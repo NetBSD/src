@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.3 2002/04/14 12:52:15 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2002/04/23 19:53:11 tv Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	2048k
+IMAGESIZE=	3m
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
-DBG=		-Os -mmemcpy
+DBG=		-Os -mmemcpy -Wa,-xgot # XXX -xgot workaround for objcopy-crunchide
 
 CRUNCHBIN=	ramdiskbin
 CRUNCHGEN_FLAGS= -d "${DBG}"
