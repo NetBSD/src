@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)str.c	5.9 (Berkeley) 3/4/93";*/
-static char rcsid[] = "$Id: str.c,v 1.4 1993/09/14 01:17:46 jtc Exp $";
+static char rcsid[] = "$Id: str.c,v 1.5 1993/10/22 22:40:17 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -230,14 +230,13 @@ genrange(s)
 	char *savestart;
 
 	savestart = s->str;
-	stopval = *++s->str == '\\' ? backslash(s) : *s->str;
+	stopval = *++s->str == '\\' ? backslash(s) : *s->str++;
 	if (stopval < s->lastch) {
 		s->str = savestart;
 		return (0);
 	}
 	s->cnt = stopval - s->lastch + 1;
 	s->state = RANGE;
-	++s->str;
 	--s->lastch;
 	return (1);
 }
@@ -280,9 +279,6 @@ genseq(s)
 
 	s->state = s->cnt ? SEQUENCE : INFINITE;
 }
-
-/* Use the #defines isXXX() here, DON'T use them above. */
-#include <ctype.h>
 
 /*
  * Translate \??? into a character.  Up to 3 octal digits, if no digits either
