@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdethers.8,v 1.1.1.1 1996/08/09 10:14:56 thorpej Exp $
+.\"	$NetBSD: stdethers.8,v 1.2 1997/10/02 14:16:33 lukem Exp $
 .\"
 .\" Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -36,13 +36,18 @@
 .Nm stdethers
 .Nd a YP filter program
 .Sh SYNOPSIS
-.Nm stdethers
+.Nm
 .Op Ar file
 .Sh DESCRIPTION
-.Nm Stdethers
-is used to get ride of some unwanted information in file or stdin. This
-program is used by YP when creating some YP maps.
+.Nm
+parses the
+.Xr ethers 5
+style input stream (stdin, or
+.Ar file
+if given), and outputs lines containing only the MAC address and host name.
 .Pp
+.Nm
+is used by other YP programs when creating some of the YP maps.
 .Pp
 The options are as follows:
 .Bl -tag -width indent

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mknetid.8,v 1.1.1.1 1996/08/09 10:14:55 thorpej Exp $
+.\"	$NetBSD: mknetid.8,v 1.2 1997/10/02 14:16:25 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nm mknetid
 .Nd a YP filter program
 .Sh SYNOPSIS
-.Nm mknetid
+.Nm
 .Op Fl d Ar domain
 .Op Fl q
 .Op Fl p Ar passwdfile
@@ -44,7 +44,7 @@
 .Op Fl h Ar hostfile
 .Op Fl m Ar netidfile
 .Sh DESCRIPTION
-.Nm Mknetid
+.Nm
 is used to create a map named 
 .Ar netid.byname .
 The map consists of information from
@@ -57,44 +57,48 @@ eventually concatenated with a
 file.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width "-p passwdfile"
 .It Fl d Ar domain
-Which yp-domain if not default yp-domain.
-.It Fl q
-Keep quiet about multipy occuraces of a uid. Ignore all but the first.
-.It Fl p Ar passwdfile
-Alternate
-.Xr passwd 5
-file. Default is
-.Nm /etc/passwd .
+YP domain to use instead of the default.
 .It Fl g Ar groupfile
 Alternate
 .Xr group 5
-file. Default is
-.Nm /etc/group .
+file.
+Default is
+.Pa /etc/group .
 .It Fl h Ar hostfile
 Alternate
-.Xr hosts 5 Default is
-.Nm /etc/hosts .
-file
+.Xr hosts 5
+file.
+Default is
+.Pa /etc/hosts .
 .It Fl m Ar netidfile
 Alternate
-.Xr netid 5 Default is
-.Nm /etc/netid .
+.Xr netid 5 
 file.
+Default is
+.Pa /etc/netid .
+.It Fl p Ar passwdfile
+Alternate
+.Xr passwd 5
+file.
+Default is
+.Pa /etc/passwd .
+.It Fl q
+Keep quiet about multiple occurrences of a uid; ignore all but the first.
 .El
 .Sh FILES
-.Bl -tag -width /etc/passwd -compact
-.It Pa /etc/passwd
+.Bl -tag -width "/etc/passwd" -compact
 .It Pa /etc/group
 .It Pa /etc/hosts
 .It Pa /etc/netid
+.It Pa /etc/passwd
 .El
 .Sh SEE ALSO
-.Xr yp 8
-.Xr passwd 5 ,
 .Xr group 5 ,
 .Xr hosts 5 ,
-.Xr netid 5
+.Xr netid 5 ,
+.Xr passwd 5 ,
+.Xr yp 8
 .Sh AUTHOR
 Mats O Jansson <moj@stacken.kth.se>

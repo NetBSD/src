@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/08/09 10:14:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/02 14:16:12 lukem Exp $
 
-SUBDIR=	makedbm mknetid stdethers stdhosts ypinit ypserv yptest yppush ypxfr
+SUBDIR=	common makedbm mknetid stdethers stdhosts ypinit yppush ypserv yptest \
+	ypxfr
 
 .include <bsd.subdir.mk>
