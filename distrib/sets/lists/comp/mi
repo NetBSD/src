@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.570 2003/05/21 06:46:53 jdc Exp $
+#	$NetBSD: mi,v 1.571 2003/05/21 21:21:14 jdc Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1600,6 +1600,8 @@
 ./usr/share/man/cat3/acosh.0	comp-c-catman
 ./usr/share/man/cat3/acoshf.0	comp-c-catman
 ./usr/share/man/cat3/addch.0		comp-c-catman
+./usr/share/man/cat3/addchnstr.0	comp-c-catman
+./usr/share/man/cat3/addchstr.0		comp-c-catman
 ./usr/share/man/cat3/addnstr.0		comp-c-catman
 ./usr/share/man/cat3/addr.0	comp-c-catman
 ./usr/share/man/cat3/addstr.0		comp-c-catman
@@ -1778,6 +1780,7 @@
 ./usr/share/man/cat3/curs_set.0		comp-c-catman
 ./usr/share/man/cat3/curses.0	comp-c-catman
 ./usr/share/man/cat3/curses_addch.0		comp-c-catman
+./usr/share/man/cat3/curses_addchstr.0		comp-c-catman
 ./usr/share/man/cat3/curses_addstr.0		comp-c-catman
 ./usr/share/man/cat3/curses_attributes.0		comp-c-catman
 ./usr/share/man/cat3/curses_background.0		comp-c-catman
@@ -2617,6 +2620,8 @@
 ./usr/share/man/cat3/mpool_sync.0	comp-c-catman
 ./usr/share/man/cat3/mrand48.0	comp-c-catman
 ./usr/share/man/cat3/mvaddch.0		comp-c-catman
+./usr/share/man/cat3/mvaddchnstr.0	comp-c-catman
+./usr/share/man/cat3/mvaddchstr.0	comp-c-catman
 ./usr/share/man/cat3/mvaddnstr.0	comp-c-catman
 ./usr/share/man/cat3/mvaddstr.0		comp-c-catman
 ./usr/share/man/cat3/mvcur.0		comp-c-catman
@@ -2627,6 +2632,8 @@
 ./usr/share/man/cat3/mvprintw.0		comp-c-catman
 ./usr/share/man/cat3/mvvline.0		comp-c-catman
 ./usr/share/man/cat3/mvwaddch.0		comp-c-catman
+./usr/share/man/cat3/mvwaddchnstr.0	comp-c-catman
+./usr/share/man/cat3/mvwaddchstr.0	comp-c-catman
 ./usr/share/man/cat3/mvwaddnstr.0	comp-c-catman
 ./usr/share/man/cat3/mvwaddstr.0	comp-c-catman
 ./usr/share/man/cat3/mvwgetnstr.0		comp-c-catman
@@ -3179,6 +3186,8 @@
 ./usr/share/man/cat3/vwarn.0	comp-c-catman
 ./usr/share/man/cat3/vwarnx.0	comp-c-catman
 ./usr/share/man/cat3/waddch.0		comp-c-catman
+./usr/share/man/cat3/waddchnstr.0	comp-c-catman
+./usr/share/man/cat3/waddchstr.0	comp-c-catman
 ./usr/share/man/cat3/waddnstr.0		comp-c-catman
 ./usr/share/man/cat3/waddstr.0		comp-c-catman
 ./usr/share/man/cat3/warn.0	comp-c-catman
@@ -4736,6 +4745,8 @@
 ./usr/share/man/man3/acosh.3		comp-c-man
 ./usr/share/man/man3/acoshf.3		comp-c-man
 ./usr/share/man/man3/addch.3		comp-c-man
+./usr/share/man/man3/addchnstr.3	comp-c-man
+./usr/share/man/man3/addchstr.3		comp-c-man
 ./usr/share/man/man3/addnstr.3		comp-c-man
 ./usr/share/man/man3/addr.3		comp-c-man
 ./usr/share/man/man3/addstr.3		comp-c-man
@@ -4914,6 +4925,7 @@
 ./usr/share/man/man3/curs_set.3		comp-c-man
 ./usr/share/man/man3/curses.3		comp-c-man
 ./usr/share/man/man3/curses_addch.3		comp-c-man
+./usr/share/man/man3/curses_addchstr.3		comp-c-man
 ./usr/share/man/man3/curses_addstr.3		comp-c-man
 ./usr/share/man/man3/curses_attributes.3		comp-c-man
 ./usr/share/man/man3/curses_background.3		comp-c-man
@@ -5753,6 +5765,8 @@
 ./usr/share/man/man3/mpool_sync.3		comp-c-man
 ./usr/share/man/man3/mrand48.3		comp-c-man
 ./usr/share/man/man3/mvaddch.3		comp-c-man
+./usr/share/man/man3/mvaddchnstr.3	comp-c-man
+./usr/share/man/man3/mvaddchstr.3	comp-c-man
 ./usr/share/man/man3/mvaddnstr.3	comp-c-man
 ./usr/share/man/man3/mvaddstr.3		comp-c-man
 ./usr/share/man/man3/mvcur.3		comp-c-man
@@ -5763,6 +5777,8 @@
 ./usr/share/man/man3/mvprintw.3		comp-c-man
 ./usr/share/man/man3/mvvline.3		comp-c-man
 ./usr/share/man/man3/mvwaddch.3		comp-c-man
+./usr/share/man/man3/mvwaddchnstr.3	comp-c-man
+./usr/share/man/man3/mvwaddchstr.3	comp-c-man
 ./usr/share/man/man3/mvwaddnstr.3	comp-c-man
 ./usr/share/man/man3/mvwaddstr.3	comp-c-man
 ./usr/share/man/man3/mvwin.3		comp-c-man
@@ -6315,6 +6331,8 @@
 ./usr/share/man/man3/vwarn.3		comp-c-man
 ./usr/share/man/man3/vwarnx.3		comp-c-man
 ./usr/share/man/man3/waddch.3		comp-c-man
+./usr/share/man/man3/waddchnstr.3	comp-c-man
+./usr/share/man/man3/waddchstr.3	comp-c-man
 ./usr/share/man/man3/waddnstr.3		comp-c-man
 ./usr/share/man/man3/waddstr.3		comp-c-man
 ./usr/share/man/man3/warn.3		comp-c-man
