@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.57 2000/08/01 23:55:09 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.58 2000/08/08 22:58:30 mjacob Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -595,7 +595,9 @@ again:
 			isp_prt(isp, ISP_LOGERR, "Ram Checksum Failure");
 			return;
 		}
+		isp->isp_loaded_fw = 1;
 	} else {
+		isp->isp_loaded_fw = 0;
 		isp_prt(isp, ISP_LOGDEBUG2, "skipping f/w download");
 	}
 
@@ -750,7 +752,7 @@ isp_scsi_init(isp)
 	/*
 	 * If we have fast memory timing enabled, turn it on.
 	 */
-	if (isp->isp_fast_mttr) {
+	if (sdp_chan0->isp_fast_mttr) {
 		ISP_WRITE(isp, RISC_MTR, 0x1313);
 	}
 
@@ -923,87 +925,51 @@ isp_scsi_channel_init(isp, channel)
 		if (sdp->isp_devparam[tgt].dev_enable == 0) {
 			continue;
 		}
-
+		sdf = DPARM_SAFE_DFLT;
 		/*
-		 * If we're in LVD mode, then we pretty much should
-		 * only disable tagged queuing.
+		 * It is not quite clear when this changed over so that
+		 * we could force narrow and async for 1000/1020 cards,
+		 * but assume that this is only the case for loaded
+		 * firmware.
 		 */
-		if (IS_ULTRA2(isp) && sdp->isp_lvdmode) {
-			sdf = DPARM_DEFAULT & ~DPARM_TQING;
-		} else {
-			int rvf = ISP_FW_REVX(isp->isp_fwrev);
-			sdf = DPARM_SAFE_DFLT;
-			
-			/*
-			 * It is not quite clear when this changed over so that
-			 * we could force narrow and async, so assume >= 7.55
-			 * for i/t F/W and = 4.55 for initiator f/w.
-			 */
-			if ((ISP_FW_REV(4, 55, 0) <= rvf &&
-			    (ISP_FW_REV(5, 0, 0) > rvf)) ||
-			    (ISP_FW_REV(7, 55, 0) <= rvf)) {
-				sdf |= DPARM_NARROW | DPARM_ASYNC;
-			}
+		if (isp->isp_loaded_fw) {
+			sdf |= DPARM_NARROW | DPARM_ASYNC;
 		}
 		mbs.param[0] = MBOX_SET_TARGET_PARAMS;
 		mbs.param[1] = (tgt << 8) | (channel << 15);
 		mbs.param[2] = sdf;
-		mbs.param[3] =
-		    (sdp->isp_devparam[tgt].sync_offset << 8) |
-		    (sdp->isp_devparam[tgt].sync_period);
+		if ((sdf & DPARM_SYNC) == 0) {
+			mbs.param[3] = 0;
+		} else {
+			mbs.param[3] =
+			    (sdp->isp_devparam[tgt].sync_offset << 8) |
+			    (sdp->isp_devparam[tgt].sync_period);
+		}
 		isp_mboxcmd(isp, &mbs, MBLOGALL);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 			sdf = DPARM_SAFE_DFLT;
 			mbs.param[0] = MBOX_SET_TARGET_PARAMS;
 			mbs.param[1] = (tgt << 8) | (channel << 15);
 			mbs.param[2] = sdf;
-			mbs.param[3] =
-			    (sdp->isp_devparam[tgt].sync_offset << 8) |
-			    (sdp->isp_devparam[tgt].sync_period);
+			mbs.param[3] = 0;
 			isp_mboxcmd(isp, &mbs, MBLOGALL);
 			if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 				continue;
 			}
 		}
-#if	0
-		/*
-		 * We don't update dev_flags with what we've set
-		 * because that's not the ultimate goal setting.
-		 * If we succeed with the command, we *do* update
-		 * cur_dflags by getting target parameters.
-		 */
-		mbs.param[0] = MBOX_GET_TARGET_PARAMS;
-		mbs.param[1] = (tgt << 8) | (channel << 15);
-		isp_mboxcmd(isp, &mbs, MBLOGALL);
-		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-			/*
-			 * Urrr.... We'll set cur_dflags to DPARM_SAFE_DFLT so
-			 * we don't try and do tags if tags aren't enabled.
-			 */
-			sdp->isp_devparam[tgt].cur_dflags = DPARM_SAFE_DFLT;
-		} else {
-			sdp->isp_devparam[tgt].cur_dflags = mbs.param[2];
-			sdp->isp_devparam[tgt].cur_offset = mbs.param[3] >> 8;
-			sdp->isp_devparam[tgt].cur_period = mbs.param[3] & 0xff;
-		}
-		isp_prt(isp, ISP_LOGTDEBUG0,
-		    "set flags 0x%x got 0x%x back for target %d",
-		    sdf, mbs.param[2], tgt);
 
-#else
 		/*
-		 * We don't update any information because we need to run
-		 * at least one command per target to cause a new state
-		 * to be latched.
-		 */
-#endif
-		/*
+		 * We don't update any information directly from the f/w
+		 * because we need to run at least one command to cause a
+		 * new state to be latched up. So, we just assume that we
+		 * converge to the values we just had set.
+		 *
 		 * Ensure that we don't believe tagged queuing is enabled yet.
 		 * It turns out that sometimes the ISP just ignores our
 		 * attempts to set parameters for devices that it hasn't
 		 * seen yet.
 		 */
-		sdp->isp_devparam[tgt].cur_dflags &= ~DPARM_TQING;
+		sdp->isp_devparam[tgt].cur_dflags = sdf & ~DPARM_TQING;
 		for (lun = 0; lun < (int) isp->isp_maxluns; lun++) {
 			mbs.param[0] = MBOX_SET_DEV_QUEUE_PARAMS;
 			mbs.param[1] = (channel << 15) | (tgt << 8) | lun;
@@ -1038,20 +1004,21 @@ isp_fibre_init(isp)
 	MEMZERO(icbp, sizeof (*icbp));
 
 	icbp->icb_version = ICB_VERSION1;
-#ifdef	ISP_TARGET_MODE
-	fcp->isp_fwoptions = ICBOPT_TGT_ENABLE;
-#else
-	fcp->isp_fwoptions = 0;
-#endif
-	fcp->isp_fwoptions |= ICBOPT_FAIRNESS;
+
+	/*
+	 * Firmware Options are either retrieved from NVRAM or
+	 * are patched elsewhere. We check them for sanity here
+	 * and make changes based on board revision, but otherwise
+	 * let others decide policy.
+	 */
+
 	/*
 	 * If this is a 2100 < revision 5, we have to turn off FAIRNESS.
 	 */
 	if ((isp->isp_type == ISP_HA_FC_2100) && isp->isp_revision < 5) {
 		fcp->isp_fwoptions &= ~ICBOPT_FAIRNESS;
 	}
-	fcp->isp_fwoptions |= ICBOPT_PDBCHANGE_AE;
-	fcp->isp_fwoptions |= ICBOPT_HARD_ADDRESS;
+
 	/*
 	 * We have to use FULL LOGIN even though it resets the loop too much
 	 * because otherwise port database entries don't get updated after
@@ -1060,11 +1027,6 @@ isp_fibre_init(isp)
 	if (ISP_FW_REVX(isp->isp_fwrev) < ISP_FW_REV(1, 17, 0)) {
 		fcp->isp_fwoptions |= ICBOPT_FULL_LOGIN;
 	}
-#ifndef	ISP_NO_FASTPOST_FC
-	fcp->isp_fwoptions |= ICBOPT_FAST_POST;
-#endif
-	if (isp->isp_confopts & ISP_CFG_FULL_DUPLEX)
-		fcp->isp_fwoptions |= ICBOPT_FULL_DUPLEX;
 
 	/*
 	 * We don't set ICBOPT_PORTNAME because we want our
@@ -1096,7 +1058,10 @@ isp_fibre_init(isp)
 	icbp->icb_retry_delay = fcp->isp_retry_delay;
 	icbp->icb_retry_count = fcp->isp_retry_count;
 	icbp->icb_hardaddr = loopid;
-#ifdef	PRET_A_PORTE
+	/*
+	 * Right now we just set extended options to prefer point-to-point
+	 * over loop based upon some soft config options.
+	 */
 	if (IS_2200(isp)) {
 		icbp->icb_fwoptions |= ICBOPT_EXTENDED;
 		/*
@@ -1107,7 +1072,6 @@ isp_fibre_init(isp)
 		else
 			icbp->icb_xfwoptions = ICBXOPT_LOOP_2_PTP;
 	}
-#endif
 	icbp->icb_logintime = 60;	/* 60 second login timeout */
 
 	if (fcp->isp_nodewwn) {
@@ -2400,19 +2364,42 @@ isp_control(isp, ctl, arg)
 			return (isp_pdb_sync(isp, -1));
 		}
 		break;
-
 #ifdef	ISP_TARGET_MODE
 	case ISPCTL_TOGGLE_TMODE:
+	{
+		int ena = *(int *)arg;
 		if (IS_SCSI(isp)) {
-			int ena = *(int *)arg;
 			mbs.param[0] = MBOX_ENABLE_TARGET_MODE;
 			mbs.param[1] = (ena)? ENABLE_TARGET_FLAG : 0;
 			isp_mboxcmd(isp, &mbs, MBLOGALL);
 			if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 				break;
 			}
+		} else {
+			fcparam *fcp = isp->isp_param;
+			/*
+			 * We assume somebody has quiesced this bus.
+			 */
+			if (ena) {
+				if (fcp->isp_fwoptions & ICBOPT_TGT_ENABLE) {
+					return (0);
+				}
+				fcp->isp_fwoptions |= ICBOPT_TGT_ENABLE;
+			} else {
+				if (!(fcp->isp_fwoptions & ICBOPT_TGT_ENABLE)) {
+					return (0);
+				}
+				fcp->isp_fwoptions &= ~ICBOPT_TGT_ENABLE;
+			}
+			isp->isp_state = ISP_RESETSTATE;
+			isp_fibre_init(isp);
+			if (isp->isp_state != ISP_INITSTATE) {
+				break;
+			}
+				
 		}
 		return (0);
+	}
 #endif
 	}
 	return (-1);
@@ -2784,8 +2771,6 @@ isp_parse_async(isp, mbox)
 	}
 
 	switch (mbox) {
-	case MBOX_COMMAND_COMPLETE:	/* sometimes these show up */
-		break;
 	case ASYNC_BUS_RESET:
 		isp->isp_sendmarker |= (1 << bus);
 #ifdef	ISP_TARGET_MODE
@@ -2858,23 +2843,23 @@ isp_parse_async(isp, mbox)
 		switch (mbox & 0x1c00) {
 		case SXP_PINS_LVD_MODE:
 			isp_prt(isp, ISP_LOGINFO, "Transition to LVD mode");
-			((sdparam *)isp->isp_param)->isp_diffmode = 0;
-			((sdparam *)isp->isp_param)->isp_ultramode = 0;
-			((sdparam *)isp->isp_param)->isp_lvdmode = 1;
+			SDPARAM(isp)->isp_diffmode = 0;
+			SDPARAM(isp)->isp_ultramode = 0;
+			SDPARAM(isp)->isp_lvdmode = 1;
 			break;
 		case SXP_PINS_HVD_MODE:
 			isp_prt(isp, ISP_LOGINFO,
 			    "Transition to Differential mode");
-			((sdparam *)isp->isp_param)->isp_diffmode = 1;
-			((sdparam *)isp->isp_param)->isp_ultramode = 0;
-			((sdparam *)isp->isp_param)->isp_lvdmode = 0;
+			SDPARAM(isp)->isp_diffmode = 1;
+			SDPARAM(isp)->isp_ultramode = 0;
+			SDPARAM(isp)->isp_lvdmode = 0;
 			break;
 		case SXP_PINS_SE_MODE:
 			isp_prt(isp, ISP_LOGINFO,
 			    "Transition to Single Ended mode");
-			((sdparam *)isp->isp_param)->isp_diffmode = 0;
-			((sdparam *)isp->isp_param)->isp_ultramode = 1;
-			((sdparam *)isp->isp_param)->isp_lvdmode = 0;
+			SDPARAM(isp)->isp_diffmode = 0;
+			SDPARAM(isp)->isp_ultramode = 1;
+			SDPARAM(isp)->isp_lvdmode = 0;
 			break;
 		default:
 			isp_prt(isp, ISP_LOGWARN,
@@ -2896,8 +2881,17 @@ isp_parse_async(isp, mbox)
 		break;
 
 	case ASYNC_CTIO_DONE:
-		/* Should only occur when Fast Posting Set for 2100s */
-		isp_prt(isp, ISP_LOGDEBUG3, "Fast Posting CTIO done");
+#ifdef	ISP_TARGET_MODE
+		/*
+		 * Bus gets overloaded with the handle. Dual bus
+		 * cards don't put bus# into the handle.
+		 */
+		bus = (ISP_READ(isp, OUTMAILBOX2) << 16) |
+		    ISP_READ(isp, OUTMAILBOX1);
+		isp_target_async(isp, bus, mbox);
+#else
+		isp_prt(isp, ISP_LOGINFO, "Fast Posting CTIO done");
+#endif
 		break;
 
 	case ASYNC_LIP_OCCURRED:
@@ -3022,6 +3016,10 @@ isp_handle_other_response(isp, sp, optrp)
 	u_int16_t *optrp;
 {
 	switch (sp->req_header.rqs_entry_type) {
+	case RQSTYPE_STATUS_CONT:
+		isp_prt(isp, ISP_LOGINFO, "Ignored Continuation Response");
+		return (0);
+		break;
 	case RQSTYPE_ATIO:
 	case RQSTYPE_CTIO:
 	case RQSTYPE_ENABLE_LUN:
@@ -3061,7 +3059,7 @@ isp_parse_status(isp, sp, xs)
 
 	case RQCS_INCOMPLETE:
 		if ((sp->req_state_flags & RQSF_GOT_TARGET) == 0) {
-			isp_prt(isp, ISP_LOGDEBUG0,
+			isp_prt(isp, ISP_LOGDEBUG1,
 			    "Selection Timeout for %d.%d.%d",
 			    XS_TGT(xs), XS_LUN(xs), XS_CHANNEL(xs));
 			if (XS_NOERR(xs)) {
@@ -4041,12 +4039,12 @@ static void
 isp_update(isp)
 	struct ispsoftc *isp;
 {
-	int bus;
+	int bus, upmask;
 
-	for (bus = 0; isp->isp_update != 0; bus++) {
-		if (isp->isp_update & (1 << bus)) {
+	for (bus = 0, upmask = isp->isp_update; upmask != 0; bus++) {
+		if (upmask & (1 << bus)) {
 			isp_update_bus(isp, bus);
-			isp->isp_update ^= (1 << bus);
+			upmask &= ~(1 << bus);
 		}
 	}
 }
@@ -4061,11 +4059,15 @@ isp_update_bus(isp, bus)
 	sdparam *sdp;
 
 	if (IS_FC(isp)) {
+		/*
+		 * There are no 'per-bus' settings for Fibre Channel.
+		 */
 		return;
 	}
 
 	sdp = isp->isp_param;
 	sdp += bus;
+	isp->isp_update &= ~(1 << bus);
 
 	for (tgt = 0; tgt < MAX_TARGETS; tgt++) {
 		u_int16_t flags, period, offset;
@@ -4076,27 +4078,48 @@ isp_update_bus(isp, bus)
 	 		    "skipping target %d bus %d update", tgt, bus);
 			continue;
 		}
-
 		/*
 		 * If the goal is to update the status of the device,
 		 * take what's in dev_flags and try and set the device
 		 * toward that. Otherwise, if we're just refreshing the
 		 * current device state, get the current parameters.
 		 */
-		if (sdp->isp_devparam[tgt].dev_update) {
+
+		/*
+		 * Refresh overrides set
+		 */
+		if (sdp->isp_devparam[tgt].dev_refresh) {
+			mbs.param[0] = MBOX_GET_TARGET_PARAMS;
+			sdp->isp_devparam[tgt].dev_refresh = 0;
+			get = 1;
+			if (sdp->isp_devparam[tgt].dev_update)
+				isp->isp_update |= (1 << bus);
+		} else if (sdp->isp_devparam[tgt].dev_update) {
 			mbs.param[0] = MBOX_SET_TARGET_PARAMS;
-			mbs.param[2] = sdp->isp_devparam[tgt].dev_flags;
 			/*
-			 * Insist that PARITY must be enabled if SYNC
-			 * is enabled.
+			 * Make sure dev_flags has "Renegotiate on Error"
+			 * on and "Freeze Queue on Error" off.
 			 */
-			if (mbs.param[2] & DPARM_SYNC) {
+			sdp->isp_devparam[tgt].dev_flags |= DPARM_RENEG;
+			sdp->isp_devparam[tgt].dev_flags &= ~DPARM_QFRZ;
+
+			mbs.param[2] = sdp->isp_devparam[tgt].dev_flags;
+			
+			/*
+			 * Insist that PARITY must be enabled
+			 * if SYNC or WIDE is enabled.
+			 */
+			if ((mbs.param[2] & (DPARM_SYNC|DPARM_WIDE)) != 0) {
 				mbs.param[2] |= DPARM_PARITY;
 			}
-			mbs.param[3] =
-				(sdp->isp_devparam[tgt].sync_offset << 8) |
-				(sdp->isp_devparam[tgt].sync_period);
-			sdp->isp_devparam[tgt].dev_update = 0;
+
+			if ((mbs.param[2] & DPARM_SYNC) == 0) {
+				mbs.param[3] = 0;
+			} else {
+				mbs.param[3] =
+				    (sdp->isp_devparam[tgt].sync_offset << 8) |
+				    (sdp->isp_devparam[tgt].sync_period);
+			}
 			/*
 			 * A command completion later that has
 			 * RQSTF_NEGOTIATION set will cause
@@ -4112,15 +4135,12 @@ isp_update_bus(isp, bus)
 			sdp->isp_devparam[tgt].cur_dflags |=
 			    (sdp->isp_devparam[tgt].dev_flags & DPARM_TQING);
 			sdp->isp_devparam[tgt].dev_refresh = 1;
-			isp_prt(isp, ISP_LOGDEBUG2,
+			sdp->isp_devparam[tgt].dev_update = 0;
+			isp_prt(isp, ISP_LOGDEBUG1,
 			    "bus %d set tgt %d flags 0x%x off 0x%x period 0x%x",
 			    bus, tgt, mbs.param[2], mbs.param[3] >> 8,
 			    mbs.param[3] & 0xff);
 			get = 0;
-		} else if (sdp->isp_devparam[tgt].dev_refresh) {
-			mbs.param[0] = MBOX_GET_TARGET_PARAMS;
-			sdp->isp_devparam[tgt].dev_refresh = 0;
-			get = 1;
 		} else {
 			continue;
 		}
@@ -4166,6 +4186,21 @@ isp_setdfltparm(isp, channel)
 		fcp->isp_loopid = DEFAULT_LOOPID(isp);
 		fcp->isp_nodewwn = DEFAULT_NODEWWN(isp);
 		fcp->isp_portwwn = DEFAULT_PORTWWN(isp);
+		fcp->isp_fwoptions = 0;
+		fcp->isp_fwoptions |= ICBOPT_FAIRNESS;
+		fcp->isp_fwoptions |= ICBOPT_PDBCHANGE_AE;
+		fcp->isp_fwoptions |= ICBOPT_HARD_ADDRESS;
+#ifndef	ISP_NO_FASTPOST_FC
+		fcp->isp_fwoptions |= ICBOPT_FAST_POST;
+#endif
+		if (isp->isp_confopts & ISP_CFG_FULL_DUPLEX)
+			fcp->isp_fwoptions |= ICBOPT_FULL_DUPLEX;
+
+		/*
+		 * Make sure this is turned off now until we get
+		 * extended options from NVRAM
+		 */
+		fcp->isp_fwoptions &= ~ICBOPT_EXTENDED;
 
 		/*
 		 * Now try and read NVRAM
@@ -4257,16 +4292,26 @@ isp_setdfltparm(isp, channel)
 			    ISP_10M_SYNCPARMS >> 8;
 			sdp->isp_devparam[tgt].sync_period =
 			    ISP_10M_SYNCPARMS & 0xff;
+		} else if (IS_ULTRA3(isp)) {
+			sdp->isp_devparam[tgt].sync_offset =
+			    ISP_80M_SYNCPARMS >> 8;
+			sdp->isp_devparam[tgt].sync_period =
+			    ISP_80M_SYNCPARMS & 0xff;
 		} else if (IS_ULTRA2(isp)) {
 			sdp->isp_devparam[tgt].sync_offset =
 			    ISP_40M_SYNCPARMS >> 8;
 			sdp->isp_devparam[tgt].sync_period =
 			    ISP_40M_SYNCPARMS & 0xff;
-		} else {
+		} else if (IS_1240(isp)) {
 			sdp->isp_devparam[tgt].sync_offset =
 			    ISP_20M_SYNCPARMS >> 8;
 			sdp->isp_devparam[tgt].sync_period =
 			    ISP_20M_SYNCPARMS & 0xff;
+		} else {
+			sdp->isp_devparam[tgt].sync_offset =
+			    ISP_20M_SYNCPARMS_1040 >> 8;
+			sdp->isp_devparam[tgt].sync_period =
+			    ISP_20M_SYNCPARMS_1040 & 0xff;
 		}
 
 		/*
@@ -4590,7 +4635,7 @@ isp_parse_nvram_1020(isp, nvram_data)
 	sdp->isp_max_queue_depth =
 		ISP_NVRAM_MAX_QUEUE_DEPTH(nvram_data);
 
-	isp->isp_fast_mttr = ISP_NVRAM_FAST_MTTR_ENABLE(nvram_data);
+	sdp->isp_fast_mttr = ISP_NVRAM_FAST_MTTR_ENABLE(nvram_data);
 	for (i = 0; i < MAX_TARGETS; i++) {
 		sdp->isp_devparam[i].dev_enable =
 			ISP_NVRAM_TGT_DEVICE_ENABLE(nvram_data, i);
