@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.103 2002/03/17 22:22:40 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.103.6.1 2003/10/04 08:34:22 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.103 2002/03/17 22:22:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.103.6.1 2003/10/04 08:34:22 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1043,27 +1043,35 @@ nfsm_disct(mdp, dposp, siz, left, cp2)
 			m1->m_next = m2;
 		}
 		m1->m_len = 0;
-		dst = m1->m_dat;
+		if (m1->m_flags & M_PKTHDR)
+			dst = m1->m_pktdat;
+		else
+			dst = m1->m_dat;
+		m1->m_data = dst;
 	} else {
 		/*
 		 * If the first mbuf has no external data
 		 * move the data to the front of the mbuf.
 		 */
-		if ((dst = m1->m_dat) != src)
+		if (m1->m_flags & M_PKTHDR)
+			dst = m1->m_pktdat;
+		else
+			dst = m1->m_dat;
+		m1->m_data = dst;
+		if (dst != src)
 			memmove(dst, src, left);
 		dst += left; 
 		m1->m_len = left;
 		m2 = m1->m_next;
 	}
-	m1->m_flags &= ~M_PKTHDR;
-	*cp2 = m1->m_data = m1->m_dat;   /* data is at beginning of buffer */
+	*cp2 = m1->m_data;
 	*dposp = mtod(m1, caddr_t) + siz;
 	/*
 	 * Loop through mbufs pulling data up into first mbuf until
 	 * the first mbuf is full or there is no more data to
 	 * pullup.
 	 */
-	while ((len = (MLEN - m1->m_len)) != 0 && m2) {
+	while ((len = M_TRAILINGSPACE(m1)) != 0 && m2) {
 		if ((len = min(len, m2->m_len)) != 0)
 			memcpy(dst, m2->m_data, len);
 		m1->m_len += len;
