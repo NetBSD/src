@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.13 2001/11/08 02:39:06 lukem Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.14 2001/11/10 17:48:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.13 2001/11/08 02:39:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_balloc.c,v 1.14 2001/11/10 17:48:02 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_uvmhist.h"
@@ -361,9 +361,6 @@ ext2fs_gop_alloc(struct vnode *vp, off_t off, off_t len, int flags,
 			UVMHIST_LOG(ubchist, "old 0x%x new 0x%x",
 				    ip->i_e2fs_size, off + bsize,0,0);
 			ip->i_e2fs_size = off + bsize;
-			if (vp->v_size < ip->i_e2fs_size) {
-				uvm_vnp_setsize(vp, ip->i_e2fs_size);
-			}
 		}
 
 		off += bsize;

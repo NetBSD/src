@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.20 2001/11/08 02:39:07 lukem Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.21 2001/11/10 17:48:02 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.20 2001/11/08 02:39:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_readwrite.c,v 1.21 2001/11/10 17:48:02 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -282,6 +282,15 @@ ext2fs_write(v)
 			}
 
 			/*
+			 * update UVM's notion of the size now that we've
+			 * copied the data into the vnode's pages.
+			 */
+
+			if (vp->v_size < uio->uio_offset) {
+				uvm_vnp_setsize(vp, uio->uio_offset);
+			}
+
+			/*
 			 * flush what we just wrote if necessary.
 			 * XXXUBC simplistic async flushing.
 			 */
@@ -319,6 +328,16 @@ ext2fs_write(v)
 			ip->i_e2fs_size = uio->uio_offset + xfersize;
 		}
 		error = uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
+
+		/*
+		 * update UVM's notion of the size now that we've
+		 * copied the data into the vnode's pages.
+		 */
+
+		if (vp->v_size < uio->uio_offset) {
+			uvm_vnp_setsize(vp, uio->uio_offset);
+		}
+
 		if (ioflag & IO_SYNC)
 			(void)bwrite(bp);
 		else if (xfersize + blkoffset == fs->e2fs_bsize)
@@ -328,11 +347,13 @@ ext2fs_write(v)
 		if (error || xfersize == 0)
 			break;
 	}
+
 	/*
 	 * If we successfully wrote any data, and we are not the superuser
 	 * we clear the setuid and setgid bits as a precaution against
 	 * tampering.
 	 */
+
 out:
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
