@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc.newconf,v 1.22 1995/01/25 20:45:53 cgd Exp $
+#	$NetBSD: files.sparc.newconf,v 1.23 1995/02/18 09:40:30 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -34,6 +34,10 @@ file	arch/sparc/sparc/memreg.c
 
 device zs at mainbus, obio
 file	arch/sparc/dev/zs.c			zs needs-count
+
+device fdc at mainbus {}
+device fd at fdc: disk
+file	arch/sparc/dev/fd.c			fd needs-flag
 
 device sbus at mainbus { slot = -1, offset = -1 }
 file	arch/sparc/dev/sbus.c		sbus
