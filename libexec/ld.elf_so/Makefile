@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 1999/03/19 22:06:37 thorpej Exp $
+#	$NetBSD: Makefile,v 1.27 1999/04/29 15:06:41 kleink Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 
@@ -12,7 +12,8 @@ M= ${.CURDIR}/arch/${ARCHSUBDIR}
 .if (${MACHINE} == "alpha") || \
     (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb") || \
     (${MACHINE_ARCH} == "powerpc") || (${MACHINE} == "sparc64") || \
-    (${MACHINE} == "i386") || (${MACHINE} == "sparc")
+    (${MACHINE} == "i386") || (${MACHINE_ARCH} == "m68k") || \
+    (${MACHINE} == "sparc")
 # Adds SRCS, CPPFLAGS, LDFLAGS, etc.  Must go first so MD startup source
 # is first.
 .if exists($M/Makefile.inc)
