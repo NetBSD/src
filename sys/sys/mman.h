@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.14.2.1 1997/10/22 06:24:49 thorpej Exp $	*/
+/*	$NetBSD: mman.h,v 1.14.2.2 1997/11/04 23:35:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -99,7 +99,7 @@ int	mprotect __P((void *, size_t, int));
 int	msync __P((void *, size_t));
 int	__msync13 __P((void *, size_t, int));
 #else
-int	msync __P((void *, size_t, int))	__RENAME("__msync13");
+int	msync __P((void *, size_t, int))	__RENAME(__msync13);
 #endif
 int	mlock __P((void *, size_t));
 int	munlock __P((void *, size_t));
