@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.633 2003/12/11 09:46:27 dyoung Exp $
+# $NetBSD: mi,v 1.634 2003/12/14 01:01:13 thorpej Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -932,6 +932,7 @@
 ./usr/share/man/cat4/rtfps.0			man-sys-catman
 ./usr/share/man/cat4/rtii.0			man-sys-catman
 ./usr/share/man/cat4/rtk.0			man-sys-catman
+./usr/share/man/cat4/satalink.0			man-sys-catman
 ./usr/share/man/cat4/sb.0			man-sys-catman
 ./usr/share/man/cat4/sbus.0			man-sys-catman
 ./usr/share/man/cat4/sc.0			man-sys-catman
@@ -2667,6 +2668,7 @@
 ./usr/share/man/man4/rtfps.4			man-sys-man
 ./usr/share/man/man4/rtii.4			man-sys-man
 ./usr/share/man/man4/rtk.4			man-sys-man
+./usr/share/man/man4/satalink.4			man-sys-man
 ./usr/share/man/man4/sb.4			man-sys-man
 ./usr/share/man/man4/sbus.4			man-sys-man
 ./usr/share/man/man4/sc.4			man-sys-man
