@@ -1,4 +1,4 @@
-/*	$NetBSD: hsearch.c,v 1.11 1997/07/13 18:52:07 christos Exp $	*/
+/*	$NetBSD: hsearch.c,v 1.12 1999/02/16 17:59:18 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,17 +41,17 @@
 #if 0
 static char sccsid[] = "@(#)hsearch.c	8.4 (Berkeley) 7/21/94";
 #else
-__RCSID("$NetBSD: hsearch.c,v 1.11 1997/07/13 18:52:07 christos Exp $");
+__RCSID("$NetBSD: hsearch.c,v 1.12 1999/02/16 17:59:18 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
 #include <fcntl.h>
+#include <search.h>
 #include <string.h>
 
 #include <db.h>
-#include "search.h"
 
 static DB *dbp = NULL;
 static ENTRY retval;
