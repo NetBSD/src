@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.102 1999/06/07 20:31:27 thorpej Exp $
+# $NetBSD: files.alpha,v 1.103 1999/06/29 07:04:16 ross Exp $
 #
 # alpha-specific configuration info
 
@@ -24,6 +24,7 @@ defopt	DEC_1000	# Mikasa etc:	AlphaServer 1000
 defopt	DEC_1000A	# Corelle etc:	AlphaServer 800 and 1000A
 defopt	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 defopt	DEC_EB66	# EB66:		21066 Evaluation Board
+defopt	DEC_6600	# EV6		Various EV6 Systems
 
 # Miscellaneous CPU-specific option headers
 defopt	FIX_UNALIGNED_VAX_FP
@@ -40,7 +41,7 @@ define	alpha_shared_intr
 file	arch/alpha/common/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_eb64plus | dec_kn20aa | dec_kn8ae |
 					dec_kn300 | dec_550 | dec_1000 |
-					dec_1000a | dec_eb66
+					dec_1000a | dec_eb66 | dec_6600
 define	alpha_sgmap
 file	arch/alpha/common/sgmap_common.c alpha_sgmap | dec_3000_500
 
@@ -299,6 +300,16 @@ file	arch/alpha/pci/mcpcia_bus_mem.c	mcpcia
 file	arch/alpha/pci/mcpcia_dma.c	mcpcia
 file	arch/alpha/pci/mcpcia_pci.c	mcpcia
 
+device	tsc { }
+attach	tsc at mainbus
+file	arch/alpha/pci/tsc.c		dec_6600
+
+device	tsp: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
+attach	tsp at tsc
+file	arch/alpha/pci/tsp_dma.c	tsp
+file	arch/alpha/pci/tsp_pci.c	tsp
+file	arch/alpha/pci/tsp_bus_io.c	tsp
+file	arch/alpha/pci/tsp_bus_mem.c	tsp
 
 # CPU support files
 file	arch/alpha/pci/pci_2100_a50.c	dec_2100_a50
@@ -317,6 +328,7 @@ file	arch/alpha/pci/pci_kn300.c	dec_kn300
 file	arch/alpha/pci/pci_550.c	dec_550
 file	arch/alpha/pci/pci_1000a.c	dec_1000a
 file	arch/alpha/pci/pci_1000.c	dec_1000
+file	arch/alpha/pci/pci_6600.c	dec_6600
 
 
 #
@@ -334,7 +346,7 @@ file	arch/alpha/pci/sio_pic.c	sio | pceb
 
 
 #
-# A12 if_de hack, this is temporary!
+# A12 if_de hack
 #
 device	ade: ether, ifnet, arp
 attach	ade at pci
@@ -418,6 +430,7 @@ file	arch/alpha/alpha/dec_kn8ae.c		dec_kn8ae
 file	arch/alpha/alpha/dec_kn300.c		dec_kn300
 file	arch/alpha/alpha/avalon_a12.c		avalon_a12
 file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a
+file	arch/alpha/alpha/dec_6600.c		dec_6600
 
 # Kernel debugger support
 file	arch/alpha/alpha/db_disasm.c		ddb
