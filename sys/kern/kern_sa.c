@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.34 2003/11/01 01:38:47 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.35 2003/11/01 02:09:52 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.34 2003/11/01 01:38:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.35 2003/11/01 02:09:52 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,11 +276,11 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-	p->p_flag |= P_SA;
-	l->l_flag |= L_SA; /* We are now an activation LWP */
-
 	/* Assign this LWP to the virtual processor */
 	sa->sa_vp = l;
+
+	p->p_flag |= P_SA;
+	l->l_flag |= L_SA; /* We are now an activation LWP */
 
 	/* This will not return to the place in user space it came from. */
 	return (0);
@@ -1086,6 +1086,9 @@ sa_unblock_userret(struct lwp *l)
 	p = l->l_proc;
 	sa = p->p_sa;
 	
+	if (p->p_flag & P_WEXIT)
+		return;
+
 	SCHED_ASSERT_UNLOCKED();
 
 	KERNEL_PROC_LOCK(l);
@@ -1103,12 +1106,10 @@ sa_unblock_userret(struct lwp *l)
 			PHOLD(l);
 			sa_putcachelwp(p, l);
 			SA_LWP_STATE_UNLOCK(l, f);
-			KERNEL_PROC_UNLOCK(l);
 			mi_switch(l, NULL);
 			/* mostly NOTREACHED */
 			SCHED_ASSERT_UNLOCKED();
 			splx(s);
-			KERNEL_PROC_LOCK(l);
 			KDASSERT(p->p_flag & P_WEXIT);
 			lwp_exit(l);
 		}
