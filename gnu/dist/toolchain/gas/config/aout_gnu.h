@@ -61,7 +61,7 @@ enum reloc_type
     NO_RELOC
   };
 
-#endif /* TC_SPARC or TC_A29K */
+#endif /* TC_SPARC or TC_A29K or TC_VAX */
 
 
 #define __GNU_EXEC_MACROS__
@@ -119,6 +119,7 @@ enum machine_type
     M_386 = 100,
     M_29K = 101,
     M_RS6000 = 102,		/* IBM RS/6000 */
+    M_VAX = 150,
     /* HP/BSD formats */
     M_HP200 = 200,		/* hp200 (68010) BSD binary */
     M_HP300 = 300,		/* hp300 (68020+68881) BSD binary */
