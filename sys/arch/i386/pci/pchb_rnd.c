@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.9.10.1 2002/05/30 15:33:22 gehenna Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.9.10.2 2002/07/14 17:48:01 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.9.10.1 2002/05/30 15:33:22 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb_rnd.c,v 1.9.10.2 2002/07/14 17:48:01 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 				/*
 				 * Random number generator is not present.
 				 */
+				bus_space_unmap(sc->sc_st, sc->sc_sh,
+				    I82802_IOSIZE);
 				return;
 			}
 
@@ -101,6 +103,8 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 				/*
 				 * Couldn't enable the RNG.
 				 */
+				bus_space_unmap(sc->sc_st, sc->sc_sh,
+				    I82802_IOSIZE);
 				return;
 			}
 
@@ -114,6 +118,8 @@ pchb_attach_rnd(struct pchb_softc *sc, struct pci_attach_args *pa)
 			}
 
 			if ((reg8 & I82802_RNG_RNGST_DATAV) == 0) {
+				bus_space_unmap(sc->sc_st, sc->sc_sh,
+				    I82802_IOSIZE);
 				printf("%s: unable to read from random "
 				    "number generator.\n",
 				    sc->sc_dev.dv_xname);

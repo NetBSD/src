@@ -1,4 +1,4 @@
-#	$NetBSD: majors.malta,v 1.1.2.2 2002/05/30 07:14:44 gehenna Exp $
+#	$NetBSD: majors.malta,v 1.1.2.3 2002/07/14 17:46:08 gehenna Exp $
 #
 # Device majors for malta
 #
@@ -66,3 +66,4 @@ device-major	mlx		char 65			mlx
 device-major	pci		char 66			pci
 
 device-major	clockctl	char 69			clockctl
+device-major	systrace	char 70			systrace

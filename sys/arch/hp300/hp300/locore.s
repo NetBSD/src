@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.120.4.1 2002/05/30 15:33:08 gehenna Exp $	*/
+/*	$NetBSD: locore.s,v 1.120.4.2 2002/07/14 17:46:14 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -94,9 +94,16 @@ ASLOCAL(tmpstk)
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
-#define	_RELOC(var, ar)		\
-	movel	#var,ar;	\
+#ifdef __STDC__
+#define	IMMEDIATE		#
+#define	_RELOC(var, ar)			\
+	movel	IMMEDIATE var,ar;	\
 	addl	%a5,ar
+#else
+#define	_RELOC(var, ar)			\
+	movel	#var,ar;		\
+	addl	%a5,ar
+#endif /* __STDC__ */
 
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
 #define	ASRELOC(var, ar)	_RELOC(_ASM_LABEL(var), ar)

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.bebox,v 1.1.2.2 2002/05/30 07:14:42 gehenna Exp $
+#	$NetBSD: majors.bebox,v 1.1.2.3 2002/07/14 17:46:02 gehenna Exp $
 #
 # Device majors for bebox
 #
@@ -57,3 +57,4 @@ device-major	isdnbchan	char 55			isdnbchan
 device-major	isdntrc		char 56			isdntrc
 device-major	isdntel		char 57			isdntel
 device-major	clockctl	char 58			clockctl
+device-major	systrace	char 59			systrace

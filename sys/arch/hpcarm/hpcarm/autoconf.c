@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.8.1 2002/05/17 13:49:53 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.8.2 2002/07/14 17:46:53 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -47,6 +47,7 @@
 #include <sys/malloc.h>
 
 #include <machine/bootconfig.h>
+#include <machine/config_hook.h>
 #include <machine/intr.h>
 
 #include "sacom.h"
@@ -146,6 +147,9 @@ cpu_rootconf()
 void
 cpu_configure()
 {
+
+	config_hook_init();
+
 	/*
 	 * Configure all the roots.
 	 * We have to have a mainbus

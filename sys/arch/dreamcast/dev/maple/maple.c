@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.12.2.1 2002/05/17 15:41:00 gehenna Exp $	*/
+/*	$NetBSD: maple.c,v 1.12.2.2 2002/07/14 17:46:06 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -422,7 +422,6 @@ maple_alloc_dma(size_t size, vaddr_t *vap, paddr_t *pap)
 
 	size = round_page(size);
 
-	TAILQ_INIT(&mlist);
 	error = uvm_pglistalloc(size, avail_start, avail_end - PAGE_SIZE,
 	    0, 0, &mlist, 1, 0);
 	if (error)

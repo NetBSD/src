@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.58 2002/04/25 15:06:28 atatat Exp $
+#	$NetBSD: CARDBUS,v 1.58.2.1 2002/07/14 17:47:50 gehenna Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -10,7 +10,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"CARDBUS-$Revision: 1.58 $"
+#ident		"CARDBUS-$Revision: 1.58.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -28,6 +28,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 #options 	DUMMY_NOPS
 
 options 	MTRR		# memory-type range register syscall support
+options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
@@ -953,6 +954,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 # rnd works; RND_COM does not on port i386 yet.
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+pseudo-device	clockctl		# user control of clock subsystem
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
