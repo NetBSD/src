@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.1.1.2 2005/02/08 06:53:29 martti Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.1.1.3 2005/02/19 21:27:19 martti Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_rcmd_pxy.c,v 1.41.2.3 2004/12/09 19:41:00 darrenr Exp
+ * Id: ip_rcmd_pxy.c,v 1.41.2.4 2005/02/04 10:22:55 darrenr Exp
  *
  * Simple RCMD transparent proxy for in-kernel use.  For use with the NAT
  * code.
@@ -203,6 +203,8 @@ nat_t *nat;
 				ip->ip_dst = nat->nat_inip;
 			}
 			(void) fr_addstate(&fi, &nat2->nat_state, SI_W_DPORT);
+			if (fi.fin_state != NULL)
+				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_len = slen;
 		ip->ip_src = swip;

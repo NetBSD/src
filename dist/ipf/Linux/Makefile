@@ -101,7 +101,7 @@ build all: $(OBJ) $(OBJ)/ipf $(OBJ)/ipfs $(OBJ)/ipfstat $(OBJ)/ipftest \
 
 ipflkm:
 	if [ $(LINUX) -lt 20499 ] ; then \
-		make $(OBJ)/ipfilter.o ; \
+		make $(OBJ)/ipfilter.o; \
 	else \
 		(cd $(OBJ); unset MAKEFLAGS; make -C "$(MODDIR)/build" SUBDIRS="`pwd`" TOP="`pwd`/../.."  CPUDIR="$(CPUDIR)" EXTRA_CFLAGS="$(EXTRA_CFLAGS)" OBJ= modules); \
 	fi
@@ -479,7 +479,11 @@ install: $(CPUDIR)/$(SPECFILE) $(CPUDIR)/ipfilter
 	done
 	$(CP) $(TOP)/ipl.h $(ROOTDIR)/usr/include/netinet/ipl.h
 	-if [ -d $(IPV4DIR) ] ; then \
-		cp $(CPUDIR)/ipfilter.o $(ROOTDIR)$(IPV4DIR)/ipfilter.$(MODEXT); \
+		-if [ -f $(CPUDIR)/ipfilter.$(MODEXT) ] ; then \
+			cp $(CPUDIR)/ipfilter.$(MODEXT) $(ROOTDIR)$(IPV4DIR)/ipfilter.$(MODEXT); \
+		else \
+			cp $(CPUDIR)/ipfilter.o $(ROOTDIR)$(IPV4DIR)/ipfilter.$(MODEXT); \
+		fi \
 	fi
 	(for i in ipfstat ipf ipnat ippool ipfs; do \
 		(cd $(CPUDIR); ../$(INSTALL) -c -s -g wheel -m 755 -o root $$i $(ROOTDIR)$(SBINDEST)); \

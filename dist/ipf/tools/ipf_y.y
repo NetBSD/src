@@ -1,4 +1,4 @@
-/*	$NetBSD: ipf_y.y,v 1.1.1.3 2005/02/08 06:53:23 martti Exp $	*/
+/*	$NetBSD: ipf_y.y,v 1.1.1.4 2005/02/19 21:27:01 martti Exp $	*/
 
 %{
 #include "ipf.h"
@@ -1092,7 +1092,10 @@ portnum:
 					  $$ = ntohs($$);
 					  free($1);
 					}
-	| YY_NUMBER			{ $$ = $1; }
+	| YY_NUMBER			{ $$ = $1;
+					  if ($$ < 0 || $$ > 65535)
+						yyerror("invalid port number");
+					}
 	;
 
 withlist:

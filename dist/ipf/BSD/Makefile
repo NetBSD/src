@@ -60,7 +60,7 @@ IPPOOL=ippool_y.o ippool_l.o kmem.o ippool.o
 IPTRAFCON=iptrafcon.o
 PROXYLIST=$(TOP)/ip_ftp_pxy.c $(TOP)/ip_ipsec_pxy.c $(TOP)/ip_irc_pxy.c \
 	  $(TOP)/ip_netbios_pxy.c $(TOP)/ip_raudio_pxy.c $(TOP)/ip_rcmd_pxy.c \
-	  $(TOP)/ip_rpcb_pxy.c
+	  $(TOP)/ip_rpcb_pxy.c $(TOP)/ip_pptp_pxy.c
 FILS=ipfstat.o
 LIBSRC=$(TOP)/lib
 RANLIB=ranlib

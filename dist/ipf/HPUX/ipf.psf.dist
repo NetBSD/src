@@ -4,9 +4,9 @@
 #
 # Copyright:	Copyright (c) 2000 Darren Reed
 #
-# Description:	PSF for IP FIlter 4.1.5
+# Description:	PSF for IP FIlter 4.1.6
 #
-# Id: ipf.psf.dist,v 1.1.2.6 2005/01/08 17:27:12 darrenr Exp
+# Id: ipf.psf.dist,v 1.1.2.7 2005/02/19 01:33:25 darrenr Exp
 
 
 # The vendor definition here applies to all subsequently defined products.
@@ -24,9 +24,9 @@ end
 # Bundle definition(s):
 bundle
 	tag		IPF
-	title		IP Filter 4.1.5
+	title		IP Filter 4.1.6
 	description	Firewall/NAT
-	revision	A.04.01.05
+	revision	A.04.01.06
 	architecture	HP-UX_HPREV_32/64
 	machine_type	9000/[678]??:*
 	os_name		HP-UX
@@ -37,16 +37,16 @@ bundle
 	is_reference	false
 	vendor_tag	IPFilter
 	hp_srdo		swtype=O;user=B;bundle_type=O
-	contents	IPF-RUN,r=A.04.01.05,a=HP-UX_HPREV_32/64,v=IPFilter
+	contents	IPF-RUN,r=A.04.01.06,a=HP-UX_HPREV_32/64,v=IPFilter
 end # bundle IPF
 
 # Product definition(s):
 product
 	tag		IPF-RUN
-	title		IP Filter 4.1.5
+	title		IP Filter 4.1.6
 	description	Firewall/NAT
 	copyright	< ../../SunOS5/copyright
-	revision	A.04.01.05
+	revision	A.04.01.06
 	architecture	HP-UX_HPREV_32/64
 	machine_type	9000/[678]??:*
 	os_name		HP-UX
@@ -68,9 +68,9 @@ product
     # InternetSrvcs.IPF-ALL
     fileset
 	tag		IPF-ALL
-	title		IP Filter 4.1.5 : IPF-ALL
+	title		IP Filter 4.1.6 : IPF-ALL
 	description	< ../IPF-ALL/description
-	revision	A.04.01.05
+	revision	A.04.01.06
 	architecture	HP-UX_HPREV_32/64
 	machine_type	9000/[678]??:*
 	os_name		HP-UX

@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.1.1.16 2005/02/08 06:52:56 martti Exp $	*/
+/*	$NetBSD: fil.c,v 1.1.1.17 2005/02/19 21:25:51 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -134,7 +134,7 @@ struct file;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.46 2005/01/09 01:20:03 darrenr Exp";
+static const char rcsid[] = "@(#)Id: fil.c,v 2.243.2.50 2005/02/17 05:32:24 darrenr Exp";
 #endif
 
 #ifndef	_KERNEL
@@ -1074,9 +1074,15 @@ fr_info_t *fin;
 
 	fi = &fin->fin_fi;
 	fi->fi_flx |= FI_TCPUDP;
-	udp = fin->fin_dp;
+
+	if (frpr_pullup(fin, sizeof(*udp)) == -1) {
+		fi->fi_flx |= FI_SHORT;
+		return;
+	}
 
 	if (!fin->fin_off && (fin->fin_dlen > 3)) {
+		udp = fin->fin_dp;
+
 		fin->fin_sport = ntohs(udp->uh_sport);
 		fin->fin_dport = ntohs(udp->uh_dport);
 	}
@@ -2412,12 +2418,6 @@ filtered:
 #endif
 	m = fin->fin_m;
 
-	if (FR_ISPASS(pass)) {
-		ATOMIC_INCL(frstats[out].fr_pass);
-	} else if (FR_ISBLOCK(pass)) {
-		ATOMIC_INCL(frstats[out].fr_block);
-	}
-
 	if (fr != NULL) {
 		frdest_t *fdp;
 
@@ -2449,21 +2449,23 @@ filtered:
 	 */
 	RWLOCK_EXIT(&ipf_mutex);
 
+finished:
 	if (!FR_ISPASS(pass)) {
+		ATOMIC_INCL(frstats[out].fr_block);
 		if (*mp != NULL) {
 			FREE_MB_T(*mp);
 			m = *mp = NULL;
 		}
-	}
+	} else {
+		ATOMIC_INCL(frstats[out].fr_pass);
 #if defined(_KERNEL) && defined(__sgi)
-	else {
 		if ((fin->fin_hbuf != NULL) &&
 		    (mtod(fin->fin_m, struct ip *) != fin->fin_ip)) {
 			COPYBACK(m, 0, fin->fin_plen, fin->fin_hbuf);
 		}
-	}
 #endif
-finished:
+	}
+
 	RWLOCK_EXIT(&ipf_global);
 #ifdef _KERNEL
 # if OpenBSD >= 200311    
@@ -2887,7 +2889,7 @@ nodata:
  * SUCH DAMAGE.
  *
  *	@(#)uipc_mbuf.c	8.2 (Berkeley) 1/4/94
- * Id: fil.c,v 2.243.2.46 2005/01/09 01:20:03 darrenr Exp
+ * Id: fil.c,v 2.243.2.50 2005/02/17 05:32:24 darrenr Exp
  */
 /*
  * Copy data from an mbuf chain starting "off" bytes from the beginning,
@@ -4661,6 +4663,8 @@ ipftqent_t *tqe;
 	ipftq_t *ifq;
 
 	ifq = tqe->tqe_ifq;
+	if (ifq == NULL)
+		return;
 	tqe->tqe_die = fr_ticks + ifq->ifq_ttl;
 
 	if (tqe->tqe_next == NULL)		/* at the end already ? */
@@ -5515,6 +5519,8 @@ ipftuneable_t ipf_tuneables[] = {
 			sizeof(nat_logging),		0 },
 	{ { &fr_defnatage },	"fr_defnatage",		1,	0x7fffffff,
 			sizeof(fr_defnatage),		IPFT_WRDISABLED },
+	{ { &fr_defnatipage },	"fr_defnatipage",	1,	0x7fffffff,
+			sizeof(fr_defnatipage),		IPFT_WRDISABLED },
 	{ { &fr_defnaticmpage }, "fr_defnaticmpage",	1,	0x7fffffff,
 			sizeof(fr_defnaticmpage),	IPFT_WRDISABLED },
 	/* frag */
@@ -5906,11 +5912,11 @@ void fr_deinitialise()
 {
 	fr_fragunload();
 	fr_authunload();
+	fr_natunload();
 	fr_stateunload();
 #ifdef IPFILTER_SCAN
 	fr_scanunload();
 #endif
-	fr_natunload();
 	appr_unload();
 
 #ifdef IPFILTER_COMPILED

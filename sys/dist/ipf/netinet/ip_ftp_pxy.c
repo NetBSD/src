@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.1.1.2 2005/02/08 06:53:27 martti Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.1.1.3 2005/02/19 21:27:14 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2003 by Darren Reed
@@ -8,7 +8,7 @@
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ftp_pxy.c,v 2.88.2.9 2005/01/08 17:24:13 darrenr Exp
+ * Id: ip_ftp_pxy.c,v 2.88.2.10 2005/02/04 10:22:54 darrenr Exp
  */
 
 #define	IPF_FTP_PROXY
@@ -322,6 +322,8 @@ int dlen;
 	 * mapping.
 	 */
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
+	fi.fin_state = NULL;
+	fi.fin_nat = NULL;
 	fi.fin_flx |= FI_IGNORE;
 	fi.fin_data[0] = sp;
 	fi.fin_data[1] = fin->fin_data[1] - 1;
@@ -373,6 +375,8 @@ int dlen;
 				ip->ip_dst = nat->nat_inip;
 			}
 			(void) fr_addstate(&fi, &nat2->nat_state, SI_W_DPORT);
+			if (fi.fin_state != NULL)
+				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_len = slen;
 		ip->ip_src = swip;
@@ -667,6 +671,8 @@ u_int data_ip;
 	 * other way.
 	 */
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
+	fi.fin_state = NULL;
+	fi.fin_nat = NULL;
 	fi.fin_flx |= FI_IGNORE;
 	fi.fin_data[0] = 0;
 	fi.fin_data[1] = port;
@@ -726,6 +732,8 @@ u_int data_ip;
 				ip->ip_dst = nat->nat_inip;
 			}
 			(void) fr_addstate(&fi, &nat2->nat_state, sflags);
+			if (fi.fin_state != NULL)
+				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
 		}
 
 		ip->ip_len = slen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.1.1.2 2005/02/08 06:53:28 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.1.1.3 2005/02/19 21:27:18 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -107,7 +107,7 @@ extern struct ifnet vpnif;
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.27 2005/01/02 13:20:31 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.195.2.30 2005/02/04 09:44:37 darrenr Exp";
 #endif
 
 
@@ -160,6 +160,7 @@ int	nat_logging = 0;
 #endif
 
 u_long	fr_defnatage = DEF_NAT_AGE,
+	fr_defnatipage = 120,		/* 60 seconds */
 	fr_defnaticmpage = 6;		/* 3 seconds */
 natstat_t nat_stats;
 int	fr_nat_lock = 0;
@@ -275,7 +276,7 @@ int fr_natinit()
 	nat_icmptq.ifq_tail = &nat_icmptq.ifq_head;
 	MUTEX_INIT(&nat_icmptq.ifq_lock, "nat icmp ipftq tab");
 	nat_icmptq.ifq_next = &nat_iptq;
-	nat_iptq.ifq_ttl = fr_defnaticmpage;
+	nat_iptq.ifq_ttl = fr_defnatipage;
 	nat_iptq.ifq_head = NULL;
 	nat_iptq.ifq_tail = &nat_iptq.ifq_head;
 	MUTEX_INIT(&nat_iptq.ifq_lock, "nat ip ipftq tab");
@@ -3572,6 +3573,8 @@ maskloop:
 				continue;
 			if (np->in_v != fin->fin_v)
 				continue;
+			if (np->in_p && (np->in_p != fin->fin_p))
+				continue;
 			if ((np->in_flags & IPN_RF) && !(np->in_flags & nflags))
 				continue;
 			if (np->in_flags & IPN_FILTER) {
@@ -3688,7 +3691,7 @@ u_32_t nflags;
 			CALC_SUMD(s1, s2, sumd);
 			fix_outcksum(fin, &fin->fin_ip->ip_sum, sumd);
 		}
-#if !defined(_KERNEL) || defined(MENTAT) || defined(__sgi)
+#if !defined(_KERNEL) || defined(MENTAT) || defined(__sgi) || defined(linux)
 		else {
 			if (nat->nat_dir == NAT_OUTBOUND)
 				fix_outcksum(fin, &fin->fin_ip->ip_sum,

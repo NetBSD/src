@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.5,v 1.1.1.7 2004/07/23 05:34:39 martti Exp $
+.\"	$NetBSD: ipnat.5,v 1.1.1.8 2005/02/19 21:26:51 martti Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -264,7 +264,13 @@ map ppp0 172.192.0.0/16 -> 209.1.2.0/24 portmap tcp/udp auto
 .fi
 .PP
 which would result in each IP address being given a small range of ports to
-use (252).  The problem here is that the \fBmap\fP directive tells the NAT
+use (252).  In all cases, the new port number that is used is deterministic.
+That is, port X will always map to port Y.
+WARNING: It is not advisable to use the \fBauto\fP feature if you are map'ing
+to a /32 (i.e. 0/32) because the NAT code will try to map multiple hosts to
+the same port number, outgoing and ultimately this will only succeed for one
+of them.
+The problem here is that the \fBmap\fP directive tells the NAT
 code to use the next address/port pair available for an outgoing connection,
 resulting in no easily discernible relation between external addresses/ports
 and internal ones.  This is overcome by using \fBmap-block\fP as follows:

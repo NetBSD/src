@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_freebsd.c,v 1.1.1.3 2005/02/08 06:52:57 martti Exp $	*/
+/*	$NetBSD: ip_fil_freebsd.c,v 1.1.1.4 2005/02/19 21:25:55 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_freebsd.c,v 2.53.2.24 2005/01/08 16:55:51 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_freebsd.c,v 2.53.2.25 2005/02/01 03:15:56 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -731,7 +731,11 @@ int ioflag;
 #else
 int iplwrite(dev, uio)
 #endif
+#if defined(_KERNEL) && (__FreeBSD_version >= 502116)
+struct cdev *dev;
+#else
 dev_t dev;
+#endif
 register struct uio *uio;
 {
 

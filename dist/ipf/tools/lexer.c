@@ -1,4 +1,4 @@
-/*	$NetBSD: lexer.c,v 1.1.1.3 2005/02/08 06:53:24 martti Exp $	*/
+/*	$NetBSD: lexer.c,v 1.1.1.4 2005/02/19 21:27:06 martti Exp $	*/
 
 /*
  * Copyright (C) 2003 by Darren Reed.
@@ -63,6 +63,8 @@ static int yygetc()
 
 	if (yypos < yylast) {
 		c = yytext[yypos++];
+		if (c == '\n')
+			yylineNum++;
 		return c;
 	}
 
@@ -74,9 +76,9 @@ static int yygetc()
 		yypos++;
 	} else {
 		c = fgetc(yyin);
-		if (c == '\n')
-			yylineNum++;
 	}
+	if (c == '\n')
+		yylineNum++;
 	yytext[yypos++] = c;
 	yylast = yypos;
 	yytext[yypos] = '\0';
@@ -88,6 +90,8 @@ static int yygetc()
 static void yyunputc(c)
 int c;
 {
+	if (c == '\n')
+		yylineNum--;
 	yytext[--yypos] = c;
 }
 
@@ -202,6 +206,9 @@ nextchar:
 
 	if (lnext == 1) {
 		lnext = 0;
+		if ((isbuilding == 0) && !ISALNUM(c)) {
+			return c;
+		}
 		goto nextchar;
 	}
 
@@ -214,7 +221,7 @@ nextchar:
 		}
 		yyswallow('\n');
 		rval = YY_COMMENT;
-		goto done;
+		goto nextchar;
 
 	case '$' :
 		if (isbuilding == 1) {
@@ -280,6 +287,13 @@ nextchar:
 		break;
 
 	case EOF :
+		yylineNum = 1;
+		yypos = 0;
+		yylast = -1;
+		yyexpectaddr = 0;
+		yybreakondot = 0;
+		yyvarnext = 0;
+		yytokentype = 0;
 		return 0;
 	}
 
@@ -477,7 +491,8 @@ done:
 	yytokentype = rval;
 
 	if (yydebug)
-		printf("lexed(%s) => %d\n", yystr, rval);
+		printf("lexed(%s) [%d,%d,%d] => %d\n", yystr, string_start,
+			string_end, pos, rval);
 
 	switch (rval)
 	{

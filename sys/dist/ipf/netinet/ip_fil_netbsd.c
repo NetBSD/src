@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.2 2005/02/08 06:53:26 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.1.1.3 2005/02/19 21:27:10 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.24 2005/01/08 16:55:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:14:31 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -1207,7 +1207,7 @@ frdest_t *fdp;
 		ip->ip_off = htons(ip->ip_off);
 #if defined(M_CSUM_IPv4)
 # if (__NetBSD_Version__ >= 105009999)
-		#if (ifp->if_csum_flags_tx & M_CSUM_IPv4)
+		if (ifp->if_csum_flags_tx & M_CSUM_IPv4)
 			m->m_pkthdr.csuminfo |= M_CSUM_IPv4;
 # else
 		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
