@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.17 1998/07/07 17:51:55 mark Exp $	*/
+/*	$NetBSD: syscall.c,v 1.18 1998/08/16 02:01:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -126,6 +126,14 @@ syscall(frame, code)
 	u_quad_t sticks;
 	int regparams;
 
+	/*
+	 * Enable interrupts if they were enabled before the exception.
+	 * Since all syscalls *should* come from user mode it will always
+	 * be safe to enable them, but check anyway. 
+	 */
+	if (!(frame->tf_spsr & I32_bit))
+		enable_interrupts(I32_bit);
+
 #if defined(UVM)
 	uvmexp.syscalls++;
 #else
@@ -143,15 +151,11 @@ syscall(frame, code)
 
 #ifdef DIAGNOSTIC
 	if ((frame->tf_spsr & PSR_MODE) != PSR_USR32_MODE) {
-		u_int s;
-		
-		s = splhigh();
 		printf("syscall: swi 0x%x from non USR32 mode\n", code);
-		printf("syscall: trapframe=0x%08x\n", (u_int)frame);
+		printf("syscall: trapframe=%p\n", frame);
 
 #ifdef CONTINUE_AFTER_NONUSR_SYSCALL
 		printf("syscall: The system should now be considered very unstable :-(\n");
-		(void)splx(s);
 		sigexit(curproc, SIGILL);
 
 		/* Not reached */
@@ -213,14 +217,6 @@ syscall(frame, code)
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
 		panic("syscall: Not in SVC32 mode\n");
 #endif	/* DIAGNOSTIC */
-
-	/*
-	 * Enable interrupts if they were enabled before the exception.
-	 * Since all syscalls *should* come from user mode it will always
-	 * be safe to enable them, but check anyway. 
-	 */
-	if (!(frame->tf_spsr & I32_bit))
-		enable_interrupts(I32_bit);
 
 	p = curproc;
 	sticks = p->p_sticks;
