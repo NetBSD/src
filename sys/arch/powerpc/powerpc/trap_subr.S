@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.53 2003/11/30 07:41:54 simonb Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.54 2003/12/09 09:49:01 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -321,7 +321,7 @@ _C_LABEL(extint):
 	ldint	%r31,CI_INTRDEPTH(%r1)	/* were we already running on intstk? */
 	addic.	%r31,%r31,1
 	stint	%r31,CI_INTRDEPTH(%r1)
-	ldptr	%r1,CI_INTSTK(%r1)		/* get interrupt stack */
+	ldptr	%r1,CI_INTSTK(%r1)	/* get interrupt stack */
 	beq	1f
 	mfsprg1	%r1			/* yes, get old SP */
 1:
@@ -346,7 +346,7 @@ _C_LABEL(decrint):
 	ldint	%r31,CI_INTRDEPTH(%r1)	/* were we already running on intstk? */
 	addic.	%r31,%r31,1
 	stint	%r31,CI_INTRDEPTH(%r1)
-	ldptr	%r1,CI_INTSTK(%r1)		/* get interrupt stack */
+	ldptr	%r1,CI_INTSTK(%r1)	/* get interrupt stack */
 	beq	1f
 	mfsprg1	%r1			/* yes, get old SP */
 1:
