@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.240.2.5 2000/07/23 05:21:40 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240.2.6 2000/08/22 02:12:47 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.236.2.5 2000/07/23 05:19:19 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.236.2.6 2000/08/22 02:08:40 enami Exp 
  */
 
 /*
@@ -3083,6 +3083,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100,
+	    0,
+	    "Promise Technology",
+	    "Ultra100/ATA Bus Master IDE Accelerator",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_ULTRA100X,
 	    0,
 	    "Promise Technology",
 	    "Ultra100/ATA Bus Master IDE Accelerator",
