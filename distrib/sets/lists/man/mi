@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.336 2001/04/06 14:15:44 wiz Exp $
+# $NetBSD: mi,v 1.337 2001/04/09 19:17:49 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -614,7 +614,7 @@
 ./usr/share/man/cat4/i4b.0			man-sys-catman
 ./usr/share/man/cat4/i4bctl.0			man-sys-catman
 ./usr/share/man/cat4/i4bipr.0			man-sys-catman
-./usr/share/man/cat4/i4bisp.0			man-sys-catman
+./usr/share/man/cat4/i4bisppp.0			man-sys-catman
 ./usr/share/man/cat4/i4brbch.0			man-sys-catman
 ./usr/share/man/cat4/i4btel.0			man-sys-catman
 ./usr/share/man/cat4/i4btrc.0			man-sys-catman
@@ -2105,7 +2105,7 @@
 ./usr/share/man/man4/i4b.4			man-sys-man
 ./usr/share/man/man4/i4bctl.4			man-sys-man
 ./usr/share/man/man4/i4bipr.4			man-sys-man
-./usr/share/man/man4/i4bisp.4			man-sys-man
+./usr/share/man/man4/i4bisppp.4			man-sys-man
 ./usr/share/man/man4/i4brbch.4			man-sys-man
 ./usr/share/man/man4/i4btel.4			man-sys-man
 ./usr/share/man/man4/i4btrc.4			man-sys-man
