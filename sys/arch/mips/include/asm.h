@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.32 2002/05/13 06:11:52 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.33 2002/06/05 06:02:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,8 +113,7 @@
 	alias = sym
 
 /*
- * WARN_REFERENCES: create a warning if the specified symbol is referenced
- * (ELF only, and thus, no leading underscores).
+ * WARN_REFERENCES: create a warning if the specified symbol is referenced.
  */
 #ifdef __STDC__
 #define	WARN_REFERENCES(_sym,_msg)				\
