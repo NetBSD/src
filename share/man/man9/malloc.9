@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.21 2001/12/05 12:44:25 ad Exp $
+.\"	$NetBSD: malloc.9,v 1.22 2002/01/07 01:00:31 deberg Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -379,6 +379,30 @@ Pipe structures.
 AGP memory.
 .It Dv M_PROP
 Kernel properties structures.
+.It Dv M_NEWDIRBLK
+Unclaimed new directory block (softdeps).
+.It Dv M_SMBIOD
+SMB network id daemon.
+.It Dv M_SMBCONN
+SMB connection id.
+.It Dv M_SMBRQ
+SMB request.
+.It Dv M_SMBDATA
+Miscellaneous SMB data.
+.It Dv M_SMBSTR
+SMB string data.
+.It Dv M_SMBTEMP
+Temporary SMB data.
+.It Dv M_ICONV
+ICONV data.
+.It Dv M_SMBNODE
+SMBFS node.
+.It Dv M_SMBNODENAME
+SMBFS node name.
+.It Dv M_SMBFSDATA
+SMBFS data.
+.It Dv M_SMBFSHASH
+SMBFS hash table.
 .El
 .Pp
 Statistics based on the
