@@ -1,4 +1,4 @@
-/*	$KAME: gssapi.h,v 1.1 2000/12/12 16:59:35 thorpej Exp $	*/
+/*	$KAME: gssapi.h,v 1.4 2001/01/29 23:18:52 thorpej Exp $	*/
 
 /*
  * Copyright 2000 Wasabi Systems, Inc.
@@ -63,17 +63,17 @@ struct gssapi_ph1_state {
 #define GSSFLAG_ID_RCVD		0x0001
 };
 
-extern gss_cred_id_t gss_racoon_cred;
+#define	gssapi_get_state(ph)						\
+	((struct gssapi_ph1_state *)((ph)->gssapi_state))
 
-#define gssapi_get_state(ph) ((struct gssapi_ph1_state *)((ph)->gssapi_state))
-#define gssapi_more_tokens(ph) \
-  ((gssapi_get_state(ph)->gss_status & GSS_S_CONTINUE_NEEDED) != 0)
+#define	gssapi_set_state(ph, st)					\
+	(ph)->gssapi_state = (st)
 
-void gssapi_error __P((OM_uint32, const char *, const char *, ...));
+#define	gssapi_more_tokens(ph)						\
+	((gssapi_get_state(ph)->gss_status & GSS_S_CONTINUE_NEEDED) != 0)
+
 int gssapi_get_itoken __P((struct ph1handle *, int *));
 int gssapi_get_rtoken __P((struct ph1handle *, int *));
-int gssapi_vm2gssbuf __P((vchar_t *, gss_buffer_t *));
-int gssapi_gss2vmbuf __P((gss_buffer_t, vchar_t **));
 int gssapi_save_received_token __P((struct ph1handle *, vchar_t *));
 int gssapi_get_token_to_send __P((struct ph1handle *, vchar_t **));
 int gssapi_get_itokens __P((struct ph1handle *, vchar_t **));
