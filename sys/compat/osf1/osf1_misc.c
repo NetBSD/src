@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.33 1999/04/29 02:08:58 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.34 1999/04/29 17:18:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -1428,6 +1428,31 @@ osf1_sys_settimeofday(p, v, retval)
 		error = sys_settimeofday(p, &a, retval);
 
 	return (error);
+}
+
+int
+osf1_sys_set_program_attributes(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_set_program_attributes_args *uap = v;
+	segsz_t tsize, dsize;
+
+	tsize = btoc(SCARG(uap, tsize));
+	dsize = btoc(SCARG(uap, dsize));
+
+	if (dsize > p->p_rlimit[RLIMIT_DATA].rlim_cur)
+		return (ENOMEM);
+	if (tsize > MAXTSIZ)
+		return (ENOMEM);
+
+	p->p_vmspace->vm_taddr = SCARG(uap, taddr);
+	p->p_vmspace->vm_tsize = tsize;
+	p->p_vmspace->vm_daddr = SCARG(uap, daddr);
+	p->p_vmspace->vm_dsize = dsize;
+
+	return (0);
 }
 
 const struct emul_flags_xtab osf1_access_flags_xtab[] = {
