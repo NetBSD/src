@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.9 2002/09/23 05:51:23 simonb Exp $	*/
+/*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.9 2002/09/23 05:51:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,7 +588,7 @@ umct_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct umct_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;
-	u_char mstatus, lstatus;
+	u_char mstatus;
 
 	if (sc->sc_dying)
 		return;
@@ -608,7 +608,6 @@ umct_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 
 	sc->sc_lsr = sc->sc_msr = 0;
 	mstatus = buf[0];
-	lstatus = buf[1];
 	if (ISSET(mstatus, MSR_DSR))
 		sc->sc_msr |= UMSR_DSR;
 	if (ISSET(mstatus, MSR_DCD))
