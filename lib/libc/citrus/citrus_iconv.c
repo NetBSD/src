@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.c,v 1.2 2003/07/01 09:42:15 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv.c,v 1.3 2003/07/10 09:08:57 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iconv.c,v 1.2 2003/07/01 09:42:15 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iconv.c,v 1.3 2003/07/10 09:08:57 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -306,6 +306,7 @@ release_shared(struct _citrus_iconv_shared * __restrict ci)
 			ci = TAILQ_FIRST(&shared_unused);
 			_DIAGASSERT(ci != NULL);
 			TAILQ_REMOVE(&shared_unused, ci, ci_tailq_entry);
+			_CITRUS_HASH_REMOVE(ci, ci_hash_entry);
 			shared_num_unused--;
 			close_shared(ci);
 		}
