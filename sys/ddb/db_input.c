@@ -1,4 +1,4 @@
-/*	$NetBSD: db_input.c,v 1.8 1997/11/16 22:24:47 christos Exp $	*/
+/*	$NetBSD: db_input.c,v 1.9 1997/11/16 23:51:23 lukem Exp $	*/
 
 /* 
  * Mach Operating System
@@ -41,9 +41,9 @@
 
 #include <dev/cons.h>
 
-#ifndef DB_HISTORY_SIZE
-#define DB_HISTORY_SIZE 0
-#endif /* DB_HISTORY_SIZE */
+#ifndef DDB_HISTORY_SIZE
+#define DDB_HISTORY_SIZE 0
+#endif /* DDB_HISTORY_SIZE */
 
 /*
  * Character input and editing.
@@ -58,9 +58,9 @@ char *	db_lbuf_start;	/* start of input line buffer */
 char *	db_lbuf_end;	/* end of input line buffer */
 char *	db_lc;		/* current character */
 char *	db_le;		/* one past last character */
-#if DB_HISTORY_SIZE != 0
-char    db_history[DB_HISTORY_SIZE];	/* start of history buffer */
-int     db_history_size = DB_HISTORY_SIZE;/* size of history buffer */
+#if DDB_HISTORY_SIZE != 0
+char    db_history[DDB_HISTORY_SIZE];	/* start of history buffer */
+int     db_history_size = DDB_HISTORY_SIZE;/* size of history buffer */
 char *  db_history_curr = db_history;	/* start of current line */
 char *  db_history_last = db_history;	/* start of last line */
 char *  db_history_prev = (char *) 0;	/* start of previous line */
@@ -125,7 +125,7 @@ db_delete_line()
 	db_le = db_lc = db_lbuf_start;
 }
 
-#if DB_HISTORY_SIZE != 0
+#if DDB_HISTORY_SIZE != 0
 #define INC_DB_CURR() \
     do { \
 	     db_history_curr++; \
@@ -208,7 +208,7 @@ db_inputchar(c)
 		    cnputc(db_lc[-1]);
 		}
 		break;
-#if DB_HISTORY_SIZE != 0
+#if DDB_HISTORY_SIZE != 0
 	    case CTRL('p'):
 	        DEC_DB_CURR();
 	        while (db_history_curr != db_history_last) {
@@ -268,7 +268,7 @@ db_inputchar(c)
 		break;
 	    case '\n':
 	    case '\r':
-#if DB_HISTORY_SIZE != 0
+#if DDB_HISTORY_SIZE != 0
 		/* Check if it same than previous line */
 		if (db_history_curr == db_history_prev) {
 			register char *pp, *pc;
