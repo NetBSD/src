@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd.c,v 1.5 1998/10/14 00:58:47 wsanchez Exp $	*/
+/*	$NetBSD: lcmd.c,v 1.6 2002/06/14 01:06:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lcmd.c,v 1.5 1998/10/14 00:58:47 wsanchez Exp $");
+__RCSID("$NetBSD: lcmd.c,v 1.6 2002/06/14 01:06:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,8 +101,7 @@ struct lcmd_tab lcmd_tab[] = {
 };
 
 struct lcmd_tab *
-lcmd_lookup(name)
-	char *name;
+lcmd_lookup(char *name)
 {
 	struct lcmd_tab *p;
 
@@ -113,8 +112,7 @@ lcmd_lookup(name)
 }
 
 int
-dosource(filename)
-	char *filename;
+dosource(char *filename)
 {
 	if (cx_beginfile(filename) < 0)
 		return -1;
@@ -125,10 +123,7 @@ dosource(filename)
 }
 
 int
-dolongcmd(buffer, arg, narg)
-	char *buffer;
-	struct value *arg;
-	int narg;
+dolongcmd(char *buffer, struct value *arg, int narg)
 {
 	if (cx_beginbuf(buffer, arg, narg) < 0)
 		return -1;

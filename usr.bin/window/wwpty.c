@@ -1,4 +1,4 @@
-/*	$NetBSD: wwpty.c,v 1.6 2002/05/30 03:22:58 simonb Exp $	*/
+/*	$NetBSD: wwpty.c,v 1.7 2002/06/14 01:07:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwpty.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwpty.c,v 1.6 2002/05/30 03:22:58 simonb Exp $");
+__RCSID("$NetBSD: wwpty.c,v 1.7 2002/06/14 01:07:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: wwpty.c,v 1.6 2002/05/30 03:22:58 simonb Exp $");
 #include "ww.h"
 
 int
-wwgetpty(w)
-	struct ww *w;
+wwgetpty(struct ww *w)
 {
 	int on = 1;
 	int result, tty;

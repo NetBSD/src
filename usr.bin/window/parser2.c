@@ -1,4 +1,4 @@
-/*	$NetBSD: parser2.c,v 1.6 1998/10/14 00:58:48 wsanchez Exp $	*/
+/*	$NetBSD: parser2.c,v 1.7 2002/06/14 01:06:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parser2.c,v 1.6 1998/10/14 00:58:48 wsanchez Exp $");
+__RCSID("$NetBSD: parser2.c,v 1.7 2002/06/14 01:06:53 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,10 +59,7 @@ __RCSID("$NetBSD: parser2.c,v 1.6 1998/10/14 00:58:48 wsanchez Exp $");
  * want to parse the arguments anyway.  flag == 0 in this case.
  */
 int
-p_function(name, v, flag)
-	char *name;
-	struct value *v;
-	int flag;
+p_function(char *name, struct value *v, int flag)
 {
 	struct value t;
 	struct lcmd_tab *c = 0;
@@ -222,10 +219,7 @@ abort:
 }
 
 int
-p_assign(name, v, flag)
-	char *name;
-	struct value *v;
-	char flag;
+p_assign(char *name, struct value *v, int flag)
 {
 	(void) s_gettok();
 

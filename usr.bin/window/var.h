@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.5 1998/10/14 00:58:49 wsanchez Exp $	*/
+/*	$NetBSD: var.h,v 1.6 2002/06/14 01:06:56 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -49,13 +49,13 @@ struct var {
 	struct value r_val;
 };
 
-struct var     **var_lookup1 __P((struct var **, char *));
-struct var	*var_set1 __P((struct var **, char *, struct value *));
-struct var	*var_setnum1 __P((struct var **, char *, int));
-struct var	*var_setstr1 __P((struct var **, char *, char *));
-int		 var_unset1 __P((struct var **, char *));
-int		 var_walk1 __P((struct var *, int (*func)(void *, struct var *),
-				void *));
+struct var     **var_lookup1(struct var **, char *);
+struct var	*var_set1(struct var **, char *, struct value *);
+struct var	*var_setnum1(struct var **, char *, int);
+struct var	*var_setstr1(struct var **, char *, char *);
+int		 var_unset1(struct var **, char *);
+int		 var_walk1(struct var *, int (*func)(void *, struct var *),
+			   void *);
 
 #define var_set(n, v)		var_set1(&var_head, n, v)
 #define var_setstr(n, s)	var_setstr1(&var_head, n, s)

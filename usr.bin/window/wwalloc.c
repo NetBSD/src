@@ -1,4 +1,4 @@
-/*	$NetBSD: wwalloc.c,v 1.4 1997/11/21 08:36:57 lukem Exp $	*/
+/*	$NetBSD: wwalloc.c,v 1.5 2002/06/14 01:06:57 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwalloc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwalloc.c,v 1.4 1997/11/21 08:36:57 lukem Exp $");
+__RCSID("$NetBSD: wwalloc.c,v 1.5 2002/06/14 01:06:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,8 +49,7 @@ __RCSID("$NetBSD: wwalloc.c,v 1.4 1997/11/21 08:36:57 lukem Exp $");
 #include "ww.h"
 
 char **
-wwalloc(row, col, nrow, ncol, size)
-	int row, col, nrow, ncol, size;
+wwalloc(int row, int col, int nrow, int ncol, int size)
 {
 	char *p, **pp;
 	int i;
@@ -74,9 +73,7 @@ wwalloc(row, col, nrow, ncol, size)
 }
 
 void
-wwfree(p, row)
-	char **p;
-	int row;
+wwfree(char **p, int row)
 {
 	free((char *)(p + row));
 }

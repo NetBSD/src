@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd6.c,v 1.5 1998/10/14 00:58:46 wsanchez Exp $	*/
+/*	$NetBSD: cmd6.c,v 1.6 2002/06/14 01:06:52 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd6.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd6.c,v 1.5 1998/10/14 00:58:46 wsanchez Exp $");
+__RCSID("$NetBSD: cmd6.c,v 1.6 2002/06/14 01:06:52 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,10 +53,10 @@ __RCSID("$NetBSD: cmd6.c,v 1.5 1998/10/14 00:58:46 wsanchez Exp $");
  * Debugging commands.
  */
 
-void	debug_str __P((void));
+void	debug_str(void);
 
 void
-c_debug()
+c_debug(void)
 {
 	struct ww *w;
 
@@ -95,7 +95,7 @@ c_debug()
 }
 
 void
-debug_str()
+debug_str(void)
 {
 #ifdef STR_DEBUG
 	struct ww *w;

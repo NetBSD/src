@@ -1,4 +1,4 @@
-/*	$NetBSD: string.c,v 1.7 1998/10/14 00:58:48 wsanchez Exp $	*/
+/*	$NetBSD: string.c,v 1.8 2002/06/14 01:06:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)string.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: string.c,v 1.7 1998/10/14 00:58:48 wsanchez Exp $");
+__RCSID("$NetBSD: string.c,v 1.8 2002/06/14 01:06:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: string.c,v 1.7 1998/10/14 00:58:48 wsanchez Exp $");
 #undef  EXTERN
 
 char *
-str_cpy(s)
-	char *s;
+str_cpy(char *s)
 {
 	char *str;
 	char *p;
@@ -68,9 +67,7 @@ str_cpy(s)
 }
 
 char *
-str_ncpy(s, n)
-	char *s;
-	int n;
+str_ncpy(char *s, int n)
 {
 	int l = strlen(s);
 	char *str;
@@ -88,8 +85,7 @@ str_ncpy(s, n)
 }
 
 char *
-str_itoa(i)
-	int i;
+str_itoa(int i)
 {
 	char buf[30];
 
@@ -98,8 +94,7 @@ str_itoa(i)
 }
 
 char *
-str_cat(s1, s2)
-	char *s1, *s2;
+str_cat(char *s1, char *s2)
 {
 	char *str;
 	char *p, *q;
@@ -119,9 +114,7 @@ str_cat(s1, s2)
  * s can be a prefix of p with at least min characters.
  */
 int
-str_match(s, p, min)
-	char *s, *p;
-	int min;
+str_match(char *s, char *p, int min)
 {
 	for (; *s && *p && *s == *p; s++, p++, min--)
 		;
@@ -130,8 +123,7 @@ str_match(s, p, min)
 
 #ifdef STR_DEBUG
 char *
-str_alloc(l)
-	size_t l;
+str_alloc(size_t l)
 {
 	struct string *s;
 
@@ -148,8 +140,7 @@ str_alloc(l)
 }
 
 void
-str_free(str)
-	char *str;
+str_free(char *str)
 {
 	struct string *s;
 

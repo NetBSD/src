@@ -1,4 +1,4 @@
-/*	$NetBSD: ttinit.c,v 1.5 1998/10/15 01:49:04 briggs Exp $	*/
+/*	$NetBSD: ttinit.c,v 1.6 2002/06/14 01:06:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttinit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttinit.c,v 1.5 1998/10/15 01:49:04 briggs Exp $");
+__RCSID("$NetBSD: ttinit.c,v 1.6 2002/06/14 01:06:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ struct tt_tab tt_tab[] = {
 };
 
 int
-ttinit()
+ttinit(void)
 {
 	int i;
 	struct tt_tab *tp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwgets.c,v 1.7 1997/11/21 08:37:24 lukem Exp $	*/
+/*	$NetBSD: wwgets.c,v 1.8 2002/06/14 01:06:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwgets.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwgets.c,v 1.7 1997/11/21 08:37:24 lukem Exp $");
+__RCSID("$NetBSD: wwgets.c,v 1.8 2002/06/14 01:06:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,13 +49,10 @@ __RCSID("$NetBSD: wwgets.c,v 1.7 1997/11/21 08:37:24 lukem Exp $");
 #include "ww.h"
 #include "char.h"
 
-static void rub __P((int, struct ww *));
+static void rub(int, struct ww *);
 
 void
-wwgets(buf, n, w)
-	char *buf;
-	int n;
-	struct ww *w;
+wwgets(char *buf, int n, struct ww *w)
 {
 	char *p = buf;
 	int c;
@@ -109,9 +106,7 @@ wwgets(buf, n, w)
 }
 
 static void
-rub(c, w)
-	int c;
-	struct ww *w;
+rub(int c, struct ww *w)
 {
 	int i;
 

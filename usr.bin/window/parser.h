@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.5 1998/10/14 00:58:48 wsanchez Exp $	*/
+/*	$NetBSD: parser.h,v 1.6 2002/06/14 01:06:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -47,19 +47,19 @@
 #define p_clearerr()	(cx.x_erred = cx.x_synerred = 0)
 #define p_abort()	(cx.x_abort)
 
-int	p_assign __P((char *, struct value *, int));
-int	p_convstr __P((struct value *v));
-void	p_error __P((const char *msg, ...));
-int	p_expr __P((struct value *, char));
-int	p_expr0 __P((struct value *, char));
-int	p_expr1 __P((struct value *, char));
-int	p_expr11 __P((struct value *, char));
-int	p_expr12 __P((struct value *, char));
-int	p_expr2 __P((struct value *, char));
-int	p_expr3_10 __P((int, struct value *, char));
-int	p_expression __P((char));
-int	p_function __P((char *, struct value *, int));
-int	p_if __P((char));
-int	p_statement __P((char));
-void	p_statementlist __P((char));
-void	p_synerror __P((void));
+int	p_assign(char *, struct value *, int);
+int	p_convstr(struct value *v);
+void	p_error(const char *msg, ...);
+int	p_expr(struct value *, char);
+int	p_expr0(struct value *, char);
+int	p_expr1(struct value *, char);
+int	p_expr11(struct value *, char);
+int	p_expr12(struct value *, char);
+int	p_expr2(struct value *, char);
+int	p_expr3_10(int, struct value *, char);
+int	p_expression(char);
+int	p_function(char *, struct value *, int);
+int	p_if(char);
+int	p_statement(char);
+void	p_statementlist(char);
+void	p_synerror(void);

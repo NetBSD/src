@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.c,v 1.7 2000/07/03 02:51:38 matt Exp $	*/
+/*	$NetBSD: scanner.c,v 1.8 2002/06/14 01:06:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)scanner.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: scanner.c,v 1.7 2000/07/03 02:51:38 matt Exp $");
+__RCSID("$NetBSD: scanner.c,v 1.8 2002/06/14 01:06:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,12 +52,12 @@ __RCSID("$NetBSD: scanner.c,v 1.7 2000/07/03 02:51:38 matt Exp $");
 #include "context.h"
 #include "window_string.h"
 
-int	s_getc __P((void));
-int	s_gettok1 __P((void));
-int	s_ungetc __P((int));
+int	s_getc(void);
+int	s_gettok1(void);
+int	s_ungetc(int);
 
 int
-s_getc()
+s_getc(void)
 {
 	int c;
 
@@ -82,8 +82,7 @@ s_getc()
 }
 
 int
-s_ungetc(c)
-	int c;
+s_ungetc(int c)
 {
 	if (c == EOF)
 		return EOF;
@@ -102,7 +101,7 @@ s_ungetc(c)
 }
 
 int
-s_gettok()
+s_gettok(void)
 {
 	char buf[100];
 	char *p = buf;
@@ -557,7 +556,7 @@ loop:
 }
 
 int
-s_gettok1()
+s_gettok1(void)
 {
 	int c;
 	int n;

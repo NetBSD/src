@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.14 1999/05/06 07:28:51 mycroft Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.15 2002/06/14 01:06:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwinit.c,v 1.14 1999/05/06 07:28:51 mycroft Exp $");
+__RCSID("$NetBSD: wwinit.c,v 1.15 2002/06/14 01:06:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: wwinit.c,v 1.14 1999/05/06 07:28:51 mycroft Exp $");
 #include "char.h"
 
 int
-wwinit()
+wwinit(void)
 {
 	int i, j;
 	char *kp;
@@ -349,9 +349,7 @@ bad:
 }
 
 void
-wwaddcap(cap, kp)
-	char *cap;
-	char **kp;
+wwaddcap(char *cap, char **kp)
 {
 	char tbuf[512];
 	char *tp = tbuf;
@@ -372,9 +370,7 @@ wwaddcap(cap, kp)
 }
 
 void
-wwaddcap1(cap, kp)
-	char *cap;
-	char **kp;
+wwaddcap1(char *cap, char **kp)
 {
 	while ((*(*kp)++ = *cap++))
 		;
@@ -382,7 +378,7 @@ wwaddcap1(cap, kp)
 }
 
 void
-wwstart()
+wwstart(void)
 {
 	int i;
 
@@ -393,7 +389,7 @@ wwstart()
 }
 
 void
-wwstart1()
+wwstart1(void)
 {
 	int i, j;
 
@@ -413,7 +409,7 @@ wwstart1()
  * Restoring wwos has been taken care of elsewhere.
  */
 void
-wwreset()
+wwreset(void)
 {
 	int i;
 

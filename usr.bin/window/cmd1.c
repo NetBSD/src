@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.5 1997/11/21 08:35:46 lukem Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.6 2002/06/14 01:06:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: cmd1.c,v 1.5 1997/11/21 08:35:46 lukem Exp $");
+__RCSID("$NetBSD: cmd1.c,v 1.6 2002/06/14 01:06:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: cmd1.c,v 1.5 1997/11/21 08:35:46 lukem Exp $");
 #include "char.h"
 
 void
-c_window()
+c_window(void)
 {
 	int col, row, xcol, xrow;
 	int id;
@@ -118,10 +118,7 @@ c_window()
 }
 
 int
-getpos(row, col, minrow, mincol, maxrow, maxcol)
-	int *row, *col;
-	int minrow, mincol;
-	int maxrow, maxcol;
+getpos(int *row, int *col, int minrow, int mincol, int maxrow, int maxcol)
 {
 	static int scount;
 	int count;

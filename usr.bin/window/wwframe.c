@@ -1,4 +1,4 @@
-/*	$NetBSD: wwframe.c,v 1.5 1997/11/21 08:37:22 lukem Exp $	*/
+/*	$NetBSD: wwframe.c,v 1.6 2002/06/14 01:06:59 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwframe.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwframe.c,v 1.5 1997/11/21 08:37:22 lukem Exp $");
+__RCSID("$NetBSD: wwframe.c,v 1.6 2002/06/14 01:06:59 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,7 @@ __RCSID("$NetBSD: wwframe.c,v 1.5 1997/11/21 08:37:22 lukem Exp $");
 	w1->ww_fmap || w1->ww_order > (w)->ww_order)
 
 void
-wwframe(w, wframe)
-	struct ww *w;
-	struct ww *wframe;
+wwframe(struct ww *w, struct ww *wframe)
 {
 	int r, c;
 	char a1, a2, a3;
@@ -200,10 +198,7 @@ wwframe(w, wframe)
 }
 
 void
-wwframec(f, r, c, code)
-	struct ww *f;
-	int r, c;
-	char code;
+wwframec(struct ww *f, int r, int c, char code)
 {
 	char oldcode;
 	unsigned char *smap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwopen.c,v 1.9 1998/08/25 20:59:43 ross Exp $	*/
+/*	$NetBSD: wwopen.c,v 1.10 2002/06/14 01:07:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwopen.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: wwopen.c,v 1.9 1998/08/25 20:59:43 ross Exp $");
+__RCSID("$NetBSD: wwopen.c,v 1.10 2002/06/14 01:07:00 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: wwopen.c,v 1.9 1998/08/25 20:59:43 ross Exp $");
 #include "ww.h"
 
 struct ww *
-wwopen(type, oflags, nrow, ncol, row, col, nline)
-	int type, oflags, nrow, ncol, row, col, nline;
+wwopen(int type, int oflags, int nrow, int ncol, int row, int col, int nline)
 {
 	struct ww *w;
 	int i, j;

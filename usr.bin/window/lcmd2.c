@@ -1,4 +1,4 @@
-/*	$NetBSD: lcmd2.c,v 1.11 2000/10/11 19:30:04 thorpej Exp $	*/
+/*	$NetBSD: lcmd2.c,v 1.12 2002/06/14 01:06:53 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lcmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lcmd2.c,v 1.11 2000/10/11 19:30:04 thorpej Exp $");
+__RCSID("$NetBSD: lcmd2.c,v 1.12 2002/06/14 01:06:53 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,13 +55,12 @@ __RCSID("$NetBSD: lcmd2.c,v 1.11 2000/10/11 19:30:04 thorpej Exp $");
 #include "lcmd.h"
 #include "alias.h"
 
-int	printalias __P((void *, struct var *));
-int	printvar __P((void *, struct var *));
-char	*strtime __P((struct timeval *t));
+int	printalias(void *, struct var *);
+int	printvar(void *, struct var *);
+char	*strtime(struct timeval *t);
 
 void
-l_iostat(v, a)
-	struct value *v, *a;
+l_iostat(struct value *v, struct value *a)
 {
 	struct ww *w;
 
@@ -113,8 +112,7 @@ struct lcmd_arg arg_time[] = {
 };
 
 void
-l_time(v, a)
-	struct value *v, *a;
+l_time(struct value *v, struct value *a)
 {
 	struct ww *w;
 	struct rusage rusage;
@@ -155,8 +153,7 @@ l_time(v, a)
 }
 
 char *
-strtime(t)
-	struct timeval *t;
+strtime(struct timeval *t)
 {
 	char fill = 0;
 	static char buf[20];
@@ -184,8 +181,7 @@ strtime(t)
 }
 
 void
-l_list(v, a)
-	struct value *v, *a;
+l_list(struct value *v, struct value *a)
 {
 	struct ww *w, *wp;
 	int i;
@@ -217,8 +213,7 @@ l_list(v, a)
 }
 
 void
-l_variable(v, a)
-	struct value *v, *a;
+l_variable(struct value *v, struct value *a)
 {
 	struct ww *w;
 
@@ -232,9 +227,7 @@ l_variable(v, a)
 }
 
 int
-printvar(vw, r)
-	void *vw;
-	struct var *r;
+printvar(void *vw, struct var *r)
 {
 	struct ww *w = vw;
 	if (more(w, 0) == 2)
@@ -260,8 +253,7 @@ struct lcmd_arg arg_def_shell[] = {
 };
 
 void
-l_def_shell(v, a)
-	struct value *v, *a;
+l_def_shell(struct value *v, struct value *a)
 {
 	char **pp;
 	struct value *vp;
@@ -303,8 +295,7 @@ struct lcmd_arg arg_alias[] = {
 };
 
 void
-l_alias(v, a)
-	struct value *v, *a;
+l_alias(struct value *v, struct value *a)
 {
 	if (a->v_type == V_ERR) {
 		struct ww *w;
@@ -355,9 +346,7 @@ l_alias(v, a)
 }
 
 int
-printalias(vw, a)
-	void *vw;
-	struct alias *a;
+printalias(void *vw, struct var *a)
 {
 	struct ww *w = vw;
 	if (more(w, 0) == 2)
@@ -372,8 +361,7 @@ struct lcmd_arg arg_unalias[] = {
 };
 
 void
-l_unalias(v, a)
-	struct value *v, *a;
+l_unalias(struct value *v, struct value *a)
 {
 	if (a->v_type == ARG_STR)
 		v->v_num = alias_unset(a->v_str);
@@ -387,8 +375,7 @@ struct lcmd_arg arg_echo[] = {
 };
 
 void
-l_echo(v, a)
-	struct value *v, *a;
+l_echo(struct value *v, struct value *a)
 {
 	char buf[20];
 	struct ww *w;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwdump.c,v 1.6 1997/11/21 08:37:14 lukem Exp $	*/
+/*	$NetBSD: wwdump.c,v 1.7 2002/06/14 01:06:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwdump.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwdump.c,v 1.6 1997/11/21 08:37:14 lukem Exp $");
+__RCSID("$NetBSD: wwdump.c,v 1.7 2002/06/14 01:06:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,8 +53,7 @@ __RCSID("$NetBSD: wwdump.c,v 1.6 1997/11/21 08:37:14 lukem Exp $");
 static char cmap[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 void
-wwdumpwin(w)
-	struct ww *w;
+wwdumpwin(struct ww *w)
 {
 	int i, j;
 
@@ -68,8 +67,7 @@ wwdumpwin(w)
 }
 
 void
-wwdumpnvis(w)
-	struct ww *w;
+wwdumpnvis(struct ww *w)
 {
 	int i;
 	char buf[20];
@@ -84,7 +82,7 @@ wwdumpnvis(w)
 }
 
 void
-wwdumpsmap()
+wwdumpsmap(void)
 {
 	int i, j;
 
@@ -98,7 +96,7 @@ wwdumpsmap()
 }
 
 void
-wwdumpns()
+wwdumpns(void)
 {
 	int i, j;
 
@@ -113,7 +111,7 @@ wwdumpns()
 }
 
 void
-wwdumpos()
+wwdumpos(void)
 {
 	int i, j;
 

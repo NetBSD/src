@@ -1,4 +1,4 @@
-/*	$NetBSD: ttf100.c,v 1.4 1997/11/21 08:36:27 lukem Exp $	*/
+/*	$NetBSD: ttf100.c,v 1.5 2002/06/14 01:06:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ttf100.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ttf100.c,v 1.4 1997/11/21 08:36:27 lukem Exp $");
+__RCSID("$NetBSD: ttf100.c,v 1.5 2002/06/14 01:06:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ short f100_frame[16] = {
 extern struct tt_str *gen_AE, *gen_AS;
 
 int
-tt_f100()
+tt_f100(void)
 {
 	static struct tt_str ae = { "\033%", 2 };
 	static struct tt_str as = { "\033$", 2 };

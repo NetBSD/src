@@ -1,4 +1,4 @@
-/*	$NetBSD: tth29.c,v 1.4 1997/11/21 08:36:31 lukem Exp $	*/
+/*	$NetBSD: tth29.c,v 1.5 2002/06/14 01:06:55 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tth29.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tth29.c,v 1.4 1997/11/21 08:36:31 lukem Exp $");
+__RCSID("$NetBSD: tth29.c,v 1.5 2002/06/14 01:06:55 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,11 +65,10 @@ kC|h29|heath-29|z29|zenith-29:\
  *
  */
 
-void	h29_setmodes __P((int));
+void	h29_setmodes(int);
 
 void
-h29_setmodes(new)
-	int new;
+h29_setmodes(int new)
 {
 	int modes = '0';
 
@@ -95,7 +94,7 @@ h29_setmodes(new)
 }
 
 int
-tt_h29()
+tt_h29(void)
 {
 	if (tt_h19() < 0)
 		return -1;

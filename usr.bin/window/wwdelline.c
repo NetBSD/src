@@ -1,4 +1,4 @@
-/*	$NetBSD: wwdelline.c,v 1.4 1997/11/21 08:37:13 lukem Exp $	*/
+/*	$NetBSD: wwdelline.c,v 1.5 2002/06/14 01:06:58 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,16 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)wwdelline.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwdelline.c,v 1.4 1997/11/21 08:37:13 lukem Exp $");
+__RCSID("$NetBSD: wwdelline.c,v 1.5 2002/06/14 01:06:58 wiz Exp $");
 #endif
 #endif /* not lint */
 
 #include "ww.h"
 
 void
-wwdelline(w, row)
-	struct ww *w;
-	int row;
+wwdelline(struct ww *w, int row)
 {
 	int i;
 	union ww_char **cpp, **cqq;

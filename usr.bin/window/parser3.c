@@ -1,4 +1,4 @@
-/*	$NetBSD: parser3.c,v 1.4 1997/11/21 08:36:14 lukem Exp $	*/
+/*	$NetBSD: parser3.c,v 1.5 2002/06/14 01:06:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser3.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: parser3.c,v 1.4 1997/11/21 08:36:14 lukem Exp $");
+__RCSID("$NetBSD: parser3.c,v 1.5 2002/06/14 01:06:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,9 +64,7 @@ __RCSID("$NetBSD: parser3.c,v 1.4 1997/11/21 08:36:14 lukem Exp $");
  * unary - + ~ !
  */
 int
-p_expr(v, flag)
-	struct value *v;
-	char flag;
+p_expr(struct value *v, char flag)
 {
 	struct value t;
 	int ret;
@@ -95,9 +93,7 @@ p_expr(v, flag)
  * ? :
  */
 int
-p_expr0(v, flag)
-	struct value *v;
-	char flag;
+p_expr0(struct value *v, char flag)
 {
 	struct value t;
 	char true = 0;
@@ -135,9 +131,7 @@ p_expr0(v, flag)
  * ||
  */
 int
-p_expr1(v, flag)
-	struct value *v;
-	char flag;
+p_expr1(struct value *v, char flag)
 {
 	char true = 0;
 
@@ -170,9 +164,7 @@ p_expr1(v, flag)
  * &&
  */
 int
-p_expr2(v, flag)
-	struct value *v;
-	char flag;
+p_expr2(struct value *v, char flag)
 {
 	char true = 1;
 
