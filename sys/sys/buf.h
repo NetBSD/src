@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.51 2002/07/21 15:32:19 hannken Exp $	*/
+/*	$NetBSD: buf.h,v 1.52 2002/08/25 20:21:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -309,11 +309,11 @@ do {									\
 #ifdef _KERNEL
 
 extern	struct bio_ops bioops;
-extern	int nbuf;		/* The number of buffer headers */
+extern	u_int nbuf;		/* The number of buffer headers */
 extern	struct buf *buf;	/* The buffer headers. */
 extern	char *buffers;		/* The buffer contents. */
-extern	int bufpages;		/* Number of memory pages in the buffer pool. */
-extern	int nswbuf;		/* Number of swap I/O buffer headers. */
+extern	u_int bufpages;		/* Number of memory pages in the buffer pool. */
+extern	u_int nswbuf;		/* Number of swap I/O buffer headers. */
 
 extern	struct pool bufpool;	/* I/O buf pool */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.25 2002/08/16 15:25:54 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.26 2002/08/25 20:21:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -190,13 +190,12 @@ bootsync(void)
 void
 cpu_startup()
 {
-	int loop;
 	paddr_t minaddr;
 	paddr_t maxaddr;
 	caddr_t sysbase;
 	caddr_t size;
 	vsize_t bufsize;
-	int base, residual;
+	u_int loop, base, residual;
 	char pbuf[9];
 
 	proc0paddr = (struct user *)kernelstack.pv_va;
@@ -317,7 +316,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
-	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
