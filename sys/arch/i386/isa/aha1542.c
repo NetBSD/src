@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.40 1995/01/03 01:30:14 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.41 1995/01/13 14:46:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1142,14 +1142,9 @@ aha_scsi_cmd(xs)
 	 * then we can't allow it to sleep
 	 */
 	flags = xs->flags;
-	if (xs->bp)
-		flags |= SCSI_NOSLEEP;	/* just to be sure */
-	if (flags & ITSDONE) {
-		printf("%s: already done?\n", aha->sc_dev.dv_xname);
+	if ((flags & (ITSDONE|INUSE)) != INUSE) {
+		printf("%s: done or not in use?\n", aha->sc_dev.dv_xname);
 		xs->flags &= ~ITSDONE;
-	}
-	if ((flags & INUSE) == 0) {
-		printf("%s: not in use?\n", aha->sc_dev.dv_xname);
 		xs->flags |= INUSE;
 	}
 	if ((ccb = aha_get_ccb(aha, flags)) == NULL) {
