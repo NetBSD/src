@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.1.2.4 2002/03/10 21:33:10 thorpej Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.1.2.5 2002/03/11 00:44:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,10 +79,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.4 2002/03/10 21:33:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.1.2.5 2002/03/11 00:44:31 thorpej Exp $");
 
 #include <sys/param.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/pool.h>
 #include <sys/proc.h> 
 #include <sys/resourcevar.h>
