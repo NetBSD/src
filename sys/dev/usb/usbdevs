@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.18 1999/01/07 01:51:12 augustss Exp $
+$NetBSD: usbdevs,v 1.19 1999/01/08 11:18:38 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,10 +87,6 @@ product KODAK DC260		0x0110	Digital Science DC260
 /* CATC products */
 product CATC ANDROMEDA		0x1237	Andromeda hub
 
-/* Nanao products */
-product NANAO HUB		0x0000	hub
-product NANAO MONITOR		0x0001	monitor
-
 /* Unixtar products */
 product UNIXTAR UTUSB41		0x1446	UT-USB41 hub
 
@@ -152,10 +148,6 @@ product BELKIN F5U002		0x0002	Parallel printer adapter
 /* Logitech products */
 product LOGITECH M2452		0x0203	M2452 keyboard
 product LOGITECH M4848		0x0301	M4848 mouse
-
-/* EIZO Nanao products */
-product EIZONANAO HUB		0x0000	hub
-product EIZONANAO MONITOR	0x0001	monitor
 
 /* Chic Technology products */
 product CHIC MOUSE1		0x0001	mouse
