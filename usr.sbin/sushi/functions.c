@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.10 2005/01/12 17:38:40 peter Exp $       */
+/*      $NetBSD: functions.c,v 1.11 2005/01/18 18:07:21 peter Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -304,12 +304,11 @@ ftp_pkgcats(char *subdir)
 	/* alloc space for each line now */
 	nlines = 0;
 	while (fgets(buf, sizeof(buf), f) != NULL) {
-		list[nlines] = strdup(buf);
-		/* XXX jdolecek: is this right? strdup() and conditional
-		 * nlines++?
-		 */
-		if (list[nlines][strlen(list[nlines])-2] == '/') {
-			list[nlines][strlen(list[nlines])-2] = '\0';
+		if (buf[strlen(buf) - 2] == '/') {
+			list[nlines] = malloc(strlen(buf) - 1);
+			if (list[nlines] == NULL)
+				bailout("malloc: %s", strerror(errno));
+			strlcpy(list[nlines], buf, strlen(buf) - 1);
 			nlines++;
 		}
 	}
@@ -341,15 +340,14 @@ ftp_pkgcats(char *subdir)
 char *
 ftp_base(int truename)
 {
-	char *pkg_path;
+	char *pkg_path, *p;
 	struct utsname un;
 	static char buf[256];
-	int rc, i, founddot;
+	int rc;
 
-	founddot = 0;
 	pkg_path = getenv("PKG_PATH");
-	if (pkg_path)
-		return (strdup(pkg_path));
+	if (pkg_path != NULL)
+		return (pkg_path);
 
 	strlcpy(buf, NETBSD_PKG_BASE, sizeof(buf));
 
@@ -359,18 +357,17 @@ ftp_base(int truename)
 
 	strlcat(buf, "/", sizeof(buf));
 	if (!truename) {
-		for (i = 0; i < _SYS_NMLN; i++) {
-			if ((un.release[i] == '_') ||
-			   (un.release[i] >= 'A' && un.release[i] <= 'Z'))
-				un.release[i] = '\0';
-			if (un.release[i] == '.') {
-				if (founddot)
-					un.release[i] = '\0';
-				else
-					founddot++;
-			}
-			if (un.release[i] == '\0')
-				break;
+		if ((p = strchr(un.release, '_')) != NULL) {
+			/* -stable or -rc, e.g. 2.0_STABLE */
+			*p = '\0';
+		} else if ((p = strstr(un.release, "99.")) != NULL) {
+			/* -current, e.g. 2.99.14 */
+			*p++ = '0';
+			*p = '\0';
+		} else if (strspn(un.release, ".") > 1) {
+			/* security release, e.g. 2.0.1 */
+			p = strrchr(un.release, '.');
+			*p = '\0';
 		}
 	}
 	strlcat(buf, un.release, sizeof(buf));
