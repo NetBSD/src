@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.1 1999/11/20 19:56:39 uch Exp $ */
+/*	$NetBSD: txcom.c,v 1.2 1999/12/23 16:57:14 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -95,6 +95,7 @@ void	txcom_attach	__P((struct device*, struct device*, void*));
 int	txcom_txintr	__P((void*));
 int	txcom_a_rxintr	__P((void*));
 int	txcom_b_rxintr	__P((void*));
+int	txcom_overrun_intr	__P((void*));
 void	txcom_rxsoft	__P((void*));
 
 int	txcom_cngetc		__P((dev_t));
@@ -180,14 +181,22 @@ txcom_attach(parent, self, aux)
 	 */
 	switch (sc->sc_slot) {
 	case TX39_UARTA:
-		tx_intr_establish(tc, MAKEINTR(2, TX39_INTRSTATUS2_UARTARXINT),
-				    IST_EDGE, IPL_TTY,
-				    txcom_a_rxintr, sc);
+		tx_intr_establish(tc, MAKEINTR(2, 
+					       TX39_INTRSTATUS2_UARTARXINT),
+				  IST_EDGE, IPL_TTY,
+				  txcom_a_rxintr, sc);
+		tx_intr_establish(
+			tc, MAKEINTR(2, TX39_INTRSTATUS2_UARTARXOVERRUNINT),
+			IST_EDGE, IPL_TTY, txcom_overrun_intr, sc);
 		break;
 	case TX39_UARTB:
-		tx_intr_establish(tc, MAKEINTR(2, TX39_INTRSTATUS2_UARTBRXINT),
-				    IST_EDGE, IPL_TTY,
-				    txcom_b_rxintr, sc);
+		tx_intr_establish(tc, MAKEINTR(2, 
+					       TX39_INTRSTATUS2_UARTBRXINT),
+				  IST_EDGE, IPL_TTY,
+				  txcom_b_rxintr, sc);
+		tx_intr_establish(
+			tc, MAKEINTR(2, TX39_INTRSTATUS2_UARTBRXOVERRUNINT),
+			IST_EDGE, IPL_TTY, txcom_overrun_intr, sc);
 		break;
 	}
 }
@@ -273,18 +282,24 @@ txcom_cngetc(dev)
 	dev_t dev;
 {
 	tx_chipset_tag_t tc;
-	int ofs, c;
-	tc = cn_sc.sc_tc;
+	int ofs, c, s;
 
+	s = splhigh();
+	
+	tc = cn_sc.sc_tc;
 	ofs = TX39_UARTCTRL1_REG(cn_sc.sc_slot);
 
 	while(!(TX39_UARTCTRL1_RXHOLDFULL & tx_conf_read(tc, ofs)))
 		;
+	
 	ofs = TX39_UARTRXHOLD_REG(cn_sc.sc_slot);
 	c = TX39_UARTRXHOLD_RXDATA(tx_conf_read(tc, ofs));
+
 	if (c == '\r') {
 		c = '\n';
 	}
+
+	splx(s);
 
 	return c;
 }
@@ -295,19 +310,23 @@ txcom_cnputc(dev, c)
 	int c;
 {
 	tx_chipset_tag_t tc;
-	int ofs;
+	int ofs, s;
+
+	s = splhigh();
 
 	tc = cn_sc.sc_tc;
 	ofs = TX39_UARTCTRL1_REG(cn_sc.sc_slot);
 
 	while (!(tx_conf_read(tc, ofs) & TX39_UARTCTRL1_EMPTY))
-		delay(20);
+		;
 
 	tx_conf_write(tc, TX39_UARTTXHOLD_REG(cn_sc.sc_slot), 
 		      (c & TX39_UARTTXHOLD_TXDATA_MASK));
 
 	while (!(tx_conf_read(tc, ofs) & TX39_UARTCTRL1_EMPTY))
-		delay(20);
+		;
+
+	splx(s);
 
 }
 
@@ -384,6 +403,17 @@ txcom_rxsoft(arg)
 	if ((*rint)(code, tp) == -1) {
 
 	}
+}
+
+int
+txcom_overrun_intr(arg)
+	void *arg;
+{
+	struct txcom_softc *sc = arg;
+	
+	printf("UART%c overrun\n", sc->sc_slot ? 'B' : 'A');
+
+	return 0;
 }
 
 int
