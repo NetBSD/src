@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.114 1999/03/11 05:17:55 sakamoto Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.115 1999/03/16 22:32:59 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.108 1999/03/09 11:48:03 drochner Exp 
+ *	NetBSD: pcidevs,v 1.110 1999/03/16 21:24:46 mjacob Exp 
  */
 
 /*
@@ -1772,6 +1772,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Q Logic",
 	    "ISP1022",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1080,
+	    0,
+	    "Q Logic",
+	    "ISP1080",
+	},
+	{
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1240,
+	    0,
+	    "Q Logic",
+	    "ISP1240",
 	},
 	{
 	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2100,
