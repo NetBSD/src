@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.55 2002/10/01 12:57:11 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.56 2002/10/03 15:58:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.55 2002/10/01 12:57:11 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.56 2002/10/03 15:58:56 fvdl Exp $");
 
 #define ISA_DMA_STATS
 
@@ -317,7 +317,7 @@ isa_strayintr(irq)
 }
 
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
-int ilevel[ICU_LEN];
+int iminlevel[ICU_LEN], imaxlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
 /*
@@ -373,6 +373,9 @@ intr_calculatemasks()
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
+	 *
+	 * (as a side effect, this also takes care of shared IRQs with
+	 *  different IPL for iunmask below)
 	 */
 	for (level = 0; level<(NIPL-1); level++)
 		imasks[level+1] |= imasks[level];
@@ -414,26 +417,30 @@ intr_calculatemasks()
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int irqs = 1 << irq;
-		int level = 0;
+		int minlevel = IPL_SERIAL;
+		int maxlevel = 0;
 
 		if (intrhand[irq] == NULL) {
-			level = IPL_HIGH;
-			irqs = IMASK(IPL_HIGH);
+			maxlevel = minlevel = IPL_SERIAL;
+			irqs = IMASK(IPL_SERIAL);
 		} else {
 			for (q = intrhand[irq]; q; q = q->ih_next) {
 				irqs |= IMASK(q->ih_level);
-				if (q->ih_level > level)
-					level = q->ih_level;
+				if (q->ih_level > maxlevel)
+					maxlevel = q->ih_level;
+				if (q->ih_level < minlevel)
+					minlevel = q->ih_level;
 			}
 		}
-		if (irqs != IMASK(level))
+		if (irqs != IMASK(maxlevel))
 			panic("irq %d level %x mask mismatch: %x vs %x", irq, level, irqs, IMASK(level));
 		
-		ilevel[irq] = level;
+		imaxlevel[irq] = maxlevel;
+		iminlevel[irq] = minlevel;
 		intrmask[irq] = irqs | (1 << IPL_TAGINTR);
 #if 0
 		printf("irq %d: level %x, mask 0x%x (%x)\n",
-		    irq, ilevel[irq], intrmask[irq], IMASK(ilevel[irq]));
+		    irq, imaxlevel[irq], intrmask[irq], IMASK(imaxlevel[irq]));
 #endif
 
 	}
@@ -448,8 +455,9 @@ intr_calculatemasks()
 			irqs |= 1 << IRQ_SLAVE;
 		imen = ~irqs;
 	}
-	for (irq = 0; irq < ICU_LEN; irq++)
-		iunmask[irq] = ~imasks[irq];
+	for (level = 0; level < NIPL; level++)
+		iunmask[level] = ~imasks[level];
+
 }
 
 static int
