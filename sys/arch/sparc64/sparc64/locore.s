@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.97 2000/09/12 04:16:29 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.98 2000/09/17 19:23:37 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -5309,7 +5309,9 @@ print_dtlb:
 	.align	8
 dostart:
 	wrpr	%g0, 0, %tick	! XXXXXXX clear %tick register for now
-	wr	%g0, TICK_CMPR	! XXXXXXX clear %tick_cmpr as well
+	mov	1, %g1
+	sllx	%g1, 63, %g1	
+	wr	%g1, TICK_CMPR	! XXXXXXX clear and disable %tick_cmpr as well
 	/*
 	 * Startup.
 	 *
@@ -8076,6 +8078,13 @@ Lsw_load:
 	call	_C_LABEL(ctx_alloc)		! ctx_alloc(&vm->vm_pmap);
 	 mov	%o2, %o0
 
+	wr	%g0, ASI_DMMU, %asi		! This context has been recycled
+	set	0x030, %o1
+	stxa	%o0, [CTX_SECONDARY] %asi	! so we need to invalidate
+	membar	#Sync
+	stxa	%o1, [%o1] ASI_DMMU_DEMAP	! whatever bits of it may
+	stxa	%o1, [%o1] ASI_IMMU_DEMAP	! be left in the TLB
+	membar	#Sync
 #ifdef SCHED_DEBUG
 	mov	%o0, %g1
 	save	%sp, -CC64FSZ, %sp
@@ -8097,19 +8106,6 @@ Lsw_havectx:
 	 * We probably need to flush the cache here.
 	 */
 	wr	%g0, ASI_DMMU, %asi		! restore the user context
-#if 0
-	!!
-	!! We should not need to flush the MMU here.  It will make
-	!! context switches expensive.
-	!! 
-	ldxa	[CTX_SECONDARY] %asi, %o1
-	brz,pn	%o1, 1f
-	 set	0x030, %o1
-	stxa	%o1, [%o1] ASI_DMMU_DEMAP
-	stxa	%o1, [%o1] ASI_IMMU_DEMAP
-	membar	#Sync
-1:
-#endif
 	stxa	%o0, [CTX_SECONDARY] %asi	! Maybe we should invalidate the old context?
 	membar	#Sync				! Maybe we should use flush here?
 	flush	%sp
@@ -11040,6 +11036,7 @@ microtick:
 	mulx	%o3, %o5, %o5					! Now calculate usecs -- damn no remainder insn
 	sub	%o2, %o5, %o1					! %o1 has the remainder
 
+	add	%o1, %o4, %o1
 	retl
 	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
 #endif
