@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.47 1998/05/24 20:59:49 ross Exp $ */
+/* $NetBSD: pmap.c,v 1.48 1998/05/24 22:15:19 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 1998/05/24 20:59:49 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 1998/05/24 22:15:19 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2851,8 +2851,9 @@ pmap_emulate_reference(p, v, user, write)
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	/* XXX XXX XXX This needs to go away! XXX XXX XXX */
+	/* because: pte/pmap is unlocked now */
 	if ((*pte & faultoff) != 0) {
-#if 1
+#if defined(UVM)
 		/*
 		 * This is apparently normal.  Why? -- cgd
 		 * XXX because was being called on unmanaged pages?
