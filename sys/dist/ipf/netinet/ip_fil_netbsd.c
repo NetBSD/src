@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.9 2005/02/19 21:30:25 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.10 2005/02/21 22:01:52 martin Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -135,8 +135,8 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	struct ip *ip = mtod(*mp, struct ip *);
-	int rv, hlen = ip->ip_hl << 2;
+	struct ip *ip;
+	int rv, hlen;
 #if __NetBSD_Version__ >= 200080000
 	/*
 	 * ensure that mbufs are writable beforehand
@@ -151,6 +151,8 @@ int dir;
 		return error;
 	}
 #endif
+	ip = mtod(*mp, struct ip *);
+	hlen = ip->ip_hl << 2;
 
 #ifdef INET
 #if defined(M_CSUM_TCPv4)
