@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$Id: Makefile,v 1.9 1994/12/22 09:58:28 cgd Exp $
+#	$Id: Makefile,v 1.10 1996/03/18 21:11:10 leo Exp $
 
 LIB=	kvm
 CFLAGS+=-DLIBC_SCCS
@@ -15,11 +15,13 @@ SRCS=	kvm_${MACHINE_ARCH}.c
 
 SRCS+=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 
-MAN=	kvm.3 kvm_geterr.3 kvm_getfiles.3 kvm_getloadavg.3 kvm_getprocs.3 \
-	kvm_nlist.3 kvm_open.3 kvm_read.3
+MAN=	kvm.3 kvm_dump.3 kvm_geterr.3 kvm_getfiles.3 kvm_getloadavg.3 \
+	kvm_getprocs.3 kvm_nlist.3 kvm_open.3 kvm_read.3
 
 MLINKS+=kvm_getprocs.3 kvm_getargv.3 kvm_getprocs.3 kvm_getenvv.3
 MLINKS+=kvm_open.3 kvm_openfiles.3 kvm_open.3 kvm_close.3
 MLINKS+=kvm_read.3 kvm_write.3
+MLINKS+=kvm_dump.3 kvm_dump_mkheader.3 kvm_dump.3 kvm_dump_wrtheader.3
+MLINKS+=kvm_dump.3 kvm_dump_inval.3
 
 .include <bsd.lib.mk>
