@@ -1,4 +1,4 @@
-/*      $NetBSD: blabel.c,v 1.6 2001/01/10 03:05:48 garbled Exp $       */
+/*      $NetBSD: blabel.c,v 1.7 2001/01/10 10:00:29 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@ extern struct winsize ws;
 extern char *lang_id;
 extern CDKSCREEN *cdkscreen;
 extern char **searchpaths;
+extern char *keylabel[10];
+extern chtype keybinding[10];
 
 WINDOW *labelwin;
 
@@ -71,6 +73,11 @@ bottom_help(int type)
 	label[7] = catgets(catalog, 2, 8, "F8=Image");
 	label[8] = catgets(catalog, 2, 9, "F9=Shell");
 	label[9] = catgets(catalog, 2, 10, "F10=Exit");
+
+	/* check for key overrides from the config file */
+	for (i=0; i < 10; i++)
+		if (keybinding[i] != 0)
+			label[i] = strdup(keylabel[i]);
 
 	labelwin = subwin(stdscr, 2, ws.ws_col, ws.ws_row-2, 0);
 	wattron(labelwin, A_BOLD);
@@ -197,10 +204,34 @@ do_shell(EObjectType cdktype, void *object, void *clientdata, chtype key)
 void
 bind_menu(CDKSCROLL *scroll, char *basedir)
 {
-	bindCDKObject(vSCROLL, scroll, KEY_F1, wrap_help, basedir);
-	bindCDKObject(vSCROLL, scroll, KEY_F2, do_refresh, NULL);
-	bindCDKObject(vSCROLL, scroll, KEY_F3, do_cancel, NULL);
-	bindCDKObject(vSCROLL, scroll, KEY_F8, do_scrdump, NULL);
-	bindCDKObject(vSCROLL, scroll, KEY_F9, do_shell, NULL);
-	bindCDKObject(vSCROLL, scroll, KEY_F10, do_exit, NULL);
+	if (keybinding[0] != 0)
+		bindCDKObject(vSCROLL, scroll, keybinding[0],
+		    wrap_help, basedir);
+	else
+		bindCDKObject(vSCROLL, scroll, KEY_F1, wrap_help, basedir);
+
+	if (keybinding[1] != 0)
+		bindCDKObject(vSCROLL, scroll, keybinding[1], do_refresh, NULL);
+	else
+		bindCDKObject(vSCROLL, scroll, KEY_F2, do_refresh, NULL);
+
+	if (keybinding[2] != 0)
+		bindCDKObject(vSCROLL, scroll, keybinding[2], do_cancel, NULL);
+	else
+		bindCDKObject(vSCROLL, scroll, KEY_F3, do_cancel, NULL);
+
+	if (keybinding[7] != 0)
+		bindCDKObject(vSCROLL, scroll, keybinding[7], do_scrdump, NULL);
+	else
+		bindCDKObject(vSCROLL, scroll, KEY_F8, do_scrdump, NULL);
+
+	if (keybinding[8] != 0)
+		bindCDKObject(vSCROLL, scroll, keybinding[8], do_shell, NULL);
+	else
+		bindCDKObject(vSCROLL, scroll, KEY_F9, do_shell, NULL);
+
+	if (keybinding[9] != 0)
+		bindCDKObject(vSCROLL, scroll, keybinding[9], do_exit, NULL);
+	else
+		bindCDKObject(vSCROLL, scroll, KEY_F10, do_exit, NULL);
 }

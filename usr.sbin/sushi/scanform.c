@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.4 2001/01/10 03:05:48 garbled Exp $       */
+/*      $NetBSD: scanform.c,v 1.5 2001/01/10 10:00:29 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,6 +68,8 @@ extern CDKSCREEN *cdkscreen;
 extern struct winsize ws;
 extern nl_catd catalog;
 extern char *lang_id;
+extern char *keylabel[10];
+extern chtype keybinding[10];
 
 static void scan_formindex(struct cqForm *cqf, char *row);
 
@@ -263,8 +265,16 @@ get_request(WINDOW *w)			/* virtual key mapping */
 {
 	static int      mode = REQ_INS_MODE;
 	int             c = wgetch(w);	/* read a character */
+	int 		i;
 
 	/* printf("GOT A THINGIE: 0x%x %d\n", c, c); */
+
+	/* convert to an FKEY for case */
+	if (c != 0)
+	for (i=0; i < 10; i++)
+		if (c == keybinding[i])
+			c = KEY_F(i+1);
+
 	switch (c) {
 	case KEY_F(1):
 		return SHOWHELP;

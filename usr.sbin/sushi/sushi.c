@@ -1,4 +1,4 @@
-/*      $NetBSD: sushi.c,v 1.5 2001/01/10 03:05:48 garbled Exp $       */
+/*      $NetBSD: sushi.c,v 1.6 2001/01/10 10:00:29 garbled Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 MTREE_ENTRY *navigate_menu __P((struct cqMenu *, char *, char *));
 MTREE_ENTRY *navigate_submenu __P((MTREE_ENTRY *));
 MTREE_ENTRY *display_menu __P((struct cqMenu *, char *, char *));
-void prepare_searchpath __P((void));
+void parse_config __P((void));
 
 extern char *__progname;
 
@@ -71,8 +71,9 @@ WINDOW		*funcwin;
 struct winsize	ws;
 nl_catd		catalog;
 char		*lang_id;
-
 char		**searchpaths;
+char		*keylabel[10];
+chtype		keybinding[10];
 
 int
 main(int argc, char **argv)
@@ -87,7 +88,7 @@ main(int argc, char **argv)
 	else
 		lang_id = strdup(getenv("LANG"));
 
-	prepare_searchpath();
+	parse_config();
 	tree_init();
 	i = 0;
 	for (p = searchpaths[i]; p != NULL; i++) {
@@ -129,13 +130,46 @@ main(int argc, char **argv)
 	return(EXIT_SUCCESS);
 }
 
+static char *
+next_word(char **line)
+{
+	char *word, *p;
+
+	p = *line;
+	while (*++p && isspace((unsigned char)*p));
+	word = p;
+	for (; *p != '\0' && !isspace((unsigned char)*p); ++p);
+	*p = '\0';
+	*line = p;
+	return(word);
+}
+
+
+static chtype
+parse_keybinding(char *key)
+{
+	if (tolower(key[0]) == 'f' && isdigit(key[1]))
+		/* we have an F key */
+		return(KEY_F(atoi(key + 1)));
+	else if (key[0] == '^')
+		return((chtype)(toupper(key[1]) & ~0x40));
+	else if (isalpha(key[0]))
+		/* we have an insane user */
+		return((chtype)tolower(key[0]));
+
+	bailout("%s: %s", catgets(catalog, 1, 20, "Bad keybinding"), key);
+	/* NOTREACHED */
+	return(0);
+}
+
 void
-prepare_searchpath(void)
+parse_config(void)
 {
 	FILE *conf;
 	size_t len;
 	int i, j;
-	char *p;
+	char *p, *t, *word;
+	char *key;
 
 	conf = fopen("/etc/sushi.conf", "r");
 	if (conf == NULL) {
@@ -158,21 +192,51 @@ prepare_searchpath(void)
 			bailout("malloc: %s", strerror(errno));
 		i = 0;
 		while ((p = fgetln(conf, &len))) {
-			searchpaths = (char **)realloc(searchpaths,
-			    sizeof(char *) * (i + 2));
-			if (searchpaths == NULL)
-				bailout("malloc: %s", strerror(errno));
-			searchpaths[i] = (char *)malloc(sizeof(char)
-			    * len + 1);
-			if (searchpaths[i] == NULL)
-				bailout("malloc: %s", strerror(errno));
-			searchpaths[i] = strdup(p);
-			for (j = 0; j < len; j++)
-				if (searchpaths[i][j] == '\n' ||
-				    searchpaths[i][j] == '\r')
-					searchpaths[i][j] = '\0';
-			i++;
-		}
+			if (len == 1 || p[len - 1] == '#' || p[len - 1] != '\n')
+				continue;
+			p[len - 1] = '\0';
+			for (; *p != '\0' && isspace((unsigned char)*p); ++p);
+			if (*p == '\0' || *p == '#')
+				continue;
+			for (t = p; *t && !isspace((unsigned char)*t); ++t);
+			if (*t == '\0')
+				continue;
+			*t = '\0';
+			word = p;
+			while (*++p && !isspace((unsigned char)*p));
+			key = strdup(word);
+			if (strcmp(key, "searchpath") == 0) {
+				word = next_word(&p);
+				searchpaths = (char **)realloc(searchpaths,
+				    sizeof(char *) * (i + 2));
+				if (searchpaths == NULL)
+					bailout("malloc: %s", strerror(errno));
+				searchpaths[i] = (char *)malloc(sizeof(char)
+				    * len + 1);
+				if (searchpaths[i] == NULL)
+					bailout("malloc: %s", strerror(errno));
+				searchpaths[i] = strdup(word);
+				for (j = 0; j < len; j++)
+					if (searchpaths[i][j] == '\n' ||
+					    searchpaths[i][j] == '\r')
+						searchpaths[i][j] = '\0';
+				i++;
+			} else if (strcmp(key, "bind") == 0) {
+				word = next_word(&p);
+				word++;
+				j = atoi(word);
+				j--;
+				/* now get the character */
+				word = next_word(&p);
+				keybinding[j] = parse_keybinding(word);
+				/* now get the string */
+				word = next_word(&p);
+				keylabel[j] = strdup(word);
+			} else {
+				bailout("%s: %s", catgets(catalog, 1, 21,
+				    "Bad keyword in config file"), key);
+			}
+		} /* while */
 	}
 	searchpaths[i] = (char *)malloc(sizeof(char) * PATH_MAX);
 	if (searchpaths[i] == NULL)
