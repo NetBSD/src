@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.4 1998/07/28 00:31:42 pk Exp $	*/
+/*	$NetBSD: magma.c,v 1.4.14.1 2000/11/20 11:43:06 bouyer Exp $	*/
 /*
  * magma.c
  *
@@ -57,9 +57,11 @@
 #include <sys/conf.h>
 #include <sys/errno.h>
 
-#include <machine/conf.h>
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
+#include <machine/conf.h>
+
 #include <dev/sbus/sbusvar.h>
 
 #include <dev/ic/cd1400reg.h>
@@ -436,11 +438,16 @@ magma_attach(parent, self, aux)
 	/*
 	 * Establish the interrupt handlers.
 	 */
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0, magma_hard, sc);
-	(void)bus_intr_establish(sa->sa_bustag, PIL_TTY,
+	if (sa->sa_nintr == 0)
+		return;		/* No interrupts to service!? */
+
+	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_TTY,
+				 0, magma_hard, sc);
+	(void)bus_intr_establish(sa->sa_bustag, PIL_TTY, IPL_SOFTSERIAL,
 				 BUS_INTR_ESTABLISH_SOFTINTR,
 				 magma_soft, sc);
-	evcnt_attach(&sc->ms_dev, "intr", &sc->ms_intrcnt);
+	evcnt_attach_dynamic(&sc->ms_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->ms_dev.dv_xname, "intr");
 }
 
 /*
@@ -1427,6 +1434,9 @@ mbpp_attach(parent, dev, args)
 	for( port = 0 ; port < sc->ms_board->mb_npar ; port++ ) {
 		mp = &ms->ms_port[port];
 
+		callout_init(&mp->mp_timeout_ch);
+		callout_init(&mp->mp_start_ch);
+
 		if( sc->ms_ncd1190 )
 			mp->mp_cd1190 = &sc->ms_cd1190[port];
 		else
@@ -1624,7 +1634,8 @@ mbpp_rw(dev, uio)
 	 */
 	if( mp->mp_timeout > 0 ) {
 		SET(mp->mp_flags, MBPPF_TIMEOUT);
-		timeout(mbpp_timeout, mp, mp->mp_timeout);
+		callout_reset(&mp->mp_timeout_ch, mp->mp_timeout,
+		    mbpp_timeout, mp);
 	}
 
 	len = cnt = 0;
@@ -1670,7 +1681,8 @@ again:		/* goto bad */
 		if( mp->mp_delay > 0 ) {
 			s = splsoftclock();
 			SET(mp->mp_flags, MBPPF_DELAY);
-			timeout(mbpp_start, mp, mp->mp_delay);
+			callout_reset(&mp->mp_start_ch, mp->mp_delay,
+			    mbpp_start, mp);
 			error = tsleep(mp, PCATCH | PZERO, "mbppdelay", 0);
 			splx(s);
 			if( error ) break;
@@ -1692,11 +1704,11 @@ again:		/* goto bad */
 	 */
 	s = splsoftclock();
 	if( ISSET(mp->mp_flags, MBPPF_TIMEOUT) ) {
-		untimeout(mbpp_timeout, mp);
+		callout_stop(&mp->mp_timeout_ch);
 		CLR(mp->mp_flags, MBPPF_TIMEOUT);
 	}
 	if( ISSET(mp->mp_flags, MBPPF_DELAY) ) {
-		untimeout(mbpp_start, mp);
+		callout_stop(&mp->mp_start_ch);
 		CLR(mp->mp_flags, MBPPF_DELAY);
 	}
 	splx(s);

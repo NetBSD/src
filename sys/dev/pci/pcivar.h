@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.41 1999/09/30 20:30:06 thorpej Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.41.2.1 2000/11/20 11:42:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -68,6 +68,10 @@ struct pcibus_attach_args {
 
 	int		pba_bus;	/* PCI bus number */
 
+#ifdef __PCI_OFW_BINDING
+	int		pba_node;	/* OFW node */
+#endif
+
 	/*
 	 * Interrupt swizzling information.  These fields
 	 * are only used by secondary busses.
@@ -90,6 +94,10 @@ struct pci_attach_args {
 	u_int		pa_function;
 	pcitag_t	pa_tag;
 	pcireg_t	pa_id, pa_class;
+
+#ifdef __PCI_OFW_BINDING
+	int		pa_node;	/* OFW node */
+#endif
 
 	/*
 	 * Interrupt information.
@@ -153,6 +161,7 @@ struct pci_quirkdata {
  * Configuration space access and utility functions.  (Note that most,
  * e.g. make_tag, conf_read, conf_write are declared by pci_machdep.h.)
  */
+pcireg_t pci_mapreg_type __P((pci_chipset_tag_t, pcitag_t, int));
 int	pci_mapreg_info __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t,
 	    bus_addr_t *, bus_size_t *, int *));
 int	pci_mapreg_map __P((struct pci_attach_args *, int, pcireg_t, int,

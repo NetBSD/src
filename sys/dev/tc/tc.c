@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.26 1998/05/22 21:15:48 thorpej Exp $	*/
+/*	$NetBSD: tc.c,v 1.26.14.1 2000/11/20 11:43:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,18 +37,6 @@
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdevs.h>
 
-struct tc_softc {
-	struct	device sc_dv;
-
-	int	sc_speed;
-	int	sc_nslots;
-	struct tc_slotdesc *sc_slots;
-
-	void	(*sc_intr_establish) __P((struct device *, void *,
-		    tc_intrlevel_t, int (*)(void *), void *));
-	void	(*sc_intr_disestablish) __P((struct device *, void *));
-	bus_dma_tag_t (*sc_get_dma_tag) __P((int));
-};
 
 /* Definition of the driver for autoconfig. */
 int	tcmatch __P((struct device *, struct cfdata *, void *));
@@ -57,6 +45,7 @@ void	tcattach __P((struct device *, struct device *, void *));
 struct cfattach tc_ca = {
 	sizeof(struct tc_softc), tcmatch, tcattach
 };
+extern struct cfdriver tc_cd;
 
 int	tcprint __P((void *, const char *));
 int	tcsubmatch __P((struct device *, struct cfdata *, void *));
@@ -100,6 +89,7 @@ tcattach(parent, self, aux)
 	sc->sc_speed = tba->tba_speed;
 	sc->sc_nslots = tba->tba_nslots;
 	sc->sc_slots = tba->tba_slots;
+	sc->sc_intr_evcnt = tba->tba_intr_evcnt;
 	sc->sc_intr_establish = tba->tba_intr_establish;
 	sc->sc_intr_disestablish = tba->tba_intr_disestablish;
 	sc->sc_get_dma_tag = tba->tba_get_dma_tag;
@@ -270,17 +260,24 @@ tc_checkslot(slotbase, namep)
 	return (0);
 }
 
+const struct evcnt *
+tc_intr_evcnt(struct device *dev, void *cookie)
+{
+	struct tc_softc *sc = tc_cd.cd_devs[0];
+
+	return ((*sc->sc_intr_evcnt)(dev, cookie));
+}
+
 void
 tc_intr_establish(dev, cookie, level, handler, arg)
 	struct device *dev;
 	void *cookie, *arg;
-	tc_intrlevel_t level;
+	int level;
 	int (*handler) __P((void *));
 {
-	struct tc_softc *sc = (struct tc_softc *)dev;
+	struct tc_softc *sc = tc_cd.cd_devs[0];
 
-	(*sc->sc_intr_establish)(sc->sc_dv.dv_parent, cookie, level,
-	    handler, arg);
+	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg);
 }
 
 void
@@ -288,9 +285,9 @@ tc_intr_disestablish(dev, cookie)
 	struct device *dev;
 	void *cookie;
 {
-	struct tc_softc *sc = (struct tc_softc *)dev;
+	struct tc_softc *sc = tc_cd.cd_devs[0];
 
-	(*sc->sc_intr_disestablish)(sc->sc_dv.dv_parent, cookie);
+	(*sc->sc_intr_disestablish)(dev, cookie);
 }
 
 #ifdef TCVERBOSE

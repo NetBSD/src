@@ -1,11 +1,12 @@
-/*	$NetBSD: usb_mem.h,v 1.10 1999/10/13 18:52:54 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.10.2.1 2000/11/20 11:43:30 bouyer Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -50,11 +51,11 @@ typedef struct usb_dma_block {
 	LIST_ENTRY(usb_dma_block) next;
 } usb_dma_block_t;
 
-#define DMAADDR(dma) ((dma)->block->segs[0].ds_addr + (dma)->offs)
+#define DMAADDR(dma) ((dma)->block->map->dm_segs[0].ds_addr + (dma)->offs)
 #define KERNADDR(dma) ((void *)((dma)->block->kaddr + (dma)->offs))
 
-usbd_status	usb_allocmem __P((usbd_bus_handle,size_t,size_t, usb_dma_t *));
-void		usb_freemem  __P((usbd_bus_handle, usb_dma_t *));
+usbd_status	usb_allocmem(usbd_bus_handle,size_t,size_t, usb_dma_t *);
+void		usb_freemem(usbd_bus_handle, usb_dma_t *);
 
 #elif defined(__FreeBSD__)
 
@@ -71,9 +72,6 @@ void		usb_freemem  __P((usbd_bus_handle, usb_dma_t *));
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <vm/vm.h>
-#include <vm/pmap.h>
-
-#include <machine/pmap.h>       /* for vtophys */
 
 #define		usb_allocmem(t,s,a,p)	(*(p) = malloc(s, M_USB, M_NOWAIT), (*(p) == NULL? USBD_NOMEM: USBD_NORMAL_COMPLETION))
 #define		usb_freemem(t,p)	(free(*(p), M_USB))

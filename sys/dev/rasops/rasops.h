@@ -1,11 +1,11 @@
-/* 	$NetBSD: rasops.h,v 1.7 1999/08/24 11:07:32 ad Exp $ */
+/* 	$NetBSD: rasops.h,v 1.7.2.1 2000/11/20 11:43:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran.
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
- 
+
 #ifndef _RASOPS_H_
 #define _RASOPS_H_ 1
 
@@ -59,19 +59,19 @@ struct rasops_info {
 	int	ri_height;	/* height (pels) */
 	int	ri_stride;	/* stride in bytes */
 
-	/* 
+	/*
 	 * These can optionally be left zeroed out. If you fill ri_font,
 	 * but aren't using wsfont, set ri_wsfcookie to -1.
 	 */
 	struct	wsdisplay_font *ri_font;
 	int	ri_wsfcookie;	/* wsfont cookie */
-	void	*ri_priv;	/* driver private data */
+	void	*ri_hw;		/* driver private data; ignored by rasops */
 	int	ri_crow;	/* cursor row */
 	int	ri_ccol;	/* cursor column */
 	int	ri_flg;		/* various operational flags */
-	
-	/* 
-	 * These are optional and will default if zero. Meaningless 
+
+	/*
+	 * These are optional and will default if zero. Meaningless
 	 * on depths other than 15, 16, 24 and 32 bits per pel. On
 	 * 24 bit displays, ri_{r,g,b}num must be 8.
 	 */
@@ -101,26 +101,37 @@ struct rasops_info {
 	/* The emulops you need to use, and the screen caps for wscons */
 	struct	wsdisplay_emulops ri_ops;
 	int	ri_caps;
-	
+
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor) __P((struct rasops_info *));
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))
 
-/* 
+/*
  * rasops_init().
  *
- * Integer parameters are the number of rows and columns we'd *like*. 
+ * Integer parameters are the number of rows and columns we'd *like*.
  *
  * In terms of optimization, fonts that are a multiple of 8 pixels wide
  * work the best.
  *
- * rasops_init() takes care of rasops_reconfig(). The parameters to both 
+ * rasops_init() takes care of rasops_reconfig(). The parameters to both
  * are the same. If calling rasops_reconfig() to change the font and
  * ri_wsfcookie >= 0, you must call wsfont_unlock() on it, and reset it
  * to -1 (or a new, valid cookie).
  */
+
+/*
+ * Per-depth initalization functions. These should not be called outside
+ * the rasops code.
+ */
+void	rasops1_init __P((struct rasops_info *));
+void	rasops2_init __P((struct rasops_info *));
+void	rasops8_init __P((struct rasops_info *));
+void	rasops15_init __P((struct rasops_info *));
+void	rasops24_init __P((struct rasops_info *));
+void	rasops32_init __P((struct rasops_info *));
 
 /* rasops.c */
 int	rasops_init __P((struct rasops_info *, int, int));
@@ -130,7 +141,7 @@ void	rasops_eraserows __P((void *, int, int, long));
 void	rasops_erasecols __P((void *, int, int, int, long));
 void	rasops_copycols __P((void *, int, int, int, int));
 
-extern u_char	rasops_isgray[16];
-extern u_char	rasops_cmap[256*3];
+extern const u_char	rasops_isgray[16];
+extern const u_char	rasops_cmap[256*3];
 
 #endif /* _RASOPS_H_ */

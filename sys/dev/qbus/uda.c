@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.30 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.30.4.1 2000/11/20 11:42:51 bouyer Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -61,26 +61,13 @@
 #include "ioconf.h"
 
 /*
- * Variants of SIMPLEQ macros for use with buf structs.
- */
-#define BUFQ_INSERT_TAIL(head, elm) {					\
-	(elm)->b_actf = NULL;						\
-	*(head)->sqh_last = (elm);					\
-	(head)->sqh_last = &(elm)->b_actf;				\
-}
-
-#define BUFQ_REMOVE_HEAD(head, elm) {					\
-	if (((head)->sqh_first = (elm)->b_actf) == NULL)		\
-		(head)->sqh_last = &(head)->sqh_first;			\
-}
-
-/*
  * Software status, per controller.
  */
 struct	uda_softc {
 	struct	device sc_dev;	/* Autoconfig info */
+	struct	evcnt sc_intrcnt; /* Interrupt counting */
 	struct	uba_unit sc_unit; /* Struct common for UBA to communicate */
-	SIMPLEQ_HEAD(, buf) sc_bufq;	/* bufs awaiting for resources */
+	struct	buf_queue sc_bufq;	/* bufs awaiting for resources */
 	struct	mscp_pack *sc_uuda;	/* Unibus address of uda struct */
 	struct	mscp_pack sc_uda;	/* Struct for uda communication */
 	bus_dma_tag_t		sc_dmat;
@@ -96,12 +83,8 @@ struct	uda_softc {
 
 static	int	udamatch __P((struct device *, struct cfdata *, void *));
 static	void	udaattach __P((struct device *, struct device *, void *));
-static	void	udareset __P((int));
-static	void	mtcreset __P((int));
-static	void	reset __P((struct uda_softc *));
-static	void	udaintr __P((int));
-static	void	mtcintr __P((int));
-static	void	intr __P((struct uda_softc *));
+static	void	udareset(struct device *);
+static	void	udaintr __P((void *));
 int	udaready __P((struct uba_unit *));
 void	udactlrdone __P((struct device *));
 int	udaprint __P((void *, const char *));
@@ -188,14 +171,6 @@ again:
 	}
 
 	/* should have interrupted by now */
-	if (strcmp(cf->cf_driver->cd_name, mtc_cd.cd_name)) {
-		ua->ua_ivec = udaintr;
-		ua->ua_reset = udareset;
-	} else {
-		ua->ua_ivec = mtcintr;
-		ua->ua_reset = mtcreset;
-	}
-
 	return 1;
 bad:
 	if (++tries < 2)
@@ -219,12 +194,18 @@ udaattach(parent, self, aux)
 
 	uh->uh_lastiv -= 4;	/* remove dynamic interrupt vector */
 
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+		udaintr, sc, &sc->sc_intrcnt);
+	uba_reset_establish(udareset, &sc->sc_dev);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "intr");
+
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_iph = ua->ua_ioh;
 	sc->sc_sah = ua->ua_ioh + 2;
 	sc->sc_dmat = ua->ua_dmat;
 	ctlr = sc->sc_dev.dv_unit;
-	SIMPLEQ_INIT(&sc->sc_bufq);
+	BUFQ_INIT(&sc->sc_bufq);
 
 	/*
 	 * Fill in the uba_unit struct, so we can communicate with the uba.
@@ -271,8 +252,8 @@ err2:		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)&sc->sc_uda,
 	 * ctlr type it is, we check what is generated and later
 	 * set the correct vcid.
 	 */
-	ma.ma_type = (strcmp(self->dv_cfdata->cf_driver->cd_name,
-	    mtc_cd.cd_name) ? MSCPBUS_DISK : MSCPBUS_TAPE);
+	ma.ma_type = (strcmp(self->dv_cfdata->cf_driver->cd_name, "mtc") ?
+	    MSCPBUS_DISK : MSCPBUS_TAPE);
 
 	ma.ma_mc = &uda_mscp_ctlr;
 	ma.ma_type |= MSCPBUS_UDA;
@@ -311,7 +292,7 @@ udago(usc, mxi)
 	 */
 	if (sc->sc_inq == 0) {
 		err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam,
-		    bp->b_un.b_addr,
+		    bp->b_data,
 		    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
 		if (err == 0) {
 			mscp_dgo(sc->sc_softc, mxi);
@@ -343,7 +324,7 @@ udaready(uu)
 	struct buf *bp = mxi->mxi_bp;
 	int err;
 
-	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_un.b_addr,
+	err = bus_dmamap_load(sc->sc_dmat, mxi->mxi_dmam, bp->b_data,
 	    bp->b_bcount, bp->b_proc, BUS_DMA_NOWAIT);
 	if (err)
 		return 0;
@@ -408,8 +389,8 @@ udasaerror(usc, doreset)
 	int doreset;
 {
 	struct	uda_softc *sc = (void *)usc;
-	register int code = bus_space_read_2(sc->sc_iot, sc->sc_sah, 0);
-	register struct saerr *e;
+	int code = bus_space_read_2(sc->sc_iot, sc->sc_sah, 0);
+	struct saerr *e;
 
 	if ((code & MP_ERR) == 0)
 		return;
@@ -433,24 +414,11 @@ udasaerror(usc, doreset)
  * interrupts, and process responses.
  */
 static void
-udaintr(ctlr)
-	int ctlr;
+udaintr(arg)
+	void *arg;
 {
-	intr(uda_cd.cd_devs[ctlr]);
-}
-
-static void
-mtcintr(ctlr)
-	int ctlr;
-{
-	intr(mtc_cd.cd_devs[ctlr]);
-}
-
-static void
-intr(sc)
-	struct uda_softc *sc;
-{
-	struct	uba_softc *uh;
+	struct uda_softc *sc = arg;
+	struct uba_softc *uh;
 	struct mscp_pack *ud;
 
 	sc->sc_wticks = 0;	/* reset interrupt watchdog */
@@ -481,26 +449,10 @@ intr(sc)
  * A Unibus reset has occurred on UBA uban.  Reinitialise the controller(s)
  * on that Unibus, and requeue outstanding I/O.
  */
-void
-udareset(ctlr)
-	int ctlr;
-{
-	reset(uda_cd.cd_devs[ctlr]);
-}
-
-void
-mtcreset(ctlr)
-	int ctlr;
-{
-	reset(mtc_cd.cd_devs[ctlr]);
-}
-
 static void
-reset(sc)
-	struct uda_softc *sc;
+udareset(struct device *dev)
 {
-	printf(" %s", sc->sc_dev.dv_xname);
-
+	struct uda_softc *sc = (void *)dev;
 	/*
 	 * Our BDP (if any) is gone; our command (if any) is
 	 * flushed; the device is no longer mapped; and the

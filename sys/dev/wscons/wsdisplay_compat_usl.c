@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.9.2.1 1999/10/20 22:56:01 thorpej Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.9.2.2 2000/11/20 11:43:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -37,6 +37,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -62,6 +63,8 @@ struct usl_syncdata {
 	int s_frsig; /* unused */
 	void (*s_callback) __P((void *, int, int));
 	void *s_cbarg;
+	struct callout s_attach_ch;
+	struct callout s_detach_ch;
 };
 
 static int usl_sync_init __P((struct wsscreen *, struct usl_syncdata **,
@@ -113,6 +116,8 @@ usl_sync_init(scr, sdp, p, acqsig, relsig, frsig)
 	sd->s_acqsig = acqsig;
 	sd->s_relsig = relsig;
 	sd->s_frsig = frsig;
+	callout_init(&sd->s_attach_ch);
+	callout_init(&sd->s_detach_ch);
 	res = wsscreen_attach_sync(scr, &usl_syncops, sd);
 	if (res) {
 		free(sd, M_DEVBUF);
@@ -127,11 +132,11 @@ usl_sync_done(sd)
 	struct usl_syncdata *sd;
 {
 	if (sd->s_flags & SF_DETACHPENDING) {
-		untimeout(usl_detachtimeout, sd);
+		callout_stop(&sd->s_detach_ch);
 		(*sd->s_callback)(sd->s_cbarg, 0, 0);
 	}
 	if (sd->s_flags & SF_ATTACHPENDING) {
-		untimeout(usl_attachtimeout, sd);
+		callout_stop(&sd->s_attach_ch);
 		(*sd->s_callback)(sd->s_cbarg, ENXIO, 0);
 	}
 	wsscreen_detach_sync(sd->s_scr);
@@ -172,6 +177,10 @@ usl_detachproc(cookie, waitok, callback, cbarg)
 	if (!usl_sync_check(sd))
 		return (0);
 
+	/* we really need a callback */
+	if (!callback)
+		return (EINVAL);
+
 	/*
 	 * Normally, this is called from the controlling process.
 	 * Is is supposed to reply with a VT_RELDISP ioctl(), so
@@ -181,7 +190,8 @@ usl_detachproc(cookie, waitok, callback, cbarg)
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_DETACHPENDING;
 	psignal(sd->s_proc, sd->s_relsig);
-	timeout(usl_detachtimeout, sd, wscompat_usl_synctimeout * hz);
+	callout_reset(&sd->s_detach_ch, wscompat_usl_synctimeout * hz,
+	    usl_detachtimeout, sd);
 
 	return (EAGAIN);
 }
@@ -196,7 +206,7 @@ usl_detachack(sd, ack)
 		return (EINVAL);
 	}
 
-	untimeout(usl_detachtimeout, sd);
+	callout_stop(&sd->s_detach_ch);
 	sd->s_flags &= ~SF_DETACHPENDING;
 
 	if (sd->s_callback)
@@ -238,11 +248,16 @@ usl_attachproc(cookie, waitok, callback, cbarg)
 	if (!usl_sync_check(sd))
 		return (0);
 
+	/* we really need a callback */
+	if (!callback)
+		return (EINVAL);
+
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
 	sd->s_flags |= SF_ATTACHPENDING;
 	psignal(sd->s_proc, sd->s_acqsig);
-	timeout(usl_attachtimeout, sd, wscompat_usl_synctimeout * hz);
+	callout_reset(&sd->s_attach_ch, wscompat_usl_synctimeout * hz,
+	    usl_attachtimeout, sd);
 
 	return (EAGAIN);
 }
@@ -257,7 +272,7 @@ usl_attachack(sd, ack)
 		return (EINVAL);
 	}
 
-	untimeout(usl_attachtimeout, sd);
+	callout_stop(&sd->s_attach_ch);
 	sd->s_flags &= ~SF_ATTACHPENDING;
 
 	if (sd->s_callback)
@@ -313,9 +328,13 @@ wsdisplay_usl_ioctl1(sc, cmd, data, flag, p)
 		return (0);
 	    case VT_ACTIVATE:
 		idx = *(int *)data - 1;
+		if (idx < 0)
+			return (EINVAL);
 		return (wsdisplay_switch((struct device *)sc, idx, 1));
 	    case VT_WAITACTIVE:
 		idx = *(int *)data - 1;
+		if (idx < 0)
+			return (EINVAL);
 		return (wsscreen_switchwait(sc, idx));
 	    case VT_GETSTATE:
 #define ss ((struct vt_stat *)data)
@@ -360,11 +379,11 @@ wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int res;
-	struct usl_syncdata *sd;
-	int req, intarg;
-	struct wskbd_bell_data bd;
+	int intarg, res;
+	u_long req;
 	void *arg;
+	struct usl_syncdata *sd;
+	struct wskbd_bell_data bd;
 
 	switch (cmd) {
 	    case VT_SETMODE:

@@ -1,7 +1,7 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.24 1999/10/11 17:49:21 thorpej Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.24.2.1 2000/11/20 11:42:43 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -141,56 +141,41 @@ struct cfattach ep_pcmcia_ca = {
 	    ep_pcmcia_detach, ep_activate
 };
 
-struct ep_pcmcia_product {
-	u_int32_t	epp_product;	/* PCMCIA product ID */
+const struct ep_pcmcia_product {
+	struct pcmcia_product epp_product;
 	u_short		epp_chipset;	/* 3Com chipset used */
 	int		epp_flags;	/* initial softc flags */
-	int		epp_expfunc;	/* expected function */
-	const char	*epp_name;	/* device name */
 } ep_pcmcia_products[] = {
-	{ PCMCIA_PRODUCT_3COM_3C562,		ELINK_CHIPSET_3C509,
-	  0,					0,
-	  PCMCIA_STR_3COM_3C562 },
-	{ PCMCIA_PRODUCT_3COM_3C589,		ELINK_CHIPSET_3C509,
-	  0,					0,
-	  PCMCIA_STR_3COM_3C589 },
+	{ { PCMCIA_STR_3COM_3C562,		PCMCIA_VENDOR_3COM,
+	    PCMCIA_PRODUCT_3COM_3C562,		0 },
+	  ELINK_CHIPSET_3C509, 0 },
 
-	{ PCMCIA_PRODUCT_3COM_3CXEM556,		ELINK_CHIPSET_3C509,
-	  0,					0,
-	  PCMCIA_STR_3COM_3CXEM556 },
+	{ { PCMCIA_STR_3COM_3C589,		PCMCIA_VENDOR_3COM,
+	    PCMCIA_PRODUCT_3COM_3C589,		0 },
+	  ELINK_CHIPSET_3C509, 0 },
 
-	{ PCMCIA_PRODUCT_3COM_3CXEM556INT,	ELINK_CHIPSET_3C509,
-	  0,					0,
-	  PCMCIA_STR_3COM_3CXEM556INT },
+	{ { PCMCIA_STR_3COM_3CXEM556,		PCMCIA_VENDOR_3COM,
+	    PCMCIA_PRODUCT_3COM_3CXEM556,	0 },
+	  ELINK_CHIPSET_3C509, 0 },
 
-	{ PCMCIA_PRODUCT_3COM_3C574,		ELINK_CHIPSET_ROADRUNNER,
-	  ELINK_FLAGS_MII,			0,
-	  PCMCIA_STR_3COM_3C574 },
+	{ { PCMCIA_STR_3COM_3CXEM556INT,	PCMCIA_VENDOR_3COM,
+	    PCMCIA_PRODUCT_3COM_3CXEM556INT,	0 },
+	  ELINK_CHIPSET_3C509, 0 },
 
-	{ PCMCIA_PRODUCT_3COM_3CCFEM556BI,	ELINK_CHIPSET_ROADRUNNER,
-	  ELINK_FLAGS_MII,			0,
-	  PCMCIA_STR_3COM_3CCFEM556BI },
+	{ { PCMCIA_STR_3COM_3C574,		PCMCIA_VENDOR_3COM,
+	    PCMCIA_PRODUCT_3COM_3C574,		0 },
+	  ELINK_CHIPSET_ROADRUNNER, ELINK_FLAGS_MII },
 
-	{ 0,					0,
-	  0,					0,
-	  NULL },
+	{ { PCMCIA_STR_3COM_3CCFEM556BI,	PCMCIA_VENDOR_3COM,
+	    PCMCIA_PRODUCT_3COM_3CCFEM556BI,	0 },
+	  ELINK_CHIPSET_ROADRUNNER, ELINK_FLAGS_MII },
+
+	{ { PCMCIA_STR_3COM_3C1,		PCMCIA_VENDOR_3COM,
+	    PCMCIA_PRODUCT_3COM_3C1,		0 },
+	  ELINK_CHIPSET_3C509, 0 },
+
+	{ { NULL } }
 };
-
-struct ep_pcmcia_product *ep_pcmcia_lookup __P((struct pcmcia_attach_args *));
-
-struct ep_pcmcia_product *
-ep_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	struct ep_pcmcia_product *epp;
-
-	for (epp = ep_pcmcia_products; epp->epp_name != NULL; epp++)
-		if (pa->product == epp->epp_product &&
-		    pa->pf->number == epp->epp_expfunc)
-			return (epp);
-
-	return (NULL);
-}
 
 int
 ep_pcmcia_match(parent, match, aux)
@@ -200,10 +185,9 @@ ep_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pa->manufacturer != PCMCIA_VENDOR_3COM)
-		return (0);
-
-	if (ep_pcmcia_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa,
+	    (const struct pcmcia_product *)ep_pcmcia_products,
+	    sizeof ep_pcmcia_products[0], NULL) != NULL)
 		return (1);
 
 	return (0);
@@ -215,6 +199,7 @@ ep_pcmcia_enable(sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 	struct pcmcia_function *pf = psc->sc_pf;
+	int error;
 
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pf, IPL_NET, epintr, sc);
@@ -224,7 +209,10 @@ ep_pcmcia_enable(sc)
 		return (1);
 	}
 
-	return (ep_pcmcia_enable1(sc));
+	error = ep_pcmcia_enable1(sc);
+	if (error != 0)
+		pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+	return (error);
 }
 
 int
@@ -262,8 +250,13 @@ ep_pcmcia_disable(sc)
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *) sc;
 
-	ep_pcmcia_disable1(sc);
+	/* 
+	 * We must disestablish the interrupt before disabling the function,
+	 * because on a multifunction card the interrupt disestablishment
+	 * accesses CCR registers.
+	 */
 	pcmcia_intr_disestablish(psc->sc_pf, sc->sc_ih);
+	ep_pcmcia_disable1(sc);
 }
 
 void
@@ -284,7 +277,7 @@ ep_pcmcia_attach(parent, self, aux)
 	struct ep_softc *sc = &psc->sc_ep;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	struct ep_pcmcia_product *epp;
+	const struct ep_pcmcia_product *epp;
 	u_int8_t myla[ETHER_ADDR_LEN];
 	u_int8_t *enaddr = NULL;
 	int i;
@@ -294,21 +287,26 @@ ep_pcmcia_attach(parent, self, aux)
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
-	if (ep_pcmcia_enable1(sc))
+	if (ep_pcmcia_enable1(sc)) {
 		printf(": function enable failed\n");
-
+		goto enable_failed;
+	}
 	sc->enabled = 1;
 
-	if (cfe->num_memspace != 0)
+	if (cfe->num_memspace != 0) {
 		printf(": unexpected number of memory spaces %d should be 0\n",
 		    cfe->num_memspace);
+		goto ioalloc_failed;
+	}
 
-	if (cfe->num_iospace != 1)
+	if (cfe->num_iospace != 1) {
 		printf(": unexpected number of I/O spaces %d should be 1\n",
 		    cfe->num_iospace);
+		goto ioalloc_failed;
+	}
 
 	if (pa->product == PCMCIA_PRODUCT_3COM_3C562) {
-		bus_addr_t maxaddr = (pa->pf->sc->iobase + pa->pf->sc->iosize);
+		bus_addr_t maxaddr = pa->pf->sc->iobase + pa->pf->sc->iosize;
 
 		for (i = pa->pf->sc->iobase; i < maxaddr; i += 0x10) {
 			/*
@@ -323,12 +321,14 @@ ep_pcmcia_attach(parent, self, aux)
 		}
 		if (i >= maxaddr) {
 			printf(": can't allocate i/o space\n");
-			return;
+			goto ioalloc_failed;
 		}
 	} else {
 		if (pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-		    cfe->iospace[0].length, &psc->sc_pcioh))
+		    cfe->iospace[0].length, &psc->sc_pcioh)) {
 			printf(": can't allocate i/o space\n");
+			goto ioalloc_failed;
+		}
 	}
 
 	sc->sc_iot = psc->sc_pcioh.iot;
@@ -338,7 +338,7 @@ ep_pcmcia_attach(parent, self, aux)
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0, cfe->iospace[0].length,
 	    &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
-		return;
+		goto iomap_failed;
 	}
 
 	switch (pa->product) {
@@ -359,11 +359,13 @@ ep_pcmcia_attach(parent, self, aux)
 		break;
 	}
 
-	epp = ep_pcmcia_lookup(pa);
+	epp = (const struct ep_pcmcia_product *)pcmcia_product_lookup(pa,
+            (const struct pcmcia_product *)ep_pcmcia_products,
+            sizeof ep_pcmcia_products[0], NULL);
 	if (epp == NULL)
 		panic("ep_pcmcia_attach: impossible");
 
-	printf(": %s\n", epp->epp_name);
+	printf(": %s\n", epp->epp_product.pp_name);
 
 	sc->bustype = ELINK_BUS_PCMCIA;
 	sc->ep_flags = epp->epp_flags;
@@ -371,11 +373,30 @@ ep_pcmcia_attach(parent, self, aux)
 	sc->enable = ep_pcmcia_enable;
 	sc->disable = ep_pcmcia_disable;
 
-	epconfig(sc, epp->epp_chipset, enaddr);
+	if (epconfig(sc, epp->epp_chipset, enaddr)) {
+		printf("%s: couldn't configure controller\n",
+		    sc->sc_dev.dv_xname);
+		goto config_failed;
+	}
 
 	sc->enabled = 0;
-
 	ep_pcmcia_disable1(sc);
+	return;
+
+ config_failed:
+	/* Unmap our i/o window. */
+	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
+
+ iomap_failed:
+	/* Free our i/o space. */
+	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
+
+ ioalloc_failed:
+	sc->enabled = 0;
+	ep_pcmcia_disable1(sc);
+
+ enable_failed:
+	psc->sc_io_window = -1;
 }
 
 int
@@ -384,6 +405,15 @@ ep_pcmcia_detach(self, flags)
 	int flags;
 {
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *)self;
+	int rv;
+
+	if (psc->sc_io_window == -1)
+		/* Nothing to detach. */
+		return (0);
+
+	rv = ep_detach(self, flags);
+	if (rv != 0)
+		return (rv);
 
 	/* Unmap our i/o window. */
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
@@ -391,16 +421,7 @@ ep_pcmcia_detach(self, flags)
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 
-#ifdef notyet
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(psc->sc_ep.sc_ethercom.ec_if);
 	return (0);
-#else
-	return (EBUSY);
-#endif
 }
 
 int

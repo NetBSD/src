@@ -1,3 +1,5 @@
+/*	$NetBSD: if_wi_ieee.h,v 1.1.4.1 2000/11/20 11:42:45 bouyer Exp $	*/
+
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -29,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi_ieee.h,v 1.1 1999/07/14 22:24:09 sommerfeld Exp $
+ * $FreeBSD: src/sys/i386/include/if_wavelan_ieee.h,v 1.4 1999/12/29 04:33:01 peter Exp $
  */
 
 #ifndef _IF_WAVELAN_IEEE_H
@@ -40,6 +42,8 @@
  * Oslo IETF plenary meeting.
  * The stuff in here should probably go into a generic extension to the
  * ifmedia goop.
+ *
+ * Michael Graff brought over the encryption bits.
  */
 
 /*
@@ -49,14 +53,6 @@
  * ifconfig(8). No, sysctl(2) is not the answer. I said a _simple_
  * interface, didn't I.
  */
-
-#ifndef SIOCSIFGENERIC
-#define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
-#endif
-
-#ifndef SIOCGIFGENERIC
-#define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
-#endif
 
 #ifndef SIOCSWAVELAN
 #define SIOCSWAVELAN	SIOCSIFGENERIC
@@ -87,6 +83,10 @@ struct wi_req {
  */
 #define WI_RID_IFACE_STATS	0x0100
 #define WI_RID_MGMT_XMIT	0x0200
+#ifdef WICACHE
+#define WI_RID_ZERO_CACHE	0x0300
+#define WI_RID_READ_CACHE	0x0400
+#endif
 
 struct wi_80211_hdr {
 	u_int16_t		frame_ctl;
@@ -135,7 +135,27 @@ struct wi_mgmt_hdr {
 	u_int16_t		seq_ctl;
 };
 
-#ifndef _KERNEL
+/* 
+ * Lucent/wavelan IEEE signal strength cache
+ *
+ * driver keeps cache of last
+ * MAXWICACHE packets to arrive including signal strength info.
+ * daemons may read this via ioctl
+ *
+ * Each entry in the wi_sigcache has a unique macsrc.
+ */
+#ifdef WICACHE
+#define	MAXWICACHE	10
+
+struct wi_sigcache {
+	char	macsrc[6];	/* unique MAC address for entry */
+	int	ipsrc;		/* ip address associated with packet */
+	int	signal;		/* signal strength of the packet */
+	int	noise;		/* noise value */
+	int	quality;	/* quality of the packet */
+};
+#endif
+
 struct wi_counters {
 	u_int32_t		wi_tx_unicast_frames;
 	u_int32_t		wi_tx_multicast_frames;
@@ -200,6 +220,15 @@ struct wi_counters {
 #define WI_RID_WDS_ADDR5	0xFC15 /* port 1 MAC of WDS link node */
 #define WI_RID_WDS_ADDR6	0xFC16 /* port 1 MAC of WDS link node */
 #define WI_RID_MCAST_PM_BUF	0xFC17 /* PM buffering of mcast */
+#define WI_RID_ENCRYPTION	0xFC20 /* enable/disable WEP */
+#define WI_RID_AUTHTYPE		0xFC21 /* specify authentication type */
+#define WI_RID_P2_TX_CRYPT_KEY	0xFC23
+#define WI_RID_P2_CRYPT_KEY0	0xFC24
+#define WI_RID_P2_CRYPT_KEY1	0xFC25
+#define WI_RID_MICROWAVE_OVEN	0xFC25
+#define WI_RID_P2_CRYPT_KEY2	0xFC26
+#define WI_RID_P2_CRYPT_KEY3	0xFC27
+#define WI_RID_P2_ENCRYPTION	0xFC28
 
 /*
  * Network parameters, dynamic configuration entities
@@ -231,7 +260,20 @@ struct wi_counters {
 #define WI_RID_TX_RATE4		0xFCA2
 #define WI_RID_TX_RATE5		0xFCA3
 #define WI_RID_TX_RATE6		0xFCA4
+#define WI_RID_DEFLT_CRYPT_KEYS	0xFCB0
+#define WI_RID_TX_CRYPT_KEY	0xFCB1
 #define WI_RID_TICK_TIME	0xFCE0
+
+struct wi_key {
+	u_int16_t		wi_keylen;
+	u_int8_t		wi_keydat[14];
+};
+
+struct wi_ltv_keys {
+	u_int16_t		wi_len;
+	u_int16_t		wi_type;
+	struct wi_key		wi_keys[4];
+};
 
 /*
  * NIC information
@@ -269,7 +311,7 @@ struct wi_counters {
 #define WI_RID_MAX_RX_LIFE	0xFD4B /* max rx frame handling duration */
 #define WI_RID_CF_POLL		0xFD4C /* contention free pollable ind */
 #define WI_RID_AUTH_ALGS	0xFD4D /* auth algorithms available */
-#define WI_RID_AUTH_TYPE	0xFD4E /* availanle auth types */
+#define WI_RID_AUTH_TYPE	0xFD4E /* available auth types */
 #define WI_RID_WEP_AVAIL	0xFD4F /* WEP privacy option available */
 #define WI_RID_CUR_TX_RATE1	0xFD80
 #define WI_RID_CUR_TX_RATE2	0xFD81
@@ -290,7 +332,5 @@ struct wi_counters {
 #define WI_RID_CCA_TIME		0xFDC4 /* clear chan assess time */
 #define WI_RID_MAC_PROC_DELAY	0xFDC5 /* MAC processing delay time */
 #define WI_RID_DATA_RATES	0xFDC6 /* supported data rates */
-#endif
-
 
 #endif

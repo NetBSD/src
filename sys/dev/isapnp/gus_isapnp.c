@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.14 1999/05/18 16:41:07 augustss Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.14.2.1 2000/11/20 11:41:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -192,16 +192,20 @@ gus_isapnp_attach(parent, self, aux)
          * Create our DMA maps.
          */
         if (sc->sc_playdrq != -1) {
+		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_playdrq);
                 if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
-                    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+                    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
                         printf("%s: can't create map for drq %d\n",
                             sc->sc_dev.dv_xname, sc->sc_playdrq);
                         return;
 		      }
 	      }
         if (sc->sc_recdrq != -1) {
+		sc->sc_rec_maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_recdrq);
                 if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
-                    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+                    sc->sc_rec_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
                         printf("%s: can't create map for drq %d\n",
                             sc->sc_dev.dv_xname, sc->sc_recdrq);
                         return;

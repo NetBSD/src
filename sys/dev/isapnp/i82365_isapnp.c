@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isapnp.c,v 1.6 1999/03/22 10:00:11 mycroft Exp $	*/
+/*	$NetBSD: i82365_isapnp.c,v 1.6.8.1 2000/11/20 11:41:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -38,8 +38,6 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
-
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -70,7 +68,7 @@ int pcic_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	pcic_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pcic_isapnp_ca = {
-	sizeof(struct pcic_softc), pcic_isapnp_match, pcic_isapnp_attach
+	sizeof(struct pcic_isa_softc), pcic_isapnp_match, pcic_isapnp_attach
 };
 
 static struct pcmcia_chip_functions pcic_isa_functions = {
@@ -111,6 +109,7 @@ pcic_isapnp_attach(parent, self, aux)
 	void *aux;
 {
 	struct pcic_softc *sc = (void *) self;
+	struct pcic_isa_softc *isc = (void *) self;
 	struct isapnp_attach_args *ipa = aux;
 	isa_chipset_tag_t ic = ipa->ipa_ic;
 	bus_space_tag_t iot = ipa->ipa_iot;
@@ -162,7 +161,7 @@ pcic_isapnp_attach(parent, self, aux)
 	sc->membase = maddr;
 	sc->subregionmask = (1 << (msize / PCIC_MEM_PAGESIZE)) - 1;
 
-	sc->intr_est = ic;
+	isc->sc_ic = ic;
 	sc->pct = (pcmcia_chipset_tag_t) & pcic_isa_functions;
 
 	sc->iot = iot;
@@ -176,31 +175,16 @@ pcic_isapnp_attach(parent, self, aux)
 	 * scarce, shareable, and for PCIC controllers, very infrequent.
 	 */
 
-	if (ipa->ipa_nirq > 0) {
+	if (ipa->ipa_nirq > 0)
 		sc->irq = ipa->ipa_irq[0].num;
-	} else {
-		if (isa_intr_alloc(ic,
-				   PCIC_CSC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask,
-				   IST_EDGE, &sc->irq)) {
-			printf("\n%s: can't allocate interrupt\n",
-			       sc->dev.dv_xname);
-			return;
-		}
-		printf(" irq %d", sc->irq);
-	}
+	else
+		sc->irq = IRQUNK;
+
 	printf("\n");
 
 	pcic_attach(sc);
-
-	pcic_isa_bus_width_probe(sc, iot, ioh, ipa->ipa_io[0].base, ipa->ipa_io[0].length);
-
-	sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
-	    pcic_intr, sc);
-	if (sc->ih == NULL) {
-		printf("%s: can't establish interrupt\n", sc->dev.dv_xname);
-		return;
-	}
-
+	pcic_isa_bus_width_probe(sc, iot, ioh, ipa->ipa_io[0].base,
+	    ipa->ipa_io[0].length);
 	pcic_attach_sockets(sc);
-
+	config_interrupts(self, pcic_isa_config_interrupts);
 }

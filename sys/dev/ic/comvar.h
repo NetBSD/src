@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.30 1999/02/03 23:20:33 mycroft Exp $	*/
+/*	$NetBSD: comvar.h,v 1.30.8.1 2000/11/20 11:40:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,15 +35,19 @@
 #include <sys/rnd.h>
 #endif
 
+#include <sys/callout.h>
 #include <sys/timepps.h>
-
-int comcnattach __P((bus_space_tag_t, int, int, int, tcflag_t));
-
-#ifdef KGDB
-int com_kgdb_attach __P((bus_space_tag_t, int, int, int, tcflag_t));
+#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
+#include <sys/lock.h>
 #endif
 
-int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
+int comcnattach __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t));
+
+#ifdef KGDB
+int com_kgdb_attach __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t));
+#endif
+
+int com_is_console __P((bus_space_tag_t, bus_addr_t, bus_space_handle_t *));
 
 /* Hardware flag masks */
 #define	COM_HW_NOIEN	0x01
@@ -53,6 +57,7 @@ int com_is_console __P((bus_space_tag_t, int, bus_space_handle_t *));
 #define	COM_HW_DEV_OK	0x20
 #define	COM_HW_CONSOLE	0x40
 #define	COM_HW_KGDB	0x80
+#define	COM_HW_TXFIFO_DISABLE	0x100
 
 /* Buffer size for character buffer */
 #define	COM_RING_SIZE	2048
@@ -62,7 +67,9 @@ struct com_softc {
 	void *sc_si;
 	struct tty *sc_tty;
 
-	int sc_iobase;			/* XXX ISA-centric name */
+	struct callout sc_diag_callout;
+
+	bus_addr_t sc_iobase;			/* XXX ISA-centric name */
 	int sc_frequency;
 
 	bus_space_tag_t sc_iot;
@@ -121,6 +128,9 @@ struct com_softc {
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;
 #endif
+#if (defined(MULTIPROCESSOR) || defined(LOCKDEBUG)) && defined(COM_MPLOCK)
+	struct simplelock	sc_lock;
+#endif
 };
 
 /* Macros to clear/set/test flags. */
@@ -131,15 +141,12 @@ struct com_softc {
 int comprobe1 __P((bus_space_tag_t, bus_space_handle_t));
 int comintr __P((void *));
 void com_attach_subr __P((struct com_softc *));
-int cominit __P((bus_space_tag_t, int, int, int, tcflag_t,
+int cominit __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
 	bus_space_handle_t *));
 int com_detach __P((struct device *, int));
 int com_activate __P((struct device *, enum devact));
 
 #ifndef __GENERIC_SOFT_INTERRUPTS
-#if defined(arc)
-#define	__NO_SOFT_SERIAL_INTERRUPT
-#endif
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 #define	IPL_SERIAL	IPL_TTY
 #define	splserial()	spltty()

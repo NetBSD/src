@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnwreg.h,v 1.1 1999/01/01 19:30:03 christos Exp $	*/
+/*	$NetBSD: if_cnwreg.h,v 1.1.8.1 2000/11/20 11:42:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 
 /* I/O area */
 #define CNW_IO_SIZE		0x10
+/* I/O area can be accessed via mapped memory too */
+#define CNW_IOM_ADDR		0x28000
+#define CNW_IOM_SIZE		CNW_IO_SIZE
+#define CNW_IOM_OFF		(CNW_IOM_ADDR - CNW_MEM_ADDR)
 
 /* I/O registers */
 #define CNW_REG_COR		0x0
@@ -72,6 +76,8 @@
 #define CNW_EREG_RSER		0x120
 #    define CNW_RSER_RXBIG		0x02
 #    define CNW_RSER_RXCRC		0x04
+#    define CNW_RSER_RXOVERRUN		0x08
+#    define CNW_RSER_RXOVERFLOW		0x10
 #    define CNW_RSER_RXERR		0x40
 #    define CNW_RSER_RXAVAIL		0x80
 #define CNW_EREG_RSERW		0x124
@@ -97,6 +103,16 @@
 #define CNW_EREG_NI		0x16e
 #define CNW_EREG_CRBP		0x17a
 #define CNW_EREG_EC		0x180
+#define CNW_EREG_STAT_RXERR	0x184
+#define CNW_EREG_STAT_FRAME	0x186
+#define CNW_EREG_STAT_IBEAT	0x188
+#define CNW_EREG_STAT_RXBUF	0x18e
+#define CNW_EREG_STAT_RXMULTI	0x190
+#define CNW_EREG_STAT_TXRETRY	0x192
+#define CNW_EREG_STAT_TXABORT	0x194
+#define CNW_EREG_STAT_OBEAT	0x198
+#define CNW_EREG_STAT_TXOK	0x19a
+#define CNW_EREG_STAT_TXSENT	0x19c
 
 /*
  * Commands used in the extended command buffer

@@ -1,7 +1,7 @@
-/*	$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $	*/
+/*	$NetBSD: dpt_pci.c,v 1.2.2.1 2000/11/20 11:42:18 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
+ * Copyright (c) 1999 Andrew Doran <ad@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.2 1999/09/29 17:33:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_pci.c,v 1.2.2.1 2000/11/20 11:42:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,9 @@ dpt_pci_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa;
+	
+	pa = (struct pci_attach_args *)aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DPT && 
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DPT_SC_RAID)
@@ -89,6 +91,7 @@ dpt_pci_attach(parent, self, aux)
 	struct dpt_softc *sc;
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
+	bus_space_handle_t ioh;
 	const char *intrstr;
 	pcireg_t csr;
 
@@ -98,8 +101,14 @@ dpt_pci_attach(parent, self, aux)
 	printf(": ");
 
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot, 
-	    &sc->sc_ioh, NULL, NULL)) {
+	    &ioh, NULL, NULL)) {
 		printf("can't map i/o space\n");
+		return;
+	}
+	
+	/* Need to map in by 16 registers */
+	if (bus_space_subregion(sc->sc_iot, ioh, 16, 16, &sc->sc_ioh)) {
+		printf("can't map i/o subregion\n");
 		return;
 	}
 
@@ -132,7 +141,7 @@ dpt_pci_attach(parent, self, aux)
 		    sc->sc_dv.dv_xname);
 		return;	
 	}
-
-	/* Now attach to the bus-independant code */
+	
+	/* Now attach to the bus-independent code */
 	dpt_init(sc, intrstr);
 }

@@ -1,7 +1,7 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.20 1999/09/30 17:48:25 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.20.2.1 2000/11/20 11:42:24 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,6 +45,7 @@
 #include "opt_inet.h"
 #include "opt_ns.h"
 #include "bpfilter.h"
+#include "opt_tlp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -55,6 +56,8 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+
+#include <machine/endian.h>
  
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -79,6 +82,7 @@
 #include <machine/intr.h>
 
 #include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/ic/tulipreg.h>
 #include <dev/ic/tulipvar.h>
@@ -95,6 +99,7 @@
 #define	TULIP_PCI_CFDA		0x40	/* configuration driver area */
 
 #define	CFDA_SLEEP		0x80000000	/* sleep mode */
+#define	CFDA_SNOOZE		0x40000000	/* snooze mode */
 
 struct tulip_pci_softc {
 	struct tulip_softc sc_tulip;	/* real Tulip softc */
@@ -131,63 +136,63 @@ const struct tulip_pci_product {
 	u_int32_t	tpp_vendor;	/* PCI vendor ID */
 	u_int32_t	tpp_product;	/* PCI product ID */
 	tulip_chip_t	tpp_chip;	/* base Tulip chip type */
-	int		tpp_pmreg;	/* power management register offset */
 } tlp_pci_products[] = {
 #ifdef TLP_MATCH_21040
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21040,
-	  TULIP_CHIP_21040,		0 },
+	  TULIP_CHIP_21040 },
 #endif
 #ifdef TLP_MATCH_21041
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21041,
-	  TULIP_CHIP_21041,		0 },
+	  TULIP_CHIP_21041 },
 #endif
 #ifdef TLP_MATCH_21140
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21140,
-	  TULIP_CHIP_21140,		0 },
+	  TULIP_CHIP_21140 },
 #endif
 #ifdef TLP_MATCH_21142
 	{ PCI_VENDOR_DEC,		PCI_PRODUCT_DEC_21142,
-	  TULIP_CHIP_21142,		0 },
+	  TULIP_CHIP_21142 },
 #endif
 
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C168,
-	  TULIP_CHIP_82C168,		0 },
+	  TULIP_CHIP_82C168 },
 
 	/*
 	 * Note: This is like a MX98725 with Wake-On-LAN and a
 	 * 128-bit multicast hash table.
 	 */
 	{ PCI_VENDOR_LITEON,		PCI_PRODUCT_LITEON_82C115,
-	  TULIP_CHIP_82C115,		0x48 },
+	  TULIP_CHIP_82C115 },
 
 	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX98713,
-	  TULIP_CHIP_MX98713,		0 },
+	  TULIP_CHIP_MX98713 },
 	{ PCI_VENDOR_MACRONIX,		PCI_PRODUCT_MACRONIX_MX987x5,
-	  TULIP_CHIP_MX98715,		0x48 },
+	  TULIP_CHIP_MX98715 },
 
 	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100TX,
-	  TULIP_CHIP_MX98713,		0 },
+	  TULIP_CHIP_MX98713 },
 
 	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C840F,
-	  TULIP_CHIP_WB89C840F,		0 },
+	  TULIP_CHIP_WB89C840F },
 	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_RL100ATX,
-	  TULIP_CHIP_WB89C840F,		0 },
+	  TULIP_CHIP_WB89C840F },
 
-#if 0
 	{ PCI_VENDOR_DAVICOM,		PCI_PRODUCT_DAVICOM_DM9102,
-	  TULIP_CHIP_DM9102,		0 },
-#endif
+	  TULIP_CHIP_DM9102 },
 
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
-	  TULIP_CHIP_AL981,		0xc4 },
+	  TULIP_CHIP_AL981 },
+
+	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN985,
+	  TULIP_CHIP_AN985 },
 
 #if 0
 	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
-	  TULIP_CHIP_AX88140,		0 },
+	  TULIP_CHIP_AX88140 },
 #endif
 
 	{ 0,				0,
-	  TULIP_CHIP_INVALID,		0 },
+	  TULIP_CHIP_INVALID },
 };
 
 struct tlp_pci_quirks {
@@ -206,6 +211,9 @@ void	tlp_pci_smc_21040_quirks __P((struct tulip_pci_softc *,
 void	tlp_pci_cogent_21040_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
 void	tlp_pci_accton_21040_quirks __P((struct tulip_pci_softc *,
+	    const u_int8_t *));
+
+void	tlp_pci_cobalt_21142_quirks __P((struct tulip_pci_softc *,
 	    const u_int8_t *));
 
 const struct tlp_pci_quirks tlp_pci_21040_quirks[] = {
@@ -232,7 +240,12 @@ const struct tlp_pci_quirks tlp_pci_21140_quirks[] = {
 	{ NULL,				{ 0, 0, 0 } }
 };
 
-const char *tlp_pci_chip_names[] = TULIP_CHIP_NAMES;
+const struct tlp_pci_quirks tlp_pci_21142_quirks[] = {
+	{ tlp_pci_dec_quirks,		{ 0x08, 0x00, 0x2b } },
+	{ tlp_pci_dec_quirks,		{ 0x00, 0x00, 0xf8 } },
+	{ tlp_pci_cobalt_21142_quirks,	{ 0x00, 0x10, 0xe0 } },
+	{ NULL,				{ 0, 0, 0 } }
+};
 
 int	tlp_pci_shared_intr __P((void *));
 
@@ -249,7 +262,7 @@ tlp_pci_lookup(pa)
 	const struct tulip_pci_product *tpp;
 
 	for (tpp = tlp_pci_products;
-	     tlp_pci_chip_names[tpp->tpp_chip] != NULL;
+	     tlp_chip_names[tpp->tpp_chip] != NULL;
 	     tpp++) {
 		if (PCI_VENDOR(pa->pa_id) == tpp->tpp_vendor &&
 		    PCI_PRODUCT(pa->pa_id) == tpp->tpp_product)
@@ -341,6 +354,7 @@ tlp_pci_attach(parent, self, aux)
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val;
 	pcireg_t reg;
+	int pmreg;
 
 	sc->sc_devno = pa->pa_device;
 	psc->sc_pc = pa->pa_pc;
@@ -360,6 +374,12 @@ tlp_pci_attach(parent, self, aux)
 	 * followed by a 4 byte pad).
 	 */
 	sc->sc_regshift = 3;
+
+	/*
+	 * No power management hooks.
+	 * XXX Maybe we should add some!
+	 */
+	sc->sc_flags |= TULIPF_ENABLED;
 
 	/*
 	 * Get revision info, and set some chip-specific variables.
@@ -389,6 +409,8 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_MX98715:
 		if (sc->sc_rev >= 0x20)
 			sc->sc_chip = TULIP_CHIP_MX98715A;
+ 		if (sc->sc_rev >= 0x25)
+ 			sc->sc_chip = TULIP_CHIP_MX98715AEC_X;
 		if (sc->sc_rev >= 0x30)
 			sc->sc_chip = TULIP_CHIP_MX98725;
 		break;
@@ -397,9 +419,35 @@ tlp_pci_attach(parent, self, aux)
 		sc->sc_regshift = 2;
 		break;
 
+	case TULIP_CHIP_AN985:
+		/*
+		 * The AN983 and AN985 are very similar, and are
+		 * differentiated by a "signature" register that
+		 * is like, but not identical, to a PCI ID register.
+		 */
+		reg = pci_conf_read(pc, pa->pa_tag, 0x80);
+		switch (reg) {
+		case 0x09811317:
+			sc->sc_chip = TULIP_CHIP_AN985;
+			break;
+
+		case 0x09851317:
+			sc->sc_chip = TULIP_CHIP_AN983;
+			break;
+
+		default:
+			/* Unknown -- use default. */
+		}
+		break;
+
 	case TULIP_CHIP_AX88140:
 		if (sc->sc_rev >= 0x10)
 			sc->sc_chip = TULIP_CHIP_AX88141;
+		break;
+
+	case TULIP_CHIP_DM9102:
+		if (sc->sc_rev >= 0x30)
+			sc->sc_chip = TULIP_CHIP_DM9102A;
 		break;
 
 	default:
@@ -407,7 +455,7 @@ tlp_pci_attach(parent, self, aux)
 	}
 
 	printf(": %s Ethernet, pass %d.%d\n",
-	    tlp_pci_chip_names[sc->sc_chip],
+	    tlp_chip_names[sc->sc_chip],
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	switch (sc->sc_chip) {
@@ -438,43 +486,50 @@ tlp_pci_attach(parent, self, aux)
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21140:
 	case TULIP_CHIP_21140A:
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98715AEC_X:
 	case TULIP_CHIP_MX98725:
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
 		/*
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
 		reg = pci_conf_read(pc, pa->pa_tag, TULIP_PCI_CFDA);
-		if (reg & CFDA_SLEEP)
+		if (reg & (CFDA_SLEEP|CFDA_SNOOZE))
 			pci_conf_write(pc, pa->pa_tag, TULIP_PCI_CFDA,
-			    reg & ~CFDA_SLEEP);
+			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
 		break;
 
 	default:
 		/* Nothing. */
 	}
 
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, 0, 0)) {
-		if (tpp->tpp_pmreg == 0) {
-			printf("%s: don't know location of PMCSR for this "
-			    "chip\n", sc->sc_dev.dv_xname);
-			return;
-		}
-		reg = pci_conf_read(pc, pa->pa_tag, tpp->tpp_pmreg) & 0x3;
-		if (reg == 3) {
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		reg = pci_conf_read(pc, pa->pa_tag, pmreg + 4);
+		switch (reg & PCI_PMCSR_STATE_MASK) {
+		case PCI_PMCSR_STATE_D1:
+		case PCI_PMCSR_STATE_D2:
+			printf(": waking up from power state D%d\n%s",
+			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
+			break;
+		case PCI_PMCSR_STATE_D3:
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
+			printf(": unable to wake up from power state D3, "
+			       "reboot required.\n");
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
 			return;
-		}
-		if (reg != 0) {
-			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg);
-			pci_conf_write(pc, pa->pa_tag, tpp->tpp_pmreg, 0);
 		}
 	}
 
@@ -515,13 +570,24 @@ tlp_pci_attach(parent, self, aux)
 	    PCI_BHLC_REG));
 
 	/*
+	 * Get PCI data moving command info.
+	 */
+	if (pa->pa_flags & PCI_FLAGS_MRL_OKAY)
+		sc->sc_flags |= TULIPF_MRL;
+	if (pa->pa_flags & PCI_FLAGS_MRM_OKAY)
+		sc->sc_flags |= TULIPF_MRM;
+	if (pa->pa_flags & PCI_FLAGS_MWI_OKAY)
+		sc->sc_flags |= TULIPF_MWI;
+
+	/*
 	 * Read the contents of the Ethernet Address ROM/SROM.
 	 */
-	memset(sc->sc_srom, 0, sizeof(sc->sc_srom));
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
+		sc->sc_srom_addrbits = 6;
+		sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF, M_NOWAIT);
 		TULIP_WRITE(sc, CSR_MIIROM, MIIROM_SROMCS);
-		for (i = 0; i < sizeof(sc->sc_srom); i++) {
+		for (i = 0; i < TULIP_ROM_SIZE(6); i++) {
 			for (j = 0; j < 10000; j++) {
 				val = TULIP_READ(sc, CSR_MIIROM);
 				if ((val & MIIROM_DN) == 0)
@@ -534,16 +600,17 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_82C168:
 	case TULIP_CHIP_82C169:
 	    {
-		u_int16_t *rombuf = (u_int16_t *)sc->sc_srom;
+		sc->sc_srom_addrbits = 2;
+		sc->sc_srom = malloc(TULIP_ROM_SIZE(2), M_DEVBUF, M_NOWAIT);
 
 		/*
 		 * The Lite-On PNIC stores the Ethernet address in
 		 * the first 3 words of the EEPROM.  EEPROM access
 		 * is not like the other Tulip chips.
 		 */
-		for (i = 0; i < 3; i++) {
+		for (i = 0; i < 6; i += 2) {
 			TULIP_WRITE(sc, CSR_PNIC_SROMCTL,
-			    PNIC_SROMCTL_READ | i);
+			    PNIC_SROMCTL_READ | (i >> 1));
 			for (j = 0; j < 500; j++) {
 				delay(2);
 				val = TULIP_READ(sc, CSR_MIIROM);
@@ -555,22 +622,17 @@ tlp_pci_attach(parent, self, aux)
 				    sc->sc_dev.dv_xname);
 				return;
 			}
-			rombuf[i] = bswap16(val & PNIC_MIIROM_DATA);
+			val &= PNIC_MIIROM_DATA;
+			sc->sc_srom[i] = val >> 8;
+			sc->sc_srom[i + 1] = val & 0xff;
 		}
 		break;
 	    }
 
 	default:
-		tlp_read_srom(sc, 0, sizeof(sc->sc_srom) >> 1, sc->sc_srom);
-#if 0
-		printf("SROM CONTENTS:");
-		for (i = 0; i < sizeof(sc->sc_srom); i++) {
-			if ((i % 8) == 0)
-				printf("\n\t");
-			printf("0x%02x ", sc->sc_srom[i]);
-		}
-		printf("\n");
-#endif
+		if (tlp_read_srom(sc) == 0)
+			goto cant_cope;
+		break;
 	}
 
 	/*
@@ -590,11 +652,8 @@ tlp_pci_attach(parent, self, aux)
 		/*
 		 * Parse the Ethernet Address ROM.
 		 */
-		if (tlp_parse_old_srom(sc, enaddr) == 0) {
-			printf("%s: unable to decode Ethernet Address ROM\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
+		if (tlp_parse_old_srom(sc, enaddr) == 0)
+			goto cant_cope;
 
 		/*
 		 * If we have a slaved ROM, adjust the Ethernet address.
@@ -629,11 +688,8 @@ tlp_pci_attach(parent, self, aux)
 			 * Not an ISV SROM; try the old DEC Ethernet Address
 			 * ROM format.
 			 */
-			if (tlp_parse_old_srom(sc, enaddr) == 0) {
-				printf("%s: unable to decode Ethernet "
-				    "Address ROM\n", sc->sc_dev.dv_xname);
-				return;
-			}
+			if (tlp_parse_old_srom(sc, enaddr) == 0)
+				goto cant_cope;
 		}
 
 		/*
@@ -656,11 +712,8 @@ tlp_pci_attach(parent, self, aux)
 			 * Not an ISV SROM; try the old DEC Ethernet Address
 			 * ROM format.
 			 */
-			if (tlp_parse_old_srom(sc, enaddr) == 0) {
-				printf("%s: unable to decode Ethernet "
-				    "Address ROM\n", sc->sc_dev.dv_xname);
-				return;
-			}
+			if (tlp_parse_old_srom(sc, enaddr) == 0)
+				goto cant_cope;
 		} else {
 			/*
 			 * We start out with the 2114x ISV media switch.
@@ -674,6 +727,37 @@ tlp_pci_attach(parent, self, aux)
 		 * Deal with any quirks this board might have.
 		 */
 		tlp_pci_get_quirks(psc, enaddr, tlp_pci_21140_quirks);
+
+		/*
+		 * Bail out now if we can't deal with this board.
+		 */
+		if (sc->sc_mediasw == NULL)
+			goto cant_cope;
+		break;
+
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
+		/* Check for new format SROM. */
+		if (tlp_isv_srom_enaddr(sc, enaddr) == 0) {
+			/*
+			 * Not an ISV SROM; try the old DEC Ethernet Address
+			 * ROM format.
+			 */
+			if (tlp_parse_old_srom(sc, enaddr) == 0)
+				goto cant_cope;
+		} else {
+			/*
+			 * We start out with the 2114x ISV media switch.
+			 * When we search for quirks, we may change to
+			 * a different switch.
+			 */
+			sc->sc_mediasw = &tlp_2114x_isv_mediasw;
+		}
+
+		/*
+		 * Deal with any quirks this board might have.
+		 */
+		tlp_pci_get_quirks(psc, enaddr, tlp_pci_21142_quirks);
 
 		/*
 		 * Bail out now if we can't deal with this board.
@@ -727,6 +811,7 @@ tlp_pci_attach(parent, self, aux)
 
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98715AEC_X:
 	case TULIP_CHIP_MX98725:
 		/*
 		 * The MX98713A has an MII as well as an internal Nway block,
@@ -769,6 +854,49 @@ tlp_pci_attach(parent, self, aux)
 		 * special registers.
 		 */
 		sc->sc_mediasw = &tlp_al981_mediasw;
+		break;
+
+	case TULIP_CHIP_AN983:
+	case TULIP_CHIP_AN985:
+		/*
+		 * The ADMtek AN985's Ethernet address is located
+		 * at offset 8 of its EEPROM.
+		 */
+		memcpy(enaddr, &sc->sc_srom[8], ETHER_ADDR_LEN);
+
+		/*
+		 * The ADMtek AN985 can be configured in Single-Chip
+		 * mode or MAC-only mode.  Single-Chip uses the built-in
+		 * PHY, MAC-only has an external PHY (usually HomePNA).
+		 * The selection is based on an EEPROM setting, and both
+		 * PHYs are accessed via MII attached to SIO.
+		 */
+		sc->sc_mediasw = &tlp_sio_mii_mediasw;
+		break;
+
+	case TULIP_CHIP_DM9102:
+	case TULIP_CHIP_DM9102A:
+		/*
+		 * Some boards with the Davicom chip have an ISV
+		 * SROM (mostly DM9102A boards -- trying to describe
+		 * the HomePNA PHY, probably) although the data in
+		 * them is generally wrong.  Check for ISV format
+		 * and grab the Ethernet address that way, and if
+		 * that fails, fall back on grabbing it from an
+		 * observed offset of 20 (which is where it would
+		 * be in an ISV SROM anyhow, tho ISV can cope with
+		 * multi-port boards).
+		 */
+		if (tlp_isv_srom_enaddr(sc, enaddr))
+			memcpy(enaddr, &sc->sc_srom[20], ETHER_ADDR_LEN);
+
+		/*
+		 * Davicom chips all have an internal MII interface
+		 * and a built-in PHY.  DM9102A also has a an external
+		 * MII interface, usually with a HomePNA PHY attached
+		 * to it.
+		 */
+		sc->sc_mediasw = &tlp_dm9102_mediasw;
 		break;
 
 	default:
@@ -1035,4 +1163,40 @@ tlp_pci_asante_21140_reset(sc)
 	TULIP_WRITE(sc, CSR_GPP, 0x8);
 	delay(100);
 	TULIP_WRITE(sc, CSR_GPP, 0);
+}
+
+void	tlp_pci_cobalt_21142_reset __P((struct tulip_softc *));
+
+void
+tlp_pci_cobalt_21142_quirks(psc, enaddr)
+	struct tulip_pci_softc *psc;
+	const u_int8_t *enaddr;
+{
+	struct tulip_softc *sc = &psc->sc_tulip;
+
+	/*
+	 * Cobalt Networks interfaces are just MII-on-SIO.
+	 */
+	sc->sc_reset = tlp_pci_cobalt_21142_reset;
+	sc->sc_mediasw = &tlp_sio_mii_mediasw;
+
+	/*
+	 * The Cobalt systems tend to fall back to store-and-forward
+	 * pretty quickly, so we select that from the beginning to
+	 * avoid initial timeouts.
+	 */
+	sc->sc_txthresh = TXTH_SF;
+}
+
+void
+tlp_pci_cobalt_21142_reset(sc)
+	struct tulip_softc *sc;
+{
+	/*
+	 * Reset PHY.
+	 */
+	TULIP_WRITE(sc, CSR_SIAGEN, SIAGEN_CWE | (1 << 16));
+	delay(10);
+	TULIP_WRITE(sc, CSR_SIAGEN, SIAGEN_CWE);
+	delay(10);
 }

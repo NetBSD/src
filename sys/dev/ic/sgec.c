@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.1 1999/08/08 11:41:29 ragge Exp $ */
+/*      $NetBSD: sgec.c,v 1.1.2.1 2000/11/20 11:40:54 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -174,6 +174,11 @@ sgec_attach(sc)
 		}
 	}
 
+	/* For vmstat -i
+	 */
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+		sc->sc_dev.dv_xname, "intr");
+
 	/*
 	 * Create ring loops of the buffer chains.
 	 * This is only done once.
@@ -310,6 +315,7 @@ zestart(ifp)
 	paddr_t	buffer;
 	struct mbuf *m, *m0;
 	int idx, len, s, i, totlen, error;
+	int old_inq = sc->sc_inq;
 	short orword;
 
 	s = splimp();
@@ -392,7 +398,7 @@ zestart(ifp)
 	if (sc->sc_inq == (TXDESCS - 1))
 		ifp->if_flags |= IFF_OACTIVE;
 
-out:	if (sc->sc_inq)
+out:	if (old_inq < sc->sc_inq)
 		ifp->if_timer = 5; /* If transmit logic dies */
 	splx(s);
 }
@@ -403,7 +409,6 @@ sgec_intr(sc)
 {
 	struct ze_cdata *zc = sc->sc_zedata;
 	struct ifnet *ifp = &sc->sc_if;
-	struct ether_header *eh;
 	struct mbuf *m;
 	int csr, len;
 
@@ -416,36 +421,19 @@ sgec_intr(sc)
 		while ((zc->zc_recv[sc->sc_nextrx].ze_framelen &
 		    ZE_FRAMELEN_OW) == 0) {
 
+			ifp->if_ipackets++;
 			m = sc->sc_rxmbuf[sc->sc_nextrx];
 			len = zc->zc_recv[sc->sc_nextrx].ze_framelen;
 			ze_add_rxbuf(sc, sc->sc_nextrx);
 			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
+			m->m_flags |= M_HASFCS;
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
-			eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
-			if (ifp->if_bpf) {
+			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
-				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-				    ETHER_ADDR_LEN) != 0 &&
-				    ((eh->ether_dhost[0] & 1) == 0)) {
-					m_freem(m);
-					continue;
-				}
-			}
 #endif
-			/*
-			 * ALLMULTI means PROMISC in this driver.
-			 */
-			if ((ifp->if_flags & IFF_ALLMULTI) &&
-			    ((eh->ether_dhost[0] & 1) == 0) &&
-			    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-			    ETHER_ADDR_LEN)) {
-				m_freem(m);
-				continue;
-			}
 			(*ifp->if_input)(ifp, m);
 		}
 
@@ -459,17 +447,20 @@ sgec_intr(sc)
 			if (++sc->sc_lastack == TXDESCS)
 				sc->sc_lastack = 0;
 
-			/* XXX collect statistics */
 			if ((zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_DT) ==
 			    ZE_TDES1_DT_SETUP)
 				continue;
+			/* XXX collect statistics */
+			if (zc->zc_xmit[idx].ze_tdes1 & ZE_TDES1_LS)
+				ifp->if_opackets++;
 			bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[idx]);
 			if (sc->sc_txmbuf[idx]) {
 				m_freem(sc->sc_txmbuf[idx]);
 				sc->sc_txmbuf[idx] = 0;
 			}
 		}
-		ifp->if_timer = 0;
+		if (sc->sc_inq == 0)
+			ifp->if_timer = 0;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		zestart(ifp); /* Put in more in queue */
 	}
@@ -481,7 +472,7 @@ sgec_intr(sc)
  */
 int
 zeioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
@@ -652,6 +643,14 @@ ze_setup(sc)
 			break;
 		}
 	}
+
+	/*
+	 * ALLMULTI implies PROMISC in this driver.
+	 */
+	if (ifp->if_flags & IFF_ALLMULTI)
+		ifp->if_flags |= IFF_PROMISC;
+	else if (ifp->if_pcount == 0)
+		ifp->if_flags &= ~IFF_PROMISC;
 
 	/*
 	 * Fiddle with the receive logic.

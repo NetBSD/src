@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.42 1999/05/06 01:10:28 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.42.2.1 2000/11/20 11:42:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -35,6 +35,8 @@
  * PCI bus autoconfiguration.
  */
 
+#include "opt_pci.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -42,6 +44,12 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
+
+#ifdef PCI_CONFIG_DUMP
+int pci_config_dump = 1;
+#else
+int pci_config_dump = 0;
+#endif
 
 int pcimatch __P((struct device *, struct cfdata *, void *));
 void pciattach __P((struct device *, struct device *, void *));
@@ -55,13 +63,20 @@ struct pci_softc {
 	u_int sc_intrswiz;
 	pcitag_t sc_intrtag;
 	int sc_flags;
+#ifdef __PCI_OFW_BINDING
+	int sc_node;
+#endif
 };
 
 struct cfattach pci_ca = {
 	sizeof(struct pci_softc), pcimatch, pciattach
 };
 
+#ifdef __PCI_OFW_BINDING
+void	pci_ofw_probe_bus __P((struct device *));
+#else
 void	pci_probe_bus __P((struct device *));
+#endif
 int	pciprint __P((void *, const char *));
 int	pcisubmatch __P((struct device *, struct cfdata *, void *));
 
@@ -118,6 +133,19 @@ pcimatch(parent, cf, aux)
 	return 1;
 }
 
+#ifdef __PCI_OFW_BINDING
+void
+pci_ofw_probe_bus(self)
+	struct device *self;
+{
+	struct pci_softc *sc = (struct pci_softc *)self;
+	int node;
+
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) {
+
+	}
+}
+#else
 void
 pci_probe_bus(self)
 	struct device *self;
@@ -184,14 +212,15 @@ pci_probe_bus(self)
 			pa.pa_id = id;
 			pa.pa_class = class;
 
-			/* set up memory and I/O enable flags as appropriate */
-			pa.pa_flags = 0;
-			if ((sc->sc_flags & PCI_FLAGS_IO_ENABLED) &&
-			    (csr & PCI_COMMAND_IO_ENABLE))
-				pa.pa_flags |= PCI_FLAGS_IO_ENABLED;
-			if ((sc->sc_flags & PCI_FLAGS_MEM_ENABLED) &&
-			    (csr & PCI_COMMAND_MEM_ENABLE))
-				pa.pa_flags |= PCI_FLAGS_MEM_ENABLED;
+			/*
+			 * Set up memory, I/O enable, and PCI command flags
+			 * as appropriate.
+			 */
+			pa.pa_flags = sc->sc_flags;
+			if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
+				pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
+			if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
+				pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
 
 			if (bus == 0) {
 				pa.pa_intrswiz = 0;
@@ -219,6 +248,7 @@ pci_probe_bus(self)
 		}
 	}
 }
+#endif
 
 void
 pciattach(parent, self, aux)
@@ -227,28 +257,46 @@ pciattach(parent, self, aux)
 {
 	struct pcibus_attach_args *pba = aux;
 	struct pci_softc *sc = (struct pci_softc *)self;
-	int io_enabled, mem_enabled;
+	int io_enabled, mem_enabled, mrl_enabled, mrm_enabled, mwi_enabled;
+	const char *sep = "";
 
 	pci_attach_hook(parent, self, pba);
 	printf("\n");
 
 	io_enabled = (pba->pba_flags & PCI_FLAGS_IO_ENABLED);
 	mem_enabled = (pba->pba_flags & PCI_FLAGS_MEM_ENABLED);
+	mrl_enabled = (pba->pba_flags & PCI_FLAGS_MRL_OKAY);
+	mrm_enabled = (pba->pba_flags & PCI_FLAGS_MRM_OKAY);
+	mwi_enabled = (pba->pba_flags & PCI_FLAGS_MWI_OKAY);
 
 	if (io_enabled == 0 && mem_enabled == 0) {
 		printf("%s: no spaces enabled!\n", self->dv_xname);
 		return;
 	}
 
+#define	PRINT(s)	do { printf("%s%s", sep, s); sep = ", "; } while (0)
+
 	printf("%s: ", self->dv_xname);
+
 	if (io_enabled)
-		printf("i/o enabled");
-	if (mem_enabled) {
-		if (io_enabled)
-			printf(", ");
-		printf("memory enabled");
+		PRINT("i/o space");
+	if (mem_enabled)
+		PRINT("memory space");
+	printf(" enabled");
+
+	if (mrl_enabled || mrm_enabled || mwi_enabled) {
+		if (mrl_enabled)
+			PRINT("rd/line");
+		if (mrm_enabled)
+			PRINT("rd/mult");
+		if (mwi_enabled)
+			PRINT("wr/inv");
+		printf(" ok");
 	}
+
 	printf("\n");
+
+#undef PRINT
 
 	sc->sc_iot = pba->pba_iot;
 	sc->sc_memt = pba->pba_memt;
@@ -259,8 +307,13 @@ pciattach(parent, self, aux)
 	sc->sc_intrswiz = pba->pba_intrswiz;
 	sc->sc_intrtag = pba->pba_intrtag;
 	sc->sc_flags = pba->pba_flags;
+#ifdef __PCI_OFW_BINDING
+	sc->sc_node = pba->pba_node;
 
+	pci_ofw_probe_bus(self);
+#else
 	pci_probe_bus(self);
+#endif
 }
 
 int
@@ -268,47 +321,45 @@ pciprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	register struct pci_attach_args *pa = aux;
+	struct pci_attach_args *pa = aux;
 	char devinfo[256];
-#if 0
 	const struct pci_quirkdata *qd;
-#endif
 
 	if (pnp) {
 		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
 		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
-#if 0
-	printf(": ");
-	pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
-	if (!pnp)
-		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
-	printf("%s at %s", devinfo, pnp ? pnp : "?");
-	printf(" dev %d function %d (", pa->pa_device, pa->pa_function);
+	if (pci_config_dump) {
+		printf(": ");
+		pci_conf_print(pa->pa_pc, pa->pa_tag, NULL);
+		if (!pnp)
+			pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
+		printf("%s at %s", devinfo, pnp ? pnp : "?");
+		printf(" dev %d function %d (", pa->pa_device, pa->pa_function);
 #ifdef __i386__
-	printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
-	    *(long *)&pa->pa_tag, *(long *)&pa->pa_intrtag,
-	    (long)pa->pa_intrswiz, (long)pa->pa_intrpin);
+		printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
+		    *(long *)&pa->pa_tag, *(long *)&pa->pa_intrtag,
+		    (long)pa->pa_intrswiz, (long)pa->pa_intrpin);
 #else
-	printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
-	    (long)pa->pa_tag, (long)pa->pa_intrtag, (long)pa->pa_intrswiz,
-	    (long)pa->pa_intrpin);
+		printf("tag %#lx, intrtag %#lx, intrswiz %#lx, intrpin %#lx",
+		    (long)pa->pa_tag, (long)pa->pa_intrtag, (long)pa->pa_intrswiz,
+		    (long)pa->pa_intrpin);
 #endif
-	printf(", i/o %s, mem %s,",
-	    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "on" : "off",
-	    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "on" : "off");
-	qd = pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
-	    PCI_PRODUCT(pa->pa_id));
-	if (qd == NULL) {
-		printf(" no quirks");
-	} else {
-		bitmask_snprintf(qd->quirks,
-		    "\20\1multifn", devinfo, sizeof (devinfo));
-		printf(" quirks %s", devinfo);
+		printf(", i/o %s, mem %s,",
+		    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "on" : "off",
+		    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "on" : "off");
+		qd = pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
+		    PCI_PRODUCT(pa->pa_id));
+		if (qd == NULL) {
+			printf(" no quirks");
+		} else {
+			bitmask_snprintf(qd->quirks,
+			    "\20\1multifn", devinfo, sizeof (devinfo));
+			printf(" quirks %s", devinfo);
+		}
+		printf(")");
 	}
-	printf(")");
-#endif
 	return (UNCONF);
 }
 
@@ -344,7 +395,20 @@ pci_get_capability(pc, tag, capid, offset, value)
 	if (!(reg & PCI_STATUS_CAPLIST_SUPPORT))
 		return (0);
 
-	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, PCI_CAPLISTPTR_REG));
+	/* Determine the Capability List Pointer register to start with. */
+	reg = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	switch (PCI_HDRTYPE_TYPE(reg)) {
+	case 0:	/* standard device header */
+		ofs = PCI_CAPLISTPTR_REG;
+		break;
+	case 2:	/* PCI-CardBus Bridge header */
+		ofs = PCI_CARDBUS_CAPLISTPTR_REG;
+		break;
+	default:
+		return (0);
+	}
+
+	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, ofs));
 	while (ofs != 0) {
 #ifdef DIAGNOSTIC
 		if ((ofs & 3) || (ofs < 0x40))

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.117 1999/09/23 11:53:13 kleink Exp $	*/
+/*	$NetBSD: audio.c,v 1.117.2.1 2000/11/20 11:39:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -82,9 +82,6 @@
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
 
-#include <vm/vm.h>
-#include <vm/vm_prot.h>
-
 #include <machine/endian.h>
 
 #ifdef AUDIO_DEBUG
@@ -107,13 +104,13 @@ int	audio_open __P((dev_t, struct audio_softc *, int, int, struct proc *));
 int	audio_close __P((struct audio_softc *, int, int, struct proc *));
 int	audio_read __P((struct audio_softc *, struct uio *, int));
 int	audio_write __P((struct audio_softc *, struct uio *, int));
-int	audio_ioctl __P((struct audio_softc *, int, caddr_t, int, struct proc *));
+int	audio_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *));
 int	audio_poll __P((struct audio_softc *, int, struct proc *));
-int	audio_mmap __P((struct audio_softc *, int, int));
+paddr_t	audio_mmap __P((struct audio_softc *, off_t, int));
 
 int	mixer_open __P((dev_t, struct audio_softc *, int, int, struct proc *));
 int	mixer_close __P((struct audio_softc *, int, int, struct proc *));
-int	mixer_ioctl __P((struct audio_softc *, int, caddr_t, int, struct proc *));
+int	mixer_ioctl __P((struct audio_softc *, u_long, caddr_t, int, struct proc *));
 static	void mixer_remove __P((struct audio_softc *, struct proc *p));
 static	void mixer_signal __P((struct audio_softc *));
     
@@ -217,7 +214,8 @@ audioattach(parent, self, aux)
 	void *hdlp = sa->hdl;
 	int error;
 	mixer_devinfo_t mi;
-	int iclass, oclass;
+	int iclass, oclass, props;
+	const char *sep = "";
 
 #ifdef DIAGNOSTIC
 	if (hwp == 0 ||
@@ -240,10 +238,23 @@ audioattach(parent, self, aux)
         }
 #endif
 
-	if (hwp->get_props(hdlp) & AUDIO_PROP_FULLDUPLEX)
-		printf(": full duplex\n");
+#define	PRINT(s)	do { printf("%s%s", sep, s); sep = ", "; } while (0)
+
+	props = hwp->get_props(hdlp);
+
+	if (props & AUDIO_PROP_FULLDUPLEX)
+		PRINT(": full duplex");
 	else
-		printf(": half duplex\n");
+		PRINT(": half duplex");
+
+	if (props & AUDIO_PROP_MMAP)
+		PRINT("mmap");
+	if (props & AUDIO_PROP_INDEPENDENT)
+		PRINT("independent");
+
+	printf("\n");
+
+#undef PRINT
 
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
@@ -279,10 +290,12 @@ audioattach(parent, self, aux)
 
 	iclass = oclass = -1;
 	sc->sc_inports.index = -1;
+	sc->sc_inports.master = -1;
 	sc->sc_inports.nports = 0;
 	sc->sc_inports.isenum = 0;
 	sc->sc_inports.allports = 0;
 	sc->sc_outports.index = -1;
+	sc->sc_outports.master = -1;
 	sc->sc_outports.nports = 0;
 	sc->sc_outports.isenum = 0;
 	sc->sc_outports.allports = 0;
@@ -310,8 +323,10 @@ audioattach(parent, self, aux)
 		    (strcmp(mi.label.name, AudioNmonitor) == 0))
 			sc->sc_monitor_port = mi.index;
 	}
-	DPRINTF(("audio_attach: inputs ports=0x%x, output ports=0x%x\n",
-		 sc->sc_inports.allports, sc->sc_outports.allports));
+	DPRINTF(("audio_attach: inputs ports=0x%x, input master=%d, "
+		 "output ports=0x%x, output master=%d\n",
+		 sc->sc_inports.allports, sc->sc_inports.master,
+		 sc->sc_outports.allports, sc->sc_outports.master));
 }
 
 int
@@ -367,7 +382,10 @@ audiodetach(self, flags)
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
-	vdevgone(maj, mn, mn, VCHR);
+	vdevgone(maj, mn | SOUND_DEVICE,    mn | SOUND_DEVICE, VCHR);
+	vdevgone(maj, mn | AUDIO_DEVICE,    mn | AUDIO_DEVICE, VCHR);
+	vdevgone(maj, mn | AUDIOCTL_DEVICE, mn | AUDIOCTL_DEVICE, VCHR);
+	vdevgone(maj, mn | MIXER_DEVICE,    mn | MIXER_DEVICE, VCHR);
 
 	return (0);
 }
@@ -537,12 +555,11 @@ audioopen(dev, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
-	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc;
 	int error;
 
-	if (unit >= audio_cd.cd_ndevs ||
-	    (sc = audio_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&audio_cd, AUDIOUNIT(dev));
+	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_dying)
@@ -603,13 +620,12 @@ audioread(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc;
 	int error;
 
-	if (unit >= audio_cd.cd_ndevs ||
-	    (sc = audio_cd.cd_devs[unit]) == NULL)
-		return ENXIO;
+	sc = device_lookup(&audio_cd, AUDIOUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -639,13 +655,12 @@ audiowrite(dev, uio, ioflag)
 	struct uio *uio;
 	int ioflag;
 {
-	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc;
 	int error;
 
-	if (unit >= audio_cd.cd_ndevs ||
-	    (sc = audio_cd.cd_devs[unit]) == NULL)
-		return ENXIO;
+	sc = device_lookup(&audio_cd, AUDIOUNIT(dev));
+	if (sc == NULL)
+		return (ENXIO);
 
 	if (sc->sc_dying)
 		return (EIO);
@@ -735,14 +750,15 @@ audiopoll(dev, events, p)
 	return (error);
 }
 
-int
+paddr_t
 audiommap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
-	int error;
+	paddr_t error;
 
 	if (sc->sc_dying)
 		return (-1);
@@ -877,7 +893,7 @@ audio_sleep_timo(chan, label, timo)
 	st = tsleep(chan, PWAIT | PCATCH, label, timo);
 	*chan = 0;
 #ifdef AUDIO_DEBUG
-	if (st != 0)
+	if (st != 0 && st != EINTR)
 	    printf("audio_sleep: woke up st=%d\n", st);
 #endif
 	return (st);
@@ -1245,13 +1261,27 @@ audio_read(sc, uio, ioflag)
 		if (n < cc)
 			cc = n;	/* don't read beyond end of buffer */
 		
+		if (sc->sc_rparams.factor != 1) {
+			/* Compensate for software coding expansion factor. */
+			n /= sc->sc_rparams.factor;
+			cc /= sc->sc_rparams.factor;
+		}
+ 
 		if (uio->uio_resid < cc)
 			cc = uio->uio_resid; /* and no more than we want */
 
 		if (sc->sc_rparams.sw_code)
 			sc->sc_rparams.sw_code(sc->hw_hdl, outp, cc);
+
 		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
+		n = uio->uio_resid;
 		error = uiomove(outp, cc, uio);
+		cc = n - uio->uio_resid; /* number of bytes actually moved */
+		if (sc->sc_rparams.factor != 1) {
+			/* Adjust count with expansion. */
+			cc *= sc->sc_rparams.factor;
+		}
+
 		used -= cc;
 		outp += cc;
 		if (outp >= cb->end)
@@ -1311,6 +1341,12 @@ audio_calc_blksize(sc, mode)
 	ROUNDSIZE(bs);
 	if (hw->round_blocksize)
 		bs = hw->round_blocksize(sc->hw_hdl, bs);
+	/* 
+	 * The blocksize should never be 0, but a faulty
+	 * driver might set it wrong.  Just use something.
+	 */
+	if (bs <= 0)
+		bs = 512;
 	rb->blksize = bs;
 
 	DPRINTF(("audio_calc_blksize: %s blksize=%d\n", 
@@ -1561,7 +1597,7 @@ audio_write(sc, uio, ioflag)
 int
 audio_ioctl(sc, cmd, addr, flag, p)
 	struct audio_softc *sc;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
@@ -1571,8 +1607,8 @@ audio_ioctl(sc, cmd, addr, flag, p)
 	int error = 0, s, offs, fd;
         int rbus, pbus;
 
-	DPRINTF(("audio_ioctl(%d,'%c',%d)\n",
-	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
+	DPRINTF(("audio_ioctl(%lu,'%c',%lu)\n",
+	          IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
 	switch (cmd) {
 	case FIONBIO:
 		/* All handled in the upper FS layer. */
@@ -1718,8 +1754,8 @@ audio_ioctl(sc, cmd, addr, flag, p)
 		error = EINVAL;
 		break;
 	}
-	DPRINTF(("audio_ioctl(%d,'%c',%d) result %d\n",
-	          IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
+	DPRINTF(("audio_ioctl(%lu,'%c',%lu) result %d\n",
+	          IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff, error));
 	return (error);
 }
 
@@ -1757,16 +1793,17 @@ audio_poll(sc, events, p)
 	return (revents);
 }
 
-int
+paddr_t
 audio_mmap(sc, off, prot)
 	struct audio_softc *sc;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb;
 	int s;
 
-	DPRINTF(("audio_mmap: off=%d, prot=%d\n", off, prot));
+	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)off, prot));
 
 	if (!(hw->get_props(sc->hw_hdl) & AUDIO_PROP_MMAP) || !hw->mappage)
 		return -1;
@@ -2705,6 +2742,13 @@ audiosetinfo(sc, ai)
 			int bs = ai->blocksize;
 			if (hw->round_blocksize)
 				bs = hw->round_blocksize(sc->hw_hdl, bs);
+			/* 
+			 * The blocksize should never be 0, but a faulty
+			 * driver might set it wrong.  Just use something.
+			 */
+			if (bs <= 0)
+				bs = 512;
+
 			sc->sc_pr.blksize = sc->sc_rr.blksize = bs;
 			sc->sc_blkset = 1;
 		}
@@ -2915,7 +2959,7 @@ mixer_close(sc, flags, ifmt, p)
 int
 mixer_ioctl(sc, cmd, addr, flag, p)
 	struct audio_softc *sc;
-	int cmd;
+	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
@@ -2923,8 +2967,8 @@ mixer_ioctl(sc, cmd, addr, flag, p)
 	struct audio_hw_if *hw = sc->hw_if;
 	int error = EINVAL;
 
-	DPRINTF(("mixer_ioctl(%d,'%c',%d)\n",
-		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff));
+	DPRINTF(("mixer_ioctl(%lu,'%c',%lu)\n",
+		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff));
 
 	switch (cmd) {
 	case FIOASYNC:
@@ -2968,8 +3012,8 @@ mixer_ioctl(sc, cmd, addr, flag, p)
 		error = EINVAL;
 		break;
 	}
-	DPRINTF(("mixer_ioctl(%d,'%c',%d) result %d\n",
-		 IOCPARM_LEN(cmd), IOCGROUP(cmd), cmd&0xff, error));
+	DPRINTF(("mixer_ioctl(%lu,'%c',%lu) result %d\n",
+		 IOCPARM_LEN(cmd), (char)IOCGROUP(cmd), cmd&0xff, error));
 	return (error);
 }
 #endif /* NAUDIO > 0 */

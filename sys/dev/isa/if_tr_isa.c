@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_isa.c,v 1.4 1999/04/30 15:29:24 bad Exp $	*/
+/*	$NetBSD: if_tr_isa.c,v 1.4.2.1 2000/11/20 11:41:17 bouyer Exp $	*/
 
 #undef TRISADEBUG
 /*
@@ -188,6 +188,8 @@ tr_isa_attach(parent, self, aux)
 {
 	struct tr_softc *sc = (void *) self;
 	struct isa_attach_args *ia = aux;
+
+	printf("\n");
 
 	sc->sc_piot = ia->ia_iot;
 	sc->sc_memt = ia->ia_memt;

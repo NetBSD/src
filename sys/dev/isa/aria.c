@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.6 1998/08/17 21:16:13 augustss Exp $	*/
+/*	$NetBSD: aria.c,v 1.6.12.1 2000/11/20 11:41:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -60,7 +60,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
@@ -658,13 +657,13 @@ aria_set_params(addr, setmode, usemode, p, r)
 		p->sw_code = r->sw_code = change_sign8;
 		break;
 	case AUDIO_ENCODING_ULINEAR_LE:
-		p->sw_code = r->sw_code = change_sign16;
+		p->sw_code = r->sw_code = change_sign16_le;
 		break;
 	case AUDIO_ENCODING_SLINEAR_BE:
 		p->sw_code = r->sw_code = swap_bytes;
 		break;
 	case AUDIO_ENCODING_ULINEAR_BE:
-		p->sw_code = r->sw_code = swap_bytes_change_sign16;
+		p->sw_code = r->sw_code = swap_bytes_change_sign16_le;
 		break;
 	}
 

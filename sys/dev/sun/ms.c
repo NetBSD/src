@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.17 1999/08/02 01:50:27 matt Exp $	*/
+/*	$NetBSD: ms.c,v 1.17.2.1 2000/11/20 11:43:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,6 +106,13 @@ msopen(dev, flags, mode, p)
 	/* This is an exclusive open device. */
 	if (ms->ms_events.ev_io)
 		return (EBUSY);
+
+	if (ms->ms_deviopen) {
+		int err;
+		err = (*ms->ms_deviopen)((struct device *)ms, flags);
+		if (err) 
+			return (err);
+	}
 	ms->ms_events.ev_io = p;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 
@@ -126,6 +133,12 @@ msclose(dev, flags, mode, p)
 	ev_fini(&ms->ms_events);
 
 	ms->ms_events.ev_io = NULL;
+	if (ms->ms_deviclose) {
+		int err;
+		err = (*ms->ms_deviclose)((struct device *)ms, flags);
+		if (err) 
+			return (err);
+	}
 	return (0);
 }
 
@@ -156,7 +169,7 @@ int
 msioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	register caddr_t data;
+	caddr_t data;
 	int flag;
 	struct proc *p;
 {
@@ -213,11 +226,11 @@ mspoll(dev, events, p)
  */
 void
 ms_input(ms, c)
-	register struct ms_softc *ms;
-	register int c;
+	struct ms_softc *ms;
+	int c;
 {
-	register struct firm_event *fe;
-	register int mb, ub, d, get, put, any;
+	struct firm_event *fe;
+	int mb, ub, d, get, put, any;
 	static const char to_one[] = { 1, 2, 2, 4, 4, 4, 4 };
 	static const int to_id[] = { MS_RIGHT, MS_MIDDLE, 0, MS_LEFT };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 1999/05/16 14:47:52 mrg Exp $	*/
+/*	$NetBSD: if_le.c,v 1.8.2.1 2000/11/20 11:43:05 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -52,8 +52,9 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 
+#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 #include <dev/sbus/lebuffervar.h>	/*XXX*/
@@ -74,6 +75,7 @@ struct	le_softc {
 	struct	sbusdev		sc_sd;		/* sbus device */
 	bus_space_tag_t		sc_bustag;
 	bus_dma_tag_t		sc_dmatag;
+	bus_dmamap_t		sc_dmamap;
 	bus_space_handle_t	sc_reg;
 };
 
@@ -158,10 +160,6 @@ lematch_sbus(parent, cf, aux)
 	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
 }
 
-#define SAME_LANCE(bp, sa) \
-	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
-	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
-
 void
 leattach_sbus(parent, self, aux)
 	struct device *parent, *self;
@@ -170,13 +168,14 @@ leattach_sbus(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	bus_dma_tag_t dmatag;
 	struct sbusdev *sd;
 	/* XXX the following declarations should be elsewhere */
 	extern void myetheraddr __P((u_char *));
 
 
 	lesc->sc_bustag = sa->sa_bustag;
-	lesc->sc_dmatag = sa->sa_dmatag;
+	lesc->sc_dmatag = dmatag = sa->sa_dmatag;
 
 	if (sbus_bus_map(sa->sa_bustag,
 			 sa->sa_slot,
@@ -220,10 +219,6 @@ leattach_sbus(parent, self, aux)
 	lesc->sc_sd.sd_reset = (void *)lance_reset;
 	sbus_establish(&lesc->sc_sd, &sc->sc_dev);
 
-	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, le_cd.cd_name) == 0 &&
-	    SAME_LANCE(sa->sa_bp, sa))
-		sa->sa_bp->dev = &sc->sc_dev;
-
 	if (sc->sc_mem == 0) {
 		bus_dma_segment_t seg;
 		int rseg, error;
@@ -232,25 +227,45 @@ leattach_sbus(parent, self, aux)
 /* XXX - This flag is not defined on all archs */
 #define BUS_DMA_24BIT	0
 #endif
-		error = bus_dmamem_alloc(lesc->sc_dmatag, MEMSIZE, NBPG, 0,
+		/* Get a DMA handle */
+		if ((error = bus_dmamap_create(dmatag, MEMSIZE, 1, MEMSIZE, 0,
+						BUS_DMA_NOWAIT|BUS_DMA_24BIT,
+						&lesc->sc_dmamap)) != 0) {
+			printf("%s: DMA map create error %d\n",
+				self->dv_xname, error);
+			return;
+		}
+
+		/* Allocate DMA buffer */
+		if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, 0, 0,
 					 &seg, 1, &rseg,
-					 BUS_DMA_NOWAIT | BUS_DMA_24BIT);
-		if (error) {
+					 BUS_DMA_NOWAIT|BUS_DMA_24BIT)) != 0){
 			printf("%s: DMA buffer allocation error %d\n",
 				self->dv_xname, error);
 			return;
 		}
-		error = bus_dmamem_map(lesc->sc_dmatag, &seg, rseg, MEMSIZE,
+
+		/* Map DMA buffer into kernel space */
+		if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
 				       (caddr_t *)&sc->sc_mem,
-				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-		if (error) {
+				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 			printf("%s: DMA buffer map error %d\n",
 				self->dv_xname, error);
 			bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
 			return;
 		}
 
-		sc->sc_addr = seg.ds_addr & 0xffffff;
+		/* Load DMA buffer */
+		if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap, sc->sc_mem,
+		    MEMSIZE, NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+			printf("%s: DMA buffer map load error %d\n",
+				self->dv_xname, error);
+			bus_dmamem_free(dmatag, &seg, rseg);
+			bus_dmamem_unmap(dmatag, sc->sc_mem, MEMSIZE);
+			return;
+		}
+
+		sc->sc_addr = lesc->sc_dmamap->dm_segs[0].ds_addr & 0xffffff;
 		sc->sc_memsize = MEMSIZE;
 		sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
 	}
@@ -272,6 +287,8 @@ leattach_sbus(parent, self, aux)
 
 	am7990_config(&lesc->sc_am7990);
 
-	(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri, 0,
-				 am7990_intr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr != 0)
+		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri,
+					 IPL_NET, 0, am7990_intr, sc);
 }

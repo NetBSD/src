@@ -1,4 +1,4 @@
-/* $NetBSD: tgareg.h,v 1.2 1998/04/29 02:11:19 thorpej Exp $ */
+/* $NetBSD: tgareg.h,v 1.2.14.1 2000/11/20 11:42:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -43,7 +43,14 @@
  */
 
 #define	TGA_MEM_ALTROM	0x0000000	/* 0MB -- Alternate ROM space */
+#define TGA2_MEM_EXTDEV	0x0000000	/* 0MB -- External Device Access */
 #define	TGA_MEM_CREGS	0x0100000	/* 1MB -- Core Registers */
+#define TGA_CREGS_SIZE	0x0100000 	/* Core registers occupy 1MB */
+#define TGA_CREGS_ALIAS	0x0000400	/* Register copies every 1kB */
+
+#define TGA2_MEM_CLOCK	0x0060000	/* TGA2 Clock access */
+#define TGA2_MEM_RAMDAC	0x0080000	/* TGA2 RAMDAC access */
+
 /* Display and Back Buffers mapped at config-dependent addresses */
 
 /*
@@ -76,7 +83,8 @@ typedef u_int32_t tga_reg_t;
 
 #define	TGA_REG_GCTR	0x013		/* Continue */
 #define	TGA_REG_GDER	0x014		/* Deep */
-/*	reserved	0x015 */
+#define TGA_REG_GREV	0x015		/* Start/Version on TGA,
+					 * Revision on TGA2 */
 #define	TGA_REG_GSMR	0x016		/* Stencil Mode */
 #define	TGA_REG_GPXR_P	0x017		/* Pixel Mask (persistent) */
 #define	TGA_REG_CCBR	0x018		/* Cursor Base Address */

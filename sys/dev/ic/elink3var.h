@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.21 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.21.10.1 2000/11/20 11:40:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -45,10 +45,13 @@ struct ep_softc {
 
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
 	struct mii_data sc_mii;		/* MII/media control		*/
+	struct callout sc_mii_callout;	/* MII callout handle		*/
+	struct callout sc_mbuf_callout;	/* mbuf fill callout		*/
 	bus_space_tag_t sc_iot;		/* bus cookie			*/
 	bus_space_handle_t sc_ioh;	/* bus i/o handle		*/
 	bus_space_tag_t sc_memt;	/* RoadRunner only		*/
 	bus_space_handle_t sc_memh;	/* RoadRunner only		*/
+	u_int32_t sc_flags;		/* misc. flags			*/
 #define MAX_MBS	8			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
 	int	next_mb;		/* Which mbuf to use next. 	*/
@@ -76,6 +79,7 @@ struct ep_softc {
 #define	ELINK_FLAGS_USEFIFOBUFFER		0x08000	/* RoadRunner only */
 #define	ELINK_FLAGS_USESHAREDMEM		0x10000	/* RoadRunner only */
 #define	ELINK_FLAGS_FORCENOWAIT		0x20000	/* RoadRunner only */
+#define ELINK_FLAGS_ATTACHED		0x40000	/* attach has succeeded */
 
 	u_short ep_chipset;		/* Chipset family on this board */
 #define ELINK_CHIPSET_3C509		0x00	/* PIO: 3c509, 3c589 */
@@ -100,14 +104,17 @@ struct ep_softc {
 	rndsource_element_t rnd_source;
 #endif
 
+	void *sd_hook;
+
 	/* power management hooks */
 	int (*enable) __P((struct ep_softc *));
 	void (*disable) __P((struct ep_softc *));
 	int enabled;
 };
 
+
 u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
-void	epconfig __P((struct ep_softc *, u_short, u_int8_t *));
+int	epconfig __P((struct ep_softc *, u_short, u_int8_t *));
 
 int	epintr __P((void *));
 void	epstop __P((struct ep_softc *));
@@ -116,3 +123,4 @@ int	epenable __P((struct ep_softc *));
 void	epdisable __P((struct ep_softc *));
 
 int	ep_activate __P((struct device *, enum devact));
+int	ep_detach __P((struct device *, int flags));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.36.2.3 1999/10/26 23:10:16 thorpej Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.36.2.4 2000/11/20 11:40:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -106,7 +107,6 @@ int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*
 					    struct ncr53c9x_ecb *));
 /*static*/ int ncr53c9x_reselect	__P((struct ncr53c9x_softc *, int));
 /*static*/ void	ncr53c9x_scsi_reset	__P((struct ncr53c9x_softc *));
-/*static*/ void	ncr53c9x_init		__P((struct ncr53c9x_softc *, int));
 /*static*/ int	ncr53c9x_poll		__P((struct ncr53c9x_softc *,
 					    struct scsipi_xfer *, int));
 /*static*/ void	ncr53c9x_sched		__P((struct ncr53c9x_softc *));
@@ -135,7 +135,7 @@ void	ncr53c9x_update_xfer_mode	__P((struct ncr53c9x_softc *, int));
  * Names for the NCR53c9x variants, correspnding to the variant tags
  * in ncr53c9xvar.h.
  */
-const char *ncr53c9x_variant_names[] = {
+static const char *ncr53c9x_variant_names[] = {
 	"ESP100",
 	"ESP100A",
 	"ESP200",
@@ -208,11 +208,6 @@ ncr53c9x_attach(sc)
 	/* CCF register only has 3 bits; 0 is actually 8 */
 	sc->sc_ccf &= 7;
 
-	/* Reset state & bus */
-	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
-	sc->sc_state = 0;
-	ncr53c9x_init(sc, 1);
-
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
@@ -235,20 +230,45 @@ ncr53c9x_attach(sc)
 	chan->chan_id = sc->sc_id;
 
 	/*
-	 * Enable interupts from the SCSI core
+	 * Add reference to adapter so that we drop the reference after
+	 * config_found() to make sure the adatper is disabled.
 	 */
-	if ((sc->sc_rev == NCR_VARIANT_ESP406) ||
-	    (sc->sc_rev == NCR_VARIANT_FAS408)) {
-		NCR_PIOREGS(sc);
-		NCR_WRITE_REG(sc, NCR_CFG5, NCRCFG5_SINT |
-		    NCR_READ_REG(sc, NCR_CFG5));
-		NCR_SCSIREGS(sc);
+	if (scsipi_adapter_addref(adapt) != 0) {
+		printf("%s: unable to enable controller\n",
+		    sc->sc_dev.dv_xname);
+		return;
 	}
 
+	/* Reset state & bus */
+	sc->sc_cfflags = sc->sc_dev.dv_cfdata->cf_flags;
+	sc->sc_state = 0;
+	ncr53c9x_init(sc, 1);
+
 	/*
-	 * Now try to attach all the sub-devices.
+	 * Now try to attach all the sub-devices
 	 */
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+
+	scsipi_adapter_delref(adapt);
+}
+
+int
+ncr53c9x_detach(sc, flags)
+	struct ncr53c9x_softc *sc;
+	int flags;
+{
+	int error;
+
+	if (sc->sc_child) {
+		error = config_detach(sc->sc_child, flags);
+		if (error)
+			return (error);
+	}
+
+	free(sc->sc_imess, M_DEVBUF);
+	free(sc->sc_omess, M_DEVBUF);
+
+	return (0);
 }
 
 /*
@@ -276,7 +296,8 @@ ncr53c9x_reset(sc)
 	switch (sc->sc_rev) {
 	case NCR_VARIANT_ESP406:
 	case NCR_VARIANT_FAS408:
-		NCR_SCSIREGS(sc);
+		NCR_WRITE_REG(sc, NCR_CFG5, sc->sc_cfg5 | NCRCFG5_SINT);
+		NCR_WRITE_REG(sc, NCR_CFG4, sc->sc_cfg4);
 	case NCR_VARIANT_AM53C974:
 	case NCR_VARIANT_FAS216:
 	case NCR_VARIANT_NCR53C94:
@@ -302,8 +323,7 @@ ncr53c9x_reset(sc)
 	}
 
 	if (sc->sc_rev == NCR_VARIANT_AM53C974)
-		NCR_WRITE_REG(sc, NCR_AMDCFG4,
-		    NCRAMDCFG4_GE12NS | NCRAMDCFG4_RADE);
+		NCR_WRITE_REG(sc, NCR_AMDCFG4, sc->sc_cfg4);
 }
 
 /*
@@ -502,6 +522,7 @@ ncr53c9x_select(sc, ecb)
 	int tiflags = ti->flags;
 	u_char *cmd;
 	int clen;
+	size_t dmasize;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x)] ",
 		   target, lun, ecb->cmd.cmd.opcode));
@@ -513,9 +534,16 @@ ncr53c9x_select(sc, ecb)
 	 * expecting to come back due to an interrupt, because it is
 	 * always possible that the interrupt may never happen.
 	 */
-	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
-		timeout(ncr53c9x_timeout, ecb,
-		    (ecb->timeout * hz) / 1000);
+	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0) {
+		int timeout = ecb->timeout;
+
+		if (hz > 100 && timeout > 1000)
+			timeout = (timeout / 1000) * hz;
+		else
+			timeout = (timeout * hz) / 1000;
+		callout_reset(&ecb->xs->xs_callout, timeout,
+		    ncr53c9x_timeout, ecb);
+	}
 
 	/*
 	 * The docs say the target register is never reset, and I
@@ -524,12 +552,47 @@ ncr53c9x_select(sc, ecb)
 	NCR_WRITE_REG(sc, NCR_SELID, target);
 	ncr53c9x_setsync(sc, ti);
 
-	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
-		size_t dmasize;
+	if (ecb->flags & ECB_SENSE) {
+		/*
+		 * For REQUEST SENSE, we should not send an IDENTIFY or
+		 * otherwise mangle the target.  There should be no MESSAGE IN
+		 * phase.
+		 */
+		if (ncr53c9x_dmaselect) {
+			/* setup DMA transfer for command */
+			dmasize = clen = ecb->clen;
+			sc->sc_cmdlen = clen;
+			sc->sc_cmdp = (caddr_t)&ecb->cmd + 1;
+			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
+	
+			/* Program the SCSI counter */
+			NCR_WRITE_REG(sc, NCR_TCL, dmasize);
+			NCR_WRITE_REG(sc, NCR_TCM, dmasize >> 8);
+			if (sc->sc_cfg2 & NCRCFG2_FE) {
+				NCR_WRITE_REG(sc, NCR_TCH, dmasize >> 16);
+			}
 
+			/* load the count in */
+			NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
+
+			/* And get the targets attention */
+			NCRCMD(sc, NCRCMD_SELNATN | NCRCMD_DMA);
+			NCRDMA_GO(sc);
+		} else {
+			/* Now the command into the FIFO */
+			cmd = (u_char *)&ecb->cmd.cmd;
+			clen = ecb->clen;
+			while (clen--)
+				NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
+
+			NCRCMD(sc, NCRCMD_SELNATN);
+		}
+		return;
+	}
+
+	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
 		ecb->cmd.id = 
 		    MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
-
 
 		/* setup DMA transfer for command */
 		dmasize = clen = ecb->clen + 1;
@@ -615,6 +678,7 @@ ncr53c9x_get_ecb(sc)
  * This function is called by the higher level SCSI-driver to queue/run
  * SCSI-commands.
  */
+
 void
 ncr53c9x_scsipi_request(chan, req, arg)
 	struct scsipi_channel *chan;
@@ -864,7 +928,7 @@ ncr53c9x_done(sc, ecb)
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
 
-	untimeout(ncr53c9x_timeout, ecb);
+	callout_stop(&ecb->xs->xs_callout);
 
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the
@@ -1040,9 +1104,9 @@ abort:
  */
 void
 ncr53c9x_msgin(sc)
-	register struct ncr53c9x_softc *sc;
+	struct ncr53c9x_softc *sc;
 {
-	register int v;
+	int v;
 
 	NCR_TRACE(("[ncr53c9x_msgin(curmsglen:%ld)] ", (long)sc->sc_imlen));
 
@@ -1239,7 +1303,7 @@ gotit:
 #if 0
 #ifdef NCR53C9X_DEBUG
 					scsipi_printaddr(ecb->xs->xs_periph);
-					printf("max sync rate %d.%02dMb/s\n",
+					printf("max sync rate %d.%02dMB/s\n",
 						r, s);
 #endif
 #endif
@@ -1322,7 +1386,7 @@ gotit:
  */
 void
 ncr53c9x_msgout(sc)
-	register struct ncr53c9x_softc *sc;
+	struct ncr53c9x_softc *sc;
 {
 	struct ncr53c9x_tinfo *ti;
 	struct ncr53c9x_ecb *ecb;
@@ -1454,11 +1518,12 @@ ncr53c9x_msgout(sc)
  */
 int sdebug = 0;
 int
-ncr53c9x_intr(sc)
-	register struct ncr53c9x_softc *sc;
+ncr53c9x_intr(arg)
+	void *arg;
 {
-	register struct ncr53c9x_ecb *ecb;
-	register struct scsipi_periph *periph;
+	struct ncr53c9x_softc *sc = arg;
+	struct ncr53c9x_ecb *ecb;
+	struct scsipi_periph *periph;
 	struct ncr53c9x_tinfo *ti;
 	size_t size;
 	int nfifo;
@@ -1695,7 +1760,7 @@ again:
 					goto reset;
 				}
 				printf("sending REQUEST SENSE\n");
-				untimeout(ncr53c9x_timeout, ecb);
+				callout_stop(&ecb->xs->xs_callout);
 				ncr53c9x_sense(sc, ecb);
 				goto out;
 			}
@@ -1761,7 +1826,7 @@ printf("<<RESELECT CONT'd>>");
 			 */
 			if (sc->sc_state == NCR_SELECTING) {
 				NCR_MISC(("backoff selector "));
-				untimeout(ncr53c9x_timeout, ecb);
+				callout_stop(&ecb->xs->xs_callout);
 				periph = ecb->xs->xs_periph;
 				ti = &sc->sc_tinfo[periph->periph_target];
 				TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
@@ -1907,6 +1972,7 @@ printf("<<RESELECT CONT'd>>");
 			case 2:
 				/* Select stuck at Command Phase */
 				NCRCMD(sc, NCRCMD_FLUSH);
+				break;
 			case 4:
 				if (ncr53c9x_dmaselect &&
 				    sc->sc_cmdlen != 0)
@@ -1968,9 +2034,10 @@ printf("<<RESELECT CONT'd>>");
 			}
 			if ((NCR_READ_REG(sc, NCR_FFLAG)
 			    & NCRFIFO_FF) != 2) {
+				/* Drop excess bytes from the queue */
 				int i = (NCR_READ_REG(sc, NCR_FFLAG)
 					    & NCRFIFO_FF) - 2;
-				while (i--)
+				while (i-- > 0)
 					(void) NCR_READ_REG(sc, NCR_FIFO);
 			}
 			ecb->stat = NCR_READ_REG(sc, NCR_FIFO);
@@ -2180,6 +2247,8 @@ ncr53c9x_abort(sc, ecb)
 	ecb->flags |= ECB_ABORT;
 
 	if (ecb == sc->sc_nexus) {
+		int timeout;
+
 		/*
 		 * If we're still selecting, the message will be scheduled
 		 * after selection is complete.
@@ -2188,12 +2257,15 @@ ncr53c9x_abort(sc, ecb)
 			ncr53c9x_sched_msgout(SEND_ABORT);
 
 		/*
-		 * Reschedule timeout. First, cancel a queued timeout (if any)
-		 * in case someone decides to call ncr53c9x_abort() from
-		 * elsewhere.
+		 * Reschedule timeout.
 		 */
-		untimeout(ncr53c9x_timeout, ecb);
-		timeout(ncr53c9x_timeout, ecb, (ecb->timeout * hz) / 1000);
+		timeout = ecb->timeout;
+		if (hz > 100 && timeout > 1000)
+			timeout = (timeout / 1000) * hz;
+		else
+			timeout = (timeout * hz) / 1000;
+		callout_reset(&ecb->xs->xs_callout, timeout,
+		    ncr53c9x_timeout, ecb);
 	} else {
 		/* The command should be on the nexus list */
 		if ((ecb->flags & ECB_NEXUS) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.7 1999/01/08 19:22:35 augustss Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.7.8.1 2000/11/20 11:41:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@
 #include <net/if_types.h>
 #include <net/if_media.h>
 #include <net/if_ether.h>
-
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>

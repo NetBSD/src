@@ -1,0 +1,15 @@
+# $NetBSD: TODO,v 1.5.2.2 2000/11/20 11:41:27 bouyer Exp $
+
+Bugs:
+* i386: detect the existence of MCA bus by BIOS call
+* i386: make isa/clock.c parse PS/2 CMOS correctly
+* i386: keyboard freezes in fd_mountroothook when booting from floppy;
+	if the fd_mountroothook is not executed, the keyboard works
+	just fine
+
+Projects:
+* bus_dma(9) support (primarily for AHA-1640 ATM)
+* 3Com 3c507 driver (prolly port of ef driver - originally, 1.3 ie driver
+	has been ported in MCA release 2.1 by Scott Telford, the ISA
+	attachment was then (after 1.3) split into ex, ef, ai)
+* ESDI support

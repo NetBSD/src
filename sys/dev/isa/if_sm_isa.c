@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
+/*	$NetBSD: if_sm_isa.c,v 1.4.14.1 2000/11/20 11:41:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>
@@ -183,7 +186,7 @@ sm_isa_attach(parent, self, aux)
 	sc->sc_bsh = ioh;
 
 	/* should always be enabled */
-	sc->sc_enabled = 1;
+	sc->sc_flags |= SMC_FLAGS_ENABLED;
 
 	/* XXX Should get Ethernet address from EEPROM!! */
 

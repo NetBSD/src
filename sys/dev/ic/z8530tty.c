@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.61 1999/10/15 06:16:16 jonathan Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.61.2.1 2000/11/20 11:41:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -152,6 +152,8 @@ struct zstty_softc {
 	struct  tty *zst_tty;
 	struct	zs_chanstate *zst_cs;
 
+	struct callout zst_diag_ch;
+
 	u_int zst_overflows,
 	      zst_floods,
 	      zst_errors;
@@ -222,7 +224,7 @@ static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
 static int	zsparam __P((struct tty *, struct termios *));
 static void zs_modem __P((struct zstty_softc *, int));
-static void tiocm_to_zs __P((struct zstty_softc *, int, int));
+static void tiocm_to_zs __P((struct zstty_softc *, u_long, int));
 static int  zs_to_tiocm __P((struct zstty_softc *));
 static int    zshwiflow __P((struct tty *, int));
 static void  zs_hwiflow __P((struct zstty_softc *));
@@ -273,6 +275,9 @@ zstty_attach(parent, self, aux)
 	struct tty *tp;
 	int channel, s, tty_unit;
 	dev_t dev;
+	char *i, *o;
+
+	callout_init(&zst->zst_diag_ch);
 
 	tty_unit = zst->zst_dev.dv_unit;
 	channel = args->channel;
@@ -288,26 +293,45 @@ zstty_attach(parent, self, aux)
 	if (zst->zst_swflags)
 		printf(" flags 0x%x", zst->zst_swflags);
 
-	if (ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
-		printf(" (console)\n");
-		DELAY(20000);
+	/*
+	 * Check whether we serve as a console device.
+	 * XXX - split console input/output channels aren't
+	 *	 supported yet on /dev/console
+	 */
+	i = o = NULL;
+	if ((zst->zst_hwflags & ZS_HWFLAG_CONSOLE_INPUT) != 0) {
+		i = "input";
+		if ((args->hwflags & ZS_HWFLAG_USE_CONSDEV) != 0) {
+			cn_tab->cn_pollc = args->consdev->cn_pollc;
+			cn_tab->cn_getc = args->consdev->cn_getc;
+		}
 		cn_tab->cn_dev = dev;
-	} else
+	}
+	if ((zst->zst_hwflags & ZS_HWFLAG_CONSOLE_OUTPUT) != 0) {
+		o = "output";
+		if ((args->hwflags & ZS_HWFLAG_USE_CONSDEV) != 0) {
+			cn_tab->cn_putc = args->consdev->cn_putc;
+		}
+		cn_tab->cn_dev = dev;
+	}
+	if (i != NULL || o != NULL)
+		printf(" (console %s)", i ? (o ? "i/o" : i) : o);
+
 #ifdef KGDB
 	if (zs_check_kgdb(cs, dev)) {
 		/*
 		 * Allow kgdb to "take over" this port.  Returns true
 		 * if this serial port is in-use by kgdb.
 		 */
-		printf(" (kgdb)\n");
+		printf(" (kgdb)");
 		/*
 		 * This is the kgdb port (exclusive use)
 		 * so skip the normal attach code.
 		 */
 		return;
-	} else
+	}
 #endif
-		printf("\n");
+	printf("\n");
 
 	tp = ttymalloc();
 	tp->t_dev = dev;
@@ -325,7 +349,10 @@ zstty_attach(parent, self, aux)
 	zst->zst_rbget = zst->zst_rbput = zst->zst_rbuf;
 	zst->zst_rbavail = zstty_rbuf_size;
 
-	/* XXX - Do we need an MD hook here? */
+	/* if there are no enable/disable functions, assume the device
+	   is always enabled */
+	if (!cs->enable)
+		cs->enabled = 1;
 
 	/*
 	 * Hardware init
@@ -386,14 +413,8 @@ struct tty *
 zstty(dev)
 	dev_t dev;
 {
-	struct zstty_softc *zst;
-	int unit = ZSUNIT(dev);
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 
-#ifdef	DIAGNOSTIC
-	if (unit >= zstty_cd.cd_ndevs)
-		panic("zstty");
-#endif
-	zst = zstty_cd.cd_devs[unit];
 	return (zst->zst_tty);
 }
 
@@ -435,6 +456,15 @@ zs_shutdown(zst)
 		zs_write_reg(cs, 1, cs->cs_creg[1]);
 	}
 
+	/* Call the power management hook. */
+	if (cs->disable) {
+#ifdef DIAGNOSTIC
+		if (!cs->enabled)
+			panic("zs_shutdown: not enabled?");
+#endif
+		(*cs->disable)(zst->zst_cs);
+	}
+
 	splx(s);
 }
 
@@ -448,18 +478,16 @@ zsopen(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = ZSUNIT(dev);
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
 	struct tty *tp;
 	int s, s2;
 	int error;
 
-	if (unit >= zstty_cd.cd_ndevs)
+	zst = device_lookup(&zstty_cd, ZSUNIT(dev));
+	if (zst == NULL)
 		return (ENXIO);
-	zst = zstty_cd.cd_devs[unit];
-	if (zst == 0)
-		return (ENXIO);
+
 	tp = zst->zst_tty;
 	cs = zst->zst_cs;
 
@@ -481,6 +509,16 @@ zsopen(dev, flags, mode, p)
 		struct termios t;
 
 		tp->t_dev = dev;
+
+		/* Call the power management hook. */
+		if (cs->enable) {
+			if ((*cs->enable)(cs)) {
+				splx(s);
+				printf("%s: device enable failed\n",
+			       	zst->zst_dev.dv_xname);
+				return (EIO);
+			}
+		}
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
@@ -590,7 +628,7 @@ zsclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
 
 	/* XXX This is for cons.c. */
@@ -621,7 +659,7 @@ zsread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flags));
@@ -633,7 +671,7 @@ zswrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flags));
@@ -647,7 +685,7 @@ zsioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
 	int error;
@@ -709,20 +747,20 @@ zsioctl(dev, cmd, data, flag, p)
 		*(int *)data = zs_to_tiocm(zst);
 		break;
 
-	case PPS_CREATE:
+	case PPS_IOC_CREATE:
 		break;
 
-	case PPS_DESTROY:
+	case PPS_IOC_DESTROY:
 		break;
 
-	case PPS_GETPARAMS: {
+	case PPS_IOC_GETPARAMS: {
 		pps_params_t *pp;
 		pp = (pps_params_t *)data;
 		*pp = zst->ppsparam;
 		break;
 	}
 
-	case PPS_SETPARAMS: {
+	case PPS_IOC_SETPARAMS: {
 		pps_params_t *pp;
 		int mode;
 		if (cs->cs_rr0_pps == 0) {
@@ -797,21 +835,16 @@ zsioctl(dev, cmd, data, flag, p)
 		break;
 	}
 
-	case PPS_GETCAP:
+	case PPS_IOC_GETCAP:
 		*(int *)data = zsppscap;
 		break;
 
-	case PPS_FETCH: {
+	case PPS_IOC_FETCH: {
 		pps_info_t *pi;
 		pi = (pps_info_t *)data;
 		*pi = zst->ppsinfo;
 		break;
 	}
-
-	case PPS_WAIT:
-		/* XXX */
-		error = EOPNOTSUPP;
-		break;
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
 		if (cs->cs_rr0_pps == 0) {
@@ -871,7 +904,7 @@ static void
 zsstart(tp)
 	struct tty *tp;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
@@ -934,7 +967,7 @@ zsstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	int s;
 
 	s = splzs();
@@ -958,7 +991,7 @@ zsparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	int ospeed, cflag;
 	u_char tmp3, tmp4, tmp5;
@@ -1187,7 +1220,8 @@ zs_modem(zst, onoff)
 static void
 tiocm_to_zs(zst, how, ttybits)
 	struct zstty_softc *zst;
-	int how, ttybits;
+	u_long how;
+	int ttybits;
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char zsbits;
@@ -1257,7 +1291,7 @@ zshwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(tp->t_dev)];
+	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(tp->t_dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	int s;
 
@@ -1459,7 +1493,7 @@ zstty_stint(cs, force)
 	 * even when interrupts are locking up the machine.
 	 */
 	if (ISSET(rr0, ZSRR0_BREAK) &&
-	    ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE)) {
+	    ISSET(zst->zst_hwflags, ZS_HWFLAG_CONSOLE_INPUT)) {
 		zs_abort(cs);
 		return;
 	}
@@ -1572,7 +1606,8 @@ zstty_rxsoft(zst, tp)
 	if (cc == zstty_rbuf_size) {
 		zst->zst_floods++;
 		if (zst->zst_errors++ == 0)
-			timeout(zstty_diag, zst, 60 * hz);
+			callout_reset(&zst->zst_diag_ch, 60 * hz,
+			    zstty_diag, zst);
 	}
 
 	/* If not yet open, drop the entire buffer content here */
@@ -1589,7 +1624,8 @@ zstty_rxsoft(zst, tp)
 			if (ISSET(rr1, ZSRR1_DO)) {
 				zst->zst_overflows++;
 				if (zst->zst_errors++ == 0)
-					timeout(zstty_diag, zst, 60 * hz);
+					callout_reset(&zst->zst_diag_ch,
+					    60 * hz, zstty_diag, zst);
 			}
 			if (ISSET(rr1, ZSRR1_FE))
 				SET(code, TTY_FE);

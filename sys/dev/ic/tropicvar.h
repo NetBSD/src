@@ -1,4 +1,4 @@
-/*	$NetBSD: tropicvar.h,v 1.4 1999/10/17 23:53:45 cgd Exp $	*/
+/*	$NetBSD: tropicvar.h,v 1.4.2.1 2000/11/20 11:40:59 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,6 +31,8 @@
  */
 
 /* $ACIS:if_lanvar.h 12.0$ */
+
+#include <sys/callout.h>
 
 /*
  * This file contains structures used in the "tr" driver for the
@@ -69,6 +71,9 @@ struct	tr_softc {
 	bus_space_handle_t sc_sramh;	/* handle for the shared ram area */
 	bus_space_handle_t sc_mmioh;	/* handle for the bios/mmio area */
 
+	struct callout sc_init_callout;
+	struct callout sc_reinit_callout;
+
 	int (*sc_mediachange) __P((struct tr_softc *));
 	void (*sc_mediastatus) __P((struct tr_softc *, struct ifmediareq *));
 	struct rbcb rbc;	/* receiver buffer control block */
@@ -88,6 +93,13 @@ struct	tr_softc {
 	caddr_t  tr_sleepevent;     	/* tr event signalled on successful */
 					/* open of adapter  */
 	unsigned short exsap_station;	/* station assigned by open sap cmd */
+
+	void *sc_sdhook;
+
+	/* Power management hooks */    
+	int (*sc_enable) __P((struct tr_softc *));
+	void (*sc_disable) __P((struct tr_softc *));
+	int sc_enabled;
 };
 
 int tr_config __P((struct tr_softc *));
@@ -99,3 +111,7 @@ void tr_stop __P((struct tr_softc *));
 int tr_reset __P((struct tr_softc *));
 void tr_sleep __P((struct tr_softc *));
 int tr_setspeed __P((struct tr_softc *, u_int8_t));
+int tr_enable __P((struct tr_softc *));
+void tr_disable __P((struct tr_softc *));
+int tr_activate __P((struct device *, enum devact));
+int tr_detach __P((struct device *, int flags));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.1 1999/06/05 14:29:10 mrg Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.1.4.1 2000/11/20 11:40:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ cs4231_regdump(label, sc)
 
 void
 cs4231_init(sc)
-	register struct cs4231_softc *sc;
+	struct cs4231_softc *sc;
 {
 	char *buf;
 #if 0
@@ -238,33 +238,48 @@ cs4231_malloc(addr, direction, size, pool, flags)
 	int pool, flags;
 {
 	struct cs4231_softc *sc = addr;
+	bus_dma_tag_t dmatag = sc->sc_dmatag;
 	struct cs_dma *p;
-	int error;
 
 	p = malloc(sizeof(*p), pool, flags);
 	if (p == NULL)
 		return (NULL);
 
-	p->size = size;
-	error = bus_dmamem_alloc(sc->sc_dmatag, size, 64*1024, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-				 &p->nsegs, BUS_DMA_NOWAIT);
-	if (error) {
-		free(p, pool);
-		return (NULL);
-	}
+	/* Allocate a DMA map */
+	if (bus_dmamap_create(dmatag, size, 1, size, 0,
+				BUS_DMA_NOWAIT, &p->dmamap) != 0)
+		goto fail1;
 
-	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size, 
-			       &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
-		free(p, pool);
-		return (NULL);
-	}
+	/* Allocate DMA memory */
+	p->size = size;
+	if (bus_dmamem_alloc(dmatag, size, 64*1024, 0,
+				p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
+				&p->nsegs, BUS_DMA_NOWAIT) != 0)
+		goto fail2;
+
+	/* Map DMA memory into kernel space */
+	if (bus_dmamem_map(dmatag, p->segs, p->nsegs, p->size, 
+			   &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT) != 0)
+		goto fail3;
+
+	/* Load the buffer */
+	if (bus_dmamap_load(dmatag, p->dmamap,
+			    p->addr, size, NULL, BUS_DMA_NOWAIT) != 0)
+		goto fail4;
 
 	p->next = sc->sc_dmas;
 	sc->sc_dmas = p;
 	return (p->addr);
+
+fail4:
+	bus_dmamem_unmap(dmatag, p->addr, p->size);
+fail3:
+	bus_dmamem_free(dmatag, p->segs, p->nsegs);
+fail2:
+	bus_dmamap_destroy(dmatag, p->dmamap);
+fail1:
+	free(p, pool);
+	return (NULL);
 }
 
 void
@@ -274,13 +289,16 @@ cs4231_free(addr, ptr, pool)
 	int pool;
 {
 	struct cs4231_softc *sc = addr;
+	bus_dma_tag_t dmatag = sc->sc_dmatag;
 	struct cs_dma *p, **pp;
 
 	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &(*pp)->next) {
 		if (p->addr != ptr)
 			continue;
-		bus_dmamem_unmap(sc->sc_dmatag, p->addr, p->size);
-		bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
+		bus_dmamap_unload(dmatag, p->dmamap);
+		bus_dmamem_unmap(dmatag, p->addr, p->size);
+		bus_dmamem_free(dmatag, p->segs, p->nsegs);
+		bus_dmamap_destroy(dmatag, p->dmamap);
 		*pp = p->next;
 		free(p, pool);
 		return;
@@ -317,8 +335,8 @@ cs4231_open(addr, flags)
 	delay(10);
 	dma->dmacsr = 0;
 	delay(10);
-	ad1848_reset(&sc->sc_ad1848);
 #endif
+	ad1848_reset(&sc->sc_ad1848);
 
 	DPRINTF(("saopen: ok -> sc=%p\n", sc));
 	return (0);
@@ -328,7 +346,7 @@ void
 cs4231_close(addr)
 	void *addr;
 {
-	register struct cs4231_softc *sc = addr;
+	struct cs4231_softc *sc = addr;
 
 	DPRINTF(("sa_close: sc=%p\n", sc));
 	/*
@@ -422,7 +440,7 @@ cs4231_get_props(addr)
 int
 cs4231_query_devinfo(addr, dip)
 	void *addr;
-	register mixer_devinfo_t *dip;
+	mixer_devinfo_t *dip;
 {
 
 	switch(dip->index) {
@@ -653,11 +671,11 @@ cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
 	DPRINTF(("trigger_out: start %p, end %p, size %lu; "
 		 "dmaaddr 0x%lx, dmacnt %lu, segsize %lu\n",
 		 start, end, (u_long)sc->sc_playsegsz, 
-		 (u_long)p->segs[0].ds_addr,
+		 (u_long)p->dmamap->dm_segs[0].ds_addr,
 		 (u_long)n, (u_long)p->size));
 
 	csr = dma->dmacsr;
-	dma->dmapnva = (u_long)p->segs[0].ds_addr;
+	dma->dmapnva = (u_long)p->dmamap->dm_segs[0].ds_addr;
 	dma->dmapnc = (u_long)n;
 	if ((csr & PDMA_GO) == 0 || (csr & APC_PPAUSE) != 0) {
 		int reg;
@@ -784,7 +802,7 @@ cs4231_intr(arg)
 		togo = sc->sc_playsegsz - sc->sc_playcnt;
 		if (togo == 0) {
 			/* Roll over */
-			nextaddr = (u_long)p->segs[0].ds_addr;
+			nextaddr = (u_long)p->dmamap->dm_segs[0].ds_addr;
 			sc->sc_playcnt = togo = APC_MAX;
 		} else {
 			nextaddr = dma->dmapnva + APC_MAX;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.12 1998/03/21 02:04:55 cgd Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.12.14.1 2000/11/20 11:42:13 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -120,7 +120,9 @@ ofdisk_attach(parent, self, aux)
 	of->sc_dk.dk_name = of->sc_name;
 	strcpy(of->sc_name, of->sc_dev.dv_xname);
 	disk_attach(&of->sc_dk);
+#ifdef __BROKEN_DK_ESTABLISH
 	dk_establish(&of->sc_dk, self);				/* XXX */
+#endif
 	printf("\n");
 
 	if (strcmp(child, "floppy") == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.15 1999/06/20 17:58:56 ragge Exp $	*/
+/*	$NetBSD: qd.c,v 1.15.4.1 2000/11/20 11:42:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -74,7 +74,7 @@
 #include <sys/poll.h>
 #include <sys/buf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -246,9 +246,9 @@ int QDlast_DMAtype;             /* type of the last DMA operation */
 void qd_attach __P((struct device *, struct device *, void *));
 static int qd_match __P((struct device *, struct cfdata *, void *));
 
-static void qddint(int);			/* DMA gate array intrpt service */
-static void qdaint(int);			/* Dragon ADDER intrpt service */
-static void qdiint(int);
+static void qddint __P((void *));	/* DMA gate array intrpt service */
+static void qdaint __P((void *));	/* Dragon ADDER intrpt service */
+static void qdiint __P((void *));
 
 #define QDPRIOR (PZERO-1)		/* must be negative */
 #define FALSE	0
@@ -558,7 +558,7 @@ qd_match(parent, match, aux)
 	struct qd_softc *sc = &ssc;
 	struct uba_attach_args *ua = aux;
 	struct uba_softc *uh = (void *)parent;
-	register int unit;
+	int unit;
 	volatile struct dga *dga;       /* pointer to gate array structure */
 	int vector;
 #ifdef notdef
@@ -719,9 +719,6 @@ qd_match(parent, match, aux)
 	DELAY(20000);			/* wait for the intrpt */
 	dga->csr = HALT;		/* stop the wheels */
 
-	/* Set interrupt vector for DMA service routine */      
-	ua->ua_ivec = qddint;
-   
 	/*
 	* score this as an existing qdss
 	*/
@@ -735,17 +732,18 @@ void qd_attach(parent, self, aux)
 	   struct device *parent, *self;
 	   void *aux;
      {
-	register struct uba_attach_args *ua = aux;
-	
-	register int unit;	/* QDSS module # for this call */
+	struct uba_attach_args *ua = aux;
+	int unit;	/* QDSS module # for this call */
 
 	printf("\n");
 	
 	unit = self->dv_unit;		/* get QDSS number */
 
-	/* Grab the other two interrupt vectors */
-	scb_vecalloc(ua->ua_cvec + 4, qdaint, self->dv_unit, SCB_ISTACK);
-	scb_vecalloc(ua->ua_cvec + 8, qdiint, self->dv_unit, SCB_ISTACK);
+	/* Set interrupt vectors for interrupt handlers */      
+   
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec    , qddint, self);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec + 4, qdaint, self);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec + 8, qdiint, self);
 
 	/*
 	* init "qdflags[]" for this QDSS 
@@ -799,8 +797,8 @@ qdopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	volatile register struct dga *dga;	/* ptr to gate array struct */
-	register struct tty *tp;
+	volatile struct dga *dga;	/* ptr to gate array struct */
+	struct tty *tp;
 	volatile struct duart *duart;
 	int unit;
 	int minor_dev;
@@ -885,9 +883,9 @@ qdclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp;
-	register struct qdmap *qd;
-	volatile register int *ptep;
+	struct tty *tp;
+	struct qdmap *qd;
+	volatile int *ptep;
 	volatile struct dga *dga;      	/* gate array register map pointer */
 	volatile struct duart *duart;
 	volatile struct adder *adder;
@@ -1085,11 +1083,11 @@ qdioctl(dev, cmd, datap, flags, p)
 	int flags;
 	struct proc *p;
 {
-	volatile register int *ptep;	/* page table entry pointer */
-	register int mapix;		/* QVmap[] page table index */
-	register struct _vs_event *event;
-	register struct tty *tp;
-	register int i;
+	volatile int *ptep;	/* page table entry pointer */
+	int mapix;		/* QVmap[] page table index */
+	struct _vs_event *event;
+	struct tty *tp;
+	int i;
 	struct qdmap *qd;		/* pointer to device map struct */
 	volatile struct dga *dga;	/* Gate Array reg structure pntr */
 	volatile struct duart *duart;	/* DUART reg structure pointer */
@@ -1517,9 +1515,9 @@ qdpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	register int s;
-	register int unit;
-	register struct tty *tp;
+	int s;
+	int unit;
+	struct tty *tp;
 	u_int minor_dev = minor(dev);
 	int revents = 0;
 
@@ -1599,9 +1597,9 @@ qdwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp;
-	register int minor_dev;
-	register int unit;
+	struct tty *tp;
+	int minor_dev;
+	int unit;
 
 	minor_dev = minor(dev);
 	unit = (minor_dev >> 2) & 0x07;
@@ -1628,9 +1626,9 @@ qdread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct tty *tp;
-	register int minor_dev;
-	register int unit;
+	struct tty *tp;
+	int minor_dev;
+	int unit;
 
 	minor_dev = minor(dev);
 	unit = (minor_dev >> 2) & 0x07;
@@ -1659,11 +1657,11 @@ qdread(dev, uio, flag)
 
 void
 qd_strategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	volatile register struct dga *dga;
-	volatile register struct adder *adder;
-	register int unit;
+	volatile struct dga *dga;
+	volatile struct adder *adder;
+	int unit;
 	int QBAreg;
 	int s;
 	int cookie;
@@ -1695,14 +1693,15 @@ panic("qd_strategy");
 	dga->bytcnt_hi = (short) (bp->b_bcount >> 16);
        
 	while (qdflags[unit].user_dma) {
-		sleep((caddr_t)&qdflags[unit].user_dma, QDPRIOR);
+		(void) tsleep(&qdflags[unit].user_dma, QSPRIOR,
+		    "qdstrat", 0);
 	}
 	splx(s);
 #ifdef notyet
 	ubarelse(uh, &QBAreg);
 #endif
 	if (!(dga->csr & DMA_ERR)) {
-		iodone(bp);
+		biodone(bp);
 		return;
 	}
 
@@ -1723,7 +1722,7 @@ panic("qd_strategy");
 		DMA_SETIGNORE(DMAheader[unit]);
 		dga->csr |= DMA_IE;
 	}
-	iodone(bp);
+	biodone(bp);
 } /* qd_strategy */
 
 
@@ -1733,7 +1732,7 @@ panic("qd_strategy");
 void qdstart(tp)
 	struct tty *tp;
 {
-	register int which_unit, unit, c;
+	int which_unit, unit, c;
 	int s;
 
 	unit = minor(tp->t_dev);
@@ -1785,7 +1784,7 @@ qdstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	register int s;
+	int s;
 
 	s = spl5();	/* block intrpts during state modification */
 	if (tp->t_state & TS_BUSY) {
@@ -1805,9 +1804,9 @@ blitc(unit, chr)
 	int unit;
 	u_char chr;
 {
-	volatile register struct adder *adder;
-	volatile register struct dga *dga;
-	register int i;
+	volatile struct adder *adder;
+	volatile struct dga *dga;
+	int i;
 	int nograph = !(qdflags[unit].inuse&GRAPHIC_DEV);
 	static short inescape[NQD];
 
@@ -2010,12 +2009,13 @@ blitc(unit, chr)
  */
 
 static void
-qddint(qd)
-	int qd;
+qddint(arg)
+	void *arg;
 {
-	register struct DMAreq_header *header;
-	register struct DMAreq *request;
-	volatile register struct dga *dga;
+	struct device *dv = arg;
+	struct DMAreq_header *header;
+	struct DMAreq *request;
+	volatile struct dga *dga;
 	volatile struct adder *adder;
 	int cookie;			/* DMA adrs for QDSS */
 
@@ -2024,9 +2024,9 @@ qddint(qd)
 	/*
 	* init pointers 
 	*/
-	header = DMAheader[qd]; 	    /* register for optimization */
-	dga = (struct dga *) qdmap[qd].dga;
-	adder = (struct adder *) qdmap[qd].adder;
+	header = DMAheader[dv->dv_unit]; 	    /* register for optimization */
+	dga = (struct dga *) qdmap[dv->dv_unit].dga;
+	adder = (struct adder *) qdmap[dv->dv_unit].adder;
 
 	/*
 	* if this interrupt flagged as bogus for interrupt flushing purposes.. 
@@ -2042,18 +2042,18 @@ qddint(qd)
 	if (dga->csr & DMA_ERR) {
 
 		if (dga->csr & PARITY_ERR)
-		    printf("qd%d: qddint: DMA hardware parity fault.\n", qd);
+		    printf("qd%d: qddint: DMA hardware parity fault.\n", dv->dv_unit);
 
 		if (dga->csr & BUS_ERR)
-		    printf("qd%d: qddint: DMA hardware bus error.\n", qd);
+		    printf("qd%d: qddint: DMA hardware bus error.\n", dv->dv_unit);
 	}
 
 	/*
 	* if this was a DMA from user space... 
 	*/
-	if (qdflags[qd].user_dma) {
-		qdflags[qd].user_dma = 0;
-		wakeup((caddr_t)&qdflags[qd].user_dma);
+	if (qdflags[dv->dv_unit].user_dma) {
+		qdflags[dv->dv_unit].user_dma = 0;
+		wakeup((caddr_t)&qdflags[dv->dv_unit].user_dma);
 		return;
 	}
 
@@ -2072,10 +2072,10 @@ qddint(qd)
 		header->newest = header->oldest;
 		header->used = 0;
 
-		if (qdrsel[qd].si_pid && qdflags[qd].selmask & SEL_WRITE) {
-			selwakeup(&qdrsel[qd]);
-			qdrsel[qd].si_pid = 0;
-			qdflags[qd].selmask &= ~SEL_WRITE;
+		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
+			selwakeup(&qdrsel[dv->dv_unit]);
+			qdrsel[dv->dv_unit].si_pid = 0;
+			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
 		}
 
 		if (dga->bytcnt_lo != 0) {
@@ -2091,10 +2091,10 @@ qddint(qd)
 	* wakeup "select" client.
 	*/
 	if (DMA_ISFULL(header)) {
-		if (qdrsel[qd].si_pid && qdflags[qd].selmask & SEL_WRITE) {
-			selwakeup(&qdrsel[qd]);
-			qdrsel[qd].si_pid = 0;  
-			qdflags[qd].selmask &= ~SEL_WRITE;
+		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
+			selwakeup(&qdrsel[dv->dv_unit]);
+			qdrsel[dv->dv_unit].si_pid = 0;  
+			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
 		}
 	}
 
@@ -2111,10 +2111,10 @@ qddint(qd)
 	* if no more DMA pending, wake up "select" client and exit 
 	*/
 	if (DMA_ISEMPTY(header)) {
-		if (qdrsel[qd].si_pid && qdflags[qd].selmask & SEL_WRITE) {
-			selwakeup(&qdrsel[qd]);
-			qdrsel[qd].si_pid = 0;
-			qdflags[qd].selmask &= ~SEL_WRITE;
+		if (qdrsel[dv->dv_unit].si_pid && qdflags[dv->dv_unit].selmask & SEL_WRITE) {
+			selwakeup(&qdrsel[dv->dv_unit]);
+			qdrsel[dv->dv_unit].si_pid = 0;
+			qdflags[dv->dv_unit].selmask &= ~SEL_WRITE;
 		}
 		DMA_CLRACTIVE(header);  /* flag DMA done */
 		return;
@@ -2163,7 +2163,7 @@ qddint(qd)
 		}
 		break;
 	default:
-		printf("qd%d: qddint: illegal DMAtype parameter.\n", qd);
+		printf("qd%d: qddint: illegal DMAtype parameter.\n", dv->dv_unit);
 		DMA_CLRACTIVE(header);	/* flag DMA done */
 		return;
 	}
@@ -2198,20 +2198,21 @@ qddint(qd)
  * ADDER interrupt service routine
  */
 static void
-qdaint(qd)
-	int qd;
+qdaint(arg)
+	void *arg;
 {
-	volatile register struct adder *adder;
+	struct device *dv = arg;
+	volatile struct adder *adder;
 	struct color_buf *cbuf;
 	int i;
-	register struct rgb *rgbp;
-	volatile register short *red;
-	volatile register short *green;
-	volatile register short *blue;
+	struct rgb *rgbp;
+	volatile short *red;
+	volatile short *green;
+	volatile short *blue;
 
 	(void)spl4(); 			/* allow interval timer in */
 
-	adder = (struct adder *) qdmap[qd].adder;
+	adder = (struct adder *) qdmap[dv->dv_unit].adder;
 
 	/*
 	* service the vertical blank interrupt (VSYNC bit) by loading 
@@ -2219,12 +2220,12 @@ qdaint(qd)
 	*/
 	if (adder->status & VSYNC) {
 		adder->status &= ~VSYNC;	/* clear the interrupt */
-		cbuf = color_buf[qd];
+		cbuf = color_buf[dv->dv_unit];
 		if (cbuf->status & LOAD_COLOR_MAP) {
 
-			red = (short *) qdmap[qd].red;
-			green = (short *) qdmap[qd].green;
-			blue = (short *) qdmap[qd].blue;
+			red = (short *) qdmap[dv->dv_unit].red;
+			green = (short *) qdmap[dv->dv_unit].green;
+			blue = (short *) qdmap[dv->dv_unit].blue;
 
 			for (i = cbuf->count, rgbp = cbuf->rgb;
 			     --i >= 0; rgbp++) {
@@ -2243,7 +2244,7 @@ qdaint(qd)
 	if (adder->status & FRAME_SYNC) {
 		adder->status &= ~FRAME_SYNC;	/* clear the interrupt */
 
-		if (scroll[qd]->status & LOAD_REGS) {
+		if (scroll[dv->dv_unit]->status & LOAD_REGS) {
 
 			for (i = 1000, adder->status = 0; i > 0 && 
 			     !(adder->status&ID_SCROLL_READY); --i)
@@ -2255,22 +2256,22 @@ qdaint(qd)
 				return;
 			}
 
-			adder->ID_scroll_data = scroll[qd]->viper_constant;
+			adder->ID_scroll_data = scroll[dv->dv_unit]->viper_constant;
 			adder->ID_scroll_command = ID_LOAD | SCROLL_CONSTANT;
 
 			adder->y_scroll_constant =
-				scroll[qd]->y_scroll_constant;
-			adder->y_offset_pending = scroll[qd]->y_offset;
+				scroll[dv->dv_unit]->y_scroll_constant;
+			adder->y_offset_pending = scroll[dv->dv_unit]->y_offset;
 
-			if (scroll[qd]->status & LOAD_INDEX) {
+			if (scroll[dv->dv_unit]->status & LOAD_INDEX) {
 
 				adder->x_index_pending = 
-					scroll[qd]->x_index_pending;
+					scroll[dv->dv_unit]->x_index_pending;
 				adder->y_index_pending = 
-					scroll[qd]->y_index_pending;
+					scroll[dv->dv_unit]->y_index_pending;
 			}
 
-			scroll[qd]->status = 0x00;
+			scroll[dv->dv_unit]->status = 0x00;
 		}
 	}
 }
@@ -2283,11 +2284,12 @@ qdaint(qd)
  */
 
 static void
-qdiint(qd)
-	int qd;
+qdiint(arg)
+	void *arg;
 {
-	register struct _vs_event *event;
-	register struct qdinput *eqh;
+	struct device *dv = arg;
+	struct _vs_event *event;
+	struct qdinput *eqh;
 	volatile struct dga *dga;
 	volatile struct duart *duart;
 	struct mouse_report *new_rep;
@@ -2301,14 +2303,14 @@ qdiint(qd)
 
 	(void)spl4(); 			/* allow interval timer in */
 
-	eqh = eq_header[qd];		/* optimized as a register */
-	new_rep = &current_rep[qd];
-	duart = (struct duart *) qdmap[qd].duart;
+	eqh = eq_header[dv->dv_unit];		/* optimized as a register */
+	new_rep = &current_rep[dv->dv_unit];
+	duart = (struct duart *) qdmap[dv->dv_unit].duart;
 
 	/*
 	* if the graphic device is turned on..	
 	*/
-	if (qdflags[qd].inuse & GRAPHIC_DEV) {
+	if (qdflags[dv->dv_unit].inuse & GRAPHIC_DEV) {
 		/*
 		* empty DUART 
 		*/
@@ -2371,7 +2373,7 @@ qdiint(qd)
 			* pick up the mouse input (if any)  */
 
 			if ((status = duart->statusB) & RCV_RDY  &&
-			    qdflags[qd].pntr_id == MOUSE_ID) {
+			    qdflags[dv->dv_unit].pntr_id == MOUSE_ID) {
 
 				if (status & 0x70) {
 					duart->cmdB = 0x40;
@@ -2426,17 +2428,17 @@ qdiint(qd)
 						/*
 						* calculate acceleration factor, if needed	*/
 
-						if (qdflags[qd].curs_acc > ACC_OFF) {
+						if (qdflags[dv->dv_unit].curs_acc > ACC_OFF) {
 
-							if (qdflags[qd].curs_thr <= new_rep->dx)
+							if (qdflags[dv->dv_unit].curs_thr <= new_rep->dx)
 							    new_rep->dx +=
-							    (new_rep->dx - qdflags[qd].curs_thr)
-							    * qdflags[qd].curs_acc;
+							    (new_rep->dx - qdflags[dv->dv_unit].curs_thr)
+							    * qdflags[dv->dv_unit].curs_acc;
 
-							if (qdflags[qd].curs_thr <= new_rep->dy)
+							if (qdflags[dv->dv_unit].curs_thr <= new_rep->dy)
 							    new_rep->dy +=
-							    (new_rep->dy - qdflags[qd].curs_thr)
-							    * qdflags[qd].curs_acc;
+							    (new_rep->dy - qdflags[dv->dv_unit].curs_thr)
+							    * qdflags[dv->dv_unit].curs_acc;
 						}
 
 						/*
@@ -2467,7 +2469,7 @@ qdiint(qd)
 						/*
 						* update cursor screen position */
 
-						dga = (struct dga *) qdmap[qd].dga;
+						dga = (struct dga *) qdmap[dv->dv_unit].dga;
 						dga->x_cursor = TRANX(eqh->curs_pos.x);
 						dga->y_cursor = TRANY(eqh->curs_pos.y);
 
@@ -2504,7 +2506,7 @@ GET_MBUTTON:
 					* if button state has changed */
 
 					a = new_rep->state & 0x07;    /*mask nonbutton bits */
-					b = last_rep[qd].state & 0x07;
+					b = last_rep[dv->dv_unit].state & 0x07;
 
 					if (a ^ b) {
 
@@ -2552,11 +2554,11 @@ GET_MBUTTON:
 
 					/* refresh last report */
 
-					last_rep[qd] = current_rep[qd];
+					last_rep[dv->dv_unit] = current_rep[dv->dv_unit];
 
 				}  /* get last byte of report */
 			} else if ((status = duart->statusB)&RCV_RDY &&
-				   qdflags[qd].pntr_id == TABLET_ID) {
+				   qdflags[dv->dv_unit].pntr_id == TABLET_ID) {
 				/*
 				* pickup tablet input, if any  
 				*/
@@ -2618,9 +2620,9 @@ GET_MBUTTON:
 					/*
 					* update cursor position coordinates */
 
-					new_rep->dx /= qdflags[qd].tab_res;
+					new_rep->dx /= qdflags[dv->dv_unit].tab_res;
 					new_rep->dy = (2200 - new_rep->dy)
-					    / qdflags[qd].tab_res;
+					    / qdflags[dv->dv_unit].tab_res;
 
 					if (new_rep->dx > 1023) {
 						new_rep->dx = 1023;
@@ -2642,7 +2644,7 @@ GET_MBUTTON:
 						/*
 						* update cursor screen position */
 
-						dga = (struct dga *) qdmap[qd].dga;
+						dga = (struct dga *) qdmap[dv->dv_unit].dga;
 						dga->x_cursor = TRANX(eqh->curs_pos.x);
 						dga->y_cursor = TRANY(eqh->curs_pos.y);
 
@@ -2683,7 +2685,7 @@ GET_TBUTTON:
 					* if button state has changed */
 
 					a = new_rep->state & 0x1E;   /* mask nonbutton bits */
-					b = last_rep[qd].state & 0x1E;
+					b = last_rep[dv->dv_unit].state & 0x1E;
 
 					if (a ^ b) {
 
@@ -2732,7 +2734,7 @@ GET_TBUTTON:
 
 					/* refresh last report */
 
-					last_rep[qd] = current_rep[qd];
+					last_rep[dv->dv_unit] = current_rep[dv->dv_unit];
 
 				} /* get last byte of report */
 			} /* pick up tablet input */
@@ -2742,10 +2744,10 @@ GET_TBUTTON:
 		/*
 		* do select wakeup	
 		*/
-		if (qdrsel[qd].si_pid && do_wakeup && qdflags[qd].selmask & SEL_READ) {
-			selwakeup(&qdrsel[qd]);
-			qdrsel[qd].si_pid = 0;
-			qdflags[qd].selmask &= ~SEL_READ;
+		if (qdrsel[dv->dv_unit].si_pid && do_wakeup && qdflags[dv->dv_unit].selmask & SEL_READ) {
+			selwakeup(&qdrsel[dv->dv_unit]);
+			qdrsel[dv->dv_unit].si_pid = 0;
+			qdflags[dv->dv_unit].selmask &= ~SEL_READ;
 			do_wakeup = 0;
 		}
 	} else {
@@ -2755,10 +2757,10 @@ GET_TBUTTON:
 		if (qdpolling)
 			return;
 	   
-		if (qd >= qd_cd.cd_ndevs || qd_cd.cd_devs[qd] == NULL)
+		if (dv->dv_unit >= qd_cd.cd_ndevs || qd_cd.cd_devs[dv->dv_unit] == NULL)
 			return;		/* no such device or address */
 
-		tp = qd_tty[qd << 2];
+		tp = qd_tty[dv->dv_unit << 2];
 
 		/*
 		 * Get a character from the keyboard. 
@@ -2880,7 +2882,7 @@ void
 clear_qd_screen(unit)
 	int unit;
 {
-	volatile register struct adder *adder;
+	volatile struct adder *adder;
 	adder = (struct adder *) qdmap[unit].adder;
 
 	adder->x_limit = 1024;
@@ -2935,9 +2937,9 @@ ldcursor(unit, bitmap)
 	int unit;
 	short *bitmap;
 {
-	volatile register struct dga *dga;
-	volatile register short *temp;
-	register int i;
+	volatile struct dga *dga;
+	volatile short *temp;
+	int i;
 	int curs;
 
 	dga = (struct dga *) qdmap[unit].dga;
@@ -2969,10 +2971,10 @@ void
 ldfont(unit)
 	int unit;
 {
-	volatile register struct adder *adder;
+	volatile struct adder *adder;
 
-	register int i, j, k, max_chars_line;
-	register short packed;
+	int i, j, k, max_chars_line;
+	short packed;
 
 	adder = (struct adder *) qdmap[unit].adder;
 
@@ -3112,9 +3114,9 @@ int
 qdcngetc(dev)
 	dev_t dev;
 {
-	register short key;
-	register char chr;
-	volatile register struct duart *duart;
+	short key;
+	char chr;
+	volatile struct duart *duart;
 
 	duart = (struct duart *) qdmap[0].duart;
 
@@ -3210,8 +3212,8 @@ void
 led_control(unit, cmd, led_mask)
 	int unit, cmd, led_mask;
 {
-	register int i;
-	volatile register struct duart *duart;
+	int i;
+	volatile struct duart *duart;
 
 	duart = (struct duart *)qdmap[unit].duart;
 
@@ -3301,7 +3303,7 @@ void
 init_shared(unit)
 	int unit;
 {
-	volatile register struct dga *dga;
+	volatile struct dga *dga;
 
 	dga = (struct dga *) qdmap[unit].dga;
 
@@ -3365,10 +3367,10 @@ setup_dragon(unit)
 	int unit;
 {
 
-	volatile register struct adder *adder;
-	volatile register struct dga *dga;
+	volatile struct adder *adder;
+	volatile struct dga *dga;
 	volatile short *memcsr;
-	register int i;
+	int i;
 	short top;		/* clipping/scrolling boundaries */
 	short bottom;
 	short right;
@@ -3619,8 +3621,8 @@ void
 setup_input(unit)
 	int unit;
 {
-	volatile register struct duart *duart;	/* DUART register structure pointer */
-	register int i, bits;
+	volatile struct duart *duart;	/* DUART register structure pointer */
+	int i, bits;
 	char id_byte;
 
 	duart = (struct duart *) qdmap[unit].duart;
@@ -3787,7 +3789,7 @@ wait_status(adder, mask)
 	volatile struct adder *adder;
 	int mask;
 {
-	register int i;
+	int i;
 
 	for (i = 10000, adder->status = 0 ; i > 0  &&  
 	     !(adder->status&mask) ; --i)
@@ -3811,7 +3813,7 @@ write_ID(adder, adrs, data)
 	short adrs;
 	short data;
 {
-	register int i;
+	int i;
 
 	for (i = 100000, adder->status = 0 ; 
 	      i > 0  &&  !(adder->status&ADDRESS_COMPLETE) ; --i)

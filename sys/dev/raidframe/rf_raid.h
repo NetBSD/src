@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.7 1999/08/14 03:10:04 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.7.2.1 2000/11/20 11:42:57 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -59,7 +59,8 @@
 #define RF_MAX_DISKS 128	/* max disks per array */
 #define RF_DEV2RAIDID(_dev)  (DISKUNIT(_dev))
 
-#define RF_COMPONENT_LABEL_VERSION 1
+#define RF_COMPONENT_LABEL_VERSION_1 1
+#define RF_COMPONENT_LABEL_VERSION 2
 #define RF_RAID_DIRTY 0
 #define RF_RAID_CLEAN 1
 
@@ -119,6 +120,8 @@ struct RF_Raid_s {
 	RF_RaidLayout_t Layout;	/* all information related to layout */
 	RF_RaidDisk_t **Disks;	/* all information related to physical disks */
 	RF_DiskQueue_t **Queues;/* all information related to disk queues */
+	RF_DiskQueueSW_t *qType;/* pointer to the DiskQueueSW used for the
+				   component queues. */
 	/* NOTE:  This is an anchor point via which the queues can be
 	 * accessed, but the enqueue/dequeue routines in diskqueue.c use a
 	 * local copy of this pointer for the actual accesses. */
@@ -131,6 +134,8 @@ struct RF_Raid_s {
 	RF_LockTableEntry_t *lockTable;	/* stripe-lock table */
 	RF_LockTableEntry_t *quiesceLock;	/* quiesnce table */
 	int     numFailures;	/* total number of failures in the array */
+	int     numNewFailures; /* number of *new* failures (that havn't 
+				   caused a mod_counter update */
 
 	int     parity_good;    /* !0 if parity is known to be correct */
 	int     serial_number;  /* a "serial number" for this set */
@@ -140,6 +145,20 @@ struct RF_Raid_s {
 	int     openings;       /* Number of IO's which can be scheduled
 				   simultaneously (high-level - not a 
 				   per-component limit)*/
+
+	int maxOutstanding;   /* maxOutstanding requests (per-component) */
+	int autoconfigure;    /* automatically configure this RAID set. 
+				 0 == no, 1 == yes */
+	int root_partition;   /* Use this set as /
+				 0 == no, 1 == yes*/
+	int last_unit;        /* last unit number (e.g. 0 for /dev/raid0) 
+				 of this component.  Used for autoconfigure
+				 only. */
+	int config_order;     /* 0 .. n.  The order in which the component
+				 should be auto-configured.  E.g. 0 is will 
+				 done first, (and would become raid0).
+				 This may be in conflict with last_unit!!?! */
+	                      /* Not currently used. */
 
 	/*
          * Cleanup stuff
@@ -177,6 +196,13 @@ struct RF_Raid_s {
 	RF_ThroughputStats_t throughputstats;
 #endif				/* !KERNEL && !SIMULATE */
 	RF_CumulativeStats_t userstats;
+	int     parity_rewrite_stripes_done;
+	int     recon_stripes_done;
+	int     copyback_stripes_done;
+
+	int     recon_in_progress;
+	int     parity_rewrite_in_progress;
+	int     copyback_in_progress;
 
 	/*
          * Engine thread control
@@ -184,7 +210,10 @@ struct RF_Raid_s {
 	        RF_DECLARE_MUTEX(node_queue_mutex)
 	        RF_DECLARE_COND(node_queue_cond)
 	RF_DagNode_t *node_queue;
+	RF_Thread_t parity_rewrite_thread;
+	RF_Thread_t copyback_thread;
 	RF_Thread_t engine_thread;
+	RF_Thread_t recon_thread;
 	RF_ThreadGroup_t engine_tg;
 	int     shutdown_engine;
 	int     dags_in_flight;	/* debug */

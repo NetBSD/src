@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.2.2.1 1999/10/20 22:36:31 thorpej Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.2.2.2 2000/11/20 11:42:30 bouyer Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -28,148 +28,149 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 /* require sys/device.h */
 /* require sys/queue.h */
+/* require sys/callout.h */
 /* require dev/ic/i82365reg.h */
 /* require dev/ic/i82365var.h */
 
 #ifndef _DEV_PCI_PCCBBVAR_H_
 #define	_DEV_PCI_PCCBBVAR_H_
 
-
 #define	PCIC_FLAG_SOCKETP	0x0001
 #define	PCIC_FLAG_CARDP		0x0002
 
-
-
 /* Chipset ID */
-#define CB_UNKNOWN  0		/* NOT Cardbus-PCI bridge */
-#define CB_TI113X   1		/* TI PCI1130/1131 */
-#define CB_TI12XX   2		/* TI PCI1250/1220 */
-#define CB_RF5C47X  3		/* RICOH RF5C475/476/477 */
-#define CB_RF5C46X  4		/* RICOH RF5C465/466/467 */
-#define CB_TOPIC95  5		/* Toshiba ToPIC95 */
-#define CB_TOPIC95B 6		/* Toshiba ToPIC95B */
-#define CB_TOPIC97  7		/* Toshiba ToPIC97 */
-#define CB_CIRRUS   8		/* Cirrus Logic CL-PD683X */
-#define CB_CHIPS_LAST  9	/* Sentinel */
+#define	CB_UNKNOWN	0	/* NOT Cardbus-PCI bridge */
+#define	CB_TI113X	1	/* TI PCI1130/1131 */
+#define	CB_TI12XX	2	/* TI PCI1250/1220 */
+#define	CB_RX5C47X	3	/* RICOH RX5C475/476/477 */
+#define	CB_RX5C46X	4	/* RICOH RX5C465/466/467 */
+#define	CB_TOPIC95	5	/* Toshiba ToPIC95 */
+#define	CB_TOPIC95B	6	/* Toshiba ToPIC95B */
+#define	CB_TOPIC97	7	/* Toshiba ToPIC97 */
+#define	CB_CIRRUS	8	/* Cirrus Logic CL-PD683X */
+#define	CB_CHIPS_LAST	9	/* Sentinel */
 
 #if 0
 static char *cb_chipset_name[CB_CHIPS_LAST] = {
-  "unknown", "TI 113X", "TI 12XX", "RF5C47X", "RF5C46X", "ToPIC95",
-  "ToPIC95B", "ToPIC97", "CL-PD 683X",
+	"unknown", "TI 113X", "TI 12XX", "RF5C47X", "RF5C46X", "ToPIC95",
+	"ToPIC95B", "ToPIC97", "CL-PD 683X",
 };
 #endif
 
 struct pccbb_softc;
+struct pccbb_intrhand_list;
 
-#if pccard
-struct cbb_pcmcia_softc {
-  pccard_chipset_t cpc_ct;
-  struct pccard_softc *cpc_csc;
-  struct pccbb_softc *cpc_parent;
-  u_int8_t cpc_statreg;		/* status register */
-  u_int32_t cpc_regbase;	/* base index of the slot */
-  u_int16_t cpc_flags;
-  bus_space_tag_t cpc_iot;
-  bus_space_handle_t cpc_ioh;
-};
-#endif /* pccard */
 
 struct cbb_pcic_handle {
-  struct device *ph_parent;
-  bus_space_tag_t ph_base_t;
-  bus_space_handle_t ph_base_h;
-  u_int8_t (* ph_read) __P((struct cbb_pcic_handle *, int));
-  void (* ph_write) __P((struct cbb_pcic_handle *, int, u_int8_t));
-  int	sock;
+	struct device *ph_parent;
+	bus_space_tag_t ph_base_t;
+	bus_space_handle_t ph_base_h;
+	u_int8_t (*ph_read) __P((struct cbb_pcic_handle *, int));
+	void (*ph_write) __P((struct cbb_pcic_handle *, int, u_int8_t));
+	int sock;
 
-  int	vendor;
-  int	flags;
-  int	memalloc;
-  struct {
-    bus_addr_t	addr;
-    bus_size_t	size;
-    long	offset;
-    int		kind;
-  } mem[PCIC_MEM_WINS];
-  int	ioalloc;
-  struct {
-    bus_addr_t	addr;
-    bus_size_t	size;
-    int		width;
-  } io[PCIC_IO_WINS];
-  int	ih_irq;
-  struct device *pcmcia;
+	int vendor;
+	int flags;
+	int memalloc;
+	struct {
+		bus_addr_t addr;
+		bus_size_t size;
+		long offset;
+		int kind;
+	} mem[PCIC_MEM_WINS];
+	int ioalloc;
+	struct {
+		bus_addr_t addr;
+		bus_size_t size;
+		int width;
+	} io[PCIC_IO_WINS];
+	int ih_irq;
+	struct device *pcmcia;
 
-  int shutdown;
+	int shutdown;
 };
-
 
 struct pccbb_win_chain {
-  bus_addr_t wc_start;		/* Caution: region [start, end], */
-  bus_addr_t wc_end;		/* instead of [start, end). */
-  int wc_flags;
-#define PCCBB_MEM_CACHABLE 1
-  bus_space_handle_t wc_handle;
-  struct pccbb_win_chain *wc_next;
+	bus_addr_t wc_start;		/* Caution: region [start, end], */
+	bus_addr_t wc_end;		/* instead of [start, end). */
+	int wc_flags;
+	bus_space_handle_t wc_handle;
+	TAILQ_ENTRY(pccbb_win_chain) wc_list;
 };
+#define	PCCBB_MEM_CACHABLE	1
 
+TAILQ_HEAD(pccbb_win_chain_head, pccbb_win_chain);
 
 struct pccbb_softc {
-  struct device sc_dev;
-  bus_space_tag_t sc_iot;
-  bus_space_tag_t sc_memt;
-  bus_dma_tag_t sc_dmat;
+	struct device sc_dev;
+	bus_space_tag_t sc_iot;
+	bus_space_tag_t sc_memt;
+	bus_dma_tag_t sc_dmat;
 
 #if rbus
-  rbus_tag_t sc_rbus_iot;	/* rbus for i/o donated from parent */
-  rbus_tag_t sc_rbus_memt;	/* rbus for mem donated from parent */
+	rbus_tag_t sc_rbus_iot;		/* rbus for i/o donated from parent */
+	rbus_tag_t sc_rbus_memt;	/* rbus for mem donated from parent */
 #endif
 
-  bus_space_tag_t sc_base_memt;
-  bus_space_handle_t sc_base_memh;
+	bus_space_tag_t sc_base_memt;
+	bus_space_handle_t sc_base_memh;
 
-  void *sc_ih;			/* interrupt handler */
-  int sc_intrline;		/* interrupt line */
-  pcitag_t sc_intrtag;		/* copy of pa->pa_intrtag */
-  pci_intr_pin_t sc_intrpin;	/* copy of pa->pa_intrpin */
-  int sc_function;
-  u_int32_t sc_flags;
-#define CBB_CARDEXIST 0x01
-#define CBB_INSERTING 0x01000000
-#define CBB_16BITCARD 0x04
-#define CBB_32BITCARD 0x08
+	struct callout sc_insert_ch;
 
-#if pccard
-  struct cbb_pcmcia_softc sc_pcmcia;
-#endif /* pccard */
-  pci_chipset_tag_t sc_pc;
-  pcitag_t sc_tag;
-  int sc_chipset;		/* chipset id */
+	void *sc_ih;			/* interrupt handler */
+	int sc_intrline;		/* interrupt line */
+	pcitag_t sc_intrtag;		/* copy of pa->pa_intrtag */
+	pci_intr_pin_t sc_intrpin;	/* copy of pa->pa_intrpin */
+	int sc_function;
+	u_int32_t sc_flags;
+#define	CBB_CARDEXIST	0x01
+#define	CBB_INSERTING	0x01000000
+#define	CBB_16BITCARD	0x04
+#define	CBB_32BITCARD	0x08
 
-  bus_addr_t sc_mem_start;	/* CardBus/PCMCIA memory start */
-  bus_addr_t sc_mem_end;	/* CardBus/PCMCIA memory end */
-  bus_addr_t sc_io_start;	/* CardBus/PCMCIA io start */
-  bus_addr_t sc_io_end;		/* CardBus/PCMCIA io end */
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_tag;
+	int sc_chipset;			/* chipset id */
 
-  /* CardBus stuff */
-  struct cardslot_softc *sc_csc;
+	bus_addr_t sc_mem_start;	/* CardBus/PCMCIA memory start */
+	bus_addr_t sc_mem_end;		/* CardBus/PCMCIA memory end */
+	bus_addr_t sc_io_start;		/* CardBus/PCMCIA io start */
+	bus_addr_t sc_io_end;		/* CardBus/PCMCIA io end */
 
-  struct pccbb_win_chain *sc_memwindow;
-  struct pccbb_win_chain *sc_iowindow;
+	/* CardBus stuff */
+	struct cardslot_softc *sc_csc;
 
-  /* pcmcia stuff */
-  struct pcic_handle sc_pcmcia_h;
-  pcmcia_chipset_tag_t sc_pct;
-  int sc_pcmcia_flags;
-#define PCCBB_PCMCIA_IO_RELOC   0x01 /* IO address relocatable stuff exists */
-#define PCCBB_PCMCIA_MEM_32     0x02 /* 32-bit memory address ready */
-#define PCCBB_PCMCIA_16BITONLY  0x04 /* 32-bit mode disable */
+	struct pccbb_win_chain_head sc_memwindow;
+	struct pccbb_win_chain_head sc_iowindow;
 
-  struct proc *sc_event_thread;
-  SIMPLEQ_HEAD(, pcic_event) sc_events;
+	/* pcmcia stuff */
+	struct pcic_handle sc_pcmcia_h;
+	pcmcia_chipset_tag_t sc_pct;
+	int sc_pcmcia_flags;
+#define	PCCBB_PCMCIA_IO_RELOC	0x01	/* IO addr relocatable stuff exists */
+#define	PCCBB_PCMCIA_MEM_32	0x02	/* 32-bit memory address ready */
+#define	PCCBB_PCMCIA_16BITONLY	0x04	/* 32-bit mode disable */
+
+	struct proc *sc_event_thread;
+	SIMPLEQ_HEAD(, pcic_event) sc_events;
+
+	/* interrupt handler list on the bridge */
+	struct pccbb_intrhand_list *sc_pil;
+	int sc_pil_intr_enable;	/* can i call intr handler for child device? */
+};
+
+/*
+ * struct pccbb_intrhand_list holds interrupt handler and argument for
+ * child devices.
+ */
+
+struct pccbb_intrhand_list {
+	int (*pil_func) __P((void *));
+	void *pil_arg;
+	int pil_level;
+	struct pccbb_intrhand_list *pil_next;
 };
 
 #endif /* _DEV_PCI_PCCBBREG_H_ */

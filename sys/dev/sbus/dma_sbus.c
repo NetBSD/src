@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_sbus.c,v 1.3 1998/09/05 17:28:57 pk Exp $ */
+/*	$NetBSD: dma_sbus.c,v 1.3.12.1 2000/11/20 11:43:04 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,8 +74,8 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -101,7 +101,8 @@ int	dmaprint_sbus	__P((void *, const char *));
 
 void	*dmabus_intr_establish __P((
 		bus_space_tag_t,
-		int,			/*level*/
+		int,			/*bus interrupt priority*/
+		int,			/*`device class' level*/
 		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
 		void *));		/*handler arg*/
@@ -152,7 +153,6 @@ dmaattach_sbus(parent, self, aux)
 	struct dma_softc *dsc = (void *)self;
 	struct lsi64854_softc *sc = &dsc->sc_lsi64854;
 	bus_space_handle_t bh;
-/*XXX*/	struct bootpath *bp;
 	bus_space_tag_t sbt;
 	int sbusburst, burst;
 	int node;
@@ -222,19 +222,6 @@ dmaattach_sbus(parent, self, aux)
 		sc->sc_channel = L64854_CHANNEL_SCSI;
 	}
 
-
-	/* Propagate bootpath */
-	bp = NULL;
-	if (sa->sa_bp != NULL) {
-		char *bpname = sa->sa_bp->name;
-		if (strcmp(bpname, "espdma") == 0)
-			/* We call everything "dma" */
-			bpname = "dma";
-
-		if (strcmp(bpname, self->dv_cfdata->cf_driver->cd_name) == 0)
-			bp = sa->sa_bp + 1;
-	}
-
 	sbus_establish(&dsc->sc_sd, &sc->sc_dev);
 	sbt = dma_alloc_bustag(dsc);
 	lsi64854_attach(sc);
@@ -243,15 +230,16 @@ dmaattach_sbus(parent, self, aux)
 	for (node = firstchild(sa->sa_node); node; node = nextsibling(node)) {
 		struct sbus_attach_args sa;
 		sbus_setup_attach_args((struct sbus_softc *)parent,
-				       sbt, sc->sc_dmatag, node, bp, &sa);
+				       sbt, sc->sc_dmatag, node, &sa);
 		(void) config_found(&sc->sc_dev, (void *)&sa, dmaprint_sbus);
 		sbus_destroy_attach_args(&sa);
 	}
 }
 
 void *
-dmabus_intr_establish(t, level, flags, handler, arg)
+dmabus_intr_establish(t, pri, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int pri;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
@@ -266,7 +254,8 @@ dmabus_intr_establish(t, level, flags, handler, arg)
 		handler = lsi64854_enet_intr;
 		arg = sc;
 	}
-	return (bus_intr_establish(sc->sc_bustag, level, flags, handler, arg));
+	return (bus_intr_establish(sc->sc_bustag, pri, level, flags,
+				   handler, arg));
 }
 
 bus_space_tag_t

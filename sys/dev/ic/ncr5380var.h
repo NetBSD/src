@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.14.2.1 1999/10/19 17:47:39 thorpej Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.14.2.2 2000/11/20 11:40:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -45,7 +45,7 @@
  *	sparc: si and sw drivers; easy to convert
  *	sun3: si driver; need bus.h first
  */
-#if defined(__i386__) || defined(__vax__)
+#if defined(__i386__) || defined(__vax__) || defined(__mips__) || defined(__sparc__)
 # define NCR5380_USE_BUS_SPACE
 #endif
 
@@ -209,16 +209,23 @@ struct ncr5380_softc {
 	u_char	*sc_omp;		/* Outgoing message pointer */
 	u_char	sc_imess[NCR_MAX_MSG_LEN];
 	u_char	*sc_imp;		/* Incoming message pointer */
+	int	sc_rev;			/* Chip revision */
+#define NCR_VARIANT_NCR5380	0
+#define NCR_VARIANT_DP8490	1
+#define NCR_VARIANT_NCR53C400	2
+#define NCR_VARIANT_PAS16	3
+#define NCR_VARIANT_CXD1180	4
 
 };
 
-void	ncr5380_init __P((struct ncr5380_softc *));
-void	ncr5380_reset_scsibus __P((struct ncr5380_softc *));
-int 	ncr5380_intr __P((struct ncr5380_softc *));
-void 	ncr5380_scsipi_request __P((struct scsipi_channel *,
+void	ncr5380_attach __P((struct ncr5380_softc *));
+int	ncr5380_detach __P((struct ncr5380_softc *, int));
+int 	ncr5380_intr __P((void *));
+void	ncr5380_scsipi_request __P((struct scsipi_channel *,
 	    scsipi_adapter_req_t, void *));
 int 	ncr5380_pio_in __P((struct ncr5380_softc *, int, int, u_char *));
 int 	ncr5380_pio_out __P((struct ncr5380_softc *, int, int, u_char *));
+void	ncr5380_init __P((struct ncr5380_softc *));
 
 #ifdef	NCR5380_DEBUG
 struct ncr5380_softc *ncr5380_debug_sc;

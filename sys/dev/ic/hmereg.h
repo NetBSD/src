@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.1 1999/06/27 12:26:32 pk Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.1.4.1 2000/11/20 11:40:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -89,16 +89,16 @@
 #define HME_SEB_STAT_SLVPERR	0x80000000	/* pio access parity error */
 #define HME_SEB_STAT_BITS	"\177\020"				\
 			"b\0GOTFRAME\0b\1RCNTEXP\0b\2ACNTEXP\0"		\
-			"b\3CCNTEXP\0b\5LCNTEXP\0b\6RFIFOVF\0"		\
-			"b\7CVCNTEXP\0b\10SENTFRAME\0b\11TFIFO_UND\0"	\
-			"b\12MAXPKTERR\0b\13NCNTEXP\0b\14ECNTEXP\0"	\
-			"b\15LCCNTEXP\0b\16FCNTEXP\0b\17DTIMEXP\0"	\
-			"b\20RXTOHOST\0b\21NORXD\0b\22RXERR\0"		\
-			"b\23RXLATERR\0b\24RXPERR\0b\25RXTERR\0"	\
-			"b\26EOPERR\0b\27MIFIRQ\0b\30HOSTTOTX\0"	\
-			"b\31TXALL\0b\32XTEACK\0b\33TXLERR\0"		\
-			"b\34TXPERR\0b\35TXTERR\0b\36SLVERR\0"		\
-			"b\37SLVPERR\0\0"
+			"b\3CCNTEXP\0b\4LCNTEXP\0b\5RFIFOVF\0"		\
+			"b\6CVCNTEXP\0b\7STSTERR\0b\10SENTFRAME\0"	\
+			"b\11TFIFO_UND\0b\12MAXPKTERR\0b\13NCNTEXP\0"	\
+			"b\14ECNTEXP\0b\15LCCNTEXP\0b\16FCNTEXP\0"	\
+			"b\17DTIMEXP\0b\20RXTOHOST\0b\21NORXD\0"	\
+			"b\22RXERR\0b\23RXLATERR\0b\24RXPERR\0"		\
+			"b\25RXTERR\0b\26EOPERR\0b\27MIFIRQ\0"		\
+			"b\30HOSTTOTX\0b\31TXALL\0b\32XTEACK\0"		\
+			"b\33TXLERR\0b\34TXPERR\0b\35TXTERR\0"		\
+			"b\36SLVERR\0b\37SLVPERR\0\0"
 
 #define HME_SEB_STAT_ALL_ERRORS	\
 	(HME_SEB_STAT_SLVPERR  | HME_SEB_STAT_SLVERR  | HME_SEB_STAT_TXTERR   |\
@@ -123,9 +123,10 @@
 #define HME_ETXI_FIFO_SWPTR	(6*4)		/* FIFO shadow write pointer */
 #define HME_ETXI_FIFO_RPTR	(7*4)		/* FIFO read pointer */
 #define HME_ETXI_FIFO_SRPTR	(8*4)		/* FIFO shadow read pointer */
-#define HME_ETXI_FIFO_SMACH	(9*4)		/* State machine */
-#define HME_ETXI_RSIZE		(10*4)		/* Ring size */
-#define HME_ETXI_BPTR		(11*4)		/* Buffer pointer */
+#define HME_ETXI_FIFO_PKTCNT	(9*4)		/* FIFO packet counter */
+#define HME_ETXI_STATEMACHINE	(10*4)		/* State machine */
+#define HME_ETXI_RSIZE		(11*4)		/* Ring size */
+#define HME_ETXI_BPTR		(12*4)		/* Buffer pointer */
 
 
 /* TXI_PENDING bits */
@@ -148,7 +149,7 @@
 #define HME_ERXI_FIFO_SWPTR	(4*4)		/* FIFO shadow write pointer */
 #define HME_ERXI_FIFO_RPTR	(5*4)		/* FIFO read pointer */
 #define HME_ERXI_FIFO_SRPTR	(6*4)		/* FIFO shadow read pointer */
-#define HME_ERXI_FIFO_SMACH	(7*4)		/* State machine */
+#define HME_ERXI_STATEMACHINE	(7*4)		/* State machine */
 
 /* RXI_CFG bits */
 #define HME_ERX_CFG_DMAENABLE	0x00000001	/* Enable RX dma */
@@ -189,7 +190,7 @@
 #define HME_MAC_XIF_OE		0x00000001	/* Output driver enable */
 #define HME_MAC_XIF_XLBACK	0x00000002	/* Loopback-mode XIF enable */
 #define HME_MAC_XIF_MLBACK	0x00000004	/* Loopback-mode MII enable */
-#define HME_MAC_XIF_MIIDISAB	0x00000008	/* MII receive buffer disable */
+#define HME_MAC_XIF_MIIENABLE	0x00000008	/* MII receive buffer enable */
 #define HME_MAC_XIF_SQENABLE	0x00000010	/* SQE test enable */
 #define HME_MAC_XIF_SQETWIN	0x000003e0	/* SQE time window */
 #define HME_MAC_XIF_LANCE	0x00000010	/* Lance mode enable */
@@ -249,6 +250,9 @@
 #define HME_MIF_FO_TALSB	0x00010000	/* Turn-around LSB */
 #define HME_MIF_FO_DATA		0x0000ffff	/* data to read or write */
 
+/* Wired HME PHY addresses */
+#define	HME_PHYAD_INTERNAL	1
+#define	HME_PHYAD_EXTERNAL	0
 
 /*
  * Buffer Descriptors.
@@ -260,13 +264,14 @@ struct hme_xd {
 #define HME_XD_SIZE			8
 #define HME_XD_FLAGS(base, index)	((base) + ((index) * HME_XD_SIZE) + 0)
 #define HME_XD_ADDR(base, index)	((base) + ((index) * HME_XD_SIZE) + 4)
-#define HME_XD_GETFLAGS(b, i)				\
-	(*((u_int32_t *)HME_XD_FLAGS(b,i)))
-#define HME_XD_SETFLAGS(b, i, f)	do {		\
-	*((u_int32_t *)HME_XD_FLAGS(b,i)) = (f);	\
+#define HME_XD_GETFLAGS(p, b, i)					\
+	(p) ? le32toh(*((u_int32_t *)HME_XD_FLAGS(b,i))) :		\
+		(*((u_int32_t *)HME_XD_FLAGS(b,i)))
+#define HME_XD_SETFLAGS(p, b, i, f)	do {				\
+	*((u_int32_t *)HME_XD_FLAGS(b,i)) = ((p) ? htole32(f) : (f));	\
 } while(0)
-#define HME_XD_SETADDR(b, i, a)	do {			\
-	*((u_int32_t *)HME_XD_ADDR(b,i)) = (a);		\
+#define HME_XD_SETADDR(p, b, i, a)	do {				\
+	*((u_int32_t *)HME_XD_ADDR(b,i)) = ((p) ? htole32(a) : (a));	\
 } while(0)
 
 /* Descriptor flag values */

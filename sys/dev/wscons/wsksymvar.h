@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymvar.h,v 1.7 1998/09/17 18:10:53 drochner Exp $ */
+/*	$NetBSD: wsksymvar.h,v 1.7.12.1 2000/11/20 11:43:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #endif
 
 typedef u_int16_t keysym_t;
-typedef u_int16_t kbd_t;
+typedef u_int32_t kbd_t;
 
 struct wscons_keymap {
 	keysym_t command;
@@ -64,6 +64,9 @@ struct wskbd_mapdata {
 	const struct wscons_keydesc *keydesc;
 	kbd_t layout;
 };
+
+/* layout variant bits ignored by mapping code */
+#define KB_HANDLEDBYWSKBD KB_METAESC
 
 /*
  * Utility functions.

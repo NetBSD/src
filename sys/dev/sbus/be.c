@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.6 1999/05/18 23:52:58 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.6.2.1 2000/11/20 11:43:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
@@ -110,8 +111,9 @@
 #include <net/bpfdesc.h>
 #endif
 
+#include <machine/bus.h>
+#include <machine/intr.h>
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -127,10 +129,25 @@ struct be_softc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	bus_space_tag_t	sc_bustag;	/* bus & dma tags */
 	bus_dma_tag_t	sc_dmatag;
+	bus_dmamap_t	sc_dmamap;
 	struct	ethercom sc_ethercom;
 	/*struct	ifmedia sc_ifmedia;	-* interface media */
 	struct mii_data	sc_mii;		/* MII media control */
 #define sc_media	sc_mii.mii_media/* shorthand */
+	int		sc_phys[2];	/* MII instance -> phy */
+
+	struct callout sc_tick_ch;
+
+	/*
+	 * Some `mii_softc' items we need to emulate MII operation
+	 * for our internal transceiver.
+	 */
+	int		sc_mii_inst;	/* instance of internal phy */
+	int		sc_mii_active;	/* currently active medium */
+	int		sc_mii_ticks;	/* tick counter */
+	int		sc_mii_flags;	/* phy status flags */
+#define MIIF_HAVELINK	0x04000000
+	int		sc_intphy_curspeed;	/* Established link speed */
 
 	struct	qec_softc *sc_qec;	/* QEC parent */
 
@@ -143,8 +160,6 @@ struct be_softc {
 
 	int	sc_channel;		/* channel number */
 	int	sc_burst;
-	int	sc_conf;
-#define BE_CONF_MII	1
 
 	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
 
@@ -172,7 +187,7 @@ static void	be_read __P((struct be_softc *, int, int));
 static int	be_put __P((struct be_softc *, int, struct mbuf *));
 static struct mbuf *be_get __P((struct be_softc *, int, int));
 
-void	be_tcvr_init __P((struct be_softc *));
+void	be_pal_gate __P((struct be_softc *, int));
 
 /* ifmedia callbacks */
 void	be_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
@@ -183,7 +198,7 @@ void	be_mcreset __P((struct be_softc *));
 /* MII methods & callbacks */
 static int	be_mii_readreg __P((struct device *, int, int));
 static void	be_mii_writereg __P((struct device *, int, int, int));
-static void	be_statchg __P((struct device *));
+static void	be_mii_statchg __P((struct device *));
 
 /* MII helpers */
 static void	be_mii_sync __P((struct be_softc *));
@@ -192,8 +207,10 @@ static int	be_mii_reset __P((struct be_softc *, int));
 static int	be_tcvr_read_bit __P((struct be_softc *, int));
 static void	be_tcvr_write_bit __P((struct be_softc *, int, int));
 
-void		be_tick __P((void *));
-void		be_internal_phy_auto __P((struct be_softc *));
+void	be_tick __P((void *));
+void	be_intphy_auto __P((struct be_softc *));
+void	be_intphy_status __P((struct be_softc *));
+int	be_intphy_service __P((struct be_softc *, struct mii_data *, int));
 
 
 struct cfattach be_ca = {
@@ -221,10 +238,14 @@ beattach(parent, self, aux)
 	struct be_softc *sc = (struct be_softc *)self;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
+	struct mii_softc *child;
 	int node = sa->sa_node;
+	bus_dma_tag_t dmatag = sa->sa_dmatag;
 	bus_dma_segment_t seg;
 	bus_size_t size;
+	int instance;
 	int rseg, error;
+	u_int32_t v;
 	extern void myetheraddr __P((u_char *));
 
 	if (sa->sa_nreg < 3) {
@@ -279,7 +300,10 @@ beattach(parent, self, aux)
 	/* Clamp at parent's burst sizes */
 	sc->sc_burst &= qec->sc_burst;
 
-	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0, beintr, sc);
+	/* Establish interrupt handler */
+	if (sa->sa_nintr)
+		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
+					 0, beintr, sc);
 
 	myetheraddr(sc->sc_enaddr);
 	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
@@ -296,28 +320,42 @@ beattach(parent, self, aux)
 		QEC_XD_RING_MAXSIZE * sizeof(struct qec_xd) +
 		sc->sc_rb.rb_ntbuf * BE_PKT_BUF_SZ +
 		sc->sc_rb.rb_nrbuf * BE_PKT_BUF_SZ;
-	if ((error = bus_dmamem_alloc(sa->sa_dmatag, size,
-				      NBPG, 0,
+
+	/* Get a DMA handle */
+	if ((error = bus_dmamap_create(dmatag, size, 1, size, 0,
+				    BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
+		printf("%s: DMA map create error %d\n", self->dv_xname, error);
+		return;
+	}
+
+	/* Allocate DMA buffer */
+	if ((error = bus_dmamem_alloc(sa->sa_dmatag, size, 0, 0,
 				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			self->dv_xname, error);
 		return;
 	}
-	sc->sc_rb.rb_dmabase = seg.ds_addr;
 
+	/* Load the buffer */
+	if ((error = bus_dmamap_load_raw(dmatag, sc->sc_dmamap,
+				&seg, rseg, size, BUS_DMA_NOWAIT)) != 0) {
+		printf("%s: DMA buffer map load error %d\n",
+			self->dv_xname, error);
+		bus_dmamem_free(dmatag, &seg, rseg);
+		return;
+	}
+	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
+
+	/* Map DMA memory in CPU addressable space */
 	if ((error = bus_dmamem_map(sa->sa_dmatag, &seg, rseg, size,
 			            &sc->sc_rb.rb_membase,
 			            BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: DMA buffer map error %d\n",
 			self->dv_xname, error);
+		bus_dmamap_unload(dmatag, sc->sc_dmamap);
 		bus_dmamem_free(sa->sa_dmatag, &seg, rseg);
 		return;
 	}
-
-	/*
-	 * Initialize transceiver and determine which PHY connection to use.
-	 */
-	be_tcvr_init(sc);
 
 	/*
 	 * Initialize our media structures and MII info.
@@ -325,45 +363,71 @@ beattach(parent, self, aux)
 	mii->mii_ifp = ifp;
 	mii->mii_readreg = be_mii_readreg;
 	mii->mii_writereg = be_mii_writereg;
-	mii->mii_statchg = be_statchg;
+	mii->mii_statchg = be_mii_statchg;
 
 	ifmedia_init(&mii->mii_media, 0, be_ifmedia_upd, be_ifmedia_sts);
 
-	if ((sc->sc_conf & BE_CONF_MII) != 0) {
-#if 1
-		mii_phy_probe(&sc->sc_dev, mii, 0xffffffff);
-#else
-		/* TEST */
-		extern int mii_print __P((void *, const char *));
-		struct mii_attach_args ma;
-		struct mii_softc *child;
+	callout_init(&sc->sc_tick_ch);
 
-		bzero(&ma, sizeof(ma));
-		ma.mii_phyno = BE_PHY_INTERNAL;
-		ma.mii_data = mii;
-		ma.mii_capmask = 0xffffffff;
-		if ((child = (struct mii_softc *)
-			config_found(&sc->sc_dev, &ma, mii_print)) != NULL) {
-			/*
-			 * Link it up in the parent's MII data.
-			 */
-			LIST_INSERT_HEAD(&mii->mii_phys, child, mii_list);
-			mii->mii_instance++;
-		}
-#endif
+	/*
+	 * Initialize transceiver and determine which PHY connection to use.
+	 */
+	be_mii_sync(sc);
+	v = bus_space_read_4(sc->sc_bustag, sc->sc_tr, BE_TRI_MGMTPAL);
 
-		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	instance = 0;
+
+	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
+
+		mii_attach(&sc->sc_dev, mii, 0xffffffff, BE_PHY_EXTERNAL,
+		    MII_OFFSET_ANY, 0);
+
+		child = LIST_FIRST(&mii->mii_phys);
+		if (child == NULL) {
 			/* No PHY attached */
-			ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_NONE, 0, NULL);
-			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_NONE);
+			ifmedia_add(&sc->sc_media,
+				    IFM_MAKEWORD(IFM_ETHER,IFM_NONE,0,instance),
+				    0, NULL);
+			ifmedia_set(&sc->sc_media,
+				   IFM_MAKEWORD(IFM_ETHER,IFM_NONE,0,instance));
 		} else {
+			/*
+			 * Note: we support just one PHY on the external
+			 * MII connector.
+			 */
+#ifdef DIAGNOSTIC
+			if (LIST_NEXT(child, mii_list) != NULL) {
+				printf("%s: spurious MII device %s attached\n",
+				       sc->sc_dev.dv_xname,
+				       child->mii_dev.dv_xname);
+			}
+#endif
+			if (child->mii_phy != BE_PHY_EXTERNAL ||
+			    child->mii_inst > 0) {
+				printf("%s: cannot accomodate MII device %s"
+				       " at phy %d, instance %d\n",
+				       sc->sc_dev.dv_xname,
+				       child->mii_dev.dv_xname,
+				       child->mii_phy, child->mii_inst);
+			} else {
+				sc->sc_phys[instance] = child->mii_phy;
+			}
+
 			/*
 			 * XXX - we can really do the following ONLY if the
 			 * phy indeed has the auto negotiation capability!!
 			 */
-			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+			ifmedia_set(&sc->sc_media,
+				   IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
+
+			/* Mark our current media setting */
+			be_pal_gate(sc, BE_PHY_EXTERNAL);
+			instance++;
 		}
-	} else {
+
+	}
+
+	if ((v & MGMT_PAL_INT_MDIO) != 0) {
 		/*
 		 * The be internal phy looks vaguely like MII hardware,
 		 * but not enough to be able to use the MII device
@@ -371,23 +435,32 @@ beattach(parent, self, aux)
 		 * ourselves.
 		 */
 
+		sc->sc_mii_inst = instance;
+		sc->sc_phys[instance] = BE_PHY_INTERNAL;
+
 		/* Use `ifm_data' to store BMCR bits */
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,0,0),
+			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,0,instance),
 			    0, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_10_T,IFM_FDX,0),
-			    BMCR_FDX, NULL);
-		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,0,0),
+			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,0,instance),
 			    BMCR_S100, NULL);
 		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_100_TX,IFM_FDX,0),
-			    BMCR_S100|BMCR_FDX, NULL);
-		ifmedia_add(&sc->sc_media,
-			    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,0),
+			    IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance),
 			    0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+
+		printf("on-board transceiver at %s: 10baseT, 100baseTX, auto\n",
+			self->dv_xname);
+
+		be_mii_reset(sc, BE_PHY_INTERNAL);
+		/* Only set default medium here if there's no external PHY */
+		if (instance == 0) {
+			be_pal_gate(sc, BE_PHY_INTERNAL);
+			ifmedia_set(&sc->sc_media,
+				   IFM_MAKEWORD(IFM_ETHER,IFM_AUTO,0,instance));
+		} else
+			be_mii_writereg((void *)sc,
+				BE_PHY_INTERNAL, MII_BMCR, BMCR_ISO);
 	}
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -403,8 +476,7 @@ beattach(parent, self, aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 
 #if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 }
 
@@ -609,7 +681,11 @@ bestop(sc)
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t br = sc->sc_br;
 
-	untimeout(be_tick, sc);
+	callout_stop(&sc->sc_tick_ch);
+
+	/* Down the MII. */
+	mii_down(&sc->sc_mii);
+	(void)be_intphy_service(sc, &sc->sc_mii, MII_DOWN);
 
 	/* Stop the transmitter */
 	bus_space_write_4(t, br, BE_BRI_TXCFG, 0);
@@ -639,7 +715,8 @@ bereset(sc)
 
 	s = splnet();
 	bestop(sc);
-	beinit(sc);
+	if ((sc->sc_ethercom.ec_if.if_flags & IFF_UP) != 0)
+		beinit(sc);
 	splx(s);
 }
 
@@ -1013,6 +1090,7 @@ beinit(sc)
 	bus_space_handle_t br = sc->sc_br;
 	bus_space_handle_t cr = sc->sc_cr;
 	struct qec_softc *qec = sc->sc_qec;
+	u_int32_t v;
 	u_int32_t qecaddr;
 	u_int8_t *ea;
 	int s;
@@ -1020,9 +1098,6 @@ beinit(sc)
 	s = splimp();
 
 	qec_meminit(&sc->sc_rb, BE_PKT_BUF_SZ);
-	be_tcvr_init(sc);
-
-	be_ifmedia_upd(ifp);
 
 	bestop(sc);
 
@@ -1031,10 +1106,15 @@ beinit(sc)
 	bus_space_write_4(t, br, BE_BRI_MACADDR1, (ea[2] << 8) | ea[3]);
 	bus_space_write_4(t, br, BE_BRI_MACADDR2, (ea[4] << 8) | ea[5]);
 
+	/* Clear hash table */
 	bus_space_write_4(t, br, BE_BRI_HASHTAB0, 0);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB1, 0);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB2, 0);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB3, 0);
+
+	/* Re-initialize RX configuration */
+	v = BE_BR_RXCFG_FIFO;
+	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 
 	be_mcreset(sc);
 
@@ -1084,14 +1164,15 @@ beinit(sc)
 			  BE_BR_TXCFG_FIFO | BE_BR_TXCFG_ENABLE);
 
 	/* Enable receiver */
-	bus_space_write_4(t, br, BE_BRI_RXCFG,
-			  BE_BR_RXCFG_HENABLE | BE_BR_RXCFG_FIFO |
-			  BE_BR_RXCFG_ENABLE);
+	v = bus_space_read_4(t, br, BE_BRI_RXCFG);
+	v |= BE_BR_RXCFG_FIFO | BE_BR_RXCFG_ENABLE;
+	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	timeout(be_tick, sc, hz);
+	be_ifmedia_upd(ifp);
+	callout_reset(&sc->sc_tick_ch, hz, be_tick, sc);
 	splx(s);
 }
 
@@ -1118,16 +1199,9 @@ be_mcreset(sc)
 		return;
 	}
 
-	v = bus_space_read_4(t, br, BE_BRI_RXCFG);
-	v &= ~BE_BR_RXCFG_PMISC;
-	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
-
 	if (ifp->if_flags & IFF_ALLMULTI) {
-		bus_space_write_4(t, br, BE_BRI_HASHTAB0, 0xffff);
-		bus_space_write_4(t, br, BE_BRI_HASHTAB1, 0xffff);
-		bus_space_write_4(t, br, BE_BRI_HASHTAB2, 0xffff);
-		bus_space_write_4(t, br, BE_BRI_HASHTAB3, 0xffff);
-		return;
+		hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
+		goto chipit;
 	}
 
 	hash[3] = hash[2] = hash[1] = hash[0] = 0;
@@ -1145,12 +1219,9 @@ be_mcreset(sc)
 			 * which the range is big enough to require
 			 * all bits set.)
 			 */
-			bus_space_write_4(t, br, BE_BRI_HASHTAB0, 0xffff);
-			bus_space_write_4(t, br, BE_BRI_HASHTAB1, 0xffff);
-			bus_space_write_4(t, br, BE_BRI_HASHTAB2, 0xffff);
-			bus_space_write_4(t, br, BE_BRI_HASHTAB3, 0xffff);
+			hash[3] = hash[2] = hash[1] = hash[0] = 0xffff;
 			ifp->if_flags |= IFF_ALLMULTI;
-			return;
+			goto chipit;
 		}
 
 		crc = 0xffffffff;
@@ -1174,11 +1245,19 @@ be_mcreset(sc)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+chipit:
+	/* Enable the hash filter */
 	bus_space_write_4(t, br, BE_BRI_HASHTAB0, hash[0]);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB1, hash[1]);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB2, hash[2]);
 	bus_space_write_4(t, br, BE_BRI_HASHTAB3, hash[3]);
-	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	v = bus_space_read_4(t, br, BE_BRI_RXCFG);
+	v &= ~BE_BR_RXCFG_PMISC;
+	v |= BE_BR_RXCFG_HENABLE;
+	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 }
 
 /*
@@ -1190,7 +1269,7 @@ be_mii_sync(sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t tr = sc->sc_tr;
-	int n = 20;
+	int n = 32;
 
 	while (n--) {
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
@@ -1204,13 +1283,10 @@ be_mii_sync(sc)
 	}
 }
 
-/*
- * Initialize the transceiver and figure out whether we're using the
- * external or internal one.
- */
 void
-be_tcvr_init(sc)
+be_pal_gate(sc, phy)
 	struct be_softc *sc;
+	int phy;
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t tr = sc->sc_tr;
@@ -1218,61 +1294,15 @@ be_tcvr_init(sc)
 
 	be_mii_sync(sc);
 
-	if (sc->sc_rev != 1) {
-		printf("%s: rev %d PAL not supported.\n",
-			sc->sc_dev.dv_xname,
-			sc->sc_rev);
-		return;
-	}
+	v = ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE | TCVR_PAL_LTENABLE);
+	if (phy == BE_PHY_INTERNAL)
+		v &= ~TCVR_PAL_SERIAL;
 
-	bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
-			  MGMT_PAL_INT_MDIO | MGMT_PAL_EXT_MDIO |
-			  MGMT_PAL_DCLOCK);
-	(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-
-	bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
-			  MGMT_PAL_INT_MDIO | MGMT_PAL_EXT_MDIO);
-	(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-	DELAY(200);
-
-	v = bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-#ifdef BEDEBUG
-	if (sc->sc_debug != 0) {
-		char bits[64];
-		printf("be_tcvr_init: MGMTPAL=%s\n",
-		       bitmask_snprintf(v, MGMT_PAL_BITS, bits, sizeof(bits)));
-	}
-#endif
-{
-	char bits[64];
-	printf("be_tcvr_init: MGMTPAL=%s\n",
-	       bitmask_snprintf(v, MGMT_PAL_BITS, bits, sizeof(bits)));
-	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
-		printf("EXTERNAL\n");
-	}
-}
-	if ((v & MGMT_PAL_EXT_MDIO) != 0) {
-		sc->sc_conf |= BE_CONF_MII;
-		/*sc->sc_tcvr_type = BE_TCVR_EXTERNAL;*/
-		bus_space_write_4(t, tr, BE_TRI_TCVRPAL,
-				  ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE |
-				    TCVR_PAL_LTENABLE));
-
-		(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
-	} else if ((v & MGMT_PAL_INT_MDIO) != 0) {
-		/*sc->sc_tcvr_type = BE_TCVR_INTERNAL;*/
-		bus_space_write_4(t, tr, BE_TRI_TCVRPAL,
-				  ~(TCVR_PAL_EXTLBACK | TCVR_PAL_MSENSE |
-				    TCVR_PAL_LTENABLE | TCVR_PAL_SERIAL));
-		(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
-	} else {
-		printf("%s: no internal or external transceiver found.\n",
-			sc->sc_dev.dv_xname);
-	}
+	bus_space_write_4(t, tr, BE_TRI_TCVRPAL, v);
+	(void)bus_space_read_4(t, tr, BE_TRI_TCVRPAL);
 }
 
-
-static __inline__ int
+static int
 be_tcvr_read_bit(sc, phy)
 	struct be_softc *sc;
 	int phy;
@@ -1287,15 +1317,13 @@ be_tcvr_read_bit(sc, phy)
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
 				  MGMT_PAL_EXT_MDIO | MGMT_PAL_DCLOCK);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-		DELAY(20);
 		ret = (bus_space_read_4(t, tr, BE_TRI_MGMTPAL) &
-			MGMT_PAL_INT_MDIO) >> 3;
+			MGMT_PAL_INT_MDIO) >> MGMT_PAL_INT_MDIO_SHIFT;
 	} else {
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, MGMT_PAL_INT_MDIO);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-		DELAY(20);
 		ret = (bus_space_read_4(t, tr, BE_TRI_MGMTPAL) &
-			MGMT_PAL_EXT_MDIO) >> 2;
+			MGMT_PAL_EXT_MDIO) >> MGMT_PAL_EXT_MDIO_SHIFT;
 		bus_space_write_4(t, tr, BE_TRI_MGMTPAL,
 				  MGMT_PAL_INT_MDIO | MGMT_PAL_DCLOCK);
 		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
@@ -1304,7 +1332,7 @@ be_tcvr_read_bit(sc, phy)
 	return (ret);
 }
 
-static __inline__ void
+static void
 be_tcvr_write_bit(sc, phy, bit)
 	struct be_softc *sc;
 	int phy;
@@ -1312,24 +1340,22 @@ be_tcvr_write_bit(sc, phy, bit)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t tr = sc->sc_tr;
+	u_int32_t v;
 
 	if (phy == BE_PHY_INTERNAL) {
-		bit = ((bit & 1) << 3) | MGMT_PAL_OENAB | MGMT_PAL_EXT_MDIO;
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, bit);
-		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, bit | MGMT_PAL_DCLOCK);
-		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
+		v = ((bit & 1) << MGMT_PAL_INT_MDIO_SHIFT) |
+			MGMT_PAL_OENAB | MGMT_PAL_EXT_MDIO;
 	} else {
-		bit = ((bit & 1) << 2) | MGMT_PAL_OENAB | MGMT_PAL_INT_MDIO;
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, bit);
-		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
-		bus_space_write_4(t, tr, BE_TRI_MGMTPAL, bit | MGMT_PAL_DCLOCK);
-		(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
+		v = ((bit & 1) << MGMT_PAL_EXT_MDIO_SHIFT)
+			| MGMT_PAL_OENAB | MGMT_PAL_INT_MDIO;
 	}
+	bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v);
+	(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
+	bus_space_write_4(t, tr, BE_TRI_MGMTPAL, v | MGMT_PAL_DCLOCK);
+	(void)bus_space_read_4(t, tr, BE_TRI_MGMTPAL);
 }
 
-static __inline__ void
+static void
 be_mii_sendbits(sc, phy, data, nbits)
 	struct be_softc *sc;
 	int phy;
@@ -1350,10 +1376,6 @@ be_mii_readreg(self, phy, reg)
 {
 	struct be_softc *sc = (struct be_softc *)self;
 	int val = 0, i;
-
-	/* The `be' internal PHY is not treated as an MII device */
-	if (phy == BE_PHY_INTERNAL)
-		return (0);
 
 	/*
 	 * Read the PHY register by manually driving the MII control lines.
@@ -1422,16 +1444,8 @@ be_mii_reset(sc, phy)
 		printf("%s: bmcr reset failed\n", sc->sc_dev.dv_xname);
 		return (EIO);
 	}
+
 	return (0);
-}
-
-void
-be_statchg(self)
-	struct device *self;
-{
-	struct be_softc *sc = (struct be_softc *)self;
-
-	printf("be_statchg: media_active=%x\n", sc->sc_mii.mii_media_active);
 }
 
 void
@@ -1441,49 +1455,39 @@ be_tick(arg)
 	struct be_softc *sc = arg;
 	int s = splnet();
 
-	if ((sc->sc_conf & BE_CONF_MII) != 0)
-		mii_tick(&sc->sc_mii);
-	else
-		be_internal_phy_auto(sc);
+	mii_tick(&sc->sc_mii);
+	(void)be_intphy_service(sc, &sc->sc_mii, MII_TICK);
 
 	splx(s);
-	timeout(be_tick, sc, hz);
+	callout_reset(&sc->sc_tick_ch, hz, be_tick, sc);
 }
 
 void
-be_internal_phy_auto(sc)
-	struct be_softc *sc;
+be_mii_statchg(self)
+	struct device *self;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int bmcr, bmsr;
+	struct be_softc *sc = (struct be_softc *)self;
+	bus_space_tag_t t = sc->sc_bustag;
+	bus_space_handle_t br = sc->sc_br;
+	u_int instance;
+	u_int32_t v;
 
-	/*
-	 * Check link status; if we don't have a link, try another
-	 * speed. We can't detect duplex mode, so half-duplex is
-	 * what we have to settle for.
-	 */
+	instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
+#ifdef DIAGNOSTIC
+	if (instance > 1)
+		panic("be_mii_statchg: instance %d out of range", instance);
+#endif
 
-	/* Only used for automatic media selection */
-	if (IFM_SUBTYPE(sc->sc_media.ifm_cur->ifm_media) != IFM_AUTO)
-		return;
+	/* Update duplex mode in TX configuration */
+	v = bus_space_read_4(t, br, BE_BRI_TXCFG);
+	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
+		v |= BE_BR_TXCFG_FULLDPLX;
+	else
+		v &= ~BE_BR_TXCFG_FULLDPLX;
+	bus_space_write_4(t, br, BE_BRI_TXCFG, v);
 
-	/* Don't bother if interface isn't up */
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return;
-
-	/* Read twice in case the register is latched */
-	bmsr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
-	       be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
-
-	if ((bmsr & BMSR_LINK) != 0) {
-		/* We have a carrier */
-		return;
-	}
-
-	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
-	/* Just flip the fast speed bit */
-	bmcr ^= BMCR_S100;
-	be_mii_writereg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
+	/* Change to appropriate gate in transceiver PAL */
+	be_pal_gate(sc, sc->sc_phys[instance]);
 }
 
 /*
@@ -1495,44 +1499,13 @@ be_ifmedia_sts(ifp, ifmr)
 	struct ifmediareq *ifmr;
 {
 	struct be_softc *sc = ifp->if_softc;
-	int bmcr, bmsr;
 
-	if ((sc->sc_conf & BE_CONF_MII) != 0) {
-		mii_pollstat(&sc->sc_mii);
-		ifmr->ifm_status = sc->sc_mii.mii_media_status;
-		ifmr->ifm_active = sc->sc_mii.mii_media_active;
-		return;
-	}
+	mii_pollstat(&sc->sc_mii);
+	(void)be_intphy_service(sc, &sc->sc_mii, MII_POLLSTAT);
 
-	/*
-	 * Internal transceiver; do the work here.
-	 */
-	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
-
-	switch (bmcr & (BMCR_S100 | BMCR_FDX)) {
-	case (BMCR_S100 | BMCR_FDX):
-		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_FDX;
-		break;
-	case BMCR_S100:
-		ifmr->ifm_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
-		break;
-	case BMCR_FDX:
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_FDX;
-		break;
-	case 0:
-		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_HDX;
-		break;
-	}
-
-	/* Read twice in case the register is latched */
-	bmsr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
-	       be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
-	if (bmsr & BMSR_LINK)
-		ifmr->ifm_status |=  IFM_AVALID | IFM_ACTIVE;
-	else {
-		ifmr->ifm_status |=  IFM_AVALID;
-		ifmr->ifm_status &= ~IFM_ACTIVE;
-	}
+	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	return;
 }
 
 /*
@@ -1543,83 +1516,212 @@ be_ifmedia_upd(ifp)
 	struct ifnet *ifp;
 {
 	struct be_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_media;
-	int newmedia = ifm->ifm_media;
-	int n, error, phy, bmcr;
-	char *speed, *mode;
-	u_int32_t v;
-	bus_space_tag_t t = sc->sc_bustag;
-	bus_space_handle_t br = sc->sc_br;
+	int error;
 
-	if (IFM_TYPE(newmedia) != IFM_ETHER)
-		return (EINVAL);
+	if ((error = mii_mediachg(&sc->sc_mii)) != 0)
+		return (error);
 
-	if ((sc->sc_conf & BE_CONF_MII) != 0) {
-		int error;
+	return (be_intphy_service(sc, &sc->sc_mii, MII_MEDIACHG));
+}
 
-		if ((error = mii_mediachg(&sc->sc_mii)) != 0)
+/*
+ * Service routine for our pseudo-MII internal transceiver.
+ */
+int
+be_intphy_service(sc, mii, cmd)
+	struct be_softc *sc;
+	struct mii_data *mii;
+	int cmd;
+{
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int bmcr, bmsr;
+	int error;
+
+	switch (cmd) {
+	case MII_POLLSTAT:
+		/*
+		 * If we're not polling our PHY instance, just return.
+		 */
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst)
+			return (0);
+
+		break;
+
+	case MII_MEDIACHG:
+
+		/*
+		 * If the media indicates a different PHY instance,
+		 * isolate ourselves.
+		 */
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst) {
+			bmcr = be_mii_readreg((void *)sc,
+				BE_PHY_INTERNAL, MII_BMCR);
+			be_mii_writereg((void *)sc,
+				BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
+			sc->sc_mii_flags &= ~MIIF_HAVELINK;
+			sc->sc_intphy_curspeed = 0;
+			return (0);
+		}
+
+
+		if ((error = be_mii_reset(sc, BE_PHY_INTERNAL)) != 0)
 			return (error);
 
-		v = bus_space_read_4(t, br, BE_BRI_TXCFG);
-		if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
-			v |= BE_BR_TXCFG_FULLDPLX;
-		else
-			v &= ~BE_BR_TXCFG_FULLDPLX;
-		bus_space_write_4(t, br, BE_BRI_TXCFG, v);
+		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
 
+		/*
+		 * Select the new mode and take out of isolation
+		 */
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_100_TX)
+			bmcr |= BMCR_S100;
+		else if (IFM_SUBTYPE(ife->ifm_media) == IFM_10_T)
+			bmcr &= ~BMCR_S100;
+		else if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+			if ((sc->sc_mii_flags & MIIF_HAVELINK) != 0) {
+				bmcr &= ~BMCR_S100;
+				bmcr |= sc->sc_intphy_curspeed;
+			} else {
+				/* Keep isolated until link is up */
+				bmcr |= BMCR_ISO;
+				sc->sc_mii_flags |= MIIF_DOINGAUTO;
+			}
+		}
+
+		if ((IFM_OPTIONS(ife->ifm_media) & IFM_FDX) != 0)
+			bmcr |= BMCR_FDX;
+		else
+			bmcr &= ~BMCR_FDX;
+
+		be_mii_writereg((void *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
+		break;
+
+	case MII_TICK:
+		/*
+		 * If we're not currently selected, just return.
+		 */
+		if (IFM_INST(ife->ifm_media) != sc->sc_mii_inst)
+			return (0);
+
+		/* Only used for automatic media selection */
+		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+			return (0);
+
+		/* Is the interface even up? */
+		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+			return (0);
+
+		/*
+		 * Check link status; if we don't have a link, try another
+		 * speed. We can't detect duplex mode, so half-duplex is
+		 * what we have to settle for.
+		 */
+
+		/* Read twice in case the register is latched */
+		bmsr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMSR) |
+		       be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMSR);
+
+		if ((bmsr & BMSR_LINK) != 0) {
+			/* We have a carrier */
+			bmcr = be_mii_readreg((void *)sc,
+					BE_PHY_INTERNAL, MII_BMCR);
+
+			if ((sc->sc_mii_flags & MIIF_DOINGAUTO) != 0) {
+				bmcr = be_mii_readreg((void *)sc,
+						BE_PHY_INTERNAL, MII_BMCR);
+
+				sc->sc_mii_flags |= MIIF_HAVELINK;
+				sc->sc_intphy_curspeed = (bmcr & BMCR_S100);
+				sc->sc_mii_flags &= ~MIIF_DOINGAUTO;
+
+				bmcr &= ~BMCR_ISO;
+				be_mii_writereg((void *)sc,
+					BE_PHY_INTERNAL, MII_BMCR, bmcr);
+
+				printf("%s: link up at %s Mbps\n",
+					sc->sc_dev.dv_xname,
+					(bmcr & BMCR_S100) ? "100" : "10");
+			}
+			return (0);
+		}
+
+		if ((sc->sc_mii_flags & MIIF_DOINGAUTO) == 0) {
+			sc->sc_mii_flags |= MIIF_DOINGAUTO;
+			sc->sc_mii_flags &= ~MIIF_HAVELINK;
+			sc->sc_intphy_curspeed = 0;
+			printf("%s: link down\n", sc->sc_dev.dv_xname);
+		}
+
+		/* Only retry autonegotiation every 5 seconds. */
+		if (++sc->sc_mii_ticks < 5)
+			return(0);
+
+		sc->sc_mii_ticks = 0;
+		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
+		/* Just flip the fast speed bit */
+		bmcr ^= BMCR_S100;
+		be_mii_writereg((void *)sc, BE_PHY_INTERNAL, MII_BMCR, bmcr);
+
+		break;
+
+	case MII_DOWN:
+		/* Isolate this phy */
+		bmcr = be_mii_readreg((void *)sc, BE_PHY_INTERNAL, MII_BMCR);
+		be_mii_writereg((void *)sc,
+				BE_PHY_INTERNAL, MII_BMCR, bmcr | BMCR_ISO);
 		return (0);
 	}
 
-	/*
-	 * The rest of this routine is devoted to the
-	 * not-quite-a-phy internal transceiver case.
-	 */
-	phy = BE_PHY_INTERNAL;
+	/* Update the media status. */
+	be_intphy_status(sc);
 
-	/* Why must we reset the device? */
-	if ((error = be_mii_reset(sc, phy)) != 0)
-		return (error);
-
-	bmcr = be_mii_readreg((struct device *)sc, phy, MII_BMCR);
-
-	if (IFM_SUBTYPE(newmedia) == IFM_100_TX) {
-		bmcr |= BMCR_S100;
-		speed = "100baseTX";
-	} else if (IFM_SUBTYPE(newmedia) == IFM_10_T) {
-		bmcr &= ~BMCR_S100;
-		speed = "10baseT";
-	} else {
-		speed = "auto sense";
+	/* Callback if something changed. */
+	if (sc->sc_mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
+		(*mii->mii_statchg)((struct device *)sc);
+		sc->sc_mii_active = mii->mii_media_active;
 	}
-
-	printf("%s: selecting %s", sc->sc_dev.dv_xname, speed);
-
-	v = bus_space_read_4(t, br, BE_BRI_TXCFG);
-	if ((IFM_OPTIONS(newmedia) & IFM_FDX) != 0) {
-		bmcr |= BMCR_FDX;
-		v |= BE_BR_TXCFG_FULLDPLX;
-		mode = "full";
-	} else {
-		bmcr &= ~BMCR_FDX;
-		v &= ~BE_BR_TXCFG_FULLDPLX;
-		mode = "half";
-	}
-	bus_space_write_4(t, br, BE_BRI_TXCFG, v);
-	printf(" %s-duplex\n", mode);
-
-	/* Select the new mode and take out of isolation */
-	be_mii_writereg((struct device *)sc, phy, MII_BMCR, bmcr & ~BMCR_ISO);
-
-	for (n = 32; n >= 0; n--) {
-		bmcr = be_mii_readreg((struct device *)sc, phy, MII_BMCR);
-		if ((bmcr & BMCR_ISO) == 0)
-			break;
-		DELAY(20);
-	}
-	if (n == 0) {
-		printf("%s: bmcr unisolate failed\n", sc->sc_dev.dv_xname);
-		return (EIO);
-	}
-
 	return (0);
+}
+
+/*
+ * Determine status of internal transceiver
+ */
+void
+be_intphy_status(sc)
+	struct be_softc *sc;
+{
+	struct mii_data *mii = &sc->sc_mii;
+	int media_active, media_status;
+	int bmcr, bmsr;
+
+	media_status = IFM_AVALID;
+	media_active = 0;
+
+	/*
+	 * Internal transceiver; do the work here.
+	 */
+	bmcr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMCR);
+
+	switch (bmcr & (BMCR_S100 | BMCR_FDX)) {
+	case (BMCR_S100 | BMCR_FDX):
+		media_active = IFM_ETHER | IFM_100_TX | IFM_FDX;
+		break;
+	case BMCR_S100:
+		media_active = IFM_ETHER | IFM_100_TX | IFM_HDX;
+		break;
+	case BMCR_FDX:
+		media_active = IFM_ETHER | IFM_10_T | IFM_FDX;
+		break;
+	case 0:
+		media_active = IFM_ETHER | IFM_10_T | IFM_HDX;
+		break;
+	}
+
+	/* Read twice in case the register is latched */
+	bmsr = be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR)|
+	       be_mii_readreg((struct device *)sc, BE_PHY_INTERNAL, MII_BMSR);
+	if (bmsr & BMSR_LINK)
+		media_status |=  IFM_ACTIVE;
+
+	mii->mii_media_status = media_status;
+	mii->mii_media_active = media_active;
 }

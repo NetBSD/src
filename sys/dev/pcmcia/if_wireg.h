@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wireg.h,v 1.2 1999/07/15 14:33:51 sommerfeld Exp $	*/
+/*	$NetBSD: if_wireg.h,v 1.2.4.1 2000/11/20 11:42:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -30,8 +30,6 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: if_wireg.h,v 1.2 1999/07/15 14:33:51 sommerfeld Exp $
  */
 
 /*
@@ -74,9 +72,19 @@
 
 #define WI_DEFAULT_MAX_SLEEP	100
 
-#define WI_DEFAULT_NODENAME	"NetBSD WaveLAN/IEEE node"
+#ifdef __NetBSD__
+#define OS_STRING_NAME	"NetBSD"
+#endif
+#ifdef __FreeBSD__
+#define OS_STRING_NAME	"FreeBSD"
+#endif
+#ifdef __OpenBSD__
+#define OS_STRING_NAME	"OpenBSD"
+#endif
 
-#define WI_DEFAULT_IBSS		"NetBSD IBSS"
+#define WI_DEFAULT_NODENAME	OS_STRING_NAME " WaveLAN/IEEE node"
+
+#define WI_DEFAULT_IBSS		OS_STRING_NAME " IBSS"
 
 #define WI_DEFAULT_CHAN		3
 
@@ -382,11 +390,9 @@ struct wi_ltv_scalethresh {
 struct wi_ltv_pcf {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
-	u_int16_t		wi_energy_detect;
-	u_int16_t		wi_carrier_detect;
-	u_int16_t		wi_defer;
-	u_int16_t		wi_cell_search;
-	u_int16_t		wi_range;
+	u_int16_t		wi_medium_occupancy_limit;
+	u_int16_t		wi_cfp_period;
+	u_int16_t		wi_cfp_max_duration;
 };
 
 /*
@@ -503,9 +509,11 @@ struct wi_ltv_mcast {
  */
 struct wi_frame {
 	u_int16_t		wi_status;	/* 0x00 */
-	u_int32_t		wi_rsvd0;	/* 0x02 */
+	u_int16_t		wi_rsvd0;	/* 0x02 */
+	u_int16_t		wi_rsvd1;	/* 0x04 */
 	u_int16_t		wi_q_info;	/* 0x06 */
-	u_int16_t		wi_rsvd1;	/* 0x08 */
+	u_int16_t		wi_rsvd2;	/* 0x08 */
+	u_int16_t		wi_rsvd3;	/* 0x0A */
 	u_int16_t		wi_tx_ctl;	/* 0x0C */
 	u_int16_t		wi_frame_ctl;	/* 0x0E */
 	u_int16_t		wi_id;		/* 0x10 */

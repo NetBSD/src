@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.8 1999/09/07 19:29:52 soren Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.8.2.1 2000/11/20 11:42:11 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.7 1999/09/04 23:58:55 soren Exp 
+ *	NetBSD: miidevs,v 1.11 2000/05/08 13:23:21 augustss Exp 
  */
 
 /*-
@@ -56,6 +56,8 @@
  */
 
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
+#define	MII_OUI_BROADCOM	0x001018	/* Broadcom */
+#define	MII_OUI_ENABLESEMI	0x0010dd	/* Enable Semiconductor */
 #define	MII_OUI_DAVICOM	0x00606e	/* Davicom Semiconductor */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
@@ -96,7 +98,15 @@
 #define	MII_MODEL_xxAMD_79C873	0x0000
 #define	MII_STR_xxAMD_79C873	"Am79C873 10/100 media interface"
 #define	MII_MODEL_AMD_79c973phy	0x0036
-#define	MII_STR_AMD_79c973phy	"Am79c973 internal PHY"
+#define	MII_STR_AMD_79c973phy	"Am79C973 internal PHY"
+#define	MII_MODEL_AMD_79c901	0x0037
+#define	MII_STR_AMD_79c901	"Am79C901 10 PHY"
+#define	MII_MODEL_AMD_79c901home	0x0039
+#define	MII_STR_AMD_79c901home	"Am79C901 HomePHY"
+
+/* Broadcom PHYs */
+#define	MII_MODEL_BROADCOM_BCM5201	0x0021
+#define	MII_STR_BROADCOM_BCM5201	"BCM5201 10/100 media interface"
 
 /* Davicom Semiconductor PHYs */
 #define	MII_MODEL_xxDAVICOM_DM9101	0x0000

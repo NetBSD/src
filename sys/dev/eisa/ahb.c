@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.28.2.4 1999/11/01 22:54:14 thorpej Exp $	*/
+/*	$NetBSD: ahb.c,v 1.28.2.5 2000/11/20 11:39:55 bouyer Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -127,7 +127,7 @@ struct ahb_probe_data {
 };
 
 void	ahb_send_mbox __P((struct ahb_softc *, int, struct ahb_ecb *));
-void	ahb_send_immed __P((struct ahb_softc *, u_long, struct ahb_ecb *));
+void	ahb_send_immed __P((struct ahb_softc *, u_int32_t, struct ahb_ecb *));
 int	ahbintr __P((void *));
 void	ahb_free_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 struct	ahb_ecb *ahb_get_ecb __P((struct ahb_softc *));
@@ -320,7 +320,8 @@ ahb_send_mbox(sc, opcode, ecb)
 		ecb->xs->xs_periph->periph_target);
 
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
-		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
+		callout_reset(&ecb->xs->xs_callout,
+		    (ecb->timeout * hz) / 1000, ahb_timeout, ecb);
 }
 
 /*
@@ -329,7 +330,7 @@ ahb_send_mbox(sc, opcode, ecb)
 void
 ahb_send_immed(sc, cmd, ecb)
 	struct ahb_softc *sc;
-	u_long cmd;
+	u_int32_t cmd;
 	struct ahb_ecb *ecb;
 {
 	bus_space_tag_t iot = sc->sc_iot;
@@ -353,7 +354,8 @@ ahb_send_immed(sc, cmd, ecb)
 		ecb->xs->xs_periph->periph_target);
 
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
-		timeout(ahb_timeout, ecb, (ecb->timeout * hz) / 1000);
+		callout_reset(&ecb->xs->xs_callout,
+		    (ecb->timeout * hz) / 1000, ahb_timeout, ecb);
 }
 
 /*
@@ -368,7 +370,7 @@ ahbintr(arg)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ahb_ecb *ecb;
 	u_char ahbstat;
-	u_long mboxval;
+	u_int32_t mboxval;
 
 #ifdef	AHBDEBUG
 	printf("%s: ahbintr ", sc->sc_dev.dv_xname);
@@ -422,7 +424,7 @@ ahbintr(arg)
 			goto next;
 		}
 
-		untimeout(ahb_timeout, ecb);
+		callout_stop(&ecb->xs->xs_callout);
 		ahb_done(sc, ecb);
 
 	next:

@@ -1,7 +1,7 @@
-/*	$NetBSD: lxtphy.c,v 1.11 1999/05/14 11:40:28 drochner Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.11.2.1 2000/11/20 11:42:10 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,11 +92,17 @@ int	lxtphymatch __P((struct device *, struct cfdata *, void *));
 void	lxtphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach lxtphy_ca = {
-	sizeof(struct mii_softc), lxtphymatch, lxtphyattach
+	sizeof(struct mii_softc), lxtphymatch, lxtphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	lxtphy_status __P((struct mii_softc *));
+void	lxtphy_reset __P((struct mii_softc *));
+
+const struct mii_phy_funcs lxtphy_funcs = {
+	lxtphy_service, lxtphy_status, lxtphy_reset,
+};
 
 int
 lxtphymatch(parent, match, aux)
@@ -127,17 +133,11 @@ lxtphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = lxtphy_service;
+	sc->mii_funcs = &lxtphy_funcs;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
-	    BMCR_LOOP|BMCR_S100);
-
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -145,10 +145,8 @@ lxtphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(mii, sc->mii_capabilities,
-		    sc->mii_inst);
+		mii_phy_add_media(sc);
 	printf("\n");
-#undef ADD
 }
 
 int
@@ -159,6 +157,9 @@ lxtphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -186,28 +187,7 @@ lxtphy_service(sc, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 1);
-			break;
-		case IFM_100_T4:
-			/*
-			 * XXX Not supported as a manual setting right now.
-			 */
-			return (EINVAL);
-		default:
-			/*
-			 * BMCR data is stored in the ifmedia entry.
-			 */
-			PHY_WRITE(sc, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
-		}
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
@@ -217,50 +197,20 @@ lxtphy_service(sc, mii, cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return (0);
-
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * Check to see if we have link.  If we do, we don't
-		 * need to restart the autonegotiation process.  Use
-		 * the LXT CSR instead of the BMSR, since the CSR's
-		 * link indication is dynamic, not latched, so only
-		 * one register read is required.
-		 */
-		reg = PHY_READ(sc, MII_LXTPHY_CSR);
-		if (reg & CSR_LINK)
-			return (0);
-
-		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 */
-		if (++sc->mii_ticks != 5)
-			return (0);
-
-		sc->mii_ticks = 0;
-		mii_phy_reset(sc);
-		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */
-	lxtphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }
 
@@ -269,7 +219,8 @@ lxtphy_status(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int bmcr, csr;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int bmcr, bmsr, csr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -294,7 +245,8 @@ lxtphy_status(sc)
 		mii->mii_media_active |= IFM_LOOP;
 
 	if (bmcr & BMCR_AUTOEN) {
-		if ((csr & CSR_ACOMP) == 0) {
+		bmsr = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+		if ((bmsr & BMSR_ACOMP) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
 			return;
@@ -306,5 +258,15 @@ lxtphy_status(sc)
 		if (csr & CSR_DUPLEX)
 			mii->mii_media_active |= IFM_FDX;
 	} else
-		mii->mii_media_active = mii_media_from_bmcr(bmcr);
+		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+lxtphy_reset(sc)
+	struct mii_softc *sc;
+{
+
+	mii_phy_reset(sc);
+	PHY_WRITE(sc, MII_LXTPHY_IER,
+	    PHY_READ(sc, MII_LXTPHY_IER) & ~IER_INTEN);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.11.14.1 2000/11/20 11:41:14 bouyer Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -38,8 +38,6 @@
 #include <sys/extent.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
-
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -55,7 +53,7 @@
 #include <dev/isa/i82365_isavar.h>
 
 #ifdef PCICISADEBUG
-int	pcicisa_debug = 0 /* XXX */ ;
+int	pcicisa_debug = 0;
 #define	DPRINTF(arg) if (pcicisa_debug) printf arg;
 #else
 #define	DPRINTF(arg)
@@ -64,12 +62,8 @@ int	pcicisa_debug = 0 /* XXX */ ;
 int	pcic_isa_probe __P((struct device *, struct cfdata *, void *));
 void	pcic_isa_attach __P((struct device *, struct device *, void *));
 
-void	*pcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
-	    struct pcmcia_function *, int, int (*) (void *), void *));
-void	pcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
-
 struct cfattach pcic_isa_ca = {
-	sizeof(struct pcic_softc), pcic_isa_probe, pcic_isa_attach
+	sizeof(struct pcic_isa_softc), pcic_isa_probe, pcic_isa_attach
 };
 
 static struct pcmcia_chip_functions pcic_isa_functions = {
@@ -170,6 +164,7 @@ pcic_isa_attach(parent, self, aux)
 	void *aux;
 {
 	struct pcic_softc *sc = (void *) self;
+	struct pcic_isa_softc *isc = (void *) self;
 	struct isa_attach_args *ia = aux;
 	isa_chipset_tag_t ic = ia->ia_ic;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -192,42 +187,20 @@ pcic_isa_attach(parent, self, aux)
 	sc->membase = ia->ia_maddr;
 	sc->subregionmask = (1 << (ia->ia_msize / PCIC_MEM_PAGESIZE)) - 1;
 
-	sc->intr_est = ic;
+	isc->sc_ic = ic;
 	sc->pct = (pcmcia_chipset_tag_t) & pcic_isa_functions;
 
 	sc->iot = iot;
 	sc->ioh = ioh;
 	sc->memt = memt;
 	sc->memh = memh;
+	sc->irq = ia->ia_irq;
 
-	/*
-	 * allocate an irq.  it will be used by both controllers.  I could
-	 * use two different interrupts, but interrupts are relatively
-	 * scarce, shareable, and for PCIC controllers, very infrequent.
-	 */
-
-	if ((sc->irq = ia->ia_irq) == IRQUNK) {
-		if (isa_intr_alloc(ic,
-		    PCIC_CSC_INTR_IRQ_VALIDMASK & pcic_isa_intr_alloc_mask,
-		    IST_EDGE, &sc->irq)) {
-			printf("\n%s: can't allocate interrupt\n",
-			    sc->dev.dv_xname);
-			return;
-		}
-		printf(": using irq %d", sc->irq);
-	}
 	printf("\n");
 
 	pcic_attach(sc);
-
-	pcic_isa_bus_width_probe (sc, iot, ioh, ia->ia_iobase, ia->ia_iosize);
-
-	sc->ih = isa_intr_establish(ic, sc->irq, IST_EDGE, IPL_TTY,
-	    pcic_intr, sc);
-	if (sc->ih == NULL) {
-		printf("%s: can't establish interrupt\n", sc->dev.dv_xname);
-		return;
-	}
-
+	pcic_isa_bus_width_probe(sc, iot, ioh, ia->ia_iobase, ia->ia_iosize);
 	pcic_attach_sockets(sc);
+
+	config_interrupts(self, pcic_isa_config_interrupts);
 }

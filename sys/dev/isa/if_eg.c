@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.48 1999/08/25 22:46:16 thorpej Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.48.2.1 2000/11/20 11:41:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -500,9 +500,9 @@ egattach(parent, self, aux)
 
 void
 eginit(sc)
-	register struct eg_softc *sc;
+	struct eg_softc *sc;
 {
-	register struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -588,7 +588,7 @@ void
 egstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct eg_softc *sc = ifp->if_softc;
+	struct eg_softc *sc = ifp->if_softc;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m0, *m;
@@ -660,7 +660,7 @@ int
 egintr(arg)
 	void *arg;
 {
-	register struct eg_softc *sc = arg;
+	struct eg_softc *sc = arg;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, len, serviced;
@@ -753,7 +753,6 @@ egread(sc, buf, len)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
-	struct ether_header *eh;
 	
 	if (len <= sizeof(struct ether_header) ||
 	    len > ETHER_MAX_LEN) {
@@ -772,30 +771,13 @@ egread(sc, buf, len)
 
 	ifp->if_ipackets++;
 
-	/* We assume the header fit entirely in one mbuf. */
-	eh = mtod(m, struct ether_header *);
-
 #if NBPFILTER > 0
 	/*
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to BPF.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	(*ifp->if_input)(ifp, m);
@@ -853,7 +835,7 @@ bad:
 
 int
 egioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
@@ -878,7 +860,7 @@ egioctl(ifp, cmd, data)
 #ifdef NS
 		case AF_NS:
 		    {
-			register struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
 				
 			if (ns_nullhost(*ina))
 				ina->x_host =
@@ -962,7 +944,7 @@ egwatchdog(ifp)
 
 void
 egstop(sc)
-	register struct eg_softc *sc;
+	struct eg_softc *sc;
 {
 	
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, EG_CONTROL, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.16 1998/11/19 21:53:32 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.16.10.1 2000/11/20 11:41:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -130,48 +130,41 @@
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
 
-#include <dev/isa/espvar.h>
+#include <dev/isa/esp_isavar.h>
 
 int	esp_isa_match __P((struct device *, struct cfdata *, void *)); 
 void	esp_isa_attach __P((struct device *, struct device *, void *));  
 
 struct cfattach esp_isa_ca = {
-	sizeof(struct esp_softc), esp_isa_match, esp_isa_attach
+	sizeof(struct esp_isa_softc), esp_isa_match, esp_isa_attach
 };
 
-struct scsipi_device esp_dev = {
-	NULL,			/* Use default error handler */
-	NULL,			/* have a queue, served by this */
-	NULL,			/* have no async handler */
-	NULL,			/* Use default 'done' routine */
-};
-
-int esp_debug = 0;	/* ESP_SHOWTRAC | ESP_SHOWREGS | ESP_SHOWMISC */
+int esp_isa_debug = 0;	/* ESP_SHOWTRAC | ESP_SHOWREGS | ESP_SHOWMISC */
 
 /*
  * Functions and the switch for the MI code.
  */
-u_char	esp_read_reg __P((struct ncr53c9x_softc *, int));
-void	esp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	esp_dma_isintr __P((struct ncr53c9x_softc *));
-void	esp_dma_reset __P((struct ncr53c9x_softc *));
-int	esp_dma_intr __P((struct ncr53c9x_softc *));
-int	esp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
+u_char	esp_isa_read_reg __P((struct ncr53c9x_softc *, int));
+void	esp_isa_write_reg __P((struct ncr53c9x_softc *, int, u_char));
+int	esp_isa_dma_isintr __P((struct ncr53c9x_softc *));
+void	esp_isa_dma_reset __P((struct ncr53c9x_softc *));
+int	esp_isa_dma_intr __P((struct ncr53c9x_softc *));
+int	esp_isa_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
 	    size_t *, int, size_t *));
-void	esp_dma_go __P((struct ncr53c9x_softc *));
-void	esp_dma_stop __P((struct ncr53c9x_softc *));
-int	esp_dma_isactive __P((struct ncr53c9x_softc *));
+void	esp_isa_dma_go __P((struct ncr53c9x_softc *));
+void	esp_isa_dma_stop __P((struct ncr53c9x_softc *));
+int	esp_isa_dma_isactive __P((struct ncr53c9x_softc *));
 
-struct ncr53c9x_glue esp_glue = {
-	esp_read_reg,
-	esp_write_reg,
-	esp_dma_isintr,
-	esp_dma_reset,
-	esp_dma_intr,
-	esp_dma_setup,
-	esp_dma_go,
-	esp_dma_stop,
-	esp_dma_isactive,
+struct ncr53c9x_glue esp_isa_glue = {
+	esp_isa_read_reg,
+	esp_isa_write_reg,
+	esp_isa_dma_isintr,
+	esp_isa_dma_reset,
+	esp_isa_dma_intr,
+	esp_isa_dma_setup,
+	esp_isa_dma_go,
+	esp_isa_dma_stop,
+	esp_isa_dma_isactive,
 	NULL,			/* gl_clear_latched_intr */
 };
 
@@ -179,26 +172,28 @@ struct ncr53c9x_glue esp_glue = {
  * Look for the board
  */
 int
-esp_find(iot, ioh, epd)
+esp_isa_find(iot, ioh, epd)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct esp_probe_data *epd;
+	struct esp_isa_probe_data *epd;
 {
 	u_int vers;
 	u_int p1;
 	u_int p2;
 	u_int jmp;
 
-	ESP_TRACE(("[esp_find] "));
+	ESP_TRACE(("[esp_isa_find] "));
 
 	/* reset card before we probe? */
+
+	epd->sc_cfg4 = NCRCFG4_ACTNEG;
+	epd->sc_cfg5 = NCRCFG5_CRS1 | NCRCFG5_AADDR | NCRCFG5_PTRINC;
 
 	/*
 	 * Switch to the PIO regs and look for the bit pattern
 	 * we expect...
 	 */
-	bus_space_write_1(iot, ioh, NCR_CFG4,
-		NCRCFG4_CRS1 | bus_space_read_1(iot, ioh, NCR_CFG4));
+	bus_space_write_1(iot, ioh, NCR_CFG5, epd->sc_cfg5);
 
 #define SIG_MASK 0x87
 #define REV_MASK 0x70
@@ -211,7 +206,7 @@ esp_find(iot, ioh, epd)
 	p1 = bus_space_read_1(iot, ioh, NCR_SIGNTR) & SIG_MASK;
 	p2 = bus_space_read_1(iot, ioh, NCR_SIGNTR) & SIG_MASK;
 
-	ESP_MISC(("esp_find: 0x%0x 0x%0x 0x%0x\n", vers, p1, p2));
+	ESP_MISC(("esp_isa_find: 0x%0x 0x%0x 0x%0x\n", vers, p1, p2));
 
 	if (!((p1 == M1 && p2 == M2) || (p1 == M2 && p2 == M1)))
 		return 0;
@@ -243,8 +238,7 @@ esp_find(iot, ioh, epd)
 			break;
 	}
 
-	bus_space_write_1(iot, ioh, NCR_CFG4,
-		~NCRCFG4_CRS1 & bus_space_read_1(iot, ioh, NCR_CFG4));
+	bus_space_write_1(iot, ioh, NCR_CFG5, epd->sc_cfg5);
 
 	/* Try to set NCRESPCFG3_FCLK, some FAS408's don't support
 	 * NCRESPCFG3_FCLK even though it is documented.  A bad
@@ -259,18 +253,18 @@ esp_find(iot, ioh, epd)
 }
 
 void
-esp_init(esc, epd)
-	struct esp_softc *esc;
-	struct esp_probe_data *epd;
+esp_isa_init(esc, epd)
+	struct esp_isa_softc *esc;
+	struct esp_isa_probe_data *epd;
 {
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 
-	ESP_TRACE(("[esp_init] "));
+	ESP_TRACE(("[esp_isa_init] "));
 
 	/*
 	 * Set up the glue for MI code early; we use some of it here.
 	 */
-	sc->sc_glue = &esp_glue;
+	sc->sc_glue = &esp_isa_glue;
 
 	sc->sc_rev = epd->sc_rev;
 	sc->sc_id = epd->sc_id;
@@ -280,8 +274,7 @@ esp_init(esc, epd)
 	if ((epd->sc_rev == NCR_VARIANT_FAS408) && epd->sc_isfast) {
 		sc->sc_freq = 40;
 		sc->sc_cfg3 |= NCRESPCFG3_FCLK;
-	}
-	else
+	} else
 		sc->sc_freq = 24;
 
 	/* Setup the register defaults */
@@ -290,6 +283,8 @@ esp_init(esc, epd)
 		sc->sc_cfg1 |= NCRCFG1_PARENB;
 	sc->sc_cfg2 = NCRCFG2_SCSI2;
 	sc->sc_cfg3 |= NCRESPCFG3_IDM | NCRESPCFG3_FSCSI;
+	sc->sc_cfg4 = epd->sc_cfg4;
+	sc->sc_cfg5 = epd->sc_cfg5;
 
 	/*
 	 * This is the value used to start sync negotiations
@@ -329,18 +324,18 @@ esp_isa_match(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	struct esp_probe_data epd;
+	struct esp_isa_probe_data epd;
 	int rv;
 
 	ESP_TRACE(("[esp_isa_match] "));
 
-	if (ia->ia_iobase != 0x230 && ia->ia_iobase != 0x330)
+	if (ia->ia_iobase == -1)
 		return 0;
 
 	if (bus_space_map(iot, ia->ia_iobase, ESP_ISA_IOSIZE, 0, &ioh))
 		return 0;
 
-	rv = esp_find(iot, ioh, &epd);
+	rv = esp_isa_find(iot, ioh, &epd);
 
 	bus_space_unmap(iot, ioh, ESP_ISA_IOSIZE);
 
@@ -369,11 +364,11 @@ esp_isa_attach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct esp_softc *esc = (void *)self;
+	struct esp_isa_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
-	struct esp_probe_data epd;
+	struct esp_isa_probe_data epd;
 	isa_chipset_tag_t ic = ia->ia_ic;
 	int error;
 
@@ -385,8 +380,8 @@ esp_isa_attach(parent, self, aux)
 		return;
 	}
 
-	if (!esp_find(iot, ioh, &epd)) {
-		printf("%s: esp_find failed\n", sc->sc_dev.dv_xname);
+	if (!esp_isa_find(iot, ioh, &epd)) {
+		printf("%s: esp_isa_find failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -399,17 +394,16 @@ esp_isa_attach(parent, self, aux)
 	}
 
 	esc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
-	    (int (*)(void *))ncr53c9x_intr, esc);
+	    ncr53c9x_intr, esc);
 	if (esc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
 
-	esp_init(esc, &epd);
-
 	esc->sc_ioh = ioh;
 	esc->sc_iot = iot;
+	esp_isa_init(esc, &epd);
 
 	printf("%s:%ssync,%sparity\n", sc->sc_dev.dv_xname,
 	    epd.sc_sync ? " " : " no ", epd.sc_parity ? " " : " no ");
@@ -418,25 +412,23 @@ esp_isa_attach(parent, self, aux)
 	/*
 	 * Now try to attach all the sub-devices
 	 */
-	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;
-	sc->sc_adapter.scsipi_minphys = minphys;
-	ncr53c9x_attach(sc, &esp_dev);
+	ncr53c9x_attach(sc, NULL, NULL);
 }
 
 /*
  * Glue functions.
  */
 u_char
-esp_read_reg(sc, reg)
+esp_isa_read_reg(sc, reg)
 	struct ncr53c9x_softc *sc;
 	int reg;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
+	struct esp_isa_softc *esc = (struct esp_isa_softc *)sc;
 	u_char v;
 
 	v =  bus_space_read_1(esc->sc_iot, esc->sc_ioh, reg);
 
-	ESP_REGS(("[esp_read_reg CRS%c 0x%02x=0x%02x] ",
+	ESP_REGS(("[esp_isa_read_reg CRS%c 0x%02x=0x%02x] ",
 	    (bus_space_read_1(esc->sc_iot, esc->sc_ioh, NCR_CFG4) &
 	    NCRCFG4_CRS1) ? '1' : '0', reg, v));
 
@@ -444,19 +436,19 @@ esp_read_reg(sc, reg)
 }
 
 void
-esp_write_reg(sc, reg, val)
+esp_isa_write_reg(sc, reg, val)
 	struct ncr53c9x_softc *sc;
 	int reg;
 	u_char val;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
+	struct esp_isa_softc *esc = (struct esp_isa_softc *)sc;
 	u_char v = val;
 
 	if (reg == NCR_CMD && v == (NCRCMD_TRANS|NCRCMD_DMA)) {
 		v = NCRCMD_TRANS;
 	}
 
-	ESP_REGS(("[esp_write_reg CRS%c 0x%02x=0x%02x] ",
+	ESP_REGS(("[esp_isa_write_reg CRS%c 0x%02x=0x%02x] ",
 	    (bus_space_read_1(esc->sc_iot, esc->sc_ioh, NCR_CFG4) &
 	    NCRCFG4_CRS1) ? '1' : '0', reg, v));
 
@@ -464,36 +456,36 @@ esp_write_reg(sc, reg, val)
 }
 
 int
-esp_dma_isintr(sc)
+esp_isa_dma_isintr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	ESP_TRACE(("[esp_dma_isintr] "));
+	ESP_TRACE(("[esp_isa_dma_isintr] "));
 
 	return NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT;
 }
 
 void
-esp_dma_reset(sc)
+esp_isa_dma_reset(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
+	struct esp_isa_softc *esc = (struct esp_isa_softc *)sc;
 
-	ESP_TRACE(("[esp_dma_reset] "));
+	ESP_TRACE(("[esp_isa_dma_reset] "));
 
 	esc->sc_active = 0;
 	esc->sc_tc = 0;
 }
 
 int
-esp_dma_intr(sc)
+esp_isa_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
+	struct esp_isa_softc *esc = (struct esp_isa_softc *)sc;
 	u_char	*p;
 	u_int	espphase, espstat, espintr;
 	int	cnt;
 
-	ESP_TRACE(("[esp_dma_intr] "));
+	ESP_TRACE(("[esp_isa_dma_intr] "));
 
 	if (esc->sc_active == 0) {
 		printf("%s: dma_intr--inactive DMA\n", sc->sc_dev.dv_xname);
@@ -536,7 +528,7 @@ esp_dma_intr(sc)
 		}
 
 		if (esc->sc_active) {
-			while (!(NCR_READ_REG(sc, NCR_STAT) & 0x80));
+			while (!(NCR_READ_REG(sc, NCR_STAT) & NCRSTAT_INT));
 			espstat = NCR_READ_REG(sc, NCR_STAT);
 			espintr = NCR_READ_REG(sc, NCR_INTR);
 			espphase = (espintr & NCRINTR_DIS)
@@ -558,16 +550,16 @@ esp_dma_intr(sc)
 }
 
 int
-esp_dma_setup(sc, addr, len, datain, dmasize)
+esp_isa_dma_setup(sc, addr, len, datain, dmasize)
 	struct ncr53c9x_softc *sc;
 	caddr_t *addr;
 	size_t *len;
 	int datain;
 	size_t *dmasize;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
+	struct esp_isa_softc *esc = (struct esp_isa_softc *)sc;
 
-	ESP_TRACE(("[esp_dma_setup] "));
+	ESP_TRACE(("[esp_isa_dma_setup] "));
 
 	esc->sc_dmaaddr = addr;
 	esc->sc_pdmalen = len;
@@ -579,30 +571,30 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 }
 
 void
-esp_dma_go(sc)
+esp_isa_dma_go(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
+	struct esp_isa_softc *esc = (struct esp_isa_softc *)sc;
 
-	ESP_TRACE(("[esp_dma_go] "));
+	ESP_TRACE(("[esp_isa_dma_go] "));
 
 	esc->sc_active = 1;
 }
 
 void
-esp_dma_stop(sc)
+esp_isa_dma_stop(sc)
 	struct ncr53c9x_softc *sc;
 {
-	ESP_TRACE(("[esp_dma_stop] "));
+	ESP_TRACE(("[esp_isa_dma_stop] "));
 }
 
 int
-esp_dma_isactive(sc)
+esp_isa_dma_isactive(sc)
 	struct ncr53c9x_softc *sc;
 {
-	struct esp_softc *esc = (struct esp_softc *)sc;
+	struct esp_isa_softc *esc = (struct esp_isa_softc *)sc;
 
-	ESP_TRACE(("[esp_dma_isactive] "));
+	ESP_TRACE(("[esp_isa_dma_isactive] "));
 
 	return esc->sc_active;
 }

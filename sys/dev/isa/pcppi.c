@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
+/* $NetBSD: pcppi.c,v 1.1.14.1 2000/11/20 11:41:20 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/device.h>
@@ -43,14 +44,25 @@
 
 #include <dev/ic/i8253reg.h>
 
+#include "pckbd.h"
+#if NPCKBD > 0
+#include <dev/ic/pckbcvar.h>
+#include <dev/pckbc/pckbdvar.h>
+
+void	pcppi_pckbd_bell __P((void *, u_int, u_int, u_int, int));
+#endif
+
 struct pcppi_softc {
 	struct device sc_dv;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ppi_ioh, sc_pit1_ioh;
 
+	struct callout sc_bell_ch;
+
 	int sc_bellactive, sc_bellpitch;
 	int sc_slp;
+	int sc_timeout;
 };
 
 int	pcppi_match __P((struct device *, struct cfdata *, void *));
@@ -141,6 +153,8 @@ pcppi_attach(parent, self, aux)
 	bus_space_tag_t iot;
 	struct pcppi_attach_args pa;
 
+	callout_init(&sc->sc_bell_ch);
+
 	sc->sc_iot = iot = ia->ia_iot;
 
 	if (bus_space_map(iot, IO_TIMER1, 4, 0, &sc->sc_pit1_ioh) ||
@@ -150,6 +164,11 @@ pcppi_attach(parent, self, aux)
 	printf("\n");
 
 	sc->sc_bellactive = sc->sc_bellpitch = sc->sc_slp = 0;
+
+#if NPCKBD > 0
+	/* Provide a beeper for the PC Keyboard, if there isn't one already. */
+	pckbd_hookup_bell(pcppi_pckbd_bell, sc);
+#endif
 
 	pa.pa_cookie = sc;
 	while (config_found(self, &pa, 0));
@@ -166,7 +185,10 @@ pcppi_bell(self, pitch, period, slp)
 
 	s1 = spltty(); /* ??? */
 	if (sc->sc_bellactive) {
-		untimeout(pcppi_bell_stop, sc);
+		if (sc->sc_timeout) {
+			sc->sc_timeout = 0;
+			callout_stop(&sc->sc_bell_ch);
+		}
 		if (sc->sc_slp)
 			wakeup(pcppi_bell_stop);
 	}
@@ -193,11 +215,17 @@ pcppi_bell(self, pitch, period, slp)
 	sc->sc_bellpitch = pitch;
 
 	sc->sc_bellactive = 1;
-	timeout(pcppi_bell_stop, sc, period);
-	if (slp) {
-		sc->sc_slp = 1;
-		tsleep(pcppi_bell_stop, PCPPIPRI | PCATCH, "bell", 0);
-		sc->sc_slp = 0;
+	if (slp & PCPPI_BELL_POLL) {
+		delay((period * 1000000) / hz);
+		pcppi_bell_stop(sc);
+	} else {
+		sc->sc_timeout = 1;
+		callout_reset(&sc->sc_bell_ch, period, pcppi_bell_stop, sc);
+		if (slp & PCPPI_BELL_SLEEP) {
+			sc->sc_slp = 1;
+			tsleep(pcppi_bell_stop, PCPPIPRI | PCATCH, "bell", 0);
+			sc->sc_slp = 0;
+		}
 	}
 	splx(s1);
 }
@@ -210,6 +238,8 @@ pcppi_bell_stop(arg)
 	int s;
 
 	s = spltty(); /* ??? */
+	sc->sc_timeout = 0;
+
 	/* disable bell */
 	bus_space_write_1(sc->sc_iot, sc->sc_ppi_ioh, 0,
 			  bus_space_read_1(sc->sc_iot, sc->sc_ppi_ioh, 0)
@@ -219,3 +249,19 @@ pcppi_bell_stop(arg)
 		wakeup(pcppi_bell_stop);
 	splx(s);
 }
+
+#if NPCKBD > 0
+void
+pcppi_pckbd_bell(arg, pitch, period, volume, poll)
+	void *arg;
+	u_int pitch, period, volume;
+	int poll;
+{
+
+	/*
+	 * Comes in as ms, goes out at ticks; volume ignored.
+	 */
+	pcppi_bell(arg, pitch, (period * hz) / 1000,
+	    poll ? PCPPI_BELL_POLL : 0);
+}
+#endif /* NPCKBD > 0 */

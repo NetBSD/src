@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.5 1998/11/19 21:54:35 thorpej Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.5.10.1 2000/11/20 11:43:13 bouyer Exp $	*/
 
 
 /*
@@ -42,6 +42,13 @@ typedef struct scsi_state {
 
 struct asc_softc {
 	struct device sc_dev;			/* us as a device */
+
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+	bus_space_handle_t sc_scsi_bsh;
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmamap;
+
 	asc_regmap_t	*regs;		/* chip address */
 	volatile int	*dmar;		/* DMA address register address */
 	int		sc_id;		/* SCSI ID of this interface */
@@ -66,10 +73,6 @@ struct asc_softc {
 	int		ccf;		/* CCF, whatever that really is? */
 	int		timeout_250;	/* 250ms timeout */
 	int		tb_ticks;	/* 4ns. ticks/tb channel ticks */
-#ifdef USE_NEW_SCSI
-	struct scsipi_link sc_link;		/* scsipi link struct */
-	struct scsipi_adapter sc_adapter;
-#endif
 };
 typedef struct asc_softc *asc_softc_t;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100.c,v 1.11 1999/03/10 19:54:52 drochner Exp $ */
+/* $NetBSD: wsemul_vt100.c,v 1.11.8.1 2000/11/20 11:43:37 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -288,7 +288,7 @@ wsemul_vt100_reset(edp)
 
 	edp->state = VT100_EMUL_STATE_NORMAL;
 	edp->flags = VTFL_DECAWM | VTFL_CURSORON;
-	edp->curattr = edp->defattr;
+	edp->bkgdattr = edp->curattr = edp->defattr;
 	edp->attrflags = 0;
 	edp->fgcol = WSCOL_WHITE;
 	edp->bgcol = WSCOL_BLACK;
@@ -465,6 +465,7 @@ wsemul_vt100_output_esc(edp, c)
 		edp->savedcursor_row = edp->crow;
 		edp->savedcursor_col = edp->ccol;
 		edp->savedattr = edp->curattr;
+		edp->savedbkgdattr = edp->bkgdattr;
 		edp->savedattrflags = edp->attrflags;
 		edp->savedfgcol = edp->fgcol;
 		edp->savedbgcol = edp->bgcol;
@@ -477,6 +478,7 @@ wsemul_vt100_output_esc(edp, c)
 		edp->crow = edp->savedcursor_row;
 		edp->ccol = edp->savedcursor_col;
 		edp->curattr = edp->savedattr;
+		edp->bkgdattr = edp->savedbkgdattr;
 		edp->attrflags = edp->savedattrflags;
 		edp->fgcol = edp->savedfgcol;
 		edp->bgcol = edp->savedbgcol;
@@ -857,7 +859,7 @@ wsemul_vt100_output_esc_hash(edp, c)
 							  2 * i, i, 1);
 			(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
 						   i, edp->ncols - i,
-						   edp->defattr);
+						   edp->bkgdattr);
 			edp->dblwid[edp->crow] = 0;
 			edp->dw = 0;
 		}
@@ -874,7 +876,7 @@ wsemul_vt100_output_esc_hash(edp, c)
 				(*edp->emulops->erasecols)(edp->emulcookie,
 							   edp->crow,
 							   2 * i + 1, 1,
-							   edp->defattr);
+							   edp->bkgdattr);
 			edp->dblwid[edp->crow] = 1;
 			edp->dw = 1;
 			if (edp->ccol > (edp->ncols >> 1) - 1)
@@ -958,9 +960,9 @@ wsemul_vt100_output(cookie, data, count, kernel)
 		panic("wsemul_vt100_output: kernel output, not console");
 #endif
 
-	/* XXX */
-	(*edp->emulops->cursor)(edp->emulcookie, 0,
-				edp->crow, edp->ccol << edp->dw);
+	if (edp->flags & VTFL_CURSORON)
+		(*edp->emulops->cursor)(edp->emulcookie, 0,
+					edp->crow, edp->ccol << edp->dw);
 	for (; count > 0; data++, count--) {
 		if ((*data & 0x7f) < 0x20) {
 			wsemul_vt100_output_c0c1(edp, *data, kernel);
@@ -976,7 +978,7 @@ wsemul_vt100_output(cookie, data, count, kernel)
 #endif
 		edp->state = vt100_output[edp->state - 1](edp, *data);
 	}
-	/* XXX */
-	(*edp->emulops->cursor)(edp->emulcookie, edp->flags & VTFL_CURSORON,
-				edp->crow, edp->ccol << edp->dw);
+	if (edp->flags & VTFL_CURSORON)
+		(*edp->emulops->cursor)(edp->emulcookie, 1,
+					edp->crow, edp->ccol << edp->dw);
 }

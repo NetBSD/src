@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.21 1999/06/06 19:16:18 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.21.4.1 2000/11/20 11:42:13 bouyer Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -65,7 +65,6 @@
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/rpb.h>
 
 #include <dev/mscp/mscp.h>
 #include <dev/mscp/mscpreg.h>
@@ -111,7 +110,7 @@ int	rasize __P((dev_t));
 int	ra_putonline __P((struct ra_softc *));
 
 struct	cfattach ra_ca = {
-	sizeof(struct ra_softc), ramatch, raattach
+	sizeof(struct ra_softc), ramatch, rxattach
 };
 
 /*
@@ -139,29 +138,6 @@ ramatch(parent, cf, aux)
 	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) == 'X' - '@')
 		return 0;
 	return 1;
-}
-
-/*
- * The attach routine only checks and prints drive type.
- * Bringing the disk online is done when the disk is accessed
- * the first time. 
- */
-void
-raattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux; 
-{
-	struct	ra_softc *ra = (void *)self;
-	struct	mscp_softc *mi = (void *)parent;
-
-	rxattach(parent, self, aux);
-	/*
-	 * Find out if we booted from this disk.
-	 */
-	if ((B_TYPE(bootdev) == BDEV_UDA) && (ra->ra_hwunit == B_UNIT(bootdev))
-	    && (mi->mi_ctlrnr == B_CONTROLLER(bootdev))
-	    && (mi->mi_adapnr == B_ADAPTOR(bootdev)))
-		booted_from = self;
 }
 
 /* 
@@ -205,7 +181,7 @@ raopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct	proc *p;
 {
-	register struct ra_softc *ra;
+	struct ra_softc *ra;
 	int part, unit, mask;
 	/*
 	 * Make sure this is a reasonable open request.
@@ -266,8 +242,8 @@ raclose(dev, flags, fmt, p)
 	int flags, fmt;
 	struct	proc *p;
 {
-	register int unit = DISKUNIT(dev);
-	register struct ra_softc *ra = ra_cd.cd_devs[unit];
+	int unit = DISKUNIT(dev);
+	struct ra_softc *ra = ra_cd.cd_devs[unit];
 	int mask = (1 << DISKPART(dev));
 
 	switch (fmt) {
@@ -288,8 +264,9 @@ raclose(dev, flags, fmt, p)
 #if notyet
 	if (ra->ra_openpart == 0) {
 		s = splimp();
-		while (udautab[unit].b_actf)
-			sleep((caddr_t)&udautab[unit], PZERO - 1);
+		while (BUFQ_FIRST(&udautab[unit]) != NULL)
+			(void) tsleep(&udautab[unit], PZERO - 1,
+			    "raclose", 0);
 		splx(s);
 		ra->ra_state = CLOSED;
 		ra->ra_wlabel = 0;
@@ -303,10 +280,10 @@ raclose(dev, flags, fmt, p)
  */
 void
 rastrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit;
-	register struct ra_softc *ra;
+	int unit;
+	struct ra_softc *ra;
 	/*
 	 * Make sure this is a reasonable drive to use.
 	 */
@@ -379,9 +356,9 @@ raioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register int unit = DISKUNIT(dev);
-	register struct disklabel *lp, *tp;
-	register struct ra_softc *ra = ra_cd.cd_devs[unit];
+	int unit = DISKUNIT(dev);
+	struct disklabel *lp, *tp;
+	struct ra_softc *ra = ra_cd.cd_devs[unit];
 	int error = 0;
 
 	lp = ra->ra_disk.dk_label;
@@ -458,7 +435,7 @@ int
 rasize(dev)
 	dev_t dev;
 {
-	register int unit = DISKUNIT(dev);
+	int unit = DISKUNIT(dev);
 	struct ra_softc *ra;
 
 	if (unit >= ra_cd.cd_ndevs || ra_cd.cd_devs[unit] == 0)
@@ -603,7 +580,7 @@ rxopen(dev, flag, fmt, p)
 	int flag, fmt;
 	struct	proc *p;
 {
-	register struct rx_softc *rx;
+	struct rx_softc *rx;
 	int unit;
 
 	/*
@@ -646,10 +623,10 @@ rxclose(dev, flags, fmt, p)
  */
 void
 rxstrategy(bp)
-	register struct buf *bp;
+	struct buf *bp;
 {
-	register int unit;
-	register struct rx_softc *rx;
+	int unit;
+	struct rx_softc *rx;
 
 	/*
 	 * Make sure this is a reasonable drive to use.
@@ -717,9 +694,9 @@ rxioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register int unit = DISKUNIT(dev);
-	register struct disklabel *lp;
-	register struct rx_softc *rx = rx_cd.cd_devs[unit];
+	int unit = DISKUNIT(dev);
+	struct disklabel *lp;
+	struct rx_softc *rx = rx_cd.cd_devs[unit];
 	int error = 0;
 
 	lp = rx->ra_disk.dk_label;
@@ -902,8 +879,8 @@ rrmakelabel(dl, type)
  */
 int
 rrgotstatus(usc, mp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 {	
 	if ((mp->mscp_status & M_ST_MASK) != M_ST_SUCCESS) {
 		printf("%s: attempt to get status failed: ", usc->dv_xname);
@@ -937,8 +914,8 @@ rrreplace(usc, mp)
 /*ARGSUSED*/
 int 
 rrioerror(usc, mp, bp)
-	register struct device *usc;
-	register struct mscp *mp;
+	struct device *usc;
+	struct mscp *mp;
 	struct buf *bp;
 {
 	struct ra_softc *ra = (void *)usc;

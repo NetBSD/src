@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.9 1999/08/14 03:10:03 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.9.2.1 2000/11/20 11:42:51 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -42,7 +42,6 @@
 #include <sys/time.h>
 #include <sys/buf.h>
 #include "rf_raid.h"
-#include "rf_threadid.h"
 #include "rf_mcpair.h"
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
@@ -52,6 +51,7 @@
 #include "rf_decluster.h"
 #include "rf_driver.h"
 #include "rf_shutdown.h"
+#include "rf_kintf.h"
 
 #define RF_COPYBACK_DATA   0
 #define RF_COPYBACK_PARITY 1
@@ -60,10 +60,10 @@ int     rf_copyback_in_progress;
 
 static int rf_CopybackReadDoneProc(RF_CopybackDesc_t * desc, int status);
 static int rf_CopybackWriteDoneProc(RF_CopybackDesc_t * desc, int status);
-static void 
-rf_CopybackOne(RF_CopybackDesc_t * desc, int typ,
-    RF_RaidAddr_t addr, RF_RowCol_t testRow, RF_RowCol_t testCol,
-    RF_SectorNum_t testOffs);
+static void rf_CopybackOne(RF_CopybackDesc_t * desc, int typ,
+			   RF_RaidAddr_t addr, RF_RowCol_t testRow, 
+			   RF_RowCol_t testCol,
+			   RF_SectorNum_t testOffs);
 static void rf_CopybackComplete(RF_CopybackDesc_t * desc, int status);
 
 int 
@@ -81,11 +81,6 @@ rf_ConfigureCopyback(listp)
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 
-/* XXX these should be in a .h file somewhere */
-int raidlookup __P((char *, struct proc *, struct vnode **));
-int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-
 /* do a complete copyback */
 void 
 rf_CopybackReconstructedData(raidPtr)
@@ -102,6 +97,8 @@ rf_CopybackReconstructedData(raidPtr)
 	struct vnode *vp;
 	struct vattr va;
 	struct proc *proc;
+
+	int ac;
 
 	done = 0;
 	fcol = 0;
@@ -131,11 +128,15 @@ rf_CopybackReconstructedData(raidPtr)
 	if (raidPtr->raid_cinfo[frow][fcol].ci_vp != NULL) {
 		printf("Closed the open device: %s\n",
 		    raidPtr->Disks[frow][fcol].devname);
-		VOP_UNLOCK(raidPtr->raid_cinfo[frow][fcol].ci_vp, 0);
-		(void) vn_close(raidPtr->raid_cinfo[frow][fcol].ci_vp,
-				FREAD | FWRITE, proc->p_ucred, proc);
+		vp = raidPtr->raid_cinfo[frow][fcol].ci_vp;
+		ac = raidPtr->Disks[frow][fcol].auto_configured;
+		rf_close_component(raidPtr, vp, ac);
 		raidPtr->raid_cinfo[frow][fcol].ci_vp = NULL;
+
 	}
+	/* note that this disk was *not* auto_configured (any longer) */
+	raidPtr->Disks[frow][fcol].auto_configured = 0;
+
 	printf("About to (re-)open the device: %s\n",
 	    raidPtr->Disks[frow][fcol].devname);
 
@@ -236,17 +237,12 @@ rf_CopybackReconstructedData(raidPtr)
 	raidread_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
 				  raidPtr->raid_cinfo[frow][fcol].ci_vp,
 				  &c_label);
-		
-	c_label.version = RF_COMPONENT_LABEL_VERSION; 
-	c_label.mod_counter = raidPtr->mod_counter;
-	c_label.serial_number = raidPtr->serial_number;
+	
+	raid_init_component_label( raidPtr, &c_label );
+
 	c_label.row = frow;
 	c_label.column = fcol;
-	c_label.num_rows = raidPtr->numRow;
-	c_label.num_columns = raidPtr->numCol;
-	c_label.clean = RF_RAID_DIRTY;
-	c_label.status = rf_ds_optimal;
-	
+
 	raidwrite_component_label( raidPtr->raid_cinfo[frow][fcol].ci_dev,
 				   raidPtr->raid_cinfo[frow][fcol].ci_vp,
 				   &c_label);
@@ -271,6 +267,8 @@ rf_ContinueCopyback(desc)
 	old_pctg = (-1);
 	while (1) {
 		stripeAddr = desc->stripeAddr;
+		desc->raidPtr->copyback_stripes_done = stripeAddr
+			/ desc->sectPerStripe;
 		if (rf_prReconSched) {
 			old_pctg = 100 * desc->stripeAddr / raidPtr->totalSectors;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.23 1998/10/07 04:58:06 enami Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.23.12.1 2000/11/20 11:41:15 bouyer Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -507,7 +507,7 @@ ate_attach(parent, self, aux)
 	printf("%s: %s Ethernet\n", sc->sc_dev.dv_xname, typestr);
 
 	/* This interface is always enabled. */
-	sc->sc_enabled = 1;
+	sc->sc_flags |= FE_FLAGS_ENABLED;
 
 	/*
 	 * Do generic MB86960 attach.

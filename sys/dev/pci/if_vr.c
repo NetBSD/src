@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.26 1999/09/20 17:40:58 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.26.2.1 2000/11/20 11:42:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
@@ -114,7 +115,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>		/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #include <net/if.h>
 #include <net/if_arp.h>
@@ -134,24 +135,17 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/endian.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
+#include <dev/mii/mii_bitbang.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_vrreg.h>
-
-#if BYTE_ORDER == BIG_ENDIAN
-#include <machine/bswap.h>
-#define	htopci(x)	bswap32(x)
-#define	pcitoh(x)	bswap32(x)
-#else
-#define	htopci(x)	(x)
-#define	pcitoh(x)	(x)
-#endif
 
 #define	VR_USEIOSPACE
 
@@ -165,6 +159,8 @@ static struct vr_type {
 } vr_devs[] = {
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043,
 		"VIA VT3043 (Rhine) 10/100" },
+	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
+		"VIA VT6102 (Rhine II) 10/100" },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 		"VIA VT86C100A (Rhine-II) 10/100" },
 	{ 0, 0, NULL }
@@ -221,6 +217,8 @@ struct vr_softc {
 	u_int8_t 		vr_enaddr[ETHER_ADDR_LEN];
 	struct mii_data		vr_mii;		/* MII/media info */
 
+	struct callout		vr_tick_ch;	/* tick callout */
+
 	bus_dmamap_t		vr_cddmamap;	/* control data DMA map */
 #define	vr_cddma	vr_cddmamap->dm_segs[0].ds_addr
 
@@ -267,11 +265,11 @@ do {									\
 	struct vr_desc *__d = VR_CDRX((sc), (i));			\
 	struct vr_descsoft *__ds = VR_DSRX((sc), (i));			\
 									\
-	__d->vr_next = htopci(VR_CDRXADDR((sc), VR_NEXTRX((i))));	\
-	__d->vr_status = htopci(VR_RXSTAT_FIRSTFRAG |			\
+	__d->vr_next = htole32(VR_CDRXADDR((sc), VR_NEXTRX((i))));	\
+	__d->vr_status = htole32(VR_RXSTAT_FIRSTFRAG |			\
 	    VR_RXSTAT_LASTFRAG | VR_RXSTAT_OWN);			\
-	__d->vr_data = htopci(__ds->ds_dmamap->dm_segs[0].ds_addr);	\
-	__d->vr_ctl = htopci(VR_RXCTL_CHAIN | VR_RXCTL_RX_INTR |	\
+	__d->vr_data = htole32(__ds->ds_dmamap->dm_segs[0].ds_addr);	\
+	__d->vr_ctl = htole32(VR_RXCTL_CHAIN | VR_RXCTL_RX_INTR |	\
 	    ((MCLBYTES - 1) & VR_RXCTL_BUFLEN));			\
 	VR_CDRXSYNC((sc), (i), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
@@ -303,8 +301,8 @@ static void vr_txeof		__P((struct vr_softc *));
 static int vr_intr		__P((void *));
 static void vr_start		__P((struct ifnet *));
 static int vr_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static int vr_init		__P((struct vr_softc *));
-static void vr_stop		__P((struct vr_softc *, int));
+static int vr_init		__P((struct ifnet *));
+static void vr_stop		__P((struct ifnet *, int));
 static void vr_rxdrain		__P((struct vr_softc *));
 static void vr_watchdog		__P((struct ifnet *));
 static void vr_tick		__P((void *));
@@ -312,8 +310,6 @@ static void vr_tick		__P((void *));
 static int vr_ifmedia_upd	__P((struct ifnet *));
 static void vr_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
-static void vr_mii_sync		__P((struct vr_softc *));
-static void vr_mii_send		__P((struct vr_softc *, u_int32_t, int));
 static int vr_mii_readreg	__P((struct device *, int, int));
 static void vr_mii_writereg	__P((struct device *, int, int, int));
 static void vr_mii_statchg	__P((struct device *));
@@ -348,57 +344,41 @@ int	vr_copy_small = 0;
 	CSR_WRITE_4(sc, reg,				\
 		CSR_READ_4(sc, reg) & ~x)
 
-#define	SIO_SET(x)					\
-	CSR_WRITE_1(sc, VR_MIICMD,			\
-		CSR_READ_1(sc, VR_MIICMD) | x)
-
-#define	SIO_CLR(x)					\
-	CSR_WRITE_1(sc, VR_MIICMD,			\
-		CSR_READ_1(sc, VR_MIICMD) & ~x)
-
 /*
- * Sync the PHYs by setting data bit and strobing the clock 32 times.
+ * MII bit-bang glue.
  */
-static void
-vr_mii_sync(sc)
-	struct vr_softc *sc;
-{
-	int i;
+u_int32_t vr_mii_bitbang_read __P((struct device *));
+void vr_mii_bitbang_write __P((struct device *, u_int32_t));
 
-	SIO_SET(VR_MIICMD_DIR|VR_MIICMD_DATAOUT);
-
-	for (i = 0; i < 32; i++) {
-		SIO_SET(VR_MIICMD_CLK);
-		DELAY(1);
-		SIO_CLR(VR_MIICMD_CLK);
-		DELAY(1);
+const struct mii_bitbang_ops vr_mii_bitbang_ops = {
+	vr_mii_bitbang_read,
+	vr_mii_bitbang_write,
+	{
+		VR_MIICMD_DATAOUT,	/* MII_BIT_MDO */
+		VR_MIICMD_DATAIN,	/* MII_BIT_MDI */
+		VR_MIICMD_CLK,		/* MII_BIT_MDC */
+		VR_MIICMD_DIR,		/* MII_BIT_DIR_HOST_PHY */
+		0,			/* MII_BIT_DIR_PHY_HOST */
 	}
+};
+
+u_int32_t
+vr_mii_bitbang_read(self)
+	struct device *self;
+{
+	struct vr_softc *sc = (void *) self;
+
+	return (CSR_READ_1(sc, VR_MIICMD));
 }
 
-/*
- * Clock a series of bits through the MII.
- */
-static void
-vr_mii_send(sc, bits, cnt)
-	struct vr_softc *sc;
-	u_int32_t bits;
-	int cnt;
+void
+vr_mii_bitbang_write(self, val)
+	struct device *self;
+	u_int32_t val;
 {
-	int i;
+	struct vr_softc *sc = (void *) self;
 
-	SIO_CLR(VR_MIICMD_CLK);
-
-	for (i = (0x1 << (cnt - 1)); i; i >>= 1) {
-		if (bits & i) {
-			SIO_SET(VR_MIICMD_DATAOUT);
-		} else {
-			SIO_CLR(VR_MIICMD_DATAOUT);
-		}
-		DELAY(1);
-		SIO_CLR(VR_MIICMD_CLK);
-		DELAY(1);
-		SIO_SET(VR_MIICMD_CLK);
-	}
+	CSR_WRITE_1(sc, VR_MIICMD, (val & 0xff) | VR_MIICMD_DIRECTPGM);
 }
 
 /*
@@ -409,77 +389,10 @@ vr_mii_readreg(self, phy, reg)
 	struct device *self;
 	int phy, reg;
 {
-	struct vr_softc *sc = (struct vr_softc *)self;
-	int i, ack, val = 0;
+	struct vr_softc *sc = (void *) self;
 
-	CSR_WRITE_1(sc, VR_MIICMD, 0);
-	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
-
-	/*
-	 * Turn on data xmit.
-	 */
-	SIO_SET(VR_MIICMD_DIR);
-
-	vr_mii_sync(sc);
-
-	/*
-	 * Send command/address info.
-	 */
-	vr_mii_send(sc, MII_COMMAND_START, 2);
-	vr_mii_send(sc, MII_COMMAND_READ, 2);
-	vr_mii_send(sc, phy, 5);
-	vr_mii_send(sc, reg, 5);
-
-	/* Idle bit */
-	SIO_CLR((VR_MIICMD_CLK|VR_MIICMD_DATAOUT));
-	DELAY(1);
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-
-	/* Turn off xmit. */
-	SIO_CLR(VR_MIICMD_DIR);
-
-	/* Check for ack */
-	SIO_CLR(VR_MIICMD_CLK);
-	DELAY(1);
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-	ack = CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAIN;
-
-	/*
-	 * Now try reading data bits. If the ack failed, we still
-	 * need to clock through 16 cycles to keep the PHY(s) in sync.
-	 */
-	if (ack) {
-		for (i = 0; i < 16; i++) {
-			SIO_CLR(VR_MIICMD_CLK);
-			DELAY(1);
-			SIO_SET(VR_MIICMD_CLK);
-			DELAY(1);
-		}
-		goto fail;
-	}
-
-	for (i = 0x8000; i; i >>= 1) {
-		SIO_CLR(VR_MIICMD_CLK);
-		DELAY(1);
-		if (!ack) {
-			if (CSR_READ_4(sc, VR_MIICMD) & VR_MIICMD_DATAIN)
-				val |= i;
-			DELAY(1);
-		}
-		SIO_SET(VR_MIICMD_CLK);
-		DELAY(1);
-	}
-
- fail:
-
-	SIO_CLR(VR_MIICMD_CLK);
-	DELAY(1);
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-
-	return (val);
+	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
+	return (mii_bitbang_readreg(self, &vr_mii_bitbang_ops, phy, reg));
 }
 
 /*
@@ -490,35 +403,10 @@ vr_mii_writereg(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
 {
-	struct vr_softc *sc = (struct vr_softc *)self;
+	struct vr_softc *sc = (void *) self;
 
-	CSR_WRITE_1(sc, VR_MIICMD, 0);
-	VR_SETBIT(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
-
-	/*
-	 * Turn on data output.
-	 */
-	SIO_SET(VR_MIICMD_DIR);
-
-	vr_mii_sync(sc);
-
-	vr_mii_send(sc, MII_COMMAND_START, 2);
-	vr_mii_send(sc, MII_COMMAND_WRITE, 2);
-	vr_mii_send(sc, phy, 5);
-	vr_mii_send(sc, reg, 5);
-	vr_mii_send(sc, MII_COMMAND_ACK, 2);
-	vr_mii_send(sc, val, 16);
-
-	/* Idle bit. */
-	SIO_SET(VR_MIICMD_CLK);
-	DELAY(1);
-	SIO_CLR(VR_MIICMD_CLK);
-	DELAY(1);
-
-	/*
-	 * Turn off xmit.
-	 */
-	SIO_CLR(VR_MIICMD_DIR);
+	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
+	mii_bitbang_writereg(self, &vr_mii_bitbang_ops, phy, reg, val);
 }
 
 static void
@@ -541,8 +429,6 @@ vr_mii_statchg(self)
 
 	if (sc->vr_ec.ec_if.if_flags & IFF_RUNNING)
 		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_RX_ON);
-
-	/* XXX Update ifp->if_baudrate */
 }
 
 /*
@@ -707,7 +593,6 @@ static void
 vr_rxeof(sc)
 	struct vr_softc *sc;
 {
-	struct ether_header *eh;
 	struct mbuf *m;
 	struct ifnet *ifp;
 	struct vr_desc *d;
@@ -723,7 +608,7 @@ vr_rxeof(sc)
 
 		VR_CDRXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		rxstat = pcitoh(d->vr_status);
+		rxstat = le32toh(d->vr_status);
 
 		if (rxstat & VR_RXSTAT_OWN) {
 			/*
@@ -780,16 +665,7 @@ vr_rxeof(sc)
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		/* No errors; receive the packet. */
-		total_len = VR_RXBYTES(pcitoh(d->vr_status));
-
-		/*
-		 * XXX The VIA Rhine chip includes the CRC with every
-		 * received frame, and there's no way to turn this
-		 * behavior off (at least, I can't find anything in
-		 * the manual that explains how to do it) so we have
-		 * to trim off the CRC manually.
-		 */
-		total_len -= ETHER_CRC_LEN;
+		total_len = VR_RXBYTES(le32toh(d->vr_status));
 
 #ifdef __NO_STRICT_ALIGNMENT
 		/*
@@ -864,8 +740,13 @@ vr_rxeof(sc)
 		    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 #endif /* __NO_STRICT_ALIGNMENT */
 
+		/*
+		 * The Rhine chip includes the FCS with every
+		 * received packet.
+		 */
+		m->m_flags |= M_HASFCS;
+
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = total_len;
 #if NBPFILTER > 0
@@ -875,16 +756,8 @@ vr_rxeof(sc)
 		 * a broadcast packet, multicast packet, matches our ethernet
 		 * address or the interface is in promiscuous mode.
 		 */
-		if (ifp->if_bpf) {
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-			if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-			    ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
-			    memcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-				   ETHER_ADDR_LEN) != 0) {
-				m_freem(m);
-				continue;
-			}
-		}
 #endif
 		/* Pass it on. */
 		(*ifp->if_input)(ifp, m);
@@ -933,7 +806,7 @@ vr_txeof(sc)
 
 		VR_CDTXSYNC(sc, i, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		txstat = pcitoh(d->vr_status);
+		txstat = le32toh(d->vr_status);
 		if (txstat & VR_TXSTAT_OWN)
 			break;
 
@@ -980,7 +853,7 @@ vr_intr(arg)
 
 	/* Suppress unwanted interrupts. */
 	if ((ifp->if_flags & IFF_UP) == 0) {
-		vr_stop(sc, 1);
+		vr_stop(ifp, 1);
 		return (0);
 	}
 
@@ -1030,7 +903,7 @@ vr_intr(arg)
 			printf("%s: PCI bus error\n", sc->vr_dev.dv_xname);
 			/* vr_init() calls vr_start() */
 			dotx = 0;
-			(void) vr_init(sc);
+			(void) vr_init(ifp);
 		}
 	}
 
@@ -1147,11 +1020,12 @@ vr_start(ifp)
 		 * Fill in the transmit descriptor.  The Rhine
 		 * doesn't auto-pad, so we have to do this ourselves.
 		 */
-		d->vr_data = htopci(ds->ds_dmamap->dm_segs[0].ds_addr);
-		d->vr_ctl = htopci(m0->m_pkthdr.len < VR_MIN_FRAMELEN ?
+		d->vr_data = htole32(ds->ds_dmamap->dm_segs[0].ds_addr);
+		d->vr_ctl = htole32(m0->m_pkthdr.len < VR_MIN_FRAMELEN ?
 		    VR_MIN_FRAMELEN : m0->m_pkthdr.len);
 		d->vr_ctl |=
-		    htopci(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|VR_TXCTL_LASTFRAG);
+		    htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|
+		    VR_TXCTL_LASTFRAG);
 		
 		/*
 		 * If this is the first descriptor we're enqueuing,
@@ -1161,7 +1035,7 @@ vr_start(ifp)
 		if (nexttx == firsttx)
 			d->vr_status = 0;
 		else
-			d->vr_status = htopci(VR_TXSTAT_OWN);
+			d->vr_status = htole32(VR_TXSTAT_OWN);
 
 		VR_CDTXSYNC(sc, nexttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
@@ -1188,7 +1062,7 @@ vr_start(ifp)
 		 * Cause a transmit interrupt to happen on the
 		 * last packet we enqueued.
 		 */
-		VR_CDTX(sc, sc->vr_txlast)->vr_ctl |= htopci(VR_TXCTL_FINT);
+		VR_CDTX(sc, sc->vr_txlast)->vr_ctl |= htole32(VR_TXCTL_FINT);
 		VR_CDTXSYNC(sc, sc->vr_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1196,7 +1070,7 @@ vr_start(ifp)
 		 * The entire packet chain is set up.  Give the
 		 * first descriptor to the Rhine now.
 		 */
-		VR_CDTX(sc, firsttx)->vr_status = htopci(VR_TXSTAT_OWN);
+		VR_CDTX(sc, firsttx)->vr_status = htole32(VR_TXSTAT_OWN);
 		VR_CDTXSYNC(sc, firsttx,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1212,16 +1086,16 @@ vr_start(ifp)
  * Initialize the interface.  Must be called at splnet.
  */
 static int
-vr_init(sc)
-	struct vr_softc *sc;
+vr_init(ifp)
+	struct ifnet *ifp;
 {
-	struct ifnet *ifp = &sc->vr_ec.ec_if;
+	struct vr_softc *sc = ifp->if_softc;
 	struct vr_desc *d;
 	struct vr_descsoft *ds;
 	int i, error = 0;
 
 	/* Cancel pending I/O. */
-	vr_stop(sc, 0);
+	vr_stop(ifp, 0);
 
 	/* Reset the Rhine to a known state. */
 	vr_reset(sc);
@@ -1240,7 +1114,7 @@ vr_init(sc)
 	for (i = 0; i < VR_NTXDESC; i++) {
 		d = VR_CDTX(sc, i);
 		memset(d, 0, sizeof(struct vr_desc));
-		d->vr_next = htopci(VR_CDTXADDR(sc, VR_NEXTTX(i)));
+		d->vr_next = htole32(VR_CDTXADDR(sc, VR_NEXTTX(i)));
 		VR_CDTXSYNC(sc, i, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	}
 	sc->vr_txpending = 0;
@@ -1303,7 +1177,7 @@ vr_init(sc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* Start one second timer. */
-	timeout(vr_tick, sc, hz);
+	callout_reset(&sc->vr_tick_ch, hz, vr_tick, sc);
 
 	/* Attempt to start output on the interface. */
 	vr_start(ifp);
@@ -1351,73 +1225,18 @@ vr_ioctl(ifp, command, data)
 {
 	struct vr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
-	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (command) {
-	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if ((error = vr_init(sc)) != 0)
-				break;
-			arp_ifinit(ifp, ifa);
-			break;
-#endif /* INET */
-		default:
-			error = vr_init(sc);
-			break;
-		}
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->vr_mii.mii_media, command);
 		break;
 
-	case SIOCGIFADDR:
-		bcopy((caddr_t) sc->vr_enaddr,
-			(caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-			ETHER_ADDR_LEN);
-		break;
-
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
-			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
-			/*
-			 * If interface is marked down and it is running, then
-			 * stop it.
-			 */
-			vr_stop(sc, 1);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
-			/*
-			 * If interface is marked up and it is stopped, then
-			 * start it.
-			 */
-			error = vr_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
-			/*
-			 * Reset the interface to pick up changes in any other
-			 * flags that affect the hardware state.
-			 */
-			error = vr_init(sc);
-		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if (command == SIOCADDMULTI)
-			error = ether_addmulti(ifr, &sc->vr_ec);
-		else
-			error = ether_delmulti(ifr, &sc->vr_ec);
-
+	default:
+		error = ether_ioctl(ifp, command, data);
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -1426,15 +1245,6 @@ vr_ioctl(ifp, command, data)
 			vr_setmulti(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->vr_mii.mii_media, command);
-		break;
-
-	default:
-		error = EINVAL;
 		break;
 	}
 
@@ -1451,7 +1261,7 @@ vr_watchdog(ifp)
 	printf("%s: device timeout\n", sc->vr_dev.dv_xname);
 	ifp->if_oerrors++;
 
-	(void) vr_init(sc);
+	(void) vr_init(ifp);
 }
 
 /*
@@ -1468,7 +1278,7 @@ vr_tick(arg)
 	mii_tick(&sc->vr_mii);
 	splx(s);
 
-	timeout(vr_tick, sc, hz);
+	callout_reset(&sc->vr_tick_ch, hz, vr_tick, sc);
 }
 
 /*
@@ -1496,16 +1306,19 @@ vr_rxdrain(sc)
  * transmit lists.
  */
 static void
-vr_stop(sc, drain)
-	struct vr_softc *sc;
-	int drain;
-{
-	struct vr_descsoft *ds;
+vr_stop(ifp, disable)
 	struct ifnet *ifp;
+	int disable;
+{
+	struct vr_softc *sc = ifp->if_softc;
+	struct vr_descsoft *ds;
 	int i;
 
 	/* Cancel one second timer. */
-	untimeout(vr_tick, sc);
+	callout_stop(&sc->vr_tick_ch);
+
+	/* Down the MII. */
+	mii_down(&sc->vr_mii);
 
 	ifp = &sc->vr_ec.ec_if;
 	ifp->if_timer = 0;
@@ -1528,12 +1341,8 @@ vr_stop(sc, drain)
 		}
 	}
 
-	if (drain) {
-		/*
-		 * Release the receive buffers.
-		 */
+	if (disable)
 		vr_rxdrain(sc);
-	}
 
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
@@ -1589,7 +1398,7 @@ vr_shutdown(arg)
 {
 	struct vr_softc *sc = (struct vr_softc *)arg;
 
-	vr_stop(sc, 1);
+	vr_stop(&sc->vr_ec.ec_if, 1);
 }
 
 /*
@@ -1613,6 +1422,8 @@ vr_attach(parent, self, aux)
 
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
+
+	callout_init(&sc->vr_tick_ch);
 
 	vrt = vr_lookup(pa);
 	if (vrt == NULL) {
@@ -1812,7 +1623,8 @@ vr_attach(parent, self, aux)
 	ifp->if_ioctl = vr_ioctl;
 	ifp->if_start = vr_start;
 	ifp->if_watchdog = vr_watchdog;
-	ifp->if_baudrate = 10000000;
+	ifp->if_init = vr_init;
+	ifp->if_stop = vr_stop;
 	bcopy(sc->vr_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*
@@ -1823,7 +1635,8 @@ vr_attach(parent, self, aux)
 	sc->vr_mii.mii_writereg = vr_mii_writereg;
 	sc->vr_mii.mii_statchg = vr_mii_statchg;
 	ifmedia_init(&sc->vr_mii.mii_media, 0, vr_ifmedia_upd, vr_ifmedia_sts);
-	mii_phy_probe(&sc->vr_dev, &sc->vr_mii, 0xffffffff);
+	mii_attach(&sc->vr_dev, &sc->vr_mii, 0xffffffff, MII_PHY_ANY,
+	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->vr_mii.mii_phys) == NULL) {
 		ifmedia_add(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->vr_mii.mii_media, IFM_ETHER|IFM_NONE);

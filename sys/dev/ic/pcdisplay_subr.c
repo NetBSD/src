@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.9 1999/09/29 17:26:06 ad Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.9.2.1 2000/11/20 11:40:51 bouyer Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -32,13 +32,42 @@
 #include <sys/device.h>
 #include <machine/bus.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/isareg.h>
-
 #include <dev/ic/mc6845reg.h>
 #include <dev/ic/pcdisplayvar.h>
 
 #include <dev/wscons/wsdisplayvar.h>
+
+void
+pcdisplay_cursor_init(scr, existing)
+	struct pcdisplayscreen *scr;
+	int existing;
+{
+#ifdef PCDISPLAY_SOFTCURSOR
+	bus_space_tag_t memt;
+	bus_space_handle_t memh;
+	int off;
+
+	pcdisplay_6845_write(scr->hdl, curstart, 0x10);
+	pcdisplay_6845_write(scr->hdl, curend, 0x10);
+	
+	if (existing) {
+		/*
+		 * This is the first screen. At this point, scr->active is
+		 * false and scr->mem is NULL (no backing store), so we
+		 * can't use pcdisplay_cursor() to do this.
+		 */
+		memt = scr->hdl->ph_memt;
+		memh = scr->hdl->ph_memh;
+		off = (scr->vc_crow * scr->type->ncols + scr->vc_ccol) * 2 +
+		    scr->dispoffset;
+
+		scr->cursortmp = bus_space_read_2(memt, memh, off);
+		bus_space_write_2(memt, memh, off, scr->cursortmp ^ 0x7700);
+	} else
+		scr->cursortmp = 0;
+#endif
+	scr->cursoron = 1;
+}
 
 void
 pcdisplay_cursor(id, on, row, col)
@@ -69,11 +98,9 @@ pcdisplay_cursor(id, on, row, col)
 
 	off = (scr->vc_crow * scr->type->ncols + scr->vc_ccol);
 	if (scr->active) {
-		off <<= 1;
-		scr->cursortmp = bus_space_read_2(memt, memh, 
-		    scr->dispoffset + off);
-		bus_space_write_2(memt, memh, scr->dispoffset + off,
-		    scr->cursortmp ^ 0x7700);
+		off = off * 2 + scr->dispoffset;
+		scr->cursortmp = bus_space_read_2(memt, memh, off);
+		bus_space_write_2(memt, memh, off, scr->cursortmp ^ 0x7700);
 	} else {
 		scr->cursortmp = scr->mem[off];
 		scr->mem[off] = scr->cursortmp ^ 0x7700;

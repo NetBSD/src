@@ -1,4 +1,40 @@
-/*	$NetBSD: eisavar.h,v 1.13 1999/03/19 03:01:50 cgd Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.13.8.1 2000/11/20 11:40:00 bouyer Exp $	*/
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -42,6 +78,11 @@
  * separated into eisa_machdep.h.
  */
 
+struct eisa_cfg_mem;
+struct eisa_cfg_irq;
+struct eisa_cfg_dma;
+struct eisa_cfg_io;
+
 #include <machine/bus.h>
 #include <dev/eisa/eisareg.h>		/* For ID register & string info. */
 
@@ -61,7 +102,7 @@ typedef int	eisa_slot_t;		/* really only needs to be 4 bits */
  * EISA bus attach arguments.
  */
 struct eisabus_attach_args {
-	char	*eba_busname;		/* XXX should be common */
+	const char *eba_busname;	/* XXX should be common */
 	bus_space_tag_t eba_iot;	/* eisa i/o space tag */
 	bus_space_tag_t eba_memt;	/* eisa mem space tag */
 	bus_dma_tag_t eba_dmat;		/* DMA tag */
@@ -90,5 +131,44 @@ struct eisa_attach_args {
  */
 #define	eisacf_slot		cf_loc[EISACF_SLOT]
 #define	EISA_UNKNOWN_SLOT	EISACF_SLOT_DEFAULT	/* wildcarded 'slot' */
+
+/*
+ * EISA Configuration entries, set up by an EISA Configuration Utility.
+ */
+
+struct eisa_cfg_mem {
+	bus_addr_t ecm_addr;
+	bus_size_t ecm_size;
+	int ecm_isram;
+	int ecm_decode;
+	int ecm_unitsize;
+};
+
+struct eisa_cfg_irq {
+	int eci_irq;
+	int eci_ist;
+	int eci_shared;
+};
+
+struct eisa_cfg_dma {
+	int ecd_drq;
+	int ecd_shared;
+	int ecd_size;
+#define	ECD_SIZE_8BIT		0
+#define	ECD_SIZE_16BIT		1
+#define	ECD_SIZE_32BIT		2
+#define	ECD_SIZE_RESERVED	3
+	int ecd_timing;
+#define	ECD_TIMING_ISA		0
+#define	ECD_TIMING_TYPEA	1
+#define	ECD_TIMING_TYPEB	2
+#define	ECD_TIMING_TYPEC	3
+};
+
+struct eisa_cfg_io {
+	bus_addr_t ecio_addr;
+	bus_size_t ecio_size;
+	int ecio_shared;
+};
 
 #endif /* _DEV_EISA_EISAVAR_H_ */

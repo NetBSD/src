@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.54 1998/08/15 10:51:17 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.54.12.1 2000/11/20 11:40:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@ am7990_config(sc)
  */
 void
 am7990_meminit(sc)
-	register struct lance_softc *sc;
+	struct lance_softc *sc;
 {
 	u_long a;
 	int bix;
@@ -186,7 +186,7 @@ am7990_meminit(sc)
 	 * Update our private copy of the Ethernet address.
 	 * We NEED the copy so we can ensure its alignment!
 	 */
-	bcopy(LLADDR(ifp->if_sadl), sc->sc_enaddr, 6);
+	bcopy(LLADDR(ifp->if_sadl), sc->sc_enaddr, ETHER_ADDR_LEN);
 	myaddr = sc->sc_enaddr;
 
 	init.init_padr[0] = (myaddr[1] << 8) | myaddr[0];
@@ -240,7 +240,7 @@ integrate void
 am7990_rint(sc)
 	struct lance_softc *sc;
 {
-	register int bix;
+	int bix;
 	int rp;
 	struct lermd rmd;
 
@@ -282,7 +282,7 @@ am7990_rint(sc)
 			ifp->if_ierrors++;
 		} else {
 #ifdef LEDEBUG
-			if (sc->sc_debug)
+			if (sc->sc_debug > 1)
 				am7990_recv_print(sc, sc->sc_last_rd);
 #endif
 			lance_read(sc, LE_RBUFADDR(sc, bix),
@@ -313,9 +313,9 @@ am7990_rint(sc)
 
 integrate void
 am7990_tint(sc)
-	register struct lance_softc *sc;
+	struct lance_softc *sc;
 {
-	register int bix;
+	int bix;
 	struct letmd tmd;
 
 	bix = sc->sc_first_td;
@@ -362,9 +362,11 @@ am7990_tint(sc)
 			if (tmd.tmd3 & LE_T3_LCOL)
 				ifp->if_collisions++;
 			if (tmd.tmd3 & LE_T3_RTRY) {
+#ifdef LEDEBUG
 				printf("%s: excessive collisions, tdr %d\n",
 				    sc->sc_dev.dv_xname,
 				    tmd.tmd3 & LE_T3_TDR_MASK);
+#endif
 				ifp->if_collisions += 16;
 			}
 			ifp->if_oerrors++;
@@ -396,14 +398,14 @@ am7990_tint(sc)
  */
 int
 am7990_intr(arg)
-	register void *arg;
+	void *arg;
 {
-	register struct lance_softc *sc = arg;
-	register u_int16_t isr;
+	struct lance_softc *sc = arg;
+	u_int16_t isr;
 
 	isr = (*sc->sc_rdcsr)(sc, LE_CSR0) | sc->sc_saved_csr0;
 	sc->sc_saved_csr0 = 0;
-#ifdef LEDEBUG
+#if defined(LEDEBUG) && LEDEBUG > 1
 	if (sc->sc_debug)
 		printf("%s: am7990_intr entering with isr=%04x\n",
 		    sc->sc_dev.dv_xname, isr);
@@ -411,9 +413,19 @@ am7990_intr(arg)
 	if ((isr & LE_C0_INTR) == 0)
 		return (0);
 
+#ifdef __vax__
+	/*
+	 * DEC needs this write order to the registers, don't know
+	 * the results on other arch's.  Ragge 991029
+	 */
+	isr &= ~LE_C0_INEA;
+	(*sc->sc_wrcsr)(sc, LE_CSR0, isr);
+	(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_INEA);
+#else
 	(*sc->sc_wrcsr)(sc, LE_CSR0,
 	    isr & (LE_C0_INEA | LE_C0_BABL | LE_C0_MISS | LE_C0_MERR |
 		   LE_C0_RINT | LE_C0_TINT | LE_C0_IDON));
+#endif
 	if (isr & LE_C0_ERR) {
 		if (isr & LE_C0_BABL) {
 #ifdef LEDEBUG
@@ -481,11 +493,11 @@ am7990_intr(arg)
  */
 void
 am7990_start(ifp)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 {
-	register struct lance_softc *sc = ifp->if_softc;
-	register int bix;
-	register struct mbuf *m;
+	struct lance_softc *sc = ifp->if_softc;
+	int bix;
+	struct mbuf *m;
 	struct letmd tmd;
 	int rp;
 	int len;
@@ -540,7 +552,7 @@ am7990_start(ifp)
 		(*sc->sc_copytodesc)(sc, &tmd, rp, sizeof(tmd));
 
 #ifdef LEDEBUG
-		if (sc->sc_debug)
+		if (sc->sc_debug > 1)
 			am7990_xmit_print(sc, sc->sc_last_td);
 #endif
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: dpt.c,v 1.8.2.9 1999/11/01 22:54:17 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.8.2.10 2000/11/20 11:40:31 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andy Doran, Charles M. Hannum and by Jason R. Thorpe of the Numerical 
+ * by Andrew Doran, Charles M. Hannum and by Jason R. Thorpe of the Numerical
  * Aerospace Simulation Facility, NASA Ames Research Center.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,22 +54,8 @@
  * functioning of this software in any circumstances.
  */
 
-/*
- * Driver for DPT EATA SCSI adapters.
- *
- * TODO:
- *
- * o Need a front-end for (newer) ISA boards.
- * o Handle older firmware better.
- * o Find a bunch of different firmware EEPROMs and try them out.
- * o Test with a bunch of different boards.
- * o dpt_readcfg() should not be using CP_PIO_GETCFG.
- * o An interface to userland applications.
- * o Some sysctls or a utility (eg dptctl(8)) to control parameters.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.9 1999/11/01 22:54:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.10 2000/11/20 11:40:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.9 1999/11/01 22:54:17 thorpej Exp $");
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
+#include <sys/endian.h>
 
-#include <machine/endian.h>
 #include <machine/bswap.h>
 #include <machine/bus.h>
 
@@ -91,13 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.8.2.9 1999/11/01 22:54:17 thorpej Exp $");
 #include <dev/ic/dptvar.h>
 
 static char *dpt_cname[] = {
-#ifdef notdef
-	"PM3755", "SmartRAID V",
-	"PM3754", "SmartRAID V",
-	"PM2654", "SmartRAID V",
-	"PM2554", "SmartRAID V",
-	"PM1554", "SmartRAID V",
-#endif
 	"PM3334", "SmartRAID IV",
 	"PM3332", "SmartRAID IV",
 	"PM2144", "SmartCache IV",
@@ -118,27 +97,9 @@ static char *dpt_cname[] = {
 	NULL,     "unknown adapter, please report using send-pr(1)",
 };
 
-void	dpt_shutdown __P((void *));
-void	dpt_timeout __P((void *));
-void	dpt_minphys __P((struct buf *));
-void	dpt_scsipi_request __P((struct scsipi_channel *,
-	    scsipi_adapter_req_t, void *));
-int	dpt_wait __P((struct dpt_softc *, u_int8_t, u_int8_t, int));
-int	dpt_poll __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_cmd __P((struct dpt_softc *, struct eata_cp *, u_int32_t, int, int));
-void	dpt_hba_inquire __P((struct dpt_softc *, struct eata_inquiry_data **));
-
-void	dpt_reset_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_free_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-void	dpt_done_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_init_ccb __P((struct dpt_softc *, struct dpt_ccb *));
-int	dpt_create_ccbs __P((struct dpt_softc *, struct dpt_ccb *, int));
+void *dpt_sdh;
 
 struct dpt_ccb	*dpt_alloc_ccb __P((struct dpt_softc *));
-
-#if 0 && defined(DEBUG)
-static void	dpt_dump_sp __P((struct eata_sp *));
-#endif
 
 /*
  * Handle an interrupt from the HBA.
@@ -150,57 +111,42 @@ dpt_intr(xxx_sc)
 	struct dpt_softc *sc;
 	struct dpt_ccb *ccb;
 	struct eata_sp *sp;
-	static int moretimo;
-	int more;
+	volatile int junk;
 
 	sc = xxx_sc;
-	sp = sc->sc_statpack;
-	more = 0;
+	sp = sc->sc_stp;
 
 #ifdef DEBUG
-	if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0)
+	if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0) {
 		printf("%s: spurious intr\n", sc->sc_dv.dv_xname);
+		return (1);
+	}
 #endif
-	
-	/* Don't get stalled by HA_ST_MORE */
-	if (moretimo < DPT_MORE_TIMEOUT / 100)
-		moretimo = 0;
 	
 	for (;;) {
 		/*
 		 * HBA might have interrupted while we were dealing with the
 		 * last completed command, since we ACK before we deal; keep 
-		 * polling. If no interrupt is signalled, but the HBA has
-		 * indicated that more data will be available soon, hang 
-		 * around. 
-		 */ 
-		if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0) {
-			if (more != 0 && moretimo++ < DPT_MORE_TIMEOUT / 100) {
-				DELAY(10);
-				continue;
-			}
+		 * polling.
+		 */
+		if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0)
 			break;
-		}
 		
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_spoff,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_stpoff,
 		    sizeof(struct eata_sp), BUS_DMASYNC_POSTREAD);
 
 		/* Might have looped before HBA can reset HBA_AUX_INTR */
 		if (sp->sp_ccbid == -1) {
 			DELAY(50);
-#ifdef DIAGNOSTIC
-			printf("%s: slow reset of HA_AUX_STATUS?",
-			    sc->sc_dv.dv_xname);
-#endif
+
 			if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0)
 				return (0);
-#ifdef DIAGNOSTIC
-			printf("%s: was a slow reset of HA_AUX_STATUS",
-			    sc->sc_dv.dv_xname);
-#endif
+
+			printf("%s: no status\n", sc->sc_dv.dv_xname);
+
 			/* Re-sync DMA map */
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, 
-			    sc->sc_spoff, sizeof(struct eata_sp),
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
+			    sc->sc_stpoff, sizeof(struct eata_sp),
 			    BUS_DMASYNC_POSTREAD);
 		}
 
@@ -209,7 +155,7 @@ dpt_intr(xxx_sc)
 			/* Sync up DMA map and cache cmd status */
 			ccb = sc->sc_ccbs + sp->sp_ccbid;
 
-			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, 
+			bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 			    CCB_OFF(sc, ccb), sizeof(struct dpt_ccb), 
 			    BUS_DMASYNC_POSTWRITE);
 
@@ -222,7 +168,7 @@ dpt_intr(xxx_sc)
 			 */
 			sp->sp_ccbid = -1;
 			ccb->ccb_flg |= CCB_INTR;
-			more = dpt_inb(sc, HA_STATUS) & HA_ST_MORE;
+			junk = dpt_inb(sc, HA_STATUS);
 			if ((ccb->ccb_flg & CCB_PRIVATE) == 0)
 				dpt_done_ccb(sc, ccb);
 		} else {
@@ -231,15 +177,11 @@ dpt_intr(xxx_sc)
 
 			/* Ack the interrupt */
 			sp->sp_ccbid = -1;
-			more = dpt_inb(sc, HA_STATUS) & HA_ST_MORE;
+			junk = dpt_inb(sc, HA_STATUS);
 		}
-		
-		/* Don't get stalled by HA_ST_MORE */
-		if (moretimo < DPT_MORE_TIMEOUT / 100)
-			moretimo = 0;
 	}
 
-	return (0);
+	return (1);
 }
 
 /*
@@ -254,7 +196,7 @@ dpt_init(sc, intrstr)
 	struct scsipi_adapter *adapt;
 	struct scsipi_channel *chan;
 	struct eata_inquiry_data *ei;
-	int i, j, error, rseg, mapsize;
+	int i, j, error, rseg, maxchannel, maxtarget;
 	bus_dma_segment_t seg;
 	struct eata_cfg *ec;
 	char model[16];
@@ -262,47 +204,47 @@ dpt_init(sc, intrstr)
 	ec = &sc->sc_ec;
 	
 	/* Allocate the CCB/status packet/scratch DMA map and load */
-	sc->sc_nccbs = min(SWAP16(*(int16_t *)ec->ec_queuedepth), DPT_MAX_CCBS);
-	sc->sc_spoff = sc->sc_nccbs * sizeof(struct dpt_ccb);
-	sc->sc_scroff = sc->sc_spoff + sizeof(struct eata_sp);
-	sc->sc_scrlen = 256; /* XXX */
-	mapsize = sc->sc_nccbs * sizeof(struct dpt_ccb) + sc->sc_scrlen +
-	    sizeof(struct eata_sp);
+	sc->sc_nccbs = 
+	    min(be16toh(*(int16_t *)ec->ec_queuedepth), DPT_MAX_CCBS);
+	sc->sc_stpoff = sc->sc_nccbs * sizeof(struct dpt_ccb);
+	sc->sc_scroff = sc->sc_stpoff + sizeof(struct eata_sp);
+	sc->sc_scrlen = DPT_SCRATCH_SIZE;
+	sc->sc_dmamapsize = sc->sc_nccbs * sizeof(struct dpt_ccb) + 
+	    sc->sc_scrlen + sizeof(struct eata_sp);
 		
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, mapsize, NBPG, 0, 
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmamapsize, NBPG, 0,
 	    &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to allocate CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return;
 	}
 
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, mapsize,
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, sc->sc_dmamapsize,
 	    (caddr_t *)&sc->sc_ccbs, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
 		printf("%s: unable to map CCBs, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return;
 	}
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, mapsize, mapsize, 1, 0, 
-	    BUS_DMA_NOWAIT, &sc->sc_dmamap_ccb)) != 0) {
+	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_dmamapsize,
+	    sc->sc_dmamapsize, 1, 0, BUS_DMA_NOWAIT, &sc->sc_dmamap)) != 0) {
 		printf("%s: unable to create CCB DMA map, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return;
 	}
 
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap_ccb,
-	    sc->sc_ccbs, mapsize, NULL, BUS_DMA_NOWAIT)) != 0) {
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap,
+	    sc->sc_ccbs, sc->sc_dmamapsize, NULL, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: unable to load CCB DMA map, error = %d\n",
 		    sc->sc_dv.dv_xname, error);
 		return;
 	}
 
-	sc->sc_statpack = (struct eata_sp *)((caddr_t)sc->sc_ccbs +
-	    sc->sc_spoff);
-	sc->sc_sppa = sc->sc_dmamap_ccb->dm_segs[0].ds_addr + sc->sc_spoff;
+	sc->sc_stp = (struct eata_sp *)((caddr_t)sc->sc_ccbs + sc->sc_stpoff);
+	sc->sc_stppa = sc->sc_dmamap->dm_segs[0].ds_addr + sc->sc_stpoff;
 	sc->sc_scr = (caddr_t)sc->sc_ccbs + sc->sc_scroff;
-	sc->sc_scrpa = sc->sc_dmamap_ccb->dm_segs[0].ds_addr + sc->sc_scroff;
-	sc->sc_statpack->sp_ccbid = -1;
+	sc->sc_scrpa = sc->sc_dmamap->dm_segs[0].ds_addr + sc->sc_scroff;
+	sc->sc_stp->sp_ccbid = -1;
 
 	/* Initialize the CCBs */
 	TAILQ_INIT(&sc->sc_free_ccb);
@@ -318,7 +260,8 @@ dpt_init(sc, intrstr)
 	}
 
 	/* Set shutdownhook before we start any device activity */
-	sc->sc_sdh = shutdownhook_establish(dpt_shutdown, sc);
+	if (dpt_sdh == NULL)
+		dpt_sdh = shutdownhook_establish(dpt_shutdown, NULL);
 
 	/* Get the page 0 inquiry data from the HBA */
 	dpt_hba_inquire(sc, &ei);
@@ -348,40 +291,45 @@ dpt_init(sc, intrstr)
 	if (intrstr != NULL)
 		printf("%s: interrupting at %s\n", sc->sc_dv.dv_xname, intrstr);
 
-	printf("%s: %d queued commands, %d channel(s), adapter on ID(s)", 
-	    sc->sc_dv.dv_xname, sc->sc_nccbs, ec->ec_maxchannel + 1);
+	maxchannel = (ec->ec_feat3 & EC_F3_MAX_CHANNEL_MASK) >>
+	    EC_F3_MAX_CHANNEL_SHIFT;
+	maxtarget = (ec->ec_feat3 & EC_F3_MAX_TARGET_MASK) >>
+	    EC_F3_MAX_TARGET_SHIFT;
 
-	for (i = 0; i <= ec->ec_maxchannel; i++)
-		printf(" %d", ec->ec_hba[3 - i]);
+	printf("%s: %d queued commands, %d channel(s), adapter on ID(s)", 
+	    sc->sc_dv.dv_xname, sc->sc_nccbs, maxchannel + 1);
+
+	for (i = 0; i <= maxchannel; i++) {
+		sc->sc_hbaid[i] = ec->ec_hba[3 - i];
+		printf(" %d", sc->sc_hbaid[i]);
+	}
 	printf("\n");
 
 	/* Reset the SCSI bus */
 	if (dpt_cmd(sc, NULL, 0, CP_IMMEDIATE, CPI_BUS_RESET))
 		panic("%s: dpt_cmd failed", sc->sc_dv.dv_xname);
-        DELAY(20000);
 
 	/*
 	 * Fill in the scsipi_adapter.
 	 */
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = &sc->sc_dv;
-	adapt->adapt_nchannels = ec->ec_maxchannel + 1;
+	adapt->adapt_nchannels = maxchannel + 1;
 	adapt->adapt_openings = sc->sc_nccbs;
 	adapt->adapt_max_periph = sc->sc_nccbs;
 	adapt->adapt_request = dpt_scsipi_request;
 	adapt->adapt_minphys = dpt_minphys;
 
-	for (i = 0; i <= ec->ec_maxchannel; i++) {
+	for (i = 0; i <= maxchannel; i++) {
 		/*
 		 * Fill in the scsipi_channel.
 		 */
-		sc->sc_hbaid[i] = ec->ec_hba[3 - i];
 		chan = &sc->sc_channels[i];
 		memset(chan, 0, sizeof(*chan));
 		chan->chan_adapter = adapt;
 		chan->chan_bustype = &scsi_bustype;
 		chan->chan_channel = i;
-		chan->chan_ntargets = ec->ec_maxtarget + 1;
+		chan->chan_ntargets = maxtarget + 1;
 		chan->chan_nluns = ec->ec_maxlun + 1;
 		chan->chan_id = sc->sc_hbaid[i];
 		config_found(&sc->sc_dv, chan, scsiprint);
@@ -396,11 +344,17 @@ void
 dpt_shutdown(xxx_sc)
 	void *xxx_sc;
 {
+	extern struct cfdriver dpt_cd;
 	struct dpt_softc *sc;
+	int i;
 
-	sc = xxx_sc;
-	printf("shutting down %s...", sc->sc_dv.dv_xname);
-	dpt_cmd(sc, NULL, 0, CP_IMMEDIATE, CPI_POWEROFF_WARN);
+	printf("shutting down dpt devices...");
+
+	for (i = 0; i < dpt_cd.cd_ndevs; i++) {
+		if ((sc = device_lookup(&dpt_cd, i)) == NULL)
+			continue;
+		dpt_cmd(sc, NULL, 0, CP_IMMEDIATE, CPI_POWEROFF_WARN);
+	}
 	DELAY(5000*1000);
 	printf(" done\n");
 }
@@ -433,10 +387,7 @@ dpt_cmd(sc, cp, addr, eatacmd, icmd)
 	if (cp == NULL)
 		addr = 0;
 
-	dpt_outb(sc, HA_DMA_BASE + 0, (u_int32_t)addr);
-	dpt_outb(sc, HA_DMA_BASE + 1, (u_int32_t)addr >> 8);
-	dpt_outb(sc, HA_DMA_BASE + 2, (u_int32_t)addr >> 16);
-	dpt_outb(sc, HA_DMA_BASE + 3, (u_int32_t)addr >> 24);
+	dpt_outl(sc, HA_DMA_BASE, (u_int32_t)addr);
 
 	if (eatacmd == CP_IMMEDIATE) {
 		if (cp == NULL) {
@@ -447,26 +398,26 @@ dpt_cmd(sc, cp, addr, eatacmd, icmd)
 		dpt_outb(sc, HA_ICMD, icmd);
 	}
 
-        dpt_outb(sc, HA_COMMAND, eatacmd);
-        return (0);
+	dpt_outb(sc, HA_COMMAND, eatacmd);
+	return (0);
 }
 
 /*
- * Wait for the HBA to reach an arbitrary state.
+ * Wait for the HBA status register to reach a specific state.
  */
 int
 dpt_wait(sc, mask, state, ms)
-        struct dpt_softc *sc;
-        u_int8_t mask, state;
-        int ms;
+	struct dpt_softc *sc;
+	u_int8_t mask, state;
+	int ms;
 {
      
-        for (ms *= 10; ms; ms--) {
-                if ((dpt_inb(sc, HA_STATUS) & mask) == state)
-                	return (0);
-                DELAY(100);
-        }
-        return (-1);
+	for (ms *= 10; ms; ms--) {
+		if ((dpt_inb(sc, HA_STATUS) & mask) == state)
+			return (0);
+		DELAY(100);
+	}
+	return (-1);
 }
 
 /*
@@ -478,8 +429,8 @@ dpt_wait(sc, mask, state, ms)
  */
 int
 dpt_poll(sc, ccb)
-        struct dpt_softc *sc;
-        struct dpt_ccb *ccb;
+	struct dpt_softc *sc;
+	struct dpt_ccb *ccb;
 {
 	int i;
 
@@ -489,16 +440,16 @@ dpt_poll(sc, ccb)
 #endif
 
  	if ((ccb->ccb_flg & CCB_INTR) != 0)
-        	return (0);                
+		return (0);                
 
-        for (i = ccb->ccb_timeout * 20; i; i--) {
-                if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) != 0)
-                	dpt_intr(sc);
-                if ((ccb->ccb_flg & CCB_INTR) != 0)
-                	return (0);
-                DELAY(50);
-        }
-        return (-1);
+	for (i = ccb->ccb_timeout * 20; i; i--) {
+		if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) != 0)
+			dpt_intr(sc);
+		if ((ccb->ccb_flg & CCB_INTR) != 0)
+			return (0);
+		DELAY(50);
+	}
+	return (-1);
 }
 
 /*
@@ -516,7 +467,7 @@ dpt_readcfg(sc)
 
 	/* Older firmware may puke if we talk to it too soon after reset */
 	dpt_outb(sc, HA_COMMAND, CP_RESET);
-        DELAY(750000);
+	DELAY(750000);
 
 	for (i = 1000; i; i--) {
 		if ((dpt_inb(sc, HA_STATUS) & HA_ST_READY) != 0)
@@ -525,22 +476,22 @@ dpt_readcfg(sc)
 	}
 	
 	if (i == 0) {
-		printf("%s: HBA not ready after reset: %02x\n", 
+		printf("%s: HBA not ready after reset (hba status:%02x)\n",
 		    sc->sc_dv.dv_xname, dpt_inb(sc, HA_STATUS));
 		return (-1);
 	}
 
 	while((((stat = dpt_inb(sc, HA_STATUS))
-            != (HA_ST_READY|HA_ST_SEEK_COMPLETE))
-            && (stat != (HA_ST_READY|HA_ST_SEEK_COMPLETE|HA_ST_ERROR))
-            && (stat != (HA_ST_READY|HA_ST_SEEK_COMPLETE|HA_ST_ERROR|HA_ST_DRQ)))
-            || (dpt_wait(sc, HA_ST_BUSY, 0, 2000))) {
-        	/* RAID drives still spinning up? */
-                if((dpt_inb(sc, HA_ERROR) != 'D')
-                    || (dpt_inb(sc, HA_ERROR + 1) != 'P')
-                    || (dpt_inb(sc, HA_ERROR + 2) != 'T')) {
-                    	printf("%s: HBA not ready\n", sc->sc_dv.dv_xname);
-                        return (-1);
+	    != (HA_ST_READY|HA_ST_SEEK_COMPLETE))
+	    && (stat != (HA_ST_READY|HA_ST_SEEK_COMPLETE|HA_ST_ERROR))
+	    && (stat != (HA_ST_READY|HA_ST_SEEK_COMPLETE|HA_ST_ERROR|HA_ST_DRQ)))
+	    || (dpt_wait(sc, HA_ST_BUSY, 0, 2000))) {
+		/* RAID drives still spinning up? */
+		if((dpt_inb(sc, HA_ERROR) != 'D')
+		    || (dpt_inb(sc, HA_ERROR + 1) != 'P')
+		    || (dpt_inb(sc, HA_ERROR + 2) != 'T')) {
+			printf("%s: HBA not ready\n", sc->sc_dv.dv_xname);
+			return (-1);
 		}
         }
 
@@ -556,7 +507,7 @@ dpt_readcfg(sc)
 	p = (u_int16_t *)ec;
 	
 	if (dpt_wait(sc, 0xFF, HA_ST_DATA_RDY, 2000)) {
-		printf("%s: cfg data didn't appear (status:%02x)\n", 
+		printf("%s: cfg data didn't appear (hba status:%02x)\n",
 		    sc->sc_dv.dv_xname, dpt_inb(sc, HA_STATUS));
   		return (-1);
   	}
@@ -565,45 +516,45 @@ dpt_readcfg(sc)
  	while (i--)
 		*p++ = dpt_inw(sc, HA_DATA);
 
-        if ((i = ec->ec_cfglen) > (sizeof(struct eata_cfg)
-            - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
-            - sizeof(ec->ec_cfglen)))
-                i = sizeof(struct eata_cfg)
-                  - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
-                  - sizeof(ec->ec_cfglen);
+	if ((i = ec->ec_cfglen) > (sizeof(struct eata_cfg)
+	    - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
+	    - sizeof(ec->ec_cfglen)))
+		i = sizeof(struct eata_cfg)
+		  - (int)(&(((struct eata_cfg *)0L)->ec_cfglen))
+		  - sizeof(ec->ec_cfglen);
 
-        j = i + (int)(&(((struct eata_cfg *)0L)->ec_cfglen)) + 
-            sizeof(ec->ec_cfglen);
-        i >>= 1;
+	j = i + (int)(&(((struct eata_cfg *)0L)->ec_cfglen)) + 
+	    sizeof(ec->ec_cfglen);
+	i >>= 1;
 
 	while (i--)
-                *p++ = dpt_inw(sc, HA_DATA);
+		*p++ = dpt_inw(sc, HA_DATA);
         
-        /* Flush until we have read 512 bytes. */
-        i = (512 - j + 1) >> 1;
+	/* Flush until we have read 512 bytes. */
+	i = (512 - j + 1) >> 1;
 	while (i--)
  		dpt_inw(sc, HA_DATA);
-        
-        /* Defaults for older Firmware */
+
+	/* Defaults for older Firmware */
 	if (p <= (u_short *)&ec->ec_hba[DPT_MAX_CHANNELS - 1])
 		ec->ec_hba[DPT_MAX_CHANNELS - 1] = 7;
 
-        if ((dpt_inb(sc, HA_STATUS) & HA_ST_ERROR) != 0) {
+	if ((dpt_inb(sc, HA_STATUS) & HA_ST_ERROR) != 0) {
         	printf("%s: HBA error\n", sc->sc_dv.dv_xname);
-        	return (-1);
+		return (-1);
         }
         
-        if (!ec->ec_hbavalid) {
-                printf("%s: ec_hba field invalid\n", sc->sc_dv.dv_xname);
-		return (-1);
-	}
-	
 	if (memcmp(ec->ec_eatasig, "EATA", 4) != 0) {
 	        printf("%s: EATA signature mismatch\n", sc->sc_dv.dv_xname);
 		return (-1);
 	}
 	
-	if (!ec->ec_dmasupported) {
+	if ((ec->ec_feat0 & EC_F0_HBA_VALID) == 0) {
+		printf("%s: ec_hba field invalid\n", sc->sc_dv.dv_xname);
+		return (-1);
+	}
+
+	if ((ec->ec_feat0 & EC_F0_DMA_SUPPORTED) == 0) {
 	        printf("%s: DMA not supported\n", sc->sc_dv.dv_xname);
 		return (-1);
 	}
@@ -657,12 +608,12 @@ dpt_init_ccb(sc, ccb)
 	
 	if (error) {
 		printf("%s: can't create ccb dmamap (%d)\n", 
-		   sc->sc_dv.dv_xname, error);
+		    sc->sc_dv.dv_xname, error);
 		return (error);
 	}
 
 	ccb->ccb_flg = 0;
-	ccb->ccb_ccbpa = sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
+	ccb->ccb_ccbpa = sc->sc_dmamap->dm_segs[0].ds_addr +
 	    CCB_OFF(sc, ccb);
 	return (0);
 }
@@ -710,7 +661,6 @@ dpt_alloc_ccb(sc)
 	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
 	if (ccb != NULL) {
 		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, ccb_chain);
-		ccb->ccb_flg |= CCB_ALLOC;
 	}
 	splx(s);
 	return (ccb);
@@ -739,7 +689,7 @@ dpt_done_ccb(sc, ccb)
 	 * If we were a data transfer, unload the map that described the 
 	 * data buffer.
 	 */
-	if (xs->datalen) {
+	if (xs->datalen != 0) {
 		bus_dmamap_sync(dmat, ccb->ccb_dmamap_xfer, 0,
 		    ccb->ccb_dmamap_xfer->dm_mapsize,
 		    (xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMASYNC_POSTREAD :
@@ -747,24 +697,13 @@ dpt_done_ccb(sc, ccb)
 		bus_dmamap_unload(dmat, ccb->ccb_dmamap_xfer);
 	}
 
-	/*
-	 * Otherwise, put the results of the operation into the xfer and 
-	 * call whoever started it.
-	 */
-#ifdef DIAGNOSTIC
-	if ((ccb->ccb_flg & CCB_ALLOC) == 0) {
-		panic("%s: done ccb not allocated!\n", sc->sc_dv.dv_xname);
-		return;
-	}
-#endif
-	
 	if (xs->error == XS_NOERROR) {
-		if (ccb->ccb_hba_status != HA_NO_ERROR) {
+		if (ccb->ccb_hba_status != SP_HBA_NO_ERROR) {
 			switch (ccb->ccb_hba_status) {
-			case HA_ERROR_SEL_TO:
+			case SP_HBA_ERROR_SEL_TO:
 				xs->error = XS_SELTIMEOUT;
 				break;
-			case HA_ERROR_RESET:
+			case SP_HBA_ERROR_RESET:
 				xs->error = XS_RESET;
 				break;
 			default:	/* Other scsi protocol messes */
@@ -835,7 +774,10 @@ dpt_scsipi_request(chan, req, arg)
 			return;
 		}
 
-		/* XXX we can't reset devices just yet */
+		/*
+		 * XXX we can't reset devices just yet. Apparently some
+		 * older firmware revisions don't even support it.
+		 */
 		if ((flags & XS_CTL_RESET) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
 			scsipi_done(xs);
@@ -863,33 +805,35 @@ dpt_scsipi_request(chan, req, arg)
 		ccb->ccb_timeout = xs->timeout;
 
 		cp = &ccb->ccb_eata_cp;
-		memcpy(&cp->cp_scsi_cmd, xs->cmd, xs->cmdlen);
+		memcpy(&cp->cp_cdb_cmd, xs->cmd, xs->cmdlen);
 		cp->cp_ccbid = ccb->ccb_id;
-		cp->cp_id = periph->periph_target;
-		cp->cp_lun = periph->periph_lun;
-		cp->cp_channel = chan->chan_channel;
 		cp->cp_senselen = sizeof(ccb->ccb_sense);
-		cp->cp_stataddr = SWAP32(sc->sc_sppa);
-		cp->cp_dispri = 1;
-		cp->cp_identify = 1;
-		cp->cp_autosense = 1;
-		cp->cp_datain = ((flags & XS_CTL_DATA_IN) != 0);
-		cp->cp_dataout = ((flags & XS_CTL_DATA_OUT) != 0);
-		cp->cp_interpret = (sc->sc_hbaid[chan->chan_channel] ==
-		    periph->periph_target);
+		cp->cp_stataddr = htobe32(sc->sc_stppa);
+		cp->cp_ctl0 = CP_C0_AUTO_SENSE;
+		cp->cp_ctl1 = 0; 
+		cp->cp_ctl2 = 0;
+		cp->cp_ctl3 = periph->periph_target << CP_C3_ID_SHIFT;
+		cp->cp_ctl3 |= chan->chan_channel << CP_C3_CHANNEL_SHIFT;
+		cp->cp_ctl4 = periph->periph_lun << CP_C4_LUN_SHIFT;
+		cp->cp_ctl4 |= CP_C4_DIS_PRI | CP_C4_IDENTIFY;
+
+		if ((flags & XS_CTL_DATA_IN) != 0)
+			cp->cp_ctl0 |= CP_C0_DATA_IN;
+		if ((flags & XS_CTL_DATA_OUT) != 0)
+			cp->cp_ctl0 |= CP_C0_DATA_OUT;
+		if (sc->sc_hbaid[chan->chan_channel] == periph->periph_target)
+			cp->cp_ctl0 |= CP_C0_INTERPRET;
 
 	 	/* Synchronous xfers musn't write-back through the cache */
 	 	if (xs->bp != NULL 
 	 	    && (xs->bp->b_flags & (B_ASYNC | B_READ)) == 0)
- 			cp->cp_nocache = 1;
-	 	else
-	 		cp->cp_nocache = 0;
+	 		cp->cp_ctl2 |= CP_C2_NO_CACHE;
 
 		cp->cp_senseaddr =
-		    SWAP32(sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
+		    htobe32(sc->sc_dmamap->dm_segs[0].ds_addr +
 		    CCB_OFF(sc, ccb) + offsetof(struct dpt_ccb, ccb_sense));
 
-		if (xs->datalen) {
+		if (xs->datalen != 0) {
 			xfer = ccb->ccb_dmamap_xfer;
 #ifdef TFS
 			if (flags & XS_CTL_DATA_UIO) {
@@ -930,10 +874,9 @@ dpt_scsipi_request(chan, req, arg)
 	 		/* Don't bother using scatter/gather for just 1 seg */
 	 		if (xfer->dm_nsegs == 1) {
  				cp->cp_dataaddr = 
- 				    SWAP32(xfer->dm_segs[0].ds_addr);
+ 				    htobe32(xfer->dm_segs[0].ds_addr);
  				cp->cp_datalen = 
- 				    SWAP32(xfer->dm_segs[0].ds_len);
- 				cp->cp_scatter = 0;
+ 				    htobe32(xfer->dm_segs[0].ds_len);
 	 		} else {
  				/*
  				 * Load the hardware scatter/gather map with 
@@ -942,28 +885,27 @@ dpt_scsipi_request(chan, req, arg)
 	 			sg = ccb->ccb_sg;
 				for (i = 0; i < xfer->dm_nsegs; i++, sg++) {
  					sg->sg_addr = 
- 					    SWAP32(xfer->dm_segs[i].ds_addr);
+ 					    htobe32(xfer->dm_segs[i].ds_addr);
  					sg->sg_len = 
- 					    SWAP32(xfer->dm_segs[i].ds_len);
+ 					    htobe32(xfer->dm_segs[i].ds_len);
  				}
-	 			cp->cp_dataaddr = SWAP32(CCB_OFF(sc, ccb) + 
- 				    sc->sc_dmamap_ccb->dm_segs[0].ds_addr +
+	 			cp->cp_dataaddr = htobe32(CCB_OFF(sc, ccb) + 
+ 				    sc->sc_dmamap->dm_segs[0].ds_addr +
  				    offsetof(struct dpt_ccb, ccb_sg));
  				cp->cp_datalen = 
- 				    SWAP32(i * sizeof(struct eata_sg));
- 				cp->cp_scatter = 1;
+ 				    htobe32(i * sizeof(struct eata_sg));
+ 				cp->cp_ctl0 |= CP_C0_SCATTER;
   			}
 		} else {
 			cp->cp_dataaddr = 0;
 			cp->cp_datalen = 0;
-			cp->cp_scatter = 0;
 		}
 
 		/* Sync up CCB and status packet */
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 		    CCB_OFF(sc, ccb), sizeof(struct dpt_ccb),
 		    BUS_DMASYNC_PREWRITE);
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_spoff, 
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_stpoff,
 		    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
 
 		/* 
@@ -1050,32 +992,6 @@ dpt_timeout(arg)
 	splx(s);
 }
 
-#if 0 && defined(DEBUG)
-/*
- * Dump the contents of an EATA status packet.
- */
-static void
-dpt_dump_sp(sp)
-	struct eata_sp *sp;
-{
-	int i;
-	
-	printf("\thba_status\t%02x\n", sp->sp_hba_status);
-	printf("\tscsi_status\t%02x\n", sp->sp_scsi_status);	
-	printf("\tinv_residue\t%d\n", sp->sp_inv_residue);	
-	printf("\tccbid\t\t%d\n", sp->sp_ccbid);
-	printf("\tid_message\t%d\n", sp->sp_id_message);
-	printf("\tque_message\t%d\n", sp->sp_que_message);	
-	printf("\ttag_message\t%d\n", sp->sp_tag_message);
-	printf("\tmessages\t");
-	
-	for (i = 0; i < 9; i++)
-		printf("%d ", sp->sp_messages[i]);
-		
-	printf("\n");
-}
-#endif	/* DEBUG */
-
 /*
  * Get inquiry data from the adapter.
  */
@@ -1101,34 +1017,30 @@ dpt_hba_inquire(sc, ei)
 	/* Put all the arguments into the CCB */
 	cp = &ccb->ccb_eata_cp;
 	cp->cp_ccbid = ccb->ccb_id;
-	cp->cp_id = sc->sc_hbaid[0];
-	cp->cp_lun = 0;
-	cp->cp_channel = 0;
 	cp->cp_senselen = sizeof(ccb->ccb_sense);
-	cp->cp_stataddr = SWAP32(sc->sc_sppa);
-	cp->cp_dispri = 1;
-	cp->cp_identify = 1;
-	cp->cp_autosense = 0;
-	cp->cp_interpret = 1;
-	cp->cp_nocache = 0;
-	cp->cp_datain = 1;
-	cp->cp_dataout = 0;
 	cp->cp_senseaddr = 0;
-	cp->cp_dataaddr = SWAP32(sc->sc_scrpa);
-	cp->cp_datalen = SWAP32(sizeof(struct eata_inquiry_data));
-	cp->cp_scatter = 0;
+	cp->cp_stataddr = htobe32(sc->sc_stppa);
+	cp->cp_dataaddr = htobe32(sc->sc_scrpa);
+	cp->cp_datalen = htobe32(sizeof(struct eata_inquiry_data));
+	cp->cp_ctl0 = CP_C0_DATA_IN | CP_C0_INTERPRET;
+	cp->cp_ctl1 = 0;
+	cp->cp_ctl2 = 0;
+	cp->cp_ctl3 = sc->sc_hbaid[0] << CP_C3_ID_SHIFT;
+	cp->cp_ctl4 = CP_C4_DIS_PRI | CP_C4_IDENTIFY;
+
 	
 	/* Put together the SCSI inquiry command */
-	memset(&cp->cp_scsi_cmd, 0, 12);	/* XXX */
-	cp->cp_scsi_cmd = INQUIRY;
-	cp->cp_len = sizeof(struct eata_inquiry_data);
+	memset(&cp->cp_cdb_cmd, 0, 12); /* XXX */
+	cp->cp_cdb_cmd = INQUIRY;
+	cp->cp_cdb_len = sizeof(struct eata_inquiry_data);
+
 
 	/* Sync up CCB, status packet and scratch area */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, CCB_OFF(sc, ccb), 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, CCB_OFF(sc, ccb), 
 	    sizeof(struct dpt_ccb), BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_spoff, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_stpoff, 
 	    sizeof(struct eata_sp), BUS_DMASYNC_PREREAD);
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_scroff, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_scroff, 
 	    sizeof(struct eata_inquiry_data), BUS_DMASYNC_PREREAD);
 
 	/* Start the command and poll on completion */
@@ -1138,14 +1050,14 @@ dpt_hba_inquire(sc, ei)
 	if (dpt_poll(sc, ccb))
 		panic("%s: inquiry timed out", sc->sc_dv.dv_xname);
 
-	if (ccb->ccb_hba_status != HA_NO_ERROR ||
+	if (ccb->ccb_hba_status != SP_HBA_NO_ERROR ||
 	    ccb->ccb_scsi_status != SCSI_OK)
-	    	panic("%s: inquiry failed (hba:%02x scsi:%02x", 
+	    	panic("%s: inquiry failed (hba:%02x scsi:%02x)",
 	    	    sc->sc_dv.dv_xname, ccb->ccb_hba_status,
 	    	    ccb->ccb_scsi_status);
 	
 	/* Sync up the DMA map and free CCB, returning */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_scroff, 
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, sc->sc_scroff, 
 	    sizeof(struct eata_inquiry_data), BUS_DMASYNC_POSTREAD);
 	dpt_free_ccb(sc, ccb);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcdreg.h,v 1.8 1997/04/04 18:59:37 christos Exp $	*/
+/*	$NetBSD: mcdreg.h,v 1.8.22.1 2000/11/20 11:41:19 bouyer Exp $	*/
 
 /*
  * Copyright 1993 by Holger Veit (data part)
@@ -250,5 +250,5 @@ struct mcd_rawsector {
 };
 
 #if __GNUC__ >= 2
-#pragma pack(4)
+#pragma pack()
 #endif

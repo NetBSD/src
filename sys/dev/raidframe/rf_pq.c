@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.6 1999/08/15 03:44:46 oster Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.6.2.1 2000/11/20 11:42:57 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -40,7 +40,6 @@
 #include "rf_dagdegwr.h"
 #include "rf_dagutils.h"
 #include "rf_dagfuncs.h"
-#include "rf_threadid.h"
 #include "rf_etimer.h"
 #include "rf_pqdeg.h"
 #include "rf_general.h"

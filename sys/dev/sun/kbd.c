@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.22 1999/05/14 06:42:02 mrg Exp $	*/
+/*	$NetBSD: kbd.c,v 1.22.2.1 2000/11/20 11:43:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,6 +50,8 @@
  * passes them up to the appropriate reader.
  */
 
+#include "opt_ddb.h"
+
 /*
  * This is the "slave" driver that will be attached to
  * the "zsc" driver for a Sun keyboard.
@@ -68,6 +70,7 @@
 #include <sys/syslog.h>
 #include <sys/select.h>
 #include <sys/poll.h>
+#include <sys/file.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
@@ -86,12 +89,14 @@
  */
 
 /* Prototypes */
-static void	kbd_new_layout(struct kbd_softc *k);
-static void	kbd_repeat(void *arg);
-static void	kbd_set_leds(struct kbd_softc *k, int leds);
-static void	kbd_update_leds(struct kbd_softc *k);
-static void	kbd_was_reset(struct kbd_softc *k);
-static int 	kbd_drain_tx(struct kbd_softc *k);
+static void	kbd_new_layout __P((struct kbd_softc *));
+static void	kbd_repeat __P((void *));
+static void	kbd_set_leds __P((struct kbd_softc *, int));
+static void	kbd_update_leds __P((struct kbd_softc *));
+static void	kbd_was_reset __P((struct kbd_softc *));
+static int 	kbd_drain_tx __P((struct kbd_softc *));
+static int	kbd_iopen __P((struct kbd_softc *));
+static int	kbd_iclose __P((struct kbd_softc *));
 
 cdev_decl(kbd);	/* open, close, read, write, ioctl, stop, ... */
 
@@ -128,16 +133,16 @@ kbdopen(dev, flags, mode, p)
 		return (EBUSY);
 	k->k_events.ev_io = p;
 
-	if ((error = kbd_iopen(unit)) != 0) {
+	if ((error = kbd_iopen(k)) != 0) {
 		k->k_events.ev_io = NULL;
 		return (error);
 	}
 	ev_init(&k->k_events);
-	k->k_evmode = 1;	/* XXX: OK? */
+	k->k_evmode = 0;	/* XXX: OK? */
 
 	if (k->k_repeating) {
 		k->k_repeating = 0;
-		untimeout(kbd_repeat, k);
+		callout_stop(&k->k_repeat_ch);
 	}
 
 	return (0);
@@ -213,7 +218,7 @@ int
 kbdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
-	register caddr_t data;
+	caddr_t data;
 	int flag;
 	struct proc *p;
 {
@@ -498,8 +503,8 @@ kbd_xlate_init(ks)
  */
 int
 kbd_code_to_keysym(ks, c)
-	register struct kbd_state *ks;
-	register int c;
+	struct kbd_state *ks;
+	int c;
 {
 	u_short *km;
 	int keysym;
@@ -557,7 +562,7 @@ kbd_input_string(k, str)
 {
 
 	while (*str) {
-		kd_input(*str);
+		(*k->k_cc->cc_upstream)(*str);
 		str++;
 	}
 }
@@ -565,9 +570,9 @@ kbd_input_string(k, str)
 void
 kbd_input_funckey(k, keysym)
 	struct kbd_softc *k;
-	register int keysym;
+	int keysym;
 {
-	register int n;
+	int n;
 	char str[12];
 
 	/*
@@ -589,10 +594,10 @@ kbd_input_funckey(k, keysym)
 int
 kbd_input_keysym(k, keysym)
 	struct kbd_softc *k;
-	register int keysym;
+	int keysym;
 {
 	struct kbd_state *ks = &k->k_state;
-	register int data;
+	int data;
 
 	switch (KEYSYM_CLASS(keysym)) {
 
@@ -600,7 +605,7 @@ kbd_input_keysym(k, keysym)
 		data = KEYSYM_DATA(keysym);
 		if (ks->kbd_modbits & KBMOD_META_MASK)
 			data |= 0x80;
-		kd_input(data);
+		(*k->k_cc->cc_upstream)(data);
 		break;
 
 	case KEYSYM_STRING:
@@ -656,7 +661,8 @@ kbd_repeat(arg)
 
 	if (k->k_repeating && k->k_repeatsym >= 0) {
 		(void)kbd_input_keysym(k, k->k_repeatsym);
-		timeout(kbd_repeat, k, k->k_repeat_step);
+		callout_reset(&k->k_repeat_ch, k->k_repeat_step,
+		    kbd_repeat, k);
 	}
 	splx(s);
 }
@@ -669,7 +675,7 @@ kbd_repeat(arg)
 void
 kbd_input_raw(k, c)
 	struct kbd_softc *k;
-	register int c;
+	int c;
 {
 	struct kbd_state *ks = &k->k_state;
 	struct firm_event *fe;
@@ -726,7 +732,7 @@ kbd_input_raw(k, c)
 		/* Any input stops auto-repeat (i.e. key release). */
 		if (k->k_repeating) {
 			k->k_repeating = 0;
-			untimeout(kbd_repeat, k);
+			callout_stop(&k->k_repeat_ch);
 		}
 
 		/* Translate this code to a keysym */
@@ -749,7 +755,8 @@ kbd_input_raw(k, c)
 		/* Setup for auto-repeat after initial delay. */
 		k->k_repeating = 1;
 		k->k_repeatsym = keysym;
-		timeout(kbd_repeat, k, k->k_repeat_start);
+		callout_reset(&k->k_repeat_ch, k->k_repeat_start,
+		    kbd_repeat, k);
 		return;
 	}
 
@@ -782,34 +789,52 @@ kbd_input_raw(k, c)
 	EV_WAKEUP(&k->k_events);
 }
 
-/****************************************************************
- * misc...
- ****************************************************************/
+/****************************************************************/
+
+/*
+ * Open/close routines called upon opening /dev/console
+ * if we serve console input.
+ */
+int
+kbd_cc_open(cc)
+	struct cons_channel *cc;
+{
+	struct kbd_softc *k = (struct kbd_softc *)cc->cc_dev;
+	return (kbd_iopen(k));
+}
+
+int
+kbd_cc_close(cc)
+	struct cons_channel *cc;
+{
+	struct kbd_softc *k = (struct kbd_softc *)cc->cc_dev;
+	return (kbd_iclose(k));
+}
 
 /*
  * Initialization to be done at first open.
- * This is called from kbdopen or kdopen (in kd.c)
+ * This is called from kbdopen() or kd_cc_open()
  * Called with user context.
  */
 int
-kbd_iopen(unit)
-	int unit;
-{
+kbd_iopen(k)
 	struct kbd_softc *k;
+{
 	struct kbd_state *ks;
 	int error, s;
 
-	if (unit >= kbd_cd.cd_ndevs)
-		return (ENXIO);
-	k = kbd_cd.cd_devs[unit];
 	if (k == NULL)
 		return (ENXIO);
+
 	ks = &k->k_state;
-	error = 0;
 
 	/* Tolerate extra calls. */
 	if (k->k_isopen)
-		return (error);
+		return (0);
+
+	/* Open internal device */
+	if (k->k_deviopen)
+		(*k->k_deviopen)((struct device *)k, FREAD|FWRITE);
 
 	s = spltty();
 
@@ -858,7 +883,14 @@ out:
 	if (error == 0)
 		k->k_isopen = 1;
 
-	return error;
+	return (error);
+}
+
+int
+kbd_iclose(k)
+	struct kbd_softc *k;
+{
+	/* For now: */ return (0);
 }
 
 /*
@@ -937,7 +969,7 @@ kbd_drain_tx(k)
 
 	error = 0;
 
-	while (k->k_txflags & K_TXBUSY) {
+	while (k->k_txflags & K_TXBUSY && !error) {
 		k->k_txflags |= K_TXWANT;
 		error = tsleep((caddr_t)&k->k_txflags,
 					   PZERO | PCATCH, "kbdout", 0);
@@ -1040,7 +1072,7 @@ kbd_update_leds(k)
     struct kbd_softc *k;
 {
 	struct kbd_state *ks = &k->k_state;
-	register char leds;
+	char leds;
 
 	leds = ks->kbd_leds;
 	leds &= ~(LED_CAPS_LOCK|LED_NUM_LOCK);
@@ -1052,4 +1084,3 @@ kbd_update_leds(k)
 
 	kbd_set_leds(k, leds);
 }
-

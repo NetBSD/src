@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.12.2.1 1999/10/20 22:56:01 thorpej Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.12.2.2 2000/11/20 11:43:36 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -103,11 +103,12 @@ struct wsdisplay_font;
 struct wsdisplay_accessops {
 	int	(*ioctl) __P((void *v, u_long cmd, caddr_t data, int flag,
 		    struct proc *p));
-	int	(*mmap) __P((void *v, off_t off, int prot));
+	paddr_t	(*mmap) __P((void *v, off_t off, int prot));
 	int	(*alloc_screen) __P((void *, const struct wsscreen_descr *,
 				     void **, int *, int *, long *));
 	void	(*free_screen) __P((void *, void *));
-	void	(*show_screen) __P((void *, void *));
+	int	(*show_screen) __P((void *, void *, int,
+				    void (*) (void *, int, int), void *));
 	int	(*load_font) __P((void *, void *, struct wsdisplay_font *));
 };
 
@@ -196,4 +197,7 @@ int wsdisplay_cfg_ioctl __P((struct wsdisplay_softc *sc,
 /*
  * for general use
  */
+#define WSDISPLAY_NULLSCREEN	-1
 void wsdisplay_switchtoconsole __P((void));
+const struct wsscreen_descr *
+    wsdisplay_screentype_pick __P((const struct wsscreen_list *, const char *));

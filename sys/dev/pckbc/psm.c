@@ -1,4 +1,4 @@
-/* $NetBSD: psm.c,v 1.8 1999/05/03 15:45:16 ad Exp $ */
+/* $NetBSD: psm.c,v 1.8.2.1 2000/11/20 11:42:41 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -28,8 +28,9 @@
 #include <sys/device.h>
 #include <sys/ioctl.h>
 
-#include <dev/isa/isavar.h>
-#include <dev/isa/pckbcvar.h>
+#include <machine/bus.h>
+
+#include <dev/ic/pckbcvar.h>
 
 #include <dev/pckbc/psmreg.h>
 
@@ -142,7 +143,7 @@ pmsattach(parent, self, aux)
 	sc->oldbuttons = 0;
 
 	pckbc_set_inputhandler(sc->sc_kbctag, sc->sc_kbcslot,
-			       pmsinput, sc);
+			       pmsinput, sc, sc->sc_dev.dv_xname);
 
 	a.accessops = &pms_accessops;
 	a.accesscookie = sc;
@@ -318,7 +319,8 @@ int data;
 
 		if (sc->dx || dy || changed)
 			wsmouse_input(sc->sc_wsmousedev,
-				      sc->buttons, sc->dx, dy, 0);
+				      sc->buttons, sc->dx, dy, 0,
+				      WSMOUSE_INPUT_DELTA);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.6 1999/09/04 21:11:21 oster Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.6.2.1 2000/11/20 11:42:53 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -39,7 +39,6 @@
 #include "rf_types.h"
 
 #include "rf_threadstuff.h"
-#include "rf_threadid.h"
 #include "rf_options.h"
 #include "rf_debugMem.h"
 #include "rf_general.h"

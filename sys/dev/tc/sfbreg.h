@@ -1,4 +1,4 @@
-/* $NetBSD: sfbreg.h,v 1.1.10.1 1999/10/20 22:55:00 thorpej Exp $ */
+/* $NetBSD: sfbreg.h,v 1.1.10.2 2000/11/20 11:43:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

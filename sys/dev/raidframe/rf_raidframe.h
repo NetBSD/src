@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raidframe.h,v 1.7 1999/08/11 02:20:35 oster Exp $	*/
+/*	$NetBSD: rf_raidframe.h,v 1.7.2.1 2000/11/20 11:42:59 bouyer Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -79,6 +79,12 @@ typedef struct RF_DeviceConfig_s {
 	RF_RaidDisk_t spares[RF_MAX_DISKS];
 }       RF_DeviceConfig_t;
 
+typedef struct RF_ProgressInfo_s {
+	RF_uint64 remaining;
+	RF_uint64 completed;
+	RF_uint64 total;
+} RF_ProgressInfo_t;
+
 /* flags that can be put in the rf_recon_req structure */
 #define RF_FDFLAGS_NONE   0x0	/* just fail the disk */
 #define RF_FDFLAGS_RECON  0x1	/* fail and initiate recon */
@@ -91,7 +97,7 @@ typedef struct RF_DeviceConfig_s {
 #define RAIDFRAME_FAIL_DISK         _IOW ('r',  5, struct rf_recon_req)	/* fail a disk &
 									 * optionally start
 									 * recon */
-#define RAIDFRAME_CHECKRECON        _IOWR('r',  6, int)	/* get reconstruction %
+#define RAIDFRAME_CHECK_RECON_STATUS _IOWR('r',  6, int)	/* get reconstruction %
 							 * complete on indicated
 							 * row */
 #define RAIDFRAME_REWRITEPARITY     _IO  ('r',  7)	/* rewrite (initialize)
@@ -128,4 +134,15 @@ typedef struct RF_DeviceConfig_s {
 #define RAIDFRAME_REMOVE_HOT_SPARE  _IOW ('r', 23, RF_SingleComponent_t)
 #define RAIDFRAME_REBUILD_IN_PLACE  _IOW ('r', 24, RF_SingleComponent_t)
 #define RAIDFRAME_CHECK_PARITY      _IOWR ('r', 25, int)
+#define RAIDFRAME_CHECK_PARITYREWRITE_STATUS _IOWR ('r', 26, int)
+#define RAIDFRAME_CHECK_COPYBACK_STATUS _IOWR ('r', 27, int)
+#define RAIDFRAME_SET_AUTOCONFIG _IOWR ('r', 28, int)
+#define RAIDFRAME_SET_ROOT _IOWR ('r', 29, int)
+#define RAIDFRAME_DELETE_COMPONENT _IOW ('r', 30, RF_SingleComponent_t)
+#define RAIDFRAME_INCORPORATE_HOT_SPARE _IOW ('r', 31, RF_SingleComponent_t)
+/* 'Extended' status versions */
+#define RAIDFRAME_CHECK_RECON_STATUS_EXT _IOWR('r',  32, RF_ProgressInfo_t *)
+#define RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT _IOWR ('r', 33, RF_ProgressInfo_t *)
+#define RAIDFRAME_CHECK_COPYBACK_STATUS_EXT _IOWR ('r', 34, RF_ProgressInfo_t *)
+
 #endif				/* !_RF__RF_RAIDFRAME_H_ */

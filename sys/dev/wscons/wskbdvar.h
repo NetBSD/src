@@ -1,4 +1,4 @@
-/* $NetBSD: wskbdvar.h,v 1.7 1999/07/29 18:20:03 augustss Exp $ */
+/* $NetBSD: wskbdvar.h,v 1.7.2.1 2000/11/20 11:43:37 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -56,6 +56,7 @@ struct wskbd_accessops {
 struct wskbd_consops {
 	void    (*getc) __P((void *, u_int *, int *));
 	void    (*pollc) __P((void *, int));
+	void	(*bell) __P((void *, u_int, u_int, u_int));
 };
 
 /*
@@ -82,6 +83,7 @@ struct wskbddev_attach_args {
  */
 void	wskbd_cnattach __P((const struct wskbd_consops *, void *,
 			    const struct wskbd_mapdata *));
+void	wskbd_cndetach __P((void));
 int	wskbddevprint __P((void *, const char *));
 
 /*
@@ -89,10 +91,11 @@ int	wskbddevprint __P((void *, const char *));
  */
 void	wskbd_input __P((struct device *kbddev, u_int type, int value));
 /* for WSDISPLAY_COMPAT_RAWKBD */
-void	wskbd_rawinput __P((struct device *, char *, int));
+void	wskbd_rawinput __P((struct device *, u_char *, int));
 
 /*
  * Console interface.
  */
 int	wskbd_cngetc __P((dev_t dev));
 void	wskbd_cnpollc __P((dev_t dev, int poll));
+void	wskbd_cnbell __P((dev_t, u_int, u_int, u_int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus.h,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: rbus.h,v 1.2.2.1 2000/11/20 11:39:54 bouyer Exp $	*/
 /*
  * Copyright (c) 1999
  *     HAYAKAWA Koichi.  All rights reserved.
@@ -31,6 +31,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_CARDBUS_RBUS_H_
+#define _DEV_CARDBUS_RBUS_H_
+
 /*
  * This file defines rbus (pseudo) class
  *
@@ -60,9 +63,6 @@
  *  space when a client requests bus space to the bridge.
  */
 
-
-#if !defined SYS_DEV_CARDBUS_RBUS_H
-#define SYS_DEV_CARDBUS_RBUS_H
 
 /* require sys/extent.h */
 /* require machine/bus.h */
@@ -148,7 +148,7 @@ rbus_tag_t rbus_new __P((rbus_tag_t parent, bus_addr_t start, bus_size_t size,
 rbus_tag_t rbus_new_root_delegate __P((bus_space_tag_t, bus_addr_t, bus_size_t,
 				       bus_addr_t offset));
 rbus_tag_t rbus_new_root_share __P((bus_space_tag_t, struct extent *,
-				    bus_addr_t, bus_size_t,bus_addr_t offset));
+    bus_addr_t /* start */, bus_size_t /* size */, bus_addr_t /* offset */));
 
 /*
  * This function release bus-space used by the argument.  This
@@ -162,4 +162,4 @@ int rbus_delete __P((rbus_tag_t));
  */
 #include <machine/rbus_machdep.h>
 
-#endif /* SYS_DEV_CARDBUS_RBUS_H */
+#endif /* !_DEV_CARDBUS_RBUS_H_ */

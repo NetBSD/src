@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.9.2.1 2000/11/20 11:39:50 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -19,7 +19,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,     
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -88,14 +88,21 @@ ata_get_params(drvp, flags, prms)
 		wdc_c.r_st_pmask = WDCS_DRQ;
 		wdc_c.timeout = 10000; /* 10s */
 	} else {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: no disks\n"),
+		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
 	wdc_c.flags = AT_READ | flags;
 	wdc_c.data = tb;
 	wdc_c.bcount = DEV_BSIZE;
-	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
+	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_exec_command failed\n"),
+		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
+	}
 	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		WDCDEBUG_PRINT(("wdc_ata_get_parms: wdc_c.flags=0x%x\n",
+		    wdc_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
 		/* Read in parameter block. */
@@ -156,6 +163,30 @@ ata_set_mode(drvp, mode, flags)
 }
 
 void
+ata_dmaerr(drvp)
+	struct ata_drive_datas *drvp;
+{
+	/*
+	 * Downgrade decision: if we get NERRS_MAX in NXFER.
+	 * We start with n_dmaerrs set to NERRS_MAX-1 so that the
+	 * first error within the first NXFER ops will immediatly trigger
+	 * a downgrade.
+	 * If we got an error and n_xfers is bigger than NXFER reset counters.
+	 */
+	drvp->n_dmaerrs++;
+	if (drvp->n_dmaerrs >= NERRS_MAX && drvp->n_xfers <= NXFER) {
+		wdc_downgrade_mode(drvp);
+		drvp->n_dmaerrs = NERRS_MAX-1;
+		drvp->n_xfers = 0;
+		return;
+	}
+	if (drvp->n_xfers > NXFER) {
+		drvp->n_dmaerrs = 1; /* just got an error */
+		drvp->n_xfers = 1; /* restart counting from this error */
+	}
+}
+
+void
 ata_perror(drvp, errno, buf)
 	struct ata_drive_datas *drvp;
 	int errno;
@@ -165,7 +196,7 @@ ata_perror(drvp, errno, buf)
 	    "track 0 not found", "aborted command", "media change requested",
 	    "id not found", "media changed", "uncorrectable data error",
 	    "bad block detected"};
-	static char *errstr4_5[] = {"",
+	static char *errstr4_5[] = {"obsolete (address mark not found)",
 	    "no media/write protected", "aborted command",
 	    "media change requested", "id not found", "media changed",
 	    "uncorrectable data error", "interface CRC error"};
@@ -184,8 +215,8 @@ ata_perror(drvp, errno, buf)
 
 	for (i = 0; i < 8; i++) {
 		if (errno & (1 << i)) {
-			buf += sprintf(buf, "%s %s", sep, errstr[i]);
-			sep = ",";
+			buf += sprintf(buf, "%s%s", sep, errstr[i]);
+			sep = ", ";
 		}
 	}
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: uhci_pci.c,v 1.12 1999/10/12 11:21:24 augustss Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.12.2.1 2000/11/20 11:42:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,14 +56,14 @@
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
 
-int	uhci_pci_match __P((struct device *, struct cfdata *, void *));
-void	uhci_pci_attach __P((struct device *, struct device *, void *));
-int	uhci_pci_detach __P((device_ptr_t, int));
+int	uhci_pci_match(struct device *, struct cfdata *, void *);
+void	uhci_pci_attach(struct device *, struct device *, void *);
+int	uhci_pci_detach(device_ptr_t, int);
 
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
-	bus_size_t		sc_size;
+	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -73,10 +73,7 @@ struct cfattach uhci_pci_ca = {
 };
 
 int
-uhci_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+uhci_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
@@ -89,18 +86,16 @@ uhci_pci_match(parent, match, aux)
 }
 
 void
-uhci_pci_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t tag = pa->pa_tag;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
-	char *typestr, *vendor;
+	pcireg_t csr, legsup;
+	char *vendor;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	char devinfo[256];
 	usbd_status r;
@@ -110,7 +105,7 @@ uhci_pci_attach(parent, self, aux)
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc_size)) {
+			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
 		printf("%s: can't map i/o space\n", devname);
 		return;
 	}
@@ -119,11 +114,12 @@ uhci_pci_attach(parent, self, aux)
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
 
 	sc->sc_pc = pc;
+	sc->sc_tag = tag;
 	sc->sc.sc_bus.dmatag = pa->pa_dmat;
 
 	/* Enable the device. */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
@@ -143,18 +139,27 @@ uhci_pci_attach(parent, self, aux)
 	}
 	printf("%s: interrupting at %s\n", devname, intrstr);
 
-	switch(pci_conf_read(pc, pa->pa_tag, PCI_USBREV) & PCI_USBREV_MASK) {
+        /* Verify that the PIRQD enable bit is set, some BIOS's don't do that*/
+	legsup = pci_conf_read(pc, tag, PCI_LEGSUP);
+	if (!(legsup & PCI_LEGSUP_USBPIRQDEN)) {
+		legsup = PCI_LEGSUP_USBPIRQDEN;
+		pci_conf_write(pc, tag, PCI_LEGSUP, legsup);
+        }
+
+	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
-		typestr = "pre 1.0";
+		sc->sc.sc_bus.usbrev = USBREV_PRE_1_0;
 		break;
 	case PCI_USBREV_1_0:
-		typestr = "1.0";
+		sc->sc.sc_bus.usbrev = USBREV_1_0;
+		break;
+	case PCI_USBREV_1_1:
+		sc->sc.sc_bus.usbrev = USBREV_1_1;
 		break;
 	default:
-		typestr = "unknown";
+		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
 		break;
 	}
-	printf("%s: USB version %s\n", devname, typestr);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = pci_findvendor(pa->pa_id);
@@ -178,9 +183,7 @@ uhci_pci_attach(parent, self, aux)
 }
 
 int
-uhci_pci_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+uhci_pci_detach(device_ptr_t self, int flags)
 {
 	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
 	int rv;
@@ -188,13 +191,13 @@ uhci_pci_detach(self, flags)
 	rv = uhci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-	if (sc->sc_ih) {
+	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-		sc->sc_ih = 0;
+		sc->sc_ih = NULL;
 	}
-	if (sc->sc_size) {
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc_size);
-		sc->sc_size = 0;
+	if (sc->sc.sc_size) {
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
 	}
 	return (0);
 }

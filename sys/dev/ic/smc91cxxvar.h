@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.6 1998/11/18 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.6.10.1 2000/11/20 11:40:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,15 +47,21 @@ struct smc91cxx_softc {
 	struct	device sc_dev;		/* generic device glue */
 	struct	ethercom sc_ec;		/* ethernet common glue */
 
+	struct mii_data sc_mii;		/* MII/media control		*/
+	struct callout sc_mii_callout;	/* MII callout handle		*/
+
 	bus_space_tag_t sc_bst;		/* bus space */
 	bus_space_handle_t sc_bsh;
-
-	struct	ifmedia sc_media;	/* our media info */
 
 	/* Power management hooks and state. */
 	int	(*sc_enable) __P((struct smc91cxx_softc *));
 	void	(*sc_disable) __P((struct smc91cxx_softc *));
-	int	sc_enabled;
+	u_int32_t	sc_flags;	/* misc. flags*/
+#define SMC_FLAGS_ENABLED	0x0001
+#define SMC_FLAGS_ATTACHED	0x0002		/* attach was successful */
+#define SMC_FLAGS_HAS_MII	0x0004		/* Has MII (FEAST) */
+
+	u_int8_t	sc_chipid;
 
 #if NRND > 0
 	rndsource_element_t rnd_source;
@@ -71,3 +77,4 @@ int	smc91cxx_intr __P((void *));
 int	smc91cxx_enable __P((struct smc91cxx_softc *));
 void	smc91cxx_disable __P((struct smc91cxx_softc *));
 int	smc91cxx_activate __P((struct device *, enum devact));
+int	smc91cxx_detach __P((struct device *, int));

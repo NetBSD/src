@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.34.2.3 1999/11/01 22:54:15 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.34.2.4 2000/11/20 11:41:21 bouyer Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -614,7 +614,8 @@ sea_scsipi_request(chan, req, arg)
 		sea_send_scb(sea, scb);
 
 		if ((flags & XS_CTL_POLL) == 0) {
-			timeout(sea_timeout, scb, (xs->timeout * hz) / 1000);
+			callout_reset(&scb->xs->xs_callout,
+			    (xs->timeout * hz) / 1000, sea_timeout, scb);
 			splx(s);
 			return;
 		}
@@ -650,32 +651,6 @@ sea_scsipi_request(chan, req, arg)
 		return;
 	    }
 	}
-}
-
-/*
- * Allocate an scb and add it to the free list.
- * We are called at splbio.
- */
-void
-sea_grow_scb(sea)
-	struct sea_softc *sea;
-{
-	struct sea_scb *scb;
-
-	if (sea->numscbs == SEA_SCB_MAX) {
-		sea->sc_channel.chan_flags &= ~SCSIPI_CHAN_CANGROW;
-		return;
-	}
-
-	scb = malloc(sizeof(struct sea_scb), M_DEVBUF, M_NOWAIT);
-	if (scb == NULL)
-		return;
-
-	memset(scb, 0, sizeof(struct sea_scb));
-
-	TAILQ_INSERT_TAIL(&sea->free_list, scb, chain);
-	sea->numscbs++;
-	sea->sc_adapter.adapt_openings++;
 }
 
 /*
@@ -723,6 +698,7 @@ sea_send_scb(sea, scb)
  * adapter in a system.  Both sea_scsi_cmd and sea_intr will try to start it in
  * case it is not running.
  */
+
 void
 sea_main()
 {
@@ -741,7 +717,7 @@ sea_main()
 loop:
 	done = 1;
 	for (unit = 0; unit < sea_cd.cd_ndevs; unit++) {
-		sea = sea_cd.cd_devs[unit];
+		sea = device_lookup(&sea_cd, unit);
 		if (!sea)
 			continue;
 		s = splbio();
@@ -820,6 +796,31 @@ loop:
 	main_running = 0;
 }
 
+/*
+ * Allocate an scb and add it to the free list.
+ * We are called at splbio.
+ */
+void
+sea_grow_scb(sea)
+	struct sea_softc *sea;
+{
+	struct sea_scb *scb;
+
+	if (sea->numscbs == SEA_SCB_MAX) {
+		sea->sc_channel.chan_flags &= ~SCSIPI_CHAN_CANGROW;
+		return;
+	}
+
+	scb = malloc(sizeof(struct sea_scb), M_DEVBUF, M_NOWAIT);
+	if (scb == NULL)
+		return;
+
+	memset(scb, 0, sizeof(struct sea_scb));
+
+	TAILQ_INSERT_TAIL(&sea->free_list, scb, chain);
+	sea->numscbs++;
+	sea->sc_adapter.adapt_openings++;
+}
 void
 sea_free_scb(sea, scb, flags)
 	struct sea_softc *sea;
@@ -868,7 +869,8 @@ sea_timeout(arg)
 		sea_abort(sea, scb);
 		/* 2 secs for the abort */
 		if ((xs->xs_control & XS_CTL_POLL) == 0)
-			timeout(sea_timeout, scb, 2 * hz);
+			callout_reset(&scb->xs->xs_callout, 2 * hz,
+			    sea_timeout, scb);
 	}
 
 	splx(s);
@@ -978,9 +980,9 @@ sea_transfer_pio(sea, phase, count, data)
 	int *count;
 	u_char **data;
 {
-	register u_char p = *phase, tmp;
-	register int c = *count;
-	register u_char *d = *data;
+	u_char p = *phase, tmp;
+	int c = *count;
+	u_char *d = *data;
 	int timeout;
 
 	do {
@@ -1223,7 +1225,7 @@ sea_done(sea, scb)
 {
 	struct scsipi_xfer *xs = scb->xs;
 
-	untimeout(sea_timeout, scb);
+	callout_stop(&scb->xs->xs_callout);
 
 	xs->resid = scb->datalen;
 
@@ -1346,36 +1348,36 @@ sea_information_transfer(sea)
 						break;
 					if (!(phase & STAT_IO)) {
 #ifdef SEA_ASSEMBLER
-						asm("shr $2, %%ecx\n\t\
-						    cld\n\t\
+						caddr_t junk;
+						asm("cld\n\t\
 						    rep\n\t\
 						    movsl" :
-						    "=S" (scb->data) :
+						    "=S" (scb->data),
+						    "=c" (len),
+						    "=D" (junk) :
 						    "0" (scb->data),
-						    "D" (sea->maddr_dr),
-						    "c" (BLOCK_SIZE) :
-						    "%ecx", "%edi");
+						    "1" (BLOCK_SIZE >> 2),
+						    "2" (sea->maddr_dr));
 #else
-						for (count = 0;
-						    count < BLOCK_SIZE;
-						    count++)
+					        for (len = BLOCK_SIZE;
+						    len; len--)
 							DATA = *(scb->data++);
 #endif
 					} else {
 #ifdef SEA_ASSEMBLER
-						asm("shr $2, %%ecx\n\t\
-						    cld\n\t\
+						caddr_t junk;
+						asm("cld\n\t\
 						    rep\n\t\
 						    movsl" :
-						    "=D" (scb->data) :
-						    "S" (sea->maddr_dr),
+						    "=D" (scb->data),
+						    "=c" (len),
+						    "=S" (junk) :
 						    "0" (scb->data),
-						    "c" (BLOCK_SIZE) :
-						    "%ecx", "%esi");
+						    "1" (BLOCK_SIZE >> 2),
+						    "2" (sea->maddr_dr));
 #else
-					        for (count = 0;
-						    count < BLOCK_SIZE;
-						    count++)
+					        for (len = BLOCK_SIZE;
+						    len; len--)
 							*(scb->data++) = DATA;
 #endif
 					}

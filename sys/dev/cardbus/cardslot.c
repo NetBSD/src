@@ -1,6 +1,7 @@
-/*	$NetBSD: cardslot.c,v 1.2 1999/10/15 06:42:22 haya Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.2.2.1 2000/11/20 11:39:53 bouyer Exp $	*/
+
 /*
- * Copyright (c) 1999
+ * Copyright (c) 1999 and 2000
  *       HAYAKAWA Koichi.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +32,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define CARDSLOT_DEBUG */
+#include "opt_cardslot.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +55,6 @@
 #if defined CARDSLOT_DEBUG
 #define STATIC
 #define DPRINTF(a) printf a
-#define DDELAY(x) delay((x)*1000*1000)
 #else
 #define STATIC static
 #define DPRINTF(a)
@@ -64,11 +64,7 @@
 
 STATIC void cardslotattach __P((struct device *, struct device *, void *));
 
-#if !defined __BROKEN_INDIRECT_CONFIG
 STATIC int cardslotmatch __P((struct device *, struct cfdata *, void *));
-#else
-STATIC int cardslotmatch __P((struct device *, void *, void *));
-#endif
 static void create_slot_manager __P((void *));
 static void cardslot_event_thread __P((void *arg));
 
@@ -88,21 +84,11 @@ struct cfdriver cardslot_cd = {
 
 
 STATIC int
-#if defined __BROKEN_INDIRECT_CONFIG
-cardslotmatch(parent, match, aux)
-     struct device *parent;
-     void *match;
-     void *aux;
-#else
 cardslotmatch(parent, cf, aux)
      struct device *parent;
      struct cfdata *cf;
      void *aux;
-#endif
 {
-#if defined __BROKEN_INDIRECT_CONFIG
-  struct cfdata *cf = match;
-#endif
   struct cardslot_attach_args *caa = aux;
 
   if (caa->caa_cb_attach == NULL && caa->caa_16_attach == NULL) {
@@ -162,6 +148,7 @@ cardslotattach(parent, self, aux)
 
   if (csc != NULL || psc != NULL) {
 #if __NetBSD_Version__ > 104060000
+    config_pending_incr();
     kthread_create(create_slot_manager, (void *)sc);
 #else
     kthread_create_deferred(create_slot_manager, (void *)sc);
@@ -173,8 +160,13 @@ cardslotattach(parent, self, aux)
   if (csc && (csc->sc_cf->cardbus_ctrl)(csc->sc_cc, CARDBUS_CD)) {
     DPRINTF(("cardslotattach: CardBus card found\n"));
     if (card_attach_now) {
-      /* attach now */
-      cardbus_attach_card(sc->sc_cb_softc);
+      if (cardbus_attach_card(sc->sc_cb_softc) > 0) {
+	/* at least one function works */
+	CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_WORKING);
+      } else {
+	/* no functions work or this card is not known */
+	CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);
+      }
       CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_CB);
     } else {
       /* attach deffered */
@@ -198,11 +190,17 @@ cardslotattach(parent, self, aux)
 
 
 STATIC int
-cardslot_cb_print(aux, pcic)
-     void *aux;
-     const char *pcic;
+cardslot_cb_print(aux, pnp)
+	void *aux;
+	const char *pnp;
 {
-  return UNCONF;
+	struct cbslot_attach_args *cba = aux;
+
+	if (pnp) {
+		printf("cardbus at %s subordinate bus %d", pnp, cba->cba_bus);
+	}
+
+	return UNCONF;
 }
 
 
@@ -231,8 +229,9 @@ cardslot_16_print(arg, pnp)
      void *arg;
      const char *pnp;
 {
+
   if (pnp) {
-    printf("pcmcia at %s", pnp);
+    printf("pcmciabus at %s", pnp);
   }
 
   return UNCONF;
@@ -315,7 +314,7 @@ cardslot_event_thread(arg)
 {
   struct cardslot_softc *sc = arg;
   struct cardslot_event *ce;
-  int s;
+  int s, first = 1;
   static int antonym_ev[4] = {
     CARDSLOT_EVENT_REMOVAL_16, CARDSLOT_EVENT_INSERTION_16,
     CARDSLOT_EVENT_REMOVAL_CB, CARDSLOT_EVENT_INSERTION_CB
@@ -325,6 +324,10 @@ cardslot_event_thread(arg)
     s = spltty();
     if ((ce = SIMPLEQ_FIRST(&sc->sc_events)) == NULL) {
       splx(s);
+      if (first) {
+        first = 0;
+        config_pending_decr();
+      }
       (void) tsleep(&sc->sc_events, PWAIT, "cardslotev", 0);
       continue;
     }
@@ -358,13 +361,23 @@ cardslot_event_thread(arg)
 
     switch (ce->ce_type) {
     case CARDSLOT_EVENT_INSERTION_CB:
-      if (CARDSLOT_CARDTYPE(sc->sc_status) != CARDSLOT_STATUS_CARD_NONE) {
-	/* A card has already been inserted. */
-	break;
+      if ((CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_CB)
+	  || (CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_16)) {
+	if (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING) {
+	  /* A card has already been inserted and work. */
+	  break;
+	}
       }
+
       if (sc->sc_cb_softc) {
-	cardbus_attach_card(sc->sc_cb_softc);
 	CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_CB);
+	if (cardbus_attach_card(sc->sc_cb_softc) > 0) {
+	  /* at least one function works */
+	  CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_WORKING);
+	} else {
+	  /* no functions work or this card is not known */
+	  CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);
+	}
       } else {
 	panic("no cardbus on %s", sc->sc_dev.dv_xname);
       }
@@ -372,13 +385,22 @@ cardslot_event_thread(arg)
       break;
 
     case CARDSLOT_EVENT_INSERTION_16:
-      if (CARDSLOT_CARDTYPE(sc->sc_status) != CARDSLOT_STATUS_CARD_NONE) {
-	/* A card has already been inserted. */
-	break;
+      if ((CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_CB)
+	  || (CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_16)) {
+	if (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING) {
+	  /* A card has already been inserted and work. */
+	  break;
+	}
       }
       if (sc->sc_16_softc) {
-	pcmcia_card_attach((struct device *)sc->sc_16_softc);
 	CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_16);
+	if (pcmcia_card_attach((struct device *)sc->sc_16_softc)) {
+	  /* Do not attach */
+	  CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);
+	} else {
+	  /* working */
+	  CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_WORKING);
+	}
       } else {
 	panic("no 16-bit pcmcia on %s", sc->sc_dev.dv_xname);
       }
@@ -386,12 +408,19 @@ cardslot_event_thread(arg)
       break;
 
     case CARDSLOT_EVENT_REMOVAL_CB:
-      if (CARDSLOT_CARDTYPE(sc->sc_status) != CARDSLOT_STATUS_CARD_CB) {
+      if (CARDSLOT_CARDTYPE(sc->sc_status) == CARDSLOT_STATUS_CARD_CB) {
 	/* CardBus card has not been inserted. */
-	break;
+	if (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING) {
+	  cardbus_detach_card(sc->sc_cb_softc);
+	  CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);
+	  CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
+	}
+	CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
+      } else if (CARDSLOT_CARDTYPE(sc->sc_status) != CARDSLOT_STATUS_CARD_16) {
+	/* Unknown card... */
+	CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
       }
-				/* not yet */
-      CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
+      CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);
       break;
 
     case CARDSLOT_EVENT_REMOVAL_16:
@@ -400,14 +429,16 @@ cardslot_event_thread(arg)
 	/* 16-bit card has not been inserted. */
 	break;
       }
-      if (sc->sc_16_softc) {
+      if ((sc->sc_16_softc != NULL)
+	  && (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING)) {
 	struct pcmcia_softc *psc = sc->sc_16_softc;
 
 	pcmcia_card_deactivate((struct device *)psc);
 	pcmcia_chip_socket_disable(psc->pct, psc->pch);
 	pcmcia_card_detach((struct device *)psc, DETACH_FORCE);
-	CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
       }
+      CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
+      CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);
       break;
 
     default:

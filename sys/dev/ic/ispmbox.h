@@ -1,4 +1,33 @@
-/* $NetBSD: ispmbox.h,v 1.19 1999/10/14 02:18:40 mjacob Exp $ */
+/* $NetBSD: ispmbox.h,v 1.19.2.1 2000/11/20 11:40:40 bouyer Exp $ */
+/*
+ * This driver, which is contained in NetBSD in the files:
+ *
+ *	sys/dev/ic/isp.c
+ *	sys/dev/ic/ic/isp.c
+ *	sys/dev/ic/ic/isp_inline.h
+ *	sys/dev/ic/ic/isp_netbsd.c
+ *	sys/dev/ic/ic/isp_netbsd.h
+ *	sys/dev/ic/ic/isp_target.c
+ *	sys/dev/ic/ic/isp_target.h
+ *	sys/dev/ic/ic/isp_tpublic.h
+ *	sys/dev/ic/ic/ispmbox.h
+ *	sys/dev/ic/ic/ispreg.h
+ *	sys/dev/ic/ic/ispvar.h
+ *	sys/microcode/isp/asm_sbus.h
+ *	sys/microcode/isp/asm_1040.h
+ *	sys/microcode/isp/asm_1080.h
+ *	sys/microcode/isp/asm_12160.h
+ *	sys/microcode/isp/asm_2100.h
+ *	sys/microcode/isp/asm_2200.h
+ *	sys/pci/isp_pci.c
+ *	sys/sbus/isp_sbus.c
+ *
+ * Is being actively maintained by Matthew Jacob (mjacob@netbsd.org).
+ * This driver also is shared source with FreeBSD, OpenBSD, Linux, Solaris,
+ * Linux versions. This tends to be an interesting maintenance problem.
+ *
+ * Please coordinate with Matthew Jacob on changes you wish to make here.
+ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -110,8 +139,12 @@
 #define		FW_FEATURE_LVD_NOTIFY	0x2
 #define		FW_FEATURE_FAST_POST	0x1
 
+#define	MBOX_ENABLE_TARGET_MODE		0x55
+#define		ENABLE_TARGET_FLAG	0x8000
+
 /* These are for the ISP2100 FC cards */
 #define	MBOX_GET_LOOP_ID		0x20
+#define	MBOX_GET_RESOURCE_COUNT		0x42
 #define	MBOX_EXEC_COMMAND_IOCB_A64	0x54
 #define	MBOX_INIT_FIRMWARE		0x60
 #define	MBOX_GET_INIT_CONTROL_BLOCK	0x61
@@ -149,6 +182,13 @@ typedef struct {
 #define	MBOX_TEST_FAILED		0x4003
 #define	MBOX_COMMAND_ERROR		0x4005
 #define	MBOX_COMMAND_PARAM_ERROR	0x4006
+#define	MBOX_PORT_ID_USED		0x4007
+#define	MBOX_LOOP_ID_USED		0x4008
+#define	MBOX_ALL_IDS_USED		0x4009
+#define	MBOX_NOT_LOGGED_IN		0x400A
+#define	MBLOGALL			0x000f
+#define	MBLOGNONE			0x0000
+#define	MBLOGMASK(x)			((x) & 0xf)
 
 /*
  * Asynchronous event status codes
@@ -175,6 +215,15 @@ typedef struct {
 #define	ASYNC_LOOP_RESET		0x8013
 #define	ASYNC_PDB_CHANGED		0x8014
 #define	ASYNC_CHANGE_NOTIFY		0x8015
+
+/* for ISP2200 only */
+#define	ASYNC_PTPMODE			0x8030
+#define	ASYNC_CONNMODE			0x8036
+#define		ISP_CONN_LOOP		1
+#define		ISP_CONN_PTP		2
+#define		ISP_CONN_BADLIP		3
+#define		ISP_CONN_FATAL		4
+#define		ISP_CONN_LOOPBACK	5
 
 /*
  * Command Structure Definitions
@@ -227,7 +276,7 @@ typedef struct {
 #define	RQSTYPE_MARKER		0x04
 #define	RQSTYPE_CMDONLY		0x05
 #define	RQSTYPE_ATIO		0x06	/* Target Mode */
-#define	RQSTYPE_CTIO0		0x07	/* Target Mode */
+#define	RQSTYPE_CTIO		0x07	/* Target Mode */
 #define	RQSTYPE_SCAM		0x08
 #define	RQSTYPE_A64		0x09
 #define	RQSTYPE_A64_CONT	0x0a
@@ -348,9 +397,10 @@ typedef struct {
 	u_int16_t	req_state_flags;
 	u_int16_t	req_status_flags;
 	u_int16_t	req_time;
+#define	req_response_len	req_time	/* FC only */
 	u_int16_t	req_sense_len;
 	u_int32_t	req_resid;
-	u_int8_t	_res1[8];
+	u_int8_t	req_response[8];	/* FC only */
 	u_int8_t	req_sense_data[32];
 } ispstatusreq_t;
 
@@ -360,20 +410,25 @@ typedef struct {
  */
 #define	RQCS_RU	0x800	/* Residual Under */
 #define	RQCS_RO	0x400	/* Residual Over */
+#define	RQCS_RESID	(RQCS_RU|RQCS_RO)
 #define	RQCS_SV	0x200	/* Sense Length Valid */
-#define	RQCS_RV	0x100	/* Residual Valid */
+#define	RQCS_RV	0x100	/* FCP Response Length Valid */
 
 /* 
  * Completion Status Codes.
  */
 #define RQCS_COMPLETE			0x0000
-#define RQCS_INCOMPLETE			0x0001
 #define RQCS_DMA_ERROR			0x0002
-#define RQCS_TRANSPORT_ERROR		0x0003
 #define RQCS_RESET_OCCURRED		0x0004
 #define RQCS_ABORTED			0x0005
 #define RQCS_TIMEOUT			0x0006
 #define RQCS_DATA_OVERRUN		0x0007
+#define RQCS_DATA_UNDERRUN		0x0015
+#define	RQCS_QUEUE_FULL			0x001C
+
+/* 1X00 Only Completion Codes */
+#define RQCS_INCOMPLETE			0x0001
+#define RQCS_TRANSPORT_ERROR		0x0003
 #define RQCS_COMMAND_OVERRUN		0x0008
 #define RQCS_STATUS_OVERRUN		0x0009
 #define RQCS_BAD_MESSAGE		0x000a
@@ -387,26 +442,24 @@ typedef struct {
 #define RQCS_DEVICE_RESET_MSG_FAILED	0x0012
 #define RQCS_ID_MSG_FAILED		0x0013
 #define RQCS_UNEXP_BUS_FREE		0x0014
-#define RQCS_DATA_UNDERRUN		0x0015
 #define	RQCS_XACT_ERR1			0x0018
 #define	RQCS_XACT_ERR2			0x0019
 #define	RQCS_XACT_ERR3			0x001A
 #define	RQCS_BAD_ENTRY			0x001B
-#define	RQCS_QUEUE_FULL			0x001C
 #define	RQCS_PHASE_SKIPPED		0x001D
 #define	RQCS_ARQS_FAILED		0x001E
 #define	RQCS_WIDE_FAILED		0x001F
 #define	RQCS_SYNCXFER_FAILED		0x0020
 #define	RQCS_LVD_BUSERR			0x0021
 
-/* 2100 Only Completion Codes */
+/* 2X00 Only Completion Codes */
 #define	RQCS_PORT_UNAVAILABLE		0x0028
 #define	RQCS_PORT_LOGGED_OUT		0x0029
 #define	RQCS_PORT_CHANGED		0x002A
 #define	RQCS_PORT_BUSY			0x002B
 
 /*
- * State Flags (not applicable to 2100)
+ * 1X00 specific State Flags 
  */
 #define RQSF_GOT_BUS			0x0100
 #define RQSF_GOT_TARGET			0x0200
@@ -417,7 +470,7 @@ typedef struct {
 #define	RQSF_XFER_COMPLETE		0x4000
 
 /*
- * Status Flags (not applicable to 2100)
+ * 1X00 Status Flags
  */
 #define RQSTF_DISCONNECT		0x0001
 #define RQSTF_SYNCHRONOUS		0x0002
@@ -427,6 +480,29 @@ typedef struct {
 #define RQSTF_ABORTED			0x0020
 #define RQSTF_TIMEOUT			0x0040
 #define RQSTF_NEGOTIATION		0x0080
+
+/*
+ * 2X00 specific state flags
+ */
+/* RQSF_SENT_CDB	*/
+/* RQSF_XFRD_DATA	*/
+/* RQSF_GOT_STATUS	*/
+/* RQSF_XFER_COMPLETE	*/
+
+/*
+ * 2X00 specific status flags
+ */
+/* RQSTF_ABORTED */
+/* RQSTF_TIMEOUT */
+#define	RQSTF_DMA_ERROR			0x0080
+#define	RQSTF_LOGOUT			0x2000
+
+/*
+ * Miscellaneous
+ */
+#ifndef	ISP_EXEC_THROTTLE
+#define	ISP_EXEC_THROTTLE	16
+#endif
 
 /*
  * FC (ISP2100) specific data structures
@@ -487,6 +563,20 @@ typedef struct isp_icb {
 #define	ICBOPT_USE_PORTNAME	0x4000
 #define	ICBOPT_EXTENDED		0x8000
 
+#define	ICBXOPT_CLASS2_ACK0	0x0200
+#define	ICBXOPT_CLASS2		0x0100
+#define	ICBXOPT_LOOP_ONLY	(0 << 4)
+#define	ICBXOPT_PTP_ONLY	(1 << 4)
+#define	ICBXOPT_LOOP_2_PTP	(2 << 4)
+#define	ICBXOPT_PTP_2_LOOP	(3 << 4)
+
+#define	ICBXOPT_RIO_OFF		0
+#define	ICBXOPT_RIO_16BIT	1
+#define	ICBXOPT_RIO_32BIT	2
+#define	ICBXOPT_RIO_16BIT_DELAY	3
+#define	ICBXOPT_RIO_32BIT_DELAY	4
+
+
 
 #define	ICB_MIN_FRMLEN		256
 #define	ICB_MAX_FRMLEN		2112
@@ -530,7 +620,7 @@ typedef struct {
 	u_int16_t	pdb_options;
 	u_int8_t	pdb_mstate;
 	u_int8_t	pdb_sstate;
-#define	BITS2WORD(x)	(x)[0] << 16 | (x)[3] << 8 | (x)[2]
+#define	BITS2WORD(x)	((x)[0] << 16 | (x)[3] << 8 | (x)[2])
 	u_int8_t	pdb_hardaddr_bits[4];
 	u_int8_t	pdb_portid_bits[4];
 	u_int8_t	pdb_nodename[8];
@@ -613,5 +703,24 @@ typedef struct {
 } sns_scrsp_t;	/* Subcommand Response Structure */
 #define	SNS_GAN_RESP_SIZE	608	/* Maximum response size (bytes) */
 #define	SNS_GP3_RESP_SIZE	532	/* XXX: For 128 ports */
+
+typedef struct {
+	u_int8_t	snscb_cthdr[16];
+	u_int8_t	snscb_port_type;
+	u_int8_t	snscb_port_id[3];
+	u_int8_t	snscb_portname[8];
+	u_int8_t	snscb_pnlen;		/* symbolic port name length */
+	u_int8_t	snscb_pname[255];	/* symbolic port name */
+	u_int8_t	snscb_nodename[8];
+	u_int8_t	snscb_nnlen;		/* symbolic node name length */
+	u_int8_t	snscb_nname[255];	/* symbolic node name */
+	u_int8_t	snscb_ipassoc[8];
+	u_int8_t	snscb_ipaddr[16];
+	u_int8_t	snscb_svc_class[4];
+	u_int8_t	snscb_fc4_types[32];
+	u_int8_t	snscb_fpname[8];
+	u_int8_t	snscb_reserved;
+	u_int8_t	snscb_hardaddr[3];
+} sns_ganrsp_t;	/* Subcommand Response Structure */
 
 #endif	/* _ISPMBOX_H */

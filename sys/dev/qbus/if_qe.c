@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.38 1999/08/01 15:25:41 ragge Exp $ */
+/*      $NetBSD: if_qe.c,v 1.38.2.1 2000/11/20 11:42:49 bouyer Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -81,6 +81,7 @@ struct qe_cdata {
 
 struct	qe_softc {
 	struct device	sc_dev;		/* Configuration common part	*/
+	struct evcnt	sc_intrcnt;	/* Interrupt counting		*/
 	struct ethercom sc_ec;		/* Ethernet common part		*/
 #define sc_if	sc_ec.ec_if		/* network-visible interface	*/
 	bus_space_tag_t sc_iot;
@@ -105,7 +106,7 @@ static	int	qematch __P((struct device *, struct cfdata *, void *));
 static	void	qeattach __P((struct device *, struct device *, void *));
 static	void	qeinit __P((struct qe_softc *));
 static	void	qestart __P((struct ifnet *));
-static	void	qeintr __P((int));
+static	void	qeintr __P((void *));
 static	int	qeioctl __P((struct ifnet *, u_long, caddr_t));
 static	int	qe_add_rxbuf __P((struct qe_softc *, int));
 static	void	qe_setup __P((struct qe_softc *));
@@ -204,7 +205,6 @@ qematch(parent, cf, aux)
 	 */
 	bus_dmamap_unload(sc->sc_dmat, cmap);
 	bus_dmamap_destroy(sc->sc_dmat, cmap);
-	ua->ua_ivec = qeintr;
 	return 1;
 }
 
@@ -347,6 +347,11 @@ qeattach(parent, self, aux)
 		ether_sprintf(enaddr));
 
 	QE_WCSR(QE_CSR_VECTOR, QE_RCSR(QE_CSR_VECTOR) & ~1); /* ??? */
+
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec, qeintr,
+		sc, &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
+		sc->sc_dev.dv_xname, "intr");
 
 	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
@@ -571,11 +576,11 @@ out:	if (sc->sc_inq)
 	splx(s);
 }
 
-void
-qeintr(unit)
-	int	unit;
+static void
+qeintr(arg)
+	void *arg;
 {
-	struct qe_softc *sc = qe_cd.cd_devs[unit];
+	struct qe_softc *sc = arg;
 	struct qe_cdata *qc = sc->sc_qedata;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_header *eh;
@@ -601,27 +606,9 @@ qeintr(unit)
 				sc->sc_nextrx = 0;
 			eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
-			if (ifp->if_bpf) {
+			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
-				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-				    ETHER_ADDR_LEN) != 0 &&
-				    ((eh->ether_dhost[0] & 1) == 0)) {
-					m_freem(m);
-					continue;
-				}
-			}
 #endif
-			/*
-			 * ALLMULTI means PROMISC in this driver.
-			 */
-			if ((ifp->if_flags & IFF_ALLMULTI) &&
-			    ((eh->ether_dhost[0] & 1) == 0) &&
-			    bcmp(LLADDR(ifp->if_sadl), eh->ether_dhost,
-			    ETHER_ADDR_LEN)) {
-				m_freem(m);
-				continue;
-			}
 			(*ifp->if_input)(ifp, m);
 		}
 
@@ -668,7 +655,7 @@ qeintr(unit)
  */
 int
 qeioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
+	struct ifnet *ifp;
 	u_long cmd;
 	caddr_t data;
 {
@@ -855,7 +842,11 @@ qe_setup(sc)
 	 * Until someone tells me, fall back to PROMISC when more than
 	 * 12 ethernet addresses.
 	 */
-	if (ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI))
+	if (ifp->if_flags & IFF_ALLMULTI)
+		ifp->if_flags |= IFF_PROMISC;
+	else if (ifp->if_pcount == 0)
+		ifp->if_flags &= ~IFF_PROMISC;
+	if (ifp->if_flags & IFF_PROMISC)
 		qc->qc_xmit[idx].qe_buf_len = -65;
 
 	qc->qc_xmit[idx].qe_addr_lo = LOWORD(sc->sc_pqedata->qc_setup);

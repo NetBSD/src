@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.23 1998/08/15 10:51:19 mycroft Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.23.12.1 2000/11/20 11:41:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,8 +93,6 @@
 #include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

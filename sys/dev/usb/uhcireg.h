@@ -1,11 +1,12 @@
-/*	$NetBSD: uhcireg.h,v 1.7 1999/08/22 23:19:57 augustss Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.7.2.1 2000/11/20 11:43:27 bouyer Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,6 +47,7 @@
 #define  PCI_USBREV_MASK	0xff
 #define  PCI_USBREV_PRE_1_0	0x00
 #define  PCI_USBREV_1_0		0x10
+#define  PCI_USBREV_1_1		0x11
 
 #define PCI_LEGSUP		0xc0	/* Legacy Support register */
 #define  PCI_LEGSUP_USBPIRQDEN	0x2000	/* USB PIRQ D Enable */
@@ -112,12 +114,19 @@
 
 typedef u_int32_t uhci_physaddr_t;
 #define UHCI_PTR_T		0x00000001
-#define UHCI_PTR_Q		0x00000002
+#define UHCI_PTR_TD		0x00000000
+#define UHCI_PTR_QH		0x00000002
 #define UHCI_PTR_VF		0x00000004
 
+/* 
+ * Wait this long after a QH has been removed.  This gives that HC a
+ * chance to stop looking at it before it's recycled.
+ */
+#define UHCI_QH_REMOVE_DELAY	5
+
 /*
- * The Queue Heads and Transfer Descriptors and accessed
- * by both the CPU and the USB controller which runs
+ * The Queue Heads and Transfer Descriptors are accessed
+ * by both the CPU and the USB controller which run
  * concurrently.  This means that they have to be accessed
  * with great care.  As long as the data structures are
  * not linked into the controller's frame list they cannot

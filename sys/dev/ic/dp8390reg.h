@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390reg.h,v 1.4 1998/10/27 23:34:17 thorpej Exp $	*/
+/*	$NetBSD: dp8390reg.h,v 1.4.12.1 2000/11/20 11:40:30 bouyer Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -460,7 +460,12 @@
 #define ED_RCR_MON	0x20
 
 /*
- * Bits 6 and 7 are unused/reserved.
+ * INTT: Interrupt Trigger Mode.  Must be set if AX88190.
+ */
+#define ED_RCR_INTT	0x40
+
+/*
+ * Bit 7 is unused/reserved.
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.55 1999/03/29 21:50:06 perry Exp $	*/
+/*	$NetBSD: lpt.c,v 1.55.8.1 2000/11/20 11:40:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -108,6 +108,8 @@ lpt_attach_subr(sc)
 
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 
+	callout_init(&sc->sc_wakeup_ch);
+
 	sc->sc_dev_ok = 1;
 }
 
@@ -121,7 +123,6 @@ lptopen(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = LPTUNIT(dev);
 	u_char flags = LPTFLAGS(dev);
 	struct lpt_softc *sc;
 	bus_space_tag_t iot;
@@ -130,9 +131,7 @@ lptopen(dev, flag, mode, p)
 	int error;
 	int spin;
 
-	if (unit >= lpt_cd.cd_ndevs)
-		return ENXIO;
-	sc = lpt_cd.cd_devs[unit];
+	sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	if (!sc || !sc->sc_dev_ok)
 		return ENXIO;
 
@@ -236,7 +235,7 @@ lptwakeup(arg)
 	lptintr(sc);
 	splx(s);
 
-	timeout(lptwakeup, sc, STEP);
+	callout_reset(&sc->sc_wakeup_ch, STEP, lptwakeup, sc);
 }
 
 /*
@@ -249,8 +248,7 @@ lptclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
+	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -258,7 +256,7 @@ lptclose(dev, flag, mode, p)
 		(void) lptpushbytes(sc);
 
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
-		untimeout(lptwakeup, sc);
+		callout_stop(&sc->sc_wakeup_ch);
 
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 	sc->sc_state = 0;
@@ -343,7 +341,7 @@ lptwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
 	size_t n;
 	int error = 0;
 

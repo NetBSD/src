@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isavar.h,v 1.1 1998/06/07 18:28:31 sommerfe Exp $	*/
+/*	$NetBSD: i82365_isavar.h,v 1.1.14.1 2000/11/20 11:41:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Bill Sommerfeld.  All rights reserved.
@@ -30,6 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct pcic_isa_softc {
+	struct pcic_softc sc_pcic;	/* real pcic softc */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset tag */
+};
+
 extern int pcic_isa_intr_alloc_mask;
 
 /* 
@@ -46,4 +51,7 @@ void	pcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
 
 void pcic_isa_bus_width_probe __P((struct pcic_softc *, bus_space_tag_t,
 				   bus_space_handle_t, bus_addr_t, u_int32_t));
-
+void	pcic_isa_chip_intr_disestablish __P((pcmcia_chipset_handle_t, void *));
+void	pcic_isa_config_interrupts __P((struct device *));
+void	*pcic_isa_chip_intr_establish __P((pcmcia_chipset_handle_t,
+	    struct pcmcia_function *, int, int (*) (void *), void *));

@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs_data.h,v 1.14 1999/09/26 09:20:04 mrg Exp $	*/
+/*	$NetBSD: tcdevs_data.h,v 1.14.2.1 2000/11/20 11:43:16 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.12 1999/09/26 09:18:53 mrg Exp 
+ *	NetBSD: tcdevs,v 1.16 2000/07/20 06:38:39 tsutsui Exp 
  */
 
 /*
@@ -80,9 +80,9 @@ struct tc_knowndev tc_knowndevs[] = {
 	    TC_DESCRIPTION_PMAF_AA,
 	},
 	{
-	    "PMAF-F  ",
-	    TC_DEVICE_PMAF_F,
-	    TC_DESCRIPTION_PMAF_F,
+	    "PMAF-FA ",
+	    TC_DEVICE_PMAF_FA,
+	    TC_DESCRIPTION_PMAF_FA,
 	},
 	{
 	    "PMAG-AA ",
@@ -113,6 +113,11 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "PMAG-DV ",
 	    TC_DEVICE_PMAG_DV,
 	    TC_DESCRIPTION_PMAG_DV,
+	},
+	{
+	    "PMAG-JA ",
+	    TC_DEVICE_PMAG_JA,
+	    TC_DESCRIPTION_PMAG_JA,
 	},
 	{
 	    "PMAGB-BA",
@@ -155,6 +160,11 @@ struct tc_knowndev tc_knowndevs[] = {
 	    TC_DESCRIPTION_PMAZB_AA,
 	},
 	{
+	    "PMAZB-AB",
+	    TC_DEVICE_PMAZB_AB,
+	    TC_DESCRIPTION_PMAZB_AB,
+	},
+	{
 	    "PMAZC-AA",
 	    TC_DEVICE_PMAZC_AA,
 	    TC_DESCRIPTION_PMAZC_AA,
@@ -178,6 +188,21 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "PMAT-AA ",
 	    TC_DEVICE_PMAT_AA,
 	    TC_DESCRIPTION_PMAT_AA,
+	},
+	{
+	    "PMABV-AA",
+	    TC_DEVICE_PMABV_AA,
+	    TC_DESCRIPTION_PMABV_AA,
+	},
+	{
+	    "PMAP-AA ",
+	    TC_DEVICE_PMAP_AA,
+	    TC_DESCRIPTION_PMAP_AA,
+	},
+	{
+	    "KWS_TD  ",
+	    TC_DEVICE_KWS_TD,
+	    TC_DESCRIPTION_KWS_TD,
 	},
 	{ NULL, NULL, NULL, }
 };

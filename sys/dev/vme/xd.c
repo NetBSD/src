@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.17 1999/07/28 10:03:02 drochner Exp $	*/
+/*	$NetBSD: xd.c,v 1.17.2.1 2000/11/20 11:43:35 bouyer Exp $	*/
 
 /*
  *
@@ -73,16 +73,14 @@
 #include <sys/dkbad.h>
 #include <sys/conf.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 #include <dev/sun/disklabel.h>
 #endif
 
+#include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
 
 #include <dev/vme/xdreg.h>
@@ -228,6 +226,11 @@ int	xdc_startbuf __P((struct xdc_softc *, struct xd_softc *, struct buf *));
 int	xdc_submit_iorq __P((struct xdc_softc *, int, int));
 void	xdc_tick __P((void *));
 void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
+int	xd_dmamem_alloc(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+			int *, bus_size_t, caddr_t *, bus_addr_t *);
+void	xd_dmamem_free(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+			int, bus_size_t, caddr_t);
+
 
 /* machine interrupt hook */
 int	xdcintr __P((void *));
@@ -246,25 +249,31 @@ bdev_decl(xd);
 cdev_decl(xd);
 
 /* XXX - think about this more.. xd_machdep? */
-void	md_setup __P((void));
+void xdc_md_setup __P((void));
 int	XDC_DELAY;
-#ifdef __sparc__
+
+#if defined(__sparc__)
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/cpuvar.h>
-void	md_setup()
+void xdc_md_setup()
 {
 	if (CPU_ISSUN4 && cpuinfo.cpu_type == CPUTYP_4_300)
 		XDC_DELAY = XDC_DELAY_4_300;
 	else
 		XDC_DELAY = XDC_DELAY_SPARC;
 }
-#endif
-#ifdef __sun3__
-void	md_setup()
+#elif defined(sun3)
+void xdc_md_setup()
 {
 	XDC_DELAY = XDC_DELAY_SUN3;
 }
+#else
+void xdc_md_setup()
+{
+	XDC_DELAY = 0;
+}
 #endif
+
 /*
  * cfattach's: device driver interface to autoconfig
  */
@@ -304,7 +313,7 @@ xddummystrat(bp)
 {
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
-	bcopy(xd_labeldata, bp->b_un.b_addr, XDFM_BPS);
+	bcopy(xd_labeldata, bp->b_data, XDFM_BPS);
 	bp->b_flags |= B_DONE;
 	bp->b_flags &= ~B_BUSY;
 }
@@ -315,7 +324,7 @@ xdgetdisklabel(xd, b)
 	void *b;
 {
 	char *err;
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 	struct sun_disklabel *sdl;
 #endif
 
@@ -333,7 +342,7 @@ xdgetdisklabel(xd, b)
 		return(XD_ERR_FAIL);
 	}
 
-#if defined(__sparc__) || defined(__sun3__)
+#if defined(__sparc__) || defined(sun3)
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sdl = (struct sun_disklabel *)xd->sc_dk.dk_cpulabel->cd_block;
 	if (sdl->sl_magic == SUN_DKMAGIC) {
@@ -362,6 +371,62 @@ xdgetdisklabel(xd, b)
 /*
  * end: disk label fix code (XXX)
  */
+
+/*
+ * Shorthand for allocating, mapping and loading a DMA buffer
+ */
+int
+xd_dmamem_alloc(tag, map, seg, nsegp, len, kvap, dmap)
+	bus_dma_tag_t		tag;
+	bus_dmamap_t		map;
+	bus_dma_segment_t	*seg;
+	int			*nsegp;
+	bus_size_t		len;
+	caddr_t			*kvap;
+	bus_addr_t		*dmap;
+{
+	int nseg;
+	int error;
+
+	if ((error = bus_dmamem_alloc(tag, len, 0, 0,
+				      seg, 1, &nseg, BUS_DMA_NOWAIT)) != 0) {
+		return (error);
+	}
+
+	if ((error = bus_dmamap_load_raw(tag, map,
+					seg, nseg, len, BUS_DMA_NOWAIT)) != 0) {
+		bus_dmamem_free(tag, seg, nseg);
+		return (error);
+	}
+
+	if ((error = bus_dmamem_map(tag, seg, nseg,
+				    len, kvap,
+				    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
+		bus_dmamap_unload(tag, map);
+		bus_dmamem_free(tag, seg, nseg);
+		return (error);
+	}
+
+	*dmap = map->dm_segs[0].ds_addr;
+	*nsegp = nseg;
+	return (0);
+}
+
+void
+xd_dmamem_free(tag, map, seg, nseg, len, kva)
+	bus_dma_tag_t		tag;
+	bus_dmamap_t		map;
+	bus_dma_segment_t	*seg;
+	int			nseg;
+	bus_size_t		len;
+	caddr_t			kva;
+{
+
+	bus_dmamap_unload(tag, map);
+	bus_dmamem_unmap(tag, kva, len);
+	bus_dmamem_free(tag, seg, nseg);
+}
+
 
 /*
  * a u t o c o n f i g   f u n c t i o n s
@@ -396,10 +461,10 @@ int xdcmatch(parent, cf, aux)
 	vme_am_t		mod;
 	int error;
 
-	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
-	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xdc),
-			    mod))
+	mod = VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
+	if (vme_space_alloc(ct, va->r[0].offset, sizeof(struct xdc), mod))
 		return (0);
+
 	error = vme_probe(ct, va->r[0].offset, sizeof(struct xdc),
 			  mod, VME_D32, xdc_probe, 0);
 	vme_space_free(va->va_vct, va->r[0].offset, sizeof(struct xdc), mod);
@@ -430,17 +495,17 @@ xdcattach(parent, self, aux)
 	int			rseg;
 	vme_mapresc_t resc;
 
-	md_setup();
+	xdc_md_setup();
 
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xdc_softc. */
 
 	xdc->dmatag = va->va_bdt;
-	mod = 0x2d; /* VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA */
+	mod = VME_AM_A16 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
 
-	if (vme_space_alloc(va->va_vct, va->r[0].offset, sizeof(struct xdc),
-			    mod))
+	if (vme_space_alloc(ct, va->r[0].offset, sizeof(struct xdc), mod))
 		panic("xdc: vme alloc");
+
 	if (vme_space_map(ct, va->r[0].offset, sizeof(struct xdc),
 			  mod, VME_D32, 0, &bt, &bh, &resc) != 0)
 		panic("xdc: vme_map");
@@ -452,33 +517,61 @@ xdcattach(parent, self, aux)
 	for (lcv = 0; lcv < XDC_MAXDEV; lcv++)
 		xdc->sc_drives[lcv] = (struct xd_softc *) 0;
 
-	/* allocate and zero buffers
+	/*
+	 * allocate and zero buffers
 	 *
 	 * note: we simplify the code by allocating the max number of iopbs and
 	 * iorq's up front.   thus, we avoid linked lists and the costs
-	 * associated with them in exchange for wasting a little memory. */
+	 * associated with them in exchange for wasting a little memory.
+	 */
 
-	error = bus_dmamem_alloc(xdc->dmatag,
-				 XDC_MAXIOPB * sizeof(struct xd_iopb),
-				 NBPG, 0,
-				 &seg, 1, &rseg, BUS_DMA_NOWAIT);
-	if (error) {
+	/* Get DMA handle for misc. transfers */
+	if ((error = vme_dmamap_create(
+				ct,		/* VME chip tag */
+				MAXPHYS,	/* size */
+				VME_AM_A24,	/* address modifier */
+				VME_D32,	/* data size */
+				0,		/* swap */
+				1,		/* nsegments */
+				MAXPHYS,	/* maxsegsz */
+				0,		/* boundary */
+				BUS_DMA_NOWAIT,
+				&xdc->auxmap)) != 0) {
+
+		printf("%s: DMA buffer map create error %d\n",
+			xdc->sc_dev.dv_xname, error);
+		return;
+	}
+
+
+	/* Get DMA handle for mapping iorq descriptors */
+	if ((error = vme_dmamap_create(
+				ct,		/* VME chip tag */
+				XDC_MAXIOPB * sizeof(struct xd_iopb),
+				VME_AM_A24,	/* address modifier */
+				VME_D32,	/* data size */
+				0,		/* swap */
+				1,		/* nsegments */
+				XDC_MAXIOPB * sizeof(struct xd_iopb),
+				0,		/* boundary */
+				BUS_DMA_NOWAIT,
+				&xdc->iopmap)) != 0) {
+
+		printf("%s: DMA buffer map create error %d\n",
+			xdc->sc_dev.dv_xname, error);
+		return;
+	}
+
+	/* Get DMA buffer for iorq descriptors */
+	if ((error = xd_dmamem_alloc(xdc->dmatag, xdc->iopmap, &seg, &rseg,
+				     XDC_MAXIOPB * sizeof(struct xd_iopb),
+				     (caddr_t *)&xdc->iopbase,
+				     (bus_addr_t *)&xdc->dvmaiopb)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xdc->sc_dev.dv_xname, error);
 		return;
 	}
-	xdc->dvmaiopb = (struct xd_iopb *)seg.ds_addr;
 
-	error = bus_dmamem_map(xdc->dmatag, &seg, rseg,
-				XDC_MAXIOPB * sizeof(struct xd_iopb),
-				(caddr_t *)&xdc->iopbase,
-				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		bus_dmamem_free(xdc->dmatag, &seg, rseg);
-		printf("%s: DMA buffer map error %d\n",
-			xdc->sc_dev.dv_xname, error);
-		return;
-	}
 	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
 
 	xdc->reqs = (struct xd_iorq *)
@@ -498,15 +591,18 @@ xdcattach(parent, self, aux)
 		xdc->iopbase[lcv].naddrmod = XDC_ADDRMOD; /* always the same */
 		xdc->iopbase[lcv].intr_vec = xdc->vector; /* always the same */
 
-		error = bus_dmamap_create(
-				xdc->dmatag,
+		if ((error = vme_dmamap_create(
+				ct,		/* VME chip tag */
 				MAXPHYS,	/* size */
+				VME_AM_A24,	/* address modifier */
+				VME_D32,	/* data size */
+				0,		/* swap */
 				1,		/* nsegments */
 				MAXPHYS,	/* maxsegsz */
 				0,		/* boundary */
 				BUS_DMA_NOWAIT,
-				&xdc->reqs[lcv].dmamap);
-		if (error) {
+				&xdc->reqs[lcv].dmamap)) != 0) {
+
 			printf("%s: DMA buffer map create error %d\n",
 				xdc->sc_dev.dv_xname, error);
 			return;
@@ -519,9 +615,8 @@ xdcattach(parent, self, aux)
 
 	/* init queue of waiting bufs */
 
-	xdc->sc_wq.b_active = 0;
-	xdc->sc_wq.b_actf = 0;
-	xdc->sc_wq.b_actb = &xdc->sc_wq.b_actf;
+	BUFQ_INIT(&xdc->sc_wq);
+	callout_init(&xdc->sc_tick_ch);
 
 	/*
 	 * section 7 of the manual tells us how to init the controller:
@@ -536,7 +631,7 @@ xdcattach(parent, self, aux)
 		printf(": couldn't read controller params\n");
 		return;		/* shouldn't ever happen */
 	}
-	ctl = (struct xd_iopb_ctrl *) & xdc->iopbase[rqno];
+	ctl = (struct xd_iopb_ctrl *) &xdc->iopbase[rqno];
 	if (ctl->ctype != XDCT_753) {
 		if (xdc->reqs[rqno].errno)
 			printf(": %s: ", xdc_e2str(xdc->reqs[rqno].errno));
@@ -559,9 +654,10 @@ xdcattach(parent, self, aux)
 	}
 
 	/* link in interrupt with higher level software */
-	vme_intr_map(ct, va->ivector, va->ilevel, &ih);
+	vme_intr_map(ct, va->ilevel, va->ivector, &ih);
 	vme_intr_establish(ct, ih, IPL_BIO, xdcintr, xdc);
-	evcnt_attach(&xdc->sc_dev, "intr", &xdc->sc_intrcnt);
+	evcnt_attach_dynamic(&xdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    xdc->sc_dev.dv_xname, "intr");
 
 
 	/* now we must look for disks using autoconfig */
@@ -572,7 +668,7 @@ xdcattach(parent, self, aux)
 		(void) config_found(self, (void *) &xa, NULL);
 
 	/* start the watchdog clock */
-	timeout(xdc_tick, xdc, XDC_TICKCNT);
+	callout_reset(&xdc->sc_tick_ch, XDC_TICKCNT, xdc_tick, xdc);
 
 }
 
@@ -661,25 +757,14 @@ xdattach(parent, self, aux)
 	newstate = XD_DRIVE_UNKNOWN;
 
 	buf = NULL;
-	error = bus_dmamem_alloc(xdc->dmatag, XDFM_BPS, NBPG, 0,
-				 &seg, 1, &rseg, BUS_DMA_NOWAIT);
-	if (error) {
+	if ((error = xd_dmamem_alloc(xdc->dmatag, xdc->auxmap, &seg, &rseg,
+				     XDFM_BPS,
+				     (caddr_t *)&buf,
+				     (bus_addr_t *)&dmaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
-			xd->sc_dev.dv_xname, error);
-		goto done;
+			xdc->sc_dev.dv_xname, error);
+		return;
 	}
-	dmaddr = (caddr_t)seg.ds_addr;
-
-	error = bus_dmamem_map(xdc->dmatag, &seg, rseg, XDFM_BPS,
-				&buf,
-				BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: DMA buffer alloc error %d\n",
-			xd->sc_dev.dv_xname, error);
-		bus_dmamem_free(xdc->dmatag, &seg, rseg);
-		goto done;
-	}
-
 
 	/* first try and reset the drive */
 
@@ -708,7 +793,7 @@ xdattach(parent, self, aux)
 	/* get drive parameters */
 	rqno = xdc_cmd(xdc, XDCMD_RDP, XDFUN_DRV, xd->xd_drive, 0, 0, 0, fmode);
 	if (rqno != XD_ERR_FAIL) {
-		driopb = (struct xd_iopb_drive *) & xdc->iopbase[rqno];
+		driopb = (struct xd_iopb_drive *) &xdc->iopbase[rqno];
 		spt = driopb->sectpertrk;
 	}
 	XDC_DONE(xdc, rqno, error);
@@ -809,12 +894,10 @@ xdattach(parent, self, aux)
 		bcopy(buf, &xd->dkb, XDFM_BPS);
 	}
 
-	dk_establish(&xd->sc_dk, &xd->sc_dev);		/* XXX */
-
 done:
 	if (buf != NULL) {
-		bus_dmamem_unmap(xdc->dmatag, buf, XDFM_BPS);
-		bus_dmamem_free(xdc->dmatag, &seg, rseg);
+		xd_dmamem_free(xdc->dmatag, xdc->auxmap,
+				&seg, rseg, XDFM_BPS, buf);
 	}
 
 	xd->state = newstate;
@@ -1110,7 +1193,6 @@ xdstrategy(bp)
 {
 	struct xd_softc *xd;
 	struct xdc_softc *parent;
-	struct buf *wq;
 	int     s, unit;
 	struct xdc_attach_args xa;
 
@@ -1167,7 +1249,7 @@ xdstrategy(bp)
 
 	/* first, give jobs in front of us a chance */
 	parent = xd->parent;
-	while (parent->nfree > 0 && parent->sc_wq.b_actf)
+	while (parent->nfree > 0 && BUFQ_FIRST(&parent->sc_wq) != NULL)
 		if (xdc_startbuf(parent, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1176,11 +1258,7 @@ xdstrategy(bp)
 	 */
 
 	if (parent->nfree == 0) {
-		wq = &xd->parent->sc_wq;
-		bp->b_actf = 0;
-		bp->b_actb = wq->b_actb;
-		*wq->b_actb = bp;
-		wq->b_actb = &bp->b_actf;
+		BUFQ_INSERT_TAIL(&parent->sc_wq, bp);
 		splx(s);
 		return;
 	}
@@ -1232,7 +1310,7 @@ xdcintr(v)
 
 	/* fill up any remaining iorq's with queue'd buffers */
 
-	while (xdcsc->nfree > 0 && xdcsc->sc_wq.b_actf)
+	while (xdcsc->nfree > 0 && BUFQ_FIRST(&xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -1459,7 +1537,6 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	int     rqno, partno;
 	struct xd_iorq *iorq;
 	struct xd_iopb *iopb;
-	struct buf *wq;
 	u_long  block;
 /*	caddr_t dbuf;*/
 	int error;
@@ -1473,15 +1550,10 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	/* get buf */
 
 	if (bp == NULL) {
-		bp = xdcsc->sc_wq.b_actf;
-		if (!bp)
+		bp = BUFQ_FIRST(&xdcsc->sc_wq);
+		if (bp == NULL)
 			panic("xdc_startbuf bp");
-		wq = bp->b_actf;
-		if (wq)
-			wq->b_actb = bp->b_actb;
-		else
-			xdcsc->sc_wq.b_actb = bp->b_actb;
-		*bp->b_actb = wq;
+		BUFQ_REMOVE(&xdcsc->sc_wq, bp);
 		xdsc = xdcsc->sc_drives[DISKUNIT(bp->b_dev)];
 	}
 	partno = DISKPART(bp->b_dev);
@@ -1509,11 +1581,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 		printf("%s: warning: cannot load DMA map\n",
 			xdcsc->sc_dev.dv_xname);
 		XDC_FREE(xdcsc, rqno);
-		wq = &xdcsc->sc_wq;	/* put at end of queue */
-		bp->b_actf = 0;
-		bp->b_actb = wq->b_actb;
-		*wq->b_actb = bp;
-		wq->b_actb = &bp->b_actf;
+		BUFQ_INSERT_TAIL(&xdcsc->sc_wq, bp);
 		return (XD_ERR_FAIL);	/* XXX: need some sort of
 					 * call-back scheme here? */
 	}
@@ -1599,7 +1667,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 			return XD_ERR_AOK;	/* success */
 		case XD_SUB_WAIT:
 			while (iorq->iopb->done == 0) {
-				sleep(iorq, PRIBIO);
+				(void) tsleep(iorq, PRIBIO, "xdciorq", 0);
 			}
 			return (iorq->errno);
 		case XD_SUB_POLL:
@@ -1631,7 +1699,7 @@ xdc_submit_iorq(xdcsc, iorqno, type)
 		return (XD_ERR_AOK);	/* success */
 	case XD_SUB_WAIT:
 		while (iorq->iopb->done == 0) {
-			sleep(iorq, PRIBIO);
+			(void) tsleep(iorq, PRIBIO, "xdciorq", 0);
 		}
 		return (iorq->errno);
 	case XD_SUB_POLL:
@@ -1719,7 +1787,7 @@ xdc_piodriver(xdcsc, iorqno, freeone)
 	/* now that we've drained everything, start up any bufs that have
 	 * queued */
 
-	while (xdcsc->nfree > 0 && xdcsc->sc_wq.b_actf)
+	while (xdcsc->nfree > 0 && BUFQ_FIRST(&xdcsc->sc_wq) != NULL)
 		if (xdc_startbuf(xdcsc, NULL, NULL) != XD_ERR_AOK)
 			break;
 
@@ -2101,7 +2169,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 	int     errno = iorq->errno;
 	int     erract = errno & XD_ERA_MASK;
 	int     oldmode, advance;
-#ifdef sparc
+#ifdef __sparc__
 	int i;
 #endif
 
@@ -2121,7 +2189,7 @@ xdc_error(xdcsc, iorq, iopb, rqno, comm)
 	    (iorq->mode & XD_MODE_B144) == 0) {
 		advance = iorq->sectcnt - iopb->sectcnt;
 		XDC_ADVANCE(iorq, advance);
-#ifdef sparc
+#ifdef __sparc__
 		if ((i = isbad(&iorq->xd->dkb, iorq->blockno / iorq->xd->sectpercyl,
 			    (iorq->blockno / iorq->xd->nsect) % iorq->xd->nhead,
 			    iorq->blockno % iorq->xd->nsect)) != -1) {
@@ -2250,7 +2318,7 @@ xdc_tick(arg)
 
 	/* until next time */
 
-	timeout(xdc_tick, xdcsc, XDC_TICKCNT);
+	callout_reset(&xdcsc->sc_tick_ch, XDC_TICKCNT, xdc_tick, xdcsc);
 }
 
 /*
@@ -2354,20 +2422,13 @@ xdc_ioctlcmd(xd, dev, xio)
 
 	/* create DVMA buffer for request if needed */
 	if (xio->dlen) {
-		error = bus_dmamem_alloc(xdcsc->dmatag, xio->dlen, NBPG, 0,
-					 &seg, 1, &rseg, BUS_DMA_WAITOK);
-		if (error)
-			return (error);
-
-		dvmabuf = (caddr_t)seg.ds_addr;
-
-		error = bus_dmamem_map(xdcsc->dmatag, &seg, rseg, xio->dlen,
-					&buf,
-					BUS_DMA_WAITOK|BUS_DMA_COHERENT);
-		if (error) {
-			bus_dmamem_free(xdcsc->dmatag, &seg, rseg);
+		if ((error = xd_dmamem_alloc(xdcsc->dmatag, xdcsc->auxmap,
+					     &seg, &rseg,
+					     xio->dlen, &buf,
+					     (bus_addr_t *)&dvmabuf)) != 0) {
 			return (error);
 		}
+
 		if (xio->cmd == XDCMD_WR || xio->cmd == XDCMD_XWR) {
 			if ((error = copyin(xio->dptr, buf, xio->dlen)) != 0) {
 				bus_dmamem_unmap(xdcsc->dmatag, buf, xio->dlen);
@@ -2397,8 +2458,8 @@ xdc_ioctlcmd(xd, dev, xio)
 done:
 	splx(s);
 	if (dvmabuf) {
-		bus_dmamem_unmap(xdcsc->dmatag, buf, xio->dlen);
-		bus_dmamem_free(xdcsc->dmatag, &seg, rseg);
+		xd_dmamem_free(xdcsc->dmatag, xdcsc->auxmap, &seg, rseg,
+				xio->dlen, buf);
 	}
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.7 1999/06/06 19:14:49 ragge Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.7.4.1 2000/11/20 11:42:49 bouyer Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -75,7 +75,7 @@ dz_uba_match(parent, cf, aux)
 	struct uba_attach_args *ua = aux;
 	bus_space_tag_t	iot = ua->ua_iot;
 	bus_space_handle_t ioh = ua->ua_ioh;
-	register int n;
+	int n;
 
 	iot = iot; /* Silly GCC */
 	/* Reset controller to initialize, enable TX interrupts */
@@ -104,7 +104,6 @@ dz_uba_match(parent, cf, aux)
 
 	/* Register the TX interrupt handler */
 
-	ua->ua_ivec = dzxint;
 
        	return (1);
 }
@@ -114,8 +113,8 @@ dz_uba_attach(parent, self, aux)
         struct device *parent, *self;
         void *aux;
 {
-	struct	dz_softc *sc = (void *)self;
-	register struct uba_attach_args *ua = aux;
+	struct dz_softc *sc = (void *)self;
+	struct uba_attach_args *ua = aux;
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
@@ -131,8 +130,12 @@ dz_uba_attach(parent, self, aux)
 
 	sc->sc_type = DZ_DZ;
 
-	/* Now register the RX interrupt handler */
-	scb_vecalloc(ua->ua_cvec - 4, dzrint, self->dv_unit, SCB_ISTACK);
+	/* Now register the TX & RX interrupt handlers */
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
+		dzxint, sc, &sc->sc_tintrcnt);
+	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4,
+		dzrint, sc, &sc->sc_rintrcnt);
+	uba_reset_establish(dzreset, self);
 
-	dzattach(sc);
+	dzattach(sc, ua->ua_evcnt);
 }

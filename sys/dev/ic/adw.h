@@ -1,10 +1,10 @@
-/*      $NetBSD: adw.h,v 1.4 1999/09/11 15:34:45 dante Exp $        */
+/*      $NetBSD: adw.h,v 1.4.2.1 2000/11/20 11:40:07 bouyer Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. SCSI controllers
  * 
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Author: Baldassare Dante Profeta <dante@mclink.it>
@@ -44,13 +44,14 @@
 /******************************************************************************/
 
 typedef int (* ADW_ISR_CALLBACK) (ADW_SOFTC *, ADW_SCSI_REQ_Q *);
-typedef int (* ADW_SBRESET_CALLBACK) (ADW_SOFTC *);
+typedef void (* ADW_ASYNC_CALLBACK) (ADW_SOFTC *, u_int8_t);
+
 
 /*
  * per request scatter-gather element limit
  * We could have up to 256 SG lists.
  */
-#define ADW_MAX_SG_LIST		64
+#define ADW_MAX_SG_LIST		255
 
 /* 
  * Scatter-Gather Definitions per request.
@@ -63,16 +64,16 @@ typedef int (* ADW_SBRESET_CALLBACK) (ADW_SOFTC *);
 	((ADW_MAX_SG_LIST + (NO_OF_SG_PER_BLOCK - 1))/NO_OF_SG_PER_BLOCK)
 
 
-struct adw_ccb
-{
-	ADW_SG_BLOCK		sg_block[ADW_NUM_SG_BLOCK];
+struct adw_ccb {
 	ADW_SCSI_REQ_Q		scsiq;
+	ADW_SG_BLOCK		sg_block[ADW_NUM_SG_BLOCK];
 
 	struct scsipi_sense_data scsi_sense;
 
 	TAILQ_ENTRY(adw_ccb)	chain;
 	struct adw_ccb		*nexthash;
 	u_int32_t		hashkey;
+
 	struct scsipi_xfer	*xs;	/* the scsipi_xfer for this cmd */
 	int			flags;	/* see below */
 
@@ -89,14 +90,13 @@ typedef struct adw_ccb ADW_CCB;
 #define CCB_ALLOC	0x01
 #define CCB_ABORTING	0x02
 #define CCB_ABORTED	0x04
-#define	CCB_WATCHDOG	0x10
 
 
-#define ADW_MAX_CCB	16
+#define ADW_MAX_CCB	63	/* Max. number commands per device (63) */
 
-struct adw_control
-{
-	ADW_CCB	ccbs[ADW_MAX_CCB];	/* all our control blocks */
+struct adw_control {
+	ADW_CCB		ccbs[ADW_MAX_CCB];	/* all our control blocks */
+	ADW_CARRIER	*carriers;		/* all our carriers */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.2 1999/10/15 06:42:39 haya Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.2.2.1 2000/11/20 11:42:30 bouyer Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -50,6 +50,10 @@
 #define CB_SOCKET_FORCE 0x0c	/* offset of cardbus socket force event */
 #define CB_SOCKET_CTRL  0x10	/* offset of cardbus socket control reg */
 
+#define PCCBB_SOCKEVENT_BITS "\020\001CSTS\002CD1\003CD2\004PWR"
+#define PCCBB_SOCKSTATE_BITS "\020\001CSTS\002CD1\003CD3\004PWR" \
+          "\00516BIT\006CB\007CINT\010NOTA\011DLOST\012BADVCC" \
+          "\0135v\0143v\015Xv\016Yv\0355vS\0363vS\037XvS\040YvS"
 
 /* CardBus latency timer, Subordinate bus no, CardBus bus no and PCI bus no */
 #define PCI_CB_LSCP_REG  0x18
@@ -71,6 +75,7 @@
 
 
 /* PCI_BCR_INTR bits for generic PCI-CardBus bridge */
+#define CB_BCR_RESET_ENABLE     0x00400000
 #define CB_BCR_INTR_IREQ_ENABLE 0x00800000
 #define CB_BCR_PREFETCH_MEMWIN0 0x01000000
 #define CB_BCR_PREFETCH_MEMWIN1 0x02000000
@@ -101,7 +106,7 @@
 #define PCI12XX_CBCTRL_INTR_DET 0x0100 /* functional interrupt detect */
 
 
-/* PCI_BCR_INTR additional bit for RF5C46[567] */
+/* PCI_BCR_INTR additional bit for Rx5C46[567] */
 #define CB_BCRI_RL_3E0_ENA 0x08000000
 #define CB_BCRI_RL_3E2_ENA 0x10000000
 

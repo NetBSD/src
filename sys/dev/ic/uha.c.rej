@@ -1,0 +1,167 @@
+void
+uha_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
+{
+	struct scsipi_xfer *xs;
+	struct scsipi_periph *periph;
+	struct uha_softc *sc = (void *)chan->chan_adapter->adapt_dev;
+	bus_dma_tag_t dmat = sc->sc_dmat;
+	struct uha_mscp *mscp;
+	struct uha_dma_seg *sg;
+	int error, seg, flags, s;
+
+
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		xs = arg;
+		periph = xs->xs_periph;
+		flags = xs->xs_control;
+
+		SC_DEBUG(periph, SCSIPI_DB2, ("uha_scsipi_request\n"));
+
+		/* Get an MSCP to use. */
+		mscp = uha_get_mscp(sc);
+#ifdef DIAGNOSTIC
+		/*
+		 * This should never happen as we track the resources
+		 * in the mid-layer.
+		 */
+		if (mscp == NULL) {
+			scsipi_printaddr(periph);
+			printf("unable to allocate mscp\n");
+			panic("uha_scsipi_request");
+		}
+#endif
+
+		mscp->xs = xs;
+		mscp->timeout = xs->timeout;
+
+		/*
+		 * Put all the arguments for the xfer in the mscp
+		 */
+		if (flags & XS_CTL_RESET) {
+			mscp->opcode = UHA_SDR;
+			mscp->ca = 0x01;
+		} else {
+			mscp->opcode = UHA_TSP;
+			/* XXX Not for tapes. */
+			mscp->ca = 0x01;
+			bcopy(xs->cmd, &mscp->scsi_cmd, mscp->scsi_cmd_length);
+		}
+		mscp->xdir = UHA_SDET;
+		mscp->dcn = 0x00;
+		mscp->chan = 0x00;
+		mscp->target = periph->periph_target;
+		mscp->lun = periph->periph_lun;
+		mscp->scsi_cmd_length = xs->cmdlen;
+		mscp->sense_ptr = sc->sc_dmamap_mscp->dm_segs[0].ds_addr +
+		    UHA_MSCP_OFF(mscp) + offsetof(struct uha_mscp, mscp_sense);
+		mscp->req_sense_length = sizeof(mscp->mscp_sense);
+		mscp->host_stat = 0x00;
+		mscp->target_stat = 0x00;
+
+		if (xs->datalen) {
+			sg = mscp->uha_dma;
+			seg = 0;
+#ifdef	TFS
+			if (flags & SCSI_DATA_UIO) {
+				error = bus_dmamap_load_uio(dmat,
+				    mscp->dmamap_xfer, (struct uio *)xs->data,
+				    BUS_DMA_NOWAIT);
+			} else
+#endif /*TFS */
+			{
+				error = bus_dmamap_load(dmat,
+				    mscp->dmamap_xfer, xs->data, xs->datalen,
+				    NULL, BUS_DMA_NOWAIT);
+			}
+
+			switch (error) {
+			case 0:
+				break;
+
+			case ENOMEM:
+			case EAGAIN:
+				xs->error = XS_RESOURCE_SHORTAGE;
+				goto out_bad;
+
+			default:
+				xs->error = XS_DRIVER_STUFFUP;
+				printf(": error 0 loading DMA map\n",
+				    sc->sc_dev.dv_xname, error);
+ out_bad:
+				uha_free_mscp(sc, mscp);
+				scsipi_done(xs);
+				return;
+			}
+
+			bus_dmamap_sync(dmat, mscp->dmamap_xfer, 0,
+			    mscp->dmamap_xfer->dm_mapsize,
+			    (flags & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
+			    BUS_DMASYNC_PREWRITE);
+
+			/*
+			 * Load the hardware scatter/gather map with the
+			 * contents of the DMA map.
+			 */
+			for (seg = 0;
+			     seg < mscp->dmamap_xfer->dm_nsegs; seg++) {
+				mscp->uha_dma[seg].seg_addr =
+				    mscp->dmamap_xfer->dm_segs[seg].ds_addr;
+				mscp->uha_dma[seg].seg_len =
+				    mscp->dmamap_xfer->dm_segs[seg].ds_len;
+			}
+
+			mscp->data_addr =
+			    sc->sc_dmamap_mscp->dm_segs[0].ds_addr +
+			    UHA_MSCP_OFF(mscp) + offsetof(struct uha_mscp,
+			    uha_dma);
+			mscp->data_length = xs->datalen;
+			mscp->sgth = 0x01;
+			mscp->sg_num = seg;
+		} else {		/* No data xfer, use non S/G values */
+			mscp->data_addr = (physaddr)0;
+			mscp->data_length = 0;
+			mscp->sgth = 0x00;
+			mscp->sg_num = 0;
+		}
+		mscp->link_id = 0;
+		mscp->link_addr = (physaddr)0;
+
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_mscp,
+		    UHA_MSCP_OFF(mscp), sizeof(struct uha_mscp),
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		s = splbio();
+		(sc->start_mbox)(sc, mscp);
+		splx(s);
+
+		if ((flags & XS_CTL_POLL) == 0)
+			return;
+
+		/*
+		 * If we can't use interrupts, poll on completion
+		 */
+		if ((sc->poll)(sc, xs, mscp->timeout)) {
+			uha_timeout(mscp);
+			if ((sc->poll)(sc, xs, mscp->timeout))
+				uha_timeout(mscp);
+		}
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		/*
+		 * We can't really do this (the UltraStor controllers
+		 * have their own config).
+		 *
+		 * XXX How do we query the config?
+		 */
+		return;
+	}
+}

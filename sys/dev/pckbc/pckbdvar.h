@@ -1,3 +1,5 @@
-/* $NetBSD: pckbdvar.h,v 1.1 1998/03/22 15:41:28 drochner Exp $ */
+/* $NetBSD: pckbdvar.h,v 1.1.14.1 2000/11/20 11:42:40 bouyer Exp $ */
 
-int pckbd_cnattach __P((pckbc_tag_t, int));
+int	pckbd_cnattach __P((pckbc_tag_t, int));
+void	pckbd_hookup_bell __P((void (*fn)(void *, u_int, u_int, u_int, int),
+	    void *));

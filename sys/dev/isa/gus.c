@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.67 1999/03/30 16:40:47 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.67.8.1 2000/11/20 11:41:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
@@ -185,10 +186,14 @@ struct gus_softc {
 	bus_space_handle_t sc_ioh3;	/* ICS2101 handle */
 	bus_space_handle_t sc_ioh4;	/* MIDI handle */
 
+	struct callout sc_dmaout_ch;
+
 	int sc_iobase;			/* I/O base address */
 	int sc_irq;			/* IRQ used */
 	int sc_playdrq;			/* DMA channel for play */
+	bus_size_t sc_play_maxsize;	/* DMA size for play */
 	int sc_recdrq;			/* DMA channel for recording */
+	bus_size_t sc_req_maxsize;	/* DMA size for recording */
 
 	int sc_flags;			/* Various flags about the GUS */
 #define GUS_MIXER_INSTALLED	0x01	/* An ICS mixer is installed */
@@ -805,6 +810,8 @@ gusattach(parent, self, aux)
  	int		iobase, i;
 	unsigned char	c,d,m;
 
+	callout_init(&sc->sc_dmaout_ch);
+
 	sc->sc_iot = iot = ia->ia_iot;
 	sc->sc_ic = ia->ia_ic;
 	iobase = ia->ia_iobase;
@@ -911,6 +918,27 @@ gusattach(parent, self, aux)
 	sc->sc_mixcontrol =
 		(m | GUSMASK_LATCHES) & ~(GUSMASK_LINE_OUT|GUSMASK_LINE_IN);
 
+	if (sc->sc_playdrq != -1) {
+		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_playdrq);
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
+		    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			       sc->sc_dev.dv_xname, sc->sc_playdrq);
+			return;
+		}
+	}
+	if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_playdrq) {
+		sc->sc_req_maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_recdrq);
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
+		    sc->sc_req_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			       sc->sc_dev.dv_xname, sc->sc_recdrq);
+			return;
+		}
+	}
+
 	/* XXX WILL THIS ALWAYS WORK THE WAY THEY'RE OVERLAYED?! */
 	sc->sc_codec.sc_ic = sc->sc_ic;
 
@@ -920,23 +948,6 @@ gusattach(parent, self, aux)
 	}
 	if (sc->sc_revision >= 10)
 		gus_init_cs4231(sc);
-
-	if (sc->sc_playdrq != -1) {
-		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
-		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			       sc->sc_dev.dv_xname, sc->sc_playdrq);
-			return;
-		}
-	}
-	if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_playdrq) {
-		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
-		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			       sc->sc_dev.dv_xname, sc->sc_recdrq);
-			return;
-		}
-	}
 
  	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
  	/*
@@ -1453,7 +1464,7 @@ gus_dmaout_intr(sc)
 
 	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
  	if (bus_space_read_1(iot, ioh2, GUS_DATA_HIGH) & GUSMASK_DMA_IRQPEND) {
-	    untimeout(gus_dmaout_timeout, sc);
+	    callout_stop(&sc->sc_dmaout_ch);
 	    gus_dmaout_dointr(sc);
 	    return 1;
 	}
@@ -2004,8 +2015,7 @@ gusdmaout(sc, flags, gusaddr, buffaddr, length)
 	/*
 	 * XXX If we don't finish in one second, give up...
 	 */
-	untimeout(gus_dmaout_timeout, sc); /* flush old one, if there is one */
-	timeout(gus_dmaout_timeout, sc, hz);
+	callout_reset(&sc->sc_dmaout_ch, hz, gus_dmaout_timeout, sc);
 }
 
 /*
@@ -2889,7 +2899,9 @@ gus_init_cs4231(sc)
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
 		sc->sc_codec.sc_ad1848.parent = sc;
 		sc->sc_codec.sc_playdrq = sc->sc_recdrq;
+		sc->sc_codec.sc_play_maxsize = sc->sc_req_maxsize;
 		sc->sc_codec.sc_recdrq = sc->sc_playdrq;
+		sc->sc_codec.sc_rec_maxsize = sc->sc_play_maxsize;
 		gus_hw_if = gusmax_hw_if;
 		/* enable line in and mic in the GUS mixer; the codec chip
 		   will do the real mixing for them. */
@@ -3072,7 +3084,7 @@ gus_halt_out_dma(addr)
   	SELECT_GUS_REG(iot, ioh2, GUSREG_DMA_CONTROL);
  	bus_space_write_1(iot, ioh2, GUS_DATA_HIGH, 0);
 
-	untimeout(gus_dmaout_timeout, sc);
+	callout_stop(&sc->sc_dmaout_ch);
  	isa_dmaabort(sc->sc_ic, sc->sc_playdrq);
 	sc->sc_flags &= ~(GUS_DMAOUT_ACTIVE|GUS_LOCKED);
 	sc->sc_dmaoutintr = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.11 1999/02/17 21:44:55 mycroft Exp $	*/
+/*	$NetBSD: interwave.c,v 1.11.8.1 2000/11/20 11:40:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -1640,16 +1640,24 @@ iw_round_buffersize(addr, direction, size)
 	int	direction;
 	size_t	size;
 {
-	if (size > MAX_ISADMA)
-		size = MAX_ISADMA;
+	struct iw_softc *sc = addr;
+	bus_size_t maxsize;
+
+	if (direction == AUMODE_PLAY)
+		maxsize = sc->sc_play_maxsize;
+	else
+		maxsize = sc->sc_rec_maxsize;
+
+	if (size > maxsize)
+		size = maxsize;
 	return (size);
 }
 
-int
+paddr_t
 iw_mappage(addr, mem, off, prot)
 	void	*addr;
 	void	*mem;
-	int	off;
+	off_t	off;
 	int	prot;
 {
 	return isa_mappage(mem, off, prot);

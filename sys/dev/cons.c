@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.33 1999/08/04 14:40:54 leo Exp $	*/
+/*	$NetBSD: cons.c,v 1.33.2.1 2000/11/20 11:39:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,7 @@ cnopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	dev_t cndev;
 
 	if (cn_tab == NULL)
 		return (0);
@@ -74,8 +75,8 @@ cnopen(dev, flag, mode, p)
 	 * later.  This follows normal device semantics; they always get
 	 * open() calls.
 	 */
-	dev = cn_tab->cn_dev;
-	if (dev == NODEV) {
+	cndev = cn_tab->cn_dev;
+	if (cndev == NODEV) {
 		/*
 		 * This is most likely an error in the console attach
 		 * code. Panicing looks better than jumping into nowhere
@@ -83,12 +84,21 @@ cnopen(dev, flag, mode, p)
 		 */
 		panic("cnopen: cn_tab->cn_dev == NODEV\n");
 	}
+	if (dev == cndev) {
+		/*
+		 * This causes cnopen() to be called recursively, which
+		 * is generally a bad thing.  It is often caused when
+		 * dev == 0 and cn_dev has not been set, but was probably
+		 * initialised to 0.
+		 */
+		panic("cnopen: cn_tab->cn_dev == dev\n");
+	}
 
 	if (cn_devvp == NULLVP) {
 		/* try to get a reference on its vnode, but fail silently */
-		cdevvp(dev, &cn_devvp);
+		cdevvp(cndev, &cn_devvp);
 	}
-	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
+	return ((*cdevsw[major(cndev)].d_open)(cndev, flag, mode, p));
 }
  
 int
@@ -237,9 +247,57 @@ cngetc()
 	return ((*cn_tab->cn_getc)(cn_tab->cn_dev));
 }
 
+int
+cngetsn(cp, size)
+	char *cp;
+	int size;
+{
+	char *lp;
+	int c, len;
+
+	cnpollc(1);
+
+	lp = cp;
+	len = 0;
+	for (;;) {
+		c = cngetc();
+		switch (c) {
+		case '\n':
+		case '\r':
+			printf("\n");
+			*lp++ = '\0';
+			cnpollc(0);
+			return (len);
+		case '\b':
+		case '\177':
+		case '#':
+			if (len) {
+				--len;
+				--lp;
+				printf("\b \b");
+			}
+			continue;
+		case '@':
+		case 'u'&037:
+			len = 0;
+			lp = cp;
+			printf("\n");
+			continue;
+		default:
+			if (len + 1 >= size || c < ' ') {
+				printf("\007");
+				continue;
+			}
+			printf("%c", c);
+			++len;
+			*lp++ = c;
+		}
+	}
+}
+
 void
 cnputc(c)
-	register int c;
+	int c;
 {
 
 	if (cn_tab == NULL)
@@ -274,4 +332,14 @@ nullcnpollc(dev, on)
 	int on;
 {
 
+}
+
+void
+cnbell(pitch, period, volume)
+	u_int pitch, period, volume;
+{
+
+	if (cn_tab == NULL || cn_tab->cn_bell == NULL)
+		return;
+	(*cn_tab->cn_bell)(cn_tab->cn_dev, pitch, period, volume);
 }

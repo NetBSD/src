@@ -1,7 +1,7 @@
-/*	$NetBSD: pcmcom.c,v 1.4 1998/11/20 05:20:20 thorpej Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.4.10.1 2000/11/20 11:42:48 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -104,20 +104,15 @@ struct cfattach pcmcom_ca = {
 	    pcmcom_detach, pcmcom_activate
 };
 
-struct pcmcom_product {
-	u_int32_t	pp_vendor;		/* PCMCIA vendor ID */
-	u_int32_t	pp_product;		/* PCMCIA product ID */
-	int		pp_expfunc;		/* expected function number */
+const struct pcmcom_product {
+	struct pcmcia_product pp_product;
 	int		pp_nslaves;		/* number of slaves */
-	const char	*pp_name;		/* device name */
 } pcmcom_products[] = {
-	{ PCMCIA_VENDOR_SOCKET,		PCMCIA_PRODUCT_SOCKET_DUAL_RS232,
-	  0,				2,
-	  PCMCIA_STR_SOCKET_DUAL_RS232 },
+	{ { PCMCIA_STR_SOCKET_DUAL_RS232,	PCMCIA_VENDOR_SOCKET,
+	    PCMCIA_PRODUCT_SOCKET_DUAL_RS232,	0 },
+	  2 },
 
-	{ 0,				0,
-	  0,				0,
-	  NULL },
+	{ { NULL } }
 };
 
 int	pcmcom_print __P((void *, const char *));
@@ -132,23 +127,6 @@ void	pcmcom_disable __P((struct pcmcom_softc *));
 
 int	pcmcom_intr __P((void *));
 
-struct pcmcom_product *pcmcom_lookup __P((struct pcmcia_attach_args *));
-
-struct pcmcom_product *
-pcmcom_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	struct pcmcom_product *pp;
-
-	for (pp = pcmcom_products; pp->pp_name != NULL; pp++)
-		if (pa->manufacturer == pp->pp_vendor &&
-		    pa->product == pp->pp_product &&
-		    pa->pf->number == pp->pp_expfunc)
-			return (pp);
-
-	return (NULL);
-}
-
 int
 pcmcom_match(parent, cf, aux)
 	struct device *parent;
@@ -157,7 +135,9 @@ pcmcom_match(parent, cf, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (pcmcom_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa,
+	    (const struct pcmcia_product *)pcmcom_products,
+	    sizeof pcmcom_products[0], NULL) != NULL)
 		return (10);	/* beat com_pcmcia */
 	return (0);
 }
@@ -170,19 +150,21 @@ pcmcom_attach(parent, self, aux)
 	struct pcmcom_softc *sc = (struct pcmcom_softc *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	struct pcmcom_product *pp;
+	const struct pcmcom_product *pp;
 	size_t size;
 	int i;
 
 	sc->sc_pf = pa->pf;
 
-	pp = pcmcom_lookup(pa);
+	pp = (const struct pcmcom_product *)pcmcia_product_lookup(pa,
+            (const struct pcmcia_product *)pcmcom_products,
+            sizeof pcmcom_products[0], NULL);
 	if (pp == NULL) {
 		printf("\n");
 		panic("pcmcom_attach: impossible");
 	}
 
-	printf(": %s\n", pp->pp_name);
+	printf(": %s\n", pp->pp_product.pp_name);
 
 	/* Allocate the slave info. */
 	sc->sc_nslaves = pp->pp_nslaves;
@@ -306,7 +288,7 @@ pcmcom_detach(self, flags)
 			continue;
 
 		/* Detach the child. */
-		if ((error = config_detach(self, flags)) != 0)
+		if ((error = config_detach(psi->psi_child, flags)) != 0)
 			return (error);
 		psi->psi_child = NULL;
 

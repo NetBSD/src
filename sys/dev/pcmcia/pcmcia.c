@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.14 1999/10/15 06:07:31 haya Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.14.2.1 2000/11/20 11:42:46 bouyer Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -42,6 +42,9 @@
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>
 #include <dev/pcmcia/pcmciavar.h>
+#ifdef IT8368E_LEGACY_MODE /* XXX -uch */
+#include <arch/hpcmips/dev/it8368var.h>
+#endif
 
 #include "locators.h"
 
@@ -206,19 +209,8 @@ pcmcia_card_attach(dev)
 		paa.pf = pf;
 
 		if ((pf->child = config_found_sm(&sc->dev, &paa, pcmcia_print,
-		    pcmcia_submatch)) != NULL) {
+		    pcmcia_submatch)) != NULL)
 			attached++;
-
-			DPRINTF(("%s: function %d CCR at %d "
-			     "offset %lx: %x %x %x %x, %x %x %x %x, %x\n",
-			     sc->dev.dv_xname, pf->number,
-			     pf->pf_ccr_window, pf->pf_ccr_offset,
-			     pcmcia_ccr_read(pf, 0x00),
-			pcmcia_ccr_read(pf, 0x02), pcmcia_ccr_read(pf, 0x04),
-			pcmcia_ccr_read(pf, 0x06), pcmcia_ccr_read(pf, 0x0A),
-			pcmcia_ccr_read(pf, 0x0C), pcmcia_ccr_read(pf, 0x0E),
-			pcmcia_ccr_read(pf, 0x10), pcmcia_ccr_read(pf, 0x12)));
-		}
 	}
 
 	return (attached ? 0 : 1);
@@ -301,24 +293,71 @@ pcmcia_print(arg, pnp)
 	struct pcmcia_attach_args *pa = arg;
 	struct pcmcia_softc *sc = pa->pf->sc;
 	struct pcmcia_card *card = &sc->card;
-	int i;
+	char devinfo[256];
 
 	if (pnp) {
-		for (i = 0; i < 4; i++) {
-			if (card->cis1_info[i] == NULL)
-				break;
-			if (i)
-				printf(", ");
-			printf("%s", card->cis1_info[i]);
-		}
-		if (i)
-			printf(" ");
-		printf("(manufacturer 0x%x, product 0x%x)", card->manufacturer,
-		       card->product);
+		pcmcia_devinfo(card, 1, devinfo, sizeof devinfo);
+		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" function %d", pa->pf->number);
 
 	return (UNCONF);
+}
+
+void
+pcmcia_devinfo(card, showhex, cp, cplen)
+	struct pcmcia_card *card;
+	int showhex;
+	char *cp;
+	int cplen;
+{
+	int i, n;
+
+	for (i = 0; i < 4 && card->cis1_info[i] != NULL && cplen > 0; i++) {
+		n = snprintf(cp, cplen, "%s%s", i ? ", " : "",
+		        card->cis1_info[i]);
+		cp += n;
+		cplen -= n;
+	}
+	if (showhex && cplen > 0)
+		snprintf(cp, cplen, "%s(manufacturer 0x%04x, product 0x%04x)",
+		    i ? " " : "", card->manufacturer, card->product);
+}
+
+const struct pcmcia_product *
+pcmcia_product_lookup(pa, tab, ent_size, matchfn)
+	struct pcmcia_attach_args *pa;
+	const struct pcmcia_product *tab;
+	size_t ent_size;
+	pcmcia_product_match_fn matchfn;
+{
+        const struct pcmcia_product *ent;
+	int matches;
+
+#ifdef DIAGNOSTIC
+	if (sizeof *ent > ent_size)
+		panic("pcmcia_product_lookup: bogus ent_size %ld", 
+		      (long) ent_size);
+#endif
+
+        for (ent = tab;
+	    ent->pp_name != NULL;
+	    ent = (const struct pcmcia_product *)
+	      ((const char *)ent + ent_size)) {
+
+		/* see if it matches vendor/product/function */
+		matches = (pa->manufacturer == ent->pp_vendor) &&
+		    (pa->product == ent->pp_product) &&
+		    (pa->pf->number == ent->pp_expfunc);
+
+		/* if a separate match function is given, let it override */
+		if (matchfn != NULL)
+			matches = (*matchfn)(pa, ent, matches);
+
+		if (matches)
+                        return (ent);
+        }
+        return (NULL);
 }
 
 int 
@@ -486,7 +525,8 @@ pcmcia_function_enable(pf)
 			printf("%s: function %d CCR at %d offset %lx: "
 			       "%x %x %x %x, %x %x %x %x, %x\n",
 			       tmp->sc->dev.dv_xname, tmp->number,
-			       tmp->pf_ccr_window, tmp->pf_ccr_offset,
+			       tmp->pf_ccr_window,
+			       (unsigned long) tmp->pf_ccr_offset,
 			       pcmcia_ccr_read(tmp, 0x00),
 			       pcmcia_ccr_read(tmp, 0x02),
 			       pcmcia_ccr_read(tmp, 0x04),
@@ -503,6 +543,11 @@ pcmcia_function_enable(pf)
 #endif
 
 	pf->pf_flags |= PFF_ENABLED;
+
+#ifdef IT8368E_LEGACY_MODE
+	/* return to I/O mode */
+	it8368_mode(pf, IT8368_IO_MODE, IT8368_WIDTH_16);
+#endif
 	return (0);
 
  bad:
@@ -770,10 +815,8 @@ pcmcia_intr_disestablish(pf, ih)
 		 */
 
 		ihcnt = 0;
-		s = 0;		/* this is only here to keep the compipler
-				   happy */
-		hiipl = 0;	/* this is only here to keep the compipler
-				   happy */
+		s = 0;		/* avoid compiler warning */
+		hiipl = 0;	/* avoid compiler warning */
 
 		for (pf2 = pf->sc->card.pf_head.sqh_first; pf2 != NULL;
 		     pf2 = pf2->pf_list.sqe_next) {
@@ -792,12 +835,14 @@ pcmcia_intr_disestablish(pf, ih)
 		}
 
 		/*
-		 * if the ih being removed is lower priority than the lowest
+		 * If the ih being removed is lower priority than the lowest
 		 * priority remaining interrupt, up the priority.
 		 */
 
-		/* ihcnt is the number of interrupt handlers *not* including
-		   the one about to be removed. */
+		/* 
+		 * ihcnt is the number of interrupt handlers *not* including
+		 * the one about to be removed. 
+		 */
 
 		if (ihcnt == 0) {
 			int reg;

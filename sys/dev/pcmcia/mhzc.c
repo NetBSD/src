@@ -1,7 +1,7 @@
-/*	$NetBSD: mhzc.c,v 1.2.2.1 1999/10/20 22:38:06 thorpej Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.2.2.2 2000/11/20 11:42:46 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -89,6 +89,9 @@
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
+
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>
 
@@ -128,6 +131,7 @@ struct mhzc_softc {
 #define	MHZC_ETHERNET_MAPPED	0x02
 #define	MHZC_MODEM_ENABLED	0x04
 #define	MHZC_ETHERNET_ENABLED	0x08
+#define	MHZC_IOSPACE_ALLOCED	0x10
 
 int	mhzc_match __P((struct device *, struct cfdata *, void *));
 void	mhzc_attach __P((struct device *, struct device *, void *));
@@ -142,11 +146,8 @@ struct cfattach mhzc_ca = {
 int	mhzc_em3336_enaddr __P((struct mhzc_softc *, u_int8_t *));
 int	mhzc_em3336_enable __P((struct mhzc_softc *));
 
-struct mhzc_product {
-	u_int32_t	mp_vendor;	/* PCMCIA vendor ID */
-	u_int32_t	mp_product;	/* PCMCIA product ID */
-	int		mp_expfunc;	/* expected function number */
-	const char	*mp_name;	/* device name */
+const struct mhzc_product {
+	struct pcmcia_product mp_product;
 
 	/* Get the Ethernet address for this card. */
 	int		(*mp_enaddr) __P((struct mhzc_softc *, u_int8_t *));
@@ -154,8 +155,8 @@ struct mhzc_product {
 	/* Perform any special `enable' magic. */
 	int		(*mp_enable) __P((struct mhzc_softc *));
 } mhzc_products[] = {
-	{ PCMCIA_VENDOR_MEGAHERTZ,	PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336,
-	  0,				PCMCIA_STR_MEGAHERTZ_XJEM3336,
+	{ { PCMCIA_STR_MEGAHERTZ_XJEM3336,	PCMCIA_VENDOR_MEGAHERTZ,
+	    PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336,	0 },
 	  mhzc_em3336_enaddr,		mhzc_em3336_enable },
 
 	/*
@@ -164,9 +165,7 @@ struct mhzc_product {
 	 * most of them work more or less the same way.
 	 */
 
-	{ 0,				0,
-	  0,				NULL,
-	  NULL,				NULL },
+	{ { NULL } }
 };
 
 int	mhzc_print __P((void *, const char *));
@@ -179,23 +178,6 @@ void	mhzc_disable __P((struct mhzc_softc *, int));
 
 int	mhzc_intr __P((void *));
 
-const struct mhzc_product *mhzc_lookup __P((const struct pcmcia_attach_args *));
-
-const struct mhzc_product *
-mhzc_lookup(pa)
-	const struct pcmcia_attach_args *pa;
-{
-	const struct mhzc_product *mp;
-
-	for (mp = mhzc_products; mp->mp_name != NULL; mp++) {
-		if (pa->manufacturer == mp->mp_vendor &&
-		    pa->product == mp->mp_product &&
-		    pa->pf->number == mp->mp_expfunc)
-			return (mp);
-	}
-	return (NULL);
-}
-
 int
 mhzc_match(parent, match, aux)
 	struct device *parent;
@@ -204,7 +186,9 @@ mhzc_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (mhzc_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa,
+	    (const struct pcmcia_product *)mhzc_products,
+	    sizeof mhzc_products[0], NULL) != NULL)
 		return (10);		/* beat `com' */
 
 	return (0);
@@ -221,13 +205,15 @@ mhzc_attach(parent, self, aux)
 
 	sc->sc_pf = pa->pf;
 
-	sc->sc_product = mhzc_lookup(pa);
+	sc->sc_product = (const struct mhzc_product *)pcmcia_product_lookup(pa,
+            (const struct pcmcia_product *)mhzc_products,
+            sizeof mhzc_products[0], NULL);
 	if (sc->sc_product == NULL) {
 		printf("\n");
 		panic("mhzc_attach: impossible");
 	}
 
-	printf(": %s\n", sc->sc_product->mp_name);
+	printf(": %s\n", sc->sc_product->mp_product.pp_name);
 
 	/*
 	 * The address decoders on these cards are wacky.  The configuration
@@ -266,15 +252,16 @@ mhzc_attach(parent, self, aux)
 	if (mhzc_alloc_ethernet(sc) == 0) {
 		printf("%s: unable to allocate space for Ethernet portion\n",
 		    sc->sc_dev.dv_xname);
-		return;
+		goto alloc_ethernet_failed;
 	}
 
 	/* Enable the card. */
 	pcmcia_function_init(pa->pf, cfe);
 	if (pcmcia_function_enable(pa->pf)) {
 		printf(": function enable failed\n");
-		return;
+		goto enable_failed;
 	}
+	sc->sc_flags |= MHZC_IOSPACE_ALLOCED;
 
 	if (sc->sc_product->mp_enable != NULL)
 		(*sc->sc_product->mp_enable)(sc);
@@ -283,6 +270,15 @@ mhzc_attach(parent, self, aux)
 	sc->sc_ethernet = config_found(&sc->sc_dev, "sm", mhzc_print);
 
 	pcmcia_function_disable(pa->pf);
+	return;
+
+ enable_failed:
+	/* Free the Ethernet's I/O space. */
+	pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
+
+ alloc_ethernet_failed:
+	/* Free the Modem's I/O space. */
+	pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
 }
 
 int
@@ -333,11 +329,6 @@ mhzc_alloc_ethernet(sc)
 		}
 	}
 
-	/*
-	 * Weren't able to allocate space for the Ethernet, so we
-	 * free the Modem's I/O space.
-	 */
-	pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
 	return (0);
 }
 
@@ -366,12 +357,16 @@ mhzc_detach(self, flags)
 		rv = config_detach(sc->sc_ethernet, flags);
 		if (rv != 0)
 			return (rv);
+		sc->sc_ethernet = NULL;
 	}
 
 	if (sc->sc_modem != NULL) {
 		rv = config_detach(sc->sc_modem, flags);
 		if (rv != 0)
 			return (rv);
+#ifdef not_necessary
+		sc->sc_modem = NULL;
+#endif
 	}
 
 	/* Unmap our i/o windows. */
@@ -381,8 +376,10 @@ mhzc_detach(self, flags)
 		pcmcia_io_unmap(sc->sc_pf, sc->sc_ethernet_io_window);
 
 	/* Free our i/o spaces. */
-	pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
-	pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
+	if (sc->sc_flags & MHZC_IOSPACE_ALLOCED) {
+		pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
+		pcmcia_io_free(sc->sc_pf, &sc->sc_ethernet_pcioh);
+	}
 
 	return (0);
 }
@@ -662,6 +659,7 @@ mhzc_em3336_ascii_enaddr(cisstr, myla)
 #if NCOM_MHZC > 0
 int	com_mhzc_match __P((struct device *, struct cfdata *, void *));
 void	com_mhzc_attach __P((struct device *, struct device *, void *));
+int	com_mhzc_detach __P((struct device *, int));
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
 struct cfattach com_mhzc_ca = {
@@ -747,12 +745,11 @@ com_mhzc_disable(sc)
 #if NSM_MHZC > 0
 int	sm_mhzc_match __P((struct device *, struct cfdata *, void *));
 void	sm_mhzc_attach __P((struct device *, struct device *, void *));
-int	sm_mhzc_detach __P((struct device *, int));
 
 /* No mhzc-specific goo in the softc; it's all in the parent. */
 struct cfattach sm_mhzc_ca = {
 	sizeof(struct smc91cxx_softc), sm_mhzc_match, sm_mhzc_attach,
-	    sm_mhzc_detach, smc91cxx_activate
+	    smc91cxx_detach, smc91cxx_activate
 };
 
 int	sm_mhzc_enable __P((struct smc91cxx_softc *));
@@ -805,25 +802,6 @@ sm_mhzc_attach(parent, self, aux)
 
 	/* Perform generic initialization. */
 	smc91cxx_attach(sc, myla);
-}
-
-int
-sm_mhzc_detach(self, flags)
-	struct device *self;
-	int flags;
-{
-#ifdef notyet
-	struct smc91cxx_softc *sc = (void *)self;
-
-	/*
-	 * Our softc is about to go away, so drop our reference
-	 * to the ifnet.
-	 */
-	if_delref(sc->sc_ec.ec_if);
-	return (0);
-#else
-	return (EBUSY);
-#endif
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.32 1999/04/01 14:55:25 tsubai Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.32.8.1 2000/11/20 11:42:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -493,6 +493,8 @@ struct _tulip_softc_t {
     struct device tulip_dev;		/* base device */
     void *tulip_ih;			/* intrrupt vectoring */
     void *tulip_ats;			/* shutdown hook */
+    struct callout tulip_to_ch;		/* tulip_timeout_callback() */
+    struct callout tulip_fto_ch;	/* tulip_fasttimeout_callback() */
     bus_space_tag_t tulip_bustag;
     bus_space_handle_t tulip_bushandle;	/* CSR region handle */
     pci_chipset_tag_t tulip_pc;
@@ -533,7 +535,7 @@ struct _tulip_softc_t {
 #define	TULIP_INRESET		0x00000200
 #define	TULIP_NEEDRESET		0x00000400
 #define	TULIP_SQETEST		0x00000800
-#define	TULIP_xxxxxx0		0x00001000
+#define	TULIP_FULLDUPLEX	0x00001000
 #define	TULIP_xxxxxx1		0x00002000
 #define	TULIP_WANTTXSTART	0x00004000
 #define	TULIP_NEWTXTHRESH	0x00008000
@@ -913,7 +915,7 @@ static void tulip_softintr(void);
 #endif
 
 #if defined(__FreeBSD__)
-typedef void ifnet_ret_t;
+#define	ifnet_ret_t void
 typedef int ioctl_cmd_t;
 #if defined(TULIP_HDR_DATA)
 static tulip_softc_t *tulips[TULIP_MAX_DEVICES];
@@ -949,7 +951,7 @@ NETISR_SET(NETISR_DE, tulip_softintr);
 #endif
 
 #if defined(__bsdi__)
-typedef int ifnet_ret_t;
+#define	ifnet_ret_t int
 typedef u_long ioctl_cmd_t;
 extern struct cfdriver decd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) decd.cd_devs[unit])
@@ -977,7 +979,7 @@ arp_ifinit(
 #endif	/* __bsdi__ */
 
 #if defined(__NetBSD__)
-typedef void ifnet_ret_t;
+#define	ifnet_ret_t void
 typedef u_long ioctl_cmd_t;
 extern struct cfattach de_ca;
 extern struct cfdriver de_cd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.11 1998/07/21 17:36:07 drochner Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.11.14.1 2000/11/20 11:43:14 bouyer Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -43,7 +43,6 @@
 
 #include <dev/tc/if_levar.h>
 #include <dev/tc/tcvar.h>
-#include <machine/autoconf.h>
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/pmax/kn01.h>
 
@@ -73,6 +72,7 @@ void	le_pmax_attach __P((struct device *, struct device *, void *));
 struct cfattach le_pmax_ca = {
 	sizeof(struct le_softc), le_pmax_match, le_pmax_attach
 };
+extern struct cfdriver ibus_cd;
 
 int
 le_pmax_match(parent, match, aux)
@@ -82,12 +82,8 @@ le_pmax_match(parent, match, aux)
 {
   	struct ibus_attach_args *d = aux;
 
-#define	CFNAME(cf) ((cf)->dv_cfdata->cf_driver->cd_name)
-
-	if (strcmp(CFNAME(parent), "ibus") != 0)
+	if (parent->dv_cfdata->cf_driver != &ibus_cd)
 		return (0);
-
-#undef CFNAME
 
 	if (strcmp("lance", d->ia_name) != 0)
 		return (0);
@@ -99,16 +95,16 @@ le_pmax_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	register struct le_softc *lesc = (void *)self;
-	register struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	register u_char *cp;
-	register struct ibus_attach_args *ia = aux;
+	struct le_softc *lesc = (void *)self;
+	struct lance_softc *sc = &lesc->sc_am7990.lsc;
+	u_char *cp;
+	struct ibus_attach_args *ia = aux;
 
 	/*
 	 * It's on the baseboard, with a dedicated interrupt line.
 	 */
 	lesc->sc_r1 = (struct lereg1 *)(ia->ia_addr);
-/*XXX*/	sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(0x19000000);
+/*XXX*/	sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(KN01_SYS_LANCE_B_START);
 /*XXX*/	cp = (u_char *)(TC_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
 
 	sc->sc_copytodesc = le_dec_copytobuf_gap2;
@@ -119,8 +115,7 @@ le_pmax_attach(parent, self, aux)
 
 	dec_le_common_attach(&lesc->sc_am7990, cp);
 
-	/* XXX more thought about ia->ia_cookie */
-	ibus_intr_establish((void*)ia->ia_cookie, TC_IPL_NET,
+	ibus_intr_establish(parent, (void*)ia->ia_cookie, IPL_NET,
 			  am7990_intr, sc);
 }
 
@@ -136,11 +131,11 @@ le_dec_copytobuf_gap2(sc, fromv, boff, len)
 	struct lance_softc *sc;  
 	void *fromv;
 	int boff;
-	register int len;
+	int len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t from = fromv;
-	register volatile u_int16_t *bptr;  
+	caddr_t from = fromv;
+	volatile u_int16_t *bptr;  
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -167,9 +162,9 @@ le_dec_copyfrombuf_gap2(sc, tov, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register caddr_t to = tov;
-	register volatile u_int16_t *bptr;
-	register u_int16_t tmp;
+	caddr_t to = tov;
+	volatile u_int16_t *bptr;
+	u_int16_t tmp;
 
 	if (boff & 0x1) {
 		/* handle unaligned first byte */
@@ -196,7 +191,7 @@ le_dec_zerobuf_gap2(sc, boff, len)
 	int boff, len;
 {
 	volatile caddr_t buf = sc->sc_mem;
-	register volatile u_int16_t *bptr;
+	volatile u_int16_t *bptr;
 
 	if ((unsigned)boff & 0x1) {
 		bptr = ((volatile u_int16_t *)buf) + (boff - 1);

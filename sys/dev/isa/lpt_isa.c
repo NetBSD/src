@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.49 1998/08/15 03:02:32 mycroft Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.49.12.1 2000/11/20 11:41:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -62,7 +62,6 @@
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/device.h>
-#include <sys/conf.h>
 #include <sys/syslog.h>
 
 #include <machine/bus.h>

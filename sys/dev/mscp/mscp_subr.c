@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.12 1999/06/06 19:16:18 ragge Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.12.4.1 2000/11/20 11:42:13 bouyer Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -160,7 +160,7 @@ mscp_attach(parent, self, aux)
 	mi->mi_rsp.mri_size = NRSP;
 	mi->mi_rsp.mri_desc = mi->mi_uda->mp_ca.ca_rspdsc;
 	mi->mi_rsp.mri_ring = mi->mi_uda->mp_rsp;
-	SIMPLEQ_INIT(&mi->mi_resq);
+	BUFQ_INIT(&mi->mi_resq);
 
 	if (mscp_init(mi)) {
 		printf("%s: can't init, controller hung\n",
@@ -169,7 +169,7 @@ mscp_attach(parent, self, aux)
 	}
 	for (i = 0; i < NCMD; i++) {
 		mi->mi_mxiuse |= (1 << i);
-		if (bus_dmamap_create(mi->mi_dmat, (64*1024), 1, (64*1024),
+		if (bus_dmamap_create(mi->mi_dmat, (64*1024), 16, (64*1024),
 		    0, BUS_DMA_NOWAIT, &mi->mi_xi[i].mxi_dmam)) {
 			printf("Couldn't alloc dmamap %d\n", i);
 			return;
@@ -341,7 +341,6 @@ mscp_init(mi)
 	}
 
 	/* step3 */
-	
 	WRITE_SW((mi->mi_dmam->dm_segs[0].ds_addr >> 16));
 	status = mscp_waitstep(mi, STEP3MASK, STEP3GOOD);
 	if (status == 0) { 
@@ -451,7 +450,7 @@ mscp_intr(mi)
 	/*
 	 * If there are any not-yet-handled request, try them now.
 	 */
-	if (SIMPLEQ_FIRST(&mi->mi_resq))
+	if (BUFQ_FIRST(&mi->mi_resq))
 		mscp_kickaway(mi);
 }
 
@@ -485,10 +484,7 @@ mscp_strategy(bp, usc)
 	struct	mscp_softc *mi = (void *)usc;
 	int s = splimp();
 
-/*	SIMPLEQ_INSERT_TAIL(&mi->mi_resq, bp, xxx) */
-	bp->b_actf = NULL;
-	*mi->mi_resq.sqh_last = bp;
-	mi->mi_resq.sqh_last = &bp->b_actf;
+	BUFQ_INSERT_TAIL(&mi->mi_resq, bp);
 	mscp_kickaway(mi);
 	splx(s);
 }
@@ -502,7 +498,7 @@ mscp_kickaway(mi)
 	struct	mscp *mp;
 	int next;
 
-	while ((bp = SIMPLEQ_FIRST(&mi->mi_resq))) {
+	while ((bp = BUFQ_FIRST(&mi->mi_resq)) != NULL) {
 		/*
 		 * Ok; we are ready to try to start a xfer. Get a MSCP packet
 		 * and try to start...
@@ -535,11 +531,7 @@ mscp_kickaway(mi)
 		bp->b_resid = next;
 		(*mi->mi_me->me_fillin)(bp, mp);
 		(*mi->mi_mc->mc_go)(mi->mi_dev.dv_parent, &mi->mi_xi[next]);
-		if ((mi->mi_resq.sqh_first = bp->b_actf) == NULL)
-			mi->mi_resq.sqh_last = &mi->mi_resq.sqh_first;
-#if 0
-		mi->mi_w = bp->b_actf;
-#endif
+		BUFQ_REMOVE(&mi->mi_resq, bp);
 	}
 }
 
@@ -568,10 +560,10 @@ mscp_dgo(mi, mxi)
  */
 void
 mscp_hexdump(mp)
-	register struct mscp *mp;
+	struct mscp *mp;
 {
-	register long *p = (long *) mp;
-	register int i = mp->mscp_msglen;
+	long *p = (long *) mp;
+	int i = mp->mscp_msglen;
 
 	if (i > 256)		/* sanity */
 		i = 256;
@@ -763,8 +755,8 @@ void
 mscp_printevent(mp)
 	struct mscp *mp;
 {
-	register int event = mp->mscp_event;
-	register struct code_decode *cdc;
+	int event = mp->mscp_event;
+	struct code_decode *cdc;
 	int c, sc;
 	char *cm, *scm;
 
@@ -804,7 +796,7 @@ static char *codemsg[16] = {
 int
 mscp_decodeerror(name, mp, mi)
 	char *name;
-	register struct mscp *mp;
+	struct mscp *mp;
 	struct mscp_softc *mi;
 {
 	int issoft;

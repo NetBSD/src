@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.12 1999/10/07 08:16:51 itohy Exp $	*/
+/*	$NetBSD: ym.c,v 1.12.2.1 2000/11/20 11:41:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,6 +124,17 @@
 #define YM_VOL_OPL3		184
 #endif
 
+/*
+ * The equalizer is ``flat'' if the 3D Enhance is turned off,
+ * but you can set other default values.
+ */
+#ifndef YM_ENHANCE_TREBLE
+#define YM_ENHANCE_TREBLE	0
+#endif
+#ifndef YM_ENHANCE_BASS
+#define YM_ENHANCE_BASS		0
+#endif
+
 #ifdef __i386__		/* XXX */
 # include "joy.h"
 #else
@@ -202,7 +213,12 @@ ym_attach(sc)
 	static struct ad1848_volume vol_master = {YM_VOL_MASTER, YM_VOL_MASTER};
 	static struct ad1848_volume vol_dac    = {YM_VOL_DAC,    YM_VOL_DAC};
 	static struct ad1848_volume vol_opl3   = {YM_VOL_OPL3,   YM_VOL_OPL3};
+#if YM_ENHANCE_TREBLE || YM_ENHANCE_BASS
+	mixer_ctrl_t mctl;
+#endif
 	struct audio_attach_args arg;
+
+	callout_init(&sc->sc_powerdown_ch);
 
 	/* Mute the output to reduce noise during initialization. */
 	ym_mute(sc, SA3_VOL_L, 1);
@@ -231,6 +247,17 @@ ym_attach(sc)
 	/* Override ad1848 settings. */
 	ad1848_set_channel_gain(ac, AD1848_DAC_CHANNEL, &vol_dac);
 	ad1848_set_channel_gain(ac, AD1848_AUX2_CHANNEL, &vol_opl3);
+
+	/*
+	 * Mute all external sources.  If you change this, you must
+	 * also change the initial value of sc->sc_external_sources
+	 * (currently 0 --- no external source is active).
+	 */
+	ad1848_mute_channel(ac, AD1848_AUX1_CHANNEL, MUTE_ALL);	/* CD */
+	ad1848_mute_channel(ac, AD1848_LINE_CHANNEL, MUTE_ALL);	/* line */
+	ac->mute[AD1848_AUX1_CHANNEL] = MUTE_ALL;
+	ac->mute[AD1848_LINE_CHANNEL] = MUTE_ALL;
+	/* speaker is muted by default */
 
 	sc->sc_version = ym_read(sc, SA3_MISC) & SA3_MISC_VER;
 
@@ -287,6 +314,21 @@ ym_attach(sc)
 		ym_mute(sc, SA3_VOL_L, sc->master_mute);
 		ym_mute(sc, SA3_VOL_R, sc->master_mute);
 	}
+
+#if YM_ENHANCE_TREBLE || YM_ENHANCE_BASS
+	/* Set tone control to the default position. */
+	mctl.un.value.num_channels = 1;
+#if YM_ENHANCE_TREBLE
+	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_ENHANCE_TREBLE;
+	mctl.dev = YM_MASTER_TREBLE;
+	ym_mixer_set_port(sc, &mctl);
+#endif
+#if YM_ENHANCE_BASS
+	mctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = YM_ENHANCE_BASS;
+	mctl.dev = YM_MASTER_BASS;
+	ym_mixer_set_port(sc, &mctl);
+#endif
+#endif
 }
 
 static __inline int
@@ -489,6 +531,7 @@ ym_mixer_set_port(addr, cp)
 	struct ym_softc *sc = ac->parent;
 	struct ad1848_volume vol;
 	int error = 0;
+	u_int8_t extsources;
 
 	DPRINTF(("%s: ym_mixer_set_port: dev 0x%x, type 0x%x, 0x%x (%d; %d, %d)\n",
 		DVNAME(sc), cp->dev, cp->type, cp->un.ord,
@@ -553,6 +596,32 @@ ym_mixer_set_port(addr, cp)
 			sc->sc_pow_timeout =
 				cp->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		goto out;
+
+	/*
+	 * Needs power-up to hear external sources.
+	 */
+	case YM_CD_MUTE:
+	case YM_LINE_MUTE:
+	case YM_SPEAKER_MUTE:
+		extsources = YM_MIXER_TO_XS(cp->dev);
+		if (cp->un.ord) {
+			if ((sc->sc_external_sources &= ~extsources) == 0) {
+				/*
+				 * All the external sources are muted
+				 *  --- no need to keep the chip on.
+				 */
+				ym_power_ctl(sc, YM_POWER_EXT_SRC, 0);
+				DPRINTF(("%s: ym_mixer_set_port: off for ext\n",
+					DVNAME(sc)));
+			}
+		} else {
+			/* mute off - power-up the chip */
+			sc->sc_external_sources |= extsources;
+			ym_power_ctl(sc, YM_POWER_EXT_SRC, 1);
+			DPRINTF(("%s: ym_mixer_set_port: on for ext\n",
+				DVNAME(sc)));
+		}
+		break;	/* fall to ad1848_mixer_set_port() */
 
 	/*
 	 * Power on/off the playback part for monitoring.
@@ -838,7 +907,7 @@ ym_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->mixer_class = YM_PWR_CLASS;
 		dip->next = YM_PWR_TIMEOUT;
-		strcpy(dip->label.name, AudioNpower);
+		strcpy(dip->label.name, AudioNsave);
 		dip->un.e.num_mem = 3;
 		strcpy(dip->un.e.member[0].label.name, AudioNpowerdown);
 		dip->un.e.member[0].ord = YM_POWER_POWERDOWN;
@@ -989,7 +1058,7 @@ ym_power_hook(why, v)
 		/*
 		 * suspending...
 		 */
-		untimeout(ym_powerdown_blocks, sc);
+		callout_stop(&sc->sc_powerdown_ch);
 		if (sc->sc_turning_off)
 			ym_powerdown_blocks(sc);
 
@@ -1116,7 +1185,7 @@ ym_chip_powerup(sc, nosleep)
 	if (nosleep)
 		delay(100000);
 	else
-		tsleep(&wchan, PWAIT, "ym_pwu1", hz / 10);
+		tsleep(&wchan, PWAIT, "ym_pu1", hz / 10);
 
 	pw &= ~(SA3_PWR_MNG_PSV | SA3_PWR_MNG_PDN);
 	ym_write(sc, SA3_PWR_MNG, pw);
@@ -1125,14 +1194,14 @@ ym_chip_powerup(sc, nosleep)
 	if (nosleep)
 		delay(70000);
 	else
-		tsleep(&wchan, PWAIT, "ym_pwu2", hz / 14);
+		tsleep(&wchan, PWAIT, "ym_pu2", hz / 14);
 
 	/* The chip is muted automatically --- unmute it now. */
 	ym_mute(sc, SA3_VOL_L, sc->master_mute);
 	ym_mute(sc, SA3_VOL_R, sc->master_mute);
 }
 
-/* timeout() handler for power-down */
+/* callout handler for power-down */
 void
 ym_powerdown_blocks(arg)
 	void *arg;
@@ -1162,8 +1231,8 @@ ym_powerdown_blocks(arg)
 			parts |= YM_POWER_CODEC_P;
 		if ((on_blocks & YM_POWER_CODEC_R) == 0)
 			parts |= YM_POWER_CODEC_R;
-		parts &= ~YM_POWER_CODEC_CTL;
 	}
+	parts &= ~YM_POWER_CODEC_PSEUDO;
 
 	/* If CODEC is being off, save the state. */
 	if ((sc->sc_on_blocks & YM_POWER_CODEC_DIGITAL) &&
@@ -1207,17 +1276,17 @@ ym_power_ctl(sc, parts, onoff)
 	while (sc->sc_in_power_ctl & YM_POWER_CTL_INUSE) {
 		sc->sc_in_power_ctl |= YM_POWER_CTL_WANTED;
 		DPRINTF(("%s: ym_power_ctl: sleeping\n", DVNAME(sc)));
-		tsleep(&sc->sc_in_power_ctl, PWAIT, "ym_pwc", 0);
+		tsleep(&sc->sc_in_power_ctl, PWAIT, "ym_pc", 0);
 		DPRINTF(("%s: ym_power_ctl: awaken\n", DVNAME(sc)));
 	}
 	sc->sc_in_power_ctl |= YM_POWER_CTL_INUSE;
 
-	/* Defeat timeout(9) interrupts. */
+	/* Defeat softclock interrupts. */
 	s = splsoftclock();
 
 	/* If ON requested to parts which are scheduled to OFF, cancel it. */
 	if (onoff && sc->sc_turning_off && (sc->sc_turning_off &= ~parts) == 0)
-		untimeout(ym_powerdown_blocks, sc);
+		callout_stop(&sc->sc_powerdown_ch);
 
 	if (!onoff && sc->sc_turning_off)
 		parts &= ~sc->sc_turning_off;
@@ -1227,7 +1296,7 @@ ym_power_ctl(sc, parts, onoff)
 
 	/* Cancel previous timeout if needed. */
 	if (parts != 0 && sc->sc_turning_off)
-		untimeout(ym_powerdown_blocks, sc);
+		callout_stop(&sc->sc_powerdown_ch);
 
 	(void) splx(s);
 
@@ -1265,7 +1334,8 @@ ym_power_ctl(sc, parts, onoff)
 
 	/* Schedule turning off. */
 	if (sc->sc_pow_mode != YM_POWER_NOSAVE && sc->sc_turning_off)
-		timeout(ym_powerdown_blocks, sc, hz * sc->sc_pow_timeout);
+		callout_reset(&sc->sc_powerdown_ch, hz * sc->sc_pow_timeout,
+		    ym_powerdown_blocks, sc);
 
 unlock:
 	if (sc->sc_in_power_ctl & YM_POWER_CTL_WANTED)

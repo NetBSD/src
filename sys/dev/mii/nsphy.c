@@ -1,7 +1,7 @@
-/*	$NetBSD: nsphy.c,v 1.18 1999/07/14 23:57:36 thorpej Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.18.2.1 2000/11/20 11:42:11 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,11 +92,16 @@ int	nsphymatch __P((struct device *, struct cfdata *, void *));
 void	nsphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach nsphy_ca = {
-	sizeof(struct mii_softc), nsphymatch, nsphyattach
+	sizeof(struct mii_softc), nsphymatch, nsphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	nsphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	nsphy_status __P((struct mii_softc *));
+
+const struct mii_phy_funcs nsphy_funcs = {
+	nsphy_service, nsphy_status, mii_phy_reset,
+};
 
 int
 nsphymatch(parent, match, aux)
@@ -127,27 +132,11 @@ nsphyattach(parent, self, aux)
 
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
-	sc->mii_service = nsphy_service;
+	sc->mii_funcs = &nsphy_funcs;
 	sc->mii_pdata = mii;
+	sc->mii_flags = mii->mii_flags;
 
-	/*
-	 * i82557 wedges if all of its PHYs are isolated!
-	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "fxp") == 0 &&
-	    mii->mii_instance == 0)
-		sc->mii_flags |= MIIF_NOISOLATE;
-
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-#if 0
-	/* Can't do this on the i82557! */
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->mii_inst),
-	    BMCR_ISO);
-#endif
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
-	    BMCR_LOOP|BMCR_S100);
-
-	mii_phy_reset(sc);
+	PHY_RESET(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -155,10 +144,8 @@ nsphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(mii, sc->mii_capabilities,
-		    sc->mii_inst);
+		mii_phy_add_media(sc);
 	printf("\n");
-#undef ADD
 }
 
 int
@@ -169,6 +156,9 @@ nsphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -217,39 +207,21 @@ nsphy_service(sc, mii, cmd)
 		 */
 		reg |= PCR_FLINK100;
 
-#if 0
 		/*
 		 * Mystery bits which are supposedly `reserved',
 		 * but we seem to need to set them when the PHY
-		 * is connected to some interfaces!
+		 * is connected to some interfaces:
+		 *
+		 * 0x0400 is needed for fxp
+		 *        (Intel EtherExpress Pro 10+/100B, 82557 chip)
+		 *        (nsphy with a DP83840 chip)
+		 * 0x0100 may be needed for some other card
 		 */
 		reg |= 0x0100 | 0x0400;
-#endif
 
 		PHY_WRITE(sc, MII_NSPHY_PCR, reg);
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		case IFM_AUTO:
-			/*
-			 * If we're already in auto mode, just return.
-			 */
-			if (PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN)
-				return (0);
-			(void) mii_phy_auto(sc, 1);
-			break;
-		case IFM_100_T4:
-			/*
-			 * XXX Not supported as a manual setting right now.
-			 */
-			return (EINVAL);
-		default:
-			/*
-			 * BMCR data is stored in the ifmedia entry.
-			 */
-			PHY_WRITE(sc, MII_ANAR,
-			    mii_anar(ife->ifm_media));
-			PHY_WRITE(sc, MII_BMCR, ife->ifm_data);
-		}
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
@@ -259,49 +231,20 @@ nsphy_service(sc, mii, cmd)
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return (0);
 
-		/*
-		 * Only used for autonegotiation.
-		 */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
-			return (0);
-
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
-			return (0);
-
-		/*
-		 * Check to see if we have link.  If we do, we don't
-		 * need to restart the autonegotiation process.  Read
-		 * the BMSR twice in case it's latched.
-		 */
-		reg = PHY_READ(sc, MII_BMSR) |
-		    PHY_READ(sc, MII_BMSR);
-		if (reg & BMSR_LINK)
-			return (0);
-
-		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 */
-		if (++sc->mii_ticks != 5)
-			return (0);
-
-		sc->mii_ticks = 0;
-		mii_phy_reset(sc);
-		if (mii_phy_auto(sc, 0) == EJUSTRETURN)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
 		break;
+
+	case MII_DOWN:
+		mii_phy_down(sc);
+		return (0);
 	}
 
 	/* Update the media status. */
-	nsphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }
 
@@ -310,6 +253,7 @@ nsphy_status(sc)
 	struct mii_softc *sc;
 {
 	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmsr, bmcr, par, anlpar;
 
 	mii->mii_media_status = IFM_AVALID;
@@ -379,5 +323,5 @@ nsphy_status(sc)
 			mii->mii_media_active |= IFM_FDX;
 #endif
 	} else
-		mii->mii_media_active = mii_media_from_bmcr(bmcr);
+		mii->mii_media_active = ife->ifm_media;
 }
