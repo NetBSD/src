@@ -1,6 +1,6 @@
 #
-# Copyright (c) 1989 The Regents of the University of California.
-# All rights reserved.
+# Copyright (c) 1989, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # This code is derived from software contributed to Berkeley by
 # Ozan Yigit.
@@ -33,7 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)hash.m4	5.2 (Berkeley) 4/12/91
+#	@(#)hash.m4	8.1 (Berkeley) 6/6/93
 #
 
 dnl	This probably will not run on any m4 that cannot
