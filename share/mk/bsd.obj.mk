@@ -1,9 +1,8 @@
-#	$NetBSD: bsd.obj.mk,v 1.27 2001/06/10 13:32:21 mrg Exp $
+#	$NetBSD: bsd.obj.mk,v 1.28 2001/08/14 09:30:48 tv Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
 .include <bsd.own.mk>
-.endif
 
 .if ${MKOBJ} == "no"
 obj:
@@ -46,9 +45,10 @@ __usrobjdirpf=
 .endif
 
 PAWD?=		/bin/pwd
+__curdir:=	${.CURDIR}
 
 obj:
-	@cd ${.CURDIR}; \
+	@cd ${__curdir}; \
 	here=`${PAWD}`; subdir=$${here#${BSDSRCDIR}/}; \
 	if test $$here != $$subdir ; then \
 		if test ! -d ${__usrobjdir}; then \
@@ -89,3 +89,4 @@ obj:
 
 print-objdir:
 	@echo ${.OBJDIR}
+.endif
