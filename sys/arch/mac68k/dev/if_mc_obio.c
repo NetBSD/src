@@ -80,7 +80,7 @@ mc_obio_match(parent, cf, aux)
 	bus_space_handle_t bsh;
 	int found = 0;
 
-	if (PSCBase == NULL)
+        if (current_mac_model->class != MACH_CLASSAV)
 		return 0;
 
 	if (bus_space_map(oa->oa_tag, MACE_REG_BASE, MC_REGSIZE, 0, &bsh))
