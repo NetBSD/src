@@ -1,7 +1,7 @@
-/*	$NetBSD: info_hesiod.c,v 1.1.1.5 2002/11/29 22:58:18 christos Exp $	*/
+/*	$NetBSD: info_hesiod.c,v 1.1.1.6 2003/03/09 01:13:14 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: info_hesiod.c,v 1.11 2002/06/23 01:05:38 ib42 Exp
+ * Id: info_hesiod.c,v 1.13 2002/12/27 22:43:49 ezk Exp
  *
  */
 
@@ -111,7 +111,7 @@ hesiod_search(mnt_map *m, char *map, char *key, char **pval, time_t *tp)
    */
   dlog("Hesiod base is: %s\n", gopt.hesiod_base);
   dlog("hesiod_search: hes_resolve(%s, %s)", hes_key, gopt.hesiod_base);
-  amuDebug(D_INFO)
+  if (amuDebug(D_INFO))
     _res.options |= RES_DEBUG;
 
 #ifdef HAVE_HESIOD_INIT

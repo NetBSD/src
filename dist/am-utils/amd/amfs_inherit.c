@@ -1,7 +1,7 @@
-/*	$NetBSD: amfs_inherit.c,v 1.1.1.5 2002/11/29 22:58:11 christos Exp $	*/
+/*	$NetBSD: amfs_inherit.c,v 1.1.1.6 2003/03/09 01:13:07 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amfs_inherit.c,v 1.11 2002/03/29 20:01:26 ib42 Exp
+ * Id: amfs_inherit.c,v 1.13 2002/12/27 22:43:47 ezk Exp
  *
  */
 
@@ -141,7 +141,7 @@ amfs_inherit_inherit(mntfs *mf)
    * first place.
    */
   mf->mf_private = 0;
-  free_mntfs(mf);
+  //free_mntfs(mf);
 
   /*
    * Free the dangling reference
@@ -164,41 +164,32 @@ amfs_inherit_inherit(mntfs *mf)
 static int
 amfs_inherit_mount(am_node *mp, mntfs *mf)
 {
+  /* It's already mounted, so just swap the ops for the real ones */
   mntfs *newmf = amfs_inherit_inherit(mp->am_mnt);
+  if (!newmf)
+    return EINVAL;
 
-  if (newmf) {
-    mp->am_mnt = newmf;
-    /*
-     * XXX - must do the am_mounted call here
-     */
-    if (newmf->mf_fsflags & FS_MBACKGROUND)
-      am_mounted(mp);
-
-    new_ttl(mp);
-    return 0;
-  }
-  return EINVAL;
-}
-
-
-#if 0 /* huh? */
-static int
-amfs_inherit_fmount(mntfs *mf)
-{
-  am_node *mp = find_mf(mf);
-
-  if (mp)
-    return amfs_inherit_mount(mp);
-  return amfs_inherit_inherit(mf) ? 0 : EINVAL;
-}
-#endif
-
-
-static int
-amfs_inherit_umount(am_node *am, mntfs *mf)
-{
+  mp->am_mnt = newmf;
   /*
-   * Always succeed
+   * Hack: must do the am_mounted() call here if it's marked FS_MBACKGROUND,
+   * because the caller will not do it for us in that case.
    */
+  if (newmf->mf_fsflags & FS_MBACKGROUND)
+    am_mounted(mp);
+
+  new_ttl(mp);
   return 0;
+}
+
+
+static int
+amfs_inherit_umount(am_node *mp, mntfs *mf)
+{
+  /* It's already mounted, so just swap the ops for the real ones */
+  mntfs *newmf = amfs_inherit_inherit(mp->am_mnt);
+  if (!newmf)
+    return EINVAL;
+
+  mp->am_mnt = newmf;
+  return unmount_mp(mp);
 }

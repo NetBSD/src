@@ -1,8 +1,8 @@
-/*	$NetBSD: autofs_linux.c,v 1.1.1.1 2002/11/29 22:58:26 christos Exp $	*/
+/*	$NetBSD: autofs_linux.c,v 1.1.1.2 2003/03/09 01:13:19 christos Exp $	*/
 
 /*
- * Copyright (c) 1999-2002 Ion Badulescu
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1999-2003 Ion Badulescu
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: autofs_linux.c,v 1.28 2002/06/24 03:51:26 ib42 Exp
+ * Id: autofs_linux.c,v 1.30 2002/12/27 22:43:54 ezk Exp
  *
  */
 
@@ -300,7 +300,7 @@ autofs_expire_one(am_node *mp, char *name, unsigned long token)
   fh = mp->am_mnt->mf_autofs_fh;
 
   ap_path = str3cat(NULL, mp->am_path, "/", name);
-  amuDebug(D_TRACE)
+  if (amuDebug(D_TRACE))
     plog(XLOG_DEBUG, "\tumount(%s)", ap_path);
 
   p = fh->pending_umounts;
@@ -380,7 +380,7 @@ autofs_handle_missing(am_node *mp, struct autofs_packet_missing *pkt)
   p->next = fh->pending_mounts;
   fh->pending_mounts = p;
 
-  amuDebug(D_TRACE)
+  if (amuDebug(D_TRACE))
     plog(XLOG_DEBUG, "\tlookup(%s, %s)", mp->am_path, pkt->name);
   ap = mf->mf_ops->lookup_child(mp, pkt->name, &error, VLOOK_CREATE);
   if (ap && error < 0)

@@ -1,7 +1,7 @@
-/*	$NetBSD: amd.h,v 1.1.1.5 2002/11/29 22:58:08 christos Exp $	*/
+/*	$NetBSD: amd.h,v 1.1.1.6 2003/03/09 01:13:04 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: amd.h,v 1.26 2002/06/24 03:05:14 ib42 Exp
+ * Id: amd.h,v 1.29 2002/12/27 22:43:46 ezk Exp
  *
  */
 
@@ -75,7 +75,7 @@
 /* interval between forced retries of a mount */
 #define RETRY_INTERVAL	2
 
-#define ereturn(x) { *error_return = x; return 0; }
+#define ereturn(x) do { *error_return = x; return 0; } while (0)
 
 #define NEVER (time_t) 0
 
@@ -133,6 +133,7 @@ struct amu_global_options {
   char *ldap_hostports;		/* LDAP host ports */
   long ldap_cache_seconds; 	/* LDAP internal cache - keep seconds */
   long ldap_cache_maxmem;	/* LDAP internal cache - max memory (bytes) */
+  long ldap_proto_version;	/* LDAP protocol version */
 #endif /* HAVE_MAP_LDAP */
 #ifdef HAVE_MAP_NIS
   char *nis_domain;		/* YP domain name */

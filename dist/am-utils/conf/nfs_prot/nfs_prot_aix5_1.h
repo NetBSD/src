@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_prot_aix5_1.h,v 1.1.1.1 2002/11/29 22:58:32 christos Exp $	*/
+/*	$NetBSD: nfs_prot_aix5_1.h,v 1.1.1.2 2003/03/09 01:13:25 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: nfs_prot_aix5_1.h,v 1.3 2002/06/25 02:35:58 ib42 Exp
+ * Id: nfs_prot_aix5_1.h,v 1.5 2002/12/27 22:43:58 ezk Exp
  *
  */
 
@@ -306,6 +306,42 @@ struct nfs_fh3 {
 typedef struct nfs_fh3 nfs_fh3;
 
 #endif /* MNT_NFS3 */
+
+#ifdef MNT_AUTOFS
+#define A_MAXNAME 255
+#define A_MAXOPTS 255
+#define A_MAXPATH 1024
+
+struct mntrequest {
+  char *name;
+  char *map;
+  char *opts;
+  char *path;
+};
+typedef struct mntrequest mntrequest;
+
+struct mntres {
+  int status;
+};
+typedef struct mntres mntres;
+
+struct umntrequest {
+  int isdirect;
+  u_int devid;
+  u_long rdevid;
+  struct umntrequest *next;
+};
+typedef struct umntrequest umntrequest;
+
+struct umntres {
+  int status;
+};
+typedef struct umntres umntres;
+
+#define AUTOFS_PROG ((unsigned long)(100099))
+#define AUTOFS_VERS ((unsigned long)(1))
+
+#endif /* MNT_AUTOFS */
 
 /*
  **************************************************************************

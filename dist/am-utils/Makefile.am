@@ -24,113 +24,113 @@ SUBDIRS =		\
 #SUBDIRS = lib wire-test amq amd
 
 # additional files to add to the distribution tar file
-#	aux/aclocal
-EXTRA_DIST_AUX =			\
-	aux/GNUmakefile			\
-	aux/amdgrep			\
-	aux/amindent			\
-	aux/autopat			\
-	aux/chop-aclocal.pl		\
-	aux/copy-if-newbig		\
-	aux/mk-aclocal			\
-	aux/mkconf			\
-	aux/rmtspc			\
-	aux/update_build_version	\
+#	m4/aclocal
+EXTRA_DIST_M4 =				\
+	m4/GNUmakefile			\
+	m4/amdgrep			\
+	m4/amindent			\
+	m4/autopat			\
+	m4/chop-aclocal.pl		\
+	m4/copy-if-newbig		\
+	m4/mk-aclocal			\
+	m4/mkconf			\
+	m4/rmtspc			\
+	m4/update_build_version		\
 	\
-	aux/macros/HEADER				\
-	aux/macros/TRAILER				\
-	aux/macros/c_void_p.m4				\
-	aux/macros/cache_check_dynamic.m4		\
-	aux/macros/check_amu_fs.m4			\
-	aux/macros/check_autofs_style.m4		\
-	aux/macros/check_checkmount_style.m4		\
-	aux/macros/check_extern.m4			\
-	aux/macros/check_fhandle.m4			\
-	aux/macros/check_field.m4			\
-	aux/macros/check_fs_headers.m4			\
-	aux/macros/check_fs_mntent.m4			\
-	aux/macros/check_gnu_getopt.m4                  \
-	aux/macros/check_hide_mount_type.m4		\
-	aux/macros/check_lib2.m4			\
-	aux/macros/check_map_funcs.m4			\
-	aux/macros/check_mnt2_cdfs_opt.m4		\
-	aux/macros/check_mnt2_gen_opt.m4		\
-	aux/macros/check_mnt2_nfs_opt.m4		\
-	aux/macros/check_mnttab_file_name.m4		\
-	aux/macros/check_mnttab_location.m4		\
-	aux/macros/check_mnttab_opt.m4			\
-	aux/macros/check_mnttab_style.m4		\
-	aux/macros/check_mnttab_type.m4			\
-	aux/macros/check_mount_style.m4			\
-	aux/macros/check_mount_trap.m4			\
-	aux/macros/check_mount_type.m4			\
-	aux/macros/check_mtype_printf_type.m4		\
-	aux/macros/check_mtype_type.m4			\
-	aux/macros/check_network_transport_type.m4	\
-	aux/macros/check_nfs_fh_dref.m4			\
-	aux/macros/check_nfs_hn_dref.m4			\
-	aux/macros/check_nfs_prot_headers.m4		\
-	aux/macros/check_nfs_sa_dref.m4			\
-	aux/macros/check_nfs_socket_connection.m4	\
-	aux/macros/check_os_libs.m4			\
-	aux/macros/check_restartable_signal_handler.m4	\
-	aux/macros/check_umount_style.m4		\
-	aux/macros/check_unmount_args.m4		\
-	aux/macros/check_unmount_call.m4		\
-	aux/macros/expand_cpp_hex.m4			\
-	aux/macros/expand_cpp_int.m4			\
-	aux/macros/expand_cpp_string.m4			\
-	aux/macros/expand_run_string.m4			\
-	aux/macros/extern_optarg.m4			\
-	aux/macros/extern_sys_errlist.m4		\
-	aux/macros/field_mntent_t_mnt_time_string.m4	\
-	aux/macros/func_bad_memcmp.m4			\
-	aux/macros/func_bad_yp_all.m4			\
-	aux/macros/header_templates.m4			\
-	aux/macros/host_macros.m4			\
-	aux/macros/linux_headers.m4			\
-	aux/macros/localconfig.m4			\
-	aux/macros/mount_headers.m4			\
-	aux/macros/opt_amu_cflags.m4			\
-	aux/macros/opt_cppflags.m4			\
-	aux/macros/opt_debug.m4				\
-	aux/macros/opt_ldflags.m4			\
-	aux/macros/opt_libs.m4				\
-	aux/macros/os_cflags.m4				\
-	aux/macros/os_cppflags.m4			\
-	aux/macros/os_ldflags.m4			\
-	aux/macros/package_bugreport.m4			\
-	aux/macros/package_name.m4			\
-	aux/macros/package_version.m4			\
-	aux/macros/save_state.m4			\
-	aux/macros/struct_field_nfs_fh.m4		\
-	aux/macros/struct_mntent.m4			\
-	aux/macros/struct_mnttab.m4			\
-	aux/macros/struct_nfs_args.m4			\
-	aux/macros/struct_nfs_fh.m4			\
-	aux/macros/struct_nfs_fh3.m4			\
-	aux/macros/struct_nfs_gfs_mount.m4		\
-	aux/macros/try_compile_anyfs.m4			\
-	aux/macros/try_compile_nfs.m4			\
-	aux/macros/try_compile_rpc.m4			\
-	aux/macros/type_auth_create_gidlist.m4		\
-	aux/macros/type_autofs_args.m4			\
-	aux/macros/type_cachefs_args.m4			\
-	aux/macros/type_cdfs_args.m4			\
-	aux/macros/type_efs_args.m4			\
-	aux/macros/type_lofs_args.m4			\
-	aux/macros/type_mfs_args.m4			\
-	aux/macros/type_pcfs_args.m4			\
-	aux/macros/type_recvfrom_fromlen.m4		\
-	aux/macros/type_rfs_args.m4			\
-	aux/macros/type_svc_in_arg.m4			\
-	aux/macros/type_time_t.m4			\
-	aux/macros/type_tmpfs_args.m4			\
-	aux/macros/type_ufs_args.m4			\
-	aux/macros/type_xdrproc_t.m4			\
-	aux/macros/type_xfs_args.m4			\
-	aux/macros/type_yp_order_outorder.m4            \
-	aux/macros/with_addon.m4
+	m4/macros/HEADER				\
+	m4/macros/TRAILER				\
+	m4/macros/c_void_p.m4				\
+	m4/macros/cache_check_dynamic.m4		\
+	m4/macros/check_amu_fs.m4			\
+	m4/macros/check_autofs_style.m4			\
+	m4/macros/check_checkmount_style.m4		\
+	m4/macros/check_extern.m4			\
+	m4/macros/check_fhandle.m4			\
+	m4/macros/check_field.m4			\
+	m4/macros/check_fs_headers.m4			\
+	m4/macros/check_fs_mntent.m4			\
+	m4/macros/check_gnu_getopt.m4			\
+	m4/macros/check_hide_mount_type.m4		\
+	m4/macros/check_lib2.m4				\
+	m4/macros/check_map_funcs.m4			\
+	m4/macros/check_mnt2_cdfs_opt.m4		\
+	m4/macros/check_mnt2_gen_opt.m4			\
+	m4/macros/check_mnt2_nfs_opt.m4			\
+	m4/macros/check_mnttab_file_name.m4		\
+	m4/macros/check_mnttab_location.m4		\
+	m4/macros/check_mnttab_opt.m4			\
+	m4/macros/check_mnttab_style.m4			\
+	m4/macros/check_mnttab_type.m4			\
+	m4/macros/check_mount_style.m4			\
+	m4/macros/check_mount_trap.m4			\
+	m4/macros/check_mount_type.m4			\
+	m4/macros/check_mtype_printf_type.m4		\
+	m4/macros/check_mtype_type.m4			\
+	m4/macros/check_network_transport_type.m4	\
+	m4/macros/check_nfs_fh_dref.m4			\
+	m4/macros/check_nfs_hn_dref.m4			\
+	m4/macros/check_nfs_prot_headers.m4		\
+	m4/macros/check_nfs_sa_dref.m4			\
+	m4/macros/check_nfs_socket_connection.m4	\
+	m4/macros/check_os_libs.m4			\
+	m4/macros/check_restartable_signal_handler.m4	\
+	m4/macros/check_umount_style.m4			\
+	m4/macros/check_unmount_args.m4			\
+	m4/macros/check_unmount_call.m4			\
+	m4/macros/expand_cpp_hex.m4			\
+	m4/macros/expand_cpp_int.m4			\
+	m4/macros/expand_cpp_string.m4			\
+	m4/macros/expand_run_string.m4			\
+	m4/macros/extern_optarg.m4			\
+	m4/macros/extern_sys_errlist.m4			\
+	m4/macros/field_mntent_t_mnt_time_string.m4	\
+	m4/macros/func_bad_memcmp.m4			\
+	m4/macros/func_bad_yp_all.m4			\
+	m4/macros/header_templates.m4			\
+	m4/macros/host_macros.m4			\
+	m4/macros/linux_headers.m4			\
+	m4/macros/localconfig.m4			\
+	m4/macros/mount_headers.m4			\
+	m4/macros/opt_amu_cflags.m4			\
+	m4/macros/opt_cppflags.m4			\
+	m4/macros/opt_debug.m4				\
+	m4/macros/opt_ldflags.m4			\
+	m4/macros/opt_libs.m4				\
+	m4/macros/os_cflags.m4				\
+	m4/macros/os_cppflags.m4			\
+	m4/macros/os_ldflags.m4				\
+	m4/macros/package_bugreport.m4			\
+	m4/macros/package_name.m4			\
+	m4/macros/package_version.m4			\
+	m4/macros/save_state.m4				\
+	m4/macros/struct_field_nfs_fh.m4		\
+	m4/macros/struct_mntent.m4			\
+	m4/macros/struct_mnttab.m4			\
+	m4/macros/struct_nfs_args.m4			\
+	m4/macros/struct_nfs_fh.m4			\
+	m4/macros/struct_nfs_fh3.m4			\
+	m4/macros/struct_nfs_gfs_mount.m4		\
+	m4/macros/try_compile_anyfs.m4			\
+	m4/macros/try_compile_nfs.m4			\
+	m4/macros/try_compile_rpc.m4			\
+	m4/macros/type_auth_create_gidlist.m4		\
+	m4/macros/type_autofs_args.m4			\
+	m4/macros/type_cachefs_args.m4			\
+	m4/macros/type_cdfs_args.m4			\
+	m4/macros/type_efs_args.m4			\
+	m4/macros/type_lofs_args.m4			\
+	m4/macros/type_mfs_args.m4			\
+	m4/macros/type_pcfs_args.m4			\
+	m4/macros/type_recvfrom_fromlen.m4		\
+	m4/macros/type_rfs_args.m4			\
+	m4/macros/type_svc_in_arg.m4			\
+	m4/macros/type_time_t.m4			\
+	m4/macros/type_tmpfs_args.m4			\
+	m4/macros/type_ufs_args.m4			\
+	m4/macros/type_xdrproc_t.m4			\
+	m4/macros/type_xfs_args.m4			\
+	m4/macros/type_yp_order_outorder.m4		\
+	m4/macros/with_addon.m4
 
 EXTRA_DIST_CONF =			\
 	conf/autofs/autofs_default.h		\
@@ -195,6 +195,7 @@ EXTRA_DIST_CONF =			\
 	conf/nfs_prot/nfs_prot_aix4_2.h		\
 	conf/nfs_prot/nfs_prot_aix4_3.h		\
 	conf/nfs_prot/nfs_prot_aix5_1.h		\
+	conf/nfs_prot/nfs_prot_aix5_2.h		\
 	conf/nfs_prot/nfs_prot_bsdi2.h		\
 	conf/nfs_prot/nfs_prot_bsdi3.h		\
 	conf/nfs_prot/nfs_prot_darwin.h		\
@@ -268,7 +269,7 @@ EXTRA_DIST_INCLUDE =		\
 	include/mount_headers2.h
 
 EXTRA_DIST =			\
-	$(EXTRA_DIST_AUX)	\
+	$(EXTRA_DIST_M4)	\
 	$(EXTRA_DIST_CONF)	\
 	$(EXTRA_DIST_INCLUDE)	\
 	\
@@ -294,7 +295,7 @@ DISTCLEANFILES = amu_nfs_prot.h config.cache.old dbgcf.h
 
 # update possibly new versions of autoconf/automake/libtool files
 update:
-	(cd $(top_srcdir) && ${MAKE} ${MFLAGS} -f ./aux/GNUmakefile update)
+	(cd $(top_srcdir) && ${MAKE} ${MFLAGS} -f ./m4/GNUmakefile update)
 	${MAKE} ${MFLAGS} libtool
 
 # remake libtool
