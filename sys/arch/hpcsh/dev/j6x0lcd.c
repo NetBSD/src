@@ -1,4 +1,4 @@
-/*	$NetBSD: j6x0lcd.c,v 1.3 2004/04/04 17:49:38 uwe Exp $ */
+/*	$NetBSD: j6x0lcd.c,v 1.4 2005/02/28 16:16:19 uwe Exp $ */
 
 /*
  * Copyright (c) 2004 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.3 2004/04/04 17:49:38 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j6x0lcd.c,v 1.4 2005/02/28 16:16:19 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -172,7 +172,7 @@ j6x0lcd_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t bcr, bdr;
 	uint8_t dcr, ddr;
 
-	/* 
+	/*
 	 * Brightness is controlled by DAC channel 0.
 	 */
 	dcr = DAC_(CR);
@@ -218,24 +218,24 @@ j6x0lcd_attach(struct device *parent, struct device *self, void *aux)
 
 
 	/* LCD brightness hooks */
-        config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BRIGHTNESS_MAX,
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BRIGHTNESS_MAX,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
-        config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BRIGHTNESS,
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_BRIGHTNESS,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
-        config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS,
+	config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_BRIGHTNESS,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
 
 	/* LCD contrast hooks */
-        config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST_MAX,
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST_MAX,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
-        config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST,
+	config_hook(CONFIG_HOOK_GET, CONFIG_HOOK_CONTRAST,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
-        config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST,
+	config_hook(CONFIG_HOOK_SET, CONFIG_HOOK_CONTRAST,
 		    CONFIG_HOOK_SHARE,
 		    j6x0lcd_param, sc);
 
@@ -315,9 +315,9 @@ j6x0lcd_param(ctx, type, id, msg)
 
 static int
 j6x0lcd_power(ctx, type, id, msg)
-	void *ctx; 
-	int type; 
-	long id; 
+	void *ctx;
+	int type;
+	long id;
 	void *msg;
 {
 	int on;
