@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.121 2003/10/26 02:17:46 lukem Exp $
+#	$NetBSD: build.sh,v 1.122 2003/10/26 03:12:21 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -653,11 +653,13 @@ rebuildmake()
 	if [ -x "${make}" ]; then
 		for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
 			if [ "${f}" -nt "${make}" ]; then
+				statusmsg "${make} outdated (older than ${f}), needs building."
 				do_rebuildmake=true
 				break
 			fi
 		done
 	else
+		statusmsg "No ${make}, needs building."
 		do_rebuildmake=true
 	fi
 
@@ -831,7 +833,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.121 2003/10/26 02:17:46 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.122 2003/10/26 03:12:21 lukem Exp $
 #
 
 EOF
