@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.10 2000/10/02 19:48:35 cgd Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.11 2001/10/01 04:22:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -137,10 +137,10 @@ mkoneswap(struct config *cf)
 		strcpy(specinfo, "NULL");
 	else {
 		sprintf(specinfo, "%s_mountroot", cf->cf_fstype);
-		if (fprintf(fp, "extern int %s __P((void));\n", specinfo) < 0)
+		if (fprintf(fp, "int %s(void);\n", specinfo) < 0)
 			goto wrerror;
 	}
-	if (fprintf(fp, "int (*mountroot) __P((void)) = %s;\n", specinfo) < 0)
+	if (fprintf(fp, "int (*mountroot)(void) = %s;\n", specinfo) < 0)
 		goto wrerror;
 
 	if (fclose(fp)) {
