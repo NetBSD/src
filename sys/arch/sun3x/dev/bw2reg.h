@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2reg.h,v 1.1.1.1 1997/01/14 20:57:02 gwr Exp $	*/
+/*	$NetBSD: bw2reg.h,v 1.2 1997/04/09 04:46:11 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,6 +46,7 @@
 
 /* Default physical address. */
 #define	BW2_FB_PADDR	0x50400000
+#define	BW2_P4_PADDR	0x50300000
 
 /* Sizes that can be mapped. */
 #define	BW2_FBSIZE  		0x20000	/* size of frame buffer */
