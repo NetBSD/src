@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.6 2001/03/02 21:17:31 jdolecek Exp $	*/
+/*	$NetBSD: jot.c,v 1.7 2001/03/14 07:50:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.6 2001/03/02 21:17:31 jdolecek Exp $");
+__RCSID("$NetBSD: jot.c,v 1.7 2001/03/14 07:50:06 jdolecek Exp $");
 #endif /* not lint */
 
 /*
@@ -65,7 +65,7 @@ __RCSID("$NetBSD: jot.c,v 1.6 2001/03/02 21:17:31 jdolecek Exp $");
 #define	ENDER_DEF	100
 #define	STEP_DEF	1
 
-#define	isdefault(s)	(strcmp((s), "-") == 0)
+#define	is_default(s)	(strcmp((s), "-") == 0)
 
 double	begin;
 double	ender;
@@ -81,12 +81,12 @@ int	nofinalnl;
 char	sepstring[BUFSIZ] = "\n";
 char	format[BUFSIZ];
 
-void	error __P((char *, char *));
 void	getargs __P((int, char *[]));
 void	getformat __P((void));
 int	getprec __P((char *));
 int	main __P((int, char **));
 void	putdata __P((double, long));
+static void	usage __P((void));
 
 int
 main(argc, argv)
@@ -117,15 +117,15 @@ main(argc, argv)
 }
 
 void
-getargs(ac, av)
-	int ac;
-	char *av[];
+getargs(argc, argv)
+	int argc;
+	char *argv[];
 {
 	unsigned int	mask = 0;
 	int		n = 0;
 
-	while (--ac && **++av == '-' && !isdefault(*av))
-		switch ((*av)[1]) {
+	while (--argc && **++argv == '-' && !is_default(*argv))
+		switch ((*argv)[1]) {
 		case 'r':
 			randomize = 1;
 			break;
@@ -138,71 +138,73 @@ getargs(ac, av)
 		case 'b':
 			boring = 1;
 		case 'w':
-			if ((*av)[2])
-				strcpy(format, *av + 2);
-			else if (!--ac)
-				error("Need context word after -w or -b", "");
+			if ((*argv)[2])
+				strcpy(format, *argv + 2);
+			else if (!--argc)
+				errx(1, "Need context word after -w or -b");
 			else
-				strcpy(format, *++av);
+				strcpy(format, *++argv);
 			break;
 		case 's':
-			if ((*av)[2])
-				strcpy(sepstring, *av + 2);
-			else if (!--ac)
-				error("Need string after -s", "");
+			if ((*argv)[2])
+				strcpy(sepstring, *argv + 2);
+			else if (!--argc)
+				errx(1, "Need string after -s");
 			else
-				strcpy(sepstring, *++av);
+				strcpy(sepstring, *++argv);
 			break;
 		case 'p':
-			if ((*av)[2])
-				prec = atoi(*av + 2);
-			else if (!--ac)
-				error("Need number after -p", "");
+			if ((*argv)[2])
+				prec = atoi(*argv + 2);
+			else if (!--argc)
+				errx(1, "Need number after -p");
 			else
-				prec = atoi(*++av);
+				prec = atoi(*++argv);
 			if (prec <= 0)
-				error("Bad precision value", "");
+				errx(1, "Bad precision value");
 			break;
 		default:
-			error("Unknown option %s", *av);
+			warnx("unknown option `%s'", *argv);
+			usage();
 		}
 
-	switch (ac) {	/* examine args right to left, falling thru cases */
+	switch (argc) {	/* examine args right to left, falling thru cases */
 	case 4:
-		if (!isdefault(av[3])) {
-			if (!sscanf(av[3], "%lf", &s))
-				error("Bad s value:  %s", av[3]);
+		if (!is_default(argv[3])) {
+			if (!sscanf(argv[3], "%lf", &s))
+				errx(1, "Bad s value:  %s", argv[3]);
 			mask |= 01;
 		}
 	case 3:
-		if (!isdefault(av[2])) {
-			if (!sscanf(av[2], "%lf", &ender))
-				ender = av[2][strlen(av[2])-1];
+		if (!is_default(argv[2])) {
+			if (!sscanf(argv[2], "%lf", &ender))
+				ender = argv[2][strlen(argv[2])-1];
 			mask |= 02;
 			if (!prec)
-				n = getprec(av[2]);
+				n = getprec(argv[2]);
 		}
 	case 2:
-		if (!isdefault(av[1])) {
-			if (!sscanf(av[1], "%lf", &begin))
-				begin = av[1][strlen(av[1])-1];
+		if (!is_default(argv[1])) {
+			if (!sscanf(argv[1], "%lf", &begin))
+				begin = argv[1][strlen(argv[1])-1];
 			mask |= 04;
 			if (!prec)
-				prec = getprec(av[1]);
+				prec = getprec(argv[1]);
 			if (n > prec)		/* maximum precision */
 				prec = n;
 		}
 	case 1:
-		if (!isdefault(av[0])) {
-			if (!sscanf(av[0], "%ld", &reps))
-				error("Bad reps value:  %s", av[0]);
+		if (!is_default(argv[0])) {
+			if (!sscanf(argv[0], "%ld", &reps))
+				errx(1, "Bad reps value:  %s", argv[0]);
 			mask |= 010;
 		}
 		break;
 	case 0:
-		error("jot - print sequential or random data", "");
+		usage();
+		break;
 	default:
-		error("Too many arguments.  What do you mean by %s?", av[4]);
+		errx(1, "Too many arguments.  What do you mean by %s?", argv[4]);
 	}
 	getformat();
 	while (mask)	/* 4 bit mask has 1's where last 4 args were given */
@@ -244,7 +246,7 @@ getargs(ac, av)
 			}
 			reps = (ender - begin + s) / s;
 			if (reps <= 0)
-				error("Impossible stepsize", "");
+				errx(1, "Impossible stepsize");
 			mask = 0;
 			break;
 		case 010:
@@ -256,19 +258,19 @@ getargs(ac, av)
 			mask = 015;
 			break;
 		case 012:
-			s = (randomize ? time(0) : STEP_DEF);
+			s = (randomize ? time(NULL) : STEP_DEF);
 			mask = 013;
 			break;
 		case 013:
 			if (randomize)
 				begin = BEGIN_DEF;
 			else if (reps == 0)
-				error("Must specify begin if reps == 0", "");
+				errx(1, "Must specify begin if reps == 0");
 			begin = ender - reps * s + s;
 			mask = 0;
 			break;
 		case 014:
-			s = (randomize ? time(0) : STEP_DEF);
+			s = (randomize ? time(NULL) : STEP_DEF);
 			mask = 015;
 			break;
 		case 015:
@@ -280,10 +282,9 @@ getargs(ac, av)
 			break;
 		case 016:
 			if (randomize)
-				s = time(0);
+				s = time(NULL);
 			else if (reps == 0)
-				error("Infinite sequences cannot be bounded",
-				    "");
+				errx(1, "Infinite sequences cannot be bounded");
 			else if (reps == 1)
 				s = 0.0;
 			else
@@ -294,14 +295,14 @@ getargs(ac, av)
 			if (!randomize && s != 0.0) {
 				long t = (ender - begin + s) / s;
 				if (t <= 0)
-					error("Impossible stepsize", "");
+					errx(1, "Impossible stepsize");
 				if (t < reps)		/* take lesser */
 					reps = t;
 			}
 			mask = 0;
 			break;
 		default:
-			error("Bad mask", "");
+			errx(1, "bad mask");
 		}
 	if (reps == 0)
 		infinity = 1;
@@ -325,15 +326,13 @@ putdata(x, notlast)
 		fputs(sepstring, stdout);
 }
 
-void
-error(msg, s)
-	char *msg, *s;
+static void
+usage(void)
 {
-	warnx(msg, s);
+	fprintf(stderr, "jot - print sequential or random data\n\n");
 	fprintf(stderr,
-	    "\nusage:  jot [ options ] [ reps [ begin [ end [ s ] ] ] ]\n");
-	if (strncmp("jot - ", msg, 6) == 0)
-		fprintf(stderr, "Options:\n\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
+	    "Usage:\n\tjot [ options ] [ reps [ begin [ end [ s ] ] ] ]\n\n");
+	fprintf(stderr, "Options:\n\t%s\t%s\t%s\t%s\t%s\t%s\t%s",
 			"-r		random data\n",
 			"-c		character data\n",
 			"-n		no final newline\n",
@@ -366,36 +365,63 @@ void
 getformat()
 {
 	char	*p;
+	size_t	sz;
 
 	if (boring)				/* no need to bother */
 		return;
 	for (p = format; *p; p++)		/* look for '%' */
-		if (*p == '%' && *(p+1) != '%')	/* leave %% alone */
-			break;
-	if (!*p && !chardata)
-		sprintf(p, "%%.%df", prec);
-	else if (!*p && chardata) {
-		strcpy(p, "%c");
-		dox = 1;
-	}
-	else if (!*(p+1))
+		if (*p == '%') {
+			if (*(p+1) != '%')
+				break;
+			p++;		/* leave %% alone */
+		}
+	sz = sizeof(format) - strlen(format) - 1;
+	if (!*p) {
+		if (chardata) {
+			if (snprintf(p, sz, "%%.%df", prec) >= (int)sz)
+				errx(1, "-w word too long");
+		} else {
+			if (strlcpy(p, "%c", sz) >= sz)
+				errx(1, "-w word too long");
+			dox = 1;
+		}
+	} else if (!*(p+1)) {
+		if (sz <= 0)
+			errx(1, "-w word too long");
 		strcat(format, "%");		/* cannot end in single '%' */
-	else {
-		for(; *p && !isalpha((unsigned char)*p); p++)
-			;
+	} else {
+		p++;				/* skip leading % */
+		for(; *p && !isalpha((unsigned char)*p); p++) {
+			/* allow all valid printf(3) flags, but deny '*' */
+			if (!strchr("0123456789#-+. ", *p))
+				break;
+		}
+		/* Allow 'l' prefix, but no other. */
+		if (*p == 'l')
+			p++;
 		switch (*p) {
 		case 'f': case 'e': case 'g': case '%':
+		case 'E': case 'G':
 			break;
 		case 's':
-			error("Cannot convert numeric data to strings", "");
+			errx(1, "cannot convert numeric data to strings");
 			break;
-		/* case 'd': case 'o': case 'x': case 'D': case 'O': case 'X':
-		case 'c': case 'u': */
-		default:
-			if (!isalpha(*p))
-				error("Invalid format '%s'", format);
+		case 'd': case 'o': case 'x': case 'u':
+		case 'D': case 'O': case 'X': case 'U':
+		case 'c': case 'i':
 			dox = 1;
 			break;
+		default:
+			errx(1, "unknown or invalid format `%s'", format);
 		}
+		/* Need to check for trailing stuff to print */
+		for (; *p; p++)		/* look for '%' */
+			if (*p == '%') {
+				if (*(p+1) != '%')
+					break;
+				p++;		/* leave %% alone */
+			}
+		if (*p)
+			errx(1, "unknown or invalid format `%s'", format);
 	}
 }
