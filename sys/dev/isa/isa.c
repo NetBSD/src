@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.62 1994/11/04 02:55:32 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.63 1994/11/04 03:57:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -83,45 +83,43 @@ isaprint(aux, isa)
 	return (QUIET);
 }
 
-int
-isasubmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
-{
-	struct device *self = match;
-	struct cfdata *cf = self->dv_cfdata;
-	struct isa_attach_args ia;
-
-	ia.ia_iobase = cf->cf_loc[0];
-	ia.ia_iosize = 0x666;
-	ia.ia_maddr = cf->cf_loc[2] - 0xa0000 + atdevbase;
-	ia.ia_msize = cf->cf_loc[3];
-	ia.ia_irq = (cf->cf_loc[4] == -1) ? IRQUNK : (1 << cf->cf_loc[4]);
-	ia.ia_drq = cf->cf_loc[5];
-
-	if ((*cf->cf_driver->cd_match)(parent, match, &ia) <= 0) {
-		/*
-		 * If we don't do this, isaattach() will repeatedly try to
-		 * probe devices that weren't found.  But we need to be careful
-		 * to do it only for the ISA bus, or we would cause things like
-		 * `com0 at ast? slave ?' to not probe on the second ast.
-		 */
-		if (parent->dv_cfdata->cf_driver == &isacd)
-			cf->cf_fstate = FSTATE_FOUND;
-		return (0);
-	}
-
-	config_attach(parent, match, &ia, isaprint);
-	return (1);
-}
-
 void
 isaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	register struct cfdata *cf;
+	register short *p;
+	struct matchinfo m;
+	struct isa_attach_args ia;
+	extern struct cfdata cfdata[];
 
 	printf("\n");
 
-	while (config_search(isasubmatch, self, NULL) != NULL);
+	m.fn = NULL;
+	m.parent = self;
+	m.aux = &ia;
+	m.indirect = 1;
+	for (cf = cfdata; cf->cf_driver; cf++) {
+		if (cf->cf_fstate == FSTATE_FOUND)
+			continue;
+		for (p = cf->cf_parents; *p >= 0; p++) {
+			if (self->dv_cfdata != &cfdata[*p])
+				continue;
+			m.match = NULL;
+			m.pri = 0;
+			ia.ia_iobase = cf->cf_loc[0];
+			ia.ia_iosize = 0x666;
+			ia.ia_maddr = cf->cf_loc[2] - 0xa0000 + atdevbase;
+			ia.ia_msize = cf->cf_loc[3];
+			ia.ia_irq =
+			  (cf->cf_loc[4] == -1) ? IRQUNK : (1 << cf->cf_loc[4]);
+			ia.ia_drq = cf->cf_loc[5];
+			config_mapply(&m, cf);
+			if (m.pri > 0) {
+				config_attach(self, m.match, &ia, isaprint);
+				break;
+			}
+		}
+	}
 }
