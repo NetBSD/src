@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6 2003/03/05 23:56:12 fvdl Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7 2003/03/16 16:26:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -105,26 +105,7 @@ process_read_regs(l, regs)
 {
 	struct trapframe *tf = process_frame(l);
 
-	regs->r_rflags = tf->tf_rflags;
-	regs->r_rdi = tf->tf_rdi;
-	regs->r_rsi = tf->tf_rsi;
-	regs->r_rbp = tf->tf_rbp;
-	regs->r_rbx = tf->tf_rbx;
-	regs->r_rdx = tf->tf_rdx;
-	regs->r_rcx = tf->tf_rcx;
-	regs->r_rax = tf->tf_rax;
-	regs->r_r8  = tf->tf_r8;
-	regs->r_r9  = tf->tf_r9;
-	regs->r_r10  = tf->tf_r10;
-	regs->r_r11  = tf->tf_r11;
-	regs->r_r12  = tf->tf_r12;
-	regs->r_r13  = tf->tf_r13;
-	regs->r_r14  = tf->tf_r14;
-	regs->r_r15  = tf->tf_r15;
-	regs->r_rip = tf->tf_rip;
-	regs->r_cs = tf->tf_cs;
-	regs->r_rsp = tf->tf_rsp;
-	regs->r_ss = tf->tf_ss;
+	memcpy(regs, tf, sizeof (*regs));
 
 	return (0);
 }
@@ -158,100 +139,22 @@ process_read_fpregs(l, regs)
 	return (0);
 }
 
-#if 0
-static __inline int
-verr_ldt(pmap, sel)
-	struct pmap *pmap;
-	int sel;
-{
-	int off;
-	struct mem_segment_descriptor *d;
-
-	off = sel & 0xfff8;
-	if (off > (pmap->pm_ldt_len - sizeof (struct mem_segment_descriptor)))
-		return 0;
-	d = (struct mem_segment_descriptor *)(ldtstore + off);
-	return ((d->sd_type & SDT_MEMRO) != 0 && d->sd_dpl == SEL_UPL &&
-		d->sd_p == 1);
-}
-
-static __inline int
-verr_gdt(pmap, sel)
-	struct pmap *pmap;
-	int sel;
-{
-	int off;
-	struct mem_segment_descriptor *d;
-
-	off = sel & 0xfff8;
-	if (off > (NGDT_MEM - 1) * sizeof (struct mem_segment_descriptor))
-		return 0;
-	d = (struct mem_segment_descriptor *)(gdtstore + off);
-	return ((d->type & SDT_MEMRO) != 0 && d->sd_p == 1 &&
-		d->dpl == SEL_UPL);
-}
-
-#define	verr(sel)	(ISLDT(sel) ? verr_ldt(IDXSEL(sel)) : \
-				      verr_gdt(IDXSEL(sel)))
-#define	valid_sel(sel)	(ISPL(sel) == SEL_UPL && verr(sel))
-#define	null_sel(sel)	(!ISLDT(sel) && IDXSEL(sel) == 0)
-
-#endif
-
 int
-process_write_regs(l, regs)
+process_write_regs(l, regp)
 	struct lwp *l;
-	struct reg *regs;
+	struct reg *regp;
 {
 	struct trapframe *tf = process_frame(l);
-	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
-#if 0
-	union descriptor *gdt = (union descriptor *)gdtstore;
-#endif
+	long *regs = regp->regs;
 
 	/*
 	 * Check for security violations.
 	 */
-	if (((regs->r_rflags ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
-	    !USERMODE(regs->r_cs, regs->r_rflags))
+	if (((regs[_REG_RFL] ^ tf->tf_rflags) & PSL_USERSTATIC) != 0 ||
+	    !USERMODE(regs[_REG_CS], regs[_REG_RFL]))
 		return (EINVAL);
 
-	simple_lock(&pmap->pm_lock);
-
-#if 0
-	/*
-	 * fs and gs contents ignored by long mode.
-	 * must reenable this check for 32bit compat mode.
-	 */
-	if ((regs->r_gs != pcb->pcb_gs && \
-	     !valid_sel(regs->r_gs) && !null_sel(regs->r_gs)) ||
-	    (regs->r_fs != pcb->pcb_fs && \
-	     !valid_sel(regs->r_fs) && !null_sel(regs->r_fs)))
-		return (EINVAL);
-#endif
-
-	simple_unlock(&pmap->pm_lock);
-
-	tf->tf_rflags = regs->r_rflags;
-	tf->tf_r15 = regs->r_r15;
-	tf->tf_r14 = regs->r_r14;
-	tf->tf_r13 = regs->r_r13;
-	tf->tf_r12 = regs->r_r12;
-	tf->tf_r11 = regs->r_r11;
-	tf->tf_r10 = regs->r_r10;
-	tf->tf_r9 = regs->r_r9;
-	tf->tf_r8 = regs->r_r8;
-	tf->tf_rdi = regs->r_rdi;
-	tf->tf_rsi = regs->r_rsi;
-	tf->tf_rbp = regs->r_rbp;
-	tf->tf_rbx = regs->r_rbx;
-	tf->tf_rdx = regs->r_rdx;
-	tf->tf_rcx = regs->r_rcx;
-	tf->tf_rax = regs->r_rax;
-	tf->tf_rip = regs->r_rip;
-	tf->tf_cs = regs->r_cs;
-	tf->tf_rsp = regs->r_rsp;
-	tf->tf_ss = regs->r_ss;
+	memcpy(tf, regs, sizeof (*tf));
 
 	return (0);
 }
@@ -269,7 +172,7 @@ process_write_fpregs(l, regs)
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}
 
-	memcpy(frame, regs, sizeof(*regs));
+	memcpy(frame, &regs->fxstate, sizeof(*regs));
 	return (0);
 }
 
@@ -294,6 +197,8 @@ process_set_pc(l, addr)
 {
 	struct trapframe *tf = process_frame(l);
 
+	if ((u_int64_t)addr > VM_MAXUSER_ADDRESS)
+		return EINVAL;
 	tf->tf_rip = (u_int64_t)addr;
 
 	return (0);
