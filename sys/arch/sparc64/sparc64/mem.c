@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16 2000/11/17 23:18:53 mrg Exp $ */
+/*	$NetBSD: mem.c,v 1.17 2000/11/18 03:52:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,9 +92,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vaddr_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t o, v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	static int physlock;
 	vm_prot_t prot;
@@ -161,7 +161,7 @@ mmrw(dev, uio, flags)
 			if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
 				panic("mmrw: uio proc");
 			while (c > 0 && uio->uio_resid) {
-				register struct iovec *iov;
+				struct iovec *iov;
 				u_int cnt;
 				int d;
 
@@ -279,7 +279,7 @@ unlock:
 
 paddr_t
 mmmmap(dev, off, prot)
-        dev_t dev;
+	dev_t dev;
 	off_t off;
 	int prot;
 {
