@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.265 2004/01/01 12:28:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.266 2004/01/04 13:29:16 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -46,6 +46,7 @@
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME?=	UTC
 MAKESUMS=	CKSUM=${TOOL_CKSUM:Q} ${HOST_SH} ${NETBSDSRCDIR}/distrib/sets/makesums
+DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
 # Flags for creating ISO CDROM image
 # mkisofs is expected to be in $PATH, install via pkgsrc/sysutils/cdrecord
@@ -144,14 +145,55 @@ distribution: check_DESTDIR .WAIT distrib-dirs
 	(cd ${.CURDIR}; ${MAKE} install-etc-files)
 .endif	# !DISTRIBUTION_DONE
 
-.PHONY: MAKEDEV
+
+.PHONY: 	MAKEDEV release-info
+CLEANFILES+=	MAKEDEV release-info
+
 MAKEDEV:
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 	    awk -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
 
-	
+
+RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
+		DESTDIR EXTERNAL_TOOLCHAIN \
+		INSTALLWORLDDIR \
+		KERNARCHDIR KERNCONFDIR KERNOBJDIR KERNSRCDIR \
+		MACHINE MACHINE_ARCH MAKE MAKECONF MAKEFLAGS \
+		MAKEOBJDIR MAKEOBJDIRPREFIX MAKEVERBOSE \
+		MKCATPAGES MKCRYPTO MKDOC MKHOSTOBJ MKINFO \
+		MKLINT MKMAN MKNLS MKOBJ MKOBJDIRS \
+		MKPIC MKPICINSTALL MKPROFILE MKSHARE \
+		MKUNPRIVED MKUPDATE \
+		NBUILDJOBS \
+		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
+		RELEASEDIR TOOLCHAIN_MISSING TOOLDIR USETOOLS
+
+release-info:
+	${_MKTARGET_CREATE}
+	@(	echo "NetBSD ${DISTRIBVER}/${MACHINE}"; \
+		echo "	$$(date -u)  $${USER-root}@$$(hostname)"; \
+		echo ; \
+		echo "Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004" ; \
+		echo "	The NetBSD Foundation, Inc.  All rights reserved."; \
+		echo "Copyright (c) 1980, 1983, 1986, 1988, 1990, 1991, 1993, 1994"; \
+		echo "	The Regents of the University of California.  All rights reserved."; \
+		echo ; \
+		echo "Build settings:"; \
+	) >${.TARGET}
+.for var in ${RELEASEVARS}
+.if defined(${var})
+	@printf "%20s = '%-s'\n" ${var} ${${var}:Q} >> ${.TARGET}
+.else
+	@printf "%20s = (undefined)\n" ${var} >> ${.TARGET}
+.endif
+.endfor
+
+install-release-info: check_DESTDIR release-info
+	${_MKMSG_INSTALL} etc/release-info
+	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 444 \
+	    release-info ${DESTDIR}/etc
 
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
