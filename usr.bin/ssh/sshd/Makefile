@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2003/12/11 09:46:27 dyoung Exp $
+#	$NetBSD: Makefile,v 1.21 2005/01/03 06:05:51 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -38,8 +38,8 @@ DPADD+=	${LIBCOM_ERR} ${LIBROKEN}
 
 CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
 
-LDADD+=	-lcrypt -lcrypto -lutil -lz
-DPADD+=	${LIBCRYPT} ${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
+LDADD+=	-lcrypt -lutil
+DPADD+=	${LIBCRYPT} ${LIBUTIL}
 
 CPPFLAGS+=-DLIBWRAP
 LDADD+=	-lwrap
