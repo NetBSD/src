@@ -1,4 +1,4 @@
-/*	$KAME: sockmisc.c,v 1.38 2003/05/09 05:31:11 itojun Exp $	*/
+/*	$KAME: sockmisc.c,v 1.40 2003/11/11 16:08:03 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sockmisc.c,v 1.4 2003/07/12 09:37:12 itojun Exp $");
+__RCSID("$NetBSD: sockmisc.c,v 1.5 2004/04/12 03:34:07 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -732,16 +732,16 @@ str2saddr(host, port)
 	error = getaddrinfo(host, port, &hints, &res);
 	if (error != 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"getaddrinfo(%s%s%s): %s",
+			"getaddrinfo(%s%s%s): %s\n",
 			host, port ? "," : "", port ? port : "",
 			gai_strerror(error));
 		return NULL;
 	}
 	if (res->ai_next != NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
+		plog(LLV_WARNING, LOCATION, NULL,
 			"getaddrinfo(%s%s%s): "
 			"resolved to multiple address, "
-			"taking the first one",
+			"taking the first one\n",
 			host, port ? "," : "", port ? port : "");
 	}
 	saddr = racoon_malloc(res->ai_addrlen);

@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isakmp.c,v 1.14 2004/03/31 07:19:27 itojun Exp $");
+__RCSID("$NetBSD: isakmp.c,v 1.15 2004/04/12 03:34:07 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -626,8 +626,7 @@ ph1_main(iph1, msg)
 			"no buffer found as sendbuf\n"); 
 		return -1;
 	}
-	vfree(iph1->sendbuf);
-	iph1->sendbuf = NULL;
+	VPTRINIT(iph1->sendbuf);
 
 	/* turn off schedule */
 	if (iph1->scr)
@@ -740,8 +739,7 @@ quick_main(iph2, msg)
 			"no buffer found as sendbuf\n"); 
 		return -1;
 	}
-	vfree(iph2->sendbuf);
-	iph2->sendbuf = NULL;
+	VPTRINIT(iph2->sendbuf);
 
 	/* turn off schedule */
 	if (iph2->scr)
@@ -1747,7 +1745,7 @@ isakmp_post_getspi(iph2)
 #endif
 
 	/* don't process it because there is no suitable phase1-sa. */
-	if (iph2->ph1->status == PHASE2ST_EXPIRED) {
+	if (iph2->ph1->status == PHASE1ST_EXPIRED) {
 		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
 			"the negotiation is stopped, "
 			"because there is no suitable ISAKMP-SA.\n");
@@ -2062,28 +2060,34 @@ isakmp_newmsgid2(iph1)
 /*
  * set values into allocated buffer of isakmp header for phase 1
  */
-caddr_t
-set_isakmp_header(vbuf, iph1, nptype)
+struct isakmp_construct
+set_isakmp_header(vbuf, iph1)
 	vchar_t *vbuf;
 	struct ph1handle *iph1;
-	int nptype;
 {
 	struct isakmp *isakmp;
+	struct isakmp_construct res;
+
+	res.buff=NULL;
+	res.np=NULL;
 
 	if (vbuf->l < sizeof(*isakmp))
-		return NULL;
+		return res;
 
 	isakmp = (struct isakmp *)vbuf->v;
 	memcpy(&isakmp->i_ck, &iph1->index.i_ck, sizeof(cookie_t));
 	memcpy(&isakmp->r_ck, &iph1->index.r_ck, sizeof(cookie_t));
-	isakmp->np = nptype;
+	isakmp->np = ISAKMP_NPTYPE_NONE ;
 	isakmp->v = iph1->version;
 	isakmp->etype = iph1->etype;
 	isakmp->flags = iph1->flags;
 	isakmp->msgid = iph1->msgid;
 	isakmp->len = htonl(vbuf->l);
 
-	return vbuf->v + sizeof(*isakmp);
+	res.np=&(isakmp->np);
+	res.buff=vbuf->v + sizeof(*isakmp);
+
+	return res;
 }
 
 /*
@@ -2113,6 +2117,36 @@ set_isakmp_header2(vbuf, iph2, nptype)
 	return vbuf->v + sizeof(*isakmp);
 }
 
+
+/*
+ * set values into allocated buffer of isakmp payload.
+ */
+struct isakmp_construct
+set_isakmp_payload_c(constr, src, nptype)
+	struct isakmp_construct constr;
+	vchar_t *src;
+	int nptype;
+{
+	struct isakmp_gen *gen;
+	caddr_t p = constr.buff;
+
+	plog(LLV_DEBUG, LOCATION, NULL, "add payload of len %d, next type %d\n",
+	    src->l, nptype);
+
+	*constr.np=nptype;
+	gen = (struct isakmp_gen *)p;
+	gen->np = ISAKMP_NPTYPE_NONE ;
+	gen->len = htons(sizeof(*gen) + src->l);
+	p += sizeof(*gen);
+	memcpy(p, src->v, src->l);
+	p += src->l;
+
+	constr.np=&(gen->np);
+	constr.buff=p;
+
+	return constr;
+}
+
 /*
  * set values into allocated buffer of isakmp payload.
  */
@@ -2137,6 +2171,7 @@ set_isakmp_payload(buf, src, nptype)
 
 	return p;
 }
+
 
 static int
 etypesw1(etype)

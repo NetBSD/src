@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.118 2003/07/12 09:34:48 itojun Exp $	*/
+/*	$KAME: cfparse.y,v 1.121 2004/03/27 03:27:45 suz Exp $	*/
 
 %{
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cfparse.y,v 1.19 2003/08/26 03:31:51 itojun Exp $");
+__RCSID("$NetBSD: cfparse.y,v 1.20 2004/04/12 03:34:05 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: cfparse.y,v 1.19 2003/08/26 03:31:51 itojun Exp $");
 #include "strnames.h"
 #include "gcmalloc.h"
 #ifdef HAVE_GSSAPI
-#include "gssapi.h"
+#include "auth_gssapi.h"
 #endif
 #include "vendorid.h"
 
@@ -115,6 +115,19 @@ static int num2dhgroup[] = {
 	OAKLEY_ATTR_GRP_DESC_EC2N155,
 	OAKLEY_ATTR_GRP_DESC_EC2N185,
 	OAKLEY_ATTR_GRP_DESC_MODP1536,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	OAKLEY_ATTR_GRP_DESC_MODP2048,
+	OAKLEY_ATTR_GRP_DESC_MODP3072,
+	OAKLEY_ATTR_GRP_DESC_MODP4096,
+	OAKLEY_ATTR_GRP_DESC_MODP6144,
+	OAKLEY_ATTR_GRP_DESC_MODP8192
 };
 
 static struct remoteconf *cur_rmconf;
@@ -1428,6 +1441,7 @@ cfreparse()
 	flushph1();
 	flushrmconf();
 	cleanprhead();
+	flushsainfo();
 	clean_tmpalgtype();
 	yycf_init_buffer();
 
