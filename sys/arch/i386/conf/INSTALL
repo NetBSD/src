@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.29 1996/12/20 06:45:15 jonathan Exp $
+#	$NetBSD: INSTALL,v 1.30 1997/01/15 01:28:47 perry Exp $
 #
 #	INSTALL -- an installation kernel config.
 #                     adapters.    This kernel should be GENERICOTHER with lines
@@ -27,8 +27,7 @@ options		MATH_EMULATE	# floating point emulation
 #options	INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users
-options		TIMEZONE=0	# time zone to adjust RTC time by
-options		DST=0		# daylight savings time used by RTC
+options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options	NTP		# NTP phase/frequency locked loop
 
 #options	DDB		# in-kernel debugger

@@ -3,7 +3,7 @@
 #    root on NFS  to boot diskless for installation,
 #    disk drivers for labelling disks and installation on local disk.
 #
-# 	$NetBSD: NFSINSTALL,v 1.2 1996/11/16 23:10:51 jonathan Exp $
+# 	$NetBSD: NFSINSTALL,v 1.3 1997/01/15 01:29:10 perry Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -19,14 +19,6 @@ options		DS5000_25		# MAXINE (kn02ca/xine) support
 options		DS5000_100		# 3MIN (kn02ba/kmin) support
 options		DS5000_200		# 3MAX (kn02) support
 options		DS5000_240		# 3MAXPLUS (kn03) support
-
-
-
-
-# You need to set this locally, but it doesn't do much outside the kernel.
-# Set up /etc/localtime instead.
-options		TIMEZONE=0		# minutes west of GMT (for)
-options		DST=0			# use daylight savings rules
 
 
 # Standard system options

@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.20 1996/12/17 07:33:01 scottr Exp $
+#	$NetBSD: SPOT,v 1.21 1997/01/15 01:28:52 perry Exp $
 #
 # SPOT
 
@@ -49,8 +49,7 @@ options 	COMPAT_11
 options 	COMPAT_12
 
 # SPOT-specific options
-options 	TIMEZONE=360
-options 	DST=1
+options 	RTC_OFFSET=360	# hardware clock is this many mins. west of GMT
 
 config		netbsd	swap generic
 

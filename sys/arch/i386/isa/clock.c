@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42 1996/11/13 07:00:30 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.43 1997/01/15 01:28:51 perry Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -454,9 +454,7 @@ inittodr(base)
 		days += yeartoday(i);
 	n += days * 3600 * 24;
 
-	n += tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		n -= 3600;
+	n += rtc_offset * 60;
 
 	if (base < n - 5*SECYR)
 		printf("WARNING: file system time much less than clock time\n");
@@ -501,9 +499,7 @@ resettodr()
 		bzero(&rtclk, sizeof(rtclk));
 	splx(s);
 
-	diff = tz.tz_minuteswest * 60;
-	if (tz.tz_dsttime)
-		diff -= 3600;
+	diff = rtc_offset * 60;
 	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
 	rtclk[MC_SEC] = dectohexdec(n % 60);
 	n /= 60;

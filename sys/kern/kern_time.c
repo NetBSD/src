@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.24 1996/12/22 10:21:11 cgd Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.25 1997/01/15 01:37:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,6 +42,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
+#include <sys/syslog.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -188,6 +189,7 @@ sys_gettimeofday(p, v, retval)
 	} */ *uap = v;
 	struct timeval atv;
 	int error = 0;
+	struct timezone tzfake;
 
 	if (SCARG(uap, tp)) {
 		microtime(&atv);
@@ -195,8 +197,15 @@ sys_gettimeofday(p, v, retval)
 		if (error)
 			return (error);
 	}
-	if (SCARG(uap, tzp))
-		error = copyout(&tz, SCARG(uap, tzp), sizeof (tz));
+	if (SCARG(uap, tzp)) {
+		/*
+		 * NetBSD has no kernel notion of timezone, so we just
+		 * fake up a timezone struct and return it if demanded.
+		 */
+		tzfake.tz_minuteswest = 0;
+		tzfake.tz_dsttime = 0;
+		error = copyout(&tzfake, SCARG(uap, tzp), sizeof (tzfake));
+	}
 	return (error);
 }
 
@@ -221,13 +230,19 @@ sys_settimeofday(p, v, retval)
 	if (SCARG(uap, tv) && (error = copyin(SCARG(uap, tv),
 	    &atv, sizeof(atv))))
 		return (error);
+	/* XXX since we don't use tz, probably no point in doing copyin. */
 	if (SCARG(uap, tzp) && (error = copyin(SCARG(uap, tzp),
 	    &atz, sizeof(atz))))
 		return (error);
 	if (SCARG(uap, tv))
 		settime(&atv);
+	/*
+	 * NetBSD has no kernel notion of timezone, and only an
+	 * obsolete program would try to set it, so we log a warning.
+	 */
 	if (SCARG(uap, tzp))
-		tz = atz;
+		log(LOG_WARNING, "pid %d attempted to set the "
+		    "(obsolete) kernel timezone.", p->p_pid); 
 	return (0);
 }
 
