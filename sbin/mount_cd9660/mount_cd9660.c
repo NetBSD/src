@@ -34,6 +34,8 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *      @(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94
  */
 
 #ifndef lint
@@ -43,8 +45,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: mount_cd9660.c,v 1.1 1994/06/08 19:07:37 mycroft Exp $";
+static char sccsid[] = "@(#)mount_cd9660.c	8.4 (Berkeley) 3/27/94";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,8 +75,9 @@ main(argc, argv)
 {
 	struct iso_args args;
 	int ch, mntflags, opts;
-	char *dev, *dir;
+	char *dev, *dir, *options;
 
+	options = NULL;
 	mntflags = opts = 0;
 	while ((ch = getopt(argc, argv, "ego:r")) != EOF)
 		switch (ch) {
@@ -86,7 +88,7 @@ main(argc, argv)
 			opts |= ISOFSMNT_GENS;
 			break;
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags);
+			getmntopts(options, mopts, &mntflags);
 			break;
 		case 'r':
 			opts |= ISOFSMNT_NORRIP;
