@@ -53,6 +53,9 @@ struct node {
   node(node *n);
   node *add_char(charinfo *c, environment *, hunits *widthp);
 
+#ifdef BROKEN_GXX_VIRTUAL_INLINE
+  inline
+#endif
   virtual ~node();
   virtual node *copy() = 0;
   virtual hunits width();
@@ -109,7 +112,8 @@ inline node::node(node *n) : next(n)
 {
 }
 
-inline node::~node()
+inline
+node::~node()
 {
 }
 
