@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.h,v 1.31.2.1 2004/05/30 11:24:57 tron Exp $	*/
+/*	$NetBSD: ip_nat.h,v 1.31.2.2 2004/08/13 03:55:44 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995-2001, 2003 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * Id: ip_nat.h,v 2.90 2004/02/11 15:10:36 darrenr Exp
+ * Id: ip_nat.h,v 2.90.2.4 2004/06/20 10:25:28 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H__
@@ -120,11 +120,11 @@ typedef	struct	nat	{
 	u_short		nat_oport;		/* other port */
 	u_short		nat_use;
 	u_char		nat_p;			/* protocol for NAT */
-	int		nat_rev;		/* 0 = forward, 1 = reverse */
 	int		nat_dir;
 	int		nat_ref;		/* reference count */
 	int		nat_hv[2];
 	char		nat_ifnames[2][LIFNAMSIZ];
+	int		nat_rev;		/* 0 = forward, 1 = reverse */
 } nat_t;
 
 #define	nat_inip	nat_inip6.in4
@@ -158,6 +158,7 @@ typedef	struct	nat	{
 
 #define	NAT_TCPUDP	(NAT_TCP|NAT_UDP)
 #define	NAT_TCPUDPICMP	(NAT_TCP|NAT_UDP|NAT_ICMPERR)
+#define	NAT_TCPUDPICMPQ	(NAT_TCP|NAT_UDP|NAT_ICMPQUERY)
 #define	NAT_FROMRULE	(NAT_TCP|NAT_UDP)
 
 /* 0x0100 reserved for FI_W_SPORT */
@@ -234,6 +235,7 @@ typedef	struct	ipnat	{
 #define	IPN_ICMPERR	0x00004
 #define	IPN_TCPUDPICMP	(IPN_TCP|IPN_UDP|IPN_ICMPERR)
 #define	IPN_ICMPQUERY	0x00008
+#define	IPN_TCPUDPICMPQ	(IPN_TCP|IPN_UDP|IPN_ICMPQUERY)
 #define	IPN_RF		(IPN_TCPUDP|IPN_DELETE|IPN_ICMPERR)
 #define	IPN_AUTOPORTMAP	0x00010
 #define	IPN_IPRANGE	0x00020
@@ -247,9 +249,10 @@ typedef	struct	ipnat	{
 #define	IPN_DELETE	0x40000
 #define	IPN_STICKY	0x80000
 #define	IPN_FRAG	0x100000
+#define	IPN_FIXEDDPORT	0x200000
 #define	IPN_USERFLAGS	(IPN_TCPUDP|IPN_AUTOPORTMAP|IPN_IPRANGE|IPN_SPLIT|\
 			 IPN_ROUNDR|IPN_FILTER|IPN_NOTSRC|IPN_NOTDST|\
-			 IPN_FRAG|IPN_STICKY)
+			 IPN_FRAG|IPN_STICKY|IPN_FIXEDDPORT|IPN_ICMPQUERY)
 
 /*
  * Values for in_redir
