@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.66 2000/06/12 23:32:48 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.67 2000/06/18 07:13:41 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@
 /* #include "fb.h" */
 
 int bus_space_debug = 0; /* This may be used by macros elsewhere. */
+#define	BSDB_MAP	0x1
 #ifdef DEBUG
 #define DPRINTF(l, s)   do { if (bus_space_debug & l) printf s; } while (0)
 #else
@@ -1576,7 +1577,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	tmp = (paddr_t)bh;
 	result = (probeget(tmp + offset, bus_type_asi[tag->type], size) != -1);
 	if (result && callback != NULL)
-		result = (*callback)(tmp, arg);
+		result = (*callback)((char *)(u_long)tmp, arg);
 	bus_space_unmap(tag, bh, size);
 	return (result);
 }
