@@ -1214,67 +1214,6 @@ ENTRY(lgdt)
 	movl	$8,4(%esp)
 	lret
 
-	/*
-	 * void lidt(struct region_descriptor *rdp);
-	 */
-ENTRY(lidt)
-	movl	4(%esp),%eax
-	lidt	(%eax)
-	ret
-
-	/*
-	 * void lldt(u_short sel)
-	 */
-ENTRY(lldt)
-	lldt	4(%esp)
-	ret
-
-	/*
-	 * void ltr(u_short sel)
-	 */
-ENTRY(ltr)
-	ltr	4(%esp)
-	ret
-
-	/*
-	 * void lcr3(caddr_t cr3)
-	 */
-	ALIGN_TEXT
-ENTRY(load_cr3)
-ALTENTRY(lcr3)
-	movl	4(%esp),%eax
-	movl	%eax,%cr3
-	ret
-
-	# tlbflush()
-ENTRY(tlbflush)
-	movl	%cr3,%eax
-	movl	%eax,%cr3
-	ret
-
-	# lcr0(cr0)
-ENTRY(lcr0)
-ALTENTRY(load_cr0)
-	movl	4(%esp),%eax
-	movl	%eax,%cr0
-	ret
-
-	# rcr0()
-ENTRY(rcr0)
-	movl	%cr0,%eax
-	ret
-
-	# rcr2()
-ENTRY(rcr2)
-	movl	%cr2,%eax
-	ret
-
-	# rcr3()
-ENTRY(_cr3)
-ALTENTRY(rcr3)
-	movl	%cr3,%eax
-	ret
-
 	# ssdtosd(*ssdp,*sdp)
 ENTRY(ssdtosd)
 	pushl	%ebx

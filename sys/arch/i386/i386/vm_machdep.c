@@ -45,17 +45,18 @@
 
 #include "npx.h"
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "malloc.h"
-#include "buf.h"
-#include "user.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/malloc.h>
+#include <sys/buf.h>
+#include <sys/user.h>
 
-#include "../include/cpu.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
