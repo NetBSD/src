@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.30 1999/11/13 00:24:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.31 2000/03/26 20:54:47 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -149,8 +149,8 @@ uvm_kernacc(addr, len, rw)
 	vaddr_t saddr, eaddr;
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
-	saddr = trunc_page(addr);
-	eaddr = round_page(addr+len);
+	saddr = trunc_page((vaddr_t)addr);
+	eaddr = round_page((vaddr_t)addr+len);
 	vm_map_lock_read(kernel_map);
 	rv = uvm_map_checkprot(kernel_map, saddr, eaddr, prot);
 	vm_map_unlock_read(kernel_map);
@@ -190,8 +190,8 @@ uvm_useracc(addr, len, rw)
 	map = &curproc->p_vmspace->vm_map;
 
 	vm_map_lock_read(map);
-	rv = uvm_map_checkprot(map, trunc_page(addr), round_page(addr+len),
-	    prot);
+	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),
+	    round_page((vaddr_t)addr+len), prot);
 	vm_map_unlock_read(map);
 
 	return(rv);
@@ -221,8 +221,8 @@ uvm_chgkprot(addr, len, rw)
 	vaddr_t sva, eva;
 
 	prot = rw == B_READ ? VM_PROT_READ : VM_PROT_READ|VM_PROT_WRITE;
-	eva = round_page(addr + len);
-	for (sva = trunc_page(addr); sva < eva; sva += PAGE_SIZE) {
+	eva = round_page((vaddr_t)addr + len);
+	for (sva = trunc_page((vaddr_t)addr); sva < eva; sva += PAGE_SIZE) {
 		/*
 		 * Extract physical address for the page.
 		 * We use a cheezy hack to differentiate physical
@@ -255,8 +255,8 @@ uvm_vslock(p, addr, len, access_type)
 	int rv;
 
 	map = &p->p_vmspace->vm_map;
-	start = trunc_page(addr);
-	end = round_page(addr + len);
+	start = trunc_page((vaddr_t)addr);
+	end = round_page((vaddr_t)addr + len);
 
 	rv = uvm_fault_wire(map, start, end, access_type);
 
@@ -276,8 +276,8 @@ uvm_vsunlock(p, addr, len)
 	caddr_t	addr;
 	size_t	len;
 {
-	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page(addr), 
-		round_page(addr+len));
+	uvm_fault_unwire(&p->p_vmspace->vm_map, trunc_page((vaddr_t)addr), 
+		round_page((vaddr_t)addr+len));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.10 1999/12/30 16:09:47 eeh Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.11 2000/03/26 20:54:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -83,7 +83,7 @@ sys_obreak(p, v, retval)
 	register int diff;
 
 	old = (vaddr_t)vm->vm_daddr;
-	new = round_page(SCARG(uap, nsize));
+	new = round_page((vaddr_t)SCARG(uap, nsize));
 	if ((int)(new - old) > p->p_rlimit[RLIMIT_DATA].rlim_cur)
 		return(ENOMEM);
 

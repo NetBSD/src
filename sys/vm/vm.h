@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.21 1999/04/10 13:52:11 drochner Exp $	*/
+/*	$NetBSD: vm.h,v 1.22 2000/03/26 20:54:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,8 @@
 #ifndef VM_H
 #define VM_H
 
-typedef int vm_inherit_t;		/* XXX: inheritance codes */
+typedef int		vm_inherit_t;	/* XXX: inheritance codes */
+typedef off_t           voff_t;		/* XXX: offset within a uvm_object */
 
 union vm_map_object;
 typedef union vm_map_object vm_map_object_t;

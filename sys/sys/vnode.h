@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.69 2000/02/14 22:00:22 fvdl Exp $	*/
+/*	$NetBSD: vnode.h,v 1.70 2000/03/26 20:54:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,6 +46,7 @@
 #include <vm/vm_param.h>	/* XXX */
 #include <sys/lock.h>		/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
+#include <vm/vm.h>		/* XXX */
 #include <uvm/uvm_vnode.h>	/* XXX */
 
 /*

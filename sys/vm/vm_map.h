@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.34 1999/07/07 05:33:33 thorpej Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.35 2000/03/26 20:54:48 kleink Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -106,7 +106,7 @@ struct vm_map_entry {
 	vaddr_t			start;		/* start address */
 	vaddr_t			end;		/* end address */
 	union vm_map_object	object;		/* object I point to */
-	vsize_t			offset;		/* offset into object */
+	voff_t			offset;		/* offset into object */
 	int			etype;		/* entry type */
 	vm_prot_t		protection;	/* protection code */
 	vm_prot_t		max_protection;	/* maximum protection */
