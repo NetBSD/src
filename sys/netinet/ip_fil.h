@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.45 2002/07/01 13:55:35 christos Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.46 2002/09/19 08:09:13 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 2.29.2.32 2002/04/10 04:57:14 darrenr Exp
+ * Id: ip_fil.h,v 2.29.2.33 2002/06/04 14:46:28 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FIL_H_
@@ -509,6 +509,7 @@ extern	int	send_reset __P((ip_t *, fr_info_t *));
 extern	int	send_icmp_err __P((ip_t *, int, fr_info_t *, int));
 extern	int	ipf_log __P((void));
 extern	struct	ifnet *get_unit __P((char *, int));
+extern	int	mbuflen __P((mb_t *));
 # if defined(__NetBSD__) || defined(__OpenBSD__) || \
 	  (_BSDI_VERSION >= 199701) || (__FreeBSD_version >= 300000)
 extern	int	iplioctl __P((dev_t, u_long, caddr_t, int));

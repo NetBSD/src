@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.c,v 1.28 2002/06/09 16:33:39 itojun Exp $	*/
+/*	$NetBSD: ip_auth.c,v 1.29 2002/09/19 08:09:11 martti Exp $	*/
 
 /*
  * Copyright (C) 1998-2001 by Darren Reed & Guido van Rooij.
@@ -108,9 +108,9 @@ extern struct ifqueue   ipintrq;		/* ip packet input queue */
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.28 2002/06/09 16:33:39 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_auth.c,v 1.29 2002/09/19 08:09:11 martti Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.19 2002/04/23 14:57:27 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_auth.c,v 2.11.2.20 2002/06/04 14:40:42 darrenr Exp";
 #endif
 #endif
 
@@ -622,7 +622,10 @@ void fr_authexpire()
 		} else
 			faep = &fae->fae_next;
 	}
-	ipauth = &fae_list->fae_fr;
+	if (fae_list != NULL)
+		ipauth = &fae_list->fae_fr;
+	else
+		ipauth = NULL;
 
 	for (frp = &fr_authlist; (fr = *frp); ) {
 		if (fr->fr_ref == 1) {

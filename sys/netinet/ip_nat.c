@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.51 2002/06/09 16:33:41 itojun Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.52 2002/09/19 08:09:16 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -112,10 +112,10 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.51 2002/06/09 16:33:41 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.52 2002/09/19 08:09:16 martti Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.67 2002/04/27 15:23:39 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.70 2002/08/28 12:45:48 darrenr Exp";
 #endif
 #endif
 
@@ -476,8 +476,12 @@ int mode;
 		}
 		for (np = &nat_list; (n = *np); np = &n->in_next)
 			if (!bcmp((char *)&nat->in_flags, (char *)&n->in_flags,
-					IPN_CMPSIZ))
+					IPN_CMPSIZ)) {
+				if (n->in_redir == NAT_REDIRECT &&
+				    n->in_pnext != nat->in_pnext)
+					continue;
 				break;
+			}
 	}
 
 	switch (cmd)
@@ -2333,8 +2337,8 @@ register natlookup_t *np;
 	fr_info_t fi;
 
 	bzero((char *)&fi, sizeof(fi));
-	fi.fin_data[0] = np->nl_inport;
-	fi.fin_data[1] = np->nl_outport;
+	fi.fin_data[0] = ntohs(np->nl_inport);
+	fi.fin_data[1] = ntohs(np->nl_outport);
 
 	/*
 	 * If nl_inip is non null, this is a lookup based on the real
@@ -2516,7 +2520,7 @@ maskloop:
 	if (nat) {
 		np = nat->nat_ptr;
 		if (natadd && (fin->fin_fl & FI_FRAG) && np)
-			ipfr_nat_newfrag(ip, fin, 0, nat);
+			ipfr_nat_newfrag(ip, fin, nat);
 		MUTEX_ENTER(&nat->nat_lock);
 		if (fin->fin_p != IPPROTO_TCP) {
 			if (np && np->in_age[1])
@@ -2617,6 +2621,8 @@ maskloop:
 			i = appr_check(ip, fin, nat);
 			if (i == 0)
 				i = 1;
+			else if (i == -1)
+				nat->nat_drop[1]++;
 		} else
 			i = 1;
 		ATOMIC_INCL(nat_stats.ns_mapped[1]);
@@ -2741,11 +2747,12 @@ maskloop:
 		np = nat->nat_ptr;
 		fin->fin_fr = nat->nat_fr;
 		if (natadd && (fin->fin_fl & FI_FRAG) && np)
-			ipfr_nat_newfrag(ip, fin, 0, nat);
+			ipfr_nat_newfrag(ip, fin, nat);
 		if (np && (np->in_apr != NULL) && (np->in_dport == 0 ||
 		     (tcp != NULL && sport == np->in_dport))) {
 			i = appr_check(ip, fin, nat);
 			if (i == -1) {
+				nat->nat_drop[0]++;
 				RWLOCK_EXIT(&ipf_nat);
 				return i;
 			}

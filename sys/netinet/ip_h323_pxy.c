@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_h323_pxy.c,v 1.4 2002/06/09 16:33:40 itojun Exp $	*/
+/*	$NetBSD: ip_h323_pxy.c,v 1.5 2002/09/19 08:09:16 martti Exp $	*/
 
 /*
  * Copyright 2001, QNX Software Systems Ltd. All Rights Reserved
@@ -11,6 +11,7 @@
  * authorized by a written license agreement from QSSL. For more information,
  * please email licensing@qnx.com.
  *
+ * For more details, see QNX_OCL.txt provided with this distribution.
  */
 
 /*
@@ -27,7 +28,7 @@
 # include <sys/ioctl.h>
 #endif
 
-__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.4 2002/06/09 16:33:40 itojun Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_h323_pxy.c,v 1.5 2002/09/19 08:09:16 martti Exp $");
 
 #define IPF_H323_PROXY
 
@@ -56,7 +57,7 @@ unsigned char *data;
 int datlen, *off;
 unsigned short *port;
 {
-	u_32_t addr;
+	u_32_t addr, netaddr;
 	u_char *dp;
 	int offset;
 
@@ -66,10 +67,11 @@ unsigned short *port;
 	*port = 0;
 	offset = *off;
 	dp = (u_char *)data;
+	netaddr = ntohl(ipaddr);
 
 	for (offset = 0; offset <= datlen - 6; offset++, dp++) {
 		addr = (dp[0] << 24) | (dp[1] << 16) | (dp[2] << 8) | dp[3];
-		if (ipaddr == addr)
+		if (netaddr == addr)
 		{
 			*port = (*(dp + 4) << 8) | *(dp + 5);
 			break;

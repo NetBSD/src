@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.84 2002/09/07 00:10:24 enami Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.85 2002/09/19 08:09:12 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -123,10 +123,10 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.84 2002/09/07 00:10:24 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.85 2002/09/19 08:09:12 martti Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.55 2002/03/26 15:54:39 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.60 2002/08/28 12:40:39 darrenr Exp";
 #endif
 #endif
 
@@ -164,6 +164,7 @@ static	int	ipfr_fastroute6 __P((struct mbuf *, struct mbuf **,
 				     fr_info_t *, frdest_t *));
 # endif
 # ifdef	__sgi
+extern	int		tcp_mtudisc;
 extern  kmutex_t        ipf_rw;
 extern	KRWLOCK_T	ipf_mutex;
 # endif
@@ -196,15 +197,6 @@ struct timeout ipfr_slowtimer_ch;
 #endif
 #if defined(__sgi) && defined(_KERNEL)
 toid_t ipfr_slowtimer_ch;
-#endif
-
-#if defined(__NetBSD__) && (__NetBSD_Version__ >= 106080000) && \
-    defined(_KERNEL)
-#include <sys/conf.h>
-const struct cdevsw ipl_cdevsw = {
-	iplopen, iplclose, iplread, nowrite, iplioctl,
-	nostop, notty, nopoll, nommap,
-};
 #endif
 
 #if (_BSDI_VERSION >= 199510) && defined(_KERNEL)
@@ -501,7 +493,7 @@ int ipl_disable()
 int ipldetach()
 # endif
 {
-	int s, i = FR_INQUE|FR_OUTQUE;
+	int s, i;
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if __NetBSD_Version__ >= 105150000
@@ -542,7 +534,8 @@ int ipldetach()
 	printf("%s unloaded\n", ipfilter_version);
 
 	fr_checkp = fr_savep;
-	i = frflush(IPL_LOGIPF, i);
+	i = frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE|FR_INACTIVE);
+	i += frflush(IPL_LOGIPF, FR_INQUE|FR_OUTQUE);
 	fr_running = 0;
 
 # ifdef NETBSD_PF
@@ -661,6 +654,9 @@ int mode;
 #else
 	unit = dev;
 #endif
+
+	if (fr_running == 0 && (cmd != SIOCFRENB || unit != IPL_LOGIPF))
+		return ENODEV;
 
 	SPL_NET(s);
 
@@ -922,7 +918,8 @@ caddr_t data;
 	 * Check that the group number does exist and that if a head group
 	 * has been specified, doesn't exist.
 	 */
-	if ((req != SIOCZRLST) && fp->fr_grhead &&
+	if ((req != SIOCZRLST) && ((req == SIOCINAFR) || (req == SIOCINIFR) ||
+	     (req == SIOCADAFR) || (req == SIOCADIFR)) && fp->fr_grhead &&
 	    fr_findgroup((u_int)fp->fr_grhead, fp->fr_flags, unit, set, NULL))
 		return EEXIST;
 	if ((req != SIOCZRLST) && fp->fr_group &&
@@ -1256,13 +1253,18 @@ fr_info_t *fin;
 struct mbuf **mp;
 {
 	struct mbuf *m = *mp;
-	char *dpsave;
-	int error;
+	int error, hlen;
+	fr_info_t frn;
 	ip_t *ip;
 
-	dpsave = fin->fin_dp;
+	bzero((char *)&frn, sizeof(frn));
+	frn.fin_ifp = fin->fin_ifp;
+	frn.fin_v = fin->fin_v;
+	frn.fin_out = fin->fin_out;
+	frn.fin_mp = fin->fin_mp;
 
 	ip = mtod(m, ip_t *);
+	hlen = sizeof(*ip);
 
 	ip->ip_v = fin->fin_v;
 	if (ip->ip_v == 4) {
@@ -1270,28 +1272,41 @@ struct mbuf **mp;
 		ip->ip_v = IPVERSION;
 		ip->ip_tos = oip->ip_tos;
 		ip->ip_id = oip->ip_id;
-		ip->ip_off = 0;
+
+# if defined(__NetBSD__) || defined(__OpenBSD__)
+		if (ip_mtudisc != 0)
+			ip->ip_off = IP_DF;
+# else
+#  if defined(__sgi)
+		if (ip->ip_p == IPPROTO_TCP && tcp_mtudisc != 0)
+			ip->ip_off = IP_DF;
+#  endif
+# endif
+
 # if (BSD < 199306) || defined(__sgi)
 		ip->ip_ttl = tcp_ttl;
 # else
 		ip->ip_ttl = ip_defttl;
 # endif
 		ip->ip_sum = 0;
-		fin->fin_dp = (char *)(ip + 1);
+		frn.fin_dp = (char *)(ip + 1);
 	}
 # ifdef	USE_INET6
 	else if (ip->ip_v == 6) {
 		ip6_t *ip6 = (ip6_t *)ip;
 
+		hlen = sizeof(*ip6);
 		ip6->ip6_hlim = 127;
-		fin->fin_dp = (char *)(ip6 + 1);
+		frn.fin_dp = (char *)(ip6 + 1);
 	}
 # endif
 # ifdef	IPSEC
 	m->m_pkthdr.rcvif = NULL;
 # endif
-	error = ipfr_fastroute(m, mp, fin, NULL);
-	fin->fin_dp = dpsave;
+
+	fr_makefrip(hlen, ip, &frn);
+
+	error = ipfr_fastroute(m, mp, &frn, NULL);
 	return error;
 }
 
@@ -1598,6 +1613,9 @@ frdest_t *fdp;
 	/*
 	 * Route packet.
 	 */
+#ifdef	__sgi
+	ROUTE_RDLOCK();
+#endif
 	bzero((caddr_t)ro, sizeof (*ro));
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
@@ -1634,6 +1652,11 @@ frdest_t *fdp;
 # else
 	rtalloc(ro);
 # endif
+
+#ifdef	__sgi
+	ROUTE_UNLOCK();
+#endif
+
 	if (!ifp) {
 		if (!fr || !(fr->fr_flags & FR_FASTROUTE)) {
 			error = -2;
@@ -1686,7 +1709,8 @@ frdest_t *fdp;
 	 */
 	if (ip->ip_len <= ifp->if_mtu) {
 # ifndef sparc
-#  if (!defined(__FreeBSD__) && !(_BSDI_VERSION >= 199510))
+#  if (!defined(__FreeBSD__) && !(_BSDI_VERSION >= 199510)) && \
+      !(__NetBSD_Version__ >= 105110000)
 		ip->ip_id = htons(ip->ip_id);
 #  endif
 		ip->ip_len = htons(ip->ip_len);
@@ -2133,7 +2157,7 @@ int code;
 fr_info_t *fin;
 int dst;
 {
-	verbose("- ICMP UNREACHABLE RST sent\n");
+	verbose("- ICMP UNREACHABLE sent\n");
 	return 0;
 }
 

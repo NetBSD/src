@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.34 2002/06/09 16:33:42 itojun Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.35 2002/09/19 08:09:18 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-2002 by Darren Reed.
@@ -79,9 +79,9 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.34 2002/06/09 16:33:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_proxy.c,v 1.35 2002/09/19 08:09:18 martti Exp $");
 #else
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.22 2002/04/26 10:23:17 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.9.2.24 2002/08/28 12:45:51 darrenr Exp";
 #endif
 #endif
 
@@ -95,6 +95,8 @@ extern  KRWLOCK_T       ipf_nat, ipf_state;
 
 static int appr_fixseqack __P((fr_info_t *, ip_t *, ap_session_t *, int ));
 
+
+#define	PROXY_DEBUG 0
 
 #define	AP_SESS_SIZE	53
 
@@ -129,7 +131,7 @@ aproxy_t	ap_proxies[] = {
 	  ippr_ipsec_match },
 #endif
 #ifdef	IPF_NETBIOS_PROXY
-	{ NULL, "netbios", (char)IPPROTO_TCP, 0, 0, ippr_netbios_init, NULL,
+	{ NULL, "netbios", (char)IPPROTO_UDP, 0, 0, ippr_netbios_init, NULL,
 	  NULL, NULL, NULL, ippr_netbios_out, NULL },
 #endif
 #ifdef  IPF_H323_PROXY
@@ -320,9 +322,19 @@ nat_t *nat;
 			sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip, tcp);
 #endif
 			if (sum != tcp->th_sum) {
+#if PROXY_DEBUG
+				printf("proxy tcp checksum failure\n");
+#endif
 				frstats[fin->fin_out].fr_tcpbad++;
 				return -1;
 			}
+
+			/*
+			 * Don't both the proxy with these...or in fact, should
+			 * we free up proxy stuff when seen?
+			 */
+			if ((tcp->th_flags & TH_RST) != 0)
+				return 0;
 		}
 
 		apr = aps->aps_apr;
@@ -336,9 +348,16 @@ nat_t *nat;
 		}
 
 		rv = APR_EXIT(err);
-		if (rv == 1)
+		if (rv == 1) {
+#if PROXY_DEBUG
+			printf("proxy says bad packet received\n");
+#endif
 			return -1;
+		}
 		if (rv == 2) {
+#if PROXY_DEBUG
+			printf("proxy says free app proxy data\n");
+#endif
 			appr_free(apr);
 			nat->nat_aps = NULL;
 			return -1;
@@ -419,6 +438,9 @@ ap_session_t *aps;
 }
 
 
+/*
+ * returns 2 if ack or seq number in TCP header is changed, returns 0 otherwise
+ */
 static int appr_fixseqack(fin, ip, aps, inc)
 fr_info_t *fin;
 ip_t *ip;
@@ -428,11 +450,18 @@ int inc;
 	int sel, ch = 0, out, nlen;
 	u_32_t seq1, seq2;
 	tcphdr_t *tcp;
+	short inc2;
 
 	tcp = (tcphdr_t *)fin->fin_dp;
 	out = fin->fin_out;
+	/*
+	 * ip_len has already been adjusted by 'inc'.
+	 */
 	nlen = ip->ip_len;
 	nlen -= (ip->ip_hl << 2) + (tcp->th_off << 2);
+
+	inc2 = inc;
+	inc = (int)inc2;
 
 	if (out != 0) {
 		seq1 = (u_32_t)ntohl(tcp->th_seq);
@@ -440,8 +469,13 @@ int inc;
 
 		/* switch to other set ? */
 		if ((aps->aps_seqmin[!sel] > aps->aps_seqmin[sel]) &&
-		    (seq1 > aps->aps_seqmin[!sel]))
+		    (seq1 > aps->aps_seqmin[!sel])) {
+#if PROXY_DEBUG
+			printf("proxy out switch set seq %d -> %d %x > %x\n",
+				sel, !sel, seq1, aps->aps_seqmin[!sel]);
+#endif
 			sel = aps->aps_sel[out] = !sel;
+}
 
 		if (aps->aps_seqoff[sel]) {
 			seq2 = aps->aps_seqmin[sel] - aps->aps_seqoff[sel];
@@ -454,8 +488,13 @@ int inc;
 		}
 
 		if (inc && (seq1 > aps->aps_seqmin[!sel])) {
-			aps->aps_seqmin[!sel] = seq1 + nlen - 1;
-			aps->aps_seqoff[!sel] = aps->aps_seqoff[sel] + inc;
+			aps->aps_seqmin[sel] = seq1 + nlen - 1;
+			aps->aps_seqoff[sel] = aps->aps_seqoff[sel] + inc;
+#if PROXY_DEBUG
+			printf("proxy seq set %d at %x to %d + %d\n", sel,
+				aps->aps_seqmin[sel], aps->aps_seqoff[sel],
+				inc);
+#endif
 		}
 
 		/***/
@@ -465,8 +504,13 @@ int inc;
 
 		/* switch to other set ? */
 		if ((aps->aps_ackmin[!sel] > aps->aps_ackmin[sel]) &&
-		    (seq1 > aps->aps_ackmin[!sel]))
+		    (seq1 > aps->aps_ackmin[!sel])) {
+#if PROXY_DEBUG
+			printf("proxy out switch set ack %d -> %d %x > %x\n",
+				sel, !sel, seq1, aps->aps_ackmin[!sel]);
+#endif
 			sel = aps->aps_sel[1 - out] = !sel;
+}
 
 		if (aps->aps_ackoff[sel] && (seq1 > aps->aps_ackmin[sel])) {
 			seq2 = aps->aps_ackoff[sel];
@@ -479,12 +523,16 @@ int inc;
 
 		/* switch to other set ? */
 		if ((aps->aps_ackmin[!sel] > aps->aps_ackmin[sel]) &&
-		    (seq1 > aps->aps_ackmin[!sel]))
+		    (seq1 > aps->aps_ackmin[!sel])) {
+#if PROXY_DEBUG
+			printf("proxy in switch set ack %d -> %d %x > %x\n",
+				sel, !sel, seq1, aps->aps_ackmin[!sel]);
+#endif
 			sel = aps->aps_sel[out] = !sel;
+}
 
 		if (aps->aps_ackoff[sel]) {
-			seq2 = aps->aps_ackmin[sel] -
-			       aps->aps_ackoff[sel];
+			seq2 = aps->aps_ackmin[sel] - aps->aps_ackoff[sel];
 			if (seq1 > seq2) {
 				seq2 = aps->aps_ackoff[sel];
 				seq1 += seq2;
@@ -496,6 +544,11 @@ int inc;
 		if (inc && (seq1 > aps->aps_ackmin[!sel])) {
 			aps->aps_ackmin[!sel] = seq1 + nlen - 1;
 			aps->aps_ackoff[!sel] = aps->aps_ackoff[sel] + inc;
+#if PROXY_DEBUG
+			printf("proxy ack set %d at %x to %d + %d\n", !sel,
+				aps->aps_seqmin[!sel], aps->aps_seqoff[sel],
+				inc);
+#endif
 		}
 
 		/***/
@@ -505,15 +558,31 @@ int inc;
 
 		/* switch to other set ? */
 		if ((aps->aps_seqmin[!sel] > aps->aps_seqmin[sel]) &&
-		    (seq1 > aps->aps_seqmin[!sel]))
+		    (seq1 > aps->aps_seqmin[!sel])) {
+#if PROXY_DEBUG
+			printf("proxy in switch set seq %d -> %d %x > %x\n",
+				sel, !sel, seq1, aps->aps_seqmin[!sel]);
+#endif
 			sel = aps->aps_sel[1 - out] = !sel;
+}
 
-		if (aps->aps_seqoff[sel] && (seq1 > aps->aps_seqmin[sel])) {
-			seq2 = aps->aps_seqoff[sel];
-			tcp->th_ack = htonl(seq1 - seq2);
-			ch = 1;
+		if (aps->aps_seqoff[sel] != 0) {
+#if PROXY_DEBUG
+			printf("sel %d seqoff %d seq1 %x seqmin %x\n", sel,
+				aps->aps_seqoff[sel], seq1,
+				aps->aps_seqmin[sel]);
+#endif
+			if (seq1 > aps->aps_seqmin[sel]) {
+				seq2 = aps->aps_seqoff[sel];
+				tcp->th_ack = htonl(seq1 - seq2);
+				ch = 1;
+			}
 		}
 	}
+#if PROXY_DEBUG
+	printf("appr_fixseqack: seq %x ack %x\n", ntohl(tcp->th_seq),
+		ntohl(tcp->th_ack));
+#endif
 	return ch ? 2 : 0;
 }
 

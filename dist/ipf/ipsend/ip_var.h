@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.1.1.2 2002/09/19 07:56:44 martti Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.2 2002/09/19 08:08:21 martti Exp $	*/
 
 /*	@(#)ip_var.h 1.11 88/08/19 SMI; from UCB 7.1 6/5/86	*/
 
