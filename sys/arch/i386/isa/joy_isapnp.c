@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.1 1997/01/16 23:17:49 christos Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.2 1997/06/14 11:35:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ joy_isapnp_attach(parent, self, aux)
 {
 	struct joy_softc *sc = (struct joy_softc *)self;
 	struct isapnp_attach_args *ipa = aux;
+	bus_space_handle_t ioh;
 
 	printf("\n");
 
@@ -82,8 +83,15 @@ joy_isapnp_attach(parent, self, aux)
 		return;
 	}
 
+	if (bus_space_subregion(ipa->ipa_iot, ipa->ipa_io[0].h, 1, 1,
+	    &ioh) < 0) {
+		printf("%s: error in region allocation\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
 	sc->sc_iot = ipa->ipa_iot;
-	sc->sc_ioh = ipa->ipa_io[0].h;
+	sc->sc_ioh = ioh;
 
 	printf("%s: %s %s\n", sc->sc_dev.dv_xname, ipa->ipa_devident,
 	    ipa->ipa_devclass);
