@@ -1,4 +1,4 @@
-.\"	$NetBSD: kbd.4,v 1.5 1998/06/11 09:03:46 fair Exp $
+.\"	$NetBSD: kbd.4,v 1.6 1998/06/11 09:16:10 fair Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,14 +64,16 @@ driver either passes the keycodes to an application as they come in, or
 translates them into
 .Tn ASCII
 characters first according to a set of built-in tables.
+.Pp
 If the keyboard is configured as the device
 to be used for system console input
-.Pq see Xr openprom 4 ,
+.Pq see Xr eeprom 8 ,
 it will be internally connected to the
 .Pa /dev/console
 device special file, which can be used as a
 .Xr tty 4
 device.
+.Pp
 The device special file
 .Pa /dev/kbd
 is used to get direct access to the keyboard input stream.
@@ -175,7 +177,9 @@ The argument is of type
 in which the current LED state is returned.
 .El
 .Sh SEE ALSO
-.Xr ms 4
+.Xr ms 4 ,
+.Xr eeprom 4 ,
+.Xr eeprom 8
 .Sh BUGS
 .Nm
 is hardwired to the built-in
