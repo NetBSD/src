@@ -1,4 +1,4 @@
-/*	$NetBSD: fields.c,v 1.14 2003/08/07 11:32:34 jdolecek Exp $	*/
+/*	$NetBSD: fields.c,v 1.15 2003/10/18 03:03:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fields.c,v 1.14 2003/08/07 11:32:34 jdolecek Exp $");
+__RCSID("$NetBSD: fields.c,v 1.15 2003/10/18 03:03:20 itojun Exp $");
 __SCCSID("@(#)fields.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -323,8 +323,8 @@ number(pos, bufend, line, lineend, Rflag)
 			} else
 				lastvalue = *line;
 			parity ^= 1;
-		} else if(*line == DECIMAL) {
-			if(!expincr)	/* a decimal already occurred once */
+		} else if (*line == DECIMAL) {
+			if (!expincr)	/* a decimal already occurred once */
 				break;
 			expincr = 0;
 		} else

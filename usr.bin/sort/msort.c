@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.15 2003/10/16 07:01:51 itojun Exp $	*/
+/*	$NetBSD: msort.c,v 1.16 2003/10/18 03:03:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.15 2003/10/16 07:01:51 itojun Exp $");
+__RCSID("$NetBSD: msort.c,v 1.16 2003/10/18 03:03:20 itojun Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -177,8 +177,8 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	int c, i, j, nf = nfiles;
 	struct mfile *flistb[MERGE_FNUM], **flist = flistb, *cfile;
 	size_t availsz = bufsize;
-	static void *bufs[MERGE_FNUM+1];
-	static size_t bufs_sz[MERGE_FNUM+1];
+	static void *bufs[MERGE_FNUM + 1];
+	static size_t bufs_sz[MERGE_FNUM + 1];
 
 	/*
 	 * We need nfiles + 1 buffers. One is 'buffer', the
@@ -186,7 +186,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	 */
 	bufs[0] = buffer;
 	bufs_sz[0] = bufsize;
-	for(i=1; i < nfiles+1; i++) {
+	for (i = 1; i < nfiles + 1; i++) {
 		if (bufs[i])
 			continue;
 
@@ -250,7 +250,7 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 				if (!cfile)
 					err(2, "merge: realloc");
 
-				for(i=0; i < nf+1; i++) {
+				for (i = 0; i < nf + 1; i++) {
 					if (bufs[i] == oldbuf) {
 						bufs[i] = (char *)cfile;
 						bufs_sz[i] = availsz;
@@ -286,7 +286,7 @@ insert(flist, rec, ttop, delete)
 	struct mfile *tmprec = *rec;
 	int mid, top = ttop, bot = 0, cmpv = 1;
 
-	for (mid = top/2; bot +1 != top; mid = (bot+top)/2) {
+	for (mid = top / 2; bot + 1 != top; mid = (bot + top) / 2) {
 		cmpv = cmp(tmprec->rec, flist[mid]->rec);
 		if (cmpv < 0)
 			top = mid;
@@ -327,7 +327,7 @@ insert(flist, rec, ttop, delete)
 		}
 		tmprec = flist[0];
 		if (bot)
-			memmove(flist, flist+1, bot * sizeof(MFILE **));
+			memmove(flist, flist + 1, bot * sizeof(MFILE **));
 		flist[bot] = *rec;
 		*rec = tmprec;
 		(*rec)->flno = flist[0]->flno;
@@ -341,7 +341,7 @@ insert(flist, rec, ttop, delete)
 		if (UNIQUE && !cmpv)
 			return (1);
 		bot++;
-		memmove(flist + bot+1, flist + bot,
+		memmove(flist + bot + 1, flist + bot,
 		    (ttop - bot) * sizeof(MFILE **));
 		flist[bot] = *rec;
 		return (0);

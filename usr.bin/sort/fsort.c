@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.28 2003/10/17 22:59:35 enami Exp $	*/
+/*	$NetBSD: fsort.c,v 1.29 2003/10/18 03:03:20 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.28 2003/10/17 22:59:35 enami Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.29 2003/10/18 03:03:20 itojun Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -114,11 +114,11 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 	u_char *weights;
 	int ntfiles, mfct = 0, total, i, maxb, lastb, panic = 0;
 	int c, nelem, base;
-	long sizes [NBINS+1];
+	long sizes [NBINS + 1];
 	get_func_t get;
 	struct recheader *crec;
 	struct field tfield[2];
-	FILE *prevfp, *tailfp[FSORTMAX+1];
+	FILE *prevfp, *tailfp[FSORTMAX + 1];
 	u_char *nbuffer;
 
 	memset(tailfp, 0, sizeof(tailfp));
@@ -170,15 +170,15 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 			crec = (RECHEADER *) buffer;
 
 		   do_read:
-			while((c = get(binno, top, filelist, nfiles, crec,
+			while ((c = get(binno, top, filelist, nfiles, crec,
 			    bufend, ftbl)) == 0) {
 				*keypos++ = crec->data + depth;
 				if (++nelem == MAXNUM) {
 					c = BUFFEND;
 					break;
 				}
-				crec =(RECHEADER *)	((char *) crec +
-				SALIGN(crec->length) + sizeof(TRECHEADER));
+				crec =(RECHEADER *)((char *) crec +
+				    SALIGN(crec->length) + sizeof(TRECHEADER));
 			}
 
 			if (c == BUFFEND && nelem < MAXNUM
@@ -198,7 +198,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 				bufend = buffer + bufsize;
 
 				/* patch up keylist[] */
-				for(keyp = &keypos[-1]; keyp >= keylist; keyp--)
+				for (keyp = &keypos[-1]; keyp >= keylist; keyp--)
 					*keyp = buffer + (*keyp - oldb);
 
 				crec = (RECHEADER *) (buffer + ((u_char *)crec - oldb));
@@ -301,7 +301,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 			if (!sizes[i])	/* bin empty; step ahead file offset */
 				getnext(i, base, NULL,ntfiles, crec, bufend, 0);
 			else
-				fsort(i, depth+1, base, filelist, ntfiles,
+				fsort(i, depth + 1, base, filelist, ntfiles,
 					outfp, ftbl);
 		}
 
@@ -311,12 +311,12 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 			if (prevfp != outfp)
 				tailfp[panic] = prevfp;
 			prevfp = ftmp();
-			for (i = maxb+1; i <= lastb; i++)
+			for (i = maxb + 1; i <= lastb; i++)
 				if (!sizes[i])
 					getnext(i, base, NULL, ntfiles, crec,
 					    bufend,0);
 				else
-					fsort(i, depth+1, base, filelist,
+					fsort(i, depth + 1, base, filelist,
 					    ntfiles, prevfp, ftbl);
 		}
 
@@ -356,7 +356,7 @@ onepass(a, depth, n, sizes, tr, fp)
 	u_char *tr;
 	FILE *fp;
 {
-	size_t tsizes[NBINS+1];
+	size_t tsizes[NBINS + 1];
 	const u_char **bin[257], ***bp, ***bpmax, **top[256], ***tp;
 	static int histo[256];
 	int *hp;
@@ -376,17 +376,17 @@ onepass(a, depth, n, sizes, tr, fp)
 	bpmax = bin + 256;
 	tp = top, hp = histo;
 	for (bp = bin; bp < bpmax; bp++) {
-		*tp++ = *(bp+1) = *bp + (c = *hp);
+		*tp++ = *(bp + 1) = *bp + (c = *hp);
 		*hp++ = 0;
 		if (c <= 1)
 			continue;
 	}
-	for (aj = a; aj < an; *aj = r, aj = bin[c+1]) 
+	for (aj = a; aj < an; *aj = r, aj = bin[c + 1]) 
 		for (r = *aj; aj < (ak = --top[c = tr[r[depth]]]) ;)
 			swap(*ak, r, t);
 
 	for (ak = a, c = 0; c < 256; c++) {
-		an = bin[c+1];
+		an = bin[c + 1];
 		n = an - ak;
 		tsizes[c] += n * sizeof(TRECHEADER);
 		/* tell getnext how many elements in this bin, this segment. */
