@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.13 2003/10/31 20:54:18 mycroft Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.14 2003/11/03 06:03:47 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@ struct acpi_devnode {
 	ACPI_HANDLE	ad_handle;	/* our ACPI handle */
 	u_int32_t	ad_level;	/* ACPI level */
 	u_int32_t	ad_type;	/* ACPI object type */
-	ACPI_DEVICE_INFO ad_devinfo;	/* our ACPI device info */
+	ACPI_DEVICE_INFO *ad_devinfo;	/* our ACPI device info */
 	struct acpi_scope *ad_scope;	/* backpointer to scope */
 	struct device	*ad_device;	/* pointer to configured device */
 };
@@ -259,6 +259,7 @@ extern int acpi_active;
 extern const struct acpi_resource_parse_ops acpi_resource_parse_ops_default;
 
 int		acpi_probe(void);
+int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 
 ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, char *, int *);
 ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, char *, char **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.32 2003/11/01 22:55:53 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.33 2003/11/03 06:03:47 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.32 2003/11/01 22:55:53 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.33 2003/11/03 06:03:47 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,6 +141,11 @@ struct acpibat_softc {
 	struct simplelock sc_lock;
 
 	struct timeval sc_lastupdate, sc_updateinterval;
+};
+
+static const char * const bat_hid[] = {
+	"PNP0C0A",
+	NULL
 };
 
 /*
@@ -242,10 +247,7 @@ acpibat_match(struct device *parent, struct cfdata *match, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return (0);
 
-	if (strcmp(aa->aa_node->ad_devinfo.HardwareId.Value, "PNP0C0A") == 0)
-		return (1);
-
-	return (0);
+	return (acpi_match_hid(aa->aa_node->ad_devinfo, bat_hid));
 }
 
 /*
