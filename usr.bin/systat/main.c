@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2000/12/01 02:19:44 simonb Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2001/07/14 07:09:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.28 2000/12/01 02:19:44 simonb Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2001/07/14 07:09:11 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,6 +64,8 @@ static struct nlist namelist[] = {
 	{ "_hz" },
 #define	X_STATHZ		1
 	{ "_stathz" },
+#define	X_MAXSLP		2
+	{ "_maxslp" },
 	{ "" }
 };
 static int     dellave;
@@ -76,7 +78,7 @@ double avenrun[3];
 int     col;
 int	naptime = 5;
 int     verbose = 1;                    /* to report kvm read errs */
-int     hz, stathz;
+int     hz, stathz, maxslp;
 char    c;
 char    *namp;
 char    hostname[MAXHOSTNAMELEN + 1];
@@ -217,6 +219,7 @@ main(int argc, char **argv)
 	hostname[sizeof(hostname) - 1] = '\0';
 	NREAD(X_HZ, &hz, sizeof hz);
 	NREAD(X_STATHZ, &stathz, sizeof stathz);
+	NREAD(X_MAXSLP, &maxslp, sizeof maxslp);
 	(*curmode->c_init)();
 	curmode->c_flags |= CF_INIT;
 	labels();
