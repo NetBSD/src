@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.71 1999/03/09 20:33:22 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.72 1999/03/22 17:59:08 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -290,6 +290,8 @@ int	 des_cipher __P((const char *, char *, long, int));
 int	 des_setkey __P((const char *key));
 void	 endusershell __P((void));
 int	 exect __P((const char *, char * const *, char * const *));
+int	 fchroot __P((int));
+int	 __getcwd __P((char *, size_t));
 int	 getdomainname __P((char *, size_t));
 int	 getgrouplist __P((const char *, gid_t, gid_t *, int *));
 mode_t	 getmode __P((const void *, mode_t));
