@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.10 2004/12/28 14:54:19 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.11 2004/12/29 13:41:57 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.10 2004/12/28 14:54:19 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.11 2004/12/29 13:41:57 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -2717,18 +2717,6 @@ au_get_port(struct audio_softc *sc, struct au_mixer_ports *ports)
 	return aumask;
 }
 
-#if NAURATECONV <= 0
-/* dummy function for the case that aurateconv is not linked */
-int
-auconv_check_params(const struct audio_params *params)
-{
-	if (params->hw_channels == params->channels
-	    && params->hw_sample_rate == params->sample_rate)
-		return 0;	/* No conversion */
-	return EINVAL;
-}
-#endif /* !NAURATECONV */
-
 int
 audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 {
@@ -2863,17 +2851,6 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 		    &pfilters, &rfilters);
 		if (error)
 			return error;
-
-		if (np > 0) {
-			error = auconv_check_params(&pp);
-			if (error)
-				return error;
-		}
-		if (nr > 0) {
-			error = auconv_check_params(&rp);
-			if (error)
-				return error;
-		}
 
 		if (!indep) {
 			/* XXX for !indep device, we have to use the same
