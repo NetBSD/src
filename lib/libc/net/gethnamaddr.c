@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.2 1997/07/20 13:33:18 mrg Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.3 1997/07/31 20:55:21 thorpej Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,10 +61,11 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.2 1997/07/20 13:33:18 mrg Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.3 1997/07/31 20:55:21 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
