@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.38 1998/11/04 06:19:56 chs Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.39 1998/12/02 20:35:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -666,3 +666,33 @@ kmeminit()
 		kmemstats[indx].ks_limit = npg * NBPG * 6 / 10;
 #endif
 }
+
+#ifdef DDB
+#include <ddb/db_output.h>
+
+/*
+ * Dump kmem statistics from ddb.
+ *
+ * usage: call dump_kmemstats
+ */
+void	dump_kmemstats __P((void));
+
+void
+dump_kmemstats()
+{
+#ifdef KMEMSTATS
+	const char *name;
+	int i;
+
+	for (i = 0; i < M_LAST; i++) {
+		name = memname[i] ? memname[i] : "";
+
+		db_printf("%2d %s%.*s %ld\n", i, name,
+		    (int)(20 - strlen(name)), "                    ",
+		    kmemstats[i].ks_memuse);
+	}
+#else
+	db_printf("Kmem stats are not being collected.\n");
+#endif /* KMEMSTATS */
+}
+#endif /* DDB */
