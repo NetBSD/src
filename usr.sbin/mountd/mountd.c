@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.90 2005/01/14 16:12:46 thorpej Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.91 2005/01/14 16:16:28 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.90 2005/01/14 16:12:46 thorpej Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.91 2005/01/14 16:16:28 thorpej Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1041,8 +1041,14 @@ get_exportlist(n)
 	 * mount() as we go along to push the export rules into the kernel.
 	 */
 	if ((exp_file = fopen(exname, "r")) == NULL) {
-		syslog(LOG_ERR, "Can't open %s: %m", exname);
-		exit(2);
+		/*
+		 * Don't exit here; we can still reload the config
+		 * after a SIGHUP.
+		 */
+		if (debug)
+			(void)fprintf(stderr, "Can't open %s: %s\n", exname,
+			    strerror(errno));
+		return;
 	}
 	dirhead = NULL;
 	while ((line = fparseln(exp_file, &len, &lineno, NULL, 0)) != NULL) {
