@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.6 1997/04/13 20:14:23 cgd Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.7 1997/06/17 05:44:22 cgd Exp $	*/
 
 /*
  * cy_pci.c
@@ -48,12 +48,19 @@ cy_map_pci(pap, iotp, iohp, iosizep, memtp, memhp, memsizep)
 	bus_size_t		*iosizep, *memsizep;
 {
 	int ioh_valid, memh_valid;
+	pcireg_t expected;
 
-	ioh_valid = (pci_mapreg_map(pap, 0x14,
-	    PCI_MAPREG_TYPE_IO, 0,
+	/* Map I/O (if possible). */
+	ioh_valid = (pci_mapreg_map(pap, 0x14, PCI_MAPREG_TYPE_IO, 0,
 	    iotp, iohp, NULL, iosizep) == 0);
-	memh_valid = (pci_mapreg_map(pap, 0x18,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+
+	/* Map mem (if possible).  Expected mem type depends on board ID.  */
+	expected = PCI_MAPREG_TYPE_MEM;
+	if (PCI_PRODUCT(pap->pa_id) == PCI_PRODUCT_CYCLADES_CYCLOMY_1)
+		expected |= PCI_MAPREG_MEM_TYPE_32BIT_1M;
+	else
+		expected |= PCI_MAPREG_MEM_TYPE_32BIT;
+	memh_valid = (pci_mapreg_map(pap, 0x18, expected, 0,
 	    memtp, memhp, NULL, memsizep) == 0);
 
 	if (ioh_valid && memh_valid)
@@ -169,7 +176,7 @@ cy_attach_pci(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pap->pa_pc, intrhandle, IPL_TTY,
 	    cy_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt", sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
