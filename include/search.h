@@ -1,7 +1,7 @@
-/*	$NetBSD: search.h,v 1.14 2000/12/20 18:35:21 christos Exp $	*/
+/*	$NetBSD: search.h,v 1.15 2003/07/26 17:35:01 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>
+ * Written by J.T. Conklin <jtc@NetBSD.org>
  * Public domain.
  */
 
