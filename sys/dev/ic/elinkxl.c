@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.2 1998/11/29 01:40:46 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.3 1999/01/10 14:19:46 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1042,6 +1042,9 @@ ex_start(ifp)
 		bus_space_write_2(iot, ioh, ELINK_COMMAND, ELINK_DNUNSTALL);
 		bus_space_write_4(iot, ioh, ELINK_DNLISTPTR,
 		    DPD_DMADDR(sc, sc->tx_head));
+
+		/* trigger watchdog */
+		ifp->if_timer = 5;
 	}
 }
 
@@ -1085,6 +1088,10 @@ ex_intr(arg)
 		if (stat & S_DN_COMPLETE) {
 			struct ex_txdesc *txp, *ptxp = NULL;
 			bus_dmamap_t txmap;
+
+			/* reset watchdog timer, was set in ex_start() */
+			ifp->if_timer = 0;
+
 			for (txp = sc->tx_head; txp != NULL;
 			    txp = txp->tx_next) {
 				bus_dmamap_sync(sc->sc_dmat,
@@ -1203,12 +1210,19 @@ ex_intr(arg)
 			}
 			/*
 			 * Just in case we filled up all UPDs and the DMA engine
-			 * stalled. We could be more subtle about this,
-			 * but we can only do that by reading a register
-			 * first, so just always do it.
+			 * stalled. We could be more subtle about this.
 			 */
-			bus_space_write_2(iot, ioh, ELINK_COMMAND,
-			    ELINK_UPUNSTALL);
+			if (bus_space_read_4(iot, ioh, ELINK_UPLISTPTR) == 0) {
+				printf("%s: uplistptr was 0\n",
+				       sc->sc_dev.dv_xname);
+				ex_init(sc);
+			} else if (bus_space_read_4(iot, ioh, ELINK_UPPKTSTATUS)
+				   & 0x2000) {
+				printf("%s: receive stalled\n",
+				       sc->sc_dev.dv_xname);
+				bus_space_write_2(iot, ioh, ELINK_COMMAND,
+						  ELINK_UPUNSTALL);
+			}
 		}
 	}
 	if (ret) {
