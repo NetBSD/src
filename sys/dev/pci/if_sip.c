@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.7 2000/02/02 17:09:40 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.8 2000/03/06 21:02:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -1957,8 +1957,6 @@ sip_mii_statchg(self)
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXCFG, sc->sc_rxcfg);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_IMR, sc->sc_imr);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_FLOWCTL, flowctl);
-
-	/* XXX Update ifp->if_baudrate */
 }
 
 /*

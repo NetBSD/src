@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.28 2000/03/02 01:21:56 enami Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.29 2000/03/06 21:02:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1847,8 +1847,6 @@ ex_mii_statchg(v)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int mctl;
- 
-	/* XXX Update ifp->if_baudrate */
  
 	GO_WINDOW(3);
 	mctl = bus_space_read_2(iot, ioh, ELINK_W3_MAC_CONTROL);
