@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.1.1.1 1997/01/14 20:57:08 gwr Exp $	*/
+/*	$NetBSD: iommu.c,v 1.2 1997/02/13 07:38:21 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ iommu_remove(sa, len)
 
 	pn = IOMMU_BTOP(sa);
 	while (len > 0) {
-		iommu_va[pn++].addr.raw = 0;
+		iommu_va[pn++].addr.raw = IOMMU_PDE_DT_INVALID;
 		len -= NBPG;
 	}
 }
