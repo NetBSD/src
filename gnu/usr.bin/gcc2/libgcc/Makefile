@@ -1,7 +1,8 @@
-#	$Id: Makefile,v 1.7 1993/12/05 00:51:51 cgd Exp $
+#	$Id: Makefile,v 1.8 1994/01/24 23:10:13 cgd Exp $
 
 LIB=	gcc
 NOPROFILE=
+NOPIC=
 
 CFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/${MACHINE_ARCH}
