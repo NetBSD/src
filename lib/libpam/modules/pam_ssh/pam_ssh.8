@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_ssh.8,v 1.3 2005/02/26 15:14:44 thorpej Exp $
+.\" $NetBSD: pam_ssh.8,v 1.4 2005/02/27 21:32:46 thorpej Exp $
 .\" Copyright (c) 2001 Mark R V Murray
 .\" All rights reserved.
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -150,3 +150,20 @@ Associates, Inc.\& under DARPA/SPAWAR contract N66001-01-C-8035
 as part of the DARPA CHATS research program.
 This manual page was written by
 .An "Mark R V Murray" Aq markm@FreeBSD.org .
+.Sh SECURITY CONSIDERATIONS
+The
+.Nm
+module implements what is fundamentally a password authentication scheme.
+Care should be taken to only use this module over a secure session
+.Po
+secure TTY, encrypted session, etc.
+.Pc ,
+otherwise the user's SSH passphrase could be compromised.
+.Pp
+Additional consideration should be given to the use of
+.Nm pam_ssh .
+Users often assume that file permissions are sufficient to protect their
+SSH keys, and thus use weak or no passphrases.
+Since the system administrator has no effective means of enforcing
+SSH passphrase quality, this has the potential to expose the system to
+security risks.
