@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.13 1994/06/29 06:33:57 cgd Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.14 1994/12/14 19:41:23 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_lookup.c	8.4 (Berkeley) 2/16/94
+ *	@(#)vfs_lookup.c	8.6 (Berkeley) 11/21/94
  */
 
 #include <sys/param.h>
@@ -431,15 +431,6 @@ unionlookup:
 
 	dp = ndp->ni_vp;
 	/*
-	 * Check for symbolic link
-	 */
-	if ((dp->v_type == VLNK) &&
-	    ((cnp->cn_flags & FOLLOW) || *ndp->ni_next == '/')) {
-		cnp->cn_flags |= ISSYMLINK;
-		return (0);
-	}
-
-	/*
 	 * Check to see if the vnode has been mounted on;
 	 * if so find the root of the mounted file system.
 	 */
@@ -454,6 +445,15 @@ unionlookup:
 			goto bad2;
 		vput(dp);
 		ndp->ni_vp = dp = tdp;
+	}
+
+	/*
+	 * Check for symbolic link
+	 */
+	if ((dp->v_type == VLNK) &&
+	    ((cnp->cn_flags & FOLLOW) || *ndp->ni_next == '/')) {
+		cnp->cn_flags |= ISSYMLINK;
+		return (0);
 	}
 
 nextname:
