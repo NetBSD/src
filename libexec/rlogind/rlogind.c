@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.15 1998/08/10 02:57:23 perry Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.16 1998/08/25 19:11:11 ross Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.15 1998/08/10 02:57:23 perry Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.16 1998/08/25 19:11:11 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -383,12 +383,13 @@ protocol(f, p)
 			omask = &obits;
 		} else
 			FD_SET(f, &ibits);
-		if (pcc >= 0)
+		if (pcc >= 0) {
 			if (pcc) {
 				FD_SET(f, &obits);
 				omask = &obits;
 			} else
 				FD_SET(p, &ibits);
+		}
 		FD_SET(p, &ebits);
 		if ((n = select(nfd, &ibits, omask, &ebits, 0)) < 0) {
 			if (errno == EINTR)
