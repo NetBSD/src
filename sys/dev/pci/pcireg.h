@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.38 2002/06/18 13:18:37 tshiozak Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.39 2002/09/21 16:16:31 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -168,6 +168,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_IPI		0x03
 #define	PCI_SUBCLASS_MASS_STORAGE_RAID		0x04
 #define	PCI_SUBCLASS_MASS_STORAGE_ATA		0x05
+#define	PCI_SUBCLASS_MASS_STORAGE_SATA		0x06
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -267,6 +268,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_WIRELESS_RF		0x10
 #define	PCI_SUBCLASS_WIRELESS_BLUETOOTH		0x11
 #define	PCI_SUBCLASS_WIRELESS_BROADBAND		0x12
+#define	PCI_SUBCLASS_WIRELESS_802_11A		0x20
+#define	PCI_SUBCLASS_WIRELESS_802_11B		0x21
 #define	PCI_SUBCLASS_WIRELESS_MISC		0x80
 
 /* 0x0e I2O (Intelligent I/O) subclasses */
@@ -408,7 +411,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_AGP		0x02
 #define	PCI_CAP_VPD		0x03
 #define	PCI_CAP_SLOTID		0x04
-#define	PCI_CAP_MBI		0x05
+#define	PCI_CAP_MSI		0x05
 #define	PCI_CAP_CPCI_HOTSWAP	0x06
 #define	PCI_CAP_PCIX		0x07
 #define	PCI_CAP_LDT		0x08
@@ -416,6 +419,10 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_DEBUGPORT	0x0a
 #define	PCI_CAP_CPCI_RSRCCTL	0x0b
 #define	PCI_CAP_HOTPLUG		0x0c
+#define	PCI_CAP_AGP8		0x0e
+#define	PCI_CAP_SECURE		0x0f
+#define	PCI_CAP_PCIEXPRESS     	0x10
+#define	PCI_CAP_MSIX		0x11
 
 /*
  * Power Management Capability; access via capability pointer.
