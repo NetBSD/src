@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 1995/06/26 23:00:32 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.31 1995/07/02 06:13:27 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -164,6 +164,7 @@ cdev_decl(bpf);
 cdev_decl(vnd);
 #include "tun.h"
 cdev_decl(tun);
+cdev_decl(svr4_net);
 #ifdef LKM
 #define NLKM 1
 #else
@@ -216,7 +217,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 40 */
 	cdev_notdef(),			/* 41 */
 	cdev_disk_init(NXD,xd),		/* 42: SMD disk */
+#ifdef COMPAT_SVR4
+	cdev_svr4_net_init(1,svr4_net),	/* 43: svr4 net pseudo-device */
+#else
 	cdev_notdef(),			/* 43 */
+#endif
 	cdev_notdef(),			/* 44 */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */
