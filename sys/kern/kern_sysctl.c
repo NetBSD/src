@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.63 2000/05/26 22:59:31 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.64 2000/05/27 03:24:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1069,7 +1069,7 @@ again:
 			}
 			needed += sizeof(struct kinfo_proc);
 		} else { /* KERN_PROC2 */
-			if (buflen >= elem_size) {
+			if (buflen >= elem_size && elem_count > 0) {
 				fill_kproc2(p, &kproc2);
 				/*
 				 * Copy out elem_size, but not larger than
@@ -1081,6 +1081,7 @@ again:
 					goto cleanup;
 				dp2 += elem_size;
 				buflen -= elem_size;
+				elem_count--;
 			}
 			needed += elem_size;
 		}
@@ -1417,7 +1418,7 @@ sysctl_procargs(name, namelen, where, sizep, up)
 		memcpy(&nargv, (char *)&pss + p->p_psnenv, sizeof(nargv));
 	if (type == KERN_PROC_NARGV || type == KERN_PROC_NENV) {
 		error = copyout(&nargv, where, sizeof(nargv));
-		*sizep = len;
+		*sizep = sizeof(nargv);
 		goto done;
 	}
 	/*
