@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.6.2.4 1997/11/28 09:02:46 mellon Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.6.2.5 1998/07/22 23:43:01 mellon Exp $	*/
 
 /*
  * Copyright (C) 1997 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.5 1997/11/24 06:09:47 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.9 1998/06/06 14:38:15 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -80,6 +80,9 @@ static const char rcsid[] = "@(#)Id: ip_proxy.c,v 2.0.2.11.2.5 1997/11/24 06:09:
 static ap_session_t *ap_find __P((ip_t *, tcphdr_t *));
 static ap_session_t *ap_new_session __P((aproxy_t *, ip_t *, tcphdr_t *,
 					 fr_info_t *, nat_t *));
+static int ap_matchsrcdst __P((ap_session_t *, struct in_addr,
+			       struct in_addr, void *, u_short, u_short));
+
 
 #define	AP_SESS_SIZE	53
 
@@ -113,15 +116,37 @@ ipnat_t *nat;
 }
 
 
+static int
+ap_matchsrcdst(aps, src, dst, tcp, sport, dport)
+ap_session_t *aps;
+struct in_addr src, dst;
+void *tcp;
+u_short sport, dport;
+{
+	if (aps->aps_dst.s_addr == dst.s_addr) {
+		if ((aps->aps_src.s_addr == src.s_addr) &&
+		    (!tcp || ((sport == aps->aps_sport) &&
+		     (dport == aps->aps_dport))))
+			return 1;
+	} else if (aps->aps_dst.s_addr == src.s_addr) {
+		if ((aps->aps_src.s_addr == dst.s_addr) &&
+		    (!tcp || ((sport == aps->aps_dport) &&
+		     (dport == aps->aps_sport))))
+			return 1;
+	}
+	return 0;
+}
+
+
 static ap_session_t *ap_find(ip, tcp)
 ip_t *ip;
 tcphdr_t *tcp;
 {
-	struct in_addr src, dst;
-	register u_long hv;
-	register u_short sp, dp;
-	register ap_session_t *aps;
 	register u_char p = ip->ip_p;
+	register ap_session_t *aps;
+	register u_short sp, dp;
+	register u_long hv;
+	struct in_addr src, dst;
 
 	src = ip->ip_src, dst = ip->ip_dst;
 	sp = dp = 0;			/* XXX gcc -Wunitialized */
@@ -138,14 +163,8 @@ tcphdr_t *tcp;
 
 	for (aps = ap_sess_tab[hv]; aps; aps = aps->aps_next)
 		if ((aps->aps_p == p) &&
-		    IPPAIR(aps->aps_src, aps->aps_dst, src, dst)) {
-			if (tcp) {
-				if (PAIRS(aps->aps_sport, aps->aps_dport,
-					  sp, dp))
-					break;
-			} else
-				break;
-		}
+		    ap_matchsrcdst(aps, src, dst, tcp, sp, dp))
+			break;
 	return aps;
 }
 
@@ -215,6 +234,7 @@ nat_t *nat;
 {
 	ap_session_t *aps;
 	aproxy_t *apr;
+	u_32_t sum;
 	int err;
 
 	if (!(fin->fin_fi.fi_fl & FI_TCPUDP))
@@ -227,8 +247,13 @@ nat_t *nat;
 			 * verify that the checksum is correct.  If not, then
 			 * don't do anything with this packet.
 			 */
-			if (tcp->th_sum != fr_tcpsum(*(mb_t **)fin->fin_mp,
-						     ip, tcp)) {
+#if SOLARIS && defined(_KERNEL)
+			sum = fr_tcpsum(fin->fin_qfm, ip, tcp, ip->ip_len);
+#else
+			sum = fr_tcpsum(*(mb_t **)fin->fin_mp,
+					ip, tcp, ip->ip_len);
+#endif
+			if (tcp->th_sum != sum) {
 				frstats[fin->fin_out].fr_tcpbad++;
 				return -1;
 			}
@@ -248,8 +273,13 @@ nat_t *nat;
 							aps, nat);
 		}
 		if (err == 2) {
+#if SOLARIS && defined(_KERNEL)
+			tcp->th_sum = fr_tcpsum(fin->fin_qfm, ip,
+						tcp, ip->ip_len);
+#else
 			tcp->th_sum = fr_tcpsum(*(mb_t **)fin->fin_mp, ip,
-						tcp);
+						tcp, ip->ip_len);
+#endif
 			err = 0;
 		}
 		return err;
