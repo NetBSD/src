@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.13 2002/05/14 22:41:36 thorpej Exp $
+# $NetBSD: postinstall,v 1.14 2002/05/14 23:35:35 itojun Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -379,6 +379,11 @@ do_ssh()
 		fi
 	fi
 
+	if [ ! -d /var/empty ]; then
+		msg "/var/empty has to be present."
+		failed=1
+	fi
+
 	if rcconf_isset sshd sshd_conf_dir ; then
 		failed=1
 	fi
@@ -424,12 +429,16 @@ do_uid()
 
 	_named=0
 	_ntpd=0
+	_sshd=0
 	while read _name _junk; do
 		if [ "$_name" = "named" ]; then
 			_named=1
 		fi
 		if [ "$_name" = "ntpd" ]; then
 			_ntpd=1
+		fi
+		if [ "$_name" = "sshd" ]; then
+			_sshd=1
 		fi
 	done < ${DEST_DIR}/etc/passwd
 
@@ -439,6 +448,10 @@ do_uid()
 	fi
 	if [ "$_ntpd" = "0" ]; then
 		msg "Required UID ntpd is not found."
+		failed=1
+	fi
+	if [ "$_sshd" = "0" ]; then
+		msg "Required UID sshd is not found."
 		failed=1
 	fi
 
@@ -461,12 +474,16 @@ do_gid()
 
 	_named=0
 	_ntpd=0
+	_sshd=0
 	while read _name _junk; do
 		if [ "$_name" = "named" ]; then
 			_named=1
 		fi
 		if [ "$_name" = "ntpd" ]; then
 			_ntpd=1
+		fi
+		if [ "$_name" = "sshd" ]; then
+			_sshd=1
 		fi
 	done < ${DEST_DIR}/etc/group
 
@@ -476,6 +493,10 @@ do_gid()
 	fi
 	if [ "$_ntpd" = "0" ]; then
 		msg "Required GID ntpd is not found."
+		failed=1
+	fi
+	if [ "$_sshd" = "0" ]; then
+		msg "Required GID sshd is not found."
 		failed=1
 	fi
 
