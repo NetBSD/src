@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.11 1999/03/22 19:44:46 garbled Exp $
+.\"	$NetBSD: sysconf.3,v 1.12 1999/06/24 14:18:10 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sysconf.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd April 19, 1994
+.Dd June 24, 1999
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -89,6 +89,18 @@ or
 .Xr writev 2 .
 .It Li _SC_JOB_CONTROL
 Return 1 if job control is available on this system, otherwise \-1.
+.It Li _SC_MAPPED_FILES
+Return 1 if the Memory Mapped Files Option is available on this system,
+otherwise \-1.
+.It Li _SC_MEMLOCK
+Return 1 if the Process Memory Locking Option is available on this system,
+otherwise \-1.
+.It Li _SC_MEMLOCK_RANGE
+Return 1 if the Range Memory Locking Option is available on this system,
+otherwise \-1.
+.It Li _SC_MEMORY_PROTECTION
+Return 1 if the Memory Protection Option is available on this system,
+otherwise \-1.
 .It Li _SC_NGROUPS_MAX
 The maximum number of supplemental groups.
 .It Li _SC_OPEN_MAX
