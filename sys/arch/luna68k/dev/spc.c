@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.2 2002/10/02 05:31:47 thorpej Exp $ */
+/* $NetBSD: spc.c,v 1.3 2003/07/05 18:43:11 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.2 2002/10/02 05:31:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.3 2003/07/05 18:43:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,15 +58,15 @@ __KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.2 2002/10/02 05:31:47 thorpej Exp $");
 
 #include <luna68k/luna68k/isr.h>
 
-static int  spc_match __P((struct device *, struct cfdata *, void *));
-static void spc_attach __P((struct device *, struct device *, void *));
+static int  spc_mainbus_match __P((struct device *, struct cfdata *, void *));
+static void spc_mainbus_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(spc, sizeof(struct spc_softc),
-    spc_match, spc_attach, NULL, NULL);
+    spc_mainbus_match, spc_mainbus_attach, NULL, NULL);
 extern struct cfdriver spc_cd;
 
 static int
-spc_match(parent, cf, aux)
+spc_mainbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
@@ -84,7 +84,7 @@ spc_match(parent, cf, aux)
 }
 
 static void
-spc_attach(parent, self, aux)
+spc_mainbus_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
