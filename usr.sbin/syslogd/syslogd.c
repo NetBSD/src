@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.5 2004/11/15 06:30:25 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.6 2004/11/15 06:32:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.5 2004/11/15 06:30:25 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.6 2004/11/15 06:32:38 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -419,7 +419,7 @@ getgroup:
 	sigaddset(&mask, SIGHUP);
 	sact.sa_handler = reapchild;
 	sact.sa_mask = mask;
-	sact.sa_flags = 0;
+	sact.sa_flags = SA_RESTART;
 	(void)sigaction(SIGCHLD, &sact, NULL);
 	(void)signal(SIGALRM, domark);
 	(void)signal(SIGPIPE, SIG_IGN);	/* We'll catch EPIPE instead. */
@@ -466,7 +466,7 @@ getgroup:
 	sigaddset(&mask, SIGCHLD);
 	sact.sa_handler = sighup;
 	sact.sa_mask = mask;
-	sact.sa_flags = 0;
+	sact.sa_flags = SA_RESTART;
 	(void)sigaction(SIGHUP, &sact, NULL);
 
 	/* setup pollfd set. */
