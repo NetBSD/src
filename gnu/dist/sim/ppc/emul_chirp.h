@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1996, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

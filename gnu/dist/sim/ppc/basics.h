@@ -1,6 +1,6 @@
 /*  This file is part of the program psim.
 
-    Copyright (C) 1994-1995, Andrew Cagney <cagney@highland.com.au>
+    Copyright (C) 1994-1997, Andrew Cagney <cagney@highland.com.au>
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,6 +47,8 @@ typedef struct _cpu cpu;
 typedef struct _psim psim;
 typedef struct _device device;
 typedef struct _device_instance device_instance;
+typedef struct _event_queue event_queue;
+typedef struct _event_entry_tag *event_entry_tag;
 
 
 /* many things are moving data between the host and target */
@@ -56,11 +58,30 @@ typedef enum {
   raw_transfer,
 } transfer_mode;
 
+
 /* possible exit statuses */
 
 typedef enum {
   was_continuing, was_trap, was_exited, was_signalled
 } stop_reason;
+
+
+/* disposition of an object when things are next restarted */
+
+typedef enum {
+  permenant_object,
+  tempoary_object,
+} object_disposition;
+
+
+/* directions */
+
+typedef enum {
+  bidirect_port,
+  input_port,
+  output_port,
+} port_direction;
+
 
 
 /* Basic configuration */
@@ -70,10 +91,12 @@ typedef enum {
 #include "inline.h"
 
 
-/* Basic host dependant mess - hopefully <stdio.h> will bring
-   potential conflicts out in the open */
+/* Basic host dependant mess - hopefully <stdio.h> + <stdarg.h> will
+   bring potential conflicts out in the open */
 
+#include <stdarg.h>
 #include <stdio.h>
+
 
 #ifndef NORETURN
 #define NORETURN
@@ -83,12 +106,22 @@ typedef enum {
 #define NULL 0
 #endif
 
-#if !defined (__attribute__) && (!defined(__GNUC__) || __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 7))
+#if !defined (__attribute__)
+#if (!defined(__GNUC__) \
+     || (__GNUC__ < 2) \
+     || (__GNUC__ == 2 && __GNUC_MINOR__ < 6))
 #define __attribute__(arg)
+#endif
 #endif
 
 #if !defined (UNUSED)
+#if (!defined(__GNUC__) \
+     || (__GNUC__ < 2) \
+     || (__GNUC__ == 2 && __GNUC_MINOR__ < 7))
+#define UNUSED
+#else
 #define UNUSED __attribute__((__unused__))
+#endif
 #endif
 
 

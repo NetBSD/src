@@ -51,7 +51,6 @@
 /****************************************************************/
 
 int spreg_lookup_table = 1;
-int number_lines = 1;
 enum {
   nr_of_sprs = 1024,
 };
@@ -156,7 +155,7 @@ gen_spreg_h(spreg_table *table, lf *file)
   spreg_table_entry *entry;
   char **attribute;
 
-  lf_print_copyleft(file);
+  lf_print__gnu_copyleft(file);
   lf_printf(file, "\n");
   lf_printf(file, "#ifndef _SPREG_H_\n");
   lf_printf(file, "#define _SPREG_H_\n");
@@ -198,7 +197,7 @@ gen_spreg_c(spreg_table *table, lf *file)
   char **attribute;
   int spreg_nr;
 
-  lf_print_copyleft(file);
+  lf_print__gnu_copyleft(file);
   lf_printf(file, "\n");
   lf_printf(file, "#ifndef _SPREG_C_\n");
   lf_printf(file, "#define _SPREG_C_\n");
@@ -281,25 +280,25 @@ main(int argc,
      char **argv,
      char **envp)
 {
+  lf_file_references file_references = lf_include_references;
   spreg_table *sprs = NULL;
   char *real_file_name = NULL;
+  int is_header = 0;
   int ch;
 
   if (argc <= 1) {
     printf("Usage: dgen ...\n");
     printf("-s  Use switch instead of table\n");
-    printf("-n  Use this as cpp line numbering name\n");
-    printf("-[Pp] <spreg>  Output spreg.h(P) or spreg.c(p)\n");
-    printf("-l  Suppress cpp line numbering in output files\n");
+    printf("-n <file-name>  Use this as cpp line numbering name\n");
+    printf("-h  Output header file\n");
+    printf("-p <spreg-file>  Output spreg.h(P) or spreg.c(p)\n");
+    printf("-L  Suppress cpp line numbering in output files\n");
   }
 
 
-  while ((ch = getopt(argc, argv, "lsn:r:P:p:")) != -1) {
+  while ((ch = getopt(argc, argv, "hLsn:r:p:")) != -1) {
     fprintf(stderr, "\t-%c %s\n", ch, ( optarg ? optarg : ""));
     switch(ch) {
-    case 'l':
-      number_lines = 0;
-      break;
     case 's':
       spreg_lookup_table = 0;
       break;
@@ -309,19 +308,23 @@ main(int argc,
     case 'n':
       real_file_name = strdup(optarg);
       break;
-    case 'P':
+    case 'L':
+      file_references = lf_omit_references;
+      break;
+    case 'h':
+      is_header = 1;
+      break;
     case 'p':
       {
-	lf *file = lf_open(optarg, real_file_name, number_lines);
-	switch (ch) {
-	case 'P':
+	lf *file = lf_open(optarg, real_file_name, file_references,
+			   (is_header ? lf_is_h : lf_is_c),
+			   argv[0]);
+	if (is_header)
 	  gen_spreg_h(sprs, file);
-	  break;
-	case 'p':
+	else
 	  gen_spreg_c(sprs, file);
-	  break;
-	}
 	lf_close(file);
+	is_header = 0;
       }
       real_file_name = NULL;
       break;

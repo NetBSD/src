@@ -52,7 +52,7 @@ core_map_read_N(core_map *map,
 			      sizeof(unsigned_N), /* nr_bytes */
 			      processor,
 			      cia) != sizeof(unsigned_N))
-      error("core_read_,N() reader should not fail\n");
+      device_error(mapping->device, "internal error - core_read_N() - io_read_buffer should not fail");
     return T2H_N(data);
   }
   else
@@ -83,7 +83,7 @@ core_map_write_N(core_map *map,
 			       sizeof(unsigned_N), /* nr_bytes */
 			       processor,
 			       cia) != sizeof(unsigned_N))
-      error("core_read_,N() writer should not fail\n");
+      device_error(mapping->device, "internal error - core_write_N() - io_write_buffer should not fail");
   }
   else
     *(unsigned_N*)core_translate(mapping, addr) = H2T_N(val);
