@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8.8.1 1997/05/04 15:19:18 mrg Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8.8.2 1997/06/01 23:53:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -90,11 +90,10 @@
 #endif
 
 /*
- * PTEs for system V style shared memory.
- * This is basically slop for kmempt which we actually allocate (malloc) from.
+ * Size of shared memory map
  */
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	(1 * NPTEPG)	/* 4mb */
+#define SHMMAXPGS	1024
 #endif
 
 /*
