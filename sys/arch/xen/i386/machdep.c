@@ -1,5 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.2 2004/03/24 15:34:52 atatat Exp $	*/
-/*	NetBSD: machdep.c,v 1.550 2004/03/05 11:34:17 junyoung Exp 	*/
+/*	$NetBSD: machdep.c,v 1.3 2004/04/06 16:01:50 cl Exp $	*/
+/*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2004/04/06 16:01:50 cl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -247,7 +247,7 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 #ifdef COMPAT_NOMID
-static int exec_nomid  (struct proc *, struct exec_package *);
+static int exec_nomid(struct proc *, struct exec_package *);
 #endif
 
 int	physmem;
@@ -420,8 +420,7 @@ i386_proc0_tss_ldt_init()
  */
 
 void
-i386_init_pcb_tss_ldt(ci)
-	struct cpu_info *ci;
+i386_init_pcb_tss_ldt(struct cpu_info *ci)
 {
 	int x;
 	struct pcb *pcb = ci->ci_idle_pcb;
@@ -760,9 +759,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	if (cold) {
@@ -994,8 +991,7 @@ cpu_dumpconf()
 static vaddr_t dumpspace;
 
 vaddr_t
-reserve_dumppages(p)
-	vaddr_t p;
+reserve_dumppages(vaddr_t p)
 {
 
 	dumpspace = p;
@@ -1129,10 +1125,7 @@ dumpsys()
  * Clear registers on exec
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -1189,10 +1182,8 @@ union	descriptor *pentium_idt;
 extern  struct user *proc0paddr;
 
 void
-setgate(gd, func, args, type, dpl, sel)
-	struct gate_descriptor *gd;
-	void *func;
-	int args, type, dpl, sel;
+setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
+    int sel)
 {
 
 	gd->gd_looffset = (int)func;
@@ -1206,8 +1197,7 @@ setgate(gd, func, args, type, dpl, sel)
 }
 
 void
-unsetgate(gd)
-	struct gate_descriptor *gd;
+unsetgate(struct gate_descriptor *gd)
 {
 	gd->gd_p = 0;
 	gd->gd_hioffset = 0;
@@ -1221,10 +1211,7 @@ unsetgate(gd)
 
 
 void
-setregion(rd, base, limit)
-	struct region_descriptor *rd;
-	void *base;
-	size_t limit;
+setregion(struct region_descriptor *rd, void *base, size_t limit)
 {
 
 	rd->rd_limit = (int)limit;
@@ -1232,11 +1219,8 @@ setregion(rd, base, limit)
 }
 
 void
-setsegment(sd, base, limit, type, dpl, def32, gran)
-	struct segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, def32, gran;
+setsegment(struct segment_descriptor *sd, void *base, size_t limit, int type,
+    int dpl, int def32, int gran)
 {
 
 	sd->sd_lolimit = (int)limit;
@@ -1283,9 +1267,7 @@ void cpu_init_idt()
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
-add_mem_cluster(seg_start, seg_end, type)
-	u_int64_t seg_start, seg_end;
-	u_int32_t type;
+add_mem_cluster(u_int64_t seg_start, u_int64_t seg_end, u_int32_t type)
 {
 	extern struct extent *iomem_ex;
 	int i;
@@ -1418,8 +1400,7 @@ initgdt()
 }
 
 void
-init386(first_avail)
-	paddr_t first_avail;
+init386(paddr_t first_avail)
 {
 #if !defined(XEN)
 	union descriptor *tgdt;
@@ -2114,9 +2095,7 @@ init386(first_avail)
 
 #ifdef COMPAT_NOMID
 static int
-exec_nomid(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_nomid(struct proc *p, struct exec_package *epp)
 {
 	int error;
 	u_long midmag, magic;
@@ -2189,9 +2168,7 @@ exec_nomid(p, epp)
  * if COMPAT_NOMID is given as a kernel option.
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 
@@ -2204,8 +2181,7 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 void *
-lookup_bootinfo(type)
-int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *help;
 	int n = *(int*)bootinfo;
@@ -2264,10 +2240,7 @@ cpu_reset()
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -2343,10 +2316,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -2476,9 +2446,7 @@ need_resched(struct cpu_info *ci)
  */
 
 int
-idt_vec_alloc(low, high)
-	int low;
-	int high;
+idt_vec_alloc(int low, int high)
 {
 	int vec;
 
@@ -2495,9 +2463,7 @@ idt_vec_alloc(low, high)
 }
 
 void
-idt_vec_set(vec, function)
-	int vec;
-	void (*function)(void);
+idt_vec_set(int vec, void (*function)(void))
 {
 	/*
 	 * Vector should be allocated, so no locking needed.
@@ -2508,8 +2474,7 @@ idt_vec_set(vec, function)
 }
 
 void
-idt_vec_free(vec)
-	int vec;
+idt_vec_free(int vec)
 {
 	simple_lock(&idt_lock);
 	unsetgate(&idt[vec]);
