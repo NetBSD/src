@@ -1,14 +1,14 @@
-# $NetBSD: AMIGA,v 1.28 2000/06/14 22:02:17 veego Exp $
+# $NetBSD: AMIGA,v 1.29 2000/07/05 04:10:15 sommerfeld Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.140 2000/03/23 22:44:42 is Exp $
+#$ NetBSD: GENERIC,v 1.146 2000/07/05 04:07:24 sommerfeld Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.28 $"
+#ident  		"GENERIC-$Revision: 1.29 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -34,8 +34,11 @@ options 	M68030		# support for 030
 options 	M68020		# support for 020/851
 options 	FPU_EMULATE	# FPU emulation
 
+#Networking options
+
 options 	INET		# IP networking support (Required)
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
@@ -46,7 +49,7 @@ options 	INET6		# IPV6
 options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 options 	ISO,TPIP	# OSI
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 options 	CCITT,LLC,HDLC	# X.25
 options 	NETATALK	# AppleTalk networking protocols
 
@@ -82,7 +85,7 @@ file-system 	UNION		# union filesystem
 #options 	FFS_EI		# FFS Endian Independant support
 
 options 	QUOTA		# User and group quotas in FFS
-#options 	SOFTDEP         # FFS soft updates support.
+options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -343,8 +346,9 @@ scsibus*	at idesc0
 sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cds
-ss*	at scsibus? target ? lun ?	# scsi scanner
 ch*	at scsibus? target ? lun ?	# scsi autochangers
+
+ss*	at scsibus? target ? lun ?	# scsi scanner
 uk*	at scsibus? target ? lun ?	# scsi unknown
 
 pseudo-device	loop			# loopback network interface
@@ -357,6 +361,7 @@ pseudo-device	bpfilter	16	# Berkeley packet filter
 pseudo-device	ipfilter		# IP Filter package
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty		16	# pseudo ptys
