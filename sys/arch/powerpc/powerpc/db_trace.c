@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11 2001/06/15 08:09:33 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.12 2001/06/15 22:27:07 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -152,9 +152,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			caller = lr;
 
 		if (frame != (db_addr_t) fakeframe) {
-			printf("0x%08lx: ", frame);
+			(*pr)("0x%08lx: ", frame);
 		} else {
-			printf("  <????>  : ");
+			(*pr)("  <????>  : ");
 		}
 		if (caller + 4 == (db_addr_t) &trapexit) {
 			const char *trapstr;
@@ -202,15 +202,15 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				(*pr)("%s+%x: srr1=%#x\n", symname, diff,
 				    tf->srr1);
 			}
-			printf("%-10s  r1=%#x cr=%#x xer=%#x ctr=%#x",
+			(*pr)("%-10s  r1=%#x cr=%#x xer=%#x ctr=%#x",
 			    "", tf->fixreg[1], tf->cr, tf->xer, tf->ctr);
 			if (tf->exc == EXC_DSI)
-				printf(" dsisr=%#x", tf->dsisr);
+				(*pr)(" dsisr=%#x", tf->dsisr);
 #ifdef PPC_IBM4XX
-			printf(" dear=%#x esr=%#x pid=%#x",
+			(*pr)(" dear=%#x esr=%#x pid=%#x",
 			    tf->dear, tf->esr, tf->pid):
 #endif
-			printf("\n");
+			(*pr)("\n");
 			fakeframe[0] = (db_addr_t) tf->fixreg[1];
 			fakeframe[1] = (db_addr_t) tf->lr;
 			frame = (db_addr_t) fakeframe;
@@ -227,9 +227,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			(*pr)("at %s+%x", symname, diff);
 		if (full)
 			/* Print all the args stored in that stackframe. */
-			printf("(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)",
+			(*pr)("(%lx, %lx, %lx, %lx, %lx, %lx, %lx, %lx)",
 				args[0], args[1], args[2], args[3],
 				args[4], args[5], args[6], args[7]);
-		printf("\n");
+		(*pr)("\n");
 	}
 }
