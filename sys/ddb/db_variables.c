@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.17 1999/10/28 06:37:32 lukem Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.18 2000/06/27 17:55:39 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <machine/db_machdep.h>

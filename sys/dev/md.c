@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2000/06/26 14:21:10 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.24 2000/06/27 17:58:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -57,8 +57,6 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 
