@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.12 2000/02/10 02:15:03 sato Exp $	*/
+/*	$NetBSD: vr.c,v 1.13 2000/02/21 13:46:05 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -38,6 +38,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
+#include <sys/kcore.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -108,7 +109,8 @@ int	vr_intr __P((u_int32_t mask, u_int32_t pc, u_int32_t statusReg, u_int32_t ca
 void	vr_cons_init __P((void));
 void	vr_device_register __P((struct device *, void *));
 void    vr_fb_init __P((caddr_t*));
-int     vr_mem_init __P((caddr_t));
+void    vr_mem_init __P((paddr_t));
+void	vr_find_dram __P((paddr_t, paddr_t));
 void	vr_reboot __P((int howto, char *bootstr));
 
 extern unsigned nullclkread __P((void));
@@ -126,6 +128,9 @@ static int (*intr_handler[4]) __P((void*, u_int32_t, u_int32_t)) =
 	null_handler
 };
 static void *intr_arg[4];
+
+extern phys_ram_seg_t mem_clusters[];
+extern int mem_cluster_cnt;
 
 void
 vr_init()
@@ -157,33 +162,82 @@ vr_init()
 #endif
 }
 
-int
+void
 vr_mem_init(kernend)
-	caddr_t kernend; /* kseg0 */
+	paddr_t kernend;
 {
-	u_int32_t startaddr, endaddr, page;
-	int npage;
-#define VR41_SYSADDR_DRAMSTART 0x0
-#define VR41_SYSADDR_DRAM_LEN 0x04000000
-	startaddr = MIPS_PHYS_TO_KSEG1(
-		(btoc((u_int32_t)kernend - MIPS_KSEG0_START)) << PGSHIFT);
-	endaddr = MIPS_PHYS_TO_KSEG1(VR41_SYSADDR_DRAMSTART +
-				     VR41_SYSADDR_DRAM_LEN);
-	for(page = startaddr, npage = 0; page < endaddr; 
-	    page+= NBPG, npage++) {
-		if (badaddr((char*)page, 4))
-			break;
-		((volatile int *)page)[0] = 0xa5a5a5a5;
-		((volatile int *)page)[4] = 0x5a5a5a5a;
-		wbflush();
-		if (*(volatile int *)page != 0xa5a5a5a5)
-			break;
-	}
-	/* Clear currently unused D-RAM area (For reboot Windows CE clearly)*/
-	memset((void*)startaddr, 0, npage * NBPG);
-	memset((void*)(KERNBASE + 0x400), 0, KERNTEXTOFF - KERNBASE - 0x800); 
+	mem_clusters[0].start = 0;
+	mem_clusters[0].size = kernend;
+	mem_cluster_cnt = 1;
+	vr_find_dram(kernend, 0x02000000);
+	vr_find_dram(0x02000000, 0x04000000);
+	vr_find_dram(0x04000000, 0x06000000);
+	vr_find_dram(0x06000000, 0x08000000);
 
-	return npage;
+	/* Clear currently unused D-RAM area (For reboot Windows CE clearly)*/
+	memset((void *)(KERNBASE + 0x400), 0, KERNTEXTOFF - (KERNBASE + 0x800));
+}
+
+void
+vr_find_dram(addr, end)
+	paddr_t addr, end;
+{
+	int n;
+	caddr_t page;
+#ifdef NARLY_MEMORY_PROBE
+	int x, i;
+#endif
+
+	n = mem_cluster_cnt;
+	for (; addr < end; addr += NBPG) {
+
+		page = (void *)MIPS_PHYS_TO_KSEG1(addr);
+		if (badaddr(page, 4))
+			goto bad;
+
+		*(volatile int *)(page+0) = 0xa5a5a5a5;
+		*(volatile int *)(page+4) = 0x5a5a5a5a;
+		wbflush();
+		if (*(volatile int *)(page+0) != 0xa5a5a5a5)
+			goto bad;
+
+		*(volatile int *)(page+0) = 0x5a5a5a5a;
+		*(volatile int *)(page+4) = 0xa5a5a5a5;
+		wbflush();
+		if (*(volatile int *)(page+0) != 0x5a5a5a5a)
+			goto bad;
+
+#ifdef NARLY_MEMORY_PROBE
+		x = random();
+		for (i = 0; i < NBPG; i += 4)
+			*(volatile int *)(page+i) = (x ^ i);
+		wbflush();
+		for (i = 0; i < NBPG; i += 4)
+			if (*(volatile int *)(page+i) != (x ^ i))
+				goto bad;
+
+		x = random();
+		for (i = 0; i < NBPG; i += 4)
+			*(volatile int *)(page+i) = (x ^ i);
+		wbflush();
+		for (i = 0; i < NBPG; i += 4)
+			if (*(volatile int *)(page+i) != (x ^ i))
+				goto bad;
+#endif
+
+		if (!mem_clusters[n].size)
+			mem_clusters[n].start = addr;
+		mem_clusters[n].size += NBPG;
+		continue;
+
+	bad:
+		if (mem_clusters[n].size)
+			++n;
+		continue;
+	}
+	if (mem_clusters[n].size)
+		++n;
+	mem_cluster_cnt = n;
 }
 
 void

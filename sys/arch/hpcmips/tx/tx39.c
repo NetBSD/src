@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.13 2000/02/10 02:15:02 sato Exp $ */
+/*	$NetBSD: tx39.c,v 1.14 2000/02/21 13:46:04 shin Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kcore.h>
 
 #include <machine/locore.h>   /* cpu_id */
 #include <machine/bootinfo.h> /* bootinfo */
@@ -79,7 +80,6 @@ u_int32_t tx39debugflag;
 
 void	tx_init __P((void));
 int	tx39icu_intr __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t));
-int	tx39_find_dram __P((u_int32_t, u_int32_t));
 void	tx39clock_cpuspeed __P((int*, int*));
 
 /* TX39-specific initialization vector */
@@ -88,10 +88,14 @@ void	tx_bus_reset __P((void));
 void	tx_cons_init __P((void));
 void	tx_device_register __P((struct device *, void *));
 void    tx_fb_init __P((caddr_t*));
-int     tx_mem_init __P((caddr_t));
+void    tx_mem_init __P((paddr_t));
+void	tx_find_dram __P((paddr_t, paddr_t));
 void	tx_reboot __P((int howto, char *bootstr));
 int	tx_intr __P((u_int32_t mask, u_int32_t pc, u_int32_t statusReg, 
 		     u_int32_t causeReg));
+
+extern phys_ram_seg_t mem_clusters[];
+extern int mem_cluster_cnt;
 
 void
 tx_init()
@@ -188,46 +192,71 @@ tx_fb_init(kernend)
 #endif /* TX392X */
 }
 
-int
+void
 tx_mem_init(kernend)
-	caddr_t kernend; /* kseg0 */
+	paddr_t kernend;
 {
-	u_int32_t startaddr, endaddr;
-	int npage, xpage, kpage;
-
-	startaddr = MIPS_PHYS_TO_KSEG1(
-		(btoc((u_int32_t)kernend - MIPS_KSEG0_START)) << PGSHIFT);
-	endaddr = MIPS_PHYS_TO_KSEG1(TX39_SYSADDR_DRAMBANK0CS1 +
-				     TX39_SYSADDR_DRAMBANK_LEN);
-	kpage = btoc(MIPS_KSEG1_TO_PHYS(startaddr));
-
-	/* D-RAM bank0 */
-	npage = tx39_find_dram(startaddr, endaddr);
-
-	printf("DRAM bank0: %d pages (%dMByte) reserved %d pages\n", 
-	       npage + 1, ((npage  + 1) * NBPG) / 0x100000, kpage + 1);
-	npage -= kpage; /* exclude kernel area */
-
-	/* Clear DRAM area */
-	memset((void*)startaddr, 0, npage * NBPG);
+	mem_clusters[0].start = 0;
+	mem_clusters[0].size = kernend;
+	mem_cluster_cnt = 1;
+	/* search DRAM bank 0 */
+	tx_find_dram(kernend, 0x02000000);
 	
-	/* D-RAM bank1 XXX find only. not usable yet */
-	startaddr = MIPS_PHYS_TO_KSEG1(TX39_SYSADDR_DRAMBANK1CS1);
-	endaddr = MIPS_PHYS_TO_KSEG1(TX39_SYSADDR_DRAMBANK1CS1 +
-				     TX39_SYSADDR_DRAMBANK_LEN);
-	xpage = tx39_find_dram(startaddr, endaddr);
-	printf("DRAM bank1: %d pages (%dMByte) ...but not usable yet\n", 
-	       xpage + 1, ((xpage + 1) * NBPG) / 0x100000);
-
+	/* search DRAM bank 1 */
+	tx_find_dram(0x02000000, 0x04000000);
 	/* 
 	 *  Clear currently unused D-RAM area 
 	 *  (For reboot Windows CE clearly)
 	 */
-	memset((void*)startaddr, 0, npage * NBPG);
-	memset((void*)(KERNBASE + 0x400), 0, 
-	       KERNTEXTOFF - KERNBASE - 0x800); 
-	
-	return npage; /* Return bank0's memory only */
+	memset((void *)(KERNBASE + 0x400), 0, KERNTEXTOFF - 
+	       (KERNBASE + 0x800));
+}
+
+void
+tx_find_dram(start, end)
+	paddr_t start, end;
+{
+	caddr_t page, startaddr, endaddr;
+
+	startaddr = (void*)MIPS_PHYS_TO_KSEG1(start);
+	endaddr = (void*)MIPS_PHYS_TO_KSEG1(end);
+
+#define DRAM_MAGIC0 0xac1dcafe
+#define DRAM_MAGIC1 0x19700220
+
+	page = startaddr;
+	if (badaddr(page, 4))
+		return;
+
+	*(volatile int *)(page+0) = DRAM_MAGIC0;
+	*(volatile int *)(page+4) = DRAM_MAGIC1;
+	wbflush();
+
+	if (*(volatile int *)(page+0) != DRAM_MAGIC0 ||
+	    *(volatile int *)(page+4) != DRAM_MAGIC1)
+		return;
+
+	for (page += NBPG; page < endaddr; page += NBPG) {
+		if (badaddr(page, 4))
+			return;
+
+		if (*(volatile int *)(page+0) == DRAM_MAGIC0 &&
+		    *(volatile int *)(page+4) == DRAM_MAGIC1) {
+			mem_clusters[mem_cluster_cnt].start = start;
+			mem_clusters[mem_cluster_cnt].size = 
+				page - startaddr;
+			/* skip kernel area */
+			if (mem_cluster_cnt == 1)
+				mem_clusters[mem_cluster_cnt].size -= start;
+
+			mem_cluster_cnt++;
+			
+			return;
+		}
+	}
+
+	/* no memory in this bank */
+	return;
 }
 
 void
@@ -236,30 +265,6 @@ tx_reboot(howto, bootstr)
 	char *bootstr;
 {
 	goto *(u_int32_t *)MIPS_RESET_EXC_VEC;
-}
-
-int
-tx39_find_dram(startaddr, endaddr)
-	u_int32_t startaddr; /* kseg1 */
-	u_int32_t endaddr;    /* kseg1 */
-{
-#define DRAM_MAGIC0 0xac1dcafe
-#define DRAM_MAGIC1 0x19700220
-	u_int32_t page;
-	int npage;
-
-	page = startaddr;
-	((volatile int *)page)[0] = DRAM_MAGIC0;
-	((volatile int *)page)[4] = DRAM_MAGIC1;
-	page += NBPG;
-	for (npage = 0; page < endaddr; page += NBPG, npage++) {
-		if ((((volatile int *)page)[0] == DRAM_MAGIC0 &&
-		     ((volatile int *)page)[4] == DRAM_MAGIC1)) {
-			return npage;
-		}
-	}
-	/* no memory in this bank */
-	return 0;
 }
 
 void
