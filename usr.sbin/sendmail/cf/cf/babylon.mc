@@ -35,30 +35,14 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-#
 # Mailer configuration for babylon.netbsd.org (a.k.a. the soon-to-be
 # mail.netbsd.org).  This is only a temporary configuration until the
 # system is fully installed.
-#
-# Only supports SMTP over TCP.  All mail is directed to mail.netbsd.org
-# for processing.  Outgoing mail appears to have come from netbsd.org.
-#
 
 include(`../m4/cf.m4')
-VERSIONID(`$NetBSD: babylon.mc,v 1.4 1998/08/07 13:55:12 mycroft Exp $')
+VERSIONID(`$NetBSD: babylon.mc,v 1.5 1998/10/15 10:24:26 mycroft Exp $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 
-define(`confAUTO_REBUILD', True)dnl
-define(`confMIME_FORMAT_ERRORS', False)dnl
-
-FEATURE(redirect)dnl
-
-MASQUERADE_AS(`netbsd.org')dnl
-FEATURE(allmasquerade)dnl
-EXPOSED_USER(root)dnl
-
-define(`MAIL_HUB', `mail.netbsd.org')dnl
-define(`LOCAL_RELAY', `mail.netbsd.org')dnl
-define(`SMART_HOST', `mail.netbsd.org')dnl
+DOMAIN(NetBSD.ORG)dnl
