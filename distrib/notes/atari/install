@@ -1,6 +1,6 @@
-.\"	$NetBSD: install,v 1.12 2000/01/21 12:32:56 tsutsui Exp $	
+.\"	$NetBSD: install,v 1.13 2000/10/03 23:21:26 lukem Exp $	
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -41,7 +41,7 @@ detailed in the section on preparing your system for install.
 .Pp
 The following is a walk-through of the steps necessary to get NetBSD
 installed on your hard disk.  If you wish to stop the installation,
-you may hit Control-C at any prompt, but if you do, you'll have to
+you may press Control-C at any prompt, but if you do, you'll have to
 begin again from scratch.
 .Bl -enum
 .It
@@ -66,7 +66,7 @@ kernel to load the install filesystem into RAMdisk. While
 While the kernel is loading, it will show a '.' for each
 track loaded. After loading 80 tracks, it will ask you
 to insert the next floppy. At this time, insert the BSD
-install floppy 2 and hit any key. The kernel continous
+install floppy 2 and press any key. The kernel continous
 loading another 40 tracks before it continues to boot.
 .(tag Note:
 If you are using 1.44Mb floppies, you should select 'md1a'
@@ -74,7 +74,7 @@ instead of 'md0a'.
 .tag)
 The system should continue to boot.  For now ignore WARNING:
 messages about bad dates in clocks. Eventually you will be
-be asked to enter the pathname of the shell, just hit
+be asked to enter the pathname of the shell, just press
 return.  After a short while, you will be asked to select
 the type of your keyboard. After you have entered a valid
 response here, the system asks you if you want to install
