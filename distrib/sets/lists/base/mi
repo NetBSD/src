@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.236 2001/03/15 12:03:11 itojun Exp $
+# $NetBSD: mi,v 1.237 2001/03/18 10:03:52 veego Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -444,7 +444,6 @@
 ./usr/include/dev/usb		base-c-usr
 ./usr/include/g++		base-cxx-usr
 ./usr/include/gssapi		base-c-usr
-./usr/include/gssapi/rpc	base-c-usr
 ./usr/include/kadm5		base-c-usr
 ./usr/include/kerberosIV	base-c-usr
 ./usr/include/krb5		base-c-usr
@@ -464,7 +463,6 @@
 ./usr/include/protocols		base-c-usr
 ./usr/include/rpc		base-c-usr
 ./usr/include/rpcsvc		base-c-usr
-./usr/include/ss		base-c-usr
 ./usr/include/sys		base-c-usr
 ./usr/include/ufs		base-c-usr
 ./usr/include/ufs/ext2fs	base-c-usr
