@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.604 2003/12/20 03:34:19 thorpej Exp $
+$NetBSD: pcidevs,v 1.605 2004/01/05 19:30:51 matt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -554,6 +554,7 @@ vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor BLUESTEEL	0x15ab	Bluesteel Networks
+vendor AGILENT		0x15bc	Agilent Technologies
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	Broadcom Corp. (SiByte)
@@ -769,6 +770,9 @@ product ADVSYS ULTRA	0x1300	ABP-930/40UA
 product ADVSYS WIDE	0x2300	ABP-940UW
 product ADVSYS U2W	0x2500	ASB-3940U2W
 product ADVSYS U3W	0x2700	ASB-3940U3W
+
+/* Agilent Technologies Products */
+product AGILENT TACHYON_DX2	0x0100	Tachyon DX2 FC controller
 
 /* Aironet Wireless Communicasions products */
 product AIRONET PC4xxx		0x0001	Aironet PC4500/PC4800 Wireless LAN Adapter
@@ -1412,6 +1416,7 @@ product HEURICON PMPPC		0x000e	PM/PPC
 
 /* Hewlett-Packard products */
 product HP A4977A		0x1005	A4977A Visualize EG
+product HP TACHYON_XL2		0x1030	Tachyon XL2 FC controller
 product HP J2585A		0x1030	J2585A
 product HP J2585B		0x1031	J2585B
 product HP 82557B		0x1200	82557B 10/100 NIC
