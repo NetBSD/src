@@ -1,4 +1,4 @@
-/*	$NetBSD: wwwrite.c,v 1.6 1997/11/21 08:38:00 lukem Exp $	*/
+/*	$NetBSD: wwwrite.c,v 1.7 2002/06/14 01:07:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwwrite.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwwrite.c,v 1.6 1997/11/21 08:38:00 lukem Exp $");
+__RCSID("$NetBSD: wwwrite.c,v 1.7 2002/06/14 01:07:02 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,10 +65,7 @@ __RCSID("$NetBSD: wwwrite.c,v 1.6 1997/11/21 08:38:00 lukem Exp $");
  * to avoid recursion, which might be a better idea.
  */
 int
-wwwrite(w, p, n)
-	struct ww *w;
-	char *p;
-	int n;
+wwwrite(struct ww *w, char *p, int n)
 {
 	int hascursor;
 	char *savep = p;
