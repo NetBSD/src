@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.7 1999/06/22 01:41:48 sakamoto Exp $	*/
+/*	$NetBSD: fd.c,v 1.8 1999/06/24 01:22:19 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@
  *  dufault@hda.com (Peter Dufault)
  */
 
+#include "rnd.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
@@ -109,6 +110,13 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
+#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
@@ -157,8 +165,17 @@ struct fdc_softc {
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
-	bus_space_handle_t   sc_ioh;	/* ISA io handle */
+	bus_space_handle_t sc_ioh;	/* ISA io handle */
 	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
+
+	/*
+	 * XXX We have port overlap with the first IDE controller.
+	 * Until we have a reasonable solution for handling overlap
+	 * like this, we kludge access to our control register at
+	 * offset 7.
+	 */
+	bus_space_handle_t sc_fdctlioh;
+#define	sc_fdinioh	sc_fdctlioh
 
 	int sc_drq;
 
@@ -209,7 +226,7 @@ struct fd_type fd_types[] = {
 	{ 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS,0xf6,1, "1.2MB"    }, /* 1.2 MB AT-diskettes */
 	{  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS,0xf6,1, "360KB/AT" }, /* 360kB in 1.2MB drive */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS,0xf6,1, "360KB/PC" }, /* 360kB PC diskettes */
-	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5" 720kB diskette */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5 inch 720kB diskette */
 	{  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS,0xf6,1, "720KB/x"  }, /* 720kB in 1.2MB drive */
 	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
 };
@@ -242,6 +259,10 @@ struct fd_softc {
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
 	struct buf sc_q;	/* head of buf chain */
+
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
 };
 
 /* floppy driver configuration */
@@ -293,9 +314,26 @@ fdcprobe(parent, match, aux)
 	iot = ia->ia_iot;
 	rv = 0;
 
-	/* Map the i/o space. */
-	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
+	/* Disallow wildcarded i/o address. */
+	if (ia->ia_iobase == IOBASEUNK)
 		return 0;
+
+	/* Map the i/o space. */
+	if (bus_space_map(iot, ia->ia_iobase, 6 /* XXX FDC_NPORT */, 0, &ioh))
+		return 0;
+
+	/* XXX XXX XXX BEGIN XXX XXX XXX */
+	{
+		bus_space_handle_t fdctlioh;
+		if (bus_space_map(iot, ia->ia_iobase + fdctl, 1, 0,
+		    &fdctlioh)) {
+			bus_space_unmap(iot, ioh, 6);
+			return 0;
+		}
+		/* not needed for the rest of the probe */
+		bus_space_unmap(iot, fdctlioh, 1);
+	}
+	/* XXX XXX XXX END XXX XXX XXX */
 
 	/* reset */
 	bus_space_write_1(iot, ioh, fdout, 0);
@@ -329,7 +367,7 @@ fdcprobe(parent, match, aux)
 	ia->ia_msize = 0;
 
  out:
-	bus_space_unmap(iot, ioh, FDC_NPORT);
+	bus_space_unmap(iot, ioh, 6 /* XXX FDC_NPORT */);
 	return rv;
 }
 
@@ -394,9 +432,21 @@ fdcattach(parent, self, aux)
 
 	iot = ia->ia_iot;
 
+	printf("\n");
+
 	/* Re-map the I/O space. */
-	if (bus_space_map(iot, ia->ia_iobase, FDC_NPORT, 0, &ioh))
-		panic("fdcattach: couldn't map I/O ports");
+	if (bus_space_map(iot, ia->ia_iobase, 6 /* XXX FDC_NPORT */, 0, &ioh)) {
+		printf("%s: can't map i/o space\n", fdc->sc_dev.dv_xname);
+		return;
+	}
+
+	/* XXX XXX XXX BEGIN XXX XXX XXX */
+	if (bus_space_map(iot, ia->ia_iobase + fdctl, 1, 0,
+	    &fdc->sc_fdctlioh)) {
+		printf("%s: can't kludge i/o space\n", fdc->sc_dev.dv_xname);
+		return;
+	}
+	/* XXX XXX XXX END XXX XXX XXX */
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
@@ -405,13 +455,6 @@ fdcattach(parent, self, aux)
 	fdc->sc_drq = ia->ia_drq;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
-
-	printf("\n");
-
-#ifdef NEWCONFIG
-	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
-	isa_establish(&fdc->sc_id, &fdc->sc_dev);
-#endif
 
 	if (isa_dmamap_create(fdc->sc_ic, fdc->sc_drq, FDC_MAXIOSIZE,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
@@ -457,21 +500,22 @@ fdprobe(parent, match, aux)
 	void *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
+	struct cfdata *cf = match;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	int n;
 
-	if (match->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
-	    match->cf_loc[FDCCF_DRIVE] != drive)
+	if (cf->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
+	    cf->cf_loc[FDCCF_DRIVE] != drive)
 		return 0;
 	/*
 	 * XXX
 	 * This is to work around some odd interactions between this driver
 	 * and SMC Ethernet cards.
 	 */
-	if (match->cf_loc[FDCCF_DRIVE] == FDCCF_DRIVE_DEFAULT && drive >= 2)
+	if (cf->cf_loc[FDCCF_DRIVE] == FDCCF_DRIVE_DEFAULT && drive >= 2)
 		return 0;
 
 	/* select drive and turn on motor */
@@ -524,7 +568,7 @@ fdattach(parent, self, aux)
 	/* XXX Allow `flags' to override device type? */
 
 	if (type)
-		printf(": %s %d cyl, %d head, %d sec\n", type->name,
+		printf(": %s, %d cyl, %d head, %d sec\n", type->name,
 		    type->cyls, type->heads, type->sectrac);
 	else
 		printf(": density unknown\n");
@@ -546,12 +590,13 @@ fdattach(parent, self, aux)
 	 */
 	mountroothook_establish(fd_mountroot_hook, &fd->sc_dev);
 
-#ifdef NEWCONFIG
-	/* XXX Need to do some more fiddling with sc_dk. */
-	dk_establish(&fd->sc_dk, &fd->sc_dev);
-#endif
 	/* Needed to power off if the motor is on when we halt. */
 	fd->sc_sdhook = shutdownhook_establish(fd_motor_off, fd);
+
+#if NRND > 0
+	rnd_attach_source(&fd->rnd_source, fd->sc_dev.dv_xname,
+			  RND_TYPE_DISK, 0);
+#endif
 }
 
 /*
@@ -639,7 +684,7 @@ fdstrategy(bp)
  	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
+	printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld sz %d\n",
 	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, sz);
 #endif
 
@@ -709,6 +754,10 @@ fdfinish(fd, bp)
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
+
+#if NRND > 0
+	rnd_add_uint32(&fd->rnd_source, bp->b_blkno);
+#endif
 
 	biodone(bp);
 	/* turn off motor 5s from now */
@@ -854,7 +903,7 @@ fdopen(dev, flags, mode, p)
 		return ENXIO;
 
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
-	    bcmp(fd->sc_type, type, sizeof(*type)))
+	    memcmp(fd->sc_type, type, sizeof(*type)))
 		return EBUSY;
 
 	fd->sc_type_copy = *type;
@@ -1086,15 +1135,14 @@ loop:
 		 }}
 #endif
 		read = bp->b_flags & B_READ ? DMAMODE_READ : DMAMODE_WRITE;
-#ifdef NEWCONFIG
-		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		       fdc->sc_drq);
-#else
 		isa_dmastart(fdc->sc_ic, fdc->sc_drq,
 		    bp->b_data + fd->sc_skip, fd->sc_nbytes,
-		    NULL, read, BUS_DMA_NOWAIT);
-#endif
+		    NULL, read | DMAMODE_DEMAND, BUS_DMA_NOWAIT);
+#if 0 /* XXX i/o port kludge */
 		bus_space_write_1(iot, ioh, fdctl, type->rate);
+#else
+		bus_space_write_1(iot, fdc->sc_fdctlioh, 0, type->rate);
+#endif
 #ifdef FD_DEBUG
 		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 			read ? "read" : "write", fd->sc_drive, fd->sc_cylin,
@@ -1158,11 +1206,7 @@ loop:
 		goto doio;
 
 	case IOTIMEDOUT:
-#ifdef NEWCONFIG
-		at_dma_abort(fdc->sc_drq);
-#else
 		isa_dmaabort(fdc->sc_ic, fdc->sc_drq);
-#endif
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1175,11 +1219,7 @@ loop:
 		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
 		if (fdcresult(fdc) != 7 || (st0 & 0xf8) != 0) {
-#ifdef NEWCONFIG
-			at_dma_abort(fdc->sc_drq);
-#else
 			isa_dmaabort(fdc->sc_ic, fdc->sc_drq);
-#endif
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
@@ -1189,11 +1229,7 @@ loop:
 			fdcretry(fdc);
 			goto loop;
 		}
-#ifdef NEWCONFIG
-		at_dma_terminate(fdc->sc_drq);
-#else
 		isa_dmadone(fdc->sc_ic, fdc->sc_drq);
-#endif
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error (corrected)", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
@@ -1372,7 +1408,7 @@ fdioctl(dev, cmd, addr, flag, p)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bzero(&buffer, sizeof(buffer));
+		memset(&buffer, 0, sizeof(buffer));
 
 		buffer.d_secpercyl = fd->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
@@ -1493,7 +1529,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd_formb.fd_formb_gaplen = fd->sc_type->gap2;
 		fd_formb.fd_formb_fillbyte = fd->sc_type->fillbyte;
 
-		bzero(il,sizeof il);
+		memset(il, 0, sizeof il);
 		for (j = 0, i = 1; i <= fd_formb.fd_formb_nsecs; i++) {
 			while (il[(j%fd_formb.fd_formb_nsecs)+1])
 				j++;
@@ -1542,7 +1578,7 @@ fdformat(dev, finfo, p)
 	if(bp == 0)
 		return ENOBUFS;
 	PHOLD(p);
-	bzero((void *)bp, sizeof(struct buf));
+	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
@@ -1597,6 +1633,7 @@ fd_mountroot_hook(dev)
 	int c;
 
 	printf("Insert filesystem floppy and press return.");
+	cnpollc(1);
 	for (;;) {
 		c = cngetc();
 		if ((c == '\r') || (c == '\n')) {
@@ -1604,4 +1641,5 @@ fd_mountroot_hook(dev)
 			break;
 		}
 	}
+	cnpollc(0);
 }
