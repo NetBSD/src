@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.19.8.1 1997/05/13 04:05:49 thorpej Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.19.8.2 1997/05/14 21:24:59 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -223,8 +223,11 @@ int		vm_page_count;		/* How many pages do we manage? */
 #define	VM_PAGE_INDEX(pa) \
 		(atop((pa)) - first_page)
 #else
-#define IS_VM_PHYSADDR(pa) \
-		(pmap_page_index(pa) >= 0)
+#define	IS_VM_PHYSADDR(pa) \
+({ \
+	int __pmapidx = pmap_page_index(pa); \
+	(__pmapidx >= 0 && __pmapidx >= first_page); \
+})
 
 #define	VM_PAGE_INDEX(pa) \
 		(pmap_page_index((pa)) - first_page)
