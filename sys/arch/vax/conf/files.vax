@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.73 2000/07/22 05:03:23 matt Exp $
+#       $NetBSD: files.vax,v 1.74 2000/07/26 12:37:14 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -25,7 +25,7 @@ defopt	opt_cputype.h	VAX780 VAX750 VAX730
 # NBI on KA88
 device	nmi { slot=-1 }
 attach	nmi at mainbus with nmi_mainbus
-file	arch/vax/vax/nmi.c		nmi
+file	arch/vax/vax/nmi_mainbus.c	nmi
 
 # SBI and related devices
 device	sbi { tr=-1 }
@@ -121,6 +121,10 @@ file	arch/vax/bi/bi_nmi.c		bi_nmi
 # VAX CPUs at BI, do not belong in MI code.
 attach	cpu at bi with cpu_bi
 attach	mem at bi with mem_bi
+
+# VAX CPUs at NMI
+attach	cpu at nmi with cpu_nmi
+attach	mem at nmi with mem_nmi
 
 # XMI bus definitions
 include	"dev/xmi/files.xmi"
