@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.59 2004/05/20 13:54:19 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.60 2004/06/29 22:44:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -1966,7 +1966,9 @@ natinfo_t *ni;
 		/*
 		 * map the address block in a 1:1 fashion
 		 */
-		in.s_addr |= ntohl(fin->fin_daddr & ~np->in_inmsk);
+ 		in.s_addr = np->in_inip;
+ 		in.s_addr |= fin->fin_daddr & ~np->in_inmsk;     
+ 		in.s_addr = ntohl(in.s_addr);     
 
 	} else {
 		in.s_addr = ntohl(np->in_inip);
