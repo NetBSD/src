@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2002/09/17 23:18:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.19 2003/03/01 13:08:51 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -14,6 +14,7 @@ SHLIB_MAJOR=	1
 SHLIB_MINOR=	0
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
+GNUHOSTDIST=	${DIST}
 
 SRCS=		${G_OBJS:.o=.c} ${G_OBJ:.o=.c}
 
