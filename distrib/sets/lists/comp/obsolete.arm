@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.arm,v 1.2 2002/03/30 06:29:01 thorpej Exp $
+# $NetBSD: obsolete.arm,v 1.3 2002/03/30 06:29:45 thorpej Exp $
 /usr/include/arm/arm32/bus.h
 /usr/include/arm/arm32/sysarch.h
 /usr/include/arm/disklabel_acorn.h
@@ -14,3 +14,4 @@
 /usr/lib/libarm32.a
 /usr/lib/libarm32_p.a
 /usr/lib/libarm32_pic.a
+/usr/libdata/lint/llib-larm32.ln
