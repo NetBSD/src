@@ -16,25 +16,25 @@ echo "Subject: $host weekly run output"
 # see if /usr/src exists and is local
 # before looking there for checked-out files
 
-if [ -d /usr/src -a \
-  X"`find -f /usr/src ! -fstype local -prune -or -type d -print -prune`" != X ];
-then
-	echo "looking for checked out files:"
-	TDIR=/tmp/_checkout$$
-
-	mkdir $TDIR
-	for file in `find -f /usr/src ! -fstype local -prune -or \
-	    -name 'p.*' -print | egrep 'SCCS/p\.'`; do
-		owner=`awk '{ print $3 }' $file`
-		echo "$owner	$file"
-		echo $file >> $TDIR/$owner
-	done | sed -e 's,SCCS/p.,,'
-	for file in $TDIR/*; do
-		sed -e 's,SCCS/p.,,' $file | \
-		    Mail -s 'checked out files' `basename $file`
-	done
-	rm -rf $TDIR
-fi
+#if [ -d /usr/src -a \
+#  X"`find -f /usr/src ! -fstype local -prune -or -type d -print -prune`" != X ];
+#then
+#	echo "looking for checked out files:"
+#	TDIR=/tmp/_checkout$$
+#
+#	mkdir $TDIR
+#	for file in `find -f /usr/src ! -fstype local -prune -or \
+#	    -name 'p.*' -print | egrep 'SCCS/p\.'`; do
+#		owner=`awk '{ print $3 }' $file`
+#		echo "$owner	$file"
+#		echo $file >> $TDIR/$owner
+#	done | sed -e 's,SCCS/p.,,'
+#	for file in $TDIR/*; do
+#		sed -e 's,SCCS/p.,,' $file | \
+#		    Mail -s 'checked out files' `basename $file`
+#	done
+#	rm -rf $TDIR
+#fi
 
 if [ -f /usr/lib/uucp/clean.weekly ]; then
 	echo ""
@@ -45,11 +45,12 @@ echo ""
 
 echo "Rotating messages:"
 cd /var/log
-if [ -f messages.2 ]; then mv -f messages.2 messages.3; fi
-if [ -f messages.1 ]; then mv -f messages.1 messages.2; fi
-if [ -f messages.0 ]; then mv -f messages.0 messages.1; fi
-mv -f messages   messages.0
-cp /dev/null  messages
+if [ -f messages.2.Z ]; then mv -f messages.2.Z messages.3.Z; fi
+if [ -f messages.1.Z ]; then mv -f messages.1.Z messages.2.Z; fi
+if [ -f messages.0.Z ]; then mv -f messages.0.Z messages.1.Z; fi
+mv -f messages messages.0
+compress -f messages.0
+cp /dev/null messages
 chmod 644 messages
 kill -1 `cat /var/run/syslog.pid`
 cd /
