@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.27 2001/10/29 19:15:48 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.28 2001/11/05 18:02:15 matt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -4516,15 +4516,15 @@ sppp_get_ip_addrs(struct sppp *sp, u_long *src, u_long *dst, u_long *srcmask)
 	 * Pick the first AF_INET address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-	for (ifa = ifp->if_addrlist.tqh_first, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_list.tqe_next)
+	si = 0;
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			si = (struct sockaddr_in *)ifa->ifa_addr;
 			sm = (struct sockaddr_in *)ifa->ifa_netmask;
 			if (si)
 				break;
 		}
+	}
 	if (ifa) {
 		if (si && si->sin_addr.s_addr) {
 			ssrc = si->sin_addr.s_addr;
@@ -4556,9 +4556,8 @@ sppp_set_ip_addr(struct sppp *sp, u_long src)
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 
-	for (ifa = ifp->if_addrlist.tqh_first, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_list.tqe_next)
+	si = 0;
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET)
 		{
@@ -4603,9 +4602,8 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 	 * Pick the first link-local AF_INET6 address from the list,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
-	for (ifa = ifp->if_addrlist.tqh_first, si = 0;
-	     ifa;
-	     ifa = ifa->ifa_list.tqe_next)
+	si = 0;
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
 			si = (struct sockaddr_in6 *)ifa->ifa_addr;
 			sm = (struct sockaddr_in6 *)ifa->ifa_netmask;
@@ -4658,9 +4656,7 @@ sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 	 */
 
 	sin6 = NULL;
-	for (ifa = ifp->if_addrlist.tqh_first;
-	     ifa;
-	     ifa = ifa->ifa_list.tqe_next)
+	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list)
 	{
 		if (ifa->ifa_addr->sa_family == AF_INET6)
 		{
