@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.2 2001/11/19 20:24:18 scw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.3 2002/07/28 05:15:14 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ pthread__sp(void)
 	return ret;
 }
 
-#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_SP])
+#define pthread__uc_sp(ucp) ((ucp)->uc_mcontext.__gregs[_REG_A7])
 #define pthread__uc_pc(ucp) ((ucp)->uc_mcontext.__gregs[_REG_PC])
 
 /*
