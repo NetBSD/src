@@ -1192,25 +1192,6 @@ fi
 done
 test -n "$M4" || M4="m4"
 
-echo "$as_me:1195: checking whether m4 supports frozen files" >&5
-echo $ECHO_N "checking whether m4 supports frozen files... $ECHO_C" >&6
-if test "${ac_cv_prog_gnu_m4+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_cv_prog_gnu_m4=no
-if test x"$M4" != x; then
-  case `$M4 --help < /dev/null 2>&1` in
-    *reload-state*) ac_cv_prog_gnu_m4=yes ;;
-  esac
-fi
-fi
-echo "$as_me:1207: result: $ac_cv_prog_gnu_m4" >&5
-echo "${ECHO_T}$ac_cv_prog_gnu_m4" >&6
-if test x"$ac_cv_prog_gnu_m4" != xyes; then
-  { { echo "$as_me:1210: error: GNU m4 1.4 is required" >&5
-echo "$as_me: error: GNU m4 1.4 is required" >&2;}
-   { (exit 1); exit 1; }; }
-fi
 # This is needed because Automake does not seem to realize there is
 # a AC-SUBST inside AC-PROG-GNU-M4.  Grmph!
 
