@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.27 2000/08/09 10:34:38 tv Exp $
+# $NetBSD: obsolete.mi,v 1.28 2000/08/13 22:24:30 wiz Exp $
 /usr/bin/genclass
 /usr/include/bfd
 /usr/include/bfd/ansidecl.h
@@ -320,32 +320,13 @@
 /usr/lib/libamu_p.a
 /usr/lib/libamu_pic.a
 /usr/lib/libbfd.a
-/usr/lib/libbfd_pic.a
-/usr/lib/libc_pic.a
-/usr/lib/libcrypt_pic.a
-/usr/lib/libcurses_pic.a
-/usr/lib/libedit_pic.a
 /usr/lib/libg++.a
 /usr/lib/libg++_p.a
 /usr/lib/libg++_pic.a
-/usr/lib/libgnumalloc_pic.a
-/usr/lib/libkvm_pic.a
-/usr/lib/libm_pic.a
 /usr/lib/libntp.a
 /usr/lib/libntp.so
 /usr/lib/libntp_p.a
 /usr/lib/libntp_pic.a
-/usr/lib/libossaudio_pic.a
-/usr/lib/libpcap_pic.a
-/usr/lib/libposix_pic.a
-/usr/lib/libresolv_pic.a
-/usr/lib/libskey_pic.a
-/usr/lib/libstdc++_pic.a
-/usr/lib/libtelnet_pic.a
-/usr/lib/libtermcap_pic.a
-/usr/lib/libutil_pic.a
-/usr/lib/libwrap_pic.a
-/usr/lib/libz_pic.a
 /usr/libdata/lint/llib-lntp.ln
 /usr/sbin/config.new
 /usr/share/man/cat1/flexdoc.0
