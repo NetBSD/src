@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.1.2.6 2002/08/14 18:48:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.1.2.7 2002/10/21 23:01:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -130,6 +130,33 @@ pthread__sp(void)
         (uc)->uc_mcontext.__fpregs.__fp_reg_set.__fpchip_state.__fp_state, \
 	(freg)->__data, sizeof(struct fpreg));				\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
+	} while (/*CONSTCOND*/0)
+
+
+#define PTHREAD_UCONTEXT_TO_SIGCONTEXT(uc, sc) do {			\
+	memcpy((sc), &(uc)->uc_mcontext.__gregs, 7 * sizeof (int));	\
+	memcpy(&(sc)->sc_ebx, &(uc)->uc_mcontext.__gregs[_REG_EBX],	\
+	    4 * sizeof (int));						\
+	(sc)->sc_eip    = (uc)->uc_mcontext.__gregs[_REG_EIP];		\
+	(sc)->sc_cs     = (uc)->uc_mcontext.__gregs[_REG_CS];		\
+	(sc)->sc_eflags = (uc)->uc_mcontext.__gregs[_REG_EFL];		\
+	(sc)->sc_esp    = (uc)->uc_mcontext.__gregs[_REG_UESP];		\
+	(sc)->sc_ss     = (uc)->uc_mcontext.__gregs[_REG_SS];		\
+	(sc)->sc_trapno = (uc)->uc_mcontext.__gregs[_REG_TRAPNO];      	\
+	(sc)->sc_err    = (uc)->uc_mcontext.__gregs[_REG_ERR];		\
+	} while (/*CONSTCOND*/0)
+
+#define PTHREAD_SIGCONTEXT_TO_UCONTEXT(uc, sc) do {			\
+	memcpy(&(uc)->uc_mcontext.__gregs, (sc), 7 * sizeof (int));	\
+	memcpy(&(uc)->uc_mcontext.__gregs[_REG_EBX], &(sc)->sc_ebx,	\
+	    4 * sizeof (int));						\
+	(uc)->uc_mcontext.__gregs[_REG_EIP]    = (sc)->sc_eip;		\
+	(uc)->uc_mcontext.__gregs[_REG_CS]     = (sc)->sc_cs;		\
+	(uc)->uc_mcontext.__gregs[_REG_EFL]    = (sc)->sc_eflags;	\
+	(uc)->uc_mcontext.__gregs[_REG_UESP]   = (sc)->sc_esp;		\
+	(uc)->uc_mcontext.__gregs[_REG_SS]     = (sc)->sc_ss;		\
+	(uc)->uc_mcontext.__gregs[_REG_TRAPNO] = (sc)->sc_trapno;	\
+	(uc)->uc_mcontext.__gregs[_REG_ERR]    = (sc)->sc_err;		\
 	} while (/*CONSTCOND*/0)
 
 #endif /* _LIB_PTHREAD_I386_MD_H */
