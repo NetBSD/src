@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.56 2003/01/23 18:49:08 pk Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.57 2003/01/23 19:54:35 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ struct xpmsg {
 			int	retval;
 		} xpmsg_func;
 	} u;
+	__volatile int	received;
+	__volatile int	complete;
 };
 
 /*
