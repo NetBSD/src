@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.20 1998/08/13 21:36:05 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.21 1998/08/30 23:40:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,10 +72,6 @@
 #define _I386_BUS_H_
 
 #include <machine/pio.h>
-
-#ifndef __BUS_SPACE_COMPAT_OLDDEFS
-#define	__BUS_SPACE_COMPAT_OLDDEFS
-#endif
 
 #ifdef BUS_SPACE_DEBUG
 /*
