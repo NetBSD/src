@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.31 1997/02/22 02:56:01 fvdl Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.32 1997/05/08 10:57:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -116,7 +116,7 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 	char *cp2;
 	struct mbuf *mb, *mreq, *mb2;
 	struct vattr va;
-	u_long testmode, nfsmode;
+	u_long inmode, testmode, outmode;
 	u_quad_t frev;
 
 	fhp = &nfh.fh_generic;
@@ -129,31 +129,35 @@ nfsrv3_access(nfsd, slp, procp, mrq)
 		nfsm_srvpostop_attr(1, (struct vattr *)0);
 		return (0);
 	}
-	nfsmode = fxdr_unsigned(u_int32_t, *tl);
-	if ((nfsmode & NFSV3ACCESS_READ) &&
-		nfsrv_access(vp, VREAD, cred, rdonly, procp, 0))
-		nfsmode &= ~NFSV3ACCESS_READ;
-	if (vp->v_type == VDIR)
-		testmode = (NFSV3ACCESS_MODIFY | NFSV3ACCESS_EXTEND |
-			NFSV3ACCESS_DELETE);
-	else
-		testmode = (NFSV3ACCESS_MODIFY | NFSV3ACCESS_EXTEND);
-	if ((nfsmode & testmode) &&
-		nfsrv_access(vp, VWRITE, cred, rdonly, procp, 0))
-		nfsmode &= ~testmode;
-	if (vp->v_type == VDIR)
-		testmode = NFSV3ACCESS_LOOKUP;
-	else
-		testmode = NFSV3ACCESS_EXECUTE;
-	if ((nfsmode & testmode) &&
-		nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0))
-		nfsmode &= ~testmode;
+	inmode = fxdr_unsigned(u_int32_t, *tl);
+	outmode = 0;
+	if ((inmode & NFSV3ACCESS_READ) &&
+	    nfsrv_access(vp, VREAD, cred, rdonly, procp, 0) == 0)
+		outmode |= NFSV3ACCESS_READ;
+	if (vp->v_type != VDIR) {
+		testmode = inmode & (NFSV3ACCESS_MODIFY | NFSV3ACCESS_EXTEND);
+		if (testmode &&
+		    nfsrv_access(vp, VWRITE, cred, rdonly, procp, 0) == 0)
+			outmode |= testmode;
+		if ((inmode & NFSV3ACCESS_EXECUTE) &&
+		    nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0) == 0)
+			outmode |= NFSV3ACCESS_EXECUTE;
+	} else {
+		testmode = inmode & (NFSV3ACCESS_MODIFY | NFSV3ACCESS_EXTEND |
+		    NFSV3ACCESS_DELETE);
+		if (testmode &&
+		    nfsrv_access(vp, VWRITE, cred, rdonly, procp, 0) == 0)
+			outmode |= testmode;
+		if ((inmode & NFSV3ACCESS_LOOKUP) &&
+		    nfsrv_access(vp, VLOOKUP, cred, rdonly, procp, 0) == 0)
+			outmode |= NFSV3ACCESS_LOOKUP;
+	}
 	getret = VOP_GETATTR(vp, &va, cred, procp);
 	vput(vp);
 	nfsm_reply(NFSX_POSTOPATTR(1) + NFSX_UNSIGNED);
 	nfsm_srvpostop_attr(getret, &va);
 	nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
-	*tl = txdr_unsigned(nfsmode);
+	*tl = txdr_unsigned(outmode);
 	nfsm_srvdone;
 }
 
@@ -2449,7 +2453,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 #endif
 	}
 	if (!error)
-		error = nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0);
+		error = nfsrv_access(vp, VLOOKUP, cred, rdonly, procp, 0);
 	if (error) {
 		vput(vp);
 		nfsm_reply(NFSX_POSTOPATTR(v3));
@@ -2716,7 +2720,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 #endif
 	if (!error) {
 		nqsrv_getl(vp, ND_READ);
-		error = nfsrv_access(vp, VEXEC, cred, rdonly, procp, 0);
+		error = nfsrv_access(vp, VLOOKUP, cred, rdonly, procp, 0);
 	}
 	if (error) {
 		vput(vp);

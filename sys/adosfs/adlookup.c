@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.17 1996/10/25 23:13:58 cgd Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.18 1997/05/08 10:57:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -101,7 +101,7 @@ adosfs_lookup(v)
 	 */
 	if (vdp->v_type != VDIR)
 		return (ENOTDIR);
-	if ((error = VOP_ACCESS(vdp, VEXEC, ucp, cnp->cn_proc)) != 0)
+	if ((error = VOP_ACCESS(vdp, VLOOKUP, ucp, cnp->cn_proc)) != 0)
 		return (error);
 	/*
 	 * cache lookup algorithm borrowed from ufs_lookup()
