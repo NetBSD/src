@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-indr.c,v 1.1.2.2 2002/01/01 21:40:21 nathanw Exp $	*/
+/*	$NetBSD: pthread-indr.c,v 1.1.2.3 2002/03/25 03:40:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -43,28 +43,28 @@
 #include <sys/cdefs.h>
 
 #ifdef __indr_reference
-__indr_reference(_pthread_mutex_init, pthread_mutex_init)
-__indr_reference(_pthread_mutex_lock, pthread_mutex_lock)
-__indr_reference(_pthread_mutex_unlock, pthread_mutex_unlock)
+__indr_reference(_libc_pthread_mutex_init, pthread_mutex_init)
+__indr_reference(_libc_pthread_mutex_lock, pthread_mutex_lock)
+__indr_reference(_libc_pthread_mutex_unlock, pthread_mutex_unlock)
 #if 0
-__indr_reference(_pthread_rwlock_init, pthread_rwlock_init)
-__indr_reference(_pthread_rwlock_rdlock, pthread_rwlock_rdlock)
-__indr_reference(_pthread_rwlock_wrlock, pthread_rwlock_wrlock)
-__indr_reference(_pthread_rwlock_unlock, pthread_rwlock_unlock)
+__indr_reference(_libc_pthread_rwlock_init, pthread_rwlock_init)
+__indr_reference(_libc_pthread_rwlock_rdlock, pthread_rwlock_rdlock)
+__indr_reference(_libc_pthread_rwlock_wrlock, pthread_rwlock_wrlock)
+__indr_reference(_libc_pthread_rwlock_unlock, pthread_rwlock_unlock)
 #endif
 __indr_reference(_flockfile, flockfile)
 __indr_reference(_ftrylockfile, ftrylockfile)
 __indr_reference(_funlockfile, funlockfile)
-__indr_reference(_pthread_once, pthread_once)
-__indr_reference(_pthread_cond_init, pthread_cond_init)
-__indr_reference(_pthread_cond_wait, pthread_cond_wait)
-__indr_reference(_pthread_cond_signal, pthread_cond_signal)
-__indr_reference(_pthread_spinlock, pthread_spinlock)
-__indr_reference(_pthread_spinunlock, pthread_spinunlock)
-__indr_reference(_pthread_key_create, pthread_key_create)
-__indr_reference(_pthread_setspecific, pthread_setspecific)
-__indr_reference(_pthread_getspecific, pthread_getspecific)
-__indr_reference(_pthread_self, pthread_self)
-__indr_reference(_pthread_sigmask, pthread_sigmask)
-__indr_reference(_pthread__errno, pthread__errno)
+__indr_reference(_libc_pthread_once, pthread_once)
+__indr_reference(_libc_pthread_cond_init, pthread_cond_init)
+__indr_reference(_libc_pthread_cond_wait, pthread_cond_wait)
+__indr_reference(_libc_pthread_cond_signal, pthread_cond_signal)
+__indr_reference(_libc_pthread_spinlock, pthread_spinlock)
+__indr_reference(_libc_pthread_spinunlock, pthread_spinunlock)
+__indr_reference(_libc_pthread_key_create, pthread_key_create)
+__indr_reference(_libc_pthread_setspecific, pthread_setspecific)
+__indr_reference(_libc_pthread_getspecific, pthread_getspecific)
+__indr_reference(_libc_pthread_self, pthread_self)
+__indr_reference(_libc_pthread_sigmask, pthread_sigmask)
+__indr_reference(_libc_pthread__errno, pthread__errno)
 #endif
