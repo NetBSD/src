@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.336 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.337 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -86,3 +86,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	texinfo(1): upgraded to 4.7.  [wiz 20040713]
 	libc: Add wordexp(3) which performs shell-style word expansions.
 		[seb 20040713]
+	sendmail: The sendmail daemon will now start by default if the
+		rc.d script determines a need for it.  [atatat 20040714]
