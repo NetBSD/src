@@ -1,4 +1,4 @@
-/* $NetBSD: ibus_pmax.c,v 1.5 1999/11/19 02:11:47 simonb Exp $ */
+/* $NetBSD: ibus_pmax.c,v 1.6 1999/11/19 03:15:28 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.5 1999/11/19 02:11:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_pmax.c,v 1.6 1999/11/19 03:15:28 nisimura Exp $");
 
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
@@ -55,14 +55,6 @@ static void ibus_pmax_attach __P((struct device *, struct device *, void *));
 struct cfattach ibus_pmax_ca = {
 	sizeof(struct ibus_softc), ibus_pmax_match, ibus_pmax_attach
 };
-
-extern void dec_3100_intr_establish __P((struct device *, void *,
-		int, int (*)(void *), void *));
-extern void dec_3100_intr_disestablish __P((struct device *, void *));
-
-extern void dec_5100_intr_establish __P((struct device *, void *,
-		int, int (*)(void *), void *));
-extern void dec_5100_intr_disestablish __P((struct device *, void *));
 
 #define KV(x) MIPS_PHYS_TO_KSEG1(x)
 
