@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.115 2001/05/29 02:20:23 mrg Exp $
+#	$NetBSD: Makefile.i386,v 1.116 2001/06/05 05:05:46 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -51,7 +51,9 @@ CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-Ttext c0100000 -e start
+
+TEXTADDR?=	c0100000
+LINKFLAGS=	-Ttext ${TEXTADDR} -e start
 
 .if (${OBJECT_FMT} == "ELF")
 KERN_LDSCRIPT?=	kern.ldscript
