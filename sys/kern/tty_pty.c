@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.74 2004/03/05 07:27:22 dbj Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.75 2004/03/09 05:30:24 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.74 2004/03/05 07:27:22 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.75 2004/03/09 05:30:24 dbj Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -301,6 +301,7 @@ ptsopen(dev, flag, devtype, p)
 	struct tty *tp;
 	int error;
 	int ptn = minor(dev);
+	int s;
 
 	if ((error = check_pty(ptn)))
 		return (error);
@@ -322,6 +323,7 @@ ptsopen(dev, flag, devtype, p)
 		SET(tp->t_state, TS_CARR_ON);
 
 	if (!ISSET(flag, O_NONBLOCK)) {
+		s = spltty();
 		TTY_LOCK(tp);
 		while (!ISSET(tp->t_state, TS_CARR_ON)) {
 			tp->t_wopen++;
@@ -330,10 +332,12 @@ ptsopen(dev, flag, devtype, p)
 			tp->t_wopen--;
 			if (error) {
 				TTY_UNLOCK(tp);
+				splx(s);
 				return (error);
 			}
 		}
 		TTY_UNLOCK(tp);
+		splx(s);
 	}
 	error = (*tp->t_linesw->l_open)(dev, tp);
 	ptcwakeup(tp, FREAD|FWRITE);
@@ -367,6 +371,7 @@ ptsread(dev, uio, flag)
 	struct tty *tp = pti->pt_tty;
 	int error = 0;
 	int cc;
+	int s;
 
 again:
 	if (pti->pt_flags & PF_REMOTE) {
@@ -376,16 +381,20 @@ again:
 			    p->p_flag & P_PPWAIT)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTIN, 1);
+			s = spltty();
 			TTY_LOCK(tp);
 			error = ttysleep(tp, (caddr_t)&lbolt,
 					 TTIPRI | PCATCH | PNORELOCK, ttybg, 0);
+			splx(s);
 			if (error)
 				return (error);
 		}
+		s = spltty();
 		TTY_LOCK(tp);
 		if (tp->t_canq.c_cc == 0) {
 			if (flag & IO_NDELAY) {
 				TTY_UNLOCK(tp);
+				splx(s);
 				return (EWOULDBLOCK);
 			}
 			error = ttysleep(tp, (caddr_t)&tp->t_canq,
@@ -396,7 +405,9 @@ again:
 		}
 		while(error == 0 && tp->t_canq.c_cc > 1 && uio->uio_resid > 0) {
 			TTY_UNLOCK(tp);
+			splx(s);
 			error = ureadc(getc(&tp->t_canq), uio);
+			s = spltty();
 			TTY_LOCK(tp);
 			/* Re-check terminal state here? */
 		}
@@ -404,6 +415,7 @@ again:
 			(void) getc(&tp->t_canq);
 		cc = tp->t_canq.c_cc;
 		TTY_UNLOCK(tp);
+		splx(s);
 		if (cc)
 			return (error);
 	} else
@@ -535,6 +547,7 @@ ptcopen(dev, flag, devtype, p)
 	struct tty *tp;
 	int error;
 	int ptn = minor(dev);
+	int s;
 
 	if ((error = check_pty(ptn)))
 		return (error);
@@ -542,13 +555,16 @@ ptcopen(dev, flag, devtype, p)
 	pti = pt_softc[ptn];
 	tp = pti->pt_tty;
 
+	s = spltty();
 	TTY_LOCK(tp);
 	if (tp->t_oproc) {
 		TTY_UNLOCK(tp);
+		splx(s);
 		return (EIO);
 	}
 	tp->t_oproc = ptsstart;
 	TTY_UNLOCK(tp);
+	splx(s);
 	(void)(*tp->t_linesw->l_modem)(tp, 1);
 	CLR(tp->t_lflag, EXTPROC);
 	pti->pt_flags = 0;
@@ -566,12 +582,15 @@ ptcclose(dev, flag, devtype, p)
 {
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
+	int s;
 
 	(void)(*tp->t_linesw->l_modem)(tp, 0);
 	CLR(tp->t_state, TS_CARR_ON);
+	s = spltty();
 	TTY_LOCK(tp);
 	tp->t_oproc = 0;		/* mark closed */
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (0);
 }
 
@@ -585,6 +604,7 @@ ptcread(dev, uio, flag)
 	struct tty *tp = pti->pt_tty;
 	u_char buf[BUFSIZ];
 	int error = 0, cc;
+	int s;
 
 	/*
 	 * We want to block until the slave
@@ -592,11 +612,13 @@ ptcread(dev, uio, flag)
 	 * but if we lost the slave or we're NBIO,
 	 * then return the appropriate error instead.
 	 */
+	s = spltty();
 	TTY_LOCK(tp);
 	for (;;) {
 		if (ISSET(tp->t_state, TS_ISOPEN)) {
 			if (pti->pt_flags & PF_PKT && pti->pt_send) {
 				TTY_UNLOCK(tp);
+				splx(s);
 				error = ureadc((int)pti->pt_send, uio);
 				if (error)
 					return (error);
@@ -617,6 +639,7 @@ ptcread(dev, uio, flag)
 			}
 			if (pti->pt_flags & PF_UCNTL && pti->pt_ucntl) {
 				TTY_UNLOCK(tp);
+				splx(s);
 				error = ureadc((int)pti->pt_ucntl, uio);
 				if (error)
 					return (error);
@@ -642,7 +665,9 @@ ptcread(dev, uio, flag)
 
 	if (pti->pt_flags & (PF_PKT|PF_UCNTL)) {
 		TTY_UNLOCK(tp);
+		splx(s);
 		error = ureadc(0, uio);
+		s = spltty();
 		TTY_LOCK(tp);
 		if (error == 0 && !ISSET(tp->t_state, TS_ISOPEN))
 			error = EIO;
@@ -652,7 +677,9 @@ ptcread(dev, uio, flag)
 		if (cc <= 0)
 			break;
 		TTY_UNLOCK(tp);
+		splx(s);
 		error = uiomove(buf, cc, uio);
+		s = spltty();
 		TTY_LOCK(tp);
 		if (error == 0 && !ISSET(tp->t_state, TS_ISOPEN))
 			error = EIO;
@@ -667,6 +694,7 @@ ptcread(dev, uio, flag)
 	}
 out:
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (error);
 }
 
@@ -684,8 +712,10 @@ ptcwrite(dev, uio, flag)
 	u_char locbuf[BUFSIZ];
 	int cnt = 0;
 	int error = 0;
+	int s;
 
 again:
+	s = spltty();
 	TTY_LOCK(tp);
 	if (!ISSET(tp->t_state, TS_ISOPEN))
 		goto block;
@@ -698,9 +728,11 @@ again:
 				cc = min(cc, TTYHOG - 1 - tp->t_canq.c_cc);
 				cp = locbuf;
 				TTY_UNLOCK(tp);
+				splx(s);
 				error = uiomove((caddr_t)cp, cc, uio);
 				if (error)
 					return (error);
+				s = spltty();
 				TTY_LOCK(tp);
 				/* check again for safety */
 				if (!ISSET(tp->t_state, TS_ISOPEN)) {
@@ -723,9 +755,11 @@ again:
 			cc = min(uio->uio_resid, BUFSIZ);
 			cp = locbuf;
 			TTY_UNLOCK(tp);
+			splx(s);
 			error = uiomove((caddr_t)cp, cc, uio);
 			if (error)
 				return (error);
+			s = spltty();
 			TTY_LOCK(tp);
 			/* check again for safety */
 			if (!ISSET(tp->t_state, TS_ISOPEN)) {
@@ -743,7 +777,9 @@ again:
 			 *	 see also tty.c:ttyinput_wlock()
 			 */
 			TTY_UNLOCK(tp);
+			splx(s);
 			(*tp->t_linesw->l_rint)(*cp++, tp);
+			s = spltty();
 			TTY_LOCK(tp);
 			cnt++;
 			cc--;
@@ -770,6 +806,7 @@ block:
 	}
 	error = ltsleep((caddr_t)&tp->t_rawq.c_cf, TTOPRI | PCATCH | PNORELOCK,
 		       ttyout, 0, &tp->t_slock);
+	splx(s);
 	if (error) {
 		/* adjust for data copied in but not written */
 		uio->uio_resid += cc;
@@ -779,6 +816,7 @@ block:
 
 out:
 	TTY_UNLOCK(tp);
+	splx(s);
 	return (error);
 }
 
@@ -967,6 +1005,7 @@ ptyioctl(dev, cmd, data, flag, p)
 	const struct cdevsw *cdev;
 	u_char *cc = tp->t_cc;
 	int stop, error, sig;
+	int s;
 
 	cdev = cdevsw_lookup(dev);
 	/*
@@ -1030,9 +1069,11 @@ ptyioctl(dev, cmd, data, flag, p)
 				pti->pt_flags |= PF_REMOTE;
 			else
 				pti->pt_flags &= ~PF_REMOTE;
+			s = spltty();
 			TTY_LOCK(tp);
 			ttyflush(tp, FREAD|FWRITE);
 			TTY_UNLOCK(tp);
+			splx(s);
 			return (0);
 
 #ifdef COMPAT_OLDTTY
