@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.17 2003/06/23 12:15:00 agc Exp $	*/
+/*	$NetBSD: audio.c,v 1.18 2004/10/30 16:57:27 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: audio.c,v 1.17 2003/06/23 12:15:00 agc Exp $");
+__RCSID("$NetBSD: audio.c,v 1.18 2004/10/30 16:57:27 dsl Exp $");
 #endif
 
 
@@ -193,7 +193,7 @@ decode_time(arg, tvp)
 		for (i = 0; i < 6; i++, base /= 10) {
 			if (!dot[i])
 				break;
-			if (!isdigit(dot[i]))
+			if (!isdigit((unsigned char)dot[i]))
 				errx(1, "argument `%s' is not a value time specification", arg);
 			tvp->tv_usec += base * (dot[i] - '0');
 		}
