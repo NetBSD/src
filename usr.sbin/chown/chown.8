@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.5 1997/03/06 06:26:09 mikel Exp $
+.\"	$NetBSD: chown.8,v 1.6 1997/10/06 13:33:56 enami Exp $
 .\"
 .Dd March 31, 1994
 .Dt CHOWN 8
@@ -44,7 +44,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl f
+.Op Fl fh
 .Ar owner Op Ar :group
 .Ar file ...
 .Nm chown
@@ -52,7 +52,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl f
+.Op Fl fh
 .Ar :group
 .Ar file ...
 .Sh DESCRIPTION
@@ -80,9 +80,15 @@ in the files instead of just the files themselves.
 .It Fl f
 Don't report any failure to change file owner or group, nor modify
 the exit status to reflect such failures.
+.It Fl h
+If
+.Ar file
+is symbolic link, the owner and/or group of the link is changed.
 .El
 .Pp
-Symbolic links don't have owners, so unless the
+If
+.Fl h
+is not given, unless the
 .Fl H
 or 
 .Fl L 
