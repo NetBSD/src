@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.273 2002/03/09 15:17:45 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.274 2002/03/18 18:42:52 bjh21 Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -299,7 +299,6 @@ NOPROFILE=	# defined
 SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 
 # GNU sources and packages sometimes see architecture names differently.
-GNU_ARCH.arm26=arm
 GNU_ARCH.arm32=arm
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
