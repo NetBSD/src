@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.86 1996/09/05 16:42:32 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.87 1996/10/06 01:46:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -1382,7 +1382,10 @@ cominit(bc, ioh, rate)
 	bus_io_write_1(bc, ioh, com_dlbh, rate >> 8);
 	bus_io_write_1(bc, ioh, com_lcr, LCR_8BITS);
 	bus_io_write_1(bc, ioh, com_ier, IER_ERXRDY | IER_ETXRDY);
-	bus_io_write_1(bc, ioh, com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
+	bus_io_write_1(bc, ioh, com_fifo,
+	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
+	bus_io_write_1(bc, ioh, com_mcr, MCR_DTR | MCR_RTS);
+	DELAY(100);
 	stat = bus_io_read_1(bc, ioh, com_iir);
 	splx(s);
 }
