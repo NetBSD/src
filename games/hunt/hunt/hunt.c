@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.3 1997/10/11 08:13:41 lukem Exp $	*/
+/*	$NetBSD: hunt.c,v 1.4 1997/10/20 00:37:14 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.3 1997/10/11 08:13:41 lukem Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.4 1997/10/20 00:37:14 lukem Exp $");
 #endif /* not lint */
 
 # include	<sys/stat.h>
@@ -508,6 +508,7 @@ get_response:
 						listmax * sizeof(SOCKET));
 		}
 
+		FD_ZERO(&mask);
 		FD_SET(test_socket, &mask);
 		if (select(test_socket + 1, &mask, NULL, NULL, &wait) == 1 &&
 		    recvfrom(test_socket, (char *) &port_num, sizeof(port_num),
