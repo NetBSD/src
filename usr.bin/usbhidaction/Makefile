@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/28 17:49:31 augustss Exp $
+#	$NetBSD: Makefile,v 1.3 2002/02/02 16:50:19 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ PROG=	usbhidaction
 SRCS=	usbhidaction.c
 
 LDADD+=	-lusbhid -lutil
-DPADD+=	${LIBUSB} ${LIBUTIL}
+DPADD+=	${LIBUSBHIB} ${LIBUTIL}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
