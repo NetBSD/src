@@ -173,7 +173,7 @@ fi
 
 # $sendmail_flags is imported from /etc/netstart;
 # If $sendmail_flags == NO, routed isn't run.
-if [ X${sendmail_flags} != X"NO" ]; then
+if [ "X${sendmail_flags}" != X"NO" ]; then
 	echo -n ' sendmail';		sendmail ${sendmail_flags}
 fi
 
