@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 1999/03/24 12:59:15 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 1999/03/25 01:17:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 1999/03/24 12:59:15 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 1999/03/25 01:17:53 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -118,11 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 1999/03/24 12:59:15 simonb Exp $")
 /* Motherboard or system-specific initialization vector */
 void		unimpl_os_init __P((void));
 void		unimpl_bus_reset __P((void));
-void		unimpl_enable_intr 
+void		unimpl_enable_intr
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
 
-int		unimpl_intr __P((u_int mask, u_int pc, 
+int		unimpl_intr __P((u_int mask, u_int pc,
 			      u_int statusReg, u_int causeReg));
 
 void		unimpl_cons_init __P((void));
@@ -144,12 +144,10 @@ struct platform  platform = {
 };
 
 
-
-
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[40];	 
+char	cpu_model[40];
 
 char	*bootinfo = NULL;		/* pointer to bootinfo structure */
 
@@ -173,7 +171,7 @@ int mem_cluster_cnt;
 
 void	(*tc_enable_interrupt)
      __P ((u_int slotno, int (*handler) __P((void *sc)),
-          void *sc, int onoff)); 
+          void *sc, int onoff));
 
 
 /*
@@ -196,13 +194,11 @@ volatile struct chiptime *mcclock_addr;
 const	struct callback *callv;	/* pointer to PROM entry points */
 
 
-
 /*
  *  Local functions.
  */
 extern	int	atoi __P((const char *cp));
 int	initcpu __P((void));
-
 
 
 /* initialize bss, etc. from kernel start, before main() is called. */
@@ -448,7 +444,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Be careful to save and restore the original contents for msgbuf.
 	 */
 	physmem = btoc((vaddr_t)kernend - MIPS_KSEG0_START);
-	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);	
+	cp = (char *)MIPS_PHYS_TO_KSEG1(physmem << PGSHIFT);
 	while (cp < (char *)physmem_boardmax) {
 	  	int j;
 		if (badaddr(cp, 4))
@@ -500,7 +496,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * virtual address space.
 	 */
 	size = (unsigned)allocsys(0);
-	v = (caddr_t)pmap_steal_memory(size, NULL, NULL); 
+	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
 	if ((allocsys(v) - v) != size)
 		panic("mach_init: table size inconsistency");
 
@@ -743,12 +739,12 @@ prom_halt(howto, bootstr)
 			(*callv->_rex)('b');
 		}
 	} else if (howto & RB_HALT) {
-		volatile void (*f) __P((void)) = 
+		volatile void (*f) __P((void)) =
 		    (volatile void (*) __P((void))) DEC_PROM_REINIT;
 
 		(*f)();	/* jump back to prom monitor */
 	} else {
-		volatile void (*f) __P((void)) = 
+		volatile void (*f) __P((void)) =
 		    (volatile void (*) __P((void)))DEC_PROM_AUTOBOOT;
 		(*f)();	/* jump back to prom monitor and do 'auto' cmd */
 	}
@@ -904,7 +900,7 @@ clkread()
 
 	/*
 	 * Scale from 40ns to microseconds.
-	 * Avoid a kernel FP divide (by 25) using the approximation 
+	 * Avoid a kernel FP divide (by 25) using the approximation
 	 * 1/25 = 40/1000 =~ 41/ 1024, which is good to 0.0975 %
 	 */
 	usec = cycles + (cycles << 3) + (cycles << 5);
@@ -1060,7 +1056,7 @@ atoi(s)
 	if (neg)
 		val = -val;
 out:
-	return val;	
+	return val;
 }
 
 /*
@@ -1068,7 +1064,7 @@ out:
  */
 
 void
-unimpl_os_init() 
+unimpl_os_init()
 {
 	panic("sysconf.init didnt set os_init\n");
 }
@@ -1086,9 +1082,9 @@ unimpl_enable_intr(slotno, handler, sc, onoff)
 	 intr_arg_t sc;
 	int onoff;
 {
-	panic("sysconf.init didnt set enable_intr\n");	
+	panic("sysconf.init didnt set enable_intr\n");
 }
-    
+
 
 int
 unimpl_intr (mask, pc, statusreg, causereg)
@@ -1097,13 +1093,13 @@ unimpl_intr (mask, pc, statusreg, causereg)
 	u_int statusreg;
 	u_int causereg;
 {
-	panic("sysconf.init didnt set intr\n");	
+	panic("sysconf.init didnt set intr\n");
 }
 
 void
 unimpl_cons_init()
 {
-	panic("sysconf.init didnt set cons_init\n");	
+	panic("sysconf.init didnt set cons_init\n");
 }
 
 void
@@ -1111,14 +1107,14 @@ unimpl_device_register(sc, arg)
      struct device *sc;
      void *arg;
 {
-	panic("sysconf.init didnt set device_register\n");	
+	panic("sysconf.init didnt set device_register\n");
 
 }
 
 const char*
 unimpl_model_name()
 {
-	panic("sysconf.init didnt set model_name\n");	
+	panic("sysconf.init didnt set model_name\n");
 }
 
 void
@@ -1139,5 +1135,5 @@ unimpl_iointr(arg, arg2)
 void
 unimpl_errintr()
 {
-	panic("sysconf.init didnt set errintr_name\n");	
+	panic("sysconf.init didnt set errintr_name\n");
 }

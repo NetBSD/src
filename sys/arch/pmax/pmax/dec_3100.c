@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.6 1998/09/05 04:11:04 nisimura Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.7 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -87,8 +87,8 @@
 #include <mips/mips/mips_mcclock.h>	/* mcclock CPUspeed estimation */
 
 #include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/turbochannel.h> 
-#include <pmax/pmax/pmaxtype.h> 
+#include <pmax/pmax/turbochannel.h>
+#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/kn01.h>
@@ -103,10 +103,10 @@ void		dec_3100_init __P((void));
 void		dec_3100_os_init __P((void));
 void		dec_3100_bus_reset __P((void));
 
-void		dec_3100_enable_intr 
+void		dec_3100_enable_intr
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
-int		dec_3100_intr __P((u_int mask, u_int pc, 
+int		dec_3100_intr __P((u_int mask, u_int pc,
 			      u_int statusReg, u_int causeReg));
 
 void		dec_3100_cons_init __P((void));
@@ -119,9 +119,9 @@ dec_3100_intr_establish __P((void* cookie, int level,
 			 int (*handler) __P((intr_arg_t)), intr_arg_t arg));
 void	dec_3100_intr_disestablish __P((struct ibus_attach_args *ia));
 
-  
+
 /*
- * Fill in platform struct. 
+ * Fill in platform struct.
  */
 void
 dec_3100_init()
@@ -221,7 +221,7 @@ dec_3100_intr(mask, pc, statusReg, causeReg)
 	unsigned statusReg;
 	unsigned causeReg;
 {
-	register volatile struct chiptime *c = 
+	register volatile struct chiptime *c =
 	    (volatile struct chiptime *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	struct clockframe cf;
 	int temp;
@@ -250,7 +250,7 @@ dec_3100_intr(mask, pc, statusReg, causeReg)
 
 #if NLE_PMAX > 0
 	if (mask & MIPS_INT_MASK_1) {
-		/* 
+		/*
 		 * tty interrupts were disabled by the splx() call
 		 * that re-enables clock interrupts.  A slip or ppp driver
 		 * manipulating if queues should have called splimp(),
@@ -292,7 +292,7 @@ dec_3100_intr_disestablish(struct ibus_attach_args *ia)
 {
 	printf("dec_3100_intr_distestablish: not implemented\n");
 }
-  
+
 
 /*
  * Handle memory errors.

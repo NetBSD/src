@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max_subr.h,v 1.1 1998/03/30 09:02:03 jonathan Exp $	*/
+/*	$NetBSD: dec_3max_subr.h,v 1.2 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,9 +31,9 @@
  */
 
 /*
- * the 3max and 3maxplus have compatible memory subsystems; 
+ * the 3max and 3maxplus have compatible memory subsystems;
  * we handle them both here.
- * used on both 
+ * used on both
  */
 
 void dec_mtasic_err __P((u_int erradr, u_int errsyn));

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 1998/11/17 22:41:05 jonathan Exp $	*/
+/*	$NetBSD: conf.c,v 1.32 1999/03/25 01:17:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,7 +110,7 @@ struct bdevsw	bdevsw[] =
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 /*
- * Swapdev is a fake block device implemented  in sw.c and only used 
+ * Swapdev is a fake block device implemented  in sw.c and only used
  * internally to get to swstrategy.  It cannot be provided to the
  * users, because the swstrategy routine munches the b_dev and b_blkno
  * entries before calling the appropriate driver.  This would horribly

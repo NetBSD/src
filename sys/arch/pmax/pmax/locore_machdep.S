@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.8 1998/09/11 16:46:34 jonathan Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.9 1999/03/25 01:17:53 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,7 +156,7 @@ LEAF(dec_mips1_wbflush)
 	nop				/* two  more cycles to complete */
  	nop
 
-1:						# spin 
+1:						# spin
 	bc3f    1b				# until write buffer drained
         nop                     		# (branch delay slot)
 
@@ -334,7 +334,7 @@ END(cpu_spl5)
 
 /*
  * hardware-level spls for hardware where the interrupt priorites
- * DO NOT  map onto levels.  
+ * DO NOT  map onto levels.
  *
  * For now, that means DECstations that use only two distinct CPU
  * levels, one for TOD clock interrupts, and a second for all other

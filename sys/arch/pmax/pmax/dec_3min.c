@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.11 1999/03/02 12:23:58 jonathan Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.12 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.11 1999/03/02 12:23:58 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.12 1999/03/25 01:17:52 simonb Exp $");
 
 
 #include <sys/types.h>
@@ -97,8 +97,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.11 1999/03/02 12:23:58 jonathan Exp $
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
 #include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/turbochannel.h> 
-#include <pmax/pmax/pmaxtype.h> 
+#include <pmax/pmax/turbochannel.h>
+#include <pmax/pmax/pmaxtype.h>
 
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
@@ -114,10 +114,10 @@ void		dec_3min_os_init __P((void));
 void		dec_3min_bus_reset __P((void));
 void		dec_3maxplus_device_register __P((struct device *, void *));
 
-void		dec_3min_enable_intr 
+void		dec_3min_enable_intr
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
-int		dec_3min_intr __P((u_int mask, u_int pc, 
+int		dec_3min_intr __P((u_int mask, u_int pc,
 			      u_int statusReg, u_int causeReg));
 
 void		dec_3min_device_register __P((struct device *, void *));
@@ -133,7 +133,7 @@ u_long	kmin_tc3_imask;
 
 
 /*
- * Fill in platform struct. 
+ * Fill in platform struct.
  */
 void
 dec_3min_init()
@@ -171,7 +171,7 @@ dec_3min_bus_reset()
 
 }
 
-  
+
 void
 dec_3min_os_init()
 {
@@ -221,7 +221,7 @@ dec_3min_os_init()
 	physmem_boardmax = MIPS_PHYS_TO_KSEG1(physmem_boardmax);
 
 	* (volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK) =
-	  kmin_tc3_imask | 
+	  kmin_tc3_imask |
 	  (KMIN_IM0 & ~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2));
 }
 
@@ -312,7 +312,7 @@ dec_3min_enable_intr(slotno, handler, sc, on)
 		}
 	} else {
 		/* Clear the relevant mask... */
-		if (slotno <= 2) {	
+		if (slotno <= 2) {
 			/* it's an option slot */
 			int s = splhigh();
 			printf("kmin_intr: cannot disable option slot %d\n",
@@ -342,7 +342,7 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 	unsigned causeReg;
 {
 	register u_int intr;
-	register volatile struct chiptime *c = 
+	register volatile struct chiptime *c =
 	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
 	volatile u_int * const imaskp =
 		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK);
@@ -372,7 +372,7 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 			asc_dma_intr();
 #endif
 		}
-	
+
 		if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
 			*intrp &= ~(IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 
@@ -381,7 +381,7 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 
 		if (intr & KMIN_INTR_TIMEOUT)
 			kn02ba_errintr();
-	
+
 		if (intr & KMIN_INTR_CLOCK) {
 			extern u_int32_t mips3_cycle_count __P((void));
 
@@ -400,7 +400,7 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 		/* If clock interrups were enabled, re-enable them ASAP. */
 		if (old_mask & KMIN_INTR_CLOCK) {
 			/*  ioctl interrupt mask to splclock and higher */
-			*imaskp = old_mask & 
+			*imaskp = old_mask &
 			  ~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
 			  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
 			wbflush();
@@ -428,7 +428,7 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 		/* If tty interrupts were enabled, re-enable them ASAP. */
 		if ((old_mask & (KMIN_INTR_SCC_1|KMIN_INTR_SCC_0)) ==
 		     (KMIN_INTR_SCC_1|KMIN_INTR_SCC_0)) {
-			*imaskp = old_mask & 
+			*imaskp = old_mask &
 			  ~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
 			  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
 			wbflush();
@@ -465,7 +465,7 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 		(*tc_slot_info[0].intr)(tc_slot_info[0].sc);
 		intrcnt[SLOT0_INTR]++;
  	}
-	
+
 	if ((mask & MIPS_INT_MASK_1) && tc_slot_info[1].intr) {
 		(*tc_slot_info[1].intr)(tc_slot_info[1].sc);
 		intrcnt[SLOT1_INTR]++;
@@ -499,9 +499,9 @@ done:
 /*
  * Count instructions between 4ms mcclock interrupt requests,
  * using the ioasic clock-interrupt-pending bit to determine
- * when clock ticks occur.  
+ * when clock ticks occur.
  * Set up iosiac to allow only clock interrupts, then
- * call 
+ * call
  */
 void
 dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
@@ -516,7 +516,7 @@ dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
 	/* Allow only clock interrupts through ioasic. */
 	*ioasic_intrmaskp = KMIN_INTR_CLOCK;
 	wbflush();
-     
+
 	mc_cpuspeed(mcclock_addr, clockmask);
 
 	*ioasic_intrmaskp = saved_imask;

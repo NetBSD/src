@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max_subr.c,v 1.4 1998/03/29 01:12:15 jonathan Exp $	*/
+/*	$NetBSD: dec_3max_subr.c,v 1.5 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max_subr.c,v 1.4 1998/03/29 01:12:15 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max_subr.c,v 1.5 1999/03/25 01:17:52 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max_subr.c,v 1.4 1998/03/29 01:12:15 jonathan E
 #include <pmax/pmax/dec_3max_subr.h>
 
 /*
- * the 3max and 3maxplus have compatible memory subsystems; 
+ * the 3max and 3maxplus have compatible memory subsystems;
  * we handle them both here.
  */
 

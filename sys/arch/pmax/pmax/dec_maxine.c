@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.7 1999/03/02 09:24:17 jonathan Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.8 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.7 1999/03/02 09:24:17 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.8 1999/03/25 01:17:52 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.7 1999/03/02 09:24:17 jonathan Exp 
 #include <dev/tc/ioasicvar.h>		/* ioasic_base */
 
 #include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/turbochannel.h> 
-#include <pmax/pmax/pmaxtype.h> 
+#include <pmax/pmax/turbochannel.h>
+#include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/machdep.h>		/* XXXjrs replace with vectors */
 
 #include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
@@ -111,10 +111,10 @@ void		dec_maxine_os_init __P((void));
 void		dec_maxine_bus_reset __P((void));
 void		dec_maxine_mach_init __P((void));
 
-void		dec_maxine_enable_intr 
+void		dec_maxine_enable_intr
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
-int		dec_maxine_intr __P((u_int mask, u_int pc, 
+int		dec_maxine_intr __P((u_int mask, u_int pc,
 			      u_int statusReg, u_int causeReg));
 
 void		dec_maxine_device_register __P((struct device *, void *));
@@ -127,7 +127,7 @@ void		dec_maxine_cons_init __P((void));
 u_long xine_tc3_imask;
 
 /*
- * Fill in platform struct. 
+ * Fill in platform struct.
  */
 void
 dec_maxine_init()
@@ -299,7 +299,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 	unsigned causeReg;
 {
 	register u_int intr;
-	register volatile struct chiptime *c = 
+	register volatile struct chiptime *c =
 	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(XINE_SYS_CLOCK);
 	volatile u_int *imaskp = (volatile u_int *)
 		MIPS_PHYS_TO_KSEG1(XINE_REG_IMSK);
@@ -344,14 +344,14 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 				printf ("can't handle scc interrupt\n");
 			intrcnt[SERIAL0_INTR]++;
 		}
-	
+
 		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
 			*intrp &= ~IOASIC_INTR_SCSI_PTR_LOAD;
 #ifdef notdef
 			asc_dma_intr();
 #endif
 		}
-	
+
 		if (intr & (IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E))
 			*intrp &= ~(IOASIC_INTR_SCSI_OVRUN | IOASIC_INTR_SCSI_READ_E);
 
@@ -366,7 +366,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 				printf ("can't handle dtop interrupt\n");
 			intrcnt[DTOP_INTR]++;
 		}
-	
+
 		if (intr & XINE_INTR_FLOPPY) {
 			if (tc_slot_info[XINE_FLOPPY_SLOT].intr)
 				(*(tc_slot_info[XINE_FLOPPY_SLOT].intr))
@@ -375,7 +375,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 			printf ("can't handle floppy interrupt\n");
 			intrcnt[FLOPPY_INTR]++;
 		}
-	
+
 		if (intr & XINE_INTR_TC_0) {
 			if (tc_slot_info[0].intr)
 				(*(tc_slot_info[0].intr))
@@ -384,7 +384,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 				printf ("can't handle tc0 interrupt\n");
 			intrcnt[SLOT0_INTR]++;
 		}
-	
+
 		if (intr & XINE_INTR_TC_1) {
 			if (tc_slot_info[1].intr)
 				(*(tc_slot_info[1].intr))
@@ -393,7 +393,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 				printf ("can't handle tc1 interrupt\n");
 			intrcnt[SLOT1_INTR]++;
 		}
-	
+
 		if (intr & XINE_INTR_ISDN) {
 			if (tc_slot_info[XINE_ISDN_SLOT].intr)
 				(*(tc_slot_info[XINE_ISDN_SLOT].intr))
@@ -409,7 +409,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 				(tc_slot_info[XINE_LANCE_SLOT].sc);
 			else
 				printf ("can't handle lance interrupt\n");
-	
+
 			intrcnt[LANCE_INTR]++;
 		}
 

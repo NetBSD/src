@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn02_subr.c,v 1.1 1998/03/25 03:57:54 jonathan Exp $	*/
+/*	$NetBSD: dec_kn02_subr.c,v 1.2 1999/03/25 01:17:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn02_subr.c,v 1.1 1998/03/25 03:57:54 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn02_subr.c,v 1.2 1999/03/25 01:17:52 simonb Exp $");
 
 /*
  * Motherboard memory error contoller used in both
@@ -85,7 +85,7 @@ kn02ba_recover_erradr(phys, mer)
 
 
 
-/* 
+/*
  * Handle error
  * All we can do with parity is panic.
  * XXX check for clean user pages, replace frame,  and reload ?
