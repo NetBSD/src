@@ -1,4 +1,4 @@
-/*	$NetBSD: k5login.c,v 1.10 1999/12/26 17:47:18 aidan Exp $	*/
+/*	$NetBSD: k5login.c,v 1.11 2000/02/14 03:17:43 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,14 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	5.11 (Berkeley) 7/12/92";
 #endif
-__RCSID("$NetBSD: k5login.c,v 1.10 1999/12/26 17:47:18 aidan Exp $");
+__RCSID("$NetBSD: k5login.c,v 1.11 2000/02/14 03:17:43 aidan Exp $");
 #endif /* not lint */
 
 #ifdef KERBEROS5
 #include <sys/param.h>
 #include <sys/syslog.h>
 #include <krb5/krb5.h>
-#include <kerberosIV/com_err.h>
+#include <com_err.h>
 #include <pwd.h>
 #include <netdb.h>
 #include <stdio.h>
@@ -55,12 +55,6 @@ __RCSID("$NetBSD: k5login.c,v 1.10 1999/12/26 17:47:18 aidan Exp $");
 
 #define KRB5_DEFAULT_OPTIONS 0
 #define KRB5_DEFAULT_LIFE 60*60*10 /* 10 hours */
-
-krb5_data tgtname = {
-    0,
-    KRB5_TGS_NAME_SIZE,
-    KRB5_TGS_NAME
-};
 
 krb5_context kcontext;
 
@@ -78,6 +72,13 @@ int k5_read_creds __P((char *));
 int k5_write_creds __P((void));
 int klogin __P((struct passwd *, char *, char *, char *));
 void kdestroy __P((void));
+
+#ifndef krb5_realm_length
+#define krb5_realm_length(r)	((r).length)
+#endif
+#ifndef krb5_realm_data
+#define krb5_realm_data(r)	((r).data)
+#endif
 
 /*
  * Attempt to read forwarded kerberos creds
@@ -114,11 +115,12 @@ k5_read_creds(username)
 
 	mcreds.client = me;
 	code = krb5_build_principal_ext(kcontext, &mcreds.server,
-					krb5_princ_realm(kcontext, me)->length,
-					krb5_princ_realm(kcontext, me)->data,
-					tgtname.length, tgtname.data,
-					krb5_princ_realm(kcontext, me)->length,
-					krb5_princ_realm(kcontext, me)->data,
+					krb5_realm_length(*krb5_princ_realm(kcontext, me)),
+					krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+					KRB5_TGS_NAME_SIZE,
+					KRB5_TGS_NAME,
+					krb5_realm_length(*krb5_princ_realm(kcontext, me)),
+					krb5_realm_data(*krb5_princ_realm(kcontext, me)),
 					0);
 	if (code) {
 		com_err("login", code, "while building server name");
@@ -187,7 +189,6 @@ klogin(pw, instance, localhost, password)
 	char *instance, *localhost, *password;
 {
         krb5_error_code kerror;
-	krb5_address **my_addresses;
 	krb5_creds my_creds;
 	krb5_timestamp now;
 	krb5_ccache ccache = NULL;
@@ -261,11 +262,12 @@ klogin(pw, instance, localhost, password)
 
 	if ((kerror = krb5_build_principal_ext(kcontext,
 					&server,
-					krb5_princ_realm(kcontext, me)->length,
-					krb5_princ_realm(kcontext, me)->data,
-					tgtname.length, tgtname.data,
-					krb5_princ_realm(kcontext, me)->length,
-					krb5_princ_realm(kcontext, me)->data,
+					krb5_realm_length(*krb5_princ_realm(kcontext, me)),
+					krb5_realm_data(*krb5_princ_realm(kcontext, me)),
+					KRB5_TGS_NAME_SIZE,
+					KRB5_TGS_NAME,
+					krb5_realm_length(*krb5_princ_realm(kcontext, me)),
+					krb5_realm_data(*krb5_princ_realm(kcontext, me)),
 					0)) != 0) {
 	    syslog(LOG_NOTICE, "%s while building server name",
 		error_message(kerror));
@@ -273,13 +275,6 @@ klogin(pw, instance, localhost, password)
 	}
 
 	my_creds.server = server;
-
-	kerror = krb5_os_localaddr(kcontext, &my_addresses);
-	if (kerror != 0) {
-	    syslog(LOG_NOTICE, "%s when getting my address",
-		error_message(kerror));
-	    return(1);
-	}
 
 	if ((kerror = krb5_timeofday(kcontext, &now)) != 0) {
 	    syslog(LOG_NOTICE, "%s while getting time of day",
@@ -292,7 +287,7 @@ klogin(pw, instance, localhost, password)
 	my_creds.times.renew_till = 0;
 
 	kerror = krb5_get_in_tkt_with_password(kcontext, options,
-					       my_addresses,
+					       NULL,
 					       NULL,
 					       NULL,
 					       password,
@@ -300,7 +295,6 @@ klogin(pw, instance, localhost, password)
 					       &my_creds, 0);
 
 	krb5_free_principal(kcontext, server);
-	krb5_free_addresses(kcontext, my_addresses);
 
 	if (chown(&tkt_location[5], pw->pw_uid, pw->pw_gid) < 0)
 		syslog(LOG_ERR, "chown tkfile (%s): %m", &tkt_location[5]);
