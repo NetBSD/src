@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.33 1999/11/19 18:22:42 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.34 1999/12/07 18:24:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1943,6 +1943,15 @@ tlp_srom_crcok(romdata)
 	crc = (crc & 0xffff) ^ 0xffff;
 	if (crc == TULIP_ROM_GETW(romdata, TULIP_ROM_CRC32_CHECKSUM))
 		return (1);
+
+	/*
+	 * Try an alternate checksum.
+	 */
+	crc = tlp_crc32(romdata, TULIP_ROM_CRC32_CHECKSUM1);
+	crc = (crc & 0xffff) ^ 0xffff;
+	if (crc == TULIP_ROM_GETW(romdata, TULIP_ROM_CRC32_CHECKSUM1))
+		return (1);
+
 	return (0);
 }
 
