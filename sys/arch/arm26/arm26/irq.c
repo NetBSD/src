@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.11 2001/01/22 23:08:26 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.12 2001/01/23 22:07:58 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.11 2001/01/22 23:08:26 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.12 2001/01/23 22:07:58 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -95,7 +95,7 @@ struct irq_handler {
 	int	irqnum;
 	int	ipl;
 	int	enabled;
-	struct	evcnt ev;
+	struct	evcnt *ev;
 };
 
 volatile static int current_spl = IPL_HIGH;
@@ -164,7 +164,7 @@ irq_handler(struct irqframe *irqf)
 				result = (h->func)(h->arg);
 			if (result == IRQ_HANDLED) {
 				stray = 0;
-				h->ev.ev_count++;
+				h->ev->ev_count++;
 				break; /* XXX handle others? */
 			}
 			if (result == IRQ_MAYBE_HANDLED)
@@ -186,7 +186,7 @@ irq_handler(struct irqframe *irqf)
 
 struct irq_handler *
 irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
-    char const *name)
+    struct evcnt *ev)
 {
 	struct irq_handler *h, *new;
 
@@ -206,9 +206,8 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 	new->ipl = ipl;
 	new->func = func;
 	new->arg = arg;
-	if (name != NULL)
-		evcnt_attach_dynamic(&new->ev, EVCNT_TYPE_INTR, NULL, name, "irq");
 	new->enabled = 1;
+	new->ev = ev;
 	if (irq_list_head.lh_first == NULL ||
 	    irq_list_head.lh_first->ipl <= ipl)
 		/* XXX This shouldn't need to be a special case */
@@ -346,8 +345,8 @@ irq_stat(void (*pr)(const char *, ...))
 
 	for (h = irq_list_head.lh_first; h != NULL; h = h->link.le_next)
 		(*pr)("%12s: ipl %2d, IRQ %2d, mask 0x%05x, count %llu\n",
-		    h->ev.ev_group ? h->ev.ev_group : "", h->ipl, h->irqnum,
-		    h->mask, h->ev.ev_count);
+		    h->ev->ev_group, h->ipl, h->irqnum,
+		    h->mask, h->ev->ev_count);
 	(*pr)("\n");
 	last = -1;
 	for (i = 0; i < NIPL; i++)
