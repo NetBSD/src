@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.27 2000/05/22 21:15:13 he Exp $
+.\" $NetBSD: main,v 1.6.2.28 2000/06/03 14:47:42 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -198,7 +198,7 @@ for the ``sparse super'' and the ``filetype'' options.
 .It
 BIND has been upgraded to version 8.2.2-P5.
 .It
-The IPF packet filtering software has been updated to version 3.3.5.
+The IPF packet filtering software has been updated to version 3.3.6.
 .It
 Tcpdump now does hex/ascii dumps of packet contents if asked to do
 so.
