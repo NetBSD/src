@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.2 2002/07/12 12:20:24 scw Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.3 2002/07/12 13:37:32 scw Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -17,10 +17,10 @@ typedef int fp_except;
 #define	FP_X_INV	0x10	/* invalid operation exception */
 
 typedef enum {
-	FP_RZ=0		/* round to zero (truncate) */
+	FP_RZ=0,	/* round to zero (truncate) */
 	FP_RN=1,	/* round to nearest representable number */
 	FP_RM=2,	/* round toward negative infinity (no h/w support) */
-	FP_RP=3,	/* round toward positive infinity (no h/w support) */
+	FP_RP=3		/* round toward positive infinity (no h/w support) */
 } fp_rnd;
 
 #endif /* !_SH5_IEEEFP_H_ */
