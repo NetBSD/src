@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.108 2003/04/27 13:15:30 ragge Exp $
+#	$NetBSD: MAKEDEV,v 1.109 2003/05/04 01:18:56 gmcgarry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -129,6 +129,7 @@
 #	bktr	Brooktree 848/849/878/879 based TV cards
 #	kttcp	kernel ttcp helper device
 #	radio*	control radio receivers
+#	wsfont*	console font control
 
 dialin=0
 dialout=524288
@@ -195,6 +196,7 @@ wscons)
 	makedev wsmux0 wsmux1 wsmux2 wsmux3
 	makedev wsmouse wskbd
 	makedev ttyEcfg
+	makedev	wsfont
 	makedev stic0
 	;;
 
@@ -794,6 +796,12 @@ radio*)
 	rm -f $radio
 	mknod $radio c $major $unit
 	chmod 666 $radio
+	;;
+
+wsfont)
+	rm -f wsfont
+	mknod wsfont c 76 0
+	chmod 600 wsfont
 	;;
 
 local)
