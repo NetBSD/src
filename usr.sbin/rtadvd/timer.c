@@ -1,5 +1,5 @@
-/*	$NetBSD: timer.c,v 1.4 2000/07/06 12:37:56 itojun Exp $	*/
-/*	$KAME: timer.c,v 1.4 2000/05/27 11:30:43 jinmei Exp $	*/
+/*	$NetBSD: timer.c,v 1.5 2002/05/21 14:22:06 itojun Exp $	*/
+/*	$KAME: timer.c,v 1.6 2002/05/15 08:53:07 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -45,7 +45,7 @@ static struct rtadvd_timer timer_head;
 
 #define MILLION 1000000
 #define TIMEVAL_EQUAL(t1,t2) ((t1)->tv_sec == (t2)->tv_sec &&\
- (t1)->tv_usec == (t2)->tv_usec) 
+ (t1)->tv_usec == (t2)->tv_usec)
 
 static struct timeval tm_max = {0x7fffffff, 0x7fffffff};
 
@@ -75,12 +75,12 @@ rtadvd_add_timer(void (*timeout) __P((void *)),
 
 	if (timeout == NULL) {
 		syslog(LOG_ERR,
-		       "<%s> timeout function unspecfied", __FUNCTION__);
+		       "<%s> timeout function unspecified", __FUNCTION__);
 		exit(1);
 	}
 	if (update == NULL) {
 		syslog(LOG_ERR,
-		       "<%s> update function unspecfied", __FUNCTION__);
+		       "<%s> update function unspecified", __FUNCTION__);
 		exit(1);
 	}
 	newtimer->expire = timeout;
@@ -152,12 +152,10 @@ rtadvd_check_timer()
 	if (TIMEVAL_EQUAL(&tm_max, &timer_head.tm)) {
 		/* no need to timeout */
 		return(NULL);
-	}
-	else if (TIMEVAL_LT(timer_head.tm, now)) {
+	} else if (TIMEVAL_LT(timer_head.tm, now)) {
 		/* this may occur when the interval is too small */
 		returnval.tv_sec = returnval.tv_usec = 0;
-	}
-	else
+	} else
 		TIMEVAL_SUB(&timer_head.tm, &now, &returnval);
 	return(&returnval);
 }
