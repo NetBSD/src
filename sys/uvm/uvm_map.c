@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.36.2.4 2000/04/30 12:40:26 he Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.36.2.5 2002/01/14 14:47:44 he Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1360,7 +1360,7 @@ uvm_map_extract(srcmap, start, len, dstmap, dstaddrp, flags)
 	 * step 1: reserve space in the target map for the extracted area
 	 */
 
-	dstaddr = *dstaddrp;
+	dstaddr = vm_map_min(dstmap);
 	if (uvm_map_reserve(dstmap, len, start, &dstaddr) == FALSE)
 		return(ENOMEM);
 	*dstaddrp = dstaddr;	/* pass address back to caller */
