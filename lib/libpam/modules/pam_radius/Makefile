@@ -1,3 +1,4 @@
+# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:46 christos Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 #
@@ -32,4 +33,4 @@ WARNS=	0
 DPADD=	${LIBRADIUS}
 LDADD=	-lradius
 
-.include <bsd.lib.mk>
+.include "${.CURDIR}/../mod.mk"

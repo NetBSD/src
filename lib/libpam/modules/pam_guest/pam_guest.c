@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_guest.c,v 1.2 2004/12/12 08:18:45 christos Exp $	*/
+
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
  * All rights reserved.
@@ -33,7 +35,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_guest/pam_guest.c,v 1.1 2003/05/31 16:52:58 des Exp $");
+#else
+__RCSID("$NetBSD: pam_guest.c,v 1.2 2004/12/12 08:18:45 christos Exp $");
+#endif
 
 #include <string.h>
 

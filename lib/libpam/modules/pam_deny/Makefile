@@ -1,3 +1,4 @@
+# $NetBSD: Makefile,v 1.2 2004/12/12 08:18:44 christos Exp $
 # Copyright 1999 Max Khon.
 # All rights reserved.
 #
@@ -28,4 +29,4 @@ LIB=	pam_deny
 SRCS=	pam_deny.c
 MAN=	pam_deny.8
 
-.include <bsd.lib.mk>
+.include "${.CURDIR}/../mod.mk"

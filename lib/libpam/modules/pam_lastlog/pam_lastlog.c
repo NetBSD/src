@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_lastlog.c,v 1.2 2004/12/12 08:18:46 christos Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -42,14 +44,18 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_lastlog/pam_lastlog.c,v 1.20 2004/01/26 19:28:37 des Exp $");
+#else
+__RCSID("$NetBSD: pam_lastlog.c,v 1.2 2004/12/12 08:18:46 christos Exp $");
+#endif
 
 #define _BSD_SOURCE
 
 #include <sys/param.h>
 
 #include <fcntl.h>
-#include <libutil.h>
+#include <util.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>

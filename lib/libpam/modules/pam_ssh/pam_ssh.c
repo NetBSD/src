@@ -1,3 +1,5 @@
+/*	$NetBSD: pam_ssh.c,v 1.2 2004/12/12 08:18:47 christos Exp $	*/
+
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
  * All rights reserved.
@@ -33,7 +35,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifndef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
+#else
+__RCSID("$NetBSD: pam_ssh.c,v 1.2 2004/12/12 08:18:47 christos Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/wait.h>
@@ -78,8 +84,8 @@ static const char *pam_ssh_keyfiles[] = {
 };
 
 static const char *pam_ssh_agent = "/usr/bin/ssh-agent";
-static char *const pam_ssh_agent_argv[] = { "ssh_agent", "-s", NULL };
-static char *const pam_ssh_agent_envp[] = { NULL };
+static const char *pam_ssh_agent_argv[] = { "ssh_agent", "-s", NULL };
+static const char *pam_ssh_agent_envp[] = { NULL };
 
 /*
  * Attempts to load a private key from the specified file in the specified
@@ -157,7 +163,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 		return (pam_err);
 
 	pass = (pam_get_item(pamh, PAM_AUTHTOK,
-	    (const void **)&passphrase) == PAM_SUCCESS);
+	    (const void **)__UNCONST(&passphrase)) == PAM_SUCCESS);
  load_keys:
 	/* get passphrase */
 	pam_err = pam_get_authtok(pamh, PAM_AUTHTOK,
@@ -270,7 +276,9 @@ pam_ssh_start_agent(pam_handle_t *pamh)
 		return (PAM_SYSTEM_ERR);
 	}
 	if (pid == 0) {
+#ifndef F_CLOSEM
 		int fd;
+#endif
 
 		/* child: drop privs, close fds and start agent */
 		setgid(getegid());
@@ -279,9 +287,14 @@ pam_ssh_start_agent(pam_handle_t *pamh)
 		open(_PATH_DEVNULL, O_RDONLY);
 		dup2(agent_pipe[1], STDOUT_FILENO);
 		dup2(agent_pipe[1], STDERR_FILENO);
+#ifdef F_CLOSEM
+		(void)fcntl(3, F_CLOSEM, 0);
+#else
 		for (fd = 3; fd < getdtablesize(); ++fd)
 			close(fd);
-		execve(pam_ssh_agent, pam_ssh_agent_argv, pam_ssh_agent_envp);
+#endif
+		execve(pam_ssh_agent, (char **)__UNCONST(pam_ssh_agent_argv),
+		    (char **)__UNCONST(pam_ssh_agent_envp));
 		_exit(127);
 	}
 
@@ -322,7 +335,7 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 
 	/* look for keys to add to it */
 	for (kfn = pam_ssh_keyfiles; *kfn != NULL; ++kfn) {
-		pam_err = pam_get_data(pamh, *kfn, (void **)&psk);
+		pam_err = pam_get_data(pamh, *kfn, (void **)__UNCONST(&psk));
 		if (pam_err == PAM_SUCCESS && psk != NULL) {
 			if (ssh_add_identity(ac, psk->key, psk->comment))
 				openpam_log(PAM_LOG_DEBUG,
