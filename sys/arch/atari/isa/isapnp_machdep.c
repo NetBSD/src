@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.1 1998/04/22 07:57:59 leo Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.2 1998/07/31 04:44:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,6 +79,11 @@
  *
  * Since this is a machine-dependent file, we make all sorts of
  * assumptions about bus.h's guts.  Beware!
+ *
+ * Note: We just use bus_space{,un}map() here, because we need to
+ * actually map the space into KVA space.  This works because we
+ * don't do space accounting (we'd need a back-door to bypass it
+ * if we did!).
  */
 
 #include <sys/param.h>
