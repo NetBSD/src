@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.68 1998/10/05 00:44:45 mark Exp $
+#	$NetBSD: files.arm32,v 1.69 1998/10/05 01:01:43 mark Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -427,8 +427,8 @@ file	arch/arm32/isa/isa_irqhandler.c		shark
 file	arch/arm32/isa/clock.c			shark
 file	arch/arm32/isa/isa_irq.S		shark
 file	arch/arm32/isa/isa_shark_machdep.c	shark
-file	arch/arm32/isa/isa_io.c			shark
-file	arch/arm32/isa/isa_io_asm.S		shark
+file	arch/arm32/isa/isa_io.c			shark | isa
+file	arch/arm32/isa/isa_io_asm.S		shark | isa
 
 # OFWGENCFG specific files
 file	arch/arm32/ofw/ofw_irq.S		ofwgencfg
@@ -483,6 +483,9 @@ file	arch/arm32/footbridge/footbridge_com_io_asm.S	fcom
 # EBSA285/CATS class board
 # DC21285 based board with cyclone firmware
 file	arch/arm32/footbridge/ebsa285_machdep.c		footbridge & ebsa285
+
+# CATS boards have an EBSA285 based core with an ISA bus
+file	arch/arm32/isa/isa_cats_machdep.c		isa & ebsa285
 
 device	sysbeep
 attach	sysbeep at pcppi with sysbeep_isa
