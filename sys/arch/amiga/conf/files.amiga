@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.92 1999/09/20 23:17:13 is Exp $
+#	$NetBSD: files.amiga,v 1.93 1999/10/15 21:50:34 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -21,6 +21,7 @@ defopt	opt_retina.h		RH_MEMCLK RH_64BIT_SPRITE RH_HARDWARECURSOR
 defopt	opt_retina.h		RETINA_SPEED_HACK
 
 defopt				BB060STUPIDROM
+defopt				P5PPC68KBOARD
 
 device  mainbus {}
 attach  mainbus at root
