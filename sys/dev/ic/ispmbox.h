@@ -1,4 +1,4 @@
-/* $NetBSD: ispmbox.h,v 1.23 2000/05/13 16:53:04 he Exp $ */
+/* $NetBSD: ispmbox.h,v 1.24 2000/07/05 22:25:53 mjacob Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -115,6 +115,7 @@
 
 /* These are for the ISP2100 FC cards */
 #define	MBOX_GET_LOOP_ID		0x20
+#define	MBOX_GET_RESOURCE_COUNT		0x42
 #define	MBOX_EXEC_COMMAND_IOCB_A64	0x54
 #define	MBOX_INIT_FIRMWARE		0x60
 #define	MBOX_GET_INIT_CONTROL_BLOCK	0x61
