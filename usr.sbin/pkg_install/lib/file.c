@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.33 1999/11/18 02:05:16 fredb Exp $	*/
+/*	$NetBSD: file.c,v 1.34 1999/12/01 05:08:10 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.33 1999/11/18 02:05:16 fredb Exp $");
+__RCSID("$NetBSD: file.c,v 1.34 1999/12/01 05:08:10 hubertf Exp $");
 #endif
 #endif
 
@@ -69,7 +69,6 @@ ftpGetURL(char *url, int *retcode)
 		dup2(p[1], 1);
 		close(p[1]);
 
-		fprintf(stderr, ">>> ftp -o - %s\n", url);
 		execl("/usr/bin/ftp", "ftp", "-V", "-o", "-", url, NULL);
 		exit(1);
 	} else {
