@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.41 2002/03/05 15:43:25 simonb Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.42 2002/03/11 16:39:40 uch Exp $	*/
 
 /*
  * Mach Operating System
@@ -350,7 +350,11 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 
 		for (i = 0; i < mips_num_tlb_entries; i++) {
 #if defined(MIPS3)
+#if defined(MIPS3_5900)
+			mips5900_TLBRead(i, &tlb);
+#else
 			mips3_TLBRead(i, &tlb);
+#endif
 #elif defined(MIPS32)
 			mips32_TLBRead(i, &tlb);
 #elif defined(MIPS64)

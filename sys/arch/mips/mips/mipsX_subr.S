@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.1 2002/03/05 15:51:00 simonb Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.2 2002/03/11 16:39:40 uch Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -242,6 +242,11 @@
 #define	MIPSX(name)	mips3_/**/name
 #endif
 
+#if defined(MIPS3_5900)
+#undef MIPSX
+#define	MIPSX(name)	mips5900_/**/name
+#endif
+	
 #if defined(MIPS32)
 #define	MIPSX(name)	mips32_/**/name
 #endif

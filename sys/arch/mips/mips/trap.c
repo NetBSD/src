@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.168 2002/03/05 15:55:41 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.169 2002/03/11 16:39:40 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.168 2002/03/05 15:55:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.169 2002/03/11 16:39:40 uch Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -1036,13 +1036,13 @@ static struct { void *addr; char *name;} names[] = {
 #endif	/* MIPS1 */
 
 /* XXX simonb: need mips32 and mips64 checks here too */
-#ifdef MIPS3		/* r4000 family (mips-III cpu) */
+#if defined(MIPS3) && !defined(MIPS3_5900) /* r4000 family (mips-III cpu) */
 	Name(mips3_KernGenException),
 	Name(mips3_UserGenException),
 	Name(mips3_SystemCall),
 	Name(mips3_KernIntr),
 	Name(mips3_UserIntr),
-#endif	/* MIPS3 */
+#endif	/* MIPS3 && !MIPS3_5900 */
 
 	Name(mips_idle),
 	Name(cpu_switch),

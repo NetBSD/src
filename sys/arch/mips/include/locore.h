@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.59 2002/03/05 15:36:51 simonb Exp $ */
+/* $NetBSD: locore.h,v 1.60 2002/03/11 16:39:39 uch Exp $ */
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -219,7 +219,7 @@ extern long *mips_locoresw[];
 #define MachTLBUpdate		mips1_TLBUpdate
 #define wbflush()		mips1_wbflush()
 #define proc_trampoline		mips1_proc_trampoline
-#elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64)
+#elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && !defined(MIPS3_5900)
 #define MachSetPID		mips3_SetPID
 #define MIPS_TBIAP()		mips3_TBIAP(mips_num_tlb_entries)
 #define MIPS_TBIS		mips3_TBIS
@@ -241,6 +241,13 @@ extern long *mips_locoresw[];
 #define MachTLBUpdate		mips64_TLBUpdate
 #define proc_trampoline		mips64_proc_trampoline
 #define wbflush()		mips64_wbflush()
+#elif !defined(MIPS1) &&  defined(MIPS3) && !defined(MIPS32) && !defined(MIPS64) && defined(MIPS3_5900)
+#define MachSetPID		mips5900_SetPID
+#define MIPS_TBIAP()		mips5900_TBIAP(mips_num_tlb_entries)
+#define MIPS_TBIS		mips5900_TBIS
+#define MachTLBUpdate		mips5900_TLBUpdate
+#define proc_trampoline		mips5900_proc_trampoline
+#define wbflush()		mips5900_wbflush()
 #else
 #define MachSetPID		(*(mips_locore_jumpvec.setTLBpid))
 #define MIPS_TBIAP()		(*(mips_locore_jumpvec.TBIAP))(mips_num_tlb_entries)
