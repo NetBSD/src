@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.5 2000/07/02 04:40:35 cgd Exp $ */
+/* $NetBSD: softintr.c,v 1.6 2000/07/30 16:39:18 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: softintr.c,v 1.5 2000/07/02 04:40:35 cgd Exp $");
+__RCSID("$NetBSD: softintr.c,v 1.6 2000/07/30 16:39:18 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -120,7 +120,7 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 	struct softintr_handler *new, *sh;
 
 	MALLOC(new, struct softintr_handler *, sizeof(*sh),
-	       M_DEVBUF, M_WAITOK);
+	       M_SOFTINTR, M_WAITOK);
 	new->sh_ipl = ipl;
 	new->sh_func = func;
 	new->sh_arg = arg;
