@@ -34,10 +34,10 @@
 .Os BSD 4.3
 .Sh NAME
 .Nm rup 
-- remote status display
+.Nd remote status display
 .Sh SYNOPSIS
 .Nm rup
-.Op host ...
+.Op Ar host ...
 .Sh DESCRIPTION
 .Nm rup
 displays a summary of the current system status of a particular
@@ -67,15 +67,11 @@ example%
 The
 .Xr rpc.rstatd 8
 daemon has not been started on the remote host.
-.El
-.Bl -tag -width indent
 .It rup: RPC: Timed out
 A communication error occurred.  Either the network is
 excessively congested, or the
 .Xr rpc.rstatd 8
 daemon has terminated on the remote host.
-.El
-.Bl -tag -width indent
 .It rup: RPC: Port mapper failure - RPC: Timed out
 The remote host is not running the portmapper (see
 .Xr portmap 8 ),
@@ -84,3 +80,11 @@ and cannot accomodate any RPC-based services.  The host may be down.
 .Sh SEE ALSO
 .Xr portmap 8 ,
 .Xr rpc.rstatd 8
+.Sh HISTORY
+The
+.Nm rwall
+command
+appeared in
+.Em Sun-OS .
+.Sh BUGS
+The sorting options are not implemented.
