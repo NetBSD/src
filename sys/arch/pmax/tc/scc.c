@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.28.6.5 1998/11/24 06:21:14 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.28.6.6 1999/02/01 04:50:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.28.6.5 1998/11/24 06:21:14 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.28.6.6 1999/02/01 04:50:38 cgd Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -231,9 +231,9 @@ struct speedtab sccspeedtab[] = {
 	{ 28800,	6,	},	/* non-POSIX */
 	{ 38400,	4,	},	/* non-POSIX */
 	{ 57600,	2,	},	/* non-POSIX */
-#ifdef SCC_HIGHSPEED
+#ifndef SCC_NO_HIGHSPEED
 	{ 76800,	1,	},	/* non-POSIX, doesn't work reliably */
-	{ 115200, 	0	},	/* non-POSIX doesn't work reliably */
+	{ 115200, 	0	},	/* non-POSIX, doesn't work reliably */
 #endif
 	{ -1,		-1,	},
 };
@@ -946,7 +946,7 @@ cold_sccparam(tp, t, sc)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = cflag;
 
-	if (ospeed == 0) {
+	if (t->c_ospeed == 0) {
 		(void) sccmctl(tp->t_dev, 0, DMSET);	/* hang up line */
 		return (0);
 	}
