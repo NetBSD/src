@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.3 1995/04/29 05:26:35 cgd Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.4 1997/07/13 20:12:12 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_prot.c,v 1.3 1995/04/29 05:26:35 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: rpc_prot.c,v 1.4 1997/07/13 20:12:12 christos Exp $");
+#endif
 #endif
 
 /*
@@ -51,6 +55,9 @@ static char *rcsid = "$NetBSD: rpc_prot.c,v 1.3 1995/04/29 05:26:35 cgd Exp $";
 #include <sys/param.h>
 
 #include <rpc/rpc.h>
+
+static void accepted __P((enum accept_stat, struct rpc_err *));
+static void rejected __P((enum reject_stat, struct rpc_err *));
 
 /* * * * * * * * * * * * * * XDR Authentication * * * * * * * * * * * */
 
@@ -108,6 +115,12 @@ xdr_accepted_reply(xdrs, ar)
 		if (! xdr_u_int32_t(xdrs, &(ar->ar_vers.low)))
 			return (FALSE);
 		return (xdr_u_int32_t(xdrs, &(ar->ar_vers.high)));
+
+	case GARBAGE_ARGS:
+	case SYSTEM_ERR:
+	case PROC_UNAVAIL:
+	case PROG_UNAVAIL:
+		break;
 	}
 	return (TRUE);  /* TRUE => open ended set of problems */
 }
@@ -230,8 +243,7 @@ rejected(rjct_stat, error)
 {
 
 	switch (rjct_stat) {
-
-	case RPC_VERSMISMATCH:
+	case RPC_MISMATCH:
 		error->re_status = RPC_VERSMISMATCH;
 		return;
 
@@ -288,6 +300,23 @@ _seterr_reply(msg, error)
 	case RPC_PROGVERSMISMATCH:
 		error->re_vers.low = msg->acpted_rply.ar_vers.low;
 		error->re_vers.high = msg->acpted_rply.ar_vers.high;
+		break;
+
+	case RPC_FAILED:
+	case RPC_SUCCESS:
+	case RPC_PROGNOTREGISTERED:
+	case RPC_PMAPFAILURE:
+	case RPC_UNKNOWNPROTO:
+	case RPC_UNKNOWNHOST:
+	case RPC_SYSTEMERROR:
+	case RPC_CANTDECODEARGS:
+	case RPC_PROCUNAVAIL:
+	case RPC_PROGUNAVAIL:
+	case RPC_TIMEDOUT:
+	case RPC_CANTRECV:
+	case RPC_CANTSEND:
+	case RPC_CANTDECODERES:
+	case RPC_CANTENCODEARGS:
 		break;
 	}
 }
