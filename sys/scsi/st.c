@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.41 1994/11/21 11:28:52 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.42 1994/11/21 11:37:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -522,7 +522,7 @@ stopen(dev, flags)
 	if (scsi_test_unit_ready(sc_link, 0)) {
 		SC_DEBUG(sc_link, SDEV_DB3, ("device not responding\n"));
 		st_unmount(st, NOEJECT);
-		error = ENXIO;
+		error = EIO;
 		goto bad;
 	}
 
