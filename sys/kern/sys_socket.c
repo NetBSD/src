@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.41 2004/11/06 02:03:20 wrstuden Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.42 2004/11/06 07:31:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.41 2004/11/06 02:03:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.42 2004/11/06 07:31:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,11 +127,11 @@ soo_ioctl(fp, cmd, data, p)
 		 * to understand the following test. We detect overflow
 		 * and return zero.
 		 */
-		if ((so->snd.sb_hiwat < so->snd.sb_cc)
-		    || (so->snd.sb_mbmax < so->snd.sb_mbcnt))
+		if ((so->so_snd.sb_hiwat < so->so_snd.sb_cc)
+		    || (so->so_snd.sb_mbmax < so->so_snd.sb_mbcnt))
 			*(int *)data = 0;
 		else
-			*(int *)data = sbspace(so->so_snd);
+			*(int *)data = sbspace(&so->so_snd);
 		return (0);
 
 	case SIOCSPGRP:
