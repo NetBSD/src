@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.6 1995/01/25 08:40:21 jtc Exp $
+.\"	$NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -100,10 +100,6 @@ these includes:
 .ft R
 Additionally, BIOCGETIF and BIOCSETIF require \fB<net/if.h>\fR.
 
-In addition to FIONREAD, the following commands
-may be applied to any open
-.I bpf
-file.
 The (third) argument to the 
 .I ioctl
 should be a pointer to the type indicated.
@@ -252,6 +248,43 @@ An incompatible filter
 may result in undefined behavior (most likely, an error returned by
 .I ioctl()
 or haphazard packet matching).
+.TP 10
+.B BIOCSRSIG BIOCGRSIG (u_int signal)
+Set or get the receive signal.  This signal will be sent to the process or process group
+specified by FIOSETOWN.  It defaults to SIGIO.
+.SH STANDARD IOCTLS
+.I bpf
+now supports several standard
+.I ioctls
+which allow the user to do async and/or non-blocking I/O to an open
+.I bpf
+file descriptor.
+.TP 10
+.B FIONREAD (int)
+Returns the number of bytes that are immediately available for reading.
+.TP 10
+.B SIOCGIFADDR (struct ifreq)
+Returns the address associated with the interface.
+.TP 10
+.B FIONBIO (int)
+Set or clear non-blocking I/O.  If arg is non-zero, then doing a
+.I read
+when no data is available will return -1 and
+.I errno
+will be set to EWOULDBLOCK.
+If arg is zero, non-blocking I/O is disabled.  Note:  setting this
+overrides the timeout set by BIOCSRTIMEOUT.
+.TP 10
+.B FIOASYNC (int)
+Enable or disable async I/O.  When enabled (arg is non-zero), the process or
+process group specified by FIOSETOWN will start receiving SIGIO's when packets
+arrive.  Note that you must do an FIOSETOWN in order for this to take affect, as
+the system will not default this for you.
+The signal may be changed via BIOCSRSIG.
+.TP 10
+.B FIOSETOWN FIOGETOWN (int)
+Set or get the process or process group (if negative) that should receive SIGIO
+when packets are available.  The signal may be changed using BIOCSRSIG (see above).
 .SH BPF HEADER
 The following structure is prepended to each packet returned by 
 .I read(2):
@@ -655,7 +688,7 @@ struct bpf_insn insns[] = {
 .fi
 .RE
 .SH SEE ALSO
-tcpdump(8)
+tcpdump(8), signal(3), ioctl(2), read(2), select(2), filio(2)
 .LP
 McCanne, S., Jacobson V.,
 .RI ` "An efficient, extensible, and portable network monitor" '
