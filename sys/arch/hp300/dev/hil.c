@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.55 2003/02/02 10:24:39 wiz Exp $	*/
+/*	$NetBSD: hil.c,v 1.56 2003/02/02 14:08:04 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.55 2003/02/02 10:24:39 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.56 2003/02/02 14:08:04 wiz Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -1415,7 +1415,7 @@ hilkbdcnattach(bus_space_tag_t bst, bus_addr_t addr)
 #endif /* End of HIL console keyboard code. */
 
 /*
- * Recoginize and clear keyboard generated NMIs.
+ * Recognize and clear keyboard generated NMIs.
  * Returns 1 if it was ours, 0 otherwise.  Note that we cannot use
  * send_hil_cmd() to issue the clear NMI command as that would actually
  * lower the priority to splvm() and it doesn't wait for the completion
