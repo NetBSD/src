@@ -1,3 +1,4 @@
+# $NetBSD: mi,v 1.136 1999/04/19 03:11:34 simonb Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as

@@ -1,3 +1,4 @@
+# $NetBSD: md.amiga,v 1.29 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/amiga
 ./usr/include/amiga/_G_config.h
 ./usr/include/amiga/ansi.h

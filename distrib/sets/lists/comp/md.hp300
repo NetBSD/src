@@ -1,3 +1,4 @@
+# $NetBSD: md.hp300,v 1.31 1999/04/19 03:11:33 simonb Exp $
 ./usr/include/hp300
 ./usr/include/hp300/_G_config.h
 ./usr/include/hp300/ansi.h

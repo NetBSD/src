@@ -1,3 +1,4 @@
+# $NetBSD: md.i386,v 1.6 1999/04/19 03:11:36 simonb Exp $
 ./usr/X11R6/include/X11/extensions/dpms.h
 ./usr/X11R6/include/X11/extensions/dpmsstr.h
 ./usr/X11R6/include/X11/extensions/xf86dga.h
