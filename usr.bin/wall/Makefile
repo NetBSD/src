@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.7 2002/08/02 01:52:13 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2002/09/18 14:00:44 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
+
+.include <bsd.own.mk>
 
 PROG=	wall
 SRCS=	wall.c utmpentry.c
@@ -8,7 +10,7 @@ BINMODE=2555
 DPADD+=${LIBUTIL}
 LDADD+=-lutil
 
-.PATH.c: ${.CURDIR}/../../usr.bin/who
-CPPFLAGS+=-I${.CURDIR}/../../usr.bin/who -DSUPPORT_UTMPX -DSUPPORT_UTMP
+.PATH.c: ${NETBSDSRCDIR}/usr.bin/who
+CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/who -DSUPPORT_UTMPX -DSUPPORT_UTMP
 
 .include <bsd.prog.mk>

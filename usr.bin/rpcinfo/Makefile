@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.6 2000/06/02 23:19:38 fvdl Exp $
+#	$NetBSD: Makefile,v 1.7 2002/09/18 14:00:40 lukem Exp $
 #	from: @(#)Makefile	5.2 (Berkeley) 5/11/90
+
+.include <bsd.own.mk>
 
 PROG=	rpcinfo
 MAN=	rpcinfo.8
 SRCS=	rpcinfo.c rpc_generic.c
 
-LIBCDIR=	${.CURDIR}/../../lib/libc
+LIBCDIR=	${NETBSDSRCDIR}/lib/libc
 LIBCRPCDIR=	${LIBCDIR}/rpc
 LIBCINCLUDE=	${LIBCDIR}/include
 
