@@ -1,4 +1,4 @@
-/* $NetBSD: ibus.c,v 1.2 1999/11/15 09:50:29 nisimura Exp $ */
+/* $NetBSD: ibus.c,v 1.3 1999/11/23 20:07:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.2 1999/11/15 09:50:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.3 1999/11/23 20:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,11 @@ __KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.2 1999/11/15 09:50:29 nisimura Exp $");
 
 #include <pmax/ibus/ibusvar.h>
 
+#include "locators.h"
+
 extern struct cfdriver ibus_cd;
+
+int	ibussubmatch __P((struct device *, struct cfdata *, void *));
 
 void
 ibusattach(parent, self, aux)
@@ -56,9 +60,27 @@ ibusattach(parent, self, aux)
         sc->sc_intr_establish = ida->ida_establish;
         sc->sc_intr_disestablish = ida->ida_disestablish;
 
-	for (i = 0; i < ida->ida_ndevs; i++) {
-		config_found(self, &ida->ida_devs[i], ibusprint);
-	}
+	for (i = 0; i < ida->ida_ndevs; i++)
+		(void) config_found_sm(self, &ida->ida_devs[i], ibusprint,
+		    ibussubmatch);
+}
+
+int
+ibussubmatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct ibus_attach_args *ia = aux;
+	paddr_t pa;
+
+	pa = MIPS_KSEG1_TO_PHYS(ia->ia_addr);
+
+	if (cf->cf_loc[IBUSCF_ADDR] != IBUSCF_ADDR_DEFAULT &&
+	    cf->cf_loc[IBUSCF_ADDR] != pa)
+		return (0);
+
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
 
 int
@@ -66,8 +88,13 @@ ibusprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
+	struct ibus_attach_args *ia = aux;
+
 	if (pnp)
-		return (QUIET);
+		printf("%s at %s", ia->ia_name, pnp);
+
+	printf(" addr 0x%x", MIPS_KSEG1_TO_PHYS(ia->ia_addr));
+
 	return (UNCONF);
 }
 

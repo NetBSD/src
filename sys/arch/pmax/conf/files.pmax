@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.71 1999/11/16 06:00:11 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.72 1999/11/23 20:07:34 thorpej Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -48,7 +48,7 @@ file	arch/pmax/pmax/memc_3min.c	dec_3min|dec_maxine
 include "dev/dec/files.dec"
 
 # 3100 and 5100 ibus under mainbus
-device ibus {}
+device ibus { [addr = -1] }
 attach ibus at mainbus with ibus_pmax
 file	arch/pmax/ibus/ibus.c		ibus
 file	arch/pmax/ibus/ibus_pmax.c	ibus & (dec_3100|dec_5100)
