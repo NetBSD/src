@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.c,v 1.4 2002/11/07 07:03:11 thorpej Exp $	*/
+/*	$NetBSD: arc4.c,v 1.5 2003/08/26 20:12:22 thorpej Exp $	*/
 
 /*
  * ARC4 implementation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.4 2002/11/07 07:03:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc4.c,v 1.5 2003/08/26 20:12:22 thorpej Exp $");
 
 #include <sys/types.h>
 
@@ -44,16 +44,13 @@ struct arc4_ctx {
 };
 
 int
-arc4_ctxlen()
+arc4_ctxlen(void)
 {
 	return sizeof(struct arc4_ctx);
 }
 
 void
-arc4_setkey(ctxp, key, keylen)
-	void *ctxp;
-	unsigned char *key;
-	unsigned int keylen;
+arc4_setkey(void *ctxp, const u_char *key, u_int keylen)
 {
 	struct arc4_ctx *ctx = ctxp;
 	unsigned int i, t, u, ki, si;
@@ -77,11 +74,7 @@ arc4_setkey(ctxp, key, keylen)
 }
 
 void
-arc4_encrypt(ctxp, dst, src, len)
-	void *ctxp;
-	unsigned char *dst;
-	unsigned char *src;
-	int len;
+arc4_encrypt(void *ctxp, u_char *dst, const u_char *src, int len)
 {
 	struct arc4_ctx *ctx = ctxp;
 	unsigned int x, y, sx, sy;
@@ -104,11 +97,8 @@ arc4_encrypt(ctxp, dst, src, len)
 }
 
 void
-arc4_decrypt(ctxp, dst, src, len)
-	void *ctxp;
-	unsigned char *dst;
-	unsigned char *src;
-	int len;
+arc4_decrypt(void *ctxp, u_char *dst, const u_char *src, int len)
 {
+
 	arc4_encrypt(ctxp, dst, src, len);
 }

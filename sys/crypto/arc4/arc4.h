@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4.h,v 1.2 2002/11/07 07:03:12 thorpej Exp $	*/
+/*	$NetBSD: arc4.h,v 1.3 2003/08/26 20:12:22 thorpej Exp $	*/
 
 /*
  * ARC4 implementation
@@ -32,9 +32,9 @@
 #ifndef _CRYPTO_ARC4_H_
 #define	_CRYPTO_ARC4_H_
 
-int arc4_ctxlen __P((void));
-void arc4_setkey __P((void *, unsigned char *, unsigned int));
-void arc4_encrypt __P((void *, unsigned char *, unsigned char *, int));
-void arc4_decrypt __P((void *, unsigned char *, unsigned char *, int));
+int arc4_ctxlen(void);
+void arc4_setkey(void *, const u_char *, unsigned int);
+void arc4_encrypt(void *, u_char *, const u_char *, int);
+void arc4_decrypt(void *, u_char *, const u_char *, int);
 
 #endif /* _CRYPTO_ARC4_H_ */
