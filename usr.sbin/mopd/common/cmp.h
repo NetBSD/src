@@ -1,3 +1,5 @@
+/*	$NetBSD: cmp.h,v 1.2 1997/03/25 03:07:04 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
  *
@@ -26,7 +28,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cmp.h,v 1.1.1.1 1997/03/16 22:23:35 cjs Exp $
+ *	$NetBSD: cmp.h,v 1.2 1997/03/25 03:07:04 thorpej Exp $
  *
  */
 

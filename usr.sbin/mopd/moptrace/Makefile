@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1997/03/24 22:02:47 christos Exp $
+#	$NetBSD: Makefile,v 1.3 1997/03/25 03:07:59 thorpej Exp $
 
 PROG=	moptrace
 SRCS=	moptrace.c print.c cmp.c get.c mopdef.c nma.c device.c version.c pf.c \
