@@ -1,10 +1,10 @@
-# $NetBSD: TCWSCONS,v 1.8 2000/03/16 08:42:40 nisimura Exp $
+# $NetBSD: TCWSCONS,v 1.9 2000/03/22 00:58:17 cgd Exp $
 #
 # TURBOchannel Alpha DEC3000
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers 32
 
@@ -93,6 +93,7 @@ options 	LKM
 # Misc. options
 #options 	EISAVERBOSE		# recognize "unknown" EISA devices
 #options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)

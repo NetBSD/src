@@ -1,4 +1,4 @@
-#	$NetBSD: RAQ,v 1.1 2000/03/19 23:07:44 soren Exp $
+#	$NetBSD: RAQ,v 1.2 2000/03/22 00:58:19 cgd Exp $
 
 include		"arch/cobalt/conf/std.cobalt"
 
@@ -26,6 +26,7 @@ options 	SOFTDEP
 options 	INET
 
 options 	PCIVERBOSE
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE
 
 options 	NFS_BOOT_DHCP

@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.1 2000/03/20 20:11:00 msaitoh Exp $
+#	$NetBSD: COMPUTEX7750,v 1.2 2000/03/22 00:58:19 cgd Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -100,6 +100,7 @@ file-system 	UMAPFS		# NULLFS + uid and gid remapping
 #options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 
 # Kernel root file system and dump configuration.

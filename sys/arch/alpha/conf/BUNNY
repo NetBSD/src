@@ -1,4 +1,4 @@
-# $NetBSD: BUNNY,v 1.24 1999/07/29 10:37:12 augustss Exp $
+# $NetBSD: BUNNY,v 1.25 2000/03/22 00:58:16 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
@@ -52,6 +52,7 @@ options 	LKM
 
 # Misc. options
 options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 # WS console uses SUN terminal emulation
