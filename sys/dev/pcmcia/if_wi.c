@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.17 2000/03/27 11:03:47 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.18 2000/05/14 17:19:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wi.c,v 1.17 2000/03/27 11:03:47 enami Exp $
+ *	$Id: if_wi.c,v 1.18 2000/05/14 17:19:18 drochner Exp $
  */
 
 /*
@@ -117,7 +117,7 @@
 
 #if !defined(lint)
 static const char rcsid[] =
-	"$Id: if_wi.c,v 1.17 2000/03/27 11:03:47 enami Exp $";
+	"$Id: if_wi.c,v 1.18 2000/05/14 17:19:18 drochner Exp $";
 #endif
 
 #ifdef foo
@@ -539,7 +539,7 @@ void wi_update_stats(sc)
 	u_int16_t		id;
 	struct ifnet		*ifp;
 	u_int32_t		*ptr;
-	int			i;
+	int			len, i;
 	u_int16_t		t;
 
 	ifp = &sc->sc_ethercom.ec_if;
@@ -548,13 +548,15 @@ void wi_update_stats(sc)
 
 	wi_read_data(sc, id, 0, (char *)&gen, 4);
 
-	if (gen.wi_type != WI_INFO_COUNTERS ||
-	    gen.wi_len > (sizeof(sc->wi_stats) / 4) + 1)
+	if (gen.wi_type != WI_INFO_COUNTERS)
 		return;
 
+	/* some card versions have a larger stats structure */
+	len = (gen.wi_len - 1 < sizeof(sc->wi_stats) / 4) ?
+		gen.wi_len - 1 : sizeof(sc->wi_stats) / 4;
 	ptr = (u_int32_t *)&sc->wi_stats;
 
-	for (i = 0; i < gen.wi_len - 1; i++) {
+	for (i = 0; i < len; i++) {
 		t = CSR_READ_2(sc, WI_DATA1);
 #ifdef WI_HERMES_STATS_WAR
 		if (t > 0xF000)
