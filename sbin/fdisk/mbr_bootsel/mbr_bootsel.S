@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr_bootsel.S,v 1.2 1999/04/17 01:38:00 fvdl Exp $	*/
+/*	$NetBSD: mbr_bootsel.S,v 1.3 1999/04/28 23:27:02 fvdl Exp $	*/
 
 
 /*-
@@ -179,6 +179,7 @@
  * or inactive. There may never be more because of space constraints.
  */
 #define BFL_SELACTIVE	0x01
+#define BFL_EXT13	0x02
 
 /*
  * Scan values for the various keys we use, as returned by the BIOS
@@ -224,11 +225,8 @@ ENTRY(start)
  * do this and pass garbage.
  */
 1:
-	cmpb $MINDRV,%dl
-	jb 2f
-	cmpb $MAXDRV,%dl
-	jbe 3f
-2:
+	testb	$0x78,%dl
+	jz 3f
 	movb $0x80,%dl
 3:
 	movb_reg_mem(DL,drvno)
@@ -288,7 +286,7 @@ bootsel:
 	subl	%edi,%edx
 	movw_mem_ax(timeout)
 	cmpl	%eax,%edx
-	jb	3b
+	jl	3b
 	movb_mem_al(defkey)
 	jmp	default
 4:
@@ -306,21 +304,21 @@ default:
  */
 	subb	$SCAN_F1,%al
 	cmpb	$9,%al
-	ja	4b
+	jg	4b
 	cmpb	$3,%al
-	jbe	5f
+	jle	5f
 /*
  * F5-F10 -> boot disk 0-5. Check if the requested disk isn't above
  * the number of disks actually in the system as stored in 0:0475 by
- * the BIOS.
+ * the BIOS. This is always sector 0, so never use int13 extensions.
  */
 	subb	$4,%al
 	cmpb_mem_reg(0x0475,AL)
-	jae	4b
+	jge	4b
 	movw_imm_reg(fakeent,SI)
 	addb	$0x80,%al
 	movb	%al,%dl
-	jmp	boot2
+	jmp16(noext)
 5:
 /*
  * Check if the requested entry is actually active in the partition and
@@ -368,6 +366,10 @@ invpart:
 boot:
 	movb_mem_reg(drvno,DL)
 boot2:
+	movb_mem_al(flags)
+	testb	$BFL_EXT13,%al
+	jz	noext
+
 	push	%esi
 	push	%edx
 	movw_imm_reg(0x55aa,BX)
@@ -469,7 +471,7 @@ newline:
 prefix:
 	.asciz	"F1: "
 err:
-	.asciz	"Err "
+	.asciz	"E"
 /*
  * Fake partition entry used to boot from other disks. First byte is
  * overloaded, it's also used as storage for the drive number. We're
