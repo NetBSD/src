@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_clock.c,v 1.6 1996/06/12 20:00:21 mark Exp $ */
+/* $NetBSD: iomd_clock.c,v 1.7 1996/08/21 19:07:19 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -56,6 +56,12 @@
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>
 #include <machine/rtc.h>
+
+#include "rtc.h"
+
+#if NRTC == 0
+#error "Need at least one RTC device for timeofday management"
+#endif
 
 #define TIMER0_COUNT 20000		/* 100Hz */
 #define TIMER_FREQUENCY 20000000	/* 2MHz clock */
