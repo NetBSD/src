@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.82.4.2 1996/12/10 06:30:03 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.82.4.3 1997/02/16 04:52:10 rat Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -905,7 +905,7 @@ comparam(tp, t)
 	 * Set the FIFO threshold based on the receive speed, if we are
 	 * changing it.
 	 */
-#if 1
+#if 0
 	if (tp->t_ispeed != t->c_ispeed) {
 #else
 	if (1) {
