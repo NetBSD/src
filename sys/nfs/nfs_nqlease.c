@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.26 1998/06/25 22:15:28 thorpej Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.27 1998/08/09 21:19:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -200,7 +200,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 		for (lp = lpp->lh_first; lp != 0; lp = lp->lc_hash.le_next)
 			if (fh.fh_fsid.val[0] == lp->lc_fsid.val[0] &&
 			    fh.fh_fsid.val[1] == lp->lc_fsid.val[1] &&
-			    !bcmp(fh.fh_fid.fid_data, lp->lc_fiddata,
+			    !memcmp(fh.fh_fid.fid_data, lp->lc_fiddata,
 				  fh.fh_fid.fid_len - sizeof (int32_t))) {
 				/* Found it */
 				lp->lc_vp = vp;
@@ -247,7 +247,7 @@ nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 				*lphp = (struct nqm *)
 					malloc(sizeof (struct nqm),
 						M_NQMHOST, M_WAITOK);
-				bzero((caddr_t)*lphp, sizeof (struct nqm));
+				memset((caddr_t)*lphp, 0, sizeof (struct nqm));
 				lph = (*lphp)->lpm_hosts;
 			}
 			nqsrv_addhost(lph, slp, nam);
@@ -292,13 +292,13 @@ doreply:
 		} while (nfsstats.srvnqnfs_leases > nqsrv_maxnumlease);
 	}
 	MALLOC(lp, struct nqlease *, sizeof (struct nqlease), M_NQLEASE, M_WAITOK);
-	bzero((caddr_t)lp, sizeof (struct nqlease));
+	memset((caddr_t)lp, 0, sizeof (struct nqlease));
 	if (flags & ND_WRITE)
 		lp->lc_flag |= (LC_WRITE | LC_WRITTEN);
 	nqsrv_addhost(&lp->lc_host, slp, nam);
 	lp->lc_vp = vp;
 	lp->lc_fsid = fh.fh_fsid;
-	bcopy(fh.fh_fid.fid_data, lp->lc_fiddata,
+	memcpy(lp->lc_fiddata, fh.fh_fid.fid_data,
 	    fh.fh_fid.fid_len - sizeof (int32_t));
 	if(!lpp)
 		panic("nfs_nqlease.c: Phoney lpp");
@@ -474,7 +474,7 @@ nqsrv_send_eviction(vp, lp, slp, nam, cred)
 			nfsm_reqhead((struct vnode *)0, NQNFSPROC_EVICTED,
 				NFSX_V3FH + NFSX_UNSIGNED);
 			fhp = &nfh.fh_generic;
-			bzero((caddr_t)fhp, sizeof(nfh));
+			memset((caddr_t)fhp, 0, sizeof(nfh));
 			fhp->fh_fsid = vp->v_mount->mnt_stat.f_fsid;
 			VFS_VPTOFH(vp, &fhp->fh_fid);
 			nfsm_srvfhtom(fhp, 1);
@@ -754,7 +754,7 @@ nqnfsrv_vacated(nfsd, slp, procp, mrq)
 	    lp = lp->lc_hash.le_next)
 		if (fhp->fh_fsid.val[0] == lp->lc_fsid.val[0] &&
 		    fhp->fh_fsid.val[1] == lp->lc_fsid.val[1] &&
-		    !bcmp(fhp->fh_fid.fid_data, lp->lc_fiddata,
+		    !memcmp(fhp->fh_fid.fid_data, lp->lc_fiddata,
 			  MAXFIDSZ)) {
 			/* Found it */
 			tlp = lp;

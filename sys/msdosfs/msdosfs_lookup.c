@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.38 1998/03/01 02:25:11 fvdl Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.39 1998/08/09 20:52:20 perry Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -333,7 +333,7 @@ msdosfs_lookup(v)
 				 * Check for a checksum or name match
 				 */
 				if (chksum != winChksum(dep->deName)
-				    && (!olddos || bcmp(dosfilename, dep->deName, 11))) {
+				    && (!olddos || memcmp(dosfilename, dep->deName, 11))) {
 					chksum = -1;
 					continue;
 				}
@@ -777,8 +777,8 @@ dosdirempty(dep)
 				 * Any names other than "." and ".." in a
 				 * directory mean it is not empty.
 				 */
-				if (bcmp(dentp->deName, ".          ", 11) &&
-				    bcmp(dentp->deName, "..         ", 11)) {
+				if (memcmp(dentp->deName, ".          ", 11) &&
+				    memcmp(dentp->deName, "..         ", 11)) {
 					brelse(bp);
 #ifdef MSDOSFS_DEBUG
 					printf("dosdirempty(): entry found %02x, %02x\n",
@@ -851,7 +851,7 @@ doscheckpath(source, target)
 
 		ep = (struct direntry *) bp->b_data + 1;
 		if ((ep->deAttributes & ATTR_DIRECTORY) == 0 ||
-		    bcmp(ep->deName, "..         ", 11) != 0) {
+		    memcmp(ep->deName, "..         ", 11) != 0) {
 			error = ENOTDIR;
 			break;
 		}
@@ -1066,7 +1066,7 @@ uniqdosname(dep, cnp, cp)
 				 */
 				if (dentp->deAttributes & ATTR_VOLUME)
 					continue;
-				if (!bcmp(dentp->deName, cp, 11)) {
+				if (!memcmp(dentp->deName, cp, 11)) {
 					error = EEXIST;
 					break;
 				}

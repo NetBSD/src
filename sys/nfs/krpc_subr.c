@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.22 1998/03/01 02:24:27 fvdl Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.23 1998/08/09 21:19:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -278,7 +278,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	 */
 	nam = m_get(M_WAIT, MT_SONAME);
 	sin = mtod(nam, struct sockaddr_in *);
-	bcopy((caddr_t)sa, (caddr_t)sin,
+	memcpy((caddr_t)sin, (caddr_t)sa,
 		  (nam->m_len = sa->sin_len));
 
 	/*
@@ -288,7 +288,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	mhead->m_next = *data;
 	call = mtod(mhead, struct rpc_call *);
 	mhead->m_len = sizeof(*call);
-	bzero((caddr_t)call, sizeof(*call));
+	memset((caddr_t)call, 0, sizeof(*call));
 	/* rpc_call part */
 	xid++;
 	call->rp_xid = txdr_unsigned(xid);
@@ -432,7 +432,7 @@ xdr_string_encode(str, len)
 	xs = mtod(m, struct xdr_string *);
 	m->m_len = mlen;
 	xs->len = txdr_unsigned(len);
-	bcopy(str, xs->data, len);
+	memcpy(xs->data, str, len);
 	return (m);
 }
 

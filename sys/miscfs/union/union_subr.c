@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.26 1998/03/01 02:21:56 fvdl Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.27 1998/08/09 20:51:11 perry Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -91,7 +91,7 @@ union_init()
 
 	for (i = 0; i < NHASH; i++)
 		LIST_INIT(&unhead[i]);
-	bzero((caddr_t) unvplock, sizeof(unvplock));
+	memset((caddr_t) unvplock, 0, sizeof(unvplock));
 }
 
 static int
@@ -449,7 +449,7 @@ loop:
 				un->un_hash = cnp->cn_hash;
 				un->un_path = malloc(cnp->cn_namelen+1,
 						M_TEMP, M_WAITOK);
-				bcopy(cnp->cn_nameptr, un->un_path,
+				memcpy(un->un_path, cnp->cn_nameptr,
 						cnp->cn_namelen);
 				un->un_path[cnp->cn_namelen] = '\0';
 				VREF(dvp);
@@ -518,7 +518,7 @@ loop:
 	if (cnp && (lowervp != NULLVP)) {
 		un->un_hash = cnp->cn_hash;
 		un->un_path = malloc(cnp->cn_namelen+1, M_TEMP, M_WAITOK);
-		bcopy(cnp->cn_nameptr, un->un_path, cnp->cn_namelen);
+		memcpy(un->un_path, cnp->cn_nameptr, cnp->cn_namelen);
 		un->un_path[cnp->cn_namelen] = '\0';
 		VREF(dvp);
 		un->un_dirvp = dvp;
@@ -739,7 +739,7 @@ union_relookup(um, dvp, vpp, cnp, cn, path, pathlen)
 	 */
 	cn->cn_namelen = pathlen;
 	cn->cn_pnbuf = malloc(cn->cn_namelen+1, M_NAMEI, M_WAITOK);
-	bcopy(path, cn->cn_pnbuf, cn->cn_namelen);
+	memcpy(cn->cn_pnbuf, path, cn->cn_namelen);
 	cn->cn_pnbuf[cn->cn_namelen] = '\0';
 
 	cn->cn_nameiop = CREATE;
@@ -904,7 +904,7 @@ union_vn_create(vpp, un, p)
 	 */
 	cn.cn_namelen = strlen(un->un_path);
 	cn.cn_pnbuf = (caddr_t) malloc(cn.cn_namelen+1, M_NAMEI, M_WAITOK);
-	bcopy(un->un_path, cn.cn_pnbuf, cn.cn_namelen+1);
+	memcpy(cn.cn_pnbuf, un->un_path, cn.cn_namelen+1);
 	cn.cn_nameiop = CREATE;
 	cn.cn_flags = (LOCKPARENT|HASBUF|SAVENAME|SAVESTART|ISLASTCN);
 	cn.cn_proc = p;

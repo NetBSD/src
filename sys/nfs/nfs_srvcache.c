@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.14 1998/07/05 04:37:44 jonathan Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.15 1998/08/09 21:19:51 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -229,7 +229,7 @@ loop:
 	if (numnfsrvcache < desirednfsrvcache) {
 		rp = (struct nfsrvcache *)malloc((u_long)sizeof *rp,
 		    M_NFSD, M_WAITOK);
-		bzero((char *)rp, sizeof *rp);
+		memset((char *)rp, 0, sizeof *rp);
 		numnfsrvcache++;
 		rp->rc_flag = RC_LOCKED;
 	} else {
