@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.43 1999/06/22 00:57:06 cgd Exp $	*/
+/*	$NetBSD: util.c,v 1.44 1999/06/22 02:43:10 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,9 +61,10 @@ struct  tarstats {
 	int nnotfound;
 	int nerror;
 	int nsuccess;
+	int nskipped;
 } tarstats;
 
-void	extract_file __P((char *path));
+int	extract_file __P((char *path));
 int	extract_dist __P((void));
 int	cleanup_dist __P((const char *path));
 int	distribution_sets_exist_p __P((const char *path));
@@ -141,33 +142,6 @@ reask_sizemult()
 
 	asked = 0;
 	ask_sizemult();
-}
-
-/*
- * Returns 1 for "y" or "Y" and "n" otherwise.  CR => default.
- */
-int
-ask_ynquestion(char *quest, char def, ...)
-{
-	char line[STRSIZE];
-	va_list ap;
-	char c;
-
-	va_start(ap, def);
-	vsnprintf(line, STRSIZE, quest, ap);
-	va_end(ap);
-
-	if (def)
-		printf("%s [%c]: ", line, def);
-	else
-		printf("%s: ", line);
-	c = getchar();
-	if (c == '\n')
-		return def == 'y';
-
-	while (getchar() != '\n') /* eat characters */;
-
-	return c == 'y' || c == 'Y';
 }
 
 void
@@ -466,20 +440,22 @@ ask_verbose_dist()
 	}
 }
 
-void
+int
 extract_file(path)
 	char *path;
 {
 	char *owd;
-	int   tarexit;
+	int   tarexit, rv;
 	
 	owd = getcwd (NULL,0);
 
 	/* check tarfile exists */
 	if (!file_exists_p(path)) {
 		tarstats.nnotfound++;
-		ask_ynquestion(msg_string(MSG_notarfile), 0, path);
-		return;
+
+		msg_display(MSG_notarfile, path);
+		process_menu(MENU_noyes);
+		return (yesno == 0);
 	}
 
 	tarstats.nfound++;	
@@ -493,15 +469,19 @@ extract_file(path)
 	/* Check tarexit for errors and give warning. */
 	if (tarexit) {
 		tarstats.nerror++;
-		ask_ynquestion(msg_string(MSG_tarerror), 0, path);
-		sleep(3);
+
+		msg_display(MSG_tarerror, path);
+		process_menu(MENU_noyes);
+		rv = (yesno == 0);
 	} else {
 		tarstats.nsuccess++;
-		sleep(1);
+		rv = 0;
 	}
 	
 	chdir(owd);
 	free(owd);
+
+	return (rv);
 }
 
 
@@ -517,15 +497,19 @@ extract_dist()
 	char distname[STRSIZE];
 	char fname[STRSIZE];
 	distinfo *list;
+	int punt;
 
 	/* reset failure/success counters */
 	memset(&tarstats, 0, sizeof(tarstats));
 
 	/*endwin();*/
-	list = dist_list;
-	while (list->name) {
+	for (punt = 0, list = dist_list; list->name != NULL; list++) {
 		if (list->getit) {
 			tarstats.nselected++;
+			if (punt) {
+				tarstats.nskipped++;
+				continue;
+			}
 			if (cleanup_dist(list->name) == 0) {
 				msg_display(MSG_cleanup_warn);
 				process_menu(MENU_ok);
@@ -534,9 +518,10 @@ extract_dist()
 			    dist_postfix);
 			(void)snprintf(fname, STRSIZE, "%s/%s", ext_dir,
 			    distname);
-			extract_file(fname);
+
+			/* if extraction failed and user aborted, punt. */
+			punt = extract_file(fname);
 		}
-		list++;
 	}
 
 	puts(CL);		/* XXX */
@@ -550,7 +535,7 @@ extract_dist()
 	} else {
 		/* We encountered  errors. Let the user know. */
 		msg_display(MSG_endtar,
-		    tarstats.nselected, tarstats.nnotfound,
+		    tarstats.nselected, tarstats.nnotfound, tarstats.nskipped,
 		    tarstats.nfound, tarstats.nsuccess, tarstats.nerror);
 		process_menu(MENU_ok);
 		return 1;

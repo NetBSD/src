@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.46 1999/06/22 02:25:27 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.47 1999/06/22 02:43:09 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -520,7 +520,8 @@ message badls
 
 message notarfile
 {Release set %s does not exist.
-}
+
+Continue extracting sets?}
 
 message endtarok
 {All selected distribution sets unpacked successfully.}
@@ -529,8 +530,9 @@ message endtar
 {There were problems unpacking distribution sets.
 Your installation is incomplete. 
 
-You selected %d distribution sets.  I couldn't find %d of those sets at all.
-Of the %d that were found, %d unpacked without errors and %d with errors.
+You selected %d distribution sets.  %d sets couldn't be found
+and %d were skipped after an error occured.  Of the %d
+that were attempted, %d unpacked without errors and %d with errors.
 
 The installation is aborted. Please recheck your distribution source
 and consider reinstalling sets from the main menu.}
@@ -663,11 +665,11 @@ message cur_distsets
 }
 
 message tarerror
-{There was an error in extracting the file %s.  That means some files
-were not extracted correctly and your system will not be complete.
-The installation is aborting.
+{There was an error in extracting the file %s.  That means
+some files were not extracted correctly and your system will not be
+complete.
 
-Press CR to continue after a short delay.}
+Continue extracting sets?}
 
 message etc_hosts
 {
