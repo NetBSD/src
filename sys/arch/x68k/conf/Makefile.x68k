@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.34 1999/03/30 04:26:01 minoura Exp $
+#	$NetBSD: Makefile.x68k,v 1.35 1999/04/01 14:11:21 minoura Exp $
 
 # Makefile for NetBSD
 #
@@ -186,7 +186,7 @@ depend: .depend
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	  ${CPPFLAGS} < ${X68k}/x68k/genassym.cf
+	  ${CPPFLAGS} < ${X68K}/x68k/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
