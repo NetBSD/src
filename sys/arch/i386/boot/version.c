@@ -1,7 +1,10 @@
-/*	$NetBSD: version.c,v 1.24 1994/10/27 04:14:43 cgd Exp $	*/
+/*	$NetBSD: version.c,v 1.25 1995/01/16 02:50:36 mycroft Exp $	*/
 
 /*
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
+ *
+ *	1.24 -> 1.25
+ *		add support for serial consoles. (mycroft)
  *
  *	1.23 -> 1.24
  *		change RCS ID format.  NOW NEED TO UPDATE STRING BELOW
@@ -40,4 +43,4 @@
  *		look in boot.c revision logs
  */
 
-char *version = "1.24";
+char *version = "1.25";
