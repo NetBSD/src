@@ -1,8 +1,9 @@
-/*	$NetBSD: map_object.c,v 1.23 2002/10/05 00:13:27 mycroft Exp $	 */
+/*	$NetBSD: map_object.c,v 1.24 2002/10/05 11:59:04 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
+ * Copyright 2002 Charles M. Hannum <root@ihack.net>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
