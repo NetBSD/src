@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.59 2004/05/07 12:05:41 yamt Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.60 2004/06/19 18:49:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.59 2004/05/07 12:05:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.60 2004/06/19 18:49:47 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -234,10 +234,9 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
 	}
 
-	if (vp != dvp)
-		simple_lock(&vp->v_interlock);
+	error = vget(vp, LK_NOWAIT);
 
-	/* Release the name cache mutex while we acquire vnode locks */
+	/* Release the name cache mutex while we get reference to the vnode */
 	simple_unlock(&namecache_slock);
 
 #ifdef DEBUG
@@ -248,24 +247,23 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	ncp = NULL;
 #endif /* DEBUG */
 
-	if (vp != dvp && __predict_false(vp->v_flag & VXLOCK)) {
+	if (error) {
+		KASSERT(error == EBUSY);
 		/*
 		 * this vnode is being cleaned out.
 		 */
-		simple_unlock(&vp->v_interlock);
 		nchstats.ncs_falsehits++; /* XXX badhits? */
 		goto fail;
 	}
 
 	if (vp == dvp) {	/* lookup on "." */
-		VREF(dvp);
 		error = 0;
 	} else if (cnp->cn_flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp, 0);
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+		error = vn_lock(vp, LK_EXCLUSIVE);
 		/*
-		 * If the above vget() succeeded and both LOCKPARENT and
+		 * If the above vn_lock() succeeded and both LOCKPARENT and
 		 * ISLASTCN is set, lock the directory vnode as well.
 		 */
 		if (!error && (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) == 0) {
@@ -276,9 +274,9 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 	} else {
-		error = vget(vp, LK_EXCLUSIVE | LK_INTERLOCK);
+		error = vn_lock(vp, LK_EXCLUSIVE);
 		/*
-		 * If the above vget() failed or either of LOCKPARENT or
+		 * If the above vn_lock() failed or either of LOCKPARENT or
 		 * ISLASTCN is set, unlock the directory vnode.
 		 */
 		if (error || (~cnp->cn_flags & (LOCKPARENT|ISLASTCN)) != 0) {
