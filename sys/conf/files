@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.73 1996/02/02 18:52:49 christos Exp $
+#	$NetBSD: files,v 1.74 1996/02/13 17:09:46 christos Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -274,6 +274,7 @@ file netns/ns_ip.c			ns
 file netns/ns_output.c			ns
 file netns/ns_pcb.c			ns
 file netns/ns_proto.c			ns
+file netns/ns_cksum.c			ns
 file netns/spp_debug.c			ns
 file netns/spp_usrreq.c			ns
 file nfs/krpc_subr.c			nfsclient
