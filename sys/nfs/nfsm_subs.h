@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.12 1997/02/22 03:11:12 fvdl Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.13 1997/02/22 23:33:05 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -103,7 +103,7 @@
 #ifdef __i386__
 #define nfsm_aligned(p) 1
 #else
-#define nfsm_aligned(p) (((int)(p) & 3) == 0)
+#define nfsm_aligned(p) (((u_long)(p) & 3) == 0)
 #endif
 
 #define	nfsm_dissect(a, c, s) \
