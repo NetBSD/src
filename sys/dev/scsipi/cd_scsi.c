@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.15 1999/09/23 11:04:34 enami Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.16 1999/09/30 22:57:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ cd_scsibus_get_mode(cd, data, page, len, flags)
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
-	    SCSI_DATA_IN));
+	    XS_CTL_DATA_IN));
 }
 
 /*
@@ -205,7 +205,7 @@ cd_scsibus_set_mode(cd, data, len, flags)
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
-	    SCSI_DATA_OUT));
+	    XS_CTL_DATA_OUT));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.129 1999/09/23 11:04:33 enami Exp $	*/
+/*	$NetBSD: cd.c,v 1.130 1999/09/30 22:57:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -344,8 +344,8 @@ cdopen(dev, flag, fmt, p)
 	} else {
 		/* Check that it is still responding and ok. */
 		error = scsipi_test_unit_ready(sc_link,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_IGNORE_NOT_READY);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
+		    XS_CTL_IGNORE_NOT_READY);
 		SC_DEBUG(sc_link, SDEV_DB1,
 		    ("cdopen: scsipi_test_unit_ready, error=%d\n", error));
 		if (error)
@@ -357,8 +357,8 @@ cdopen(dev, flag, fmt, p)
 		 * will check for SDEV_MEDIA_LOADED.
 		 */
 		error = scsipi_start(sc_link, SSS_START,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_SILENT);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
+		    XS_CTL_SILENT);
 		SC_DEBUG(sc_link, SDEV_DB1,
 		    ("cdopen: scsipi_start, error=%d\n", error));
 		if (error) {
@@ -372,7 +372,7 @@ cdopen(dev, flag, fmt, p)
 
 		/* Lock the pack in. */
 		error = scsipi_prevent(sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
 		SC_DEBUG(sc_link, SDEV_DB1,
 		    ("cdopen: scsipi_prevent, error=%d\n", error));
 		if (error)
@@ -424,7 +424,7 @@ bad2:
 bad:
 	if (cd->sc_dk.dk_openmask == 0) {
 		scsipi_prevent(sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE);
 		sc_link->flags &= ~SDEV_OPEN;
 	}
 
@@ -468,8 +468,8 @@ cdclose(dev, flag, fmt, p)
 		scsipi_wait_drain(cd->sc_link);
 
 		scsipi_prevent(cd->sc_link, PR_ALLOW,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_IGNORE_NOT_READY);
+		    XS_CTL_IGNORE_ILLEGAL_REQUEST | XS_CTL_IGNORE_MEDIA_CHANGE |
+		    XS_CTL_IGNORE_NOT_READY);
 		cd->sc_link->flags &= ~SDEV_OPEN;
 
 		scsipi_wait_drain(cd->sc_link);
@@ -594,7 +594,7 @@ cdstart(v)
 	/*
 	 * Check if the device has room for another command
 	 */
-	while (sc_link->openings > 0) {
+	while (sc_link->active < sc_link->openings) {
 		/*
 		 * there is excess capacity, but a special waits
 		 * It'll need the adapter as soon as we clear out of the
@@ -678,11 +678,13 @@ cdstart(v)
 		/*
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
+		 * XXX NOSLEEP really needed?
 		 */
 		error = scsipi_command(sc_link, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
-		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
-		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
+		    CDRETRIES, 30000, bp, XS_CTL_NOSLEEP | XS_CTL_ASYNC |
+		    ((bp->b_flags & B_READ) ?
+		     XS_CTL_DATA_IN : XS_CTL_DATA_OUT));
 		if (error) {
 			disk_unbusy(&cd->sc_dk, 0); 
 			printf("%s: not queued, error %d\n",
@@ -1054,7 +1056,7 @@ cdioctl(dev, cmd, addr, flag, p)
 		return (scsipi_start(cd->sc_link, SSS_STOP, 0));
 	case CDIOCCLOSE:
 		return (scsipi_start(cd->sc_link, SSS_START|SSS_LOEJ, 
-		    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE));
+		    XS_CTL_IGNORE_NOT_READY | XS_CTL_IGNORE_MEDIA_CHANGE));
 	case DIOCEJECT:
 		if (*(int *)addr == 0) {
 			/*
@@ -1065,7 +1067,7 @@ cdioctl(dev, cmd, addr, flag, p)
 			    cd->sc_dk.dk_bopenmask + cd->sc_dk.dk_copenmask ==
 			    cd->sc_dk.dk_openmask) {
 				error =  scsipi_prevent(cd->sc_link, PR_ALLOW,
-				    SCSI_IGNORE_NOT_READY);
+				    XS_CTL_IGNORE_NOT_READY);
 				if (error)
 					return (error);
 			} else {
@@ -1213,7 +1215,7 @@ cd_size(cd, flags)
 	if (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 30000, NULL,
-	    flags | SCSI_DATA_IN) != 0)
+	    flags | XS_CTL_DATA_IN) != 0)
 		return (0);
 
 	blksize = _4btol(rdcap.length);
@@ -1334,7 +1336,7 @@ cd_reset(cd)
 {
 
 	return (scsipi_command(cd->sc_link, 0, 0, 0, 0,
-	    CDRETRIES, 30000, NULL, SCSI_RESET));
+	    CDRETRIES, 30000, NULL, XS_CTL_RESET));
 }
 
 /*
@@ -1359,7 +1361,7 @@ cd_read_subchannel(cd, mode, format, track, data, len)
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(struct scsipi_read_subchannel), (u_char *)data, len,
-	    CDRETRIES, 30000, NULL, SCSI_DATA_IN|SCSI_SILENT));
+	    CDRETRIES, 30000, NULL, XS_CTL_DATA_IN|XS_CTL_SILENT));
 }
 
 /*
@@ -1391,7 +1393,7 @@ cd_read_toc(cd, mode, start, data, len, control)
 	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd,
 	    sizeof(struct scsipi_read_toc), (u_char *)data, len, CDRETRIES,
-	    30000, NULL, SCSI_DATA_IN));
+	    30000, NULL, XS_CTL_DATA_IN));
 }
 
 int
