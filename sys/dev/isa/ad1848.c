@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.16 1997/03/13 08:34:50 mikel Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.17 1997/03/19 19:31:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -148,8 +148,8 @@ static int ad1848_init_values[] = {
 };
 
 void	ad1848_reset __P((struct ad1848_softc *));
-int	ad1848_set_speed __P((struct ad1848_softc *, int));
-int	ad1848_set_format __P((struct ad1848_softc *, int, int)); 
+int	ad1848_set_speed __P((struct ad1848_softc *, u_long));
+int	ad1848_set_format __P((struct ad1848_softc *, u_int, u_int)); 
 void	ad1848_mute_monitor __P((void *, int));
 
 static int ad_read __P((struct ad1848_softc *, int));
@@ -495,13 +495,11 @@ ad1848_attach(sc)
     }
     ad1848_reset(sc);
 
-    /* Set default encoding (ULAW) */
-    sc->sc_irate = sc->sc_orate = 8000;
-    sc->precision = 8;
-    sc->channels = 1;
-    sc->encoding = AUDIO_ENCODING_ULAW;
-    (void) ad1848_set_in_sr(sc, sc->sc_irate);
-    (void) ad1848_set_out_sr(sc, sc->sc_orate);
+    /* Set default parameters (mono, 8KHz, ULAW) */
+    (void) ad1848_set_channels(sc, 1);
+    (void) ad1848_set_speed(sc, 8000);
+    (void) ad1848_set_format(sc, AUDIO_ENCODING_ULAW, 8);
+    (void) ad1848_commit_settings(sc);
 
     /* Set default gains */
     (void) ad1848_set_rec_gain(sc, &vol_mid);
@@ -914,9 +912,7 @@ ad1848_set_in_sr(addr, sr)
 
     DPRINTF(("ad1848_set_in_sr: %d\n", sr));
 
-    sc->sc_irate = sc->sc_orate = ad1848_set_speed(sc, sr);
-
-    return(0);
+    return (ad1848_set_speed(sc, sr));
 }
 
 u_long
@@ -925,7 +921,7 @@ ad1848_get_in_sr(addr)
 {
     register struct ad1848_softc *sc = addr;
 
-    return(sc->sc_irate);
+    return (sc->speed);
 }
 
 int
@@ -937,9 +933,7 @@ ad1848_set_out_sr(addr, sr)
 
     DPRINTF(("ad1848_set_out_sr: %d\n", sr));
 
-    sc->sc_irate = sc->sc_orate = ad1848_set_speed(sc, sr);
-
-    return(0);
+    return (ad1848_set_speed(sc, sr));
 }
 
 u_long
@@ -948,7 +942,7 @@ ad1848_get_out_sr(addr)
 {
     register struct ad1848_softc *sc = addr;
 
-    return(sc->sc_orate);
+    return (sc->speed);
 }
 
 int
@@ -983,29 +977,13 @@ ad1848_query_encoding(addr, fp)
 int
 ad1848_set_encoding(addr, enc)
     void *addr;
-    u_int enc;
+    u_int encoding;
 {
     register struct ad1848_softc *sc = addr;
 	
-    DPRINTF(("ad1848_set_encoding: %d\n", enc));
+    DPRINTF(("ad1848_set_encoding: %d\n", encoding));
 
-    if (sc->encoding != AUDIO_ENCODING_PCM8 &&
-	sc->encoding != AUDIO_ENCODING_PCM16 &&
-	sc->encoding != AUDIO_ENCODING_ALAW &&
-	sc->encoding != AUDIO_ENCODING_ULAW) {
-
-	sc->encoding = AUDIO_ENCODING_PCM8;
-	return (EINVAL);
-    }
-
-    sc->encoding = ad1848_set_format(sc, enc, sc->precision);
-
-    if (sc->encoding == -1) {
-	sc->encoding = AUDIO_ENCODING_PCM8;
-	return (EINVAL);
-    }
-
-    return (0);
+    return (ad1848_set_format(sc, encoding, sc->precision));
 }
 
 int
@@ -1014,27 +992,19 @@ ad1848_get_encoding(addr)
 {
     register struct ad1848_softc *sc = addr;
 
-    return(sc->encoding);
+    return (sc->encoding);
 }
 
 int
 ad1848_set_precision(addr, prec)
     void *addr;
-    u_int prec;
+    u_int precision;
 {
     register struct ad1848_softc *sc = addr;
 	
-    DPRINTF(("ad1848_set_precision: %d\n", prec));
+    DPRINTF(("ad1848_set_precision: %d\n", precision));
 
-    sc->encoding = ad1848_set_format(sc, sc->encoding, prec);
-    if (sc->encoding == -1) {
-	sc->encoding = AUDIO_ENCODING_PCM16;
-	sc->precision = 16;
-	return (EINVAL);
-    }
-    sc->precision = prec;
-	
-    return (0);
+    return (ad1848_set_format(sc, sc->encoding, precision));
 }
 
 int
@@ -1043,24 +1013,25 @@ ad1848_get_precision(addr)
 {
     register struct ad1848_softc *sc = addr;
 
-    return(sc->precision);
+    return (sc->precision);
 }
 
 int
 ad1848_set_channels(addr, chans)
     void *addr;
-    int chans;
+    int channels;
 {
     register struct ad1848_softc *sc = addr;
 	
-    DPRINTF(("ad1848_set_channels: %d\n", chans));
+    DPRINTF(("ad1848_set_channels: %d\n", channels));
 
-    if (chans < 1 || chans > 2)
-	return(EINVAL);
+    if (channels < 1 || channels > 2)
+	return (EINVAL);
 
-    sc->channels = chans;
+    sc->channels = channels;
+    sc->need_commit = 1;
 
-    return(0);
+    return (0);
 }
 
 int
@@ -1126,7 +1097,7 @@ ad1848_round_blocksize(addr, blk)
     sc->sc_lastcc = -1;
 
     /* Higher speeds need bigger blocks to avoid popping and silence gaps. */
-    if ((sc->sc_orate > 8000 || sc->sc_irate > 8000) && blk < NBPG/2)
+    if (sc->speed > 8000 && blk < NBPG/2)
 	    blk = NBPG/2;
     /* don't try to DMA too much at once, though. */
     if (blk > NBPG)
@@ -1203,7 +1174,12 @@ ad1848_commit_settings(addr)
     struct ad1848_softc *sc = addr;
     int timeout;
     u_char fs;
-    int s = splaudio();
+    int s;
+
+    if (!sc->need_commit)
+	return 0;
+
+    s = splaudio();
     
     ad1848_mute_monitor(sc, 1);
     
@@ -1263,6 +1239,7 @@ ad1848_commit_settings(addr)
 
     splx(s);
     
+    sc->need_commit = 0;
     return 0;
 }
 
@@ -1294,7 +1271,7 @@ ad1848_reset(sc)
 int
 ad1848_set_speed(sc, arg)
     register struct ad1848_softc *sc;
-    int arg;
+    u_long arg;
 {
     /*
      * The sampling speed is encoded in the least significant nible of I8. The
@@ -1310,21 +1287,21 @@ ad1848_set_speed(sc, arg)
     } speed_struct;
 
     static speed_struct speed_table[] =  {
-    {5510, (0 << 1) | 1},
-    {5510, (0 << 1) | 1},
-    {6620, (7 << 1) | 1},
-    {8000, (0 << 1) | 0},
-    {9600, (7 << 1) | 0},
-    {11025, (1 << 1) | 1},
-    {16000, (1 << 1) | 0},
-    {18900, (2 << 1) | 1},
-    {22050, (3 << 1) | 1},
-    {27420, (2 << 1) | 0},
-    {32000, (3 << 1) | 0},
-    {33075, (6 << 1) | 1},
-    {37800, (4 << 1) | 1},
-    {44100, (5 << 1) | 1},
-    {48000, (6 << 1) | 0}
+	{5510, (0 << 1) | 1},
+	{5510, (0 << 1) | 1},
+	{6620, (7 << 1) | 1},
+	{8000, (0 << 1) | 0},
+	{9600, (7 << 1) | 0},
+	{11025, (1 << 1) | 1},
+	{16000, (1 << 1) | 0},
+	{18900, (2 << 1) | 1},
+	{22050, (3 << 1) | 1},
+	{27420, (2 << 1) | 0},
+	{32000, (3 << 1) | 0},
+	{33075, (6 << 1) | 1},
+	{37800, (4 << 1) | 1},
+	{44100, (5 << 1) | 1},
+	{48000, (6 << 1) | 0}
     };
 
     int i, n, selected = -1;
@@ -1358,46 +1335,53 @@ ad1848_set_speed(sc, arg)
 
     sc->speed = speed_table[selected].speed;
     sc->speed_bits = speed_table[selected].bits;
+    sc->need_commit = 1;
 
-    return sc->speed;
+    return (0);
 }
 
 int
-ad1848_set_format(sc, fmt, prec)
+ad1848_set_format(sc, encoding, precision)
     register struct ad1848_softc *sc;
-    int fmt, prec;
+    u_int encoding, precision;
 {
     static u_char format2bits[] =  {
+      /* AUDIO_ENCODING_NONE */   0,
       /* AUDIO_ENCODING_ULAW */   FMT_ULAW >> 5,
       /* AUDIO_ENCODING_ALAW */   FMT_ALAW >> 5, 
       /* AUDIO_ENCODING_PCM16 */  FMT_TWOS_COMP >> 5,
-      /* AUDIO_ENCODING_PCM8 */   FMT_PCM8 >> 5
+      /* AUDIO_ENCODING_PCM8 */   FMT_PCM8 >> 5,
+      /* AUDIO_ENCODING_ADPCM */  0,
     };
 
-    DPRINTF(("ad1848_set_format: fmt=%d prec=%d\n", fmt, prec));
+    DPRINTF(("ad1848_set_format: encoding=%d precision=%d\n", encoding, precision));
     
-    /* If not linear; force prec to 8bits */
-    if (fmt != AUDIO_ENCODING_PCM16 && prec == 16)
-	prec = 8;
+    switch (encoding) {
+    case AUDIO_ENCODING_ULAW:
+    case AUDIO_ENCODING_ALAW:
+    case AUDIO_ENCODING_PCM8:
+	if (precision == 16)
+	    precision = 8;
+	break;
+    case AUDIO_ENCODING_PCM16:
+	if (precision == 8)
+	    encoding = AUDIO_ENCODING_PCM8;
+	break;
+    default:
+	return (EINVAL);
+    }
 
-    if (fmt < AUDIO_ENCODING_ULAW || fmt > AUDIO_ENCODING_PCM8)
-	goto nogood;
-
-    if (prec != 8 && prec != 16)
-	goto nogood;
+    if (precision != 8 && precision != 16)
+	return (EINVAL);
     
-    sc->format_bits = format2bits[fmt-1];
-
-    if (fmt == AUDIO_ENCODING_PCM16 && prec == 8)
-	sc->format_bits = FMT_PCM8 >> 5;	/* signed vs. unsigned samples? */
+    sc->encoding = encoding;
+    sc->precision = precision;
+    sc->format_bits = format2bits[encoding];
+    sc->need_commit = 1;
 
     DPRINTF(("ad1848_set_format: bits=%x\n", sc->format_bits));
 
-    return fmt;
-
- nogood:
-    sc->format_bits = 0;
-    return -1;
+    return (0);
 }
 
 /*

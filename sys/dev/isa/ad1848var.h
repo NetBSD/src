@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.9 1997/03/13 02:19:54 mycroft Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.10 1997/03/19 19:31:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -64,18 +64,10 @@ struct ad1848_softc {
 	int	sc_drq;			/* DMA */
 	int	sc_recdrq;		/* record/capture DMA */
 	
-	u_long	sc_irate;		/* Sample rate for input */
-	u_long	sc_orate;		/* ...and output */
-
 	/* We keep track of these */
 	struct ad1848_volume rec_gain, aux1_gain, aux2_gain, out_gain, mon_gain, line_gain, mono_gain;
 
-	u_int	encoding;		/* ulaw/linear -- keep track */
-	u_int	precision;		/* 8/16 bits */
-	
 	int	rec_port;		/* recording port */
-
-	int	channels;
 
 	/* ad1848 */
 	u_char	MCE_bit;
@@ -84,9 +76,14 @@ struct ad1848_softc {
 	char	*chip_name;
 	int	mode;
 	
-	int	speed;
+	int	channels;
+	u_long	speed;
+	u_int	encoding;		/* ulaw/linear -- keep track */
+	u_int	precision;		/* 8/16 bits */
+	
 	u_char	speed_bits;
 	u_char	format_bits;
+	u_char	need_commit;
 
 	u_long	sc_interrupts;		/* number of interrupts taken */
 	void	(*sc_intr)(void *);	/* dma completion intr handler */
