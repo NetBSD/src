@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: specfile.c,v 1.5 1993/08/02 17:56:56 mycroft Exp $";
+static char rcsid[] = "$Id: specfile.c,v 1.6 1994/02/01 02:04:19 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -326,9 +326,12 @@ int f_identifier(expr,explain)
 {
     struct opt *op;
     struct device *dp;
+    struct cputype *cp;
 
     for (op = opt; op != 0; op = op->op_next)
 	if (opteq(op->op_name, expr->name)) return 1;
+    for (cp = cputype; cp != 0; cp = cp->cpu_next)
+	if (opteq(cp->cpu_name, expr->name)) return 1;
     for (dp = dtab; dp != 0; dp = dp->d_next)
 	if (eq(dp->d_name, expr->name) &&
 	    !(dp->d_type == PSEUDO_DEVICE && dp->d_flags && dp->d_slave == 0)) return 1;
