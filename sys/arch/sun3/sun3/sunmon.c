@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.9 1998/02/26 19:30:59 gwr Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.9.24.1 2000/12/15 04:25:55 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -116,6 +116,12 @@ void sunmon_halt()
 	*romVectorPtr->vector_cmd = sunmon_vcmd;
 #ifdef	_SUN3X_
 	loadcrp(&mon_crp);
+	/*
+	 * The PROM monitor "exit_to_mon" function appears to have problems...
+	 * SunOS uses the "abort" function when you halt (bug work-around?)
+	 * so we might as well do the same.
+	 */
+	asm(" trap #14"); /* mon_exit_to_mon() provokes PROM monitor bug */
 #endif
 	mon_exit_to_mon();
 	/*NOTREACHED*/
