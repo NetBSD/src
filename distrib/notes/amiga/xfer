@@ -45,7 +45,7 @@ To prepare for installing via a tape:
 	that describes the tape drive you're using (possibly
 	something like /dev/nrst0, but we make no guarantees 8-).
 	If you can't figure it out, ask your system administrator.
-	"<files>" are the names of the "set_name.nnn" files
+	"<files>" are the names of the "set_name.xx" files
 	which you want to be placed on the tape.
 
 	Once you have done this, you can proceed to the next
