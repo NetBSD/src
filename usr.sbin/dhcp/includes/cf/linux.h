@@ -111,28 +111,27 @@ extern int h_errno;
 #define TIME time_t
 #define GET_TIME(x)	time ((x))
 
-#if defined (USE_DEFAULT_NETWORK)
-# if (LINUX_MAJOR >= 2) && (LINUX_MINOR >= 1)
-#  define USE_LPF
+#if (LINUX_MAJOR >= 2)
+# if (LINUX_MINOR >= 1)
+#  if defined (USE_DEFAULT_NETWORK)
+#   define USE_LPF
+#  endif
 #  define LINUX_SLASHPROC_DISCOVERY
 #  define PROCDEV_DEVICE "/proc/net/dev"
 #  define HAVE_ARPHRD_TUNNEL
-#  define HAVE_ARPHRD_METRICOM
-#  define HAVE_ARPHRD_IEEE802
-#  define HAVE_ARPHRD_LOOPBACK
-#  define HAVE_SO_BINDTODEVICE
-#  define HAVE_SIOCGIFHWADDR
-# else
-#  if (LINUX_MAJOR == 2)
-#   define HAVE_ARPHRD_METRICOM
-#   define HAVE_ARPHRD_IEEE802
-#   define HAVE_ARPHRD_LOOPBACK
-#   define HAVE_SO_BINDTODEVICE
-#   define HAVE_SIOCGIFHWADDR
-#  endif
-#  define USE_SOCKETS
-#  define IGNORE_HOSTUNREACH
 # endif
+# define HAVE_ARPHRD_METRICOM
+# define HAVE_ARPHRD_IEEE802
+# define HAVE_ARPHRD_LOOPBACK
+# define HAVE_SO_BINDTODEVICE
+# define HAVE_SIOCGIFHWADDR
+#endif
+
+#if !defined (USE_LPF)
+# if defined (USE_DEFAULT_NETWORK)
+#  define USE_SOCKETS
+# endif
+# define IGNORE_HOSTUNREACH
 #endif
 
 #define ALIAS_NAMES_PERMUTED
