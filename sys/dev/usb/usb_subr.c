@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.16 1998/12/12 12:06:53 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.17 1998/12/12 12:18:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -318,7 +318,7 @@ usbd_find_idesc(cd, ifaceidx, altidx)
 	char *p = (char *)cd;
 	char *end = p + UGETW(cd->wTotalLength);
 	usb_interface_descriptor_t *d;
-	int curidx, lastno, curaidx;
+	int curidx, lastno, curaidx = 0;
 
 	for (curidx = lastno = -1; p < end; ) {
 		d = (usb_interface_descriptor_t *)p;
@@ -894,60 +894,6 @@ usbd_submatch(parent, cf, aux)
 	     cf->uhubcf_interface != uaa->ifaceno))
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
-}
-
-usbd_status
-usb_insert_transfer(reqh)
-	usbd_request_handle reqh;
-{
-	usbd_pipe_handle pipe = reqh->pipe;
-	usbd_interface_handle iface = pipe->iface;
-
-	if (pipe->state == USBD_PIPE_IDLE ||
-	    (iface && iface->state == USBD_INTERFACE_IDLE))
-		return (USBD_IS_IDLE);
-	SIMPLEQ_INSERT_TAIL(&pipe->queue, reqh, next);
-	if (pipe->state != USBD_PIPE_ACTIVE ||
-	    (iface && iface->state != USBD_INTERFACE_ACTIVE))
-		return (USBD_NOT_STARTED);
-	if (pipe->running)
-		return (USBD_IN_PROGRESS);
-	pipe->running = 1;
-	return (USBD_NORMAL_COMPLETION);
-}
-
-void
-usb_start_next(pipe)
-	usbd_pipe_handle pipe;
-{
-	usbd_request_handle reqh;
-	usbd_status r;
-
-#ifdef DIAGNOSTIC
-	if (SIMPLEQ_FIRST(&pipe->queue) == 0) {
-		printf("usb_start_next: empty\n");
-		return;
-	}
-#endif
-
-	/* First remove remove old */
-	SIMPLEQ_REMOVE_HEAD(&pipe->queue, SIMPLEQ_FIRST(&pipe->queue), next);
-	if (pipe->state != USBD_PIPE_ACTIVE) {
-		pipe->running = 0;
-		return;
-	}
-	reqh = SIMPLEQ_FIRST(&pipe->queue);
-	DPRINTFN(5, ("usb_start_next: start reqh=%p\n", reqh));
-	if (!reqh)
-		pipe->running = 0;
-	else {
-		r = pipe->methods->start(reqh);
-		if (r != USBD_IN_PROGRESS) {
-			printf("usb_start_next: error=%d\n", r);
-			pipe->running = 0;
-			/* XXX do what? */
-		}
-	}
 }
 
 void
