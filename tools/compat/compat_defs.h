@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.15.2.3 2004/06/14 16:56:58 tron Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.15.2.4 2004/06/16 01:25:51 jmc Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -297,6 +297,16 @@ void *setmode(const char *);
 #undef _DIAGASSERT
 #define _DIAGASSERT(x)
 
+/* Various sources use this */
+#undef  __RCSID
+#define __RCSID(x)
+#undef  __SCCSID
+#define __SCCSID(x)
+#undef  __COPYRIGHT
+#define __COPYRIGHT(x)
+#undef  __KERNEL_RCSID
+#define __KERNEL_RCSID(x,y)
+
 /* Heimdal expects this one. */
 
 #undef RCSID
@@ -363,6 +373,9 @@ void *setmode(const char *);
 #endif
 #ifndef _PATH_TMP
 #define _PATH_TMP "/tmp/"
+#endif
+#ifndef _PATH_DEFTAPE
+#define _PATH_DEFTAPE "/dev/nrst0"
 #endif
 
 /* <stdarg.h> */
