@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.6 2003/02/24 09:55:37 jdolecek Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.7 2003/02/24 16:12:08 briggs Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.6 2003/02/24 09:55:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.7 2003/02/24 16:12:08 briggs Exp $");
 
 /*
  * Connection engine.
@@ -69,7 +69,9 @@ MALLOC_DEFINE(M_SMBCONN, "SMB conn", "SMB connection");
 
 static void smb_co_init(struct smb_connobj *cp, int level, const char *objname);
 static void smb_co_done(struct smb_connobj *cp);
+#if defined(DEBUG) || defined(DIAGNOSTIC)
 static int  smb_co_lockstatus(struct smb_connobj *cp);
+#endif
 
 static int  smb_vc_disconnect(struct smb_vc *vcp);
 static void smb_vc_free(struct smb_connobj *cp);
@@ -332,11 +334,13 @@ smb_co_put(struct smb_connobj *cp, struct smb_cred *scred)
 	smb_co_gone(cp, scred);
 }
 
+#if defined(DEBUG) || defined(DIAGNOSTIC)
 int
 smb_co_lockstatus(struct smb_connobj *cp)
 {
 	return lockstatus(&cp->co_lock);
 }
+#endif
 
 int
 smb_co_lock(struct smb_connobj *cp, int flags)
