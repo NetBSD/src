@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.59 1999/11/02 06:23:50 soren Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.60 1999/12/05 19:02:29 fredb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.59 1999/11/02 06:23:50 soren Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.60 1999/12/05 19:02:29 fredb Exp $");
 #endif
 #endif /* not lint */
 
@@ -574,12 +574,12 @@ dosum()
 	(void)printf("%9u cpu context switches\n", uvmexp.swtch);
 	(void)printf("%9u software interrupts\n", uvmexp.softs);
 	(void)printf("%9u system calls\n", uvmexp.syscalls);
-	(void)printf("%9u pagein requests\n", uvmexp.pageins / CLSIZE);
-	(void)printf("%9u pageout requests\n", uvmexp.pdpageouts / CLSIZE);
+	(void)printf("%9u pagein requests\n", uvmexp.pageins);
+	(void)printf("%9u pageout requests\n", uvmexp.pdpageouts);
 	(void)printf("%9u swap ins\n", uvmexp.swapins);
 	(void)printf("%9u swap outs\n", uvmexp.swapouts);
-	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin / CLSIZE);
-	(void)printf("%9u pages swapped out\n", uvmexp.pgswapout / CLSIZE);
+	(void)printf("%9u pages swapped in\n", uvmexp.pgswapin);
+	(void)printf("%9u pages swapped out\n", uvmexp.pgswapout);
 	(void)printf("%9u forks total\n", uvmexp.forks);
 	(void)printf("%9u forks blocked parent\n", uvmexp.forks_ppwait);
 	(void)printf("%9u forks shared address space with parent\n",
