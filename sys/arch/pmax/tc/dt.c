@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.1.2.1 2002/03/15 14:22:49 ad Exp $	*/
+/*	$NetBSD: dt.c,v 1.1.2.2 2002/03/15 16:48:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.1.2.1 2002/03/15 14:22:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.1.2.2 2002/03/15 16:48:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,6 +287,8 @@ dt_intr(void *cookie)
 		 * whenever a data overrun occurs.
 		 */
 		sc->sc_msg.src = dt_kbd_addr;
+		sc->sc_msg.code.val.P = 0;
+		sc->sc_msg.code.val.sub = 0;
 		sc->sc_msg.code.val.len = 1;
 		sc->sc_msg.body[0] = DT_KBD_EMPTY;
 #ifdef DIAGNOSTIC
@@ -405,8 +407,12 @@ dt_msg_get(struct dt_msg *msg, int intr)
 			msg->code.bits = c;
 			dt_state.ds_state = 2;
 			dt_state.ds_len = msg->code.val.len + 1;
+			if (dt_state.ds_len > sizeof(msg->body))
+				printf("dt_msg_get: msg truncated: %d\n",
+				    dt_state.ds_len);
 		} else /* if (dt_state.ds_state == 2) */ {
-			msg->body[dt_state.ds_ptr++] = c;
+			if (dt_state.ds_ptr < sizeof(msg->body))
+				msg->body[dt_state.ds_ptr++] = c;
 			if (dt_state.ds_ptr >= dt_state.ds_len)
 				break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dtkbd.c,v 1.1.2.3 2002/03/15 15:46:49 ad Exp $	*/
+/*	$NetBSD: dtkbd.c,v 1.1.2.4 2002/03/15 16:48:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.1.2.3 2002/03/15 15:46:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtkbd.c,v 1.1.2.4 2002/03/15 16:48:32 ad Exp $");
 
 #include "locators.h"
 
@@ -153,6 +153,7 @@ dtkbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_enabled = 1;
+	dt_kbd_addr = dta->dta_addr;
 
 	a.console = dtkbd_isconsole;
 	a.keymap = &dtkbd_keymapdata;
@@ -192,7 +193,8 @@ dtkbd_cngetc(void *v, u_int *type, int *data)
 	if (i >= cnt) {
 		for (;;) {
 			if (dt_msg_get(&msg, 0) == DT_GET_DONE)
-				if (msg.src == DT_ADDR_KBD)
+				if (msg.src == DT_ADDR_KBD &&
+				    !msg.code.val.P)
 					break;
 			DELAY(1000);
 		}
@@ -252,10 +254,12 @@ dtkbd_handler(void *cookie)
 
 	while ((msg = dt_msg_dequeue(dtdv)) != NULL) {
 		if (sc->sc_enabled) {
-			cnt = dtkbd_process_msg(msg, types, vals);
-			for (i = 0; i < cnt; i++)
-				wskbd_input(sc->sc_wskbddev, types[i],
-				    vals[i]);
+			if (!msg->code.val.P) {
+				cnt = dtkbd_process_msg(msg, types, vals);
+				for (i = 0; i < cnt; i++)
+					wskbd_input(sc->sc_wskbddev, types[i],
+					    vals[i]);
+			}
 		}
 
 		dt_msg_release(dt, msg);

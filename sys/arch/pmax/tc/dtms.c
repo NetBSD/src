@@ -1,4 +1,4 @@
-/*	$NetBSD: dtms.c,v 1.1.2.2 2002/03/15 15:46:49 ad Exp $	*/
+/*	$NetBSD: dtms.c,v 1.1.2.3 2002/03/15 16:48:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.1.2.2 2002/03/15 15:46:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtms.c,v 1.1.2.3 2002/03/15 16:48:32 ad Exp $");
 
 #include "locators.h"
 
@@ -184,7 +184,7 @@ dtms_handler(void *cookie)
 	dt = (struct dt_softc *)sc->sc_dv.dv_parent;
 
 	while ((msg = dt_msg_dequeue(dtdv)) != NULL) {
-		if (sc->sc_enabled) {
+		if (sc->sc_enabled && !msg->code.val.P) {
 			tmp = GET_SHORT(msg->body[0], msg->body[1]);
 			buttons = ((tmp >> 1) & 0x3) | ((tmp << 2) & 0x4);
 
