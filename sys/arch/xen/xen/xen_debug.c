@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_debug.c,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: xen_debug.c,v 1.2 2004/05/07 13:56:48 cl Exp $	*/
 
 /*
  *
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_debug.c,v 1.1 2004/03/11 21:44:08 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_debug.c,v 1.2 2004/05/07 13:56:48 cl Exp $");
 
 #define XENDEBUG
 
@@ -80,6 +80,17 @@ printk(const char *fmt, ...)
 	va_start(ap, fmt);
 	ret = vsnprintf(buf, PRINTK_BUFSIZE - 1, fmt, ap);
 	va_end(ap);
+	buf[ret] = 0;
+	(void)HYPERVISOR_console_write(buf, ret);
+}
+
+void
+vprintk(const char *fmt, va_list ap)
+{
+	int ret;
+	static char buf[PRINTK_BUFSIZE];
+
+	ret = vsnprintf(buf, PRINTK_BUFSIZE - 1, fmt, ap);
 	buf[ret] = 0;
 	(void)HYPERVISOR_console_write(buf, ret);
 }
@@ -198,7 +209,7 @@ xen_dbg4(void *esi)
 
 
 
-void do_exit(void);
+static void do_exit(void);
 
 /*
  * These are assembler stubs in vector.S.
@@ -224,7 +235,7 @@ void alignment_check(void);
 void spurious_interrupt_bug(void);
 void machine_check(void);
 
-void
+static void
 dump_regs(struct pt_regs *regs)
 {
 	int in_kernel = 1;
@@ -388,12 +399,11 @@ do_spurious_interrupt_bug(struct pt_regs *regs, long error_code)
 {
 }
 
-void
+static void
 do_exit(void)
 {
 
-	printk("xen_exit_handler called!\n");
-	for (;;);
+	HYPERVISOR_exit();
 }
 
 /*

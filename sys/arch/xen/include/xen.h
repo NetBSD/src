@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.5 2004/04/26 23:54:42 cl Exp $	*/
+/*	$NetBSD: xen.h,v 1.6 2004/05/07 13:56:48 cl Exp $	*/
 
 /*
  *
@@ -56,6 +56,7 @@ typedef uint64_t u64;
 
 #ifdef XENDEBUG
 void printk(const char *, ...);
+void vprintk(const char *, va_list);
 #endif
 
 #endif
@@ -109,7 +110,6 @@ void printk(const char *, ...);
 
 /* some function prototypes */
 void trap_init(void);
-void dump_regs(struct trapframe *regs);
 
 
 /*
