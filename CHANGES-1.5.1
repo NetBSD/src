@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.46 2001/04/06 02:13:15 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.47 2001/04/06 09:59:01 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -3640,3 +3640,27 @@ distrib/notes/common/main			patch
 sys/conf/osrelease.sh				patch
 
   Bump version information to 1.5.1_BETA.
+
+distrib/utils/x_dhclient/Makefile		1.7
+distrib/utils/x_dhclient/Src-common		1.5
+distrib/utils/x_dhclient/Src-dst		1.1 (new)
+distrib/utils/x_dhclient/Src-minires		delete
+distrib/utils/x_dhclient/Src-omapip		1.4
+
+  Make this work with the new dhcp code -- but the binary is Bigger.
+  Might require some trimming in the dhcp code itself.
+
+crypto/dist/heimdal/kdc/kerberos5.c		1.2 via patch
+
+  Prevent a NULL-pointer deref when making a TGS_REP for a ticket
+  renewal.  Fixes a kdc core dump which happens frequently if you
+  have Windows 2000 clients in the realm.
+
+libexec/ld.aout_so/malloc.c			1.7
+libexec/ld.aout_so/rtld.c			1.78-1.80
+
+  Several changes to consolidate with main trunk:
+   o Deal correctly with common symbols in shared libraries.
+     Fixes PR#10940.
+   o Deal correctly with an empty hints file.
+   o A few minor fixes.
