@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 1997/03/24 22:03:00 christos Exp $
+#	$NetBSD: Makefile,v 1.29 1997/05/07 16:03:16 mycroft Exp $
 #
 #  NetBSD Makefile
 #
@@ -37,7 +37,7 @@ BINMODE=6555
 FILES=sendmail.hf
 FILESDIR=/usr/share/misc
 
-proginstall::
+afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 	    ${DESTDIR}/var/log/sendmail.st
 

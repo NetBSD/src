@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1997/04/19 07:20:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 1997/05/07 16:03:15 mycroft Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	hack
@@ -32,7 +32,7 @@ makedefs: makedefs.c
 	${HOST_CC} ${HOST_CFLAGS} ${HOST_LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${.CURDIR}/${.PREFIX}.c
 
 .if !exists(${DESTDIR}${FILESDIR}/perm)
-proginstall:: clobber
+afterinstall: clobber
 .endif
 
 clobber: 
