@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.21 1999/07/08 01:06:07 wrstuden Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.22 1999/07/30 01:55:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -184,8 +184,8 @@ ufs_lookup(v)
 			cnp->cn_flags |= PDIRUNLOCK;
 			error = vget(vdp, LK_EXCLUSIVE);
 			if (!error && lockparent && (flags & ISLASTCN)) {
-				error = vn_lock(pdp, LK_EXCLUSIVE);
-				if (error == 0)
+				if ((error = vn_lock(pdp, LK_EXCLUSIVE)) != 0)
+					return (error);
 				cnp->cn_flags &= ~PDIRUNLOCK;
 			}
 		} else {
