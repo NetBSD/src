@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.8 1997/04/04 20:56:40 mycroft Exp $	*/
+/*	$NetBSD: comvar.h,v 1.9 1997/05/24 03:45:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -109,8 +109,4 @@ void cominit 		__P((bus_space_tag_t, bus_space_handle_t, int));
 #define	IPL_SOFTSERIAL	IPL_TTY
 #define	splsoftserial()	spltty()
 #endif
-#endif
-
-#ifndef __BROKEN_INDIRECT_CONFIG
-#define	__CGD_INDIRECT_CONFIG
 #endif
