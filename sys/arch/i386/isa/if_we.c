@@ -59,7 +59,10 @@
  * BPF trailer support added by David Greenman, 1/7/93
  *
  * $Log: if_we.c,v $
- * Revision 1.6  1993/04/29 09:33:21  mycroft
+ * Revision 1.7  1993/04/30 23:48:35  mycroft
+ * Move bpfattach() call into weattach().
+ *
+ * Revision 1.6  1993/04/29  09:33:21  mycroft
  * Fix total bogosity in the receiver code.
  *
  * Revision 1.5  1993/04/10  15:58:56  glass
@@ -156,9 +159,6 @@ struct	we_softc {
 	u_char	we_flags;		/* software state		*/
 #define	WDF_RUNNING	0x01
 #define WDF_TXBUSY	0x02
-#if NBPFILTER > 0
-#define	WDF_ATTACHED	0x80
-#endif
 
 	u_char	we_type;		/* interface type code		*/
 	u_short	we_vector;		/* interrupt vector 		*/
@@ -170,6 +170,10 @@ struct	we_softc {
 	caddr_t	we_vmem_ring;		/* receive ring RAM vaddress	*/
 	caddr_t	we_vmem_end;		/* receive ring RAM end	*/
 	caddr_t	we_bpf;			/* Magic Cookie for BPF */
+
+#ifdef WEDEBUG
+	int fae, crc, mpa;
+#endif
 } we_softc[NWE];
 
 int	weprobe(), weattach(), weintr(), westart();
@@ -344,8 +348,8 @@ weattach(is)
 		bcopy(sc->we_addr, LLADDR(sdl), ETHER_ADDR_LEN);
 		}
 
-#if NBPFILTER > 0
-	sc->we_flags &= ~WDF_ATTACHED;	/* Make sure BPF attach flag clear */
+#ifdef WEDEBUG
+	sc->fae = sc->crc = sc->mpa = 0;
 #endif
  
 	/*
@@ -354,6 +358,9 @@ weattach(is)
 	printf("we%d: %saddr %s\n", is->id_unit,
 		(sc->we_type & WD_ETHERNET) ? "enet" : "slan",
 		ether_sprintf(sc->we_addr));
+
+	bpfattach(&sc->we_bpf, ifp, DLT_EN10MB,
+		  sizeof(struct ether_header));
 }
  
 /*
@@ -409,14 +416,6 @@ weinit(unit)
 	register struct ifnet *ifp = &sc->we_if;
 	union we_command wecmd;
 	int i, s;
-
-#if NBPFILTER > 0
-	if ((sc->we_flags & WDF_ATTACHED) == 0) {
-		bpfattach(&sc->we_bpf, ifp, DLT_EN10MB,
-			sizeof(struct ether_header));
-		sc->we_flags |= WDF_ATTACHED;
-	}
-#endif
 
 	/* address not known */
 	if (ifp->if_addrlist == (struct ifaddr *)0)
@@ -634,11 +633,19 @@ loop:
 
 	/* receiver error */
 	if (weisr.is_rxe) {
+		++sc->we_if.if_ierrors;
 		/* need to read these registers to clear status */
+#ifndef WEDEBUG
 		(void) inb(sc->we_io_nic_addr + 0xD);
 		(void) inb(sc->we_io_nic_addr + 0xE);
 		(void) inb(sc->we_io_nic_addr + 0xF);
-		++sc->we_if.if_ierrors;
+#else
+		sc->fae += inb(sc->we_io_nic_addr + 0xD);
+		sc->crc += inb(sc->we_io_nic_addr + 0xE);
+		sc->mpa += inb(sc->we_io_nic_addr + 0xF);
+		printf ("we%d: ierr %d fae %d crc %d mpa\n",
+			unit, sc->fae, sc->crc, sc->mpa);
+#endif
 	}
 
 	/* normal transmit complete */
