@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 1994/11/20 20:54:19 deraadt Exp $ */
+/*	$NetBSD: intr.c,v 1.7 1994/12/16 21:52:36 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,6 @@
 #include <machine/instr.h>
 #include <machine/trap.h>
 
-#include <sparc/sparc/clockreg.h>
 
 /*
  * Stray interrupt handler.  Clear it if possible.
