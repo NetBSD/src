@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.9 2000/08/05 19:09:37 leo Exp $	*/
+/*	$NetBSD: edlabel.c,v 1.10 2001/12/07 23:12:33 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -257,17 +257,17 @@ get_val_cts(d, buf, result)
 }
 
 void
-get_fstype(tmpbuf, fstype)
-	char	 *tmpbuf;
+get_fstype(buf, fstype)
+	char	 *buf;
 	u_int8_t *fstype;
 {
 	int	i, len;
 
 	/* An empty response retains previous value */
-	if (tmpbuf[0] == '\n')
+	if (buf[0] == '\n')
 		return;
-	for (i = 0, len = strlen(tmpbuf) - 1; i < FSMAXTYPES; i++) {
-		if (!strncasecmp(tmpbuf, fstypenames[i], len)) {
+	for (i = 0, len = strlen(buf) - 1; i < FSMAXTYPES; i++) {
+		if (!strncasecmp(buf, fstypenames[i], len)) {
 			*fstype = i;
 			return;
 		}
