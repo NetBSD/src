@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.c,v 1.2 2002/03/03 14:31:28 uch Exp $	*/
+/*	$NetBSD: mmu_sh4.c,v 1.3 2002/03/17 14:04:18 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,9 +67,14 @@ sh4_mmu_start()
 	/* Set current ASID to 0 */
 	sh_tlb_set_asid(0);
 
-	/* Single virtual memory mode. User can't access store queue */
+	/* 
+	 * Single virtual memory mode. 
+	 * User can't access store queue 
+	 * make wired entry for u-area.
+	 */
 	_reg_write_4(SH4_MMUCR, SH4_MMUCR_AT | SH4_MMUCR_TI | SH4_MMUCR_SV |
-	    SH4_MMUCR_SQMD);
+	    SH4_MMUCR_SQMD | 
+	    (SH4_UTLB_ENTRY - UPAGES) << SH4_MMUCR_URB_SHIFT);
 
 	SH4_MMU_HAZARD;
 }
