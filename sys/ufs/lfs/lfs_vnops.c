@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.13 1996/09/07 12:41:40 mycroft Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.14 1997/06/11 10:10:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -435,20 +435,20 @@ lfs_getattr(v)
 	 */
 	vap->va_fsid = ip->i_dev;
 	vap->va_fileid = ip->i_number;
-	vap->va_mode = ip->i_mode & ~IFMT;
-	vap->va_nlink = ip->i_nlink;
-	vap->va_uid = ip->i_uid;
-	vap->va_gid = ip->i_gid;
-	vap->va_rdev = (dev_t)ip->i_rdev;
-	vap->va_size = ip->i_din.di_size;
-	vap->va_atime.tv_sec = ip->i_atime;
-	vap->va_atime.tv_nsec = ip->i_atimensec;
-	vap->va_mtime.tv_sec = ip->i_mtime;
-	vap->va_mtime.tv_nsec = ip->i_mtimensec;
-	vap->va_ctime.tv_sec = ip->i_ctime;
-	vap->va_ctime.tv_nsec = ip->i_ctimensec;
-	vap->va_flags = ip->i_flags;
-	vap->va_gen = ip->i_gen;
+	vap->va_mode = ip->i_ffs_mode & ~IFMT;
+	vap->va_nlink = ip->i_ffs_nlink;
+	vap->va_uid = ip->i_ffs_uid;
+	vap->va_gid = ip->i_ffs_gid;
+	vap->va_rdev = (dev_t)ip->i_ffs_rdev;
+	vap->va_size = ip->i_ffs_size;
+	vap->va_atime.tv_sec = ip->i_ffs_atime;
+	vap->va_atime.tv_nsec = ip->i_ffs_atimensec;
+	vap->va_mtime.tv_sec = ip->i_ffs_mtime;
+	vap->va_mtime.tv_nsec = ip->i_ffs_mtimensec;
+	vap->va_ctime.tv_sec = ip->i_ffs_ctime;
+	vap->va_ctime.tv_nsec = ip->i_ffs_ctimensec;
+	vap->va_flags = ip->i_ffs_flags;
+	vap->va_gen = ip->i_ffs_gen;
 	/* this doesn't belong here */
 	if (vp->v_type == VBLK)
 		vap->va_blocksize = BLKDEV_IOSIZE;
@@ -456,7 +456,7 @@ lfs_getattr(v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = dbtob(ip->i_blocks);
+	vap->va_bytes = dbtob(ip->i_ffs_blocks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);
@@ -487,7 +487,7 @@ lfs_close(v)
 	if (vp->v_usecount > 1 && !(ip->i_flag & IN_LOCKED)) {
 		mod = ip->i_flag & IN_MODIFIED;
 		TIMEVAL_TO_TIMESPEC(&time, &ts);
-		ITIMES(ip, &ts, &ts, &ts);
+		FFS_ITIMES(ip, &ts, &ts, &ts);
 		if (!mod && ip->i_flag & IN_MODIFIED)
 			ip->i_lfs->lfs_uinodes++;
 	}

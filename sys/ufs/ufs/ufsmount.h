@@ -1,4 +1,4 @@
-/*	$NetBSD: ufsmount.h,v 1.4 1994/12/21 20:00:23 mycroft Exp $	*/
+/*	$NetBSD: ufsmount.h,v 1.5 1997/06/11 10:10:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -51,11 +51,14 @@ struct ufsmount {
 	struct	vnode *um_devvp;		/* block device mounted vnode */
 
 	union {					/* pointer to superblock */
-		struct	lfs *lfs;		/* LFS */
 		struct	fs *fs;			/* FFS */
+		struct	lfs *lfs;		/* LFS */
+		struct  m_ext2fs *e2fs; /* EXT2FS */
 	} ufsmount_u;
 #define	um_fs	ufsmount_u.fs
 #define	um_lfs	ufsmount_u.lfs
+#define um_e2fs	ufsmount_u.e2fs
+#define um_e2fsb ufsmount_u.e2fs->s_es
 
 	struct	vnode *um_quotas[MAXQUOTAS];	/* pointer to quota files */
 	struct	ucred *um_cred[MAXQUOTAS];	/* quota file access cred */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.12 1996/12/22 10:10:43 cgd Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.13 1997/06/11 10:10:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -529,7 +529,7 @@ lfs_vget(mp, ino, vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	ip->i_din = *lfs_ifind(fs, ino, (struct dinode *)bp->b_data);
+	ip->i_din.ffs_din = *lfs_ifind(fs, ino, (struct dinode *)bp->b_data);
 	brelse(bp);
 
 	/*
@@ -599,6 +599,6 @@ lfs_vptofh(vp, fhp)
 	ufhp = (struct ufid *)fhp;
 	ufhp->ufid_len = sizeof(struct ufid);
 	ufhp->ufid_ino = ip->i_number;
-	ufhp->ufid_gen = ip->i_gen;
+	ufhp->ufid_gen = ip->i_ffs_gen;
 	return (0);
 }

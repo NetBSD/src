@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.7 1997/03/10 06:18:30 mycroft Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.8 1997/06/11 10:09:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -97,10 +97,10 @@ lfs_valloc(v)
 	if (fs->lfs_free == LFS_UNUSED_INUM) {
 		vp = fs->lfs_ivnode;
 		ip = VTOI(vp);
-		blkno = lblkno(fs, ip->i_size);
+		blkno = lblkno(fs, ip->i_ffs_size);
 		lfs_balloc(vp, fs->lfs_bsize, blkno, &bp);
-		ip->i_size += fs->lfs_bsize;
-		vnode_pager_setsize(vp, (u_long)ip->i_size);
+		ip->i_ffs_size += fs->lfs_bsize;
+		vnode_pager_setsize(vp, (u_long)ip->i_ffs_size);
 		vnode_pager_uncache(vp);
 
 		i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
@@ -125,11 +125,11 @@ lfs_valloc(v)
 
 	ip = VTOI(vp);
 	/* Zero out the direct and indirect block addresses. */
-	bzero(&ip->i_din, sizeof(struct dinode));
-	ip->i_din.di_inumber = new_ino;
+	bzero(&ip->i_din.ffs_din, sizeof(struct dinode));
+	ip->i_din.ffs_din.di_inumber = new_ino;
 
 	/* Set a new generation number for this inode. */
-	ip->i_gen++;
+	ip->i_ffs_gen++;
 
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
@@ -182,9 +182,9 @@ lfs_vcreate(mp, ino, vpp)
 	ip->i_devvp = ump->um_devvp;
 	ip->i_flag = IN_MODIFIED;
 	ip->i_dev = ump->um_dev;
-	ip->i_number = ip->i_din.di_inumber = ino;
-ip->i_din.di_spare[0] = 0xdeadbeef;
-ip->i_din.di_spare[1] = 0xdeadbeef;
+	ip->i_number = ip->i_din.ffs_din.di_inumber = ino;
+	ip->i_din.ffs_din.di_spare[0] = 0xdeadbeef;
+	ip->i_din.ffs_din.di_spare[1] = 0xdeadbeef;
 	ip->i_lfs = ump->um_lfs;
 #ifdef QUOTA
 	for (i = 0; i < MAXQUOTAS; i++)
@@ -192,9 +192,9 @@ ip->i_din.di_spare[1] = 0xdeadbeef;
 #endif
 	ip->i_lockf = 0;
 	ip->i_diroff = 0;
-	ip->i_mode = 0;
-	ip->i_size = 0;
-	ip->i_blocks = 0;
+	ip->i_ffs_mode = 0;
+	ip->i_ffs_size = 0;
+	ip->i_ffs_blocks = 0;
 	++ump->um_lfs->lfs_uinodes;
 	return (0);
 }
