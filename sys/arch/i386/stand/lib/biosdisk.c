@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.7.2.1 1998/11/23 07:57:28 cgd Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.7.2.2 1998/12/01 04:05:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -214,7 +214,7 @@ biosdiskopen(struct open_file *f, ...)
 		dptr = (struct dos_partition *) & d->buf[DOSPARTOFF];
 		for (i = 0; i < NDOSPART; i++, dptr++)
 			if (dptr->dp_typ == DOSPTYP_386BSD) {
-				printf("WARNING: disk appears to be old-NetbSD or FreeBSD. See installboot(8).\n");
+				printf("WARNING: Disk appears to be old-NetBSD or FreeBSD.  See installboot(8).\n");
 				sector = dptr->dp_start;
 				break;
 			}
