@@ -29,12 +29,15 @@
 /*
  * HISTORY
  * $Log: asm.S,v $
- * Revision 1.2  1993/07/11 12:02:19  andrew
- * Fixes from bde, including support for loading @ any MB boundary (e.g. a
- * kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
- * buffering to speed booting from floppies.  Also works with aha174x
- * controllers in enhanced mode.
+ * Revision 1.3  1993/08/28 01:18:52  brezak
+ * Changes: Boot omagic kernels (like Mach), pass cnvmem, extmem, and esym args, load symbol table into memory, enable kbd clock.
  *
+Revision 1.2  1993/07/11  12:02:19  andrew
+Fixes from bde, including support for loading @ any MB boundary (e.g. a
+kernel linked for 0xfe100000 will load at the 1MB mark) and read-ahead
+buffering to speed booting from floppies.  Also works with aha174x
+controllers in enhanced mode.
+
  *
  * 93/06/28  bde
  *	Switch IDT for debugger.
@@ -203,6 +206,9 @@ ENTRY(startprog)
 	movl	%ebx, %esp
 	
 	# push some number of args onto the stack
+	pushl	28(%eax)		# argv[7] = cnvmem
+	pushl	32(%eax)		# argv[8] = extmem
+	pushl	16(%eax)		# argv[4] = esym
 	pushl	$0			# nominally a cyl offset in the boot.
 	pushl	0x8(%eax)		# argv[2] = bootdev
 	pushl	0x4(%eax)		# argv[1] = howto

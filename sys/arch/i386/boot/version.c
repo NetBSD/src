@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: version.c,v 1.9 1993/08/02 17:52:14 mycroft Exp $
+ *	$Id: version.c,v 1.10 1993/08/28 01:18:43 brezak Exp $
  */
 
 /*
@@ -57,12 +57,17 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/reboot.h>
 
 struct exec head;
-int argv[10], esym;
+int argv[9];
 char *name;
 char *names[] = {
+#ifdef MACH
+	"/mach", "/mach.old",
+#endif
+#ifdef __NetBSD__
 	"/netbsd", "/onetbsd", "/netbsd.old",
+#else
 	"/386bsd", "/o386bsd", "/386bsd.old",
-	"/vmunix", "/ovmunix", "/vmunix.old"
+#endif
 };
 #define NUMNAMES	(sizeof(names)/sizeof(char *))
 
@@ -73,12 +78,11 @@ int drive;
 	int loadflags, currname = 0;
 	char *t;
 		
-	printf("\n>> NetBSD BOOT @ 0x%x: %d/%d k of memory  [%s]\n",
+	printf("\n>> NetBSD BOOT @ 0x%x: %d/%d k [%s]\n",
 		ouraddr,
 		argv[7] = memsize(0),
 		argv[8] = memsize(1),
-		"$Revision: 1.9 $");
-	printf("use options hd(1,...... to boot sd0 when wd0 is also installed\n");
+		"$Revision: 1.10 $");
 	gateA20();
 loadstart:
 	/***************************************************************\
@@ -87,6 +91,7 @@ loadstart:
 	\***************************************************************/
 	part = unit = 0;
 	maj = (drive&0x80 ? 0 : 2);		/* a good first bet */
+
 	name = names[currname++];
 
 	loadflags = 0;
@@ -97,9 +102,10 @@ loadstart:
 		printf("Can't find %s\n", name);
 		goto loadstart;
 	}
-/*	if (inode.i_mode&IEXEC)
+#if 0
+	if (inode.i_mode&IEXEC)
 		loadflags |= RB_KDB;
-*/
+#endif
 	loadprog(loadflags);
 	goto loadstart;
 }
@@ -110,7 +116,7 @@ loadprog(howto)
 	long int startaddr;
 	long int addr;	/* physical address.. not directly useable */
 	long int addr0;
-	int i;
+	int i, omagic;
 	static int (*x_entry)() = 0;
 	unsigned char	tmpbuf[4096]; /* we need to load the first 4k here */
 
@@ -122,9 +128,10 @@ loadprog(howto)
 		return;
 	}
 
-	poff = N_TXTOFF(head);
-	/*if(poff==0)
-		poff = 32;*/
+	omagic = N_GETMAGIC(head) == OMAGIC;
+	if(omagic) poff = sizeof(struct exec);
+	else
+                poff = N_TXTOFF(head);
 
 	startaddr = (int)head.a_entry;
 	addr = (startaddr & 0x00f00000); /* some MEG boundary */
@@ -170,8 +177,9 @@ loadprog(howto)
 	/********************************************************/
 	/* Load the Initialised data after the text		*/
 	/********************************************************/
-	while (addr & CLOFSET)
-                *(char *)addr++ = 0;
+	if(!omagic)
+	  while (addr & CLOFSET)
+	    *(char *)addr++ = 0;
 
 	printf("data=0x%x ", head.a_data);
 	xread(addr, head.a_data);
@@ -190,9 +198,8 @@ loadprog(howto)
 	{
 		pbzero(addr,head.a_bss);
 	}
-	argv[3] = (addr += head.a_bss);
 
-#ifdef LOADSYMS /* not yet, haven't worked this out yet */
+	argv[3] = (addr += head.a_bss);
 	if (addr > 0x100000)
 	{
 		/********************************************************/
@@ -204,7 +211,7 @@ loadprog(howto)
 		/********************************************************/
 		/* READ in the symbol table				*/
 		/********************************************************/
-		printf("symbols=[+0x%x", head.a_syms);
+		printf("symbols=[0x%x", head.a_syms);
 		xread(addr, head.a_syms);
 		addr += head.a_syms;
 	
@@ -214,36 +221,40 @@ loadprog(howto)
 		/********************************************************/
 		read(&i, sizeof(int));
 		pcpy(&i, addr, sizeof(int));
-		i -= sizeof(int);
-		addr += sizeof(int);
-	
-	
+                if (i) {
+                        i -= sizeof(int);
+                        addr += sizeof(int);
+                        xread(addr, i);
+                        addr += i;
+                }
+                
 		/********************************************************/
 		/* and that many bytes of (debug symbols?)		*/
 		/********************************************************/
 		printf("+0x%x] ", i);
-		xread(addr, i);
-		addr += i;
+                argv[4] = ((addr+sizeof(int)-1))&~(sizeof(int)-1);
 	}
-#endif	LOADSYMS
+
 	/********************************************************/
 	/* and note the end address of all this			*/
 	/********************************************************/
 
-	argv[4] = ((addr+sizeof(int)-1))&~(sizeof(int)-1);
-	printf("total=0x%x ",argv[4]);
+	printf("total=0x%x ",(addr+sizeof(int)-1))&~(sizeof(int)-1);
 
 
 	/*
 	 *  We now pass the various bootstrap parameters to the loaded
 	 *  image via the argument list
-	 *  (THIS IS A BIT OF HISTORY FROM MACH.. LEAVE FOR NOW)
+	 *
+         *  arg0 = 8 (magic)
 	 *  arg1 = boot flags
 	 *  arg2 = boot device
 	 *  arg3 = start of symbol table (0 if not loaded)
 	 *  arg4 = end of symbol table (0 if not loaded)
 	 *  arg5 = transfer address from image
 	 *  arg6 = transfer address for next image pointer
+         *  arg7 = conventional memory size (640)
+         *  arg8 = extended memory size (8196)
 	 */
 	switch(maj)
 	{
@@ -262,7 +273,7 @@ loadprog(howto)
 	/****************************************************************/
 	/* copy that first page and overwrite any BIOS variables	*/
 	/****************************************************************/
-	printf("entry point=0x%x\n" ,((int)startaddr) & 0xffffff);
+	/*printf("entry point=0x%x\n" ,((int)startaddr) & 0xffffff);*/
 	/* Under no circumstances overwrite precious BIOS variables! */
 	pcpy(tmpbuf, addr0, 0x400);
 	pcpy(tmpbuf + 0x500, addr0 + 0x500, 4096 - 0x500);
