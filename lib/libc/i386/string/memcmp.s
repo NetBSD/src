@@ -27,8 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memcmp.s,v 1.2 1993/08/02 17:49:48 mycroft Exp $
+ *	$Id: memcmp.s,v 1.3 1993/08/16 17:06:33 jtc Exp $
  */
+
+#if defined(LIBC_RCS) && !defined(lint)
+        .asciz "$Id: memcmp.s,v 1.3 1993/08/16 17:06:33 jtc Exp $"
+#endif /* LIBC_RCS and not lint */
 
 #include "DEFS.h"
 
@@ -42,8 +46,6 @@
 /*
  * XXX should compare by words
  */
-
-#include "DEFS.h"
 
 ENTRY(memcmp)
 	pushl	%edi
