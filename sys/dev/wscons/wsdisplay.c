@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.79 2004/07/20 20:28:20 heas Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.80 2004/07/28 12:34:04 jmmv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.79 2004/07/20 20:28:20 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.80 2004/07/28 12:34:04 jmmv Exp $");
 
 #include "opt_wsdisplay_compat.h"
+#include "opt_wsmsgattrs.h"
 #include "opt_compat_netbsd.h"
 #include "wskbd.h"
 #include "wsmux.h"
@@ -1150,6 +1151,32 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	case WSDISPLAYIO_GETWSCHAR:
 		return ENODEV;
 #endif /* WSDISPLAY_CHARFUNCS */
+
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+	case WSDISPLAYIO_GMSGATTRS:
+#define d ((struct wsdisplay_msgattrs *)data)
+		(*scr->scr_dconf->wsemul->getmsgattrs)
+		    (scr->scr_dconf->wsemulcookie, d);
+		return (0);
+#undef d
+
+	case WSDISPLAYIO_SMSGATTRS: {
+#define d ((struct wsdisplay_msgattrs *)data)
+		int i;
+		for (i = 0; i < WSDISPLAY_MAXSCREEN; i++)
+			if (sc->sc_scr[i] != NULL)
+				(*sc->sc_scr[i]->scr_dconf->wsemul->setmsgattrs)
+				    (sc->sc_scr[i]->scr_dconf->wsemulcookie,
+				     sc->sc_scr[i]->scr_dconf->scrdata,
+				     d);
+		}
+		return (0);
+#undef d
+#else
+	case WSDISPLAYIO_GMSGATTRS:
+	case WSDISPLAYIO_SMSGATTRS:
+		return (ENODEV);
+#endif
 
 	}
 
