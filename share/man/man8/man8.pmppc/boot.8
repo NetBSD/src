@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 2003/11/10 18:45:58 augustss Exp $
+.\"	$NetBSD: boot.8,v 1.2 2003/11/11 13:36:33 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,9 +48,9 @@ An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
 .Sy Cold starts
-On a Artesyn PMPPC card, the boot procedure uses the boot monitor to load
+On an Artesyn PMPPC card, the boot procedure uses the boot monitor to load
 a kernel over the network using BOOTP and TFTP.
-The filesystems are mounted via NFS, as described in
+The file systems are mounted via NFS, as described in
 .Xr diskless 8 .
 .Pp
 .Sy Boot monitor settings
@@ -66,7 +66,7 @@ The monitor settings should point to a TFTP server which has the binary
 kernel image,
 .Pa netbsd.bin ,
 which is built when a kernel is compiled.
-Furthermore, the monitor should be set up to not initilize PCI devices.
+Furthermore, the monitor should be set up to not initialize PCI devices.
 .Sh SEE ALSO
 .Xr halt 8 ,
 .Xr init 8 ,
