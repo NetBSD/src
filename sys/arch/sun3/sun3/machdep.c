@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.56 1995/04/22 20:28:59 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.57 1995/04/22 23:23:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -117,10 +117,6 @@ int fpu_type;
  * during autoconfiguration or after a panic.
  */
 int	safepri = PSL_LOWIPL;
-
-#ifdef COMPAT_SUNOS
-extern void hack_sun_reboot();	/* XXX - Temporary hack... */
-#endif
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -341,10 +337,6 @@ void cpu_startup()
 
 #ifdef	HAVECACHE
 	cache_enable();
-#endif
-
-#ifdef	COMPAT_SUNOS
-	hack_sun_reboot();	/* XXX - Temporary hack... */
 #endif
 }
 
