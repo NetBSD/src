@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.138 2003/09/07 13:11:18 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.139 2003/09/09 19:23:57 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1487,4 +1487,20 @@ src/sys/arch/i386/include/cpu.h:		patch
 
 	Make output of CPU features look nicer on new Pentium IV CPUs.
 	[drochner, ticket #1344]
+
+sys/arch/sun68k/stand/tapeboot/boot.c		1.2
+sys/arch/sun68k/stand/tapeboot/rawfs.c		1.2
+sys/arch/sun68k/stand/libsa/version		1.4
+
+	Added seek support for tape files.  Before, seeking a tape file
+	would silently fail, causing loadfile to load file contents into
+	the wrong addresses.
+	On the sun3/sun3x, MARK_START was incorrectly set too.  Also
+	added support for booting a sun2.
+	[fredette, ticket #1402]
+
+sys/netinet/tcp_subr.c				1.153
+
+	Initialize ip_hl for ipsec policy lookup. PR kern/22715
+	[itojun, ticket #1452]
 
