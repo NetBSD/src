@@ -1,8 +1,8 @@
-/*	$NetBSD: passwd.c,v 1.9 1996/11/26 23:35:38 thorpej Exp $	*/
+/*	$NetBSD: passwd.c,v 1.10 1996/12/28 04:30:07 tls Exp $	*/
 
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,16 +34,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)passwd.c	5.5 (Berkeley) 7/6/91";
+static char sccsid[] = "from: @(#)passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: passwd.c,v 1.9 1996/11/26 23:35:38 thorpej Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.10 1996/12/28 04:30:07 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,10 @@ static char rcsid[] = "$NetBSD: passwd.c,v 1.9 1996/11/26 23:35:38 thorpej Exp $
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "extern.h"
+ 
+void	usage __P((void)); 
 
 /*
  * Note on configuration:
@@ -75,7 +79,7 @@ main(argc, argv)
 	char **argv;
 {
 	extern int optind;
-	register int ch;
+	int ch;
 	char *username;
 
 #if defined(KERBEROS) || defined(KERBEROS5)
@@ -145,9 +149,10 @@ main(argc, argv)
 #if defined(KERBEROS) || defined(KERBEROS5)
 		if (use_kerberos && strcmp(argv[0], username)) {
 			errx(1, "%s\n\t%s\n%s\n",
-"to change another user's Kerberos password, do",
-"\"kinit <user>; passwd; kdestroy\";",
-"to change a user's local passwd, use \"passwd -l <user>\"");
+			     "to change another user's Kerberos password, do",
+			     "\"kinit <user>; passwd; kdestroy\";",
+			     "to change a user's local passwd, use\
+			     \"passwd -l <user>\"");
 		}
 #endif
 		username = argv[0];
@@ -168,6 +173,7 @@ main(argc, argv)
 	exit(local_passwd(username));
 }
 
+void
 usage()
 {
 

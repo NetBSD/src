@@ -1,8 +1,8 @@
-/*	$NetBSD: yp_passwd.c,v 1.10 1996/11/26 23:35:39 thorpej Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.11 1996/12/28 04:30:08 tls Exp $	*/
 
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";
+static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.10 1996/11/26 23:35:39 thorpej Exp $";
+static char rcsid[] = "$NetBSD: yp_passwd.c,v 1.11 1996/12/28 04:30:08 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,12 +185,12 @@ yp_passwd(username)
 
 static char *
 getnewpasswd(pw, old_pass)
-	register struct passwd *pw;
+	struct passwd *pw;
 	char **old_pass;
 {
-	static char buf[_PASSWORD_LEN+1];
-	register char *p, *t;
 	int tries;
+	char *p, *t;
+	static char buf[_PASSWORD_LEN+1];
 	char salt[9], *crypt(), *getpass();
 	
 	(void)printf("Changing YP password for %s.\n", pw->pw_name);
@@ -222,7 +222,10 @@ getnewpasswd(pw, old_pass)
 		}
 		for (t = p; *t && islower(*t); ++t);
 		if (!*t && ++tries < 2) {
-			(void)printf("Please don't use an all-lower case password.\nUnusual capitalization, control characters or digits are suggested.\n");
+			(void)printf("Please don't use an all-lower case\
+				     password.\nUnusual capitalization,
+				     control characters or digits are\
+				     suggested.\n");
 			continue;
 		}
 		(void)strcpy(buf, p);
