@@ -1,11 +1,11 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.12 1993/10/19 00:36:34 cgd Exp $
+#	$Id: Makefile.inc,v 1.13 1993/10/22 17:26:43 jtc Exp $
 
 # stdlib sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/stdlib ${.CURDIR}/stdlib
 
-SRCS+=	abort.c atexit.c atoi.c atol.c bsearch.c calloc.c cfree.c exit.c \
-	getenv.c getopt.c heapsort.c malloc.c multibyte.c \
+SRCS+=	a64l.c abort.c atexit.c atoi.c atol.c bsearch.c calloc.c cfree.c \
+	exit.c getenv.c getopt.c heapsort.c l64a.c malloc.c multibyte.c \
 	putenv.c qsort.c radixsort.c rand.c random.c setenv.c strtod.c \
 	strtol.c strtoul.c system.c \
 	_rand48.c drand48.c erand48.c jrand48.c lcong48.c lrand48.c \
