@@ -1188,7 +1188,7 @@ do { char dstr[30];							\
 #define ASM_OUTPUT_MI_THUNK(FILE, THUNK_FNDECL, DELTA, FUNCTION) \
 do {						\
   fprintf (FILE, "\t.word 0x0ffc\n");		\
-  fprintf (FILE, "\taddl2 $%d,4(ap)\n", DELTA);	\
+  fprintf (FILE, "\taddl2 $%d,4(%sap)\n", DELTA, REGISTER_PREFIX);	\
   fprintf (FILE, "\tjmp ");			\
   assemble_name (FILE,  XSTR (XEXP (DECL_RTL (FUNCTION), 0), 0)); \
   fprintf (FILE, "+2\n");			\
