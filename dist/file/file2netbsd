@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: file2netbsd,v 1.4 2003/03/28 19:44:58 pooka Exp $
+#	$NetBSD: file2netbsd,v 1.5 2003/05/25 21:52:57 pooka Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,12 @@
 # based on texinfo2netbsd
 #
 
-file_vers='4.00'
+# edit this
+file_vers='4.03'
+
+#
+# (usually) NO NEED TO EDIT BELOW THIS LINE
+#
 
 ### Wipe out stuff we don't want
 rm -f .cvsignore
