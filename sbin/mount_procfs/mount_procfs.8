@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_procfs.8,v 1.6 1995/03/18 14:58:10 cgd Exp $
+.\"	$NetBSD: mount_procfs.8,v 1.7 1997/04/28 02:59:44 mycroft Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -93,8 +93,7 @@ stops the target process and arranges for the sending
 process to become the debug control process.
 .It detach
 continue execution of the target process and
-remove it from control by the debug process (which
-need not be the sending process).
+remove it from control by the debug process.
 .It run
 continue running the target process until
 a signal is delivered, a breakpoint is hit, or the
@@ -102,10 +101,9 @@ target process exits.
 .It step
 single step the target process, with no signal delivery.
 .It wait
-wait for the target process to come to a steady
-state ready for debugging.
-The target process must be in this state before
-any of the other commands are allowed.
+wait for the target process to stop.
+The target process must be stopped before
+any of the run, step, or signal commands are allowed.
 .El
 .Pp
 The string can also be the name of a signal, lower case
@@ -121,9 +119,11 @@ This can be used to gain access to the process' symbol table,
 or to start another copy of the process.
 .It Pa mem
 The complete virtual memory image of the process.
-Only those address which exist in the process can be accessed.
-Reads and writes to this file modify the process.
-Writes to the text segment remain private to the process.
+Only those addresses which exist in the process can be accessed.
+Writes to this file modify the process.
+Writes to the text segment normally remain private to the process,
+since the text segment is mapped with MAP_PRIVATE; however, this is
+not guaranteed.
 .It Pa note
 Not implemented.
 .It Pa notepg
@@ -213,36 +213,21 @@ immediately after the call to exec (see
 .Sh FILES
 .Bl -tag -width /proc/curproc -compact
 .It Pa /proc/#
+.It Pa /proc/#/ctl
+.It Pa /proc/#/file
+.It Pa /proc/#/mem
+.It Pa /proc/#/note
+.It Pa /proc/#/notepg
+.It Pa /proc/#/regs
+.It Pa /proc/#/fpregs
+.It Pa /proc/#/status
 .It Pa /proc/curproc
-.It Pa /proc/curproc/ctl
-.It Pa /proc/curproc/file
-.It Pa /proc/curproc/mem
-.It Pa /proc/curproc/note
-.It Pa /proc/curproc/notepg
-.It Pa /proc/curproc/regs
-.It Pa /proc/curproc/fpregs
-.It Pa /proc/curproc/status
 .El
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr mount 2 ,
 .Xr unmount 2 ,
 .Sh CAVEATS
-No
-.Pa .
-and
-.Pa ..
-entries appear when listing the contents of the
-.Pa /proc
-directory.
-This makes sense in the context of this filesystem, but is inconsistent
-with usual filesystem conventions.
-However, it is still possible to refer to both
-.Pa .
-and 
-.Pa ..
-in a pathname.
-.Pp
 This filesystem may not be NFS-exported
 since most of the functionality of
 .Dv procfs
