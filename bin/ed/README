@@ -6,6 +6,7 @@ The following compiler directives are recognized:
 GNU_REGEX	- use with GNU regex(3)
 DES		- use to add encryption support (requires crypt(3))
 NO_REALLOC_NULL	- use if realloc(3) does not accept a NULL pointer
+HAVE_SIGSETJMP	- use if sigsetjmp/siglongjmp are supported
 
 The file `POSIX' describes extensions to and deviations from the POSIX
 standard.
