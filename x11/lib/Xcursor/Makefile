@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2004/08/05 01:28:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2004/11/15 09:12:46 rtr Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xcursor
-.PATH:	${X11SRCDIR.xc}/lib/${LIB}
 
+.PATH:	${X11SRCDIR.xc}/lib/${LIB}
 SRCS=	cursor.c display.c file.c library.c xlib.c
 
 INCS=	Xcursor.h

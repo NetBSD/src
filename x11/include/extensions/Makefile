@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/03/06 03:14:23 rtr Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2004/11/15 09:12:45 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,9 @@ INCS=	MITMisc.h Print.h Printstr.h XEVI.h XEVIstr.h XI.h \
 	xf86bigfstr.h xf86dga.h xf86dga1.h xf86dga1str.h xf86dgastr.h \
 	xf86misc.h xf86mscstr.h xf86rush.h xf86rushstr.h xf86vmode.h \
 	xf86vmstr.h xtestext1.h xteststr.h xtrapbits.h xtrapddmi.h xtrapdi.h \
-	xtrapemacros.h xtraplib.h xtraplibp.h xtrapproto.h
+	xtrapemacros.h xtraplib.h xtraplibp.h xtrapproto.h damage.h \
+	damagewire.h damageproto.h composite.h compositeproto.h \
+	xfixeswire.h xfixesproto.h Xeviestr.h Xevie.h
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

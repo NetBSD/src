@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/03/06 03:31:08 rtr Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2004/11/15 09:12:43 rtr Exp $
 
 .include "../../Makefile.serverlib"
 
@@ -24,7 +24,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xnest \
 
 CPPFLAGS+=	${X11FLAGS.OS_DEFINES} \
 		${X11FLAGS.EXTENSION} \
-		-DNO_HW_ONLY_EXTS -UXFree86LOADER -UMITSHM
+		-DNO_HW_ONLY_EXTS -UXFree86LOADER -UMITSHM \
+		-D__XKBDEFRULES__='"xorg"'
 
 CPPFLAGS.miinitext.c=	-UDPMSExtension
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2004/04/17 06:47:04 mrg Exp $
+# $NetBSD: Makefile,v 1.4.2.1 2004/11/15 09:12:42 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -6,14 +6,14 @@ XMODULEDIR=	${X11USRLIBDIR}/modules
 
 LIB=		int10
 
-.PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
-.PATH:	${X11SRCDIR.xc}/extras/x86emu/src/x86emu
-SRCS=	pci.c xf86int10module.c helper_exec.c helper_mem.c xf86int10.c \
-	xf86x86emu.c generic.c debug.c decode.c fpu.c ops.c ops2.c \
-	prim_ops.c sys.c
+.PATH:          ${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/int10
+SRCS=		x86emu.c generic.c xf86x86emu.c xf86int10.c helper_mem.c \
+		helper_exec.c xf86int10module.c pci.c
 
 CPPFLAGS+=	-D__DRIVER__ -DFORCE_POST -D_CEXPORT= -DNO_LONG_LONG \
-		-D_X86EMU
+		-D_X86EMU -DNO_SYS_HEADERS \
+		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-D_PC
 .endif

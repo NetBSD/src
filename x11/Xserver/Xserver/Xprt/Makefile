@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/30 09:45:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2004/11/15 09:12:38 rtr Exp $
 
 NOMAN=		1
 
@@ -8,18 +8,94 @@ PROG=	Xprt
 
 .include "../Makefile.Xserver"
 
-LDADD+=	${LIBDIR.printer}/ddxInit.o ${LIBDIR.printer}/miinitext.o \
-	${LIBDIR.printer}/dpmsstubs.o \
-	${LDADD.dix} ${LDADD.os} -lXau -lXdmcp \
-	${LDADD.printer} ${LDADD.printer/raster} ${LDADD.printer/pcl} \
-	${LDADD.printer/ps} ${LDADD.mfb} ${LDADD.cfb} ${LDADD.cfb32} \
-	${LDADD.mfb} ${LDADD.dix/xpstubs} ${LDADD.mi} ${LDADD.Xext/exts} \
-	${LDADD.xkb} ${LDADD.xinput} ${LDADD.lbx} -llbxutil \
-	${LDADD.randr} ${LDADD.render} ${LDADD.Xext/ext} ${LDADD.dbe} \
-	${LDADD.record} ${LDADD.GL/glx} ${LDADD.GL/GLcore} ${LDADD.xtrap} \
-	${LIBCWRAPPER} \
-	-lXfont -lfreetype ${LDADD.dix/xpstubs} \
-	-lz -lm
+LDADD+=	${LIBDIR.printer}/ddxInit.o \
+	${LIBDIR.printer}/miinitext.o \
+	${LIBDIR.printer}/dpmsstubs.o
+
+LDADD+= ${LIBCWRAPPER} \
+	${LDADD.dix} \
+	${LDADD.os} \
+	${LDADD.printer} \
+	${LDADD.printer/raster} \
+	${LDADD.printer/pcl} \
+	${LDADD.printer/pcl-mono} \
+	${LDADD.printer/ps} \
+	${LDADD.mfb} \
+	${LDADD.cfb} \
+	${LDADD.cfb32} \
+	${LDADD.mfb} \
+	${LDADD.dix/xpstubs} \
+	${LDADD.mi} \
+	${LDADD.composite} \
+	${LDADD.damage} \
+	${LDADD.miext/damage} \
+	${LDADD.xfixes} \
+	${LDADD.miext/cw} \
+	${LDADD.Xext/exts} \
+	${LDADD.xkb} \
+	${LDADD.xinput} \
+	${LDADD.lbx} \
+	-llbxutil \
+	${LDADD.randr} \
+	${LDADD.render} \
+	${LDADD.Xext/ext} \
+	${LDADD.dbe} \
+	${LDADD.record} \
+	${LDADD.GL/glx} \
+	${LDADD.GL/GLcore} \
+	${LDADD.xtrap} \
+	-lXfont \
+	-lfreetype \
+	${LDADD.dix/xpstubs} \
+	-lz \
+	-lm \
+	-lXau \
+	-lXdmcp
+
+#Xprint/ddxInit.o
+#Xprint/miinitext.o
+#Xprint/dpmsstubs.o
+#os/libcwrapper.o
+#dix/libdix.a
+#os/libos.a
+#Xprint/libprinter.a
+#Xprint/raster/libraster.a
+#Xprint/pcl/libpcl.a
+#Xprint/pcl-mono/libpcl.a
+#Xprint/ps/libps.a
+#mfb/libmfb.a
+#cfb/libcfb.a
+#cfb32/libcfb32.a
+#mfb/libmfb.a
+#dix/libxpstubs.a
+#mi/libmi.a
+#composite/libcomposite.a
+#damageext/libdamage.a
+#miext/damage/libdamage.a
+#xfixes/libxfixes.a
+#miext/cw/libcw.a
+#Xext/libexts.a
+#xkb/libxkb.a
+#Xi/libxinput.a
+#lbx/liblbx.a
+#../../lib/lbxutil/liblbxutil.a
+#randr/librandr.a
+#render/librender.a
+#Xext/libext.a
+#dbe/libdbe.a
+#record/librecord.a
+#GL/glx/libglx.a
+#GL/mesa/GLcore/libGLcore.a
+#XTrap/libxtrap.a -L/usr/X11R6/lib
+#../../lib/font/libXfont.a
+#-lfreetype
+#dix/libxpstubs.a
+#-lz
+#-lm
+#-lXau
+#-lXdmcp
+#-li386
+
 
 DPADD+=	${LIBDIR.printer}/ddxInit.o ${LIBDIR.printer}/miinitext.o \
 	${LIBDIR.printer}/dpmsstubs.o \

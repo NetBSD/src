@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/02/21 08:32:34 rtr Exp $
+#	$NetBSD: Makefile,v 1.4.4.1 2004/11/15 09:12:38 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -7,15 +7,40 @@ PROG=	Xvfb
 
 .include "../Makefile.Xserver"
 
-LDADD+=	${LDADD.dix} ${LDADD.hw/vfb} ${LDADD.os} -lXau -lXdmcp \
-	${LDADD.fb} ${LDADD.mfb} ${LDADD.dix/xpstubs} \
-	${LDADD.mi} ${LDADD.Xext/exts} ${LDADD.xkb} ${LDADD.xinput} \
-	${LDADD.lbx} -llbxutil ${LDADD.randr} ${LDADD.render} \
-	${LDADD.mi} ${LDADD.Xext/ext} ${LDADD.dbe} ${LDADD.record} \
-	${LDADD.GL/glx} ${LDADD.GL/GLcore} ${LDADD.xtrap} \
+LDADD+=	${LDADD.dix} \
+	${LDADD.hw/vfb} \
+	${LDADD.os} \
+	-lXau \
+	-lXdmcp \
+	${LDADD.fb} \
+	${LDADD.mfb} \
+	${LDADD.dix/xpstubs} \
+	${LDADD.mi} \
+	${LDADD.composite} \
+	${LDADD.damage} \
+	${LDADD.miext/damage} \
+	${LDADD.xfixes} \
+	${LDADD.miext/cw} \
+	${LDADD.Xext/exts} \
+	${LDADD.xkb} \
+	${LDADD.xinput} \
+	${LDADD.lbx} \
+	-llbxutil \
+	${LDADD.randr} \
+	${LDADD.render} \
+	${LDADD.mi} \
+	${LDADD.Xext/ext} \
+	${LDADD.dbe} \
+	${LDADD.record} \
+	${LDADD.GL/glx} \
+	${LDADD.GL/GLcore} \
+	${LDADD.xtrap} \
 	${LIBCWRAPPER} \
-	-lXfont -lfreetype ${LDADD.dix/xpstubs} \
-	-lz -lm
+	-lXfont \
+	-lfreetype \
+	${LDADD.dix/xpstubs} \
+	-lz \
+	-lm
 
 DPADD+=	${DPADD.dix} ${DPADD.os} ${LIBXAU} ${LIBXDMCP} \
 	${DPADD.hw/vfb} ${DPADD.fb} ${DPADD.mfb} ${DPADD.dix/xpstubs} \

@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2004/02/07 06:52:08 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2004/11/15 09:12:45 rtr Exp $
 
 .include "../Makefile.serverlib"
 
 LIB=		render
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/render
 
-SRCS=		animcur.c filter.c glyph.c miglyph.c miindex.c \
-		mipict.c mirect.c mitrap.c mitri.c picture.c render.c
+SRCS=		animcur.c filter.c glyph.c miglyph.c miindex.c mipict.c \
+		mirect.c mitrap.c mitri.c picture.c render.c renderedge.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/render \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \

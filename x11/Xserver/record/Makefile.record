@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.record,v 1.3 2004/02/07 06:52:08 lukem Exp $
+#	$NetBSD: Makefile.record,v 1.3.4.1 2004/11/15 09:12:44 rtr Exp $
 
 LIB=		record
-.PATH:		${X11SRCDIR.xc}/programs/Xserver/${LIB}
 
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/${LIB}
 SRCS+=		record.c set.c
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
@@ -11,7 +11,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${X11SRCDIR.xc}/programs/Xserver/Xext
 
-CPPFLAGS+=	-DNDEBUG
+CPPFLAGS+=	-DNDEBUG -DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

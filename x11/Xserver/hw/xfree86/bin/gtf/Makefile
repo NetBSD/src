@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 05:23:15 rtr Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2004/11/15 09:12:39 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/etc \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/scanpci \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/dummylib \
 		-I${XSERVERINCDIR}
+
+CPPFLAGS+=	-D__XSERVERNAME__='"Xorg"'
 
 LDADD=	-lm
 DPADD=	${LIBM}

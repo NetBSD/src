@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/08 09:49:24 rtr Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2004/11/15 09:12:46 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ LIB=	xtt
 .PATH:	${X11SRCDIR.xc}/extras/X-TrueType
 .PATH:	${X11SRCDIR.xc}/lib/font/X-TrueType
 
-INCS=	xttcap.h xttcconv.h xttcconvP.h xttcommon.h xttversion.h \
+INCS=	\
 	cconvversion.h
 INCSDIR=${X11INCDIR}/X11/fonts/codeconv
 

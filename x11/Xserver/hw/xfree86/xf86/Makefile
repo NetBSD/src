@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/06 03:31:08 rtr Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2004/11/15 09:12:43 rtr Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -15,7 +15,8 @@ SRCS=	xf86Configure.c xf86Bus.c xf86isaBus.c xf86pciBus.c \
 	xf86Globals.c xf86Helper.c xf86Init.c xf86Io.c xf86MiscExt.c \
 	xf86Mode.c xf86Option.c xf86VidMode.c xf86fbman.c xf86xv.c \
 	xf86xvmc.c xf86cmap.c xf86PM.c xf86Versions.c xf86Debug.c \
-	xf86KbdBSD.c xf86Xinput.c xisb.c xf86XKB.c xf86RandR.c
+	xf86KbdBSD.c xf86Xinput.c xisb.c xf86XKB.c xf86RandR.c \
+	xorgHelper.c
 
 # Rebuild xf86Build.h on every make
 #
@@ -58,7 +59,11 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${XSERVERINCDIR}
 
 CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \
-		-DXFree86LOADER -DWSCONS_SUPPORT
+		-DXFree86LOADER -DWSCONS_SUPPORT -D__XKBDEFRULES__='"xorg"' \
+		-D__XSERVERNAME__='"Xorg"' -D__XCONFIGFILE__='"xorg.conf"' \
+		-D__VENDORDWEBSUPPORT__='"http://wiki.X.Org"' \
+		-DXVENDORNAME='"The X.Org Foundation"' \
+		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 .if ${MACHINE} == "i386"
 CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT

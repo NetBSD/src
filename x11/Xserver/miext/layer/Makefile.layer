@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.layer,v 1.1 2004/10/07 13:49:24 rtr Exp $
+#	$NetBSD: Makefile.layer,v 1.1.2.1 2004/11/15 09:12:44 rtr Exp $
 
 LIB=	layer
-.PATH:	${X11SRCDIR.xc}/programs/Xserver/miext/${LIB}
 
+.PATH:	${X11SRCDIR.xc}/programs/Xserver/miext/${LIB}
 SRCS+=	layergc.c layerinit.c layerpict.c layerwin.c
+
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/miext/${LIB} \
 		-I${X11SRCDIR.xc}/programs/Xserver/miext/shadow \
@@ -16,6 +17,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/miext/${LIB} \
 		-I${X11SRCDIR.xc}/programs/Xserver/render \
 		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${XSERVERINCDIR}
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

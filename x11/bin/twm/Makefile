@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2004/11/15 09:12:45 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,10 @@ TWMCONFIGDIR=		${X11ETCDIR}/twm
 
 X11EXTRAMANDEFS+=	-DTWMDIR=${TWMCONFIGDIR}
 
-CPPFLAGS+=		-I. -I${X11SRCDIR.xc}/programs/${PROG} -DHAS_MKSTEMP
+CPPFLAGS+=		-I. -I${X11SRCDIR.xc}/programs/${PROG}
+CPPFLAGS+=		-DHAS_MKSTEMP -DXORG_RELEASE=${XORG_RELEASE} \
+			-DXVENDORNAME=${XVENDORNAME}
+
 CPPFLAGS.parse.c=	-DSYSTEM_INIT_FILE=\"${TWMCONFIGDIR}/system.twmrc\"
 
 CONFIGFILES=	system.twmrc

@@ -1,5 +1,0 @@
-#	$NetBSD: files.sha2,v 1.3 2003/08/24 19:26:55 thorpej Exp $
-
-define	sha2
-
-file	crypto/sha2/sha2.c	sha2

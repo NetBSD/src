@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/03/17 23:15:30 perry Exp $
+#	$NetBSD: Makefile,v 1.5.4.1 2004/11/15 09:12:38 rtr Exp $
 
 XMODULEDIR=     ${X11USRLIBDIR}/modules/fonts
 
@@ -20,6 +20,9 @@ SRCS+=	ftbase.c ftinit.c ftglyph.c ftbbox.c ftsystem.c fttype1.c ftxf86.c ftbdf.
 	
 .PATH:	${FT2SRC}/gzip
 SRCS+=	ftgzip.c
+
+.PATH:	${FT2SRC}/lzw
+SRCS+=	lzw.c
 
 .PATH:	${FT2SRC}/raster
 SRCS+=	raster.c
@@ -77,19 +80,15 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/lib/font/FreeType/module \
 		-I${FT2SRC}/pcf \
 		-I${XSERVERINCDIR}
 
-CPPFLAGS+=	-DXFREE86_FT2
+CPPFLAGS+=	-DXFREE86_FT2 -DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
-.include <bsd.x11.mk>
 
 .if defined(MKTTINTERP) && ${MKTTINTERP} != "no"
 CPPFLAGS+=	-DTT_CONFIG_OPTION_BYTECODE_INTERPRETER
 .endif
 
-.if !empty(X11FLAGS.LOADABLE)
 CPPFLAGS+=	-DFONTMODULE
-LIBDIR=	${XMODULEDIR}
-.else
-libinstall::
-.endif
 
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
 .include <bsd.lib.mk>

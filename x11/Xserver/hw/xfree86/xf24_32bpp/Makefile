@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2004/02/07 06:52:07 lukem Exp $
+# $NetBSD: Makefile,v 1.2.4.1 2004/11/15 09:12:43 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -21,6 +21,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB} \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${XSERVERINCDIR}
+
+CPPFLAGS+=	-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
 
 CPPFLAGS.cfbgc32.c=	-DPSZ=32
 CPPFLAGS.cfbgc24.c=	-DPSZ=24

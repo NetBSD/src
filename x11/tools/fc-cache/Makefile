@@ -1,62 +1,102 @@
-#	$NetBSD: Makefile,v 1.8 2004/04/28 14:17:57 lukem Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2004/11/15 09:12:46 rtr Exp $
 
 NOMAN=		1
 
 .include <bsd.own.mk>
 
 HOSTPROG=	fc-cache
-.PATH:		${X11SRCDIR.xc}/extras/fontconfig/src
-FONTCONFIGSRC=	${X11SRCDIR.xc}/extras/fontconfig
-FREETYPESRC=	${X11SRCDIR.xc}/extras/freetype2/src
 
-LDADD=	-lz
+FONTCONFIG=	${X11SRCDIR.xc}/extras/fontconfig
+FREETYPE=	${X11SRCDIR.xc}/extras/freetype2
+EXPAT=		${X11SRCDIR.xc}/extras/expat
 
-.PATH:		${FONTCONFIGSRC}/${HOSTPROG}
-SRCS=		fc-cache.c
 
-.PATH:		${FONTCONFIGSRC}/src
-SRCS+=		fcatomic.c fcblanks.c fccache.c fccfg.c fccharset.c fcdbg.c \
-		fcdefault.c fcdir.c fcfreetype.c fcfs.c fcinit.c fclang.c \
-		fclist.c fcmatch.c fcmatrix.c fcname.c fcpat.c fcstr.c fcxml.c
+.PATH:	${FONTCONFIG}/fc-cache
+SRCS.fc-cache=	fc-cache.c
 
-.PATH:		${FREETYPESRC}/autohint
-.PATH:		${FREETYPESRC}/base
-.PATH:		${FREETYPESRC}/bdf
-.PATH:		${FREETYPESRC}/cff
-.PATH:		${FREETYPESRC}/cid
-.PATH:		${FREETYPESRC}/gzip
-.PATH:		${FREETYPESRC}/pcf
-.PATH:		${FREETYPESRC}/pfr
-.PATH:		${FREETYPESRC}/psaux
-.PATH:		${FREETYPESRC}/pshinter
-.PATH:		${FREETYPESRC}/psnames
-.PATH:		${FREETYPESRC}/raster
-.PATH:		${FREETYPESRC}/sfnt
-.PATH:		${FREETYPESRC}/smooth
-.PATH:		${FREETYPESRC}/truetype
-.PATH:		${FREETYPESRC}/type1
-.PATH:		${FREETYPESRC}/type42
-.PATH:		${FREETYPESRC}/winfonts
-SRCS+=		autohint.c bdf.c cff.c ftbase.c ftbbox.c ftbdf.c ftdebug.c \
-		ftglyph.c ftinit.c ftmm.c ftsynth.c ftsystem.c fttype1.c \
-		ftxf86.c pcf.c pfr.c psaux.c pshinter.c psnames.c raster.c \
-		sfnt.c smooth.c truetype.c type1.c type1cid.c type42.c \
-		winfnt.c ftgzip.c
 
-.PATH:		${X11SRCDIR.xc}/extras/expat/lib
-SRCS+=		xmlparse.c xmlrole.c xmltok.c
+.PATH:	${FONTCONFIG}/src
+SRCS.fontconfig=	fcatomic.c fcblanks.c fccache.c fccfg.c \
+		fccharset.c fcdbg.c fcdefault.c fcdir.c fcfreetype.c \
+		fcfs.c fcinit.c fclang.c fclist.c fcmatch.c fcmatrix.c \
+		fcname.c fcpat.c fcstr.c fcxml.c
 
-HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
-		-I${DESTDIR}${X11INCDIR}/freetype2 \
+.PATH:	${FREETYPE}/src/base
+SRCS.freetype=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
+		ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c ftsystem.c \
+		fttype1.c ftwinfnt.c ftxf86.c
+
+.PATH: ${FREETYPE}/src/autofit
+SRCS.freetype+=	autofit.c
+
+.PATH:	${FREETYPE}/src/autohint
+SRCS.freetype+=	autohint.c
+
+.PATH:	${FREETYPE}/src/bdf
+SRCS.freetype+=	bdf.c
+
+.PATH:	${FREETYPE}/src/cff
+SRCS.freetype+=	cff.c
+
+.PATH:	${FREETYPE}/src/cid
+SRCS.freetype+=	type1cid.c
+
+.PATH:	${FREETYPE}/src/gzip
+SRCS.freetype+=	ftgzip.c
+
+.PATH:	${FREETYPE}/src/lzw
+SRCS.freetype+=	ftlzw.c
+
+.PATH:	${FREETYPE}/src/pcf
+SRCS.freetype+=	pcf.c
+
+.PATH:	${FREETYPE}/src/pfr
+SRCS.freetype+=	pfr.c
+
+.PATH:	${FREETYPE}/src/psaux
+SRCS.freetype+=	psaux.c
+
+.PATH:	${FREETYPE}/src/pshinter
+SRCS.freetype+=	pshinter.c
+
+.PATH:	${FREETYPE}/src/psnames
+SRCS.freetype+=	psnames.c
+
+.PATH:	${FREETYPE}/src/raster
+SRCS.freetype+=	raster.c
+
+.PATH:	${FREETYPE}/src/sfnt
+SRCS.freetype+=	sfnt.c
+
+.PATH:	${FREETYPE}/src/smooth
+SRCS.freetype+=	smooth.c
+
+.PATH:	${FREETYPE}/src/truetype
+SRCS.freetype+=	truetype.c
+
+.PATH:	${FREETYPE}/src/type1
+SRCS.freetype+=	type1.c
+
+.PATH:	${FREETYPE}/src/type42
+SRCS.freetype+=	type42.c
+
+.PATH:	${FREETYPE}/src/winfonts
+SRCS.freetype+=	winfnt.c
+
+
+.PATH:	${EXPAT}/lib
+SRCS.expat=	xmlparse.c xmltok.c xmlrole.c
+
+SRCS=	${SRCS.fc-cache} ${SRCS.fontconfig} ${SRCS.freetype} ${SRCS.expat}
+
+# XXX FONTCONFIG_PATH was arbitrarily chosen
+HOST_CPPFLAGS=	-DFONTCONFIG_PATH='"/etc/X11/fonts"' \
+		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"'
+HOST_CPPFLAGS+=	-I${FONTCONFIG} -I${FREETYPE} \
+		-I${FREETYPE}/include -I${EXPAT}/lib \
 		-I${X11SRCDIR.xc}/lib/expat \
-		-I${X11SRCDIR.xc}/extras/expat/lib \
-		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' -DHAVE_EXPAT \
-		-DXML_BYTE_ORDER=0
+		-I${DESTDIR}${X11INCDIR}
 
-# This tells a cross build on darwin not to bother with
-# resource fork font support which needs the carbon libraries.
-HOST_CPPFLAGS+=	-DDARWIN_NO_CARBON \
-		-DFT_CONFIG_OPTION_SYSTEM_ZLIB
 
 .include <bsd.x11.mk>
 .include <bsd.hostprog.mk>

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 2004/04/29 05:18:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.8.2.1 2004/11/15 09:12:46 rtr Exp $
 
 .include <bsd.own.mk>
 
 LIB=	Xft
-.PATH:	${X11SRCDIR.xc}/lib/${LIB}
 
+.PATH:	${X11SRCDIR.xc}/lib/${LIB}
 SRCS=	xftcolor.c xftcore.c xftdbg.c xftdpy.c xftdraw.c xftextent.c \
 	xftfont.c xftfreetype.c xftglyphs.c xftinit.c xftlist.c \
 	xftname.c xftrender.c xftstr.c xftswap.c xftxlfd.c
