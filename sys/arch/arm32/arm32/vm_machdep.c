@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.10 1996/10/15 22:07:41 mark Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.11 1996/10/17 02:50:14 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -124,25 +124,34 @@ cpu_fork(p1, p2)
 #ifdef STACKCHECKS
 	int loop;
 	u_char *ptr;
-#endif
+#endif	/* STACKCHECKS */
 
 #ifdef DEBUG_VMMACHDEP        
 	if (pmap_debug_level >= 0)
 		printf("cpu_fork: %08x %08x %08x %08x\n", (u_int)p1, (u_int)p2,
 		   (u_int) curproc, (u_int)&proc0);
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 
 #if 0	/* XXX */
 	/* Sync the pcb */
 	savectx(curpcb);
 #endif
 
+	{
+		pt_entry_t *pte;
+
+/*		pte = pmap_pte(kernel_pmap, (vm_offset_t)p2->p_addr);
+		*pte = (*pte) & ~(PT_B);*/
+		pte = pmap_pte(kernel_pmap, (vm_offset_t)p2->p_addr + NBPG);
+		*pte = (*pte) & ~(PT_C);
+	}
+
 	/* Copy the pcb */
 	*pcb = p1->p_addr->u_pcb;
 
 	/* 
 	 * Set up the undefined stack for the process.
-	 * Note: this stack is not in use if we are forking
+	 * Note: this stack is not in use if we are forking from p1
 	 */
 	pcb->pcb_und_sp = (u_int)p2->p_addr + USPACE_UNDEF_STACK_TOP;
 	pcb->pcb_sp = (u_int)p2->p_addr + USPACE_SVC_STACK_TOP;
@@ -159,7 +168,7 @@ cpu_fork(p1, p2)
 	ptr = ((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM;
 	for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM); ++loop, ++ptr)
 		*ptr = 0xdd;
-#endif
+#endif	/* STACKCHECKS */
 
 /* Now ...
  * vm_fork has allocated UPAGES in kernel Vm space for us. p2->p_addr
@@ -181,7 +190,7 @@ cpu_fork(p1, p2)
 		printf("p2->procaddr=%08x p2->procaddr->u_pcb=%08x pid=%d pmap=%08x\n",
 		    (u_int)p2->p_addr, (u_int)&p2->p_addr->u_pcb, p2->p_pid, (u_int)&p2->p_vmspace->vm_pmap);
 	}
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 
 /* ream out old pagetables */
 
@@ -201,7 +210,7 @@ cpu_fork(p1, p2)
 		printf("p2->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p2->p_vmspace->vm_pmap.pm_pdir[0]);
 		printf("p2->pm_vptpt[0] = %08x", *((int *)(p2->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 
 /* Nuke the exising mapping */
 
@@ -223,7 +232,7 @@ cpu_fork(p1, p2)
 	if (pmap_debug_level >= 0) {
 		printf("vm_map_pageable: addr=%08x\n", (u_int)addr);
 	}
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 
 	if (vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE) != 0) {
 		panic("Failed to fault in system page PT\n");
@@ -235,7 +244,7 @@ cpu_fork(p1, p2)
 		printf("p2->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p2->p_vmspace->vm_pmap.pm_pdir[0]);
 		printf("p2->pm_vptpt[0] = %08x", *((int *)(p2->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 
 	/* Map the system page */
 
@@ -248,7 +257,7 @@ cpu_fork(p1, p2)
 	/* Initialise a new FP context for p2 and copy the context from p1 */
 	arm_fpe_core_initcontext(FP_CONTEXT(p2));
 	arm_fpe_copycontext(FP_CONTEXT(p1), FP_CONTEXT(p2));
-#endif
+#endif	/* ARMFPE */
 
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_sp - 1;
 
@@ -291,7 +300,7 @@ cpu_exit(p)
 	/* Abort any active FP operation and deactivate the context */
 	arm_fpe_core_abort(FP_CONTEXT(p), NULL, NULL);
 	arm_fpe_core_changecontext(0);
-#endif
+#endif	/* ARMFPE */
 
 #ifdef STACKCHECKS
 	/* Report how much stack has been used - debugging */
@@ -310,7 +319,7 @@ cpu_exit(p)
 		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
 
 	}
-#endif
+#endif	/* STACKCHECKS */
 
 	cnt.v_swtch++;
 	switch_exit(p, &proc0);
@@ -326,7 +335,7 @@ cpu_swapin(p)
 #ifdef DEBUG_VMMACHDEP
 	if (pmap_debug_level >= 0)
 		printf("cpu_swapin(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 
 #ifdef FREESWAPPEDPAGEDIRS
 	printf("cpu_swapin(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
@@ -334,7 +343,7 @@ cpu_swapin(p)
 		printf("pdir = %08x\n", (u_int)p->p_vmspace->vm_pmap.pm_pdir);
 	pmap_pinit(&p->p_vmspace->vm_pmap);
 	pmap_debug_level = 10;
-#endif
+#endif	/* FREESWAPPEDPAGEDIRS */
 
 /* Get the address of the page table containing 0x00000000 */
 
@@ -346,7 +355,7 @@ cpu_swapin(p)
 		printf("p->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p->p_vmspace->vm_pmap.pm_pdir[0]);
 		printf("p->pm_vptpt[0] = %08x", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 
 	/* Wire down a page to cover the page table zero page and the start of the user are in */
 
@@ -358,7 +367,7 @@ cpu_swapin(p)
 		printf("p->p_vmspace->vm_pmap.pm_pdir[0] = %08x\n", p->p_vmspace->vm_pmap.pm_pdir[0]);
 		printf("p->pm_vptpt[0] = %08x", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 
 /* Map the system page */
 
@@ -376,7 +385,7 @@ cpu_swapout(p)
 		printf("cpu_swapout(%08x, %d, %s, %08x)\n", (u_int)p, p->p_pid, p->p_comm, (u_int)&p->p_vmspace->vm_pmap);
 		printf("p->pm_vptpt[0] = %08x", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)));
 	}
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 
 	/* Free the system page mapping */
 
@@ -387,7 +396,7 @@ cpu_swapout(p)
 	printf("p->pm_vptpt[0] = %08x pdir=%08x\n", *((int *)(p->p_vmspace->vm_pmap.pm_vptpt + 0)), (u_int)p->p_vmspace->vm_pmap.pm_pdir);
 	pmap_freepagedir(&p->p_vmspace->vm_pmap);
 	p->p_vmspace->vm_pmap.pm_pdir = 0;
-#endif
+#endif	/* FREESWAPPEDPAGEDIRS */
 }
 
 
@@ -411,7 +420,7 @@ pagemove(from, to, size)
 	if (pmap_debug_level >= 0)
 		printf("pagemove: V%08x to %08x size %08x\n", (u_int)from,
 		    (u_int)to, size);
-#endif
+#endif	/* DEBUG_VMMACHDEP */
 	fpte = vtopte(from);
 	tpte = vtopte(to);
 
