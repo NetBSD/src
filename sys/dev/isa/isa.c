@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.25 1993/07/07 06:52:39 cgd Exp $
+ *	$Id: isa.c,v 1.26 1993/07/11 14:03:54 mycroft Exp $
  */
 
 /*
@@ -108,11 +108,8 @@ isa_configure() {
 		;
 	for (dvp = isa_devtab_null; config_isadev(dvp, (u_int *) NULL); dvp++)
 		;
-#include "sl.h"
-#if NSL > 0
-	netmask |= ttymask;
-	ttymask |= netmask;
-#endif
+
+	impmask = ttymask | netmask;
 
 	/* and the problem is... if netmask == 0, then the loopback
 	 * code can do some really ugly things.
@@ -124,7 +121,8 @@ isa_configure() {
 		netmask = 0x8000;	/* same as for softclock.  XXX */
 
 	/* biomask |= ttymask ;  can some tty devices use buffers? */
-	printf("biomask %x ttymask %x netmask %x\n", biomask, ttymask, netmask);
+	printf("biomask %x ttymask %x netmask %x impmask %x\n",
+	       biomask, ttymask, netmask, impmask);
 	splnone();
 }
 

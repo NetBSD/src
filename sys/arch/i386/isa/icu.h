@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.h	5.6 (Berkeley) 5/9/91
- *	$Id: icu.h,v 1.4 1993/06/27 05:42:45 andrew Exp $
+ *	$Id: icu.h,v 1.5 1993/07/11 14:03:51 mycroft Exp $
  */
 
 /*
@@ -59,7 +59,8 @@ extern	unsigned cpl;		/* current priority level mask */
 extern	unsigned highmask;	/* group of interrupts masked with splhigh() */
 extern	unsigned ttymask;	/* group of interrupts masked with spltty() */
 extern	unsigned biomask;	/* group of interrupts masked with splbio() */
-extern	unsigned netmask;	/* group of interrupts masked with splimp() */
+extern	unsigned netmask;	/* group of interrupts masked with splnet() */
+extern	unsigned impmask;	/* group of interrupts masked with splimp() */
 
 #define	INTREN(s)	(imen &= ~(s), SET_ICUS())
 #define	INTRDIS(s)	(imen |= (s), SET_ICUS())
