@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.67 2000/05/26 21:20:31 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.68 2000/05/27 01:43:27 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -123,9 +123,10 @@ uiomove(buf, n, uio)
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
-	struct proc *p = uio->uio_procp;
 
 #ifdef DIAGNOSTIC
+	struct proc *p = uio->uio_procp;
+
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 		panic("uiomove: mode");
 	if (uio->uio_segflg == UIO_USERSPACE && p != curproc)
