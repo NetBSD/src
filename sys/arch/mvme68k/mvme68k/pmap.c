@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2001/07/07 07:51:39 scw Exp $        */
+/*	$NetBSD: pmap.c,v 1.64 2001/07/18 17:18:53 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -145,7 +145,6 @@
 
 #include <machine/cpu.h>
 #include <m68k/cacheops.h>
-
 
 #ifdef DEBUG
 #define PDB_FOLLOW	0x0001
@@ -2419,7 +2418,11 @@ pmap_enter_ptpage(pmap, va)
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
 #endif
-			pmap_changebit((paddr_t)pmap->pm_stpa, PG_CI, ~PG_CCB);
+			{
+				if (pmap_changebit((paddr_t)pmap->pm_stpa,
+				    PG_CI, ~PG_CCB))
+					DCIS();
+			}
 			pmap->pm_stfree = protostfree;
 		}
 #endif
@@ -2560,7 +2563,8 @@ pmap_enter_ptpage(pmap, va)
 			       pmap == pmap_kernel() ? "Kernel" : "User",
 			       va, ptpa, pte, *pte);
 #endif
-		pmap_changebit(ptpa, PG_CI, ~PG_CCB);
+		if (pmap_changebit(ptpa, PG_CI, ~PG_CCB))
+			DCIS();
 	}
 #endif
 	/*
@@ -2619,7 +2623,6 @@ pmap_enter_ptpage(pmap, va)
 		    ("enter: stab %p refcnt %d\n",
 		    pmap->pm_stab, pmap->pm_sref));
 	}
-#if 0
 	/*
 	 * Flush stale TLB info.
 	 */
@@ -2627,7 +2630,6 @@ pmap_enter_ptpage(pmap, va)
 		TBIAS();
 	else
 		TBIAU();
-#endif
 	pmap->pm_ptpages++;
 	splx(s);
 }
@@ -2688,27 +2690,12 @@ _pmap_set_page_cacheable(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
-	pt_entry_t *pte;
 
 	if (!pmap_ste_v(pm, va))
 		return;
 
-	pte = pmap_pte(pm, va);
-
-	if ( pmap_pte_ci(pte) ) {
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-		if (mmutype == MMU_68040)
-#endif
-		{
-			paddr_t pa = pmap_pte_pa(pte);
-			DCFP(pa);
-			ICPP(pa);
-		}
-#endif
-		*pte &= ~PG_CI;
-		TBIS(va);
-	}
+	if (pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CCB, ~PG_CI))
+		DCIS();
 }
 
 void
@@ -2716,27 +2703,12 @@ _pmap_set_page_cacheinhibit(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
-	pt_entry_t *pte;
 
 	if (!pmap_ste_v(pm, va))
 		return;
 
-	pte = pmap_pte(pm, va);
-
-	if ( ! pmap_pte_ci(pte) ) {
-#if defined(M68040) || defined(M68060)
-#if defined(M68020) || defined(M68030)
-		if (mmutype == MMU_68040)
-#endif
-		{
-			paddr_t pa = pmap_pte_pa(pte);
-			DCFP(pa);
-			ICPP(pa);
-		}
-#endif
-		*pte |= PG_CI;
-		TBIS(va);
-	}
+	if (pmap_changebit(pmap_pte_pa(pmap_pte(pm, va)), PG_CI, ~PG_CCB))
+		DCIS();
 }
 
 int
@@ -2744,17 +2716,11 @@ _pmap_page_is_cacheable(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
-	pt_entry_t *pte;
 
 	if (!pmap_ste_v(pm, va))
 		return (0);
 
-	pte = pmap_pte(pm, va);
-
-	if (pmap_pte_ci(pte))
-		return (0);
-	else
-		return (1);
+	return ((pmap_pte_ci(pmap_pte(pm, va)) == 0) ? 1 : 0);
 }
 
 #ifdef DEBUG
