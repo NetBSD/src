@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.30 2004/03/18 15:24:19 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.31 2004/03/21 13:57:58 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.30 2004/03/18 15:24:19 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.31 2004/03/21 13:57:58 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -97,6 +97,7 @@ static char	*opf_getbootargs(void);
 static int	opf_finddevice(char *);
 static int	opf_instance_to_package(int);
 static char	*opf_nextprop(int, char *);
+static void	opf_interpret_simple(char *);
 
 
 /*
@@ -708,7 +709,8 @@ obp_v2_getbootargs()
 }
 
 /*
- * Static storage shared by parse_bootfile() and getbootfile().
+ * Static storage shared by prom_getbootfile(), prom_getbootargs() and
+ * prom_getbootpath().
  * Overwritten on each call!
  */
 static	char storage[128];
@@ -834,8 +836,8 @@ static char *
 opf_getbootpath()
 {
 	int node = findchosen();
-	char *buf = NULL;
-	int blen = 0;
+	char *buf = storage;
+	int blen = sizeof storage;
 
 	if (prom_getprop(node, "bootpath", 1, &blen, &buf) != 0)
 		return ("");
@@ -847,8 +849,8 @@ static char *
 opf_getbootargs()
 {
 	int node = findchosen();
-	char *buf = NULL;
-	int blen = 0;
+	char *buf = storage;
+	int blen = sizeof storage;
 
 	if (prom_getprop(node, "bootargs", 1, &blen, &buf) != 0)
 		return ("");
@@ -860,8 +862,8 @@ static char *
 opf_getbootfile()
 {
 	int node = findchosen();
-	char *buf = NULL;
-	int blen = 0;
+	char *buf = storage;
+	int blen = sizeof storage;
 
 	if (prom_getprop(node, "bootargs", 1, &blen, &buf) != 0)
 		return ("");
@@ -878,6 +880,12 @@ opf_nextprop(node, prop)
 	static char buf[OF_NEXTPROP_BUF_SIZE];
 	OF_nextprop(node, prop, buf);
 	return (buf);
+}
+
+void
+opf_interpret_simple(char *s)
+{
+	(void)OF_interpret(s, 0, 0);
 }
 
 /*
@@ -932,7 +940,7 @@ prom_makememarr(ap, max, which)
 				break;
 			}
 			ap->zero = 0;
-			ap->addr = (u_int)mp->addr;
+			ap->addr = (u_long)mp->addr;
 			ap->len = mp->nbytes;
 			ap++;
 		}
@@ -992,20 +1000,25 @@ prom_getidprom(void)
 {
 	int node, len;
 	u_long h;
-	u_char *src, *dst;
+	u_char *dst;
 
 	if (idprom.id_format != 0)
 		/* Already got it */
 		return (&idprom);
 
+	dst = (char *)&idprom;
+	len = sizeof(struct idprom);
+
 	switch (prom_version()) {
 	case PROM_OLDMON:
-		len = sizeof(struct idprom);
-		src = (char *)AC_IDPROM;
-		dst = (char *)&idprom;
-		do {
-			*dst++ = lduba(src++, ASI_CONTROL);
-		} while (--len > 0);
+#ifdef AC_IDPROM
+		{
+			u_char *src = (char *)AC_IDPROM;
+			do {
+				*dst++ = lduba(src++, ASI_CONTROL);
+			} while (--len > 0);
+		}
+#endif
 		break;
 
 	/*
@@ -1015,8 +1028,6 @@ prom_getidprom(void)
 	case PROM_OBP_V2:
 	case PROM_OPENFIRM:
 	case PROM_OBP_V3:
-		dst = (char *)&idprom;
-		len = sizeof(struct idprom);
 		node = prom_findroot();
 		if (prom_getprop(node, "idprom", 1, &len, &dst) != 0) {
 			printf("`idprom' property cannot be read: "
@@ -1026,7 +1037,7 @@ prom_getidprom(void)
 	}
 
 	/* Establish hostid */
-	h =  idprom.id_machine << 24;
+	h =  (u_int)idprom.id_machine << 24;
 	h |= idprom.id_hostid[0] << 16;
 	h |= idprom.id_hostid[1] << 8;
 	h |= idprom.id_hostid[2];
@@ -1244,7 +1255,7 @@ prom_init_opf()
 	promops.po_halt = OF_exit;
 	promops.po_reboot = OF_boot;
 	promops.po_abort = OF_enter;
-	promops.po_interpret = OF_interpret;
+	promops.po_interpret = opf_interpret_simple;
 	promops.po_setcallback = (void *)OF_set_callback;
 	promops.po_ticks = OF_milliseconds;
 
