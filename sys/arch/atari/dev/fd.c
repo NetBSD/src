@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.23 1996/10/13 04:10:54 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.24 1996/11/06 14:03:15 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -167,18 +167,22 @@ struct fd_types {
 	int		nsectors;	/* sectors per track		*/
 	int		nblocks;	/* number of blocks		*/
 	int		density;	/* density code			*/
+	const char	*descr;		/* type description		*/
 } fdtypes[NR_TYPES] = {
-		{ 1,  9,  720 , FLP_DD },	/* 360  Kb	*/
-		{ 2,  9, 1440 , FLP_DD },	/* 720  Kb	*/
-		{ 2, 18, 2880 , FLP_HD },	/* 1.44 Mb	*/
+		{ 1,  9,  720 , FLP_DD , "360KB" },	/* 360  Kb	*/
+		{ 2,  9, 1440 , FLP_DD , "720KB" },	/* 720  Kb	*/
+		{ 2, 18, 2880 , FLP_HD , "1.44MB" },	/* 1.44 Mb	*/
 };
+
+#define	FLP_DEFTYPE	1		/* 720Kb, reasonable default	*/
+#define	FLP_TYPE(dev)	( DISKPART(dev) == 0 ? FLP_DEFTYPE : DISKPART(dev) - 1 )
 
 typedef void	(*FPV) __P((void *));
 
 /*
  * {b,c}devsw[] function prototypes
  */
-dev_type_open(Fdopen);
+dev_type_open(fdopen);
 dev_type_close(fdclose);
 dev_type_read(fdread);
 dev_type_write(fdwrite);
@@ -306,12 +310,16 @@ fdcprint(auxp, pnp)
 void	*auxp;
 const char	*pnp;
 {
+	if (pnp != NULL)
+		printf("fd%d at %s:", (int)auxp, pnp);
+	
 	return(UNCONF);
 }
 
 static int	fdmatch __P((struct device *, void *, void *));
 static void	fdattach __P((struct device *, struct device *, void *));
-	   void fdstrategy __P((struct buf *));
+
+       void	fdstrategy __P((struct buf *));
 struct dkdriver fddkdriver = { fdstrategy };
 
 struct cfattach fd_ca = {
@@ -336,10 +344,13 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	struct fd_softc	*sc;
+	struct fd_types *type = &fdtypes[FLP_DEFTYPE]; /* XXX: switches??? */
 
 	sc = (struct fd_softc *)dp;
 
-	printf("\n");
+	printf(": %s %d cyl, %d head, %d sec\n", type->descr,
+		type->nblocks / (type->nsectors * type->nheads), type->nheads,
+		type->nsectors);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -374,7 +385,7 @@ struct proc	*p;
 			((struct partinfo *)addr)->disklab =
 				sc->dkdev.dk_label;
 			((struct partinfo *)addr)->part =
-			      &sc->dkdev.dk_label->d_partitions[DISKPART(dev)];
+			      &sc->dkdev.dk_label->d_partitions[RAW_PART];
 			return(0);
 #ifdef notyet /* XXX LWP */
 		case DIOCSRETRIES:
@@ -396,7 +407,7 @@ struct proc	*p;
  *	partition 1: 780Kb
  */
 int
-Fdopen(dev, flags, devtype, proc)
+fdopen(dev, flags, devtype, proc)
 dev_t		dev;
 int		flags, devtype;
 struct proc	*proc;
@@ -405,10 +416,10 @@ struct proc	*proc;
 	int		sps;
 
 #ifdef FLP_DEBUG
-	printf("Fdopen dev=0x%x\n", dev);
+	printf("fdopen dev=0x%x\n", dev);
 #endif
 
-	if(DISKPART(dev) >= NR_TYPES)
+	if(FLP_TYPE(dev) >= NR_TYPES)
 		return(ENXIO);
 
 	if((sc = getsoftc(fd_cd, DISKUNIT(dev))) == NULL)
@@ -421,7 +432,7 @@ struct proc	*proc;
 	if(!nopens) {
 
 #ifdef FLP_DEBUG
-		printf("Fdopen device not yet open\n");
+		printf("fdopen device not yet open\n");
 #endif
 		nopens++;
 		write_fdreg(FDC_CS, IRUPT);
@@ -433,23 +444,25 @@ struct proc	*proc;
 	 */
 	sps = splbio();
 	while(sc->flags & FLPF_INOPEN)
-		tsleep((caddr_t)sc, PRIBIO, "Fdopen", 0);
+		tsleep((caddr_t)sc, PRIBIO, "fdopen", 0);
 	splx(sps);
 
 	if(!(sc->flags & FLPF_ISOPEN)) {
 		/*
 		 * Initialise some driver values.
 		 */
-		int	part = DISKPART(dev);
+		int	type;
 		void	*addr;
+
+		type = FLP_TYPE(dev);
 
 		sc->bufq.b_actf = NULL;
 		sc->unit        = DISKUNIT(dev);
-		sc->part        = part;
-		sc->nheads	= fdtypes[part].nheads;
-		sc->nsectors	= fdtypes[part].nsectors;
-		sc->nblocks     = fdtypes[part].nblocks;
-		sc->density	= fdtypes[part].density;
+		sc->part        = RAW_PART;
+		sc->nheads	= fdtypes[type].nheads;
+		sc->nsectors	= fdtypes[type].nsectors;
+		sc->nblocks     = fdtypes[type].nblocks;
+		sc->density	= fdtypes[type].density;
 		sc->curtrk	= INV_TRK;
 		sc->sector	= 0;
 		sc->errcnt	= 0;
@@ -465,7 +478,7 @@ struct proc	*proc;
 		st_dmagrab((dma_farg)fdcint, (dma_farg)fdstatus, sc,
 								&lock_stat, 0);
 		while(sc->flags & FLPF_GETSTAT)
-			tsleep((caddr_t)sc, PRIBIO, "Fdopen", 0);
+			tsleep((caddr_t)sc, PRIBIO, "fdopen", 0);
 		splx(sps);
 		wakeup((caddr_t)sc);
 
@@ -485,12 +498,12 @@ struct proc	*proc;
 		 * Multiply opens are granted when accessing the same type of
 		 * floppy (eq. the same partition).
 		 */
-		if(sc->part != DISKPART(dev))
+		if(sc->density != fdtypes[DISKPART(dev)].density)
 			return(ENXIO);	/* XXX temporarely out of business */
 	}
 	fdgetdisklabel(sc, dev);
 #ifdef FLP_DEBUG
-	printf("Fdopen open succeeded on type %d\n", sc->part);
+	printf("fdopen open succeeded on type %d\n", sc->part);
 #endif
 	return (0);
 }
@@ -520,12 +533,12 @@ struct buf	*bp;
 {
 	struct fd_softc	 *sc;
 	struct disklabel *lp;
-	int		 sps;
+	int		 sps, sz;
 
 	sc = getsoftc(fd_cd, DISKUNIT(bp->b_dev));
 
 #ifdef FLP_DEBUG
-	printf("fdstrategy: 0x%x\n", bp);
+	printf("fdstrategy: %p, b_bcount: %ld\n", bp, bp->b_bcount);
 #endif
 
 	/*
@@ -536,11 +549,28 @@ struct buf	*bp;
 		bp->b_error = EIO;
 		goto bad;
 	}
-	if (bounds_check_with_label(bp, lp, 0) <= 0)
-		goto done;
-
+	if (bp->b_blkno < 0 || (bp->b_bcount % SECTOR_SIZE)) {
+		bp->b_error = EINVAL;
+		goto bad;
+	}
 	if (bp->b_bcount == 0)
 		goto done;
+
+	sz = howmany(bp->b_bcount, SECTOR_SIZE);
+
+	if (bp->b_blkno + sz > sc->nblocks) {
+		sz = sc->nblocks - bp->b_blkno;
+		if (sz == 0) /* Exactly at EndOfDisk */
+			goto done;
+		if (sz < 0) { /* Past EndOfDisk */
+			bp->b_error = EINVAL;
+			goto bad;
+		}
+		/* Trucate it */
+		if (bp->b_flags & B_RAW)
+			bp->b_bcount = sz << DEV_BSHIFT;
+		else bp->b_bcount = sz * lp->d_secsize;
+	}
 
 	/*
 	 * queue the buf and kick the low level code
@@ -678,7 +708,7 @@ register struct fd_softc	*sc;
 		splx(sps);
 
 #ifdef FLP_DEBUG
-		printf("fddone: unit: %d, buf: %x, resid: %d\n",sc->unit,bp,
+		printf("fddone: unit: %d, buf: %p, resid: %d\n",sc->unit,bp,
 								sc->io_bytes);
 #endif
 		bp->b_resid = sc->io_bytes;
@@ -869,7 +899,7 @@ struct fd_softc	*sc;
 	st_dmaaddr_set((caddr_t)phys_addr);	/* DMA address setup */
 
 #ifdef FLP_DEBUG
-	printf("fd_xfer:Start io (io_addr:%x)\n", kvtop(sc->io_data));
+	printf("fd_xfer:Start io (io_addr:%lx)\n", (u_long)kvtop(sc->io_data));
 #endif
 
 	if(sc->io_dir == B_READ) {
@@ -1158,13 +1188,13 @@ struct buf	*bp;
 	tsz  = sc->nsectors * sc->nheads * SECTOR_SIZE;
 
 #ifdef FLP_DEBUG
-	printf("fdminphys: before %d", bp->b_bcount);
+	printf("fdminphys: before %ld", bp->b_bcount);
 #endif
 
 	bp->b_bcount = min(bp->b_bcount, tsz - toff);
 
 #ifdef FLP_DEBUG
-	printf(" after %d\n", bp->b_bcount);
+	printf(" after %ld\n", bp->b_bcount);
 #endif
 
 	minphys(bp);
@@ -1256,7 +1286,7 @@ dev_t			dev;
 	printf("fdgetdisklabel()\n");
 #endif
 
-	part = DISKPART(dev);
+	part = RAW_PART;
 	lp   = sc->dkdev.dk_label;
 	bzero(lp, sizeof(struct disklabel));
 
