@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.39 2000/12/30 14:32:04 sommerfeld Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.40 2001/01/01 15:27:31 sommerfeld Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -48,11 +48,11 @@ SUBDIR_${targ} += .WAIT
 .else
 .PHONY: ${targ}-${dir}
 ${targ}-${dir}: .MAKE __recurse
-SUBDIR_${targ} += ${targ}-${dir}
+subdir-${targ}: ${targ}-${dir}
 .endif
 .endfor
 .if defined(__REALSUBDIR)
-${targ}: ${SUBDIR_${targ}}
+${targ}: subdir-${targ}
 .endif
 .endfor
 
