@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.21 1998/05/22 21:14:40 thorpej Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.22 1999/04/13 18:50:52 ad Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21 1998/05/22 21:14:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.22 1999/04/13 18:50:52 ad Exp $");
 
 
 #include <sys/types.h>
@@ -69,11 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21 1998/05/22 21:14:40 thorpej Exp $")
 #include "cfb.h"
 #include "mfb.h"
 #include "sfb.h"
-
-#ifdef notyet
 #include "px.h"
-#include "pxg.h"
-#endif
 
 /*
  * Tables for table-driven TC and console configuration.
@@ -83,6 +79,8 @@ struct tcfbsw {
 	const char fbsw_name[TC_ROM_LLEN+1];
 	int (*fbsw_initfn) __P((struct fbinfo*, char*, int, int));
 };
+
+extern int px_init __P((struct fbinfo*, char*, int, int));
 
 #define tcfbsw_entry(tcname, initfn) { tcname, initfn }
 
@@ -101,15 +99,12 @@ const struct tcfbsw tcfbsw[] = {
 #endif
 
 #if NPX > 0
-  tcfbsw_entry("PMAG-CA", pxinit),
-  tcfbsw_entry("PMAG-C ", pxinit),
-#endif
-
-#if NPXG > 0
-  tcfbsw_entry("PMAG-DA", pxginit),
-  tcfbsw_entry("PMAG-E ", pxginit),
-  tcfbsw_entry("PMAG-F ", pxginit),
-  tcfbsw_entry("PMAG-FA", pxginit),
+  tcfbsw_entry("PMAG-CA ", px_init),
+  tcfbsw_entry("PMAG-DA ", px_init),
+  tcfbsw_entry("PMAG-E  ", px_init),	/* ??? */
+  tcfbsw_entry("PMAG-EA ", px_init),
+  tcfbsw_entry("PMAG-F  ", px_init),	/* ??? */
+  tcfbsw_entry("PMAG-FA ", px_init),	
 #endif
 };
 const int ntcfbsw = sizeof(tcfbsw) / sizeof(tcfbsw[0]);
