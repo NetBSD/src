@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.5 2001/02/02 03:07:29 thorpej Exp $	*/
+/*	$NetBSD: pvr.c,v 1.6 2001/02/19 21:37:31 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.5 2001/02/02 03:07:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.6 2001/02/19 21:37:31 marcus Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,6 +105,7 @@ struct fb_devconfig {
 	vaddr_t	dc_videobase;		/* base of flat frame buffer */
 	int	dc_blanked;		/* currently has video disabled */
 	int	dc_dispflags;		/* display flags */
+	int	dc_tvsystem;		/* TV broadcast system */
 
 	struct rasops_info rinfo;
 };
@@ -245,6 +246,8 @@ pvr_attach(struct device *parent, struct device *self, void *aux)
 	struct pvr_softc *sc = (void *) self;
 	struct wsemuldisplaydev_attach_args waa;
 	int console;
+	static const char *tvsystem_name[4] =
+		{ "NTSC", "PAL", "PAL-M", "PAL-N" };
 
 	console = pvr_is_console;
 	if (console) {
@@ -257,8 +260,8 @@ pvr_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf(": %d x %d, %dbpp, %s, %s\n", sc->sc_dc->dc_wid,
 	    sc->sc_dc->dc_ht, sc->sc_dc->dc_depth,
-							/* XXX PAL? */
-	    (sc->sc_dc->dc_dispflags & PVR_VGAMODE) ? "VGA" : "NTSC",
+	    (sc->sc_dc->dc_dispflags & PVR_VGAMODE) ? "VGA" :
+	       tvsystem_name[sc->sc_dc->dc_tvsystem],
 	    (sc->sc_dc->dc_dispflags & PVR_RGBMODE) ? "RGB" : "composite");
 
 	/* XXX Colormap initialization? */
@@ -383,15 +386,25 @@ pvr_check_cable(struct fb_devconfig *dc)
 		dc->dc_dispflags |= PVR_RGBMODE;
 }
 
+static void
+pvr_check_tvsys(struct fb_devconfig *dc)
+{
+	/* XXX should use flashmem device when one exists */
+	dc->dc_tvsystem = (*(__volatile u_int8_t *)0xa021a004) & 3;
+}
+
 void
 pvrinit(struct fb_devconfig *dc)
 {
 	__volatile u_int32_t *pvr = (__volatile u_int32_t *)
 	    SH3_PHYS_TO_P2SEG(0x005f8000);
 	int display_lines_per_field = 240;
-	int modulo = 1, voffset;
+	int v_absolute_size = 524;
+	int h_absolute_size = 857;
+	int modulo = 1, voffset, hoffset = 164, border = (126 << 16) | 837;
 
 	pvr_check_cable(dc);
+	pvr_check_tvsys(dc);
 
 	pvr[8/4] = 0;		/* reset */
 	pvr[0x40/4] = 0;	/* black border */
@@ -402,8 +415,16 @@ pvrinit(struct fb_devconfig *dc)
 		display_lines_per_field = 480;
 		voffset = 36;
 	} else {
+		if(dc->dc_tvsystem & 1) {
+			/* 50 Hz */
+			v_absolute_size = 624;
+			h_absolute_size = 863;
+			hoffset = 174;
+			border = (116 << 16) | 843;
+		}
 		pvr[0x44/4] = 0x000004;	/* 15kHz, RGB565 */
-		pvr[0xd0/4] = 0x110;	/* video output, NTSC, interlace */
+		/* video output, PAL/NTSC, interlace */
+		pvr[0xd0/4] = 0x110|(dc->dc_tvsystem<<6);
 		modulo += 640 * 2 / 4;	/* interlace -> skip every other line */
 		voffset = 18;
 	}
@@ -418,9 +439,9 @@ pvrinit(struct fb_devconfig *dc)
 
 	pvr[0xf0/4] = voffset;				/* V start */
 	pvr[0xdc/4] = voffset + display_lines_per_field;/* V border */
-	pvr[0xec/4] = 164;				/* H start */
-	pvr[0xd8/4] = (524 << 16) | 857;		/* HV counter */
-	pvr[0xd4/4] = (126 << 16) | 837;		/* H border */
+	pvr[0xec/4] = hoffset;				/* H start */
+	pvr[0xd8/4] = (v_absolute_size<<16) | h_absolute_size; /* HV counter */
+	pvr[0xd4/4] = border;				/* H border */
 	pvr[0xe8/4] = 22 << 16;
 
 	/* RGB / composite */
