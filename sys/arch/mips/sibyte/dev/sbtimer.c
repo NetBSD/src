@@ -1,4 +1,4 @@
-/* $NetBSD: sbtimer.c,v 1.6 2002/10/01 02:54:12 thorpej Exp $ */
+/* $NetBSD: sbtimer.c,v 1.7 2002/10/02 15:52:26 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -60,7 +60,7 @@ static int	sbtimer_match(struct device *, struct cfdata *, void *);
 static void	sbtimer_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sbtimer, sizeof(struct sbtimer_softc),
-    sbtimer_match, sbtimer_attach, NULL, NULL)
+    sbtimer_match, sbtimer_attach, NULL, NULL);
 
 static void	sbtimer_clockintr(void *arg, uint32_t status, uint32_t pc);
 static void	sbtimer_statclockintr(void *arg, uint32_t status,
