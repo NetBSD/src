@@ -1,14 +1,14 @@
-/*	$NetBSD: miidevs.h,v 1.4 1999/02/05 20:20:04 thorpej Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.5 1999/03/24 21:07:26 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.4 1999/02/05 20:19:44 thorpej Exp 
+ *	NetBSD: miidevs,v 1.5 1999/03/24 21:07:04 thorpej Exp 
  */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,6 +56,7 @@
 #define	MII_OUI_NATSEMI	0x080017	/* National Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_SEEQ	0x0005be	/* Seeq */
+#define	MII_OUI_SIS	0x000760	/* Silicon Integrated Systems */
 #define	MII_OUI_TI	0x100014	/* Texas Instruments */
 
 /*
@@ -97,6 +98,10 @@
 #define	MII_STR_SEEQ_80220	"Seeq 80220 10/100 media interface"
 #define	MII_MODEL_SEEQ_84220	0x0004
 #define	MII_STR_SEEQ_84220	"Seeq 84220 10/100 media interface"
+
+/* Silicon Integrated Systems PHYs */
+#define	MII_MODEL_SIS_900	0x0000
+#define	MII_STR_SIS_900	"SiS 900 10/100 media interface"
 
 /* Texas Instruments PHYs */
 #define	MII_MODEL_TI_TLAN10T	0x0001
