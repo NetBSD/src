@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 2003/08/07 16:28:55 agc Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 2003/10/27 16:48:08 cl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14 2003/08/07 16:28:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.15 2003/10/27 16:48:08 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14 2003/08/07 16:28:55 agc Exp $");
 
 static unsigned short nextstep_checksum __P((unsigned char *,
 			unsigned char *));
-static char * parse_nextstep_label __P((struct nextstep_disklabel *, 
+static char * parse_nextstep_label __P((struct next68k_disklabel *, 
 			struct disklabel *, struct cpu_disklabel *));
-static int build_nextstep_label __P((struct nextstep_disklabel *, 
+static int build_nextstep_label __P((struct next68k_disklabel *, 
 			struct disklabel *, struct cpu_disklabel *));
 
 static unsigned short
@@ -77,17 +77,17 @@ nextstep_checksum(buf, limit)
 
 static char *
 parse_nextstep_label(ondisk, lp, osdep)
-	struct nextstep_disklabel *ondisk;
+	struct next68k_disklabel *ondisk;
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 	int i, t, nbp;
 	unsigned short *checksum;
 
-	if (ondisk->cd_version == CD_V3) {
-		checksum = &ondisk->cd_v3_checksum;
+	if (ondisk->cd_version == NEXT68K_LABEL_CD_V3) {
+		checksum = &ondisk->NEXT68K_LABEL_cd_v3_checksum;
 	} else {
-		checksum = &ondisk->cd_checksum;
+		checksum = &ondisk->NEXT68K_LABEL_cd_checksum;
 	}
 	if (nextstep_checksum ((unsigned char *)ondisk,
 			       (unsigned char *)checksum) != *checksum) {
@@ -120,7 +120,7 @@ parse_nextstep_label(ondisk, lp, osdep)
 	lp->d_sbsize = SBLOCKSIZE;
 
 	lp->d_npartitions = nbp = 0;
-	for (i = 0; i < CPUMAXPARTITIONS - 1; i++) {
+	for (i = 0; i < NEXT68K_LABEL_MAXPARTITIONS - 1; i++) {
 		if (ondisk->cd_partitions[i].cp_size > 0) {
 			lp->d_partitions[nbp].p_size =
 				ondisk->cd_partitions[i].cp_size *
@@ -137,7 +137,7 @@ parse_nextstep_label(ondisk, lp, osdep)
 #else
 			for (t = 0; t < FSMAXTYPES; t++) {
 				if (!strncmp (ondisk->cd_partitions[i].cp_type,
-					      fstypenames[t], MAXFSTLEN))
+					fstypenames[t], NEXT68K_LABEL_MAXFSTLEN))
 					break;
 			}
 			if (t == FSMAXTYPES)
@@ -172,16 +172,16 @@ parse_nextstep_label(ondisk, lp, osdep)
 
 static int
 build_nextstep_label(ondisk, lp, osdep)
-	struct nextstep_disklabel *ondisk;
+	struct next68k_disklabel *ondisk;
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
 	int i, t, nbp;
-	int front_porch = DEFAULTFRONTPORCH;
+	int front_porch = NEXT68K_LABEL_DEFAULTFRONTPORCH;
 	unsigned short *checksum;
 
 	if (osdep->od_version == 0) {
-		osdep->od_version = CD_V3;
+		osdep->od_version = NEXT68K_LABEL_CD_V3;
 
 		memset (ondisk, 0, sizeof (ondisk));
 
@@ -231,7 +231,7 @@ build_nextstep_label(ondisk, lp, osdep)
 		if (nbp != RAW_PART && lp->d_partitions[nbp].p_offset > 0 &&
 		    lp->d_partitions[nbp].p_offset < front_porch)
 			front_porch = lp->d_partitions[nbp].p_offset;
-		for (t = 0; t < CPUMAXPARTITIONS; t++) {
+		for (t = 0; t < NEXT68K_LABEL_MAXPARTITIONS; t++) {
 			if (t != (nbp > RAW_PART ? nbp-1 : nbp) &&
 			    (lp->d_partitions[nbp].p_size ==
 			     ondisk->cd_partitions[t].cp_size *
@@ -242,12 +242,17 @@ build_nextstep_label(ondisk, lp, osdep)
 			     (ondisk->cd_secsize / lp->d_secsize)) &&
 			    ((lp->d_partitions[nbp].p_fstype == FS_OTHER) ||
 			     (!strncmp (ondisk->cd_partitions[t].cp_type,
-					fstypenames[lp->d_partitions[nbp].p_fstype], MAXFSTLEN))))
+				 fstypenames[lp->d_partitions[nbp].p_fstype], 
+				 NEXT68K_LABEL_MAXFSTLEN))))
 			{
-				struct cpu_partition tmp;
-				memcpy (&tmp, &ondisk->cd_partitions[t], sizeof (tmp));
-				memcpy (&ondisk->cd_partitions[t], &ondisk->cd_partitions[nbp > RAW_PART ? nbp-1 : nbp], sizeof (tmp));
-				memcpy (&ondisk->cd_partitions[nbp > RAW_PART ? nbp-1 : nbp], &tmp, sizeof (tmp));
+				struct next68k_partition tmp;
+				memcpy (&tmp, &ondisk->cd_partitions[t], 
+				    sizeof (tmp));
+				memcpy (&ondisk->cd_partitions[t], 
+				    &ondisk->cd_partitions[nbp > RAW_PART ? nbp-1 : nbp],
+				    sizeof (tmp));
+				memcpy (&ondisk->cd_partitions[nbp > RAW_PART ? nbp-1 : nbp],
+				    &tmp, sizeof (tmp));
 			}
 		}
 	}
@@ -257,8 +262,8 @@ build_nextstep_label(ondisk, lp, osdep)
 	 * update partitions
 	 */
 	nbp = 0;
-	for (i = 0; i < CPUMAXPARTITIONS; i++) {
-		struct cpu_partition *p = &ondisk->cd_partitions[i];
+	for (i = 0; i < NEXT68K_LABEL_MAXPARTITIONS; i++) {
+		struct next68k_partition *p = &ondisk->cd_partitions[i];
 		if (nbp < lp->d_npartitions && lp->d_partitions[nbp].p_size) {
 			p->cp_size = lp->d_partitions[nbp].p_size /
 				(ondisk->cd_secsize / lp->d_secsize);
@@ -269,9 +274,10 @@ build_nextstep_label(ondisk, lp, osdep)
 				* lp->d_partitions[nbp].p_fsize;
 			p->cp_fsize = lp->d_partitions[nbp].p_fsize;
 			if (lp->d_partitions[nbp].p_fstype != FS_OTHER) {
-				memset (p->cp_type, 0, MAXFSTLEN);
+				memset (p->cp_type, 0, NEXT68K_LABEL_MAXFSTLEN);
 				strncpy (p->cp_type,
-					 fstypenames[lp->d_partitions[nbp].p_fstype], MAXFSTLEN);
+				    fstypenames[lp->d_partitions[nbp].p_fstype],
+				    NEXT68K_LABEL_MAXFSTLEN);
 			}
 			if (p->cp_density < 0)
 				p->cp_density = 4096; /* set some default */
@@ -293,15 +299,15 @@ build_nextstep_label(ondisk, lp, osdep)
 	}
 
 	ondisk->cd_front = front_porch;
-	ondisk->cd_boot_blkno[0] = DEFAULTBOOT0_1 /
+	ondisk->cd_boot_blkno[0] = NEXT68K_LABEL_DEFAULTBOOT0_1 /
 				(ondisk->cd_secsize / lp->d_secsize);
-	ondisk->cd_boot_blkno[1] = DEFAULTBOOT0_2 /
+	ondisk->cd_boot_blkno[1] = NEXT68K_LABEL_DEFAULTBOOT0_2 /
 				(ondisk->cd_secsize / lp->d_secsize);
 
-	if (ondisk->cd_version == CD_V3) {
-		checksum = &ondisk->cd_v3_checksum;
+	if (ondisk->cd_version == NEXT68K_LABEL_CD_V3) {
+		checksum = &ondisk->NEXT68K_LABEL_cd_v3_checksum;
 	} else {
-		checksum = &ondisk->cd_checksum;
+		checksum = &ondisk->NEXT68K_LABEL_cd_checksum;
 	}
 	*checksum = nextstep_checksum ((unsigned char *)ondisk,
 				       (unsigned char *)checksum);
@@ -355,9 +361,9 @@ readdisklabel(dev, strat, lp, osdep)
 
 	if (biowait(bp))
 		msg = "I/O error";
-	else if (IS_DISKLABEL ((struct nextstep_disklabel *)bp->b_data))
+	else if (IS_DISKLABEL ((struct next68k_disklabel *)bp->b_data))
 		msg = parse_nextstep_label
-			((struct nextstep_disklabel *)bp->b_data, lp, osdep);
+			((struct next68k_disklabel *)bp->b_data, lp, osdep);
 	else {
 		if (osdep &&
 		    ((struct disklabel *)bp->b_data)->d_magic == DISKMAGIC)
@@ -459,7 +465,7 @@ writedisklabel(dev, strat, lp, osdep)
 		if (error)
 			goto done;
 		error = build_nextstep_label 
-			((struct nextstep_disklabel *)bp->b_data, lp, osdep);
+			((struct next68k_disklabel *)bp->b_data, lp, osdep);
 		if (error)
 			goto done;
 		bp->b_flags &= ~(B_READ|B_DONE);
