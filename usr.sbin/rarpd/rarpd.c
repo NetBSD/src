@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.34 1999/09/26 10:40:32 kleink Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.35 2000/02/07 01:15:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.34 1999/09/26 10:40:32 kleink Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.35 2000/02/07 01:15:52 nathanw Exp $");
 #endif
 
 
@@ -243,7 +243,7 @@ init_all()
 {
 	char inbuf[8192*2];
 	struct ifconf ifc;
-	struct ifreq ifreq, *ifr;
+	struct ifreq ifreq, ifrd, *ifr, *ifrp;
 	int fd;
 	int i, len;
 
@@ -259,11 +259,13 @@ init_all()
 		rarperr(FATAL, "init_all: SIOCGIFCONF: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	ifr = ifc.ifc_req;
+	ifr = &ifrd;
+	ifrp = ifc.ifc_req;
 	ifreq.ifr_name[0] = '\0';
 	for (i = 0; i < ifc.ifc_len;
-	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
+	     i += len, ifrp = (struct ifreq *)((caddr_t)ifrp + len)) {
 #define SIN(s)	((struct sockaddr_in *) (s))
+		memcpy(&ifrd, ifrp, sizeof (ifrd));
 		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
 		if (ifr->ifr_addr.sa_family != AF_INET)
 			continue;
