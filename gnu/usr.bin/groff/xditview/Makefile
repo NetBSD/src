@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/25 10:12:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2000/09/23 13:53:42 simonb Exp $
 
 .if exists(/usr/X11)
 XINCDIR=	/usr/X11/include
@@ -28,7 +28,7 @@ LDADD+=		-L$(XLIBDIR) -lXaw -lXmu -lXt -lXext -lX11 -lm
 DPADD+=		$(LIBM)
 
 afterinstall:
-		${INSTALL} -c -o $(BINOWN) -g $(BINGRP) -m 444 \
+		${INSTALL} ${COPY} -o $(BINOWN) -g $(BINGRP) -m 444 \
 			$(.CURDIR)/GXditview.ad \
 			$(DESTDIR)$(XLIBDIR)/X11/app-defaults/GXditview
 .endif
