@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.597 2003/12/06 11:19:17 jdolecek Exp $
+$NetBSD: pcidevs,v 1.598 2003/12/08 11:06:36 scw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1725,6 +1725,7 @@ product INTERGRAPH 4D50T	0x00e4	Powerstorm 4D50T
 
 /* Intersil products */
 product INTERSIL MINI_PCI_WLAN	0x3873	Intersil PRISM2.5 Mini-PCI WLAN
+product INTERSIL MINI_PCI_P54	0x3890	Intersil PRISM-54 Mini-PCI WLAN
 
 /* Invertex */
 product INVERTEX AEON		0x0005	AEON
