@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.8 1994/10/26 08:46:16 cgd Exp $	*/
+/*	$NetBSD: scsi.c,v 1.9 1994/11/29 03:43:52 briggs Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -46,9 +46,9 @@ static int pdebug=0;
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
-#include "../scsi/scsi_all.h"
-#include "../scsi/scsi_debug.h"
-#include "../scsi/scsiconf.h"
+#include <scsi/scsi_all.h>
+#include <scsi/scsi_debug.h>
+#include <scsi/scsiconf.h>
 
 #include "scsi_defs.h"
 #define PAD(n)	u_char	n[15]
