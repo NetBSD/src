@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.7.2.2 2000/09/06 20:31:43 soren Exp $
+# $NetBSD: obsolete.mi,v 1.7.2.3 2001/04/25 14:13:07 he Exp $
 /usr/share/doc/xntp
 /usr/share/doc/smm/03.fsck/0.t
 /usr/share/doc/smm/03.fsck/1.t
@@ -14,7 +14,9 @@
 /usr/share/doc/usd/13.viref/merge.awk
 /usr/share/doc/usd/13.viref/spell.ok
 /usr/share/examples/supfiles/skarven.itea.unit.no
+/usr/share/examples/sup/sup.de.netbsd.org
 /usr/share/examples/supfiles/sup.no.netbsd.org
+/usr/share/examples/supfiles/ftp.cs.umn.edu
 /usr/share/doc/smm/09.sendmail/Makefile
 /usr/share/doc/smm/09.sendmail/intro.me
 /usr/share/misc/sendmail.hf
