@@ -1,13 +1,8 @@
-/*	$NetBSD: ioctl.h,v 1.20 1996/01/30 18:21:47 thorpej Exp $	*/
+/*	$NetBSD: dkio.h,v 1.1 1996/01/30 18:21:48 thorpej Exp $	*/
 
-/*-
- * Copyright (c) 1982, 1986, 1990, 1993, 1994
+/*
+ * Copyright (c) 1987, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,53 +31,32 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)ioctl.h	8.6 (Berkeley) 3/28/94
  */
 
-#ifndef	_SYS_IOCTL_H_
-#define	_SYS_IOCTL_H_
-
-#include <sys/ttycom.h>
-
-/*
- * Pun for SunOS prior to 3.2.  SunOS 3.2 and later support TIOCGWINSZ
- * and TIOCSWINSZ (yes, even 3.2-3.5, the fact that it wasn't documented
- * nonwithstanding).
- */
-struct ttysize {
-	unsigned short	ts_lines;
-	unsigned short	ts_cols;
-	unsigned short	ts_xxx;
-	unsigned short	ts_yyy;
-};
-#define	TIOCGSIZE	TIOCGWINSZ
-#define	TIOCSSIZE	TIOCSWINSZ
+#ifndef _SYS_DKIO_H_
+#define _SYS_DKIO_H_
 
 #include <sys/ioccom.h>
 
-#include <sys/dkio.h>
-#include <sys/filio.h>
-#include <sys/sockio.h>
-
-#ifndef _KERNEL
-
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-int	ioctl __P((int, unsigned long, ...));
-__END_DECLS
-#endif /* !_KERNEL */
-#endif /* !_SYS_IOCTL_H_ */
-
 /*
- * Keep outside _SYS_IOCTL_H_
- * Compatability with old terminal driver
- *
- * Source level -> #define USE_OLD_TTY
- * Kernel level -> options COMPAT_43 or COMPAT_SUNOS or ...
+ * Disk-specific ioctls.
  */
-#if defined(USE_OLD_TTY) || defined(COMPAT_43) || defined(COMPAT_SUNOS) || \
-    defined(COMPAT_SVR4) || defined(COMPAT_FREEBSD)
-#include <sys/ioctl_compat.h>
-#endif
+		/* get and set disklabel; DIOCGPART used internally */
+#define DIOCGDINFO	_IOR('d', 101, struct disklabel)/* get */
+#define DIOCSDINFO	_IOW('d', 102, struct disklabel)/* set */
+#define DIOCWDINFO	_IOW('d', 103, struct disklabel)/* set, update disk */
+#define DIOCGPART	_IOW('d', 104, struct partinfo)	/* get partition */
+
+/* do format operation, read or write */
+#define DIOCRFORMAT	_IOWR('d', 105, struct format_op)
+#define DIOCWFORMAT	_IOWR('d', 106, struct format_op)
+
+#define DIOCSSTEP	_IOW('d', 107, int)	/* set step rate */
+#define DIOCSRETRIES	_IOW('d', 108, int)	/* set # of retries */
+#define DIOCWLABEL	_IOW('d', 109, int)	/* write en/disable label */
+
+#define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
+#define DIOCEJECT	_IO('d', 112)		/* eject removable disk */
+#define DIOCLOCK	_IOW('d', 113, int)	/* lock/unlock pack */
+
+#endif /* _SYS_DKIO_H_ */
