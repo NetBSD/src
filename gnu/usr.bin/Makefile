@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.32 1996/01/24 21:48:03 briggs Exp $
+#	$NetBSD: Makefile,v 1.33 1996/02/11 11:53:22 leo Exp $
 
 SUBDIR+=	bc cpio dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
 
 .if	(${MACHINE_ARCH} == "i386") || (${MACHINE_ARCH} == "ns32k") || \
 	(${MACHINE_ARCH} == "vax") || (${MACHINE} == "amiga") || \
-	(${MACHINE} == "hp300") || (${MACHINE} == "mac68k")
+	(${MACHINE} == "hp300") || (${MACHINE} == "mac68k") || \
+	(${MACHINE} == "atari")
 SUBDIR+=        gas gcc gdb ld
 .elif	(${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "sparc")
 SUBDIR+=	gas gcc2 gdb ld
