@@ -1,4 +1,4 @@
-.\"	$NetBSD: getaddrinfo.3,v 1.26 2002/05/10 22:26:59 kleink Exp $
+.\"	$NetBSD: getaddrinfo.3,v 1.27 2002/05/14 13:50:21 kleink Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -34,7 +34,7 @@
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
 .\"
-.Dd May 25, 1995
+.Dd May 14, 2002
 .Dt GETADDRINFO 3
 .Os
 .\"
@@ -73,13 +73,13 @@ structure is defined as a result of including the
 .Aq Pa netdb.h
 header:
 .Bd -literal -offset
-struct addrinfo {                                                  *
-     int     ai_flags;     /* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
-     int     ai_family;    /* PF_xxx */
-     int     ai_socktype;  /* SOCK_xxx */
-     int     ai_protocol;  /* 0 or IPPROTO_xxx for IPv4 and IPv6 */
-     size_t  ai_addrlen;   /* length of ai_addr */
-     char   *ai_canonname; /* canonical name for nodename */
+struct addrinfo {
+     int       ai_flags;     /* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
+     int       ai_family;    /* PF_xxx */
+     int       ai_socktype;  /* SOCK_xxx */
+     int       ai_protocol;  /* 0 or IPPROTO_xxx for IPv4 and IPv6 */
+     socklen_t ai_addrlen;   /* length of ai_addr */
+     char *    ai_canonname; /* canonical name for nodename */
      struct sockaddr  *ai_addr; /* binary address */
      struct addrinfo  *ai_next; /* next structure in linked list */
 };
