@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.677 2004/06/22 14:17:07 itojun Exp $
+#	$NetBSD: files,v 1.678 2004/07/01 12:44:26 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -21,6 +21,7 @@ defflag				KTRACE
 defflag				SYSTRACE
 defparam			MAXUPRC
 defparam			RTC_OFFSET
+defparam			HZ
 defparam			DEFCORENAME
 defflag	opt_pipe.h		PIPE_SOCKETPAIR PIPE_NODIRECT
 
