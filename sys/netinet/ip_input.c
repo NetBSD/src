@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.181 2003/11/11 20:25:26 jonathan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.182 2003/11/12 15:00:05 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.181 2003/11/11 20:25:26 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.182 2003/11/12 15:00:05 itojun Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -2059,10 +2059,10 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPCTL_CHECKINTERFACE:
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 		    &ip_checkinterface));
+
 	case IPCTL_IFQ:
-		return (sysctl_ifq(name+1, namelen-1,
-				  oldp, oldlenp, newp, newlen,
-				  &ipintrq));
+		return (sysctl_ifq(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen, &ipintrq));
 
 	default:
 		return (EOPNOTSUPP);
