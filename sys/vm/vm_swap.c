@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.25 1997/06/05 01:52:31 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.26 1997/06/05 09:47:56 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -292,6 +292,7 @@ restart:
 		if (spp->spi_swapdev.cqh_first != (void *)&spp->spi_swapdev)
 			continue;
 		LIST_REMOVE(spp, spi_swappri);
+		free((caddr_t)spp, M_VMSWAP);
 		goto restart;
 	}
 	_swaplist_unlock();
