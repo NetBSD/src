@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 2000/04/24 14:45:30 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.10 2000/05/08 17:06:48 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -123,6 +123,8 @@ autoconf()
 	case VAX_BTYP_650:
 	case VAX_BTYP_660:
 	case VAX_BTYP_670:
+	case VAX_BTYP_680:
+	case VAX_BTYP_53:
 		nuba = 1;
 		nuda = 2;
 		ubaaddr = uba630;
