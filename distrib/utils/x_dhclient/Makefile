@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/04/06 04:09:55 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2001/04/06 18:53:33 mellon Exp $
 
 PROG=	dhclient
 MKMAN=	no
@@ -12,9 +12,9 @@ RSRCDIR= ${.CURDIR}/../../../usr.sbin/dhcp
 
 SRCS=	dhclient.c clparse.c
 
-.include "Src-dst"
-DSTOBJS+= ${DSTSRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
-SRCS+= ${DSTSRCS}
+#.include "Src-dst"
+#DSTOBJS+= ${DSTSRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
+#SRCS+= ${DSTSRCS}
 
 .include "Src-omapip"
 OMOBJS+= ${OMSRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
