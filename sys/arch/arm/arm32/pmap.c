@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2002/03/05 04:19:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 2002/03/05 04:48:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2002/03/05 04:19:59 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2002/03/05 04:48:03 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -278,7 +278,6 @@ vsize_t npages;
 static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t, boolean_t));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t, boolean_t));
 __inline static void pmap_clearbit __P((struct vm_page *, unsigned int));
-__inline static boolean_t pmap_testbit __P((struct vm_page *, unsigned int));
 
 extern paddr_t physical_start;
 extern paddr_t physical_freestart;
@@ -3148,27 +3147,6 @@ pmap_dump_pvlist(phys, m)
 
 #endif	/* PMAP_DEBUG */
 
-__inline static boolean_t
-pmap_testbit(pg, setbits)
-	struct vm_page *pg;
-	unsigned int setbits;
-{
-
-	PDEBUG(1, printf("pmap_testbit: pa=%08lx set=%08x\n",
-	    VM_PAGE_TO_PHYS(pg), setbits));
-
-	/*
-	 * Check saved info only
-	 */
-	if (pg->mdpage.pvh_attrs & setbits) {
-		PDEBUG(0, printf("pmap_attributes = %02x\n",
-		    pg->mdpage.pvh_attrs));
-		return(TRUE);
-	}
-
-	return(FALSE);
-}
-
 static pt_entry_t *
 pmap_map_ptes(struct pmap *pmap)
 {
@@ -3319,31 +3297,50 @@ pmap_clearbit(pg, maskbits)
 	PMAP_HEAD_TO_MAP_UNLOCK();
 }
 
-
+/*
+ * pmap_clear_modify:
+ *
+ *	Clear the "modified" attribute for a page.
+ */
 boolean_t
 pmap_clear_modify(pg)
 	struct vm_page *pg;
 {
 	boolean_t rv;
 
-	PDEBUG(0, printf("pmap_clear_modify pa=%08lx\n", VM_PAGE_TO_PHYS(pg)));
-	rv = pmap_testbit(pg, PT_M);
-	pmap_clearbit(pg, PT_M);
-	return rv;
+	if (pg->mdpage.pvh_attrs & PT_M) {
+		rv = TRUE;
+		pmap_clearbit(pg, PT_M);
+	} else
+		rv = FALSE;
+
+	PDEBUG(0, printf("pmap_clear_modify pa=%08lx -> %d\n",
+	    VM_PAGE_TO_PHYS(pg), rv));
+
+	return (rv);
 }
 
-
+/*
+ * pmap_clear_reference:
+ *
+ *	Clear the "referenced" attribute for a page.
+ */
 boolean_t
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
 	boolean_t rv;
 
-	PDEBUG(0, printf("pmap_clear_reference pa=%08lx\n",
-	    VM_PAGE_TO_PHYS(pg)));
-	rv = pmap_testbit(pg, PT_H);
-	pmap_clearbit(pg, PT_H);
-	return rv;
+	if (pg->mdpage.pvh_attrs & PT_H) {
+		rv = TRUE;
+		pmap_clearbit(pg, PT_H);
+	} else
+		rv = FALSE;
+
+	PDEBUG(0, printf("pmap_clear_reference pa=%08lx -> %d\n",
+	    VM_PAGE_TO_PHYS(pg), rv));
+
+	return (rv);
 }
 
 
@@ -3355,32 +3352,19 @@ pmap_copy_on_write(pg)
 	pmap_clearbit(pg, PT_Wr);
 }
 
+/*
+ * pmap_is_modified:
+ *
+ *	Test if a page has the "modified" attribute.
+ */
+/* See <arm/arm32/pmap.h> */
 
-boolean_t
-pmap_is_modified(pg)
-	struct vm_page *pg;
-{
-	boolean_t result;
-    
-	result = pmap_testbit(pg, PT_M);
-	PDEBUG(1, printf("pmap_is_modified pa=%08lx %x\n",
-	    VM_PAGE_TO_PHYS(pg), result));
-	return (result);
-}
-
-
-boolean_t
-pmap_is_referenced(pg)
-	struct vm_page *pg;
-{
-	boolean_t result;
-	
-	result = pmap_testbit(pg, PT_H);
-	PDEBUG(0, printf("pmap_is_referenced pa=%08lx %x\n",
-	    VM_PAGE_TO_PHYS(pg), result));
-	return (result);
-}
-
+/*
+ * pmap_is_referenced:
+ *
+ *	Test if a page has the "referenced" attribute.
+ */
+/* See <arm/arm32/pmap.h> */
 
 int
 pmap_modified_emulation(pmap, va)
