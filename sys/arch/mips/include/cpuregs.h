@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.63 2003/09/28 08:16:51 tsutsui Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.64 2003/09/28 08:43:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,8 @@
 #define	MIPS_PHYS_TO_KSEG0(x)	((unsigned)(x) | MIPS_KSEG0_START)
 #define	MIPS_KSEG1_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
 #define	MIPS_PHYS_TO_KSEG1(x)	((unsigned)(x) | MIPS_KSEG1_START)
+#define	MIPS_KSEG2_TO_PHYS(x)	((unsigned)(x) & MIPS_PHYS_MASK)
+#define	MIPS_PHYS_TO_KSEG2(x)	((unsigned)(x) | MIPS_KSEG2_START)
 
 /* Map virtual address to index in mips3 r4k virtually-indexed cache */
 #define	MIPS3_VA_TO_CINDEX(x) \
@@ -362,6 +364,35 @@
 
 /* Master-Checker Mode - 1: enabled */
 #define	MIPS3_CONFIG_CM		0x80000000
+
+/*
+ * The bits in the MIPS4 config register.
+ */
+
+/* kseg0 coherency algorithm - see MIPS3_TLB_ATTR values */
+#define	MIPS4_CONFIG_K0_MASK	MIPS3_CONFIG_K0_MASK
+#define	MIPS4_CONFIG_DN_MASK	0x00000018	/* Device number */
+#define	MIPS4_CONFIG_CT		0x00000020	/* CohPrcReqTar */
+#define	MIPS4_CONFIG_PE		0x00000040	/* PreElmReq */
+#define	MIPS4_CONFIG_PM_MASK	0x00000180	/* PreReqMax */
+#define	MIPS4_CONFIG_EC_MASK	0x00001e00	/* SysClkDiv */
+#define	MIPS4_CONFIG_SB		0x00002000	/* SCBlkSize */
+#define	MIPS4_CONFIG_SK		0x00004000	/* SCColEn */
+#define	MIPS4_CONFIG_BE		0x00008000	/* MemEnd */
+#define	MIPS4_CONFIG_SS_MASK	0x00070000	/* SCSize */
+#define	MIPS4_CONFIG_SC_MASK	0x00380000	/* SCClkDiv */
+#define	MIPS4_CONFIG_RESERVED	0x03c00000	/* Reserved wired 0 */
+#define	MIPS4_CONFIG_DC_MASK	0x1c000000	/* Primary D-Cache size */
+#define	MIPS4_CONFIG_IC_MASK	0xe0000000	/* Primary I-Cache size */
+
+#define	MIPS4_CONFIG_DC_SHIFT	26
+#define	MIPS4_CONFIG_IC_SHIFT	29
+
+#define	MIPS4_CONFIG_CACHE_SIZE(config, mask, base, shift)		\
+	((base) << (((config) & (mask)) >> (shift)))
+
+#define	MIPS4_CONFIG_CACHE_L2_LSIZE(config)				\
+	(((config) & MIPS4_CONFIG_SB) ? 128 : 64)
 
 /*
  * Location of exception vectors.
