@@ -11,7 +11,7 @@
  *
  *	-d			- debug
  *	-v			- verbose
- *	-A <kernel>		- specify symbol kernel (default="/386bsd")
+ *	-A <kernel>		- specify symbol kernel (default="/netbsd")
  *	-e <entry>		- entry point (default="xxxinit")
  *	-p <postinstall>	- postinstall script or executable
  *	-o <output file>	- output file (default=<input file>-".o")
@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: modload.c,v 1.2 1993/06/07 23:10:34 cgd Exp $
+ *	$Id: modload.c,v 1.3 1993/11/23 04:43:06 cgd Exp $
  */
 
 #define printf I_HATE_ANSI
@@ -126,7 +126,7 @@ char		*object;
 		break;
 	case 1:				/* uninformitive error*/
 		/*
-		 * Someone needs to fix the return values from the 386BSD
+		 * Someone needs to fix the return values from the NetBSD
 		 * ld program -- it's totally uninformative.
 		 *
 		 * No such file		(4 on SunOS)
