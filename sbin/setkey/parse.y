@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.13 2003/09/07 22:20:05 itojun Exp $	*/
+/*	$NetBSD: parse.y,v 1.14 2003/09/12 07:45:21 itojun Exp $	*/
 /*	$KAME: parse.y,v 1.80 2003/06/27 07:15:45 itojun Exp $	*/
 
 /*
@@ -72,6 +72,9 @@ void free_buffer __P((void));
 int setkeymsg0 __P((struct sadb_msg *, unsigned int, unsigned int, size_t));
 static int setkeymsg_spdaddr __P((unsigned int, unsigned int, vchar_t *,
 	struct addrinfo *, int, struct addrinfo *, int));
+#ifdef SADB_X_EXT_TAG
+static int setkeymsg_spdaddr_tag __P((unsigned int, char *, vchar_t *));
+#endif
 static int setkeymsg_addr __P((unsigned int, unsigned int,
 	struct addrinfo *, struct addrinfo *, int));
 static int setkeymsg_add __P((unsigned int, unsigned int,
@@ -106,6 +109,7 @@ extern void yyerror __P((const char *));
 %token SPDADD SPDDELETE SPDDUMP SPDFLUSH
 %token F_POLICY PL_REQUESTS
 %token F_AIFLAGS
+%token TAGGED
 
 %type <num> prefix protocol_spec upper_spec
 %type <num> ALG_ENC ALG_ENC_DESDERIV ALG_ENC_DES32IV ALG_ENC_OLD ALG_ENC_NOKEY
@@ -502,6 +506,19 @@ spdadd_command
 			if (status < 0)
 				return -1;
 		}
+	|	SPDADD TAGGED QUOTEDSTRING policy_spec EOT
+		{
+#ifdef SADB_X_EXT_TAG
+			int status;
+
+			status = setkeymsg_spdaddr_tag(SADB_X_SPDADD,
+			    $3.buf, &$4);
+			if (status < 0)
+				return -1;
+#else
+			return -1;
+#endif
+		}
 	;
 
 spddelete_command
@@ -797,6 +814,48 @@ setkeymsg_spdaddr(type, upper, policy, srcs, splen, dsts, dplen)
 	else
 		return 0;
 }
+
+#ifdef SADB_X_EXT_TAG
+static int
+setkeymsg_spdaddr_tag(type, tag, policy)
+	unsigned int type;
+	char *tag;
+	vchar_t *policy;
+{
+	struct sadb_msg *msg;
+	char buf[BUFSIZ];
+	int l, l0;
+	struct sadb_x_tag m_tag;
+	int n;
+
+	msg = (struct sadb_msg *)buf;
+
+	/* fix up length afterwards */
+	setkeymsg0(msg, type, SADB_SATYPE_UNSPEC, 0);
+	l = sizeof(struct sadb_msg);
+
+	memcpy(buf + l, policy->buf, policy->len);
+	l += policy->len;
+
+	l0 = l;
+	n = 0;
+
+	memset(&m_tag, 0, sizeof(m_tag));
+	m_tag.sadb_x_tag_len = PFKEY_UNIT64(sizeof(m_tag));
+	m_tag.sadb_x_tag_exttype = SADB_X_EXT_TAG;
+	if (strlcpy(m_tag.sadb_x_tag_name, tag,
+	    sizeof(m_tag.sadb_x_tag_name)) >= sizeof(m_tag.sadb_x_tag_name))
+		return -1;
+	memcpy(buf + l, &m_tag, sizeof(m_tag));
+	l += sizeof(m_tag);
+
+	msg->sadb_msg_len = PFKEY_UNIT64(l);
+
+	sendkeymsg(buf, l);
+
+	return 0;
+}
+#endif
 
 /* XXX NO BUFFER OVERRUN CHECK! BAD BAD! */
 static int
