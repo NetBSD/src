@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)psl.h	7.2 (Berkeley) 5/4/91
- *	$Id: psl.h,v 1.1 1994/08/02 20:20:47 ragge Exp $
+ *	$Id: psl.h,v 1.2 1994/10/08 15:43:57 ragge Exp $
  */
 
 #ifndef PSL_C
@@ -46,7 +46,7 @@
 #define	PSL_V		0x00000002	/* overflow bit */
 #define	PSL_Z		0x00000004     	/* zero bit */
 #define	PSL_N		0x00000008     	/* negative bit */
-#define	PSL_ALLCC	0x0000000F	/* all cc bits - unlikely */
+/* #define	PSL_ALLCC	0x0000000F	/* all cc bits - unlikely */
 #define	PSL_T		0x00000010      /* trace enable bit */
 #define	PSL_IPL00	0x00000000	/* interrupt priority level 0 */
 #define	PSL_IPL01	0x00010000	/* interrupt priority level 1 */
