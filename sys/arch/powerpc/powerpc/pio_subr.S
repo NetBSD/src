@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.2 2003/03/16 06:52:39 matt Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.3 2003/04/30 19:14:44 scw Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -614,39 +614,137 @@ ENTRY_NOPROFILE(bsrm8rb)
 
 /* LINTSTUB: Func: void bswr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t c); */
 /* LINTSTUB: Func: void bswr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr1rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t c); */
-/* LINTSTUB: Func: void bswr1rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int8_t *a, size_t c); */
 ENTRY_NOPROFILE(bswr1_s)
-ENTRY_NOPROFILE(bswr1rb_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,1		/* distance between dst bytes */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbswr1_enter
 ENTRY_NOPROFILE(bswr1)
-ENTRY_NOPROFILE(bswr1rb)
-	trap
+	li	8,1		/* distance between dst bytes */
+.Lbswr1_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-1		/* pre-decrement */
+	sub	3,3,8
+1:	lbzu	0,1(6)		/* load and increment */
+	stbux	0,3,8		/* store and add distance */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bswr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c); */
 /* LINTSTUB: Func: void bswr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c); */
+ENTRY_NOPROFILE(bswr2_s)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,2		/* distance between dst halfwords */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbswr2_enter
+ENTRY_NOPROFILE(bswr2)
+	li	8,2		/* distance between dst halfwords */
+.Lbswr2_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	slwi	7,7,1		/* len *= 2 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-2		/* pre-decrement */
+	sub	3,3,8
+1:	lhzu	0,2(6)		/* load and increment */
+	sthux	0,3,8		/* store and add distance */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
+
 /* LINTSTUB: Func: void bswr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c); */
 /* LINTSTUB: Func: void bswr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int16_t *a, size_t c); */
-ENTRY_NOPROFILE(bswr2_s)
 ENTRY_NOPROFILE(bswr2rb_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
-ENTRY_NOPROFILE(bswr2)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,2		/* distance between dst halfwords */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbswr2rb_enter
 ENTRY_NOPROFILE(bswr2rb)
-	trap
+	li	8,2		/* distance between dst halfwords */
+.Lbswr2rb_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	slwi	7,7,1		/* len *= 2 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-2		/* pre-decrement */
+1:	lbzu	0,2(6)		/* load and increment */
+	sthbrx	0,0,3		/* store (reversed)
+	add	3,3,8		/* dst += distance */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bswr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c); */
 /* LINTSTUB: Func: void bswr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c); */
+ENTRY_NOPROFILE(bswr4_s)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,4		/* distance between dst halfwords */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbswr4_enter
+ENTRY_NOPROFILE(bswr4)
+	li	8,4		/* distance between dst halfwords */
+.Lbswr4_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	slwi	7,7,2		/* len *= 4 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-4		/* pre-decrement */
+	sub	3,3,8
+1:	lwzu	0,4(6)		/* load and increment */
+	stwux	0,3,8		/* store and add distance */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
+
 /* LINTSTUB: Func: void bswr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c); */
 /* LINTSTUB: Func: void bswr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int32_t *a, size_t c); */
-ENTRY_NOPROFILE(bswr4_s)
 ENTRY_NOPROFILE(bswr4rb_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
-ENTRY_NOPROFILE(bswr4)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,4		/* distance between dst halfwords */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbswr4rb_enter
 ENTRY_NOPROFILE(bswr4rb)
-	trap
+	li	8,4		/* distance between dst halfwords */
+.Lbswr4rb_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	slwi	7,7,2		/* len *= 4 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-4		/* pre-decrement */
+1:	lwzu	0,4(6)		/* load and increment */
+	stwbrx	0,0,3		/* store (reversed)
+	add	3,3,8		/* dst += distance */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bswr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_t c); */
 /* LINTSTUB: Func: void bswr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, const u_int64_t *a, size_t c); */
@@ -662,39 +760,138 @@ ENTRY_NOPROFILE(bswr8rb)
 
 /* LINTSTUB: Func: void bsrr1_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c); */
 /* LINTSTUB: Func: void bsrr1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr1rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c); */
-/* LINTSTUB: Func: void bsrr1rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int8_t *a, size_t c); */
 ENTRY_NOPROFILE(bsrr1_s)
-ENTRY_NOPROFILE(bsrr1rb_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,1		/* distance between src bytes */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbsrr1_enter
 ENTRY_NOPROFILE(bsrr1)
-ENTRY_NOPROFILE(bsrr1rb)
-	trap
+	li	8,1		/* distance between src bytes */
+.Lbsrr1_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-1		/* pre-decrement */
+	sub	3,3,8
+1:	lbzux	0,3,8		/* load value and add distance */
+	stbu	0,1(6)		/* store and increment */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bsrr2_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c); */
 /* LINTSTUB: Func: void bsrr2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c); */
+ENTRY_NOPROFILE(bsrr2_s)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,2		/* distance between src halfwords */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbsrr2_enter
+ENTRY_NOPROFILE(bsrr2)
+	li	8,2		/* distance between src halfwords */
+.Lbsrr2_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	slwi	7,7,1		/* len *= 2 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-2		/* pre-decrement */
+	sub	3,3,8
+1:	lhzux	0,3,8		/* load value and add distance */
+	sthu	0,2(6)		/* store and increment */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
+
 /* LINTSTUB: Func: void bsrr2rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c); */
 /* LINTSTUB: Func: void bsrr2rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int16_t *a, size_t c); */
-ENTRY_NOPROFILE(bsrr2_s)
 ENTRY_NOPROFILE(bsrr2rb_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
-ENTRY_NOPROFILE(bsrr2)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,2		/* distance between source halfwords */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbsrr2rb_enter
 ENTRY_NOPROFILE(bsrr2rb)
-	trap
+	li	8,2		/* distance between source halfwords */
+.Lbsrr2rb_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	slwi	7,7,1		/* len *= 2 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-2		/* pre-decrement */
+1:	lhbrx	0,0,3		/* load value (reversed) */
+	add	3,3,8		/* src += distance */
+	sthu	0,2(6)		/* store and increment */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bsrr4_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c); */
 /* LINTSTUB: Func: void bsrr4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c); */
+ENTRY_NOPROFILE(bsrr4_s)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,4		/* distance between src words */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbsrr4_enter
+ENTRY_NOPROFILE(bsrr4)
+	li	8,4		/* distance between src words */
+.Lbsrr4_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	slwi	7,7,2		/* len *= 4 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-4		/* pre-decrement */
+	sub	3,3,8
+1:	lwzux	0,3,8		/* load value and add distance */
+	stwu	0,4(6)		/* store and increment */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
+
 /* LINTSTUB: Func: void bsrr4rb_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c); */
 /* LINTSTUB: Func: void bsrr4rb(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int32_t *a, size_t c); */
-ENTRY_NOPROFILE(bsrr4_s)
 ENTRY_NOPROFILE(bsrr4rb_s)
-	lwz	0,0(3)
-	rotlw	5,5,0
-ENTRY_NOPROFILE(bsrr4)
+	lwz	0,0(3)		/* get log2(stride) */
+	li	8,4		/* distance between src words */
+	rotlw	5,5,0		/* shift offset */
+	rotlw	8,8,0		/* shift distance */
+	b	.Lbsrr4rb_enter
 ENTRY_NOPROFILE(bsrr4rb)
-	trap
+	li	8,4		/* distance between src words */
+.Lbsrr4rb_enter:
+	add	3,4,5		/* add offset to handle & place in argument 0 */
+	mr	4,6		/* move addr to argument 1 register */
+	cmpwi	7,0		/* len == 0? */
+	beqlr-			/*   return if len == 0 */
+	addi	7,7,-1		/* len -= 1 */
+	slwi	7,7,2		/* len *= 4 */
+	add	7,7,6		/* len += src */
+	addi	6,6,-4		/* pre-decrement */
+1:	lwbrx	0,0,3		/* load value (reversed) */
+	add	3,3,8		/* src += distance */
+	sthu	0,4(6)		/* store and increment */
+	cmpl	0,6,7		/* at the end? */
+	bne+	1b		/*   nope, do another pass */
+	eieio			/* memory barrier (reorder protection) */
+	DBGSYNC			/* force exceptions */
+	blr			/* return */
 
 /* LINTSTUB: Func: void bsrr8_s(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c); */
 /* LINTSTUB: Func: void bsrr8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, u_int64_t *a, size_t c); */
