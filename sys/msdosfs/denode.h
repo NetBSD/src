@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: denode.h,v 1.1 1993/08/13 11:35:31 cgd Exp $
+ *	$Id: denode.h,v 1.2 1993/09/07 15:41:31 ws Exp $
  */
 
 /*
@@ -193,11 +193,7 @@ int msdosfs_rename __P((struct nameidata * fndp, struct nameidata * tdnp, struct
 int msdosfs_mkdir __P((struct nameidata * ndp, struct vattr * vap, struct proc * p));
 int msdosfs_rmdir __P((struct nameidata * ndp, struct proc * p));
 int msdosfs_symlink __P((struct nameidata * ndp, struct vattr * vap, char *target, struct proc * p));
-#ifdef __bsdi__
 int msdosfs_readdir __P((struct vnode * vp, struct uio * uio, struct ucred * cred, int *eofflagp, u_int * cookies, int ncookies));
-#else
-int msdosfs_readdir __P((struct vnode * vp, struct uio * uio, struct ucred * cred, int *eofflagp));
-#endif
 int msdosfs_readlink __P((struct vnode * vp, struct uio * uio, struct ucred * cred));
 int msdosfs_abortop __P((struct nameidata * ndp));
 int msdosfs_inactive __P((struct vnode * vp, struct proc * p));

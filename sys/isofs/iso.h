@@ -1,5 +1,5 @@
 /*
- *	$Id: iso.h,v 1.4 1993/09/03 04:37:52 cgd Exp $
+ *	$Id: iso.h,v 1.5 1993/09/07 15:40:52 ws Exp $
  */
 
 #define ISODCL(from, to) (to - from + 1)
@@ -71,17 +71,40 @@ struct iso_directory_record {
    of the last entry (34 instead of 33) */
 #define ISO_DIRECTORY_RECORD_SIZE	33
 
-/* CD-ROM Fromat type */
-enum ISO_FTYPE  { ISO_FTYPE_9660, ISO_FTYPE_RRIP, ISO_FTYPE_ECMA };
+struct iso_extended_attributes {
+	unsigned char owner		[ISODCL (1, 4)]; /* 723 */
+	unsigned char group		[ISODCL (5, 8)]; /* 723 */
+	unsigned char perm		[ISODCL (9, 10)]; /* 9.5.3 */
+	char ctime			[ISODCL (11, 27)]; /* 8.4.26.1 */
+	char mtime			[ISODCL (28, 44)]; /* 8.4.26.1 */
+	char xtime			[ISODCL (45, 61)]; /* 8.4.26.1 */
+	char ftime			[ISODCL (62, 78)]; /* 8.4.26.1 */
+	char recfmt			[ISODCL (79, 79)]; /* 711 */
+	char recattr			[ISODCL (80, 80)]; /* 711 */
+	unsigned char reclen		[ISODCL (81, 84)]; /* 723 */
+	char system_id			[ISODCL (85, 116)]; /* achars */
+	char system_use			[ISODCL (117, 180)];
+	char version			[ISODCL (181, 181)]; /* 711 */
+	char len_esc			[ISODCL (182, 182)]; /* 711 */
+	char reserved			[ISODCL (183, 246)];
+	unsigned char len_au		[ISODCL (247, 250)]; /* 723 */
+};
+
+/* CD-ROM Format type */
+enum ISO_FTYPE  { ISO_FTYPE_DEFAULT, ISO_FTYPE_9660, ISO_FTYPE_RRIP, ISO_FTYPE_ECMA };
+
+#ifndef	ISOFSMNT_ROOT
+#define	ISOFSMNT_ROOT	0
+#endif
 
 struct iso_mnt {
+	int im_flags;
+	
 	int logical_block_size;
 	int volume_space_size;
 	struct vnode *im_devvp;
 	char im_fsmnt[50];
 	
-	int im_ronly;
-	int im_fmod;
 	struct mount *im_mountp;
 	dev_t im_dev;
 
@@ -93,6 +116,9 @@ struct iso_mnt {
 	int root_extent;
 	int root_size;
 	enum ISO_FTYPE  iso_ftype;
+	
+	int rr_skip;
+	int rr_skip0;
 };
 
 #define VFSTOISOFS(mp)	((struct iso_mnt *)((mp)->mnt_data))
@@ -116,20 +142,77 @@ int isofs_init __P(());
 
 struct iso_node;
 int iso_bmap __P((struct iso_node *ip, int lblkno, daddr_t *result)); 
-int iso_blkatoff __P((struct iso_node *ip, off_t offset, char **res, struct buf **bpp)); 
+int iso_blkatoff __P((struct iso_node *ip, off_t offset, struct buf **bpp)); 
 int iso_iget __P((struct iso_node *xp, ino_t ino, struct iso_node **ipp, 
 		  struct iso_directory_record *isodir));
 int iso_iput __P((struct iso_node *ip)); 
 int iso_ilock __P((struct iso_node *ip)); 
 int iso_iunlock __P((struct iso_node *ip)); 
-int isonum_711 __P((unsigned char *p)); 
-int isonum_712 __P((signed char *p)); 
-int isonum_721 __P((unsigned char *p)); 
-int isonum_722 __P((unsigned char *p)); 
-int isonum_723 __P((unsigned char *p)); 
-int isonum_731 __P((unsigned char *p)); 
-int isonum_732 __P((unsigned char *p)); 
-int isonum_733 __P((unsigned char *p)); 
 int isofs_mountroot __P((void)); 
-int iso_mountfs __P((struct vnode *devvp, struct mount *mp, struct proc *p)); 
-int iso_mountedon __P((struct vnode *vp)); 
+
+extern inline int
+isonum_711(p)
+	unsigned char *p;
+{
+	return *p;
+}
+
+extern inline int
+isonum_712(p)
+	char *p;
+{
+	return *p;
+}
+
+extern inline int
+isonum_721(p)
+	unsigned char *p;
+{
+	return *p|((char)p[1] << 8);
+}
+
+extern inline int
+isonum_722(p)
+	unsigned char *p;
+{
+	return ((char)*p << 8)|p[1];
+}
+
+extern inline int
+isonum_723(p)
+	unsigned char *p;
+{
+	return isonum_721(p);
+}
+
+extern inline int
+isonum_731(p)
+	unsigned char *p;
+{
+	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24);
+}
+
+extern inline int
+isonum_732(p)
+	unsigned char *p;
+{
+	return (*p << 24)|(p[1] << 16)|(p[2] << 8)|p[3];
+}
+
+extern inline int
+isonum_733(p)
+	unsigned char *p;
+{
+	return isonum_731(p);
+}
+
+int isofncmp __P((unsigned char *fn, int fnlen,
+		  unsigned char *isofn, int isolen));
+void isofntrans __P((unsigned char *infn, int infnlen,
+		     unsigned char *outfn, unsigned short *outfnlen,
+		     int stripgen, int assoc));
+
+/*
+ * Associated files have a trailing '@'.
+ */
+#define	ASSOCCHAR	'@'

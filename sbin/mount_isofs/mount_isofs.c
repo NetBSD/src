@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: mount_isofs.c,v 1.6 1993/08/02 17:51:07 mycroft Exp $";
+static char rcsid[] = "$Id: mount_isofs.c,v 1.7 1993/09/07 15:40:30 ws Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -21,11 +21,9 @@ char **argv;
 {
 	char *dev;
 	char *dir;
-	struct ufs_args args;
+	struct iso_args args;
 	int c;
-	int opts;
-
-	opts = MNT_RDONLY;
+	int opts = 0;
 
 	argc--;
 	argv++;
@@ -37,6 +35,12 @@ char **argv;
 		} else if (!strcmp(argv[0], "-norrip")) {
 			opts |= ISOFSMNT_NORRIP;
 			argc--; argv++;
+		} else if (!strcmp(argv[0], "-gen")) {
+			opts |= ISOFSMNT_GENS;
+			argc--; argv++;
+		} else if (!strcmp(argv[0], "-extattr")) {
+			opts |= ISOFSMNT_EXTATT;
+			argc--; argv++;
 		} else
 			usage();
 	}
@@ -45,8 +49,7 @@ char **argv;
 	dir = argv[1];
 
 	args.fspec = dev;
-	args.exflags = MNT_EXRDONLY | opts;
-	args.exroot = 0;
+	args.flags = opts;
 
 	if (mount (MOUNT_ISOFS, dir, MNT_RDONLY, &args) < 0) {
 		perror ("mount");

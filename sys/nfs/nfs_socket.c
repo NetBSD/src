@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
- *	$Id: nfs_socket.c,v 1.7 1993/09/06 21:25:20 mycroft Exp $
+ *	$Id: nfs_socket.c,v 1.8 1993/09/07 15:41:41 ws Exp $
  */
 
 /*
@@ -957,7 +957,7 @@ nfs_getreq(so, prog, vers, maxproc, nam, mrp, mdp, dposp, retxid, procnum, cr,
 		*wascomp = 0;
 	dpos = mtod(mrep, caddr_t);
 	nfsm_disect(tl, u_long *, 10*NFSX_UNSIGNED);
-	*retxid = *tl++;
+	*retxid = fxdr_unsigned(u_long, *tl++);
 	if (*tl++ != rpc_call || *tl++ != rpc_vers) {		/* 08 Aug 92*/
 		*mrp = mrep;
 		*procnum = NFSPROC_NOOP;
@@ -1058,7 +1058,7 @@ nfs_rephead(siz, retxid, err, mrq, mbp, bposp)
 	tl = mtod(mreq, u_long *);
 	mreq->m_len = 6*NFSX_UNSIGNED;
 	bpos = ((caddr_t)tl)+mreq->m_len;
-	*tl++ = retxid;
+	*tl++ = txdr_unsigned(retxid);
 	*tl++ = rpc_reply;
 	if (err == ERPCMISMATCH) {
 		*tl++ = rpc_msgdenied;

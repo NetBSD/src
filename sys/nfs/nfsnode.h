@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsnode.h	7.12 (Berkeley) 4/16/91
- *	$Id: nfsnode.h,v 1.4 1993/08/02 23:12:32 mycroft Exp $
+ *	$Id: nfsnode.h,v 1.5 1993/09/07 15:41:48 ws Exp $
  */
 
 #ifndef _NFS_NFSNODE_H_
@@ -191,7 +191,9 @@ int	nfs_readdir __P((
 		struct vnode *vp,
 		struct uio *uio,
 		struct ucred *cred,
-		int *eofflagp));
+		int *eofflagp,
+		u_int *cookies,
+		int ncookies));
 int	nfs_readlink __P((
 		struct vnode *vp,
 		struct uio *uio,
