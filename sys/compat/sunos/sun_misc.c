@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.15 1994/04/02 08:32:56 cgd Exp $
+ * $Id: sun_misc.c,v 1.16 1994/04/24 11:37:49 deraadt Exp $
  */
 
 /*
@@ -167,25 +167,6 @@ sun_unmount(p, uap, retval)
 	return (unmount(p, uap, retval));
 }
 
-static int
-gettype(tptr)
-	int *tptr;
-{
-	int type, error;
-	char in[20];
-
-	if (error = copyinstr((caddr_t)*tptr, in, sizeof in, (u_int *)0))
-		return (error);
-	if (strcmp(in, "4.2") == 0 || strcmp(in, "ufs") == 0)
-		type = MOUNT_UFS;
-	else if (strcmp(in, "nfs") == 0)
-		type = MOUNT_NFS;
-	else
-		return (EINVAL);
-	*tptr = type;
-	return (0);
-}
-
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
 #define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */
 #define	SUNM_NEWTYPE	0x04	/* type is string (char *), not int */
@@ -213,7 +194,7 @@ struct	sun_nfs_args {
 };
 
 struct sun_mount_args {
-	int	type;
+	char	*type;
 	char	*dir;
 	int	flags;
 	caddr_t	data;
@@ -225,12 +206,14 @@ sun_mount(p, uap, retval)
 {
 	int oflags = uap->flags, nflags, error;
 	extern char sigcode[], esigcode[];
+	char fsname[MFSNAMELEN];
+
 #define	szsigcode	(esigcode - sigcode)
 
 	if (oflags & (SUNM_NOSUB | SUNM_SYS5))
 		return (EINVAL);
-	if (oflags & SUNM_NEWTYPE && (error = gettype(&uap->type)))
-		return (error);
+	if ((oflags & SUNM_NEWTYPE) == 0)
+		return (EINVAL);
 	nflags = 0;
 	if (oflags & SUNM_RDONLY)
 		nflags |= MNT_RDONLY;
@@ -240,7 +223,14 @@ sun_mount(p, uap, retval)
 		nflags |= MNT_UPDATE;
 	uap->flags = nflags;
 
-	if (uap->type == MOUNT_NFS) {
+	if (error = copyinstr((caddr_t)uap->type, fsname, sizeof fsname, (u_int *)0))
+		return (error);
+
+	if (strcmp(fsname, "4.2") == 0) {
+		uap->type = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+		if (error = copyout("ufs", uap->type, sizeof("ufs")))
+			return (error);
+	} else if (strcmp(fsname, "nfs") == 0) {
 		struct sun_nfs_args sna;
 		struct sockaddr_in sain;
 		struct nfs_args na;
@@ -792,7 +782,7 @@ sunstatfs(sp, buf)
 
 	bzero(&ssfs, sizeof ssfs);
 	ssfs.f_type = 0;
-	ssfs.f_bsize = sp->f_fsize;
+	ssfs.f_bsize = sp->f_bsize;
 	ssfs.f_blocks = sp->f_blocks;
 	ssfs.f_bfree = sp->f_bfree;
 	ssfs.f_bavail = sp->f_bavail;
