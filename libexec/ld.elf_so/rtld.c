@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.104 2004/05/17 11:00:01 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.105 2004/05/17 13:16:02 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -132,7 +132,9 @@ _rtld_call_init_functions(Obj_Entry *first)
 /*
  * Initialize the dynamic linker.  The argument is the address at which
  * the dynamic linker has been mapped into memory.  The primary task of
- * this function is to relocate the dynamic linker.
+ * this function is to create an Obj_Entry for the dynamic linker and
+ * to resolve the PLT relocation for platforms that need it (those that
+ * define __HAVE_FUNCTION_DESCRIPTORS
  */
 static void
 _rtld_init(caddr_t mapbase, caddr_t relocbase)
@@ -148,8 +150,12 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase)
 
 	_rtld_digest_dynamic(&_rtld_objself);
 	assert(!_rtld_objself.needed);
+#if !defined(__hppa__)
 	assert(!_rtld_objself.pltrel && !_rtld_objself.pltrela);
-#if !defined(__mips__)
+#else
+	_rtld_relocate_plt_objects(&_rtld_objself);
+#endif
+#if !defined(__mips__) && !defined(__hppa__)
 	assert(!_rtld_objself.pltgot);
 #endif
 #if !defined(__arm__) && !defined(__mips__) && !defined(__sh__)
