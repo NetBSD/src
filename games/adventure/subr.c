@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.6 1998/08/24 22:07:37 hubertf Exp $	*/
+/*	$NetBSD: subr.c,v 1.7 1998/09/13 15:21:37 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.6 1998/08/24 22:07:37 hubertf Exp $");
+__RCSID("$NetBSD: subr.c,v 1.7 1998/09/13 15:21:37 hubertf Exp $");
 #endif
 #endif				/* not lint */
 
@@ -474,7 +474,7 @@ trbridge()
 }
 
 
-int
+void
 badmove()
 {				/* 20                   */
 	spk = 12;
@@ -493,10 +493,9 @@ badmove()
 	if (k == 17)
 		spk = 80;
 	rspeak(spk);
-	return (2);
 }
 
-int
+void
 bug(n)
 	int     n;
 {
@@ -505,7 +504,7 @@ bug(n)
 }
 
 
-int
+void
 checkhints()
 {				/* 2600 &c              */
 	int     hint;
@@ -552,7 +551,6 @@ l40010:	hintlc[hint] = 0;
 		hinted[hint] = yes(175, hints[hint][4], 54);
 l40020:	hintlc[hint] = 0;
 	}
-	return 0;
 }
 
 
@@ -1001,7 +999,7 @@ trfill()
 }
 
 
-int
+void
 closing()
 {				/* 10000 */
 	int     i;
@@ -1025,11 +1023,10 @@ closing()
 	rspeak(129);
 	clock1 = -1;
 	closng = TRUE;
-	return (19999);
 }
 
 
-int
+void
 caveclose()
 {				/* 11000 */
 	int     i;
@@ -1058,5 +1055,4 @@ caveclose()
 			dstroy(i);
 	rspeak(132);
 	closed = TRUE;
-	return (2);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 1998/09/11 14:51:18 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.11 1998/09/13 15:21:37 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.10 1998/09/11 14:51:18 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 1998/09/13 15:21:37 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -286,12 +286,8 @@ l8:
 		case 2:
 			continue;	/* i.e. goto l2 */
 		case 99:
-			switch (die(99)) {
-			case 2000:
-				goto l2000;
-			default:
-				bug(111);
-			}
+			die(99);
+			goto l2000;
 		default:
 			bug(110);
 		}
