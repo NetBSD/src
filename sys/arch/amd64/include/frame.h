@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3 2003/10/06 22:53:47 fvdl Exp $	*/
+/*	$NetBSD: frame.h,v 1.4 2003/10/13 18:38:02 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,82 +88,82 @@
  * Exception/Trap Stack Frame
  */
 struct trapframe {
-	int64_t	tf_rdi;
-	int64_t	tf_rsi;
-	int64_t	tf_rdx;
-	int64_t	tf_rcx;
-	int64_t tf_r8;
-	int64_t tf_r9;
-	int64_t tf_r10;
-	int64_t tf_r11;
-	int64_t tf_r12;
-	int64_t tf_r13;
-	int64_t tf_r14;
-	int64_t tf_r15;
-	int64_t	tf_rbp;
-	int64_t	tf_rbx;
-	int64_t	tf_rax;
-	int64_t	tf_gs;
-	int64_t	tf_fs;
-	int64_t	tf_es;
-	int64_t	tf_ds;
-	int64_t	tf_trapno;
+	uint64_t	tf_rdi;
+	uint64_t	tf_rsi;
+	uint64_t	tf_rdx;
+	uint64_t	tf_rcx;
+	uint64_t	tf_r8;
+	uint64_t 	tf_r9;
+	uint64_t	tf_r10;
+	uint64_t 	tf_r11;
+	uint64_t 	tf_r12;
+	uint64_t 	tf_r13;
+	uint64_t 	tf_r14;
+	uint64_t 	tf_r15;
+	uint64_t	tf_rbp;
+	uint64_t	tf_rbx;
+	uint64_t	tf_rax;
+	uint64_t	tf_gs;
+	uint64_t	tf_fs;
+	uint64_t	tf_es;
+	uint64_t	tf_ds;
+	uint64_t	tf_trapno;
 	/* below portion defined in hardware */
-	int64_t	tf_err;
-	int64_t	tf_rip;
-	int64_t	tf_cs;
-	int64_t	tf_rflags;
+	uint64_t	tf_err;
+	uint64_t	tf_rip;
+	uint64_t	tf_cs;
+	uint64_t	tf_rflags;
 	/* These are pushed unconditionally on the x86-64 */
-	int64_t	tf_rsp;
-	int64_t	tf_ss;
+	uint64_t	tf_rsp;
+	uint64_t	tf_ss;
 };
 
 /*
  * Interrupt stack frame
  */
 struct intrframe {
-	int64_t	if_ppl;
-	int64_t	if_rdi;
-	int64_t	if_rsi;
-	int64_t	if_rdx;
-	int64_t	if_rcx;
-	int64_t if_r8;
-	int64_t if_r9;
-	int64_t if_r10;
-	int64_t if_r11;
-	int64_t if_r12;
-	int64_t if_r13;
-	int64_t if_r14;
-	int64_t if_r15;
-	int64_t	if_rbp;
-	int64_t	if_rbx;
-	int64_t	if_rax;
-	int64_t	tf_gs;
-	int64_t	tf_fs;
-	int64_t	tf_es;
-	int64_t	tf_ds;
+	uint64_t	if_ppl;
+	uint64_t	if_rdi;
+	uint64_t	if_rsi;
+	uint64_t	if_rdx;
+	uint64_t	if_rcx;
+	uint64_t	if_r8;
+	uint64_t	if_r9;
+	uint64_t	if_r10;
+	uint64_t	if_r11;
+	uint64_t	if_r12;
+	uint64_t	if_r13;
+	uint64_t	if_r14;
+	uint64_t	if_r15;
+	uint64_t	if_rbp;
+	uint64_t	if_rbx;
+	uint64_t	if_rax;
+	uint64_t	tf_gs;
+	uint64_t	tf_fs;
+	uint64_t	tf_es;
+	uint64_t	tf_ds;
 	u_int64_t __if_trapno; /* for compat with trap frame - trapno */
 	u_int64_t __if_err;	/* for compat with trap frame - err */
 	/* below portion defined in hardware */
-	int64_t	if_rip;
-	int64_t	if_cs;
-	int64_t	if_rflags;
+	uint64_t	if_rip;
+	uint64_t	if_cs;
+	uint64_t	if_rflags;
 	/* These are pushed unconditionally on the x86-64 */
-	int64_t	if_rsp;
-	int64_t	if_ss;
+	uint64_t	if_rsp;
+	uint64_t	if_ss;
 };
 
 /*
  * Stack frame inside cpu_switch()
  */
 struct switchframe {
-	int64_t	sf_r15;
-	int64_t	sf_r14;
-	int64_t	sf_r13;
-	int64_t	sf_r12;
-	int64_t sf_rbp;
-	int64_t	sf_rbx;
-	int64_t	sf_rip;
+	uint64_t	sf_r15;
+	uint64_t	sf_r14;
+	uint64_t	sf_r13;
+	uint64_t	sf_r12;
+	uint64_t	sf_rbp;
+	uint64_t	sf_rbx;
+	uint64_t	sf_rip;
 };
 
 /*
