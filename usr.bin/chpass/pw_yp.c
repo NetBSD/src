@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.15 1999/08/16 03:02:46 simonb Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.16 2000/10/04 08:38:09 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-__RCSID("$NetBSD: pw_yp.c,v 1.15 1999/08/16 03:02:46 simonb Exp $");
+__RCSID("$NetBSD: pw_yp.c,v 1.16 2000/10/04 08:38:09 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -317,8 +317,12 @@ yppw_error(name, err, eval)
 	int err, eval;
 {
 
-	if (err)
-		warn(name);
+	if (err) {
+		if (name)
+			warn("%s", name);
+		else
+			warn(name);
+	}
 
 	errx(eval, "YP passwd information unchanged");
 }
