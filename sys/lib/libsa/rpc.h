@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.h,v 1.3 1995/02/20 11:04:19 mycroft Exp $	*/
+/*	$NetBSD: rpc.h,v 1.4 1995/06/27 15:29:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -41,19 +41,30 @@
 #define	PMAPPORT		111
 #define	PMAPPROG		100000
 #define	PMAPVERS		2
+#define	PMAPPROC_NULL		0
+#define	PMAPPROC_SET		1
+#define	PMAPPROC_UNSET		2
 #define	PMAPPROC_GETPORT	3
-
-/* Generic rpc reply header */
-struct rpc_reply {
-	u_long	rp_xid;			/* request transaction id */
-	int	rp_direction;		/* call direction */
-	int	rp_stat;		/* accept status */
-	u_long	rp_prog;		/* program (unused) */
-	u_long	rp_vers;		/* version (unused) */
-	u_long	rp_proc;		/* procedure (unused) */
-};
+#define	PMAPPROC_DUMP		4
+#define	PMAPPROC_CALLIT		5
 
 /* RPC functions: */
-size_t	callrpc __P((struct iodesc *d, u_long prog, u_long ver, u_long op,
+size_t	rpc_call __P((struct iodesc *d, n_long prog, n_long ver, n_long func,
 	    void *sdata, size_t slen, void *rdata, size_t rlen));
-u_short	getport __P((struct iodesc *d, u_long prog, u_long vers));
+int 	rpc_getport __P((struct iodesc *d, n_long prog, n_long vers));
+void	rpc_fromaddr(void *pkt, n_long *addr, u_short *port);
+void	rpc_pmap_putcache __P((n_long addr, n_long pr, n_long v, int port));
+
+extern int rpc_xid; 	/* increment before call */
+extern int rpc_port;	/* decrement before bind */
+
+/*
+ * How much space to leave in front of RPC requests.
+ * In 32-bit words (alignment) we have:
+ * 12: Ether + IP + UDP + padding
+ *  6: RPC call header
+ *  7: Auth UNIX
+ *  2: Auth NULL
+ */
+#define	RPC_HEADER_WORDS 28
+
