@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.4 2005/03/11 11:34:32 bouyer Exp $      */
+/*      $NetBSD: xennetback.c,v 1.4.2.1 2005/03/30 10:07:29 tron Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -466,10 +466,8 @@ xennetback_evthandler(void *arg)
 {
 	struct xnetback_instance *xneti = arg;
 	struct ifnet *ifp = &xneti->xni_if;
-
 	netif_tx_request_t *txreq;
 	netif_tx_response_t *txresp;
-
 	NETIF_RING_IDX req_prod;
 	NETIF_RING_IDX req_cons, resp_prod, i;
 	vaddr_t pkt;
@@ -477,10 +475,9 @@ xennetback_evthandler(void *arg)
 	struct mbuf *m;
 	int do_event = 0;
 
-
 again:
 	req_prod = xneti->xni_txring->req_prod;
-	__insn_barrier(); /* ensure we see all requests up to req_prod */
+	x86_lfence(); /* ensure we see all requests up to req_prod */
 	resp_prod = xneti->xni_txring->resp_prod;
 	req_cons = xneti->xni_txring->req_cons;
 	XENPRINTF(("%s event req_prod %d resp_prod %d req_cons %d event %d\n",
@@ -569,13 +566,17 @@ again:
 	}
 	if (xneti->xni_txring->event == resp_prod)
 		do_event = 1;
-	__insn_barrier(); /* make sure the guest see out responses */
+	x86_lfence(); /* make sure the guest see our responses */
 	xneti->xni_txring->req_cons = req_cons;
 	xneti->xni_txring->resp_prod = resp_prod;
+	/*
+	 * make sure the guest will see our replies before testing for more
+	 * work.
+	 */
+	x86_lfence(); /* ensure we see all requests up to req_prod */
 	if (i > 0)
 		goto again; /* more work to do ? */
 	if (do_event) {
-		__insn_barrier();
 		XENPRINTF(("%s send event\n", xneti->xni_if.if_xname));
 		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
 	}
@@ -613,9 +614,11 @@ xennetback_ifstart(struct ifnet *ifp)
 	NETIF_RING_IDX resp_prod = xneti->xni_rxring->resp_prod;
 	int need_event = 0;
 
+
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
-	__insn_barrier();
+
+	x86_lfence();
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		mmup = xstart_mmu;
 		mclp = xstart_mcl;
@@ -686,17 +689,17 @@ xennetback_ifstart(struct ifnet *ifp)
 				printf("%s: xstart_mcl[%d] failed\n",
 				    ifp->if_xname, j);
 		}
-		__insn_barrier();
+		x86_lfence();
 		/* update pointer */
 		xneti->xni_rxring->resp_prod += i;
-		__insn_barrier();
+		x86_lfence();
 		/* check if we need to allocate new xmit pages */
 		if (xmit_pages_alloc < 0)
 			xennetback_get_new_xmit_pages();
 	}
 	/* send event, if needed */
 	if (do_event) {
-		__insn_barrier();
+		x86_lfence();
 		XENPRINTF(("%s receive event\n", xneti->xni_if.if_xname));
 		hypervisor_notify_via_evtchn(xneti->xni_evtchn);
 	}
@@ -716,8 +719,6 @@ xennetback_ifinit(struct ifnet *ifp)
 	struct xnetback_instance *xneti = ifp->if_softc;
 	int s = splnet();
 
-	/* cancel pending I/O - possible ? */
-
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		splx(s);
 		return 0;
@@ -731,7 +732,12 @@ xennetback_ifinit(struct ifnet *ifp)
 static void
 xennetback_ifstop(struct ifnet *ifp, int disable)
 {
-	//struct xnetback_instance *xneti = ifp->if_softc;
+	struct xnetback_instance *xneti = ifp->if_softc;
+	int s = splnet();
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	if (xneti->status == CONNECTED) {
+		xennetback_evthandler(ifp->if_softc); /* flush pending RX requests */
+	}
+	splx(s);
 }
