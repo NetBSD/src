@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.24 2003/09/07 05:26:30 isaki Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.25 2003/11/02 11:07:45 wiz Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.24 2003/09/07 05:26:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.25 2003/11/02 11:07:45 wiz Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -759,7 +759,7 @@ abort:
 /*
  * Schedule a SCSI operation.  This has now been pulled out of the interrupt
  * handler so that we may call it from spc_scsi_cmd and spc_done.  This may
- * save us an unecessary interrupt just to get things going.  Should only be
+ * save us an unnecessary interrupt just to get things going.  Should only be
  * called when state == SPC_IDLE and at bio pl.
  */
 void

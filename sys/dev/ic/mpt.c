@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.3 2003/07/14 15:47:11 lukem Exp $	*/
+/*	$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.3 2003/07/14 15:47:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.4 2003/11/02 11:07:45 wiz Exp $");
 
 #include <dev/ic/mpt.h>
 
@@ -329,7 +329,7 @@ mpt_send_handshake_cmd(mpt_softc_t *mpt, size_t len, void *cmd)
 	len = (len + 3) >> 2;
 	data32 = cmd;
 
-	/* Clear any left over pending doorbell interupts */
+	/* Clear any left over pending doorbell interrupts */
 	if (MPT_DB_INTR(mpt_rd_intr(mpt)))
 		mpt_write(mpt, MPT_OFFSET_INTR_STATUS, 0);
 
@@ -1000,7 +1000,7 @@ mpt_send_event_request(mpt_softc_t *mpt, int onoff)
 }
 
 /*
- * Un-mask the interupts on the chip.
+ * Un-mask the interrupts on the chip.
  */
 void
 mpt_enable_ints(mpt_softc_t *mpt)
@@ -1010,7 +1010,7 @@ mpt_enable_ints(mpt_softc_t *mpt)
 }
 
 /*
- * Mask the interupts on the chip.
+ * Mask the interrupts on the chip.
  */
 void
 mpt_disable_ints(mpt_softc_t *mpt)

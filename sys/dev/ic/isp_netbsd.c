@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.62 2003/10/08 19:51:01 pk Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.63 2003/11/02 11:07:45 wiz Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.62 2003/10/08 19:51:01 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_netbsd.c,v 1.63 2003/11/02 11:07:45 wiz Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <sys/scsiio.h>
@@ -723,7 +723,7 @@ isp_dog(void *arg)
 			(void) isp_control(isp, ISPCTL_ABORT_CMD, arg);
 
 			/*
-			 * After this point, the comamnd is really dead.
+			 * After this point, the command is really dead.
 			 */
 			if (XS_XFRLEN(xs)) {
 				ISP_DMAFREE(isp, xs, handle);

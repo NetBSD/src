@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.17 2003/07/08 10:06:31 itojun Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.18 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  *
  * The front-end is required to manage the SCP and ISCP structures. i.e.
  * allocate room for them on the board's memory, and arrange to point the
- * chip at the SCB stucture, the offset of which is passed to the MI
+ * chip at the SCB structure, the offset of which is passed to the MI
  * driver in `sc_scb'.
  *
  * The following functions provide the glue necessary to deal with

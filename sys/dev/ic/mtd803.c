@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.4 2003/09/23 19:37:39 martin Exp $ */
+/* $NetBSD: mtd803.c,v 1.5 2003/11/02 11:07:45 wiz Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.4 2003/09/23 19:37:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.5 2003/11/02 11:07:45 wiz Exp $");
 
 #include "bpfilter.h"
 
@@ -551,7 +551,7 @@ mtd_stop (ifp, disable)
 
 	/* Must do more at disable??... */
 	if (disable) {
-		/* Delete tx and rx descriptor base adresses */
+		/* Delete tx and rx descriptor base addresses */
 		MTD_WRITE_4(sc, MTD_RXLBA, 0x00000000);
 		MTD_WRITE_4(sc, MTD_TXLBA, 0x00000000);
 	}

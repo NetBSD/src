@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.15 2003/10/07 19:02:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.16 2003/11/02 11:07:45 wiz Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.15 2003/10/07 19:02:36 martin Exp $");
 #ifdef NetBSD1_3
 #if NetBSD1_3 < 2
 /* the device is MI, only the attach struct is in the bus
-   dependend frontend. And only on old versions... */
+   dependent frontend. And only on old versions... */
 struct cfdriver daic_cd = {
 	NULL, "daic", DV_DULL
 };

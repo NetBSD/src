@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.151 2003/10/31 21:25:09 briggs Exp $ */
+/*	$NetBSD: wdc.c,v 1.152 2003/11/02 11:07:46 wiz Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.151 2003/10/31 21:25:09 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.152 2003/11/02 11:07:46 wiz Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -406,7 +406,7 @@ atabusconfig(atabus_sc)
 			    AT_WAIT | AT_POLL, &params);
 		}
 		if (error == CMD_OK) {
-			/* If IDENTIFY succeded, this is not an OLD ctrl */
+			/* If IDENTIFY succeeded, this is not an OLD ctrl */
 			chp->ch_drive[0].drive_flags &= ~DRIVE_OLD;
 			chp->ch_drive[1].drive_flags &= ~DRIVE_OLD;
 		} else {
@@ -532,7 +532,7 @@ atabusconfig(atabus_sc)
 #endif /* NATARAID > 0 */
 
 	/*
-	 * reset drive_flags for unnatached devices, reset state for attached
+	 * reset drive_flags for unattached devices, reset state for attached
 	 *  ones
 	 */
 	for (i = 0; i < 2; i++) {
@@ -1392,7 +1392,7 @@ wdctimeout(arg)
 }
 
 /*
- * Probe drive's capabilites, for use by the controller later
+ * Probe drive's capabilities, for use by the controller later
  * Assumes drvp points to an existing drive. 
  * XXX this should be a controller-indep function
  */
