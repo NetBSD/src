@@ -34,17 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)machdep.c	7.4 (Berkeley) 6/3/91
- *
- * PATCHES MAGIC		LEVEL	PATCH THAT GOT US HERE
- * --------------------		-----	----------------------
- * CURRENT PATCH LEVEL:		2	00003
- * --------------------		-----	----------------------
- *
- * 15 Aug 92    William Jolitz          Large memory bug
- * 15 Aug 92	Terry Lambert		Fixed CMOS RAM size bug
+ *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
+ *	$Id: machdep.c,v 1.13 1993/05/20 01:42:26 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/machdep.c,v 1.12 1993/05/17 22:31:21 cgd Exp $";
 
 #include "param.h"
 #include "systm.h"
