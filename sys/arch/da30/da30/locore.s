@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 11/14/93
- *	$Id: locore.s,v 1.2 1994/06/18 12:09:55 paulus Exp $
+ *	$Id: locore.s,v 1.3 1994/07/08 12:02:14 paulus Exp $
  */
 
 /*
@@ -657,10 +657,6 @@ Ldorte1:
 _Umap:	.long	0
 	.globl	_kstack, _Umap
 
-#define	RELOC(var, ar)	\
-	lea	var,ar
-/*	addl	a5,ar	*/
-
 /*
  * Initialization
  *
@@ -681,21 +677,18 @@ start:
 	movl	sp@(4),d6		| get bootdev
 	movl	sp@(16),d7		| get boothowto
 	movl	#0,a5			| RAM starts at 0
-	RELOC(tmpstk, a0)
-	movl	a0,sp			| give ourselves a temporary stack
+	lea	tmpstk,sp		| give ourselves a temporary stack
 
-	RELOC(_edata,a0)		| clear out BSS
+	lea	_edata,a0		| clear out BSS
 	movl	#_end-4,d0		| (must be <= 256 kB)
 	subl	#_edata,d0
 	lsrl	#2,d0
 1:	clrl	a0@+
 	dbra	d0,1b
 
-	RELOC(_esym, a0)
-	clrl	a0@			| no symbol table, yet
+	clrl	_esym			| no symbol table, yet
 
-	RELOC(_lowram, a0)
-	movl	a5,a0@			| store start of physical memory
+	movl	a5,_lowram		| store start of physical memory
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| clear and disable on-chip cache(s)
 
@@ -706,6 +699,9 @@ start:
 	clrb	a0@(4)			| clear ictrl1
 	movb	#0x7c,a0@		| reset interrupt bits
 
+/* for now, use the ROM monitor's vector for trap #14. */
+	movel	ROM+0xB8,0xB8
+
 /* initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space
 	movc	d0,sfc			|   as source
@@ -715,16 +711,13 @@ start:
 	movl	#RAMSIZE,d1		| last page
 	moveq	#PGSHIFT,d2
 	lsrl	d2,d1			| convert to page (click) number
-	RELOC(_maxmem, a0)
-	movl	d1,a0@			| save as maxmem
-	RELOC(_physmem, a0)
-	movl	d1,a0@			| and physmem
+	movl	d1,_maxmem		| save as maxmem
+	movl	d1,_physmem		| and physmem
 
 /* configure kernel and proc0 VA space so we can get going */
 	.globl	_Sysseg, _pmap_bootstrap, _avail_start
 #ifdef DDB
-	RELOC(_esym,a0)			| end of static kernel test/data/syms
-	movl	a0@,d5
+	movl	_esym,d5		| end of static kernel test/data/syms
 	jne	Lstart2
 #endif
 	movl	#_end,d5		| end of static kernel text/data
@@ -742,20 +735,16 @@ Lstart2:
  * Enable the MMU.
  * Since the kernel is mapped logical == physical, we just turn it on.
  */
-	RELOC(_Sysseg, a0)		| system segment table addr
-	movl	a0@,d1			| read value (a KVA)
-	addl	a5,d1			| convert to PA
-	RELOC(_protorp, a0)
+	movl	_Sysseg,d1		| system segment table addr
+	lea	_protorp,a0
 	movl	#0x80000202,a0@		| nolimit + share global + 4 byte PTEs
 	movl	d1,a0@(4)		| + segtable address
 	pmove	a0@,srp			| load the supervisor root pointer
 	movl	#0x80000002,a0@		| reinit upper half for CRP loads
 
-/*
 	movl	#0x82c0aa00,a7@-	| value to load TC with
 	pmove	a7@,tc			| load it
 	addql	#4,sp
-*/
 
 /*
  * Should be running mapped from this point on
@@ -806,7 +795,7 @@ Lstart2:
   	clrw	sp@-			| vector offset/frame type
 	clrl	sp@-			| PC - filled in by "execve"
   	movw	#PSL_USER,sp@-		| in user mode
-	clrw	sp@-			| pad SR to longword
+	clrl	sp@-			| pad and stack adjust
 	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
 	pea	sp@			| addr of space for D0
 	jbsr	_main			| main(firstaddr, r0)
@@ -814,7 +803,7 @@ Lstart2:
 	movl	sp@(60),a0		| grab and load
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| load most registers (all but SSP)
-	addql	#6,sp			| pop SSP and align word
+	addql	#8,sp			| pop SSP and stack adjust
   	rte
 
 /*
