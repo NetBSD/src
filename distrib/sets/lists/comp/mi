@@ -678,6 +678,7 @@
 ./usr/include/nfs/xdr_subs.h
 ./usr/include/nl_types.h
 ./usr/include/nlist.h
+./usr/include/nsswitch.h
 ./usr/include/objc/NXConstStr.h
 ./usr/include/objc/Object.h
 ./usr/include/objc/Protocol.h
@@ -1405,6 +1406,12 @@
 ./usr/share/man/cat3/dirfd.0
 ./usr/share/man/cat3/dirname.0
 ./usr/share/man/cat3/div.0
+./usr/share/man/cat3/dlclose.0
+./usr/share/man/cat3/dlctl.0
+./usr/share/man/cat3/dlerror.0
+./usr/share/man/cat3/dlfcn.0
+./usr/share/man/cat3/dlopen.0
+./usr/share/man/cat3/dlsym.0
 ./usr/share/man/cat3/dn_comp.0
 ./usr/share/man/cat3/dn_expand.0
 ./usr/share/man/cat3/drand48.0
@@ -1709,6 +1716,7 @@
 ./usr/share/man/cat3/ns.0
 ./usr/share/man/cat3/ns_addr.0
 ./usr/share/man/cat3/ns_ntoa.0
+./usr/share/man/cat3/nsdispatch.0
 ./usr/share/man/cat3/ntoa.0
 ./usr/share/man/cat3/ntohl.0
 ./usr/share/man/cat3/ntohs.0
@@ -1800,6 +1808,7 @@
 ./usr/share/man/cat3/seekdir.0
 ./usr/share/man/cat3/setbuf.0
 ./usr/share/man/cat3/setbuffer.0
+./usr/share/man/cat3/setdisktab.0
 ./usr/share/man/cat3/setdomainname.0
 ./usr/share/man/cat3/setenv.0
 ./usr/share/man/cat3/setfsent.0
@@ -2400,6 +2409,12 @@
 ./usr/share/man/man3/dirfd.3
 ./usr/share/man/man3/dirname.3
 ./usr/share/man/man3/div.3
+./usr/share/man/man3/dlclose.3
+./usr/share/man/man3/dlctl.3
+./usr/share/man/man3/dlerror.3
+./usr/share/man/man3/dlfcn.3
+./usr/share/man/man3/dlopen.3
+./usr/share/man/man3/dlsym.3
 ./usr/share/man/man3/dn_comp.3
 ./usr/share/man/man3/dn_expand.3
 ./usr/share/man/man3/drand48.3
@@ -2704,6 +2719,7 @@
 ./usr/share/man/man3/ns.3
 ./usr/share/man/man3/ns_addr.3
 ./usr/share/man/man3/ns_ntoa.3
+./usr/share/man/man3/nsdispatch.3
 ./usr/share/man/man3/ntoa.3
 ./usr/share/man/man3/ntohl.3
 ./usr/share/man/man3/ntohs.3
@@ -2795,6 +2811,7 @@
 ./usr/share/man/man3/seekdir.3
 ./usr/share/man/man3/setbuf.3
 ./usr/share/man/man3/setbuffer.3
+./usr/share/man/man3/setdisktab.3
 ./usr/share/man/man3/setdomainname.3
 ./usr/share/man/man3/setenv.3
 ./usr/share/man/man3/setfsent.3
