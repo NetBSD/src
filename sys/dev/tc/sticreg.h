@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticreg.h,v 1.6 2002/02/22 16:05:27 ad Exp $	*/
+/* 	$NetBSD: sticreg.h,v 1.7 2002/02/23 14:05:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
  * XYMASK address calculation.
  */
 #define	XMASKADDR(sw, sx, a)	(((a)-((sx) % (sw))) & 15)
-#define	YMASKADDR(sh, sy, b)	(((b)-((sy) & (shm))) & 15)
+#define	YMASKADDR(shm, sy, b)	(((b)-((sy) & (shm))) & 15)
 #define	XYMASKADDR(sw,shm,x,y,a,b)	\
     (XMASKADDR(sw,x,a) << 16 | YMASKADDR(shm,y,b))
 
