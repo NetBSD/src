@@ -1,4 +1,4 @@
-/*	$NetBSD: getdirentries.c,v 1.1 1997/10/10 02:15:56 fvdl Exp $	*/
+/*	$NetBSD: getdirentries.c,v 1.2 1998/10/14 11:56:29 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -32,6 +32,7 @@
  * SUCH DAMAGE.
  */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <dirent.h>
 #include <unistd.h>
