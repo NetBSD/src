@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp700,v 1.13 2003/12/10 02:04:01 jmc Exp $
+#	$NetBSD: majors.hp700,v 1.14 2004/09/19 23:03:34 chs Exp $
 #
 # Device majors for hp700
 #
@@ -41,8 +41,9 @@ device-major	systrace	char 34			systrace
 device-major	cgd		char 35  block 8	cgd
 device-major	ksyms		char 36			ksyms
 device-major	wsfont		char 37			wsfont
-device-major	clockctl	char 39			clockctl
 device-major	scsibus		char 38			scsibus
+device-major	clockctl	char 39			clockctl
+device-major	audio		char 40			audio
 
 # Majors up to 143 are reserved for machine-dependant drivers.
 # New machine-independant driver majors are assigned in 
