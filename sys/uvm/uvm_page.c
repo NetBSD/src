@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.54 2001/04/29 04:23:21 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.55 2001/04/29 22:44:39 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -312,6 +312,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 		paddr = ptoa(vm_physmem[lcv].start);
 		for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
 			vm_physmem[lcv].pgs[i].phys_addr = paddr;
+			VM_MDPAGE_INIT(&vm_physmem[lcv].pgs[i]);
 			if (atop(paddr) >= vm_physmem[lcv].avail_start &&
 			    atop(paddr) <= vm_physmem[lcv].avail_end) {
 				uvmexp.npages++;

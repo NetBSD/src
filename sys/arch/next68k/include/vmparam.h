@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.10 2000/12/01 17:57:44 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.11 2001/04/29 22:44:36 thorpej Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -161,6 +161,11 @@
 #define	VM_PHYSSEG_NOADD				/* @@@ does the NeXT really need this? */
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
+
+#define	VM_MDPAGE_MEMBERS	/* XXX nothing yet */
+#define	VM_MDPAGE_INIT(pg)	/* XXX nothing yet */
+#define	PMAP_PHYSSEG		/* XXX for now */
+
 /*
  * pmap-specific data stored in the vm_physmem[] array.
  */
