@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.26 2003/07/24 15:31:54 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.27 2003/12/11 09:46:26 dyoung Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -12,14 +12,14 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: servconf.c,v 1.116 2003/02/21 09:05:53 markus Exp $");
-__RCSID("$NetBSD: servconf.c,v 1.26 2003/07/24 15:31:54 itojun Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.27 2003/12/11 09:46:26 dyoung Exp $");
 
-#if defined(KRB4) || defined(KRB5)
+#ifdef KRB4
 #include <krb.h>
-#endif
 #ifdef AFS
 #include <kafs.h>
-#endif
+#endif /* AFS */
+#endif /* KRB4 */
 
 #include "ssh.h"
 #include "log.h"

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.90 2003/12/04 18:24:39 drochner Exp $
+# $NetBSD: mi,v 1.91 2003/12/11 09:46:27 dyoung Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -345,7 +345,6 @@
 ./usr/share/examples/isdn/isdnd.rates.L		misc-isdn-examples
 ./usr/share/examples/isdn/isdnd.rates.UK.BT	misc-isdn-examples
 ./usr/share/examples/isdn/isdnd.rc.sample	misc-isdn-examples
-./usr/share/examples/kerberos/krb5.conf		misc-krb5-examples
 ./usr/share/examples/mount_portal/advanced.1	misc-sys-examples
 ./usr/share/examples/mount_portal/advanced.1.conf	misc-sys-examples
 ./usr/share/examples/mount_portal/cvs.1		misc-sys-examples

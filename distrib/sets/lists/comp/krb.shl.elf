@@ -1,0 +1,11 @@
+./usr/lib/libasn1.so		comp-c-lib
+./usr/lib/libcom_err.so		comp-c-lib
+./usr/lib/libgssapi.so		comp-c-lib
+./usr/lib/libhdb.so		comp-c-lib
+./usr/lib/libkadm5clnt.so	comp-c-lib
+./usr/lib/libkadm5srv.so	comp-c-lib
+./usr/lib/libkafs.so		comp-c-lib
+./usr/lib/libkrb5.so		comp-c-lib
+./usr/lib/libroken.so		comp-c-lib
+./usr/lib/libsl.so		comp-c-lib
+./usr/lib/libss.so		comp-c-lib

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2003/08/05 10:45:43 lha Exp $
+#	$NetBSD: Makefile,v 1.38 2003/12/11 09:46:27 dyoung Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>
@@ -18,21 +18,21 @@ CPPFLAGS+=-I${.CURDIR}
 
 LIBTELNETDIR!=	cd ${.CURDIR}/../../lib/libtelnet; ${PRINTOBJDIR}
 
-.if (${USE_KERBEROS4} != "no" || ${USE_KERBEROS} != "no")
-CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
-
 .if (${USE_KERBEROS} != "no")
+CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION
+LDADD+= -ldes -lcrypto
+DPADD+=	${LIBDES} ${LIBCRYPTO}
+
 CPPFLAGS+=-I${DESTDIR}/usr/include/krb5
 CPPFLAGS+=-DKRB5
 
-LDADD+= -lkrb5 -lasn1 -lcrypto 
-DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
-.endif
+LDADD+= -lkrb5 -lasn1
+DPADD+=	${LIBKRB5} ${LIBASN1}
 
 .if (${USE_KERBEROS4} != "no")
 CPPFLAGS+=-DKRB4
-LDADD+= -lkrb -ldes
-DPADD+=	${LIBKRB} ${LIBDES}
+LDADD+= -lkrb
+DPADD+=	${LIBKRB}
 .endif
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}

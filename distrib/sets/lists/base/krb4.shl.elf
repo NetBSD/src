@@ -1,0 +1,4 @@
+./usr/lib/libkadm.so.5		base-krb4-shlib
+./usr/lib/libkdb.so.5		base-krb4-shlib
+./usr/lib/libkrb.so.6		base-krb4-shlib
+./usr/lib/libkstream.so.2	base-krb4-shlib

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2003/08/23 23:03:44 lha Exp $
+#	$NetBSD: Makefile,v 1.18 2003/12/11 09:46:27 dyoung Exp $
 
 .include <bsd.own.mk>
 
@@ -12,12 +12,13 @@ SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 	sshconnect.c sshconnect1.c sshconnect2.c
 
 .if (${USE_KERBEROS} != "no")
+CPPFLAGS+=-I${DESTDIR}/usr/include/kerberosIV
 CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
 LDADD+=	-lkrb5 -lkafs -lasn1
 DPADD+=	${LIBKRB5} ${LIBKAFS} ${LIBASN1}
 
 .if ${MKKERBEROS4} != "no"
-CPPFLAGS+=-DKRB4 -I${DESTDIR}/usr/include/kerberosIV
+CPPFLAGS+=-DKRB4
 LDADD+=	-lkrb -ldes
 DPADD+=	${LIBKRB} ${LIBDES}
 .endif
