@@ -1,5 +1,0 @@
-.\"	$NetBSD: prep,v 1.3 2000/10/29 14:08:08 lukem Exp $
-.
-No preparation is necessary, since the
-.Nx*M
-sets must be installed on a server.

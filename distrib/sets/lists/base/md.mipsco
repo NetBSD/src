@@ -1,5 +1,0 @@
-# $NetBSD: md.mipsco,v 1.1 2001/02/19 07:35:42 wdk Exp $
-./boot				base-sysutil-bin
-./usr/mdec/boot			base-sysutil-bin
-./usr/mdec/bootxx_ffs		base-sysutil-bin
-./usr/mdec/installboot		base-sysutil-bin

@@ -1,8 +1,0 @@
-# Host: Sun4u or UltraSPARC in 64-bit mode, running NetBSD
-XDEPFILES= ser-tcp.o
-XM_FILE= xm-nbsd.h
-XM_CLIBS= -lkvm
-NAT_FILE= nm-nbsd64.h
-NATDEPFILES= fork-child.o infptrace.o inftarg.o corelow.o kcore-nbsd.o \
-	sp64nbsd-nat.o solib.o
-HOST_IPC=-DBSD_IPC

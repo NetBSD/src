@@ -1,4 +1,0 @@
-# $NetBSD: obsolete.pmax,v 1.4 2001/09/19 18:51:04 thorpej Exp $
-/usr/include/pmax/dec_boot.h
-/usr/include/pmax/elf.h
-/usr/include/pmax/fbio.h

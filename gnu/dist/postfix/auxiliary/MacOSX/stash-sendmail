@@ -1,6 +1,0 @@
-#! /bin/sh
-
-mv /usr/sbin/sendmail /usr/sbin/sendmail.OFF
-mv /usr/bin/newaliases /usr/bin/newaliases.OFF
-mv /usr/bin/mailq /usr/bin/mailq.OFF
-chmod 755 /usr/sbin/sendmail.OFF /usr/bin/newaliases.OFF /usr/bin/mailq.OFF
