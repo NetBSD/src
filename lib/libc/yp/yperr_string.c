@@ -1,4 +1,4 @@
-/*	$NetBSD: yperr_string.c,v 1.3 1997/07/21 14:09:31 jtc Exp $	 */
+/*	$NetBSD: yperr_string.c,v 1.4 1999/09/16 09:54:28 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yperr_string.c,v 1.3 1997/07/21 14:09:31 jtc Exp $");
+__RCSID("$NetBSD: yperr_string.c,v 1.4 1999/09/16 09:54:28 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -82,7 +82,8 @@ yperr_string(incode)
 	case YPERR_BADDB:
 		return "Server data base is bad";
 	case YPERR_VERS:
-		return "YP server version mismatch - server can't supply service.";
+		return
+		    "YP server version mismatch - server can't supply service.";
 	case YPERR_ACCESS:
 		return "Access violation";
 	case YPERR_BUSY:
