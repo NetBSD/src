@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.53 2000/11/01 04:01:45 enami Exp $	*/
+/*	$NetBSD: mount.c,v 1.54 2000/11/01 04:06:49 enami Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.53 2000/11/01 04:01:45 enami Exp $");
+__RCSID("$NetBSD: mount.c,v 1.54 2000/11/01 04:06:49 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -619,7 +619,7 @@ getfslab(str)
 	}
 
 	if (ioctl(fd, DIOCGDINFO, &dl) == -1) {
-		warn("cannot get disklabel for `%s'", str);
+		(void) close(fd);
 		return (NULL);
 	}
 
