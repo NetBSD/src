@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.1 1999/03/18 17:18:05 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.2 1999/03/19 17:28:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.1 1999/03/18 17:18:05 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.2 1999/03/19 17:28:19 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -486,14 +486,14 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	off += (lfsp->lfs_segtabsz << lfsp->lfs_bshift);
 	(void)free(segtable);
 
+	put(fd, off, ifile, lfsp->lfs_bsize);
+	off += lfsp->lfs_bsize;
+
 	/* XXX KS - write the single indirect block */
 	if(ifib) {
 		put(fd, off, ifib, lfsp->lfs_bsize);
 		off += lfsp->lfs_bsize;
 	}
-
-	put(fd, off, ifile, lfsp->lfs_bsize);
-	off += lfsp->lfs_bsize;
 
 	/*
 	 * use ipagep for space for writing out other stuff.  It used to 
@@ -542,14 +542,16 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	 * is already counted.  Finally, we leave room for 1 inode block
 	 * address.
 	 */
-	sum_size = 3*sizeof(FINFO) + sizeof(SEGSUM) + sizeof(daddr_t) +
+	sum_size = 3*sizeof(FINFO) + sizeof(SEGSUM) + 2*sizeof(daddr_t) +
 	    (lfsp->lfs_cleansz + lfsp->lfs_segtabsz) * sizeof(u_long);
 #define	SUMERR \
 "Multiple summary blocks in segment 1 not yet implemented\nsummary is %d bytes."
 	if (sum_size > LFS_SUMMARY_SIZE)
 		fatal(SUMERR, sum_size);
 
-		block_array_size = lfsp->lfs_cleansz + lfsp->lfs_segtabsz + 1;
+	block_array_size = lfsp->lfs_cleansz + lfsp->lfs_segtabsz + 1;
+	if (block_array_size > NDADDR)
+		block_array_size++;
 
 	if (!(block_array = malloc(block_array_size *sizeof(int))))
 		fatal("%s: %s", special, strerror(errno));
@@ -557,6 +559,8 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	/* fill in the array */
 	for (i = 0; i < block_array_size; i++)
 		block_array[i] = i;
+	if (block_array_size > NDADDR)
+		block_array[block_array_size-1] = -NDADDR;
 
 	/* copy into segment */
 	sump = ipagep;
@@ -600,7 +604,6 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	sp->ss_magic = SS_MAGIC;
 
 	/* Now write the summary block for the next partial so it's invalid */
-	lfsp->lfs_tstamp = 0;
 	off += lfsp->lfs_bsize;
 	sp->ss_sumsum =
 	    cksum(&sp->ss_datasum, LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum));
@@ -610,6 +613,10 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 	for (seg_addr = last_addr = lfsp->lfs_sboffs[0], j = 1, i = 1; 
 	    i < lfsp->lfs_nseg; i++) {
+
+		/* Leave the time stamp on the alt sb, zero the rest */
+		if(j > 1)
+			lfsp->lfs_tstamp = 0;
 
 		seg_addr += lfsp->lfs_ssize << lfsp->lfs_fsbtodb;
 		sp->ss_next = last_addr;
@@ -673,6 +680,7 @@ make_dinode(ino, dip, nblocks, saddr, lfsp)
 	dip->di_atimensec = dip->di_mtimensec = dip->di_ctimensec = 0;
 	dip->di_inumber = ino;
 
+	db_per_fb = 1 << lfsp->lfs_fsbtodb;
 #if 0
 	if (NDADDR < nblocks)
 		fatal("File ino=%d requires more than the number of direct blocks; please increase block or segment size.",ino);
@@ -682,10 +690,10 @@ make_dinode(ino, dip, nblocks, saddr, lfsp)
 	} else if (NDADDR < nblocks) {
 		printf("Using %d single indirect block(s) for inode %d\n",
 		     (nblocks-NDADDR)/NINDIR(lfsp) + 1, ino);
+		dip->di_blocks += db_per_fb;
 	}
 #endif
 	/* Assign the block addresses for the ifile */
-	db_per_fb = 1 << lfsp->lfs_fsbtodb;
 	for (i = 0; i < MIN(nblocks,NDADDR); i++, saddr += db_per_fb) {
 		dip->di_db[i] = saddr;
 	}
