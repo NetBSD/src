@@ -1,5 +1,5 @@
-/*
- * Copyright (c) 1989 The Regents of the University of California.
+/*-
+ * Copyright (c) 1985 The Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,11 +30,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pathnames.h	5.4 (Berkeley) 6/1/90
- *	$Id: pathnames.h,v 1.2 1993/08/01 17:55:18 mycroft Exp $
+ *	@(#)pathnames.h	5.6 (Berkeley) 5/11/93
  */
 
 #include <paths.h>
 
+#ifdef sgi
+#define	_PATH_MASTERLOG	"/var/adm/timed.masterlog"
+#define	_PATH_TIMEDLOG	"/var/adm/timed.log"
+#else
 #define	_PATH_MASTERLOG	"/var/log/timed.masterlog"
 #define	_PATH_TIMEDLOG	"/var/log/timed.log"
+#endif
