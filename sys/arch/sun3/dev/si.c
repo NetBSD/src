@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.41 1998/11/19 21:49:46 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.42 1998/12/23 04:53:44 fair Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ si_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef	DEBUG
 		if (si_debug) {
-			printf("si_minphys len = 0x%x.\n", bp->b_bcount);
+			printf("si_minphys len = 0x%lx.\n", bp->b_bcount);
 			Debugger();
 		}
 #endif
