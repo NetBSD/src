@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2003/04/02 02:45:36 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2003/04/18 20:02:34 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2213,7 +2213,6 @@ void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	struct mem_region *mp;
-	int is_mmem, idx;
 	ptel_t ptel;
 
 	PMPRINTF(("pmap_kenter_pa: va 0x%lx, pa 0x%lx, prot 0x%x\n",
@@ -2222,25 +2221,19 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	if (va < pmap_kva_avail_start)
 		panic("pmap_kenter_pa: Entering non-kernel VA: 0x%lx", va);
 
-	idx = kva_to_iptidx(va);
-
-	for (is_mmem = 0, mp = mem; mp->mr_size; mp++) {
+	ptel = SH5_PTEL_CB_DEVICE;
+	for (mp = mem; mp->mr_size; mp++) {
 		if (pa >= mp->mr_start && pa < mp->mr_start + mp->mr_size) {
-			is_mmem = 1;
+			ptel = SH5_PTEL_CB_WRITEBACK;
 			break;
 		}
 	}
 
-	if (!is_mmem) {
-		ptel = SH5_PTEL_CB_DEVICE | SH5_PTEL_PR_R | SH5_PTEL_PR_W;
-		ptel |= (ptel_t)(pa & SH5_PTEL_PPN_MASK);
+	ptel |= SH5_PTEL_PR_R | (ptel_t)(pa & SH5_PTEL_PPN_MASK);
+	if (prot & VM_PROT_WRITE)
+		ptel |= SH5_PTEL_PR_W;
 
-		pmap_kernel_ipt_set_ptel(&pmap_kernel_ipt[idx], ptel);
-	} else {
-		if (pmap_enter(pmap_kernel(), va, pa, prot,
-		    PMAP_WIRED | PMAP_UNMANAGED))
-			panic("pmap_kenter_pa: pmap_enter botched");
-	}
+	pmap_kernel_ipt_set_ptel(&pmap_kernel_ipt[kva_to_iptidx(va)], ptel);
 
 	PMPRINTF(("pmap_kenter_pa: done\n"));
 }
