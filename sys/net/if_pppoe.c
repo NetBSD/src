@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.24.4.10 2003/02/07 20:10:28 tron Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.24.4.11 2003/02/07 20:13:08 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.10 2003/02/07 20:10:28 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.24.4.11 2003/02/07 20:13:08 tron Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -930,7 +930,7 @@ pppoe_timeout(void *arg)
 		 *    established and will try infinitely (without user
 		 *    intervention)
 		 * We only enter slow retry mode if IFF_LINK1 (aka autodial)
-		 * is not set and we already had a successfull connection.
+		 * is not set.
 		 */
 
 		/* initialize for quick retry mode */
@@ -939,8 +939,7 @@ pppoe_timeout(void *arg)
 		x = splnet();
 		sc->sc_padi_retried++;
 		if (sc->sc_padi_retried >= PPPOE_DISC_MAXPADI) {
-			if ((sc->sc_sppp.pp_if.if_flags & IFF_LINK1) == 0 &&
-			    sc->sc_sppp.pp_if.if_ibytes) {
+			if ((sc->sc_sppp.pp_if.if_flags & IFF_LINK1) == 0) {
 				/* slow retry mode */
 				retry_wait = PPPOE_SLOW_RETRY;
 			} else {
