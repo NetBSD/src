@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.9 1998/11/25 06:41:26 mycroft Exp $	*/
+/*	$NetBSD: disassem.c,v 1.1 2001/01/12 13:43:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -51,7 +51,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <arm32/arm32/disassem.h>
+#include <arch/arm/arm/disassem.h>
 
 /*
  * General instruction format
