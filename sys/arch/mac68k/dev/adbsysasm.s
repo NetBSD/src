@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsysasm.s,v 1.8 1998/10/26 07:07:34 scottr Exp $	*/
+/*	$NetBSD: adbsysasm.s,v 1.9 1999/02/11 06:41:08 ender Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -43,14 +43,14 @@
 /* (provided it has been set up with SetADBInfo) */
 GLOBAL(adb_kbd_asmcomplete)
 #if NKBD > 0
-	moveml	#0xc0c0, sp@-	| save scratch regs
+	moveml	#0x80e0, sp@-	| save scratch regs
 	movl	d0, sp@-	/* ADB command byte */
 	movl	a2, sp@-	/* data area pointer */
 	/*	a1 is the pointer to this routine itself. */
 	movl	a0, sp@-	/* device data buffer */
 	jbsr	_C_LABEL(kbd_adbcomplete)
 	addl	#12, sp		/* pop params */
-	moveml	sp@+, #0x0303	| restore scratch regs
+	moveml	sp@+, #0x0701	| restore scratch regs
 #endif
 	rts
 
@@ -58,14 +58,14 @@ GLOBAL(adb_kbd_asmcomplete)
 /* (provided it has been set up with SetADBInfo) */
 GLOBAL(adb_ms_asmcomplete)
 #if NMS > 0
-	moveml	#0xc0c0, sp@-	| save scratch regs
+	moveml	#0x80e0, sp@-	| save scratch regs
 	movl	d0, sp@-	/* ADB command byte */
 	movl	a2, sp@-	/* data area pointer */
 	/*	a1 is the pointer to this routine itself. */
 	movl	a0, sp@-	/* device data buffer */
 	jbsr	_C_LABEL(ms_adbcomplete)
 	addl	#12, sp		/* pop params */
-	moveml	sp@+, #0x0303	| restore scratch regs
+	moveml	sp@+, #0x0701	| restore scratch regs
 #endif
 	rts
 

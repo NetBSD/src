@@ -1,4 +1,4 @@
-/*	$Id: ms.c,v 1.2 1999/01/16 22:49:37 scottr Exp $	*/
+/*	$Id: ms.c,v 1.3 1999/02/11 06:41:09 ender Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -117,16 +117,16 @@ msattach(parent, self, aux)
 	switch (sc->handler_id) {
 	case ADBMS_100DPI:
 		printf("%d-button, %d dpi mouse\n", sc->sc_buttons,
-		    sc->sc_res);
+		    (int)(sc->sc_res));
 		break;
 	case ADBMS_200DPI:
 		sc->sc_res = 200;
 		printf("%d-button, %d dpi mouse\n", sc->sc_buttons,
-		    sc->sc_res);
+		    (int)(sc->sc_res));
 		break;
 	case ADBMS_MSA3:
 		printf("Mouse Systems A3 mouse, %d-button, %d dpi\n",
-		    sc->sc_buttons, sc->sc_res);
+		    sc->sc_buttons, (int)(sc->sc_res));
 		break;
 	case ADBMS_USPEED:
 		printf("MicroSpeed mouse, default parameters\n");
@@ -166,7 +166,7 @@ msattach(parent, self, aux)
 				break;
 			}
 			printf(" <%s> %d-button, %d dpi\n", sc->sc_devid,
-			    sc->sc_buttons, sc->sc_res);
+			    sc->sc_buttons, (int)(sc->sc_res));
 		}
 		break;
 	default:

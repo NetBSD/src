@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.39 1998/08/11 20:08:00 briggs Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.40 1999/02/11 06:41:08 ender Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -73,8 +73,8 @@ adb_complete(buffer, data_area, adb_command)
 #endif
 
 	event.addr = adbaddr;
-	event.hand_id = adbdata.devType;
-	event.def_addr = adbdata.origADBAddr;
+	event.hand_id = (int)(adbdata.devType);
+	event.def_addr = (int)(adbdata.origADBAddr);
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
@@ -119,7 +119,7 @@ adb_msa3_complete(buffer, data_area, adb_command)
 
 	event.addr = adbaddr;
 	event.hand_id = ADBMS_MSA3;
-	event.def_addr = adbdata.origADBAddr;
+	event.def_addr = (int)(adbdata.origADBAddr);
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
@@ -186,8 +186,8 @@ adb_mm_nonemp_complete(buffer, data_area, adb_command)
 		buffer[3] = 0x80;
 
 	event.addr = adbaddr;
-	event.hand_id = adbdata.devType;
-	event.def_addr = adbdata.origADBAddr;
+	event.hand_id = (int)(adbdata.devType);
+	event.def_addr = (int)(adbdata.origADBAddr);
 	event.byte_count = buffer[0];
 	memcpy(event.bytes, buffer + 1, event.byte_count);
 
@@ -421,7 +421,7 @@ adb_init()
 		printf("adb: ");
 		switch (adbdata.origADBAddr) {
 		case ADBADDR_SECURE:
-			printf("security dongle (%d)", adbdata.devType);
+			printf("security dongle (%d)", (int)(adbdata.devType));
 			break;
 		case ADBADDR_MAP:
 			switch (adbdata.devType) {
@@ -492,7 +492,7 @@ adb_init()
 				printf("extended keyboard");
 				break;
 			default:
-				printf("mapped device (%d)", adbdata.devType);
+				printf("mapped device (%d)", (int)(adbdata.devType));
 				break;
 			}
 			break;
@@ -557,7 +557,7 @@ adb_init()
 				break;
 			default:
 				printf("relative positioning device (mouse?) "
-				    "(%d)", adbdata.devType);
+				    "(%d)", (int)(adbdata.devType));
 				break;
 			}
 			break;
@@ -568,13 +568,13 @@ adb_init()
 				break;
 			default:
 				printf("abs. pos. device (tablet?) (%d)",
-				    adbdata.devType);
+				    (int)(adbdata.devType));
 				break;
 			}
 			break;
 		case ADBADDR_DATATX:
 			printf("data transfer device (modem?) (%d)",
-			    adbdata.devType);
+			    (int)(adbdata.devType));
 			break;
 		case ADBADDR_MISC:
 			switch (adbdata.devType) {
@@ -583,13 +583,13 @@ adb_init()
 				break;
 			default:
 				printf("misc. device (remote control?) (%d)",
-				    adbdata.devType);
+				    (int)(adbdata.devType));
 				break;
 			}
 			break;
 		default:
 			printf("unknown type device, (def %d, handler %d)",
-			    adbdata.origADBAddr, adbdata.devType);
+			    (int)(adbdata.origADBAddr), (int)(adbdata.devType));
 			break;
 		}
 		printf(" at %d\n", adbaddr);

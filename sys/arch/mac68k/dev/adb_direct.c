@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.19 1998/11/14 03:20:47 briggs Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.20 1999/02/11 06:41:07 ender Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -170,9 +170,9 @@
 struct ADBDevEntry {
 	void	(*ServiceRtPtr) __P((void));
 	void	*DataAreaAddr;
-	char	devType;
-	char	origAddr;
-	char	currentAddr;
+	int	devType;
+	int	origAddr;
+	int	currentAddr;
 };
 
 /*
@@ -2060,7 +2060,7 @@ adb_reinit(void)
 		    (Ptr)0, (short)command);
 		if (0x00 != send_string[0]) {	/* anything come back ?? */
 			ADBDevTable[++ADBNumDevices].devType =
-			    (u_char)send_string[2];
+				(int)(send_string[2]);
 			ADBDevTable[ADBNumDevices].origAddr = i;
 			ADBDevTable[ADBNumDevices].currentAddr = i;
 			ADBDevTable[ADBNumDevices].DataAreaAddr =
@@ -2127,7 +2127,7 @@ adb_reinit(void)
 					printf_intr("new device found\n");
 #endif
 				ADBDevTable[++ADBNumDevices].devType =
-				    (u_char)send_string[2];
+					(int)(send_string[2]);
 				ADBDevTable[ADBNumDevices].origAddr = device;
 				ADBDevTable[ADBNumDevices].currentAddr = device;
 				/* These will be set correctly in adbsys.c */
@@ -2171,7 +2171,7 @@ adb_reinit(void)
 		for (i = 1; i <= ADBNumDevices; i++) {
 			x = get_ind_adb_info(&data, i);
 			if (x != -1)
-				printf_intr("index 0x%x, addr 0x%x, type 0x%x\n",
+				printf_intr("index 0x%x, addr 0x%x, type 0x%hx\n",
 				    i, x, data.devType);
 		}
 	}
@@ -2522,8 +2522,8 @@ get_ind_adb_info(ADBDataBlock * info, int index)
 	if (0 == ADBDevTable[index].devType)	/* make sure it's a valid entry */
 		return (-1);
 
-	info->devType = ADBDevTable[index].devType;
-	info->origADBAddr = ADBDevTable[index].origAddr;
+	info->devType = (unsigned char)(ADBDevTable[index].devType);
+	info->origADBAddr = (unsigned char)(ADBDevTable[index].origAddr);
 	info->dbServiceRtPtr = (Ptr)ADBDevTable[index].ServiceRtPtr;
 	info->dbDataAreaAddr = (Ptr)ADBDevTable[index].DataAreaAddr;
 
@@ -2540,8 +2540,8 @@ get_adb_info(ADBDataBlock * info, int adbAddr)
 
 	for (i = 1; i < 15; i++)
 		if (ADBDevTable[i].currentAddr == adbAddr) {
-			info->devType = ADBDevTable[i].devType;
-			info->origADBAddr = ADBDevTable[i].origAddr;
+			info->devType = (unsigned char)(ADBDevTable[i].devType);
+			info->origADBAddr = (unsigned char)(ADBDevTable[i].origAddr);
 			info->dbServiceRtPtr = (Ptr)ADBDevTable[i].ServiceRtPtr;
 			info->dbDataAreaAddr = ADBDevTable[i].DataAreaAddr;
 			return 0;	/* found */

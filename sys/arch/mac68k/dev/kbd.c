@@ -1,4 +1,4 @@
-/*	$Id: kbd.c,v 1.1 1998/10/23 01:16:24 ender Exp $	*/
+/*	$Id: kbd.c,v 1.2 1999/02/11 06:41:09 ender Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -315,7 +315,7 @@ setleds(ksc, leds)
 	if ((leds & 0x07) == (ksc->sc_leds & 0x07))
 		return (0);
 
-	addr = (int)ksc->adbaddr;
+	addr = ksc->adbaddr;
 	buffer[0] = 0;
 	kbd_done = 0;
 
@@ -365,7 +365,7 @@ blinkleds(ksc)
 	int addr, i;
 	u_char blinkleds, origleds;
 
-	addr = (int)ksc->adbaddr;
+	addr = ksc->adbaddr;
 	origleds = getleds(addr);
 	blinkleds = LED_NUMLOCK | LED_CAPSLOCK | LED_SCROLL_LOCK;
 
