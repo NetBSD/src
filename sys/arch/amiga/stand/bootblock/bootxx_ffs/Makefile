@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2003/10/25 03:14:33 mhitch Exp $
+#	$NetBSD: Makefile,v 1.8 2003/10/26 07:25:36 lukem Exp $
 
 ### what we need:
 
@@ -51,7 +51,7 @@ CAFLAGS += -Wa,-l -Wa,-m68030 ${INCPATH} -D_PRIMARY_BOOT
 COPTIM= -Os -fomit-frame-pointer -fcse-follow-jumps -fcse-skip-blocks  -Wa,-l -m68060 -Wa,-m68030
 CFLAGS= -ffreestanding ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 
-NETBSD_VERS!=	sh ${.CURDIR}/../../../../../conf/osrelease.sh
+NETBSD_VERS!=	${HOST_SH} ${.CURDIR}/../../../../../conf/osrelease.sh
 DEFS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
 # Use small daddr_t to avoid code bloat
@@ -95,7 +95,7 @@ libboot.a: ${OBJS}
 
 .PHONY:	vers.c
 vers.c:	${.CURDIR}/../boot/version
-	sh ${DIR_TOP}/conf/newvers_stand.sh -NDM ${.CURDIR}/../boot/version "amiga"
+	${HOST_SH} ${DIR_TOP}/conf/newvers_stand.sh -NDM ${.CURDIR}/../boot/version "amiga"
 
 machine:
 	-rm -f $@

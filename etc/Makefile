@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.259 2003/10/25 03:55:26 ross Exp $
+#	$NetBSD: Makefile,v 1.260 2003/10/26 07:25:34 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -36,13 +36,9 @@
 #
 .include <bsd.own.mk>
 
-# For KERNSRCDIR, KERNOBJDIR, ...
-#
-.include <bsd.kernobj.mk>
-
-# For TARGET_ENDIANNESS
-#
-.include <bsd.endian.mk>
+.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.kernobj.mk>	# For KERNSRCDIR, KERNOBJDIR, ...
+.include <bsd.endian.mk>	# For TARGET_ENDIANNESS
 
 
 .MAKEOVERRIDES+=	USETOOLS
@@ -56,7 +52,7 @@ MAKESUMS=	CKSUM=${TOOL_CKSUM:Q} ${HOST_SH} ${NETBSDSRCDIR}/distrib/sets/makesums
 # Note: At least mkisofs 2.0 should be used.
 #
 MKISOFS?=	mkisofs
-DISTRIBREV!=	sh ${KERNSRCDIR}/conf/osrelease.sh -s
+DISTRIBREV!=	${HOST_SH} ${KERNSRCDIR}/conf/osrelease.sh -s
 # ISO 9660 volume ID.  Note that this can only contain [A-Z0-9_].
 ISO_VOLID!=	echo NETBSD_${MACHINE}_${DISTRIBREV} | tr a-z A-Z
 MKISOFS_FLAGS+= -J -l \

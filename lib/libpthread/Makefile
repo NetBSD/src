@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2003/08/13 18:52:01 nathanw Exp $
+#	$NetBSD: Makefile,v 1.22 2003/10/26 07:25:34 lukem Exp $
 #
 
 WARNS=	2
@@ -28,7 +28,7 @@ DPSRCS+=	assym.h
 CLEANFILES+=	assym.h
 
 assym.h: genassym.sh ${ARCHDIR}/genassym.cf
-	sh ${.CURDIR}/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
+	${HOST_SH} ${.CURDIR}/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
 		< ${ARCHDIR}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 

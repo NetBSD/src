@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2003/01/19 21:37:04 ragge Exp $
+#	$NetBSD: Makefile,v 1.32 2003/10/26 07:25:37 lukem Exp $
 
 S=	${.CURDIR}/../../../..
 NOMAN=	# defined
@@ -53,7 +53,7 @@ START=nisse
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	sh ${S}/conf/newvers_stand.sh -NM ${.CURDIR}/version "${MACHINE}"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -NM ${.CURDIR}/version "${MACHINE}"
 
 ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${LD} -N -Ttext ${RELOC} -e ${START} -o ${PROG}.sym ${OBJS} \

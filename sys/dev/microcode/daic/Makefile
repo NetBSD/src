@@ -15,7 +15,7 @@
 # static byte array via the "gendnloadh" shell script.
 dnload.h:	dnload.bin
 	@rm -f dnload.h
-	@sh ./gendnloadh
+	@${HOST_SH} ./gendnloadh
 .else
 # Fake part - user did not copy the necessary file here. Compilation will
 # fail with an error explaining his fault.

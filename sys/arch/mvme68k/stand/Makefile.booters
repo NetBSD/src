@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.11 2003/10/24 21:28:24 scw Exp $
+#	$NetBSD: Makefile.booters,v 1.12 2003/10/26 07:25:36 lukem Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -28,7 +28,7 @@ SRCS+= vers.c
 CLEANFILES+= vers.c
 
 vers.c: version
-	sh ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvme68k"
+	${HOST_SH} ${S}/conf/newvers_stand.sh -DM ${.CURDIR}/version "mvme68k"
 .endif
 
 CLEANFILES+= machine m68k
