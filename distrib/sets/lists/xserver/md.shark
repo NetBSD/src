@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.10 2002/02/11 16:23:21 tron Exp $
+# $NetBSD: md.shark,v 1.1 2002/02/11 19:11:03 thorpej Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/Xarm32VIDC
 ./usr/X11R6/bin/Xnest
