@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.73 2003/04/20 20:55:39 thorpej Exp $
+#	$NetBSD: special,v 1.74 2003/04/30 09:05:56 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -118,10 +118,10 @@
 ./etc/postfix/master.cf		type=file mode=0644 optional
 ./etc/postfix/postfix-script	type=file mode=0555 optional
 ./etc/postinstall		type=file mode=0555 optional
-./etc/powerd			type=dir  mode=755
-./etc/powerd/scripts		type=dir  mode=755
-./etc/powerd/scripts/power_button type=file mode=0555
-./etc/powerd/scripts/reset_button type=file mode=0555
+./etc/powerd			type=dir  mode=0755 optional
+./etc/powerd/scripts		type=dir  mode=0755 optional
+./etc/powerd/scripts/power_button type=file mode=0555 optional
+./etc/powerd/scripts/reset_button type=file mode=0555 optional
 ./etc/ppp			type=dir  mode=0755 optional
 ./etc/ppp/options		type=file mode=0644 optional
 ./etc/printcap			type=file mode=0644
