@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.9 2003/03/31 03:58:55 perry Exp $
+#	$NetBSD: MAKEDEV,v 1.10 2003/04/17 18:03:10 fvdl Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -43,6 +43,8 @@
 #	all	Makes all known devices, including local devices.
 #		If units are expected for a device MAKEDEV supplies the
 #		standard numbers.
+#	init	A set of devices that is used for MFS /dev by init.
+#		May be equal to "all".
 #	minimal	A minimal set of devices for install disks, etc.
 #	std	The standard devices (console, drum, klog, kmem, mem,
 #		null, stderr, stdin, stdout, tty, zero).
@@ -111,7 +113,7 @@ for i
 do
 case $i in
 
-all)
+init|all)
 	makedev std wscons fd pty0
 	makedev vnd0 vnd1 vnd2 vnd3
 	makedev ccd0 ccd1 ccd2 ccd3 md0 md1
