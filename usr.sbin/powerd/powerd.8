@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerd.8,v 1.3 2003/04/21 00:55:17 thorpej Exp $
+.\"	$NetBSD: powerd.8,v 1.4 2003/04/22 22:45:48 augustss Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -83,6 +83,11 @@ If the script is not found in the first location,
 looks in
 .Pa /etc/powerd/scripts .
 .Pp
+Configuration scripts are run synchronously, i.e.,
+.Nm
+will start the script and wait for its completion before it handles
+the next event.
+.Pp
 Configuration scripts are called with different arguments, depending on
 the script class.
 These classes are described in the following sections.
@@ -127,6 +132,10 @@ when a power button is pressed by the operator:
 .Nm
 first appeared in
 .Nx 2.0 .
+.Sh BUGS
+Due to its synchronous nature
+.Nm
+cannot be trusted to handle events within a certain time.
 .Sh AUTHORS
 .Nm
 was written by
