@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.18 1995/06/18 10:58:59 cgd Exp $	*/
+/*	$NetBSD: mount.c,v 1.19 1995/06/22 11:16:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.18 1995/06/18 10:58:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.19 1995/06/22 11:16:44 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -396,7 +396,7 @@ prmount(sf)
 	struct opt *o;
 	int f;
 
-	(void)printf("%s on %s type %*s", sf->f_mntfromname, sf->f_mntonname,
+	(void)printf("%s on %s type %.*s", sf->f_mntfromname, sf->f_mntonname,
 	    MFSNAMELEN, sf->f_fstypename);
 
 	flags = sf->f_flags & MNT_VISFLAGMASK;
