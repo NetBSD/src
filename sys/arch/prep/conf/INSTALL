@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.28 2004/07/15 03:53:51 atatat Exp $
+#	$NetBSD: INSTALL,v 1.29 2004/11/10 17:54:06 christos Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -31,6 +31,7 @@ options 	OPENPIC				# OpenPIC support (7043-140)
 #options 	COMPAT_15	# NetBSD 1.5,
 #options 	COMPAT_16	# NetBSD 1.6,
 #options 	COMPAT_43	# and 4.3BSD
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

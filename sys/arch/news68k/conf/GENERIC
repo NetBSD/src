@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.55 2004/09/04 23:29:56 manu Exp $
+# $NetBSD: GENERIC,v 1.56 2004/11/10 17:54:06 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55 $"
+#ident 		"GENERIC-$Revision: 1.56 $"
 
 maxusers	8
 
@@ -77,6 +77,7 @@ options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 #options 	COMPAT_SVR4		# binary compatibility with SVR4
 options 	COMPAT_SUNOS		# binary compatibility with SunOS
 #options 	COMPAT_LINUX		# binary compatibllity with Linux/m68k
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 2004/09/06 23:32:59 uwe Exp $
+# $NetBSD: GENERIC,v 1.43 2004/11/10 17:54:04 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -106,6 +106,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 #options 	BSDDISKLABEL_EI	# endian independent disklabel support
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables

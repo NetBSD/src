@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.28 2004/09/04 23:29:46 manu Exp $
+#	$NetBSD: MIMORI,v 1.29 2004/11/10 17:54:03 christos Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -56,6 +56,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 # mipsel specific
 #options 	COMPAT_ULTRIX	# Ultrix binary compatibility
 #options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# fast filesystem

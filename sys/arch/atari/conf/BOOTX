@@ -1,5 +1,5 @@
 #
-# $NetBSD: BOOTX,v 1.52 2004/06/26 07:34:43 abs Exp $
+# $NetBSD: BOOTX,v 1.53 2004/11/10 17:54:03 christos Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -40,6 +40,7 @@ options COMPAT_16 # Compatibility to NetBSD1.6
 
 options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
+options	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
 options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30 2004/10/23 14:00:51 augustss Exp $
+# $NetBSD: GENERIC,v 1.31 2004/11/10 17:54:02 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.30 $"
+#ident 		"GENERIC-$Revision: 1.31 $"
 
 maxusers	32		# estimated number of users
 
@@ -98,6 +98,7 @@ options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
 options 	COMPAT_NETBSD32
 options 	EXEC_ELF32
+options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
