@@ -1,9 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 1997/10/13 03:58:05 explorer Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/13 14:16:16 mycroft Exp $
 
 PROG=	rndctl
-SRCS=	rndctl.c
 MAN=	rndctl.8
-
-MLINKS=	rndctl.8
 
 .include <bsd.prog.mk>
