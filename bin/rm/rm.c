@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.30 2002/05/02 13:25:09 enami Exp $ */
+/* $NetBSD: rm.c,v 1.31 2002/11/05 04:49:05 enami Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.30 2002/05/02 13:25:09 enami Exp $");
+__RCSID("$NetBSD: rm.c,v 1.31 2002/11/05 04:49:05 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ rm_tree(char **argv)
 	if (Wflag)
 		flags |= FTS_WHITEOUT;
 	if (!(fts = fts_open(argv, flags,
-	    (int (*) __P((const FTSENT **, const FTSENT **)))NULL)))
+	    (int (*)(const FTSENT **, const FTSENT **))NULL)))
 		err(1, NULL);
 	while ((p = fts_read(fts)) != NULL) {
 		switch (p->fts_info) {
@@ -404,7 +404,7 @@ checkdot(char **argv)
 	complained = 0;
 	for (t = argv; *t;) {
 		/* strip trailing slashes */
-		p = strrchr (*t, '\0');
+		p = strrchr(*t, '\0');
 		while (--p > *t && *p == '/')
 			*p = '\0';
 
