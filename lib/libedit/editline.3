@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.3 1997/01/11 06:47:51 lukem Exp $
+.\"	$NetBSD: editline.3,v 1.4 1997/01/14 04:17:23 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -325,7 +325,7 @@ is the key which caused the invocation.
 The return value of
 .Fn func
 should be one of:
-.Bl -tag -width "CC_REFRESH"
+.Bl -tag -width "CC_REDISPLAY"
 .It Dv CC_NORM
 Add a normal character.
 .It Dv CC_NEWLINE
@@ -337,7 +337,11 @@ Expecting further command input as arguments, do nothing visually.
 .It Dv CC_REFRESH
 Refresh display.
 .It Dv CC_CURSOR
-Move cursor and refresh display.
+Cursor moved, so update and perform
+.Dv CC_REFRESH.
+.It Dv CC_REDISPLAY
+Redisplay entire input line.
+This is useful if a key binding outputs extra information.
 .It Dv CC_ERROR
 An error occurred.
 Beep, and flush tty.
