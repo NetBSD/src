@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_general.h,v 1.12 2004/01/01 19:27:36 oster Exp $	*/
+/*	$NetBSD: rf_general.h,v 1.13 2004/01/01 20:39:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -78,15 +78,6 @@ extern char rf_panicbuf[];
 
 /* get time of day */
 #define RF_GETTIME(_t) microtime(&(_t))
-
-/*
- * zero memory- not all memset calls go through here, only
- * those which in the kernel may have a user address
- */
-
-#define RF_BZERO(_bp,_b,_l)  memset(_b,0,_l)	/* XXX This is likely
-						 * incorrect. GO */
-
 
 #define RF_UL(x)           ((unsigned long) (x))
 #define RF_PGMASK          PAGE_MASK
