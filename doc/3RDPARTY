@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.199 2004/03/28 09:06:15 martti Exp $
+#	$NetBSD: 3RDPARTY,v 1.200 2004/03/28 12:08:28 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -25,8 +25,8 @@
 #     remaining lines until the end of the record are notes.
 
 Package:	acpica
-Version:	20040311
-Current Vers:	20040211
+Version:	20040211
+Current Vers:	20040311
 Maintainer:	INTEL
 Archive Site:	http://developer.intel.com/technology/IAPC/acpi/downloads.htm
 Mailing List:	acpi-devel@lists.sourceforge.net
@@ -488,8 +488,8 @@ official openssh releases dropped kerberosIV support already, therefore
 if we need to keep it we need to maintain it ourselves.
 
 Package:	OpenSSL
-Version:	0.9.6g + security fix/0.9.7d
-Current Vers:	0.9.6l/0.9.7d
+Version:	0.9.7d
+Current Vers:	0.9.7d
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Mailing List:	openssl-announce@openssl.org
@@ -540,7 +540,7 @@ formating in man pages, disallowing flood pinging, alignment fixes,
 and more.
 
 Package:	postfix
-Version:	2.0.6
+Version:	2.0.19
 Current Vers:	2.0.19
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
