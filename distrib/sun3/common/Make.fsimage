@@ -1,5 +1,5 @@
 #
-#	$NetBSD: Make.fsimage,v 1.4 1999/03/04 20:32:20 wrstuden Exp $
+#	$NetBSD: Make.fsimage,v 1.5 2000/01/21 12:32:57 tsutsui Exp $
 #
 
 # TOP is assumed to be defined by Makefile including this one.
@@ -13,8 +13,8 @@ LISTS?=		${.CURDIR}/${CBIN}.list
 
 MOUNT_POINT?=	/mnt
 DISKTYPE?=	xxx-disktype
-BDEV?=		/dev/md0
-CDEV?=		/dev/md0
+BDEV?=		/dev/md0a
+CDEV?=		/dev/md0a
 
 IMAGE_DEPS?=	${CBIN}
 CLEANFILES+=	${IMAGE}.fs

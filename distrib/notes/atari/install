@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.11 2000/01/10 05:03:27 tsutsui Exp $	
+.\"	$NetBSD: install,v 1.12 2000/01/21 12:32:56 tsutsui Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@ You should see the screen clear and some information about
 your system as the kernel configures the hardware.  Then
 you will be prompted for a root device.  At this time remove
 the GEMDOS kernel boot floppy from the drive if present and
-insert the BSD install floppy 1.  Now type `md0' to tell the
+insert the BSD install floppy 1.  Now type `md0a' to tell the
 kernel to load the install filesystem into RAMdisk. While
 While the kernel is loading, it will show a '.' for each
 track loaded. After loading 80 tracks, it will ask you
@@ -69,8 +69,8 @@ to insert the next floppy. At this time, insert the BSD
 install floppy 2 and hit any key. The kernel continous
 loading another 40 tracks before it continues to boot.
 .(tag Note:
-If you are using 1.44Mb floppies, you should select 'md1'
-instead of 'md0'.
+If you are using 1.44Mb floppies, you should select 'md1a'
+instead of 'md0a'.
 .tag)
 The system should continue to boot.  For now ignore WARNING:
 messages about bad dates in clocks. Eventually you will be
@@ -224,7 +224,7 @@ You did it!
 Congratulations, you just installed NetBSD successfully! If you
 also installed a bootblock, you only have to reboot your atari to
 enter your freshly build system. If you didn't, get back to section
-1 (How to boot the miniroot). Just substitute 'md0' by your NetBSD
+1 (How to boot the miniroot). Just substitute 'md0a' by your NetBSD
 root disk.
 .El
 .Ss2 Some\ Extra\ Remarks
