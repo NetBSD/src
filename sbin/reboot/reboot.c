@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.17 1998/01/20 23:37:27 mycroft Exp $	*/
+/*	$NetBSD: reboot.c,v 1.18 1998/01/20 23:41:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,20 +44,21 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.17 1998/01/20 23:37:27 mycroft Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.18 1998/01/20 23:41:57 mycroft Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/reboot.h>
-#include <signal.h>
-#include <pwd.h>
+
 #include <err.h>
 #include <errno.h>
-#include <syslog.h>
-#include <unistd.h>
+#include <pwd.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
+#include <unistd.h>
 #include <util.h>
 
 int main __P((int, char *[]));
@@ -169,8 +170,7 @@ main(argc, argv)
 		 * single-user mode.
 		 */
 		if (errno != ESRCH) {
-			(void)fprintf(stderr, "%s: SIGTERM processes: %s",
-			    dohalt ? "halt" : "reboot", strerror(errno));
+			warn("SIGTERM processes");
 			goto restart;
 		}
 	}
@@ -192,8 +192,7 @@ main(argc, argv)
 			goto restart;
 		}
 		if (i > 5) {
-			(void)fprintf(stderr,
-			    "WARNING: some process(es) wouldn't die\n");
+			warnx("WARNING: some process(es) wouldn't die");
 			break;
 		}
 		(void)sleep(2 * i);
