@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.120 2000/02/21 05:11:09 mjacob Exp $ */
+/*	$NetBSD: st.c,v 1.121 2000/03/30 00:00:56 augustss Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1164,7 +1164,7 @@ ststart(v)
 {
 	struct st_softc *st = v;
 	struct scsipi_link *sc_link = st->sc_link;
-	register struct buf *bp;
+	struct buf *bp;
 	struct scsi_rw_tape cmd;
 	int flags, error;
 

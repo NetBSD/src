@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.158 2000/03/13 23:52:37 soren Exp $	*/
+/*	$NetBSD: sd.c,v 1.159 2000/03/30 00:00:56 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -657,10 +657,10 @@ done:
  */
 void 
 sdstart(v)
-	register void *v;
+	void *v;
 {
-	register struct sd_softc *sd = v;
-	register struct	scsipi_link *sc_link = sd->sc_link;
+	struct sd_softc *sd = v;
+	struct scsipi_link *sc_link = sd->sc_link;
 	struct disklabel *lp = sd->sc_dk.dk_label;
 	struct buf *bp = 0;
 	struct scsipi_rw_big cmd_big;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.29 2000/01/21 23:40:00 thorpej Exp $	*/
+/*	$NetBSD: ss.c,v 1.30 2000/03/30 00:00:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -279,7 +279,7 @@ void
 ssminphys(bp)
 	struct buf *bp;
 {
-	register struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
+	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 
 	(ss->sc_link->adapter->scsipi_minphys)(bp);
 
@@ -398,7 +398,7 @@ ssstart(v)
 {
 	struct ss_softc *ss = v;
 	struct scsipi_link *sc_link = ss->sc_link;
-	register struct buf *bp;
+	struct buf *bp;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart "));
 	/*

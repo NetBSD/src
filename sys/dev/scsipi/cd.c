@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.137 2000/03/13 23:52:36 soren Exp $	*/
+/*	$NetBSD: cd.c,v 1.138 2000/03/30 00:00:55 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -600,10 +600,10 @@ done:
  */
 void 
 cdstart(v)
-	register void *v;
+	void *v;
 {
-	register struct cd_softc *cd = v;
-	register struct scsipi_link *sc_link = cd->sc_link;
+	struct cd_softc *cd = v;
+	struct scsipi_link *sc_link = cd->sc_link;
 	struct disklabel *lp = cd->sc_dk.dk_label;
 	struct buf *bp = 0;
 	struct scsipi_rw_big cmd_big;
