@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.110 1999/01/12 04:58:37 jwise Exp $
+#	$NetBSD: rc,v 1.111 1999/01/12 12:42:46 mrg Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -152,8 +152,11 @@ rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; install -c -m 664 -g utmp /dev/null utmp; })
 
-# save a copy of the boot messages
-dmesg | sed -n -e '1,$H' -e '/^NetBSD/h' -e '$g' -e '$p' > /var/run/dmesg.boot
+# get the system dmesg output, hopefully containing the boot messages
+# $dmesg_flags is imported from /etc/rc.conf
+if checkyesno dmesg; then
+	dmesg $dmesg_flags > /var/run/dmesg.boot
+fi
 
 # start the system logger first, so that all messages from daemons
 # are logged, then start savecore to get a dump on low memory systems
@@ -457,7 +460,7 @@ if checkyesno rbootd; then
 	else
 		echo
 		logger -s "WARNING: /etc/rbootd.conf not readable; " \
-		    "rarpd not started."
+		    "rbootd not started."
 	fi
 fi
 
