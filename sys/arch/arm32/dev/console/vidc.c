@@ -1,4 +1,4 @@
-/* $NetBSD: vidc.c,v 1.1 1996/01/31 23:19:42 mark Exp $ */
+/* $NetBSD: vidc.c,v 1.2 1996/03/18 19:33:07 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -39,9 +39,6 @@
  * Old console ioctl declarations
  *
  * Created      : 17/09/94
- * Last updated : 15/11/95
- *
- *    $Id: vidc.c,v 1.1 1996/01/31 23:19:42 mark Exp $
  */
 
 #include <sys/types.h>

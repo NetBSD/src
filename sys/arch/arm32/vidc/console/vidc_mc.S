@@ -1,4 +1,4 @@
-/* $NetBSD: vidc_mc.S,v 1.2 1996/02/02 02:36:04 mycroft Exp $ */
+/* $NetBSD: vidc_mc.S,v 1.3 1996/03/18 19:33:08 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -39,9 +39,6 @@
  * Console assembly functions
  *
  * Created      : 17/09/94
- * Last updated : 15/11/95
- *
- *    $Id: vidc_mc.S,v 1.2 1996/02/02 02:36:04 mycroft Exp $
  */
 
 #include "assym.h"
