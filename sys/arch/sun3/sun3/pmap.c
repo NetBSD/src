@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86 1997/11/03 22:47:10 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.87 1997/11/19 00:19:10 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -154,6 +154,10 @@
  */
 #define MEM_BITS	(PG_TYPE | PA_PGNUM(0xF0000000))
 #define	IS_MAIN_MEM(pte) (((pte) & MEM_BITS) == 0)
+
+/* Does this (pseudo) PA represent device space? */
+#define PA_IS_DEV(pa) (((pa) & (PMAP_OBIO | PMAP_VME16)) || \
+					   (PA_PGNUM(pa) >= physmem))
 
 /*
  * Is there a Virtually Addressed Cache (VAC) alias problem
@@ -462,7 +466,7 @@ pa_to_pvhead(vm_offset_t pa)
 
 	idx = PA_PGNUM(pa);
 #ifdef	DIAGNOSTIC
-	if (idx > physmem)
+	if ((pa & PGOFSET) || (idx >= physmem))
 		panic("pmap:pa_to_pvhead: bad pa=0x%lx", pa);
 #endif
 	return (&pv_head_tbl[idx]);
@@ -475,8 +479,8 @@ pa_to_pvflags(vm_offset_t pa)
 
 	idx = PA_PGNUM(pa);
 #ifdef	DIAGNOSTIC
-	if (idx > physmem)
-		panic("pmap:pa_to_pvflags: idx=0x%x", idx);
+	if ((pa & PGOFSET) || (idx >= physmem))
+		panic("pmap:pa_to_pvflags: bad pa=0x%lx", pa);
 #endif
 	return (&pv_flags_tbl[idx]);
 }
@@ -2647,6 +2651,10 @@ pmap_clear_modify(pa)
 	if (!pv_initialized)
 		return;
 
+	/* The VM code may call this on device addresses! */
+	if (PA_IS_DEV(pa))
+		return;
+
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
@@ -2668,6 +2676,10 @@ pmap_is_modified(pa)
 	int rv, s;
 
 	if (!pv_initialized)
+		return (0);
+
+	/* The VM code may call this on device addresses! */
+	if (PA_IS_DEV(pa))
 		return (0);
 
 	pv_flags = pa_to_pvflags(pa);
@@ -2697,6 +2709,10 @@ pmap_clear_reference(pa)
 	if (!pv_initialized)
 		return;
 
+	/* The VM code may call this on device addresses! */
+	if (PA_IS_DEV(pa))
+		return;
+
 	pv_flags = pa_to_pvflags(pa);
 	head     = pa_to_pvhead(pa);
 
@@ -2719,6 +2735,10 @@ pmap_is_referenced(pa)
 	int rv, s;
 
 	if (!pv_initialized)
+		return (0);
+
+	/* The VM code may call this on device addresses! */
+	if (PA_IS_DEV(pa))
 		return (0);
 
 	pv_flags = pa_to_pvflags(pa);
@@ -2889,6 +2909,10 @@ pmap_page_protect(pa, prot)
 	vm_prot_t	   prot;
 {
 	int s;
+
+	/* The VM code may call this on device addresses! */
+	if (PA_IS_DEV(pa))
+		return;
 
 	s = splpmap();
 
@@ -3856,7 +3880,7 @@ pv_print(pa)
 		return;
 	}
 	idx = PA_PGNUM(pa);
-	if (idx > physmem) {
+	if (idx >= physmem) {
 		db_printf("bad address\n");
 		return;
 	}
