@@ -1,4 +1,4 @@
-/*	$NetBSD: tcvar.h,v 1.8 1997/07/17 01:12:42 jtk Exp $	*/
+/*	$NetBSD: tcvar.h,v 1.8.2.1 1997/09/01 20:59:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -34,9 +34,7 @@
  * Definitions for TurboChannel autoconfiguration.
  */
 
-#ifdef __alpha__	/* XXX pmax does not yet have machine/bus.h */
 #include <machine/bus.h>
-#endif
 #include <dev/tc/tcreg.h>
 
 /*
@@ -91,9 +89,7 @@ typedef enum {
  */
 struct tcbus_attach_args {
 	char		*tba_busname;		/* XXX should be common */
-#ifdef __alpha__ /* XXX */
 	bus_space_tag_t tba_memt;
-#endif
 
 	/* Bus information */
 	u_int		tba_speed;		/* see TC_SPEED_* below */
@@ -113,9 +109,7 @@ struct tcbus_attach_args {
  * Arguments used to attach TurboChannel devices.
  */
 struct tc_attach_args {
-#ifdef __alpha__ /* XXX */
 	bus_space_tag_t ta_memt;
-#endif
 
 	char		ta_modname[TC_ROM_LLEN+1];
 	u_int		ta_slot;

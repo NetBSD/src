@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.8 1997/07/14 20:46:21 fvdl Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.8.2.1 1997/09/01 21:02:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -69,8 +69,7 @@ int nfs_asyncio __P((struct buf *, struct ucred *));
 int nfs_doio __P((struct buf *, struct ucred *, struct proc *));
 
 /* nfs_boot.c */
-int nfs_boot_init __P((struct nfs_diskless *, struct proc *));
-int nfs_boot_init __P((struct nfs_diskless *, struct proc *));
+/* see nfsdiskless.h */
 
 /* nfs_node.c */
 void nfs_nhinit __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.38.4.1 1997/08/23 07:14:19 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.38.4.2 1997/09/01 21:00:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -477,6 +477,21 @@ in_arpinput(m)
 	op = ntohs(ah->ar_op);
 	bcopy((caddr_t)ar_spa(ah), (caddr_t)&isaddr, sizeof (isaddr));
 	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&itaddr, sizeof (itaddr));
+
+	/*
+	 * If either the source or destination IP address is zero, then
+	 * the packet is bogus and we can just ignore it.  If we try to
+	 * process such bogus packets normally, they cause odd problems,
+	 * especially when we are using IP address zero (diskless boot).
+	 */
+	if (in_nullhost(isaddr) || in_nullhost(itaddr)) {
+		/* On some networks, this happens a lot! (stupid PCs...) */
+		log(LOG_DEBUG, "arp: zero IP addr from link address %s\n",
+		    lla_snprintf(ar_sha(ah), ah->ar_hln));
+		goto out;
+	}
+
+	/* Search for a matching interface address. */
 	for (ia = in_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next)
 		if (ia->ia_ifp == ifp) {
 			maybe_ia = ia;
@@ -642,12 +657,16 @@ arp_ifinit(ifp, ifa)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 {
+	struct in_addr *ip;
 
-	/* Warn the user if another station has this IP address. */
-	arprequest(ifp,
-	    &IA_SIN(ifa)->sin_addr,
-	    &IA_SIN(ifa)->sin_addr,
-	    LLADDR(ifp->if_sadl));
+	/*
+	 * Warn the user if another station has this IP address,
+	 * but only if the interface IP address is not zero.
+	 */
+	ip = &IA_SIN(ifa)->sin_addr;
+	if (!in_nullhost(*ip))
+		arprequest(ifp, ip, ip, LLADDR(ifp->if_sadl));
+
 	ifa->ifa_rtrequest = arp_rtrequest;
 	ifa->ifa_flags |= RTF_CLONING;
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: nfsdiskless.h,v 1.11.4.1 1997/08/23 07:14:24 thorpej Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.11.4.2 1997/09/01 21:03:00 thorpej Exp $	*/
 
-/*
- * Copyright (c) 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
+/*-
+ * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * Rick Macklem at The University of Guelph.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Adam Glass and Gordon W. Ross.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,37 +17,36 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  *
  *	@(#)nfsdiskless.h	8.1 (Berkeley) 6/10/93
  */
 
 /*
- * Structure that must be initialized for a diskless nfs client.
- * This structure is used by nfs_mountroot() to set up the root and swap
- * vnodes plus do a partial ifconfig(8) and route(8) so that the critical
- * net interface can communicate with the server.
- * Whether or not the swap area is nfs mounted is determined
- * by the value in swdevt[0]. (equal to NODEV --> swap over nfs)
- * Currently only works for AF_INET protocols.
- * NB: All fields are stored in net byte order to avoid hassles with
- * client/server byte ordering differences.
+ * Structure holds parameters needed by nfs_mountroot(),
+ * which are filled in by nfs_boot_init() using either
+ * BOOTP (RFC951, RFC1048) or Sun RPC/bootparams.  These
+ * parameters are INET specific because nfs_boot_init()
+ * currently supports only AF_INET protocols.
+ *
+ * NB: All fields are stored in net byte order to avoid hassles
+ * with client/server byte ordering differences.
  */
 struct nfs_dlmount {
 	struct nfs_args ndm_args;
@@ -56,7 +55,11 @@ struct nfs_dlmount {
 	u_char		ndm_fh[NFSX_V3FHMAX]; 	/* The file's file handle */
 };
 struct nfs_diskless {
-	struct sockaddr_in nd_boot; 	/* Address of boot server */
+	/* A collection of IP addresses, for convenience. */
+	struct in_addr nd_myip; /* My IP address */
+	struct in_addr nd_mask; /* My netmask */
+	struct in_addr nd_gwip; /* My gateway */
+	/* Information for each mount point we need. */
 	struct nfs_dlmount nd_root; 	/* Mount info for root */
 #if 0
 	struct nfs_dlmount nd_swap; 	/* Mount info for swap */
@@ -65,4 +68,7 @@ struct nfs_diskless {
 
 int nfs_boot_init __P((struct nfs_diskless *nd, struct proc *procp));
 int nfs_boot_getfh __P((struct nfs_dlmount *ndm));
+
+int nfs_bootdhcp  __P((struct ifnet *, struct nfs_diskless *, struct proc *));
+int nfs_bootparam __P((struct ifnet *, struct nfs_diskless *, struct proc *));
 
