@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.5 1997/05/11 07:59:38 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.6 1997/05/11 08:10:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -219,7 +219,7 @@ list_swap(dolong)
 		    dbtob(totalsize) / blocksize,
 		    dbtob(totalinuse) / blocksize,
 		    dbtob(totalsize - totalinuse) / blocksize,
-		    (double)(totalsize-totalinuse) / (double)totalsize * 100.0);
+		    (double)(totalinuse) / (double)totalsize * 100.0);
 	} else {
 		puts("swap -s not done (yet)");
 	}
