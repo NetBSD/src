@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.36 2004/12/29 19:41:04 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.37 2005/01/02 04:23:03 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.36 2004/12/29 19:41:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.37 2005/01/02 04:23:03 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -327,7 +327,7 @@ rtw_continuous_tx_enable(struct rtw_softc *sc, int enable)
 {
 	struct rtw_regs *regs = &sc->sc_regs;
 
-	u_int32_t tcr;
+	uint32_t tcr;
 	tcr = RTW_READ(regs, RTW_TCR);
 	tcr &= ~RTW_TCR_LBK_MASK;
 	if (enable)
@@ -426,7 +426,7 @@ rtw_set_access(struct rtw_softc *sc, enum rtw_access access)
 void
 rtw_config0123_enable(struct rtw_regs *regs, int enable)
 {
-	u_int8_t ecr;
+	uint8_t ecr;
 	ecr = RTW_READ8(regs, RTW_9346CR);
 	ecr &= ~(RTW_9346CR_EEM_MASK | RTW_9346CR_EECS | RTW_9346CR_EESK);
 	if (enable)
@@ -443,7 +443,7 @@ rtw_config0123_enable(struct rtw_regs *regs, int enable)
 void
 rtw_anaparm_enable(struct rtw_regs *regs, int enable)
 {
-	u_int8_t cfg3;
+	uint8_t cfg3;
 
 	cfg3 = RTW_READ8(regs, RTW_CONFIG3);
 	cfg3 |= RTW_CONFIG3_CLKRUNEN;
@@ -459,7 +459,7 @@ rtw_anaparm_enable(struct rtw_regs *regs, int enable)
 void
 rtw_txdac_enable(struct rtw_softc *sc, int enable)
 {
-	u_int32_t anaparm;
+	uint32_t anaparm;
 	struct rtw_regs *regs = &sc->sc_regs;
 
 	anaparm = RTW_READ(regs, RTW_ANAPARM);
@@ -474,7 +474,7 @@ rtw_txdac_enable(struct rtw_softc *sc, int enable)
 static __inline int
 rtw_chip_reset1(struct rtw_regs *regs, const char *dvname)
 {
-	u_int8_t cr;
+	uint8_t cr;
 	int i;
 
 	RTW_WRITE8(regs, RTW_CR, RTW_CR_RST);
@@ -515,7 +515,7 @@ static __inline int
 rtw_recall_eeprom(struct rtw_regs *regs, const char *dvname)
 {
 	int i;
-	u_int8_t ecr;
+	uint8_t ecr;
 
 	ecr = RTW_READ8(regs, RTW_9346CR);
 	ecr = (ecr & ~RTW_9346CR_EEM_MASK) | RTW_9346CR_EEM_AUTOLOAD;
@@ -618,8 +618,8 @@ rtw_srom_free(struct rtw_srom *sr)
 }
 
 static void
-rtw_srom_defaults(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
-    enum rtw_rfchipid *rfchipid, u_int32_t *rcr)
+rtw_srom_defaults(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
+    enum rtw_rfchipid *rfchipid, uint32_t *rcr)
 {
 	*flags |= (RTW_F_DIGPHY|RTW_F_ANTDIV);
 	*cs_threshold = RTW_SR_ENERGYDETTHR_DEFAULT;
@@ -628,15 +628,15 @@ rtw_srom_defaults(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 }
 
 static int
-rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
-    enum rtw_rfchipid *rfchipid, u_int32_t *rcr, enum rtw_locale *locale,
+rtw_srom_parse(struct rtw_srom *sr, uint32_t *flags, uint8_t *cs_threshold,
+    enum rtw_rfchipid *rfchipid, uint32_t *rcr, enum rtw_locale *locale,
     const char *dvname)
 {
 	int i;
 	const char *rfname, *paname;
 	char scratch[sizeof("unknown 0xXX")];
-	u_int16_t version;
-	u_int8_t mac[IEEE80211_ADDR_LEN];
+	uint16_t version;
+	uint8_t mac[IEEE80211_ADDR_LEN];
 
 	*flags &= ~(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV);
 	*rcr &= ~(RTW_RCR_ENCS1 | RTW_RCR_ENCS2);
@@ -728,12 +728,12 @@ rtw_srom_parse(struct rtw_srom *sr, u_int32_t *flags, u_int8_t *cs_threshold,
 
 /* Returns -1 on failure. */
 static int
-rtw_srom_read(struct rtw_regs *regs, u_int32_t flags, struct rtw_srom *sr,
+rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
     const char *dvname)
 {
 	int rc;
 	struct seeprom_descriptor sd;
-	u_int8_t ecr;
+	uint8_t ecr;
 
 	(void)memset(&sd, 0, sizeof(sd));
 
@@ -819,7 +819,7 @@ static void
 rtw_set_rfprog(struct rtw_regs *regs, enum rtw_rfchipid rfchipid,
     const char *dvname)
 {
-	u_int8_t cfg4;
+	uint8_t cfg4;
 	const char *method;
 
 	cfg4 = RTW_READ8(regs, RTW_CONFIG4) & ~RTW_CONFIG4_RFTYPE_MASK;
@@ -896,7 +896,7 @@ static __inline void
 rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale,
     const char *dvname)
 {
-	u_int8_t cfg0 = RTW_READ8(regs, RTW_CONFIG0);
+	uint8_t cfg0 = RTW_READ8(regs, RTW_CONFIG0);
 
 	switch (cfg0 & RTW_CONFIG0_GL_MASK) {
 	case RTW_CONFIG0_GL_USA:
@@ -915,13 +915,13 @@ rtw_identify_country(struct rtw_regs *regs, enum rtw_locale *locale,
 }
 
 static __inline int
-rtw_identify_sta(struct rtw_regs *regs, u_int8_t (*addr)[IEEE80211_ADDR_LEN],
+rtw_identify_sta(struct rtw_regs *regs, uint8_t (*addr)[IEEE80211_ADDR_LEN],
     const char *dvname)
 {
-	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
+	static const uint8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
-	u_int32_t idr0 = RTW_READ(regs, RTW_IDR0),
+	uint32_t idr0 = RTW_READ(regs, RTW_IDR0),
 	          idr1 = RTW_READ(regs, RTW_IDR1);
 
 	(*addr)[0] = MASK_AND_RSHIFT(idr0, BITS(0,  7));
@@ -943,7 +943,7 @@ rtw_identify_sta(struct rtw_regs *regs, u_int8_t (*addr)[IEEE80211_ADDR_LEN],
 	return 0;
 }
 
-static u_int8_t
+static uint8_t
 rtw_chan2txpower(struct rtw_srom *sr, struct ieee80211com *ic,
     struct ieee80211_channel *chan)
 {
@@ -1176,9 +1176,9 @@ rtw_rxdesc_init_all(struct rtw_rxdesc_blk *rdb, struct rtw_rxsoft *ctl, int kick
 }
 
 static void
-rtw_io_enable(struct rtw_regs *regs, u_int8_t flags, int enable)
+rtw_io_enable(struct rtw_regs *regs, uint8_t flags, int enable)
 {
-	u_int8_t cr;
+	uint8_t cr;
 
 	RTW_DPRINTF(RTW_DEBUG_IOSTATE, ("%s: %s 0x%02x\n", __func__,
 	    enable ? "enable" : "disable", flags));
@@ -1201,14 +1201,14 @@ rtw_io_enable(struct rtw_regs *regs, u_int8_t flags, int enable)
 }
 
 static void
-rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
+rtw_intr_rx(struct rtw_softc *sc, uint16_t isr)
 {
 	static const int ratetbl[4] = {2, 4, 11, 22};	/* convert rates:
 							 * hardware -> net80211
 							 */
 	u_int next, nproc = 0;
 	int hwrate, len, rate, rssi, sq;
-	u_int32_t hrssi, hstat, htsfth, htsftl;
+	uint32_t hrssi, hstat, htsfth, htsftl;
 	struct rtw_rxdesc *rd;
 	struct rtw_rxsoft *rs;
 	struct rtw_rxdesc_blk *rdb;
@@ -1508,7 +1508,7 @@ rtw_collect_txring(struct rtw_softc *sc, struct rtw_txsoft_blk *tsb,
 }
 
 static void
-rtw_intr_tx(struct rtw_softc *sc, u_int16_t isr)
+rtw_intr_tx(struct rtw_softc *sc, uint16_t isr)
 {
 	int pri;
 	struct rtw_txsoft_blk	*tsb;
@@ -1529,7 +1529,7 @@ rtw_intr_tx(struct rtw_softc *sc, u_int16_t isr)
 }
 
 static void
-rtw_intr_beacon(struct rtw_softc *sc, u_int16_t isr)
+rtw_intr_beacon(struct rtw_softc *sc, uint16_t isr)
 {
 	/* TBD */
 	return;
@@ -1719,7 +1719,7 @@ rtw_suspend_ticks(struct rtw_softc *sc)
 static __inline void
 rtw_resume_ticks(struct rtw_softc *sc)
 {
-	u_int32_t tsftrl0, tsftrl1, next_tick;
+	uint32_t tsftrl0, tsftrl1, next_tick;
 
 	tsftrl0 = RTW_READ(&sc->sc_regs, RTW_TSFTRL);
 
@@ -1749,7 +1749,7 @@ rtw_intr(void *arg)
 	int i;
 	struct rtw_softc *sc = arg;
 	struct rtw_regs *regs = &sc->sc_regs;
-	u_int16_t isr;
+	uint16_t isr;
 
 	/*
 	 * If the interface isn't running, the interrupt couldn't
@@ -1900,7 +1900,7 @@ static void
 rtw_maxim_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
     int before_rf, int digphy)
 {
-	u_int32_t anaparm;
+	uint32_t anaparm;
 
 	anaparm = RTW_READ(regs, RTW_ANAPARM);
 	anaparm &= ~(RTW_ANAPARM_RFPOW_MASK | RTW_ANAPARM_TXDACOFF);
@@ -1940,7 +1940,7 @@ static void
 rtw_rfmd_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
     int before_rf, int digphy)
 {
-	u_int32_t anaparm;
+	uint32_t anaparm;
 
 	anaparm = RTW_READ(regs, RTW_ANAPARM);
 	anaparm &= ~(RTW_ANAPARM_RFPOW_MASK | RTW_ANAPARM_TXDACOFF);
@@ -1977,7 +1977,7 @@ static void
 rtw_philips_pwrstate(struct rtw_regs *regs, enum rtw_pwrstate power,
     int before_rf, int digphy)
 {
-	u_int32_t anaparm;
+	uint32_t anaparm;
 
 	anaparm = RTW_READ(regs, RTW_ANAPARM);
 	anaparm &= ~(RTW_ANAPARM_RFPOW_MASK | RTW_ANAPARM_TXDACOFF);
@@ -2148,7 +2148,7 @@ rtw_enable(struct rtw_softc *sc)
 static void
 rtw_transmit_config(struct rtw_regs *regs)
 {
-	u_int32_t tcr;
+	uint32_t tcr;
 
 	tcr = RTW_READ(regs, RTW_TCR);
 
@@ -2230,7 +2230,7 @@ rtw_pktfilt_load(struct rtw_softc *sc)
 	struct ethercom *ec = &ic->ic_ec;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int hash;
-	u_int32_t hashes[2] = { 0, 0 };
+	uint32_t hashes[2] = { 0, 0 };
 	struct ether_multi *enm;
 	struct ether_multistep step;
 
@@ -2990,7 +2990,7 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 static void
 rtw_recv_beacon(struct rtw_softc *sc, struct mbuf *m,
-    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, int subtype, int rssi, uint32_t rstamp)
 {
 	(*sc->sc_mtbl.mt_recv_mgmt)(&sc->sc_ic, m, ni, subtype, rssi, rstamp);
 	return;
@@ -2998,7 +2998,7 @@ rtw_recv_beacon(struct rtw_softc *sc, struct mbuf *m,
 
 static void
 rtw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
-    struct ieee80211_node *ni, int subtype, int rssi, u_int32_t rstamp)
+    struct ieee80211_node *ni, int subtype, int rssi, uint32_t rstamp)
 {
 	struct rtw_softc *sc = (struct rtw_softc*)ic->ic_softc;
 
@@ -3312,13 +3312,13 @@ rtw_rf_attach(struct rtw_softc *sc, enum rtw_rfchipid rfchipid,
 /* Revision C and later use a different PHY delay setting than
  * revisions A and B.
  */
-static u_int8_t
-rtw_check_phydelay(struct rtw_regs *regs, u_int32_t rcr0)
+static uint8_t
+rtw_check_phydelay(struct rtw_regs *regs, uint32_t rcr0)
 {
 #define REVAB (RTW_RCR_MXDMA_UNLIMITED | RTW_RCR_AICV)
 #define REVC (REVAB | RTW_RCR_RXFTH_WHOLE)
 
-	u_int8_t phydelay = LSHIFT(0x6, RTW_PHYDELAY_PHYDELAY);
+	uint8_t phydelay = LSHIFT(0x6, RTW_PHYDELAY_PHYDELAY);
 
 	RTW_WRITE(regs, RTW_RCR, REVAB);
 	RTW_WBW(regs, RTW_RCR, RTW_RCR);

@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.3 2004/12/25 06:58:37 dyoung Exp $ */
+/* $NetBSD: rtwphy.c,v 1.4 2005/01/02 04:23:03 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.3 2004/12/25 06:58:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.4 2005/01/02 04:23:03 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,10 @@ rtw_bbp_preinit(struct rtw_regs *regs, u_int antatten0, int dflantb,
 
 static int
 rtw_bbp_init(struct rtw_regs *regs, struct rtw_bbpset *bb, int antdiv,
-    int dflantb, u_int8_t cs_threshold, u_int freq)
+    int dflantb, uint8_t cs_threshold, u_int freq)
 {
 	int rc;
-	u_int32_t sys2, sys3;
+	uint32_t sys2, sys3;
 
 	sys2 = bb->bb_sys2;
 	if (antdiv)
@@ -109,7 +109,7 @@ rtw_bbp_init(struct rtw_regs *regs, struct rtw_bbpset *bb, int antdiv,
 }
 
 static int
-rtw_sa2400_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+rtw_sa2400_txpower(struct rtw_rf *rf, uint8_t opaque_txpower)
 {
 	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
 	struct rtw_rfbus *bus = &sa->sa_bus;
@@ -120,9 +120,9 @@ rtw_sa2400_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
 
 /* make sure we're using the same settings as the reference driver */
 static void
-verify_syna(u_int freq, u_int32_t val)
+verify_syna(u_int freq, uint32_t val)
 {
-	u_int32_t expected_val = ~val;
+	uint32_t expected_val = ~val;
 
 	switch (freq) {
 	case 2412:
@@ -178,7 +178,7 @@ rtw_sa2400_tune(struct rtw_rf *rf, u_int freq)
 	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
 	struct rtw_rfbus *bus = &sa->sa_bus;
 	int rc;
-	u_int32_t syna, synb, sync;
+	uint32_t syna, synb, sync;
 
 	/* XO = 44MHz, R = 11, hence N is in units of XO / R = 4MHz.
 	 *
@@ -217,7 +217,7 @@ rtw_sa2400_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
 {
 	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
 	struct rtw_rfbus *bus = &sa->sa_bus;
-	u_int32_t opmode;
+	uint32_t opmode;
 	opmode = SA2400_OPMODE_DEFAULTS;
 	switch (power) {
 	case RTW_ON:
@@ -241,7 +241,7 @@ rtw_sa2400_pwrstate(struct rtw_rf *rf, enum rtw_pwrstate power)
 static int
 rtw_sa2400_manrx_init(struct rtw_sa2400 *sa)
 {
-	u_int32_t manrx;
+	uint32_t manrx;
 
 	/* XXX we are not supposed to be in RXMGC mode when we do
 	 * this?
@@ -257,7 +257,7 @@ rtw_sa2400_manrx_init(struct rtw_sa2400 *sa)
 static int
 rtw_sa2400_vcocal_start(struct rtw_sa2400 *sa, int start)
 {
-	u_int32_t opmode;
+	uint32_t opmode;
 
 	opmode = SA2400_OPMODE_DEFAULTS;
 	if (start)
@@ -287,7 +287,7 @@ rtw_sa2400_vco_calibration(struct rtw_sa2400 *sa)
 static int
 rtw_sa2400_filter_calibration(struct rtw_sa2400 *sa)
 {
-	u_int32_t opmode;
+	uint32_t opmode;
 
 	opmode = SA2400_OPMODE_DEFAULTS | SA2400_OPMODE_MODE_FCALIB;
 	if (sa->sa_digphy)
@@ -302,7 +302,7 @@ rtw_sa2400_dc_calibration(struct rtw_sa2400 *sa)
 {
 	struct rtw_rf *rf = &sa->sa_rf;
 	int rc;
-	u_int32_t dccal;
+	uint32_t dccal;
 
 	(*rf->rf_continuous_tx_cb)(rf->rf_continuous_tx_arg, 1);
 
@@ -335,7 +335,7 @@ rtw_sa2400_dc_calibration(struct rtw_sa2400 *sa)
 static int
 rtw_sa2400_agc_init(struct rtw_sa2400 *sa)
 {
-	u_int32_t agc;
+	uint32_t agc;
 
 	agc = LSHIFT(25, SA2400_AGC_MAXGAIN_MASK);
 	agc |= LSHIFT(7, SA2400_AGC_BBPDELAY_MASK);
@@ -377,7 +377,7 @@ rtw_sa2400_calibrate(struct rtw_rf *rf, u_int freq)
 }
 
 static int
-rtw_sa2400_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+rtw_sa2400_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
 	struct rtw_sa2400 *sa = (struct rtw_sa2400 *)rf;
@@ -474,7 +474,7 @@ rtw_max2820_destroy(struct rtw_rf *rf)
 }
 
 static int
-rtw_max2820_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
+rtw_max2820_init(struct rtw_rf *rf, u_int freq, uint8_t opaque_txpower,
     enum rtw_pwrstate power)
 {
 	struct rtw_max2820 *mx = (struct rtw_max2820 *)rf;
@@ -517,7 +517,7 @@ rtw_max2820_init(struct rtw_rf *rf, u_int freq, u_int8_t opaque_txpower,
 }
 
 static int
-rtw_max2820_txpower(struct rtw_rf *rf, u_int8_t opaque_txpower)
+rtw_max2820_txpower(struct rtw_rf *rf, uint8_t opaque_txpower)
 {
 	/* TBD */
 	return 0;
@@ -592,8 +592,8 @@ rtw_max2820_create(struct rtw_regs *regs, rtw_rf_write_t rf_write, int is_a)
 
 /* freq is in MHz */
 int
-rtw_phy_init(struct rtw_regs *regs, struct rtw_rf *rf, u_int8_t opaque_txpower,
-    u_int8_t cs_threshold, u_int freq, int antdiv, int dflantb,
+rtw_phy_init(struct rtw_regs *regs, struct rtw_rf *rf, uint8_t opaque_txpower,
+    uint8_t cs_threshold, u_int freq, int antdiv, int dflantb,
     enum rtw_pwrstate power)
 {
 	int rc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.7 2004/12/29 19:43:27 dyoung Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.8 2005/01/02 04:23:03 dyoung Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,7 +35,7 @@
 #ifndef _BIT_TWIDDLE
 #define _BIT_TWIDDLE
 /* nth bit, BIT(0) == 0x1. */
-#define BIT(n) (((n) == 32) ? 0 : ((u_int32_t)1 << (n)))
+#define BIT(n) (((n) == 32) ? 0 : ((uint32_t)1 << (n)))
 
 /* bits m through n, m < n. */
 #define BITS(m, n) ((BIT(MAX((m), (n)) + 1) - 1) ^ (BIT(MIN((m), (n))) - 1))
@@ -844,12 +844,12 @@
 
 /* Tx descriptor */ 
 struct rtw_txdesc {
-	u_int32_t	td_ctl0;
-	u_int32_t	td_ctl1;
-	u_int32_t	td_buf;
-	u_int32_t	td_len;
-	u_int32_t	td_next;
-	u_int32_t	td_rsvd[3];
+	uint32_t	td_ctl0;
+	uint32_t	td_ctl1;
+	uint32_t	td_buf;
+	uint32_t	td_len;
+	uint32_t	td_next;
+	uint32_t	td_rsvd[3];
 };
 
 #define td_stat td_ctl0
@@ -906,10 +906,10 @@ struct rtw_txdesc {
 
 /* Rx descriptor */ 
 struct rtw_rxdesc {
-    u_int32_t	rd_ctl;
-    u_int32_t	rd_rsvd0;
-    u_int32_t	rd_buf;
-    u_int32_t	rd_rsvd1;
+    uint32_t	rd_ctl;
+    uint32_t	rd_rsvd0;
+    uint32_t	rd_buf;
+    uint32_t	rd_rsvd1;
 };
 
 #define rd_stat rd_ctl
