@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sh,v 1.2.2.2 1995/11/16 22:30:55 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.3.2.2 1995/11/16 22:30:57 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -40,7 +40,7 @@ ROOTDISK=""				# filled in below
 FILESYSTEMS="/tmp/filesystems"		# used thoughout
 FQDN=""					# domain name
 
-trap "umount /tmp > /dev/null 2>&1" 0
+trap "umount /tmp /mnt/usr /mnt > /dev/null 2>&1" 0
 
 getresp() {
 	read resp
@@ -221,91 +221,71 @@ addifconfig() {
 
 
 configurenetwork() {
-	local _ifsdone
-	local _ifs
-
-	_IFS=`md_get_ifdevs`
-	_ifsdone=""
-	resp=""		# force at least one iteration
-	while [ "X${resp}" != X"done" ]; do
 	cat << \__configurenetwork_1
 
-You may configure the following network interfaces (the interfaces
-marked with [X] have been succesfully configured):
+You may configure the following network interfaces:
 
 __configurenetwork_1
 
-		for _ifs in $_IFS; do
-			if isin $_ifs $_ifsdone ; then
-				echo -n "[X] "
-			else
-				echo -n "    "
-			fi
-			echo $_ifs
-		done
-		echo	""
-		echo -n	"Configure which interface? [done] "
-		getresp "done"
-		case "$resp" in
+	_IFS=`md_get_ifdevs`
+	echo	$_IFS
+	echo	""
+	echo -n	"Configure which interface? [done] "
+	getresp "done"
+	case "$resp" in
 		"done")
 			;;
+
 		*)
-			_ifs=$resp
-			if isin $_ifs $_IFS ; then
-				if configure_ifs $_ifs ; then
-					_ifsdone="$_ifs $_ifsdone"
+			if isin $resp $_IFS ; then
+				_interface_name=$resp
+
+				# remove from list
+				_IFS=`rmel $resp "$_IFS"`
+
+				# Get IP address
+				resp=""		# force one iteration
+				while [ "X${resp}" = X"" ]; do
+					echo -n "IP address? "
+					getresp ""
+					_interface_ip=$resp
+				done
+
+				# Get symbolic name
+				resp=""		# force one iteration
+				while [ "X${resp}" = X"" ]; do
+					echo -n "Symbolic name? "
+					getresp ""
+					_interface_symname=$resp
+				done
+
+				# Get netmask
+				resp=""		# force one iteration
+				while [ "X${resp}" = X"" ]; do
+					echo -n "Netmask? "
+					getresp ""
+					_interface_mask=$resp
+				done
+
+				# Configure the interface.  If it
+				# succeeds, add it to the permanent
+				# network configuration info.
+				ifconfig ${_interface_name} down
+				if ifconfig ${_interface_name} inet \
+				    ${_interface_ip} \
+				    netmask ${_interface_mask} up ; then
+					addifconfig \
+					    ${_interface_name} \
+					    ${_interface_symname} \
+					    ${_interface_ip} \
+					    ${_interface_mask}
 				fi
 			else
-				echo "Invalid response: \"$resp\" is not in list"
+				echo ""
+				echo "The interface $resp does not exist."
 			fi
 			;;
-		esac
-	done
-}
-
-configure_ifs() {
-
-	_interface_name=$1
-
-	# Get IP address
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo -n "IP address? "
-		getresp ""
-		_interface_ip=$resp
-	done
-
-	# Get symbolic name
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo -n "Symbolic (host) name? "
-		getresp ""
-		_interface_symname=$resp
-	done
-
-	# Get netmask
-	resp=""		# force one iteration
-	while [ "X${resp}" = X"" ]; do
-		echo -n "Netmask? "
-		getresp ""
-		_interface_mask=$resp
-	done
-
-	# Configure the interface.  If it
-	# succeeds, add it to the permanent
-	# network configuration info.
-	ifconfig ${_interface_name} down
-	if ifconfig ${_interface_name} inet \
-	    ${_interface_ip} \
-	    netmask ${_interface_mask} up ; then
-		addifconfig \
-		    ${_interface_name} \
-		    ${_interface_symname} \
-		    ${_interface_ip} \
-		    ${_interface_mask}
-		return 0
-	fi
-	return 1
+	esac
 }
 
 install_ftp() {
@@ -518,7 +498,6 @@ __install_cdrom_2
 				;;
 		esac
 	done
-
 	# Mount the CD-ROM
 	mkdir /mnt2 > /dev/null 2>&1
 	if ! mount -t ${_cdrom_filesystem} -o ro \
@@ -571,7 +550,6 @@ install_nfs() {
 	esac
 
 	# Mount the server
-	mkdir /mnt2 > /dev/null 2>&1
 	if ! mount_nfs $_nfs_tcp ${_nfs_server_ip}:${_nfs_server_path} \
 	    /mnt2 ; then
 		echo "Cannot mount NFS server.  Aborting."
@@ -743,7 +721,7 @@ __get_timezone_1
 }
 
 echo	""
-echo	"Welcome to the NetBSD/sparc ${VERSION} installation program."
+echo	"Welcome to the NetBSD/sparc ${VERSION} upgrade program."
 cat << \__welcome_banner_1
 
 This program is designed to help you put NetBSD on your disk,
@@ -762,7 +740,6 @@ prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
 __welcome_banner_1
-
 echo -n "Proceed with installation? [n] "
 getresp "n"
 case "$resp" in
@@ -781,8 +758,6 @@ __welcome_banner_2
 esac
 
 set_terminal
-
-get_timezone
 
 # We don't like it, but it sure makes a few things a lot easier.
 ##do_mfs_mount "/tmp"
@@ -823,245 +798,34 @@ __disklabel_corrupted_1
 		;;
 esac
 
-# Give the user the opportinuty to edit the root disklabel.
-cat << \__disklabel_notice_1
+cat << \__mount_root
+Ready to mount your existing root filesystem. This is normally
+the `a' partition on your boot disk.
 
-You have already placed a disklabel onto the target root disk.
-However, due to the limitations of the standalone program used
-you may want to edit that label to change partition type information.
-You will be given the opportunity to do that now.  Note that you may
-not change the size or location of any presently open partition.
+__mount_root
 
-__disklabel_notice_1
-echo -n	"Do you wish to edit the root disklabel? [y] "
-getresp "y"
-case "$resp" in
-	y*|Y*)
-cat << \__disklabel_notice_2
-Here is an example of what the partition information will look like once
-you have entered the disklabel editor. Disk partition sizes and offsets
-are in sector (most likely 512 bytes) units. Make sure these size/offset
-pairs are on cylinder boundaries (the number of sector per cylinder is
-given in the `sectors/cylinder' entry, which is not shown here).
-
-Do not change any parameters except the partition layout and the label name.
-It's probably also wisest not to touch the `8 partitions:' line, even
-in case you have defined less than eight partitions.
-
-[Example]
-8 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
-  a:    50176        0    4.2BSD     1024  8192    16   # (Cyl.    0 - 111)
-  b:    64512    50176      swap                        # (Cyl.  112 - 255)
-  c:   640192        0   unknown                        # (Cyl.    0 - 1428)
-  d:   525504   114688    4.2BSD     1024  8192    16   # (Cyl.  256 - 1428)
-[End of example]
-
-__disklabel_notice_2
-		echo -n "Hit <enter> to enter the disklabel editor: "
-		getresp ""
-
-		disklabel -W ${ROOTDISK}
-		disklabel -e ${ROOTDISK}
-		;;
-
-	*)
-		;;
-esac
-
-cat << \__disklabel_notice_3
-
-You will now be given the opportunity to place disklabels on any additional
-disks on your system.
-__disklabel_notice_3
-
-resp="X"	# force at least one iteration
-while [ "X$resp" != X"done" ]; do
-	labelmoredisks
-done
-
-# Assume partition 'a' of $ROOTDISK is for the root filesystem.  Loop and
-# get the rest.
-# XXX ASSUMES THAT THE USER DOESN'T PROVIDE BOGUS INPUT.
-cat << \__get_filesystems_1
-
-You will now have the opportunity to specify mount points for some or
-all of the partitions you have on your disk(s).
-You will be prompted for device name (for example `/dev/sd0d') and
-mount point (full path, e.g. `/usr').
-
-Note that these do not have to be in any particular order.  You will
-be given the opportunity to edit the resulting 'fstab' file before
-any of the filesystems are mounted.  At that time you will be able
-to resolve any filesystem order dependencies.
-
-__get_filesystems_1
-
-echo	"The following will be used for the root filesystem:"
-echo	"	${ROOTDISK}a	/"
-
-echo	"${ROOTDISK}a	/" > ${FILESYSTEMS}
-
-resp="X"	# force at least one iteration
-while [ "X$resp" != X"done" ]; do
-	echo	""
-	echo -n	"Device name? [done] "
-	getresp "done"
+while : ; do
+	echo -n	"Root filesystem? [${ROOTDISK}a] "
+	getresp "${ROOTDISK}a"
 	case "$resp" in
-		done)
-			;;
-
 		*)
-			_device_name=`basename $resp`
-
-			# force at least one iteration
-			_first_char="X"
-			while [ "X${_first_char}" != X"/" ]; do
-				echo -n "Mount point? "
-				getresp ""
-				_mount_point=$resp
-				if [ "X${_mount_point}" = X"/" ]; then
-					# Invalid response; no multiple roots
-					_first_char="X"
-				else
-					_first_char=`echo ${_mount_point} | \
-					    cut -c 1`
-				fi
-			done
-			echo "${_device_name}	${_mount_point}" >> \
-			    ${FILESYSTEMS}
-			resp="X"	# force loop to repeat
+			mount /dev/$resp /mnt
+			if [ $? = 0 ]; then
+				break 2;
+			fi
+			echo "$resp could not be mounted"
 			;;
 	esac
 done
 
-echo	""
-echo	"You have configured the following devices and mount points:"
-echo	""
-cat ${FILESYSTEMS}
-echo	""
-echo	"Filesystems will now be created on these devices.  If you made any"
-echo -n	"mistakes, you may edit this now.  Edit? [n] "
-getresp "n"
-case "$resp" in
-	y*|Y*)
-		vi ${FILESYSTEMS}
-		;;
-	*)
-		;;
-esac
-
-# Loop though the file, place filesystems on each device.
-echo	"Creating filesystems..."
-(
-	while read line; do
-		_device_name=`echo $line | awk '{print $1}'`
-		newfs /dev/r${_device_name}
-		echo ""
-	done
-) < ${FILESYSTEMS}
-
-# Get network configuration information, and store it for placement in the
-# root filesystem later.
-cat << \__network_config_1
-You will now be given the opportunity to configure the network.  This will
-be useful if you need to transfer the installation sets via FTP or NFS.
-Even if you choose not to transfer installation sets that way, this
-information will be preserved and copied into the new root filesystem.
-
-Note, enter all symbolic host names WITHOUT the domain name appended.
-I.e. use 'hostname' NOT 'hostname.domain.name'.
-
-__network_config_1
-echo -n	"Configure the network? [y] "
-getresp "y"
-case "$resp" in
-	y*|Y*)
-		echo -n "Enter system hostname: "
-		resp=""		# force at least one iteration
-		while [ "X${resp}" = X"" ]; do
-			getresp ""
-		done
-		hostname $resp
-		echo $resp > /tmp/myname
-
-		echo -n "Enter DNS domain name: "
-		resp=""		# force at least one iteration
-		while [ "X${resp}" = X"" ]; do
-			getresp ""
-		done
-		FQDN=$resp
-
-		configurenetwork
-
-		echo -n "Enter IP address of default route: [none] "
-		getresp "none"
-		if [ "X${resp}" != X"none" ]; then
-			route delete default > /dev/null 2>&1
-			if route add default $resp > /dev/null ; then
-				echo $resp > /tmp/mygate
-			fi
-		fi
-
-		echo ""
-		echo "The host table is as follows:"
-		echo ""
-		cat /tmp/hosts
-		echo ""
-		echo "You may want to edit the host table in the event that"
-		echo "you need to mount an NFS server."
-		echo -n "Would you like to edit the host table? [n] "
-		getresp "n"
-		case "$resp" in
-			y*|Y*)
-				vi /tmp/hosts
-				;;
-
-			*)
-				;;
-		esac
-
-		cat << \__network_config_2
-
-You will now be given the opportunity to escape to the command shell to
-do any additional network configuration you may need.  This may include
-adding additional routes, if needed.  In addition, you might take this
-opportunity to redo the default route in the event that it failed above.
-If you do change the default route, and wish for that change to carry over
-to the installed system, execute the following command at the shell
-prompt:
-
-	echo <ip_address_of_gateway> > /tmp/mygate
-
-where <ip_address_of_gateway> is the IP address of the default router.
-
-__network_config_2
-		echo -n "Escape to shell? [n] "
-		getresp "n"
-		case "$resp" in
-			y*|Y*)
-				echo "Type 'exit' to return to install."
-				sh
-				;;
-
-			*)
-				;;
-		esac
-		;;
-	*)
-		;;
-esac
-
-# Now that the network has been configured, it is safe to configure the
-# fstab.
+# Look in /mnt/etc/fstab for /usr filesystem.
 awk '{
-	if ($2 == "/")
-		printf("/dev/%s %s ffs rw 1 1\n", $1, $2)
-	else
-		printf("/dev/%s %s ffs rw 1 2\n", $1, $2)
-}' < ${FILESYSTEMS} > /tmp/fstab
+	if ($2 == "/" || $2 == "/usr") {
+		print
+	}
+}' < /mnt/etc/fstab > /tmp/fstab
 
-echo	"The fstab is configured as follows:"
+echo	"These filesystems are configured to be used for this upgrade:"
 echo	""
 cat /tmp/fstab
 cat << \__fstab_config_1
@@ -1071,6 +835,12 @@ dependencies in the order which the filesystems are mounted.  You may
 also wish to take this opportunity to place NFS mounts in the fstab.
 This would be especially useful if you plan to keep '/usr' on an NFS
 server.
+
+You also need to edit the fstab file if your disk has been assigned a
+different unit number by the currently running kernel. For instance,
+a SCSI disk that was known as `sd0' in your existing configuration
+might appear as `sd3' here. If this is the case, change all old
+unit numbers to the new unit number.
 
 __fstab_config_1
 echo -n	"Edit the fstab? [n] "
@@ -1109,6 +879,9 @@ echo	""
 		# point is present.
 		if [ "X${_mp}" != X"/mnt" ]; then
 			mkdir -p $_mp
+			# note: root already mounted on /mnt
+		else
+			continue;
 		fi
 
 		# Mount the filesystem.  If the mount fails, exit
@@ -1149,7 +922,7 @@ if [ -f $RELDIR/base.tar.gz ]; then
 	getresp "y"
 	case "$resp" in
 		y*|Y*)
-			for _f in $ALLSETS; do
+			for _f in $UPGRSETS; do
 				if [ ! -f $RELDIR/${_f}.tar.gz ]; then
 					continue;
 				fi
@@ -1207,7 +980,7 @@ while [ "X${resp}" = X"" ]; do
 	# Give the user the opportunity to extract more sets.  They don't
 	# necessarily have to come from the same media.
 	echo	""
-	echo -n	"Extract more sets (from other media)? [n] "
+	echo -n	"Extract more sets? [n] "
 	getresp "n"
 	case "$resp" in
 		y*|Y*)
@@ -1220,31 +993,41 @@ while [ "X${resp}" = X"" ]; do
 	esac
 done
 
+#get_timezone
+
+echo -n "Do you want to install the NetBSD bootblocks on your boot disk? [y]"
+getresp "y"
+case "$resp" in
+	y*|Y*)
+		_INSTBOOT="Y"
+		;;
+
+	*)
+		_INSTBOOT="N"
+		;;
+esac
+
 # Copy in configuration information and make devices in target root.
 (
-	cd /tmp
-	for file in fstab hostname.* hosts myname mygate; do
-		if [ -f $file ]; then
-			echo "Copying $file..."
-			cp $file /mnt/etc/$file
-		fi
-	done
-
-	echo "Installing timezone link for $TZ ..."
-	rm -f /mnt/etc/localtime
-	ln -s /usr/share/zoneinfo/$TZ /mnt/etc/localtime
-
 	echo -n "Making devices..."
-	pid=`twiddle`
 	cd /mnt/dev
+	pid=`twiddle`
 	sh MAKEDEV all
 	kill $pid
 	echo "done."
 
-	echo "Copying kernel..."
+	if [ -f /mnt/netbsd ]; then
+		echo "Saving existing kernel in netbsd.1.0."
+		mv /mnt/netbsd /mnt/netbsd.1.0
+	fi
+
+	echo "Copying netbsd 1.1 kernel ..."
 	cp -p /netbsd /mnt/netbsd
 
-	md_installboot ${ROOTDISK}
+	if [ "$_INSTBOOT" = "Y" ]; then
+		echo "Installing NetBSD bootblock..."
+		md_installboot ${ROOTDISK}
+	fi
 )
 
 # Unmount all filesystems and check their integrity.
@@ -1279,8 +1062,8 @@ done
 
 cat << \__congratulations_1
 
-CONGRATULATIONS!  You have successfully installed NetBSD on your disk!
-To boot the installed system, enter halt at the command prompt. Once the
+CONGRATULATIONS!  You have successfully installed NetBSD!
+To boot the installed system, enter halt at the command prompt.  Once the
 system has halted, reset the machine and boot from the disk.
 
 __congratulations_1
