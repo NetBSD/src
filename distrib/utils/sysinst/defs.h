@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.61 2000/10/02 09:26:26 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.62 2000/10/11 11:06:03 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -337,6 +337,8 @@ int	set_timezone __P((void));
 
 /* from target.c */
 int	must_mount_root __P((void));
+const	char* concat_paths __P((const char *prefix, const char *suffix));
+char	*target_realpath __P((const char *path, char *resolved));
 const	char * target_expand __P((const char *pathname));
 void	make_target_dir __P((const char *path));
 void	append_to_target_file __P((const char *path, const char *string));
