@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2002/10/21 05:08:23 lukem Exp $
+# $NetBSD: Makefile,v 1.15 2002/12/09 14:20:52 scw Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -106,6 +106,7 @@ MACHINE_ARCH.cobalt=	mipsel
 MACHINE_ARCH.dreamcast=	sh3el
 MACHINE_ARCH.evbarm=	arm
 MACHINE_ARCH.evbmips=	mipsel
+MACHINE_ARCH.evbppc=	powerpc
 MACHINE_ARCH.evbsh3=	sh3eb
 MACHINE_ARCH.hp300=	m68k
 MACHINE_ARCH.hpcarm=	arm
@@ -130,7 +131,6 @@ MACHINE_ARCH.sbmips=	mipseb
 MACHINE_ARCH.sgimips=	mipseb
 MACHINE_ARCH.shark=	arm
 MACHINE_ARCH.sun3=	m68k
-MACHINE_ARCH.walnut=	powerpc
 MACHINE_ARCH.x68k=	m68k
 
 ##### Fetched directories from FTP server #####
