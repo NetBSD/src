@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.7 2002/02/08 23:50:53 thorpej Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.8 2002/03/03 21:10:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -322,6 +322,9 @@ delay(u_int n)
 void
 inittodr(time_t base)
 {
+
+	time.tv_sec = base;
+	time.tv_usec = 0;
 }
 
 /*
