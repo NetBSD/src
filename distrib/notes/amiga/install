@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.31 2002/08/02 14:35:49 is Exp $
+.\"	$NetBSD: install,v 1.32 2002/08/16 12:01:39 is Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,13 +175,17 @@ The drive with the lowest SCSI-ID will be called
 the next one
 .Li sd1 ,
 etc.
-Also, any Amiga internal IDE disk drives
+Also, any ATAPI disk drives (e.g. ZIP) 
 will be configured as
 .Dq SCSI
-drives, and will be configured
+drives, too, and will be configured
 before any
 .Sq real
-SCSI drives (if any are present).
+SCSI drives if connected to the Amiga internal port on A4000/A1200
+(if any are present). Real IDE drives will be configured as 
+.Li wd0 ,
+.Li wd1 , 
+etc.
 .Pp
 The installer will offer you to look at the
 .Nx
