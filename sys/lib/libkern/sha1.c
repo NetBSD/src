@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.7 2003/09/23 20:00:43 martin Exp $	*/
+/*	$NetBSD: sha1.c,v 1.8 2004/06/30 13:45:54 christos Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -234,14 +234,15 @@ void SHA1Final(digest, context)
 {
     u_int i;
     u_char finalcount[8];
+    static unsigned char bs[] = "\200", zp[] = "\0";
 
     for (i = 0; i < 8; i++) {
 	finalcount[i] = (u_char)((context->count[(i >= 4 ? 0 : 1)]
 	 >> ((3-(i & 3)) * 8) ) & 255);	 /* Endian independent */
     }
-    SHA1Update(context, (u_char *)"\200", 1);
+    SHA1Update(context, bs, 1);
     while ((context->count[0] & 504) != 448)
-	SHA1Update(context, (u_char *)"\0", 1);
+	SHA1Update(context, zp, 1);
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
 
     if (digest) {
