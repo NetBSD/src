@@ -1,5 +1,5 @@
 /*
- * $Id: lib.c,v 1.7 1993/12/10 20:24:48 pk Exp $	- library routines
+ * $Id: lib.c,v 1.8 1993/12/15 13:26:46 pk Exp $	- library routines
  */
 
 #include <sys/param.h>
@@ -626,17 +626,17 @@ read_shared_object (desc, entry)
 	if (dyn2.ld_need) {
 		struct link_object	lobj;
 		off_t			offset;
-		struct file_entry	*subentry, *prev = NULL;
-
-		subentry = (struct file_entry *)
-				xmalloc(sizeof(struct file_entry));
-		bzero(subentry, sizeof(struct file_entry));
-
-		subentry->superfile = entry;
+		struct file_entry	*prev = NULL;
 
 		offset = (off_t)dyn2.ld_need;
 		while (1) {
+			struct file_entry *subentry;
 			char *libname, name[MAXPATHLEN]; /*XXX*/
+
+			subentry = (struct file_entry *)
+				xmalloc(sizeof(struct file_entry));
+			bzero(subentry, sizeof(struct file_entry));
+			subentry->superfile = entry;
 
 			lseek(desc, offset, L_SET);
 			if (read(desc, &lobj, sizeof(lobj)) != sizeof(lobj)) {
@@ -669,7 +669,7 @@ read_shared_object (desc, entry)
 			else
 				entry->subfiles = subentry;
 			prev = subentry;
-			file_open(entry);
+			desc = file_open(entry);
 			if ((offset = (off_t)lobj.lo_next) == 0)
 				break;
 		}
