@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2004/12/16 17:10:24 tron Exp $
+#	$NetBSD: Makefile,v 1.22 2005/01/14 07:44:21 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -49,7 +49,7 @@ BUILDSYMLINKS+=	gen-doc.texi configdoc.texi
 
 .depend.${f}: ${f}.sh
 	${_MKTARGET_CREATE}
-	(srcdir=${DIST}/ld . ${>:M*.sh} && \
+	(srcdir=${DIST}/ld EMULATION_NAME=$f . ${>:M*.sh} && \
 		if [ x"$$TEMPLATE_NAME" != x ]; then \
 			temp_emul=$$TEMPLATE_NAME.em; \
 		else \
