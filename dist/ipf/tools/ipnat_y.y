@@ -131,7 +131,8 @@ eol:	| ';'
 	;
 
 map:	mapit ifnames addr IPNY_TLATE rhaddr proxy mapoptions
-				{ nat->in_inip = $3.a.s_addr;
+				{ nat->in_v = 4;
+				  nat->in_inip = $3.a.s_addr;
 				  nat->in_inmsk = $3.m.s_addr;
 				  nat->in_outip = $5.a.s_addr;
 				  nat->in_outmsk = $5.m.s_addr;
@@ -146,7 +147,8 @@ map:	mapit ifnames addr IPNY_TLATE rhaddr proxy mapoptions
 					nat_setgroupmap(nat);
 				}
 	| mapit ifnames addr IPNY_TLATE rhaddr mapport mapoptions
-				{ nat->in_inip = $3.a.s_addr;
+				{ nat->in_v = 4;
+				  nat->in_inip = $3.a.s_addr;
 				  nat->in_inmsk = $3.m.s_addr;
 				  nat->in_outip = $5.a.s_addr;
 				  nat->in_outmsk = $5.m.s_addr;
@@ -161,7 +163,8 @@ map:	mapit ifnames addr IPNY_TLATE rhaddr proxy mapoptions
 					nat_setgroupmap(nat);
 				}
 	| mapit ifnames mapfrom IPNY_TLATE rhaddr proxy mapoptions
-				{ nat->in_outip = $5.a.s_addr;
+				{ nat->in_v = 4;
+				  nat->in_outip = $5.a.s_addr;
 				  nat->in_outmsk = $5.m.s_addr;
 				  if (nat->in_ifnames[1][0] == '\0')
 					strncpy(nat->in_ifnames[1],
@@ -174,7 +177,8 @@ map:	mapit ifnames addr IPNY_TLATE rhaddr proxy mapoptions
 					nat_setgroupmap(nat);
 				}
 	| mapit ifnames mapfrom IPNY_TLATE rhaddr mapport mapoptions
-				{ nat->in_outip = $5.a.s_addr;
+				{ nat->in_v = 4;
+				  nat->in_outip = $5.a.s_addr;
 				  nat->in_outmsk = $5.m.s_addr;
 				  if (nat->in_ifnames[1][0] == '\0')
 					strncpy(nat->in_ifnames[1],
@@ -190,7 +194,8 @@ map:	mapit ifnames addr IPNY_TLATE rhaddr proxy mapoptions
 
 mapblock:
 	mapblockit ifnames addr IPNY_TLATE addr ports mapoptions
-				{ nat->in_inip = $3.a.s_addr;
+				{ nat->in_v = 4;
+				  nat->in_inip = $3.a.s_addr;
 				  nat->in_inmsk = $3.m.s_addr;
 				  nat->in_outip = $5.a.s_addr;
 				  nat->in_outmsk = $5.m.s_addr;
@@ -207,7 +212,8 @@ mapblock:
 	;
 
 redir:	rdrit ifnames addr dport IPNY_TLATE dip nport rdrproto rdroptions
-				{ nat->in_outip = $3.a.s_addr;
+				{ nat->in_v = 4;
+				  nat->in_outip = $3.a.s_addr;
 				  nat->in_outmsk = $3.m.s_addr;
 				  if (nat->in_ifnames[1][0] == '\0')
 					strncpy(nat->in_ifnames[1],
@@ -221,7 +227,8 @@ redir:	rdrit ifnames addr dport IPNY_TLATE dip nport rdrproto rdroptions
 						setnatproto(IPPROTO_TCP);
 				}
 	| rdrit ifnames rdrfrom IPNY_TLATE dip nport rdrproto rdroptions
-				{ if ((nat->in_p == 0) &&
+				{ nat->in_v = 4;
+				  if ((nat->in_p == 0) &&
 				      ((nat->in_flags & IPN_TCPUDP) == 0) &&
 				      (nat->in_pmin != 0 ||
 				       nat->in_pmax != 0 ||
@@ -233,7 +240,8 @@ redir:	rdrit ifnames addr dport IPNY_TLATE dip nport rdrproto rdroptions
 						sizeof(nat->in_ifnames[0]));
 				}
 	| rdrit ifnames addr IPNY_TLATE dip rdrproto rdroptions
-				{ nat->in_outip = $3.a.s_addr;
+				{ nat->in_v = 4;
+				  nat->in_outip = $3.a.s_addr;
 				  nat->in_outmsk = $3.m.s_addr;
 				  if (nat->in_ifnames[1][0] == '\0')
 					strncpy(nat->in_ifnames[1],
