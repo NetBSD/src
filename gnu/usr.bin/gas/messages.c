@@ -18,7 +18,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: messages.c,v 1.6 1994/08/25 07:36:33 pk Exp $";
+static char rcsid[] = "$Id: messages.c,v 1.7 1998/07/26 17:02:39 mycroft Exp $";
 #endif
 
 #include <stdio.h>
@@ -39,8 +39,6 @@ static char rcsid[] = "$Id: messages.c,v 1.6 1994/08/25 07:36:33 pk Exp $";
 #include <varargs.h>
 #endif /* NO_VARARGS */
 #endif /* NO_STDARG */
-
-extern char *strerror ();
 
 static void as_show_where PARAMS ((void));
 static void as_warn_internal PARAMS ((char *, unsigned int, char *));
