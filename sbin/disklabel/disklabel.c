@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.74 1999/07/21 17:56:34 kleink Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.75 1999/09/17 18:30:33 ross Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.74 1999/07/21 17:56:34 kleink Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.75 1999/09/17 18:30:33 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -469,10 +469,11 @@ writelabel(f, boot, lp)
 
 #ifdef __sparc__
 	/* Let the kernel deal with SunOS disklabel compatibility */
-	if (0) {
+	if (0)
 #else
-	if (rflag) {
+	if (rflag)
 #endif
+	{
 #ifdef __i386__
 		struct partition *pp = &lp->d_partitions[2];
 
