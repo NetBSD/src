@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.27 2000/09/22 01:37:27 eeh Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.28 2000/11/01 23:51:39 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -49,15 +49,10 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
+#include <sys/ioctl.h>
+#include <sys/ttycom.h>
 #include <sys/conf.h>
-
-#define	ttynodisc ((int (*) __P((dev_t, struct tty *)))enodev)
-#define	ttyerrclose ((int (*) __P((struct tty *, int flags)))enodev)
-#define	ttyerrio ((int (*) __P((struct tty *, struct uio *, int)))enodev)
-#define	ttyerrinput ((int (*) __P((int c, struct tty *)))enodev)
-#define	ttyerrstart ((int (*) __P((struct tty *)))enodev)
-
-int	nullioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
+#include <sys/malloc.h>
 
 #include "tb.h"
 #if NTB > 0
@@ -101,102 +96,47 @@ int	stripinput __P((int c, struct tty *tp));
 int	stripstart __P((struct tty *tp));
 #endif
 
-/*
- * XXXXXX
- *
- * The implementation for the following is currently in
- * sys/dev/sun.  I expect it will be moved out of there
- * eventually, but until then add yourself to the list if
- * you want to use the Sun Keyboard or Mouse line disciplines.
- */
-#if defined(__sparc__) || defined(__sparc_v9__) || defined(sun3) || defined(sun3x)
-#include "kbd.h"
-#if NKBD > 0
-int	sunkbdinput __P((int c, struct tty *tp));
-int	sunkbdstart __P((struct tty *tp));
-int	sunkbdstart __P((struct tty *tp));
-#endif
 
-#include "ms.h"
-#if NMS > 0
-int	sunmsinput __P((int c, struct tty *tp));
-#endif
-#endif
-
-struct	linesw linesw[] =
-{
-	{ ttylopen, ttylclose, ttread, ttwrite, nullioctl,
-	  ttyinput, ttstart, ttymodem },		/* 0- termios */
-
-	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem },	/* 1- defunct */
-
+struct  linesw termios_disc =
+	{ "termios", 0, ttylopen, ttylclose, ttread, ttwrite, nullioctl,
+	  ttyinput, ttstart, ttymodem };		/* 0- termios */
+struct  linesw defunct_disc =
+	{ "defunct", 1, ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
+	  ttyerrinput, ttyerrstart, nullmodem };	/* 1- defunct */
 #if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
-	{ ttylopen, ttylclose, ttread, ttwrite, nullioctl,
-	  ttyinput, ttstart, ttymodem },		/* 2- old NTTYDISC */
-#else
-	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem },	/* 2- defunct */
+struct  linesw ntty_disc =
+	{ "ntty", 2, ttylopen, ttylclose, ttread, ttwrite, nullioctl,
+	  ttyinput, ttstart, ttymodem };		/* 2- old NTTYDISC */
 #endif
-
 #if NTB > 0
-	{ tbopen, tbclose, tbread, ttyerrio, tbtioctl,
-	  tbinput, ttstart, nullmodem },		/* 3- TABLDISC */
-#else
-	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem },
+struct  linesw table_disc =
+	{ "table", 3, tbopen, tbclose, tbread, ttyerrio, tbtioctl,
+	  tbinput, ttstart, nullmodem };		/* 3- TABLDISC */
 #endif
-
 #if NSL > 0
-	{ slopen, slclose, ttyerrio, ttyerrio, sltioctl,
-	  slinput, slstart, nullmodem },		/* 4- SLIPDISC */
-#else
-	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem },
+struct  linesw slip_disc =
+	{ "slip", 4, slopen, slclose, ttyerrio, ttyerrio, sltioctl,
+	  slinput, slstart, nullmodem };		/* 4- SLIPDISC */
 #endif
-
 #if NPPP > 0
-	{ pppopen, pppclose, pppread, pppwrite, ppptioctl,
-	  pppinput, pppstart, ttymodem },		/* 5- PPPDISC */
-#else
-	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem },
+struct  linesw ppp_disc =
+	{ "ppp", 5, pppopen, pppclose, pppread, pppwrite, ppptioctl,
+	  pppinput, pppstart, ttymodem };		/* 5- PPPDISC */
 #endif
-
 #if NSTRIP > 0
-	{ stripopen, stripclose, ttyerrio, ttyerrio, striptioctl,
-	  stripinput, stripstart, nullmodem },		/* 6- STRIPDISC */
-#else
-	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem },
+struct  linesw strip_disc =
+	{ "strip", 6, stripopen, stripclose, ttyerrio, ttyerrio, striptioctl,
+	  stripinput, stripstart, nullmodem };		/* 6- STRIPDISC */
 #endif
 
 /*
- * The following are special line disciplines for Sun style Keybaords and Mice.
- * Since they are used to handle special hardware they are enabled if/when the
- * hardware is detected and you cannot switch in or out of them by normal means.
- *
- * All I/O currently goes through the keyboard and mouse device nodes so the
- * TTY does no I/O itself.
+ * Registered line disciplines.  Don't use this
+ * it will go away.
  */
-#if NKBD > 0
-	{ ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
-	  sunkbdinput, sunkbdstart, nullmodem },	/* 7- SUNKBDDISC */
-#else
-	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem },
-#endif
-
-#if NMS > 0
-	{ ttylopen, ttylclose, ttyerrio, ttyerrio, nullioctl,
-	  sunmsinput, ttstart, nullmodem },		/* 8- SUNMOUSEDISC */
-#else
-	{ ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem },
-#endif
-};
-
-int	nlinesw = sizeof(linesw) / sizeof(linesw[0]);
+#define LSWITCHBRK	20
+struct	linesw **linesw = NULL;
+int	nlinesw = 0;
+int	slinesw = 0;
 
 /*
  * Do nothing specific version of line
@@ -216,4 +156,147 @@ nullioctl(tp, cmd, data, flags, p)
 	tp = tp; data = data; flags = flags; p = p;
 #endif
 	return (-1);
+}
+
+/*
+ * Register a line discipline, optionally providing a
+ * specific discipline number for compatibility, -1 allocates
+ * a new one.  Returns a discipline number, or -1 on
+ * failure.
+ */
+int
+ttyldisc_add(disc, no) 
+	struct linesw *disc;
+	int no;
+{
+
+	/* You are not allowed to exceed TTLINEDNAMELEN */
+	if (strlen(disc->l_name) > TTLINEDNAMELEN)
+		return (-1);
+
+	/* 
+	 * You are not allowed to specify a line switch 
+	 * compatibility number greater than 10.
+	 */
+	if (no > 10) 
+		return (-1);
+
+	if (linesw == NULL)
+		panic("adding uninitialized linesw");
+
+	if (no == -1) {
+		/* Hunt for any slot */
+
+		for (no = slinesw; no-->0; )
+			if (linesw[no] == NULL) break;
+		/* if no == -1 we should realloc linesw. */
+	}
+
+	/* Need a specific slot */
+	if (linesw[no] != NULL)
+		return (-1);
+	
+	linesw[no] = disc;
+	disc->l_no = no;
+
+	/* Define size of table */
+	if (no >= nlinesw)
+		nlinesw = no + 1;
+	
+	return (no);
+}
+
+/*
+ * Remove a line discipline by its name.  Returns the
+ * discipline on success or NULL on failure.
+ */
+
+struct linesw *
+ttyldisc_remove(name) 
+	char *name;
+{
+	struct linesw *disc;
+	int i;
+
+	if (linesw == NULL)
+		panic("removing uninitialized linesw");
+
+	for (i=0; i<nlinesw; i++) {
+		if (linesw[i] && (strcmp(name, linesw[i]->l_name) == 0)) {
+			disc = linesw[i];
+			linesw[i] = NULL;
+			
+			if (nlinesw == i + 1) {
+				/* Need to fix up array sizing */
+				while (i && (linesw[i] != NULL))
+					i--;
+				nlinesw = i + i;
+			}
+			return (disc);
+		}
+	}
+	return (NULL);
+}
+
+/*
+ * Look up a line discipline by its name.
+ */
+
+struct linesw *
+ttyldisc_lookup(name)
+	char *name;
+{
+	int i;
+
+	for (i=0; i<nlinesw; i++)
+		if (linesw[i] && (strcmp(name, linesw[i]->l_name) == 0))
+			return (linesw[i]);
+	return (NULL);
+}
+
+#define TTYLDISCINIT(s, v) \
+	do { \
+		if (ttyldisc_add(&(s), (v)) != (v)) \
+			panic(__CONCAT("ttyldisc_init: ", __STRING(s))); \
+	} while (0);
+
+/*
+ * Register the basic line disciplines.
+ */	
+void
+ttyldisc_init() {
+	/* Only initialize once */
+	if (linesw)
+		return;
+
+	slinesw = LSWITCHBRK;
+	linesw = malloc(slinesw * sizeof(struct linesw *), 
+			M_TTYS, M_WAITOK);
+	bzero(linesw, slinesw * sizeof(struct linesw *));
+
+	TTYLDISCINIT(termios_disc, 0);
+	/* Do we really need this one? */
+	TTYLDISCINIT(defunct_disc, 1);
+
+	/* 
+	 * The following should really be moved to
+	 * initialization code for each module.
+	 */
+
+#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
+	TTYLDISCINIT(ntty_disc, 2);
+#endif
+#if NTB > 0
+	TTYLDISCINIT(table_disc, 3);
+#endif
+#if NSL > 0
+	TTYLDISCINIT(slip_disc, 4);
+#endif
+#if NPPP > 0
+	TTYLDISCINIT(ppp_disc, 5);
+#endif
+#if NSTRIP > 0
+	TTYLDISCINIT(strip_disc, 6);
+#endif
+
 }
