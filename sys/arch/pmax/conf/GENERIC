@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.18.4.1 1997/11/20 08:44:41 mellon Exp $
+# 	$NetBSD: GENERIC,v 1.18.4.2 1998/05/08 06:30:07 mycroft Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -116,16 +116,6 @@ oldscsibus*	at asc?
 #
 include 	"arch/pmax/conf/scsi.pmax"
 #include 	"arch/pmax/conf/mi.scsi"		# not yet supported
-
-# disks and tapes for a second ASC
-rz8	at	oldscsibus?	target ? drive ?
-rz9	at	oldscsibus?	target ? drive ?
-rz10	at	oldscsibus?	target ? drive ?
-rz11	at	oldscsibus?	target ? drive ?
-rz12	at	oldscsibus?	target ? drive ?
-rz13	at	oldscsibus?	target ? drive ?
-tz2	at	oldscsibus?	target?  drive ?
-tz3	at	oldscsibus?	target?  drive ?
 
 ########################################################################
 ###                        Pseudo-devices                            ###
