@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.266 2000/09/27 02:15:30 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.267 2000/10/03 02:59:05 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.262 2000/09/27 02:14:54 augustss Exp 
+ *	NetBSD: pcidevs,v 1.263 2000/10/03 02:58:30 thorpej Exp 
  */
 
 /*
@@ -560,6 +560,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ADMtek",
 	    "ADMtek AL981 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985,
+	    0,
+	    "ADMtek",
+	    "ADMtek AN985 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
