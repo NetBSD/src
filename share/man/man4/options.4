@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.211 2003/05/06 08:36:29 wiz Exp $
+.\"	$NetBSD: options.4,v 1.212 2003/05/06 10:21:13 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -332,8 +332,8 @@ not available on all architectures.
 .It Cd options DDB_FROMCONSOLE=integer
 If set to non-zero, DDB may be entered by sending a break on a serial
 console or by a special key sequence on a graphics console.
-A value of "0" ignores console breaks or key sequences,
-It not explicitly specified, the default value is "1".
+A value of "0" ignores console breaks or key sequences.
+If not explicitly specified, the default value is "1".
 Note that this sets the value of the
 .Em ddb.fromconsole
 .Xr sysctl 3
