@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdevmajor.3,v 1.2 2004/12/16 04:07:22 christos Exp $
+.\"	$NetBSD: getdevmajor.3,v 1.3 2004/12/16 17:29:55 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,33 +51,17 @@ device specified by
 .Ar name
 and a file type matching the one encoded in
 .Fa type
-which must be one of S_IFBLK or S_IFCHR.
+which must be one of
+.Dv S_IFBLK
+or
+.Dv S_IFCHR .
 .Sh RETURN VALUES
 If no device matches the specified values, no information is
 available, or an error occurs,
 .Dv (dev_t)~0
-is returned and errno is set to indicate the error.
-.Sh ERRORS
-The
-.Fn getdevmajor
-function may fail and set
+is returned and
 .Va errno
-for any of the errors specified for the library functions
-.Xr malloc 3 
-and
-.Xr sysctlbyname 3 .
-In addition, the following errors may be reported:
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The value of the
-.Fa major
-argument is not
-.Dv S_IFCHR
-or
-.Dv S_IFBLK .
-.It Bq Er ENOENT
-The named device is not found.
-.El
+is set to indicate the error.
 .Sh EXAMPLES
 To retrieve the major number for
 .Xr pty 4
@@ -101,13 +85,34 @@ dev_t c, b;
 c = getdevmajor("wd", S_IFCHR);
 b = getdevmajor("wd", S_IFBLK);
 .Ed
+.Sh ERRORS
+The
+.Fn getdevmajor
+function may fail and set
+.Va errno
+for any of the errors specified for the library functions
+.Xr malloc 3
+and
+.Xr sysctlbyname 3 .
+In addition, the following errors may be reported:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+The value of the
+.Fa major
+argument is not
+.Dv S_IFCHR
+or
+.Dv S_IFBLK .
+.It Bq Er ENOENT
+The named device is not found.
+.El
 .Sh SEE ALSO
 .Xr stat 2 ,
 .Xr devname 3 ,
 .Xr malloc 3 ,
-.Xr sysctlbyname 3 .
+.Xr sysctlbyname 3
 .Sh HISTORY
 The
-.Nm getdevmajor
+.Fn getdevmajor
 function call appeared in
 .Nx 3.0 .
