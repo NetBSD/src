@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.120 2000/02/12 21:37:13 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.121 2000/02/12 21:51:51 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3159,6 +3159,7 @@ sys/arch/amiga/amiga/amiga_init.c		1.67-1.68 via patch
 sys/arch/amiga/conf/files.amiga			1.93
 sys/arch/amiga/conf/GENERIC			1.129
 sys/arch/amiga/conf/AMIGA			regenerate
+share/man/man4/options.4			1.97
 
   Add reboot code for Phase5 68040+PPC boards.
 
@@ -3429,3 +3430,7 @@ distrib/notes/i386/hardware			patch
 distrib/notes/common/contents			patch
 
   Update distribution set sizes for alpha, i386 and hp300.
+
+sys/arch/amiga/dev/if_ed.c			1.33
+
+  Only output diagnostic message on really special DEBUG kernels.
