@@ -63,6 +63,7 @@
 ./sbin/fsck
 ./sbin/fsck_ext2fs
 ./sbin/fsck_ffs
+./sbin/fsck_lfs
 ./sbin/fsck_msdos
 ./sbin/fsdb
 ./sbin/fsirand
