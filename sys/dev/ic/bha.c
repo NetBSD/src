@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.1 1996/08/31 20:18:26 mycroft Exp $	*/
+/*	$NetBSD: bha.c,v 1.2 1996/10/10 22:14:18 christos Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -180,7 +180,7 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 			delay(50);
 		}
 		if (!i) {
-			printf("%s: bha_cmd, host not idle(0x%x)\n",
+			kprintf("%s: bha_cmd, host not idle(0x%x)\n",
 			    name, sts);
 			return (1);
 		}
@@ -206,7 +206,7 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 		}
 		if (!i) {
 			if (opcode != BHA_INQUIRE_REVISION)
-				printf("%s: bha_cmd, cmd/data port full\n", name);
+				kprintf("%s: bha_cmd, cmd/data port full\n", name);
 			bus_io_write_1(bc, ioh, BHA_CTRL_PORT, BHA_CTRL_SRST);
 			return (1);
 		}
@@ -225,7 +225,7 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 		}
 		if (!i) {
 			if (opcode != BHA_INQUIRE_REVISION)
-				printf("%s: bha_cmd, cmd/data port empty %d\n",
+				kprintf("%s: bha_cmd, cmd/data port empty %d\n",
 				    name, ocnt);
 			bus_io_write_1(bc, ioh, BHA_CTRL_PORT, BHA_CTRL_SRST);
 			return (1);
@@ -246,7 +246,7 @@ bha_cmd(bc, ioh, sc, icnt, ibuf, ocnt, obuf)
 			delay(50);
 		}
 		if (!i) {
-			printf("%s: bha_cmd, host not finished(0x%x)\n",
+			kprintf("%s: bha_cmd, host not finished(0x%x)\n",
 			    name, sts);
 			return (1);
 		}
@@ -297,14 +297,14 @@ bha_finish_ccbs(sc)
 	if (wmbi->stat == BHA_MBI_FREE) {
 		for (i = 0; i < BHA_MBX_SIZE; i++) {
 			if (wmbi->stat != BHA_MBI_FREE) {
-				printf("%s: mbi not in round-robin order\n",
+				kprintf("%s: mbi not in round-robin order\n",
 				    sc->sc_dev.dv_xname);
 				goto AGAIN;
 			}
 			bha_nextmbx(wmbi, wmbx, mbi);
 		}
 #ifdef BHADIAGnot
-		printf("%s: mbi interrupt with no full mailboxes\n",
+		kprintf("%s: mbi interrupt with no full mailboxes\n",
 		    sc->sc_dev.dv_xname);
 #endif
 		return;
@@ -314,7 +314,7 @@ AGAIN:
 	do {
 		ccb = bha_ccb_phys_kv(sc, phystol(wmbi->ccb_addr));
 		if (!ccb) {
-			printf("%s: bad mbi ccb pointer; skipping\n",
+			kprintf("%s: bad mbi ccb pointer; skipping\n",
 			    sc->sc_dev.dv_xname);
 			goto next;
 		}
@@ -322,11 +322,11 @@ AGAIN:
 #ifdef BHADEBUG
 		if (bha_debug) {
 			u_char *cp = &ccb->scsi_cmd;
-			printf("op=%x %x %x %x %x %x\n",
+			kprintf("op=%x %x %x %x %x %x\n",
 			    cp[0], cp[1], cp[2], cp[3], cp[4], cp[5]);
-			printf("stat %x for mbi addr = 0x%08x, ",
+			kprintf("stat %x for mbi addr = 0x%08x, ",
 			    wmbi->stat, wmbi);
-			printf("ccb addr = 0x%x\n", ccb);
+			kprintf("ccb addr = 0x%x\n", ccb);
 		}
 #endif /* BHADEBUG */
 
@@ -355,7 +355,7 @@ AGAIN:
 			break;
 
 		default:
-			printf("%s: bad mbi status %02x; skipping\n",
+			kprintf("%s: bad mbi status %02x; skipping\n",
 			    sc->sc_dev.dv_xname, wmbi->stat);
 			goto next;
 		}
@@ -384,7 +384,7 @@ bha_intr(arg)
 	u_char sts;
 
 #ifdef BHADEBUG
-	printf("%s: bha_intr ", sc->sc_dev.dv_xname);
+	kprintf("%s: bha_intr ", sc->sc_dev.dv_xname);
 #endif /* BHADEBUG */
 
 	/*
@@ -503,7 +503,7 @@ bha_get_ccb(sc, flags)
 			ccb = (struct bha_ccb *) malloc(sizeof(struct bha_ccb),
 			    M_TEMP, M_NOWAIT);
 			if (!ccb) {
-				printf("%s: can't malloc ccb\n",
+				kprintf("%s: can't malloc ccb\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
@@ -563,7 +563,9 @@ bha_collect_mbo(sc)
 	struct bha_softc *sc;
 {
 	struct bha_mbx_out *wmbo;	/* Mail Box Out pointer */
+#ifdef BHADIAG
 	struct bha_ccb *ccb;
+#endif
 
 	wmbo = wmbx->cmbo;
 
@@ -657,13 +659,13 @@ bha_done(sc, ccb)
 	 */
 #ifdef BHADIAG
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: exiting ccb still in transit!\n", sc->sc_dev.dv_xname);
+		kprintf("%s: exiting ccb still in transit!\n", sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
 #endif
 	if ((ccb->flags & CCB_ALLOC) == 0) {
-		printf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
+		kprintf("%s: exiting ccb not allocated!\n", sc->sc_dev.dv_xname);
 		Debugger();
 		return;
 	}
@@ -674,7 +676,7 @@ bha_done(sc, ccb)
 				xs->error = XS_SELTIMEOUT;
 				break;
 			default:	/* Other scsi protocol messes */
-				printf("%s: host_stat %x\n",
+				kprintf("%s: host_stat %x\n",
 				    sc->sc_dev.dv_xname, ccb->host_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
@@ -691,7 +693,7 @@ bha_done(sc, ccb)
 				xs->error = XS_BUSY;
 				break;
 			default:
-				printf("%s: target_stat %x\n",
+				kprintf("%s: target_stat %x\n",
 				    sc->sc_dev.dv_xname, ccb->target_stat);
 				xs->error = XS_DRIVER_STUFFUP;
 				break;
@@ -736,7 +738,7 @@ bha_find(bc, ioh, sc)
 	if (!i) {
 #ifdef BHADEBUG
 		if (bha_debug)
-			printf("bha_find: No answer from buslogic board\n");
+			kprintf("bha_find: No answer from buslogic board\n");
 #endif /* BHADEBUG */
 		return (0);
 	}
@@ -759,7 +761,7 @@ bha_find(bc, ioh, sc)
 		/* We don't grok MicroChannel (yet). */
 		return (0);
 	default:
-		printf("bha_find: illegal bus type %c\n", inquire.reply.bus_type);
+		kprintf("bha_find: illegal bus type %c\n", inquire.reply.bus_type);
 		return (0);
 	}
 
@@ -789,7 +791,7 @@ bha_find(bc, ioh, sc)
 		drq = 7;
 		break;
 	default:
-		printf("bha_find: illegal drq setting %x\n", config.reply.chan);
+		kprintf("bha_find: illegal drq setting %x\n", config.reply.chan);
 		return (0);
 	}
 
@@ -813,7 +815,7 @@ bha_find(bc, ioh, sc)
 		irq = 15;
 		break;
 	default:
-		printf("bha_find: illegal irq setting %x\n", config.reply.intr);
+		kprintf("bha_find: illegal irq setting %x\n", config.reply.intr);
 		return (0);
 	}
 
@@ -866,7 +868,7 @@ bha_init(sc)
 	    sizeof(setup.cmd), (u_char *)&setup.cmd,
 	    sizeof(setup.reply), (u_char *)&setup.reply);
 
-	printf("%s: %s, %s\n",
+	kprintf("%s: %s, %s\n",
 	    sc->sc_dev.dv_xname,
 	    setup.reply.sync_neg ? "sync" : "async",
 	    setup.reply.parity ? "parity" : "no parity");
@@ -886,7 +888,7 @@ bha_init(sc)
 		if (!setup.reply.sync[i].valid ||
 		    (!setup.reply.sync[i].offset && !setup.reply.sync[i].period))
 			continue;
-		printf("%s targ %d: sync, offset %d, period %dnsec\n",
+		kprintf("%s targ %d: sync, offset %d, period %dnsec\n",
 		    sc->sc_dev.dv_xname, i,
 		    setup.reply.sync[i].offset, period.reply.period[i] * 10);
 	}
@@ -974,7 +976,7 @@ bha_inquire_setup_information(sc)
 	} else
 		strcpy(sc->sc_model, "542B");
 
-	printf("%s: model BT-%s, firmware %s\n", sc->sc_dev.dv_xname,
+	kprintf("%s: model BT-%s, firmware %s\n", sc->sc_dev.dv_xname,
 	    sc->sc_model, sc->sc_firmware);
 }
 
@@ -1114,7 +1116,7 @@ bha_scsi_cmd(xs)
 			/*
 			 * there's still data, must have run out of segs!
 			 */
-			printf("%s: bha_scsi_cmd, more than %d dma segs\n",
+			kprintf("%s: bha_scsi_cmd, more than %d dma segs\n",
 			    sc->sc_dev.dv_xname, BHA_NSEG);
 			goto bad;
 		}
@@ -1202,7 +1204,7 @@ bha_timeout(arg)
 	int s;
 
 	sc_print_addr(sc_link);
-	printf("timed out");
+	kprintf("timed out");
 
 	s = splbio();
 
@@ -1212,7 +1214,7 @@ bha_timeout(arg)
 	 */
 	bha_collect_mbo(sc);
 	if (ccb->flags & CCB_SENDING) {
-		printf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
+		kprintf("%s: not taking commands!\n", sc->sc_dev.dv_xname);
 		Debugger();
 	}
 #endif
@@ -1224,11 +1226,11 @@ bha_timeout(arg)
 	 */
 	if (ccb->flags & CCB_ABORT) {
 		/* abort timed out */
-		printf(" AGAIN\n");
+		kprintf(" AGAIN\n");
 		/* XXX Must reset! */
 	} else {
 		/* abort the operation that has timed out */
-		printf("\n");
+		kprintf("\n");
 		ccb->xs->error = XS_TIMEOUT;
 		ccb->timeout = BHA_ABORT_TIMEOUT;
 		ccb->flags |= CCB_ABORT;
