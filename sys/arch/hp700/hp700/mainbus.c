@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.23 2005/01/28 17:38:51 jkunz Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.24 2005/01/31 18:22:24 jkunz Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.23 2005/01/28 17:38:51 jkunz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2005/01/31 18:22:24 jkunz Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -186,10 +186,10 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
 	u_int frames;
-/*
+#ifdef USE_BTLB
 	vsize_t btlb_size;
 	int error;
-*/
+#endif /* USE_BTLB */
 
 	/*
 	 * We must be called with a page-aligned address in 
@@ -213,6 +213,8 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		/*
 		 * If this mapping is more than eight pages long,
 		 * try to add a BTLB entry.
+		 */
+#ifdef USE_BTLB
 		if (frames > 8 &&
 		    frames >= hppa_btlb_size_min) {
 			btlb_size = frames;
@@ -233,7 +235,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 			else if (error != ENOMEM)
 				return error;
 		}
-		 */
+#endif /* USE_BTLB */
 
 		/*
 		 * Enter another single-page mapping.
@@ -255,8 +257,10 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 {
 	bus_addr_t bpa;
 	u_int frames;
+#ifdef USE_BTLB
 	vsize_t btlb_size;
 	int error;
+#endif /* USE_BTLB */
 
 	/*
 	 * We must be called with a page-aligned address in 
@@ -277,6 +281,7 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 		 * If this mapping is more than eight pages long,
 		 * try to remove a BTLB entry.
 		 */
+#ifdef USE_BTLB
 		if (frames > 8 &&
 		    frames >= hppa_btlb_size_min) {
 			btlb_size = frames;
@@ -293,6 +298,7 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 			else if (error != ENOENT)
 				return error;
 		}
+#endif /* USE_BTLB */
 
 		/*
 		 * Remove another single-page mapping.
