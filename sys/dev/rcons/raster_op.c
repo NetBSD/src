@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_op.c,v 1.4 1996/03/14 19:02:30 christos Exp $ */
+/*	$NetBSD: raster_op.c,v 1.5 1998/12/18 21:59:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -1233,7 +1233,7 @@ raster_blit( src, srclin1, srcleftignore, srcrightignore, srclongs, dst, dstlin1
 			/*s*/   prevsl | ( sl RSOP currrightshift ),
 			/*d*/   dl,
 			/*pst*/ *dstlong = ( *dstlong & lm ) | ( dl & nlm ); )
-			prevsl = sl << prevleftshift;
+			prevsl = sl LSOP prevleftshift;
 			++srclong;
 			++dstlong;
 			}
