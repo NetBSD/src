@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.2 2003/01/20 20:09:59 scw Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.3 2003/01/21 11:29:29 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.2 2003/01/20 20:09:59 scw Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.3 2003/01/21 11:29:29 scw Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,28 +47,27 @@ __RCSID("$NetBSD: makecontext.c,v 1.2 2003/01/20 20:09:59 scw Exp $");
 #include "extern.h"
 
 #include <stdarg.h>
-#include <machine/fpu.h>
+#include <sh5/fpu.h>
 
 void
 makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 {
-	greg_t *gr = ucp->uc_mcontext.__gregs;
+	__greg_t *gr = ucp->uc_mcontext.__gregs;
 	register_t *sp;
 	register_t r;
 	va_list ap;
 	int i;
 
 	sp  = (register_t *)
-	    ((intptr_t)(ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size) & ~7);
+	    (((intptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size) & ~7);
 	if (argc > 8)
 		sp -= (argc - 8);
 
-	gr[_REG_PC] = ((__greg_t)(intptr_t)func;
+	gr[_REG_PC] = (__greg_t)(intptr_t)func;
 	gr[_REG_R(18)] = (__greg_t)(intptr_t)_resumecontext;
-	gr[_REG_SP] = sp;
+	gr[_REG_SP] = (__greg_t)(intptr_t)sp;
 	gr[_REG_FP] = 0;
 	gr[_REG_USR] = 0x000f;	/* r0-r31 are dirty */
-	gr[_REG_R(24)] = 0x12345678ACEBABE5ULL;	/* magic number */
 
 	/*
 	 * The new context inherits the global variable/constant pointers
