@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.31 2002/08/31 00:05:22 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.32 2002/09/06 17:54:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -392,14 +392,22 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	if (event) {
 		getucontext(event, &sau->sau_e_ctx);
 		sau->sau_event.sa_context = (ucontext_t *)
-		    (_UC_MACHINE_SP(&sau->sau_e_ctx) - sizeof(ucontext_t));
+		    ((_UC_MACHINE_SP(&sau->sau_e_ctx) - sizeof(ucontext_t))
+#ifdef _UC_UCONTEXT_ALIGN
+			& _UC_UCONTEXT_ALIGN
+#endif
+			    );
 		sau->sau_event.sa_id = event->l_lid;
 		sau->sau_event.sa_cpu = 0; /* XXX extract from l_cpu */
 	}
 	if (interrupted) {
 		getucontext(interrupted, &sau->sau_i_ctx);
 		sau->sau_interrupted.sa_context = (ucontext_t *)
-		    (_UC_MACHINE_SP(&sau->sau_i_ctx) - sizeof(ucontext_t));
+		    ((_UC_MACHINE_SP(&sau->sau_i_ctx) - sizeof(ucontext_t))
+#ifdef _UC_UCONTEXT_ALIGN
+			& _UC_UCONTEXT_ALIGN
+#endif
+			    );
 		sau->sau_interrupted.sa_id = interrupted->l_lid;
 		sau->sau_interrupted.sa_cpu = 0; /* XXX extract from l_cpu */
 	}
