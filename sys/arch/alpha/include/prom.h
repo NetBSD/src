@@ -1,4 +1,4 @@
-/* $NetBSD: prom.h,v 1.7 1997/04/06 08:47:37 cgd Exp $ */
+/* $NetBSD: prom.h,v 1.8 1998/05/25 04:01:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -72,6 +72,8 @@ void	hwrpb_restart_setup __P((void));
 #define	PROM_E_BOOTED_FILE	0x6
 #define	PROM_E_BOOTED_OSFLAGS	0x8
 #define	PROM_E_TTY_DEV		0xf
+#define	PROM_E_SCSIID		0x42
+#define	PROM_E_SCSIFAST		0x43
 
 /*
  * There have to be stub routines to do the copying that ensures that the
