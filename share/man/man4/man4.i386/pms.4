@@ -1,4 +1,4 @@
-.\"	$NetBSD: pms.4,v 1.11 1997/11/15 20:18:54 carrel Exp $
+.\"	$NetBSD: pms.4,v 1.12 1999/01/30 17:50:36 drochner Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -35,27 +35,42 @@
 .Nm pms
 .Nd PS/2 auxiliary port mouse driver
 .Sh SYNOPSIS
-.Cd pms0 at pckbd? irq 12
+.Cd pms* at pckbc?
+.Cd wsmouse* at pms?
+.Cd opms* at pckbc?
+.Cd opms0 at pc? irq 12
+.Cd opms0 at vt? irq 12
 .Cd options PMS_RESET_AND_DISABLE
 .Sh DESCRIPTION
-This driver provides an interface to a PS/2 auxiliary port mouse.  The
+This driver provides an interface to a PS/2 auxiliary port mouse.
+Mouse related data are accessed by
+.Xr wsmouse 4
+devices.
+The
+.Dq opms
+versions are provided for compatibility. The
+.Dq opms
 driver internally converts the PS/2 mouse output into
 .Xr busmouse 4
 protocol.
 .Sh CONFIGURATION
-The option PMS_RESET_AND_DISABLE causes the pms device to be reset when it
-is probed and disabled when it is closed.  This should not be needed since
-the pms driver is attached to the
+The option PMS_RESET_AND_DISABLE is available only if the
+.Dq opms
+device is attached to a
 .Xr pc 4
 or
 .Xr pcvt 4
-devices.
+terminal driver. It causes the pms device to be reset when it
+is probed and disabled when it is closed.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/pms0
-first PS/2 mouse device.
+first PS/2 mouse device (with
+.Dq opms
+only).
 .El
 .Sh SEE ALSO
+.Xr wsmouse 4 ,
 .Xr busmouse 4 ,
 .Xr lms 4 ,
 .Xr mms 4 .

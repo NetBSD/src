@@ -1,4 +1,4 @@
-.\"	$NetBSD: mms.4,v 1.7 1997/03/12 06:18:56 mikel Exp $
+.\"	$NetBSD: mms.4,v 1.8 1999/01/30 17:50:36 drochner Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -37,9 +37,18 @@
 .Sh SYNOPSIS
 .Cd mms0 at isa? port 0x23c irq 5
 .Cd mms1 at isa? port 0x238 irq 5
+.Cd wsmouse* at mms?
+.Cd omms0 at isa? port 0x23c irq 5
+.Cd omms1 at isa? port 0x238 irq 5
 .Sh DESCRIPTION
 This driver provides an interface to a Microsoft-style bus mouse.
-It uses the
+Mouse related data are accessed by
+.Xr wsmouse 4
+devices.
+The
+.Dq omms
+versions are provided for compatibility.
+They use the
 .Xr busmouse 4
 protocol.
 .Sh FILES
@@ -48,6 +57,7 @@ protocol.
 first Microsoft-style bus mouse
 .El
 .Sh SEE ALSO
+.Xr wsmouse 4 ,
 .Xr busmouse 4 ,
 .Xr lms 4 ,
 .Xr pms 4 .
