@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/03/22 18:10:25 thorpej Exp $
+#	$NetBSD: Makefile,v 1.21 2002/11/29 23:25:06 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -13,7 +13,7 @@ SRCS=	am_ops.c amd.c amfs_auto.c amfs_direct.c amfs_error.c amfs_host.c \
 	amq_svc.c autil.c clock.c conf.c get_args.c info_file.c \
 	info_ndbm.c info_passwd.c \
 	info_union.c map.c mapc.c mntfs.c nfs_prot_svc.c nfs_start.c \
-	nfs_subr.c ops_autofs.c ops_cdfs.c \
+	nfs_subr.c ops_cdfs.c \
 	ops_mfs.c ops_nfs.c ops_nfs3.c ops_nullfs.c ops_pcfs.c \
 	ops_tfs.c ops_tmpfs.c ops_ufs.c ops_umapfs.c ops_unionfs.c \
 	opts.c restart.c rpc_fwd.c sched.c srvr_amfs_auto.c srvr_nfs.c \
