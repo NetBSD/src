@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.143 2003/11/07 17:55:29 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.144 2003/12/04 14:57:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.143 2003/11/07 17:55:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.144 2003/12/04 14:57:47 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1623,7 +1623,7 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 	bp->b_dev = NODEV;
 	bp->b_blkno = bp->b_lblkno = addr;
 	bp->b_iodone = lfs_cluster_callback;
-	bp->b_saveaddr = (caddr_t)cl;
+	bp->b_private = cl;
 	bp->b_vp = vp;
 
 	return bp;
@@ -1912,7 +1912,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		panic("devvp is NULL");
 	for (bpp = sp->bpp, i = nblocks; i;) {
 		cbp = lfs_newclusterbuf(fs, devvp, (*bpp)->b_blkno, i);
-		cl = (struct lfs_cluster *)cbp->b_saveaddr;
+		cl = cbp->b_private;
 
 		cbp->b_dev = i_dev;
 		cbp->b_flags |= B_ASYNC | B_BUSY;
@@ -2061,8 +2061,6 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	bp->b_flags |= B_BUSY | B_CALL | B_ASYNC;
 	bp->b_flags &= ~(B_DONE | B_ERROR | B_READ | B_DELWRI);
 	bp->b_iodone = lfs_supercallback;
-	/* XXX KS - same nasty hack as above */
-	bp->b_saveaddr = (caddr_t)fs;
 
 	vop_strategy_a.a_desc = VDESC(vop_strategy);
 	vop_strategy_a.a_bp = bp;
@@ -2140,7 +2138,7 @@ lfs_callback(struct buf *bp)
 {
 	struct lfs *fs;
 
-	fs = (struct lfs *)bp->b_saveaddr;
+	fs = bp->b_private;
 	lfs_freebuf(fs, bp);
 }
 
@@ -2149,7 +2147,7 @@ lfs_super_aiodone(struct buf *bp)
 {
 	struct lfs *fs;
 
-	fs = (struct lfs *)bp->b_saveaddr;
+	fs = bp->b_private;
 	fs->lfs_sbactive = 0;
 	wakeup(&fs->lfs_sbactive);
 	if (--fs->lfs_iocount <= 1)
@@ -2170,7 +2168,7 @@ lfs_cluster_aiodone(struct buf *bp)
 	if (bp->b_flags & B_ERROR)
 		error = bp->b_error;
 
-	cl = (struct lfs_cluster *)bp->b_saveaddr;
+	cl = bp->b_private;
 	fs = cl->fs;
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 
