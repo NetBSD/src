@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.2 1997/09/15 06:31:54 lukem Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.3 1997/10/17 17:47:41 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newfs_msdos.c,v 1.2 1997/09/15 06:31:54 lukem Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.3 1997/10/17 17:47:41 drochner Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -190,6 +190,7 @@ setup_boot_sector_from_template(bs, dp)
 	struct descrip *dp;
 {
 	struct byte_bpb50 bpb;
+	struct extboot *exb = (struct extboot *)bs->bs50.bsExt;
 
 	assert(sizeof(bs->bs50) == 512);
 	assert(sizeof(bootcode) == 512);
@@ -209,17 +210,17 @@ setup_boot_sector_from_template(bs, dp)
 	putulong(bpb.bpbHiddenSecs, dp->hidnsec);
 	putulong(bpb.bpbHugeSectors, dp->ext_totsecs);
 
-	bs->bs50.bsDriveNumber = dp->ext_physdrv;
-	bs->bs50.bsBootSignature = dp->ext_extboot;
+	exb->exDriveNumber = dp->ext_physdrv;
+	exb->exBootSignature = dp->ext_extboot;
 
 	/* assign a "serial number" :) */
 	srandom((unsigned) time((time_t) 0));
-	putulong(bs->bs50.bsVolumeID, random());
+	putulong(exb->exVolumeID, random());
 
-	(void) memcpy(bs->bs50.bsVolumeLabel, dp->ext_label,
-	    MIN(sizeof(dp->ext_label), sizeof(bs->bs50.bsVolumeLabel)));
-	(void) memcpy(bs->bs50.bsFileSysType, dp->ext_fsysid,
-	    MIN(sizeof(dp->ext_fsysid), sizeof(bs->bs50.bsFileSysType)));
+	(void) memcpy(exb->exVolumeLabel, dp->ext_label,
+	    MIN(sizeof(dp->ext_label), sizeof(exb->exVolumeLabel)));
+	(void) memcpy(exb->exFileSysType, dp->ext_fsysid,
+	    MIN(sizeof(dp->ext_fsysid), sizeof(exb->exFileSysType)));
 	(void) memcpy(bs->bs50.bsBPB, &bpb, 
 	    MIN(sizeof(bpb), sizeof(bs->bs50.bsBPB)));
 }
@@ -278,7 +279,8 @@ main(argc, argv)
 
 	/* if we've got an explicit label, use it */
 	if (label)
-		(void) strncpy(bs.bs50.bsVolumeLabel, label, 11);
+		(void) strncpy(((struct extboot *)(bs.bs50.bsExt))
+			       ->exVolumeLabel, label, 11);
 
 	if (write(fd, &bs, sizeof bs) != sizeof bs)
 		err(1, "Writing boot sector");
