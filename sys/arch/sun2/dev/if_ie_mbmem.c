@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mbmem.c,v 1.2 2001/04/10 12:42:51 fredette Exp $	*/
+/*	$NetBSD: if_ie_mbmem.c,v 1.3 2001/06/27 17:32:44 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -161,6 +161,7 @@
 #include <machine/idprom.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/cpu.h>
 
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
@@ -324,28 +325,7 @@ ie_mbmemcopyin(sc, p, offset, size)
 	int offset;
 	size_t size;
 {
-	size_t help;
-
-	if ((offset & 1) && ((u_long)p & 1) && size > 0) {
-		*(u_int8_t *)p = bus_space_read_1(sc->bt, sc->bh, offset);
-		offset++;
-		p = (u_int8_t *)p + 1;
-		size--;
-	}
-
-	if ((offset & 1) || ((u_long)p & 1)) {
-		bus_space_read_region_1(sc->bt, sc->bh, offset, p, size);
-		return;
-	}
-
-	help = size / 2;
-	bus_space_read_region_2(sc->bt, sc->bh, offset, p, help);
-	if (2 * help == size)
-		return;
-
-	offset += 2 * help;
-	p = (u_int16_t *)p + help;
-	*(u_int8_t *)p = bus_space_read_1(sc->bt, sc->bh, offset);
+	bus_space_copyin(sc->bt, sc->bh, offset, p, size);
 }
 
 /*
@@ -358,28 +338,7 @@ ie_mbmemcopyout(sc, p, offset, size)
 	int offset;
 	size_t size;
 {
-	size_t help;
-
-	if ((offset & 1) && ((u_long)p & 1) && size > 0) {
-		bus_space_write_1(sc->bt, sc->bh, offset, *(u_int8_t *)p);
-		offset++;
-		p = (u_int8_t *)p + 1;
-		size--;
-	}
-
-	if ((offset & 1) || ((u_long)p & 1)) {
-		bus_space_write_region_1(sc->bt, sc->bh, offset, p, size);
-		return;
-	}
-
-	help = size / 2;
-	bus_space_write_region_2(sc->bt, sc->bh, offset, p, help);
-	if (2 * help == size)
-		return;
-
-	offset += 2 * help;
-	p = (u_int16_t *)p + help;
-	bus_space_write_1(sc->bt, sc->bh, offset, *(u_int8_t *)p);
+	bus_space_copyout(sc->bt, sc->bh, offset, p, size);
 }
 
 /* read a 16-bit value at BH offset */
@@ -438,23 +397,26 @@ ie_mbmem_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mbmem_attach_args *mbma = aux;
+	bus_space_handle_t bh;
+	int matched;
 
 	/* No default Multibus address. */
-	if (ca->ca_paddr == -1)
+	if (mbma->mbma_paddr == -1)
 		return(0);
 
-	/* Make sure something is there... */
-	if (!bus_space_probe(ca->ca_bustag, 0, ca->ca_paddr,
-				2,	/* probe size */
-				0,	/* offset */
-				0,	/* flags */
-				NULL, NULL))
+	/* Make sure there is something there... */
+	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, sizeof(struct iembmem), 
+			  0, &bh))
+		return (0);
+	matched = (bus_space_peek_2(mbma->mbma_bustag, bh, 0, NULL) == 0);
+	bus_space_unmap(mbma->mbma_bustag, bh, sizeof(struct iembmem));
+	if (!matched)
 		return (0);
 
 	/* Default interrupt priority. */
-	if (ca->ca_intpri == -1)
-		ca->ca_intpri = 3;
+	if (mbma->mbma_pri == -1)
+		mbma->mbma_pri = 3;
 
 	return (1);
 }
@@ -467,7 +429,7 @@ ie_mbmem_attach(parent, self, aux)
 {
 	u_int8_t myaddr[ETHER_ADDR_LEN];
 	struct ie_mbmem_softc *vsc = (void *) self;
-	struct confargs *ca = aux;
+	struct mbmem_attach_args *mbma = aux;
 	struct ie_softc *sc;
 	bus_size_t memsize;
 	bus_addr_t rampaddr;
@@ -494,8 +456,8 @@ ie_mbmem_attach(parent, self, aux)
 	memsize = 0x10000; /* MEMSIZE 64K */
 
 	/* Map in the board control regs. */
-	vsc->ievt = ca->ca_bustag;
-	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, sizeof(struct iembmem), 
+	vsc->ievt = mbma->mbma_bustag;
+	if (bus_space_map(mbma->mbma_bustag, mbma->mbma_paddr, sizeof(struct iembmem), 
 			  0, &vsc->ievh))
 		panic("ie_mbmem_attach: can't map regs");
 
@@ -503,11 +465,11 @@ ie_mbmem_attach(parent, self, aux)
 	 * Find and map in the board memory.
 	 */
 	/* top 12 bits */
-	rampaddr = ca->ca_paddr & 0xfff00000;
+	rampaddr = mbma->mbma_paddr & 0xfff00000;
 	/* 4 more */
 	rampaddr = rampaddr | ((read_iev(vsc, status) & IEMBMEM_HADDR) << 16);
-	sc->bt = ca->ca_bustag;
-	if (bus_space_map(ca->ca_bustag, rampaddr, memsize, 0, &sc->bh))
+	sc->bt = mbma->mbma_bustag;
+	if (bus_space_map(mbma->mbma_bustag, rampaddr, memsize, 0, &sc->bh))
 		panic("ie_mbmem_attach: can't map mem");
 
 	write_iev(vsc, pectrl, read_iev(vsc, pectrl) | IEMBMEM_PARACK);
@@ -562,6 +524,6 @@ ie_mbmem_attach(parent, self, aux)
 
 	i82586_attach(sc, "multibus", myaddr, media, NMEDIA, media[0]);
 
-	bus_intr_establish(ca->ca_bustag, ca->ca_intpri, IPL_NET, 0,
+	bus_intr_establish(mbma->mbma_bustag, mbma->mbma_pri, IPL_NET, 0,
 			   i82586_intr, sc);
 }
