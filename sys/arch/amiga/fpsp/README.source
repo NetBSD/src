@@ -1,5 +1,0 @@
-The source for the Motorola FPSP (Floating Point Software Package) was ported
-to gas by Eric Norum at the University of Saskatchewan.  It is available
-by anonymous ftp from:
-	ftp.usask.ca      /pub/software/fpsp/fpsp_gas.tar.gz
-
