@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.h,v 1.1 2000/04/10 09:13:45 jdolecek Exp $	*/
+/*	$NetBSD: setemul.h,v 1.2 2000/11/13 21:38:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,13 +75,13 @@
 
 struct emulation {
 	const char *name;	/* Emulation name */
-	char **sysnames;	/* Array of system call names */
+	const char * const *sysnames;	/* Array of system call names */
 	int  nsysnames;		/* Number of */
 	int  *errno;		/* Array of error number mapping */
 	int  nerrno;		/* number of elements in array */
 };
 
-extern struct emulation *current;
+extern const struct emulation *current;
 
 void setemul __P((const char *, pid_t, int));
 void ectx_sanify __P((pid_t));
