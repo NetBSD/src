@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.12 1999/03/27 09:01:28 ross Exp $ */
+/* $NetBSD: boot.c,v 1.13 1999/03/31 03:03:01 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@ char *kernelnames[] = {
 };
 
 void
-main(fd)
+main_(fd)
 	int	fd;
 {
 	char *name, **namep;

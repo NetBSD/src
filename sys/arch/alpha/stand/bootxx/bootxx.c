@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.7 1999/03/27 09:01:27 ross Exp $ */
+/* $NetBSD: bootxx.c,v 1.8 1999/03/31 03:03:01 cgd Exp $ */
 
 /*
  * Copyright (C) 1998 by Ross Harvey
@@ -174,7 +174,7 @@ static void printdec(int n)
 }
 
 void
-main()
+main_()
 {
 	int fd;
 	char *loadaddr;
