@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.84 2004/08/12 13:39:38 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.85 2004/08/16 15:40:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.84 2004/08/12 13:39:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.85 2004/08/16 15:40:35 mycroft Exp $");
 
 #define	PCICDEBUG
 
@@ -1440,21 +1440,18 @@ pcic_chip_socket_enable(pch)
 		printf("pcic_chip_socket_enable: enabling twice\n");
 #endif
 
-	/* disable interrupts */
+	/* disable interrupts; assert RESET */
 	intr = pcic_read(h, PCIC_INTR);
 	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
+	intr &= ~PCIC_INTR_RESET;
 	pcic_write(h, PCIC_INTR, intr);
 
 	/* zero out the address windows */
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
 
-	/* disable socket: negate output enable bit and power off */
-	power = 0;
+	/* power off; assert output enable bit */
+	power = PCIC_PWRCTL_OE;
 	pcic_write(h, PCIC_PWRCTL, power);
-
-	/* now make sure we have reset# active */
-	intr &= ~PCIC_INTR_RESET;
-	pcic_write(h, PCIC_INTR, intr);
 
 	/*
 	 * power hack for RICOH RF5C[23]96
@@ -1492,28 +1489,23 @@ pcic_chip_socket_enable(pch)
 	pcic_write(h, PCIC_PWRCTL, power);
 
 	/*
-	 * wait 100ms until power raise (Tpr) and 20ms to become
-	 * stable (Tsu(Vcc)).
+	 * Table 4-18 and figure 4-6 of the PC Card specifiction say:
+	 * Vcc Rising Time (Tpr) = 100ms
+	 * RESET Width (Th (Hi-z RESET)) = 1ms
+	 * RESET Width (Tw (RESET)) = 10us
 	 *
 	 * some machines require some more time to be settled
-	 * (300ms is added here).
+	 * (100ms is added here).
 	 */
-	pcic_delay(h, 100 + 20 + 300, "pccen1");
+	pcic_delay(h, 200 + 1, "pccen1");
 
-	power |= PCIC_PWRCTL_OE;
-	pcic_write(h, PCIC_PWRCTL, power);
-
-	/*
-	 * hold RESET at least 10us, this is a min allow for slop in
-	 * delay routine.
-	 */
-	delay(20);
-
-	/* clear the reset flag */
+	/* negate RESET */
 	intr |= PCIC_INTR_RESET;
 	pcic_write(h, PCIC_INTR, intr);
 
-	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
+	/*
+	 * RESET Setup Time (Tsu (RESET)) = 20ms
+	 */
 	pcic_delay(h, 20, "pccen2");
 
 #ifdef DIAGNOSTIC
@@ -1549,9 +1541,10 @@ pcic_chip_socket_disable(pch)
 
 	DPRINTF(("pcic_chip_socket_disable\n"));
 
-	/* disable interrupts */
+	/* disable interrupts; assert RESET */
 	intr = pcic_read(h, PCIC_INTR);
 	intr &= ~(PCIC_INTR_IRQ_MASK | PCIC_INTR_CARDTYPE_MASK);
+	intr &= ~PCIC_INTR_RESET;
 	pcic_write(h, PCIC_INTR, intr);
 
 	/* zero out the address windows */
@@ -1560,7 +1553,9 @@ pcic_chip_socket_disable(pch)
 	/* disable socket: negate output enable bit and power off */
 	pcic_write(h, PCIC_PWRCTL, 0);
 
-	/* wait 300ms for power to fall */
+	/*
+	 * Vcc Falling Time (Tpf) = 300ms
+	 */
 	pcic_delay(h, 300, "pccwr1");
 
 	h->flags &= ~PCIC_FLAG_ENABLED;
