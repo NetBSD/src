@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.30 2003/06/16 21:19:23 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.31 2003/06/16 21:26:24 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -444,3 +444,14 @@ sys/dev/pci/pciidevar.h				1.9 (via patch)
 	Sync with the latest diff I made available, and also include changes
 	from kern/18015 which is much better than the hack I've done.
 	[bouyer, ticket #1234]
+
+share/misc/na.phone				1.16-1.18 (via patch)
+
+	Fix comment about format.
+	Fixes PR misc/17722 from David MacKenzie.
+
+	Add new numbers, remove some stars, and mildly sort it so that it's
+	actually in numeric order.
+
+	re-gen with new machinery. Finally up-to-date.
+	[jhawk, #1189]
