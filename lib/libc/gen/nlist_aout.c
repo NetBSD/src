@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.5 1998/02/03 18:23:47 perry Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.6 1998/06/30 20:47:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.5 1998/02/03 18:23:47 perry Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.6 1998/06/30 20:47:37 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,8 +72,7 @@ __fdnlist_aout(fd, list)
 	struct exec exec;
 	struct stat st;
 
-	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
-	    read(fd, &exec, sizeof(exec)) != sizeof(exec) ||
+	if (pread(fd, &exec, sizeof(exec), (off_t)0) != sizeof(exec) ||
 	    N_BADMAG(exec) || fstat(fd, &st) < 0)
 		return (-1);
 
