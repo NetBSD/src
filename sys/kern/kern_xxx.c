@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.9 1994/02/15 06:52:25 cgd Exp $
+ *	$Id: kern_xxx.c,v 1.10 1994/02/15 06:58:07 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -203,7 +203,8 @@ oquota()
 int	scdebug = 1;	/* XXX */
 
 void
-scdebug_call(code, narg, args)
+scdebug_call(p, code, narg, args)
+	struct proc *p;
 	int code, narg, *args;
 {
 	int i;
@@ -211,7 +212,7 @@ scdebug_call(code, narg, args)
 	if (!scdebug)
 		return;
 
-	printf("syscall ");
+	printf("proc %d: syscall ", p->p_pid);
 	if (code < 0 || code >= nsysent) {
 		printf("OUT OF RANGE (%d)", code);
 		code = 0;
@@ -224,13 +225,14 @@ scdebug_call(code, narg, args)
 }
 
 void
-scdebug_ret(code, error, retval)
+scdebug_ret(p, code, error, retval)
+	struct proc *p;
 	int code, error, retval;
 {
 	if (!scdebug)
 		return;
 
-	printf("syscall ");
+	printf("proc %d: syscall ", p->p_pid);
 	if (code < 0 || code >= nsysent) {
 
 		printf("OUT OF RANGE (%d)", code);
