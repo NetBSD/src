@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.1 2001/04/06 15:05:56 fredette Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2 2001/04/10 12:27:40 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -137,10 +137,11 @@ fpu_probe()
 		return FPU_68881;
 	if (b == 0x38)
 		return FPU_68882;
-#endif
 
 	/*
 	 * If it's not one of the above, we have no clue what it is.
 	 */
 	return FPU_UNKNOWN;
+#endif
+	return FPU_NONE;
 }
