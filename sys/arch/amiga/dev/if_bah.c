@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.18 1996/05/07 00:46:39 thorpej Exp $ */
+/*	$NetBSD: if_bah.c,v 1.19 1996/09/02 17:28:22 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -1146,11 +1146,13 @@ bah_ioctl(ifp, command, data)
 {
 	struct bah_softc *sc;
 	register struct ifaddr *ifa;
+	struct ifreq *ifr;
 	int s, error;
 
 	error = 0;
 	sc = ifp->if_softc;
 	ifa = (struct ifaddr *)data;
+	ifr = (struct ifreq *)data;
 	s = splnet();
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2) 
@@ -1191,7 +1193,13 @@ bah_ioctl(ifp, command, data)
 		} 
 		break;
 
-		/* Multicast not supported */
+	case SIOCSIFMULTI:
+	case SIOCDIFMULTI:
+		if (ifr->ifr_addr.sa_family == AF_INET)
+			error = 0;
+		else
+			error = EAFNOSUPPORT;
+		break;
 
 	default:
 		error = EINVAL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.8 1996/05/07 02:40:29 thorpej Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.9 1996/09/02 17:28:25 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -143,13 +143,14 @@ arc_output(ifp, m0, dst, rt0)
 		/*
 		 * For now, use the simple IP addr -> ARCnet addr mapping
 		 */
-		if (m->m_flags & M_BCAST) 
+		if (m->m_flags & (M_BCAST|M_MCAST)) 
 			adst = arcbroadcastaddr; /* ARCnet broadcast address */
 		else
 			adst = ntohl(SIN(dst)->sin_addr.s_addr) & 0xFF;
 
 		/* If broadcasting on a simplex interface, loopback a copy */
-		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
+		if ((m->m_flags & (M_BCAST|M_MCAST)) && 
+		    (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		if (ifp->if_flags & IFF_LINK0) {
 			atype = ARCTYPE_IP;
@@ -486,7 +487,7 @@ arc_input(ifp, m)
 	ifp->if_ibytes += m->m_pkthdr.len;
 
 	if (arcbroadcastaddr == ah->arc_dhost) {
-		m->m_flags |= M_BCAST;
+		m->m_flags |= M_BCAST|M_MCAST;
 		ifp->if_imcasts++;
 	}
 
@@ -550,6 +551,8 @@ arc_ifattach(ifp)
 	ifp->if_type = IFT_ARCNET;
 	ifp->if_addrlen = 1;
 	ifp->if_hdrlen = ARC_HDRLEN;
+	if (ifp->if_flags & IFF_BROADCAST)
+		ifp->if_flags |= IFF_MULTICAST|IFF_ALLMULTI;
 	if (ifp->if_flags & IFF_LINK0 && arc_phdsmtu > 60480)
 		log(LOG_ERR,
 		    "%s: arc_phdsmtu is %d, but must not exceed 60480",
