@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.4 2001/12/31 19:52:45 thorpej Exp $ */
+/* $NetBSD: moused.c,v 1.5 2002/01/01 06:31:49 thorpej Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.4 2001/12/31 19:52:45 thorpej Exp $");
+__RCSID("$NetBSD: moused.c,v 1.5 2002/01/01 06:31:49 thorpej Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -107,39 +107,6 @@ __RCSID("$NetBSD: moused.c,v 1.4 2001/12/31 19:52:45 thorpej Exp $");
 #define ID_MODEL	8
 #define ID_ALL		(ID_PORT | ID_IF | ID_TYPE | ID_MODEL)
 
-#define debug(fmt,args...) \
-	if (debug&&nodaemon) warnx(fmt, ##args)
-
-#define logerr(e, fmt, args...) {				\
-	if (background) {					\
-	    syslog(LOG_DAEMON | LOG_ERR, fmt ": %m", ##args);	\
-	    exit(e);						\
-	} else							\
-	    err(e, fmt, ##args);				\
-}
-
-#define logerrx(e, fmt, args...) {				\
-	if (background) {					\
-	    syslog(LOG_DAEMON | LOG_ERR, fmt, ##args);		\
-	    exit(e);						\
-	} else							\
-	    errx(e, fmt, ##args);				\
-}
-
-#define logwarn(fmt, args...) {					\
-	if (background)						\
-	    syslog(LOG_DAEMON | LOG_WARNING, fmt ": %m", ##args); \
-	else							\
-	    warn(fmt, ##args);					\
-}
-
-#define logwarnx(fmt, args...) {				\
-	if (background)						\
-	    syslog(LOG_DAEMON | LOG_WARNING, fmt, ##args);	\
-	else							\
-	    warnx(fmt, ##args);					\
-}
-
 /* structures */
 
 /* symbol table entry */
@@ -166,7 +133,7 @@ typedef struct {
 
 /* global variables */
 
-int	debug = 0;
+int	dbg = 0;
 int	nodaemon = FALSE;
 int	background = FALSE;
 int	identify = ID_NONE;
@@ -501,6 +468,63 @@ static void wsev(int ty, int val);
 
 static int kidspad(u_char rxc, mousestatus_t *act);
 
+static void
+debug(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (dbg && nodaemon)
+		vwarnx(fmt, ap);
+	va_end(ap);
+}
+
+static void
+logerr(int e, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (background) {
+		int saveerrno = errno;
+		vsyslog(LOG_DAEMON | LOG_ERR, fmt, ap);
+		errno = saveerrno;
+		syslog(LOG_DAEMON | LOG_ERR, "%m");
+		exit(e);
+	} else
+		verr(e, fmt, ap);
+	va_end(ap);
+}
+
+static void
+logwarn(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (background) {
+		int saveerrno = errno;
+		vsyslog(LOG_DAEMON | LOG_WARNING, fmt, ap);
+		errno = saveerrno;
+		syslog(LOG_DAEMON | LOG_WARNING, "%m");
+	} else
+		vwarn(fmt, ap);
+	va_end(ap);
+}
+
+static void
+logwarnx(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (background)
+		vsyslog(LOG_DAEMON | LOG_WARNING, fmt, ap);
+	else
+		vwarnx(fmt, ap);
+	va_end(ap);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -549,7 +573,7 @@ main(int argc, char *argv[])
 	    break;
 
 	case 'd':
-	    ++debug;
+	    ++dbg;
 	    break;
 
 	case 'f':
@@ -831,10 +855,10 @@ wsev(int ty, int val)
 
     ev.type = ty;
     ev.value = val;
-    if (debug)
+    if (dbg)
 	printf("wsev: type=%d value=%d\n", ty, val);
     if (ioctl(rodent.cfd, WSMUXIO_INJECTEVENT, &ev) < 0)
-	logwarn("WSMUXIO_INJECTEVENT");
+	logwarn("muxio inject event");
 }
 
 static void
@@ -908,7 +932,7 @@ moused(char *wsm)
 	    action0.dx = action0.dy = action0.dz = 0;
 	    action0.flags = flags = 0;
 	    if (r_timeout() && r_statetrans(&action0, &action, A_TIMEOUT)) {
-		if (debug > 2)
+		if (dbg > 2)
 		    debug("flags:%08x buttons:%08x obuttons:%08x",
 			  action.flags, action.button, action.obutton);
 	    } else {
@@ -953,22 +977,22 @@ moused(char *wsm)
 	    debug("activity : buttons 0x%08x  dx %d  dy %d  dz %d",
 		action2.button, action2.dx, action2.dy, action2.dz);
 
-            if (debug > 1) 
+            if (dbg > 1) 
 	        printf("buttons=%x x=%d y=%d z=%d\n", action2.button,
 		    (int)(action2.dx * rodent.accelx),
 		    (int)(action2.dy * rodent.accely),
 		    (int)action2.dz);
-	    if (action2.dx != 0 && debug < 2)
+	    if (action2.dx != 0 && dbg < 2)
 		wsev(WSCONS_EVENT_MOUSE_DELTA_X, action2.dx * rodent.accelx);
-	    if (action2.dy != 0 && debug < 2)
+	    if (action2.dy != 0 && dbg < 2)
 		wsev(WSCONS_EVENT_MOUSE_DELTA_Y, -action2.dy * rodent.accely);
-	    if (action2.dz != 0 && debug < 2)
+	    if (action2.dz != 0 && dbg < 2)
 		wsev(WSCONS_EVENT_MOUSE_DELTA_Z, action2.dz);
 	    button = lastbutton ^ action2.button;
 	    lastbutton = action2.button;
 	    printf("diff=%x buts=%x\n", button, lastbutton);
 	    for (i = 0; i < 3; i ++) {
-		if ((button & (1<<i)) && debug < 2) {
+		if ((button & (1<<i)) && dbg < 2) {
 		    wsev(lastbutton & (1<<i) ? WSCONS_EVENT_MOUSE_DOWN :
 			 WSCONS_EVENT_MOUSE_UP, i);
 		}
@@ -994,7 +1018,7 @@ moused(char *wsm)
 	            mouse.operation = MOUSE_ACTION;
 	            mouse.u.data.buttons = action2.button;
 		    mouse.u.data.x = mouse.u.data.y = mouse.u.data.z = 0;
-		    if (debug < 2)
+		    if (dbg < 2)
 	                ioctl(rodent.cfd, CONS_MOUSECTL, &mouse);
 	        }
 #endif
@@ -1960,7 +1984,7 @@ r_statetrans(mousestatus_t *a1, mousestatus_t *a2, int trans)
     changed = FALSE;
 
     if (rodent.flags & Emulate3Button) {
-	if (debug > 2)
+	if (dbg > 2)
 	    debug("state:%d, trans:%d -> state:%d", 
 		  mouse_button_state, trans,
 		  states[mouse_button_state].s[trans]);
