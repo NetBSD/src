@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.11 2001/01/14 21:18:39 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.12 2001/01/16 06:01:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,6 +40,9 @@
 
 #ifndef _MIPS_PROC_H_
 #define _MIPS_PROC_H_
+
+struct proc;
+
 /*
  * Machine-dependent part of the proc structure for MIPS
  */
@@ -50,6 +53,8 @@ struct mdproc {
 	int	md_ss_addr;		/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
 	__volatile int md_astpending;	/* AST pending on return to userland */
+					/* syscall entry for this process */
+	void	(*md_syscall)(struct proc *, u_int, u_int, u_int);
 };
 
 /* md_flags */
