@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: pms.4,v 1.1 1993/08/06 10:10:57 cgd Exp $
+.\"	$Id: pms.4,v 1.2 1993/10/30 22:20:11 mycroft Exp $
 .\"
 .Dd August 6, 1993
 .Dt PMS 4 i386
@@ -35,26 +35,17 @@
 .Sh NAME
 .Nm pms
 .Nd
-PS/2-style bus mouse driver
+PS/2 auxiliary port mouse driver
 .Sh SYNOPSIS
 .\" XXX this is awful hackery to get it to work right... -- cgd
-.Cd "device pms0 at isa? port" \&"IO_BMS0\&" tty irq 5 vector pmsintr
+.Cd "device pms0 at isa? port" \&"IO_KBD\&" tty irq 12 vector pmsintr
 .Sh DESCRIPTION
-This driver provides an interface to a PS/2-style bus mouse.
+This driver provides an interface to a PS/2 auxiliary port mice.
 .Sh FILES
 .Bl -tag -width Pa -compact
 .It Pa /dev/pms0
-first PS/2-style bus mouse
+PS/2 mouse device file
 .El
 .Sh SEE ALSO
 .Xr lms 4 ,
 .Xr mms 4
-.Sh BUGS
-The
-.Nm lms ,
-.Nm mms ,
-and
-.Nm pms
-bus mouse drivers could probably be combined into one.
-.Pp
-The probe routine currently doesn't probe for the device.
