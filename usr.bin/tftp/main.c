@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2003/10/02 21:33:05 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2003/10/02 23:31:52 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.18 2003/10/02 21:33:05 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2003/10/02 23:31:52 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,6 +192,8 @@ main(argc, argv)
 	if (argc >= 1) {
 		if (setjmp(toplevel) != 0)
 			exit(0);
+		argc++;
+		argv--;
 		setpeer(argc, argv);
 	}
 	if (setjmp(toplevel) != 0)
