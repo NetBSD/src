@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.34 2000/08/18 22:45:39 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.35 2000/08/23 22:30:56 tron Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -338,6 +338,11 @@ Says that the package installs itself into the X11 base directory
 .Dv ${X11BASE} .
 This is necessary for packages that install X11 fonts, application
 default files or Imake rule or template files. 
+.It USE_XAW 
+Says that the package uses the Athena widget set.
+.It USE_XPM 
+Says that the package uses the Xpm library. If it is not included
+in the installed X11 distribution the xpm package will be used.
 .It USE_GTEXINFO	
 Says that the package uses gtexinfo.
 .It USE_MOTIF
