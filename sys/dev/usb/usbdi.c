@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.65 2000/03/08 15:34:10 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.66 2000/03/23 18:59:10 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -384,6 +384,10 @@ usbd_alloc_xfer(dev)
 	if (xfer == NULL)
 		return (NULL);
 	xfer->device = dev;
+#if defined(__NetBSD__)
+	callout_init(&xfer->timo_handle);
+	callout_init(&xfer->abort_handle);
+#endif
 	DPRINTFN(5,("usbd_alloc_xfer() = %p\n", xfer));
 	return (xfer);
 }
@@ -395,6 +399,12 @@ usbd_free_xfer(xfer)
 	DPRINTFN(5,("usbd_free_xfer: %p\n", xfer));
 	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
 		usbd_free_buffer(xfer);
+#if defined(__NetBSD__) && defined(DIAGNOSTIC)
+	if (callout_pending(&xfer->timo_handle))
+		panic("usbd_free_xfer: timo_handle pending");
+	if (callout_pending(&xfer->abort_handle))
+		panic("usbd_free_xfer: abort_handle pending");
+#endif
 	xfer->device->bus->methods->freex(xfer->device->bus, xfer);
 	return (USBD_NORMAL_COMPLETION);
 }
