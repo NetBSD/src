@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.146 2004/04/29 04:07:37 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.147 2004/04/29 04:08:25 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1498,3 +1498,8 @@ sys/compat/linux/common/linux_sysctl.c		1.14
 
 	Be consistent about using sysc_init_field()
 	[atatat, ticket #206]
+
+sys/ddb/db_command.c				1.76
+
+	Not supposed to be there
+	[atatat, ticket #207]
