@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.33 2000/06/06 17:41:58 soren Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.34 2000/06/09 06:06:59 soda Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -565,7 +565,7 @@
 
 #define MIPS3_TLB_NUM_TLB_ENTRIES	48
 #define MIPS_R4300_TLB_NUM_TLB_ENTRIES	32
-#define MIPS3_TLB_WIRED_ENTRIES		8	/* XXX gross XXX */
+#define MIPS3_TLB_WIRED_UPAGES		2
 
 
 /*
