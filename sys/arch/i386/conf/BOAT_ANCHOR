@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.64 1996/08/26 23:39:54 mrg Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.65 1996/08/31 20:39:14 mycroft Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -124,17 +124,17 @@ com*	at ast? slave ?
 #scsibus* at ahb?
 #aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
-#bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt2	at isa? port ? irq ?
-#scsibus* at bt?
+#bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+#bha1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
+#bha*	at eisa? slot ?
+#scsibus* at bha?
 #ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
 #scsibus* at ncr?
 #sea0	at isa? iomem 0xc8000 irq 5
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
+#uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 #scsibus* at uha?
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #st*	at scsibus? target ? lun ?	# SCSI tape drives

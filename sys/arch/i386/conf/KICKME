@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.32 1996/08/26 23:40:16 mrg Exp $
+#	$NetBSD: KICKME,v 1.33 1996/08/31 20:39:22 mycroft Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -62,8 +62,8 @@ pc0	at isa? port 0x60 irq 1		# generic PC console device
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 
-bt0	at isa? port 0x330 irq ? drq ?	# BusLogic 54x SCSI controllers
-scsibus* at bt?
+bha0	at isa? port 0x330 irq ? drq ?	# BusLogic 54x SCSI controllers
+scsibus* at bha?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
