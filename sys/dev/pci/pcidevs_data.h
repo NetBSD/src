@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.193 2000/01/31 18:34:51 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.194 2000/02/03 13:58:55 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.188 2000/01/31 18:34:19 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.189 2000/02/03 13:58:28 joda Exp 
  */
 
 /*
@@ -1546,9 +1546,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Maestro 2E",
 	},
 	{
-	    PCI_VENDOR_2MICRO, PCI_PRODUCT_2MICRO_OZ6832,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
 	    0,
-	    "2 Micro Inc",
+	    "O2 Micro Inc",
 	    "OZ6832 CardBus Controller",
 	},
 	{
@@ -6418,9 +6418,9 @@ struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_2MICRO, 0,
+	    PCI_VENDOR_O2MICRO, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "2 Micro Inc",
+	    "O2 Micro Inc",
 	    NULL,
 	},
 	{
