@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.16 2002/09/13 20:27:53 mycroft Exp $	*/
+/*	$NetBSD: whatis.c,v 1.17 2002/09/19 11:29:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.16 2002/09/13 20:27:53 mycroft Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.17 2002/09/19 11:29:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,8 @@ __RCSID("$NetBSD: whatis.c,v 1.16 2002/09/13 20:27:53 mycroft Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <man/manconf.h>
-#include <man/pathnames.h>
+#include "manconf.h"		/* from ../man/ */
+#include "pathnames.h"		/* from ../man/ */
 
 #define	MAXLINELEN	8192			/* max line handled */
 
