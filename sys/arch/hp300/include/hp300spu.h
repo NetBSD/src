@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.8 2002/10/20 02:37:27 chs Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.9 2002/11/03 17:44:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -127,8 +127,7 @@ extern	int mmuid;		/* MMU id */
 #define M68K_VAC
 #endif
 
-#if defined(HP345) || defined(HP360) || defined(HP370) || \
-    defined(HP375) || defined(HP400)
+#if defined(HP345) || defined(HP370) || defined(HP375) || defined(HP400)
 #define	CACHE_HAVE_PAC
 #endif
 
