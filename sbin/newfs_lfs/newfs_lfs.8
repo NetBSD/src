@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.15 2001/11/16 10:25:48 wiz Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.16 2001/11/16 12:05:00 wiz Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,8 +52,8 @@ Before running
 the disk must be labeled using
 .Xr disklabel 8 ,
 the proper fstype is 4.4LFS.  Reasonable values for the
-.Li fsize,
-.Li bsize,
+.Li fsize ,
+.Li bsize ,
 and
 .Li sgs
 fields are 1024, 8192, and 7 respectively.
@@ -119,9 +119,9 @@ are 1 or 2 (the default).
 .Sh SEE ALSO
 .Xr disktab 5 ,
 .\" .Xr fs 5 ,
-.Xr dumplfs 8 ,
 .Xr disklabel 8 ,
-.Xr diskpart 8
+.Xr diskpart 8 ,
+.Xr dumplfs 8
 .\" .Xr tunefs 8
 .Rs
 .%A M. Seltzer
@@ -144,10 +144,11 @@ are 1 or 2 (the default).
 .%D October 1997
 .Re
 .Sh HISTORY
-A \fBnewlfs\fR
+A
+.Ic newlfs
 command appeared in
 .Bx 4.4 ,
 and was renamed to
 .Nm
 for
-.Nx 1.4.
+.Nx 1.4 .
