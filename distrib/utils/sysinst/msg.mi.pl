@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.1 2002/04/09 19:47:58 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.2 2002/05/24 08:07:49 itojun Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -815,12 +815,12 @@ Nacisnij ENTER aby wybrac. Nacisnij 'x' a potem ENTER aby wyjsc.
 
 message choose_crypt
 {Wybierz sposob szyfrowania hasel, ktorego chcesz uzywac. NetBSD moze korzystac
-albo z DES albo MD5.
+albo z DES, MD5 albo Blowfish.
 
 Tradycyjna metoda DES, jest kompatybilna z wiekszoscia unixowych systemow
 operacyjnych, ale wtedy tylko 8 pierwszych znakow w hasle jest rozpoznawanych.
-Metoda MD5 pozwala na dluzsze hasla, niektorzy twierdza ze jest bardziej
-bezpieczna.
+Metoda MD5 i Blowfish pozwala na dluzsze hasla, niektorzy twierdza ze jest
+bardziej bezpieczna.
 
 Jesli posiadasz siec oraz zamierasz korzystac z NIS, pamietaj o mozliwosciach
 innych maszyn w twojej sieci.
