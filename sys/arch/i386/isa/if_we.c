@@ -61,7 +61,11 @@
  * BPF trailer support added by David Greenman, 1/7/93
  *
  * $Log: if_we.c,v $
- * Revision 1.4  1993/04/08 08:26:54  deraadt
+ * Revision 1.5  1993/04/10 15:58:56  glass
+ * Fixed so they are useable when compiled with options NS.  Not that I know
+ * anyone who will.....
+ *
+ * Revision 1.4  1993/04/08  08:26:54  deraadt
  * dmesg output at boottime now tries to print out information as
  * soon as it is available. The output looks much more like Sunos.
  *
@@ -147,7 +151,7 @@ struct	we_softc {
 	struct	arpcom we_ac;		/* Ethernet common part 	*/
 #define	we_if	we_ac.ac_if		/* network-visible interface 	*/
 #define	we_addr	we_ac.ac_enaddr		/* hardware Ethernet address 	*/
-
+#define	ns_addrp we_ac.ac_enaddr		/* hardware Ethernet address 	*/
 	u_char	we_flags;		/* software state		*/
 #define	WDF_RUNNING	0x01
 #define WDF_TXBUSY	0x02
@@ -779,7 +783,7 @@ weioctl(ifp, cmd, data)
 			register struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 
 			if (ns_nullhost(*ina))
-				ina->x_host = *(union ns_host *)(sc->ns_addr);
+				ina->x_host = *(union ns_host *)(sc->ns_addrp);
 			else {
 				/* 
 				 * The manual says we cant change the address 
@@ -788,7 +792,7 @@ weioctl(ifp, cmd, data)
 				 */
 				ifp->if_flags &= ~IFF_RUNNING; 
 				bcopy((caddr_t)ina->x_host.c_host,
-				    (caddr_t)sc->ns_addr, sizeof(sc->ns_addr));
+				    (caddr_t)sc->ns_addrp, sizeof(sc->ns_addrp));
 			}
 			weinit(ifp->if_unit); /* does ne_setaddr() */
 			break;
