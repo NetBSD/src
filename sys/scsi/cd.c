@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.54 1995/01/30 11:37:17 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.55 1995/01/30 11:47:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -176,7 +176,7 @@ cdattach(parent, self, aux)
 	 * the drive. We cannot use interrupts yet, so the
 	 * request must specify this.
 	 */
-	if (scsi_start(cd->sc_link, SSS_START|SSS_LOEJ,
+	if (scsi_start(cd->sc_link, SSS_START,
 	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT) ||
 	    cd_get_parms(cd, SCSI_AUTOCONF) != 0)
 		printf(": drive empty\n");
@@ -234,7 +234,7 @@ cdopen(dev, flag, fmt)
 			goto bad3;
 
 		/* Start the pack spinning if necessary. */
-		if (error = scsi_start(sc_link, SSS_START|SSS_LOEJ,
+		if (error = scsi_start(sc_link, SSS_START,
 		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT))
 			goto bad3;
 
