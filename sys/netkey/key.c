@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.113 2004/03/24 15:34:55 atatat Exp $	*/
+/*	$NetBSD: key.c,v 1.114 2004/04/12 07:50:56 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.113 2004/03/24 15:34:55 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.114 2004/04/12 07:50:56 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -5098,14 +5098,7 @@ key_getsavbyseq(sah, seq)
 
 		KEY_CHKSASTATE(state, sav->state, "key_getsabyseq");
 
-		if (sav->seq == seq) {
-			sav->refcnt++;
-			KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
-				printf("DP key_getsavbyseq cause "
-					"refcnt++:%d SA:%p\n",
-					sav->refcnt, sav));
-			return sav;
-		}
+		if (sav->seq == seq)
 	}
 
 	return NULL;
