@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.346 2001/06/02 19:12:59 jdolecek Exp $
+#	$NetBSD: mi,v 1.347 2001/06/03 17:44:30 jdolecek Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -158,10 +158,10 @@
 ./usr/include/dev/sbus/mbppio.h		comp-c-include
 ./usr/include/dev/scsipi		comp-c-include
 ./usr/include/dev/scsipi/scsi_all.h		comp-c-include
-./usr/include/dev/scsipi/scsi_cd.h		comp-c-include
 ./usr/include/dev/scsipi/scsi_disk.h		comp-c-include
 ./usr/include/dev/scsipi/scsiconf.h		comp-c-include
 ./usr/include/dev/scsipi/scsipi_all.h		comp-c-include
+./usr/include/dev/scsipi/scsipi_cd.h		comp-c-include
 ./usr/include/dev/scsipi/scsipi_debug.h		comp-c-include
 ./usr/include/dev/scsipi/scsipiconf.h		comp-c-include
 ./usr/include/dev/scsipi/ses.h			comp-c-include
