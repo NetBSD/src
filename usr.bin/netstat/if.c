@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.31 1999/03/14 22:28:05 mycroft Exp $	*/
+/*	$NetBSD: if.c,v 1.31.2.1 2000/10/19 16:32:04 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.31 1999/03/14 22:28:05 mycroft Exp $");
+__RCSID("$NetBSD: if.c,v 1.31.2.1 2000/10/19 16:32:04 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ intpr(interval, ifnetaddr)
 			printf("%-17.17s ", "none");
 		} else {
 			char hexsep = '.';		/* for hexprint */
-			const char *hexfmt = "%x%c";	/* for hexprint */
+			const char hexfmt[] = "%02x%c";	/* for hexprint */
 			if (kread(ifaddraddr, (char *)&ifaddr, sizeof ifaddr)) {
 				ifaddraddr = 0;
 				continue;
@@ -231,7 +231,7 @@ intpr(interval, ifnetaddr)
 				    cp = (char *)LLADDR(sdl);
 				    if (sdl->sdl_type == IFT_FDDI
 					|| sdl->sdl_type == IFT_ETHER)
-					    hexsep = ':', hexfmt = "%02x%c";
+					    hexsep = ':';
 				    n = sdl->sdl_alen;
 				}
 				m = printf("%-13.13s ", "<Link>");
