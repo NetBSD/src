@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.2 2001/06/16 12:53:05 toshii Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.3 2001/06/22 14:38:44 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: sed_saip.c,v 1.2 2001/06/16 12:53:05 toshii Exp $";
+    "$NetBSD: sed_saip.c,v 1.3 2001/06/22 14:38:44 toshii Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/config_hook.h>
 

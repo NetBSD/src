@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.5 2001/06/05 17:29:12 uch Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.6 2001/06/22 14:38:44 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.5 2001/06/05 17:29:12 uch Exp $";
+    "$NetBSD: hpcfb.c,v 1.6 2001/06/22 14:38:44 toshii Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,6 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#include <machine/autoconf.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
