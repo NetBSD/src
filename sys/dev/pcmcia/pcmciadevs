@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.196 2004/07/07 05:34:18 mycroft Exp $
+$NetBSD: pcmciadevs,v 1.197 2004/07/07 05:38:29 mycroft Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -428,7 +428,7 @@ vendor YEDATA			-1	Y-E DATA
 product ACCTON EN2212		{ "ACCTON", "EN2212", NULL, NULL } Accton EN2212
 product ACCTON EN2216		{ "ACCTON", "EN2216-PCMCIA-ETHERNET", "EN2216R01", NULL } Accton EN2216
 product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB8002T
-product AMBICON AMB8110		{ "AmbiCom,Inc.", "Fast&spEthernet&spPC&spCard(AMB8110)", NULL, NULL } AmbiCom AMB8110
+product AMBICOM AMB8110		{ "AmbiCom,Inc.", "Fast&spEthernet&spPC&spCard(AMB8110)", NULL, NULL } AmbiCom AMB8110
 product AMD AM79C930		{ "AMD", "Am79C930", NULL, NULL } AMD Am79C930
 product BILLIONTON CFLT10N	{ "CF", "10Base-Ethernet", "1.0", NULL } Billionton Systems Inc. CFLT10N Ethernet
 product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } Billionton Systems Inc. LNT-10TN NE2000 Compatible Card
