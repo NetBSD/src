@@ -1,6 +1,7 @@
 \input texinfo          @c -*-texinfo-*-
+@c $NetBSD: am-utils.texi,v 1.1.1.2 2000/11/19 23:44:05 wiz Exp $
 @c
-@c Copyright (c) 1997-1999 Erez Zadok
+@c Copyright (c) 1997-2000 Erez Zadok
 @c Copyright (c) 1989 Jan-Simon Pendry
 @c Copyright (c) 1989 Imperial College of Science, Technology & Medicine
 @c Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +39,7 @@
 @c
 @c      %W% (Berkeley) %G%
 @c
-@c Id: am-utils.texi,v 1.17 2000/02/07 08:35:18 ezk Exp 
+@c Id: am-utils.texi,v 1.21.2.6 2000/07/08 22:16:59 ezk Exp
 @c
 @setfilename am-utils.info
 
@@ -60,7 +61,7 @@
 (Originally by Jan-Simon Pendry and Nick Williams)
 
 @page
-Copyright @copyright{} 1997-1999 Erez Zadok
+Copyright @copyright{} 1997-2000 Erez Zadok
 @*
 Copyright @copyright{} 1989 Jan-Simon Pendry
 @*
@@ -701,6 +702,10 @@ features.
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
+@item @b{alpha-dec-osf4.0f}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
+
 @item @b{alphaev5-unknown-linux-gnu}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
@@ -708,6 +713,10 @@ features.
 @item @b{alphaev5-unknown-linux-gnu-rh5.2}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
+
+@item @b{alphaev6-dec-osf5.0}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
 @item @b{hppa1.0-hp-hpux11.00}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
@@ -723,7 +732,7 @@ features.
 
 @item @b{hppa1.1-hp-hpux11.00}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
-@tab yes     @tab yes   @tab yes  @tab no    @tab yes  @tab yes
+@tab yes     @tab yes   @tab yes  @tab UDP    @tab yes  @tab yes
 
 @item @b{hppa1.1-hp-hpux9.01}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
@@ -817,6 +826,10 @@ features.
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
 
+@item @b{i386-unknown-freebsdelf3.4}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
+
 @item @b{i386-unknown-freebsdelf4.0}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab yes   @tab yes  @tab ?
@@ -905,6 +918,10 @@ features.
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
+@item @b{i586-pc-linux-gnu-rh6.2}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
+
 @item @b{i586-pc-linux-gnulibc1}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
@@ -912,7 +929,6 @@ features.
 @item @b{i586-pc-linux-gnulibc1-rh4.2}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
-
 
 @item @b{i686-pc-linux-gnu}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
@@ -923,6 +939,10 @@ features.
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
 @item @b{i686-pc-linux-gnu-rh6.0}
+@c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
+@tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
+
+@item @b{i686-pc-linux-gnu-rh6.2}
 @c {Config}  {Compile}  {Amd}     {NFS V.3}  {Shlib}   {Hlfsd}
 @tab yes     @tab yes   @tab yes  @tab n/a   @tab yes  @tab ?
 
@@ -1653,6 +1673,7 @@ The following selectors are currently implemented.
 * byte Selector Variable::
 * cluster Selector Variable::
 * domain Selector Variable::
+* dollar Selector Variable::
 * host Selector Variable::
 * hostd Selector Variable::
 * karch Selector Variable::
@@ -1734,7 +1755,7 @@ filesystems.  @code{$@{cluster@}} defaults to the value of
 command line option.
 
 @c ----------------------------------------------------------------
-@node domain Selector Variable, host Selector Variable, cluster Selector Variable, Selectors
+@node domain Selector Variable, dollar Selector Variable, cluster Selector Variable, Selectors
 @comment  node-name,  next,  previous,  up
 @subsubsection domain Selector Variable
 @cindex domain Selector Variable
@@ -1746,7 +1767,22 @@ The local domain name as specified by the @code{-d} command line option.
 @xref{host Selector Variable}.
 
 @c ----------------------------------------------------------------
-@node host Selector Variable, hostd Selector Variable, domain Selector Variable, Selectors
+@node dollar Selector Variable, host Selector Variable, domain Selector Variable, Selectors
+@comment  node-name,  next,  previous,  up
+@subsubsection dollar Selector Variable
+@cindex dollar Selector Variable
+
+This is a special variable, whose sole purpose is to produce a literal
+dollar sign in the value of another variable.  For example, if you have
+a remote file system whose name is @samp{/disk$s}, you can mount it by
+setting the remote file system variable as follows:
+
+@example
+rfs:=/disk$@{dollar@}s
+@end example
+
+@c ----------------------------------------------------------------
+@node host Selector Variable, hostd Selector Variable, dollar Selector Variable, Selectors
 @comment  node-name,  next,  previous,  up
 @subsubsection host Selector Variable
 @cindex host Selector Variable
@@ -3075,6 +3111,8 @@ enter daemon mode
 fork server
 @item full
 program trace
+@item hrtime
+print high resolution time stamps (only if @b{syslog}(3) is not used)
 @item info
 @cindex debugging hesiod resolver service
 @cindex Hesiod: turning on RES_DEBUG
@@ -3084,12 +3122,16 @@ hesiod maps, turns on the hesiod RES_DEBUG internal debugging option.
 trace memory allocations
 @item mtab
 use local @file{./mtab} file
+@item readdir
+show readdir progress
 @item str
 debug string munging
 @item test
 full debug but no daemon
 @item trace
 trace RPC protocol and NFS mount arguments
+@item xdrtrace
+trace XDR routines
 @end table
 
 You may also refer to the program source for a more detailed explanation
@@ -3365,17 +3407,16 @@ The options are the same as for the @samp{nfs} filesystem with one
 difference.
 
 @noindent
-The following options must be specified:
+The following options should be specified:
 
 @table @code
 @item rhost
-the remote fileserver.  This must be an entry in the hosts database.  IP
-addresses are not accepted.  The default value is taken from the local
+the remote fileserver.  The default value is taken from the local
 host name (@code{$@{host@}}) if no other value is specified.
 
 @item rfs
-as a list of filesystems to mount.  The list is in the form of a comma
-separated strings.
+is a list of filesystems to mount, and must be specified.
+The list is in the form of a comma separated strings.
 @end table
 
 @noindent
@@ -4318,8 +4359,10 @@ The following parameters are applicable to the @samp{[global]} section only.
 * local_domain Parameter::
 * log_file Parameter::
 * log_options Parameter::
+* nfs_proto Parameter::
 * nfs_retransmit_counter Parameter::
 * nfs_retry_interval Parameter::
+* nfs_vers Parameter::
 * nis_domain Parameter::
 * normalize_hostnames Parameter::
 * os Parameter::      
@@ -4543,7 +4586,7 @@ is generally a bad idea to use those reserved for other services such as
 @samp{kern}, @samp{lpr}, @samp{cron}, etc.
 
 @c ----------------------------------------------------------------
-@node log_options Parameter, nfs_retransmit_counter Parameter, log_file Parameter, Global Parameters
+@node log_options Parameter, nfs_proto Parameter, log_file Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{log_options} Parameter
 @cindex log_options Parameter
@@ -4580,7 +4623,21 @@ warnings
 @end table
 
 @c ----------------------------------------------------------------
-@node nfs_retransmit_counter Parameter, nfs_retry_interval Parameter, log_options Parameter, Global Parameters
+@node nfs_proto Parameter, nfs_retransmit_counter Parameter, log_options Parameter, Global Parameters
+@comment  node-name,  next,  previous,  up
+@subsection @t{nfs_proto} Parameter
+@cindex nfs_proto Parameter
+
+(type=string, default to trying version tcp then udp).  By default,
+@i{Amd} tries @code{tcp} and then @code{udp}.  This option forces the
+overall NFS protocol used to TCP or UDP.  It overrides what is in the
+@i{Amd} maps, and is useful when @i{Amd} is compiled with NFSv3 support
+that may not be stable.  With this option you can turn off the complete
+usage of NFSv3 dynamically (without having to recompile @i{Amd}) until
+such time as NFSv3 support is desired again.
+
+@c ----------------------------------------------------------------
+@node nfs_retransmit_counter Parameter, nfs_retry_interval Parameter, nfs_proto Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{nfs_retransmit_counter} Parameter
 @cindex nfs_retransmit_counter Parameter
@@ -4591,7 +4648,7 @@ number of NFS retransmissions that the kernel will use to communicate
 with @i{Amd}.  @xref{-t Option}.
 
 @c ----------------------------------------------------------------
-@node nfs_retry_interval Parameter, nis_domain Parameter, nfs_retransmit_counter Parameter, Global Parameters
+@node nfs_retry_interval Parameter, nfs_vers Parameter, nfs_retransmit_counter Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{nfs_retry_interval} Parameter
 @cindex nfs_retry_interval Parameter
@@ -4602,14 +4659,28 @@ timeout interval, in @emph{tenths} of seconds, between NFS/RPC retries
 (for UDP only).  This is the value that the kernel will use to
 communicate with @i{Amd}.  @xref{-t Option}.
 
-Amd relies on the kernel RPC retransmit mechanism to trigger mount
+@i{Amd} relies on the kernel RPC retransmit mechanism to trigger mount
 retries.  The values of the @i{nfs_retransmit_counter} and the
 @i{nfs_retry_interval} parameters change the overall retry interval.
 Too long an interval gives poor interactive response; too short an
 interval causes excessive retries.
 
 @c ----------------------------------------------------------------
-@node nis_domain Parameter, normalize_hostnames Parameter, nfs_retry_interval Parameter, Global Parameters
+@node nfs_vers Parameter, nis_domain Parameter, nfs_retry_interval Parameter, Global Parameters
+@comment  node-name,  next,  previous,  up
+@subsection @t{nfs_vers} Parameter
+@cindex nfs_vers Parameter
+
+(type=numeric, default to trying version 3 then 2).  By default, @i{Amd}
+tries version 3 and then version 2.  This option forces the overall NFS
+protocol used to version 3 or 2.  It overrides what is in the @i{Amd}
+maps, and is useful when @i{Amd} is compiled with NFSv3 support that may not
+be stable.  With this option you can turn off the complete usage of
+NFSv3 dynamically (without having to recompile @i{Amd}) until such time as
+NFSv3 support is desired again.
+
+@c ----------------------------------------------------------------
+@node nis_domain Parameter, normalize_hostnames Parameter, nfs_vers Parameter, Global Parameters
 @comment  node-name,  next,  previous,  up
 @subsection @t{nis_domain} Parameter
 @cindex nis_domain Parameter
@@ -5002,6 +5073,7 @@ mount point.
 * Amq default::       Default command behavior.
 * Amq -f option::     Flushing the map cache.
 * Amq -h option::     Controlling a non-local host.
+* Amq -H-option::     Print help message.
 * Amq -l option::     Controlling the log file.
 * Amq -m option::     Obtaining mount statistics.
 * Amq -M-option::     Mounting a volume.
@@ -5012,6 +5084,7 @@ mount point.
 * Amq -U-option::     Use UDP transport.
 * Amq -u option::     Forcing volumes to time out.
 * Amq -v option::     Version information.
+* Amq -w option::     Print Amd current working directory.
 * Other Amq options:: Three other special options.
 @end menu
 
@@ -5104,7 +5177,27 @@ also be synchronized with the map source by using the @samp{sync} option
 (@pxref{Automount Filesystem}).@refill
 
 @c ----------------------------------------------------------------
-@node Amq -l option, Amq -m option, Amq -h option, Controlling Amd
+@node Amq -h option, Amq -H-option, Amq -f option, Controlling Amd
+@comment  node-name,  next,  previous,  up
+@subsection @i{Amq} @code{-h} option
+@cindex Querying an alternate host
+
+By default the local host is used.  In an HP-UX cluster the root server
+is used since that is the only place in the cluster where @i{Amd} will
+be running.  To query @i{Amd} on another host the @code{-h} option should
+be used.
+
+@c ----------------------------------------------------------------
+@node Amq -H-option, Amq -l option, Amq -h option, Controlling Amd
+@comment  node-name,  next,  previous,  up
+@subsection @i{Amq} @code{-H} option
+@cindex Displaying brief help
+@cindex Help; showing from Amq
+
+Print a brief help and usage string.
+
+@c ----------------------------------------------------------------
+@node Amq -l option, Amq -m option, Amq -H-option, Controlling Amd
 @comment  node-name,  next,  previous,  up
 @subsection @i{Amq} @code{-l} option
 @cindex Resetting the Amd log file
@@ -5116,17 +5209,6 @@ reasons, this @emph{must} be the same log file which @i{Amd} used when
 started.  This option is therefore only useful to refresh @i{Amd}'s open
 file handle on the log file, so that it can be rotated and compressed
 via daily cron jobs.
-
-@c ----------------------------------------------------------------
-@node Amq -h option, Amq -l option, Amq -f option, Controlling Amd
-@comment  node-name,  next,  previous,  up
-@subsection @i{Amq} @code{-h} option
-@cindex Querying an alternate host
-
-By default the local host is used.  In an HP-UX cluster the root server
-is used since that is the only place in the cluster where @i{Amd} will
-be running.  To query @i{Amd} on another host the @code{-h} option should
-be used.
 
 @c ----------------------------------------------------------------
 @node Amq -m option, Amq -M-option, Amq -l option, Controlling Amd
@@ -5317,11 +5399,11 @@ safe way to unmount an automounted filesystem.  It is not possible to
 unmount a filesystem which has been mounted with the @samp{nounmount}
 flag.
 
-@c The @code{-H} option informs @i{Amd} that the specified mount point has hung -
-@c as if its keepalive timer had expired.
+@c The @code{-H} option informs @i{Amd} that the specified mount point
+@c has hung - as if its keepalive timer had expired.
 
 @c ----------------------------------------------------------------
-@node Amq -v option, Other Amq options, Amq -u option, Controlling Amd
+@node Amq -v option, Amq -w option, Amq -u option, Controlling Amd
 @comment  node-name,  next,  previous,  up
 @subsection @i{Amq} @code{-v} option
 @cindex Version information at run-time
@@ -5330,7 +5412,17 @@ The @code{-v} option displays the version of @i{Amd} in a similar way to
 @i{Amd}'s @code{-v} option.
 
 @c ----------------------------------------------------------------
-@node Other Amq options, , Amq -v option, Controlling Amd
+@node Amq -w option, Other Amq options, Amq -v option, Controlling Amd
+@comment  node-name,  next,  previous,  up
+@subsection @i{Amq} @code{-w} option
+@cindex Getting real working directory
+
+The @code{-w} option translates a full pathname as returned by
+@b{getpwd}(3) into a short @i{Amd} pathname that goes through its mount
+points.  This option requires that @i{Amd} is running.
+
+@c ----------------------------------------------------------------
+@node Other Amq options, , Amq -w option, Controlling Amd
 @comment  node-name,  next,  previous,  up
 @subsection Other @i{Amq} options
 @cindex Logging options via Amq
@@ -6274,7 +6366,7 @@ to @file{stdout} on a line starting with a @samp{#} character.
 
 @node -D-FSinfo Option, -I FSinfo Option, -v FSinfo Option, FSinfo Command Line Options
 @comment  node-name,  next,  previous,  up
-@subsection @code{-D} @var{name[=defn]}
+@subsection @code{-D} @var{name}@i{[=defn]}
 
 Defines a symbol @dfn{name} for the preprocessor when reading the
 configuration files.  Equivalent to @code{#define} directive.
@@ -8218,4 +8310,4 @@ All other registered trademarks are owned by their respective owners.
 @c LocalWords:  nointr extatt setchapternewpage columnfractions alphaev gnulibc
 @c LocalWords:  freebsdelf gnuoldld ifhtml defperm nodefperm norrip RRIP rrip
 @c LocalWords:  noversion attr XXXXXX netgrpd rh mkstemp uid gid noexec mntfs
-@c LocalWords:  nomnttab optionstr
+@c LocalWords:  nomnttab optionstr hrtime xdrtrace getpwd

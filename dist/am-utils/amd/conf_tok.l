@@ -1,3 +1,5 @@
+/*	$NetBSD: conf_tok.l,v 1.1.1.2 2000/11/19 23:43:48 wiz Exp $	*/
+
 %{
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -39,7 +41,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * Id: conf_tok.l,v 1.3 2000/01/12 16:44:18 ezk Exp 
+ * Id: conf_tok.l,v 1.3 2000/01/12 16:44:18 ezk Exp
  *
  */
 
