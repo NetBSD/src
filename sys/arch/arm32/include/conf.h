@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.2 1997/10/14 09:20:06 mark Exp $	*/
+/*	$NetBSD: conf.h,v 1.3 1998/06/12 23:59:23 tv Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -103,6 +103,21 @@ cdev_decl(md);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
+#ifdef  SHARK
+/* open, close, read, write, ioctl, tty, mmap */
+#define cdev_pc_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+        dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+        dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
+
+/* open, close, read, ioctl */
+#define cdev_prof_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+#endif
+
 #define mmread  mmrw
 #define mmwrite mmrw
 cdev_decl(mm);
@@ -118,3 +133,16 @@ cdev_decl(kbd);
 cdev_decl(cpu);
 cdev_decl(iic);
 cdev_decl(rtc);
+#ifdef	OFW
+cdev_decl(ofcons_);
+cdev_decl(ofd);
+cdev_decl(ofrtc);
+#endif
+cdev_decl(scr);
+#ifdef	SHARK
+cdev_decl(pc);
+cdev_decl(prof);
+#endif
+#define ofromread  ofromrw
+#define ofromwrite ofromrw
+cdev_decl(ofrom);
