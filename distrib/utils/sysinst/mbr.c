@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.52 2003/09/21 02:30:18 takemura Exp $ */
+/*	$NetBSD: mbr.c,v 1.53 2003/09/27 10:39:35 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -983,7 +983,7 @@ set_mbr_label(menudesc *m, int opt, void *arg)
 		    rstart, rend - rstart,
 		    mbrp->mbrp_flag == MBR_FLAGS_ACTIVE ? 'a' : ' ',
 #ifdef BOOTSEL
-		    ombri->bootsec == mbri->sector + mbrp->mbrp_start ? 'b' :
+		    ombri->bootsec == mbri->sector + mbrp->mbrp_start ? 'd' :
 #endif
 			' ',
 		    mbri->sector + mbrp->mbrp_start == ombri->install &&
@@ -1143,7 +1143,7 @@ edit_mbr(mbr_info_t *mbri)
 		return 1;
 	}
 
-	mbr_menu = new_menu(NULL, NULL, 16, 0, 7, 15, 70,
+	mbr_menu = new_menu(NULL, NULL, 16, 0, -1, 15, 70,
 			MC_NOBOX | MC_SCROLL | MC_NOCLEAR,
 			set_mbr_header, set_mbr_label, NULL,
 			NULL, MSG_Partition_table_ok);
