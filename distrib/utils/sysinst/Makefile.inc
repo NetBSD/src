@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2000/05/18 01:10:58 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.8.4.1 2000/08/11 19:46:31 jdolecek Exp $
 #
 # Makefile for install
 
@@ -34,7 +34,7 @@ WARNS=1
 
 CLEANFILES= menu_defs.c menu_defs.h menus.def msg_defs.c msg_defs.h msg.def
 
-LANG?=en
+SYSINSTLANG?=en
 
 .PATH: ${.CURDIR}/../..
 
@@ -49,10 +49,10 @@ menu_defs.c menu_defs.h: menus.def
 msg_defs.c msg_defs.h: msg.def
 	${MSGC} msg.def
 
-msg.def: msg.mi.${LANG} msg.md.${LANG}
+msg.def: msg.mi.${SYSINSTLANG} msg.md.${SYSINSTLANG}
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} > ${.TARGET}
 
-menus.def: menus.mi.${LANG} menus.md.${LANG}
+menus.def: menus.mi.${SYSINSTLANG} menus.md.${SYSINSTLANG}
 	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC} > ${.TARGET}
 
 menu_defs.c: msg_defs.h
