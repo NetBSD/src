@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2002/03/23 02:22:57 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2002/03/23 19:38:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
 #define	PAGE_TABLE_SPACE	((1 << (32 - PGSHIFT)) * sizeof(pt_entry_t))
 
 /* Address where the page talbles are mapped. */
-#define	PTE_BASE		(KERNEL_SPACE_START - PAGE_TABLE_SPACE)
+#define	PTE_BASE		(KERNEL_BASE - PAGE_TABLE_SPACE)
 
 /*
  * Mach derived constants
@@ -98,7 +98,7 @@
 #define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
 #define	VM_MAXUSER_ADDRESS	((vaddr_t) (PTE_BASE - UPAGES * NBPG))
 #define	VM_MAX_ADDRESS		((vaddr_t) (PTE_BASE + \
-					    (KERNEL_SPACE_START >> PGSHIFT) * \
+					    (KERNEL_BASE >> PGSHIFT) * \
 					    sizeof(pt_entry_t)))
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_TEXT_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
