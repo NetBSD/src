@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subs.c,v 1.11 2002/01/31 19:27:54 tv Exp $	*/
+/*	$NetBSD: tty_subs.c,v 1.12 2003/02/09 18:27:10 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tty_subs.c,v 1.11 2002/01/31 19:27:54 tv Exp $");
+__RCSID("$NetBSD: tty_subs.c,v 1.12 2003/02/09 18:27:10 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -184,7 +184,7 @@ syswarn(int set, int errnum, const char *fmt, ...)
 	 * line by itself
 	 */
 	if (vflag && vfpart) {
-		(void)fputc('\n', stderr);
+		(void)fputc('\n', stdout);
 		vfpart = 0;
 	}
 	(void)fprintf(stderr, "%s: ", argv0);
