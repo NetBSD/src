@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)cmds.c	8.5 (Berkeley) 4/6/94";*/
-static char *rcsid = "$Id: cmds.c,v 1.6 1994/08/29 03:09:06 mycroft Exp $";
+static char *rcsid = "$Id: cmds.c,v 1.7 1994/12/15 08:58:44 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -743,6 +743,7 @@ mget(argc, argv)
 			if (mcase) {
 				for (tp2 = tmpbuf; ch = *tp++;)
 					*tp2++ = isupper(ch) ? tolower(ch) : ch;
+				*tp2 = '\0';
 				tp = tmpbuf;
 			}
 			if (ntflag) {
