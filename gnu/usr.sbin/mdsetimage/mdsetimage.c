@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.10 2002/09/27 07:28:18 wiz Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.11 2003/03/04 08:32:58 dogcow Exp $ */
 /* from: NetBSD: mdsetimage.c,v 1.15 2001/03/21 23:46:48 cgd Exp $ */
 
 /*
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdsetimage.c,v 1.10 2002/09/27 07:28:18 wiz Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.11 2003/03/04 08:32:58 dogcow Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -247,7 +247,7 @@ main(int argc, char *argv[])
 	if (verbose)
 		fprintf(stderr, "exiting\n");
 
-	bfd_close(abfd);
+	bfd_close_all_done(abfd);
 	exit(0);
 }
 
