@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unpcb.h	7.6 (Berkeley) 6/28/90
- *	$Id: unpcb.h,v 1.3 1993/05/20 16:23:43 cgd Exp $
+ *	$Id: unpcb.h,v 1.3.4.1 1993/11/10 19:57:04 mycroft Exp $
  */
 
 #ifndef _SYS_UNPCB_H_
@@ -39,7 +39,7 @@
 
 /*
  * Protocol control block for an active
- * instance of a UNIX internal protocol.
+ * instance of a system-internal protocol.
  *
  * A socket may be associated with an vnode in the
  * file system.  If so, the unp_vnode pointer holds

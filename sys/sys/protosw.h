@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)protosw.h	7.8 (Berkeley) 4/28/91
- *	$Id: protosw.h,v 1.3 1993/05/20 16:22:52 cgd Exp $
+ *	$Id: protosw.h,v 1.3.4.1 1993/11/10 19:56:59 mycroft Exp $
  */
 
 #ifndef _SYS_PROTOSW_H_
@@ -51,7 +51,7 @@
  *
  * Protocols pass data between themselves as chains of mbufs using
  * the pr_input and pr_output hooks.  Pr_input passes data up (towards
- * UNIX) and pr_output passes it down (towards the imps); control
+ * the kernel) and pr_output passes it down (towards the imps); control
  * information passes up and down on pr_ctlinput and pr_ctloutput.
  * The protocol is responsible for the space occupied by any the
  * arguments to these entries and must dispose it.
@@ -101,8 +101,8 @@ struct protosw {
  * and opt is a pointer to a socketopt structure or nil.
  * The protocol is responsible for disposal of the mbuf chain m,
  * the caller is responsible for any space held by nam and opt.
- * A non-zero return from usrreq gives an
- * UNIX error number which should be passed to higher level software.
+ * A non-zero return from usrreq gives a
+ * system error number which should be passed to higher level software.
  */
 #define	PRU_ATTACH		0	/* attach protocol to up */
 #define	PRU_DETACH		1	/* detach protocol from up */
@@ -194,8 +194,8 @@ char	*prcrequests[] = {
  * The protocol is responsible for disposal of the mbuf chain *optval
  * if supplied,
  * the caller is responsible for any space held by *optval, when returned.
- * A non-zero return from usrreq gives an
- * UNIX error number which should be passed to higher level software.
+ * A non-zero return from usrreq gives a
+ * system error number which should be passed to higher level software.
  */
 #define	PRCO_GETOPT	0
 #define	PRCO_SETOPT	1

@@ -31,18 +31,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)un.h	7.7 (Berkeley) 6/28/90
- *	$Id: un.h,v 1.4 1993/06/27 05:59:12 andrew Exp $
+ *	$Id: un.h,v 1.4.4.1 1993/11/10 19:57:02 mycroft Exp $
  */
 
 #ifndef _SYS_UN_H_
 #define _SYS_UN_H_
 
 /*
- * Definitions for UNIX IPC domain.
+ * Definitions for system-internal IPC domain.
  */
 struct	sockaddr_un {
 	u_char	sun_len;		/* sockaddr len including null */
-	u_char	sun_family;		/* AF_UNIX */
+	u_char	sun_family;		/* AF_LOCAL */
 	char	sun_path[104];		/* path name (gag) */
 };
 

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode.h	7.39 (Berkeley) 6/27/91
- *	$Id: vnode.h,v 1.11.2.2 1993/09/28 06:25:31 deraadt Exp $
+ *	$Id: vnode.h,v 1.11.2.3 1993/11/10 19:57:06 mycroft Exp $
  */
 
 #ifndef _SYS_VNODE_H_
@@ -42,7 +42,7 @@
 #endif
 
 /*
- * The vnode is the focus of all file activity in UNIX.
+ * The vnode is the focus of all file activity.
  * There is a unique vnode allocated for each active file,
  * each current directory, each mounted-on file, text file, and the root.
  */
@@ -87,7 +87,7 @@ struct vnode {
 	enum vtype	v_type;			/* vnode type */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
-		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
+		struct socket	*vu_socket;	/* local ipc (VSOCK) */
 		caddr_t		vu_vmdata;	/* private data for vm (VREG) */
 		struct specinfo	*vu_specinfo;	/* device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
