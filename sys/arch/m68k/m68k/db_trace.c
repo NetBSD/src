@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.35 2002/05/13 20:30:09 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.36 2002/05/14 00:14:53 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,6 +37,7 @@
 #include <ddb/db_output.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
 #include <ddb/db_variables.h>
 
 /*
