@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.10 1996/10/05 05:22:11 thorpej Exp $	*/
+/*	$NetBSD: itevar.h,v 1.11 1996/12/17 08:41:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,6 +88,7 @@ struct itesw {
 };
 
 struct ite_softc {
+	struct	device sc_dev;		/* generic device info */
 	struct	ite_data *sc_data;	/* terminal state info */
 	struct	grf_softc *sc_grf;	/* pointer to framebuffer */
 };
