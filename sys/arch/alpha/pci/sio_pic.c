@@ -1,4 +1,4 @@
-/*	$NetBSD: sio_pic.c,v 1.10 1996/07/14 04:08:41 cgd Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.11 1996/08/15 22:17:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -356,10 +356,21 @@ sio_strayintr(irq)
 	int irq;
 {
 
-	if (++sio_strayintrcnt[irq] <= STRAY_MAX)
-		log(LOG_ERR, "stray interrupt %d%s\n", irq,
+        sio_strayintrcnt[irq]++;
+
+#ifdef notyet
+        if (sio_strayintrcnt[irq] == STRAY_MAX)
+                sio_disable_intr(irq);
+
+        log(LOG_ERR, "stray isa irq %d\n", irq);
+        if (sio_strayintrcnt[irq] == STRAY_MAX)
+                log(LOG_ERR, "disabling interrupts on isa irq %d\n", irq);
+#else
+	if (sio_strayintrcnt[irq] <= STRAY_MAX)
+		log(LOG_ERR, "stray isa irq %d%s\n", irq,
 		    sio_strayintrcnt[irq] >= STRAY_MAX ?
 			"; stopped logging" : "");
+#endif
 }
 
 void
