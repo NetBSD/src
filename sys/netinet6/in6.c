@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.31 2000/04/16 15:27:59 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.32 2000/04/27 16:44:19 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.75 2000/04/12 03:51:29 itojun Exp $	*/
 
 /*
@@ -669,7 +669,7 @@ in6_control(so, cmd, data, ifp, p)
 					    "from list\n");
 				}
 			}
-			IFAFREE(&ia->ia_ifa);
+			IFAFREE(&oia->ia_ifa);
 		}
 #endif
 		return error;
