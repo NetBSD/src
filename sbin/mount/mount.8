@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.14 1997/03/10 03:59:53 mikel Exp $
+.\"	$NetBSD: mount.8,v 1.15 1997/09/15 04:09:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Nm mount
 .Nd mount file systems
 .Sh SYNOPSIS
-.Nm mount
+.Nm
 .Op Fl Aadfruvw
 .Op Fl t Ar type 
 .Nm mount
@@ -53,7 +53,7 @@
 .Ar special node
 .Sh DESCRIPTION
 The
-.Nm mount
+.Nm
 command invokes a filesystem-specific program to prepare
 and graft the
 .Ar special
@@ -70,14 +70,14 @@ file.
 .Pp
 The system maintains a list of currently mounted file systems.
 If no arguments are given to
-.Nm mount,
+.Nm "" ,
 this list is printed.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl A
 Causes
-.Nm mount
+.Nm
 to try to mount all of the file systems listed in the
 .Xr fstab
 table except those for which the
@@ -88,9 +88,9 @@ Similar to the
 .Fl A
 flag, except that if a file system (other than the root file system)
 appears to be already mounted,
-.Nm mount
+.Nm
 will not try to mount it again.
-.Nm Mount
+.Nm
 assumes that a file system is already mounted if a file system with
 the same type is mounted on the given mount point.
 More stringent checks are not possible because some file system types
@@ -103,7 +103,7 @@ This option is useful in conjunction with the
 .Fl v
 flag to
 determine what the
-.Nm mount
+.Nm
 command is trying to do.
 .It Fl f
 Forces the revocation of write access when trying to downgrade
@@ -186,7 +186,7 @@ mount -t mfs -o nosuid,-N,-s=4000 /dev/dk0b /tmp
 .Ed
 .Pp
 causes
-.Nm mount
+.Nm
 to execute the equivalent of:
 .Bd -literal -offset indent
 /sbin/mount_mfs -o nosuid -N -s 4000 /dev/dk0b /tmp
@@ -216,7 +216,7 @@ to specify the filesystem types for which action should
 .Em not
 be taken.
 For example, the
-.Nm mount
+.Nm
 command:
 .Bd -literal -offset indent
 mount -a -t nonfs,mfs
@@ -227,7 +227,7 @@ mounts all filesystems except those of type
 and
 .Tn MFS .
 .Pp
-.Nm Mount
+.Nm
 will attempt to execute a program in
 .Pa /sbin/mount_ Ns Em XXX
 where
@@ -300,6 +300,6 @@ file system table
 .Xr umount 8
 .Sh HISTORY
 A
-.Nm mount
+.Nm
 command appeared in
 .At v6 .
