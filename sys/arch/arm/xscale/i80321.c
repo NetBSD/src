@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.2 2002/05/16 01:01:34 thorpej Exp $	*/
+/*	$NetBSD: i80321.c,v 1.2.2.1 2002/11/11 22:45:48 he Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -61,7 +61,21 @@ struct bus_space i80321_bs_tag;
  */
 struct i80321_softc *i80321_softc;
 
+int	i80321_iopxs_print(void *, const char *);
 int	i80321_pcibus_print(void *, const char *);
+
+/* Built-in devices. */
+static const struct iopxs_device {
+	const char *id_name;
+	bus_addr_t id_offset;
+	bus_size_t id_size;
+} iopxs_devices[] = {
+	{ "iopaau",	VERDE_AAU_BASE,		VERDE_AAU_SIZE },
+	{ "iopdma",	VERDE_DMA_BASE,		VERDE_DMA_SIZE },
+	{ "iopssp",	VERDE_SSP_BASE,		VERDE_SSP_SIZE },
+	{ "iopwdog",	0,			0 },
+	{ NULL,		0,			0 }
+};
 
 /*
  * i80321_attach:
@@ -72,6 +86,8 @@ void
 i80321_attach(struct i80321_softc *sc)
 {
 	struct pcibus_attach_args pba;
+	const struct iopxs_device *id;
+	struct iopxs_attach_args ia;
 	pcireg_t preg;
 
 	i80321_softc = sc;
@@ -189,6 +205,20 @@ i80321_attach(struct i80321_softc *sc)
 	i80321_pci_init(&sc->sc_pci_chipset, sc);
 
 	/*
+	 * Attach all the IOP built-ins.
+	 */
+	for (id = iopxs_devices; id->id_name != NULL; id++) {
+		ia.ia_name = id->id_name;
+		ia.ia_st = sc->sc_st;
+		ia.ia_sh = sc->sc_sh;
+		ia.ia_dmat = &sc->sc_local_dmat;
+		ia.ia_offset = id->id_offset;
+		ia.ia_size = id->id_size;
+
+		(void) config_found(&sc->sc_dev, &ia, i80321_iopxs_print);
+	}
+
+	/*
 	 * Attach the PCI bus.
 	 */
 	preg = bus_space_read_4(sc->sc_st, sc->sc_atu_sh, ATU_PCIXSR);
@@ -207,6 +237,19 @@ i80321_attach(struct i80321_softc *sc)
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 	(void) config_found(&sc->sc_dev, &pba, i80321_pcibus_print);
+}
+
+/*
+ * i80321_iopxs_print:
+ *
+ *	Autoconfiguration cfprint routine when attaching
+ *	to the "iopxs" device.
+ */
+int
+i80321_iopxs_print(void *aux, const char *pnp)
+{
+
+	return (QUIET);
 }
 
 /*
