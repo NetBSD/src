@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.13 1998/12/20 14:48:33 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.14 1999/07/02 15:09:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -92,6 +92,13 @@ typedef unsigned char cc_t;
 #include <string.h>
 #else
 #include <strings.h>
+#endif
+
+#if defined(IPSEC)
+#include <netinet6/ipsec.h>
+#if defined(IPSEC_POLICY_IPSEC)
+extern char *ipsec_policy;
+#endif
 #endif
 
 #ifndef	_POSIX_VDISABLE
@@ -275,7 +282,8 @@ int ayt_status P((void));
 int tn P((int, char *[]));
 void command P((int, char *, int));
 void cmdrc P((const char *, const char *));
-unsigned long sourceroute P((char *, char **, unsigned long *));
+struct addrinfo;
+int sourceroute P((struct addrinfo *, char *, char **, int *, int*));
 
 /* main.c */
 void tninit P((void));
