@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2003/07/24 14:16:54 itojun Exp $
+# $NetBSD: Makefile,v 1.28 2004/07/30 07:02:53 lukem Exp $
 
 NOLINT=		# defined
 
@@ -23,6 +23,8 @@ MLINKS=		kerberos.3 krb_mk_req.3 kerberos.3 krb_rd_req.3 \
 WARNS?=		1
 
 LIB=		krb
+
+DEPLIBS=	des
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=		cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
@@ -145,9 +147,6 @@ INFOFLAGS=	-I${DIST}/krb4/doc
 		false; \
 	fi
 .endif
-
-LDADD+=	-ldes
-DPADD+=	${LIBDES}
 
 .include <bsd.lib.mk>
 .include <bsd.info.mk>
