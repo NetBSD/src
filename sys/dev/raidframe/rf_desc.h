@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.12 2004/03/13 02:31:12 oster Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.12.2.1 2004/04/11 11:19:37 tron Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include "rf_archs.h"
 #include "rf_etimer.h"
 #include "rf_dag.h"
+#include "rf_layout.h"
 
 struct RF_RaidReconDesc_s {
 	RF_Raid_t *raidPtr;	/* raid device descriptor */
@@ -78,6 +79,11 @@ struct RF_RaidAccessDesc_s {
 	RF_AccessState_t *states;	/* array of states to be run */
 	int     status;		/* pass/fail status of the last operation */
 	RF_DagList_t *dagList;	/* list of dag lists, one list per stripe */
+	RF_VoidPointerListElem_t *iobufs; /* iobufs that need to be cleaned 
+					     up at the end of this IO */
+	RF_VoidPointerListElem_t *stripebufs; /* stripe buffers that need to 
+						 be cleaned up at the end of
+						 this IO */
 	RF_AccessStripeMapHeader_t *asmap;	/* the asm for this I/O */
 	void   *bp;		/* buf pointer for this RAID acc.  ignored
 				 * outside the kernel */
@@ -86,8 +92,6 @@ struct RF_RaidAccessDesc_s {
 	void    (*callbackFunc) (RF_CBParam_t);	/* callback function for this
 						 * I/O */
 	void   *callbackArg;	/* arg to give to callback func */
-	RF_AllocListElem_t *cleanupList;	/* memory to be freed at the
-						 * end of the access */
 	RF_RaidAccessDesc_t *next;
 	int     async_flag;
 	RF_Etimer_t timer;	/* used for timing this access */
