@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sun3_startup.c,v 1.22 1994/06/28 22:06:02 gwr Exp $
+ *	$Id: sun3_startup.c,v 1.23 1994/07/11 03:41:33 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -298,9 +298,9 @@ void sun3_vm_init()
     }
 
     /*
-     * we need to kill off a segment to handle the stupid non-contexted
-     * pmeg 
-     *
+     * Reserve a segment for the kernel to use to access a pmeg
+	 * that is not currently mapped into any context/segmap.
+	 * The kernel temporarily maps such a pmeg into this segment.
      */
     temp_seg = sun3_round_seg(virtual_avail);
     set_temp_seg_addr(temp_seg);

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.10 1994/05/27 14:58:28 gwr Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.11 1994/07/11 03:41:28 gwr Exp $
  */
 
 	.data
@@ -96,8 +96,9 @@ _level5intr_clock:
 	orb #IREG_CLOCK_ENAB_5, INTERREG_VA
 	tstb CLOCK_VA+INTERSIL_INTR_OFFSET
 	INTERRUPT_SAVEREG 	| save a0, a1, d0, d1
-#define CLOCK_DEBUG
-#ifdef CLOCK_DEBUG
+
+#undef	CLOCK_DEBUG	/* XXX - Broken anyway... -gwr */
+#ifdef	CLOCK_DEBUG
 	.globl	_panicstr, _regdump, _panic
 	tstl	timebomb		| set to go off?
 	jeq	Lnobomb			| no, skip it

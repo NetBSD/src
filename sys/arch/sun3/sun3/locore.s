@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.18 1994/05/29 05:16:56 gwr Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.19 1994/07/11 03:41:29 gwr Exp $
  */
 #include "assym.s"
 #include <machine/asm.h>
@@ -38,6 +38,7 @@
 
 .globl tmpstk
 .data
+tmpstk_low:
 .space NBPG
 tmpstk:
 .set	_kstack,MONSHORTSEG
