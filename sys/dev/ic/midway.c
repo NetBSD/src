@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.34 1998/08/08 23:51:40 mycroft Exp $	*/
+/*	$NetBSD: midway.c,v 1.35 1998/08/13 02:10:51 eeh Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -159,7 +159,7 @@
 #if defined(__alpha__)
 /* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */
 #undef vtophys
-#define	vtophys(va)	alpha_XXX_dmamap((vm_offset_t)(va))
+#define	vtophys(va)	alpha_XXX_dmamap((vaddr_t)(va))
 #endif
 #elif defined(__FreeBSD__)
 #include <machine/cpufunc.h>            /* for rdtsc proto for clock.h below */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: cgthree.c,v 1.2 1998/08/13 02:10:41 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $ */
+/*	$NetBSD: fb.c,v 1.2 1998/08/13 02:10:42 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -194,7 +194,7 @@ fbmmap(dev, off, prot)
 	int (*map)__P((dev_t, int, int)) = devfb->fb_driver->fbd_mmap;
 
 	if (map == NULL)
-		return (-1);
+		return (-1LL);
 	return (map(dev, off, prot));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.5 1998/08/09 20:36:58 perry Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.6 1998/08/13 02:10:50 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -265,9 +265,12 @@ X_db_search_symbol(symtab, off, strategy, diffp)
 	for (symp = symtab_start; symp < symtab_end; symp++) {
 		if (symp->st_name == 0)
 			continue;
+#if 0
+		/* This prevents me from seeing anythin in locore.s -- eeh */
 		if (ELF_SYM_TYPE(symp->st_info) != Elf_estt_object &&
 		    ELF_SYM_TYPE(symp->st_info) != Elf_estt_func)
 			continue;
+#endif
 
 		if (off >= symp->st_value) {
 			if ((off - symp->st_value) < diff) {

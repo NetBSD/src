@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.8 1998/07/24 16:20:14 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.9 1998/08/13 02:10:52 eeh Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

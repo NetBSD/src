@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.4 1998/07/24 16:22:51 drochner Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.5 1998/08/13 02:10:52 eeh Exp $ */
 
 /*
  * Copyright (c) 1998

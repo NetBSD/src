@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.h,v 1.1 1998/07/31 04:38:04 thorpej Exp $	*/
+/*	$NetBSD: isapnp_machdep.h,v 1.2 1998/08/13 02:10:37 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

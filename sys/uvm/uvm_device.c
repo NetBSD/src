@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.8 1998/05/05 20:51:05 kleink Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.9 1998/08/13 02:11:00 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -77,12 +77,12 @@ static void		udv_init __P((void));
 struct uvm_object 	*udv_attach __P((void *, vm_prot_t));
 static void             udv_reference __P((struct uvm_object *));
 static void             udv_detach __P((struct uvm_object *));
-static int		udv_fault __P((struct uvm_faultinfo *, vm_offset_t,
+static int		udv_fault __P((struct uvm_faultinfo *, vaddr_t,
 				       vm_page_t *, int, int, vm_fault_t,
 				       vm_prot_t, int));
-static boolean_t        udv_flush __P((struct uvm_object *, vm_offset_t, 
-					 vm_offset_t, int));
-static int		udv_asyncget __P((struct uvm_object *, vm_offset_t,
+static boolean_t        udv_flush __P((struct uvm_object *, vaddr_t, 
+					 vaddr_t, int));
+static int		udv_asyncget __P((struct uvm_object *, vaddr_t,
 					    int));
 static int		udv_put __P((struct uvm_object *, vm_page_t *,
 					int, boolean_t));
@@ -365,7 +365,7 @@ udv_detach(uobj)
 
 static boolean_t udv_flush(uobj, start, stop, flags)
 	struct uvm_object *uobj;
-	vm_offset_t start, stop;
+	vaddr_t start, stop;
 	int flags;
 {
 
@@ -391,7 +391,7 @@ static boolean_t udv_flush(uobj, start, stop, flags)
 static int
 udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	struct uvm_faultinfo *ufi;
-	vm_offset_t vaddr;
+	vaddr_t vaddr;
 	vm_page_t *pps;
 	int npages, centeridx, flags;
 	vm_fault_t fault_type;
@@ -400,7 +400,8 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	struct vm_map_entry *entry = ufi->entry;
 	struct uvm_object *uobj = entry->object.uvm_obj;
 	struct uvm_device *udv = (struct uvm_device *)uobj;
-	vm_offset_t curr_offset, curr_va, paddr;
+	vaddr_t curr_offset, curr_va;
+	paddr_t paddr;
 	int lcv, retval;
 	dev_t device;
 	int (*mapfn) __P((dev_t, int, int));
@@ -461,15 +462,13 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 
 		paddr = pmap_phys_address((*mapfn)(device, (int)curr_offset,
 		    access_type));
-
 		if (paddr == -1) {
 			retval = VM_PAGER_ERROR;
 			break;
 		}
-
 		UVMHIST_LOG(maphist,
 		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
-		    ufi->orig_map->pmap, curr_va, paddr, access_type);
+		    ufi->orig_map->pmap, curr_va, (int)paddr, access_type);
 		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0);
 
 	}
@@ -488,7 +487,7 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 static int
 udv_asyncget(uobj, offset, npages)
 	struct uvm_object *uobj;
-	vm_offset_t offset;
+	vaddr_t offset;
 	int npages;
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 1998/07/04 22:18:41 jonathan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.3 1998/08/13 02:10:45 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -795,7 +795,6 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	 */
 	for (node = node0; node; node = nextsibling(node)) {
 		const char *cp;
-		struct sbus_reg romreg;
 
 		if (node_has_property(node, "device_type") &&
 		    strcmp(getpropstringA(node, "device_type", namebuf),
@@ -1019,7 +1018,7 @@ getprop_intr1(node, ip)
 	int *ip;
 {
 	int error, n;
-	struct sbus_intr *rip = NULL;
+	struct sbus_intr *sip = NULL;
 	int *interrupts;
 	char buf[32];
 
@@ -1045,7 +1044,7 @@ getprop_intr1(node, ip)
          * this.  Need to get to the vector.
 	 */
 	error = getpropA(node, "intr", sizeof(struct sbus_intr),
-			 &n, (void **)&rip);
+			 &n, (void **)&sip);
 	if (error != 0) {
 		if (error == ENOENT) {
 			*ip = 0;
@@ -1054,8 +1053,8 @@ getprop_intr1(node, ip)
 		return (error);
 	}
 
-	*ip = rip[0].int_pri;
-	free(rip, M_DEVBUF);
+	*ip = sip[0].sbi_pri;
+	free(sip, M_DEVBUF);
 	return (0);
 }
 

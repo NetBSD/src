@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 1998/07/07 03:05:03 eeh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 1998/08/13 02:10:45 eeh Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -96,7 +96,7 @@ extern struct page_size_map page_size_map[];
 struct pmap {
 	int pm_ctx;		/* Current context */
 	int pm_refs;		/* ref count */
-	vm_offset_t pm_physaddr; /* physical address of pm_segs */
+	paddr_t pm_physaddr;	/* physical address of pm_segs */
 	union sun4u_data* pm_segs[STSZ];
 };
 
@@ -112,6 +112,7 @@ struct prom_map {
 
 #define PMAP_NC		1	/* Set the E bit in the page */
 #define PMAP_NVC	2	/* Don't enable the virtual cache */
+#define PMAP_LITTLE	3	/* Map in little endian mode */
 /* If these bits are different in va's to the same PA then there is an aliasing in the d$ */
 #define VA_ALIAS_MASK   (1<<14)	
 
@@ -128,33 +129,29 @@ typedef	struct pmap *pmap_t;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
-void pmap_clear_modify __P((vm_offset_t pa));
-void pmap_clear_reference __P((vm_offset_t pa));
-int pmap_is_modified __P((vm_offset_t pa));
-int pmap_is_referenced __P((vm_offset_t pa));
 int pmap_count_res __P((pmap_t pmap));
-/* int pmap_change_wiring __P((pmap_t pm, vm_offset_t va, boolean_t wired)); */
+/* int pmap_change_wiring __P((pmap_t pm, vaddr_t va, boolean_t wired)); */
 #define pmap_resident_count(pm)		pmap_count_res((pm))
-#define	pmap_phys_address(x)		(x)
+#define	pmap_phys_address(x)		((((paddr_t)(x))<<PGSHIFT)|PMAP_NC)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend, u_int numctx));
 
 /* This needs to be implemented when we get a kernel map */
-void pmap_changeprot __P((pmap_t pmap, vm_offset_t start, vm_prot_t prot, int size));
+void pmap_changeprot __P((pmap_t pmap, vaddr_t start, vm_prot_t prot, int size));
 
 /* SPARC specific? */
 void		pmap_redzone __P((void));
 int             pmap_dumpsize __P((void));
 int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
                                  daddr_t));
-int		pmap_pa_exists __P((vm_offset_t));
+int		pmap_pa_exists __P((paddr_t));
 struct user;
 void		switchexit __P((vm_map_t, struct user *, int));
 
 /* SPARC64 specific */
 int	ctx_alloc __P((struct pmap*));
 void	ctx_free __P((struct pmap*));
-void	pmap_enter_phys __P((pmap_t, vm_offset_t, u_int64_t, u_int64_t, vm_prot_t, boolean_t));
+void	pmap_enter_phys __P((pmap_t, vaddr_t, u_int64_t, u_int64_t, vm_prot_t, boolean_t));
 
 
 #endif	/* _KERNEL */

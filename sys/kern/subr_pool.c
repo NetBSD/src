@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.9 1998/08/04 04:03:15 perry Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.10 1998/08/13 02:10:58 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -846,9 +846,9 @@ pool_page_free(v, sz, mtype)
 {
 
 #if defined(UVM)
-	uvm_km_free_poolpage((vm_offset_t)v);
+	uvm_km_free_poolpage((vaddr_t)v);
 #else
-	kmem_free_poolpage((vm_offset_t)v);
+	kmem_free_poolpage((vaddr_t)v);
 #endif  
 }
 

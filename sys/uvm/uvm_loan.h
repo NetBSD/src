@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.h,v 1.4 1998/02/10 02:34:44 perry Exp $	*/
+/*	$NetBSD: uvm_loan.h,v 1.5 1998/08/13 02:11:01 eeh Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -52,7 +52,7 @@
  * loan prototypes
  */
 
-int uvm_loan __P((struct vm_map *, vm_offset_t, vm_size_t, void **, int));
+int uvm_loan __P((struct vm_map *, vaddr_t, vsize_t, void **, int));
 void uvm_unloananon __P((struct vm_anon **, int));
 void uvm_unloanpage __P((struct vm_page **, int));
 
