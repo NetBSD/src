@@ -1,4 +1,4 @@
-.\" $NetBSD: audioctl.1,v 1.15 2002/01/27 10:09:56 jdolecek Exp $
+.\" $NetBSD: audioctl.1,v 1.16 2002/10/13 01:06:42 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,12 +96,12 @@ To set the playing sampling rate to 11025, you can use
 .Dl audioctl -w play.sample_rate=11025
 To set all of the play parameters for CD-quality audio, you can use
 .Dl audioctl -w play=44100,2,16,slinear_le
-Note that many of the variables that can be inspected and changed
-with
+Note that many of the variables that can be inspected and changed with
 .Nm
 are reset when
 .Pa /dev/audio0
-is opened.  This can be circumvented by using
+is opened.
+This can be circumvented by using
 .Pa /dev/sound0
 instead.
 .Sh SEE ALSO
@@ -118,4 +118,5 @@ command first appeared in
 .Sh COMPATIBILITY
 The old
 .Fl f
-flag is still supported. This support will be removed eventually.
+flag is still supported.
+This support will be removed eventually.
