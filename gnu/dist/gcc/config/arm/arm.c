@@ -3316,6 +3316,7 @@ arm_reload_in_hi (operands)
   rtx base = find_replacement (&XEXP (operands[1], 0));
 
   emit_insn (gen_zero_extendqisi2 (operands[2], gen_rtx (MEM, QImode, base)));
+
   /* Handle the case where the address is too complex to be offset by 1.  */
   if (GET_CODE (base) == MINUS
       || (GET_CODE (base) == PLUS && GET_CODE (XEXP (base, 1)) != CONST_INT))
@@ -3353,26 +3354,37 @@ arm_reload_out_hi (operands)
      rtx *operands;
 {
   rtx base = find_replacement (&XEXP (operands[0], 0));
+  rtx scratch = gen_rtx_REG (SImode, REGNO (operands[2]));
+
+  /* Handle the case where the address is too complex to be offset by 1.  */
+  if (GET_CODE (base) == MINUS
+      || (GET_CODE (base) == PLUS && GET_CODE (XEXP (base, 1)) != CONST_INT))
+    {
+      rtx base_plus = gen_rtx (REG, SImode, REGNO (operands[2]) + 1);
+
+      emit_insn (gen_rtx (SET, VOIDmode, base_plus, base));
+      base = base_plus;
+    }
 
   if (BYTES_BIG_ENDIAN)
     {
       emit_insn (gen_movqi (gen_rtx (MEM, QImode, plus_constant (base, 1)),
 			    gen_rtx (SUBREG, QImode, operands[1], 0)));
-      emit_insn (gen_lshrsi3 (operands[2],
+      emit_insn (gen_lshrsi3 (scratch,
 			      gen_rtx (SUBREG, SImode, operands[1], 0),
 			      GEN_INT (8)));
       emit_insn (gen_movqi (gen_rtx (MEM, QImode, base),
-			    gen_rtx (SUBREG, QImode, operands[2], 0)));
+			    gen_rtx (SUBREG, QImode, scratch, 0)));
     }
   else
     {
       emit_insn (gen_movqi (gen_rtx (MEM, QImode, base),
 			    gen_rtx (SUBREG, QImode, operands[1], 0)));
-      emit_insn (gen_lshrsi3 (operands[2],
+      emit_insn (gen_lshrsi3 (scratch,
 			      gen_rtx (SUBREG, SImode, operands[1], 0),
 			      GEN_INT (8)));
       emit_insn (gen_movqi (gen_rtx (MEM, QImode, plus_constant (base, 1)),
-			    gen_rtx (SUBREG, QImode, operands[2], 0)));
+			    gen_rtx (SUBREG, QImode, scratch, 0)));
     }
 }
 
