@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.31 2004/08/02 22:02:35 bouyer Exp $      */
+/*      $NetBSD: ata.c,v 1.32 2004/08/03 22:37:19 bouyer Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.31 2004/08/02 22:02:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.32 2004/08/03 22:37:19 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -544,6 +544,8 @@ atabusioctl(dev, cmd, addr, flag, p)
         struct proc *p;
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+	struct wdc_channel *chp = sc->sc_chan;
+	int min_drive, max_drive, drive;
         int error;
 	int s;
 
@@ -567,6 +569,47 @@ atabusioctl(dev, cmd, addr, flag, p)
 		splx(s);
 		error = 0;
 		break;
+	case ATABUSIOSCAN:
+	{
+#if 0
+		struct atabusioscan_args *a=
+		    (struct atabusioscan_args *)addr;
+#endif
+		if ((chp->ch_drive[0].drive_flags & DRIVE_OLD) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_OLD))
+			return (EOPNOTSUPP);
+		return (EOPNOTSUPP);
+	}
+	case ATABUSIODETACH:
+	{
+		struct atabusioscan_args *a=
+		    (struct atabusioscan_args *)addr;
+		if ((chp->ch_drive[0].drive_flags & DRIVE_OLD) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_OLD))
+			return (EOPNOTSUPP);
+		switch (a->at_dev) {
+		case -1:
+			min_drive = 0;
+			max_drive = 1;
+			break;
+		case 0:
+		case 1:
+			min_drive = max_drive = a->at_dev;
+			break;
+		default:
+			return (EINVAL);
+		}
+		for (drive = min_drive; drive <= max_drive; drive++) {
+			if (chp->ch_drive[drive].drv_softc != NULL) {
+				error = config_detach(
+				    chp->ch_drive[drive].drv_softc, 0);
+				if (error)
+					return (error);
+			}
+		}
+		error = 0;
+		break;
+	}
 	default:
 		error = ENOTTY;
 	}
