@@ -34,6 +34,7 @@
 ./usr/games/hide/gomoku
 ./usr/games/hide/hack
 ./usr/games/hide/hangman
+./usr/games/hide/hunt
 ./usr/games/hide/larn
 ./usr/games/hide/mille
 ./usr/games/hide/monop
@@ -51,7 +52,6 @@
 ./usr/games/hide/trek
 ./usr/games/hide/worm
 ./usr/games/hide/wump
-./usr/games/hunt
 ./usr/games/huntd
 ./usr/games/larn
 ./usr/games/mille
