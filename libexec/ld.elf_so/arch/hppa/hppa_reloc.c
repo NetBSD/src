@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.9 2002/09/06 03:12:06 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.10 2002/09/06 13:20:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -443,7 +443,7 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			 * COPY relocation is not in a shared library.  They
 			 * are allowed only in executable files.
 			 */
-			if (!obj->mainprog) {
+			if (obj->isdynamic) {
 				_rtld_error(
 			"%s: Unexpected R_COPY relocation in shared library",
 				    obj->path);
