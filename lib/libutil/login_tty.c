@@ -1,4 +1,4 @@
-/*	$NetBSD: login_tty.c,v 1.9 1999/09/20 04:48:07 lukem Exp $	*/
+/*	$NetBSD: login_tty.c,v 1.10 2000/07/05 11:46:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)login_tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login_tty.c,v 1.9 1999/09/20 04:48:07 lukem Exp $");
+__RCSID("$NetBSD: login_tty.c,v 1.10 2000/07/05 11:46:41 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,7 @@ __RCSID("$NetBSD: login_tty.c,v 1.9 1999/09/20 04:48:07 lukem Exp $");
 #include <util.h>
 
 int
-login_tty(fd)
-	int fd;
+login_tty(int fd)
 {
 
 	_DIAGASSERT(fd != -1);
