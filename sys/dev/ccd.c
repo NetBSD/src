@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.66 2000/02/08 12:56:00 enami Exp $	*/
+/*	$NetBSD: ccd.c,v 1.67 2000/03/16 03:54:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ ccdinit(cs, cpaths, vpp, p)
 	struct partinfo dpart;
 	struct ccdgeom *ccg = &cs->sc_geom;
 	char tmppath[MAXPATHLEN];
-	int error;
+	int error, path_alloced;
 
 #ifdef DEBUG
 	if (ccddebug & (CCDB_FOLLOW|CCDB_INIT))
@@ -245,7 +245,7 @@ ccdinit(cs, cpaths, vpp, p)
 	 */
 	maxsecsize = 0;
 	minsize = 0;
-	for (ix = 0; ix < cs->sc_nccdisks; ix++) {
+	for (ix = 0, path_alloced = 0; ix < cs->sc_nccdisks; ix++) {
 		ci = &cs->sc_cinfo[ix];
 		ci->ci_vp = vpp[ix];
 
@@ -261,11 +261,11 @@ ccdinit(cs, cpaths, vpp, p)
 				printf("%s: can't copy path, error = %d\n",
 				    cs->sc_xname, error);
 #endif
-			free(cs->sc_cinfo, M_DEVBUF);
-			return (error);
+			goto out;
 		}
 		ci->ci_path = malloc(ci->ci_pathlen, M_DEVBUF, M_WAITOK);
 		bcopy(tmppath, ci->ci_path, ci->ci_pathlen);
+		path_alloced++;
 
 		/*
 		 * XXX: Cache the component's dev_t.
@@ -277,9 +277,7 @@ ccdinit(cs, cpaths, vpp, p)
 				    cs->sc_xname, ci->ci_path,
 				    "error", error);
 #endif
-			free(ci->ci_path, M_DEVBUF);
-			free(cs->sc_cinfo, M_DEVBUF);
-			return (error);
+			goto out;
 		}
 		ci->ci_dev = va.va_rdev;
 
@@ -294,9 +292,7 @@ ccdinit(cs, cpaths, vpp, p)
 				 printf("%s: %s: ioctl failed, error = %d\n",
 				     cs->sc_xname, ci->ci_path, error);
 #endif
-			free(ci->ci_path, M_DEVBUF);
-			free(cs->sc_cinfo, M_DEVBUF);
-			return (error);
+			goto out;
 		}
 
 		/*
@@ -316,9 +312,8 @@ ccdinit(cs, cpaths, vpp, p)
 				printf("%s: %s: size == 0\n",
 				    cs->sc_xname, ci->ci_path);
 #endif
-			free(ci->ci_path, M_DEVBUF);
-			free(cs->sc_cinfo, M_DEVBUF);
-			return (ENODEV);
+			error = ENODEV;
+			goto out;
 		}
 
 		if (minsize == 0 || size < minsize)
@@ -338,9 +333,8 @@ ccdinit(cs, cpaths, vpp, p)
 			printf("%s: interleave must be at least %d\n",
 			    cs->sc_xname, (maxsecsize / DEV_BSIZE));
 #endif
-		free(ci->ci_path, M_DEVBUF);
-		free(cs->sc_cinfo, M_DEVBUF);
-		return (EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 
 	/*
@@ -372,6 +366,12 @@ ccdinit(cs, cpaths, vpp, p)
 	cs->sc_flags |= CCDF_INITED;
 
 	return (0);
+
+ out:
+	for (ix = 0; ix < path_alloced; ix++)
+		free(cs->sc_cinfo[ix].ci_path, M_DEVBUF);
+	free(cs->sc_cinfo, M_DEVBUF);
+	return (error);
 }
 
 static void
