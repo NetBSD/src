@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.23 1999/03/26 14:05:41 mrg Exp $	*/
+/*	$NetBSD: ctl.c,v 1.23.10.1 2002/01/29 23:24:15 he Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -172,7 +172,8 @@ prfield(p, sep)
 	char *sep;
 {
 	u_int v;
-	char *cm, *encstr;
+	char *cm;
+	const char *encstr;
 	int i;
 
 	if (sep)
