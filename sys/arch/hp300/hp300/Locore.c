@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)Locore.c	7.4 (Berkeley) 5/7/91
- *	$Id: Locore.c,v 1.4 1994/05/13 00:57:37 mycroft Exp $
+ *	$Id: Locore.c,v 1.5 1994/05/20 18:19:45 mycroft Exp $
  */
 
 #include "../include/pte.h"
@@ -185,7 +185,7 @@ struct	pte CMAP1;
 char	CADDR1[NBPG];
 struct	pte CMAP2;
 char	CADDR2[NBPG];
-struct	pte mmap[1];
+struct	pte vmpte[1];
 char	vmmap[NBPG];
 struct	pte Mbmap[NMBCLUSTERS/CLSIZE];
 char	mbutl[NMBCLUSTERS][MCLBYTES];
