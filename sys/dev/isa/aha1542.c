@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1542.c,v 1.46 1995/07/28 22:49:56 mycroft Exp $	*/
+/*	$NetBSD: aha1542.c,v 1.47 1995/07/29 23:04:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -695,7 +695,7 @@ AGAIN:
 			aha_nextmbx(wmbi, wmbx, mbi);
 		}
 		if (!found) {
-#ifdef DIAGNOSTIC
+#if 0
 			printf("%s: mbi interrupt with no full mailboxes\n",
 			    aha->sc_dev.dv_xname);
 #endif
