@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28 2001/10/28 13:06:43 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.29 2002/01/29 10:20:28 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -38,6 +38,18 @@
  *
  *	@(#)extern.h	8.2 (Berkeley) 4/18/94
  */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#define HAVE_FTS_H 1
+#define HAVE_STRUCT_STAT_ST_FLAGS 1
+#endif
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
 
 /*
  * External references from each source file

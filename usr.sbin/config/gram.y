@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.31 2001/12/17 15:39:43 atatat Exp $	*/
+/*	$NetBSD: gram.y,v 1.32 2002/01/29 10:20:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "config.h"
+#include "defs.h"
 #include "sem.h"
 
 #define	FORMAT(n) ((n) > -10 && (n) < 10 ? "%d" : "0x%x")

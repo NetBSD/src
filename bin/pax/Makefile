@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/01/25 22:11:11 martin Exp $
+#	$NetBSD: Makefile,v 1.16 2002/01/29 10:20:28 tv Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -36,9 +36,6 @@ SRCS=	ar_io.c ar_subs.c buf_subs.c cpio.c file_subs.c ftree.c\
 # LINKS+=	${BINDIR}/pax ${BINDIR}/tar
 # LINKS+=	${BINDIR}/pax ${BINDIR}/cpio
 
-LDADD+=	-lutil
-DPADD+=	${LIBUTIL}
-
 CPPFLAGS+=	-I${.CURDIR}/../../usr.sbin/mtree \
 		-I${.CURDIR}/../../sbin/mknod \
 		-I${.CURDIR}/../../bin/ls
@@ -49,5 +46,8 @@ CPPFLAGS+=	-I${.CURDIR}/../../usr.sbin/mtree \
 NOHTML=doc2html-error
 
 .ifndef HOSTPROG
+LDADD+=	-lutil
+DPADD+=	${LIBUTIL}
+
 .include <bsd.prog.mk>
 .endif

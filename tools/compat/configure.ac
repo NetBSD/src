@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.5 2002/01/24 04:05:28 lukem Exp $
+#	$NetBSD: configure.ac,v 1.6 2002/01/29 10:20:32 tv Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -8,33 +8,63 @@ AC_CONFIG_HEADERS(config.h)
 AC_CONFIG_FILES(defs.mk)
 
 AC_C_BIGENDIAN
+AC_HEADER_STDC
+
+# Confirm existence of zlib.  (This is available as a default install
+# option on many OS's; this could be added as a reachover build in the
+# future.)
+AC_CHECK_HEADER(zlib.h,,
+	AC_MSG_ERROR([zlib must be installed in a compiler-visible path]))
+AC_CHECK_LIB(z, gzdopen,,
+	AC_MSG_ERROR([zlib must be installed in a compiler-visible path]))
 
 # Make sure certain required headers are available.
 # These are not necessarily required by the code, but they are not
 # currently conditionalized.
-AC_CHECK_HEADERS(sys/cdefs.h sys/mman.h sys/param.h sys/stat.h \
-	sys/types.h sys/utsname.h sys/wait.h \
-	ctype.h errno.h fcntl.h grp.h limits.h locale.h paths.h pwd.h \
-	signal.h stdio.h stdlib.h string.h unistd.h,,
+AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/mtio.h sys/param.h \
+	sys/stat.h sys/types.h sys/utsname.h sys/wait.h \
+	assert.h ctype.h errno.h fcntl.h grp.h limits.h locale.h \
+	netdb.h pwd.h signal.h stdarg.h stdio.h stdlib.h string.h \
+	unistd.h,,
 	AC_MSG_ERROR([standard system header file not found]))
 
 # Find headers that may not be available.
-AC_CHECK_HEADERS(err.h inttypes.h libgen.h stddef.h vis.h)
+AC_HEADER_DIRENT
+AC_CHECK_HEADERS(sys/sysmacros.h \
+	err.h fts.h inttypes.h libgen.h malloc.h stddef.h stdint.h util.h vis.h)
+AC_CHECK_HEADERS(sys/cdefs.h sys/featuretest.h paths.h,,
+	[touch include/$ac_header])
 
 # Typedefs.
 AC_TYPE_SIZE_T
-AC_CHECK_TYPES(id_t)
+AC_CHECK_TYPES([id_t, long long])
+
+define([NB_CHECK_INTTYPE], [
+	AC_CHECK_TYPE(u_int][$1][_t,, [
+		AC_CHECK_TYPE(uint][$1][_t,
+			AC_DEFINE(u_int][$1][_t, uint][$1][_t),
+			AC_MSG_ERROR([cannot find a suitable type for u_int][$1][_t]))
+	])
+])
+
+NB_CHECK_INTTYPE(8)
+NB_CHECK_INTTYPE(16)
+NB_CHECK_INTTYPE(32)
+NB_CHECK_INTTYPE(64)
 
 # Struct members.
 AC_CHECK_MEMBERS(struct stat.st_flags,,, [#include <sys/stat.h>])
+AC_CHECK_MEMBERS(DIR.dd_fd,,, [#include <dirent.h>])
 
 # Global variable decls.
 AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 
 # Library functions (where a .h check isn't enough).
 AC_SEARCH_LIBS(fparseln, util)
-AC_CHECK_FUNCS(basename dirname fgetln flock fparseln futimes \
-	pread pwcache_userdb pwrite setprogname strlcat strlcpy)
+AC_CHECK_FUNCS(asprintf asnprintf basename dirfd dirname \
+	fgetln flock fparseln futimes isblank lchmod lchown lutimes pread pwcache_userdb \
+	pwrite setenv setgroupent setpassent setprogname \
+	snprintf strlcat strlcpy strsep vasprintf vasnprintf vsnprintf)
 
 # regcomp() and regexec() are also names of functions in the old V8
 # regexp package.  To avoid them, we need to find out who has regfree().

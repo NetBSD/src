@@ -1,4 +1,4 @@
-/*	$NetBSD: getid.c,v 1.2 2002/01/29 00:29:32 lukem Exp $	*/
+/*	$NetBSD: getid.c,v 1.3 2002/01/29 10:20:38 tv Exp $	*/
 /*	from: NetBSD: getpwent.c,v 1.48 2000/10/03 03:22:26 enami Exp */
 /*	from: NetBSD: getgrent.c,v 1.41 2002/01/12 23:51:30 lukem Exp */
 
@@ -82,7 +82,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "mtree.h"
+#include "extern.h"
 
 static	struct group *	gi_getgrnam(const char *);
 static	struct group *	gi_getgrgid(gid_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.56 2001/10/01 04:22:00 simonb Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.57 2002/01/29 10:20:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "defs.h"
 
 /*
  * Make ioconf.c.

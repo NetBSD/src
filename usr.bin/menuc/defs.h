@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.4 2000/10/11 14:46:13 is Exp $	 */
+/*	$NetBSD: defs.h,v 1.5 2002/01/29 10:20:35 tv Exp $	 */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,10 @@
  */
 
 /* defs.h: definitions needed for the menu system. */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <stdio.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.11 2001/10/01 04:22:00 simonb Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.12 2002/01/29 10:20:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "defs.h"
 #include "sem.h"
 
 static	char   *mkdevstr(dev_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.6 2001/10/20 06:01:53 jmc Exp $	*/
+/*	$NetBSD: yacc.y,v 1.7 2002/01/29 10:20:35 tv Exp $	*/
 
 %{
 /*-
@@ -37,18 +37,23 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#endif
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)yacc.y	8.1 (Berkeley) 6/6/93";
 static char rcsid[] = "$FreeBSD$";
 #else
-__RCSID("$NetBSD: yacc.y,v 1.6 2001/10/20 06:01:53 jmc Exp $");
+__RCSID("$NetBSD: yacc.y,v 1.7 2002/01/29 10:20:35 tv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
-#include <err.h>
 #if !defined(__FreeBSD__)
 #define _BSD_RUNE_T_    int
 #define _BSD_CT_RUNE_T_ rune_t
@@ -63,6 +68,10 @@ __RCSID("$NetBSD: yacc.y,v 1.6 2001/10/20 06:01:53 jmc Exp $");
 #include <unistd.h>
 
 #include "ldef.h"
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
 
 const char	*locale_file = "<stdout>";
 

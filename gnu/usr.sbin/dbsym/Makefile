@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/31 23:04:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2002/01/29 10:20:30 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,7 @@ DIST=		${TOP}/dist/toolchain
 PROG=		dbsym
 MAN=		dbsym.8
 
-CPPFLAGS+=	-I${BFDDIR} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include \
-		-DHAVE_CONFIG_H 
+CPPFLAGS+=	-I${BFDDIR} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
 
 DPADD+=		${BFDDIR}/libbfd.a
 LDADD+=		-L${BFDDIR} -lbfd

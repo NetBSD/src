@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.12 2001/09/23 16:32:35 yamt Exp $	*/
+/*	$NetBSD: gencat.c,v 1.13 2002/01/29 10:20:34 tv Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gencat.c,v 1.12 2001/09/23 16:32:35 yamt Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.13 2002/01/29 10:20:34 tv Exp $");
 #endif
 
 /***********************************************************
@@ -73,11 +73,16 @@ up-to-date.  Many thanks.
 
 ******************************************************************/
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#endif
+
 #define _NLS_PRIVATE
 
 #include <sys/queue.h>
 #include <ctype.h>
-#include <err.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <nl_types.h>
@@ -85,6 +90,10 @@ up-to-date.  Many thanks.
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
 
 struct _msgT {
 	long    msgId;

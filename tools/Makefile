@@ -1,24 +1,31 @@
-#	$NetBSD: Makefile,v 1.30 2002/01/25 05:01:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.31 2002/01/29 10:20:31 tv Exp $
+
+# XXX Note: NO_DBSYM and NO_MAKEFS are stopgap temporary variables for use
+# with the development of non-NetBSD hosting support.  These will go away.
 
 .include <bsd.own.mk>
 
 # XXX We can't currently build the toolchain for x86-64.
 .if ${MACHINE_ARCH} != "x86_64"
-TOOLCHAIN_BITS= toolchain .WAIT dbsym mdsetimage
+TOOLCHAIN_BITS= toolchain .WAIT ${NO_DBSYM:D:Udbsym} mdsetimage
+.endif
+
+.if ${MKLINT} != "no"
+LINT_BITS=	lint lint1 lint2
 .endif
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 .if !defined(NOSUBDIR)
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT \
-		crunchgen gencat lint lint2 lorder mkdep mtree rpcgen \
-		texinfo tsort makewhatis \
+		crunchgen gencat lorder makewhatis mkdep mtree \
+		rpcgen texinfo tsort \
 	${TOOLCHAIN_BITS} \
 	yacc .WAIT \
 		groff \
 	lex .WAIT \
-		asn1_compile compile_et config lint1 msgc menuc makefs \
-		mklocale pax pwd_mkdb zic
+		${LINT_BITS} asn1_compile compile_et config \
+		${NO_MAKEFS:D:Umakefs} menuc mklocale msgc pax pwd_mkdb zic
 
 .if ${MKMAINTAINERTOOLS:Uno} != "no"
 SUBDIR+=	m4 .WAIT autoconf

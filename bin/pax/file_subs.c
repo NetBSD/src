@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.20 2001/10/25 05:33:33 lukem Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.21 2002/01/29 10:20:28 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.20 2001/10/25 05:33:33 lukem Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.21 2002/01/29 10:20:28 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: file_subs.c,v 1.20 2001/10/25 05:33:33 lukem Exp $");
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/param.h>
-#include <err.h>
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
@@ -168,8 +167,10 @@ file_close(ARCHD *arcn, int fd)
 		set_pmode(arcn->name, arcn->sb.st_mode);
 	if (patime || pmtime)
 		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	if (pfflags && arcn->type != PAX_SLK)
 		set_chflags(arcn->name, arcn->sb.st_flags);
+#endif
 }
 
 /*
@@ -434,7 +435,11 @@ node_creat(ARCHD *arcn)
 	/*
 	 * we were able to create the node. set uid/gid, modes and times
 	 */
+#if HAVE_LCHOWN
 	if (pids)
+#else
+	if (pids && arcn->type != PAX_SLK)
+#endif
 		res = set_ids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid);
 	else
 		res = 0;
@@ -446,7 +451,11 @@ node_creat(ARCHD *arcn)
 	 */
 	if (!pmode || res)
 		arcn->sb.st_mode &= ~(SETBITS);
+#if HAVE_LCHMOD
 	if (pmode)
+#else
+	if (pmode && arcn->type != PAX_SLK)
+#endif
 		set_pmode(arcn->name, arcn->sb.st_mode);
 
 	if (arcn->type == PAX_DIR) {
@@ -486,10 +495,17 @@ node_creat(ARCHD *arcn)
 			add_dir(arcn->name, arcn->nlen, &(arcn->sb), 0);
 	}
 
+#if HAVE_LUTIMES
 	if (patime || pmtime)
+#else
+	if ((patime || pmtime) && arcn->type != PAX_SLK)
+#endif
 		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	if (pfflags && arcn->type != PAX_SLK)
 		set_chflags(arcn->name, arcn->sb.st_flags);
+#endif
 	return(0);
 }
 
@@ -657,10 +673,17 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 		 * set. We get the current values of the times if we need them.
 		 */
 		if (lstat(fnm, &sb) == 0) {
+#ifdef BSD4_4
 			if (!patime)
 				TIMESPEC_TO_TIMEVAL(&tv[0], &sb.st_atimespec);
 			if (!pmtime)
 				TIMESPEC_TO_TIMEVAL(&tv[1], &sb.st_mtimespec);
+#else
+			if (!patime)
+				tv[0].tv_sec = sb.st_atime;
+			if (!pmtime)
+				tv[1].tv_sec = sb.st_mtime;
+#endif
 		} else
 			syswarn(0,errno,"Unable to obtain file stats %s", fnm);
 	}
@@ -668,7 +691,11 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 	/*
 	 * set the times
 	 */
-	if (lutimes(fnm, tv) < 0)
+#if HAVE_LUTIMES
+	if (lutimes(fnm, tv))
+#else
+	if (utimes(fnm, tv))
+#endif
 		syswarn(1, errno, "Access/modification time set failed on: %s",
 		    fnm);
 	return;
@@ -684,7 +711,12 @@ set_ftime(char *fnm, time_t mtime, time_t atime, int frc)
 int
 set_ids(char *fnm, uid_t uid, gid_t gid)
 {
-	if (lchown(fnm, uid, gid) < 0) {
+#if HAVE_LCHOWN
+	if (lchown(fnm, uid, gid))
+#else
+	if (chown(fnm, uid, gid))
+#endif
+	{
 		syswarn(1, errno, "Unable to set file uid/gid of %s", fnm);
 		return(-1);
 	}
@@ -700,7 +732,11 @@ void
 set_pmode(char *fnm, mode_t mode)
 {
 	mode &= ABITS;
-	if (lchmod(fnm, mode) < 0)
+#if HAVE_LCHMOD
+	if (lchmod(fnm, mode))
+#else
+	if (chmod(fnm, mode))
+#endif
 		syswarn(1, errno, "Could not set permissions on %s", fnm);
 	return;
 }

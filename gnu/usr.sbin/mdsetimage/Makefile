@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/01/22 13:50:53 tron Exp $
+#	$NetBSD: Makefile,v 1.8 2002/01/29 10:20:30 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -9,8 +9,7 @@ DIST=		${TOP}/dist/toolchain
 PROG=		mdsetimage
 MAN=		mdsetimage.8
 
-CPPFLAGS+=	-I${BFDDIR} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include \
-		-DHAVE_CONFIG_H -DHAVE_ERR_H
+CPPFLAGS+=	-I${BFDDIR} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
 
 DPADD+=		${BFDDIR}/libbfd.a
 LDADD+=		-L${BFDDIR} -lbfd

@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.8 2000/10/02 19:51:07 cgd Exp $	*/
+/*	$NetBSD: hash.c,v 1.9 2002/01/29 10:20:37 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
+#include "defs.h"
 
 /*
  * These are really for MAKE_BOOTSTRAP but harmless.

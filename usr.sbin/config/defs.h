@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.56 2001/12/17 15:39:43 atatat Exp $	*/
+/*	$NetBSD: defs.h,v 1.1 2002/01/29 10:20:36 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,8 +45,15 @@
  */
 
 /*
- * config.h:  Global definitions for "config"
+ * defs.h:  Global definitions for "config"
  */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#define HAVE_VIS_H 1
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_hout.c,v 1.15 2001/03/21 00:30:39 mycroft Exp $	*/
+/*	$NetBSD: rpc_hout.c,v 1.16 2002/01/29 10:20:36 tv Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_hout.c 1.12 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_hout.c,v 1.15 2001/03/21 00:30:39 mycroft Exp $");
+__RCSID("$NetBSD: rpc_hout.c,v 1.16 2002/01/29 10:20:36 tv Exp $");
 #endif
 #endif
 
@@ -43,10 +43,13 @@ __RCSID("$NetBSD: rpc_hout.c,v 1.15 2001/03/21 00:30:39 mycroft Exp $");
  */
 #include <stdio.h>
 #include <ctype.h>
-#include <err.h>
 #include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
+
+#if HAVE_ERR_H
+#include <err.h>
+#endif
 
 static void pconstdef __P((definition *));
 static void pargdef __P((definition *));

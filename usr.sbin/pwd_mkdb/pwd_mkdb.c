@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.22 2001/08/18 19:29:32 ad Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.23 2002/01/29 10:20:38 tv Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#define HAVE_ERR_H 1
+#define HAVE_UTIL_H 1
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
@@ -41,24 +48,33 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.22 2001/08/18 19:29:32 ad Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.23 2002/01/29 10:20:38 tv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
 #include <db.h>
-#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#if HAVE_CONFIG_H
+#include "compat_pwd.h"
+#else
+#include <pwd.h>
+#endif
+#if HAVE_ERR_H
+#include <err.h>
+#endif
+#if HAVE_UTIL_H
 #include <util.h>
+#endif
 
 #define	MAX_CACHESIZE	8*1024*1024
 #define	MIN_CACHESIZE	2*1024*1024
@@ -66,8 +82,12 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.22 2001/08/18 19:29:32 ad Exp $");
 #define	PERM_INSECURE	(S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)
 #define	PERM_SECURE	(S_IRUSR | S_IWUSR)
 
+#if HAVE_CONFIG_H
+static const char __yp_token[] = "__YP!";
+#else
 /* Pull this out of the C library. */
 extern const char __yp_token[];
+#endif
 
 HASHINFO openinfo = {
 	4096,		/* bsize */
