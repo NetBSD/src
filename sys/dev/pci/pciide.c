@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.157 2002/06/09 16:52:26 taca Exp $	*/
+/*	$NetBSD: pciide.c,v 1.158 2002/06/10 08:41:11 cjs Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.157 2002/06/09 16:52:26 taca Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.158 2002/06/10 08:41:11 cjs Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -2177,6 +2177,10 @@ apollo_chip_map(sc, pa)
 		break;
 	case PCI_PRODUCT_VIATECH_VT8233:
 		printf("VT8233 ATA100 controller\n");
+		sc->sc_wdcdev.UDMA_cap = 5;
+		break;
+        case PCI_PRODUCT_VIATECH_VT8233A:
+		printf("VT8233A ATA100 controller\n");
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
