@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 1998/02/02 05:54:20 sakamoto Exp $	*/
+/*	$NetBSD: types.h,v 1.4 1998/03/26 23:42:53 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -52,6 +52,8 @@ typedef	int32_t			register_t;
 
 typedef	unsigned long		vm_size_t;
 typedef	unsigned long		vm_offset_t;
+
+#define __HAVE_NWSCONS
 
 #if 0
 /* This is only to make some unneeded function declaration happy */
