@@ -1,5 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.3 1998/09/08 07:19:58 mjacob Exp $ */
-/* $Id: isp_netbsd.c,v 1.3 1998/09/08 07:19:58 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.4 1998/09/17 22:51:05 mjacob Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  *
