@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 1997/11/19 19:28:10 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 1997/11/21 17:14:07 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,6 +123,8 @@
 #error	"PMAP_XXX definitions don't match pte.h!"
 #endif
 
+/* Type bits in a "pseudo" physical address. (XXX: pmap.h?) */
+#define PMAP_TYPE	PMAP_VME32
 
 /*
  * Local convenience macros
@@ -156,7 +158,7 @@
 #define	IS_MAIN_MEM(pte) (((pte) & MEM_BITS) == 0)
 
 /* Does this (pseudo) PA represent device space? */
-#define PA_DEV_MASK   (0xF8000000 | PMAP_OBIO | PMAP_VME16)
+#define PA_DEV_MASK   (0xF8000000 | PMAP_TYPE)
 #define PA_IS_DEV(pa) ((pa) & PA_DEV_MASK)
 
 /*
@@ -1553,27 +1555,16 @@ found:
 void
 protection_init()
 {
-	unsigned int *kp, prot;
+	unsigned int kp, *kpp, prot;
 
-	kp = protection_converter;
+	kpp = protection_converter;
 	for (prot = 0; prot < 8; prot++) {
-		switch (prot) {
-			/* READ WRITE EXECUTE */
-		case VM_PROT_NONE |VM_PROT_NONE |VM_PROT_NONE:
-			*kp++ = PG_INVAL;
-			break;
-		case VM_PROT_NONE |VM_PROT_NONE |VM_PROT_EXECUTE:
-		case VM_PROT_READ |VM_PROT_NONE |VM_PROT_NONE:
-		case VM_PROT_READ |VM_PROT_NONE |VM_PROT_EXECUTE:
-			*kp++ = PG_VALID;
-			break;
-		case VM_PROT_NONE |VM_PROT_WRITE |VM_PROT_NONE:
-		case VM_PROT_NONE |VM_PROT_WRITE |VM_PROT_EXECUTE:
-		case VM_PROT_READ |VM_PROT_WRITE |VM_PROT_NONE:
-		case VM_PROT_READ |VM_PROT_WRITE |VM_PROT_EXECUTE:
-			*kp++ = PG_VALID|PG_WRITE;
-			break;
-		}
+		kp = PG_INVAL;
+		if (prot & (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE))
+			kp |= PG_VALID;
+		if (prot & VM_PROT_WRITE)
+			kp |= PG_WRITE;
+		*kpp++ = kp;
 	}
 }
 
