@@ -1,10 +1,10 @@
-# 	$NetBSD: POWEROFSEVEN,v 1.11 2000/07/07 08:44:16 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN,v 1.12 2000/07/13 05:40:51 mrg Exp $
 #
 # Configuration for Ultra5/Ultra10
 
 include "arch/sparc64/conf/std.sparc64"
 
-maxusers	32
+maxusers	64
 
 ## System kernel configuration.  See options(4) for more detail.
 
@@ -30,7 +30,7 @@ options		__ELF__		# we use elf
 ## automagically determined at boot time.
 
 config		netbsd	root on ? type ?
-options 	BUFCACHE=20
+options 	BUFCACHE=25
 
 ## UVM options.
 options 	UVM_PAGE_TRKOWN
@@ -132,8 +132,6 @@ options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility
 options 	COMPAT_SVR4	# SunOS 5.x binary compatibility
 options 	EXEC_ELF32	# Exec module for SunOS 5.x binaries.
 #options 	EXEC_ELF64	# Exec module for sparc64 & SunOs 5.x binaries. -- 64-bit only
-#options 	SYSCALL_DEBUG
-#options 	COMPAT_AOUT	# NetBSD/sparc compat support
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
 
 ## File systems.  You probably need at least one of FFS or NFS.
