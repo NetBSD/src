@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.c,v 1.4 2000/12/23 12:37:18 itojun Exp $	*/
+/*	$NetBSD: iso2022.c,v 1.5 2000/12/26 06:12:09 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iso2022.c,v 1.4 2000/12/23 12:37:18 itojun Exp $");
+__RCSID("$NetBSD: iso2022.c,v 1.5 2000/12/26 06:12:09 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -943,7 +943,7 @@ _ISO2022_initstate(rl, s)
 	if (!s)
 		return;
 	state = s;
-	memset(state, sizeof(_Iso2022State), 0);
+	memset(state, 0, sizeof(_Iso2022State));
 
 	state->gl = 0;
 	state->gr = (CEI(rl)->flags & F_8BIT) ? 1 : -1;
