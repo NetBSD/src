@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24.8.1 2002/05/17 13:35:33 gehenna Exp $	*/
+/*	$NetBSD: mem.c,v 1.24.8.2 2002/06/08 09:13:46 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,6 +66,13 @@ const struct cdevsw mem_cdevsw = {
 	nullopen, nullclose, mmrw, mmrw, mmioctl,
 	nostop, notty, nopoll, nommap,
 };
+
+#if defined(pmax)
+const struct cdevsw mem_ultrix_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, nommap,
+};
+#endif /* defined(pmax) */
 
 /*ARGSUSED*/
 int
