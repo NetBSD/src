@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.8 1994/06/29 06:34:22 cgd Exp $	*/
+/*	$NetBSD: fifo.h,v 1.9 1994/12/13 20:14:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fifo.h	8.2 (Berkeley) 2/2/94
+ *	@(#)fifo.h	8.3 (Berkeley) 8/10/94
  */
 
 #ifdef FIFO
@@ -52,6 +52,7 @@ int	fifo_close __P((struct vop_close_args *));
 #define fifo_setattr ((int (*) __P((struct  vop_setattr_args *)))fifo_ebadf)
 int	fifo_read __P((struct vop_read_args *));
 int	fifo_write __P((struct vop_write_args *));
+#define fifo_lease_check ((int (*) __P((struct  vop_lease_args *)))nullop)
 int	fifo_ioctl __P((struct vop_ioctl_args *));
 int	fifo_select __P((struct vop_select_args *));
 #define fifo_mmap ((int (*) __P((struct  vop_mmap_args *)))fifo_badop)

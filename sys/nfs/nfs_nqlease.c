@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.6 1994/08/21 21:07:13 cgd Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.7 1994/12/13 20:15:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_nqlease.c	8.3 (Berkeley) 1/4/94
+ *	@(#)nfs_nqlease.c	8.5 (Berkeley) 8/18/94
  */
 
 /*
@@ -304,21 +304,22 @@ doreply:
  * Local lease check for server syscalls.
  * Just set up args and let nqsrv_getlease() do the rest.
  */
-void
-lease_check(vp, p, cred, flag)
-	struct vnode *vp;
-	struct proc *p;
-	struct ucred *cred;
-	int flag;
+lease_check(ap)
+	struct vop_lease_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+		struct ucred *a_cred;
+		int a_flag;
+	} */ *ap;
 {
 	int duration = 0, cache;
 	struct nfsd nfsd;
 	u_quad_t frev;
 
 	nfsd.nd_slp = NQLOCALSLP;
-	nfsd.nd_procp = p;
-	(void) nqsrv_getlease(vp, &duration, NQL_CHECK | flag, &nfsd,
-		(struct mbuf *)0, &cache, &frev, cred);
+	nfsd.nd_procp = ap->a_p;
+	(void) nqsrv_getlease(ap->a_vp, &duration, NQL_CHECK | ap->a_flag,
+		&nfsd, (struct mbuf *)0, &cache, &frev, ap->a_cred);
 }
 
 /*
@@ -363,9 +364,8 @@ nqsrv_instimeq(lp, duration)
 	newexpiry = time.tv_sec + duration + nqsrv_clockskew;
 	if (lp->lc_expiry == newexpiry)
 		return;
-	if (lp->lc_timer.cqe_next != 0) {
+	if (lp->lc_timer.cqe_next != 0)
 		CIRCLEQ_REMOVE(&nqtimerhead, lp, lc_timer);
-	}
 	lp->lc_expiry = newexpiry;
 
 	/*
@@ -1065,7 +1065,7 @@ if (strcmp(&vp->v_mount->mnt_stat.f_fstypename[0], MOUNT_NFS)) panic("trash4");
 		    error = tsleep((caddr_t)&nmp->nm_authstr, PSOCK | PCATCH,
 			"nqnfstimr", hz / 3);
 		    if (error == EINTR || error == ERESTART)
-			(void) dounmount(nmp->nm_mountp, 0, p);
+			(void) dounmount(nmp->nm_mountp, MNT_FORCE, p);
 	    }
 	}
 	free((caddr_t)nmp, M_NFSMNT);
