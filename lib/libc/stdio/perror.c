@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.18 1998/11/17 16:13:59 christos Exp $	*/
+/*	$NetBSD: perror.c,v 1.19 1999/01/28 20:13:40 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,21 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: perror.c,v 1.18 1998/11/17 16:13:59 christos Exp $");
+__RCSID("$NetBSD: perror.c,v 1.19 1999/01/28 20:13:40 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-
-#include <sys/types.h>
-#include <sys/uio.h>
-
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-
 #include "extern.h"
 
 /*
@@ -69,25 +62,16 @@ void
 perror(s)
 	const char *s;
 {
-	struct iovec *v;
-	struct iovec iov[4];
+	const char *separator;
 	char buf[NL_TEXTMAX];
 
-	v = iov;
-	if (s && *s) {
-		/* LINTED we don't touch the string */
-		v->iov_base = (void *)s;
-		v->iov_len = strlen(s);
-		v++;
-		v->iov_base = ": ";
-		v->iov_len = 2;
-		v++;
-	}
-	/* LINTED we don't touch the string */
-	v->iov_base = (void *)__strerror(errno, buf, sizeof(buf));
-	v->iov_len = strlen(v->iov_base);
-	v++;
-	v->iov_len = 1;
-	v->iov_base = "\n";
-	(void)writev(STDERR_FILENO, iov, (v - iov) + 1);
+	if (s == NULL)
+		s = "";
+	if (*s == '\0')
+		separator = "";
+	else
+		separator = ": ";
+
+	(void)fprintf(stderr, "%s%s%s\n", s, separator,
+	    __strerror(errno, buf, sizeof(buf)));
 }
