@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.46 2000/01/09 03:39:13 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.47 2000/01/21 23:39:59 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -214,7 +214,7 @@ struct raid_softc {
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
 	struct pool sc_cbufpool;	/* component buffer pool */
-	struct buf buf_queue;   /* used for the device queue */
+	struct buf_queue buf_queue;	/* used for the device queue */
 };
 /* sc_flags */
 #define RAIDF_INITED	0x01	/* unit has been initialized */
@@ -325,9 +325,7 @@ raidattach(num)
 	bzero(raid_softc, num * sizeof(struct raid_softc));
 
 	for (raidID = 0; raidID < num; raidID++) {
-		raid_softc[raidID].buf_queue.b_actf = NULL;
-		raid_softc[raidID].buf_queue.b_actb = 
-			&raid_softc[raidID].buf_queue.b_actf;
+		BUFQ_INIT(&raid_softc[raidID].buf_queue);
 		RF_Calloc(raidPtrs[raidID], 1, sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
 		if (raidPtrs[raidID] == NULL) {
@@ -522,7 +520,6 @@ raidstrategy(bp)
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs = &raid_softc[raidID];
 	struct disklabel *lp;
-	struct buf *dp;
 	int     wlabel;
 
 	if ((rs->sc_flags & RAIDF_INITED) ==0) {
@@ -572,13 +569,8 @@ raidstrategy(bp)
 	bp->b_resid = 0;
 
 	/* stuff it onto our queue */
+	BUFQ_INSERT_TAIL(&rs->buf_queue, bp);
 
-	dp = &rs->buf_queue;
-	bp->b_actf = NULL;
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
-	
 	raidstart(raidPtrs[raidID]);
 
 	splx(s);
@@ -1361,7 +1353,6 @@ raidstart(raidPtr)
 	struct raid_softc *rs;
 	int     do_async;
 	struct buf *bp;
-	struct buf *dp;
 
 	unit = raidPtr->raidid;
 	rs = &raid_softc[unit];
@@ -1372,21 +1363,11 @@ raidstart(raidPtr)
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
 
 		/* get the next item, if any, from the queue */
-		dp = &rs->buf_queue;
-		bp = dp->b_actf;
-		if (bp == NULL) {
+		if ((bp = BUFQ_FIRST(&rs->buf_queue)) == NULL) {
 			/* nothing more to do */
 			return;
 		}
-
-		/* update structures */
-		dp = bp->b_actf;
-		if (dp != NULL) {
-			dp->b_actb = bp->b_actb;
-		} else {
-			rs->buf_queue.b_actb = bp->b_actb;
-		}
-		*bp->b_actb = dp;
+		BUFQ_REMOVE(&rs->buf_queue, bp);
 
 		/* Ok, for the bp we have here, bp->b_blkno is relative to the
 		 * partition.. Need to make it absolute to the underlying 

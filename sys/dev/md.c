@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21 2000/01/21 12:14:53 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.22 2000/01/21 23:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -84,7 +84,7 @@ struct md_softc {
 	struct device sc_dev;	/* REQUIRED first entry */
 	struct disk sc_dkdev;	/* hook for generic disk handling */
 	struct md_conf sc_md;
-	struct buf *sc_buflist;
+	struct buf_queue sc_buflist;
 };
 /* shorthand for fields in sc_md: */
 #define sc_addr sc_md.md_addr
@@ -146,6 +146,8 @@ md_attach(parent, self, aux)
 	void		*aux;
 {
 	struct md_softc *sc = (struct md_softc *)self;
+
+	BUFQ_INIT(&sc->sc_buflist);
 
 	/* XXX - Could accept aux info here to set the config. */
 #ifdef	MEMORY_DISK_HOOKS
@@ -339,9 +341,8 @@ mdstrategy(bp)
 #if MEMORY_DISK_SERVER
 	case MD_UMEM_SERVER:
 		/* Just add this job to the server's queue. */
-		bp->b_actf = sc->sc_buflist;
-		sc->sc_buflist = bp;
-		if (bp->b_actf == NULL) {
+		BUFQ_INSERT_TAIL(&sc->sc_buflist, bp);
+		if (BUFQ_FIRST(&sc->sc_buflist) == bp) {
 			/* server queue was empty. */
 			wakeup((caddr_t)sc);
 			/* see md_server_loop() */
@@ -504,16 +505,14 @@ md_server_loop(sc)
 
 	for (;;) {
 		/* Wait for some work to arrive. */
-		while (sc->sc_buflist == NULL) {
+		while ((bp = BUFQ_FIRST(&sc->sc_buflist)) == NULL) {
 			error = tsleep((caddr_t)sc, md_sleep_pri, "md_idle", 0);
 			if (error)
 				return error;
 		}
 
 		/* Unlink buf from head of list. */
-		bp = sc->sc_buflist;
-		sc->sc_buflist = bp->b_actf;
-		bp->b_actf = NULL;
+		BUFQ_REMOVE(&sc->sc_buflist, bp);
 
 		/* Do the transfer to/from user space. */
 		error = 0;

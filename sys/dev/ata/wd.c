@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.199 1999/12/23 21:23:19 leo Exp $ */
+/*	$NetBSD: wd.c,v 1.200 2000/01/21 23:39:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -133,7 +133,7 @@ struct wd_softc {
 	/* General disk infos */
 	struct device sc_dev;
 	struct disk sc_dk;
-	struct buf sc_q;
+	struct buf_queue sc_q;
 	/* IDE disk soft states */
 	struct ata_bio sc_wdc_bio; /* current transfer */
 	struct buf *sc_bp; /* buf being transfered */
@@ -260,6 +260,8 @@ wdattach(parent, self, aux)
 	int i, blank;
 	char buf[41], c, *p, *q;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
+
+	BUFQ_INIT(&wd->sc_q);
 
 	wd->openings = aa_link->aa_openings;
 	wd->drvp = aa_link->aa_drv_data;;
@@ -400,8 +402,8 @@ wddetach(self, flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */ 
-	while ((bp = sc->sc_q.b_actf) != NULL) {
-		sc->sc_q.b_actf = bp->b_actf;
+	while ((bp = BUFQ_FIRST(&sc->sc_q)) != NULL) {
+		BUFQ_REMOVE(&sc->sc_q, bp);
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR; 
 		bp->b_resid = bp->b_bcount;
@@ -471,7 +473,7 @@ wdstrategy(bp)
 		goto done;
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort(&wd->sc_q, bp);
+	disksort_blkno(&wd->sc_q, bp);
 	wdstart(wd);
 	splx(s);
 	return;
@@ -491,17 +493,16 @@ wdstart(arg)
 	void *arg;
 {
 	struct wd_softc *wd = arg;
-	struct buf *dp, *bp=0;
+	struct buf *bp = NULL;
 
 	WDCDEBUG_PRINT(("wdstart %s\n", wd->sc_dev.dv_xname),
 	    DEBUG_XFERS);
 	while (wd->openings > 0) {
 
 		/* Is there a buf for us ? */
-		dp = &wd->sc_q;
-		if ((bp = dp->b_actf) == NULL)  /* yes, an assign */
-			 return;
-		dp->b_actf = bp->b_actf;
+		if ((bp = BUFQ_FIRST(&wd->sc_q)) == NULL)
+			return;
+		BUFQ_REMOVE(&wd->sc_q, bp);
 	
 		/* 
 		 * Make the command. First lock the device

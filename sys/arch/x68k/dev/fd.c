@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.28 1999/03/24 14:07:38 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.29 2000/01/21 23:39:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,8 +122,6 @@ int     fddebug = 0;
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
 
-#define b_cylin b_resid
-
 enum fdc_state {
 	DEVIDLE = 0,
 	MOTORWAIT,
@@ -241,7 +239,8 @@ struct fd_softc {
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */
-	struct buf sc_q;	/* head of buf chain */
+	struct buf_queue sc_q;	/* pending I/O requests */
+	int sc_active;		/* number of active I/O operations */
 	u_char *sc_copybuf;	/* for secsize >=3 */
 	u_char sc_part;		/* for secsize >=3 */
 #define	SEC_P10	0x02		/* first part */
@@ -588,6 +587,7 @@ fdattach(parent, self, aux)
 	else
 		printf(": density unknown\n");
 
+	BUFQ_INIT(&fd->sc_q);
 	fd->sc_cylin = -1;
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
@@ -670,17 +670,17 @@ fdstrategy(bp)
 		bp->b_bcount = sz << DEV_BSHIFT;
 	}
 
- 	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE)
+ 	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE)
 		/ (fd->sc_type->seccyl * (1 << (fd->sc_type->secsize - 2)));
 
 	DPRINTF(("fdstrategy: %s b_blkno %d b_bcount %ld cylin %ld\n",
 		 bp->b_flags & B_READ ? "read" : "write",
-		 bp->b_blkno, bp->b_bcount, bp->b_cylin));
+		 bp->b_blkno, bp->b_bcount, bp->b_cylinder));
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
-	disksort(&fd->sc_q, bp);
+	disksort_cylinder(&fd->sc_q, bp);
 	untimeout(fd_motor_off, fd); /* a good idea */
-	if (!fd->sc_q.b_active)
+	if (fd->sc_active == 0)
 		fdstart(fd);
 #ifdef DIAGNOSTIC
 	else {
@@ -709,7 +709,7 @@ fdstart(fd)
 	int active = fdc->sc_drives.tqh_first != 0;
 
 	/* Link into controller queue. */
-	fd->sc_q.b_active = 1;
+	fd->sc_active = 1;
 	TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 
 	/* If controller not already active, start it. */
@@ -733,14 +733,14 @@ fdfinish(fd, bp)
 	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
-		if (bp->b_actf) {
+		if (BUFQ_NEXT(bp) != NULL) {
 			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 		} else
-			fd->sc_q.b_active = 0;
+			fd->sc_active = 0;
 	}
 	bp->b_resid = fd->sc_bcount;
 	fd->sc_skip = 0;
-	fd->sc_q.b_actf = bp->b_actf;
+	BUFQ_REMOVE(&fd->sc_q, bp);
 
 #if NRND > 0
 	rnd_add_uint32(&fd->rnd_source, bp->b_blkno);
@@ -1023,7 +1023,7 @@ fdctimeout(arg)
 	s = splbio();
 	fdcstatus(&fd->sc_dev, 0, "timeout");
 
-	if (fd->sc_q.b_actf)
+	if (BUFQ_FIRST(&fd->sc_q) != NULL)
 		fdc->sc_state++;
 	else
 		fdc->sc_state = DEVIDLE;
@@ -1081,11 +1081,11 @@ loop:
 	}
 
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
-	bp = fd->sc_q.b_actf;
+	bp = BUFQ_FIRST(&fd->sc_q);
 	if (bp == NULL) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
-		fd->sc_q.b_active = 0;
+		fd->sc_active = 0;
 		goto loop;
 	}
 
@@ -1126,7 +1126,7 @@ loop:
 	case DOSEEK:
 	doseek:
 		DPRINTF(("fdcintr: in DOSEEK\n"));
-		if (fd->sc_cylin == bp->b_cylin)
+		if (fd->sc_cylin == bp->b_cylinder)
 			goto doio;
 
 		out_fdc(iot, ioh, NE7CMD_SPECIFY);/* specify command */
@@ -1135,7 +1135,7 @@ loop:
 
 		out_fdc(iot, ioh, NE7CMD_SEEK);	/* seek function */
 		out_fdc(iot, ioh, fd->sc_drive);	/* drive number */
-		out_fdc(iot, ioh, bp->b_cylin * fd->sc_type->step);
+		out_fdc(iot, ioh, bp->b_cylinder * fd->sc_type->step);
 
 		fd->sc_cylin = -1;
 		fdc->sc_state = SEEKWAIT;
@@ -1221,7 +1221,7 @@ loop:
 		else
 			out_fdc(iot, ioh, NE7CMD_WRITE); /* WRITE */
 		out_fdc(iot, ioh, (head << 2) | fd->sc_drive);
-		out_fdc(iot, ioh, bp->b_cylin);		/* cylinder */
+		out_fdc(iot, ioh, bp->b_cylinder);	/* cylinder */
 		out_fdc(iot, ioh, head);
 		out_fdc(iot, ioh, sec + 1);		/* sector +1 */
 		out_fdc(iot, ioh, type->secsize);	/* sector size */
@@ -1242,7 +1242,7 @@ loop:
 		fdc_dmastart(fdc, B_READ, fd->sc_copybuf, 1024);
 		out_fdc(iot, ioh, NE7CMD_READ);		/* READ */
 		out_fdc(iot, ioh, (head << 2) | fd->sc_drive);
-		out_fdc(iot, ioh, bp->b_cylin);		/* cylinder */
+		out_fdc(iot, ioh, bp->b_cylinder);	/* cylinder */
 		out_fdc(iot, ioh, head);
 		out_fdc(iot, ioh, sec + 1);		/* sector +1 */
 		out_fdc(iot, ioh, type->secsize);	/* sector size */
@@ -1293,7 +1293,7 @@ loop:
 		}
 		out_fdc(iot, ioh, NE7CMD_WRITE);	/* WRITE */
 		out_fdc(iot, ioh, (head << 2) | fd->sc_drive);
-		out_fdc(iot, ioh, bp->b_cylin);		/* cylinder */
+		out_fdc(iot, ioh, bp->b_cylinder);	/* cylinder */
 		out_fdc(iot, ioh, head);
 		out_fdc(iot, ioh, sec + 1);		/* sector +1 */
 		out_fdc(iot, ioh, fd->sc_type->secsize); /* sector size */
@@ -1326,14 +1326,14 @@ loop:
 			goto loop;
 		} else if (tmp != 2 ||
 			   (st0 & 0xf8) != 0x20 ||
-			   cyl != bp->b_cylin) {
+			   cyl != bp->b_cylinder) {
 #ifdef FDDEBUG
 			fdcstatus(&fd->sc_dev, 2, "seek failed");
 #endif
 			fdcretry(fdc);
 			goto loop;
 		}
-		fd->sc_cylin = bp->b_cylin;
+		fd->sc_cylin = bp->b_cylinder;
 		goto doio;
 
 	case IOTIMEDOUT:
@@ -1377,7 +1377,7 @@ loop:
 		fd->sc_bcount -= fd->sc_nbytes;
 		DPRINTF(("fd->sc_bcount = %d\n", fd->sc_bcount));
 		if (fd->sc_bcount > 0) {
-			bp->b_cylin = fd->sc_blkno
+			bp->b_cylinder = fd->sc_blkno
 				/ (fd->sc_type->seccyl
 				   * (1 << (fd->sc_type->secsize - 2)));
 			goto doseek;
@@ -1484,7 +1484,7 @@ fdcretry(fdc)
 
 	DPRINTF(("fdcretry:\n"));
 	fd = fdc->sc_drives.tqh_first;
-	bp = fd->sc_q.b_actf;
+	bp = BUFQ_FIRST(&fd->sc_q);
 
 	switch (fdc->sc_errors) {
 	case 0:

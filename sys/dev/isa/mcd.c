@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.63 1999/02/08 16:33:17 bouyer Exp $	*/
+/*	$NetBSD: mcd.c,v 1.64 2000/01/21 23:39:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -144,7 +144,8 @@ struct mcd_softc {
 #define	MCD_MD_UNKNOWN	-1
 	int	lastupc;
 #define	MCD_UPC_UNKNOWN	-1
-	struct	buf buf_queue;
+	struct buf_queue buf_queue;
+	int	active;
 	u_char	readcmd;
 	u_char	debug;
 	u_char	probe;
@@ -244,6 +245,8 @@ mcdattach(parent, self, aux)
 		printf(": mcd_find failed\n");
 		return;
 	}
+
+	BUFQ_INIT(&sc->buf_queue);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -489,9 +492,9 @@ mcdstrategy(bp)
 	
 	/* Queue it. */
 	s = splbio();
-	disksort(&sc->buf_queue, bp);
+	disksort_blkno(&sc->buf_queue, bp);
 	splx(s);
-	if (!sc->buf_queue.b_active)
+	if (!sc->active)
 		mcdstart(sc);
 	return;
 
@@ -506,23 +509,22 @@ void
 mcdstart(sc)
 	struct mcd_softc *sc;
 {
-	struct buf *bp, *dp = &sc->buf_queue;
+	struct buf *bp;
 	int s;
 	
 loop:
 	s = splbio();
 
-	bp = dp->b_actf;
-	if (bp == NULL) {
+	if ((bp = BUFQ_FIRST(&sc->buf_queue)) == NULL) {
 		/* Nothing to do. */
-		dp->b_active = 0;
+		sc->active = 0;
 		splx(s);
 		return;
 	}
 
 	/* Block found to process; dequeue. */
 	MCD_TRACE("start: found block bp=0x%x\n", bp, 0, 0, 0);
-	dp->b_actf = bp->b_actf;
+	BUFQ_REMOVE(&sc->buf_queue, bp);
 	splx(s);
 
 	/* Changed media? */
@@ -534,7 +536,7 @@ loop:
 		goto loop;
 	}
 
-	dp->b_active = 1;
+	sc->active = 1;
 
 	/* Instrumentation. */
 	s = splbio();
