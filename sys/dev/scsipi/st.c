@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.64 1996/03/19 03:05:15 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.65 1996/03/30 21:45:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -65,11 +65,11 @@
 #include <sys/user.h>
 #include <sys/mtio.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_tape.h>
 #include <scsi/scsiconf.h>
-#include <scsi/scsi_conf.h>
 
 /* Defines for device specific stuff */
 #define DEF_FIXED_BSIZE  512

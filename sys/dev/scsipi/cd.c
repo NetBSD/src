@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.89 1996/03/29 14:50:12 mrg Exp $	*/
+/*	$NetBSD: cd.c,v 1.90 1996/03/30 21:44:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -63,12 +63,12 @@
 #include <sys/cdio.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
+#include <sys/conf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_cd.h>
 #include <scsi/scsi_disk.h>	/* rw_big and start_stop come from there */
 #include <scsi/scsiconf.h>
-#include <scsi/scsi_conf.h>
 
 #define	CDOUTSTANDING	4
 #define	CDRETRIES	1

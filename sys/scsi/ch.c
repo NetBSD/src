@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.18 1996/03/19 03:05:15 mycroft Exp $	*/
+/*	$NetBSD: ch.c,v 1.19 1996/03/30 21:44:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -44,11 +44,11 @@
 #include <sys/user.h>
 #include <sys/chio.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_changer.h>
 #include <scsi/scsiconf.h>
-#include <scsi/scsi_conf.h>
 
 #define	CHRETRIES	2
 

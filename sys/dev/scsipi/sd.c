@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.94 1996/03/26 22:22:33 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.95 1996/03/30 21:45:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -62,11 +62,11 @@
 #include <sys/disk.h>
 #include <sys/proc.h>
 #include <sys/cpu.h>
+#include <sys/conf.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
-#include <scsi/scsi_conf.h>
 
 #define	SDOUTSTANDING	4
 #define	SDRETRIES	4
