@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.50 1999/09/27 04:28:27 enami Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.51 1999/09/27 22:58:56 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.47 1999/09/27 04:27:28 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.48 1999/09/27 22:57:26 enami Exp 
  */
 
 /*-
@@ -292,12 +292,12 @@
 #define	PCMCIA_PRODUCT_PLANET_SMARTCOM2000	-1
 #define	PCMCIA_STR_PLANET_SMARTCOM2000	"Planet SmartCOM 2000"
 /*
- * vendor ID of FMW-3600-T is LINKSYS(0x0149) and product ID is 0xc1ab, but
+ * vendor ID of FNW-3600-T is LINKSYS(0x0149) and product ID is 0xc1ab, but
  * it conflicts with LINKSYS Combo EhternetCard.
  */
-#define	PCMCIA_CIS_PLANEX_FMW3600T	{ "Fast Ethernet", "Adapter", "1.0", NULL }
-#define	PCMCIA_PRODUCT_PLANEX_FMW3600T	-1
-#define	PCMCIA_STR_PLANEX_FMW3600T	"Planex FMW-3600-T"
+#define	PCMCIA_CIS_PLANEX_FNW3600T	{ "Fast Ethernet", "Adapter", "1.0", NULL }
+#define	PCMCIA_PRODUCT_PLANEX_FNW3600T	-1
+#define	PCMCIA_STR_PLANEX_FNW3600T	"Planex FNW-3600-T"
 #define	PCMCIA_CIS_DLINK_DE650	{ "D-Link", "DE-650", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DE650	-1
 #define	PCMCIA_STR_DLINK_DE650	"D-Link DE-650"
