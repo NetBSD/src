@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: specfile.c,v 1.7 1994/03/10 19:50:49 mycroft Exp $";
+static char rcsid[] = "$Id: specfile.c,v 1.8 1994/03/30 04:25:22 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -550,9 +550,11 @@ read_file(filename, fatal_on_open, override)
                 is_dup = 1;
             else
                 is_dup = 0;
-            if (override && ((tmp = fltail_lookup(kf_name)) != 0))
-                    fprintf(stderr, "%s:%dLocal file %s overrides %s.\n",
+            if (override && ((tmp = fltail_lookup(kf_name)) != 0)) {
+                    fprintf(stderr, "%s:%d: Local file %s overrides %s.\n",
                             current_file, current_line, kf_name, tmp->f_fn);
+		    tmp->f_type = INVISIBLE;
+	    }
             if (!optional) {
                 if (driver)
                     parse_err("'standard' incompatible with 'device-driver'");
