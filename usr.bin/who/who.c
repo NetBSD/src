@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.10 2002/08/01 23:23:09 christos Exp $	*/
+/*	$NetBSD: who.c,v 1.11 2003/02/17 13:56:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.10 2002/08/01 23:23:09 christos Exp $");
+__RCSID("$NetBSD: who.c,v 1.11 2003/02/17 13:56:28 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ int main(int, char **);
 static int show_term;			/* show term state */
 static int show_idle;			/* show idle time */
 
-static int maxname = 8, maxline = 8, maxhost = 16;
+extern int maxname, maxline, maxhost;
 
 int
 main(int argc, char **argv)
