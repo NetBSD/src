@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.22 2001/11/12 23:49:39 lukem Exp $ */
+/*	$NetBSD: if_gre.c,v 1.23 2001/11/13 00:49:35 lukem Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,10 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.22 2001/11/12 23:49:39 lukem Exp $");
-
-#include "gre.h"
-#if NGRE > 0
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.23 2001/11/13 00:49:35 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -576,4 +573,3 @@ gre_in_cksum(u_short *p, u_int len)
 	sum += (sum >> 16);
 	return (~sum);
 }
-#endif
