@@ -1,4 +1,4 @@
-/*	$NetBSD: ptmx.c,v 1.2 2004/05/26 01:14:56 christos Exp $	*/
+/*	$NetBSD: ptmx.c,v 1.3 2004/05/27 03:18:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,11 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptmx.c,v 1.2 2004/05/26 01:14:56 christos Exp $");
+__RCSID("$NetBSD: ptmx.c,v 1.3 2004/05/27 03:18:19 christos Exp $");
 
 #include <stdlib.h>
 #include <unistd.h>
 #include <grp.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 
@@ -52,8 +53,11 @@ main(int argc, char *argv[])
 	int fdm, fds;
 	struct group *gp;
 
-	if ((fdm = posix_openpt(O_RDWR|O_NOCTTY)) == -1)
+	if ((fdm = posix_openpt(O_RDWR|O_NOCTTY)) == -1) {
+		if (errno == ENOENT || errno == ENODEV)
+			return 0;
 		err(1, "open master");
+	}
 
 	if (fstat(fdm, &stm) == -1)
 		err(1, "fstat master");
