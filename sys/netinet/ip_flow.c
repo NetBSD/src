@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.1 1998/04/29 21:37:55 matt Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.2 1998/05/04 05:46:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@ ipflow_fastforward(
 	struct ip *ip;
 	struct ipflow *ipf;
 	struct rtentry *rt;
-	u_int32_t sum;
 	int error;
 
 	/*
@@ -131,6 +130,12 @@ ipflow_fastforward(
 	 * Find a flow.
 	 */
 	if ((ipf = ipflow_lookup(ip)) == NULL)
+		return 0;
+
+	/*
+	 * Veryify the IP header checksum.
+	 */
+	if (in_cksum(m, sizeof(struct ip)) != 0)
 		return 0;
 
 	/*
@@ -156,16 +161,11 @@ ipflow_fastforward(
 	 * 16 bits and a carry).  
 	 */
 	ip->ip_ttl -= IPTTLDEC;
-#if BYTE_ORDER == LITTLE_ENDIAN
-	sum = ip->ip_sum + IPTTLDEC;
-#endif
-#if BYTE_ORDER == BIG_ENDIAN
-	sum = ip->ip_sum + (IPTTLDEC << 8);
-	sum = (sum & 0xFFFF) + (sum >> 16);
-#endif
-	if (sum > 0x10000)		/* add in carry if needed */
-		sum++;
-	ip->ip_sum = sum;		/* bit 16 is dropped */
+	if (ip->ip_sum >= htons(0xffff - (IPTTLDEC << 8))) {
+		ip->ip_sum += htons(IPTTLDEC << 8) + 1;
+	} else {
+		ip->ip_sum += htons(IPTTLDEC << 8);
+	}
 
 	/*
 	 * Send the packet on it's way.  All we can get back is ENOBUFS
@@ -261,6 +261,12 @@ ipflow_slowtimo(
 {
 	struct ipflow *ipf;
 	int idx;
+
+	/*
+	 * Save ourselves some work if we know there aren't any flows.
+	 */
+	if (ipflow_inuse == 0)
+		return;
 
 	for (idx = 0; idx < IPFLOW_HASHSIZE; idx++) {
 		ipf = LIST_FIRST(&ipflows[idx]);
