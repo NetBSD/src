@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.50 1998/11/11 22:44:25 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.51 1999/01/23 17:02:35 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -110,6 +110,8 @@ sys___vfork14(p, v, retval)
 
 	return (fork1(p, FORK_PPWAIT|FORK_SHAREVM, retval, NULL));
 }
+
+int slowchild = 1;
 
 int
 fork1(p1, flags, retval, rnewprocp)
@@ -275,6 +277,12 @@ again:
 	memcpy(p2->p_cred, p1->p_cred, sizeof(*p2->p_cred));
 	p2->p_cred->p_refcnt = 1;
 	crhold(p1->p_ucred);
+
+	/*
+	 * slow us down if parent was cpu-bound
+	 */
+	if (slowchild)
+		p2->p_estcpu = p1->p_estcpu;
 
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;
