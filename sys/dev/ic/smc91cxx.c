@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.1.2.2 1997/08/12 06:58:55 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.1.2.3 1997/08/13 03:54:26 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1191,7 +1191,7 @@ smc91cxx_ioctl(ifp, cmd, data)
 		break;
 
 #if defined(CCITT) && defined(LLC)
-	case SIOCIFCONF_X25:
+	case SIOCSIFCONF_X25:
 		ifp->if_flags |= IFF_UP;
 		ifa->ifa_rtrequest = cons_rtrequest;	/* XXX */
 		error = x25_llcglue(PRC_IFUP, ifa->ifa_addr);
