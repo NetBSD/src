@@ -1,3 +1,5 @@
+/*	$NetBSD: mille.h,v 1.5 1995/03/24 05:01:51 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mille.h	8.1 (Berkeley) 5/31/93
- *	$Id: mille.h,v 1.4 1994/05/12 17:39:34 jtc Exp $
+ *	@(#)mille.h	8.1 (Berkeley) 5/31/93
  */
 
 # include	<sys/types.h>
