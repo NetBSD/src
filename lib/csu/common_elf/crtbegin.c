@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.1 1996/09/12 16:59:03 cgd Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.2 1997/03/21 05:47:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -37,14 +37,22 @@
  */
 
 /*
- * Run-time module for GNU C++ compiled shared libraries.
+ * Run-time module which handles constructors and destructors,
+ * and NetBSD identification.
  *
  * The linker constructs the following arrays of pointers to global
  * constructors and destructors. The first element contains the
- * number of pointers in each.
- * The tables are also null-terminated.
+ * number of pointers in each or -1 to indicate that the run-time
+ * code should figure out how many there are.  The tables are also
+ * null-terminated.
  */
+
+#include <sys/param.h>
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
 #include <stdlib.h>
+
+#include "sysident.h"
 
 static void (*__CTOR_LIST__[1]) __P((void))
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
