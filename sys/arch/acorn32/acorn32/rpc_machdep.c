@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.14 2002/02/11 18:47:36 reinoud Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.15 2002/02/12 19:21:36 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -51,7 +51,6 @@
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
-#include "opt_compat_old_bootloader.h"
 #include "vidcvideo.h"
 #include "rpckbd.h"
 #include "pckbc.h"
