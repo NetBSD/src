@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.4 1994/05/29 22:14:33 jtc Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.5 1994/10/05 17:33:50 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -76,8 +76,6 @@ static char *rcsid = "$Id: msgcat.c,v 1.4 1994/05/29 22:14:33 jtc Exp $";
 
 #define	NLERR	((nl_catd) -1)
 
-char	*MCAppPath = NULL;
-
 static nl_catd loadCat();
 static nl_catd loadSet();
 
@@ -101,15 +99,6 @@ int type;
 	if ((lang = (char *) getenv("LANG")) == NULL) lang = "C";
 	if ((nlspath = (char *) getenv("NLSPATH")) == NULL) {
 	    nlspath = "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L";
-	}
-	if (MCAppPath) {
-	    tmppath = (char *) malloc(strlen(nlspath) + strlen(MCAppPath) + 3);
-	    if (!tmppath) return(NLERR);
-	    strcpy(tmppath, nlspath);
-	    if (tmppath[strlen(tmppath)-1] != ':' && *MCAppPath != ':')
-	      strcat(tmppath, ":");
-	    strcat(tmppath, MCAppPath);
-	    nlspath = tmppath;
 	}
 	
 	len = strlen(nlspath);
