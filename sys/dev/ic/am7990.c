@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.49 1998/07/05 06:49:11 jonathan Exp $	*/
+/*	$NetBSD: am7990.c,v 1.50 1998/07/07 14:13:51 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -707,6 +707,9 @@ am7990_tint(sc)
 		if (sc->sc_no_td <= 0)
 			break;
 
+		(*sc->sc_copyfromdesc)(sc, &tmd, LE_TMDADDR(sc, bix),
+		    sizeof(tmd));
+
 #ifdef LEDEBUG
 		if (sc->sc_debug)
 			printf("trans tmd: "
@@ -715,9 +718,6 @@ am7990_tint(sc)
 			    tmd.tmd0, tmd.tmd1_hadr, tmd.tmd1_bits,
 			    tmd.tmd2, tmd.tmd3);
 #endif
-
-		(*sc->sc_copyfromdesc)(sc, &tmd, LE_TMDADDR(sc, bix),
-		    sizeof(tmd));
 
 		if (tmd.tmd1_bits & LE_T1_OWN)
 			break;
