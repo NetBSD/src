@@ -55,3 +55,17 @@ device	sbscn: tty
 attach	sbscn at sbobio
 file	arch/mips/sibyte/dev/sbscn.c		sbscn	needs-flag
 
+# XXX XXX
+# need to think about SMBus more, just hack something together
+# temporariliy so we can use the RTC.
+
+# SB1250 SMBus
+device	smbus {[chan = -1], [dev = -1]}
+attach	smbus at sbobio
+file	arch/mips/sibyte/dev/sbsmbus.c		smbus
+
+# XXX XXX
+# Bogus RTC attachment
+device	rtc
+attach	rtc at smbus
+file	arch/sbmips/sbmips/rtc.c
