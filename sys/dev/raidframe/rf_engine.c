@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.20 2002/10/02 14:38:53 oster Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.21 2002/10/02 21:48:00 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.20 2002/10/02 14:38:53 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.21 2002/10/02 21:48:00 oster Exp $");
 
 #include "rf_threadstuff.h"
 
@@ -139,7 +139,7 @@ rf_ConfigureEngine(
 	if (rf_engineDebug) {
 		printf("raid%d: Creating engine thread\n", raidPtr->raidid);
 	}
-	if (RF_CREATE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr,"raid")) {
+	if (RF_CREATE_ENGINE_THREAD(raidPtr->engine_thread, DAGExecutionThread, raidPtr,"raid%d",raidPtr->raidid)) {
 		RF_ERRORMSG("RAIDFRAME: Unable to create engine thread\n");
 		return (ENOMEM);
 	}
