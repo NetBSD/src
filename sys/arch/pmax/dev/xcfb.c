@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.37 2002/09/27 20:34:49 thorpej Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.38 2002/10/02 04:15:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -138,9 +138,8 @@ static int	xcfbmatch __P((struct device *, struct cfdata *, void *));
 static void	xcfbattach __P((struct device *, struct device *, void *));
 static int	xcfbinit __P((struct fbinfo *, caddr_t, int, int));
 
-const struct cfattach xcfb_ca = {
-	sizeof(struct device), xcfbmatch, xcfbattach
-};
+CFATTACH_DECL(xcfb, sizeof(struct device),
+    xcfbmatch, xcfbattach, NULL, NULL);
 
 int
 xcfb_cnattach()

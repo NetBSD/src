@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.12 2002/09/27 20:29:40 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.13 2002/10/02 04:06:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.12 2002/09/27 20:29:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.13 2002/10/02 04:06:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,8 @@ struct gbus_softc {
 static int	gbusmatch __P((struct device *, struct cfdata *, void *));
 static void	gbusattach __P((struct device *, struct device *, void *));
 
-const struct cfattach gbus_ca = {
-	sizeof(struct gbus_softc), gbusmatch, gbusattach
-};
+CFATTACH_DECL(gbus, sizeof(struct gbus_softc),
+    gbusmatch, gbusattach, NULL, NULL);
 
 static int	gbusprint __P((void *, const char *));
 static int	gbussubmatch __P((struct device *, struct cfdata *, void *));

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.25 2002/09/27 20:29:33 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.26 2002/10/02 04:06:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.25 2002/09/27 20:29:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.26 2002/10/02 04:06:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.25 2002/09/27 20:29:33 thorpej Exp $");
 
 static int	dwlpxmatch __P((struct device *, struct cfdata *, void *));
 static void	dwlpxattach __P((struct device *, struct device *, void *));
-const struct cfattach dwlpx_ca = {
-	sizeof(struct dwlpx_softc), dwlpxmatch, dwlpxattach
-};
+CFATTACH_DECL(dwlpx, sizeof(struct dwlpx_softc),
+    dwlpxmatch, dwlpxattach, NULL, NULL);
 
 extern struct cfdriver dwlpx_cd;
 

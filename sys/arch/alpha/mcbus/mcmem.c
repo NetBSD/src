@@ -1,4 +1,4 @@
-/* $NetBSD: mcmem.c,v 1.3 2002/09/27 20:29:31 thorpej Exp $ */
+/* $NetBSD: mcmem.c,v 1.4 2002/10/02 04:06:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.3 2002/09/27 20:29:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.4 2002/10/02 04:06:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,9 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: mcmem.c,v 1.3 2002/09/27 20:29:31 thorpej Exp $");
 
 static int	mcmemmatch __P((struct device *, struct cfdata *, void *));
 static void	mcmemattach __P((struct device *, struct device *, void *));
-const struct cfattach mcmem_ca = {
-	sizeof (struct device), mcmemmatch, mcmemattach
-};
+CFATTACH_DECL(mcmem, sizeof (struct device),
+    mcmemmatch, mcmemattach, NULL, NULL);
 
 static int
 mcmemmatch(parent, cf, aux)

@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_ioasic.c,v 1.10 2002/09/27 20:29:39 thorpej Exp $ */
+/* $NetBSD: mcclock_ioasic.c,v 1.11 2002/10/02 04:06:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.10 2002/09/27 20:29:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_ioasic.c,v 1.11 2002/10/02 04:06:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -56,10 +56,8 @@ struct mcclock_ioasic_softc {
 int	mcclock_ioasic_match __P((struct device *, struct cfdata *, void *));
 void	mcclock_ioasic_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach mcclock_ioasic_ca = {
-	sizeof (struct mcclock_ioasic_softc), mcclock_ioasic_match,
-	    mcclock_ioasic_attach, 
-};
+CFATTACH_DECL(mcclock_ioasic, sizeof (struct mcclock_ioasic_softc),
+    mcclock_ioasic_match, mcclock_ioasic_attach, NULL, NULL);
 
 void	mcclock_ioasic_write __P((struct mcclock_softc *, u_int, u_int));
 u_int	mcclock_ioasic_read __P((struct mcclock_softc *, u_int));
