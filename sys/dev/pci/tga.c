@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.26 2000/06/26 04:56:25 simonb Exp $ */
+/* $NetBSD: tga.c,v 1.27 2000/06/28 16:08:50 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,8 +35,6 @@
 #include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
-
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

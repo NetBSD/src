@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.11 2000/05/12 16:41:59 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.12 2000/06/28 16:08:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -52,7 +52,7 @@
 #include <sys/device.h>
 #include <sys/queue.h>
 
-#include <vm/vm.h>		/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
 #include <net/if.h>
 #include <net/if_dl.h>
