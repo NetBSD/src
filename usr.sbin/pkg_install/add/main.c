@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.33 2004/12/10 21:49:31 erh Exp $	*/
+/*	$NetBSD: main.c,v 1.34 2004/12/29 11:34:59 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.33 2004/12/10 21:49:31 erh Exp $");
+__RCSID("$NetBSD: main.c,v 1.34 2004/12/29 11:34:59 agc Exp $");
 #endif
 #endif
 
@@ -51,7 +51,7 @@ char   *Owner = NULL;
 char   *Group = NULL;
 char   *PkgName = NULL;
 char   *Directory = NULL;
-char    FirstPen[FILENAME_MAX];
+char    FirstPen[MaxPathSize];
 add_mode_t AddMode = NORMAL;
 int     Replace = 0;
 
