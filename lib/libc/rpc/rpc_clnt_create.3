@@ -2,7 +2,7 @@
 .\" Copyright 1989 AT&T
 .\" @(#)rpc_clnt_create 1.5 89/07/24 SMI;
 .\" Copyright (c) 1988 Sun Microsystems, Inc. - All Rights Reserved.
-.\"	$NetBSD: rpc_clnt_create.3,v 1.6 2002/10/01 17:22:01 wiz Exp $
+.\"	$NetBSD: rpc_clnt_create.3,v 1.7 2003/01/03 21:41:28 mjl Exp $
 .Dd May 7, 1993
 .Dt RPC_CLNT_CREATE 3
 .Os
@@ -390,7 +390,7 @@ Default options are set,
 which can be changed using
 .Fn clnt_control
 calls.
-The remote pcbind service on the host
+The remote rpcbind service on the host
 .Fa host
 is consulted for the address of the remote service.
 This routine returns
