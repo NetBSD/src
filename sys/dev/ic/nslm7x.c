@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.1 2000/02/25 02:17:43 groo Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.2 2000/03/07 18:39:14 groo Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,6 +114,41 @@ lm_writereg(sc, reg, val)
 
 
 /*
+ * bus independent probe
+ * pre:  lmsc contains valid busspace tag and handle
+ */
+
+int
+lm_probe(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	u_int8_t cr;
+	int rv;
+
+	/* Check for some power-on defaults */
+	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
+
+	/* Perform LM78 reset */
+	bus_space_write_1(iot, ioh, LMC_DATA, 0x80);
+
+	/* XXX - Why do I have to reselect the register? */
+	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
+	cr = bus_space_read_1(iot, ioh, LMC_DATA);
+
+	/* XXX - spec says *only* 0x08! */
+	if ((cr == 0x08) || (cr == 0x01))
+		rv = 1;
+	else
+		rv = 0;
+
+	DPRINTF(("lm: rv = %d, cr = %x\n", rv, cr));
+
+	return (rv);
+}
+
+
+/*
  * pre:  lmsc contains valid busspace tag and handle
  */
 void
@@ -159,7 +194,7 @@ lm_attach(lmsc)
 	}
 
 	lmsc->sensors[7].units = ENVSYS_STEMP;
-	strcpy(lmsc->info[7].desc, "MB Temp");
+	strcpy(lmsc->info[7].desc, "Temp");
 
 	for (i = 8; i < 11; ++i) {
 		lmsc->sensors[i].units = lmsc->info[i].units = ENVSYS_SFANRPM;
