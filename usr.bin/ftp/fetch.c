@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.147 2004/06/06 01:37:41 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.148 2004/07/20 10:40:21 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.147 2004/06/06 01:37:41 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.148 2004/07/20 10:40:21 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1278,6 +1278,7 @@ aborthttp(int notused)
 	char msgbuf[100];
 	int len;
 
+	sigint_raised = 1;
 	alarmtimer(0);
 	len = strlcpy(msgbuf, "\nHTTP fetch aborted.\n", sizeof(msgbuf));
 	write(fileno(ttyout), msgbuf, len);
@@ -1686,6 +1687,7 @@ go_fetch(const char *url)
  * If an ftp path has a trailing "/", the path will be cd-ed into and
  * the connection remains open, and the function will return -1
  * (to indicate the connection is alive).
+ * If the transfer was interrupted with SIGINT, the return value is EXIT_SIGINT.
  * If an error occurs the return value will be the offset+1 in
  * argv[] of the file that caused a problem (i.e, argv[x]
  * returns x+1)
@@ -1699,10 +1701,15 @@ auto_fetch(int argc, char *argv[])
 
 	argpos = 0;
 
+	sigint_raised = 0;
 	if (sigsetjmp(toplevel, 1)) {
 		if (connected)
 			disconnect(0, NULL);
-		return (argpos + 1);
+		if (rval > 0)
+			rval = argpos + 1;
+		if (sigint_raised)
+			rval = EXIT_SIGINT;
+		return (rval);
 	}
 	(void)xsignal(SIGINT, intr);
 	(void)xsignal(SIGPIPE, lostpeer);
@@ -1722,6 +1729,8 @@ auto_fetch(int argc, char *argv[])
 			outfile = NULL;
 		if (rval > 0)
 			rval = argpos + 1;
+		if (sigint_raised)
+			rval = EXIT_SIGINT;
 	}
 
 	if (connected && rval != -1)

@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.88 2004/07/09 12:12:27 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.89 2004/07/20 10:40:22 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -104,7 +104,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.88 2004/07/09 12:12:27 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.89 2004/07/20 10:40:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -515,8 +515,13 @@ main(int argc, char *argv[])
 		} else {
 			char *xargv[4], *user, *host;
 
-			if (sigsetjmp(toplevel, 1))
-				exit(0);
+			sigint_raised = 0;
+			if (sigsetjmp(toplevel, 1)) {
+				if (sigint_raised)
+					exit(EXIT_SIGINT);
+				else
+					exit(1);
+			}
 			(void)xsignal(SIGINT, intr);
 			(void)xsignal(SIGPIPE, lostpeer);
 			user = NULL;
