@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp_040.c,v 1.3 1999/08/29 22:50:25 mycroft Exp $	*/
+/*	$NetBSD: ldexp_040.c,v 1.4 1999/08/30 16:48:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp_040.c,v 1.3 1999/08/29 22:50:25 mycroft Exp $");
+__RCSID("$NetBSD: ldexp_040.c,v 1.4 1999/08/30 16:48:07 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -54,7 +54,7 @@ ldexp(val, exp)
 	double val;
 	int exp;
 {
-	register int oldexp, newexp, mulexp;
+	register int oldexp, newexp;
 	union {
 		double v;
 		struct ieee_double s;
