@@ -26,7 +26,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char cu_rcsid[] = "$Id: cu.c,v 1.4 1998/02/04 14:32:58 christos Exp $";
+const char cu_rcsid[] = "$Id: cu.c,v 1.5 1999/01/18 20:54:43 tron Exp $";
 #endif
 
 #include "cu.h"
@@ -2101,7 +2101,7 @@ fcusend_buf (qconn, zbufarg, cbufarg)
 	 of normal characters; when we send a newline we look for
 	 *zCuvar_echonl.  */
       if ((fCuvar_echocheck && ! fCuvar_binary)
-	  || (fnl && *zCuvar_echonl != '\0'))
+	  && (fnl && *zCuvar_echonl != '\0'))
 	{
 	  long iend;
 
