@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.4 1998/05/03 18:49:54 thorpej Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.5 1998/08/09 20:36:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ X_db_sym_init(symtab, esymtab, name)
 	 * Validate the Elf header.
 	 */
 	elf = (Elf_Ehdr *)symtab;
-	if (bcmp(elf->e_ident, Elf_e_ident, Elf_e_siz) != 0)
+	if (memcmp(elf->e_ident, Elf_e_ident, Elf_e_siz) != 0)
 		goto badheader;
 
 	switch (elf->e_machine) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.16 1998/07/28 21:39:54 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.17 1998/08/09 20:37:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -189,7 +189,7 @@ ibcs2_elf32_signature(p, epp, eh)
 		    (caddr_t)buf, sizeof(signature) - 1)) != 0)
 			goto out;
 
-		if (bcmp(buf, signature, sizeof(signature) - 1) == 0)
+		if (memcmp(buf, signature, sizeof(signature) - 1) == 0)
 			goto out;
 		else
 			break;	/* only one .note section so quit */

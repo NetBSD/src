@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_sig.c,v 1.16 1997/04/01 19:59:02 scottr Exp $	*/
+/*	$NetBSD: hpux_sig.c,v 1.17 1998/08/09 20:37:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,7 +221,7 @@ hpux_sys_sigprocmask(p, v, retval)
 	 * (proc sigmask should not be changed if call fails for any reason)
 	 */
 	if (SCARG(uap, oset)) {
-		bzero((caddr_t)&sigset, sizeof(sigset));
+		memset((caddr_t)&sigset, 0, sizeof(sigset));
 		sigset.sigset[0] = bsdtohpuxmask(p->p_sigmask);
 		if (copyout((caddr_t)&sigset, (caddr_t)SCARG(uap, oset),
 		    sizeof(sigset)))
@@ -308,7 +308,7 @@ hpux_sys_sigaction(p, v, retval)
 	sa = &action;
 	if (SCARG(uap, osa)) {
 		sa->sa_handler = ps->ps_sigact[sig];
-		bzero((caddr_t)&sa->sa_mask, sizeof(sa->sa_mask));
+		memset((caddr_t)&sa->sa_mask, 0, sizeof(sa->sa_mask));
 		sa->sa_mask.sigset[0] = bsdtohpuxmask(ps->ps_catchmask[sig]);
 		bit = sigmask(sig);
 		sa->sa_flags = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.14 1997/04/01 19:59:05 scottr Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.15 1998/08/09 20:37:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -95,7 +95,7 @@ hpux_termio(fd, com, data, p)
 		 */
 		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p)))
 			break;
-		bzero((char *)&htios, sizeof htios);
+		memset((char *)&htios, 0, sizeof htios);
 		/*
 		 * Set iflag.
 		 * Same through ICRNL, no BSD equivs for IUCLC, IENQAK
@@ -205,7 +205,7 @@ hpux_termio(fd, com, data, p)
 		htios.c_cc[HPUXVSTART] = tios.c_cc[VSTART];
 		htios.c_cc[HPUXVSTOP] = tios.c_cc[VSTOP];
 		if (newi)
-			bcopy((char *)&htios, data, sizeof htios);
+			memcpy(data, (char *)&htios, sizeof htios);
 		else
 			termiostotermio(&htios, (struct hpux_termio *)data);
 		break;
@@ -224,7 +224,7 @@ hpux_termio(fd, com, data, p)
 		if ((error = (*ioctlrout)(fp, TIOCGETA, (caddr_t)&tios, p)))
 			break;
 		if (newi)
-			bcopy(data, (char *)&htios, sizeof htios);
+			memcpy((char *)&htios, data, sizeof htios);
 		else
 			termiototermios((struct hpux_termio *)data,
 			    &htios, &tios);
@@ -387,7 +387,7 @@ termiototermios(tio, tios, bsdtios)
 {
 	int i;
 
-	bzero((char *)tios, sizeof *tios);
+	memset((char *)tios, 0, sizeof *tios);
 	tios->c_iflag = tio->c_iflag;
 	tios->c_oflag = tio->c_oflag;
 	tios->c_cflag = tio->c_cflag;
@@ -537,7 +537,7 @@ getsettty(p, fdes, com, cmarg)
 				(fp, TIOCHPCL, (caddr_t)0, p);
 		com = TIOCSETP;
 	} else {
-		bzero((caddr_t)&hsb, sizeof hsb);
+		memset((caddr_t)&hsb, 0, sizeof hsb);
 		com = TIOCGETP;
 	}
 	error = (*fp->f_ops->fo_ioctl)(fp, com, (caddr_t)&sb, p);

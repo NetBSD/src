@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.14 1998/03/05 04:36:07 scottb Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.15 1998/08/09 20:37:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -310,7 +310,7 @@ stios2stio(ts, t)
 	t->c_cflag = ts->c_cflag;
 	t->c_lflag = ts->c_lflag;
 	t->c_line  = ts->c_line;
-	bcopy(ts->c_cc, t->c_cc, IBCS2_NCC);
+	memcpy(t->c_cc, ts->c_cc, IBCS2_NCC);
 }
 
 static void
@@ -324,7 +324,7 @@ stio2stios(t, ts)
 	ts->c_cflag = t->c_cflag;
 	ts->c_lflag = t->c_lflag;
 	ts->c_line  = t->c_line;
-	bcopy(t->c_cc, ts->c_cc, IBCS2_NCC);
+	memcpy(ts->c_cc, t->c_cc, IBCS2_NCC);
 }
 
 int

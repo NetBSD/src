@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.6 1997/05/25 05:30:21 jonathan Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.7 1998/08/09 20:37:57 perry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -249,7 +249,7 @@ ultrixstatfs(sp, buf)
 {
 	struct ultrix_statfs ssfs;
 
-	bzero(&ssfs, sizeof ssfs);
+	memset(&ssfs, 0, sizeof ssfs);
 	ssfs.f_type = 0;
 	ssfs.f_bsize = sp->f_bsize;
 	ssfs.f_blocks = sp->f_blocks;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.31 1998/07/05 08:49:45 jonathan Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.32 1998/08/09 20:42:54 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -208,10 +208,10 @@ cd9660_mount(mp, path, data, ndp, p)
 	}
 	imp = VFSTOISOFS(mp);
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
-	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
+	memset(mp->mnt_stat.f_mntonname + size, 0, MNAMELEN - size);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
-	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	memset(mp->mnt_stat.f_mntfromname + size, 0, MNAMELEN - size);
 	return 0;
 }
 
@@ -272,7 +272,7 @@ iso_mountfs(devvp, mp, p, argp)
 			goto out;
 		
 		vdp = (struct iso_volume_descriptor *)bp->b_data;
-		if (bcmp (vdp->id, ISO_STANDARD_ID, sizeof vdp->id) != 0) {
+		if (memcmp(vdp->id, ISO_STANDARD_ID, sizeof(vdp->id)) != 0) {
 			error = EINVAL;
 			goto out;
 		}
@@ -305,10 +305,10 @@ iso_mountfs(devvp, mp, p, argp)
 	rootp = (struct iso_directory_record *)pri->root_directory_record;
 	
 	isomp = malloc(sizeof *isomp, M_ISOFSMNT, M_WAITOK);
-	bzero((caddr_t)isomp, sizeof *isomp);
+	memset((caddr_t)isomp, 0, sizeof *isomp);
 	isomp->logical_block_size = logical_block_size;
 	isomp->volume_space_size = isonum_733 (pri->volume_space_size);
-	bcopy (rootp, isomp->root, sizeof isomp->root);
+	memcpy(isomp->root, rootp, sizeof(isomp->root));
 	isomp->root_extent = isonum_733 (rootp->extent);
 	isomp->root_size = isonum_733 (rootp->size);
 	
@@ -498,8 +498,8 @@ cd9660_statfs(mp, sbp, p)
 	sbp->f_files =  0; /* total files */
 	sbp->f_ffree = 0; /* free file nodes */
 	if (sbp != &mp->mnt_stat) {
-		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
-		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
+		memcpy(sbp->f_mntonname, mp->mnt_stat.f_mntonname, MNAMELEN);
+		memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname, MNAMELEN);
 	}
 	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	/* Use the first spare for flags: */
@@ -629,7 +629,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	}
 	MALLOC(ip, struct iso_node *, sizeof(struct iso_node), M_ISOFSNODE,
 	    M_WAITOK);
-	bzero((caddr_t)ip, sizeof(struct iso_node));
+	memset((caddr_t)ip, 0, sizeof(struct iso_node));
 	lockinit(&ip->i_lock, PINOD, "isonode", 0, 0);
 	vp->v_data = ip;
 	ip->i_vnode = vp;

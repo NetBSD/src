@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.27 1998/07/28 21:39:54 thorpej Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.28 1998/08/09 20:37:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -413,7 +413,7 @@ linux_elf32_signature(p, epp, eh)
 		/*
 		 * error is 0, if the signatures match we are done.
 		 */
-		if (bcmp(buf, signature, sizeof(signature) - 1) == 0)
+		if (memcmp(buf, signature, sizeof(signature) - 1) == 0)
 			goto out;
 	}
 	error = EFTYPE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.25 1997/12/01 06:04:23 mjacob Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.26 1998/08/09 20:37:55 perry Exp $	 */
 /*
  * Copyright (c) 1994 Christos Zoulas
  * All rights reserved.
@@ -46,13 +46,13 @@
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_ucontext.h>
 
-#define sigemptyset(s)		bzero((s), sizeof(*(s)))
+#define sigemptyset(s)		memset((s), 0, sizeof(*(s)))
 #define sigismember(s, n)	(*(s) & sigmask(n))
 #define sigaddset(s, n)		(*(s) |= sigmask(n))
 
 #define	svr4_sigmask(n)		(1 << (((n) - 1) & (32 - 1)))
 #define	svr4_sigword(n)		(((n) - 1) >> 5)
-#define svr4_sigemptyset(s)	bzero((s), sizeof(*(s)))
+#define svr4_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
 #define	svr4_sigismember(s, n)	((s)->bits[svr4_sigword(n)] & svr4_sigmask(n))
 #define	svr4_sigaddset(s, n)	((s)->bits[svr4_sigword(n)] |= svr4_sigmask(n))
 

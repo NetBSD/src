@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.c,v 1.10 1996/06/05 19:27:41 christos Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.11 1998/08/09 20:37:56 perry Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -511,7 +511,7 @@ svr4_term_ioctl(fp, p, retval, fd, cmd, data)
 		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t) &bt, p)) != 0)
 			return error;
 
-		bzero(&st,sizeof(st));
+		memset(&st, 0, sizeof(st));
 		bsd_to_svr4_termios(&bt, &st);
 
 		DPRINTF(("ioctl(TCGET%c);\n", cmd == SVR4_TCGETA ? 'A' : 'S'));
