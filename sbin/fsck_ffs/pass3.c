@@ -1,4 +1,4 @@
-/*	$NetBSD: pass3.c,v 1.10 1997/09/16 16:45:19 lukem Exp $	*/
+/*	$NetBSD: pass3.c,v 1.10.14.1 2001/11/24 22:08:18 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass3.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: pass3.c,v 1.10 1997/09/16 16:45:19 lukem Exp $");
+__RCSID("$NetBSD: pass3.c,v 1.10.14.1 2001/11/24 22:08:18 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,9 +74,6 @@ pass3()
 			inp = getinoinfo(inp->i_parent);
 		}
 		(void)linkup(orphan, inp->i_dotdot);
-		inp->i_parent = inp->i_dotdot = lfdir;
 		lncntp[lfdir]--;
-		statemap[orphan] = DFOUND;
-		propagate();
 	}
 }
