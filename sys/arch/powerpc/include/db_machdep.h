@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.4 1998/08/31 14:43:39 tsubai Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.5 2000/06/25 13:37:55 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,7 +33,8 @@
 #ifndef	_PPC_DB_MACHDEP_H_
 #define	_PPC_DB_MACHDEP_H_
 
-#include <vm/vm_prot.h>
+#include <uvm/uvm_prot.h>
+
 #include <vm/vm_param.h>
 #include <vm/vm_inherit.h>
 #include <machine/trap.h>
