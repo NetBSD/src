@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.2 2002/07/01 16:10:02 fredette Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3 2002/07/04 16:44:10 thorpej Exp $	*/
 
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
@@ -73,7 +73,7 @@
 /*
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
-ENTRY(sigcode,0)
+ENTRY_NOPROFILE(sigcode,0)
 	.call
 	/*
 	 * Our sendsig() places the address of the signal handler 
