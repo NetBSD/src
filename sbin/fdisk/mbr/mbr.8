@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbr.8,v 1.3 1999/05/02 12:18:40 fvdl Exp $
+.\"	$NetBSD: mbr.8,v 1.4 2000/11/07 05:40:17 lukem Exp $
 .Dd April 13, 1999
 .Dt MBR 8 i386
 .Os
@@ -29,7 +29,8 @@ that cross or start beyond the 8 Gigabyte boundary.
 The bootselecting MBR contains configurable code that will present
 the user with a simple menu, allowing a choice between partitions to
 boot from, and hard disks to boot from. The choices and default settings
-can be configured through fdisk(8).
+can be configured through
+.Xr fdisk 8 .
 .El
 .Pp
 The rest of this manual page will discuss the bootselecting version of
