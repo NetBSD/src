@@ -5,14 +5,14 @@
 # files ../README and ../PORT/README for information on building nvi for
 # other systems.
 
-PROG=	nvi
+PROG=	vi
 #CFLAGS=-g -DDEBUG
 #CFLAGS+=-pg
 CFLAGS+=-I. -I${.CURDIR}
 #STRIP=
 .PATH:	${.CURDIR}/../common ${.CURDIR}/../ex ${.CURDIR}/../sex \
-	${.CURDIR}/../vi ${.CURDIR}/../svi ${.CURDIR}/../xaw
-CLEANFILES+=nex
+	${.CURDIR}/../vi ${.CURDIR}/../svi ${.CURDIR}/../xaw \
+	${.CURDIR}/../USD.doc/vi.man
 
 # General sources.
 SRCS=	cut.c delete.c exf.c line.c log.c main.c mark.c msg.c options.c \
@@ -53,12 +53,7 @@ DPADD+= ${LIBCURSES} ${LIBTERM} ${LIBUTIL}
 LDADD+=	-lcurses -ltermlib -lutil
 SPECHDR=compat.h excmd.h options.h
 CLEANFILES+=${SPECHDR}
-LINKS=	${BINDIR}/nvi ${BINDIR}/nex
-
-all: nvi nex vi.0
-nex: nvi
-	rm -f nex
-	ln nvi nex
+LINKS=	${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
 
 nvi: compat.h options.h excmd.h
 
@@ -74,10 +69,6 @@ excmd.h: excmd.h.stub excmd.c excmd.awk
 	rm -f excmd.h
 	cat ${.CURDIR}/../ex/excmd.h.stub > excmd.h
 	awk -f ${.CURDIR}/../ex/excmd.awk ${.CURDIR}/../ex/excmd.c >> excmd.h
-
-vi.0:
-	rm -f vi.0
-	ln -s ${.CURDIR}/../USD.doc/vi.man/vi.0 vi.0
 
 tags::
 	-(cd ${.CURDIR} && rm -f tags && \
@@ -98,6 +89,7 @@ warn:: ${SRCS}
 MAN=	${.CURDIR}/../USD.doc/vi.man
 REF=	${.CURDIR}/../USD.doc/vi.ref
 
+.include "../../Makefile.inc"
 .include <bsd.prog.mk>
 
 .depend: ${SPECHDR}
