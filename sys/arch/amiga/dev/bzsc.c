@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.8 1996/06/10 16:11:20 is Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.9 1996/07/01 08:00:02 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -102,15 +102,26 @@ bzscmatch(pdp, match, auxp)
 	void *match, *auxp;
 {
 	struct zbus_args *zap;
+	vu_char *ta;
 
 	if (!is_a1200())
 		return(0);
 
 	zap = auxp;
-	if (zap->manid == 0x2140 && zap->prodid == 11)
-		return(1);
+	if (zap->manid != 0x2140 || zap->prodid != 11)
+		return(0);
 
-	return(0);
+	ta = (vu_char *)(((char *)zap->va)+0x10010);
+	if (badbaddr((caddr_t)ta))
+		return(0);
+
+	*ta = 0;
+	*ta = 1;
+	DELAY(5);
+	if (*ta != 1)
+		return(0);
+
+	return(1);
 }
 
 void
