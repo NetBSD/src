@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.59 1997/01/27 20:50:42 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.60 1997/01/27 21:59:54 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,7 +58,6 @@
 #include <machine/machdep.h>
 
 #include <sun3/sun3/interreg.h>
-#include <sun3/sun3/sunmon.h>
 #include <sun3/sun3/vector.h>
 
 /* This is defined in locore.s */
