@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -32,7 +32,7 @@
  *
  *	@(#)routed.h	8.1 (Berkeley) 6/2/93
  *
- *	$NetBSD: routed.h,v 1.1.1.3 1997/02/03 21:06:37 christos Exp $
+ *	$NetBSD: routed.h,v 1.1.1.4 1999/02/23 09:56:52 christos Exp $
  */
 
 #ifndef _ROUTED_H_
@@ -40,7 +40,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ident "$Revision: 1.1.1.3 $"
+#ident "$Revision: 1.1.1.4 $"
 
 /*
  * Routing Information Protocol
@@ -134,7 +134,7 @@ struct rip {
 #define	RIPCMD_MAX		6
 
 #ifdef RIPCMDS
-char *ripcmds[RIPCMD_MAX] = {
+const char *ripcmds[RIPCMD_MAX] = {
 	"#0", "REQUEST", "RESPONSE", "TRACEON", "TRACEOFF"
 };
 #endif

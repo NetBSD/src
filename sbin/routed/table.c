@@ -11,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(sgi) && !defined(__NetBSD__)
-static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
+#if !defined(sgi) && !defined(__NetBSD__)
+static char sccsid[] __attribute__((unused)) = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
-static char rcsid[] = "$NetBSD: table.c,v 1.1.1.4 1998/06/02 17:41:27 thorpej Exp $";
+__RCSID("$NetBSD: table.c,v 1.1.1.5 1999/02/23 09:56:52 christos Exp $");
 #endif
-#ident "$Revision: 1.1.1.4 $"
 
 #include "defs.h"
 
@@ -183,11 +182,11 @@ ag_del(struct ag_info *ag)
 }
 
 
-/* Flush routes waiting for aggretation.
+/* Flush routes waiting for aggregation.
  *	This must not suppress a route unless it is known that among all
  *	routes with coarser masks that match it, the one with the longest
  *	mask is appropriate.  This is ensured by scanning the routes
- *	in lexical order, and with the most restritive mask first
+ *	in lexical order, and with the most restrictive mask first
  *	among routes to the same destination.
  */
 void
@@ -326,8 +325,8 @@ ag_check(naddr	dst,
 		 * A route to an address less than the current destination
 		 * will not be affected by the current route or any route
 		 * seen hereafter.  That means it is safe to suppress it.
-		 * This check keeps poor routes (eg. with large hop counts)
-		 * from preventing suppresion of finer routes.
+		 * This check keeps poor routes (e.g. with large hop counts)
+		 * from preventing suppression of finer routes.
 		 */
 		if (ag_cors != 0
 		    && ag->ag_dst_h < dst
@@ -608,10 +607,10 @@ ag_check(naddr	dst,
 }
 
 
-static char *
+static const char *
 rtm_type_name(u_char type)
 {
-	static char *rtm_types[] = {
+	static const char *rtm_types[] = {
 		"RTM_ADD",
 		"RTM_DELETE",
 		"RTM_CHANGE",
@@ -651,7 +650,7 @@ masktrim(struct sockaddr_in *ap)
 masktrim(struct sockaddr_in_new *ap)
 #endif
 {
-	register char *cp;
+	char *cp;
 
 	if (ap->sin_addr.s_addr == 0) {
 		ap->sin_len = 0;
@@ -689,7 +688,7 @@ rtioctl(int action,			/* RTM_DELETE, etc */
 #   define ARGS rtm_type_name(action), rtname(dst,mask,gate), metric, flags
 
 again:
-	bzero(&w, sizeof(w));
+	memset(&w, 0, sizeof(w));
 	w.w_rtm.rtm_msglen = sizeof(w);
 	w.w_rtm.rtm_version = RTM_VERSION;
 	w.w_rtm.rtm_type = action;
@@ -737,7 +736,7 @@ again:
 		msglog("write(rt_sock)" PAT ": %s", ARGS, strerror(errno));
 		return;
 	} else if (cc != w.w_rtm.rtm_msglen) {
-		msglog("write(rt_sock) wrote %d instead of %d for" PAT,
+		msglog("write(rt_sock) wrote %ld instead of %d for" PAT,
 		       cc, w.w_rtm.rtm_msglen, ARGS);
 		return;
 	}
@@ -800,7 +799,7 @@ kern_add(naddr dst, naddr mask)
 
 	k = (struct khash *)rtmalloc(sizeof(*k), "kern_add");
 
-	bzero(k, sizeof(*k));
+	memset(k, 0, sizeof(*k));
 	k->k_dst = dst;
 	k->k_mask = mask;
 	k->k_state = KS_NEW;
@@ -824,7 +823,7 @@ kern_check_static(struct khash *k,
 	if (k->k_metric == 0)
 		return;
 
-	bzero(&new, sizeof(new));
+	memset(&new, 0, sizeof(new));
 	new.rts_ifp = ifp;
 	new.rts_gate = k->k_gate;
 	new.rts_router = (ifp != 0) ? ifp->int_addr : loopaddr;
@@ -1083,7 +1082,7 @@ flush_kern(void)
 		if (rtm->rtm_msglen == 0) {
 			msglog("zero length kernel route at "
 			       " %#x in buffer %#x before %#x",
-			       rtm, sysctl_buf, lim);
+			       (int)rtm, (int)sysctl_buf, (int)lim);
 			break;
 		}
 
@@ -1377,7 +1376,7 @@ kern_out(struct ag_info *ag)
 /* ARGSUSED */
 static int
 walk_kern(struct radix_node *rn,
-	  struct walkarg *w)
+	  struct walkarg *argp UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	char metric, pref;
@@ -1592,10 +1591,11 @@ del_redirects(naddr bad_gate,
 
 /* Start the daemon tables.
  */
+extern int max_keylen;
+
 void
 rtinit(void)
 {
-	extern int max_keylen;
 	int i;
 	struct ag_info *ag;
 
@@ -1679,7 +1679,7 @@ rtadd(naddr	dst,
 	struct rt_spare *rts;
 
 	rt = (struct rt_entry *)rtmalloc(sizeof (*rt), "rtadd");
-	bzero(rt, sizeof(*rt));
+	memset(rt, 0, sizeof(*rt));
 	for (rts = rt->rt_spares, i = NUM_SPARES; i != 0; i--, rts++)
 		rts->rts_metric = HOPCNT_INFINITY;
 
@@ -1713,7 +1713,7 @@ rtadd(naddr	dst,
 
 	if (0 == rhead->rnh_addaddr(&rt->rt_dst_sock, &mask_sock,
 				    rhead, rt->rt_nodes)) {
-		msglog("rnh_addaddr() failed for %s mask=%#x",
+		msglog("rnh_addaddr() failed for %s mask=%#lx",
 		       naddr_ntoa(dst), mask);
 	}
 }
@@ -1807,7 +1807,7 @@ rtswitch(struct rt_entry *rt,
 		return;
 
 	swap = rt->rt_spares[0];
-	(void)sprintf(label, "Use #%d", rts - rt->rt_spares);
+	(void)sprintf(label, "Use #%d", (int)(rts - rt->rt_spares));
 	rtchange(rt, rt->rt_state & ~(RS_NET_SYN | RS_RDISC), rts, label);
 	if (swap.rts_metric == HOPCNT_INFINITY) {
 		*rts = rts_empty;
@@ -1945,7 +1945,7 @@ rtbad_sub(struct rt_entry *rt)
 /* ARGSUSED */
 int
 walk_bad(struct radix_node *rn,
-	 struct walkarg *w)
+	 struct walkarg *argp UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	struct rt_spare *rts;
@@ -1988,7 +1988,7 @@ walk_bad(struct radix_node *rn,
 /* ARGSUSED */
 static int
 walk_age(struct radix_node *rn,
-	   struct walkarg *w)
+	   struct walkarg *argp UNUSED)
 {
 #define RT ((struct rt_entry *)rn)
 	struct interface *ifp;
@@ -2091,7 +2091,7 @@ age(naddr bad_gate)
 		if (ifp->int_act_time != NEVER
 		    && now.tv_sec - ifp->int_act_time > EXPIRE_TIME) {
 			msglog("remote interface %s to %s timed out after"
-			       " %d:%d",
+			       " %ld:%ld",
 			       ifp->int_name,
 			       naddr_ntoa(ifp->int_dstaddr),
 			       (now.tv_sec - ifp->int_act_time)/60,
