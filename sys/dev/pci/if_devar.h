@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.19 1997/10/15 06:12:44 explorer Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.20 1997/10/15 19:07:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -166,7 +166,7 @@ typedef struct {
 
 #define	TULIP_TXTIMER		4
 #define	TULIP_RXDESCS		48
-#define	TULIP_TXDESCS		128
+#define	TULIP_TXDESCS		32
 #define	TULIP_RXQ_TARGET	32
 #if TULIP_RXQ_TARGET >= TULIP_RXDESCS
 #error TULIP_RXQ_TARGET must be less than TULIP_RXDESCS
@@ -241,6 +241,7 @@ typedef enum {
 
 typedef struct {
     enum {
+	TULIP_MEDIAINFO_NONE,
 	TULIP_MEDIAINFO_SIA,
 	TULIP_MEDIAINFO_GPR,
 	TULIP_MEDIAINFO_MII,
@@ -548,6 +549,7 @@ struct _tulip_softc_t {
 #define	TULIP_HAVE_OKROM	0x00002000	/* ROM was recognized */
 #define	TULIP_HAVE_NOMEDIA	0x00004000	/* did not detect any media */
 #define	TULIP_HAVE_STOREFWD	0x00008000	/* have CMD_STOREFWD */
+#define	TULIP_HAVE_SIA100	0x00010000	/* has LS100 in SIA status */
     u_int32_t tulip_intrmask;	/* our copy of csr_intr */
     u_int32_t tulip_cmdmode;	/* our copy of csr_cmdmode */
     u_int32_t tulip_last_system_error : 3;	/* last system error (only value is TULIP_SYSTEMERROR is also set) */
