@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.2 1997/03/08 19:46:43 cgd Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.3 1997/03/14 00:00:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -30,10 +30,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsirand.c,v 1.2 1997/03/08 19:46:43 cgd Exp $";
+static char rcsid[] = "$NetBSD: fsirand.c,v 1.3 1997/03/14 00:00:26 cgd Exp $";
 #endif /* lint */
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <errno.h>
