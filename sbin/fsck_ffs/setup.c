@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.51 2001/11/16 05:35:40 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.52 2001/12/19 10:05:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.51 2001/11/16 05:35:40 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.52 2001/12/19 10:05:20 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -602,6 +602,8 @@ cmpsblks(const struct fs *sb, struct fs *asb)
 		sb->fs_snapinum, sizeof sb->fs_snapinum);
 	asb->fs_avgfilesize = sb->fs_avgfilesize;
 	asb->fs_avgfpdir = sb->fs_avgfpdir;
+	asb->fs_pendingblocks = sb->fs_pendingblocks;
+	asb->fs_pendinginodes = sb->fs_pendinginodes;
 	memmove(asb->fs_sparecon,
 		sb->fs_sparecon, sizeof sb->fs_sparecon);
 	/*
