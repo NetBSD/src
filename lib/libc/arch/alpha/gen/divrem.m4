@@ -1,4 +1,4 @@
-/* $NetBSD: divrem.m4,v 1.8 2000/06/14 06:49:01 cgd Exp $ */
+/* $NetBSD: divrem.m4,v 1.9 2002/01/21 23:40:41 ross Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -171,7 +171,7 @@ ifelse(OP, `div',
 ifelse(S, `true',
 `
 	/* Check to see if we should negate it. */
-	subqv	zero, RESULT, T_0
+	subq	zero, RESULT, T_0
 	cmovlbs	NEG, T_0, RESULT
 ')
 
