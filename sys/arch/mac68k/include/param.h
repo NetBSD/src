@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.7 1993/12/15 03:22:58 briggs Exp $
+ *	$Id: param.h,v 1.8 1994/01/30 00:53:07 briggs Exp $
  */
 
 #ifndef PSL_IPL
@@ -241,14 +241,3 @@
 
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
-
-#ifdef KERNEL
-#ifndef LOCORE
-int	cpuspeed;
-#define	DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
-#endif
-
-#else
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
-
-#endif
