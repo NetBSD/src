@@ -1,12 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2003/12/01 09:37:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2003/12/04 09:29:36 mrg Exp $
 
 .include <bsd.own.mk>
 
-.if ${HAVE_BINUTILS214} == "yes"
 MODULE=		binutils
-.else
-MODULE=		toolchain
-.endif
 
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-,"

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.397 2003/12/03 10:26:45 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.398 2003/12/04 09:29:35 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -93,16 +93,6 @@ _SRC_TOP_OBJ_!=		cd ${_SRC_TOP_} && ${PRINTOBJDIR}
 
 .endif	# _SRC_TOP_ != ""		# }
 
-
-#
-# Transitional for toolchain upgrade to binutils 2.14
-# this has to be down here to get the definition of NETBSDSRCDIR.
-#
-.if exists(${NETBSDSRCDIR}/gnu/usr.bin/binutils/libbfd/arch/${MACHINE_ARCH}/config.h)
-HAVE_BINUTILS214?=	yes
-.else
-HAVE_BINUTILS214?=	no
-.endif
 
 .if (${_SRC_TOP_} != "") && \
     (${TOOLCHAIN_MISSING} != "yes" || defined(EXTERNAL_TOOLCHAIN))

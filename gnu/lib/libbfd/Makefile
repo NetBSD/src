@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2003/10/21 10:01:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.37 2003/12/04 09:29:31 mrg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -20,10 +20,10 @@ LIB=		bfd
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
+DIST=		${NETBSDSRCDIR}/gnu/dist/binutils
+
 SHLIB_MAJOR=	5
 SHLIB_MINOR=	0
-
-DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} -I${DIST}/include -I. \
