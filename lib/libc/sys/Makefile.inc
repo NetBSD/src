@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.60 1997/06/12 15:46:58 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.61 1997/06/12 22:39:15 mrg Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -17,7 +17,7 @@ SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c
 # we can avoid bumping libc's minor number as functions are added to the
 # kernel.
 SRCS+=	timer_create.c timer_delete.c timer_gettime.c timer_settime.c \
-	timer_getoverrun.c
+	timer_getoverrun.c swapon.c
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
