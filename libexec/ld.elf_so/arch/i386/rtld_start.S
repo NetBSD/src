@@ -1,11 +1,11 @@
-/*	$NetBSD: rtld_start.S,v 1.4 2002/09/09 14:08:08 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.5 2002/09/11 17:23:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,7 +44,6 @@
 	.type	.rtld_start,@function
 .rtld_start:
 	subl	$8,%esp			# make room of obj_main and exit proc
-	movl	%esp,%eax		# save stack pointer for _rtld
 	pushl	%ebx			# save ps_strings
 
 	call	1f
@@ -53,19 +52,18 @@
 	addl	$_GLOBAL_OFFSET_TABLE_+[.-1b],%ebx
 
 	movl	_GLOBAL_OFFSET_TABLE_@GOT(%ebx),%edx
-	movl	_GOT_END_@GOT(%ebx),%ecx
-	subl	%edx,%ecx
-	shrl	$2,%ecx
-	subl	%ebx,%edx
-1:
-	subl	%edx,(%ebx)
-	leal	4(%ebx),%ebx
-	decl	%ecx
-	jg	1b
+	movl	_DYNAMIC@GOT(%ebx),%ecx
+	subl	%edx,%ebx
+	pushl	%ebx
+	addl	%ebx,%ecx
+	pushl	%ecx
+	call	_rtld_relocate_nonplt_self@PLT
 
+	leal	12(%esp),%eax		# &cleanup
 	pushl	%eax
 	call	_rtld@PLT		# _rtld(sp)
-	addl	$4,%esp			# pop args
+
+	addl	$12,%esp		# pop args
 
 	popl	%ebx			# %ebx = ps_strings
 	popl	%edx			# %edx = cleanup
