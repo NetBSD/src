@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.28 1995/05/26 17:09:37 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.29 1995/05/30 15:32:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -120,11 +120,9 @@ L_high_code:
 	movc	d0, sfc			| space for copyin/copyout
 	movc	d0, dfc
 
-| Setup process zero user/kernel stacks and PCB.  Note:
-| Make sure PCB.sr is valid before cpu_fork copies it!
+| Setup process zero user/kernel stacks.
 	movl	_proc0paddr,a1		| get proc0 pcb addr
-	lea	a1@(USPACE-4),sp	| set kernel stack to end of it
-	movw	sr,a1@(PCB_PS)		| PSL_HIGHPRI
+	lea	a1@(USPACE-4),sp	| set SSP to last word
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 
@@ -1050,7 +1048,7 @@ Lswnofpsave:
 #endif
 
 | Important note:  We MUST call pmap_activate to set the
-| MMU context register (like setting a root table poiter).
+| MMU context register (like setting a root table pointer).
 	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
 	pea	a1@			| push pcb (at p_addr)
 	pea	a0@			| push pmap
@@ -1084,6 +1082,7 @@ Lres_skip:
 	btst	#13,d0			| supervisor mode?
 	jeq	Lbadsw			| no? panic!
 #endif
+	movw	d0,sr			| OK, restore PS
 	moveq	#1,d0			| return 1 (for alternate returns)
 	rts
 
