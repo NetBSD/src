@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.4 1995/11/28 23:40:50 thorpej Exp $	*/
+/*	$NetBSD: bzero.S,v 1.5 1996/11/30 02:01:26 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)bzero.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bzero.S,v 1.4 1995/11/28 23:40:50 thorpej Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.5 1996/11/30 02:01:26 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,26 +59,26 @@
 ENTRY(bzero)
 	movl	sp@(4),a0		| destination
 	movl	sp@(8),d0		| count
-	beq	bzdone			| nothing to do
+	beq	Lbzdone			| nothing to do
 	movl	a0,d1
 	btst	#0,d1			| address odd?
-	beq	bzeven			| no, skip alignment
+	beq	Lbzeven			| no, skip alignment
 	clrb	a0@+			| yes, clear a byte
 	subql	#1,d0			| adjust count
-	beq	bzdone			| if zero, all done
-bzeven:
+	beq	Lbzdone			| if zero, all done
+Lbzeven:
 	movl	d0,d1
 	lsrl	#2,d1			| convert to longword count
-	beq	bzbloop			| no longwords, skip loop
-bzlloop:
+	beq	Lbzbloop		| no longwords, skip loop
+Lbzlloop:
 	clrl	a0@+			| clear a longword
 	subql	#1,d1			| adjust count
-	bne	bzlloop			| still more, keep going
+	bne	Lbzlloop		| still more, keep going
 	andl	#3,d0			| what remains
-	beq	bzdone			| nothing, all done
-bzbloop:
+	beq	Lbzdone			| nothing, all done
+Lbzbloop:
 	clrb	a0@+			| clear a byte
 	subql	#1,d0			| adjust count
-	bne	bzbloop			| still more, keep going
-bzdone:
+	bne	Lbzbloop		| still more, keep going
+Lbzdone:
 	rts
