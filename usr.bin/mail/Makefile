@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.17 2000/09/23 13:53:42 simonb Exp $
+#	$NetBSD: Makefile,v 1.18 2001/10/19 02:46:19 tv Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
 
 PROG=	mail
-SRCS=	version.c aux.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c dotlock.c \
+SRCS=	version.c support.c cmd1.c cmd2.c cmd3.c cmdtab.c collect.c dotlock.c \
 	edit.c fio.c getname.c head.c v7.local.c lex.c list.c main.c names.c \
 	popen.c quit.c send.c strings.c temp.c tty.c vars.c
 EFILES=	mail.rc
