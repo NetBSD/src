@@ -1,7 +1,7 @@
-/*	$NetBSD: i80321var.h,v 1.7 2003/02/06 03:16:49 briggs Exp $	*/
+/*	$NetBSD: i80321var.h,v 1.8 2003/10/06 16:06:06 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -166,6 +166,10 @@ void	i80321_icu_init(void);
 void	i80321_intr_init(void);
 void	*i80321_intr_establish(int, int, int (*)(void *), void *);
 void	i80321_intr_disestablish(void *);
+
+void	i80321_gpio_set_direction(uint8_t, uint8_t);
+void	i80321_gpio_set_val(uint8_t, uint8_t);
+uint8_t	i80321_gpio_get_val(void);
 
 void	i80321_bs_init(bus_space_tag_t, void *);
 void	i80321_io_bs_init(bus_space_tag_t, void *);
