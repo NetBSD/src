@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2001/05/28 21:54:27 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2001/05/28 22:47:05 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -572,13 +572,6 @@ cpu_dumpconf()
 	int nblks;	/* size of dump area */
 	int maj;
 	int (*getsize)__P((dev_t));
-
-	/* Validate space in page zero for the kcore header. */
-	if (MSGBUFOFF < (sizeof(kcore_seg_t) + sizeof(cpu_kcore_hdr_t))) {
-		printf("%d %d\n",
-MSGBUFOFF, (sizeof(kcore_seg_t) + sizeof(cpu_kcore_hdr_t)));
-		panic("cpu_dumpconf: MSGBUFOFF too small");
-	}
 
 	if (dumpdev == NODEV)
 		return;
