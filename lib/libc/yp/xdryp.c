@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.21 1998/11/15 17:10:30 christos Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.22 1999/01/31 20:46:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.21 1998/11/15 17:10:30 christos Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.22 1999/01/31 20:46:12 christos Exp $");
 #endif
 
 /*
@@ -381,7 +381,7 @@ xdr_ypmaplist(xdrs, objp)
 		return FALSE;
 
 	if (!xdr_pointer(xdrs, (caddr_t *)&objp->ypml_next,
-	    sizeof(struct ypmaplist), xdr_ypmaplist))
+	    sizeof(struct ypmaplist), (xdrproc_t)xdr_ypmaplist))
 		return FALSE;
 
 	return TRUE;
@@ -396,7 +396,7 @@ xdr_ypresp_maplist(xdrs, objp)
 		return FALSE;
 
 	if (!xdr_pointer(xdrs, (caddr_t *)&objp->list,
-	    sizeof(struct ypmaplist), xdr_ypmaplist))
+	    sizeof(struct ypmaplist), (xdrproc_t)xdr_ypmaplist))
 		return FALSE;
 
 	return TRUE;
