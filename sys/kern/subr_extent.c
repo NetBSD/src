@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.8.4.2 1997/08/29 00:29:12 thorpej Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.8.4.3 1997/08/29 00:33:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -381,7 +381,7 @@ extent_alloc_region(ex, start, size, flags)
 			 * We lie before this region and don't
 			 * conflict.
 			 */
-			 break;
+			break;
 		}
 
 		/*
