@@ -1,16 +1,5 @@
 /* netboot
  *
- * $Log: kbd.c,v $
- * Revision 1.1  1993/07/08 16:04:00  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.2  1993/06/30  20:16:13  mckim
- * Clean up compiler error msg.
- *
- * Revision 1.1.1.1  1993/05/28  11:41:07  mckim
- * Initial version.
- *
- *
  * source in this file came from
  * the original 386BSD boot blocks.
  *
@@ -49,6 +38,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)kbd.c	7.4 (Berkeley) 5/4/91
+ *	$Id: kbd.c,v 1.2 1994/02/15 15:10:22 mycroft Exp $
  */
 
 #include "proto.h"

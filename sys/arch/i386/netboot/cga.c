@@ -1,13 +1,5 @@
 /* netboot
  *
- * $Log: cga.c,v $
- * Revision 1.1  1993/07/08 16:03:54  brezak
- * Diskless boot prom code from Jim McKim (mckim@lerc.nasa.gov)
- *
- * Revision 1.1.1.1  1993/05/28  11:41:06  mckim
- * Initial version.
- *
- *
  * source in this file came from
  * the original 386BSD boot block.
  *
@@ -46,6 +38,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)cga.c	5.3 (Berkeley) 4/28/91
+ *	$Id: cga.c,v 1.2 1994/02/15 15:10:20 mycroft Exp $
  */
 
 #include "proto.h"
