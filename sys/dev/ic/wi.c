@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.152 2004/02/10 00:52:12 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.153 2004/02/10 00:59:38 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.152 2004/02/10 00:52:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.153 2004/02/10 00:59:38 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -328,6 +328,21 @@ wi_attach(struct wi_softc *sc)
 			sc->sc_flags |= WI_FLAGS_BUG_AUTOINC;
 		}
 #endif
+		/* RSS rate-adaptation is known to cause STA f/w
+		 * 8.42.1 to lock up. STA f/w 8.70.1 and 7.28.1
+		 * appear to work.  I suspect that most versions
+		 * will work.
+		 */
+		switch (sc->sc_sta_firmware_ver) {
+		case 0x084201:
+			sc->sc_flags &= ~WI_FLAGS_RSSADAPTSTA;
+			break;
+		case 0x087001:
+		case 0x072801:
+		default:
+			sc->sc_flags |= WI_FLAGS_RSSADAPTSTA;
+			break;
+		}
 		if (sc->sc_sta_firmware_ver >= 60000)
 			sc->sc_flags |= WI_FLAGS_HAS_MOR;
 		if (sc->sc_sta_firmware_ver >= 60006) {
@@ -338,6 +353,7 @@ wi_attach(struct wi_softc *sc)
 		break;
 
 	case WI_INTERSIL:
+		sc->sc_flags |= WI_FLAGS_RSSADAPTSTA;
 		sc->sc_flags |= WI_FLAGS_HAS_FRAGTHR;
 		sc->sc_flags |= WI_FLAGS_HAS_ROAMING;
 		sc->sc_flags |= WI_FLAGS_HAS_SYSSCALE;
@@ -354,15 +370,13 @@ wi_attach(struct wi_softc *sc)
 		break;
 
 	case WI_SYMBOL:
+		sc->sc_flags |= WI_FLAGS_RSSADAPTSTA;
 		sc->sc_flags |= WI_FLAGS_HAS_DIVERSITY;
 		if (sc->sc_sta_firmware_ver >= 20000)
 			ic->ic_caps |= IEEE80211_C_IBSS;
 		sc->sc_ibss_port = 4;
 		break;
 	}
-
-	/* start out doing RSS link adaptation. */
-	sc->sc_flags |= WI_FLAGS_RSSADAPT;
 
 	/*
 	 * Find out if we support WEP on this card.
@@ -826,7 +840,7 @@ wi_stop(struct ifnet *ifp, int disable)
 
 /*
  * Choose a data rate for a packet len bytes long that suits the packet
- * type and, if WI_FLAGS_RSSADAPT, the wireless conditions.
+ * type and the wireless conditions.
  *
  * TBD Adapt fragmentation threshold.
  */
@@ -874,7 +888,8 @@ wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 		rateidx = i;
 		if ((rs->rs_rates[i] & flags) != flags)
 			continue;
-		if ((sc->sc_flags & WI_FLAGS_RSSADAPT) == 0)
+		if (ic->ic_opmode != IEEE80211_M_HOSTAP &&
+		    (sc->sc_flags & WI_FLAGS_RSSADAPTSTA) == 0)
 			break;
 		if ((*thrs)[i] < ra->ra_avg_rssi)
 			break;
@@ -1094,7 +1109,7 @@ wi_start(struct ifnet *ifp)
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
 			frmhdr.wi_tx_rate = 5 * (rs->rs_rates[ni->ni_txrate] &
 			    IEEE80211_RATE_VAL);
-		else if (sc->sc_flags & WI_FLAGS_RSSADAPT)
+		else if (sc->sc_flags & WI_FLAGS_RSSADAPTSTA)
 			(void)wi_write_txrate(sc, rs->rs_rates[ni->ni_txrate]);
 
 		m_copydata(m0, 0, sizeof(struct ieee80211_frame),
@@ -1126,9 +1141,8 @@ wi_start(struct ifnet *ifp)
 		}
 		sc->sc_txnext = cur = (cur + 1) % WI_NTXBUF;
 		SLIST_REMOVE_HEAD(&sc->sc_rssdfree, rd_next);
-		if (sc->sc_flags & WI_FLAGS_RSSADAPT) {
-			id->id_node = ni;
-		} else
+		id->id_node = ni;
+		continue;
 next:
 		if (ni != NULL && ni != ic->ic_bss)
 			ieee80211_free_node(ic, ni);
