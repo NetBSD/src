@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.17 2001/11/13 01:08:11 lukem Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.18 2003/01/20 01:38:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.17 2001/11/13 01:08:11 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.18 2003/01/20 01:38:43 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ ns_pcbbind(nsp, nam, p)
 {
 	struct sockaddr_ns *sns;
 	u_int16_t lport = 0;
-	int error;
 
 	if (nsp->nsp_lport || !ns_nullhost(nsp->nsp_laddr))
 		return (EINVAL);
@@ -103,7 +102,7 @@ ns_pcbbind(nsp, nam, p)
 	if (lport) {
 
 		if (ntohs(lport) < NSPORT_RESERVED &&
-		    (p == 0 || (error = suser(p->p_ucred, &p->p_acflag))))
+		    (p == 0 || suser(p->p_ucred, &p->p_acflag)))
 			return (EACCES);
 		if (ns_pcblookup(&zerons_addr, lport, 0))
 			return (EADDRINUSE);
