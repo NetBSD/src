@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.3 1999/10/30 10:56:49 uch Exp $	*/
+/*	$NetBSD: platid.def,v 1.4 1999/11/21 07:58:49 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -76,10 +76,10 @@ NEC {
     }
     5XX {
       CPU=MIPS_VR_4111 500
-      CPU=MIPS_VR_4121 510 520
+      CPU=MIPS_VR_4121 510 520 520A
     }
     7XX {
-      CPU=MIPS_VR_4121 700
+      CPU=MIPS_VR_4121 700 700A
     }
   }
 }
