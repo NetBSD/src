@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.44 1999/04/26 21:56:23 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.45 1999/05/26 01:07:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -162,8 +162,13 @@ sys___sysctl(p, v, retval)
 			memlock.sl_locked++;
 		}
 		memlock.sl_lock = 1;
-		if (dolock)
-			uvm_vslock(p, SCARG(uap, old), oldlen);
+		if (dolock) {
+			/*
+			 * XXX Um, this is kind of evil.  What should we
+			 * XXX be passing here?
+			 */
+			uvm_vslock(p, SCARG(uap, old), oldlen, VM_PROT_NONE);
+		}
 		savelen = oldlen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
