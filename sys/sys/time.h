@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.27 1998/03/01 02:24:15 fvdl Exp $	*/
+/*	$NetBSD: time.h,v 1.27.8.1 2000/02/18 20:26:14 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -162,6 +162,7 @@ struct clockinfo {
 int	itimerfix __P((struct timeval *tv));
 int	itimerdecr __P((struct itimerval *itp, int usec));
 void	microtime __P((struct timeval *tv));
+int	ratecheck __P((struct timeval *, const struct timeval *));
 #else /* !_KERNEL */
 
 #ifndef _STANDALONE
