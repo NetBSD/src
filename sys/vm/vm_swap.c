@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.4 1997/05/06 22:55:30 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.5 1997/05/07 22:33:17 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -139,7 +139,9 @@ static int swap_on __P((struct proc *, struct swapdev *));
 static int swap_off __P((struct proc *, struct swapdev *));
 #endif
 static struct swapdev *swap_getdevfromaddr __P((daddr_t));
+#if _unused_
 static daddr_t swap_vtop_addr __P((daddr_t));
+#endif
 static daddr_t swap_ptov_addr __P((struct swapdev *, daddr_t));
 static void swap_addmap __P((struct swapdev *, int));
 
@@ -258,6 +260,8 @@ sys_swapon(p, v, retval)
 				printf("sw: had to create a new swappri = %d\n",
 				   priority);
 #endif /* SWAPDEBUG */
+
+			CIRCLEQ_INIT(&nspp->spi_swapdev);
 			nspp->spi_priority = priority;
 			if (spp == NULL)
 				spp = pspp;
@@ -284,7 +288,6 @@ sys_swapon(p, v, retval)
 						 spi_swappri);
 			}
 		}
-		CIRCLEQ_INIT(&nspp->spi_swapdev);
 		CIRCLEQ_INSERT_TAIL(&nspp->spi_swapdev, nsdp, swd_next);
 		vref(vp);
 		break;
@@ -364,6 +367,7 @@ swap_on(p, sdp)
 	struct vnode *vp = sdp->swd_vp;
 	int error, nblks, size;
 	long blk, addr;
+#define SWAP_TO_FILES
 #ifdef SWAP_TO_FILES
 	struct vattr va;
 #endif
@@ -397,7 +401,7 @@ swap_on(p, sdp)
 #ifdef SWAP_TO_FILES
 		if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
 			goto bad;
-		nblks = (int)(va.va_size / S_BLKSIZE);
+		nblks = (int)btodb(va.va_size);
 #else
 		error = ENXIO;
 		goto bad;
@@ -422,7 +426,7 @@ swap_on(p, sdp)
 #endif
 
 	/*
-	 * skip over first cluster of a device incase of labels or
+	 * skip over first cluster of a device in case of labels or
 	 * boot blocks.
 	 */
 	if (vp->v_type == VBLK) {
@@ -436,13 +440,13 @@ swap_on(p, sdp)
 	if (vmswapdebug & VMSDB_SWON)
 		printf("swap_on: dev %x: size %d, addr %ld\n", dev, size, addr);
 #endif /* SWAPDEBUG */
-	/* coalese these two malloc calls? */
+	/* coalesce these two malloc calls? */
 	name = malloc(12, M_VMSWAP, M_WAITOK);
 	sprintf(name, "swap0x%04x", count++);
 	ssize = EXTENT_FIXED_STORAGE_SIZE(nswapmap);
 	storage = malloc(ssize, M_VMSWAP, M_WAITOK);
-	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP, storage,
-	    ssize, EX_MALLOCOK|EX_NOWAIT);
+	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP,
+				    storage, ssize, EX_MALLOCOK|EX_WAITOK);
 	swap_addmap(sdp, size);
 	nswapdev++;
 	nswap += nblks;
@@ -489,7 +493,7 @@ swap_off(p, sdp)
 	return ENODEV;
 
 	free(sdp->swd_ex->ex_name, M_VMSWAP);
-	extent_free(swapmap, sdp->swd_mapsize, sdp->swd_mapoffset, EX_WAITOK);
+	extent_free(swapmap, sdp->swd_mapoffset, sdp->swd_mapsize, EX_WAITOK);
 	nswap -= sdp->swd_nblks;
 	nswapdev--;
 	extent_destroy(sdp->swd_ex);
@@ -497,7 +501,7 @@ swap_off(p, sdp)
 	if (sdp->swp_vp != rootvp)
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
 	if (sdp->swd_vp)
-		vput(sdp->swd_vp);
+		vrele(sdp->swd_vp);
 	free((caddr_t)sdp, M_VMSWAP);
 	return (0);
 }
@@ -537,10 +541,10 @@ swap_alloc(size)
 
 	/* XXX THIS IS BUSTED XXX */
 	for (spp = swap_priority.lh_first; spp != NULL;
-	    spp = spp->spi_swappri.le_next) {
+	     spp = spp->spi_swappri.le_next) {
 		for (sdp = spp->spi_swapdev.cqh_first; sdp != NULL;
-		    sdp = sdp->swd_next.cqe_next) {
-			/* if it's not enabled, then, we can't swap from it */
+		     sdp = sdp->swd_next.cqe_next) {
+			/* if it's not enabled, then we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0 ||
 			    extent_alloc(sdp->swd_ex, size, EX_NOALIGN,
 					 EX_NOBOUNDARY, 0, &result) != 0) {
@@ -574,7 +578,7 @@ swap_free(size, addr)
 	if (nswapdev < 1)
 		panic("swap_free: nswapdev < 1\n");
 #endif
-	extent_free(sdp->swd_ex, size, swap_vtop_addr(addr), EX_NOWAIT);
+	extent_free(sdp->swd_ex, addr - sdp->swd_mapoffset, size, EX_NOWAIT);
 }
 
 /*
@@ -613,6 +617,7 @@ swap_ptov_addr(sdp, addr)
 	return (addr + sdp->swd_mapoffset);
 }
 
+#if _unused_
 /* XXX make this a macro or an inline? */
 static daddr_t
 swap_vtop_addr(addr)
@@ -622,6 +627,7 @@ swap_vtop_addr(addr)
 
 	return (addr - sdp->swd_mapoffset);
 }
+#endif
 
 void
 swap_addmap(sdp, size)
@@ -630,13 +636,10 @@ swap_addmap(sdp, size)
 {
 	u_long result;
 
-	sdp->swd_mapoffset = extent_alloc(swapmap, size, EX_NOALIGN,
-					  EX_NOBOUNDARY, 0, &result);
-	/* XXX if we fail we should try another swap partition!!! */
-#ifdef DIAGNOSTIC
-	if (result < 0)
+	if (extent_alloc(swapmap, size, EX_NOALIGN, EX_NOBOUNDARY, 0, &result))
 		panic("swap_addmap");
-#endif
+
+	sdp->swd_mapoffset = result;
 	sdp->swd_mapsize = size;
 }
 
@@ -670,8 +673,9 @@ swstrategy(bp)
 	struct vnode *vp;
 	daddr_t addr;
 
-	addr = dbtob(bp->b_blkno);
+	addr = bp->b_blkno;
 	sdp = swap_getdevfromaddr(addr);
+	bp->b_blkno = addr - sdp->swd_mapoffset;
 
 	VHOLD(sdp->swd_vp);
 	if ((bp->b_flags & B_READ) == 0) {
@@ -685,7 +689,6 @@ swstrategy(bp)
 		sdp->swd_vp->v_numoutput++;
 	}
 
-	bp->b_blkno = btodb(addr - sdp->swd_mapoffset);
 	if (bp->b_vp != NULL)
 		brelvp(bp);
 	bp->b_vp = sdp->swd_vp;
@@ -737,8 +740,8 @@ swapinit()
 		printf("swapinit: swapmap size=%08lx addr=%08lx nswapmap=%d\n",
 		    size, addr, nswapmap);
 #endif
-	swapmap = extent_create("swapmap", addr, addr + size, M_WAITOK, storage,
-	    ssize, EX_MALLOCOK);
+	swapmap = extent_create("swapmap", addr, addr + size, M_WAITOK,
+				storage, ssize, EX_MALLOCOK);
 	if (swapmap == 0)
 		panic("swapinit: extent_create failed");
 
