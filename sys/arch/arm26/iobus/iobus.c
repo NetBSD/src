@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.2 2000/10/14 23:44:42 bjh21 Exp $ */
+/* $NetBSD: iobus.c,v 1.3 2001/01/23 22:59:24 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iobus.c,v 1.2 2000/10/14 23:44:42 bjh21 Exp $");
+__RCSID("$NetBSD: iobus.c,v 1.3 2001/01/23 22:59:24 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -43,11 +43,11 @@ __RCSID("$NetBSD: iobus.c,v 1.2 2000/10/14 23:44:42 bjh21 Exp $");
 
 #include "locators.h"
 
-static int iobus_match __P((struct device *parent, struct cfdata *cf, void *aux));
-static void iobus_attach __P((struct device *parent, struct device *self, void *aux));
-static int iobus_search_ioc __P((struct device *parent, struct cfdata *cf, void *aux));
-static int iobus_search __P((struct device *parent, struct cfdata *cf, void *aux));
-static int iobus_print __P((void *aux, const char *pnp));
+static int iobus_match(struct device *parent, struct cfdata *cf, void *aux);
+static void iobus_attach(struct device *parent, struct device *self, void *aux);
+static int iobus_search_ioc(struct device *parent, struct cfdata *cf, void *aux);
+static int iobus_search(struct device *parent, struct cfdata *cf, void *aux);
+static int iobus_print(void *aux, const char *pnp);
 
 struct iobus_softc {
 	struct device	sc_dev;
@@ -60,10 +60,7 @@ struct cfattach iobus_ca = {
 extern struct cfdriver iobus_cd;
 
 static int
-iobus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+iobus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
 	/* There can be only one! */
@@ -74,10 +71,7 @@ iobus_match(parent, cf, aux)
 }
 
 static void
-iobus_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+iobus_attach(struct device *parent, struct device *self, void *aux)
 {
 
 	printf("\n");
@@ -93,10 +87,7 @@ iobus_attach(parent, self, aux)
 extern struct bus_space iobus_bs_tag;
 
 static int
-iobus_search_ioc(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+iobus_search_ioc(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct iobus_attach_args ioa;
 
@@ -110,10 +101,7 @@ iobus_search_ioc(parent, cf, aux)
 }
 
 static int
-iobus_search(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+iobus_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct iobus_attach_args ioa;
 	
@@ -126,9 +114,7 @@ iobus_search(parent, cf, aux)
 }
 
 static int
-iobus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+iobus_print(void *aux, const char *pnp)
 {
 	struct iobus_attach_args *ioa = aux;
 
@@ -136,4 +122,3 @@ iobus_print(aux, pnp)
 		printf(" base 0x%06x", ioa->ioa_base);
 	return UNCONF;
 }
-
