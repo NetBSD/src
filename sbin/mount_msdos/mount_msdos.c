@@ -3,7 +3,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: mount_msdos.c,v 1.2 1993/08/02 17:51:11 mycroft Exp $";
+static char rcsid[] = "$Id: mount_msdos.c,v 1.3 1993/08/14 11:05:26 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -26,7 +26,7 @@ char **argv;
 {
 	char *dev;
 	char *dir;
-	struct pcfs_args args;
+	struct msdosfs_args args;
 	int c;
 	extern char *optarg;
 	extern int optind;
