@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.72 2004/08/19 23:02:09 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.73 2004/09/25 03:32:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.72 2004/08/19 23:02:09 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.73 2004/09/25 03:32:52 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: mount.c,v 1.72 2004/08/19 23:02:09 christos Exp $");
 
 #define MOUNTNAMES
 #include <fcntl.h>
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 
@@ -660,6 +661,7 @@ static const char *
 getfslab(str)
 	const char *str;
 {
+	static struct dkwedge_info dkw;
 	struct disklabel dl;
 	int fd;
 	int part;
@@ -687,6 +689,13 @@ getfslab(str)
 		/* Silently fail here - mount call can display error */
 		if ((fd = open(buf, O_RDONLY)) == -1)
 			return (NULL);
+	}
+
+	/* Check to see if this is a wedge. */
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
+		/* Yup, this is easy. */
+		(void) close(fd);
+		return (dkw.dkw_ptype);
 	}
 
 	if (ioctl(fd, DIOCGDINFO, &dl) == -1) {

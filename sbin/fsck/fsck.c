@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.35 2004/08/19 22:28:38 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.36 2004/09/25 03:32:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.35 2004/08/19 22:28:38 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.36 2004/09/25 03:32:52 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: fsck.c,v 1.35 2004/08/19 22:28:38 christos Exp $");
 #include <sys/wait.h>
 #define FSTYPENAMES
 #define FSCKNAMES
+#include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 
@@ -490,10 +491,10 @@ mangle(char *opts, int *argcp, const char ***argvp, int *maxargcp)
 	*maxargcp = maxargc;
 }
 
-
 const static char *
 getfslab(const char *str)
 {
+	static struct dkwedge_info dkw;
 	struct disklabel dl;
 	int fd;
 	char p;
@@ -503,6 +504,13 @@ getfslab(const char *str)
 	/* deduce the file system type from the disk label */
 	if ((fd = open(str, O_RDONLY)) == -1)
 		err(1, "cannot open `%s'", str);
+
+	/* First check to see if it's a wedge. */
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
+		/* Yup, this is easy. */
+		(void) close(fd);
+		return (dkw.dkw_ptype);
+	}
 
 	if (ioctl(fd, DIOCGDINFO, &dl) == -1)
 		err(1, "cannot get disklabel for `%s'", str);
