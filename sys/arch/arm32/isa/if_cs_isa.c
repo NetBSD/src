@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.11 1998/07/21 00:22:29 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.12 1998/07/21 00:23:18 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -275,25 +275,6 @@ do {									\
 		CS_WRITE_PACKET_PAGE_IO((sc)->sc_iot, (sc)->sc_ioh,	\
 		    (offset), (val));					\
 } while (0)
-
-/*
- * the kerndebug macros reserve use of the first and last byte, so we can
- * only use the middle two bytes for flags.
- */
-
-#define CSPROBE_DBG_INFO    0x00000100
-#define CSATTACH_DBG_INFO   0x00000200
-#define CSRESET_DBG_INFO    0x00000400
-#define CSINIT_DBG_INFO     0x00000800
-#define CSIOCTL_DBG_INFO    0x00001000
-#define CSSTARTTX_DBG_INFO  0x00002000
-#define CSTXEVENT_DBG_INFO  0x00004000
-#define CSRXNORM_DBG_INFO   0x00008000
-#define CSRXEARLY_DBG_INFO  0x00010000
-#define CSRXDMA_DBG_INFO    0x00020000
-#define CSMCAST_DBG_INFO    0x00040000
-#define CSBUFF_DBG_INFO     0x00080000
-#define CSUTIL_DBG_INFO     0x00800000
 
 /*
  * FUNCTION PROTOTYPES
