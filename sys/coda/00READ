@@ -1,9 +1,0 @@
-WARNING:A version of this code has run on 1.3 for a while now.
-	The code has been recently ported to current.  It is mostly
-	working, but hasn't been run long enough to be sure all the
-	bugs are sorted out.  Let me know if there are any problems.
-	In particular, killing venus (or rebooting) when/if venus
-	is hung, may not work correctly.
-
-
-						rvb@cmu.edu
