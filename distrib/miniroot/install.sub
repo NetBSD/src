@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.39 2000/11/22 21:04:46 abs Exp $
+#	$NetBSD: install.sub,v 1.40 2001/12/17 20:17:34 fredette Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -159,6 +159,10 @@ dir_has_sets() {
 		fi
 		# Try for stupid msdos convention
 		if [ -f $_dir/${_file}.tgz ]; then
+			return 0
+		fi
+		# Try for uncompressed files
+		if [ -f $_dir/${_file}.tar ]; then
 			return 0
 		fi
 		# Try for split files
@@ -628,7 +632,7 @@ install_ftp() {
 	echo "while read line; do"	>> /tmp/fname_filter.sh
 	echo "    case \$line in"	>> /tmp/fname_filter.sh
 	for _f in $THESETS; do
-		echo "    $_f.tar.gz|$_f.tgz|$_f.${VERSION}.aa)" \
+		echo "    $_f.tar.gz|$_f.tgz|$_f.tar|$_f.${VERSION}.aa)" \
 					>> /tmp/fname_filter.sh
 		echo '        echo -n "$line ";;' \
 					>> /tmp/fname_filter.sh
@@ -820,6 +824,8 @@ install_from_mounted_fs() {
 			_sets="$_sets ${_f}.tar.gz"
 		elif [ -f ${_dirname}/${_f}.tgz ]; then
 			_sets="$_sets ${_f}.tgz"
+		elif [ -f ${_dirname}/${_f}.tar ]; then
+			_sets="$_sets ${_f}.tar"
 		elif [ -f ${_dirname}/${_f}${VERSION}.aa ]; then
 			_sets="$_sets ${_f}${VERSION}"
 		fi
@@ -881,7 +887,15 @@ install_from_mounted_fs() {
 
 			# Extract file
 			echo "Extracting the $_f set:"
-			cat $_filename | (cd /mnt; pax -zr${verbose_flag}pe)
+			case "$_filename" in
+			*.tar)
+				(cd /mnt; pax -r${verbose_flag}pe < $_filename)
+				;;
+			*)
+				cat $_filename | \
+					(cd /mnt; pax -zr${verbose_flag}pe)
+				;;
+			esac
 			echo "Extraction complete."
 			_setsdone="$_f $_setsdone"
 		done
@@ -1144,7 +1158,19 @@ install_nfs() {
 			;;
 
 		*)
-			_nfs_tcp=""
+			echo -n "Use small NFS transfers (needed when server "
+			echo "or client"
+			echo -n "has a slow network card)? [n] "
+			getresp "n"
+			case "$resp" in
+			y*|Y*)
+				_nfs_tcp="-r 1024 -w 1024"
+				;;
+
+			*)
+				_nfs_tcp=""
+				;;
+			esac
 			;;
 	esac
 
