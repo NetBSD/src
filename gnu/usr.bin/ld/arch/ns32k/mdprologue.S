@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mdprologue.S,v 1.3 1995/05/29 18:11:35 phil Exp $
+ *	$Id: mdprologue.S,v 1.4 1996/07/31 06:22:41 phil Exp $
  */
 
 /*
@@ -64,11 +64,13 @@ _rtl_entry:
  */
 
 _binder_entry:
-	movd	tos,r1			/* grab return address (within PLT) */
-	movd	r0,tos			/* save r0 (for cerror)		*/
-	movzwd	0(r1),tos		/* get function index		*/
-	addr	-6(r1),tos		/* point to PLT slot		*/
+	save	[r0,r1,r2]		/* preserve scratch registers	*/
+					/* save r0 (for cerror) 	*/
+					/* save r1 (maybe static chain) */
+					/* save r2 (maybe struct addr)	*/
+	addr	-6(12(sp)),tos		/* push address of PLT slot	*/
 	bsr	_binder			/* relocate function address	*/
-	movd	r0,tos			/* prepare for jump		*/
-	movd	12(sp),r0		/* restore r0			*/
-	ret	12			/* jump into function		*/
+	cmpqd	0,tos
+	movd	r0,12(sp)		/* prepare for jump		*/
+	restore	[r0,r1,r2]		/* restore scratch registers	*/
+	ret	0			/* jump into function		*/
