@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.2 1999/05/02 18:26:43 kleink Exp $	*/
+/*	$NetBSD: common.h,v 1.3 1999/08/19 20:52:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -37,6 +37,12 @@
 
 #include <stdlib.h>
 #ifdef DYNAMIC
+#ifdef __weak_alias
+#define dlopen	_dlopen
+#define dlclose	_dlclose
+#define dlsym	_dlsym
+#define dlerror	_dlerror
+#endif
 #include <dlfcn.h>
 #include "rtld.h"
 #else
