@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_sfil.c,v 1.4 2000/05/21 18:53:55 veego Exp $	*/
+/*	$NetBSD: ip_sfil.c,v 1.5 2000/05/23 06:16:44 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "%W% %G% (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.23.2.1 2000/05/13 07:47:26 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_sfil.c,v 2.23.2.2 2000/05/22 10:26:14 darrenr Exp";
 #endif
 
 #include <sys/types.h>
@@ -677,10 +677,9 @@ cred_t *cp;
  * send_reset - this could conceivably be a call to tcp_respond(), but that
  * requires a large amount of setting up and isn't any more efficient.
  */
-int send_reset(fin, oip, qif)
-fr_info_t *fin;
+int send_reset(oip, fin)
 ip_t *oip;
-qif_t *qif;
+fr_info_t *fin;
 {
 	tcphdr_t *tcp, *tcp2;
 	int tlen = 0, hlen;
@@ -702,11 +701,12 @@ qif_t *qif;
 #endif
 		hlen = sizeof(ip_t);
 	hlen += sizeof(*tcp2);
-	if ((m = (mblk_t *)allocb(hlen, BPRI_HI)) == NULL)
+	if ((m = (mblk_t *)allocb(hlen + 16, BPRI_HI)) == NULL)
 		return -1;
 
+	m->b_rptr += 16;
 	MTYPE(m) = M_DATA;
-	m->b_wptr += hlen;
+	m->b_wptr = m->b_rptr + hlen;
 	bzero((char *)m->b_rptr, hlen);
 	tcp2 = (struct tcphdr *)(m->b_rptr + hlen - sizeof(*tcp2));
 	tcp2->th_dport = tcp->th_sport;
@@ -721,19 +721,13 @@ qif_t *qif;
 	 * computation that is done by their put routine.
 	 */
 	tcp2->th_sum = htons(0x14);
-	RWLOCK_EXIT(&ipfs_mutex);
-	RWLOCK_EXIT(&ipf_solaris);
 #ifdef	USE_INET6
 	if (fin->fin_v == 6) {
 		ip6 = (ip6_t *)m->b_rptr;
-		ip6->ip6_flow = 0;
-		ip6->ip6_vfc = 0x60;
-		ip6->ip6_hlim = 127;
 		ip6->ip6_src = oip6->ip6_dst;
 		ip6->ip6_dst = oip6->ip6_src;
-		ip6->ip6_plen = sizeof(*tcp);
+		ip6->ip6_plen = htons(sizeof(*tcp));
 		ip6->ip6_nxt = IPPROTO_TCP;
-		ip_wput_v6(qif->qf_ill->ill_wq, m);
 	} else
 #endif
 	{
@@ -741,12 +735,38 @@ qif_t *qif;
 		ip->ip_src.s_addr = oip->ip_dst.s_addr;
 		ip->ip_dst.s_addr = oip->ip_src.s_addr;
 		ip->ip_hl = sizeof(*ip) >> 2;
-		ip->ip_v = IPVERSION;
 		ip->ip_p = IPPROTO_TCP;
 		ip->ip_len = htons(sizeof(*ip) + sizeof(*tcp));
 		ip->ip_tos = oip->ip_tos;
+	}
+	return send_ip(fin, m);
+}
+
+
+int send_ip(fin, m)
+fr_info_t *fin;
+mblk_t *m;
+{
+	RWLOCK_EXIT(&ipfs_mutex);
+	RWLOCK_EXIT(&ipf_solaris);
+#ifdef	USE_INET6
+	if (fin->fin_v == 6) {
+		ip6_t *ip6;
+
+		ip6 = (ip6_t *)m->b_rptr;
+		ip6->ip6_flow = 0;
+		ip6->ip6_vfc = 0x60;
+		ip6->ip6_hlim = 127;
+		ip_wput_v6(((qif_t *)fin->fin_qif)->qf_ill->ill_wq, m);
+	} else
+#endif
+	{
+		ip_t *ip;
+
+		ip = (ip_t *)m->b_rptr;
+		ip->ip_v = IPVERSION;
 		ip->ip_ttl = 60;
-		ip_wput(qif->qf_ill->ill_wq, m);
+		ip_wput(((qif_t *)fin->fin_qif)->qf_ill->ill_wq, m);
 	}
 	READ_ENTER(&ipf_solaris);
 	READ_ENTER(&ipfs_mutex);
@@ -754,26 +774,27 @@ qif_t *qif;
 }
 
 
-int send_icmp_err(oip, type, code, fin, dst)
+int send_icmp_err(oip, type, fin, dst)
 ip_t *oip;
-int type, code;
+int type;
 fr_info_t *fin;
 int dst;
 {
 	struct in_addr dst4;
 	struct icmp *icmp;
+	mblk_t *m, *mb;
+	int hlen, code;
 	qif_t	*qif;
 	u_short sz;
-	mblk_t *m, *mb;
 #ifdef	USE_INET6
 	ip6_t *ip6, *oip6;
 #endif
 	ip_t *ip;
-	int hlen;
 
 	if ((type < 0) || (type > ICMP_MAXTYPE))
 		return -1;
 
+	code = fin->fin_icode;
 #ifdef USE_INET6
 	if ((code < 0) || (code > sizeof(icmptoicmp6unreach)/sizeof(int)))
 		return -1;
@@ -794,18 +815,32 @@ int dst;
 	} else
 #endif
 	{
+		if ((oip->ip_p == IPPROTO_ICMP) &&
+		    !(fin->fin_fi.fi_fl & FI_SHORT))
+			switch (ntohs(fin->fin_data[0]) >> 8)
+			{
+			case ICMP_ECHO :
+			case ICMP_TSTAMP :
+			case ICMP_IREQ :
+			case ICMP_MASKREQ :
+				break;
+			default :
+				return 0;
+			}
+
 		sz = sizeof(ip_t) * 2;
 		sz += 8;		/* 64 bits of data */
 		hlen = sz;
 	}
 
 	sz += offsetof(struct icmp, icmp_ip);
-	if ((mb = (mblk_t *)allocb((size_t)sz, BPRI_HI)) == NULL)
+	if ((mb = (mblk_t *)allocb((size_t)sz + 16, BPRI_HI)) == NULL)
 		return -1;
 	MTYPE(mb) = M_DATA;
-	mb->b_wptr += sz;
+	mb->b_rptr += 16;
+	mb->b_wptr = mb->b_rptr + sz;
 	bzero((char *)mb->b_rptr, (size_t)sz);
-	icmp = (struct icmp *)(mb->b_rptr + hlen);
+	icmp = (struct icmp *)(mb->b_rptr + sizeof(*ip));
 	icmp->icmp_type = type;
 	icmp->icmp_code = code;
 	icmp->icmp_cksum = 0;
@@ -816,7 +851,7 @@ int dst;
 		int csz;
 
 		if (dst == 0) {
-			if (fr_ifpaddr(6, qif->qf_ill,
+			if (fr_ifpaddr(6, ((qif_t *)fin->fin_qif)->qf_ill,
 				       (struct in_addr *)&dst6) == -1)
 				return -1;
 		} else
@@ -848,7 +883,8 @@ int dst;
 		ip->ip_tos = oip->ip_tos;
 		ip->ip_len = (u_short)htons(sz);
 		if (dst == 0) {
-			if (fr_ifpaddr(4, qif->qf_ill, &dst4) == -1)
+			if (fr_ifpaddr(4, ((qif_t *)fin->fin_qif)->qf_ill,
+				       &dst4) == -1)
 				return -1;
 		} else
 			dst4 = oip->ip_dst;
@@ -865,10 +901,5 @@ int dst;
 	 * Need to exit out of these so we don't recursively call rw_enter
 	 * from fr_qout.
 	 */
-	RWLOCK_EXIT(&ipfs_mutex);
-	RWLOCK_EXIT(&ipf_solaris);
-	ip_wput(qif->qf_ill->ill_wq, mb);
-	READ_ENTER(&ipf_solaris);
-	READ_ENTER(&ipfs_mutex);
-	return 0;
+	return send_ip(fin, mb);
 }
