@@ -33,17 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_we.c	7.3 (Berkeley) 5/21/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         3       00047
- * --------------------         -----   ----------------------
- *
- * 20 Sep 92	Barry Lustig		WD8013 16 bit mode -- enable
- *						with "option WD8013".
- * 19 Sep 92	Michael Galassi		Fixed multiboard routing
- * 09 Sep 92	Mike Durkin		Fix Danpex EW-2016 & other 8013 clones
+ *	from: @(#)if_we.c	7.3 (Berkeley) 5/21/91
+ *	$Id: if_we.c,v 1.9 1993/05/18 18:19:01 cgd Exp $
  */
 
 /*
@@ -59,7 +50,10 @@
  * BPF trailer support added by David Greenman, 1/7/93
  *
  * $Log: if_we.c,v $
- * Revision 1.8  1993/05/01 19:12:45  mycroft
+ * Revision 1.9  1993/05/18 18:19:01  cgd
+ * make kernel select interface be one-stop shopping & clean it all up.
+ *
+ * Revision 1.8  1993/05/01  19:12:45  mycroft
  * Fix error in last change.  B-P
  *
  * Revision 1.7  1993/04/30  23:48:35  mycroft
@@ -103,6 +97,7 @@
 #include "ioctl.h"
 #include "errno.h"
 #include "syslog.h"
+#include "select.h"
 
 #include "net/if.h"
 #include "net/if_types.h"

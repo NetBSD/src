@@ -30,10 +30,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)af.c	7.6 (Berkeley) 6/28/90
+ *	from: @(#)af.c	7.6 (Berkeley) 6/28/90
+ *	$Id: af.c,v 1.2 1993/05/18 18:19:49 cgd Exp $
  */
 
 #include "param.h"
+#include "select.h"
 #include "mbuf.h"
 #include "protosw.h"
 #include "socket.h"

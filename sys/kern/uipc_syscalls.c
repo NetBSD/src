@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)uipc_syscalls.c	7.24 (Berkeley) 6/3/91
+ *	from: @(#)uipc_syscalls.c	7.24 (Berkeley) 6/3/91
+ *	$Id: uipc_syscalls.c,v 1.2 1993/05/18 18:19:40 cgd Exp $
  */
 
 #include "param.h"
@@ -39,6 +40,7 @@
 #include "file.h"
 #include "buf.h"
 #include "malloc.h"
+#include "select.h"
 #include "mbuf.h"
 #include "protosw.h"
 #include "socket.h"

@@ -30,19 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)com.c	7.5 (Berkeley) 5/16/91
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         4       00079
- * --------------------         -----   ----------------------
- *
- * 23 Sep 92	Rodney W. Grimes	Fix SILO overflow on 16550 UARTS
- * 30 Aug 92	Poul-Henning Kamp	Stabilize SLIP on lossy lines/UARTS
- * 09 Aug 92	Christoph Robitschko	Correct minor number on com ports
- * 10 Feb 93	Jordan K. Hubbard	Added select code
+ *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
+ *	$Id: com.c,v 1.7 1993/05/18 18:18:59 cgd Exp $
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/Attic/com.c,v 1.6 1993/04/10 12:05:19 glass Exp $";
 
 #include "com.h"
 #if NCOM > 0
@@ -53,6 +43,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/Attic/com.c,v 1.6 1993/
 #include "param.h"
 #include "systm.h"
 #include "ioctl.h"
+#include "select.h"
 #include "tty.h"
 #include "proc.h"
 #include "user.h"
@@ -537,11 +528,7 @@ comstart(tp)
 			tp->t_state &= ~TS_ASLEEP;
 			wakeup((caddr_t)&tp->t_out);
 		}
-		if (tp->t_wsel) {
-			selwakeup(tp->t_wsel, tp->t_state & TS_WCOLL);
-			tp->t_wsel = 0;
-			tp->t_state &= ~TS_WCOLL;
-		}
+		selwakeup(&tp->t_wsel);
 	}
 	if (RB_LEN(&tp->t_out) == 0)
 		goto out;
@@ -743,19 +730,13 @@ comselect(dev, rw, p)
 		if (nread > 0 || 
 		   ((tp->t_cflag&CLOCAL) == 0 && (tp->t_state&TS_CARR_ON) == 0))
 			goto win;
-		if (tp->t_rsel && (selp = pfind(tp->t_rsel)) && selp->p_wchan == (caddr_t)&selwait)
-			tp->t_state |= TS_RCOLL;
-		else
-			tp->t_rsel = p->p_pid;
+		selrecord(p, &tp->t_rsel);
 		break;
 
 	case FWRITE:
 		if (RB_LEN(&tp->t_out) <= tp->t_lowat)
 			goto win;
-		if (tp->t_wsel && (selp = pfind(tp->t_wsel)) && selp->p_wchan == (caddr_t)&selwait)
-			tp->t_state |= TS_WCOLL;
-		else
-			tp->t_wsel = p->p_pid;
+		selrecord(p, &tp->t_wsel);
 		break;
 	}
 	splx(s);

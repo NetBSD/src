@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bpfdesc.h	7.1 (Berkeley) 5/7/91
- *
- * @(#) $Header: /cvsroot/src/sys/net/bpfdesc.h,v 1.4 1993/04/19 03:47:43 mycroft Exp $ (LBL)
+ *	from: @(#)bpfdesc.h	7.1 (Berkeley) 5/7/91
+ * 	$Id: bpfdesc.h,v 1.5 1993/05/18 18:19:52 cgd Exp $
  */
 
 #ifndef _NET_BPFDESC_H_
@@ -74,14 +73,10 @@ struct bpf_d {
 	u_char		bd_promisc;	/* true if listening promiscuously */
 	u_char		bd_state;	/* idle, waiting, or timed out */
 	u_char		bd_immediate;	/* true to return on packet arrival */
-#if BSD <= 199103
+#if (BSD <= 199103) && !defined(__386BSD__)
 	u_char		bd_selcoll;	/* true if selects collide */
 	int		bd_timedout;
-#if defined(__386BSD__)
-	pid_t		bd_selpid;	/* process that last selected us */
-#else
 	struct proc *	bd_selproc;	/* process that last selected us */
-#endif
 #else /* BSD > 199103 */
 	u_char		bd_pad;		/* explicit alignment */
 	struct selinfo	bd_sel;		/* bsd select info */

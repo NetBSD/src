@@ -35,10 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bpf.c	7.5 (Berkeley) 7/15/91
- *
- * static char rcsid[] =
- * "$Header: /cvsroot/src/sys/net/bpf.c,v 1.4 1993/04/09 11:02:51 glass Exp $";
+ *	from: @(#)bpf.c	7.5 (Berkeley) 7/15/91
+ *	$Id: bpf.c,v 1.5 1993/05/18 18:19:50 cgd Exp $
  */
 
 #include "bpfilter.h"
@@ -58,6 +56,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
 
 #include <sys/file.h>
 #if defined(sparc) && BSD < 199103
@@ -472,24 +471,16 @@ bpf_wakeup(d)
 	register struct bpf_d *d;
 {
 	wakeup((caddr_t)d);
-#if BSD > 199103
+#if (BSD > 199103) || defined(__386BSD__)
 	selwakeup(&d->bd_sel);
 	/* XXX */
 	d->bd_sel.si_pid = 0;
-#else
-#if defined(__386BSD__)
-	if (d->bd_selpid) {
-		selwakeup(d->bd_selpid, (int)d->bd_selcoll);
-		d->bd_selcoll = 0;
-		d->bd_selpid = 0; /* XXX */
-	}
 #else
 	if (d->bd_selproc) {
 		selwakeup(d->bd_selproc, (int)d->bd_selcoll);
 		d->bd_selcoll = 0;
 		d->bd_selproc = 0;
 	}
-#endif
 #endif
 }
 
@@ -937,9 +928,6 @@ bpf_select(dev, rw, p)
 {
 	register struct bpf_d *d;
 	register int s;
-#if defined(__386BSD__)
-	struct proc *p2;
-#endif
 
 	if (rw != FREAD)
 		return (0);
@@ -956,7 +944,7 @@ bpf_select(dev, rw, p)
 		splx(s);
 		return (1);
 	}
-#if 0
+#if defined(__386BSD__)
 	selrecord(p, &d->bd_sel);
 #else
 	/*
@@ -966,17 +954,10 @@ bpf_select(dev, rw, p)
 	 * forks while one of these is open, it is possible that both
 	 * processes could select on the same descriptor.
 	 */
-#if defined(__386BSD__)
-        if (d->bd_selpid && (p2=pfind(d->bd_selpid)) && p2->p_wchan == (caddr_t)&selwait)
-                d->bd_selcoll = 1;
-        else
-                d->bd_selpid = p->p_pid;
-#else
 	if (d->bd_selproc && d->bd_selproc->p_wchan == (caddr_t)&selwait)
 		d->bd_selcoll = 1;
 	else
 		d->bd_selproc = p;
-#endif
 #endif
 	splx(s);
 	return (0);

@@ -30,12 +30,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_subr.c	7.20 (Berkeley) 12/1/90
+ *	from: @(#)tcp_subr.c	7.20 (Berkeley) 12/1/90
+ *	$Id: tcp_subr.c,v 1.3 1993/05/18 18:20:19 cgd Exp $
  */
 
 #include "param.h"
 #include "systm.h"
 #include "malloc.h"
+#include "select.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "socketvar.h"
