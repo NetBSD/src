@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.10 1999/04/29 17:34:49 cgd Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.11 1999/05/05 01:51:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -73,11 +73,11 @@
 extern int scdebug;
 #endif
 
-int osf1_ioctl_f	__P((struct proc *p, struct sys_ioctl_args *nuap,
+static int osf1_ioctl_f	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
-int osf1_ioctl_i	__P((struct proc *p, struct sys_ioctl_args *nuap,
+static int osf1_ioctl_i	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
-int osf1_ioctl_t	__P((struct proc *p, struct sys_ioctl_args *nuap,
+static int osf1_ioctl_t	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
 
 int
@@ -150,7 +150,7 @@ osf1_sys_ioctl(p, v, retval)
 	}
 }
 
-int
+static int
 osf1_ioctl_f(p, uap, retval, cmd, dir, len)
 	struct proc *p;
 	struct sys_ioctl_args *uap;
@@ -178,7 +178,7 @@ osf1_ioctl_f(p, uap, retval, cmd, dir, len)
 	return sys_ioctl(p, uap, retval);
 }
 
-int
+static int
 osf1_ioctl_i(p, uap, retval, cmd, dir, len)
 	struct proc *p;
 	struct sys_ioctl_args *uap;
@@ -212,7 +212,7 @@ osf1_ioctl_i(p, uap, retval, cmd, dir, len)
 	return sys_ioctl(p, uap, retval);
 }
 
-int
+static int
 osf1_ioctl_t(p, uap, retval, cmd, dir, len)
 	struct proc *p;
 	struct sys_ioctl_args *uap;
