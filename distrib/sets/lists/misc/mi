@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.43 2000/09/10 20:03:11 joda Exp $
+# $NetBSD: mi,v 1.44 2000/10/10 11:17:49 itojun Exp $
 ./usr/share/dict/README
 ./usr/share/dict/eign
 ./usr/share/dict/propernames
@@ -526,6 +526,7 @@
 ./usr/share/sendmail/ostype/solaris2.m4
 ./usr/share/sendmail/ostype/solaris2.ml.m4
 ./usr/share/sendmail/ostype/solaris2.pre5.m4
+./usr/share/sendmail/ostype/solaris8.m4
 ./usr/share/sendmail/ostype/sunos3.5.m4
 ./usr/share/sendmail/ostype/sunos4.1.m4
 ./usr/share/sendmail/ostype/svr4.m4

@@ -10,7 +10,7 @@ divert(-1)
 #
 #  Definitions for Makefile construction for sendmail
 #
-#	Id: defines.m4,v 8.31.4.1 2000/06/05 17:29:45 gshapiro Exp
+#	Id: defines.m4,v 8.31.4.2 2000/08/23 04:06:10 gshapiro Exp
 #
 divert(0)dnl
 
@@ -61,7 +61,6 @@ LIBDIRS=confLIBDIRS
 LIBADD= ifdef(`conf_'bldCURRENT_PRD`_LIBS', `conf_'bldCURRENT_PRD`_LIBS') 
 
 # libraries required on your system
-#  delete -l44bsd if you are not running BIND 4.9.x
 LIBS= ${LIBADD} ifdef(`confLIBS', `confLIBS') ifdef(`conf_'bldCURRENT_PRD`_LIB_POST', `conf_'bldCURRENT_PRD`_LIB_POST') 
 
 # location of sendmail binary (usually /usr/sbin or /usr/lib)
