@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.60 2000/09/27 12:42:04 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.61 2000/10/02 09:26:26 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -259,6 +259,7 @@ int	md_post_newfs __P((void));
 int	md_pre_disklabel __P((void));
 int	md_pre_update __P((void));
 int	md_update __P((void));
+void	md_init __P((void));
 
 /* from main.c */
 void toplevel __P((void));

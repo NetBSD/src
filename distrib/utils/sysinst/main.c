@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2000/05/11 02:23:53 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2000/10/02 09:26:26 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,7 +107,8 @@ main(argc, argv)
 		default:
 			usage();
 		}
-	
+
+	md_init();
 
 	/* initialize message window */
 	if (menu_init()) {
