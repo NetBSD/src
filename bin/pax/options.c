@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.29 2000/07/04 17:17:49 thorpej Exp $	*/
+/*	$NetBSD: options.c,v 1.30 2000/07/04 17:24:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.29 2000/07/04 17:17:49 thorpej Exp $");
+__RCSID("$NetBSD: options.c,v 1.30 2000/07/04 17:24:47 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -665,13 +665,13 @@ struct option tar_longopts[] = {
 	{ "uncompress",		no_argument,		0,	'Z' },
 	{ "unlink",		no_argument,		0,
 						OPT_UNLINK },
+	{ "use-compress-program", required_argument,	0,
+						OPT_USE_COMPRESS_PROGRAM },
 #if 0 /* Not implemented */
 	{ "catenate",		no_argument,		0,	'A' },	/* F */
 	{ "concatenate",	no_argument,		0,	'A' },	/* F */
 	{ "diff",		no_argument,		0,	'd' },	/* F */
 	{ "compare",		no_argument,		0,	'd' },	/* F */
-	{ "use-compress-program", required_argument,	0,
-						OPT_USE_COMPRESS_PROGRAM },
 	{ "checkpoint",		no_argument,		0,
 						OPT_CHECKPOINT },
 	{ "help",		no_argument,
@@ -915,6 +915,10 @@ tar_options(argc, argv)
 			break;
 		case OPT_UNLINK:
 			/* Just ignore -- we always unlink first. */
+			break;
+		case OPT_USE_COMPRESS_PROGRAM:
+			zflag = 1;
+			gzip_program = optarg;
 			break;
 		default:
 			tar_usage();
