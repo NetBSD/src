@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.99 2000/03/10 12:04:43 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.100 2000/03/10 20:01:50 windsor Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -83,6 +83,11 @@ private
 # ./etc/postfix
 postfix
 # ./etc/postfix
+..
+
+# ./etc/ppp
+ppp
+# ./etc/ppp
 ..
 
 # ./etc/rc.d
