@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/02/09 07:59:01 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2004/02/23 05:47:47 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ BUILDTARGETS+=	do-tools
 BUILDTARGETS+=	do-lib-X11 do-lib-ICE do-lib-Xau
 BUILDTARGETS+=	do-lib-SM do-lib-Xext
 BUILDTARGETS+=	do-lib-Xt do-lib-Xpm do-lib-Xrender do-lib-GL
-BUILDTARGETS+=	do-lib-Xmu do-lib-dps
+BUILDTARGETS+=	do-lib-Xmu do-lib-dps do-lib-expat
 BUILDTARGETS+=	do-lib
 BUILDTARGETS+=	do-build
 
@@ -39,7 +39,7 @@ do-build:
 .endfor
 
 .for dir in	tools lib/X11 lib/ICE lib/Xau lib/SM lib/Xext lib/Xt lib/Xpm \
-		lib/Xrender lib/GL lib/Xmu lib/dps lib
+		lib/Xrender lib/GL lib/Xmu lib/dps lib/expat lib
 do-${dir:S/\//-/g}:
 .  for targ in dependall install
 	(cd ${.CURDIR}/${dir} && ${MAKE} ${targ})
