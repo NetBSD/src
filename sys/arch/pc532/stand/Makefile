@@ -1,21 +1,28 @@
-#	$NetBSD: Makefile,v 1.4 1994/12/16 18:00:36 phil Exp $
+#	$NetBSD: Makefile,v 1.5 1995/08/29 21:55:39 phil Exp $
 
 #	@(#)Makefile	8.1 (Berkeley) 6/10/93
 
 DESTDIR=
 STANDDIR=${DESTDIR}/stand
-# load at 1.5Meg -- allow 1.4xx meg kernel, but below ram disk
+
+# load at 0x200000 + 79 * 18 * 1024
+# that way the boot code will be at the correct
+# address if the floppy image is started from memory
 # NOTE: alloc() function takes memory after _end
-RELOC=	180000
+RELOC=	363800
 
 CONS= -DSCNCONSOLE
 DEFS= -DSTANDALONE ${CONS}
 CFLAGS=	-O ${INCPATH} ${DEFS} -fwritable-strings
 
 SRCS=   cons.c devopen.c scn.c scsi_low.c scsi_hi.c \
-	conf.c prf.c tgets.c machdep.c sd.c filesystem.c
+	conf.c prf.c tgets.c machdep.c sd.c rd.c filesystem.c
 
-S=	${.CURDIR}/../../..
+.if exists(obj)
+S=../../../..
+.else
+S=../../..
+.endif
 
 .PATH: ${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 .PATH: ${S}/stand ${S}/lib/libsa
@@ -32,7 +39,7 @@ LIBSA=	${SA_LIB}
 LIBS=	${LIBSA} ${.OBJDIR}/libdrive.a \
 	${LIBKERN} ${LIBSA} ${LIBKERN}
 
-BOOTS=	boot
+BOOTS=	boot zboot.o
 ALL=	${BOOTS}
 
 all: ${ALL}
@@ -59,6 +66,9 @@ boot:	boot.o srt0.o ${LIBS}
 	ld -z -T ${RELOC} -e begin srt0.o boot.o ${LIBS} -o $@
 	@size boot
 
+zboot.o:	inflate.o
+	ld -r srt0.o inflate.o $(LIBS) -o zboot.o
+
 # new boot user mode test
 TESTBOOT=	boot.o test.o $(SC) ${LIBS}
 # objects from regular libc;
@@ -71,14 +81,14 @@ $(SC): /usr/lib/libc.a
 
 # utilities
 
-clean cleandir:
+cleandir:
 	rm -f *.o errs make.out
-	rm -f a.out boot cat ls testboot
+	rm -f a.out boot zboot.o cat ls testboot
 	rm -f *.core
 	rm -f libdrive.a 
 
-install: boot
-	cp boot ${DESTDIR}/
+install: ${ALL}
+	cp ${ALL} ${DESTDIR}/usr/mdec
 
 .include <bsd.dep.mk>
 .include <bsd.obj.mk>

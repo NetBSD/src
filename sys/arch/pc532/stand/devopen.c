@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 1994/12/09 21:04:41 phil Exp $	*/
+/*	$NetBSD: devopen.c,v 1.4 1995/08/29 21:55:44 phil Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -168,7 +168,7 @@ devparse(char *fname, int *dev, int *adapt, int *ctlr, int *unit, int *part, cha
 
 devopen(f, fname, file)
 	struct open_file *f;
-	char *fname;
+	const char *fname;
 	char **file;
 {
 	int n, error;

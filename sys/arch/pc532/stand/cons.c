@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.2 1994/10/26 08:25:46 cgd Exp $	*/
+/*	$NetBSD: cons.c,v 1.3 1995/08/29 21:55:43 phil Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,7 +81,7 @@ cninit()
 cngetc()
 {
 	if (cn_tab)
-		return((*cn_tab->cn_getc)());
+		return((*cn_tab->cn_getc)(cn_tab->cn_dev));
 	return(0);
 }
 
@@ -89,5 +89,5 @@ cnputc(c)
 	int c;
 {
 	if (cn_tab)
-		(*cn_tab->cn_putc)(c);
+		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
 }
