@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
+/*	$NetBSD: lst.h,v 1.8 1999/07/29 19:45:32 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -47,11 +47,11 @@
 #ifndef _LST_H_
 #define _LST_H_
 
-#include	<sprite.h>
 #include	<sys/param.h>
 #if __STDC__
 #include	<stdlib.h>
 #endif
+#include	"sprite.h"
 
 /*
  * basic typedef. This is what the Lst_ functions handle
