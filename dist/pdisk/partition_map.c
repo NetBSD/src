@@ -319,7 +319,7 @@ write_partition_map(partition_map_header *map)
     char *block;
     partition_map * entry;
     int i = 0;
-    int result;
+    int result = 0;
 
     m = map->m;
     if (map->misc != NULL) {
