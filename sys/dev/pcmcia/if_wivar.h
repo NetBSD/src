@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.3 2000/02/04 07:48:29 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_wivar.h,v 1.2 1999/07/14 23:07:29 sommerfeld Exp $
+ *	$Id: if_wivar.h,v 1.3 2000/02/04 07:48:29 explorer Exp $
  */
 
 
@@ -39,30 +39,6 @@
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
  */
-
-struct wi_counters {
-	u_int32_t		wi_tx_unicast_frames;
-	u_int32_t		wi_tx_multicast_frames;
-	u_int32_t		wi_tx_fragments;
-	u_int32_t		wi_tx_unicast_octets;
-	u_int32_t		wi_tx_multicast_octets;
-	u_int32_t		wi_tx_deferred_xmits;
-	u_int32_t		wi_tx_single_retries;
-	u_int32_t		wi_tx_multi_retries;
-	u_int32_t		wi_tx_retry_limit;
-	u_int32_t		wi_tx_discards;
-	u_int32_t		wi_rx_unicast_frames;
-	u_int32_t		wi_rx_multicast_frames;
-	u_int32_t		wi_rx_fragments;
-	u_int32_t		wi_rx_unicast_octets;
-	u_int32_t		wi_rx_multicast_octets;
-	u_int32_t		wi_rx_fcs_errors;
-	u_int32_t		wi_rx_discards_nobuf;
-	u_int32_t		wi_tx_discards_wrong_sa;
-	u_int32_t		wi_rx_WEP_cant_decrypt;
-	u_int32_t		wi_rx_msg_in_msg_frags;
-	u_int32_t		wi_rx_msg_in_bad_msg_frags;
-};
 
 struct wi_softc	{
 	struct device sc_dev;
@@ -97,6 +73,10 @@ struct wi_softc	{
 	char			wi_node_name[32];
 	char			wi_net_name[32];
 	char			wi_ibss_name[32];
-	u_int8_t		wi_txbuf[1536];
+	u_int8_t		wi_txbuf[1596];
+	int                     wi_has_wep;
+	int                     wi_use_wep;
+	int                     wi_tx_key;
+	struct wi_ltv_keys      wi_keys;
 	struct wi_counters	wi_stats;
 };
