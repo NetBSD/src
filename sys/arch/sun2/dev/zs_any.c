@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_any.c,v 1.2 2001/05/30 15:24:38 lukem Exp $	*/
+/*	$NetBSD: zs_any.c,v 1.3 2001/06/14 15:20:46 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -103,13 +103,16 @@ zs_any_match(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
+	bus_space_handle_t bh;
+	int matched;
 
 	/* Make sure there is something there... */
-	if (!bus_space_probe(ca->ca_bustag, 0, ca->ca_paddr,
-				1,	/* probe size */
-				0,	/* offset */
-				0,	/* flags */
-				NULL, NULL))
+	if (bus_space_map(ca->ca_bustag, ca->ca_paddr, sizeof(struct zsdevice), 
+			  0, &bh))
+		return (0);
+	matched = (bus_space_peek_1(ca->ca_bustag, bh, 0, NULL) == 0);
+	bus_space_unmap(ca->ca_bustag, bh, sizeof(struct zsdevice));
+	if (!matched)
 		return (0);
 
 	/* Default interrupt priority (always splbio==2) */
@@ -157,6 +160,8 @@ zs_find_prom(unit)
 {
 	bus_addr_t zs0_phys;
 	bus_space_handle_t bh;
+extern	int sun68k_find_prom_map __P((bus_addr_t, bus_type_t, 
+				      int, bus_space_handle_t *));
 
 	if (unit != 0)
 		return (NULL);
@@ -167,7 +172,7 @@ zs_find_prom(unit)
 	zs0_phys = (cpu_machine_id == SUN2_MACH_120 ?
 	    	    0x002000 : 0x7f2000);
 	    
-	if (sun2_find_prom_map(zs0_phys, PMAP_OBIO, sizeof(struct zsdevice), &bh))
+	if (sun68k_find_prom_map(zs0_phys, PMAP_OBIO, sizeof(struct zsdevice), &bh))
 		return (NULL);
 
 	return ((void*) bh);
