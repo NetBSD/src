@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.7 1997/10/14 15:05:54 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.8 1998/05/20 01:02:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.7 1997/10/14 15:05:54 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.8 1998/05/20 01:02:38 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -65,6 +65,7 @@ static const char hist_cookie[] = "_HiStOrY_V1_\n";
 typedef int	(*history_gfun_t) __P((ptr_t, HistEvent *));
 typedef int	(*history_efun_t) __P((ptr_t, HistEvent *, const char *));
 typedef void 	(*history_vfun_t) __P((ptr_t, HistEvent *));
+typedef int	(*history_sfun_t) __P((ptr_t, HistEvent *, const int));
 
 struct history {
     ptr_t	   h_ref;		/* Argument for history fcns	*/
@@ -73,17 +74,19 @@ struct history {
     history_gfun_t h_last;		/* Get the last element		*/
     history_gfun_t h_prev;		/* Get the previous element	*/
     history_gfun_t h_curr;		/* Get the current element	*/
+    history_sfun_t h_set;		/* Set the current element	*/
     history_vfun_t h_clear;		/* Clear the history list	*/ 
     history_efun_t h_enter;		/* Add an element		*/
     history_efun_t h_add;		/* Append to an element		*/
 };
 
-#define	HNEXT(h, ev)  	(*(h)->h_next)((h)->h_ref, ev)
-#define	HFIRST(h, ev) 	(*(h)->h_first)((h)->h_ref, ev)
-#define	HPREV(h, ev)  	(*(h)->h_prev)((h)->h_ref, ev)
-#define	HLAST(h, ev) 	(*(h)->h_last)((h)->h_ref, ev)
-#define	HCURR(h, ev) 	(*(h)->h_curr)((h)->h_ref, ev)
-#define	HCLEAR(h, ev) 	(*(h)->h_clear)((h)->h_ref, ev)
+#define	HNEXT(h, ev)  		(*(h)->h_next)((h)->h_ref, ev)
+#define	HFIRST(h, ev) 		(*(h)->h_first)((h)->h_ref, ev)
+#define	HPREV(h, ev)  		(*(h)->h_prev)((h)->h_ref, ev)
+#define	HLAST(h, ev) 		(*(h)->h_last)((h)->h_ref, ev)
+#define	HCURR(h, ev) 		(*(h)->h_curr)((h)->h_ref, ev)
+#define	HSET(h, ev, n) 		(*(h)->h_set)((h)->h_ref, ev, n)
+#define	HCLEAR(h, ev) 		(*(h)->h_clear)((h)->h_ref, ev)
 #define	HENTER(h, ev, str)	(*(h)->h_enter)((h)->h_ref, ev, str)
 #define	HADD(h, ev, str)	(*(h)->h_add)((h)->h_ref, ev, str)
 
@@ -126,6 +129,7 @@ private int	history_def_last   __P((ptr_t, HistEvent *));
 private int	history_def_next   __P((ptr_t, HistEvent *));
 private int	history_def_prev   __P((ptr_t, HistEvent *));
 private int	history_def_curr   __P((ptr_t, HistEvent *));
+private int	history_def_set    __P((ptr_t, HistEvent *, const int n));
 private int	history_def_enter  __P((ptr_t, HistEvent *, const char *));
 private int	history_def_add    __P((ptr_t, HistEvent *, const char *));
 private void	history_def_init   __P((ptr_t *, HistEvent *, int));
@@ -133,7 +137,7 @@ private void	history_def_clear  __P((ptr_t, HistEvent *));
 private int	history_def_insert __P((history_t *, HistEvent *,const char *));
 private void	history_def_delete __P((history_t *, HistEvent *, hentry_t *));
 
-#define history_def_set(p, num)	(void) (((history_t *) p)->max = (num))
+#define history_def_setsize(p, num)(void) (((history_t *) p)->max = (num))
 #define history_def_getsize(p)  (((history_t *) p)->cur)
 
 #define he_strerror(code)	he_errlist[code]
@@ -144,21 +148,21 @@ private void	history_def_delete __P((history_t *, HistEvent *, hentry_t *));
 					
 /* error messages */
 static const char *const he_errlist[] = {
-	"OK",
-	"malloc() failed",
-	"first event not found",
-	"last event not found",
-	"empty list",
-	"no next event",
-	"no previous event",
-	"current event is invalid",
-	"event not found",
-	"can't read history from file",
-	"can't write history",
-	"required parameter(s) not supplied",
-	"history size negative",
-	"function not allowed with other history-functions-set the default",
-	"bad parameters"
+    "OK",
+    "malloc() failed",
+    "first event not found",
+    "last event not found",
+    "empty list",
+    "no next event",
+    "no previous event",
+    "current event is invalid",
+    "event not found",
+    "can't read history from file",
+    "can't write history",
+    "required parameter(s) not supplied",
+    "history size negative",
+    "function not allowed with other history-functions-set the default",
+    "bad parameters"
 };
 
 /* error codes */
@@ -200,6 +204,7 @@ history_def_first(p, ev)
     return 0;
 }
 
+
 /* history_def_last():
  *	Default function to return the last event in the history.
  */
@@ -220,6 +225,7 @@ history_def_last(p, ev)
 
     return 0;
 }
+
 
 /* history_def_next():
  *	Default function to return the next event in the history.
@@ -255,7 +261,7 @@ history_def_next(p, ev)
 private int
 history_def_prev(p, ev)
     ptr_t p;
-   HistEvent *ev;
+    HistEvent *ev;
 {
     history_t *h = (history_t *) p;
 
@@ -283,7 +289,7 @@ history_def_prev(p, ev)
 private int
 history_def_curr(p, ev)
     ptr_t p;
-   HistEvent *ev;
+    HistEvent *ev;
 {
     history_t *h = (history_t *) p;
 
@@ -296,6 +302,40 @@ history_def_curr(p, ev)
 
     return 0;
 }
+
+
+/* history_def_set():
+ *	Default function to set the current event in the history to the
+ *	given one.
+ */
+private int
+history_def_set(p, ev, n)
+    ptr_t p;
+    HistEvent *ev;
+    int n;
+{
+    history_t *h = (history_t *) p;
+
+    if (h->cur == 0) {
+	he_seterrev(ev, _HE_EMPTY_LIST);
+	return -1;
+    }
+
+    if (h->cursor == &h->list || h->cursor->ev.num != n) {
+	for (h->cursor = h->list.next; h->cursor != &h->list;
+	     h->cursor = h->cursor->next)
+	    if (h->cursor->ev.num == n)
+		break;
+    }
+
+    if (h->cursor == &h->list) {
+	he_seterrev(ev, _HE_NOT_FOUND);
+	return -1;
+    }
+
+    return 0;
+}
+
 
 /* history_def_add():
  *	Append string to element
@@ -459,6 +499,7 @@ history_init()
     h->h_last  = history_def_last;
     h->h_prev  = history_def_prev;
     h->h_curr  = history_def_curr;
+    h->h_set   = history_def_set;
     h->h_clear = history_def_clear;
     h->h_enter = history_def_enter;
     h->h_add   = history_def_add;
@@ -500,7 +541,7 @@ history_set_num(h, ev, num)
 	return -1;
     }
 
-    history_def_set(h->h_ref, num);
+    history_def_setsize(h->h_ref, num);
     return 0;
 }
 
@@ -538,8 +579,8 @@ history_set_fun(h, nh)
 {
     HistEvent ev;
 
-    if (nh->h_first == NULL || nh->h_next == NULL ||
-        nh->h_last == NULL  || nh->h_prev == NULL || nh->h_curr == NULL ||
+    if (nh->h_first == NULL || nh->h_next == NULL || nh->h_last == NULL ||
+	nh->h_prev == NULL || nh->h_curr == NULL || nh->h_set == NULL ||
 	nh->h_enter == NULL || nh->h_add == NULL || nh->h_clear == NULL ||
 	nh->h_ref == NULL) {
 	if (h->h_next != history_def_next) {
@@ -549,6 +590,7 @@ history_set_fun(h, nh)
 	    h->h_last  = history_def_last;
 	    h->h_prev  = history_def_prev;
 	    h->h_curr  = history_def_curr;
+	    h->h_set   = history_def_set;
 	    h->h_clear = history_def_clear;
 	    h->h_enter = history_def_enter;
 	    h->h_add   = history_def_add;
@@ -564,6 +606,7 @@ history_set_fun(h, nh)
     h->h_last  = nh->h_last;
     h->h_prev  = nh->h_prev;
     h->h_curr  = nh->h_curr;
+    h->h_set   = nh->h_set;
     h->h_clear = nh->h_clear;
     h->h_enter = nh->h_enter;
     h->h_add   = nh->h_add;
@@ -743,6 +786,14 @@ history(va_alist)
     he_seterrev(ev, _HE_OK);
 
     switch (fun) {
+    case H_GETSIZE:
+	retval = history_get_size(h, ev);
+	break;
+
+    case H_SETSIZE:
+	retval = history_set_num(h, ev, va_arg(va, int));
+	break;
+
     case H_ADD:
 	str = va_arg(va, const char *);
 	retval = HADD(h, ev, str);
@@ -771,6 +822,10 @@ history(va_alist)
 
     case H_CURR:
 	retval = HCURR(h, ev);
+	break;
+
+    case H_SET:
+	retval = HSET(h, ev, va_arg(va, const int));
 	break;
 
     case H_CLEAR:
@@ -806,19 +861,17 @@ history(va_alist)
 	retval = history_next_string(h, ev, va_arg(va, const char*));
 	break;
 
-    case H_SETMAXSIZE:
-	retval = history_set_num(h, ev, va_arg(va, int));
-	break;
-
     case H_FUNC:
 	{
 	    History hf;
+
 	    hf.h_ref   = va_arg(va, ptr_t);
 	    hf.h_first = va_arg(va, history_gfun_t);
 	    hf.h_next  = va_arg(va, history_gfun_t);
 	    hf.h_last  = va_arg(va, history_gfun_t);
 	    hf.h_prev  = va_arg(va, history_gfun_t);
 	    hf.h_curr  = va_arg(va, history_gfun_t);
+	    hf.h_set   = va_arg(va, history_sfun_t);
 	    hf.h_clear = va_arg(va, history_vfun_t);
 	    hf.h_enter = va_arg(va, history_efun_t);
 	    hf.h_add   = va_arg(va, history_efun_t);
@@ -831,10 +884,6 @@ history(va_alist)
     case H_END:
 	history_end(h);
 	retval = 0;
-	break;
-
-    case H_GETSIZE:
-	retval = history_get_size(h, ev);
 	break;
 
     default:
