@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 2004/03/03 13:18:48 rtr Exp $
+# $NetBSD: mi,v 1.17 2004/03/06 03:54:25 rtr Exp $
 ./etc/mtree/set.xfont						xfont-sys-root
 ./usr/X11R6/lib/X11/fonts                                       xfont   share
 ./usr/X11R6/lib/X11/fonts/100dpi                                xfont   share
@@ -470,6 +470,7 @@
 ./usr/X11R6/lib/X11/fonts/100dpi/fonts.alias			xfont	share
 ./usr/X11R6/lib/X11/fonts/100dpi/fonts.cache-1			xfont	share
 ./usr/X11R6/lib/X11/fonts/100dpi/fonts.dir			xfont	share
+./usr/X11R6/lib/X11/fonts/100dpi/fonts.scale
 ./usr/X11R6/lib/X11/fonts/100dpi/helvB08-ISO8859-1.pcf.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/100dpi/helvB08-ISO8859-10.pcf.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/100dpi/helvB08-ISO8859-13.pcf.gz	xfont	share
@@ -2369,6 +2370,7 @@
 ./usr/X11R6/lib/X11/fonts/75dpi/fonts.alias			xfont	share
 ./usr/X11R6/lib/X11/fonts/75dpi/fonts.cache-1			xfont	share
 ./usr/X11R6/lib/X11/fonts/75dpi/fonts.dir			xfont	share
+./usr/X11R6/lib/X11/fonts/75dpi/fonts.scale
 ./usr/X11R6/lib/X11/fonts/75dpi/helvB08-ISO8859-1.pcf.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/75dpi/helvB08-ISO8859-10.pcf.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/75dpi/helvB08-ISO8859-13.pcf.gz	xfont	share
@@ -3805,7 +3807,6 @@
 ./usr/X11R6/lib/X11/fonts/CID/fonts.dir				xfont	share
 ./usr/X11R6/lib/X11/fonts/CID/fonts.scale			xfont	share
 ./usr/X11R6/lib/X11/fonts/Speedo                                xfont   share
-./usr/X11R6/lib/X11/fonts/Speedo/encodings.dir			xfont	share
 ./usr/X11R6/lib/X11/fonts/Speedo/font0419.spd			xfont	share
 ./usr/X11R6/lib/X11/fonts/Speedo/font0582.spd			xfont	share
 ./usr/X11R6/lib/X11/fonts/Speedo/font0583.spd			xfont	share
@@ -3961,6 +3962,7 @@
 ./usr/X11R6/lib/X11/fonts/cyrillic/fonts.alias			xfont	share
 ./usr/X11R6/lib/X11/fonts/cyrillic/fonts.cache-1		xfont	share
 ./usr/X11R6/lib/X11/fonts/cyrillic/fonts.dir			xfont	share
+./usr/X11R6/lib/X11/fonts/cyrillic/fonts.scale
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi10x16b.pcf.gz		xfont	share
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi10x20.pcf.gz		xfont	share
 ./usr/X11R6/lib/X11/fonts/cyrillic/koi12x24.pcf.gz		xfont	share
@@ -4000,16 +4002,19 @@
 ./usr/X11R6/lib/X11/fonts/encodings/iso8859-16.enc		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large                       xfont   share
 ./usr/X11R6/lib/X11/fonts/encodings/large/big5.eten-0.enc.gz	xfont	share
+./usr/X11R6/lib/X11/fonts/encodings/large/big5hkscs-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/encodings.dir		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/fonts.cache-1		xfont	share
+./usr/X11R6/lib/X11/fonts/encodings/large/gb18030.2000-0.enc.gz
+./usr/X11R6/lib/X11/fonts/encodings/large/gb18030.2000-1.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/large/gb2312.1980-0.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/gbk-0.enc.gz		xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/jisx0201.1976-0.enc.gz	xfont	share
-./usr/X11R6/lib/X11/fonts/encodings/large/jisx0208.1983-0.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/jisx0208.1990-0.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/jisx0212.1990-0.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/ksc5601.1987-0.enc.gz	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/large/ksc5601.1992-3.enc.gz	xfont	share
+./usr/X11R6/lib/X11/fonts/encodings/large/sun.unicode.india-0.enc.gz
 ./usr/X11R6/lib/X11/fonts/encodings/microsoft-cp1250.enc	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/microsoft-cp1251.enc	xfont	share
 ./usr/X11R6/lib/X11/fonts/encodings/microsoft-cp1252.enc	xfont	share
@@ -4032,6 +4037,7 @@
 ./usr/X11R6/lib/X11/fonts/local/encodings.dir			xfont	share
 ./usr/X11R6/lib/X11/fonts/local/fonts.cache-1			xfont	share
 ./usr/X11R6/lib/X11/fonts/local/fonts.dir			xfont	share
+./usr/X11R6/lib/X11/fonts/local/fonts.scale
 ./usr/X11R6/lib/X11/fonts/misc                                  xfont   share   
 ./usr/X11R6/lib/X11/fonts/misc/10x20-ISO8859-1.pcf.gz		xfont	share
 ./usr/X11R6/lib/X11/fonts/misc/10x20-ISO8859-10.pcf.gz		xfont	share
@@ -4430,6 +4436,7 @@
 ./usr/X11R6/lib/X11/fonts/misc/fonts.alias			xfont	share
 ./usr/X11R6/lib/X11/fonts/misc/fonts.cache-1			xfont	share
 ./usr/X11R6/lib/X11/fonts/misc/fonts.dir			xfont	share
+./usr/X11R6/lib/X11/fonts/misc/fonts.scale
 ./usr/X11R6/lib/X11/fonts/misc/gb16fs.pcf.gz			xfont	share
 ./usr/X11R6/lib/X11/fonts/misc/gb16st.pcf.gz			xfont	share
 ./usr/X11R6/lib/X11/fonts/misc/gb24st.pcf.gz			xfont	share

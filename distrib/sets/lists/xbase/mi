@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.38 2004/02/09 07:59:01 lukem Exp $
+# $NetBSD: mi,v 1.39 2004/03/06 03:54:22 rtr Exp $
 ./etc/mtree/set.xbase				xbase-sys-root
 ./usr/X11R6/bin/Xmark
 ./usr/X11R6/bin/appres
@@ -215,8 +215,8 @@
 ./usr/X11R6/lib/X11/XErrorDB
 ./usr/X11R6/lib/X11/XKeysymDB
 ./usr/X11R6/lib/X11/Xcms.txt
-./usr/X11R6/lib/X11/XftConfig-OBSOLETE		xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/XftConfig			xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/XftConfig-OBSOLETE		xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/app-defaults/Beforelight
 ./usr/X11R6/lib/X11/app-defaults/Bitmap
 ./usr/X11R6/lib/X11/app-defaults/Bitmap-color
@@ -550,6 +550,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/al
 ./usr/X11R6/lib/X11/xkb/symbols/altwin
 ./usr/X11R6/lib/X11/xkb/symbols/am
+./usr/X11R6/lib/X11/xkb/symbols/apple
 ./usr/X11R6/lib/X11/xkb/symbols/ar
 ./usr/X11R6/lib/X11/xkb/symbols/az
 ./usr/X11R6/lib/X11/xkb/symbols/be
@@ -591,6 +592,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/gur
 ./usr/X11R6/lib/X11/xkb/symbols/hp/us
 ./usr/X11R6/lib/X11/xkb/symbols/hr
+./usr/X11R6/lib/X11/xkb/symbols/hr_US
 ./usr/X11R6/lib/X11/xkb/symbols/hu
 ./usr/X11R6/lib/X11/xkb/symbols/hu_US
 ./usr/X11R6/lib/X11/xkb/symbols/hu_qwerty
@@ -714,8 +716,8 @@
 ./usr/X11R6/lib/X11/xkb/symbols/pt
 ./usr/X11R6/lib/X11/xkb/symbols/ralt
 ./usr/X11R6/lib/X11/xkb/symbols/ro
+./usr/X11R6/lib/X11/xkb/symbols/ro2
 ./usr/X11R6/lib/X11/xkb/symbols/ru
-./usr/X11R6/lib/X11/xkb/symbols/ru_yawerty
 ./usr/X11R6/lib/X11/xkb/symbols/sapmi
 ./usr/X11R6/lib/X11/xkb/symbols/se
 ./usr/X11R6/lib/X11/xkb/symbols/se_FI
@@ -735,6 +737,8 @@
 ./usr/X11R6/lib/X11/xkb/symbols/syr_phonetic
 ./usr/X11R6/lib/X11/xkb/symbols/tel
 ./usr/X11R6/lib/X11/xkb/symbols/th
+./usr/X11R6/lib/X11/xkb/symbols/th_pat
+./usr/X11R6/lib/X11/xkb/symbols/th_tis
 ./usr/X11R6/lib/X11/xkb/symbols/tj
 ./usr/X11R6/lib/X11/xkb/symbols/tml
 ./usr/X11R6/lib/X11/xkb/symbols/tr
@@ -744,6 +748,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/us_group2
 ./usr/X11R6/lib/X11/xkb/symbols/us_group3
 ./usr/X11R6/lib/X11/xkb/symbols/us_intl
+./usr/X11R6/lib/X11/xkb/symbols/uz
 ./usr/X11R6/lib/X11/xkb/symbols/vn
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68/amiga
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68/ataritt
@@ -764,7 +769,6 @@
 ./usr/X11R6/lib/X11/xman.help
 ./usr/X11R6/libexec/chooser
 ./usr/X11R6/libexec/rstartd.real
-./usr/X11R6/man/whatis.db			-unknown-		man
 ./usr/X11R6/man/cat1/Xmark.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/appres.0			-unknown-		.cat
 ./usr/X11R6/man/cat1/atobm.0			-unknown-		.cat
@@ -1003,6 +1007,7 @@
 ./usr/X11R6/man/man7/XProjectTeam.7		-unknown-		.man
 ./usr/X11R6/man/man7/XStandards.7		-unknown-		.man
 ./usr/X11R6/man/man7/Xsecurity.7		-unknown-		.man
+./usr/X11R6/man/whatis.db			-unknown-		man
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-1337.ad
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-NeXTish.ad
 ./usr/X11R6/share/examples/ssh-askpass/SshAskpass-default.ad
