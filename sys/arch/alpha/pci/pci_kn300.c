@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.5 1998/04/25 00:12:45 thorpej Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.6 1998/04/30 04:31:19 mjacob Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.5 1998/04/25 00:12:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.6 1998/04/30 04:31:19 mjacob Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,21 +73,22 @@ void * dec_kn300_intr_establish __P((void *, pci_intr_handle_t,
 void	dec_kn300_intr_disestablish __P((void *, void *));
 
 #define	KN300_PCEB_IRQ	16
-#define	NPIN	4
+#define	NPIN		4
 
-static struct vectab {
-	int (*func) __P((void *));
-	void *arg;
-	int irq;
-} vectab[MAX_MC_BUS][MCPCIA_PER_MCBUS][MCPCIA_MAXSLOT][NPIN];
+#define	NVEC	(MAX_MC_BUS * MCPCIA_PER_MCBUS * MCPCIA_MAXSLOT * NPIN)
+static char savunit[NVEC];
+static char savirqs[NVEC];
+extern struct mcpcia_softc *mcpcias;
 
 struct mcpcia_config *mcpcia_eisaccp = NULL;
+
+static struct alpha_shared_intr *kn300_pci_intr;
 
 #ifdef EVCNT_COUNTERS
 struct evcnt kn300_intr_evcnt;
 #endif
 
-int	kn300_spurious __P((void *));
+static char * kn300_spurious __P((int));
 void	kn300_iointr __P((void *, unsigned long));
 void	kn300_enable_intr __P((struct mcpcia_config *, int));
 void	kn300_disable_intr __P((struct mcpcia_config *, int));
@@ -101,25 +102,12 @@ pci_kn300_pickintr(ccp, first)
 
 	if (first) {
 		int g;
-		for (g = 0; g < MAX_MC_BUS; g++) {
-			int m;
-			for (m = 0; m < MCPCIA_PER_MCBUS; m++) {
-				int s;
-				for (s = 0; s < MCPCIA_MAXSLOT; s++) {
-					int p;
-					for (p = 0; p < NPIN; p++) {
-						struct vectab *vp;
-						vp = &vectab[g][m][s][p];
-						vp->func = kn300_spurious;
-						vp->arg = (void *) ((long)
-							(g << 0) |
-							(m << 3) |
-							(s << 6) |
-							(p << 9));
-						vp->irq = -1;
-					}
-				}
-			}
+
+		kn300_pci_intr = alpha_shared_intr_alloc(NVEC);
+		for (g = 0; g < NVEC; g++) {
+			alpha_shared_intr_set_maxstrays(kn300_pci_intr, g, 25);
+			savunit[g] = (char) -1;
+			savirqs[g] = (char) -1;
 		}
 		set_iointr(kn300_iointr);
 	}
@@ -190,17 +178,17 @@ dec_kn300_intr_map(ccv, bustag, buspin, line, ihp)
 	/*
 	 * handle layout:
 	 *
-	 *	bits 0..2	7-GID
-	 *	bits 3..5	MID-4
-	 *	bits 6..8	PCI Slot (0..7- yes, some don't exist)
-	 *	bits 9..10	buspin-1
+	 *	bits 0..1	buspin-1
+	 *	bits 2..4	PCI Slot (0..7- yes, some don't exist)
+	 *	bits 5..7	MID-4
+	 *	bits 8..10	7-GID
 	 *	bits 11-15	IRQ
 	 */
 	*ihp = (pci_intr_handle_t)
-		(7 - ccp->cc_sc->mcpcia_gid)		|
-		((ccp->cc_sc->mcpcia_mid - 4) << 3)	|
-		(device << 6)				|
-		((buspin-1) << 9)			|
+		(buspin - 1			    )	|
+		((device & 0x7)			<< 2)	|
+		((ccp->cc_sc->mcpcia_mid - 4)	<< 5)	|
+		((7 - ccp->cc_sc->mcpcia_gid)	<< 8)	|
 		(kn300_irq << 11);
 	return (0);
 }
@@ -212,7 +200,7 @@ dec_kn300_intr_string(ccv, ih)
 {
         static char irqstr[64];
 	sprintf(irqstr, "kn300 irq %d PCI Interrupt Pin %c",
-		(ih >> 11) & 0x1f, ((ih >> 9) & 0x3) + 'A');
+		(ih >> 11) & 0x1f, (ih & 0x3) + 'A');
 	return (irqstr);
 }
 
@@ -224,41 +212,20 @@ dec_kn300_intr_establish(ccv, ih, level, func, arg)
         int (*func) __P((void *));
         void *arg;
 {           
-	struct vectab *vp;
-	int gidx, midx, slot, pidx, s;
-	void *cookie = NULL;
+	void *cookie;
+	int v;
 
-	gidx = ih & 0x7;
-	midx = (ih >> 3) & 0x7;
-	slot = (ih >> 6) & 0x7;
-	pidx = (ih >> 9) & 0x3;
+	v = ih & 0x3ff;
+	cookie = alpha_shared_intr_establish(kn300_pci_intr, v, IST_LEVEL,
+	    level, func, arg, "kn300 vector");
 
-	/*
-	 * XXX: FIXME - for PCI bridges, the framework here is such that
-	 * XXX: we're mapping the mapping for the bridge, not the
-	 * XXX: device behind the bridge, so we're not cognizant of the
-	 * XXX: pin swizzling that could go on. We really ought to fix
-	 * XXX: this, but for a first cut, assuming all pins map to the
-	 * XXX: same device and filling in all pin vectors is probably
-	 * XXX: okay.
-	 */
-
-	for (pidx = 0; pidx < 4; pidx++) {
-		vp = &vectab[gidx][midx][slot][pidx];
-		if (vp->func != kn300_spurious) {
-			printf("dec_kn300_intr_establish: vector cookie 0x%x "
-				"already used\n", ih);
-			return (cookie);
-		}
-		s = splhigh();
-		vp->func = func;
-		vp->arg = arg;
-		vp->irq = (ih >> 11) & 0x1f;
-		(void) splx(s);
+	if (cookie != NULL && alpha_shared_intr_isactive(kn300_pci_intr, v)) {
+		struct mcpcia_config *ccp = ccv;
+		savunit[v] = ccp->cc_sc->mcpcia_dev.dv_unit;
+		savirqs[v] = (ih >> 11) & 0x1f;
+		kn300_enable_intr(ccv, (int)((ih >> 11) & 0x1f));
+		alpha_mb();
 	}
-
-	kn300_enable_intr(ccv, (int)((ih >> 11) & 0x1f));
-	cookie = (void *) ih;
 	return (cookie);
 }
 
@@ -266,44 +233,23 @@ void
 dec_kn300_intr_disestablish(ccv, cookie)
         void *ccv, *cookie;
 {
-	pci_intr_handle_t ih = (pci_intr_handle_t) cookie;
-	int gidx, midx, slot, pidx, s;
-	struct vectab *vp;
-
-	gidx = ih & 0x7;
-	midx = (ih >> 3) & 0x7;
-	slot = (ih >> 6) & 0x7;
-	pidx = (ih >> 9) & 0x3;
-	vp = &vectab[gidx][midx][slot][pidx];
-	s = splhigh();
-	vp->func = kn300_spurious;
-	vp->arg = cookie;
-	vp->irq = -1;
-	(void) splx(s);
-	kn300_disable_intr(ccv, (int)((ih >> 11) & 0x1f));
+	panic("dec_kn300_intr_disestablish not implemented");
 }
 
-int
-kn300_spurious(arg)
-	void *arg;
+static char *
+kn300_spurious(ih)
+	int ih;
 {
-	pci_intr_handle_t ih = (pci_intr_handle_t) arg;
-	int gidx, midx, slot, pidx;
+        static char str[48];
+	int pidx, slot, midx, gidx;
 
-	gidx = ih & 0x7;
-	midx = (ih >> 3) & 0x7;
-	slot = (ih >> 6) & 0x7;
-	pidx = (ih >> 9) & 0x3;
-	printf("Spurious Interrupt from mcbus%d MID %d Slot %d "
-		"PCI Interrupt Pin %c\n", gidx, midx + 4, slot, pidx + 'A');
-	/*
-	 * XXX: We *could*, if we have recorded all the mcpcia softcs
-	 * XXX: that we've configured, and this spurious interrupt
-	 * XXX: falls within this range, disable this interrupt.
-	 *
-	 * XXX: Later.
-	 */
-	return (-1);
+	pidx = ih & 0x3;
+	slot = (ih >> 2) & 0x7;
+	midx = (ih >> 5) & 0x7;
+	gidx = (ih >> 8) & 0x7;
+	sprintf(str, "mcbus%d mid %d PCI Slot %d PCI Interrupt Pin %c irq",
+	    gidx, midx + 4, slot, pidx + 'A');
+	return (str);
 }
 
 void
@@ -311,8 +257,8 @@ kn300_iointr(framep, vec)
 	void *framep;
 	unsigned long vec;
 {
-	int base, gidx, midx, slot, pidx;
-	struct vectab *vp;
+	struct mcpcia_softc *mcp;
+	int v, gidx, midx;
 
 	if (vec >= MCPCIA_VEC_EISA && vec < MCPCIA_VEC_PCI) {
 #if NSIO
@@ -325,20 +271,13 @@ kn300_iointr(framep, vec)
 #endif
 	} 
 
-	base = (int) vec - MCPCIA_VEC_PCI;
+	v = (int) vec - MCPCIA_VEC_PCI;
 
-	midx = base / 0x200;
+	
+	midx = v / 0x200;
 	gidx = midx / 4;
 	midx = midx % 4;
-	slot = (base % 0x200) / 0x10;
-	pidx = ((slot / 4) & 0x3);
-	slot = slot / 4;
 
-	if (gidx >= MAX_MC_BUS || midx >= MCPCIA_PER_MCBUS ||
-	    slot >= MCPCIA_MAXSLOT || pidx >= NPIN) {
-		panic("kn300_iointr: vec 0x%x (mcbus%d mid%d slot %d pin%d)",
-		    vec, gidx, midx+4, slot, pidx);
-	}
 
 #ifdef	EVCNT_COUNTERS
 	kn300_intr_evcnt.ev_count++;
@@ -361,20 +300,43 @@ kn300_iointr(framep, vec)
 		return;
 	}
 
+
 	/*
-	 * Now, for the main stuff...
+	 * Convert vector offset into a dense number.
 	 */
-	vp = &vectab[gidx][midx][slot][pidx];
+
+	v /= 0x10;
 #ifndef	EVCNT_COUNTERS
-	if (vp->irq >= 0 && vp->irq <= INTRCNT_KN300_NCR810) {
-		intrcnt[INTRCNT_KN300_IRQ + vp->irq]++;
+	if (savirqs[v] >= 0 && savirqs[v] <= INTRCNT_KN300_NCR810) {
+		intrcnt[INTRCNT_KN300_IRQ + savirqs[v]]++;
 	}
 #endif
-	if ((*vp->func)(vp->arg) == 0) {
-#if	0
-		printf("Unclaimed interrupt from mcbus%d MID %d Slot %d "
-		    "PCI Interrupt Pin %c\n", gidx, midx + 4, slot, pidx + 'A');
-#endif
+
+	if (alpha_shared_intr_dispatch(kn300_pci_intr, v)) {
+		return;
+	}
+	/*
+	 * Nobody fielded the interrupt?
+	 */
+	alpha_shared_intr_stray(kn300_pci_intr, savirqs[v], kn300_spurious(v));
+	if (kn300_pci_intr[v].intr_nstrays <
+	    kn300_pci_intr[v].intr_maxstrays) {
+		return;
+	}
+	/*
+	 * Search for the controlling mcpcia.
+	 */
+	for (mcp = mcpcias; mcp != NULL; mcp = mcp->mcpcia_next) {
+		if (mcp->mcpcia_dev.dv_unit == savunit[v]) {
+			break;
+		}
+	}
+	/*
+	 * And if found, disable this IRQ level. Guess what?
+	 * This may kill other things too.
+	 */
+	if (mcp) {
+		kn300_disable_intr(&mcp->mcpcia_cc, savirqs[v]);
 	}
 }
 
