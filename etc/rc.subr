@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.42 2002/02/25 12:49:34 lukem Exp $
+# $NetBSD: rc.subr,v 1.43 2002/03/13 04:50:08 lukem Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -269,6 +269,10 @@ wait_for_pids()
 #				If this completes with a non-zero exit code,
 #				don't run ${_arg}_cmd.
 #
+#	${_arg}_postcmd	n	If set, run just after performing the main
+#				action in the default command, if that action
+#				returned a zero exit code.
+#
 #	required_dirs	n	If set, check for the existence of the given
 #				directories before running the default
 #				(re)start command.
@@ -389,7 +393,8 @@ run_rc_command()
 					# if there's a custom ${XXX_cmd},
 					# run that instead of the default
 					#
-		eval _cmd=\$${_arg}_cmd _precmd=\$${_arg}_precmd
+		eval _cmd=\$${_arg}_cmd _precmd=\$${_arg}_precmd \
+		    _postcmd=\$${_arg}_postcmd
 		if [ -n "$_cmd" ]; then
 					# if the precmd failed and force
 					# isn't set, exit
@@ -458,7 +463,6 @@ run_rc_command()
 				return 1
 			fi
 
-
 					# setup the command to run, and run it
 					#
 			echo "Starting ${name}."
@@ -476,7 +480,17 @@ $command $_flags $command_args"
 				    _doit="su -m $_user -c 'sh -c \"$_doit\"'"
 				fi
 			fi
-			eval $_doit
+
+					# if the cmd failed and force
+					# isn't set, exit
+					#
+			if ! eval $_doit && [ -z "$_rc_force_run" ]; then
+				return 1
+			fi
+
+					# finally, run postcmd
+					#
+			eval $_postcmd
 			;;
 
 		stop)
@@ -490,16 +504,32 @@ $command $_flags $command_args"
 				exit 1
 			fi
 
+					# if the precmd failed and force
+					# isn't set, exit
+					#
 			if ! eval $_precmd && [ -z "$_rc_force_run" ]; then
 				return 1
 			fi
+
+					# send the signal to stop
+					#
 			echo "Stopping ${name}."
 			_doit="kill -${sig_stop:-TERM} $_pid"
 			if [ -n "$_user" ]; then
 				_doit="su -m $_user -c 'sh -c \"$_doit\"'"
 			fi
-			eval $_doit
+
+					# if the stop cmd failed and force
+					# isn't set, exit
+					#
+			if ! eval $_doit && [ -z "$_rc_force_run" ]; then
+				return 1
+			fi
+
+					# wait for the command to exit,
+					# and run postcmd.
 			wait_for_pids $_pid
+			eval $_postcmd
 			;;
 
 		reload)
@@ -520,7 +550,10 @@ $command $_flags $command_args"
 			if [ -n "$_user" ]; then
 				_doit="su -m $_user -c 'sh -c \"$_doit\"'"
 			fi
-			eval $_doit
+			if ! eval $_doit && [ -z "$_rc_force_run" ]; then
+				return 1
+			fi
+			eval $_postcmd
 			;;
 
 		restart)
@@ -538,6 +571,7 @@ $command $_flags $command_args"
 			( $0 ${_rc_force_run:+force}stop )
 			$0 ${_rc_force_run:+force}start
 
+			eval $_postcmd
 			;;
 
 		poll)
@@ -588,7 +622,7 @@ run_rc_script()
 
 	unset	name command command_args extra_commands pidfile procname \
 		rcvar required_dirs required_files required_vars
-	eval unset ${_arg}_cmd ${_arg}_precmd
+	eval unset ${_arg}_cmd ${_arg}_precmd ${_arg}_postcmd
 
 	case "$_file" in
 	*.sh)				# run in current shell
