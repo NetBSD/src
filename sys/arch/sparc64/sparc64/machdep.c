@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2000/06/18 08:13:26 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.69 2000/06/24 16:51:34 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,6 @@
 #include <machine/ctlreg.h>
 
 #include <sparc64/sparc64/cache.h>
-#include <sparc64/sparc64/vaddrs.h>
 
 /* #include "fb.h" */
 
