@@ -1795,8 +1795,8 @@ execution.  The program will not stop by itself; you must use
 @item -w
 @itemx --wait
 After calling out (to a particular system when @samp{-s},
-@samp{--system}, or @samp{-S} is specifed, or to all systems which have
-work when just @samp{-r1} or @samp{--master} is specifed), begin an
+@samp{--system}, or @samp{-S} is specified, or to all systems which have
+work when just @samp{-r1} or @samp{--master} is specified), begin an
 endless loop as with @samp{--loop}.
 
 @item -q
@@ -4922,7 +4922,7 @@ systems.
 @item pubdir @var{string}
 @findex pubdir in sys file
 
-Specifies the public directory that is used when @samp{~} is specifed in
+Specifies the public directory that is used when @samp{~} is specified in
 a file transfer or a list of directories.  This essentially overrides
 the public directory specified in the main configuration file for this
 system only.  The default is the public directory specified in the main
@@ -5649,8 +5649,8 @@ Keywords: UUCP, protocol, FAQ
 Approved: news-answers-request@@MIT.Edu
 
 Archive-name: uucp-internals
-Version: $Revision: 1.3 $
-Last-modified: $Date: 2001/08/20 12:00:48 $
+Version: $Revision: 1.4 $
+Last-modified: $Date: 2003/01/06 12:38:47 $
 @end format
 @end ifset
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.23 2001/03/29 21:54:01 cgd Exp $	*/
+/*	$NetBSD: quota.c,v 1.24 2003/01/06 12:38:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.23 2001/03/29 21:54:01 cgd Exp $");
+__RCSID("$NetBSD: quota.c,v 1.24 2003/01/06 12:38:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ showuid(uid)
 }
 
 /*
- * Print out quotas for a specifed user name.
+ * Print out quotas for a specified user name.
  */
 void
 showusrname(name)
@@ -273,7 +273,7 @@ showgid(gid)
 }
 
 /*
- * Print out quotas for a specifed group name.
+ * Print out quotas for a specified group name.
  */
 void
 showgrpname(name)
