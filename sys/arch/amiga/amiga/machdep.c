@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 1997/03/30 10:38:51 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 1997/04/02 21:50:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -124,6 +124,9 @@
 #ifdef ISO
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 #if NPPP > 0
 #include <net/ppp_defs.h>
@@ -1341,6 +1344,12 @@ netintr()
 	if (netisr & (1 << NETISR_IP)) {
 		netisr &= ~(1 << NETISR_IP);
 		ipintr();
+	}
+#endif
+#ifdef NETATALK
+	if (netisr & (1 << NETISR_ATALK)) {
+		netisr &= ~(1 << NETISR_ATALK);
+		atintr();
 	}
 #endif
 #ifdef NS
