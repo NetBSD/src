@@ -1,4 +1,4 @@
-/* $NetBSD: netisr_dispatch.h,v 1.9 2002/11/02 07:26:56 perry Exp $ */
+/* $NetBSD: netisr_dispatch.h,v 1.10 2002/11/02 12:00:03 kristerw Exp $ */
 
 /*
  * netisr_dispatch: This file is included by the 
@@ -8,7 +8,7 @@
  *
  * softintr() {
  *	...do setup stuff...
- *	#define DONETISR(bit, fn) do { ... } while (/*CONSTCOND*/ 0)
+ *	#define DONETISR(bit, fn) do { ... } while (0)
  *	#include <net/netisr_dispatch.h>
  *	#undef DONETISR
  *	...do cleanup stuff.
