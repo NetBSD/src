@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.15 2003/10/31 03:28:13 simonb Exp $	*/
+/*	$NetBSD: exception.c,v 1.16 2003/11/23 23:13:11 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.15 2003/10/31 03:28:13 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.16 2003/11/23 23:13:11 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -153,6 +153,7 @@ general_exception(struct lwp *l, struct trapframe *tf)
 {
 	int expevt = tf->tf_expevt;
 	boolean_t usermode = !KERNELMODE(tf->tf_ssr);
+	ksiginfo_t ksi;
 
 	uvmexp.traps++;
 
@@ -169,12 +170,17 @@ general_exception(struct lwp *l, struct trapframe *tf)
 		/* Check for debugger break */
 		if (_reg_read_4(SH_(TRA)) == (_SH_TRA_BREAK << 2)) {
 			tf->tf_spc -= 2; /* back to the breakpoint address */
-			trapsignal(l, SIGTRAP, tf->tf_expevt);
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGTRAP;
+			ksi.ksi_code = TRAP_BRKPT;
+			ksi.ksi_addr = (void *)tf->tf_spc;
+			goto trapsignal;
 		} else {
 			syscall(l, tf);
 			return;
 		}
 		break;
+
 	case EXPEVT_ADDR_ERR_LD:
 		/*FALLTHROUGH*/
 	case EXPEVT_ADDR_ERR_ST:
@@ -187,24 +193,43 @@ general_exception(struct lwp *l, struct trapframe *tf)
 	case EXPEVT_ADDR_ERR_LD | EXP_USER:
 		/*FALLTHROUGH*/
 	case EXPEVT_ADDR_ERR_ST | EXP_USER:
-		trapsignal(l, SIGSEGV, tf->tf_expevt);
-		break;
+		KSI_INIT_TRAP(&ksi);
+		/* XXX: for kernel access attempt this should be a SIGSEGV */
+		ksi.ksi_signo = SIGBUS;
+		ksi.ksi_code = BUS_ADRALN;
+		ksi.ksi_addr = (void *)tf->tf_spc; /* XXX: use TEA */
+		goto trapsignal;
 
 	case EXPEVT_RES_INST | EXP_USER:
 		/*FALLTHROUGH*/
 	case EXPEVT_SLOT_INST | EXP_USER:
-		trapsignal(l, SIGILL, tf->tf_expevt);
-		break;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC; /* XXX: could be ILL_PRVOPC */
+		ksi.ksi_addr = (void *)tf->tf_spc;
+		goto trapsignal;
 
 	case EXPEVT_BREAK | EXP_USER:
-		trapsignal(l, SIGTRAP, tf->tf_expevt);
-		break;
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_BRKPT; /* XXX: ??? */
+		ksi.ksi_addr = (void *)tf->tf_spc;
+		goto trapsignal;
+
 	default:
 		goto do_panic;
 	}
 
 	if (usermode)
 		userret(l);
+	return;
+
+ trapsignal:
+	ksi.ksi_trap = tf->tf_expevt;
+	KERNEL_PROC_LOCK(l);
+	trapsignal(l, &ksi);
+	KERNEL_PROC_UNLOCK(l);
+	userret(l);
 	return;
 
  do_panic:
@@ -387,6 +412,7 @@ do {									\
 } while(/*CONSTCOND*/0)
 	struct vm_map *map;
 	pmap_t pmap;
+	ksiginfo_t ksi;
 	boolean_t usermode;
 	int err, track, ftype;
 	char *panic_msg;
@@ -417,7 +443,10 @@ do {									\
 		TLB_ASSERT((int)va > 0,
 		    "kernel virtual protection fault (load)");
 		if (usermode) {
-			trapsignal(l, SIGSEGV, tf->tf_expevt);
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+			ksi.ksi_addr = (void *)va;
 			goto user_fault;
 		} else {
 			TLB_ASSERT(l && l->l_md.md_pcb->pcb_onfault != NULL,
@@ -509,7 +538,13 @@ do {									\
 
 	/* Page not found. */
 	if (usermode) {
-		trapsignal(l, err == ENOMEM ? SIGKILL : SIGSEGV, tf->tf_expevt);
+		KSI_INIT_TRAP(&ksi);
+		if (err == ENOMEM)
+			ksi.ksi_signo = SIGKILL;
+		else {
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = SEGV_MAPERR;
+		}
 		goto user_fault;
 	} else {
 		TLB_ASSERT(l->l_md.md_pcb->pcb_onfault,
@@ -519,6 +554,10 @@ do {									\
 	return;
 
  user_fault:
+	ksi.ksi_trap = tf->tf_expevt
+	KERNEL_PROC_LOCK(l);
+	trapsignal(l, &ksi);
+	KERNEL_PROC_UNLOCK(l);
 	userret(l);
 	ast(l, tf);
 	return;
