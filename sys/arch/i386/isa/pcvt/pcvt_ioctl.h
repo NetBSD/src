@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_ioctl.h,v 1.2 1994/10/27 04:18:52 cgd Exp $	*/
+/*	$NetBSD: pcvt_ioctl.h,v 1.3 1995/03/28 18:17:55 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -52,7 +52,7 @@
 #ifndef	_IOCTL_PCVT_H_
 #define	_IOCTL_PCVT_H_
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #else

@@ -26,8 +26,8 @@ struct bsd_aouthdr {
   u_long  a_drsize;       /* data relocation size */
 };
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #define _AOUT_INCLUDE_
 #include <nlist.h>
-#endif /* KERNEL */
+#endif /* _KERNEL */
 #endif /* __MACHINE_BSD_AOUT_H__ */

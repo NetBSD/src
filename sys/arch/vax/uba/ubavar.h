@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.3 1995/02/13 00:44:25 ragge Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.4 1995/03/28 18:21:31 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -218,7 +218,7 @@ struct ubinfo {
 #endif
 
 #ifndef LOCORE
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	ubago(ui)	ubaqueue(ui, 0)
 
 /*

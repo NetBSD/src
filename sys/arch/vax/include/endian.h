@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.3 1995/02/13 00:43:21 ragge Exp $	*/
+/*	$NetBSD: endian.h,v 1.4 1995/03/28 18:21:21 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -51,7 +51,7 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-#if defined(KERNEL)||defined(STANDALONE)
+#if defined(_KERNEL)||defined(STANDALONE)
 static	unsigned long   htonl __P((unsigned long));
 static	unsigned short  htons __P((unsigned short));
 static	unsigned long   ntohl __P((unsigned long));

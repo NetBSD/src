@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.h,v 1.1 1995/02/13 23:08:50 cgd Exp $	*/
+/*	$NetBSD: asic.h,v 1.2 1995/03/28 18:14:22 jtc Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -223,7 +223,7 @@
 #define	ASIC_SYS_ETHER_ADDRESS(base)	((base) + ASIC_SLOT_2_START)
 #define	ASIC_SYS_LANCE(base)		((base) + ASIC_SLOT_3_START)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	ASIC_SLOT_LANCE		0	/* ASIC slots for interrupt lookup. */
 #define	ASIC_SLOT_SCC0		1
 #define	ASIC_SLOT_SCC1		2

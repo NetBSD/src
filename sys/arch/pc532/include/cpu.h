@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 1994/10/26 08:24:23 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 1995/03/28 18:18:16 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,7 +81,7 @@
 #define	CLKF_PC(framep)		((framep)->if_pc)
 #define	CLKF_INTR(frame)	(0)	/* XXX should have an interrupt stack */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <machine/icu.h>
 #endif
 
