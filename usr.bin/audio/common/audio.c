@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.11 2001/03/04 15:27:35 hubertf Exp $	*/
+/*	$NetBSD: audio.c,v 1.12 2001/06/07 12:48:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -328,8 +328,8 @@ decode_time(arg, tvp)
 		if ((colon = strchr(s, ':'))) {
 			*colon++ = '\0';
 			decode_int(s, &first);
-			tvp->tv_sec += first;
-			tvp->tv_sec *= 60;	/* minutes and hours */
+			tvp->tv_sec *= 60;
+			tvp->tv_sec += first;	/* minutes and hours */
 			s = colon;
 		}
 	}
