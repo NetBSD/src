@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.36 1996/07/11 00:09:29 jtc Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.37 1996/10/02 18:05:03 ws Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -69,7 +69,7 @@ sys_getpriority(curp, v, retval)
 		syscallarg(int) who;
 	} */ *uap = v;
 	register struct proc *p;
-	register int low = PRIO_MAX + 1;
+	register int low = NZERO + PRIO_MAX + 1;
 
 	switch (SCARG(uap, which)) {
 
@@ -109,9 +109,9 @@ sys_getpriority(curp, v, retval)
 	default:
 		return (EINVAL);
 	}
-	if (low == PRIO_MAX + 1)
+	if (low == NZERO + PRIO_MAX + 1)
 		return (ESRCH);
-	*retval = low;
+	*retval = low - NZERO;
 	return (0);
 }
 
@@ -191,6 +191,7 @@ donice(curp, chgp, n)
 		n = PRIO_MAX;
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
+	n += NZERO;
 	if (n < chgp->p_nice && suser(pcred->pc_ucred, &curp->p_acflag))
 		return (EACCES);
 	chgp->p_nice = n;

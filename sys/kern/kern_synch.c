@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.38 1996/07/17 21:54:06 explorer Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.39 1996/10/02 18:05:05 ws Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -204,7 +204,8 @@ schedcpu(arg)
 			(p->p_cpticks * FSCALE / hz)) >> FSHIFT;
 #endif
 		p->p_cpticks = 0;
-		newcpu = (u_int) decay_cpu(loadfac, p->p_estcpu) + p->p_nice;
+		newcpu = (u_int)decay_cpu(loadfac, p->p_estcpu)
+		    + p->p_nice - NZERO;
 		p->p_estcpu = min(newcpu, UCHAR_MAX);
 		resetpriority(p);
 		if (p->p_priority >= PUSER) {
@@ -599,7 +600,7 @@ mi_switch()
 		}
 	}
 	if (autonicetime && s > autonicetime && p->p_ucred->cr_uid && p->p_nice == NZERO) {
-		p->p_nice = autoniceval;
+		p->p_nice = autoniceval + NZERO;
 		resetpriority(p);
 	}
 
@@ -680,7 +681,7 @@ resetpriority(p)
 {
 	register unsigned int newpriority;
 
-	newpriority = PUSER + p->p_estcpu / 4 + 2 * p->p_nice;
+	newpriority = PUSER + p->p_estcpu / 4 + 2 * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	p->p_usrpri = newpriority;
 	if (newpriority < curpriority)

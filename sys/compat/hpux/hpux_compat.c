@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.25 1996/06/23 11:10:01 mycroft Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.26 1996/10/02 18:04:56 ws Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -548,8 +548,8 @@ hpux_sys_rtprio(cp, v, retval)
 		p = cp;
 	else if ((p = pfind(SCARG(uap, pid))) == 0)
 		return (ESRCH);
-	nice = p->p_nice;
-	if (nice < NZERO)
+	nice = p->p_nice - NZERO;
+	if (nice < 0)
 		*retval = (nice + 16) << 3;
 	else
 		*retval = RTPRIO_RTOFF;
@@ -559,9 +559,9 @@ hpux_sys_rtprio(cp, v, retval)
 		return (0);
 
 	case RTPRIO_RTOFF:
-		if (nice >= NZERO)
+		if (nice >= 0)
 			return (0);
-		nice = NZERO;
+		nice = 0;
 		break;
 
 	default:
@@ -1321,7 +1321,7 @@ hpux_sys_nice_6x(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	error = donice(p, p, (p->p_nice-NZERO)+SCARG(uap, nval));
+	error = donice(p, p, (p->p_nice - NZERO) + SCARG(uap, nval));
 	if (error == 0)
 		*retval = p->p_nice - NZERO;
 	return (error);
