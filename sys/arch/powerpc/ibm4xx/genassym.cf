@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3 2003/08/03 21:40:13 matt Exp $
+#	$NetBSD: genassym.cf,v 1.4 2003/08/04 00:30:51 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -115,6 +115,7 @@ define	CFRAME_R31	offsetof(struct callframe, r31)
 
 define	SFRAMELEN	roundup(sizeof(struct switchframe), CALLFRAMELEN)
 define	SFRAME_SP	offsetof(struct switchframe, sp)
+define	SFRAME_USER_SR	offsetof(struct switchframe, user_sr)
 define	SFRAME_CR	offsetof(struct switchframe, cr)
 define	SFRAME_R2	offsetof(struct switchframe, fixreg2)
 define	SFRAME_R13	offsetof(struct switchframe, fixreg[0])
