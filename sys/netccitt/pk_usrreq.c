@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.11 1996/05/22 13:55:22 mycroft Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.12 1996/05/23 23:35:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -65,6 +65,31 @@
 
 static void old_to_new __P((struct mbuf *));
 static void new_to_old __P((struct mbuf *));
+
+void
+pk_setsockaddr(lcp, nam)
+	struct pklcd *lcp;
+	struct mbuf *nam;
+{
+
+	nam->m_len = sizeof(struct sockaddr_x25);
+	bcopy(lcp->lcd_ceaddr, mtod(nam, caddr_t), (size_t)nam->m_len);
+	if (lcp->lcd_flags & X25_OLDSOCKADDR)
+		new_to_old(nam);
+}
+
+void
+pk_setpeeraddr(lcp, nam)
+	struct pklcd *lcp;
+	struct mbuf *nam;
+{
+
+	nam->m_len = sizeof(struct sockaddr_x25);
+	bcopy(lcp->lcd_craddr, mtod(nam, caddr_t), (size_t)nam->m_len);
+	if (lcp->lcd_flags & X25_OLDSOCKADDR)
+		new_to_old(nam);
+}
+
 /*
  *
  *  X.25 Packet level protocol interface to socket abstraction.
@@ -82,35 +107,39 @@ pk_usrreq(so, req, m, nam, control, p)
 	struct mbuf *m, *nam, *control;
 	struct proc *p;
 {
-	register struct pklcd *lcp = (struct pklcd *) so->so_pcb;
-	register int    error = 0;
+	register struct pklcd *lcp;
+	int s;
+	register int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (pk_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
-	if (control && control->m_len) {
+
+	s = splsoftnet();
+	lcp = (struct pklcd *)so->so_pcb;
+#ifdef DIAGNOSTIC
+	if (req != PRU_SEND && req != PRU_SENDOOB && control)
+		panic("pk_usrreq: unexpected control mbuf");
+#endif
+	if (lcp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
 	}
-	if (lcp == NULL && req != PRU_ATTACH) {
-		error = EINVAL;
-		goto release;
-	}
+
 	/*
 		pk_trace (pkcbhead, TR_USER, (struct pklcd *)0,
 			req, (struct x25_packet *)0);
 	*/
-
 	switch (req) {
+
 		/*
 		 * X.25 attaches to socket via PRU_ATTACH and allocates a
 		 * logical channel descriptor.  If the socket is to  receive
 		 * connections, then the LISTEN state is entered.
 		 */
 	case PRU_ATTACH:
-		if (lcp) {
+		if (lcp != 0) {
 			error = EISCONN;
-			/* Socket already connected. */
 			break;
 		}
 		lcp = pk_attach(so);
@@ -151,9 +180,15 @@ pk_usrreq(so, req, m, nam, control, p)
 	case PRU_CONNECT:
 		if (nam->m_len == sizeof(struct x25_sockaddr))
 			old_to_new(nam);
-		if (pk_checksockaddr(nam))
-			return (EINVAL);
+		if (pk_checksockaddr(nam)) {
+			error = EINVAL;
+			break;
+		}
 		error = pk_connect(lcp, mtod(nam, struct sockaddr_x25 *));
+		break;
+
+	case PRU_CONNECT2:
+		error = EOPNOTSUPP;
 		break;
 
 		/*
@@ -173,11 +208,11 @@ pk_usrreq(so, req, m, nam, control, p)
 	case PRU_ACCEPT:
 		if (lcp->lcd_craddr == NULL)
 			break;
-		bcopy((caddr_t) lcp->lcd_craddr, mtod(nam, caddr_t),
-		      sizeof(struct sockaddr_x25));
-		nam->m_len = sizeof(struct sockaddr_x25);
-		if (lcp->lcd_flags & X25_OLDSOCKADDR)
-			new_to_old(nam);
+		pk_setpeeraddr(lcp, nam);
+		break;
+
+	case PRU_SHUTDOWN:
+		socantsendmore(so);
 		break;
 
 		/*
@@ -186,23 +221,6 @@ pk_usrreq(so, req, m, nam, control, p)
 	case PRU_RCVD:
 		pk_flowcontrol(lcp, /* sbspace (&so -> so_rcv) <= */ 0, 1);
 		break;
-
-		/*
-		 * Send INTERRUPT packet.
-		 */
-	case PRU_SENDOOB:
-		if (m == 0) {
-			MGETHDR(m, M_WAITOK, MT_OOBDATA);
-			m->m_pkthdr.len = m->m_len = 1;
-			*mtod(m, octet *) = 0;
-		}
-		if (m->m_pkthdr.len > 32) {
-			m_freem(m);
-			error = EMSGSIZE;
-			break;
-		}
-		MCHTYPE(m, MT_OOBDATA);
-		/* FALLTHROUGH */
 
 		/*
 		 * Do send by placing data on the socket output queue.
@@ -214,8 +232,10 @@ pk_usrreq(so, req, m, nam, control, p)
 			control->m_data += sizeof(*ch);
 			error = pk_ctloutput(PRCO_SETOPT, so, ch->cmsg_level,
 					     ch->cmsg_type, &control);
+			if (error)
+				break;
 		}
-		if (error == 0 && m)
+		if (m)
 			error = pk_send(m, lcp);
 		break;
 
@@ -227,46 +247,12 @@ pk_usrreq(so, req, m, nam, control, p)
 		pk_disconnect(lcp);
 		break;
 
-		/* Begin unimplemented hooks. */
-
-	case PRU_SHUTDOWN:
-		error = EOPNOTSUPP;
-		break;
-
-	case PRU_CONTROL:
-		error = EOPNOTSUPP;
-		break;
-
 	case PRU_SENSE:
-#ifdef BSD4_3
-		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
-#else
-		error = EOPNOTSUPP;
-#endif
-		break;
-
-		/* End unimplemented hooks. */
-
-	case PRU_SOCKADDR:
-		if (lcp->lcd_ceaddr == 0)
-			return (EADDRNOTAVAIL);
-		nam->m_len = sizeof(struct sockaddr_x25);
-		bcopy((caddr_t) lcp->lcd_ceaddr, mtod(nam, caddr_t),
-		      sizeof(struct sockaddr_x25));
-		if (lcp->lcd_flags & X25_OLDSOCKADDR)
-			new_to_old(nam);
-		break;
-
-	case PRU_PEERADDR:
-		if (lcp->lcd_state != DATA_TRANSFER)
-			return (ENOTCONN);
-		nam->m_len = sizeof(struct sockaddr_x25);
-		bcopy(lcp->lcd_craddr ? (caddr_t) lcp->lcd_craddr :
-		      (caddr_t) lcp->lcd_ceaddr,
-		      mtod(nam, caddr_t), sizeof(struct sockaddr_x25));
-		if (lcp->lcd_flags & X25_OLDSOCKADDR)
-			new_to_old(nam);
-		break;
+		/*
+		 * stat: don't bother with a blocksize.
+		 */
+		splx(s);
+		return (0);
 
 		/*
 		 * Receive INTERRUPT packet.
@@ -290,12 +276,47 @@ pk_usrreq(so, req, m, nam, control, p)
 		*mtod(m, char *) = lcp->lcd_intrdata;
 		break;
 
+		/*
+		 * Send INTERRUPT packet.
+		 */
+	case PRU_SENDOOB:
+		if (control) {
+			register struct cmsghdr *ch = mtod(m, struct cmsghdr *);
+			control->m_len -= sizeof(*ch);
+			control->m_data += sizeof(*ch);
+			error = pk_ctloutput(PRCO_SETOPT, so, ch->cmsg_level,
+					     ch->cmsg_type, &control);
+			if (error)
+				break;
+		}
+		if (m) {
+			MCHTYPE(m, MT_OOBDATA);
+			error = pk_send(m, lcp);
+		}
+		break;
+
+	case PRU_SOCKADDR:
+		if (lcp->lcd_ceaddr == 0) {
+			error = EADDRNOTAVAIL;
+			break;
+		}
+		pk_setsockaddr(lcp, nam);
+		break;
+
+	case PRU_PEERADDR:
+		if (lcp->lcd_state != DATA_TRANSFER) {
+			error = ENOTCONN;
+			break;
+		}
+		pk_setpeeraddr(lcp, nam);
+		break;
+
 	default:
 		panic("pk_usrreq");
 	}
+
 release:
-	if (control != NULL)
-		m_freem(control);
+	splx(s);
 	return (error);
 }
 
