@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.6 1999/01/10 16:56:36 augustss Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.7 1999/01/14 11:57:48 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ static const keysym_t pckbd_keydesc_us[] = {
     KC(11), 			KS_0,		KS_parenright,
     KC(12), 			KS_minus,	KS_underscore,
     KC(13), 			KS_equal,	KS_plus,
-    KC(14), 			KS_Delete,
+    KC(14),  KS_Cmd_ResetEmul,	KS_Delete,
     KC(15), 			KS_Tab,
     KC(16), 			KS_q,
     KC(17), 			KS_w,
