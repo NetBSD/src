@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.8 2002/03/06 13:09:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2002/03/06 13:17:01 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -12,13 +12,13 @@ CRUNCHBIN=	ramdiskbin
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
-IMAGEDEPENDS+=	${CRUNCHBIN} dot.profile termcap.mini \
+MAKEDEVTARGETS=	std md0
+IMAGEDEPENDS+=	${CRUNCHBIN} \
+		dot.profile termcap.mini \
+		${DESTDIR}/usr/mdec/installboot ${DESTDIR}/usr/mdec/uboot.lif \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
 		${_SRC_TOP_}/etc/services ${DESTDIR}/usr/mdec/uboot.lif
-
-
-MAKEDEVTARGETS+=std md0
 
 
 realall: ${IMAGE}
