@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.3 2001/11/18 08:16:16 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.4 2001/11/20 16:09:01 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -162,17 +162,20 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_base = ga->ga_addr;
 
 	for (hd = hpc_devices; hd->hd_name != NULL; hd++) {
-		ha.ha_name = hd->hd_name;
-		ha.ha_devoff = hd->hd_devoff;
-		ha.ha_dmaoff = hd->hd_dmaoff;
-		ha.ha_irq = hd->hd_irq;
+		if (hd->hd_sysmask & sysmask) {
+			ha.ha_name = hd->hd_name;
+			ha.ha_devoff = hd->hd_devoff;
+			ha.ha_dmaoff = hd->hd_dmaoff;
+			ha.ha_irq = hd->hd_irq;
 
-		/* XXX This is disgusting. */
-		ha.ha_st = 1;
-		ha.ha_sh = MIPS_PHYS_TO_KSEG1(sc->sc_base);
-		ha.ha_dmat = &sgimips_default_bus_dma_tag;
+			/* XXX This is disgusting. */
+			ha.ha_st = 1;
+			ha.ha_sh = MIPS_PHYS_TO_KSEG1(sc->sc_base);
+			ha.ha_dmat = &sgimips_default_bus_dma_tag;
 
-		(void) config_found_sm(self, &ha, hpc_print, hpc_submatch);
+			(void) config_found_sm(self, &ha, 
+						hpc_print, hpc_submatch);
+		}
 	}
 
 	/* 
