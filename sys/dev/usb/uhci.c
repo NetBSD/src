@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.13 1998/12/26 12:53:01 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.14 1998/12/28 02:06:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -909,7 +909,7 @@ uhci_run(sc, run)
 	}
 	splx(s);
 	printf("%s: cannot %s\n", USBDEVNAME(sc->sc_bus.bdev),
-	       (run ? "start" : "stop"));
+	       run ? "start" : "stop");
 }
 
 /*
