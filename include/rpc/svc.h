@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.10 1997/07/13 18:17:43 christos Exp $	*/
+/*	$NetBSD: svc.h,v 1.11 1998/02/10 00:44:47 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -38,8 +38,8 @@
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
-#ifndef _RPC_SVC_H
-#define _RPC_SVC_H
+#ifndef _RPC_SVC_H_
+#define _RPC_SVC_H_
 #include <sys/cdefs.h>
 
 /*
@@ -320,4 +320,4 @@ __BEGIN_DECLS
 extern SVCXPRT *svcfd_create __P((int, u_int, u_int));
 __END_DECLS
 
-#endif /* !_RPC_SVC_H */
+#endif /* !_RPC_SVC_H_ */

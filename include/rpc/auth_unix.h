@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.h,v 1.4 1994/10/26 00:56:56 cgd Exp $	*/
+/*	$NetBSD: auth_unix.h,v 1.5 1998/02/10 00:44:27 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -45,8 +45,8 @@
  * for the credentials.
  */
 
-#ifndef _RPC_AUTH_UNIX_H
-#define _RPC_AUTH_UNIX_H
+#ifndef _RPC_AUTH_UNIX_H_
+#define _RPC_AUTH_UNIX_H_
 #include <sys/cdefs.h>
 
 /* The machine name is part of a credential; it may not exceed 255 bytes */
@@ -80,4 +80,4 @@ struct short_hand_verf {
 	struct opaque_auth new_cred;
 };
 
-#endif /* !_RPC_AUTH_UNIX_H */
+#endif /* !_RPC_AUTH_UNIX_H_ */
