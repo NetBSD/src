@@ -1,4 +1,4 @@
-.\"	$NetBSD: vi.1,v 1.3 1998/01/09 08:07:23 perry Exp $
+.\"	$NetBSD: vi.1,v 1.4 1999/01/08 06:16:54 abs Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ ex, vi, view \- text editors
 .SH SYNOPSIS
 .B ex
 [\c
-.B -eFRrsv\c
+.B -eFGRrsv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -53,7 +53,7 @@ ex, vi, view \- text editors
 .br
 .B vi
 [\c
-.B -eFlRrv\c
+.B -eFGlRrv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -64,7 +64,7 @@ ex, vi, view \- text editors
 .br
 .B view
 [\c
-.B -eFRrv\c
+.B -eFGRrv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -136,6 +136,9 @@ Start editing in ex mode, as if the command name were
 Don't copy the entire file when first starting to edit.
 (The default is to make a copy in case someone else modifies
 the file during your edit session.)
+.TP
+.B \-G
+Start editing in gtags mode, as if the gtagsmode option was set.
 .TP
 .B \-l
 Start editing with the lisp and showmatch options set.
@@ -443,6 +446,8 @@ commands or cancel partial commands.
 .TP
 .B "<control-]>"
 Push a tag reference onto the tag stack.
+In gtagsmode, if at the first column of line,
+locate function references otherwise function definitions.
 .TP
 .B "<control-^>"
 Switch to the most recently edited file.
@@ -954,6 +959,9 @@ Grow or shrink the current screen.
 .B "rew[ind][!]"
 Rewind the argument list.
 .TP
+.B "rta[g][!] tagstring"
+Edit the file refering the specified tag. (Only in gtagsmode)
+.TP
 .B "se[t] [option[=[value]] ...] [nooption ...] [option? ...] [all]"
 Display or set editor options.
 .TP
@@ -1123,6 +1131,9 @@ command line.
 .TP
 .B "flash [on]"
 Flash the screen instead of beeping the keyboard on error.
+.TP
+.B "gtagsmode, gt [off]"
+Use GTAGS and GRTAGS instead of tags.
 .TP
 .B "hardtabs, ht [8]"
 Set the spacing between hardware tab settings.
