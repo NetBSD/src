@@ -1,4 +1,4 @@
-.\"	$NetBSD: finger.1,v 1.7 1997/01/09 20:19:18 tls Exp $
+.\"	$NetBSD: finger.1,v 1.8 1997/09/09 02:41:07 mrg Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)finger.1	6.14 (Berkeley) 7/27/91
-.\"	$NetBSD: finger.1,v 1.7 1997/01/09 20:19:18 tls Exp $
+.\"	$NetBSD: finger.1,v 1.8 1997/09/09 02:41:07 mrg Exp $
 .\"
 .Dd November 21, 1996
 .Dt FINGER 1
@@ -42,7 +42,7 @@
 .Nd user information lookup program
 .Sh SYNOPSIS
 .Nm finger
-.Op Fl lmpsho
+.Op Fl lmpshog
 .Op Ar user ...
 .Op Ar user@host ...
 .Sh DESCRIPTION
@@ -87,6 +87,9 @@ When used in conjunction with the
 .Fl s
 option, the office location and office phone information is displayed
 instead of the name of the remote host.
+.Pp
+.It Fl g
+This option restricts the gecos output to only the users' real names.
 .Pp
 .It Fl l
 Produces a multi-line format displaying all of the information
