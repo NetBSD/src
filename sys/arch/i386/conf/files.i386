@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.167 2000/09/13 04:47:00 thorpej Exp $
+#	$NetBSD: files.i386,v 1.168 2000/10/19 14:32:21 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -100,8 +100,8 @@ major	{md = 17}
 # RAIDframe
 major	{raid = 18}
 
-# Compaq arrays
-major	{ca = 19}
+# Logical storage units
+major	{lsu = 19}
 
 # attribute used to bring in BIOS trampoline code for real-mode probing
 # of certain devices/BIOS features
