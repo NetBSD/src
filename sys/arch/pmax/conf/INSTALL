@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.43 2002/01/27 13:23:25 jdolecek Exp $
+# 	$NetBSD: INSTALL,v 1.43.6.1 2002/03/15 14:22:40 ad Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -84,46 +84,73 @@ cpu*		at mainbus0
 ## Peripheral Bus Support (for devices to attach to)
 ## ----------------------------------------------------------------------------
 
-# TURBOchannel bus support
-tc*	at	mainbus0
-
 # 3MIN, 3MAX+ and MAXINE have IOASIC in system slot
 ioasic0	at	tc?
 mcclock* at	ioasic? offset ?	# DS1287 RTC
 le*	at	ioasic? offset ?	# LANCE
-scc*	at	ioasic? offset ?	# Z85C30
-#bba*	at	ioasic? offset ?	# MAXINE baseboard audio
-#audio*	at	bba?
-dtop*	at	ioasic? offset ?	# MAXINE kbd and mouse
+dt*	at	ioasic? offset ?	# MAXINE kbd and mouse
+bba*	at	ioasic? offset ?	# MAXINE baseboard audio
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
+zsc0	at	ioasic? offset 0x100000	# Z85C30
+zsc1	at	ioasic? offset 0x180000	# Z85C30
 asc*	at	ioasic? offset ?	# NCR53C94 SCSI with IOASIC
+
+options NEW_SCC_DRIVER
+zstty*	at	zsc? channel ?		# serial ports on B channels
+lkkbd*	at	zsc1 channel ?		# keyboard port on A channels
+vsms*	at	zsc0 channel ?		# mouse port on A channels
+
+audio*	at	bba?
+
+dtkbd*	at	dt? addr ?
+dtms*	at	dt? addr ?
 
 # 3MAX has TURBOchannel but no IOASIC
 ibus0	at	tc? slot ? offset ?	# 3MAX system slot
 
 # PMAX, 3MAX and MIPSMATE common devices
 mcclock* at	ibus0 addr ?		# DS1287 RTC
-dc*	at	ibus0 addr ?		# DC7085 quad line serial device
+dz*	at	ibus0 addr ?		# DC7085 quad line serial device
+lkkbd*	at	dz? line 0		# Keyboard
+vsms*	at	dz? line 1		# Mouse
 
 # TURBOchannel devices
 mfb*	at	tc? slot ? offset ?	# PMAG-A MX Monochrome Framebuffer
 cfb*	at	tc? slot ? offset ?	# PMAG-B CX Color Framebuffer
-#tfb*	at	tc? slot ? offset ?	# PMAG-RO TX True Color Framebuffer
+px*	at	tc? slot ? offset ?	# PMAG-C 2D accelerator
+pxg*	at	tc? slot ? offset ?	# PMAG-D,E,F 3D accelerator
 sfb*	at	tc? slot ? offset ?	# PMAGB-B HX Smart Framebuffer
-px0	at	tc? slot ? offset ?	# PMAG-C,D,E,F PX family
-#sfbp*	at	tc? slot ? offset ?	# PMAGD HX+ Smart Framebuffer
-xcfb0	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
+sfbp*	at	tc? slot ? offset ?	# PMAGD HX+ Smart Framebuffer
+tfb*	at	tc? slot ? offset ?	# PMAG-RO TX True Color Framebuffer
+xcfb*	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
 asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
 le*	at	tc? slot ? offset ?	# PMAD-A LANCE
 fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
-#tcds*	at	tc? slot ? offset ?	# PMAZB/PMAZC dual channel SCSI
-#asc*	at	tcds? chip ?
+tcds*	at	tc? slot ? offset ?	# PMAZB/PMAZC dual channel SCSI
+asc*	at	tcds? chip ?
 
 # PMAX and MIPSMATE
 ibus0	at	mainbus0
 pm*	at	ibus0 addr ?		# 3100 onboard fb
-le*	at	ibus0 addr ?		# 3100 onboard LANCE
+le*	at	ibus0 addr ?		# 3100, 5100 onboard LANCE
 sii*	at	ibus0 addr ?		# DC7061 onboard SCSI
+
+# Workstation console
+
+wskbd*		at	lkkbd? console ?
+wskbd*		at	dtkbd? console ?
+wsmouse*	at	vsms?
+wsmouse*	at	dtms?
+
+wsdisplay*	at	mfb?
+wsdisplay*	at	cfb?
+wsdisplay*	at	px?
+wsdisplay*	at	pxg?
+wsdisplay*	at	sfb?
+wsdisplay*	at	sfbp?
+wsdisplay*	at	tfb?
+wsdisplay*	at	xcfb?
+wsdisplay*	at	pm?
 
 #########################################################################
 # SCSI configuration							#
@@ -143,6 +170,3 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
 pseudo-device	ccd		 4	# concatenated disks
-
-pseudo-device	rasterconsole	 1 	# NB: raster console requires "fb"
-pseudo-device	fb		 1	# only 1 framebuffer supported

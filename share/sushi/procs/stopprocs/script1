@@ -1,9 +1,0 @@
-#!/bin/sh
-# $NetBSD: script1,v 1.1 2001/04/26 02:26:22 garbled Exp $
-
-for i in `ls -1 /etc/rc.d`
-do
-	/etc/rc.d/$i status
-done 2>&1 | grep -v unknown | grep -v Usage | grep 'is running' | \
-awk '{print $1}'
-echo "none"

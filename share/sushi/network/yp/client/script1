@@ -1,8 +1,0 @@
-#!/bin/sh
-# $NetBSD: script1,v 1.1 2001/04/25 03:43:36 garbled Exp $
-
-if [ -f "/etc/myname" ]; then
-	cat /etc/defaultdomain
-else
-	domainname
-fi

@@ -1,5 +1,0 @@
-#	$NetBSD: fstab.wd,v 1.1 2000/08/22 05:33:27 mrg Exp $
-#
-/dev/wd0a / ffs rw 1 1
-/dev/wd0b none swap sw 0 0
-/dev/wd0g /usr ffs rw 1 2

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3max.c,v 1.37 2001/09/18 16:24:16 tsutsui Exp $ */
+/* $NetBSD: dec_3max.c,v 1.37.10.1 2002/03/15 14:22:46 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,13 +73,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.37 2001/09/18 16:24:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.37.10.1 2002/03/15 14:22:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/locore.h>
 #include <machine/sysconf.h>
@@ -89,9 +90,12 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.37 2001/09/18 16:24:16 tsutsui Exp $"
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn02.h>
 #include <pmax/pmax/memc.h>
-#include <pmax/dev/dcvar.h>
 
-#include "rasterconsole.h"
+#include <dev/dec/dzreg.h>
+#include <dev/dec/dzvar.h>
+#include <dev/dec/dzkbdvar.h>
+
+#include "wsdisplay.h"
 
 void		dec_3max_init __P((void));		/* XXX */
 static void	dec_3max_bus_reset __P((void));
@@ -165,21 +169,24 @@ static void
 dec_3max_cons_init()
 {
 	int kbd, crt, screen;
-	extern int tcfb_cnattach __P((int));		/* XXX */
+	extern int tcfb_cnattach(int);	/* XXX */
+	void dz_ibus_cnsetup(paddr_t);	/* XXX */
+	void dz_ibus_cnattach(void);	/* XXX */
 
 	kbd = crt = screen = 0;
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NRASTERCONSOLE > 0
+#if NWSDISPLAY > 0
 		if (kbd == 7 && tcfb_cnattach(crt) > 0) {
-			dckbd_cnattach(KN02_SYS_DZ);
+			dz_ibus_cnsetup(KN02_SYS_DZ);
+			dzkbd_cnattach(NULL);
 			return;
 		}
-#else
-		printf("No framebuffer device configured for slot %d: ", crt);
-		printf("using serial console\n");
 #endif
+		printf("No framebuffer device configured for slot %d: \n",
+		    crt);
+		printf("Using serial console.\n");
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.
@@ -188,7 +195,8 @@ dec_3max_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-	dc_cnattach(KN02_SYS_DZ, kbd);
+	dz_ibus_cnsetup(KN02_SYS_DZ);
+	dz_ibus_cnattach();
 }
 
 static const struct {

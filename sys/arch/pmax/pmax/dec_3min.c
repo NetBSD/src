@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.49 2001/09/18 16:15:20 tsutsui Exp $ */
+/* $NetBSD: dec_3min.c,v 1.49.10.1 2002/03/15 14:22:47 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.49 2001/09/18 16:15:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.49.10.1 2002/03/15 14:22:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.49 2001/09/18 16:15:20 tsutsui Exp $"
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kmin.h>		/* 3min baseboard addresses */
 #include <pmax/pmax/memc.h>		/* 3min/maxine memory errors */
-#include <pmax/tc/sccvar.h>
 
-#include "rasterconsole.h"
+#include <dev/ic/z8530sc.h>                                          
+#include <dev/tc/zs_ioasicvar.h>
+#include "wsdisplay.h"
 
 void		dec_3min_init __P((void));		/* XXX */
 static void	dec_3min_bus_reset __P((void));
@@ -210,14 +211,15 @@ dec_3min_cons_init()
 	prom_findcons(&kbd, &crt, &screen);
 
 	if (screen > 0) {
-#if NRASTERCONSOLE > 0
+#if NWSDISPLAY > 0
 		if (tcfb_cnattach(crt) > 0) {
-			scc_lk201_cnattach(ioasic_base, 0x180000);
+			zs_ioasic_lk201_cnattach(ioasic_base, 0x180000, 0);
 			return;
 		}
 #endif
-		printf("No framebuffer device configured for slot %d: ", crt);
-		printf("using serial console\n");
+		printf("No framebuffer device configured for slot %d: \n",
+		    crt);
+		printf("Using serial console.\n");
 	}
 	/*
 	 * Delay to allow PROM putchars to complete.
@@ -226,7 +228,7 @@ dec_3min_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-	scc_cnattach(ioasic_base, 0x180000);
+	zs_ioasic_cnattach(ioasic_base, 0x180000, 1);
 }
 
 static void

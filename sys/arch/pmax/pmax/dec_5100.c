@@ -1,4 +1,4 @@
-/* $NetBSD: dec_5100.c,v 1.33 2001/09/18 16:15:20 tsutsui Exp $ */
+/* $NetBSD: dec_5100.c,v 1.33.10.1 2002/03/15 14:22:47 ad Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.33 2001/09/18 16:15:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.33.10.1 2002/03/15 14:22:47 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_5100.c,v 1.33 2001/09/18 16:15:20 tsutsui Exp $"
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>		/* common definitions */
 #include <pmax/pmax/kn230.h>
-#include <pmax/dev/dcvar.h>
 
 #include <pmax/ibus/ibusvar.h>
 
@@ -107,6 +106,9 @@ dec_5100_bus_reset()
 static void
 dec_5100_cons_init()
 {
+	void dz_ibus_cnsetup(paddr_t);	/* XXX */
+	void dz_ibus_cnattach(void);	/* XXX */
+
 	/*
 	 * Delay to allow PROM putchars to complete.
 	 * FIFO depth * character time,
@@ -114,7 +116,8 @@ dec_5100_cons_init()
 	 */
 	DELAY(160000000 / 9600);	/* XXX */
 
-	dc_cnattach(KN230_SYS_DZ0, 0);
+	dz_ibus_cnsetup(KN230_SYS_DZ0);
+	dz_ibus_cnattach();
 }
 
 static void

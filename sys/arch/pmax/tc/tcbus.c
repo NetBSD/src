@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.14 2001/09/19 19:04:17 thorpej Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.14.10.1 2002/03/15 14:22:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.14 2001/09/19 19:04:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.14.10.1 2002/03/15 14:22:51 ad Exp $");
 
 /*
  * Which system models were configured?
@@ -178,26 +178,66 @@ tc_ds_get_dma_tag(slot)
 	return (&pmax_default_bus_dma_tag);
 }
 
-#include "rasterconsole.h"
+#include "wsdisplay.h"
 
-#if NRASTERCONSOLE > 0
+#if NWSDISPLAY > 0
 
-#include "mfb.h"
-#include "cfb.h"
 #include "sfb.h"
+#include "sfbp.h"
+#include "cfb.h"
+#include "mfb.h"
+#include "tfb.h"
+#include "xcfb.h"
 #include "px.h"
+#include "pxg.h"
 
-#include <machine/pmioctl.h>	/* XXX */
-#include <dev/sun/fbio.h>	/* XXX */
-#include <machine/fbvar.h>	/* XXX */
-#include <pmax/dev/fbreg.h>	/* XXX */
-#include <pmax/dev/cfbvar.h>
-#include <pmax/dev/mfbvar.h>
-#include <pmax/dev/sfbvar.h>
-#include <pmax/dev/pxreg.h>
-#include <pmax/dev/pxvar.h>
+extern void	sfb_cnattach __P((tc_addr_t));
+extern void	sfbp_cnattach __P((tc_addr_t));
+extern void	cfb_cnattach __P((tc_addr_t));
+extern void	mfb_cnattach __P((tc_addr_t));
+extern void	tfb_cnattach __P((tc_addr_t));
+extern void	xcfb_cnattach __P((tc_addr_t));
+extern void	px_cnattach __P((tc_addr_t));
+extern void	pxg_cnattach __P((tc_addr_t));
+extern int	tc_checkslot __P((tc_addr_t, char *));
+
+struct cnboards {
+	const char	*cb_tcname;
+	void	(*cb_cnattach)(tc_addr_t);
+} static const cnboards[] = {
+#if NXCFB > 0
+	{ "PMAG-DV ", xcfb_cnattach },
+#endif
+#if NSFB > 0
+	{ "PMAGB-BA", sfb_cnattach },
+#endif
+#if NSFBP > 0
+	{ "PMAGD   ", sfbp_cnattach },
+#endif
+#if NCFB > 0
+	{ "PMAG-BA ", cfb_cnattach },
+#endif
+#if NMFB > 0
+	{ "PMAG-AA ", mfb_cnattach },
+#endif
+#if NTFB > 0
+	{ "PMAG-JA ", tfb_cnattach },
+#endif
+#if NPX > 0
+	{ "PMAG-CA ", px_cnattach },
+#endif
+#if NPXG > 0
+	{ "PMAG-DA ", pxg_cnattach },
+	{ "PMAG-FA ", pxg_cnattach },
+	{ "PMAG-FB ", pxg_cnattach },
+	{ "PMAGB-FA", pxg_cnattach },
+	{ "PMAGB-FB", pxg_cnattach },
+#endif
+};
 
 #include <machine/dec_prom.h>
+
+int tcfb_cnattach __P((int));
 
 int
 tcfb_cnattach(slotno)
@@ -205,36 +245,20 @@ tcfb_cnattach(slotno)
 {
 	paddr_t tcaddr;
 	char tcname[TC_ROM_LLEN];
+	int i;
 
 	tcaddr = (*callv->_slot_address)(slotno);
 	if (tc_badaddr(tcaddr) || tc_checkslot(tcaddr, tcname) == 0)
 		panic("TC console designated by PROM does not exist!?");
 
-#if NSFB > 0
-	if (strncmp("PMAGB-BA", tcname, TC_ROM_LLEN) == 0) {
-		return sfb_cnattach(tcaddr);
-	}
-#endif
-#if NCFB > 0
-	if (strncmp("PMAG-BA ", tcname, TC_ROM_LLEN) == 0) {
-		return cfb_cnattach(tcaddr);
-	}
-#endif
-#if NMFB > 0
-	if (strncmp("PMAG-AA ", tcname, TC_ROM_LLEN) == 0) {
-		return mfb_cnattach(tcaddr);
-	}
-#endif
-#if NPX > 0
-	if (strncmp("PMAG-CA ", tcname, TC_ROM_LLEN) == 0
-	    || strncmp("PMAG-DA ", tcname, TC_ROM_LLEN) == 0
-	    || strncmp("PMAG-FA ", tcname, TC_ROM_LLEN) == 0) {
-		int px_cnattach __P((paddr_t)); /* XXX much simpler XXX */
+	for (i = 0; i < sizeof(cnboards) / sizeof(cnboards[0]); i++)
+		if (strncmp(tcname, cnboards[i].cb_tcname, TC_ROM_LLEN) == 0)
+			break;
 
-		return px_cnattach(tcaddr);
-	}
-#endif
-	return 0;
+	if (i == sizeof(cnboards) / sizeof(cnboards[0]))
+		return (0);
+
+	(cnboards[i].cb_cnattach)(tcaddr);
+	return (1);
 }
-
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.100 2002/03/13 02:55:13 simonb Exp $
+#	$NetBSD: files.pmax,v 1.100.2.1 2002/03/15 14:22:40 ad Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -42,6 +42,19 @@ file	arch/pmax/pmax/dec_5100.c	dec_5100	# kn230, mipsmate
 file	arch/pmax/pmax/memc_3max.c	dec_3max|dec_3maxplus
 file	arch/pmax/pmax/memc_3min.c	dec_3min|dec_maxine
 
+file	arch/pmax/pmax/autoconf.c
+file	arch/pmax/pmax/bus_dma.c
+file	arch/pmax/pmax/bus_space.c
+file	arch/pmax/pmax/conf.c
+file	arch/pmax/pmax/disksubr.c
+file	arch/pmax/pmax/machdep.c
+file	arch/pmax/pmax/mainbus.c
+file	arch/pmax/pmax/interrupt.c
+file	arch/pmax/pmax/promcall.c
+file	arch/pmax/pmax/sysconf.c
+file	arch/pmax/stand/common/callvec.c
+file	dev/cons.c
+
 #
 # Bus-independent support for DEC devices
 #
@@ -75,7 +88,6 @@ file	arch/pmax/ibus/ibus_3max.c	ibus & dec_3max
 # attach ioasic at tc
 file	arch/pmax/tc/ioasic.c		ioasic
 
-
 # Real-time clock (not optional)
 device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
@@ -99,30 +111,56 @@ major { md = 17 }
 # RAIDframe
 major { raid = 32 }
 
-
 # asc attachment at ioasic?
 attach	asc at ioasic with asc_ioasic
 file	arch/pmax/tc/asc_ioasic.c	asc_ioasic
 
 # sii: kn01 SCSI interface
 device	sii: scsi
-file	arch/pmax/dev/sii.c		sii needs-flag
+file	arch/pmax/ibus/sii.c		sii needs-flag
 attach	sii at ibus with sii_ds
-file	arch/pmax/dev/sii_ds.c		sii_ds
+file	arch/pmax/ibus/sii_ds.c		sii_ds
 
+# DC7085 (DZ-11 like four-port serial device) on ibus
+attach	dz at ibus with dz_ibus
+file	arch/pmax/ibus/dz_ibus.c	dz_ibus
 
-# DC7085 (DZ-like four-port serial device) on ibus
-device dc: tty
-file	arch/pmax/dev/dc.c		dc
-attach dc at ibus with dc_ds
-file	arch/pmax/dev/dc_ds.c		dc needs-flag
+device	lkkbd: wskbddev
+attach	lkkbd at dz with dzkbd
+file	dev/dec/dzkbd.c			dzkbd needs-flag
 
+device	vsms: wsmousedev
+attach	vsms at dz with dzms
+file	dev/dec/dzms.c			dzms needs-flag
 
-# The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
-device dtop
-attach dtop at ioasic
-file	arch/pmax/dev/dtop.c		dtop needs-flag
+# The "desktop bus" on the MAXINE (5k/25).
+device	dt { addr = -1 }
+attach	dt at ioasic
+file	arch/pmax/tc/dt.c		dt needs-flag
 
+device	dtkbd: wskbddev, lkkbdmap
+attach	dtkbd at dt
+file	arch/pmax/tc/dtkbd.c		dtkbd needs-flag
+
+device	dtms: wsmousedev
+attach	dtms at dt 
+file	arch/pmax/tc/dtms.c		dtms needs-flag
+
+# 8530 UARTs using the MI 8530 driver
+device	zsc { channel = -1 }
+attach	zsc at ioasic with zsc_ioasic
+file	dev/tc/zs_ioasic.c		zsc_ioasic	needs-flag
+file	dev/ic/z8530sc.c		zsc
+
+device	zstty: tty
+attach	zstty at zsc
+file	dev/ic/z8530tty.c		zstty		needs-flag
+
+attach	vsms at zsc with zsms
+file	dev/tc/zsms.c			zsms
+
+attach	lkkbd at zsc with zskbd
+file	dev/tc/zskbd.c			zskbd		needs-flag
 
 # LANCE ethernet driver.
 #   device defined in sys/conf/files.
@@ -131,92 +169,60 @@ file	arch/pmax/dev/dtop.c		dtop needs-flag
 attach le at ibus with le_pmax:		le24, le_dec_subr
 file	arch/pmax/ibus/if_le_ibus.c	le_pmax
 
-
-# Raster operations for rcons. This isn't in the rcons section, since
-# it depends on fb devices for configuration glue.
+# Workstation console
 include "dev/rasops/files.rasops"
-
+include "dev/wsfont/files.wsfont"
+include "dev/wscons/files.wscons"
 
 # 3100 (pmax) onboard framebuffer
-device pm: rasops1, rasops8
-attach pm at ibus with pm_ds
-file	arch/pmax/dev/pm.c		pm needs-flag
-file	arch/pmax/dev/bt478.c		pm
+device	pm: wsemuldisplaydev, rasops1, rasops8
+attach	pm at ibus
+file	arch/pmax/ibus/pm.c		pm needs-flag
 
+#
+# XXX Temporarily pulled from files.tc
+#
 
-#########################################################################
-# TURBOchannel option cards.						#
-#########################################################################
-
-device cfb: rasops8
+# CX PMAG-B
+device cfb: wsemuldisplaydev, rasops8
 attach cfb at tc
-file	arch/pmax/dev/cfb.c		cfb needs-flag
+file	dev/tc/cfb.c			cfb needs-flag
 
-device sfb: rasops8
-attach sfb at tc
-file	arch/pmax/dev/sfb.c		sfb needs-flag
-
-device mfb: rasops8
+# MX PMAG-A
+device mfb: wsemuldisplaydev, rasops8
 attach mfb at tc
-file	arch/pmax/dev/mfb.c		mfb needs-flag
+file	dev/tc/mfb.c			mfb needs-flag
 
-# Zilog 8350/Intel 82350(?) SCC UART.
-device scc: tty
-attach scc at ioasic
-file	arch/pmax/tc/scc.c		scc needs-flag
+# TX PMAG-J
+device tfb: wsemuldisplaydev, rasops8
+attach tfb at tc
+file	dev/tc/tfb.c			tfb needs-flag
 
-# MAXINE onboard framebuffer
-device	xcfb: rasops8
-attach	xcfb at tc
-file	arch/pmax/dev/xcfb.c 		xcfb needs-flag
-file	arch/pmax/dev/ims332.c		xcfb
+# HX PMAGB-B
+device sfb: wsemuldisplaydev, rasops8
+attach sfb at tc
+file	dev/tc/sfb.c			sfb needs-flag
 
-# PixelStamp graphics boards
-device	px: rasops8
+# HX+
+device sfbp: wsemuldisplaydev, rasops8, rasops32
+attach sfbp at tc
+file	dev/tc/sfbplus.c		sfbp needs-flag
+
+# DV MAXINE builtin
+device xcfb: wsemuldisplaydev, rasops8
+attach xcfb at tc
+file	dev/tc/xcfb.c			xcfb needs-flag
+
+# STIC (stamp interface chip) for PX and PXG
+define	stic
+file	dev/tc/stic.c			stic needs-flag
+
+# PX PMAG-C
+device	px: wsemuldisplaydev, stic
 attach	px at tc
-file	arch/pmax/dev/px.c 		px needs-flag
+file	dev/tc/px.c			px needs-flag
 
-# DECWRL 45Mbit T3 interface
-device	tt: tty
-attach	tt at tc
-file	arch/pmax/dev/if_tt.c		tt needs-count
-
-file	arch/pmax/pmax/autoconf.c
-file	arch/pmax/pmax/bus_dma.c
-file	arch/pmax/pmax/bus_space.c
-file	arch/pmax/pmax/conf.c
-file	arch/pmax/pmax/disksubr.c
-file	arch/pmax/pmax/machdep.c
-file	arch/pmax/pmax/mainbus.c
-file	arch/pmax/pmax/interrupt.c
-file	arch/pmax/pmax/promcall.c
-file	arch/pmax/pmax/sysconf.c
-file	arch/pmax/stand/common/callvec.c
-file	dev/cons.c
-
-# pmax configuration glue for rconsole. Requires fb pseudo-device.
-
-include "dev/rcons/files.rcons"
-include "dev/wsfont/files.wsfont"
-
-defpseudo	rasterconsole
-file	arch/pmax/dev/rcons.c			rasterconsole	needs-flag
-
-## Support code for LK-201 keyboards, mice, and qvss ring buffers
-file	arch/pmax/dev/lk201.c		pm | cfb | sfb | mfb | xcfb | px
-file	arch/pmax/dev/qvss_compat.c	fb | px
-
-
-# VDAC/RAMDAC support for framebuffers. Other devices supported by
-# NetBSD may use the same chips, too.
-file	arch/pmax/dev/bt459.c			cfb | sfb
-
-#
-# Pseudo-device driver for framebuffers.  All user-level requests,
-# including open(), go through the fb driver, which presents a consistent
-# interface to all framebuffers.  Configure as many units as you
-# have framebuffers.  Provides qvss-style interface compatible with
-# X11R5 servers.
-#
-defpseudo	fb
-file	arch/pmax/dev/fb.c		fb needs-count
+# PXG PMAG-D, PMAG-E, PMAG-F
+device	pxg: wsemuldisplaydev, stic
+attach	pxg at tc
+file	dev/tc/pxg.c			pxg needs-flag

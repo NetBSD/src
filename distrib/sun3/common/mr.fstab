@@ -1,5 +1,0 @@
-#	$NetBSD: mr.fstab,v 1.2 1998/01/09 18:56:53 perry Exp $
-#
-/kern  /kern kernfs ro 0 0
-/kern/rootdev / ffs rw 1 1
-/kern/rootdev none swap sw 0 0

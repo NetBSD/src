@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.7 2002/02/28 03:17:29 simonb Exp $	*/
+/*	$NetBSD: conf.h,v 1.7.6.1 2002/03/15 14:22:44 ad Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -20,12 +20,7 @@
 
 #include <sys/conf.h>
 
-cdev_decl(scc);		/* pmax (also alpha m-d z8530 SCC */
-cdev_decl(dc);		/* dc7085 dz11-on-a-chip */
-
-cdev_decl(dtop);	/* Personal Decstation (MAXINE) desktop bus */
-cdev_decl(fb);		/* generic framebuffer pseudo-device */
-cdev_decl(rcons);	/* framebuffer-based raster console pseudo-device */
-cdev_decl(px);		/* PixelStamp framebuffers */
+cdev_decl(zstty);
+cdev_decl(dz);
 
 #endif	/* !_PMAX_CONF_H_ */
