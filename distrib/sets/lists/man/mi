@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.710 2004/07/04 07:20:39 dan Exp $
+# $NetBSD: mi,v 1.711 2004/07/06 19:46:28 mycroft Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1373,7 +1373,6 @@
 ./usr/share/man/cat5/dirent.0			man-c-catman		.cat
 ./usr/share/man/cat5/disklabel.0		man-sys-catman		.cat
 ./usr/share/man/cat5/disktab.0			man-sys-catman		.cat
-./usr/share/man/cat5/dm.conf.0			man-games-catman	.cat
 ./usr/share/man/cat5/editrc.0			man-sys-catman		.cat
 ./usr/share/man/cat5/elf.0			man-sys-catman		.cat
 ./usr/share/man/cat5/ethers.0			man-net-catman		.cat
@@ -1630,7 +1629,6 @@
 ./usr/share/man/cat8/diskless.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/diskpart.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dkctl.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/dm.0			man-games-catman	.cat
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-obsolete		obsolete
 ./usr/share/man/cat8/dreamcast/boot.0		man-sysutil-catman	.cat
@@ -2043,7 +2041,6 @@
 ./usr/share/man/cat8/stdethers.0		man-nis-catman		yp,.cat
 ./usr/share/man/cat8/stdhosts.0			man-nis-catman		yp,.cat
 ./usr/share/man/cat8/sticky.0			man-obsolete		obsolete
-./usr/share/man/cat8/strfile.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/string2key.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/sun2/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/sun2/boot.0		man-sys-catman		.cat
@@ -3494,7 +3491,6 @@
 ./usr/share/man/man5/dirent.5			man-c-man		.man
 ./usr/share/man/man5/disklabel.5		man-sys-man		.man
 ./usr/share/man/man5/disktab.5			man-sys-man		.man
-./usr/share/man/man5/dm.conf.5			man-games-man		.man
 ./usr/share/man/man5/editrc.5			man-sys-man		.man
 ./usr/share/man/man5/elf.5			man-sys-man		.man
 ./usr/share/man/man5/ethers.5			man-net-man		.man
@@ -3750,7 +3746,6 @@
 ./usr/share/man/man8/diskless.8			man-sysutil-man		.man
 ./usr/share/man/man8/diskpart.8			man-sysutil-man		.man
 ./usr/share/man/man8/dkctl.8			man-sysutil-man		.man
-./usr/share/man/man8/dm.8			man-games-man		.man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man		.man
 ./usr/share/man/man8/dreamcast/MAKEDEV.8	man-obsolete		obsolete
 ./usr/share/man/man8/dreamcast/boot.8		man-sysutil-man		.man
@@ -4164,7 +4159,6 @@
 ./usr/share/man/man8/stdethers.8		man-nis-man		yp,.man
 ./usr/share/man/man8/stdhosts.8			man-nis-man		yp,.man
 ./usr/share/man/man8/sticky.8			man-obsolete		obsolete
-./usr/share/man/man8/strfile.8			man-sysutil-man		.man
 ./usr/share/man/man8/string2key.8		man-krb5-man		kerberos,.man
 ./usr/share/man/man8/sun2/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/sun2/boot.8		man-sys-man		.man
