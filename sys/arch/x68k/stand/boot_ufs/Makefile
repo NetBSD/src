@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2001/09/27 13:27:54 minoura Exp $
+#	$NetBSD: Makefile,v 1.3 2001/09/27 14:08:27 minoura Exp $
+
+.include <bsd.own.mk>
 
 BOOT=	boot_ufs
 VERSION=1.0
@@ -32,8 +34,12 @@ CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
 CPPFLAGS+= -DUSE_FFS #-DUSE_LFS
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS}
 AFLAGS=	   ${CFLAGS:M-[ID]*}
+.if ${OBJECT_FMT} == "ELF"
 LDFLAGS=   -N -Bstatic -T ${.CURDIR}/${BOOT}.ldscript
 LDFLAGS+=  -noinhibit-exec	# XXX
+.else
+LDFLAGS=   -n -Bstatic -Ttext ${TEXT}
+.endif
 
 CLEANFILES=	$(BOOT).x s.x x.s x.o
 
