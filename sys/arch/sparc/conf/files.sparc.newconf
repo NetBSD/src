@@ -1,5 +1,5 @@
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-# $Id: files.sparc.newconf,v 1.5 1993/11/10 10:17:52 deraadt Exp $
+# $Id: files.sparc.newconf,v 1.6 1993/11/14 15:00:50 deraadt Exp $
 # sparc-specific configuration info
 
 maxusers 2 8 64
@@ -47,7 +47,12 @@ device bwtwo at sbus
 file	arch/sparc/sbus/bwtwo.c		bwtwo needs-flag
 
 device cgthree at sbus
-file	arch/sparc/sbus/cgthree.c		cgthree needs-flag
+file	arch/sparc/sbus/cgthree.c	cgthree needs-flag
+
+device cgsix at sbus
+file	arch/sparc/sbus/cgsix.c		cgsix needs-flag
+
+file	arch/sparc/sbus/bt_subr.c	cgsix cgthree
 
 device le at sbus: ifnet, ether
 file	arch/sparc/sbus/if_le.c		le
