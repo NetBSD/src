@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.7 2002/02/26 00:48:58 kleink Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.8 2002/03/02 02:18:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -137,6 +137,9 @@ cpu_attach_common(struct device *self, int id)
 		break;
 
 	case MPC7450:
+		/* Disable BTIC on 7450 Rev 2.0 or earlier */
+		if ((pvr & 0xFFFF) <= 0x0200)
+			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
