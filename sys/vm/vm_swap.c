@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.39 1997/06/13 15:37:17 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.40 1997/06/16 13:35:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -125,6 +125,9 @@ struct swapdev {
 #endif
 };
 
+/*
+ * Swap device priority entry; the list is kept sorted on `spi_priority'.
+ */
 struct swappri {
 	int			spi_priority;
 	CIRCLEQ_HEAD(spi_swapdev, swapdev)	spi_swapdev;
@@ -226,10 +229,13 @@ insert_swapdev(sdp, priority)
 
 again:
 	_swaplist_lock();
-	pspp = swap_priority.lh_first;
 
-	for (spp = pspp; spp != NULL; spp = spp->spi_swappri.le_next) {
-		if (spp->spi_priority <= priority)
+	/*
+	 * Find entry at or after which to insert the new device.
+	 */
+	for (pspp = NULL, spp = swap_priority.lh_first; spp != NULL;
+	     spp = spp->spi_swappri.le_next) {
+		if (priority <= spp->spi_priority)
 			break;
 		pspp = spp;
 	}
@@ -255,8 +261,7 @@ again:
 		if (pspp)
 			LIST_INSERT_AFTER(pspp, spp, spi_swappri);
 		else
-			LIST_INSERT_HEAD(&swap_priority, spp,
-					 spi_swappri);
+			LIST_INSERT_HEAD(&swap_priority, spp, spi_swappri);
 
 	}
 	/* Onto priority list */
@@ -592,8 +597,7 @@ swap_on(p, sdp)
 	storagesize = EXTENT_FIXED_STORAGE_SIZE(maxproc * 2);
 	storage = malloc(storagesize, M_VMSWAP, M_WAITOK);
 	sdp->swd_ex = extent_create(name, addr, addr + size, M_VMSWAP,
-				    storage, storagesize,
-				    EX_NOCOALESCE|EX_WAITOK);
+				    storage, storagesize, EX_WAITOK);
 
 	if (vp == rootvp) {
 		struct mount *mp;
@@ -619,8 +623,10 @@ swap_on(p, sdp)
 	nswapdev++;
 	nswap += nblks;
 	sdp->swd_flags |= SWF_ENABLE;
-	if (dumpdev == NULL && vp->v_type == VBLK)
+	if (dumpdev == NULL && vp->v_type == VBLK) {
 		dumpdev = dev;
+		cpu_dumpconf();
+	}
 
 	return (0);
 
@@ -636,6 +642,8 @@ swap_off(p, sdp)
 	struct proc *p;
 	struct swapdev *sdp;
 {
+	char	*name;
+
 	/* turn off the enable flag */
 	sdp->swd_flags &= ~SWF_ENABLE;
 
@@ -652,16 +660,23 @@ swap_off(p, sdp)
 	 *
 	 * eventually, we should try to move them out to other swap areas
 	 * if available.
+	 *
+	 * The alternative is to create a redirection map for this swap
+	 * device.  This should work by moving all the pages of data from
+	 * the ex-swap device to another one, and making an entry in the
+	 * redirection map for it.  locking is going to be important for
+	 * this!
 	 */
 
 	/* until the above code is written, we must ENODEV */
 	return ENODEV;
 
-	free(sdp->swd_ex->ex_name, M_VMSWAP);
 	extent_free(swapmap, sdp->swd_mapoffset, sdp->swd_mapsize, EX_WAITOK);
 	nswap -= sdp->swd_nblks;
 	nswapdev--;
+	name = sdp->swd_ex->ex_name;
 	extent_destroy(sdp->swd_ex);
+	free(name, M_VMSWAP);
 	free((caddr_t)sdp->swd_ex, M_VMSWAP);
 	if (sdp->swp_vp != rootvp)
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
