@@ -1,7 +1,9 @@
-#	$NetBSD: majors.evbsh5,v 1.4 2003/10/05 08:04:25 jdolecek Exp $
+#	$NetBSD: majors.evbsh5,v 1.5 2003/10/05 09:00:19 jdolecek Exp $
 #
 # Devices majors specific to evbsh5
 #
+
+include "arch/sh5/conf/majors.sh5"
 
 device-major	alphaled	char 9			alphaled
 
