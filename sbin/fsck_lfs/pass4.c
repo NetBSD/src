@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.4 2001/01/06 23:08:29 joff Exp $	 */
+/* $NetBSD: pass4.c,v 1.5 2001/09/25 00:03:25 wiz Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -98,7 +98,7 @@ pass4()
 			break;
 
 		default:
-			errexit("BAD STATE %d FOR INODE I=%d",
+			errexit("BAD STATE %d FOR INODE I=%d\n",
 				statemap[inumber], inumber);
 		}
 	}
