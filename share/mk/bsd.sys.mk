@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.105 2003/10/21 16:36:58 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.106 2003/10/29 02:10:57 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -194,9 +194,9 @@ LFLAGS+=	-P${LPREFIX}
 .l.o: # remove to force use of .l.c->.c.o transforms
 .l:
 	${_MKTARGET_LEX}
-	${LEX.l} -o${.TARGET:R}.${LPREFIX}.c ${.IMPSRC}
-	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.TARGET:R}.${LPREFIX}.c ${LDLIBS} -ll
-	rm -f ${.TARGET:R}.${LPREFIX}.c
+	${LEX.l} -o${.PREFIX}.${LPREFIX}.c ${.IMPSRC}
+	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.PREFIX}.${LPREFIX}.c ${LDLIBS} -ll
+	rm -f ${.PREFIX}.${LPREFIX}.c
 .l.c:
 	${_MKTARGET_LEX}
 	${LEX.l} -o${.TARGET} ${.IMPSRC}
@@ -207,9 +207,9 @@ YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 .y.o: # remove to force use of .y.c->.c.o transforms
 .y:
 	${_MKTARGET_YACC}
-	${YACC.y} -b ${.TARGET:R} ${.IMPSRC}
-	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.TARGET:R}.tab.c ${LDLIBS}
-	rm -f ${.TARGET:R}.tab.[ch]
+	${YACC.y} -b ${.PREFIX} ${.IMPSRC}
+	${LINK.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} -o ${.TARGET} ${.PREFIX}.tab.c ${LDLIBS}
+	rm -f ${.PREFIX}.tab.[ch]
 .y.c:
 	${_MKTARGET_YACC}
 	${YACC.y} -o ${.TARGET} ${.IMPSRC}
