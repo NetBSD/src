@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* static char sccsid[] = "@(#)gmon.c	5.3 (Berkeley) 5/22/91"; */
-static char rcsid[] = "";
+static char rcsid[] = "$Id: gmon.c,v 1.2 1994/05/03 07:35:31 phil Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -198,15 +198,16 @@ mcount()
 	 */
 	asm(".text");		/* make sure we're in text space */
 	/*
-	 * selfpc = pc pushed by mcount call
+	 * selfpc = pc pushed by mcount bsr
 	 */
-	asm("movd 8(fp),%0" : "=r" (selfpc));
+	asm("movd 4(fp),%0" : "=r" (selfpc));
 	/*
 	 * frompcindex = pc pushed by jsr into self.
 	 * In GCC the caller's stack frame has already been built so we
 	 * have to chase a6 to find caller's raddr.
+	 * NOTE: this assumes that all profiled routines use link/unlk.
 	 */
-	asm("movd 4(fp),%0" : "=r" (frompcindex));
+	asm("movd 4(0(fp)),%0" : "=r" (frompcindex));
 	/*
 	 *	check that we are profiling
 	 *	and that we aren't recursively invoked.
