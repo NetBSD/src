@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.6 2001/07/07 06:29:13 ichiro Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.7 2001/07/16 22:01:38 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -200,7 +200,7 @@ sed1356_init(struct hpcfb_fbconf *fb)
 	    bootinfo->fb_line_bytes == 0 ||
 	    bootinfo->fb_width == 0 ||
 	    bootinfo->fb_height == 0) {
-		printf("no frame buffer infomation.\n");
+		printf("no frame buffer information.\n");
 		return (-1);
 	}
 
