@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.8 2002/10/02 16:52:27 thorpej Exp $	*/
+/*	$NetBSD: if_il.c,v 1.9 2003/01/15 22:12:31 bouyer Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.8 2002/10/02 16:52:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.9 2003/01/15 22:12:31 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -426,15 +426,6 @@ ilstart(struct ifnet *ifp)
 		goto startcmd;
 	}
 	len = if_wubaput(&sc->sc_ifuba, m);
-	/*
-	 * Ensure minimum packet length.
-	 * This makes the safe assumtion that there are no virtual holes
-	 * after the data.
-	 * For security, it might be wise to zero out the added bytes,
-	 * but we're mainly interested in speed at the moment.
-	 */
-	if (len - sizeof(struct ether_header) < ETHERMIN)
-		len = ETHERMIN + sizeof(struct ether_header);
 #ifdef notdef
 	if (sc->sc_ifuba.ifu_flags & UBA_NEEDBDP)
 		UBAPURGE(is->is_ifuba.ifu_uba, is->is_ifuba.ifu_w.ifrw_bdp);
