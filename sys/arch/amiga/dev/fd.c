@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.30 1996/04/29 06:23:47 mhitch Exp $	*/
+/*	$NetBSD: fd.c,v 1.31 1996/04/30 06:09:51 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -41,7 +41,6 @@
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 #include <sys/proc.h>
-#include <sys/cpu.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
