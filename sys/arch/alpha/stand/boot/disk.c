@@ -1,4 +1,4 @@
-/* $NetBSD: disk.c,v 1.8 1998/10/15 00:48:55 ross Exp $ */
+/* $NetBSD: disk.c,v 1.9 1998/12/28 09:12:52 ross Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,7 +156,6 @@ diskclose(f)
 	struct disk_softc *sc;
 
 	sc = f->f_devdata;
-	(void)prom_close(sc->sc_fd);
 
 	free(sc, sizeof(struct disk_softc));
 	f->f_devdata = NULL;
