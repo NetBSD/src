@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 1998/12/04 20:22:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 1998/12/21 21:58:19 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -950,7 +950,8 @@ cpu_reboot(howto, what)
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NADB > 0
-		powermac_powerdown();
+		DELAY(1000000);
+		adb_poweroff();
 		printf("WARNING: powerdown failed!\n");
 #endif
 	}
