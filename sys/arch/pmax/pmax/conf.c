@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 1995/04/11 10:14:52 mellon Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 1995/04/12 00:01:01 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,6 +96,7 @@ cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 dev_type_read(mmrw);
+cdev_decl(mm);
 #include "pty.h"
 #define	pts_tty		pt_tty
 #define	ptsioctl	ptyioctl
@@ -262,7 +263,7 @@ iszerodev(dev)
 #endif
 }
 
-static int chrtoblktbl[MAXDEV] =  {
+static int chrtoblktbl[] =  {
 	/* XXXX This needs to be dynamic for LKMs. */
 	/*VCHR*/	/*VBLK*/
 	/*  0 */	NODEV,
