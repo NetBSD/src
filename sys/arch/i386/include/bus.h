@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 1996/05/03 19:22:18 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 1996/06/23 19:59:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -54,9 +54,10 @@ typedef void *bus_chipset_tag_t;
 typedef u_long bus_io_handle_t;
 typedef caddr_t bus_mem_handle_t;
 
-#define bus_io_map(t, port, size, iohp)					\
-    ((void) t, *iohp = port, 0)
-#define bus_io_unmap(t, ioh, size)
+int	bus_io_map __P((bus_chipset_tag_t, bus_io_addr_t,
+	    bus_io_size_t, bus_io_handle_t *));
+void	bus_io_unmap __P((bus_chipset_tag_t, bus_io_handle_t,
+	    bus_io_size_t));
 
 #define	bus_io_read_1(t, h, o)		((void) t, inb((h) + (o)))
 #define	bus_io_read_2(t, h, o)		((void) t, inw((h) + (o)))
