@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.sgimips.inc,v 1.3 2001/10/05 14:57:18 pooka Exp $
+#	$NetBSD: Makefile.sgimips.inc,v 1.4 2001/10/08 10:14:41 simonb Exp $
 
-SYSTEM_LD_TAIL=	@echo ${LD} -N -T ${MIPS}/conf/kern.ldscript -Ttext 0x88002000 \
+SYSTEM_LD_TAIL=	@echo ${LD} -N -T ${KERNLDSCRIPT} -Ttext 0x88002000 \
 		-e start ${GP} -x -o $@.high '$${SYSTEM_OBJ}' vers.o ; \
-		${LD} -N -T ${MIPS}/conf/kern.ldscript -Ttext 0x88002000 \
+		${LD} -N -T ${KERNLDSCRIPT} -Ttext 0x88002000 \
 		-e start ${GP} -x -o $@.high ${SYSTEM_OBJ} vers.o swapnetbsd.o
 # XXX
 SYSTEM_LD_TAIL+=; \
