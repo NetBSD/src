@@ -312,6 +312,26 @@ Save the current terminal modes as the \'in curses\' state for use with
 Save the current terminal modes as the \'not in curses\' state for use with
 .Fn reset_shell_mode .
 .Ds
+.Fn define_key "char *sequence" "int key_symbol" 
+.De
+Assigns the character sequence given in
+.Vn sequence
+to the key symbol
+.Vn key_symbol .
+If 
+.Fn keypad
+has set been set TRUE and the character sequence is found in the input
+stream then the key symbol defined will be returned.  Normally the
+sequences are found in the
+.b termcap
+database but this function allows extensions to be added by the
+application.  If 
+.Vn sequence
+is a NULL pointer then all the sequences associated with
+.Vn key_symbol
+will be removed, including any definitions inserted by
+.b termcap .
+.Ds
 .Fn delch ""
 .De
 Delete the character at the current \*y.
@@ -549,6 +569,7 @@ Returns the y location of the given subwindow relative to the parent
 window.  If the window is not a subwindow then -1 is returned.
 .Ds
 .Fn getpary "WINDOW *win" "int y" "int x"
+.De
 Is a macro that sets the 
 .Vn y
 and
@@ -561,7 +582,6 @@ is not a subwindow then both
 and 
 .Vn x
 will be set to -1.
-.De
 .Ds
 .Fn gettmode ""
 .De
@@ -758,6 +778,16 @@ Sets the terminal flush on interrupt mode.  If
 is non-zero, flushing of the output buffer will occur when an
 interrupt key is pressed.  The default is inherited from the
 terminal settings.
+.Ds
+.Fn keyok "int key_symbol" "bool flag"
+.De
+Controls the recognition of the key symbol
+.Vn key_symbol .
+By setting
+.Vn flag
+to FALSE the recognition of any sequence of characters
+that have been associated with the key symbol will be disabled.
+By default, this flag is TRUE so sequences will be recognised.
 .Ds
 .Fn keypad "WINDOW *win" "int boolf"
 .De
