@@ -63,6 +63,9 @@ struct	cpu_dep ka49_calls = {
 	2,	/* SCB pages */
 	ka49_halt,
 	ka49_reboot,
+	NULL,
+	NULL,
+	CPU_RAISEIPL,
 };
 
 
