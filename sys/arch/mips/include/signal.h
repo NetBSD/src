@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12 1999/01/14 18:45:45 castor Exp $	*/
+/*	$NetBSD: signal.h,v 1.13 1999/01/31 00:55:41 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,6 +40,8 @@
 
 #ifndef	_MIPS_SIGNAL_H_
 #define	_MIPS_SIGNAL_H_
+
+#if !defined(__ASSEMBLER__)
 
 /*
  * Machine-dependent signal definitions
@@ -86,4 +88,21 @@ struct sigcontext {
 };
 
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+
+#endif	/* !_LANGUAGE_ASSEMBLY */
+#if !defined(_KERNEL)
+/* 
+ * Hard code these to make people think twice about breaking compatibility.
+ * These macros are generated independently for the kernel.
+ */
+#if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
+#define _OFFSETOF_SC_REGS	12
+#define _OFFSETOF_SC_FPREGS	152
+#define _OFFSETOF_SC_MASK	320
+#else
+#define _OFFSETOF_SC_REGS	16
+#define _OFFSETOF_SC_FPREGS	292
+#define _OFFSETOF_SC_MASK	460
+#endif
+#endif	/* !_KERNEL */
 #endif	/* !_MIPS_SIGNAL_H_ */
