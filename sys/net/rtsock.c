@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.27 1998/12/10 15:52:40 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.28 1998/12/12 17:26:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1991, 1993
@@ -80,7 +80,7 @@ static __inline void
 rt_adjustcount(af, cnt)
 	int af, cnt;
 {
-	route_cb.any_count--;
+	route_cb.any_count += cnt;
 	switch (af) {
 	case AF_INET:
 		route_cb.ip_count += cnt;
