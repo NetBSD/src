@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.20 1999/10/04 19:23:19 ross Exp $ */
+/* $NetBSD: installboot.c,v 1.21 1999/10/04 21:22:15 ross Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -60,9 +60,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>				/* XXX for roundup, howmany */
+#include <sys/param.h>		/* XXX for roundup, howmany */
 #include <sys/stat.h>
-#include <include/disklabel.h>
+#include <include/disklabel.h>	/* defeat <machine/disklabel.h>, force alpha */
 #include <sys/disklabel.h>
 #include <dev/sun/disklabel.h>
 #include <assert.h>
@@ -82,7 +82,7 @@ static void set_bootstrap(const char *disk, const char *bootstrap);
 
 extern char *__progname;
 
-int sunflag, verbose, nowrite;
+int sunrewrite, sunflag, verbose, nowrite;
 
 static void
 usage()
@@ -101,7 +101,7 @@ main(int argc, char **argv)
 
 	clearflag = verbose = nowrite = 0;
 
-	while ((c = getopt(argc, argv, "cnsv")) != -1) {
+	while ((c = getopt(argc, argv, "cnsSv")) != -1) {
 		switch (c) {
 		case 'c':
 			/* Clear any existing boot block */
@@ -113,6 +113,10 @@ main(int argc, char **argv)
 			/* Do not actually write the boot file */
 			nowrite = 1;
 			break;
+		case 'S':
+			/* undocumented transition period fixup flag */
+			sunrewrite = 1;
+			/* fall thru */
 		case 's':
 			/*
 			 * Sun checksum and magic number overlay
@@ -133,7 +137,10 @@ main(int argc, char **argv)
 	argc -= optind;
 	argv += optind;
 
-	if ((clearflag && argc != 1) || (!clearflag && argc != 2))
+	if (sunrewrite) {
+		if(argc != 1)
+			usage();
+	} else if ((clearflag && argc != 1) || (!clearflag && argc != 2))
 		usage();
 
 	disk = argv[0];
@@ -178,7 +185,8 @@ clr_bootstrap(const char *disk)
 	CHECKSUM_BOOT_BLOCK(&bb, &cksum);
 	if (cksum != bb.bb_cksum) {
 		fprintf(stderr,
-		    "old boot block checksum invalid (was %#llx, calculated %#llx)\n",
+		    "old boot block checksum invalid (was %#llx,"
+		    " calculated %#llx)\n",
 		    (unsigned long long)bb.bb_cksum,
 		    (unsigned long long)cksum);
 		fprintf(stderr, "boot block invalid\n");
@@ -231,6 +239,8 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	size_t bootstrapsize;
 	ssize_t rv;
 
+	if (sunrewrite)
+		goto bbonly;
 	/* Open the input file and check it out */
 	if ((bootstrapfd = open(bootstrap, O_RDONLY)) == -1)
 		err(EXIT_FAILURE, "open %s", bootstrap);
@@ -259,6 +269,7 @@ set_bootstrap(const char *disk, const char *bootstrap)
 		errx(EXIT_FAILURE, "read %s: short read", bootstrap);
 	(void)close(bootstrapfd);
 
+bbonly:
 	if ((diskfd = open(disk, nowrite ? O_RDONLY : O_RDWR)) == -1)
 		err(EXIT_FAILURE, "open %s", disk);
 
@@ -272,9 +283,12 @@ set_bootstrap(const char *disk, const char *bootstrap)
 		check_sparc(&bb, "initial");
 
 	/* fill in the updated boot block fields, and checksum boot block */
-	bb.bb_secsize = howmany(bootstrapsb.st_size, BOOT_BLOCK_BLOCKSIZE);
-	bb.bb_secstart = 1;
-	bb.bb_flags = 0;
+	if (!sunrewrite) {
+		bb.bb_secsize = howmany(bootstrapsb.st_size,
+		    BOOT_BLOCK_BLOCKSIZE);
+		bb.bb_secstart = 1;
+		bb.bb_flags = 0;
+	}
 	CHECKSUM_BOOT_BLOCK(&bb, &bb.bb_cksum);
 
 	if (verbose) {
@@ -298,15 +312,17 @@ set_bootstrap(const char *disk, const char *bootstrap)
 	if (verbose)
 		fprintf(stderr, "writing bootstrap\n");
 
-	rv = pwrite(diskfd, bootstrapbuf, bootstrapsize,
-	    BOOT_BLOCK_OFFSET + BOOT_BLOCK_BLOCKSIZE);
-	if (rv == -1)
-		err(EXIT_FAILURE, "write %s", disk);
-	else if (rv != bootstrapsize)
-		errx(EXIT_FAILURE, "write %s: short write", disk);
+	if (!sunrewrite) {
+		rv = pwrite(diskfd, bootstrapbuf, bootstrapsize,
+		    BOOT_BLOCK_OFFSET + BOOT_BLOCK_BLOCKSIZE);
+		if (rv == -1)
+			err(EXIT_FAILURE, "write %s", disk);
+		else if (rv != bootstrapsize)
+			errx(EXIT_FAILURE, "write %s: short write", disk);
 
-	if (verbose)
-		fprintf(stderr, "writing boot block\n");
+		if (verbose)
+			fprintf(stderr, "writing boot block\n");
+	}
 
 	rv = pwrite(diskfd, &bb, sizeof bb, BOOT_BLOCK_OFFSET);
 	if (rv == -1)
@@ -344,15 +360,23 @@ done:
 static void
 resum(struct boot_block * const bb, u_int16_t *bb16)
 {
-	memcpy(bb, bb16, sizeof *bb);
+	static u_int64_t lastsum;
+
+	if (bb16 != NULL)
+		memcpy(bb, bb16, sizeof *bb);
 	CHECKSUM_BOOT_BLOCK(bb, &bb->bb_cksum);
-	memcpy(bb16, bb, sizeof *bb);
+	if (bb16 != NULL)
+		memcpy(bb16, bb, sizeof *bb);
+	if (verbose && lastsum != bb->bb_cksum)
+		printf("alpha checksum now %016llx\n", (long long)bb->bb_cksum);
+	lastsum = bb->bb_cksum;
 }
 
 static void
 sun_bootstrap(struct boot_block * const bb)
 {
 #	define BB_ADJUST_OFFSET 64
+	static char our_int16s[] = "\2\3\6\7\12";
 	u_int16_t i, j, chkdelta, sunsum, bb16[256];
 
 	/*
@@ -366,8 +390,8 @@ sun_bootstrap(struct boot_block * const bb)
 	 */
 	assert(sizeof bb16 == sizeof *bb);
 	memcpy(bb16, bb, sizeof bb16);
-	for (i = 0; i < 8; ++i) {
-		j = BB_ADJUST_OFFSET + i;
+	for (i = 0; our_int16s[i]; ++i) {
+		j = BB_ADJUST_OFFSET + our_int16s[i];
 		if (bb16[j]) {
 			warnx("non-zero bits %04x in bytes %d..%d",
 			    bb16[j], j * 2, j * 2 + 1);
@@ -399,8 +423,10 @@ sun_bootstrap(struct boot_block * const bb)
 		if (verbose)
 			printf("target adjustment %04x was odd, correcting\n",
 			    chkdelta);
-		bb16[BB_ADJUST_OFFSET + 2] += 0x8000;
+		assert(bb16[BB_ADJUST_OFFSET + 6] == 0);
+		assert(bb16[BB_ADJUST_OFFSET + 012] == 0);
 		bb16[BB_ADJUST_OFFSET + 6] += 0x8000;
+		bb16[BB_ADJUST_OFFSET + 012] += 0x8000;
 	}
 	resum(bb, bb16);
 	if (verbose)
