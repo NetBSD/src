@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.36.2.5 2004/09/21 13:24:46 skrll Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.36.2.6 2004/10/24 07:58:41 skrll Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@ symlink
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.36.2.5 2004/09/21 13:24:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.36.2.6 2004/10/24 07:58:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ coda_open(v)
 
     /* Translate the <device, inode> pair for the cache file into
        an inode pointer. */
-    error = coda_grab_vnode(dev, inode, &vp, l);
+    error = coda_grab_vnode(dev, inode, &vp);
     if (error)
 	return (error);
 
@@ -428,7 +428,7 @@ coda_rdwr(vp, uiop, rw, ioflag, cred, l)
 	 * it's completely written.
 	 */
 	if (cp->c_inode != 0 && !(p && (p->p_acflag & ACORE))) { 
-	    error = coda_grab_vnode(cp->c_device, cp->c_inode, &cfvp, l);
+	    error = coda_grab_vnode(cp->c_device, cp->c_inode, &cfvp);
 	    if (error) {
 		MARK_INT_FAIL(CODA_RDWR_STATS);
 		return(error);
@@ -1865,7 +1865,7 @@ coda_islocked(v)
 
 /* How one looks up a vnode given a device/inode pair: */
 int
-coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp, struct lwp *l)
+coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp)
 {
     /* This is like VFS_VGET() or igetinode()! */
     int           error;
