@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.156 2004/08/08 16:38:50 mycroft Exp $
+# $NetBSD: GENERIC,v 1.157 2004/08/13 15:55:14 uch Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.156 $"
+#ident 		"GENERIC-$Revision: 1.157 $"
 
 maxusers	16
 
@@ -399,7 +399,7 @@ hpcioman9 at vrgiu? platform NEC_MCR_730A
 hpcin*	at hpcioman9 evtype PCIINTR id PCIINTR_00_00_01 port 13 level 0 connect 1
 
 #
-# Sharp Telios HC-AJ1, HC-VJ1C
+# Sharp Telios HC-AJ1/AJ2/AJ3, HC-VJ1C
 #
 txcsbus1	at tx39biu? platform SHARP_TELIOS
 
@@ -410,7 +410,7 @@ txioman* at txsim?
 #	 2 BETTY IO
 #	(3) ITE IO notyet
 #	(4) Plum2 IO (EXTPW[0:2]) notyet
-hpcioman1 at txioman? platform SHARP_TELIOS_HCAJ1
+hpcioman1 at txioman? platform SHARP_TELIOS_HCAJ
 hpcin*	at hpcioman1 iochip 1 evtype BUTTON  id BTN_APP0   port 7  edge 1 # IE button
 hpcin*	at hpcioman1 iochip 1 evtype BUTTON  id BTN_APP1   port 8  edge 1 # Mail button
 hpcin*	at hpcioman1 iochip 1 evtype PMEVENT id PME_AC	   port 6  edge 1 # AC-power
@@ -418,7 +418,7 @@ hpcin*	at hpcioman1 iochip 0 evtype EVENT   id COM0_CTS   port 27 edge 3
 hpcin*	at hpcioman1 iochip 0 evtype EVENT   id COM0_DCD   port 29 edge 3
 hpcout*	at hpcioman1 iochip 1 evtype POWER   id PWCTL_LED  port 4  flags 3 #(blink)
 
-hpcioman2 at txioman? platform SHARP_TELIOS_HCVJ1C_JP
+hpcioman2 at txioman? platform SHARP_TELIOS_HCVJ
 hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP0   port 7  edge 1 # IE button
 hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP1   port 8  edge 1 # Mail button
 hpcin*	at hpcioman2 iochip 1 evtype BUTTON  id BTN_APP2   port 11 edge 1 # Video button
