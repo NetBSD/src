@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.25 1997/06/22 07:42:44 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.26 1997/07/07 03:54:40 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -1210,13 +1210,14 @@ sccintr(xxxsc)
 		 */
 		if (tp == scctty(makedev(SCCDEV, SCCKBD_PORT)) && 
 		    raster_console()) {
-#ifdef KADB
+#ifdef DDB
 			if (cc == LK_DO) {
 				spl0();
-				kdbpanic();
+				Debugger();
 				return -1;
 			}
 #endif
+
 #ifdef DEBUG
 			debugChar = cc;
 #endif
@@ -1447,11 +1448,24 @@ scc_modem_intr(dev)
 	if (chan == SCC_CHANNEL_A)
 		return;
 	s = spltty();
+
+	SCC_READ_REG_ZERO(regs, chan, value);
 	if (sc->scc_softCAR & (1 << chan))
 		car = 1;
 	else {
-		SCC_READ_REG_ZERO(regs, chan, value);
 		car = value & ZSRR0_DCD;
+	}
+
+
+	/* Break on serial console drops into the dbeugger */
+	if ((value & ZSRR0_BREAK) && CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
+#ifdef DDB
+		splx(s);		/* spl0()? */
+		Debugger();
+		return;
+#else
+		/* XXX maybe fall back to PROM? */
+#endif
 	}
 
 	/*
@@ -1459,15 +1473,19 @@ scc_modem_intr(dev)
 	 * XXX Why doesn't the Alpha driver follow carrier-detect?
 	 * (in the Alpha driver, this is an "#ifdef notdef").
 	 * Is it related to  console handling?
+	 *
+	 * Ignore hups on a console tty.
 	 */
 #ifndef alpha
-	if (car) {
-		/* carrier present */
-		if (!(tp->t_state & TS_CARR_ON))
-			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
-	} else if (tp->t_state & TS_CARR_ON)
-		(void)(*linesw[tp->t_line].l_modem)(tp, 0);
-#endif /* !alpha */
+	if (!CONSOLE_ON_UNIT(sc->sc_dv.dv_unit)) {
+		if (car) {
+			/* carrier present */
+			if (!(tp->t_state & TS_CARR_ON))
+				(void)(*linesw[tp->t_line].l_modem)(tp, 1);
+		} else if (tp->t_state & TS_CARR_ON)
+			(void)(*linesw[tp->t_line].l_modem)(tp, 0);
+	}
+#endif
 	splx(s);
 }
 

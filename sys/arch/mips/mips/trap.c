@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.68 1997/06/30 14:42:35 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.69 1997/07/07 03:54:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,6 +75,10 @@
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
 #include <miscfs/procfs/procfs.h>
+
+#ifdef DDB
+#include <mips/db_machdep.h>
+#endif
 
 /* all this to get prototypes for ipintr() and arpintr() */
 #include <sys/socket.h>
@@ -332,8 +336,8 @@ void trapDump __P((char * msg));
 #endif	/* DEBUG */
 
 
-void mips1_dump_tlb __P((int, int));
-void mips3_dump_tlb __P((int, int));
+void mips1_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
+void mips3_dump_tlb __P((int, int, void (*printfn)(const char*, ...)));
 void mips_dump_tlb __P((int, int));
 
 /*
@@ -366,9 +370,8 @@ extern void ast __P((unsigned pc));
  /*
   *  stack trace code, also useful to DDB one day
   */
-#if defined(DEBUG) || defined(MDB)
+#if defined(DEBUG) || defined(MDB) || defined(DDB)
 int	kdbpeek __P((vm_offset_t addr));
-extern void cpu_getregs __P((int *));
 extern void stacktrace __P((void)); /*XXX*/
 extern void logstacktrace __P((void)); /*XXX*/
 
@@ -666,16 +669,10 @@ trap(status, cause, vaddr, opc, frame)
 			printf("pid=%d cmd=%s\n", p->p_pid, p->p_comm);
 		else
 			printf("curproc == NULL\n");
-#ifdef MDB
-		frame.f_regs[CAUSE] = cause;
-		frame.f_regs[BADVADDR] = vaddr;
-		mdb(type, (struct frame *)&frame.f_regs);
-#else
 #ifdef DEBUG
 		stacktrace();
 		trapDump("trap");
 #endif	/* DEBUG */
-#endif	/* MDB */
 		panic("trap");
 		/*NOTREACHED*/
 	case T_TLB_MOD:
@@ -687,9 +684,6 @@ trap(status, cause, vaddr, opc, frame)
 			pte = kvtopte(vaddr);
 			entry = pte->pt_entry;
 			if (!mips_pg_v(entry) || (entry & mips_pg_m_bit())) {
-#ifdef MDB
-				mdb(type, (struct frame *)&frame.f_regs);
-#endif
 				panic("ktlbmod: invalid pte");
 			}
 /*XXX MIPS3? */		if (entry & mips_pg_ro_bit()) {
@@ -843,6 +837,14 @@ trap(status, cause, vaddr, opc, frame)
 		sig = SIGSEGV;
 		ucode = vaddr;
 		break; /* SIGNAL */
+
+	case T_BREAK:
+#ifdef DDB
+		kdb_trap(type, (struct frame *)&frame.f_regs);
+		return;	/* KERN */
+#else
+		goto dopanic;
+#endif
 	case T_BREAK+T_USER:
 	    {
 		unsigned va, instr; 
@@ -853,6 +855,9 @@ trap(status, cause, vaddr, opc, frame)
 
 		/* read break instruction */
 		instr = fuiword((caddr_t)va);
+#ifdef DEBUG
+/*XXX*/		printf("break insn  0x%x\n", instr);
+#endif
 
 		if (p->p_md.md_ss_addr != va || instr != MIPS_BREAK_SSTEP) {
 			sig = SIGTRAP; 
@@ -889,9 +894,10 @@ trap(status, cause, vaddr, opc, frame)
 		uio.uio_rw = UIO_WRITE; 
 		uio.uio_procp = curproc;
 		rv = procfs_domem(p, p, NULL, &uio);
-		MachFlushCache();  
 		}
 #endif
+		MachFlushCache();
+
 		if (rv < 0)
 			printf("Warning: can't restore instruction at 0x%x: 0x%x\n",
 				p->p_md.md_ss_addr, p->p_md.md_ss_instr);
@@ -1054,8 +1060,10 @@ trapDump(msg)
 			trp->vadr, trp->pc, trp->cause, trp->status);
 		printf("   RA %x SP %x code %d\n", trp->ra, trp->sp, trp->code);
 	}
+#ifndef DDB
 	bzero(trapdebug, sizeof(trapdebug));
 	trp = trapdebug;
+#endif
 	splx(s);
 }
 #endif
@@ -1326,13 +1334,15 @@ mips_singlestep(p)
         return 0;
 }
 
-#if defined(DEBUG) || defined(MDB)
+#if defined(DEBUG) || defined(MDB) || defined(DDB)
 int
 kdbpeek(addr)
 	vm_offset_t addr;
 {
 	if (addr & 3) {
 		printf("kdbpeek: unaligned address %lx\n", addr);
+		/* We might have been called from DDB, so don\'t go there. */
+		stacktrace();
 		return (-1);
 	}
 	return (*(int *)addr);
@@ -1342,7 +1352,9 @@ kdbpeek(addr)
 
 /* forward */
 char *fn_name(unsigned addr);
-void stacktrace_subr __P((int, int, int, int, void (*)(const char*, ...)));
+void stacktrace_subr __P((int a0, int a1, int a2, int a3,
+			  u_int pc, u_int sp, u_int fp, u_int ra,
+			  void (*)(const char*, ...)));
 
 /*
  * Do a stack backtrace.
@@ -1350,30 +1362,20 @@ void stacktrace_subr __P((int, int, int, int, void (*)(const char*, ...)));
  * the console, or both.
  */
 void
-stacktrace_subr(a0, a1, a2, a3, printfn)
+stacktrace_subr(a0, a1, a2, a3, pc, sp, fp, ra, printfn)
 	int a0, a1, a2, a3;
+	u_int  pc, sp, fp, ra;
 	void (*printfn) __P((const char*, ...));
 {
-	unsigned pc, sp, fp, ra, va, subr;
+	unsigned va, subr;
 	unsigned instr, mask;
 	InstFmt i;
 	int more, stksize;
-	int regs[3];
 	extern char start[], edata[];
 	unsigned int frames =  0;
 
-	cpu_getregs(regs);
-
-	/* get initial values from the exception frame */
-	sp = regs[0];
-	pc = regs[1];
-	ra = 0;
-	fp = regs[2];
-
 /* Jump here when done with a frame, to start a new one */
 loop:
-	ra = 0;
-
 /* Jump here after a nonstandard (interrupt handler) frame */
 specialframe:
 	stksize = 0;
@@ -1706,9 +1708,10 @@ fn_name(unsigned addr)
  * called by mips3 locore after in-kernel TLB miss.
  */
 void
-mips3_dump_tlb(first, last)
+mips3_dump_tlb(first, last, printfn)
 	int first;
 	int last;
+	void (*printfn) __P((const char*, ...));
 {
 	int tlbno;
 	struct tlb tlb;
@@ -1719,20 +1722,20 @@ mips3_dump_tlb(first, last)
 	while(tlbno <= last) {
 		mips3_TLBRead(tlbno, &tlb);
 		if (mips_pg_v(tlb.tlb_lo0) || mips_pg_v(tlb.tlb_lo1)) {
-			printf("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
+			(*printfn)("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
 		else {
-			printf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
+			(*printfn)("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
-		printf("0=0x%08lx ", pfn_to_vad(tlb.tlb_lo0));
-		printf("%c", tlb.tlb_lo0 & mips_pg_m_bit() ? 'M' : ' ');
-		printf("%c", tlb.tlb_lo0 & mips_pg_global_bit() ? 'G' : ' ');
-		printf(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
-		printf("1=0x%08lx ", pfn_to_vad(tlb.tlb_lo1));
-		printf("%c", tlb.tlb_lo1 & mips_pg_m_bit() ? 'M' : ' ');
-		printf("%c", tlb.tlb_lo1 & mips_pg_global_bit() ? 'G' : ' ');
-		printf(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
-		printf(" sz=%x\n", tlb.tlb_mask);
+		(*printfn)("0=0x%08lx ", pfn_to_vad(tlb.tlb_lo0));
+		(*printfn)("%c", tlb.tlb_lo0 & mips_pg_m_bit() ? 'M' : ' ');
+		(*printfn)("%c", tlb.tlb_lo0 & mips_pg_global_bit() ? 'G' : ' ');
+		(*printfn)(" atr %x ", (tlb.tlb_lo0 >> 3) & 7);
+		(*printfn)("1=0x%08lx ", pfn_to_vad(tlb.tlb_lo1));
+		(*printfn)("%c", tlb.tlb_lo1 & mips_pg_m_bit() ? 'M' : ' ');
+		(*printfn)("%c", tlb.tlb_lo1 & mips_pg_global_bit() ? 'G' : ' ');
+		(*printfn)(" atr %x ", (tlb.tlb_lo1 >> 3) & 7);
+		(*printfn)(" sz=%x\n", tlb.tlb_mask);
 
 		tlbno++;
 	}
@@ -1744,9 +1747,10 @@ mips3_dump_tlb(first, last)
  * called by mips3 locore after in-kernel TLB miss.
  */
 void
-mips1_dump_tlb(first, last)
+mips1_dump_tlb(first, last, printfn)
 	int first;
 	int last;
+	void (*printfn) __P((const char*, ...));
 {
 	int tlbno;
 	extern u_int tlbhi, tlblo;
@@ -1757,21 +1761,24 @@ mips1_dump_tlb(first, last)
 	while(tlbno <= last) {
 		mips1_TLBRead(tlbno);
 		if (mips_pg_v(tlblo)) {
-			printf("TLB %2d vad 0x%08x ", tlbno, tlbhi);
+			(*printfn)("TLB %2d vad 0x%08x ", tlbno, tlbhi);
 		}
 		else {
-			printf("TLB*%2d vad 0x%08x ", tlbno, tlbhi);
+			(*printfn)("TLB*%2d vad 0x%08x ", tlbno, tlbhi);
 		}
-		printf("0x%08x ", tlblo & MIPS1_PG_FRAME);
-		printf("%c", tlblo & mips_pg_m_bit() ? 'M' : ' ');
-		printf("%c", tlblo & mips_pg_global_bit() ? 'G' : ' ');
-		printf("%c\n", tlblo & MIPS1_PG_N ? 'N' : ' ');
+		(*printfn)("0x%08x ", tlblo & MIPS1_PG_FRAME);
+		(*printfn)("%c", tlblo & mips_pg_m_bit() ? 'M' : ' ');
+		(*printfn)("%c", tlblo & mips_pg_global_bit() ? 'G' : ' ');
+		(*printfn)("%c\n", tlblo & MIPS1_PG_N ? 'N' : ' ');
 
 		tlbno++;
 	}
 }
 
 
+/*
+ *  Dump TLB after panic.
+ */
 void
 mips_dump_tlb(first, last)
 	int first;
@@ -1779,11 +1786,11 @@ mips_dump_tlb(first, last)
 {
 	if (CPUISMIPS3) {
 #ifdef MIPS3
-		mips3_dump_tlb(first,last);
+		mips3_dump_tlb(first,last, printf);
 #endif
 	} else {
 #ifdef MIPS1
-		mips1_dump_tlb(first,last);
+		mips1_dump_tlb(first,last, printf);
 #endif
 	}
 }

@@ -1,10 +1,23 @@
-/*	$NetBSD: mips_param.h,v 1.4 1997/06/16 03:52:08 jonathan Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.5 1997/07/07 03:54:30 jonathan Exp $	*/
 
 /*
  * Architecture name.
  */
 #define	_MACHINE_ARCH	mips
 #define	MACHINE_ARCH	"mips"
+
+/*
+ * NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE.
+ * On mips, UPAGES is fixed by sys/arch/mips/mips/locore code
+ * to be the number of per-process-wired kernel-stack pages/PTES.
+ */
+
+#define	UPAGES		2		/* pages of u-area */
+#define	UADDR		0xffffc000	/* address of u */
+#define USPACE          (UPAGES*NBPG)   /* size of u-area in bytes */
+#define	UVPN		(UADDR>>PGSHIFT)/* virtual page number of u */
+#define	KERNELSTACK	(UADDR+UPAGES*NBPG)	/* top of kernel stack */
+
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all

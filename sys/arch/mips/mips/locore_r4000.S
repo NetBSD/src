@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r4000.S,v 1.38 1997/06/25 05:06:05 mhitch Exp $	*/
+/*	$NetBSD: locore_r4000.S,v 1.39 1997/07/07 03:54:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -306,7 +306,12 @@ NNON_LEAF(mips3_KernGenException, TRAP_FRAME_SIZE, ra)
 	mfc0	a3, MIPS_COP_0_EXC_PC		# Fourth arg is the pc.
 	sw	a0, TRAP_FRAME_OFFSET + (SR * 4)(sp)
 
+#ifdef DDB
+	addu	v0, sp, TRAP_FRAME_SIZE 	#  SP at trap for debugging
+	sw	v0, TRAP_FRAME_OFFSET+(SP * 4)(sp)
+#else
 	nop
+#endif DDB
 	sw	a3, TRAP_FRAME_OFFSET + (PC * 4)(sp)
 	mtc0	zero,MIPS_COP_0_STATUS_REG	# Set kernel no error level
 /*
@@ -1093,6 +1098,8 @@ sys_stk_chk:
 	.asciiz	"ktlbmiss: PC %x RA %x ADR %x\nSR %x CR %x SP %x\n"
 	.text
 
+	/* Call mips3_dump_tlb(0, 2, printf) to show the bad kstack TLB */
+	la	a2, _C_LABEL(printf)
 	li	a0, 0
 	jal	mips3_dump_tlb
 	li	a1, 2				# BDslot
