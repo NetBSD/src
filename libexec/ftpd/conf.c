@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.37 2000/12/18 02:32:50 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.38 2001/03/16 20:35:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.37 2000/12/18 02:32:50 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.38 2001/03/16 20:35:35 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -933,9 +933,11 @@ strsuftoll(const char *arg)
 		case 'g':
 			val <<= 30;
 			break;
+#ifndef NO_LONG_LONG
 		case 't':
 			val <<= 40;
 			break;
+#endif
 		default:
 			return (-1);
 		}
