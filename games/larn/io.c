@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.7 1997/10/18 20:03:26 christos Exp $	*/
+/*	$NetBSD: io.c,v 1.8 1999/10/04 23:27:02 lukem Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.7 1997/10/18 20:03:26 christos Exp $");
+__RCSID("$NetBSD: io.c,v 1.8 1999/10/04 23:27:02 lukem Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -1047,13 +1047,14 @@ static int      vindex = 0;
 /*
  * xputchar(ch)		Print one character in decoded output buffer.
  */
-void 
+int 
 xputchar(c)
 	int             c;
 {
 	outbuf[vindex++] = c;
 	if (vindex >= BUFBIG)
 		flush_buf();
+	return (0);
 }
 
 /*
