@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.205 2003/09/23 09:19:24 mycroft Exp $	*/
+/*	$NetBSD: pciide.c,v 1.206 2003/09/25 19:29:49 mycroft Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.205 2003/09/23 09:19:24 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.206 2003/09/25 19:29:49 mycroft Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -841,7 +841,7 @@ pciide_attach(parent, self, aux)
 	WDCDEBUG_PRINT(("pciide: command/status register=%x\n",
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 
-	config_interrupts(self, wdcattach);
+	wdcattach(&sc->sc_wdcdev);
 }
 
 /* tell whether the chip is enabled or not */
