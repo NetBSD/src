@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.2 2003/03/13 14:56:58 hannken Exp $
+#	$NetBSD: MAKEDEV,v 1.3 2003/03/13 17:02:52 matt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -41,19 +41,17 @@
 #	st*	SCSI tapes
 #
 # Disks:
-#	wd*	"winchester" disk drives (IDE)
+#	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
-#	vnd*	"file" pseudo-disks
 #	md*	memory pseudo-disk devices
+#	vnd*	"file" pseudo-disks
+#	raid*	RAIDframe disk driver
 #	ccd*	contatenated disk devices
 #	cgd*	cryptographic disk devices
-#	raid*	RAIDframe disk devices
+#	ld*	Logical disk devices (e.g., hardware RAID)
 #
-# Terminal ports:
-#	com*	standard PC COM ports			(XXX)
-#	tty*	alias for PC COM ports, this is what the system really wants
-#	ttyCY*	Cyclom-Y multiport serial boards. Each "unit" makes 32 ports.
+# Console ports:
 #	ttyE*	wscons
 #
 # Pointing devices:
@@ -62,9 +60,26 @@
 # Keyboard devices:
 #	wskbd*	wscons keyboard events
 #
+# Terminal ports:
+#	com*	standard PC COM ports			(XXX)
+#	tty*	alias for PC COM ports, this is what the system really wants
+#	ttyCZ*	Cyclades-Z multiport serial boards.  Each "unit"
+#		makes 64 ports.
+#	ttyCY*	Cyclom-Y multiport serial boards. Each "unit" makes
+#		32 ports.
+#
 # Pseudo terminals:
 #	pty*	set of 62 master and slave pseudo terminals
 #	opty	first 16 ptys, to save inodes on install media
+#
+# USB devices:
+#	usb*	Bus control devices used by usbd for attach/detach
+#	uhid*	Generic HID devices
+#	ulpt*	Printer devices
+#	ugen*	Generic device
+#	urio*	Diamond Rio 500
+#	uscanner*	Scanners
+#	ttyU*	Modem
 #
 # Printers:
 #	lpt*	stock lp
@@ -82,24 +97,29 @@
 #	fd	file descriptors
 #	bpf*	packet filter
 #	ipl	ip filter
-#	random	Random number generator
+#	random	random number generator
 #	lkm	loadable kernel modules interface
+#	audio*	audio devices
 #	tun*	network tunnel driver
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	uk*	unknown SCSI device
 #	ch*	SCSI media changer
+#	wsmux*	wscons event multiplexor
 #	cfs*	Coda file system device
 #	pci*	PCI bus access devices
-#	systrace syscall tracer
-#	kttcp	kernel ttcp helper
 #	sysmon	System Monitoring hardware
+#	systrace syscall tracer
+#	kttcp	Kernel ttcp helper device
+#	mlx*	Mylex DAC960 control interface
+#	bktr	Brooktree 848/849/878/879 based TV cards
+#	radio*	control radio receivers
 #	wsfont*	console font control
-#	wsmux*	wscons event multiplexor
 #
 
 dialin=0
 dialout=524288		# high bit of the minor number
+callunit=262144
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
@@ -122,22 +142,35 @@ do
 case $i in
 
 all)
-	makedev std wscons fd wd0 wd1 wd2 wd3 sd0 sd1 sd2 sd3 sd4
-	makedev tty0 tty1 pty0
-	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
-	makedev st0 st1 ch0 cd0 cd1 vnd0 vnd1 lpa0 lpa1 lpa2
-	makedev lpt0 lpt1 lpt2 tun0 tun1 ipl
-	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
-	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random ttyCY0
+	makedev std wscons fd sd0 sd1 sd2 st0 st1 cd0 cd1 wd0 wd1 md0
+	makedev ss0 ch0 uk0 uk1 vnd0 vnd1 ccd0 ccd1 ccd2 ccd3
 	makedev cgd0 cgd1 cgd2 cgd3
-	makedev lkm local
+	makedev mlx0 ld0 ld1 ld2 ld3
+	makedev tty00 tty01 pty0
+	makedev lpa0 lpa1 lpa2 lpt0 lpt1 lpt2 
+	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	makedev tun0 tun1 ipl usbs ttyCZ0 ttyCY0 audio
+	makedev music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
+	makedev ccd0 ccd1 ccd2 ccd3
+	makedev lkm local random
+	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
-	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	makedev isdns
+	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	makedev clockctl
+	makedev sysmon
 	makedev systrace
+	makedev bktr
+	makedev radio
 	makedev kttcp
-	makedev	sysmon
+	;;
+
+audio)
+	makedev audio0 audio1 audio2 audio3
+	ln -fs sound0 sound
+	ln -fs audio0 audio
+	ln -fs mixer0 mixer
+	ln -fs audioctl0 audioctl
 	;;
 
 ramdisk)
@@ -178,13 +211,13 @@ wscons)
 
 wsmouse)
 	rm -f wsmouse
-	mknod wsmouse c 68 0
+	mknod wsmouse c 43 0
 	chmod 600 wsmouse
 	;;
 
 wskbd)
 	rm -f wskbd
-	mknod wskbd c 68 1
+	mknod wskbd c 43 1
 	chmod 600 wskbd
 	;;
 
@@ -193,7 +226,7 @@ wsmux*)
 	unitctl=$(($unit + 128))
 	wsmux=wsmux$unit
 	wsmuxctl=wsmuxctl$unit
-	major=65
+	major=43
 	rm -f $wsmux $wsmuxctl
 	mknod $wsmux c $major $unit
 	chmod 600 $wsmux
@@ -203,46 +236,83 @@ wsmux*)
 
 wsfont)
 	rm -f wsfont
-	mknod wsfont c 69 0
+	mknod wsfont c 73 0
 	chmod 600 wsfont
 	;;
 
 ttyEstat)
-	chr=65
+	chr=35
 	rm -f ttyEcfg
 	mknod ttyEcfg c $chr 254
 	chmod 600 ttyEcfg
 	;;
 
 ttyEcfg)
-	chr=65
+	chr=35
 	rm -f ttyEcfg
 	mknod ttyEcfg c $chr 255
 	chmod 600 ttyEcfg
 	;;
 
 ttyE*)
-	chr=65; unit=${i#ttyE}
+	chr=35; unit=${i#ttyE}
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
-	;;
-
-wsmouse*)
-	unit=${i#wsmouse}
-	wsmouse=wsmouse$unit
-	major=67
-	rm -f $wsmouse
-	mknod $wsmouse c $major $unit
-	chmod 600 $wsmouse
 	;;
 
 wskbd*)
 	unit=${i#wskbd}
 	wskbd=wskbd$unit
-	major=66
+	major=36
 	rm -f $wskbd
 	mknod $wskbd c $major $unit
 	chmod 600 $wskbd
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	major=37
+	rm -f $wsmouse
+	mknod $wsmouse c $major $unit
+	chmod 600 $wsmouse
+	;;
+
+audio*)
+	unit=${i#audio}
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	major=48
+	audioctl=audioctl$unit
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $(($unit + 0))
+	mknod $audio    c $major $(($unit + 128))
+	mknod $mixer    c $major $(($unit + 16))
+	mknod $audioctl c $major $(($unit + 192))
+	chmod 666 $audio $sound $mixer $audioctl
+	;;
+
+rmidi*)
+	unit=${i#rmidi}
+	major=49
+	rmidi=rmidi$unit
+	rm -f $rmidi
+	mknod $rmidi c $major $unit
+	chmod 666 $rmidi
+	;;
+
+music*)
+	unit=${i#music}
+	music=music$unit
+	sequencer=sequencer$unit
+	major=50
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $sequencer $music
+	mknod $music     c $major $(($unit + 0))
+	mknod $sequencer c $major $(($unit + 128))
+	chmod 666 $music $sequencer
 	;;
 
 fd)
@@ -259,17 +329,6 @@ fd)
 	fi
 	;;
 
-md*)
-	unit=${i#md}; blk=9; chr=27
-	rm -f md${unit}? rmd${unit}?
-	mknod md${unit}a  b $blk $(($unit * 16 + 0))
-	mknod md${unit}d  b $blk $(($unit * 16 + 3))
-#	mknod rmd${unit}a c $chr $(($unit * 16 + 0))
-#	mknod rmd${unit}d c $chr $(($unit * 16 + 3))
-	chgrp operator md${unit}? #rmd${unit}?
-	chmod 640 md${unit}? #rmd${unit}?
-	;;
-
 ss*)
 	case $i in
 	ss*) name=ss;	unit=${i#ss};	chr=17;;
@@ -282,14 +341,16 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-ccd*|cgd*|sd*|vnd*|wd*|raid*)
+ccd*|cgd*|fd*|raid*|sd*|vnd*|wd*|ld*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=3;	chr=26;;
-	cgd*) name=cgd;	unit=${i#cgd};	blk=13;	chr=64;;
-	raid*) name=raid; unit=${i#raid}; blk=12; chr=38;;
+	cgd*) name=cgd;	unit=${i#cgd};	blk=14;	chr=66;;
+#	fd*) name=fd;	unit=${i#fd};	blk=2;	chr=27;;
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=13;;
+	raid*) name=raid; unit=${i#raid}; blk=12; chr=38;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=2;	chr=25;;
 	wd*) name=wd;	unit=${i#wd};	blk=10;	chr=30;;
+	ld*) name=ld;	unit=${i#ld};	blk=13;	chr=59;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 16 + 0))
@@ -328,6 +389,30 @@ ccd*|cgd*|sd*|vnd*|wd*|raid*)
 	chmod 640 $name$unit? r$name$unit?
 	;;
 
+ttyCZ*)
+	unit=${i#ttyCZ}
+	major=46
+	minor=$(($unit * 64))
+	eminor=$(($minor + 64))
+	while [ $minor -lt $eminor ]; do
+		if [ $minor -lt 10 ]; then
+			nminor=000$minor
+		elif [ $minor -lt 100 ]; then
+			nminor=00$minor
+		elif [ $minor -lt 1000 ]; then
+			nminor=0$minor
+		else
+			nminor=$minor
+		fi
+		rm -f ttyCZ$nminor dtyCZ$nminor
+		mknod ttyCZ$nminor c $major $(($minor + $dialin  ))
+		mknod dtyCZ$nminor c $major $(($minor + $dialout ))
+		chown uucp ttyCZ$nminor dtyCZ$nminor
+		chmod 600 ttyCZ$nminor dtyCZ$nminor
+		minor=$(($minor + 1))
+	done
+	;;
+
 ttyCY*)
 	unit=${i#ttyCY}
 	major=47
@@ -348,6 +433,20 @@ ttyCY*)
 		chmod 600 ttyCY$nminor dtyCY$nminor
 		minor=$(($minor + 1))
 	done
+	;;
+
+ttyU*)
+	unit=${i#ttyU}
+	ttyU=ttyU$unit
+	dtyU=dtyU$unit
+	ctyU=ctyU$unit
+	major=44
+	rm -f $ttyU $dtyU $ctyU
+	mknod $ttyU c $major $(($unit + $dialin  ))
+	mknod $dtyU c $major $(($unit + $dialout ))
+	mknod $ctyU c $major $(($unit + $callunit))
+	chown uucp $ttyU $dtyU $ctyU
+	chmod 600 $ttyU $dtyU $ctyU
 	;;
 
 com*|tty*)					# (XXX -- com should die)
@@ -441,11 +540,22 @@ cd*)
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 16 + 0))
-	mknod ${name}${unit}d	b $blk $(($unit * 16 + 3))
+	mknod ${name}${unit}c	b $blk $(($unit * 16 + 2))
 	mknod r${name}${unit}a	c $chr $(($unit * 16 + 0))
-	mknod r${name}${unit}d	c $chr $(($unit * 16 + 3))
+	mknod r${name}${unit}c	c $chr $(($unit * 16 + 2))
 	chgrp operator $name$unit? r$name$unit?
 	chmod 640 $name$unit? r$name$unit?
+	;;
+
+md*)
+	unit=${i#md}; blk=9; chr=27
+	rm -f md${unit}? rmd${unit}?
+	mknod md${unit}a  b $blk $(($unit * 16 + 0))
+	mknod md${unit}c  b $blk $(($unit * 16 + 2))
+#	mknod rmd${unit}a c $chr $(($unit * 16 + 0))
+#	mknod rmd${unit}c c $chr $(($unit * 16 + 2))
+	chgrp operator md${unit}? #rmd${unit}?
+	chmod 640 md${unit}? #rmd${unit}?
 	;;
 
 lpt*|lpa*)
@@ -493,7 +603,7 @@ random)
 cfs*)
 	unit=${i#cfs}
 	cfs=cfs$unit
-	major=60
+	major=29
 	rm -f $cfs
 	mknod $cfs c $major $unit
 	chmod 600 $cfs
@@ -504,6 +614,88 @@ scsibus*)
 	rm -f scsibus$unit
 	mknod scsibus$unit c 34 $unit
 	chmod 644 scsibus$unit
+	;;
+
+mlx*)
+	unit=${i#mlx}
+	rm -f mlx$unit
+	mknod mlx$unit c 68 $unit
+	chmod 600 mlx$unit
+	;;
+
+usbs)
+	makedev usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
+	makedev uhid0 uhid1 uhid2 uhid3
+	makedev ulpt0 ulpt1
+	makedev ttyU0 ttyU1
+	makedev urio0
+	makedev uscanner0 uscanner1
+	makedev ugen0
+	;;
+
+usb*)
+	unit=${i#usb}
+	if [ "$unit" = "" ]; then
+	    unit=255
+	    usb=usb
+	else
+	    usb=usb$unit
+	fi
+	major=39
+	rm -f $usb
+	mknod $usb c $major $unit
+	chmod 600 $usb
+	;;
+
+uhid*)
+	unit=${i#uhid}
+	uhid=uhid$unit
+	major=40
+	rm -f $uhid
+	mknod $uhid c $major $unit
+	chmod 666 $uhid
+	;;
+
+ulpt*)
+	unit=${i#ulpt}
+	ulpt=ulpt$unit
+	ulpn=ulpn$unit
+	major=41
+	rm -f $ulpt $ulpn
+	mknod $ulpt c $major $unit
+	mknod $ulpn c $major $(($unit + 64))
+	chmod 600 $ulpt $ulpn
+	;;
+
+ugen*)
+	unit=${i#ugen}
+	ugen=ugen$unit
+	major=42
+	for j in 00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
+	do
+		ugenj=$ugen.$j
+		rm -f $ugenj
+		mknod $ugenj c $major $(($unit * 16 + $j))
+		chmod 600 $ugenj
+	done
+	;;
+
+urio*)
+	unit=${i#urio}
+	urio=urio$unit
+	major=62
+	rm -f $urio
+	mknod $urio c $major $unit
+	chmod 600 $urio
+	;;
+
+uscanner*)
+	unit=${i#uscanner}
+	uscanner=uscanner$unit
+	major=52
+	rm -f $uscanner
+	mknod $uscanner c $major $unit
+	chmod 600 $uscanner
 	;;
 
 isdn)
@@ -540,29 +732,17 @@ isdntrc*)
 	;;
 
 pci*)
-	unit=${i#pci};
+	unit=${i#pci}
 	rm -f pci$unit
-	mknod pci$unit c 63 $unit
+	mknod pci$unit c 60 $unit
 	chmod 644 pci$unit
 	;;
 
 clockctl)
 	rm -f clockctl
-	mknod clockctl c 59 0
+	mknod clockctl c 61 0
 	chgrp ntpd clockctl
 	chmod 660 clockctl
-	;;
-
-systrace)
-	rm -f systrace
-	mknod systrace c 60 0
-	chmod 644 systrace
-	;;
-
-kttcp)
-	rm -f kttcp
-	mknod kttcp c 61 0
-	chmod 600 kttcp
 	;;
 
 sysmon)
@@ -574,6 +754,49 @@ sysmon)
 	rm -f watchdog
 	mknod watchdog c $major 1
 	chmod 644 watchdog
+	;;
+
+systrace)
+	rm -f systrace
+	mknod systrace c 63 0
+	chmod 644 systrace
+	;;
+
+kttcp)
+	rm -f kttcp
+	mknod kttcp c 65 0
+	chmod 600 kttcp
+	;;
+
+bktr)
+	makedev bktr0 bktr1
+	ln -fs bktr0 bktr
+	ln -fs tuner0 tuner
+	ln -fs vbi0 vbi
+	;;
+
+bktr*)
+	unit=${i#bktr}
+	rm -f bktr$unit tuner$unit vbi$unit
+	mknod bktr$unit c 71 $(($unit + 0))
+	mknod tuner$unit c 71 $(($unit + 16))
+	mknod vbi$unit c 71 $(($unit + 32))
+	chmod 444 bktr$unit tuner$unit vbi$unit
+	;;
+
+radio)
+	makedev radio0 radio1
+	ln -fs radio0 radio
+	;;
+
+radio*)
+	unit=${i#radio}
+	radio=radio$unit
+	major=72
+	if [ "$unit" = "" ]; then unit=0; fi
+	rm -f $radio
+	mknod $radio c $major $unit
+	chmod 666 $radio
 	;;
 
 local)

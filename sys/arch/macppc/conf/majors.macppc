@@ -1,4 +1,4 @@
-#	$NetBSD: majors.macppc,v 1.8 2003/01/14 08:40:54 fair Exp $
+#	$NetBSD: majors.macppc,v 1.9 2003/03/13 17:02:54 matt Exp $
 #
 # Device majors for macppc
 #
@@ -72,3 +72,4 @@ device-major	mlx		char 68			mlx
 
 device-major	bktr		char 71			bktr
 device-major	radio		char 72			radio
+device-major	wsfont		char 73			wsfont
