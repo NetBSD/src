@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.105 1998/03/01 02:22:32 fvdl Exp $	*/
+/*	$NetBSD: tty.c,v 1.106 1998/03/21 04:02:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -189,7 +189,6 @@ ttyopen(device, tp)
 		tp->t_flags = 0;
 #endif
 	}
-	CLR(tp->t_state, TS_WOPEN);
 	splx(s);
 	return (0);
 }
@@ -833,13 +832,6 @@ ttioctl(tp, cmd, data, flag, p)
 				splx(s);
 				return (error);
 			} else {
-				if (!ISSET(tp->t_state, TS_CARR_ON) &&
-				    ISSET(tp->t_cflag, CLOCAL) &&
-				    !ISSET(t->c_cflag, CLOCAL)) {
-					CLR(tp->t_state, TS_ISOPEN);
-					SET(tp->t_state, TS_WOPEN);
-					ttwakeup(tp);
-				}
 				tp->t_cflag = t->c_cflag;
 				tp->t_ispeed = t->c_ispeed;
 				tp->t_ospeed = t->c_ospeed;

@@ -1,7 +1,7 @@
-/*	$NetBSD: com.c,v 1.140 1998/02/25 08:32:35 ross Exp $	*/
+/*	$NetBSD: com.c,v 1.141 1998/03/21 04:05:49 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995, 1996, 1997
+ * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
  *	Charles M. Hannum.  All rights reserved.
  *
  * Interrupt processing and hardware flow control partly based on code from
@@ -118,6 +118,7 @@ static void com_enable_debugport __P((struct com_softc *));
 #endif
 void	com_attach_subr	__P((struct com_softc *sc));
 void	com_config	__P((struct com_softc *));
+void	com_shutdown	__P((struct com_softc *));
 int	comspeed	__P((long, long));
 static	u_char	cflag2lcr __P((tcflag_t));
 int	comparam	__P((struct tty *, struct termios *));
@@ -577,6 +578,52 @@ com_config(sc)
 #endif
 }
 
+void
+com_shutdown(sc)
+	struct com_softc *sc;
+{
+	struct tty *tp = sc->sc_tty;
+	int s;
+
+	s = splserial();
+
+	/* If we were asserting flow control, then deassert it. */
+	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
+	com_hwiflow(sc);
+
+	/* Clear any break condition set with TIOCSBRK. */
+	com_break(sc, 0);
+
+	/*
+	 * Hang up if necessary.  Wait a bit, so the other side has time to
+	 * notice even if we immediately open the port again.
+	 */
+	if (ISSET(tp->t_cflag, HUPCL)) {
+		com_modem(sc, 0);
+		(void) tsleep(sc, TTIPRI, ttclos, hz);
+	}
+
+	/* Turn off interrupts. */
+#ifdef DDB
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
+	else
+#endif
+		sc->sc_ier = 0;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+
+	if (sc->disable) {
+#ifdef DIAGNOSTIC
+		if (!sc->enabled)
+			panic("com_shutdown: not enabled?");
+#endif
+		(*sc->disable)(sc);
+		sc->enabled = 0;
+	}
+
+	splx(s);
+}
+
 int
 comopen(dev, flag, mode, p)
 	dev_t dev;
@@ -612,13 +659,10 @@ comopen(dev, flag, mode, p)
 
 	s = spltty();
 
-	/* We need to set this early for the benefit of comsoft(). */
-	SET(tp->t_state, TS_WOPEN);
-
 	/*
 	 * Do the following iff this is a first open.
 	 */
-	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
 
 		tp->t_dev = dev;
@@ -627,6 +671,7 @@ comopen(dev, flag, mode, p)
 
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
+				splx(s2);
 				splx(s);
 				printf("%s: device enable failed\n",
 				       sc->sc_dev.dv_xname);
@@ -697,52 +742,39 @@ comopen(dev, flag, mode, p)
 
 		splx(s2);
 	}
-	error = 0;
 
 	/* If we're doing a blocking open... */
 	if (!ISSET(flag, O_NONBLOCK))
 		/* ...then wait for carrier. */
 		while (!ISSET(tp->t_state, TS_CARR_ON) &&
 		    !ISSET(tp->t_cflag, CLOCAL | MDMBUF)) {
+			tp->t_wopen++;
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 			    ttopen, 0);
-			if (error)
-				break;
-			SET(tp->t_state, TS_WOPEN);
+			tp->t_wopen--;
+			if (error) {
+				splx(s);
+				goto bad;
+			}
 		}
 
 	splx(s);
-	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
+
+	error = (*linesw[tp->t_line].l_open)(dev, tp);
 	if (error)
-		if (!ISSET(tp->t_state, TS_ISOPEN)) {
-			s = splserial();
+		goto bad;
 
-			/*
-			 * When we're doing a blocking open,
-			 * if the open was interrupted and nobody
-			 * else has the device open, then hang up.
-			 */
-			if (!ISSET(flag, O_NONBLOCK))
-				/* Hang up. */
-				com_modem(sc, 0);
+	return (0);
 
-			/*
-			 * If the device is enabled but finally failed to
-			 * open and nobody else has it open, disable it.
-			 */
-			if (sc->disable != NULL)
-				if (sc->enabled != 0) {
-					(*sc->disable)(sc);
-					sc->enabled = 0;
-				}
+bad:
+	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
+		/*
+		 * We failed to open the device, and nobody else had it opened.
+		 * Clean up the state as appropriate.
+		 */
+		com_shutdown(sc);
+	}
 
-			if (!ISSET(flag, O_NONBLOCK)) {
-				CLR(tp->t_state, TS_WOPEN);
-				ttwakeup(tp);
-			}
-			splx(s);
-		}
 	return (error);
 }
  
@@ -754,7 +786,6 @@ comclose(dev, flag, mode, p)
 {
 	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
-	int s;
 
 	/* XXX This is for cons.c. */
 	if (!ISSET(tp->t_state, TS_ISOPEN))
@@ -763,42 +794,8 @@ comclose(dev, flag, mode, p)
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 
-	s = splserial();
+	com_shutdown(sc);
 
-	/* If we were asserting flow control, then deassert it. */
-	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
-	com_hwiflow(sc);
-
-	/* Clear any break condition set with TIOCSBRK. */
-	com_break(sc, 0);
-
-	/*
-	 * Hang up if necessary.  Wait a bit, so the other side has time to
-	 * notice even if we immediately open the port again.
-	 */
-	if (ISSET(tp->t_cflag, HUPCL)) {
-		com_modem(sc, 0);
-		(void) tsleep(sc, TTIPRI, ttclos, hz);
-	}
-
-	/* Turn off interrupts. */
-#ifdef DDB
-	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
-		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
-	else
-#endif
-		sc->sc_ier = 0;
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
-
-	if (sc->disable) {
-		if (sc->enabled) {
-			(*sc->disable)(sc);
-			sc->enabled = 0;
-		}
-	}
-
-	splx(s);
-	
 	return (0);
 }
  
@@ -1617,7 +1614,9 @@ comsoft(arg)
 			continue;
 
 		tp = sc->sc_tty;
-		if (tp == NULL || !ISSET(tp->t_state, TS_ISOPEN | TS_WOPEN))
+		if (tp == NULL)
+			continue;
+		if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0)
 			continue;
 #endif
 		tp = sc->sc_tty;
