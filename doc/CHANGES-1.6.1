@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.90 2003/01/27 04:55:10 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.91 2003/01/27 05:46:14 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3231,3 +3231,56 @@ sys/dev/isa/if_el.c				1.69-1.70
 	Zero out the NIC memory when padding packet to 
 	ETHER_MIN_LEN-ETHER_CRC_LEN
 	[bouyer, ticket #1090]
+
+sys/dev/ofw/ofnet.c				1.30-1.31
+
+	Zero out the buffer when padding packet to
+	ETHER_MIN_LEN-ETHER_CRC_LEN
+	[bouyer, ticket #1091]
+
+sys/dev/pci/if_vr.c				1.59-1.60
+
+	Zero out the buffer when padding packet to
+	ETHER_MIN_LEN-ETHER_CRC_LEN
+	[bouyer, ticket #1092]
+
+sys/dev/qbus/if_qe.c				1.55-1.56
+
+	Zero out the buffer when padding packet to ETHER_MIN_LEN.
+	[bouyer, ticket #1093]
+
+sys/dev/qbus/if_il.c				1.8-1.9
+
+	This chip should autopad, so just remove the check.
+	[bouyer, ticket #1094]
+
+sys/dev/usb/if_url.c				1.6-1.7
+
+	When padding to URL_MIN_FRAME_LEN, memset the extra buffer space used.
+	[bouyer, ticket #1095]
+
+sys/arch/acorn26/podulebus/if_eh.c		1.6-1.7
+sys/arch/mac68k/dev/if_ae.c			1.71-1.73
+sys/dev/ic/dp8390.c				1.51-1.52
+sys/dev/ic/mx98905.c				1.2-1.3
+sys/dev/ic/ne2000.c				1.37-1.38
+sys/dev/ic/we.c					1.4-1.5
+sys/dev/isa/if_ec.c				1.19-1.20
+
+	Zero out the NIC memory when padding packet to 
+	ETHER_MIN_LEN-ETHER_CRC_LEN sc->write_mbuf now return len of 
+	buffer, including padding.
+	[bouyer, ticket #1096]
+
+sys/arch/sgimips/hpc/if_sq.c			1.15-1.16 (hand patched)
+
+	When padding frames smaller than ethernet minimum size, make sure 
+	we supply a buffer long enouth, with the padding bytes initialised.
+	Also pad to ETHER_MIN_LEN - ETHER_CRC_LEN, not ETHER_MIN_LEN 
+	(padded frames were 4 bytes too long).
+	[bouyer, ticket #1097]
+
+sys/dev/bi/if_ni.c				1.18-1.20
+
+	This chip should autopad, so just remove the check for len.
+	[bouyer, ticket #1098]
