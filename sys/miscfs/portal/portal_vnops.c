@@ -37,7 +37,7 @@
  * From:
  *	Id: portal_vnops.c,v 1.5 1993/09/22 17:57:20 jsp Exp
  *
- *	$Id: portal_vnops.c,v 1.1 1994/01/05 14:23:29 cgd Exp $
+ *	$Id: portal_vnops.c,v 1.2 1994/01/12 19:50:24 cgd Exp $
  */
 
 /*
@@ -327,8 +327,10 @@ portal_open(vp, mode, cred, p)
 	printf("portal_open: constructing data uio\n");
 #endif
 
-	pcred.pcr_uid = cred->cr_uid;
-	pcred.pcr_gid = cred->cr_gid;
+	pcred.pcr_flag = ap->a_mode;
+	pcred.pcr_uid = ap->a_cred->cr_uid;
+	pcred.pcr_ngroups = ap->a_cred->cr_ngroups;
+	bcopy(ap->a_cred->cr_groups, pcred.pcr_groups, NGROUPS * sizeof(gid_t));
 	aiov[0].iov_base = (caddr_t) &pcred;
 	aiov[0].iov_len = sizeof(pcred);
 	aiov[1].iov_base = pt->pt_arg;
