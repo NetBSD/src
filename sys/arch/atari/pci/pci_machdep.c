@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.33 2002/01/09 21:19:14 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34 2002/05/15 17:30:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -611,6 +611,21 @@ pci_make_tag(pc, bus, device, function)
 	int bus, device, function;
 {
 	return ((bus << 16) | (device << 11) | (function << 8));
+}
+
+void
+pci_decompose_tag(pc, tag, bp, dp, fp)
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	int *bp, *dp, *fp;
+{
+
+	if (bp != NULL)
+		*bp = (tag >> 16) & 0xff;
+	if (dp != NULL)
+		*dp = (tag >> 11) & 0x1f;
+	if (fp != NULL)
+		*fp = (tag >> 8) & 0x7;
 }
 
 int
