@@ -102,3 +102,6 @@
 #ifndef TARGET_CPU_DEFAULT
 #define TARGET_CPU_DEFAULT	TARGET_CPU_sparc
 #endif
+
+/* Use sjlj exceptions. */
+#define DWARF2_UNWIND_INFO 0
