@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2003/08/01 17:03:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/08/11 07:34:26 mrg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -38,29 +38,33 @@ COPTS.toplev.o=			-DTARGET_NAME=\"$(target_alias)\"
 COPTS.insn-conditions.c=	-DGENERATOR_FILE
 COPTS.sparc.o=			-DTARGET_CPU_DEFAULT=${G_target_cpu_default}
 
+# Headers that host objects depend on (except gen*rtl*)
+HH=	hconfig.h genrtl.h
+
 #
 # Generate the various header files we need.
 #
 genrtl.c genrtl.h: gengenrtl
 	./gengenrtl > genrtl.c
 	./gengenrtl -h > genrtl.h
-gengenrtl.o: gengenrtl.c
-	${HOST_COMPILE.c} $>
+gengenrtl.o: gengenrtl.c hconfig.h
+	${HOST_COMPILE.c} $<
 gengenrtl: gengenrtl.o
-	${HOST_LINK.c} -o gengenrtl $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+	${HOST_LINK.c} -o $@ $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
 tm-preds.h: genpreds
 	./genpreds > tm-preds.h
-genpreds.o: genpreds.c
-	${HOST_COMPILE.c} $>
+genpreds.o: genpreds.c $(HH)
+	${HOST_COMPILE.c} $<
 genpreds: genpreds.o
-	${HOST_LINK.c} -o genpreds $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+	${HOST_LINK.c} -o $@ $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
-#gencheck.o: gencheck.c
-#	${HOST_COMPILE.c} $>
-tree-check.h: gencheck.c
-	${HOST_LINK.c} -o gencheck $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+tree-check.h: gencheck
 	./gencheck >$@
+gencheck.o: gencheck.c $(HH)
+	${HOST_COMPILE.c} $<
+gencheck: gencheck.o
+	${HOST_LINK.c} -o $@ $> ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
 gtype-desc.c: gtype-desc.h
 gtype-desc.h: gengtype
@@ -68,14 +72,14 @@ gtype-desc.h: gengtype
 	ln -s ${.CURDIR}/../arch/${MACHINE_ARCH}/auto-host.h .
 	./gengtype
 gengtype.c: gtyp-gen.h
-gengtype.o: gengtype.c
-	${HOST_COMPILE.c} $>
-gengtype-lex.o: gengtype-lex.c
-	${HOST_COMPILE.c} $>
-gengtype-yacc.o: gengtype-yacc.c
-	${HOST_COMPILE.c} $>
+gengtype.o: gengtype.c $(HH)
+	${HOST_COMPILE.c} $<
+gengtype-lex.o: gengtype-lex.c $(HH)
+	${HOST_COMPILE.c} $<
+gengtype-yacc.o: gengtype-yacc.c $(HH)
+	${HOST_COMPILE.c} $<
 gengtype: gengtype.o gtyp-gen.h gengtype-lex.o gengtype-yacc.o config.h
-	${HOST_LINK.c} -o gengtype gengtype.o gengtype-lex.o gengtype-yacc.o ${NBCOMPATLIB} ${HOSTLIBIBERTY}
+	${HOST_LINK.c} -o $@ gengtype.o gengtype-lex.o gengtype-yacc.o ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
 gtyp-gen.h: Makefile
 	(	echo "static const char *srcdir = \"$(G_GTFILES_SRCDIR)\";"		; \
@@ -94,14 +98,13 @@ gtyp-gen.h: Makefile
 		echo "NULL };"								; \
 	) > gtyp-gen.h
 
-# XXX /bin/sh
-config.h:
+config.h: Makefile
 	TM_DEFINES="$(G_tm_defines)" \
 	HEADERS="$(G_host_xm_file)" XM_DEFINES="$(G_host_xm_defines)" \
 	TARGET_CPU_DEFAULT="$(G_target_cpu_default)" \
 	/bin/sh $(GNUHOSTDIST)/gcc/mkconfig.sh config.h
 
-tm_p.h:
+tm_p.h: Makefile
 	TM_DEFINES="" \
 	HEADERS="$(G_tm_p_file)" XM_DEFINES="" TARGET_CPU_DEFAULT="" \
 	/bin/sh $(GNUHOSTDIST)/gcc/mkconfig.sh tm_p.h
@@ -111,6 +114,21 @@ options.h: Makefile
 		echo "#include \"$$f\""; \
 	done | sed 's|$(GNUHOSTDIST)/gcc/||' > options.h
 
+
+# Yuck, we have to run configure to generate this one...
+CLEANFILES+=	auto-build.h
+hconfig.h: auto-build.h
+auto-build.h: Makefile
+	rm -rf .ab && \
+	mkdir .ab && \
+	(cd .ab && \
+		/bin/sh $(GNUHOSTDIST)/gcc/configure \
+			--build=`${.CURDIR}/../../../dist/gcc/config.guess` \
+			--host=`${.CURDIR}/../../../dist/gcc/config.guess` \
+			--target=${MACHINE_GNU_PLATFORM} && \
+		mv auto-host.h ../auto-build.h) && \
+	rm -rf .ab
+
 #
 # These are copies of files we build for the build host that are used
 # by the genfoo programs.
@@ -119,41 +137,41 @@ build-rtl.c: rtl.c \
   $(G_RTL_H) real.h $(G_GCC_H) errors.h gtype-desc.h
 	rm -f build-rtl.c
 	sed -e 's/config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/rtl.c > build-rtl.c
-build-rtl.o: build-rtl.c
+build-rtl.o: build-rtl.c $(HH)
 	${HOST_COMPILE.c} -DGENERATOR_FILE build-rtl.c
 
 print-rtl1.c: print-rtl.c \
   $(G_RTL_H) $(G_TREE_H) hard-reg-set.h $(G_BASIC_BLOCK_H)
 	rm -f print-rtl1.c
 	sed -e 's/config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/print-rtl.c > print-rtl1.c
-print-rtl1.o: print-rtl.c
+print-rtl1.o: print-rtl.c $(HH)
 	${HOST_COMPILE.c} -DGENERATOR_FILE print-rtl1.c
 
 build-bitmap.c: bitmap.c \
   $(G_RTL_H) flags.h $(G_BASIC_BLOCK_H) $(REGS_H) $(G_GCC_H) gtype-desc.h
 	rm -f build-bitmap.c
 	sed -e 's/config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/bitmap.c > build-bitmap.c
-build-bitmap.o: build-bitmap.c
+build-bitmap.o: build-bitmap.c $(HH)
 	${HOST_COMPILE.c} ${COPTS.${.IMPSRC:T}} build-bitmap.c
 
 build-errors.c: errors.c errors.h
 	rm -f build-errors.c
 	sed -e 's/config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/errors.c > build-errors.c
-build-errors.o: build-errors.c
+build-errors.o: build-errors.c $(HH)
 	${HOST_COMPILE.c} -DGENERATOR_FILE build-errors.c
 
 build-varray.c: varray.c \
   $(G_RTL_H) $(G_GCC_H) $(TREE_H) bitmap.h errors.h
 	rm -f build-varray.c
 	sed -e 's/config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/varray.c > build-varray.c
-build-varray.o: build-varray.c
+build-varray.o: build-varray.c $(HH) gtype-desc.h
 	${HOST_COMPILE.c} ${COPTS.${.IMPSRC:T}} build-varray.c
 
 build-ggc-none.c: ggc-none.c \
   $(G_GCC_H) gtype-desc.h
 	rm -f build-ggc-none.c
 	sed -e 's/config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/ggc-none.c > build-ggc-none.c
-build-ggc-none.o: build-ggc-none.c
+build-ggc-none.o: build-ggc-none.c $(HH)
 	${HOST_COMPILE.c} -DGENERATOR_FILE build-ggc-none.c
 
 #
@@ -163,8 +181,8 @@ EXTRADEPENDSEARLY=	${G_HOST_EARLY_SUPPORT} ${G_HOST_RTL} ${G_HOST_ERRORS}
 .for f in conditions.c constants.h
 CLEANFILES+=		gen${f:R} insn-${f}
 
-gen${f:R}.o: gen${f:R}.c
-	${HOST_COMPILE.c} $>
+gen${f:R}.o: gen${f:R}.c $(HH)
+	${HOST_COMPILE.c} $<
 insn-${f:R}.o:
 	${HOST_COMPILE.c} ${COPTS.${.IMPSRC:T}} insn-${f:R}.c
 insn-${f}: genrtl.h ${G_md_file} ${EXTRADEPENDSEARLY:.c=.o} gen${f:R}.o
@@ -176,8 +194,8 @@ insn-${f}: genrtl.h ${G_md_file} ${EXTRADEPENDSEARLY:.c=.o} gen${f:R}.o
 # The normal insn-foo generators
 #
 .for f in gensupport.c read-rtl.c dummy-conditions.c
-${f:R}.o: ${f:R}.c
-	${HOST_COMPILE.c} $>
+${f:R}.o: ${f:R}.c $(HH)
+	${HOST_COMPILE.c} $<
 .endfor
 
 EXTRADEPENDS=		${G_HOST_RTL} ${G_HOST_SUPPORT} ${G_HOST_PRINT} ${G_HOST_ERRORS}
@@ -185,8 +203,8 @@ EXTRADEPENDS=		${G_HOST_RTL} ${G_HOST_SUPPORT} ${G_HOST_PRINT} ${G_HOST_ERRORS}
 	  peep.c recog.c
 CLEANFILES+=		gen${f:R} insn-${f}
 
-gen${f:R}.o: gen${f:R}.c
-	${HOST_COMPILE.c} $>
+gen${f:R}.o: gen${f:R}.c $(HH)
+	${HOST_COMPILE.c} $<
 insn-${f}: genrtl.h ${G_md_file} ${EXTRADEPENDS:.c=.o} gen${f:R}.o
 	${HOST_LINK.c} -o gen${f:R} gen${f:R}.o ${EXTRADEPENDS:.c=.o} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 	./gen${f:R} ${G_md_file} >$@
@@ -196,10 +214,10 @@ insn-${f}: genrtl.h ${G_md_file} ${EXTRADEPENDS:.c=.o} gen${f:R}.o
 # "One of these things is not like the other"
 #
 CLEANFILES+=		genattrtab insn-attrtab.c
-genattrtab.o: genattrtab.c
-	${HOST_COMPILE.c} $>
-genautomata.o: genautomata.c
-	${HOST_COMPILE.c} $>
+genattrtab.o: genattrtab.c $(HH) gtype-desc.h
+	${HOST_COMPILE.c} $<
+genautomata.o: genautomata.c $(HH)
+	${HOST_COMPILE.c} $<
 insn-attrtab.c: genrtl.h ${G_md_file} ${EXTRADEPENDS:.c=.o} ${G_HOST_VARRAY:.c=.o} genattrtab.o genautomata.o
 	${HOST_LINK.c} -o genattrtab genattrtab.o genautomata.o ${EXTRADEPENDS:.c=.o} ${G_HOST_VARRAY:.c=.o} ${NBCOMPATLIB} ${HOSTLIBIBERTY} -lm
 	./genattrtab ${G_md_file} >$@
@@ -207,6 +225,7 @@ insn-attrtab.c: genrtl.h ${G_md_file} ${EXTRADEPENDS:.c=.o} ${G_HOST_VARRAY:.c=.
 #
 # Required hard-coded dependancies.
 #
+genextract.c: insn-config.h
 insn-attrtab.c: ${G_HOST_RTLANAL:.o=.c}
 insn-attrtab.c insn-extract.c: insn-config.h
 insn-conditions.c: insn-constants.h tm_p.h tm-preds.h
