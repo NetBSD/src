@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.12 1999/08/24 00:48:38 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.13 1999/11/10 18:51:47 abs Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.16 1997/10/08 07:45:43 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 1999/08/24 00:48:38 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 1999/11/10 18:51:47 abs Exp $");
 #endif
 #endif
 
@@ -129,14 +129,22 @@ main(int argc, char **argv)
 				char   *s;
 
 				if (fexists(*argv)) {	/* refers to a file directly */
-					lpp = alloc_lpkg(realpath(*argv, pkgname));
+					if (!(cp = realpath(*argv, pkgname))) {
+						lpp = NULL;
+						warn("realpath failed for '%s'", *argv);
+					} else
+						lpp = alloc_lpkg(cp);
 				} else if (ispkgpattern(*argv)
 					    && (s = findbestmatchingname(dirname_of(*argv),
 					    basename_of(*argv))) != NULL) {
 					if (Verbose)
 						printf("Using %s for %s\n", s, *argv);
 
-					lpp = alloc_lpkg(realpath(s, pkgname));
+					if (!(cp = realpath(s, pkgname))) {
+						lpp = NULL;
+						warn("realpath failed for '%s'", s);
+					} else
+						lpp = alloc_lpkg(cp);
 				} else {
 					/* look for the file(pattern) in the expected places */
 					if (!(cp = fileFindByPath(NULL, *argv))) {
