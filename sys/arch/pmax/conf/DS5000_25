@@ -2,7 +2,7 @@
 # Sample Config file for DECstation 5000/20 or 5000/25
 # (UNTESTED!)
 #
-# 	$NetBSD: DS5000_25,v 1.9 1998/03/25 04:17:08 jonathan Exp $
+# 	$NetBSD: DS5000_25,v 1.10 1998/04/19 08:46:51 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -14,9 +14,6 @@ options 	MIPS3			# R4000/R4400 support
 
 # Support for specific models of DECstation
 options 	DEC_MAXINE		# kn02ca: 5000/xx (Personal DECstation)
-
-# old stype options (deprecated, still required)
-options 	DS5000_25		# MAXINE (kn02ca/xine) support
 
 
 # Standard system options
