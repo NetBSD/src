@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 1998/06/28 07:27:52 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 1998/09/20 03:37:29 mark Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -355,15 +355,26 @@ struct bus_space {
 /*
  * Copy operations.
  */
-#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
+#define	bus_space_copy_region_1(t, h1, o1, h2, o2, c)				\
 	__bs_copy(1, t, h1, o1, h2, o2, c)
-#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
+#define	bus_space_copy_region_2(t, h1, o1, h2, o2, c)				\
 	__bs_copy(2, t, h1, o1, h2, o2, c)
-#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
+#define	bus_space_copy_region_4(t, h1, o1, h2, o2, c)				\
 	__bs_copy(4, t, h1, o1, h2, o2, c)
-#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
+#define	bus_space_copy_region_8(t, h1, o1, h2, o2, c)				\
 	__bs_copy(8, t, h1, o1, h2, o2, c)
 
+#ifdef __BUS_SPACE_COMPAT_OLDDEFS
+/* compatibility definitions; deprecated */
+#define	bus_space_copy_1(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_2(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_4(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#define	bus_space_copy_8(t, h1, o1, h2, o2, c)				\
+	bus_space_copy_region_1((t), (h1), (o1), (h2), (o2), (c))
+#endif
 
 /*
  * Macros to provide prototypes for all the functions used in the
