@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.22 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: pax.h,v 1.23 2004/02/12 22:19:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -110,6 +110,7 @@ typedef struct {
 	int ln_nlen;			/* link name length */
 	char ln_name[PAXPATHLEN+1];	/* name to link to (if any) */
 	char *org_name;			/* orig name in file system */
+	char *tmp_name;			/* tmp name used to restore */
 	PATTERN *pat;			/* ptr to pattern match (if any) */
 	struct stat sb;			/* stat buffer see stat(2) */
 	off_t pad;			/* bytes of padding after file xfer */

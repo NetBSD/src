@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.36 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.37 2004/02/12 22:19:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.36 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.37 2004/02/12 22:19:18 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,46 +85,39 @@ int
 file_creat(ARCHD *arcn)
 {
 	int fd = -1;
-	mode_t file_mode;
 	int oerrno;
 
 	/*
-	 * assume file doesn't exist, so just try to create it, most times this
-	 * works. We have to take special handling when the file does exist. To
-	 * detect this, we use O_EXCL. For example when trying to create a
-	 * file and a character device or fifo exists with the same name, we
-	 * can accidently open the device by mistake (or block waiting to open)
-	 * If we find that the open has failed, then spend the effort to
-	 * figure out why. This strategy was found to have better average
-	 * performance in common use than checking the file (and the path)
-	 * first with lstat.
+	 * Create a temporary file name so that the file doesn't have partial
+	 * contents while restoring.
 	 */
-	file_mode = arcn->sb.st_mode & FILEBITS;
-	if ((fd = open(arcn->name, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL,
-	    file_mode)) >= 0)
-		return(fd);
-
-	/*
-	 * the file seems to exist. First we try to get rid of it (found to be
-	 * the second most common failure when traced). If this fails, only
-	 * then we go to the expense to check and create the path to the file
-	 */
-	if (unlnk_exist(arcn->name, arcn->type) != 0)
+	arcn->tmp_name = malloc(arcn->nlen + 8);
+	if (arcn->tmp_name == NULL) {
+		syswarn(1, errno, "Cannot malloc %d bytes", arcn->nlen + 8);
 		return(-1);
+	}
+	(void)snprintf(arcn->tmp_name, arcn->nlen + 8, "%s.XXXXXX", arcn->name);
+
+	fd = mkstemp(arcn->tmp_name);
+	if (fd >= 0)
+		return(fd);
 
 	for (;;) {
 		/*
-		 * try to open it again, if this fails, check all the nodes in
-		 * the path and give it a final try. if chk_path() finds that
-		 * it cannot fix anything, we will skip the last attempt
+		 * try to create the temporary file we use to restore the
+		 * contents info.  if this fails, keep checking all the nodes
+		 * in the path until chk_path() finds that it cannot fix
+		 * anything further.  if that happens we just give up.
 		 */
-		if ((fd = open(arcn->name, O_WRONLY | O_CREAT | O_TRUNC,
-		    file_mode)) >= 0)
+		fd = mkstemp(arcn->tmp_name);
+		if (fd >= 0)
 			break;
 		oerrno = errno;
-		if (nodirs || chk_path(arcn->name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
+		if (nodirs || chk_path(arcn->tmp_name,arcn->sb.st_uid,arcn->sb.st_gid) < 0) {
 			(void)fflush(listf);
-			syswarn(1, oerrno, "Cannot create %s", arcn->name);
+			syswarn(1, oerrno, "Cannot create %s", arcn->tmp_name);
+			free(arcn->tmp_name);
+			arcn->tmp_name = NULL;
 			return(-1);
 		}
 	}
@@ -148,7 +141,7 @@ file_close(ARCHD *arcn, int fd)
 		return;
 	if (close(fd) < 0)
 		syswarn(0, errno, "Cannot close file descriptor on %s",
-		    arcn->name);
+		    arcn->tmp_name);
 
 	/*
 	 * set owner/groups first as this may strip off mode bits we want
@@ -156,23 +149,38 @@ file_close(ARCHD *arcn, int fd)
 	 * modification times.
 	 */
 	if (pids)
-		res = set_ids(arcn->name, arcn->sb.st_uid, arcn->sb.st_gid);
+		res = set_ids(arcn->tmp_name, arcn->sb.st_uid, arcn->sb.st_gid);
 
 	/*
 	 * IMPORTANT SECURITY NOTE:
 	 * if not preserving mode or we cannot set uid/gid, then PROHIBIT
-	 * set uid/gid bits
+	 * set uid/gid bits but restore the file modes (since mkstemp doesn't).
 	 */
 	if (!pmode || res)
 		arcn->sb.st_mode &= ~(SETBITS);
 	if (pmode)
-		set_pmode(arcn->name, arcn->sb.st_mode);
+		set_pmode(arcn->tmp_name, arcn->sb.st_mode);
+	else
+		set_pmode(arcn->tmp_name, arcn->sb.st_mode & FILEBITS);
 	if (patime || pmtime)
-		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+		set_ftime(arcn->tmp_name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
 #if HAVE_STRUCT_STAT_ST_FLAGS
 	if (pfflags && arcn->type != PAX_SLK)
-		set_chflags(arcn->name, arcn->sb.st_flags);
+		set_chflags(arcn->tmp_name, arcn->sb.st_flags);
 #endif
+
+	/*
+	 * Finally, now the temp file is fully instantiated rename it to
+	 * the desired file name.
+	 */
+	if (rename(arcn->tmp_name, arcn->name) < 0) {
+		syswarn(0, errno, "Cannot rename %s to %s",
+		    arcn->tmp_name, arcn->name);
+		(void)unlink(arcn->tmp_name);
+	}
+
+	free(arcn->tmp_name);
+	arcn->tmp_name = NULL;
 }
 
 /*
