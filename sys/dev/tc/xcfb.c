@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.11 1999/05/07 08:00:31 nisimura Exp $ */
+/* $NetBSD: xcfb.c,v 1.12 1999/10/19 00:49:33 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.11 1999/05/07 08:00:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.12 1999/10/19 00:49:33 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ struct wsscreen_descr xcfb_stdscreen = {
 	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	&xcfb_emulops,
 	0, 0,
-	0
+	WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *_xcfb_scrlist[] = {
