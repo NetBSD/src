@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.346 2002/08/29 00:51:40 lukem Exp $
+# $NetBSD: mi,v 1.347 2002/08/29 01:30:46 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -93,7 +93,6 @@
 ./rescue/echo		base-rescue-root
 ./rescue/ed		base-rescue-root
 ./rescue/expr		base-rescue-root
-./rescue/fdisk		base-rescue-root
 ./rescue/fsck		base-rescue-root
 ./rescue/fsck_ext2fs	base-rescue-root
 ./rescue/fsck_ffs	base-rescue-root
@@ -115,7 +114,6 @@
 ./rescue/ksh		base-rescue-root
 ./rescue/ktrace		base-rescue-root
 ./rescue/ktruss		base-rescue-root
-./rescue/ldconfig	base-rescue-root
 ./rescue/ldd		base-rescue-root
 ./rescue/lmcctl		base-rescue-root
 ./rescue/ln		base-rescue-root
