@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.137 2002/11/29 08:29:57 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.138 2002/12/15 15:01:08 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1348,8 +1348,15 @@ cpumatch_hypersparc(sc, mp, node)
 	int	node;
 {
 	sc->cpu_type = CPUTYP_HS_MBUS;/*XXX*/
-	if (node == 0)
+
+	if (node == 0) {
+		/* Flush I-cache */
 		sta(0, ASI_HICACHECLR, 0);
+
+		/* Disable `unimplemented flush' traps during boot-up */
+		wrasr(rdasr(HYPERSPARC_ASRNUM_ICCR) | HYPERSPARC_ICCR_FTD,
+			HYPERSPARC_ASRNUM_ICCR);
+	}
 }
 
 void
