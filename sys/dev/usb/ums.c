@@ -1,11 +1,12 @@
-/*	$NetBSD: ums.c,v 1.10 1998/11/21 18:57:09 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.11 1998/11/25 22:32:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson <augustss@carlstedt.se>
- *         Carlstedt Research & Technology
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@carlstedt.se) at
+ * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

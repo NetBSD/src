@@ -1,11 +1,12 @@
-/*	$NetBSD: usb_mem.h,v 1.1 1998/07/24 21:09:08 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.2 1998/11/25 22:32:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
- * Author: Lennart Augustsson <augustss@carlstedt.se>
- *         Carlstedt Research & Technology
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Lennart Augustsson (augustss@carlstedt.se) at
+ * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
