@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.122 2004/08/03 15:53:03 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.123 2004/08/27 04:56:16 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.122 2004/08/03 15:53:03 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.123 2004/08/27 04:56:16 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -129,13 +129,11 @@ u_int32_t key_debug_level = 0;
 static u_int key_spi_trycnt = 1000;
 static u_int32_t key_spi_minval = 0x100;
 static u_int32_t key_spi_maxval = 0x0fffffff;	/* XXX */
-static u_int key_int_random = 60;	/*interval to initialize randseed,1(m)*/
 static u_int key_larval_lifetime = 30;	/* interval to expire acquiring, 30(s)*/
 static int key_blockacq_count = 10;	/* counter for blocking SADB_ACQUIRE.*/
 static int key_blockacq_lifetime = 20;	/* lifetime for blocking SADB_ACQUIRE.*/
 
 static u_int32_t acq_seq = 0;
-static int key_tick_init_random = 0;
 
 struct _satailq satailq;		/* list of all SAD entry */
 struct _sptailq sptailq;		/* SPD table + pcb */
@@ -388,7 +386,6 @@ static int key_cmpsaidx_withoutmode
 	__P((struct secasindex *, struct secasindex *));
 static int key_sockaddrcmp __P((struct sockaddr *, struct sockaddr *, int));
 static int key_bbcmp __P((caddr_t, caddr_t, u_int));
-static void key_srandom __P((void));
 static u_long key_random __P((void));
 static u_int16_t key_satype2proto __P((u_int8_t));
 static u_int8_t key_proto2satype __P((u_int16_t));
@@ -4582,12 +4579,6 @@ key_timehandler(arg)
 	}
     }
 
-	/* initialize random seed */
-	if (key_tick_init_random++ > key_int_random) {
-		key_tick_init_random = 0;
-		key_srandom();
-	}
-
 	callout_reset(&key_timehandler_ch, hz, key_timehandler, (void *)0);
 
 	splx(s);
@@ -4597,13 +4588,6 @@ key_timehandler(arg)
 /*
  * to initialize a seed for random()
  */
-static void
-key_srandom()
-{
-
-	return;
-}
-
 static u_long
 key_random()
 {
@@ -7945,11 +7929,6 @@ SYSCTL_SETUP(sysctl_net_key_setup, "sysctl net.key subtree setup")
 		       CTLTYPE_INT, "spi_max_value", NULL,
 		       NULL, 0, &key_spi_maxval, 0,
 		       CTL_NET, PF_KEY, KEYCTL_SPI_MAX_VALUE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "random_int", NULL,
-		       NULL, 0, &key_int_random, 0,
-		       CTL_NET, PF_KEY, KEYCTL_RANDOM_INT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "larval_lifetime", NULL,
