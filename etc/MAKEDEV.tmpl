@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.5 2003/10/24 10:25:08 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.6 2003/10/24 23:39:42 jdolecek Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -128,7 +128,7 @@
 #	dca*	HP200/300 single port serial interface
 #	dcm*	HP200/300 4 port serial mux interface
 #	apci*	HP400     4 port serial mux interface
-#	ttya	'ttya' system console (luna68k)
+#	ttya	"ttya" system console (luna68k)
 #	ttyb	second system serial port (luna68k)
 #	tty*	Onboard serial ports (mvme68k)
 #		On the mvme147 these are: ttyZ1, ttyZ2 and ttyZ3.
@@ -201,9 +201,9 @@
 #	cgfour*	8-bit color frame buffer
 #	cgsix*	accelerated 8-bit color frame buffer
 #	cgeight*	24-bit color frame buffer
-#	etvme	Tseng et-compatible cards on VME
+#	etvme	Tseng et-compatible cards on VME (atari)
 #	ik*	UNIBUS interface to Ikonas frame buffer
-#	leo	Circad Leonardo VME-bus true color
+#	leo	Circad Leonardo VME-bus true color (atari)
 #	ps*	UNIBUS interface to Picture System 2
 #	qv*	QVSS (MicroVAX) display
 #	tcx*	accelerated 8/24-bit color frame buffer
@@ -231,7 +231,7 @@
 #	dmoverio hardware-assisted data movers
 #	dpt*	DPT/Adaptec EATA RAID management interface
 #	dpti*	DPT/Adaptec I2O RAID management interface
-#	fb*	generic framebuffer pseudo-device
+#	fb*	PMAX generic framebuffer pseudo-device
 #	fd	file descriptors
 #	grf*	graphics frame buffer device
 #	hil	HP300 HIL input devices
@@ -252,12 +252,12 @@
 #	nsmb*	SMB requester
 #	openfirm OpenFirmware accessor
 #	pci*	PCI bus access devices
-#	pf	PF packet filter
+#	pf	PF packet filter (not in tree)
 #	pow*	power management device (x86k)
 #	px*	PixelStamp Xserver access
 #	radio*	radio devices
 #	random	Random number generator, see rnd(4)
-#	rtc*	Atari RealTimeClock
+#	rtc*	RealTimeClock
 #	satlink* PlanetConnect satellite receiver driver
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	se*	SCSI Ethernet
