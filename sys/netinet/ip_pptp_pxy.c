@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.1.1.1 2004/03/28 08:56:47 martti Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.1.1.1.2.1 2004/08/13 03:55:49 jmc Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed
@@ -6,7 +6,7 @@
  * Simple PPTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_pptp_pxy.c,v 2.10.2.3 2004/03/14 13:11:37 darrenr Exp
+ * Id: ip_pptp_pxy.c,v 2.10.2.5 2004/06/07 14:20:05 darrenr Exp
  *
  */
 #define	IPF_PPTP_PROXY
@@ -97,7 +97,7 @@ nat_t *nat;
 	ipn->in_apr = NULL;
 	ipn->in_use = 1;
 	ipn->in_hits = 1;
-	ipn->in_nip = nat->nat_outip.s_addr;
+	ipn->in_nip = ntohl(nat->nat_outip.s_addr);
 	ipn->in_ippip = 1;
 	ipn->in_inip = nat->nat_inip.s_addr;
 	ipn->in_inmsk = 0xffffffff;
@@ -220,15 +220,9 @@ ap_session_t *aps;
 
 	if (pptp != NULL) {
 		/*
-		 * Don't delete it from here, just schedule it to be
-		 * deleted ASAP.
+		 * Don't bother changing any of the NAT structure details,
+		 * *_del() is on a callback from aps_free(), from nat_delete()
 		 */
-		if (pptp->pptp_nat != NULL) {
-			pptp->pptp_nat->nat_age = fr_ticks + 1;
-			pptp->pptp_nat->nat_ptr = NULL;
-			pptp->pptp_nat->nat_me = NULL;
-			fr_queuefront(&pptp->pptp_nat->nat_tqe);
-		}
 
 		READ_ENTER(&ipf_state);
 		if (pptp->pptp_state != NULL) {
