@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.9 1997/11/26 17:37:53 kleink Exp $
+.\"	$NetBSD: chgrp.1,v 1.10 1997/12/21 18:11:19 kleink Exp $
 .\"
 .Dd March 31, 1994
 .Dt CHGRP 1
@@ -117,6 +117,12 @@ The user invoking
 .Nm
 must belong to the specified group and be the owner of the file,
 or be the super-user.
+.Pp
+Unless invoked by the super-user,
+.Nm
+clears the set-user-id and set-group-id bits on a file to prevent
+accidental or mischievous creation of set-user-id or set-group-id
+programs.
 .Pp
 The
 .Nm
