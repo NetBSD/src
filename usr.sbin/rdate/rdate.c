@@ -1,4 +1,4 @@
-/*	$NetBSD: rdate.c,v 1.9 1997/10/18 11:23:19 lukem Exp $	*/
+/*	$NetBSD: rdate.c,v 1.10 2000/02/05 22:14:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -39,11 +39,10 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rdate.c,v 1.9 1997/10/18 11:23:19 lukem Exp $");
+__RCSID("$NetBSD: rdate.c,v 1.10 2000/02/05 22:14:20 kleink Exp $");
 #endif/* lint */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 
@@ -87,12 +86,10 @@ main(argc, argv)
 	int		slidetime = 0;
 	int		adjustment;
 	time_t          tim;
-	char           *hname;
-	struct hostent *hp;
-	struct protoent *pp, ppp;
-	struct servent *sp, ssp;
-	struct sockaddr_in sa;
+	char           *hname, *emsg;
+	struct addrinfo	hints, *res, *res0;
 	int             c;
+	int		error;
 
 	adjustment = 0;
 	while ((c = getopt(argc, argv, "psa")) != -1)
@@ -120,31 +117,32 @@ main(argc, argv)
 	}
 	hname = argv[optind];
 
-	if ((hp = gethostbyname(hname)) == NULL) {
-		warnx("%s: %s", hname, hstrerror(h_errno));
-		return 1;
+	memset(&hints, 0, sizeof (hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_CANONNAME;
+	error = getaddrinfo(hname, "time", &hints, &res0);
+	if (error)
+		errx(1, "%s: %s", gai_strerror(error), hname);
+
+	for (res = res0, s = -1; res != NULL; res = res->ai_next) {
+		s = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+		if (s < 0) {
+			emsg = "socket";
+			continue;
+		}
+
+		if (connect(s, res->ai_addr, res->ai_addrlen)) {
+			close(s);
+			s = -1;
+			emsg = "connect";
+			continue;
+		}
+		
+		break;
 	}
-
-	if ((sp = getservbyname("time", "tcp")) == NULL) {
-		sp = &ssp;
-		sp->s_port = 37;
-		sp->s_proto = "tcp";
-	}
-	if ((pp = getprotobyname(sp->s_proto)) == NULL) {
-		pp = &ppp;
-		pp->p_proto = 6;
-	}
-	if ((s = socket(AF_INET, SOCK_STREAM, pp->p_proto)) == -1)
-		err(1, "Could not create socket");
-
-	memset(&sa, 0, sizeof sa);
-	sa.sin_family = AF_INET;
-	sa.sin_port = sp->s_port;
-
-	memcpy(&(sa.sin_addr.s_addr), hp->h_addr, hp->h_length);
-
-	if (connect(s, (struct sockaddr *) & sa, sizeof(sa)) == -1)
-		err(1, "Could not connect socket");
+	if (s < 0)
+		err(1, emsg);
 
 	if (read(s, &tim, sizeof(time_t)) != sizeof(time_t))
 		err(1, "Could not read data");
