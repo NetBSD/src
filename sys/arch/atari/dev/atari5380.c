@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.12 1996/04/18 08:51:50 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.13 1996/04/26 06:50:12 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -70,7 +70,7 @@
 #define	DBG_NOSTATIC		/* No static functions, all in DDB trace*/
 #define	DBG_PID		25	/* Keep track of driver			*/
 #define	REAL_DMA		/* Use DMA if sensible			*/
-#if defined(FALCON_SCSI)
+#if defined(notdef) && defined(FALCON_SCSI)
 #define	REAL_DMA_POLL	1	/* 1: Poll for end of DMA-transfer	*/
 #else
 #define	REAL_DMA_POLL	0	/* 1: Poll for end of DMA-transfer	*/
@@ -470,12 +470,12 @@ static void	fal1_dma __P((u_int, u_int, SC_REQ *));
 static void	scsi_falcon_dmasetup __P((SC_REQ  *, u_int, u_char));
 static int	falcon_poll_edma __P((SC_REQ  *));
 static int	falcon_get_dma_result __P((SC_REQ  *, u_long *));
-       void	scsi_falcon_ienable __P((void));
-       void	scsi_falcon_idisable __P((void));
        void	scsi_falcon_clr_ipend __P((void));
-       int scsi_falcon_ipending __P((void));
-       int falcon_claimed_dma __P((void));
-       void falcon_reconsider_dma __P((void));
+       void	scsi_falcon_idisable __P((void));
+       void	scsi_falcon_ienable __P((void));
+       int	scsi_falcon_ipending __P((void));
+       int	falcon_claimed_dma __P((void));
+       void	falcon_reconsider_dma __P((void));
 
 static void
 scsi_falcon_init(sc)
@@ -528,8 +528,15 @@ scsi_falcon_clr_ipend()
 extern __inline__ int
 scsi_falcon_ipending()
 {
-	return(!(MFP->mf_gpip & IO_DINT)
-		&& (get_falcon_5380_reg(NCR5380_DMSTAT) & SC_IRQ_SET));
+	if (connected && (connected->dr_flag & DRIVER_IN_DMA)) {
+		/*
+		 *  XXX: When DMA is running, we are only allowed to
+		 *       check the 5380 when DMA _might_ be finished.
+		 */
+		if (MFP->mf_gpip & IO_DINT)
+		    return (0); /* XXX: Actually: we're not allowed to check */
+	}
+	return(get_falcon_5380_reg(NCR5380_DMSTAT) & SC_IRQ_SET);
 }
 
 static int
