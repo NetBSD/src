@@ -1,4 +1,4 @@
-/*	$NetBSD: timekeeper.c,v 1.2 2002/02/12 20:38:28 scw Exp $	*/
+/*	$NetBSD: timekeeper.c,v 1.3 2002/02/23 17:18:54 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -108,7 +108,8 @@ timekeeper_attach(parent, self, aux)
 
 	bus_space_map(ma->ma_bust, ma->ma_offset, sc->sc_size, 0, &sc->sc_bush);
 
-	todr = mk48txx_attach(sc->sc_bust, sc->sc_bush, model, YEAR0);
+	todr = mk48txx_attach(sc->sc_bust, sc->sc_bush, model, YEAR0,
+	    NULL, NULL);
 	if (todr == NULL)
 		panic("\ntimekeeper_attach");
 
