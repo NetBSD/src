@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.431.2.29 2004/04/06 05:24:57 jmc Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.431.2.30 2004/06/22 15:21:10 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.32 2004/03/28 08:44:27 jmc Exp 
+ *	NetBSD: pcidevs,v 1.428.2.34 2004/06/22 15:17:04 tron Exp 
  */
 
 /*
@@ -2270,6 +2270,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Compaq",
 	    "Netelligent 10/100 TX",
+	},
+	{
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_INT100TX,
+	    0,
+	    "Compaq",
+	    "Integrated Netelligent 10/100 TX",
 	},
 	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T,
