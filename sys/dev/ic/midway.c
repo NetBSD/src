@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.51 2001/07/07 05:35:40 thorpej Exp $	*/
+/*	$NetBSD: midway.c,v 1.52 2001/07/07 16:00:09 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -800,7 +800,7 @@ done_probe:
    */
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-  bcopy(sc->sc_dev.dv_xname, sc->enif.if_xname, IFNAMSIZ);
+  strcpy(sc->enif.if_xname, sc->sc_dev.dv_xname);
 #endif
 #if !defined(MISSING_IF_SOFTC)
   sc->enif.if_softc = sc;
@@ -1887,7 +1887,7 @@ struct mbuf **mm, *prev;
 
   if (off) {
     if ((m->m_flags & M_EXT) == 0) {
-      bcopy(d, d - off, m->m_len);   /* ALIGN! (with costly data copy...) */
+      memmove(d - off, d, m->m_len);   /* ALIGN! (with costly data copy...) */
       d -= off;
       m->m_data = (caddr_t)d;
     } else {
@@ -1903,7 +1903,7 @@ struct mbuf **mm, *prev;
         EN_COUNT(sc->mfixfail);
         return(0);
       }
-      bcopy(d, new->m_data, m->m_len);	/* ALIGN! (with costly data copy...) */
+      memcpy(new->m_data, d, m->m_len);	/* ALIGN! (with costly data copy...) */
       new->m_len = m->m_len;
       new->m_next = m->m_next;
       if (prev)
@@ -1972,7 +1972,7 @@ STATIC int en_makeexclusive(sc, mm, prev)
 		EN_COUNT(sc->mfixfail);
 		return(0);
 	    }
-	    bcopy(m->m_data, new->m_data, m->m_len);	
+	    memcpy(new->m_data, m->m_data, m->m_len);	
 	    new->m_len = m->m_len;
 	    new->m_next = m->m_next;
 	    if (prev)
@@ -1987,7 +1987,7 @@ STATIC int en_makeexclusive(sc, mm, prev)
 	    int off = ((u_long)d) % sizeof(u_int32_t);
 
 	    if (off > 0) {
-		bcopy(d, d - off, m->m_len);
+		memmove(d - off, d, m->m_len);
 		m->m_data = (caddr_t)d - off;
 	    }
 	}
@@ -2019,7 +2019,7 @@ struct mbuf **mm, *prev;
 
   if (off) {
     if ((m->m_flags & M_EXT) == 0) {
-      bcopy(d, d - off, m->m_len);   /* ALIGN! (with costly data copy...) */
+      memmove(d - off, d, m->m_len);   /* ALIGN! (with costly data copy...) */
       d -= off;
       m->m_data = (caddr_t)d;
     } else {
