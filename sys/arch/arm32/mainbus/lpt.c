@@ -1,7 +1,7 @@
-/* $NetBSD: lpt.c,v 1.7 1996/05/07 00:51:44 thorpej Exp $ */
+/* $NetBSD: lpt.c,v 1.8 1996/06/03 22:36:23 mark Exp $ */
 
 /*
- * Copyright (c) 1995 Mark Brinicombe
+ * Copyright (c) 1994 Matthias Pfaller.
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
  * All rights reserved.
@@ -48,16 +48,31 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from:$NetBSD: lpt.c,v 1.7 1996/05/07 00:51:44 thorpej Exp $
  */
 
 /*
  * Device Driver for AT parallel printer port
  */
+
 /*
- * PLIP driver code added by Mark Brinicombe
+ * PLIP code Copyright (c) 1994 Matthias Pfaller from pc532/dev/lpt.c
+ *
+ * Merged into the arm32/mainbus/lpt.c by Mark Brinicombe
  */
+
+/* NOTE: The PLIP code does not work at the moment
+ *
+ * The lpt code needed upgrading to fix some bugs in the previous version
+ * The new version uses the bus_io_*() macros which makes this code
+ * incompatible with the previous plip driver.
+ * The plip code is being upgraded but is not complete.
+ *
+ * Normally I would hold off committing until I had finished but
+ * more of people want a working lpt driver than the plip driver.
+ *
+ * Thus if you use plip stick to the old version of this driver for now.
+ */
+#undef PLIP
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +83,16 @@
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <sys/syslog.h>
+
+#include <machine/bus.h>
+#include <machine/cpu.h>
+#include <machine/katelib.h>
+#include <machine/irqhandler.h>
+#include <machine/io.h>
+#include <arm32/mainbus/lptreg.h>
+#include <arm32/mainbus/mainbus.h>
 
 #if defined(INET) && defined(PLIP)
 #include <sys/mbuf.h>
@@ -82,19 +106,7 @@
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/if_ether.h>
-#include "bpfilter.h"
-#if NBPFILTER > 0
-#include <sys/time.h>
-#include <net/bpf.h>
 #endif
-#endif
-
-#include <machine/cpu.h>
-#include <machine/katelib.h>
-#include <machine/irqhandler.h>
-#include <machine/io.h>
-#include <arm32/mainbus/lptreg.h>
-#include <arm32/mainbus/mainbus.h>
 
 #define	TIMEOUT		hz*16	/* wait up to 16 seconds for a ready */
 #define	STEP		hz/4
@@ -102,39 +114,41 @@
 #define	LPTPRI		(PZERO+8)
 #define	LPT_BSIZE	1024
 
-#if defined(INET) && defined(PLIP)
-#ifndef PLIPMTU                 /* MTU for the plip# interfaces */
-#if defined(COMPAT_PLIP10)
-#define PLIPMTU         1600
+#if !defined(DEBUG) || !defined(notdef)
+#define LPRINTF(a)
 #else
-#define PLIPMTU         (ETHERMTU - ifp->if_hdrlen)
+#define LPRINTF		if (lptdebug) printf a
+int lptdebug = 1;
+#endif
+
+#if defined(INET) && defined(PLIP)
+#ifndef PLIPMTU			/* MTU for the plip# interfaces */
+#if defined(COMPAT_PLIP10)
+#define	PLIPMTU		1600				/* Linux 1.0.x */
+#elif defined(COMPAT_PLIP11)
+#define	PLIPMTU		(ETHERMTU - ifp->if_hdrlen)	/* Linux 1.1.x */
+#else
+#define PLIPMTU		ETHERMTU			/* Linux 1.3.x */
 #endif
 #endif
 
-#ifndef PLIPMXSPIN1             /* DELAY factor for the plip# interfaces */
-#define PLIPMXSPIN1     2000    /* Spinning for remote intr to happen */
+#ifndef PLIPMXSPIN1		/* DELAY factor for the plip# interfaces */
+#define	PLIPMXSPIN1	2000	/* Spinning for remote intr to happen */
 #endif
 
-#ifndef PLIPMXSPIN2             /* DELAY factor for the plip# interfaces */
-#define PLIPMXSPIN2     6000    /* Spinning for remote handshake to happen */
+#ifndef PLIPMXSPIN2		/* DELAY factor for the plip# interfaces */
+#define	PLIPMXSPIN2	6000	/* Spinning for remote handshake to happen */
 #endif
 
-#ifndef PLIPMXERRS              /* Max errors before !RUNNING */
-#define PLIPMXERRS      100
+#ifndef PLIPMXERRS		/* Max errors before !RUNNING */
+#define	PLIPMXERRS	20
 #endif
 #ifndef PLIPMXRETRY
-#define PLIPMXRETRY     10      /* Max number of retransmits */
+#define PLIPMXRETRY	20	/* Max number of retransmits */
 #endif
 #ifndef PLIPRETRY
-#define PLIPRETRY       hz/10   /* Time between retransmits */
+#define PLIPRETRY	hz/50	/* Time between retransmits */
 #endif
-#endif
-
-#if !defined(DEBUG) || !defined(notdef)
-#define lprintf
-#else
-#define lprintf		if (lptdebug) printf
-int lptdebug = 1;
 #endif
 
 struct lpt_softc {
@@ -146,6 +160,8 @@ struct lpt_softc {
 	u_char *sc_cp;
 	int sc_spinmax;
 	int sc_iobase;
+	bus_chipset_tag_t sc_bc;
+	bus_io_handle_t sc_ioh;
 	int sc_irq;
 	u_char sc_state;
 #define	LPT_OPEN	0x01	/* device is open */
@@ -159,15 +175,23 @@ struct lpt_softc {
 	u_char sc_control;
 	u_char sc_laststatus;
 #if defined(INET) && defined(PLIP)
-	struct arpcom	sc_arpcom;
+	struct	arpcom	sc_arpcom;
 	u_char		*sc_ifbuf;
-	int		sc_iferrs;
-	int		sc_ifretry;
+	int		sc_ifierrs;	/* consecutive input errors */
+	int		sc_ifoerrs;	/* consecutive output errors */
+	int		sc_ifsoftint;	/* i/o software interrupt */
+	volatile int	sc_pending;	/* interrputs pending */
+#define PLIP_IPENDING	1
+#define PLIP_OPENDING	2
+
 #if defined(COMPAT_PLIP10)
 	u_char		sc_adrcksum;
 #endif
 #endif
 };
+
+/* XXX does not belong here */
+cdev_decl(lpt);
 
 int lptprobe __P((struct device *, void *, void *));
 void lptattach __P((struct device *, struct device *, void *));
@@ -177,8 +201,10 @@ int lptintr __P((void *));
 /* Functions for the plip# interface */
 static void plipattach(struct lpt_softc *,int);
 static int plipioctl(struct ifnet *, u_long, caddr_t);
+void plipsoftint(struct lpt_softc *);
+static void plipinput(struct lpt_softc *);
 static void plipstart(struct ifnet *);
-static int plipintr(struct lpt_softc *);
+static void plipoutput(struct lpt_softc *);
 #endif
 
 struct cfattach lpt_ca = {
@@ -194,33 +220,39 @@ struct cfdriver lpt_cd = {
 
 #define	LPS_INVERT	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK)
 #define	LPS_MASK	(LPS_SELECT|LPS_NERR|LPS_NBSY|LPS_NACK|LPS_NOPAPER)
-#define	NOT_READY()	((inb(iobase + lpt_status) ^ LPS_INVERT) & LPS_MASK)
-#define	NOT_READY_ERR()	not_ready(inb(iobase + lpt_status), sc)
+#define	NOT_READY()	((bus_io_read_1(bc, ioh, lpt_status) ^ LPS_INVERT) & LPS_MASK)
+#define	NOT_READY_ERR()	not_ready(bus_io_read_1(bc, ioh, lpt_status), sc)
 static int not_ready __P((u_char, struct lpt_softc *));
 
 static void lptwakeup __P((void *arg));
 static int pushbytes __P((struct lpt_softc *));
 
+int	lpt_port_test __P((bus_chipset_tag_t, bus_io_handle_t, bus_io_addr_t,
+	    bus_io_size_t, u_char, u_char));
+
 /*
  * Internal routine to lptprobe to do port tests of one byte value.
  */
 int
-lpt_port_test(port, data, mask)
-	int port;
+lpt_port_test(bc, ioh, base, off, data, mask)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	bus_io_addr_t base;
+	bus_io_size_t off;
 	u_char data, mask;
 {
 	int timeout;
 	u_char temp;
 
 	data &= mask;
-	outb(port, data);
+	bus_io_write_1(bc, ioh, off, data);
 	timeout = 1000;
 	do {
 		delay(10);
-		temp = inb(port) & mask;
+		temp = bus_io_read_1(bc, ioh, off) & mask;
 	} while (temp != data && --timeout);
-	lprintf("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", port, data,
-	    temp, timeout);
+	LPRINTF(("lpt: port=0x%x out=0x%x in=0x%x timeout=%d\n", base + off,
+	    data, temp, timeout));
 	return (temp == data);
 }
 
@@ -251,46 +283,57 @@ lptprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct mainbus_attach_args *mb = aux;
-	int iobase = mb->mb_iobase;
-	int port;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	u_long base;
 	u_char mask, data;
-	int i;
+	int i, rv;
 
 #ifdef DEBUG
 #define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
-		    return 0;} while (0)
+		    goto out;} while (0)
 #else
-#define	ABORT	return 0
+#define	ABORT	goto out
 #endif
 
-	port = iobase + lpt_data;
+	bc = NULL;
+	base = mb->mb_iobase;
+	if (bus_io_map(bc, base, LPT_NPORTS, &ioh))
+		return 0;
+
+	rv = 0;
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(port, data, mask))
+	if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(port, data, mask))
+	if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 		data = ~(1 << i);
-		if (!lpt_port_test(port, data, mask))
+		if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 		data = (1 << i);
-		if (!lpt_port_test(port, data, mask))
+		if (!lpt_port_test(bc, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
-	outb(iobase + lpt_data, 0);
-	outb(iobase + lpt_control, 0);
+	bus_io_write_1(bc, ioh, lpt_data, 0);
+	bus_io_write_1(bc, ioh, lpt_control, 0);
 
 	mb->mb_iosize = LPT_NPORTS;
-	return 1;
+
+	rv = 1;
+
+out:
+	bus_io_unmap(bc, ioh, LPT_NPORTS);
+	return rv;
 }
 
 void
@@ -300,52 +343,60 @@ lptattach(parent, self, aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct mainbus_attach_args *mb = aux;
-	int iobase = mb->mb_iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 
 	if (mb->mb_irq != IRQUNK)
 		printf("\n");
 	else
 		printf(": polled\n");
 
-	sc->sc_iobase = iobase;
+	sc->sc_iobase = mb->mb_iobase;
 	sc->sc_irq = mb->mb_irq;
 	sc->sc_state = 0;
-	outb(iobase + lpt_control, LPC_NINIT);
+
+	bc = sc->sc_bc = NULL;
+	if (bus_io_map(bc, sc->sc_iobase, LPT_NPORTS, &ioh))
+		panic("lptattach: couldn't map I/O ports");
+	sc->sc_ioh = ioh;
+
+	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
+
+#if defined(INET) && defined(PLIP)
+	plipattach(sc, self->dv_unit);
+#endif
 
 	if (mb->mb_irq != IRQUNK) {
-		sc->sc_ih.ih_func = lptintr;
-		sc->sc_ih.ih_arg = sc;
-#if defined(INET) && defined(PLIP)
-		sc->sc_ih.ih_level = IPL_NET;
-		sc->sc_ih.ih_name = "lpt/plip";
-        	plipattach(sc, self->dv_unit);
-#else
-		sc->sc_ih.ih_level = IPL_NONE;
-		sc->sc_ih.ih_name = "lpt";
-#endif
+	 	sc->sc_ih.ih_func = lptintr;
+ 		sc->sc_ih.ih_arg = sc;
+ 		sc->sc_ih.ih_level = IPL_NONE;
+ 		sc->sc_ih.ih_name = "lpt";
+ 
 		if (irq_claim(mb->mb_irq, &sc->sc_ih))
 			panic("Cannot claim IRQ %d for lpt%d\n", mb->mb_irq, sc->sc_dev.dv_unit);
-
 	}
 #if defined(INET) && defined(PLIP)
-	else {
-		printf("Warning PLIP device needs IRQ driven lpt driver\n");
-	}
+	else
+		printf("Warning PLIP device needs an interrupt driven lpt driver\n");
 #endif
+
 }
 
 /*
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lptopen(dev, flag)
+lptopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	int unit = LPTUNIT(dev);
 	u_char flags = LPTFLAGS(dev);
 	struct lpt_softc *sc;
-	int iobase;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
 	u_char control;
 	int error;
 	int spin;
@@ -370,17 +421,18 @@ lptopen(dev, flag)
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
-	lprintf("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags);
-	iobase = sc->sc_iobase;
+	LPRINTF(("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags));
+	bc = sc->sc_bc;
+	ioh = sc->sc_ioh;
 
 	if ((flags & LPT_NOPRIME) == 0) {
 		/* assert INIT for 100 usec to start up printer */
-		outb(iobase + lpt_control, LPC_SELECT);
+		bus_io_write_1(bc, ioh, lpt_control, LPC_SELECT);
 		delay(100);
 	}
 
 	control = LPC_SELECT | LPC_NINIT;
-	outb(iobase + lpt_control, control);
+	bus_io_write_1(bc, ioh, lpt_control, control);
 
 	/* wait till ready (printer running diagnostics) */
 	for (spin = 0; NOT_READY_ERR(); spin += STEP) {
@@ -390,8 +442,8 @@ lptopen(dev, flag)
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
-		if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen",
-		    STEP) != EWOULDBLOCK) {
+		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "lptopen", STEP);
+		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
 			return error;
 		}
@@ -402,7 +454,7 @@ lptopen(dev, flag)
 	if (flags & LPT_AUTOLF)
 		control |= LPC_AUTOLF;
 	sc->sc_control = control;
-	outb(iobase + lpt_control, control);
+	bus_io_write_1(bc, ioh, lpt_control, control);
 
 	sc->sc_inbuf = geteblk(LPT_BSIZE);
 	sc->sc_count = 0;
@@ -411,7 +463,7 @@ lptopen(dev, flag)
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
 		lptwakeup(sc);
 
-	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
+	LPRINTF(("%s: opened\n", sc->sc_dev.dv_xname));
 	return 0;
 }
 
@@ -436,7 +488,6 @@ not_ready(status, sc)
 	return status;
 }
 
-
 void
 lptwakeup(arg)
 	void *arg;
@@ -454,13 +505,17 @@ lptwakeup(arg)
 /*
  * Close the device, and free the local line buffer.
  */
-lptclose(dev, flag)
+int
+lptclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
+	int mode;
+	struct proc *p;
 {
 	int unit = LPTUNIT(dev);
 	struct lpt_softc *sc = lpt_cd.cd_devs[unit];
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 
 	if (sc->sc_count)
 		(void) pushbytes(sc);
@@ -468,12 +523,12 @@ lptclose(dev, flag)
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
 		untimeout(lptwakeup, sc);
 
-	outb(iobase + lpt_control, LPC_NINIT);
+	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
 	sc->sc_state = 0;
-	outb(iobase + lpt_control, LPC_NINIT);
+	bus_io_write_1(bc, ioh, lpt_control, LPC_NINIT);
 	brelse(sc->sc_inbuf);
 
-	lprintf("%s: closed\n", sc->sc_dev.dv_xname);
+	LPRINTF(("%s: closed\n", sc->sc_dev.dv_xname));
 	return 0;
 }
 
@@ -481,7 +536,8 @@ int
 pushbytes(sc)
 	struct lpt_softc *sc;
 {
-	int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	int error;
 
 	if (sc->sc_flags & LPT_NOINTR) {
@@ -509,10 +565,10 @@ pushbytes(sc)
 				break;
 			}
 
-			outb(iobase + lpt_data, *sc->sc_cp++);
-			outb(iobase + lpt_control, control | LPC_STROBE);
+			bus_io_write_1(bc, ioh, lpt_data, *sc->sc_cp++);
+			bus_io_write_1(bc, ioh, lpt_control, control | LPC_STROBE);
 			sc->sc_count--;
-			outb(iobase + lpt_control, control);
+			bus_io_write_1(bc, ioh, lpt_control, control);
 
 			/* adapt busy-wait algorithm */
 			if (spin*2 + 16 < sc->sc_spinmax)
@@ -524,14 +580,15 @@ pushbytes(sc)
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
-				lprintf("%s: write %d\n", sc->sc_dev.dv_xname,
-				    sc->sc_count);
+				LPRINTF(("%s: write %d\n", sc->sc_dev.dv_xname,
+				    sc->sc_count));
 				s = spltty();
 				(void) lptintr(sc);
 				splx(s);
 			}
-			if (error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
-			    "lptwrite2", 0))
+			error = tsleep((caddr_t)sc, LPTPRI | PCATCH,
+			    "lptwrite2", 0);
+			if (error)
 				return error;
 		}
 	}
@@ -542,15 +599,17 @@ pushbytes(sc)
  * Copy a line from user space to a local buffer, then call putc to get the
  * chars moved to the output queue.
  */
-lptwrite(dev, uio)
+int
+lptwrite(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
+	int flags;
 {
 	struct lpt_softc *sc = lpt_cd.cd_devs[LPTUNIT(dev)];
 	size_t n;
 	int error = 0;
 
-	while (n = min(LPT_BSIZE, uio->uio_resid)) {
+	while ((n = min(LPT_BSIZE, uio->uio_resid)) != 0) {
 		uiomove(sc->sc_cp = sc->sc_inbuf->b_data, n, uio);
 		sc->sc_count = n;
 		error = pushbytes(sc);
@@ -576,19 +635,22 @@ lptintr(arg)
 	void *arg;
 {
 	struct lpt_softc *sc = arg;
-	int iobase = sc->sc_iobase;
-
-/*printf("lptintr:\n");*/
-
-#if defined(INET) && defined(PLIP)
-	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
-		return(plipintr(sc));
-	}
-#endif
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 
 #if 0
 	if ((sc->sc_state & LPT_OPEN) == 0)
 		return 0;
+#endif
+
+#if defined(INET) && defined(PLIP)
+	if (sc->sc_arpcom.ac_if.if_flags & IFF_UP) {
+/*		i8255->port_a &= ~LPA_ACKENABLE;*/
+/* YYYY */
+		sc->sc_pending |= PLIP_IPENDING;
+		setsoftintr(sc->sc_ifsoftint);
+		return(0);
+	}
 #endif
 
 	/* is printer online and ready for output */
@@ -598,10 +660,10 @@ lptintr(arg)
 	if (sc->sc_count) {
 		u_char control = sc->sc_control;
 		/* send char */
-		outb(iobase + lpt_data, *sc->sc_cp++);
-		outb(iobase + lpt_control, control | LPC_STROBE);
+		bus_io_write_1(bc, ioh, lpt_data, *sc->sc_cp++);
+		bus_io_write_1(bc, ioh, lpt_control, control | LPC_STROBE);
 		sc->sc_count--;
-		outb(iobase + lpt_control, control);
+		bus_io_write_1(bc, ioh, lpt_control, control);
 		sc->sc_state |= LPT_OBUSY;
 	} else
 		sc->sc_state &= ~LPT_OBUSY;
@@ -611,15 +673,16 @@ lptintr(arg)
 		wakeup((caddr_t)sc);
 	}
 
-	return(1);
+	return 1;
 }
 
 int
-lptioctl(dev, cmd, data, flag)
+lptioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	int error = 0;
 
@@ -636,11 +699,12 @@ lptioctl(dev, cmd, data, flag)
 
 #define PLIP_INTR_ENABLE	(LPC_NINIT | LPC_SELECT | LPC_IENABLE)
 #define PLIP_INTR_DISABLE	(LPC_NINIT | LPC_SELECT)
-#define PLIP_DATA		(iobase + lpt_data)
-#define PLIP_STATUS		(iobase + lpt_status)
-#define PLIP_CONTROL		(iobase + lpt_control)
+#define PLIP_DATA		(lpt_data)
+#define PLIP_STATUS		(lpt_status)
+#define PLIP_CONTROL		(lpt_control)
 #define PLIP_REMOTE_TRIGGER	0x08
 #define PLIP_DELAY_UNIT		50
+
 #if PLIP_DELAY_UNIT > 0	
 #define PLIP_DELAY		DELAY(PLIP_DELAY_UNIT)
 #else
@@ -672,20 +736,12 @@ plipattach(struct lpt_softc *sc, int unit)
 	ifp->if_addrlen = 6;
 	ifp->if_hdrlen = 14;
 	ifp->if_mtu = PLIPMTU;
-
-	if_attach(ifp);
-	ether_ifattach(ifp);
+	sc->sc_ifsoftint = IRQMASK_SOFTPLIP;
 
 	printf("plip%d at lpt%d: mtu=%d,%d,%d", unit, unit, (int) ifp->if_mtu,
 	    ifp->if_hdrlen, ifp->if_addrlen);
-	if (sizeof(struct ether_header) != 14)
-		printf(" ethhdr super kludge mode enabled\n");
-	else
-		printf("\n");
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif                 
+	if_attach(ifp);
 }
 
 /*
@@ -696,14 +752,15 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct proc *p = curproc;
 	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
-	unsigned int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data; 
 	int s;
 	int error = 0;
 
 #if PLIP_DEBUG > 0
-	printf("plipioctl: cmd=%08x ifp=%08x data=%08x\n", cmd, ifp, data);
+	printf("plipioctl: cmd=%08lx ifp=%08x data=%08x\n", cmd, (u_int)ifp, (u_int)data);
 	printf("plipioctl: ifp->flags=%08x\n", ifp->if_flags);
 #endif
 
@@ -718,13 +775,13 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (plip_debug & PLIP_DEBUG_IF)
 				printf("plip: Disabling lpt irqs\n");
 #endif
-			outb(PLIP_DATA, 0x00);
-			outb(PLIP_CONTROL, PLIP_INTR_DISABLE);
-			sc->sc_state = 0;
-			         
+			bus_io_write_1(bc, ioh, lpt_data, 0x00);
+			bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_DISABLE);
+
+/*			sc->sc_i8255->port_control = LPT_MODE;
+			i8255->port_a = LPA_ACTIVE | LPA_NPRIME;*/
 			if (sc->sc_ifbuf)
 				free(sc->sc_ifbuf, M_DEVBUF);
-				
 			sc->sc_ifbuf = NULL;
 		}
 		if (((ifp->if_flags & IFF_UP)) &&
@@ -733,16 +790,12 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				error = EBUSY;
 				break;
 			}
-/*			if (!(ifp->if_flags & IFF_DEBUG))
-				plip_debug = PLIP_DEBUG;
-			else
-				plip_debug = 0;*/
-			sc->sc_state = LPT_OPEN | LPT_PLIP;
 			if (!sc->sc_ifbuf)
 				sc->sc_ifbuf =
 					malloc(ifp->if_mtu + ifp->if_hdrlen,
 					       M_DEVBUF, M_WAITOK);
 		        ifp->if_flags |= IFF_RUNNING;
+
 /* This starts it running */
 /* Enable lpt interrupts */
 
@@ -750,8 +803,12 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (plip_debug & PLIP_DEBUG_IF)
 				printf("plip: Enabling lpt irqs\n");
 #endif
-			outb(PLIP_CONTROL, PLIP_INTR_ENABLE);
-			outb(PLIP_DATA, 0x00);
+
+			bus_io_write_1(bc, ioh, lpt_data, 0x00);
+			bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_ENABLE);
+/*			sc->sc_i8255->port_control = LPT_IRQDISABLE;
+			sc->sc_i8255->port_b = 0;
+			sc->sc_i8255->port_a |= LPA_ACKENABLE;*/
 		}
 		break;
 
@@ -761,12 +818,10 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 				sc->sc_ifbuf =
 					malloc(PLIPMTU + ifp->if_hdrlen,
 					       M_DEVBUF, M_WAITOK);
-
 			sc->sc_arpcom.ac_enaddr[0] = 0xfc;
 			sc->sc_arpcom.ac_enaddr[1] = 0xfc;
 			bcopy((caddr_t)&IA_SIN(ifa)->sin_addr,
 			      (caddr_t)&sc->sc_arpcom.ac_enaddr[2], 4);
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
 #if defined(COMPAT_PLIP10)
 			if (ifp->if_flags & IFF_LINK0) {
 				int i;
@@ -798,9 +853,11 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (plip_debug & PLIP_DEBUG_IF)
 				printf("plip: Enabling lpt irqs\n");
 #endif
-			outb(PLIP_CONTROL, PLIP_INTR_ENABLE);
-			outb(PLIP_DATA, 0x00);
-
+			bus_io_write_1(bc, ioh, lpt_data, 0x00);
+			bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_ENABLE);
+/*			sc->sc_i8255->port_control = LPT_IRQDISABLE;
+			sc->sc_i8255->port_b = 0;
+			sc->sc_i8255->port_a |= LPA_ACKENABLE;*/
 			arp_ifinit(&sc->sc_arpcom, ifa);
 		} else
 			error = EAFNOSUPPORT;
@@ -820,7 +877,6 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		        ifp->if_mtu = ifr->ifr_metric;
 			if (sc->sc_ifbuf) {
 				s = splimp();
-
 				free(sc->sc_ifbuf, M_DEVBUF);
 				sc->sc_ifbuf =
 					malloc(ifp->if_mtu + ifp->if_hdrlen,
@@ -840,117 +896,74 @@ plipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-static int
-plipreceive(unsigned int iobase, u_char *buf, int len)
+void
+plipintr(struct lpt_softc *sc)
 {
-	int i;
-	u_char cksum = 0, c;
-	u_char c0, c1;
+	int pending;
+	sc = lpt_cd.cd_devs[0];
+	pending = sc->sc_pending;
 
-#if PLIP_DEBUG != 0
-	if (plip_debug & PLIP_DEBUG_RX)
-		printf("Rx: ");
-#endif
-
-	while (len--) {
-		i = PLIPMXSPIN2;
-/* Receive a byte */
-
-/* Wait for a steady handshake */
-		while (1) {
-			c0 = inb(PLIP_STATUS);
-			if ((c0 & LPS_NBSY) == 0) {
-				c1 = inb(PLIP_STATUS);
-				if (c0 == c1) break;
-#if PLIP_DEBUG != 0
-				if (plip_debug & PLIP_DEBUG_RX)
-					printf("rx: %02x-%02x ", c0, c1);
-#endif
-			}
-			--i;
-			if (i < 0) {
-#if PLIP_DEBUG > 0
-				printf("timeout rx lsn %02x\n", c0);
-#endif
-				return(-1);
-			}
-			PLIP_DELAY;
-		}
-		c = (c0 >> 3) & 0x0f;
-
-/* Acknowledge */
-		outb(PLIP_DATA, 0x10);
-
-/* Another handshake */		
-		i = PLIPMXSPIN2;
-		while (1) {
-			c0 = inb(PLIP_STATUS);
-			if (c0 & LPS_NBSY) {
-				c1 = inb(PLIP_STATUS);
-				if (c0 == c1) break;
-#if PLIP_DEBUG != 0
-				if (plip_debug & PLIP_DEBUG_RX)
-					printf("rx: %02x-%02x ", c0, c1);
-#endif
-			}
-			--i;
-			if (i < 0) {
-#if PLIP_DEBUG > 0
-				printf("timeout rx msn %02x\n", c0);
-#endif
-				return(-1);
-			}
-			PLIP_DELAY;
-		}
-		c = c | ((c0 << 1) & 0xf0);
-/* Acknowledge */
-		outb(PLIP_DATA, 0x00);
-#if PLIP_DEBUG != 0
-		if (plip_debug & PLIP_DEBUG_RX)
-			printf("%02x ", c);
-#endif
-
-		cksum += (*buf++ = c);
+	while (sc->sc_pending & PLIP_IPENDING) {
+		pending |= sc->sc_pending;
+		sc->sc_pending = 0;
+		plipinput(sc);
 	}
-#if PLIP_DEBUG != 0
-	if (plip_debug & PLIP_DEBUG_RX)
-		printf("\n");
-#endif
-	return(cksum);
+
+	if (pending & PLIP_OPENDING)
+		plipoutput(sc);
 }
 
 static int
-plipintr(struct lpt_softc *sc)
+plipreceive(bc, ioh, buf, len)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	u_char *buf;
+	int len;
+{
+	int i;
+	u_char cksum = 0, c;
+
+	while (len--) {
+		i = PLIPMXSPIN2;
+		while (((bus_io_read_1(bc, ioh, lpt_status)) & LPS_NBSY) != 0)
+			if (i-- < 0) return -1;
+		c = ((bus_io_read_1(bc, ioh, lpt_status)) >> 3) & 0x0f;
+		bus_io_write_1(bc, ioh, lpt_data, 0x11);
+		while (((bus_io_read_1(bc, ioh, lpt_status)) & LPS_NBSY) == 0)
+			if (i-- < 0) return -1;
+		c |= ((bus_io_read_1(bc, ioh, lpt_status)) << 1) & 0xf0;
+		bus_io_write_1(bc, ioh, lpt_data, 0x01);
+		cksum += (*buf++ = c);
+	}
+	return(cksum);
+}
+
+static void
+plipinput(struct lpt_softc *sc)
 {
 	extern struct mbuf *m_devget(char *, int, int, struct ifnet *, void (*)());
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	unsigned int iobase = sc->sc_iobase;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m;
 	struct ether_header *eh;
 	u_char *p = sc->sc_ifbuf, minibuf[4];
-	int c, s, len, cksum;
-	u_char c0;
+	int c, i = 0, s, len, cksum;
+/* YYYY */
 
-printf("plipintr:\n");
+/*	if (!(i8255->port_c & LPC_NACK)) {
+		i8255->port_a |= LPA_ACKENABLE;
+		ifp->if_collisions++;
+		return;
+	}*/
+	bus_io_write_1(bc, ioh, lpt_data, 0x01);
+	bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_DISABLE);
+/*	i8255->port_b = 0x01;
+	i8255->port_a &= ~(LPA_ACKENABLE | LPA_ACTIVE);*/
 
-/* Get the status */
-
-	c0 = inb(PLIP_STATUS);
-#if PLIP_DEBUG > 0
-	if ((c0 & 0xf8) != 0xc0) {
-		printf("st5=%02x ", c0);
-	}
-#endif
-
-/* Don't want ints while receiving */
-
-	outb(PLIP_CONTROL, PLIP_INTR_DISABLE);
-
-	outb(PLIP_DATA, 0x01);   /* send ACK */ /* via NERR */
-                                              
 #if defined(COMPAT_PLIP10)
 	if (ifp->if_flags & IFF_LINK0) {
-		if (plipreceive(iobase, minibuf, 3) < 0) goto err;
+		if (plipreceive(bc, ioh, minibuf, 3) < 0) goto err;
 		len = (minibuf[1] << 8) | minibuf[2];
 		if (len > (ifp->if_mtu + ifp->if_hdrlen)) goto err;
 
@@ -962,15 +975,15 @@ printf("plipintr:\n");
 			p[3] = p[ 9] = ifp->ac_enaddr[3];
 			p[4] = p[10] = ifp->ac_enaddr[4];
 			p += 5;
-			if ((cksum = plipreceive(iobase, p, 1)) < 0) goto err;
+			if ((cksum = plipreceive(bc, ioh, p, 1)) < 0) goto err;
 			p += 6;
-			if ((c = plipreceive(iobase, p, len - 11)) < 0) goto err;
+			if ((c = plipreceive(bc, ioh, p, len - 11)) < 0) goto err;
 			cksum += c + sc->sc_adrcksum;
 			c = p[1]; p[1] = p[2]; p[2] = c;
 			cksum &= 0xff;
 			break;
 		case 0xfd:
-			if ((cksum = plipreceive(iobase, p, len)) < 0) goto err;
+			if ((cksum = plipreceive(bc, ioh, p, len)) < 0) goto err;
 			break;
 		default:
 			goto err;
@@ -978,161 +991,84 @@ printf("plipintr:\n");
 	} else
 #endif
 	{
-		if (plipreceive(iobase, minibuf, 2) < 0) goto err;
+		if (plipreceive(bc, ioh, minibuf, 2) < 0) goto err;
 		len = (minibuf[1] << 8) | minibuf[0];
 		if (len > (ifp->if_mtu + ifp->if_hdrlen)) {
-			log(LOG_NOTICE, "%s: packet > MTU\n", ifp->if_xname);
+			log(LOG_NOTICE, "%s: packet > MTU\n", ifp->if_softc);
 			goto err;
 		}
-#if PLIP_DEBUG != 0
-		if (plip_debug & PLIP_DEBUG_RX)
-			printf("len=%d ", len);
-#endif
-       		if (sizeof(struct ether_header) != 14) {
-         		if ((cksum = plipreceive(iobase, p, 14)) < 0) goto err;
-         		if ((c = plipreceive(iobase, p+16, len-14)) < 0) goto err;
-         		cksum += c;
-			len += 2;
-		}
-		else
-         		if ((cksum = plipreceive(iobase, p, len)) < 0) goto err;
+		if ((cksum = plipreceive(bc, ioh, p, len)) < 0) goto err;
 	}
-	
-	if (plipreceive(iobase, minibuf, 1) < 0) goto err;
-	if ((cksum & 0xff) != minibuf[0]) {
-		printf("cksum=%d, %d, %d\n", cksum, c, minibuf[0]);
+
+	if (plipreceive(bc, ioh, minibuf, 1) < 0) goto err;
+	if (cksum != minibuf[0]) {
 		log(LOG_NOTICE, "%s: checksum error\n", ifp->if_xname);
 		goto err;
-	} 
+	}
+	bus_io_write_1(bc, ioh, lpt_data, 0x00);
+/*	i8255->port_b = 0x00;*/
 
-	outb(PLIP_DATA, 0x00);   /* clear ACK */ /* via NERR */
-#if PLIP_DEBUG != 0
-	if (plip_debug & PLIP_DEBUG_RX)
-		printf("done\n");
-#endif
 	s = splimp();
-	
-	eh = (struct ether_header *)sc->sc_ifbuf;
-
-	if ((m = m_devget(sc->sc_ifbuf + sizeof(struct ether_header), len - sizeof(struct ether_header), 0, ifp, NULL))) {
+	if (m = m_devget(sc->sc_ifbuf, len, 0, ifp, NULL)) {
 		/* We assume that the header fit entirely in one mbuf. */
-/*		eh = mtod(m, struct ether_header *);*/
-/*		m->m_pkthdr.len -= sizeof(*eh);*/
-/*		m->m_len -= sizeof(*eh);*/
-/*		m->m_data += sizeof(*eh);*/
-/*		printf("m->m_data=%08x ifbuf=%08x eh=%08x\n", m->m_data, sc->sc_ifbuf, eh);*/
-
-#if NBPFILTER > 0
-/*
- * Check if there's a BPF listener on this interface.
- * If so, hand off the raw packet to bpf.
- */
-		if (sc->sc_arpcom.ac_if.if_bpf) {
-			bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m);
-		}
-#endif
+		eh = mtod(m, struct ether_header *);
+		m->m_pkthdr.len -= sizeof(*eh);
+		m->m_len -= sizeof(*eh);
+		m->m_data += sizeof(*eh);
 		ether_input(ifp, eh, m);
 	}
 	splx(s);
-	sc->sc_iferrs = 0;
+	sc->sc_ifierrs = 0;
 	ifp->if_ipackets++;
-
-/* Allow ints again */
-
-	outb(PLIP_CONTROL, PLIP_INTR_ENABLE);
-	return(1);
+	bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_ENABLE);
+/*	i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;*/
+	return;
 
 err:
-	outb(PLIP_DATA, 0x00);   /* clear ACK */ /* via NERR */
+	bus_io_write_1(bc, ioh, lpt_data, 0x00);
+/*	i8255->port_b = 0x00;*/
 
-	ifp->if_ierrors++;
-	sc->sc_iferrs++;
-	if (sc->sc_iferrs > PLIPMXERRS
-	    || (sc->sc_iferrs > 5 && (inb(iobase + lpt_status) & LPS_NBSY))) {
+	if (sc->sc_ifierrs < PLIPMXERRS) {
+		bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_ENABLE);
+/*		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;*/
+	} else {
 		/* We are not able to send receive anything for now,
 		 * so stop wasting our time and leave the interrupt
 		 * disabled.
 		 */
-		if (sc->sc_iferrs == PLIPMXERRS + 1)
+		if (sc->sc_ifierrs == PLIPMXERRS)
 			log(LOG_NOTICE, "%s: rx hard error\n", ifp->if_xname);
-/*	xxx	i8255->port_a |= LPA_ACTIVE;*/
-	} else
-;
-/*	xxx	i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;*/
-
-/* Allow ints again */
-
-	outb(PLIP_CONTROL, PLIP_INTR_ENABLE);
-	return(1);
+		bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_ENABLE);
+/*		i8255->port_a |= LPA_ACTIVE;*/
+	}
+	ifp->if_ierrors++;
+	sc->sc_ifierrs++;
+	return;
 }
 
 static int
-pliptransmit(unsigned int iobase, u_char *buf, int len)
+pliptransmit(bc, ioh, buf, len)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	u_char *buf;
+	int len;
 {
 	int i;
 	u_char cksum = 0, c;
-	u_char c0;
-#if PLIP_DEBUG != 0
-	if (plip_debug & PLIP_DEBUG_TX)
-		printf("tx: len=%d ", len);
-#endif
 
 	while (len--) {
 		i = PLIPMXSPIN2;
 		cksum += (c = *buf++);
-#if PLIP_DEBUG != 0
-		if (plip_debug & PLIP_DEBUG_TX)
-			printf("%02x ", c);
-#endif
-/*	xxx	while ((i8255->port_c & LPC_NBUSY) == 0)
+		while (((bus_io_read_1(bc, ioh, lpt_status)) & LPS_NBSY) == 0)
 			if (i-- < 0) return -1;
-		i8255->port_b = c & 0x0f;
-		i8255->port_b = c & 0x0f | 0x10;
+		bus_io_write_1(bc, ioh, lpt_data, (c & 0x0f));
+		bus_io_write_1(bc, ioh, lpt_data, (c & 0x0f) | 0x10);
 		c >>= 4;
-		while ((i8255->port_c & LPC_NBUSY) != 0)
+		while (((bus_io_read_1(bc, ioh, lpt_status)) & LPS_NBSY) != 0)
 			if (i-- < 0) return -1;
-		i8255->port_b = c | 0x10;
-		i8255->port_b = c;
-*/
-
-/* Send the nibble + handshake */
-
-		outb(PLIP_DATA, 0x00 | (c & 0x0f));
-		outb(PLIP_DATA, 0x10 | (c & 0x0f));
-
-		while (1) {
-			c0 = inb(PLIP_STATUS);
-			if ((c0 & LPS_NBSY) == 0)
-				break;
-			if (--i == 0) { /* time out */
-#if PLIP_DEBUG > 0
-				printf("timeout tx lsn %02x ", c0);
-#endif
-				return(-1);
-			}
-			PLIP_DELAY;
-		}
-
-		outb(PLIP_DATA, 0x10 | (c >> 4));
-		outb(PLIP_DATA, 0x00 | (c >> 4));
-		i = PLIPMXSPIN2;
-		while (1) {
-			c0 = inb(PLIP_STATUS);
-			if ((c0 & LPS_NBSY) != 0)
-				break;
-			if (--i == 0) { /* time out */
-#if PLIP_DEBUG > 0
-				printf("timeout tx msn %02x ", c0);
-#endif
-				return(-1);
-			}
-			PLIP_DELAY;
-		}
+		bus_io_write_1(bc, ioh, lpt_data, c | 0x10);
+		bus_io_write_1(bc, ioh, lpt_data, c);
 	}
-#if PLIP_DEBUG != 0
-	if (plip_debug & PLIP_DEBUG_TX)
-		printf("done\n");
-#endif
 	return(cksum);
 }
 
@@ -1143,50 +1079,36 @@ static void
 plipstart(struct ifnet *ifp)
 {
 	struct lpt_softc *sc = (struct lpt_softc *)(ifp->if_softc);
-	unsigned int iobase = sc->sc_iobase;
+	sc->sc_pending |= PLIP_OPENDING;
+	setsoftintr(sc->sc_ifsoftint);
+}
+
+static void
+plipoutput(struct lpt_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
 	struct mbuf *m0, *m;
 	u_char minibuf[4], cksum;
 	int len, i, s;
-	u_char *p;
 
-#if PLIP_DEBUG != 0
-	if (plip_debug & PLIP_DEBUG_TX)
-		printf("plipstart: ");
-#endif
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 	ifp->if_flags |= IFF_OACTIVE;
 
-	if (sc->sc_ifretry)
-		untimeout((void (*)(void *))plipstart, ifp);
+	if (sc->sc_ifoerrs)
+		untimeout((void (*)(void *))plipoutput, sc);
 
 	for (;;) {
-		s = splimp();
+		s = splnet();
 		IF_DEQUEUE(&ifp->if_snd, m0);
 		splx(s);
 		if (!m0)
 			break;
 
-		for (len = 0, m = m0; m; m = m->m_next) {
-#if PLIP_DEBUG > 0
-			if (plip_debug & PLIP_DEBUG_TX)
-				printf("len=%d %d\n", m->m_len, len);
-#endif
+		for (len = 0, m = m0; m; m = m->m_next)
 			len += m->m_len;
-		}
-#if NBPFILTER > 0
-		p = sc->sc_ifbuf;
-		for (m = m0; m; m = m->m_next) {
-			if (m->m_len == 0)
-				continue;
-			bcopy(mtod(m, u_char *), p, m->m_len);
-			p += m->m_len;
-		}
-		if (sc->sc_arpcom.ac_if.if_bpf)
-			bpf_tap(sc->sc_arpcom.ac_if.if_bpf, sc->sc_ifbuf, len);
-#endif
-       		if (sizeof(struct ether_header) != 14)
-			len -= 2;
 #if defined(COMPAT_PLIP10)
 		if (ifp->if_flags & IFF_LINK0) {
 			minibuf[0] = 3;
@@ -1201,114 +1123,76 @@ plipstart(struct ifnet *ifp)
 			minibuf[2] = len >> 8;
 		}
 
-/*yyy		for (i = PLIPMXSPIN1; (inb(PLIP_STATUS) & LPS_NERR) != 0; i--)
-			if (i < 0) goto retry;*/
-
 		/* Trigger remote interrupt */
-
-#if PLIP_DEBUG > 0
-		if (plip_debug & PLIP_DEBUG_TX)
-			printf("st=%02x ", inb(PLIP_STATUS));
-#endif
-		if (inb(PLIP_STATUS) & LPS_NERR) {
-			for (i = PLIPMXSPIN1; (inb(PLIP_STATUS) & LPS_NERR) != 0; i--)
-				PLIP_DELAY;
-#if PLIP_DEBUG > 0
-			if (plip_debug & PLIP_DEBUG_TX)
-				printf("st1=%02x ", inb(PLIP_STATUS));
-#endif
-		}
-
-		outb(PLIP_DATA, PLIP_REMOTE_TRIGGER);
-		for (i = PLIPMXSPIN1; (inb(PLIP_STATUS) & LPS_NERR) == 0; i--) {
-			if (i < 0 || (i > PLIPMXSPIN1/3
-			    && inb(PLIP_STATUS) & LPS_NACK)) {
-#if PLIP_DEBUG > 0
-			    printf("trigger ack timeout\n");
-#endif
+		i = PLIPMXSPIN1;
+		do {
+			if (sc->sc_pending & PLIP_IPENDING) {
+				bus_io_write_1(bc, ioh, lpt_data, 0x00);
+/*				i8255->port_b = 0x00;*/
+				sc->sc_pending = 0;
+				plipinput(sc);
+				i = PLIPMXSPIN1;
+			} else if (i-- < 0)
 				goto retry;
-			}
-			PLIP_DELAY;
-		}
-#if PLIP_DEBUG > 0
-		if (plip_debug & PLIP_DEBUG_TX)
-			printf("st3=%02x ", inb(PLIP_STATUS));
-#endif
+			/* Retrigger remote interrupt */
+			bus_io_write_1(bc, ioh, lpt_data, PLIP_REMOTE_TRIGGER);
+/*			i8255->port_b = 0x08;*/
+		} while ((i8255->port_c & LPC_NERROR) == 0);
+/*		i8255->port_a &= ~(LPA_ACKENABLE | LPA_ACTIVE);*/
+		bus_io_write_1(bc, ioh, lpt_control, PLIP_INTR_DISABLE);
 
-/* Don't want ints while transmitting */
-
-		outb(PLIP_CONTROL, PLIP_INTR_DISABLE);
-
-		if (pliptransmit(iobase, minibuf + 1, minibuf[0]) < 0) goto retry;
+		if (pliptransmit(bc, ioh, minibuf + 1, minibuf[0]) < 0) goto retry;
 		for (cksum = 0, m = m0; m; m = m->m_next) {
-			if (sizeof(struct ether_header) != 14 && m == m0) {
-				i = pliptransmit(iobase, mtod(m, u_char *), 14);
-				if (i < 0) goto retry;
-				cksum += i;
-				i = pliptransmit(iobase, mtod(m, u_char *)+16, m->m_len-16);
-				if (i < 0) goto retry;
-			}
-			else			         
-				i = pliptransmit(iobase, mtod(m, u_char *), m->m_len);
+			i = pliptransmit(bc, ioh, mtod(m, u_char *), m->m_len);
 			if (i < 0) goto retry;
 			cksum += i;
 		}
-		if (pliptransmit(iobase, &cksum, 1) < 0) goto retry;
+		if (pliptransmit(bc, ioh, &cksum, 1) < 0) goto retry;
 		i = PLIPMXSPIN2;
-		while ((inb(PLIP_STATUS) & LPS_NBSY) == 0)
+		while (((bus_io_read_1(bc, ioh, lpt_status)) & LPS_NBSY) == 0)
 			if (i-- < 0) goto retry;
-
-		outb(iobase + lpt_data, 0x00);
-/* Re-enable ints */
-
-		outb(PLIP_CONTROL, PLIP_INTR_ENABLE);
+				bus_io_write_1(bc, ioh, lpt_data, 0x00);
+/*		i8255->port_b = 0x00;*/
 
 		ifp->if_opackets++;
 		ifp->if_obytes += len + 4;
-		sc->sc_ifretry = 0;
+		sc->sc_ifoerrs = 0;
 		s = splimp();
 		m_freem(m0);
 		splx(s);
+		i8255->port_a |= LPA_ACKENABLE;
 	}
+	i8255->port_a |= LPA_ACTIVE;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	return;
 
 retry:
-#if PLIP_DEBUG > 0
-	if (plip_debug & PLIP_DEBUG_TX)
-		printf("retry: %02x", inb(iobase + lpt_status));
-#endif
-	if (inb(PLIP_STATUS & LPS_NACK))
+	if (i8255->port_c & LPC_NACK)
 		ifp->if_collisions++;
 	else
 		ifp->if_oerrors++;
+
+	ifp->if_flags &= ~IFF_OACTIVE;
+				bus_io_write_1(bc, ioh, lpt_data, 0x00);
+/*	i8255->port_b = 0x00;*/
+
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == (IFF_RUNNING | IFF_UP)
-	    && sc->sc_ifretry < PLIPMXRETRY) {
-		sc->sc_ifretry++;
-		s = splimp();
+	    && sc->sc_ifoerrs < PLIPMXRETRY) {
+		s = splnet();
 		IF_PREPEND(&ifp->if_snd, m0);
 		splx(s);
-		timeout((void (*)(void *))plipstart, ifp, PLIPRETRY);
+		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;
+		timeout((void (*)(void *))plipoutput, sc, PLIPRETRY);
 	} else {
-		if (sc->sc_ifretry == PLIPMXRETRY) {
-			sc->sc_ifretry++;
+		if (sc->sc_ifoerrs == PLIPMXRETRY) {
 			log(LOG_NOTICE, "%s: tx hard error\n", ifp->if_xname);
 		}
 		s = splimp();
 		m_freem(m0);
 		splx(s);
-	}
-	ifp->if_flags &= ~IFF_OACTIVE;
-		outb(PLIP_DATA, 0x00);
-
-/* Re-enable ints */
-
-		outb(PLIP_CONTROL, PLIP_INTR_ENABLE);
-/*xxx	if (sc->sc_iferrs > PLIPMXERRS)
 		i8255->port_a |= LPA_ACTIVE;
-	else
-		i8255->port_a |= LPA_ACKENABLE | LPA_ACTIVE;*/
-	return;
+	}
+	sc->sc_ifoerrs++;
 }
 
 #endif
