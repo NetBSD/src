@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.9 1998/02/03 07:48:36 mycroft Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.10 1999/10/22 10:38:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.9 1998/02/03 07:48:36 mycroft Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.10 1999/10/22 10:38:40 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,9 +239,6 @@ appnd_start(skcnt)
 	int res;
 	off_t cnt;
 
-#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
-	(void)&cnt;
-#endif
 	if (exit_val != 0) {
 		tty_warn(0, "Cannot append to an archive that may have flaws.");
 		return(-1);
@@ -445,10 +442,6 @@ rd_skip(skcnt)
 	off_t res;
 	off_t cnt;
 	off_t skipped = 0;
-
-#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
-	(void)&cnt;
-#endif
 
 	/*
 	 * consume what data we have in the buffer. If we have to move foward
@@ -866,11 +859,6 @@ cp_file(arcn, fd1, fd2)
 	int rem;
 	int sz = MINFBSZ;
 	struct stat sb;
-
-#ifdef __GNUC__
-	/* This outrageous construct just to shut up a GCC warning. */
-	(void) &cpcnt;
-#endif
 
 	/*
 	 * check for holes in the source file. If none, we will use regular
