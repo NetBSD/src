@@ -18,9 +18,12 @@ port-cats
 port-cobalt
 port-dreamcast
 port-evbmips
+port-evbsh5
 port-hp300
+port-hp700
 port-hpcmips
 port-hpcsh
+port-hppa
 port-i386
 port-luna68k
 port-m68k
@@ -41,6 +44,7 @@ port-prep
 port-sbmips
 port-sgimips
 port-sh3
+port-sh5
 port-shark
 port-sparc
 port-sparc64
@@ -48,6 +52,7 @@ port-sun2
 port-sun3
 port-vax
 port-x68k
+port-x86_64
 security
 standards
 toolchain
