@@ -1,4 +1,4 @@
-/*	$NetBSD: raster.h,v 1.2 1994/11/20 20:53:44 deraadt Exp $ */
+/*	$NetBSD: raster.h,v 1.3 1995/04/11 07:06:33 mellon Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -55,11 +55,14 @@
 
 /* Configurable definitions. */
 
+
+#include <machine/endian.h>
+#if BYTE_ORDER == BIG_ENDIAN
 /* CONFIGURE: define or undef for your machine's byte order */
 #define MSBYTE_FIRST
-
 /* CONFIGURE: define or under for your frame buffer's bit order */
 #define MSBIT_FIRST
+#endif
 
 /* CONFIGURE: The text routines can optionally keep a cache of 8-bit
 ** characters.  This uses about 30K, but makes text on a color screen
