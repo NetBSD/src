@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2001/04/26 02:44:46 garbled Exp $
+#	$NetBSD: Makefile,v 1.5 2001/04/29 04:53:05 garbled Exp $
 
 SUBDIR= rcconf dailyconf weeklyconf securityconf inetdconf mailerconf
-SUBDIR+= usermgmtconf sysctl
+SUBDIR+= usermgmtconf sysctl localtime
 
 FILES=	index help
 FILESDIR=${BINDIR}/sushi/system
