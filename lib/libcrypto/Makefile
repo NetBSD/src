@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2003/04/26 00:53:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.32 2003/07/14 13:49:21 itojun Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -69,7 +69,7 @@ CLEANFILES+= buildinf.h
 INCS+=	asn1.h asn1_mac.h bio.h blowfish.h bn.h buffer.h cast.h comp.h
 INCS+=	conf.h conf_api.h crypto.h des.h dh.h dsa.h dso.h e_os2.h
 INCS+=	ebcdic.h err.h evp.h hmac.h lhash.h md2.h md4.h
-INCS+=	md5.h mdc2.h obj_mac.h objects.h opensslconf.h opensslv.h pem.h
+INCS+=	md5.h obj_mac.h objects.h opensslconf.h opensslv.h pem.h
 INCS+=	pem2.h pkcs12.h pkcs7.h rand.h rc2.h rc4.h ripemd.h
 INCS+=	rsaref.h safestack.h sha.h stack.h
 INCS+=	symhacks.h tmdiff.h txt_db.h x509.h x509_vfy.h x509v3.h
@@ -82,6 +82,9 @@ INCS+=	idea.h
 
 # RC5 - patented, but we install the header anyways
 INCS+=	rc5.h
+
+# MDC2 - patented, but we install the header anyways
+INCS+=	mdc2.h
 
 INCSDIR=/usr/include/openssl
 
