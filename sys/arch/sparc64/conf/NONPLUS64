@@ -1,8 +1,9 @@
-# 	$NetBSD: NONPLUS64,v 1.19 2001/10/24 18:49:39 thorpej Exp $
+# 	$NetBSD: NONPLUS64,v 1.20 2001/10/25 13:28:21 mrg Exp $
 
 include "arch/sparc64/conf/NONPLUS"
+include "arch/sparc64/conf/std.sparc64-64"
 
-#ident 		"GENERIC64-$Revision: 1.19 $"
+#ident 		"GENERIC64-$Revision: 1.20 $"
 
 options 	COMPAT_NETBSD32	# NetBSD/sparc binary compatibility
 options		COMPAT_SVR4_32	# 32-bit SVR4 binaries
