@@ -38,7 +38,7 @@
  * from: Utah $Hdr: grfvar.h 1.9 91/01/21$
  *
  *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
- *	$Id: grfvar.h,v 1.7 1994/05/08 05:53:10 chopps Exp $
+ *	$Id: grfvar.h,v 1.8 1994/06/05 07:45:13 chopps Exp $
  */
 
 struct ite_softc;
@@ -101,5 +101,6 @@ struct	grf_softc {
  */
 enum grfunits {
 	GRF_CC_UNIT,
-	GRF_RETINAII_UNIT
+	GRF_RETINAII_UNIT,
+	GRF_RETINAIII_UNIT
 };

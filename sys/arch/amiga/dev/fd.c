@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: fd.c,v 1.5 1994/05/29 01:44:50 chopps Exp $
+ *	$Id: fd.c,v 1.6 1994/06/05 07:45:08 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ struct fd_softc {
 	int hwunit;		/* unit for amiga controlling hw */
 	int unitmask;		/* mask for cia select deslect */
 	int pstepdir;		/* previous step direction */
-	int ctrack;		/* current track head is positioned over */
+	int curcyl;		/* current curcyl head positioned on */
 	int flags;		/* misc flags */
 	int wlabel;
 	int stepdelay;		/* useq to delay after seek user setable */
@@ -138,6 +138,7 @@ struct fd_softc {
 #define FDF_JUSTFLUSH	(0x40)	/* don't bother caching track. */
 
 int fdc_wantwakeup;
+int fdc_side;
 void  *fdc_dmap;
 struct fd_softc *fdc_indma;
 
@@ -278,6 +279,7 @@ fdcattach(pdp, dp, auxp)
 	args.unit = 0;
 	args.type = fdcgetfdtype(args.unit);
 
+	fdc_side = -1;
 	config_found(dp, &args, fdcprint);
 	for (args.unit++; args.unit < FDMAXUNITS; args.unit++) {
 		if ((args.type = fdcgetfdtype(args.unit)) == NULL)
@@ -322,7 +324,7 @@ fdattach(pdp, dp, auxp)
 	ap = auxp;
 	sc = (struct fd_softc *)dp;
 
-	sc->ctrack = sc->cachetrk = -1;
+	sc->curcyl = sc->cachetrk = -1;
 	sc->openpart = -1;
 	sc->type = ap->type;
 	sc->hwunit = ap->unit;
@@ -755,7 +757,8 @@ fdsetdisklabel(sc, lp)
 	    lp->d_secperunit != clp->d_secperunit ||
 	    lp->d_magic != DISKMAGIC ||
 	    lp->d_magic2 != DISKMAGIC ||
-	    lp->d_npartitions != RAW_PART + 1 ||
+	    lp->d_npartitions == 0 ||
+	    lp->d_npartitions > FDMAXPARTS ||
 	    (lp->d_partitions[0].p_offset && lp->d_partitions[1].p_offset) ||
 	    dkcksum(lp))
 		return(EINVAL);
@@ -963,20 +966,29 @@ fdsetpos(sc, trk, towrite)
 	struct fd_softc *sc;
 	int trk, towrite;
 {
-	int hsw, nstep, sdir;
+	int nstep, sdir, ondly, ncyl, nside;
 
 	FDDESELECT(FDCUNITMASK);
 	FDSETMOTOR(1);
 	delay(1);
 	FDSELECT(sc->unitmask);
 	delay(1);
-	if ((sc->flags & FDF_MOTORON) == 0)
-		while (FDTESTC(FDB_READY) == 0)
-			;
+	if ((sc->flags & FDF_MOTORON) == 0) {
+		ondly = 0;
+		while (FDTESTC(FDB_READY) == 0) {
+			delay(1000);
+			if (++ondly >= 1000)
+				break;
+		}
+	}
 	sc->flags |= FDF_MOTORON;
 
-	if (trk == sc->ctrack)
+	ncyl = trk / FDNHEADS;
+	nside = trk % FDNHEADS;
+
+	if (sc->curcyl == ncyl && fdc_side == nside)
 		return;
+
 	if (towrite)
 		sc->flags |= FDF_WRITEWAIT;
 	
@@ -984,15 +996,7 @@ fdsetpos(sc, trk, towrite)
 	printf("fdsetpos: cyl %d head %d towrite %d\n", trk / FDNHEADS, 
 	    trk % FDNHEADS, towrite);
 #endif
-	/*
-	 * need to switch heads?
-	 */
-	if ((trk % FDNHEADS) != (sc->ctrack % FDNHEADS) || sc->ctrack == -1)
-		hsw = 1;
-	else
-		hsw = 0;
-
-	nstep = (trk / FDNHEADS) - (sc->ctrack / FDNHEADS);
+	nstep = ncyl - sc->curcyl;
 	if (nstep) {
 		/*
 		 * figure direction
@@ -1005,7 +1009,7 @@ fdsetpos(sc, trk, towrite)
 			sdir = FDSTEPOUT;
 			FDSETDIR(0);
 		}
-		if (trk == 0) {
+		if (ncyl == 0) {
 			/*
 			 * either just want cylinder 0 or doing 
 			 * a calibrate.
@@ -1030,26 +1034,16 @@ fdsetpos(sc, trk, towrite)
 		if (sc->pstepdir != sdir)
 			delay(FDSETTLEDELAY);
 		sc->pstepdir = sdir;
+		sc->curcyl = ncyl;
 	}
-	sc->ctrack = trk;
-
-	if (hsw == 0)
+	if (nside == fdc_side)
 		return;
-
 	/*
 	 * select side
 	 */
-	FDSETHEAD(trk % FDNHEADS);
-
-	/*
-	 * delay at least FDPRESIDEDELAY
-	 * and indicate need to do write delay if needed.
-	 */
+	fdc_side = nside;
+	FDSETHEAD(nside);
 	delay(FDPRESIDEDELAY);
-	if (towrite) {
-		sc->flags |= FDF_WRITEWAIT;
-		delay(FDSETTLEDELAY);
-	}
 }
 
 void

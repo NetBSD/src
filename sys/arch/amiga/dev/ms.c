@@ -44,7 +44,7 @@
  *	@(#)ms.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: ms.c,v 1.5 92/11/26 01:28:47 torek Exp  (LBL)
- *	$Id: ms.c,v 1.3 1994/05/08 05:53:29 chopps Exp $
+ *	$Id: ms.c,v 1.4 1994/06/05 07:45:17 chopps Exp $
  */
 
 /*
@@ -260,6 +260,7 @@ msintr(arg)
 			fe->id = LOC_X_DELTA;
 			fe->value = ms->ms_dx;
 			fe->time = time;
+			fe++;
 
 			if (put >= EV_QSIZE) {
 				put = 0;
@@ -278,6 +279,7 @@ msintr(arg)
 			fe->id = LOC_Y_DELTA;
 			fe->value = ms->ms_dy;
 			fe->time = time;
+			fe++;
 
 			if (put >= EV_QSIZE) {
 				put = 0;
