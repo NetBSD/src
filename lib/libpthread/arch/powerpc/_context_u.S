@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.2 2003/01/18 10:34:20 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3 2003/06/12 19:09:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,9 +71,6 @@
 	mflr	 %r0					; \
 	stw	 %r0, _REG_LR(reg)			; \
 	stw	 %r0, _REG_PC(reg)			; \
-	xor	 %r0, %r0, %r0				; \
-	ori	 %r0, %r0, 0xf032			; \
-	stw	 %r0, _REG_MSR(reg)			; \
 							; \
 	mffs	%r0					; \
 	stfd	%r0, (_REG_FPSCR - 4)(reg)		; \
