@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.10 2003/05/14 11:22:55 ad Exp $	*/
+/*	$NetBSD: amr.c,v 1.11 2003/05/15 18:04:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.10 2003/05/14 11:22:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.11 2003/05/15 18:04:08 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,7 +514,7 @@ amr_teardown(struct amr_softc *amr)
 	if ((fl & AMRF_PCI_INTR) != 0)
 		pci_intr_disestablish(amr->amr_pc, amr->amr_ih);
 	if ((fl & AMRF_PCI_REGS) != 0)
-		bus_space_unmap(amr->amr_ioh, amr->amr_iot, amr->amr_ios);
+		bus_space_unmap(amr->amr_iot, amr->amr_ioh, amr->amr_ios);
 }
 
 /*
