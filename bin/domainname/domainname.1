@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)hostname.1	8.1 (Berkeley) 5/31/93
-.\"	$Id: domainname.1,v 1.4 1994/09/22 09:42:47 mycroft Exp $
+.\"	$Id: domainname.1,v 1.5 1994/09/26 06:54:38 mycroft Exp $
 .\"
 .Dd May 31, 1993
 .Dt DOMAINNAME 1
@@ -44,7 +44,7 @@
 .Sh DESCRIPTION
 .Nm Domainname
 prints the YP domain name of the current host.  The super-user can
-set the domainname by supplying an argument; this is usually done in the
+set the domain name by supplying an argument; this is usually done in the
 network initialization script
 .Pa /etc/netstart ,
 normally run at boot
@@ -60,3 +60,7 @@ command is derived from the
 .Nm hostname
 command, which appeared in
 .Bx 4.2 .
+The
+.Nm domainname
+command appeared in
+.Nx 0.8 .
