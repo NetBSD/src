@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.5 2001/07/22 14:58:20 wiz Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.6 2003/04/02 04:27:17 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -212,7 +212,7 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 * 32-bit DMA, and indicate that here.
 	 *
 	 * ...or, there is an opposite case.  The most segments
-	 * a transfer will require is (maxxfer / NBPG) + 1.  If
+	 * a transfer will require is (maxxfer / PAGE_SIZE) + 1.  If
 	 * the caller can't handle that many segments (e.g. the
 	 * ISA DMA controller), we may have to bounce it as well.
 	 */
@@ -223,7 +223,7 @@ _isa_bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	}
 	cookieflags = 0;
 	if (map->_dm_bounce_thresh != 0 ||
-	    ((map->_dm_size / NBPG) + 1) > map->_dm_segcnt) {
+	    ((map->_dm_size / PAGE_SIZE) + 1) > map->_dm_segcnt) {
 		cookieflags |= ID_MIGHT_NEED_BOUNCE;
 		cookiesize += (sizeof(bus_dma_segment_t) * map->_dm_segcnt);
 	}
@@ -657,7 +657,7 @@ _isa_dma_alloc_bouncebuf(t, map, size, flags)
 
 	cookie->id_bouncebuflen = round_page(size);
 	error = _isa_bus_dmamem_alloc(t, cookie->id_bouncebuflen,
-	    NBPG, map->_dm_boundary, cookie->id_bouncesegs,
+	    PAGE_SIZE, map->_dm_boundary, cookie->id_bouncesegs,
 	    map->_dm_segcnt, &cookie->id_nbouncesegs, flags);
 	if (error)
 		goto out;

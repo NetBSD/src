@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.14 2002/10/02 04:15:10 thorpej Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.15 2003/04/02 04:20:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,13 +37,15 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.14 2002/10/02 04:15:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.15 2003/04/02 04:20:32 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -141,8 +143,9 @@ asc_ioasic_attach(parent, self, aux)
 		return;
 	}
 	asc->sc_dmat = ((struct ioasic_softc *)parent)->sc_dmat;
-	if (bus_dmamap_create(asc->sc_dmat, NBPG * 2,
-			2, NBPG, NBPG, BUS_DMA_NOWAIT, &asc->sc_dmamap)) {
+	if (bus_dmamap_create(asc->sc_dmat, PAGE_SIZE * 2,
+			2, PAGE_SIZE, PAGE_SIZE, BUS_DMA_NOWAIT,
+			&asc->sc_dmamap)) {
 		printf(": failed to create DMA map\n");
 		return;
 	}
@@ -211,7 +214,7 @@ asc_ioasic_reset(sc)
 	asc->sc_flags &= ~(ASC_DMAACTIVE|ASC_MAPLOADED);
 }
 
-#define	TWOPAGE(a)	(NBPG*2 - ((a) & (NBPG-1)))
+#define	TWOPAGE(a)	(PAGE_SIZE*2 - ((a) & (PAGE_SIZE-1)))
 
 int
 asc_ioasic_setup(sc, addr, len, ispullup, dmasize)

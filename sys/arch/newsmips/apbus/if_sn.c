@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.11 2002/09/27 15:36:29 provos Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.12 2003/04/02 04:17:50 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -153,7 +153,7 @@ snsetup(sc, lladdr)
 	 * around problems near the end of 64k !!
 	 */
 	p = sc->space;
-	pp = (u_char *)ROUNDUP ((int)p, NBPG);
+	pp = (u_char *)ROUNDUP ((int)p, PAGE_SIZE);
 	p = pp;
 
 	for (i = 0; i < NRRA; i++) {
@@ -180,29 +180,29 @@ snsetup(sc, lladdr)
 
 	p = (u_char *)SOALIGN(sc, p);
 
-	if ((p - pp) > NBPG) {
+	if ((p - pp) > PAGE_SIZE) {
 		printf ("%s: sizeof RRA (%ld) + CDA (%ld) +"
-		    "TDA (%ld) > NBPG (%d). Punt!\n",
+		    "TDA (%ld) > PAGE_SIZE (%d). Punt!\n",
 		    sc->sc_dev.dv_xname,
 		    (ulong)sc->p_cda - (ulong)sc->p_rra[0],
 		    (ulong)sc->mtda[0].mtd_txp - (ulong)sc->p_cda,
 		    (ulong)p - (ulong)sc->mtda[0].mtd_txp,
-		    NBPG);
+		    PAGE_SIZE);
 		return(1);
 	}
 
-	p = pp + NBPG;
+	p = pp + PAGE_SIZE;
 	pp = p;
 
-	sc->sc_nrda = NBPG / RXPKT_SIZE(sc);
+	sc->sc_nrda = PAGE_SIZE / RXPKT_SIZE(sc);
 	sc->p_rda = (caddr_t) p;
 	sc->v_rda = SONIC_GETDMA(p);
 
-	p = pp + NBPG;
+	p = pp + PAGE_SIZE;
 
 	for (i = 0; i < NRBA; i++) {
 		sc->rbuf[i] = (caddr_t)p;
-		p += NBPG;
+		p += PAGE_SIZE;
 	}
 
 	pp = p;
@@ -834,8 +834,8 @@ initialise_rra(sc)
 		v = SONIC_GETDMA(sc->rbuf[i]);
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRHI, UPPER(v));
 		SWO(bitmode, sc->p_rra[i], RXRSRC_PTRLO, LOWER(v));
-		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(NBPG/2));
-		SWO(bitmode, sc->p_rra[i], RXRSRC_WCLO, LOWER(NBPG/2));
+		SWO(bitmode, sc->p_rra[i], RXRSRC_WCHI, UPPER(PAGE_SIZE/2));
+		SWO(bitmode, sc->p_rra[i], RXRSRC_WCLO, LOWER(PAGE_SIZE/2));
 	}
 	sc->sc_rramark = NRBA;
 	NIC_PUT(sc, SNR_RWP, LOWER(sc->v_rra[sc->sc_rramark]));

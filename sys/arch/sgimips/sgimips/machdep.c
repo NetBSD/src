@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2003/03/31 00:56:53 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 2003/04/02 04:27:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -626,7 +626,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base + 1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base + 1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -663,7 +663,7 @@ cpu_startup()
 	printf(", %s free", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ctob(arcsmem));
 	printf(", %s for ARCS", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf(", %s in %u buffers\n", pbuf, nbuf);
 
 	/*

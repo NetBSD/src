@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.20 2002/10/02 04:27:52 thorpej Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.21 2003/04/02 04:17:51 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -12,6 +12,8 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -319,14 +321,14 @@ start:
 		va = (vaddr_t)xs->data;
 
 		offset = va & PGOFSET;
-		pages = (offset + xs->datalen + NBPG -1 ) >> PGSHIFT;
+		pages = (offset + xs->datalen + PAGE_SIZE -1 ) >> PGSHIFT;
 		if (pages >= NSCMAP)
 			panic("sc_map: Too many pages");
 
 		for (i = 0; i < pages; i++) {
 			pn = kvtophys(va) >> PGSHIFT;
 			sc->sc_map[chan].mp_addr[i] = pn;
-			va += NBPG;
+			va += PAGE_SIZE;
 		}
 
 		sc->sc_map[chan].mp_offset = offset;

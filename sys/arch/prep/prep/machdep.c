@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2003/03/18 16:40:24 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2003/04/02 04:27:18 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -238,7 +238,7 @@ cpu_startup()
 	/*
 	 * Mapping PReP interrput vector register.
 	 */
-	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, NBPG);
+	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE);
 	if (!prep_intr_reg)
 		panic("startup: no room for interrupt register");
 

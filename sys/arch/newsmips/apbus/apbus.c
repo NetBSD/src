@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.11 2003/01/01 01:55:42 thorpej Exp $	*/
+/*	$NetBSD: apbus.c,v 1.12 2003/04/02 04:17:50 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -290,7 +290,7 @@ apbus_dma_mapalloc(t, map, flags)
 {
 	int i, j, cnt;
 
-	cnt = round_page(map->_dm_size) / NBPG;
+	cnt = round_page(map->_dm_size) / PAGE_SIZE;
 
   again:
 	for (i = 0; i < APBUS_NDMAMAP; i += j + 1) {
@@ -349,7 +349,7 @@ apbus_dma_mapset(t, map)
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		segs = &map->dm_segs[seg];
 		for (addr = segs->ds_addr, eaddr = addr + segs->ds_len;
-		    addr < eaddr; addr += NBPG, i++) {
+		    addr < eaddr; addr += PAGE_SIZE, i++) {
 #ifdef DIAGNOSTIC
 			if (i >= map->_dm_maptblcnt)
 				panic("dma map table overflow");
@@ -378,7 +378,7 @@ apbus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	int error;
 
 	if (flags & NEWSMIPS_DMAMAP_MAPTBL)
-		nsegments = round_page(size) / NBPG;
+		nsegments = round_page(size) / PAGE_SIZE;
 	error = _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary,
 	    flags, dmamp);
 	if (error == 0 && (flags & NEWSMIPS_DMAMAP_MAPTBL)) {
