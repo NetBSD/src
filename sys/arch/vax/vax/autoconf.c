@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 2000/05/23 19:55:55 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56 2000/05/26 21:05:23 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -322,7 +322,7 @@ booted_rl(struct device *dev, void *aux)
 {
 	static int ub;
 
-	if (jmfr("rlc", dev, BDEV_RL))
+	if (jmfr("rlc", dev, BDEV_RL) == 0)
 		ub = ubtest(aux);
 	if (ub)
 		return 0;
