@@ -56,6 +56,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -113,7 +114,7 @@ i87307KbdConfig(bus_space_tag_t iot,
 		u_int           kbdBase, 
 		u_int           irqNum )
 {
-    u_int                configured;
+    u_int                configured = FALSE;
     bus_space_handle_t   ioh;	     
 
 
@@ -246,7 +247,7 @@ int
 i87307PrinterConfig(bus_space_tag_t iot,
 		  u_int           irqNum )
 {
-    u_int                configured;
+    u_int                configured = FALSE;
     bus_space_handle_t   ioh;	     
 
     u_char value;
