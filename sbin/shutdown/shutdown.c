@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.10 1996/12/11 04:05:21 thorpej Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.11 1997/01/23 05:48:06 mikel Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$NetBSD: shutdown.c,v 1.10 1996/12/11 04:05:21 thorpej Exp $";
+static char rcsid[] = "$NetBSD: shutdown.c,v 1.11 1997/01/23 05:48:06 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,8 +89,8 @@ struct interval {
 #undef S
 
 static time_t offset, shuttime;
-static int dofast, dohalt, doreboot, killflg, mbuflen;
-static char *nosync, *whom, mbuf[BUFSIZ];
+static int dofast, dohalt, doreboot, killflg, mbuflen, nosync;
+static char *whom, mbuf[BUFSIZ];
 
 void badtime __P((void));
 void die_you_gravy_sucking_pig_dog __P((void));
@@ -119,7 +119,6 @@ main(argc, argv)
 		exit(1);
 	}
 #endif
-	nosync = NULL;
 	readstdin = 0;
 	while ((ch = getopt(argc, argv, "-fhknr")) != EOF)
 		switch (ch) {
@@ -136,7 +135,7 @@ main(argc, argv)
 			killflg = 1;
 			break;
 		case 'n':
-			nosync = "-n";
+			nosync = 1;
 			break;
 		case 'r':
 			doreboot = 1;
@@ -352,14 +351,14 @@ die_you_gravy_sucking_pig_dog()
 	(void)printf("\nkill -HUP 1\n");
 #else
 	if (doreboot) {
-		execle(_PATH_REBOOT, "reboot", "-l", nosync, (char *)0,
-		    (char **)0);
+		execle(_PATH_REBOOT, "reboot", nosync ? "-ln" : "-l",
+		    (char *)0, (char **)0);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_REBOOT);
 		perror("shutdown");
 	}
 	else if (dohalt) {
-		execle(_PATH_HALT, "halt", "-l", nosync, (char *)0,
-		    (char **)0);
+		execle(_PATH_HALT, "halt", nosync ? "-ln" : "-l",
+		    (char *)0, (char **)0);
 		syslog(LOG_ERR, "shutdown: can't exec %s: %m.", _PATH_HALT);
 		perror("shutdown");
 	}
