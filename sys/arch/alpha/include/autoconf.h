@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.h,v 1.10 1997/07/25 07:01:42 cgd Exp $ */
+/* $NetBSD: autoconf.h,v 1.11 1997/08/11 23:43:38 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -81,13 +81,14 @@ struct bootdev_data {
 };
 
 /*
- * The boot program passes a pointer to a bootinfo to the kernel
- * using the following convention:
+ * The boot program passes a pointer (in the boot environment virtual
+ * address address space; "BEVA") to a bootinfo to the kernel using
+ * the following convention:
  *
  *	a0 contains first free page frame number
  *	a1 contains page number of current level 1 page table
  *	if a2 contains BOOTINFO_MAGIC:
- *		a3 contains (boot env. virtual) address of bootinfo
+ *		a3 contains pointer (BEVA) to bootinfo
  */
 
 #define	BOOTINFO_MAGIC		0xdeadbeeffeedface
@@ -97,11 +98,12 @@ struct bootinfo_v1 {
 	u_long	esym;			/* 8: end of kernel sym table	*/
 	char	boot_flags[64];		/* 16: boot flags		*/
 	char	booted_kernel[64];	/* 80: name of booted kernel	*/
-	void	*hwrpb;			/* 144: hwrpb pointer		*/
-	int	(*cngetc) __P((void));	/* 152: console getc pointer	*/
-	void	(*cnputc) __P((int));	/* 160: console putc pointer	*/
-	void	(*cnpollc) __P((int));	/* 168: console pollc pointer	*/
-					/* 176: total size		*/
+	void	*hwrpb;			/* 144: hwrpb pointer (BEVA)	*/
+	u_long	hwrpbsize;		/* 152: size of hwrpb data	*/
+	int	(*cngetc) __P((void));	/* 160: console getc pointer	*/
+	void	(*cnputc) __P((int));	/* 168: console putc pointer	*/
+	void	(*cnpollc) __P((int));	/* 176: console pollc pointer	*/
+					/* 184: total size		*/
 };
 
 struct bootinfo {
