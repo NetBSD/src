@@ -1,6 +1,5 @@
-# $NetBSD: md.evbarm,v 1.6 2003/01/18 17:50:23 thorpej Exp $
+# $NetBSD: md.evbarm,v 1.7 2003/09/21 20:16:11 matt Exp $
 ./usr/include/evbarm			comp-c-include
-./usr/include/evbarm/_G_config.h	comp-c-include
 ./usr/include/evbarm/ansi.h		comp-c-include
 ./usr/include/evbarm/aout_machdep.h	comp-c-include
 ./usr/include/evbarm/asm.h		comp-c-include
