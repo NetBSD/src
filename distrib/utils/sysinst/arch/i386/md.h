@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.51 2004/05/15 21:53:29 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.52 2004/06/06 05:45:04 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -102,7 +102,7 @@
  * Default fileystem type for floppy disks.
  * On i386, that is  msdos.
  */
-EXTERN	const char *fdtype INIT("msdos");
+const char *fdtype;
 
 #define _PATH_MBR	DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE
 #define _PATH_BOOTSEL	DEFAULT_BOOTDIR "/" DEFAULT_BOOTSELCODE
