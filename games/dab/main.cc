@@ -1,4 +1,4 @@
-/*	$NetBSD: main.cc,v 1.1 2003/12/27 01:16:55 christos Exp $	*/
+/*	$NetBSD: main.cc,v 1.2 2003/12/28 17:53:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * main.C: Main dots program
  */
 #include "defs.h"
-RCSID("$NetBSD: main.cc,v 1.1 2003/12/27 01:16:55 christos Exp $")
+RCSID("$NetBSD: main.cc,v 1.2 2003/12/28 17:53:48 thorpej Exp $")
 
 #include <iostream>
 #include <unistd.h>
@@ -106,7 +106,7 @@ static void play(BOARD& b, PLAYER* p[2])
 int main(int argc, char** argv)
 {
     size_t ny, nx, nn = 1, wt = 0;
-    char* nc = "ch";
+    const char* nc = "ch";
     int c;
     int acs = 1;
 
