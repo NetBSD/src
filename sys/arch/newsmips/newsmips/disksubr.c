@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 2002/03/05 09:40:41 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 2003/03/30 08:42:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -187,7 +187,7 @@ done:
 	return (error);
 }
 
-/* 
+/*
  * UNTESTED !!
  *
  * Determine the size of the transfer, and make sure it is
@@ -202,19 +202,20 @@ bounds_check_with_label(bp, lp, wlabel)
 {
 
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
+	u_int labelsector = lp->d_partitions[RAW_PART].p_offset + LABELSECTOR;
 	int maxsz = p->p_size;
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */ 
-	if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
+	/* XXX should also protect bootstrap in first 8K */
+	if (securelevel >= 1 && DISKPART(bp->b_dev) != RAW_PART &&
+	    bp->b_blkno + p->p_offset <= labelsector &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
-	/* beyond partition? */ 
+	/* beyond partition? */
 	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
 		/* if exactly at end of disk, return an EOF */
 		if (bp->b_blkno == maxsz) {
@@ -228,7 +229,7 @@ bounds_check_with_label(bp, lp, wlabel)
 			goto bad;
 		}
 		bp->b_bcount = sz << DEV_BSHIFT;
-	}               
+	}
 
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_resid = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
