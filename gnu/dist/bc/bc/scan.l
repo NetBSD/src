@@ -58,9 +58,8 @@ _PROTOTYPE(int yywrap, (void));
 		rl_input((char *)buf, &result, max_size)
 
 /* Variables to help interface readline with bc. */
-static char *rl_line = (char *)NULL;
-static char *rl_start = (char *)NULL;
-static char  rl_len = 0;
+static char   *rl_line = (char *)NULL;
+static size_t  rl_len = 0;
 
 /* Definitions for readline access. */
 extern FILE *rl_instream;
