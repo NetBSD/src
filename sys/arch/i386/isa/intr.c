@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.2 1993/10/22 19:33:13 mycroft Exp $
+ *	$Id: intr.c,v 1.3 1993/10/26 12:10:01 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -136,7 +136,7 @@ intr_establish(intr, ih, class)
 	 * This is O(N^2), but we want to preserve the order, and N is
 	 * always small.
 	 */
-	for (p = &intrhand[intr]; (q = *p) != NULL; p = &q->ih_next)
+	for (p = &intrhand[irqnum]; (q = *p) != NULL; p = &q->ih_next)
 		;
 	*p = ih;
 
@@ -178,7 +178,7 @@ isa_defaultirq()
 
 	/* icu vectors */
 	for (i = ICU_OFFSET; i < ICU_OFFSET + ICU_LEN ; i++)
-		setidt(i, IDTVEC(intr)[i],  SDT_SYS386IGT, SEL_KPL);
+		setidt(i, IDTVEC(intr)[i - ICU_OFFSET],  SDT_SYS386IGT, SEL_KPL);
   
 	/* out of range vectors */
 	for (; i < NIDT; i++)
@@ -248,13 +248,11 @@ isa_discoverintr(force, aux)
 	outb(iobase + TIMER_CNTR2, 0xff);
 	last = 0xffff;
 	while (time > 0) {
-		register u_char irr, lo, hi;
-		irr = inb(IO_ICU1) & ~IRQ_SLAVE;
+		register unsigned irr;
+		register u_char lo, hi;
+		irr = (inb(IO_ICU1) | (inb(IO_ICU2) << 8)) & ~(IRQ_SLAVE | IRQ0);
 		if (irr)
 			return 1 << (ffs(irr) - 1);
-		irr = inb(IO_ICU2);
-		if (irr)
-			return 1 << (ffs(irr) + 7);
 		outb(iobase + TIMER_MODE, TIMER_SEL2|TIMER_LATCH);
 		lo = inb(iobase + TIMER_CNTR2);
 		hi = inb(iobase + TIMER_CNTR2);
