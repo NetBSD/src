@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.c,v 1.7 1995/02/27 13:22:44 cgd Exp $	*/
+/*	$NetBSD: ndbm.c,v 1.8 1996/05/03 21:43:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,9 +38,9 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)ndbm.c	8.3 (Berkeley) 5/30/94";
+static char sccsid[] = "@(#)ndbm.c	8.4 (Berkeley) 7/21/94";
 #else
-static char rcsid[] = "$NetBSD: ndbm.c,v 1.7 1995/02/27 13:22:44 cgd Exp $";
+static char rcsid[] = "$NetBSD: ndbm.c,v 1.8 1996/05/03 21:43:58 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -73,7 +73,7 @@ dbm_open(file, flags, mode)
 	info.bsize = 4096;
 	info.ffactor = 40;
 	info.nelem = 1;
-	info.cachesize = NULL;
+	info.cachesize = 0;
 	info.hash = NULL;
 	info.lorder = 0;
 	(void)strcpy(path, file);
