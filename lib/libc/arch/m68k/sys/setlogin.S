@@ -34,20 +34,20 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)setlogin.s	5.1 (Berkeley) 5/6/91"*/
-	.asciz "$Id: setlogin.S,v 1.1 1993/11/25 23:39:33 paulus Exp $"
+	.asciz "$Id: setlogin.S,v 1.2 1993/12/18 01:05:16 jtc Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-.globl	__logname_valid		/* in getlogin() */
+.globl	___logname_valid		/* in getlogin() */
 
 SYSCALL(setlogin)
 #ifdef	PIC
 	movl	#__GLOBAL_OFFSET_TABLE_,a1
 	lea	pc@(0,a1:l),a1
-	movl	a1@(__logname_valid:w),a1
+	movl	a1@(___logname_valid:w),a1
 	clrl	a1@
 #else
-	movl	#0,__logname_valid
+	movl	#0,___logname_valid
 #endif
 	rts				/* setlogin(name) */
