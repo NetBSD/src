@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.1.4.1 1997/05/23 21:14:48 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.1.4.2 1997/05/26 15:40:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 Luke Mewburn <lukem@netbsd.org>
@@ -50,7 +50,7 @@ static ns_DBT	 *_nsmap = NULL;
  * this is to help power of 2 mallocs which are really wasteful if the
  * amount just overflows a power of 2 boundary.
  */
-#define NSELEMSPERCHUNK		17
+#define NSELEMSPERCHUNK		10
 
 int
 _nscmp(const void *a, const void *b)
