@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.16 2002/10/01 12:57:14 fvdl Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.17 2002/10/22 21:02:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.16 2002/10/01 12:57:14 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.17 2002/10/22 21:02:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -257,7 +257,7 @@ mca_intr_disestablish(mc, cookie)
 	mca_chipset_tag_t mc;
 	void *cookie;
 {
-	return isa_intr_disestablish(NULL, cookie);
+	isa_intr_disestablish(NULL, cookie);
 }
 	
 
