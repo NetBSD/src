@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.15 1998/10/20 01:48:14 matt Exp $	*/
+/*	$NetBSD: bad144.c,v 1.16 2002/06/13 11:01:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.15 1998/10/20 01:48:14 matt Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.16 2002/06/13 11:01:08 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,19 +91,17 @@ daddr_t	size;
 struct	disklabel *dp;
 char	name[BUFSIZ];
 
-daddr_t	badsn __P((const struct bt_bad *));
-int	blkcopy __P((int, daddr_t, daddr_t));
-void	blkzero __P((int, daddr_t));
-int	checkold __P((void));
-int	compare __P((const void *, const void *));
-daddr_t	getold __P((int, struct dkbad *));
-int	main __P((int, char **));
-void	shift __P((int, int, int));
+daddr_t	badsn(const struct bt_bad *);
+int	blkcopy(int, daddr_t, daddr_t);
+void	blkzero(int, daddr_t);
+int	checkold(void);
+int	compare(const void *, const void *);
+daddr_t	getold(int, struct dkbad *);
+int	main(int, char **);
+void	shift(int, int, int);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct bt_bad *bt;
 	daddr_t	sn, bn[126];
@@ -334,9 +332,7 @@ usage:
 }
 
 daddr_t
-getold(f, bad)
-	int f;
-	struct dkbad *bad;
+getold(int f, struct dkbad *bad)
 {
 	int i;
 	daddr_t sn;
@@ -363,7 +359,7 @@ getold(f, bad)
 }
 
 int
-checkold()
+checkold(void)
 {
 	int i;
 	struct bt_bad *bt;
@@ -417,8 +413,7 @@ checkold()
  * new is the new number of bad sectors, old is the previous count.
  */
 void
-shift(f, new, old)
-     int f, new, old;
+shift(int f, int new, int old)
 {
 	daddr_t repl;
 
@@ -454,9 +449,7 @@ char *buf;
  *  Copy disk sector s1 to s2.
  */
 int
-blkcopy(f, s1, s2)
-	int f;
-	daddr_t s1, s2;
+blkcopy(int f, daddr_t s1, daddr_t s2)
 {
 	int tries, n;
 
@@ -492,9 +485,7 @@ blkcopy(f, s1, s2)
 char *zbuf;
 
 void
-blkzero(f, sn)
-	int f;
-	daddr_t sn;
+blkzero(int f, daddr_t sn)
 {
 
 	if (zbuf == (char *)NULL) {
@@ -511,8 +502,7 @@ blkzero(f, sn)
 }
 
 int
-compare(v1, v2)
-	const void *v1, *v2;
+compare(const void *v1, const void *v2)
 {
 	const struct bt_bad *b1 = v1;
 	const struct bt_bad *b2 = v2;
@@ -527,8 +517,7 @@ compare(v1, v2)
 }
 
 daddr_t
-badsn(bt)
-	const struct bt_bad *bt;
+badsn(const struct bt_bad *bt)
 {
 
 	return ((bt->bt_cyl * dp->d_ntracks
