@@ -1,4 +1,4 @@
-/*	$NetBSD: domain.h,v 1.18 2004/04/22 01:34:17 matt Exp $	*/
+/*	$NetBSD: domain.h,v 1.19 2004/05/22 22:52:16 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,6 +42,7 @@
 /*
  * Forward structure declarations for function prototypes [sic].
  */
+struct	proc;
 struct	mbuf;
 struct	ifnet;
 
@@ -51,7 +52,7 @@ struct	domain {
 	void	(*dom_init)		/* initialize domain data structures */
 			(void);
 	int	(*dom_externalize)	/* externalize access rights */
-			(struct mbuf *);
+			(struct mbuf *, struct proc *);
 	void	(*dom_dispose)		/* dispose of internalized rights */
 			(struct mbuf *);
 	const struct protosw *dom_protosw, *dom_protoswNPROTOSW;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.104 2004/05/10 10:40:42 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.105 2004/05/22 22:52:15 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.104 2004/05/10 10:40:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.105 2004/05/22 22:52:15 jonathan Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -154,9 +154,10 @@ struct callout nfs_timer_ch = CALLOUT_INITIALIZER_SETFUNC(nfs_timer, NULL);
  * We do not free the sockaddr if error.
  */
 int
-nfs_connect(nmp, rep)
+nfs_connect(nmp, rep, p)
 	struct nfsmount *nmp;
 	struct nfsreq *rep;
+	struct proc *p;
 {
 	struct socket *so;
 	int s, error, rcvreserve, sndreserve;
@@ -169,8 +170,8 @@ nfs_connect(nmp, rep)
 
 	nmp->nm_so = (struct socket *)0;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
-	error = socreate(saddr->sa_family, &nmp->nm_so, nmp->nm_sotype, 
-		nmp->nm_soproto);
+	error = socreate(saddr->sa_family, &nmp->nm_so,
+		nmp->nm_sotype, nmp->nm_soproto, p);
 	if (error)
 		goto bad;
 	so = nmp->nm_so;
@@ -235,7 +236,7 @@ nfs_connect(nmp, rep)
 			goto bad;
 		}
 	} else {
-		error = soconnect(so, nmp->nm_nam);
+		error = soconnect(so, nmp->nm_nam, p);
 		if (error)
 			goto bad;
 
@@ -332,15 +333,16 @@ bad:
  * nb: Must be called with the nfs_sndlock() set on the mount point.
  */
 int
-nfs_reconnect(rep)
+nfs_reconnect(rep, p)
 	struct nfsreq *rep;
+	struct proc *p;
 {
 	struct nfsreq *rp;
 	struct nfsmount *nmp = rep->r_nmp;
 	int error;
 
 	nfs_disconnect(nmp);
-	while ((error = nfs_connect(nmp, rep)) != 0) {
+	while ((error = nfs_connect(nmp, rep, p)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
 		(void) tsleep((caddr_t)&lbolt, PSOCK, "nfscn2", 0);
@@ -421,14 +423,24 @@ nfs_safedisconnect(nmp)
  * - do any cleanup required by recoverable socket errors (? ? ?)
  */
 int
-nfs_send(so, nam, top, rep)
+nfs_send(so, nam, top, rep, p)
 	struct socket *so;
 	struct mbuf *nam;
 	struct mbuf *top;
 	struct nfsreq *rep;
+	struct proc *p;
 {
 	struct mbuf *sendnam;
 	int error, soflags, flags;
+
+	/* XXX nfs_doio()/nfs_request() calls with  rep->r_procp == NULL */
+	if (p == NULL && rep->r_procp == NULL) {
+#ifdef DIAGNOSTIC
+		printf("nfs_send: proc botch: rep %p arg %p curproc %p\n",
+		       rep->r_procp, p, curproc );
+#endif
+		p = curproc;
+	}
 
 	if (rep) {
 		if (rep->r_flags & R_SOFTTERM) {
@@ -454,7 +466,7 @@ nfs_send(so, nam, top, rep)
 		flags = 0;
 
 	error = (*so->so_send)(so, sendnam, (struct uio *)0, top,
-		(struct mbuf *)0, flags);
+		    (struct mbuf *)0, flags,  p);
 	if (error) {
 		if (rep) {
 			if (error == ENOBUFS && so->so_type == SOCK_DGRAM) {
@@ -514,10 +526,11 @@ nfs_send(so, nam, top, rep)
  * we have read any of it, even if the system call has been interrupted.
  */
 int
-nfs_receive(rep, aname, mp)
+nfs_receive(rep, aname, mp, p)
 	struct nfsreq *rep;
 	struct mbuf **aname;
 	struct mbuf **mp;
+	struct proc *p;
 {
 	struct socket *so;
 	struct uio auio;
@@ -527,7 +540,6 @@ nfs_receive(rep, aname, mp)
 	u_int32_t len;
 	struct mbuf **getnam;
 	int error, sotype, rcvflg;
-	struct proc *p = curproc;	/* XXX */
 
 	/*
 	 * Set up arguments for soreceive()
@@ -564,7 +576,7 @@ tryagain:
 		}
 		so = rep->r_nmp->nm_so;
 		if (!so) {
-			error = nfs_reconnect(rep); 
+			error = nfs_reconnect(rep, p); 
 			if (error) {
 				nfs_sndunlock(&rep->r_nmp->nm_iflag);
 				return (error);
@@ -574,10 +586,10 @@ tryagain:
 		while (rep->r_flags & R_MUSTRESEND) {
 			m = m_copym(rep->r_mreq, 0, M_COPYALL, M_WAIT);
 			nfsstats.rpcretries++;
-			error = nfs_send(so, rep->r_nmp->nm_nam, m, rep);
+			error = nfs_send(so, rep->r_nmp->nm_nam, m, rep, p);
 			if (error) {
 				if (error == EINTR || error == ERESTART ||
-				    (error = nfs_reconnect(rep)) != 0) {
+				    (error = nfs_reconnect(rep, p)) != 0) {
 					nfs_sndunlock(&rep->r_nmp->nm_iflag);
 					return (error);
 				}
@@ -689,7 +701,7 @@ errout:
 				 rep->r_nmp->nm_mountp->mnt_stat.f_mntfromname);
 			error = nfs_sndlock(&rep->r_nmp->nm_iflag, rep);
 			if (!error)
-				error = nfs_reconnect(rep);
+				error = nfs_reconnect(rep, p);
 			if (!error)
 				goto tryagain;
 			else
@@ -730,8 +742,9 @@ errout:
  */
 /* ARGSUSED */
 int
-nfs_reply(myrep)
+nfs_reply(myrep, procp)
 	struct nfsreq *myrep;
+	struct proc *procp;
 {
 	struct nfsreq *rep;
 	struct nfsmount *nmp = myrep->r_nmp;
@@ -760,7 +773,7 @@ nfs_reply(myrep)
 		 * Get the next Rpc reply off the socket
 		 */
 		nmp->nm_waiters++;
-		error = nfs_receive(myrep, &nam, &mrep);
+		error = nfs_receive(myrep, &nam, &mrep, procp);
 		nfs_rcvunlock(nmp);
 		if (error) {
 
@@ -1050,7 +1063,7 @@ tryagain:
 			error = nfs_sndlock(&nmp->nm_iflag, rep);
 		if (!error) {
 			m = m_copym(rep->r_mreq, 0, M_COPYALL, M_WAIT);
-			error = nfs_send(nmp->nm_so, nmp->nm_nam, m, rep);
+			error = nfs_send(nmp->nm_so, nmp->nm_nam, m, rep, procp);
 			if (nmp->nm_soflags & PR_CONNREQUIRED)
 				nfs_sndunlock(&nmp->nm_iflag);
 		}
@@ -1067,7 +1080,7 @@ tryagain:
 	 * Wait for the reply from our send or the timer's.
 	 */
 	if (!error || error == EPIPE)
-		error = nfs_reply(rep);
+		error = nfs_reply(rep, procp);
 
 	/*
 	 * RPC done, unlink the request.
@@ -2009,7 +2022,8 @@ nfsrv_rcv(so, arg, waitflag)
 		slp->ns_flag |= SLP_NEEDQ; goto dorecs;
 	}
 #endif
-	auio.uio_procp = NULL;
+	/* XXX: was NULL, soreceive() requires non-NULL uio->uio_procp */
+	auio.uio_procp = curproc;	/* XXX curproc */
 	if (so->so_type == SOCK_STREAM) {
 		/*
 		 * If there are already records on the queue, defer soreceive()

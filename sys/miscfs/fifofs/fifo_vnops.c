@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.48 2004/05/12 02:07:37 jrf Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.49 2004/05/22 22:52:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.48 2004/05/12 02:07:37 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.49 2004/05/22 22:52:14 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,13 +162,15 @@ fifo_open(void *v)
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		MALLOC(fip, struct fifoinfo *, sizeof(*fip), M_VNODE, M_WAITOK);
 		vp->v_fifoinfo = fip;
-		if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0)) != 0) {
+		error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, p);
+		if (error != 0) {
 			free(fip, M_VNODE);
 			vp->v_fifoinfo = NULL;
 			return (error);
 		}
 		fip->fi_readsock = rso;
-		if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0)) != 0) {
+		error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, p);
+		if (error != 0) {
 			(void)soclose(rso);
 			free(fip, M_VNODE);
 			vp->v_fifoinfo = NULL;
@@ -310,7 +312,7 @@ fifo_write(void *v)
 		wso->so_state |= SS_NBIO;
 	VOP_UNLOCK(ap->a_vp, 0);
 	error = (*wso->so_send)(wso, (struct mbuf *)0, ap->a_uio, 0,
-	    (struct mbuf *)0, 0);
+	    (struct mbuf *)0, 0, curproc /*XXX*/);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_state &= ~SS_NBIO;
