@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.51 1998/03/24 23:47:28 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.52 1998/03/25 00:03:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.51 1998/03/24 23:47:28 cgd Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.52 1998/03/25 00:03:19 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,13 +140,15 @@ static int mbrpt_nobsd; /* MBR partition table exists, but no BSD partition */
 static struct dos_partition *readmbr __P((int));
 #define MBRSIGOFS 0x1fe
 static char mbrsig[2] = {0x55, 0xaa};
-static void confirm __P((const char *));
 #endif
 #ifdef __arm32__
 static u_int filecore_partition_offset;
 static u_int get_filecore_partition __P((int));
 static u_int filecore_checksum __P((u_char *));
 #endif	/* __arm32__ */
+#if defined(__i386__) || (defined(__arm32__) && defined(notyet))
+static void confirm __P((const char *));
+#endif
 
 int main __P((int, char *[]));
 
@@ -419,14 +421,14 @@ makelabel(type, name, lp)
 		(void)strncpy(lp->d_packname, name, sizeof(lp->d_packname));
 }
 
-#ifdef __i386__
+#if defined(__i386__) || (defined(__arm32__) && defined(notyet))
 static void
 confirm(txt)
 	const char *txt;
 {
 	int first, ch;
 
-	(void) printf(txt);
+	(void) printf("%s? [n]: ", txt);
 	(void) fflush(stdout);
 	first = ch = getchar();
 	while (ch != '\n' && ch != EOF)
@@ -470,16 +472,16 @@ writelabel(f, boot, lp)
 		 */
 		if (dosdp) {
 			if (dosdp->dp_start != pp->p_offset)
-				confirm("Write outside MBR partition? [n]: ");
+				confirm("Write outside MBR partition");
 		        sectoffset = pp->p_offset * lp->d_secsize;
 		} else {
 			if (mbrpt_nobsd)
-				confirm("Erase the previous contents "
-					"of the disk? [n]: ");
+				confirm("Erase the previous contents of the disk");
 			sectoffset = 0;
 		}
 #endif
 #ifdef __arm32__
+		/* XXX */
 		sectoffset = filecore_partition_offset * DEV_BSIZE;
 #endif	/* __arm32__ */
 		/*
@@ -780,6 +782,7 @@ readlabel(f)
 			sectoffset = dosdp->dp_start * DEV_BSIZE;
 #endif
 #ifdef __arm32__
+		/* XXX */
 		sectoffset = filecore_partition_offset * DEV_BSIZE;
 #endif	/* __arm32__ */
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
@@ -1642,6 +1645,9 @@ checklabel(lp)
 		lp->d_secperunit = dosdp->dp_start + dosdp->dp_size;
 	}
 	/* XXX should also check geometry against BIOS's idea */
+#endif
+#ifdef __arm32__notyet__
+	/* XXX similar code as for i386 */
 #endif
 	if (lp->d_bbsize == 0) {
 		warnx("boot block size %d", lp->d_bbsize);
