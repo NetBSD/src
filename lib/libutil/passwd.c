@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.10 1997/07/24 08:50:31 phil Exp $	*/
+/*	$NetBSD: passwd.c,v 1.11 1997/12/31 05:47:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.10 1997/07/24 08:50:31 phil Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.11 1997/12/31 05:47:15 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -90,7 +90,7 @@ pw_mkdb()
 	if (pid == 0) {
 		execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p",
 		      _PATH_MASTERPASSWD_LOCK, NULL);
-		exit(1);
+		_exit(1);
 	}
 	pid = waitpid(pid, &pstat, 0);
 	if (pid == -1 || !WIFEXITED(pstat) || WEXITSTATUS(pstat) != 0)
