@@ -1,11 +1,11 @@
-/*	$NetBSD: zsvar.h,v 1.8 2000/11/09 19:51:57 scw Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.9 2000/11/15 21:32:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe and Steve C. Woodford.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,9 +36,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MVME68K_ZSVAR_H
-#define _MVME68K_ZSVAR_H
-
 /*
  * Non-exported definitons common to the different attachment
  * types for the SCC on the Motorola MVME series of computers.
@@ -47,48 +44,51 @@
 /*
  * The MVME-147 provides a 5 MHz clock to the SCC chips.
  */
-#define ZSMVME_PCLK_147	5000000		/* PCLK pin input clock rate */
+#define PCLK_147	5000000		/* PCLK pin input clock rate */
 
 /*
  * The MVME-162 provides a 10 MHz clock to the SCC chips.
  */
-#define ZSMVME_PCLK_162	10000000	/* PCLK pin input clock rate */
+#define PCLK_162	10000000	/* PCLK pin input clock rate */
 
 /*
- * ZS should interrupt host at level 4.
+ * SCC should interrupt host at level 4.
  */
-#define ZSMVME_HARD_PRI	4
+#define ZSHARD_PRI	4
+
+/*
+ * No delay needed when writing SCC registers.
+ */
+#define ZS_DELAY()
 
 /*
  * XXX Make cnprobe a little easier.
  */
-#define NZSMVMEC	2
+#define NZSC	2
 
-
-struct zsmvme_softc {
-	struct zsc_softc	sc_zsc;
-	struct zs_chanstate	sc_cs_store[2];
-	void			*sc_softintr_cookie;
+/*
+ * The layout of this is hardware-dependent (padding, order).
+ */
+struct zschan {
+	volatile u_char *zc_csr;	/* ctrl,status, and indirect access */
+	volatile u_char *zc_data;	/* data */
 };
 
-struct zsmvme_config {
-	bus_space_tag_t	zc_bt;
-	struct {
-		bus_space_handle_t zc_csrbh;
-		bus_space_handle_t zc_databh;
-	} zc_s[2];
-	int		zc_vector;
-	int		zc_pclk;
+struct zsdevice {
+	/* Yes, they are backwards. */
+	struct	zschan zs_chan_b;
+	struct	zschan zs_chan_a;
 };
 
 /* Globals exported from zs.c */
-extern	u_char zsmvme_init_reg[];
-extern	struct zs_chanstate *zsmvme_conschan;
+extern	u_char zs_init_reg[];
 
 /* Functions exported to ASIC-specific drivers. */
-void	zsmvme_config __P((struct zsmvme_softc *, struct zsmvme_config *));
-void	zsmvme_cnconfig __P((int, int, struct zsmvme_config *));
-int	zsmvme_getc(void *);
-void	zsmvme_putc(void *, int);
-
-#endif /* _MVME68K_ZSVAR_H */
+void	zs_config __P((struct zsc_softc *, struct zsdevice *, int, int));
+void	zs_cnconfig __P((int, int, struct zsdevice *, int));
+#ifdef MVME147
+int	zshard_shared __P((void *));
+#endif
+#ifdef MVME162
+int	zshard_unshared(void *);
+#endif
