@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.22 2002/10/12 12:20:10 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.23 2002/10/13 14:54:48 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -142,12 +142,12 @@ ENTRY(setrunqueue)
 .Lsetrunqueue_erg:
 	mov	r2, r1
 	mov	r1, r0
-	add	r0, pc, #.Ltext1 - . - 8
+	adr	r0, .Ltext1
 	bl	_C_LABEL(printf)
 
 	ldr	r2, .Lqs
 	ldr	r1, [r2]
-	add	r0, pc, #.Ltext2 - . - 8
+	adr	r0, .Ltext2
 	b	_C_LABEL(panic)	
 
 .Ltext1:
@@ -557,10 +557,8 @@ ENTRY(cpu_switch)
 
 	stmfd	sp!, {r0-r3}
 	ldr	r1, .Lcpufuncs
-	add	lr, pc, #.Lcs_cache_purged - . - 8
+	mov	lr, pc
 	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
-
-.Lcs_cache_purged:
 	ldmfd	sp!, {r0-r3}
 
 .Lcs_cache_purge_skipped:
@@ -582,10 +580,9 @@ ENTRY(cpu_switch)
 
 	/* Switch the memory to the new process */
 	ldr	r3, .Lcpufuncs
-	add	lr, pc, #.Lcs_context_switched - . - 8
+	mov	lr, pc
 	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
        
-.Lcs_context_switched:
 	/*
 	 * This can be optimised... We know we want to go from SVC32
 	 * mode to UND32 mode
@@ -694,10 +691,9 @@ ENTRY(switch_exit)
 	stmfd	sp!, {r0-r3}
 
 	ldr	r0, .Lcpufuncs
-	add	lr, pc, #.Lse_cache_purged - . - 8
+	mov	lr, pc
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
-.Lse_cache_purged:
 	ldmfd	sp!, {r0-r3}
 
 	IRQdisable
@@ -707,10 +703,9 @@ ENTRY(switch_exit)
 
 	/* Switch the memory to the new process */
 	ldr	r4, .Lcpufuncs
-	add	lr, pc, #.Lse_context_switched - . - 8
+	mov	lr, pc
 	ldr	pc, [r4, #CF_CONTEXT_SWITCH]
        
-.Lse_context_switched:
 	/* Restore all the save registers */
 	add	r7, r2, #PCB_R8
 	ldmia	r7, {r8-r13}
