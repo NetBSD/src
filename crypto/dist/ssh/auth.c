@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.11 2002/03/08 02:00:51 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.12 2002/04/22 07:59:36 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.35 2002/03/01 13:12:10 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.41 2002/03/19 15:31:47 markus Exp $");
 
 #include <libgen.h>
 
@@ -40,6 +40,7 @@ RCSID("$OpenBSD: auth.c,v 1.35 2002/03/01 13:12:10 markus Exp $");
 #include "bufaux.h"
 #include "uidswap.h"
 #include "tildexpand.h"
+#include "misc.h"
 
 #ifdef HAVE_LOGIN_CAP
 #include <login_cap.h>
@@ -198,17 +199,17 @@ allowed_user(struct passwd * pw)
 	/* Return false if user is listed in DenyUsers */
 	if (options.num_deny_users > 0) {
 		for (i = 0; i < options.num_deny_users; i++)
- 			if (match_user(pw->pw_name, hostname, ipaddr,
+			if (match_user(pw->pw_name, hostname, ipaddr,
 			    options.deny_users[i])) {
- 				log("User %.100s not allowed because listed in DenyUsers",
- 				    pw->pw_name);
+				log("User %.100s not allowed because listed in DenyUsers",
+				    pw->pw_name);
 				return 0;
 			}
 	}
 	/* Return false if AllowUsers isn't empty and user isn't listed there */
 	if (options.num_allow_users > 0) {
 		for (i = 0; i < options.num_allow_users; i++)
- 			if (match_user(pw->pw_name, hostname, ipaddr,
+			if (match_user(pw->pw_name, hostname, ipaddr,
 			    options.allow_users[i]))
 				break;
 		/* i < options.num_allow_users iff we break for loop */
@@ -493,4 +494,38 @@ secure_filename(FILE *f, const char *file, struct passwd *pw,
 			break;
 	}
 	return 0;
+}
+
+struct passwd *
+getpwnamallow(const char *user)
+{
+#ifdef HAVE_LOGIN_CAP
+	extern login_cap_t *lc;
+#ifdef BSD_AUTH
+	auth_session_t *as;
+#endif
+#endif
+	struct passwd *pw;
+
+	pw = getpwnam(user);
+	if (pw == NULL || !allowed_user(pw))
+		return (NULL);
+#ifdef HAVE_LOGIN_CAP
+	if ((lc = login_getclass(pw->pw_class)) == NULL) {
+		debug("unable to get login class: %s", user);
+		return (NULL);
+	}
+#ifdef BSD_AUTH
+	if ((as = auth_open()) == NULL || auth_setpwd(as, pw) != 0 ||
+	    auth_approval(NULL, lc, pw->pw_name, "ssh") <= 0) {
+		debug("Approval failure for %s", user);
+		pw = NULL;
+	}
+	if (as != NULL)
+		auth_close(as);
+#endif
+#endif
+	if (pw != NULL)
+		return (pwcopy(pw));
+	return (NULL);
 }

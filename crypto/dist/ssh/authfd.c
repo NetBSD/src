@@ -1,4 +1,4 @@
-/*	$NetBSD: authfd.c,v 1.9 2002/03/08 02:00:51 itojun Exp $	*/
+/*	$NetBSD: authfd.c,v 1.10 2002/04/22 07:59:37 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.48 2002/02/24 19:14:59 markus Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.49 2002/03/21 22:44:05 rees Exp $");
 
 #include <openssl/evp.h>
 
@@ -533,7 +533,7 @@ ssh_remove_identity(AuthenticationConnection *auth, Key *key)
 }
 
 int
-ssh_update_card(AuthenticationConnection *auth, int add, const char *reader_id)
+ssh_update_card(AuthenticationConnection *auth, int add, const char *reader_id, const char *pin)
 {
 	Buffer msg;
 	int type;
@@ -542,6 +542,7 @@ ssh_update_card(AuthenticationConnection *auth, int add, const char *reader_id)
 	buffer_put_char(&msg, add ? SSH_AGENTC_ADD_SMARTCARD_KEY :
 	    SSH_AGENTC_REMOVE_SMARTCARD_KEY);
 	buffer_put_cstring(&msg, reader_id);
+	buffer_put_cstring(&msg, pin);
 	if (ssh_request_reply(auth, &msg, &msg) == 0) {
 		buffer_free(&msg);
 		return 0;

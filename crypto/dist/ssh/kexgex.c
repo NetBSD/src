@@ -1,4 +1,4 @@
-/*	$NetBSD: kexgex.c,v 1.7 2002/03/08 02:00:53 itojun Exp $	*/
+/*	$NetBSD: kexgex.c,v 1.8 2002/04/22 07:59:40 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kexgex.c,v 1.20 2002/02/28 15:46:33 markus Exp $");
+RCSID("$OpenBSD: kexgex.c,v 1.22 2002/03/24 17:27:03 stevesk Exp $");
 
 #include <openssl/bn.h>
 
@@ -39,6 +39,7 @@ RCSID("$OpenBSD: kexgex.c,v 1.20 2002/02/28 15:46:33 markus Exp $");
 #include "dh.h"
 #include "ssh2.h"
 #include "compat.h"
+#include "monitor_wrap.h"
 
 static u_char *
 kexgex_hash(
@@ -260,7 +261,7 @@ kexgex_server(Kex *kex)
 {
 	BIGNUM *shared_secret = NULL, *dh_client_pub = NULL;
 	Key *server_host_key;
-	DH *dh = dh;
+	DH *dh;
 	u_char *kbuf, *hash, *signature = NULL, *server_host_key_blob = NULL;
 	u_int sbloblen, klen, kout, slen;
 	int min = -1, max = -1, nbits = -1, type;
@@ -297,7 +298,8 @@ kexgex_server(Kex *kex)
 		fatal("DH_GEX_REQUEST, bad parameters: %d !< %d !< %d",
 		    min, nbits, max);
 
-	dh = choose_dh(min, nbits, max);
+	/* Contact privileged parent */
+	dh = PRIVSEP(choose_dh(min, nbits, max));
 	if (dh == NULL)
 		packet_disconnect("Protocol error: no matching DH grp found");
 
@@ -380,7 +382,7 @@ kexgex_server(Kex *kex)
 
 	/* sign H */
 	/* XXX hashlen depends on KEX */
-	key_sign(server_host_key, &signature, &slen, hash, 20);
+	PRIVSEP(key_sign(server_host_key, &signature, &slen, hash, 20));
 
 	/* destroy_sensitive_data(); */
 
@@ -391,6 +393,7 @@ kexgex_server(Kex *kex)
 	packet_put_bignum2(dh->pub_key);	/* f */
 	packet_put_string(signature, slen);
 	packet_send();
+
 	xfree(signature);
 	xfree(server_host_key_blob);
 	/* have keys, free DH */
