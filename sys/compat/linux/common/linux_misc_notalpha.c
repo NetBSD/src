@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.55 2000/06/29 02:40:39 mrg Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.56 2000/07/13 17:32:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,10 @@ linux_sys_alarm(p, v, retval)
 	}
 
 	if (timerisset(&it.it_value)) {
+		/*
+		 * Don't need to check hzto() return value, here.
+		 * callout_reset() does it for us.
+		 */
 		timeradd(&it.it_value, &time, &it.it_value);
 		callout_reset(&p->p_realit_ch, hzto(&it.it_value),
 		    realitexpire, p);
