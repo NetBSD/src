@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.23 1998/04/30 21:22:00 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.24 1998/06/02 20:41:47 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,6 +43,7 @@
  * Created      : 15/10/94
  */
 
+#include "opt_uvm.h"
 #include "assym.h"
 #include <machine/param.h>
 #include <machine/cpu.h>
@@ -650,7 +651,11 @@ Lse_context_switched:
 	 * pmap gets released in vmspace_free()
 	 */
 	ldr	r0, [r3, #(P_VMSPACE)]
+#if defined(UVM)
+	bl	_uvmspace_free
+#else
 	bl	_vmspace_free
+#endif
 
 	/* This has to be done here */
 	mov	r2, #(UPAGES << PGSHIFT)
@@ -658,7 +663,11 @@ Lse_context_switched:
 	ldr	r1, [r0, #(P_ADDR)]
 	ldr	r0, Lkernel_map
 	ldr	r0, [r0]
+#if defined(UVM)
+	bl	_uvm_km_free
+#else
 	bl	_kmem_free
+#endif
 
 	/* Paranoia */
 	mov	r0, #0x00000000

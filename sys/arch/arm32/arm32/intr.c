@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 1998/02/21 23:21:28 mark Exp $	*/
+/*	$NetBSD: intr.c,v 1.5 1998/06/02 20:41:48 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -33,22 +33,19 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * RiscBSD kernel project
- *
- * irqhandler.c
- *
- * IRQ/FIQ initialisation, claim, release and handler routines
- *
- * Created      : 30/09/94
  */
 
+#include "opt_uvm.h"
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <vm/vm.h>
 #include <net/netisr.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/irqhandler.h>
 #include <machine/cpu.h>
@@ -126,7 +123,11 @@ dosoftints()
 	 */
 
 	if (softints & IRQMASK_SOFTCLOCK) {
-		++cnt.v_soft;
+#if defined(UVM)
+		++uvmexp.softs;
+#else
+  		++cnt.v_soft;
+#endif
 #ifdef IRQSTATS
 		++intrcnt[IRQ_SOFTCLOCK];
 #endif	/* IRQSTATS */
@@ -139,7 +140,11 @@ dosoftints()
 	 */
 
 	if (softints & IRQMASK_SOFTNET) {
-		++cnt.v_soft;
+#if defined(UVM)
+		++uvmexp.softs;
+#else
+  		++cnt.v_soft;
+#endif
 #ifdef IRQSTATS
 		++intrcnt[IRQ_SOFTNET];
 #endif	/* IRQSTATS */

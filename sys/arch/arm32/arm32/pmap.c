@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.23 1998/05/19 19:00:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 1998/06/02 20:41:50 mark Exp $	*/
 
 /*
- * Copyright (c) 1994-1997 Mark Brinicombe.
+ * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -17,22 +17,19 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
- * 4. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
- *    prior written permission.
+ *	This product includes software developed by Mark Brinicombe.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  *
  * RiscBSD kernel project
  *
@@ -44,22 +41,13 @@
  */
 
 /*
- * XXX XXX XXX
- *
- * There are one or two ultra gross hacks in the file. This fix some
- * nightmare problems with double mappings.
- * This file is being rewritten from the ground up and these problems
- * will disappear then. In the mean this this GROSS hack can be used.
- * Due to the serious performance hit with the SA110 and this problem
- * a temporary fix is needed prior to the complete pmap rewrite.
+ * Performance improvements, UVM changes, overhauls and part-rewrites
+ * were contributed by Neil A. Carson <neil@causality.com>.
  */
 
 /*
  * The dram block info is currently referenced from the bootconfig.
- * This should be placed in a separate structure
- *
- * sob sob sob - been looking at other pmap code ... don't think
- * I should have base mine of the i386 code ...
+ * This should be placed in a separate structure.
  */
 
 /*
@@ -68,6 +56,8 @@
  */
     
 /* Include header files */
+
+#include "opt_uvm.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,6 +71,10 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
+
 #include <machine/bootconfig.h>
 #include <machine/pmap.h>
 #include <machine/pcb.h>
@@ -91,19 +85,13 @@
 #include "hydrabus.h"
 #endif	/* HYDRA */
 
-#define bzero_pagedir(s) bzero(s, PD_SIZE)
-
-#define VM_KERNEL_VIRTUAL_MIN     KERNEL_VM_BASE + 0x00000000
-#define VM_KERNEL_VIRTUAL_MAX     KERNEL_VM_BASE + 0x01ffffff
-
-#define pmap_pde(m, v) (&((m)->pm_pdir[((vm_offset_t)(v) >> PDSHIFT)&4095]))
-
-#define pmap_pte_pa(pte)	(*(pte) & PG_FRAME)
-#define pmap_pde_v(pde)		(*(pde) != 0)
-#define pmap_pte_v(pte)		(*(pte) != 0)
-
 #ifdef PMAP_DEBUG
+#define	PDEBUG(_lev_,_stat_) \
+	if (pmap_debug_level >= (_lev_)) \
+        	((_stat_))
 int pmap_debug_level = -2;
+#else	/* PMAP_DEBUG */
+#define	PDEBUG(_lev_,_stat_) /* Nothing */
 #endif	/* PMAP_DEBUG */
 
 struct pmap     kernel_pmap_store;
@@ -118,9 +106,11 @@ extern caddr_t msgbufaddr;
 #if !defined(MACHINE_NEW_NONCONTIG)
 u_char *pmap_attributes = NULL;
 pv_entry_t pv_table = NULL;
-#endif	/* !MACHINE_NEW_NONCONTIG */
-boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
+#endif
+boolean_t pmap_initialized = FALSE;	/* Has pmap_init completed? */
+
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
+
 int pv_nfree = 0;
 
 vm_size_t npages;
@@ -160,13 +150,12 @@ SIMPLEQ_HEAD(l1pt_queue, l1pt);
 struct l1pt_queue l1pt_static_queue;	/* head of our static l1 queue */
 int l1pt_static_queue_count;		/* items in the static l1 queue */
 int l1pt_static_create_count;		/* static l1 items created */
-struct l1pt_queue l1pt_queue;	/* head of our l1 queue */
-int l1pt_queue_count;		/* items in the l1 queue */
-int l1pt_create_count;		/* stat - L1's create count */
-int l1pt_reuse_count;		/* stat - L1's reused count */
+struct l1pt_queue l1pt_queue;		/* head of our l1 queue */
+int l1pt_queue_count;			/* items in the l1 queue */
+int l1pt_create_count;			/* stat - L1's create count */
+int l1pt_reuse_count;			/* stat - L1's reused count */
 
 /* Local function prototypes (not used outside this file) */
-
 pt_entry_t *pmap_pte __P((pmap_t pmap, vm_offset_t va));
 int pmap_page_index __P((vm_offset_t pa)); 
 void map_pagetable __P((vm_offset_t pagetable, vm_offset_t va,
@@ -175,8 +164,9 @@ void pmap_copy_on_write __P((vm_offset_t pa));
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
-void bzero_page __P((vm_offset_t));
-void bcopy_page __P((vm_offset_t, vm_offset_t));
+/* Other function prototypes */
+extern void bzero_page __P((vm_offset_t));
+extern void bcopy_page __P((vm_offset_t, vm_offset_t));
 
 struct l1pt *pmap_alloc_l1pt __P((void));
 static __inline void pmap_map_in_l1 __P((pmap_t pmap, vm_offset_t va,
@@ -216,9 +206,14 @@ pmap_alloc_pv()
 	 * Do we have any free pv_entry structures left ?
 	 * If not allocate a page of them
 	 */
-  
+
 	if (pv_nfree == 0) {
+#if defined(UVM)
+		/* NOTE: can't lock kernel_map here */
+		MALLOC(pvp, struct pv_page *, NBPG, M_VMPVENT, M_WAITOK);
+#else
 		pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG);
+#endif
 		if (pvp == 0)
 			panic("pmap_alloc_pv: kmem_alloc() failed");
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
@@ -266,12 +261,16 @@ pmap_free_pv(pv)
 	case NPVPPG:
 		pv_nfree -= NPVPPG - 1;
 		TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+#if defined(UVM)
+		FREE((vm_offset_t)pvp, M_VMPVENT);
+#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#endif
 		break;
 	}
 }
 
-
+#if 0
 void
 pmap_collect_pv()
 {
@@ -288,7 +287,8 @@ pmap_collect_pv()
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
 		if (pvp->pvp_pgi.pgi_nfree > NPVPPG / 3) {
 			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
-			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp, pvp_pgi.pgi_list);
+			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp,
+			    pvp_pgi.pgi_list);
 			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
 			pvp->pvp_pgi.pgi_nfree = -1;
 		}
@@ -306,7 +306,8 @@ pmap_collect_pv()
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
 				pvp = pv_page_freelist.tqh_first;
 				if (--pvp->pvp_pgi.pgi_nfree == 0) {
-					TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
+					TAILQ_REMOVE(&pv_page_freelist,
+					    pvp, pvp_pgi.pgi_list);
 				}
 				npv = pvp->pvp_pgi.pgi_freelist;
 #ifdef DIAGNOSTIC
@@ -325,9 +326,14 @@ pmap_collect_pv()
 
 	for (pvp = pv_page_collectlist.tqh_first; pvp; pvp = npvp) {
 		npvp = pvp->pvp_pgi.pgi_list.tqe_next;
+#if defined(UVM)
+		FREE((vm_offset_t)pvp, M_VMPVENT);
+#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#endif
 	}
 }
+#endif
 
 /*
  * Enter a new physical-virtual mapping into the pv table
@@ -348,11 +354,8 @@ pmap_enter_pv(pmap, va, pv, flags)
 
 	s = splimp();
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 5)
-		printf("pmap_enter_pv: pv %p: %08lx/%p/%p\n",
-		    pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(5, printf("pmap_enter_pv: pv %p: %08lx/%p/%p\n",
+	    pv, pv->pv_va, pv->pv_pmap, pv->pv_next));
 
 	if (pv->pv_pmap == NULL) {
 		/*
@@ -457,23 +460,16 @@ pmap_modify_pv(pmap, va, pv, bic_mask, eor_mask)
 	u_int s;
 	u_int flags;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 5)
-		printf("pmap_modify_pv(pmap=%p, va=%08lx, pv=%p, bic_mask=%08x, eor_mask=%08x)\n",
-		    pmap, va, pv, bic_mask, eor_mask);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(5, printf("pmap_modify_pv(pmap=%p, va=%08lx, pv=%p, bic_mask=%08x, eor_mask=%08x)\n",
+	    pmap, va, pv, bic_mask, eor_mask));
 
 	if (!pmap_initialized)
 		return(0);
 
 	s = splimp();
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 5)
-		printf("pmap_modify_pv: pv %p: %08lx/%p/%p/%08x ",
-		    pv, pv->pv_va, pv->pv_pmap, pv->pv_next,
-		    pv->pv_flags);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(5, printf("pmap_modify_pv: pv %p: %08lx/%p/%p/%08x ",
+	    pv, pv->pv_va, pv->pv_pmap, pv->pv_next, pv->pv_flags));
 
 	/*
 	 * There is at least one VA mapping this page.
@@ -483,19 +479,13 @@ pmap_modify_pv(pmap, va, pv, bic_mask, eor_mask)
 		if (pmap == npv->pv_pmap && va == npv->pv_va) {
 			flags = npv->pv_flags;
 			npv->pv_flags = ((flags & ~bic_mask) ^ eor_mask);
-#ifdef PMAP_DEBUG
-			if (pmap_debug_level >= 0)
-				printf("done flags=%08x\n", flags);
-#endif	/* PMAP_DEBUG */
+			PDEBUG(0, printf("done flags=%08x\n", flags));
 			(void)splx(s);
 			return(flags);
 		}
 	}
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("done.\n");
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("done.\n"));
 	(void)splx(s);
 	return(0);
 }
@@ -515,11 +505,9 @@ pmap_map_in_l1(pmap, va, l2pa)
 
 	/* Calculate the index into the L1 page table */
 	ptva = (va >> PDSHIFT) & ~3;
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("wiring %08lx in to pd%p pte0x%lx va0x%lx\n", l2pa,
-		    pmap->pm_pdir, L1_PTE(l2pa), ptva);
-#endif	/* PMAP_DEBUG */
+
+	PDEBUG(0, printf("wiring %08lx in to pd%p pte0x%lx va0x%lx\n", l2pa,
+	    pmap->pm_pdir, L1_PTE(l2pa), ptva));
 
 	/* Map page table into the L1 */
 	pmap->pm_pdir[ptva + 0] = L1_PTE(l2pa + 0x000);
@@ -527,11 +515,8 @@ pmap_map_in_l1(pmap, va, l2pa)
 	pmap->pm_pdir[ptva + 2] = L1_PTE(l2pa + 0x800);
 	pmap->pm_pdir[ptva + 3] = L1_PTE(l2pa + 0xc00);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pt self reference %lx in %lx\n",
-		    L2_PTE_NC_NB(l2pa, AP_KRW), pmap->pm_vptpt);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pt self reference %lx in %lx\n",
+	    L2_PTE_NC_NB(l2pa, AP_KRW), pmap->pm_vptpt));
 
 	/* Map the page table into the page table area */
 	*((pt_entry_t *)(pmap->pm_vptpt + ptva)) =
@@ -549,7 +534,6 @@ pmap_map_in_l1(pmap, va, l2pa)
  *	For now, VM is already on, we only need to map the
  *	specified memory.
  */
-
 vm_offset_t
 pmap_map(va, spa, epa, prot)
 	vm_offset_t va, spa, epa;
@@ -574,7 +558,7 @@ pmap_map(va, spa, epa, prot)
  * and also allocated virtual addresses for certain page hooks.
  * Currently the only one page hook is allocated that is used
  * to zero physical pages of memory.
- * It also initialises the start and end address of the kernel data space.                 
+ * It also initialises the start and end address of the kernel data space.
  */
 extern vm_offset_t physical_freestart;
 extern vm_offset_t physical_freeend;
@@ -594,7 +578,11 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	/*
 	 * Initialize PAGE_SIZE-dependent variables.
 	 */
+#if defined(UVM)
+	uvm_setpagesize();
+#else
 	vm_set_page_size();
+#endif
 
 #if defined(MACHINE_NEW_NONCONTIG)
 	{
@@ -609,15 +597,21 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 				start = physical_freestart;
 			if (end > physical_freeend)
 				end = physical_freeend;
+			printf("%d: %lx -> %lx\n", loop, start, end-1);
+#if defined(UVM)
+			uvm_page_physload(atop(start), atop(end),
+					  atop(start), atop(end));
+#else
 			vm_page_physload(atop(start), atop(end),
 			    atop(start), atop(end));
+#endif
 			++loop;
 		}
 	}
 #endif	/* MACHINE_NEW_NONCONTIG */
 
-	virtual_start = VM_KERNEL_VIRTUAL_MIN;
-	virtual_end = VM_KERNEL_VIRTUAL_MAX;
+	virtual_start = KERNEL_VM_BASE;
+	virtual_end = KERNEL_VM_BASE + KERNEL_VM_SIZE;
 
 	ALLOC_PAGE_HOOK(page_hook0, NBPG);
 	ALLOC_PAGE_HOOK(page_hook1, NBPG);
@@ -637,7 +631,8 @@ pmap_bootstrap(kernel_l1pt, kernel_ptpt)
 	hydrascratch.virtual = virtual_start;
 	virtual_start += NBPG;
 
-	*((pt_entry_t *)pmap_pte(kernel_pmap, hydrascratch.virtual)) = L2_PTE_NC_NB(hydrascratch.physical, AP_KRW);
+	*((pt_entry_t *)pmap_pte(kernel_pmap, hydrascratch.virtual)) =
+	    L2_PTE_NC_NB(hydrascratch.physical, AP_KRW);
 	cpu_tlb_flushD_SE(hydrascratch.virtual);
 #endif	/* NHYDRABUS */
 	cpu_cache_cleanD();
@@ -680,7 +675,13 @@ pmap_init()
 		npages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
 	s = (vm_size_t) (sizeof(struct pv_entry) * npages + npages);
 	s = round_page(s);
-	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
+#if defined(UVM)
+	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, s);
+#else
+	addr = (vm_offset_t)kmem_alloc(kernel_map, s);
+#endif
+	if (addr == NULL)
+		panic("pmap_init");
 
 	/* allocate pv_entry stuff first */
 	for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
@@ -748,7 +749,11 @@ pmap_init()
     
 	s = (vm_size_t) (sizeof(struct pv_entry) * npages + npages);
 	s = round_page(s);
-	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
+#if defined(UVM)
+	addr = (vm_offset_t)uvm_km_zalloc(kernel_map, s);
+#else
+	addr = (vm_offset_t)kmem_alloc(kernel_map, s);
+#endif
 #ifdef DIAGNOSTIC	
 	if (addr == 0)
 		panic("pmap_init: Cannot allocate memory for pv_table\n");
@@ -858,7 +863,11 @@ pmap_alloc_l1pt(void)
 	pt_entry_t *pte;
 
 	/* Allocate virtual address space for the L1 page table */
+#if defined(UVM)
+	va = uvm_km_valloc(kernel_map, PD_SIZE);
+#else
 	va = kmem_alloc_pageable(kernel_map, PD_SIZE);
+#endif
 	if (va == 0) {
 #ifdef DIAGNOSTIC
 		printf("pmap: Cannot allocate pageable memory for L1\n");
@@ -873,8 +882,13 @@ pmap_alloc_l1pt(void)
 	 * Allocate pages from the VM system.
 	 */
 	TAILQ_INIT(&pt->pt_plist);
+#if defined(UVM)
+	error = uvm_pglistalloc(PD_SIZE, physical_start, physical_end,
+	    PD_SIZE, 0, &pt->pt_plist, 1, M_WAITOK);
+#else
 	error = vm_page_alloc_memory(PD_SIZE, physical_start, physical_end,
 	    PD_SIZE, 0, &pt->pt_plist, 1, M_WAITOK);
+#endif
 	if (error) {
 #ifdef DIAGNOSTIC
 		printf("pmap: Cannot allocate physical memory for L1 (%d)\n",
@@ -882,7 +896,11 @@ pmap_alloc_l1pt(void)
 #endif	/* DIAGNOSTIC */
 		/* Release the resources we already have claimed */
 		free(pt, M_VMPMAP);
+#if defined(UVM)
+		uvm_km_free(kernel_map, va, PD_SIZE);
+#else
 		kmem_free(kernel_map, va, PD_SIZE);
+#endif
 		return(NULL);
 	}
 
@@ -898,7 +916,7 @@ pmap_alloc_l1pt(void)
 		/* Revoke cacheability and bufferability */
 		/* XXX should be done better than this */
 		pte = pmap_pte(pmap_kernel(), va);
-		*pte = (*pte) & ~(PT_C | PT_B);		
+		*pte = (*pte) & ~(PT_C | PT_B);
 
 		va += NBPG;
 		m = m->pageq.tqe_next;
@@ -924,10 +942,18 @@ pmap_free_l1pt(pt)
 	pmap_remove(kernel_pmap, pt->pt_va, pt->pt_va + PD_SIZE);
 
 	/* Return the physical memory */
+#if defined(UVM)
+	uvm_pglistfree(&pt->pt_plist);
+#else
 	vm_page_free_memory(&pt->pt_plist);
+#endif
 
 	/* Free the virtual space */
+#if defined(UVM)
+	uvm_km_free(kernel_map, pt->pt_va, PD_SIZE);
+#else
 	kmem_free(kernel_map, pt->pt_va, PD_SIZE);
+#endif
 
 	/* Free the l1pt structure */
 	free(pt, M_VMPMAP);
@@ -948,10 +974,7 @@ pmap_allocpagedir(pmap)
 	struct l1pt *pt;
 	pt_entry_t *pte;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_allocpagedir(%p)\n", pmap);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_allocpagedir(%p)\n", pmap));
 
 	/* Do we have any spare L1's lying around ? */
 	if (l1pt_static_queue_count) {
@@ -981,14 +1004,15 @@ pmap_allocpagedir(pmap)
 
 	/* Clean the L1 if it is dirty */
 	if (!(pt->pt_flags & PTFLAG_CLEAN))
-		bzero((void *)pmap->pm_pdir, PD_SIZE - 0x400);
+		bzero((void *)pmap->pm_pdir, (PD_SIZE - KERNEL_PD_SIZE));
 
 	/* Do we already have the kernel mappings ? */
 	if (!(pt->pt_flags & PTFLAG_KPT)) {
 		/* Duplicate the kernel mapping i.e. all mappings 0xf0000000+ */
 
-		bcopy((void *)kernel_pmap->pm_pdir + 0x3c00,
-		    (void *)pmap->pm_pdir + 0x3c00, 0x400);
+		bcopy((void *)kernel_pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
+		    (void *)pmap->pm_pdir + (PD_SIZE - KERNEL_PD_SIZE),
+		    KERNEL_PD_SIZE);
 		pt->pt_flags |= PTFLAG_KPT;
 	}
 
@@ -1000,12 +1024,16 @@ pmap_allocpagedir(pmap)
 		panic("pmap_allocpagedir: have pt already\n");
 	}
 #endif	/* DIAGNOSTIC */
+#if defined(UVM)
+	pmap->pm_vptpt = uvm_km_zalloc(kernel_map, NBPG);
+#else
 	pmap->pm_vptpt = kmem_alloc(kernel_map, NBPG);
+#endif
 	pmap->pm_pptpt = pmap_extract(kernel_pmap, pmap->pm_vptpt) & PG_FRAME;
 	/* Revoke cacheability and bufferability */
 	/* XXX should be done better than this */
 	pte = pmap_pte(kernel_pmap, pmap->pm_vptpt);
-	*pte = (*pte) & ~(PT_C | PT_B);		
+	*pte = (*pte) & ~(PT_C | PT_B);
 
 	/* Wire in this page table */
 	pmap_map_in_l1(pmap, PROCESS_PAGE_TBLS_BASE, pmap->pm_pptpt);
@@ -1019,8 +1047,10 @@ pmap_allocpagedir(pmap)
 	 */
 
 	bcopy((void *)(PROCESS_PAGE_TBLS_BASE
-	    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)) + 0xf00),
-	    (void *)pmap->pm_vptpt + 0xf00, 0x100);
+	    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT - 2))
+	    + ((PD_SIZE - KERNEL_PD_SIZE) >> 2)),
+	    (void *)pmap->pm_vptpt + ((PD_SIZE - KERNEL_PD_SIZE) >> 2),
+	    (KERNEL_PD_SIZE >> 2));
 
 	/*
 	 * Now we get nasty. We need to map the page
@@ -1077,10 +1107,7 @@ void
 pmap_pinit(pmap)
 	struct pmap *pmap;
 {
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_pinit(%p)\n", pmap);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_pinit(%p)\n", pmap));
 
 	/* Keep looping until we succeed in allocating a page directory */
 	while (pmap_allocpagedir(pmap) != 0) {
@@ -1114,7 +1141,11 @@ pmap_freepagedir(pmap)
 	pmap_t pmap;
 {
 	/* Free the memory used for the page table mapping */
+#if defined(UVM)
+	uvm_km_free(kernel_map, (vm_offset_t)pmap->pm_vptpt, NBPG);
+#else
 	kmem_free(kernel_map, (vm_offset_t)pmap->pm_vptpt, NBPG);
+#endif
 
 	/* junk the L1 page table */
 	if (pmap->pm_l1pt->pt_flags & PTFLAG_STATIC) {
@@ -1148,11 +1179,7 @@ pmap_destroy(pmap)
 	if (pmap == NULL)
 		return;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_destroy(%p)\n", pmap);
-#endif	/* PMAP_DEBUG */
-
+	PDEBUG(0, printf("pmap_destroy(%p)\n", pmap));
 	simple_lock(&pmap->pm_lock);
 	count = --pmap->pm_count;
 	simple_unlock(&pmap->pm_lock);
@@ -1177,10 +1204,8 @@ pmap_release(pmap)
 	pt_entry_t *pte;
 	int loop;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_release(%p)\n", pmap);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_release(%p)\n", pmap));
+
 #if 0
 	if (pmap->pm_count != 1)		/* XXX: needs sorting */
 		panic("pmap_release count %d", pmap->pm_count);
@@ -1196,17 +1221,18 @@ pmap_release(pmap)
 	 * reduce the count and free the pagetable when the count
 	 * reaches zero.
 	 */
-	for (loop = 0; loop < 0x3bf; ++loop) {
+	for (loop = 0; loop < (((PD_SIZE - KERNEL_PD_SIZE) >> 4) - 1); ++loop) {
 		pte = (pt_entry_t *)(pmap->pm_vptpt + loop * 4);
 		if (*pte != 0) {
-#ifdef PMAP_DEBUG
-			if (pmap_debug_level >= 0)
-				printf("%x: pte=%p:%08x\n", loop, pte, *pte);
-#endif	/* PMAP_DEBUG */
+			PDEBUG(0, printf("%x: pte=%p:%08x\n", loop, pte, *pte));
 			page = PHYS_TO_VM_PAGE(pmap_pte_pa(pte));
 			if (page == NULL)
 				panic("pmap_release: bad address for phys page");
+#if defined(UVM)
+			uvm_pagefree(page);
+#else
 			vm_page_free1(page);
+#endif
 		}
 	}
 	/* Free the page dir */
@@ -1231,8 +1257,7 @@ pmap_reference(pmap)
 	pmap->pm_count++;
 	simple_unlock(&pmap->pm_lock);
 }
-                                                                                     
-  
+
 /*
  * void pmap_virtual_space(vm_offset_t *start, vm_offset_t *end)
  *
@@ -1282,12 +1307,9 @@ pmap_pageable(pmap, sva, eva, pageable)
 	 * right this will get called when making pagetables pageable
 	 */
  
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 5)
-		printf("pmap_pageable: pmap=%p sva=%08lx eva=%08lx p=%d\n",
-		    pmap, sva, eva, pageable);
-#endif	/* PMAP_DEBUG */
- 
+	PDEBUG(5, printf("pmap_pageable: pmap=%p sva=%08lx eva=%08lx p=%d\n",
+	    pmap, sva, eva, pageable));
+
 	if (pmap == kernel_pmap && pageable && eva == (sva + NBPG)) {
 		vm_offset_t pa;
 		pt_entry_t *pte;
@@ -1321,17 +1343,11 @@ pmap_activate(p)
 	pcb->pcb_pagedir = (pd_entry_t *)pmap_extract(kernel_pmap,
 	    (vm_offset_t)pmap->pm_pdir);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_activate: p=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
-		    p, pmap, pcb, pmap->pm_pdir, pcb->pcb_pagedir);
-#endif
+	PDEBUG(0, printf("pmap_activate: p=%p pmap=%p pcb=%p pdir=%p l1=%p\n",
+	    p, pmap, pcb, pmap->pm_pdir, pcb->pcb_pagedir));
 
 	if (p == curproc) {
-#if PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("pmap_activate: setting TTB\n");
-#endif
+		PDEBUG(0, printf("pmap_activate: setting TTB\n"));
 		setttb((u_int)pcb->pcb_pagedir);
 	}
 #if 0
@@ -1370,15 +1386,13 @@ pmap_zero_page(phys)
 	int pind;
 #endif
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0)
-		printf("pmap_zero_page(pa=%lx)", phys);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_zero_page(pa=%lx)", phys));
 
 	if (pmap_initialized) {
 #if defined(MACHINE_NEW_NONCONTIG)
 		if ((bank = vm_physseg_find(atop(phys), &off)) == -1)
-			panic("pmap_zero_page: not a real page, phys=%lx\n", phys);
+			panic("pmap_zero_page: not a real page, phys=%lx\n",
+			    phys);
 		pv = &vm_physmem[bank].pmseg.pvent[off];
 #else
 		pind = pmap_page_index(phys);
@@ -1404,7 +1418,7 @@ pmap_zero_page(phys)
 	}
 	(void)splx(s);
 	if (pv == NULL)
-		cpu_cache_purgeID();	/* We need to purge as the page may have dirty cache entries */
+		cpu_cache_purgeID();	/* Page may have dirty cache entries */
 	else if (addr)
 		cpu_cache_purgeID_rng(addr, NBPG);	/* Clean the page */
 
@@ -1444,13 +1458,10 @@ pmap_copy_page(src, dest)
 	int pind;
 #endif
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= -1)
-		printf("pmap_copy_pag(src=P%lx, dest=P%lx)\n",
-		    src, dest);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(-1, printf("pmap_copy_pag(src=P%lx, dest=P%lx)\n",
+	    src, dest));
 
-	cpu_cache_cleanD();	/* We need to clean as the page may have dirty cache entries */
+	cpu_cache_cleanD();	/* Page may have dirty cache entries */
 
 	if (pmap_initialized) {
 #if defined(MACHINE_NEW_NONCONTIG)
@@ -1501,7 +1512,7 @@ pmap_copy_page(src, dest)
 	}
 	(void)splx(s);
 	if (spv == NULL || dpv == NULL)
-		cpu_cache_purgeID();	/* We need to purge as the page may have dirty cache entries */
+		cpu_cache_purgeID();	/* Page may have dirty cache entries */
 	else if (saddr)
 		cpu_cache_purgeID_rng(saddr, NBPG);	/* Clean the page */
 	else if (daddr)
@@ -1578,10 +1589,7 @@ pmap_next_page(addr)
 	vm_offset_t *addr;
 {
 	if (free_pages == 0 || physical_freestart == physical_freeend) {
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("pmap_next_page: Trying to allocate beyond memory\n");
-#endif	/* PMAP_DEBUG */
+		PDEBUG(0, printf("pmap_next_page: Trying to allocate beyond memory\n"));
 		return(FALSE);
 	} 
 
@@ -1596,13 +1604,9 @@ pmap_next_page(addr)
 			physical_freestart = bootconfig.dram[physical_memoryblock].address;
 	}
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 10) {
-		printf("pmap_next_page: Allocated physpage %lx\n", *addr);
-		printf("pmap_next_page: Next page is       %lx\n",
-		    physical_freestart);
-	}
-#endif	/* PMAP_DEBUG */
+	PDEBUG(10, printf("pmap_next_page: Allocated physpage %lx\n", *addr));
+	PDEBUG(10, printf("pmap_next_page: Next page is       %lx\n",
+	    physical_freestart));
 
 	return(TRUE);
 }
@@ -1619,10 +1623,7 @@ pmap_next_page(addr)
 unsigned int
 pmap_free_pages()
 {
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 5)
-		printf("pmap_free_pages: %08x pages free\n", free_pages);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(5, printf("pmap_free_pages: %08x pages free\n", free_pages));
 	return(free_pages);
 }
 
@@ -1647,10 +1648,7 @@ pmap_page_index(pa)
 	int loop;
 	vm_offset_t start, end;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 5)
-		printf("pmap_page_index(pa=P%lx)", pa);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(5, printf("pmap_page_index(pa=P%lx)", pa));
 
 	index = 0;
 	loop = 0;
@@ -1661,10 +1659,7 @@ pmap_page_index(pa)
 			if (pa < start)
 				return(-1);
 			index += (pa - start) >> PGSHIFT;
-#ifdef PMAP_DEBUG
-			if (pmap_debug_level >= 5)
-				printf(" index = %08x\n" ,index);
-#endif	/* PMAP_DEBUG */
+			PDEBUG(5, printf(" index = %08x\n" ,index));
 			return(index);
 			
 		} else {
@@ -1673,12 +1668,7 @@ pmap_page_index(pa)
 		++loop;
 	}
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 5)
-		printf(" index = Invalid\n");
-	if (pmap_debug_level >= 1)
-		printf("page invalid - no index %lx\n", pa);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(1, printf(" page invalid - no index %lx\n", pa));
 	return(-1);
 }
 #endif	/* !MACHINE_NEW_NONCONTIG */
@@ -1706,11 +1696,8 @@ pmap_remove(pmap, sva, eva)
 
 	cpu_cache_cleanID_rng(sva, (eva - sva));
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
-		    pmap, sva, eva);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_remove: pmap=%p sva=%08lx eva=%08lx\n",
+	    pmap, sva, eva));
 
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
@@ -1745,13 +1732,6 @@ pmap_remove(pmap, sva, eva)
 		/*
 		 * Update statistics
 		 */
-
-		/* Wired bit done below */
-
-/*
-		if (pmap_pte_w(pte))
-			pmap->pm_stats.wired_count--;
-*/
 		pmap->pm_stats.resident_count--;
 
 		pa = pmap_pte_pa(pte);
@@ -1762,11 +1742,7 @@ pmap_remove(pmap, sva, eva)
 		 * as possible at once.
 		 */
 
-#ifdef DEBUG
-		if (pmapdebug & PDB_REMOVE)
-		if (pmap_debug_level >= 0)
-			printf("remove: inv pte at %p(%x) ", pte, *pte);
-#endif	/* DEBUG */
+		PDEBUG(10, printf("remove: inv pte at %p(%x) ", pte, *pte));
 
 #if defined(MACHINE_NEW_NONCONTIG)
 		if ((bank = vm_physseg_find(atop(pa), &off)) != -1) {
@@ -1823,11 +1799,7 @@ pmap_remove_all(pa)
 #endif
 	int s;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_remove_all: pa=%lx ", pa);
-#endif	/* PMAP_DEBUG */
-
+	PDEBUG(0, printf("pmap_remove_all: pa=%lx ", pa));
 
 #if defined(MACHINE_NEW_NONCONTIG)
 	bank = vm_physseg_find(atop(pa), &off);
@@ -1836,10 +1808,7 @@ pmap_remove_all(pa)
 	pv = ph = &vm_physmem[bank].pmseg.pvent[off];
 #else
 	if ((pind = pmap_page_index(pa)) == -1) {
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("no accounting\n");
-#endif	/* PMAP_DEBUG */
+		PDEBUG(0, printf("no accounting\n"));
 		return;
 	}
 	pv = ph = &pv_table[pind];
@@ -1850,10 +1819,7 @@ pmap_remove_all(pa)
 	s = splimp();
 
 	if (ph->pv_pmap == NULL) {
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("free page\n");
-#endif	/* PMAP_DEBUG */
+		PDEBUG(0, printf("free page\n"));
 		(void)splx(s);
 		return;
 	}
@@ -1862,11 +1828,8 @@ pmap_remove_all(pa)
 		pmap = pv->pv_pmap;
 		pte = pmap_pte(pmap, pv->pv_va);
 
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("[%p,%08x,%08lx,%08x] ", pmap, *pte,
-			    pv->pv_va, pv->pv_flags);
-#endif	/* PMAP_DEBUG */
+		PDEBUG(0, printf("[%p,%08x,%08lx,%08x] ", pmap, *pte,
+		    pv->pv_va, pv->pv_flags));
 #ifdef DEBUG
 		if (!pte || !pmap_pte_v(pte) || pmap_pte_pa(pte) != pa)
 			panic("pmap_remove_all: bad mapping");
@@ -1875,14 +1838,9 @@ pmap_remove_all(pa)
 		/*
 		 * Update statistics
 		 */
-		/* Wired bit done below */
-
-/*
-		if (pmap_pte_w(pte))
-			pmap->pm_stats.wired_count--;
-*/
 		pmap->pm_stats.resident_count--;
 
+		/* Wired bit */
 		if (pv->pv_flags & PT_W)
 			pmap->pm_stats.wired_count--;
           
@@ -1891,10 +1849,6 @@ pmap_remove_all(pa)
 		 * XXX: should cluster them up and invalidate as many
 		 * as possible at once.
 		 */
-#ifdef DEBUG
-		if (pmapdebug & PDB_REMOVE)
-			printf("remove: inv pte at %x(%x) ", pte, *pte);
-#endif	/* DEBUG */
 
 #ifdef needednotdone
 reduce wiring count on page table pages as references drop
@@ -1920,11 +1874,7 @@ reduce wiring count on page table pages as references drop
 	}
 	(void)splx(s);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("done\n");
-#endif	/* PMAP_DEBUG */
-
+	PDEBUG(0, printf("done\n"));
 	cpu_tlb_flushID();
 }
 
@@ -1955,12 +1905,8 @@ pmap_protect(pmap, sva, eva, prot)
 	 */
 	if (pmap == NULL)
 		return;
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_protect: pmap=%p %08lx->%08lx %x\n",
-		    pmap, sva, eva, prot);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_protect: pmap=%p %08lx->%08lx %x\n",
+	    pmap, sva, eva, prot));
 
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
@@ -2013,7 +1959,8 @@ pmap_protect(pmap, sva, eva, prot)
 		/* Clear write flag */
 #if defined(MACHINE_NEW_NONCONTIG)
 		if ((bank = vm_physseg_find(atop(pa), &off)) != -1)
-			pmap_modify_pv(pmap, sva, &vm_physmem[bank].pmseg.pvent[off], PT_Wr, 0);
+			pmap_modify_pv(pmap, sva,
+			    &vm_physmem[bank].pmseg.pvent[off], PT_Wr, 0);
 #else
 		if ((pind = pmap_page_index(pa)) != -1) 
 			pmap_modify_pv(pmap, sva, &pv_table[pind], PT_Wr, 0);
@@ -2059,7 +2006,8 @@ pmap_nightmare(pmap, pv, va, prot)
 	}
 	if (entries > 1) {
 #ifdef PORTMASTER
-/*		printf("pmap_nightmare: e=%d w=%d p=%d c=%d va=%lx [", entries, writeable, (prot & VM_PROT_WRITE), cacheable, va);*/
+/*		printf("pmap_nightmare: e=%d w=%d p=%d c=%d va=%lx [",
+		    entries, writeable, (prot & VM_PROT_WRITE), cacheable, va);*/
 #endif
 		for (npv = pv; npv; npv = npv->pv_next) {
 			/* Count mappings in the same pmap */
@@ -2084,10 +2032,10 @@ pmap_nightmare(pmap, pv, va, prot)
 			cacheable = PT_C;
 #ifdef PORTMASTER
 /*		if (cacheable == 0)
-			printf("pmap_nightmare: w=%d p=%d va=%lx c=%d\n", writeable, (prot & VM_PROT_WRITE), va, cacheable);*/
+			printf("pmap_nightmare: w=%d p=%d va=%lx c=%d\n",
+			    writeable, (prot & VM_PROT_WRITE), va, cacheable);*/
 #endif
 	}
-
 	return(cacheable);
 }
 
@@ -2123,7 +2071,8 @@ pmap_nightmare1(pmap, pv, va, prot, cacheable)
 	}
 	if (entries > 1) {
 #ifdef PORTMASTER
-/*		printf("pmap_nightmare1: e=%d w=%d p=%d c=%d va=%lx [", entries, writeable, (prot & VM_PROT_WRITE), cacheable, va);*/
+/*		printf("pmap_nightmare1: e=%d w=%d p=%d c=%d va=%lx [",
+		    entries, writeable, (prot & VM_PROT_WRITE), cacheable, va);*/
 #endif
 		for (npv = pv; npv; npv = npv->pv_next) {
 			/* Count mappings in the same pmap */
@@ -2145,7 +2094,8 @@ pmap_nightmare1(pmap, pv, va, prot, cacheable)
 #endif
 	} else {
 /*		cacheable = PT_C;*/
-/*		printf("pmap_nightmare1: w=%d p=%d va=%lx c=%d\n", writeable, (prot & VM_PROT_WRITE), va, cacheable);*/
+/*		printf("pmap_nightmare1: w=%d p=%d va=%lx c=%d\n",
+		    writeable, (prot & VM_PROT_WRITE), va, cacheable);*/
 	}
 
 	return(cacheable);
@@ -2188,18 +2138,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 	u_int cacheable = 0;
 	vm_offset_t opa = -1;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 5)
-		printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, wired = %d\n",
-		    va, pa, pmap, prot, wired);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(5, printf("pmap_enter: V%08lx P%08lx in pmap %p prot=%08x, wired = %d\n",
+	    va, pa, pmap, prot, wired));
 
 	/* Valid pmap ? */
 	if (pmap == NULL)
 		return;
 
 	/* Valid address ? */
-	if (va >= VM_KERNEL_VIRTUAL_MAX)
+	if (va >= (KERNEL_VM_BASE + KERNEL_VM_SIZE))
 		panic("pmap_enter: too big");
 
 	/*
@@ -2213,8 +2160,11 @@ pmap_enter(pmap, va, pa, prot, wired)
 		vm_offset_t l2pa;
 
 		/* Allocate a page table */
+#if defined(UVM)
+		page = uvm_pagealloc(NULL, 0, NULL);
+#else
 		page = vm_page_alloc1();
-
+#endif
 		/* XXX should try and free up memory if alloc fails */
 		if (page == NULL)
 			panic("pmap_pinit: No more physical pages\n");
@@ -2231,13 +2181,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 			    pmap, va, pa);                                               
 	}
 
-#ifdef PMAP_DEBUG
 	/* More debugging info */
-	if (pmap_debug_level >= 5) {
-		printf("pmap_enter: pte for V%08lx = V%p", va, pte);
-		printf(" (%08x)\n", *pte);
-	}
-#endif	/* PMAP_DEBUG */
+	PDEBUG(5, printf("pmap_enter: pte for V%08lx = V%p (%08x)\n", va, pte,
+	    *pte));
 
 	/* Is the pte valid ? If so then this page is already mapped */
 	if (pmap_pte_v(pte)) {
@@ -2249,10 +2195,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 			int flags;
 
 			/* All we must be doing is changing the protection */
-#ifdef PMAP_DEBUG
-			if (pmap_debug_level >= 0)
-				printf("Case 02 in pmap_enter (V%08lx P%08lx)\n", va, pa);
-#endif	/* PMAP_DEBUG */
+			PDEBUG(0, printf("Case 02 in pmap_enter (V%08lx P%08lx)\n",
+			    va, pa));
+
 #if defined(MACHINE_NEW_NONCONTIG)
 			if ((bank = vm_physseg_find(atop(pa), &off)) != -1)
 				pv = &vm_physmem[bank].pmseg.pvent[off];
@@ -2276,11 +2221,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 			/* We are replacing the page with a new one. */
 			cpu_cache_purgeID_rng(va, NBPG);
 
-#ifdef PMAP_DEBUG
-			if (pmap_debug_level >= 0)
-				printf("Case 03 in pmap_enter (V%08lx P%08lx P%08lx)\n",
-				    va, pa, opa);
-#endif	/* PMAP_DEBUG */
+			PDEBUG(0, printf("Case 03 in pmap_enter (V%08lx P%08lx P%08lx)\n",
+			    va, pa, opa));
 
 			/*
 			 * If it is part of our managed memory then we
@@ -2289,7 +2231,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 #if defined(MACHINE_NEW_NONCONTIG)
 			if ((bank = vm_physseg_find(atop(opa), &off)) != -1) {
 				int flags;
-				flags = pmap_remove_pv(pmap, va, &vm_physmem[bank].pmseg.pvent[off]);
+				flags = pmap_remove_pv(pmap, va,
+				    &vm_physmem[bank].pmseg.pvent[off]);
 				if (flags & PT_W)
 					--pmap->pm_stats.wired_count;
 				vm_physmem[bank].pmseg.attrs[off] |= flags & (PT_M | PT_H);
@@ -2358,12 +2301,16 @@ pmap_enter(pmap, va, pa, prot, wired)
 			  * memory then it must be device memory which
 			  * may be volatile.
 			  */
+#if defined(MACHINE_NEW_NONCONTIG)
+			if (bank == -1) {
+#endif
 			cacheable = 0;
-#ifdef PMAP_DEBUG
-			if (pmap_debug_level > 0)
- 				printf("pmap_enter: non-managed memory mapping va=%08lx pa=%08lx\n",
- 				    va, pa);
-#endif	/* PMAP_DEBUG */
+			PDEBUG(0, printf("pmap_enter: non-managed memory mapping va=%08lx pa=%08lx\n",
+			    va, pa));
+#if defined(MACHINE_NEW_NONCONTIG)
+			} else
+				cacheable = PT_C;
+#endif
 		}
 	}
 
@@ -2423,9 +2370,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 
 	cpu_tlb_flushID_SE(va);
 
-#if PMAP_DEBUG > 5
-	printf("pmap_enter: pte = V%08x %08x\n", pte, *pte);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(5, printf("pmap_enter: pte = V%p %08x\n", pte, *pte));
 }
 
 
@@ -2440,10 +2385,7 @@ pmap_page_protect(phys, prot)
 	vm_offset_t phys;
 	vm_prot_t prot;
 {
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_page_protect(pa=%lx, prot=%d)\n", phys, prot);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_page_protect(pa=%lx, prot=%d)\n", phys, prot));
 
 	switch(prot) {
 	case VM_PROT_READ:
@@ -2534,10 +2476,6 @@ pmap_change_wiring(pmap, va, wired)
  * into the memory map at 0xf3c00000 to 0xf3fffffff. This allows
  * page tables to be located quickly.
  */
-
-int pmap_pte_entries = 0;
-int pmap_pte_entries_alt = 0;
- 
 pt_entry_t *
 pmap_pte(pmap, va)
 	pmap_t pmap;
@@ -2552,42 +2490,26 @@ pmap_pte(pmap, va)
 		return(NULL);
 
 	/* Return the address of the pte */
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 10) {
-		printf("pmap_pte: pmap=%p va=V%08lx pde = V%p", pmap,
-		    va, pmap_pde(pmap, va));
-		printf(" (%08x)\n", *(pmap_pde(pmap, va)));
-	}
-#endif	/* PMAP_DEBUG */
+	PDEBUG(10, printf("pmap_pte: pmap=%p va=V%08lx pde = V%p (%08X)\n",
+	    pmap, va, pmap_pde(pmap, va), *(pmap_pde(pmap, va))));
 
 	/* Do we have a valid pde ? If not we don't have a page table */
 	if (!pmap_pde_v(pmap_pde(pmap, va))) {
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("pmap_pte: failed - pde = %p\n",
-			    pmap_pde(pmap, va));
-#endif	/* PMAP_DEBUG */
+		PDEBUG(0, printf("pmap_pte: failed - pde = %p\n",
+		    pmap_pde(pmap, va)));
 		return(NULL); 
 	}
 
-	++pmap_pte_entries;
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 10)
-		printf("pmap pagetable = P%08lx current = P%08x\n",
-		    pmap->pm_pptpt, (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
-		    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2))+0xefc)) & PG_FRAME));
-#endif	/* PMAP_DEBUG */
+	PDEBUG(10, printf("pmap pagetable = P%08lx current = P%08x\n",
+	    pmap->pm_pptpt, (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
+	    + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2))+0xefc)) & PG_FRAME)));
 
 	if (pmap == kernel_pmap || pmap->pm_pptpt
 	    == (*((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE
 	    + ((PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)) & ~3)+0xefc)) & PG_FRAME)) {
 		ptp = (pt_entry_t *)PROCESS_PAGE_TBLS_BASE;
 	} else {
-		pde = (pd_entry_t *)CURRENT_PAGEDIR_BASE;        
-		++pmap_pte_entries_alt;
-          
+		pde = (pd_entry_t *)CURRENT_PAGEDIR_BASE;          
 		ptp = (pt_entry_t *)ALT_PAGE_TBLS_BASE;
 		pde[(ALT_PAGE_TBLS_BASE >> 20) + 0] = L1_PTE(pmap->pm_pptpt + 0x000);
 		pde[(ALT_PAGE_TBLS_BASE >> 20) + 1] = L1_PTE(pmap->pm_pptpt + 0x400);
@@ -2598,15 +2520,11 @@ pmap_pte(pmap, va)
 		    L2_PTE_NC_NB(pmap->pm_pptpt, AP_KRW);
 		cpu_tlb_flushD();
 	}
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 10)
-		printf("page tables base = %p offset=%lx\n", ptp,
-		    ((va >> (PGSHIFT-2)) & ~3));
-#endif	/* PMAP_DEBUG */
+	PDEBUG(10, printf("page tables base = %p offset=%lx\n", ptp,
+	    ((va >> (PGSHIFT-2)) & ~3)));
 	result = (pt_entry_t *)((char *)ptp + ((va >> (PGSHIFT-2)) & ~3));
 	return(result);
-}                                                                         
-
+}
 
 /*
  * Routine:  pmap_extract
@@ -2614,7 +2532,6 @@ pmap_pte(pmap, va)
  *           Extract the physical page address associated
  *           with the given map/virtual_address pair.
  */
-
 vm_offset_t
 pmap_extract(pmap, va)
 	pmap_t pmap;
@@ -2623,10 +2540,7 @@ pmap_extract(pmap, va)
 	pt_entry_t *pte;
 	vm_offset_t pa;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 5)
-		printf("pmap_extract(pmap=%p, va=V%08lx\n", pmap, va);
-#endif
+	PDEBUG(5, printf("pmap_extract: pmap=%p, va=V%08lx\n", pmap, va));
 
 	/*
 	 * Get the pte for this virtual address. If there is no pte
@@ -2644,10 +2558,8 @@ pmap_extract(pmap, va)
 	/* Extract the physical address from the pte */
 	pa = pmap_pte_pa(pte);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 5)
-		printf("pmap_extract: pa = P%08lx\n", (pa | (va & ~PG_FRAME)));
-#endif
+	PDEBUG(5, printf("pmap_extract: pa = P%08lx\n",
+	    (pa | (va & ~PG_FRAME))));
 
 	return(pa | (va & ~PG_FRAME));
 }
@@ -2668,11 +2580,8 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vm_size_t len;
 	vm_offset_t src_addr;
 {
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
-		    dst_pmap, src_pmap, dst_addr, len, src_addr);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
+	    dst_pmap, src_pmap, dst_addr, len, src_addr));
 }
 
 #if defined(PMAP_DEBUG)
@@ -2691,7 +2600,7 @@ pmap_dump_pvlist(phys, m)
 
 #if defined(MACHINE_NEW_NONCONTIG)
 	if ((bank = vm_physseg_find(atop(phys), &off)) == -1) {
-		printf("INVALID PA!\n");
+		printf("INVALID PA\n");
 		return;
 	}
 	pv = &vm_physmem[bank].pmseg.pvent[off];
@@ -2752,10 +2661,7 @@ pmap_testbit(pa, setbits)
 #endif
 	int s;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 1)
-		printf("pmap_testbit: pa=%08lx set=%08x\n", pa, setbits);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(1, printf("pmap_testbit: pa=%08lx set=%08x\n", pa, setbits));
 
 #if defined(MACHINE_NEW_NONCONTIG)
 	if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
@@ -2776,16 +2682,12 @@ pmap_testbit(pa, setbits)
 	 */
 #if defined(MACHINE_NEW_NONCONTIG)
 	if (vm_physmem[bank].pmseg.attrs[off] & setbits) {
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("pmap_attributes = %02x\n", vm_physmem[bank].pmseg.attrs[off]);
-#endif	/* PMAP_DEBUG */
+		PDEBUG(0, printf("pmap_attributes = %02x\n",
+		    vm_physmem[bank].pmseg.attrs[off]));
 #else
 	if (pmap_attributes[pind] & setbits) {
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("pmap_attributes = %02x\n", pmap_attributes[pind]);
-#endif	/* PMAP_DEBUG */
+		PDEBUG(0, printf("pmap_attributes = %02x\n",
+		    pmap_attributes[pind]));
 #endif
 		(void)splx(s);
 		return(TRUE);
@@ -2842,11 +2744,8 @@ pmap_changebit(pa, setbits, maskbits)
 #endif
 	int s;
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 1)
-		printf("pmap_changebit: pa=%08lx set=%08x mask=%08x\n",
-		    pa, setbits, maskbits);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(1, printf("pmap_changebit: pa=%08lx set=%08x mask=%08x\n",
+	    pa, setbits, maskbits));
 #if defined(MACHINE_NEW_NONCONTIG)
 	if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
 		return;
@@ -2890,10 +2789,15 @@ pmap_changebit(pa, setbits, maskbits)
 			 * XXX don't write protect pager mappings
 			 */
 			if (maskbits == ~PT_Wr) {
+#if defined(UVM)
+                                if (va >= uvm.pager_sva && va < uvm.pager_eva)
+                                	continue;
+#else
 				extern vm_offset_t pager_sva, pager_eva;
 
 				if (va >= pager_sva && va < pager_eva)
 					continue;
+#endif
 			}
 
 			pv->pv_flags = (pv->pv_flags & maskbits) | setbits;
@@ -2917,10 +2821,7 @@ void
 pmap_clear_modify(pa)
 	vm_offset_t pa;
 {
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_clear_modify pa=%08lx\n", pa);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_clear_modify pa=%08lx\n", pa));
 	pmap_changebit(pa, 0, ~PT_M);
 }
 
@@ -2929,10 +2830,7 @@ void
 pmap_clear_reference(pa)
 	vm_offset_t pa;
 {
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_clear_reference pa=%08lx\n", pa);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_clear_reference pa=%08lx\n", pa));
 	pmap_changebit(pa, 0, ~PT_H);
 }
 
@@ -2941,10 +2839,7 @@ void
 pmap_copy_on_write(pa)
 	vm_offset_t pa;
 {
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_copy_on_write pa=%08lx\n", pa);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_copy_on_write pa=%08lx\n", pa));
 	pmap_changebit(pa, 0, ~PT_Wr);
 }
 
@@ -2955,10 +2850,7 @@ pmap_is_modified(pa)
 	boolean_t result;
     
 	result = pmap_testbit(pa, PT_M);
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_is_modified pa=%08lx %x\n", pa, result);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_is_modified pa=%08lx %x\n", pa, result));
 	return(result);
 }
 
@@ -2970,10 +2862,7 @@ pmap_is_referenced(pa)
 	boolean_t result;
 	
 	result = pmap_testbit(pa, PT_H);
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pmap_is_referenced pa=%08lx %x\n", pa, result);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_is_referenced pa=%08lx %x\n", pa, result));
 	return(result);
 }
 
@@ -3013,10 +2902,7 @@ pmap_modified_emulation(pmap, va)
 
 	/* Get the current flags for this page. */
 	flags = pmap_modify_pv(pmap, va, pv, 0, 0);
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 2)
-		printf("pmap_modified_emulation: flags = %08x\n", flags);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(2, printf("pmap_modified_emulation: flags = %08x\n", flags));
 
 	/*
 	 * Do the flags say this page is writable ? If not then it is a
@@ -3028,17 +2914,10 @@ pmap_modified_emulation(pmap, va)
 	if (!(flags & PT_Wr))
 		return(0);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0) {
-		printf("pmap_modified_emulation: Got a hit va=%08lx\n", va);
-		printf("pte = %p (%08x)", pte, *pte);
-	}
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("pmap_modified_emulation: Got a hit va=%08lx, pte = %p (%08x)\n",
+	    va, pte, *pte));
 	*pte = *pte | PT_AP(AP_W);
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0)
-		printf("->(%08x)\n", *pte);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("->(%08x)\n", *pte));
 	cpu_tlb_flushID_SE(va);
     
 /*	pmap_modify_pv(pmap, va, pv, PT_M, PT_M);*/
@@ -3068,43 +2947,28 @@ pmap_handled_emulation(pmap, va)
 	int pind;
 #endif
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 2)
-		printf("pmap_handled_emulation\n");
-#endif	/* PMAP_DEBUG */
+	PDEBUG(2, printf("pmap_handled_emulation\n"));
 
 	/* Get the pte */
 	pte = pmap_pte(pmap, va);
 	if (!pte) {
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level > 2)
-			printf("no pte\n");
-#endif	/* PMAP_DEBUG */
+		PDEBUG(2, printf("no pte\n"));
 		return(0);
 	}
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 1)
-		printf("*pte=%08x\n", *pte);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(1, printf("*pte=%08x\n", *pte));
 
 	/* Check for a zero pte */
 	if (*pte == 0)
 		return(0);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 1)
-		printf("pmap_handled_emulation: non zero pte %08x\n", *pte);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(1, printf("pmap_handled_emulation: non zero pte %08x\n", *pte));
 
 	/* Have we marked a valid pte as invalid ? */
 	if (((*pte) & L2_MASK) != L2_INVAL)
 		return(0);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >=-1)
-		printf("Got an invalid pte\n");
-#endif	/* PMAP_DEBUG */
+	PDEBUG(1, printf("Got an invalid pte\n"));
 
 	/* Extract the physical address of the page */
 	pa = pmap_pte_pa(pte);
@@ -3118,21 +2982,13 @@ pmap_handled_emulation(pmap, va)
 		return(0);
 #endif
 
-/*
- * Ok we just enable the pte and mark the attibs as handled
- */
-
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0) {
-		printf("pmap_handled_emulation: Got a hit va=%08lx\n", va);
-		printf("pte = %p (%08x)", pte, *pte);
-	}
-#endif	/* PMAP_DEBUG */
+	/*
+	 * Ok we just enable the pte and mark the attibs as handled
+	 */
+	PDEBUG(0, printf("pmap_handled_emulation: Got a hit va=%08lx pte = %p (%08x)\n",
+	    va, pte, *pte));
 	*pte = ((*pte) & ~L2_MASK) | L2_SPAGE;
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level > 0)
-		printf("->(%08x)\n", *pte);
-#endif	/* PMAP_DEBUG */
+	PDEBUG(0, printf("->(%08x)\n", *pte));
 
 	cpu_tlb_flushID_SE(va);
 
