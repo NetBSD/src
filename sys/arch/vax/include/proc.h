@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.3 2002/07/02 20:27:44 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.4 2003/01/18 07:10:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -35,14 +35,21 @@
  *	@(#)proc.h	7.1 (Berkeley) 5/15/91
  */
 
+#ifndef _VAX_PROC_H_
+#define _VAX_PROC_H_
+
 /*
- * Machine-dependent part of the proc structure for hp300.
+ * Machine-dependent lwp struct for vax,
+ */
+struct mdlwp {
+	int md_dummy;			/* Must be at least one field */
+};
+
+/*
+ * Machine-dependent part of the proc structure for vax.
  */
 struct mdproc {
-	int	md_flags;		/* machine-dependent flags */
-#if 0
-	int	*md_regs;		/* registers on current frame */
-#endif
+	int md_dummy;			/* Must be at least one field */
 };
 
 /* md_flags */
@@ -53,3 +60,5 @@ struct mdproc {
 	((caddr_t)(p)->p_addr + (REDZONEADDR + VAX_NBPG))
 #define	KSTACK_SIZE	\
 	(USPACE - (REDZONEADDR + VAX_NBPG))
+
+#endif /* _VAX_PROC_H_ */

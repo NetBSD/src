@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.35 2002/10/10 11:45:14 jdolecek Exp $	*/
+/*	$NetBSD: ka820.c,v 1.36 2003/01/18 07:10:34 thorpej Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -195,8 +195,8 @@ ka820_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	bcopy(curcpu(), &sc->sc_ci, sizeof(struct cpu_info));
 	mtpr(&sc->sc_ci, PR_SSP);
-	proc0.p_addr->u_pcb.SSP = mfpr(PR_SSP);
-	proc0.p_cpu = curcpu();
+	lwp0.l_addr->u_pcb.SSP = mfpr(PR_SSP);
+	lwp0.l_cpu = curcpu();
 	curcpu()->ci_dev = self;
 
 	/* reset the console and enable the RX50 */

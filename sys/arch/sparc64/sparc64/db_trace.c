@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.25 2002/05/16 20:27:09 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.26 2003/01/18 06:55:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -78,8 +78,10 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	if (!have_addr)
 		frame = (vaddr_t)DDB_TF->tf_out[6];
 	else {
+#if 0
 		if (trace_thread) {
 			struct proc *p;
+			struct lwp *l;
 			struct user *u;
 			(*pr)("trace: pid %d ", (int)addr);
 			p = pfind(addr);
@@ -87,16 +89,20 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				(*pr)("not found\n");
 				return;
 			}	
-			if ((p->p_flag & P_INMEM) == 0) {
-				(*pr)("swapped out\n");
-				return;
-			}
-			u = p->p_addr;
+                        l = LIST_FIRST(&p->p_lwps);     /* XXX NJWLWP */
+                        if ((l->l_flag & L_INMEM) == 0) {
+                                (*pr)("swapped out\n");
+                                return;
+                        }
+                        u = l->l_addr;
 			frame = (vaddr_t)u->u_pcb.pcb_sp;
 			(*pr)("at %p\n", frame);
 		} else {
 			frame = (vaddr_t)addr;
 		}
+#else
+		return;
+#endif
 	}
 
 	while (count--) {
@@ -349,7 +355,7 @@ db_dump_trap(addr, have_addr, count, modif)
 		register char c, *cp = modif;
 		while ((c = *cp++) != 0)
 			if (c == 'u')
-				tf = curproc->p_md.md_tf;
+				tf = curlwp->l_md.md_tf;
 	}
 	/* Or an arbitrary trapframe */
 	if (have_addr)
@@ -405,7 +411,7 @@ db_dump_trap(addr, have_addr, count, modif)
 		  (unsigned long long)tf->tf_in[7]);
 #endif
 #if 0
-	if (tf == curproc->p_md.md_tf) {
+	if (tf == curlwp->p_md.md_tf) {
 		struct rwindow32 *kstack = (struct rwindow32 *)(((caddr_t)tf)+CCFSZ);
 		db_printf("ins (from stack):\n%016llx %016llx %016llx %016llx\n",
 			  (int64_t)kstack->rw_local[0], (int64_t)kstack->rw_local[1],

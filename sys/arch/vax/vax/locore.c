@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.65 2002/12/01 21:20:31 matt Exp $	*/
+/*	$NetBSD: locore.c,v 1.66 2003/01/18 07:10:34 thorpej Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -324,15 +324,12 @@ _start(struct rpb *prpb)
 
 	avail_end &= ~PGOFSET; /* be sure */
 
-	proc0.p_addr = (void *)proc0paddr; /* XXX */
-
-	/* Clear the used parts of the uarea except for the pcb */
-	bzero(&proc0.p_addr->u_stats, sizeof(struct user) - sizeof(struct pcb));
+	lwp0.l_addr = (void *)proc0paddr; /* XXX */
 
 	pmap_bootstrap();
 
 	/* Now running virtual. set red zone for proc0 */
-	pt = kvtopte((u_int)proc0.p_addr + REDZONEADDR);
+	pt = kvtopte((u_int)lwp0.l_addr + REDZONEADDR);
 	pt->pg_v = 0;
 
 	((struct pcb *)proc0paddr)->framep = scratch;

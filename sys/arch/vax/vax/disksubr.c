@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 2002/06/10 17:45:54 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 2003/01/18 07:10:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -341,7 +341,6 @@ disk_reallymapin(struct buf *bp, struct pte *map, int reg, int flag)
 	struct proc *p;
 	volatile pt_entry_t *io;
 	pt_entry_t *pte;
-	struct pcb *pcb;
 	int pfnum, npf, o;
 	caddr_t addr;
 
@@ -359,8 +358,12 @@ disk_reallymapin(struct buf *bp, struct pte *map, int reg, int flag)
 		if (p == 0)
 			p = &proc0;
 	} else {
-		pcb = &p->p_addr->u_pcb;
-		pte = uvtopte(addr, pcb);
+		long xaddr = (long)addr;
+		if (xaddr & 0x40000000)
+			pte = &p->p_vmspace->vm_map.pmap->pm_p1br[xaddr &
+			    ~0x40000000];
+		else
+			pte = &p->p_vmspace->vm_map.pmap->pm_p0br[xaddr];
 	}
 
 	if (map) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.67 2001/12/05 18:04:35 atatat Exp $	*/
+/*	$NetBSD: locore.s,v 1.68 2003/01/18 07:14:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -375,7 +375,8 @@ Ltrap1:
  * command in d0, addr in a1, length in d1
  */
 ENTRY_NOPROFILE(trap12)
-	movl	_C_LABEL(curproc),%sp@-	| push curproc pointer
+	movl	_C_LABEL(curlwp),%a0
+	movl	%a0@(L_PROC),%sp@-	| push curproc pointer
 	movl	%d1,%sp@-		| push length
 	movl	%a1,%sp@-		| push addr
 	movl	%d0,%sp@-		| push command
@@ -815,7 +816,7 @@ Lstart1:
 	subl	%d0,%d1			| compute amount of RAM present
 	RELOC(physmem, %a0)
 	movl	%d1,%a0@		| and physmem
-/* configure kernel and proc0 VA space so we can get going */
+/* configure kernel and lwp0 VA space so we can get going */
 #ifdef DDB
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%d5
@@ -922,13 +923,13 @@ Lenab1:
 	jbsr	_C_LABEL(fpu_probe)
 	movl	%d0,_C_LABEL(fputype)
 /* set kernel stack, user SP, and initial pcb */
-	movl	_C_LABEL(proc0paddr),%a1 | get proc0 pcb addr
+	movl	_C_LABEL(proc0paddr),%a1 | get lwp0 pcb addr
 	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	lea	_C_LABEL(proc0),%a2	| initialize proc0.p_addr so that
-	movl	%a1,%a2@(P_ADDR)	|   we don't deref NULL in trap()
+	lea	_C_LABEL(lwp0),%a2	| initialize lwp0.l_addr so that
+	movl	%a1,%a2@(L_ADDR)	|   we don't deref NULL in trap()
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
-	movl	%a1,_C_LABEL(curpcb)	| proc0 is running
+	movl	%a1,_C_LABEL(curpcb)	| lwp0 is running
 
 	tstl	_C_LABEL(fputype)	| Have an FPU?
 	jeq	Lenab2			| No, skip.
@@ -962,8 +963,8 @@ Lenab3:
 	movw	#PSL_USER,%sp@-		| in user mode
 	clrl	%sp@-			| stack adjust count and padding
 	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
-	lea	_C_LABEL(proc0),%a0	| save pointer to frame
-	movl	%sp,%a0@(P_MD_REGS)	|   in proc0.p_md.md_regs
+	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
+	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.p_md.md_regs
 
 	jra	_C_LABEL(main)		| main()
 
@@ -1009,288 +1010,12 @@ GLOBAL(proc_trampoline)
  */
 #include <m68k/m68k/proc_subr.s>
 
-	.data
-GLOBAL(curpcb)
-GLOBAL(masterpaddr)		| XXX compatibility (debuggers)
-	.long	0
-ASLOCAL(mdpflag)
-	.byte	0		| copy of proc md_flags low byte
-	.align	2
-
-ASBSS(nullpcb,SIZEOF_PCB)
-
 /*
- * At exit of a process, do a switch for the last time.
- * Switch to a safe stack and PCB, and select a new process to run.  The
- * old stack and u-area will be freed by the reaper.
- *
- * MUST BE CALLED AT SPLHIGH!
+ * Use common m68k process/lwp switch and context save subroutines.
  */
-ENTRY(switch_exit)
-	movl	%sp@(4),%a0
-	/* save state into garbage pcb */
-	movl	#_ASM_LABEL(nullpcb),_C_LABEL(curpcb)
-	lea	_ASM_LABEL(tmpstk),%sp	| goto a tmp stack
+#define FPCOPROC	/* XXX: Temp. Reqd. */
+#include <m68k/m68k/switch_subr.s>
 
-	/* Schedule the vmspace and stack to be freed. */
-	movl	%a0,%sp@-		| exit2(p)
-	jbsr	_C_LABEL(exit2)
-	lea	%sp@(4),%sp		| pop args
-
-#if defined(LOCKDEBUG)
-	/* Acquire sched_lock */ 
-	jbsr	_C_LABEL(sched_lock_idle)
-#endif
-
-	jra	_C_LABEL(cpu_switch)
-
-/*
- * When no processes are on the runq, Swtch branches to Idle
- * to wait for something to come ready.
- */
-ASENTRY_NOPROFILE(Idle)
-#if defined(LOCKDEBUG)
-	/* Release sched_lock */
-	jbsr	 _C_LABEL(sched_unlock_idle)
-#endif
-	movw	#PSL_LOWIPL,%sr
-
-	/* Try to zero some pages. */
-	movl	_C_LABEL(uvm)+UVM_PAGE_IDLE_ZERO,%d0
-	jeq	1f
-	jbsr	_C_LABEL(uvm_pageidlezero)
-	jra	2f
-1:
-	stop	#PSL_LOWIPL
-2:	movw	#PSL_HIGHIPL,%sr
-#if defined(LOCKDEBUG)
-	/* Acquire sched_lock */
-	jbsr	_C_LABEL(sched_lock_idle)
-#endif
-	movl	_C_LABEL(sched_whichqs),%d0
-	jeq	_ASM_LABEL(Idle)
-	jra	Lsw1
-
-Lbadsw:
-	PANIC("switch")
-	/*NOTREACHED*/
-
-/*
- * cpu_switch()
- *
- * NOTE: On the mc68851 (318/319/330) we attempt to avoid flushing the
- * entire ATC.  The effort involved in selective flushing may not be
- * worth it, maybe we should just flush the whole thing?
- *
- * NOTE 2: With the new VM layout we now no longer know if an inactive
- * user's PTEs have been changed (formerly denoted by the SPTECHG p_flag
- * bit).  For now, we just always flush the full ATC.
- */
-ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),%a0	| current pcb
-	movw	%sr,%a0@(PCB_PS)	| save sr before changing ipl
-#ifdef notyet
-	movl	_C_LABEL(curproc),%sp@-	| remember last proc running
-#endif
-	clrl	_C_LABEL(curproc)
-
-	/*
-	 * Find the highest-priority queue that isn't empty,
-	 * then take the first proc from that queue.
-	 */
-	movl	_C_LABEL(sched_whichqs),%d0
-	jeq	_ASM_LABEL(Idle)
-Lsw1:
-	/*
-	 * Interrupts are blocked, sched_lock is held.  If
-	 * we come here via Idle, %d0 contains the contents
-	 * of a non-zero sched_whichqs.
-	 */
-	movl	%d0,%d1
-	negl	%d0
-	andl	%d1,%d0
-	bfffo	%d0{#0:#32},%d1
-	eorib	#31,%d1
-
-	movl	%d1,%d0
-	lslb	#3,%d1			| convert queue number to index
-	addl	#_C_LABEL(sched_qs),%d1	| locate queue (q)
-	movl	%d1,%a1
-	movl	%a1@(P_FORW),%a0	| p = q->p_forw
-	cmpal	%d1,%a0			| anyone on queue?
-	jeq	Lbadsw			| no, panic
-#ifdef DIAGNOSTIC
-	tstl	%a0@(P_WCHAN)
-	jne	Lbadsw
-	cmpb	#SRUN,%a0@(P_STAT)
-	jne	Lbadsw
-#endif
-	movl	%a0@(P_FORW),%a1@(P_FORW) | q->p_forw = p->p_forw
-	movl	%a0@(P_FORW),%a1	| n = p->p_forw
-	movl	%d1,%a1@(P_BACK)	| n->p_back = q
-	cmpal	%d1,%a1			| anyone left on queue?
-	jne	Lsw2			| yes, skip
-	movl	_C_LABEL(sched_whichqs),%d1
-	bclr	%d0,%d1			| no, clear bit
-	movl	%d1,_C_LABEL(sched_whichqs)
-Lsw2:
-	/* p->p_cpu initialized in fork1() for single-processor */
-	movb	#SONPROC,%a0@(P_STAT)	| p->p_stat = SONPROC
-	movl	%a0,_C_LABEL(curproc)
-	clrl	_C_LABEL(want_resched)
-#ifdef notyet
-	movl	%sp@+,%a1
-	cmpl	%a0,%a1			| switching to same proc?
-	jeq	Lswdone			| yes, skip save and restore
-#endif
-	/*
-	 * Save state of previous process in its pcb.
-	 */
-	movl	_C_LABEL(curpcb),%a1
-	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
-	movl	%usp,%a2		| grab USP (a2 has been saved)
-	movl	%a2,%a1@(PCB_USP)	| and save it
-
-	tstl	_C_LABEL(fputype)	| Do we have an FPU?
-	jeq	Lswnofpsave		| No  Then don't attempt save.
-	lea	%a1@(PCB_FPCTX),%a2	| pointer to FP save area
-	fsave	%a2@			| save FP state
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#if defined(M68060)
-	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	Lsavfp60
-#endif
-	tstb	%a2@			| null state frame?
-	jeq	Lswnofpsave		| yes, all done
-	fmovem	%fp0-%fp7,%a2@(FPF_REGS) | save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a2@(FPF_FPCR) | save FP control registers
-#if defined(M68060)
-	jra	Lswnofpsave
-Lsavfp60:
-#endif
-#endif
-#if defined(M68060)
-	tstb	%a2@(2)			| null state frame?
-	jeq	Lswnofpsave		| yes, all done
-	fmovem	%fp0-%fp7,%a2@(FPF_REGS) | save FP general registers
-	fmovem	%fpcr,%a2@(FPF_FPCR)	| save FP control registers
-	fmovem	%fpsr,%a2@(FPF_FPSR)
-	fmovem	%fpi,%a2@(FPF_FPI)
-#endif
-Lswnofpsave:
-
-	clrl	%a0@(P_BACK)		| clear back link
-	movb	%a0@(P_MD_FLAGS+3),mdpflag | low byte of p_md.md_flags
-	movl	%a0@(P_ADDR),%a1	| get p_addr
-	movl	%a1,_C_LABEL(curpcb)
-
-#if defined(LOCKDEBUG)
-	/*
-	 * Done mucking with the run queues, release the
-	 * scheduler lock, but keep interrupts out.
-	 */
-	movl	%a0,%sp@-		| not args...
-	movl	%a1,%sp@-		| ...just saving
-	jbsr	_C_LABEL(sched_unlock_idle)
-	movl	%sp@+,%a1
-	movl	%sp@+,%a0
-#endif
-
-	/*
-	 * Activate process's address space.
-	 * XXX Should remember the last USTP value loaded, and call this
-	 * XXX only if it has changed.
-	 */
-	pea	%a0@			| push proc
-	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(p)
-	addql	#4,%sp
-	movl	_C_LABEL(curpcb),%a1	| restore p_addr
-
-	lea	_ASM_LABEL(tmpstk),%sp	| now goto a tmp stack for NMI
-
-	moveml	%a1@(PCB_REGS),#0xFCFC	| and registers
-	movl	%a1@(PCB_USP),%a0
-	movl	%a0,%usp		| and USP
-
-	tstl	_C_LABEL(fputype)	| If we don't have an FPU,
-	jeq	Lnofprest		|  don't try to restore it.
-	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#if defined(M68060)
-	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	Lresfp60rest1
-#endif
-	tstb	%a0@			| null state frame?
-	jeq	Lresfprest		| yes, easy
-#if defined(M68040)
-	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040?
-	jne	Lresnot040		| no, skip
-	clrl	%sp@-			| yes...
-	frestore %sp@+			| ...magic!
-Lresnot040:
-#endif
-	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi | restore FP control registers
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7 | restore FP general registers
-#if defined(M68060)
-	jra	Lresfprest
-Lresfp60rest1:
-#endif
-#endif
-#if defined(M68060)
-	tstb	%a0@(2)			| null state frame?
-	jeq	Lresfprest		| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr	| restore FP control registers
-	fmovem	%a0@(FPF_FPSR),%fpsr
-	fmovem	%a0@(FPF_FPI),%fpi
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7 | restore FP general registers
-#endif
-Lresfprest:
-	frestore %a0@			| restore state
-Lnofprest:
-	movw	%a1@(PCB_PS),%sr	| no, restore PS
-	moveq	#1,%d0			| return 1 (for alternate returns)
-	rts
-
-/*
- * savectx(pcb)
- * Update pcb, saving current processor state.
- */
-ENTRY(savectx)
-	movl	%sp@(4),%a1
-	movw	%sr,%a1@(PCB_PS)
-	movl	%usp,%a0		| grab USP
-	movl	%a0,%a1@(PCB_USP)	| and save it
-	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
-
-	tstl	_C_LABEL(fputype)	| Do we have FPU?
-	jeq	Lsvnofpsave		| No?  Then don't save state.
-	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area
-	fsave	%a0@			| save FP state
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#if defined(M68060)
-	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	Lsvsavfp60
-#endif
-	tstb	%a0@			| null state frame?
-	jeq	Lsvnofpsave		| yes, all done
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS) | save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR) | save FP control registers
-#if defined(M68060)
-	jra	Lsvnofpsave
-Lsvsavfp60:
-#endif
-#endif
-#if defined(M68060)
-	tstb	%a0@(2)			| null state frame?
-	jeq	Lsvnofpsave		| yes, all done
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS) | save FP general registers
-	fmovem	%fpcr,%a0@(FPF_FPCR)	| save FP control registers
-	fmovem	%fpsr,%a0@(FPF_FPSR)
-	fmovem	%fpi,%a0@(FPF_FPI)
-#endif
-Lsvnofpsave:
-	moveq	#0,%d0			| return 0
-	rts
 
 #if defined(M68040) || defined(M68060)
 ENTRY(suline)
@@ -1546,7 +1271,7 @@ GLOBAL(want_resched)
 	.long	0
 
 GLOBAL(proc0paddr)
-	.long	0		| KVA of proc0 u-area
+	.long	0		| KVA of lwp0 u-area
 
 GLOBAL(intiolimit)
 	.long	0		| KVA of end of internal IO space

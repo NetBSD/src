@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 2002/12/23 16:26:13 jdolecek Exp $ */
+/*	$NetBSD: trap.c,v 1.87 2003/01/18 06:55:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -60,8 +60,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/resource.h>
@@ -371,8 +374,8 @@ const char *trap_type[] = {
 
 #define	N_TRAP_TYPES	(sizeof trap_type / sizeof *trap_type)
 
-static __inline void share_fpu __P((struct proc *, struct trapframe64 *));
-static __inline void userret __P((struct proc *, int,  u_quad_t));
+static __inline void share_fpu __P((struct lwp *, struct trapframe64 *));
+static __inline void userret __P((struct lwp *, int,  u_quad_t));
 
 void trap __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, long tstate));
 void data_access_fault __P((struct trapframe64 *tf, unsigned type, vaddr_t pc, 
@@ -429,17 +432,23 @@ print_trapframe(tf)
  * trap, mem_access_fault, and syscall.
  */
 static __inline void
-userret(p, pc, oticks)
-	struct proc *p;
+userret(l, pc, oticks)
+	struct lwp *l;
 	int pc;
 	u_quad_t oticks;
 {
+	struct proc *p = l->l_proc;
 	int sig;
 
 	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
+
+	/* XXX copied from alpha port */
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
+
 	if (want_ast) {
 		want_ast = 0;
 		if (p->p_flag & P_OWEUPC) {
@@ -447,14 +456,16 @@ userret(p, pc, oticks)
 			ADDUPROF(p);
 		}
 	}
+#if 0
 	if (want_resched) {
 		/*
 		 * We are being preempted.
 		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
+		preempt(0);
+		while ((sig = CURSIG(l)) != 0)
 			postsig(sig);
 	}
+#endif
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
@@ -462,7 +473,11 @@ userret(p, pc, oticks)
 	if (p->p_flag & P_PROFIL)
 		addupc_task(p, pc, (int)(p->p_sticks - oticks));
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	/* Invoke any pending upcalls. */
+	if (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
+
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
@@ -474,12 +489,12 @@ userret(p, pc, oticks)
  * Oh, and don't touch the FPU bit if we're returning to the kernel.
  */
 static __inline void
-share_fpu(p, tf)
-	struct proc *p;
+share_fpu(l, tf)
+	struct lwp *l;
 	struct trapframe64 *tf;
 {
 	if (!(tf->tf_tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) &&
-	    fpproc != p)
+	    fplwp != l)
 		tf->tf_tstate &= ~(PSTATE_PEF << TSTATE_PSTATE_SHIFT);
 }
 
@@ -494,6 +509,7 @@ trap(tf, type, pc, tstate)
 	vaddr_t pc;
 	long tstate;
 {
+	struct lwp *l;
 	struct proc *p;
 	struct pcb *pcb;
 	int64_t n;
@@ -577,35 +593,35 @@ trap(tf, type, pc, tstate)
 		if (type == T_FPDISABLED) {
 extern void db_printf(const char * , ...);
 #ifndef NEW_FPSTATE
-			if (fpproc != NULL) {	/* someone else had it */
-				savefpstate(fpproc->p_md.md_fpstate);
-				fpproc = NULL;
+			if (fplwp != NULL) {	/* someone else had it */
+				savefpstate(fplwp->l_md.md_fpstate);
+				fplwp = NULL;
 				/* Enable the FPU */
 /*				loadfpstate(initfpstate);*/
 			}
 			tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
 			return;
 #else
-			struct proc *newfpproc;
+			struct lwp *newfplwp;
 
 			/* New scheme */
-			if (CLKF_INTR((struct clockframe *)tf) || !curproc) {
-				newfpproc = &proc0;
+			if (CLKF_INTR((struct clockframe *)tf) || !curlwp) {
+				newfplwp = &lwp0;
 			} else {
-				newfpproc = curproc;
+				newfplwp = curlwp;
 			}
-			if (fpproc != newfpproc) {
-				if (fpproc != NULL) {
+			if (fplwp != newfplwp) {
+				if (fplwp != NULL) {
 					/* someone else had it, maybe? */
-					savefpstate(fpproc->p_md.md_fpstate);
-					fpproc = NULL;
+					savefpstate(fplwp->l_md.md_fpstate);
+					fplwp = NULL;
 				}
 				/* If we have an allocated fpstate, load it */
-				if (newfpproc->p_md.md_fpstate != 0) {
-					fpproc = newfpproc;
-					loadfpstate(fpproc->p_md.md_fpstate);
+				if (newfplwp->l_md.md_fpstate != 0) {
+					fplwp = newfplwp;
+					loadfpstate(fplwp->l_md.md_fpstate);
 				} else
-					fpproc = NULL;
+					fplwp = NULL;
 			}
 			/* Enable the FPU */
 			tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
@@ -614,11 +630,12 @@ extern void db_printf(const char * , ...);
 		}
 		goto dopanic;
 	}
-	if ((p = curproc) == NULL)
-		p = &proc0;
+	if ((l = curlwp) == NULL)
+		l = &lwp0;
+	p = l->l_proc;
 	sticks = p->p_sticks;
-	pcb = &p->p_addr->u_pcb;
-	p->p_md.md_tf = tf;	/* for ptrace/signals */
+	pcb = &l->l_addr->u_pcb;
+	l->l_md.md_tf = tf;	/* for ptrace/signals */
 
 	switch (type) {
 
@@ -649,7 +666,7 @@ badtrap:
 		/* ... but leave it in until we find anything */
 		printf("%s[%d]: unimplemented software trap 0x%x\n",
 		    p->p_comm, p->p_pid, type);
-		trapsignal(p, SIGILL, type);
+		trapsignal(l, SIGILL, type);
 		break;
 
 #if defined(COMPAT_SVR4) || defined(COMPAT_SVR4_32)
@@ -661,17 +678,26 @@ badtrap:
 	case T_SVR4_GETHRVTIME:
 	case T_SVR4_GETHRESTIME:
 #if defined(COMPAT_SVR4_32)
-		if (svr4_32_trap(type, p))
+		if (svr4_32_trap(type, l))
 			break;
 #endif
 #if defined(COMPAT_SVR4)
-		if (svr4_trap(type, p))
+		if (svr4_trap(type, l))
 			break;
 #endif
 		goto badtrap;
 #endif
 
 	case T_AST:
+#if 1
+		if (want_resched) {
+			extern int sadebug;
+			if (sadebug)
+				printf("trap: T_AST, preempt\n");
+			preempt(0);
+		}
+		want_ast = 0;
+#endif
 		break;	/* the work is all in userret() */
 
 	case T_ILLINST:
@@ -684,7 +710,7 @@ badtrap:
 		if (trapdebug & TDB_STOPSIG)
 			Debugger();
 #endif
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		trapsignal(l, SIGILL, 0);	/* XXX code?? */
 		break;
 
 	case T_PRIVINST:
@@ -694,22 +720,22 @@ badtrap:
 		if (trapdebug & TDB_STOPSIG)
 			Debugger();
 #endif
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		trapsignal(l, SIGILL, 0);	/* XXX code?? */
 		break;
 
 	case T_PRIVACT:
-		trapsignal(p, SIGILL, 0);
+		trapsignal(l, SIGILL, 0);
 		break;
 
 	case T_FPDISABLED: {
-		struct fpstate64 *fs = p->p_md.md_fpstate;
+		struct fpstate64 *fs = l->l_md.md_fpstate;
 
 		if (fs == NULL) {
 			/* NOTE: fpstate must be 64-bit aligned */
 			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
 			*fs = initfpstate;
 			fs->fs_qsize = 0;
-			p->p_md.md_fpstate = fs;
+			l->l_md.md_fpstate = fs;
 		}
 		/*
 		 * We may have more FPEs stored up and/or ops queued.
@@ -720,14 +746,14 @@ badtrap:
 		 */
 		if (fs->fs_qsize) {
 			printf("trap: Warning fs_qsize is %d\n",fs->fs_qsize);
-			fpu_cleanup(p, fs);
+			fpu_cleanup(l, fs);
 			break;
 		}
-		if (fpproc != p) {		/* we do not have it */
-			if (fpproc != NULL)	/* someone else had it */
-				savefpstate(fpproc->p_md.md_fpstate);
+		if (fplwp != l) {		/* we do not have it */
+			if (fplwp != NULL)	/* someone else had it */
+				savefpstate(fplwp->l_md.md_fpstate);
 			loadfpstate(fs);
-			fpproc = p;		/* now we do have it */
+			fplwp = l;		/* now we do have it */
 		}
 		tf->tf_tstate |= (PSTATE_PEF << TSTATE_PSTATE_SHIFT);
 		break;
@@ -746,17 +772,17 @@ badtrap:
 		/* 
 		 * If we're busy doing copyin/copyout continue
 		 */
-		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault) {
-			tf->tf_pc = (vaddr_t)p->p_addr->u_pcb.pcb_onfault;
+		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault) {
+			tf->tf_pc = (vaddr_t)l->l_addr->u_pcb.pcb_onfault;
 			tf->tf_npc = tf->tf_pc + 4;
 			break;
 		}
 		
 #ifdef DEBUG
 #define fmt64(x)	(u_int)((x)>>32), (u_int)((x))
-		printf("Alignment error: pid=%d comm=%s dsfsr=%08x:%08x "
+		printf("Alignment error: pid=%d.%d comm=%s dsfsr=%08x:%08x "
 		       "dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
-		       p->p_pid, p->p_comm, fmt64(dsfsr), fmt64(dsfar),
+		       l->l_proc->p_pid, l->l_lid, l->l_proc->p_comm, fmt64(dsfsr), fmt64(dsfar),
 		       fmt64(isfsr), pc);
 #endif
 	}
@@ -767,12 +793,12 @@ badtrap:
 		kdb_trap(type, tf);
 	}
 #endif
-		if ((p->p_md.md_flags & MDP_FIXALIGN) != 0 && 
-		    fixalign(p, tf) == 0) {
+		if ((l->l_md.md_flags & MDP_FIXALIGN) != 0 && 
+		    fixalign(l, tf) == 0) {
 			ADVANCE;
 			break;
 		}
-		trapsignal(p, SIGBUS, 0);	/* XXX code?? */
+		trapsignal(l, SIGBUS, 0);	/* XXX code?? */
 		break;
 
 	case T_FP_IEEE_754:
@@ -785,24 +811,24 @@ badtrap:
 		 * will not match once fpu_cleanup does its job, so
 		 * we must not save again later.)
 		 */
-		if (p != fpproc)
+		if (l != fplwp)
 			panic("fpe without being the FP user");
-		savefpstate(p->p_md.md_fpstate);
-		fpproc = NULL;
+		savefpstate(l->l_md.md_fpstate);
+		fplwp = NULL;
 		/* tf->tf_psr &= ~PSR_EF; */	/* share_fpu will do this */
-		if (p->p_md.md_fpstate->fs_qsize == 0) {
+		if (l->l_md.md_fpstate->fs_qsize == 0) {
 			error = copyin((caddr_t)pc,
-			    &p->p_md.md_fpstate->fs_queue[0].fq_instr,
+			    &l->l_md.md_fpstate->fs_queue[0].fq_instr,
 			    sizeof(int));
 			if (error) {
-				trapsignal(p, SIGBUS, 0);	/* XXX code */
+				trapsignal(l, SIGBUS, 0);	/* XXX code */
 				break;
 			}
-			p->p_md.md_fpstate->fs_qsize = 1;
-			fpu_cleanup(p, p->p_md.md_fpstate);
+			l->l_md.md_fpstate->fs_qsize = 1;
+			fpu_cleanup(l, l->l_md.md_fpstate);
 			ADVANCE;
 		} else
-			fpu_cleanup(p, p->p_md.md_fpstate);
+			fpu_cleanup(l, l->l_md.md_fpstate);
 		/* fpu_cleanup posts signals if needed */
 #if 0		/* ??? really never??? */
 		ADVANCE;
@@ -810,16 +836,16 @@ badtrap:
 		break;
 
 	case T_TAGOF:
-		trapsignal(p, SIGEMT, 0);	/* XXX code?? */
+		trapsignal(l, SIGEMT, 0);	/* XXX code?? */
 		break;
 
 	case T_BREAKPOINT:
-		trapsignal(p, SIGTRAP, 0);
+		trapsignal(l, SIGTRAP, 0);
 		break;
 
 	case T_DIV0:
 		ADVANCE;
-		trapsignal(p, SIGFPE, FPE_INTDIV_TRAP);
+		trapsignal(l, SIGFPE, FPE_INTDIV_TRAP);
 		break;
 
 	case T_CLEANWIN:
@@ -836,7 +862,7 @@ badtrap:
 	case T_RANGECHECK:
 		printf("T_RANGECHECK\n");	/* XXX */
 		ADVANCE;
-		trapsignal(p, SIGILL, 0);	/* XXX code?? */
+		trapsignal(l, SIGILL, 0);	/* XXX code?? */
 		break;
 
 	case T_FIXALIGN:
@@ -844,18 +870,18 @@ badtrap:
 		uprintf("T_FIXALIGN\n");
 #endif
 		/* User wants us to fix alignment faults */
-		p->p_md.md_flags |= MDP_FIXALIGN;
+		l->l_md.md_flags |= MDP_FIXALIGN;
 		ADVANCE;
 		break;
 
 	case T_INTOF:
 		uprintf("T_INTOF\n");		/* XXX */
 		ADVANCE;
-		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP);
+		trapsignal(l, SIGFPE, FPE_INTOVF_TRAP);
 		break;
 	}
-	userret(p, pc, sticks);
-	share_fpu(p, tf);
+	userret(l, pc, sticks);
+	share_fpu(l, tf);
 #undef ADVANCE
 #ifdef DEBUG
 	if (trapdebug & (TDB_FOLLOW | TDB_TRAP)) {
@@ -882,10 +908,10 @@ badtrap:
  * window thing entirely.  
  */
 int
-rwindow_save(p)
-	struct proc *p;
+rwindow_save(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct rwindow64 *rw = &pcb->pcb_rw[0];
 	u_int64_t rwdest;
 	int i, j;
@@ -893,14 +919,15 @@ rwindow_save(p)
 	i = pcb->pcb_nsaved;
 #ifdef DEBUG
 	if (rwindow_debug & RW_FOLLOW)
-		printf("rwindow_save(%p): nsaved %d\n", p, i);
+		printf("rwindow_save(%p): nsaved %d\n", l, i);
 #endif
 	if (i == 0)
 		return (0);
 #ifdef DEBUG
 	if (rwindow_debug & RW_FOLLOW)
-		printf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
+		printf("%s[%d]: rwindow: pcb->stack:", l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
+
 	 while (i > 0) {
 		rwdest = rw[i--].rw_in[6];
 #ifdef DEBUG
@@ -974,12 +1001,12 @@ rwindow_save(p)
  * the registers into the new process after the exec.
  */
 void
-kill_user_windows(p)
-	struct proc *p;
+kill_user_windows(l)
+	struct lwp *l;
 {
 
 	write_user_windows();
-	p->p_addr->u_pcb.pcb_nsaved = 0;
+	l->l_addr->u_pcb.pcb_nsaved = 0;
 }
 
 /*
@@ -996,6 +1023,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	u_long sfsr;
 {
 	u_int64_t tstate;
+	struct lwp *l;
 	struct proc *p;
 	struct vmspace *vm;
 	vaddr_t va;
@@ -1043,8 +1071,9 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 #endif
 
 	uvmexp.traps++;
-	if ((p = curproc) == NULL)	/* safety check */
-		p = &proc0;
+	if ((l = curlwp) == NULL)	/* safety check */
+		l = &lwp0;
+	p = l->l_proc;
 	sticks = p->p_sticks;
 	tstate = tf->tf_tstate;
 
@@ -1086,7 +1115,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 		 * If this was an access that we shouldn't try to page in,
 		 * resume at the fault handler without any action.
 		 */
-		if (p->p_addr && p->p_addr->u_pcb.pcb_onfault == Lfsbail)
+		if (l->l_addr && l->l_addr->u_pcb.pcb_onfault == Lfsbail)
 			goto kfault;
 
 		/*
@@ -1112,14 +1141,14 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			goto kfault;
 		}
 	} else
-		p->p_md.md_tf = tf;
+		l->l_md.md_tf = tf;
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
-	onfault = (vaddr_t)p->p_addr->u_pcb.pcb_onfault;
-	p->p_addr->u_pcb.pcb_onfault = NULL;
+	onfault = (vaddr_t)l->l_addr->u_pcb.pcb_onfault;
+	l->l_addr->u_pcb.pcb_onfault = NULL;
 	rv = uvm_fault(&vm->vm_map, va, 0, access_type);
-	p->p_addr->u_pcb.pcb_onfault = (void *)onfault;
+	l->l_addr->u_pcb.pcb_onfault = (void *)onfault;
 
 #ifdef DEBUG
 	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
@@ -1154,8 +1183,8 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 		 */
 		if (tstate & (PSTATE_PRIV << TSTATE_PSTATE_SHIFT)) {
 kfault:
-			onfault = p->p_addr ?
-			    (long)p->p_addr->u_pcb.pcb_onfault : 0;
+			onfault = l->l_addr ?
+			    (long)l->l_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				extern int trap_trace_dis;
 
@@ -1199,14 +1228,14 @@ kfault:
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, (u_long)addr);
+			trapsignal(l, SIGKILL, (u_long)addr);
 		} else {
-			trapsignal(p, SIGSEGV, (u_long)addr);
+			trapsignal(l, SIGSEGV, (u_long)addr);
 		}
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
-		userret(p, pc, sticks);
-		share_fpu(p, tf);
+		userret(l, pc, sticks);
+		share_fpu(l, tf);
 	}
 #ifdef DEBUG
 	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
@@ -1242,7 +1271,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 {
 	u_long pc;
 	u_int64_t tstate;
-	struct proc *p;
+	struct lwp *l;
 	vaddr_t onfault;
 	u_quad_t sticks;
 #ifdef DEBUG
@@ -1288,14 +1317,14 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 #endif
 
 	uvmexp.traps++;
-	if ((p = curproc) == NULL)	/* safety check */
-		p = &proc0;
-	sticks = p->p_sticks;
+	if ((l = curlwp) == NULL)	/* safety check */
+		l = &lwp0;
+	sticks = l->l_proc->p_sticks;
 
 	pc = tf->tf_pc;
 	tstate = tf->tf_tstate;
 
-	onfault = p->p_addr ? (long)p->p_addr->u_pcb.pcb_onfault : 0;
+	onfault = l->l_addr ? (long)l->l_addr->u_pcb.pcb_onfault : 0;
 	printf("data error type %x sfsr=%lx sfva=%lx afsr=%lx afva=%lx tf=%p\n",
 		type, sfsr, sfva, afsr, afva, tf);
 
@@ -1369,11 +1398,11 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		Debugger();
 	}
 #endif
-	trapsignal(p, SIGSEGV, (u_long)sfva);
+	trapsignal(l, SIGSEGV, (u_long)sfva);
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
-		userret(p, pc, sticks);
-		share_fpu(p, tf);
+		userret(l, pc, sticks);
+		share_fpu(l, tf);
 	}
 #ifdef DEBUG
 	if (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))
@@ -1396,6 +1425,7 @@ text_access_fault(tf, type, pc, sfsr)
 	u_long sfsr;
 {
 	u_int64_t tstate;
+	struct lwp *l;
 	struct proc *p;
 	struct vmspace *vm;
 	vaddr_t va;
@@ -1428,8 +1458,9 @@ text_access_fault(tf, type, pc, sfsr)
 #endif
 
 	uvmexp.traps++;
-	if ((p = curproc) == NULL)	/* safety check */
-		p = &proc0;
+	if ((l = curlwp) == NULL)	/* safety check */
+		l = &lwp0;
+	p = l->l_proc;
 	sticks = p->p_sticks;
 	tstate = tf->tf_tstate;
 	va = trunc_page(pc);
@@ -1446,7 +1477,7 @@ text_access_fault(tf, type, pc, sfsr)
 		panic("kernel fault");
 		/* NOTREACHED */
 	} else
-		p->p_md.md_tf = tf;
+		l->l_md.md_tf = tf;
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
@@ -1496,11 +1527,11 @@ text_access_fault(tf, type, pc, sfsr)
 			Debugger();
 		}
 #endif
-		trapsignal(p, SIGSEGV, (u_long)pc);
+		trapsignal(l, SIGSEGV, (u_long)pc);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
-		userret(p, pc, sticks);
-		share_fpu(p, tf);
+		userret(l, pc, sticks);
+		share_fpu(l, tf);
 	}
 #ifdef DEBUG
 	if (trapdebug & (TDB_TXTFLT | TDB_FOLLOW)) {
@@ -1531,6 +1562,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	u_long afsr;
 {
 	int64_t tstate;
+	struct lwp *l;
 	struct proc *p;
 	struct vmspace *vm;
 	vaddr_t va;
@@ -1573,8 +1605,9 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 	}
 #endif
 	uvmexp.traps++;
-	if ((p = curproc) == NULL)	/* safety check */
-		p = &proc0;
+	if ((l = curlwp) == NULL)	/* safety check */
+		l = &lwp0;
+	p = l->l_proc;
 	sticks = p->p_sticks;
 
 	tstate = tf->tf_tstate;
@@ -1592,7 +1625,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			panic("text_access_error: kernel memory error");
 
 		/* User fault -- Berr */
-		trapsignal(p, SIGBUS, (u_long)pc);
+		trapsignal(l, SIGBUS, (u_long)pc);
 	}
 
 	if ((sfsr & SFSR_FV) == 0 || (sfsr & SFSR_FT) == 0)
@@ -1609,7 +1642,6 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
 			       curproc->p_pid, curproc->p_comm,
-				/* XXX */
 			       curproc->p_sigctx.ps_sigmask.__bits[0], 
 			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
@@ -1627,7 +1659,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		panic("kernel fault");
 		/* NOTREACHED */
 	} else
-		p->p_md.md_tf = tf;
+		l->l_md.md_tf = tf;
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
@@ -1673,12 +1705,12 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 			Debugger();
 		}
 #endif
-		trapsignal(p, SIGSEGV, (u_long)pc);
+		trapsignal(l, SIGSEGV, (u_long)pc);
 	}
 out:
 	if ((tstate & TSTATE_PRIV) == 0) {
-		userret(p, pc, sticks);
-		share_fpu(p, tf);
+		userret(l, pc, sticks);
+		share_fpu(l, tf);
 	}
 #ifdef DEBUG
 	if (trapdebug & (TDB_TXTFLT | TDB_FOLLOW))
@@ -1727,6 +1759,7 @@ syscall(tf, code, pc)
 	int i, nsys, nap;
 	int64_t *ap;
 	const struct sysent *callp;
+	struct lwp *l = curlwp;
 	struct proc *p;
 	int error = 0, new;
 	union args {
@@ -1735,9 +1768,14 @@ syscall(tf, code, pc)
 	} args;
 	register_t rval[2];
 	u_quad_t sticks;
+	vaddr_t dest;
+	vaddr_t opc, onpc;
 #ifdef DIAGNOSTIC
 	extern struct pcb *cpcb;
 #endif
+
+	/* Don't dereference a non-existent curlwp XXX how can this happen? */
+	if (l) p = l->l_proc;
 
 #ifdef DEBUG
 	write_user_windows();
@@ -1763,22 +1801,37 @@ syscall(tf, code, pc)
 #endif
 
 	uvmexp.syscalls++;
-	p = curproc;
 #ifdef DIAGNOSTIC
 	if (tf->tf_tstate & TSTATE_PRIV)
 		panic("syscall from kernel");
-	if (cpcb != &p->p_addr->u_pcb)
+	if (cpcb != &l->l_addr->u_pcb)
 		panic("syscall: cpcb/ppcb mismatch");
 	if (tf != (struct trapframe64 *)((caddr_t)cpcb + USPACE) - 1)
 		panic("syscall: trapframe");
 #endif
 	sticks = p->p_sticks;
-	p->p_md.md_tf = tf;
+	l->l_md.md_tf = tf;
 	new = code & (SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 	code &= ~(SYSCALL_G7RFLAG | SYSCALL_G2RFLAG);
 
 	callp = p->p_emul->e_sysent;
 	nsys = p->p_emul->e_nsysent;
+
+	/*
+	 * save pc/npc in case of ERESTART
+	 * adjust pc/npc to new values
+	 */
+	opc = tf->tf_pc;
+	onpc = tf->tf_npc;
+
+	if (new)
+		dest = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
+	else
+		dest = tf->tf_npc;
+
+	tf->tf_pc = dest;
+	tf->tf_npc = dest + 4;
+
 
 	/*
 	 * The first six system call arguments are in the six %o registers.
@@ -1819,7 +1872,7 @@ syscall(tf, code, pc)
 #ifdef DEBUG
 	if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
 		printf("%d syscall(%d[%x]): tstate=%x:%x %s\n", 
-		       curproc?curproc->p_pid:-1, (int)code, (u_int)code,
+		       l ? p->p_pid : -1, (int)code, (u_int)code,
 		       (int)(tf->tf_tstate>>32), (int)(tf->tf_tstate),
 		       (p->p_emul->e_syscallnames) ?
 		       ((code < 0 || code >= nsys) ? 
@@ -1827,7 +1880,7 @@ syscall(tf, code, pc)
 			p->p_emul->e_syscallnames[code]) :
 		       "unknown syscall");
 	if (p->p_emul->e_syscallnames)
-		p->p_addr->u_pcb.lastcall = 
+		l->l_addr->u_pcb.lastcall = 
 			((code < 0 || code >= nsys) ? 
 			 "illegal syscall" : 
 			 p->p_emul->e_syscallnames[code]);
@@ -1994,17 +2047,18 @@ syscall(tf, code, pc)
 		       "unknown syscall");
 	}
 #endif
-	error = (*callp->sy_call)(p, &args, rval);
+	error = (*callp->sy_call)(l, &args, rval);
 
 	switch (error) {
-		vaddr_t dest;
 	case 0:
 		/* Note: fork() does not return here in the child */
 		tf->tf_out[0] = rval[0];
 		tf->tf_out[1] = rval[1];
 		if (new) {
+#if 0
 			/* jmp %g2 (or %g7, deprecated) on success */
 			dest = tf->tf_global[new & SYSCALL_G2RFLAG ? 2 : 7];
+#endif
 #ifdef DEBUG
 			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
 				printf("syscall: return tstate=%llx new "
@@ -2013,15 +2067,19 @@ syscall(tf, code, pc)
 				       (void *)(u_long)dest,
 				       (u_long)rval[0], (u_long)rval[1]);
 #endif
+#if 0
 			if (dest & 3) {
 				error = EINVAL;
 				goto bad;
 			}
+#endif
 		} else {
 			/* old system call convention: clear C on success */
 			tf->tf_tstate &= ~(((int64_t)(ICC_C | XCC_C)) <<
 					   TSTATE_CCR_SHIFT);	/* success */
+#if 0
 			dest = tf->tf_npc;
+#endif
 #ifdef DEBUG
 			if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
 				printf("syscall: return tstate=%llx old "
@@ -2036,11 +2094,17 @@ syscall(tf, code, pc)
 				    (void *)(u_long)dest);
 #endif
 		}
+#if 0
 		tf->tf_pc = dest;
 		tf->tf_npc = dest + 4;
+#endif
 		break;
 
 	case ERESTART:
+		tf->tf_pc = opc;
+		tf->tf_npc = onpc;
+		break;
+
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
@@ -2052,9 +2116,8 @@ syscall(tf, code, pc)
 		tf->tf_out[0] = error;
 		tf->tf_tstate |= (((int64_t)(ICC_C | XCC_C)) <<
 				  TSTATE_CCR_SHIFT);	/* fail */
-		dest = tf->tf_npc;
-		tf->tf_pc = dest;
-		tf->tf_npc = dest + 4;
+		tf->tf_pc = onpc;
+		tf->tf_npc = tf->tf_pc + 4;
 #ifdef DEBUG
 		if (trapdebug & (TDB_SYSCALL | TDB_FOLLOW)) 
 			printf("syscall: return tstate=%llx fail %d to %p\n", 
@@ -2065,12 +2128,12 @@ syscall(tf, code, pc)
 	}
 
 
-	userret(p, pc, sticks);
+	userret(l, pc, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
 #endif
-	share_fpu(p, tf);
+	share_fpu(l, tf);
 #ifdef DEBUG
 	if (trapdebug & (TDB_STOPCALL | TDB_SYSTOP)) { 
 		Debugger();
@@ -2090,18 +2153,49 @@ void
 child_return(arg)
 	void *arg;
 {
-	struct proc *p = arg;
+	struct lwp *l = arg;
+#ifdef KTRACE
+	struct proc *p = l->l_proc;
+#endif
 
 	/*
 	 * Return values in the frame set by cpu_fork().
 	 */
-#ifdef NOTDEF_DEBUG
-	printf("child_return: proc=%p\n", p);
-#endif
-	userret(p, p->p_md.md_tf->tf_pc, 0);
+	userret(l, l->l_md.md_tf->tf_pc, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 #endif
+}
+
+
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curlwp;
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l, 0, 0);
+}
+
+void
+upcallret(struct lwp *l)
+{
+
+	userret(l, 0, 0);
 }

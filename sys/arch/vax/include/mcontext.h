@@ -1,11 +1,11 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.4 2003/01/18 07:10:34 thorpej Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.2 2003/01/18 07:10:33 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,57 +36,40 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/exec.h>
-#include <sys/user.h>
-#include <sys/signalvar.h>
-#include <sys/signal.h>
-
-#include <machine/cpu.h>
-#include <machine/psl.h>
-#include <machine/reg.h>
-#include <machine/vmparam.h>
-#include <machine/ibcs2_machdep.h>
-
-#include <compat/ibcs2/ibcs2_types.h>
-#include <compat/ibcs2/ibcs2_signal.h>
-
-void
-ibcs2_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
-{
-	/* Don't need to anything special */
-	setregs(l, epp, stack);
-}
+#ifndef _VAX_MCONTEXT_H_
+#define _VAX_MCONTEXT_H_
 
 /*
- * Send an interrupt to process.
- *
- * Stack is set up to allow sigcode stored
- * in u. to call routine, followed by kcall
- * to sigreturn routine below.  After sigreturn
- * resets the signal mask, the stack, and the
- * frame pointer, it returns to the user
- * specified pc, psl.
+ * Layout of mcontext_t.
+ * As on Alpha, this maps directly to `struct reg'.
  */
-void
-ibcs2_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
-{
-	sendsig(native_to_ibcs2_signo[sig], mask, code);
-}
 
-int
-ibcs2_sys_sysmachine(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	return EINVAL;
-}
+#define	_NGREG	17		/* R0-31, AP, SP, FP, PC, PSL */
+
+typedef	int		__greg_t;
+typedef	__greg_t	__gregset_t[_NGREG];
+
+#define	_REG_R0		0
+#define	_REG_R1		1
+#define	_REG_R2		2
+#define	_REG_R3		3
+#define	_REG_R4		4
+#define	_REG_R5		5
+#define	_REG_R6		6
+#define	_REG_R7		7
+#define	_REG_R8		8
+#define	_REG_R9		9
+#define	_REG_R10	10
+#define	_REG_R11	11
+#define	_REG_AP		12
+#define	_REG_FP		13
+#define	_REG_SP		14
+#define	_REG_PC		15
+#define	_REG_PSL	16
+
+typedef struct {
+	__gregset_t	__gregs;	/* General Purpose Register set */
+} mcontext_t;
+
+#define	_UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
+#endif	/* !_VAX_MCONTEXT_H_ */

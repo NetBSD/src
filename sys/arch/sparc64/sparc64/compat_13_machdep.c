@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.12 2000/12/29 17:09:49 eeh Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.13 2003/01/18 06:55:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sparc64/sparc64/sigdebug.h>
 
@@ -62,28 +63,29 @@
  */
 /* ARGSUSED */
 int
-compat_13_sys_sigreturn(p, v, retval)
-	struct proc *p;
+compat_13_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct compat_13_sys_sigreturn_args /* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigcontext13 sc, *scp;
-	sigset_t mask;
 	struct trapframe64 *tf;
+	sigset_t mask;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(p)) {
+	if (rwindow_save(l)) {
 #ifdef DEBUG
-		printf("compat_13_sys_sigreturn: rwindow_save(%p) failed, sending SIGILL\n", p);
+		printf("compat_13_sys_sigreturn: rwindow_save(%p) failed, sending SIGILL\n", l);
 #ifdef DDB
 		Debugger();
 #endif
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
@@ -111,7 +113,7 @@ compat_13_sys_sigreturn(p, v, retval)
 
 	scp = &sc;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
 	 * verified.  pc and npc must be multiples of 4.  This is all

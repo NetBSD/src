@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_machdep.h,v 1.3 2001/05/11 17:37:14 kleink Exp $	 */
+/*	$NetBSD: svr4_32_machdep.h,v 1.4 2003/01/18 06:55:22 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -91,6 +91,6 @@ typedef struct svr4_32_mcontext {
 
 struct svr4_32_ucontext;
 
-int svr4_32_trap __P((int, struct proc *));
+int svr4_32_trap __P((int, struct lwp *));
 
 #endif /* !_SPARC_SVR4_32_MACHDEP_H_ */

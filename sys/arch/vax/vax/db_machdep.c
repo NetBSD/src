@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.33 2002/05/13 20:30:13 matt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.34 2003/01/18 07:10:34 thorpej Exp $	*/
 
 /* 
  * :set tabs=4
@@ -416,7 +416,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	void		(*pr) __P((const char *, ...)); /* Print function */
 {
 	extern vaddr_t	proc0paddr;
-	struct proc	*p = curproc;
+	struct lwp	*l = curlwp;
+	struct proc	*p = l->l_proc;
 	struct user	*uarea;
 	int		trace_proc;
 	pid_t	curpid;
@@ -475,8 +476,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		}
 	} else {
 		if (trace_proc) {
-			p = curproc;
-			if (p == NULL) {
+			l = curlwp;
+			if (l == NULL) {
 				(*pr)("trace: no current process! (ignored)\n");
 				return;
 			}
@@ -491,7 +492,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		uarea = (struct user *)proc0paddr;
 		curpid = 0;
 	} else {
-		uarea = p->p_addr;
+		uarea = l->l_addr;
 		curpid = p->p_pid;
 	}
 	(*pr)("Process %d\n", curpid);
@@ -643,9 +644,9 @@ db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	stopcpu = ci;
 	bcopy(stopcpu->ci_ddb_regs, &ddb_regs, sizeof(struct trapframe));
 	db_printf("using cpu %ld", addr);
-	if (ci->ci_curproc)
-		db_printf(" in proc %d (%s)\n", ci->ci_curproc->p_pid,
-		    ci->ci_curproc->p_comm);
+	if (ci->ci_curlwp)
+		db_printf(" in proc %d (%s)\n", ci->ci_curlwp->p_pid,
+		    ci->ci_curlwp->p_comm);
 }
 #endif
 

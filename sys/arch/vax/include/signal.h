@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.7 1998/09/30 18:40:04 ragge Exp $   */
+/*      $NetBSD: signal.h,v 1.8 2003/01/18 07:10:33 thorpej Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -73,6 +73,30 @@ struct sigcontext {
 	int	sc_ps;			/* psl to restore */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
+
+/*
+ * The following macros are used to convert from a ucontext to sigcontext,
+ * and vice-versa.  This is for building a sigcontext to deliver to old-style
+ * signal handlers, and converting back (in the event the handler modifies
+ * the context).
+ */
+#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
+do {									\
+	(sc)->sc_sp = (uc)->uc_mcontext.__gregs[_REG_SP];		\
+	(sc)->sc_fp = (uc)->uc_mcontext.__gregs[_REG_FP];		\
+	(sc)->sc_ap = (uc)->uc_mcontext.__gregs[_REG_AP];		\
+	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_PC];		\
+	(sc)->sc_ps = (uc)->uc_mcontext.__gregs[_REG_PSL];		\
+} while (/*CONSTCOND*/0)
+
+#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
+do {									\
+	(uc)->uc_mcontext.__gregs[_REG_SP]  = (sc)->sc_sp;		\
+	(uc)->uc_mcontext.__gregs[_REG_FP]  = (sc)->sc_fp;		\
+	(uc)->uc_mcontext.__gregs[_REG_AP]  = (sc)->sc_ap;		\
+	(uc)->uc_mcontext.__gregs[_REG_PC]  = (sc)->sc_pc;		\
+	(uc)->uc_mcontext.__gregs[_REG_PSL] = (sc)->sc_ps;		\
+} while (/*CONSTCOND*/0)
 
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_VAX_SIGNAL_H_ */

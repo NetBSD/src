@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106 2002/10/20 02:37:37 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.107 2003/01/18 07:03:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -56,6 +56,8 @@
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
@@ -107,7 +109,7 @@ void trap_kdebug __P((int type, struct trapframe tf));
 int _nodb_trap __P((int type, struct trapframe *));
 void straytrap __P((struct trapframe));
 
-static void userret __P((struct proc *, struct trapframe *, u_quad_t));
+static void userret __P((struct lwp *, struct trapframe *, u_quad_t));
 
 int astpending;
 int want_resched;
@@ -172,27 +174,25 @@ int mmupid = -1;
  * returning to user mode.
  */
 static void
-userret(p, tf, oticks)
-	struct proc *p;
+userret(l, tf, oticks)
+	struct lwp *l;
 	struct trapframe *tf;
 	u_quad_t oticks;
 {
+	struct proc *p = l->l_proc;
 	int sig;
 
 	/* take pending signals */
-	while ((sig = CURSIG(p)) != 0)
+	while ((sig = CURSIG(l)) != 0)
 		postsig(sig);
 
-	p->p_priority = p->p_usrpri;
+	/* Invoke per-process kernel-exit handling, if any */
+	if (p->p_userret)
+		(p->p_userret)(l, p->p_userret_arg);
 
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
+	/* Invoke any pending upcalls. */
+	while (l->l_flag & L_SA_UPCALL)
+		sa_upcall_userret(l);
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
@@ -203,23 +203,23 @@ userret(p, tf, oticks)
 		            (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
  * Used by the common m68k syscall() and child_return() functions.
  * XXX: Temporary until all m68k ports share common trap()/userret() code.
  */
-void machine_userret(struct proc *, struct frame *, u_quad_t);
+void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(p, f, t)
-	struct proc *p;
+machine_userret(l, f, t)
+	struct lwp *l;
 	struct frame *f;
 	u_quad_t t;
 {
 
-	userret(p, &f->F_t, t);
+	userret(l, &f->F_t, t);
 }
 
 /*
@@ -234,6 +234,7 @@ trap(type, code, v, tf)
 	u_int code, v;
 	struct trapframe tf;
 {
+	struct lwp *l;
 	struct proc *p;
 	int sig, tmp;
 	u_int ucode;
@@ -241,22 +242,24 @@ trap(type, code, v, tf)
 	caddr_t onfault;
 
 	uvmexp.traps++;
-	p = curproc;
+	l = curlwp;
 	ucode = 0;
 	sig = 0;
 
 	/* I have verified that this DOES happen! -gwr */
-	if (p == NULL)
-		p = &proc0;
+	if (l == NULL)
+		l = &lwp0;
+	p = l->l_proc;
+
 #ifdef	DIAGNOSTIC
-	if (p->p_addr == NULL)
+	if (l->l_addr == NULL)
 		panic("trap: no pcb");
 #endif
 
 	if (USERMODE(tf.tf_sr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
-		p->p_md.md_regs = tf.tf_regs;
+		l->l_md.md_regs = tf.tf_regs;
 	} else {
 		sticks = 0;
 		/* XXX: Detect trap recursion? */
@@ -299,7 +302,7 @@ trap(type, code, v, tf)
 		panic("trap type 0x%x", type);
 
 	case T_BUSERR:		/* kernel bus error */
-		if (p->p_addr->u_pcb.pcb_onfault == NULL)
+		if (l->l_addr->u_pcb.pcb_onfault == NULL)
 			goto dopanic;
 		/*FALLTHROUGH*/
 
@@ -312,7 +315,7 @@ trap(type, code, v, tf)
 		 */
 		tf.tf_stackadj = exframesize[tf.tf_format];
 		tf.tf_format = tf.tf_vector = 0;
-		tf.tf_pc = (int) p->p_addr->u_pcb.pcb_onfault;
+		tf.tf_pc = (int) l->l_addr->u_pcb.pcb_onfault;
 		goto done;
 
 	case T_BUSERR|T_USER:	/* bus error */
@@ -368,7 +371,7 @@ trap(type, code, v, tf)
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #ifdef	FPU_EMULATE
-		sig = fpu_emulate(&tf, &p->p_addr->u_pcb.pcb_fpregs);
+		sig = fpu_emulate(&tf, &l->l_addr->u_pcb.pcb_fpregs);
 		/* XXX - Deal with tracing? (tf.tf_sr & PSL_T) */
 #else
 		uprintf("pid %d killed: no floating point support\n", p->p_pid);
@@ -440,6 +443,8 @@ trap(type, code, v, tf)
 			p->p_flag &= ~P_OWEUPC;
 			ADDUPROF(p);
 		}
+		if (want_resched)
+			preempt(0);
 		goto douret;
 
 	case T_MMUFLT:		/* kernel mode page fault */
@@ -456,8 +461,8 @@ trap(type, code, v, tf)
 		 * If we were doing profiling ticks or other user mode
 		 * stuff from interrupt code, Just Say No.
 		 */
-		if (p->p_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
-		    p->p_addr->u_pcb.pcb_onfault == (caddr_t)subail)
+		if (l->l_addr->u_pcb.pcb_onfault == (caddr_t)fubail ||
+		    l->l_addr->u_pcb.pcb_onfault == (caddr_t)subail)
 		{
 #ifdef	DEBUG
 			if (mmudebug & MDB_CPFAULT) {
@@ -494,7 +499,7 @@ trap(type, code, v, tf)
 		map = &vm->vm_map;
 		if ((type & T_USER) == 0) {
 			/* supervisor mode fault */
-			if ((p->p_addr->u_pcb.pcb_onfault == NULL) || KDFAULT(code))
+			if ((l->l_addr->u_pcb.pcb_onfault == NULL) || KDFAULT(code))
 				map = kernel_map;
 		}
 
@@ -515,10 +520,10 @@ trap(type, code, v, tf)
 		 * faults in the kernel text segment, etc.
 		 */
 
-		onfault = p->p_addr->u_pcb.pcb_onfault;
-		p->p_addr->u_pcb.pcb_onfault = NULL;
+		onfault = l->l_addr->u_pcb.pcb_onfault;
+		l->l_addr->u_pcb.pcb_onfault = NULL;
 		rv = _pmap_fault(map, va, ftype);
-		p->p_addr->u_pcb.pcb_onfault = onfault;
+		l->l_addr->u_pcb.pcb_onfault = onfault;
 
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
@@ -551,7 +556,7 @@ trap(type, code, v, tf)
 
 		if ((type & T_USER) == 0) {
 			/* supervisor mode fault */
-			if (p->p_addr->u_pcb.pcb_onfault) {
+			if (l->l_addr->u_pcb.pcb_onfault) {
 #ifdef	DEBUG
 				if (mmudebug & MDB_CPFAULT) {
 					printf("trap: copyfault pcb_onfault\n");
@@ -584,9 +589,9 @@ finish:
 		goto done;
 	/* Post a signal if necessary. */
 	if (sig != 0)
-		trapsignal(p, sig, ucode);
+		trapsignal(l, sig, ucode);
 douret:
-	userret(p, &tf, sticks);
+	userret(l, &tf, sticks);
 
 done:;
 	/* XXX: Detect trap recursion? */

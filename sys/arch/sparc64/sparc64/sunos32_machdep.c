@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.8 2002/07/04 23:32:07 thorpej Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.9 2003/01/18 06:55:25 thorpej Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <sys/malloc.h>
 #include <sys/select.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
@@ -96,17 +97,18 @@ static int ev_out32 __P((struct firm_event *, int, struct uio *));
  */
 /* ARGSUSED */
 void
-sunos32_setregs(p, pack, stack)
-	struct proc *p;
+sunos32_setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	u_long stack; /* XXX */
 {
-	register struct trapframe64 *tf = p->p_md.md_tf;
+	register struct trapframe64 *tf = l->l_md.md_tf;
 	register struct fpstate64 *fs;
 	register int64_t tstate;
+	struct proc *p = l->l_proc;
 
 	/* Don't allow misaligned code by default */
-	p->p_md.md_flags &= ~MDP_FIXALIGN;
+	l->l_md.md_flags &= ~MDP_FIXALIGN;
 
 	/* Mark this as a 32-bit emulation */
 	p->p_flag |= P_32;
@@ -124,18 +126,18 @@ sunos32_setregs(p, pack, stack)
 	 */
 	tstate = ((PSTATE_USER32)<<TSTATE_PSTATE_SHIFT) 
 		| (tf->tf_tstate & TSTATE_CWP);
-	if ((fs = p->p_md.md_fpstate) != NULL) {
+	if ((fs = l->l_md.md_fpstate) != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (p == fpproc) {
+		if (l == fplwp) {
 			savefpstate(fs);
-			fpproc = NULL;
+			fplwp = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
-		p->p_md.md_fpstate = NULL;
+		l->l_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
@@ -154,7 +156,8 @@ sunos32_sendsig(sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct lwp *l = curlwp;	/* XXX */
+	struct proc *p = l->l_proc;
 	struct sunos32_sigframe *fp;
 	struct trapframe64 *tf;
 	struct rwindow32 *oldsp, *newsp;
@@ -164,7 +167,7 @@ sunos32_sendsig(sig, mask, code)
 	int onstack; 
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	/* Need to attempt to zero extend this 32-bit pointer */
 	oldsp = (struct rwindow32 *)(u_long)(u_int)tf->tf_out[6];
 	oldsp32 = (u_int32_t)(u_long)oldsp;
@@ -236,7 +239,7 @@ sunos32_sendsig(sig, mask, code)
 	    printf("sunos32_sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
-	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
+	if (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 	    copyout((caddr_t)&oldsp32, &(((struct rwindow32 *)newsp)->rw_in[6]), sizeof oldsp32)) {
 		/*
 		 * Process has trashed its stack; give it an illegal
@@ -250,7 +253,7 @@ sunos32_sendsig(sig, mask, code)
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -280,22 +283,23 @@ sunos32_sendsig(sig, mask, code)
 }
 
 int
-sunos32_sys_sigreturn(p, v, retval)
-        register struct proc *p;
+sunos32_sys_sigreturn(l, v, retval)
+        register struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct sunos32_sys_sigreturn_args /* 
 		syscallarg(netbsd32_sigcontextp_t) sigcntxp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sunos32_sigcontext sc, *scp;
 	sigset_t mask;
 	struct trapframe64 *tf;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(p))
-		sigexit(p, SIGILL);
+	if (rwindow_save(l))
+		sigexit(l, SIGILL);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sunos32_sigreturn: %s[%d], sigcntxp %p\n",
@@ -311,7 +315,7 @@ sunos32_sys_sigreturn(p, v, retval)
 		return (EFAULT);
 	scp = &sc;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
 	 * verified.  pc and npc must be multiples of 4.  This is all

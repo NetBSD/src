@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.50 2002/11/02 20:03:07 chs Exp $	*/
+/*	$NetBSD: locore.s,v 1.51 2003/01/18 07:03:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,7 +133,7 @@ L_high_code:
 	movc	%d0,%dfc
 
 | Setup process zero user/kernel stacks.
-	movl	_C_LABEL(proc0paddr),%a1| get proc0 pcb addr
+	movl	_C_LABEL(proc0paddr),%a1| get lwp0 pcb addr
 	lea	%a1@(USPACE-4),%sp	| set SSP to last word
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
@@ -154,8 +154,8 @@ L_high_code:
 	movw	#PSL_USER,%sp@-		| tf_sr for user mode
 	clrl	%sp@-			| tf_stackadj
 	lea	%sp@(-64),%sp		| tf_regs[16]
-	lea	_C_LABEL(proc0),%a0	| proc0.p_md.md_regs = 
-	movl	%a1,%a0@(P_MDREGS)	|   trapframe
+	lea	_C_LABEL(lwp0),%a0	| proc0.p_md.md_regs = 
+	movl	%a1,%a0@(L_MD_REGS)	|   trapframe
 	jbsr	_C_LABEL(main)		| main(&trapframe)
 	PANIC("main() returned")
 
@@ -350,7 +350,8 @@ GLOBAL(trap0)
  * command in d0, addr in a1, length in d1
  */
 GLOBAL(trap12)
-	movl	_C_LABEL(curproc),%sp@-	| push curproc pointer
+	movl	_C_LABEL(curlwp),%a0
+	movl	%a0@(L_PROC),%sp@-	| push curproc pointer
 	movl	%d1,%sp@-		| push length
 	movl	%a1,%sp@-		| push addr
 	movl	%d0,%sp@-		| push command
@@ -611,250 +612,12 @@ BSS(want_resched,4)
  */
 #include <m68k/m68k/proc_subr.s>
 
-| Message for Lbadsw panic
-Lsw0:
-	.asciz	"cpu_switch"
-	.even
-
-	.data
-GLOBAL(masterpaddr)		| XXX compatibility (debuggers)
-GLOBAL(curpcb)
-	.long	0
-ASBSS(nullpcb,SIZEOF_PCB)
-	.text
-
 /*
- * At exit of a process, do a cpu_switch for the last time.
- * Switch to a safe stack and PCB, and select a new process to run.  The
- * old stack and u-area will be freed by the reaper.
- *
- * MUST BE CALLED AT SPLHIGH!
+ * Use common m68k process/lwp switch and context save subroutines.
  */
-ENTRY(switch_exit)
-	movl	%sp@(4),%a0		| struct proc *p
-					| save state into garbage pcb
-	movl	#_ASM_LABEL(nullpcb),_C_LABEL(curpcb)
-	lea	_ASM_LABEL(tmpstk),%sp	| goto a tmp stack
+#define FPCOPROC	/* XXX: Temp. Reqd. */
+#include <m68k/m68k/switch_subr.s>
 
-	/* Schedule the vmspace and stack to be freed. */
-	movl	%a0,%sp@-			| exit2(p)
-	jbsr	_C_LABEL(exit2)
-	lea	%sp@(4),%sp
-
-#if defined(LOCKDEBUG)
-	/* Acquire sched_lock */
-	jbsr	_C_LABEL(sched_lock_idle)
-#endif
-
-	jra	_C_LABEL(cpu_switch)
-
-/*
- * When no processes are on the runq, cpu_switch() branches to idle
- * to wait for something to come ready.
- */
-Lidle:
-#if defined(LOCKDEBUG)
-	/* Release sched_lock */  
-	jbsr	_C_LABEL(sched_unlock_idle)
-#endif
-	stop	#PSL_LOWIPL
-GLOBAL(_Idle)				| See clock.c
-	movw	#PSL_HIGHIPL,%sr
-#if defined(LOCKDEBUG)
-	/* Acquire sched_lock */
-	jbsr	_C_LABEL(sched_lock_idle)
-#endif
-	movl	_C_LABEL(sched_whichqs),%d0
-	jeq	Lidle
-	jra	Lsw1
-
-Lbadsw:
-	movl	#Lsw0,%sp@-
-	jbsr	_C_LABEL(panic)
-	/*NOTREACHED*/
-
-/*
- * cpu_switch()
- * Hacked for sun3
- */
-ENTRY(cpu_switch)
-	movl	_C_LABEL(curpcb),%a1	| current pcb
-	movw	%sr,%a1@(PCB_PS)	| save sr before changing ipl
-#ifdef notyet
-	movl	_C_LABEL(curproc),%sp@-	| remember last proc running
-#endif
-	clrl	_C_LABEL(curproc)
-
-	/*
-	 * Find the highest-priority queue that isn't empty,
-	 * then take the first proc from that queue.
-	 */
-	movl	_C_LABEL(sched_whichqs),%d0
-	jeq	Lidle
-Lsw1:
-	/*
-	 * Interrupts are blocked, sched_lock is held.  If
-	 * we come here via Idle, %d0 contains the contents
-	 * of a non-zero sched_whichqs.
-	 */
-	movl	%d0,%d1
-	negl	%d0
-	andl	%d1,%d0
-	bfffo	%d0{#0:#32},%d1
-	eorib	#31,%d1
-
-	movl	%d1,%d0
-	lslb	#3,%d1			| convert queue number to index
-	addl	#_C_LABEL(sched_qs),%d1	| locate queue (q)
-	movl	%d1,%a1
-	movl	%a1@(P_FORW),%a0	| p = q->p_forw
-	cmpal	%d1,%a0			| anyone on queue?
-	jeq	Lbadsw			| no, panic
-#ifdef DIAGNOSTIC
-	tstl	%a0@(P_WCHAN)
-	jne	Lbadsw
-	cmpb	#SRUN,%a0@(P_STAT)
-	jne	Lbadsw
-#endif
-	movl	%a0@(P_FORW),%a1@(P_FORW)	| q->p_forw = p->p_forw
-	movl	%a0@(P_FORW),%a1		| n = p->p_forw
-	movl	%a0@(P_BACK),%a1@(P_BACK)	| n->p_back = q
-	cmpal	%d1,%a1			| anyone left on queue?
-	jne	Lsw2			| yes, skip
-	movl	_C_LABEL(sched_whichqs),%d1
-	bclr	%d0,%d1			| no, clear bit
-	movl	%d1,_C_LABEL(sched_whichqs)
-Lsw2:
-	/* p->p_cpu initialized in fork1() for single-processor */
-	movb	#SONPROC,%a0@(P_STAT)	| p->p_stat = SONPROC
-	movl	%a0,_C_LABEL(curproc)
-	clrl	_C_LABEL(want_resched)
-#ifdef notyet
-	movl	%sp@+,%a1		| XXX - Make this work!
-	cmpl	%a0,%a1			| switching to same proc?
-	jeq	Lswdone			| yes, skip save and restore
-#endif
-	/*
-	 * Save state of previous process in its pcb.
-	 */
-	movl	_C_LABEL(curpcb),%a1
-	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
-	movl	%usp,%a2		| grab USP (a2 has been saved)
-	movl	%a2,%a1@(PCB_USP)	| and save it
-
-	tstl	_C_LABEL(fputype)	| Do we have an fpu?
-	jeq	Lswnofpsave		| No?  Then don't try save.
-	lea	%a1@(PCB_FPCTX),%a2	| pointer to FP save area
-	fsave	%a2@			| save FP state
-	tstb	%a2@			| null state frame?
-	jeq	Lswnofpsave		| yes, all done
-	fmovem	%fp0-%fp7,%a2@(FPF_REGS)	| save FP general regs
-	fmovem	%fpcr/%fpsr/%fpi,%a2@(FPF_FPCR)	| save FP control regs
-Lswnofpsave:
-
-	/*
-	 * Now that we have saved all the registers that must be
-	 * preserved, we are free to use those registers until
-	 * we load the registers for the switched-to process.
-	 * In this section, keep:  %a0=curproc, %a1=curpcb
-	 */
-
-	clrl	%a0@(P_BACK)		| clear back link
-	movl	%a0@(P_ADDR),%a1		| get p_addr
-	movl	%a1,_C_LABEL(curpcb)
-
-#if defined(LOCKDEBUG)
-	/*
-	 * Done mucking with the run queues, release the
-	 * scheduler lock, but keep interrupts out.
-	 */
-	movl	%a0,%sp@-		| not args...
-	movl	%a1,%sp@-		| ...just saving
-	jbsr	_C_LABEL(sched_unlock_idle)
-	movl	%sp@+,%a1
-	movl	%sp@+,%a0
-#endif
-
-	/*
-	 * Load the new VM context (new MMU root pointer)
-	 */
-	movl	%a0@(P_VMSPACE),%a2	| vm = p->p_vmspace
-#ifdef DIAGNOSTIC
-	tstl	%a2			| vm == VM_MAP_NULL?
-	jeq	Lbadsw			| panic
-#endif
-#ifdef PMAP_DEBUG
-	/* When debugging just call _pmap_switch(). */
-	movl	%a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
-	pea	%a2@			| push pmap
-	jbsr	_C_LABEL(_pmap_switch)	| _pmap_switch(pmap)
-	addql	#4,%sp
-	movl	_C_LABEL(curpcb),%a1	| restore p_addr
-#else
-	/* Otherwise, use this inline version. */
-	lea	_C_LABEL(kernel_crp),%a3 | our CPU Root Ptr. (CRP)
-	movl	%a2@(VM_PMAP),%a2 	| pmap = vm->vm_map.pmap
-	movl	%a2@(PM_A_PHYS),%d0	| phys = pmap->pm_a_phys
-	cmpl	%a3@(4),%d0		|  == kernel_crp.rp_addr ?
-	jeq	Lsame_mmuctx		| skip loadcrp/flush
-	/* OK, it is a new MMU context.  Load it up. */
-	movl	%d0,%a3@(4)
-	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr		| invalidate cache(s)
-	pflusha				| flush entire TLB
-	pmove	%a3@,%crp		| load new user root pointer
-Lsame_mmuctx:
-#endif
-
-	/*
-	 * Reload the registers for the new process.
-	 * After this point we can only use %d0,%d1,%a0,%a1
-	 */
-	moveml	%a1@(PCB_REGS),#0xFCFC	| reload registers
-	movl	%a1@(PCB_USP),%a0
-	movl	%a0,%usp		| and USP
-
-	tstl	_C_LABEL(fputype)	| If we don't have an fpu,
-	jeq	Lres_skip		|  don't try to restore it.
-	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area
-	tstb	%a0@			| null state frame?
-	jeq	Lresfprest		| yes, easy
-	fmovem	%a0@(FPF_FPCR),%fpcr/%fpsr/%fpi	| restore FP control regs
-	fmovem	%a0@(FPF_REGS),%fp0-%fp7	| restore FP general regs
-Lresfprest:
-	frestore %a0@			| restore state
-Lres_skip:
-	movw	%a1@(PCB_PS),%d0		| no, restore PS
-#ifdef DIAGNOSTIC
-	btst	#13,%d0			| supervisor mode?
-	jeq	Lbadsw			| no? panic!
-#endif
-	movw	%d0,%sr			| OK, restore PS
-	movl	#1,%a0			| return 1 (for alternate returns)
-	rts
-
-/*
- * savectx(pcb)
- * Update pcb, saving current processor state.
- */
-ENTRY(savectx)
-	movl	%sp@(4),%a1
-	movw	%sr,%a1@(PCB_PS)
-	movl	%usp,%a0		| grab USP
-	movl	%a0,%a1@(PCB_USP)	| and save it
-	moveml	#0xFCFC,%a1@(PCB_REGS)	| save non-scratch registers
-
-	tstl	_C_LABEL(fputype)	| Do we have FPU?
-	jeq	Lsavedone		| No?  Then don't save state.
-	lea	%a1@(PCB_FPCTX),%a0	| pointer to FP save area
-	fsave	%a0@			| save FP state
-	tstb	%a0@			| null state frame?
-	jeq	Lsavedone		| yes, all done
-	fmovem	%fp0-%fp7,%a0@(FPF_REGS)	| save FP general regs
-	fmovem	%fpcr/%fpsr/%fpi,%a0@(FPF_FPCR)	| save FP control regs
-Lsavedone:
-	movl	#0,%a0			| return 0
-	rts
 
 /* suline() */
 
