@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.33 2002/03/09 01:56:27 thorpej Exp $	*/
+/*	$NetBSD: pool.h,v 1.34 2002/03/09 18:06:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -218,6 +218,7 @@ void		_pool_reclaim(struct pool *, const char *, long);
 #define		pool_reclaim(h)	_pool_reclaim((h), __FILE__, __LINE__)
 #endif /* POOL_DIAGNOSTIC */
 
+int		pool_prime(struct pool *, int);
 void		pool_setlowat(struct pool *, int);
 void		pool_sethiwat(struct pool *, int);
 void		pool_sethardlimit(struct pool *, int, const char *, int);
