@@ -1,4 +1,4 @@
-/*	$NetBSD: i8253reg.h,v 1.5 1998/01/19 11:38:00 drochner Exp $	*/
+/*	$NetBSD: i8253reg.h,v 1.6 2003/02/21 17:14:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -69,7 +69,7 @@
 
 /*
  * Frequency of all three count-down timers; (TIMER_FREQ/freq) is the
- * appropriate count to generate a frequency of freq hz.
+ * appropriate count to generate a frequency of freq Hz.
  */
 #ifndef TIMER_FREQ
 #define	TIMER_FREQ	1193182

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.16 2003/01/06 13:10:28 wiz Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.17 2003/02/21 17:14:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.16 2003/01/06 13:10:28 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.17 2003/02/21 17:14:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1238,7 +1238,7 @@ ad1848_set_speed(sc, argp)
 {
 	/*
 	 * The sampling speed is encoded in the least significant nible of I8.
-	 * The LSB selects the clock source (0=24.576 MHz, 1=16.9344 Mhz) and
+	 * The LSB selects the clock source (0=24.576 MHz, 1=16.9344 MHz) and
 	 * other three bits select the divisor (indirectly):
 	 *
 	 * The available speeds are in the following table. Keep the speeds in

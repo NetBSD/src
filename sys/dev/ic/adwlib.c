@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.24 2001/11/15 09:48:04 lukem Exp $        */
+/* $NetBSD: adwlib.c,v 1.25 2003/02/21 17:14:06 tsutsui Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.24 2001/11/15 09:48:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.25 2003/02/21 17:14:06 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1469,7 +1469,7 @@ AdwASC38C1600Cabling(iot, ioh, cfg)
 	 * Each ASC-38C1600 function has two connectors. Only an HVD device
 	 * can not be connected to either connector. An LVD device or SE device
 	 * may be connected to either connecor. If an SE device is connected,
-	 * then at most Ultra speed (20 Mhz) can be used on both connectors.
+	 * then at most Ultra speed (20 MHz) can be used on both connectors.
 	 *
 	 * If an HVD device is attached, return an error.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bt8xx.h,v 1.4 2000/12/30 16:55:24 wiz Exp $	*/
+/*	$NetBSD: bt8xx.h,v 1.5 2003/02/21 17:14:04 tsutsui Exp $	*/
 
 /* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */
 /* The copyright below only applies to the ioctl_meteor.h part of this file. */
@@ -120,7 +120,7 @@ struct meteor_video {
 #define	METEOR_STATUS_SVP	0x0100	/* State of VRAM Port:inactive/active */
 #define	METEOR_STATUS_STTC	0x0080	/* Time Constant: TV/VCR */
 #define	METEOR_STATUS_HCLK	0x0040	/* Horiz PLL: locked/unlocked */
-#define	METEOR_STATUS_FIDT	0x0020	/* Field detect: 50/60hz */
+#define	METEOR_STATUS_FIDT	0x0020	/* Field detect: 50/60Hz */
 #define	METEOR_STATUS_ALTD	0x0002	/* Line alt: no line alt/line alt */
 #define METEOR_STATUS_CODE	0x0001	/* Colour info: no colour/colour */
 

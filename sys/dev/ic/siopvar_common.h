@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.22 2002/10/23 02:32:36 christos Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.23 2003/02/21 17:14:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -153,9 +153,9 @@ struct siop_common_softc {
 
 /* features */
 #define SF_BUS_WIDE	0x00000001 /* wide bus */
-#define SF_BUS_ULTRA	0x00000002 /* Ultra (20Mhz) bus */
-#define SF_BUS_ULTRA2	0x00000004 /* Ultra2 (40Mhz) bus */
-#define SF_BUS_ULTRA3	0x00000008 /* Ultra3 (80Mhz) bus */
+#define SF_BUS_ULTRA	0x00000002 /* Ultra (20MHz) bus */
+#define SF_BUS_ULTRA2	0x00000004 /* Ultra2 (40MHz) bus */
+#define SF_BUS_ULTRA3	0x00000008 /* Ultra3 (80MHz) bus */
 #define SF_BUS_DIFF	0x00000010 /* differential bus */
 
 #define SF_CHIP_LED0	0x00000100 /* led on GPIO0 */

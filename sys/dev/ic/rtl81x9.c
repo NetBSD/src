@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.44 2003/01/15 21:55:03 bouyer Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.45 2003/02/21 17:14:07 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -70,7 +70,7 @@
  * levels.
  *
  * It's impossible given this rotten design to really achieve decent
- * performance at 100Mbps, unless you happen to have a 400Mhz PII or
+ * performance at 100Mbps, unless you happen to have a 400MHz PII or
  * some equally overmuscled CPU to drive it.
  *
  * On the bright side, the 8139 does have a built-in PHY, although
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.44 2003/01/15 21:55:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45 2003/02/21 17:14:07 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

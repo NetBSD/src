@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.13 2002/05/30 21:10:36 thorpej Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.14 2003/02/21 17:14:07 tsutsui Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.13 2002/05/30 21:10:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.14 2003/02/21 17:14:07 tsutsui Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -254,7 +254,7 @@ spcattach(sc)
 	 * the chip's clock input and the size and offset of the sync period
 	 * register.
 	 *
-	 * For a 20Mhz clock, this gives us 25, or 100nS, or 10MB/s, as a
+	 * For a 20MHz clock, this gives us 25, or 100nS, or 10MB/s, as a
 	 * maximum transfer rate, and 112.5, or 450nS, or 2.22MB/s, as a
 	 * minimum transfer rate.
 	 */

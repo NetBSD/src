@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.21 2002/03/05 04:12:57 itojun Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.22 2003/02/21 17:14:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.21 2002/03/05 04:12:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.22 2003/02/21 17:14:05 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -508,7 +508,7 @@ sca_msci_get_baud_rate_values(u_int32_t hz, u_int8_t *tmcp)
 	 * tmc = chip / hz, but have tmc <= 256
 	 */
 
-	/* assume system clock is 9.8304Mhz or 9830400hz */
+	/* assume system clock is 9.8304MHz or 9830400Hz */
 	clock = clock = 9830400 >> 1;
 
 	/* round down */
