@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58 1996/09/08 11:49:49 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59 1996/09/30 08:31:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1630,7 +1630,7 @@ kmin_enable_intr(slotno, handler, sc, on)
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 	printf("3MIN: imask %x, %sabling slot %d, sc %x addr 0x%x\n",
-	       kn03_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
+	       kmin_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
 #endif
 
 	/*
