@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.29 2004/09/26 00:17:15 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.30 2004/09/26 00:35:51 soda Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -699,9 +699,8 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	if (err == 0)
 		*nresult = (int)(nr + rsz);
 	else
-#else
-	*nresult = (int)nr;
 #endif
+	*nresult = (int)nr;
 
 	return 0;
 }
