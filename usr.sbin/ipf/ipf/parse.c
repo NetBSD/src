@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.13 1998/05/29 20:46:46 veego Exp $	*/
+/*	$NetBSD: parse.c,v 1.14 1998/08/27 18:03:44 ross Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -1164,12 +1164,13 @@ struct	frentry	*fp;
 		(void)printf("block");
 		if (fp->fr_flags & FR_RETICMP) {
 			(void)printf(" return-icmp");
-			if (fp->fr_icode)
+			if (fp->fr_icode) {
 				if (fp->fr_icode <= MAX_ICMPCODE)
 					printf("(%s)",
 						icmpcodes[(int)fp->fr_icode]);
 				else
 					printf("(%d)", fp->fr_icode);
+			}
 		}
 		if (fp->fr_flags & FR_RETRST)
 			(void)printf(" return-rst");
@@ -1241,7 +1242,7 @@ struct	frentry	*fp;
 		else
 			(void)printf("/%d ", ones);
 	}
-	if (fp->fr_scmp)
+	if (fp->fr_scmp) {
 		if (fp->fr_scmp == FR_INRANGE || fp->fr_scmp == FR_OUTRANGE)
 			(void)printf("port %d %s %d ", fp->fr_sport,
 				     pcmp1[fp->fr_scmp], fp->fr_stop);
@@ -1249,6 +1250,7 @@ struct	frentry	*fp;
 			(void)printf("port %s %s ", pcmp1[fp->fr_scmp],
 				     portname(pr, fp->fr_sport));
 
+	}
 	printf("to %s", fp->fr_flags & FR_NOTDSTIP ? "!" : "");
 	if (!fp->fr_dst.s_addr & !fp->fr_dmsk.s_addr)
 		(void)printf("any");

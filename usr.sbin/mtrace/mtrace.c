@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.10 1998/07/04 21:34:20 mrg Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.11 1998/08/27 18:03:45 ross Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.10 1998/07/04 21:34:20 mrg Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.11 1998/08/27 18:03:45 ross Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1596,16 +1596,18 @@ Usage: mtrace [-Mlnps] [-w wait] [-m max_hops] [-q nqueries] [-g gateway]\n\
 
     if (base.rtime == 0) {
 	printf("Timed out receiving responses\n");
-	if (IN_MULTICAST(ntohl(tdst)))
+	if (IN_MULTICAST(ntohl(tdst))) {
 	  if (tdst == query_cast)
 	    printf("Perhaps no local router has a route for source %s\n",
 		   inet_fmt(qsrc, s1));
 	  else
-	    printf("Perhaps receiver %s is not a member of group %s,\n\
-or no router local to it has a route for source %s,\n\
-or multicast at ttl %d doesn't reach its last-hop router for that source\n",
-		   inet_fmt(qdst, s2), inet_fmt(qgrp, s3), inet_fmt(qsrc, s1),
-		   qttl ? qttl : MULTICAST_TTL1);
+	    printf("Perhaps receiver %s is not a member of group %s,\n"
+		"or no router local to it has a route for source %s,\n"
+		"or multicast at ttl %d doesn't reach its last-hop router"
+		" for that source\n",
+		inet_fmt(qdst, s2), inet_fmt(qgrp, s3), inet_fmt(qsrc, s1),
+		qttl ? qttl : MULTICAST_TTL1);
+	}
 	exit(1);
     }
 

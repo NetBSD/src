@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.14 1998/07/06 06:57:34 mrg Exp $	*/
+/*	$NetBSD: create.c,v 1.15 1998/08/27 18:03:45 ross Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.14 1998/07/06 06:57:34 mrg Exp $");
+__RCSID("$NetBSD: create.c,v 1.15 1998/08/27 18:03:45 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,16 +143,18 @@ statf(p)
 
 	if (!S_ISREG(p->fts_statp->st_mode))
 		output(&indent, "type=%s", inotype(p->fts_statp->st_mode));
-	if (keys & (F_UID | F_UNAME) && p->fts_statp->st_uid != uid)
+	if (keys & (F_UID | F_UNAME) && p->fts_statp->st_uid != uid) {
 		if (keys & F_UNAME && (pw = getpwuid(p->fts_statp->st_uid)))
 			output(&indent, "uname=%s", pw->pw_name);
 		else /* if (keys & F_UID) */
 			output(&indent, "uid=%u", p->fts_statp->st_uid);
-	if (keys & (F_GID | F_GNAME) && p->fts_statp->st_gid != gid)
+	}
+	if (keys & (F_GID | F_GNAME) && p->fts_statp->st_gid != gid) {
 		if (keys & F_GNAME && (gr = getgrgid(p->fts_statp->st_gid)))
 			output(&indent, "gname=%s", gr->gr_name);
 		else /* if (keys & F_GID) */
 			output(&indent, "gid=%u", p->fts_statp->st_gid);
+	}
 	if (keys & F_MODE && (p->fts_statp->st_mode & MBITS) != mode)
 		output(&indent, "mode=%#o", p->fts_statp->st_mode & MBITS);
 	if (keys & F_NLINK && p->fts_statp->st_nlink != 1)
@@ -238,11 +240,12 @@ statd(t, parent, puid, pgid, pmode)
 			(void)printf(" gname=%s", gr->gr_name);
 		else
 			(void)printf(" gid=%u", savegid);
-	if (keys & F_UNAME)
+	if (keys & F_UNAME) {
 		if ((pw = getpwuid(saveuid)) != NULL)
 			(void)printf(" uname=%s", pw->pw_name);
 		else
 			(void)printf(" uid=%u", saveuid);
+	}
 	if (keys & F_UID)
 		(void)printf(" uid=%u", saveuid);
 	if (keys & F_MODE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.14 1997/10/24 03:12:06 enami Exp $	*/
+/*	$NetBSD: compare.c,v 1.15 1998/08/27 18:03:45 ross Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.14 1997/10/24 03:12:06 enami Exp $");
+__RCSID("$NetBSD: compare.c,v 1.15 1998/08/27 18:03:45 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ typeerr:		LABEL;
 			tab = "\t";
 		}
 	}
-	if (s->flags & F_CKSUM)
+	if (s->flags & F_CKSUM) {
 		if ((fd = open(p->fts_accpath, O_RDONLY, 0)) < 0) {
 			LABEL;
 			(void)printf("%scksum: %s: %s\n",
@@ -226,6 +226,7 @@ typeerr:		LABEL;
 			}
 			tab = "\t";
 		}
+	}
 	if (s->flags & F_SLINK && strcmp(cp = rlink(name), s->slink)) {
 		LABEL;
 		(void)printf("%slink ref (%s, %s)\n", tab, cp, s->slink);

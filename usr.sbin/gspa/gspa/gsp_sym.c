@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_sym.c,v 1.3 1997/10/17 06:59:10 lukem Exp $	*/
+/*	$NetBSD: gsp_sym.c,v 1.4 1998/08/27 18:03:43 ross Exp $	*/
 /*
  * GSP assembler - symbol table
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_sym.c,v 1.3 1997/10/17 06:59:10 lukem Exp $");
+__RCSID("$NetBSD: gsp_sym.c,v 1.4 1998/08/27 18:03:43 ross Exp $");
 #endif
 
 #include <stdio.h>
@@ -189,8 +189,8 @@ reset_numeric_labels()
 
 	for( h = 0; h < NHASH; ++h )
 		for( p = symbol_hash[h]; p != NULL; p = p->next )
-			if( (p->flags & NUMERIC_LABEL) != 0 )
-				if( (p->flags & DEFINED) != 0 ){
+			if( (p->flags & NUMERIC_LABEL) != 0 ) {
+				if( (p->flags & DEFINED) != 0 ) {
 					/* a backward reference */
 					p->flags &= ~DEFINED;
 				} else {
@@ -200,4 +200,5 @@ reset_numeric_labels()
 					p->value = nl->value;
 					p->lineno = nl->lineno;
 				}
+			}
 }

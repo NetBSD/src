@@ -1,4 +1,4 @@
-/*	$NetBSD: prune.c,v 1.4 1997/10/17 10:38:33 lukem Exp $	*/
+/*	$NetBSD: prune.c,v 1.5 1998/08/27 18:03:44 ross Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -1781,11 +1781,12 @@ age_table_entry()
 	    if (gt->gt_pruntbl != NULL || gt->gt_srctbl != NULL ||
 		gt->gt_prsent_timer > 0) {
 		gt->gt_timer = CACHE_LIFETIME(cache_lifetime);
-		if (gt->gt_prsent_timer == -1)
+		if (gt->gt_prsent_timer == -1) {
 		    if (gt->gt_grpmems == 0)
 			send_prune(gt);
 		    else
 			gt->gt_prsent_timer = 0;
+		}
 		gtnptr = &gt->gt_gnext;
 		continue;
 	    }
@@ -1818,11 +1819,12 @@ age_table_entry()
 #endif /* RSRR */
 	    free((char *)gt);
 	} else {
-	    if (gt->gt_prsent_timer == -1)
+	    if (gt->gt_prsent_timer == -1) {
 		if (gt->gt_grpmems == 0)
 		    send_prune(gt);
 		else
 		    gt->gt_prsent_timer = 0;
+	    }
 	    gtnptr = &gt->gt_gnext;
 	}
     }
@@ -2208,12 +2210,13 @@ accept_mtrace(src, dst, group, data, no, datalen)
 	    resp->tr_rflags = TR_SCOPED;
 	else if (gt->gt_prsent_timer)
 	    resp->tr_rflags = TR_PRUNED;
-	else if (!VIFM_ISSET(vifi, gt->gt_grpmems))
+	else if (!VIFM_ISSET(vifi, gt->gt_grpmems)) {
 	    if (VIFM_ISSET(vifi, rt->rt_children) &&
 		!VIFM_ISSET(vifi, rt->rt_leaves))
 		resp->tr_rflags = TR_OPRUNED;
 	    else
 		resp->tr_rflags = TR_NO_FWD;
+	}
     } else {
 	if (scoped_addr(vifi, group))
 	    resp->tr_rflags = TR_SCOPED;
