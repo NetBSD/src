@@ -1,4 +1,4 @@
-/*	$NetBSD: ipfs.c,v 1.1.1.1 2004/03/28 08:56:32 martti Exp $	*/
+/*	$NetBSD: ipfs.c,v 1.2 2004/05/10 00:36:19 christos Exp $	*/
 
 /*
  * Copyright (C) 1999-2001, 2003 by Darren Reed.
@@ -528,9 +528,11 @@ int readnat(fd, file)
 int fd;
 char *file;
 {
-	nat_save_t ipn, *in, *ipnhead, *in1, *ipntail, *ipnp;
+	nat_save_t ipn, *in, *ipnhead = NULL, *in1, *ipntail = NULL;
 	int nfd, i;
 	nat_t *nat;
+	char *s;
+	int n;
 
 	nfd = -1;
 	in = NULL;
@@ -548,7 +550,6 @@ char *file;
 	}
 
 	bzero((char *)&ipn, sizeof(ipn));
-	ipnp = &ipn;
 
 	/*
 	 * 1. Read all state information in.
@@ -570,33 +571,36 @@ char *file;
 		}
 
 		if (ipn.ipn_dsize > 0) {
-			char *s = ipnp->ipn_data;
-			int n = ipnp->ipn_dsize;
+			n = ipn.ipn_dsize;
 
-			n -= sizeof(ipnp->ipn_data);
+			if (n > sizeof(ipn.ipn_data))
+				n -= sizeof(ipn.ipn_data);
+			else
+				n = 0;
 			in = malloc(sizeof(*in) + n);
 			if (!in)
 				break;
-
-			s += sizeof(ipnp->ipn_data);
-			i = read(nfd, s, n);
-			if (i == 0)
-				break;
-			if (i != n) {
-				fprintf(stderr, "incomplete read: %d != %d\n",
-					i, n);
-				close(nfd);
-				free(in);
-				return 1;
+			if (n > 0) {
+				s = in->ipn_data + sizeof(in->ipn_data);
+ 				i = read(nfd, s, n);
+				if (i == 0)
+					break;
+				if (i != n) {
+					fprintf(stderr,
+						"incomplete read: %d != %d\n",
+						i, n);
+					close(nfd);
+					return 1;
+				}
 			}
 		} else {
 			ipn.ipn_dsize = 0;
 			in = (nat_save_t *)malloc(sizeof(*in));
 		}
-		bcopy((char *)ipnp, (char *)in, sizeof(ipn));
+		bcopy((char *)&ipn, (char *)in, sizeof(ipn));
 
 		/*
-		 * Check to see if this is the first state entry that will
+		 * Check to see if this is the first NAT entry that will
 		 * reference a particular rule and if so, flag it as such
 		 * else just adjust the rule pointer to become a pointer to
 		 * the other.  We do this so we have a means later for tracking
@@ -626,6 +630,7 @@ char *file;
 	} while (1);
 
 	close(nfd);
+	nfd = -1;
 
 	for (in = ipnhead; in; in = in->ipn_next) {
 		if (opts & OPT_VERBOSE)
@@ -740,6 +745,7 @@ char *dirname;
 		dirname = IPF_SAVEDIR;
 
 	if (chdir(dirname)) {
+		fprintf(stderr, "IPF_SAVEDIR=%s: ", dirname);
 		perror("chdir(IPF_SAVEDIR)");
 		return 1;
 	}
