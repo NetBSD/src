@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.5 1996/01/31 00:43:02 cgd Exp 
+ *	NetBSD: pcidevs,v 1.6 1996/02/19 20:08:25 christos Exp 
  */
 
 /*
@@ -42,6 +42,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c590",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595,
+	    0,
+	    "3Com",
+	    "3c595",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
