@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_madt.c,v 1.2.2.2 2003/01/07 21:33:57 thorpej Exp $	*/
+/*	$NetBSD: acpi_madt.c,v 1.2.2.3 2003/01/08 16:51:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -50,8 +50,6 @@
 #include <dev/acpi/acpica/Subsystem/acnamesp.h>
 #include <dev/acpi/acpi_madt.h>
 
-#undef ACPI_MADT_DEBUG
-
 #ifdef ACPI_MADT_DEBUG
 static void acpi_madt_print(void);
 static ACPI_STATUS acpi_madt_print_entry(APIC_HEADER *, void *);
@@ -80,6 +78,9 @@ acpi_madt_map(void)
 	if (AcpiGbl_XSDT == NULL)
 		return AE_NO_ACPI_TABLES;
 
+	if (AcpiGbl_MADT != NULL)
+		return AE_ALREADY_EXISTS;
+
 	xp = AcpiGbl_XSDT;
 	hdrp = &AcpiGbl_XSDT->Header;
 
@@ -99,18 +100,22 @@ acpi_madt_map(void)
 			    (ACPI_SIZE)header.Length, (void **)&AcpiGbl_MADT);
 			if (ACPI_FAILURE (Status))
 				return Status;
+			else
+				break;
 		}
 	}
 #ifdef ACPI_MADT_DEBUG
-	acpi_madt_print();
+	if (AcpiGbl_MADT != NULL)
+		acpi_madt_print();
 #endif
-	return AE_OK;
+	return AcpiGbl_MADT != NULL ? AE_OK : AE_NOT_FOUND;
 }
 
 void
 acpi_madt_unmap(void)
 {
 	AcpiOsUnmapMemory(AcpiGbl_MADT, AcpiGbl_MADT->Length);
+	AcpiGbl_MADT = NULL;
 }
 
 #ifdef ACPI_MADT_DEBUG
