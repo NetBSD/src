@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.132 2001/05/14 18:51:33 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.133 2001/05/28 02:50:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2816,28 +2816,6 @@ nfs_strategy(v)
 	    nfs_asyncio(bp))
 		error = nfs_doio(bp, p);
 	return (error);
-}
-
-/*
- * Mmap a file
- *
- * NB Currently unsupported.
- */
-/* ARGSUSED */
-int
-nfs_mmap(v)
-	void *v;
-{
-#if 0
-	struct vop_mmap_args /* {
-		struct vnode *a_vp;
-		int a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-#endif
-
-	return (EINVAL);
 }
 
 /*
