@@ -1,4 +1,4 @@
-/*	$NetBSD: sleep.c,v 1.12 1995/10/20 17:32:06 pk Exp $	*/
+/*	$NetBSD: sleep.c,v 1.13 1995/10/26 22:07:00 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sleep.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: sleep.c,v 1.12 1995/10/20 17:32:06 pk Exp $";
+static char rcsid[] = "$NetBSD: sleep.c,v 1.13 1995/10/26 22:07:00 pk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -110,13 +110,18 @@ sleep(seconds)
 		sigprocmask(SIG_SETMASK, &oset, NULL);
 		(void) setitimer(ITIMER_REAL, &oitv, &itv);
 	} else {
+		struct itimerval nulltv;
 		/*
 		 * Interrupted by other signal; allow for pending 
-		 * SIGALRM to be processed before resetting handler.
+		 * SIGALRM to be processed before resetting handler,
+		 * after first turning off the timer.
 		 */
-		(void) setitimer(ITIMER_REAL, &oitv, &itv);
+		timerclear(&nulltv.it_interval);
+		timerclear(&nulltv.it_value);
+		(void) setitimer(ITIMER_REAL, &nulltv, &itv);
 		sigprocmask(SIG_SETMASK, &oset, NULL);
 		sigaction(SIGALRM, &oact, NULL);
+		(void) setitimer(ITIMER_REAL, &oitv, NULL);
 	}
 
 	if (timerisset(&diff))
