@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.18 2003/05/10 21:10:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.19 2003/10/26 08:05:00 jdolecek Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.18 2003/05/10 21:10:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.19 2003/10/26 08:05:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,8 +109,7 @@ uvm_init()
 
 	/*
 	 * step 4: setup the kernel's virtual memory data structures.  this
-	 * includes setting up the kernel_map/kernel_object and the kmem_map/
-	 * kmem_object.
+	 * includes setting up the kernel_map/kernel_object.
 	 */
 
 	uvm_km_init(kvm_start, kvm_end);
@@ -124,7 +123,8 @@ uvm_init()
 
 	/*
 	 * step 6: init the kernel memory allocator.   after this call the
-	 * kernel memory allocator (malloc) can be used.
+	 * kernel memory allocator (malloc) can be used. this includes
+	 * setting up the kmem_map.
 	 */
 
 	kmeminit();
