@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.53 2000/11/13 15:24:22 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.54 2000/11/30 00:19:25 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
+#include <sys/pool.h>
 #include <sys/scsiio.h>
 
 #include <dev/scsipi/scsi_all.h>
@@ -102,11 +103,14 @@
 #include <dev/ic/ncr53c9xvar.h>
 
 int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*/
+#ifdef DEBUG
+int ncr53c9x_notag = 0;
+#endif
 
 /*static*/ void	ncr53c9x_readregs	__P((struct ncr53c9x_softc *));
 /*static*/ void	ncr53c9x_select		__P((struct ncr53c9x_softc *,
 					    struct ncr53c9x_ecb *));
-/*static*/ int ncr53c9x_reselect	__P((struct ncr53c9x_softc *, int));
+/*static*/ int ncr53c9x_reselect	__P((struct ncr53c9x_softc *, int, int, int));
 /*static*/ void	ncr53c9x_scsi_reset	__P((struct ncr53c9x_softc *));
 /*static*/ int	ncr53c9x_poll		__P((struct ncr53c9x_softc *,
 					    struct scsipi_xfer *, int));
@@ -116,6 +120,7 @@ int ncr53c9x_debug = 0; /*NCR_SHOWPHASE|NCR_SHOWMISC|NCR_SHOWTRAC|NCR_SHOWCMDS;*
 /*static*/ void	ncr53c9x_msgin		__P((struct ncr53c9x_softc *));
 /*static*/ void	ncr53c9x_msgout		__P((struct ncr53c9x_softc *));
 /*static*/ void	ncr53c9x_timeout	__P((void *arg));
+/*static*/ void	ncr53c9x_watch		__P((void *arg));
 /*static*/ void	ncr53c9x_abort		__P((struct ncr53c9x_softc *,
 					    struct ncr53c9x_ecb *));
 /*static*/ void ncr53c9x_dequeue	__P((struct ncr53c9x_softc *,
@@ -132,6 +137,10 @@ struct ncr53c9x_ecb *ncr53c9x_get_ecb	__P((struct ncr53c9x_softc *, int));
 static inline int ncr53c9x_stp2cpb	__P((struct ncr53c9x_softc *, int));
 static inline void ncr53c9x_setsync	__P((struct ncr53c9x_softc *,
 					    struct ncr53c9x_tinfo *));
+static struct ncr53c9x_linfo *ncr53c9x_lunsearch __P((struct ncr53c9x_tinfo *,
+							     int64_t lun));
+static int ecb_pool_initialized = 0;
+static struct pool ecb_pool;
 
 /*
  * Names for the NCR53c9x variants, correspnding to the variant tags
@@ -166,6 +175,21 @@ static struct scsipi_device ncr53c9x_device = {
 };
 
 /*
+ * Search linked list for LUN info by LUN id.
+ */
+static struct ncr53c9x_linfo *
+ncr53c9x_lunsearch(ti, lun)
+	struct ncr53c9x_tinfo *ti;
+	int64_t lun;
+{
+	struct ncr53c9x_linfo *li;
+	LIST_FOREACH(li, &ti->luns, link) 
+		if (li->lun == lun)
+			return (li);
+	return (NULL);
+}
+
+/*
  * Attach this instance, and then all the sub-devices
  */
 void
@@ -175,6 +199,7 @@ ncr53c9x_attach(sc, adapter, device)
 	struct scsipi_device *device;
 {
 
+	callout_init(&sc->sc_watchdog);
 	/*
 	 * Allocate SCSI message buffers.
 	 * Front-ends can override allocation to avoid alignment
@@ -234,7 +259,7 @@ ncr53c9x_attach(sc, adapter, device)
 	sc->sc_link.scsipi_scsi.adapter_target = sc->sc_id;
 	sc->sc_link.adapter = (adapter) ? adapter : &ncr53c9x_adapter;
 	sc->sc_link.device = (device) ? device : &ncr53c9x_device;
-	sc->sc_link.openings = 2;
+	sc->sc_link.openings = 32;
 	sc->sc_link.scsipi_scsi.max_target = 7;
 	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
@@ -260,6 +285,7 @@ ncr53c9x_attach(sc, adapter, device)
 	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
 	scsipi_adapter_delref(&sc->sc_link);
+	callout_reset(&sc->sc_watchdog, 60*hz, ncr53c9x_watch, sc);
 }
 
 int
@@ -359,33 +385,58 @@ ncr53c9x_init(sc, doreset)
 	int doreset;
 {
 	struct ncr53c9x_ecb *ecb;
-	int r;
+	struct ncr53c9x_linfo *li;
+	int i, r;
 
 	NCR_TRACE(("[NCR_INIT(%d)] ", doreset));
 
+	if (!ecb_pool_initialized) {
+		/* All instances share this pool */
+		pool_init(&ecb_pool, sizeof(struct ncr53c9x_ecb), 0, 0, 0, 
+			  "ncr53c9x_ecb", 0, NULL, NULL, 0);
+		ecb_pool_initialized = 1;
+	}
+
 	if (sc->sc_state == 0) {
 		/* First time through; initialize. */
+
 		TAILQ_INIT(&sc->ready_list);
-		TAILQ_INIT(&sc->nexus_list);
-		TAILQ_INIT(&sc->free_list);
 		sc->sc_nexus = NULL;
-		ecb = sc->sc_ecb;
-		bzero(ecb, sizeof(sc->sc_ecb));
-		for (r = 0; r < sizeof(sc->sc_ecb) / sizeof(*ecb); r++) {
-			TAILQ_INSERT_TAIL(&sc->free_list, ecb, chain);
-			ecb++;
-		}
 		bzero(sc->sc_tinfo, sizeof(sc->sc_tinfo));
+		for (r=0; r<NCR_NTARG; r++) {
+			LIST_INIT(&sc->sc_tinfo[r].luns);
+		}
 	} else {
 		/* Cancel any active commands. */
 		sc->sc_state = NCR_CLEANING;
+		sc->sc_msgify = 0;
 		if ((ecb = sc->sc_nexus) != NULL) {
 			ecb->xs->error = XS_TIMEOUT;
 			ncr53c9x_done(sc, ecb);
 		}
-		while ((ecb = sc->nexus_list.tqh_first) != NULL) {
-			ecb->xs->error = XS_TIMEOUT;
-			ncr53c9x_done(sc, ecb);
+		/* Cancel outstanding disconnected commands on each LUN */
+		for (r=0; r<8; r++) {
+			LIST_FOREACH(li, &sc->sc_tinfo[r].luns, link) {
+				if ((ecb = li->untagged)) {
+					li->untagged = NULL;
+					/* 
+					 * XXXXXXX
+					 *
+					 * Should we terminate a command 
+					 * that never reached the disk? 
+					 */
+					li->busy = 0;
+					ecb->xs->error = XS_TIMEOUT;
+					ncr53c9x_done(sc, ecb);
+				}
+				for (i=0; i<256; i++)
+					if ((ecb = li->queued[i])) {
+						li->queued[i] = NULL;
+						ecb->xs->error = XS_TIMEOUT;
+						ncr53c9x_done(sc, ecb);
+					}
+				li->used = 0;
+			}
 		}
 	}
 
@@ -399,10 +450,14 @@ ncr53c9x_init(sc, doreset)
 		struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[r];
 /* XXX - config flags per target: low bits: no reselect; high bits: no synch */
 
-		ti->flags = (((sc->sc_cfflags & (1<<(r+8))) != 0)
-				? T_SYNCHOFF : 0) |
-				((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0) |
-				T_NEED_TO_RESET;
+		ti->flags = ((sc->sc_cfflags & (1<<(r+16))) ? T_TAGOFF : 0) |
+			((sc->sc_minsync && !(sc->sc_cfflags & (1<<(r+8))))
+			 ? T_SYNCHOFF : 0) |
+			((sc->sc_cfflags & (1<<r)) ? T_RSELECTOFF : 0) |
+			T_NEED_TO_RESET;
+#ifdef DEBUG
+		if (ncr53c9x_notag) ti->flags |= T_TAGOFF;
+#endif
 		ti->period = sc->sc_minsync;
 		ti->offset = 0;
 	}
@@ -534,11 +589,10 @@ ncr53c9x_select(sc, ecb)
 	int clen;
 	size_t dmasize;
 
-	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x)] ",
-		   target, lun, ecb->cmd.cmd.opcode));
+	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x,tag:%x,%x)] ",
+		   target, lun, ecb->cmd.cmd.opcode, ecb->tag[0], ecb->tag[1]));
 
 	sc->sc_state = NCR_SELECTING;
-
 	/*
 	 * Schedule the timeout now, the first time we will go away
 	 * expecting to come back due to an interrupt, because it is
@@ -572,7 +626,7 @@ ncr53c9x_select(sc, ecb)
 			/* setup DMA transfer for command */
 			dmasize = clen = ecb->clen;
 			sc->sc_cmdlen = clen;
-			sc->sc_cmdp = (caddr_t)&ecb->cmd + 1;
+			sc->sc_cmdp = (caddr_t)&ecb->cmd.cmd;
 			NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
 	
 			/* Program the SCSI counter */
@@ -589,7 +643,7 @@ ncr53c9x_select(sc, ecb)
 			NCRCMD(sc, NCRCMD_SELNATN | NCRCMD_DMA);
 			NCRDMA_GO(sc);
 		} else {
-			/* Now the command into the FIFO */
+			/* Now get the command into the FIFO */
 			cmd = (u_char *)&ecb->cmd.cmd;
 			clen = ecb->clen;
 			while (clen--)
@@ -600,14 +654,26 @@ ncr53c9x_select(sc, ecb)
 		return;
 	}
 
+	if (ecb->tag[0]) {
+		/* We'll use tags */
+		ecb->cmd.msg[0] = MSG_IDENTIFY(lun, 1);
+		ecb->cmd.msg[1] = ecb->tag[0];
+		ecb->cmd.msg[2] = ecb->tag[1];
+		cmd = (u_char *)&ecb->cmd.msg[0];
+		clen = ecb->clen + 3;
+	} else {
+		ecb->cmd.msg[2] = 
+			MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
+		cmd = (u_char *)&ecb->cmd.msg[2];
+		clen = ecb->clen + 1;
+	}
+
 	if (ncr53c9x_dmaselect && (tiflags & T_NEGOTIATE) == 0) {
-		ecb->cmd.id = 
-		    MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
 
 		/* setup DMA transfer for command */
-		dmasize = clen = ecb->clen + 1;
+		dmasize = clen;
 		sc->sc_cmdlen = clen;
-		sc->sc_cmdp = (caddr_t)&ecb->cmd;
+		sc->sc_cmdp = cmd;
 		NCRDMA_SETUP(sc, &sc->sc_cmdp, &sc->sc_cmdlen, 0, &dmasize);
 
 		/* Program the SCSI counter */
@@ -621,7 +687,10 @@ ncr53c9x_select(sc, ecb)
 		NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
 
 		/* And get the targets attention */
-		NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
+		if (ecb->tag[0])
+			NCRCMD(sc, NCRCMD_SELATN3 | NCRCMD_DMA);
+		else
+			NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
 		NCRDMA_GO(sc);
 		return;
 	}
@@ -630,8 +699,8 @@ ncr53c9x_select(sc, ecb)
 	 * Who am I. This is where we tell the target that we are
 	 * happy for it to disconnect etc.
 	 */
-	NCR_WRITE_REG(sc, NCR_FIFO,
-		      MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1));
+	NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
+	clen --;
 
 	if (ti->flags & T_NEGOTIATE) {
 		/* Arbitrate, select and stop after IDENTIFY message */
@@ -639,14 +708,23 @@ ncr53c9x_select(sc, ecb)
 		return;
 	}
 
-	/* Now the command into the FIFO */
-	cmd = (u_char *)&ecb->cmd.cmd;
-	clen = ecb->clen;
+	/* If we want to send a tag, get it into the fifo */
+	if (ecb->tag[0]) {
+		NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
+		clen --;
+		NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
+		clen --;
+	}
+
+	/* Now get the command into the FIFO */
 	while (clen--)
 		NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
 
 	/* And get the targets attention */
-	NCRCMD(sc, NCRCMD_SELATN);
+	if (ecb->tag[0])
+		NCRCMD(sc, NCRCMD_SELATN3 | NCRCMD_DMA);
+	else
+		NCRCMD(sc, NCRCMD_SELATN | NCRCMD_DMA);
 }
 
 void
@@ -658,18 +736,10 @@ ncr53c9x_free_ecb(sc, ecb, flags)
 	int s;
 
 	s = splbio();
-
 	ecb->flags = 0;
-	TAILQ_INSERT_HEAD(&sc->free_list, ecb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (ecb->chain.tqe_next == 0)
-		wakeup(&sc->free_list);
-
+	pool_put(&ecb_pool, (void *)ecb);
 	splx(s);
+	return;
 }
 
 struct ncr53c9x_ecb *
@@ -678,19 +748,17 @@ ncr53c9x_get_ecb(sc, flags)
 	int flags;
 {
 	struct ncr53c9x_ecb *ecb;
-	int s;
+	int s, wait = 0;
+
+	if ((curproc != NULL) && ((flags & XS_CTL_NOSLEEP) == 0))
+		wait = PR_WAITOK;
 
 	s = splbio();
-
-	while ((ecb = sc->free_list.tqh_first) == NULL &&
-	       (flags & XS_CTL_NOSLEEP) == 0)
-		tsleep(&sc->free_list, PRIBIO, "especb", 0);
-	if (ecb) {
-		TAILQ_REMOVE(&sc->free_list, ecb, chain);
-		ecb->flags |= ECB_ALLOC;
-	}
-
+	ecb = (struct ncr53c9x_ecb *)pool_get(&ecb_pool, wait);
 	splx(s);
+	bzero(ecb, sizeof(*ecb));
+	if (ecb)
+		ecb->flags |= ECB_ALLOC;
 	return (ecb);
 }
 
@@ -710,13 +778,41 @@ ncr53c9x_scsi_cmd(xs)
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_softc *sc = sc_link->adapter_softc;
 	struct ncr53c9x_ecb *ecb;
+	struct ncr53c9x_tinfo *ti;
+	struct ncr53c9x_linfo *li;
+	int64_t lun = sc_link->scsipi_scsi.lun;
 	int s, flags;
 
 	NCR_TRACE(("[ncr53c9x_scsi_cmd] "));
 	NCR_CMDS(("[0x%x, %d]->%d ", (int)xs->cmd->opcode, xs->cmdlen,
 	    sc_link->scsipi_scsi.target));
 
+	/*
+	 * Find the LUN info structure and allocate one if it does
+	 * not exist.
+	 */
 	flags = xs->xs_control;
+	ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+	li = TINFO_LUN(ti, lun);
+	if (li == NULL) {
+		int wait = M_NOWAIT;
+
+		/* Initialize LUN info and add to list. */
+		if ((curproc != NULL) && ((flags & XS_CTL_NOSLEEP) == 0))
+			wait = M_WAITOK;
+		if ((li = malloc(sizeof(*li), M_DEVBUF, M_NOWAIT)) == NULL) {
+		    return (TRY_AGAIN_LATER);
+		}
+		bzero(li, sizeof(*li));
+		li->last_used = time.tv_sec;
+		li->lun = lun;
+		s = splbio();
+		LIST_INSERT_HEAD(&ti->luns, li, link);
+		if (lun < NCR_NLUN)
+			ti->lun[lun] = li;
+		splx(s);
+	}
+
 	if ((ecb = ncr53c9x_get_ecb(sc, flags)) == NULL)
 		return (TRY_AGAIN_LATER);
 
@@ -739,6 +835,7 @@ ncr53c9x_scsi_cmd(xs)
 	s = splbio();
 
 	TAILQ_INSERT_TAIL(&sc->ready_list, ecb, chain);
+	ecb->flags |= ECB_READY;
 	if (sc->sc_state == NCR_IDLE)
 		ncr53c9x_sched(sc);
 
@@ -852,6 +949,9 @@ ncr53c9x_sched(sc)
 	struct ncr53c9x_ecb *ecb;
 	struct scsipi_link *sc_link;
 	struct ncr53c9x_tinfo *ti;
+	int lun;
+	struct ncr53c9x_linfo *li;
+	int s, tag;
 
 	NCR_TRACE(("[ncr53c9x_sched] "));
 	if (sc->sc_state != NCR_IDLE)
@@ -864,8 +964,108 @@ ncr53c9x_sched(sc)
 	for (ecb = sc->ready_list.tqh_first; ecb; ecb = ecb->chain.tqe_next) {
 		sc_link = ecb->xs->sc_link;
 		ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
-		if ((ti->lubusy & (1 << sc_link->scsipi_scsi.lun)) == 0) {
+		lun = sc_link->scsipi_scsi.lun;
+
+		/* Select type of tag for this command */
+		if (ecb->xs->xs_control & XS_CTL_URGENT)
+			tag = MSG_HEAD_OF_Q_TAG;
+		else
+			tag = MSG_SIMPLE_Q_TAG;
+		if (ti->flags & (T_RSELECTOFF|T_TAGOFF)) 
+			tag = 0;
+#if 0
+		/* XXXX Use tags for polled commands? */
+		if (ecb->xs->xs_control & XS_CTL_POLL)
+			tag = 0;
+#endif
+		if (ecb->flags & ECB_SENSE)
+			tag = 0;
+		s = splbio();
+		li = TINFO_LUN(ti, lun);
+		if (!li) {
+			int wait = M_NOWAIT;
+			int flags = ecb->xs->xs_control;
+
+			/* Initialize LUN info and add to list. */
+			if ((curproc != NULL) && ((flags & XS_CTL_NOSLEEP) == 0))
+				wait = M_WAITOK;
+			if ((li = malloc(sizeof(*li), M_DEVBUF, M_NOWAIT)) == NULL) {
+				splx(s);
+				continue;
+			}
+			bzero(li, sizeof(*li));
+			li->lun = lun;
+
+			LIST_INSERT_HEAD(&ti->luns, li, link);
+			if (lun < NCR_NLUN)
+				ti->lun[lun] = li;
+		}
+		li->last_used = time.tv_sec;
+		if (!tag) {
+			/* Try to issue this as an un-tagged command */
+			if (!li->untagged)
+				li->untagged = ecb;
+		}
+		if (li->untagged) {
+			tag = 0;
+			if ((li->busy != 1) && !li->used) {
+				/* We need to issue this untagged command now */
+				ecb = li->untagged;
+				sc_link = ecb->xs->sc_link;
+			} 
+			else {
+				/* Not ready yet */
+				splx(s);
+				continue;
+			}
+		}
+		ecb->tag[0] = tag;
+		if (tag) {
+			int i;
+
+			/* Allocate a tag */
+			if (li->used == 255) {
+				/* no free tags */
+				splx(s);
+				continue;
+			}
+			/* Start from the last used location */
+			for (i=li->avail; i<256; i++) {
+				if (li->queued[i] == NULL)
+					break;
+			}
+			/* Couldn't find one, start again from the beginning */
+			if (i == 256) {
+				for (i=0; i<256; i++) {
+					if (li->queued[i] == NULL)
+						break;
+				}
+			}
+#ifdef DIAGNOSTIC
+			/* There's supposed to be at least 1 tag avail */
+			if (i == 256)
+				panic("ncr53c9x_sched: tag alloc failure\n");
+#endif
+
+			/* Save where to start next time. */
+			li->avail = i+1;
+			li->used ++;
+
+			li->queued[i] = ecb;
+			ecb->tag[1] = i;
+		}
+		splx(s);
+		if (li->untagged && (li->busy != 1)) {
+			li->busy = 1;
 			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
+			ecb->flags &= ~ECB_READY;
+			sc->sc_nexus = ecb;
+			ncr53c9x_select(sc, ecb);
+			break;
+		}
+		if (!li->untagged && tag) {
+			TAILQ_REMOVE(&sc->ready_list, ecb, chain);
+			ecb->flags &= ~ECB_READY;
 			sc->sc_nexus = ecb;
 			ncr53c9x_select(sc, ecb);
 			break;
@@ -885,6 +1085,8 @@ ncr53c9x_sense(sc, ecb)
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
 	struct scsipi_sense *ss = (void *)&ecb->cmd.cmd;
+	struct ncr53c9x_linfo *li;
+	int lun = sc_link->scsipi_scsi.lun;
 
 	NCR_MISC(("requesting sense "));
 	/* Next, setup a request sense command block */
@@ -898,14 +1100,16 @@ ncr53c9x_sense(sc, ecb)
 	ecb->flags |= ECB_SENSE;
 	ecb->timeout = NCR_SENSE_TIMEOUT;
 	ti->senses++;
-	if (ecb->flags & ECB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
+	li = TINFO_LUN(ti, lun);
+	if (li->busy) li->busy = 0;
+	ncr53c9x_dequeue(sc, ecb);
+	li->untagged = ecb; /* must be executed first to fix C/A */
+	li->busy = 2;
 	if (ecb == sc->sc_nexus) {
-		ecb->flags &= ~ECB_NEXUS;
 		ncr53c9x_select(sc, ecb);
 	} else {
-		ncr53c9x_dequeue(sc, ecb);
 		TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
+		ecb->flags |= ECB_READY;
 		if (sc->sc_state == NCR_IDLE)
 			ncr53c9x_sched(sc);
 	}
@@ -922,10 +1126,24 @@ ncr53c9x_done(sc, ecb)
 	struct scsipi_xfer *xs = ecb->xs;
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+	int lun = sc_link->scsipi_scsi.lun;
+	struct ncr53c9x_linfo *li = TINFO_LUN(ti, lun);
 
 	NCR_TRACE(("[ncr53c9x_done(error:%x)] ", xs->error));
 
 	callout_stop(&ecb->xs->xs_callout);
+
+
+	if (ecb->stat == SCSI_QUEUE_FULL) {
+		/* 
+		 * Set current throttle -- we should reset 
+		 * this periodically 
+		 */
+		sc_link->openings = li->used - 1;
+		printf("\n%s: QFULL -- throttling to %d commands\n",
+		    sc->sc_dev.dv_xname, sc_link->openings);
+
+	}
 
 	/*
 	 * Now, if we've come here with no error code, i.e. we've kept the
@@ -967,17 +1185,27 @@ ncr53c9x_done(sc, ecb)
 	/*
 	 * Remove the ECB from whatever queue it's on.
 	 */
-	if (ecb->flags & ECB_NEXUS)
-		ti->lubusy &= ~(1 << sc_link->scsipi_scsi.lun);
+	ncr53c9x_dequeue(sc, ecb);
 	if (ecb == sc->sc_nexus) {
 		sc->sc_nexus = NULL;
 		if (sc->sc_state != NCR_CLEANING) {
 			sc->sc_state = NCR_IDLE;
 			ncr53c9x_sched(sc);
 		}
-	} else
-		ncr53c9x_dequeue(sc, ecb);
-		
+	}
+
+	if (xs->error == XS_SELTIMEOUT) {
+		/* Selection timeout -- discard this LUN if empty */
+		if (!li->untagged && !li->used) {
+printf("ncr53c9x_done: deleting LUN %d target %d\n", 
+       (int)li->lun, sc_link->scsipi_scsi.target);
+			if (lun < NCR_NLUN)
+				ti->lun[lun] = NULL;
+			LIST_REMOVE(li, link);
+			free(li, M_DEVBUF);
+		}
+	}
+
 	ncr53c9x_free_ecb(sc, ecb, xs->xs_control);
 	ti->cmds++;
 	scsipi_done(xs);
@@ -988,11 +1216,34 @@ ncr53c9x_dequeue(sc, ecb)
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;
 {
+	struct ncr53c9x_tinfo *ti = 
+		&sc->sc_tinfo[ecb->xs->sc_link->scsipi_scsi.target];
+	struct ncr53c9x_linfo *li;
+	int64_t lun = ecb->xs->sc_link->scsipi_scsi.lun;
+	
+	li = TINFO_LUN(ti, lun);
+#ifdef DIAGNOSTIC
+	if ((!li) || (li->lun != lun))
+		panic("ncr53c9x_dequeue: lun %qx for ecb %p does not exist\n",
+		      lun, ecb);
+#endif
+	if (li->untagged == ecb) {
+		li->busy = 0;
+		li->untagged = NULL;
+	}
+	if (ecb->tag[0] && li->queued[ecb->tag[1]]) {
+#ifdef DIAGNOSTIC
+		if (li->queued[ecb->tag[1]] && (li->queued[ecb->tag[1]] != ecb))
+			panic("ncr53c9x_dequeue: slot %d for lun %qx has %p "
+			      "instead of ecb %p\n", ecb->tag[1], (quad_t)lun,
+			      li->queued[ecb->tag[1]], ecb);
+#endif
+		li->queued[ecb->tag[1]] = NULL;
+		li->used --;
 
-	if (ecb->flags & ECB_NEXUS) {
-		TAILQ_REMOVE(&sc->nexus_list, ecb, chain);
-		ecb->flags &= ~ECB_NEXUS;
-	} else {
+	} 
+	if (ecb->flags & ECB_READY) {
+		ecb->flags &= ~ECB_READY;
 		TAILQ_REMOVE(&sc->ready_list, ecb, chain);
 	}
 }
@@ -1008,21 +1259,22 @@ ncr53c9x_dequeue(sc, ecb)
  */
 #define ncr53c9x_sched_msgout(m) \
 	do {							\
-		NCR_MISC(("ncr53c9x_sched_msgout %d ", m));	\
+		NCR_MISC(("ncr53c9x_sched_msgout %x %d", m, __LINE__));	\
 		NCRCMD(sc, NCRCMD_SETATN);			\
 		sc->sc_flags |= NCR_ATN;			\
 		sc->sc_msgpriq |= (m);				\
 	} while (0)
 
 int
-ncr53c9x_reselect(sc, message)
+ncr53c9x_reselect(sc, message, tagtype, tagid)
 	struct ncr53c9x_softc *sc;
 	int message;
+	int tagtype, tagid;
 {
 	u_char selid, target, lun;
-	struct ncr53c9x_ecb *ecb;
-	struct scsipi_link *sc_link;
+	struct ncr53c9x_ecb *ecb = NULL;
 	struct ncr53c9x_tinfo *ti;
+	struct ncr53c9x_linfo *li;
 
 	/*
 	 * The SCSI chip made a snapshot of the data bus while the reselection
@@ -1044,31 +1296,33 @@ ncr53c9x_reselect(sc, message)
 	 */
 	target = ffs(selid) - 1;
 	lun = message & 0x07;
-	for (ecb = sc->nexus_list.tqh_first; ecb != NULL;
-	     ecb = ecb->chain.tqe_next) {
-		sc_link = ecb->xs->sc_link;
-		if (sc_link->scsipi_scsi.target == target &&
-		    sc_link->scsipi_scsi.lun == lun)
-			break;
+	ti = &sc->sc_tinfo[target];
+	li = TINFO_LUN(ti, lun);
+
+	/*
+	 * We can get as far as the LUN with the IDENTIFY
+	 * message.  Check to see if we're running an 
+	 * un-tagged command.  Otherwise ack the IDENTIFY
+	 * and wait for a tag message.
+	 */
+	
+	if (li) {
+		if (li->untagged && li->busy) ecb = li->untagged;
+		else if (tagtype != MSG_SIMPLE_Q_TAG) {
+			/* Wait for tag to come by */
+			sc->sc_state = NCR_IDENTIFIED;
+			return (0);
+		} else if (tagtype) ecb = li->queued[tagid];
 	}
 	if (ecb == NULL) {
-		printf("%s: reselect from target %d lun %d with no nexus;"
-		    " sending ABORT\n", sc->sc_dev.dv_xname, target, lun);
+		printf("%s: reselect from target %d lun %d tag %x:%x with no nexus;"
+		    " sending ABORT\n", sc->sc_dev.dv_xname, target, lun, tagtype, tagid);
 		goto abort;
 	}
 
 	/* Make this nexus active again. */
-	TAILQ_REMOVE(&sc->nexus_list, ecb, chain);
 	sc->sc_state = NCR_CONNECTED;
 	sc->sc_nexus = ecb;
-	ti = &sc->sc_tinfo[target];
-#ifdef NCR53C9X_DEBUG
-	if ((ti->lubusy & (1 << lun)) == 0) {
-		printf("%s: reselect: target %d, lun %d: should be busy\n",
-			sc->sc_dev.dv_xname, target, lun);
-		ti->lubusy |= (1 << lun);
-	}
-#endif
 	ncr53c9x_setsync(sc, ti);
 
 	if (ecb->flags & ECB_RESET)
@@ -1107,9 +1361,11 @@ ncr53c9x_msgin(sc)
 {
 	int v;
 
-	NCR_TRACE(("[ncr53c9x_msgin(curmsglen:%ld)] ", (long)sc->sc_imlen));
+	v = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF);
+	NCR_TRACE(("[ncr53c9x_msgin(curmsglen:%ld fifo:%d)] ", 
+		   (long)sc->sc_imlen, v));
 
-	if ((NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) == 0) {
+	if (v == 0) {
 		printf("%s: msgin: no msg byte available\n",
 			sc->sc_dev.dv_xname);
 		return;
@@ -1227,6 +1483,12 @@ gotit:
 			NCR_MSGS(("noop "));
 			break;
 
+		case MSG_HEAD_OF_Q_TAG:
+		case MSG_SIMPLE_Q_TAG:
+		case MSG_ORDERED_Q_TAG:
+			NCR_MSGS(("TAG %x:%x", sc->sc_imess[0], sc->sc_imess[1]));
+			break;
+
 		case MSG_DISCONNECT:
 			NCR_MSGS(("disconnect "));
 			ti->dconns++;
@@ -1339,14 +1601,30 @@ gotit:
 		break;
 
 	case NCR_RESELECTED:
-		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
+	case NCR_IDENTIFIED:
+		if (MSG_ISIDENTIFY(sc->sc_imess[0])) {
+			sc->sc_msgify = sc->sc_imess[0];
+		} else if (sc->sc_imess[0] == MSG_SIMPLE_Q_TAG) {
+			if (!sc->sc_msgify) {
+				printf("%s: TAG reselect without IDENTIFY;"
+				       " MSG %x;"
+				       " sending DEVICE RESET\n",
+				       sc->sc_imess[0],
+				       sc->sc_dev.dv_xname);
+				goto reset;
+			}
+		} else {
 			printf("%s: reselect without IDENTIFY;"
+			       " MSG %x;"
 			       " sending DEVICE RESET\n",
+			       sc->sc_imess[0],
 			       sc->sc_dev.dv_xname);
 			goto reset;
 		}
 
-		(void) ncr53c9x_reselect(sc, sc->sc_imess[0]);
+		(void) ncr53c9x_reselect(sc, sc->sc_msgify, 
+					 sc->sc_imess[0], 
+					 sc->sc_imess[1]);
 		break;
 
 	default:
@@ -1430,14 +1708,24 @@ ncr53c9x_msgout(sc)
 				ncr53c9x_setsync(sc, ti);
 			}
 			break;
-		case SEND_IDENTIFY:
+                case SEND_IDENTIFY:
+                        if (sc->sc_state != NCR_CONNECTED) {
+                                printf("%s at line %d: no nexus\n",
+                                    sc->sc_dev.dv_xname, __LINE__);
+                        }
+                        ecb = sc->sc_nexus;
+                        sc->sc_omess[0] =
+                            MSG_IDENTIFY(ecb->xs->sc_link->scsipi_scsi.lun, 0);
+                        break;
+		case SEND_TAG:
 			if (sc->sc_state != NCR_CONNECTED) {
 				printf("%s at line %d: no nexus\n",
 				    sc->sc_dev.dv_xname, __LINE__);
 			}
 			ecb = sc->sc_nexus;
-			sc->sc_omess[0] =
-			    MSG_IDENTIFY(ecb->xs->sc_link->scsipi_scsi.lun, 0);
+			sc->sc_omess[0] = ecb->tag[0];
+			sc->sc_omess[1] = ecb->tag[1];
+			sc->sc_omlen = 2;
 			break;
 		case SEND_DEV_RESET:
 			sc->sc_flags |= NCR_ABORTING;
@@ -1483,6 +1771,14 @@ ncr53c9x_msgout(sc)
 		sc->sc_omp = sc->sc_omess;
 	}
 
+#ifdef DEBUG
+	{
+		int i;
+		
+		for (i=0; i<sc->sc_omlen; i++) 
+			NCR_MISC(("<msgbyte:0x%02x>", sc->sc_omess[i]));
+	}
+#endif
 	/* (re)send the message */
 	size = min(sc->sc_omlen, sc->sc_maxxfer);
 	NCRDMA_SETUP(sc, &sc->sc_omp, &sc->sc_omlen, 0, &size);
@@ -1685,6 +1981,7 @@ again:
 					sc->sc_espstep,
 					sc->sc_prevphase,
 					ecb?ecb->dleft:-1);
+Debugger();
 			}
 		}
 	}
@@ -1701,6 +1998,7 @@ again:
 	}
 
 	if (sc->sc_espintr & NCRINTR_DIS) {
+		sc->sc_msgify = 0;
 		NCR_MISC(("<DISC [intr %x, stat %x, step %d]>",
 			sc->sc_espintr,sc->sc_espstat,sc->sc_espstep));
 		if (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF) {
@@ -1717,10 +2015,30 @@ again:
 		case NCR_RESELECTED:
 			goto sched;
 
-		case NCR_SELECTING:
-			ecb->xs->error = XS_SELTIMEOUT;
-			goto finish;
+		case NCR_SELECTING: 
+		{
+			struct ncr53c9x_linfo *li;
 
+			ecb->xs->error = XS_SELTIMEOUT;
+
+			/* Selection timeout -- discard all LUNs if empty */
+			sc_link = ecb->xs->sc_link;
+			ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+			li = ti->luns.lh_first;
+			while (li) {
+				if (!li->untagged && !li->used) {
+					if (li->lun < NCR_NLUN)
+						ti->lun[li->lun] = NULL;
+					LIST_REMOVE(li, link);
+					free(li, M_DEVBUF);
+					/* Restart the search at the beginning */
+					li = ti->luns.lh_first;
+					continue;
+				}
+				li = li->link.le_next;
+			}
+			goto finish;
+		}
 		case NCR_CONNECTED:
 			if ((sc->sc_flags & NCR_SYNCHNEGO)) {
 #ifdef NCR53C9X_DEBUG
@@ -1760,7 +2078,6 @@ again:
 			goto finish;
 
 		case NCR_DISCONNECT:
-			TAILQ_INSERT_HEAD(&sc->nexus_list, ecb, chain);
 			sc->sc_nexus = NULL;
 			goto sched;
 
@@ -1799,16 +2116,32 @@ printf("<<RESELECT CONT'd>>");
 #endif
 		break;
 
+	case NCR_IDENTIFIED:
+		ecb = sc->sc_nexus;
+		if (sc->sc_phase != MESSAGE_IN_PHASE) {
+			int i = (NCR_READ_REG(sc, NCR_FFLAG)
+				 & NCRFIFO_FF);
+ 			/*
+			 * Things are seriously fucked up.
+			 * Pull the brakes, i.e. reset
+			 */
+			printf("%s: target didn't send tag: %d bytes in fifo\n",
+			       sc->sc_dev.dv_xname, i);
+			/* Drain and display fifo */
+			while (i-- > 0)
+				printf("[%d] ", NCR_READ_REG(sc, NCR_FIFO));
+			
+			ncr53c9x_init(sc, 1);
+			return (1);
+		} else 
+			goto msgin;
+
+		break;
 	case NCR_IDLE:
 	case NCR_SELECTING:
 		sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
 		sc->sc_flags = 0;
 		ecb = sc->sc_nexus;
-		if (ecb != NULL && (ecb->flags & ECB_NEXUS)) {
-			scsi_print_addr(ecb->xs->sc_link);
-			printf("ECB_NEXUS while in state %x\n", sc->sc_state);
-		}
-
 		if (sc->sc_espintr & NCRINTR_RESEL) {
 			/*
 			 * If we're trying to select a
@@ -1818,9 +2151,9 @@ printf("<<RESELECT CONT'd>>");
 			if (sc->sc_state == NCR_SELECTING) {
 				NCR_MISC(("backoff selector "));
 				callout_stop(&ecb->xs->xs_callout);
-				sc_link = ecb->xs->sc_link;
-				ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
+				ncr53c9x_dequeue(sc, ecb);
 				TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
+				ecb->flags |= ECB_READY;
 				ecb = sc->sc_nexus = NULL;
 			}
 			sc->sc_state = NCR_RESELECTED;
@@ -1876,7 +2209,8 @@ printf("<<RESELECT CONT'd>>");
 				sc->sc_flags |= NCR_EXPECT_ILLCMD;
 			}
 
-			if (sc->sc_state != NCR_CONNECTED) {
+			if (sc->sc_state != NCR_CONNECTED &&
+			    sc->sc_state != NCR_IDENTIFIED) {
 				/* IDENTIFY fail?! */
 				printf("%s: identify failed\n",
 					sc->sc_dev.dv_xname);
@@ -1927,7 +2261,11 @@ printf("<<RESELECT CONT'd>>");
 				ti->period = sc->sc_minsync;
 				ti->offset = 15;
 				sc->sc_flags |= NCR_SYNCHNEGO;
-				ncr53c9x_sched_msgout(SEND_SDTR);
+				if (ecb->tag[0])
+					ncr53c9x_sched_msgout(SEND_TAG|SEND_SDTR);
+				else
+					ncr53c9x_sched_msgout(SEND_SDTR);
+				sc->sc_prevphase = MESSAGE_OUT_PHASE; /* XXXX */
 				break;
 			case 3:
 				/*
@@ -1980,9 +2318,6 @@ printf("<<RESELECT CONT'd>>");
 				/* So far, everything went fine */
 				break;
 			}
-
-			ecb->flags |= ECB_NEXUS;
-			ti->lubusy |= (1 << sc_link->scsipi_scsi.lun);
 
 			sc->sc_prevphase = INVALID_PHASE; /* ?? */
 			/* Do an implicit RESTORE POINTERS. */
@@ -2069,6 +2404,7 @@ printf("<<RESELECT CONT'd>>");
 		sc->sc_prevphase = MESSAGE_OUT_PHASE;
 		break;
 	case MESSAGE_IN_PHASE:
+msgin:
 		NCR_PHASE(("MESSAGE_IN_PHASE "));
 		sc->sc_prevphase = MESSAGE_IN_PHASE;
 		if (sc->sc_espintr & NCRINTR_BS) {
@@ -2258,14 +2594,8 @@ ncr53c9x_abort(sc, ecb)
 		callout_reset(&ecb->xs->xs_callout, timeout,
 		    ncr53c9x_timeout, ecb);
 	} else {
-		/* The command should be on the nexus list */
-		if ((ecb->flags & ECB_NEXUS) == 0) {
-			scsi_print_addr(ecb->xs->sc_link);
-			printf("ncr53c9x_abort: not NEXUS\n");
-			ncr53c9x_init(sc, 1);
-		}
 		/*
-		 * Just leave the command on the nexus list.
+		 * Just leave the command where it is.
 		 * XXX - what choice do we have but to reset the SCSI
 		 *	 eventually?
 		 */
@@ -2325,3 +2655,93 @@ ncr53c9x_timeout(arg)
 
 	splx(s);
 }
+
+void
+ncr53c9x_watch(arg)
+	void *arg;
+{
+	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
+	struct ncr53c9x_tinfo *ti;
+	struct ncr53c9x_linfo *li;
+	int t, s;
+	/* Delete any structures that have not been used in 10min. */
+	time_t old = time.tv_sec - (10*60);
+
+	s = splbio();
+	for (t=0; t<NCR_NTARG; t++) {
+		ti = &sc->sc_tinfo[t];
+		li = ti->luns.lh_first;
+		while (li) {
+			if (li->last_used < old && !li->untagged && !li->used) {
+				if (li->lun < NCR_NLUN)
+					ti->lun[li->lun] = NULL;
+				LIST_REMOVE(li, link);
+				free(li, M_DEVBUF);
+				/* Restart the search at the beginning */
+				li = ti->luns.lh_first;
+				continue; 
+			}
+			li = li->link.le_next;
+		}
+	}
+	splx(s);
+	callout_reset(&sc->sc_watchdog, 60*hz, ncr53c9x_watch, sc);
+}
+
+
+#include "opt_ddb.h"
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <machine/autoconf.h>
+#include <ddb/db_output.h>
+
+void db_esp __P((db_expr_t, int, db_expr_t, char*));
+
+void
+db_esp(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	struct ncr53c9x_softc *sc;
+	struct ncr53c9x_ecb *ecb;
+	struct ncr53c9x_linfo *li;
+	int u, t, i;
+
+	for (u=0; u<10; u++) {
+		sc = (struct ncr53c9x_softc *)
+			getdevunit("esp", u);
+		if (!sc) continue;
+
+		db_printf("esp%d: nexus %p phase %x prev %x dp %p dleft %lx ify %x\n",
+			  u, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase, 
+			  sc->sc_dp, sc->sc_dleft, sc->sc_msgify);
+		db_printf("\tmsgout %x msgpriq %x msgin %x:%x:%x:%x:%x\n",
+			  sc->sc_msgout, sc->sc_msgpriq, sc->sc_imess[0],
+			  sc->sc_imess[1], sc->sc_imess[2], sc->sc_imess[3],
+			  sc->sc_imess[0]);
+		db_printf("ready: ");
+		for (ecb = sc->ready_list.tqh_first; ecb; ecb = ecb->chain.tqe_next) {
+			db_printf("ecb %p ", ecb);
+			if (ecb == ecb->chain.tqe_next) {
+				db_printf("\nWARNING: tailq loop on ecb %p", ecb);
+				break;
+			}
+		}
+		db_printf("\n");
+		
+		for (t=0; t<NCR_NTARG; t++) {
+			LIST_FOREACH(li, &sc->sc_tinfo[t].luns, link) {
+				db_printf("t%d lun %d untagged %p busy %d used %x\n",
+					  t, (int)li->lun, li->untagged, li->busy,
+					  li->used);
+				for (i=0; i<256; i++)
+					if ((ecb = li->queued[i])) {
+						db_printf("ecb %p tag %x\n", ecb, i);
+					}
+			}
+		}
+	}
+}
+#endif
