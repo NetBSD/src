@@ -1031,7 +1031,7 @@ enum reg_class { NO_REGS, ALL_REGS, LIM_REG_CLASSES };
 
 /* The prefix to add to user-visible assembler symbols. */
 
-#define USER_LABEL_PREFIX "_"
+#define USER_LABEL_PREFIX ""
 
 /* This is how to output an internal numbered label where
    PREFIX is the class of label and NUM is the number within the class.  */
