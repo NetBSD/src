@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.5 1997/02/23 08:48:16 jonathan Exp $
+.\"	$NetBSD: ahc.4,v 1.6 1997/10/19 18:08:10 soda Exp $
 .\"
 .\" Copyright (c) 1995, 1996 
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -135,27 +135,7 @@ utility
 will allow normal function.
 .if 1 \{
 .Pp
-There are three known problems in NetBSD version of this driver as follows.
-All of these problems relate to NetBSD MI SCSI system.
-.Pp
-It is dangerous to simultaneously access SCSI devices more than half
-number of SCBs. It may cause fatal disk trouble. In this case,
-diagnostics message 
-.Dq not queued, error ...
-is displayed to console.
-For example, AHA-274x and AHA-284x have only 4 SCBs, so that using 3 SCSI
-devices is dangerous, using 2 devices is OK.
-.Pp
-When you suddenly access SCSI devices on free physical memory shortage
-conditions, and if there have been very few load on SCSI devices until 
-then, it may cause fatal disk trouble. In this case, diagnostics
-message 
-.Dq ahc0: Can't malloc SCB
-and 
-.Dq not queued, error ...
-is displayed to console.
-.Pp
-SCSI residual handling is not complete.
+SCSI residual handling is not complete on NetBSD version of this driver.
 \}
 .Sh SEE ALSO
 .Xr aha 4 ,
