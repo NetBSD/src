@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.63 2002/12/17 14:49:19 jdolecek Exp $
+# $NetBSD: obsolete.mi,v 1.64 2002/12/18 20:07:23 wiz Exp $
 ./bin/rcorder
 ./dev/i4b
 ./dev/i4bctl
@@ -104,20 +104,6 @@
 ./usr/share/doc/usd/13.ex/Makefile
 ./usr/share/doc/usd/13.ex/ex.rm
 ./usr/share/doc/usd/13.ex/ex.summary
-./usr/share/examples/fstab/fstab.md
-./usr/share/examples/fstab/fstab.nfs.1
-./usr/share/examples/fstab/fstab.nfs.2
-./usr/share/examples/fstab/fstab.nfs.3
-./usr/share/examples/fstab/fstab.ra
-./usr/share/examples/fstab/fstab.rd
-./usr/share/examples/fstab/fstab.sd0.1
-./usr/share/examples/fstab/fstab.sd0.2
-./usr/share/examples/fstab/fstab.sd0.amiga
-./usr/share/examples/fstab/fstab.sd0.atari
-./usr/share/examples/fstab/fstab.wd0.1
-./usr/share/examples/fstab/fstab.wd0.2
-./usr/share/examples/fstab/fstab.wd0.3
-./usr/share/examples/fstab/fstab.wd0.cobalt
 ./usr/share/examples/verifiedexec_load
 ./usr/share/examples/verifiedexec_load/gen_md5
 ./usr/share/examples/verifiedexec_load/gen_sha1
@@ -206,12 +192,14 @@
 ./usr/share/man/cat8/arm32/MAKEDEV.0
 ./usr/share/man/cat8/arm32/makedev.0
 ./usr/share/man/cat8/tahoe
+./usr/share/man/cat8/walnut
 ./usr/share/man/cat9/arm26
 ./usr/share/man/cat9/arm32
 ./usr/share/man/html4/arm26
 ./usr/share/man/html8/arm26
 ./usr/share/man/html8/arm32
 ./usr/share/man/html8/playstation
+./usr/share/man/html8/walnut
 ./usr/share/man/html9/arm26
 ./usr/share/man/html9/arm32
 ./usr/share/man/man3/atari
@@ -244,6 +232,7 @@
 ./usr/share/man/man8/arm32/MAKEDEV.8
 ./usr/share/man/man8/arm32/makedev.8
 ./usr/share/man/man8/tahoe
+./usr/share/man/man8/walnut
 ./usr/share/man/man9/arm26
 ./usr/share/man/man9/arm32
 ./usr/share/misc/getopt
