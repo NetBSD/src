@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 1999/04/11 04:04:06 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 1999/06/17 18:21:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1309,28 +1309,6 @@ pmap_virtual_space(start, end)
 	*end = virtual_end;
 }
 
-
-/*
- * void pmap_pageable(pmap_t pmap, vm_offset_t sva, vm_offset_t eva,
- *   boolean_t pageable)
- *  
- * Make the specified pages (by pmap, offset) pageable (or not) as requested.
- *
- * A page which is not pageable may not take a fault; therefore, its
- * page table entry must remain valid for the duration.
- *
- * This routine is merely advisory; pmap_enter will specify that these
- * pages are to be wired down (or not) as appropriate.
- */
- 
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t pmap;
-	vm_offset_t sva;
-	vm_offset_t eva;
-	boolean_t pageable;
-{
-}
 
 /*
  * Activate the address space for the specified process.  If the process

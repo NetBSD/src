@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 1999/06/08 03:44:18 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 1999/06/17 18:21:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 1999/06/08 03:44:18 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 1999/06/17 18:21:31 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1658,34 +1658,6 @@ pmap_copy_page(src, dst)
 		/*	MachFlushCache();*/
 		MachFlushDCache(dst, NBPG);
 	}
-#endif
-}
-
-/*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
- *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
- *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t pmap;
-	vaddr_t	sva, eva;
-	boolean_t pageable;
-{
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_pageable(%p, %lx, %lx, %x)\n",
-		       pmap, sva, eva, pageable);
 #endif
 }
 

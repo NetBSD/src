@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 1999/03/26 23:41:37 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112 1999/06/17 18:21:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -2947,29 +2947,6 @@ pmap_page_protect(pa, prot)
 	}
 
 	splx(s);
-}
-
-/*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
- *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
- *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
- */
-void
-pmap_pageable(pmap, sva, eva, pageable)
-	pmap_t		pmap;
-	vm_offset_t	sva, eva;
-	boolean_t	pageable;
-{
-	/* not implemented, hopefully not needed */
 }
 
 /*

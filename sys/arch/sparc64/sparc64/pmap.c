@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.38 1999/06/07 05:28:04 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.39 1999/06/17 18:21:35 thorpej Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 1
 /* #define BOOT_DEBUG */
@@ -1279,19 +1279,6 @@ pmap_collect(pm)
 	}
 	splx(s);
 #endif
-}
-
-/*
- * Make the specified pages pageable or not as requested.
- *
- * This routine is merely advisory.
- */
-void
-pmap_pageable(pm, start, end, pageable)
-	struct pmap *pm;
-	vaddr_t start, end;
-	int pageable;
-{
 }
 
 #if 0
