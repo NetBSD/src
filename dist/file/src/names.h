@@ -1,4 +1,5 @@
-/*	$NetBSD: names.h,v 1.1.1.4 2004/12/13 10:24:54 pooka Exp $	*/
+/*	$NetBSD: names.h,v 1.1.1.5 2005/02/21 14:33:38 pooka Exp $	*/
+
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
