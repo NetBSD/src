@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.30 1996/12/31 17:44:04 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.31 1997/01/06 18:05:15 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -146,7 +146,9 @@ static struct aconfdata aconftab[] = {
 	/* Advanced Systems */
 	{ "nxsc",	2102,	1 },	/* Nexus SCSI board */
 	/* Masoboshi */
-	{ "mcsc",	8535,	4 }	/* Masoboshi Mastercard 702 */
+	{ "mcsc",	8535,	4 },	/* Masoboshi Mastercard 702 */
+	/* Apollo */
+	{ "apssc",	8738,	35 }	/* Apollo '060 scsi */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
