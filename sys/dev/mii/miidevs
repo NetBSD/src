@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.7 1999/09/04 23:58:55 soren Exp $
+$NetBSD: miidevs,v 1.8 1999/09/07 19:29:52 soren Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -123,3 +123,4 @@ model xxTI 100VGPMI		0x0002 ThunderLAN 100VG-AnyLan media interface
 
 /* TDK Semiconductor PHYs */
 model TSC 78Q2120		0x0014 78Q2120 10/100 media interface
+model TSC 78Q2121		0x0015 78Q2121 100baseTX media interface
