@@ -1,4 +1,4 @@
-/*	$NetBSD: putc_unlocked.c,v 1.1 2003/03/14 03:38:42 thorpej Exp $	*/
+/*	$NetBSD: putc_unlocked.c,v 1.2 2003/03/21 14:40:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,10 +43,12 @@
 #if !HAVE_PUTC_UNLOCKED
 #include <stdio.h>
 
+#ifndef putc_unlocked
 int
 putc_unlocked(int c, FILE *stream)
 {
 
 	putc(c, stream);
 }
+#endif /* putc_unlocked */
 #endif
