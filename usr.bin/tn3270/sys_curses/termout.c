@@ -1,4 +1,4 @@
-/*	$NetBSD: termout.c,v 1.11 2000/04/27 16:48:42 mycroft Exp $	*/
+/*	$NetBSD: termout.c,v 1.12 2000/12/17 14:28:45 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termout.c	4.3 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: termout.c,v 1.11 2000/04/27 16:48:42 mycroft Exp $");
+__RCSID("$NetBSD: termout.c,v 1.12 2000/12/17 14:28:45 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,9 +67,6 @@ extern char *tgetstr __P((char *, char **));
 #define nl()	 (_tty.sg_flags |= CRMOD,_pfast = _rawmode,stty(_tty_ch, &_tty))
 #define nonl()	 (_tty.sg_flags &= ~CRMOD, _pfast = TRUE, stty(_tty_ch, &_tty))
 #endif	/* defined(ultrix) */
-#if	defined(__SVR4) || defined(__svr4__)
-char *SE, *SO, *VB;
-#endif
 
 #include "../general/general.h"
 
@@ -104,9 +101,7 @@ static int max_changes_before_poll;	/* how many characters before looking */
 					/* at terminal and net again */
 
 static int needToRing;			/* need to ring terinal bell */
-static char *bellSequence = "\07";	/* bell sequence (may be replaced by
-					 * VB during initialization)
-					 */
+static char bellSequence[1024];		/* bell sequence */
 static WINDOW *bellwin = 0;		/* The window the bell message is in */
 int	bellwinup = 0;			/* Are we up with it or not */
 
@@ -667,6 +662,8 @@ InitTerminal()
     struct termios term;
     speed_t speed;
 #endif
+    char termbuf[1024];
+    char *bsp;
     
     InitMapping();		/* Go do mapping file (MAP3270) first */
     if (!screenInitd) { 	/* not initialized */
@@ -703,8 +700,14 @@ InitTerminal()
 #endif
 	DoARefresh();
 	setconnmode(0);
-	if (VB && *VB) {
-	    bellSequence = VB;		/* use visual bell */
+	if (tgetent(termbuf, getenv("TERM")) == 1) {
+	    bsp = bellSequence;
+	    if ((bsp = tgetstr("vb", &bsp)) == NULL) {	/* use visual bell */
+	        bsp = bellSequence;
+		if ((bsp = tgetstr("bl", &bsp)) == NULL) {
+		    strcpy (bellSequence, "\07");
+		}
+	    }
 	}
 	screenInitd = 1;
 	screenStopped = 0;		/* Not stopped */
