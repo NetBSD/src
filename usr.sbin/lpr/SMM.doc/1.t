@@ -1,4 +1,4 @@
-.\" $NetBSD: 1.t,v 1.2 1995/11/15 22:54:26 pk Exp $
+.\" $NetBSD: 1.t,v 1.3 1997/07/09 02:34:42 jtc Exp $
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -57,12 +57,12 @@ following files and commands:
 .TS
 l l.
 /etc/printcap	printer configuration and capability data base
-/usr/lib/lpd	line printer daemon, does all the real work
-/usr/ucb/lpr	program to enter a job in a printer queue
-/usr/ucb/lpq	spooling queue examination program
-/usr/ucb/lprm	program to delete jobs from a queue
-/etc/lpc	program to administer printers and spooling queues
-/dev/printer	socket on which lpd listens
+/usr/sbin/lpd	line printer daemon, does all the real work
+/usr/bin/lpr	program to enter a job in a printer queue
+/usr/bin/lpq	spooling queue examination program
+/usr/bin/lprm	program to delete jobs from a queue
+/usr/sbin/lpc	program to administer printers and spooling queues
+/var/run/printer	socket on which lpd listens
 .TE
 .DE
 The file /etc/printcap is a master data base describing line
