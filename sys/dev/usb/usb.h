@@ -1,4 +1,5 @@
-/*	$NetBSD: usb.h,v 1.38 1999/10/20 21:02:39 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.39 1999/11/18 23:32:30 augustss Exp $	*/
+/*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -364,7 +365,7 @@ typedef struct {
 #define  UPROTO_MASS_CBI_I	0
 #define  UPROTO_MASS_CBI	1
 #define  UPROTO_MASS_BULK	2
-#define  UPROTO_MASS_BULK_P	80
+#define  UPROTO_MASS_BULK_P	80	/* 'P' for the Iomega Zip drive */
 #define UCLASS_HUB		9
 #define  USUBCLASS_HUB		0
 #define UCLASS_DATA		10
