@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.14 2001/06/29 10:54:20 jdolecek Exp $
+.\"	$NetBSD: sleep.9,v 1.15 2001/07/01 03:23:02 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -174,7 +174,9 @@ conditions that blocked them, since a call to
 merely signals a
 .Em possible
 change to the blocking conditions.
-For example, when two or more processes are waiting for an exclusive lock,
+For example, when two or more processes are waiting for an exclusive-access
+lock 
+.Pq see Xr lock 9 ,
 only one of them will succeed in acquiring the lock when it is released.
 All others will have to go back to sleep and wait for the next opportunity.
 .Sh RETURN VALUES
@@ -197,6 +199,14 @@ If
 returns because of a timeout it returns
 .Er EWOULDBLOCK .
 .Sh HISTORY
+The sleep/wakeup process synchronization mechanism is very old.  It
+appeared in a very early version of Unix.
+.Fn tsleep
+appeared in
+.Bx 4.4 .
 .Fn ltsleep
 appeared in
 .Nx 1.5 .
+.Sh SEE ALSO
+.Xr sigaction 2 ,
+.Xr lock 9 .
