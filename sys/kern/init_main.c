@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.159 1999/11/15 18:49:09 fvdl Exp $	*/
+/*	$NetBSD: init_main.c,v 1.160 1999/12/16 19:59:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -45,6 +45,7 @@
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
+#include "opt_multiprocessor.h"
 
 #include "rnd.h"
 
@@ -432,6 +433,11 @@ main()
 
 	/* Create any other deferred kernel threads. */
 	kthread_run_deferred_queue();
+
+#if defined(MULTIPROCESSOR)
+	/* Boot the secondary processors. */
+	cpu_boot_secondary_processors();
+#endif
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();
