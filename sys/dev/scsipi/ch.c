@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.59 2004/04/23 21:52:17 itojun Exp $	*/
+/*	$NetBSD: ch.c,v 1.60 2004/06/23 23:44:58 seb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.59 2004/04/23 21:52:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.60 2004/06/23 23:44:58 seb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -579,13 +579,6 @@ ch_interpret_sense(xs)
 		 */
 		if ((xs->xs_control & XS_CTL_IGNORE_MEDIA_CHANGE) == 0)
 			ch_event(sc, CHEV_ELEMENT_STATUS_CHANGED);
-		if ((periph->periph_flags & PERIPH_OPEN) == 0) {
-			/*
-			 * if the device is not yet open, we can ignore this
-			 * information.
-			 */
-			return (0);
-		}
 		break;
 	default:
 		break;
