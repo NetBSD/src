@@ -12,6 +12,8 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
+ *
+ *	$Id: sd.c,v 1.9 1993/05/20 03:46:42 cgd Exp $
  */
 
 #include "sd.h"

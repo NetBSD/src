@@ -13,17 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- */
-
-/*
- * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
+ *	$Id: cd.c,v 1.8 1993/05/20 03:46:15 cgd Exp $
  */
 
 #define SPLCD splbio

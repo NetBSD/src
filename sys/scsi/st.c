@@ -12,6 +12,8 @@
  * TFS supplies this software to be publicly redistributed
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
+ *
+ *	$Id: st.c,v 1.8 1993/05/20 03:46:50 cgd Exp $
  */
 
 /*
