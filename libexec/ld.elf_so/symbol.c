@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.31 2003/07/24 10:12:26 skrll Exp $	 */
+/*	$NetBSD: symbol.c,v 1.32 2003/08/05 19:41:53 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -181,7 +181,8 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	def = NULL;
 	defobj = NULL;
 	
-	if (refobj->symbolic) {	/* Look first in the referencing object */
+	/* Look first in the referencing object if linked symbolically */
+	if (refobj->symbolic) {
 		symp = _rtld_symlook_obj(name, hash, refobj, in_plt);
 		if (symp != NULL) {
 			def = symp;
