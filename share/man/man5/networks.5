@@ -1,4 +1,4 @@
-.\"	$NetBSD: networks.5,v 1.9 1999/03/17 20:19:47 garbled Exp $
+.\"	$NetBSD: networks.5,v 1.10 2000/11/08 13:27:44 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)networks.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd January 16, 1999
+.Dd November 9, 2000
 .Dt NETWORKS 5
 .Os
 .Sh NAME
@@ -70,11 +70,17 @@ is used instead, except as noted.
 For each
 .Tn IP
 network a single line should be present with the following information:
-.Bd -unfilled -offset indent
-official network name
-ip network number
-aliases
-.Ed
+.Dl name network [alias ...]
+.Pp
+These are:
+.Bl -tag -width network -offset indent -compact
+.It Ar name
+Official network name
+.It Ar network
+IP network number
+.It Ar alias
+Network alias
+.El
 .Pp
 Items are separated by any number of blanks and/or tab characters.
 A ``#'' indicates the beginning of a comment; characters up to the end of
