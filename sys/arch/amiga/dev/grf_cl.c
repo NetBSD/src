@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.22 1998/04/17 17:57:08 veego Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.23 1999/03/14 09:17:19 veego Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -299,7 +299,12 @@ grfclmatch(pdp, cfp, auxp)
 			break;
 		    case 24:
 			cl_regaddr = (void *)((unsigned long)(zap->va) + 0x600000);
-			cl_fbaddr = (void *)((unsigned long)(zap->va) + 0x01000000);
+			/* check for PicassoIV with 64MB config and handle it */
+			if (zap->size == 0x04000000) {
+			    cl_fbaddr = (void *)((unsigned long)(zap->va) + 0x02000000);
+			} else {
+			    cl_fbaddr = (void *)((unsigned long)(zap->va) + 0x01000000);
+			}
 			cl_fbautosize = 0x400000;
 			break;
 		    default:
