@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/ecs.c,v 1.4 1993/12/02 19:17:33 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/ecs.c,v 1.5 1993/12/06 19:29:08 jtc Exp $ */
 
 #include "flexdef.h"
 

@@ -26,10 +26,9 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* @(#) $Header: /cvsroot/src/usr.bin/lex/Attic/flexdef.h,v 1.5 1993/12/02 19:17:37 jtc Exp $ (LBL) */
+/* @(#) $Header: /cvsroot/src/usr.bin/lex/Attic/flexdef.h,v 1.6 1993/12/06 19:29:13 jtc Exp $ (LBL) */
 
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
 
 /* Always be prepared to generate an 8-bit scanner. */
@@ -549,7 +548,7 @@ extern char **scname;
 
 extern int current_max_dfa_size, current_max_xpairs;
 extern int current_max_template_xpairs, current_max_dfas;
-extern int lastdfa, lasttemp, *nxt, *chk, *tnxt;
+extern int lastdfa, *nxt, *chk, *tnxt;
 extern int *base, *def, *nultrans, NUL_ec, tblend, firstfree, **dss, *dfasiz;
 extern union dfaacc_union
 	{
@@ -608,7 +607,9 @@ void *reallocate_array PROTO((void*, int, int));
 void *yy_flex_alloc PROTO((int));
 void *yy_flex_realloc PROTO((void*, int));
 void yy_flex_free PROTO((void*));
-void *yy_flex_xmalloc PROTO((int));
+int yy_strcmp PROTO(( const char *s1, const char *s2 ));
+void yy_strcpy PROTO(( char *s1, const char *s2 ));
+int yy_strlen PROTO(( const char *s ));
 
 #define allocate_integer_array(size) \
 	(int *) allocate_array( size, sizeof( int ) )
@@ -766,6 +767,9 @@ extern void skelout PROTO((void));
 
 /* Output a yy_trans_info structure. */
 extern void transition_struct_out PROTO((int, int));
+
+/* Only needed when using certain broken versions of bison to build parse.c. */
+extern void *yy_flex_xmalloc PROTO(( int ));
 
 /* Set a region of memory to 0. */
 extern void zero_out PROTO((char *, int));

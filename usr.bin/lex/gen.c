@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $Header: /cvsroot/src/usr.bin/lex/Attic/gen.c,v 1.4 1993/12/02 19:17:43 jtc Exp $ */
+/* $Header: /cvsroot/src/usr.bin/lex/Attic/gen.c,v 1.5 1993/12/06 19:29:19 jtc Exp $ */
 
 #include "flexdef.h"
 
@@ -594,7 +594,7 @@ int worry_about_NULs;
 		}
 
 	else
-		(void) strcpy( char_map,
+		yy_strcpy( char_map,
 			useecs ? "yy_ec[(unsigned int) *yy_cp]" : "*yy_cp" );
 
 	if ( worry_about_NULs && nultrans )
@@ -1052,7 +1052,7 @@ void make_tables()
 		indent_puts(
 		"YY_FATAL_ERROR( \"token too large, exceeds YYLMAX\" ); \\" );
 		indent_down();
-		indent_puts( "strcpy( yytext, yytext_ptr ); \\" );
+		indent_puts( "yy_strcpy( yytext, yytext_ptr ); \\" );
 		}
 
 	set_indent( 0 );
@@ -1255,7 +1255,7 @@ void make_tables()
 			printf(
 			"\tif ( yy_current_buffer->is_interactive ) \\\n" );
 			printf(
-		"\t\tresult = (buf[0] = getc( yyin )) == EOF ? 0 : 1; \\\n" );
+"\t\tresult = ((int) (buf[0] = getc( yyin ))) == EOF ? 0 : 1; \\\n" );
 			printf(
 "\telse if ( ((result = fread( (char *) buf, 1, max_size, yyin )) == 0)\\\n" );
 			printf( "\t\t  && ferror( yyin ) ) \\\n" );
