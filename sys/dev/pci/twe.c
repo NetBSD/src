@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.45 2003/09/22 01:13:02 thorpej Exp $	*/
+/*	$NetBSD: twe.c,v 1.46 2003/09/22 18:31:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.45 2003/09/22 01:13:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.46 2003/09/22 18:31:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +114,9 @@ static int	twe_submatch(struct device *, struct cfdata *, void *);
 static int	twe_status_check(struct twe_softc *, u_int);
 static int	twe_status_wait(struct twe_softc *, u_int, int);
 static void	twe_describe_controller(struct twe_softc *);
+
+static int	twe_add_unit(struct twe_softc *, int);
+static int	twe_del_unit(struct twe_softc *, int);
 
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void twe_outl(struct twe_softc *, int, u_int32_t);
@@ -302,14 +305,9 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	int size, i, rv, rseg;
 	size_t max_segs, max_xfer;
-	struct twe_param *dtp, *atp;
-	struct twe_array_descriptor *ad;
-	struct twe_drive *td;
 	bus_dma_segment_t seg;
 	struct twe_cmd *tc;
-	struct twe_attach_args twea;
 	struct twe_ccb *ccb;
-	uint16_t dsize;
 
 	sc = (struct twe_softc *)self;
 	pa = aux;
@@ -435,86 +433,184 @@ twe_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* Initialise connection with controller. */
+	twe_init_connection(sc);
+
+	twe_describe_controller(sc);
+
+	/* Find and attach RAID array units. */
+	sc->sc_nunits = 0;
+	for (i = 0; i < TWE_MAX_UNITS; i++)
+		(void) twe_add_unit(sc, i);
+
+	/* ...and finally, enable interrupts. */
+	twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR |
+	    TWE_CTL_UNMASK_RESP_INTR |
+	    TWE_CTL_ENABLE_INTRS);
+}
+
+void
+twe_register_callbacks(struct twe_softc *sc, int unit,
+    const struct twe_callbacks *tcb)
+{
+
+	sc->sc_units[unit].td_callbacks = tcb;
+}
+
+static void
+twe_recompute_openings(struct twe_softc *sc)
+{
+	struct twe_drive *td;
+	int unit, openings;
+
+	if (sc->sc_nunits != 0)
+		openings = (TWE_MAX_QUEUECNT - 1) / sc->sc_nunits;
+	else
+		openings = 0;
+	if (openings == sc->sc_openings)
+		return;
+	sc->sc_openings = openings;
+
+#ifdef TWE_DEBUG
+	printf("%s: %d array%s, %d openings per array\n",
+	    sc->sc_dv.dv_xname, sc->sc_nunits,
+	    sc->sc_nunits == 1 ? "" : "s", sc->sc_openings);
+#endif
+
+	for (unit = 0; unit < TWE_MAX_UNITS; unit++) {
+		td = &sc->sc_units[unit];
+		if (td->td_dev != NULL)
+			(*td->td_callbacks->tcb_openings)(td->td_dev,
+			    sc->sc_openings);
+	}
+}
+
+static int
+twe_add_unit(struct twe_softc *sc, int unit)
+{
+	struct twe_param *dtp, *atp;
+	struct twe_array_descriptor *ad;
+	struct twe_drive *td;
+	struct twe_attach_args twea;
+	uint32_t newsize;
+	int rv;
+	uint16_t dsize;
+	uint8_t newtype, newstripe;
+
+	if (unit < 0 || unit >= TWE_MAX_UNITS)
+		return (EINVAL);
+
 	/* Find attached units. */ 
 	rv = twe_param_get(sc, TWE_PARAM_UNITSUMMARY,
 	    TWE_PARAM_UNITSUMMARY_Status, TWE_MAX_UNITS, NULL, &dtp);
 	if (rv != 0) {
-		aprint_error("%s: can't detect attached units (%d)\n",
+		aprint_error("%s: error %d fetching unit summary\n",
 		    sc->sc_dv.dv_xname, rv);
-		return;
+		return (rv);
 	}
 
 	/* For each detected unit, collect size and store in an array. */
-	for (i = 0, sc->sc_nunits = 0; i < TWE_MAX_UNITS; i++) {
-		td = &sc->sc_units[i];
+	td = &sc->sc_units[unit];
 
-		/* Unit present? */
-		if ((dtp->tp_data[i] & TWE_PARAM_UNITSTATUS_Online) == 0) {
-			td->td_size = 0;
-			td->td_type = 0;
-			td->td_stripe = 0;
-	   		continue;
-	   	}
+	/* Unit present? */
+	if ((dtp->tp_data[unit] & TWE_PARAM_UNITSTATUS_Online) == 0) {
+		/*
+		 * XXX Should we check to see if a device has been
+		 * XXX attached at this index and detach it if it
+		 * XXX has?  ("rescan" semantics)
+		 */
+		rv = 0;
+		goto out;
+   	}
 
-		rv = twe_param_get_2(sc, TWE_PARAM_UNITINFO + i,
-		    TWE_PARAM_UNITINFO_DescriptorSize, &dsize);
-		if (rv != 0) {
-			aprint_error("%s: error %d fetching descriptor size "
-			    "for unit %d\n", sc->sc_dv.dv_xname, rv, i);
-			td->td_size = 0;
-			td->td_type = 0;
-			td->td_stripe = 0;
-			continue;
-		}
+	rv = twe_param_get_2(sc, TWE_PARAM_UNITINFO + unit,
+	    TWE_PARAM_UNITINFO_DescriptorSize, &dsize);
+	if (rv != 0) {
+		aprint_error("%s: error %d fetching descriptor size "
+		    "for unit %d\n", sc->sc_dv.dv_xname, rv, unit);
+		goto out;
+	}
 
-		rv = twe_param_get(sc, TWE_PARAM_UNITINFO + i,
-		    TWE_PARAM_UNITINFO_Descriptor, dsize - 3, NULL, &atp);
-		if (rv != 0) {
-			aprint_error("%s: error %d fetching array descriptor "
-			    "for unit %d\n", sc->sc_dv.dv_xname, rv, i);
-			td->td_size = 0;
-			td->td_type = 0;
-			td->td_stripe = 0;
-			continue;
-		}
-		ad = (struct twe_array_descriptor *)atp->tp_data;
-		td->td_type = ad->configuration;
-		td->td_stripe = ad->stripe_size;
-		free(atp, M_DEVBUF);
+	rv = twe_param_get(sc, TWE_PARAM_UNITINFO + unit,
+	    TWE_PARAM_UNITINFO_Descriptor, dsize - 3, NULL, &atp);
+	if (rv != 0) {
+		aprint_error("%s: error %d fetching array descriptor "
+		    "for unit %d\n", sc->sc_dv.dv_xname, rv, unit);
+		goto out;
+	}
 
-		rv = twe_param_get_4(sc, TWE_PARAM_UNITINFO + i,
-		    TWE_PARAM_UNITINFO_Capacity, &td->td_size);
-		if (rv != 0) {
-			aprint_error(
-			    "%s: error %d fetching capacity for unit %d\n",
-			    sc->sc_dv.dv_xname, rv, i);
-			td->td_size = 0;
-			td->td_type = 0;
-			td->td_stripe = 0;
-			continue;
-		}
+	ad = (struct twe_array_descriptor *)atp->tp_data;
+	newtype = ad->configuration;
+	newstripe = ad->stripe_size;
+	free(atp, M_DEVBUF);
 
+	rv = twe_param_get_4(sc, TWE_PARAM_UNITINFO + unit,
+	    TWE_PARAM_UNITINFO_Capacity, &newsize);
+	if (rv != 0) {
+		aprint_error(
+		    "%s: error %d fetching capacity for unit %d\n",
+		    sc->sc_dv.dv_xname, rv, unit);
+		goto out;
+	}
+
+	/*
+	 * Have a device, so we need to attach it.  If there is currently
+	 * something sitting at the slot, and the parameters are different,
+	 * then we detach the old device before attaching the new one.
+	 */
+	if (td->td_dev != NULL &&
+	    td->td_size == newsize &&
+	    td->td_type == newtype &&
+	    td->td_stripe == newstripe) {
+		/* Same as the old device; just keep using it. */
+		rv = 0;
+		goto out;
+	} else if (td->td_dev != NULL) {
+		/* Detach the old device first. */
+		(void) config_detach(td->td_dev, DETACH_FORCE);
+		td->td_dev = NULL;
+	} else if (td->td_size == 0)
 		sc->sc_nunits++;
-	}
+
+	/*
+	 * Committed to the new array unit; assign its parameters and
+	 * recompute the number of available command openings.
+	 */
+	td->td_size = newsize;
+	td->td_type = newtype;
+	td->td_stripe = newstripe;
+	twe_recompute_openings(sc);
+
+	twea.twea_unit = unit;
+	td->td_dev = config_found_sm(&sc->sc_dv, &twea, twe_print,
+	    twe_submatch);
+
+	rv = 0;
+ out:
 	free(dtp, M_DEVBUF);
+	return (rv);
+}
 
-	/* Initialise connection with controller and enable interrupts. */
-	twe_init_connection(sc);
-	twe_outl(sc, TWE_REG_CTL, TWE_CTL_CLEAR_ATTN_INTR |
-	    TWE_CTL_UNMASK_RESP_INTR |
-	    TWE_CTL_ENABLE_INTRS);
+static int
+twe_del_unit(struct twe_softc *sc, int unit)
+{
+	struct twe_drive *td;
 
-	twe_describe_controller(sc);
+	if (unit < 0 || unit >= TWE_MAX_UNITS)
+		return (EINVAL);
 
-	/* Attach sub-devices. */
-	for (i = 0; i < TWE_MAX_UNITS; i++) {
-		td = &sc->sc_units[i];
-		if (td->td_size == 0)
-			continue;
-		twea.twea_unit = i;
-		td->td_dev = config_found_sm(&sc->sc_dv, &twea, twe_print,
-		    twe_submatch);
+	td = &sc->sc_units[unit];
+	if (td->td_size != 0)
+		sc->sc_nunits--;
+	td->td_size = 0;
+	td->td_type = 0;
+	td->td_stripe = 0;
+	if (td->td_dev != NULL) {
+		(void) config_detach(td->td_dev, DETACH_FORCE);
+		td->td_dev = NULL;
 	}
+	twe_recompute_openings(sc);
+	return (0);
 }
 
 /*
@@ -1515,6 +1611,14 @@ tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case TWEIO_RESET:
 		twe_reset(twe);
 		return (0);
+
+	case TWEIO_ADD_UNIT:
+		/* XXX mutex */
+		return (twe_add_unit(twe, *(int *)data));
+
+	case TWEIO_DEL_UNIT:
+		/* XXX mutex */
+		return (twe_del_unit(twe, *(int *)data));
 
 	default:
 		return EINVAL;
