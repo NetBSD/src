@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.9 1997/10/20 03:30:16 lukem Exp $	*/
+/*	$NetBSD: xargs.c,v 1.10 1998/04/14 09:26:33 fair Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: xargs.c,v 1.9 1997/10/20 03:30:16 lukem Exp $");
+__RCSID("$NetBSD: xargs.c,v 1.10 1998/04/14 09:26:33 fair Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: xargs.c,v 1.9 1997/10/20 03:30:16 lukem Exp $");
 #include <unistd.h>
 #include <limits.h>
 #include <locale.h>
+#include <signal.h>
 #include <err.h>
 #include "pathnames.h"
 
@@ -319,7 +320,13 @@ run(argv)
 			rval = 123;
 		}
 	} else if (WIFSIGNALED (status)) {
-		warnx ("%s terminated by signal %d", argv[0], WTERMSIG(status));
+		if (WTERMSIG(status) < _NSIG) {
+			warnx("%s terminated by SIG%s", argv[0],
+				sys_signame[WTERMSIG(status)]);
+		} else {
+			warnx("%s terminated by signal %d", argv[0],
+				WTERMSIG(status));
+		}
 		exit(125);
 	}
 }
