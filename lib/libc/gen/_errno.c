@@ -1,4 +1,4 @@
-/*	$NetBSD: _errno.c,v 1.4 1997/07/30 23:53:32 jtc Exp $	*/
+/*	$NetBSD: _errno.c,v 1.5 1999/12/03 23:24:33 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,8 +38,14 @@
 
 #include <errno.h>
 
+#ifdef __weak_alias
+__weak_alias(__errno, __errno_func);
+#endif
+
+int *__errno_func(void);
+
 int *
-__errno()
+__errno_func(void)
 {
 #undef errno
 	extern int errno;
