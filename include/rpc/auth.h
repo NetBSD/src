@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.12 1998/02/11 22:41:30 lukem Exp $	*/
+/*	$NetBSD: auth.h,v 1.13 1998/07/26 11:37:23 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -100,7 +100,7 @@ typedef struct __rpc_auth {
 	struct	opaque_auth	ah_cred;
 	struct	opaque_auth	ah_verf;
 	union	des_block	ah_key;
-	struct auth_ops {
+	const struct auth_ops {
 		void	(*ah_nextverf) __P((struct __rpc_auth *));
 		/* nextverf & serialize */
 		int	(*ah_marshal) __P((struct __rpc_auth *, XDR *));

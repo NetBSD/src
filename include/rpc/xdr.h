@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.10 1998/02/11 23:01:30 lukem Exp $	*/
+/*	$NetBSD: xdr.h,v 1.11 1998/07/26 11:37:23 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -98,7 +98,7 @@ enum xdr_op {
  */
 typedef struct __rpc_xdr {
 	enum xdr_op	x_op;		/* operation; fast additional param */
-	struct xdr_ops {
+	const struct xdr_ops {
 		/* get a long from underlying stream */
 		bool_t	(*x_getlong) __P((struct __rpc_xdr *, long *));
 		/* put a long to " */
