@@ -1,5 +1,5 @@
 /* Context-format output routines for GNU DIFF.
-   Copyright (C) 1988, 89, 91, 92 Free Software Foundation, Inc.
+   Copyright (C) 1988, 89, 91, 92, 93 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
@@ -18,16 +18,19 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: context.c,v 1.3 1993/08/02 17:26:06 mycroft Exp $";
-#endif /* not lint */
+static char *rcsid = "$Id: context.c,v 1.4 1993/09/16 17:39:06 jtc Exp $";
+#endif
 
 #include "diff.h"
 
-static void pr_context_hunk ();
-static void pr_unidiff_hunk ();
-static struct change *find_hunk ();
-static void mark_ignorable ();
-static void find_function ();
+static struct change *find_hunk PARAMS((struct change *));
+static void find_function PARAMS((struct file_data const *, int, char const **, size_t *));
+static void mark_ignorable PARAMS((struct change *));
+static void pr_context_hunk PARAMS((struct change *));
+static void pr_unidiff_hunk PARAMS((struct change *));
+static void print_context_label PARAMS ((char const *, struct file_data *, char const *));
+static void print_context_number_range PARAMS((struct file_data const *, int, int));
+static void print_unidiff_number_range PARAMS((struct file_data const *, int, int));
 
 /* Last place find_function started searching from.  */
 static int find_function_last_search;
@@ -39,24 +42,23 @@ static int find_function_last_match;
 
 static void
 print_context_label (mark, inf, label)
-     const char *mark;
+     char const *mark;
      struct file_data *inf;
-     const char *label;
+     char const *label;
 {
   if (label)
     fprintf (outfile, "%s %s\n", mark, label);
-  else if (inf->stat.st_mtime)
-    fprintf (outfile, "%s %s\t%s", mark, inf->name, ctime(&inf->stat.st_mtime));
   else
-    /* Don't pretend that standard input is ancient.  */
-    fprintf (outfile, "%s %s\n", mark, inf->name);
+    /* See Posix.2 section 4.17.6.1.4 for this format.  */
+    fprintf (outfile, "%s %s\t%s",
+	     mark, inf->name, ctime (&inf->stat.st_mtime));
 }
 
 /* Print a header for a context diff, with the file names and dates.  */
 
 void
 print_context_header (inf, unidiff_flag)
-     struct file_data *inf;
+     struct file_data inf[];
      int unidiff_flag;
 {
   if (unidiff_flag)
@@ -104,7 +106,7 @@ print_context_script (script, unidiff_flag)
 
 static void
 print_context_number_range (file, a, b)
-     struct file_data *file;
+     struct file_data const *file;
      int a, b;
 {
   int trans_a, trans_b;
@@ -132,9 +134,9 @@ pr_context_hunk (hunk)
 {
   int first0, last0, first1, last1, show_from, show_to, i;
   struct change *next;
-  char *prefix;
-  const char *function;
-  int function_length;
+  char const *prefix;
+  char const *function;
+  size_t function_length;
   FILE *out;
 
   /* Determine range of line numbers involved in each file.  */
@@ -238,7 +240,7 @@ pr_context_hunk (hunk)
 
 static void
 print_unidiff_number_range (file, a, b)
-     struct file_data *file;
+     struct file_data const *file;
      int a, b;
 {
   int trans_a, trans_b;
@@ -266,8 +268,8 @@ pr_unidiff_hunk (hunk)
 {
   int first0, last0, first1, last1, show_from, show_to, i, j, k;
   struct change *next;
-  char *function;
-  int function_length;
+  char const *function;
+  size_t function_length;
   FILE *out;
 
   /* Determine range of line numbers involved in each file.  */
@@ -321,7 +323,7 @@ pr_unidiff_hunk (hunk)
       if (!next || i < next->line0)
 	{
 	  putc (tab_align_flag ? '\t' : ' ', out);
-	  print_1_line ((char *)0, &files[0].linbuf[i++]);
+	  print_1_line (0, &files[0].linbuf[i++]);
 	  j++;
 	}
       else
@@ -334,7 +336,7 @@ pr_unidiff_hunk (hunk)
 	      putc ('-', out);
 	      if (tab_align_flag)
 		putc ('\t', out);
-	      print_1_line ((char *)0, &files[0].linbuf[i++]);
+	      print_1_line (0, &files[0].linbuf[i++]);
 	    }
 
 	  /* Then output the inserted part. */
@@ -345,7 +347,7 @@ pr_unidiff_hunk (hunk)
 	      putc ('+', out);
 	      if (tab_align_flag)
 		putc ('\t', out);
-	      print_1_line ((char *)0, &files[1].linbuf[j++]);
+	      print_1_line (0, &files[1].linbuf[j++]);
 	    }
 
 	  /* We're done with this hunk, so on to the next! */
@@ -428,10 +430,10 @@ mark_ignorable (script)
 
 static void
 find_function (file, linenum, linep, lenp)
-     struct file_data *file;
+     struct file_data const *file;
      int linenum;
-     const char **linep;
-     int *lenp;
+     char const **linep;
+     size_t *lenp;
 {
   int i = linenum;
   int last = find_function_last_search;
@@ -441,8 +443,8 @@ find_function (file, linenum, linep, lenp)
     {
       /* See if this line is what we want.  */
       struct regexp_list *r;
-      const char *line = file->linbuf[i];
-      int len = file->linbuf[i + 1] - line;
+      char const *line = file->linbuf[i];
+      size_t len = file->linbuf[i + 1] - line;
 
       for (r = function_regexp_list; r; r = r->next)
 	if (0 <= re_search (&r->buf, line, len, 0, len, 0))

@@ -1,5 +1,5 @@
 /* Analyze file differences for GNU DIFF.
-   Copyright (C) 1988, 1989, 1992 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1989, 1992, 1993 Free Software Foundation, Inc.
 
 This file is part of GNU DIFF.
 
@@ -18,25 +18,15 @@ along with GNU DIFF; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: analyze.c,v 1.3 1993/08/02 17:26:05 mycroft Exp $";
-#endif /* not lint */
+static char *rcsid = "$Id: analyze.c,v 1.4 1993/09/16 17:39:02 jtc Exp $";
+#endif
 
-/* The basic algorithm is described in: 
+/* The basic algorithm is described in:
    "An O(ND) Difference Algorithm and its Variations", Eugene Myers,
    Algorithmica Vol. 1 No. 2, 1986, p 251.  */
 
 #include "diff.h"
-
-int read_files ();
-void finish_output ();
-void print_context_script ();
-void print_ed_script ();
-void print_ifdef_script ();
-void print_sdiff_script ();
-void print_normal_script ();
-void print_rcs_script ();
-void pr_forward_ed_script ();
-void setup_output ();
+#include "cmpbuf.h"
 
 extern int no_discards;
 
@@ -49,6 +39,15 @@ static int *bdiag;		/* Vector, indexed by diagonal, containing
 				   the X coordinate of the point furthest
 				   along the given diagonal in the backward
 				   search of the edit matrix. */
+
+static int diag PARAMS((int, int, int, int, int *));
+static struct change *add_change PARAMS((int, int, int, int, struct change *));
+static struct change *build_reverse_script PARAMS((struct file_data const[]));
+static struct change *build_script PARAMS((struct file_data const[]));
+static void briefly_report PARAMS((int, struct file_data const[]));
+static void compareseq PARAMS((int, int, int, int));
+static void discard_confusing_lines PARAMS((struct file_data[]));
+static void shift_boundaries PARAMS((struct file_data[]));
 
 /* Find the midpoint of the shortest edit script for a specified
    portion of the two files.
@@ -83,10 +82,10 @@ diag (xoff, xlim, yoff, ylim, cost)
   int *const bd = bdiag;	/* Additional help for the compiler. */
   int *const xv = xvec;		/* Still more help for the compiler. */
   int *const yv = yvec;		/* And more and more . . . */
-  const int dmin = xoff - ylim;	/* Minimum valid diagonal. */
-  const int dmax = xlim - yoff;	/* Maximum valid diagonal. */
-  const int fmid = xoff - yoff;	/* Center diagonal of top-down search. */
-  const int bmid = xlim - ylim;	/* Center diagonal of bottom-up search. */
+  int const dmin = xoff - ylim;	/* Minimum valid diagonal. */
+  int const dmax = xlim - yoff;	/* Maximum valid diagonal. */
+  int const fmid = xoff - yoff;	/* Center diagonal of top-down search. */
+  int const bmid = xlim - ylim;	/* Center diagonal of bottom-up search. */
   int fmin = fmid, fmax = fmid;	/* Limits of top-down search. */
   int bmin = bmid, bmax = bmid;	/* Limits of bottom-up search. */
   int c;			/* Cost. */
@@ -165,6 +164,7 @@ diag (xoff, xlim, yoff, ylim, cost)
 	  int bestpos;
 
 	  best = 0;
+	  bestpos = 0; /* Pacify `gcc -Wall'.  */
 	  for (d = fmax; d >= fmin; d -= 2)
 	    {
 	      int dd = d - fmid;
@@ -253,7 +253,7 @@ compareseq (xoff, xlim, yoff, ylim)
   /* Slide up the top initial diagonal. */
   while (xlim > xoff && ylim > yoff && xvec[xlim - 1] == yvec[ylim - 1])
     --xlim, --ylim;
-  
+
   /* Handle simple cases. */
   if (xoff == xlim)
     while (yoff < ylim)
@@ -345,10 +345,12 @@ discard_confusing_lines (filevec)
 
   /* Set up tables of which lines are going to be discarded.  */
 
-  discarded[0] = (char *) xmalloc (filevec[0].buffered_lines
-				   + filevec[1].buffered_lines);
+  discarded[0] = xmalloc (sizeof (char)
+			  * (filevec[0].buffered_lines
+			     + filevec[1].buffered_lines));
   discarded[1] = discarded[0] + filevec[0].buffered_lines;
-  bzero (discarded[0], filevec[0].buffered_lines + filevec[1].buffered_lines);
+  bzero (discarded[0], sizeof (char) * (filevec[0].buffered_lines
+					+ filevec[1].buffered_lines));
 
   /* Mark to be discarded each line that matches no line of the other file.
      If a line matches many lines, mark it as provisionally discardable.  */
@@ -633,7 +635,7 @@ add_change (line0, line1, deleted, inserted, old)
 
 static struct change *
 build_reverse_script (filevec)
-     struct file_data filevec[];
+     struct file_data const filevec[];
 {
   struct change *script = 0;
   char *changed0 = filevec[0].changed_flag;
@@ -671,7 +673,7 @@ build_reverse_script (filevec)
 
 static struct change *
 build_script (filevec)
-     struct file_data filevec[];
+     struct file_data const filevec[];
 {
   struct change *script = 0;
   char *changed0 = filevec[0].changed_flag;
@@ -701,6 +703,18 @@ build_script (filevec)
   return script;
 }
 
+/* If CHANGES, briefly report that two files differed.  */
+static void
+briefly_report (changes, filevec)
+     int changes;
+     struct file_data const filevec[];
+{
+  if (changes)
+    message (no_details_flag ? "Files %s and %s differ\n"
+	     : "Binary files %s and %s differ\n",
+	     filevec[0].name, filevec[1].name);
+}
+
 /* Report the differences of two files.  DEPTH is the current directory
    depth. */
 int
@@ -718,9 +732,10 @@ diff_2_files (filevec, depth)
   /* If we have detected that either file is binary,
      compare the two files as binary.  This can happen
      only when the first chunk is read.
-     Also, -q means treat all files as binary.  */
+     Also, --brief without any --ignore-* options means
+     we can speed things up by treating the files as binary.  */
 
-  if (read_files (filevec))
+  if (read_files (filevec, no_details_flag & ~ignore_some_changes))
     {
       /* Files with different lengths must be different.  */
       if (filevec[0].stat.st_size != filevec[1].stat.st_size
@@ -736,8 +751,8 @@ diff_2_files (filevec, depth)
 	/* Scan both files, a buffer at a time, looking for a difference.  */
 	{
 	  /* Allocate same-sized buffers for both files.  */
-	  int buffer_size = max (STAT_BLOCKSIZE (filevec[0].stat),
-				 STAT_BLOCKSIZE (filevec[1].stat));
+	  size_t buffer_size = buffer_lcm (STAT_BLOCKSIZE (filevec[0].stat),
+					   STAT_BLOCKSIZE (filevec[1].stat));
 	  for (i = 0; i < 2; i++)
 	    filevec[i].buffer = xrealloc (filevec[i].buffer, buffer_size);
 
@@ -761,9 +776,9 @@ diff_2_files (filevec, depth)
 
 	      /* If the buffers differ, the files differ.  */
 	      if (filevec[0].buffered_chars != filevec[1].buffered_chars
-	          || bcmp (filevec[0].buffer,
-			   filevec[1].buffer,
-			   filevec[0].buffered_chars) != 0)
+		  || memcmp (filevec[0].buffer,
+			     filevec[1].buffer,
+			     filevec[0].buffered_chars) != 0)
 		{
 		  changes = 1;
 		  break;
@@ -778,10 +793,7 @@ diff_2_files (filevec, depth)
 	    }
 	}
 
-      if (changes) 
-	message (no_details_flag ? "Files %s and %s differ\n"
-		 : "Binary files %s and %s differ\n",
-		 filevec[0].name, filevec[1].name);
+      briefly_report (changes, filevec);
     }
   else
     {
@@ -790,11 +802,9 @@ diff_2_files (filevec, depth)
 	 is an insertion or deletion.
 	 Allocate an extra element, always zero, at each end of each vector.  */
 
-      filevec[0].changed_flag = (char *) xmalloc (filevec[0].buffered_lines
-						  + filevec[1].buffered_lines
-						  + 4);
-      bzero (filevec[0].changed_flag, filevec[0].buffered_lines
-				      + filevec[1].buffered_lines + 4);
+      size_t s = filevec[0].buffered_lines + filevec[1].buffered_lines + 4;
+      filevec[0].changed_flag = xmalloc (s);
+      bzero (filevec[0].changed_flag, s);
       filevec[0].changed_flag++;
       filevec[1].changed_flag = filevec[0].changed_flag
 				+ filevec[0].buffered_lines + 2;
@@ -837,50 +847,7 @@ diff_2_files (filevec, depth)
       else
 	script = build_script (filevec);
 
-      if (script || ! no_diff_means_no_output)
-	{
-	  /* Record info for starting up output,
-	     to be used if and when we have some output to print.  */
-	  setup_output (files[0].name, files[1].name, depth);
-
-	  switch (output_style)
-	    {
-	    case OUTPUT_CONTEXT:
-	      print_context_script (script, 0);
-	      break;
-
-	    case OUTPUT_UNIFIED:
-	      print_context_script (script, 1);
-	      break;
-
-	    case OUTPUT_ED:
-	      print_ed_script (script);
-	      break;
-
-	    case OUTPUT_FORWARD_ED:
-	      pr_forward_ed_script (script);
-	      break;
-
-	    case OUTPUT_RCS:
-	      print_rcs_script (script);
-	      break;
-
-	    case OUTPUT_NORMAL:
-	      print_normal_script (script);
-	      break;
-
-	    case OUTPUT_IFDEF:
-	      print_ifdef_script (script);
-	      break;
-
-	    case OUTPUT_SDIFF:
-	      print_sdiff_script (script);
-	    }
-
-	  finish_output ();
-	}
-
-      /* Set CHANGES if we had any diffs that were printed.
+      /* Set CHANGES if we had any diffs.
 	 If some changes are ignored, we must scan the script to decide.  */
       if (ignore_blank_lines_flag || ignore_regexp_list)
 	{
@@ -899,9 +866,9 @@ diff_2_files (filevec, depth)
 	      /* Disconnect them from the rest of the changes, making them
 		 a hunk, and remember the rest for next iteration.  */
 	      next = end->link;
-	      end->link = NULL;
+	      end->link = 0;
 
-	      /* Determine whether this hunk was printed.  */
+	      /* Determine whether this hunk is really a difference.  */
 	      analyze_hunk (this, &first0, &last0, &first1, &last1,
 			    &deletes, &inserts);
 
@@ -914,6 +881,54 @@ diff_2_files (filevec, depth)
 	}
       else
 	changes = (script != 0);
+
+      if (no_details_flag)
+	briefly_report (changes, filevec);
+      else
+	{
+	  if (changes || ! no_diff_means_no_output)
+	    {
+	      /* Record info for starting up output,
+		 to be used if and when we have some output to print.  */
+	      setup_output (files[0].name, files[1].name, depth);
+
+	      switch (output_style)
+		{
+		case OUTPUT_CONTEXT:
+		  print_context_script (script, 0);
+		  break;
+
+		case OUTPUT_UNIFIED:
+		  print_context_script (script, 1);
+		  break;
+
+		case OUTPUT_ED:
+		  print_ed_script (script);
+		  break;
+
+		case OUTPUT_FORWARD_ED:
+		  pr_forward_ed_script (script);
+		  break;
+
+		case OUTPUT_RCS:
+		  print_rcs_script (script);
+		  break;
+
+		case OUTPUT_NORMAL:
+		  print_normal_script (script);
+		  break;
+
+		case OUTPUT_IFDEF:
+		  print_ifdef_script (script);
+		  break;
+
+		case OUTPUT_SDIFF:
+		  print_sdiff_script (script);
+		}
+
+	      finish_output ();
+	    }
+	}
 
       free (filevec[0].undiscarded);
 
