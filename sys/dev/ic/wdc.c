@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.198 2004/08/12 21:34:52 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.199 2004/08/12 22:33:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.198 2004/08/12 21:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.199 2004/08/12 22:33:45 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1823,40 +1823,6 @@ wdc_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);
-}
-
-/*
- * Kill off all pending xfers for a wdc_channel.
- *
- * Must be called at splbio().
- */
-void
-wdc_kill_pending(struct ata_drive_datas *drvp)
-{
-	struct wdc_channel *chp = drvp->chnl_softc;
-	struct ata_xfer *xfer, *next_xfer;
-	int s = splbio();
-
-	for (xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
-	    xfer != NULL; xfer = next_xfer) {
-		next_xfer = TAILQ_NEXT(xfer, c_xferchain);
-		if (xfer->c_chp != chp || xfer->c_drive != drvp->drive)
-			continue;
-		TAILQ_REMOVE(&chp->ch_queue->queue_xfer, xfer, c_xferchain);
-		(*xfer->c_kill_xfer)(chp, xfer, KILL_GONE);
-	}
-
-	while ((xfer = chp->ch_queue->active_xfer) != NULL) {
-		if (xfer->c_chp == chp && xfer->c_drive == drvp->drive) {
-			drvp->drive_flags |= DRIVE_WAITDRAIN;
-			(void) tsleep(&chp->ch_queue->active_xfer,
-			    PRIBIO, "atdrn", 0);
-		} else {
-			/* no more xfer for us */
-			break;
-		}
-	}
-	splx(s);
 }
 
 static void
