@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.17 1998/10/10 14:12:21 drochner Exp $	*/
+/*	$NetBSD: pchb.c,v 1.18 2000/05/11 16:44:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -82,93 +82,6 @@ pchbmatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-#if 0
-	/*
-	 * PCI host bridges are matched on class/subclass.
-	 * This list contains only the bridges where correct
-	 * (or incorrect) behaviour is not yet confirmed.
-	 */
-	switch (PCI_VENDOR(pa->pa_id)) {
-	case PCI_VENDOR_INTEL:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_CDC:
-		case PCI_PRODUCT_INTEL_PCMC:
-		case PCI_PRODUCT_INTEL_82437FX:
-		case PCI_PRODUCT_INTEL_82437MX:
-		case PCI_PRODUCT_INTEL_82437VX:
-		case PCI_PRODUCT_INTEL_82439HX:
-		case PCI_PRODUCT_INTEL_82441FX:
-		case PCI_PRODUCT_INTEL_82443BX:
-		case PCI_PRODUCT_INTEL_82443LX:
-		case PCI_PRODUCT_INTEL_PCI450_PB:
-		case PCI_PRODUCT_INTEL_PCI450_MC:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_UMC:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_UMC_UM8891N:
-		case PCI_PRODUCT_UMC_UM8881F:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_ACC:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ACC_2188:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_ACER:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ACER_M1435:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_ALI:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ALI_M1445:
-		case PCI_PRODUCT_ALI_M1451:
-		case PCI_PRODUCT_ALI_M1461:
-		case PCI_PRODUCT_ALI_M1541:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_COMPAQ:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_COMPAQ_TRIFLEX1:
-		case PCI_PRODUCT_COMPAQ_TRIFLEX2:
-		case PCI_PRODUCT_COMPAQ_TRIFLEX4:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_NEXGEN:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_NEXGEN_NX82C501:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_NKK:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_NKK_NDR4600:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_TOSHIBA:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_TOSHIBA_R4X00:
-			return (1);
-		}
-		break;
-	case PCI_VENDOR_VIATECH:
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_VIATECH_VT82C570M:
-		case PCI_PRODUCT_VIATECH_VT82C595:
-			return (1);
-		}
-		break;
-	}
-#endif
-
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_BRIDGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_BRIDGE_HOST) {
 		return (1);
@@ -187,6 +100,7 @@ pchbattach(parent, self, aux)
 	struct pcibus_attach_args pba;
 	pcireg_t bcreg;
 	u_char bdnum, pbnum;
+	pcitag_t tag;
 
 	printf("\n");
 
@@ -242,6 +156,52 @@ pchbattach(parent, self, aux)
 					       I82424_CPU_BCTL_REG, bcreg);
 				printf("%s: disabled CPU-PCI write posting\n",
 					self->dv_xname);
+			}
+			break;
+		case PCI_PRODUCT_INTEL_82451NX_PXB:
+			/*
+			 * The NX chipset supports up to 2 "PXB" chips
+			 * which can drive 2 PCI buses each. Each bus
+			 * shows up as logical PCI device, with fixed
+			 * device numbers between 18 and 21.
+			 * See the datasheet at
+		ftp://download.intel.com/design/chipsets/datashts/24377102.pdf
+			 * for details.
+			 * (It would be easier to attach all the buses
+			 * at the MIOC, but less aesthetical imho.)
+			 */
+			pbnum = 0;
+			switch (pa->pa_device) {
+			case 18: /* PXB 0 bus A - primary bus */
+				break;
+			case 19: /* PXB 0 bus B */
+				/* read SUBA0 from MIOC */
+				tag = pci_make_tag(pa->pa_pc, 0, 16, 0);
+				bcreg = pci_conf_read(pa->pa_pc, tag, 0xd0);
+				pbnum = ((bcreg & 0x0000ff00) >> 8) + 1;
+				break;
+			case 20: /* PXB 1 bus A */
+				/* read BUSNO1 from MIOC */
+				tag = pci_make_tag(pa->pa_pc, 0, 16, 0);
+				bcreg = pci_conf_read(pa->pa_pc, tag, 0xd0);
+				pbnum = (bcreg & 0xff000000) >> 24;
+				break;
+			case 21: /* PXB 1 bus B */
+				/* read SUBA1 from MIOC */
+				tag = pci_make_tag(pa->pa_pc, 0, 16, 0);
+				bcreg = pci_conf_read(pa->pa_pc, tag, 0xd4);
+				pbnum = (bcreg & 0x000000ff) + 1;
+				break;
+			}
+			if (pbnum != 0) {
+				pba.pba_busname = "pci";
+				pba.pba_iot = pa->pa_iot;
+				pba.pba_memt = pa->pa_memt;
+				pba.pba_dmat = pa->pa_dmat;
+				pba.pba_bus = pbnum;
+				pba.pba_flags = pci_bus_flags();
+				pba.pba_pc = pa->pa_pc;
+				config_found(self, &pba, pchb_print);
 			}
 			break;
 		}
