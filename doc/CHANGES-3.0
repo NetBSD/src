@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.11 2005/03/21 09:30:04 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.12 2005/03/21 21:21:34 jwise Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -173,3 +173,8 @@ lib/libpthread/pthread_cancelstub.c		1.12
 	to do it.
 	[kleink, ticket #38]
 
+usr.bin/login/login.c				1.83
+
+	Make S/Key prompt compliant with RFC 2289. Patch supplied by Dave
+	Huang in PR bin/23167.
+	[tron, ticket #28]
