@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.12 1999/09/13 17:18:21 tron Exp $	*/
+/*	$NetBSD: play.c,v 1.13 1999/09/27 05:00:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -331,8 +331,10 @@ audioctl_write_fromhdr(hdr, fsz, fd)
 	if (ntohl(sunhdr->magic) == AUDIO_FILE_MAGIC) {
 		if (audio_get_sun_encoding(ntohl(sunhdr->encoding), 
 		    &info.play.encoding, &info.play.precision)) {
-			warnx("unknown supported Sun audio encoding format %d",
-			    sunhdr->encoding);
+			warnx("unknown unsupported Sun audio encoding format %d",
+			    ntohl(sunhdr->encoding));
+			if (fflag)
+				goto set_audio_mode;
 			return (-1);
 		}
 
