@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_cardbus.c,v 1.15 2003/06/26 21:14:44 ichiro Exp $	*/
+/*	$NetBSD: if_rtk_cardbus.c,v 1.16 2003/10/25 23:48:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000 Masanori Kanaoka
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.15 2003/06/26 21:14:44 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.16 2003/10/25 23:48:45 fvdl Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -104,26 +104,25 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_cardbus.c,v 1.15 2003/06/26 21:14:44 ichiro E
  */
 static const struct rtk_type rtk_cardbus_devs[] = {
 	{ CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
-		"Accton MPX 5030/5038 10/100BaseTX",
-		RTK_8139 },
+		RTK_8139, "Accton MPX 5030/5038 10/100BaseTX" },
 	{ CARDBUS_VENDOR_DLINK, CARDBUS_PRODUCT_DLINK_DFE_690TXD,
-		"D-Link DFE-690TXD 10/100BaseTX", RTK_8139 },
+		RTK_8139, "D-Link DFE-690TXD 10/100BaseTX" },
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
-		"RealTek 8138 10/100BaseTX", RTK_8139 },
+		RTK_8139, "RealTek 8138 10/100BaseTX" },
 	{ CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8139,
-		"RealTek 8139 10/100BaseTX", RTK_8139 },
+		RTK_8139, "RealTek 8139 10/100BaseTX" },
 	{ CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_CB_TXD,
-		"Corega FEther CB-TXD 10/100BaseTX", RTK_8139 },
+		RTK_8139, "Corega FEther CB-TXD 10/100BaseTX" },
 	{ CARDBUS_VENDOR_COREGA, CARDBUS_PRODUCT_COREGA_2CB_TXD,
-		"Corega FEther II CB-TXD 10/100BaseTX", RTK_8139 },
+		RTK_8139, "Corega FEther II CB-TXD 10/100BaseTX" },
 	{ CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3603_TX,
-		"Planex FNW-3603 10/100BaseTX", RTK_8139 },
+		RTK_8139, "Planex FNW-3603 10/100BaseTX" },
 	{ CARDBUS_VENDOR_PLANEX, CARDBUS_PRODUCT_PLANEX_FNW_3800_TX,
-		"Planex 10/100BaseTX FNW-3800-TX", RTK_8139 },
+		RTK_8139, "Planex 10/100BaseTX FNW-3800-TX" },
 	{ CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2000VX,
-		"AboCom FE2000VX 10/100BaseTX", RTK_8139 },
+		RTK_8139, "AboCom FE2000VX 10/100BaseTX" },
 
-	{ 0, 0, NULL, 0 }
+	{ 0, 0, 0, NULL }
 };
 
 static int rtk_cardbus_match	__P((struct device *, struct cfdata *, void *));
@@ -256,7 +255,7 @@ rtk_cardbus_attach(parent, self, aux)
 	 * configuration registers.
 	 */
 	rtk_cardbus_setup(csc);
-	sc->rtk_type = t->rtk_type;
+	sc->rtk_type = t->rtk_basetype;
 
 	rtk_attach(sc);
 
