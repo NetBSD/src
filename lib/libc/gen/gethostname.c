@@ -1,4 +1,4 @@
-/*	$NetBSD: gethostname.c,v 1.5 1997/07/21 14:07:07 jtc Exp $	*/
+/*	$NetBSD: gethostname.c,v 1.6 1998/05/06 19:48:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gethostname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gethostname.c,v 1.5 1997/07/21 14:07:07 jtc Exp $");
+__RCSID("$NetBSD: gethostname.c,v 1.6 1998/05/06 19:48:39 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +54,7 @@ __weak_alias(gethostname,_gethostname);
 int
 gethostname(name, namelen)
 	char *name;
-	int namelen;
+	size_t namelen;
 {
 	int mib[2];
 	size_t size;
