@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.101 2003/09/27 18:57:05 dsl Exp $
+.\"	$NetBSD: sysctl.8,v 1.102 2003/09/27 19:07:12 dsl Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd September 21, 2003
+.Dd September 27, 2003
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -179,7 +179,7 @@ privilege can change the value.
 .It kern.cp_time	struct	no
 .It kern.defcorename	string	yes
 .It kern.domainname	string	yes
-.It kern.drivers	int,struct	no
+.It kern.drivers	struct	no
 .It kern.forkfsleep	integer	yes
 .It kern.fscale	integer	no
 .It kern.fsync	integer	no
