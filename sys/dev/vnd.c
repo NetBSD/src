@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.82 2002/07/21 15:32:18 hannken Exp $	*/
+/*	$NetBSD: vnd.c,v 1.83 2002/07/26 06:16:32 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.82 2002/07/21 15:32:18 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.83 2002/07/26 06:16:32 enami Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -763,18 +763,12 @@ vndioctl(dev, cmd, data, flag, p)
 		 * have to worry about them.
 		 */
 		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, vio->vnd_file, p);
-		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0) {
-			vndunlock(vnd);
-			return(error);
-		}
+		if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
+			goto unlock_and_exit;
 		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
-		if (error) {
-			VOP_UNLOCK(nd.ni_vp, 0);
-			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
-			vndunlock(vnd);
-			return(error);
-		}
 		VOP_UNLOCK(nd.ni_vp, 0);
+		if (error)
+			goto close_and_exit;
 		vnd->sc_vp = nd.ni_vp;
 		vnd->sc_size = btodb(vattr.va_size);	/* note truncation */
 
@@ -794,10 +788,8 @@ vndioctl(dev, cmd, data, flag, p)
 			 */
 			if (vnd->sc_geom.vng_secsize < DEV_BSIZE ||
 			    (vnd->sc_geom.vng_secsize % DEV_BSIZE) != 0) {
-				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
-				    p->p_ucred, p);
-				vndunlock(vnd);
-				return (EINVAL);
+				error = EINVAL;
+				goto close_and_exit;
 			}
 
 			/*
@@ -814,10 +806,8 @@ vndioctl(dev, cmd, data, flag, p)
 			 * geometry.
 			 */
 			if (vnd->sc_size < geomsize) {
-				(void) vn_close(nd.ni_vp, FREAD|FWRITE,
-				    p->p_ucred, p);
-				vndunlock(vnd);
-				return (EINVAL);
+				error = EINVAL;
+				goto close_and_exit;
 			}
 		} else {
 			/*
@@ -825,8 +815,8 @@ vndioctl(dev, cmd, data, flag, p)
 			 * (1M) in order to use this geometry.
 			 */
 			if (vnd->sc_size < (32 * 64)) {
-				vndunlock(vnd);
-				return (EINVAL);
+				error = EINVAL;
+				goto close_and_exit;
 			}
 
 			vnd->sc_geom.vng_secsize = DEV_BSIZE;
@@ -847,11 +837,8 @@ vndioctl(dev, cmd, data, flag, p)
 		 */
 		vnd->sc_size = geomsize;
 
-		if ((error = vndsetcred(vnd, p->p_ucred)) != 0) {
-			(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
-			vndunlock(vnd);
-			return(error);
-		}
+		if ((error = vndsetcred(vnd, p->p_ucred)) != 0)
+			goto close_and_exit;
 		vndthrottle(vnd, vnd->sc_vp);
 		vio->vnd_size = dbtob(vnd->sc_size);
 		vnd->sc_flags |= VNF_INITED;
@@ -883,6 +870,12 @@ vndioctl(dev, cmd, data, flag, p)
 		vndunlock(vnd);
 
 		break;
+
+close_and_exit:
+		(void) vn_close(nd.ni_vp, FREAD|FWRITE, p->p_ucred, p);
+unlock_and_exit:
+		vndunlock(vnd);
+		return (error);
 
 	case VNDIOCCLR:
 		if ((error = vndlock(vnd)) != 0)
