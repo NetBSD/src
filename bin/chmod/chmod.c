@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.20 1998/07/28 05:31:22 mycroft Exp $	*/
+/*	$NetBSD: chmod.c,v 1.21 2000/01/20 02:49:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.20 1998/07/28 05:31:22 mycroft Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.21 2000/01/20 02:49:41 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,13 +73,11 @@ main(argc, argv)
 	FTSENT *p;
 	mode_t *set;
 	long val;
-	int oct, omode;
 	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	char *ep, *mode;
 	int (*change_mode) __P((const char *, mode_t));
 
 	set = NULL;	/* XXX gcc -Wuninitialized */
-	omode = 0;	/* XXX gcc -Wuninitialized */
 
 	(void)setlocale(LC_ALL, "");
 
@@ -155,22 +153,8 @@ done:	argv += optind;
 		change_mode = chmod;
 
 	mode = *argv;
-	if (*mode >= '0' && *mode <= '7') {
-		errno = 0;
-		val = strtol(mode, &ep, 8);
-		if (val > INT_MAX || val < 0)
-			errno = ERANGE;
-		if (errno)
-			err(1, "invalid file mode: %s", mode);
-		if (*ep)
-			errx(1, "invalid file mode: %s", mode);
-		omode = val;
-		oct = 1;
-	} else {
-		if ((set = setmode(mode)) == NULL)
-			errx(1, "invalid file mode: %s", mode);
-		oct = 0;
-	}
+	if ((set = setmode(mode)) == NULL)
+		errx(1, "invalid file mode: %s", mode);
 
 	if ((ftsp = fts_open(++argv, fts_options, 0)) == NULL)
 		err(1, argv[0]);
@@ -205,7 +189,7 @@ done:	argv += optind;
 		default:
 			break;
 		}
-		if ((*change_mode)(p->fts_accpath, oct ? omode :
+		if ((*change_mode)(p->fts_accpath,
 		    getmode(set, p->fts_statp->st_mode)) && !fflag) {
 			warn("%s", p->fts_path);
 			rval = 1;
