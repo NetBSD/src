@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.2 2000/04/14 06:26:53 simonb Exp $ */
+/*	$NetBSD: envstat.c,v 1.2.4.1 2000/07/30 17:58:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.2 2000/04/14 06:26:53 simonb Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.2.4.1 2000/07/30 17:58:24 bouyer Exp $");
 #endif
 
 #include <fcntl.h>
@@ -46,12 +46,15 @@ __RCSID("$NetBSD: envstat.c,v 1.2 2000/04/14 06:26:53 simonb Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #include <sys/envsys.h>
 #include <sys/ioctl.h>
 
 extern char *__progname;
-const char E_CANTENUM[] = "envsys: cannot enumerate sensors\n";
+const char E_CANTENUM[] = "cannot enumerate sensors";
+
+#define	_PATH_SYSMON	"/dev/sysmon"
 
 int main __P((int, char **));
 void listsensors __P((envsys_basic_info_t *, int));
@@ -77,6 +80,7 @@ main(argc, argv)
 	envsys_basic_info_t *ebis;
 	int *cetds;
 	char *sensors;
+	const char *dev;
 
 	fd = -1;
 	ls = 0;
@@ -116,40 +120,30 @@ main(argc, argv)
 		}
 	}
 
-	if (optind < argc) {
-		if ((fd = open(argv[optind], O_RDONLY)) == -1) {
-			perror("envstat");
-			exit(1);
-		}
-	} else {
-		fprintf(stderr, "envstat: no device specified\n");
-		usage();
-	}
+	if (optind < argc)
+		dev = argv[optind];
+	else
+		dev = _PATH_SYSMON;
 
+	if ((fd = open(dev, O_RDONLY)) == -1)
+		err(1, "unable to open %s", dev);
 
 	/*
 	 * Determine number of sensors, allocate and fill arrays with
 	 * initial information.  Determine column width
 	 */
-	if ((ns = numsensors(fd)) <= 0) {
-		fprintf(stderr, E_CANTENUM);
-		exit(1);
-	}
-	
+	if ((ns = numsensors(fd)) <= 0)
+		errx(1, E_CANTENUM);
+
 	cetds = (int *)malloc(ns * sizeof(int));
 	etds = (envsys_tre_data_t *)malloc(ns * sizeof(envsys_tre_data_t));
 	ebis = (envsys_basic_info_t *)malloc(ns * sizeof(envsys_basic_info_t));
 
-	if ((cetds == NULL) || (etds == NULL) || (ebis == NULL)) {
-		fprintf(stderr, "envstat: cannot allocate memory\n");
-		exit(1);
-	}
+	if ((cetds == NULL) || (etds == NULL) || (ebis == NULL))
+		errx(1, "cannot allocate memory");
 
-	if (fillsensors(fd, etds, ebis, ns) == -1) {
-		fprintf(stderr, E_CANTENUM);
-		exit(1);
-	}
-
+	if (fillsensors(fd, etds, ebis, ns) == -1)
+		errx(1, E_CANTENUM);
 
 	if (ls) {
 		listsensors(ebis, ns);
@@ -189,10 +183,8 @@ main(argc, argv)
 
 		sleep(interval);
 
-		if (fillsensors(fd, etds, ebis, ns) == -1) {
-			fprintf(stderr, E_CANTENUM);
-			exit(1);
-		}
+		if (fillsensors(fd, etds, ebis, ns) == -1)
+			errx(1, E_CANTENUM);
 	}
 
 	/* NOTREACHED */
