@@ -1,4 +1,4 @@
-/*	$NetBSD: stdhosts.c,v 1.5 1997/10/13 03:19:05 lukem Exp $	 */
+/*	$NetBSD: stdhosts.c,v 1.6 1997/11/01 14:25:09 lukem Exp $	 */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: stdhosts.c,v 1.5 1997/10/13 03:19:05 lukem Exp $");
+__RCSID("$NetBSD: stdhosts.c,v 1.6 1997/11/01 14:25:09 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -58,11 +58,10 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	FILE *data_file;
-	char data_line[_POSIX2_LINE_MAX];
-	int line_no = 0, len;
-	char *k, *v, *addr_string, *fname;
 	struct in_addr host_addr;
+	FILE	*data_file;
+	int	 line_no, len;
+	char	*k, *v, *addr_string, *fname;
 
 	addr_string = NULL;		/* XXX gcc -Wuninitialized */
 
@@ -79,29 +78,18 @@ main(argc, argv)
 		data_file = stdin;
 	}
 
-	while (read_line(data_file, data_line, sizeof(data_line))) {
-		line_no++;
-		len = strlen(data_line);
-
-		if (len <= 1 || data_line[0] == '#')
+	line_no = 0;
+	while ((v = read_line(data_file, &len, &line_no)) != NULL) {
+		if (len == 0 || *v == '#')
 			continue;
 
-		/*
-		 * Check if we have the whole line
-		 */
-		if (data_line[len - 1] != '\n') {
-			warnx("%s line %d: line to long, skipping",
-			    fname, line_no);
-			continue;
-		} else
-			data_line[len - 1] = '\0';
+		k = strchr(v, '#');
+		if (k != NULL)
+			*k = '\0';
 
-		v = data_line;
-
-		/* Find the key, replace trailing whitespace will <NUL> */
-		for (k = v; isspace(*v) == 0; v++)
-			/*null*/;
-		while (isspace(*v))
+		for (k = v; *v && !isspace(*v); v++)
+			;
+		while (*v && isspace(*v))
 			*v++ = '\0';
 
 		if (inet_aton(k, &host_addr) == 0 ||
