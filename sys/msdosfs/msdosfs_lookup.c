@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.16 1994/12/27 21:53:31 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.17 1995/09/09 19:38:06 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -99,6 +99,7 @@ msdosfs_lookup(ap)
 	u_long cluster;
 	int rootreloff;
 	int diroff;
+	int blsize;
 	int isadir;		/* ~0 if found direntry is a directory	 */
 	u_long scn;		/* starting cluster number		 */
 	struct vnode *pdp;
@@ -240,16 +241,17 @@ msdosfs_lookup(ap)
 	 */
 	rootreloff = 0;
 	for (frcn = 0;; frcn++) {
-		if (error = pcbmap(dp, frcn, &bn, &cluster)) {
+		if (error = pcbmap(dp, frcn, &bn, &cluster, &blsize)) {
 			if (error == E2BIG)
 				break;
 			return (error);
 		}
-		if (error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, NOCRED, &bp))
+		if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp))
 			return (error);
-		for (diroff = 0; diroff < pmp->pm_depclust;
-		     diroff++, rootreloff++) {
-			dep = (struct direntry *)bp->b_data + diroff;
+		for (diroff = 0; diroff < blsize;
+		     diroff += sizeof(struct direntry),
+		     rootreloff += sizeof(struct direntry)) {
+			dep = (struct direntry *)(bp->b_data + diroff);
 			/*
 			 * If the slot is empty and we are still looking
 			 * for an empty then remember this one.  If the
@@ -354,7 +356,7 @@ notfound:;
 			dp->de_fndoffset = slotoffset;
 			dp->de_fndclust = slotcluster;
 		}
-		/* dp->de_flag |= DE_UPDATE; /* never update dos directories */
+
 		/*
 		 * We return with the directory locked, so that
 		 * the parameters we set up above will still be
@@ -663,7 +665,7 @@ int
 dosdirempty(dep)
 	struct denode *dep;
 {
-	int dei;
+	int blsize;
 	int error;
 	u_long cn;
 	daddr_t bn;
@@ -677,14 +679,14 @@ dosdirempty(dep)
 	 * we hit end of file.
 	 */
 	for (cn = 0;; cn++) {
-		error = pcbmap(dep, cn, &bn, 0);
+		error = pcbmap(dep, cn, &bn, 0, &blsize);
 		if (error == E2BIG)
 			return (1);	/* it's empty */
-		if (error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, NOCRED,
-				  &bp))
+		if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, &bp))
 			return (error);
-		dentp = (struct direntry *)bp->b_data;
-		for (dei = 0; dei < pmp->pm_depclust; dei++, dentp++) {
+		for (dentp = (struct direntry *)bp->b_data;
+		     (char *)dentp < bp->b_data + blsize;
+		     dentp++) {
 			if (dentp->deName[0] != SLOT_DELETED &&
 			    (dentp->deAttributes & ATTR_VOLUME) == 0) {
 				/*
@@ -706,8 +708,8 @@ dosdirempty(dep)
 				    bcmp(dentp->deName, "..         ", 11)) {
 					brelse(bp);
 #ifdef MSDOSFS_DEBUG
-					printf("dosdirempty(): entry %d found %02x, %02x\n",
-					       dei, dentp->deName[0], dentp->deName[1]);
+					printf("dosdirempty(): entry found %02x, %02x\n",
+					       dentp->deName[0], dentp->deName[1]);
 #endif
 					return (0);	/* not empty */
 				}
@@ -810,9 +812,16 @@ readep(pmp, dirclust, diroffset, bpp, epp)
 {
 	int error;
 	daddr_t bn;
+	int blsize;
+	u_long boff;
 
+	boff = diroffset & ~pmp->pm_crbomask;
+	blsize = pmp->pm_bpcluster;
+	if (dirclust == MSDOSFSROOT
+	    && boff + blsize > (pmp->pm_rootdirsize << pmp->pm_bnshift))
+		blsize = (pmp->pm_rootdirsize << pmp->pm_bnshift) - boff;
 	bn = detobn(pmp, dirclust, diroffset);
-	if (error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, NOCRED, bpp)) {
+	if (error = bread(pmp->pm_devvp, bn, blsize, NOCRED, bpp)) {
 		*bpp = NULL;
 		return (error);
 	}
