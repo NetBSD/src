@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.5 1997/05/31 15:13:49 kleink Exp $	*/
+/*	$NetBSD: fmt.c,v 1.6 1997/10/18 15:00:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-static char rcsid[] = "$NetBSD: fmt.c,v 1.5 1997/05/31 15:13:49 kleink Exp $";
+__RCSID("$NetBSD: fmt.c,v 1.6 1997/10/18 15:00:17 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -77,18 +77,32 @@ int	mark;			/* Last place we saw a head line */
 
 char	*headnames[] = {"To", "Subject", "Cc", 0};
 
+void	fmt __P((FILE *));
+int	ispref __P((char *, char *));
+int	ishead __P((char *));
+void	leadin __P((void));
+int	main __P((int, char **));
+void	oflush __P((void));
+void	pack __P((char *, int));
+void	prefix __P((char *));
+char   *savestr __P((char *));
+void	setout __P((void));
+void	split __P((char *));
+void	tabulate __P((char *));
+
 /*
  * Drive the whole formatter by managing input files.  Also,
  * cause initialization of the output stuff and flush it out
  * at the end.
  */
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register FILE *fi;
-	register int errs = 0;
+	FILE *fi;
+	int errs = 0;
 	int number;		/* LIZ@UOM 6/18/85 */
 
 	goal_length = GOAL_LENGTH;
@@ -140,12 +154,13 @@ main(argc, argv)
  * doing ^H processing, expanding tabs, stripping trailing blanks,
  * and sending each line down for analysis.
  */
+void
 fmt(fi)
 	FILE *fi;
 {
 	char linebuf[BUFSIZ], canonb[BUFSIZ];
-	register char *cp, *cp2;
-	register int c, col;
+	char *cp, *cp2;
+	int c, col;
 
 	c = getc(fi);
 	while (c != EOF) {
@@ -182,7 +197,7 @@ fmt(fi)
 		col = 0;
 		cp = linebuf;
 		cp2 = canonb;
-		while (c = *cp++) {
+		while ((c = *cp++) != 0) {
 			if (c != '\t') {
 				col++;
 				if (cp2-canonb < BUFSIZ-1)
@@ -215,11 +230,12 @@ fmt(fi)
  * Finally, if the line minus the prefix is a mail header, try to keep
  * it on a line by itself.
  */
+void
 prefix(line)
 	char line[];
 {
-	register char *cp, **hp;
-	register int np, h;
+	char *cp, **hp;
+	int np, h;
 
 	if (strlen(line) == 0) {
 		oflush();
@@ -236,7 +252,7 @@ prefix(line)
 	 */
 	if (np != pfx && (np > pfx || abs(pfx-np) > 8))
 		oflush();
-	if (h = ishead(cp))
+	if ((h = ishead(cp)) != 0)
 		oflush(), mark = lineno;
 	if (lineno - mark < 3 && lineno - mark > 0)
 		for (hp = &headnames[0]; *hp != (char *) 0; hp++)
@@ -262,10 +278,11 @@ prefix(line)
  * attached at the end.  Pass these words along to the output
  * line packer.
  */
+void
 split(line)
 	char line[];
 {
-	register char *cp, *cp2;
+	char *cp, *cp2;
 	char word[BUFSIZ];
 	int wordl;		/* LIZ@UOM 6/18/85 */
 
@@ -319,6 +336,7 @@ char	*outp;				/* Pointer in above */
 /*
  * Initialize the output section.
  */
+void
 setout()
 {
 	outp = NOSTR;
@@ -344,12 +362,13 @@ setout()
  * pack(word)
  *	char word[];
  */
+void
 pack(word,wl)
 	char word[];
 	int wl;
 {
-	register char *cp;
-	register int s, t;
+	char *cp;
+	int s, t;
 
 	if (outp == NOSTR)
 		leadin();
@@ -382,6 +401,7 @@ pack(word,wl)
  * its way.  Set outp to NOSTR to indicate the absence of the current
  * line prefix.
  */
+void
 oflush()
 {
 	if (outp == NOSTR)
@@ -395,11 +415,12 @@ oflush()
  * Take the passed line buffer, insert leading tabs where possible, and
  * output on standard output (finally).
  */
+void
 tabulate(line)
 	char line[];
 {
-	register char *cp;
-	register int b, t;
+	char *cp;
+	int b, t;
 
 	/*
 	 * Toss trailing blanks in the output line.
@@ -434,10 +455,11 @@ tabulate(line)
  * Initialize the output line with the appropriate number of
  * leading blanks.
  */
+void
 leadin()
 {
-	register int b;
-	register char *cp;
+	int b;
+	char *cp;
 
 	for (b = 0, cp = outbuf; b < pfx; b++)
 		*cp++ = ' ';
@@ -453,7 +475,7 @@ char *
 savestr(str)
 	char str[];
 {
-	register char *top;
+	char *top;
 
 	top = malloc(strlen(str) + 1);
 	if (top == NOSTR) {
@@ -467,8 +489,9 @@ savestr(str)
 /*
  * Is s1 a prefix of s2??
  */
+int
 ispref(s1, s2)
-	register char *s1, *s2;
+	char *s1, *s2;
 {
 
 	while (*s1++ == *s2)
