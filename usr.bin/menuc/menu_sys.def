@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.28 2001/12/08 01:10:37 ross Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.29 2002/04/04 14:11:23 blymn Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,50 +49,6 @@
 #define REQ_SCROLLUP   1005
 #define REQ_HELP       1006
 
-/* Multiple key support */
-#define KEYSEQ_FIRST       256
-#define KEYSEQ_DOWN_ARROW  256
-#define KEYSEQ_UP_ARROW    257
-#define KEYSEQ_LEFT_ARROW  258
-#define KEYSEQ_RIGHT_ARROW 259
-#define KEYSEQ_PAGE_DOWN   260
-#define KEYSEQ_PAGE_UP     261
-
-struct keyseq {
-	char *termcap_name;
-	char *chars;
-	int  numchars;
-	int  keyseq_val;
-	struct keyseq *next;
-};
-
-/* keypad and other definitions */
-struct keyseq _mc_key_seq[] = {
-	/* Cludge for xterm ... */
-	{  NULL, "\033[B", 0, KEYSEQ_DOWN_ARROW, NULL },
-	{  NULL, "\033[D", 0, KEYSEQ_LEFT_ARROW, NULL },
-	{  NULL, "\033[C", 0, KEYSEQ_RIGHT_ARROW, NULL },
-	{  NULL, "\033[A", 0, KEYSEQ_UP_ARROW, NULL },
-	/* Termcap defined */
-	{ "kd", NULL, 0, KEYSEQ_DOWN_ARROW, NULL },
-	{ "kl", NULL, 0, KEYSEQ_LEFT_ARROW, NULL },
-	{ "kr", NULL, 0, KEYSEQ_RIGHT_ARROW, NULL },
-	{ "ku", NULL, 0, KEYSEQ_UP_ARROW, NULL },
-	{ "kf", NULL, 0, KEYSEQ_PAGE_DOWN, NULL },  /* scroll forward */
-	{ "kN", NULL, 0, KEYSEQ_PAGE_DOWN, NULL },  /* next page */
-	{ "kP", NULL, 0, KEYSEQ_PAGE_UP, NULL },    /* scroll backward */
-	{ "kR", NULL, 0, KEYSEQ_PAGE_UP, NULL },    /* prev page */
-	/* other definitions */
-	{ NULL, "\033v", 0, KEYSEQ_PAGE_UP, NULL },   /* ESC-v */
-	{ NULL, "\026", 0, KEYSEQ_PAGE_DOWN, NULL },  /* CTL-v */
-};
-
-int _mc_num_key_seq = sizeof(_mc_key_seq) / sizeof(struct keyseq);
-struct keyseq *pad_list = NULL;
-static char str_area [512];
-static size_t str_size = sizeof str_area;
-static char *str_ptr = str_area;
-
 /* Macros */
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #define MIN(x,y) ((x)<(y)?(x):(y))
@@ -112,8 +68,6 @@ static int num_avail  = 0;
 #endif
 
 /* prototypes for in here! */
-static void ins_keyseq (struct keyseq **seq, struct keyseq *ins);
-static void init_keyseq (void);
 static void init_menu (struct menudesc *m);
 static char opt_ch (int op_no);
 static void post_menu (struct menudesc *m);
@@ -128,110 +82,42 @@ static int menucmd (WINDOW *w);
 /* menu system processing routines */
 #define mbeep() (void)fputc('\a', stderr)
 
-static void
-ins_keyseq (struct keyseq **seq, struct keyseq *ins)
-{
-	if (*seq == NULL) {
-		ins->next = NULL;
-		*seq = ins;
-	} else if (ins->numchars <= (*seq)->numchars) {
-		ins->next = *seq;
-		*seq = ins;
-	} else
-		ins_keyseq (&(*seq)->next, ins);
-}
-
-static void
-init_keyseq(void)
-{
-	/*
-	 * XXX XXX XXX THIS SHOULD BE NUKED FROM ORBIT!  DO THIS
-	 * XXX XXX XXX WITH NORMAL CURSES FACILITIES!
-	 */
-	struct tinfo *ti;
-	char *term = getenv("TERM");
-	int i;
-
-	if (term == NULL || term[0] == '\0')
-		return;
-
-	if (t_getent(&ti, term) < 0)
-		return;
-
-	for (i = 0; i < _mc_num_key_seq; i++) {
-		if (_mc_key_seq[i].termcap_name == NULL)
-			continue;
-
-		_mc_key_seq[i].chars = t_getstr(ti, _mc_key_seq[i].termcap_name,
-		     &str_ptr, &str_size);
-
-		if (_mc_key_seq[i].chars != NULL &&
-		    (_mc_key_seq[i].numchars = strlen(_mc_key_seq[i].chars))
-		    > 0)
-			ins_keyseq(&pad_list, &_mc_key_seq[i]);
-	}
-	t_freent(ti);
-}
-
-static int
-mgetch(WINDOW *w)
-{
-	static char buf[20];
-	static int  num = 0;
-	struct keyseq *list = pad_list;
-	int i, ret;
-
-	/* key pad processing */
-	while (list) {
-		for (i=0; i< list->numchars; i++) {
-			if (i >= num)
-				buf[num++] = wgetch(w);
-			if (buf[i] != list->chars[i])
-				break;
-		}
-		if (i == list->numchars) {
-			num = 0;
-			return list->keyseq_val;
-		}
-		list = list->next;
-	}
-
-	ret = buf[0];
-	for (i = 0; i < strlen(buf); i++)
-		buf[i] = buf[i+1];
-	num--;
-	return ret;
-}
-
 static int
 menucmd (WINDOW *w)
 {
 	int ch;
 
 	while (TRUE) {
-		ch = mgetch(w);
+		ch = wgetch(w);
 		
 		switch (ch) {
 		case '\n':
 			return REQ_EXECUTE;
 		case '\016':  /* Contnrol-P */
-		case KEYSEQ_DOWN_ARROW:
+		case KEY_DOWN:
 			return REQ_NEXT_ITEM;
 		case '\020':  /* Control-N */
-		case KEYSEQ_UP_ARROW:
+		case KEY_UP:
 			return REQ_PREV_ITEM;
 		case '\014':  /* Control-L */
 		        return REQ_REDISPLAY;
 		case '<':
 		case '\010':  /* Control-H (backspace) */
-		case KEYSEQ_PAGE_UP:
+		case KEY_PPAGE:
 			return REQ_SCROLLUP;
+		case '\026':
 		case '>':
 		case ' ':
-		case KEYSEQ_PAGE_DOWN:
+		case KEY_NPAGE:
 			return REQ_SCROLLDOWN;
 		case '?':
 			return REQ_HELP;
+		case '\033': /* esc-v is scroll down */
+			ch = wgetch(w);
+			if (ch == 'v')
+				return REQ_SCROLLUP;
+			else
+				ch = 0; /* zap char so we beep */
 		}
 		
 		if (isalpha(ch)) 
@@ -309,6 +195,7 @@ init_menu (struct menudesc *m)
 
 	/* Get the windows. */
 	m->mw = newwin(m->h+hadd, m->w+wadd, m->y, m->x);
+	keypad(m->mw, TRUE); /* enable multi-key assembling for win */
 
 	if (m->mw == NULL) {
 		endwin();
@@ -455,16 +342,16 @@ process_help (struct menudesc *m, int num)
 	  	wrefresh(stdscr);
 
 		do {
-			winin = mgetch(stdscr);
-			if (winin < KEYSEQ_FIRST)
+			winin = wgetch(stdscr);
+			if (winin < KEY_MIN)
 				winin = tolower(winin);
 			again = 0;
 			switch (winin) {
 				case '<':
 				case 'u':
-				case KEYSEQ_UP_ARROW:
-				case KEYSEQ_LEFT_ARROW:
-				case KEYSEQ_PAGE_UP:
+				case KEY_UP:
+				case KEY_LEFT:
+				case KEY_PPAGE:
 					if (lineoff)
 						lineoff -= max_lines - 2;
 					else
@@ -472,9 +359,9 @@ process_help (struct menudesc *m, int num)
 					break;
 				case '>':
 				case 'd':
-				case KEYSEQ_DOWN_ARROW:
-				case KEYSEQ_RIGHT_ARROW:
-				case KEYSEQ_PAGE_DOWN:
+				case KEY_DOWN:
+				case KEY_RIGHT:
+				case KEY_NPAGE:
 					if (*help)
 						lineoff += max_lines - 2;
 					else
@@ -631,7 +518,7 @@ menu_init (void)
 
 	max_lines = getmaxy(stdscr);
 	max_cols = getmaxx(stdscr);
-	init_keyseq();
+	keypad(stdscr, TRUE);
 #ifdef DYNAMIC_MENUS
 	num_menus = DYN_INIT_NUM;
 	while (num_menus < DYN_MENU_START)
