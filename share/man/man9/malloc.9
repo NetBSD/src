@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.1 1996/06/16 23:20:53 pk Exp $
+.\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,7 +83,8 @@ operational charateristics as follows:
 .Bl -tag -offset indent
 .It Dv M_NOWAIT
 Causes
-.Fn malloc to return
+.Fn malloc
+to return
 .Dv NULL
 if the request cannot be immediately fulfilled due to resource shortage.
 Otherwise,
