@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 1999/04/27 01:37:13 simonb Exp $
+#	$NetBSD: Makefile,v 1.5 1999/04/27 12:03:40 simonb Exp $
+
+BINDIR=		/installation/netboot
 
 TOP?=		${.CURDIR}/..
 ARCHDIR?=        ${.CURDIR}/../../${MACHINE}/miniroot
@@ -56,9 +58,13 @@ ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
+realinstall:
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
+		-m ${NONBINMODE} ${DISKIMAGE} ${RELEASEDIR}${BINDIR}
+
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include "../Makefile.inc"
