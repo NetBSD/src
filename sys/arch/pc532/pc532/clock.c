@@ -1,3 +1,6 @@
+/*	$NetBSD: clock.c,v 1.6.2.1 1994/10/19 19:07:14 cgd Exp $
+*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,11 +38,12 @@
  *
  *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  *
- *	$Id: clock.c,v 1.6 1994/05/20 06:44:26 phil Exp $
  */
 
 /*
  * Primitive clock interrupt routines.
+ *
+ * Improved by Phil Budne ... 10/17/94.
  */
 
 #include <sys/param.h>
@@ -52,6 +56,25 @@ void spinwait __P((int));
 
 /* Get access to the time variable. */
 extern struct timeval time;
+extern struct timezone tz;
+
+/* Conversion data */
+static const short daymon[12] = {
+    0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
+};
+
+/* Defines to make code more readable. */
+
+#define FROMBCD(B)	(((B)>>4) * 10 + ((B)&0xf))
+#define TOBCD(D)	((((D)/10)<<4) + (D)%10)
+
+#define DAYMON(M,L)	(daymon[(M)] + ((L) && (M) > 0))
+
+#define SECDAY		(24*60*60)
+#define SECMON(M,L)	(DAYMON(M,L)*SECDAY)
+#define SECYR		(365*SECDAY)
+#define LEAPYEAR(Y)	(((Y) & 3) == 0)
+
 
 startrtclock()
 {
@@ -65,51 +88,25 @@ startrtclock()
 
 }
 
-/* convert 2 digit BCD number */
-bcd(i)
-int i;
-{
-	return ((i/16)*10 + (i%16));
-}
 
-/* convert years to seconds (from 1970) */
-unsigned long
+/* convert years to seconds since Jan 1, 1970 */
+static unsigned long
 ytos(y)
 int y;
 {
 	int i;
 	unsigned long ret;
 
-	ret = 0; y = y - 70;
-	for(i=0;i<y;i++) {
-		if (i % 4) ret += 365*24*60*60;
-		else ret += 366*24*60*60;
-	}
-	return ret;
-}
-
-/* convert months to seconds */
-unsigned long
-mtos(m,leap)
-int m,leap;
-{
-	int i;
-	unsigned long ret;
-
 	ret = 0;
-	for(i=1;i<m;i++) {
-		switch(i){
-		case 1: case 3: case 5: case 7: case 8: case 10: case 12:
-			ret += 31*24*60*60; break;
-		case 4: case 6: case 9: case 11:
-			ret += 30*24*60*60; break;
-		case 2:
-			if (leap) ret += 29*24*60*60;
-			else ret += 28*24*60*60;
-		}
+	y -= 70;
+	for(i=0;i<y;i++) {
+	    ret += SECYR;
+	    if (LEAPYEAR(i))
+		ret += SECDAY;
 	}
 	return ret;
 }
+
 
 /*
  *  Access to the real time clock.
@@ -118,57 +115,147 @@ int m,leap;
 
 extern int have_rtc;
 
+void
 inittodr(base)
-	time_t base;
+    time_t base;
 {
-  unsigned char buffer[8];
-  unsigned int sec;
-  int leap;
+    unsigned char buffer[8];
+    unsigned int year, month, dom, hour, min, sec, csec;
 
-  if (!have_rtc)
-    {
-      time.tv_sec = base;
-      return;
+    if (!have_rtc) {
+	time.tv_sec = base;
+	return;
     }
 
-  /* Read rtc and convert to seconds since Jan 1, 1970. */
+    /* Read rtc and convert to seconds since Jan 1, 1970. */
 
-  rw_rtc ( buffer, 0);  /* Read the rtc. */
+    rw_rtc( buffer, 0);		/* Read the rtc. */
 
-  /* Check to see if it was really the rtc by checking for bad date info. */
-  if (bcd(buffer[1]) > 59 || bcd(buffer[2]) > 59 || bcd(buffer[3]) > 23
-      || bcd(buffer[5]) > 31 || bcd(buffer[6]) > 12)
-    {
-      printf ("inittodr: No clock found\n");
-      have_rtc = 0;
-      time.tv_sec = base;
-      return;
+    /* convert to decimal */
+    year = FROMBCD(buffer[7]);
+    /* XXX apply offset, or tweak for 21st century? */
+
+    month = FROMBCD(buffer[6]);
+    dom = FROMBCD(buffer[5]);
+    /* buffer[4] is dow! */
+    hour = FROMBCD(buffer[3]);
+    min = FROMBCD(buffer[2]);
+    sec = FROMBCD(buffer[1]);
+    csec = FROMBCD(buffer[0]);
+
+    /* Check to see if it was really the rtc by checking for bad date info. */
+    if (sec > 59 || min > 59 || hour > 23 || dom > 31 || month > 12) {
+	printf("inittodr: No clock found\n");
+	have_rtc = 0;
+	time.tv_sec = base;
+	return;
     }
 
-  leap = (bcd(buffer[7]) % 4) == 0;
-  sec = ytos(bcd(buffer[7]))		/* year */
-      + mtos(bcd(buffer[6]), leap)	/* month */
-      + bcd(buffer[5])*24*60*60		/* days */
-      + bcd(buffer[3])*60*60		/* hours */
-      + bcd(buffer[2])*60		/* minutes */
-      + bcd(buffer[1]);			/* seconds */
+    month--;			/* make zero based */
+    dom--;			/* make zero based */
 
-  sec -= 24*60*60; /* XXX why ??? Compensate for Jan 1, 1970??? */  
+#ifdef TEST
+    printf("ytos %d secmon %d dom %d hour %d, min %d\n",
+	   ytos(year),		/* years */
+	   SECMON(month, LEAPYEAR(year)), /* months */
+	   dom * SECDAY,	/* days of month */
+	   hour*60*60,		/* hours */
+	   min*60);		/* minutes */
 
-  if (sec < base)
+#endif
+
+    sec += ytos(year)		/* years */
+	+ SECMON(month, LEAPYEAR(year)) /* months */
+	    + dom * SECDAY	/* days of month */
+		+ hour*60*60	/* hours */
+		    + min*60;	/* minutes */
+
+    /* apply local offset */
+    sec += tz.tz_minuteswest * 60;
+    if (tz.tz_dsttime)
+	sec -= 60 * 60;
+
+    if (sec < base)
 	printf ("WARNING: clock is earlier than last shutdown time.\n");
+    time.tv_sec = sec;
 
-  time.tv_sec = sec;
-  time.tv_usec = 0;
+    if (csec > 99)
+	csec = 0;		/* ignore if bogus */
+    time.tv_usec = csec * 10000;
 }
 
 
 /*
- * Restart the clock.
+ * Reset clock chip to current system time
+ * Phil Budne 10/17/94
  */
 resettodr()
 {
-  printf ("resettodr\n");
+    int year, leap, mon, dom, hour, min, sec, csec;
+    struct timeval tv;
+    unsigned char buffer[8];
+    unsigned long t, t2;
+
+    tv = time;			/* XXX do under spl? */
+
+    t = tv.tv_sec;
+
+    /* XXX apply 1-day tweak? */
+
+    /* apply local offset */
+    sec -= tz.tz_minuteswest * 60;
+    if (tz.tz_dsttime)
+	sec += 60 * 60;
+
+    year = 70;
+    for (;;) {
+	t2 = SECYR;
+	if (LEAPYEAR(year))
+	    t2 += SECDAY;
+	if (t < t2)
+	    break;
+	year++;
+	t -= t2;
+    }
+
+    leap = LEAPYEAR(year);
+    mon = 0;
+    for (;;) {
+	mon++;
+	if (t < SECMON(mon, leap))
+	    break;
+    }
+    mon--;			/* get zero based */
+    t -= SECMON(mon, leap);
+    mon++;			/* make one based */
+
+    dom = t / SECDAY;
+    t %= SECDAY;
+
+    hour = t / (60*60);
+    t %= 60*60;
+
+    min = t / 60;
+    sec = t % 60;
+    csec = tv.tv_usec / 10000;
+
+    dom++;			/* make one-based */
+
+#ifdef TEST
+    printf("resettodr: %d/%d/%d %d:%02d:%02d.%02d\n",
+	   mon, dom, year + 1900, hour, min, sec, csec );
+#endif
+
+    buffer[0] = TOBCD(csec);
+    buffer[1] = TOBCD(sec);
+    buffer[2] = TOBCD(min);
+    buffer[3] = TOBCD(hour);
+    buffer[4] = 0;		/* XXX DOW! */
+    buffer[5] = TOBCD(dom);
+    buffer[6] = TOBCD(mon);
+    buffer[7] = TOBCD(year);    /* XXX remove offset, or mod by 100? */
+
+    rw_rtc(buffer,1);		/* reset chip!! */
 }
 
 /*
