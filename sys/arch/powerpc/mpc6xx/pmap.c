@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.41 2002/04/19 20:56:56 kleink Exp $	*/
+/*	$NetBSD: pmap.c,v 1.42 2002/04/23 12:41:07 kleink Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2635,7 +2635,8 @@ pmap_boot_find_memory(psize_t size, psize_t alignment, int at_end)
  * is really initialized.
  */
 void
-pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
+pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
+    const struct segtab *kernsegs)
 {
 	struct mem_region *mp, tmp;
 	paddr_t s, e;
@@ -2903,6 +2904,16 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	__asm __volatile ("mtsr %0,%1"
 		      :: "n"(KERNEL2_SR), "r"(KERNEL2_SEGMENT));
 #endif
+	if (kernsegs != NULL) {
+		for (i = 0; i < 16; i++) {
+			if (kernsegs->st_mask & (1 << i)) {
+				pmap_kernel()->pm_sr[i] = kernsegs->st_sr[i];
+				__asm __volatile ("mtsrin %0,%1"
+				    :: "r"(i << ADDR_SR_SHFT),
+				       "r"(kernsegs->st_sr[i]));
+			}
+		}
+	}
 	__asm __volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((u_int)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 	tlbia();

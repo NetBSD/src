@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.17 2001/12/04 18:54:11 is Exp $ */
+/* $NetBSD: machdep.c,v 1.18 2002/04/23 12:41:04 kleink Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -252,7 +252,7 @@ initppc(startkernel, endkernel)
 	/*
 	 * Initialize pmap module
 	 */
-	pmap_bootstrap(startkernel, endkernel);
+	pmap_bootstrap(startkernel, endkernel, NULL);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2002/03/02 00:44:08 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2002/04/23 12:41:05 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -391,7 +391,7 @@ initppc(startkernel, endkernel, args)
 	/*
 	 * Initialize pmap module.
 	 */
-	pmap_bootstrap(startkernel, endkernel);
+	pmap_bootstrap(startkernel, endkernel, NULL);
 
 	restore_ofmap(ofmap, ofmaplen);
 }
