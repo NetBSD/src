@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.7 1998/03/01 02:25:28 fvdl Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.8 1998/03/09 00:58:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -522,7 +522,8 @@ sys_swapctl(p, v, retval)
 	 * [can also be obtained with uvmexp sysctl]
 	 */
 	if (SCARG(uap, cmd) == SWAP_NSWAP) {
-		UVMHIST_LOG(pdhist, "<- done SWAP_NSWAP=%d", uvmexp.nswapdev, 0, 0, 0);
+		UVMHIST_LOG(pdhist, "<- done SWAP_NSWAP=%d", uvmexp.nswapdev,
+		    0, 0, 0);
 		*retval = uvmexp.nswapdev;
 		lockmgr(&swap_syscall_lock, LK_RELEASE, (void *)0);
 		return (0);
@@ -665,7 +666,7 @@ sys_swapctl(p, v, retval)
 		 */
 		if ((error = swap_on(p, sdp)) != 0) {
 			simple_lock(&swap_data_lock);
-       			(void) swaplist_find(vp, 1);  /* kill fake entry */
+			(void) swaplist_find(vp, 1);  /* kill fake entry */
 			swaplist_trim();
 			simple_unlock(&swap_data_lock);
 #ifdef SWAP_TO_FILES
@@ -846,7 +847,7 @@ swap_on(p, sdp)
 	 */
 
 	sdp->swd_se.se_nblks = nblocks;
-       	npages = dbtob(nblocks) / PAGE_SIZE;
+	npages = dbtob(nblocks) / PAGE_SIZE;
 
 	/*
 	 * for block special files, we want to make sure that leave
@@ -1339,7 +1340,7 @@ sw_reg_start(sdp)
 	struct buf	*bp;
 	UVMHIST_FUNC("sw_reg_start"); UVMHIST_CALLED(pdhist);
 
-        /* recursion control */
+	/* recursion control */
 	if ((sdp->swd_flags & SWF_BUSY) != 0)
 		return;
 
@@ -1429,13 +1430,13 @@ sw_reg_iodone(bp)
 	if (pbp->b_resid == 0) {
 #ifdef DIAGNOSTIC
 		if (vnx->vx_pending != 0)
-			panic("sw_reg_iodone: vnx pending: %d", vnx->vx_pending);
+			panic("sw_reg_iodone: vnx pending: %d",vnx->vx_pending);
 #endif
 
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
-		UVMHIST_LOG(pdhist, "  iodone error=%d !",
-				pbp, vnx->vx_error, 0, 0);
-  			putvndxfer(vnx);
+			UVMHIST_LOG(pdhist, "  iodone error=%d !",
+			    pbp, vnx->vx_error, 0, 0);
+			putvndxfer(vnx);
 			biodone(pbp);
 		}
 	}
@@ -1848,7 +1849,7 @@ uvm_swap_aiodone(aio)
 	int lcv, s;
 	vm_offset_t addr;
 	UVMHIST_FUNC("uvm_swap_aiodone"); UVMHIST_CALLED(pdhist);
-  
+
 	UVMHIST_LOG(pdhist, "done with aio %p", aio, 0, 0, 0);
 #ifdef DIAGNOSTIC
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_user.c,v 1.3 1998/02/07 11:09:53 mrg Exp $	*/
+/*	$NetBSD: uvm_user.c,v 1.4 1998/03/09 00:58:59 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -54,19 +54,19 @@
  * uvm_deallocate: deallocate memory (unmap)
  */
 
-int uvm_deallocate(map, start, size)
-
-vm_map_t map;
-vm_offset_t start;
-vm_size_t size;
-
+int
+uvm_deallocate(map, start, size)
+	vm_map_t map;
+	vm_offset_t start;
+	vm_size_t size;
 {
-  if (map == NULL)
-    panic("uvm_deallocate with null map");
 
-  if (size == (vm_offset_t) 0)
-    return(KERN_SUCCESS);
+	if (map == NULL)
+		panic("uvm_deallocate with null map");
 
-  return(uvm_unmap(map, trunc_page(start), round_page(start+size), 0));
+	if (size == (vm_offset_t) 0)
+		return (KERN_SUCCESS);
+
+	return(uvm_unmap(map, trunc_page(start), round_page(start+size), 0));
 
 }

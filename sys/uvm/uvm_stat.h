@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.10 1998/02/13 05:33:56 thorpej Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.11 1998/03/09 00:58:59 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -196,7 +196,7 @@ do { \
 	(NAME).e[i].v[1] = (u_long)(B); \
 	(NAME).e[i].v[2] = (u_long)(C); \
 	(NAME).e[i].v[3] = (u_long)(D); \
-        UVMHIST_PRINTNOW(&((NAME).e[i])); \
+	UVMHIST_PRINTNOW(&((NAME).e[i])); \
 } while (0)
 
 #define UVMHIST_CALLED(NAME) \

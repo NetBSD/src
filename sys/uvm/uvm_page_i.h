@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.4 1998/02/10 02:34:54 perry Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.5 1998/03/09 00:58:58 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -90,30 +90,29 @@
  *	out from under it
  */
 
-struct vm_page *uvm_pagelookup(obj, off)
-
-struct uvm_object *obj;
-vm_offset_t off;
-
+struct vm_page *
+uvm_pagelookup(obj, off)
+	struct uvm_object *obj;
+	vm_offset_t off;
 {
-  struct vm_page *pg;
-  struct pglist *buck;
-  int s;
+	struct vm_page *pg;
+	struct pglist *buck;
+	int s;
 
-  buck = &uvm.page_hash[uvm_pagehash(obj,off)];
+	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
 
-  s = splimp();
-  simple_lock(&uvm.hashlock);
-  for (pg = buck->tqh_first ; pg != NULL ; pg = pg->hashq.tqe_next) {
-    if (pg->uobject == obj && pg->offset == off) {
-      simple_unlock(&uvm.hashlock);
-      splx(s);
-      return(pg);
-    }
-  }
-  simple_unlock(&uvm.hashlock);
-  splx(s);
-  return(NULL);
+	s = splimp();
+	simple_lock(&uvm.hashlock);
+	for (pg = buck->tqh_first ; pg != NULL ; pg = pg->hashq.tqe_next) {
+		if (pg->uobject == obj && pg->offset == off) {
+			simple_unlock(&uvm.hashlock);
+			splx(s);
+			return(pg);
+		}
+	}
+	simple_unlock(&uvm.hashlock);
+	splx(s);
+	return(NULL);
 }
 
 /*
@@ -123,32 +122,32 @@ vm_offset_t off;
  * => caller must lock page queues
  */
 
-PAGE_INLINE void uvm_pagewire(pg, tmpwire)
-
-struct vm_page *pg;
-boolean_t tmpwire;
-
+PAGE_INLINE void
+uvm_pagewire(pg, tmpwire)
+	struct vm_page *pg;
+	boolean_t tmpwire;
 {
-  if (pg->wire_count == 0) {
-    if (pg->pqflags & PQ_ACTIVE) {
-      TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-      pg->pqflags &= ~PQ_ACTIVE;
-      uvmexp.active--;
-    }
-    if (pg->pqflags & PQ_INACTIVE) {
-      if (pg->pqflags & PQ_SWAPBACKED)
-        TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-      else
-        TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
-      pg->pqflags &= ~PQ_INACTIVE;
-      uvmexp.inactive--;
-    }
-    if (tmpwire)
-      return;
-    uvmexp.wired++;
-  }
-  if (!tmpwire)
-    pg->wire_count++;
+
+	if (pg->wire_count == 0) {
+		if (pg->pqflags & PQ_ACTIVE) {
+			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+			pg->pqflags &= ~PQ_ACTIVE;
+			uvmexp.active--;
+		}
+		if (pg->pqflags & PQ_INACTIVE) {
+			if (pg->pqflags & PQ_SWAPBACKED)
+				TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
+			else
+				TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+			pg->pqflags &= ~PQ_INACTIVE;
+			uvmexp.inactive--;
+		}
+		if (tmpwire)
+			return;
+		uvmexp.wired++;
+	}
+	if (!tmpwire)
+		pg->wire_count++;
 }
 
 /*
@@ -158,18 +157,18 @@ boolean_t tmpwire;
  * => caller must lock page queues
  */
  
-PAGE_INLINE void uvm_pageunwire(pg)
-
-struct vm_page *pg;
-
+PAGE_INLINE void
+uvm_pageunwire(pg)
+	struct vm_page *pg;
 {
-  pg->wire_count--;
-  if (pg->wire_count == 0) {
-    TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
-    uvmexp.active++;
-    pg->pqflags |= PQ_ACTIVE;
-    uvmexp.wired--;
-  }
+
+	pg->wire_count--;
+	if (pg->wire_count == 0) {
+		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
+		uvmexp.active++;
+		pg->pqflags |= PQ_ACTIVE;
+		uvmexp.wired--;
+	}
 }
 
 /*
@@ -180,31 +179,31 @@ struct vm_page *pg;
  * => object that page belongs to must be locked (so we can adjust pg->flags)
  */
 
-PAGE_INLINE void uvm_pagedeactivate(pg)
-
-struct vm_page *pg;
-
+PAGE_INLINE void
+uvm_pagedeactivate(pg)
+	struct vm_page *pg;
 {
-  if (pg->pqflags & PQ_ACTIVE) {
-    TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-    pg->pqflags &= ~PQ_ACTIVE;
-    uvmexp.active--;
-  }
-  if ((pg->pqflags & PQ_INACTIVE) == 0) {
+	if (pg->pqflags & PQ_ACTIVE) {
+		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+		pg->pqflags &= ~PQ_ACTIVE;
+		uvmexp.active--;
+	}
+	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 #ifdef DIAGNOSTIC 
-    if (pg->wire_count)
-      panic("uvm_pagedeactivate: caller did not check wire count");
+		if (pg->wire_count)
+			panic("uvm_pagedeactivate: caller did not check "
+			    "wire count");
 #endif
-    if (pg->pqflags & PQ_SWAPBACKED)
-      TAILQ_INSERT_TAIL(&uvm.page_inactive_swp, pg, pageq);
-    else
-      TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
-    pg->pqflags |= PQ_INACTIVE;
-    uvmexp.inactive++;
-    pmap_clear_reference(PMAP_PGARG(pg));
-    if (pmap_is_modified(PMAP_PGARG(pg)))
-      pg->flags &= ~PG_CLEAN;
-  }
+		if (pg->pqflags & PQ_SWAPBACKED)
+			TAILQ_INSERT_TAIL(&uvm.page_inactive_swp, pg, pageq);
+		else
+			TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
+		pg->pqflags |= PQ_INACTIVE;
+		uvmexp.inactive++;
+		pmap_clear_reference(PMAP_PGARG(pg));
+		if (pmap_is_modified(PMAP_PGARG(pg)))
+			pg->flags &= ~PG_CLEAN;
+	}
 }
 
 /*
@@ -213,38 +212,34 @@ struct vm_page *pg;
  * => caller must lock page queues
  */
 
-PAGE_INLINE void uvm_pageactivate(pg)
-
-struct vm_page *pg;
-
+PAGE_INLINE void
+uvm_pageactivate(pg)
+	struct vm_page *pg;
 {
-  if (pg->pqflags & PQ_INACTIVE) {
-    if (pg->pqflags & PQ_SWAPBACKED)
-      TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-    else
-      TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
-    pg->pqflags &= ~PQ_INACTIVE;
-    uvmexp.inactive--;
-  }
-  if (pg->wire_count == 0) {
+	if (pg->pqflags & PQ_INACTIVE) {
+		if (pg->pqflags & PQ_SWAPBACKED)
+			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
+		else
+			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+		pg->pqflags &= ~PQ_INACTIVE;
+		uvmexp.inactive--;
+	}
+	if (pg->wire_count == 0) {
 
-    /*
-     * if page is already active, remove it from list so we can put it at tail.
-     * if it wasn't active, then mark it active and bump active count
-     */
-    if (pg->pqflags & PQ_ACTIVE) {
+		/*
+		 * if page is already active, remove it from list so we
+		 * can put it at tail.  if it wasn't active, then mark
+		 * it active and bump active count
+		 */
+		if (pg->pqflags & PQ_ACTIVE) 
+			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+		else {
+			pg->pqflags |= PQ_ACTIVE;
+			uvmexp.active++;
+		}
 
-      TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-
-    } else {
-
-      pg->pqflags |= PQ_ACTIVE;
-      uvmexp.active++;
-
-    }
-
-    TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
-  }
+		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
+	}
 }
 
 /*
@@ -254,13 +249,13 @@ struct vm_page *pg;
  *	to protect pg->flags.
  */
 
-PAGE_INLINE void uvm_pagezero(pg)
-
-struct vm_page *pg;
-
+PAGE_INLINE void
+uvm_pagezero(pg)
+	struct vm_page *pg;
 {
-  pg->flags &= ~PG_CLEAN;
-  pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+
+	pg->flags &= ~PG_CLEAN;
+	pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 }
 
 /*
@@ -270,13 +265,13 @@ struct vm_page *pg;
  *	to protect pg->flags.
  */
 
-PAGE_INLINE void uvm_pagecopy(src, dst)
-
-struct vm_page *src, *dst;
-
+PAGE_INLINE void
+uvm_pagecopy(src, dst)
+	struct vm_page *src, *dst;
 {
-  dst->flags &= ~PG_CLEAN;
-  pmap_copy_page(VM_PAGE_TO_PHYS(src), VM_PAGE_TO_PHYS(dst));
+
+	dst->flags &= ~PG_CLEAN;
+	pmap_copy_page(VM_PAGE_TO_PHYS(src), VM_PAGE_TO_PHYS(dst));
 }
 
 #endif /* defined(UVM_PAGE_INLINE) || defined(UVM_PAGE) */

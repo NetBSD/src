@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.5 1998/02/10 14:12:04 mrg Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.6 1998/03/09 00:58:56 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -107,7 +107,7 @@
  */
 
 AMAP_INLINE vm_offset_t amap_add __P((struct vm_aref *, vm_offset_t,
-                                                struct vm_anon *, int));
+				      struct vm_anon *, int));
 struct vm_amap *amap_alloc __P((vm_offset_t, vm_offset_t, int));
 void amap_copy __P((vm_map_t, vm_map_entry_t, int, boolean_t,
 			vm_offset_t, vm_offset_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.h,v 1.4 1998/02/10 02:35:05 perry Exp $	*/
+/*	$NetBSD: uvm_vnode.h,v 1.5 1998/03/09 00:59:00 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -54,14 +54,16 @@
  */
 
 struct uvm_vnode {
-  struct uvm_object u_obj;		/* the actual VM object */
-  int u_flags;				/* flags */
-  int u_nio;				/* number of running I/O requests */
-  vm_size_t u_size;			/* size of object */
-  /* the following entry is locked by uvn_wl_lock */
-  LIST_ENTRY(uvm_vnode) u_wlist;	/* list of writeable vnode objects */
-  /* the following entry is locked by uvn_sync_lock */
-  SIMPLEQ_ENTRY(uvm_vnode) u_syncq;	/* vnode objects due for a "sync" */
+	struct uvm_object u_obj;	/* the actual VM object */
+	int u_flags;			/* flags */
+	int u_nio;			/* number of running I/O requests */
+	vm_size_t u_size;		/* size of object */
+
+	/* the following entry is locked by uvn_wl_lock */
+	LIST_ENTRY(uvm_vnode) u_wlist;	/* list of writeable vnode objects */
+
+	/* the following entry is locked by uvn_sync_lock */
+	SIMPLEQ_ENTRY(uvm_vnode) u_syncq; /* vnode objects due for a "sync" */
 };
 
 /*
