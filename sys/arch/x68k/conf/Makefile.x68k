@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.42 2000/02/01 05:25:49 tsutsui Exp $
+#	$NetBSD: Makefile.x68k,v 1.43 2000/04/23 05:49:14 minoura Exp $
 
 # Makefile for NetBSD
 #
@@ -206,7 +206,7 @@ uipc_proto.o vfs_conf.o: Makefile
 machdep.o: Makefile
 
 # depend on CPU configuration 
-fd.o intio_dmac.o locore.o machdep.o pmap.o pmap_boostrap.o sys_machdep.o trap.o: Makefile
+locore.o: Makefile
 
 # depend on DEBUG and/or DIAGNOSTIC options
 grf.o par.o sram.o: Makefile
