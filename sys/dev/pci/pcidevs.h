@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.593 2003/11/28 20:05:14 chs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.594 2003/12/05 04:28:47 grant Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.595 2003/11/28 20:04:16 chs Exp 
+ *	NetBSD: pcidevs,v 1.596 2003/12/05 04:28:04 grant Exp 
  */
 
 /*
@@ -1133,6 +1133,8 @@
 #define	PCI_PRODUCT_CIRRUS_CS4280	0x6003		/* CS4280 CrystalClear Audio Interface */
 #define	PCI_PRODUCT_CIRRUS_CS4281	0x6005		/* CS4281 CrystalClear Audio Interface */
 
+/* Adaptec's AAR-1210SA serial ATA RAID controller uses the CMDTECH chip */
+#define	PCI_PRODUCT_CMDTECH_AAR_1210SA	0x0240		/* AAR-1210SA serial ATA RAID controller */
 /* CMD Technology products -- info gleaned from their web site */
 #define	PCI_PRODUCT_CMDTECH_640	0x0640		/* PCI0640 */
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
