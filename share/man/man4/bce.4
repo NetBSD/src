@@ -1,10 +1,10 @@
-.\"	$NetBSD: bge.4,v 1.7 2003/09/28 18:32:18 wiz Exp $
+.\" $NetBSD: bce.4,v 1.1 2003/09/28 18:32:18 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
-.\" by Matthias Scheler <tron@NetBSD.org>.
+.\" by Thomas Klausner.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -34,75 +34,35 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 31, 2003
-.Dt BGE 4
+.Dd September 28, 2003
+.Dt BCE 4
 .Os
 .Sh NAME
-.Nm bge
-.Nd Broadcom BCM570x family Gigabit Ethernet driver
+.Nm bce
+.Nd Broadcom BCM4401 Ethernet device driver
 .Sh SYNOPSIS
-.Cd "bge* at pci? dev ? function ?"
-.Pp
-Configuration of PHYs may also be necessary.  See
-.Xr mii 4 .
+.Cd "bce* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports Gigabit Ethernet interfaces based on the Broadcom
-BCM570x family of Gigabit Ethernet chips.
-The interfaces supported by the
-.Nm
-driver include:
-.Bl -bullet
-.It
-3Com 3c996-T (10BASE-T/100BASE-TX/1000BASE-T)
-.It
-Dell PowerEdge 2550 integrated BCM5700 NIC (10BASE-T/100BASE-TX/1000BASE-T)
-.It
-IBM x235 server integrated BCM5703x NIC (10BASE-T/100BASE-TX/1000BASE-T)
-.It
-Netgear GA302T (10BASE-T/100BASE-TX/1000BASE-T)
-.It
-SysKonnect SK-9D21 (10BASE-T/100BASE-TX/1000BASE-T)
-.It
-SysKonnect SK-9D41 (1000BASE-SX)
-.El
-.Pp
-The BCM570x family supports IPv4/TCP/UDP checksumming in hardware.
-The
-.Nm
-driver supports this feature of the chip.
-See
-.Xr ifconfig 8
-for information on how to enable this feature.
+provides support for the Broadcom BCM4401 10/100 Ethernet card.
+Other cards from the 440x series may also be supported.
 .Sh SEE ALSO
-.Xr arp 4 ,
-.Xr bce 4 ,
-.Xr ifmedia 4 ,
+.Xr bge 4 ,
 .Xr mii 4 ,
-.Xr netintro 4 ,
-.Xr pci 4 ,
-.Xr ifconfig 8
+.Xr ukphy 4
 .Sh HISTORY
 The
 .Nm
-driver first appeared in
-.Nx 1.6.1 .
+driver appeared in
+.Nx 2.0 .
 .Sh AUTHORS
-The
-.Nm
-driver was written by
-.An Bill Paul
-.Aq wpaul@windriver.com
-for
-.Fx
-and ported to
-.Nx
-by
-.An Frank van der Linden
-.Aq fvdl@wasabisystems.com ,
-.An Jason R. Thorpe
-.Aq thorpej@wasabisystems.com
-and
-.An Jonathan Stone
-.Aq jonathan@dsg.stanford.edu .
+.An Cliff Wright
+.Aq cliff@snipe444.org
+.Sh BUGS
+There is no VLAN support.
+.Pp
+There is no flow control support.
+.Pp
+Multicast is not using the packet filter and is in
+the accept all multicast mode.
