@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.13 1996/09/12 04:49:52 scottr Exp $
+#	$NetBSD: SPOT,v 1.14 1996/09/12 05:35:00 scottr Exp $
 #
 # SPOT
 
@@ -90,7 +90,6 @@ scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?
 st*		at scsibus? target ? lun ?
 cd*		at scsibus? target ? lun ?
-ch*		at scsibus? target ? lun ?
 
 pseudo-device	pty		32
 pseudo-device	bpfilter	16

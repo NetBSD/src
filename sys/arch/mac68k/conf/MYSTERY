@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.1 1996/09/12 04:50:43 scottr Exp $
+#	$NetBSD: MYSTERY,v 1.2 1996/09/12 05:34:59 scottr Exp $
 #
 # SPOT
 
@@ -88,10 +88,10 @@ ite0		at grf?
 sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
 
 scsibus*	at scsi?
-sd*		at scsibus? target ? lun ?
-st*		at scsibus? target ? lun ?
-cd*		at scsibus? target ? lun ?
-ch*		at scsibus? target ? lun ?
+sd*		at scsibus? target ? lun ?	# SCSI disk drives
+st*		at scsibus? target ? lun ?	# SCSI tape drives
+cd*		at scsibus? target ? lun ?	# SCSI CD-ROM drives
+uk*		at scsibus? target ? lun ?	# SCSI unknown
 
 pseudo-device	pty		16
 pseudo-device	bpfilter	12
