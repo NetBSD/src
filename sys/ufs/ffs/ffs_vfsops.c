@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.6 1994/10/28 20:15:09 mycroft Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.7 1994/10/28 20:16:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -839,7 +839,7 @@ ffs_sbupdate(mp, waitfor)
 	int blks;
 	caddr_t space;
 	int i, size, error = 0;
-	struct *cfs;
+	struct fs *cfs;
 
 	bp = getblk(mp->um_devvp, SBOFF >> (fs->fs_fshift - fs->fs_fsbtodb),
 	    (int)fs->fs_sbsize, 0, 0);
