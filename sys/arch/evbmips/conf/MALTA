@@ -1,9 +1,9 @@
-#	$NetBSD: MALTA,v 1.6 2002/04/12 08:10:56 gmcgarry Exp $
+#	$NetBSD: MALTA,v 1.7 2002/04/16 11:49:54 wiz Exp $
 
 #include 	"arch/evbmips/conf/std.malta.eb"	# big-endian mode
 include 	"arch/evbmips/conf/std.malta.el"	# little-endian mode
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -147,10 +147,8 @@ com1		at isa? port 0x2f8 irq 3
 #pckbc*		at isa?				# PC keyboard controller
 #pckbd*		at pckbc?			# PC keyboard (kbd port)
 #pms*		at pckbc?			# PS/2-style mouse (aux port)
-#pmsi*		at pckbc?			# PS/2 "Intelli"mouse for wsmouse
 #wskbd*		at pckbd?
 #wsmouse*	at pms?
-#wsmouse*	at pmsi?
 
 # PCI SCSI controllers
 #adv*		at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA]

@@ -1,5 +1,5 @@
-.\" $NetBSD: wsmouse.4,v 1.6 2001/09/11 23:18:56 wiz Exp $
-.Dd March 20, 1999
+.\" $NetBSD: wsmouse.4,v 1.7 2002/04/16 11:49:54 wiz Exp $
+.Dd April 16, 2002
 .Os
 .Dt WSMOUSE 4
 .Sh NAME
@@ -7,11 +7,7 @@
 .Nd generic mouse support in wscons
 .Sh SYNOPSIS
 .Cd "wsmouse*   at pms? mux 0"
-(PS/2 mouse)
-.Cd "wsmouse*   at pmsi? mux 0"
-.Po Dq Intellimouse
--compatible wheel mouse with PS/2 interface
-.Pc
+(PS/2 mouse, including ``Intellimouse''-compatible wheel mice)
 .Cd "wsmouse*   at ums? mux 0"
 (USB mouse)
 .Cd "wsmouse*   at lms? mux 0"
