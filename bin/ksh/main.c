@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1999/10/20 15:09:59 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.6.6.1 2002/10/18 13:41:35 itojun Exp $	*/
 
 /*
  * startup, main loop, enviroments and error handling
@@ -66,7 +66,9 @@ static const char *const initcoms [] = {
 #ifdef KSH
 	 /* Aliases that are builtin commands in at&t */
 	  "login=exec login",
+#ifndef __NetBSD__
 	  "newgrp=exec newgrp",
+#endif /* __NetBSD__ */
 #endif /* KSH */
 	  NULL,
 	/* this is what at&t ksh seems to track, with the addition of emacs */

@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.71 2002/10/18 13:31:51 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.72 2002/10/18 13:41:34 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1750,3 +1750,7 @@ share/zoneinfo/systemv				1.1.1.2
 share/zoneinfo/zone.tab				1.1.1.14-1.1.1.18
 
   Upgrade timezone data to tzdata2002d.
+
+bin/ksh/main.c					1.8
+
+  Prevent ksh from dying if a user enters the (nonexistent) 'newgrp' command.
