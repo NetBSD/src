@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 2002/12/02 13:31:21 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2004/01/30 14:26:26 augustss Exp $
 #
 #	etc.pmppc/Makefile.inc -- pmppc-specific etc Makefile targets
 #
 
-KERNEL_SETS=		PMPPC
+KERNEL_SETS=		PMPPC INSTALL
