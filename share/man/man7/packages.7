@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.28.4.1 2000/07/13 02:22:05 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.28.4.2 2000/07/21 06:50:36 rh Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -256,12 +256,22 @@ The name of a file which will be displayed when installing
 binary packages. If there is a file called
 .Pa ${PKGDIR}/MESSAGE ,
 that file will be used.
+.It NO_BIN_ON_CDROM
+Binaries of this package may not be placed on CDROM.  Set this string to
+.Pa ${RESTRICTED} .
+.It NO_BIN_ON_FTP
+Binaries of this package may not be made available via ftp.  Set this string to
+.Pa ${RESTRICTED} .
 .It NO_BUILD	
 Use a dummy (do-nothing) build target.
 .It NO_CONFIGURE
 Use a dummy (do-nothing) configure target.
 .It NO_CDROM	
 Package may not go on CDROM.  Set this string to reason.
+Use of this variable is deprecated in favour of
+.Pa NO_BIN_ON_CDROM
+and
+.Pa NO_SRC_ON_CDROM .
 .It NO_DESCRIBE
 Use a dummy (do-nothing) describe target.
 .It NO_EXTRACT
@@ -272,6 +282,12 @@ Use a dummy (do-nothing) install target.
 Use a dummy (do-nothing) package target.
 .It NO_PKG_REGISTER
 Don't register a package install as a package.
+.It NO_SRC_ON_CDROM
+Distfile(s) of this package may not be placed on CDROM.  Set this string to
+.Pa ${RESTRICTED} .
+.It NO_SRC_ON_FTP
+Distfile(s) of this package may not be made available via ftp.  Set this string to
+.Pa ${RESTRICTED} .
 .It NO_WRKSUBDIR
 Assume package unpacks directly into
 .Pa ${WRKDIR} .
@@ -562,15 +578,11 @@ and
 targets),
 and also sets PATCH_DEBUG as well.
 .It REINSTALL
-Use
-.Dq reinstall
-instead of
+During update, deinstall each package before calling
 .Sq ${DEPENDS_TARGET}
-as installation target for updating packages (see the
+(see the
 .Dq update
-target).  Also leave out the
-.Dq clean
-target when traversing package directories.
+target for more information).
 .El
 .Sh INSTALL VARIABLES
 This section documents variables that serve as convenient aliases.
@@ -638,6 +650,10 @@ nothing, depending on what's available.
 Actually compile the sources.
 .It install	
 Install the results of a build.
+.It bin-install	
+Install a binary package if available, do a 
+.Dq make package
+else.
 .It reinstall	
 Install the results of a build, ignoring
 .Dq already installed
