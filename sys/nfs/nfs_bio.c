@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.50 2000/06/27 17:52:28 mrg Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.51 2000/09/19 17:04:50 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,8 @@
  *
  *	@(#)nfs_bio.c	8.9 (Berkeley) 3/30/95
  */
+
+#include "opt_nfs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +100,11 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 	if (vp->v_type != VDIR && uio->uio_offset < 0)
 		return (EINVAL);
 	p = uio->uio_procp;
+#ifndef NFS_V2_ONLY
 	if ((nmp->nm_flag & NFSMNT_NFSV3) &&
 	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
 		(void)nfs_fsinfo(nmp, vp, cred, p);
+#endif
 	if (vp->v_type != VDIR &&
 	    (uio->uio_offset + uio->uio_resid) > nmp->nm_maxfilesize)
 		return (EFBIG);
@@ -573,9 +577,11 @@ nfs_write(v)
 		np->n_flag &= ~NWRITEERR;
 		return (np->n_error);
 	}
+#ifndef NFS_V2_ONLY
 	if ((nmp->nm_flag & NFSMNT_NFSV3) &&
 	    !(nmp->nm_iflag & NFSMNT_GOTFSINFO))
 		(void)nfs_fsinfo(nmp, vp, cred, p);
+#endif
 	if (ioflag & (IO_APPEND | IO_SYNC)) {
 		if (np->n_flag & NMODIFIED) {
 			np->n_attrstamp = 0;
