@@ -1,3 +1,5 @@
+/*      $NetBSD: special.c,v 1.2 1995/09/08 03:23:00 tls Exp $      */
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +34,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)special.c	8.3 (Berkeley) 4/2/94";
+#else
+static char rcsid[] = "$NetBSD: special.c,v 1.2 1995/09/08 03:23:00 tls Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
