@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.16 2000/11/29 17:55:52 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.17 2000/12/01 18:09:01 kei Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -577,7 +577,7 @@ ext_intr_openpic()
 
 	realirq = openpic_read_irq(0);
 	if (realirq == 255) {
-		printf("sprious interrupt\n");
+		printf("spurious interrupt\n");
 		goto out;
 	}
 
