@@ -1,8 +1,5 @@
 Things to do for scheduler activations/LWP code.
 
-- POSIX timers need to create an activation if there isn't one running
-  when a timer expires. This breaks pthread_cond_timedwait().
-
 - Document! Not everyone wants to read the thesis. Man pages, etc.
 
 - Rethink scheduler. Verify that behavior is still correct for a system
