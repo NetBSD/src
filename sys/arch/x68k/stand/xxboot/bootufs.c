@@ -1,4 +1,4 @@
-/*	$NetBSD: bootufs.c,v 1.2 2001/06/12 16:57:28 minoura Exp $	*/
+/*	$NetBSD: bootufs.c,v 1.3 2002/01/07 04:01:13 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -74,8 +74,12 @@
  #error You must make changes to pass sector size to RAW_READ or 64bit-ise it.
 #endif
 
-#define alloca __builtin_alloca
-#define memcpy __builtin_memcpy
+#if __GNUC_PREREQ__(2, 95)
+#define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
+#endif
+#ifdef __GNUC__
+#define	alloca(s)		__builtin_alloca(s)
+#endif
 
 static inline void memset __P((void *p, int v, size_t len));
 #ifdef SCSI_ADHOC_BOOTPART
