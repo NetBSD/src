@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110 2002/08/21 18:34:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111 2002/08/21 21:22:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2002/08/21 18:34:31 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2002/08/21 21:22:52 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -194,6 +194,23 @@ static LIST_HEAD(, pmap) pmaps;
  */
 
 struct pool pmap_pmap_pool;
+
+/*
+ * pool/cache that PT-PT's are allocated from
+ */
+
+struct pool pmap_ptpt_pool;
+struct pool_cache pmap_ptpt_cache;
+u_int pmap_ptpt_cache_generation;
+
+static void *pmap_ptpt_page_alloc(struct pool *, int);
+static void pmap_ptpt_page_free(struct pool *, void *);
+
+struct pool_allocator pmap_ptpt_allocator = {
+	pmap_ptpt_page_alloc, pmap_ptpt_page_free,
+};
+
+static int pmap_ptpt_ctor(void *, void *, int);
 
 static pt_entry_t *csrc_pte, *cdst_pte;
 static vaddr_t csrcp, cdstp;
@@ -284,9 +301,6 @@ static void pmap_free_l1pt __P((struct l1pt *));
 static int pmap_allocpagedir __P((struct pmap *));
 static int pmap_clean_page __P((struct pv_entry *, boolean_t));
 static void pmap_remove_all __P((struct vm_page *));
-
-static int pmap_alloc_ptpt(struct pmap *);
-static void pmap_free_ptpt(struct pmap *);
 
 static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t));
 static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t));
@@ -1031,7 +1045,16 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, pv_addr_t kernel_ptpt)
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 		  &pool_allocator_nointr);
-	
+
+	/*
+	 * initialize the PT-PT pool and cache.
+	 */
+
+	pool_init(&pmap_ptpt_pool, PAGE_SIZE, 0, 0, 0, "ptptpl",
+		  &pmap_ptpt_allocator);
+	pool_cache_init(&pmap_ptpt_cache, &pmap_ptpt_pool,
+			pmap_ptpt_ctor, NULL, NULL);
+
 	cpu_dcache_wbinv_all();
 }
 
@@ -1250,40 +1273,38 @@ pmap_free_l1pt(struct l1pt *pt)
 }
 
 /*
- * pmap_alloc_ptpt:
+ * pmap_ptpt_page_alloc:
  *
- *	Allocate the page table that maps the PTE array.
+ *	Back-end page allocator for the PT-PT pool.
  */
-static int
-pmap_alloc_ptpt(struct pmap *pmap)
+static void *
+pmap_ptpt_page_alloc(struct pool *pp, int flags)
 {
 	struct vm_page *pg;
 	pt_entry_t *pte;
+	vaddr_t va;
 
-	KASSERT(pmap->pm_vptpt == 0);
-
-	pmap->pm_vptpt = uvm_km_valloc(kernel_map, L2_TABLE_SIZE);
-	if (pmap->pm_vptpt == 0) {
-		PDEBUG(0,
-		    printf("pmap_alloc_ptpt: no KVA for PTPT\n"));
-		return (ENOMEM);
-	}
+	/* XXX PR_WAITOK? */
+	va = uvm_km_valloc(kernel_map, L2_TABLE_SIZE);
+	if (va == 0)
+		return (NULL);
 
 	for (;;) {
 		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
 		if (pg != NULL)
 			break;
+		if ((flags & PR_WAITOK) == 0) {
+			uvm_km_free(kernel_map, va, L2_TABLE_SIZE);
+			return (NULL);
+		}
 		uvm_wait("pmap_ptpt");
 	}
 
-	pmap->pm_pptpt = VM_PAGE_TO_PHYS(pg);
-
-	pte = vtopte(pmap->pm_vptpt);
-
+	pte = vtopte(va);
 	KDASSERT(pmap_pte_v(pte) == 0);
 
-	*pte = L2_S_PROTO | pmap->pm_pptpt |
-	    L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
+	*pte = L2_S_PROTO | VM_PAGE_TO_PHYS(pg) |
+	     L2_S_PROT(PTE_KERNEL, VM_PROT_READ|VM_PROT_WRITE);
 #ifdef PMAP_ALIAS_DEBUG
     {
 	int s = splhigh();
@@ -1292,24 +1313,53 @@ pmap_alloc_ptpt(struct pmap *pmap)
     }
 #endif /* PMAP_ALIAS_DEBUG */
 
-	return (0);
+	return ((void *) va);
 }
 
 /*
- * pmap_free_ptpt:
+ * pmap_ptpt_page_free:
  *
- *	Free the page table that maps the PTE array.
+ *	Back-end page free'er for the PT-PT pool.
  */
 static void
-pmap_free_ptpt(struct pmap *pmap)
+pmap_ptpt_page_free(struct pool *pp, void *v)
 {
+	vaddr_t va = (vaddr_t) v;
+	paddr_t pa;
 
-	pmap_kremove(pmap->pm_vptpt, L2_TABLE_SIZE);
+	pa = vtophys(va);
+
+	pmap_kremove(va, L2_TABLE_SIZE);
 	pmap_update(pmap_kernel());
 
-	uvm_pagefree(PHYS_TO_VM_PAGE(pmap->pm_pptpt));
+	uvm_pagefree(PHYS_TO_VM_PAGE(pa));
 
-	uvm_km_free(kernel_map, pmap->pm_vptpt, L2_TABLE_SIZE);
+	uvm_km_free(kernel_map, va, L2_TABLE_SIZE);
+}
+
+/*
+ * pmap_ptpt_ctor:
+ *
+ *	Constructor for the PT-PT cache.
+ */
+static int
+pmap_ptpt_ctor(void *arg, void *object, int flags)
+{
+	caddr_t vptpt = object;
+
+	/* Page is already zero'd. */
+
+	/*
+	 * Map in kernel PTs.
+	 *
+	 * XXX THIS IS CURRENTLY DONE AS UNCACHED MEMORY ACCESS.
+	 */
+	memcpy(vptpt + ((L1_TABLE_SIZE - KERNEL_PD_SIZE) >> 2),
+	       (char *)(PTE_BASE + (PTE_BASE >> (PGSHIFT - 2)) +
+			((L1_TABLE_SIZE - KERNEL_PD_SIZE) >> 2)),
+	       (KERNEL_PD_SIZE >> 2));
+
+	return (0);
 }
 
 /*
@@ -1322,9 +1372,10 @@ pmap_free_ptpt(struct pmap *pmap)
 static int
 pmap_allocpagedir(struct pmap *pmap)
 {
+	vaddr_t vptpt;
 	paddr_t pa;
 	struct l1pt *pt;
-	int error;
+	u_int gen;
 
 	PDEBUG(0, printf("pmap_allocpagedir(%p)\n", pmap));
 
@@ -1362,13 +1413,28 @@ pmap_allocpagedir(struct pmap *pmap)
 	}
 
 	/* Allocate a page table to map all the page tables for this pmap */
-	if ((error = pmap_alloc_ptpt(pmap)) != 0) {
+	KASSERT(pmap->pm_vptpt == 0);
+
+ try_again:
+	gen = pmap_ptpt_cache_generation;
+	vptpt = (vaddr_t) pool_cache_get(&pmap_ptpt_cache, PR_WAITOK);
+	if (vptpt == NULL) {
+		PDEBUG(0, printf("pmap_alloc_pagedir: no KVA for PTPT\n"));
 		pmap_freepagedir(pmap);
-		return (error);
+		return (ENOMEM);
 	}
 
 	/* need to lock this all up for growkernel */
 	simple_lock(&pmaps_lock);
+
+	if (gen != pmap_ptpt_cache_generation) {
+		simple_unlock(&pmaps_lock);
+		pool_cache_destruct_object(&pmap_ptpt_cache, (void *) vptpt);
+		goto try_again;
+	}
+
+	pmap->pm_vptpt = vptpt;
+	pmap->pm_pptpt = vtophys(vptpt);
 
 	/* Duplicate the kernel mappings. */
 	bcopy((char *)pmap_kernel()->pm_pdir + (L1_TABLE_SIZE - KERNEL_PD_SIZE),
@@ -1381,15 +1447,6 @@ pmap_allocpagedir(struct pmap *pmap)
 	pmap_map_in_l1(pmap, PTE_BASE, pmap->pm_pptpt, TRUE);
 
 	pt->pt_flags &= ~PTFLAG_CLEAN;	/* L1 is dirty now */
-
-	/*
-	 * Map the kernel page tables into the new PT map.
-	 */
-	bcopy((char *)(PTE_BASE
-	    + (PTE_BASE >> (PGSHIFT - 2))
-	    + ((L1_TABLE_SIZE - KERNEL_PD_SIZE) >> 2)),
-	    (char *)pmap->pm_vptpt + ((L1_TABLE_SIZE - KERNEL_PD_SIZE) >> 2),
-	    (KERNEL_PD_SIZE >> 2));
 
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
 	simple_unlock(&pmaps_lock);
@@ -1450,18 +1507,28 @@ pmap_pinit(struct pmap *pmap)
 	}
 }
 
-
 void
 pmap_freepagedir(struct pmap *pmap)
 {
 	/* Free the memory used for the page table mapping */
-	if (pmap->pm_vptpt != 0)
-		pmap_free_ptpt(pmap);
+	if (pmap->pm_vptpt != 0) {
+		/*
+		 * XXX Objects freed to a pool cache must be in constructed
+		 * XXX form when freed, but we don't free page tables as we
+		 * XXX go, so we need to zap the mappings here.
+		 *
+		 * XXX THIS IS CURRENTLY DONE AS UNCACHED MEMORY ACCESS.
+		 */
+		memset((caddr_t) pmap->pm_vptpt, 0,
+		       ((L1_TABLE_SIZE - KERNEL_PD_SIZE) >> 2));
+		pool_cache_put(&pmap_ptpt_cache, (void *) pmap->pm_vptpt);
+	}
 
 	/* junk the L1 page table */
 	if (pmap->pm_l1pt->pt_flags & PTFLAG_STATIC) {
 		/* Add the page table to the queue */
-		SIMPLEQ_INSERT_TAIL(&l1pt_static_queue, pmap->pm_l1pt, pt_queue);
+		SIMPLEQ_INSERT_TAIL(&l1pt_static_queue,
+				    pmap->pm_l1pt, pt_queue);
 		++l1pt_static_queue_count;
 	} else if (l1pt_queue_count < 8) {
 		/* Add the page table to the queue */
@@ -1470,7 +1537,6 @@ pmap_freepagedir(struct pmap *pmap)
 	} else
 		pmap_free_l1pt(pmap->pm_l1pt);
 }
-
 
 /*
  * Retire the given physical map from service.
@@ -1536,10 +1602,10 @@ pmap_destroy(struct pmap *pmap)
 		uvm_pagefree(page);
 	}
 	simple_unlock(&pmap->pm_obj.vmobjlock);
-	
+
 	/* Free the page dir */
 	pmap_freepagedir(pmap);
-	
+
 	/* return the pmap to the pool */
 	pool_put(&pmap_pmap_pool, pmap);
 }
@@ -3538,6 +3604,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			pmap_map_in_l1(pm, pmap_curmaxkvaddr,
 			    VM_PAGE_TO_PHYS(ptp), TRUE); 
 		}
+
+		/* Invalidate the PTPT cache. */
+		pool_cache_invalidate(&pmap_ptpt_cache);
+		pmap_ptpt_cache_generation++;
 
 		simple_unlock(&pmaps_lock);
 	}
