@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.478.2.8 2003/02/10 06:05:57 jmc Exp $
+# $NetBSD: mi,v 1.478.2.9 2003/02/11 08:32:09 jmc Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -553,6 +553,7 @@
 ./usr/share/man/cat4/awi.0			man-sys-catman
 ./usr/share/man/cat4/az.0			man-sys-catman
 ./usr/share/man/cat4/bba.0			man-sys-catman
+./usr/share/man/cat4/bge.0			man-sys-catman
 ./usr/share/man/cat4/bha.0			man-sys-catman
 ./usr/share/man/cat4/bicc.0			man-sys-catman
 ./usr/share/man/cat4/bktr.0			man-sys-catman
@@ -2261,6 +2262,7 @@
 ./usr/share/man/man4/awi.4			man-sys-man
 ./usr/share/man/man4/az.4			man-sys-man
 ./usr/share/man/man4/bba.4			man-sys-man
+./usr/share/man/man4/bge.4			man-sys-man
 ./usr/share/man/man4/bha.4			man-sys-man
 ./usr/share/man/man4/bicc.4			man-sys-man
 ./usr/share/man/man4/bktr.4			man-sys-man
