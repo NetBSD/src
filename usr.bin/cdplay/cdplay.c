@@ -1,7 +1,7 @@
-/* 	$NetBSD: cdplay.c,v 1.5 2000/01/05 18:15:20 ad Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.6 2000/06/13 13:37:15 ad Exp $	*/
 
 /*
- * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
+ * Copyright (c) 1999 Andrew Doran.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@
  *              New eject algorithm.
  *              Some code style reformatting.
  *
- * From: Id: cdcontrol.c,v 1.17.2.1 1999/01/31 15:36:01 billf Exp
+ * from FreeBSD: cdcontrol.c,v 1.17.2.1 1999/01/31 15:36:01 billf Exp
  */
 
 /*
@@ -56,7 +56,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.5 2000/01/05 18:15:20 ad Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.6 2000/06/13 13:37:15 ad Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
