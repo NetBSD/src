@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 1998/10/11 23:21:00 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 1998/12/19 21:11:14 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -116,55 +116,6 @@
 #endif
 
 #include <machine/cpu.h>
-
-#ifdef PMAPSTATS
-struct {
-	int collectscans;
-	int collectpages;
-	int kpttotal;
-	int kptinuse;
-	int kptmaxuse;
-} kpt_stats;
-struct {
-	int kernel;	/* entering kernel mapping */
-	int user;	/* entering user mapping */
-	int ptpneeded;	/* needed to allocate a PT page */
-	int nochange;	/* no change at all */
-	int pwchange;	/* no mapping change, just wiring or protection */
-	int wchange;	/* no mapping change, just wiring */
-	int pchange;	/* no mapping change, just protection */
-	int mchange;	/* was mapped but mapping to different page */
-	int managed;	/* a managed page */
-	int firstpv;	/* first mapping for this PA */
-	int secondpv;	/* second mapping for this PA */
-	int ci;		/* cache inhibited */
-	int unmanaged;	/* not a managed page */
-	int flushes;	/* cache flushes */
-} enter_stats;
-struct {
-	int calls;
-	int removes;
-	int pvfirst;
-	int pvsearch;
-	int ptinvalid;
-	int uflushes;
-	int sflushes;
-} remove_stats;
-struct {
-	int calls;
-	int changed;
-	int alreadyro;
-	int alreadyrw;
-} protect_stats;
-struct chgstats {
-	int setcalls;
-	int sethits;
-	int setmiss;
-	int clrcalls;
-	int clrhits;
-	int clrmiss;
-} changebit_stats[16];
-#endif
 
 #ifdef DEBUG
 int debugmap = 0;
@@ -538,9 +489,6 @@ bogons:
 		kpt_pages->kpt_va = addr2;
 		kpt_pages->kpt_pa = pmap_extract(pmap_kernel(), addr2);
 	} while (addr != addr2);
-#ifdef PMAPSTATS
-	kpt_stats.kpttotal = atop(s);
-#endif
 #ifdef DEBUG
 	if (pmapdebug & PDB_INIT)
 		printf("pmap_init: KPT: %ld pages from %lx to %lx\n",
@@ -987,9 +935,6 @@ pmap_remove(pmap, sva, eva)
 	if (pmap == NULL)
 		return;
 
-#ifdef PMAPSTATS
-	remove_stats.calls++;
-#endif
 	firstpage = TRUE;
 	needcflush = FALSE;
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
@@ -1020,9 +965,6 @@ pmap_remove(pmap, sva, eva)
 					 */
 					if (firstpage) {
 						DCIS();
-#ifdef PMAPSTATS
-						remove_stats.sflushes++;
-#endif
 					}
 					/*
 					 * Remember if we may need to
@@ -1070,14 +1012,8 @@ pmap_remove(pmap, sva, eva)
 	if (needcflush) {
 		if (pmap == pmap_kernel()) {
 			DCIS();
-#ifdef PMAPSTATS
-			remove_stats.sflushes++;
-#endif
 		} else {
 			DCIU();
-#ifdef PMAPSTATS
-			remove_stats.uflushes++;
-#endif
 		}
 	}
 #endif
@@ -1168,9 +1104,6 @@ pmap_protect(pmap, sva, eva, prot)
 	if (pmap == NULL)
 		return;
 
-#ifdef PMAPSTATS
-	protect_stats.calls++;
-#endif
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
 		return;
@@ -1227,19 +1160,8 @@ pmap_protect(pmap, sva, eva, prot)
 				pmap_pte_set_prot(pte, isro);
 				if (needtflush)
 					TBIS(sva);
-#ifdef PMAPSTATS
-				protect_stats.changed++;
-#endif
 				firstpage = FALSE;
 			}
-#ifdef PMAPSTATS
-			else if (pmap_pte_v(pte)) {
-				if (isro)
-					protect_stats.alreadyro++;
-				else
-					protect_stats.alreadyrw++;
-			}
-#endif
 			pte++;
 			sva += NBPG;
 		}
@@ -1290,12 +1212,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (pmap == NULL)
 		return;
 
-#ifdef PMAPSTATS
-	if (pmap == pmap_kernel())
-		enter_stats.kernel++;
-	else
-		enter_stats.user++;
-#endif
 	/*
 	 * For user mapping, allocate kernel VM resources if necessary.
 	 */
@@ -1326,9 +1242,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * Mapping has not changed, must be protection or wiring change.
 	 */
 	if (opa == pa) {
-#ifdef PMAPSTATS
-		enter_stats.pwchange++;
-#endif
 		/*
 		 * Wiring change, just update stats.
 		 * We don't worry about wiring PT pages as they remain
@@ -1344,17 +1257,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 				pmap->pm_stats.wired_count++;
 			else
 				pmap->pm_stats.wired_count--;
-#ifdef PMAPSTATS
-			if (pmap_pte_prot(pte) == pte_prot(pmap, prot))
-				enter_stats.wchange++;
-#endif
 		}
-#ifdef PMAPSTATS
-		else if (pmap_pte_prot(pte) != pte_prot(pmap, prot))
-			enter_stats.pchange++;
-		else
-			enter_stats.nochange++;
-#endif
 		/*
 		 * Retain cache inhibition status
 		 */
@@ -1374,9 +1277,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 			printf("enter: removing old mapping %lx\n", va);
 #endif
 		pmap_remove_mapping(pmap, va, pte, PRM_TFLUSH|PRM_CFLUSH);
-#ifdef PMAPSTATS
-		enter_stats.mchange++;
-#endif
 	}
 
 	/*
@@ -1402,9 +1302,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 		struct pv_entry *pv, *npv;
 		int s;
 
-#ifdef PMAPSTATS
-		enter_stats.managed++;
-#endif
 		pv = pa_to_pvh(pa);
 		s = splimp();
 #ifdef DEBUG
@@ -1416,9 +1313,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * No entries yet, use header as the first entry
 		 */
 		if (pv->pv_pmap == NULL) {
-#ifdef PMAPSTATS
-			enter_stats.firstpv++;
-#endif
 			pv->pv_va = va;
 			pv->pv_pmap = pmap;
 			pv->pv_next = NULL;
@@ -1444,10 +1338,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 			npv->pv_ptpmap = NULL;
 			npv->pv_flags = 0;
 			pv->pv_next = npv;
-#ifdef PMAPSTATS
-			if (!npv->pv_next)
-				enter_stats.secondpv++;
-#endif
 #ifdef M68K_MMU_HP
 			/*
 			 * Since there is another logical mapping for the
@@ -1492,9 +1382,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 #endif
 					cacheable = FALSE;
 					pv->pv_flags |= PV_CI;
-#ifdef PMAPSTATS
-					enter_stats.ci++;
-#endif
 				}
 			}
 #endif
@@ -1507,9 +1394,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 */
 	else if (pmap_initialized) {
 		checkpv = cacheable = FALSE;
-#ifdef PMAPSTATS
-		enter_stats.unmanaged++;
-#endif
 	}
 
 	/*
@@ -1572,9 +1456,6 @@ validate:
 	if (checkpv && !cacheable) {
 		pmap_changebit(pa, PG_CI, TRUE);
 		DCIA();
-#ifdef PMAPSTATS
-		enter_stats.flushes++;
-#endif
 #ifdef DEBUG
 		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
 		    (PDB_CACHE|PDB_PVDUMP))
@@ -1747,9 +1628,6 @@ pmap_collect(pmap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_collect(%p)\n", pmap);
 #endif
-#ifdef PMAPSTATS
-	kpt_stats.collectscans++;
-#endif
 	s = splimp();
 	for (bank = 0; bank < vm_nphysseg; bank++)
 		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
@@ -1853,10 +1731,6 @@ ok:
 		*pkpt = kpt->kpt_next;
 		kpt->kpt_next = kpt_free_list;
 		kpt_free_list = kpt;
-#ifdef PMAPSTATS
-		kpt_stats.kptinuse--;
-		kpt_stats.collectpages++;
-#endif
 #ifdef DEBUG
 		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT))
 			pmapdebug = opmapdebug;
@@ -2173,9 +2047,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		 * state of any hardware maintained bits.
 		 */
 		DCIS();
-#ifdef PMAPSTATS
-		remove_stats.sflushes++;
-#endif
 		/*
 		 * If this is a non-CI user mapping for the current process,
 		 * flush the VAC.  Note that the kernel side was flushed
@@ -2183,18 +2054,12 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		 */
 		if (active_user_pmap(pmap) && !pmap_pte_ci(pte)) {
 			DCIU();
-#ifdef PMAPSTATS
-			remove_stats.uflushes++;
-#endif
 		}
 	}
 #endif
 	pa = pmap_pte_pa(pte);
 #ifdef DEBUG
 	opte = *pte;
-#endif
-#ifdef PMAPSTATS
-	remove_stats.removes++;
 #endif
 	/*
 	 * Update statistics
@@ -2262,14 +2127,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			pmap_free_pv(npv);
 		} else
 			pv->pv_pmap = NULL;
-#ifdef PMAPSTATS
-		remove_stats.pvfirst++;
-#endif
 	} else {
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-#ifdef PMAPSTATS
-			remove_stats.pvsearch++;
-#endif
 			if (pmap == npv->pv_pmap && va == npv->pv_va)
 				break;
 			pv = npv;
@@ -2308,9 +2167,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * mapping from the associated segment table.
 	 */
 	if (ste) {
-#ifdef PMAPSTATS
-		remove_stats.ptinvalid++;
-#endif
 #ifdef DEBUG
 		if (pmapdebug & (PDB_REMOVE|PDB_PTPAGE))
 			printf("remove: ste was %x@%p pte was %x@%p\n",
@@ -2456,9 +2312,6 @@ pmap_changebit(pa, bit, setem)
 #if defined(M68K_MMU_HP) || defined(M68040)
 	boolean_t firstpage = TRUE;
 #endif
-#ifdef PMAPSTATS
-	struct chgstats *chgp;
-#endif
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -2468,13 +2321,6 @@ pmap_changebit(pa, bit, setem)
 	if (PAGE_IS_MANAGED(pa) == 0)
 		return;
 
-#ifdef PMAPSTATS
-	chgp = &changebit_stats[(bit>>2)-1];
-	if (setem)
-		chgp->setcalls++;
-	else
-		chgp->clrcalls++;
-#endif
 	pv = pa_to_pvh(pa);
 	s = splimp();
 	/*
@@ -2544,21 +2390,7 @@ pmap_changebit(pa, bit, setem)
 				*pte = npte;
 				if (active_pmap(pv->pv_pmap))
 					TBIS(va);
-#ifdef PMAPSTATS
-				if (setem)
-					chgp->sethits++;
-				else
-					chgp->clrhits++;
-#endif
 			}
-#ifdef PMAPSTATS
-			else {
-				if (setem)
-					chgp->setmiss++;
-				else
-					chgp->clrmiss++;
-			}
-#endif
 		}
 #if defined(M68K_MMU_HP) && defined(DEBUG)
 		if (setem && bit == PG_RO && (pmapvacflush & PVF_PROTECT)) {
@@ -2588,9 +2420,6 @@ pmap_enter_ptpage(pmap, va)
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER|PDB_PTPAGE))
 		printf("pmap_enter_ptpage: pmap %p, va %lx\n", pmap, va);
-#endif
-#ifdef PMAPSTATS
-	enter_stats.ptpneeded++;
 #endif
 	/*
 	 * Allocate a segment table if necessary.  Note that it is allocated
@@ -2695,10 +2524,6 @@ pmap_enter_ptpage(pmap, va)
 			if ((kpt = kpt_free_list) == (struct kpt_page *)0)
 				panic("pmap_enter_ptpage: can't get KPT page");
 		}
-#ifdef PMAPSTATS
-		if (++kpt_stats.kptinuse > kpt_stats.kptmaxuse)
-			kpt_stats.kptmaxuse = kpt_stats.kptinuse;
-#endif
 		kpt_free_list = kpt->kpt_next;
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
