@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.14 (Berkeley) 9/15/92
-#	$NetBSD: Makefile,v 1.20 1997/06/06 00:24:36 kleink Exp $
+#	$NetBSD: Makefile,v 1.21 1997/10/17 10:47:42 mrg Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/8/93
 
 MAN=	termcap.5
 
