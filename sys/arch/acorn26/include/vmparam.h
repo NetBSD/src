@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2002/03/24 15:47:12 bjh21 Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2002/12/10 05:14:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -36,7 +36,6 @@
 #ifndef	_ARM26_VMPARAM_H_
 #define	_ARM26_VMPARAM_H_
 
-#define	USRTEXT		VM_MIN_ADDRESS
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 #define	MAXTSIZ		(0x007f8000)		/* max text size */
