@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.13 1998/08/10 03:11:07 perry Exp $	*/
+/*	$NetBSD: util.c,v 1.14 1998/12/19 16:01:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.13 1998/08/10 03:11:07 perry Exp $");
+__RCSID("$NetBSD: util.c,v 1.14 1998/12/19 16:01:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,7 +308,7 @@ prphone(num)
 
 	/* don't touch anything if the user has their own formatting */
 	for (p = num; *p; ++p)
-		if (!isdigit(*p))
+		if (!isdigit((unsigned char)*p))
 			return(num);
 	len = p - num;
 	p = pbuf;
