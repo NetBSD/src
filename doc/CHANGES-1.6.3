@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.71 2004/04/07 04:33:41 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.72 2004/04/07 04:37:01 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -464,3 +464,10 @@ crypto/dist/kame/racoon/isakmp.c		patch
 
 	Reject packet with too big isakmp message length field.
 	[itojun, ticket #1644]
+
+sys/dev/hpc/hpckbdkeymap.h			1.27
+
+	Give the MobilePro 800 and MobilePro 880 correct keymaps:  fix the
+	positioning of the cursor keys to match the keycaps, and make the cmdmap
+	work correctly.
+	[tv, ticket #1659]
