@@ -1,4 +1,4 @@
-.\"	$NetBSD: crontab.5,v 1.9 2002/02/08 01:38:48 ross Exp $
+.\"	$NetBSD: crontab.5,v 1.10 2002/04/25 14:45:05 atatat Exp $
 .\"
 .\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
 .\" * All rights reserved
@@ -79,6 +79,23 @@ mail will be sent.  Otherwise mail is sent to the owner of the crontab.  This
 option is useful if you decide on /bin/mail instead of /usr/lib/sendmail as
 your mailer when you install cron -- /bin/mail doesn't do aliasing, and UUCP
 usually doesn't read its mail.
+.PP
+In order to provide finer control over when jobs execute, users
+can also set the environment variables CRON_TZ and CRON_WITHIN.
+The CRON_TZ variable can be set to an alternate time zone in order
+to affect when the job is run.  Note that this only affects the
+scheduling of the job, not the time zone that the job perceives
+when it is run.  If CRON_TZ is defined but empty (CRON_TZ=""), jobs
+are scheduled with respect to the local time zone.
+.PP
+The CRON_WITHIN variable should indicate the number of seconds
+within a job's scheduled time that it should still be run.  On a
+heavily loaded system, or on a system that has just been "woken
+up", jobs will sometimes start later than originally intended, and
+by skipping non-critical jobs because of delays, system load can
+be lightened.  If CRON_WITHIN is defined but empty (CRON_WITHIN="") or
+set to some non-positive value (0, a negative number, or a non-numeric
+string), it is treated as if it was unset.
 .PP
 The format of a cron command is very much the V7 standard, with a number of
 upward-compatible extensions.  Each line has five time and date fields,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.9 1999/03/17 20:57:05 fair Exp $	*/
+/*	$NetBSD: cron.c,v 1.10 2002/04/25 14:45:05 atatat Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.9 1999/03/17 20:57:05 fair Exp $");
+__RCSID("$NetBSD: cron.c,v 1.10 2002/04/25 14:45:05 atatat Exp $");
 #endif
 #endif
 
@@ -154,18 +154,32 @@ static void
 cron_tick(db)
 	cron_db	*db;
 {
- 	struct tm	*tm = localtime(&TargetTime);
+	char		*orig_tz, *job_tz;
+ 	struct tm	*tm;
 	int		minute, hour, dom, month, dow;
 	user		*u;
 	entry		*e;
 
 	/* make 0-based values out of these so we can use them as indicies
 	 */
-	minute = tm->tm_min -FIRST_MINUTE;
-	hour = tm->tm_hour -FIRST_HOUR;
-	dom = tm->tm_mday -FIRST_DOM;
-	month = tm->tm_mon +1 /* 0..11 -> 1..12 */ -FIRST_MONTH;
-	dow = tm->tm_wday -FIRST_DOW;
+#define maketime(tz1, tz2) do { \
+	char *t = tz1; \
+	if (t != NULL && *t != '\0') \
+		setenv("TZ", t, 1); \
+	else if ((tz2) != NULL) \
+		setenv("TZ", (tz2), 1); \
+	else \
+		unsetenv("TZ"); \
+	tm = localtime(&TargetTime); \
+	minute = tm->tm_min -FIRST_MINUTE; \
+	hour = tm->tm_hour -FIRST_HOUR; \
+	dom = tm->tm_mday -FIRST_DOM; \
+	month = tm->tm_mon +1 /* 0..11 -> 1..12 */ -FIRST_MONTH; \
+	dow = tm->tm_wday -FIRST_DOW; \
+	} while (0)
+
+	orig_tz = getenv("TZ");
+	maketime(NULL, orig_tz);
 
 	Debug(DSCH, ("[%d] tick(%d,%d,%d,%d,%d)\n",
 		getpid(), minute, hour, dom, month, dow))
@@ -181,6 +195,8 @@ cron_tick(db)
 			Debug(DSCH|DEXT, ("user [%s:%d:%d:...] cmd=\"%s\"\n",
 					  env_get("LOGNAME", e->envp),
 					  e->uid, e->gid, e->cmd))
+			job_tz = env_get("CRON_TZ", e->envp);
+			maketime(job_tz, orig_tz);
 			if (bit_test(e->minute, minute)
 			 && bit_test(e->hour, hour)
 			 && bit_test(e->month, month)
@@ -193,6 +209,10 @@ cron_tick(db)
 			}
 		}
 	}
+	if (orig_tz != NULL)
+		setenv("TZ", orig_tz, 1);
+	else
+		unsetenv("TZ");
 }
 
 
