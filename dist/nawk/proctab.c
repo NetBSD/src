@@ -2,7 +2,7 @@
 #include "awk.h"
 #include "awkgram.h"
 
-static const char * const printname[92] = {
+static const char * const printname[93] = {
 	"FIRSTTOKEN",	/* 257 */
 	"PROGRAM",	/* 258 */
 	"PASTAT",	/* 259 */
@@ -83,22 +83,23 @@ static const char * const printname[92] = {
 	"STRING",	/* 334 */
 	"REGEXPR",	/* 335 */
 	"GETLINE",	/* 336 */
-	"RETURN",	/* 337 */
-	"SPLIT",	/* 338 */
-	"SUBSTR",	/* 339 */
-	"WHILE",	/* 340 */
-	"CAT",	/* 341 */
-	"NOT",	/* 342 */
-	"UMINUS",	/* 343 */
-	"POWER",	/* 344 */
-	"DECR",	/* 345 */
-	"INCR",	/* 346 */
-	"INDIRECT",	/* 347 */
-	"LASTTOKEN",	/* 348 */
+	"GENSUB",	/* 337 */
+	"RETURN",	/* 338 */
+	"SPLIT",	/* 339 */
+	"SUBSTR",	/* 340 */
+	"WHILE",	/* 341 */
+	"CAT",	/* 342 */
+	"NOT",	/* 343 */
+	"UMINUS",	/* 344 */
+	"POWER",	/* 345 */
+	"DECR",	/* 346 */
+	"INCR",	/* 347 */
+	"INDIRECT",	/* 348 */
+	"LASTTOKEN",	/* 349 */
 };
 
 
-Cell *(*proctab[92])(Node **, int) = {
+Cell *(*proctab[93])(Node **, int) = {
 	nullproc,	/* FIRSTTOKEN */
 	program,	/* PROGRAM */
 	pastat,	/* PASTAT */
@@ -179,6 +180,7 @@ Cell *(*proctab[92])(Node **, int) = {
 	nullproc,	/* STRING */
 	nullproc,	/* REGEXPR */
 	getline,	/* GETLINE */
+	gensub,	/* GENSUB */
 	jump,	/* RETURN */
 	split,	/* SPLIT */
 	substr,	/* SUBSTR */
