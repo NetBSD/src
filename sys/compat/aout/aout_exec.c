@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.17 2003/09/23 14:33:34 christos Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.18 2003/12/03 20:24:51 manu Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aout_exec.c,v 1.17 2003/09/23 14:33:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aout_exec.c,v 1.18 2003/12/03 20:24:51 manu Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -84,6 +84,7 @@ const struct emul emul_netbsd_aout = {
 #endif
 	sendsig,
 	trapsignal,
+	NULL,
 #ifdef COMPAT_16
 	sigcode,
 	esigcode,
