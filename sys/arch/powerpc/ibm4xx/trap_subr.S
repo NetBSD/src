@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.1 2001/06/13 06:01:48 simonb Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.2 2001/06/17 13:38:33 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -333,7 +333,8 @@ trapagain:
 /* Call C trap code: */
 	addi	3,1,8
 	bl	_C_LABEL(trap)
-trapexit:
+	.globl	_C_LABEL(trapexit)
+_C_LABEL(trapexit):
 	/* Disable interrupts: */
 	wrteei	0
 	/* Test AST pending: */
