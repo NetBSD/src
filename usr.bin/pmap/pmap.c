@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2003/02/23 01:08:29 atatat Exp $ */
+/*	$NetBSD: pmap.c,v 1.13 2003/02/27 04:10:36 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.12 2003/02/23 01:08:29 atatat Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.13 2003/02/27 04:10:36 atatat Exp $");
 #endif
 
 #include <string.h>
@@ -62,6 +62,9 @@ static int search_cache(kvm_t *, struct kbit *, char **, char *, size_t);
 
 /* when recursing, output is indented */
 #define indent(n) ((n) * (recurse > 1 ? recurse - 1 : 0))
+#define rwx (VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE)
+
+int heapfound;
 
 void
 PMAPFUNC(process_map,VERSION)(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc)
@@ -169,22 +172,7 @@ dump_vm_map(kvm_t *kd, pid_t pid, struct kinfo_proc2 *proc,
 		printf(" timestamp = %u }\n", D(vm_map, vm_map)->timestamp);
 	}
 	if (print_ddb) {
-		char *name;
-
-		if (A(vm_map) == kernel_map_addr)
-			name = "kernel_map";
-		else if (P(vm_map) == kmem_map)
-			name = "kmem_map";
-		else if (P(vm_map) == mb_map)
-			name = "mb_map";
-		else if (P(vm_map) == phys_map)
-			name = "phys_map";
-		else if (P(vm_map) == exec_map)
-			name = "exec_map";
-		else if (P(vm_map) == pager_map)
-			name = "pager_map";
-		else
-			name = NULL;
+		const char *name = mapname(P(vm_map));
 
 		printf("%*s%s %p: [0x%lx->0x%lx]\n", indent(2), "",
 		       recurse < 2 ? "MAP" : "SUBMAP", P(vm_map),
@@ -613,10 +601,17 @@ findname(kvm_t *kd, struct kbit *vmspace,
 		 (caddr_t)vme->end)
 		name = "  [ stack ]";
 
-	else if ((vme->protection & rwx) == rwx && !heapfound) {
-		/* XXX this could probably be done better */
+	else if (!heapfound &&
+		 (vme->protection & rwx) == rwx &&
+		 vme->start >= (u_long)D(vmspace, vmspace)->vm_daddr) {
 		heapfound = 1;
 		name = "  [ heap ]";
+	}
+
+	else if (UVM_ET_ISSUBMAP(vme)) {
+		const char *sub = mapname(vme->object.sub_map);
+		snprintf(buf, sizeof(buf), "  [ %s ]", sub ? sub : "(submap)");
+		name = buf;
 	}
 
 	else
