@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.68 1996/08/11 03:16:26 mrg Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.69 1996/08/26 22:49:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -187,6 +187,25 @@ sunos_sys_execv(p, v, retval)
 	SCARG(&ouap, path) = SCARG(uap, path);
 	SCARG(&ouap, argp) = SCARG(uap, argp);
 	SCARG(&ouap, envp) = NULL;
+
+	return (sys_execve(p, &ouap, retval));
+}
+
+int
+sunos_sys_execve(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sunos_sys_execve_args *uap = v;
+	struct sys_execve_args ouap;
+
+	caddr_t sg = stackgap_init(p->p_emul);
+	SUNOS_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&ouap, path) = SCARG(uap, path);
+	SCARG(&ouap, argp) = SCARG(uap, argp);
+	SCARG(&ouap, envp) = SCARG(uap, envp);
 
 	return (sys_execve(p, &ouap, retval));
 }

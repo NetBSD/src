@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.34 1996/06/23 11:15:37 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.35 1996/08/26 22:49:48 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -103,7 +103,7 @@
 56	OBSOL		sunos_owait3
 57	NOARGS		{ int sys_symlink(char *path, char *link); }
 58	NOARGS		{ int sys_readlink(char *path, char *buf, int count); }
-59	NOARGS		{ int sys_execve(char *path, char **argp, \
+59	STD		{ int sunos_sys_execve(char *path, char **argp, \
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
