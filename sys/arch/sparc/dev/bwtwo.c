@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.7 1994/11/20 20:51:57 deraadt Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.8 1995/02/17 09:47:36 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,9 +78,9 @@ struct bwtwo_softc {
 
 /* autoconfiguration driver */
 static void	bwtwoattach(struct device *, struct device *, void *);
-static int	bwtwomatch(struct device *, struct cfdata *, void *);
+static int	bwtwomatch(struct device *, void *, void *);
 struct cfdriver bwtwocd =
-    { NULL, "bwtwo", matchbyname, bwtwoattach,
+    { NULL, "bwtwo", bwtwomatch, bwtwoattach,
       DV_DULL, sizeof(struct bwtwo_softc) };
 
 /* XXX we do not handle frame buffer interrupts (do not know how) */
@@ -99,6 +99,26 @@ static struct bwtwo_softc *bwcons;
 #define	BWTWO_MAJOR	27		/* XXX */
 
 /*
+ * Match a bwtwo.
+ */
+int
+bwtwomatch(parent, vcf, aux)
+	struct device *parent;
+	void *vcf, *aux;
+{
+	struct cfdata *cf = vcf;
+	struct confargs *ca = aux;
+	struct romaux *ra = &ca->ca_ra;
+
+	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+		return (0);
+	if (ca->ca_bustype == BUS_SBUS)
+		return(1);
+	ra->ra_len = NBPG;
+	return (probeget(ra->ra_vaddr, 4) != -1);
+}
+
+/*
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
@@ -111,6 +131,8 @@ bwtwoattach(parent, self, args)
 	register int node = ca->ca_ra.ra_node, ramsize;
 	register struct bwtwo_all *p;
 	int isconsole;
+	int sbus = 1;
+	char *nam;
 
 	sc->sc_fb.fb_major = BWTWO_MAJOR;	/* XXX to be removed */
 
@@ -121,14 +143,46 @@ bwtwoattach(parent, self, args)
 	 * to be correct as defaults go...
 	 */
 	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN2BW;
-	sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
-	sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
-	sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 144);
+	switch (ca->ca_bustype) {
+	case BUS_OBIO:
+	case BUS_VME32:
+	case BUS_VME16:
+		sbus = node = 0;
+		sc->sc_fb.fb_type.fb_width = 1152;
+		sc->sc_fb.fb_type.fb_height = 900;
+		sc->sc_fb.fb_linebytes = 1152;
+		nam = "bwtwo";
+
+		/*
+		 * XXX: some frame buffers can be in 1600x1280 or
+		 * 1024x1024 mode, and we need to figure out how
+		 * to determine which.
+		 */
+#if defined(SUN4)
+		if (cputyp==CPU_SUN4) {
+			/* XXX: need code to find sun4 (oldrom) screen size */
+		}
+#endif
+#if defined(SUN4M)
+		if (cputyp==CPU_SUN4M) {
+			/* XXX: need code to find 4/600 vme screen size */
+		}
+#endif
+
+		break;
+	case BUS_SBUS:
+		sc->sc_fb.fb_type.fb_width = getpropint(node, "width", 1152);
+		sc->sc_fb.fb_type.fb_height = getpropint(node, "height", 900);
+		sc->sc_fb.fb_linebytes = getpropint(node, "linebytes", 144);
+		nam = getpropstring(node, "model");
+		break;
+	}
+
 	ramsize = sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes;
 	sc->sc_fb.fb_type.fb_depth = 1;
 	sc->sc_fb.fb_type.fb_cmsize = 0;
 	sc->sc_fb.fb_type.fb_size = ramsize;
-	printf(": %s, %d x %d", getpropstring(node, "model"),
+	printf(": %s, %d x %d", nam,
 	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
 
 	/*
@@ -157,7 +211,8 @@ bwtwoattach(parent, self, args)
 #endif
 	} else
 		printf("\n");
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
+	if (sbus)
+		sbus_establish(&sc->sc_sd, &sc->sc_dev);
 	if (node == fbnode)
 		fb_attach(&sc->sc_fb);
 }
