@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 1998/01/12 19:51:17 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.18 1998/10/10 19:46:29 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -187,6 +187,7 @@ struct devnametobdevmaj mvme68k_nam2blk[] = {
 /*
  * Determine mass storage and memory configuration for a machine.
  */
+void
 configure()
 {
 
