@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.27 2004/01/17 18:54:32 provos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.28 2004/01/21 22:50:56 kleink Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -561,13 +561,16 @@ main(int argc, char **argv)
 	char **args;
 	char *filename = NULL;
 	char *policypath = NULL;
-	struct timeval tv, tv_wait = {60, 0};
+	struct timeval tv, tv_wait;
 	pid_t pidattach = 0;
 	int usex11 = 1, count;
 	int background;
 	int setcredentials = 0;
 	uid_t cr_uid;
 	gid_t cr_gid;
+
+	tv_wait.tv_sec = 60;
+	tv_wait.tv_usec = 0;
 
 	while ((c = getopt(argc, argv, "c:aAituUCd:g:f:p:")) != -1) {
 		switch (c) {
