@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.56 2004/10/30 18:08:40 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.57 2005/01/30 17:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.56 2004/10/30 18:08:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.57 2005/01/30 17:23:45 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -678,9 +678,10 @@ epic_intr(arg)
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 			/*
-			 * The EPIC includes the CRC with every packet.
+			 * The EPIC includes the CRC with every packet;
+			 * trim it.
 			 */
-			len = RXSTAT_RXLENGTH(rxstatus);
+			len = RXSTAT_RXLENGTH(rxstatus) - ETHER_CRC_LEN;
 
 			if (len < sizeof(struct ether_header)) {
 				/*
@@ -729,7 +730,6 @@ epic_intr(arg)
 				}
 			}
 
-			m->m_flags |= M_HASFCS;
 			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
 
