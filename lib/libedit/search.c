@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.19 2003/10/25 06:42:41 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.20 2004/11/04 01:16:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.19 2003/10/25 06:42:41 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.20 2004/11/04 01:16:03 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -269,6 +269,7 @@ ce_inc_search(EditLine *el, int dir)
 			redo++;
 			break;
 
+		case EM_DELETE_PREV_CHAR:
 		case ED_DELETE_PREV_CHAR:
 			if (el->el_search.patlen > LEN)
 				done++;
