@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.6 1996/11/25 03:26:38 cgd Exp $	*/
+/*	$NetBSD: pms.c,v 1.6.2.1 1996/12/07 02:05:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -46,7 +46,8 @@
 
 #include <machine/intr.h>
 #include <dev/isa/isavar.h>
-#include <alpha/wscons/wsconsvar.h>
+#include <machine/wsconsio.h>
+#include <alpha/wscons/wsmousevar.h>
 #include <alpha/isa/pcppivar.h>
 
 #define	PMS_DATA	0x0	/* offset for data port, read-write */
@@ -77,19 +78,15 @@
 #define	PMS_DEV_DISABLE	0xf5	/* mouse off */
 #define	PMS_RESET	0xff	/* reset */
 
-#define	PMS_CHUNK	128	/* chunk size for read */
-#define	PMS_BSIZE	1020	/* buffer size */
-
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;
 
 	void *sc_ih;
 
-	u_char sc_state;	/* mouse driver state */
-#define	PMS_OPEN	0x01	/* device is open */
-#define	PMS_ASLP	0x02	/* waiting for mouse data */
-	u_char sc_status;	/* mouse button status */
-	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
+	int sc_enabled;		/* input enabled? */
+	u_int sc_buttonstatus;	/* mouse button status */
+
+	struct device *sc_wsmousedev;
 };
 
 bus_space_tag_t pms_iot;
@@ -110,11 +107,13 @@ struct cfdriver pms_cd = {
 
 #define	PMSUNIT(dev)	(minor(dev))
 
-int	pms_enable __P((struct device *));
-int	pms_disable __P((struct device *));
+int	pms_enable __P((void *));
+int	pms_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+void	pms_disable __P((void *));
 
-struct wscons_mdev_spec pms_mdev_spec = {
+const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
+	pms_ioctl,
 	pms_disable,
 };
 
@@ -200,34 +199,43 @@ pmsattach(parent, self, aux)
 {
 	struct pms_softc *sc = (void *)self;
 	struct pcppi_attach_args *pa = aux;
+	struct wsmousedev_attach_args a;
 
 	pms_iot = pa->pa_iot;
 	pms_ioh = pa->pa_ioh;
 	pms_ic = pa->pa_ic;
 
-	msattach(self, &pms_mdev_spec);
-
 	printf("\n");
 
 	/* Other initialization was done by pmsprobe. */
-	sc->sc_state = 0;
+	sc->sc_buttonstatus = 0;
 
 	sc->sc_ih = isa_intr_establish(pms_ic, 12, IST_EDGE, IPL_TTY,
 	    pmsintr, sc);
+
+	a.accessops = &pms_accessops;
+	a.accesscookie = sc;
+
+	/*
+	 * Attach the wsmouse, saving a handle to it.
+	 * Note that we don't need to check this pointer against NULL
+	 * here or in pmsintr, because if this fails pms_enable() will
+	 * never be called, so pmsintr() will never be called.
+	 */
+	sc->sc_wsmousedev = config_found(self, &a, wsmousedevprint);
 }
 
 int
-pms_enable(dev)
-	struct device *dev;
+pms_enable(v)
+	void *v;
 {
-	struct pms_softc *sc = (struct pms_softc *)dev;
+	struct pms_softc *sc = v;
 
-	if (sc->sc_state & PMS_OPEN)
+	if (sc->sc_enabled)
 		return EBUSY;
 
-	sc->sc_state |= PMS_OPEN;
-	sc->sc_status = 0;
-	sc->sc_x = sc->sc_y = 0;
+	sc->sc_enabled = 1;
+	sc->sc_buttonstatus = 0;
 
 	/* Enable interrupts. */
 	pms_dev_cmd(PMS_DEV_ENABLE);
@@ -246,19 +254,36 @@ pms_enable(dev)
 }
 
 int
-pms_disable(dev)
-	struct device *dev;
+pms_ioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
 {
-	struct pms_softc *sc = (struct pms_softc *)dev;
+#if 0
+	struct pms_softc *sc = v;
+#endif
+
+	switch (cmd) {
+	case WSMOUSEIO_GTYPE:
+		*(u_int *)data = WSMOUSE_TYPE_PS2;
+		return (0);
+	}
+	return (-1);
+}
+void
+pms_disable(v)
+	void *v;
+{
+	struct pms_softc *sc = v;
 
 	/* Disable interrupts. */
 	pms_dev_cmd(PMS_DEV_DISABLE);
 	pms_pit_cmd(PMS_INT_DISABLE);
 	pms_aux_cmd(PMS_AUX_DISABLE);
 
-	sc->sc_state &= ~PMS_OPEN;
-
-	return 0;
+	sc->sc_enabled = 0;
 }
 
 /* Masks for the first byte of a packet */
@@ -272,14 +297,14 @@ pmsintr(arg)
 {
 	struct pms_softc *sc = arg;
 	static int state = 0;
-	static u_char buttons;
-	u_char changed;
-	static char dx, dy;
+	static u_int buttons;
+	static signed char dx, dy;
+	u_int changed;
 
-	if ((sc->sc_state & PMS_OPEN) == 0) {
+	if (!sc->sc_enabled) {
 		/* Interrupts are not expected.  Discard the byte. */
 		pms_flush();
-		return 0;
+		return (0);
 	}
 
 	switch (state) {
@@ -302,13 +327,14 @@ pmsintr(arg)
 		dy = (dy == -128) ? -127 : dy;
 		state = 0;
 
-		buttons = ((buttons & PS2LBUTMASK) << 2) |
-			  ((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
-		changed = (buttons ^ sc->sc_status);
-		sc->sc_status = buttons;
+		buttons = ((buttons & PS2LBUTMASK) ? 0x1 : 0) |
+		    ((buttons & PS2MBUTMASK) ? 0x2 : 0) |
+		    ((buttons & PS2RBUTMASK) ? 0x4 : 0);
+		changed = (buttons ^ sc->sc_buttonstatus);
+		sc->sc_buttonstatus = buttons;
 
 		if (dx || dy || changed)
-			ms_event(buttons, dx, dy);
+			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy);
 		break;
 	}
 
