@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.137 1999/06/18 04:55:27 tsubai Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.138 1999/06/19 04:51:42 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.130 1999/06/18 04:54:06 tsubai Exp 
+ *	NetBSD: pcidevs,v 1.131 1999/06/19 04:49:52 augustss Exp 
  */
 
 /*
@@ -1005,6 +1005,7 @@
 
 /* Neomagic products */
 #define	PCI_PRODUCT_NEOMAGIC_NMMG128ZV	0x0003		/* MagicGraph 128ZV */
+#define	PCI_PRODUCT_NEOMAGIC_NMMG2160	0x0004		/* MagicGraph 128XD */
 #define	PCI_PRODUCT_NEOMAGIC_NMMM256AV_VGA	0x0005		/* MagicMedia 256AV VGA */
 #define	PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU	0x8005		/* MagicMedia 256AV Audio */
 
@@ -1161,6 +1162,9 @@
 #define	PCI_PRODUCT_TI_PCI1251	0xac1d		/* PCI1251 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_TI_PCI2030	0xac20		/* PCI2030 PCI-CardBus Bridge */
   
+/* Sony products */
+#define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire Host Controller */
+
 /* Toshiba products */
 #define	PCI_PRODUCT_TOSHIBA_R4X00	0x0009		/* R4x00 Host-PCI Bridge */
 #define	PCI_PRODUCT_TOSHIBA_TC35856F	0x0020		/* TC35856F ATM (\"Meteor\") */
