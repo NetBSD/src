@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.c,v 1.15 2000/04/22 13:29:01 blymn Exp $	*/
+/*	$NetBSD: curses.c,v 1.16 2000/04/27 00:21:22 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)curses.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: curses.c,v 1.15 2000/04/22 13:29:01 blymn Exp $");
+__RCSID("$NetBSD: curses.c,v 1.16 2000/04/27 00:21:22 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -53,7 +53,7 @@ int	__noqch = 0;			/*
 					 * insert/delete line capabilities
 					 * for quick change on refresh.
 					 */
-char	AM, BE, BS, CA, CC, DA, EO, HC, HL, IN, MI, MS, NC, NS, OS, PC,
+char	AM, UT, BS, CA, CC, DA, EO, HC, HL, IN, MI, MS, NC, NS, OS, PC,
 	UL, XB, XN, XT, XS, XX;
 int	PA, cO, nc;
 char	*AC, *AE, *AL, *AS, *BC, *BL, *BT, *CD, *CE, *CL, *CM, *CR, *CS,
@@ -73,6 +73,7 @@ char	*AC, *AE, *AL, *AS, *BC, *BL, *BT, *CD, *CE, *CL, *CM, *CR, *CS,
  */
 WINDOW	*curscr;			/* Current screen. */
 WINDOW	*stdscr;			/* Standard screen. */
+WINDOW	*__virtscr;			/* Virtual screen (for doupdate()). */
 int	 COLS;				/* Columns on the screen. */
 int	 LINES;				/* Lines on the screen. */
 int	 COLORS;			/* Maximum colors on the screen */
