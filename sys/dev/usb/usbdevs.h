@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.23 1999/04/03 11:57:02 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.24 1999/04/03 19:03:02 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.23 1999/04/03 11:56:39 augustss Exp 
+ *	NetBSD: usbdevs,v 1.24 1999/04/03 19:01:57 augustss Exp 
  */
 
 /*
@@ -70,6 +70,7 @@
 #define	USB_VENDOR_SHUTTLE	0x04e6		/* Shuttle Technology */
 #define	USB_VENDOR_JAZZ	0x04fa		/* Jazz */
 #define	USB_VENDOR_AKS	0x0529		/* Aladdin Knowledge Systems */
+#define	USB_VENDOR_VISION	0x0533		/* Vision */
 #define	USB_VENDOR_ATEN	0x0557		/* ATen */
 #define	USB_VENDOR_PERACOM	0x0565		/* Peracom */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
@@ -78,6 +79,7 @@
 #define	USB_VENDOR_LOGITECH	0x05ac		/* Logitech */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
 #define	USB_VENDOR_CHIC	0x05fe		/* Chic Technology */
+#define	USB_VENDOR_MACALLY	0x0618		/* Macally */
 #define	USB_VENDOR_ADS	0x06e1		/* ADS Technologies */
 #define	USB_VENDOR_PLX	0x10b5		/* PLX */
 #define	USB_VENDOR_ENTREGA	0x1645		/* Entrega */
@@ -150,6 +152,9 @@
 /* AKS products */
 #define	USB_PRODUCT_AKS_USBHASP	0x0001		/* USB-HASP 0.06 */
 
+/* Vision products */
+#define	USB_PRODUCT_VISION_VC6452V002	0x0002		/* VC6452V002 Camera */
+
 /* ATen products */
 #define	USB_PRODUCT_ATEN_UC1284	0x2001		/* Parallel printer adapter */
 
@@ -172,6 +177,9 @@
 
 /* Chic Technology products */
 #define	USB_PRODUCT_CHIC_MOUSE1	0x0001		/* mouse */
+
+/* Macally products */
+#define	USB_PRODUCT_MACALLY_MOUSE1	0x0101		/* mouse */
 
 /* ADS products */
 #define	USB_PRODUCT_ADS_ENET	0x0008		/* Ethernet adapter */
