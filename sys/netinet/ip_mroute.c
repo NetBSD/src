@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.20 1995/06/04 06:55:30 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.21 1995/06/04 07:20:47 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1493,48 +1493,43 @@ ipip_input(m, hlen)
  */
 static void
 tbf_control(vifp, m, ip, p_len)
-    register struct vif *vifp;
-    register struct mbuf *m;
-    register struct ip *ip;
-    register u_int32_t p_len;
+	register struct vif *vifp;
+	register struct mbuf *m;
+	register struct ip *ip;
+	register u_int32_t p_len;
 {
-    tbf_update_tokens(vifp);
 
-    /* if there are enough tokens, 
-     * and the queue is empty,
-     * send this packet out
-     */
+	tbf_update_tokens(vifp);
 
-    if (vifp->v_tbf.q_len == 0) {
-	if (p_len <= vifp->v_tbf.n_tok) {
-	    vifp->v_tbf.n_tok -= p_len;
-	    tbf_send_packet(vifp, m);
-	} else if (p_len > MAX_BKT_SIZE) {
-	    /* drop if packet is too large */
-	    mrtstat.mrts_pkt2large++;
-	    m_freem(m);
-	    return;
+	/*
+	 * If there are enough tokens, and the queue is empty, send this packet
+	 * out immediately.  Otherwise, try to insert it on this vif's queue.
+	 */
+	if (vifp->v_tbf.q_len == 0) {
+		if (p_len <= vifp->v_tbf.n_tok) {
+			vifp->v_tbf.n_tok -= p_len;
+			tbf_send_packet(vifp, m);
+		} else if (p_len > MAX_BKT_SIZE) {
+			/* drop if packet is too large */
+			mrtstat.mrts_pkt2large++;
+			m_freem(m);
+		} else {
+			/* queue packet and timeout till later */
+			tbf_queue(vifp, m, ip);
+			timeout(tbf_reprocess_q, vifp, 1);
+		}
 	} else {
-	    /* queue packet and timeout till later */
-	    tbf_queue(vifp, m, ip);
-	    timeout(tbf_reprocess_q, vifp, 1);
+		if (vifp->v_tbf.q_len >= MAXQSIZE &&
+		    !tbf_dq_sel(vifp, ip)) {
+			/* queue length too much, and couldn't make room */
+			mrtstat.mrts_q_overflow++;
+			m_freem(m);
+		} else {
+			/* queue length low enough, or made room */
+			tbf_queue(vifp, m, ip);
+			tbf_process_q(vifp);
+		}
 	}
-    } else if (vifp->v_tbf.q_len < MAXQSIZE) {
-	/* finite queue length, so queue pkts and process queue */
-	tbf_queue(vifp, m, ip);
-	tbf_process_q(vifp);
-    } else {
-	/* queue length too much, try to dq and queue and process */
-	if (!tbf_dq_sel(vifp, ip)) {
-	    mrtstat.mrts_q_overflow++;
-	    m_freem(m);
-	    return;
-	} else {
-	    tbf_queue(vifp, m, ip);
-	    tbf_process_q(vifp);
-	}
-    }
-    return;
 }
 
 /* 
