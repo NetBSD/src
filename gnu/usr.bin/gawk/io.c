@@ -524,7 +524,7 @@ int exitwarn;
 
 	/* SVR4 awk checks and warns about status of close */
 	if (status) {
-		char *s = strerror(errno);
+		char *s = (char *)strerror(errno);
 
 		/*
 		 * Too many people have complained about this.
@@ -1117,7 +1117,7 @@ NODE *tree;
 			rp = redirect(tree->rnode, &redir_error);
 			if (rp == NULL && redir_error) { /* failed redirect */
 				if (! do_unix) {
-					s = strerror(redir_error);
+					s = (char *)strerror(redir_error);
 
 					unref(ERRNO_node->var_value);
 					ERRNO_node->var_value =
@@ -1132,7 +1132,7 @@ NODE *tree;
 		errcode = 0;
 		cnt = get_a_record(&s, iop, *RS, & errcode);
 		if (! do_unix && errcode != 0) {
-			s = strerror(errcode);
+			s = (char *)strerror(errcode);
 
 			unref(ERRNO_node->var_value);
 			ERRNO_node->var_value = make_string(s, strlen(s));
