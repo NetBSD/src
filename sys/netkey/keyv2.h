@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: keyv2.h,v 1.2 1999/07/01 08:13:00 itojun Exp $ */
+/* $Id: keyv2.h,v 1.3 1999/07/02 19:58:28 itojun Exp $ */
 
 /*
  * This file has been derived rfc 2367,
@@ -281,8 +281,12 @@ struct sadb_x_ipsecrequest {
 #define SADB_EALG_NULL          3	/* 11 */
 #define SADB_EALG_BLOWFISHCBC   4
 #define SADB_EALG_CAST128CBC    5
+#if 0
 #define SADB_EALG_RC5CBC        6
 #define SADB_EALG_MAX           7
+#else
+#define SADB_EALG_MAX           6
+#endif
 
 #if 1	/*nonstandard */
 #define SADB_X_CALG_NONE	0
