@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.42 1997/12/14 18:46:51 is Exp $
+#	$NetBSD: MAKEDEV,v 1.43 1998/05/02 20:37:30 is Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -92,6 +92,10 @@
 #	audio*	one unit of the audio device. On Amiga machines, 
 #		Unit 0 is custom chip audio, if configured.
 #
+
+# for new-style serial interfaces:
+dialin=0
+dialout=524288		# high bit of the minor number
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
@@ -298,18 +302,28 @@ ch*|uk*)
 	chmod 640 $name$unit
 	;;
 
-tty0*|ttyA*|ttyB*|ttyC*)
+tty0*|ttyA*|ttyB*)
 	case $i in
 	tty0*) name=tty0; mname=ttym;	unit=${i#tty0};	chr=12; mult=1; add=128;;
 	ttyA*) name=ttyA; mname=ttyAm;	unit=${i#ttyA};	chr=17; mult=1; add=128;;
 	ttyB*) name=ttyB; mname=ttyBm;	unit=${i#ttyB};	chr=31; mult=2; add=1;;
-	ttyC*) name=ttyC; mname=ttyCm;	unit=${i#ttyC};	chr=32; mult=1; add=0;;
 	esac
 	rm -f $name$unit $mname$unit
 	rm -f ser$unit
 	rm -f ttyM$unit
 	mknod $name$unit	c $chr $(($unit * $mult))
 	mknod $mname$unit	c $chr $(($unit * $mult + $add))
+	chown uucp:wheel $name$unit $mname$unit
+	;;
+
+# newstyle tty devices:
+ttyC*)
+	case $i in
+	ttyC*) name=ttyC; mname=dtyC;	unit=${i#ttyC};	chr=32;;
+	esac
+	rm -f $name$unit $mname$unit
+	mknod $name$unit	c $chr $(($unit + $dialin))
+	mknod $mname$unit	c $chr $(($unit + $dialout))
 	chown uucp:wheel $name$unit $mname$unit
 	;;
 
