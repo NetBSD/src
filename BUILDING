@@ -395,6 +395,11 @@ BUILDING
      -b        Bootstrap ``make'' and create a nbmake-MACHINE script (see be-
                low).
 
+     -d        Build a full distribution.  This differs from a normal build in
+               that etc files will also be installed.  Note this does not
+               build a ``release''; no release sets are placed in ${RE-
+               LEASEDIR}.
+
      -j njob   Set the value of NBUILDJOBS to njob.  This provides similar
                functionality to the familiar ``make -j'', but preserves the
                ordering of the top level ``make build''.
