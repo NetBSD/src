@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy.S,v 1.6 2000/10/10 20:29:03 jeffs Exp $	*/
+/*	$NetBSD: memcpy.S,v 1.7 2001/10/16 15:40:53 uch Exp $	*/
 /* XXXX We need to define this in a way which supports multiple architectures */
 
 #include <machine/cdefs.h>	/* Get SZREG correct */
@@ -126,6 +126,10 @@ wordcopy:
 	lw	t3,0(a1)
 	addu	a1,4
 	sw	t3,0(a0)
+#ifdef MIPS3_5900	
+	nop
+	nop
+#endif	
 	bne	a1,t0,1b
 	addu	a0,4		# BDSLOT
 
@@ -137,6 +141,9 @@ bytecopy:
 	addu	a1,1
 	sb	t3,0(a0)
 	subu	a2,1
+#ifdef MIPS3_5900	
+	nop
+#endif	
 	bgtz	a2,2b
 	addu	a0,1		# BDSLOT
 
@@ -158,6 +165,9 @@ destaligned:
 	LWLO	t3,3(a1)
 	addi	a1,4
 	sw	t3,0(a0)
+#ifdef MIPS3_5900
+	nop
+#endif	
 	bne	a1,a3,3b
 	addi	a0,4		# BDSLOT
 
@@ -175,6 +185,10 @@ backcopy:
 	lb	t3,-1(t0)	
 	subu	t0,1
 	sb	t3,-1(t1)
+#ifdef MIPS3_5900
+	nop
+	nop
+#endif	
 	bne	t0,a1,4b
 	subu	t1,1		# BDSLOT
 	j	ra
