@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.16.2.1 2004/07/15 19:36:37 he Exp $
+# $NetBSD: sendmail,v 1.16.2.2 2004/07/23 08:38:10 tron Exp $
 #
 
 # PROVIDE: mail
@@ -106,6 +106,8 @@ check_need_sendmail()
 {
 	_mta_path=$(awk '/^sendmail[ \t]/{print$2}' /etc/mailer.conf)
 	_sendmail_path="/usr/libexec/sendmail/sendmail"
+	_mta_host=$(sed -n '/^D{MTAHost}/s/.*\[\([^]\.]*\)\.*]/\1/p' \
+	    /etc/mail/submit.cf 2>/dev/null | tr A-Z a-z)
 	if [ "${sendmail}" != "check" ]; then
 		echo "${sendmail}"
 	elif [ "${_mta_path}" != "${_sendmail_path}" -o \
@@ -114,7 +116,12 @@ check_need_sendmail()
 	    "$(stat -f "%Mp %Sg" "$_sendmail_path")" != "2 smmsp" ]; then
 		echo NO
 	else
-		echo YES
+		case "$_mta_host" in
+		localhost|127.0.0.1|::1|localhost.*)
+			echo YES;;
+		*)
+			echo NO;;
+		esac
 	fi
 }
 
