@@ -1,4 +1,4 @@
-/*	$NetBSD: apecsvar.h,v 1.5 1996/11/25 03:49:36 cgd Exp $	*/
+/* $NetBSD: apecsvar.h,v 1.6 1997/04/07 01:59:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

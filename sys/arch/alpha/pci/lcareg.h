@@ -1,4 +1,4 @@
-/*	$NetBSD: lcareg.h,v 1.4 1996/11/23 06:41:00 cgd Exp $	*/
+/* $NetBSD: lcareg.h,v 1.5 1997/04/07 01:59:58 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

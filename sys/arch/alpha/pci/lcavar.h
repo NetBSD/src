@@ -1,4 +1,4 @@
-/*	$NetBSD: lcavar.h,v 1.5 1996/11/25 03:49:38 cgd Exp $	*/
+/* $NetBSD: lcavar.h,v 1.6 1997/04/07 01:59:58 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

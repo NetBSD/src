@@ -1,4 +1,4 @@
-/*	$NetBSD: bt485reg.h,v 1.4 1996/04/12 06:08:17 cgd Exp $	*/
+/* $NetBSD: bt485reg.h,v 1.5 1997/04/07 01:59:53 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
