@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.25 1995/04/22 19:43:00 christos Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.26 1995/04/25 21:10:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -282,7 +282,7 @@ scdebug_ret(p, code, error, retval)
 
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= *em->e_nsysent ||
+	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
 	    sy->sy_call == nosys))
 		return;
 		
