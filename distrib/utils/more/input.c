@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.2 1998/01/09 08:03:27 perry Exp $	*/
+/*	$NetBSD: input.c,v 1.3 1998/02/04 11:08:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: input.c,v 1.3 1998/02/04 11:08:51 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -49,13 +54,9 @@ static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
  */
 
 #include <sys/types.h>
-#include <less.h>
 
-extern int squeeze;
-extern int sigs;
-extern char *line;
-
-off_t ch_tell();
+#include "less.h"
+#include "extern.h"
 
 /*
  * Get the next line.
@@ -69,7 +70,7 @@ forw_line(curr_pos)
 	off_t curr_pos;
 {
 	off_t new_pos;
-	register int c;
+	int c;
 
 	if (curr_pos == NULL_POSITION || ch_seek(curr_pos))
 		return (NULL_POSITION);

@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.3 1998/01/09 08:03:33 perry Exp $	*/
+/*	$NetBSD: output.c,v 1.4 1998/02/04 11:09:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 4/27/95";
+#else
+__RCSID("$NetBSD: output.c,v 1.4 1998/02/04 11:09:03 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -44,27 +49,21 @@ static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 4/27/95";
 
 #include <stdio.h>
 #include <string.h>
-#include <less.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+#include "less.h"
+#include "extern.h"
 
 int errmsgs;	/* Count of messages displayed by error() */
 
-extern int sigs;
-extern int sc_width, sc_height;
-extern int ul_width, ue_width;
-extern int so_width, se_width;
-extern int bo_width, be_width;
-extern int tabstop;
-extern int screen_trashed;
-extern int any_display;
-extern char *line;
-
 /* display the line which is in the line buffer. */
+void
 put_line()
 {
-	register char *p;
-	register int c;
-	register int column;
-	extern int auto_wrap, ignaw;
+	char *p;
+	int c;
+	int column;
 
 	if (sigs)
 	{
@@ -138,9 +137,10 @@ static char *ob = obuf;
 /*
  * Flush buffered output.
  */
+void
 flush()
 {
-	register int n;
+	int n;
 
 	n = ob - obuf;
 	if (n == 0)
@@ -153,6 +153,7 @@ flush()
 /*
  * Purge any pending output.
  */
+void
 purge()
 {
 
@@ -162,6 +163,7 @@ purge()
 /*
  * Output a character.
  */
+void
 putchr(c)
 	int c;
 {
@@ -173,8 +175,9 @@ putchr(c)
 /*
  * Output a string.
  */
+void
 putstr(s)
-	register char *s;
+	char *s;
 {
 	while (*s != '\0')
 		putchr(*s++);
@@ -187,6 +190,7 @@ static char return_to_continue[] = "(press RETURN)";
  * Output a message in the lower left corner of the screen
  * and wait for carriage return.
  */
+void
 error(s)
 	char *s;
 {
@@ -244,6 +248,7 @@ error(s)
 
 static char intr_to_abort[] = "... (interrupt to abort)";
 
+void
 ierror(s)
 	char *s;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: position.c,v 1.2 1998/01/09 08:03:35 perry Exp $	*/
+/*	$NetBSD: position.c,v 1.3 1998/02/04 11:09:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 Mark Nudleman
@@ -34,8 +34,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)position.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: position.c,v 1.3 1998/02/04 11:09:05 christos Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -49,12 +54,13 @@ static char sccsid[] = "@(#)position.c	8.1 (Berkeley) 6/6/93";
  */
 
 #include <sys/types.h>
-#include <less.h>
+#include <stdlib.h>
+
+#include "less.h"
+#include "extern.h"
 
 static off_t *table;		/* The position table */
 static int tablesize;
-
-extern int sc_height;
 
 /*
  * Return the starting file position of a line displayed on the screen.
@@ -86,10 +92,11 @@ position(where)
 /*
  * Add a new file position to the bottom of the position table.
  */
+void
 add_forw_pos(pos)
 	off_t pos;
 {
-	register int i;
+	int i;
 
 	/*
 	 * Scroll the position table up.
@@ -102,10 +109,11 @@ add_forw_pos(pos)
 /*
  * Add a new file position to the top of the position table.
  */
+void
 add_back_pos(pos)
 	off_t pos;
 {
-	register int i;
+	int i;
 
 	/*
 	 * Scroll the position table down.
@@ -115,9 +123,10 @@ add_back_pos(pos)
 	table[0] = pos;
 }
 
+void
 copytable()
 {
-	register int a, b;
+	int a, b;
 
 	for (a = 0; a < sc_height && table[a] == NULL_POSITION; a++);
 	for (b = 0; a < sc_height; a++, b++) {
@@ -129,10 +138,10 @@ copytable()
 /*
  * Initialize the position table, done whenever we clear the screen.
  */
+void
 pos_clear()
 {
-	register int i;
-	extern char *malloc(), *realloc();
+	int i;
 
 	if (table == 0) {
 		tablesize = sc_height > 25 ? sc_height : 25;
@@ -151,10 +160,11 @@ pos_clear()
  * Check the position table to see if the position falls within its range.
  * Return the position table entry if found, -1 if not.
  */
+int
 onscreen(pos)
 	off_t pos;
 {
-	register int i;
+	int i;
 
 	if (pos < table[0])
 		return (-1);
