@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.6 2000/05/22 15:34:05 matt Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.7 2000/06/04 02:19:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@
 
 struct le_softc {
 	struct	am7990_softc sc_am7990; /* Must be first */
+	struct	evcnt sc_intrcnt;
 	bus_dmamap_t sc_dm;
 	volatile u_short *sc_rap;
 	volatile u_short *sc_rdp;
@@ -228,7 +229,10 @@ le_vsbus_attach(parent, self, aux)
 	sc->sc_am7990.lsc.sc_wrcsr = lewrcsr;
 	sc->sc_am7990.lsc.sc_nocarrier = NULL;
 
-	scb_vecalloc(va->va_cvec, (void (*)(void *)) am7990_intr, sc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec, (void (*)(void *)) am7990_intr, sc,
+		SCB_ISTACK, &sc->sc_intrcnt);
+	evcnt_attach(self, "intr", &sc->sc_intrcnt);
+
         /*
          * Allocate a (DMA-safe) block for all descriptors and buffers.
          */
