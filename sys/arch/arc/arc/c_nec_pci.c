@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.4 2003/01/19 10:06:12 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.5 2003/05/25 14:00:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -98,6 +98,51 @@ struct mcclock_jazzio_config mcclock_nec_pci_conf = {
 	{ mc_nec_pci_read, mc_nec_pci_write }
 };
 
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+static const u_int32_t nec_pci_ipl_sr_bits[_IPL_N] = {
+	0,					/* IPL_NONE */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2,		/* IPL_BIO */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2,		/* IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2,		/* IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3|
+		MIPS_INT_MASK_4|
+		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
+};
+
 u_int
 mc_nec_pci_read(sc, reg)
 	struct mcclock_softc *sc;
@@ -194,12 +239,7 @@ c_nec_pci_init()
 	/*
 	 * Initialize interrupt priority
 	 */
-	splvec.splnet = MIPS_INT_MASK_SPL2;
-	splvec.splbio = MIPS_INT_MASK_SPL2;
-	splvec.splvm = MIPS_INT_MASK_SPL2;
-	splvec.spltty = MIPS_INT_MASK_SPL2;
-	splvec.splclock = MIPS_INT_MASK_SPL5;
-	splvec.splstatclock = MIPS_INT_MASK_SPL5;
+	ipl_sr_bits = nec_pci_ipl_sr_bits;
 
 	/*
 	 * Disable all interrupts. New masks will be set up
