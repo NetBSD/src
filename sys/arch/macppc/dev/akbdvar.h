@@ -56,13 +56,7 @@ struct akbd_softc {
 	unsigned char sc_polledkeys[32];
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
-#define AKBD_RAW_MAX_KEYS 	20
-#define AKBD_RAW_REPEAT_DELAY1 	400
-#define AKBD_RAW_REPEAT_DELAYN 	100
 	int sc_rawkbd;
-	int sc_nrep;
-	char sc_rep[AKBD_RAW_MAX_KEYS];
-	struct callout sc_rawrepeat_ch;
 #endif
 };
 
