@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.4 1996/10/13 03:34:50 christos Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.5 1997/10/17 20:28:06 oki Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -24,6 +24,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,17 +35,22 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <net/netisr.h>
+
+#include <net/if_ether.h>
 
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
@@ -69,7 +75,7 @@
 struct ed_softc {
 	struct	device sc_dev;
 
-	struct	arpcom sc_arpcom;	/* ethernet common */
+	struct	ethercom sc_ethercom;	/* ethernet common */
 
 	char	*type_str;	/* pointer to type string */
 	u_char	type;		/* interface type code */
@@ -95,12 +101,19 @@ struct ed_softc {
 	u_char	rec_page_start;	/* first page of RX ring-buffer */
 	u_char	rec_page_stop;	/* last page of RX ring-buffer */
 	u_char	next_packet;	/* pointer to next unread RX packet */
+
+	u_int8_t sc_enaddr[6];
+
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 int edmatch __P((struct device *, void *, void *));
 void edattach __P((struct device *, struct device *, void *));
 int ed_probe_generic8390 __P((caddr_t));
 int ed_find_Novell __P((caddr_t, caddr_t));
+int ed_check_type __P((struct ed_softc *));
 int edintr __P((int));
 int edioctl __P((struct ifnet *, u_long, caddr_t));
 void edstart __P((struct ifnet *));
@@ -111,7 +124,7 @@ void edstop __P((struct ed_softc *));
 
 /* #define inline	/* XXX for debugging porpoises */
 
-void ed_getmcaf __P((struct arpcom *, u_long *));
+void ed_getmcaf __P((struct ethercom *, u_long *));
 void edread __P((struct ed_softc *, caddr_t, int));
 struct mbuf *edget __P((struct ed_softc *, caddr_t, int));
 static inline void ed_rint __P((struct ed_softc *));
@@ -386,7 +399,8 @@ ed_check_type(sc)
 		}
 
 		if (mstart == 0) {
-			printf(": cannot find start of RAM\n");
+			printf("%s: cannot find start of RAM\n",
+			    sc->sc_dev.dv_xname);
 			return (0);
 		}
 
@@ -435,10 +449,10 @@ ed_check_type(sc)
 
 	ed_pio_readmem(sc, 0, romdata, 16);
 	for (n = 0; n < ETHER_ADDR_LEN; n++)
-		sc->sc_arpcom.ac_enaddr[n] = romdata[n*(sc->isa16bit+1)];
+		sc->sc_enaddr[n] = romdata[n*(sc->isa16bit+1)];
 
 #ifdef GWETHER
-	if (sc->arpcom.ac_enaddr[2] == 0x86)
+	if (sc->sc_enaddr[2] == 0x86)
 		sc->type_str = "Gateway AT";
 #endif /* GWETHER */
 
@@ -457,7 +471,7 @@ edattach(parent, self, aux)
 	void *aux;
 {
 	struct ed_softc *sc = (void *)self;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	sc->nic_base = NEPTUNE_NIC;
 	sc->asic_base = NEPTUNE_ASIC;
@@ -478,10 +492,11 @@ edattach(parent, self, aux)
 
 	/* Attach the interface. */
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, sc->sc_enaddr);
 
 	/* Print additional info when attached. */
-	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf("\n%s: address %s, ", sc->sc_dev.dv_xname,
+	       ether_sprintf(sc->sc_enaddr));
 
 	if (sc->type_str)
 		printf("type %s ", sc->type_str);
@@ -493,6 +508,11 @@ edattach(parent, self, aux)
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+			  RND_TYPE_NET);
 #endif
 }
 
@@ -543,7 +563,7 @@ edwatchdog(ifp)
 	struct ed_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
-	++sc->sc_arpcom.ac_if.if_oerrors;
+	++sc->sc_ethercom.ec_if.if_oerrors;
 
 	edreset(sc);
 }
@@ -555,7 +575,7 @@ void
 edinit(sc)
 	struct ed_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	caddr_t nicbase = sc->nic_base;
 	int i;
 	u_long mcaf[2];
@@ -624,10 +644,10 @@ edinit(sc)
 
 	/* Copy out our station address. */
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
-		NIC_PUT(nicbase, ED_P1_PAR0 + i*2, sc->sc_arpcom.ac_enaddr[i]);
+		NIC_PUT(nicbase, ED_P1_PAR0 + i*2, sc->sc_enaddr[i]);
 
 	/* Set multicast filter on chip. */
-	ed_getmcaf(&sc->sc_arpcom, mcaf);
+	ed_getmcaf(&sc->sc_ethercom, mcaf);
 	for (i = 0; i < 8; i++)
 		NIC_PUT(nicbase, ED_P1_MAR0 + i*2, ((u_char *)mcaf)[i]);
 
@@ -672,7 +692,7 @@ static inline void
 ed_xmit(sc)
 	struct ed_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	caddr_t nicbase = sc->nic_base;
 	u_short len;
 
@@ -865,7 +885,7 @@ loop:
 			log(LOG_ERR,
 			    "%s: NIC memory corrupt - invalid packet length %d\n",
 			    sc->sc_dev.dv_xname, len);
-			++sc->sc_arpcom.ac_if.if_ierrors;
+			++sc->sc_ethercom.ec_if.if_ierrors;
 			edreset(sc);
 			return;
 		}
@@ -892,7 +912,7 @@ edintr(unit)
 	int unit;
 {
 	struct ed_softc *sc = ed_cd.cd_devs[unit];
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	caddr_t nicbase = sc->nic_base;
 	u_char isr;
 
@@ -1051,6 +1071,10 @@ edintr(unit)
 			(void) NIC_GET(nicbase, ED_P0_CNTR2);
 		}
 
+#if NRND > 0
+		rnd_add_uint32(&sc->rnd_source, isr);
+#endif
+
 		isr = NIC_GET(nicbase, ED_P0_ISR);
 		if (!isr)
 			return (1);
@@ -1082,7 +1106,7 @@ edioctl(ifp, cmd, data)
 #ifdef INET
 		case AF_INET:
 			edinit(sc);
-			arp_ifinit(&sc->sc_arpcom, ifa);
+			arp_ifinit(ifp, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1093,11 +1117,10 @@ edioctl(ifp, cmd, data)
 
 			if (ns_nullhost(*ina))
 				ina->x_host =
-				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+				    *(union ns_host *)LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host,
-				    sc->sc_arpcom.ac_enaddr,
-				    sizeof(sc->sc_arpcom.ac_enaddr));
+				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				    sizeof(sc->sc_enaddr));
 			/* Set new address. */
 			edinit(sc);
 			break;
@@ -1139,8 +1162,8 @@ edioctl(ifp, cmd, data)
 	case SIOCDELMULTI:
 		/* Update our multicast list. */
 		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->sc_arpcom) :
-		    ether_delmulti(ifr, &sc->sc_arpcom);
+		    ether_addmulti(ifr, &sc->sc_ethercom) :
+		    ether_delmulti(ifr, &sc->sc_ethercom);
 
 		if (error == ENETRESET) {
 			/*
@@ -1172,7 +1195,7 @@ edread(sc, buf, len)
 	caddr_t buf;
 	int len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	struct ether_header *eh;
 
@@ -1203,7 +1226,7 @@ edread(sc, buf, len)
 		 */
 		if ((ifp->if_flags & IFF_PROMISC) &&
 		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
 			    sizeof(eh->ether_dhost)) != 0) {
 			m_freem(m);
 			return;
@@ -1354,7 +1377,7 @@ ed_pio_write_mbufs(sc, m, dst)
 		}
 	} else {
 		/* NE2000s are a bit trickier. */
-		u_char *data, savebyte[2];
+		u_int8_t *data, savebyte[2];
 		int len, wantbyte;
 
 		wantbyte = 0;
@@ -1362,7 +1385,7 @@ ed_pio_write_mbufs(sc, m, dst)
 			len = m->m_len;
 			if (len == 0)
 				continue;
-			data = mtod(m, u_char *);
+			data = mtod(m, u_int8_t *);
 			/* Finish the last word. */
 			if (wantbyte) {
 				savebyte[1] = *data;
@@ -1444,6 +1467,7 @@ ed_ring_copy(sc, src, dst, amount)
  * as needed.  Return pointer to last mbuf in chain.
  * sc = ed info (softc)
  * src = pointer in ed ring buffer
+ * dst = pointer to last mbuf in mbuf chain to copy to
  * amount = amount of data to copy
  */
 struct mbuf *
@@ -1452,7 +1476,7 @@ edget(sc, src, total_len)
 	caddr_t src;
 	u_short total_len;
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *top, **mp, *m;
 	int len;
 
@@ -1476,8 +1500,12 @@ edget(sc, src, total_len)
 		}
 		if (total_len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
+			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
+				m_freem(top);
+				return 0;
+			}
+			len = MCLBYTES;
 		}
 		m->m_len = len = min(total_len, len);
 		src = ed_ring_copy(sc, src, mtod(m, caddr_t), len);
@@ -1494,11 +1522,11 @@ edget(sc, src, total_len)
  * need to listen to.
  */
 void
-ed_getmcaf(ac, af)
-	struct arpcom *ac;
+ed_getmcaf(ec, af)
+	struct ethercom *ec;
 	u_long *af;
 {
-	struct ifnet *ifp = &ac->ac_if;
+	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
 	register u_long crc;
@@ -1520,7 +1548,7 @@ ed_getmcaf(ac, af)
 	}
 
 	af[0] = af[1] = 0;
-	ETHER_FIRST_MULTI(step, ac, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
