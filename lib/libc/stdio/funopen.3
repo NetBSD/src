@@ -1,4 +1,4 @@
-.\"	$NetBSD: funopen.3,v 1.6 1996/11/07 09:23:10 mouse Exp $
+.\"	$NetBSD: funopen.3,v 1.7 1997/01/23 08:10:04 mikel Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,14 +84,20 @@ and
 must match those, respectively, of
 .Xr read 2 ,
 .Xr write 2 ,
-.Xr seek 2 ,
+.Xr lseek 2 ,
 and
-.Xr close 2
-with the single exception that they are passed the
+.Xr close 2 ;
+except that they are passed the
 .Fa cookie
 argument specified to 
 .Fn funopen
-in place of the traditional file descriptor argument.
+in place of the traditional file descriptor argument,
+and
+.Fa seekfn
+uses
+.Li fpos_t
+instead of
+.Li off_t .
 .Pp
 Read and write
 .Tn I/O
