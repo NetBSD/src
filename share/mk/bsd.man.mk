@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.88 2003/10/21 10:01:21 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.89 2003/11/06 22:59:03 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -97,7 +97,8 @@ manlinks: manpages					# symlink install
 		dir=${DESTDIR}${MANDIR}/man$${name##*.}; \
 		t=$${dir}${MANSUBDIR}/$${name}${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
-			echo $$t -\> $$l; \
+	    		${_MKSHMSG} "install  $$t"; \
+			${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 			${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 		fi; \
 	done
@@ -157,7 +158,8 @@ catlinks: catpages					# symlink install
 		dir=${DESTDIR}${MANDIR}/cat$${name##*.}; \
 		t=$${dir}${MANSUBDIR}/$${name%.*}.0${MANSUFFIX}; \
 		if test $$l -nt $$t -o ! -f $$t; then \
-			echo $$t -\> $$l; \
+	    		${_MKSHMSG} "install  $$t"; \
+			${_MKSHECHO} ${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 			${INSTALL_LINK} ${SYSPKGDOCTAG} $$l $$t; \
 		fi; \
 	done
