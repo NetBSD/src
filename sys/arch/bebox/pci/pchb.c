@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.7 2004/04/23 21:13:05 itojun Exp $	*/
+/*	$NetBSD: pchb.c,v 1.8 2004/07/29 18:39:00 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7 2004/04/23 21:13:05 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.8 2004/07/29 18:39:00 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,16 +51,17 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7 2004/04/23 21:13:05 itojun Exp $");
 
 #include <dev/pci/pcidevs.h>
 
-int	pchbmatch __P((struct device *, void *, void *));
+int	pchbmatch __P((struct device *, struct cfdata *, void *));
 void	pchbattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(pchb, sizeof(struct device),
-    (cfmatch_t)pchbmatch, pchbattach, NULL, NULL);
+    pchbmatch, pchbattach, NULL, NULL);
 
 int
 pchbmatch(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct pci_attach_args *pa = aux;
 
