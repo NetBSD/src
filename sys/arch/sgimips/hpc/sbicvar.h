@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.7 2004/01/10 02:55:54 sekiya Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.8 2004/02/24 15:12:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -195,7 +195,7 @@ struct wd33c93_softc {
 #define SBIC_CONNECTED		5	/* Actively using the SCSI bus */
 #define	SBIC_DISCONNECT		6	/* MSG_DISCONNECT received */
 #define	SBIC_CMDCOMPLETE 	7	/* MSG_CMDCOMPLETE received */
-#define	SBIC_ERROR		8	/* Error has occured */
+#define	SBIC_ERROR		8	/* Error has occurred */
 #define SBIC_SELTIMEOUT		9	/* Select Timeout */
 #define	SBIC_CLEANING		10	/* Scrubbing ACB's */
 #define SBIC_BUSRESET		11	/* SCSI RST has been issued */

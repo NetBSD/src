@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.6 2004/01/28 01:35:31 jonathan Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.7 2004/02/24 15:12:52 wiz Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.6 2004/01/28 01:35:31 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.7 2004/02/24 15:12:52 wiz Exp $");
 
 /*
  * IPsec controller part.
@@ -253,7 +253,7 @@ key_allocsp_default(const char* where, int tag)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  *	others:	a pointer to SP
  *
  * NOTE: IPv6 mapped adddress concern is implemented here.
@@ -281,7 +281,7 @@ ipsec_getpolicy(struct tdb_ident *tdbi, u_int dir)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  *	others:	a pointer to SP
  *
  * NOTE: IPv6 mapped adddress concern is implemented here.
@@ -415,7 +415,7 @@ ipsec_getpolicybysock(m, dir, inp, error)
  *		0	: bypass
  *		EACCES	: discard packet.
  *		ENOENT	: ipsec_acquire() in progress, maybe.
- *		others	: error occured.
+ *		others	: error occurred.
  */
 struct secpolicy *
 ipsec_getpolicybyaddr(m, dir, flag, error)
