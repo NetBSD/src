@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.17 1996/05/29 06:15:45 mhitch Exp $	*/
+/*	$NetBSD: dc.c,v 1.18 1996/06/13 08:06:12 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -213,18 +213,21 @@ dcmatch(parent, match, aux)
 
 	static int nunits = 0;
 
-#if NTC>0
-	if (parent->dv_cfdata->cf_driver != &mainbus_cd &&
-	    strcmp(d->iada_modname, "dc") != 0 &&
-	    strcmp(d->iada_modname, "mdc") != 0 &&
-	    strcmp(d->iada_modname, "dc7085") != 0)
-		return (0);
+#if NTC > 0
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
+		if (strcmp(d->iada_modname, "dc") != 0 &&
+		    strcmp(d->iada_modname, "dc7085") == 0)
+			return (0);
+	}
 	else
-#endif
-	if (strcmp(ca->ca_name, "dc") != 0 &&
-	    strcmp(ca->ca_name, "mdc") != 0 &&
-	    strcmp(ca->ca_name, "dc7085") != 0)
-		return (0);
+#endif /* NTC */
+
+	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
+		if (strcmp(ca->ca_name, "dc") != 0 &&
+		    strcmp(ca->ca_name, "mdc") != 0 &&
+		    strcmp(ca->ca_name, "dc7085") != 0)
+			return (0);
+	}
 
 	/*
 	 * Use statically-allocated softc and attach code until
@@ -245,13 +248,14 @@ dcattach(parent, self, aux)
 	void *aux;
 {
 	register struct confargs *ca = aux;
-#if NTC>0
+#if NTC > 0
 	struct ioasicdev_attach_args *d = aux;
-#endif
+#endif /* NTC */
 	caddr_t dcaddr;
 
-#if NTC>0
-	if (parent->dv_cfdata->cf_driver != &mainbus_cd) {
+
+#if NTC > 0
+	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		dcaddr = (caddr_t)d->iada_addr;
 		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
 				  self->dv_unit, self->dv_cfdata->cf_flags,
@@ -261,8 +265,8 @@ dcattach(parent, self, aux)
 		    dcintr, self);
 	}
 	else
-#endif
-	{
+#endif /* NTC */
+	if (parent->dv_cfdata->cf_driver == &mainbus_cd) {
 		dcaddr = (caddr_t)ca->ca_addr;
 		(void) dc_doprobe((void*)MACH_PHYS_TO_UNCACHED(dcaddr),
 				  self->dv_unit, self->dv_cfdata->cf_flags,
