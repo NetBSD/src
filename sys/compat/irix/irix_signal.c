@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.12 2002/04/12 18:44:58 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.13 2002/04/13 10:53:00 manu Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.12 2002/04/12 18:44:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.13 2002/04/13 10:53:00 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -233,7 +233,8 @@ irix_sendsig(catcher, sig, mask, code)
 	 * errno in userspace. This is used by the signal
 	 * trampoline. No idea how to emulate this for now...
 	 */
-	/* sf.isf_errno = 0;  */
+	/* sf.isf_uep = NULL; */
+	/* sf.isf_errno = 0 */
 
 	/*
 	 * Compute the new stack address after copying sigframe (hold by sp),
