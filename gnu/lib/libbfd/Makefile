@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2001/08/07 03:28:07 tv Exp $
+#	$NetBSD: Makefile,v 1.22 2001/08/19 14:19:38 mrg Exp $
 
 LIB=		bfd
 
@@ -28,9 +28,13 @@ SRCS=		${GSRCS:.lo=.c} ${G_libopcodes_la_SOURCES}
 DPSRCS+=	elf32-target.h elf64-target.h targmatch.h
 CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h
 
-.PATH: ${DIST}/bfd ${DIST}/opcodes
+TEXINFO=	bfd.texinfo
+INFOFLAGS=	-I${DIST}/bfd/doc
+
+.PATH: ${DIST}/bfd ${DIST}/opcodes ${DIST}/bfd/doc
 
 .include <bsd.lib.mk>
+.include <bsd.info.mk>
 
 ${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
 targets.o targets.so: targmatch.h Makefile
