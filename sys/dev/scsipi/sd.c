@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.142 1999/02/08 16:33:18 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.143 1999/02/10 12:29:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -476,9 +476,11 @@ sdstrategy(bp)
 		goto bad;
 	}
 	/*
-	 * The transfer must be a whole number of blocks.
+	 * The transfer must be a whole number of blocks, offset must not be
+	 * negative.
 	 */
-	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0) {
+	if ((bp->b_bcount % sd->sc_dk.dk_label->d_secsize) != 0 ||
+	    bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
 		goto bad;
 	}
