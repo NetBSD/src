@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.13 1998/11/19 21:47:03 thorpej Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.14 1998/12/05 19:43:43 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -136,7 +136,8 @@ wdsc_pcc_attach(pdp, dp, auxp)
     sc->sc_link.device         = &wdsc_scsidev;
     sc->sc_link.openings       = 2;
     sc->sc_link.scsipi_scsi.max_target     = 7;
-	sc->sc_link.type = BUS_SCSI;
+    sc->sc_link.scsipi_scsi.max_lun = 7;
+    sc->sc_link.type = BUS_SCSI;
 
     printf(": WD33C93 SCSI, target %d\n",
 		sc->sc_link.scsipi_scsi.adapter_target);

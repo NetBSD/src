@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.30 1998/11/19 21:53:32 thorpej Exp $	*/
+/*	$NetBSD: seagate.c,v 1.31 1998/12/05 19:43:55 mjacob Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -457,6 +457,7 @@ seaattach(parent, self, aux)
 	sea->sc_link.device = &sea_dev;
 	sea->sc_link.openings = 1;
 	sea->sc_link.scsipi_scsi.max_target = 7;
+	sea->sc_link.scsipi_scsi.max_lun = 7;
 	sea->sc_link.type = BUS_SCSI;
   
 	printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.26 1998/11/19 21:44:36 thorpej Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.27 1998/12/05 19:43:35 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -189,6 +189,7 @@ gtscattach(pdp, dp, auxp)
 	sc->sc_link.device = &gtsc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	sbicinit(sc);

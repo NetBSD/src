@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.9 1998/11/19 21:44:59 thorpej Exp $	*/
+/*	$NetBSD: cosc.c,v 1.10 1998/12/05 19:43:41 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -259,6 +259,7 @@ coscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.device	    = &cosc_scsidev;
 	sc->sc_softc.sc_link.openings	    = 1;
 	sc->sc_softc.sc_link.scsipi_scsi.max_target     = 7;
+	sc->sc_softc.sc_link.scsipi_scsi.max_lun     = 7;
 	sc->sc_softc.sc_link.type = BUS_SCSI;
 
 	/* initialise the card */

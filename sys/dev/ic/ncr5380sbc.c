@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.29 1998/10/26 04:44:04 scottr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.30 1998/12/05 19:43:53 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -369,6 +369,7 @@ ncr5380_init(sc)
 
 	sc->sc_link.openings = 2;	/* XXX - Not SCI_OPENINGS */
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 	sc->sc_prevphase = PHASE_INVALID;
 	sc->sc_state = NCR_IDLE;

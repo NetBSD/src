@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.49 1998/11/19 21:54:35 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.50 1998/12/05 19:43:58 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -533,6 +533,7 @@ ascattach(asc, bus_speed)
 	asc->sc_link.device = &asc_dev;
 	asc->sc_link.openings = 2;
 	asc->sc_link.scsipi_scsi.max_target = 7;
+	asc->sc_link.scsipi_scsi.max_lun = 7;
 	asc->sc_link.type = BUS_SCSI;
 
 	/*

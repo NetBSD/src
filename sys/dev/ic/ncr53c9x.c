@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.31 1998/11/30 07:54:29 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.32 1998/12/05 19:43:54 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -220,6 +220,7 @@ ncr53c9x_attach(sc, dev)
 	sc->sc_link.device = dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	/*

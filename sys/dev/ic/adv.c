@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.7 1998/11/19 21:52:58 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.8 1998/12/05 19:43:49 mjacob Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -577,6 +577,7 @@ adv_attach(sc)
 	sc->sc_link.device = &adv_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 

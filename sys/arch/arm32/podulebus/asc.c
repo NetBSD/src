@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.24 1998/11/19 21:44:59 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.25 1998/12/05 19:43:40 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -172,6 +172,7 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_link.device = &asc_scsidev;
 	sbic->sc_link.openings = 1;	/* was 2 */
 	sbic->sc_link.scsipi_scsi.max_target = 7;
+	sbic->sc_link.scsipi_scsi.max_lun = 7;
 	sbic->sc_link.type = BUS_SCSI;
 
 	/* Provide an override for the host id */

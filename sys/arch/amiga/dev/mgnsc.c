@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.28 1998/11/19 21:44:36 thorpej Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.29 1998/12/05 19:43:37 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -124,6 +124,7 @@ mgnscattach(pdp, dp, auxp)
 	sc->sc_link.device = &mgnsc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	siopinitialize(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.10 1998/11/19 21:50:30 thorpej Exp $	*/
+/*	$NetBSD: mha.c,v 1.11 1998/12/05 19:43:47 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki, Takumi Nakamura and Masanobu Saitoh.  All rights reserved.
@@ -341,6 +341,7 @@ mhaattach(parent, self, aux)
 	sc->sc_link.device = &mha_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	sc->sc_spcinitialized = 0;

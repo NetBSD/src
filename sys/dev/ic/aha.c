@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.20 1998/11/19 21:52:59 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.21 1998/12/05 19:43:49 mjacob Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -325,6 +325,7 @@ aha_attach(sc, apd)
 	sc->sc_link.device = &aha_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	aha_inquire_setup_information(sc);

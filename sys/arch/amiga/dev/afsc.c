@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.24 1998/11/19 21:44:33 thorpej Exp $	*/
+/*	$NetBSD: afsc.c,v 1.25 1998/12/05 19:43:33 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -149,6 +149,7 @@ afscattach(pdp, dp, auxp)
 	sc->sc_link.device = &afsc_scsidev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	siopinitialize(sc);

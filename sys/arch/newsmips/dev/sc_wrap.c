@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.8 1998/11/19 21:47:21 thorpej Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.9 1998/12/05 19:43:46 mjacob Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -99,6 +99,7 @@ cxd1185_attach(parent, self, aux)
 	sc->sc_link.device = &cxd1185_dev;
 	sc->sc_link.openings = 2;
 	sc->sc_link.scsipi_scsi.max_target = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	TAILQ_INIT(&sc->ready_list);
