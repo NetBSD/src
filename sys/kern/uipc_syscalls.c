@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.86 2003/11/29 10:02:42 matt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.86.2.1 2004/05/20 09:50:51 tron Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.86 2003/11/29 10:02:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.86.2.1 2004/05/20 09:50:51 tron Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -272,13 +272,14 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	struct socket	*so;
 	struct mbuf	*nam;
 	int		error, s;
+	int		interrupted = 0;
 
 	p = l->l_proc;
 	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
 	so = (struct socket *)fp->f_data;
-	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
+	if (so->so_state & SS_ISCONNECTING) {
 		error = EALREADY;
 		goto out;
 	}
@@ -299,8 +300,11 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	while ((so->so_state & SS_ISCONNECTING) && so->so_error == 0) {
 		error = tsleep((caddr_t)&so->so_timeo, PSOCK | PCATCH,
 			       netcon, 0);
-		if (error)
+		if (error) {
+			if (error == EINTR || error == ERESTART)
+				interrupted = 1;
 			break;
+		}
 	}
 	if (error == 0) {
 		error = so->so_error;
@@ -308,7 +312,8 @@ sys_connect(struct lwp *l, void *v, register_t *retval)
 	}
 	splx(s);
  bad:
-	so->so_state &= ~SS_ISCONNECTING;
+	if (!interrupted)
+		so->so_state &= ~SS_ISCONNECTING;
 	m_freem(nam);
 	if (error == ERESTART)
 		error = EINTR;
