@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.58 2001/12/04 00:05:06 darrenr Exp $ */
+/*	$NetBSD: intr.c,v 1.58.4.1 2002/03/18 07:51:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,6 +76,23 @@ void *softnet_cookie;
 
 void	strayintr __P((struct clockframe *));
 void	softnet __P((void *));
+
+/*
+ * Map IPL_* to PSR IPL.
+ */
+const int ipl_to_psr[IPL_HIGH + 1] = {
+	0,		/* IPL_NONE */
+	1,		/* IPL_SOFTCLOCK, IPL_SOFTNET */
+	PIL_BIO,	/* IPL_BIO */
+	PIL_NET,	/* IPL_NET */
+	PIL_TTY/*XXX*/,	/* IPL_SOFTSERIAL */
+	PIL_TTY,	/* IPL_TTY */
+	7,		/* IPL_VM */
+	PIL_AUD,	/* IPL_AUDIO */
+	PIL_CLOCK,	/* IPL_CLOCK */
+	PIL_SER,	/* IPL_SERIAL */
+	PIL_HIGH,	/* IPL_HIGH */
+};
 
 /*
  * Stray interrupt handler.  Clear it if possible.
