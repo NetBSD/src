@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.53 2001/10/25 23:07:50 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.54 2001/11/20 06:05:32 lukem Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -193,7 +193,7 @@ file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S
 file	arch/sparc64/sparc64/in4_cksum.c	inet
 file	arch/sparc64/sparc64/intr.c
-file	arch/sparc64/sparc64/kgdb_machdep.c kgdb
+file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 # sparc/sparc/locore.s is handled specially in the makefile,
 # because it must come first in the "ld" command line.
 file	arch/sparc64/sparc64/locore2.c
@@ -216,8 +216,8 @@ file	arch/sparc64/sparc64/disksubr.c
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_trace.c	ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
-#file 	ddb/db_aout.c			ddb_aout
-#file	ddb/db_elf.c			ddb
+#file 	ddb/db_aout.c				ddb_aout
+#file	ddb/db_elf.c				ddb
 
 #
 # Raster Console support
