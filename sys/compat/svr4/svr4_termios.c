@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_termios.c,v 1.2 1994/11/18 02:54:19 christos Exp $	 */
+/*	$NetBSD: svr4_termios.c,v 1.3 1995/01/10 00:04:09 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -90,14 +90,14 @@ static void svr4_termios_to_termio __P((const struct svr4_termios *ts,
 #define svr4_to_bsd_flag2(f,a,b,c1,t1,c2,t2) \
 	bt->f &= ~__CONCAT(a,b); \
 	switch (st->f & __CONCAT3(SVR4_,a,b)) { \
-	case __CONCAT3(SVR4_,c1,t1): bt->f |= __CONCAT(c1,t2); break; \
+	case __CONCAT3(SVR4_,c1,t1): bt->f |= __CONCAT(c1,t1); break; \
 	case __CONCAT3(SVR4_,c2,t2): bt->f |= __CONCAT(c2,t2); break; \
 	}
 
 #define svr4_to_bsd_flag4(f,a,b,c1,t1,c2,t2,c3,t3,c4,t4) \
 	bt->f &= ~__CONCAT(a,b); \
 	switch (st->f & __CONCAT3(SVR4_,a,b)) { \
-	case __CONCAT3(SVR4_,c1,t1): bt->f |= __CONCAT(c1,t2); break; \
+	case __CONCAT3(SVR4_,c1,t1): bt->f |= __CONCAT(c1,t1); break; \
 	case __CONCAT3(SVR4_,c2,t2): bt->f |= __CONCAT(c2,t2); break; \
 	case __CONCAT3(SVR4_,c3,t3): bt->f |= __CONCAT(c3,t3); break; \
 	case __CONCAT3(SVR4_,c4,t4): bt->f |= __CONCAT(c4,t4); break; \
