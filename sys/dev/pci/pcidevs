@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.649 2004/09/16 13:08:51 ragge Exp $
+$NetBSD: pcidevs,v 1.650 2004/09/17 16:04:17 xtraeme Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2179,6 +2179,7 @@ product NVIDIA	GF_FX5900	0x0331	GeForce FX 5900
 product NVIDIA	GF_FX5900XT	0x0332	GeForce FX 5900XT
 product NVIDIA	GF_FX5950U	0x0333	GeForce FX 5950 Ultra
 product NVIDIA	QUADRO_FX_3000	0x0338	Quadro FX 3000
+product	NVIDIA	GF_FX5700_LE	0x0343	GeForce FX 5700 LE
 
 /* Nvidia Corporation & SGS-Thomson Microelectronics */
 product NVIDIA_SGS	RIVA128	0x0018	Riva 128
