@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.32.2.3 1997/12/09 20:17:33 thorpej Exp $	*/
+/*	$NetBSD: sbc.c,v 1.32.2.4 1998/01/29 12:21:19 mellon Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -72,11 +72,9 @@ int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 int	sbc_options = 0 /* | SBC_PDMA */;
 
-static	void	sbc_minphys __P((struct buf *bp));
-
 struct scsipi_adapter	sbc_ops = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()		*/
-	sbc_minphys,			/* scsi_minphys()	*/
+	minphys,			/* scsi_minphys()	*/
 	NULL,				/* open_target_lu()	*/
 	NULL,				/* close_target_lu()	*/
 };
@@ -100,14 +98,6 @@ extern caddr_t	m68k_fault_addr;
 static	int	sbc_wait_busy __P((struct ncr5380_softc *));
 static	int	sbc_ready __P((struct ncr5380_softc *));
 static	int	sbc_wait_dreq __P((struct ncr5380_softc *));
-
-static void
-sbc_minphys(struct buf *bp)
-{
-	if (bp->b_bcount > MAX_DMA_LEN)
-		bp->b_bcount = MAX_DMA_LEN;
-	return (minphys(bp));
-}
 
 
 /***
