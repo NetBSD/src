@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.13 1998/08/15 05:16:43 mycroft Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.14 1998/09/05 17:23:09 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 
 /*
  * Copyright (c) 1994 Peter Galbavy
- * Copyright (c) 1995 Paul Kranenburg
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
