@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)badsect.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: badsect.c,v 1.4 1993/08/01 18:28:21 mycroft Exp $";
+static char rcsid[] = "$Id: badsect.c,v 1.5 1993/12/15 17:01:36 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -53,8 +53,8 @@ static char rcsid[] = "$Id: badsect.c,v 1.4 1993/08/01 18:28:21 mycroft Exp $";
  * does not support bad block forwarding.
  */
 #include <sys/param.h>
-#include <sys/dir.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <ufs/fs.h>
 #include <ufs/dinode.h>
 #include <stdio.h>
@@ -84,7 +84,7 @@ main(argc, argv)
 {
 	daddr_t number;
 	struct stat stbuf, devstat;
-	register struct direct *dp;
+	register struct dirent *dp;
 	DIR *dirp;
 	int fd;
 	char name[BUFSIZ];
