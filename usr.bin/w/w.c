@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.39 2000/07/15 22:45:14 enami Exp $	*/
+/*	$NetBSD: w.c,v 1.40 2000/07/22 03:14:06 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.39 2000/07/15 22:45:14 enami Exp $");
+__RCSID("$NetBSD: w.c,v 1.40 2000/07/22 03:14:06 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,9 @@ main(argc, argv)
 	if ((kp = kvm_getproc2(kd, KERN_PROC_ALL, 0,
 	    sizeof(struct kinfo_proc2), &nentries)) == NULL)
 		errx(1, "%s", kvm_geterr(kd));
-	lognamelen = sizeof("USER") - 1 /* NUL */;
+
+	/* Include trailing space because TTY header starts one column early. */
+	lognamelen = sizeof("USER ") - 1 /* NUL */;
 	for (i = 0; i < nentries; i++, kp++) {
 
 		if (kp->p_stat == SIDL || kp->p_stat == SZOMB)
@@ -249,7 +251,7 @@ main(argc, argv)
 		}
 	}
 
-	argwidth = printf("%-*s TTY %-*s %*s  IDLE WHAT\n",
+	argwidth = printf("%-*sTTY %-*s %*s  IDLE WHAT\n",
 	    lognamelen, "USER", UT_HOSTSIZE, "FROM",
 	    7 /* "dddhhXm" */, "LOGIN@");
 	argwidth -= sizeof("WHAT\n") - 1 /* NUL */;
@@ -317,7 +319,7 @@ main(argc, argv)
 			    (int)(ep->utmp.ut_host + UT_HOSTSIZE - x), x);
 			p = buf;
 		}
-		(void)printf("%-*s %-3.3s %-*.*s ",
+		(void)printf("%-*s %-2.2s %-*.*s ",
 		    lognamelen, ep->kp->p_login,
 		    (strncmp(ep->utmp.ut_line, "tty", 3) &&
 		    strncmp(ep->utmp.ut_line, "dty", 3)) ?
