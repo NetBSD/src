@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.7 2002/05/04 07:45:07 manu Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.8 2002/05/22 05:14:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.7 2002/05/04 07:45:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.8 2002/05/22 05:14:00 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.7 2002/05/04 07:45:07 manu Exp $");
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
+#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -258,44 +259,67 @@ fd_truncate(p, fd, whence, start, retval)
 }
 
 int
-irix_sys_fchmod(p, v, retval)
+irix_sys_open(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct irix_sys_fchmod_args /* {
-		syscallarg(int) fd;
-		syscallarg(int) mode;
+	struct irix_sys_open_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) flags;
+		syscallarg(mode_t) mode;
 	} */ *uap = v;
-	struct sys_fchmod_args cup;
-	struct file *fp;
 	int error;
-	int major, minor;
+	int fd;
+	struct file *fp;
 	struct vnode *vp;
+	struct vnode *nvp;
 
-	SCARG(&cup, fd) = SCARG(uap, fd);
-	SCARG(&cup, mode) = SCARG(uap, mode);
-	error = sys_fchmod(p, &cup, retval);
+	if ((error = svr4_sys_open(p, v, retval)) != 0)
+		return error;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
-		return (error);
+	fd = (int)*retval;
+	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
+		return EBADF;
+
+	FILE_USE(fp);
+
+	vp = (struct vnode *)fp->f_data;
 
 	/* 
-	 * bug for bug emulation of IRIX: on some device, including
-	 * /dev/usemaclone, fchmod returns 0 on faillure, and libc
-	 * depends on that behavior.
+	 * A special hook for the usemaclone driver: we need to clone
+	 * the vnode, because the driver method need a context for each
+	 * usemaclone open instance, and because we need to overload 
+	 * some vnode operations like setattr.
+	 * The original vnode is stored in the v_data field of the cloned
+	 * vnode.
 	 */
-	vp = (struct vnode *)(fp->f_data);
-	if (vp->v_type == VCHR) {
-		major = major(vp->v_specinfo->si_rdev);
-		minor = minor(vp->v_specinfo->si_rdev);
-		/* XXX is there a better way to identify a given driver ? */
-		if (cdevsw[major].d_open == *irix_usemaopen &&
-		    minor == IRIX_USEMACLNDEV_MINOR)
-			error = 0;
-	}
+	if (vp->v_type == VCHR && vp->v_rdev == irix_usemaclonedev) {
+		if ((error = getnewvnode(VCHR, vp->v_mount, 
+		    irix_usema_vnodeop_p, 
+		    (struct vnode **)&fp->f_data)) != 0) {
+			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
+			FILE_UNUSE(fp, p);
+			ffree(fp);
+			fdremove(p->p_fd, fd);
+			return error;
+		}
+		
+		nvp = (struct vnode *)fp->f_data;
 
+		if (SCARG(uap, flags) & O_RDWR || SCARG(uap, flags) & O_WRONLY)
+			nvp->v_writecount++;
+
+		nvp->v_type = VCHR;
+		nvp->v_specinfo = (void *)malloc(sizeof(struct specinfo), 
+		    M_VNODE, M_WAITOK|M_ZERO);
+		nvp->v_rdev = vp->v_rdev;
+		nvp->v_specmountpoint = vp->v_specmountpoint;
+
+		nvp->v_data = (void *)vp;
+		vref(vp);
+	}
 	FILE_UNUSE(fp, p);
-	return (error);
+
+	return 0;
 }
