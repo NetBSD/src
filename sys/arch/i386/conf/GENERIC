@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.406 2001/06/03 13:46:58 tsutsui Exp $
+#	$NetBSD: GENERIC,v 1.407 2001/06/18 22:45:54 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.406 $"
+#ident 		"GENERIC-$Revision: 1.407 $"
 
 maxusers	32		# estimated number of users
 
@@ -557,12 +557,14 @@ epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 esh*	at pci? dev ? function ?	# Essential HIPPI card
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
-sip*	at pci? dev ? function ?	# SiS 900 Ethernet
+sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
+sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
@@ -641,6 +643,7 @@ icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
