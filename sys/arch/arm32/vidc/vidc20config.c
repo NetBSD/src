@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.2 2001/04/01 16:58:05 reinoud Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.3 2001/04/09 19:23:32 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -677,9 +677,7 @@ vidcvideo_init(void)
 		/*	vidcvideo_flash_go() */;
 
 	/* setting a mode goes wrong in 32 bpp ... 8 and 16 seem OK */
-#if 0
 	vidcvideo_setmode(vidc_currentmode);
-#endif
 
 	vidcvideo_textpalette();
 
