@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.18 2000/01/21 13:22:01 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.19 2001/03/15 03:01:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -161,6 +161,7 @@ _C_LABEL(fdciop):
 	.seg	"text"
 	.align	4
 
+/* XXXSMP: kernel lock perimeter? */
 _ENTRY(_C_LABEL(fdchwintr))
 	set	save_l, %l7
 	std	%l0, [%l7]
