@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.9 1997/09/13 17:25:15 mycroft Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.10 1997/10/06 13:18:52 enami Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -58,6 +58,7 @@
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciareg.h>
 
+#include <dev/isa/comreg.h>
 #include <dev/isa/comvar.h>
 #include <dev/isa/isareg.h>
 
@@ -203,6 +204,7 @@ com_pcmcia_attach(parent, self, aux)
 	}
 
 	sc->sc_iobase = -1;
+	sc->sc_frequency = COM_FREQ;
 
 	com_attach_subr(sc);
 
