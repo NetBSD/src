@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.144 2003/10/08 00:28:42 thorpej Exp $ */
+/*	$NetBSD: trap.c,v 1.145 2003/10/12 14:34:31 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.144 2003/10/08 00:28:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2003/10/12 14:34:31 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1039,6 +1039,7 @@ kfault:
 			tf->tf_out[0] = (rv == EACCES) ? EFAULT : rv;
 			return;
 		}
+		KSI_INIT_TRAP(&ksi);
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
@@ -1051,7 +1052,6 @@ kfault:
 			ksi.ksi_code = (rv == EACCES
 				? SEGV_ACCERR : SEGV_MAPERR);
 		}
-		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)v;
 		trapsignal(l, &ksi);
@@ -1325,6 +1325,7 @@ kfault:
 			KERNEL_UNLOCK();
 			return;
 		}
+		KSI_INIT_TRAP(&ksi);
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
@@ -1337,7 +1338,6 @@ kfault:
 			ksi.ksi_code = (rv == EACCES)
 				? SEGV_ACCERR : SEGV_MAPERR;
 		}
-		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_trap = type;
 		ksi.ksi_addr = (void *)sfva;
 		trapsignal(l, &ksi);
