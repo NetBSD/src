@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.15 1995/10/05 00:40:33 mycroft Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.16 1995/10/05 00:54:45 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -235,7 +235,7 @@ setflags(n)
 #define BICS(v,c,s)	BIC(v,c),BIS(v,s)
 
 	iflag = omode.c_iflag;
-	oflag = 0;
+	oflag = omode.c_oflag;
 	cflag = omode.c_cflag;
 	lflag = omode.c_lflag;
 
@@ -280,6 +280,11 @@ setflags(n)
 		oflag &= ~ONLCR;
 	}
 
+	if (!HT)
+		oflag |= OXTABS|OPOST;
+	else
+		oflag &= ~OXTABS;
+
 #ifdef XXX_DELAY
 	f |= delaybits();
 #endif
@@ -287,7 +292,7 @@ setflags(n)
 	if (n == 1) {		/* read mode flags */
 		if (RW) {
 			iflag = 0;
-			oflag = 0;
+			oflag &= ~OPOST;
 			BICS(cflag, CSIZE|PARENB|PARODD, CS8);
 			lflag = 0;
 		} else {
@@ -295,11 +300,6 @@ setflags(n)
 		}
 		goto out;
 	}
-
-	if (HT)
-		oflag &= ~OXTABS;
-	else
-		oflag |= OXTABS|OPOST;
 
 	if (n == 0)
 		goto out;
@@ -311,21 +311,33 @@ setflags(n)
 
 	if (CE)
 		lflag |= ECHOE;
+	else
+		lflag &= ~ECHOE;
 
 	if (CK)
 		lflag |= ECHOKE;
+	else
+		lflag &= ~ECHOKE;
 
 	if (PE)
 		lflag |= ECHOPRT;
+	else
+		lflag &= ~ECHOPRT;
 
 	if (EC)
 		lflag |= ECHO;
+	else
+		lflag &= ~ECHO;
 
 	if (XC)
 		lflag |= ECHOCTL;
+	else
+		lflag &= ~ECHOCTL;
 
 	if (DX)
 		lflag |= IXANY;
+	else
+		lflag &= ~IXANY;
 
 out:
 	tmode.c_iflag = iflag;
