@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.23 2001/07/29 15:21:33 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.24 2001/08/01 07:03:45 ichiro Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -125,6 +125,18 @@ attach	ipaqpcic at ipaqbus
 file	arch/hpcarm/dev/ipaq_pcic.c		ipaqpcic needs-flag
 
 file	arch/hpcarm/sa11x0/sa11xx_pcic.c	sacpcic | ipaqpcic
+
+# Atmel microcontroller
+device	atmelgpioif {}
+device	atmelgpio: atmelgpioif
+attach	atmelgpio at ipaqbus
+file	arch/hpcarm/dev/ipaq_atmelgpio.c	atmelgpio
+
+# uda1341 Codec
+device	udaif {}
+device	uda: udaif
+attach	uda at ipaqbus
+file	arch/hpcarm/dev/uda1341.c		uda
 
 # Include ISA stuff
 include "dev/isa/files.isa"
