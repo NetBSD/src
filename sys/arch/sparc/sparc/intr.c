@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 1997/12/03 22:32:06 mjacob Exp $ */
+/*	$NetBSD: intr.c,v 1.25 1998/03/29 05:10:45 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,10 +97,12 @@ strayintr(fp)
 	struct clockframe *fp;
 {
 	static int straytime, nstray;
+	char bits[64];
 	int timesince;
 
-	printf("stray interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%b\n",
-		fp->ipl, fp->pc, fp->npc, fp->psr, PSR_BITS);
+	printf("stray interrupt ipl 0x%x pc=0x%x npc=0x%x psr=%s\n",
+		fp->ipl, fp->pc, fp->npc, bitmask_snprintf(fp->psr,
+		       PSR_BITS, bits, sizeof(bits)));
 
 	timesince = time.tv_sec - straytime;
 	if (timesince <= 10) {
