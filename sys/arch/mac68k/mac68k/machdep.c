@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 1996/10/21 05:42:26 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.124 1996/10/23 14:12:37 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1375,7 +1375,8 @@ cpu_exec_aout_makecmds(p, epp)
 	int     error = ENOEXEC;
 
 #ifdef COMPAT_NOMID
-	if (epp->ep_hdr->a_midmag == ZMAGIC)	/* i.e., MID == 0. */
+	/* Check to see if MID == 0. */
+	if (((struct exec *) epp->ep_hdr)->a_midmag == ZMAGIC)
 		return exec_aout_prep_oldzmagic(p, epp);
 #endif
 
@@ -2482,7 +2483,7 @@ mac68k_set_io_offsets(base)
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc000;
 		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base;
+		SCSIBase = base + 0xf000;
 		break;
 	case MACH_CLASSQ2:
 		/*
@@ -2493,11 +2494,16 @@ mac68k_set_io_offsets(base)
 		Via1Base = (volatile u_char *) base;
 		sccA = (volatile u_char *) base + 0xc020;
 		ASCBase = (volatile u_char *) base + 0x14000;
-		SCSIBase = base;
+		SCSIBase = base + 0xf000;
+		break;
+	case MACH_CLASSAV:
+		Via1Base = (volatile u_char *) base;
+		sccA = (volatile u_char *) base + 0x4000;
+		ASCBase = NULL;
+		SCSIBase = base + 0x18000;
 		break;
 	case MACH_CLASSII:
 	case MACH_CLASSPB:
-	case MACH_CLASSAV:
 	case MACH_CLASSIIci:
 	case MACH_CLASSIIsi:
 	case MACH_CLASSIIvx:
