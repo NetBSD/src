@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.188 2002/09/18 01:46:24 chs Exp $	*/
+/*	$NetBSD: sd.c,v 1.189 2002/10/18 14:31:15 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,9 +54,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.188 2002/09/18 01:46:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.189 2002/10/18 14:31:15 junyoung Exp $");
 
 #include "opt_scsi.h"
+#include "opt_bufq.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -152,7 +153,11 @@ sdattach(parent, sd, periph, ops)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
 
+#ifdef NEW_BUFQ_STRATEGY
+	bufq_alloc(&sd->buf_queue, BUFQ_READ_PRIO|BUFQ_SORT_RAWBLOCK);
+#else
 	bufq_alloc(&sd->buf_queue, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+#endif
 
 	/*
 	 * Store information needed to contact our base driver

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.229 2002/10/02 16:33:37 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.230 2002/10/18 14:31:13 junyoung Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,12 +66,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.229 2002/10/02 16:33:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.230 2002/10/18 14:31:13 junyoung Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
 #endif /* WDCDEBUG */
 
+#include "opt_bufq.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -279,7 +280,11 @@ wdattach(parent, self, aux)
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	callout_init(&wd->sc_restart_ch);
+#ifdef NEW_BUFQ_STRATEGY
+	bufq_alloc(&wd->sc_q, BUFQ_READ_PRIO|BUFQ_SORT_RAWBLOCK);
+#else
 	bufq_alloc(&wd->sc_q, BUFQ_DISKSORT|BUFQ_SORT_RAWBLOCK);
+#endif
 
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
