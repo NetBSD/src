@@ -22,12 +22,18 @@
 
 #define TARGET_BYTES_BIG_ENDIAN 0
 
-#define NO_RELOC 0
-#define NOP_OPCODE 0x01
+#ifndef OBJ_VMS
+#ifndef BFD_ASSEMBLER
+enum reloc_type {
+  NO_RELOC, NO_RELOC2, RELOC_32, RELOC_GLOB_DAT, RELOC_JMP_TBL, RELOC_JMP_SLOT
+};
+#endif
+#endif
+#define NOP_OPCODE	0x01
+#define	NEED_FX_R_TYPE	1
 
 #define tc_aout_pre_write_hook(x)	{;}	/* not used */
 #define tc_crawl_symbol_chain(a)	{;}	/* not used */
-#define tc_headers_hook(a)		{;}	/* not used */
 #define md_operand(x)
 
 long md_chars_to_number PARAMS ((unsigned char *, int));

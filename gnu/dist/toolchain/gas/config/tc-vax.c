@@ -58,6 +58,15 @@ LITTLENUM_TYPE big_operand_bits[VIT_MAX_OPERANDS][SIZE_OF_LARGE_NUMBER];
 FLONUM_TYPE float_operand[VIT_MAX_OPERANDS];
 /* Above is made to point into big_operand_bits by md_begin(). */
 
+#ifndef OBJ_VMS
+#define	GLOBAL_OFFSET_TABLE_NAME	"__GLOBAL_OFFSET_TABLE_"
+#define	PROCEDURE_LINKAGE_TABLE_NAME	"__PROCEDURE_LINKAGE_TABLE_"
+static int flag_want_pic;
+symbolS *GOT_symbol;		/* Pre-defined "__GLOBAL_OFFSET_TABLE_" */
+symbolS *PLT_symbol;		/* Pre-defined "__PROCEDURE_LINKAGE_TABLE_" */
+#endif
+
+
 int flag_hash_long_names;	/* -+ */
 int flag_one;			/* -1 */
 int flag_show_after_trunc;	/* -H */
@@ -210,6 +219,15 @@ const relax_typeS md_relax_table[] =
   {BF, BB, 1, C (5, 1)},	/* Xob___,,foo      5,0 */
   {WF + 4, WB + 4, 6, C (5, 2)},/* Xob.+2,brb.+3,brw5,1 */
   {0, 0, 9, 0},			/* Xob.+2,brb.+6,jmp5,2 */
+  {1, 1, 0, 0},			/* unused	    5,3 */
+  {BF + 1, BB + 1, 2, C (6, 1)},/* B^"foo"	    6,0 */
+  {WF + 1, WB + 1, 3, C (6, 2)},/* W^"foo"	    6,1 */
+  {0, 0, 5, 0},			/* L^"foo"	    6,2 */
+  {1, 1, 0, 0},			/* unused	    6,3 */
+  {BF + 1, BB + 1, 2, C (7, 1)},/* B^"foo"	    7,0 */
+  {WF + 1, WB + 1, 3, C (7, 2)},/* W^"foo"	    7,1 */
+  {0, 0, 5, 0},			/* L^"foo"	    7,2 */
+  {1, 1, 0, 0},			/* unused	    7,3 */
 };
 
 #undef C
@@ -234,6 +252,8 @@ const pseudo_typeS md_pseudo_table[] =
 #define STATE_ALWAYS_BRANCH		(3)	/* includes BSB... */
 #define STATE_COMPLEX_BRANCH	        (4)
 #define STATE_COMPLEX_HOP		(5)
+#define STATE_PC_RELATIVE_CALL		(6)
+#define STATE_PC_RELATIVE_JMP		(7)
 
 #define STATE_BYTE			(0)
 #define STATE_WORD			(1)
@@ -994,7 +1014,15 @@ md_assemble (instruction_string)
 			       * the instruction, permitting relaxation.
 			       */
 			      p = frag_var (rs_machine_dependent, 5, 2,
-			       ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF),
+#ifndef OBJ_VMS
+			       (flag_want_pic && !at && (*(unsigned char *)opcode_low_byteP == 0xfa 
+				       || *(unsigned char *)opcode_low_byteP == 0xfb))
+				 ? ENCODE_RELAX (STATE_PC_RELATIVE_CALL, STATE_UNDF) :
+			       ((flag_want_pic && !at && (*(unsigned char *)opcode_low_byteP == 0x16 
+				       || *(unsigned char *)opcode_low_byteP == 0x17))
+				 ? ENCODE_RELAX (STATE_PC_RELATIVE_JMP, STATE_UNDF) :
+#endif
+			       ENCODE_RELAX (STATE_PC_RELATIVE, STATE_UNDF)),
 					    this_add_symbol, this_add_number,
 					    0);
 			      p[0] = at << 4;
@@ -1046,10 +1074,24 @@ md_assemble (instruction_string)
 			}
 		      else
 			{
+			  int reloc_type = NO_RELOC;
+			  int is_pcrel = 0;
 			  /* I^#... */
 			  know (nbytes);
 			  p = frag_more (nbytes + 1);
 			  know (operandP->vop_reg == 0xF);
+#ifndef OBJ_VMS
+			  if (flag_want_pic && operandP->vop_mode == 8
+				&& this_add_symbol != NULL)
+			    {
+			      as_warn ("Symbol used as immediate operand in PIC mode.");
+#if 0
+			      operandP->vop_mode = 0xf;	/* deferred pc-rel */
+			      reloc_type = RELOC_GLOB_DAT;
+			      is_pcrel = 1;
+#endif
+			    }
+#endif
 			  p[0] = (operandP->vop_mode << 4) | 0xF;
 			  if ((to_seg == SEG_ABSOLUTE) && (expP->X_op != O_big))
 			    {
@@ -1095,7 +1137,7 @@ md_assemble (instruction_string)
 				{
 				  fix_new (frag_now, p + 1 - frag_now->fr_literal,
 					   nbytes, this_add_symbol,
-					   this_add_number, 0, NO_RELOC);
+					   this_add_number, is_pcrel, reloc_type);
 				}
 			    }
 			}
@@ -1175,11 +1217,80 @@ md_estimate_size_before_relax (fragP, segment)
 	}
       else
 	{
+	  int reloc_type = NO_RELOC;
 	  p = fragP->fr_literal + old_fr_fix;
-	  p[0] |= VAX_PC_RELATIVE_MODE;	/* Preserve @ bit. */
+#ifndef OBJ_VMS
+	  /*
+	   * If this is to undefined symbol, then if it's an indirect
+	   * reference indicate that is can mutated into a GLOB_DAT
+	   * by the loader.  We restrict ourselves to no offset due to
+	   * a limitation in the NetBSD linker.
+	   */
+	  if ((p[0] & 0x10) == 0 && !fragP->fr_offset && !flag_want_pic)
+	    {
+	      reloc_type = NO_RELOC2;
+	    }
+	  if (GOT_symbol == NULL)
+	    GOT_symbol = symbol_find(GLOBAL_OFFSET_TABLE_NAME);
+	  if (PLT_symbol == NULL)
+	    PLT_symbol = symbol_find(PROCEDURE_LINKAGE_TABLE_NAME);
+	  if (flag_want_pic
+		&& (GOT_symbol == NULL || fragP->fr_symbol != GOT_symbol)
+		&& (PLT_symbol == NULL || fragP->fr_symbol != PLT_symbol)
+		&& fragP->fr_symbol != NULL
+		&& !S_IS_DEFINED(fragP->fr_symbol))
+	    {
+	      if (p[0] & 0x10)
+		as_fatal("PIC reference to %s is already indirect.\n",
+			 S_GET_NAME(fragP->fr_symbol));
+	      p[0] |= 0x10;		/* SET @ bit */
+	      reloc_type = RELOC_GLOB_DAT;
+	    }
+#endif
+	  p[0] |= VAX_PC_RELATIVE_MODE;
 	  fragP->fr_fix += 1 + 4;
 	  fix_new (fragP, old_fr_fix + 1, 4, fragP->fr_symbol,
-		   fragP->fr_offset, 1, NO_RELOC);
+		   fragP->fr_offset, 1, reloc_type);
+	  frag_wane (fragP);
+	}
+      break;
+
+    case ENCODE_RELAX (STATE_PC_RELATIVE_JMP, STATE_UNDF):
+      if (S_GET_SEGMENT (fragP->fr_symbol) == segment)
+	{			/* A relaxable case. */
+	  fragP->fr_subtype = ENCODE_RELAX (STATE_PC_RELATIVE_JMP, STATE_BYTE);
+	}
+      else
+	{
+	  p = fragP->fr_literal + old_fr_fix;
+	  p[0] |= VAX_PC_RELATIVE_MODE;		 /* don't force @ bit */
+	  fragP->fr_fix += 1 + 4;
+	  fix_new (fragP, old_fr_fix + 1, 4, fragP->fr_symbol,
+		   fragP->fr_offset, 1,
+#ifndef OBJ_VMS
+		   flag_want_pic ? RELOC_JMP_SLOT :
+#endif
+			 NO_RELOC);
+	  frag_wane (fragP);
+	}
+      break;
+
+    case ENCODE_RELAX (STATE_PC_RELATIVE_CALL, STATE_UNDF):
+      if (S_GET_SEGMENT (fragP->fr_symbol) == segment)
+	{			/* A relaxable case. */
+	  fragP->fr_subtype = ENCODE_RELAX (STATE_PC_RELATIVE_CALL, STATE_BYTE);
+	}
+      else
+	{
+	  p = fragP->fr_literal + old_fr_fix;
+	  p[0] |= VAX_PC_RELATIVE_MODE;		 /* don't force @ bit */
+	  fragP->fr_fix += 1 + 4;
+	  fix_new (fragP, old_fr_fix + 1, 4, fragP->fr_symbol,
+		   fragP->fr_offset, 1,
+#ifndef OBJ_VMS
+		   flag_want_pic ? RELOC_JMP_TBL :
+#endif
+		   NO_RELOC);
 	  frag_wane (fragP);
 	}
       break;
@@ -1256,7 +1367,11 @@ md_estimate_size_before_relax (fragP, segment)
 	  p[0] = VAX_PC_RELATIVE_MODE;	/* ...(PC) */
 	  fragP->fr_fix += 1 + 4;
 	  fix_new (fragP, old_fr_fix + 1, 4, fragP->fr_symbol,
-		   fragP->fr_offset, 1, NO_RELOC);
+		   fragP->fr_offset, 1,
+#ifndef OBJ_VMS
+		   flag_want_pic ? RELOC_JMP_SLOT :
+#endif
+		   NO_RELOC);
 	  frag_wane (fragP);
 	}
       break;
@@ -1310,6 +1425,8 @@ md_convert_frag (headers, seg, fragP)
   switch (fragP->fr_subtype)
     {
 
+    case ENCODE_RELAX (STATE_PC_RELATIVE_JMP, STATE_BYTE):
+    case ENCODE_RELAX (STATE_PC_RELATIVE_CALL, STATE_BYTE):
     case ENCODE_RELAX (STATE_PC_RELATIVE, STATE_BYTE):
       know (*addressP == 0 || *addressP == 0x10);	/* '@' bit. */
       addressP[0] |= 0xAF;	/* Byte displacement. */
@@ -1317,6 +1434,8 @@ md_convert_frag (headers, seg, fragP)
       extension = 2;
       break;
 
+    case ENCODE_RELAX (STATE_PC_RELATIVE_JMP, STATE_WORD):
+    case ENCODE_RELAX (STATE_PC_RELATIVE_CALL, STATE_WORD):
     case ENCODE_RELAX (STATE_PC_RELATIVE, STATE_WORD):
       know (*addressP == 0 || *addressP == 0x10);	/* '@' bit. */
       addressP[0] |= 0xCF;	/* Word displacement. */
@@ -1324,6 +1443,8 @@ md_convert_frag (headers, seg, fragP)
       extension = 3;
       break;
 
+    case ENCODE_RELAX (STATE_PC_RELATIVE_JMP, STATE_LONG):
+    case ENCODE_RELAX (STATE_PC_RELATIVE_CALL, STATE_LONG):
     case ENCODE_RELAX (STATE_PC_RELATIVE, STATE_LONG):
       know (*addressP == 0 || *addressP == 0x10);	/* '@' bit. */
       addressP[0] |= 0xEF;	/* Long word displacement. */
@@ -1455,6 +1576,7 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
 
   static const unsigned char nbytes_r_length[] = {42, 0, 1, 42, 2};
   long r_symbolnum;
+  int r_flags;
 
   know (fixP->fx_addsy != NULL);
 
@@ -1465,13 +1587,53 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
   r_symbolnum = (S_IS_DEFINED (fixP->fx_addsy)
 		 ? S_GET_TYPE (fixP->fx_addsy)
 		 : fixP->fx_addsy->sy_number);
+  r_flags = (fixP->fx_pcrel ? 1 : 0)
+      | (!S_IS_DEFINED (fixP->fx_addsy) ? 8 : 0)	/* extern */
+      | ((nbytes_r_length[fixP->fx_size] & 3) << 1);
 
-  where[6] = (r_symbolnum >> 16) & 0x0ff;
-  where[5] = (r_symbolnum >> 8) & 0x0ff;
-  where[4] = r_symbolnum & 0x0ff;
-  where[7] = ((((!S_IS_DEFINED (fixP->fx_addsy)) << 3) & 0x08)
-	      | ((nbytes_r_length[fixP->fx_size] << 1) & 0x06)
-	      | (((fixP->fx_pcrel << 0) & 0x01) & 0x0f));
+#if 0
+  r_flags |= ((!S_IS_DEFINED(fixP->fx_addsy)
+      && fixP->fx_pcrel
+      && fixP->fx_addsy != GOT_symbol
+      && fixP->fx_addsy != PLT_symbol
+      && flags_want_pic) ? 0x10 : 0);
+#endif
+	
+  switch (fixP->fx_r_type) {
+	case NO_RELOC:
+		break;
+	case NO_RELOC2:
+		if (r_flags & 8)
+		    r_flags |= 0x80;		/* setting the copy bit */
+						/*   says we can convert */
+						/*   to gotslot if needed */
+		break;
+	case RELOC_32:
+		if (flag_want_pic && S_IS_EXTERNAL(fixP->fx_addsy)) {
+			r_symbolnum = fixP->fx_addsy->sy_number;  
+			r_flags |= 8;		/* set extern bit */
+		}
+		break;
+	case RELOC_JMP_SLOT:
+		r_flags |= 0x20;		/* set jmptable */
+		r_flags &= ~0x08;		/* clear extern bit */
+		break;
+	case RELOC_JMP_TBL:
+		r_flags |= 0x20;		/* set jmptable */
+		r_flags |= 0x08;		/* set extern bit */
+		break;
+	case RELOC_GLOB_DAT:
+		r_flags |= 0x10;	/* set baserel bit */
+		r_symbolnum = fixP->fx_addsy->sy_number;
+		if (S_IS_EXTERNAL(fixP->fx_addsy))
+			r_flags |= 8;	/* set extern bit */
+		break;
+  }
+
+  where[4] = (r_symbolnum >>  0) & 0xff;
+  where[5] = (r_symbolnum >>  8) & 0xff;
+  where[6] = (r_symbolnum >> 16) & 0xff;
+  where[7] = r_flags;
 }
 
 /*
@@ -3115,7 +3277,7 @@ md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
 #ifdef OBJ_VMS
 CONST char *md_shortopts = "d:STt:V+1h:Hv::";
 #else
-CONST char *md_shortopts = "d:STt:V";
+CONST char *md_shortopts = "d:STt:Vk";
 #endif
 struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
@@ -3180,6 +3342,12 @@ md_parse_option (c, arg)
       break;
 #endif
 
+#ifndef OBJ_VMS
+    case 'k':   
+      flag_want_pic = 1;
+      break;			/* -pic, Position Independent Code */
+#endif
+
     default:
       return 0;
     }
@@ -3232,12 +3400,20 @@ md_section_align (segment, size)
 
 /* Exactly what point is a PC-relative offset relative TO?
    On the vax, they're relative to the address of the offset, plus
-   its size. (??? Is this right?  FIXME-SOON) */
+   its size. */
 long
 md_pcrel_from (fixP)
      fixS *fixP;
 {
   return fixP->fx_size + fixP->fx_where + fixP->fx_frag->fr_address;
+}
+
+void
+tc_headers_hook(headers)
+      object_headers *headers;
+{
+  N_SET_INFO(headers->header, OMAGIC, M_VAX, flag_want_pic ? 0x40 : 0);
+  headers->header.a_info = htonl(headers->header.a_info);
 }
 
 /* end of tc-vax.c */
