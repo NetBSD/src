@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.125 2003/10/25 19:12:08 christos Exp $	*/
+/*	$NetBSD: tulip.c,v 1.126 2003/12/18 18:39:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.125 2003/10/25 19:12:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.126 2003/12/18 18:39:36 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -480,6 +480,13 @@ tlp_attach(sc, enaddr)
 	    sc->sc_name[0] != '\0' ? sc->sc_name : "",
 	    sc->sc_name[0] != '\0' ? ", " : "",
 	    ether_sprintf(enaddr));
+
+	/*
+	 * Check to see if we're the simulated Ethernet on Connectix
+	 * Virtual PC.
+	 */
+	if (enaddr[0] == 0x00 && enaddr[1] == 0x03 && enaddr[2] == 0xff)
+		sc->sc_flags |= TULIPF_VPC;
 
 	/*
 	 * Initialize our media structures.  This may probe the MII, if
@@ -1355,6 +1362,27 @@ tlp_rxintr(sc)
 		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
+
+		/*
+		 * XXX Work-around for a weird problem with the emulated
+		 * 21041 on Connectix Virtual PC:
+		 *
+		 * When we receive a full-size TCP segment, we seem to get
+		 * a packet there the Rx status says 1522 bytes, yet we do
+		 * not get a frame-too-long error from the chip.  The extra
+		 * bytes seem to always be zeros.  Perhaps Virtual PC is
+		 * inserting 4 bytes of zeros after every packet.  In any
+		 * case, let's try and detect this condition and truncate
+		 * the length so that it will pass up the stack.
+		 */
+		if (__predict_false((sc->sc_flags & TULIPF_VPC) != 0)) {
+			uint16_t etype = ntohs(eh->ether_type);
+
+			if (len > ETHER_MAX_FRAME(ifp, etype,
+						  M_HASFCS))
+				m->m_pkthdr.len = m->m_len = len =
+				    ETHER_MAX_FRAME(ifp, etype, M_HASFCS);
+		}
 
 #if NBPFILTER > 0
 		/*
