@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2000/03/16 18:47:48 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2000/08/04 09:01:05 enami Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.16 2000/03/16 18:47:48 enami Exp $");
+__RCSID("$NetBSD: main.c,v 1.17 2000/08/04 09:01:05 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,13 +92,11 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "HLPXdf:hsx")) != -1)
 		switch (ch) {
 		case 'H':
-			ftsoptions |= FTS_COMFOLLOW;
-#if 0	/* XXX necessary? */
 			ftsoptions &= ~FTS_LOGICAL;
-#endif
+			ftsoptions |= FTS_PHYSICAL|FTS_COMFOLLOW;
 			break;
 		case 'L':
-			ftsoptions &= ~FTS_COMFOLLOW;
+			ftsoptions &= ~(FTS_COMFOLLOW|FTS_PHYSICAL);
 			ftsoptions |= FTS_LOGICAL;
 			break;
 		case 'P':
