@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.25 1999/10/06 05:01:05 mjacob Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.26 1999/10/17 06:13:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@ scsipi_kill_pending(sc_link)
 
 	while ((xs = TAILQ_FIRST(&sc_link->pending_xfers)) != NULL) {
 		xs->xs_status |= XS_STS_DONE;
-		xs->error = ENODEV;
+		xs->error = XS_DRIVER_STUFFUP;
 		scsipi_done(xs);
 	}
 }
