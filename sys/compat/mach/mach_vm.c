@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.36 2003/11/16 01:14:07 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.37 2003/11/24 15:06:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.36 2003/11/16 01:14:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.37 2003/11/24 15:06:09 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -432,7 +432,7 @@ mach_sys_map_fd(l, v, retval)
 
 	vput(vp);
 	FILE_UNUSE(fp, p);
-	DPRINTF(("mach_sya_map_fd: mapping at %p\n", (void *)evc.ev_addr));
+	DPRINTF(("mach_sys_map_fd: mapping at %p\n", (void *)evc.ev_addr));
 
 	va = (mach_vm_offset_t *)evc.ev_addr;
 
