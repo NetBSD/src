@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.13 1998/07/28 17:11:12 mycroft Exp $
+.\"	$NetBSD: mktemp.3,v 1.14 2001/06/22 20:09:05 aymeric Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -93,6 +93,12 @@ function
 is similar to
 .Fn mkstemp ,
 but it creates a mode 0700 directory instead and returns the path.
+.Pp
+Please note that the permissions of the file or directory being created are
+subject to the restrictions imposed by the
+.Xr umask 2
+system call. It may thus happen that the created file is unreadable and/or
+unwritable.
 .Sh RETURN VALUES
 The
 .Fn mktemp
@@ -156,7 +162,8 @@ function.
 .Xr chmod 2 ,
 .Xr getpid 2 ,
 .Xr open 2 ,
-.Xr stat 2
+.Xr stat 2 ,
+.Xr umask 2
 .Sh HISTORY
 A
 .Fn mktemp
