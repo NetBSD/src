@@ -26,6 +26,9 @@ typedef struct MASTER_SERV {
     union {
 	struct INET_ADDR_LIST *inet;
     } addr_list;
+    union {
+	struct INET_ADDR_LIST *inet;
+    } addr_list_buf;
     int     max_proc;			/* upper bound on # processes */
     char   *path;			/* command pathname */
     struct ARGV *args;			/* argument vector */
