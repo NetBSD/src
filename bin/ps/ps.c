@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.46 2001/12/20 20:10:34 soren Exp $	*/
+/*	$NetBSD: ps.c,v 1.47 2002/06/19 08:11:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.46 2001/12/20 20:10:34 soren Exp $");
+__RCSID("$NetBSD: ps.c,v 1.47 2002/06/19 08:11:56 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,6 @@ struct varent *vhead, *vtail;
 int	eval;			/* exit value */
 int	rawcpu;			/* -C */
 int	sumrusage;		/* -S */
-int	dontuseprocfs;		/* -K */
 int	termwidth;		/* width of screen (0 == infinity) */
 int	totwidth;		/* calculated width of requested variables */
 
@@ -202,8 +201,7 @@ main(argc, argv)
 			jfmt[0] = '\0';
 			break;
 		case 'K':
-			dontuseprocfs=1;
-			break;
+			break;			/* no-op - was dontuseprocfs */
 		case 'L':
 			showkey();
 			exit(0);
@@ -215,7 +213,6 @@ main(argc, argv)
 			break;
 		case 'M':
 			memf = optarg;
-			dontuseprocfs = 1;
 			break;
 		case 'm':
 			sortby = SORTMEM;
@@ -346,14 +343,8 @@ main(argc, argv)
 	} else
 		kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
 		
-	if (kd == 0) {
-		if (dontuseprocfs)
-			errx(1, "%s", errbuf);
-		else {
-			warnx("kvm_openfiles: %s", errbuf);
-			fprintf(stderr, "ps: falling back to /proc-based lookup\n");
-		}
-	}
+	if (kd == 0)
+		errx(1, "%s", errbuf);
 
 	if (!fmt)
 		parsefmt(dfmt);
@@ -368,26 +359,9 @@ main(argc, argv)
 	 */
 	if (!kd || !(kinfo = getkinfo_kvm(kd, what, flag, &nentries)))
 	{
-		/*  If/when the /proc-based code is ripped out
-		 *  again, make sure all references to the -K
-		 *  option are also pulled (getopt(), usage(),
-		 *  man page).  See the man page comments about
-		 *  this for more details.  */
 		if (kd)
 			warnx("%s.", kvm_geterr(kd));
-		if (dontuseprocfs)
-			exit(1);
-
-		/*  procfs_getprocs supports all but the
-		 *  KERN_PROC_RUID flag.  */
-		kinfo = getkinfo_procfs(what, flag, &nentries);
-		if (kinfo == 0)
-			errx(1, "fallback /proc-based lookup also failed.  %s",
-			    "Giving up...");
-		fprintf(stderr, "%s%s",
-		    "Warning:  /proc does not provide ",
-		    "valid data for all fields.\n");
-		use_procfs = 1;
+		exit(1);
 	}
 	if (nentries == 0) {
 		printheader();
@@ -558,7 +532,7 @@ usage()
 
 	(void)fprintf(stderr,
 	    "usage:\t%s\n\t   %s\n\t%s\n",
-	    "ps [-acCehjKlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
+	    "ps [-acCehjlmrSTuvwx] [-O|o fmt] [-p pid] [-t tty]",
 	    "[-M core] [-N system] [-W swap] [-U username]",
 	    "ps [-L]");
 	exit(1);

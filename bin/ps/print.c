@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.73 2002/06/17 16:48:44 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.74 2002/06/19 08:11:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.73 2002/06/17 16:48:44 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.74 2002/06/19 08:11:55 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -299,11 +299,7 @@ command(ki, ve, mode)
 	if (needcomm) {
 		name = ki->p_comm;
 		if (!commandonly) {
-			argv = NULL;
-			if (!use_procfs)
-				argv = kvm_getargv2(kd, ki, termwidth);
-			else
-				argv = procfs_getargv(ki, termwidth);
+			argv = kvm_getargv2(kd, ki, termwidth);
 			if ((p = argv) != NULL) {
 				while (*p) {
 					fmt_puts(*p, &left);
@@ -320,10 +316,6 @@ command(ki, ve, mode)
 					fmt_putc('(', &left);
 					fmt_puts(name, &left);
 					fmt_putc(')', &left);
-				}
-				if (use_procfs) {
-					free(argv[0]);
-					free(argv);
 				}
 			} else {
 				/*
