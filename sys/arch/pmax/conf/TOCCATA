@@ -2,7 +2,7 @@
 # GENERIC DECstation (3100 or 5000/xxx)
 #
 #	from: @(#)GENERIC.pmax	8.1 (Berkeley) 6/29/93
-# 	$Id: TOCCATA,v 1.1 1995/01/18 06:14:27 mellon Exp $
+# 	$Id: TOCCATA,v 1.2 1995/04/11 10:52:33 mellon Exp $
 #
 machine		pmax
 
@@ -42,7 +42,7 @@ options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 options		COMPAT_ULTRIX	# ultrix compatibility
 
 #config		netbsd swap generic
-config		netbsd root on rz2a swap on rz2b dumps on rz2b
+config		netbsd root on rz4a swap on rz4b dumps on rz4b
 
 controller	dtop0	at nexus0 csr ?
 controller	sfb0	at nexus0 csr ?
@@ -63,3 +63,4 @@ pseudo-device	pty		64	# pseudo ptys
 pseudo-device	loop
 pseudo-device	ether
 pseudo-device	sl		1	# Serial Line IP...
+pseudo-device	rcons
