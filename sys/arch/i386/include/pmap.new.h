@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.h,v 1.8 1999/05/05 05:21:14 chs Exp $	*/
+/*	$NetBSD: pmap.new.h,v 1.9 1999/05/12 19:28:30 thorpej Exp $	*/
 
 /*
  *
@@ -41,6 +41,7 @@
 
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
+#include <machine/segments.h>
 #include <uvm/uvm_object.h>
 
 /*
@@ -254,12 +255,22 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
 
 struct pmap {
   struct uvm_object pm_obj;	/* object (lck by object lock) */
+#define	pm_lock	pm_obj.vmobjlock
   LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
   pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
   u_int32_t pm_pdirpa;		/* PA of PD (read-only after create) */
   struct vm_page *pm_ptphint;	/* pointer to a random PTP in our pmap */
   struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
+
+  int pm_flags;			/* see below */
+
+  union descriptor *pm_ldt;	/* user-set LDT */
+  int pm_ldt_len;		/* number of LDT entries */
+  int pm_ldt_sel;		/* LDT selector */
 };
+
+/* pm_flags */
+#define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
 
 /*
  * for each managed physical page we maintain a list of <PMAP,VA>'s
@@ -516,6 +527,11 @@ vm_prot_t prot;
 }                                               
 
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+
+#if defined(USER_LDT)
+void	pmap_ldt_cleanup __P((struct proc *));
+#define	PMAP_FORK
+#endif /* USER_LDT */
 
 #endif /* _KERNEL */
 #endif	/* _I386_PMAP_H_ */
