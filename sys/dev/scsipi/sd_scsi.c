@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.25 2002/10/02 16:52:54 thorpej Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.26 2002/10/04 03:43:06 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.25 2002/10/02 16:52:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.26 2002/10/04 03:43:06 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,6 +320,8 @@ fake_it:
 	 * different. but we have to put SOMETHING here..)
 	 */
 	sectors = scsipi_size(sd->sc_periph, flags);
+	if (sectors == 0)
+		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 	dp->blksize = 512;
 	dp->disksize = sectors;
 	/* Try calling driver's method for figuring out geometry. */
