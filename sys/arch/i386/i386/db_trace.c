@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.42 2004/02/27 22:52:03 dbj Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.43 2004/02/28 01:00:30 dbj Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.42 2004/02/27 22:52:03 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.43 2004/02/28 01:00:30 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,7 +368,7 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 	int *retaddr, *arg0;
 	int		*argp;
 	db_addr_t	callpc;
-	int		is_trap = 0;
+	int		is_trap;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
 
@@ -431,6 +431,9 @@ db_stack_trace_print(db_expr_t addr, boolean_t have_addr, db_expr_t count,
 		char	*argnames[MAXNARG], **argnp = NULL;
 		db_addr_t	lastcallpc;
 
+		name = "?";
+		is_trap = NONE;
+		offset = 0;
 		sym = db_frame_info(frame, callpc, &name, &offset, &is_trap,
 				    &narg);
 
