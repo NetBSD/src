@@ -1,4 +1,4 @@
-.\"	$NetBSD: test.1,v 1.6 1995/03/21 07:04:03 cgd Exp $
+.\"	$NetBSD: test.1,v 1.7 1996/01/05 12:39:30 pk Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,6 +87,14 @@ True if
 .Ar file
 exists and its set group ID flag
 is set.
+.It Fl h Ar file
+True if
+.Ar file
+exists and is a symbolic link.
+This operator is retained for compatibility with previous versions of
+this program. Do not rely on its existence; use
+.Fl L
+instead.
 .It Fl k Ar file
 True if
 .Ar file
