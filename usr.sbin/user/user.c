@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.39 2001/06/23 02:42:32 itojun Exp $ */
+/* $NetBSD: user.c,v 1.40 2001/08/17 08:29:00 joda Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.39 2001/06/23 02:42:32 itojun Exp $");
+__RCSID("$NetBSD: user.c,v 1.40 2001/08/17 08:29:00 joda Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1457,7 +1457,7 @@ usermod(int argc, char **argv)
 	if ((u.u_flags & F_MKDIR) && !(u.u_flags & F_HOMEDIR) &&
 	    !(u.u_flags & F_USERNAME)) {
 		warnx("option 'm' useless without 'd' or 'l' -- ignored");
-		u.u_flags &= !F_MKDIR;
+		u.u_flags &= ~F_MKDIR;
 	}
 	argc -= optind;
 	argv += optind;
