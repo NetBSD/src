@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.7 2001/11/23 22:02:40 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.7.4.1 2002/03/17 06:37:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.7 2001/11/23 22:02:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.7.4.1 2002/03/17 06:37:50 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.7 2001/11/23 22:02:40 jdolecek
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/namei.h>
+#include <sys/rwlock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -61,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.7 2001/11/23 22:02:40 jdolecek
 /* this is provided by kern/kern_exec.c */
 extern int exec_maxhdrsz;
 #if defined(LKM) || defined(_LKM)
-extern struct lock exec_lock;
+extern krwlock_t exec_rwlock;
 #endif
 
 /* 
@@ -140,7 +141,7 @@ netbsd32_execve2(p, uap, retval)
 	pack.ep_flags = 0;
 
 #if defined(LKM) || defined(_LKM)
-	lockmgr(&exec_lock, LK_SHARED, NULL);
+	rw_enter(&exec_rwlock, RW_READER);
 #endif
 
 	/* see if we can run it. */
@@ -462,7 +463,7 @@ netbsd32_execve2(p, uap, retval)
 #endif
 
 #if defined(LKM) || defined(_LKM)
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_rwlock);
 #endif
 
 	return (EJUSTRETURN);
@@ -484,7 +485,7 @@ bad:
 
 freehdr:
 #if defined(LKM) || defined(_LKM)
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_rwlock);
 #endif
 
 	free(pack.ep_hdr, M_EXEC);
@@ -492,7 +493,7 @@ freehdr:
 
 exec_abort:
 #if defined(LKM) || defined(_LKM)
-	lockmgr(&exec_lock, LK_RELEASE, NULL);
+	rw_exit(&exec_rwlock);
 #endif
 
 	/*
