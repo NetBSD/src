@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.1 1995/04/11 10:23:32 mellon Exp $	*/
+/*	$NetBSD: rcons.c,v 1.2 1995/04/21 01:24:33 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,36 +86,25 @@ struct tty *fbconstty;		/* Frame buffer console tty... */
 struct tty rcons_tty [NRCONS];	/* Console tty struct... */
 extern struct consdev *cn_tab;	/* Console I/O table... */
 
-void no_blank ()
-{
-}
+/* rcons_connect is called by fbconnect when the first frame buffer is
+   attached.   That frame buffer will always be the console frame buffer. */
 
-cons_fb_init (fp, bpp, linebytes, cmsize)
-	struct pmax_fb *fp;
-	int bpp, linebytes, cmsize;
+rcons_connect (info)
+	struct fbinfo *info;
 {
 	static struct fbdevice fb;
-	static struct fbdriver fd = { no_blank };
-	static struct fbtype ft;
 	static int row, col;
-	extern int (*v_putc)();
+	extern int (*v_putc)(int);
 
 	fbconstty = &rcons_tty [0];
 	fbconstty->t_dev = makedev(85, 0);	/* /dev/console */
 	fbconstty->t_ispeed = fbconstty->t_ospeed = TTYDEF_SPEED;
 	fbconstty->t_param = (int (*)(struct tty *, struct termios *))nullop;
 
-	ft.fb_height = fp -> fbu -> scrInfo.max_y;
-	ft.fb_width = fp -> fbu -> scrInfo.max_x;
-	ft.fb_depth = bpp;
-	ft.fb_cmsize = cmsize;
-	ft.fb_size = fp -> fr_size;
+	/* Connect the console geometry... */
+	fb.fb_devinfo = info;
 
-	fb.fb_type = ft;
-	fb.fb_pixels = (caddr_t)fp -> fr_addr;
-	fb.fb_linebytes = linebytes;
-	fb.fb_driver = &fd;
-	fb.fb_device = (struct device *)0;
+	/* Initialize the state information. */
 	fb.fb_bits = 0;
 	fb.fb_ringing = 0;
 	fb.fb_belldepth = 0;
@@ -128,21 +117,19 @@ cons_fb_init (fp, bpp, linebytes, cmsize)
 	fb.fb_col = &col;
 
 	fb.fb_maxrow = 80;
-	fb.fb_maxcol = 25;
+	fb.fb_maxcol = 34;
 	rcons_init (&fb);
 
 	cn_tab -> cn_putc = v_putc;
 	cn_tab -> cn_dev = makedev (85, 0);
-	constty = fbconstty;
-printf ("Console should be working...\n");
-rcons_puts (&fb, "\033[H\033[JTesting rcons_puts\n", 26);
+/*	constty = fbconstty; */
 }
 
 /* ARGSUSED */
 rconsattach (n)
 	int n;
 {
-	printf ("rcons%d\n");
+	printf ("rcons%d\n", n);
 }
 
 /* ARGSUSED */
@@ -210,9 +197,17 @@ rconswrite(dev, uio, flag)
 	int flag;
 {
 	register struct tty *tp;
-	
+
 	tp = &rcons_tty [0];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+rconstty(dev)
+        dev_t dev;
+{
+        register struct tty *tp = &rcons_tty [0];
+        return (tp);
 }
 
 rconsioctl(dev, cmd, data, flag, p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.8 1994/10/26 21:08:56 cgd Exp $	*/
+/*	$NetBSD: dc.c,v 1.9 1995/04/21 01:24:29 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -333,6 +333,14 @@ dcwrite(dev, uio, flag)
 
 	tp = dc_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+dctty(dev)
+        dev_t dev;
+{
+        struct tty *tp = dc_tty [minor (dev)];
+        return (tp);
 }
 
 /*ARGSUSED*/
