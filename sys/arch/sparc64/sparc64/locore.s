@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.134 2001/08/07 00:03:27 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.135 2001/08/08 18:30:45 eeh Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -3040,18 +3040,18 @@ datafault:
 Ldatafault_internal:
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1,%o2) should not fault
 !	ldx	[%sp + CC64FSZ + STKB + TF_FAULT], %g1		! DEBUG make sure this has not changed
-	mov	%g1, %o5				! Move these to the out regs so we can save the globals
-	mov	%g2, %o1
-	mov	%g3, %o2
+	mov	%g1, %o0				! Move these to the out regs so we can save the globals
+	mov	%g2, %o4
+	mov	%g3, %o5
 
-	ldxa	[%g0] ASI_AFAR, %o3			! get async fault address
-	ldxa	[%g0] ASI_AFSR, %o4			! get async fault status
+	ldxa	[%g0] ASI_AFAR, %o2			! get async fault address
+	ldxa	[%g0] ASI_AFSR, %o3			! get async fault status
 	mov	-1, %g7
 	stxa	%g7, [%g0] ASI_AFSR			! And clear this out, too
 	membar	#Sync					! No real reason for this XXXX
 
 #ifdef TRAPTRACE
-	rdpr	%tt, %o0				! find out what trap brought us here
+	rdpr	%tt, %o1				! find out what trap brought us here
 	wrpr	%g0, 0x69, %tt	! We claim to be trap type 69, not a valid trap
 	TRACEME
 	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
@@ -3061,7 +3061,7 @@ Ldatafault_internal:
 	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
 
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]	! save g1
-	rdpr	%tt, %o0				! find out what trap brought us here
+	rdpr	%tt, %o1				! find out what trap brought us here
 #endif
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + (2*8)]	! save g2
 	rdpr	%tstate, %g1
@@ -3079,8 +3079,8 @@ Ldatafault_internal:
 	set	DATA_START, %g7				! debug
 	set	0x21, %g6				! debug
 	stb	%g6, [%g7 + 0x20]			! debug
-	sth	%o0, [%sp + CC64FSZ + STKB + TF_TT]! debug
 #endif
+	sth	%o1, [%sp + CC64FSZ + STKB + TF_TT]
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]		! set tf.tf_npc
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
@@ -3123,25 +3123,28 @@ Ldatafault_internal:
 	!! In our case we need to clear it before calling any C-code
 	clr	%g4
 
-	/* Use trap type to see what handler to call */
-	cmp	%o0, T_FIMMU_MISS
-	st	%g4, [%sp + CC64FSZ + STKB + TF_Y]	! set tf.tf_y
-	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
-	bl	data_error
-	 wrpr	%g0, PSTATE_INTR, %pstate		! reenable interrupts
+	/*
+	 * Right now the registers have the following values:
+	 *
+	 *	%o0 -- MMU_TAG_ACCESS
+	 *	%o1 -- TT
+	 *	%o2 -- afar
+	 *	%o3 -- afsr
+	 *	%o4 -- sfar
+	 *	%o5 -- sfsr
+	 */
+	
+	cmp	%o1, T_DATA_ERROR
+	st	%g4, [%sp + CC64FSZ + STKB + TF_Y]
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
+	be,pn	%icc, data_error
+	 wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
 
-	mov	%o5, %o1				! (argument:	trap address)
-	mov	%g2, %o2				! (argument:	trap pc)
-	call	_C_LABEL(data_access_fault)		! data_access_fault(type, addr, pc, &tf);
-	 add	%sp, CC64FSZ + STKB, %o3				! (argument: &tf)
-
-	ba	data_recover
-	 nop
-
-data_error:
-	call	_C_LABEL(data_access_error)		! data_access_error(type, sfva, sfsr,
-							!		afva, afsr, &tf);
-	 add	%sp, CC64FSZ + STKB, %o5				! (argument: &tf)
+	mov	%o0, %o3			! (argument: trap address)
+	mov	%g2, %o2			! (argument: trap pc)
+	call	_C_LABEL(data_access_fault)	! data_access_fault(&tf, type, 
+						!	pc, addr, sfva, sfsr)
+	 add	%sp, CC64FSZ + STKB, %o0	! (argument: &tf)
 
 data_recover:
 	CHKPT(%o1,%o2,1)
@@ -3155,6 +3158,15 @@ data_recover:
 	b	return_from_trap			! go return
 	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1		! Load this for return_from_trap
 	NOTREACHED
+
+data_error:
+	call	_C_LABEL(data_access_error)	! data_access_error(&tf, type, 
+						!	afva, afsr, sfva, sfsr)
+	 add	%sp, CC64FSZ + STKB, %o0	! (argument: &tf)
+	ba	data_recover
+	 nop
+	NOTREACHED
+
 /*
  * Each memory instruction access fault from a fast access handler comes here.
  * We will quickly check if this is an original prom mapping before going
@@ -3308,22 +3320,22 @@ textfault:
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1,%o2)
 
-	mov	%g3, %o2
+	mov	%g3, %o3
 
 	wrpr	%g0, PSTATE_KERN, %pstate		! Switch to normal globals
-	ldxa	[%g0] ASI_AFSR, %o3			! get async fault status
-	ldxa	[%g0] ASI_AFAR, %o4			! get async fault address
+	ldxa	[%g0] ASI_AFSR, %o4			! get async fault status
+	ldxa	[%g0] ASI_AFAR, %o5			! get async fault address
 	mov	-1, %o0
 	stxa	%o0, [%g0] ASI_AFSR			! Clear this out
 	membar	#Sync					! No real reason for this XXXX
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]	! save g1
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + (2*8)]	! save g2
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + (3*8)]	! (sneak g3 in here)
-	rdpr	%tt, %o0				! Find out what caused this trap
+	rdpr	%tt, %o1				! Find out what caused this trap
 	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + (4*8)]	! sneak in g4
 	rdpr	%tstate, %g1
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + (5*8)]	! sneak in g5
-	rdpr	%tpc, %o1				! sync virt addr; must be read first
+	rdpr	%tpc, %o2				! sync virt addr; must be read first
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + (6*8)]	! sneak in g6
 	rdpr	%tnpc, %g3
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + (7*8)]	! sneak in g7
@@ -3331,9 +3343,9 @@ textfault:
 
 	/* Finish stackframe, call C trap handler */
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]		! set tf.tf_psr, tf.tf_pc
-	sth	%o0, [%sp + CC64FSZ + STKB + TF_TT]! debug
+	sth	%o1, [%sp + CC64FSZ + STKB + TF_TT]! debug
 
-	stx	%o1, [%sp + CC64FSZ + STKB + TF_PC]
+	stx	%o2, [%sp + CC64FSZ + STKB + TF_PC]
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]		! set tf.tf_npc
 
 	rdpr	%pil, %g5
@@ -3354,28 +3366,27 @@ textfault:
 	clr	%g4
 
 	/* Use trap type to see what handler to call */
-	cmp	%o0, T_FIMMU_MISS
-	bl	text_error
+	cmp	%o1, T_INST_ERROR
+	be,pn	%xcc, text_error
 	 st	%g7, [%sp + CC64FSZ + STKB + TF_Y]		! set tf.tf_y
 
 	wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
-	call	_C_LABEL(text_access_fault)	! mem_access_fault(type, pc, &tf);
-	 add	%sp, CC64FSZ + STKB, %o2	! (argument: &tf)
-
-	ba	text_recover
-	 nop
-
-text_error:
-	wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
-	call	_C_LABEL(text_access_error)	! mem_access_fault(type, sfva [pc], sfsr,
-						!		afva, afsr, &tf);
-	 add	%sp, CC64FSZ + STKB, %o5	! (argument: &tf)
-
+	call	_C_LABEL(text_access_fault)	! mem_access_fault(&tf, type, pc, sfsr)
+	 add	%sp, CC64FSZ + STKB, %o0	! (argument: &tf)
 text_recover:
 	CHKPT(%o1,%o2,2)
 	wrpr	%g0, PSTATE_KERN, %pstate	! disable interrupts
 	b	return_from_trap		! go return
 	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
+	NOTREACHED
+
+text_error:
+	wrpr	%g0, PSTATE_INTR, %pstate	! reenable interrupts
+	call	_C_LABEL(text_access_error)	! mem_access_fault(&tfm type, sfva [pc], sfsr,
+						!		afva, afsr);
+	 add	%sp, CC64FSZ + STKB, %o0	! (argument: &tf)
+	ba	text_recover
+	 nop
 	NOTREACHED
 
 /*
@@ -3441,19 +3452,19 @@ slowtrap:
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 Lslowtrap_reenter:
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
-	mov	%g4, %o0		! (type)
+	mov	%g4, %o1		! (type)
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_PC]
 	rd	%y, %g5
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_NPC]
-	mov	%g1, %o1		! (pstate)
+	mov	%g1, %o3		! (pstate)
 	st	%g5, [%sp + CC64FSZ + STKB + TF_Y]
 	mov	%g2, %o2		! (pc)
-	sth	%o0, [%sp + CC64FSZ + STKB + TF_TT]! debug
+	sth	%o1, [%sp + CC64FSZ + STKB + TF_TT]! debug
 
 	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + (1*8)]
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + (2*8)]
-	add	%sp, CC64FSZ + STKB, %o3		! (&tf)
+	add	%sp, CC64FSZ + STKB, %o0		! (&tf)
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + (3*8)]
 	stx	%g4, [%sp + CC64FSZ + STKB + TF_G + (4*8)]
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + (5*8)]
@@ -3476,7 +3487,7 @@ Lslowtrap_reenter:
 
 	wr	%g0, ASI_PRIMARY_NOFAULT, %asi		! Restore default ASI
 	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
-	call	_C_LABEL(trap)			! trap(type, pstate, pc, &tf)
+	call	_C_LABEL(trap)			! trap(tf, type, pc, pstate)
 	 nop
 
 	CHKPT(%o1,%o2,3)
@@ -3822,14 +3833,14 @@ syscall_setup:
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 
 #ifdef DEBUG
-	rdpr	%tt, %o0	! debug
-	sth	%o0, [%sp + CC64FSZ + STKB + TF_TT]! debug
+	rdpr	%tt, %o1	! debug
+	sth	%o1, [%sp + CC64FSZ + STKB + TF_TT]! debug
 #endif
 
-	wrpr	%g0, PSTATE_KERN, %pstate		! Get back to normal globals
+	wrpr	%g0, PSTATE_KERN, %pstate	! Get back to normal globals
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_G + ( 1*8)]
-	mov	%g1, %o0				! code
-	rdpr	%tpc, %o2				! (pc)
+	mov	%g1, %o1			! code
+	rdpr	%tpc, %o2			! (pc)
 	stx	%g2, [%sp + CC64FSZ + STKB + TF_G + ( 2*8)]
 	rdpr	%tstate, %g1
 	stx	%g3, [%sp + CC64FSZ + STKB + TF_G + ( 3*8)]
@@ -3839,9 +3850,9 @@ syscall_setup:
 	stx	%g5, [%sp + CC64FSZ + STKB + TF_G + ( 5*8)]
 	stx	%g6, [%sp + CC64FSZ + STKB + TF_G + ( 6*8)]
 	CHKPT(%g5,%g6,0x31)
-	wrpr	%g0, 0, %tl				! return to tl=0
+	wrpr	%g0, 0, %tl			! return to tl=0
 	stx	%g7, [%sp + CC64FSZ + STKB + TF_G + ( 7*8)]
-	add	%sp, CC64FSZ + STKB, %o1		! (&tf)
+	add	%sp, CC64FSZ + STKB, %o0	! (&tf)
 
 	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
 	stx	%o2, [%sp + CC64FSZ + STKB + TF_PC]
@@ -3855,15 +3866,14 @@ syscall_setup:
 	!! In the EMBEDANY memory model %g4 points to the start of the data segment.
 	!! In our case we need to clear it before calling any C-code
 	clr	%g4
+	wr	%g0, ASI_PRIMARY_NOFAULT, %asi	! Restore default ASI
 
-!	flushw			! DEBUG
-!	ldx	[%sp + CC64FSZ + STKB + TF_G + ( 1*8)], %o0	! (code)
-	call	_C_LABEL(syscall)		! syscall(code, &tf, pc, suncompat)
+	call	_C_LABEL(syscall)		! syscall(&tf, code, pc)
 	 wrpr	%g0, PSTATE_INTR, %pstate	! turn on interrupts
 
 	/* see `proc_trampoline' for the reason for this label */
 return_from_syscall:
-	wrpr	%g0, PSTATE_KERN, %pstate		! Disable intterrupts
+	wrpr	%g0, PSTATE_KERN, %pstate	! Disable intterrupts
 	CHKPT(%o1,%o2,0x32)
 	wrpr	%g0, 0, %tl			! Return to tl==0
 	CHKPT(%o1,%o2,4)
@@ -6069,18 +6079,18 @@ _C_LABEL(dcache_flush_page):
 
 	mov	-1, %o1		! Generate mask for tag: bits [29..2]
 	srlx	%o0, 13-2, %o2	! Tag is VA bits <40:13> in bits <29:2>
+	clr	%o4
 	srl	%o1, 2, %o1	! Now we have bits <29:0> set
+	set	(2*NBPG), %o5
 	andn	%o1, 3, %o1	! Now we have bits <29:2> set
 
-	set	(2*NBPG), %o5
-	clr	%o4
 1:
 	ldxa	[%o4] ASI_DCACHE_TAG, %o3
+	dec	16, %o5
 	xor	%o3, %o2, %o3
 	andcc	%o3, %o1, %g0
 	bne,pt	%xcc, 2f
-	 dec	16, %o5
-	membar	#LoadStore
+	 membar	#LoadStore
 	stxa	%g0, [%o4] ASI_DCACHE_TAG
 	membar	#StoreLoad
 2:
@@ -6088,20 +6098,20 @@ _C_LABEL(dcache_flush_page):
 	 inc	16, %o4
 
 	!! Now do the I$
-	mov	-1, %o1		! Generate mask for tag: bits [35..8]
 	srlx	%o0, 13-8, %o2
+	mov	-1, %o1		! Generate mask for tag: bits [35..8]
 	srl	%o1, 32-35+7, %o1
-	sll	%o1, 7, %o1	! Mask
-
-	set	(2*NBPG), %o5
 	clr	%o4
+	sll	%o1, 7, %o1	! Mask
+	set	(2*NBPG), %o5
+	
 1:
 	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
+	dec	16, %o5
 	xor	%g1, %o2, %g1
 	andcc	%g1, %o1, %g0
 	bne,pt	%xcc, 2f
-	 dec	16, %o5
-	membar	#LoadStore
+	 membar	#LoadStore
 	stxa	%g0, [%o4] ASI_ICACHE_TAG
 	membar	#StoreLoad
 2:
