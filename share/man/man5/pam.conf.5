@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam.conf.5,v 1.6 2005/03/09 17:07:00 wiz Exp $
+.\"	$NetBSD: pam.conf.5,v 1.7 2005/03/16 18:51:09 christos Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -193,6 +193,23 @@ auth	required	pam_nologin.so
 auth	sufficient	pam_krb5.so
 auth	required	pam_unix.so
 .Ed
+.Sh NOTES
+It is important to note that loading a chain will fail if any of the
+components of the chain fail to load or are not available.
+A common situation when this can happen is on a system that where
+components such as
+.Xr kerberos 1
+or
+.Xr crypto 3
+have not been installed.
+In that situation
+.Xr pam_krb5 8 ,
+.Xr pam_ksu 8 ,
+or
+.Xr pam_ssh 8
+might not be present in the system.
+In order for a chain to load properly all non-present components must
+be removed from the chain.
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr passwd 1 ,
