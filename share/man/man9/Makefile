@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.144 2003/09/07 11:24:34 yamt Exp $
+#       $NetBSD: Makefile,v 1.145 2003/09/07 21:14:22 seb Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -355,8 +355,7 @@ MLINKS+=pmc.9 pmc_get_num_counters.9 \
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
 	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
-MLINKS+=pool_cache.9 pool_cache.9 \
-	pool_cache.9 pool_cache_init.9 \
+MLINKS+=pool_cache.9 pool_cache_init.9 \
 	pool_cache.9 pool_cache_destroy.9 \
 	pool_cache.9 pool_cache_get_paddr.9 \
 	pool_cache.9 pool_cache_get.9 \
