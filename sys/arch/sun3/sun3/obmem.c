@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.c,v 1.11 1996/11/20 18:56:57 gwr Exp $	*/
+/*	$NetBSD: obmem.c,v 1.12 1996/12/17 21:10:52 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #include <machine/autoconf.h>
 #include <machine/obmem.h>
 
-static int  obmem_match __P((struct device *, void *, void *));
+static int  obmem_match __P((struct device *, struct cfdata *, void *));
 static void obmem_attach __P((struct device *, struct device *, void *));
 
 struct cfattach obmem_ca = {
@@ -60,9 +60,10 @@ struct cfdriver obmem_cd = {
 };
 
 static int
-obmem_match(parent, vcf, aux)
+obmem_match(parent, cf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct confargs *ca = aux;
 
