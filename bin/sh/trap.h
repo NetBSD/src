@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.9 1995/05/11 21:30:32 christos Exp $	*/
+/*	$NetBSD: trap.h,v 1.10 1995/06/07 04:17:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)trap.h	8.2 (Berkeley) 5/4/95
+ *	@(#)trap.h	8.3 (Berkeley) 6/5/95
  */
 
 extern int pendingsigs;
@@ -43,7 +43,6 @@ extern int pendingsigs;
 int trapcmd __P((int, char **));
 void clear_traps __P((void)); 
 long setsignal __P((int)); 
-sig_t getsigaction __P((int));
 void ignoresig __P((int));
 void onsig __P((int));
 void dotrap __P((void));
