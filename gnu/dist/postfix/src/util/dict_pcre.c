@@ -12,7 +12,8 @@
 /*	int	dict_flags;
 /* DESCRIPTION
 /*	dict_pcre_open() opens the named file and compiles the contained
-/*	regular expressions.
+/*	regular expressions. The result object can be used to match strings
+/*	against the table.
 /* SEE ALSO
 /*	dict(3) generic dictionary manager
 /* AUTHOR(S)
@@ -52,151 +53,263 @@
 #include "dict.h"
 #include "dict_pcre.h"
 #include "mac_parse.h"
-
-/* PCRE library */
-
 #include "pcre.h"
 
-#define PCRE_MAX_CAPTURE	99	/* Max strings captured by regexp - */
- /* essentially the max number of (..) */
+ /*
+  * Support for IF/ENDIF based on an idea by Bert Driehuis.
+  */
+#define DICT_PCRE_OP_MATCH    1		/* Match this regexp */
+#define DICT_PCRE_OP_IF       2		/* Increase if/endif nesting on match */
+#define DICT_PCRE_OP_ENDIF    3		/* Decrease if/endif nesting on match */
 
-struct dict_pcre_list {
-    pcre   *pattern;			/* The compiled pattern */
-    pcre_extra *hints;			/* Hints to speed pattern execution */
-    char   *replace;			/* Replacement string */
-    int     lineno;			/* Source file line number */
-    struct dict_pcre_list *next;	/* Next regexp in dict */
-};
+ /*
+  * Max strings captured by regexp - essentially the max number of (..)
+  */
+#define PCRE_MAX_CAPTURE	99
+
+ /*
+  * Regular expression before and after compilation.
+  */
+typedef struct {
+    char   *regexp;			/* regular expression */
+    int     options;			/* options */
+} DICT_PCRE_REGEXP;
 
 typedef struct {
+    pcre   *pattern;			/* the compiled pattern */
+    pcre_extra *hints;			/* hints to speed pattern execution */
+} DICT_PCRE_ENGINE;
+
+ /*
+  * Compiled generic rule, and subclasses that derive from it.
+  */
+typedef struct DICT_PCRE_RULE {
+    int     op;				/* DICT_PCRE_OP_MATCH/IF/ENDIF */
+    int     nesting;			/* level of IF/ENDIF nesting */
+    int     lineno;			/* source file line number */
+    struct DICT_PCRE_RULE *next;	/* next rule in dict */
+} DICT_PCRE_RULE;
+
+typedef struct {
+    DICT_PCRE_RULE rule;		/* generic part */
+    pcre   *pattern;			/* compiled pattern */
+    pcre_extra *hints;			/* hints to speed pattern execution */
+    char   *replacement;		/* replacement string */
+} DICT_PCRE_MATCH_RULE;
+
+typedef struct {
+    DICT_PCRE_RULE rule;		/* generic members */
+    pcre   *pattern;			/* compiled pattern */
+    pcre_extra *hints;			/* hints to speed pattern execution */
+} DICT_PCRE_IF_RULE;
+
+ /*
+  * PCRE map.
+  */
+typedef struct {
     DICT    dict;			/* generic members */
-    struct dict_pcre_list *head;
+    DICT_PCRE_RULE *head;
 } DICT_PCRE;
 
-static  dict_pcre_init = 0;		/* flag need to init pcre library */
+static int dict_pcre_init = 0;		/* flag need to init pcre library */
 
 /*
- * Context for macro expansion callback.
+ * Context for $number expansion callback.
  */
-struct dict_pcre_context {
-    const char *dict_name;		/* source dict name */
+typedef struct {
+    const char *mapname;		/* source dict name */
     int     lineno;			/* source file line number */
-    VSTRING *buf;			/* target string buffer */
-    const char *subject;		/* str against which we match */
+    VSTRING *expansion_buf;		/* target string buffer */
+    const char *lookup_string;		/* string against which we match */
     int     offsets[PCRE_MAX_CAPTURE * 3];	/* Cut substrings */
     int     matches;			/* Count of cuts */
-};
+} DICT_PCRE_EXPAND_CONTEXT;
 
-/*
- * Macro expansion callback - replace $0-${99} with strings cut from
- * matched string.
- */
-static int dict_pcre_action(int type, VSTRING *buf, char *ptr)
+ /*
+  * Context for $number pre-scan callback.
+  */
+typedef struct {
+    const char *mapname;		/* name of regexp map */
+    int     lineno;			/* where in file */
+    int     flags;			/* dict_flags */
+} DICT_PCRE_PRESCAN_CONTEXT;
+
+ /*
+  * Compatibility.
+  */
+#ifndef MAC_PARSE_OK
+#define MAC_PARSE_OK 0
+#endif
+
+ /*
+  * Macros to make dense code more accessible.
+  */
+#define NULL_STARTOFFSET	(0)
+#define NULL_EXEC_OPTIONS 	(0)
+#define NULL_OVECTOR		((int *) 0)
+#define NULL_OVECTOR_LENGTH	(0)
+
+/* dict_pcre_expand - replace $number with matched text */
+
+static int dict_pcre_expand(int type, VSTRING *buf, char *ptr)
 {
-    struct dict_pcre_context *ctxt = (struct dict_pcre_context *) ptr;
+    DICT_PCRE_EXPAND_CONTEXT *ctxt = (DICT_PCRE_EXPAND_CONTEXT *) ptr;
     const char *pp;
-    int     n,
-            ret;
+    int     n;
+    int     ret;
 
+    /*
+     * Replace $0-${99} with strings cut from matched text.
+     */
     if (type == MAC_PARSE_VARNAME) {
 	n = atoi(vstring_str(buf));
-	ret = pcre_get_substring(ctxt->subject, ctxt->offsets, ctxt->matches,
-				 n, &pp);
+	ret = pcre_get_substring(ctxt->lookup_string, ctxt->offsets,
+				 ctxt->matches, n, &pp);
 	if (ret < 0) {
 	    if (ret == PCRE_ERROR_NOSUBSTRING)
 		msg_fatal("regexp %s, line %d: replace index out of range",
-			  ctxt->dict_name, ctxt->lineno);
+			  ctxt->mapname, ctxt->lineno);
 	    else
 		msg_fatal("regexp %s, line %d: pcre_get_substring error: %d",
-			  ctxt->dict_name, ctxt->lineno, ret);
+			  ctxt->mapname, ctxt->lineno, ret);
 	}
 	if (*pp == 0) {
 	    myfree((char *) pp);
 	    return (MAC_PARSE_UNDEF);
 	}
-	vstring_strcat(ctxt->buf, pp);
+	vstring_strcat(ctxt->expansion_buf, pp);
 	myfree((char *) pp);
-	return (0);
-    } else
-	/* Straight text - duplicate with no substitution */
-	vstring_strcat(ctxt->buf, vstring_str(buf));
+	return (MAC_PARSE_OK);
+    }
 
-    return (0);
+    /*
+     * Straight text - duplicate with no substitution.
+     */
+    else {
+	vstring_strcat(ctxt->expansion_buf, vstring_str(buf));
+	return (MAC_PARSE_OK);
+    }
 }
 
-/*
- * Look up regexp dict and perform string substitution on matched
- * strings.
- */
-static const char *dict_pcre_lookup(DICT *dict, const char *name)
+/* dict_pcre_exec_error - report matching error */
+
+static void dict_pcre_exec_error(const char *mapname, int lineno, int errval)
+{
+    switch (errval) {
+	case 0:
+	msg_warn("pcre map %s, line %d: too many (...)",
+		 mapname, lineno);
+	return;
+    case PCRE_ERROR_NULL:
+    case PCRE_ERROR_BADOPTION:
+	msg_fatal("pcre map %s, line %d: bad args to re_exec",
+		  mapname, lineno);
+    case PCRE_ERROR_BADMAGIC:
+    case PCRE_ERROR_UNKNOWN_NODE:
+	msg_fatal("pcre map %s, line %d: corrupt compiled regexp",
+		  mapname, lineno);
+    default:
+	msg_fatal("pcre map %s, line %d: unknown re_exec error: %d",
+		  mapname, lineno, errval);
+    }
+}
+
+/* dict_pcre_lookup - match string and perform optional substitution */
+
+static const char *dict_pcre_lookup(DICT *dict, const char *lookup_string)
 {
     DICT_PCRE *dict_pcre = (DICT_PCRE *) dict;
-    struct dict_pcre_list *pcre_list;
-    int     name_len = strlen(name);
-    struct dict_pcre_context ctxt;
-    static VSTRING *buf;
+    DICT_PCRE_RULE *rule;
+    DICT_PCRE_IF_RULE *if_rule;
+    DICT_PCRE_MATCH_RULE *match_rule;
+    int     lookup_len = strlen(lookup_string);
+    DICT_PCRE_EXPAND_CONTEXT ctxt;
+    static VSTRING *expansion_buf;
+    int     nesting = 0;
 
     dict_errno = 0;
 
     if (msg_verbose)
-	msg_info("dict_pcre_lookup: %s: %s", dict_pcre->dict.name, name);
+	msg_info("dict_pcre_lookup: %s: %s", dict->name, lookup_string);
 
-    /* Search for a matching expression */
-    ctxt.matches = 0;
-    for (pcre_list = dict_pcre->head; pcre_list; pcre_list = pcre_list->next) {
-	if (pcre_list->pattern) {
-	    ctxt.matches = pcre_exec(pcre_list->pattern, pcre_list->hints,
-		  name, name_len, 0, 0, ctxt.offsets, PCRE_MAX_CAPTURE * 3);
-	    if (ctxt.matches != PCRE_ERROR_NOMATCH) {
-		if (ctxt.matches > 0)
-		    break;			/* Got a match! */
-		else {
-		    /* An error */
-		    switch (ctxt.matches) {
-		    case 0:
-			msg_warn("pcre map %s, line %d: too many (...)",
-				 dict_pcre->dict.name, pcre_list->lineno);
-			break;
-		    case PCRE_ERROR_NULL:
-		    case PCRE_ERROR_BADOPTION:
-			msg_fatal("pcre map %s, line %d: bad args to re_exec",
-				  dict_pcre->dict.name, pcre_list->lineno);
-			break;
-		    case PCRE_ERROR_BADMAGIC:
-		    case PCRE_ERROR_UNKNOWN_NODE:
-			msg_fatal("pcre map %s, line %d: corrupt compiled regexp",
-				  dict_pcre->dict.name, pcre_list->lineno);
-			break;
-		    default:
-			msg_fatal("pcre map %s, line %d: unknown re_exec error: %d",
-				  dict_pcre->dict.name, pcre_list->lineno, ctxt.matches);
-			break;
-		    }
-		    return ((char *) 0);
-		}
+    for (rule = dict_pcre->head; rule; rule = rule->next) {
+
+	/*
+	 * Skip rules inside failed IF/ENDIF.
+	 */
+	if (nesting < rule->nesting)
+	    continue;
+
+	switch (rule->op) {
+
+	    /*
+	     * Search for a matching expression.
+	     */
+	case DICT_PCRE_OP_MATCH:
+	    match_rule = (DICT_PCRE_MATCH_RULE *) rule;
+	    ctxt.matches = pcre_exec(match_rule->pattern, match_rule->hints,
+				     lookup_string, lookup_len,
+				     NULL_STARTOFFSET, NULL_EXEC_OPTIONS,
+				     ctxt.offsets, PCRE_MAX_CAPTURE * 3);
+	    if (ctxt.matches == PCRE_ERROR_NOMATCH)
+		continue;
+	    if (ctxt.matches <= 0) {
+		dict_pcre_exec_error(dict->name, rule->lineno, ctxt.matches);
+		continue;
 	    }
+
+	    /*
+	     * We've got a match. Perform substitution on replacement string.
+	     */
+	    if (expansion_buf == 0)
+		expansion_buf = vstring_alloc(10);
+	    VSTRING_RESET(expansion_buf);
+	    ctxt.expansion_buf = expansion_buf;
+	    ctxt.lookup_string = lookup_string;
+	    ctxt.mapname = dict->name;
+	    ctxt.lineno = rule->lineno;
+
+	    if (mac_parse(match_rule->replacement, dict_pcre_expand,
+			  (char *) &ctxt) & MAC_PARSE_ERROR)
+		msg_fatal("pcre map %s, line %d: bad replacement syntax",
+			  dict->name, rule->lineno);
+
+	    VSTRING_TERMINATE(expansion_buf);
+	    return (vstring_str(expansion_buf));
+
+	    /*
+	     * Conditional. XXX We provide space for matched substring info
+	     * because PCRE uses part of it as workspace for backtracking.
+	     * PCRE will allocate memory if it runs out of backtracking
+	     * storage.
+	     */
+	case DICT_PCRE_OP_IF:
+	    if_rule = (DICT_PCRE_IF_RULE *) rule;
+	    ctxt.matches = pcre_exec(if_rule->pattern, if_rule->hints,
+				     lookup_string, lookup_len,
+				     NULL_STARTOFFSET, NULL_EXEC_OPTIONS,
+				     ctxt.offsets, PCRE_MAX_CAPTURE * 3);
+	    if (ctxt.matches == PCRE_ERROR_NOMATCH)
+		continue;
+	    if (ctxt.matches <= 0) {
+		dict_pcre_exec_error(dict->name, rule->lineno, ctxt.matches);
+		continue;
+	    }
+	    nesting++;
+	    continue;
+
+	    /*
+	     * ENDIF after successful IF.
+	     */
+	case DICT_PCRE_OP_ENDIF:
+	    nesting--;
+	    continue;
+
+	default:
+	    msg_panic("dict_pcre_lookup: impossible operation %d", rule->op);
 	}
     }
-
-    /* If we've got a match, */
-    if (ctxt.matches > 0) {
-	/* Then perform substitution on replacement string */
-	if (buf == 0)
-	    buf = vstring_alloc(10);
-	VSTRING_RESET(buf);
-	ctxt.buf = buf;
-	ctxt.subject = name;
-	ctxt.dict_name = dict_pcre->dict.name;
-	ctxt.lineno = pcre_list->lineno;
-
-	if (mac_parse(pcre_list->replace, dict_pcre_action, (char *) &ctxt) & MAC_PARSE_ERROR)
-	    msg_fatal("pcre map %s, line %d: bad replacement syntax",
-		      dict_pcre->dict.name, pcre_list->lineno);
-
-	VSTRING_TERMINATE(buf);
-	return (vstring_str(buf));
-    }
-    return ((char *) 0);
+    return (0);
 }
 
 /* dict_pcre_close - close pcre dictionary */
@@ -204,162 +317,397 @@ static const char *dict_pcre_lookup(DICT *dict, const char *name)
 static void dict_pcre_close(DICT *dict)
 {
     DICT_PCRE *dict_pcre = (DICT_PCRE *) dict;
-    struct dict_pcre_list *pcre_list;
-    struct dict_pcre_list *next;
+    DICT_PCRE_RULE *rule;
+    DICT_PCRE_RULE *next;
+    DICT_PCRE_MATCH_RULE *match_rule;
+    DICT_PCRE_IF_RULE *if_rule;
 
-    for (pcre_list = dict_pcre->head; pcre_list; pcre_list = next) {
-	next = pcre_list->next;
-	if (pcre_list->pattern)
-	    myfree((char *) pcre_list->pattern);
-	if (pcre_list->hints)
-	    myfree((char *) pcre_list->hints);
-	if (pcre_list->replace)
-	    myfree((char *) pcre_list->replace);
-	myfree((char *) pcre_list);
+    for (rule = dict_pcre->head; rule; rule = next) {
+	next = rule->next;
+	switch (rule->op) {
+	case DICT_PCRE_OP_MATCH:
+	    match_rule = (DICT_PCRE_MATCH_RULE *) rule;
+	    if (match_rule->pattern)
+		myfree((char *) match_rule->pattern);
+	    if (match_rule->hints)
+		myfree((char *) match_rule->hints);
+	    if (match_rule->replacement)
+		myfree((char *) match_rule->replacement);
+	    break;
+	case DICT_PCRE_OP_IF:
+	    if_rule = (DICT_PCRE_IF_RULE *) rule;
+	    if (if_rule->pattern)
+		myfree((char *) if_rule->pattern);
+	    if (if_rule->hints)
+		myfree((char *) if_rule->hints);
+	    break;
+	case DICT_PCRE_OP_ENDIF:
+	    break;
+	default:
+	    msg_panic("dict_pcre_close: unknown operation %d", rule->op);
+	}
+	myfree((char *) rule);
     }
     dict_free(dict);
 }
 
-/*
- * dict_pcre_open - load and compile a file containing regular expressions
- */
-DICT   *dict_pcre_open(const char *map, int unused_flags, int dict_flags)
+/* dict_pcre_get_pattern - extract pattern from rule */
+
+static int dict_pcre_get_pattern(const char *mapname, int lineno, char **bufp,
+				         DICT_PCRE_REGEXP *pattern)
+{
+    char   *p = *bufp;
+    char    re_delimiter;
+
+    re_delimiter = *p++;
+    pattern->regexp = p;
+
+    /*
+     * Search for second delimiter, handling backslash escape.
+     */
+    while (*p) {
+	if (*p == '\\') {
+	    ++p;
+	    if (*p == 0)
+		break;
+	} else if (*p == re_delimiter)
+	    break;
+	++p;
+    }
+
+    if (!*p) {
+	msg_warn("pcre map %s, line %d: no closing regexp delimiter \"%c\": "
+		 "ignoring this rule", mapname, lineno, re_delimiter);
+	return (0);
+    }
+    *p++ = 0;					/* Null term the regexp */
+
+    /*
+     * Parse any regexp options.
+     */
+    pattern->options = PCRE_CASELESS | PCRE_DOTALL;
+    while (*p && !ISSPACE(*p)) {
+	switch (*p) {
+	case 'i':
+	    pattern->options ^= PCRE_CASELESS;
+	    break;
+	case 'm':
+	    pattern->options ^= PCRE_MULTILINE;
+	    break;
+	case 's':
+	    pattern->options ^= PCRE_DOTALL;
+	    break;
+	case 'x':
+	    pattern->options ^= PCRE_EXTENDED;
+	    break;
+	case 'A':
+	    pattern->options ^= PCRE_ANCHORED;
+	    break;
+	case 'E':
+	    pattern->options ^= PCRE_DOLLAR_ENDONLY;
+	    break;
+	case 'U':
+	    pattern->options ^= PCRE_UNGREEDY;
+	    break;
+	case 'X':
+	    pattern->options ^= PCRE_EXTRA;
+	    break;
+	default:
+	    msg_warn("pcre map %s, line %d: unknown regexp option \"%c\": "
+		     "skipping this rule", mapname, lineno, *p);
+	    return (0);
+	}
+	++p;
+    }
+    *bufp = p;
+    return (1);
+}
+
+/* dict_pcre_prescan - sanity check $number instances in replacement text */
+
+static int dict_pcre_prescan(int type, VSTRING *buf, char *context)
+{
+    DICT_PCRE_PRESCAN_CONTEXT *ctxt = (DICT_PCRE_PRESCAN_CONTEXT *) context;
+    size_t  n;
+
+    if (type == MAC_PARSE_VARNAME) {
+	if (ctxt->flags & DICT_FLAG_NO_REGSUB) {
+	    msg_warn("pcre map %s, line %d: "
+		      "regular expression substitution is not allowed",
+		      ctxt->mapname, ctxt->lineno);
+	    return (MAC_PARSE_ERROR);
+	}
+
+	if (!alldig(vstring_str(buf))) {
+	    msg_warn("pcre map %s, line %d: non-numeric replacement index \"%s\"",
+		     ctxt->mapname, ctxt->lineno, vstring_str(buf));
+	    return (MAC_PARSE_ERROR);
+	}
+	n = atoi(vstring_str(buf));
+	if (n < 1) {
+	    msg_warn("pcre map %s, line %d: out of range replacement index \"%s\"",
+		     ctxt->mapname, ctxt->lineno, vstring_str(buf));
+	    return (MAC_PARSE_ERROR);
+	}
+    }
+    return (MAC_PARSE_OK);
+}
+
+/* dict_pcre_compile - compile pattern */
+
+static int dict_pcre_compile(const char *mapname, int lineno,
+			             DICT_PCRE_REGEXP *pattern,
+			             DICT_PCRE_ENGINE *engine)
+{
+    const char *error;
+    int     errptr;
+
+    engine->pattern = pcre_compile(pattern->regexp, pattern->options,
+				   &error, &errptr, NULL);
+    if (engine->pattern == 0) {
+	msg_warn("pcre map %s, line %d: error in regex at offset %d: %s",
+		 mapname, lineno, errptr, error);
+	return (0);
+    }
+    engine->hints = pcre_study(engine->pattern, 0, &error);
+    if (error != 0) {
+	msg_warn("pcre map %s, line %d: error while studying regex: %s",
+		 mapname, lineno, error);
+	myfree((char *) engine->pattern);
+	return (0);
+    }
+    return (1);
+}
+
+/* dict_pcre_rule_alloc - fill in a generic rule structure */
+
+static DICT_PCRE_RULE *dict_pcre_rule_alloc(int op, int nesting,
+					            int lineno,
+					            size_t size)
+{
+    DICT_PCRE_RULE *rule;
+
+    rule = (DICT_PCRE_RULE *) mymalloc(size);
+    rule->op = op;
+    rule->nesting = nesting;
+    rule->lineno = lineno;
+    rule->next = 0;
+
+    return (rule);
+}
+
+/* dict_pcre_parse_rule - parse and compile one rule */
+
+static DICT_PCRE_RULE *dict_pcre_parse_rule(const char *mapname, int lineno,
+					            char *line, int nesting,
+					            int dict_flags)
+{
+    char   *p;
+
+    p = line;
+
+    /*
+     * An ordinary match rule takes one pattern and replacement text.
+     */
+    if (!ISALNUM(*p)) {
+	DICT_PCRE_REGEXP regexp;
+	DICT_PCRE_ENGINE engine;
+	DICT_PCRE_PRESCAN_CONTEXT prescan_context;
+	DICT_PCRE_MATCH_RULE *match_rule;
+
+	/*
+	 * Get the pattern string and options.
+	 */
+	if (dict_pcre_get_pattern(mapname, lineno, &p, &regexp) == 0)
+	    return (0);
+
+	/*
+	 * Get the replacement text.
+	 */
+	while (*p && ISSPACE(*p))
+	    ++p;
+	if (!*p)
+	    msg_warn("%s, line %d: no replacement text: using empty string",
+		     mapname, lineno);
+
+	/*
+	 * Sanity check the $number instances in the replacement text.
+	 */
+	prescan_context.mapname = mapname;
+	prescan_context.lineno = lineno;
+	prescan_context.flags = dict_flags;
+
+	if (mac_parse(p, dict_pcre_prescan, (char *) &prescan_context)
+	    & MAC_PARSE_ERROR) {
+	    msg_warn("pcre map %s, line %d: bad replacement syntax: "
+		     "skipping this rule", mapname, lineno);
+	    return (0);
+	}
+
+	/*
+	 * Compile the pattern.
+	 */
+	if (dict_pcre_compile(mapname, lineno, &regexp, &engine) == 0)
+	    return (0);
+
+	/*
+	 * Save the result.
+	 */
+	match_rule = (DICT_PCRE_MATCH_RULE *)
+	    dict_pcre_rule_alloc(DICT_PCRE_OP_MATCH, nesting, lineno,
+				 sizeof(DICT_PCRE_MATCH_RULE));
+	match_rule->replacement = mystrdup(p);
+	match_rule->pattern = engine.pattern;
+	match_rule->hints = engine.hints;
+	return ((DICT_PCRE_RULE *) match_rule);
+    }
+
+    /*
+     * The IF operator takes one pattern but no replacement text.
+     */
+    else if (strncasecmp(p, "IF", 2) == 0 && !ISALNUM(p[2])) {
+	DICT_PCRE_REGEXP regexp;
+	DICT_PCRE_ENGINE engine;
+	DICT_PCRE_IF_RULE *if_rule;
+
+	p += 2;
+
+	/*
+	 * Get the pattern.
+	 */
+	while (*p && ISSPACE(*p))
+	    p++;
+	if (!dict_pcre_get_pattern(mapname, lineno, &p, &regexp))
+	    return (0);
+
+	/*
+	 * Warn about out-of-place text.
+	 */
+	if (*p)
+	    msg_warn("pcre map %s, line %d: ignoring extra text after IF",
+		     mapname, lineno);
+
+	/*
+	 * Compile the pattern.
+	 */
+	if (dict_pcre_compile(mapname, lineno, &regexp, &engine) == 0)
+	    return (0);
+
+	/*
+	 * Save the result.
+	 */
+	if_rule = (DICT_PCRE_IF_RULE *)
+	    dict_pcre_rule_alloc(DICT_PCRE_OP_IF, nesting, lineno,
+				 sizeof(DICT_PCRE_IF_RULE));
+	if_rule->pattern = engine.pattern;
+	if_rule->hints = engine.hints;
+	return ((DICT_PCRE_RULE *) if_rule);
+    }
+
+    /*
+     * The ENDIF operator takes no patterns and no replacement text.
+     */
+    else if (strncasecmp(p, "ENDIF", 5) == 0 && !ISALNUM(p[5])) {
+	DICT_PCRE_RULE *rule;
+
+	p += 5;
+
+	/*
+	 * Warn about out-of-place ENDIFs.
+	 */
+	if (nesting == 0) {
+	    msg_warn("pcre map %s, line %d: ignoring ENDIF without matching IF",
+		     mapname, lineno);
+	    return (0);
+	}
+
+	/*
+	 * Warn about out-of-place text.
+	 */
+	if (*p)
+	    msg_warn("pcre map %s, line %d: ignoring extra text after ENDIF",
+		     mapname, lineno);
+
+	/*
+	 * Save the result.
+	 */
+	rule = dict_pcre_rule_alloc(DICT_PCRE_OP_ENDIF, nesting, lineno,
+				    sizeof(DICT_PCRE_RULE));
+	return (rule);
+    }
+
+    /*
+     * Unrecognized input.
+     */
+    else {
+	msg_warn("regexp map %s, line %d: ignoring unrecognized request",
+		 mapname, lineno);
+	return (0);
+    }
+}
+
+/* dict_pcre_open - load and compile a file containing regular expressions */
+
+DICT   *dict_pcre_open(const char *mapname, int unused_flags, int dict_flags)
 {
     DICT_PCRE *dict_pcre;
     VSTREAM *map_fp;
     VSTRING *line_buffer;
-    struct dict_pcre_list *pcre_list = NULL,
-           *pl;
+    DICT_PCRE_RULE *last_rule = 0;
+    DICT_PCRE_RULE *rule;
     int     lineno = 0;
-    char   *regexp,
-           *p,
-            re_delimiter;
-    int     re_options;
-    pcre   *pattern;
-    pcre_extra *hints;
-    const char *error;
-    int     errptr;
+    int     nesting = 0;
+    char   *p;
 
     line_buffer = vstring_alloc(100);
 
-    dict_pcre = (DICT_PCRE *) dict_alloc(DICT_TYPE_PCRE, map,
+    dict_pcre = (DICT_PCRE *) dict_alloc(DICT_TYPE_PCRE, mapname,
 					 sizeof(*dict_pcre));
     dict_pcre->dict.lookup = dict_pcre_lookup;
     dict_pcre->dict.close = dict_pcre_close;
     dict_pcre->dict.flags = dict_flags | DICT_FLAG_PATTERN;
-    dict_pcre->head = NULL;
+    dict_pcre->head = 0;
 
     if (dict_pcre_init == 0) {
 	pcre_malloc = (void *(*) (size_t)) mymalloc;
 	pcre_free = (void (*) (void *)) myfree;
 	dict_pcre_init = 1;
     }
-    if ((map_fp = vstream_fopen(map, O_RDONLY, 0)) == 0) {
-	msg_fatal("open %s: %m", map);
-    }
-    while (readlline(line_buffer, map_fp, &lineno)) {
 
+    /*
+     * Parse the pcre table.
+     */
+    if ((map_fp = vstream_fopen(mapname, O_RDONLY, 0)) == 0)
+	msg_fatal("open %s: %m", mapname);
+
+    while (readlline(line_buffer, map_fp, &lineno)) {
 	p = vstring_str(line_buffer);
 	trimblanks(p, 0)[0] = 0;		/* Trim space at end */
-	re_delimiter = *p++;
-	regexp = p;
-
-	/* Search for second delimiter, handling backslash escape */
-	while (*p) {
-	    if (*p == '\\') {
-		++p;
-		if (*p == 0)
-		    break;
-	    } else if (*p == re_delimiter)
-		break;
-	    ++p;
-	}
-
-	if (!*p) {
-	    msg_warn("%s, line %d: no closing regexp delimiter: %c",
-		     VSTREAM_PATH(map_fp), lineno, re_delimiter);
+	if (*p == 0)
 	    continue;
-	}
-	*p++ = '\0';				/* Null term the regexp */
-
-	/* Now parse any regexp options */
-	re_options = PCRE_CASELESS;
-	while (*p && !ISSPACE(*p)) {
-	    switch (*p) {
-	    case 'i':
-		re_options ^= PCRE_CASELESS;
-		break;
-	    case 'm':
-		re_options ^= PCRE_MULTILINE;
-		break;
-	    case 's':
-		re_options ^= PCRE_DOTALL;
-		break;
-	    case 'x':
-		re_options ^= PCRE_EXTENDED;
-		break;
-	    case 'A':
-		re_options ^= PCRE_ANCHORED;
-		break;
-	    case 'E':
-		re_options ^= PCRE_DOLLAR_ENDONLY;
-		break;
-	    case 'U':
-		re_options ^= PCRE_UNGREEDY;
-		break;
-	    case 'X':
-		re_options ^= PCRE_EXTRA;
-		break;
-	    default:
-		msg_warn("%s, line %d: unknown regexp option '%c'",
-			 VSTREAM_PATH(map_fp), lineno, *p);
-	    }
-	    ++p;
-	}
-
-	while (*p && ISSPACE(*p))
-	    ++p;
-
-	if (!*p) {
-	    msg_warn("%s, line %d: no replacement text",
-		     VSTREAM_PATH(map_fp), lineno);
-	    p = "";
-	}
-	/* Compile the patern */
-	pattern = pcre_compile(regexp, re_options, &error, &errptr, NULL);
-	if (pattern == NULL) {
-	    msg_warn("%s, line %d: error in regex at offset %d: %s",
-		     VSTREAM_PATH(map_fp), lineno, errptr, error);
+	rule = dict_pcre_parse_rule(mapname, lineno, p, nesting, dict_flags);
+	if (rule == 0)
 	    continue;
+	if (rule->op == DICT_PCRE_OP_IF) {
+	    nesting++;
+	} else if (rule->op == DICT_PCRE_OP_ENDIF) {
+	    nesting--;
 	}
-	hints = pcre_study(pattern, 0, &error);
-	if (error != NULL) {
-	    msg_warn("%s, line %d: error while studying regex: %s",
-		     VSTREAM_PATH(map_fp), lineno, error);
-	    myfree((char *) pattern);
-	    continue;
-	}
-	/* Add it to the list */
-	pl = (struct dict_pcre_list *) mymalloc(sizeof(struct dict_pcre_list));
-
-	/* Save the replacement string (if any) */
-	pl->replace = mystrdup(p);
-	pl->pattern = pattern;
-	pl->hints = hints;
-	pl->next = NULL;
-	pl->lineno = lineno;
-
-	if (pcre_list == NULL)
-	    dict_pcre->head = pl;
+	if (last_rule == 0)
+	    dict_pcre->head = rule;
 	else
-	    pcre_list->next = pl;
-	pcre_list = pl;
+	    last_rule->next = rule;
+	last_rule = rule;
     }
+
+    if (nesting)
+	msg_warn("pcre map %s, line %d: more IFs than ENDIFs",
+		 mapname, lineno);
 
     vstring_free(line_buffer);
     vstream_fclose(map_fp);
 
-    return (DICT_DEBUG(&dict_pcre->dict));
+    return (DICT_DEBUG (&dict_pcre->dict));
 }
 
 #endif					/* HAS_PCRE */

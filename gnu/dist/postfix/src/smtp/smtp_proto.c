@@ -83,6 +83,7 @@
 #include <stringops.h>
 #include <mymalloc.h>
 #include <iostuff.h>
+#include <split_at.h>
 
 /* Global library. */
 
@@ -100,6 +101,8 @@
 #include <off_cvt.h>
 #include <mark_corrupt.h>
 #include <quote_821_local.h>
+#include <mail_proto.h>
+#include <mime_state.h>
 
 /* Application-specific. */
 
@@ -144,6 +147,15 @@ char   *xfer_states[SMTP_STATE_LAST] = {
     "sending end of data -- message may be sent more than once",
     "sending final RSET",
     "sending QUIT",
+};
+
+char   *xfer_request[SMTP_STATE_LAST] = {
+    "MAIL FROM command",
+    "RCPT TO command",
+    "DATA command",
+    "end of DATA command",
+    "final RSET command",
+    "QUIT command",
 };
 
 /* smtp_helo - perform initial handshake with SMTP server */
@@ -207,17 +219,18 @@ int     smtp_helo(SMTP_STATE *state)
      * heuristic failed.
      */
     if (state->features & SMTP_FEATURE_ESMTP) {
-	smtp_chat_cmd(state, "EHLO %s", var_myhostname);
+	smtp_chat_cmd(state, "EHLO %s", var_smtp_helo_name);
 	if ((resp = smtp_chat_resp(state))->code / 100 != 2)
 	    state->features &= ~SMTP_FEATURE_ESMTP;
     }
     if ((state->features & SMTP_FEATURE_ESMTP) == 0) {
-	smtp_chat_cmd(state, "HELO %s", var_myhostname);
+	smtp_chat_cmd(state, "HELO %s", var_smtp_helo_name);
 	if ((resp = smtp_chat_resp(state))->code / 100 != 2)
 	    return (smtp_site_fail(state, resp->code,
 				   "host %s refused to talk to me: %s",
 				   session->namaddr,
 				   translit(resp->str, "\n", " ")));
+	return (0);
     }
 
     /*
@@ -272,6 +285,69 @@ int     smtp_helo(SMTP_STATE *state)
     return (0);
 }
 
+/* smtp_text_out - output one header/body record */
+
+static void smtp_text_out(void *context, int rec_type,
+			          const char *text, int len,
+			          off_t unused_offset)
+{
+    SMTP_STATE *state = (SMTP_STATE *) context;
+    SMTP_SESSION *session = state->session;
+    int     data_left;
+    const char *data_start;
+
+    /*
+     * Deal with an impedance mismatch between Postfix queue files (record
+     * length <= $message_line_length_limit) and SMTP (DATA record length <=
+     * $smtp_line_length_limit). The code below does a little too much work
+     * when the SMTP line length limit is disabled, but it avoids code
+     * duplication, and thus, it avoids testing and maintenance problems.
+     */
+    data_left = len;
+    data_start = text;
+    do {
+	if (state->space_left == var_smtp_line_limit
+	    && data_left > 0 && *data_start == '.')
+	    smtp_fputc('.', session->stream);
+	if (var_smtp_line_limit > 0 && data_left >= state->space_left) {
+	    smtp_fputs(data_start, state->space_left, session->stream);
+	    data_start += state->space_left;
+	    data_left -= state->space_left;
+	    state->space_left = var_smtp_line_limit;
+	    if (data_left > 0 || rec_type == REC_TYPE_CONT) {
+		smtp_fputc(' ', session->stream);
+		state->space_left -= 1;
+	    }
+	} else {
+	    if (rec_type == REC_TYPE_CONT) {
+		smtp_fwrite(data_start, data_left, session->stream);
+		state->space_left -= data_left;
+	    } else {
+		smtp_fputs(data_start, data_left, session->stream);
+		state->space_left = var_smtp_line_limit;
+	    }
+	    break;
+	}
+    } while (data_left > 0);
+}
+
+/* smtp_header_out - output one message header */
+
+static void smtp_header_out(void *context, int unused_header_class,
+			            HEADER_OPTS *unused_info, VSTRING *buf,
+			            off_t offset)
+{
+    char   *start = vstring_str(buf);
+    char   *line;
+    char   *next_line;
+
+    for (line = start; line; line = next_line) {
+	next_line = split_at(line, '\n');
+	smtp_text_out(context, REC_TYPE_NORM, line, next_line ?
+		      next_line - line - 1 : strlen(line), offset);
+    }
+}
+
 /* smtp_xfer - send a batch of envelope information and the message data */
 
 int     smtp_xfer(SMTP_STATE *state)
@@ -296,9 +372,8 @@ int     smtp_xfer(SMTP_STATE *state)
     int     sndbuffree;
     SOCKOPT_SIZE optlen = sizeof(sndbufsize);
     int     mail_from_rejected;
-    int     space_left = var_smtp_line_limit;
-    int     data_left;
-    char   *data_start;
+    int     downgrading;
+    int     mime_errs;
 
     /*
      * Macros for readability.
@@ -320,7 +395,12 @@ int     smtp_xfer(SMTP_STATE *state)
 	} \
     } while (0)
 
-#define RETURN(x) do { vstring_free(next_command); return (x); } while (0)
+#define RETURN(x) do { \
+	vstring_free(next_command); \
+	if (state->mime_state) \
+	    state->mime_state = mime_state_free(state->mime_state); \
+	return (x); \
+    } while (0)
 
 #define SENDER_IS_AHEAD \
 	(recv_state < send_state || recv_rcpt != send_rcpt)
@@ -361,6 +441,8 @@ int     smtp_xfer(SMTP_STATE *state)
 	if (getsockopt(vstream_fileno(state->session->stream), SOL_SOCKET,
 		       SO_SNDBUF, (char *) &sndbufsize, &optlen) < 0)
 	    msg_fatal("%s: getsockopt: %m", myname);
+	if (sndbufsize > VSTREAM_BUFSIZE)
+	    sndbufsize = VSTREAM_BUFSIZE;
 	if (msg_verbose)
 	    msg_info("Using ESMTP PIPELINING, TCP send buffer size is %d",
 		     sndbufsize);
@@ -407,17 +489,21 @@ int     smtp_xfer(SMTP_STATE *state)
 	     * Build the MAIL FROM command.
 	     */
 	case SMTP_STATE_MAIL:
-	    if (var_disable_dns == 0) {
-		REWRITE_ADDRESS(state->scratch, state->scratch2,
-				request->sender);
-	    } else {
-		QUOTE_ADDRESS(state->scratch, request->sender);
-	    }
+	    QUOTE_ADDRESS(state->scratch, request->sender);
 	    vstring_sprintf(next_command, "MAIL FROM:<%s>",
 			    vstring_str(state->scratch));
-	    if (state->features & SMTP_FEATURE_SIZE)	/* RFC 1652 */
+	    if (state->features & SMTP_FEATURE_SIZE)	/* RFC 1870 */
 		vstring_sprintf_append(next_command, " SIZE=%lu",
 				       request->data_size);
+	    if (state->features & SMTP_FEATURE_8BITMIME) {	/* RFC 1652 */
+		if (strcmp(request->encoding, MAIL_ATTR_ENC_8BIT) == 0)
+		    vstring_strcat(next_command, " BODY=8BITMIME");
+		else if (strcmp(request->encoding, MAIL_ATTR_ENC_7BIT) == 0)
+		    vstring_strcat(next_command, " BODY=7BIT");
+		else if (strcmp(request->encoding, MAIL_ATTR_ENC_NONE) != 0)
+		    msg_warn("%s: unknown content encoding: %s",
+			     request->queue_id, request->encoding);
+	    }
 	    next_state = SMTP_STATE_RCPT;
 	    break;
 
@@ -427,12 +513,7 @@ int     smtp_xfer(SMTP_STATE *state)
 	     */
 	case SMTP_STATE_RCPT:
 	    rcpt = request->rcpt_list.info + send_rcpt;
-	    if (var_disable_dns == 0) {
-		REWRITE_ADDRESS(state->scratch, state->scratch2,
-				rcpt->address);
-	    } else {
-		QUOTE_ADDRESS(state->scratch, rcpt->address);
-	    }
+	    QUOTE_ADDRESS(state->scratch, rcpt->address);
 	    vstring_sprintf(next_command, "RCPT TO:<%s>",
 			    vstring_str(state->scratch));
 	    if ((next_rcpt = send_rcpt + 1) == request->rcpt_list.len)
@@ -527,8 +608,10 @@ int     smtp_xfer(SMTP_STATE *state)
 		case SMTP_STATE_MAIL:
 		    if (resp->code / 100 != 2) {
 			smtp_mesg_fail(state, resp->code,
-				       "host %s said: %s", session->namaddr,
-				       translit(resp->str, "\n", " "));
+				       "host %s said: %s (in reply to %s)",
+				       session->namaddr,
+				       translit(resp->str, "\n", " "),
+				       xfer_request[SMTP_STATE_MAIL]);
 			mail_from_rejected = 1;
 		    }
 		    recv_state = SMTP_STATE_RCPT;
@@ -557,8 +640,10 @@ int     smtp_xfer(SMTP_STATE *state)
 			} else {
 			    rcpt = request->rcpt_list.info + recv_rcpt;
 			    smtp_rcpt_fail(state, resp->code, rcpt,
-				       "host %s said: %s", session->namaddr,
-					   translit(resp->str, "\n", " "));
+					"host %s said: %s (in reply to %s)",
+					   session->namaddr,
+					   translit(resp->str, "\n", " "),
+					   xfer_request[SMTP_STATE_RCPT]);
 			    rcpt->offset = 0;	/* in case deferred */
 			}
 		    }
@@ -575,8 +660,10 @@ int     smtp_xfer(SMTP_STATE *state)
 		    if (resp->code / 100 != 3) {
 			if (nrcpt > 0)
 			    smtp_mesg_fail(state, resp->code,
-				       "host %s said: %s", session->namaddr,
-					   translit(resp->str, "\n", " "));
+					"host %s said: %s (in reply to %s)",
+					   session->namaddr,
+					   translit(resp->str, "\n", " "),
+					   xfer_request[SMTP_STATE_DATA]);
 			nrcpt = -1;
 		    }
 		    recv_state = SMTP_STATE_DOT;
@@ -595,14 +682,16 @@ int     smtp_xfer(SMTP_STATE *state)
 		    if (nrcpt > 0) {
 			if (resp->code / 100 != 2) {
 			    smtp_mesg_fail(state, resp->code,
-					   "host %s said: %s",
+					"host %s said: %s (in reply to %s)",
 					   session->namaddr,
-					   translit(resp->str, "\n", " "));
+					   translit(resp->str, "\n", " "),
+					   xfer_request[SMTP_STATE_DOT]);
 			} else {
 			    for (nrcpt = 0; nrcpt < recv_rcpt; nrcpt++) {
 				rcpt = request->rcpt_list.info + nrcpt;
 				if (rcpt->offset) {
-				    sent(request->queue_id, rcpt->address,
+				    sent(request->queue_id, rcpt->orig_addr,
+					 rcpt->address,
 					 session->namaddr,
 					 request->arrival_time, "%s",
 					 resp->str);
@@ -668,8 +757,26 @@ int     smtp_xfer(SMTP_STATE *state)
 	 * Special case if the server accepted the DATA command. If the
 	 * server accepted at least one recipient send the entire message.
 	 * Otherwise, just send "." as per RFC 2197.
+	 * 
+	 * XXX If there is a hard MIME error while downgrading to 7-bit mail,
+	 * disconnect ungracefully, because there is no other way to cancel a
+	 * transaction in progress.
 	 */
 	if (send_state == SMTP_STATE_DOT && nrcpt > 0) {
+	    downgrading =
+		(var_disable_mime_oconv == 0
+		 && (state->features & SMTP_FEATURE_8BITMIME) == 0
+		 && strcmp(request->encoding, MAIL_ATTR_ENC_7BIT) != 0);
+	    if (downgrading)
+		state->mime_state = mime_state_alloc(MIME_OPT_DOWNGRADE
+						  | MIME_OPT_REPORT_NESTING,
+						     smtp_header_out,
+						     (MIME_STATE_ANY_END) 0,
+						     smtp_text_out,
+						     (MIME_STATE_ANY_END) 0,
+						   (MIME_STATE_ERR_PRINT) 0,
+						     (void *) state);
+	    state->space_left = var_smtp_line_limit;
 	    smtp_timeout_setup(state->session->stream,
 			       var_smtp_data1_tmout);
 	    if ((except = vstream_setjmp(state->session->stream)) != 0)
@@ -682,41 +789,22 @@ int     smtp_xfer(SMTP_STATE *state)
 	    while ((rec_type = rec_get(state->src, state->scratch, 0)) > 0) {
 		if (rec_type != REC_TYPE_NORM && rec_type != REC_TYPE_CONT)
 		    break;
-		if (prev_type != REC_TYPE_CONT)
-		    if (vstring_str(state->scratch)[0] == '.')
-			smtp_fputc('.', session->stream);
-
-		/*
-		 * Deal with an impedance mismatch between Postfix queue
-		 * files (record length <= $message_line_length_limit) and
-		 * SMTP (DATA record length <= $smtp_line_length_limit). The
-		 * code below does a little too much work when the SMTP line
-		 * length limit is disabled, but it avoids code duplication,
-		 * and thus, it avoids testing and maintenance problems.
-		 */
-		data_left = VSTRING_LEN(state->scratch);
-		data_start = vstring_str(state->scratch);
-		do {
-		    if (var_smtp_line_limit > 0 && data_left >= space_left) {
-			smtp_fputs(data_start, space_left, session->stream);
-			data_start += space_left;
-			data_left -= space_left;
-			space_left = var_smtp_line_limit;
-			if (data_left > 0 || rec_type == REC_TYPE_CONT) {
-			    smtp_fputc(' ', session->stream);
-			    space_left -= 1;
-			}
-		    } else {
-			if (rec_type == REC_TYPE_CONT) {
-			    smtp_fwrite(data_start, data_left, session->stream);
-			    space_left -= data_left;
-			} else {
-			    smtp_fputs(data_start, data_left, session->stream);
-			    space_left = var_smtp_line_limit;
-			}
-			break;
+		if (downgrading == 0) {
+		    smtp_text_out((void *) state, rec_type,
+				  vstring_str(state->scratch),
+				  VSTRING_LEN(state->scratch),
+				  (off_t) 0);
+		} else {
+		    mime_errs =
+			mime_state_update(state->mime_state, rec_type,
+					  vstring_str(state->scratch),
+					  VSTRING_LEN(state->scratch));
+		    if (mime_errs) {
+			smtp_mesg_fail(state, 554, "MIME 7-bit conversion failed: %s",
+				       mime_state_error(mime_errs));
+			RETURN(0);
 		    }
-		} while (data_left > 0);
+		}
 		prev_type = rec_type;
 	    }
 

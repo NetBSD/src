@@ -1,4 +1,3 @@
-# 
 # PCRE_TABLE(5)                                       PCRE_TABLE(5)
 # 
 # NAME
@@ -6,6 +5,10 @@
 # 
 # SYNOPSIS
 #        pcre:/etc/postfix/filename
+# 
+#        postmap -q "string" pcre:/etc/postfix/filename
+# 
+#        postmap -q - pcre:/etc/postfix/filename <inputfile
 # 
 # DESCRIPTION
 #        The  Postfix  mail system uses optional tables for address
@@ -16,33 +19,101 @@
 #        To find out what types of lookup tables your Postfix  sys-
 #        tem supports use the postconf -m command.
 # 
+#        To   test  lookup  tables,  use  the  postmap  command  as
+#        described in the SYNOPSIS above.
+# 
 #        The general form of a PCRE table is:
 # 
-#        pattern result
-#               When  pattern matches a search string, use the cor-
-#               responding result.
+#        /pattern/flags result
+#               When pattern matches a search string, use the  cor-
+#               responding result value.
 # 
 #        blank lines and comments
-#               Empty lines and whitespace-only lines are  ignored,
-#               as  are  lines whose first non-whitespace character
+#               Empty  lines and whitespace-only lines are ignored,
+#               as are lines whose first  non-whitespace  character
 #               is a `#'.
 # 
 #        multi-line text
-#               A logical line starts with non-whitespace  text.  A
-#               line  that starts with whitespace continues a logi-
+#               A  logical  line starts with non-whitespace text. A
+#               line that starts with whitespace continues a  logi-
 #               cal line.
 # 
+#        if /pattern/flags
+# 
+#        endif  Examine the lines between if..endif only if pattern
+#               matches. The if..endif can nest.   Do  not  prepend
+#               whitespace to patterns inside if..endif.
+# 
 #        Each  pattern  is  a  perl-like  regular  expression.  The
-#        expression  delimiter can be any character, except whites-
-#        pace or characters that have special  meaning  (tradition-
-#        ally  the  forward slash is used).  The regular expression
+#        expression delimiter can be any character, except  whites-
+#        pace  or  characters that have special meaning (tradition-
+#        ally the forward slash is used).  The  regular  expression
 #        can contain whitespace.
 # 
-#        By default, matching is case-insensitive, although follow-
-#        ing  the  second slash with an `i' flag will reverse this.
-#        Other flags are supported, but the only other  useful  one
-#        is `U', which makes matching ungreedy (see PCRE documenta-
-#        tion and source for more info).
+#        By default, matching is case-insensitive, and newlines are
+#        not treated as special characters. The  behavior  is  con-
+#        trolled  by  flags,  which are toggled by appending one or
+#        more of the following characters after the pattern:
+# 
+#        i (default: on)
+#               Toggles the  case  sensitivity  flag.  By  default,
+#               matching is case insensitive.
+# 
+#        m (default: off)
+#               Toggles  the PCRE_MULTILINE flag. When this flag is
+#               on, the ^ and $  metacharacters  match  immediately
+#               after  and  immediately before a newline character,
+#               respectively, in addition to matching at the  start
+#               and end of the subject string.
+# 
+#        s (default: on)
+#               Toggles the PCRE_DOTALL flag. When this flag is on,
+#               the .  metacharacter matches the newline character.
+#               With  Postfix  versions prior to 20020528, The flag
+#               is off by default, which is inconvenient for multi-
+#               line message header matching.
+# 
+#        x (default: off)
+#               Toggles  the  pcre extended flag. When this flag is
+#               on, whitespace in the  pattern  (other  than  in  a
+#               character class) and characters between a # outside
+#               a character class and the  next  newline  character
+#               are  ignored.  An escaping backslash can be used to
+#               include a whitespace or # character as part of  the
+#               pattern.
+# 
+#        A (default: off)
+#               Toggles  the PCRE_ANCHORED flag.  When this flag is
+#               on, the pattern is forced to  be  "anchored",  that
+#               is, it is constrained to match only at the start of
+#               the string which is being  searched  (the  "subject
+#               string").  This  effect  can  also  be  achieved by
+#               appropriate constructs in the pattern itself.
+# 
+#        E (default: off)
+#               Toggles the  PCRE_DOLLAR_ENDONLY  flag.  When  this
+#               flag  is  on,  a  $  metacharacter  in  the pattern
+#               matches only at the  end  of  the  subject  string.
+#               Without  this  flag,  a dollar also matches immedi-
+#               ately before the final character if it is a newline
+#               character (but not before any other newline charac-
+#               ters). This flag is ignored if PCRE_MULTILINE  flag
+#               is set.
+# 
+#        U (default: off)
+#               Toggles the ungreedy matching flag.  When this flag
+#               is on, the  pattern  matching  engine  inverts  the
+#               "greediness"  of  the  quantifiers so that they are
+#               not greedy by default, but become  greedy  if  fol-
+#               lowed  by  "?".   This  flag can also set by a (?U)
+#               modifier within the pattern.
+# 
+#        X (default: off)
+#               Toggles the PCRE_EXTRA flag.  When this flag is on,
+#               any  backslash  in  a pattern that is followed by a
+#               letter that has no special meaning causes an error,
+#               thus reserving these combinations for future expan-
+#               sion.
 # 
 #        Each pattern is applied to the entire lookup  key  string.
 #        Depending  on  the  application,  that string is an entire
@@ -80,6 +151,13 @@
 #        /^Subject: make money fast/     REJECT
 #        /^To: friend@public\.com/       REJECT
 # 
+# EXAMPLE BODY FILTER MAP
+#        # First skip over base 64 encoded text to save CPU cycles.
+#        # Requires PCRE version 3.
+#        ~^[[:alnum:]+/]{60,}$~          OK
+# 
+#        # Put your own body patterns here.
+# 
 # SEE ALSO
 #        regexp_table(5) format of POSIX regular expression tables
 # 
@@ -97,5 +175,4 @@
 #        P.O. Box 704
 #        Yorktown Heights, NY 10598, USA
 # 
-#                                                                 1
-# 
+#                                                     PCRE_TABLE(5)

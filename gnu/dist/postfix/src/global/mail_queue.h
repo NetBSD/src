@@ -21,6 +21,7 @@
   * Mail queue names.
   */
 #define MAIL_QUEUE_MAILDROP	"maildrop"
+#define MAIL_QUEUE_HOLD		"hold"
 #define MAIL_QUEUE_INCOMING	"incoming"
 #define MAIL_QUEUE_ACTIVE	"active"
 #define MAIL_QUEUE_DEFERRED	"deferred"

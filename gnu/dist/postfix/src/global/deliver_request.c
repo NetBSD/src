@@ -15,6 +15,7 @@
 /*		long	data_offset;
 /*		long	data_size;
 /*		char	*nexthop;
+/*		char	*encoding;
 /*		char	*sender;
 /*		char	*errors_to;
 /*		char	*return_receipt;
@@ -169,6 +170,8 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
     static VSTRING *queue_name;
     static VSTRING *queue_id;
     static VSTRING *nexthop;
+    static VSTRING *encoding;
+    static VSTRING *orig_addr;
     static VSTRING *address;
     static VSTRING *errors_to;
     static VSTRING *return_receipt;
@@ -183,6 +186,8 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
 	queue_name = vstring_alloc(10);
 	queue_id = vstring_alloc(10);
 	nexthop = vstring_alloc(10);
+	encoding = vstring_alloc(10);
+	orig_addr = vstring_alloc(10);
 	address = vstring_alloc(10);
 	errors_to = vstring_alloc(10);
 	return_receipt = vstring_alloc(10);
@@ -199,12 +204,15 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
 		  ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, &request->data_offset,
 		  ATTR_TYPE_LONG, MAIL_ATTR_SIZE, &request->data_size,
 		  ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, nexthop,
+		  ATTR_TYPE_STR, MAIL_ATTR_ENCODING, encoding,
 		  ATTR_TYPE_STR, MAIL_ATTR_SENDER, address,
 		  ATTR_TYPE_STR, MAIL_ATTR_ERRTO, errors_to,
 		  ATTR_TYPE_STR, MAIL_ATTR_RRCPT, return_receipt,
 		  ATTR_TYPE_LONG, MAIL_ATTR_TIME, &request->arrival_time,
-		  ATTR_TYPE_END) != 10)
+		  ATTR_TYPE_END) != 11) {
+	msg_warn("%s: error receiving common attributes", myname);
 	return (-1);
+    }
     if (mail_open_ok(vstring_str(queue_name),
 		     vstring_str(queue_id), &st, &path) == 0)
 	return (-1);
@@ -212,6 +220,7 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
     request->queue_name = mystrdup(vstring_str(queue_name));
     request->queue_id = mystrdup(vstring_str(queue_id));
     request->nexthop = mystrdup(vstring_str(nexthop));
+    request->encoding = mystrdup(vstring_str(encoding));
     request->sender = mystrdup(vstring_str(address));
     request->errors_to = mystrdup(vstring_str(errors_to));
     request->return_receipt = mystrdup(vstring_str(return_receipt));
@@ -223,15 +232,22 @@ static int deliver_request_get(VSTREAM *stream, DELIVER_REQUEST *request)
     for (;;) {
 	if (attr_scan(stream, ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
 		      ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, &offset,
-		      ATTR_TYPE_END) != 1)
+		      ATTR_TYPE_END) != 1) {
+	    msg_warn("%s: error receiving offset attribute", myname);
 	    return (-1);
+	}
 	if (offset == 0)
 	    break;
 	if (attr_scan(stream, ATTR_FLAG_MORE | ATTR_FLAG_STRICT,
+		      ATTR_TYPE_STR, MAIL_ATTR_ORCPT, orig_addr,
 		      ATTR_TYPE_STR, MAIL_ATTR_RECIP, address,
-		      ATTR_TYPE_END) != 1)
+		      ATTR_TYPE_END) != 2) {
+	    msg_warn("%s: error receiving recipient attributes", myname);
 	    return (-1);
-	recipient_list_add(&request->rcpt_list, offset, vstring_str(address));
+	}
+	recipient_list_add(&request->rcpt_list, offset,
+			   vstring_str(orig_addr),
+			   vstring_str(address));
     }
 
     /*
@@ -274,6 +290,7 @@ static DELIVER_REQUEST *deliver_request_alloc(void)
     request->queue_name = 0;
     request->queue_id = 0;
     request->nexthop = 0;
+    request->encoding = 0;
     request->sender = 0;
     request->errors_to = 0;
     request->return_receipt = 0;
@@ -296,6 +313,8 @@ static void deliver_request_free(DELIVER_REQUEST *request)
 	myfree(request->queue_id);
     if (request->nexthop)
 	myfree(request->nexthop);
+    if (request->encoding)
+	myfree(request->encoding);
     if (request->sender)
 	myfree(request->sender);
     if (request->errors_to)

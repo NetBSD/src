@@ -54,9 +54,7 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
 	ENETUNREACH,
 	ENOTCONN,
 	EWOULDBLOCK,
-	0,
-    };
-    static int accept_warn_errors[] = {
+	ENOBUFS,			/* HPUX11 */
 	ECONNABORTED,
 	0,
     };
@@ -80,17 +78,13 @@ int     sane_accept(int sock, struct sockaddr * sa, SOCKADDR_SIZE *len)
      * reported successful completion. This was fixed shortly before FreeBSD
      * 4.3. However, other systems may make that same mistake again, so we're
      * adding a special warning.
+     * 
+     * XXX HP-UX 11 returns ENOBUFS when the client has disconnected in the mean
+     * time.
      */
     if ((fd = accept(sock, sa, len)) < 0) {
 	for (count = 0; (err = accept_ok_errors[count]) != 0; count++) {
 	    if (errno == err) {
-		errno = EAGAIN;
-		break;
-	    }
-	}
-	for (count = 0; (err = accept_warn_errors[count]) != 0; count++) {
-	    if (errno == err) {
-		msg_warn("accept: %m");
 		errno = EAGAIN;
 		break;
 	    }

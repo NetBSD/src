@@ -65,7 +65,7 @@ void    master_vars_init(void)
     mail_conf_read();
     get_mail_conf_int_table(int_table);
     get_mail_conf_time_table(time_table);
-    path = concatenate(var_config_dir, "/master.cf", (char *) 0);
+    path = concatenate(var_config_dir, "/", MASTER_CONF_FILE, (char *) 0);
     fset_master_ent(path);
     myfree(path);
 }

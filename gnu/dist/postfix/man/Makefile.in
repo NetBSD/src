@@ -12,8 +12,10 @@ COMMANDS= man1/postalias.1 man1/postcat.1 man1/postconf.1 man1/postfix.1 \
 	man1/postqueue.1 man1/postsuper.1
 CONFIG	= man5/access.5 man5/aliases.5 man5/canonical.5 man5/relocated.5 \
 	man5/transport.5 man5/virtual.5 man5/pcre_table.5 man5/regexp_table.5
+TOOLS	= man1/smtp-sink.1 man1/smtp-source.1 man1/qmqp-sink.1 \
+	man1/qmqp-source.1
 
-update:	$(DAEMONS) $(COMMANDS) $(CONFIG)
+update:	$(DAEMONS) $(COMMANDS) $(CONFIG) $(TOOLS)
 
 Makefile: Makefile.in
 	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../src/makedefs; cat $?) >$@
@@ -151,3 +153,15 @@ man5/transport.5: ../proto/transport
 
 man5/virtual.5: ../proto/virtual
 	../mantools/srctoman - $? >$@
+
+man1/smtp-sink.1: ../src/smtpstone/smtp-sink.c
+	../mantools/srctoman $? >$@
+
+man1/smtp-source.1: ../src/smtpstone/smtp-source.c
+	../mantools/srctoman $? >$@
+
+man1/qmqp-sink.1: ../src/smtpstone/qmqp-sink.c
+	../mantools/srctoman $? >$@
+
+man1/qmqp-source.1: ../src/smtpstone/qmqp-source.c
+	../mantools/srctoman $? >$@

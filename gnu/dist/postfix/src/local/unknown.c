@@ -50,6 +50,11 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <string.h>
+
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
 
 /* Utility library. */
 
@@ -64,6 +69,8 @@
 #include <mail_params.h>
 #include <mail_proto.h>
 #include <bounce.h>
+#include <mail_addr.h>
+#include <sent.h>
 
 /* Application-specific. */
 
@@ -98,29 +105,39 @@ int     deliver_unknown(LOCAL_STATE state, USER_ATTR usr_attr)
      */
     if (*var_fallback_transport)
 	return (deliver_pass(MAIL_CLASS_PRIVATE, var_fallback_transport,
-			     state.request, state.msg_attr.recipient, -1L));
-
-    /*
-     * Bounce the message when no luser relay is specified.
-     */
-    if (*var_luser_relay == 0)
-	return (bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
-			      "unknown user: \"%s\"", state.msg_attr.local));
+			     state.request, state.msg_attr.orig_rcpt,
+			     state.msg_attr.recipient, -1L));
 
     /*
      * Subject the luser_relay address to $name expansion, disable
      * propagation of unmatched address extension, and re-inject the address
-     * into the delivery machinery. Donot give special treatment to "|stuff"
+     * into the delivery machinery. Do not give special treatment to "|stuff"
      * or /stuff.
      */
-    state.msg_attr.unmatched = 0;
-    expand_luser = vstring_alloc(100);
-    local_expand(expand_luser, var_luser_relay, &state, &usr_attr, (char *) 0);
-    status = deliver_resolve_addr(state, usr_attr, vstring_str(expand_luser));
-    vstring_free(expand_luser);
+    if (*var_luser_relay) {
+	state.msg_attr.unmatched = 0;
+	expand_luser = vstring_alloc(100);
+	local_expand(expand_luser, var_luser_relay, &state, &usr_attr, (char *) 0);
+	status = deliver_resolve_addr(state, usr_attr, vstring_str(expand_luser));
+	vstring_free(expand_luser);
+	return (status);
+    }
 
     /*
-     * Done.
+     * If no alias was found for a required reserved name, toss the message
+     * into the bit bucket, and issue a warning instead.
      */
-    return (status);
+#define STREQ(x,y) (strcasecmp(x,y) == 0)
+
+    if (STREQ(state.msg_attr.local, MAIL_ADDR_MAIL_DAEMON)
+	|| STREQ(state.msg_attr.local, MAIL_ADDR_POSTMASTER)) {
+	msg_warn("required alias not found: %s", state.msg_attr.local);
+	return (sent(SENT_ATTR(state.msg_attr), "discarded"));
+    }
+
+    /*
+     * Bounce the message when no luser relay is specified.
+     */
+    return (bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
+			  "unknown user: \"%s\"", state.msg_attr.local));
 }

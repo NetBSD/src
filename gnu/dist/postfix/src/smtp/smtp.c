@@ -37,11 +37,15 @@
 /*	run chrooted at fixed low privilege.
 /* STANDARDS
 /*	RFC 821 (SMTP protocol)
+/*	RFC 822 (ARPA Internet Text Messages)
 /*	RFC 1651 (SMTP service extensions)
+/*	RFC 1652 (8bit-MIME transport)
 /*	RFC 1870 (Message Size Declaration)
-/*	RFC 2197 (Pipelining)
+/*	RFC 2045 (MIME: Format of Internet Message Bodies)
+/*	RFC 2046 (MIME: Media Types)
 /*	RFC 2554 (AUTH command)
 /*	RFC 2821 (SMTP protocol)
+/*	RFC 2920 (SMTP Pipelining)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager can
@@ -88,9 +92,16 @@
 /*	mail on. When any of those addresses appears in the list of mail
 /*	exchangers for a remote destination, the list is truncated to
 /*	avoid mail delivery loops.
+/*	See also the \fBproxy_interfaces\fR parameter.
 /* .IP \fBnotify_classes\fR
 /*	When this parameter includes the \fBprotocol\fR class, send mail to the
 /*	postmaster with transcripts of SMTP sessions with protocol errors.
+/* .IP \fBproxy_interfaces\fR
+/*	Network interfaces that this mail system receives mail on by way
+/*	of a proxy or network address translator. When any of those addresses
+/*	appears in the list of mail exchangers for a remote destination, the
+/*	list is truncated to avoid mail delivery loops.
+/*	See also the \fBinet_interfaces\fR parameter.
 /* .IP \fBsmtp_always_send_ehlo\fR
 /*	Always send EHLO at the start of a connection.
 /* .IP \fBsmtp_never_send_ehlo\fR
@@ -100,6 +111,8 @@
 /* .IP \fBsmtp_line_length_limit\fR
 /*	Length limit for SMTP message content lines. Zero means no limit.
 /*	Some SMTP servers misbehave on long lines.
+/* .IP \fBsmtp_helo_name\fR
+/*	The hostname to be used in HELO and EHLO commands.
 /* .IP \fBsmtp_skip_4xx_greeting\fR
 /*	Skip servers that greet us with a 4xx status code.
 /* .IP \fBsmtp_skip_5xx_greeting\fR
@@ -112,6 +125,19 @@
 /* .IP \fBsmtp_pix_workaround_threshold_time\fR
 /*	The time a message must be queued before the CISCO PIX firewall
 /*	<CR><LF>.<CR><LF> bug workaround is turned on.
+/* .SH "MIME Conversion"
+/* .IP \fBdisable_mime_output_conversion\fR
+/*	Disable the conversion of 8BITMIME format to 7BIT format when
+/*	the remote system does not advertise 8BITMIME support.
+/* .IP \fBmime_boundary_length_limit\fR
+/*	The amount of space that will be allocated for MIME multipart
+/*	boundary strings. The MIME processor is unable to distinguish
+/*	between boundary strings that do not differ in the first
+/*	\fB$mime_boundary_length_limit\fR characters.
+/* .IP \fBmime_nesting_limit\fR
+/*	The maximal nesting level of multipart mail that the MIME
+/*	processor can handle. Refuse mail that is nested deeper,
+/*	when converting from 8BITMIME format to 7BIT format.
 /* .SH "Authentication controls"
 /* .IP \fBsmtp_sasl_auth_enable\fR
 /*	Enable per-session authentication as per RFC 2554 (SASL).
@@ -262,6 +288,7 @@ bool    var_smtp_rand_addr;
 int     var_smtp_pix_thresh;
 int     var_smtp_pix_delay;
 int     var_smtp_line_limit;
+char   *var_smtp_helo_name;
 
  /*
   * Global variables. smtp_errno is set by the address lookup routines and by
@@ -324,6 +351,7 @@ static int deliver_message(DELIVER_REQUEST *request)
 	    && (state->error_mask & name_mask(VAR_NOTIFY_CLASSES,
 				     mail_error_masks, var_notify_classes)))
 	    smtp_chat_notify(state);
+	/* XXX smtp_xfer() may abort in the middle of DATA. */
 	smtp_session_free(state->session);
 	debug_peer_restore();
     }
@@ -413,6 +441,7 @@ int     main(int argc, char **argv)
 	VAR_SMTP_SASL_PASSWD, DEF_SMTP_SASL_PASSWD, &var_smtp_sasl_passwd, 0, 0,
 	VAR_SMTP_SASL_OPTS, DEF_SMTP_SASL_OPTS, &var_smtp_sasl_opts, 0, 0,
 	VAR_SMTP_BIND_ADDR, DEF_SMTP_BIND_ADDR, &var_smtp_bind_addr, 0, 0,
+	VAR_SMTP_HELO_NAME, DEF_SMTP_HELO_NAME, &var_smtp_helo_name, 1, 0,
 	0,
     };
     static CONFIG_TIME_TABLE time_table[] = {

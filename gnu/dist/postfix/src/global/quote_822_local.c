@@ -95,7 +95,7 @@ static int is_822_dot_string(const char *local_part, const char *end, int flags)
      * RFC 822 expects 7-bit data. Rather than quoting every 8-bit character
      * (and still passing it on as 8-bit data) we leave 8-bit data alone.
      */
-    if (local_part[0] == 0 || local_part[0] == '.')
+    if (local_part == end || local_part[0] == 0 || local_part[0] == '.')
 	return (NO);
     for (cp = local_part; cp < end && (ch = *(unsigned char *) cp) != 0; cp++) {
 	if (ch == '.' && (cp + 1) < end && cp[1] == '.')

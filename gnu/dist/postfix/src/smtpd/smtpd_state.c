@@ -52,6 +52,7 @@
 #include <cleanup_user.h>
 #include <mail_params.h>
 #include <mail_error.h>
+#include <mail_proto.h>
 
 /* Application-specific. */
 
@@ -86,12 +87,17 @@ void    smtpd_state_init(SMTPD_STATE *state, VSTREAM *stream)
     state->sender = 0;
     state->recipient = 0;
     state->etrn_name = 0;
-    state->protocol = "SMTP";
+    state->protocol = MAIL_PROTO_SMTP;
     state->where = SMTPD_AFTER_CONNECT;
     state->recursion = 0;
     state->msg_size = 0;
     state->junk_cmds = 0;
-    state->warn_if_reject = 0;
+    state->defer_if_permit_client = 0;
+    state->defer_if_permit_helo = 0;
+    state->defer_if_permit_sender = 0;
+    state->defer_if_reject.reason = 0;
+    state->defer_if_permit.reason = 0;
+    state->expand_buf = 0;
 
 #ifdef USE_SASL_AUTH
     if (SMTPD_STAND_ALONE(state))
@@ -124,6 +130,12 @@ void    smtpd_state_reset(SMTPD_STATE *state)
     if (state->buffer)
 	vstring_free(state->buffer);
     smtpd_peer_reset(state);
+    if (state->defer_if_permit.reason)
+	vstring_free(state->defer_if_permit.reason);
+    if (state->defer_if_reject.reason)
+	vstring_free(state->defer_if_reject.reason);
+    if (state->expand_buf)
+	vstring_free(state->expand_buf);
 
 #ifdef USE_SASL_AUTH
     if (var_smtpd_sasl_enable)
