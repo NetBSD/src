@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.34 2001/07/07 05:35:41 thorpej Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.35 2001/07/07 15:53:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -450,9 +450,9 @@ pdq_ifioctl(
 			ina->x_host = *(union ns_host *)PDQ_LANADDR(sc);
 		    } else {
 			ifp->if_flags &= ~IFF_RUNNING;
-			bcopy((caddr_t)ina->x_host.c_host,
-			      (caddr_t)PDQ_LANADDR(sc),
-			      PDQ_LANADDR_SIZE(sc));
+			memcpy((caddr_t)PDQ_LANADDR(sc),
+			    (caddr_t)ina->x_host.c_host,
+			    PDQ_LANADDR_SIZE(sc));
 		    }
 
 		    pdq_ifinit(sc);
@@ -469,9 +469,8 @@ pdq_ifioctl(
 	}
 	case SIOCGIFADDR: {
 	    struct ifreq *ifr = (struct ifreq *)data;
-	    bcopy((caddr_t) PDQ_LANADDR(sc),
-		  (caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		  6);
+	    memcpy((caddr_t) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
+		(caddr_t) PDQ_LANADDR(sc), 6);
 	    break;
 	}
 

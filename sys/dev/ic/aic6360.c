@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.72 2001/04/30 03:45:35 lukem Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.73 2001/07/07 15:53:14 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 #ifdef DDB
@@ -554,7 +554,7 @@ aic_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			acb->scsipi_cmd_length = 0;
 			acb->data_length = 0;
 		} else {
-			bcopy(xs->cmd, &acb->scsipi_cmd, xs->cmdlen);
+			memcpy(&acb->scsipi_cmd, xs->cmd, xs->cmdlen);
 			acb->scsipi_cmd_length = xs->cmdlen;
 			acb->data_addr = xs->data;
 			acb->data_length = xs->datalen;
