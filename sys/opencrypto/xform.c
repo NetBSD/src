@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.3 2003/08/01 01:47:45 itojun Exp $ */
+/*	$NetBSD: xform.c,v 1.4 2003/08/25 04:09:57 thorpej Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.3 2003/08/01 01:47:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.4 2003/08/25 04:09:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.3 2003/08/01 01:47:45 itojun Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/des/des.h>
+#include <crypto/ripemd160//rmd160.h>
 
-#include <opencrypto/rmd160.h>
 #include <opencrypto/blf.h>
 #include <opencrypto/cast.h>
 #include <opencrypto/deflate.h>
