@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.19 2001/11/26 15:23:38 pooka Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.20 2002/06/21 09:04:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999 Matthew R. Green
@@ -448,6 +448,11 @@ do_fstab(add)
 
 		if (strcmp(fp->fs_type, "sw") != 0)
 			continue;
+
+		/* handle dp as mnt option */
+		if (strstr(fp->fs_mntops, "dp") && add)
+			set_dumpdev(spec);
+
 		isblk = 0;
 
 		if ((s = strstr(fp->fs_mntops, PRIORITYEQ)) != NULL) {
