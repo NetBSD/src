@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.120 2004/09/18 18:49:50 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.121 2004/10/01 03:39:11 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.120 2004/09/18 18:49:50 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.121 2004/10/01 03:39:11 enami Exp $");
 
 #include "opt_scsi.h"
 
@@ -2030,6 +2030,9 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 * into....
 	 */
  free_xs:
+	if (xs->xs_control & XS_CTL_DATA_ONSTACK)
+		PRELE(curlwp);
+
 	s = splbio();
 	scsipi_put_xs(xs);
 	splx(s);
@@ -2040,8 +2043,6 @@ scsipi_execute_xs(struct scsipi_xfer *xs)
 	 */
 	scsipi_run_queue(chan);
 
-	if (xs->xs_control & XS_CTL_DATA_ONSTACK)
-		PRELE(curlwp);
 	return (error);
 }
 
