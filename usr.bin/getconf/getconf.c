@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: getconf.c,v 1.1 1994/04/27 19:50:54 jtc Exp $";
+static char rcsid[] = "$Id: getconf.c,v 1.2 1994/05/10 00:04:12 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -232,30 +232,3 @@ usage()
   fprintf (stderr, "       getconf path_var pathname\n");
   exit(1);
 }
-
-
-#ifdef NEED_SYSCONF
-long
-sysconf(name)
-	int name;
-{
-	errno = ENOSYS;
-	return -1;
-}
-#endif
-
-#ifdef NEED_PATHCONF
-long
-pathconf(path, name)
-	const char *path;
-	int name;
-{
-	if (path == NULL) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	errno = ENOSYS;
-	return -1;
-}
-#endif
