@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.29 1996/10/13 13:13:54 jonathan Exp $	*/
+/*	$NetBSD: dc.c,v 1.30 1996/10/16 02:10:33 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1128,7 +1128,7 @@ dcGetc(dev)
 	int s;
 
 	line = DCLINE(dev);
-	if (cold) {
+	if (cold && dc_cons_addr) {
 		dcaddr = dc_cons_addr;
 	} else {
 		struct dc_softc *sc;
@@ -1166,7 +1166,7 @@ dcPutc(dev, c)
 
 	s = spltty();
 	out_line = DCLINE(dev);
-	if (cold) {
+	if (cold && dc_cons_addr) {
 		brk = 0;
 		dcaddr = dc_cons_addr;
 	} else {
