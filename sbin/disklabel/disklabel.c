@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.126 2004/01/18 22:34:22 lukem Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.127 2004/02/29 21:31:14 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.126 2004/01/18 22:34:22 lukem Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.127 2004/02/29 21:31:14 itojun Exp $");
 #endif
 #endif	/* not lint */
 
@@ -166,6 +166,7 @@ static int		 getasciilabel(FILE *, struct disklabel *);
 static void		 setbootflag(struct disklabel *);
 #endif
 static void		 usage(void);
+static int		 getulong(const char *, unsigned long *, unsigned long);
 
 int
 main(int argc, char *argv[])
@@ -1326,7 +1327,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	const char *const *cpp, *s;
 	struct partition *pp;
 	char	*cp, *tp, line[BUFSIZ], tbuf[15];
-	int	 v, lineno, errors;
+	int	 lineno, errors;
+	unsigned long v;
 
 	lineno = 0;
 	errors = 0;
@@ -1357,8 +1359,12 @@ getasciilabel(FILE *f, struct disklabel *lp)
 					lp->d_type = cpp - dktypenames;
 					goto next;
 				}
-			v = atoi(tp);
-			if ((unsigned)v >= DKMAXTYPES)
+			if (getulong(tp, &v, UINT16_MAX) != 0) {
+				warnx("line %d: syntax error", lineno);
+				errors++;
+				continue;
+			}
+			if (v >= DKMAXTYPES)
 				warnx("line %d: warning, unknown disk type: %s",
 				    lineno, tp);
 			lp->d_type = v;
@@ -1386,13 +1392,19 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			int i;
 
 			for (i = 0; (cp = tp) && *cp != '\0' && i < NDDATA;) {
-				lp->d_drivedata[i++] = atoi(cp);
+				if (getulong(cp, &v, UINT32_MAX) != 0) {
+					warnx("line %d: bad drive data",
+					    lineno);
+					errors++;
+				} else
+					lp->d_drivedata[i] = v;
+				i++;
 				tp = word(cp);
 			}
 			continue;
 		}
-		if (sscanf(cp, "%d partitions", &v) == 1) {
-			if (v == 0 || (unsigned)v > MAXPARTITIONS) {
+		if (sscanf(cp, "%lu partitions", &v) == 1) {
+			if (v == 0 || v > MAXPARTITIONS) {
 				warnx("line %d: bad # of partitions", lineno);
 				lp->d_npartitions = MAXPARTITIONS;
 				errors++;
@@ -1413,8 +1425,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "bytes/sector")) {
-			v = atoi(tp);
-			if (v <= 0 || (v % 512) != 0) {
+			if (getulong(tp, &v, UINT32_MAX) != 0 || v <= 0 ||
+			    (v % 512) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1422,8 +1434,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "sectors/track")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			if (getulong(tp, &v, UINT32_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1431,8 +1442,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "sectors/cylinder")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			if (getulong(tp, &v, UINT32_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1440,8 +1450,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "tracks/cylinder")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			if (getulong(tp, &v, UINT32_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1449,8 +1458,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "cylinders")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			if (getulong(tp, &v, UINT32_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1458,8 +1466,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "total sectors")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			if (getulong(tp, &v, UINT32_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1467,8 +1474,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "rpm")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			if (getulong(tp, &v, UINT16_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1476,8 +1482,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "interleave")) {
-			v = atoi(tp);
-			if (v <= 0) {
+			if (getulong(tp, &v, UINT16_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1485,8 +1490,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "trackskew")) {
-			v = atoi(tp);
-			if (v < 0) {
+			if (getulong(tp, &v, UINT16_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1494,8 +1498,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "cylinderskew")) {
-			v = atoi(tp);
-			if (v < 0) {
+			if (getulong(tp, &v, UINT16_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1503,8 +1506,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "headswitch")) {
-			v = atoi(tp);
-			if (v < 0) {
+			if (getulong(tp, &v, UINT32_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1512,8 +1514,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		if (!strcmp(cp, "track-to-track seek")) {
-			v = atoi(tp);
-			if (v < 0) {
+			if (getulong(tp, &v, UINT32_MAX) != 0) {
 				warnx("line %d: bad %s: %s", lineno, cp, tp);
 				errors++;
 			} else
@@ -1538,19 +1539,29 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		break;						\
 	}
 
-#define NXTNUM(n) do { \
+/* cannot use do-while due to the use of "break" in _CHECKLINE */
+#define NXTNUM(n) { \
 	_CHECKLINE						\
-	cp = tp, tp = word(cp), (n) = (cp != NULL ? atoi(cp) : 0);	\
-} while (/* CONSTCOND */ 0)
+	cp = tp, tp = word(cp);					\
+	if (cp != NULL) {					\
+		if (getulong(cp, &v, UINT32_MAX) != 0) {	\
+			warnx("line %d: syntax error", lineno);	\
+			errors++;				\
+			break;					\
+		}						\
+		(n) = v;					\
+	} else							\
+		(n) = 0;					\
+}
 
-#define NXTXNUM(n) do { \
+/* cannot use do-while due to the use of "break" in _CHECKLINE */
+#define NXTXNUM(n) { \
 	char	*ptr;							\
-	int	 m;							\
+	unsigned long m;						\
 									\
 	_CHECKLINE							\
 	cp = tp, tp = word(cp);						\
-	m = (int)strtol(cp, &ptr, 10);					\
-	if (*ptr == '\0')						\
+	if (getulong(cp, &m, UINT32_MAX) == 0)				\
 		(n) = m;						\
 	else {								\
 		if (*ptr++ != '/') {					\
@@ -1559,32 +1570,25 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			break;						\
 		}							\
 		(n) = m * lp->d_secpercyl;				\
-		m = (int)strtol(ptr, &ptr, 10);				\
-		if (*ptr++ != '/') {					\
+		errno = 0;						\
+		m = strtoul(ptr, &ptr, 10);				\
+		if (!ptr || *ptr++ != '/' || errno == ERANGE) {		\
 			warnx("line %d: invalid format", lineno);	\
 			errors++;					\
 			break;						\
 		}							\
 		(n) += m * lp->d_nsectors;				\
-		m = (int)strtol(ptr, &ptr, 10);				\
+		if (getulong(ptr, &m, UINT32_MAX) != 0) {		\
+			warnx("line %d: invalid format", lineno);	\
+			errors++;					\
+			break;						\
+		}							\
 		(n) += m;						\
 	}								\
-} while (/* CONSTCOND */ 0)
+}
 
-			NXTXNUM(v);
-			if (v < 0) {
-				warnx("line %d: bad partition size: %s",
-				    lineno, cp);
-				errors++;
-			} else
-				pp->p_size = v;
-			NXTXNUM(v);
-			if (v < 0) {
-				warnx("line %d: bad partition offset: %s",
-				    lineno, cp);
-				errors++;
-			} else
-				pp->p_offset = v;
+			NXTXNUM(pp->p_size);
+			NXTXNUM(pp->p_offset);
 			/* can't use word() here because of blanks
 			   in fstypenames[] */
 			_CHECKLINE
@@ -1611,9 +1615,13 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				}
 			}
 			tp = word(cp);
-			if (isdigit(*cp))
-				v = atoi(cp);
-			else
+			if (isdigit(*cp)) {
+				if (getulong(cp, &v, UINT8_MAX) != 0) {
+					warnx("line %d: syntax error",
+					    lineno);
+					errors++;
+				}
+			} else
 				v = FSMAXTYPES;
 			if ((unsigned)v >= FSMAXTYPES) {
 				warnx("line %d: warning, unknown"
@@ -1871,4 +1879,21 @@ usage(void)
 		(void) fputs("\n", stderr);
 	}
 	exit(1);
+}
+
+static int
+getulong(str, ul, max)
+	const char *str;
+	unsigned long *ul;
+	unsigned long max;
+{
+	char *ep;
+
+	errno = 0;
+	*ul = strtoul(str, &ep, 10);
+	if (*str == '\0' || !ep || (*ep != '\0' && !isspace(*ep)) ||
+	    errno == ERANGE || *ul > max)
+		return ERANGE;
+	else
+		return 0;
 }
