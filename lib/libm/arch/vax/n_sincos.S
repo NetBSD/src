@@ -1,4 +1,4 @@
-/*	$NetBSD: n_sincos.S,v 1.1 1995/10/10 23:40:28 ragge Exp $	*/
+/*	$NetBSD: n_sincos.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -48,12 +48,13 @@
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
-
-	.globl	_sin
+#include <machine/asm.h>
 	.text
 	.align	1
-
-_sin:	.word	0xffc		# save r2-r11
+	.globl	_sin
+	.type	_sin@function
+_sin:
+	.word	0xffc		# save r2-r11
 	movq	4(ap),r0
 	bicw3	$0x807f,r0,r2
 	beql	1f		# if x is zero or reserved operand then return x
@@ -81,11 +82,12 @@ _sin:	.word	0xffc		# save r2-r11
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
-	.globl	_cos
 	.text
 	.align	1
-
-_cos:	.word	0xffc		# save r2-r11
+	.globl	_cos
+	.type	_cos,@function
+_cos:
+	.word	0xffc		# save r2-r11
 	movq	4(ap),r0
 	bicw3	$0x7f,r0,r2
 	cmpw	$0x8000,r2

@@ -1,4 +1,4 @@
-/*      $NetBSD: n_infnan.S,v 1.1 1995/10/10 23:40:27 ragge Exp $ */
+/*      $NetBSD: n_infnan.S,v 1.2 1998/10/31 02:06:02 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,11 +46,12 @@ _sccsid:
  *
  * The Reserved Operand Fault is generated inside of this routine.
  */	
-	.globl	_infnan
 	.set	EDOM,33
 	.set	ERANGE,34
 	.text
 	.align 1
+	.globl	_infnan
+	.type	_infnan,@function
 _infnan:
 	.word	0x0
 	cmpl	4(ap),$ERANGE

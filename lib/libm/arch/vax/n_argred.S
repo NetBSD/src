@@ -1,4 +1,4 @@
-/*	$NetBSD: n_argred.S,v 1.1 1995/10/10 23:40:21 ragge Exp $	*/
+/*	$NetBSD: n_argred.S,v 1.2 1998/10/31 02:06:01 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -44,9 +44,11 @@
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
-	.globl	libm$argred
-	.globl	libm$sincos
 	.text
+	.globl	libm$argred
+	.type	libm$argred,@label
+	.globl	libm$sincos
+	.type	libm$sincos,@label
 	.align	1
 
 libm$argred:

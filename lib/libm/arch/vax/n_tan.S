@@ -1,4 +1,4 @@
-/*	$NetBSD: n_tan.S,v 1.1 1995/10/10 23:40:31 ragge Exp $	*/
+/*	$NetBSD: n_tan.S,v 1.2 1998/10/31 02:06:02 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,9 +46,10 @@
  * method: true range reduction to [-pi/4,pi/4], P. Tang  &  B. Corbett
  * S. McDonald, April 4,  1985
  */
-	.globl	_tan
 	.text
 	.align	1
+	.globl	_tan
+	.type	_tan,@function
 
 _tan:	.word	0xffc		# save r2-r11
 	movq	4(ap),r0
