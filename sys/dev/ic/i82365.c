@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.21 1999/02/01 22:17:05 marc Exp $	*/
+/*	$NetBSD: i82365.c,v 1.22 1999/02/19 00:27:45 mycroft Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1255,6 +1255,16 @@ pcic_chip_socket_enable(pch)
 	 */
 	delay((300 + 100) * 1000);
 
+#ifdef VADEM_POWER_HACK
+	bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_INDEX, 0x0e);
+	bus_space_write_1(h->sc->iot, h->sc->ioh, PCIC_REG_INDEX, 0x37);
+	printf("prcr = %02x\n", pcic_read(h, 0x02));
+	printf("cvsr = %02x\n", pcic_read(h, 0x2f));
+	printf("DANGER WILL ROBINSON!  Changing voltage select!\n");
+	pcic_write(h, 0x2f, pcic_read(h, 0x2f) & ~0x03);
+	printf("cvsr = %02x\n", pcic_read(h, 0x2f));
+#endif
+	
 	/* power up the socket */
 
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV
@@ -1310,7 +1320,7 @@ pcic_chip_socket_enable(pch)
 	reg |= ((cardtype == PCMCIA_IFTYPE_IO) ?
 		PCIC_INTR_CARDTYPE_IO :
 		PCIC_INTR_CARDTYPE_MEM);
-	reg |= h->ih_irq;
+	reg |= h->ih_irq | PCIC_INTR_ENABLE;
 	pcic_write(h, PCIC_INTR, reg);
 
 	DPRINTF(("%s: pcic_chip_socket_enable %02x cardtype %s %02x\n",
