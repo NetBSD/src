@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_debug.c,v 1.13 2004/04/19 05:16:45 matt Exp $	*/
+/*	$NetBSD: clnp_debug.c,v 1.14 2004/04/21 18:40:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_debug.c,v 1.13 2004/04/19 05:16:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_debug.c,v 1.14 2004/04/21 18:40:41 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -174,7 +174,7 @@ clnp_iso_addrp(struct iso_addr *isoa)
 #endif
 
 	/* print length */
-	sprintf(iso_addr_b, "[%d] ", isoa->isoa_len);
+	snprintf(iso_addr_b, sizeof(iso_addr_b), "[%d] ", isoa->isoa_len);
 
 	/* set cp to end of what we have */
 	cp = iso_addr_b;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.82 2003/11/19 18:39:34 jonathan Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.83 2004/04/21 18:40:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.82 2003/11/19 18:39:34 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.83 2004/04/21 18:40:41 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -695,7 +695,8 @@ add_vif(m)
 		/* Create a fake encapsulation interface. */
 		ifp = (struct ifnet *)malloc(sizeof(*ifp), M_MRTABLE, M_WAITOK);
 		bzero(ifp, sizeof(*ifp));
-		sprintf(ifp->if_xname, "mdecap%d", vifcp->vifc_vifi);
+		snprintf(ifp->if_xname, sizeof(ifp->if_xname), "mdecap%d",
+		    vifcp->vifc_vifi);
 
 		/* Prepare cached route entry. */
 		bzero(&vifp->v_route, sizeof(vifp->v_route));
