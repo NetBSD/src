@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1995/03/24 14:57:12 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.4 1995/04/22 12:34:15 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -192,7 +192,7 @@ void	lererror(struct le_softc *, char *);
 void	leread(struct le_softc *, char *, int);
 void	lereset(struct device *);
 void	lerint(struct le_softc *);
-int	lestart(struct ifnet *);
+void	lestart(struct ifnet *);
 void	lexerror(struct le_softc *);
 void	lexint(struct le_softc *);
 
@@ -277,7 +277,6 @@ leattach(parent, self, aux)
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = "le";
 	ifp->if_ioctl = leioctl;
-	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
         ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -566,7 +565,7 @@ leinit(unit)
  * off of the interface queue, and copy it to the interface
  * before starting the output.
  */
-int
+void
 lestart(ifp)
 	struct ifnet *ifp;
 {
@@ -576,7 +575,7 @@ lestart(ifp)
 	register int bix, len;
 
 	if ((sc->sc_if.if_flags & IFF_RUNNING) == 0)
-		return (0);
+		return;
 
 	bix = sc->sc_tmdnext;
 	len = 0;
@@ -612,7 +611,7 @@ lestart(ifp)
 		LERDWR(ler0, LE_C0_TDMD | LE_C0_INEA, sc->sc_r1->ler1_rdp);
 	}
 	sc->sc_tmdnext = bix;
-	return (0);
+	return;
 }
 
 int
@@ -981,10 +980,8 @@ leioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			(void)leinit(ifp->if_unit);	/* before arpwhohas */
-			((struct arpcom *)ifp)->ac_ipaddr =
-				IA_SIN(ifa)->sin_addr;
-			arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
+			(void)leinit(ifp->if_unit);
+			arp_ifinit(&sc->sc_ac, ifa);
 			break;
 #endif
 #ifdef NS
