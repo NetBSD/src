@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.39 2003/04/08 10:02:23 fvdl Exp $	*/
+/*	$NetBSD: traverse.c,v 1.40 2003/05/01 10:59:20 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.39 2003/04/08 10:02:23 fvdl Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.40 2003/05/01 10:59:20 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -322,7 +322,7 @@ mapdirs(ino_t maxino, u_int64_t *tape_size)
 			if (is_ufs2)
 				blk = iswap64(di.dp2.di_ib[i]);
 			else
-				blk = iswap32(di.dp2.di_ib[i]);
+				blk = iswap32(di.dp1.di_ib[i]);
 			if (blk == 0)
 				continue;
 			ret |= dirindir(ino, blk, i, &filesize,
