@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.9 1998/03/01 02:23:46 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.10 1998/03/02 16:13:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -405,12 +405,13 @@ ext2fs_reload(mountp, cred, p)
 	if (error)
 		return (error);
 	newfs = (struct ext2fs *)bp->b_data;
-	if (fs2h16(newfs->e2fs_magic) != E2FS_MAGIC ||
-		fs2h32(newfs->e2fs_rev) != E2FS_REV) {
+	if (fs2h16(newfs->e2fs_magic) != E2FS_MAGIC) {
+		brelse(bp);
+		return (EIO);		/* XXX needs translation */
+	}
+	if (fs2h32(newfs->e2fs_rev) != E2FS_REV) {
 #ifdef DIAGNOSTIC
-		printf("Wrong magic number: %x (expected %x for ext2 fs)",
-					fs2h16(newfs->e2fs_magic), E2FS_MAGIC);
-		printf("or wrong revision number: %x (expected %x for ext2 fs)",
+		printf("Ext2 fs: unsupported revision number: %x (expected %x)\n",
 					fs2h32(newfs->e2fs_rev), E2FS_REV);
 #endif
 		brelse(bp);
@@ -418,7 +419,7 @@ ext2fs_reload(mountp, cred, p)
 	}
 	if (fs2h32(newfs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
 #ifdef DIAGNOSTIC
-		printf("wrong block size: %d (expected <=2 for ext2 fs)\n",
+		printf("Ext2 fs: bad block size: %d (expected <=2 for ext2 fs)\n",
 			fs2h32(newfs->e2fs_log_bsize));
 #endif
 		brelse(bp);
@@ -556,21 +557,21 @@ ext2fs_mountfs(devvp, mp, p)
 	if (error)
 		goto out;
 	fs = (struct ext2fs *)bp->b_data;
-	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC ||
-		fs2h32(fs->e2fs_rev) != E2FS_REV) {
+	if (fs2h16(fs->e2fs_magic) != E2FS_MAGIC) {
+		error = EINVAL;		/* XXX needs translation */
+		goto out;
+	}
+	if (fs2h32(fs->e2fs_rev) != E2FS_REV) {
 #ifdef DIAGNOSTIC
-		printf("Wrong magic number: %x (expected %x for ext2 fs)",
-			fs2h16(fs->e2fs_magic), E2FS_MAGIC);
-		printf(" or wrong revision number: %x (expected %x for ext2 fs)\n",
-			fs2h32(fs->e2fs_rev), E2FS_REV);
+		printf("Ext2 fs: unsupported revision number: %x (expected %x)\n",
+					fs2h32(fs->e2fs_rev), E2FS_REV);
 #endif
 		error = EINVAL;		/* XXX needs translation */
 		goto out;
 	}
-
 	if (fs2h32(fs->e2fs_log_bsize) > 2) { /* block size = 1024|2048|4096 */
 #ifdef DIAGNOSTIC
-		printf("wrong block size: %d (expected <2 for ext2 fs)\n",
+		printf("Ext2 fs: bad block size: %d (expected <=2 for ext2 fs)\n",
 			fs2h32(fs->e2fs_log_bsize));
 #endif
 		error = EINVAL;	 /* XXX needs translation */
