@@ -1,6 +1,8 @@
+/*	$NetBSD: sigsetops.c,v 1.8 1995/02/27 05:51:37 cgd Exp $	*/
+
 /*-
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,15 +31,19 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)sigsetops.c	8.1 (Berkeley) 6/4/93
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)sigsetops.c	5.3 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: sigsetops.c,v 1.7 1994/02/07 04:47:49 proven Exp $";
+#if 0
+static char sccsid[] = "@(#)sigsetops.c	8.1 (Berkeley) 6/4/93";
+#else
+static char rcsid[] = "$NetBSD";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/signal.h>
-#include <errno.h>
+#include <signal.h>
 
 #undef sigemptyset
 #undef sigfillset

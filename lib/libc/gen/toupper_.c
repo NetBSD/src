@@ -1,3 +1,5 @@
+/*	$NetBSD: toupper_.c,v 1.6 1995/02/27 05:54:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -26,12 +28,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: toupper_.c,v 1.5 1994/01/28 20:41:08 jtc Exp $
  */
 
 #if defined(LIBC_RCS) && !defined(lint)
-static char *rcsid = "$Id: toupper_.c,v 1.5 1994/01/28 20:41:08 jtc Exp $";
+static char rcsid[] = "$NetBSD: toupper_.c,v 1.6 1995/02/27 05:54:47 cgd Exp $";
 #endif /* LIBC_RCS and not lint */
 
 #include <stdio.h>
