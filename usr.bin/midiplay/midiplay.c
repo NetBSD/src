@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.18 2003/02/17 18:00:27 augustss Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.19 2003/06/23 13:05:49 agc Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: midiplay.c,v 1.19 2003/06/23 13:05:49 agc Exp $");
+#endif
+
 
 #include <stdio.h>
 #include <stdlib.h>

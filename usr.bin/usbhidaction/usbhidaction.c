@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.9 2003/05/17 01:03:54 itojun Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.10 2003/06/23 13:05:54 agc Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: usbhidaction.c,v 1.10 2003/06/23 13:05:54 agc Exp $");
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>

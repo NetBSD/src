@@ -1,4 +1,4 @@
-/*	$NetBSD: version.c,v 1.4 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: version.c,v 1.5 2003/06/23 13:05:53 agc Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -27,6 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: version.c,v 1.5 2003/06/23 13:05:53 agc Exp $");
+#endif
 
 #include "os.h"
 #include "top.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.15 2003/06/10 17:24:17 dsl Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.16 2003/06/23 13:05:50 agc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,13 @@
  */
 
 /* mdb.c - message database manipulation */
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: msgdb.c,v 1.16 2003/06/23 13:05:50 agc Exp $");
+#endif
+
 
 #include <stdio.h>
 #include <stdlib.h>

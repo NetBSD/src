@@ -1,4 +1,4 @@
-/* $NetBSD: radioctl.c,v 1.4 2002/01/03 18:23:09 augustss Exp $ */
+/* $NetBSD: radioctl.c,v 1.5 2003/06/23 13:05:51 agc Exp $ */
 /* $OpenBSD: radioctl.c,v 1.5 2001/12/18 18:42:19 mickey Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
@@ -26,6 +26,11 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: radioctl.c,v 1.5 2003/06/23 13:05:51 agc Exp $");
+#endif
 
 #include <sys/ioctl.h>
 #include <sys/radioio.h>

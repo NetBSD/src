@@ -1,4 +1,4 @@
-/*	$NetBSD: qsubst.c,v 1.5 2002/12/08 21:29:27 perry Exp $	*/
+/*	$NetBSD: qsubst.c,v 1.6 2003/06/23 13:05:51 agc Exp $	*/
 
 /*
  * qsubst -- designed for renaming routines existing in a whole bunch
@@ -97,6 +97,11 @@
  *
  *			       mouse@rodents.montreal.qc.ca
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: qsubst.c,v 1.6 2003/06/23 13:05:51 agc Exp $");
+#endif
 
 #include <sys/file.h>
 

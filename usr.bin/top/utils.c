@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.5 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: utils.c,v 1.6 2003/06/23 13:05:53 agc Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -31,6 +31,11 @@
 /*
  *  This file contains various handy utilities used by top.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: utils.c,v 1.6 2003/06/23 13:05:53 agc Exp $");
+#endif
 
 #include "os.h"
 #include "top.h"

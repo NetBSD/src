@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.7 2002/07/16 00:40:51 itojun Exp $	*/
+/*	$NetBSD: screen.c,v 1.8 2003/06/23 13:05:53 agc Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -36,6 +36,11 @@
  *  didn't really like the results.  If you desire it, turn on the
  *  preprocessor variable "TOStop".   --wnl
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: screen.c,v 1.8 2003/06/23 13:05:53 agc Exp $");
+#endif
 
 #include "os.h"
 #include "top.h"

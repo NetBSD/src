@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.15 2002/09/23 12:48:05 mycroft Exp $	*/
+/*	$NetBSD: top.c,v 1.16 2003/06/23 13:05:53 agc Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -46,6 +46,12 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
  *	SIGRELSE - use SVR4 sigrelse function when defined
  *	FD_SET   - macros FD_SET and FD_ZERO are used when defined
  */
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: top.c,v 1.16 2003/06/23 13:05:53 agc Exp $");
+#endif
 
 #include "os.h"
 #include <signal.h>

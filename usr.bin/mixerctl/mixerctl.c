@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.17 2002/01/31 00:03:24 augustss Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.18 2003/06/23 13:05:49 agc Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: mixerctl.c,v 1.18 2003/06/23 13:05:49 agc Exp $");
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>

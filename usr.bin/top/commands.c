@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.8 2002/08/02 20:03:36 chris Exp $	*/
+/*	$NetBSD: commands.c,v 1.9 2003/06/23 13:05:52 agc Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -34,6 +34,11 @@
  *  in "main".  This is necessary because they change the global state of
  *  "top" (i.e.:  changing the number of processes to display).
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: commands.c,v 1.9 2003/06/23 13:05:52 agc Exp $");
+#endif
 
 #include "os.h"
 #include <ctype.h>

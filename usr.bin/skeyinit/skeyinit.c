@@ -1,4 +1,4 @@
-/*	$NetBSD: skeyinit.c,v 1.21 2003/05/17 21:05:10 itojun Exp $	*/
+/*	$NetBSD: skeyinit.c,v 1.22 2003/06/23 13:05:52 agc Exp $	*/
 
 /* S/KEY v1.1b (skeyinit.c)
  *
@@ -13,6 +13,12 @@
  *
  * S/KEY initialization and seed update
  */
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: skeyinit.c,v 1.22 2003/06/23 13:05:52 agc Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/time.h>

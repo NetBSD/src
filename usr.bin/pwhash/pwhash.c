@@ -1,4 +1,4 @@
-/*	$NetBSD: pwhash.c,v 1.3 2002/10/02 13:39:10 jdolecek Exp $	*/
+/*	$NetBSD: pwhash.c,v 1.4 2003/06/23 13:05:51 agc Exp $	*/
 /*	$OpenBSD: encrypt.c,v 1.16 2002/02/16 21:27:45 millert Exp $	*/
 
 /*
@@ -25,6 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: pwhash.c,v 1.4 2003/06/23 13:05:51 agc Exp $");
+#endif
 
 #include <sys/types.h>
 #include <ctype.h>

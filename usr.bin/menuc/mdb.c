@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.33 2003/06/10 17:19:04 dsl Exp $	*/
+/*	$NetBSD: mdb.c,v 1.34 2003/06/23 13:05:48 agc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,13 @@
  */
 
 /* mdb.c - menu database manipulation */
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: mdb.c,v 1.34 2003/06/23 13:05:48 agc Exp $");
+#endif
+
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: msgmain.c,v 1.4 2000/07/03 02:51:25 matt Exp $	*/
+/*	$NetBSD: msgmain.c,v 1.5 2003/06/23 13:05:50 agc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,13 @@
  */
 
 /* main.c - main program */
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: msgmain.c,v 1.5 2003/06/23 13:05:50 agc Exp $");
+#endif
+
 
 #include <stdio.h>
 #include <stdlib.h>

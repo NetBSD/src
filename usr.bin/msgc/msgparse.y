@@ -1,4 +1,4 @@
-/*	$NetBSD: msgparse.y,v 1.1.1.1 1997/09/26 21:16:38 phil Exp $	*/
+/*	$NetBSD: msgparse.y,v 1.2 2003/06/23 13:05:50 agc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,13 @@
  */
 
 %{
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: msgparse.y,v 1.2 2003/06/23 13:05:50 agc Exp $");
+#endif
+
 
 #include "defs.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2000/07/03 02:51:24 matt Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2003/06/23 13:05:48 agc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,13 @@
  */
 
 /* main.c - main program for menu compiler. */
+
+#include <sys/cdefs.h>
+
+#ifndef lint
+__RCSID("$NetBSD: main.c,v 1.8 2003/06/23 13:05:48 agc Exp $");
+#endif
+
 
 #include <stdio.h>
 #include <stdlib.h>
