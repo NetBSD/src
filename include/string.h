@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.13 1998/02/03 04:45:41 perry Exp $	*/
+/*	$NetBSD: string.h,v 1.14 1998/04/27 17:02:04 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -80,13 +80,13 @@ char	*strtok_r __P((char *, const char *, char **));
 size_t	 strxfrm __P((char *, const char *, size_t));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE)
-#include <strings.h>		/* for backwards-compatibilty */
 void	*memccpy __P((void *, const void *, int, size_t));
 char	*strdup __P((const char *));
 #endif /* !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) */
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
+#include <strings.h>		/* for backwards-compatibilty */
 char	*strsep __P((char **, const char *));
 #endif /* !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE) && ... */
 __END_DECLS
