@@ -5,128 +5,179 @@
 maxpartitions	8
 maxusers 2 8 64
 
-device mainbus { [base = -1], [dack = -1], [irq = -1] }
-attach mainbus at root
+device	mainbus { [base = -1], [dack = -1], [irq = -1] }
+attach	mainbus at root
 file	arch/arm32/mainbus/mainbus.c		mainbus
 file	arch/arm32/mainbus/mainbus_io.c		mainbus
 file	arch/arm32/mainbus/mainbus_io_asm.S	mainbus
 
-device hydrabus { [slot = -1] }
-attach hydrabus at mainbus
-file	arch/arm32/mainbus/exp/hydra.c		hydrabus needs-flag
-file	arch/arm32/mainbus/exp/hydraboot.S	hydrabus
-
-device cpu
-attach cpu at mainbus, hydrabus
+device	cpu
+attach	cpu at mainbus
 file	arch/arm32/mainbus/cpu.c		cpu needs-flag
 major	{cpu = 38}
 
-device iomd
-attach iomd at mainbus
-file	arch/arm32/mainbus/iomd.c		iomd needs-flag
+# PIOC (Peripheral IO Controller) device
+# parent to wdc, fdc, com lpt
+device	pioc { [offset = -1], [dack = -1], [irq = -1] }
+attach	pioc at mainbus
+file	arch/arm32/mainbus/pioc.c		pioc
 
 # Standard NetBSD wd driver
 device  wdc {drive = -1}
-attach	wdc at mainbus
 device  wd: disk
 attach	wd at wdc
-file    arch/arm32/mainbus/wd.c			wdc needs-flag
+file    arch/arm32/dev/wd.c			wdc needs-flag
 major   {wd = 16}
+
+attach	wdc at pioc with wdc_pioc
+file    arch/arm32/mainbus/wdc_pioc.c		wdc_pioc
 
 # Standard NetBSD fd driver
 device  fdc {drive = -1}
-attach	fdc at mainbus
+attach	fdc at pioc
 device  fd: disk
 attach	fd at fdc
 file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
+# Standard parallel driver
+device	lpt: tty
+file	arch/arm32/dev/lpt.c			lpt needs-flag
+major   {lpt = 8}
+
+attach  lpt at pioc with lpt_pioc
+file    arch/arm32/mainbus/lpt_pioc.c		lpt_pioc
+
+# Standard serial driver
+device  com: tty
+file    arch/arm32/dev/com.c			com needs-flag
+major   {com = 12}
+
+attach	com at pioc with com_pioc
+file    arch/arm32/mainbus/com_pioc.c		com_pioc
+
 # Memory disk driver
 file	arch/arm32/dev/md_hooks.c		md & memory_disk_hooks
 major   {md = 18}
 
-# Standard parallal driver
-device  lpt: tty, ether, ifnet, arp
-attach	lpt at mainbus
-file    arch/arm32/mainbus/lpt.c		lpt needs-flag
-major   {lpt = 8}
+# IOMD device
+# parent to kbd, qms, pms, iic
+# also provides irq and timer services
+device	iomd {}
+attach	iomd at mainbus
+file	arch/arm32/iomd/iomd.c			iomd needs-flag
+file	arch/arm32/iomd/iomd_io.c		iomd
+file	arch/arm32/iomd/iomd_io_asm.S		iomd
+file	arch/arm32/iomd/iomd_irq.S		iomd
+file	arch/arm32/iomd/iomd_irqhandler.c	iomd
+file	arch/arm32/iomd/iomd_fiq.S		iomd
+file	arch/arm32/iomd/iomd_dma.c		iomd
 
-# Standard serial driver
-device  com: tty
-attach	com at mainbus
-file    arch/arm32/mainbus/com.c		com needs-flag
-major   {com = 12}
+# IOMD mouse devices
+# clock device
+device  clock
+attach	clock at iomd
+file	arch/arm32/iomd/iomd_clock.c		iomd
 
-# Mouse devices
-device  quadmouse: tty
-attach	quadmouse at mainbus
-file    arch/arm32/mainbus/qmouse.c		quadmouse needs-flag
-major   {quadmouse = 9}
+# quadmouse device
+device  qms: tty
+file    arch/arm32/dev/qms.c			qms needs-flag
+major   {qms = 9}
 
-device  pms: tty
-attach	pms at mainbus
-file    arch/arm32/mainbus/pms.c		pms needs-flag
-major   {pms = 40}
+attach	qms at iomd with qms_iomd
+file    arch/arm32/iomd/qms_iomd.c		qms_iomd
 
-# Audio devices
-device	beep
-attach	beep at mainbus
-file    arch/arm32/mainbus/beep.c		beep needs-flag
-major   {beep = 10}
+# PS/2 mouse device
+device	pms: tty
+file	arch/arm32/dev/pms.c			pms needs-flag
+major	{pms = 40}
 
-device	vidcaudio: audio
-attach	vidcaudio at mainbus
-file	arch/arm32/mainbus/vidcaudio.c		vidcaudio needs-flag
-major   {vidcaudio = 36}
-
-device	lmcaudio: audio
-attach	lmcaudio at mainbus
-file	arch/arm32/mainbus/lmcaudio.c		lmcaudio needs-flag
-file	arch/arm32/mainbus/lmc1982.S		lmcaudio
+attach	pms at iomd with pms_iomd
+file	arch/arm32/iomd/pms_iomd.c		pms_iomd
 
 # Standard keyboard driver
 device	kbd
-attach	kbd at mainbus
-file    arch/arm32/mainbus/kbd.c		kbd needs-flag
-major   {kbd = 11}
+file	arch/arm32/dev/kbd.c			kbd needs-flag
+major	{kbd = 11}
+
+attach	kbd at iomd with kbd_iomd
+file	arch/arm32/iomd/kbd_iomd.c		kbd_iomd
+
+# IIC device
+device	iic { addr = -1 }
+file	arch/arm32/dev/iic.c			iic	needs-flag
+
+attach iic at iomd with iic_iomd
+file	arch/arm32/iomd/iic_iomd.c		iic_iomd
+file	arch/arm32/iomd/iomd_iic.S		iic_iomd
+
+# IIC based RTC
+device	rtc {}
+attach	rtc at iic
+file	arch/arm32/dev/rtc.c			rtc	needs-flag
+
+device	todclock
+attach	todclock at rtc
+file	arch/arm32/dev/todclock.c		todclock	needs-count
+
+# VIDC device
+# parent to vidcvideo, vidcaudio, beep
+device	vidc { [base = -1], [dack = -1], [irq = -1] }
+attach	vidc at mainbus
+file	arch/arm32/vidc/vidc20.c		vidc needs-count
+
+# Audio devices
+device	beep
+attach	beep at vidc
+file	arch/arm32/vidc/beep.c			beep needs-flag
+major	{beep = 10}
+
+device	vidcaudio: audio
+attach	vidcaudio at vidc
+file	arch/arm32/vidc/vidcaudio.c		vidcaudio needs-flag
+major	{vidcaudio = 36}
+
+device	lmcaudio: audio
+attach	lmcaudio at vidc
+file	arch/arm32/vidc/lmcaudio.c		lmcaudio needs-flag
+file	arch/arm32/vidc/lmc1982.S		lmcaudio
 
 # Podule bus device
-device podulebus { [slot = -1] }
-attach podulebus at root
+device	podulebus { [slot = -1] }
+attach	podulebus at root
 file	arch/arm32/podulebus/podulebus.c	podulebus needs-flag
 file	arch/arm32/podulebus/podulebus_io.c	podulebus
 file	arch/arm32/podulebus/podulebus_io_asm.S	podulebus
 
 # Ethernet devices
-device ea: ether, ifnet, arp
-attach ea at podulebus
+# Generic DP8390 driver PIO routines
+define	dp8390pio
+file	arch/arm32/dev/dp8390_pio.c		dp8390pio
+file	arch/arm32/dev/dp8390.c			dp8390pio
+
+device	em: ether, ifnet, dp8390pio, arp
+attach 	em at podulebus
+file	arch/arm32/podulebus/if_em.c		em
+
+device	ea: ether, ifnet, arp
+attach	ea at podulebus
 file	arch/arm32/podulebus/if_ea.c		ea
 
-device eb: ether, ifnet, arp
-attach eb at podulebus
+device	eb: ether, ifnet, arp
+attach	eb at podulebus
 file	arch/arm32/podulebus/if_eb.c		eb
 
-device eh: ether, ifnet, arp
-attach eh at podulebus
+device	eh: ether, ifnet, arp
+attach	eh at podulebus
 file	arch/arm32/podulebus/if_eh.c		eh
 
-device ie: ether, ifnet, arp
-attach ie at podulebus
+device	ie: ether, ifnet, arp
+attach	ie at podulebus
 file	arch/arm32/podulebus/if_ie.c		ie
 
-device es: ether, ifnet, arp
-attach es at mainbus
-file  arch/arm32/mainbus/if_es.c		es
-
-# IIC/RTC files
-device iic { addr = -1 }
-attach iic at mainbus
-file	arch/arm32/mainbus/iic_asm.S		iic
-file	arch/arm32/mainbus/iic.c		iic	needs-flag
-
-device rtc
-attach rtc at iic
-file	arch/arm32/mainbus/rtc.c		rtc	needs-count
+device	es: ether, ifnet, arp
+attach	es at mainbus
+file	arch/arm32/rc7500/if_es.c		es & rc7500
 
 #define	ipkdb
 
@@ -171,18 +222,13 @@ file	arch/arm32/podulebus/cosc.c		cosc
 define	sfas
 file	arch/arm32/podulebus/sfas.c		sfas
 
-# Cumana specific layer for sfas
-device	csc: scsi, sfas
-attach	csc at podulebus
-file	arch/arm32/podulebus/nda/csc.c		csc
-
 device	ptsc: scsi, sfas
 attach	ptsc at podulebus
 file	arch/arm32/podulebus/ptsc.c		ptsc
 
 # Generic NCR driver
 define	ncr
-file	arch/arm32/podulebus/ncr5380sbc.c	ncr
+file	arch/arm32/dev/ncr5380sbc.c		ncr
 
 # Oak specific layer for ncr
 device	oak: scsi, ncr
@@ -206,24 +252,32 @@ file	arch/arm32/podulebus/rapide_io_asm.S	rapide
 
 attach	wdc at rapide with wdc_rapide
 
-# VIDC device
+# Simtec IDE driver
+device	simide {}
+attach	simide at podulebus
+file	arch/arm32/podulebus/simide.c		simide
+file	arch/arm32/podulebus/simide_io_asm.S	simide
+
+attach	wdc at simide with wdc_sim
+
 device  vidcvideo
-attach	vidcvideo at mainbus
+attach	vidcvideo at vidc
+file    arch/arm32/vidc/console/vidcvideo.c	vidcvideo needs-count
 major	{vidcvideo = 37}
 device  vt: tty
-attach	vt at mainbus
+attach	vt at vidc
 
-file    arch/arm32/dev/console/console.c	vt needs-count
-file    arch/arm32/dev/console/vidcconsole.c	vt needs-count
-file	arch/arm32/dev/console/vidc_mc.S	vt needs-count
-file    arch/arm32/dev/console/vidc.c		vt needs-count
-file    arch/arm32/dev/console/vt220.c		vt needs-count
-file	arch/arm32/dev/console/debugconsole.c 	vt needs-count
-file	arch/arm32/dev/console/dumb.c 		vt needs-count
+file    arch/arm32/vidc/console/console.c	vt needs-count
+file    arch/arm32/vidc/console/vidcconsole.c	vt
+file	arch/arm32/vidc/console/vidc_mc.S	vt
+file    arch/arm32/vidc/console/vidc.c		vt
+file    arch/arm32/vidc/console/vt220.c		vt
+file	arch/arm32/vidc/console/debugconsole.c 	vt
+file	arch/arm32/vidc/console/dumb.c 		vt
 
+# Generic MD files
 file	arch/arm32/arm32/autoconf.c
 file	arch/arm32/arm32/blockio.S
-file	arch/arm32/arm32/clock.c
 file	arch/arm32/arm32/conf.c
 file	arch/arm32/arm32/cpuswitch.S
 file	arch/arm32/arm32/disksubr.c		disk
@@ -244,17 +298,12 @@ file	arch/arm32/arm32/cpufunc.c
 file	arch/arm32/arm32/cpufunc_asm.S
 file	arch/arm32/arm32/setcpsr.S
 file	arch/arm32/arm32/setstack.S
-
-file	dev/clock_subr.c
-
-file	netinet/in_cksum.c			inet
-file	netns/ns_cksum.c			ns
-
-# IRQ/FIQ files
 file	arch/arm32/arm32/spl.S
-file	arch/arm32/arm32/irq.S
-file	arch/arm32/arm32/irqhandler.c
-file	arch/arm32/arm32/fiq.S
+file	arch/arm32/arm32/intr.c
+file	arch/arm32/dev/bus_space_notimpl.S
+
+file	arch/arm32/arm32/in_cksum_arm32.c	inet
+file	netns/ns_cksum.c			ns
 
 # library functions
 file	arch/arm32/arm32/strstr.c
@@ -264,16 +313,16 @@ file	arch/arm32/arm32/bcopyinout.S
 file	arch/arm32/arm32/copystr.S
 
 # files related to the shell
-file	arch/arm32/kshell/shell_input.c		kshell
-file	arch/arm32/kshell/shell_shell.c		kshell
-file	arch/arm32/kshell/shell_disassem.c	kshell
-file	arch/arm32/kshell/dumphex.c		kshell
+file	arch/arm32/kshell/kshell_input.c	kshell
+file	arch/arm32/kshell/kshell_shell.c	kshell
+file	arch/arm32/kshell/kshell_disassem.c	kshell
+file	arch/arm32/kshell/kshell_dumphex.c	kshell
+file	arch/arm32/kshell/kshell_debug.c	kshell
 
 # files related to debugging
-file	arch/arm32/arm32/debug.c
 file	arch/arm32/arm32/disassem.c
-file	arch/arm32/arm32/postmortem.c
- 
+file	arch/arm32/arm32/postmortem.c		postmortem
+
 file    dev/cons.c
 file	dev/cninit.c
 
@@ -288,6 +337,12 @@ file	arch/arm32/arm32/db_interface.c		ddb
 file	arch/arm32/arm32/db_trace.c		ddb
 file	arch/arm32/arm32/db_machdep.c		ddb
 
-# RC7500 prom related files
-file	arch/arm32/dev/rc7500_prom.c		prom_debug
-file	arch/arm32/dev/rc7500_promsys.s		prom_debug
+# RiscPC specific files
+file	arch/arm32/riscpc/rpc_machdep.c		riscpc
+file    arch/arm32/riscpc/rpc_kbd_map.c		riscpc & kbd
+
+# RC7500 specific files
+file	arch/arm32/rc7500/rc7500_machdep.c	rc7500
+file    arch/arm32/rc7500/rc7500_kbd_map.c	rc7500 & kbd
+file	arch/arm32/rc7500/rc7500_prom.c		rc7500 & prom_debug
+file	arch/arm32/rc7500/rc7500_promsys.S	rc7500 & prom_debug
