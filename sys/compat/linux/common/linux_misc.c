@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.73 2000/11/01 20:56:30 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.74 2000/12/01 12:28:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -291,7 +291,7 @@ linux_sys_statfs(p, v, retval)
 	sg = stackgap_init(p->p_emul);
 	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
 
-	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&bsa, path) = SCARG(uap, path);
 	SCARG(&bsa, buf) = bsp;

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.9 2000/07/29 20:06:30 jdolecek Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.10 2000/12/01 12:28:34 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -86,7 +86,7 @@
 #include <nfs/nfsmount.h>
 
 #include <compat/osf1/osf1.h>
-#include <compat/osf1/osf1_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
 
 const struct emul_flags_xtab osf1_access_flags_xtab[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.6 1999/10/11 01:36:22 eeh Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.7 2000/12/01 12:28:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -141,7 +141,7 @@ compat_12_netbsd32_stat12(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_stat(p, &ua, retval);
 
@@ -197,7 +197,7 @@ compat_12_netbsd32_lstat12(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = &sb12;
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	rv = compat_12_sys_lstat(p, &ua, retval);
 

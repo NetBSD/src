@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.39 2000/11/21 12:23:29 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.40 2000/12/01 12:28:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -66,8 +66,6 @@
 #include <compat/linux/common/linux_errno.h>
 #include <compat/linux/common/linux_emuldata.h>
 
-const char linux_emul_path[] = "/emul/linux";
-
 extern struct sysent linux_sysent[];
 extern const char * const linux_syscallnames[];
 extern char linux_sigcode[], linux_esigcode[];
@@ -95,7 +93,7 @@ linux_sys_execve(p, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
-	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -109,6 +107,7 @@ linux_sys_execve(p, v, retval)
  */
 const struct emul emul_linux = {
 	"linux",
+	"/emul/linux",
 	native_to_linux_errno,
 	linux_sendsig,
 	LINUX_SYS_syscall,

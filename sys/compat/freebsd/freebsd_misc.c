@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.7 2000/08/07 18:10:24 bjh21 Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.8 2000/12/01 12:28:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -47,7 +47,7 @@
 #include <sys/syscallargs.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
-#include <compat/freebsd/freebsd_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/freebsd/freebsd_rtprio.h>
 #include <compat/freebsd/freebsd_timex.h>
 #include <compat/freebsd/freebsd_signal.h>

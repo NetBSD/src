@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.48 2000/11/21 00:37:54 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.49 2000/12/01 12:28:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -265,7 +265,8 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 #endif
 
 	if (itp[0]) {
-		if ((error = emul_find(p, NULL, linux_emul_path, itp, &bp, 0)))
+		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
+		    itp, &bp, 0)))
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
 			return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_util.h,v 1.9 1998/10/04 00:02:45 fvdl Exp $	*/
+/*	$NetBSD: linux_util.h,v 1.10 2000/12/01 12:28:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -43,13 +43,5 @@
 
 #define cvtto_linux_mask(flags,bmask,lmask) (((flags) & bmask) ? lmask : 0)
 #define cvtto_bsd_mask(flags,lmask,bmask) (((flags) & lmask) ? bmask : 0)
-
-extern const char linux_emul_path[];
-
-#define LINUX_CHECK_ALT_EXIST(p, sgp, path) \
-    CHECK_ALT_EXIST(p, sgp, linux_emul_path, path)
-
-#define LINUX_CHECK_ALT_CREAT(p, sgp, path) \
-    CHECK_ALT_CREAT(p, sgp, linux_emul_path, path)
 
 #endif /* !_LINUX_UTIL_H */

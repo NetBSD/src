@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.18 2000/11/21 00:37:53 jdolecek Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.19 2000/12/01 12:28:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -94,7 +94,6 @@
 
 #include <machine/hpux_machdep.h>
 
-const char hpux_emul_path[] = "/emul/hpux";
 extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
 extern const char * const hpux_syscallnames[];
@@ -106,6 +105,7 @@ static	int exec_hpux_prep_omagic __P((struct proc *, struct exec_package *));
 
 const struct emul emul_hpux = {
 	"hpux",
+	"/emul/hpux",
 	native_to_hpux_errno,
 	hpux_sendsig,
 	HPUX_SYS_syscall,
@@ -314,7 +314,7 @@ hpux_sys_execv(p, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
-	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -338,7 +338,7 @@ hpux_sys_execve(p, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
-	HPUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.111 2000/11/21 00:37:56 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.112 2000/12/01 12:28:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -83,9 +83,11 @@ struct	pgrp {
  */
 struct exec_package;
 struct ps_strings;
+struct trapframe;
 
 struct	emul {
 	char	e_name[8];		/* Symbolic name */
+	const char *e_path;		/* Extra emulation path (NULL if none)*/
 	int	*e_errno;		/* Errno array */
 					/* Signal sending function */
 	void	(*e_sendsig) __P((sig_t, int, sigset_t *, u_long));
@@ -96,10 +98,15 @@ struct	emul {
 	char	*e_sigcode;		/* Start of sigcode */
 	char	*e_esigcode;		/* End of sigcode */
 
-	/* Per-process hooks */
+					/* Per-process hooks */
 	void	(*e_proc_exec) __P((struct proc *, struct exec_package *));
 	void	(*e_proc_fork) __P((struct proc *p, struct proc *parent));
 	void	(*e_proc_exit) __P((struct proc *));
+
+	int	e_flags;		/* Miscellaneous flags */
+					/* Syscall handling function */
+	void	(*e_syscall) __P((struct trapframe *));
+
 };
 
 /*

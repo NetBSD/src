@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_signal.c,v 1.17 2000/08/21 02:33:04 thorpej Exp $	*/
+/*	$NetBSD: osf1_signal.c,v 1.18 2000/12/01 12:28:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -47,7 +47,7 @@
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_signal.h>
 #include <compat/osf1/osf1_syscallargs.h>
-#include <compat/osf1/osf1_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
 
 #if 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.40 2000/11/30 12:54:38 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.41 2000/12/01 12:28:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -654,7 +654,7 @@ netbsd32_open(p, v, retval)
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TO64_UAP(mode);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_open(p, &ua, retval));
 }
@@ -1468,7 +1468,7 @@ netbsd32_access(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(flags);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_access(p, &ua, retval));
 }
@@ -1688,7 +1688,7 @@ netbsd32_revoke(p, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_revoke(p, &ua, retval));
 }
@@ -1729,7 +1729,7 @@ netbsd32_readlink(p, v, retval)
 	NETBSD32TOP_UAP(buf, char);
 	NETBSD32TOX_UAP(count, size_t);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_readlink(p, &ua, retval));
 }
@@ -1774,7 +1774,7 @@ netbsd32_execve(p, v, retval)
 	NETBSD32TOP_UAP(argp, char *);
 	NETBSD32TOP_UAP(envp, char *);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	/*
 	 * figure out the maximum size of an exec header, if necessary.
@@ -5202,7 +5202,7 @@ netbsd32___stat13(p, v, retval)
 
 	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, path);
+	CHECK_ALT_EXIST(p, &sg, path);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
@@ -5276,7 +5276,7 @@ netbsd32___lstat13(p, v, retval)
 
 	path = (char *)(u_long)SCARG(uap, path);
 	sg = stackgap_init(p->p_emul);
-	NETBSD32_CHECK_ALT_EXIST(p, &sg, path);
+	CHECK_ALT_EXIST(p, &sg, path);
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, path, p);
 	if ((error = namei(&nd)) != 0)
