@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.7 2003/07/05 16:48:12 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.8 2003/07/19 02:39:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.7 2003/07/05 16:48:12 tsutsui Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8 2003/07/19 02:39:27 tsutsui Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.7 2003/07/05 16:48:12 tsutsui Exp $");
 #include <hp300/dev/rtcreg.h>
 
 #include <dev/clock_subr.h>
-#include <hp300/hp300/clockvar.h>
 
 struct rtc_softc {
 	struct device sc_dev;
@@ -125,7 +124,7 @@ rtcattach(parent, self, aux)
 	todr_handle->todr_setcal = rtc_setcal;
 	todr_handle->todr_setwen = NULL;
 
-	clockattach(todr_handle);
+	todr_attach(todr_handle);
 }
 
 static int
