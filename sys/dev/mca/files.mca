@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.11 2001/04/20 07:37:42 jdolecek Exp $
+# $NetBSD: files.mca,v 1.12 2001/04/23 06:10:08 jdolecek Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -52,3 +52,7 @@ file	dev/mca/ed_mca.c		ed_mca		needs-flag
 # Novell NE2000, and clones
 attach	ne at mca with ne_mca
 file	dev/mca/if_ne_mca.c		ne_mca
+
+# AMD am7990 (Lance) -based boards
+attach	le at mca with le_mca
+file	dev/mca/if_le_mca.c		le_mca
