@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.10 2000/08/02 17:06:17 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.11 2000/08/03 17:15:40 bouyer Exp $	*/
 
 
 /*
@@ -118,6 +118,8 @@ int wdcdebug_pciide_mask = 0;
 #include <dev/pci/pciide_opti_reg.h>
 #include <dev/pci/pciide_hpt_reg.h>
 #include <dev/pci/cy82c693var.h>
+
+#include "opt_pciide.h"
 
 /* inlines for reading/writing 8-bit PCI registers */
 static __inline u_int8_t pciide_pci_read __P((pci_chipset_tag_t, pcitag_t,
@@ -2205,6 +2207,21 @@ cmd0643_9_chip_map(sc, pa)
 			if (rev >= CMD0646U2_REV) {
 				sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 				sc->sc_wdcdev.UDMA_cap = 2;
+			} else if (rev >= CMD0646U_REV) {
+			/*
+			 * Linux's driver claims that the 646U is broken
+			 * with UDMA. Only enable it if we know what we're
+			 * doing
+			 */
+#ifdef PCIIDE_CMD0646U_ENABLEUDMA
+				sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
+				sc->sc_wdcdev.UDMA_cap = 2;
+#endif
+				/* explicitely disable UDMA */
+				pciide_pci_write(sc->sc_pc, sc->sc_tag,
+				    CMD_UDMATIM(0), 0);
+				pciide_pci_write(sc->sc_pc, sc->sc_tag,
+				    CMD_UDMATIM(1), 0);
 			}
 			sc->sc_wdcdev.irqack = cmd646_9_irqack;
 			break;
@@ -2231,7 +2248,10 @@ cmd0643_9_chip_map(sc, pa)
 			continue;
 		cmd0643_9_setup_channel(&cp->wdc_channel);
 	}
-	/* note - this also make sure we clear the irq disable and reset bits */
+	/*
+	 * note - this also makes sure we clear the irq disable and reset
+	 * bits
+	 */
 	pciide_pci_write(sc->sc_pc, sc->sc_tag, CMD_DMA_MODE, CMD_DMA_MULTIPLE);
 	WDCDEBUG_PRINT(("cmd0643_9_chip_map: timings reg now 0x%x 0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, 0x54),
