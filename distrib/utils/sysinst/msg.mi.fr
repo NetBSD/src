@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.21 1999/06/22 02:43:10 cgd Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.22 1999/06/22 04:29:54 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -249,14 +249,12 @@ laissant votre disque intact. On continue ?
 }
 
 message disksetupdone
-{Bien, la première partie de la procédure est terminée. Sysinst a écrit,
-sur votre disque de destination, un disklabel, créé (newfs) et testé (fsck)
-vos nouvelles partitions.
-Si vous voyez ci dessus des messages d'erreurs sur votre disque de
-destination et plus particulièrement sur les partitions / et /usr
-abandonnez maintenant.
-Si les systèmes de fichiers cibles semblent bons, l'étape suivant consiste a
-recopier les différents composants. Appuyer sur <entrée> pour continuer.
+{Bien, la première partie de la procédure est terminée.
+Sysinst a écrit, sur votre disque de destination, un disklabel,
+créé (newfs) et testé (fsck) vos nouvelles partitions.
+
+L'étape suivant consiste a recopier les différents composants.
+Appuyer sur <entrée> pour continuer.
 }
 
 message openfail

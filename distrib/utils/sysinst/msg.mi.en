@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.47 1999/06/22 02:43:09 cgd Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.48 1999/06/22 04:29:54 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -245,14 +245,12 @@ gets changed.  Shall we continue?
 }
 
 message disksetupdone
-{Okay, the first part of the procedure is finished. sysinst has
+{Okay, the first part of the procedure is finished.  Sysinst has
 written a disklabel to the target disk, and newfs'ed and fsck'ed
 the new partitions you specified for the target disk.
-If you see error messages above that indicate problems with the
-target-disk filesystems -- especially / and /usr --  abort now.
 
-If the target filesystems look good, the next step is to fetch and
-unpack the distribution filesets.  Press <return> to proceed.
+The next step is to fetch and unpack the distribution filesets.
+Press <return> to proceed.
 }
 
 message openfail
