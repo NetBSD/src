@@ -87,7 +87,8 @@ cpu_fork(p1, p2)
 	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
 	for (i = 0; i < UPAGES; i++)
 		pmap_enter(&p2->p_vmspace->vm_pmap, kstack + i * NBPG,
-		    pmap_extract(kernel_pmap, ((int)p2->p_addr) + i * NBPG),
+		    pmap_extract(kernel_pmap,
+		        (vm_offset_t)(((int)p2->p_addr) + i * NBPG)),
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 
 	pmap_activate(&p2->p_vmspace->vm_pmap, &up->u_pcb);
