@@ -38,12 +38,16 @@
  *	@(#)bpf.c	7.5 (Berkeley) 7/15/91
  *
  * static char rcsid[] =
- * "$Header: /cvsroot/src/sys/net/bpf.c,v 1.2 1993/03/25 00:27:49 cgd Exp $";
+ * "$Header: /cvsroot/src/sys/net/bpf.c,v 1.3 1993/04/05 22:04:09 deraadt Exp $";
  */
 
 #include "bpfilter.h"
 
 #if NBPFILTER > 0
+
+#ifndef __386BSD__
+#define __386BSD__
+#endif
 
 #ifndef __GNUC__
 #define inline
@@ -474,16 +478,24 @@ bpf_wakeup(d)
 	register struct bpf_d *d;
 {
 	wakeup((caddr_t)d);
-#if 0
+#if BSD > 199103
 	selwakeup(&d->bd_sel);
 	/* XXX */
 	d->bd_sel.si_pid = 0;
+#else
+#if defined(__386BSD__)
+	if (d->bd_selpid) {
+		selwakeup(d->bd_selpid, (int)d->bd_selcoll);
+		d->bd_selcoll = 0;
+		d->bd_selpid = 0; /* XXX */
+	}
 #else
 	if (d->bd_selproc) {
 		selwakeup(d->bd_selproc, (int)d->bd_selcoll);
 		d->bd_selcoll = 0;
 		d->bd_selproc = 0;
 	}
+#endif
 #endif
 }
 
@@ -931,6 +943,9 @@ bpf_select(dev, rw, p)
 {
 	register struct bpf_d *d;
 	register int s;
+#if defined(__386BSD__)
+	struct proc *p2;
+#endif
 
 	if (rw != FREAD)
 		return (0);
@@ -957,10 +972,17 @@ bpf_select(dev, rw, p)
 	 * forks while one of these is open, it is possible that both
 	 * processes could select on the same descriptor.
 	 */
+#if defined(__386BSD__)
+        if (d->bd_selpid && (p2=pfind(d->bd_selpid)) && p2->p_wchan == (caddr_t)&selwait)
+                d->bd_selcoll = 1;
+        else
+                d->bd_selpid = p->p_pid;
+#else
 	if (d->bd_selproc && d->bd_selproc->p_wchan == (caddr_t)&selwait)
 		d->bd_selcoll = 1;
 	else
 		d->bd_selproc = p;
+#endif
 #endif
 	splx(s);
 	return (0);
