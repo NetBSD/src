@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.76 1998/09/02 22:32:08 is Exp $
+#	$NetBSD: files.amiga,v 1.77 1998/10/08 21:46:39 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -190,7 +190,7 @@ device	drsupio: supio
 attach	drsupio at mainbus
 file	arch/amiga/dev/drsupio.c	drsupio
 
-# Hypercom 3/4
+# ZBus HyperComs: HyperCom Z3, HyperCom 4
 device	hyper: supio
 attach	hyper at zbus
 file	arch/amiga/dev/hyper.c		hyper
@@ -350,6 +350,7 @@ file	dev/cons.c			ite | ser
 file	dev/cninit.c			ite | ser
 file	arch/amiga/amiga/amiga_init.c
 file	arch/amiga/amiga/autoconf.c
+file	arch/amiga/amiga/busfuncs.c
 file	arch/amiga/amiga/cia.c
 file	arch/amiga/amiga/conf.c
 file	arch/amiga/amiga/disksubr.c
