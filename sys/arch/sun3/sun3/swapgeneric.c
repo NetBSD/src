@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.10 1994/10/26 09:13:12 cgd Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.11 1994/11/21 21:39:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross

@@ -1,4 +1,4 @@
-/*	$NetBSD: interreg.h,v 1.5 1994/10/26 09:12:31 cgd Exp $	*/
+/*	$NetBSD: interreg.h,v 1.6 1994/11/21 21:38:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -30,6 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
 #define IREG_CLOCK_ENAB_7  0x80
 #define IREG_RESERVED      0x40
 #define IREG_CLOCK_ENAB_5  0x20

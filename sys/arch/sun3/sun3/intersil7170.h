@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.h,v 1.7 1994/10/26 09:12:37 cgd Exp $	*/
+/*	$NetBSD: intersil7170.h,v 1.8 1994/11/21 21:38:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

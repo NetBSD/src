@@ -1,6 +1,7 @@
-/*	$NetBSD: vector.c,v 1.9 1994/10/26 09:13:19 cgd Exp $	*/
+/*	$NetBSD: vector.c,v 1.10 1994/11/21 21:39:19 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *

@@ -1,8 +1,6 @@
-/*	$NetBSD: lib.s,v 1.7 1994/10/26 09:12:41 cgd Exp $	*/
+/*	$NetBSD: lib.s,v 1.8 1994/11/21 21:38:42 gwr Exp $	*/
 
 /*
- * This file contains excerpts from the hp300 locore.s, and no original code.
- *
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1980, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -39,10 +37,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: locore.s 1.58 91/04/22$
- *
- *	@(#)locore.s	7.11 (Berkeley) 5/9/91
+ *	from: Utah $Hdr: locore.s 1.58 91/04/22$
+ *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
  */
+
 /*
  * Primitives
  */ 

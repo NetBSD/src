@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 1994/10/26 09:12:16 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 1994/11/21 21:38:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -39,9 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: clock.c 1.18 91/01/21$
- *
- *	@(#)clock.c	8.2 (Berkeley) 1/12/94
+ *	from: Utah Hdr: clock.c 1.18 91/01/21$
+ *	from: @(#)clock.c	8.2 (Berkeley) 1/12/94
  */
 
 /*
