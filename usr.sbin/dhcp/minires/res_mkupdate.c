@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_mkupdate.c,v 1.1.1.1 2000/04/22 07:11:55 mellon Exp $";
+static const char rcsid[] = "$Id: res_mkupdate.c,v 1.1.1.1.4.1 2000/07/22 05:03:37 mellon Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -85,7 +85,7 @@ static struct protoent *cgetprotobynumber(int);
  */
 int
 res_nmkupdate(res_state statp,
-	      ns_updrec *rrecp_in, u_char *buf, unsigned *blp) {
+	      ns_updrec *rrecp_in, double *bp, unsigned *blp) {
 	ns_updrec *rrecp_start = rrecp_in;
 	HEADER *hp;
 	u_char *cp, *sp1, *sp2, *startp, *endp;
@@ -101,6 +101,7 @@ res_nmkupdate(res_state statp,
 	u_char *dnptrs[20], **dpp, **lastdnptr;
 	unsigned siglen, keylen, certlen;
 	unsigned buflen = *blp;
+	u_char *buf = (unsigned char *)bp;
 
 	/*
 	 * Initialize header fields.
