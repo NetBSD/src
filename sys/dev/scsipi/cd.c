@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.161 2001/12/09 22:56:10 veego Exp $	*/
+/*	$NetBSD: cd.c,v 1.162 2002/05/05 15:16:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.161 2001/12/09 22:56:10 veego Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.162 2002/05/05 15:16:31 bouyer Exp $");
 
 #include "rnd.h"
 
@@ -959,7 +959,8 @@ int cd_interpret_sense(xs)
 
 		SC_DEBUG(periph, SCSIPI_DB1, ("Waiting 5 sec for CD "
 						"spinup\n"));
-		scsipi_periph_freeze(periph, 1);
+		if (!callout_active(&periph->periph_callout))
+			scsipi_periph_freeze(periph, 1);
 		callout_reset(&periph->periph_callout,
 		    5 * hz, scsipi_periph_timed_thaw, periph);
 		retval = ERESTART;

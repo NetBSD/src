@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.71 2002/04/01 20:37:42 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.72 2002/05/05 15:16:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.71 2002/04/01 20:37:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.72 2002/05/05 15:16:32 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -1519,7 +1519,7 @@ scsipi_complete(xs)
 			if ((xs->xs_control & XS_CTL_POLL) ||
 			    (chan->chan_flags & SCSIPI_CHAN_TACTIVE) == 0) {
 				delay(1000000);
-			} else {
+			} else if (!callout_active(&periph->periph_callout)) {
 				scsipi_periph_freeze(periph, 1);
 				callout_reset(&periph->periph_callout,
 				    hz, scsipi_periph_timed_thaw, periph);
