@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.34 2000/10/29 13:03:38 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.35 2001/11/08 06:29:24 gmcgarry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,6 +62,12 @@
 #	apci*	HP400     4 port serial mux interface
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
+# wscons:
+#	ttyE*	wscons consoles
+#	wskbd*	wscons keyboard events
+#	wsmouse* wscons mouse events
+#	wsmux*	wscons events multiplexor
+#	wsfont*	console font control
 # Special purpose devices:
 #	fd	file descriptors
 #	grf*	raw interface to HP300 graphics devices
@@ -90,6 +96,7 @@ all)
 	sh $0 tun0 tun1 tun2 tun3 lkm ipl random
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 local
+#	sh $0 wscons
 	;;
 
 std)
@@ -332,6 +339,87 @@ hil)
 	fi
 	chmod 666 hil*
 #	echo "hil: use $0.hpux to make HP-UX names for devices"
+	;;
+
+wscons)
+	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	sh $0 ttyEcfg
+	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
+	sh $0 wsmux0 wsmux1 wsmux2 wsmux3
+	sh $0 wskbd wsmouse
+	sh $0 wsfont
+	;;
+
+wskbd)
+	rm -f wskbd
+	mknod wskbd c 38 1
+	chown root.wheel wskbd
+	chmod 600 wskbd
+	;;
+
+wsmouse)
+	rm -f wsmouse
+	mknod wsmouse c 39 0
+	chown root.wheel wsmouse
+	chmod 600 wsmouse
+	;;
+
+wsfont)
+	rm -f wsfont
+	mknod wsfont c 41 0
+	chown root:wheel wsfont
+	chmod 600 wsfont
+	;;
+
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	major=38
+	rm -f $wskbd
+	mknod $wskbd c $major $unit
+	chown root.wheel $wskbd
+	chmod 600 $wskbd
+	;;
+
+wsmouse*)
+	unit=${i#wsmouse}
+	wsmouse=wsmouse$unit
+	major=39
+	rm -f $wsmouse
+	mknod $wsmouse c $major $unit
+	chown root.wheel $wsmouse
+	chmod 600 $wsmouse
+	;;
+
+wsmux*)
+	unit=${i#wsmux}
+	unitctl=$(($unit + 128))
+	wsmux=wsmux$unit
+	wsmuxctl=wsmuxctl$unit
+	major=40
+	rm -f $wsmux $wsmuxctl
+	mknod $wsmux c $major $unit
+	chown root.wheel $wsmux
+	chmod 600 $wsmux
+	mknod $wsmuxctl c $major $unitctl
+	chown root.wheel $wsmuxctl
+	chmod 200 $wsmuxctl
+	;;
+
+ttyEcfg)
+	chr=37
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chown root.wheel ttyEcfg
+	chmod 600 ttyEcfg
+	;;
+
+ttyE*)
+	chr=37; unit=${i#ttyE}
+	rm -f ttyE$unit
+	mknod ttyE$unit c $chr $unit
+	chown root.wheel ttyE$unit
 	;;
 
 lkm)
