@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.266 2002/08/07 15:39:23 augustss Exp $
+$NetBSD: usbdevs,v 1.267 2002/08/07 23:26:18 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -666,7 +666,7 @@ product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
 /* Genesys Logic products */
-product GENESYS HUB604		0x0604	Hub
+product GENESYS GL650		0x0604	GL650 Hub
 product GENESYS GL641USB	0x0700	GL641USB CompactFlash Card Reader
 
 /* Hagiwara products */
