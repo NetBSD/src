@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1999/12/24 08:29:23 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2000/01/14 19:09:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,6 +124,15 @@ void	delay __P((int));
 #define SH3_P3SEG_END	0xdfffffff
 #define SH3_P4SEG_BASE	0xe0000000
 #define SH3_P4SEG_END	0xffffffff
+
+#define SH3_PHYS_MASK	0x1fffffff
+#define SH3_P1234SEG_SIZE	0x20000000
+
+#define SH3_P1SEG_TO_PHYS(x)	((unsigned)(x) & SH3_PHYS_MASK)
+#define SH3_P2SEG_TO_PHYS(x)	((unsigned)(x) & SH3_PHYS_MASK)
+#define SH3_PHYS_TO_P1SEG(x)	((unsigned)(x) | SH3_P1SEG_BASE)
+#define SH3_PHYS_TO_P2SEG(x)	((unsigned)(x) | SH3_P2SEG_BASE)
+#define SH3_P1SEG_TO_P2SEG(x)	((unsigned)(x) | SH3_P1234SEG_SIZE)
 
 /*
  * pull in #defines for kinds of processors
