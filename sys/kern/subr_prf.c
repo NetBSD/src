@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.86 2002/11/02 07:25:22 perry Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.87 2002/12/31 16:53:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.86 2002/11/02 07:25:22 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.87 2002/12/31 16:53:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.86 2002/11/02 07:25:22 perry Exp $");
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#include <sys/kprintf.h>
 
 #include <dev/cons.h>
 
@@ -79,26 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.86 2002/11/02 07:25:22 perry Exp $");
 
 #if defined(MULTIPROCESSOR)
 struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
-
-/*
- * Use cpu_simple_lock() and cpu_simple_unlock().  These are the actual
- * atomic locking operations, and never attempt to print debugging
- * information.
- */
-#define	KPRINTF_MUTEX_ENTER(s)						\
-do {									\
-	(s) = splhigh();						\
-	__cpu_simple_lock(&kprintf_slock.lock_data);			\
-} while (/*CONSTCOND*/ 0)
-
-#define	KPRINTF_MUTEX_EXIT(s)						\
-do {									\
-	__cpu_simple_unlock(&kprintf_slock.lock_data);			\
-	splx((s));							\
-} while (/*CONSTCOND*/ 0)
-#else /* ! MULTIPROCESSOR */
-#define	KPRINTF_MUTEX_ENTER(s)	(s) = splhigh()
-#define	KPRINTF_MUTEX_EXIT(s)	splx((s))
 #endif /* MULTIPROCESSOR */
 
 /*
@@ -122,13 +103,6 @@ do {									\
  * defines
  */
 
-/* flags for kprintf */
-#define TOCONS		0x01	/* to the console */
-#define TOTTY		0x02	/* to the process' tty */
-#define TOLOG		0x04	/* to the kernel message buffer */
-#define TOBUFONLY	0x08	/* to the buffer (only) [for snprintf] */
-#define TODDB		0x10	/* to ddb console */
-
 /* max size buffer kprintf needs to print quad_t [size in base 8 + \0] */
 #define KPRINTF_BUFSIZE		(sizeof(quad_t) * NBBY / 3 + 2)
 
@@ -137,10 +111,7 @@ do {									\
  * local prototypes
  */
 
-static int	 kprintf __P((const char *, int, void *, 
-				char *, va_list));
 static void	 putchar __P((int, int, struct tty *));
-static void	 klogpri __P((int));
 
 
 /*
@@ -336,7 +307,7 @@ logpri(level)
 /*
  * Note: we must be in the mutex here!
  */
-static void
+void
 klogpri(level)
 	int level;
 {
@@ -960,7 +931,7 @@ out:
 /*
  * Guts of kernel printf.  Note, we already expect to be in a mutex!
  */
-static int
+int
 kprintf(fmt0, oflags, vp, sbuf, ap)
 	const char *fmt0;
 	int oflags;
