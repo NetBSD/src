@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.398 2002/01/28 19:57:00 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.399 2002/01/29 06:08:36 junyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.395 2002/01/28 19:55:15 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.396 2002/01/29 06:07:16 junyoung Exp 
  */
 
 /*
@@ -2810,6 +2810,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Initio",
 	    "INIC-950 SCSI",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_IGA1680,
+	    0,
+	    "Integraphics Systems",
+	    "IGA 1680",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_IGA1682,
+	    0,
+	    "Integraphics Systems",
+	    "IGA 1682",
 	},
 	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
@@ -8326,7 +8338,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    NULL,
 	},
 	{
-	    PCI_VENDOR_INTERGRAPHICS, 0,
+	    PCI_VENDOR_INTEGRAPHICS, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Integraphics Systems",
 	    NULL,
