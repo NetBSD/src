@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2001/02/20 15:53:27 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2001/02/21 05:53:35 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -854,7 +854,6 @@ initcpu()
 #endif
 
 #ifdef MAPPEDCOPY
-	extern u_int mappedcopysize;
 
 	/*
 	 * Initialize lower bound for doing copyin/copyout using
