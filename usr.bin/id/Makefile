@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.1.1.2 1994/05/05 22:50:14 cgd Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	id
 MAN1=   id.0 groups.0 whoami.0
