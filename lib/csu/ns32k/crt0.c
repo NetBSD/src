@@ -27,12 +27,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.2 1994/05/03 07:35:29 phil Exp $
+ *	$Id: crt0.c,v 1.3 1994/06/09 05:50:34 phil Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "@(#)crt0.c	5.7 (Berkeley) 7/3/91"; */
-static char rcsid[] = "$Id: crt0.c,v 1.2 1994/05/03 07:35:29 phil Exp $";
+static char rcsid[] = "$Id: crt0.c,v 1.3 1994/06/09 05:50:34 phil Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 extern void exit();
@@ -104,7 +104,8 @@ char			*__progname = empty;
     __syscall(SYS_mmap, (addr), (len), (prot), _MAP_NEW|(flags), (fd), (off))
 #else
 #define mmap(addr, len, prot, flags, fd, off)	\
-    __syscall(SYS_mmap, (addr), (len), (prot), (flags), (fd), (off_t)(off))
+    __syscall(SYS___syscall, (quad_t)SYS_mmap, (addr), (len), (prot), \
+	      (flags), (fd), 0, (off_t)(off))
 #endif
 
 #define _FATAL(str) \
