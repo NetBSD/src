@@ -1,45 +1,45 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.73 1997/06/12 18:42:02 mrg Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.74 1997/06/25 04:41:15 mellon Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
 
 include "arch/i386/conf/std.i386"
 
-options		I386_CPU	# CPU classes; at least one is REQUIRED
+options 	I386_CPU	# CPU classes; at least one is REQUIRED
 
-options		DUMMY_NOPS	# speed hack; recommended
-options		XSERVER,UCONSOLE
+options 	DUMMY_NOPS	# speed hack; recommended
+options 	XSERVER,UCONSOLE
 
 maxusers	10		# estimated number of users
-options		RTC_OFFSET=480	# hardware clock is this many mins. west of GMT
+options 	RTC_OFFSET=480	# hardware clock is this many mins. west of GMT
 
-options		DIAGNOSTIC	# internal consistency checks
-options		KTRACE		# system call tracing, a la ktrace(1)
+options 	DIAGNOSTIC	# internal consistency checks
+options 	KTRACE		# system call tracing, a la ktrace(1)
 
-options		COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
-options		COMPAT_09	# NetBSD 0.9,
-options		COMPAT_10	# NetBSD 1.0,
-options		COMPAT_11	# NetBSD 1.1,
+options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
+options 	COMPAT_09	# NetBSD 0.9,
+options 	COMPAT_10	# NetBSD 1.0,
+options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12
-options		COMPAT_43	# and 4.3BSD
+options 	COMPAT_43	# and 4.3BSD
 
 file-system	FFS		# UFS and quotas
 file-system	NFS		# Network File System client
 file-system	MSDOSFS		# MS-DOS file system
 
-#options 	NFSSERVER	# Network File System server
-options		FIFO		# FIFOs; RECOMMENDED
+#options  	NFSSERVER	# Network File System server
+options 	FIFO		# FIFOs; RECOMMENDED
 
-#options	GATEWAY		# packet forwarding
-options		INET		# IP + ICMP + TCP + UDP
+#options 	GATEWAY		# packet forwarding
+options 	INET		# IP + ICMP + TCP + UDP
 
 # PCVT options
-#options	PCVT_NSCREENS=1
-#options	PCVT_24LINESDEF
+#options 	PCVT_NSCREENS=1
+#options 	PCVT_24LINESDEF
 
 # PPP options
-options		PPP_BSDCOMP
-options		PPP_DEFLATE
+options 	PPP_BSDCOMP
+options 	PPP_DEFLATE
 
 config		netbsd	root on wd0 
 
