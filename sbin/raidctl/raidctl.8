@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.26 2001/11/16 11:06:46 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.27 2002/01/20 02:30:11 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -962,6 +962,93 @@ raidctl -F component1 raid0
 at which point the data missing from
 .Sq component1
 would be reconstructed onto /dev/sd3e.
+.Pp
+When more than one component is marked as
+.Sq failed
+due to a non-component hardware failure (e.g. loss of power to two
+components, adapter problems, termination problems, or cabling issues) it
+is quite possible to recover the data on the RAID set.  The first
+thing to be aware of is that the first disk to fail will almost certainly
+be out-of-sync with the remainder of the array.  If any IO was
+performed between the time the first component is considered
+.Sq failed
+and when the second component is considered
+.Sq failed ,
+then the first component to fail will
+.Ar not
+contain correct data, and should be ignored.  When the second
+component is marked as failed, however, the RAID device will
+(currently) panic the system.  At this point the data on the RAID set
+(not including the first failed component) is still self consistent,
+and will be in no worse state of repair than had the power gone out in
+the middle of a write to a filesystem on a non-RAID device.
+The problem, however, is that the component labels may now have 3
+different 'modification counters' (one value on the first component
+that failed, one value on the second component that failed, and a
+third value on the remaining components).  In such a situation, the
+RAID set will not autoconfigure, and can only be forcibly re-configured
+with the 
+.Fl C
+option.  To recover the RAID set, one must first remedy whatever physical
+problem caused the multiple-component failure.  After that is done,
+the RAID set can be restored by forcibly configuring the raid set
+.Ar without
+the component that failed first.  For example, if /dev/sd1e and
+/dev/sd2e fail (in that order) in a RAID set of the following
+configuration:
+.Bd -literal -offset indent
+START array
+1 4 0
+
+START drives
+/dev/sd1e
+/dev/sd2e
+/dev/sd3e
+/dev/sd4e
+
+START layout
+# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_5
+64 1 1 5
+
+START queue
+fifo 100
+
+.Ed
+.Pp
+then the following configuration (say "recover_raid0.conf")
+.Bd -literal -offset indent
+START array
+1 4 0
+
+START drives
+/dev/sd6e
+/dev/sd2e
+/dev/sd3e
+/dev/sd4e
+
+START layout
+# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_5
+64 1 1 5
+
+START queue
+fifo 100
+.Ed
+.Pp
+(where /dev/sd6e has no physical device) can be used with
+.Bd -literal -offset indent
+raidctl -C recover_raid0.conf raid0
+.Ed
+.Pp
+to force the configuration of raid0.  A
+.Bd -literal -offset indent
+raidctl -I 12345 raid0
+.Ed
+.Pp
+will be required in order to synchronize the component labels.
+At this point the filesystems on the RAID set can then be checked and
+corrected.  To complete the re-construction of the RAID set, 
+/dev/sd1e is simply hot-added back into the array, and reconstructed
+as described earlier.
 .Ss RAID on RAID
 RAID sets can be layered to create more complex and much larger RAID
 sets.  A RAID 0 set, for example, could be constructed from four RAID
