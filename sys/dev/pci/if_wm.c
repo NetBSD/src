@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.89 2004/11/30 03:08:27 briggs Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.90 2005/01/30 17:33:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.89 2004/11/30 03:08:27 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.90 2005/01/30 17:33:48 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2186,11 +2186,15 @@ wm_rxintr(struct wm_softc *sc)
 		}
 
 		/*
-		 * Okay, we have the entire packet now...
+		 * Okay, we have the entire packet now.  The chip is
+		 * configured to include the FCS (not all chips can
+		 * be configured to strip it), so we need to trim it.
 		 */
+		m->m_len -= ETHER_CRC_LEN;
+
 		*sc->sc_rxtailp = NULL;
 		m = sc->sc_rxhead;
-		len += sc->sc_rxlen;
+		len = m->m_len + sc->sc_rxlen;
 
 		WM_RXCHAIN_RESET(sc);
 
@@ -2219,11 +2223,7 @@ wm_rxintr(struct wm_softc *sc)
 
 		/*
 		 * No errors.  Receive the packet.
-		 *
-		 * Note, we have configured the chip to include the
-		 * CRC with every packet.
 		 */
-		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
 
