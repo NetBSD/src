@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.6 2001/06/12 15:17:25 wiz Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.7 2001/07/19 15:38:18 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -400,7 +400,9 @@ lmc_ds3_watchdog (lmc_softc_t * const sc)
 	sc->lmc_miireg16 = lmc_mii_readreg (sc, 0, 16);
 	if (sc->lmc_miireg16 & 0x0018)
 	{
+#if 0
 		printf("%s: AIS Received\n", sc->lmc_xname);
+#endif
 		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
 	}
 }
@@ -1128,13 +1130,17 @@ lmc_t1_watchdog(lmc_softc_t * const sc)
 	t1stat = lmc_t1_read (sc, 0x47);
 	/* blue alarm -- RAIS */
 	if (t1stat & 0x08) {
+#if 0
 		if (sc->lmc_blue != 1)
 			printf ("%s: AIS Received\n", sc->lmc_xname);
+#endif
 		lmc_led_on (sc, LMC_DS3_LED1 | LMC_DS3_LED2);
 		sc->lmc_blue = 1;
 	} else {
+#if 0
 		if (sc->lmc_blue == 1)
 			printf ("%s: AIS ok\n", sc->lmc_xname);
+#endif
 		lmc_led_off (sc, LMC_DS3_LED1);
 		lmc_led_on (sc, LMC_DS3_LED2);
 		sc->lmc_blue = 0;
@@ -1200,5 +1206,11 @@ lmc_set_protocol(lmc_softc_t * const sc, lmc_ctl_t *ctl)
 			sc->lmc_sppp.pp_flags = PP_CISCO;
 		}
 	}
+
+	/* just in case we are going to change encap type */
+	if ((sc->lmc_sppp.pp_flags & PP_CISCO) != 0)
+		bpf_change_type(&sc->lmc_if, DLT_HDLC, PPP_HEADER_LEN);
+	else
+		bpf_change_type(&sc->lmc_if, DLT_PPP, PPP_HEADER_LEN);
 #endif
 }
