@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.43 1996/04/22 02:53:28 christos Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.1 1996/05/07 01:50:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -60,131 +60,92 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include "isa.h"
-#include "pci.h"
-
-#if NISA > 0
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <i386/isa/isa_machdep.h>
-#endif
 
-#if NPCI > 0
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-#endif
-
-#include <dev/isa/if_levar.h>
 #include <dev/ic/am7990reg.h>
-#define LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
 
-char *card_type[] = {"unknown", "BICC Isolan", "NE2100", "DEPCA", "PCnet-ISA", "PCnet-PCI"};
+#include <dev/isa/if_levar.h>
 
-#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
-#define	LE_DELAY(x)	delay(x)
+static char *card_type[] =
+    { "unknown", "BICC Isolan", "NE2100", "DEPCA", "PCnet-ISA" };
 
-int leprobe __P((struct device *, void *, void *));
-int depca_probe __P((struct le_softc *, struct isa_attach_args *));
-int ne2100_probe __P((struct le_softc *, struct isa_attach_args *));
-int bicc_probe __P((struct le_softc *, struct isa_attach_args *));
-int lance_probe __P((struct le_softc *));
-void leattach __P((struct device *, struct device *, void *));
-int leintr __P((void *));
-int leintredge __P((void *));
-void leshutdown __P((void *));
+int le_isa_probe __P((struct device *, void *, void *));
+void le_isa_attach __P((struct device *, struct device *, void *));
 
-/* XXX the following two structs should be different. */
 struct cfattach le_isa_ca = {
-	sizeof(struct le_softc), leprobe, leattach
+	sizeof(struct le_softc), le_isa_probe, le_isa_attach
 };
 
-struct cfattach le_pci_ca = {
-	sizeof(struct le_softc), leprobe, leattach
-};
+int depca_isa_probe __P((struct le_softc *, struct isa_attach_args *));
+int ne2100_isa_probe __P((struct le_softc *, struct isa_attach_args *));
+int bicc_isa_probe __P((struct le_softc *, struct isa_attach_args *));
+int lance_isa_probe __P((struct am7990_softc *));
 
-struct cfdriver le_cd = {
-	NULL, "le", DV_IFNET
-};
+int le_isa_intredge __P((void *));
 
-integrate void
-lehwinit(sc)
-	struct le_softc *sc;
-{
-}
+hide void le_isa_wrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t le_isa_rdcsr __P((struct am7990_softc *, u_int16_t));  
 
-integrate void
-lewrcsr(sc, port, val)
-	struct le_softc *sc;
+hide void
+le_isa_wrcsr(sc, port, val)
+	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
 
-	outw(sc->sc_rap, port);
-	outw(sc->sc_rdp, val);
+	outw(((struct le_softc *)sc)->sc_rap, port);
+	outw(((struct le_softc *)sc)->sc_rdp, val);
 }
 
-integrate u_int16_t
-lerdcsr(sc, port)
-	struct le_softc *sc;
+hide u_int16_t
+le_isa_rdcsr(sc, port)
+	struct am7990_softc *sc;
 	u_int16_t port;
 {
 	u_int16_t val;
 
-	outw(sc->sc_rap, port);
-	val = inw(sc->sc_rdp);
+	outw(((struct le_softc *)sc)->sc_rap, port);
+	val = inw(((struct le_softc *)sc)->sc_rdp);
 	return (val);
 }
 
 int
-leprobe(parent, match, aux)
+le_isa_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct le_softc *sc = match;
-	extern struct cfdriver isa_cd, pci_cd;
+	struct le_softc *lesc = match;
+	struct isa_attach_args *ia = aux;
 
-#if NISA > 0
-	if (parent->dv_cfdata->cf_driver == &isa_cd) {
-		struct isa_attach_args *ia = aux;
-
-		if (bicc_probe(sc, ia))
-			return (1);
-		if (ne2100_probe(sc, ia))
-			return (1);
-		if (depca_probe(sc, ia))
-			return (1);
-	}
-#endif
-
-#if NPCI > 0
-	if (parent->dv_cfdata->cf_driver == &pci_cd) {
-		struct pci_attach_args *pa = aux;
-
-		if (pa->pa_id == 0x20001022)
-			return (1);
-	}
-#endif
+	if (bicc_isa_probe(lesc, ia))
+		return (1);
+	if (ne2100_isa_probe(lesc, ia))
+		return (1);
+	if (depca_isa_probe(lesc, ia))
+		return (1);
 
 	return (0);
 }
 
-#if NISA > 0
 int
-depca_probe(sc, ia)
-	struct le_softc *sc;
+depca_isa_probe(lesc, ia)
+	struct le_softc *lesc;
 	struct isa_attach_args *ia;
 {
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	int iobase = ia->ia_iobase, port;
 	u_long sum, rom_sum;
 	u_char x;
 	int i;
 
-	sc->sc_rap = iobase + DEPCA_RAP;
-	sc->sc_rdp = iobase + DEPCA_RDP;
-	sc->sc_card = DEPCA;
+	lesc->sc_rap = iobase + DEPCA_RAP;
+	lesc->sc_rdp = iobase + DEPCA_RDP;
+	lesc->sc_card = DEPCA;
 
-	if (lance_probe(sc) == 0)
+	if (lance_isa_probe(sc) == 0)
 		return 0;
 
 	outb(iobase + DEPCA_CSR, DEPCA_CSR_DUM);
@@ -252,18 +213,19 @@ found:
 }
 
 int
-ne2100_probe(sc, ia)
-	struct le_softc *sc;
+ne2100_isa_probe(lesc, ia)
+	struct le_softc *lesc;
 	struct isa_attach_args *ia;
 {
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	int iobase = ia->ia_iobase;
 	int i;
 
-	sc->sc_rap = iobase + NE2100_RAP;
-	sc->sc_rdp = iobase + NE2100_RDP;
-	sc->sc_card = NE2100;
+	lesc->sc_rap = iobase + NE2100_RAP;
+	lesc->sc_rdp = iobase + NE2100_RDP;
+	lesc->sc_card = NE2100;
 
-	if (lance_probe(sc) == 0)
+	if (lance_isa_probe(sc) == 0)
 		return 0;
 
 	/*
@@ -277,18 +239,19 @@ ne2100_probe(sc, ia)
 }
 
 int
-bicc_probe(sc, ia)
-	struct le_softc *sc;
+bicc_isa_probe(lesc, ia)
+	struct le_softc *lesc;
 	struct isa_attach_args *ia;
 {
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	int iobase = ia->ia_iobase;
 	int i;
 
-	sc->sc_rap = iobase + BICC_RAP;
-	sc->sc_rdp = iobase + BICC_RDP;
-	sc->sc_card = BICC;
+	lesc->sc_rap = iobase + BICC_RAP;
+	lesc->sc_rdp = iobase + BICC_RDP;
+	lesc->sc_card = BICC;
 
-	if (lance_probe(sc) == 0)
+	if (lance_isa_probe(sc) == 0)
 		return 0;
 
 	/*
@@ -305,57 +268,34 @@ bicc_probe(sc, ia)
  * Determine which chip is present on the card.
  */
 int
-lance_probe(sc)
-	struct le_softc *sc;
+lance_isa_probe(sc)
+	struct am7990_softc *sc;
 {
 
 	/* Stop the LANCE chip and put it in a known state. */
-	lewrcsr(sc, LE_CSR0, LE_C0_STOP);
-	LE_DELAY(100);
+	le_isa_wrcsr(sc, LE_CSR0, LE_C0_STOP);
+	delay(100);
 
-	if (lerdcsr(sc, LE_CSR0) != LE_C0_STOP)
+	if (le_isa_rdcsr(sc, LE_CSR0) != LE_C0_STOP)
 		return 0;
 
-	lewrcsr(sc, LE_CSR3, sc->sc_conf3);
+	le_isa_wrcsr(sc, LE_CSR3, sc->sc_conf3);
 	return 1;
 }
-#endif
 
 void
-leattach(parent, self, aux)
+le_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct le_softc *sc = (void *)self;
-	extern struct cfdriver isa_cd, pci_cd;
+	struct le_softc *lesc = (void *)self;
+	struct am7990_softc *sc = &lesc->sc_am7990;
+	struct isa_attach_args *ia = aux;
 
-#if NPCI > 0
-	if (parent->dv_cfdata->cf_driver == &pci_cd) {
-		struct pci_attach_args *pa = aux;
-		int iobase;
+	printf(": %s Ethernet\n", sc->sc_dev.dv_xname,
+	    card_type[lesc->sc_card]);
 
-		if (pa->pa_id == 0x20001022) {
-			int i;
-
-			if (pci_map_io(pa->pa_tag, 0x10, &iobase))
-				return;
-
-			sc->sc_rap = iobase + NE2100_RAP;
-			sc->sc_rdp = iobase + NE2100_RDP;
-			sc->sc_card = PCnet_PCI;
-
-			/*
-			 * Extract the physical MAC address from the ROM.
-			 */
-			for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-				sc->sc_arpcom.ac_enaddr[i] = inb(iobase + i);
-		}
-	}
-#endif
-
-#if NISA > 0
-	if (sc->sc_card == DEPCA) {
-		struct isa_attach_args *ia = aux;
+	if (lesc->sc_card == DEPCA) {
 		u_char *mem, val;
 		int i;
 
@@ -379,9 +319,7 @@ leattach(parent, self, aux)
 		sc->sc_conf3 = LE_C3_ACON;
 		sc->sc_addr = 0;
 		sc->sc_memsize = ia->ia_msize;
-	} else
-#endif
-	{
+	} else {
 		sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
 		if (sc->sc_mem == 0) {
 			printf("%s: couldn't allocate memory for card\n",
@@ -400,63 +338,30 @@ leattach(parent, self, aux)
 	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
 	sc->sc_zerobuf = am7990_zerobuf_contig;
 
-	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
-	leconfig(sc);
+	sc->sc_rdcsr = le_isa_rdcsr;
+	sc->sc_wrcsr = le_isa_wrcsr;
+	sc->sc_hwinit = NULL;
 
-	printf("%s: type %s\n", sc->sc_dev.dv_xname, card_type[sc->sc_card]);
+	printf("%s", sc->sc_dev.dv_xname);
+	am7990_config(sc);
 
-#if NISA > 0
-	if (parent->dv_cfdata->cf_driver == &isa_cd) {
-		struct isa_attach_args *ia = aux;
+	if (ia->ia_drq != DRQUNK)
+		isa_dmacascade(ia->ia_drq);
 
-		if (ia->ia_drq != DRQUNK)
-			isa_dmacascade(ia->ia_drq);
-
-		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-		    IPL_NET, leintredge, sc);
-	}
-#endif
-
-#if NPCI > 0
-	if (parent->dv_cfdata->cf_driver == &pci_cd) {
-		struct pci_attach_args *pa = aux;
-		pcireg_t csr;
-
-		csr = pci_conf_read(pa->pa_bc, pa->pa_tag,
-		    PCI_COMMAND_STATUS_REG);
-		pci_conf_write(pa->pa_bc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		    csr | PCI_COMMAND_MASTER_ENABLE);
-
-		sc->sc_ih = pci_map_int(pa->pa_tag, IPL_NET, leintr, sc);
-	}
-#endif
-
-	sc->sc_sh = shutdownhook_establish(leshutdown, sc);
+	lesc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_NET, le_isa_intredge, sc);
 }
 
-void
-leshutdown(arg)
-	void *arg;
-{
-	struct le_softc *sc = arg;
-
-	lestop(sc);
-}
-
-#if NISA > 0
 /*
  * Controller interrupt.
  */
-leintredge(arg)
+le_isa_intredge(arg)
 	void *arg;
 {
 
-	if (leintr(arg) == 0)
+	if (am7990_intr(arg) == 0)
 		return (0);
 	for (;;)
-		if (leintr(arg) == 0)
+		if (am7990_intr(arg) == 0)
 			return (1);
 }
-#endif
-
-#include <dev/ic/am7990.c>

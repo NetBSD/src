@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.19 1996/05/06 21:36:58 is Exp $
+#	$NetBSD: files.isa,v 1.20 1996/05/07 01:50:09 thorpej Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -185,10 +185,9 @@ file    dev/isa/if_iy.c			iy
 
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
-# XXX conflicts with alpha if_le.c
-#device	le: ether, ifnet, isadma
-#attach	le at isa with le_isa
-#file	dev/isa/if_le.c			le
+# device declaration in sys/conf/files
+attach	le at isa with le_isa: isadma
+file	dev/isa/if_le_isa.c		le_isa
 
 #
 # ISA Sound hardware
