@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: s_ceil.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: s_ceil.S,v 1.6 2002/03/26 15:17:37 fvdl Exp $")
 
 ENTRY(ceil)
 #ifdef __i386__
@@ -15,17 +15,17 @@ ENTRY(ceil)
 	movl	%esp,%ebp
 	subl	$8,%esp
 
-	fstcw	-12(%ebp)		/* store fpu control word */
-	movw	-12(%ebp),%dx
+	fstcw	-4(%ebp)		/* store fpu control word */
+	movw	-4(%ebp),%dx
 	orw	$0x0800,%dx		/* round towards +oo */
 	andw	$0xfbff,%dx
-	movw	%dx,-16(%ebp)
-	fldcw	-16(%ebp)		/* load modfied control word */
+	movw	%dx,-8(%ebp)
+	fldcw	-8(%ebp)		/* load modfied control word */
 
 	fldl	8(%ebp);		/* round */
 	frndint
 
-	fldcw	-12(%ebp)		/* restore original control word */
+	fldcw	-4(%ebp)		/* restore original control word */
 
 	leave
 #else
