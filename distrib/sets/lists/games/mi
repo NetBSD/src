@@ -177,6 +177,7 @@
 ./usr/share/man/cat6/hangman.0
 ./usr/share/man/cat6/hunt.0
 ./usr/share/man/cat6/huntd.0
+./usr/share/man/cat6/intro.0
 ./usr/share/man/cat6/larn.0
 ./usr/share/man/cat6/mille.0
 ./usr/share/man/cat6/monop.0
@@ -221,6 +222,7 @@
 ./usr/share/man/man6/hangman.6
 ./usr/share/man/man6/hunt.6
 ./usr/share/man/man6/huntd.6
+./usr/share/man/man6/intro.6
 ./usr/share/man/man6/larn.6
 ./usr/share/man/man6/mille.6
 ./usr/share/man/man6/monop.6
