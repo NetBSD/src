@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.1 1994/05/30 19:58:42 phil Exp $
+#	     $Id: Makefile,v 1.2 1994/07/24 20:29:45 phil Exp $
 
 DESTDIR=
-
+STANDDIR=${DESTDIR}/stand
 # load at 1.5Meg -- allow 1.4xx meg kernel, but below ram disk
 # NOTE: alloc() function takes memory after _end
 RELOC=	180000
@@ -75,6 +75,9 @@ clean cleandir:
 	rm -f a.out boot cat ls testboot
 	rm -f *.core
 	rm -f libdrive.a 
+
+install: boot
+	cp boot ${DESTDIR}/
 
 .include <bsd.dep.mk>
 .include <bsd.obj.mk>
