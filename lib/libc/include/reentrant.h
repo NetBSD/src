@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.6.4.4 2002/03/25 03:40:37 nathanw Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.6.4.5 2002/05/02 16:56:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997,98 The NetBSD Foundation, Inc.
@@ -81,10 +81,15 @@
  * pthreads, however it should be reasonably easy to wrap another mutex
  * implementation so it presents a similar interface.
  * 
- * Stub implementations of the mutex functions are provided with *weak*
- * linkage.  These functions simply return success.  When linked with a
- * thread library (i.e. -lpthread), the functions will override the
- * stubs.
+ * The mutex functions operate by dispatching through a vector of function
+ * pointers; the pointer to this is defined in thread-stub/pthread-stub.c.
+ * The pointer initially points to a set of no-op functions for non-threaded
+ * use (most uses of thread operations are conditional on __isthreaded, but
+ * a few aren't, so we have to have a vector of stub operations rather than
+ * just leaving the vector pointer NULL).
+ *
+ * When a thread library is linked in, the library's initialization routine
+ * will set the vector pointer to point to real thread operations.
  */
 
 #ifdef _REENTRANT
@@ -94,61 +99,53 @@
 #define mutex_t			pthread_mutex_t
 #define MUTEX_INITIALIZER	PTHREAD_MUTEX_INITIALIZER
 
-#define mutex_init(m, a)	_libc_pthread_mutex_init(m, a)
-#define mutex_lock(m)		_libc_pthread_mutex_lock(m)
-#define mutex_trylock(m)	_libc_pthread_mutex_trylock(m)
-#define mutex_unlock(m)		_libc_pthread_mutex_unlock(m)
-
 #define cond_t			pthread_cond_t
 #define COND_INITIALIZER	PTHREAD_COND_INITIALIZER
 
-#define cond_signal(m)		_libc_pthread_cond_signal(m)
-#define cond_wait(c, m)		_libc_pthread_cond_wait(c, m)
-#define cond_init(c, t, a)     	_libc_pthread_cond_init(c, a)
-
-#if 0
-#define rwlock_t		pthread_rwlock_t
-#define RWLOCK_INITIALIZER	PTHREAD_RWLOCK_INITIALIZER
-
-#define rwlock_init(l, a)	_libc_pthread_rwlock_init(l, a)
-#define rwlock_rdlock(l)	_libc_pthread_rwlock_rdlock(l)
-#define rwlock_wrlock(l)	_libc_pthread_rwlock_wrlock(l)
-#define rwlock_unlock(l)	_libc_pthread_rwlock_unlock(l)
-#else
 #define rwlock_t		pthread_mutex_t
 #define RWLOCK_INITIALIZER	PTHREAD_MUTEX_INITIALIZER
 
-#define rwlock_init(l, a)	_libc_pthread_mutex_init(l, a)
-#define rwlock_rdlock(l)	_libc_pthread_mutex_lock(l)
-#define rwlock_wrlock(l)	_libc_pthread_mutex_lock(l)
-#define rwlock_unlock(l)	_libc_pthread_mutex_unlock(l)
-
-#endif
 #define thread_key_t		pthread_key_t
-#define thr_keycreate(k, d)	_libc_pthread_key_create(k, d)
-#define thr_setspecific(k, p)	_libc_pthread_setspecific(k, p)
-#define thr_getspecific(k)	_libc_pthread_getspecific(k)
-#define thr_sigsetmask(f, n, o)	_libc_pthread_sigmask(f, n, o)
 
 #define thr_t			pthread_t
 
-#define thr_self()		_libc_pthread_self()
-#define thr_exit(x)		_libc_pthread_exit(x)
+#define once_t			pthread_once_t
+#define ONCE_INITIALIZER	PTHREAD_ONCE_INIT
+
+extern pthread_ops_t *__libc_pthread_ops;
+
+#define mutex_init(m, a)	((__libc_pthread_ops->mutex_init)((m),(a)))
+#define mutex_lock(m)		((__libc_pthread_ops->mutex_lock)((m)))
+#define mutex_unlock(m)		((__libc_pthread_ops->mutex_unlock)((m)))
+
+#define cond_init(c, t, a)     	((__libc_pthread_ops->cond_init)((c), (a)))
+#define cond_signal(m)		((__libc_pthread_ops->cond_signal)((m)))
+#define cond_wait(c, m)		((__libc_pthread_ops->cond_wait)((c), (m)))
+
+#define rwlock_init(l, a)	((__libc_pthread_ops->mutex_init)((l), (a)))
+#define rwlock_rdlock(l)	((__libc_pthread_ops->mutex_lock)((l)))
+#define rwlock_wrlock(l)	((__libc_pthread_ops->mutex_lock)((l)))
+#define rwlock_unlock(l)	((__libc_pthread_ops->mutex_unlock)((l)))
+
+#define thr_keycreate(k, d)	((__libc_pthread_ops->thr_keycreate)((k), (d)))
+#define thr_setspecific(k, p)	((__libc_pthread_ops->thr_setspecific)((k), (p)))
+#define thr_getspecific(k)	((__libc_pthread_ops->thr_getspecific)((k)))
+
+#define thr_sigsetmask(f, n, o)	((__libc_pthread_ops->thr_sigsetmask)((f), (n), (o)))
+
+#define thr_once(o,f)		((__libc_pthread_ops->thr_once)((o),(f)))
+
+#define thr_self()		((__libc_pthread_ops->thr_self)())
+
+#define thr_errno()		((__libc_pthread_ops->thr_errno)())
 
 #define FLOCKFILE(fp)		flockfile(fp)
 #define FUNLOCKFILE(fp)		funlockfile(fp)
-
-#define once_t			pthread_once_t
-#define ONCE_INITIALIZER	PTHREAD_ONCE_INIT
-#define thr_once(o,f)		_libc_pthread_once(o,f)
-
-#define thr_errno()		_libc_pthread__errno()
 
 #else
 
 #define mutex_init(m, a)	
 #define mutex_lock(m)		
-#define mutex_trylock(m)
 #define mutex_unlock(m)		
 
 #define cond_signal(m)
@@ -163,16 +160,14 @@
 #define thr_keycreate(k, d)
 #define thr_setspecific(k, p)
 #define thr_getspecific(k)
+
 #define thr_sigsetmask(f, n, o)
 
-#define thr_self()
-#define thr_exit()
+#define thr_once(o, f)
+
+#define thr_errno()
 
 #define FLOCKFILE(fp)		
 #define FUNLOCKFILE(fp)		
-
-#define once_t
-#define ONCE_INITIALIZER
-#define thr_once(o,f)
 
 #endif
