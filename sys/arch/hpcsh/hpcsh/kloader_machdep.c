@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.5 2002/02/28 01:57:00 uch Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.6 2002/05/09 12:37:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <sys/systm.h>
 
 #include <sh3/mmu.h>
+#include <sh3/mmu_sh3.h>
+#include <sh3/mmu_sh4.h>
 #include <sh3/cache.h>
 #include <sh3/cache_sh3.h>
 #include <sh3/cache_sh4.h>

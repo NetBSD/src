@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.4 2002/03/28 15:27:02 uch Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.5 2002/05/09 12:37:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 #include <dev/pcmcia/pcmciachip.h>
 
 #include <sh3/bscreg.h>
+#include <sh3/mmu.h>
 
 #include <hpcsh/dev/hd64465/hd64465reg.h>
 #include <hpcsh/dev/hd64465/hd64465var.h>
@@ -62,8 +63,8 @@
 #include "locators.h"
 
 #ifdef	HD64465PCMCIA_DEBUG
-#define DPRINTF_ENABLE
-#define DPRINTF_DEBUG	hd64465pcmcia_debug
+#define	DPRINTF_ENABLE
+#define	DPRINTF_DEBUG	hd64465pcmcia_debug
 #endif
 #include <machine/debug.h>
 
@@ -73,14 +74,14 @@ enum memory_window_16 {
 	MEMWIN_16M_COMMON_2,
 	MEMWIN_16M_COMMON_3,
 };
-#define MEMWIN_16M_MAX	4
+#define	MEMWIN_16M_MAX	4
 
 enum hd64465pcmcia_event_type {
 	EVENT_NONE,
 	EVENT_INSERT,
 	EVENT_REMOVE,
 };
-#define EVENT_QUEUE_MAX		5
+#define	EVENT_QUEUE_MAX		5
 
 struct hd64465pcmcia_softc; /* forward declaration */
 
@@ -201,7 +202,7 @@ STATIC void __sh_set_bus_width(int, int);
 STATIC int __sh_hd64465_map(vaddr_t, paddr_t, size_t, u_int32_t);
 STATIC vaddr_t __sh_hd64465_map_2page(paddr_t);
 
-#define DELAY_MS(x)	delay((x) * 1000)
+#define	DELAY_MS(x)	delay((x) * 1000)
 
 int
 hd64465pcmcia_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -218,7 +219,7 @@ hd64465pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	struct hd64465pcmcia_softc *sc = (struct hd64465pcmcia_softc *)self;
 
 	sc->sc_module_id = ha->ha_module_id;
-	
+
 	printf("\n");
 
 	sc->sc_area5 = __sh_hd64465_map_2page(0x14000000); /* area 5 */
@@ -260,7 +261,7 @@ hd64465pcmcia_event_thread(void *arg)
 	struct hd64465pcmcia_softc *sc = arg;
 	struct hd64465pcmcia_event *pe;
 	int s;
-	
+
 	while (!sc->sc_shutdown) {
 		tsleep(sc, PWAIT, "CSC wait", 0);
 		s = splhigh();
@@ -327,7 +328,7 @@ hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *sc, int channel)
 {
 	struct device *parent = (struct device *)sc;
 	struct hd64465pcmcia_channel *ch = &sc->sc_ch[channel];
-	struct pcmciabus_attach_args paa;	
+	struct pcmciabus_attach_args paa;
 	bus_addr_t baseaddr;
 	u_int8_t r;
 	int i;
@@ -335,8 +336,8 @@ hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *sc, int channel)
 	ch->ch_parent = sc;
 	ch->ch_channel = channel;
 
-	/* 
-	 * Continuous 16-MB Area Mode 
+	/*
+	 * Continuous 16-MB Area Mode
 	 */
 	/* set Continuous 16-MB Area Mode */
 	r = hd64465_reg_read_1(HD64461_PCCGCR(channel));
@@ -362,7 +363,7 @@ hd64465pcmcia_attach_channel(struct hd64465pcmcia_softc *sc, int channel)
 	/* I/O port extent */
 	ch->ch_iobase = 0;
 	ch->ch_iosize = 0x01000000;
-	ch->ch_iot = bus_space_create(0, "PCMCIA I/O port", 
+	ch->ch_iot = bus_space_create(0, "PCMCIA I/O port",
 	    baseaddr + 0x01000000 * 2, ch->ch_iosize);
 
 	/* Interrupt */
@@ -558,7 +559,7 @@ hd64465pcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
 		if (bus_space_subregion(ch->ch_memt, ch->ch_memh, card_addr,
 		    size, &cookie->wc_handle) != 0)
 			goto bad;
-		
+
 		*offsetp = card_addr;
 		cookie->wc_window = -1;
 	} else {
@@ -570,7 +571,7 @@ hd64465pcmcia_chip_mem_map(pcmcia_chipset_handle_t pch, int kind,
 		if (bus_space_map(cookie->wc_tag, ofs, size, 0,
 		    &cookie->wc_handle) != 0)
 			goto bad;
-		
+
 		/* XXX bogus. check window per common memory access. */
 		hd64465pcmcia_memory_window16_switch(ch->ch_channel, window);
 		*offsetp = ofs + 0x01000000; /* skip attribute area */
@@ -728,7 +729,7 @@ __detect_card(int channel)
 		return EVENT_REMOVE;
 	}
 	if (r == 0) {
-		DPRINTF("insert\n");		
+		DPRINTF("insert\n");
 		return EVENT_INSERT;
 	}
 	DPRINTF("transition\n");
@@ -774,7 +775,7 @@ __sh_set_bus_width(int channel, int width)
 	u_int16_t r16;
 
 	r16 = _reg_read_2(SH4_BCR2);
-#ifdef HD64465PCMCIA_DEBUG	
+#ifdef HD64465PCMCIA_DEBUG
 	dbg_bit_print_msg(r16, "BCR2");
 #endif
 	if (channel == 0) {
@@ -826,23 +827,14 @@ __sh_hd64465_map(vaddr_t va, paddr_t pa, size_t sz, u_int32_t flags)
 
 	epa = pa + sz;
 	while (pa < epa) {
-		if (pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED) != 0) {
-			PRINTF("can't map va 0x%08x -> pa 0x%08x\n",
-			    (unsigned)va, (unsigned)pa);
-			return (1);
-		}
-
-		pte = kvtopte(va);
-		*pte &= ~PG_N; /* uncacheable */
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pte = __pmap_kpte_lookup(va);
+		KDASSERT(pte);
 		*pte |= flags;  /* PTEA PCMCIA assistant bit */
-		pmap_update_pg(va);
-
+		sh_tlb_update(0, va, *pte);
 		pa += NBPG;
 		va += NBPG;
 	}
-
-	pmap_update(pmap_kernel());
 
 	return (0);
 }
