@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.6 1999/01/20 11:49:33 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.7 1999/01/20 13:05:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@ _nscmp(a, b)
 	const void *a;
 	const void *b;
 {
-	return (strcasecmp(((ns_dbt *)a)->name, ((ns_dbt *)b)->name));
+	return (strcasecmp(((const ns_dbt *)a)->name,
+	    ((const ns_dbt *)b)->name));
 }
 
 
@@ -97,8 +98,7 @@ _nsdbtaddsrc(dbt, src)
 		if (dbt->srclist == NULL)
 			err(1, "nsdispatch: memory allocation failure");
 	}
-	memmove((void *)&dbt->srclist[dbt->srclistsize++], (void *)src,
-	    sizeof(ns_src));
+	memmove(&dbt->srclist[dbt->srclistsize++], src, sizeof(ns_src));
 }
 
 
@@ -153,14 +153,17 @@ _nsdbtget(name)
 
 			for (i = 0; i < _nsmapsize; i++) {
 				for (j = 0; j < _nsmap[i].srclistsize; j++) {
-					if (_nsmap[i].srclist[j].name != NULL)
-						free((char *)
-						    _nsmap[i].srclist[j].name);
+					if (_nsmap[i].srclist[j].name != NULL) {
+						/*LINTED const cast*/
+						free((void *)_nsmap[i].srclist[j].name);
+					}
 				}
 				if (_nsmap[i].srclist)
 					free(_nsmap[i].srclist);
-				if (_nsmap[i].name)
-					free((char *)_nsmap[i].name);
+				if (_nsmap[i].name) {
+					/*LINTED const cast*/
+					free((void *)_nsmap[i].name);
+				}
 			}
 			if (_nsmap)
 				free(_nsmap);
@@ -177,10 +180,10 @@ _nsdbtget(name)
 			return (NULL);
 		_nsyyparse();
 		(void)fclose(_nsyyin);
-		qsort(_nsmap, _nsmapsize, sizeof(ns_dbt), _nscmp);
+		qsort(_nsmap, (size_t)_nsmapsize, sizeof(ns_dbt), _nscmp);
 		confmod = statbuf.st_mtime;
 	}
-	return (bsearch(&dbt, _nsmap, _nsmapsize, sizeof(ns_dbt), _nscmp));
+	return (bsearch(&dbt, _nsmap, (size_t)_nsmapsize, sizeof(ns_dbt), _nscmp));
 }
 
 
@@ -195,8 +198,7 @@ _nsdbtput(dbt)
 					/* overwrite existing entry */
 			if (_nsmap[i].srclist != NULL)
 				free(_nsmap[i].srclist);
-			memmove((void *)&_nsmap[i], (void *)dbt,
-				sizeof(ns_dbt));
+			memmove(&_nsmap[i], dbt, sizeof(ns_dbt));
 			return;
 		}
 	}
@@ -207,7 +209,7 @@ _nsdbtput(dbt)
 		if (_nsmap == NULL)
 			err(1, "nsdispatch: memory allocation failure");
 	}
-	memmove((void *)&_nsmap[_nsmapsize++], (void *)dbt, sizeof(ns_dbt));
+	memmove(&_nsmap[_nsmapsize++], dbt, sizeof(ns_dbt));
 }
 
 
