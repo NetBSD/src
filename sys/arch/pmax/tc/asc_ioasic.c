@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.9 2000/06/07 10:09:19 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.9.2.1 2000/09/30 01:47:17 mhitch Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.9 2000/06/07 10:09:19 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.9.2.1 2000/09/30 01:47:17 mhitch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -143,7 +143,7 @@ asc_ioasic_attach(parent, self, aux)
 	}
 	asc->sc_dmat = ((struct ioasic_softc *)parent)->sc_dmat;
 	if (bus_dmamap_create(asc->sc_dmat, NBPG * 2,
-			2, NBPG, 0, BUS_DMA_NOWAIT, &asc->sc_dmamap)) {
+			2, NBPG, NBPG, BUS_DMA_NOWAIT, &asc->sc_dmamap)) {
 		printf(": failed to create DMA map\n");
 		return;
 	}
