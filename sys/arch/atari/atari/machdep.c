@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 1998/07/05 08:49:38 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 1998/08/11 12:22:57 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -969,6 +969,13 @@ void	nsintr __P((void));
 #ifdef ISO
 void	clnlintr __P((void));
 #endif
+#ifdef CCITT
+void	ccittintr __P((void));
+#endif
+#ifdef NATM
+void	natmintr __P((void));
+#endif
+
 
 static void
 netintr()
@@ -1001,6 +1008,18 @@ netintr()
 	if (netisr & (1 << NETISR_ISO)) {
 		netisr &= ~(1 << NETISR_ISO);
 		clnlintr();
+	}
+#endif
+#ifdef CCITT
+	if (netisr & (1 << NETISR_CCITT)) {
+		netisr &= ~(1 << NETISR_CCITT);
+		ccittintr();
+	}
+#endif
+#ifdef NATM
+	if (netisr & (1 << NETISR_NATM)) {
+		netisr &= ~(1 << NETISR_NATM);
+		natmintr();
 	}
 #endif
 #ifdef NPPP
