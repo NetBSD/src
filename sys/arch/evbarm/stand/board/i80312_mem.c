@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mem.c,v 1.1 2002/02/23 05:12:01 thorpej Exp $	*/
+/*	$NetBSD: i80312_mem.c,v 1.2 2002/04/25 22:11:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -73,9 +73,9 @@ mem_init(void)
 
 	size = bank0 + bank1;
 
-	heap = (start + size) - 0x30000;
+	heap = (start + size) - HEAP_SIZE;
 
 	printf(">> RAM 0x%x - 0x%x, heap at 0x%x\n",
 	    start, (start + size) - 1, heap);
-	setheap((void *)heap, (void *)(start + size));
+	setheap((void *)heap, (void *)(start + size - 1));
 }
