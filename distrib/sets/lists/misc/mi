@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.106 2004/11/18 15:34:24 wiz Exp $
+# $NetBSD: mi,v 1.107 2005/01/10 03:13:04 lukem Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -619,7 +619,7 @@
 ./usr/share/examples/racoon/psk.txt.sample	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/racoon.conf.sample	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples	crypto,share
-./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	share
+./usr/share/examples/rtadvd/rtadvd.conf		misc-router-examples	inet6,share
 ./usr/share/examples/smbfs/dot.nsmbrc		misc-sysutil-examples	share
 ./usr/share/examples/supfiles/ftp.cs.umn.edu	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/skarven.itea.unit.no	misc-obsolete		obsolete

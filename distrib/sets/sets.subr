@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.37 2005/01/10 00:20:21 he Exp $
+#	$NetBSD: sets.subr,v 1.38 2005/01/10 03:13:04 lukem Exp $
 #
 
 #
@@ -37,6 +37,7 @@ MKVARS="\
 	MKGDB		\
 	MKHESIOD	\
 	MKINFO		\
+	MKINET6		\
 	MKKERBEROS	\
 	MKKERBEROS4	\
 	MKLINT		\
@@ -120,7 +121,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.37 2005/01/10 00:20:21 he Exp $
+# 	# $NetBSD: sets.subr,v 1.38 2005/01/10 03:13:04 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -152,6 +153,7 @@ fi
 #	gdb			${MKGDB} != no
 #	hesiod			${MKHESIOD} != no
 #	info			${MKINFO} != no
+#	inet6			${MKINET6} != no
 #	kerberos		${MKKERBEROS} != no
 #	kerberos4		${MKKERBEROS4} != no
 #	lint			${MKLINT} != no
