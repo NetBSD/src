@@ -53,7 +53,7 @@ char copyright2[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ed.c	5.5 (Berkeley) 3/28/93";*/
-static char rcsid[] = "$Id: ed.c,v 1.16 1993/08/01 18:59:46 mycroft Exp $";
+static char rcsid[] = "$Id: ed.c,v 1.17 1993/08/30 02:20:22 alm Exp $";
 #endif /* not lint */
 
 /*
@@ -834,6 +834,10 @@ docmd(glob)
 			return ERR;
 		} else if (!(sflags & SGF))
 			sgflag &= 0xff;
+		if (*ibufp != '\n' && *(ibufp + 1) == '\n') {
+			sprintf(errmsg, "invalid pattern delimiter");
+			return ERR;
+		}
 		tpat = pat;
 		spl1();
 		if ((!sflags || (sflags & SGR))

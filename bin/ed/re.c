@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)re.c	5.5 (Berkeley) 3/28/93";*/
-static char rcsid[] = "$Id: re.c,v 1.9 1993/08/01 18:59:45 mycroft Exp $";
+static char rcsid[] = "$Id: re.c,v 1.10 1993/08/30 02:20:28 alm Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -65,13 +65,10 @@ optpat()
 	char delim;
 	int n;
 
-	if ((delim = *ibufp) == '\n') {
-		if (!exp) sprintf(errmsg, "no previous pattern");
-		return exp;
-	} else if (delim == ' ' || *++ibufp == '\n') {
+	if ((delim = *ibufp) == ' ') {
 		sprintf(errmsg, "invalid pattern delimiter");
 		return NULL;
-	} else if (*ibufp == delim) {
+	} else if (delim == '\n' || *++ibufp == '\n' || *ibufp == delim) {
 		if (!exp) sprintf(errmsg, "no previous pattern");
 		return exp;
 	} else if ((exps = getlhs(delim)) == NULL)
@@ -85,16 +82,10 @@ optpat()
 		return NULL;
 	}
 	patlock = 0;
-#ifdef GNU_REGEX
-	/* initialize pattern buffer */
-	exp->buffer = NULL;
-	exp->allocated = 0L;
-	exp->fastmap = 0;		/* not used by GNU regex after 0.12 */
-	exp->translate = 0;
-#endif
 	if (n = regcomp(exp, exps, 0)) {
 		regerror(n, exp, errmsg, sizeof errmsg);
-		return NULL;
+		free(exp);
+		return exp = NULL;
 	}
 	return exp;
 }
