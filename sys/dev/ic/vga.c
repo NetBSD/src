@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.4 1998/05/28 16:48:40 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.5 1998/06/12 18:41:01 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -67,6 +67,10 @@ struct vga_config {
 	int nscreens;
 	LIST_HEAD(, vgascreen) screens;
 	struct vgascreen *active; /* current display */
+
+	int vc_biosmapped;
+	bus_space_tag_t vc_biostag;
+	bus_space_handle_t vc_bioshdl;
 };
 
 static int vgaconsole, vga_console_type, vga_console_attached;
@@ -331,6 +335,14 @@ vga_init(vc, iot, memt)
 				(vh->vh_mono ? 0x10000 : 0x18000), 0x8000,
 				&vh->vh_memh))
                 panic("vga_common_setup: mem subrange failed");
+
+	/* should only reserve the space (no need to map - save KVM) */
+	vc->vc_biostag = memt;
+	if (bus_space_map(vc->vc_biostag, 0xc0000, 0x8000, 0,
+			  &vc->vc_bioshdl))
+		vc->vc_biosmapped = 0;
+	else
+		vc->vc_biosmapped = 1;
 
 	vc->nscreens = 0;
 	LIST_INIT(&vc->screens);
