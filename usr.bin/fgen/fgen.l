@@ -1,6 +1,35 @@
 %{
 /* FLEX input for FORTH input file scanner */
-/* 
+/*  
+ * Copyright (c) 1998 Eduardo Horvath.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Eduardo Horvath.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software withough specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+/*
 	Specifications are as follows:
 
 	The function "yylex()" always returns a pointer to a structure:
@@ -25,6 +54,7 @@ tail	{white}
 #include <fcntl.h>
 #include <string.h>
 #include <assert.h>
+#include <unistd.h>
 #include "fgen.h"
 TOKEN token;
 
@@ -51,9 +81,12 @@ int tokenizer = 0;
 Cell parse_stack[PSTKSIZ];
 int parse_stack_ptr = 0;
 
+/* define prototype */
+YY_DECL;
+
 int debug = 0;
 #define ASSERT if (debug) assert
-#define STATE(y, x)	do { if (debug) printf( "%d State %s: token `%s'\n", outpos, x, y); } while (0)
+#define STATE(y, x)	do { if (debug) printf( "%ld State %s: token `%s'\n", outpos, x, y); } while (0)
 %}
 
 %%
@@ -250,6 +283,7 @@ int emit __P((char *));
 int spit __P((long));
 int sspit __P((char *));
 int apply_macros __P((YY_BUFFER_STATE, char *));
+int main __P((int argc, char *argv[]));
 
 /*
  * Standard FCode names and numbers.  Includes standard
@@ -708,11 +742,11 @@ struct fcode *dict, *new;
 	if (!res) return (0);
 	if (res < 0) {
 		if (dict->l)
-			fadd(dict->l, new);
+			return fadd(dict->l, new);
 		else {
 #ifdef DEBUG
 			if (debug > 1)
-				(void)printf( "fadd: new FCode `%s' is %x\n", 
+				(void)printf( "fadd: new FCode `%s' is %lx\n", 
 					      new->name, new->num);
 #endif
 			new->l = new->r = NULL;
@@ -720,11 +754,11 @@ struct fcode *dict, *new;
 		}
 	} else {
 		if (dict->r)
-			fadd(dict->r, new);
+			return fadd(dict->r, new);
 		else {
 #ifdef DEBUG
 			if (debug > 1)
-				(void)printf( "fadd: new FCode `%s' is %x\n", 
+				(void)printf( "fadd: new FCode `%s' is %lx\n", 
 					      new->name, new->num);
 #endif
 			new->l = new->r = NULL;
@@ -777,7 +811,7 @@ struct macro *dict, *new;
 	if (!res) return (0);
 	if (res < 0) {
 		if (dict->l)
-			aadd(dict->l, new);
+			return aadd(dict->l, new);
 		else {
 			new->l = new->r = NULL;
 			dict->l = new;
@@ -789,7 +823,7 @@ struct macro *dict, *new;
 		}
 	} else {
 		if (dict->r)
-			aadd(dict->r, new);
+			return aadd(dict->r, new);
 		else {
 			new->l = new->r = NULL;
 			dict->r = new;
@@ -968,10 +1002,11 @@ char *argv[];
 
 	/* Now calculate length and checksum and stick them in the header */
 	fheader->format = 0x08;
-	fheader->length = outpos;
+	fheader->length = htonl(outpos);
 	fheader->checksum = 0;
 	for (i = sizeof(*fheader); i<outpos; i++)
 		fheader->checksum += outbuf[i];
+	fheader->checksum = htons(fheader->checksum);
 
 	if (write(outf, outbuf, outpos) != outpos) {
 		close(outf);
@@ -1107,7 +1142,10 @@ tokenize(input)
 			fcode = malloc(sizeof(*fcode));
 			fcode->num = nextfcode++;
 			fcode->name = strdup(token->text);
-			fadd(dictionary, fcode);
+			if ( !fadd(dictionary, fcode) ) {
+				(void)printf( "Duplicate definition: `%s'\n", fcode->name);
+				exit(1);
+			}
 #ifdef DEBUG
 			if (debug) (void)printf( "Adding %s to dictionary\n", token->text);		
 #endif
@@ -1832,6 +1870,7 @@ tokenize(input)
 		default:
 		}
 	}
+	return (NULL);
 }
 
 /*
@@ -1844,7 +1883,7 @@ emit(str)
 	char *str;
 {
 	struct fcode *code;
-	if (code = flookup( dictionary, str))
+	if ((code = flookup( dictionary, str)))
 		spit(code->num);
 #ifdef DEBUG
 	if (debug > 1) {
@@ -1867,18 +1906,20 @@ int
 spit(n)
 long n;
 {
+	int count = 1;
 
 	if (n >> 8)
-		spit(n >> 8);
+		count += spit(n >> 8);
 	if (outpos >= outbufsiz) {
 		while (outpos >= outbufsiz) outbufsiz += BUFCLICK;
 		if (!(outbuf = realloc(outbuf, outbufsiz))) {
-			(void)printf( "realloc of %d bytes failed -- out of memory\n",
+			(void)printf( "realloc of %ld bytes failed -- out of memory\n",
 				      outbufsiz);
 			exit(1);
 		}
 	}
 	outbuf[outpos++] = n;
+	return (count);
 }
 
 /*
