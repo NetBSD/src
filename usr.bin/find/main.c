@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2003/08/07 11:13:42 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2005/01/19 01:03:16 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -39,7 +39,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.20 2003/08/07 11:13:42 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2005/01/19 01:03:16 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -151,7 +151,8 @@ main(argc, argv)
 		usage();
 	*p = NULL;
 
-	if ((dotfd = open(".", O_RDONLY, 0)) < 0)
+	if ((dotfd = open(".", O_RDONLY, 0)) == -1 ||
+	    fcntl(dotfd, F_SETFD, FD_CLOEXEC) == -1)
 		err(1, ".");
 
 	exit(find_execute(find_formplan(argv), start));
