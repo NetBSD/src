@@ -6,7 +6,7 @@
  *	Beaverton, OR 97005
  *	kirkenda@cs.pdx.edu
  *
- *	$Id: vi.h,v 1.4 1993/11/03 08:27:19 cgd Exp $
+ *	$Id: vi.h,v 1.5 1993/11/08 05:06:35 alm Exp $
  */
 
 #define VERSION "ELVIS 1.7, by Steve Kirkendall (30 December 1992)"
@@ -68,6 +68,9 @@
 /*------------------------------------------------------------------------*/
 /* Miscellaneous constants.						  */
 
+#ifdef REGEX
+# define SE_MAX		30		/* max number of subexpressions */
+#endif
 #define INFINITY	2000000001L	/* a very large integer */
 #define LONGKEY		10		/* longest possible raw :map key */
 #ifndef MAXRCLEN
