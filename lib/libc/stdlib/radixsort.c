@@ -1,4 +1,4 @@
-/*	$NetBSD: radixsort.c,v 1.6 1995/12/28 08:52:38 thorpej Exp $	*/
+/*	$NetBSD: radixsort.c,v 1.7 1996/12/19 07:56:34 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "from: @(#)radixsort.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: radixsort.c,v 1.6 1995/12/28 08:52:38 thorpej Exp $";
+static char *rcsid = "$NetBSD: radixsort.c,v 1.7 1996/12/19 07:56:34 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,7 @@ typedef struct {
 	int sn, si;
 } stack;
 
-static inline void simplesort
+static __inline void simplesort
 	    __P((const u_char **, int, int, const u_char *, u_int));
 static void r_sort_a __P((const u_char **, int, int, const u_char *, u_int));
 static void r_sort_b __P((const u_char **,
@@ -300,7 +300,7 @@ r_sort_b(a, ta, n, i, tr, endch)
 	}
 }
 		
-static inline void
+static __inline void
 simplesort(a, n, b, tr, endch)	/* insertion sort */
 	register const u_char **a;
 	int n, b;
