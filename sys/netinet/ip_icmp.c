@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.47.2.1 2000/07/02 14:25:59 sommerfeld Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.47.2.2 2000/07/28 16:58:09 sommerfeld Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -176,7 +176,7 @@ icmp_error(n, type, code, dest, destifp)
 	unsigned oiplen = oip->ip_hl << 2;
 	struct icmp *icp;
 	struct mbuf *m;
-	unsigned icmplen;
+	unsigned icmplen, mblen;
 
 #ifdef ICMPPRINTFS
 	if (icmpprintfs)
@@ -215,12 +215,42 @@ icmp_error(n, type, code, dest, destifp)
 	/*
 	 * Now, formulate icmp message
 	 */
+	icmplen = oiplen + min(icmpreturndatabytes, oip->ip_len - oiplen);
+	/*
+	 * Defend against mbuf chains shorter than oip->ip_len:
+	 */
+	mblen = 0;
+	for (m = n; m && (mblen < icmplen); m = m->m_next)
+		mblen += m->m_len;
+	icmplen = min(mblen, icmplen);
+
+	/*
+	 * As we are not required to return everything we have,
+	 * we return whatever we can return at ease.
+	 *
+	 * Note that ICMP datagrams longer than 576 octets are out of spec
+	 * according to RFC1812; the limit on icmpreturndatabytes below in
+	 * icmp_sysctl will keep things below that limit.
+	 */
+
+	KASSERT(ICMP_MINLEN <= MCLBYTES);
+
+	if (icmplen + ICMP_MINLEN > MCLBYTES)
+		icmplen = MCLBYTES - ICMP_MINLEN;
+
 	m = m_gethdr(M_DONTWAIT, MT_HEADER);
+	if (m && (icmplen + ICMP_MINLEN > MHLEN)) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_freem(m);
+			m = NULL;
+		}
+	}
 	if (m == NULL)
 		goto freeit;
-	icmplen = oiplen + min(icmpreturndatabytes, oip->ip_len - oiplen);
 	m->m_len = icmplen + ICMP_MINLEN;
-	MH_ALIGN(m, m->m_len);
+	if ((m->m_flags & M_EXT) == 0)
+		MH_ALIGN(m, m->m_len);
 	icp = mtod(m, struct icmp *);
 	if ((u_int)type > ICMP_MAXTYPE)
 		panic("icmp_error");
