@@ -1,4 +1,4 @@
-/*	$NetBSD: isaclock.c,v 1.2 1997/11/27 10:19:35 sakamoto Exp $	*/
+/*	$NetBSD: isaclock.c,v 1.3 1998/01/19 02:20:55 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -101,8 +101,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/ic/mc146818reg.h>
+#include <dev/ic/i8253reg.h>
 #include <bebox/isa/nvram.h>
-#include <bebox/isa/timerreg.h>
 #include <bebox/isa/spkrreg.h>
 
 void	spinwait __P((int));
@@ -147,209 +147,6 @@ mc146818_write(sc, reg, datum)
 	isa_outb(IO_RTC+1, datum);
 }
 
-#if 0
-/*
- * microtime() makes use of the following globals.  Note that isa_timer_tick
- * may be redundant to the `tick' variable, but is kept here for stability.
- * isa_timer_count is the countdown count for the timer.  timer_msb_table[]
- * and timer_lsb_table[] are used to compute the microsecond increment
- * for time.tv_usec in the follow fashion:
- *
- * time.tv_usec += isa_timer_msb_table[cnt_msb] - isa_timer_lsb_table[cnt_lsb];
- */
-#define	ISA_TIMER_MSB_TABLE_SIZE	128
-
-u_long	isa_timer_tick;		/* the number of microseconds in a tick */
-u_short	isa_timer_count;	/* the countdown count for the timer */
-u_short	isa_timer_msb_table[ISA_TIMER_MSB_TABLE_SIZE];	/* timer->usec MSB */
-u_short	isa_timer_lsb_table[256];	/* timer->usec conversion for LSB */
-
-void
-startrtclock()
-{
-	int s;
-	u_long tval;
-	u_long t, msb, lsb, quotient, remainder;
-
-	findcpuspeed();		/* use the clock (while it's free)
-					to find the cpu speed */
-
-	/*
-	 * Compute timer_tick from hz.  We truncate this value (i.e.
-	 * round down) to minimize the possibility of a backward clock
-	 * step if hz is not a nice number.
-	 */
-	isa_timer_tick = 1000000 / (u_long) hz;
-
-	/*
-	 * Compute timer_count, the count-down count the timer will be
-	 * set to.  We can't stand any number with an MSB larger than
-	 * TIMER_MSB_TABLE_SIZE will accomodate.  Also, correctly round
-	 * this by carrying an extra bit through the division.
-	 */
-	tval = (TIMER_FREQ * 2) / (u_long) hz;
-	tval = (tval / 2) + (tval & 0x1);
-	if ((tval / 256) >= ISA_TIMER_MSB_TABLE_SIZE
-	    || TIMER_FREQ > (8*1024*1024)) {
-		panic("startrtclock: TIMER_FREQ/HZ unsupportable");
-	}
-	isa_timer_count = (u_short) tval;
-
-	/*
-	 * Now compute the translation tables from timer ticks to
-	 * microseconds.  We go to some length to ensure all values
-	 * are rounded-to-nearest (i.e. +-0.5 of the exact values)
-	 * as this will ensure the computation
-	 *
-	 * isa_timer_msb_table[msb] - isa_timer_lsb_table[lsb]
-	 *
-	 * will produce a result which is +-1 usec away from the
-	 * correctly rounded conversion (in fact, it'll be exact about
-	 * 75% of the time, 1 too large 12.5% of the time, and 1 too
-	 * small 12.5% of the time).
-	 */
-	for (s = 0; s < 256; s++) {
-		/* LSB table is easy, just divide and round */
-		t = ((u_long) s * 1000000 * 2) / TIMER_FREQ;
-		isa_timer_lsb_table[s] = (u_short) ((t / 2) + (t & 0x1));
-
-		/* MSB table is zero unless the MSB is <= isa_timer_count */
-		if (s < ISA_TIMER_MSB_TABLE_SIZE) {
-			msb = ((u_long) s) * 256;
-			if (msb > tval) {
-				isa_timer_msb_table[s] = 0;
-			} else {
-				/*
-				 * Harder computation here, since multiplying
-				 * the value by 1000000 can overflow a long.
-				 * To avoid 64-bit computations we divide
-				 * the high order byte and the low order
-				 * byte of the numerator separately, adding
-				 * the remainder of the first computation
-				 * into the second.  The constraint on
-				 * TIMER_FREQ above should prevent overflow
-				 * here.
-				 */
-				msb = tval - msb;
-				lsb = msb % 256;
-				msb = (msb / 256) * 1000000;
-				quotient = msb / TIMER_FREQ;
-				remainder = msb % TIMER_FREQ;
-				t = ((remainder * 256 * 2)
-				    + (lsb * 1000000 * 2)) / TIMER_FREQ;
-				isa_timer_msb_table[s] = (u_short)((t / 2)
-				    + (t & 0x1) + (quotient * 256));
-			}
-		}
-	}
-
-	/* initialize 8253 clock */
-	isa_outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
-
-	/* Correct rounding will buy us a better precision in timekeeping */
-	isa_outb(IO_TIMER1, isa_timer_count % 256);
-	isa_outb(IO_TIMER1, isa_timer_count / 256);
-
-	/* Check diagnostic status */
-	if ((s = mc146818_read(NULL, NVRAM_DIAG)) != 0) { /* XXX softc */
-		char bits[128];
-		printf("RTC BIOS diagnostic error %s\n",
-		    bitmask_snprintf(s, NVRAM_DIAG_BITS, bits, sizeof(bits)));
-	}
-}
-
-int
-clockintr(arg)
-	void *arg;
-{
-	struct clockframe *frame = arg;		/* not strictly necessary */
-
-	hardclock(frame);
-	return -1;
-}
-#endif 0
-
-int
-gettick()
-{
-	u_char lo, hi;
-
-	/* Don't want someone screwing with the counter while we're here. */
-	disable_intr();
-	/* Select counter 0 and latch it. */
-	isa_outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
-	lo = isa_inb(TIMER_CNTR0);
-	hi = isa_inb(TIMER_CNTR0);
-	enable_intr();
-	return ((hi << 8) | lo);
-}
-
-#if 0
-/*
- * Wait "n" microseconds.
- * Relies on timer 1 counting down from (TIMER_FREQ / hz) at TIMER_FREQ Hz.
- * Note: timer had better have been programmed before this is first used!
- * (Note that we use `rate generator' mode, which counts at 1:1; `square
- * wave' mode counts at 2:1).
- */
-void
-delay(n)
-	int n;
-{
-	int limit, tick, otick;
-
-	/*
-	 * Read the counter first, so that the rest of the setup overhead is
-	 * counted.
-	 */
-	otick = gettick();
-
-#if 0
-	/*
-	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
-	 * we can take advantage of the intermediate 64-bit quantity to prevent
-	 * loss of significance.
-	 */
-	n -= 5;
-	if (n < 0)
-		return;
-	{register int m;
-	__asm __volatile("mul %3"
-			 : "=a" (n), "=d" (m)
-			 : "0" (n), "r" (TIMER_FREQ));
-	__asm __volatile("div %3"
-			 : "=a" (n)
-			 : "0" (n), "d" (m), "r" (1000000)
-			 : "%edx");}
-#else
-	/*
-	 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating point and
-	 * without any avoidable overflows.
-	 */
-	n -= 20;
-	{
-		int sec = n / 1000000,
-		    usec = n % 1000000;
-		n = sec * TIMER_FREQ +
-		    usec * (TIMER_FREQ / 1000000) +
-		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
-		    usec * (TIMER_FREQ % 1000) / 1000000;
-	}
-#endif
-
-	limit = TIMER_FREQ / hz;
-
-	while (n > 0) {
-		tick = gettick();
-		if (tick > otick)
-			n -= limit - (tick - otick);
-		else
-			n -= otick - tick;
-		otick = tick;
-	}
-}
-#endif 0
-
 static int beeping;
 
 void
@@ -389,37 +186,6 @@ sysbeep(pitch, period)
 	beeping = 1;
 	timeout(sysbeepstop, 0, period);
 }
-
-void
-findcpuspeed()
-{
-	short i = 10 / 1000 * TIMER_FREQ / 2;	/* 10ms */
-	volatile short remainder;
-
-	/* Put counter in count down mode */
-	isa_outb(TIMER_MODE, TIMER_SEL0|TIMER_16BIT|TIMER_RATEGEN);
-	isa_outb(TIMER_CNTR0, i);		/* lo */
-	isa_outb(TIMER_CNTR0, i >> 8);	/* hi */
-	do {
-		/* Read the value left in the counter */
-		isa_outb(TIMER_MODE, TIMER_SEL0|TIMER_LATCH);
-		remainder = isa_inb(TIMER_CNTR0);
-		remainder += (isa_inb(TIMER_CNTR0) << 8);
-	} while (remainder > 0);
-}
-
-#if 0
-void
-cpu_initclocks()
-{
-
-	/*
-	 * XXX If you're doing strange things with multiple clocks, you might
-	 * want to keep track of clock handlers.
-	 */
-	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK, clockintr, 0);
-}
-#endif 0
 
 void
 rtcinit()
@@ -613,11 +379,3 @@ resettodr()
 	rtcput(&rtclk);
 	splx(s);
 }
-
-#if 0
-void
-setstatclockrate(arg)
-	int arg;
-{
-}
-#endif 0
