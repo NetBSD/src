@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.52 1999/11/24 02:05:12 thorpej Exp $
+# 	$NetBSD: GENERIC,v 1.53 1999/11/24 02:25:37 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -148,6 +148,8 @@ dtop0	at	ioasic? offset ?	# MAXINE kbd and mouse
 #fdc	at	ioasic? offset ?	# MAXINE floppy disk (not supported)
 
 # 3MAX has TURBOchannel but no IOASIC
+asc0	at	tc? slot ? offset ?	# NCR53C94 SCSI
+le0	at	tc? slot ? offset ?	# LANCE
 ibus0	at	tc? slot ? offset ?	# 3MAX system slot
 mcclock0 at	ibus0 addr ?		# DS1287 RTC
 dc0	at	ibus0 addr ?		# DC7085 quad line serial device
