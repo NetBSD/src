@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.14 1999/04/30 15:31:18 christos Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.15 1999/05/02 12:44:34 fvdl Exp $	*/
 	
 /*
  * BIOS bootsector startup
@@ -146,7 +146,6 @@ hd:	/**** load sector 0 (DOSBBSECTOR) into the BOOTSEG ****/
 	data32
 	jb	read_error
 
-
 	/***# find the first NetBSD partition *****/
 	data32
 	movl	$PARTSTART, %ebx
@@ -196,7 +195,9 @@ found:
  * The reason to avoid int13 extensions as much as possible, is
  * that they're apparently buggy in some BIOSs.
  */
+	data32
 	pushl	%ebx		/* save partition entry */
+	data32
 	pushl	%edx		/* save drive number */
 
 	data32
@@ -204,6 +205,7 @@ found:
 	data32
 	xorl	%eax,%eax
 
+	data32
 	movl	%ebx,%esi
 
 	movb	$8,%ah
@@ -217,6 +219,7 @@ found:
 
 	movl	%ecx,%ebx
 	shrl	$8,%ecx
+
 	andl	$0xc0,%ebx
 	shll	$2,%ebx
 	orl	%ebx,%ecx
@@ -234,12 +237,12 @@ found:
 
 	data32
 	cmpl	%eax, %ebx
-
+	data32
 	popl	%edx
+	data32
 	popl	%ebx
+	data32
 	jl	tradint13
-
-1:
 /*
  * First we check for int13 extensions.
  * If they work, let's use them.
@@ -270,6 +273,7 @@ found:
 	data32
 	movl	$0xaa55, %edi
 	cmpl	%edi, %eax
+	data32
 	jnz	tradint13
 	testb	$1, %cl
 	data32
@@ -405,7 +409,7 @@ done:
 	data32
 	ret
 
-eread:	.asciz		"Read error\r\n"
+eread:	.asciz		"Read err\r\n"
 enoboot: .asciz		"No NetBSD part\r\n"
 efail: .asciz		"Boot failed\r\n"
 
