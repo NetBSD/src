@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.11 1996/12/28 23:51:23 pk Exp $	*/
+/*	$NetBSD: md_root.c,v 1.12 1997/03/30 21:04:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -109,8 +109,8 @@ int		unit;
 struct md_conf	*md;
 {
 	if (atari_realconfig && (unit < RAMD_NDEV) && rd_info[unit].ramd_flag) {
-		printf ("md%d:%sauto-load on open. Size %ld bytes.\n", unit,
-		    rd_info[unit].ramd_flag & RAMD_LCOMP ? " decompress/" : "",
+		printf ("md%d: %sauto-load on open. Size %ld bytes.\n", unit,
+		    rd_info[unit].ramd_flag & RAMD_LCOMP ? "decompress/" : "",
 		    rd_info[unit].ramd_size);
 		md->md_type = MD_UNCONFIGURED; /* Paranoia... */
 	}
