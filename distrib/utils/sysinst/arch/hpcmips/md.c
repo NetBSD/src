@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 2003/05/15 08:09:51 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.23 2003/05/21 10:05:24 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -142,7 +142,7 @@ md_make_bsd_partitions(void)
 
 	/* Ask for layout type -- standard or special */
 	msg_display(MSG_layout,
-			(1.0*fsptsize*sectorsize)/MEG,
+			(1.0*ptsize*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
 	process_menu(MENU_layout);
@@ -161,11 +161,11 @@ md_make_bsd_partitions(void)
 	/* Partitions C and D are predefined. */
 	bsdlabel[C].pi_fstype = FS_UNUSED;
 	bsdlabel[C].pi_offset = ptstart;
-	bsdlabel[C].pi_size = fsptsize;
+	bsdlabel[C].pi_size = ptsize;
 	
 	bsdlabel[D].pi_fstype = FS_UNUSED;
 	bsdlabel[D].pi_offset = 0;
-	bsdlabel[D].pi_size = fsdsize;
+	bsdlabel[D].pi_size = dlsize;
 
 	/* Standard fstypes */
 	bsdlabel[A].pi_fstype = FS_BSDFFS;
@@ -186,7 +186,7 @@ md_make_bsd_partitions(void)
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize);
 		i += NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize);
-		if ( i > fsptsize) {
+		if ( i > ptsize) {
 			msg_display(MSG_disktoosmall);
 			process_menu(MENU_ok);
 			goto custom;
@@ -212,7 +212,7 @@ md_make_bsd_partitions(void)
 		partstart += partsize;
 
 		/* /usr */
-		partsize = fsptsize - (partstart - ptstart);
+		partsize = ptsize - (partstart - ptstart);
 		bsdlabel[E].pi_fstype = FS_BSDFFS;
 		bsdlabel[E].pi_offset = partstart;
 		bsdlabel[E].pi_size = partsize;
@@ -225,7 +225,7 @@ md_make_bsd_partitions(void)
 custom:		ask_sizemult(dlcylsize);
 		msg_display(MSG_defaultunit, multname);
 		partstart = ptstart;
-		remain = fsptsize;
+		remain = ptsize;
 
 		/* root */
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize) + partstart;

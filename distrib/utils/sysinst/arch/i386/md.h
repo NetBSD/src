@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.38 2003/05/16 19:48:29 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.39 2003/05/21 10:05:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,16 +107,6 @@ EXTERN	char *disk_names[]
 
 /* Bootblock type */
 EXTERN char *boottype INIT("");
-
-/*
- * Legal start character for a disk for checking input. 
- * this must return 1 for a character that matches the first
- * characters of each member of disk_names.
- *
- * On  i386, that means matching 'w' for st-506/ide, 's' for sd and 'l' for ld,
- * 'e' for ed.
- */
-#define ISDISKSTART(dn)	(dn == 'w' || dn == 's' || dn == 'l' || dn == 'e')
 
 /*
  * Machine-specific command to write a new label to a disk.

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.77 2003/05/18 07:52:57 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.78 2003/05/21 10:05:25 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -55,6 +55,10 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
+#ifdef NO_LBA_READS		/* for testing */
+#undef BIFLAG_EXTINT13
+#define BIFLAG_EXTINT13	0
+#endif
 
 mbr_sector_t mbr;
 int mbr_len;
@@ -236,6 +240,10 @@ md_copy_filesystem(void)
 int
 md_make_bsd_partitions(void)
 {
+
+#if 0
+	return make_bsd_partitions();
+#else
 	FILE *f;
 	int i;
 	int maxpart = getmaxpartitions();
@@ -244,7 +252,7 @@ md_make_bsd_partitions(void)
 editlab:
 	/* Ask for layout type -- standard or special */
 	msg_display(MSG_layout,
-			(1.0*fsptsize*sectorsize)/MEG,
+			(1.0*ptsize*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
 	process_menu(MENU_layout);
@@ -263,11 +271,11 @@ editlab:
 	/* Partitions C and D are predefined. */
 	bsdlabel[C].pi_fstype = FS_UNUSED;
 	bsdlabel[C].pi_offset = ptstart;
-	bsdlabel[C].pi_size = fsptsize;
+	bsdlabel[C].pi_size = ptsize;
 	
 	bsdlabel[D].pi_fstype = FS_UNUSED;
 	bsdlabel[D].pi_offset = 0;
-	bsdlabel[D].pi_size = fsdsize;
+	bsdlabel[D].pi_size = dlsize;
 
 	/* Standard fstypes */
 	bsdlabel[A].pi_fstype = FS_BSDFFS;
@@ -296,7 +304,7 @@ editlab:
 		i = NUMSEC(20+2*rammb, MEG/sectorsize, dlcylsize);
 		i += NUMSEC(layoutkind * 2 * (rammb < 16 ? 16 : rammb),
 			   MEG/sectorsize, dlcylsize);
-		if ( i > fsptsize) {
+		if ( i > ptsize) {
 			msg_display(MSG_disktoosmall);
 			process_menu(MENU_ok);
 			goto custom;
@@ -320,7 +328,7 @@ editlab:
 		partstart += partsize;
 
 		/* /usr */
-		partsize = fsptsize - (partstart - ptstart);
+		partsize = ptsize - (partstart - ptstart);
 		bsdlabel[E].pi_fstype = FS_BSDFFS;
 		bsdlabel[E].pi_offset = partstart;
 		bsdlabel[E].pi_size = partsize;
@@ -387,7 +395,7 @@ custom:
 	}
 
 	/* Disk name */
-	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
+	msg_prompt(MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
 
 	/* Create the disktab.preinstall */
 #ifdef DEBUG
@@ -423,6 +431,7 @@ custom:
 
 	/* Everything looks OK. */
 	return (1);
+#endif
 }
 
 int
@@ -430,6 +439,15 @@ md_pre_update(void)
 {
 	if (rammb <= 8)
 		set_swap(diskdev, NULL, 1);
+	return 1;
+}
+
+/*
+ * any additional partition validation
+ */
+int
+md_check_partitions(void)
+{
 	return 1;
 }
 
@@ -655,14 +673,12 @@ md_init(void)
 {
 }
 
-#ifdef notdef
 void
 md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
 }
-#endif
 
 void
 md_set_no_x(void)

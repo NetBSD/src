@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.14 2003/04/06 16:12:40 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.15 2003/05/21 10:05:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -94,9 +94,6 @@ EXTERN MAP_TYPE map_types[]
 #define HFS_PART 4
 #define SCRATCH_PART 5
 
-EXTERN int bcyl, bhead, bsec, bsize, bcylsize;
-EXTERN int part[4][5] INIT({{0}});
-EXTERN int bsdpart;			/* partition in use by NetBSD */
 EXTERN int usefull;			/* on install, clobber entire disk */
 
 typedef struct {
@@ -230,9 +227,6 @@ EXTERN	char *disk_names[]
 = {"wd", "sd", NULL}
 #endif
 ;
-
-/* Legal start character for a disk for checking input. */
-#define ISDISKSTART(dn)	(dn == 'w' || dn == 's')
 
 /*
  * Machine-specific command to write a new label to a disk.

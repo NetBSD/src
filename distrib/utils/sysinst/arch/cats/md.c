@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2002/12/05 01:17:21 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2003/05/21 10:05:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -159,21 +159,11 @@ int md_make_bsd_partitions (void)
 	 * Standard 4.3BSD 8-partition labels always cover whole disk.
 	 */
 	ptsize = dlsize - ptstart;
-	fsdsize = dlsize;		/* actually means `whole disk' */
-	fsptsize = dlsize - ptstart;	/* netbsd partition -- same as above */
-	fsdmb = fsdsize / MEG;
-
-/*	endwin();
-	printf("ptsize=%d\n", ptsize);
-	printf("fsdsize=%d\n", fsdsize);
-	printf("fsptsize=%d\n", fsptsize);
-	printf("fsdmb=%d\n", fsdmb);
-	backtowin();*/
 
 /*editlab:*/
 	/* Ask for layout type -- standard or special */
 	msg_display (MSG_layout,
-			(1.0*fsptsize*sectorsize)/MEG,
+			(1.0*ptsize*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG,
 			(1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
 	process_menu(MENU_layout);
@@ -239,7 +229,7 @@ int md_make_bsd_partitions (void)
 		partstart += partsize;
 
 		/* /usr */
-		partsize = fsptsize - (partstart - ptstart);
+		partsize = ptsize - (partstart - ptstart);
 		bsdlabel[E].pi_fstype = FS_BSDFFS;
 		bsdlabel[E].pi_offset = partstart;
 		bsdlabel[E].pi_size = partsize;
@@ -252,7 +242,7 @@ int md_make_bsd_partitions (void)
 	case 3: /* custom: ask user for all sizes */
 		ask_sizemult(dlcylsize);
 		partstart = ptstart;
-		remain = fsptsize;
+		remain = ptsize;
 
 		/* root */
 		i = NUMSEC(24+2*rammb, MEG/sectorsize, dlcylsize) + partstart;

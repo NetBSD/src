@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2003/04/06 16:12:43 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2003/05/21 10:05:28 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -92,13 +92,6 @@ EXTERN	char *disk_names[]
 = {"sd", "wd", NULL}
 #endif
 ;
-
-/*
- * Legal start character for a disk for checking input.
- * this must return 1 for a character that matches the first
- * characters of each member of disk_names.
- */
-#define ISDISKSTART(dn)	(dn == 'w' || dn == 's')
 
 /*
  * Machine-specific command to write a new label to a disk.

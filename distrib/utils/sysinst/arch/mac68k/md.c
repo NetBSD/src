@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 2003/01/12 21:49:52 christos Exp $ */
+/*	$NetBSD: md.c,v 1.30 2003/05/21 10:05:25 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,6 +48,8 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+int blk_size;
 
 /*
  * Compare lexigraphically two strings
@@ -258,7 +260,7 @@ getName(part, len_name, name)
 		 */
 		if ((fd = open(devname, O_RDONLY, 0)) >= 0) {
 		    seek = (off_t)part->pmPyPartStart + (off_t)2;
-		    seek *= (off_t)bsize;
+		    seek *= (off_t)blk_size;
 		    lseek(fd, seek, SEEK_SET);
 		    read(fd, &macosblk, sizeof(macosblk));
 		    macosblk[37+32] = '\0';
@@ -678,7 +680,7 @@ md_get_info()
 	 * Get the disk parameters from the disk driver.  It should have
 	 *  obained them by querying the disk itself.
 	 */
-	bsize = disklabel.d_secsize;
+	blk_size = disklabel.d_secsize;
 	dlcyl = disklabel.d_ncylinders;
 	dlhead = disklabel.d_ntracks;
 	dlsec = disklabel.d_nsectors;
@@ -701,7 +703,7 @@ md_get_info()
 	}
 	dlsize = disklabel.d_secperunit;
 #if 0
-	msg_display(MSG_dldebug, bsize, dlcyl, dlhead, dlsec, dlsize);
+	msg_display(MSG_dldebug, blk_size, dlcyl, dlhead, dlsec, dlsize);
 	process_menu(MENU_ok);
 #endif
 	map.size = 0;
@@ -709,7 +711,7 @@ md_get_info()
 	 * Verify the disk has been initialized for MacOS use by checking
 	 *  to see if the disk have a Boot Block
 	 */
-	if (lseek(fd, (off_t)0 * bsize, SEEK_SET) < 0 ||
+	if (lseek(fd, (off_t)0 * blk_size, SEEK_SET) < 0 ||
 	    read(fd,  &block, sizeof(block)) < sizeof(block) ||
 	    block.pmSig != 0x4552) {
              process_menu(MENU_nodiskmap);
@@ -721,17 +723,17 @@ md_get_info()
 	    *  to it and the number currently in use.
 	    */
 	   for (i=0;i<MAXMAXPARTITIONS;i++) {
-		lseek(fd, (off_t)(i+1) * bsize, SEEK_SET);
+		lseek(fd, (off_t)(i+1) * blk_size, SEEK_SET);
 		read(fd, &block, sizeof(block));
 		if (stricmp("Apple_partition_map", block.pmPartType) == 0) {
 		    map.size = block.pmPartBlkCnt;
 		    map.in_use_cnt = block.pmMapBlkCnt;
-		    map.blk = (struct apple_part_map_entry *)malloc(map.size * bsize);
+		    map.blk = (struct apple_part_map_entry *)malloc(map.size * blk_size);
 		    break;
 	        }
             }
-	    lseek(fd, (off_t)1 * bsize, SEEK_SET);
-	    read(fd, map.blk, map.size * bsize);
+	    lseek(fd, (off_t)1 * blk_size, SEEK_SET);
+	    read(fd, map.blk, map.size * blk_size);
 	}
 	close(fd);
 	/*
@@ -776,14 +778,14 @@ md_pre_disklabel()
      *  we need to write out Block0 too.
      */
     if (map.blk[0].pmSigPad == 0xa5a5) {
-	if (lseek (fd, (off_t)0 * bsize, SEEK_SET) < 0) {
+	if (lseek (fd, (off_t)0 * blk_size, SEEK_SET) < 0) {
 	    endwin();
 	    fprintf (stderr, "Can't position to write Block0\n");
 	    close (fd);
 	    exit (1);
 	}
 	new_block0.sbBlkCount = dlsize;		/* Set disk size */
-	if (write (fd, &new_block0, bsize) != bsize) {
+	if (write (fd, &new_block0, blk_size) != blk_size) {
 	    endwin();
 	    fprintf (stderr, "I/O error writing Block0\n");
 	    close (fd);
@@ -791,13 +793,13 @@ md_pre_disklabel()
 	}
 	map.blk[0].pmSigPad = 0;
     }
-    if (lseek (fd, (off_t)1 * bsize, SEEK_SET) < 0) {
+    if (lseek (fd, (off_t)1 * blk_size, SEEK_SET) < 0) {
 	endwin();
 	fprintf (stderr, "Can't position disk to rewrite Disk Map\n");
 	close (fd);
 	exit (1);
     }
-    if (write (fd, map.blk, map.size * bsize) != (map.size * bsize)) {
+    if (write (fd, map.blk, map.size * blk_size) != (map.size * blk_size)) {
 	endwin();
 	fprintf(stderr, "I/O error writing Disk Map\n");
 	close (fd);
@@ -1045,7 +1047,7 @@ md_make_bsd_partitions(void)
 	(void)fprintf (f, "\t:dt=%s:ty=winchester:\\\n", disktype);
 	(void)fprintf (f, "\t:nc#%d:nt#%d:ns#%d:\\\n", dlcyl, dlhead, dlsec);
 	(void)fprintf (f, "\t:sc#%d:su#%d:\\\n", dlhead*dlsec, dlsize);
-	(void)fprintf (f, "\t:se#%d:%s\\\n", bsize, doessf);
+	(void)fprintf (f, "\t:se#%d:%s\\\n", blk_size, doessf);
 	for (i=0; i<8; i++) {
 		if (bsdlabel[i].pi_fstype == FS_HFS)
 		    (void)fprintf (f, "\t:p%c#%d:o%c#%d:t%c=macos:",

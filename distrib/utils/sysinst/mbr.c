@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.34 2003/05/16 19:44:23 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.35 2003/05/21 10:05:21 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -228,15 +228,12 @@ edit_mbr(mbr)
 		part[2].mbrp_typ = part[0].mbrp_flag = 0;
 		part[2].mbrp_start = part[0].mbrp_size = 0;
 		part[3].mbrp_typ = dosptyp_nbsd;
-		part[3].mbrp_size = bsize - bsec;
+		part[3].mbrp_size = dlsize - bsec;
 		part[3].mbrp_start = bsec;
 		part[3].mbrp_flag = 0x80;
 
 		ptstart = bsec;
-		ptsize = bsize - bsec;
-		fsdsize = dlsize;
-		fsptsize = dlsize - bsec;
-		fsdmb = fsdsize / MEG;
+		ptsize = dlsize - bsec;
 		activepart = 3;
 	} else {
 		int numbsd, overlap;
@@ -246,13 +243,14 @@ edit_mbr(mbr)
 		ask_sizemult(bcylsize);
 		bsdpart = freebsdpart = -1;
 		activepart = -1;
-		for (i = 0; i < NMBRPART; i++)
+		for (i = 0; i < NMBRPART; i++) {
 			if (part[i].mbrp_flag != 0) {
 				activepart = i;
 				part[i].mbrp_flag = 0;
 			}
+		}
 		do {
-			process_menu (MENU_editparttable);
+			process_menu(MENU_editparttable);
 			numbsd = 0;
 			bsdpart = -1;
 			freebsdpart = -1;
@@ -319,12 +317,6 @@ edit_mbr(mbr)
 			
 		ptstart = part[bsdpart].mbrp_start;
 		ptsize = part[bsdpart].mbrp_size;
-		fsdsize = dlsize;
-		if (ptstart + ptsize < bsize)
-			fsptsize = ptsize;
-		else
-			fsptsize = dlsize - ptstart;
-		fsdmb = fsdsize / MEG;
 
 		/* Ask if a boot selector is wanted. XXXX */
 	}
@@ -373,8 +365,8 @@ edit_ptn_bounds(void)
 		size = NUMSEC(inp, sizemult, dlcylsize);
 	if (sizemult > 1 && start == bsec)
 		size -= bsec;
-	if (start + size > bsize)
-		size = bsize - start;
+	if (start + size > dlsize)
+		size = dlsize - start;
 	if (size < 0) {
 		size = 0;
 		start = 0;
