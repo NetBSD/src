@@ -24,6 +24,7 @@
     || defined(OPENBSD2) || defined(NETBSD1) || defined(RHAPSODY5)
 #define SUPPORTED
 #include <sys/types.h>
+#include <sys/param.h>
 #define USE_PATHS_H
 #define USE_FLOCK_LOCK
 #define HAS_SUN_LEN
@@ -31,10 +32,15 @@
 #define HAS_DB
 #define HAS_SA_LEN
 #define DEF_DB_TYPE	"hash"
-#if 0	/*before sendmail 8.10*/
-#define ALIAS_DB_MAP	"hash:/etc/aliases"
-#else	/*sendmail 8.10*/
+#ifdef __NetBSD__
+#if (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104250000)
+/* sendmail 8.10 */
 #define ALIAS_DB_MAP	"hash:/etc/mail/aliases"
+#else
+#define ALIAS_DB_MAP	"hash:/etc/aliases"
+#endif
+#else
+#define ALIAS_DB_MAP	"hash:/etc/aliases"
 #endif
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
