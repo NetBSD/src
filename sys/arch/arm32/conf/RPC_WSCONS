@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.6 2001/07/08 16:32:15 abs Exp $
+#	$NetBSD: RPC_WSCONS,v 1.7 2001/07/10 00:52:32 bjh21 Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -31,7 +31,6 @@ options 	CPU_ARM7	# Support the ARM7 core
 #options 	CPU_ARM7500	# We are actually an ARM7500
 
 # Architecture options
-options 	IOMD		# We have an IOMD
 options 	RISCPC		# We are a RiscPC
 #options 	RC7500		# We are a RC7500
 
