@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mc,v 1.2 1997/11/09 20:59:20 phil Exp $	*/
+/*	$NetBSD: menus.mc,v 1.3 1998/06/24 06:46:25 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,7 +58,88 @@ menu root, title "  Main Menu of Test System";
 		action (endwin) { system ("/bin/sh"); }
 	;
 	exit action (endwin)  { printf ("Thanks for playing\n"); };
+	help {
+                    Main Menu Help Screen
 
+This is help text for the main menu of the menu test system.  This
+text should appear verbatim when asked for by use of the ? key by
+the user.  This should allow scrolling, if needed.  If the first
+character in the help is the newline (as the case for this help),
+then that newline is not included in the help text.
+
+Now this tests lines for scrolling:
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+};
 
 menu submenu, title "  submenu test";
 	option  "upper right", sub menu  upperright;
