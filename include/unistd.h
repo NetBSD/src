@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.88 2001/07/29 22:18:45 wiz Exp $	*/
+/*	$NetBSD: unistd.h,v 1.89 2003/04/14 08:12:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -161,6 +161,14 @@ extern	 int optind;
 extern	 int optopt;
 #endif
 
+/*
+ * IEEE Std 1003.1-2001, adopted in X/Open Portability Guide Issue 6 and later
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_POSIX_C_SOURCE - 0) >= 200112L || (_XOPEN_SOURCE - 0) >= 600
+int	 setegid __P((gid_t));
+int	 seteuid __P((uid_t));
+#endif
 
 /*
  * The following three syscalls are also defined in <sys/types.h>
@@ -329,8 +337,6 @@ int	 revoke __P((const char *));
 int	 rresvport __P((int *));
 int	 ruserok __P((const char *, int, const char *, const char *));
 int	 setdomainname __P((const char *, size_t));
-int	 setegid __P((gid_t));
-int	 seteuid __P((uid_t));
 int	 setgroups __P((int, const gid_t *));
 int	 sethostid __P((long));
 int	 sethostname __P((const char *, size_t));
