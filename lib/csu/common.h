@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.4 1996/10/18 05:36:44 thorpej Exp $	*/
+/*	$NetBSD: common.h,v 1.5 1996/12/07 22:31:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -104,6 +104,8 @@ char			**environ;
 int			errno;
 static char		empty[1];
 char			*__progname = empty;
+struct ps_strings;
+struct ps_strings	*__ps_strings = 0;
 #ifndef DYNAMIC
 #define _strrchr	strrchr
 #endif
