@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2000/03/19 23:07:44 soren Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2000/03/21 01:05:54 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -113,7 +113,8 @@ extern int iointr(unsigned int, struct clockframe *);
 #define ICU_LEN 16
 extern struct intrhand *intrhand[ICU_LEN]; 
 extern struct com_mainbus_softc *com0;
-extern void *tlp0;
+void *tlp0;
+void *tlp1;
 int comintr(void *); 
 int tlp_intr(void *);
 
@@ -146,9 +147,7 @@ cobalt_hardware_intr(mask, pc, status, cause)
 	}
 
 	if (cause & MIPS_INT_MASK_4) {
-		s = splbio(); /* XXX redo interrupts XXX */
 		iointr(mask, &cf);
-		splx(s);	/* XXX redo interrupts XXX */
 		cause &= ~MIPS_INT_MASK_4;
 	}
 
@@ -166,6 +165,10 @@ cobalt_hardware_intr(mask, pc, status, cause)
 		cause &= ~MIPS_INT_MASK_1;
 	}
 	if (cause & MIPS_INT_MASK_2) {
+		s = splnet();	/* XXX redo interrupts XXX */
+		tlp_intr(tlp1);
+		splx(s);	/* XXX redo interrupts XXX */
+		cause &= ~MIPS_INT_MASK_1;
 		cause &= ~MIPS_INT_MASK_2;
 	}
 
