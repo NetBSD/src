@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.75 1994/01/11 21:46:49 mycroft Exp $
+ *	$Id: machdep.c,v 1.76 1994/01/11 22:35:55 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -540,7 +540,7 @@ sigreturn(p, uap, retval)
 	    (scp->sc_ss&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ss)) ||
 	    (scp->sc_ds&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ds) &&
 	     !null_sel(scp->sc_ds)) ||
-	    (scp->sc_ds&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ds) &&
+	    (scp->sc_es&0xffff != _udatasel && !valid_ldt_sel(scp->sc_es) &&
 	     !null_sel(scp->sc_es))) {
 		trapsignal(p, SIGBUS, T_PROTFLT);
 		return(EINVAL);
