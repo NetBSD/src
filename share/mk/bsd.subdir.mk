@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.28.2.1 1997/10/29 00:28:28 mellon Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.28.2.2 1997/11/13 09:20:52 thorpej Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -22,7 +22,7 @@ __REALSUBDIR+=${dir}
 .for targ in ${TARGETS}
 .PHONY: ${targ}-${dir}
 ${targ}-${dir}: .MAKE
-	@echo "===> ${_THISDIR_}${dir}"
+	@echo "${targ} ===> ${_THISDIR_}${dir}"
 	@cd ${.CURDIR}/${dir}; \
 	${MAKE} "_THISDIR_=${_THISDIR_}${dir}/" ${targ}
 subdir-${targ}: ${targ}-${dir}
