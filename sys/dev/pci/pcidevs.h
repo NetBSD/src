@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.433.2.18 2003/01/28 06:24:46 jmc Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.19 2003/06/02 09:53:24 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.19 2003/01/27 06:21:36 jmc Exp 
+ *	NetBSD: pcidevs,v 1.428.2.21 2003/06/02 09:51:02 tron Exp 
  */
 
 /*
@@ -1916,6 +1916,7 @@
 #define	PCI_PRODUCT_SIS_645	0x0645		/* SiS 645 Host Bridge */
 #define	PCI_PRODUCT_SIS_630	0x0630		/* SiS 630 Host Bridge */
 #define	PCI_PRODUCT_SIS_650	0x0650		/* SiS 650 Host Bridge */
+#define	PCI_PRODUCT_SIS_651	0x0650		/* SiS 651 Host Bridge */
 #define	PCI_PRODUCT_SIS_730	0x0730		/* SiS 730 Host Bridge */
 #define	PCI_PRODUCT_SIS_735	0x0735		/* SiS 735 Host Bridge */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* SiS 900 10/100 Ethernet */
