@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 1999/03/16 16:30:23 minoura Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 1999/03/17 12:28:58 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -101,6 +101,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/user.h>
+#include <sys/pool.h>
 
 #include <machine/pte.h>
 
@@ -113,60 +114,8 @@
 #endif
 
 #include <machine/cpu.h>
-#include <x68k/x68k/iodevice.h>
-
-#ifdef PMAPSTATS
-struct {
-	int collectscans;
-	int collectpages;
-	int kpttotal;
-	int kptinuse;
-	int kptmaxuse;
-} kpt_stats;
-struct {
-	int kernel;	/* entering kernel mapping */
-	int user;	/* entering user mapping */
-	int ptpneeded;	/* needed to allocate a PT page */
-	int nochange;	/* no change at all */
-	int pwchange;	/* no mapping change, just wiring or protection */
-	int wchange;	/* no mapping change, just wiring */
-	int pchange;	/* no mapping change, just protection */
-	int mchange;	/* was mapped but mapping to different page */
-	int managed;	/* a managed page */
-	int firstpv;	/* first mapping for this PA */
-	int secondpv;	/* second mapping for this PA */
-	int ci;		/* cache inhibited */
-	int unmanaged;	/* not a managed page */
-	int flushes;	/* cache flushes */
-} enter_stats;
-struct {
-	int calls;
-	int removes;
-	int pvfirst;
-	int pvsearch;
-	int ptinvalid;
-	int uflushes;
-	int sflushes;
-} remove_stats;
-struct {
-	int calls;
-	int changed;
-	int alreadyro;
-	int alreadyrw;
-} protect_stats;
-struct chgstats {
-	int setcalls;
-	int sethits;
-	int setmiss;
-	int clrcalls;
-	int clrhits;
-	int clrmiss;
-} changebit_stats[16];
-#endif
 
 #ifdef DEBUG
-int debugmap = 0;
-int pmapdebug = 0x2000;
 #define PDB_FOLLOW	0x0001
 #define PDB_INIT	0x0002
 #define PDB_ENTER	0x0004
@@ -183,21 +132,18 @@ int pmapdebug = 0x2000;
 #define PDB_WIRING	0x4000
 #define PDB_PVDUMP	0x8000
 
-#ifdef M68K_MMU_HP
-int pmapvacflush = 0;
-#define	PVF_ENTER	0x01
-#define	PVF_REMOVE	0x02
-#define	PVF_PROTECT	0x04
-#define	PVF_TOTAL	0x80
-#endif
+int debugmap = 0;
+int pmapdebug = PDB_PARANOIA;
+
+#define	PMAP_DPRINTF(l, x)	if (pmapdebug & (l)) printf x
 
 #if defined(M68040) || defined(M68060)
 int dowriteback = 1;	/* 68040/060: enable writeback caching */
 int dokwriteback = 1;	/* 68040/060: enable writeback caching of kernel AS */
 #endif
-
-extern vaddr_t pager_sva, pager_eva;
-#endif
+#else /* ! DEBUG */
+#define	PMAP_DPRINTF(l, x)	/* nothing */
+#endif /* DEBUG */
 
 /*
  * Get STEs and PTEs for user/kernel address space
@@ -250,8 +196,8 @@ int	protection_codes[8];
  */
 struct kpt_page {
 	struct kpt_page *kpt_next;	/* link on either used or free list */
-	vaddr_t	kpt_va;			/* always valid kernel VA */
-	paddr_t	kpt_pa;			/* PA of this page (for speed) */
+	vaddr_t		kpt_va;		/* always valid kernel VA */
+	paddr_t		kpt_pa;		/* PA of this page (for speed) */
 };
 struct kpt_page *kpt_free_list, *kpt_used_list;
 struct kpt_page *kpt_pages;
@@ -289,17 +235,19 @@ char		*pmap_attributes;	/* reference and modify bits */
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
-/* The following three variables are defined in pmap_bootstrap.c */
-extern int		numranges;
-extern unsigned long	low[8];
-extern unsigned long	high[8];
-
 #ifdef M68K_MMU_HP
 int		pmap_aliasmask;	/* seperation at which VA aliasing ok */
 #endif
 #if defined(M68040) || defined(M68060)
 int		protostfree;	/* prototype (default) free ST map */
 #endif
+
+extern caddr_t	CADDR1, CADDR2;
+
+pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
+pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
+
+struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
 
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
@@ -332,7 +280,7 @@ int	pmap_mapmulti __P((pmap_t, vaddr_t));
  */
 void	pmap_remove_mapping __P((pmap_t, vaddr_t, pt_entry_t *, int));
 boolean_t pmap_testbit	__P((paddr_t, int));
-void	pmap_changebit	__P((paddr_t, int, boolean_t));
+void	pmap_changebit	__P((paddr_t, int, int));
 void	pmap_enter_ptpage	__P((pmap_t, vaddr_t));
 void	pmap_collect1	__P((pmap_t, paddr_t, paddr_t));
 void	pmap_pinit __P((pmap_t));
@@ -347,14 +295,16 @@ void pmap_check_wiring	__P((char *, vaddr_t));
 #define	PRM_TFLUSH	1
 #define	PRM_CFLUSH	2
 
-
 /*
- *	Routine:	pmap_virtual_space
+ * pmap_virtual_space:		[ INTERFACE ]
  *
- *	Function:
- *		Report the range of available kernel virtual address
- *		space to the VM system during bootstrap.  Called by
- *		vm_bootstrap_steal_memory().
+ *	Report the range of available kernel virtual address
+ *	space to the VM system during bootstrap.
+ *
+ *	This is only an interface function if we do not use
+ *	pmap_steal_memory()!
+ *
+ *	Note: no locking is necessary in this function.
  */
 void
 pmap_virtual_space(vstartp, vendp)
@@ -366,34 +316,56 @@ pmap_virtual_space(vstartp, vendp)
 }
 
 /*
- *	Routine:	pmap_init
+ * pmap_procwr:			[ INTERFACE ]
+ * 
+ *	Synchronize caches corresponding to [addr, addr+len) in p.
  *
- *	Function:
- *		Initialize the pmap module.
- *		Called by vm_init, to initialize any structures that the pmap
- *		system needs to map virtual memory.
+ *	Note: no locking is necessary in this function.
+ */   
+void
+pmap_procwr(p, va, len)
+	struct proc	*p;
+	vaddr_t		va;
+	size_t		len;
+{
+	(void)cachectl1(0x80000004, va, len, p);
+}
+
+/*
+ * pmap_init:			[ INTERFACE ]
+ *
+ *	Initialize the pmap module.  Called by vm_init(), to initialize any
+ *	structures that the pmap system needs to map virtual memory.
+ *
+ *	Note: no locking is necessary in this function.
  */
 void
 pmap_init()
 {
 	vaddr_t		addr, addr2;
 	vsize_t		s;
-	int		rv;
-	int		npages;
 	struct pv_entry	*pv;
 	char		*attr;
+	int		rv;
+	int		npages;
 	int		bank;
+	extern u_int8_t *intiobase;
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_init()\n");
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_init()\n"));
+
+	/*
+	 * Before we do anything else, initialize the PTE pointers
+	 * used by pmap_zero_page() and pmap_copy_page().
+	 */
+	caddr1_pte = pmap_pte(pmap_kernel(), CADDR1);
+	caddr2_pte = pmap_pte(pmap_kernel(), CADDR2);
+
 	/*
 	 * Now that kernel map has been allocated, we can mark as
 	 * unavailable regions which we have mapped in pmap_bootstrap().
 	 */
 #if defined(UVM)
-	addr = (vaddr_t) IODEVbase;
+	addr = (vaddr_t) intiobase;
 	if (uvm_map(kernel_map, &addr,
 		    m68k_ptob(IIOMAPSIZE+EIOMAPSIZE),
 		    NULL, UVM_UNKNOWN_OFFSET,
@@ -416,10 +388,10 @@ pmap_init()
 		panic("pmap_init: bogons in the VM system!\n");
 	}
 #else
-	addr = (vaddr_t) IODEVbase;
+	addr = (vaddr_t) intiobase;
 	(void) vm_map_find(kernel_map, NULL, (vaddr_t) 0,
 			   &addr, m68k_ptob(IIOMAPSIZE+EIOMAPSIZE), FALSE);
-	if (addr != (vaddr_t)IODEVbase)
+	if (addr != (vaddr_t)intiobase)
 		goto bogons;
 	addr = (vaddr_t) Sysmap;
 	vm_object_reference(kernel_object);
@@ -435,14 +407,12 @@ bogons:
 		panic("pmap_init: bogons in the VM system!\n");
 #endif /* UVM */
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_INIT) {
-		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
-		       Sysseg, Sysmap, Sysptmap);
-		printf("  pstart %lx, pend %lx, vstart %lx, vend %lx\n",
-		       avail_start, avail_end, virtual_avail, virtual_end);
-	}
-#endif
+	PMAP_DPRINTF(PDB_INIT,
+	    ("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
+	    Sysseg, Sysmap, Sysptmap));
+	PMAP_DPRINTF(PDB_INIT,
+	    ("  pstart %lx, pend %lx, vstart %lx, vend %lx\n",
+	    avail_start, avail_end, virtual_avail, virtual_end));
 
 	/*
 	 * Allocate memory for random pmap data structures.  Includes the
@@ -471,12 +441,10 @@ bogons:
 
 	pmap_attributes = (char *) addr;
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_INIT)
-		printf("pmap_init: %lx bytes: page_cnt %x s0 %p(%p) tbl %p atr %p\n",
-		       s, page_cnt, Segtabzero, Segtabzeropa,
-		       pv_table, pmap_attributes);
-#endif
+	PMAP_DPRINTF(PDB_INIT, ("pmap_init: %lx bytes: page_cnt %x s0 %p(%p) "
+	    "tbl %p atr %p\n",
+	    s, page_cnt, Segtabzero, Segtabzeropa,
+	    pv_table, pmap_attributes));
 
 	/*
 	 * Now that the pv and attribute tables have been allocated,
@@ -543,14 +511,9 @@ bogons:
 		kpt_pages->kpt_va = addr2;
 		kpt_pages->kpt_pa = pmap_extract(pmap_kernel(), addr2);
 	} while (addr != addr2);
-#ifdef PMAPSTATS
-	kpt_stats.kpttotal = atop(s);
-#endif
-#ifdef DEBUG
-	if (pmapdebug & PDB_INIT)
-		printf("pmap_init: KPT: %ld pages from %lx to %lx\n",
-		       atop(s), addr, addr + s);
-#endif
+
+	PMAP_DPRINTF(PDB_INIT, ("pmap_init: KPT: %ld pages from %lx to %lx\n",
+	    atop(s), addr, addr + s));
 
 #if defined(UVM)
 	/*
@@ -608,10 +571,9 @@ bogons:
 	rv = vm_map_submap(kernel_map, addr, addr2, pt_map);
 	if (rv != KERN_SUCCESS)
 		panic("pmap_init: cannot map range to pt_map");
-#ifdef DEBUG
-	if (pmapdebug & PDB_INIT)
-		printf("pmap_init: pt_map [%lx - %lx)\n", addr, addr2);
-#endif
+
+	PMAP_DPRINTF(PDB_INIT,
+	/* ( */ ("pmap_init: pt_map [%lx - %lx)\n", addr, addr2));
 #endif /* UVM */
 
 #if defined(M68040) || defined(M68060)
@@ -623,11 +585,22 @@ bogons:
 #endif
 
 	/*
+	 * Initialize the pmap pools.
+	 */
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+
+	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
 	pmap_initialized = TRUE;
 }
 
+/*
+ * pmap_alloc_pv:
+ *
+ *	Allocate a pv_entry.
+ */
 struct pv_entry *
 pmap_alloc_pv()
 {
@@ -668,6 +641,11 @@ pmap_alloc_pv()
 	return pv;
 }
 
+/*
+ * pmap_free_pv:
+ *
+ *	Free a pv_entry.
+ */
 void
 pmap_free_pv(pv)
 	struct pv_entry *pv;
@@ -695,6 +673,11 @@ pmap_free_pv(pv)
 	}
 }
 
+/*
+ * pmap_collect_pv:
+ *
+ *	Perform compaction on the PV list, called via pmap_collect().
+ */
 void
 pmap_collect_pv()
 {
@@ -757,11 +740,15 @@ pmap_collect_pv()
 }
 
 /*
+ * pmap_map:
+ *
  *	Used to map a range of physical addresses into kernel
  *	virtual address space.
  *
  *	For now, VM is already on, we only need to map the
  *	specified memory.
+ *
+ *	Note: THIS FUNCTION IS DEPRECATED, AND SHOULD BE REMOVED!
  */
 vaddr_t
 pmap_map(va, spa, epa, prot)
@@ -770,10 +757,8 @@ pmap_map(va, spa, epa, prot)
 	int prot;
 {
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW,
+	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
 
 	while (spa < epa) {
 		pmap_enter(pmap_kernel(), va, spa, prot, FALSE);
@@ -784,16 +769,11 @@ pmap_map(va, spa, epa, prot)
 }
 
 /*
+ * pmap_create:			[ INTERFACE ]
+ *
  *	Create and return a physical map.
  *
- *	If the size specified for the map
- *	is zero, the map is an actual physical
- *	map, and may be referenced by the
- *	hardware.
- *
- *	If the size specified is non-zero,
- *	the map will be used in software only, and
- *	is bounded by that size.
+ *	Note: no locking is necessary in this function.
  */
 pmap_t
 pmap_create(size)
@@ -801,10 +781,8 @@ pmap_create(size)
 {
 	pmap_t pmap;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		printf("pmap_create(%lx)\n", size);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
+	    ("pmap_create(%lx)\n", size));
 
 	/*
 	 * Software use map does not need a pmap
@@ -812,30 +790,27 @@ pmap_create(size)
 	if (size)
 		return (NULL);
 
-	/* XXX: is it ok to wait here? */
-	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
-#ifdef notifwewait
-	if (pmap == NULL)
-		panic("pmap_create: cannot allocate a pmap");
-#endif
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
+
 	bzero(pmap, sizeof(*pmap));
 	pmap_pinit(pmap);
 	return (pmap);
 }
 
 /*
- * Initialize a preallocated and zeroed pmap structure,
- * such as one in a vmspace structure.
+ * pmap_pinit:
+ *
+ *	Initialize a preallocated and zeroed pmap structure.
+ *
+ *	Note: THIS FUNCTION SHOULD BE MOVED INTO pmap_create()!
  */
 void
 pmap_pinit(pmap)
 	struct pmap *pmap;
 {
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
-		printf("pmap_pinit(%p)\n", pmap);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_CREATE,
+	    ("pmap_pinit(%p)\n", pmap));
 
 	/*
 	 * No need to allocate page table space yet but we do need a
@@ -854,9 +829,10 @@ pmap_pinit(pmap)
 }
 
 /*
- *	Retire the given physical map from service.
- *	Should only be called if the map contains
- *	no valid mappings.
+ * pmap_destroy:		[ INTERFACE ]
+ *
+ *	Drop the reference count on the specified pmap, releasing
+ *	all resources if the reference count drops to zero.
  */
 void
 pmap_destroy(pmap)
@@ -867,34 +843,30 @@ pmap_destroy(pmap)
 	if (pmap == NULL)
 		return;
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_destroy(%p)\n", pmap);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_destroy(%p)\n", pmap));
 
 	simple_lock(&pmap->pm_lock);
 	count = --pmap->pm_count;
 	simple_unlock(&pmap->pm_lock);
 	if (count == 0) {
 		pmap_release(pmap);
-		free((caddr_t)pmap, M_VMPMAP);
+		pool_put(&pmap_pmap_pool, pmap);
 	}
 }
 
 /*
- * Release any resources held by the given physical map.
- * Called when a pmap initialized by pmap_pinit is being released.
- * Should only be called if the map contains no valid mappings.
+ * pmap_release:
+ *
+ *	Relese the resources held by a pmap.
+ *
+ *	Note: THIS FUNCTION SHOULD BE MOVED INTO pmap_destroy().
  */
 void
 pmap_release(pmap)
 	struct pmap *pmap;
 {
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_release(%p)\n", pmap);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_release(%p)\n", pmap));
 
 #ifdef notdef /* DIAGNOSTIC */
 	/* count would be 0 from pmap_destroy... */
@@ -922,6 +894,8 @@ pmap_release(pmap)
 }
 
 /*
+ * pmap_reference:		[ INTERFACE ]
+ *
  *	Add a reference to the specified pmap.
  */
 void
@@ -932,10 +906,7 @@ pmap_reference(pmap)
 	if (pmap == NULL)
 		return;
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_reference(%p)\n", pmap);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_reference(%p)\n", pmap));
 
 	simple_lock(&pmap->pm_lock);
 	pmap->pm_count++;
@@ -943,7 +914,14 @@ pmap_reference(pmap)
 }
 
 /*
- *	Mark that a processor is about to be used by a given pmap.
+ * pmap_activate:		[ INTERFACE ]
+ *
+ *	Activate the pmap used by the specified process.  This includes
+ *	reloading the MMU context if the current process, and marking
+ *	the pmap in use by the processor.
+ *
+ *	Note: we may only use spin locks here, since we are called
+ *	by a critical section in cpu_switch()!
  */
 void
 pmap_activate(p)
@@ -951,24 +929,32 @@ pmap_activate(p)
 {
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_SEGTAB))
-		printf("pmap_activate(%p)\n", p);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_SEGTAB,
+	    ("pmap_activate(%p)\n", p));
 
 	PMAP_ACTIVATE(pmap, p == curproc);
 }
 
 /*
- *	Mark that a processor is no longer in use by a given pmap.
+ * pmap_deactivate:		[ INTERFACE ]
+ *
+ *	Mark that the pmap used by the specified process is no longer
+ *	in use by the processor.
+ *
+ *	The comment above pmap_activate() wrt. locking applies here,
+ *	as well.
  */
 void
 pmap_deactivate(p)
 	struct proc *p;
 {
+
+	/* No action necessary in this pmap implementation. */
 }
 
 /*
+ * pmap_remove:			[ INTERFACE ]
+ *
  *	Remove the given range of addresses from the specified map.
  *
  *	It is assumed that the start and end are properly
@@ -984,17 +970,12 @@ pmap_remove(pmap, sva, eva)
 	boolean_t firstpage, needcflush;
 	int flags;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
+	    ("pmap_remove(%p, %lx, %lx)\n", pmap, sva, eva));
 
 	if (pmap == NULL)
 		return;
 
-#ifdef PMAPSTATS
-	remove_stats.calls++;
-#endif
 	firstpage = TRUE;
 	needcflush = FALSE;
 	flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
@@ -1025,9 +1006,6 @@ pmap_remove(pmap, sva, eva)
 					 */
 					if (firstpage) {
 						DCIS();
-#ifdef PMAPSTATS
-						remove_stats.sflushes++;
-#endif
 					}
 					/*
 					 * Remember if we may need to
@@ -1062,36 +1040,21 @@ pmap_remove(pmap, sva, eva)
 	 */
 	if (pmap_aliasmask && !active_user_pmap(pmap))
 		needcflush = FALSE;
-#ifdef DEBUG
-	if (pmap_aliasmask && (pmapvacflush & PVF_REMOVE)) {
-		if (pmapvacflush & PVF_TOTAL)
-			DCIA();
-		else if (pmap == pmap_kernel())
-			DCIS();
-		else
-			DCIU();
-	} else
-#endif
 	if (needcflush) {
 		if (pmap == pmap_kernel()) {
 			DCIS();
-#ifdef PMAPSTATS
-			remove_stats.sflushes++;
-#endif
 		} else {
 			DCIU();
-#ifdef PMAPSTATS
-			remove_stats.uflushes++;
-#endif
 		}
 	}
 #endif
 }
 
 /*
- *	pmap_page_protect:
+ * pmap_page_protect:		[ INTERFACE ]
  *
- *	Lower the permission for all mappings to a given page.
+ *	Lower the permission for all mappings to a given page to
+ *	the permissions specified.
  */
 void
 pmap_page_protect(pa, prot)
@@ -1116,7 +1079,7 @@ pmap_page_protect(pa, prot)
 	/* copy_on_write */
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
-		pmap_changebit(pa, PG_RO, TRUE);
+		pmap_changebit(pa, PG_RO, ~0);
 		return;
 	/* remove_all */
 	default:
@@ -1151,31 +1114,29 @@ pmap_page_protect(pa, prot)
 }
 
 /*
- *	Set the physical protection on the
- *	specified range of this map as requested.
+ * pmap_protect:		[ INTERFACE ]
+ *
+ *	Set the physical protectoin on the specified range of this map
+ *	as requested.
  */
 void
 pmap_protect(pmap, sva, eva, prot)
-	pmap_t	pmap;
-	vaddr_t sva, eva;
-	vm_prot_t prot;
+	pmap_t		pmap;
+	vaddr_t 	sva, eva;
+	vm_prot_t	prot;
 {
 	vaddr_t nssva;
 	pt_entry_t *pte;
 	boolean_t firstpage, needtflush;
 	int isro;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_PROTECT))
-		printf("pmap_protect(%p, %lx, %lx, %x)\n", pmap, sva, eva, prot);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_PROTECT,
+	    ("pmap_protect(%p, %lx, %lx, %x)\n",
+	    pmap, sva, eva, prot));
 
 	if (pmap == NULL)
 		return;
 
-#ifdef PMAPSTATS
-	protect_stats.calls++;
-#endif
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
 		return;
@@ -1232,45 +1193,26 @@ pmap_protect(pmap, sva, eva, prot)
 				pmap_pte_set_prot(pte, isro);
 				if (needtflush)
 					TBIS(sva);
-#ifdef PMAPSTATS
-				protect_stats.changed++;
-#endif
 				firstpage = FALSE;
 			}
-#ifdef PMAPSTATS
-			else if (pmap_pte_v(pte)) {
-				if (isro)
-					protect_stats.alreadyro++;
-				else
-					protect_stats.alreadyrw++;
-			}
-#endif
 			pte++;
 			sva += NBPG;
 		}
 	}
-#if defined(M68K_MMU_HP) && defined(DEBUG)
-	if (pmap_aliasmask && (pmapvacflush & PVF_PROTECT)) {
-		if (pmapvacflush & PVF_TOTAL)
-			DCIA();
-		else if (pmap == pmap_kernel())
-			DCIS();
-		else
-			DCIU();
-	}
-#endif
 }
 
 /*
- *	Insert the given physical page (p) at
- *	the specified virtual address (v) in the
+ * pmap_enter:			[ INTERFACE ]
+ *
+ *	Insert the given physical page (pa) at
+ *	the specified virtual address (va) in the
  *	target physical map with the protection requested.
  *
  *	If specified, the page will be wired down, meaning
- *	that the related pte can not be reclaimed.
+ *	that the related pte cannot be reclaimed.
  *
- *	NB:  This is the only routine which MAY NOT lazy-evaluate
- *	or lose information.  That is, this routine must actually
+ *	Note: This is the only routine which MAY NOT lazy-evaluate
+ *	or lose information.  Thatis, this routine must actually
  *	insert this page into the given map NOW.
  */
 void
@@ -1287,20 +1229,22 @@ pmap_enter(pmap, va, pa, prot, wired)
 	boolean_t cacheable = TRUE;
 	boolean_t checkpv = TRUE;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
-		printf("pmap_enter(%p, %lx, %lx, %x, %x)\n",
-		       pmap, va, pa, prot, wired);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER,
+	    ("pmap_enter(%p, %lx, %lx, %x, %x)\n",
+	    pmap, va, pa, prot, wired));
+
 	if (pmap == NULL)
 		return;
 
-#ifdef PMAPSTATS
-	if (pmap == pmap_kernel())
-		enter_stats.kernel++;
-	else
-		enter_stats.user++;
+#ifdef DIAGNOSTIC
+	/*
+	 * pmap_enter() should never be used for CADDR1 and CADDR2.
+	 */
+	if (pmap == pmap_kernel() &&
+	    (va == (vaddr_t)CADDR1 || va == (vaddr_t)CADDR2))
+		panic("pmap_enter: used for CADDR1 or CADDR2");
 #endif
+
 	/*
 	 * For user mapping, allocate kernel VM resources if necessary.
 	 */
@@ -1322,18 +1266,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 	pa = m68k_trunc_page(pa);
 	pte = pmap_pte(pmap, va);
 	opa = pmap_pte_pa(pte);
-#ifdef DEBUG
-	if (pmapdebug & PDB_ENTER)
-		printf("enter: pte %p, *pte %x\n", pte, *pte);
-#endif
+
+	PMAP_DPRINTF(PDB_ENTER, ("enter: pte %p, *pte %x\n", pte, *pte));
 
 	/*
 	 * Mapping has not changed, must be protection or wiring change.
 	 */
 	if (opa == pa) {
-#ifdef PMAPSTATS
-		enter_stats.pwchange++;
-#endif
 		/*
 		 * Wiring change, just update stats.
 		 * We don't worry about wiring PT pages as they remain
@@ -1341,25 +1280,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 		 * Hence, if a user page is wired, the PT page will be also.
 		 */
 		if (pmap_pte_w_chg(pte, wired ? PG_W : 0)) {
-#ifdef DEBUG
-			if (pmapdebug & PDB_ENTER)
-				printf("enter: wiring change -> %x\n", wired);
-#endif
+			PMAP_DPRINTF(PDB_ENTER,
+			    ("enter: wiring change -> %x\n", wired));
 			if (wired)
 				pmap->pm_stats.wired_count++;
 			else
 				pmap->pm_stats.wired_count--;
-#ifdef PMAPSTATS
-			if (pmap_pte_prot(pte) == pte_prot(pmap, prot))
-				enter_stats.wchange++;
-#endif
 		}
-#ifdef PMAPSTATS
-		else if (pmap_pte_prot(pte) != pte_prot(pmap, prot))
-			enter_stats.pchange++;
-		else
-			enter_stats.nochange++;
-#endif
 		/*
 		 * Retain cache inhibition status
 		 */
@@ -1374,14 +1301,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * handle validating new mapping.
 	 */
 	if (opa) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_ENTER)
-			printf("enter: removing old mapping %lx\n", va);
-#endif
+		PMAP_DPRINTF(PDB_ENTER,
+		    ("enter: removing old mapping %lx\n", va));
 		pmap_remove_mapping(pmap, va, pte, PRM_TFLUSH|PRM_CFLUSH);
-#ifdef PMAPSTATS
-		enter_stats.mchange++;
-#endif
 	}
 
 	/*
@@ -1407,23 +1329,15 @@ pmap_enter(pmap, va, pa, prot, wired)
 		struct pv_entry *pv, *npv;
 		int s;
 
-#ifdef PMAPSTATS
-		enter_stats.managed++;
-#endif
 		pv = pa_to_pvh(pa);
 		s = splimp();
-#ifdef DEBUG
-		if (pmapdebug & PDB_ENTER)
-			printf("enter: pv at %p: %lx/%p/%p\n",
-			       pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
-#endif
+		PMAP_DPRINTF(PDB_ENTER,
+		    ("enter: pv at %p: %lx/%p/%p\n",
+		    pv, pv->pv_va, pv->pv_pmap, pv->pv_next));
 		/*
 		 * No entries yet, use header as the first entry
 		 */
 		if (pv->pv_pmap == NULL) {
-#ifdef PMAPSTATS
-			enter_stats.firstpv++;
-#endif
 			pv->pv_va = va;
 			pv->pv_pmap = pmap;
 			pv->pv_next = NULL;
@@ -1449,10 +1363,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 			npv->pv_ptpmap = NULL;
 			npv->pv_flags = 0;
 			pv->pv_next = npv;
-#ifdef PMAPSTATS
-			if (!npv->pv_next)
-				enter_stats.secondpv++;
-#endif
 #ifdef M68K_MMU_HP
 			/*
 			 * Since there is another logical mapping for the
@@ -1478,11 +1388,9 @@ pmap_enter(pmap, va, pa, prot, wired)
 			 */
 			if (pmap_aliasmask) {
 				if (pv->pv_flags & PV_CI) {
-#ifdef DEBUG
-					if (pmapdebug & PDB_CACHE)
-					printf("enter: pa %lx already CI'ed\n",
-					       pa);
-#endif
+					PMAP_DPRINTF(PDB_CACHE,
+					    ("enter: pa %lx already CI'ed\n",
+					    pa));
 					checkpv = cacheable = FALSE;
 				} else if (npv->pv_next ||
 					   ((pmap == pv->pv_pmap ||
@@ -1490,16 +1398,11 @@ pmap_enter(pmap, va, pa, prot, wired)
 					     pv->pv_pmap == pmap_kernel()) &&
 					    ((pv->pv_va & pmap_aliasmask) !=
 					     (va & pmap_aliasmask)))) {
-#ifdef DEBUG
-					if (pmapdebug & PDB_CACHE)
-					printf("enter: pa %lx CI'ing all\n",
-					       pa);
-#endif
+					PMAP_DPRINTF(PDB_CACHE,
+					    ("enter: pa %lx CI'ing all\n",
+					    pa));
 					cacheable = FALSE;
 					pv->pv_flags |= PV_CI;
-#ifdef PMAPSTATS
-					enter_stats.ci++;
-#endif
 				}
 			}
 #endif
@@ -1512,9 +1415,6 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 */
 	else if (pmap_initialized) {
 		checkpv = cacheable = FALSE;
-#ifdef PMAPSTATS
-		enter_stats.unmanaged++;
-#endif
 	}
 
 	/*
@@ -1548,10 +1448,9 @@ validate:
 #endif
 		npte |= PG_CCB;
 #endif
-#ifdef DEBUG
-	if (pmapdebug & PDB_ENTER)
-		printf("enter: new pte value %x\n", npte);
-#endif
+
+	PMAP_DPRINTF(PDB_ENTER, ("enter: new pte value %x\n", npte));
+
 	/*
 	 * Remember if this was a wiring-only change.
 	 * If so, we need not flush the TLB and caches.
@@ -1575,27 +1474,14 @@ validate:
 	 * external VAC.
 	 */
 	if (checkpv && !cacheable) {
-		pmap_changebit(pa, PG_CI, TRUE);
+		pmap_changebit(pa, PG_CI, ~0);
 		DCIA();
-#ifdef PMAPSTATS
-		enter_stats.flushes++;
-#endif
 #ifdef DEBUG
 		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
 		    (PDB_CACHE|PDB_PVDUMP))
 			pmap_pvdump(pa);
 #endif
 	}
-#ifdef DEBUG
-	else if (pmapvacflush & PVF_ENTER) {
-		if (pmapvacflush & PVF_TOTAL)
-			DCIA();
-		else if (pmap == pmap_kernel())
-			DCIS();
-		else
-			DCIU();
-	}
-#endif
 #endif
 #ifdef DEBUG
 	if ((pmapdebug & PDB_WIRING) && pmap != pmap_kernel())
@@ -1604,24 +1490,23 @@ validate:
 }
 
 /*
- *	Routine:	pmap_change_wiring
- *	Function:	Change the wiring attribute for a map/virtual-address
- *			pair.
- *	In/out conditions:
- *			The mapping must already exist in the pmap.
+ * pmap_change_wiring:		[ INTERFACE ]
+ *
+ *	Change the wiring attribute for a map/virtual-address pair.
+ *
+ *	The mapping must already exist in the pmap.
  */
 void
 pmap_change_wiring(pmap, va, wired)
-	pmap_t	pmap;
-	vaddr_t	va;
+	pmap_t		pmap;
+	vaddr_t		va;
 	boolean_t	wired;
 {
 	pt_entry_t *pte;
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW,
+	    ("pmap_change_wiring(%p, %lx, %x)\n", pmap, va, wired));
+
 	if (pmap == NULL)
 		return;
 
@@ -1661,12 +1546,11 @@ pmap_change_wiring(pmap, va, wired)
 }
 
 /*
- *	Routine:	pmap_extract
- *	Function:
- *		Extract the physical page address associated
- *		with the given map/virtual_address pair.
+ * pmap_extract:		[ INTERFACE ]
+ *
+ *	Extract the physical address associated with the given
+ *	pmap/virtual address pair.
  */
-
 paddr_t
 pmap_extract(pmap, va)
 	pmap_t	pmap;
@@ -1674,93 +1558,98 @@ pmap_extract(pmap, va)
 {
 	paddr_t pa;
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_extract(%p, %lx) -> ", pmap, va);
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW,
+	    ("pmap_extract(%p, %lx) -> ", pmap, va));
+
 	pa = 0;
 	if (pmap && pmap_ste_v(pmap, va))
 		pa = *pmap_pte(pmap, va);
 	if (pa)
 		pa = (pa & PG_FRAME) | (va & ~PG_FRAME);
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("%lx\n", pa);
-#endif
-	return(pa);
+
+	PMAP_DPRINTF(PDB_FOLLOW, ("%lx\n", pa));
+
+	return (pa);
 }
 
 /*
- *	Copy the range specified by src_addr/len
+ * pmap_copy:		[ INTERFACE ]
+ *
+ *	Copy the mapping range specified by src_addr/len
  *	from the source map to the range dst_addr/len
  *	in the destination map.
  *
  *	This routine is only advisory and need not do anything.
  */
-void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
+void
+pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	pmap_t		dst_pmap;
 	pmap_t		src_pmap;
 	vaddr_t		dst_addr;
 	vsize_t		len;
 	vaddr_t		src_addr;
 {
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
-		       dst_pmap, src_pmap, dst_addr, len, src_addr);
-#endif
+
+	PMAP_DPRINTF(PDB_FOLLOW,
+	    ("pmap_copy(%p, %p, %lx, %lx, %lx)\n",
+	    dst_pmap, src_pmap, dst_addr, len, src_addr));
 }
 
 /*
- *	Require that all active physical maps contain no
- *	incorrect entries NOW.  [This update includes
- *	forcing updates of any address map caching.]
+ * pmap_update:
  *
- *	Generally used to insure that a thread about
- *	to run will see a semantically correct world.
+ *	Require that all active physical maps contain no
+ *	incorrect entires NOW, by processing any deferred
+ *	pmap operations.
  */
-void pmap_update()
+void
+pmap_update()
 {
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_update()\n");
-#endif
-	TBIA();
+
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_update()\n"));
+
+	TBIA();		/* XXX should not be here. */
 }
 
 /*
- *	Routine:	pmap_collect
- *	Function:
- *		Garbage collects the physical map system for
- *		pages which are no longer used.
- *		Success need not be guaranteed -- that is, there
- *		may well be pages which are not referenced, but
- *		others may be collected.
- *	Usage:
- *		Called by the pageout daemon when pages are scarce.
+ * pmap_collect:		[ INTERFACE ]
+ *
+ *	Garbage collects the physical map system for pages which are no
+ *	longer used.  Success need not be guaranteed -- that is, there
+ *	may well be pages which are not referenced, but others may be
+ *	collected.
+ *
+ *	Called by the pageout daemon when pages are scarce.
  */
 void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
-	int s;
-	int bank;
 
-	if (pmap != pmap_kernel())
-		return;
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_collect(%p)\n", pmap));
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_collect(%p)\n", pmap);
-#endif
-#ifdef PMAPSTATS
-	kpt_stats.collectscans++;
-#endif
-	s = splimp();
-	for (bank = 0; bank < vm_nphysseg; bank++)
-		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
-		    ptoa(vm_physmem[bank].end));
-	splx(s);
+	if (pmap == pmap_kernel()) {
+		int bank, s;
+
+		/*
+		 * XXX This is very bogus.  We should handle kernel PT
+		 * XXX pages much differently.
+		 */
+
+		s = splimp();
+		for (bank = 0; bank < vm_nphysseg; bank++)
+			pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
+			    ptoa(vm_physmem[bank].end));
+		splx(s);
+	} else {
+		/*
+		 * This process is about to be swapped out; free all of
+		 * the PT pages by removing the physical mappings for its
+		 * entire address space.  Note: pmap_remove() performs
+		 * all necessary locking.
+		 */
+		pmap_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS);
+	}
 
 #ifdef notyet
 	/* Go compact and garbage-collect the pv_table. */
@@ -1769,11 +1658,13 @@ pmap_collect(pmap)
 }
 
 /*
- *	Routine:	pmap_collect1()
+ * pmap_collect1():
  *
- *	Function:
- *		Helper function for pmap_collect().  Do the actual
- *		garbage-collection of range of physical addresses.
+ *	Garbage-collect KPT pages.  Helper for the above (bogus)
+ *	pmap_collect().
+ *
+ *	Note: THIS SHOULD GO AWAY, AND BE REPLACED WITH A BETTER
+ *	WAY OF HANDLING PT PAGES!
  */
 void
 pmap_collect1(pmap, startpa, endpa)
@@ -1859,10 +1750,6 @@ ok:
 		*pkpt = kpt->kpt_next;
 		kpt->kpt_next = kpt_free_list;
 		kpt_free_list = kpt;
-#ifdef PMAPSTATS
-		kpt_stats.kptinuse--;
-		kpt_stats.collectpages++;
-#endif
 #ifdef DEBUG
 		if (pmapdebug & (PDB_PTPAGE|PDB_COLLECT))
 			pmapdebug = opmapdebug;
@@ -1879,81 +1766,137 @@ ok:
 }
 
 /*
- *	pmap_zero_page zeros the specified (machine independent)
- *	page by mapping the page into virtual memory and using
- *	bzero to clear its contents, one machine dependent page
- *	at a time.
+ * pmap_zero_page:		[ INTERFACE ]
  *
- *	XXX this is a bad implementation for virtual cache machines
- *	(320/350) because pmap_enter doesn't cache-inhibit the temporary
- *	kernel mapping and we wind up with data cached for that KVA.
- *	It is probably a win for physical cache machines (370/380)
- *	as the cache loading is not wasted.
+ *	Zero the specified (machine independent) page by mapping the page
+ *	into virtual memory and using bzero to clear its contents, one
+ *	machine dependent page at a time.
+ *
+ *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
+ *	      (Actually, we go to splimp(), and since we don't
+ *	      support multiple processors, this is sufficient.)
  */
 void
 pmap_zero_page(phys)
 	paddr_t phys;
 {
-	vaddr_t kva;
-	extern caddr_t CADDR1;
+	int s, npte;
+
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%lx)\n", phys));
+
+	npte = phys | PG_V;
+#ifdef M68K_MMU_HP
+	if (pmap_aliasmask) {
+		/*
+		 * Cache-inhibit the mapping on VAC machines, as we would
+		 * be wasting the cache load.
+		 */
+		npte |= PG_CI;
+	}
+#endif
+
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		/*
+		 * Set copyback caching on the page; this is required
+		 * for cache consistency (since regular mappings are
+		 * copyback as well).
+		 */
+		npte |= PG_CCB;
+	}
+#endif
+
+	s = splimp();
+
+	*caddr1_pte = npte;
+	TBIS((vaddr_t)CADDR1);
+
+	zeropage(CADDR1);
 
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_zero_page(%lx)\n", phys);
+	*caddr1_pte = PG_NV;
+	TBIS((vaddr_t)CADDR1);
 #endif
-	kva = (vaddr_t) CADDR1;
-	pmap_enter(pmap_kernel(), kva, phys, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	zeropage((caddr_t)kva);
-	pmap_remove_mapping(pmap_kernel(), kva, PT_ENTRY_NULL,
-			    PRM_TFLUSH|PRM_CFLUSH);
+
+	splx(s);
 }
 
 /*
- *	pmap_copy_page copies the specified (machine independent)
- *	page by mapping the page into virtual memory and using
- *	bcopy to copy the page, one machine dependent page at a
- *	time.
+ * pmap_copy_page:		[ INTERFACE ]
  *
+ *	Copy the specified (machine independent) page by mapping the page
+ *	into virtual memory and using bcopy to copy the page, one machine
+ *	dependent page at a time.
  *
- *	XXX this is a bad implementation for virtual cache machines
- *	(320/350) because pmap_enter doesn't cache-inhibit the temporary
- *	kernel mapping and we wind up with data cached for that KVA.
- *	It is probably a win for physical cache machines (370/380)
- *	as the cache loading is not wasted.
+ *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
+ *	      (Actually, we go to splimp(), and since we don't
+ *	      support multiple processors, this is sufficient.)
  */
 void
 pmap_copy_page(src, dst)
 	paddr_t src, dst;
 {
-	vaddr_t skva, dkva;
-	extern caddr_t CADDR1, CADDR2;
+	int s, npte1, npte2;
+
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_copy_page(%lx, %lx)\n", src, dst));
+
+	npte1 = src | PG_RO | PG_V;
+	npte2 = dst | PG_V;
+#ifdef M68K_MMU_HP
+	if (pmap_aliasmask) {
+		/*
+		 * Cache-inhibit the mapping on VAC machines, as we would
+		 * be wasting the cache load.
+		 */
+		npte1 |= PG_CI;
+		npte2 |= PG_CI;
+	}
+#endif
+
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		/*
+		 * Set copyback caching on the pages; this is required
+		 * for cache consistency (since regular mappings are
+		 * copyback as well).
+		 */
+		npte1 |= PG_CCB;
+		npte2 |= PG_CCB;
+	}
+#endif
+
+	s = splimp();
+
+	*caddr1_pte = npte1;
+	TBIS((vaddr_t)CADDR1);
+
+	*caddr2_pte = npte2;
+	TBIS((vaddr_t)CADDR2);
+
+	copypage(CADDR1, CADDR2);
 
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_copy_page(%lx, %lx)\n", src, dst);
+	*caddr1_pte = PG_NV;
+	TBIS((vaddr_t)CADDR1);
+
+	*caddr2_pte = PG_NV;
+	TBIS((vaddr_t)CADDR2);
 #endif
-	skva = (vaddr_t) CADDR1;
-	dkva = (vaddr_t) CADDR2;
-	pmap_enter(pmap_kernel(), skva, src, VM_PROT_READ, TRUE);
-	pmap_enter(pmap_kernel(), dkva, dst, VM_PROT_READ|VM_PROT_WRITE, TRUE);
-	copypage((caddr_t)skva, (caddr_t)dkva);
-	/* CADDR1 and CADDR2 are virtually contiguous */
-	pmap_remove(pmap_kernel(), skva, skva + (2 * NBPG));
+
+	splx(s);
 }
 
 /*
- *	Routine:	pmap_pageable
- *	Function:
- *		Make the specified pages (by pmap, offset)
- *		pageable (or not) as requested.
+ * pmap_pageable:		[ INTERFACE ]
  *
- *		A page which is not pageable may not take
- *		a fault; therefore, its page table entry
- *		must remain valid for the duration.
+ *	Make the specified pages (by pmap, offset) pageable (or not) as
+ *	requested.
  *
- *		This routine is merely advisory; pmap_enter
- *		will specify that these pages are to be wired
- *		down (or not) as appropriate.
+ *	A page which is not pageable may not take a fault; therefore,
+ *	its page table entry must remain valid for the duration.
+ *
+ *	This routine is merely advisory; pmap_enter() will specify that
+ *	these pages are to be wired down (or not) as appropriate.
  */
 void
 pmap_pageable(pmap, sva, eva, pageable)
@@ -1961,11 +1904,11 @@ pmap_pageable(pmap, sva, eva, pageable)
 	vaddr_t		sva, eva;
 	boolean_t	pageable;
 {
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_pageable(%p, %lx, %lx, %x)\n",
-		       pmap, sva, eva, pageable);
-#endif
+
+	PMAP_DPRINTF(PDB_FOLLOW,
+	    ("pmap_pageable(%p, %lx, %lx, %x)\n",
+	    pmap, sva, eva, pageable));
+
 	/*
 	 * If we are making a PT page pageable then all valid
 	 * mappings must be gone from that page.  Hence it should
@@ -2001,7 +1944,7 @@ pmap_pageable(pmap, sva, eva, pageable)
 		/*
 		 * Mark it unmodified to avoid pageout
 		 */
-		pmap_changebit(pa, PG_M, FALSE);
+		pmap_changebit(pa, 0, ~PG_M);
 #ifdef DEBUG
 		if ((PHYS_TO_VM_PAGE(pa)->flags & PG_CLEAN) == 0) {
 			printf("pa %lx: flags=%x: not clean\n",
@@ -2018,43 +1961,41 @@ pmap_pageable(pmap, sva, eva, pageable)
 }
 
 /*
+ * pmap_clear_modify:		[ INTERFACE ]
+ *
  *	Clear the modify bits on the specified physical page.
  */
-
 void
 pmap_clear_modify(pa)
 	paddr_t	pa;
 {
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_modify(%lx)\n", pa);
-#endif
-	pmap_changebit(pa, PG_M, FALSE);
+
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_modify(%lx)\n", pa));
+
+	pmap_changebit(pa, 0, ~PG_M);
 }
 
 /*
- *	pmap_clear_reference:
+ * pmap_clear_reference:	[ INTERFACE ]
  *
  *	Clear the reference bit on the specified physical page.
  */
-
-void pmap_clear_reference(pa)
+void
+pmap_clear_reference(pa)
 	paddr_t	pa;
 {
-#ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
-		printf("pmap_clear_reference(%lx)\n", pa);
-#endif
-	pmap_changebit(pa, PG_U, FALSE);
+
+	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_clear_reference(%lx)\n", pa));
+
+	pmap_changebit(pa, 0, ~PG_U);
 }
 
 /*
- *	pmap_is_referenced:
+ * pmap_is_referenced:		[ INTERFACE ]
  *
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
  */
-
 boolean_t
 pmap_is_referenced(pa)
 	paddr_t	pa;
@@ -2070,12 +2011,11 @@ pmap_is_referenced(pa)
 }
 
 /*
- *	pmap_is_modified:
+ * pmap_is_modified:		[ INTERFACE ]
  *
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
  */
-
 boolean_t
 pmap_is_modified(pa)
 	paddr_t	pa;
@@ -2090,6 +2030,15 @@ pmap_is_modified(pa)
 	return(pmap_testbit(pa, PG_M));
 }
 
+/*
+ * pmap_phys_address:		[ INTERFACE ]
+ *
+ *	Return the physical address corresponding to the specified
+ *	cookie.  Used by the device pager to decode a device driver's
+ *	mmap entry point return value.
+ *
+ *	Note: no locking is necessary in this function.
+ */
 paddr_t
 pmap_phys_address(ppn)
 	int ppn;
@@ -2099,12 +2048,14 @@ pmap_phys_address(ppn)
 
 #ifdef COMPAT_HPUX
 /*
- * 'PUX hack for dealing with the so called multi-mapped address space.
- * The first 256mb is mapped in at every 256mb region from 0x10000000
- * up to 0xF0000000.  This allows for 15 bits of tag information.
+ * pmap_mapmulti:
  *
- * We implement this at the segment table level, the machine independent
- * VM knows nothing about it.
+ *	'PUX hack for dealing with the so called multi-mapped address space.
+ *	The first 256mb is mapped in at every 256mb region from 0x10000000
+ *	up to 0xF0000000.  This allows for 15 bits of tag information.
+ *
+ *	We implement this at the segment table level, the machine independent
+ *	VM knows nothing about it.
  */
 int
 pmap_mapmulti(pmap, va)
@@ -2131,17 +2082,23 @@ pmap_mapmulti(pmap, va)
 	}
 	return (KERN_INVALID_ADDRESS);
 }
-#endif
+#endif /* COMPAT_HPUX */
 
 /*
  * Miscellaneous support routines follow
  */
 
 /*
- * Invalidate a single page denoted by pmap/va.
- * If (pte != NULL), it is the already computed PTE for the page.
- * If (flags & PRM_TFLUSH), we must invalidate any TLB information.
- * If (flags & PRM_CFLUSH), we must flush/invalidate any cache information.
+ * pmap_remove_mapping:
+ *
+ *	Invalidate a single page denoted by pmap/va.
+ *
+ *	If (pte != NULL), it is the already computed PTE for the page.
+ *
+ *	If (flags & PRM_TFLUSH), we must invalidate any TLB information.
+ *
+ *	If (flags & PRM_CFLUSH), we must flush/invalidate any cache
+ *	information.
  */
 /* static */
 void
@@ -2158,11 +2115,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	int s, bits;
 #ifdef DEBUG
 	pt_entry_t opte;
-
-	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
-		printf("pmap_remove_mapping(%p, %lx, %p, %x)\n",
-		       pmap, va, pte, flags);
 #endif
+
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
+	    ("pmap_remove_mapping(%p, %lx, %p, %x)\n",
+	    pmap, va, pte, flags));
 
 	/*
 	 * PTE not provided, compute it from pmap and va.
@@ -2179,9 +2136,6 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		 * state of any hardware maintained bits.
 		 */
 		DCIS();
-#ifdef PMAPSTATS
-		remove_stats.sflushes++;
-#endif
 		/*
 		 * If this is a non-CI user mapping for the current process,
 		 * flush the VAC.  Note that the kernel side was flushed
@@ -2189,18 +2143,12 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		 */
 		if (active_user_pmap(pmap) && !pmap_pte_ci(pte)) {
 			DCIU();
-#ifdef PMAPSTATS
-			remove_stats.uflushes++;
-#endif
 		}
 	}
 #endif
 	pa = pmap_pte_pa(pte);
 #ifdef DEBUG
 	opte = *pte;
-#endif
-#ifdef PMAPSTATS
-	remove_stats.removes++;
 #endif
 	/*
 	 * Update statistics
@@ -2212,10 +2160,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	/*
 	 * Invalidate the PTE after saving the reference modify info.
 	 */
-#ifdef DEBUG
-	if (pmapdebug & PDB_REMOVE)
-		printf("remove: invalidating pte at %p\n", pte);
-#endif
+	PMAP_DPRINTF(PDB_REMOVE, ("remove: invalidating pte at %p\n", pte));
 	bits = *pte & (PG_U|PG_M);
 	*pte = PG_NV;
 	if ((flags & PRM_TFLUSH) && active_pmap(pmap))
@@ -2268,14 +2213,8 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			pmap_free_pv(npv);
 		} else
 			pv->pv_pmap = NULL;
-#ifdef PMAPSTATS
-		remove_stats.pvfirst++;
-#endif
 	} else {
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
-#ifdef PMAPSTATS
-			remove_stats.pvsearch++;
-#endif
 			if (pmap == npv->pv_pmap && va == npv->pv_va)
 				break;
 			pv = npv;
@@ -2296,12 +2235,10 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 */
 	if (pmap_aliasmask &&
 	    pv->pv_pmap && pv->pv_next == NULL && (pv->pv_flags & PV_CI)) {
-#ifdef DEBUG
-		if (pmapdebug & PDB_CACHE)
-			printf("remove: clearing CI for pa %lx\n", pa);
-#endif
+		PMAP_DPRINTF(PDB_CACHE,
+		    ("remove: clearing CI for pa %lx\n", pa));
 		pv->pv_flags &= ~PV_CI;
-		pmap_changebit(pa, PG_CI, FALSE);
+		pmap_changebit(pa, 0, ~PG_CI);
 #ifdef DEBUG
 		if ((pmapdebug & (PDB_CACHE|PDB_PVDUMP)) ==
 		    (PDB_CACHE|PDB_PVDUMP))
@@ -2314,14 +2251,9 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 * mapping from the associated segment table.
 	 */
 	if (ste) {
-#ifdef PMAPSTATS
-		remove_stats.ptinvalid++;
-#endif
-#ifdef DEBUG
-		if (pmapdebug & (PDB_REMOVE|PDB_PTPAGE))
-			printf("remove: ste was %x@%p pte was %x@%p\n",
-			       *ste, ste, opte, pmap_pte(pmap, va));
-#endif
+		PMAP_DPRINTF(PDB_REMOVE|PDB_PTPAGE,
+		    ("remove: ste was %x@%p pte was %x@%p\n",
+		    *ste, ste, opte, pmap_pte(pmap, va)));
 #if defined(M68040) || defined(M68060)
 		if (mmutype == MMU_68040) {
 			st_entry_t *este = &ste[NPTEPG/SG4_LEV3SIZE];
@@ -2340,20 +2272,18 @@ pmap_remove_mapping(pmap, va, pte, flags)
 		 * freeing it if it is now empty.
 		 */
 		if (ptpmap != pmap_kernel()) {
+			PMAP_DPRINTF(PDB_REMOVE|PDB_SEGTAB,
+			    ("remove: stab %p, refcnt %d\n",
+			    ptpmap->pm_stab, ptpmap->pm_sref - 1));
 #ifdef DEBUG
-			if (pmapdebug & (PDB_REMOVE|PDB_SEGTAB))
-				printf("remove: stab %p, refcnt %d\n",
-				       ptpmap->pm_stab, ptpmap->pm_sref - 1);
 			if ((pmapdebug & PDB_PARANOIA) &&
 			    ptpmap->pm_stab != (st_entry_t *)trunc_page(ste))
 				panic("remove: bogus ste");
 #endif
 			if (--(ptpmap->pm_sref) == 0) {
-#ifdef DEBUG
-				if (pmapdebug&(PDB_REMOVE|PDB_SEGTAB))
-					printf("remove: free stab %p\n",
-					       ptpmap->pm_stab);
-#endif
+				PMAP_DPRINTF(PDB_REMOVE|PDB_SEGTAB,
+				    ("remove: free stab %p\n",
+				    ptpmap->pm_stab));
 #if defined(UVM)
 				uvm_km_free_wakeup(st_map,
 						 (vaddr_t)ptpmap->pm_stab,
@@ -2402,6 +2332,11 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	splx(s);
 }
 
+/*
+ * pmap_testbit:
+ *
+ *	Test the modified/referenced bits of a physical page.
+ */
 /* static */
 boolean_t
 pmap_testbit(pa, bit)
@@ -2432,13 +2367,14 @@ pmap_testbit(pa, bit)
 		DCIS();
 #endif
 	/*
-	 * Not found, check current mappings returning
-	 * immediately if found.
+	 * Not found.  Check current mappings, returning immediately if
+	 * found.  Cache a hit to speed future lookups.
 	 */
 	if (pv->pv_pmap != NULL) {
 		for (; pv; pv = pv->pv_next) {
 			pte = pmap_pte(pv->pv_pmap, pv->pv_va);
 			if (*pte & bit) {
+				*pa_to_attribute(pa) |= bit;
 				splx(s);
 				return(TRUE);
 			}
@@ -2448,12 +2384,17 @@ pmap_testbit(pa, bit)
 	return(FALSE);
 }
 
+/*
+ * pmap_changebit:
+ *
+ *	Change the modified/referenced bits, or other PTE bits,
+ *	for a physical page.
+ */
 /* static */
 void
-pmap_changebit(pa, bit, setem)
+pmap_changebit(pa, set, mask)
 	paddr_t pa;
-	int bit;
-	boolean_t setem;
+	int set, mask;
 {
 	struct pv_entry *pv;
 	pt_entry_t *pte, npte;
@@ -2462,32 +2403,21 @@ pmap_changebit(pa, bit, setem)
 #if defined(M68K_MMU_HP) || defined(M68040) || defined(M68060)
 	boolean_t firstpage = TRUE;
 #endif
-#ifdef PMAPSTATS
-	struct chgstats *chgp;
-#endif
 
-#ifdef DEBUG
-	if (pmapdebug & PDB_BITS)
-		printf("pmap_changebit(%lx, %x, %s)\n",
-		       pa, bit, setem ? "set" : "clear");
-#endif
+	PMAP_DPRINTF(PDB_BITS,
+	    ("pmap_changebit(%lx, %x, %x)\n", pa, set, mask));
+
 	if (!PAGE_IS_MANAGED(pa))
 		return;
 
-#ifdef PMAPSTATS
-	chgp = &changebit_stats[(bit>>2)-1];
-	if (setem)
-		chgp->setcalls++;
-	else
-		chgp->clrcalls++;
-#endif
 	pv = pa_to_pvh(pa);
 	s = splimp();
+
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
-	if (!setem)
-		*pa_to_attribute(pa) &= ~bit;
+	*pa_to_attribute(pa) &= mask;
+
 	/*
 	 * Loop over all current mappings setting/clearing as appropos
 	 * If setting RO do we need to clear the VAC?
@@ -2505,7 +2435,7 @@ pmap_changebit(pa, bit, setem)
 			/*
 			 * XXX don't write protect pager mappings
 			 */
-			if (bit == PG_RO) {
+			if (set == PG_RO) {
 #if defined(UVM)
 				if (va >= uvm.pager_sva && va < uvm.pager_eva)
 					continue;
@@ -2528,10 +2458,7 @@ pmap_changebit(pa, bit, setem)
 				DCIS();
 			}
 #endif
-			if (setem)
-				npte = *pte | bit;
-			else
-				npte = *pte & ~bit;
+			npte = (*pte | set) & mask;
 			if (*pte != npte) {
 #if defined(M68040) || defined(M68060)
 				/*
@@ -2539,9 +2466,10 @@ pmap_changebit(pa, bit, setem)
 				 * protection make sure the caches are
 				 * flushed (but only once).
 				 */
-				if (firstpage && mmutype == MMU_68040 &&
-				    ((bit == PG_RO && setem) ||
-				    (bit & PG_CMASK))) {
+				if (firstpage && (mmutype == MMU_68040) &&
+				    ((set == PG_RO) ||
+				     (set & PG_CMASK) ||
+				     (mask & PG_CMASK) == 0)) {
 					firstpage = FALSE;
 					DCFP(pa);
 					ICPP(pa);
@@ -2550,36 +2478,17 @@ pmap_changebit(pa, bit, setem)
 				*pte = npte;
 				if (active_pmap(pv->pv_pmap))
 					TBIS(va);
-#ifdef PMAPSTATS
-				if (setem)
-					chgp->sethits++;
-				else
-					chgp->clrhits++;
-#endif
 			}
-#ifdef PMAPSTATS
-			else {
-				if (setem)
-					chgp->setmiss++;
-				else
-					chgp->clrmiss++;
-			}
-#endif
 		}
-#if defined(M68K_MMU_HP) && defined(DEBUG)
-		if (setem && bit == PG_RO && (pmapvacflush & PVF_PROTECT)) {
-			if ((pmapvacflush & PVF_TOTAL) || toflush == 3)
-				DCIA();
-			else if (toflush == 2)
-				DCIS();
-			else
-				DCIU();
-		}
-#endif
 	}
 	splx(s);
 }
 
+/*
+ * pmap_enter_ptpage:
+ *
+ *	Allocate and map a PT page for the specified pmap/va pair.
+ */
 /* static */
 void
 pmap_enter_ptpage(pmap, va)
@@ -2591,13 +2500,9 @@ pmap_enter_ptpage(pmap, va)
 	st_entry_t *ste;
 	int s;
 
-#ifdef DEBUG
-	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER|PDB_PTPAGE))
-		printf("pmap_enter_ptpage: pmap %p, va %lx\n", pmap, va);
-#endif
-#ifdef PMAPSTATS
-	enter_stats.ptpneeded++;
-#endif
+	PMAP_DPRINTF(PDB_FOLLOW|PDB_ENTER|PDB_PTPAGE,
+	    ("pmap_enter_ptpage: pmap %p, va %lx\n", pmap, va));
+
 	/*
 	 * Allocate a segment table if necessary.  Note that it is allocated
 	 * from a private map and not pt_map.  This keeps user page tables
@@ -2620,7 +2525,7 @@ pmap_enter_ptpage(pmap, va)
 #ifdef DEBUG
 			if (dowriteback && dokwriteback)
 #endif
-			pmap_changebit((vaddr_t)pmap->pm_stpa, PG_CIN, 1);
+			pmap_changebit((paddr_t)pmap->pm_stpa, 0, ~PG_CCB);
 			pmap->pm_stfree = protostfree;
 		}
 #endif
@@ -2630,11 +2535,10 @@ pmap_enter_ptpage(pmap, va)
 		 */
 		if (active_user_pmap(pmap))
 			PMAP_ACTIVATE(pmap, 1);
-#ifdef DEBUG
-		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
-			printf("enter: pmap %p stab %p(%p)\n",
-			       pmap, pmap->pm_stab, pmap->pm_stpa);
-#endif
+
+		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
+		    ("enter: pmap %p stab %p(%p)\n",
+		    pmap, pmap->pm_stab, pmap->pm_stpa));
 	}
 
 	ste = pmap_ste(pmap, va);
@@ -2655,10 +2559,9 @@ pmap_enter_ptpage(pmap, va)
 			bzero(addr, SG4_LEV2SIZE*sizeof(st_entry_t));
 			addr = (caddr_t)&pmap->pm_stpa[ix*SG4_LEV2SIZE];
 			*ste = (u_int)addr | SG_RW | SG_U | SG_V;
-#ifdef DEBUG
-			if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
-				printf("enter: alloc ste2 %d(%p)\n", ix, addr);
-#endif
+
+			PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
+			    ("enter: alloc ste2 %d(%p)\n", ix, addr));
 		}
 		ste = pmap_ste2(pmap, va);
 		/*
@@ -2670,11 +2573,9 @@ pmap_enter_ptpage(pmap, va)
 		 * entirety below.
 		 */
 		ste = (st_entry_t *)((int)ste & ~(NBPG/SG4_LEV3SIZE-1));
-#ifdef DEBUG
-		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
-			printf("enter: ste2 %p (%p)\n",
-			       pmap_ste2(pmap, va), ste);
-#endif
+
+		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
+		    ("enter: ste2 %p (%p)\n", pmap_ste2(pmap, va), ste));
 	}
 #endif
 	va = trunc_page((vaddr_t)pmap_pte(pmap, va));
@@ -2693,18 +2594,12 @@ pmap_enter_ptpage(pmap, va)
 			 * No PT pages available.
 			 * Try once to free up unused ones.
 			 */
-#ifdef DEBUG
-			if (pmapdebug & PDB_COLLECT)
-				printf("enter: no KPT pages, collecting...\n");
-#endif
+			PMAP_DPRINTF(PDB_COLLECT,
+			    ("enter: no KPT pages, collecting...\n"));
 			pmap_collect(pmap_kernel());
 			if ((kpt = kpt_free_list) == (struct kpt_page *)0)
 				panic("pmap_enter_ptpage: can't get KPT page");
 		}
-#ifdef PMAPSTATS
-		if (++kpt_stats.kptinuse > kpt_stats.kptmaxuse)
-			kpt_stats.kptmaxuse = kpt_stats.kptinuse;
-#endif
 		kpt_free_list = kpt->kpt_next;
 		kpt->kpt_next = kpt_used_list;
 		kpt_used_list = kpt;
@@ -2731,10 +2626,8 @@ pmap_enter_ptpage(pmap, va)
 		 * lose the segment table when low on memory.
 		 */
 		pmap->pm_sref++;
-#ifdef DEBUG
-		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
-			printf("enter: about to fault UPT pg at %lx\n", va);
-#endif
+		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
+		    ("enter: about to fault UPT pg at %lx\n", va));
 #if defined(UVM)
 		s = uvm_fault(pt_map, va, 0, VM_PROT_READ|VM_PROT_WRITE);
 		if (s != KERN_SUCCESS) {
@@ -2778,7 +2671,7 @@ pmap_enter_ptpage(pmap, va)
 			       pmap == pmap_kernel() ? "Kernel" : "User",
 			       va, ptpa, pte, *pte);
 #endif
-		pmap_changebit(ptpa, PG_CIN, 1);
+		pmap_changebit(ptpa, 0, ~PG_CCB);
 	}
 #endif
 	/*
@@ -2801,10 +2694,9 @@ pmap_enter_ptpage(pmap, va)
 #endif
 	pv->pv_ptste = ste;
 	pv->pv_ptpmap = pmap;
-#ifdef DEBUG
-	if (pmapdebug & (PDB_ENTER|PDB_PTPAGE))
-		printf("enter: new PT page at PA %lx, ste at %p\n", ptpa, ste);
-#endif
+
+	PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
+	    ("enter: new PT page at PA %lx, ste at %p\n", ptpa, ste));
 
 	/*
 	 * Map the new PT page into the segment table.
@@ -2826,11 +2718,9 @@ pmap_enter_ptpage(pmap, va)
 #endif
 	*ste = (ptpa & SG_FRAME) | SG_RW | SG_V;
 	if (pmap != pmap_kernel()) {
-#ifdef DEBUG
-		if (pmapdebug & (PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB))
-			printf("enter: stab %p refcnt %d\n",
-			       pmap->pm_stab, pmap->pm_sref);
-#endif
+		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
+		    ("enter: stab %p refcnt %d\n",
+		    pmap->pm_stab, pmap->pm_sref));
 	}
 #if 0
 	/*
@@ -2845,22 +2735,12 @@ pmap_enter_ptpage(pmap, va)
 	splx(s);
 }
 
-/*
- *	Routine:        pmap_procwr
- * 
- *	Function:
- *		Synchronize caches corresponding to [addr, addr+len) in p.
- */   
-void
-pmap_procwr(p, va, len)
-	struct proc	*p;
-	vaddr_t		va;
-	size_t		len;
-{
-	(void)cachectl1(0x80000004, va, len, p);
-}
-
 #ifdef DEBUG
+/*
+ * pmap_pvdump:
+ *
+ *	Dump the contents of the PV list for the specified physical page.
+ */
 /* static */
 void
 pmap_pvdump(pa)
@@ -2877,6 +2757,13 @@ pmap_pvdump(pa)
 }
 
 /* static */
+/*
+ * pmap_check_wiring:
+ *
+ *	Count the number of valid mappings in the specified PT page,
+ *	and ensure that it is consistent with the number of wirings
+ *	to that page that the VM system has.
+ */
 void
 pmap_check_wiring(str, va)
 	char *str;
@@ -2910,4 +2797,4 @@ pmap_check_wiring(str, va)
 		printf("*%s*: %lx: w%d/a%d\n",
 		       str, va, entry->wired_count, count);
 }
-#endif
+#endif /* DEBUG */
