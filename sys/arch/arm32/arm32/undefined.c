@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.10 1998/04/19 03:41:14 mark Exp $	*/
+/*	$NetBSD: undefined.c,v 1.11 1998/04/19 22:43:27 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -127,10 +127,9 @@ undefinedinstruction(frame)
 	u_quad_t sticks = 0;
 	int coprocessor;
 
-#ifndef BLOCK_IRQS
+	/* Enable interrupts if they were enabled before the exception. */
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
-#endif
 
 	/* Update vmmeter statistics */
     	cnt.v_trap++;

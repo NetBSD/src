@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.11 1998/02/21 22:41:34 mark Exp $ */
+/* $NetBSD: syscall.c,v 1.12 1998/04/19 22:43:27 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -218,15 +218,12 @@ syscall(frame, code)
 #endif	/* DIAGNOSTIC */
 
 	/*
-	 * Enable interrupts if they were enable before the exception.
-	 * Sinces all syscalls *should* come from user mode it will always
+	 * Enable interrupts if they were enabled before the exception.
+	 * Since all syscalls *should* come from user mode it will always
 	 * be safe to enable them, but check anyway. 
 	 */
-
-#ifndef BLOCK_IRQS
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
-#endif	/* BLOCK_IRQS */
 
 	p = curproc;
 	sticks = p->p_sticks;
