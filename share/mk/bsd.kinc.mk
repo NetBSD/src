@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.11 2000/02/26 19:02:40 mycroft Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.12 2000/04/23 07:58:17 simonb Exp $
 
 # System configuration variables:
 #
@@ -116,19 +116,20 @@ ${DESTDIR}${INCSDIR}/$I: ${DESTDIR}${INCSDIR} $I
 .if defined(SYMLINKS) && !empty(SYMLINKS)
 incinstall::
 	@(set ${SYMLINKS}; \
-	 echo ".include <bsd.own.mk>"; \
 	 while test $$# -ge 2; do \
 		l=$$1; \
 		shift; \
 		t=${DESTDIR}$$1; \
 		shift; \
-		echo "realall: $$t"; \
-		echo ".PHONY: $$t"; \
-		echo "$$t:"; \
-		echo "	@echo \"$$t -> $$l\""; \
-		echo "	@rm -rf $$t; ln -s $$l $$t"; \
-	 done; \
-	) | ${MAKE} -f- all
+		if [ -L $$t ]; then \
+			cur=`ls -ld $$t | awk '{print $$NF}'` ; \
+			if [ "$$cur" = "$$l" ]; then \
+				continue ; \
+			fi; \
+		fi; \
+		echo "$$t -> $$l"; \
+		rm -rf $$t; ln -s $$l $$t; \
+	 done; )
 .endif
 
 .if !target(incinstall)

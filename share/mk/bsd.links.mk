@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.12 2000/02/26 19:02:40 mycroft Exp $
+#	$NetBSD: bsd.links.mk,v 1.13 2000/04/23 07:58:17 simonb Exp $
 
 .PHONY:		linksinstall
 realinstall:	linksinstall
@@ -6,19 +6,20 @@ realinstall:	linksinstall
 .if defined(SYMLINKS) && !empty(SYMLINKS)
 linksinstall::
 	@(set ${SYMLINKS}; \
-	 echo ".include <bsd.own.mk>"; \
 	 while test $$# -ge 2; do \
 		l=$$1; \
 		shift; \
 		t=${DESTDIR}$$1; \
 		shift; \
-		echo "realall: $$t"; \
-		echo ".PHONY: $$t"; \
-		echo "$$t:"; \
-		echo "	@echo \"$$t -> $$l\""; \
-		echo "	@rm -f $$t; ln -s $$l $$t"; \
-	 done; \
-	) | ${MAKE} -f- all
+		if [ -L $$t ]; then \
+			cur=`ls -ld $$t | awk '{print $$NF}'` ; \
+			if [ "$$cur" = "$$l" ]; then \
+				continue ; \
+			fi; \
+		fi; \
+		echo "$$t -> $$l"; \
+		rm -rf $$t; ln -s $$l $$t; \
+	 done; )
 .endif
 .if defined(LINKS) && !empty(LINKS)
 linksinstall::
