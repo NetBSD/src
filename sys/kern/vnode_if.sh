@@ -33,7 +33,7 @@ copyright='
  * SUCH DAMAGE.
  */
 '
-SCRIPT_ID='$Id: vnode_if.sh,v 1.2 1994/06/15 15:49:03 gwr Exp $'
+SCRIPT_ID='$Id: vnode_if.sh,v 1.3 1994/06/15 18:13:31 gwr Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -45,9 +45,6 @@ if [ $# -ne 1 ] ; then
 	echo 'usage: vnode_if.sh srcfile'
 	exit 1
 fi
-
-# Disable filename generation (globbing)
-set -f
 
 # Name of the source file.
 src=$1
