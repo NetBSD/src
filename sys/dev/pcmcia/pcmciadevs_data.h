@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.39 1999/06/19 18:49:34 mjl Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.40 1999/06/23 10:37:10 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.36 1999/06/19 18:16:07 mjl Exp 
+ *	NetBSD: pcmciadevs,v 1.37 1999/06/23 10:36:19 mjl Exp 
  */
 
 /*-
@@ -92,6 +92,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Compex Corporation",
 	    "Compex Linkport ENET-B Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_LASAT, PCMCIA_PRODUCT_LASAT_CREDIT_288,
+	    PCMCIA_CIS_LASAT_CREDIT_288,
+	    0,
+	    "",
+	    "Lasat Credit 288 Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_1,
