@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.130 2000/12/14 18:06:14 mycroft Exp $
+# $NetBSD: files.alpha,v 1.131 2001/01/01 23:43:06 mrg Exp $
 #
 # alpha-specific configuration info
 
@@ -198,11 +198,6 @@ file	dev/tc/zsms.c			zsms
 device	lkkbd: wskbddev
 attach	lkkbd at zsc with zskbd
 file	dev/tc/zskbd.c			zskbd		needs-flag
-
-# the TCDS ASIC
-device	tcds { chip = -1 }
-attach	tcds at tc
-file	dev/tc/tcds.c			tcds
 
 # 53C[F]90 SCSI
 device	asc: scsi, ncr53c9x
