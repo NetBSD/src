@@ -71,7 +71,7 @@ static	int poscnt;
 uschar	*patbeg;
 int	patlen;
 
-#define	NFA	20	/* cache this many dynamic fa's */
+#define	NFA	128	/* cache this many dynamic fa's */
 fa	*fatab[NFA];
 int	nfatab	= 0;	/* entries in fatab */
 
