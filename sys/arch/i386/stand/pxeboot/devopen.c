@@ -1,7 +1,7 @@
-/*	$NetBSD: devopen.c,v 1.1 2002/02/16 03:37:40 thorpej Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 2002/02/17 20:14:08 thorpej Exp $	*/
 
 /*
- * Copyright 2001 Wasabi Systems, Inc.
+ * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -50,6 +50,7 @@
 
 #ifdef _STANDALONE
 struct btinfo_bootpath bibp;
+extern char bootfile[];
 #endif
 
 /*
@@ -71,9 +72,23 @@ devopen(struct open_file *f, const char *fname, char **file)
 	struct devsw *dp;
 	char *filename;
 	size_t fsnamelen;
-	int i;
+	int i, error;
 
+	dp = &devsw[0];
+
+	/* Set the default boot file system. */
 	bcopy(pxeboot_fstab[0].fst_ops, file_system, sizeof(struct fs_ops));
+
+	/* Open the device; this might give us a boot file name. */
+	error = (*dp->dv_open)(f, NULL);
+	if (error)
+		return (error);
+
+	f->f_dev = dp;
+
+	/* If the DHCP server provided a file name, use it. */
+	if (bootfile[0] != '\0')
+		fname = bootfile;
 
 	filename = strchr(fname, ':');
 	if (filename != NULL) {
@@ -89,24 +104,28 @@ devopen(struct open_file *f, const char *fname, char **file)
 		if (i == npxeboot_fstab) {
 			printf("Invalid file system type specified in %s\n",
 			    fname);
-			return (EINVAL);
+			error = EINVAL;
+			goto bad;
 		}
 		filename++;
 		if (filename[0] == '\0') {
 			printf("No file specified in %s\n", fname);
-			return (EINVAL);
+			error = EINVAL;
+			goto bad;
 		}
 	} else
 		filename = (char *)fname;
 
 	*file = filename;
-	dp = &devsw[0];
-	f->f_dev = dp;
 
 #ifdef _STANDALONE
 	strncpy(bibp.bootpath, filename, sizeof(bibp.bootpath));
 	BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
 #endif
 
-	return ((*dp->dv_open)(f, NULL));
+	return (0);
+ bad:
+	(*dp->dv_close)(f);
+	f->f_dev = NULL;
+	return (error);
 }
