@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.12 2003/02/26 23:41:01 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.13 2003/02/28 18:37:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,7 +89,9 @@ __strong_alias(__libc_thr_errno,pthread__errno)
  */
 extern int pthread__cancel_stub_binder;
 extern int pthread__sched_binder;
+#if 0
 extern struct pthread_queue_t pthread__nanosleeping;
+#endif
 
 void *pthread__static_lib_binder[] = {
 	&pthread__cancel_stub_binder,
@@ -99,7 +101,9 @@ void *pthread__static_lib_binder[] = {
 	pthread_barrier_init,
 	pthread_key_create,
 	&pthread__sched_binder,
+#if 0
 	&pthread__nanosleeping
+#endif
 };
 
 /* Private data for pthread_attr_t */
