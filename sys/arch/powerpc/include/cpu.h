@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2001/12/05 05:02:10 chs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2002/03/03 07:09:09 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -45,6 +45,8 @@
 #include <machine/psl.h>
 #include <machine/intr.h>
 
+#include <dev/sysmon/sysmonvar.h>
+
 #ifdef _KERNEL
 #include <sys/sched.h>
 struct cpu_info {
@@ -75,6 +77,8 @@ struct cpu_info {
 	int ci_ddbsave[8];
 	int ci_ipkdbsave[8];
 	int ci_disisave[4];
+	struct sysmon_envsys ci_sysmon;
+	struct envsys_tre_data ci_tau_info;
 	struct evcnt ci_ev_traps;	/* calls to trap() */
 	struct evcnt ci_ev_kdsi;	/* kernel DSI traps */
 	struct evcnt ci_ev_udsi;	/* user DSI traps */
