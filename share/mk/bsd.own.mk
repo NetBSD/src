@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.290 2002/04/29 19:27:07 wiz Exp $
+#	$NetBSD: bsd.own.mk,v 1.291 2002/05/03 08:58:45 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -258,11 +258,7 @@ RENAME?=	-r
 HRDLINK?=	-l h
 SYMLINK?=	-l s
 
-.if defined(_SRC_TOP_OBJ_)
-METALOG?=	${_SRC_TOP_OBJ_}/METALOG
-.else
-METALOG?=	/dev/null
-.endif
+METALOG?=	${DESTDIR}/METALOG
 INSTPRIV?=	${UNPRIVED:D-U -M ${METALOG}}
 STRIPFLAG?=	-s
 

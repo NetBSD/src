@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.16 2002/05/02 22:13:30 sommerfeld Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.17 2002/05/03 08:59:14 lukem Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd March 5, 2002
+.Dd May 3, 2002
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -438,10 +438,8 @@ The user, group, permissions, and file flags, will not be set on
 the installed item; instead the information will be appended to
 a file called
 .Pa METALOG
-in the
-.Sy .OBJDIR
-of
-.Sy src .
+in
+.Sy DESTDIR .
 The contents of
 .Pa METALOG
 is used during the generation of the distribution tar files to ensure
