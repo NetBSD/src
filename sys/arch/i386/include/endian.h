@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.19 1996/10/11 00:02:47 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.20 1997/07/17 18:44:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -119,10 +119,10 @@ __END_DECLS
 
 #endif /* __OPTIMIZE__ */
 
-#define	ntohl(x)	__byte_swap_long(x)
-#define	ntohs(x)	__byte_swap_word(x)
-#define	htonl(x)	__byte_swap_long(x)
-#define	htons(x)	__byte_swap_word(x)
+#define	ntohl(x)	((in_addr_t)__byte_swap_long((in_addr_t)(x)))
+#define	ntohs(x)	((in_port_t)__byte_swap_word((in_port_t)(x)))
+#define	htonl(x)	((in_addr_t)__byte_swap_long((in_addr_t)(x)))
+#define	htons(x)	((in_port_t)__byte_swap_word((in_port_t)(x)))
 
 #endif	/* __GNUC__ */
 
