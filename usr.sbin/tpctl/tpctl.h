@@ -1,7 +1,7 @@
-/*	$NetBSD: tpctl.h,v 1.1 2002/08/27 14:12:19 takemura Exp $	*/
+/*	$NetBSD: tpctl.h,v 1.2 2003/01/03 04:41:49 takemura Exp $	*/
 
 /*-
- * Copyright (c) 2002 TAKEMRUA Shin
+ * Copyright (c) 2002, 2003 TAKEMRUA Shin
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -71,7 +71,7 @@ struct tpctl_data {
 
 struct tp {
 	int fd;
-	char id[64];
+	char id[WSMOUSE_ID_MAXLEN];
 };
 
 typedef u_int32_t fb_pixel_t;
