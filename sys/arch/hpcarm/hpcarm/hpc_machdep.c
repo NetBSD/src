@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.35 2002/02/22 18:25:08 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.36 2002/02/23 13:58:10 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -571,10 +571,6 @@ initarm(argc, argv, bi)
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
 	    PROCESS_PAGE_TBLS_BASE + (KERNEL_SPACE_START >> (PGSHIFT-2)),
-	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
