@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.13 2000/04/27 09:43:38 jdolecek Exp $	*/
+/*	$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pac.c,v 1.13 2000/04/27 09:43:38 jdolecek Exp $");
+__RCSID("$NetBSD: pac.c,v 1.14 2000/04/27 13:40:18 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,6 @@ main(argc, argv)
 	char * const argv[];
 {
 	FILE *acct;
-	char *cp;
 	int opt;
 
 	while ((opt = getopt(argc, argv, "P:p:scmr")) != -1) {
