@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.c,v 1.11 2000/09/09 09:37:58 jsm Exp $	*/
+/*	$NetBSD: globals.c,v 1.12 2000/09/17 23:03:43 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)globals.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: globals.c,v 1.11 2000/09/09 09:37:58 jsm Exp $");
+__RCSID("$NetBSD: globals.c,v 1.12 2000/09/17 23:03:43 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -256,6 +256,7 @@ unsigned int inven[NUMOFWORDS];
 unsigned int wear[NUMOFWORDS];
 char    beenthere[NUMOFROOMS + 1];
 char    injuries[NUMOFINJURIES];
+int     verbose = 0;
 
 const char *username;
 
