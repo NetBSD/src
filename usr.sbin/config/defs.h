@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.13 2003/09/03 18:56:37 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.14 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,8 +44,8 @@
  * defs.h:  Global definitions for "config"
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <sys/types.h>

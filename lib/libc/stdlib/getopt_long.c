@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.16 2003/10/27 00:12:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.16 2003/10/27 00:12:42 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: getopt_long.c,v 1.15 2002/01/31 22:43:40 tv Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-#if HAVE_CONFIG_H && !HAVE_GETOPT_LONG && !HAVE_DECL_OPTIND
+#if HAVE_NBTOOL_CONFIG_H && !HAVE_GETOPT_LONG && !HAVE_DECL_OPTIND
 #define REPLACE_GETOPT
 #endif
 
@@ -63,7 +63,7 @@ int	optind = 1;		/* index into parent argv vector */
 int	optopt = '?';		/* character checked for validity */
 int	optreset;		/* reset getopt */
 char    *optarg;		/* argument associated with option */
-#elif HAVE_CONFIG_H && !HAVE_DECL_OPTRESET
+#elif HAVE_NBTOOL_CONFIG_H && !HAVE_DECL_OPTRESET
 static int optreset;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.20 2002/04/25 18:16:49 tv Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.21 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -37,8 +37,8 @@
    net-bootable kernels for machines (e.g., DECstation and Alpha) which
    only support the ECOFF object file format. */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <sys/types.h>

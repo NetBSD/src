@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 2003/08/07 11:25:35 agc Exp $	*/
+/*	$NetBSD: extern.h,v 1.28 2003/10/27 00:12:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,8 +33,8 @@
 
 #include "mtree.h"
 
-#if HAVE_CONFIG_H
-#include "config.h" 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #else 
 #define HAVE_STRUCT_STAT_ST_FLAGS 1
 #endif

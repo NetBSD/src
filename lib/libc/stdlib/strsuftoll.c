@@ -1,4 +1,4 @@
-/*	$NetBSD: strsuftoll.c,v 1.3 2003/08/07 16:43:44 agc Exp $	*/
+/*	$NetBSD: strsuftoll.c,v 1.4 2003/10/27 00:12:42 lukem Exp $	*/
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,18 +67,18 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strsuftoll.c,v 1.3 2003/08/07 16:43:44 agc Exp $");
+__RCSID("$NetBSD: strsuftoll.c,v 1.4 2003/10/27 00:12:42 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef _LIBC
 #include "namespace.h"
-#endif
-
-#if HAVE_CONFIG_H
-#include "config.h"
 #endif
 
 #if !HAVE_STRSUFTOLL

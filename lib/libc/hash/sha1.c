@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.11 2003/09/21 17:15:36 martin Exp $	*/
+/*	$NetBSD: sha1.c,v 1.12 2003/10/27 00:12:42 lukem Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -30,8 +30,8 @@
 #include <string.h>
 #endif
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #if !HAVE_SHA1_H

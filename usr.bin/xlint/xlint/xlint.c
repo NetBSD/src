@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.32 2003/01/06 13:10:31 wiz Exp $ */
+/* $NetBSD: xlint.c,v 1.33 2003/10/27 00:12:44 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.32 2003/01/06 13:10:31 wiz Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.33 2003/10/27 00:12:44 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -434,7 +434,7 @@ main(int argc, char *argv[])
 			Sflag = 1;
 			break;
 
-#if !HAVE_CONFIG_H
+#if ! HAVE_NBTOOL_CONFIG_H
 		case 't':
 			if (sflag)
 				usage();

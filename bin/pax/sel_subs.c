@@ -1,4 +1,4 @@
-/*	$NetBSD: sel_subs.c,v 1.18 2003/10/13 07:41:22 agc Exp $	*/
+/*	$NetBSD: sel_subs.c,v 1.19 2003/10/27 00:12:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -33,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: sel_subs.c,v 1.18 2003/10/13 07:41:22 agc Exp $");
+__RCSID("$NetBSD: sel_subs.c,v 1.19 2003/10/27 00:12:41 lukem Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.y,v 1.1 2003/06/26 06:30:18 tshiozak Exp $	*/
+/*	$NetBSD: yacc.y,v 1.2 2003/10/27 00:12:43 lukem Exp $	*/
 
 %{
 /*-
@@ -27,14 +27,14 @@
  * SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yacc.y,v 1.1 2003/06/26 06:30:18 tshiozak Exp $");
-#endif /* LIBC_SCCS and not lint */
+#if !defined(lint)
+__RCSID("$NetBSD: yacc.y,v 1.2 2003/10/27 00:12:43 lukem Exp $");
+#endif /* not lint */
 
 #include <assert.h>
 #include <err.h>

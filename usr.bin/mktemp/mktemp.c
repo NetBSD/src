@@ -1,4 +1,4 @@
-/* $NetBSD: mktemp.c,v 1.5 2002/09/14 04:26:23 thorpej Exp $ */
+/* $NetBSD: mktemp.c,v 1.6 2003/10/27 00:12:43 lukem Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1996, 1998 Peter Wemm <peter@netplex.com.au>
@@ -36,8 +36,8 @@
  * more like the OpenBSD version - which was first to publish the interface.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@
 #include <unistd.h>
 
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: mktemp.c,v 1.5 2002/09/14 04:26:23 thorpej Exp $");
+__RCSID("$NetBSD: mktemp.c,v 1.6 2003/10/27 00:12:43 lukem Exp $");
 #endif /* !__lint */
 
 static void usage __P((void));

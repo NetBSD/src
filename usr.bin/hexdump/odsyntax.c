@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.19 2003/10/22 12:30:39 dmcmahill Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.20 2003/10/27 00:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -29,18 +29,18 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.19 2003/10/22 12:30:39 dmcmahill Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.20 2003/10/27 00:12:43 lukem Exp $");
 #endif
 #endif /* not lint */
-
-#if HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <sys/types.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.30 2003/08/27 18:33:26 uwe Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.31 2003/10/27 00:12:42 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -322,15 +322,20 @@ void *setmode(const char *);
 #undef _DIAGASSERT
 #define _DIAGASSERT(x)
 
+/* Various sources use this */
+#undef	__RCSID
+#define	__RCSID(x)
+#undef	__SCCSID
+#define	__SCCSID(x)
+#undef	__COPYRIGHT
+#define	__COPYRIGHT(x)
+#undef	__KERNEL_RCSID
+#define	__KERNEL_RCSID(x,y)
+
 /* Heimdal expects this one. */
 
 #undef RCSID
 #define RCSID(x)
-
-/* pwd_mkdb expects this one. */
-
-#undef __SCCSID
-#define __SCCSID(x)
 
 /* Some definitions not available on all systems. */
 
