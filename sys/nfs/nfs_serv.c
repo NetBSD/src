@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_serv.c	7.40 (Berkeley) 5/15/91
- *	$Id: nfs_serv.c,v 1.5 1993/07/16 00:51:55 cgd Exp $
+ *	$Id: nfs_serv.c,v 1.6 1993/07/16 00:52:50 cgd Exp $
  */
 
 /*
@@ -664,7 +664,7 @@ nfsrv_create(mrep, md, dpos, cred, xid, mrq, repstat, p)
 				error = ENXIO;
 				goto out;
 #endif /* FIFO */
-			} else if (error = suser(cred, (short *)0)) {
+			} else if (error = suser(cred, (u_short *)0)) {
 				VOP_ABORTOP(&nd);
 				vput(nd.ni_dvp);
 				goto out;
@@ -773,7 +773,7 @@ nfsrv_remove(mrep, md, dpos, cred, xid, mrq, repstat, p)
 		nfsm_reply(0);
 	vp = nd.ni_vp;
 	if (vp->v_type == VDIR &&
-		(error = suser(cred, (short *)0)))
+		(error = suser(cred, (u_short *)0)))
 		goto out;
 	/*
 	 * The root of a mounted filesystem cannot be deleted.
