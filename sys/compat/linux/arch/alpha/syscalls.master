@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 2000/11/08 04:19:01 erh Exp $
+	$NetBSD: syscalls.master,v 1.22 2000/11/17 03:55:18 erh Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -59,6 +59,7 @@
 
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#include "opt_compat_osf1.h"
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -86,8 +87,9 @@
 4	NOARGS		{ int sys_write(int fd, const void *buf, size_t nbyte); }
 5	UNIMPL
 6	NOARGS		{ int sys_close(int fd); }
-7	UNIMPL		osf_wait4
-;8	OBSOL		osf_old_creat, NOT USED
+7	NODEF		{ int osf1_sys_wait4(int pid, int *status, \
+			    int options, struct osf1_rusage *rusage); }
+;8	ALIAS		osf1_sys_old_creat, NOT USED
 8	STD		{ int linux_sys_creat(const char *path, mode_t mode); }
 9	NOARGS		{ int sys_link(const char *path, const char *link); }
 10	STD		{ int linux_sys_unlink(const char *path); }
@@ -97,13 +99,14 @@
 14	STD		{ int linux_sys_mknod(const char *path, int mode, int dev); }
 15	STD		{ int linux_sys_chmod(const char *path, int mode); }
 16	STD		{ int linux_sys_chown(const char *path, int uid, int gid); }
-;17	ALIAS		osf_brk
+;17	ALIAS		osf1_sys_brk
 17	STD		{ int linux_sys_brk(char *nsize); }
 18	UNIMPL
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
 20	NOARGS		{ pid_t sys_getpid(void); }
-21	UNIMPL		osf_mount
+21	NODEF		{ int osf1_sys_mount(int type, const char *path, \
+			    int flags, caddr_t data); }
 22	UNIMPL		umount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
@@ -126,12 +129,17 @@
 40	UNIMPL
 41	NOARGS		{ int sys_dup(int fd); }
 42	NOARGS		{ int linux_sys_pipe(void); }
-43	UNIMPL		osf_set_program_attributes
+43	NODEF		{ int osf1_sys_set_program_attributes( \
+			    caddr_t taddr, unsigned long tsize, \
+			    caddr_t daddr, unsigned long dsize); }
 44	UNIMPL
 45	STD		{ int linux_sys_open(const char *path, int flags, int mode); }
 46	UNIMPL
 47	NOARGS		{ gid_t sys_getgid(void); }
-48	UNIMPL		osf_sigprocmask
+; ALIAS osf1_sys_sigprocmask(int how, unsigned long mask);
+; XXX <- copied from osf1/syscalls.master
+48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
+			    sigset13_t mask); }
 49	UNIMPL
 50	UNIMPL
 51	NOARGS		{ int sys_acct(const char *path); }
@@ -159,7 +167,7 @@
 			    struct linux_stat *sp); }
 69	UNIMPL 
 70	UNIMPL
-;71	ALIAS		osf_mmap
+;71	ALIAS		osf1_sys_mmap
 71	NOARGS		{ int linux_sys_mmap(unsigned long addr, size_t len, \
 			    int prot, int flags, int fd, off_t offset); }
 72	UNIMPL
@@ -174,10 +182,12 @@
 80	NOARGS		{ int sys_setgroups(int gidsetsize, const gid_t *gidset); }
 81	UNIMPL
 82	UNIMPL		setpgrp
-83	UNIMPL		osf_setitimer
+83	NODEF		{ int osf1_sys_setitimer(u_int which, \
+			    struct osf1_itimerval *itv, \
+			    struct osf1_itimerval *oitv); }
 84	UNIMPL
 85	UNIMPL	
-86	UNIMPL		osf_getitimer
+86	UNIMPL		osf1_sys_getitimer
 87	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
 			    u_int len); }
 88	NOARGS		{ int compat_43_sys_sethostname(char *hostname, \
@@ -186,7 +196,8 @@
 90	NOARGS		{ int sys_dup2(int from, int to); }
 91	STD		{ int linux_sys_fstat(int fd, struct linux_stat *sp); }
 92	STD		{ int linux_sys_fcntl(int fd, int cmd, void *arg); }
-93	UNIMPL		osf_select
+93	NODEF		{ int osf1_sys_select(u_int nd, fd_set *in, \
+			    fd_set *ou, fd_set *ex, struct osf1_timeval *tv); }
 94	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 95	NOARGS		{ int sys_fsync(int fd); }
@@ -198,7 +209,7 @@
 			    unsigned int namelen); }
 99	NOARGS		{ int compat_43_sys_accept(int s, \
 				caddr_t name, int *anamelen); }
-;100	ALIAS		osf_getpriority
+;100	ALIAS		osf1_sys_getpriority
 100	NOARGS		{ int sys_getpriority(int which, int who); }
 101	NOARGS		{ int compat_43_sys_send(int s, caddr_t buf, int len, \
 				int flags); }
@@ -217,14 +228,18 @@
 
 111	STD		{ int linux_sys_sigsuspend(caddr_t restart, \
 			    int oldmask, int mask); }
-112	UNIMPL		osf_sigstack
+;112	ALIAS		osf1_sys_sigstack
+112	NOARGS		{ int compat_43_sys_sigstack(struct sigstack *nss, \
+			    struct sigstack *oss); }
 113	NOARGS		{ size_t sys_recvmsg(int fd, struct msghdr *msg, \
 				int flags); }
 114	NOARGS		{ ssize_t sys_sendmsg(int fd, \
 				const struct msghdr *msg, int flags); }
 115	UNIMPL
-116	UNIMPL		osf_gettimeofday
-117	UNIMPL		osf_getrusage
+116	NODEF		{ int osf1_sys_gettimeofday(struct osf1_timeval *tv, \
+			    struct osf1_timezone *tzp); }
+117	NODEF		{ int osf1_sys_getrusage(int who, \
+			    struct osf1_rusage *rusage); }
 118	STD		{ int linux_sys_getsockopt(int s, int level, \
 				int optname, void *optval, int *optlen); }
 119	UNIMPL
@@ -232,7 +247,8 @@
 				int iovcnt); }
 121	NOARGS		{ ssize_t sys_writev(int fd, const struct iovec *iovp, \
 				int iovcnt); }
-122	UNIMPL		osf_settimeofday
+122	NODEF		{ int osf1_sys_settimeofday(struct osf1_timeval *tv, \
+			    struct osf1_timezone *tzp); }
 123	STD		{ int linux_sys_fchown(int fd, int uid, int gid); }
 124	NOARGS		{ int sys_fchmod(int fd, mode_t mode); }
 125	STD		{ int linux_sys_recvfrom(int s, void *buf, int len, \
@@ -252,7 +268,8 @@
 				int protocol, int *rsv); }
 136	STD		{ int linux_sys_mkdir(const char *path, int mode); }
 137	STD		{ int linux_sys_rmdir(const char *path); }
-138	UNIMPL		osf_utimes
+138	NODEF		{ int osf1_sys_utimes(const char *path, \
+			    const struct osf1_timeval *tptr); }
 139	UNIMPL
 140	UNIMPL
 141	NOARGS		{ int compat_43_sys_getpeername(int fdes, \
@@ -274,19 +291,25 @@
 153	UNIMPL
 154	UNIMPL
 155	UNIMPL
-;156	ALIAS		osf_sigaction
+;156	ALIAS		osf1_sys_sigaction
 156	STD		{ int linux_sys_sigaction(int signum, \
 				const struct linux_old_sigaction *nsa, \
 				struct linux_old_sigaction *osa); }
 157	UNIMPL
 158	UNIMPL
-159	UNIMPL		osf_getdirentries
-160	UNIMPL		osf_statfs
-161	UNIMPL		osf_fstatfs
+;159	ALIAS		osf1_sys_getdirentries
+159	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
+			    u_int count, long *basep); }
+160	NODEF		{ int osf1_sys_statfs(const char *path, \
+			    struct osf1_statfs *buf, int len); }
+161	NODEF		{ int osf1_sys_fstatfs(int fd, \
+			    struct osf1_statfs *buf, int len); }
 162	UNIMPL
 163	UNIMPL
 164	UNIMPL
-165	UNIMPL		osf_getdomainname
+;165	ALIAS		osf1_sys_getdomainname
+165	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+			    int len); }
 166	UNIMPL		setdomainname
 167	UNIMPL
 168	UNIMPL
@@ -320,7 +343,7 @@
 196	UNIMPL
 197	UNIMPL
 198	UNIMPL
-199	UNIMPL		osf_swapon
+199	UNIMPL		osf1_sys_swapon
 #ifdef SYSVMSG
 200	NOARGS		{ int linux_sys_msgctl(int msqid, int cmd, \
 			    struct linux_msqid_ds *buf); }
@@ -346,7 +369,7 @@
 205	UNIMPL		semget
 206	UNIMPL		semop
 #endif
-;207	ALIAS		osf_utsname
+;207	ALIAS		osf1_sys_utsname
 207	STD		{ int linux_sys_olduname(struct linux_old_utsname *up); }
 208	STD		{ int linux_sys_lchown(char *path, int uid, int gid); }
 #ifdef SYSVSHM
@@ -390,23 +413,27 @@
 238	UNIMPL
 239	UNIMPL
 240	UNIMPL
-241	UNIMPL		osf_sysinfo
+241	NODEF		{ int osf1_sys_sysinfo(int cmd, char buf, long len); }
 242	UNIMPL
 243	UNIMPL
-244	UNIMPL		osf_proplist_syscall
+244	UNIMPL		osf1_sys_proplist_syscall
 245	UNIMPL
 246	UNIMPL
 247	UNIMPL
 248	UNIMPL
 249	UNIMPL
 250	UNIMPL
-251	UNIMPL		osf_usleep_thread
+251	NODEF		{ int osf1_sys_usleep_thread( \
+			    struct osf1_timeval *sleep, \
+			    struct osf1_timeval *slept); }
 252	UNIMPL
 253	UNIMPL
-254	UNIMPL		sysfs
-255	UNIMPL
-256	UNIMPL		osf_getsysinfo
-257	UNIMPL		osf_setsysinfo
+254	UNIMPL
+255	UNIMPL		sysfs
+256	NODEF		{ int osf1_sys_getsysinfo(u_long op, caddr_t buffer, \
+			    u_long nbytes, caddr_t arg, u_long flag); }
+257	NODEF		{ int osf1_sys_setsysinfo(u_long op, caddr_t buffer, \
+			    u_long nbytes, caddr_t arg, u_long flag); }
 258	UNIMPL
 259	UNIMPL
 260	UNIMPL
@@ -466,7 +493,6 @@
 311	STD		{ int linux_sys_reboot(int magic1, int magic2, \
 			    int cmd, void *arg); }
 312	STD		{ int linux_sys_clone(int flags, void *stack); }
-; XXX XAX does alpha linux really have a.out exec?
 #ifdef EXEC_AOUT
 313	STD		{ int linux_sys_uselib(char *path); }
 #else

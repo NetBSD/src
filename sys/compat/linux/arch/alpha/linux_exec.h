@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.1 1998/09/30 21:36:23 erh Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.2 2000/11/17 03:55:18 erh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,5 +43,53 @@
 
 #define LINUX_M_ALPHA		MID_ALPHA
 #define LINUX_MID_MACHINE	LINUX_M_ALPHA
+
+#define LINUX_COPYARGS_FUNCTION	ELFNAME2(linux,copyargs)
+
+/*
+ * Alpha specific ELF defines.
+ *
+ * If this is common to more than one linux port move it
+ * to common/linux_exec.h.
+ */
+#define LINUX_AT_NOTELF  	10
+#define	LINUX_AT_UID      	11
+#define LINUX_AT_EUID     	12
+#define LINUX_AT_GID      	13
+#define	LINUX_AT_EGID     	14
+#define LINUX_AT_PLATFORM	15
+#define LINUX_AT_HWCAP    	16
+
+#define LINUX_ELF_AUX_ENTRIES 12
+
+#define LINUX_ELF_AUX_ARGSIZ howmany(sizeof(LinuxAuxInfo) * LINUX_ELF_AUX_ENTRIES, sizeof(char *))
+
+typedef struct {
+	Elf32_Sword	a_type;
+	Elf32_Word	a_v;
+} LinuxAux32Info;
+
+typedef struct {
+	Elf64_Word	a_type;
+	Elf64_Word	a_v;
+} LinuxAux64Info;
+
+#if defined(ELFSIZE) && (ELFSIZE == 32)
+#define LinuxAuxInfo	LinuxAux32Info
+#else
+#define LinuxAuxInfo	LinuxAux64Info
+#endif
+
+
+#ifdef _KERNEL
+__BEGIN_DECLS
+#ifdef EXEC_ELF32
+void *linux_elf32_copyargs __P((struct exec_package *, struct ps_strings *, void *, void *));
+#endif
+#ifdef EXEC_ELF64
+void *linux_elf64_copyargs __P((struct exec_package *, struct ps_strings *, void *, void *));
+#endif
+__END_DECLS
+#endif /* !_KERNEL */
 
 #endif /* !_ALPHA_LINUX_EXEC_H */
