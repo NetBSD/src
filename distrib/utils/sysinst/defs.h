@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.77 2003/05/18 20:40:09 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.78 2003/05/21 10:05:20 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -163,22 +163,17 @@ EXTERN char swapdev[SSTRSIZE] INIT("");
 /* Used in editing partitions ... BSD disklabel and others */
 EXTERN int editpart;
 
-/* Partition start and size in disk sectors. */
+/* Area of disk we can allocate, start and size in disk sectors. */
 EXTERN int ptstart, ptsize;	
 
-/* File system disk size.  File system partition size. May not include
-   full disk size. */
-EXTERN int fsdsize, fsptsize;	
-
-
-EXTERN int fsdmb;
 EXTERN int minfsdmb;
 EXTERN int partstart;
 EXTERN int partsize;
 
-/* set by md_get_info() */
+/* Actual values for current disk - set by md_get_info() */
 EXTERN int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
 EXTERN int current_cylsize;
+
 /* Information for the NetBSD disklabel */
 enum DLTR {A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z};
 #define partition_name(x)	('a' + (x))
@@ -403,6 +398,7 @@ void	unwind_mounts(void);
 /* from bsddisklabel.c */
 void	show_cur_filesystems(void);
 extern int layout_swap, layout_usr, layout_tmp, layout_var, layout_home;
+int	make_bsd_partitions(void);
 
 /* from aout2elf.c */
 int move_aout_libs(void);
