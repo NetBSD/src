@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.113 2003/10/11 18:32:53 jdolecek Exp $	*/
+/*	$NetBSD: conf.h,v 1.114 2003/10/16 12:02:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -184,12 +184,11 @@ int	ttynullioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
 
 #define	DEV_MEM		0	/* minor device 0 is physical memory */
 #define	DEV_KMEM	1	/* minor device 1 is kernel memory */
-#define DEV_NULL	2	/* minor device 2 is EOF/rathole */
-#ifdef __arm__			/* XXX: FIX ME ARM! */
-#define DEV_ZERO	3	/* minor device 3 is '\0'/rathole */
-#else
-#define DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
+#define	DEV_NULL	2	/* minor device 2 is EOF/rathole */
+#ifdef COMPAT_16
+#define	_DEV_ZERO_oARM	3	/* reserved: old ARM /dev/zero minor */
 #endif
+#define	DEV_ZERO	12	/* minor device 12 is '\0'/rathole */
 
 #endif /* _KERNEL */
 
