@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3 1997/10/09 07:25:45 jtc Exp $
+#	$NetBSD: install.md,v 1.4 1997/10/29 17:36:56 mhitch Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ md_installboot() {
 		case "$resp" in
 			y*|Y*)
 				echo "Installing boot block..."
-				chroot /mnt /usr/mdec/installboot -v $1
+				chroot /mnt /usr/mdec/installboot /usr/mdec/xxboot /dev/r${1}a
 				;;
 			*)
 				echo "No bootblock installed..."
