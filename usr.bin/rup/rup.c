@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.23 2001/01/16 02:43:37 cgd Exp $	*/
+/*	$NetBSD: rup.c,v 1.24 2003/10/16 07:07:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.23 2001/01/16 02:43:37 cgd Exp $");
+__RCSID("$NetBSD: rup.c,v 1.24 2003/10/16 07:07:43 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -177,14 +177,17 @@ compare(struct rup_data *d1, struct rup_data *d2)
 void
 remember_rup_data(const char *host, struct statstime *st)
 {
+	struct rup_data *n;
+
         if (rup_data_idx >= rup_data_max) {
-                rup_data_max += 16;
-                rup_data = realloc (rup_data, 
-				rup_data_max * sizeof(struct rup_data));
-                if (rup_data == NULL) {
+                n = realloc(rup_data,
+                    (rup_data_max + 16) * sizeof(struct rup_data));
+                if (n == NULL) {
                         err (1, "realloc");
 			/* NOTREACHED */
                 }
+		rup_data = n;
+                rup_data_max += 16;
         }
 	
 	rup_data[rup_data_idx].host = strdup(host);
