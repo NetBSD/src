@@ -13,8 +13,8 @@
 ./usr/bin/genclass
 ./usr/bin/gprof
 ./usr/bin/ld
-./usr/bin/lint
 ./usr/bin/lex
+./usr/bin/lint
 ./usr/bin/lorder
 ./usr/bin/mkstr
 ./usr/bin/ranlib
@@ -43,7 +43,6 @@
 ./usr/include/dev/eisa/eisareg.h
 ./usr/include/dev/eisa/eisavar.h
 ./usr/include/dev/ic
-./usr/include/dev/ic/ad1848reg.h
 ./usr/include/dev/ic/am7930reg.h
 ./usr/include/dev/ic/am7990reg.h
 ./usr/include/dev/ic/am7990var.h
@@ -56,14 +55,16 @@
 ./usr/include/dev/ic/i82586reg.h
 ./usr/include/dev/ic/mb86960reg.h
 ./usr/include/dev/ic/mc146818reg.h
+./usr/include/dev/ic/ncr5380reg.h
+./usr/include/dev/ic/ncr5380var.h
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
-./usr/include/dev/isa/cs4231var.h
 ./usr/include/dev/isa/comreg.h
+./usr/include/dev/isa/cs4231var.h
 ./usr/include/dev/isa/elink.h
 ./usr/include/dev/isa/if_edreg.h
 ./usr/include/dev/isa/if_egreg.h
@@ -599,7 +600,6 @@
 ./usr/lib/c++rt0.o
 ./usr/lib/crt0.o
 ./usr/lib/gcrt0.o
-./usr/lib/scrt0.o
 ./usr/lib/libc.a
 ./usr/lib/libc_p.a
 ./usr/lib/libcompat.a
@@ -641,7 +641,6 @@
 ./usr/lib/libutil_p.a
 ./usr/lib/liby.a
 ./usr/lib/liby_p.a
-./usr/libdata/lint
 ./usr/libdata/lint/llib-lposix.ln
 ./usr/libdata/lint/llib-lstdc.ln
 ./usr/libexec/cc1
@@ -683,6 +682,7 @@
 ./usr/share/man/cat1/gprof.0
 ./usr/share/man/cat1/ld.0
 ./usr/share/man/cat1/lex.0
+./usr/share/man/cat1/lint.0
 ./usr/share/man/cat1/lorder.0
 ./usr/share/man/cat1/mkstr.0
 ./usr/share/man/cat1/ranlib.0
