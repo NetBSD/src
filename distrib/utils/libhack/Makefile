@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2000/05/18 00:43:06 matt Exp $
+# $NetBSD: Makefile,v 1.10.4.1 2001/07/29 20:32:29 he Exp $
 #
 # Stubs to kill off some things from libc:
 # This save space on a boot system.
@@ -20,7 +20,9 @@ HACKOBJS= getcap.o getgrent.o gethost.o getnet.o getnetgr.o getpwent.o \
 HACKOBJS+= opendir.o
 .endif
 
+.if ${MACHINE_ARCH} != "sparc64"
 COPTS+= -Os
+.endif
 WARNS=	1
 MKPIC=	no
 MKLINT= no
