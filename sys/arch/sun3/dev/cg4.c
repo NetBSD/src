@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.14 1998/01/26 20:53:17 gwr Exp $	*/
+/*	$NetBSD: cg4.c,v 1.15 1998/02/08 05:22:10 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,16 +76,18 @@
 #include <machine/idprom.h>
 #include <machine/pmap.h>
 
-#include "fbvar.h"
-#include "btreg.h"
-#include "btvar.h"
-#include "cg4reg.h"
+#include <sun3/dev/fbvar.h>
+#include <sun3/dev/btreg.h>
+#include <sun3/dev/btvar.h>
+#include <sun3/dev/cg4reg.h>
+#include <sun3/dev/p4reg.h>
+
+#define CG4_TYPE_A 0	/* AMD DACs */
+#define CG4_TYPE_B 1	/* Brooktree DACs */
 
 cdev_decl(cg4);
 
 #define	CG4_MMAP_SIZE (CG4_OVERLAY_SIZE + CG4_ENABLE_SIZE + CG4_PIXMAP_SIZE)
-
-extern unsigned char cpu_machine_id;
 
 #define CMAP_SIZE 256
 struct soft_cmap {
@@ -106,6 +108,7 @@ struct cg4_softc {
 	void	*sc_va_cmap;		/* Colormap h/w (mapped KVA) */
 	void	*sc_btcm;		/* Soft cmap, Brooktree format */
 	struct soft_cmap sc_cmap;	/* Soft cmap, user format */
+	void	(*sc_ldcmap) __P((struct cg4_softc *));
 };
 
 /* autoconfiguration driver */
@@ -145,41 +148,64 @@ cg4match(parent, cf, args)
 	void *args;
 {
 	struct confargs *ca = args;
-	int paddr;
+	int mid, p4id, peekval;
+	void *p4reg;
 
-	/* XXX: Huge hack due to lack of probe info... */
-	/* XXX: Machines that might have a cg4 (gag). */
-	/* XXX: Need info on the "P4" register... */
-	switch (cpu_machine_id) {
+	/* No default address support. */
+	if (ca->ca_paddr == -1)
+		return (0);
 
-	case SUN3_MACH_110:
-		/* XXX: Assume type A. */
-		if (ca->ca_paddr == -1)
-			ca->ca_paddr = CG4A_DEF_BASE;
-		if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
-			return (0);
+	/*
+	 * Slight hack here:  The low four bits of the
+	 * config flags, if set, restrict the match to
+	 * that machine "implementation" only.
+	 */
+	mid = cf->cf_flags & IDM_IMPL_MASK;
+	if (mid && (mid != (cpu_machine_id & IDM_IMPL_MASK)))
+		return (0);
+
+	/*
+	 * Make sure something is there, and if so,
+	 * see if it looks like a P4 register.
+	 */
+	p4reg = bus_tmapin(ca->ca_bustype, ca->ca_paddr);
+	peekval = peek_long(p4reg);
+	p4id = (peekval == -1) ?
+		P4_NOTFOUND : fb_pfour_id(p4reg);
+	bus_tmapout(p4reg);
+	if (peekval == -1)
+		return (0);
+
+	/*
+	 * The config flag 0x10 if set means we are
+	 * looking for a Type A (3/110) which has
+	 * AMD RAMDACs in control space.
+	 */
+#ifdef	_SUN3_
+	if (cf->cf_flags & 0x10) {
 		if (bus_peek(BUS_OBIO, CG4A_OBIO_CMAP, 1) == -1)
 			return (0);
-		break;
+		/* OK, assume it really is a Type A. */
+		return (1);
+	}
+#endif	/* SUN3 */
 
-	case SUN3_MACH_60:
-		/* XXX: Assume type A. */
-		if (ca->ca_paddr == -1)
-			ca->ca_paddr = CG4B_DEF_BASE;
-		paddr = ca->ca_paddr;
-		if (bus_peek(ca->ca_bustype, paddr, 1) == -1)
-			return (0);
-		/* Make sure we're color */
-		paddr += CG4B_OFF_PIXMAP;
-		if (bus_peek(ca->ca_bustype, paddr, 1) == -1)
-			return (0);
-		break;
-
+	/*
+	 * OK, we are expecting a "Type B" CG4, and
+	 * there may or may not be a P4 register.
+	 */
+	switch (p4id) {
+	case P4_ID_COLOR8P1:
+	case P4_NOTFOUND:
+		return (1);
 	default:
-		return (0);
+#ifdef	DEBUG
+		printf("cgfour at 0x%x match p4id=0x%x fails\n",
+			   ca->ca_paddr, p4id & 0xFF);
+#endif
 	}
 
-	return (1);
+	return (0);
 }
 
 /*
@@ -194,52 +220,93 @@ cg4attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
-
-	/* XXX: should do better than this... */
-	switch (cpu_machine_id) {
-	case SUN3_MACH_110:
-		sc->sc_cg4type = CG4_TYPE_A;
-		break;
-	case SUN3_MACH_60:
-	default:
-		sc->sc_cg4type = CG4_TYPE_B;
-	}
-
-	fb->fb_driver = &cg4_fbdriver;
-	fb->fb_private = sc;
-	fb->fb_name = sc->sc_dev.dv_xname;
+	void *p4reg;
+	int p4id, tmp;
 
 	fbt = &fb->fb_fbtype;
 	fbt->fb_type = FBTYPE_SUN4COLOR;
+	fbt->fb_width = 1152;	/* default - see below */
+	fbt->fb_height = 900;	/* default - see below */
 	fbt->fb_depth = 8;
 	fbt->fb_cmsize = 256;
-
-	fbt->fb_width = 1152;
-	fbt->fb_height = 900;
 	fbt->fb_size = CG4_MMAP_SIZE;
+	fb->fb_driver = &cg4_fbdriver;
+	fb->fb_private = sc;
+	fb->fb_name  = sc->sc_dev.dv_xname;
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
-	switch (sc->sc_cg4type) {
-	case CG4_TYPE_A:	/* Sun3/110 */
+	p4reg = NULL;
+
+	/*
+	 * The config flag 0x10 if set means we are
+	 * attaching a Type A (3/110) which has the
+	 * AMD RAMDACs in control space, and no P4.
+	 */
+	if (fb->fb_flags & 0x10) {
+#ifdef	_SUN3_
+		sc->sc_cg4type = CG4_TYPE_A;
+		sc->sc_ldcmap  = cg4a_ldcmap;
 		sc->sc_va_cmap = bus_mapin(BUS_OBIO, CG4A_OBIO_CMAP,
 		                           sizeof(struct amd_regs));
 		sc->sc_pa_overlay = ca->ca_paddr + CG4A_OFF_OVERLAY;
 		sc->sc_pa_enable  = ca->ca_paddr + CG4A_OFF_ENABLE;
 		sc->sc_pa_pixmap  = ca->ca_paddr + CG4A_OFF_PIXMAP;
 		cg4a_init(sc);
-		break;
-		
-	case CG4_TYPE_B:	/* Sun3/60 */
-	default:
+#else	/* SUN3 */
+		panic("cgfour flags 0x10");
+#endif	/* SUN3 */
+	} else {
+		sc->sc_cg4type = CG4_TYPE_B;
+		sc->sc_ldcmap  = cg4b_ldcmap;
 		sc->sc_va_cmap = bus_mapin(ca->ca_bustype, ca->ca_paddr,
 					   sizeof(struct bt_regs));
 		sc->sc_pa_overlay = ca->ca_paddr + CG4B_OFF_OVERLAY;
 		sc->sc_pa_enable  = ca->ca_paddr + CG4B_OFF_ENABLE;
 		sc->sc_pa_pixmap  = ca->ca_paddr + CG4B_OFF_PIXMAP;
 		cg4b_init(sc);
-		break;
+
+		/* Does it have a P4 register? */
+		p4reg = bus_mapin(ca->ca_bustype, ca->ca_paddr, 4);
+		p4id = fb_pfour_id(p4reg);
+		if (p4id != P4_NOTFOUND)
+			fb->fb_pfour = p4reg;
+		else
+			bus_mapout(p4reg, 4);
 	}
 
+	/*
+	 * Determine width and height as follows:
+	 * If it has a P4 register, use that;
+	 * else if unit==0, use the EEPROM size,
+	 * else make our best guess.
+	 */
+	if (fb->fb_pfour)
+		fb_pfour_setsize(fb);
+	else if (sc->sc_dev.dv_unit == 0)
+		fb_eeprom_setsize(fb);
+	else {
+		/* Guess based on machine ID. */
+		switch (cpu_machine_id) {
+		default:
+			/* Leave the defaults set above. */
+			break;
+		}
+	}
 	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
+
+	/*
+	 * Make sure video is on.  This driver uses a
+	 * black colormap to blank the screen, so if
+	 * there is any global enable, set it here.
+	 */
+	tmp = 1;
+	cg4svideo(fb, &tmp);
+	if (fb->fb_pfour)
+		fb_pfour_set_video(fb, 1);
+	else
+		enable_video(1);
+
+	/* Let /dev/fb know we are here. */
 	fb_attach(fb, 4);
 }
 
@@ -287,15 +354,8 @@ cg4ioctl(dev, cmd, data, flags, p)
  * 	128k overlay data memory
  * 	128k overlay enable bitmap
  * 	1024k color memory
- * 
- * The hardware really looks like this (starting at ca_paddr)
- *  4 bytes Brooktree DAC registers
- *  2MB-4 gap
- * 	128k overlay memory
- * 	1920k gap
- * 	128k overlay-enable bitmap
- * 	1920k gap
- * 	1024k color memory
+ *
+ * The hardware looks completely different.
  */
 int
 cg4mmap(dev, off, prot)
@@ -328,7 +388,7 @@ cg4mmap(dev, off, prot)
 
 	/*
 	 * I turned on PMAP_NC here to disable the cache as I was
-	 * getting horribly broken behaviour with it on.
+	 * getting horribly broken behaviour without it.
 	 */
 	return ((physbase + off) | PMAP_NC);
 }
@@ -377,13 +437,9 @@ static int cg4svideo(fb, data)
 
 	if (sc->sc_video_on == *on)
 		return (0);
-
 	sc->sc_video_on = *on;
-	if (sc->sc_cg4type == CG4_TYPE_A)
-		cg4a_ldcmap(sc);
-	else
-		cg4b_ldcmap(sc);
 
+	(*sc->sc_ldcmap)(sc);
 	return (0);
 }
 
@@ -446,17 +502,14 @@ static int cg4putcmap(fb, data)
 	if ((error = copyin(fbcm->blue, &cm->b[start], count)) != 0)
 		return (error);
 
-	if (sc->sc_cg4type == CG4_TYPE_A)
-		cg4a_ldcmap(sc);
-	else
-		cg4b_ldcmap(sc);
-
+	(*sc->sc_ldcmap)(sc);
 	return (0);
 }
 
 /****************************************************************
  * Routines for the "Type A" hardware
  ****************************************************************/
+#ifdef	_SUN3_
 
 static void
 cg4a_init(sc)
@@ -504,7 +557,7 @@ cg4a_ldcmap(sc)
 		}
 	}
 }
-
+#endif	/* SUN3 */
 
 /****************************************************************
  * Routines for the "Type B" hardware
@@ -520,7 +573,7 @@ cg4b_init(sc)
 	int i;
 
 	/* Need a buffer for colormap format translation. */
-	btcm = malloc(sizeof(union bt_cmap), M_DEVBUF, M_WAITOK);
+	btcm = malloc(sizeof(*btcm), M_DEVBUF, M_WAITOK);
 	sc->sc_btcm = btcm;
 
 	/*

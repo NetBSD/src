@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.13 1998/02/05 04:56:35 gwr Exp $	*/
+/*	$NetBSD: bw2.c,v 1.14 1998/02/08 05:22:08 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,10 +68,9 @@
 #include <machine/idprom.h>
 #include <machine/pmap.h>
 
-#include <sun3/sun3/machdep.h>
-
-#include "fbvar.h"
-#include "bw2reg.h"
+#include <sun3/dev/fbvar.h>
+#include <sun3/dev/bw2reg.h>
+#include <sun3/dev/p4reg.h>
 
 cdev_decl(bw2);
 
@@ -80,7 +79,6 @@ struct bw2_softc {
 	struct	device sc_dev;		/* base device */
 	struct	fbdevice sc_fb;		/* frame buffer device */
 	int 	sc_phys;		/* display RAM (phys addr) */
-	int 	sc_pixeloffset;		/* offset to framebuffer */
 	/* If using overlay plane of something, it is... */
 	int	sc_ovtype;		/* ... this type. */
 	int sc_video_on;
@@ -98,8 +96,8 @@ extern struct cfdriver bwtwo_cd;
 
 /* XXX we do not handle frame buffer interrupts */
 
-static int  bw2gvideo __P((struct fbdevice *, void *));
-static int	bw2svideo __P((struct fbdevice *, void *));
+static int bw2gvideo __P((struct fbdevice *, void *));
+static int bw2svideo __P((struct fbdevice *, void *));
 
 static struct fbdriver bw2fbdriver = {
 	bw2open, bw2close, bw2mmap,
@@ -114,32 +112,66 @@ bw2match(parent, cf, args)
 	void *args;
 {
 	struct confargs *ca = args;
-	int x;
+	int mid, p4id, peekval;
+	void *p4reg;
 
-#if 0	/* XXX - Assume only one is in use anyway... */
+	/* No default address support. */
+	if (ca->ca_paddr == -1)
+		return (0);
+
 	/*
-	 * This driver only supports one unit because the
-	 * system enable register is used for blanking.
+	 * Slight hack here:  The low four bits of the
+	 * config flags, if set, restrict the match to
+	 * that machine "implementation" only.
 	 */
-	if (cf->cf_unit != 0)
+	mid = cf->cf_flags & IDM_IMPL_MASK;
+	if (mid && (mid != (cpu_machine_id & IDM_IMPL_MASK)))
 		return (0);
-#endif
 
-	if (ca->ca_paddr == -1) {
-#ifdef	_SUN3X_
-		/* Demand an address locator on 3X. */
+	/*
+	 * Make sure something is there, and if so,
+	 * see if it looks like a P4 register.
+	 */
+	p4reg = bus_tmapin(ca->ca_bustype, ca->ca_paddr);
+	peekval = peek_long(p4reg);
+	p4id = (peekval == -1) ?
+		P4_NOTFOUND : fb_pfour_id(p4reg);
+	bus_tmapout(p4reg);
+	if (peekval == -1)
 		return (0);
-#else
-		if (cpu_machine_id == SUN3_MACH_50)
-			ca->ca_paddr = BW2_50_PADDR;
-		else
-			ca->ca_paddr = BW2_FB_PADDR;
+
+	/*
+	 * The config flag 0x40 if set means we should match
+	 * only on a CG? overlay plane.  We can use only the
+	 * CG4 and CG8, which both have a P4 register.
+	 */
+	if (cf->cf_flags & 0x40) {
+		switch (p4id) {
+		case P4_ID_COLOR8P1:
+		case P4_ID_COLOR24:
+			return (1);
+		case P4_NOTFOUND:
+		default:
+			return (0);
+		}
+	}
+
+	/*
+	 * OK, we are expecting a plain old BW2, and
+	 * there may or may not be a P4 register.
+	 */
+	switch (p4id) {
+	case P4_ID_BW:
+	case P4_NOTFOUND:
+		return (1);
+	default:
+#ifdef	DEBUG
+		printf("bwtwo at 0x%x match p4id=0x%x fails\n",
+			   ca->ca_paddr, p4id & 0xFF);
 #endif
 	}
 
-	/* The peek returns -1 on bus error. */
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 1);
-	return (x != -1);
+	return (0);
 }
 
 /*
@@ -154,46 +186,100 @@ bw2attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
-#ifdef	_SUN3_
-	int tmp;
-#endif	/* SUN3 */
-
-	sc->sc_phys = ca->ca_paddr;
+	void *p4reg;
+	int p4id, tmp;
+	int pixeloffset;		/* offset to framebuffer */
 
 	fbt = &fb->fb_fbtype;
 	fbt->fb_type = FBTYPE_SUN2BW;
-	fbt->fb_width = 1152;		/* default - see below */
-	fbt->fb_height = 900;		/* default - see below */
+	fbt->fb_width = 1152;	/* default - see below */
+	fbt->fb_height = 900;	/* default - see below */
 	fbt->fb_depth = 1;
 	fbt->fb_cmsize = 0;
 	fbt->fb_size = BW2_FBSIZE;	/* default - see below */
 	fb->fb_driver = &bw2fbdriver;
 	fb->fb_private = sc;
-	fb->fb_name = sc->sc_dev.dv_xname;
+	fb->fb_name  = sc->sc_dev.dv_xname;
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
 
-#ifdef	_SUN3_
-	switch (cpu_machine_id) {
-	case SUN3_MACH_60:
-		/*
-		 * Only the model 60 can have hi-res.
-		 * XXX - Use PROM screen size values?
-		 */
-		tmp = bus_peek(BUS_OBMEM, BW2_CR_PADDR, 1);
-		if ((tmp != -1) && (tmp & 0x80) == 0)
-			goto high_res;
+	/* Set up default pixel offset.  May be changed below. */
+	pixeloffset = 0;
+
+	/* Does it have a P4 register? */
+	p4reg = bus_mapin(ca->ca_bustype, ca->ca_paddr, 4);
+	p4id = fb_pfour_id(p4reg);
+	if (p4id != P4_NOTFOUND)
+		fb->fb_pfour = p4reg;
+	else
+		bus_mapout(p4reg, 4);
+
+	switch (p4id) {
+	case P4_NOTFOUND:
+		pixeloffset = 0;
 		break;
 
-	case SUN3_MACH_260:
-		/* The Sun3/260 is ALWAYS high-resolution! */
-	high_res:
-		fbt->fb_width = 1600;
-		fbt->fb_height = 1280;
-		fbt->fb_size = BW2_FBSIZE_HIRES;
+	case P4_ID_BW:
+		pixeloffset = P4_BW_OFF;
+		break;
+
+	default:
+		printf("%s: bad p4id=0x%x\n", fb->fb_name, p4id);
+		/* Must be some kinda color... */
+		/* fall through */
+	case P4_ID_COLOR8P1:
+	case P4_ID_COLOR24:
+		sc->sc_ovtype = p4id;
+		pixeloffset = P4_COLOR_OFF_OVERLAY;
 		break;
 	}
+	sc->sc_phys = ca->ca_paddr + pixeloffset;
+
+	/*
+	 * Determine width and height as follows:
+	 * If it has a P4 register, use that;
+	 * else if unit==0, use the EEPROM size,
+	 * else make our best guess.
+	 */
+	if (fb->fb_pfour)
+		fb_pfour_setsize(fb);
+	else if (sc->sc_dev.dv_unit == 0)
+		fb_eeprom_setsize(fb);
+	else {
+		/* Guess based on machine ID. */
+		switch (cpu_machine_id) {
+#ifdef	_SUN3_
+		case SUN3_MACH_60:
+			/*
+			 * Only the model 60 can have hi-res.
+			 * Look at the "resolution" jumper.
+			 */
+			tmp = bus_peek(BUS_OBMEM, BW2_CR_PADDR, 1);
+			if ((tmp != -1) && (tmp & 0x80) == 0)
+				goto high_res;
+			break;
+
+		case SUN3_MACH_260:
+			/* The Sun3/260 is ALWAYS high-resolution! */
+			/* fall through */
+		high_res:
+			fbt->fb_width = 1600;
+			fbt->fb_height = 1280;
+			fbt->fb_size = BW2_FBSIZE_HIRES;
+			break;
 #endif	/* SUN3 */
 
+		default:
+			/* Leave the defaults set above. */
+			break;
+		}
+	}
 	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);
+
+	/* Make sure video is on. */
+	tmp = 1;
+	bw2svideo(fb, &tmp);
+
+	/* Let /dev/fb know we are here. */
 	fb_attach(fb, 1);
 }
 
@@ -243,14 +329,17 @@ bw2mmap(dev, off, prot)
 	int off, prot;
 {
 	struct bw2_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
+	int size = sc->sc_fb.fb_fbtype.fb_size;
 
 	if (off & PGOFSET)
+		panic("bw2mmap");
+
+	if ((off < 0) || (off >= size))
 		return (-1);
-	if ((unsigned)off >= sc->sc_fb.fb_fbtype.fb_size)
-		return (-1);
+
 	/*
 	 * I turned on PMAP_NC here to disable the cache as I was
-	 * getting horribly broken behaviour with it on.
+	 * getting horribly broken behaviour without it.
 	 */
 	return ((sc->sc_phys + off) | PMAP_NC);
 }
@@ -267,7 +356,7 @@ static int bw2gvideo(fb, data)
 	return (0);
 }
 
-/* FBIOSVIDEO */
+/* FBIOSVIDEO: */
 static int bw2svideo(fb, data)
 	struct fbdevice *fb;
 	void *data;
@@ -279,8 +368,11 @@ static int bw2svideo(fb, data)
 		return (0);
 	sc->sc_video_on = *on;
 
-	/* XXX: P4 support... */
-	enable_video(sc->sc_video_on);
+	if (fb->fb_pfour)
+		fb_pfour_set_video(fb, sc->sc_video_on);
+	else
+		enable_video(sc->sc_video_on);
 
 	return(0);
 }
+
