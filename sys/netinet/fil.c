@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.37 2000/08/09 21:00:39 veego Exp $	*/
+/*	$NetBSD: fil.c,v 1.38 2000/08/12 08:04:18 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: fil.c,v 1.37 2000/08/09 21:00:39 veego Exp $";
+static const char rcsid[] = "$NetBSD: fil.c,v 1.38 2000/08/12 08:04:18 veego Exp $";
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 2.35.2.19 2000/07/27 13:08:18 darrenr Exp";
@@ -848,6 +848,7 @@ int out;
 		ATOMIC_INCL(frstats[0].fr_ipv6[out]);
 	} else
 # endif
+# ifdef	IPFILTER_LOG
 		if (!out && fr_chksrc && !fr_verifysrc(ip->ip_src, ifp)) {
 			ATOMIC_INCL(frstats[0].fr_badsrc);
 			if (fr_chksrc == 2) {
@@ -855,6 +856,7 @@ int out;
 				pass = FR_INQUE|FR_NOMATCH|FR_LOGB;
 				(void) IPLLOG(pass, ip, fin, m);
 			}
+# endif
 # if !SOLARIS
 			m_freem(m);
 # endif
