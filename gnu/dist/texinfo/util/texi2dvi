@@ -1,6 +1,6 @@
 #! /bin/sh
 # texi2dvi --- smartly produce DVI files from texinfo sources
-# $Id: texi2dvi,v 1.1.1.1 1999/02/11 03:57:24 tv Exp $
+# $Id: texi2dvi,v 1.2 1999/02/11 15:21:18 tv Exp $
 #
 # Copyright (C) 1992, 93, 94, 95, 96, 97, 98 Free Software Foundation, Inc.
 #
@@ -45,7 +45,7 @@
 progname=`echo "$0" | sed -e 's/[^\/]*\///g'`
 
 # This string is expanded by rcs automatically when this file is checked out.
-rcs_revision='$Revision: 1.1.1.1 $'
+rcs_revision='$Revision: 1.2 $'
 version=`set - $rcs_revision; echo $2`
 
 # To prevent hairy quoting and escaping later.
@@ -272,7 +272,12 @@ for command_line_filename in ${1+"$@"}; do
     fi
     $verbose "Running $tex $filename_input ..."
     cmd="$tex $tex_mode \\input $filename_input"
-    $cmd
+    $cmd || ( echo 1>&2 ''
+echo 1>&2 'TeX failed.  If the above said "tex: not found", you may need to install TeX;'
+echo 1>&2 'it is available from the pkgsrc system in print/teTeX.'
+echo 1>&2 'If TeX is installed, make sure it is in your $PATH, or set the environment'
+echo 1>&2 'variable $TEX to its location.'
+)
 
     # Check if index files changed.
     # 
