@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.88 1998/02/07 23:00:24 pk Exp $	*/
+/*	$NetBSD: st.c,v 1.89 1998/02/13 08:12:40 enami Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -73,7 +73,6 @@
 #include <sys/rnd.h>
 #endif
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_tape.h>
