@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.4 2002/01/21 20:04:36 tv Exp $
+#	$NetBSD: configure.ac,v 1.5 2002/01/24 04:05:28 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -33,7 +33,8 @@ AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 
 # Library functions (where a .h check isn't enough).
 AC_SEARCH_LIBS(fparseln, util)
-AC_CHECK_FUNCS(basename dirname fgetln flock fparseln futimes pread pwrite setprogname strlcat strlcpy)
+AC_CHECK_FUNCS(basename dirname fgetln flock fparseln futimes \
+	pread pwcache_userdb pwrite setprogname strlcat strlcpy)
 
 # regcomp() and regexec() are also names of functions in the old V8
 # regexp package.  To avoid them, we need to find out who has regfree().
