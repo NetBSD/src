@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1999/05/11 20:46:59 veego Exp $
+#	$NetBSD: Makefile,v 1.14 1999/06/05 20:17:39 bouyer Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -8,9 +8,7 @@ IMAGE=		ramdisk.fs
 
 AUXTARGETS=	install.sh upgrade.sh start.sh
 AUXDEPENDS= 	dot.profile dot.hdprofile disktab.preinstall \
-		termcap.mini termcap.pc3 dist/base_obsolete dist/comp_obsolete \
-		dist/games_obsolete dist/man_obsolete dist/misc_obsolete \
-		dist/secr_obsolete dist/xbase_obsolete dist/xserver_obsolete
+		termcap.mini termcap.pc3
 AUXCLEAN=	${AUXTARGETS}
 
 CBIN=		ramdiskbin
@@ -46,7 +44,9 @@ all: ${AUXTARGETS} ${CBIN} ${AUXDEPENDS} ${MTREE} ${LISTS}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i 5120 -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
-	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u
+	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -U
+	echo toto
+	echo ${TOP} ${.CURDIR} ${.OBJDIR} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${.CURDIR}/${LISTS}
 	@echo ""
