@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.36 2000/01/21 17:08:34 mycroft Exp $	*/
+/*	$NetBSD: init.c,v 1.37 2000/03/19 23:21:46 soren Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.36 2000/01/21 17:08:34 mycroft Exp $");
+__RCSID("$NetBSD: init.c,v 1.37 2000/03/19 23:21:46 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,11 +189,11 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	int c;
 	struct sigaction sa;
 	sigset_t mask;
-
 #ifndef LETS_GET_SMALL
+	int c;
+
 	/* Dispose of random users. */
 	if (getuid() != 0) {
 		errno = EPERM;
