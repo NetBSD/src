@@ -12,7 +12,6 @@ options		"SUN3_60"
 maxusers	4
 options		TIMEZONE=480		# minutes west of GMT (for param.c)
 options 	DST=2			# daylight savings rules (for param.c)
-options 	MAXFDESCS=2048   	# max # of fds/process (for param.c)
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
