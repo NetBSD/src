@@ -1,5 +1,6 @@
-.\"	$NetBSD: eg.4,v 1.4 1997/02/24 00:01:53 jonathan Exp $
+.\"	$NetBSD: eg.4,v 1.4.2.1 1997/11/11 05:28:15 thorpej Exp $
 .\"
+.\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
 .\"
@@ -22,24 +23,24 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 10, 1995
+.Dd November 10, 1997
 .Dt EG 4
 .Os NetBSD
 .Sh NAME
 .Nm eg
-.Nd Ethernet driver for 3Com 3c505 Ethernet boards
+.Nd device driver for 3Com Etherlink Plus (3c505) Ethernet interface
 .Sh SYNOPSIS
-.Cd "eg0 at isa?"
+.Cd "eg0 at isa? port 0x280 irq 6"
 .Sh DESCRIPTION
 The
 .Nm
 interface provides access to a 10 Mb/s Ethernet network via the
-3Com 3c505 Ethernet board. 
+3Com Etherlink Plus (3c505) Ethernet board. 
+.Sh AUTHOR
+The
+.Nm
+driver was written by Dean Huxley.
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr intro 4 ,
-.Xr ed 4 ,
-.Xr el 4 ,
-.Xr ep 4 ,
-.Xr ie 4 ,
-.Xr le 4 
+.Xr isa 4
