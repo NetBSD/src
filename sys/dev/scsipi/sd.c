@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.126 1998/03/03 23:15:36 cgd Exp $	*/
+/*	$NetBSD: sd.c,v 1.127 1998/07/15 20:21:12 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -46,6 +46,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@dialix.oz.au) Sept 1992
  */
 
+#include "opt_scsiverbose.h"
 #include "rnd.h"
 
 #include <sys/types.h>
@@ -95,13 +96,14 @@ void	sdgetdisklabel __P((struct sd_softc *));
 void	sdstart __P((void *));
 void	sddone __P((struct scsipi_xfer *));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
+int	sd_interpret_sense __P((struct scsipi_xfer *));
 
 extern struct cfdriver sd_cd;
 
 struct dkdriver sddkdriver = { sdstrategy };
 
 struct scsipi_device sd_switch = {
-	NULL,			/* Use default error handler */
+	sd_interpret_sense,	/* check our error handler first */
 	sdstart,		/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	sddone,			/* deal with stats at interrupt time */
@@ -864,6 +866,69 @@ sd_reassign_blocks(sd, blkno)
 	    (u_char *)&rbdata, sizeof(rbdata), SDRETRIES, 5000, NULL,
 	    SCSI_DATA_OUT));
 }
+
+/*
+ * Check Errors
+ */
+int
+sd_interpret_sense(xs)
+	struct scsipi_xfer *xs;
+{
+	struct scsipi_link *sc_link = xs->sc_link;
+	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
+	struct sd_softc *sd = sc_link->device_softc;
+	int retval = SCSIRET_CONTINUE;
+
+	/*
+	 * If the device is not open yet, let the generic code handle it.
+	 */
+	if ((sc_link->flags & SDEV_OPEN) == 0) {
+		return (retval);
+	}
+
+	/*
+	 * If it isn't a extended or extended/deferred error, let
+	 * the generic code handle it.
+	 */
+	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
+	    (sense->error_code & SSD_ERRCODE) != 0x71) {	/* DEFFERRED */
+		return (retval);
+	}
+
+	if ((sense->flags & SSD_KEY) == SKEY_NOT_READY &&
+	    sense->add_sense_code == 0x4) {
+		if (sense->add_sense_code_qual == 0x01)	{
+			printf("%s: ..is spinning up...waiting\n",
+			    sd->sc_dev.dv_xname);
+			/*
+			 * I really need a sdrestart function I can call here.
+			 */
+			delay(1000000 * 5);	/* 5 seconds */
+			retval = SCSIRET_RETRY;
+		} else if ((sense->add_sense_code_qual == 0x2) &&
+		    (sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
+			if (sd->sc_link->flags & SDEV_REMOVABLE) {
+				printf("%s: removable disk stopped- not "
+				    "restarting\n", sd->sc_dev.dv_xname);
+				retval = EIO;
+			} else {
+				printf("%s: respinning up disk\n",
+				    sd->sc_dev.dv_xname);
+				retval = scsipi_start(sd->sc_link, SSS_START,
+				    SCSI_URGENT | SCSI_NOSLEEP | SCSI_POLL);
+				if (retval != 0) {
+					printf("%s: respin of disk failed-%d\n",
+					    sd->sc_dev.dv_xname, retval);
+					retval = EIO;
+				} else {
+					retval = SCSIRET_RETRY;
+				}
+			}
+		}
+	}
+	return (retval);
+}
+
 
 int
 sdsize(dev)
