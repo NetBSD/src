@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.39.2.4 2000/07/16 20:29:08 tron Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.39.2.5 2000/08/09 14:39:15 castor Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -406,6 +406,8 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_MX98715:
 		if (sc->sc_rev >= 0x20)
 			sc->sc_chip = TULIP_CHIP_MX98715A;
+ 		if (sc->sc_rev >= 0x25)
+ 			sc->sc_chip = TULIP_CHIP_MX98715AEC_X;
 		if (sc->sc_rev >= 0x30)
 			sc->sc_chip = TULIP_CHIP_MX98725;
 		break;
@@ -465,6 +467,7 @@ tlp_pci_attach(parent, self, aux)
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715:
 	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98715AEC_X:
 	case TULIP_CHIP_MX98725:
 	case TULIP_CHIP_DM9102:
 	case TULIP_CHIP_DM9102A:
@@ -488,7 +491,9 @@ tlp_pci_attach(parent, self, aux)
 		case PCI_PMCSR_STATE_D2:
 			printf(": waking up from power state D%d\n%s",
 			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
 			break;
 		case PCI_PMCSR_STATE_D3:
 			/*
@@ -497,7 +502,9 @@ tlp_pci_attach(parent, self, aux)
 			 */
 			printf(": unable to wake up from power state D3, "
 			       "reboot required.\n");
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + 4,
+			    (reg & ~PCI_PMCSR_STATE_MASK) |
+			    PCI_PMCSR_STATE_D0);
 			return;
 		}
 	}
@@ -780,6 +787,7 @@ tlp_pci_attach(parent, self, aux)
 
 	case TULIP_CHIP_MX98713A:
 	case TULIP_CHIP_MX98715A:
+	case TULIP_CHIP_MX98715AEC_X:
 	case TULIP_CHIP_MX98725:
 		/*
 		 * The MX98713A has an MII as well as an internal Nway block,
