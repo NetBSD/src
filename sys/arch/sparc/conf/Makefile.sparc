@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.54 1998/10/15 18:37:16 drochner Exp $
+# 	$NetBSD: Makefile.sparc,v 1.55 1999/01/08 19:26:15 augustss Exp $
 
 # Makefile for NetBSD
 #
@@ -45,7 +45,8 @@ SPARC=	$S/arch/sparc
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
-CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif

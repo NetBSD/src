@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.6 1998/10/15 18:37:16 drochner Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.7 1999/01/08 19:26:15 augustss Exp $
 
 # Makefile for NetBSD
 #
@@ -54,7 +54,7 @@ SPARC64=	$S/arch/sparc64
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL ${SVR4}
-CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wuninitialized -Wparentheses -Wstrict-prototypes -Wmissing-prototypes
+CWARNFLAGS=	-Wimplicit -Wunused -Wswitch -Wcomment -Wtrigraphs -Wchar-subscripts -Wuninitialized -Wparentheses -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 #CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -Wa,-Av9a -mno-fpu
 AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.45 1998/10/15 18:37:17 drochner Exp $
+#	$NetBSD: Makefile.vax,v 1.46 1999/01/08 19:26:15 augustss Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,8 @@ HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-D_VAX_INLINE_
-CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes
+CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
+		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif

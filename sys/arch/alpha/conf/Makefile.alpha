@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.45 1998/10/15 18:37:13 drochner Exp $
+# $NetBSD: Makefile.alpha,v 1.46 1999/01/08 19:26:12 augustss Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dalpha
 COPTS?=		-O2
 CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
-		-Wno-format
+		-Wno-format -Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif

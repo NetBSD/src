@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.77 1998/10/15 18:37:13 drochner Exp $
+#	$NetBSD: Makefile.amiga,v 1.78 1999/01/08 19:26:12 augustss Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,8 @@ HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
 		-Dmc68020 -Damiga -DFPCOPROC
-CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes
+CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
