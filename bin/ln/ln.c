@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.20 2002/10/30 22:52:10 kleink Exp $ */
+/* $NetBSD: ln.c,v 1.21 2002/12/27 03:50:05 jrf Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.20 2002/10/30 22:52:10 kleink Exp $");
+__RCSID("$NetBSD: ln.c,v 1.21 2002/12/27 03:50:05 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,10 @@ __RCSID("$NetBSD: ln.c,v 1.20 2002/10/30 22:52:10 kleink Exp $");
 int	fflag;				/* Unlink existing files. */
 int	hflag;				/* Check new name for symlink first. */
 int	sflag;				/* Symbolic, not hard, link. */
+int    vflag;                          /* Verbose output */
 					/* System link call. */
 int (*linkf)(const char *, const char *);
+char   linkch;
 
 int	linkit(char *, char *, int);
 void	usage(void);
@@ -75,7 +77,7 @@ main(int argc, char *argv[])
 	char *sourcedir;
 
 	setprogname(argv[0]);
-	while ((ch = getopt(argc, argv, "fhns")) != -1)
+	while ((ch = getopt(argc, argv, "fhnsv")) != -1)
 		switch (ch) {
 		case 'f':
 			fflag = 1;
@@ -87,6 +89,9 @@ main(int argc, char *argv[])
 		case 's':
 			sflag = 1;
 			break;
+		case 'v':               
+		vflag = 1;      
+		break;   
 		case '?':
 		default:
 			usage();
@@ -95,7 +100,13 @@ main(int argc, char *argv[])
 	argv += optind;
 	argc -= optind;
 
-	linkf = sflag ? symlink : link;
+	if (sflag) {
+		linkf  = symlink;
+		linkch = '-';
+	} else {
+		linkf  = link;
+		linkch = '=';
+	}
 
 	switch(argc) {
 	case 0:
@@ -162,6 +173,8 @@ linkit(char *target, char *source, int isdir)
 		warn("%s", source);
 		return (1);
 	}
+	if (vflag)
+		(void)printf("%s %c> %s\n", source, linkch, target);
 
 	return (0);
 }
@@ -171,7 +184,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage:\t%s [-fhns] file1 file2\n\t%s [-fhns] file ... directory\n",
+	    "Usage:\t%s [-fhns] file1 file2\n\t%s [-fhnsv] file ... directory\n",
 	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */
