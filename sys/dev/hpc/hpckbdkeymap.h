@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.4 2001/03/04 03:04:30 takemura Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.5 2001/03/04 03:40:39 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -421,6 +421,43 @@ static const keysym_t sigmarion_cmdmap[] = {
 	KC(52),  KS_Cmd_ContrastUp,	KS_period,	KS_greater,
 	KC(57),  KS_Cmd_BacklightToggle,KS_space,
 };
+
+/* NTT DoCoMo Pocket PostPet (Japan) */
+static u_int8_t pocketpostpet_keytrans[] = {
+/*00	esc	1	q	a	ctrl	-	down	left	*/
+/*08	tab	2	w	s	z	-	right	up	*/
+/*10	pgup	3	e	d	x	shift	-	-	*/
+/*18	pgdn	4	r	f	c	alt	-	-	*/
+/*20	f5	5	t	g	v	nfer	-	-	*/
+/*28	f6	6	y	h	b	-	-	-	*/
+/*30	f7	7	u	j	n	space	-	-	*/
+/*38	f8	8	i	k	m	-	-	-	*/
+/*40	f9	9	o	l	,	xfer	-	-	*/
+/*48	f10	0	p	;	.	-	-	-	*/
+/*50	\|	minus	@	:	/	ent	-	-	*/
+/*58	bs	^	[	]	\_	del	-	-	*/
+/* MailCheck  -> tab	*/
+/* Prev       -> pgup	*/
+/* Next       -> pgdn	*/
+/* tab        -> ctrl	*/
+/* h/z        -> menu	*/
+/* k/h        -> alt	*/
+/* knj        -> nfer	*/
+/* eng        -> xfer	*/
+/*----------------------------------------------------------------------*/
+/*00*/	1,	2,	16,	30,	29,	UNK,	208,	203,
+/*08*/	15,	3,	17,	31,	44,	UNK,	205,	200,
+/*10*/	73,	4,	18,	32,	45,	42,	UNK,	UNK,
+/*08*/	81,	5,	19,	33,	46,	56,	UNK,	UNK,
+/*20*/	63,	6,	20,	34,	47,	123,	UNK,	UNK,
+/*28*/	64,	7,	21,	35,	48,	UNK,	UNK,	UNK,
+/*30*/	65,	8,	22,	36,	49,	57,	UNK,	UNK,
+/*38*/	66,	9,	23,	37,	50,	UNK,	UNK,	UNK,
+/*40*/	67,	10,	24,	38,	51,	121,	UNK,	UNK,
+/*48*/	68,	11,	25,	39,	52,	UNK,	UNK,	UNK,
+/*50*/	125,	12,	26,	40,	53,	28,	UNK,	UNK,
+/*58*/	14,	13,	27,	43,	115,	14,	UNK,	UNK,
+};
 #endif /* hpcmips */
 
 #ifdef hpcsh
@@ -545,6 +582,11 @@ const struct hpckbd_keymap_table {
 		KB_JP },
 	{	&platid_mask_MACH_FUJITSU_INTERTOP,
 		intertop_keytrans,
+		NULL,
+		NULLCMDMAP,
+		KB_JP },
+	{	&platid_mask_MACH_CASIO_POCKETPOSTPET,
+		pocketpostpet_keytrans,
 		NULL,
 		NULLCMDMAP,
 		KB_JP },
