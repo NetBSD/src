@@ -1,4 +1,4 @@
-/*	$OpenBSD: unimpl_emul.s,v 1.5 2001/04/17 03:17:48 bjc Exp $	*/
+/*	$NetBSD: unimpl_emul.s,v 1.6 2001/06/10 20:47:49 ragge Exp $	*/
 
 /*
  * Copyright (c) 2001 Brandon Creighton.  All rights reserved.
