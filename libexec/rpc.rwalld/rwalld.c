@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rwalld.c,v 1.4 1995/01/13 06:14:34 mycroft Exp $";
+static char rcsid[] = "$Id: rwalld.c,v 1.5 1995/01/13 18:51:39 mycroft Exp $";
 #endif /* not lint */
 
 #include <unistd.h>
@@ -50,28 +50,25 @@ static char rcsid[] = "$Id: rwalld.c,v 1.4 1995/01/13 06:14:34 mycroft Exp $";
 #endif
 
 void wallprog_1();
-void possess();
-void killkids();
 
-int nodaemon = 0;
 int from_inetd = 1;
+
+void
+cleanup()
+{
+	(void) pmap_unset(WALLPROG, WALLVERS);
+	exit(0);
+}
 
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	SVCXPRT *transp;
-	int s, salen;
-	struct sockaddr_in sa;
-        int sock = 0;
-        int proto = 0;
-
-	if (argc == 2 && !strcmp(argv[1], "-n"))
-		nodaemon = 1;
-	if (argc != 1 && !nodaemon) {
-		printf("usage: %s [-n]\n", argv[0]);
-		exit(1);
-	}
+	int sock = 0;
+	int proto = 0;
+	struct sockaddr_in from;
+	int fromlen;
 
 	if (geteuid() == 0) {
 		struct passwd *pep = getpwnam("nobody");
@@ -81,87 +78,57 @@ main(argc, argv)
 			setuid(getuid());
 	}
 
-        /*
-         * See if inetd started us
-         */
+	/*
+	 * See if inetd started us
+	 */
 	fromlen = sizeof(from);
-        if (getsockname(0, (struct sockaddr *)&sa, &salen) < 0) {
-                from_inetd = 0;
-                sock = RPC_ANYSOCK;
-                proto = IPPROTO_UDP;
-        }
-        
-        if (!from_inetd) {
-                if (!nodaemon)
-                        possess();
+	if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+		from_inetd = 0;
+		sock = RPC_ANYSOCK;
+		proto = IPPROTO_UDP;
+	}
 
-                (void)pmap_unset(WALLPROG, WALLVERS);
-                if ((s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0) {
-                        perror("socket");
-                        exit(1);
-                }
-                bzero((char *)&sa, sizeof sa);
-                if (bind(s, (struct sockaddr *)&sa, sizeof sa) < 0) {
-                        perror("bind");
-                        exit(1);
-                }
+	if (!from_inetd) {
+		daemon(0, 0);
 
-                salen = sizeof sa;
-                if (getsockname(s, (struct sockaddr *)&sa, &salen)) {
-                        perror("getsockname");
-                        exit(1);
-                }
+		(void) pmap_unset(WALLPROG, WALLVERS);
 
-                pmap_set(WALLPROG, WALLVERS, IPPROTO_UDP, ntohs(sa.sin_port));
-                if (dup2(s, 0) < 0) {
-                        perror("dup2");
-                        exit(1);
-                }
-                (void)pmap_unset(WALLPROG, WALLVERS);
-        }
+		(void) signal(SIGINT, cleanup);
+		(void) signal(SIGTERM, cleanup);
+		(void) signal(SIGHUP, cleanup);
+	}
 
-	(void)signal(SIGCHLD, killkids);
+	openlog("rpc.rwalld", LOG_CONS|LOG_PID, LOG_DAEMON);
 
 	transp = svcudp_create(sock);
 	if (transp == NULL) {
-		(void)fprintf(stderr, "cannot create udp service.\n");
+		syslog(LOG_ERR, "cannot create udp service.");
 		exit(1);
 	}
 	if (!svc_register(transp, WALLPROG, WALLVERS, wallprog_1, proto)) {
-		(void)fprintf(stderr, "unable to register (WALLPROG, WALLVERS, udp).\n");
+		syslog(LOG_ERR, "unable to register (WALLPROG, WALLVERS, %s).", proto?"udp":"(inetd)");
 		exit(1);
 	}
+
 	svc_run();
-	(void)fprintf(stderr, "svc_run returned\n");
+	syslog(LOG_ERR, "svc_run returned");
 	exit(1);
 
 }
 
-void possess()
-{
-	daemon(0, 0);
-}
-
-void killkids()
-{
-	while(wait4(-1, NULL, WNOHANG, NULL) > 0)
-		;
-}
-
-void *wallproc_wall_1(s)
+void *
+wallproc_wall_1(s)
 	char **s;
 {
-	/* fork, popen wall with special option, and send the message */
-	if (fork() == 0) {
-		FILE *pfp;
+	FILE *pfp;
 
-		pfp = popen(WALL_CMD, "w");
-		if (pfp != NULL) {
-			fprintf(pfp, "\007\007%s", *s);
-			pclose(pfp);
-			exit(0);
-		}
+	pfp = popen(WALL_CMD, "w");
+	if (pfp != NULL) {
+		fprintf(pfp, "\007\007%s", *s);
+		pclose(pfp);
 	}
+
+	return (NULL);
 }
 
 void
@@ -201,10 +168,10 @@ wallprog_1(rqstp, transp)
 		svcerr_systemerr(transp);
 	}
 	if (!svc_freeargs(transp, xdr_argument, (caddr_t)&argument)) {
-		(void)fprintf(stderr, "unable to free arguments\n");
+		log(LOG_ERR, "unable to free arguments");
 		exit(1);
 	}
 leave:
-        if (from_inetd)
-                exit(0);
+	if (from_inetd)
+		exit(0);
 }
