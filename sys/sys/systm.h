@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.67 1997/04/16 23:46:00 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.68 1997/06/14 04:19:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -100,6 +100,7 @@ extern int physmem;		/* physical memory */
 extern dev_t dumpdev;		/* dump device */
 extern long dumplo;		/* offset into dumpdev */
 extern int dumpsize;		/* size of dump in pages */
+extern const char *dumpspec;	/* how dump device was specified */
 
 extern dev_t rootdev;		/* root device */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
