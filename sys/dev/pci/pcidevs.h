@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.125 1999/05/07 21:11:20 hwr Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.126 1999/05/07 21:20:12 hwr Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.118 1999/05/07 21:09:31 hwr Exp 
+ *	NetBSD: pcidevs,v 1.119 1999/05/07 21:19:06 hwr Exp 
  */
 
 /*
@@ -697,6 +697,7 @@
 #define	PCI_PRODUCT_CIRRUS_CL_GD5436	0x00ac		/* CL-GD5436 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD5446	0x00b8		/* CL-GD5446 */
 #define	PCI_PRODUCT_CIRRUS_CL_PD6729	0x1100		/* CL-PD6729 */
+#define	PCI_PRODUCT_CIRRUS_CL_PD6832	0x1100		/* CL-PD6832 PCI-CardBus Bridge */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7542	0x1200		/* CL-GD7542 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7543	0x1202		/* CL-GD7543 */
 #define	PCI_PRODUCT_CIRRUS_CL_GD7541	0x1204		/* CL-GD7541 */
