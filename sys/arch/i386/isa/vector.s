@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.29 1995/05/08 18:00:20 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.30 1996/01/07 02:02:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -202,7 +202,12 @@ FAST(15, IO_ICU2, ENABLE_ICU1_AND_2)
  * On exit, we jump to doreti, to process soft interrupts and ASTs.
  */
 #define	INTR(irq_num, icu, enable_icus) \
-IDTVEC(intr/**/irq_num)							;\
+IDTVEC(recurse/**/irq_num)						;\
+	pushfl								;\
+	pushl	%cs							;\
+	pushl	%esi							;\
+	cli								;\
+_Xintr/**/irq_num/**/:							;\
 	pushl	$0			/* dummy error code */		;\
 	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
 	INTRENTRY							;\
@@ -235,7 +240,7 @@ _Xresume/**/irq_num/**/:						;\
 	jnz	7b							;\
 	STRAY_TEST			/* see if it's a stray */	;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
-	INTREXIT			/* lower spl and do ASTs */	;\
+	jmp	_Xdoreti		/* lower spl and do ASTs */	;\
 IDTVEC(stray/**/irq_num)						;\
 	pushl	$irq_num						;\
 	call	_isa_strayintr						;\
@@ -282,42 +287,6 @@ INTR(12, IO_ICU2, ENABLE_ICU1_AND_2)
 INTR(13, IO_ICU2, ENABLE_ICU1_AND_2)
 INTR(14, IO_ICU2, ENABLE_ICU1_AND_2)
 INTR(15, IO_ICU2, ENABLE_ICU1_AND_2)
-
-/*
- * Recursive interrupts.
- *
- * This is a somewhat nasty hack to deal with resuming interrupts from splx().
- * We can't just jump to the resume point, because some handlers require an
- * interrupt frame.  Instead, we just recursively interrupt.
- *
- * On entry, %esi contains a pointer to where we need to return.  This is a
- * bit faster than a call/ret/jmp to continue the loop.
- *
- * XXX
- * It might be a little faster to build the interrupt frame manually and jump
- * to the resume point.  The code would be larger, though.
- */
-#define	RECURSE(irq_num) \
-IDTVEC(recurse/**/irq_num)						;\
-	int	$(ICU_OFFSET + irq_num)					;\
-	jmp	%esi
-
-RECURSE(0)
-RECURSE(1)
-RECURSE(2)
-RECURSE(3)
-RECURSE(4)
-RECURSE(5)
-RECURSE(6)
-RECURSE(7)
-RECURSE(8)
-RECURSE(9)
-RECURSE(10)
-RECURSE(11)
-RECURSE(12)
-RECURSE(13)
-RECURSE(14)
-RECURSE(15)
 
 /*
  * These tables are used by the ISA configuration code.
