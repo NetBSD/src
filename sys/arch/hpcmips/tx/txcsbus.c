@@ -1,4 +1,4 @@
-/*	$NetBSD: txcsbus.c,v 1.1 1999/11/20 19:56:39 uch Exp $ */
+/*	$NetBSD: txcsbus.c,v 1.2 1999/12/03 18:15:41 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -60,7 +60,8 @@ struct cfattach txcsbus_ca = {
 	sizeof(struct txcsbus_softc), txcsbus_match, txcsbus_attach
 };
 
-bus_space_tag_t __txcsbus_alloc_cstag __P((struct txcsbus_softc*, struct cs_handle*));
+bus_space_tag_t __txcsbus_alloc_cstag __P((struct txcsbus_softc*, 
+					   struct cs_handle*));
 
 int
 txcsbus_match(parent, cf, aux)
@@ -71,15 +72,19 @@ txcsbus_match(parent, cf, aux)
 	struct csbus_attach_args *cba = aux;
 	platid_mask_t mask;
 
-	if (strcmp(cba->cba_busname, cf->cf_driver->cd_name))
+	if (strcmp(cba->cba_busname, cf->cf_driver->cd_name)) {
 		return 0;
+	}
 
-	if (cf->cf_loc[TXCSBUSIFCF_PLATFORM] == TXCSBUSIFCF_PLATFORM_DEFAULT) 
+	if (cf->cf_loc[TXCSBUSIFCF_PLATFORM] == 
+	    TXCSBUSIFCF_PLATFORM_DEFAULT) {
 		return 1;
+	}
 
 	mask = PLATID_DEREF(cf->cf_loc[TXCSBUSIFCF_PLATFORM]);
-	if (platid_match(&platid, &mask))
+	if (platid_match(&platid, &mask)) {
 		return 2;
+	}
 
 	return 0;
 }
@@ -125,23 +130,27 @@ txcsbus_search(parent, cf, aux)
 	ca.ca_csreg.csbase	= cf->cf_loc[TXCSBUSCF_REGCSBASE];
 	ca.ca_csreg.cssize	= cf->cf_loc[TXCSBUSCF_REGCSSIZE];
 	ca.ca_csreg.cswidth	= cf->cf_loc[TXCSBUSCF_REGCSWIDTH];
+
 	if (ca.ca_csreg.cs != TXCSBUSCF_REGCS_DEFAULT) {
-		ca.ca_csreg.cstag	= __txcsbus_alloc_cstag(sc, &ca.ca_csreg);
+		ca.ca_csreg.cstag = __txcsbus_alloc_cstag(sc, &ca.ca_csreg);
 	}
 
 	ca.ca_csio.cs		= cf->cf_loc[TXCSBUSCF_IOCS];
 	ca.ca_csio.csbase	= cf->cf_loc[TXCSBUSCF_IOCSBASE];
 	ca.ca_csio.cssize	= cf->cf_loc[TXCSBUSCF_IOCSSIZE];
 	ca.ca_csio.cswidth	= cf->cf_loc[TXCSBUSCF_IOCSWIDTH];
+
 	if (ca.ca_csio.cs != TXCSBUSCF_IOCS_DEFAULT) {
-		ca.ca_csio.cstag	= __txcsbus_alloc_cstag(sc, &ca.ca_csio);
+		ca.ca_csio.cstag = __txcsbus_alloc_cstag(sc, &ca.ca_csio);
 	}
+
 	ca.ca_csmem.cs		= cf->cf_loc[TXCSBUSCF_MEMCS];
 	ca.ca_csmem.csbase	= cf->cf_loc[TXCSBUSCF_MEMCSBASE];
 	ca.ca_csmem.cssize	= cf->cf_loc[TXCSBUSCF_MEMCSSIZE];
 	ca.ca_csmem.cswidth	= cf->cf_loc[TXCSBUSCF_MEMCSWIDTH];
+
 	if (ca.ca_csmem.cs != TXCSBUSCF_MEMCS_DEFAULT) {
-		ca.ca_csmem.cstag	= __txcsbus_alloc_cstag(sc, &ca.ca_csmem);
+		ca.ca_csmem.cstag = __txcsbus_alloc_cstag(sc, &ca.ca_csmem);
 	}
 
 	ca.ca_irq1		= cf->cf_loc[TXCSBUSCF_IRQ1];
@@ -166,20 +175,32 @@ __txcsbus_alloc_cstag(sc, csh)
 		paddr_t	cs_addr;
 		psize_t	cs_size;
 	} __csmap[] = {
-		[TX39_CS0]	= {"CS0(ROM)"	, TX39_SYSADDR_CS0	,TX39_SYSADDR_CS_SIZE},
-		[TX39_CS1]	= {"CS1"	, TX39_SYSADDR_CS1	,TX39_SYSADDR_CS_SIZE},
-		[TX39_CS2]	= {"CS2"	, TX39_SYSADDR_CS2	,TX39_SYSADDR_CS_SIZE},
-		[TX39_CS3]	= {"CS3"	, TX39_SYSADDR_CS3	,TX39_SYSADDR_CS_SIZE},
-		[TX39_MCS0]	= {"MCS0"	, TX39_SYSADDR_MCS0	,TX39_SYSADDR_MCS_SIZE},
-		[TX39_MCS1]	= {"MCS1"	, TX39_SYSADDR_MCS1	,TX39_SYSADDR_MCS_SIZE},
+		[TX39_CS0]	= {"CS0(ROM)"	, TX39_SYSADDR_CS0	,
+				   TX39_SYSADDR_CS_SIZE},
+		[TX39_CS1]	= {"CS1"	, TX39_SYSADDR_CS1	,
+				   TX39_SYSADDR_CS_SIZE},
+		[TX39_CS2]	= {"CS2"	, TX39_SYSADDR_CS2	,
+				   TX39_SYSADDR_CS_SIZE},
+		[TX39_CS3]	= {"CS3"	, TX39_SYSADDR_CS3	,
+				   TX39_SYSADDR_CS_SIZE},
+		[TX39_MCS0]	= {"MCS0"	, TX39_SYSADDR_MCS0	,
+				   TX39_SYSADDR_MCS_SIZE},
+		[TX39_MCS1]	= {"MCS1"	, TX39_SYSADDR_MCS1	,
+				   TX39_SYSADDR_MCS_SIZE},
 #ifdef TX391X
-		[TX39_MCS2]	= {"MCS2"	, TX39_SYSADDR_MCS2	,TX39_SYSADDR_MCS_SIZE},
-		[TX39_MCS3]	= {"MCS3"	, TX39_SYSADDR_MCS3	,TX39_SYSADDR_MCS_SIZE},
+		[TX39_MCS2]	= {"MCS2"	, TX39_SYSADDR_MCS2	,
+				   TX39_SYSADDR_MCS_SIZE},
+		[TX39_MCS3]	= {"MCS3"	, TX39_SYSADDR_MCS3	,
+				   TX39_SYSADDR_MCS_SIZE},
 #endif /* TX391X */
-		[TX39_CARD1]	= {"CARD1(io)"	, TX39_SYSADDR_CARD1	,TX39_SYSADDR_CARD_SIZE},
-		[TX39_CARD2]	= {"CARD2(io)"	, TX39_SYSADDR_CARD2	,TX39_SYSADDR_CARD_SIZE},
-		[TX39_CARD1MEM]	= {"CARD1(mem)"	, TX39_SYSADDR_CARD1MEM	,TX39_SYSADDR_CARD_SIZE},
-		[TX39_CARD2MEM]	= {"CARD2(mem)"	, TX39_SYSADDR_CARD2MEM	,TX39_SYSADDR_CARD_SIZE},
+		[TX39_CARD1]	= {"CARD1(io/attr)", TX39_SYSADDR_CARD1	,
+				   TX39_SYSADDR_CARD_SIZE},
+		[TX39_CARD2]	= {"CARD2(io/attr)", TX39_SYSADDR_CARD2	,
+				   TX39_SYSADDR_CARD_SIZE},
+		[TX39_CARD1MEM]	= {"CARD1(mem)"	, TX39_SYSADDR_CARD1MEM	,
+				   TX39_SYSADDR_CARD_SIZE},
+		[TX39_CARD2MEM]	= {"CARD2(mem)"	, TX39_SYSADDR_CARD2MEM	,
+				   TX39_SYSADDR_CARD_SIZE},
 	};
 
 	tx_chipset_tag_t tc = sc->sc_tc;
@@ -209,36 +230,84 @@ __txcsbus_alloc_cstag(sc, csh)
 	switch (width) {
 	default:
 		panic("txcsbus_alloc_tag: bogus bus width %d\n", width);
+
 	case 32:
 		if (TX39_ISCS(cs)) {
 			reg = tx_conf_read(tc, TX39_MEMCONFIG0_REG);
 			reg |= (1 << cs);
 			tx_conf_write(tc, TX39_MEMCONFIG0_REG, reg);
-		} else {
+		} else if(TX39_ISMCS(cs)) {
 #ifdef TX391X
 			panic("txcsbus_alloc_tag: MCS is 16bit only");
-#elif defined TX392X
+#endif /* TX391X */
+#ifdef TX392X
 			reg = tx_conf_read(tc, TX39_MEMCONFIG1_REG);
-			reg |= ((cs == TX39_MCS0) ? TX39_MEMCONFIG1_MCS0_32 :
+			reg |= ((cs == TX39_MCS0) ? 
+				TX39_MEMCONFIG1_MCS0_32 :
 				TX39_MEMCONFIG1_MCS1_32);
 			tx_conf_write(tc, TX39_MEMCONFIG1_REG, reg);
-#endif
+#endif /* TX392X */
 		}
 		break;
+
 	case 16:
 		if (TX39_ISCS(cs)) {
 			reg = tx_conf_read(tc, TX39_MEMCONFIG0_REG);
 			reg &= ~(1 << cs);
 			tx_conf_write(tc, TX39_MEMCONFIG0_REG, reg);
-		} else { /* TX391X always 16bit port */
+		} else if(TX39_ISMCS(cs)) {
+			/* TX391X always 16bit port */
 #ifdef TX392X
 			reg = tx_conf_read(tc, TX39_MEMCONFIG1_REG);
-			reg &= ~((cs == TX39_MCS0) ? TX39_MEMCONFIG1_MCS0_32 :
+			reg &= ~((cs == TX39_MCS0) ? 
+				 TX39_MEMCONFIG1_MCS0_32 :
 				 TX39_MEMCONFIG1_MCS1_32);
 			tx_conf_write(tc, TX39_MEMCONFIG1_REG, reg);
-#endif
+#endif /* TX392X */
+		} else {
+			/* CARD io/attr or mem */
+			reg = tx_conf_read(tc, TX39_MEMCONFIG3_REG);
+
+			/* enable I/O access */
+			reg |= (cs == TX39_CARD1) ?
+				TX39_MEMCONFIG3_CARD1IOEN :
+				TX39_MEMCONFIG3_CARD2IOEN;
+			/* disable 8bit access */
+#ifdef TX392X
+			reg &= ~((cs == TX39_CARD1) ?
+				TX39_MEMCONFIG3_CARD1_8SEL :
+				TX39_MEMCONFIG3_CARD2_8SEL);
+#endif /* TX392X */
+#ifdef TX391X
+			reg &= ~TX39_MEMCONFIG3_PORT8SEL;
+#endif /* TX391X */
+			tx_conf_write(tc, TX39_MEMCONFIG3_REG, reg);
 		}
 		break;
+
+	case 8:
+		if (TX39_ISCARD(cs)) {
+			reg = tx_conf_read(tc, TX39_MEMCONFIG3_REG);
+
+			/* enable I/O access */
+			reg |= (cs == TX39_CARD1) ?
+				TX39_MEMCONFIG3_CARD1IOEN :
+				TX39_MEMCONFIG3_CARD2IOEN;
+			/* disable 8bit access */
+#ifdef TX392X
+			reg |= (cs == TX39_CARD1) ?
+				TX39_MEMCONFIG3_CARD1_8SEL :
+				TX39_MEMCONFIG3_CARD2_8SEL;
+#endif /* TX392X */
+#ifdef TX391X
+			reg |= TX39_MEMCONFIG3_PORT8SEL;
+#endif /* TX391X */
+			tx_conf_write(tc, TX39_MEMCONFIG3_REG, reg);
+
+		} else {
+			panic("__txcsbus_alloc_cstag: CS%d 8bit mode is"
+			      "not allowed");
+		}
 	}
 	
 	hpcmips_init_bus_space_extent(iot);
