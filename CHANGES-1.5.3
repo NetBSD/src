@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.33 2002/01/29 23:35:49 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.34 2002/02/06 22:59:56 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1506,3 +1506,44 @@ sys/dev/pci/cac_pci.c				1.12
    o Copy access method into to softc to avoid double dereference
    o Remove static on functions
   Fixes PR#14453.
+
+bin/ksh/edit.c					1.7
+bin/ksh/emacs.c					1.11
+
+  Fix some aspects of globbing, particularly in emacs mode.
+
+sys/dev/usb/usbdevs			1.122,1.186,1.212,1.220 via patch
+sys/dev/usb/usbdevs.h				regenerate
+sys/dev/usb/usbdevs_data.h			regenerate
+sys/dev/usb/if_kue.c				1.43 via patch
+
+  Add more devices using the Kawasaki USB-ethernet chip.  Fixes
+  PR#15344.
+
+lib/libossaudio/soundcard.h			1.12
+
+  Determine the ``native'' endianness using _BYTE_ORDER from
+  <machine/endian_machdep.h>.
+
+sys/dev/pci/ahc_pci.c				1.30
+
+  Move stray debugging message to only occur in debug mode.
+
+share/man/man4/cac.4				patch
+
+  Correct some documentation inaccuracies.
+
+share/man/man4/mlx.4				patch
+
+  Remove documentation of EISA attachment, as that's not in this
+  code yet.
+
+sys/dev/pci/pcidevs				1.277,1.279,1.318
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pciide.c			1.112,1.118,1.125,1.128 via patch
+sys/dev/pci/pciide_acard_reg.h			1.1 (new)
+distrib/notes/i386/hardware			1.101
+distrib/notes/macppc/hardware			1.22
+
+  Add support for Acard ATP-850/860 pciide controllers.
