@@ -1,4 +1,4 @@
-/*	$NetBSD: fclose.c,v 1.12 1999/09/20 04:39:25 lukem Exp $	*/
+/*	$NetBSD: fclose.c,v 1.13 2000/01/21 19:53:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fclose.c	8.1 (Berkeley) 6/4/93";
 #endif
-__RCSID("$NetBSD: fclose.c,v 1.12 1999/09/20 04:39:25 lukem Exp $");
+__RCSID("$NetBSD: fclose.c,v 1.13 2000/01/21 19:53:02 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -59,12 +59,11 @@ fclose(fp)
 
 	_DIAGASSERT(fp != NULL);
 
-	FLOCKFILE(fp);
 	if (fp->_flags == 0) {	/* not open! */
 		errno = EBADF;
-		FUNLOCKFILE(fp);
 		return (EOF);
 	}
+	FLOCKFILE(fp);
 	r = fp->_flags & __SWR ? __sflush(fp) : 0;
 	if (fp->_close != NULL && (*fp->_close)(fp->_cookie) < 0)
 		r = EOF;
@@ -74,8 +73,9 @@ fclose(fp)
 		FREEUB(fp);
 	if (HASLB(fp))
 		FREELB(fp);
+	FUNLOCKFILE(fp);
+	fp->_file = -1;
 	fp->_flags = 0;		/* Release this FILE for reuse. */
 	fp->_r = fp->_w = 0;	/* Mess up if reaccessed. */
-	FUNLOCKFILE(fp);
 	return (r);
 }
