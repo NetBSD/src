@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.55 1995/04/22 19:40:29 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.56 1995/05/16 14:17:34 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -46,14 +46,14 @@
  * The following structure is found at the top of the user stack of each
  * user process. The ps program uses it to locate argv and environment
  * strings. Programs that wish ps to display other information may modify
- * it; normally ps_argvstr points to the text for argv[0], and ps_nargvstr
- * is the same as the program's argc. The fields ps_envstr and ps_nenvstr
- * are the equivalent for the environment.
+ * it; normally ps_argvstr points to argv[0], and ps_nargvstr is the same
+ * as the program's argc. The fields ps_envstr and ps_nenvstr are the
+ * equivalent for the environment.
  */
 struct ps_strings {
-	char	*ps_argvstr;	/* first of 0 or more argument strings */
+	char	**ps_argvstr;	/* first of 0 or more argument strings */
 	int	ps_nargvstr;	/* the number of argument strings */
-	char	*ps_envstr;	/* first of 0 or more environment strings */
+	char	**ps_envstr;	/* first of 0 or more environment strings */
 	int	ps_nenvstr;	/* the number of environment strings */
 };
 
