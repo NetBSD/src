@@ -1,14 +1,14 @@
-#	$NetBSD: Makefile,v 1.19 1997/03/24 22:06:35 christos Exp $
+#	$NetBSD: Makefile,v 1.19.2.1 1997/11/08 06:54:08 lukem Exp $
 
 PROG=	gzip
 SRCS=	gzip.c zip.c deflate.c trees.c bits.c unzip.c inflate.c util.c \
 	crypt.c lzw.c unlzw.c unlzh.c unpack.c getopt.c
 MAN=	gzexe.1 gzip.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
-CFLAGS+=-DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DDIRENT=1
+CPPFLAGS+=-DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DDIRENT=1
 
 .if (${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "i386")
 SRCS+=	match.S
-CFLAGS+=-DASMV
+CPPFLAGS+=-DASMV
 .endif
 
 LDSTATIC= -static

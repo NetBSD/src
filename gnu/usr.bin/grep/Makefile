@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 1997/03/24 22:06:22 christos Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 1997/11/08 06:53:23 lukem Exp $
 
 PROG=	grep
 SRCS=	dfa.c grep.c getopt.c kwset.c obstack.c regex.c search.c
-CFLAGS+=-DGREP -DHAVE_STRING_H=1 -DHAVE_SYS_PARAM_H=1 -DHAVE_UNISTD_H=1 \
+CPPFLAGS+=-DGREP -DHAVE_STRING_H=1 -DHAVE_SYS_PARAM_H=1 -DHAVE_UNISTD_H=1 \
 	-DHAVE_GETPAGESIZE=1 -DHAVE_MEMCHR=1 -DHAVE_STRERROR=1 \
 	-DHAVE_VALLOC=1
 

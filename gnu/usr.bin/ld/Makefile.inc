@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/04/16 16:49:29 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.1.2.1 1997/11/08 06:54:10 lukem Exp $
 
-CFLAGS += -I$(.CURDIR)/../common -I$(.CURDIR)/../arch/$(MACHINE_ARCH)
+CPPFLAGS += -I$(.CURDIR)/../common -I$(.CURDIR)/../arch/$(MACHINE_ARCH)
 
 .PATH: $(.CURDIR)/../common $(.CURDIR)/../arch/$(MACHINE_ARCH)

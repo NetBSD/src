@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.2.2 1997/10/27 00:27:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9.2.3 1997/11/08 06:52:02 lukem Exp $
 
 SUBDIR+= libmalloc
 SUBDIR+= libg++

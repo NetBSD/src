@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/18 05:59:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.13.2.1 1997/11/08 06:54:04 lukem Exp $
 
 PROG=		troff
 SRCS=		env.cc node.cc input.cc div.cc symbol.cc dictionary.cc reg.cc \
 		number.cc majorminor.cc
-CFLAGS+=	-I$(.CURDIR)/../include
+CPPFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF) -lm
 DPADD+=		$(LIBGROFF) $(LIBM)
 
