@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.5 1994/06/29 06:31:26 cgd Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.6 1994/10/09 08:19:43 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,22 +32,14 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
-#include <vm/vm.h>
-
-#include <machine/db_machdep.h>
-
-#include <ddb/db_lex.h>
 #include <ddb/db_watch.h>
+#include <ddb/db_lex.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 
 /*
  * Watchpoints.
  */
-
-extern boolean_t db_map_equal();
-extern boolean_t db_map_current();
-extern vm_map_t db_map_addr();
 
 boolean_t	db_watchpoints_inserted = TRUE;
 

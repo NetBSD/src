@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.5 1994/06/29 06:31:16 cgd Exp $	*/
+/*	$NetBSD: db_run.c,v 1.6 1994/10/09 08:19:37 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,11 +32,7 @@
 /*
  * Commands to run process.
  */
-#include <sys/param.h>
-#include <sys/proc.h>
-
-#include <machine/db_machdep.h>
-
+#include <ddb/db_run.h>
 #include <ddb/db_lex.h>
 #include <ddb/db_break.h>
 #include <ddb/db_access.h>
@@ -54,28 +50,18 @@ boolean_t	db_sstep_print;
 int		db_loop_count;
 int		db_call_depth;
 
-int		db_inst_count;
-int		db_load_count;
-int		db_store_count;
-
-#ifndef db_set_single_step
-void		db_set_single_step(/* db_regs_t *regs */);	/* forward */
-#endif
-#ifndef db_clear_single_step
-void		db_clear_single_step(/* db_regs_t *regs */);
-#endif
-
 boolean_t
-db_stop_at_pc(is_breakpoint)
+db_stop_at_pc(regs, is_breakpoint)
+	db_regs_t *regs;
 	boolean_t	*is_breakpoint;
 {
 	register db_addr_t	pc;
 	register db_breakpoint_t bkpt;
 
-	db_clear_single_step(DDB_REGS);
+	db_clear_single_step(regs);
 	db_clear_breakpoints();
 	db_clear_watchpoints();
-	pc = PC_REGS(DDB_REGS);
+	pc = PC_REGS(regs);
 
 #ifdef	FIXUP_PC_AFTER_BREAK
 	if (*is_breakpoint) {
@@ -84,7 +70,7 @@ db_stop_at_pc(is_breakpoint)
 	     * machine requires it.
 	     */
 	    FIXUP_PC_AFTER_BREAK
-	    pc = PC_REGS(DDB_REGS);
+	    pc = PC_REGS(regs);
 	}
 #endif
 
@@ -99,7 +85,7 @@ db_stop_at_pc(is_breakpoint)
 		return (TRUE);	/* stop here */
 	    }
 	} else if (*is_breakpoint) {
-		PC_REGS(&ddb_regs) += BKPT_SIZE;
+		PC_REGS(regs) += BKPT_SIZE;
 	}
 		
 	*is_breakpoint = FALSE;
@@ -160,10 +146,11 @@ db_stop_at_pc(is_breakpoint)
 }
 
 void
-db_restart_at_pc(watchpt)
+db_restart_at_pc(regs, watchpt)
+	db_regs_t *regs;
 	boolean_t watchpt;
 {
-	register db_addr_t	pc = PC_REGS(DDB_REGS);
+	register db_addr_t pc = PC_REGS(regs);
 
 	if ((db_run_mode == STEP_COUNT) ||
 	    (db_run_mode == STEP_RETURN) ||
@@ -197,13 +184,13 @@ db_restart_at_pc(watchpt)
 		 * Step over breakpoint/watchpoint.
 		 */
 		db_run_mode = STEP_INVISIBLE;
-		db_set_single_step(DDB_REGS);
+		db_set_single_step(regs);
 	    } else {
 		db_set_breakpoints();
 		db_set_watchpoints();
 	    }
 	} else {
-	    db_set_single_step(DDB_REGS);
+	    db_set_single_step(regs);
 	}
 }
 
