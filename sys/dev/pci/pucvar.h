@@ -1,4 +1,4 @@
-/*	$NetBSD: pucvar.h,v 1.4 2001/01/03 15:13:15 bouyer Exp $	*/
+/*	$NetBSD: pucvar.h,v 1.5 2004/01/25 11:57:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -82,6 +82,8 @@ struct puc_attach_args {
 	bus_addr_t		a;
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
+	bus_dma_tag_t		dmat;
+	bus_dma_tag_t		dmat64;
 };
 
 extern const struct puc_device_description puc_devices[];
