@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 1999/10/23 14:42:21 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.4 2000/04/16 01:42:41 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -84,10 +84,10 @@ int	cnvtab[] = {
 int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
 
 struct fs_ops file_system[] = {
-	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
-	    ustarfs_seek, ustarfs_stat },
 	{ ufs_open, ufs_close, ufs_read, ufs_write, ufs_seek, ufs_stat },
 	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
+	{ ustarfs_open, ustarfs_close, ustarfs_read, ustarfs_write,
+	    ustarfs_seek, ustarfs_stat },
 };
 
 int nfsys = (sizeof(file_system) / sizeof(struct fs_ops));
