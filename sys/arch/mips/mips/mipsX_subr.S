@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.4 2002/06/04 21:44:40 thorpej Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.5 2002/06/24 05:52:28 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -818,7 +818,7 @@ NESTED_NOPROFILE(MIPSX(UserGenException), CALLFRAME_SIZ, ra)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK_TOUSER(k0,ra)	# machine dependent masking
+	DYNAMIC_STATUS_MASK_TOUSER(k0, ra)	# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	s8, FRAME_S8(k1)
@@ -988,7 +988,7 @@ NESTED_NOPROFILE(MIPSX(SystemCall), CALLFRAME_SIZ, ra)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK_TOUSER(k0,ra)	# machine dependent masking
+	DYNAMIC_STATUS_MASK_TOUSER(k0, ra)	# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	s8, FRAME_S8(k1)
@@ -1116,7 +1116,7 @@ NESTED_NOPROFILE(MIPSX(KernIntr), KERNFRAME_SIZ, ra)
 	.set noat
 #endif
 	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# ??? why differs ???
-	DYNAMIC_STATUS_MASK(a0,t0)		# machine dependent masking
+	DYNAMIC_STATUS_MASK(a0, t0)		# machine dependent masking
 	REG_L	t0, TF_BASE+TF_REG_MULLO(sp)
 	REG_L	t1, TF_BASE+TF_REG_MULHI(sp)
 	REG_L	v0, TF_BASE+TF_REG_EPC(sp)
@@ -1278,7 +1278,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	nop
 #else
 	li	t0, MIPS_HARD_INT_MASK | MIPS_SR_INT_IE
-	DYNAMIC_STATUS_MASK(t0,t1)		# machine dependent masking
+	DYNAMIC_STATUS_MASK(t0, t1)		# machine dependent masking
 	mtc0	t0, MIPS_COP_0_STATUS		# enable interrupts (spl0)
 	COP0_SYNC
 #endif
@@ -1350,7 +1350,7 @@ NESTED_NOPROFILE(MIPSX(UserIntr), CALLFRAME_SIZ, ra)
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK_TOUSER(k0,ra)	# machine dependent masking
+	DYNAMIC_STATUS_MASK_TOUSER(k0, ra)	# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	sp, FRAME_SP(k1)
 	REG_L	ra, FRAME_RA(k1)
@@ -1540,7 +1540,7 @@ LEAF_NOPROFILE(MIPSX(TLBMissException))
 
 outofworld:
 	/* eret to panic so shutdown can use K2.  Try to ensure valid $sp. */
-	la	a0,_C_LABEL(panic)
+	la	a0, _C_LABEL(panic)
 	_MFC0	a2, MIPS_COP_0_EXC_PC
 	move	a1, sp
 	sll	k0, k0, PGSHIFT
@@ -1951,7 +1951,7 @@ LEAF(MIPSX(proc_trampoline))
 	REG_L	t8, FRAME_T8(k1)
 	REG_L	t9, FRAME_T9(k1)
 	REG_L	k0, FRAME_SR(k1)
-	DYNAMIC_STATUS_MASK(k0,sp)		# machine dependent masking
+	DYNAMIC_STATUS_MASK(k0, sp)		# machine dependent masking
 	REG_L	gp, FRAME_GP(k1)
 	REG_L	s8, FRAME_S8(k1)
 	REG_L	ra, FRAME_RA(k1)
@@ -2214,7 +2214,7 @@ LEAF(MIPSX(pagezero))
 	sd	zero, 40(a0)
 	sd	zero, 24(a0)
 	sd	zero, 56(a0)
-	bgtz	a1,1b
+	bgtz	a1, 1b
 	addu	a0, 64
 
 	j	ra
