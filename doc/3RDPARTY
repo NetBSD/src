@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.180 2004/01/22 16:06:19 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.181 2004/01/29 13:11:21 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -769,6 +769,8 @@ The Makefile is completely new (*BSD style, of course).  Lastly,
 the file gzio.c was changed to allow -DNO_DEFLATE to eliminate
 all references to deflate.c and friends, which permits building
 a really small zcat implementation.  (src/distrib/utils/zcat)
+There are two additional API functions in the NetBSD userland
+zlib, used by the free NetBSD gzip(1).
 
 Package:      Vinum
 Version:      2003-10-10
