@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.89 2002/12/05 04:56:57 junyoung Exp $	 */
+/*	$NetBSD: rtld.c,v 1.90 2002/12/14 15:37:57 junyoung Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -301,7 +301,10 @@ _rtld(sp, relocbase)
 	}
 
 	/* Initialize and relocate ourselves. */
-	assert(pAUX_base != NULL);
+	if (pAUX_base == NULL) {
+		_rtld_error("Bad pAUX_base");
+		_rtld_die();
+	}
 	assert(pAUX_pagesz != NULL);
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
 	_rtld_init((caddr_t)pAUX_base->a_v, (caddr_t)relocbase);
