@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.1 1997/01/30 09:38:07 matthias Exp $
+#	$NetBSD: genassym.sh,v 1.2 1997/01/31 21:38:16 pk Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -39,7 +39,7 @@ if [ $1 = '-c' ] ; then
 else
 	ccode=0
 fi
-echo $ccode
+
 trap "rm -f /tmp/$$.c /tmp/genassym.$$" 0 1 2 3 15
 awk -v ccode=$ccode '
 function defstart()
@@ -67,7 +67,6 @@ BEGIN {
 	printf("#define	offsetof(type, member) ((size_t)(&((type *)0)->member))\n");
 	matched = 0;
 	defining = 0;
-	ccode = 1;
 }
 
 /^[ \t]*#.*/ {
@@ -103,9 +102,8 @@ BEGIN {
 }
 
 /^quote[ \t]/ {
-	value = $0
-	gsub("^quote[ \t]+", "", value)
-	printf(value);
+	gsub("^quote[ \t]+", "");
+	print;
 	matched = 1;
 }
 
@@ -123,7 +121,7 @@ END {
 		printf("int main(int argc, char **argv) {");
 		for (i in call)
 			printf(call[i] "();");
-		printf("}\n");
+		printf("return(0); }\n");
 	}
 }
 ' >/tmp/$$.c || exit 1
