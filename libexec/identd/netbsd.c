@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd.c,v 1.11 1997/10/08 07:24:51 mrg Exp $	*/
+/*	$NetBSD: netbsd.c,v 1.12 1998/07/15 07:31:57 msaitoh Exp $	*/
 
 /*
 ** netbsd.c		Low level kernel access functions for NetBSD
@@ -6,12 +6,13 @@
 ** This program is in the public domain and may be used freely by anyone
 ** who wants to. 
 **
-** Last update: 17 March 1993
+** Last update: 15 July 1998
 **
 ** Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
 */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
 #include <limits.h>
@@ -19,7 +20,6 @@
 #include <pwd.h>
 #include <signal.h>
 #include <syslog.h>
-#include <stdlib.h>
 
 #include "kvm.h"
 
@@ -62,6 +62,7 @@
 
 #include "identd.h"
 #include "error.h"
+
 
 struct nlist nl[] =
 {
@@ -117,7 +118,7 @@ static int getbuf(addr, buf, len, what)
   int len;
   char *what;
 {
-  if (kvm_read(kd, addr, buf, len) < 0)
+  if (kvm_read(kd, addr, buf, len) != len)
   {
     if (syslog_flag)
       syslog(LOG_ERR, "getbuf: kvm_read(%#lx, %d) - %s : %m",
@@ -151,8 +152,7 @@ getlist(tcbtablep, ktcbtablep, faddr, fport, laddr, lport)
 	for (kpcbp = tcbtablep->inpt_queue.cqh_first;
 	     kpcbp != (struct inpcb *)ktcbtablep;
 	     kpcbp = pcb.inp_queue.cqe_next) {
-		if (!getbuf((long)kpcbp, (char *)&pcb, sizeof(struct inpcb),
-		    "tcb"))
+		if (!getbuf((long) kpcbp, (char *)&pcb, sizeof(struct inpcb), "tcb"))
 			break;
 		if (pcb.inp_faddr.s_addr == faddr->s_addr &&
 		    pcb.inp_laddr.s_addr == laddr->s_addr &&
@@ -168,12 +168,20 @@ getlist(tcbtablep, ktcbtablep, faddr, fport, laddr, lport)
 /*
 ** Return the user number for the connection owner
 */
-int k_getuid(faddr, fport, laddr, lport, uid)
+int k_getuid(faddr, fport, laddr, lport, uid
+#ifdef ALLOW_FORMAT
+			 , pid, cmd, cmd_and_args
+#endif
+			 )
   struct in_addr *faddr;
   int fport;
   struct in_addr *laddr;
   int lport;
   int *uid;
+#ifdef ALLOW_FORMAT
+  int *pid;
+  char **cmd, **cmd_and_args;
+#endif
 {
   long addr;
   struct socket *sockp;
@@ -211,14 +219,20 @@ int k_getuid(faddr, fport, laddr, lport, uid)
   
   /* -------------------- TCP PCB LIST -------------------- */
   if (!getbuf(nl[N_TCBTABLE].n_value, (char *)&tcbtable, sizeof(tcbtable),
-      "tcbtable"))
+			  "tcbtable"))
     return -1;
   
   sockp = getlist(&tcbtable, (struct inpcbtable *)nl[N_TCBTABLE].n_value,
-      faddr, fport, laddr, lport);
+				  faddr, fport, laddr, lport);
   
   if (!sockp)
     return -1;
+
+#ifdef ALLOW_FORMAT
+  *pid = 0;			/* sorry, currently not implemented. */
+  *cmd = NULL;
+  *cmd_and_args = NULL;
+#endif
 
   /*
   ** Locate the file descriptor that has the socket in question
