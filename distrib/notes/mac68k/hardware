@@ -34,10 +34,11 @@ Supported devices on all of the above systems include:
 	Ethernet cards based on the National Semiconductor 8390 and the
 		SONIC (DP83932) chips
 		(Asante, Apple, and a few others--problems still
-		 with Ethernet and many NuBus video cards).
+		 with Ethernet and many NuBus video cards)
 	Onboard Ethernet based on the SONIC chip for Quadra-series Macs
-	Onboard Ethernet based on the MACE chip for the AV Quadras.
-	Comm-slot Ethernet may be working for some machines/cards.
+	Onboard Ethernet based on the MACE (Am79C940) chip for the Quadra
+		AV-series Macs
+	Comm-slot Ethernet may be working for some machines/cards
 	
 
 If your 68030 system is not listed above, it may be because of a problem
