@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/09/21 20:35:00 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2003/05/16 14:53:55 itojun Exp $
 #	@(#)Makefile	8.3 (Berkeley) 1/25/94
 
 PROG=	mountd
@@ -10,8 +10,6 @@ INETDDIR= ${.CURDIR}/../inetd
 CPPFLAGS+= -I${INETDDIR} -DIPSEC
 LDADD+=	-lipsec -lutil
 DPADD+=	${LIBIPSEC} ${LIBUTIL}
-
-
 
 .include <bsd.prog.mk>
 
