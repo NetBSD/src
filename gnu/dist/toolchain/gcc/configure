@@ -2952,10 +2952,19 @@ for machine in $build $host $target; do
 	tm_file=${cpu_type}/${cpu_type}.h
 	xm_file=${cpu_type}/xm-${cpu_type}.h
 	
-	# Common parts for linux-gnu and openbsd systems
+	# Common parts for some multiplatform systems
 	case $machine in
 	*-*-linux-gnu*)
 		xm_defines="HAVE_ATEXIT POSIX BSTRING"
+		;;
+	*-*-netbsd*)
+		case $machine in
+		*-*-netbsdelf*)	tm_file=${cpu_type}/netbsd-elf.h;;
+		*)		tm_file=${cpu_type}/netbsd.h;;
+		esac
+		tmake_file="t-libc-ok t-netbsd"
+		xm_file="${xm_file} xm-netbsd.h"
+		xmake_file=none
 		;;
 	*-*-openbsd*)
 		tm_file=${cpu_type}/openbsd.h
@@ -3060,20 +3069,15 @@ for machine in $build $host $target; do
  		fi
 		;;
 	alpha*-*-netbsd*)
-		tm_file="${tm_file} alpha/elf.h alpha/netbsd.h alpha/netbsd-elf.h"
 		target_cpu_default="MASK_GAS"
-		tmake_file="alpha/t-crtbe alpha/t-ieee"
-		extra_parts="crtbegin.o crtend.o"
-		xmake_file=none
+		tmake_file="${tmake_file} alpha/t-ieee"
 		gas=yes gnu_ld=yes
 		;;
-
 	alpha*-*-openbsd*)
 		# default x-alpha is only appropriate for dec-osf.
 		target_cpu_default="MASK_GAS"
 		tmake_file="alpha/t-ieee"
 		;;
-		
 	alpha*-dec-osf*)
 		if test x$stabs = xyes
 		then
@@ -3171,16 +3175,10 @@ for machine in $build $host $target; do
 		tmake_file=arm/t-semiaof
 		;;
 	arm*-*-netbsdelf*)
-		tm_file=arm/netbsd-elf.h
-		xm_file="arm/xm-netbsd.h ${xm_file}"
-		tmake_file="t-netbsd arm/t-netbsd"
-       use_collect2=yes
+		gas=yes gnu_ld=yes
 		;;
 	arm*-*-netbsd*)
-		tm_file=arm/netbsd.h
-		xm_file="arm/xm-netbsd.h ${xm_file}"
-		tmake_file="t-netbsd arm/t-netbsd"
-       use_collect2=yes
+		gas=yes
 		;;
 	arm*-*-linux-gnuaout*)		# ARM GNU/Linux with a.out
 		cpu_type=arm
@@ -3575,15 +3573,9 @@ for machine in $build $host $target; do
 		tmake_file=t-freebsd
 		;;
 	i[34567]86-*-netbsdelf*)
-		tm_file=i386/netbsd-elf.h
-		xm_file=i386/xm-netbsd.h
-		tmake_file=t-netbsd
+		gas=yes gnu_ld=yes
 		;;
 	i[34567]86-*-netbsd*)
-		tm_file=i386/netbsd.h
-		xm_file=i386/xm-netbsd.h
-		tmake_file=t-netbsd
-       use_collect2=yes
 		;;
 	i[34567]86-*-openbsd*)
 		# we need collect2 until our bug is fixed...
@@ -4384,11 +4376,12 @@ for machine in $build $host $target; do
 		extra_headers=math-68881.h
 		float_format=m68k
 		;;
-	m68k*-*-netbsd*)
-		tm_file=m68k/netbsd.h
-		tmake_file=t-netbsd
+	m68*-*-netbsdelf*)
 		float_format=m68k
-       use_collect2=yes
+		gas=yes gnu_ld=yes
+		;;
+	m68*-*-netbsd*)
+		float_format=m68k
 		;;
 	m68k*-*-openbsd*)
 		float_format=m68k
@@ -4703,10 +4696,8 @@ for machine in $build $host $target; do
 			use_collect2=yes
 	      fi
 	      ;;
-	mipsel-*-netbsd* | mips-dec-netbsd*)    # Decstation running NetBSD
-		tm_file=mips/netbsd.h
-		# On NetBSD, the headers are already okay, except for math.h.
-		tmake_file=t-netbsd
+	mips*-*-netbsd*)
+		gas=yes gnu_ld=yes
 		;;
        mips*-*-linux*)                         # Linux MIPS, either endian.
 		xmake_file=x-linux
@@ -5052,11 +5043,7 @@ for machine in $build $host $target; do
 		use_collect2=yes
 		;;
 	ns32k-*-netbsd*)
-		tm_file=ns32k/netbsd.h
-		xm_file="ns32k/xm-netbsd.h ${xm_file}"
-		# On NetBSD, the headers are already okay, except for math.h.
-		tmake_file=t-netbsd
-       use_collect2=yes
+		xm_file="${xm_file} ns32k/xm-netbsd.h"
 		;;
         pdp11-*-bsd)
 		tm_file="${tm_file} pdp11/2bsd.h"
@@ -5352,15 +5339,9 @@ for machine in $build $host $target; do
 		tm_file="sparc/aout.h libgloss.h"
 		;;
 	sparc-*-netbsdelf*)
-		tm_file=sparc/netbsd-elf.h
-		xm_file=sparc/xm-netbsd.h
-		tmake_file=t-netbsd
-		use_collect2=yes
+		gas=yes gnu_ld=yes
 		;;
 	sparc-*-netbsd*)
-		tm_file=sparc/netbsd.h
-		tmake_file=t-netbsd
-       use_collect2=yes
 		;;
 	sparc-*-openbsd*)
 		# we need collect2 until our bug is fixed...
@@ -5552,9 +5533,8 @@ for machine in $build $host $target; do
 		;;
         sparc64-*-netbsd*)
 		tm_file=sparc/netbsd64.h
-		xm_file=sparc/xm-netbsd64.h
-		tmake_file=t-netbsd
-		use_collect2=yes
+		xm_file="sparc/xm-sp64.h xm-netbsd.h"
+		gas=yes gnu_ld=yes
 		;;
 # This hasn't been upgraded to GCC 2.
 #	tahoe-harris-*)			# Harris tahoe, using COFF.
@@ -5603,16 +5583,12 @@ for machine in $build $host $target; do
 		float_format=vax
 		;;
 	vax-*-netbsdelf*)
-		tm_file="${tm_file} vax/netbsd-elf.h" 
-		tmake_file=t-netbsd
 		float_format=vax
-		use_collect2=yes
+		gas=yes gnu_ld=yes
 		;;
 	vax-*-netbsd*)
 		tm_file="${tm_file} netbsd.h vax/netbsd.h"
-		tmake_file=t-netbsd
 		float_format=vax
-		use_collect2=yes
 		;;
 	vax-*-openbsd*)
 		tmake_file="${tmake_file} vax/t-openbsd"

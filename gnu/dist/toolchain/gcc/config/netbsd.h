@@ -23,14 +23,18 @@
 /* Under NetBSD, the normal location of the compiler back ends is the
    /usr/libexec directory.  */
 
-#undef STANDARD_EXEC_PREFIX
-#define STANDARD_EXEC_PREFIX		"/usr/libexec/"
+#undef MD_EXEC_PREFIX
+#ifdef NBSD_EXEC_PREFIX
+#define	MD_EXEC_PREFIX			NBSD_EXEC_PREFIX
+#else
+#define MD_EXEC_PREFIX			"/usr/libexec/"
+#endif
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
 
-#undef STANDARD_STARTFILE_PREFIX
-#define STANDARD_STARTFILE_PREFIX	"/usr/lib/"
+#undef MD_STARTFILE_PREFIX
+#define MD_STARTFILE_PREFIX		"/usr/lib/"
 
 #endif
 
@@ -151,6 +155,9 @@
 /* XXX.  This is WRONG for alpha.  Needs to be verified on other ELF ports. */
 #ifndef NETBSD_ELF
 
+/* XXX.  This is WRONG for alpha.  Needs to be verified on other ELF ports. */
+#ifndef NETBSD_ELF
+
 /* Write the extra assembler code needed to declare a function properly.
    Some svr4 assemblers need to also have something extra said about the
    function's return value.  We allow for that here.  */
@@ -231,6 +238,51 @@ do {									 \
 	putc ('\n', FILE);						\
       }									\
   } while (0)
+
+#endif
+
+/* ELF ports */
+
+#ifdef NETBSD_ELF
+
+/* Provide a STARTFILE_SPEC appropriate for NetBSD ELF targets.  Here we
+   provide support for the special GCC option -static.  On ELF targets,
+   we also add the crtbegin.o file which provides part of the support
+   for getting C++ file-scope static objects constructed before entering
+   `main'. */
+
+#undef STARTFILE_SPEC
+#define	STARTFILE_SPEC \
+ "%{!shared: \
+     %{pg:gcrt0%O%s} \
+     %{!pg: \
+        %{p:gcrt0%O%s} \
+        %{!p:crt0%O%s}}} \
+   %{!shared:crtbegin%O%s} %{shared:crtbeginS%O%s}"
+
+/* Provide an ENDFILE_SPEC approrpiate for NetBSD ELF targets.  Here we
+   add crtend.o, which provides part of the support for getting C++
+   file-scope static objects deconstructed after exiting `main'. */
+
+#undef ENDFILE_SPEC
+#define	ENDFILE_SPEC \
+ "%{!shared:crtend%O%s} %{shared:crtendS%O%s}"
+
+/* Provide a LINK_SPEC appropriate for a NetBSD ELF target.  */
+
+#undef LINK_SPEC
+#define	LINK_SPEC \
+ "%{assert*} \
+  %{shared:-shared} \
+  %{!shared: \
+    -dc -dp \
+    %{!nostdlib:%{!r*:%{!e*:-e __start}}} \
+    %{!static: \
+      %{rdynamic:-export-dynamic} \
+      %{!dynamic-linker:-dynamic-linker /usr/libexec/ld.elf_so}} \
+    %{static:-static}}"
+
+#endif /* NETBSD_ELF */
 
 #endif /* ! NETBSD_ELF */
 
