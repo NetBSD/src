@@ -1,14 +1,14 @@
-#	$NetBSD: CARDBUS,v 1.31 2001/01/30 23:32:34 tshiozak Exp $
+#	$NetBSD: CARDBUS,v 1.32 2001/03/20 05:49:32 lukem Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
 
-#	from: GENERIC,v 1.390 2001/01/09 00:40:53 lukem Exp
+#	from: GENERIC,v 1.400 2001/02/04 17:36:03 perry Exp $
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.31 $"
+#ident		"CARDBUS-$Revision: 1.32 $"
 
 maxusers	32		# estimated number of users
 
@@ -78,6 +78,7 @@ options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
@@ -473,9 +474,12 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 #cac*	at eisa?			# Compaq EISA array controllers
 #cac*	at pci? dev ? function ?	# Compaq PCI array controllers
+#mlx*	at pci? dev ? function ?	# Mylex DAC960 & DEC SWXCR family
 #twe*	at pci? dev ? function ?	# 3ware Escalade RAID controllers
-#ld*	at cac? unit ?			# Compaq array disk devices
-#ld*	at twe? unit ?			# 3ware array disk devices
+
+#ld*	at cac? unit ?			# logical disk devices
+#ld*	at twe? unit ?
+#ld*	at mlx? unit ?
 
 
 # IDE and related devices
@@ -703,8 +707,11 @@ upl*	at uhub? port ?
 
 # Serial adapters
 # FTDI FT8U100AX serial adapter
-#uftdi*	at uhub? port ?
-#ucom*	at uftdi? portno ?
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
+
+uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ? 
 
 # Diamond Multimedia Rio 500
 urio*	at uhub? port ?
@@ -715,6 +722,10 @@ ucom*	at uvisor?
 
 # USB scanners
 uscanner* at uhub? port ?
+
+# USB scanners that use SCSI emulation, e.g., HP5300
+usscanner* at uhub? port ?
+scsibus* at usscanner? channel ?
 
 # Y@P firmware loader
 uyap* at uhub? port ?
@@ -729,6 +740,7 @@ ugen*	at uhub? port ?
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
@@ -772,6 +784,7 @@ opl*	at wss?
 audio*	at auich?
 audio*	at auvia?
 audio*	at clcs?
+audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
 audio*	at esm?
@@ -797,6 +810,8 @@ mpu*	at sb?
 #mpu*	at ym?
 
 # MIDI support
+midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
+#midi*	at clct?		# Cirrus Logic CS4281 MIDI port
 #midi*	at cms?			# Creative Music System
 midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
@@ -833,6 +848,8 @@ midi*   at umidi?               # USB MIDI
 
 
 # Joysticks
+
+#joy*	at pnpbios? index ?		# Game port
 
 # ISA Plug-and-Play joysticks
 #joy*	at isapnp?			# Game ports (usually on audio cards)
