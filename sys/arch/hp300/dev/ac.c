@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.12 2000/05/19 18:54:31 thorpej Exp $	*/
+/*	$NetBSD: ac.c,v 1.13 2001/12/08 03:34:38 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -321,7 +321,7 @@ accommand(dev, command, bufp, buflen)
 		panic("accommand: active!");
 
 	sc->sc_flags |= ACF_ACTIVE;
-	bzero((caddr_t)cmd->cdb, sizeof(cmd->cdb));
+	memset((caddr_t)cmd->cdb, 0, sizeof(cmd->cdb));
 	cmd->cdb[0] = command;
 
 	switch (command) {
@@ -455,7 +455,7 @@ acgeteinfo(dev)
 	char msbuf[48];
 	int error;
 
-	bzero(msbuf, sizeof msbuf);
+	memset(msbuf, 0, sizeof msbuf);
 	error = accommand(dev, ACCMD_MODESENSE, msbuf, sizeof msbuf);
 	if (error)
 		return(error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.48 2001/11/17 23:53:37 gmcgarry Exp $	*/
+/*	$NetBSD: ite.c,v 1.49 2001/12/08 03:34:39 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ iteattach(parent, self, aux)
 			    ite->sc_dev.dv_xname);
 			return;
 		}
-		bzero(ite->sc_data, sizeof(struct ite_data));
+		memset(ite->sc_data, 0, sizeof(struct ite_data));
 		ite->sc_data->flags = ITE_ALIVE;
 	}
 
@@ -280,7 +280,7 @@ iteinit(ip)
 	if (ip->attrbuf == NULL)
 		ip->attrbuf = (u_char *)
 			malloc(ip->rows * ip->cols, M_DEVBUF, M_WAITOK);
-	bzero(ip->attrbuf, (ip->rows * ip->cols));
+	memset(ip->attrbuf, 0, (ip->rows * ip->cols));
 
 	ip->imode = 0;
 	ip->flags |= ITE_INITED;
