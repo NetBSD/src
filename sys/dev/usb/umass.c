@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.96 2003/04/26 12:46:59 dsainty Exp $	*/
+/*	$NetBSD: umass.c,v 1.97 2003/09/04 00:02:59 mycroft Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.96 2003/04/26 12:46:59 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.97 2003/09/04 00:02:59 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1673,7 +1673,8 @@ umass_bbb_get_max_lun(struct umass_softc *sc, u_int8_t *maxlun)
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, 1);
 
-	err = usbd_do_request(sc->sc_udev, &req, maxlun);
+	err = usbd_do_request_flags(sc->sc_udev, &req, maxlun,
+	    USBD_SHORT_XFER_OK, 0, USBD_DEFAULT_TIMEOUT);
 	switch (err) {
 	case USBD_NORMAL_COMPLETION:
 		DPRINTF(UDMASS_BBB, ("%s: Max Lun %d\n",
