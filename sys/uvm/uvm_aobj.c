@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.20 1999/05/25 00:09:00 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.21 1999/07/07 05:32:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -722,9 +722,13 @@ uao_flush(uobj, start, end, flags)
  	 */
 	/*
  	 * XXX
- 	 * deal with PGO_DEACTIVATE (for madvise(MADV_SEQUENTIAL))
- 	 * and PGO_FREE (for msync(MSINVALIDATE))
- 	 */
+	 * Deal with:
+	 *
+	 *	PGO_DEACTIVATE	for sequential access, via uvm_fault(), and
+	 *			for MADV_DONTNEED
+	 *
+	 *	PGO_FREE	for MADV_FREE and MSINVALIDATE
+	 */
 	return TRUE;
 }
 
