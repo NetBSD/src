@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.53 2002/05/23 06:44:17 pooka Exp $
+.\"	$NetBSD: contents,v 1.54 2002/05/30 12:56:34 leo Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,16 +53,24 @@ conventions for indicating italic and bold display.
 .	(tag instkernel/ -compact
 .		It Pa kernel/
 .		(tag netbsd.INSTALL_LAPTOP.gz -compact
+.if !r_atari \{\
 .			It Pa netbsd-GENERIC.gz
 A gzipped
 .Nx
 kernel containing code for everything supported in this release.
+.\}
 .if r_hpcmips \{\
 This kernel runs on Vr41xx and TX3922 CPU only.
 .\}
 .
 .if r_sgimips \{\
 This kernel will boot on O2 and similar machines.
+.\}
+.
+.if r_acorn26 \{\
+.			It Pa netbsd.FOURMEG.gz
+A somewhat smaller kernel, intended to be usable on systems with
+four megabytes of RAM.
 .\}
 .
 .if r_amiga \{\
@@ -72,10 +80,24 @@ using loadbsd for installation on memory-tight systems. This is the
 same kernel as present on the miniroot.
 .\}
 .
-.if r_acorn26 \{\
-.			It Pa netbsd.FOURMEG.gz
-A somewhat smaller kernel, intended to be usable on systems with
-four megabytes of RAM.
+.if r_atari \{\
+.			It Pa netbsd-ATARITT.gz
+A kernel specifically tuned for the Atari TT030.
+.			It Pa netbsd-BOOT.gz
+A kernel for both the Falcon and TT030. It is kept pretty small, so you
+can use it to boot the system for installation on memory-tight systems.
+This is the kernel supplied on the boot.fs floppy.
+.			It Pa netbsd-BOOTX.gz
+Same as the BOOT kernel, but it has slightly more features. You can run X11
+with it.
+.			It Pa netbsd-FALCON.gz
+A kernel specifically tuned for the Atari Falcon.
+.			It Pa netbsd-HADES.gz
+A kernel specifically tuned for the Hades.
+.			It Pa netbsd-MILAN-ISAIDE.gz
+A kernel specifically tuned for the MILAN using IDE in ISA mode.
+.			It Pa netbsd-MILAN-PCIIDE.gz
+A kernel specifically tuned for the MILAN using IDE in PCI mode.
 .\}
 .
 .if r_hpcmips \{\
@@ -192,7 +214,7 @@ no need to
 this image.
 .\}
 .
-.if \n[amiga]:\n[hp300]:\n[mvme68k]:\n[sparc]:\n[sparc64]:\n[sun2]:\n[sun3] \{\
+.if \n[amiga]:\n[atari]:\n[hp300]:\n[mvme68k]:\n[sparc]:\n[sparc64]:\n[sun2]:\n[sun3] \{\
 .		It Pa miniroot/
 \*M miniroot file system image; see below.
 .\}
@@ -446,6 +468,7 @@ This set includes the games and their manual pages.
 .if r_sun2 .Em 5.4 MB gzipped, 12.2 MB uncompressed
 .if r_vax .Em 2.9 MB gzipped, 7.1 MB uncompressed
 .
+.if !r_atari \{\
 .It Sy kern-GENERIC
 This set contains a
 .Nx*M
@@ -473,6 +496,18 @@ install this distribution set.
 .if r_sun2 .Em 0.4 MB gzipped, 0.9 MB uncompressed
 .if r_vax .Em 0.7 MB gzipped, 1.4 MB uncompressed
 .if r_x68k .Em 0.9 MB gzipped, 2.1 MB uncompressed
+.\}
+.if r_atari \{\
+.It Sy kern-BOOT,kern-HADES,kern-MILAN-ISAIDE and kern-MILAN-PCIIDE
+These sets contain a
+.Nx*M
+\*V
+kernel, named
+.Pa /netbsd .
+.No You Em must
+install the kernel that matches your hardware.
+.br
+.\}
 .
 .It Sy man
 This set includes all of the manual pages for the
@@ -757,7 +792,7 @@ in the
 subdirectory of the
 .Nx \*V
 distribution tree. These kernels are generally named something like
-.Pa netbsd.BOOT.gz
+.Pa netbsd-BOOT.gz
 or some other suitable name. Please note that these kernels are simply
 gzipped and are not in tar archives.
 .Pp
