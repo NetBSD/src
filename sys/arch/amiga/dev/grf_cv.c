@@ -31,7 +31,8 @@
 #include "grfcv.h"
 #if NGRFCV > 0
 
-#undef CV64CONSOLE
+#undef CV64CONSOLE /* DO NOT REMOVE THIS till ite5 is ready */
+
 /*
  * Graphics routines for the CyberVision 64 board, using the S3 Trio64.
  *
@@ -87,6 +88,10 @@ int  grfcvprint  __P((void *, char *));
 int  grfcvmatch  __P((struct device *, struct cfdata *, void *));
 void cv_memset __P((unsigned char *, unsigned char, int));
 
+#ifdef CV64CONSOLE
+extern void grfcv_iteinit __P((struct grf_softc *));
+#endif
+
 /* Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.
  */
@@ -111,7 +116,7 @@ static struct grfvideo_mode *monitor_current = &monitor_def[0];
 extern unsigned char S3FONT[];
 
 struct grfcvtext_mode cvconsole_mode = {
-	{255, "", 25000000, 640, 400, 4, 80, 82, 84, 90, 95, 406,
+	{255, "", 25000000, 640, 400, 4, 640, 656, 672, 720, 760, 406,
 	441, 412, 426, 447},
 	S3FONTX, S3FONTY, 80, 506/S3FONTY, S3FONT, 32, 255
 };
@@ -454,7 +459,7 @@ cv_boardinit(gp)
 	WCrt(ba, CRT_ID_START_ADDR_LOW, 0x00);
 
 	/* Cursor location */
-	WCrt(ba, CRT_ID_CURSOR_LOC_HIGH, 0x0);
+	WCrt(ba, CRT_ID_CURSOR_LOC_HIGH, 0x00);
 	WCrt(ba, CRT_ID_CURSOR_LOC_LOW, 0x00);
 
 	/* Vertical retrace */
@@ -838,7 +843,7 @@ cv_toggle(gp,wopp)
 {
 	volatile unsigned char *ba;
 
-	ba = gp->g_regkva-0x0200000;
+	ba = gp->g_regkva - READ_OFFSET;
 
 	if (pass_toggle) {
 		cvscreen(0, ba);
@@ -862,7 +867,7 @@ cv_mondefok(gv)
 	switch(gv->depth) {
 	   case 1:
 	   case 4:
-		/* remove this comment when ite5 is ready */
+		/* Remove this comment when ite5 is ready */
 		/* if (gv->mode_num != 255) */
 			return (0);
 	   case 8:
@@ -900,9 +905,6 @@ cv_load_mon(gp, md)
 	int uplim, lowlim;
 	char test;
 
-	/* turn gfx off, don't mess up the display */
-	gfx_on_off(1, ba);
-
 	/* identity */
 	gv = &md->gv;
 	TEXT = (gv->depth == 4);
@@ -913,6 +915,9 @@ cv_load_mon(gp, md)
 	}
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
+
+	/* turn gfx off, don't mess up the display */
+	gfx_on_off(1, ba);
 
 	/* provide all needed information in grf device-independant locations */
 	gp->g_data		= (caddr_t) gv;
@@ -997,9 +1002,9 @@ cv_load_mon(gp, md)
 	   ((HT & 0x100) ? 0x01 : 0x00) |
 	   ((HDE & 0x100) ? 0x02 : 0x00) |
 	   ((HBS & 0x100) ? 0x04 : 0x00) |
-	/* ((HBE & 0x40) ? 0x08 : 0x00) |    */  /* Later... */
+	/* ((HBE & 0x40) ? 0x08 : 0x00) | */  /* Later... */
 	   ((HSS & 0x100) ? 0x10 : 0x00) |
-	/* ((HSE & 0x20) ? 0x20 : 0x00) |    */
+	/* ((HSE & 0x20) ? 0x20 : 0x00) | */
 	   (((HT-5) & 0x100) ? 0x40 : 0x00) );
 
 	WCrt(ba, CRT_ID_EXT_VER_OVF,
@@ -1135,12 +1140,6 @@ cv_load_mon(gp, md)
 	    (gv->depth == 1) ? 0x01 : 0x0f);
 	delay(100000);
 
-	/* text initialization */
-
-	if (TEXT) {
-		cv_inittextmode(gp);
-	}
-
 	/* M-Parameter of Display FIFO
 	 * this is dependant on the pixel clock
 	 * If someone knows a better formula, please tell me!
@@ -1166,6 +1165,12 @@ cv_load_mon(gp, md)
 	WCrt(ba, CRT_ID_EXT_MEM_CNTL_2, test);
 	delay(10000);
 
+	/* text initialization */
+
+	if (TEXT) {
+		cv_inittextmode(gp);
+	}
+
 	/* Some kind of Magic */
 	WAttr(ba, 0x33, 0);
 
@@ -1173,7 +1178,7 @@ cv_load_mon(gp, md)
 	gfx_on_off(0, ba);
 
 	/* Pass-through */
-	cvscreen(0, ba - 0x2000000);
+	cvscreen(0, ba - READ_OFFSET);
 
 	return (1);
 }
