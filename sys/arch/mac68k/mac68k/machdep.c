@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.243 2000/02/14 07:01:48 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.244 2000/02/21 01:51:37 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,25 +85,25 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/exec.h>
-#include <sys/core.h>
-#include <sys/kcore.h>
-#include <sys/vnode.h>
-#include <sys/reboot.h>
-#include <sys/conf.h>
-#include <sys/file.h>
 #include <sys/clist.h>
+#include <sys/conf.h>
+#include <sys/core.h>
+#include <sys/exec.h>
+#include <sys/extent.h>
+#include <sys/file.h>
+#include <sys/kcore.h>
+#include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/user.h>
 #include <sys/mount.h>
-#include <sys/extent.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/signalvar.h>
 #include <sys/syscallargs.h>
+#include <sys/user.h>
+#include <sys/vnode.h>
 #ifdef	KGDB
 #include <sys/kgdb.h>
 #endif
@@ -273,15 +273,6 @@ mac68k_init()
 
 	/* Initialize the interrupt handlers. */
 	intr_init();
-
-	/* Initialize the VIAs */
-	via_init();
-
-	/* Initialize the IOPs (if present) */
-	iop_init(1);
-
-	/* Initialize the PSC (if present) */
-	psc_init();
 
 	/*
 	 * Initialize error message buffer (at end of core).
