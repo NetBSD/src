@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.170 2002/10/01 12:57:01 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.171 2002/10/05 21:21:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.170 2002/10/01 12:57:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.171 2002/10/05 21:21:05 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -125,6 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.170 2002/10/01 12:57:01 fvdl Exp $");
 #include "npx.h"
 
 void trap __P((struct trapframe));
+void trap_tss __P((struct i386tss *, int, int));
 #if defined(I386_CPU)
 int trapwrite __P((unsigned));
 #endif
@@ -167,6 +168,32 @@ int	trapdebug = 0;
 #endif
 
 #define	IDTVEC(name)	__CONCAT(X, name)
+
+void
+trap_tss(struct i386tss *tss, int trapno, int code)
+{
+	struct trapframe tf;
+
+	tf.tf_gs = tss->tss_gs;
+	tf.tf_fs = tss->tss_fs;
+	tf.tf_es = tss->__tss_es;
+	tf.tf_ds = tss->__tss_ds;
+	tf.tf_edi = tss->__tss_edi;
+	tf.tf_esi = tss->__tss_esi;
+	tf.tf_ebp = tss->tss_ebp;
+	tf.tf_ebx = tss->__tss_ebx;
+	tf.tf_edx = tss->__tss_edx;
+	tf.tf_ecx = tss->__tss_ecx;
+	tf.tf_eax = tss->__tss_eax;
+	tf.tf_trapno = trapno;
+	tf.tf_err = code | TC_TSS;
+	tf.tf_eip = tss->__tss_eip;
+	tf.tf_cs = tss->__tss_cs;
+	tf.tf_eflags = tss->__tss_eflags;
+	tf.tf_esp = tss->tss_esp;
+	tf.tf_ss = tss->__tss_ss;
+	trap(tf);
+}
 
 /*
  * trap(frame):
@@ -419,7 +446,8 @@ copyfault:
 
 	case T_ARITHTRAP|T_USER:
 		KERNEL_PROC_LOCK(p);
-		(*p->p_emul->e_trapsignal)(p, SIGFPE, frame.tf_err);
+		(*p->p_emul->e_trapsignal)(p, SIGFPE,
+		    frame.tf_err & ~TC_FLAGMASK);
 		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
