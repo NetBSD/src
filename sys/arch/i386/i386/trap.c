@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 1994/11/06 20:30:09 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.61 1994/11/07 05:26:17 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -563,10 +563,11 @@ syscall(frame)
 
 	case ERESTART:
 		/*
-		 * Reconstruct pc, assuming lcall $X,y is 7 bytes, as it is
-		 * always.
+		 * The offset to adjust the PC by depends on whether we entered
+		 * the kernel through the trap or call gate.  We pushed the
+		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip = opc - 7;
+		frame.tf_eip = opc - frame.tf_err;
 		break;
 
 	case EJUSTRETURN:
