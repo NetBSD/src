@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.14 1997/09/16 16:44:56 lukem Exp $	*/
+/*	$NetBSD: fsck.h,v 1.15 1997/09/20 06:16:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,8 +35,6 @@
  *	@(#)fsck.h	8.4 (Berkeley) 5/9/95
  */
 
-#include <unistd.h>
-#include <stdlib.h>
 #include <stdio.h>
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */
