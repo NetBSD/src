@@ -21,7 +21,7 @@ CFLAGS+=-DARCH_REP=\"${MACHINE}\"
 CFLAGS+=-DOS_REP=\"${OS}\"
 CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
 CFLAGS+=${CONFIG}
-CLEANFILES+=vers.${PROG}.c vers.${PROG}.o
+CLEANFILES+=vers.${PROG}.c vers.${PROG}.o version.amd
 
 vers.${PROG}.c: ${SRCS:.c=.o}
 	@d=${.CURDIR}/ sh ${.CURDIR}/../config/newvers.sh ${PROG} ${MACHINE} ${OS}
