@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.112 2004/04/21 03:58:38 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.113 2004/04/21 04:14:27 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1118,3 +1118,22 @@ sys/net/bpfdesc.h				1.17-1.18
 	based on whether or not the entire packet is in one mbuf.
 	Various other bpf fixes, including PR#8674, PR#12170
 	[darrenr, ticket #167]
+
+
+distrib/amd64/floppies/ramdisk/list		1.6
+distrib/atari/floppies/common/Makefile.images	1.6
+distrib/common/list.sysinst			1.11
+distrib/common/list.sysinst.en			1.1
+distrib/i386/floppies/common/Makefile.ramdisk	1.22
+distrib/i386/floppies/ramdisk-big/list		1.20
+distrib/i386/floppies/ramdisk-tiny/Makefile	1.26
+distrib/mac68k/instkernel/ramdisk/Makefile	1.27
+distrib/prep/floppies/ramdisk/Makefile		1.11
+distrib/x68k/floppies/ramdisk/Makefile		1.25
+
+	Add French, German and Polish sysinstmsgs to all ramdisks that include 
+	sysinst except those where at least one of the language variants isn't 
+	built, and those that are known not to have enough space 
+	(i386 ramdisk-tiny).  Files added to list.sysinst, list.sysinst.en is 
+	used when these files cannot be added.
+	[dsl, ticket #168]
