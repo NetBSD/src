@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.3 1994/08/24 01:34:47 gwr Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.4 1994/08/24 18:14:44 gwr Exp $";
 #endif
 
 /*
@@ -815,8 +815,8 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 		strcpy(realpath, hp->tftpdir->string);
 		clntpath = &realpath[strlen(realpath)];
 	} else {
+		realpath[0] = '\0';
 		clntpath = realpath;
-		clntpath[0] = '\0';
 	}
 
 	/*
