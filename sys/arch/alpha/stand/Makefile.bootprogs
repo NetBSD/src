@@ -1,6 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.1 1998/03/28 00:21:35 thorpej Exp $
-
-.include <bsd.own.mk>			# for ECOFF_TOOLCHAIN definition
+# $NetBSD: Makefile.bootprogs,v 1.2 1998/03/28 00:54:15 cgd Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -44,10 +42,6 @@ CPPFLAGS+=		-DHEAP_LIMIT="0x${HEAP_LIMIT}"
 
 PRIMARY_CPPFLAGS=	-DPRIMARY_BOOTBLOCK
 FILE_FORMAT_CPPFLAGS=	-DALPHA_BOOT_ECOFF -DALPHA_BOOT_ELF
-
-.if defined(ECOFF_TOOLCHAIN)
-CPPFLAGS+=	-DECOFF_COMPAT
-.endif
 
 .include <bsd.prog.mk>
 

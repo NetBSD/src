@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.3 1998/03/27 09:11:33 jtc Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.4 1998/03/28 00:52:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -29,8 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef ECOFF_COMPAT
 
 /*
  * XXX EVENTUALLY SHOULD BE MERGED BACK WITH c++rt0.c
@@ -115,5 +113,3 @@ _fini()
 	 */
 	__dtors();
 }
-
-#endif /* !ECOFF_COMPAT */
