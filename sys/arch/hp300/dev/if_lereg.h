@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_lereg.h	7.1 (Berkeley) 5/8/90
- *	$Id: if_lereg.h,v 1.3 1994/02/05 05:07:00 mycroft Exp $
+ *	$Id: if_lereg.h,v 1.4 1994/02/05 15:08:47 mycroft Exp $
  */
 
 #define	LEID		21
@@ -41,8 +41,8 @@
 #define	LERBUF		8
 #define	LERBUFLOG2	3
 #define	LE_RLEN		(LERBUFLOG2 << 13)
-#define	LETBUF		1
-#define	LETBUFLOG2	0
+#define	LETBUF		2
+#define	LETBUFLOG2	1
 #define	LE_TLEN		(LETBUFLOG2 << 13)
 
 #define vu_char		volatile u_char
@@ -64,8 +64,8 @@ struct lereg1 {
 
 /*
  * Overlayed on 16K dual-port RAM.
- * Current size is 13,758 bytes with 8 x 1518 receive buffers and
- * 1 x 1518 transmit buffer.
+ * Current size is 15,284 bytes with 8 x 1518 receive buffers and
+ * 2 x 1518 transmit buffer.
  */
 struct lereg2 {
 	/* init block */
@@ -90,8 +90,8 @@ struct lereg2 {
 		short	tmd2;
 		u_short	tmd3;
 	} ler2_tmd[LETBUF];
-	char	ler2_rbuf[LERBUF][LEMTU]; /* +0x0060 */
-	char	ler2_tbuf[LETBUF][LEMTU]; /* +0x2FD0 */
+	char	ler2_rbuf[LERBUF][LEMTU]; /* +0x0068 */
+	char	ler2_tbuf[LETBUF][LEMTU]; /* +0x2FD8 */
 };
 
 /*
