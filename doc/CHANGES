@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.443 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.444 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -242,8 +242,11 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		(this drops support for xen 1.2) [bouyer 20050309]
 	rcp(1): Add -4 and -6 options, used to limit host addresses to
 		IPv4 or IPv6 respectively. [ginsbach 20050309]
+	sockstat(1): Add sockstat(1) modeled after the program by the same
+		name in FreeBSD.  [atatat 20050309]
 	rsh(1), rlogin(1): Add -4 and -6 options, used to limit host
 		addresses to IPv4 or IPv6 respectively. [ginsbach 20050311]
 	rcp(1): Add support for specifying the rhost as an IPv6 address
 		string. [ginsbach 20050311]
 	stf(4): Add support for changing the MTU. [tron 20050311]
+	sendmail(8): update to 8.13.3.  [atatat 20050315]
