@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.30 1994/06/13 08:12:32 chopps Exp $
+ *	$Id: machdep.c,v 1.31 1994/06/16 15:05:05 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -442,6 +442,7 @@ identifycpu()
 	else
 		mach = "Amiga 500/2000";
 
+	fpu = NULL;
 	if (machineid & AMIGA_68040) {
 		cpu_type = "m68040";
 		mmu = "/MMU";
@@ -453,7 +454,7 @@ identifycpu()
 		cpu_type = "m68020";
 		mmu = " m68851 MMU";
 	}
-	if (machineid & (AMIGA_68030 | AMIGA_68020)) {
+	if (fpu == NULL) {
 		if (machineid & AMIGA_68882)
 			fpu = " m68882 FPU";
 		else if (machineid & AMIGA_68881)
@@ -707,11 +708,12 @@ sendsig(catcher, sig, mask, code)
 }
 
 #ifdef COMPAT_SUNOS
-/* much simpler sendsig() for SunOS processes, as SunOS does the whole
-   context-saving in usermode. For now, no hardware information (ie.
-   frames for buserror etc) is saved. This could be fatal, so I take 
-   SIG_DFL for "dangerous" signals. */
-
+/*
+ * much simpler sendsig() for SunOS processes, as SunOS does the whole
+ * context-saving in usermode. For now, no hardware information (ie.
+ * frames for buserror etc) is saved. This could be fatal, so I take 
+ * SIG_DFL for "dangerous" signals.
+ */
 void
 sun_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
@@ -816,7 +818,6 @@ sun_sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
-
 struct sigreturn_args {
 	struct sigcontext *sigcntxp;
 };
@@ -949,12 +950,13 @@ sigreturn(p, uap, retval)
 }
 
 #ifdef COMPAT_SUNOS
-/* this is a "light weight" version of the NetBSD sigreturn, just for
-   SunOS processes. We don't have to restore any hardware frames,
-   registers, fpu stuff, that's all done in user space. */
-
+/*
+ * this is a "light weight" version of the NetBSD sigreturn, just for
+ * SunOS processes. We don't have to restore any hardware frames,
+ * registers, fpu stuff, that's all done in user space.
+ */
 struct sun_sigreturn_args {
-    struct sun_sigcontext *sigcntxp;
+	struct sun_sigcontext *sigcntxp;
 };
 
 int
@@ -1020,12 +1022,6 @@ bootsync(void)
 		 */
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
-#ifdef notdef
-#include "fd.h"
-#if NFD > 0
-		fdshutdown();
-#endif
-#endif
 		sync(&proc0, (void *)NULL, (int *)NULL);
 
 		for (iter = 0; iter < 20; iter++) {
@@ -1256,114 +1252,106 @@ netintr()
 }
 
 
-/* this is a handy package to have asynchronously executed
-   function calls executed at very low interrupt priority.
-   Example for use is keyboard repeat, where the repeat 
-   handler running at splclock() triggers such a (hardware
-   aided) software interrupt.
-
-   Note: the installed functions are currently called in a
-         LIFO fashion, might want to change this to FIFO
-	 later. */
-
+/*
+ * this is a handy package to have asynchronously executed
+ * function calls executed at very low interrupt priority.
+ * Example for use is keyboard repeat, where the repeat 
+ * handler running at splclock() triggers such a (hardware
+ * aided) software interrupt.
+ * Note: the installed functions are currently called in a
+ * LIFO fashion, might want to change this to FIFO
+ * later.
+ */
 struct si_callback {
-  struct si_callback *next;
-  void (*function) __P((void *rock1, void *rock2));
-  void *rock1, *rock2;
+	struct si_callback *next;
+	void (*function) __P((void *rock1, void *rock2));
+	void *rock1, *rock2;
 };
-
-static struct si_callback *si_callbacks = 0;
+static struct si_callback *si_callbacks;
 
 void
 add_sicallback (function, rock1, rock2)
-     void (*function) __P((void *rock1, void *rock2));
-     void *rock1, *rock2;
+	void (*function) __P((void *rock1, void *rock2));
+	void *rock1, *rock2;
 {
-  struct si_callback *si;
-  int s;
+	struct si_callback *si;
+	int s;
 
-  /* Note: this function may be called from high-priority
-           interrupt handlers. We may NOT block for 
-	   memory-allocation in here!. */
+	/*
+	 * this function may be called from high-priority interrupt handlers.
+	 * We may NOT block for  memory-allocation in here!.
+	 */
+	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
 
-  si = (struct si_callback *) malloc (sizeof (*si), M_TEMP, M_NOWAIT);
+	if (!si)
+		return;
 
-  /* bad luck really.. */
-  if (! si)
-    return;
+	si->function = function;
+	si->rock1 = rock1;
+	si->rock2 = rock2;
 
-  si->function = function;
-  si->rock1    = rock1;
-  si->rock2    = rock2;
+	s = splhigh();
+	si->next = si_callbacks;
+	si_callbacks = si;
+	splx(s);
 
-  s = splhigh();
-  si->next     = si_callbacks;
-  si_callbacks = si;
-  splx (s);
+	/*
+	 * make sure we have software ints enabled at all..
+	 */
+	custom.intena = INTF_SETCLR | INTF_SOFTINT;
 
-  /* make sure we have software ints enabled at all.. */
-  custom.intena = INTF_SETCLR | INTF_SOFTINT;
-
-  /* and cause a software interrupt (spl1). This interrupt might happen
-     immediately, or after returning to a safe enough level. */
-  custom.intreq = INTF_SETCLR | INTF_SOFTINT;
+	/*
+	 * and cause a software interrupt (spl1). This interrupt might
+	 * happen immediately, or after returning to a safe enough level.
+	 */
+	custom.intreq = INTF_SETCLR | INTF_SOFTINT;
 }
 
 
 void
-rem_sicallback (function)
-     void (*function) __P((void *rock1, void *rock2));
+rem_sicallback(function)
+	void (*function) __P((void *rock1, void *rock2));
 {
-  struct si_callback *si, *psi;
-  int s;
+	struct si_callback *si, *psi, *nsi;
+	int s;
 
-  s = splhigh();
+	s = splhigh();
+	for (psi = 0, si = si_callbacks; si; ) {
+		nsi = si->next;
 
-  for (psi = 0, si = si_callbacks; si; )
-    {
-      struct si_callback *nsi = si->next;
-
-      if (si->function == function)
-	{
-	  free (si, M_TEMP);
-	  if (psi)
-	    psi->next = nsi;
-	  else
-	    si_callbacks = nsi;
+		if (si->function != function)
+			psi = si;
+		else {
+			free(si, M_TEMP);
+			if (psi)
+				psi->next = nsi;
+			else
+				si_callbacks = nsi;
+		}
+		si = nsi;
 	}
-      else
-	psi = si;
-
-      si = nsi;
-    }
-
-  splx (s);
-
+	splx(s);
 }
 
 /* purge the list */
 static void
-call_sicallbacks ()
+call_sicallbacks()
 {
-  int s;
-  struct si_callback *si;
+	struct si_callback *si;
+	int s;
 
-  do
-    {
-      s = splhigh ();
-      if (si = si_callbacks)
-	si_callbacks = si->next;
-      splx (s);
+	do {
+		s = splhigh ();
+		if (si = si_callbacks)
+			si_callbacks = si->next;
+		splx(s);
 
-      if (si)
-	{
-	  si->function (si->rock1, si->rock2);
-	  free (si, M_TEMP);
-	}
-    }
-  while (si);
+		if (si) {
+			si->function(si->rock1, si->rock2);
+			free(si, M_TEMP);
+		}
+	} while (si);
 }
-
 
 intrhand(sr)
 	int sr;
@@ -1535,8 +1523,8 @@ nmihand(frame)
 
 
 regdump(fp, sbytes)
-  struct frame *fp; /* must not be register */
-  int sbytes;
+	struct frame *fp; /* must not be register */
+	int sbytes;
 {
 	static int doingdump = 0;
 	register int i;
@@ -1624,66 +1612,32 @@ hexstr(val, len)
 	return(nbuf);
 }
 
-
-physstrat(bp, strat, prio)
-	struct buf *bp;
-	int (*strat)(), prio;
-{
-	register int s;
-#if thats_history
-	caddr_t baddr;
-
-	/*
-	 * vmapbuf clobbers b_addr so we must remember it so that it
-	 * can be restored after vunmapbuf.  This is truely rude, we
-	 * should really be storing this in a field in the buf struct
-	 * but none are available and I didn't want to add one at
-	 * this time.  Note that b_addr for dirty page pushes is 
-	 * restored in vunmapbuf. (ugh!)
-	 */
-	baddr = bp->b_un.b_addr;
-#endif
-	vmapbuf(bp);
-	(*strat)(bp);
-	/* pageout daemon doesn't wait for pushed pages */
-	if (bp->b_flags & B_DIRTY)
-		return;
-	s = splbio();
-	while ((bp->b_flags & B_DONE) == 0)
-		sleep((caddr_t)bp, prio);
-	splx(s);
-	vunmapbuf(bp);
-#if thats_history
-	bp->b_un.b_addr = baddr;
-#endif
-}
-
-/* should only get here, if no standard executable. This can currently
-   only mean, we're reading an old ZMAGIC file without MID, but since Amiga
-   ZMAGIC always worked the `right' way (;-)) just ignore the missing
-   MID and proceed to new zmagic code ;-) */
-
+/*
+ * should only get here, if no standard executable. This can currently
+ * only mean, we're reading an old ZMAGIC file without MID, but since Amiga
+ * ZMAGIC always worked the `right' way (;-)) just ignore the missing
+ * MID and proceed to new zmagic code ;-)
+ */
 cpu_exec_aout_makecmds(p, epp)
-    struct proc *p;
-    struct exec_package *epp;
+	struct proc *p;
+	struct exec_package *epp;
 {
-  int error = ENOEXEC;
-  struct exec *execp = epp->ep_hdr;
+	int error = ENOEXEC;
+	struct exec *execp = epp->ep_hdr;
 
 #ifdef COMPAT_NOMID
-  if (! ((execp->a_midmag >> 16) & 0x0fff)
-      && execp->a_midmag == ZMAGIC)
-    return exec_aout_prep_zmagic (p, epp);
+	if (!((execp->a_midmag >> 16) & 0x0fff)
+	    && execp->a_midmag == ZMAGIC)
+		return(exec_aout_prep_zmagic(p, epp));
 #endif
-
 #ifdef COMPAT_SUNOS
-  {
-    extern sun_exec_aout_makecmds __P((struct proc *, struct exec_package *));
-    if ((error = sun_exec_aout_makecmds(p, epp)) == 0)
-      return 0;
-  }
+	{
+		extern sun_exec_aout_makecmds
+		    __P((struct proc *, struct exec_package *));
+		if ((error = sun_exec_aout_makecmds(p, epp)) == 0)
+			return(0);
+	}
 #endif
-
-  return error;
+	return(error);
 }
 

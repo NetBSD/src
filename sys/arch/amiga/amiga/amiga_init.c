@@ -1,7 +1,7 @@
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
  *
- *	$Id: amiga_init.c,v 1.19 1994/06/04 11:58:35 chopps Exp $
+ *	$Id: amiga_init.c,v 1.20 1994/06/16 15:04:59 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -763,6 +763,7 @@ int
 kernel_reload_write(uio)
 	struct uio *uio;
 {
+	extern int eclockfreq;
 	struct iovec *iov;
 	int error, c;
 
@@ -862,7 +863,7 @@ kernel_reload_write(uio)
 		kernel_reload(kernel_image,
 		    kernel_load_ofs + kernel_image_magic_size(),
 		    kernel_exec.a_entry, boot_fphystart, boot_fphysize,
-		    boot_cphysize, kernel_symbol_esym);
+		    boot_cphysize, kernel_symbol_esym, eclockfreq);
 		/*NOTREACHED*/
 	case 3:		/* done loading kernel symbol table */
 		c = *((u_long *)(kernel_image + kernel_load_ofs - 4));
