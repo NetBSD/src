@@ -1,4 +1,4 @@
-.\"	$NetBSD: ec.4,v 1.7 1999/04/07 21:39:34 fair Exp $
+.\"	$NetBSD: ec.4,v 1.8 2001/06/12 12:12:07 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -130,9 +130,9 @@ these boards' shared-memory access speed is quite slow; typically only
 about 1MB/second.
 The overhead of this slow memory access, and the fact that there
 is only room for 4 full-sized packets means that the ring-buffer
-will occassionally overrun.
+will occasionally overrun.
 .Pp
-When an overrun occurrs, the board must be reset to avoid a lockup
+When an overrun occurs, the board must be reset to avoid a lockup
 problem in early revision DP8390
 .Tn Ethernet
 chips.
