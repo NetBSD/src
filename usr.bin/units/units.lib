@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.4 1997/01/09 20:23:16 tls Exp $
+/	$NetBSD: units.lib,v 1.5 1999/03/15 16:02:55 hubertf Exp $
 
 / primitive units
 
@@ -244,6 +244,7 @@ chinarenminbi		.174856 $
 colombiapeso		.001495 $
 denmarkkrone		.15 $
 ecuadorsucre		.000539 $
+europeeuro		0.9142 $
 finlandmarkka		.17 $
 francefranc		.17 $
 germanymark		.58 $
@@ -287,6 +288,7 @@ uruguaynewpeso		.246852 $
 venezuelabolivar	.011 $
 
 mark			germanymark
+euro			europeeuro
 bolivar			venezuelabolivar
 peseta			spainpeseta
 rand			southafricarand
