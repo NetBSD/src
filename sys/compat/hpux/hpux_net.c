@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.25 2002/12/23 01:08:45 gmcgarry Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.26 2003/01/18 07:36:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.25 2002/12/23 01:08:45 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.26 2003/01/18 07:36:57 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_net.c,v 1.25 2002/12/23 01:08:45 gmcgarry Exp $
 #include <sys/socketvar.h>
 #include <sys/uio.h>
 #include <sys/ktrace.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
@@ -89,8 +90,8 @@ struct hpux_sys_getsockopt_args {
 	syscallarg(int *) avalsize;
 };
 
-int	hpux_sys_setsockopt	__P((struct proc *, void *, register_t *));
-int	hpux_sys_getsockopt	__P((struct proc *, void *, register_t *));
+int	hpux_sys_setsockopt	__P((struct lwp *, void *, register_t *));
+int	hpux_sys_getsockopt	__P((struct lwp *, void *, register_t *));
 
 void	socksetsize __P((int, struct mbuf *));
 
@@ -104,7 +105,7 @@ void	socksetsize __P((int, struct mbuf *));
  */
 
 struct hpuxtobsdipc {
-	int (*rout) __P((struct proc *, void *, register_t *));
+	int (*rout) __P((struct lwp *, void *, register_t *));
 	int nargs;
 } hpuxtobsdipc[NUMBSDIPC] = {
 	{ sys_socket,			3 }, /* 3ee */
@@ -146,8 +147,8 @@ struct hpuxtobsdipc {
  * Gleened from disassembled libbsdipc.a syscall entries.
  */
 int
-hpux_sys_netioctl(p, v, retval)
-	struct proc *p;
+hpux_sys_netioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -174,7 +175,7 @@ hpux_sys_netioctl(p, v, retval)
 		ktrsyscall(p, code + MINBSDIPCCODE,
 		    code + MINBSDIPCCODE, NULL, (register_t *)uap);
 #endif
-	return ((*hpuxtobsdipc[code].rout)(p, uap, retval));
+	return ((*hpuxtobsdipc[code].rout)(l, uap, retval));
 }
 
 void
@@ -206,12 +207,13 @@ socksetsize(size, m)
 
 /* ARGSUSED */
 int
-hpux_sys_setsockopt(p, v, retval)
-	struct proc *p;
+hpux_sys_setsockopt(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct hpux_sys_setsockopt_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int tmp, error;
@@ -253,12 +255,13 @@ hpux_sys_setsockopt(p, v, retval)
 
 /* ARGSUSED */
 int
-hpux_sys_setsockopt2(p, v, retval)
-	struct proc *p;
+hpux_sys_setsockopt2(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct hpux_sys_setsockopt2_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -288,12 +291,13 @@ hpux_sys_setsockopt2(p, v, retval)
 }
 
 int
-hpux_sys_getsockopt(p, v, retval)
-	struct proc *p;
+hpux_sys_getsockopt(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct hpux_sys_getsockopt_args *uap = v;
+	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int valsize, error;

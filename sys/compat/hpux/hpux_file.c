@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.20 2002/03/24 15:03:00 jdolecek Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.21 2003/01/18 07:36:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.20 2002/03/24 15:03:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.21 2003/01/18 07:36:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.20 2002/03/24 15:03:00 jdolecek Exp 
 #include <machine/psl.h>
 #include <machine/vmparam.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/hpux/hpux.h>
@@ -120,7 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpux_file.c,v 1.20 2002/03/24 15:03:00 jdolecek Exp 
 #include <compat/hpux/hpux_syscall.h>
 #include <compat/hpux/hpux_syscallargs.h>
 
-static int	hpux_stat1 __P((struct proc *, void *, register_t *, int));
+static int	hpux_stat1 __P((struct lwp *, void *, register_t *, int));
 static void	bsd_to_hpux_stat __P((struct stat *, struct hpux_stat *));
 static void	bsd_to_hpux_ostat __P((struct stat *, struct hpux_ostat *));
 
@@ -130,8 +131,8 @@ static void	bsd_to_hpux_ostat __P((struct stat *, struct hpux_ostat *));
  * Just call open(2) with the TRUNC, CREAT and WRONLY flags.
  */
 int
-hpux_sys_creat(p, v, retval)
-	struct proc *p;
+hpux_sys_creat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -139,7 +140,7 @@ hpux_sys_creat(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-
+	struct proc *p = l->l_proc;
 	struct sys_open_args oa;
 	caddr_t sg;
 
@@ -150,7 +151,7 @@ hpux_sys_creat(p, v, retval)
 	SCARG(&oa, flags) = O_CREAT | O_TRUNC | O_WRONLY;
 	SCARG(&oa, mode) = SCARG(uap, mode);
 
-	return sys_open(p, &oa, retval);
+	return sys_open(l, &oa, retval);
 }
 
 /*
@@ -164,8 +165,8 @@ hpux_sys_creat(p, v, retval)
  *	- O_SYNCIO is removed entirely.
  */
 int
-hpux_sys_open(p, v, retval)
-	struct proc *p;
+hpux_sys_open(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -174,6 +175,7 @@ hpux_sys_open(p, v, retval)
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_open_args oa;
 	int flags, nflags, error;
 	caddr_t sg;
@@ -219,7 +221,7 @@ hpux_sys_open(p, v, retval)
 	SCARG(&oa, flags) = nflags;
 	SCARG(&oa, mode) =  SCARG(uap, mode);
 
-	error = sys_open(p, &oa, retval);
+	error = sys_open(l, &oa, retval);
 
 	/*
 	 * Record non-blocking mode for fcntl, read, write, etc.
@@ -236,8 +238,8 @@ hpux_sys_open(p, v, retval)
  * HP-UX fcntl(2) system call.
  */
 int
-hpux_sys_fcntl(p, v, retval)
-	struct proc *p;
+hpux_sys_fcntl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -246,6 +248,7 @@ hpux_sys_fcntl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(int) arg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int arg, mode, error, flg = F_POSIX;
 	struct file *fp;
 	char *pop;
@@ -376,7 +379,7 @@ hpux_sys_fcntl(p, v, retval)
 	SCARG(&fa, cmd) = SCARG(uap, cmd);
 	SCARG(&fa, arg) = (void *)arg;
 
-	error = sys_fcntl(p, &fa, retval);
+	error = sys_fcntl(l, &fa, retval);
 
 	if ((error == 0) && (SCARG(&fa, cmd) == F_GETFL)) {
 		mode = *retval;
@@ -404,8 +407,8 @@ hpux_sys_fcntl(p, v, retval)
  * HP-UX fstat(2) system call.
  */
 int
-hpux_sys_fstat(p, v, retval)
-	struct proc *p;
+hpux_sys_fstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -413,6 +416,7 @@ hpux_sys_fstat(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys___fstat13_args fsa;
 	struct hpux_stat tmphst;
 	struct stat *st, tmpst;
@@ -426,7 +430,7 @@ hpux_sys_fstat(p, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(p, &fsa, retval)))
+	if ((error = sys___fstat13(l, &fsa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -441,34 +445,34 @@ hpux_sys_fstat(p, v, retval)
  * HP-UX stat(2) system call.
  */
 int
-hpux_sys_stat(p, v, retval)
-	struct proc *p; 
+hpux_sys_stat(l, v, retval)
+	struct lwp *l; 
 	void *v;
 	register_t *retval;
 {
 
-	return (hpux_stat1(p, v, retval, 0));
+	return (hpux_stat1(l, v, retval, 0));
 }
 
 /*
  * HP-UX lstat(2) system call.
  */
 int
-hpux_sys_lstat(p, v, retval)
-	struct proc *p;
+hpux_sys_lstat(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 
-	return (hpux_stat1(p, v, retval, 1));
+	return (hpux_stat1(l, v, retval, 1));
 }
 
 /*
  * Do the meat of stat(2) and lstat(2).
  */
 static int
-hpux_stat1(p, v, retval, dolstat)
-	struct proc *p;
+hpux_stat1(l, v, retval, dolstat)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 	int dolstat;
@@ -477,6 +481,7 @@ hpux_stat1(p, v, retval, dolstat)
 		syscallarg(const char *) path;
 		syscallarg(struct hpux_stat *) sb;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys___stat13_args sa;
 	struct hpux_stat tmphst;
 	struct stat *st, tmpst;
@@ -491,9 +496,9 @@ hpux_stat1(p, v, retval, dolstat)
 	SCARG(&sa, path) = SCARG(uap, path);
 
 	if (dolstat)
-		error = sys___lstat13(p, &sa, retval);
+		error = sys___lstat13(l, &sa, retval);
 	else
-		error = sys___stat13(p, &sa, retval);
+		error = sys___stat13(l, &sa, retval);
 
 	if (error)
 		return (error);
@@ -510,8 +515,8 @@ hpux_stat1(p, v, retval, dolstat)
  * The old HP-UX fstat(2) system call.
  */
 int
-hpux_sys_fstat_6x(p, v, retval)
-	struct proc *p;
+hpux_sys_fstat_6x(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -519,6 +524,7 @@ hpux_sys_fstat_6x(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys___fstat13_args fsa;
 	struct hpux_ostat tmphst;
 	struct stat *st, tmpst;
@@ -532,7 +538,7 @@ hpux_sys_fstat_6x(p, v, retval)
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
 
-	if ((error = sys___fstat13(p, &fsa, retval)))
+	if ((error = sys___fstat13(l, &fsa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -547,8 +553,8 @@ hpux_sys_fstat_6x(p, v, retval)
  * The old HP-UX stat(2) system call.
  */
 int
-hpux_sys_stat_6x(p, v, retval)
-	struct proc *p;
+hpux_sys_stat_6x(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -556,6 +562,7 @@ hpux_sys_stat_6x(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(struct hpux_ostat *) sb;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys___stat13_args sa;
 	struct hpux_ostat tmphst;
 	struct stat *st, tmpst;
@@ -570,7 +577,7 @@ hpux_sys_stat_6x(p, v, retval)
 	SCARG(&sa, ub) = st;
 	SCARG(&sa, path) = SCARG(uap, path);
 
-	if ((error = sys___stat13(p, &sa, retval)))
+	if ((error = sys___stat13(l, &sa, retval)))
 		return (error);
 
 	if ((error = copyin(st, &tmpst, sizeof(tmpst))))
@@ -651,8 +658,8 @@ bsd_to_hpux_ostat(sb, hsb)
  * HP-UX access(2) system call.
  */
 int
-hpux_sys_access(p, v, retval)
-	struct proc *p;
+hpux_sys_access(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -660,57 +667,60 @@ hpux_sys_access(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (sys_access(p, uap, retval));
+	return (sys_access(l, uap, retval));
 }
 
 /*
  * HP-UX unlink(2) system call.
  */
 int
-hpux_sys_unlink(p, v, retval)
-	struct proc *p;
+hpux_sys_unlink(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct hpux_sys_unlink_args /* {
 		syscallarg(char *) path;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (sys_unlink(p, uap, retval));
+	return (sys_unlink(l, uap, retval));
 }
 
 /*
  * HP-UX chdir(2) system call.
  */
 int
-hpux_sys_chdir(p, v, retval)
-	struct proc *p;
+hpux_sys_chdir(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct hpux_sys_chdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (sys_chdir(p, uap, retval));
+	return (sys_chdir(l, uap, retval));
 }
 
 /*
  * HP-UX mknod(2) system call.
  */
 int
-hpux_sys_mknod(p, v, retval)
-	struct proc *p;
+hpux_sys_mknod(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -719,6 +729,7 @@ hpux_sys_mknod(p, v, retval)
 		syscallarg(int) mode;
 		syscallarf(int) dev;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 	struct sys_mkfifo_args bma;
 
@@ -730,17 +741,17 @@ hpux_sys_mknod(p, v, retval)
 	if (SCARG(uap, mode) & S_IFIFO) {
 		SCARG(&bma, path) = SCARG(uap, path);
 		SCARG(&bma, mode) = SCARG(uap, mode);
-		return (sys_mkfifo(p, uap, retval));
+		return (sys_mkfifo(l, uap, retval));
 	} else
-		return (sys_mknod(p, uap, retval));
+		return (sys_mknod(l, uap, retval));
 }
 
 /*
  * HP-UX chmod(2) system call.
  */
 int
-hpux_sys_chmod(p, v, retval)
-	struct proc *p;
+hpux_sys_chmod(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -748,19 +759,20 @@ hpux_sys_chmod(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(int) mode; 
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (sys_chmod(p, uap, retval));
+	return (sys_chmod(l, uap, retval));
 }
 
 /*
  * HP-UX chown(2) system call.
  */
 int
-hpux_sys_chown(p, v, retval)
-	struct proc *p;
+hpux_sys_chown(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -769,21 +781,22 @@ hpux_sys_chown(p, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	/* XXX What about older HP-UX executables? */
 
-	return (sys___posix_chown(p, uap, retval));
+	return (sys___posix_chown(l, uap, retval));
 }
 
 /*
  * HP-UX rename(2) system call.
  */
 int
-hpux_sys_rename(p, v, retval)
-	struct proc *p;
+hpux_sys_rename(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -791,20 +804,21 @@ hpux_sys_rename(p, v, retval)
 		syscallarg(const char *) from;
 		syscallarg(const char *) to;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
 
-	return (sys___posix_rename(p, uap, retval));
+	return (sys___posix_rename(l, uap, retval));
 }
 
 /*
  * HP-UX mkdir(2) system call.
  */
 int
-hpux_sys_mkdir(p, v, retval)
-	struct proc *p;
+hpux_sys_mkdir(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -812,38 +826,40 @@ hpux_sys_mkdir(p, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
-	return (sys_mkdir(p, uap, retval));
+	return (sys_mkdir(l, uap, retval));
 }
 
 /*
  * HP-UX rmdir(2) system call.
  */
 int
-hpux_sys_rmdir(p, v, retval)
-	struct proc *p;
+hpux_sys_rmdir(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct hpux_sys_rmdir_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (sys_rmdir(p, uap, retval));
+	return (sys_rmdir(l, uap, retval));
 }
 
 /*
  * HP-UX symlink(2) system call.
  */
 int
-hpux_sys_symlink(p, v, retval)
-	struct proc *p;
+hpux_sys_symlink(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -851,20 +867,21 @@ hpux_sys_symlink(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(const char *) link;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
 
-	return (sys_symlink(p, uap, retval));
+	return (sys_symlink(l, uap, retval));
 }
 
 /*
  * HP-UX readlink(2) system call.
  */
 int
-hpux_sys_readlink(p, v, retval)
-	struct proc *p;
+hpux_sys_readlink(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -873,19 +890,20 @@ hpux_sys_readlink(p, v, retval)
 		syscallarg(char *) buf;
 		syscallarg(int) count;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
 
-	return (sys_readlink(p, uap, retval));
+	return (sys_readlink(l, uap, retval));
 }
 
 /*
  * HP-UX truncate(2) system call.
  */
 int
-hpux_sys_truncate(p, v, retval)
-	struct proc *p;
+hpux_sys_truncate(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -893,9 +911,10 @@ hpux_sys_truncate(p, v, retval)
 		syscallarg(const char *) path;
 		syscallarg(long) length;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return (compat_43_sys_truncate(p, uap, retval));
+	return (compat_43_sys_truncate(l, uap, retval));
 }
