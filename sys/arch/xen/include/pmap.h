@@ -1,5 +1,5 @@
-/*	$NetBSD: pmap.h,v 1.3.6.2 2004/12/17 11:08:22 bouyer Exp $	*/
-/*	NetBSD: pmap.h,v 1.79 2004/02/20 17:35:01 yamt Exp 	*/
+/*	$NetBSD: pmap.h,v 1.3.6.3 2004/12/17 16:06:05 bouyer Exp $	*/
+/*	NetBSD: pmap.h,v 1.82 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*
  *
@@ -79,7 +79,7 @@
  * a 4GB address space into a linear chunk of virtual memory.  in other
  * words, the PTE for page 0 is the first int mapped into the 4MB recursive
  * area.  the PTE for page 1 is the second int.  the very last int in the
- * 4MB range is the PTE that maps VA 0xffffe000 (the last page in a 4GB
+ * 4MB range is the PTE that maps VA 0xfffff000 (the last page in a 4GB
  * address).
  *
  * all pmap's PD's must have the same values in slots 768->1023 so that
@@ -126,7 +126,7 @@
  *   |   0| -> maps the contents of PTP#0 at VA 0xbfc00000->0xbfc01000
  *   |    |
  *   |    |
- *   | 767| -> maps contents of PTP#767 (the PDP) at VA 0xbffbf000
+ *   | 767| -> maps contents of PTP#767 (the PDP) at VA 0xbfeff000
  *   | 768| -> maps contents of first kernel PTP
  *   |    |
  *   |1023|
@@ -172,7 +172,7 @@
 
 /*
  * the follow define determines how many PTPs should be set up for the
- * kernel by locore.s at boot time.  this should be large enough to
+ * kernel by locore.S at boot time.  this should be large enough to
  * get the VM system running.  once the VM system is running, the
  * pmap module can add more PTPs to the kernel area on demand.
  */
