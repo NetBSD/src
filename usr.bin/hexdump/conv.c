@@ -1,8 +1,8 @@
-/*	$NetBSD: conv.c,v 1.4 1997/07/11 06:28:26 mikel Exp $	*/
+/*	$NetBSD: conv.c,v 1.5 1997/10/18 13:54:03 mrg Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,15 +35,17 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)conv.c	5.4 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)conv.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: conv.c,v 1.4 1997/07/11 06:28:26 mikel Exp $";
+static char rcsid[] = "$NetBSD: conv.c,v 1.5 1997/10/18 13:54:03 mrg Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <ctype.h>
+
 #include <stdio.h>
+#include <ctype.h>
+
 #include "hexdump.h"
 
 void
@@ -118,7 +120,7 @@ conv_u(pr, p)
 	} else if (*p == 0x7f) {
 		*pr->cchar = 's';
 		(void)printf(pr->fmt, "del");
-	} else if (deprecated && *p == 0x20) {	/* od replace space with sp */
+	} else if (deprecated && *p == 0x20) {	/* od replaced space with sp */
 		*pr->cchar = 's';
 		(void)printf(pr->fmt, " sp");
 	} else if (isprint(*p)) {

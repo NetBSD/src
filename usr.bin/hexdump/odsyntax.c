@@ -1,8 +1,8 @@
-/*	$NetBSD: odsyntax.c,v 1.6 1997/07/11 06:28:30 mikel Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.7 1997/10/18 13:54:35 mrg Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,20 +35,24 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";
+static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: odsyntax.c,v 1.6 1997/07/11 06:28:30 mikel Exp $";
+static char rcsid[] = "$NetBSD: odsyntax.c,v 1.7 1997/10/18 13:54:35 mrg Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 #include "hexdump.h"
 
 int deprecated;
 
+static void odoffset __P((int, char ***));
 static void odprecede __P((void));
 
 void
@@ -148,14 +152,11 @@ oldsyntax(argc, argvp)
 	argc -= optind;
 	*argvp += optind;
 
-	odoffset(argc, argvp);
+	if (argc)
+		odoffset(argc, argvp);
 }
 
-#define	ishexdigit(c) \
-	((c >= '0' && c <= '9') || \
-	 (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
-
-void
+static void
 odoffset(argc, argvp)
 	int argc;
 	char ***argvp;
@@ -176,11 +177,12 @@ odoffset(argc, argvp)
 	 *
 	 * We assume it's a file if the offset is bad.
 	 */
-	p = **argvp;
+	p = argc == 1 ? (*argvp)[0] : (*argvp)[1];
 	if (!p)
 		return;
+
 	if (*p != '+' && (argc < 2 ||
-	    (!isdigit(p[0]) && (p[0] != 'x' || !ishexdigit(p[1])))))
+	    (!isdigit(p[0]) && (p[0] != 'x' || !isxdigit(p[1])))))
 		return;
 
 	base = 0;
@@ -190,7 +192,7 @@ odoffset(argc, argvp)
 	 */
 	if (p[0] == '+')
 		++p;
-	if (p[0] == 'x' && ishexdigit(p[1])) {
+	if (p[0] == 'x' && isxdigit(p[1])) {
 		++p;
 		base = 16;
 	} else if (p[0] == '0' && p[1] == 'x') {
@@ -200,7 +202,7 @@ odoffset(argc, argvp)
 
 	/* skip over the number */
 	if (base == 16)
-		for (num = p; ishexdigit(*p); ++p);
+		for (num = p; isxdigit(*p); ++p);
 	else
 		for (num = p; isdigit(*p); ++p);
 
@@ -218,35 +220,40 @@ odoffset(argc, argvp)
 	skip = strtol(num, &end, base ? base : 8);
 
 	/* if end isn't the same as p, we got a non-octal digit */
-	if (end != p)
+	if (end != p) {
 		skip = 0;
-	else {
-		if (*p) {
-			if (*p == 'b')
-				skip *= 512;
-			else if (*p == 'B')
-				skip *= 1024;
+		return;
+	}
+
+	if (*p)
+		if (*p == 'B') {
+			skip *= 1024;
+			++p;
+		} else if (*p == 'b') {
+			skip *= 512;
 			++p;
 		}
-		if (*p)
-			skip = 0;
-		else {
-			++*argvp;
-			/*
-			 * If the offset uses a non-octal base, the base of
-			 * the offset is changed as well.  This isn't pretty,
-			 * but it's easy.
-			 */
-#define	TYPE_OFFSET	7
-			if (base == 16) {
-				fshead->nextfu->fmt[TYPE_OFFSET] = 'x';
-				fshead->nextfs->nextfu->fmt[TYPE_OFFSET] = 'x';
-			} else if (base == 10) {
-				fshead->nextfu->fmt[TYPE_OFFSET] = 'd';
-				fshead->nextfs->nextfu->fmt[TYPE_OFFSET] = 'd';
-			}
-		}
+
+	if (*p) {
+		skip = 0;
+		return;
 	}
+
+	/*
+	 * If the offset uses a non-octal base, the base of the offset
+	 * is changed as well.  This isn't pretty, but it's easy.
+	 */
+#define	TYPE_OFFSET	7
+	if (base == 16) {
+		fshead->nextfu->fmt[TYPE_OFFSET] = 'x';
+		fshead->nextfs->nextfu->fmt[TYPE_OFFSET] = 'x';
+	} else if (base == 10) {
+		fshead->nextfu->fmt[TYPE_OFFSET] = 'd';
+		fshead->nextfs->nextfu->fmt[TYPE_OFFSET] = 'd';
+	}
+
+	/* Terminate file list. */
+	(*argvp)[1] = NULL;
 }
 
 static void

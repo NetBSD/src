@@ -1,8 +1,8 @@
-/*	$NetBSD: hexdump.h,v 1.4 1997/07/11 06:28:26 mikel Exp $	*/
+/*	$NetBSD: hexdump.h,v 1.5 1997/10/18 13:54:22 mrg Exp $	*/
 
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)hexdump.h	5.4 (Berkeley) 6/1/90
- *	$NetBSD: hexdump.h,v 1.4 1997/07/11 06:28:26 mikel Exp $
+ *	from: @(#)hexdump.h	8.1 (Berkeley) 6/6/93
  */
 
 typedef struct _pr {
@@ -86,8 +85,8 @@ extern enum _vflag vflag;
 
 void	 add __P((char *));
 void	 addfile __P((char *));
-void	 badconv __P((char *));
 void	 badcnt __P((char *));
+void	 badconv __P((char *));
 void	 badfmt __P((char *));
 void	 badsfmt __P((void));
 void	 bpad __P((PR *));
@@ -95,14 +94,14 @@ void	 conv_c __P((PR *, u_char *));
 void	 conv_u __P((PR *, u_char *));
 void	 display __P((void));
 void	 doskip __P((char *, int));
-char	*emalloc __P((int));
+/*void	 err __P((const char *, ...));*/
+void	*emalloc __P((int));
 void	 escape __P((char *));
 u_char	*get __P((void));
 void	 newsyntax __P((int, char ***));
-void	 odoffset __P((int, char ***));
-void	 oldsyntax __P((int, char ***));
 int	 next __P((char **));
 void	 nomem __P((void));
+void	 oldsyntax __P((int, char ***));
 void	 rewrite __P((FS *));
 int	 size __P((FS *));
 void	 usage __P((void));

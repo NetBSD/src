@@ -1,7 +1,7 @@
-.\"	$NetBSD: hexdump.1,v 1.6 1997/07/10 04:31:37 mikel Exp $
+.\"	$NetBSD: hexdump.1,v 1.7 1997/10/18 13:54:11 mrg Exp $
 .\"
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -31,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)hexdump.1	5.12 (Berkeley) 7/27/91
-.\"	$NetBSD: hexdump.1,v 1.6 1997/07/10 04:31:37 mikel Exp $
+.\"	from: @(#)hexdump.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd July 27, 1991
+.Dd April 18, 1994
 .Dt HEXDUMP 1
 .Os
 .Sh NAME
@@ -179,8 +178,8 @@ character (unlike the
 .Xr fprintf 3
 default which prints the entire string if the precision is unspecified).
 .It
-The conversion characters ``h'', ``n'', and ``p'' are not
-supported.
+The conversion characters ``h'', ``l'', ``n'', ``p'' and ``q'' are
+not supported.
 .It
 The single character escape sequences
 described in the C standard are supported:
@@ -249,7 +248,7 @@ One byte counts only.
 .Li \&%d , \&%i , \&%o ,
 .Li \&%u , \&%X , \&%x 
 .Xc
-Four byte default, one and two byte counts supported.
+Four byte default, one, two and four byte counts supported.
 .It Xo
 .Li \&%E , \&%e , \&%f ,
 .Li \&%G , \&%g 
