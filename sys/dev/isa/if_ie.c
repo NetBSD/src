@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.47 1996/04/11 22:29:27 cgd Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.48 1996/04/29 20:03:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -232,8 +232,8 @@ struct ie_softc {
 
 	struct arpcom sc_arpcom;
 
-	void (*reset_586)();
-	void (*chan_attn)();
+	void (*reset_586) __P((struct ie_softc *));
+	void (*chan_attn) __P((struct ie_softc *));
 
 	enum ie_hardware hard_type;
 	int hard_vers;
@@ -299,6 +299,8 @@ void iememinit __P((void *, struct ie_softc *));
 static int mc_setup __P((struct ie_softc *, void *));
 static void mc_reset __P((struct ie_softc *));
 
+vm_offset_t kvtop __P((caddr_t));	/* XXX: Should not use this */
+
 #ifdef IEDEBUG
 void print_rbd __P((volatile struct ie_recv_buf_desc *));
 
@@ -306,8 +308,24 @@ int in_ierint = 0;
 int in_ietint = 0;
 #endif
 
-int ieprobe __P((struct device *, void *, void *));
-void ieattach __P((struct device *, struct device *, void *));
+int	ieprobe __P((struct device *, void *, void *));
+void	ieattach __P((struct device *, struct device *, void *));
+int	sl_probe __P((struct ie_softc *, struct isa_attach_args *));
+int	el_probe __P((struct ie_softc *, struct isa_attach_args *));
+int	ee16_probe __P((struct ie_softc *, struct isa_attach_args *));
+int	check_ie_present __P((struct ie_softc *, caddr_t, u_int));
+
+static __inline void ie_setup_config __P((volatile struct ie_config_cmd *,
+    int, int));
+static __inline void ie_ack __P((struct ie_softc *, u_int));
+static __inline int ether_equal __P((u_char *, u_char *));
+static __inline int check_eh __P((struct ie_softc *, struct ether_header *,
+    int *));
+static __inline int ie_buflen __P((struct ie_softc *, int));
+static __inline int ie_packet_len __P((struct ie_softc *));
+
+static void chan_attn_timeout __P((void *));
+static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
 
 struct cfattach ie_ca = {
 	sizeof(struct ie_softc), ieprobe, ieattach
@@ -327,7 +345,7 @@ struct cfdriver ie_cd = {
  * Here are a few useful functions.  We could have done these as macros, but
  * since we have the inline facility, it makes sense to use that instead.
  */
-static inline void
+static __inline void
 ie_setup_config(cmd, promiscuous, manchester)
 	volatile struct ie_config_cmd *cmd;
 	int promiscuous, manchester;
@@ -347,7 +365,7 @@ ie_setup_config(cmd, promiscuous, manchester)
 	cmd->ie_junk = 0xff;
 }
 
-static inline void
+static __inline void
 ie_ack(sc, mask)
 	struct ie_softc *sc;
 	u_int mask;
@@ -553,12 +571,9 @@ ee16_probe(sc, ia)
 	struct isa_attach_args *ia;
 {
 	int i;
-	int cnt_id;
 	u_short board_id, id_var1, id_var2, checksum = 0;
 	u_short eaddrtemp, irq;
         u_short pg, adjust, decode, edecode;
-        u_char lock_bit;
-	u_char c;
 	u_char	bart_config;
 
 	short	irq_translate[] = {0, 0x09, 0x03, 0x04, 0x05, 0x0a, 0x0b, 0};
@@ -986,7 +1001,7 @@ ietint(sc)
  * Compare two Ether/802 addresses for equality, inlined and unrolled for
  * speed.  I'd love to have an inline assembler version of this...
  */
-static inline int
+static __inline int
 ether_equal(one, two)
 	u_char *one, *two;
 {
@@ -1009,7 +1024,7 @@ ether_equal(one, two)
  * only client which will fiddle with IFF_PROMISC is BPF.  This is
  * probably a good assumption, but we do not make it here.  (Yet.)
  */
-static inline int
+static __inline int
 check_eh(sc, eh, to_bpf)
 	struct ie_softc *sc;
 	struct ether_header *eh;
@@ -1117,7 +1132,7 @@ check_eh(sc, eh, to_bpf)
  * IE_RBUF_SIZE is an even power of two.  If somehow the act_len exceeds
  * the size of the buffer, then we are screwed anyway.
  */
-static inline int
+static __inline int
 ie_buflen(sc, head)
 	struct ie_softc *sc;
 	int head;
@@ -1127,7 +1142,7 @@ ie_buflen(sc, head)
 	    & (IE_RBUF_SIZE | (IE_RBUF_SIZE - 1)));
 }
 
-static inline int
+static __inline int
 ie_packet_len(sc)
 	struct ie_softc *sc;
 {
@@ -1786,7 +1801,7 @@ iereset(sc)
  */
 static void
 chan_attn_timeout(rock)
-	caddr_t rock;
+	void *rock;
 {
 
 	*(int *)rock = 1;
@@ -2013,7 +2028,6 @@ ieinit(sc)
 {
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
 	void *ptr;
-	int n;
 
 	ptr = (void *)ALIGN(scb + 1);
 

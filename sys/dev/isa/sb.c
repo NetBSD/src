@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.34 1996/04/11 22:30:01 cgd Exp $	*/
+/*	$NetBSD: sb.c,v 1.35 1996/04/29 20:03:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -270,7 +270,6 @@ sbattach(parent, self, aux)
 {
 	register struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	register int iobase = ia->ia_iobase;
 	int err;
 	
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,

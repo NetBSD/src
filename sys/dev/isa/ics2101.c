@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101.c,v 1.3 1996/02/05 02:22:11 jtc Exp $ */
+/* $NetBSD: ics2101.c,v 1.4 1996/04/29 20:03:10 christos Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,6 +67,8 @@
 
 #define cvt_value(val) ((val) >> 1)
 
+static void ics2101_mix_doit __P((struct ics2101_softc *, u_int, u_int, u_int,
+    u_int));
 /*
  * Program one channel of the ICS mixer
  */
@@ -75,7 +77,7 @@
 static void
 ics2101_mix_doit(sc, chan, side, value, flags)
 	struct ics2101_softc *sc;
-	unsigned int chan, side, value, flags;
+	u_int chan, side, value, flags;
 {
 	unsigned char flip_left[6] = {0x01, 0x01, 0x01, 0x02, 0x01, 0x02};
 	unsigned char flip_right[6] = {0x02, 0x02, 0x02, 0x01, 0x02, 0x01};

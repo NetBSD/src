@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.93 1996/04/11 22:28:55 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.94 1996/04/29 20:03:13 christos Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -173,8 +173,6 @@ edprobe(parent, match, aux)
 	void *match, *aux;
 {
 	struct ed_softc *sc = match;
-	struct cfdata *cf = sc->sc_dev.dv_cfdata;
-	struct isa_attach_args *ia = aux;
 
 	return (ed_find(match, sc->sc_dev.dv_cfdata, aux));
 }
@@ -251,7 +249,7 @@ ed_find_WD80x3(sc, cf, ia)
 {
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-	bus_mem_handle_t memh;
+	bus_mem_handle_t memh = NULL;
 	u_int memsize;
 	u_char iptr, isa16bit, sum;
 	int i, rv, mapped_mem = 0;
@@ -259,6 +257,10 @@ ed_find_WD80x3(sc, cf, ia)
 
 	bc = ia->ia_bc;
 	rv = 0;
+
+	/* Set initial values for width/size. */
+	memsize = 8192;
+	isa16bit = 0;
 
 	if (bus_io_map(bc, ia->ia_iobase, ED_WD_IO_PORTS, &ioh))
 		return (0);
@@ -309,9 +311,6 @@ ed_find_WD80x3(sc, cf, ia)
 	sc->vendor = ED_VENDOR_WD_SMC;
 	sc->type = bus_io_read_1(bc, ioh, asicbase + ED_WD_CARD_ID);
 
-	/* Set initial values for width/size. */
-	memsize = 8192;
-	isa16bit = 0;
 	switch (sc->type) {
 	case ED_TYPE_WD8003S:
 		sc->type_str = "WD8003S";
@@ -548,7 +547,7 @@ ed_find_WD80x3(sc, cf, ia)
 		    (sc->type == ED_TYPE_TOSHIBA1) ||
 		    (sc->type == ED_TYPE_TOSHIBA4) ||
 #endif
-		    (sc->type == ED_TYPE_WD8013EBT) && !sc->is790) {
+		    ((sc->type == ED_TYPE_WD8013EBT) && !sc->is790)) {
 			sc->wd_laar_proto =
 			    ((ia->ia_maddr >> 19) &
 			    ED_WD_LAAR_ADDRHI);
@@ -667,8 +666,15 @@ ed_find_3Com(sc, cf, ia)
 	bus_mem_handle_t memh;
 	int i, rv, mapped_mem = 0;
 	u_int memsize;
-	u_char isa16bit, sum, x;
+	u_char isa16bit, x;
 	int ptr, asicbase, nicbase;
+
+	/*
+	 * Hmmm...a 16bit 3Com board has 16k of memory, but only an 8k window
+	 * to it.
+	 */
+	memsize = 8192;
+
 
 	bc = ia->ia_bc;
 	rv = 0;
@@ -757,12 +763,6 @@ ed_find_3Com(sc, cf, ia)
 	sc->type_str = "3c503";
 	sc->mem_shared = 1;
 	sc->cr_proto = ED_CR_RD2;
-
-	/*
-	 * Hmmm...a 16bit 3Com board has 16k of memory, but only an 8k window
-	 * to it.
-	 */
-	memsize = 8192;
 
 	/*
 	 * Get station address from on-board ROM.
@@ -942,9 +942,9 @@ ed_find_Novell(sc, cf, ia)
 {
 	bus_chipset_tag_t bc;
 	bus_io_handle_t ioh;
-	bus_mem_handle_t memh;
+	bus_mem_handle_t memh = NULL;
 	u_int memsize, n;
-	u_char romdata[16], isa16bit = 0, tmp;
+	u_char romdata[16], tmp;
 	static u_char test_pattern[32] = "THIS is A memory TEST pattern";
 	u_char test_buffer[32];
 	int rv, asicbase, nicbase;
@@ -1343,7 +1343,6 @@ edinit(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	int i;
-	u_char command;
 	u_long mcaf[2];
 
 	/*
@@ -1544,7 +1543,7 @@ edstart(ifp)
 	struct mbuf *m0, *m;
 	int buffer;
 	int asicbase = sc->asic_base;
-	int len, i;
+	int len;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -2250,7 +2249,6 @@ ed_pio_write_mbufs(sc, m, dst)
 	bus_io_handle_t ioh = sc->sc_ioh;
 	int nicbase = sc->nic_base, asicbase = sc->asic_base;
 	u_short len;
-	struct mbuf *mp;
 	int maxwait = 100; /* about 120us */
 
 	len = m->m_pkthdr.len;
