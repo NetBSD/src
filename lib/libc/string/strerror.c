@@ -33,10 +33,11 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)strerror.c	5.6 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: strerror.c,v 1.3 1994/09/03 05:07:53 jtc Exp $";
+static char *rcsid = "$Id: strerror.c,v 1.4 1994/10/06 18:14:53 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
+#Include <limits.h>
 
 /*
  * Since perror() is not allowed to change the contents of strerror()'s
@@ -50,6 +51,6 @@ char *
 strerror(num)
 	int num;
 {
-	static char buf[128];
+	static char buf[NL_TEXTMAX];
 	return __strerror(num, buf);
 }
