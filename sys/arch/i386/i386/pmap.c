@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.8.2.2 1993/09/24 08:46:04 mycroft Exp $
+ *	$Id: pmap.c,v 1.8.2.3 1993/09/29 15:35:46 mycroft Exp $
  */
 
 /*
@@ -87,6 +87,7 @@
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
 
+#include "machine/cpu.h"
 #include "isa.h"
 #include "i386/isa/isa.h"
 
