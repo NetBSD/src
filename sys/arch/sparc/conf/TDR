@@ -1,4 +1,4 @@
-#	$NetBSD: TDR,v 1.19 1994/11/20 20:51:43 deraadt Exp $
+#	$NetBSD: TDR,v 1.20 1994/11/30 19:44:57 deraadt Exp $
 
 # Kernel for Theo's wimpy sparcstation IPC
 
@@ -17,7 +17,7 @@ options		KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb
 #options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
 options		RCONSOLE		# fast rasterop console
-#options	SYSVMSG,SYSVSEM,SYSVSHM
+options	SYSVMSG,SYSVSEM,SYSVSHM
 options		"COMPAT_09"
 
 # Filesystem options
