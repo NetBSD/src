@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 1999/08/05 18:08:11 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.17 1999/09/21 18:49:19 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,6 +73,7 @@
 
 #include <machine/psl.h>
 
+#ifdef _KERNEL
 /* spl0 requires checking for software interrupts */
 
 #define spllowersoftclock()	spl1()
@@ -92,10 +93,11 @@
 /* watch out for side effects */
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
 
-#if defined(_KERNEL) && !defined(_LOCORE)
+#ifndef _LOCORE
 extern void _delay __P((unsigned));
 #define delay(us)	_delay((us)<<8)
 #define DELAY(n)	delay(n)
-#endif	/* _KERNEL && !_LOCORE */
+#endif	/* !_LOCORE */
+#endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PARAM_H_ */
