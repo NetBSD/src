@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.11 1996/04/19 20:33:01 leo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.12 1996/07/12 13:27:37 leo Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -268,23 +268,23 @@ vm_offset_t kernel_size;
 	/*
 	 * Setup physical address ranges
 	 */
-	for (i = 0; phys_segs[i+1].start; i++)
+	for (i = 0; usable_segs[i+1].start; i++)
 		;
 	/* XXX: allow for msgbuf */
-	phys_segs[i].end -= atari_round_page(sizeof(struct msgbuf));
+	usable_segs[i].end -= atari_round_page(sizeof(struct msgbuf));
 
-	avail_start = phys_segs[0].start;
-	avail_end   = phys_segs[i].end;
+	avail_start = usable_segs[0].start;
+	avail_end   = usable_segs[i].end;
 
 #ifdef MACHINE_NONCONTIG
 	/*
 	 * Setup var's for pmap_next_page()
 	 */
-	for (i = 0, avail_remaining = 0; phys_segs[i].start; i++)
-		avail_remaining += phys_segs[i].end - phys_segs[i].start;
+	for (i = 0, avail_remaining = 0; usable_segs[i].start; i++)
+		avail_remaining += usable_segs[i].end - usable_segs[i].start;
 
 	avail_remaining >>= PGSHIFT;
-	avail_next        = phys_segs[0].start;
+	avail_next        = usable_segs[0].start;
 #endif
 
 	virtual_avail = VM_MIN_KERNEL_ADDRESS + kernel_size;
@@ -412,12 +412,12 @@ pmap_init(phys_start, phys_end)
 #ifdef MACHINE_NONCONTIG
 	{
 		int i;
-		for (npg = 0, i = 0; phys_segs[i].start; ++i)
-			npg += atop(phys_segs[i].end - phys_segs[i].start);
+		for (npg = 0, i = 0; usable_segs[i].start; ++i)
+			npg += atop(usable_segs[i].end - usable_segs[i].start);
 	}
 #ifdef DEBUG
-	printf ("pmap_init: avail_start %08x phys_segs[0].start %08x npg %d\n",
-		avail_start, phys_segs[0].start, npg);
+	printf ("pmap_init: avail_start %08x segs[0].start %08x npg %d\n",
+		avail_start, usable_segs[0].start, npg);
 #endif
 #else
 	npg = atop(phys_end - phys_start);
@@ -552,14 +552,14 @@ pmap_next_page(addrp)
 	static int cur_seg = 0;
 
 #ifdef DEBUG
-	if(!cur_seg && (avail_next == phys_segs[cur_seg].start))
+	if(!cur_seg && (avail_next == usable_segs[cur_seg].start))
 		printf ("pmap_next_page: next %08x remain %d\n",
 		    avail_next, avail_remaining);
 #endif
-	if (phys_segs[cur_seg].start == 0)
+	if (usable_segs[cur_seg].start == 0)
 		return FALSE;
-	if (avail_next == phys_segs[cur_seg].end) {
-		avail_next = phys_segs[++cur_seg].start;
+	if (avail_next == usable_segs[cur_seg].end) {
+		avail_next = usable_segs[++cur_seg].start;
 #ifdef DEBUG
 		printf ("pmap_next_page: next %08x remain %d\n",
 		    avail_next, avail_remaining);
@@ -579,7 +579,7 @@ pmap_page_index(pa)
 	vm_offset_t pa;
 {
 
-	struct physeg *sep = &phys_segs[0];
+	struct memseg *sep = &usable_segs[0];
 
 	while (sep->start) {
 		if (pa >= sep->start && pa < sep->end)
@@ -2192,7 +2192,7 @@ static int
 pmap_isvalidphys(pa)
 vm_offset_t pa;
 {
-    struct physeg *sep = &phys_segs[0];
+    struct memseg *sep = &usable_segs[0];
 
     while (sep->start) {
 	if (pa >= sep->start && pa < sep->end)
