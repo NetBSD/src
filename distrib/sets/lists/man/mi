@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.708 2004/06/25 16:32:28 wiz Exp $
+# $NetBSD: mi,v 1.709 2004/06/25 16:34:45 itojun Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2021,6 +2021,7 @@
 ./usr/share/man/cat8/spamd-setup.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/spamd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/spamdb.0			man-netutil-catman	.cat
+./usr/share/man/cat8/spamlogd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/sparc/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/sparc/binstall.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/sparc/boot.0		man-sys-catman		.cat
@@ -4141,6 +4142,7 @@
 ./usr/share/man/man8/spamd-setup.8		man-netutil-man		.man
 ./usr/share/man/man8/spamd.8			man-netutil-man		.man
 ./usr/share/man/man8/spamdb.8			man-netutil-man		.man
+./usr/share/man/man8/spamlogd.8			man-netutil-man		.man
 ./usr/share/man/man8/sparc/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/sparc/binstall.8		man-sys-man		.man
 ./usr/share/man/man8/sparc/boot.8		man-sys-man		.man

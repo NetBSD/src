@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.490 2004/06/25 16:25:00 itojun Exp $
+# $NetBSD: mi,v 1.491 2004/06/25 16:34:45 itojun Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -887,6 +887,7 @@
 ./usr/libexec/smrsh				base-sendmail-bin	sendmail
 ./usr/libexec/spamd				base-netutil-bin
 ./usr/libexec/spamd-setup			base-netutil-bin
+./usr/libexec/spamlogd				base-netutil-bin
 ./usr/libexec/ssh-keysign			base-secsh-bin		crypto
 ./usr/libexec/telnetd				base-netutil-bin
 ./usr/libexec/tftpd				base-netutil-bin

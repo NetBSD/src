@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.47 2004/06/22 22:19:36 itojun Exp $
+#	$NetBSD: Makefile,v 1.48 2004/06/25 16:34:45 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -14,6 +14,6 @@ SUBDIR+= hpropd kadmind kpasswdd
 .endif
 
 # PF
-SUBDIR+=spamd spamd-setup ftp-proxy
+SUBDIR+=spamd spamd-setup ftp-proxy spamlogd
 
 .include <bsd.subdir.mk>
