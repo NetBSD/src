@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 2000/05/02 03:32:09 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 2000/05/11 15:42:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,8 +141,15 @@
 #include <dev/isa/fdcvar.h>
 
 #if defined(__i386__)
+
 #include <dev/ic/mc146818reg.h>			/* for NVRAM access */
 #include <i386/isa/nvram.h>
+
+#include "mca.h"
+#if NMCA > 0
+#include <machine/mca_machdep.h>		/* for MCA_system */
+#endif
+
 #endif /* __i386__ */
 
 #define FDUNIT(dev)	(minor(dev) / 8)
@@ -175,6 +182,14 @@ struct fd_type {
 	u_char	interleave;	/* interleave factor (formatting) */
 	char	*name;
 };
+
+#if NMCA > 0
+/* MCA - specific entries */
+struct fd_type mca_fd_types[] = {
+	{ 18,2,36,2,0xff,0x0f,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette - XXX try 16ms step rate */
+	{  9,2,18,2,0xff,0x4f,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5 inch 720kB diskette - XXX try 24ms step rate */
+};
+#endif /* NMCA > 0 */
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
@@ -472,11 +487,21 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	case NVRAM_DISKETTE_TYPE6:
 		/* XXX We really ought to handle 2.88MB format. */
 	case NVRAM_DISKETTE_144M:
-		return &fd_types[0];
+#if NMCA > 0
+		if (MCA_system)
+			return &mca_fd_types[0];
+		else
+#endif /* NMCA > 0 */
+			return &fd_types[0];
 	case NVRAM_DISKETTE_360K:
 		return &fd_types[3];
 	case NVRAM_DISKETTE_720K:
-		return &fd_types[4];
+#if NMCA > 0
+		if (MCA_system)
+			return &mca_fd_types[1];
+		else
+#endif /* NMCA > 0 */
+			return &fd_types[4];
 	default:
 		printf("%s: drive %d: unknown device type 0x%x\n",
 		    fdc, drive, type);
