@@ -192,5 +192,5 @@
 /* #undef USE_BINARY_FOPEN */
 
 /* Configured target name. */
-#define TARGET "arm--netbsdelf"
+#define TARGET "arm-unknown-netbsdelfX"
 

@@ -234,19 +234,19 @@
 #define BFD_ASSEMBLER 1
 
 /* Target alias. */
-#define TARGET_ALIAS "arm--netbsdelf"
+#define TARGET_ALIAS "arm-unknown-netbsdelfX"
 
 /* Canonical target. */
-#define TARGET_CANONICAL "arm--netbsdelf"
+#define TARGET_CANONICAL "arm-unknown-netbsdelfX"
 
 /* Target CPU. */
 #define TARGET_CPU "arm"
 
 /* Target vendor. */
-#define TARGET_VENDOR ""
+#define TARGET_VENDOR "unknown"
 
 /* Target OS. */
-#define TARGET_OS "netbsdelf"
+#define TARGET_OS "netbsdelfX"
 
 /* Define if you have the stpcpy function */
 /* #undef HAVE_STPCPY */
