@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 2002/08/02 03:46:42 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 2002/11/25 05:11:32 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -336,6 +336,7 @@ brain_damage:
 
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
   done:
+	return;
 }
 
 int
