@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$NetBSD: Makefile,v 1.13 2002/01/23 21:06:28 scw Exp $
+#	$NetBSD: Makefile,v 1.14 2002/02/09 09:36:00 lukem Exp $
 
 CLEANFILES+=stboot bootst bootst.bug
 
@@ -16,10 +16,10 @@ bootst stboot: ${PROG} ${WRTVID}
 	@${WRTVID} bootst	# creates stboot
 
 proginstall::
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
-	   -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} bootst ${DESTDIR}${MDEC_DIR}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${STRIPFLAG} ${INSTPRIV} \
-	   -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} stboot ${DESTDIR}${MDEC_DIR}
+	${INSTALL_FILE} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		bootst ${DESTDIR}${MDEC_DIR}
+	${INSTALL_FILE} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+		stboot ${DESTDIR}${MDEC_DIR}
 
 .include "../Makefile.booters"
 

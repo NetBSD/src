@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:43 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/02/09 09:36:00 lukem Exp $
 
 NOMAN=	# defined
 
 beforeinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} ${INSTPRIV} \
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${.CURDIR}/installboot.sh ${DESTDIR}${BINDIR}/installboot
 
 .include <bsd.prog.mk>

@@ -12,8 +12,8 @@ msdos5mb.gz: msdos5mb.gz.uu
 	${UUDECODE} ${.CURDIR}/msdos5mb.gz.uu
 
 realinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 mbr msdos5mb.gz \
-		${DESTDIR}/usr/mdec
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 444 \
+		mbr msdos5mb.gz ${DESTDIR}/usr/mdec
 
 
 .include <bsd.prog.mk>
