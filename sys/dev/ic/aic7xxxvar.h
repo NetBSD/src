@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: aic7xxxvar.h,v 1.5 1996/05/16 05:20:30 mycroft Exp $
+ *	$Id: aic7xxxvar.h,v 1.6 1996/05/16 05:22:28 mycroft Exp $
  */
 
 #ifndef _AIC7XXX_H_
@@ -177,7 +177,7 @@ struct scb {
 					 */
 /*27*/	u_char prev;
 /*-----------------end of hardware supported fields----------------*/
-	STAILQ_ENTRY(scb)	links;	/* for chaining */
+	SIMPLEQ_ENTRY(scb)	links;	/* for chaining */
 	struct scsi_xfer *xs;	/* the scsi_xfer for this cmd */
 	scb_flag flags;
 	u_char	position;	/* Position in card's scbarray */
@@ -204,19 +204,19 @@ struct ahc_data {
 					  * Paged out, non-tagged scbs
 					  * indexed by target.
 					  */
-	STAILQ_HEAD(, scb) free_scbs;	/*
+	SIMPLEQ_HEAD(, scb) free_scbs;	/*
 					 * SCBs assigned to free slots
 					 * on the card. (no paging required)
 					 */
-	STAILQ_HEAD(, scb) page_scbs;	/*
+	SIMPLEQ_HEAD(, scb) page_scbs;	/*
 					 * SCBs that will require paging
 					 * before use (no assigned slot)
 					 */
-	STAILQ_HEAD(, scb) waiting_scbs;/*
+	SIMPLEQ_HEAD(, scb) waiting_scbs;/*
 					 * SCBs waiting to be paged in
 					 * and started.
 					 */
-	STAILQ_HEAD(, scb)assigned_scbs;/*
+	SIMPLEQ_HEAD(, scb)assigned_scbs;/*
 					 * SCBs that were waiting but have
 					 * now been assigned a slot by
 					 * ahc_free_scb.
