@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus_machdep.h,v 1.3 2001/03/24 00:10:42 bjh21 Exp $ */
+/* $NetBSD: podulebus_machdep.h,v 1.4 2001/07/04 13:58:04 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -104,11 +104,6 @@ struct evcnt;
 
 extern void *podulebus_irq_establish(podulebus_intr_handle_t, int,
     int (*)(void *), void *, struct evcnt *);
-extern int podulebus_initloader(struct podulebus_attach_args *);
-extern int podloader_readbyte(struct podulebus_attach_args *, u_int);
-extern void podloader_writebyte(struct podulebus_attach_args *, u_int, int);
-void podloader_reset(struct podulebus_attach_args *);
-int podloader_callloader(struct podulebus_attach_args *, u_int, u_int);
 
 #endif
 

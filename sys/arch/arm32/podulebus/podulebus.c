@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.45 2001/07/04 13:38:36 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.46 2001/07/04 13:58:04 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -583,6 +583,52 @@ podulebus_shift_tag(tag, shift, tagp)
         *tagp = malloc(sizeof(struct bus_space), M_DEVBUF, M_WAITOK);
 	**tagp = *tag;
 	(*tagp)->bs_cookie = (void *)shift;
+}
+
+int
+podulebus_initloader(struct podulebus_attach_args *pa)
+{
+
+	/* No loader support at present on arm32, so always fail. */
+	return -1;
+}
+
+int
+podloader_readbyte(struct podulebus_attach_args *pa, u_int addr)
+{
+
+	panic("podloader_readbyte");
+}
+
+void
+podloader_writebyte(struct podulebus_attach_args *pa, u_int addr, int val)
+{
+
+	panic("podloader_writebyte");
+}
+
+void
+podloader_reset(struct podulebus_attach_args *pa)
+{
+
+	panic("podloader_reset");
+}
+
+int
+podloader_callloader(struct podulebus_attach_args *pa, u_int r0, u_int r1)
+{
+
+	panic("podloader_callloader");
+}
+
+void
+podloader_read_region(struct podulebus_attach_args *pa, u_int src,
+    u_int8_t *dest, size_t length)
+{
+
+	while (length--)
+		*dest++ = podloader_readbyte(pa, src++);
+	podloader_reset(pa);
 }
 
 /* End of podulebus.c */
