@@ -1,4 +1,4 @@
-#	$NetBSD: makedev2spec.awk,v 1.1 2002/02/06 16:08:16 lukem Exp $
+#	$NetBSD: makedev2spec.awk,v 1.2 2002/02/07 11:35:56 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,6 +61,8 @@ $1 == "ln" \
 
 $1 == "mkdir" \
 {
+	if (NF != 2)
+		err("Usage: mkdir dir");
 	type[$2] = "type=dir";
 	next;
 }
@@ -79,6 +81,8 @@ $1 == "mknod" \
 
 $1 == "rm" \
 {
+	if (NF < 2)
+		err("Usage: rm [-f] file [...]");
 	for (i = 2; i <= NF; i++) {
 		if ($i == "-f")
 			continue;
@@ -98,6 +102,8 @@ $1 == "rm" \
 # XXX: doesn't change symlinks - need to fix
 $1 == "chgrp" \
 {
+	if (NF < 3)
+		err("Usage: chgrp group file [...]");
 	for (i = 3; i <= NF; i++) {
 		n = split(glob($i), globs, " ");
 		for (j = 1; j <= n; j++) {
@@ -110,6 +116,8 @@ $1 == "chgrp" \
 # XXX: doesn't change symlinks - need to fix
 $1 == "chmod" \
 {
+	if (NF < 3)
+		err("Usage: chmod mode file [...]");
 	for (i = 3; i <= NF; i++) {
 		n = split(glob($i), globs, " ");
 		for (j = 1; j <= n; j++) {
@@ -122,6 +130,8 @@ $1 == "chmod" \
 # XXX: doesn't change symlinks - need to fix
 $1 == "chown" \
 {
+	if (NF < 3)
+		err("Usage: chown user[:group] file [...]");
 	user = $2;
 	if ((n = match(user, /[\.:]/)) > 0) {
 		group = substr(user, n + 1);
@@ -141,7 +151,7 @@ $1 == "chown" \
 }
 
 {
-	err("Unknown keyword " $1);
+	err("Unknown keyword '" $1 "'");
 }
 
 
