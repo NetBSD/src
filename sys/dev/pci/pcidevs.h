@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.618 2004/04/03 10:51:16 martti Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.619 2004/04/17 01:56:31 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.618 2004/04/03 10:49:13 martti Exp 
+ *	NetBSD: pcidevs,v 1.619 2004/04/17 01:56:10 matt Exp 
  */
 
 /*
@@ -463,7 +463,7 @@
 #define	PCI_VENDOR_POWERCC	0x11a7		/* Power Computing */
 #define	PCI_VENDOR_INNOSYS	0x11a9		/* InnoSys */
 #define	PCI_VENDOR_ACTEL	0x11aa		/* Actel */
-#define	PCI_VENDOR_GALILEO	0x11ab		/* Galileo Technology */
+#define	PCI_VENDOR_GALILEO	0x11ab		/* Galileo (Marvell) Technology */
 #define	PCI_VENDOR_CANNON	0x11ac		/* Cannon IS */
 #define	PCI_VENDOR_LITEON	0x11ad		/* Lite-On Communications */
 #define	PCI_VENDOR_SCITEX	0x11ae		/* Scitex Corporation */
@@ -1432,6 +1432,7 @@
 #define	PCI_PRODUCT_GALILEO_GT64120	0x4620		/* GT-64120 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64130	0x6320		/* GT-64130 System Controller */
 #define	PCI_PRODUCT_GALILEO_GT64260	0x6430		/* GT-64260 System Controller */
+#define	PCI_PRODUCT_GALILEO_GT64360	0x6460		/* MV6436x System Controller */
 
 /* Global Sun Tech products */
 #define	PCI_PRODUCT_GLOBALSUN_GL24110P	0x1101		/* GL24110P PCI IEEE 802.11b */

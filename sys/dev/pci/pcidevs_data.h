@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.616 2004/04/03 10:51:16 martti Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.617 2004/04/17 01:56:31 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.618 2004/04/03 10:49:13 martti Exp 
+ *	NetBSD: pcidevs,v 1.619 2004/04/17 01:56:10 matt Exp 
  */
 
 /*
@@ -3756,44 +3756,50 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64010A,
 	    0,
-	    "Galileo Technology",
+	    "Galileo (Marvell) Technology",
 	    "GT-64010A System Controller",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64115,
 	    0,
-	    "Galileo Technology",
+	    "Galileo (Marvell) Technology",
 	    "GT-64115 System Controller",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64011,
 	    0,
-	    "Galileo Technology",
+	    "Galileo (Marvell) Technology",
 	    "GT-64011 System Controller",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_SKNET,
 	    0,
-	    "Galileo Technology",
+	    "Galileo (Marvell) Technology",
 	    "SK-NET Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64120,
 	    0,
-	    "Galileo Technology",
+	    "Galileo (Marvell) Technology",
 	    "GT-64120 System Controller",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64130,
 	    0,
-	    "Galileo Technology",
+	    "Galileo (Marvell) Technology",
 	    "GT-64130 System Controller",
 	},
 	{
 	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64260,
 	    0,
-	    "Galileo Technology",
+	    "Galileo (Marvell) Technology",
 	    "GT-64260 System Controller",
+	},
+	{
+	    PCI_VENDOR_GALILEO, PCI_PRODUCT_GALILEO_GT64360,
+	    0,
+	    "Galileo (Marvell) Technology",
+	    "MV6436x System Controller",
 	},
 	{
 	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
@@ -13068,7 +13074,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_GALILEO, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Galileo Technology",
+	    "Galileo (Marvell) Technology",
 	    NULL,
 	},
 	{
