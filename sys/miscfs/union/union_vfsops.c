@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.7 1994/12/15 20:00:27 mycroft Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.8 1995/01/18 09:34:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -472,7 +472,7 @@ union_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }

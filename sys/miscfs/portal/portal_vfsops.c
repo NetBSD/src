@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.9 1994/12/15 20:00:20 mycroft Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.10 1995/01/18 09:34:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,10 +123,10 @@ portal_mount(mp, path, data, ndp, p)
 	mp->mnt_data = (qaddr_t)fmp;
 	getnewfsid(mp, makefstype(MOUNT_PORTAL));
 
-	(void)copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
+	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
-	(void)copyinstr(args.pa_config,
-	    mp->mnt_stat.f_mntfromname, MNAMELEN - 1, &size);
+	(void) copyinstr(args.pa_config, mp->mnt_stat.f_mntfromname,
+	    MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 	return (0);
 }
@@ -253,7 +253,7 @@ portal_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.4 1994/12/15 20:00:18 mycroft Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.5 1995/01/18 09:34:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -305,7 +305,7 @@ nullfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(&sbp->f_fstypename[0], mp->mnt_op->vfs_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	sbp->f_fstypename[MFSNAMELEN] = '\0';
 	return (0);
 }
