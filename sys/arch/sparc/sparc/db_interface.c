@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.8 1996/03/14 21:09:05 christos Exp $ */
+/*	$NetBSD: db_interface.c,v 1.9 1996/03/30 21:13:03 christos Exp $ */
 
 /* 
  * Mach Operating System
@@ -194,7 +194,7 @@ db_write_text(dst, ch)
 	pte0 = getpte(va);
 
 	if ((pte0 & PG_V) == 0) { 
-		db_printf(" address 0x%x not a valid page\n", dst);
+		db_printf(" address %p not a valid page\n", dst);
 		splx(s);
 		return;
 	}
