@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.95 2000/08/31 20:14:55 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.96 2000/09/11 23:29:31 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -70,7 +70,7 @@
 #define	PMAP_PHYS_PAGE		/* Use phys ASIs for pmap copy/zero */
 #define	DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #undef	NO_TSB			/* Don't use TSB */
-#undef	TICK_IS_TIME		/* Keep %tick synchronized with time */
+#define	TICK_IS_TIME		/* Keep %tick synchronized with time */
 #undef	SCHED_DEBUG
 
 #include "opt_ddb.h"
@@ -4224,14 +4224,6 @@ _C_LABEL(sparc_interrupt):
 	 set	_C_LABEL(intrlev), %g3
 	wr	%g0, 1, CLEAR_SOFTINT
 	DLFLUSH(%g3, %g2)
-#ifndef TICK_IS_TIME
-	rd	TICK_CMPR, %g2
-	rd	%tick, %g5
-	srax	%g2, 1, %g2
-	cmp	%g2, %g5
-	tg	%xcc, 1
-	wrpr	%g0, 0, %tick	! Reset %tick so we'll get another interrupt
-#endif
 	ba,pt	%icc, setup_sparcintr
 	 LDPTR	[%g3 + PTRSZ], %g5	! intrlev[1] is reserved for %tick intr.
 0:
@@ -5317,6 +5309,7 @@ print_dtlb:
 	.align	8
 dostart:
 	wrpr	%g0, 0, %tick	! XXXXXXX clear %tick register for now
+	wr	%g0, TICK_CMPR	! XXXXXXX clear %tick_cmpr as well
 	/*
 	 * Startup.
 	 *
@@ -5540,7 +5533,7 @@ _C_LABEL(cpu_initialize):
 	or	%l4, 0xfff, %l4			! We can just load this in 12 (of 13) bits
 
 	andn	%l1, %l4, %l1			! Mask the phys page number
-	andn	%o1, %l4, %o1			! Mask the phys page number
+	andn	%g1, %l4, %g1			! Mask the phys page number
 
 	or	%l2, %l1, %l1			! Now take care of the high bits
 	or	%l2, %g1, %g1			! Now take care of the high bits
@@ -9357,12 +9350,12 @@ ENTRY(pseg_get)
 /*
  * In 32-bit mode:
  *
- * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3,
+ * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2:%o3,
  *			 paddr_t spare %o4:%o5);
  *
  * In 64-bit mode:
  *
- * extern void pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2, 
+ * extern int pseg_set(struct pmap* %o0, vaddr_t addr %o1, int64_t tte %o2, 
  *			paddr_t spare %o3);
  *
  * Set a pseg entry to a particular TTE value.  Returns 0 on success, 1 if it needs to fill
@@ -11133,34 +11126,57 @@ tlimit:
 	.xword	0
 	.text
 ENTRY(next_tick)
-#ifndef TICK_IS_TIME
-/*
- * Synchronizing %tick with time is hard.  Just reset it to zero.
- * This entire %tick thing will break on an MPU.
- */
-	wr	%o0, TICK_CMPR	! Make sure we enable the interrupt
-	retl
-	 wrpr	%g0, 0, %tick	! Reset the clock
-#else
-	sethi	%hi(tlimit), %o1
-	ldx	[%o1 + %lo(tlimit)], %o2
-	add	%o2, %o0, %o2
-
-		
+	rd	TICK_CMPR, %o2
 	rdpr	%tick, %o1
-	mov	1, %o2
-	sllx	%o2, 63, %o2
-	andn	%o1, %o2, %o3	! Mask off the NPT bit
-	add	%o3, %o0, %o3	! Add increment
-	brlez,pn	%o3, 1f	! Overflow?
+	
+	mov	1, %o3		! Mask off high bits of these registers
+	sllx	%o3, 63, %o3
+	andn	%o1, %o3, %o1
+	andn	%o2, %o3, %o2
+	cmp	%o1, %o2	! Did we wrap?  (tick < tick_cmpr)
+	bgt,pt	%icc, 1f
+	 add	%o1, 1000, %o1	! Need some slack so we don't lose intrs.
+
+	/*
+	 * Handle the unlikely case of %tick wrapping.
+	 *
+	 * This should only happen every 10 years or more.
+	 *
+	 * We need to increment the time base by the size of %tick in
+	 * microseconds.  This will require some divides and multiplies
+	 * which can take time.  So we re-read %tick.
+	 * 
+	 */
+
+	/* XXXXX NOT IMPLEMENTED */
+
+	
+	
+1:	
+	add	%o2, %o0, %o2
+	andn	%o2, %o3, %o4
+	brlz,pn	%o4, Ltick_ovflw
+	 cmp	%o2, %o1	! Has this tick passed?
+	blt,pn	%xcc, 1b	! Yes
 	 nop
+		
 	retl
-	 wr	%o3, TICK_CMPR
-1:
-	wrpr	%g0, %tick	! XXXXX Reset %tick on overflow
+	 wr	%o2, TICK_CMPR
+	
+Ltick_ovflw:
+/*
+ * When we get here tick_cmpr has wrapped, but we don't know if %tick
+ * has wrapped.  If bit 62 is set then we have not wrapped and we can
+ * use the current value of %o4 as %tick.  Otherwise we need to return
+ * to our loop with %o4 as %tick_cmpr (%o2).
+ */
+	srlx	%o3, 1, %o5
+	btst	%o5, %o1
+	bz,pn	%xcc, 1b
+	 mov	%o4, %o2
 	retl
-	 wr	%o0, TICK_CMPR
-#endif
+	 wr	%o2, TICK_CMPR
+
 
 ENTRY(setjmp)
 	save	%sp, -CC64FSZ, %sp	! Need a frame to return to.
