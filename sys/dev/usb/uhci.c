@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.63 1999/11/12 00:34:57 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.64 1999/11/13 23:58:01 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -960,7 +960,7 @@ uhci_idone(ii)
 	usbd_xfer_handle xfer = ii->xfer;
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->pipe;
 	uhci_soft_td_t *std;
-	u_int32_t status;
+	u_int32_t status, nstatus;
 	int actlen;
 
 #ifdef DIAGNOSTIC
@@ -1022,9 +1022,10 @@ uhci_idone(ii)
 	/* The transfer is done, compute actual length and status. */
 	actlen = 0;
 	for (std = ii->stdstart; std != NULL; std = std->link.std) {
-		status = LE(std->td.td_status);
-		if (status & UHCI_TD_ACTIVE)
+		nstatus = LE(std->td.td_status);
+		if (nstatus & UHCI_TD_ACTIVE)
 			break;
+		status = nstatus;
 		if (UHCI_TD_GET_PID(LE(std->td.td_token)) != 
 		    UHCI_TD_PID_SETUP)
 			actlen += UHCI_TD_GET_ACTLEN(status);
