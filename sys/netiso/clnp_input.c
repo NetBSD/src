@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.9 1995/06/13 07:13:18 mycroft Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.10 1995/07/27 20:36:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -135,6 +135,8 @@ clnp_init()
 	clnl_protox[ISO8473_CLNP].clnl_input = clnp_input;
 
 	clnlintrq.ifq_maxlen = clnpqmaxlen;
+
+	TAILQ_INIT(&iso_ifaddr);
 }
 
 /*
