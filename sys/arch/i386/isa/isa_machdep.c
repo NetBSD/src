@@ -1,7 +1,7 @@
-/*	$NetBSD: isa_machdep.c,v 1.14 1996/05/12 23:06:18 mycroft Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.15 1996/08/30 15:39:31 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -169,6 +169,12 @@ intr_calculatemasks()
 				irqs |= 1 << irq;
 		imask[level] = irqs | SIR_ALLMASK;
 	}
+
+	/*
+	 * Since run queues may be manipulated by both the statclock and tty,
+	 * network, and disk drivers, statclock > (tty | net | bio).
+	 */
+	imask[IPL_CLOCK] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
 
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
