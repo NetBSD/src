@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.4 2003/06/10 17:47:15 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.5 2003/06/11 09:03:32 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -58,4 +58,29 @@ default y=12, no exit, scrollable;
 
 allow dynamic menus;
 allow dynamic messages;
+
+
+menu selfskind, title MSG_Select_the_type, y=15;
+	option "4.2BSD", exit, action 
+	    { ((partinfo *)arg)->pi_fstype = FS_BSDFFS; set_bsize(arg, 8192); };
+	option "unused", exit, action 
+	    { ((partinfo *)arg)->pi_fstype = FS_UNUSED; set_bsize(arg, 0); };
+	option "swap", exit, action 
+	    { ((partinfo *)arg)->pi_fstype = FS_SWAP;   set_bsize(arg, 0); };
+	option "msdos", exit, action 
+	    { ((partinfo *)arg)->pi_fstype = FS_MSDOS;  set_bsize(arg, 0); };
+	option "4.4LFS", exit, action 
+	    { ((partinfo *)arg)->pi_fstype = FS_BSDLFS; set_bsize(arg, 8192); };
+
+menu selbsize, title MSG_Select_file_system_block_size, y = 15;
+	option  "8192", exit, action { set_bsize(arg, 8192); };
+	option  "4096", exit, action { set_bsize(arg, 4096); };
+	option "16384", exit, action { set_bsize(arg, 16384); };
+	option "32768", exit, action { set_bsize(arg, 32768); };
+
+menu selfsize, title MSG_Select_number_of_fragments_per_block, y = 15;
+	option MSG_f8_per_block, exit, action { set_fsize(arg, 8); };
+	option MSG_f4_per_block, exit, action { set_fsize(arg, 4); };
+	option MSG_f2_per_block, exit, action { set_fsize(arg, 2); };
+	option MSG_f1_per_block, exit, action { set_fsize(arg, 1); };
 

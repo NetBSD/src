@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.102 2003/06/10 17:47:15 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.103 2003/06/11 09:03:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -323,6 +323,9 @@ message not42bsd
 frag size to set.
 }
 
+message Select_the_type
+{MSG Select the type}
+
 message label_size
 {%s
 Special values that can be entered for the size value:
@@ -342,6 +345,17 @@ start (%s)}
 message invalid_sector_number
 {Badly formed sector number
 }
+
+message Select_file_system_block_size
+{Select file system block size}
+
+message Select_number_of_fragments_per_block
+{Select number of fragments per filesystem block}
+
+message f8_per_block {8 per block}
+message f4_per_block {4 per block}
+message f2_per_block {2 per block}
+message f1_per_block {1 per block}
 
 message packname
 {Please enter a name for your NetBSD disk}

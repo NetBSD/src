@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.22 2003/06/06 14:31:27 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.23 2003/06/11 09:03:33 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -166,41 +166,6 @@ fois que vous apportez votre copie de sauvegarde améliorée de système, vous
 pouvez devoir prendre soin de fusionner nouvellement créé / répertoire
 d' /emul/aout avec le vieil.
 }
-
-message Change_a
-{Changer a}
-message Change_b
-{Changer b}
-message NetBSD_partition_cant_change
-{Partition de NetBSD - Changement impossible}
-message Whole_disk_cant_change
-{Totalité du disque - Changement impossible}
-message Change_e
-{Changer e}
-message Change_f
-{Changer f}
-message Change_g
-{Changer g}
-message Change_h
-{Changer h}
-message Change_i
-{Changer i}
-message Change_j
-{Changer j}
-message Change_k
-{Changer k}
-message Change_l
-{Changer l}
-message Change_m
-{Changer m}
-message Change_n
-{Changer n}
-message Change_o
-{Changer o}
-message Change_p
-{Changer p}
-message Set_new_allocation_size
-{Changer d'unité}
 
 message Selection_toggles_inclusion
 {Sélection des composants}
