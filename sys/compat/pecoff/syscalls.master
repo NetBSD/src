@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.6 2003/04/08 10:57:56 oki Exp $
+	$NetBSD: syscalls.master,v 1.7 2003/09/12 02:10:33 christos Exp $
 ; based on NetBSD: syscalls.master,v 1.128 2003/03/18 18:08:49 christos Exp
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -616,7 +616,11 @@
 			    const sigset_t *set, \
 			    sigset_t *oset); }
 294	NOARGS		{ int sys___sigsuspend14(const sigset_t *set); }
+#ifdef __HAVE_SIGINFO
+295	NOARGS		{ int compat_16_sys___sigreturn14(struct sigcontext *sigcntxp); }
+#else
 295	NOARGS		{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
+#endif
 296	NOARGS		{ int sys___getcwd(char *bufp, size_t length); }
 297	NOARGS		{ int sys_fchroot(int fd); }
 298	NOARGS		{ int sys_fhopen(const fhandle_t *fhp, int flags); }
