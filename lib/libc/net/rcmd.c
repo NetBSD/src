@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94"; */
-static char *rcsid = "$Id: rcmd.c,v 1.8 1994/06/01 19:23:59 pk Exp $";
+static char *rcsid = "$Id: rcmd.c,v 1.9 1994/06/01 19:32:43 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -243,16 +243,20 @@ ruserok(rhost, superuser, ruser, luser)
 	int superuser;
 {
 	struct hostent *hp;
-	u_long addr;
 	char **ap;
+	int i;
+#define MAXADDRS	35
+	u_long addrs[MAXADDRS + 1];
 
 	if ((hp = gethostbyname(rhost)) == NULL)
 		return (-1);
-	for (ap = hp->h_addr_list; *ap; ++ap) {
-		bcopy(*ap, &addr, sizeof(addr));
-		if (iruserok(addr, superuser, ruser, luser) == 0)
+	for (i = 0, ap = hp->h_addr_list; *ap && i < MAXADDRS; ++ap, ++i)
+		bcopy(*ap, &addrs[i], sizeof(addrs[i]));
+	addrs[i] = 0;
+
+	for (i = 0; i < MAXADDRS && addrs[i]; i++)
+		if (iruserok(addrs[i], superuser, ruser, luser) == 0)
 			return (0);
-	}
 	return (-1);
 }
 
