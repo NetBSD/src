@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.26 2000/02/02 07:47:33 itojun Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.27 2000/02/02 08:00:23 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -412,6 +412,11 @@ ep_pcmcia_detach(self, flags)
 	struct ep_pcmcia_softc *psc = (struct ep_pcmcia_softc *)self;
 	struct ep_softc *sc = &psc->sc_ep;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int rv;
+
+	rv = ep_detach(self, flags);
+	if (rv)
+		return (rv);
 
 	/* Unmap our i/o window. */
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
