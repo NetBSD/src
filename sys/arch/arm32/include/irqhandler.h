@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.19 2001/07/10 00:04:30 bjh21 Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.20 2001/07/10 00:09:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -161,7 +161,6 @@
 #define IRQ_TIMER0      0
 #endif
 
-/* XXX why is this in ARM7500? */
 #ifdef SHARK
 /*
  * shark hardware requirements for IRQ's:
