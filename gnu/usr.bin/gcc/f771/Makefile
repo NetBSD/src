@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/10/08 23:18:11 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/11/08 00:13:53 simonb Exp $
 
 PROG=		f771
 SRCS=		${G_F77_OBJS:.o=.c}
@@ -15,11 +15,7 @@ CLEANFILES+=	str-${f}.h str-${f}.j
 
 fini: fini.c proj.c
 	${HOST_LINK.c} -o $@ $>
-
-.if !target(.BEGIN) && !make(fini)
-.BEGIN:
-	@rm -f fini
-.endif
+CLEANFILES+=	fini
 
 .for f in 1t 2t fo io nq op ot
 str-${f}.h str-${f}.j: str-${f}.fin fini
