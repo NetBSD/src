@@ -229,6 +229,9 @@ usr.bin/at/pathnames.h				1.4
 usr.bin/at/perm.c				1.1 (new)
 usr.bin/at/perm.h				1.1 (new)
 usr.bin/at/privs.h				1.4
+libexec/atrun/atrun.8				1.7-1.8
+libexec/atrun/atrun.c				1.5
+libexec/atrun/atrun.h				1.4
 
   Fix several bugs (some of which are security related), and implement
   some new features (e.g. at.allow and at.deny files).  (mrg)
@@ -274,3 +277,8 @@ sys/arch/pmax/pmax/conf.c			patch
 sys/arch/i386/i386/machdep.c			patch
 
   Correct panic message in _bus_dmamap_load_mbuf (PR#6226).  (frueauf)
+
+sbin/routed/input.c				1.23
+
+  Disable and log RIP_TRACEON and RIP_TRACEOFF.  They are
+  insecure.  (christos)
