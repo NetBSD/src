@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.86 2004/09/14 17:20:29 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.87 2004/09/14 17:25:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.86 2004/09/14 17:20:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.87 2004/09/14 17:25:37 jdolecek Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -178,9 +178,6 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 #endif
 
 extern const struct emul emul_netbsd;
-#ifdef COMPAT_AOUT
-extern const struct emul emul_netbsd_aout;
-#endif
 #ifdef COMPAT_AOUT_M68K
 extern const struct emul emul_netbsd_aoutm68k;
 #endif
@@ -219,9 +216,7 @@ const struct execsw execsw_builtin[] = {
 	{ sizeof(struct exec),
 	  exec_aout_makecmds,
 	  { NULL },
-#ifdef COMPAT_AOUT
-	  &emul_netbsd_aout,
-#elif defined(COMPAT_AOUT_M68K)
+#if defined(COMPAT_AOUT_M68K)
 	  &emul_netbsd_aoutm68k,
 #else
 	  &emul_netbsd,
