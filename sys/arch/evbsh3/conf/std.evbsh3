@@ -1,7 +1,11 @@
-# $NetBSD: std.evbsh3,v 1.1 1999/09/13 10:30:25 itojun Exp $
+# $NetBSD: std.evbsh3,v 1.2 1999/11/15 19:00:27 fvdl Exp $
 #
 # standard, required NetBSD/evbsh3 'options'
  
 machine evbsh3 sh3
+
+prefix ../gnu/sys
+cinclude "conf/files.softdep"
+prefix
 
 options	EXEC_SCRIPT	# exec #! scripts

@@ -1,13 +1,13 @@
-# $NetBSD: std.i386,v 1.17 1999/11/15 18:49:07 fvdl Exp $
+# $NetBSD: std.i386,v 1.18 1999/11/15 19:00:28 fvdl Exp $
 #
 # standard, required NetBSD/i386 'options'
 
 machine i386
 
-options 	EXEC_AOUT	# exec a.out binaries
-options		EXEC_ELF32	# exec ELF binaries
-options 	EXEC_SCRIPT	# exec #! scripts
-
 prefix ../gnu/sys
 cinclude "conf/files.softdep"
 prefix
+
+options 	EXEC_AOUT	# exec a.out binaries
+options		EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts
