@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.566 2003/08/17 18:06:22 chs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.567 2003/08/20 22:58:22 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.566 2003/08/17 18:03:29 chs Exp 
+ *	NetBSD: pcidevs,v 1.567 2003/08/20 22:56:13 jonathan Exp 
  */
 
 /*
@@ -1058,7 +1058,7 @@
 #define	PCI_PRODUCT_BROADCOM_5820	0x5820		/* 5820 Security processor */
 #define	PCI_PRODUCT_BROADCOM_5821	0x5821		/* 5821 Security processor */
 #define	PCI_PRODUCT_BROADCOM_5822	0x5822		/* 5822 Security processor */
-#define	PCI_PRODUCT_BROADCOM_5823	0x5822		/* 5823 Security processor */
+#define	PCI_PRODUCT_BROADCOM_5823	0x5823		/* 5823 Security processor */
 
 /* Brooktree products */
 #define	PCI_PRODUCT_BROOKTREE_BT848	0x0350		/* Bt848 Video Capture */
