@@ -1,7 +1,7 @@
-/* $NetBSD: sched.h,v 1.14 2001/07/01 18:06:12 thorpej Exp $ */
+/* $NetBSD: sched.h,v 1.14.10.1 2002/03/10 19:08:26 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -92,6 +92,7 @@
     !defined(_ANSI_SOURCE)
 
 #include <sys/time.h>
+#include <sys/queue.h>
 
 /*
  * Sleep queues.
@@ -155,6 +156,20 @@ struct schedstate_percpu {
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 
 /*
+ * Turnstile sleep queue for kernel synchronization primitives.
+ */
+struct turnstile {
+	LIST_ENTRY(turnstile) ts_chain;	/* link on hash chain */
+	struct turnstile *ts_free;	/* turnstile free list */
+	void		*ts_obj;	/* lock object */
+	struct slpque	ts_sleepq;	/* queue of waiters */
+	u_int		ts_waiters;	/* number of waiters on queue */
+};
+
+#define	TS_READER_Q	0		/* reader sleep queue */
+#define	TS_WRITER_Q	1		/* writer sleep queue */
+
+/*
  * Flags passed to the Linux-compatible __clone(2) system call.
  */
 #define	CLONE_CSIGNAL		0x000000ff	/* signal to be sent at exit */
@@ -171,6 +186,8 @@ struct schedstate_percpu {
 #endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE && !_ANSI_SOURCE */
 
 #ifdef _KERNEL
+
+#include <sys/pool.h>
 
 #define	PPQ	(128 / RUNQUE_NQS)	/* priorities per queue */
 #define NICE_WEIGHT 2			/* priorities per nice level */
@@ -199,6 +216,16 @@ struct cpu_info;
 void schedclock(struct proc *p);
 void sched_wakeup(void *);
 void roundrobin(struct cpu_info *);
+void awaken(struct proc *);
+
+void	turnstile_init(void);
+
+struct turnstile *turnstile_lookup(void *);
+void	turnstile_exit(void *);
+int	turnstile_block(struct turnstile *, int, void *);
+void	turnstile_wakeup(struct turnstile *, int, int);
+
+extern struct pool turnstile_pool;
 
 /*
  * scheduler_fork_hook:
@@ -230,17 +257,8 @@ extern struct simplelock sched_lock;
 #define	SCHED_ASSERT_LOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock))
 #define	SCHED_ASSERT_UNLOCKED()	LOCK_ASSERT(simple_lock_held(&sched_lock) == 0)
 
-#define	SCHED_LOCK(s)							\
-do {									\
-	s = splsched();							\
-	simple_lock(&sched_lock);					\
-} while (/* CONSTCOND */ 0)
-
-#define	SCHED_UNLOCK(s)							\
-do {									\
-	simple_unlock(&sched_lock);					\
-	splx(s);							\
-} while (/* CONSTCOND */ 0)
+#define	_SCHED_LOCK			simple_lock(&sched_lock)
+#define	_SCHED_UNLOCK			simple_unlock(&sched_lock)
 
 void	sched_lock_idle(void);
 void	sched_unlock_idle(void);
@@ -250,8 +268,20 @@ void	sched_unlock_idle(void);
 #define	SCHED_ASSERT_LOCKED()		/* nothing */
 #define	SCHED_ASSERT_UNLOCKED()		/* nothing */
 
-#define	SCHED_LOCK(s)			s = splsched()
-#define	SCHED_UNLOCK(s)			splx(s)
+#define	_SCHED_LOCK			/* nothing */
+#define	_SCHED_UNLOCK			/* nothing */
+
+#define	SCHED_LOCK(s)							\
+do {									\
+	s = splsched();							\
+	_SCHED_LOCK;							\
+} while (/* CONSTCOND */ 0)
+
+#define	SCHED_UNLOCK(s)							\
+do {									\
+	_SCHED_UNLOCK;							\
+	splx(s);							\
+} while (/* CONSTCOND */ 0)
 
 #endif /* MULTIPROCESSOR || LOCKDEBUG */
 
