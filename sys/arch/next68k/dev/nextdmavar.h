@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.2 1998/07/05 07:53:45 dbj Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.3 1998/12/19 09:31:44 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -44,8 +44,6 @@ struct nextdma_config {
 	void (*nd_completed_cb) __P((bus_dmamap_t, void *));
 	/* This is called when dma shuts down */
 	void (*nd_shutdown_cb)  __P((void *));
-
-	int nd_chaining_flag;					/* true if this interface chains */
 
 	void *nd_cb_arg;							/* callback argument */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.4 1998/07/21 06:17:35 dbj Exp $	*/
+/*	$NetBSD: espvar.h,v 1.5 1998/12/19 09:31:44 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct esp_softc {
 	caddr_t sc_slop_end_addr;			/* bytes to be fifo'd at end */
 	int sc_slop_bgn_size;					/* # bytes to be fifo'd at beginning */
 	int sc_slop_end_size;					/* # bytes to be fifo'd at end */
+	int sc_dmamap_loaded;					/* flag as to whether given to continue_cb yet */
 	caddr_t *sc_dmaaddr;
 	size_t  *sc_dmalen;
 	size_t  sc_dmasize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.6 1998/12/08 09:35:07 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.7 1998/12/19 09:31:44 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -251,6 +251,19 @@ next_dma_rotate(nd)
 		}
 		nd->_nd_idx_cont = 0;
 	}
+
+#ifdef DIAGNOSTIC
+	if (nd->_nd_map_cont) {
+		if (!DMA_BEGINALIGNED(nd->_nd_map_cont->dm_segs[nd->_nd_idx].ds_addr)) {
+			panic("DMA request unaligned at start\n");
+		}
+		if (!DMA_ENDALIGNED(nd->_nd_map_cont->dm_segs[nd->_nd_idx].ds_addr + 
+				nd->_nd_map_cont->dm_segs[nd->_nd_idx].ds_len)) {
+			panic("DMA request unaligned at end\n");
+		}
+	}
+#endif
+
 }
 
 void
@@ -284,10 +297,15 @@ next_dma_setup_cont_regs(nd)
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP, 0xdeadbeef);
 	}
 
+#if 0
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_START, 
 			bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_START));
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_STOP,
 			bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_STOP));
+#else
+	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_START, 0xfeedbeef);
+	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_STOP, 0xfeedbeef);
+#endif
 
 }
 
@@ -313,11 +331,16 @@ next_dma_setup_curr_regs(nd)
 			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 0xdeadbeef);
 
 		}
-			
+
+#if 0
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 
 				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF));
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT,
 				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT));
+#else
+		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 0xfeedbeef);
+		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT, 0xfeedbeef);
+#endif
 		
 	} else {
 
@@ -334,10 +357,15 @@ next_dma_setup_curr_regs(nd)
 
 		}
 
+#if 0
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 
 				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT));
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT,
 				bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT));
+#else
+		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT, 0xfeedbeef);
+		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT, 0xfeedbeef);
+#endif
 
 	}
 
@@ -438,127 +466,185 @@ nextdma_intr(arg)
   DPRINTF(("DMA interrupt ipl (%ld) intr(0x%b)\n",
           NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
 
+#ifdef DIAGNOSTIC
+	if (!nd->_nd_map) {
+		next_dma_print(nd);
+		panic("DMA missing current map in interrupt!\n");
+	}
+#endif
+
   {
     int state = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_CSR);
-
-    state &= (DMACSR_BUSEXC | DMACSR_COMPLETE | 
-              DMACSR_SUPDATE | DMACSR_ENABLE);
-
-    if (state & DMACSR_BUSEXC) {
-#if 0 /* This bit seems to get set periodically and I don't know why */
-			next_dma_print(nd);
-      panic("Bus exception in DMA ipl (%ld) intr(0x%b)\n",
-             NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
-#endif
-    }
 
 #ifdef DIAGNOSTIC
 		if (!(state & DMACSR_COMPLETE)) {
 			next_dma_print(nd);
-#if 0 /* This bit doesn't seem to get set every once in a while,
-			 * and I don't know why.  Let's try treating it as a spurious
-			 * interrupt.  ie. report it and ignore the interrupt.
-			 */
 			printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
 			panic("DMA  ipl (%ld) intr(0x%b), DMACSR_COMPLETE not set in intr\n",
 					NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
-#else
-			printf("DMA  ipl (%ld) intr(0x%b), DMACSR_COMPLETE not set in intr\n",
-					NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
-			return(1);
-#endif
 		}
 #endif
 
-		/* Set the length of the segment to match actual length. 
-		 * @@@ is it okay to resize dma segments here?
-		 * i should probably ask jason about this.
-		 */
-		if (nd->_nd_map) {
-
-			bus_addr_t next;
-			bus_addr_t limit;
-
-#if 0
-			if (state & DMACSR_ENABLE) {
-				next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT);
-			} else {
-				next  = nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr;
-			}
-#else
-			next  = nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr;
+#if 0 /* This bit gets set sometimes & I don't know why. */
+#ifdef DIAGNOSTIC
+		if (state & DMACSR_BUSEXC) {
+			next_dma_print(nd);
+			printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
+			panic("DMA  ipl (%ld) intr(0x%b), DMACSR_COMPLETE not set in intr\n",
+					NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
+		}
 #endif
-			limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT);
+#endif
 
-			if (nd->nd_intr == NEXT_I_ENETX_DMA) {
-				limit &= ~0x80000000;
-			}
+		/* Check to see if we are expecting dma to shut down */
+		if (!nd->_nd_map_cont) {
 
 #ifdef DIAGNOSTIC
-			if (next != nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr) {
+			if (state & (DMACSR_SUPDATE|DMACSR_ENABLE)) {
 				next_dma_print(nd);
-				printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
-
-				panic("DMA  ipl (%ld) intr(0x%b), unexpected completed address\n",
-						NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS);
+				panic("unexpected bits set in DMA state at shutdown (0x%b)\n", state,DMACSR_BITS);
 			}
 #endif
 
-			/* @@@ I observed a case where DMACSR_ENABLE wasn't set and
-			 * DD_SAVED_LIMIT didn't contain the expected limit value.  This
-			 * should be tested, fixed, and removed.  */
+#ifdef DIAGNOSTIC
+#if 0 /* Sometimes the DMA registers have totally bogus values when read.
+			 * Until that's understood, we skip this check
+			 */
 
-			if (((limit-next) > nd->_nd_map->dm_segs[nd->_nd_idx].ds_len)
-					|| (limit-next < 0)) {
-#if 0
-				next_dma_print(nd);
-				printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
-				panic("DMA packlen: next = 0x%08x limit = 0x%08x\n",next,limit);
-#else
-				DPRINTF(("DMA packlen: next = 0x%08x limit = 0x%08x",next,limit));
+			/* Verify that the registers are laid out as expected */
+			{
+				bus_addr_t next;
+				bus_addr_t limit;
+				bus_addr_t expected_limit;
+				expected_limit = 
+						nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
+						nd->_nd_map->dm_segs[nd->_nd_idx].ds_len;
+
+				if (nd->nd_intr == NEXT_I_ENETX_DMA) {
+					next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF);
+					limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT) & ~0x80000000;
+				} else {
+					next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_NEXT);
+					limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT);
+				}
+
+				if ((next != limit) || (limit != expected_limit)) {
+					next_dma_print(nd);
+					printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
+					panic("unexpected DMA limit at shutdown 0x%08x, 0x%08x, 0x%08x",
+							next,limit,expected_limit);
+				}
+			}
 #endif
-				
-			} else {
-				nd->_nd_map->dm_segs[nd->_nd_idx].ds_len = limit - next;
-			}
-		}
+#endif
 
-
-		if ((state & DMACSR_ENABLE) == 0) {
-
-			/* Non chaining interrupts shutdown immediately */
-			if (!nd->nd_chaining_flag) {
-				nd->_nd_map = nd->_nd_map_cont;
-				nd->_nd_idx = nd->_nd_idx_cont;
-				nd->_nd_map_cont = 0;
-				nd->_nd_idx_cont = 0;
-			}
-
-			/* Call the completed callback for the last packet */
-			if (nd->_nd_map && ((nd->_nd_idx+1) == nd->_nd_map->dm_nsegs)) {
+			if ((nd->_nd_idx+1) == nd->_nd_map->dm_nsegs) {
 				if (nd->nd_completed_cb) 
 					(*nd->nd_completed_cb)(nd->_nd_map, nd->nd_cb_arg);
 			}
 			nd->_nd_map = 0;
 			nd->_nd_idx = 0;
 
-			if (nd->_nd_map_cont) {
-				DPRINTF(("DMA  ipl (%ld) intr(0x%b), restarting\n",
-					NEXT_I_IPL(nd->nd_intr), NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+					DMACSR_CLRCOMPLETE | DMACSR_RESET);
+			
+			DPRINTF(("DMA: a normal and expected shutdown occurred\n"));
+			if (nd->nd_shutdown_cb) (*nd->nd_shutdown_cb)(nd->nd_cb_arg);
 
+			return(1);
+		}
+
+#if 0
+#ifdef DIAGNOSTIC
+		if (!(state & DMACSR_SUPDATE)) {
+			next_dma_print(nd);
+			printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
+			panic("SUPDATE not set with continuing DMA");
+		}
+#endif
+#endif
+
+		/* Check that the buffer we are interrupted for is the one we expect.
+		 * Shorten the buffer if the dma completed with a short buffer
+		 */
+		{
+			bus_addr_t next;
+			bus_addr_t limit;
+			bus_addr_t expected_next;
+			bus_addr_t expected_limit;
+			
+			expected_next = nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr;
+			expected_limit = expected_next + nd->_nd_map->dm_segs[nd->_nd_idx].ds_len;
+
+#if 0 /* for some unknown reason, somtimes DD_SAVED_NEXT has value from
+			 * nd->_nd_map and sometimes it has value from nd->_nd_map_cont.
+			 * Somtimes, it has a completely different unknown value.
+			 * Until that's understood, we won't sanity check the expected_next value.
+			 */
+			next  = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_NEXT);
+#else
+			next  = expected_next;
+#endif
+			limit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT);
+
+			if (nd->nd_intr == NEXT_I_ENETX_DMA) {
+				limit &= ~0x80000000;
+			}
+			
+			if ((limit-next < 0) || 
+					(limit-next >= expected_limit-expected_next)) {
+#ifdef DIAGNOSTIC
+#if 0 /* Sometimes, (under load I think) even DD_SAVED_LIMIT has
+			 * a bogus value.  Until that's understood, we don't panic
+			 * here.
+			 */
+				next_dma_print(nd);
+				printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
+				panic("Unexpected saved registers values.");
+#endif
+#endif
+			} else {
+				/* Set the length of the segment to match actual length. 
+				 * @@@ is it okay to resize dma segments here?
+				 * i should probably ask jason about this.
+				 */
+				nd->_nd_map->dm_segs[nd->_nd_idx].ds_len = limit-next;
+				expected_limit = expected_next + nd->_nd_map->dm_segs[nd->_nd_idx].ds_len;
+			}
+
+#if 0 /* these checks are turned off until the above mentioned weirdness is fixed. */
+#ifdef DIAGNOSTIC
+			if (next != expected_next) {
+				next_dma_print(nd);
+				printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
+				panic("unexpected DMA next buffer in interrupt (found 0x%08x, expected 0x%08x)",
+						next,expected_next);
+			}
+			if (limit != expected_limit) {
+				next_dma_print(nd);
+				printf("DEBUG: state = 0x%b\n", state,DMACSR_BITS);
+				panic("unexpected DMA limit buffer in interrupt (found 0x%08x, expected 0x%08x)",
+						limit,expected_limit);
+			}
+#endif
+#endif
+		}
+
+		next_dma_rotate(nd);
+		next_dma_setup_cont_regs(nd);
+
+		if (!(state & DMACSR_ENABLE)) {
+			DPRINTF(("Unexpected DMA shutdownn, restarting."));
+
+			if (nd->_nd_map_cont) {
 				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
 						DMACSR_SETSUPDATE | DMACSR_SETENABLE);
-
 			} else {
-				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
-						DMACSR_CLRCOMPLETE | DMACSR_RESET);
-				DPRINTF(("DMA: enable not set w/o continue map, shutting down dma\n"));
-				if (nd->nd_shutdown_cb) (*nd->nd_shutdown_cb)(nd->nd_cb_arg);
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
+						DMACSR_SETENABLE);
 			}
 
 		} else {
-			next_dma_rotate(nd);
-			next_dma_setup_cont_regs(nd);
 
 			if (nd->_nd_map_cont) {
 				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
@@ -567,7 +653,6 @@ nextdma_intr(arg)
 				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
 						DMACSR_CLRCOMPLETE);
 			}
-
 		}
 
 	}
@@ -620,48 +705,33 @@ nextdma_start(nd, dmadir)
 	}
 #endif
 
+	/* preload both the current and the continue maps */
 	next_dma_rotate(nd);
 
 #ifdef DIAGNOSTIC
 	if (!nd->_nd_map_cont) {
 		panic("No map available in nextdma_start()");
 	}
-	if (!DMA_BEGINALIGNED(nd->_nd_map_cont->dm_segs[nd->_nd_idx].ds_addr)) {
-		panic("unaligned begin dma at start\n");
-	}
-	if (!DMA_ENDALIGNED(nd->_nd_map_cont->dm_segs[nd->_nd_idx].ds_addr + 
-			nd->_nd_map_cont->dm_segs[nd->_nd_idx].ds_len)) {
-		panic("unaligned end dma at start\n");
-	}
 #endif
 
+	next_dma_rotate(nd);
+
 	DPRINTF(("DMA initiating DMA %s of %d segments on intr(0x%b)\n",
-			(dmadir == DMACSR_READ ? "read" : "write"), nd->_nd_map_cont->dm_nsegs,
+			(dmadir == DMACSR_READ ? "read" : "write"), nd->_nd_map->dm_nsegs,
 			NEXT_I_BIT(nd->nd_intr),NEXT_INTR_BITS));
 
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 0);
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
 			DMACSR_INITBUF | DMACSR_RESET | dmadir);
 
-	next_dma_setup_cont_regs(nd);
-
-	/* When starting DMA, we must put the continue map
-	 * into the current register.  We reset the nd->_nd_map
-	 * pointer here to avoid duplicated completed callbacks
-	 * for the first buffer.
-	 */
-	nd->_nd_map = nd->_nd_map_cont;
-	nd->_nd_idx = nd->_nd_idx_cont;
 	next_dma_setup_curr_regs(nd);
-	nd->_nd_map = 0;
-	nd->_nd_idx = 0;
-
+	next_dma_setup_cont_regs(nd);
 
 #if (defined(ND_DEBUG))
 	next_dma_print(nd);
 #endif
 
-	if (nd->nd_chaining_flag) {
+	if (nd->_nd_map_cont) {
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
 				DMACSR_SETSUPDATE | DMACSR_SETENABLE);
 	} else {
