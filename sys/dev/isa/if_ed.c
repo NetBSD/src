@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.77 1995/06/28 04:31:37 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.78 1995/07/23 16:32:33 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1380,6 +1380,10 @@ outloop:
 		return;
 	}
 
+	/* We need to use m->m_pkthdr.len, so require the header */
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("ed_start: no header mbuf");
+
 	/* Copy the mbuf chain into the transmit buffer. */
 	m0 = m;
 
@@ -1414,11 +1418,11 @@ outloop:
 			break;
 		}
 
-		for (len = 0; m; m = m->m_next) {
+		for (; m; m = m->m_next) {
 			bcopy(mtod(m, caddr_t), buffer, m->m_len);
 			buffer += m->m_len;
-      	 		len += m->m_len;
 		}
+		len = m->m_pkthdr.len;
 
 		/* Restore previous shared memory access. */
 		switch (sc->vendor) {
@@ -2051,9 +2055,7 @@ ed_pio_write_mbufs(sc, m, dst)
 	struct mbuf *mp;
 	int maxwait = 100; /* about 120us */
 
-	/* First, count up the total number of bytes to copy. */
-	for (len = 0, mp = m; mp; mp = mp->m_next)
-		len += mp->m_len;
+	len = m->m_pkthdr.len;
 
 	/* Select page 0 registers. */
 	NIC_PUT(sc, ED_P0_CR, ED_CR_RD2 | ED_CR_PAGE_0 | ED_CR_STA);

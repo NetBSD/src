@@ -2175,6 +2175,10 @@ fe_write_mbufs(sc, m)
 	}
 #endif
 
+	/* We need to use m->m_pkthdr.len, so require the header */
+	if ((m->m_flags & M_PKTHDR) == 0)
+	  	panic("fe_write_mbufs: no header mbuf");
+
 #if FE_DEBUG >= 2
 	/* First, count up the total number of bytes to copy. */
 	for (totlen = 0, mp = m; mp != 0; mp = mp->m_next)
