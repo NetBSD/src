@@ -1,4 +1,4 @@
-#	$NetBSD: files.mmeye,v 1.8 2001/11/20 14:34:22 lukem Exp $
+#	$NetBSD: files.mmeye,v 1.9 2002/02/22 19:44:03 uch Exp $
 #
 # config file for mmeye
 
@@ -11,7 +11,7 @@ file	arch/mmeye/mmeye/conf.c
 file	arch/mmeye/mmeye/machdep.c
 file	arch/mmeye/mmeye/procfs_machdep.c	procfs
 file	arch/mmeye/mmeye/autoconf.c
-file	arch/sh3/sh3/clock.c
+file	arch/mmeye/mmeye/clock_machdep.c
 file	arch/sh3/sh3/disksubr.c			disk
 
 defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE

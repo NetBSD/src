@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.13 2002/02/22 19:44:02 uch Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.1 2002/02/22 19:43:58 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,41 +33,78 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SH3_CPUFUNC_H_
-#define	_SH3_CPUFUNC_H_
+#include <sys/param.h>
+#include <sys/systm.h>
 
-#ifdef _KERNEL
-#ifndef _LOCORE
+#include <dev/clock_subr.h>
+#include <sh3/clock.h>
 
-/*
- * Memory-mapped register access method.
- */
-#define	_reg_read_1(a)		(*(__volatile__ u_int8_t *)((vaddr_t)(a)))
-#define	_reg_read_2(a)		(*(__volatile__ u_int16_t *)((vaddr_t)(a)))
-#define	_reg_read_4(a)		(*(__volatile__ u_int32_t *)((vaddr_t)(a)))
-#define	_reg_write_1(a, v)						\
-	(*(__volatile__ u_int8_t *)(a) = (u_int8_t)(v))
-#define	_reg_write_2(a, v)						\
-	(*(__volatile__ u_int16_t *)(a) = (u_int16_t)(v))
-#define	_reg_write_4(a, v)						\
-	(*(__volatile__ u_int32_t *)(a) = (u_int32_t)(v))
+#ifdef DEBUG
+#define STATIC
+#else
+#define STATIC static
+#endif
 
-/*
- * CPU exception/interrupt ops.	(locore_subr.S)
- */
-/* suspend/resume external interrupt (SR.IMASK) */
-u_int32_t _cpu_intr_suspend(void);
-void _cpu_intr_resume(u_int32_t);
-/* suspend/resume exception (SR.BL) */
-u_int32_t _cpu_exception_suspend(void);
-void _cpu_exception_resume(u_int32_t);
+#define DREAMCAST_RTC		0xa0710000
 
-/* for delay loop. */
-void _cpu_spin(u_int32_t);
+STATIC void dreamcast_rtc_init(void *);
+STATIC void dreamcast_rtc_get(void *, time_t, struct clock_ymdhms *);
+STATIC void dreamcast_rtc_set(void *, struct clock_ymdhms *);
 
-/* Soft reset */
-void cpu_reset(void);
+STATIC u_int32_t dreamcast_read_rtc(void);
 
-#endif /* !_LOCORE */
-#endif /* _KERNEL */
-#endif /* !_SH3_CPUFUNC_H_ */
+STATIC struct rtc_ops dreamcast_rtc_ops = {
+	.init	= dreamcast_rtc_init,
+	.get	= dreamcast_rtc_get,
+	.set	= dreamcast_rtc_set
+};
+
+void
+machine_clock_init()
+{
+
+	sh_clock_init(SH_CLOCK_NORTC, &dreamcast_rtc_ops); 	
+}
+
+void
+dreamcast_rtc_init(void *cookie)
+{
+	/* Nothing to do */
+}
+
+void
+dreamcast_rtc_get(void *cookie, time_t base, struct clock_ymdhms *dt)
+{
+
+	clock_secs_to_ymdhms(dreamcast_read_rtc(), dt);
+}
+
+void
+dreamcast_rtc_set(void *cookie, struct clock_ymdhms *dt)
+{
+	
+	/* Not suppoted */
+}
+
+u_int32_t
+dreamcast_read_rtc()
+{
+	__volatile__ u_int32_t *rtc = (__volatile__ u_int32_t *)DREAMCAST_RTC;
+	u_int32_t new, old;
+	int i;
+	
+	for (old = 0;;) {
+		for (i = 0; i < 3; i++) {
+			new = ((rtc[0] & 0xffff) << 16) | (rtc[1] & 0xffff);
+			if (new != old)
+				break;
+		}
+		if (i < 3)
+			old = new;
+		else
+			break;
+	}
+
+	/* offset 20 years */
+	return (new - 631152000);
+}
