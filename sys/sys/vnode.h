@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.124 2004/07/01 10:03:32 hannken Exp $	*/
+/*	$NetBSD: vnode.h,v 1.125 2004/08/13 23:15:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -274,6 +274,7 @@ extern const int	vttoif_tab[];
 
 #define	UPDATE_WAIT	0x0001		/* update: wait for completion */
 #define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
+#define	UPDATE_CLOSE	0x0004		/* update: clean up on close */
 
 #define	HOLDRELE(vp)	holdrele(vp)
 #define	VHOLD(vp)	vhold(vp)
