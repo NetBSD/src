@@ -1,4 +1,4 @@
-.\" $NetBSD: pmatch.9,v 1.1 2003/10/13 19:52:59 bouyer Exp $
+.\" $NetBSD: pmatch.9,v 1.2 2003/10/14 06:49:51 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Manuel Bouyer.
 .\"
@@ -43,27 +43,28 @@ Extract substring matching
 .Fa pattern
 from
 .Fa string .
-If not NULL,
+If not
+.Dv NULL ,
 .Fa estr
 points to the end of the longest exact or substring match.
 .Pp
 .Fn pmatch
 uses the following metacharacters:
 .Bl -tag -width Ds
-.It Li ?
+.It Li \&?
 match any single character.
 .It Li *
 match any character 0 or more times.
-.It Li [
+.It Li \&[
 define a range of characters that will match.
 The range is defined by 2 characters separated by a
-.Li - .
+.Sq Li \&- .
 The range definition has to end with a
-.Li ] .
+.Sq Li \&] .
 A
-.Li ^
+.Sq Li ^
 following the
-.Li [
+.Sq Li \&[
 will negate the range.
 .El
 .Sh RETURN VALUES
