@@ -1,4 +1,4 @@
-/	$NetBSD: units.lib,v 1.10 2001/11/04 03:33:49 groo Exp $
+/	$NetBSD: units.lib,v 1.11 2003/08/12 19:03:32 dogcow Exp $
 
 / primitive units
 
@@ -520,6 +520,7 @@ sigma			microsec
 skein			120 yd
 skot			1e-3 apostilb
 slug			lb-g-sec2/ft
+smoot			67 in
 span			9 in
 spat			4 pi sr
 spindle			14400 yd
