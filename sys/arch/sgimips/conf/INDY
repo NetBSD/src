@@ -1,4 +1,4 @@
-#	$NetBSD: INDY,v 1.6 2001/02/14 04:49:45 itojun Exp $
+#	$NetBSD: INDY,v 1.7 2001/05/14 17:59:22 matt Exp $
 
 include		"arch/sgimips/conf/std.sgimips"
 
@@ -19,6 +19,8 @@ maxusers	32
 #options 	PCI_CONFIG_DUMP
 
 options 	SCSI_DELAY=0
+
+options		IP32			# this is required for an O2
 
 #options 	MIPS1
 options 	MIPS3
