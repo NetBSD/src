@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.53 1998/03/12 06:27:36 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.54 1998/03/17 05:15:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,6 +95,9 @@
  *	by Jason R. Thorpe, with lots of help from Ross Harvey of
  *	Avalon Computer Systems and from Chris Demetriou.
  *
+ *	Support for the new UVM pmap interface was written by
+ *	Jason R. Thorpe.
+ *
  * Notes:
  *
  *	All page table access is done via K0SEG.  The one exception
@@ -148,10 +151,11 @@
  */
 
 #include "opt_uvm.h"
+#include "opt_pmap_new.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.53 1998/03/12 06:27:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.54 1998/03/17 05:15:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -718,19 +722,24 @@ pmap_init()
  * pmap_create:
  *
  *	Create and return a physical map.
- *
- *	If the size specified for the map is zero, the map is an
- *	actual physical map, and may be referenced by the hardware.
- *
- *	If the size specified is non-zero, the map will be used in
- *	software only, and is bounded by that size.
  */
+#if defined(PMAP_NEW)
+pmap_t
+pmap_create()
+#else /* ! PMAP_NEW */
 pmap_t
 pmap_create(size)
 	vm_size_t	size;
+#endif /* PMAP_NEW */
 {
 	register pmap_t pmap;
 
+#if defined(PMAP_NEW)
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
+		printf("pmap_create()\n");
+#endif
+#else /* ! PMAP_NEW */
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_CREATE))
 		printf("pmap_create(%lx)\n", size);
@@ -740,6 +749,7 @@ pmap_create(size)
 	 */
 	if (size)
 		return(NULL);
+#endif /* PMAP_NEW */
 
 	/* XXX: is it ok to wait here? */
 	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
@@ -940,14 +950,31 @@ pmap_remove(pmap, sva, eva)
  *	Lower the permission for all mappings to a given page to
  *	the permissions specified.
  */
+#if defined(PMAP_NEW)
+void
+pmap_page_protect(pg, prot)
+	struct vm_page *pg;
+	vm_prot_t prot;
+#else
 void
 pmap_page_protect(pa, prot)
 	vm_offset_t	pa;
 	vm_prot_t	prot;
+#endif /* PMAP_NEW */
 {
 	struct pv_head *pvh;
 	pv_entry_t pv, nextpv;
 	int s;
+#if defined(PMAP_NEW)
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+
+#ifdef DEBUG
+	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
+	    (prot == VM_PROT_NONE && (pmapdebug & PDB_REMOVE)))
+		printf("pmap_page_protect(%p, %x)\n", pg, prot);
+#endif
+
+#else /* ! PMAP_NEW */
 
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
@@ -956,6 +983,7 @@ pmap_page_protect(pa, prot)
 #endif
 	if (!PAGE_IS_MANAGED(pa))
 		return;
+#endif /* PMAP_NEW */
 
 	/*
 	 * Even though we don't change the mapping of the page,
@@ -1325,10 +1353,18 @@ pmap_enter(pmap, va, pa, prot, wired)
 	if (managed) {
 		struct pv_head *pvh = pa_to_pvh(pa);
 
+		/*
+		 * Set up referenced/modified emulation for new mapping.
+		 */
 		if ((pvh->pvh_attrs & PMAP_ATTR_REF) == 0)
 			npte |= PG_FOR | PG_FOW | PG_FOE;
 		else if ((pvh->pvh_attrs & PMAP_ATTR_MOD) == 0)
 			npte |= PG_FOW;
+
+		/*
+		 * Mapping was entered on PV list.
+		 */
+		npte |= PG_PVLIST;
 	}
 	if (wired)
 		npte |= PG_WIRED;
@@ -1353,6 +1389,150 @@ pmap_enter(pmap, va, pa, prot, wired)
 			alpha_pal_imb();
 	}
 }
+
+#if defined(PMAP_NEW)
+/*
+ * pmap_kenter_pa:
+ *
+ *	Enter a va -> pa mapping into the kernel pmap without any
+ *	physical->virtual tracking.
+ */
+void
+pmap_kenter_pa(va, pa, prot)
+	vm_offset_t va;
+	vm_offset_t pa;
+	vm_prot_t prot;
+{
+	pt_entry_t *pte, npte;
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
+		printf("pmap_kenter_pa(%lx, %lx, %x)\n",
+		    va, pa, prot);
+
+	/*
+	 * All kernel level 2 and 3 page tables are
+	 * pre-allocated and mapped in.  Therefore, the
+	 * level 1 and level 2 PTEs must already be valid.
+	 */
+	if (pmap_pte_v(pmap_l1pte(pmap_kernel(), va)) == 0)
+		panic("pmap_kenter_pa: kernel level 1 PTE not valid");
+	if (pmap_pte_v(pmap_l2pte(pmap_kernel(), va)) == 0)
+		panic("pmap_kenter_pa: kernel level 2 PTE not valid");
+
+	/*
+	 * Get the PTE that will map the page.
+	 */
+	pte = pmap_l3pte(pmap_kernel(), va);
+#else
+	/*
+	 * All kernel level 2 and 3 page tables are
+	 * pre-allocated and mapped in, so we can use
+	 * the Virtual Page Table to get the PTE for
+	 * kernel mappings.
+	 */
+	pte = &VPT[VPT_INDEX(va)];
+#endif
+
+	/*
+	 * Build the new PTE.
+	 */
+	npte = ((pa >> PGSHIFT) << PG_SHIFT) | pte_prot(pmap_kernel(), prot) |
+	    PG_V | PG_WIRED;
+
+	/*
+	 * Set the new PTE.
+	 */
+	*pte = npte;
+
+	/*
+	 * Invalidate the TLB entry for this VA and any appropriate
+	 * caches.
+	 */
+	ALPHA_TBIS(va);
+	if (prot & VM_PROT_EXECUTE)
+		alpha_pal_imb();
+}
+
+/*
+ * pmap_kenter_pgs:
+ *
+ *	Enter a va -> pa mapping for the array of vm_page's into the
+ *	kernel pmap without any physical->virtual tracking, starting
+ *	at address va, for npgs pages.
+ */
+void
+pmap_kenter_pgs(va, pgs, npgs)
+	vm_offset_t va;
+	vm_page_t *pgs;
+	int npgs;
+{
+	int i;
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
+		printf("pmap_kenter_pgs(%lx, %p, %d)\n",
+		    va, pgs, npgs);
+#endif
+
+	for (i = 0; i < npgs; i++)
+		pmap_kenter_pa(va + (PAGE_SIZE * i),
+		    VM_PAGE_TO_PHYS(pgs[i]),
+		    VM_PROT_READ|VM_PROT_WRITE);
+}
+
+/*
+ * pmap_kremove:
+ *
+ *	Remove a mapping entered with pmap_kenter_pa() or pmap_kenter_pgs()
+ *	starting at va, for size bytes (assumed to be page rounded).
+ */
+void
+pmap_kremove(va, size)
+	vm_offset_t va;
+	vm_size_t size;
+{
+	pt_entry_t *pte;
+
+#ifdef DEBUG
+	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
+		printf("pmap_kremove(%lx, %lx)\n",
+		    va, size);
+#endif
+
+	for (; size != 0; size -= PAGE_SIZE, va += PAGE_SIZE) {
+#ifdef DEBUG
+		/*
+		 * All kernel level 2 and 3 page tables are
+		 * pre-allocated and mapped in.  Therefore, the
+		 * level 1 and level 2 PTEs must already be valid.
+		 */
+		if (pmap_pte_v(pmap_l1pte(pmap_kernel(), va)) == 0)
+			panic("pmap_kremove: kernel level 1 PTE not valid");
+		if (pmap_pte_v(pmap_l2pte(pmap_kernel(), va)) == 0)
+			panic("pmap_kremove: kernel level 2 PTE not valid");
+
+		/*
+		 * Get the PTE that will map the page.
+		 */
+		pte = pmap_l3pte(pmap_kernel(), va);
+#else
+		/*
+		 * All kernel level 2 and 3 page tables are
+		 * pre-allocated and mapped in, so we can use
+		 * the Virtual Page Table to get the PTE for
+		 * kernel mappings.
+		 */
+		pte = &VPT[VPT_INDEX(va)];
+#endif
+		*pte = PG_NV;
+		ALPHA_TBIS(va);
+	}
+
+	/* Probably isn't needed, but what the hell... */
+	alpha_pal_imb();
+}
+#endif /* PMAP_NEW */
 
 /*
  * pmap_change_wiring:
@@ -1637,6 +1817,30 @@ pmap_pageable(pmap, sva, eva, pageable)
  *
  *	Clear the modify bits on the specified physical page.
  */
+#if defined(PMAP_NEW)
+boolean_t
+pmap_clear_modify(pg)
+	struct vm_page *pg;
+{
+	struct pv_head *pvh;
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv = FALSE;
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_clear_modify(%p)\n", pg);
+#endif
+
+	pvh = pa_to_pvh(pa);
+	if (pvh->pvh_attrs & PMAP_ATTR_MOD) {
+		rv = TRUE;
+		pmap_changebit(pa, PG_FOW, TRUE);
+		pvh->pvh_attrs &= ~PMAP_ATTR_MOD;
+	}
+
+	return (rv);
+}
+#else /* ! PMAP_NEW */
 void
 pmap_clear_modify(pa)
 	vm_offset_t	pa;
@@ -1655,12 +1859,37 @@ pmap_clear_modify(pa)
 		pvh->pvh_attrs &= ~PMAP_ATTR_MOD;
 	}
 }
+#endif /* PMAP_NEW */
 
 /*
  * pmap_clear_reference:
  *
  *	Clear the reference bit on the specified physical page.
  */
+#if defined(PMAP_NEW)
+boolean_t
+pmap_clear_reference(pg)
+	struct vm_page *pg;
+{
+	struct pv_head *pvh;
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv = FALSE;
+
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW)
+		printf("pmap_clear_reference(%p)\n", pg);
+#endif
+
+	pvh = pa_to_pvh(pa);
+	if (pvh->pvh_attrs & PMAP_ATTR_REF) {
+		rv = TRUE;
+		pmap_changebit(pa, PG_FOR | PG_FOW | PG_FOE, TRUE);
+		pvh->pvh_attrs &= ~PMAP_ATTR_REF;
+	}
+
+	return (rv);
+}
+#else /* ! PMAP_NEW */
 void
 pmap_clear_reference(pa)
 	vm_offset_t	pa;
@@ -1679,6 +1908,7 @@ pmap_clear_reference(pa)
 		pvh->pvh_attrs &= ~PMAP_ATTR_REF;
 	}
 }
+#endif /* PMAP_NEW */
 
 /*
  * pmap_is_referenced:
@@ -1686,6 +1916,25 @@ pmap_clear_reference(pa)
  *	Return whether or not the specified physical page is referenced
  *	by any physical maps.
  */
+#if defined(PMAP_NEW)
+boolean_t
+pmap_is_referenced(pg)
+	struct vm_page *pg;
+{
+	struct pv_head *pvh;
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv;
+
+	pvh = pa_to_pvh(pa);
+	rv = ((pvh->pvh_attrs & PMAP_ATTR_REF) != 0);
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW) {
+		printf("pmap_is_referenced(%p) -> %c\n", pg, "FT"[rv]);
+	}
+#endif
+	return (rv);
+}
+#else /* ! PMAP_NEW */
 boolean_t
 pmap_is_referenced(pa)
 	vm_offset_t	pa;
@@ -1705,6 +1954,7 @@ pmap_is_referenced(pa)
 #endif
 	return rv;
 }
+#endif /* PMAP_NEW */
 
 /*
  * pmap_is_modified:
@@ -1712,6 +1962,25 @@ pmap_is_referenced(pa)
  *	Return whether or not the specified physical page is modified
  *	by any physical maps.
  */
+#if defined(PMAP_NEW)
+boolean_t
+pmap_is_modified(pg)
+	struct vm_page *pg;
+{
+	struct pv_head *pvh;
+	vm_offset_t pa = VM_PAGE_TO_PHYS(pg);
+	boolean_t rv;
+
+	pvh = pa_to_pvh(pa);
+	rv = ((pvh->pvh_attrs & PMAP_ATTR_MOD) != 0);
+#ifdef DEBUG
+	if (pmapdebug & PDB_FOLLOW) {
+		printf("pmap_is_modified(%p) -> %c\n", pg, "FT"[rv]);
+	}
+#endif
+	return (rv);
+}
+#else /* ! PMAP_NEW */
 boolean_t
 pmap_is_modified(pa)
 	vm_offset_t	pa;
@@ -1721,6 +1990,7 @@ pmap_is_modified(pa)
 
 	if (!PAGE_IS_MANAGED(pa))		/* XXX why not panic? */
 		return 0;
+
 	pvh = pa_to_pvh(pa);
 	rv = ((pvh->pvh_attrs & PMAP_ATTR_MOD) != 0);
 #ifdef DEBUG
@@ -1730,6 +2000,7 @@ pmap_is_modified(pa)
 #endif
 	return rv;
 }
+#endif /* PMAP_NEW */
 
 /*
  * pmap_phys_address:
@@ -1805,12 +2076,11 @@ pmap_remove_mapping(pmap, va, pte, tflush)
 	register pt_entry_t *pte;
 	boolean_t tflush;
 {
-	struct pv_head *pvh;
 	vm_offset_t pa;
 	int s;
-#ifdef DEBUG
-	pt_entry_t opte;
+	boolean_t onpv;
 
+#ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT))
 		printf("pmap_remove_mapping(%p, %lx, %p, %d)\n",
 		       pmap, va, pte, tflush);
@@ -1821,15 +2091,13 @@ pmap_remove_mapping(pmap, va, pte, tflush)
 	 */
 	if (pte == PT_ENTRY_NULL) {
 		pte = pmap_l3pte(pmap, va);
-		if (*pte == PG_NV)
+		if (pmap_pte_v(pte) == 0)
 			return;
 	}
 
 	pa = pmap_pte_pa(pte);
+	onpv = (pmap_pte_pv(pte) != 0);
 
-#ifdef DEBUG
-	opte = *pte;
-#endif
 #ifdef PMAPSTATS
 	remove_stats.removes++;
 #endif
@@ -1923,16 +2191,15 @@ pmap_remove_mapping(pmap, va, pte, tflush)
 	}
 
 	/*
-	 * If this isn't a managed page, we are all done.
+	 * If the mapping wasn't enterd on the PV list, we're all done.
 	 */
-	if (!PAGE_IS_MANAGED(pa))
+	if (onpv == FALSE)
 		return;
 
 	/*
 	 * Otherwise remove it from the PV table
 	 * (raise IPL since we may be called at interrupt time).
 	 */
-	pvh = pa_to_pvh(pa);
 	s = splimp();
 	pmap_remove_pv(pmap, pa, va);
 	splx(s);
@@ -2502,6 +2769,12 @@ pmap_free_physpage(ptpage)
 }
 
 /******************** page table page management ********************/
+
+#if defined(PMAP_NEW)
+
+	/* Implement pmap_growkernel() */
+
+#endif /* PMAP_NEW */
 
 /*
  * pmap_create_lev1map:
