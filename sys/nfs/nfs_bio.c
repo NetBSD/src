@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.105.2.4 2004/09/21 13:38:35 skrll Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.105.2.5 2004/10/30 07:37:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.105.2.4 2004/09/21 13:38:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.105.2.5 2004/10/30 07:37:39 skrll Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -526,7 +526,7 @@ nfs_write(v)
 	if (uio->uio_rw != UIO_WRITE)
 		panic("nfs_write mode");
 	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_lwp != curlwp)
-		panic("nfs_write proc");
+		panic("nfs_write lwp");
 #endif
 	if (vp->v_type != VREG)
 		return (EIO);
