@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.18.2.1 1998/11/09 06:06:38 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.18.2.2 1999/02/25 04:13:04 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -791,7 +791,7 @@ uvm_km_free_wakeup(map, addr, size)
 	vm_map_lock(map);
 	(void)uvm_unmap_remove(map, trunc_page(addr), round_page(addr+size), 
 			 &dead_entries);
-	thread_wakeup(map);
+	wakeup(map);
 	vm_map_unlock(map);
 
 	if (dead_entries != NULL)
