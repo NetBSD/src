@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 1997/10/17 09:34:52 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 1997/10/18 19:48:02 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 1997/10/17 09:34:52 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 1997/10/18 19:48:02 mhitch Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -281,6 +281,9 @@ void	prom_halt __P((int, char *))   __attribute__((__noreturn__));
 extern void stacktrace __P((void)); /*XXX*/
 #endif
 
+extern caddr_t esym;
+void ddb_init(void);
+
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.  Used as an argument to splx().
@@ -315,8 +318,20 @@ mach_init(argc, argv, code, cv)
 	extern char edata[], end[];
 
 	/* clear the BSS segment */
-	v = (caddr_t)mips_round_page(end);
-	bzero(edata, v - edata);
+#ifdef DDB
+	if (((struct exec *)edata)->a_midmag == 0x07018b00 &&	/* exec hdr? */
+	    (i = ((struct exec *)edata)->a_syms) != 0) {	/* a_syms */
+		*(long *)end = i;
+		i += (*(long *)(end + i + 4) + 3) & ~3;		/* strings */
+		esym = end + i + 4;
+		v = (caddr_t)mips_round_page(esym);
+		bzero(edata, end - edata);
+	} else
+#endif
+	{
+		v = (caddr_t)mips_round_page(end);
+		bzero(edata, v - edata);
+	}
 
 	/* Initialize callv so we can do PROM output... */
 	if (code == DEC_PROM_MAGIC) {
@@ -346,6 +361,8 @@ mach_init(argc, argv, code, cv)
 	 * Initialize machine-dependent DDB commands, in case of early panic.
 	 */
 	db_machine_init();
+	if (esym)
+		ddb_init();		/* init symbols if present */
 #endif
 
 	/* look at argv[0] and compute bootdev */
