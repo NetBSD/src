@@ -1,4 +1,4 @@
-/*	$NetBSD: ypset.c,v 1.10 1996/06/18 20:32:25 christos Exp $	*/
+/*	$NetBSD: ypset.c,v 1.11 1997/07/18 08:16:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,8 +32,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: ypset.c,v 1.10 1996/06/18 20:32:25 christos Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ypset.c,v 1.11 1997/07/18 08:16:58 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -45,6 +46,7 @@ static char rcsid[] = "$NetBSD: ypset.c,v 1.10 1996/06/18 20:32:25 christos Exp 
 #include <unistd.h>
 #include <err.h>
 #include <netdb.h>
+
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
@@ -53,16 +55,53 @@ static char rcsid[] = "$NetBSD: ypset.c,v 1.10 1996/06/18 20:32:25 christos Exp 
 
 extern char *__progname;
 
+int	main __P((int, char *[]));
 static void usage __P((void));
 static void gethostaddr __P((const char *, struct in_addr *));
 static int bind_tohost __P((struct sockaddr_in *, char *, char *));
 
-static void
-usage()
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	(void) fprintf(stderr, "Usage: %s [-h host ] [-d domain] server\n",
-	    __progname);
-	exit(1);
+	struct sockaddr_in sin;
+	extern char *optarg;
+	extern int optind;
+	char *domainname;
+	int c;
+
+	yp_get_default_domain(&domainname);
+
+	(void) memset(&sin, 0, sizeof sin);
+	sin.sin_family = AF_INET;
+	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+
+	while ((c = getopt(argc, argv, "h:d:")) != -1) {
+		switch(c) {
+		case 'd':
+			domainname = optarg;
+			break;
+
+		case 'h':
+			gethostaddr(optarg, &sin.sin_addr);
+			break;
+
+		default:
+			usage();
+		}
+	}
+
+	if (domainname == NULL)
+		errx(1, "YP domain name not set");
+
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
+
+	return bind_tohost(&sin, domainname, argv[0]) != 0;
 }
 
 static void
@@ -81,7 +120,6 @@ gethostaddr(host, ia)
 		    hstrerror(h_errno));
 	(void) memcpy(ia, hp->h_addr, sizeof(*ia));
 }
-
 
 static int
 bind_tohost(sin, dom, server)
@@ -130,37 +168,10 @@ bind_tohost(sin, dom, server)
 	return 0;
 }
 
-int
-main(argc, argv)
-	int argc;
-	char *argv[];
+static void
+usage()
 {
-	struct sockaddr_in sin;
-	extern char *optarg;
-	extern int optind;
-	char *domainname;
-	int c;
-
-	yp_get_default_domain(&domainname);
-
-	(void) memset(&sin, 0, sizeof sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-
-	while((c = getopt(argc, argv, "h:d:")) != -1)
-		switch(c) {
-		case 'd':
-			domainname = optarg;
-			break;
-		case 'h':
-			gethostaddr(optarg, &sin.sin_addr);
-			break;
-		default:
-			usage();
-		}
-
-	if(optind + 1 != argc)
-		usage();
-
-	return bind_tohost(&sin, domainname, argv[optind]) != 0;
+	(void) fprintf(stderr, "usage: %s [-h host ] [-d domain] server\n",
+	    __progname);
+	exit(1);
 }
