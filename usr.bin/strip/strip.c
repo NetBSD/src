@@ -1,4 +1,4 @@
-/*	$NetBSD: strip.c,v 1.17 1997/10/18 15:05:05 mrg Exp $	*/
+/*	$NetBSD: strip.c,v 1.18 1997/10/19 23:30:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)strip.c	8.3 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$NetBSD: strip.c,v 1.17 1997/10/18 15:05:05 mrg Exp $";
+__RCSID("$NetBSD: strip.c,v 1.18 1997/10/19 23:30:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ typedef struct nlist NLIST;
 
 int main __P((int, char *[]));
 
+int	main __P((int, char **));
 static int s_stab __P((const char *, int, EXEC *, struct stat *));
 static int s_sym __P((const char *, int, EXEC *, struct stat *));
 static void usage __P((void));
@@ -88,7 +89,7 @@ main(argc, argv)
 	char *fn;
 
 	sfcn = s_sym;
-	while ((ch = getopt(argc, argv, "dxX")) != EOF)
+	while ((ch = getopt(argc, argv, "dxX")) != -1)
 		switch(ch) {
 		case 'x':
 			xflag = 1;
@@ -144,7 +145,7 @@ static int
 s_sym(fn, fd, ep, sp)
 	const char *fn;
 	int fd;
-	register EXEC *ep;
+	EXEC *ep;
 	struct stat *sp;
 {
 	char *neweof;
@@ -214,9 +215,9 @@ s_stab(fn, fd, ep, sp)
 	EXEC *ep;
 	struct stat *sp;
 {
-	register int cnt, len;
-	register char *nstr, *nstrbase, *p, *strbase;
-	register NLIST *sym, *nsym;
+	int cnt, len;
+	char *nstr, *nstrbase, *p, *strbase;
+	NLIST *sym, *nsym;
 	NLIST *symbase;
 
 	/* Quit if no symbols. */
@@ -284,7 +285,7 @@ s_stab(fn, fd, ep, sp)
 		*nsym = *sym;
 		nsym->strx = nstr - nstrbase;
 		len = strlen(p) + 1;
-		bcopy(p, nstr, len);
+		memmove(nstr, p, len);
 		nstr += len;
 		++nsym;
 	}
@@ -299,7 +300,7 @@ s_stab(fn, fd, ep, sp)
 	 * Copy the new string table into place.  Nsym should be pointing
 	 * at the address past the last symbol entry.
 	 */
-	bcopy(nstrbase, (void *)nsym, len);
+	memmove((void *)nsym, nstrbase, len);
 	free(nstrbase);
 
 	/* Truncate to the current length. */
