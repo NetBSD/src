@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.c,v 1.34.4.7 1997/02/18 15:24:20 is Exp $	*/
+/*	$NetBSD: if_ether.c,v 1.34.4.8 1997/02/18 19:26:00 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -727,7 +727,7 @@ in_revarpinput(m)
 		goto out;
 	if (myip_initialized)
 		goto wake;
-	if (bcmp(ar_tha(ah), LLADDR(ifp->if_sadl), ah->ar_hln))
+	if (bcmp(ar_tha(ah), LLADDR(ifp->if_sadl), ifp->if_sadl->sdl_alen))
 		goto out;
 	bcopy((caddr_t)ar_spa(ah), (caddr_t)&srv_ip, sizeof(srv_ip));
 	bcopy((caddr_t)ar_tpa(ah), (caddr_t)&myip, sizeof(myip));
