@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 1995/09/01 20:06:15 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 1995/09/11 21:58:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,7 @@
 #include <sys/msgbuf.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
+#include <sys/device.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
@@ -79,10 +80,10 @@
 
 #include <pmax/stand/dec_prom.h>
 
-#include <pmax/dev/device.h>
 #include <pmax/dev/sccreg.h>
 #include <pmax/dev/ascreg.h>
 
+#include <machine/autoconf.h>
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
@@ -115,7 +116,7 @@ extern int dtopKBDGetc();
 
 extern int KBDGetc();
 extern void fbPutc();
-extern struct consdev cn_tab;
+/*extern struct consdev cn_tab;*/
 
 /* Will scan from max to min, inclusive */
 static int tc_max_slot = KN02_TC_MAX;
@@ -158,13 +159,22 @@ u_long	asic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
 
 extern void	(*tc_enable_interrupt)  __P ((u_int slotno,
-					      void (*handler)(int unit),
-					      int unit, int onoff)); 
-void	(*tc_enable_interrupt) __P ((u_int slotno, void (*handler)(int unit),
-				     int unit, int onoff));
+					      int (*handler) __P((void *sc)),
+					      void *sc, int onoff)); 
+void	(*tc_enable_interrupt) __P ((u_int slotno,
+				     int (*handler) __P ((void *sc)),
+				     void *sc, int onoff));
 extern	int (*pmax_hardware_intr)();
 
-int	kn02_intr(), kmin_intr(), xine_intr(), pmax_intr();
+int	kn02_intr(), kmin_intr(), xine_intr();
+
+#ifdef DS3100
+extern int	kn01_intr();
+void	kn01_enable_intr  __P ((u_int slotno,
+				int (*handler) __P ((intr_arg_t sc)),
+				intr_arg_t sc, int onoff));
+#endif /* DS3100 */
+
 #ifdef DS5000_240
 int	kn03_intr();
 #endif
@@ -187,23 +197,24 @@ extern	void RemconsInit();
 #ifdef DS5000
 
 #if 1 /*def DS5000_200*/
-void	kn02_enable_intr  __P ((u_int slotno, void (*handler)(),
-				int unit, int onoff));
+void	kn02_enable_intr __P ((u_int slotno,
+			       int (*handler) __P((intr_arg_t sc)),
+			       intr_arg_t sc, int onoff));
 #endif /*def DS5000_200*/
 
 #ifdef DS5000_100
-void kmin_enable_intr  __P ((u_int slotno, void (*handler)(),
-			     int unit, int onoff));
+void	kmin_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
+			     intr_arg_t sc, int onoff));
 #endif /*DS5000_100*/
 
 #ifdef DS5000_25
-void xine_enable_intr __P ((u_int slotno, void (*handler)(),
-			    int unit, int onoff));
+void	xine_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
+			    intr_arg_t sc, int onoff));
 #endif /*DS5000_25*/
 
 #ifdef DS5000_240
-void	kn03_enable_intr __P ((u_int slotno, void (*handler)(),
-			       int unit, int onoff));
+void	kn03_enable_intr __P ((u_int slotno, int (*handler) (intr_arg_t sc),
+			       intr_arg_t sc, int onoff));
 #endif /*DS5000_240*/
 
 volatile u_int *Mach_reset_addr;
@@ -385,7 +396,8 @@ mach_init(argc, argv, code, cv)
 		/*
 		 * Set up interrupt handling and I/O addresses.
 		 */
-		pmax_hardware_intr = pmax_intr;
+		pmax_hardware_intr = kn01_intr;
+		tc_enable_interrupt = kn01_enable_intr; /*XXX*/
 		Mach_splbio = Mach_spl0;
 		Mach_splnet = Mach_spl1;
 		Mach_spltty = Mach_spl2;
@@ -670,199 +682,7 @@ mach_init(argc, argv, code, cv)
 
 }
 
-/*
- * Gross hack for identifying slots with potential
- * console devices.
- */
 
-int framebuffer_in[15];
-
-void
-framebuffer_in_slot(slot)
-	int slot;
-{
-	if (slot > 15) 
-	    panic("Framebuffer in slot %d: impossible\n", slot);
-	framebuffer_in[slot] = 1;
-}
-
-int kbd, crt;
-char *oscon;
-
-/*
- * Console initialization: called early on from main,
- * before vm init or startup.  Do enough configuration
- * to choose and initialize a console.
- */
-consinit()
-{
-	/*
-	 * First get the "osconsole" environment variable.
-	 */
-	oscon = (*callv->_getenv)("osconsole");
-	crt = kbd = -1;
-	if (oscon && *oscon >= '0' && *oscon <= '9') {
-		kbd = *oscon - '0';
-		cn_tab.cn_screen = 0;
-		while (*++oscon) {
-			if (*oscon == ',')
-				cn_tab.cn_screen = 1;
-			else if (cn_tab.cn_screen &&
-			    *oscon >= '0' && *oscon <= '9') {
-				crt = kbd;
-				kbd = *oscon - '0';
-				break;
-			}
-		}
-	}
-	/* we can't do anything until auto-configuration
-	 * has run, and that requires kmalloc(), which
-	 * hasn't been initialized yet.  Just keep using
-	 * whatever the PROM vector gave us.
-	 */
-}
-
-/*
- * Do console initialization
- */
-xconsinit()
-{
-
-#ifdef DEBUG
-/*XXX*/			printf("xconsinit: Looking for console device\n");
-#endif
-
-	if (pmax_boardtype == DS_PMAX && kbd == 1)
-		cn_tab.cn_screen = 1;
-	/*
-	 * The boot program uses PMAX ROM entrypoints so the ROM sets
-	 * osconsole to '1' like the PMAX.
-	 */
-	if (pmax_boardtype == DS_3MAX && crt == -1 && kbd == 1) {
-		cn_tab.cn_screen = 1;
-		crt = 0;
-		kbd = 7;
-	}
-
-	/*
-	 * First try the keyboard/crt cases then fall through to the
-	 * remote serial lines.
-	 */
-	if (cn_tab.cn_screen) {
-	    switch (pmax_boardtype) {
-	    case DS_PMAX:
-#if NDC > 0 && NPM > 0
-		if (pminit()) {
-			cn_tab.cn_dev = makedev(DCDEV, DCKBD_PORT);
-			cn_tab.cn_getc = KBDGetc;
-			cn_tab.cn_kbdgetc = dcGetc;
-			cn_tab.cn_putc = fbPutc;
-			cn_tab.cn_disabled = 0;
-			return;
-		}
-#endif /* NDC and NPM */
-		goto remcons;
-
-	    case DS_MAXINE:
-#if NDTOP > 0
-		if (kbd == 3) {
-			cn_tab.cn_dev = makedev(DTOPDEV, 0);
-			cn_tab.cn_getc = dtopKBDGetc;
-			cn_tab.cn_putc = fbPutc;
-		} else
-#endif /* NDTOP */
-			goto remcons;
-#if NXCFB > 0
-		if (crt == 3 && xcfbinit()) {
-			cn_tab.cn_disabled = 0;
-			return;
-		}
-#endif /* XCFB */
-		break;
-
-	    case DS_3MAX:
-#if NDC > 0
-		if (kbd == 7) {
-			cn_tab.cn_dev = makedev(DCDEV, DCKBD_PORT);
-			cn_tab.cn_getc = KBDGetc;
-			cn_tab.cn_kbdgetc = dcGetc;
-			cn_tab.cn_putc = fbPutc;
-		} else
-#endif /* NDC */
-			goto remcons;
-		break;
-
-	    case DS_3MIN:
-	    case DS_3MAXPLUS:
-#if NSCC > 0
-		if (kbd == 3) {
-			cn_tab.cn_dev = makedev(SCCDEV, SCCKBD_PORT);
-			cn_tab.cn_getc = KBDGetc;
-			cn_tab.cn_kbdgetc = sccGetc;
-			cn_tab.cn_putc = fbPutc;
-		} else
-#endif /* NSCC */
-			goto remcons;
-		break;
-
-	    default:
-		goto remcons;
-	    };
-
-	    /*
-	     * Check for a suitable turbochannel frame buffer.
-	     */
-	if (framebuffer_in[crt]) {
-			cn_tab.cn_disabled = 0;
-			return;
-	    } else
-		printf("No crt console device in slot %d\n", crt);
-	}
-remcons:
-	/*
-	 * Configure a serial port as a remote console.
-	 */
-	cn_tab.cn_screen = 0;
-	switch (pmax_boardtype) {
-	case DS_PMAX:
-#if NDC > 0
-		if (kbd == 4)
-			cn_tab.cn_dev = makedev(DCDEV, DCCOMM_PORT);
-		else
-			cn_tab.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
-		cn_tab.cn_getc = dcGetc;
-		cn_tab.cn_putc = dcPutc;
-#endif /* NDC */
-		break;
-
-	case DS_3MAX:
-#if NDC > 0
-		cn_tab.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
-		cn_tab.cn_getc = dcGetc;
-		cn_tab.cn_putc = dcPutc;
-#endif /* NDC */
-		break;
-
-	case DS_3MIN:
-	case DS_3MAXPLUS:
-#if NSCC > 0
-		cn_tab.cn_dev = makedev(SCCDEV, SCCCOMM3_PORT);
-		cn_tab.cn_getc = sccGetc;
-		cn_tab.cn_putc = sccPutc;
-#endif /* NSCC */
-		break;
-
-	case DS_MAXINE:
-#if NSCC > 0
-		cn_tab.cn_dev = makedev(SCCDEV, SCCCOMM2_PORT);
-		cn_tab.cn_getc = sccGetc;
-		cn_tab.cn_putc = sccPutc;
-#endif /* NSCC */
-		break;
-	};
-	if (cn_tab.cn_dev == NODEV)
-		printf("Can't configure console!\n");
-}
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
@@ -989,8 +809,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab.cn_dev,
-		    sizeof cn_tab.cn_dev));
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
+		    sizeof cn_tab->cn_dev));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1467,197 +1287,42 @@ out:
 
 
 #ifdef DS5000
-/* 
- * Mach Operating System
- * Copyright (c) 1991,1990,1989 Carnegie Mellon University
- * All Rights Reserved.
- * 
- * Permission to use, copy, modify and distribute this software and its
- * documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
- * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
- * 
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
- */
-
 
 /*
- * Driver map: associates a device driver to an option type.
- * Drivers name are (arbitrarily) defined in each driver and
- * used in the various config tables.
- */
-struct drivers_map {
-	char	module_name[TC_ROM_LLEN];	/* from ROM, literally! */
-	char	*driver_name;			/* in bus_??_init[] tables */
-} tc_drivers_map[] = {
-	{ "KN02    ",	"dc"},		/* (*) 3max system board (with DC) */
-	{ "PMAD-AA ",	"le"},		/* Ether */
-	{ "PMAZ-AA ",	"asc"},		/* SCSI */
-	{ "PMAG-AA ",	"mfb"},		/* Mono Frame Buffer */
-	{ "PMAG-BA ",	"cfb"},		/* Color Frame Buffer */
-	{ "PMAGB-BA",	"sfb"},		/* Smart Frame Buffer */
-	{ "PMAG-CA ",	"ga"},		/* 2D graphic board */
-	{ "PMAG-DA ",	"gq"},		/* 3D graphic board (LM) */
-	{ "PMAG-FA ",	"gq"},		/* 3D graphic board (HE) */
-	{ "PMAG-DV ",	"xcfb"},	/* (*) maxine Color Frame Buffer */
-	{ "Z8530   ",	"scc"},		/* (*) 3min/maxine serial lines */
-	{ "ASIC    ",	"asic"},	/* (*) 3min/maxine DMA controller */
-	{ "XINE-FDC",	"fdc"},		/* (*) maxine floppy controller */
-	{ "DTOP    ",	"dtop"},	/* (*) maxine desktop bus */
-	{ "AMD79c30",	"isdn"},	/* (*) maxine ISDN chip */
-	{ "XINE-FRC",	"frc"},		/* (*) maxine free-running counter */
-	{ "PMAF-AA ",   "fza"},		/* slow FDDI */
-	{ "T3PKT   ",   "tt"},		/* DECWRL turbochannel T3 */
-	{ "T1D4PKT ",   "ds"},		/* DECWRL turbochannel T1 */
-	{ "FORE_ATM",	"fa"},		/* Fore ATM */
-	{ "", 0}			/* list end */
-};
-
-/*
- * Identify an option on the TC.  Looks at the mandatory
- * info in the option's ROM and checks it.
- */
-#ifdef DEBUG
-int tc_verbose = 0;
-#endif
-
-static int
-tc_identify_option(addr, slot, complain)
-	tc_rommap_t	*addr;
-	tc_option_t	*slot;
-	int		complain;
-{
-	register int	i;
-	unsigned char   width;
-	char            firmwr[TC_ROM_LLEN+1], vendor[TC_ROM_LLEN+1],
-			module[TC_ROM_LLEN+1], host_type[TC_ROM_SLEN+1];
-
-	/*
-	 * We do not really use the 'width' info, but take advantage
-	 * of the restriction that the spec impose on the portion
-	 * of the ROM that maps between +0x3e0 and +0x470, which
-	 * is the only piece we need to look at.
-	 */
-	width = addr->rom_width.value;
-	switch (width) {
-	case 1:
-	case 2:
-	case 4:
-		break;
-
-	default:
-#ifdef DEBUG
-		if (tc_verbose && complain)
-			printf("%s (x%x) at x%x\n", "Invalid ROM width",
-			       width, addr);
-#endif
-		return (0);
-	}
-
-	if (addr->rom_stride.value != 4) {
-#ifdef DEBUG
-		if (tc_verbose && complain)
-			printf("%s (x%x) at x%x\n", "Invalid ROM stride",
-			       addr->rom_stride.value, addr);
-#endif
-		return (0);
-	}
-
-	if ((addr->test_data[0] != 0x55) ||
-	    (addr->test_data[4] != 0x00) ||
-	    (addr->test_data[8] != 0xaa) ||
-	    (addr->test_data[12] != 0xff)) {
-#ifdef DEBUG
-		if (tc_verbose && complain)
-			printf("%s x%x\n", "Test pattern failed, option at",
-			       addr);
-#endif
-		return (0);
-	}
-
-	for (i = 0; i < TC_ROM_LLEN; i++) {
-		firmwr[i] = addr->firmware_rev[i].value;
-		vendor[i] = addr->vendor_name[i].value;
-		module[i] = addr->module_name[i].value;
-		if (i >= TC_ROM_SLEN)
-			continue;
-		host_type[i] = addr->host_firmware_type[i].value;
-	}
-	firmwr[TC_ROM_LLEN] = vendor[TC_ROM_LLEN] =
-	module[TC_ROM_LLEN] = host_type[TC_ROM_SLEN] = '\0';
-
-#ifdef DEBUG
-	if (tc_verbose)
-		printf("%s %s '%s' at 0x%x\n %s %s %s '%s'\n %s %d %s %d %s\n",
-		"Found a", vendor, module, addr,
-		"Firmware rev.", firmwr,
-		"diagnostics for a", host_type,
-		"ROM size is", addr->rom_size.value << 3,
-		"Kbytes, uses", addr->slot_size.value, "TC slot(s)");
-#endif
-
-	bcopy(module, slot->module_name, TC_ROM_LLEN);
-	bcopy(vendor, slot->module_id, TC_ROM_LLEN);
-	bcopy(firmwr, &slot->module_id[TC_ROM_LLEN], TC_ROM_LLEN);
-	slot->slot_size = addr->slot_size.value;
-	slot->rom_width = width;
-
-	return (1);
-}
-
-
-/*
- * Probe a slot in the TURBOchannel. Return TRUE if a valid option
- * is present, FALSE otherwise. A side-effect is to fill the slot
- * descriptor with the size of the option, whether it is
- * recognized or not.
- */
-int
-tc_probe_slot(addr, slot)
-	caddr_t addr;
-	tc_option_t *slot;
-{
-	int i;
-	static unsigned tc_offset_rom[] = {
-		TC_OFF_PROTO_ROM, TC_OFF_ROM
-	};
-#define TC_N_OFFSETS	sizeof(tc_offset_rom)/sizeof(unsigned)
-
-	slot->slot_size = 1;
-
-	for (i = 0; i < TC_N_OFFSETS; i++) {
-		if (badaddr(addr + tc_offset_rom[i], 4))
-			continue;
-		/* complain only on last chance */
-		if (tc_identify_option((tc_rommap_t *)(addr + tc_offset_rom[i]),
-		    slot, i == (TC_N_OFFSETS-1)))
-			return (1);
-	}
-	return (0);
-#undef TC_N_OFFSETS
-}
-
-/*
- * Enable/Disable interrupts for a TURBOchannel slot.
+ * Enable an interrupt from a slot on the KN01 internal bus.
+ *
+ * The 4.4bsd kn01 interrupt handler hard-codes r3000 CAUSE register
+ * bits to particular device interrupt handlers.  We may choose to store
+ * function and softc pointers at some future point.
  */
 void
-kn02_enable_intr(slotno, handler, unit, on)
+kn01_enable_intr(slotno, handler, sc, on)
+	register unsigned int slotno;
+	int (*handler) __P((void* softc));
+	void *sc;
+	int on;
+{
+	/*
+	 */
+	if (on)  {
+		tc_slot_info[slotno].intr = handler;
+		tc_slot_info[slotno].sc = sc;
+	} else {
+		tc_slot_info[slotno].intr = 0;
+		tc_slot_info[slotno].sc = 0;
+	}
+}
+
+
+/*
+ * Enable/Disable interrupts for a TURBOchannel slot on the 3MAX.
+ */
+void
+kn02_enable_intr(slotno, handler, sc, on)
 	register u_int slotno;
-	void (*handler)();
-	int unit, on;
+	int (*handler) __P((void* softc));
+	void *sc;
+	int on;
 {
 	register volatile int *p_csr =
 		(volatile int *)MACH_PHYS_TO_UNCACHED(KN02_SYS_CSR);
@@ -1675,10 +1340,10 @@ kn02_enable_intr(slotno, handler, unit, on)
 	if (on)  {
 		/*printf("kn02: slot %d handler 0x%x\n", slotno, handler);*/
 		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].unit = unit;
+		tc_slot_info[slotno].sc = sc;
 	} else {
 		tc_slot_info[slotno].intr = 0;
-		tc_slot_info[slotno].unit = 0;
+		tc_slot_info[slotno].sc = 0;
 	}
 
 	slotno = 1 << (slotno + KN02_CSR_IOINTEN_SHIFT);
@@ -1700,20 +1365,31 @@ kn02_enable_intr(slotno, handler, unit, on)
  *	We pretend we actually have 8 slots even if we really have
  *	only 4: TCslots 0-2 maps to slots 0-2, TCslot3 maps to
  *	slots 3-7 (see pmax/tc/ds-asic-conf.c).
+ *
+ *	3MIN TURBOchannel interrupts are unlike other decstations,
+ *	in that interrupt requests from the option slots (0-2) map
+ *	directly to R3000 interrupt lines, not to IOASIC interrupt
+ *	bits.  If it weren't for that, the 3MIN and 3MAXPLUS could
+ *	share   interrupt handlers and interrupt-enable code
  */
 void
-kmin_enable_intr(slotno, handler, unit, on)
+kmin_enable_intr(slotno, handler, sc, on)
 	register unsigned int slotno;
-	void (*handler)();
-	int unit, on;
+	int (*handler) __P((void* softc));
+	void *sc;
+	int on;
 {
 	register unsigned mask;
 
 	switch (slotno) {
+		/* slots 0-2 don't interrupt through the IOASIC. */
 	case 0:
+		mask = MACH_INT_MASK_0;	break;
 	case 1:
+		mask = MACH_INT_MASK_1; break;
 	case 2:
-		return;
+		mask = MACH_INT_MASK_2; break;
+
 	case KMIN_SCSI_SLOT:
 		mask = (KMIN_INTR_SCSI | KMIN_INTR_SCSI_PTR_LOAD |
 			KMIN_INTR_SCSI_OVRUN | KMIN_INTR_SCSI_READ_E);
@@ -1733,10 +1409,54 @@ kmin_enable_intr(slotno, handler, unit, on)
 	default:
 		return;
 	}
-	if (on)
-		kmin_tc3_imask |= mask;
-	else
-		kmin_tc3_imask &= ~mask;
+
+#if defined(DEBUG) || defined(DIAGNOSTIC)
+	printf("3MIN: imask %x, %sabling slot %d, sc %x addr 0x%x\n",
+	       kn03_tc3_imask, (on? "en" : "dis"), slotno, sc, handler);
+#endif
+
+	/*
+	 * Enable the interrupt  handler, and if it's an IOASIC
+	 * slot, set the IOASIC interrupt mask.
+	 * Otherwise, set the appropriate spl level in the R3000
+	 * register.
+	 * Be careful to set handlers  before enabling, and disable
+	 * interrupts before clearing handlers.
+	 */
+
+	if (on) {
+		/* Set the interrupt handler and argument ... */
+		tc_slot_info[slotno].intr = handler;
+		tc_slot_info[slotno].sc = sc;
+
+		/* ... and set the relevant mask */
+		if (slotno <= 2) {
+			/* it's an option slot */
+			int s = splhigh();
+			printf("Enabling 3MIN tcslot %d (UNTESTED)\n", slotno);
+			s  |= mask;
+			splx(s);
+		} else {
+			/* it's a baseboard device going via the ASIC */
+			kmin_tc3_imask |= mask;
+		}
+	} else {
+		/* Clear the relevant mask... */
+		if (slotno <= 2) {	
+			/* it's an option slot */
+			int s = splhigh();
+			printf("kmin_intr: cannot disable option slot %d\n",
+				slotno);
+			s &= ~mask;
+			splx(s);
+		} else {
+			/* it's a baseboard device going via the ASIC */
+			kmin_tc3_imask &= ~mask;
+		}
+		/* ... and clear the handler */
+		tc_slot_info[slotno].intr = 0;
+		tc_slot_info[slotno].sc = 0;
+	}
 }
 
 /*
@@ -1752,10 +1472,11 @@ kmin_enable_intr(slotno, handler, unit, on)
  *	Note that all these interrupts come in via the IMR.
  */
 void
-xine_enable_intr(slotno, handler, unit, on)
+xine_enable_intr(slotno, handler, sc, on)
 	register unsigned int slotno;
-	void (*handler)();
-	int unit, on;
+	int (*handler) __P((void* softc));
+	void *sc;
+	int on;
 {
 	register unsigned mask;
 
@@ -1791,10 +1512,16 @@ xine_enable_intr(slotno, handler, unit, on)
 	default:
 		return;/* ignore */
 	}
-	if (on)
+
+	if (on) {
 		xine_tc3_imask |= mask;
-	else
+		tc_slot_info[slotno].intr = handler;
+		tc_slot_info[slotno].sc = sc;
+	} else {
 		xine_tc3_imask &= ~mask;
+		tc_slot_info[slotno].intr = 0;
+		tc_slot_info[slotno].sc = 0;
+	}
 	*(u_int *)ASIC_REG_IMSK(asic_base) = xine_tc3_imask;
 }
 
@@ -1821,10 +1548,11 @@ kn03_tc_reset()
  *	slots 3-7 (see pmax/tc/ds-asic-conf.c).
  */
 void
-kn03_enable_intr(slotno, handler, unit, on)
+kn03_enable_intr(slotno, handler, sc, on)
 	register unsigned int slotno;
-	void (*handler)();
-	int unit, on;
+	int (*handler) __P((void* softc));
+	void *sc;
+	int on;
 {
 	register unsigned mask;
 
@@ -1868,11 +1596,12 @@ kn03_enable_intr(slotno, handler, unit, on)
 	if (on) {
 		kn03_tc3_imask |= mask;
 		tc_slot_info[slotno].intr = handler;
-		tc_slot_info[slotno].unit = unit;
+		tc_slot_info[slotno].sc = sc;
 
 	} else {
 		kn03_tc3_imask &= ~mask;
 		tc_slot_info[slotno].intr = 0;
+		tc_slot_info[slotno].sc = 0;
 	}
 done:
 	*(u_int *)ASIC_REG_IMSK(asic_base) = kn03_tc3_imask;
