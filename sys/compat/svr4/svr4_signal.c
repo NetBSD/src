@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.6 1995/01/08 21:31:37 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.7 1995/01/09 01:04:21 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.2 1994/11/18 02:54:24 christos Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.3 1995/01/09 01:04:22 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -165,15 +165,7 @@ svr4_ttoldioctl(fp, cmd, data, p, retval)
 			       sizeof(p->p_pgrp->pg_id));
 
 	case SVR4_TIOCSPGRP:
-		{
-			struct setpgid_args sa;
-
-			SCARG(&sa, pid) = 0;
-			SCARG(&sa, pgid) = (int) data;
-			if ((error = setpgid(p, &sa, retval)) != 0)
-				return error;
-			return 0;
-		}
+		return (*ctl)(fp, TIOCSPGRP, data, p);
 
 	case SVR4_TIOCGETP:
 		{
