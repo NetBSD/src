@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2000/05/23 23:34:20 matt Exp $ */
+/*	$NetBSD: boot.c,v 1.8 2000/05/25 19:36:20 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -62,7 +62,7 @@ int	setjmp(int *);
 int	testkey(void);
 void	loadpcs(void);
 
-struct vals {
+const struct vals {
 	char	*namn;
 	void	(*func)(char *);
 	char	*info;
@@ -74,13 +74,16 @@ struct vals {
 	{0, 0},
 };
 
-char *filer[] = {
-	"netbsd.vax",
-	"netbsd",
-	"netbsd.gz",
-	"netbsd.old",
-	"gennetbsd",
-	0,
+static struct {
+	char name[12];
+	int quiet;
+} filelist[] = {
+	{ "netbsd.vax", 1 },
+	{ "netbsd", 0 },
+	{ "netbsd.gz", 0 },
+	{ "netbsd.old", 0 },
+	{ "gennetbsd", 0 },
+	{ "", 0 },
 };
 
 int jbuf[10];
@@ -90,7 +93,7 @@ struct rpb bootrpb;
 void
 Xmain(struct rpb *prpb)
 {
-	int io, filindex = 0;
+	int io;
 	int j, nu;
 
 	/* First copy rpb/bqo to its new location */
@@ -132,11 +135,15 @@ Xmain(struct rpb *prpb)
 
 	/* First try to autoboot */
 	if (askname == 0) {
-		while (filer[filindex]) {
+		int fileindex;
+		for (fileindex = 0; filelist[fileindex].name[0] != '\0'; fileindex++) {
 			errno = 0;
-			printf("> boot %s\n", filer[filindex]);
-			exec(filer[filindex++], 0, 0);
-			printf("boot failed: %s\n", strerror(errno));
+			if (!filelist[fileindex].quiet)
+				printf("> boot %s\n", filelist[fileindex].name);
+			exec(filelist[fileindex].name, 0, 0);
+			if (!filelist[fileindex].quiet)
+				printf("%s: boot failed: %s\n", 
+				    filelist[fileindex].name, strerror(errno));
 			if (testkey())
 				break;
 		}
@@ -144,7 +151,7 @@ Xmain(struct rpb *prpb)
 
 	/* If any key pressed, go to conversational boot */
 	for (;;) {
-		struct vals *v = &val[0];
+		const struct vals *v = &val[0];
 		char *c, *d;
 
 		printf("> ");
@@ -312,7 +319,7 @@ loadpcs()
 void
 usage(char *hej)
 {
-	struct vals *v = &val[0];
+	const struct vals *v = &val[0];
 
 	printf("Commands:\n");
 	while (v->namn) {
