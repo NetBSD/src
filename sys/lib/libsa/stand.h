@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.27 1999/02/11 09:10:45 pk Exp $	*/
+/*	$NetBSD: stand.h,v 1.28 1999/02/11 14:32:00 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -118,8 +118,11 @@ char	*getdisklabel __P((const char *, struct disklabel *));
 int	dkcksum __P((struct disklabel *));
 
 void	printf __P((const char *, ...));
-void	sprintf __P((char *, const char *, ...));
+int	sprintf __P((char *, const char *, ...));
+int	snprintf __P((char *, size_t, const char *, ...));
 void	vprintf __P((const char *, _BSD_VA_LIST_));
+int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
+int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
 void	twiddle __P((void));
 void	gets __P((char *));
 int	getfile __P((char *prompt, int mode));
