@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.48.2.2 1999/05/16 22:38:12 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.48.2.3 1999/05/23 23:24:41 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -185,10 +185,18 @@ pmap_bootstrap(nextpa, firstpa)
 	p0upa = nextpa;
 	nextpa += USPACE;
 
-	if (nextpa > high[0]) {
+	
+	for (i = 0; i < numranges; i++)
+		if (low[i] <= firstpa && firstpa < high[i])
+			break;
+	if (i >= numranges || nextpa > high[i]) {
 		if (mac68k_machine.do_graybars) {
-			printf("Failure in NetBSD boot; "
-			    "nextpa=0x%lx, high[0]=0x%lx.\n", nextpa, high[0]);
+			printf("Failure in NetBSD boot; ");
+			if (i < numranges)
+				printf("nextpa=0x%lx, high[%d]=0x%lx.\n",
+				    nextpa, i, high[i]);
+			else
+				printf("can't find kernel RAM segment.\n");
 			printf("You're hosed!  Try booting with 32-bit ");
 			printf("addressing enabled in the memory control ");
 			printf("panel.\n");
