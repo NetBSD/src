@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.13 2001/05/15 15:11:02 bouyer Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.14 2001/07/18 20:36:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,10 +91,12 @@ struct command device_commands[] = {
 
 void	bus_reset __P((int, char *[]));
 void	bus_scan __P((int, char *[]));
+void	bus_detach __P((int, char *[]));
 
 struct command bus_commands[] = {
 	{ "reset",	"",			bus_reset },
 	{ "scan",	"target lun",		bus_scan },
+	{ "detach",	"target lun",		bus_detach },
 	{ NULL,		NULL,				NULL },
 };
 
@@ -409,6 +411,45 @@ bus_scan(argc, argv)
 
 	if (ioctl(fd, SCBUSIOSCAN, &args) != 0)
 		err(1, "SCBUSIOSCAN");
+
+	return;
+}
+
+/*
+ * bus_detach:
+ *
+ *	detach SCSI devices from a bus.
+ */
+void
+bus_detach(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct scbusiodetach_args args;
+	char *cp;
+
+	/* Must have two args: target lun */
+	if (argc != 2)
+		usage();
+
+	if (strcmp(argv[0], "any") == 0 || strcmp(argv[0], "all") == 0)
+		args.sa_target = -1;
+	else {
+		args.sa_target = strtol(argv[0], &cp, 10);
+		if (*cp != '\0' || args.sa_target < 0)
+			errx(1, "invalid target: %s\n", argv[0]);
+	}
+
+	if (strcmp(argv[1], "any") == 0 || strcmp(argv[1], "all") == 0)
+		args.sa_lun = -1;
+	else {
+		args.sa_lun = strtol(argv[1], &cp, 10);
+		if (*cp != '\0' || args.sa_lun < 0)
+			errx(1, "invalid lun: %s\n", argv[1]);
+	}
+
+	if (ioctl(fd, SCBUSIODETACH, &args) != 0)
+		err(1, "SCBUSIODETACH");
 
 	return;
 }
