@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.527 2003/04/22 20:53:11 fvdl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.528 2003/04/24 23:37:00 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.527 2003/04/22 20:52:06 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.528 2003/04/24 23:36:09 nathanw Exp 
  */
 
 /*
@@ -904,6 +904,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AC9100 Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_HT,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD64 HyperTransport configuration",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_ADDR,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD64 Address Map configuration",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_DRAM,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD64 DRAM configuration",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_MISC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD64 Miscellaneous configuration",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
 	    0,
 	    "Advanced Micro Devices",
@@ -1064,6 +1088,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "IO Apic",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 I/O Hub",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_LPC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 LPC Controller",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_IDE,
