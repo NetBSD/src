@@ -1,30 +1,41 @@
-/*	$NetBSD: tx39io.c,v 1.5 2000/01/16 21:47:00 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.6 2000/10/04 13:53:56 uch Exp $ */
 
-/*
- * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "opt_tx39_debug.h"
 #include "opt_tx39iodebug.h"
 
@@ -41,13 +52,14 @@
 
 #include <hpcmips/tx/txiomanvar.h>
 
+#undef TX39IODEBUG
 #define TX39IO_ATTACH_DUMMYHANDLER 0
 #undef TX39IO_MFIOOUTPORT_ON
 #undef TX39IO_MFIOOUTPORT_OFF
 
-int	tx39io_match	__P((struct device*, struct cfdata*, void*));
-void	tx39io_attach	__P((struct device*, struct device*, void*));
-int	tx39io_print	__P((void*, const char*));
+int	tx39io_match(struct device *, struct cfdata *, void *);
+void	tx39io_attach(struct device *, struct device *, void *);
+int	tx39io_print(void *, const char *);
 
 struct tx39io_softc {
 	struct	device sc_dev;
@@ -59,14 +71,13 @@ struct cfattach tx39io_ca = {
 };
 
 #ifdef TX39IODEBUG
-int	tx39io_intr __P((void*));
-int	tx39mfio_intr __P((void*));
-void	tx39io_dump __P((struct tx39io_softc*));
-void	tx39io_dump_and_attach_handler __P((struct tx39io_softc*, int));
-void	__dump_and_attach_handler __P((tx_chipset_tag_t, u_int32_t, 
-				       u_int32_t, u_int32_t, u_int32_t, 
-				       int, int, int (*) __P((void*)), 
-				       void*, int));
+int	tx39io_intr(void *);
+int	tx39mfio_intr(void *);
+void	tx39io_dump(struct tx39io_softc *);
+void	tx39io_dump_and_attach_handler(struct tx39io_softc *, int);
+void	__dump_and_attach_handler(tx_chipset_tag_t, u_int32_t, 
+				  u_int32_t, u_int32_t, u_int32_t, 
+				  int, int, int (*)(void *), void *, int); 
 #endif /* TX39IODEBUG */
 
 #define ISSET(x, s)	((x) & (1 << (s)))
@@ -125,19 +136,13 @@ const struct {
 };
 
 int
-tx39io_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tx39io_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return 2; /* 1st attach group of txsim */
 }
 
 void
-tx39io_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tx39io_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
 	struct tx39io_softc *sc = (void*)self;
@@ -158,17 +163,13 @@ tx39io_attach(parent, self, aux)
 }
 
 int
-tx39io_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+tx39io_print(void *aux, const char *pnp)
 {
 	return pnp ? QUIET : UNCONF;
 }
 
 void
-tx39io_portout(tc, port, onoff)
-	tx_chipset_tag_t tc;
-	int port, onoff;
+tx39io_portout(tx_chipset_tag_t tc, int port, int onoff)
 {
 	txreg_t reg;
 	
@@ -203,8 +204,7 @@ tx39io_portout(tc, port, onoff)
 
 #ifdef TX39IODEBUG
 int
-tx39io_intr(arg)
-	void *arg;
+tx39io_intr(void *arg)
 {
 	printf("io (%d:%d)\n", (tx39intrvec >> 16) & 0xffff, 
 	       tx39intrvec & 0xfff);
@@ -213,8 +213,7 @@ tx39io_intr(arg)
 }
 
 int
-tx39mfio_intr(arg)
-	void *arg;
+tx39mfio_intr(void *arg)
 {
 	printf("mfio (%d:%d)\n", (tx39intrvec >> 16) & 0xffff, 
 	       tx39intrvec & 0xfff);
@@ -223,8 +222,7 @@ tx39mfio_intr(arg)
 }
 
 void
-tx39io_dump(sc)
-	struct tx39io_softc *sc;
+tx39io_dump(struct tx39io_softc *sc)
 {
 #ifdef COMPAQ_LOCAL_INTR /* for debug */
 	/* 2010c Rec button */
@@ -279,15 +277,13 @@ tx39io_dump(sc)
 }
 
 void
-tx39io_dump_and_attach_handler(sc, dummy)
-	struct tx39io_softc *sc;
-	int dummy;
+tx39io_dump_and_attach_handler(struct tx39io_softc *sc, int dummy)
 {
 	tx_chipset_tag_t tc;
 	u_int32_t reg, reg_out, reg_dir, reg_in, reg_sel, reg_pwr, reg_deb;
 	int i;
-	int (*iointr) __P((void*));
-	int (*mfiointr) __P((void*));
+	int (*iointr)(void*);
+	int (*mfiointr)(void*);
 	
 	tc = sc->sc_tc;
 	if (dummy) {
@@ -346,14 +342,10 @@ tx39io_dump_and_attach_handler(sc, dummy)
 }
 
 void	
-__dump_and_attach_handler(tc, reg_dir, reg_out, reg_in, reg_pwr, 
-			  i, io, func, arg, mf)
-	tx_chipset_tag_t tc;
-	u_int32_t reg_dir, reg_out, reg_in, reg_pwr;
-	int i, io;
-	int (*func) __P((void*));
-	void *arg;
-	int mf;
+__dump_and_attach_handler(tx_chipset_tag_t tc, u_int32_t reg_dir,
+			  u_int32_t reg_out, u_int32_t reg_in,
+			  u_int32_t reg_pwr, int i, int io,
+			  int (*func)(void*), void *arg, int mf)
 {
 	int pset, nset, pofs, nofs;
 
@@ -373,7 +365,7 @@ __dump_and_attach_handler(tc, reg_dir, reg_out, reg_in, reg_pwr,
 		nset = 4;
 		pofs = nofs = i;
 	}
-	
+
 	if (ISSET(reg_dir, i)) {
 #if defined TX39IO_MFIOOUTPORT_ON || defined TX39IO_MFIOOUTPORT_OFF
 		txreg_t reg;

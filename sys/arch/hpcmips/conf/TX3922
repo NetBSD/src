@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.26 2000/09/27 10:22:23 shin Exp $
+#	$NetBSD: TX3922,v 1.27 2000/10/04 13:53:54 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -89,6 +89,10 @@ options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
 options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
+# temporally power management
+hpcapm0	at mainbus0			# power management
+apmdev0	at hpcapm0			# APM
+
 txsim*	at mainbus0
 #
 # TX39 System Internal Modules
@@ -113,14 +117,14 @@ options USE_POLL	# m38813,tc5165 requires this
 
 # PHILIPS UCB1200 / TOSHIBA TC35413F modem/audio analog front-end
 ucb*		at tx39sib? slot 0
-ucbtp*		at ucb?
+#ucbtp*		at ucb?
 ucbsnd*		at ucb?
 
 # PHILIPS 74ALVC*1624? / TOSHIBA TC5165BFTS buffer chip (keyboard)
 # chip select: CS1, IRQ: 3:12/4:12
 tc5165buf*	at txcsbus1 iocs 1 iocsbase 0 iocssize 0x100 iocswidth 16
 hpckbd*		at tc5165buf?
-wsmouse*	at ucbtp? mux 0
+#wsmouse*	at ucbtp? mux 0
 
 # VICTOR InterLink keyboard driver
 # chip select: CARD1 IRQ ???
@@ -138,7 +142,6 @@ plumvideo*	at plum?
 plumpcmcia*	at plum?
 #plumiobus*	at plum?
 #plumisab0	at plumiobus? platform ? slot 0
-options 	PLUM_BIG_OHCI_BUFFER	# reserve V-RAM area for OHCI module
 ohci*	at plum?
 
 # USB bus support
