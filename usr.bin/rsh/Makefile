@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.15 2002/09/19 11:31:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2004/11/12 05:51:54 jmc Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
 
-PROG=	rsh
 WARNS=	2
+PROG=	rsh
+SRCS=	rsh.c getport.c
 #CPPFLAGS+=-DKERBEROS -DCRYPT
 #SRCS=	rsh.c krcmd.c kcmd.c des_rw.c
 #DPADD=	${LIBKRB} ${LIBDES}
