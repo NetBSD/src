@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 1998/08/21 16:13:28 tsubai Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 1998/10/03 21:24:00 thorpej Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -863,6 +863,7 @@ struct macppc_bus_dmamap {
 	int		_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
+	bus_addr_t	_dm_bounce_thresh; /* bounce threshold; see tag */
 	int		_dm_flags;	/* misc. flags */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
