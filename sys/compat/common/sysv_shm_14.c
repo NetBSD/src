@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.2 2000/06/02 15:53:04 simonb Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.3 2000/12/17 15:55:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
 #include <sys/mount.h>
 #include <sys/shm.h>  
 
+#ifndef SYSVSHM
 #define	SYSVSHM
+#endif
 
 #include <sys/syscallargs.h>
 
