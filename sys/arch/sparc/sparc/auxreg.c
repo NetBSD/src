@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.6 1994/11/23 07:02:38 deraadt Exp $ */
+/*	$NetBSD: auxreg.c,v 1.7 1995/02/18 09:33:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -112,3 +112,15 @@ auxregattach(parent, self, aux)
 	blink((caddr_t)0);
 #endif
 }
+
+unsigned int
+auxregbisc(bis, bic)
+{
+	register int v, s = splhigh();
+
+	v = *AUXIO_REG;
+	*AUXIO_REG = ((v | bis) & ~bic) | AUXIO_MB1;
+	splx(s);
+	return v;
+}
+
