@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.16 1999/01/16 07:52:22 lukem Exp $	*/
+/*	$NetBSD: resolv.h,v 1.17 1999/01/17 05:08:10 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1987, 1989, 1993
@@ -115,6 +115,7 @@ struct __res_state {
 		struct in_addr	addr;
 		u_int32_t	mask;
 	} sort_list[MAXRESOLVSORT];
+	char	lookups[4];
 };
 
 /*
