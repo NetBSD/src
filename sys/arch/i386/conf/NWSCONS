@@ -1,4 +1,4 @@
-#	$NetBSD: NWSCONS,v 1.19 1999/01/06 12:17:49 drochner Exp $
+#	$NetBSD: NWSCONS,v 1.20 1999/01/06 23:30:53 thorpej Exp $
 #
 #	like GENERIC, with new console drivers
 #
@@ -295,6 +295,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 
 # EISA SCSI controllers
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
@@ -335,6 +336,7 @@ scsibus* at bha?
 scsibus* at isp?
 scsibus* at nca?
 scsibus* at ncr?
+scsibus* at pcscp?
 scsibus* at sea?
 scsibus* at uha?
 scsibus* at wds?
