@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.2 2003/10/15 23:23:39 itojun Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.3 2003/12/16 06:48:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/ath/if_athioctl.h,v 1.3 2003/09/05 22:22:49 sam Exp $
+ * $FreeBSD: src/sys/dev/ath/if_athioctl.h,v 1.4 2003/11/29 01:23:59 sam Exp $
  */
 
 /*
@@ -92,6 +92,15 @@ struct ath_stats {
 };
 
 #define	SIOCGATHSTATS	_IOWR('i', 137, struct ifreq)
+
+struct ath_diag {
+	char	ad_name[IFNAMSIZ];		/* if name, e.g. "ath0" */
+	u_int	ad_id;
+	caddr_t	ad_data;
+	u_int	ad_size;
+
+};
+#define	SIOCGATHDIAG	_IOWR('i', 138, struct ath_diag)
 
 /*
  * Radio capture format.

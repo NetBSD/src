@@ -28,6 +28,8 @@
 #define _ATH_COMPAT_H
 
 #ifdef __FreeBSD__
+#define ATH_TICKS() (ticks)
+
 typedef struct task ath_task_t;
 
 #define ATH_CALLOUT_INIT(chp) callout_init((chp), CALLOUT_MPSAFE)
@@ -61,6 +63,7 @@ ath_buf_dmamap_load_mbuf(bus_dma_tag_t tag, struct ath_buf *bf,
 	bus_dmamap_sync((tag), (bf)->bf_dmamap, (ops))
 
 #else
+#define ATH_TICKS() (hardclock_ticks)
 
 #define BPF_MTAP(ifp, m)	bpf_mtap((ifp)->if_bpf, (m))
 #undef KASSERT
