@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.10 2003/07/14 14:26:31 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.11 2003/07/14 22:11:01 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -123,7 +123,7 @@ while [ $# -gt 0 ]; do
 			echo "Package $1 already exists in $viewstr."
 		else
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
-			env PLIST_IGNORE_FILES="${PLIST_IGNORE_FILES} $dbs" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+			env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 			$mkdirprog -p ${depot_pkg_dbdir}/$1
 			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
 			$touchprog ${depot_pkg_dbdir}/$1/+VIEWS
@@ -144,7 +144,7 @@ while [ $# -gt 0 ]; do
 			echo "Package $1 does not exist in $viewstr."
 		else
 			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
-			env PLIST_IGNORE_FILES="${PLIST_IGNORE_FILES} $dbs" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+			env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
 			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
 			$cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
 			($grepprog -v '^'${pkg_dbdir}'$' ${temp} || true) > ${depot_pkg_dbdir}/$1/+VIEWS
