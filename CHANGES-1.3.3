@@ -777,3 +777,59 @@ sys/dev/ic/dp8390.c				1.14
 
   Fixes a bug that causes the driver to corrupt its internal state and
   experience random lossage (sometimes observed as NFS wedging).  (mycroft)
+
+sbin/fdisk/fdisk.c				1.25
+
+  This updates the list of partition names to include (amongst others)
+  NetBSD's 169 partition identifier.  (jonathan)
+
+distrib/utils/sysinst/arch/i386/menus.md.eng	1.14
+distrib/utils/sysinst/arch/i386/menus.md.fr	1.7
+distrib/utils/sysinst/arch/i386/msg.md.eng	1.6
+
+  Clarify BIOS geometry menus.  (jonathan)
+
+distrib/utils/sysinst/arch/i386/menus.md.eng	1.15
+distrib/utils/sysinst/arch/i386/msg.md.eng	1.7
+
+  Change the `whole disk' vs `normal' (`part of disk') menu to
+  explain more clearly what it's asking about.  (jonathan)
+
+distrib/utils/sysinst/msg.mi.eng		1.31
+
+  Explain that this menu lets the user choose partition-size units
+  for either BSD disklabel partitions, or (on some ports) for MBR
+  slices, too.  (jonathan)
+
+distrib/utils/sysinst/msg.mi.eng		1.32
+
+  Change `layout' message to explicitly say that here, partitions are
+  being defined in the BSD disklabel (not the MBR).  (jonathan)
+
+distrib/utils/sysinst/menus.mi.eng		1.21
+distrib/utils/sysinst/menus.mi.fr		1.7
+
+  UI safety: change order of menu entries in BSD disklabel-editing
+  menu, so that the default option is to change a partition entry,
+  rather than proceed.  (The change-parittion menu has an option
+  to quit.)  (jonathan)
+
+distrib/utils/sysinst/msg.mi.eng		1.30
+distrib/utils/sysinst/msg.mi.fr			1.7
+distrib/utils/sysinst/arch/arm32/menus.md.eng	1.3
+distrib/utils/sysinst/arch/arm32/menus.md.fr	1.2
+distrib/utils/sysinst/arch/i386/menus.md.eng	1.13
+distrib/utils/sysinst/arch/i386/menus.md.fr	1.6
+distrib/utils/sysinst/arch/pc532/menus.md.eng	1.7
+distrib/utils/sysinst/arch/pc532/menus.md.fr	1.2
+distrib/utils/sysinst/arch/pmax/menus.md.eng	1.7
+distrib/utils/sysinst/arch/pmax/menus.md.fr	1.2
+
+  Move all partitioning menus up by one, and add an entry (two for
+  the i386) so that the partition menu items match the selector
+  letters).  (simonb)
+
+distrib/utils/sysinst/arch/i386/fdisk.c		patch
+
+  When editing BIOS geometry, prompt user with current idea of BIOS
+  geometry.  (jonathan)
