@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.31 1994/03/10 21:52:07 mycroft Exp $
+ *	$Id: fd.c,v 1.32 1994/03/10 22:30:06 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -239,6 +239,16 @@ struct isa_device *dev;
 fdcattach(dev)
 struct isa_device *dev;
 {
+
+	/* XXXX */
+	if (dev->id_iobase == 0) {
+		static int warned;
+		if (!warned) {
+			warned = 1;
+			printf("PLEASE UPDATE YOUR COPY OF CONFIG(8)!\n");
+		}
+		return fdattach(dev);
+	}
 }
 
 fdprobe(dev)
