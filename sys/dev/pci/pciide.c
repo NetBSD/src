@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.120 2001/06/13 09:55:25 scw Exp $	*/
+/*	$NetBSD: pciide.c,v 1.121 2001/07/04 16:26:17 bouyer Exp $	*/
 
 
 /*
@@ -2749,6 +2749,8 @@ sis_chip_map(sc, pa)
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
 	pcireg_t rev = PCI_REVISION(pa->pa_class);
 	bus_size_t cmdsize, ctlsize;
+	pcitag_t pchb_tag;
+	pcireg_t pchb_id, pchb_class;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
@@ -2756,12 +2758,25 @@ sis_chip_map(sc, pa)
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
 	printf("\n");
+
+	/* get a PCI tag for the host bridge (function 0 of the same device) */
+	pchb_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
+	/* and read ID and rev of the ISA bridge */
+	pchb_id = pci_conf_read(sc->sc_pc, pchb_tag, PCI_ID_REG);
+	pchb_class = pci_conf_read(sc->sc_pc, pchb_tag, PCI_CLASS_REG);
+
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (rev > 0xd0)
+		/*
+		 * controllers associated to a rev 0x2 530 Host to PCI Bridge
+		 * have problems with UDMA (info provided by Christos)
+		 */
+		if (rev >= 0xd0 &&
+		    (PCI_PRODUCT(pchb_id) != PCI_PRODUCT_SIS_530HB ||
+		    PCI_REVISION(pchb_class) >= 0x03))
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 
