@@ -186,13 +186,14 @@ where X is the disk unit you booted from, and Y is either a or b,
 and rz2b for diskimage in swap.)
 
 
-CD-ROM NOTE:  If you are installing from a CD-ROM, sysinst may have
-problems mounting the CD-ROM.  NetBSD/pmax uses the same devices for
-CD-ROMs as it does hard disks, so you need to specifiy "rzX" (where
-X is the SCSI id of the CD-ROM) as the device, not "cdX" as in other
-NetBSD ports.  Also note that sysinst doesn't expect a partition - just
-the base device.  If you still have problems, you can try issuing the
-following command before starting sysinst
+CD-ROM INSTALLATION NOTE:  If you are installing from a CD-ROM, sysinst
+will offer you a default choice of "cd0" for the CD-ROM device.  Unlike
+other NetBSD ports, NetBSD/pmax currently uses the same device driver
+for both hard disks and CD-ROMs.  You will need to specify "rzX" (where
+X is the SCSI id of the CD-ROM) as the CD-ROM device.  Also note that
+sysinst doesn't expect a partition - just the base device.  If you still
+have problems, you can try issuing the following command before starting
+sysinst
 
 	mount -r -t cd9660 /dev/rzXc /mnt2
 
