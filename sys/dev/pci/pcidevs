@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.111 1999/03/17 19:20:51 thorpej Exp $
+$NetBSD: pcidevs,v 1.112 1999/03/19 06:39:32 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -781,6 +781,7 @@ product EMULEX LPPFC	0x10df	\"Light Pulse\" FibreChannel adapter
 
 /* Ensoniq products */
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
+product ENSONIQ AUDIOPCI97	0x1371	AudioPCI 97
 
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
