@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.8 2003/06/28 00:59:09 uwe Exp $	*/
+/*	$NetBSD: srt0.S,v 1.9 2004/03/23 15:36:08 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -199,6 +199,14 @@ ENTRY(sparc_noop)
 	retl
 	 nop
 
+/*
+ * Openfirmware entry point: openfirmware(void *args)
+ */
+ENTRY(openfirmware)
+	sethi	%hi(_C_LABEL(romp)), %o1
+	ld	[%o1 + %lo(_C_LABEL(romp))], %o2
+	jmp	%o2
+	 nop
 
 #ifdef TIGHT
 
