@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_net.c,v 1.7 2003/06/29 13:35:43 martin Exp $	 */
+/*	$NetBSD: svr4_32_net.c,v 1.8 2003/06/29 22:29:51 fvdl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.7 2003/06/29 13:35:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.8 2003/06/29 22:29:51 fvdl Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -103,8 +103,8 @@ int svr4_32_netattach __P((int));
 static int svr4_32_soo_close __P((struct file *, struct proc *));
 static int svr4_32_ptm_alloc __P((struct proc *));
 #else
-int svr4_soo_close __P((struct file *, struct lwp *));
-int svr4_ptm_alloc __P((struct lwp *));
+int svr4_soo_close __P((struct file *, struct proc *));
+int svr4_ptm_alloc __P((struct proc *));
 #endif
 
 static struct fileops svr4_32_netops = {
@@ -228,15 +228,15 @@ svr4_32_netopen(dev, flag, mode, p)
 
 #if 0
 static int
-svr4_32_soo_close(fp, l)
+svr4_32_soo_close(fp, p)
 	struct file *fp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct socket *so = (struct socket *) fp->f_data;
 
-	svr4_32_delete_socket(l, fp);
+	svr4_32_delete_socket(p, fp);
 	free(so->so_internal, M_NETADDR);
-	return soo_close(fp, l);
+	return soo_close(fp, p);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.91 2003/06/28 14:22:08 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.92 2003/06/29 22:31:55 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -124,7 +124,7 @@ extern	int	ip_optcopy __P((struct ip *, struct ip *));
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.91 2003/06/28 14:22:08 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.92 2003/06/29 22:31:55 fvdl Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.60 2002/08/28 12:40:39 darrenr Exp";
@@ -634,8 +634,8 @@ int IPL_EXTERN(ioctl)(dev, cmd, data, mode
 # if (defined(_KERNEL) && ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || \
        (NetBSD >= 199511) || (__FreeBSD_version >= 220000) || \
        defined(__OpenBSD__)))
-, l)
-struct lwp *l;
+, p)
+struct proc *p;
 # else
 )
 # endif
@@ -1096,9 +1096,9 @@ int IPL_EXTERN(open)(dev_t dev, int flags)
 int IPL_EXTERN(open)(dev, flags
 #  if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
      (__FreeBSD_version >= 220000) || defined(__OpenBSD__)) && defined(_KERNEL)
-, devtype, l)
+, devtype, p)
 int devtype;
-struct lwp *l;
+struct proc *p;
 #  else
 )
 #  endif
@@ -1126,9 +1126,9 @@ int IPL_EXTERN(close)(dev_t dev, int flags, int devtype, cred_t *cp)
 int IPL_EXTERN(close)(dev, flags
 #  if ((_BSDI_VERSION >= 199510) || (BSD >= 199506) || (NetBSD >= 199511) || \
      (__FreeBSD_version >= 220000) || defined(__OpenBSD__)) && defined(_KERNEL)
-, devtype, l)
+, devtype, p)
 int devtype;
-struct lwp *l;
+struct proc *p;
 #  else
 )
 #  endif

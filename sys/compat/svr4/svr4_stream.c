@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.51 2003/06/28 14:21:27 darrenr Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.52 2003/06/29 22:29:48 fvdl Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.51 2003/06/28 14:21:27 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_stream.c,v 1.52 2003/06/29 22:29:48 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1060,7 +1060,7 @@ i_nread(fp, l, retval, fd, cmd, dat)
 	 * message waiting for us.
 	 */
 	if ((error = (*fp->f_ops->fo_ioctl)(fp, FIONREAD,
-	    (caddr_t) &nread, l)) != 0)
+	    (caddr_t) &nread, l->l_proc)) != 0)
 		return error;
 
 	if (nread != 0)
@@ -1648,7 +1648,7 @@ svr4_sys_putmsg(l, v, retval)
 			msg.msg_flags = 0;
 			aiov.iov_base = dat.buf;
 			aiov.iov_len = dat.len;
-			error = sendit(l, SCARG(uap, fd), &msg,
+			error = sendit(p, SCARG(uap, fd), &msg,
 				       SCARG(uap, flags), retval);
 
 			*retval = 0;
@@ -1915,7 +1915,7 @@ svr4_sys_getmsg(l, v, retval)
 		aiov.iov_len = dat.maxlen;
 		msg.msg_flags = 0;
 
-		error = recvit(l, SCARG(uap, fd), &msg, (caddr_t) flen,
+		error = recvit(p, SCARG(uap, fd), &msg, (caddr_t) flen,
 		    retval);
 
 		if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.11 2003/06/29 09:56:30 darrenr Exp $ */
+/*	$NetBSD: fb.c,v 1.12 2003/06/29 22:30:48 fvdl Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.11 2003/06/29 09:56:30 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.12 2003/06/29 22:30:48 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,47 +210,47 @@ fb_attach(fb, isconsole)
 }
 
 int
-fbopen(dev, flags, mode, l)
+fbopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	if (devfb == NULL)
 		return (ENXIO);
-	return (devfb->fb_driver->fbd_open)(dev, flags, mode, l);
+	return (devfb->fb_driver->fbd_open)(dev, flags, mode, p);
 }
 
 int
-fbclose(dev, flags, mode, l)
+fbclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 
-	return (devfb->fb_driver->fbd_close)(dev, flags, mode, l);
+	return (devfb->fb_driver->fbd_close)(dev, flags, mode, p);
 }
 
 int
-fbioctl(dev, cmd, data, flags, l)
+fbioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 
-	return (devfb->fb_driver->fbd_ioctl)(dev, cmd, data, flags, l);
+	return (devfb->fb_driver->fbd_ioctl)(dev, cmd, data, flags, p);
 }
 
 int
-fbpoll(dev, events, l)
+fbpoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 
-	return (devfb->fb_driver->fbd_poll)(dev, events, l);
+	return (devfb->fb_driver->fbd_poll)(dev, events, p);
 }
 
 int

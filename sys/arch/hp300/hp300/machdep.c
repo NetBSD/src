@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171 2003/06/29 15:58:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.172 2003/06/29 22:28:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2003/06/29 15:58:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2003/06/29 22:28:20 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -668,14 +668,14 @@ identifycpu()
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	dev_t consdev;
 
@@ -1327,8 +1327,8 @@ done:
  *	done on little-endian machines...  -- cgd
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 #if defined(COMPAT_NOMID) || defined(COMPAT_44)
@@ -1346,12 +1346,12 @@ cpu_exec_aout_makecmds(l, epp)
 	switch (midmag) {
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
+		error = exec_aout_prep_oldzmagic(p, epp);
 		return(error);
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
+		error = exec_aout_prep_oldzmagic(p, epp);
 		return(error);
 #endif
 	}

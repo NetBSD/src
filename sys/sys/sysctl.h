@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.94 2003/06/28 14:22:22 darrenr Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.95 2003/06/29 22:32:28 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -749,7 +749,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
  * the name.
  */
 typedef int (sysctlfn)
-    (int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
+    (int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 int sysctl_int(void *, size_t *, void *, size_t, int *);
 int sysctl_rdint(void *, size_t *, void *, int);
@@ -772,15 +772,15 @@ int sysctl_dombuf(int *, u_int, void *, size_t *, void *, size_t);
 
 void fill_eproc(struct proc *, struct eproc *);
 
-int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int hw_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int proc_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
+int kern_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int hw_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int proc_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 #ifdef DEBUG
-int debug_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
+int debug_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 #endif
-int net_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int emul_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
+int net_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int cpu_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int emul_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 /* ddb_sysctl() declared in ddb_var.h */
 

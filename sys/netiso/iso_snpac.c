@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.27 2003/06/28 14:22:14 darrenr Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.28 2003/06/29 22:32:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,7 +63,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.27 2003/06/28 14:22:14 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.28 2003/06/29 22:32:06 fvdl Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -516,17 +516,15 @@ snpac_fixdstandmask(nsellength)
  * NOTES:
  */
 int
-snpac_ioctl(so, cmd, data, l)
+snpac_ioctl(so, cmd, data, p)
 	struct socket  *so;
 	u_long cmd;	/* ioctl to process */
 	caddr_t data;	/* data for the cmd */
-	struct lwp *l;
+	struct proc *p;
 {
 	struct systype_req *rq = (struct systype_req *) data;
-	struct proc *p;
 	int error;
 
-	p = l ? l->l_proc : NULL;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_IOCTL]) {
 		if (cmd == SIOCSSTYPE)

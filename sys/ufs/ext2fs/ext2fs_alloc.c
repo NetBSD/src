@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.18 2003/06/29 18:43:39 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.19 2003/06/29 22:32:31 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.18 2003/06/29 18:43:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.19 2003/06/29 22:32:31 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.13 2003/06/29 18:43:30 thorpej Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.14 2003/06/29 22:31:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

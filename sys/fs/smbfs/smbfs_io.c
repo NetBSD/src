@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.14 2003/06/28 14:21:51 darrenr Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.15 2003/06/29 22:31:12 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.14 2003/06/28 14:21:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.15 2003/06/29 22:31:12 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ smbfs_readvdir(struct vnode *vp, struct uio *uio, struct ucred *cred)
 		return EINVAL;
 
 	SMBVDEBUG("dirname='%.*s'\n", (int) np->n_nmlen, np->n_name);
-	smb_makescred(&scred, uio->uio_lwp, cred);
+	smb_makescred(&scred, uio->uio_procp, cred);
 	offset = uio->uio_offset / DE_SIZE; 	/* offset in the directory */
 	limit = uio->uio_resid / DE_SIZE;
 
@@ -191,7 +191,7 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 {
 	struct smbmount *smp = VFSTOSMBFS(vp->v_mount);
 	struct smbnode *np = VTOSMB(vp);
-	struct lwp *l;
+	struct proc *p;
 	struct vattr vattr;
 	struct smb_cred scred;
 	int error;
@@ -209,25 +209,25 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred)
 		return error;
 	}
 
-	l = uiop->uio_lwp;
+	p = uiop->uio_procp;
 	if (np->n_flag & NMODIFIED) {
 		smbfs_attr_cacheremove(vp);
-		error = VOP_GETATTR(vp, &vattr, cred, l);
+		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
 			return error;
 		np->n_mtime.tv_sec = vattr.va_mtime.tv_sec;
 	} else {
-		error = VOP_GETATTR(vp, &vattr, cred, l);
+		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
 			return error;
 		if (np->n_mtime.tv_sec != vattr.va_mtime.tv_sec) {
-			error = smbfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
+			error = smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
 				return error;
 			np->n_mtime.tv_sec = vattr.va_mtime.tv_sec;
 		}
 	}
-	smb_makescred(&scred, l, cred);
+	smb_makescred(&scred, p, cred);
 	return smb_read(smp->sm_share, np->n_fid, uiop, &scred);
 }
 
@@ -239,7 +239,6 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 	struct smbnode *np = VTOSMB(vp);
 	struct smb_cred scred;
 	struct proc *p;
-	struct lwp *l;
 	int error = 0;
 	int extended = 0;
 	size_t resid = uiop->uio_resid;
@@ -254,12 +253,11 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 		return EINVAL;
 /*	if (uiop->uio_offset + uiop->uio_resid > smp->nm_maxfilesize)
 		return (EFBIG);*/
-	l = uiop->uio_lwp;
-	p = l ? l->l_proc : NULL;
+	p = uiop->uio_procp;
 	if (ioflag & (IO_APPEND | IO_SYNC)) {
 		if (np->n_flag & NMODIFIED) {
 			smbfs_attr_cacheremove(vp);
-			error = smbfs_vinvalbuf(vp, V_SAVE, cred, l, 1);
+			error = smbfs_vinvalbuf(vp, V_SAVE, cred, p, 1);
 			if (error)
 				return error;
 		}
@@ -282,7 +280,7 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
 		psignal(p, SIGXFSZ);
 		return EFBIG;
 	}
-	smb_makescred(&scred, l, cred);
+	smb_makescred(&scred, p, cred);
 	error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);
 	SMBVDEBUG("after: ofs=%lld,resid=%d,err=%d\n",(long long int)uiop->uio_offset, uiop->uio_resid, error);
 	if (!error) {
@@ -302,7 +300,7 @@ smbfs_writevnode(struct vnode *vp, struct uio *uiop,
  * Do an I/O operation to/from a cache block.
  */
 int
-smbfs_doio(struct buf *bp, struct ucred *cr, struct lwp *l)
+smbfs_doio(struct buf *bp, struct ucred *cr, struct proc *p)
 {
 	struct vnode *vp = bp->b_vp;
 	struct smbmount *smp = VFSTOSMBFS(vp->v_mount);
@@ -315,9 +313,9 @@ smbfs_doio(struct buf *bp, struct ucred *cr, struct lwp *l)
 	uiop->uio_iov = &io;
 	uiop->uio_iovcnt = 1;
 	uiop->uio_segflg = UIO_SYSSPACE;
-	uiop->uio_lwp = l;
+	uiop->uio_procp = p;
 
-	smb_makescred(&scred, l, cr);
+	smb_makescred(&scred, p, cr);
 
 	if (bp->b_flags == B_READ) {
 	    io.iov_len = uiop->uio_resid = bp->b_bcount;
@@ -402,11 +400,11 @@ smbfs_doio(struct buf *bp, struct ucred *cr, struct lwp *l)
  * doing the flush, just wait for completion.
  */
 int
-smbfs_vinvalbuf(vp, flags, cred, l, intrflg)
+smbfs_vinvalbuf(vp, flags, cred, p, intrflg)
 	struct vnode *vp;
 	int flags;
 	struct ucred *cred;
-	struct lwp *l;
+	struct proc *p;
 	int intrflg;
 {
 	struct smbnode *np = VTOSMB(vp);
@@ -426,7 +424,7 @@ smbfs_vinvalbuf(vp, flags, cred, l, intrflg)
 	}
 	np->n_flag |= NFLUSHINPROG;
 	for(;;) {
-		if ((error = vinvalbuf(vp, flags, cred, l, slpflag, 0)) == 0)
+		if ((error = vinvalbuf(vp, flags, cred, p, slpflag, 0)) == 0)
 			break;
 
 		if (intrflg && (error == ERESTART || error == EINTR)) {

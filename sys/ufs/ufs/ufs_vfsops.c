@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.16 2003/06/29 18:43:48 thorpej Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.17 2003/06/29 22:32:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.16 2003/06/29 18:43:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.17 2003/06/29 22:32:48 fvdl Exp $");
 
 #include "opt_quota.h"
 
@@ -69,10 +69,10 @@ int ufs_initcount = 0;
  */
 /* ARGSUSED */
 int
-ufs_start(mp, flags, l)
+ufs_start(mp, flags, p)
 	struct mount *mp;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	return (0);
@@ -99,21 +99,19 @@ ufs_root(mp, vpp)
  * Do operations associated with quotas
  */
 int
-ufs_quotactl(mp, cmds, uid, arg, l)
+ufs_quotactl(mp, cmds, uid, arg, p)
 	struct mount *mp;
 	int cmds;
 	uid_t uid;
 	caddr_t arg;
-	struct lwp *l;
+	struct proc *p;
 {
 
 #ifndef QUOTA
 	return (EOPNOTSUPP);
 #else
 	int cmd, type, error;
-	struct proc *p;
 
-	p = l->l_proc;
 	if (uid == -1)
 		uid = p->p_cred->p_ruid;
 	cmd = cmds >> SUBCMDSHIFT;
@@ -139,11 +137,11 @@ ufs_quotactl(mp, cmds, uid, arg, l)
 	switch (cmd) {
 
 	case Q_QUOTAON:
-		error = quotaon(l, mp, type, arg);
+		error = quotaon(p, mp, type, arg);
 		break;
 
 	case Q_QUOTAOFF:
-		error = quotaoff(l, mp, type);
+		error = quotaoff(p, mp, type);
 		break;
 
 	case Q_SETQUOTA:
@@ -159,7 +157,7 @@ ufs_quotactl(mp, cmds, uid, arg, l)
 		break;
 
 	case Q_SYNC:
-		error = qsync(l, mp);
+		error = qsync(mp);
 		break;
 
 	default:

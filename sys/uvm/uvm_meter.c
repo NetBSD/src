@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.25 2003/06/28 14:22:30 darrenr Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.26 2003/06/29 22:32:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.25 2003/06/28 14:22:30 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.26 2003/06/29 22:32:50 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -123,14 +123,14 @@ uvm_loadav(avg)
  * uvm_sysctl: sysctl hook into UVM system.
  */
 int
-uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+uvm_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct vmtotal vmtotals;
 	int rv, t;

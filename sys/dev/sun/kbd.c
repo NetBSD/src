@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.36 2003/06/29 09:56:31 darrenr Exp $	*/
+/*	$NetBSD: kbd.c,v 1.37 2003/06/29 22:30:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.36 2003/06/29 09:56:31 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37 2003/06/29 22:30:48 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ const struct cdevsw kbd_cdevsw = {
 #if NWSKBD > 0
 int	wssunkbd_enable __P((void *, int));
 void	wssunkbd_set_leds __P((void *, int));
-int	wssunkbd_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
+int	wssunkbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
 void    sunkbd_wskbd_cngetc __P((void *, u_int *, int *));
 void    sunkbd_wskbd_cnpollc __P((void *, int));
@@ -170,10 +170,10 @@ static void	kbd_input_event(struct kbd_softc *, int);
  * setup event channel, clear ASCII repeat stuff.
  */
 int
-kbdopen(dev, flags, mode, l)
+kbdopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct kbd_softc *k;
 	int error, unit;
@@ -196,7 +196,7 @@ kbdopen(dev, flags, mode, l)
 	/* exclusive open required for /dev/kbd */
 	if (k->k_events.ev_io)
 		return (EBUSY);
-	k->k_events.ev_io = l->l_proc;
+	k->k_events.ev_io = p;
 
 	/* stop pending autorepeat of console input */
 	if (k->k_repeating) {
@@ -224,10 +224,10 @@ kbdopen(dev, flags, mode, l)
  * unless it is supplying console input.
  */
 int
-kbdclose(dev, flags, mode, l)
+kbdclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct kbd_softc *k;
 
@@ -259,15 +259,15 @@ kbdread(dev, uio, flags)
 
 
 int
-kbdpoll(dev, events, l)
+kbdpoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct kbd_softc *k;
 
 	k = kbd_cd.cd_devs[minor(dev)];
-	return (ev_poll(&k->k_events, events, l));
+	return (ev_poll(&k->k_events, events, p));
 }
 
 int
@@ -282,12 +282,12 @@ kbdkqfilter(dev, kn)
 }
 
 int
-kbdioctl(dev, cmd, data, flag, l)
+kbdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct kbd_softc *k;
 	struct kbd_state *ks;
@@ -995,12 +995,12 @@ wssunkbd_set_leds(v, leds)
 }
 
 int
-wssunkbd_ioctl(v, cmd, data, flag, l)
+wssunkbd_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	return EPASSTHROUGH;
 }

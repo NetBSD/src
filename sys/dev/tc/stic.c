@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.23 2003/06/29 15:07:10 simonb Exp $	*/
+/*	$NetBSD: stic.c,v 1.24 2003/06/29 22:30:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.23 2003/06/29 15:07:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.24 2003/06/29 22:30:54 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.23 2003/06/29 15:07:10 simonb Exp $");
 	tc_wmb();				\
    } while (0)
 
-int	sticioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	sticioctl(void *, u_long, caddr_t, int, struct proc *);
 int	stic_alloc_screen(void *, const struct wsscreen_descr *, void **,
 			  int *, int *, long *);
 void	stic_free_screen(void *, void *);
@@ -557,7 +557,7 @@ stic_clear_screen(struct stic_info *si)
 }
 
 int
-sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct stic_info *si;
 
@@ -620,7 +620,7 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	case WSDISPLAYIO_SMODE:
 		si->si_dispmode = *(int *)data;
 		if (si->si_dispmode == WSDISPLAYIO_MODE_EMUL) {
-			(*si->si_ioctl)(si, STICIO_STOPQ, NULL, flag, l);
+			(*si->si_ioctl)(si, STICIO_STOPQ, NULL, flag, p);
 			stic_setup_vdac(si);
 			stic_flush(si);
 			stic_clear_screen(si);
@@ -634,7 +634,7 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	}
 
 	if (si->si_ioctl != NULL)
-		return ((*si->si_ioctl)(si, cmd, data, flag, l));
+		return ((*si->si_ioctl)(si, cmd, data, flag, p));
 
 	return (EPASSTHROUGH);
 }
@@ -1448,7 +1448,7 @@ stic_set_hwcurpos(struct stic_info *si)
  * it.
  */
 int
-sticopen(dev_t dev, int flag, int mode, struct lwp *l)
+sticopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct stic_info *si;
 	int s;
@@ -1472,7 +1472,7 @@ sticopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-sticclose(dev_t dev, int flag, int mode, struct lwp *l)
+sticclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct stic_info *si;
 	int s;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.16 2003/06/28 14:21:20 darrenr Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.17 2003/06/29 22:29:26 fvdl Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.16 2003/06/28 14:21:20 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.17 2003/06/29 22:29:26 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,8 +91,8 @@ bsd_to_linux_msf_lba(unsigned address_format, union msf_lba *bml,
 }
 
 int
-linux_ioctl_cdrom(l, uap, retval)
-	struct lwp *l;
+linux_ioctl_cdrom(p, uap, retval)
+	struct proc *p;
 	struct linux_sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
@@ -105,7 +105,7 @@ linux_ioctl_cdrom(l, uap, retval)
 	caddr_t sg;
 	struct file *fp;
 	struct filedesc *fdp;
-	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
+	int (*ioctlf)(struct file *, u_long, void *, struct proc *);
 
 	struct linux_cdrom_blk l_blk;
 	struct linux_cdrom_msf l_msf;
@@ -125,7 +125,6 @@ linux_ioctl_cdrom(l, uap, retval)
 	struct cd_sub_channel_info *info, t_info;
 	struct ioc_read_subchannel t_subchannel;
 	struct ioc_vol t_vol;
-	struct proc *p = l->l_proc;
 
 	dvd_struct ds;
 	dvd_authinfo dai;
@@ -153,7 +152,7 @@ linux_ioctl_cdrom(l, uap, retval)
 		t_msf.end_s = l_msf.cdmsf_sec1;
 		t_msf.end_f = l_msf.cdmsf_frame1;
 
-		error = ioctlf(fp, CDIOCPLAYMSF, (caddr_t)&t_msf, l);
+		error = ioctlf(fp, CDIOCPLAYMSF, (caddr_t)&t_msf, p);
 		break;
 
 	case LINUX_CDROMPLAYTRKIND:
@@ -166,11 +165,11 @@ linux_ioctl_cdrom(l, uap, retval)
 		t_track.end_track = l_ti.cdti_trk1;
 		t_track.end_index = l_ti.cdti_ind1;
 
-		error = ioctlf(fp, CDIOCPLAYTRACKS, (caddr_t)&t_track, l);
+		error = ioctlf(fp, CDIOCPLAYTRACKS, (caddr_t)&t_track, p);
 		break;
 
 	case LINUX_CDROMREADTOCHDR:
-		error = ioctlf(fp, CDIOREADTOCHEADER, (caddr_t)&t_header, l);
+		error = ioctlf(fp, CDIOREADTOCHEADER, (caddr_t)&t_header, p);
 		if (error)
 			break;
 
@@ -194,7 +193,7 @@ linux_ioctl_cdrom(l, uap, retval)
 		t_toc_entry.data = entry;
 
 		error = ioctlf(fp, CDIOREADTOCENTRIES, (caddr_t)&t_toc_entry,
-			       l);
+			       p);
 		if (error)
 			break;
 
@@ -225,11 +224,11 @@ linux_ioctl_cdrom(l, uap, retval)
 		t_vol.vol[2] = l_volctrl.channel2;
 		t_vol.vol[3] = l_volctrl.channel3;
 
-		error = ioctlf(fp, CDIOCSETVOL, (caddr_t)&t_vol, l);
+		error = ioctlf(fp, CDIOCSETVOL, (caddr_t)&t_vol, p);
 		break;
 
 	case LINUX_CDROMVOLREAD:
-		error = ioctlf(fp, CDIOCGETVOL, (caddr_t)&t_vol, l);
+		error = ioctlf(fp, CDIOCGETVOL, (caddr_t)&t_vol, p);
 		if (error)
 			break;
 
@@ -257,7 +256,7 @@ linux_ioctl_cdrom(l, uap, retval)
 			 l_subchnl.cdsc_format, l_subchnl.cdsc_trk));
 
 		error = ioctlf(fp, CDIOCREADSUBCHANNEL, (caddr_t)&t_subchannel,
-			       l);
+			       p);
 		if (error)
 			break;
 
@@ -303,7 +302,7 @@ linux_ioctl_cdrom(l, uap, retval)
 		t_blocks.blk = l_blk.from;
 		t_blocks.len = l_blk.len;
 
-		error = ioctlf(fp, CDIOCPLAYBLOCKS, (caddr_t)&t_blocks, l);
+		error = ioctlf(fp, CDIOCPLAYBLOCKS, (caddr_t)&t_blocks, p);
 		break;
 
 	case LINUX_CDROMEJECT_SW:
@@ -315,31 +314,31 @@ linux_ioctl_cdrom(l, uap, retval)
 			ncom = CDIOCALLOW;
 		else
 			ncom = CDIOCPREVENT;
-		error = ioctlf(fp, ncom, NULL, l);
+		error = ioctlf(fp, ncom, NULL, p);
 		break;
 
 	case LINUX_CDROMPAUSE:
-		error = ioctlf(fp, CDIOCPAUSE, NULL, l);
+		error = ioctlf(fp, CDIOCPAUSE, NULL, p);
 		break;
 
 	case LINUX_CDROMRESUME:
-		error = ioctlf(fp, CDIOCRESUME, NULL, l);
+		error = ioctlf(fp, CDIOCRESUME, NULL, p);
 		break;
 
 	case LINUX_CDROMSTOP:
-		error = ioctlf(fp, CDIOCSTOP, NULL, l);
+		error = ioctlf(fp, CDIOCSTOP, NULL, p);
 		break;
 
 	case LINUX_CDROMSTART:
-		error = ioctlf(fp, CDIOCSTART, NULL, l);
+		error = ioctlf(fp, CDIOCSTART, NULL, p);
 		break;
 
 	case LINUX_CDROMEJECT:
-		error = ioctlf(fp, CDIOCEJECT, NULL, l);
+		error = ioctlf(fp, CDIOCEJECT, NULL, p);
 		break;
 
 	case LINUX_CDROMRESET:
-		error = ioctlf(fp, CDIOCRESET, NULL, l);
+		error = ioctlf(fp, CDIOCRESET, NULL, p);
 		break;
 
 	case LINUX_CDROMMULTISESSION:
@@ -347,7 +346,7 @@ linux_ioctl_cdrom(l, uap, retval)
 		if (error)
 			break;
 
-		error = ioctlf(fp, CDIOREADTOCHEADER, (caddr_t)&t_header, l);
+		error = ioctlf(fp, CDIOREADTOCHEADER, (caddr_t)&t_header, p);
 		if (error)
 			break;
 
@@ -359,7 +358,7 @@ linux_ioctl_cdrom(l, uap, retval)
 		t_toc_entry.data = entry;
 
 		error = ioctlf(fp, CDIOREADTOCENTRIES,
-		    (caddr_t)&t_toc_entry, l);
+		    (caddr_t)&t_toc_entry, p);
 		if (error)
 			break;
 
@@ -380,12 +379,12 @@ linux_ioctl_cdrom(l, uap, retval)
 		break;
 
 	case LINUX_CDROMCLOSETRAY:
-		error = ioctlf(fp, CDIOCCLOSE, NULL, l);
+		error = ioctlf(fp, CDIOCCLOSE, NULL, p);
 		break;
 
 	case LINUX_CDROM_LOCKDOOR:
 		ncom = SCARG(uap, data) != 0 ? CDIOCPREVENT : CDIOCALLOW;
-		error = ioctlf(fp, ncom, NULL, l);
+		error = ioctlf(fp, ncom, NULL, p);
 		break;
 
 	case LINUX_CDROM_SET_OPTIONS:
@@ -395,7 +394,7 @@ linux_ioctl_cdrom(l, uap, retval)
 
 	case LINUX_CDROM_DEBUG:
 		ncom = SCARG(uap, data) != 0 ? CDIOCSETDEBUG : CDIOCCLRDEBUG;
-		error = ioctlf(fp, ncom, NULL, l);
+		error = ioctlf(fp, ncom, NULL, p);
 		break;
 
 	case LINUX_CDROM_SELECT_SPEED:
@@ -412,7 +411,7 @@ linux_ioctl_cdrom(l, uap, retval)
 		error = copyin(SCARG(uap, data), &ds, sizeof ds);
 		if (error)
 			break;
-		error = ioctlf(fp, DVD_READ_STRUCT, (caddr_t)&ds, l);
+		error = ioctlf(fp, DVD_READ_STRUCT, (caddr_t)&ds, p);
 		if (error)
 			break;
 		error = copyout(&ds, SCARG(uap, data), sizeof ds);
@@ -422,7 +421,7 @@ linux_ioctl_cdrom(l, uap, retval)
 		error = copyin(SCARG(uap, data), &ds, sizeof ds);
 		if (error)
 			break;
-		error = ioctlf(fp, DVD_WRITE_STRUCT, (caddr_t)&ds, l);
+		error = ioctlf(fp, DVD_WRITE_STRUCT, (caddr_t)&ds, p);
 		if (error)
 			break;
 		error = copyout(&ds, SCARG(uap, data), sizeof ds);
@@ -432,7 +431,7 @@ linux_ioctl_cdrom(l, uap, retval)
 		error = copyin(SCARG(uap, data), &dai, sizeof dai);
 		if (error)
 			break;
-		error = ioctlf(fp, DVD_AUTH, (caddr_t)&dai, l);
+		error = ioctlf(fp, DVD_AUTH, (caddr_t)&dai, p);
 		if (error)
 			break;
 		error = copyout(&dai, SCARG(uap, data), sizeof dai);
@@ -444,6 +443,6 @@ linux_ioctl_cdrom(l, uap, retval)
 		error = EINVAL;
 	}
 
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return error;
 }

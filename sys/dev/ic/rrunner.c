@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.38 2003/06/28 14:21:35 darrenr Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.39 2003/06/29 22:30:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.38 2003/06/28 14:21:35 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.39 2003/06/29 22:30:13 fvdl Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -711,7 +711,11 @@ bad_init:
  */
 
 int 
-esh_fpopen(dev_t dev, int oflags, int devtype, struct lwp *l)
+esh_fpopen(dev, oflags, devtype, p)
+	dev_t dev;
+	int oflags;
+	int devtype;
+	struct proc *p;
 {
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
@@ -928,7 +932,11 @@ bad_fp_dmamem_alloc:
 
 
 int 
-esh_fpclose(dev_t dev, int fflag, int devtype, struct lwp *l)
+esh_fpclose(dev, fflag, devtype, p)
+	dev_t dev;
+	int fflag;
+	int devtype;
+	struct proc *p;
 {
 	struct esh_softc *sc;
 	struct rr_ring_ctl *ring_ctl;
@@ -2034,8 +2042,7 @@ eshstart(ifp)
 		 */
 
 		error = bus_dmamap_load(sc->sc_dmat, send->ec_dma,
-					bp->b_data, bp->b_bcount,
-					bp->b_proc,
+					bp->b_data, bp->b_bcount, bp->b_proc,
 					BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 
 		if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.9 2003/06/29 13:35:40 martin Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.10 2003/06/29 22:29:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.9 2003/06/29 13:35:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.10 2003/06/29 22:29:40 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -60,23 +60,23 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.9 2003/06/29 13:35:40 martin E
 #include <ddb/ddbvar.h>
 #endif
 
-int uvm_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int kern_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
-int hw_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
+int uvm_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int kern_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
+int hw_sysctl32(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 
 /*
  * uvm_sysctl32: sysctl hook into UVM system, handling special 32-bit
  * sensitive calls.
  */
 int
-uvm_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, l)
+uvm_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct netbsd32_loadavg av32;
 
@@ -101,14 +101,14 @@ uvm_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, l)
  * sensitive calls.
  */
 int
-kern_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, l)
+kern_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct netbsd32_timeval bt32;
 
@@ -146,7 +146,7 @@ kern_sysctl32(name, namelen, oldp, oldlenp, newp, newlen, l)
  */
 int
 hw_sysctl32(int *name, u_int namelen, void *oldp, size_t *oldlenp,
-    void *newp, size_t newlen, struct lwp *l)
+    void *newp, size_t newlen, struct proc *p)
 {
 	extern char machine_arch32[];
 
@@ -283,7 +283,7 @@ netbsd32___sysctl(l, v, retval)
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, 
 	    (void *)NETBSD32PTR64(SCARG(uap, old)), &oldlen, 
-	    (void *)NETBSD32PTR64(SCARG(uap, new)), SCARG(uap, newlen), l);
+	    (void *)NETBSD32PTR64(SCARG(uap, new)), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		uvm_vsunlock(p, (void *)NETBSD32PTR64(SCARG(uap, old)),
 		    savelen);

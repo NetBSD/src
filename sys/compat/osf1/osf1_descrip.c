@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_descrip.c,v 1.16 2003/06/29 15:14:17 simonb Exp $ */
+/* $NetBSD: osf1_descrip.c,v 1.17 2003/06/29 22:29:40 fvdl Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.16 2003/06/29 15:14:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_descrip.c,v 1.17 2003/06/29 22:29:40 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,8 @@ osf1_sys_fstat(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_fstat_args *uap = v;
-	struct filedesc *fdp = l->l_proc->p_fd;
+	struct proc *p = l->l_proc;
+	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct stat ub;
 	struct osf1_stat oub;
@@ -251,8 +252,8 @@ osf1_sys_fstat(l, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
-	FILE_UNUSE(fp, l);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
+	FILE_UNUSE(fp, p);
 
 	osf1_cvt_stat_from_native(&ub, &oub);
 	if (error == 0)
@@ -272,7 +273,8 @@ osf1_sys_fstat2(l, v, retval)
 	register_t *retval;
 {
 	struct osf1_sys_fstat2_args *uap = v;
-	struct filedesc *fdp = l->l_proc->p_fd;
+	struct proc *p = l->l_proc;
+	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct stat ub;
 	struct osf1_stat2 oub;
@@ -282,8 +284,8 @@ osf1_sys_fstat2(l, v, retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
-	FILE_UNUSE(fp, l);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
+	FILE_UNUSE(fp, p);
 
 	osf1_cvt_stat2_from_native(&ub, &oub);
 	if (error == 0)

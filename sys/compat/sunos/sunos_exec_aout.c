@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.9 2003/06/29 09:56:27 darrenr Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.10 2003/06/29 22:29:43 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.9 2003/06/29 09:56:27 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.10 2003/06/29 22:29:43 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,8 @@ int sunos_exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
 int sunos_exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
 
 int
-exec_sunos_aout_makecmds(l, epp)
-	struct lwp *l;
+exec_sunos_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	struct sunos_exec *sunmag = epp->ep_hdr;
@@ -77,13 +77,13 @@ exec_sunos_aout_makecmds(l, epp)
 
 	switch (sunmag->a_magic) {
 	case ZMAGIC:
-		error = sunos_exec_aout_prep_zmagic(l->l_proc, epp);
+		error = sunos_exec_aout_prep_zmagic(p, epp);
 		break;
 	case NMAGIC:
-		error = sunos_exec_aout_prep_nmagic(l->l_proc, epp);
+		error = sunos_exec_aout_prep_nmagic(p, epp);
 		break;
 	case OMAGIC:
-		error = sunos_exec_aout_prep_omagic(l->l_proc, epp);
+		error = sunos_exec_aout_prep_omagic(p, epp);
 		break;
 	}
 	return error;

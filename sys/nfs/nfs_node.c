@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.67 2003/06/29 18:43:35 thorpej Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.68 2003/06/29 22:32:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.67 2003/06/29 18:43:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.68 2003/06/29 22:32:15 fvdl Exp $");
 
 #include "opt_nfs.h"
 
@@ -154,12 +154,11 @@ nfs_nhdone()
  * nfsnode structure is returned.
  */
 int
-nfs_nget(mntp, fhp, fhsize, npp, l)
+nfs_nget(mntp, fhp, fhsize, npp)
 	struct mount *mntp;
 	nfsfh_t *fhp;
 	int fhsize;
 	struct nfsnode **npp;
-	struct lwp *l;
 {
 	struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
@@ -210,7 +209,7 @@ loop:
 	np->n_vattr = pool_get(&nfs_vattr_pool, PR_WAITOK);
 	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
 	lockmgr(&nfs_hashlock, LK_RELEASE, NULL);
-	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curlwp);
+	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
 	if (error) {
 		vput(vp);
 		return error;
@@ -226,11 +225,11 @@ nfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct nfsnode *np;
 	struct sillyrename *sp;
-	struct lwp *l = ap->a_l;
+	struct proc *p = ap->a_p;
 	struct vnode *vp = ap->a_vp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 
@@ -243,7 +242,7 @@ nfs_inactive(v)
 	} else
 		sp = NULL;
 	if (sp != NULL)
-		nfs_vinvalbuf(vp, 0, sp->s_cred, l, 1);
+		nfs_vinvalbuf(vp, 0, sp->s_cred, p, 1);
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
 		NQNFSNONCACHE | NQNFSWRITE);
 	VOP_UNLOCK(vp, 0);

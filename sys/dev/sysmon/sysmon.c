@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.9 2003/06/28 14:21:45 darrenr Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.10 2003/06/29 22:30:50 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.9 2003/06/28 14:21:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.10 2003/06/29 22:30:50 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -72,24 +72,24 @@ const struct cdevsw sysmon_cdevsw = {
  *	Open the system monitor device.
  */
 int
-sysmonopen(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int error;
 
 	switch (minor(dev)) {
 #if NSYSMON_ENVSYS > 0
 	case SYSMON_MINOR_ENVSYS:
-		error = sysmonopen_envsys(dev, flag, mode, l);
+		error = sysmonopen_envsys(dev, flag, mode, p);
 		break;
 #endif
 #if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
-		error = sysmonopen_wdog(dev, flag, mode, l);
+		error = sysmonopen_wdog(dev, flag, mode, p);
 		break;
 #endif
 #if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		error = sysmonopen_power(dev, flag, mode, l);
+		error = sysmonopen_power(dev, flag, mode, p);
 		break;
 #endif
 	default:
@@ -105,24 +105,24 @@ sysmonopen(dev_t dev, int flag, int mode, struct lwp *l)
  *	Close the system monitor device.
  */
 int
-sysmonclose(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int error;
 
 	switch (minor(dev)) {
 #if NSYSMON_ENVSYS > 0
 	case SYSMON_MINOR_ENVSYS:
-		error = sysmonclose_envsys(dev, flag, mode, l);
+		error = sysmonclose_envsys(dev, flag, mode, p);
 		break;
 #endif
 #if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
-		error = sysmonclose_wdog(dev, flag, mode, l);
+		error = sysmonclose_wdog(dev, flag, mode, p);
 		break;
 #endif
 #if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		error = sysmonclose_power(dev, flag, mode, l);
+		error = sysmonclose_power(dev, flag, mode, p);
 		break;
 #endif
 	default:
@@ -138,24 +138,24 @@ sysmonclose(dev_t dev, int flag, int mode, struct lwp *l)
  *	Perform a control request.
  */
 int
-sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sysmonioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error;
 
 	switch (minor(dev)) {
 #if NSYSMON_ENVSYS > 0
 	case SYSMON_MINOR_ENVSYS:
-		error = sysmonioctl_envsys(dev, cmd, data, flag, l);
+		error = sysmonioctl_envsys(dev, cmd, data, flag, p);
 		break;
 #endif
 #if NSYSMON_WDOG > 0
 	case SYSMON_MINOR_WDOG:
-		error = sysmonioctl_wdog(dev, cmd, data, flag, l);
+		error = sysmonioctl_wdog(dev, cmd, data, flag, p);
 		break;
 #endif
 #if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		error = sysmonioctl_power(dev, cmd, data, flag, l);
+		error = sysmonioctl_power(dev, cmd, data, flag, p);
 		break;
 #endif
 	default:
@@ -194,14 +194,14 @@ sysmonread(dev_t dev, struct uio *uio, int flags)
  *	Poll the system monitor device.
  */
 int
-sysmonpoll(dev_t dev, int events, struct lwp *l)
+sysmonpoll(dev_t dev, int events, struct proc *p)
 {
 	int rv;
 
 	switch (minor(dev)) {
 #if NSYSMON_POWER > 0
 	case SYSMON_MINOR_POWER:
-		rv = sysmonpoll_power(dev, events, l);
+		rv = sysmonpoll_power(dev, events, p);
 		break;
 #endif
 	default:

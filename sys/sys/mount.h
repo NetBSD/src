@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.106 2003/06/29 18:43:38 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.107 2003/06/29 22:32:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -142,7 +142,7 @@ struct mount {
 	struct statfs	mnt_stat;		/* cache of filesystem stats */
 	void		*mnt_data;		/* private data */
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
-	struct lwp	*mnt_unmounter;		/* who is (un)mounting */
+	struct proc	*mnt_unmounter;		/* who is unmounting */
 };
 
 /*
@@ -350,18 +350,18 @@ struct vfsops {
 	const char *vfs_name;
 	int	(*vfs_mount)	__P((struct mount *mp, const char *path,
 				    void *data, struct nameidata *ndp,
-				    struct lwp *l));
+				    struct proc *p));
 	int	(*vfs_start)	__P((struct mount *mp, int flags,
-				    struct lwp *l));
+				    struct proc *p));
 	int	(*vfs_unmount)	__P((struct mount *mp, int mntflags,
-				    struct lwp *l));
+				    struct proc *p));
 	int	(*vfs_root)	__P((struct mount *mp, struct vnode **vpp));
 	int	(*vfs_quotactl)	__P((struct mount *mp, int cmds, uid_t uid,
-				    caddr_t arg, struct lwp *l));
+				    caddr_t arg, struct proc *p));
 	int	(*vfs_statfs)	__P((struct mount *mp, struct statfs *sbp,
-				    struct lwp *l));
+				    struct proc *p));
 	int	(*vfs_sync)	__P((struct mount *mp, int waitfor,
-				    struct ucred *cred, struct lwp *l));
+				    struct ucred *cred, struct proc *p));
 	int	(*vfs_vget)	__P((struct mount *mp, ino_t ino,
 				    struct vnode **vpp));
 	int	(*vfs_fhtovp)	__P((struct mount *mp, struct fid *fhp,
@@ -371,7 +371,7 @@ struct vfsops {
 	void	(*vfs_reinit)	__P((void));
 	void	(*vfs_done)	__P((void));
 	int	(*vfs_sysctl)	__P((int *, u_int, void *, size_t *, void *,
-				    size_t, struct lwp *l));
+				    size_t, struct proc *));
 	int	(*vfs_mountroot) __P((void));
 	int	(*vfs_checkexp) __P((struct mount *mp, struct mbuf *nam,
 				    int *extflagsp, struct ucred **credanonp));
@@ -380,15 +380,15 @@ struct vfsops {
 	LIST_ENTRY(vfsops) vfs_list;
 };
 
-#define VFS_MOUNT(MP, PATH, DATA, NDP, L) \
-	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, NDP, L)
+#define VFS_MOUNT(MP, PATH, DATA, NDP, P) \
+	(*(MP)->mnt_op->vfs_mount)(MP, PATH, DATA, NDP, P)
 #define VFS_START(MP, FLAGS, P)	  (*(MP)->mnt_op->vfs_start)(MP, FLAGS, P)
 #define VFS_UNMOUNT(MP, FORCE, P) (*(MP)->mnt_op->vfs_unmount)(MP, FORCE, P)
 #define VFS_ROOT(MP, VPP)	  (*(MP)->mnt_op->vfs_root)(MP, VPP)
 #define VFS_QUOTACTL(MP,C,U,A,P)  (*(MP)->mnt_op->vfs_quotactl)(MP, C, U, A, P)
 #define VFS_STATFS(MP, SBP, P)	  (*(MP)->mnt_op->vfs_statfs)(MP, SBP, P)
 #define VFS_SYNC(MP, WAIT, C, P)  (*(MP)->mnt_op->vfs_sync)(MP, WAIT, C, P)
-#define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
+#define VFS_VGET(MP, INO, VPP)	  (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
 #define VFS_FHTOVP(MP, FIDP, VPP) (*(MP)->mnt_op->vfs_fhtovp)(MP, FIDP, VPP)
 #define VFS_CHECKEXP(MP, NAM, EXFLG, CRED) \
 	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
@@ -479,8 +479,7 @@ int	vfs_setpublicfs			    /* set publicly exported fs */
 int	vfs_mountedon __P((struct vnode *));/* is a vfs mounted on vp */
 int	vfs_mountroot __P((void));
 void	vfs_shutdown __P((void));	    /* unmount and sync file systems */
-void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
-void	vfs_unmountall __P((struct lwp *));	    /* unmount file systems */
+void	vfs_unmountall __P((struct proc *));	    /* unmount file systems */
 int 	vfs_busy __P((struct mount *, int, struct simplelock *));
 int	vfs_rootmountalloc __P((char *, char *, struct mount **));
 void	vfs_unbusy __P((struct mount *));
@@ -489,7 +488,7 @@ int	vfs_detach __P((struct vfsops *));
 void	vfs_reinit __P((void));
 struct vfsops *vfs_getopsbyname __P((const char *));
 int	vfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-			struct lwp *));
+			struct proc *));
 
 extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
 extern	struct vfsops *vfssw[];			/* filesystem type table */
@@ -498,7 +497,7 @@ extern	struct nfs_public nfs_pub;
 extern	struct simplelock mountlist_slock;
 extern	struct simplelock spechash_slock;
 long	makefstype __P((const char *));
-int	dounmount __P((struct mount *, int, struct lwp *));
+int	dounmount __P((struct mount *, int, struct proc *));
 void	vfsinit __P((void));
 void	vfs_opv_init __P((const struct vnodeopv_desc * const *));
 void	vfs_opv_free __P((const struct vnodeopv_desc * const *));
@@ -510,7 +509,7 @@ LIST_HEAD(vfs_list_head, vfsops);
 extern struct vfs_list_head vfs_list;
 
 int	set_statfs_info __P((const char *, int, const char *, int,
-    struct mount *, struct lwp *l));
+    struct mount *, struct proc *p));
 void	copy_statfs_info __P((struct statfs *, const struct mount *));
 
 

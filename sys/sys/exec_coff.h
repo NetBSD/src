@@ -1,4 +1,4 @@
-/* $NetBSD: exec_coff.h,v 1.3 2003/06/28 14:22:20 darrenr Exp $ */
+/* $NetBSD: exec_coff.h,v 1.4 2003/06/29 22:32:23 fvdl Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -141,7 +141,7 @@ struct coff_exechdr {
          COFF_SEGMENT_ALIGNMENT(fp, ap))))
 
 #ifdef _KERNEL
-int     exec_coff_makecmds __P((struct lwp *, struct exec_package *));
+int     exec_coff_makecmds __P((struct proc *, struct exec_package *));
 int	exec_coff_setup_stack __P((struct proc *, struct exec_package *));
 
 int	exec_coff_prep_omagic __P((struct proc *, struct exec_package *,

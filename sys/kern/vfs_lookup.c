@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.47 2003/06/29 18:43:28 thorpej Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.48 2003/06/29 22:31:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.47 2003/06/29 18:43:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.48 2003/06/29 22:31:33 fvdl Exp $");
 
 #include "opt_ktrace.h"
 
@@ -101,14 +101,14 @@ namei(ndp)
 	struct componentname *cnp = &ndp->ni_cnd;
 
 #ifdef DIAGNOSTIC
-	if (!cnp->cn_cred || !cnp->cn_lwp)
+	if (!cnp->cn_cred || !cnp->cn_proc)
 		panic ("namei: bad cred/proc");
 	if (cnp->cn_nameiop & (~OPMASK))
 		panic ("namei: nameiop contaminated with flags");
 	if (cnp->cn_flags & OPMASK)
 		panic ("namei: flags contaminated with nameiops");
 #endif
-	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
+	cwdi = cnp->cn_proc->p_cwdi;
 
 	/*
 	 * Get a buffer for the name to be translated, and copy the
@@ -137,8 +137,8 @@ namei(ndp)
 	ndp->ni_loopcnt = 0;
 
 #ifdef KTRACE
-	if (KTRPOINT(cnp->cn_lwp->l_proc, KTR_NAMEI))
-		ktrnamei(cnp->cn_lwp, cnp->cn_pnbuf);
+	if (KTRPOINT(cnp->cn_proc, KTR_NAMEI))
+		ktrnamei(cnp->cn_proc, cnp->cn_pnbuf);
 #endif
 
 	/*
@@ -187,7 +187,7 @@ namei(ndp)
 		}
 		if (ndp->ni_vp->v_mount->mnt_flag & MNT_SYMPERM) {
 			error = VOP_ACCESS(ndp->ni_vp, VEXEC, cnp->cn_cred,
-			    cnp->cn_lwp);
+			    cnp->cn_proc);
 			if (error != 0)
 				break;
 		}
@@ -202,7 +202,7 @@ namei(ndp)
 		auio.uio_offset = 0;
 		auio.uio_rw = UIO_READ;
 		auio.uio_segflg = UIO_SYSSPACE;
-		auio.uio_lwp = (struct lwp *)0;
+		auio.uio_procp = (struct proc *)0;
 		auio.uio_resid = MAXPATHLEN;
 		error = VOP_READLINK(ndp->ni_vp, &auio, cnp->cn_cred);
 		if (error) {
@@ -326,7 +326,6 @@ lookup(ndp)
 	int slashes;
 	int dpunlocked = 0;		/* dp has already been unlocked */
 	struct componentname *cnp = &ndp->ni_cnd;
-	struct lwp *l = cnp->cn_lwp;
 
 	/*
 	 * Setup: break out flag bits into variables.
@@ -453,8 +452,6 @@ dirloop:
 	 *    .. in the other file system.
 	 */
 	if (cnp->cn_flags & ISDOTDOT) {
-		struct proc *p = l->l_proc;
-
 		for (;;) {
 			if (dp == ndp->ni_rootdir || dp == rootvnode) {
 				ndp->ni_dvp = dp;
@@ -465,15 +462,17 @@ dirloop:
 			if (ndp->ni_rootdir != rootvnode) {
 				int retval;
 				VOP_UNLOCK(dp, 0);
-				retval = vn_isunder(dp, ndp->ni_rootdir, l);
+				retval = vn_isunder(dp, ndp->ni_rootdir,
+				    cnp->cn_proc);
 				vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 				if (!retval) {
 				    /* Oops! We got out of jail! */
 				    log(LOG_WARNING,
 					"chrooted pid %d uid %d (%s) "
 					"detected outside of its chroot\n",
-					p->p_pid, p->p_ucred->cr_uid,
-					p->p_comm);
+					cnp->cn_proc->p_pid,
+					cnp->cn_proc->p_ucred->cr_uid,
+					cnp->cn_proc->p_comm);
 				    /* Put us at the jail root. */
 				    vput(dp);
 				    dp = ndp->ni_rootdir;

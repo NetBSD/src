@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.11 2003/06/28 14:21:47 darrenr Exp $	*/
+/*	$NetBSD: ustir.c,v 1.12 2003/06/29 22:30:59 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.11 2003/06/28 14:21:47 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.12 2003/06/29 22:30:59 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,18 +209,18 @@ struct ustir_softc {
 #define USTIR_WR_TIMEOUT 200
 
 Static int ustir_activate(device_ptr_t self, enum devact act);
-Static int ustir_open(void *h, int flag, int mode, struct lwp *l);
-Static int ustir_close(void *h, int flag, int mode, struct lwp *l);
+Static int ustir_open(void *h, int flag, int mode, usb_proc_ptr p);
+Static int ustir_close(void *h, int flag, int mode, usb_proc_ptr p);
 Static int ustir_read(void *h, struct uio *uio, int flag);
 Static int ustir_write(void *h, struct uio *uio, int flag);
 Static int ustir_set_params(void *h, struct irda_params *params);
 Static int ustir_get_speeds(void *h, int *speeds);
 Static int ustir_get_turnarounds(void *h, int *times);
-Static int ustir_poll(void *h, int events, struct lwp *l);
+Static int ustir_poll(void *h, int events, usb_proc_ptr p);
 Static int ustir_kqfilter(void *h, struct knote *kn);
 
 #ifdef USTIR_DEBUG_IOCTLS
-Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, struct lwp *l);
+Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p);
 #endif
 
 Static struct irframe_methods const ustir_methods = {
@@ -856,7 +856,7 @@ ustir_activate(device_ptr_t self, enum devact act)
 
 /* ARGSUSED */
 Static int
-ustir_open(void *h, int flag, int mode, struct lwp *l)
+ustir_open(void *h, int flag, int mode, usb_proc_ptr p)
 {
 	struct ustir_softc *sc = h;
 	int error;
@@ -945,7 +945,7 @@ ustir_open(void *h, int flag, int mode, struct lwp *l)
 
 /* ARGSUSED */
 Static int
-ustir_close(void *h, int flag, int mode, struct lwp *l)
+ustir_close(void *h, int flag, int mode, usb_proc_ptr p)
 {
 	struct ustir_softc *sc = h;
 
@@ -1185,7 +1185,7 @@ ustir_write(void *h, struct uio *uio, int flag)
 }
 
 Static int
-ustir_poll(void *h, int events, struct lwp *l)
+ustir_poll(void *h, int events, usb_proc_ptr p)
 {
 	struct ustir_softc *sc = h;
 	int revents = 0;
@@ -1198,7 +1198,7 @@ ustir_poll(void *h, int events, struct lwp *l)
 		} else {
 			DPRINTFN(2,("%s: recording write select\n",
 				    __func__));
-			selrecord(l, &sc->sc_wr_sel);
+			selrecord(p, &sc->sc_wr_sel);
 		}
 	}
 
@@ -1209,7 +1209,7 @@ ustir_poll(void *h, int events, struct lwp *l)
 		} else {
 			DPRINTFN(2,("%s: recording read select\n",
 				    __func__));
-			selrecord(l, &sc->sc_rd_sel);
+			selrecord(p, &sc->sc_rd_sel);
 		}
 	}
 
@@ -1293,7 +1293,7 @@ ustir_kqfilter(void *h, struct knote *kn)
 }
 
 #ifdef USTIR_DEBUG_IOCTLS
-Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+Static int ustir_ioctl(void *h, u_long cmd, caddr_t addr, int flag, usb_proc_ptr p)
 {
 	struct ustir_softc *sc = h;
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.37 2003/06/29 05:26:25 enami Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.38 2003/06/29 22:29:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.37 2003/06/29 05:26:25 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.38 2003/06/29 22:29:30 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -87,21 +87,22 @@ linux_sys_ioctl(l, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
 	case 'M':
-		return oss_ioctl_mixer(l, LINUX_TO_OSS(v), retval);
+		return oss_ioctl_mixer(p, LINUX_TO_OSS(v), retval);
 	case 'Q':
-		return oss_ioctl_sequencer(l, LINUX_TO_OSS(v), retval);
+		return oss_ioctl_sequencer(p, LINUX_TO_OSS(v), retval);
 	case 'P':
-		return oss_ioctl_audio(l, LINUX_TO_OSS(v), retval);
+		return oss_ioctl_audio(p, LINUX_TO_OSS(v), retval);
 	case 'r': /* VFAT ioctls; not yet supported */
 		return ENOSYS;
 	case 'S':
-		return linux_ioctl_cdrom(l, uap, retval);
+		return linux_ioctl_cdrom(p, uap, retval);
 	case 't':
 	case 'f':
-		return linux_ioctl_termios(l, uap, retval);
+		return linux_ioctl_termios(p, uap, retval);
 	case 'T':
 	{
 #if NSEQUENCER > 0
@@ -112,7 +113,6 @@ linux_sys_ioctl(l, v, retval)
 		 * way.  We do it by indexing in the cdevsw with the major
 		 * device number and check if that is the sequencer entry.
 		 */
-		struct proc *p = l->l_proc;
 		struct file *fp;
 		struct filedesc *fdp;
 		struct vnode *vp;
@@ -127,30 +127,29 @@ linux_sys_ioctl(l, v, retval)
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&
 		    vp->v_type == VCHR &&
-		    VOP_GETATTR(vp, &va, p->p_ucred, l) == 0 &&
+		    VOP_GETATTR(vp, &va, p->p_ucred, p) == 0 &&
 		    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw) {
-			error = oss_ioctl_sequencer(l,
-						    (void*)LINUX_TO_OSS(uap),
-						    retval);
+			error = oss_ioctl_sequencer(p, (void*)LINUX_TO_OSS(uap),
+						   retval);
 		}
 		else {
-			error = linux_ioctl_termios(l, uap, retval);
+			error = linux_ioctl_termios(p, uap, retval);
 		}
-		FILE_UNUSE(fp, l);
+		FILE_UNUSE(fp, p);
 		return error;
 #else
-		return linux_ioctl_termios(l, uap, retval);
+		return linux_ioctl_termios(p, uap, retval);
 #endif
 	}
 	case 0x89:
-		return linux_ioctl_socket(l, uap, retval);
+		return linux_ioctl_socket(p, uap, retval);
 	case 0x03:
-		return linux_ioctl_hdio(l, uap, retval);
+		return linux_ioctl_hdio(p, uap, retval);
 	case 0x02:
-		return linux_ioctl_fdio(l, uap, retval);
+		return linux_ioctl_fdio(p, uap, retval);
 	case 0x12:
-		return linux_ioctl_blkio(l, uap, retval);
+		return linux_ioctl_blkio(p, uap, retval);
 	default:
-		return linux_machdepioctl(l, uap, retval);
+		return linux_machdepioctl(p, uap, retval);
 	}
 }

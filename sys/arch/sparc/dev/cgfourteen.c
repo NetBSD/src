@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.33 2003/06/29 09:56:24 darrenr Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.34 2003/06/29 22:28:54 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -315,10 +315,10 @@ cgfourteenattach(parent, self, aux)
 static int cg14_opens = 0;
 
 int
-cgfourteenopen(dev, flags, mode, l)
+cgfourteenopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	int unit = minor(dev);
@@ -340,10 +340,10 @@ cgfourteenopen(dev, flags, mode, l)
 }
 
 int
-cgfourteenclose(dev, flags, mode, l)
+cgfourteenclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	int s, opens;
@@ -364,12 +364,12 @@ cgfourteenclose(dev, flags, mode, l)
 }
 
 int
-cgfourteenioctl(dev, cmd, data, flags, l)
+cgfourteenioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	struct fbgattr *fba;

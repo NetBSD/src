@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.108 2003/06/29 09:56:25 darrenr Exp $	*/
+/*	$NetBSD: fd.c,v 1.109 2003/06/29 22:28:55 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -1063,10 +1063,10 @@ fdc_wrfifo(fdc, x)
 }
 
 int
-fdopen(dev, flags, fmt, l)
+fdopen(dev, flags, fmt, p)
 	dev_t dev;
 	int flags, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
  	int unit, pmask;
 	struct fd_softc *fd;
@@ -1114,10 +1114,10 @@ fdopen(dev, flags, fmt, l)
 }
 
 int
-fdclose(dev, flags, fmt, l)
+fdclose(dev, flags, fmt, p)
 	dev_t dev;
 	int flags, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	int pmask = (1 << DISKPART(dev));
@@ -1863,12 +1863,12 @@ fdcretry(fdc)
 }
 
 int
-fdioctl(dev, cmd, addr, flag, l)
+fdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct fd_softc *fd;
 	struct fdc_softc *fdc;
@@ -2051,7 +2051,7 @@ fdioctl(dev, cmd, addr, flag, l)
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
 
-		error = fdformat(dev, fd_formb, l->l_proc);
+		error = fdformat(dev, fd_formb, p);
 		free(fd_formb, M_TEMP);
 		return error;
 

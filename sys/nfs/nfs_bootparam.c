@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.22 2003/06/28 14:22:17 darrenr Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.23 2003/06/29 22:32:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.22 2003/06/28 14:22:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.23 2003/06/29 22:32:15 fvdl Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -110,9 +110,9 @@ static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
  * is used for all subsequent booptaram RPCs.
  */
 int
-nfs_bootparam(nd, lwp)
+nfs_bootparam(nd, procp)
 	struct nfs_diskless *nd;
-	struct lwp *lwp;
+	struct proc *procp;
 {
 	struct ifnet *ifp = nd->nd_ifp;
 	struct in_addr my_ip, arps_ip, gw_ip;
@@ -128,7 +128,7 @@ nfs_bootparam(nd, lwp)
 	/*
 	 * Bring up the interface. (just set the "up" flag)
 	 */
-	error = nfs_boot_ifupdown(ifp, lwp, 1);
+	error = nfs_boot_ifupdown(ifp, procp, 1);
 	if (error) {
 		printf("nfs_boot: SIFFLAGS, error=%d\n", error);
 		return (error);
@@ -158,7 +158,7 @@ nfs_bootparam(nd, lwp)
 	 * Do enough of ifconfig(8) so that the chosen interface
 	 * can talk to the servers.  (just set the address)
 	 */
-	error = nfs_boot_setaddress(ifp, lwp, my_ip.s_addr,
+	error = nfs_boot_setaddress(ifp, procp, my_ip.s_addr,
 				    INADDR_ANY, INADDR_ANY);
 	if (error) {
 		printf("nfs_boot: set ifaddr, error=%d\n", error);
@@ -229,8 +229,8 @@ nfs_bootparam(nd, lwp)
 	/* Have a netmask too!  Save it; update the I/F. */
 	nd->nd_mask.s_addr = mask;
 	printf("nfs_boot: my_mask=%s\n", inet_ntoa(nd->nd_mask));
-	(void)  nfs_boot_deladdress(ifp, lwp, my_ip.s_addr);
-	error = nfs_boot_setaddress(ifp, lwp, my_ip.s_addr,
+	(void)  nfs_boot_deladdress(ifp, procp, my_ip.s_addr);
+	error = nfs_boot_setaddress(ifp, procp, my_ip.s_addr,
 				    mask, INADDR_ANY);
 	if (error) {
 		printf("nfs_boot: set ifmask, error=%d\n", error);
@@ -260,10 +260,10 @@ nogwrepl:
 
 delout:
 	if (error)
-		(void) nfs_boot_deladdress(ifp, lwp, my_ip.s_addr);
+		(void) nfs_boot_deladdress(ifp, procp, my_ip.s_addr);
 out:
 	if (error) {
-		(void) nfs_boot_ifupdown(ifp, lwp, 0);
+		(void) nfs_boot_ifupdown(ifp, procp, 0);
 		nfs_boot_flushrt(ifp);
 	}
 #ifndef NFS_BOOTPARAM_NOGATEWAY

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.7 2003/06/28 14:21:45 darrenr Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.8 2003/06/29 22:30:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.7 2003/06/28 14:21:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.8 2003/06/29 22:30:51 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,7 +89,7 @@ void	sysmon_wdog_shutdown(void *);
  *	Open the system monitor device.
  */
 int
-sysmonopen_wdog(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonopen_wdog(dev_t dev, int flag, int mode, struct proc *p)
 {
 
 	simple_lock(&sysmon_wdog_list_slock);
@@ -111,7 +111,7 @@ sysmonopen_wdog(dev_t dev, int flag, int mode, struct lwp *l)
  *	Close the system monitor device.
  */
 int
-sysmonclose_wdog(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonclose_wdog(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct sysmon_wdog *smw;
 	int omode, s, error = 0;
@@ -149,7 +149,7 @@ sysmonclose_wdog(dev_t dev, int flag, int mode, struct lwp *l)
  *	Perform a watchdog control request.
  */
 int
-sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct sysmon_wdog *smw;
 	int s, error = 0;
@@ -226,7 +226,7 @@ sysmonioctl_wdog(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if ((smw = sysmon_armed_wdog) != NULL) {
 			error = (*smw->smw_tickle)(smw);
 			if (error == 0)
-				smw->smw_tickler = l->l_proc->p_pid;
+				smw->smw_tickler = p->p_pid;
 		} else
 			error = ESRCH;
 		SYSMON_WDOG_UNLOCK(s);

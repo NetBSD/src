@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.40 2003/06/28 14:22:01 darrenr Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.41 2003/06/29 22:31:39 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.40 2003/06/28 14:22:01 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.41 2003/06/29 22:31:39 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ fifo_open(void *v)
 		struct vnode	*a_vp;
 		int		a_mode;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;
@@ -160,7 +160,7 @@ fifo_open(void *v)
 	int		error;
 
 	vp = ap->a_vp;
-	p = ap->a_l->l_proc;
+	p = ap->a_p;
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		MALLOC(fip, struct fifoinfo *, sizeof(*fip), M_VNODE, M_WAITOK);
@@ -237,7 +237,7 @@ fifo_open(void *v)
 	}
 	return (0);
  bad:
-	VOP_CLOSE(vp, ap->a_mode, ap->a_cred, ap->a_l);
+	VOP_CLOSE(vp, ap->a_mode, ap->a_cred, p);
 	return (error);
 }
 
@@ -333,7 +333,7 @@ fifo_ioctl(void *v)
 		caddr_t		a_data;
 		int		a_fflag;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 	struct file	filetmp;
 	int		error;
@@ -342,13 +342,13 @@ fifo_ioctl(void *v)
 		return (0);
 	if (ap->a_fflag & FREAD) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_readsock;
-		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_l);
+		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_p);
 		if (error)
 			return (error);
 	}
 	if (ap->a_fflag & FWRITE) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_writesock;
-		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_l);
+		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_p);
 		if (error)
 			return (error);
 	}
@@ -362,7 +362,7 @@ fifo_poll(void *v)
 	struct vop_poll_args /* {
 		struct vnode	*a_vp;
 		int		a_events;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 	struct file	filetmp;
 	int		revents;
@@ -371,12 +371,12 @@ fifo_poll(void *v)
 	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_readsock;
 		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, ap->a_l);
+			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 	}
 	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_writesock;
 		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, ap->a_l);
+			revents |= soo_poll(&filetmp, ap->a_events, ap->a_p);
 	}
 
 	return (revents);
@@ -387,7 +387,7 @@ fifo_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode	*a_vp;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 
 	VOP_UNLOCK(ap->a_vp, 0);
@@ -428,7 +428,7 @@ fifo_close(void *v)
 		struct vnode	*a_vp;
 		int		a_fflag;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;

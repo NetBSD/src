@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.34 2003/06/28 14:22:00 darrenr Exp $
+#	$NetBSD: vnode_if.src,v 1.35 2003/06/29 22:31:36 fvdl Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -131,7 +131,7 @@ vop_open {
 	IN struct vnode *vp;
 	IN int mode;
 	IN struct ucred *cred;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -141,7 +141,7 @@ vop_close {
 	IN struct vnode *vp;
 	IN int fflag;
 	IN struct ucred *cred;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -151,7 +151,7 @@ vop_access {
 	IN struct vnode *vp;
 	IN int mode;
 	IN struct ucred *cred;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -161,7 +161,7 @@ vop_getattr {
 	IN struct vnode *vp;
 	IN struct vattr *vap;
 	IN struct ucred *cred;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -171,7 +171,7 @@ vop_setattr {
 	IN struct vnode *vp;
 	IN struct vattr *vap;
 	IN struct ucred *cred;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -203,7 +203,7 @@ vop_ioctl {
 	IN void *data;
 	IN int fflag;
 	IN struct ucred *cred;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -215,7 +215,7 @@ vop_fcntl {
 	IN void *data;
 	IN int fflag;
 	IN struct ucred *cred;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -224,7 +224,7 @@ vop_fcntl {
 vop_poll {
 	IN struct vnode *vp;
 	IN int events;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -250,7 +250,7 @@ vop_mmap {
 	IN struct vnode *vp;
 	IN int fflags;
 	IN struct ucred *cred;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -262,7 +262,7 @@ vop_fsync {
 	IN int flags;
 	IN off_t offlo
 	IN off_t offhi
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -394,7 +394,7 @@ vop_abortop {
 #
 vop_inactive {
 	IN WILLUNLOCK struct vnode *vp;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -402,7 +402,7 @@ vop_inactive {
 #
 vop_reclaim {
 	IN struct vnode *vp;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -531,7 +531,7 @@ vop_truncate {
 	IN off_t length;
 	IN int flags;
 	IN struct ucred *cred;
-	IN struct lwp *l;
+	IN struct proc *p;
 };
 
 #
@@ -549,7 +549,7 @@ vop_update {
 # 
 vop_lease {
 	IN struct vnode *vp;
-	IN struct lwp *l;
+	IN struct proc *p;
 	IN struct ucred *cred;
 	IN int flag;
 };

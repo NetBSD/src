@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.20 2003/06/28 14:22:14 darrenr Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.21 2003/06/29 22:32:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,7 +69,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.20 2003/06/28 14:22:14 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.21 2003/06/29 22:32:06 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,21 +389,19 @@ tp_sendoob(tpcb, so, xdata, outflags)
  */
 /* ARGSUSED */
 int
-tp_usrreq(so, req, m, nam, control, l)
+tp_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct tp_pcb *tpcb;
-	struct proc *p;
 	int             s;
 	int             error = 0;
 	int             flags, *outflags = &flags;
 	u_long          eotsdu = 0;
 	struct tp_event E;
 
-	p = l ? l->l_proc : NULL;
 #ifdef ARGO_DEBUG
 	if (argo_debug[D_REQUEST]) {
 		printf("usrreq(%p,%d,%p,%p,%p)\n", so, req, m, nam, outflags);
@@ -825,7 +823,7 @@ tp_snd_control(m, so, data)
 			}
 			error = tp_usrreq(so, PRU_DISCONNECT, (struct mbuf *)0,
 			    (struct mbuf *)0, (struct mbuf *)0,
-			    (struct lwp *)0);
+			    (struct proc *)0);
 		}
 	}
 	if (m)

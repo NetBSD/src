@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.21 2003/06/29 11:02:25 darrenr Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.22 2003/06/29 22:29:25 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.21 2003/06/29 11:02:25 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22 2003/06/29 22:29:25 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,8 +480,8 @@ linux_fakedev(dev, raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(l, v, retval)
-	struct lwp *l;
+linux_machdepioctl(p, v, retval)
+	struct proc *p;
 	void *v;
 	register_t *retval;
 { 
@@ -504,7 +504,7 @@ linux_machdepioctl(l, v, retval)
 	}
 	SCARG(&bia, com) = com;
 	/* XXX NJWLWP */
-	return sys_ioctl(l, &bia, retval);
+	return sys_ioctl(curlwp, &bia, retval);
 }
 #if 0
 /*

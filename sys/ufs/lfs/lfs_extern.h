@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.49 2003/06/29 18:43:44 thorpej Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.50 2003/06/29 22:32:38 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ extern struct pool lfs_inoext_pool;	/* memory pool for inode extension */
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
-int lfs_rf_valloc(struct lfs *, ino_t, int, struct lwp *, struct vnode **);
+int lfs_rf_valloc(struct lfs *, ino_t, int, struct proc *, struct vnode **);
 void lfs_vcreate(struct mount *, ino_t, struct vnode *);
 /* lfs_bio.c */
 int lfs_availwait(struct lfs *, int);
@@ -197,7 +197,7 @@ struct buf *lfs_fakebuf(struct lfs *, struct vnode *, int, size_t, caddr_t);
 int lfs_do_segclean(struct lfs *, unsigned long);
 void lfs_fakebuf_iodone(struct buf *);
 int lfs_segwait(fsid_t *, struct timeval *);
-int lfs_bmapv(struct lwp *, fsid_t *, struct block_info *, int);
+int lfs_bmapv(struct proc *, fsid_t *, struct block_info *, int);
 int lfs_markv(struct proc *, fsid_t *, struct block_info *, int);
 
 /* lfs_vfsops.c */
@@ -205,14 +205,14 @@ void lfs_init(void);
 void lfs_reinit(void);
 void lfs_done(void);
 int lfs_mountroot(void);
-int lfs_mount(struct mount *, const char *, void *, struct nameidata *, struct lwp *);
-int lfs_unmount(struct mount *, int, struct lwp *);
-int lfs_statfs(struct mount *, struct statfs *, struct lwp *);
-int lfs_sync(struct mount *, int, struct ucred *, struct lwp *);
+int lfs_mount(struct mount *, const char *, void *, struct nameidata *, struct proc *);
+int lfs_unmount(struct mount *, int, struct proc *);
+int lfs_statfs(struct mount *, struct statfs *, struct proc *);
+int lfs_sync(struct mount *, int, struct ucred *, struct proc *);
 int lfs_vget(struct mount *, ino_t, struct vnode **);
 int lfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int lfs_vptofh(struct vnode *, struct fid *);
-int lfs_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct lwp *);
+int lfs_sysctl(int *, u_int, void *, size_t *, void *, size_t, struct proc *);
 void lfs_vinit(struct mount *mp, struct vnode *);
 
 /* lfs_vnops.c */

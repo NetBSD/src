@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227 2003/06/29 09:56:26 darrenr Exp $ */
+/*	$NetBSD: machdep.c,v 1.228 2003/06/29 22:28:57 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -466,14 +466,14 @@ struct sigframe {
  * machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	char *cp;
 	struct btinfo_kernelfile *bi_file;
@@ -1226,8 +1226,8 @@ stackdump()
 }
 
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	return (ENOEXEC);

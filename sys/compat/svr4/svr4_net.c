@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.32 2003/06/28 14:21:27 darrenr Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.33 2003/06/29 22:29:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.32 2003/06/28 14:21:27 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.33 2003/06/29 22:29:47 fvdl Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -106,7 +106,7 @@ enum {
 
 int svr4_netattach __P((int));
 
-int svr4_soo_close __P((struct file *, struct lwp *));
+int svr4_soo_close __P((struct file *, struct proc *));
 int svr4_ptm_alloc __P((struct proc *));
 
 static struct fileops svr4_netops = {
@@ -127,13 +127,12 @@ svr4_netattach(n)
 
 
 int
-svr4_netopen(dev, flag, mode, l)
+svr4_netopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct lwp *l;
+	struct proc *p;
 {
-	struct proc *p = l->l_proc;
 	int type, protocol;
 	int fd;
 	struct file *fp;
@@ -223,21 +222,21 @@ svr4_netopen(dev, flag, mode, l)
 
 	p->p_dupfd = fd;
 	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return ENXIO;
 }
 
 
 int
-svr4_soo_close(fp, l)
+svr4_soo_close(fp, p)
 	struct file *fp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct socket *so = (struct socket *) fp->f_data;
 
-	svr4_delete_socket(l->l_proc, fp);
+	svr4_delete_socket(p, fp);
 	free(so->so_internal, M_NETADDR);
-	return soo_close(fp, l);
+	return soo_close(fp, p);
 }
 
 

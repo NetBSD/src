@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.26 2003/06/29 10:39:51 martin Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.27 2003/06/29 22:29:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.26 2003/06/29 10:39:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.27 2003/06/29 22:29:36 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -104,7 +104,7 @@ compat_43_netbsd32_ocreat(l, v, retval)
 	NETBSD32TO64_UAP(mode);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_open(l, &ua, retval));
 }
@@ -152,7 +152,7 @@ compat_43_netbsd32_stat43(l, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 	rv = compat_43_sys_stat(l, &ua, retval);
 
 	error = copyin(sgsbp, &sb43, sizeof(sb43));
@@ -186,7 +186,7 @@ compat_43_netbsd32_lstat43(l, v, retval)
 
 	NETBSD32TOP_UAP(path, const char);
 	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 	rv = compat_43_sys_stat(l, &ua, retval);
 
 	error = copyin(sgsbp, &sb43, sizeof(sb43));
@@ -327,7 +327,7 @@ compat_43_netbsd32_ogethostname(l, v, retval)
 	name = KERN_HOSTNAME;
 	sz = SCARG(uap, len);
 	return (kern_sysctl(&name, 1,
-	    (char *)NETBSD32PTR64(SCARG(uap, hostname)), &sz, 0, 0, l));
+	    (char *)NETBSD32PTR64(SCARG(uap, hostname)), &sz, 0, 0, l->l_proc));
 }
 
 int
@@ -336,6 +336,7 @@ compat_43_netbsd32_osethostname(l, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct compat_43_netbsd32_osethostname_args /* {
 		syscallarg(netbsd32_charp) hostname;
 		syscallarg(u_int) len;
@@ -343,11 +344,11 @@ compat_43_netbsd32_osethostname(l, v, retval)
 	int name;
 	int error;
 
-	if ((error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag)) != 0)
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	name = KERN_HOSTNAME;
 	return (kern_sysctl(&name, 1, 0, 0, (char *)NETBSD32PTR64(SCARG(uap,
-	    hostname)), SCARG(uap, len), l));
+	    hostname)), SCARG(uap, len), p));
 }
 
 int

@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.9 2003/06/28 14:22:04 darrenr Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.10 2003/06/29 22:31:45 fvdl Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.9 2003/06/28 14:22:04 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10 2003/06/29 22:31:45 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.9 2003/06/28 14:22:04 darrenr Exp
  * mountflag is used.
  */
 int
-procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
+procfs_domeminfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char buf[512], *cp;
@@ -115,10 +115,9 @@ procfs_domeminfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
  * mountflag is used.
  */
 int
-procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
+procfs_do_pid_stat(struct proc *p, struct lwp *l, struct pfsnode *pfs,
 		 struct uio *uio)
 {
-	struct proc *p = curl->l_proc;
 	char buf[512], *cp;
 	int len, error;
 	struct tty *tty = p->p_session->s_ttyp;
@@ -220,7 +219,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
 }
 
 int
-procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
+procfs_docpuinfo(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char buf[512], *cp;
@@ -244,7 +243,7 @@ procfs_docpuinfo(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 }
 
 int
-procfs_douptime(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
+procfs_douptime(struct proc *curp, struct proc *p, struct pfsnode *pfs,
 		 struct uio *uio)
 {
 	char buf[512], *cp;

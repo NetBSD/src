@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.39 2003/06/28 14:21:45 darrenr Exp $	*/
+/*	$NetBSD: uk.c,v 1.40 2003/06/29 22:30:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.39 2003/06/28 14:21:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.40 2003/06/29 22:30:46 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,10 +167,10 @@ ukdetach(self, flags)
  * open the device.
  */
 int
-ukopen(dev, flag, fmt, l)
+ukopen(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit, error;
 	struct uk_softc *uk;
@@ -212,10 +212,10 @@ ukopen(dev, flag, fmt, l)
  * occurence of an open device
  */
 int
-ukclose(dev, flag, fmt, l)
+ukclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 	struct scsipi_periph *periph = uk->sc_periph;
@@ -236,14 +236,14 @@ ukclose(dev, flag, fmt, l)
  * Only does generic scsi ioctls.
  */
 int
-ukioctl(dev, cmd, addr, flag, l)
+ukioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	register struct uk_softc *uk = uk_cd.cd_devs[UKUNIT(dev)];
 
-	return (scsipi_do_ioctl(uk->sc_periph, dev, cmd, addr, flag, l));
+	return (scsipi_do_ioctl(uk->sc_periph, dev, cmd, addr, flag, p));
 }

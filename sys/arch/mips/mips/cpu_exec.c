@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.39 2003/06/29 15:14:13 simonb Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.40 2003/06/29 22:28:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,7 +62,7 @@
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
-int	mips_elf_makecmds(struct lwp *, struct exec_package *);
+int	mips_elf_makecmds(struct proc *, struct exec_package *);
 
 
 /*
@@ -74,8 +74,8 @@ int	mips_elf_makecmds(struct lwp *, struct exec_package *);
  *
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	int error;
@@ -90,7 +90,7 @@ cpu_exec_aout_makecmds(l, epp)
 #endif
 	{
 		/* If that failed, try old NetBSD-1.1 elf format */
-		error = mips_elf_makecmds (l, epp);
+		error = mips_elf_makecmds (p, epp);
 		return error;
 	}
 
@@ -143,8 +143,8 @@ cpu_exec_ecoff_setregs(l, epp, stack)
  * Do any machine-dependent diddling of the exec package when doing ECOFF.
  */
 int
-cpu_exec_ecoff_probe(l, epp)
-	struct lwp *l;
+cpu_exec_ecoff_probe(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 
@@ -154,15 +154,15 @@ cpu_exec_ecoff_probe(l, epp)
 #endif /* EXEC_ECOFF */
 
 /*
- * mips_elf_makecmds (l, epp)
+ * mips_elf_makecmds (p, epp)
  *
  * Test if an executable is a MIPS ELF executable.   If it is,
  * try to load it.
  */
 
 int
-mips_elf_makecmds (l, epp)
-        struct lwp *l;
+mips_elf_makecmds (p, epp)
+        struct proc *p;
         struct exec_package *epp;
 {
 	Elf32_Ehdr *ex = (Elf32_Ehdr *)epp->ep_hdr;
@@ -212,7 +212,7 @@ mips_elf_makecmds (l, epp)
 		if ((error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)&ph,
 				    sizeof ph, ex->e_phoff + i * sizeof ph,
 				    UIO_SYSSPACE, IO_NODELOCKED,
-				    l->l_proc->p_ucred, &resid, l))
+				    p->p_ucred, &resid, p))
 		    != 0)
 			return error;
 
@@ -287,7 +287,7 @@ mips_elf_makecmds (l, epp)
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
 	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.25 2003/06/28 14:22:04 darrenr Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.26 2003/06/29 22:31:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.25 2003/06/28 14:22:04 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.26 2003/06/29 22:31:45 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static const vfs_namemap_t signames[] = {
 	{ 0 },
 };
 
-int procfs_control __P((struct lwp *, struct lwp *, int, int));
+int procfs_control __P((struct proc *, struct lwp *, int, int));
 
 /* Macros to clear/set/test flags. */ 
 #define	SET(t, f)	(t) |= (f)
@@ -100,14 +100,13 @@ int procfs_control __P((struct lwp *, struct lwp *, int, int));
 #define	ISSET(t, f)	((t) & (f))
 
 int
-procfs_control(curl, l, op, sig)
-	struct lwp *curl;
+procfs_control(curp, l, op, sig)
+	struct proc *curp;
 	struct lwp *l;
 	int op, sig;
 {
-	struct proc *curp = curl->l_proc;
-	struct proc *p = l->l_proc;
 	int s, error;
+	struct proc *p = l->l_proc;
 
 	/*
 	 * You cannot do anything to the process if it is currently exec'ing
@@ -293,17 +292,17 @@ procfs_control(curl, l, op, sig)
 }
 
 int
-procfs_doctl(curl, l, pfs, uio)
-	struct lwp *curl;
+procfs_doctl(curp, l, pfs, uio)
+	struct proc *curp;
 	struct lwp *l;
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
-	struct proc *p = l->l_proc;
+	int xlen;
+	int error;
 	char msg[PROCFS_CTLLEN+1];
 	const vfs_namemap_t *nm;
-	int error;
-	int xlen;
+	struct proc *p = l->l_proc;
 
 	if (uio->uio_rw != UIO_WRITE)
 		return (EOPNOTSUPP);
@@ -326,13 +325,13 @@ procfs_doctl(curl, l, pfs, uio)
 
 	nm = vfs_findname(ctlnames, msg, xlen);
 	if (nm) {
-		error = procfs_control(curl, l, nm->nm_val, 0);
+		error = procfs_control(curp, l, nm->nm_val, 0);
 	} else {
 		nm = vfs_findname(signames, msg, xlen);
 		if (nm) {
 			if (ISSET(p->p_flag, P_TRACED) &&
-			    p->p_pptr == p)
-				error = procfs_control(curl, l, PROCFS_CTL_RUN,
+			    p->p_pptr == curp)
+				error = procfs_control(curp, l, PROCFS_CTL_RUN,
 				    nm->nm_val);
 			else {
 				psignal(p, nm->nm_val);

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.12 2003/06/28 14:21:23 darrenr Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.13 2003/06/29 22:29:33 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.12 2003/06/28 14:21:23 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.13 2003/06/29 22:29:33 fvdl Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -75,8 +75,8 @@ int	exec_m68k4k_prep_omagic __P((struct proc *, struct exec_package *));
  */
 
 int
-exec_m68k4k_makecmds(l, epp)
-	struct lwp *l;
+exec_m68k4k_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	u_long midmag, magic;
@@ -99,13 +99,13 @@ exec_m68k4k_makecmds(l, epp)
 
 	switch (midmag) {
 	case (MID_M68K4K << 16) | ZMAGIC:
-		error = exec_m68k4k_prep_zmagic(l->l_proc, epp);
+		error = exec_m68k4k_prep_zmagic(p, epp);
 		break;
 	case (MID_M68K4K << 16) | NMAGIC:
-		error = exec_m68k4k_prep_nmagic(l->l_proc, epp);
+		error = exec_m68k4k_prep_nmagic(p, epp);
 		break;
 	case (MID_M68K4K << 16) | OMAGIC:
-		error = exec_m68k4k_prep_omagic(l->l_proc, epp);
+		error = exec_m68k4k_prep_omagic(p, epp);
 		break;
 	default:
 		error = ENOEXEC;

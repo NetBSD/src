@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.53 2003/06/28 14:22:12 darrenr Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.54 2003/06/29 22:32:02 fvdl Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.53 2003/06/28 14:22:12 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.54 2003/06/29 22:32:02 fvdl Exp $");
 
 #include "opt_ipsec.h"
 
@@ -596,20 +596,18 @@ extern	u_long rip6_sendspace;
 extern	u_long rip6_recvspace;
 
 int
-rip6_usrreq(so, req, m, nam, control, l)
+rip6_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct in6pcb *in6p = sotoin6pcb(so);
-	struct proc *p;
 	int s;
 	int error = 0;
 	int priv;
 
 	priv = 0;
-	p = l ? l->l_proc : NULL;
 	if (p && !suser(p->p_ucred, &p->p_acflag))
 		priv++;
 

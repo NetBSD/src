@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.6 2003/06/29 11:10:37 ichiro Exp $ */
+/*	$NetBSD: sscom.c,v 1.7 2003/06/29 22:28:10 fvdl Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -594,7 +594,7 @@ sscom_shutdown(struct sscom_softc *sc)
 }
 
 int
-sscomopen(dev_t dev, int flag, int mode, struct lwp *l)
+sscomopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct sscom_softc *sc;
 	struct tty *tp;
@@ -621,7 +621,7 @@ sscomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		l->l_proc->p_ucred->cr_uid != 0)
+		p->p_ucred->cr_uid != 0)
 		return EBUSY;
 
 	s = spltty();
@@ -730,7 +730,7 @@ bad:
 }
  
 int
-sscomclose(dev_t dev, int flag, int mode, struct lwp *l)
+sscomclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -782,7 +782,7 @@ sscomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-sscompoll(dev_t dev, int events, struct lwp *l)
+sscompoll(dev_t dev, int events, struct proc *p)
 {
 	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -790,7 +790,7 @@ sscompoll(dev_t dev, int events, struct lwp *l)
 	if (SSCOM_ISALIVE(sc) == 0)
 		return EIO;
  
-	return (*tp->t_linesw->l_poll)(tp, events, l);
+	return (*tp->t_linesw->l_poll)(tp, events, p);
 }
 
 struct tty *
@@ -803,7 +803,7 @@ sscomtty(dev_t dev)
 }
 
 int
-sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct sscom_softc *sc = device_lookup(&sscom_cd, SSCOMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -813,11 +813,11 @@ sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	if (SSCOM_ISALIVE(sc) == 0)
 		return EIO;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, l);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return error;
 
@@ -848,7 +848,7 @@ sscomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
+		error = suser(p->p_ucred, &p->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

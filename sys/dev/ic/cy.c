@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.31 2003/06/28 14:21:34 darrenr Exp $	*/
+/*	$NetBSD: cy.c,v 1.32 2003/06/29 22:30:11 fvdl Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.31 2003/06/28 14:21:34 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.32 2003/06/29 22:30:11 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -272,7 +272,7 @@ cy_getport(dev_t dev)
  * open routine. returns zero if successful, else error code
  */
 int
-cyopen(dev_t dev, int flag, int mode, struct lwp *l)
+cyopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
@@ -372,8 +372,7 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
 			SET(tp->t_state, TS_CARR_ON);
 		else
 			CLR(tp->t_state, TS_CARR_ON);
-	} else if (ISSET(tp->t_state, TS_XCLUDE) &&
-	    l->l_proc->p_ucred->cr_uid != 0) {
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0) {
 		return EBUSY;
 	} else {
 		s = spltty();
@@ -402,7 +401,7 @@ cyopen(dev_t dev, int flag, int mode, struct lwp *l)
  * close routine. returns zero if successful, else error code
  */
 int
-cyclose(dev_t dev, int flag, int mode, struct lwp *l)
+cyclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
@@ -470,7 +469,10 @@ cywrite(dev_t dev, struct uio *uio, int flag)
  * Poll routine
  */
 int
-cypoll(dev_t dev, int events, struct lwp *l)
+cypoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
 {
 	struct cy_port *cy;
 	struct tty *tp;
@@ -478,7 +480,7 @@ cypoll(dev_t dev, int events, struct lwp *l)
 	cy = CY_PORT(dev);
 	tp = cy->cy_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*
@@ -498,24 +500,22 @@ cytty(dev_t dev)
  * ioctl routine
  */
 int
-cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cyioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct cy_softc *sc;
 	struct cy_port *cy;
-	struct proc *p;
 	struct tty *tp;
 	int error;
 
-	p = l ? l->l_proc : NULL;
 	cy = CY_PORT(dev);
 	sc = CY_BOARD(cy);
 	tp = cy->cy_tty;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return error;
 
-	error = ttioctl(tp, cmd, data, flag, l);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.6 2003/06/28 14:21:45 darrenr Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.7 2003/06/29 22:30:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@ sysmon_power_event_queue_flush(void)
  *	Open the system monitor device.
  */
 int
-sysmonopen_power(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonopen_power(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int error = 0;
 
@@ -151,7 +151,7 @@ sysmonopen_power(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sysmon_power_daemon != NULL)
 		error = EBUSY;
 	else {
-		sysmon_power_daemon = l->l_proc;
+		sysmon_power_daemon = p;
 		sysmon_power_event_queue_flush();
 	}
 	simple_unlock(&sysmon_power_event_queue_slock);
@@ -165,7 +165,7 @@ sysmonopen_power(dev_t dev, int flag, int mode, struct lwp *l)
  *	Close the system monitor device.
  */
 int
-sysmonclose_power(dev_t dev, int flag, int mode, struct lwp *l)
+sysmonclose_power(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int count;
 
@@ -225,7 +225,7 @@ sysmonread_power(dev_t dev, struct uio *uio, int flags)
  *	Poll the system monitor device.
  */
 int
-sysmonpoll_power(dev_t dev, int events, struct lwp *l)
+sysmonpoll_power(dev_t dev, int events, struct proc *p)
 {
 	int revents;
 
@@ -239,7 +239,7 @@ sysmonpoll_power(dev_t dev, int events, struct lwp *l)
 	if (sysmon_power_event_queue_count)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
-		selrecord(l, &sysmon_power_event_queue_selinfo);
+		selrecord(p, &sysmon_power_event_queue_selinfo);
 	simple_unlock(&sysmon_power_event_queue_slock);
 
 	return (revents);
@@ -310,7 +310,7 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
  *	Perform a power managmenet control request.
  */
 int
-sysmonioctl_power(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+sysmonioctl_power(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error = 0;
 

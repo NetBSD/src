@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.9 2003/06/28 14:21:16 darrenr Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.10 2003/06/29 22:29:12 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.9 2003/06/28 14:21:16 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10 2003/06/29 22:29:12 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -85,7 +85,7 @@ aoutm68k_compat_43_sys_stat(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -140,7 +140,7 @@ aoutm68k_compat_43_sys_lstat(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -171,7 +171,7 @@ aoutm68k_compat_12_sys_stat(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -226,7 +226,7 @@ aoutm68k_compat_12_sys_lstat(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -256,7 +256,7 @@ aoutm68k_sys___stat13(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 
@@ -312,7 +312,7 @@ aoutm68k_sys___lstat13(l, v, retval)
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(st));
 #ifdef COMPAT_AOUT_ALTPATH
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 #endif
 	SCARG(&cup, path) = SCARG(uap, path);
 

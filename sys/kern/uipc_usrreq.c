@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.61 2003/06/28 14:21:58 darrenr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.62 2003/06/29 22:31:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.61 2003/06/28 14:21:58 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.62 2003/06/29 22:31:32 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,15 +168,14 @@ unp_setpeeraddr(unp, nam)
 
 /*ARGSUSED*/
 int
-uipc_usrreq(so, req, m, nam, control, l)
+uipc_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct unpcb *unp = sotounpcb(so);
 	struct socket *so2;
-	struct proc *p;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
@@ -186,7 +185,6 @@ uipc_usrreq(so, req, m, nam, control, l)
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("uipc_usrreq: unexpected control mbuf");
 #endif
-	p = l ? l->l_proc : NULL;
 	if (unp == 0 && req != PRU_ATTACH) {
 		error = EINVAL;
 		goto release;
@@ -207,7 +205,7 @@ uipc_usrreq(so, req, m, nam, control, l)
 		break;
 
 	case PRU_BIND:
-		error = unp_bind(unp, nam, l);
+		error = unp_bind(unp, nam, p);
 		break;
 
 	case PRU_LISTEN:
@@ -216,7 +214,7 @@ uipc_usrreq(so, req, m, nam, control, l)
 		break;
 
 	case PRU_CONNECT:
-		error = unp_connect(so, nam, l);
+		error = unp_connect(so, nam, p);
 		break;
 
 	case PRU_CONNECT2:
@@ -284,7 +282,7 @@ uipc_usrreq(so, req, m, nam, control, l)
 					error = EISCONN;
 					goto die;
 				}
-				error = unp_connect(so, nam, l);
+				error = unp_connect(so, nam, p);
 				if (error) {
 				die:
 					m_freem(control);
@@ -555,23 +553,21 @@ unp_detach(unp)
 }
 
 int
-unp_bind(unp, nam, l)
+unp_bind(unp, nam, p)
 	struct unpcb *unp;
 	struct mbuf *nam;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sockaddr_un *sun;
 	struct vnode *vp;
 	struct vattr vattr;
 	size_t addrlen;
-	struct proc *p;
 	int error;
 	struct nameidata nd;
 
 	if (unp->unp_vnode != 0)
 		return (EINVAL);
 
-	p = l->l_proc;
 	/*
 	 * Allocate the new sockaddr.  We have to allocate one
 	 * extra byte so that we can ensure that the pathname
@@ -583,7 +579,7 @@ unp_bind(unp, nam, l)
 	*(((char *)sun) + nam->m_len) = '\0';
 
 	NDINIT(&nd, CREATE, FOLLOW | LOCKPARENT, UIO_SYSSPACE,
-	    sun->sun_path, l);
+	    sun->sun_path, p);
 
 /* SHOULD BE ABLE TO ADOPT EXISTING AND wakeup() ALA FIFO's */
 	if ((error = namei(&nd)) != 0)
@@ -602,7 +598,7 @@ unp_bind(unp, nam, l)
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS;
-	VOP_LEASE(nd.ni_dvp, l, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error)
 		goto bad;
@@ -620,10 +616,10 @@ unp_bind(unp, nam, l)
 }
 
 int
-unp_connect(so, nam, l)
+unp_connect(so, nam, p)
 	struct socket *so;
 	struct mbuf *nam;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sockaddr_un *sun;
 	struct vnode *vp;
@@ -644,7 +640,7 @@ unp_connect(so, nam, l)
 	m_copydata(nam, 0, nam->m_len, (caddr_t)sun);
 	*(((char *)sun) + nam->m_len) = '\0';
 
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, sun->sun_path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, sun->sun_path, p);
 
 	if ((error = namei(&nd)) != 0)
 		goto bad2;
@@ -653,7 +649,7 @@ unp_connect(so, nam, l)
 		error = ENOTSOCK;
 		goto bad;
 	}
-	if ((error = VOP_ACCESS(vp, VWRITE, l->l_proc->p_ucred, l)) != 0)
+	if ((error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p)) != 0)
 		goto bad;
 	so2 = vp->v_socket;
 	if (so2 == 0) {
@@ -808,8 +804,7 @@ int
 unp_externalize(rights)
 	struct mbuf *rights;
 {
-	struct lwp *l = curlwp;			/* XXX */
-	struct proc *p = l->l_proc;
+	struct proc *p = curproc;		/* XXX */
 	struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
 	int i, *fdp;
 	struct file **rp;
@@ -836,7 +831,7 @@ unp_externalize(rights)
 			if (fp->f_type == DTYPE_VNODE) {
 				struct vnode *vp = (struct vnode *)fp->f_data;
 				if ((vp->v_type == VDIR) &&
-				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
+				    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, p)) {
 					error = EPERM;
 					break;
 				}
@@ -1220,7 +1215,7 @@ unp_gc()
 		fp = *fpp;
 		simple_lock(&fp->f_slock);
 		FILE_USE(fp);
-		(void) closef(fp, (struct lwp *)0);
+		(void) closef(fp, (struct proc *)0);
 	}
 	free((caddr_t)extra_ref, M_FILE);
 	unp_gcing = 0;
@@ -1314,5 +1309,5 @@ unp_discard(fp)
 	fp->f_msgcount--;
 	simple_unlock(&fp->f_slock);
 	unp_rights--;
-	(void) closef(fp, (struct lwp *)0);
+	(void) closef(fp, (struct proc *)0);
 }

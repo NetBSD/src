@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.17 2003/06/29 18:43:39 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.18 2003/06/29 22:32:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -46,7 +46,7 @@ struct m_ext2fs;
 struct inode;
 struct mount;
 struct nameidata;
-struct lwp;
+struct proc;
 struct statfs;
 struct timeval;
 struct ucred;
@@ -110,18 +110,18 @@ void ext2fs_reinit __P((void));
 void ext2fs_done __P((void));
 int ext2fs_mountroot __P((void));
 int ext2fs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		   struct lwp *));
-int ext2fs_reload __P((struct mount *, struct ucred *, struct lwp *));
-int ext2fs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
-int ext2fs_unmount __P((struct mount *, int, struct lwp *));
-int ext2fs_flushfiles __P((struct mount *, int, struct lwp *));
-int ext2fs_statfs __P((struct mount *, struct statfs *, struct lwp *));
-int ext2fs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+		   struct proc *));
+int ext2fs_reload __P((struct mount *, struct ucred *, struct proc *));
+int ext2fs_mountfs __P((struct vnode *, struct mount *, struct proc *));
+int ext2fs_unmount __P((struct mount *, int, struct proc *));
+int ext2fs_flushfiles __P((struct mount *, int, struct proc *));
+int ext2fs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int ext2fs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int ext2fs_vget __P((struct mount *, ino_t, struct vnode **));
 int ext2fs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int ext2fs_vptofh __P((struct vnode *, struct fid *));
 int ext2fs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		       struct lwp *));
+		       struct proc *));
 int ext2fs_sbupdate __P((struct ufsmount *, int));
 int ext2fs_cgupdate __P((struct ufsmount *, int));
 

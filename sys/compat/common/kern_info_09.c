@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_09.c,v 1.11 2003/06/28 14:21:16 darrenr Exp $	*/
+/*	$NetBSD: kern_info_09.c,v 1.12 2003/06/29 22:29:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.11 2003/06/28 14:21:16 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_09.c,v 1.12 2003/06/29 22:29:13 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,12 +60,13 @@ compat_09_sys_getdomainname(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) domainname;
 		syscallarg(int) len;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int name;
 	size_t sz;
 
 	name = KERN_DOMAINNAME;
 	sz = SCARG(uap,len);
-	return (kern_sysctl(&name, 1, SCARG(uap, domainname), &sz, 0, 0, l));
+	return (kern_sysctl(&name, 1, SCARG(uap, domainname), &sz, 0, 0, p));
 }
 
 
@@ -85,7 +86,7 @@ compat_09_sys_setdomainname(struct lwp *l, void *v, register_t *retval)
 		return (error);
 	name = KERN_DOMAINNAME;
 	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
-			    SCARG(uap, len), l));
+			    SCARG(uap, len), p));
 }
 
 struct outsname {

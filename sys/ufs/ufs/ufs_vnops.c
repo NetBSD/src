@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.101 2003/06/29 18:43:48 thorpej Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.102 2003/06/29 22:32:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.101 2003/06/29 18:43:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.102 2003/06/29 22:32:48 fvdl Exp $");
 
 #ifndef _LKM
 #include "opt_quota.h"
@@ -383,20 +383,20 @@ ufs_setattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
+		struct proc	*a_p;
 	} */ *ap = v;
 	struct vattr	*vap;
 	struct vnode	*vp;
 	struct inode	*ip;
 	struct ucred	*cred;
-	struct lwp	*l;
+	struct proc	*p;
 	int		error;
 
 	vap = ap->a_vap;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
 	cred = ap->a_cred;
-	l = ap->a_l;
+	p = ap->a_p;
 
 	/*
 	 * Check for unsettable attributes.
@@ -411,7 +411,7 @@ ufs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_uid &&
-		    (error = suser(cred, &l->l_proc->p_acflag)))
+		    (error = suser(cred, &p->p_acflag)))
 			return (error);
 		if (cred->cr_uid == 0) {
 			if ((ip->i_flags & (SF_IMMUTABLE | SF_APPEND)) &&
@@ -442,7 +442,7 @@ ufs_setattr(void *v)
 	if (vap->va_uid != (uid_t)VNOVAL || vap->va_gid != (gid_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred, l->l_proc);
+		error = ufs_chown(vp, vap->va_uid, vap->va_gid, cred, p);
 		if (error)
 			return (error);
 	}
@@ -463,7 +463,7 @@ ufs_setattr(void *v)
 		default:
 			break;
 		}
-		error = VOP_TRUNCATE(vp, vap->va_size, 0, cred, l);
+		error = VOP_TRUNCATE(vp, vap->va_size, 0, cred, p);
 		if (error)
 			return (error);
 	}
@@ -473,9 +473,9 @@ ufs_setattr(void *v)
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
 		if (cred->cr_uid != ip->i_uid &&
-		    (error = suser(cred, &l->l_proc->p_acflag)) &&
+		    (error = suser(cred, &p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
-		    (error = VOP_ACCESS(vp, VWRITE, cred, l))))
+		    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
 		if (vap->va_atime.tv_sec != VNOVAL)
 			if (!(vp->v_mount->mnt_flag & MNT_NOATIME))
@@ -495,7 +495,7 @@ ufs_setattr(void *v)
 	if (vap->va_mode != (mode_t)VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
 			return (EROFS);
-		error = ufs_chmod(vp, (int)vap->va_mode, cred, l->l_proc);
+		error = ufs_chmod(vp, (int)vap->va_mode, cred, p);
 	}
 	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
@@ -983,7 +983,7 @@ ufs_rename(void *v)
 	 * to namei, as the parent directory is unlocked by the
 	 * call to checkpath().
 	 */
-	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_lwp);
+	error = VOP_ACCESS(fvp, VWRITE, tcnp->cn_cred, tcnp->cn_proc);
 	VOP_UNLOCK(fvp, 0);
 	if (oldparent != dp->i_number)
 		newparent = dp->i_number;
@@ -993,7 +993,7 @@ ufs_rename(void *v)
 		if (xp != NULL)
 			vput(tvp);
 		vref(tdvp);	/* compensate for the ref checkpath looses */
-		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred, tcnp->cn_lwp)) != 0) {
+		if ((error = ufs_checkpath(ip, dp, tcnp->cn_cred)) != 0) {
 			vrele(tdvp);
 			goto out;
 		}
@@ -1134,7 +1134,7 @@ ufs_rename(void *v)
 			DIP_ASSIGN(xp, nlink, xp->i_nlink);
 			xp->i_flag |= IN_CHANGE;
 			if ((error = VOP_TRUNCATE(tvp, (off_t)0, IO_SYNC,
-			    tcnp->cn_cred, tcnp->cn_lwp)))
+			    tcnp->cn_cred, tcnp->cn_proc)))
 				goto bad;
 		}
 		VN_KNOTE(tdvp, NOTE_WRITE);
@@ -1503,7 +1503,7 @@ ufs_rmdir(void *v)
 		DIP_ASSIGN(ip, nlink, ip->i_nlink);
 		ip->i_flag |= IN_CHANGE;
 		error = VOP_TRUNCATE(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
-		    cnp->cn_lwp);
+		    cnp->cn_proc);
 	}
 	cache_purge(vp);
  out:
@@ -1548,7 +1548,7 @@ ufs_symlink(void *v)
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred, NULL,
-		    (struct lwp *)0);
+		    (struct proc *)0);
 	if (error)
 		vput(vp);
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.165 2003/06/28 14:22:21 darrenr Exp $	*/
+/*	$NetBSD: proc.h,v 1.166 2003/06/29 22:32:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -125,7 +125,7 @@ struct emul {
 #endif
 					/* Emulation specific sysctl */
 	int		(*e_sysctl) __P((int *, u_int , void *, size_t *,
-				void *, size_t, struct lwp *l));
+				void *, size_t, struct proc *p));
 					/* Specific VM fault handling */
 	int		(*e_fault) __P((struct proc *, vaddr_t, int, int));
 };
@@ -450,7 +450,7 @@ void	cpu_wait __P((struct lwp *));
 
 void	child_return(void *);
 
-int	proc_isunder(struct proc *, struct lwp *);
+int	proc_isunder(struct proc *, struct proc *);
 
 void	proclist_lock_read(void);
 void	proclist_unlock_read(void);

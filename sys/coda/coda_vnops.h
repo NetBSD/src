@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.h,v 1.8 2003/06/29 18:43:22 thorpej Exp $	*/
+/*	$NetBSD: coda_vnops.h,v 1.9 2003/06/29 22:29:11 fvdl Exp $	*/
 
 /*
  * 
@@ -81,7 +81,7 @@ int coda_putpages  __P((void *));
 
 int (**coda_vnodeop_p)(void *);
 int coda_rdwr(struct vnode *vp, struct uio *uiop, enum uio_rw rw,
-    int ioflag, struct ucred *cred, struct lwp *l);
+    int ioflag, struct ucred *cred, struct proc *p);
 
 int coda_grab_vnode(dev_t dev, ino_t ino, struct vnode **vpp);
 void print_vattr(struct vattr *attr);

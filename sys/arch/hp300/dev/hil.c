@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.58 2003/06/29 15:58:19 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.59 2003/06/29 22:28:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.58 2003/06/29 15:58:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.59 2003/06/29 22:28:17 fvdl Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -239,10 +239,10 @@ hilattach_deferred(self)
 
 /* ARGSUSED */
 int
-hilopen(dev, flags, mode, l)
+hilopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
   	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
@@ -278,7 +278,7 @@ hilopen(dev, flags, mode, l)
 	 *	Multiple processes can open the device.
 	 */
 #ifdef COMPAT_HPUX
-	if (l->l_proc->p_emul == &emul_hpux) {
+	if (p->p_emul == &emul_hpux) {
 		if (dptr->hd_flags & (HIL_READIN|HIL_QUEUEIN))
 			return(EBUSY);
 		dptr->hd_flags |= HIL_READIN;
@@ -320,10 +320,10 @@ hilopen(dev, flags, mode, l)
 
 /* ARGSUSED */
 int
-hilclose(dev, flags, mode, l)
+hilclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
   	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
@@ -343,20 +343,20 @@ hilclose(dev, flags, mode, l)
 	if (HILUNIT(dev) && (dptr->hd_flags & HIL_PSEUDO))
 		return (0);
 
-	if (l && l->l_proc->p_emul == &emul_netbsd) {
+	if (p && p->p_emul == &emul_netbsd) {
 		/*
 		 * If this is the loop device,
 		 * free up all queues belonging to this process.
 		 */
 		if (HILUNIT(dev) == 0) {
 			for (i = 0; i < NHILQ; i++)
-				if (hilp->hl_queue[i].hq_procp == l->l_proc)
-					(void) hilqfree(hilp, i, l->l_proc);
+				if (hilp->hl_queue[i].hq_procp == p)
+					(void) hilqfree(hilp, i, p);
 		} else {
 			mask = ~hildevmask(HILUNIT(dev));
 			s = splhil();
 			for (i = 0; i < NHILQ; i++)
-				if (hilp->hl_queue[i].hq_procp == l->l_proc) {
+				if (hilp->hl_queue[i].hq_procp == p) {
 					dptr->hd_qmask &= ~hilqmask(i);
 					hilp->hl_queue[i].hq_devmask &= mask;
 				}
@@ -461,12 +461,12 @@ hilread(dev, uio, flag)
 }
 
 int
-hilioctl(dev, cmd, data, flag, l)
+hilioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
@@ -518,7 +518,7 @@ hilioctl(dev, cmd, data, flag, l)
 	}
 
 #ifdef COMPAT_HPUX
-	if (l->l_proc->p_emul == &emul_hpux)
+	if (p->p_emul == &emul_hpux)
 		return(hpuxhilioctl(dev, cmd, data, flag));
 #endif
 
@@ -599,20 +599,19 @@ hilioctl(dev, cmd, data, flag, l)
 		break;
 
         case HILIOCALLOCQ:
-		error = hilqalloc(hilp, (struct hilqinfo *)data, l->l_proc);
+		error = hilqalloc(hilp, (struct hilqinfo *)data, p);
 		break;
 
         case HILIOCFREEQ:
-		error = hilqfree(hilp, ((struct hilqinfo *)data)->qid,
-		    l->l_proc);
+		error = hilqfree(hilp, ((struct hilqinfo *)data)->qid, p);
 		break;
 
         case HILIOCMAPQ:
-		error = hilqmap(hilp, *(int *)data, HILUNIT(dev), l->l_proc);
+		error = hilqmap(hilp, *(int *)data, HILUNIT(dev), p);
 		break;
 
         case HILIOCUNMAPQ:
-		error = hilqunmap(hilp, *(int *)data, HILUNIT(dev), l->l_proc);
+		error = hilqunmap(hilp, *(int *)data, HILUNIT(dev), p);
 		break;
 
 	case HILIOCHPUX:
@@ -772,10 +771,10 @@ hpuxhilioctl(dev, cmd, data, flag)
 
 /*ARGSUSED*/
 int
-hilpoll(dev, events, l)
+hilpoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct hil_softc *hilp;
 	struct hilloopdev *dptr;
@@ -801,7 +800,7 @@ hilpoll(dev, events, l)
 		if (dptr->hd_queue.c_cc > 0)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(l, &dptr->hd_selr);
+			selrecord(p, &dptr->hd_selr);
 		splx(s);
 		return (revents);
 	}
@@ -829,14 +828,14 @@ hilpoll(dev, events, l)
 	 */
 	s = splhil();
 	for (qp = hilp->hl_queue; qp < &hilp->hl_queue[NHILQ]; qp++)
-		if (qp->hq_procp == l->l_proc && (mask & qp->hq_devmask) &&
+		if (qp->hq_procp == p && (mask & qp->hq_devmask) &&
 		    qp->hq_eventqueue->hil_evqueue.head !=
 		    qp->hq_eventqueue->hil_evqueue.tail) {
 			splx(s);
 			return (revents | (events & (POLLIN | POLLRDNORM)));
 		}
 
-	selrecord(l, &dptr->hd_selr);
+	selrecord(p, &dptr->hd_selr);
 	splx(s);
 	return (revents);
 }

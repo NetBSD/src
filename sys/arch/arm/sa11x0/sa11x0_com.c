@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.16 2003/06/29 11:10:37 ichiro Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.17 2003/06/29 22:28:11 fvdl Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -526,10 +526,10 @@ sacom_shutdown(sc)
 }
 
 int
-sacomopen(dev, flag, mode, l)
+sacomopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sacom_softc *sc;
 	struct tty *tp;
@@ -548,7 +548,7 @@ sacomopen(dev, flag, mode, l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		l->l_proc->p_ucred->cr_uid != 0)
+		p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -666,10 +666,10 @@ bad:
 }
  
 int
-sacomclose(dev, flag, mode, l)
+sacomclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -727,10 +727,10 @@ sacomwrite(dev, uio, flag)
 }
 
 int
-sacompoll(dev, events, l)
+sacompoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -738,7 +738,7 @@ sacompoll(dev, events, l)
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
  
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
@@ -752,12 +752,12 @@ sacomtty(dev)
 }
 
 int
-sacomioctl(dev, cmd, data, flag, l)
+sacomioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -767,11 +767,11 @@ sacomioctl(dev, cmd, data, flag, l)
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, l);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
@@ -802,7 +802,7 @@ sacomioctl(dev, cmd, data, flag, l)
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(l->l_proc->p_ucred, &l->l_proc->p_acflag); 
+		error = suser(p->p_ucred, &p->p_acflag); 
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.101 2003/06/29 18:58:28 ragge Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.102 2003/06/29 22:32:00 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -758,7 +758,7 @@ struct tcpcb *
 	 tcp_usrclosed __P((struct tcpcb *));
 int	 tcp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 int	 tcp_usrreq __P((struct socket *,
-	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *));
+	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *));
 void	 tcp_xmit_timer __P((struct tcpcb *, uint32_t));
 tcp_seq	 tcp_new_iss __P((struct tcpcb *, tcp_seq));
 tcp_seq  tcp_new_iss1 __P((void *, void *, u_int16_t, u_int16_t, size_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.50 2003/06/29 18:43:36 thorpej Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.51 2003/06/29 22:32:15 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.50 2003/06/29 18:43:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_nqlease.c,v 1.51 2003/06/29 22:32:15 fvdl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -172,12 +172,12 @@ extern struct nfsstats nfsstats;
  *     queue yet. (Ditto for the splsoftnet() and splx(s) calls)
  */
 int
-nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
+nqsrv_getlease(vp, duration, flags, slp, procp, nam, cachablep, frev, cred)
 	struct vnode *vp;
 	u_int32_t *duration;
 	int flags;
 	struct nfssvc_sock *slp;
-	struct lwp *lwp;
+	struct proc *procp;
 	struct mbuf *nam;
 	int *cachablep;
 	u_quad_t *frev;
@@ -196,7 +196,7 @@ nqsrv_getlease(vp, duration, flags, slp, lwp, nam, cachablep, frev, cred)
 		return (0);
 	if (*duration > nqsrv_maxlease)
 		*duration = nqsrv_maxlease;
-	error = VOP_GETATTR(vp, &vattr, cred, lwp);
+	error = VOP_GETATTR(vp, &vattr, cred, procp);
 	if (error)
 		return (error);
 	*frev = vattr.va_filerev;
@@ -709,10 +709,10 @@ nqnfs_serverd()
  * do the real work.
  */
 int
-nqnfsrv_getlease(nfsd, slp, lwp, mrq)
+nqnfsrv_getlease(nfsd, slp, procp, mrq)
 	struct nfsrv_descript *nfsd;
 	struct nfssvc_sock *slp;
-	struct lwp *lwp;
+	struct proc *procp;
 	struct mbuf **mrq;
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
@@ -750,9 +750,9 @@ nqnfsrv_getlease(nfsd, slp, lwp, mrq)
 		nfsm_reply(0);
 		return 0;
 	}
-	(void) nqsrv_getlease(vp, &nfsd->nd_duration, flags, slp, lwp,
+	(void) nqsrv_getlease(vp, &nfsd->nd_duration, flags, slp, procp,
 		nam, &cache, &frev, cred);
-	error = VOP_GETATTR(vp, &va, cred, lwp);
+	error = VOP_GETATTR(vp, &va, cred, procp);
 	vput(vp);
 	nfsm_reply(NFSX_V3FATTR + 4 * NFSX_UNSIGNED);
 	nfsm_build(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
@@ -769,10 +769,10 @@ nqnfsrv_getlease(nfsd, slp, lwp, mrq)
  * client. Find the entry and expire it.
  */
 int
-nqnfsrv_vacated(nfsd, slp, lwp, mrq)
+nqnfsrv_vacated(nfsd, slp, procp, mrq)
 	struct nfsrv_descript *nfsd;
 	struct nfssvc_sock *slp;
-	struct lwp *lwp;
+	struct proc *procp;
 	struct mbuf **mrq;
 {
 	struct mbuf *mrep = nfsd->nd_mrep, *md = nfsd->nd_md;
@@ -847,11 +847,11 @@ nfsmout:
  * Client get lease rpc function.
  */
 int
-nqnfs_getlease(vp, rwflag, cred, l)
+nqnfs_getlease(vp, rwflag, cred, p)
 	struct vnode *vp;
 	int rwflag;
 	struct ucred *cred;
-	struct lwp *l;
+	struct proc *p;
 {
 	u_int32_t *tl;
 	caddr_t cp;
@@ -874,7 +874,7 @@ nqnfs_getlease(vp, rwflag, cred, l)
 	*tl++ = txdr_unsigned(rwflag);
 	*tl = txdr_unsigned(nmp->nm_leaseterm);
 	reqtime = time.tv_sec;
-	nfsm_request(np, NQNFSPROC_GETLEASE, l, cred);
+	nfsm_request(np, NQNFSPROC_GETLEASE, p, cred);
 	nfsm_dissect(tl, u_int32_t *, 4 * NFSX_UNSIGNED);
 	cachable = fxdr_unsigned(int, *tl++);
 	reqtime += fxdr_unsigned(int, *tl++);
@@ -942,11 +942,10 @@ nfsmout:
  * Called for client side callbacks
  */
 int
-nqnfs_callback(nmp, mrep, md, dpos, l)
+nqnfs_callback(nmp, mrep, md, dpos)
 	struct nfsmount *nmp;
 	struct mbuf *mrep, *md;
 	caddr_t dpos;
-	struct lwp *l;
 {
 	struct vnode *vp;
 	u_int32_t *tl;
@@ -981,7 +980,7 @@ nqnfs_callback(nmp, mrep, md, dpos, l)
 	fhp = &nfh.fh_generic;
 	nfsm_srvmtofh(fhp);
 	m_freem(mrep);
-	error = nfs_nget(nmp->nm_mountp, (nfsfh_t *)fhp, NFSX_V3FH, &np, l);
+	error = nfs_nget(nmp->nm_mountp, (nfsfh_t *)fhp, NFSX_V3FH, &np);
 	if (error)
 		return (error);
 	vp = NFSTOV(np);
@@ -1015,7 +1014,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 	caddr_t argp;
 	struct lwp *l;
 {
-	struct proc *p = l ? l->l_proc : NULL;
+	struct proc *p = l->l_proc;
 #ifndef NFS_V2_ONLY
 	struct nfsnode *np;
 	struct vnode *vp;
@@ -1069,7 +1068,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
 		if (vfs_busy(nmp->nm_mountp, LK_NOWAIT, 0) != 0)
 			lockmgr(&syncer_lock, LK_EXCLUSIVE, NULL);
-		else if (dounmount(nmp->nm_mountp, 0, l) != 0)
+		else if (dounmount(nmp->nm_mountp, 0, p) != 0)
 			CLRSIG(p, CURSIG(l));
 		sleepreturn = 0;
 		continue;
@@ -1086,7 +1085,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 		    myrep.r_flags = R_GETONEREP;
 		    myrep.r_nmp = nmp;
 		    myrep.r_mrep = (struct mbuf *)0;
-		    myrep.r_lwp = (struct lwp *)0;
+		    myrep.r_procp = (struct proc *)0;
 		    (void) nfs_reply(&myrep);
 		}
 
@@ -1111,12 +1110,12 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 							nfs_invaldircache(vp,0);
 						cache_purge(vp);
 						(void) nfs_vinvalbuf(vp,
-						       V_SAVE, cred, l, 0);
+						       V_SAVE, cred, p, 0);
 						np->n_flag &= ~NQNFSEVICTED;
 						(void) nqnfs_vacated(vp, cred);
 					} else if (vp->v_type == VREG) {
 						(void) VOP_FSYNC(vp, cred,
-						    FSYNC_WAIT, 0, 0, l);
+						    FSYNC_WAIT, 0, 0, p);
 						np->n_flag &= ~NMODIFIED;
 					}
 				}
@@ -1131,7 +1130,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 				 vget(vp, LK_EXCLUSIVE) == 0) {
 				 nmp->nm_inprog = vp;
 				 if (vpid == vp->v_id &&
-				     nqnfs_getlease(vp, ND_WRITE, cred, l)==0)
+				     nqnfs_getlease(vp, ND_WRITE, cred, p)==0)
 					np->n_brev = np->n_lrev;
 				 vput(vp);
 				 nmp->nm_inprog = NULLVP;

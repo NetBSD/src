@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 2003/06/28 14:21:13 darrenr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117 2003/06/29 22:29:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1059,8 +1059,8 @@ nmihand(frame)
  *	done on little-endian machines...  -- cgd
  */
 int
-cpu_exec_aout_makecmds(l, epp)
-	struct lwp *l;
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 #if defined(COMPAT_NOMID) || defined(COMPAT_44)
@@ -1078,12 +1078,12 @@ cpu_exec_aout_makecmds(l, epp)
 	switch (midmag) {
 #ifdef COMPAT_NOMID
 	case (MID_ZERO << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
+		error = exec_aout_prep_oldzmagic(p, epp);
 		break;
 #endif
 #ifdef COMPAT_44
 	case (MID_HP300 << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l->l_proc, epp);
+		error = exec_aout_prep_oldzmagic(p, epp);
 		break;
 #endif
 	default:

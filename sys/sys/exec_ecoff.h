@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.h,v 1.14 2003/06/28 14:22:20 darrenr Exp $	*/
+/*	$NetBSD: exec_ecoff.h,v 1.15 2003/06/29 22:32:23 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -103,7 +103,7 @@ struct ecoff_exechdr {
          ECOFF_SEGMENT_ALIGNMENT(ep))))
 
 #ifdef _KERNEL
-int	exec_ecoff_makecmds __P((struct lwp *, struct exec_package *));
+int	exec_ecoff_makecmds __P((struct proc *, struct exec_package *));
 int	exec_ecoff_setup_stack __P((struct proc *, struct exec_package *));
 int	cpu_exec_ecoff_probe __P((struct proc *, struct exec_package *));
 void	cpu_exec_ecoff_setregs __P((struct lwp *, struct exec_package *,

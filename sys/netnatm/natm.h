@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.h,v 1.4 2003/06/28 14:22:14 darrenr Exp $	*/
+/*	$NetBSD: natm.h,v 1.5 2003/06/29 22:32:08 fvdl Exp $	*/
 
 /*
  *
@@ -143,7 +143,7 @@ struct	natmpcb *npcb_add __P((struct natmpcb *, struct ifnet *, int, int));
 /* natm.c */
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int	natm_usrreq __P((struct socket *, int, struct mbuf *,
-                             struct mbuf *, struct mbuf *, struct lwp *));
+                             struct mbuf *, struct mbuf *, struct proc *));
 #elif defined(__FreeBSD__)
 int	natm_usrreq __P((struct socket *, int, struct mbuf *,
                              struct mbuf *, struct mbuf *));

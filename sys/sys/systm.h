@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.162 2003/06/28 14:22:22 darrenr Exp $	*/
+/*	$NetBSD: systm.h,v 1.163 2003/06/29 22:32:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -179,7 +179,7 @@ struct malloc_type;
 void	*hashinit __P((u_int, enum hashtype, struct malloc_type *,
 	    int, u_long *));
 void	hashdone __P((void *, struct malloc_type *));
-int	seltrue __P((dev_t, int, struct lwp *));
+int	seltrue __P((dev_t, int, struct proc *));
 int	sys_nosys __P((struct lwp *, void *, register_t *));
 
 
@@ -319,14 +319,14 @@ void	domountroothook __P((void));
  * Exec hooks. Subsystems may want to do cleanup when a process
  * execs.
  */
-void	*exechook_establish __P((void (*)(struct lwp *, void *), void *));
+void	*exechook_establish __P((void (*)(struct proc *, void *), void *));
 void	exechook_disestablish __P((void *));
 void	doexechooks __P((struct proc *));
 
 /*
  * Exit hooks. Subsystems may want to do cleanup when a process exits.
  */
-void	*exithook_establish __P((void (*)(struct lwp *, void *), void *));
+void	*exithook_establish __P((void (*)(struct proc *, void *), void *));
 void	exithook_disestablish __P((void *));
 void	doexithooks __P((struct proc *));
 

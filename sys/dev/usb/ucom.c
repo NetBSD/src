@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.50 2003/06/28 14:21:46 darrenr Exp $	*/
+/*	$NetBSD: ucom.c,v 1.51 2003/06/29 22:30:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.50 2003/06/28 14:21:46 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.51 2003/06/29 22:30:55 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ Static int	ucomparam(struct tty *, struct termios *);
 Static void	ucomstart(struct tty *);
 Static void	ucom_shutdown(struct ucom_softc *);
 Static int	ucom_do_ioctl(struct ucom_softc *, u_long, caddr_t,
-			      int, struct lwp *);
+			      int, usb_proc_ptr);
 Static void	ucom_dtr(struct ucom_softc *, int);
 Static void	ucom_rts(struct ucom_softc *, int);
 Static void	ucom_break(struct ucom_softc *, int);
@@ -300,11 +300,10 @@ ucom_shutdown(struct ucom_softc *sc)
 }
 
 int
-ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
+ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	int unit = UCOMUNIT(dev);
 	usbd_status err;
-	struct proc *p = l->l_proc;
 	struct ucom_softc *sc;
 	struct tty *tp;
 	int s;
@@ -496,7 +495,7 @@ bad:
 }
 
 int
-ucomclose(dev_t dev, int flag, int mode, struct lwp *l)
+ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -563,7 +562,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-ucompoll(dev_t dev, int events, struct lwp *l)
+ucompoll(dev_t dev, int events, usb_proc_ptr p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -573,7 +572,7 @@ ucompoll(dev_t dev, int events, struct lwp *l)
 		return (EIO);
 
 	sc->sc_refcnt++;
-	error = ((*tp->t_linesw->l_poll)(tp, events, l));
+	error = ((*tp->t_linesw->l_poll)(tp, events, p));
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
@@ -589,13 +588,13 @@ ucomtty(dev_t dev)
 }
 
 int
-ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 {
 	struct ucom_softc *sc = ucom_cd.cd_devs[UCOMUNIT(dev)];
 	int error;
 
 	sc->sc_refcnt++;
-	error = ucom_do_ioctl(sc, cmd, data, flag, l);
+	error = ucom_do_ioctl(sc, cmd, data, flag, p);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
@@ -603,10 +602,9 @@ ucomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 Static int
 ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
-	      int flag, struct lwp *l)
+	      int flag, usb_proc_ptr p)
 {
 	struct tty *tp = sc->sc_tty;
-	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
@@ -615,17 +613,17 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 
 	DPRINTF(("ucomioctl: cmd=0x%08lx\n", cmd));
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, l);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
 	if (sc->sc_methods->ucom_ioctl != NULL) {
 		error = sc->sc_methods->ucom_ioctl(sc->sc_parent,
-			    sc->sc_portno, cmd, data, flag, l->l_proc);
+			    sc->sc_portno, cmd, data, flag, p);
 		if (error != EPASSTHROUGH)
 			return (error);
 	}

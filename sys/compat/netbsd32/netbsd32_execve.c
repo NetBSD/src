@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.16 2003/06/29 13:35:38 martin Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.17 2003/06/29 22:29:37 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.16 2003/06/29 13:35:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.17 2003/06/29 22:29:37 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -88,7 +88,7 @@ netbsd32_execve(l, v, retval)
 	NETBSD32TOP_UAP(argp, char *);
 	NETBSD32TOP_UAP(envp, char *);
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(&ua, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return netbsd32_execve2(l, &ua, retval);
 }
@@ -126,7 +126,7 @@ netbsd32_execve2(l, uap, retval)
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
 	/*
 	 * initialize the fields of the exec package.
@@ -147,7 +147,7 @@ netbsd32_execve2(l, uap, retval)
 #endif
 
 	/* see if we can run it. */
-	if ((error = check_exec(l, &pack)) != 0)
+	if ((error = check_exec(p, &pack)) != 0)
 		goto freehdr;
 
 	/* XXX -- THE FOLLOWING SECTION NEEDS MAJOR CLEANUP */
@@ -286,7 +286,7 @@ netbsd32_execve2(l, uap, retval)
 #endif
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
-		error = (*vcp->ev_proc)(l, vcp);
+		error = (*vcp->ev_proc)(p, vcp);
 #ifdef DEBUG
 		if (error) {
 			int j;
@@ -318,7 +318,7 @@ netbsd32_execve2(l, uap, retval)
 
 	stack = (char *) (vm->vm_minsaddr - len);
 	/* Now copy argc, args & environ to new stack */
-	error = (*pack.ep_es->es_copyargs)(l, &pack, &arginfo,
+	error = (*pack.ep_es->es_copyargs)(p, &pack, &arginfo,
 	    &stack, argp);
 	if (error) {
 #ifdef DEBUG
@@ -362,7 +362,7 @@ netbsd32_execve2(l, uap, retval)
 	}
 
 	stopprofclock(p);	/* stop profiling */
-	fdcloseexec(l);		/* handle close on exec */
+	fdcloseexec(p);		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 	l->l_ctxlink = NULL;	/* reset ucontext link */
 
@@ -425,7 +425,7 @@ netbsd32_execve2(l, uap, retval)
 
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 
 	/* setup new registers and do misc. setup. */
@@ -464,7 +464,7 @@ netbsd32_execve2(l, uap, retval)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_EMUL))
-		ktremul(l);
+		ktremul(p);
 #endif
 
 #if defined(LKM) || defined(_LKM)
@@ -479,11 +479,11 @@ bad:
 	/* kill any opened file descriptor, if necessary */
 	if (pack.ep_flags & EXEC_HASFD) {
 		pack.ep_flags &= ~EXEC_HASFD;
-		(void) fdrelease(l, pack.ep_fd);
+		(void) fdrelease(p, pack.ep_fd);
 	}
 	/* close and put the exec'd file */
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
@@ -512,7 +512,7 @@ exec_abort:
 		FREE(pack.ep_emul_arg, M_TEMP);
 	PNBUF_PUT(nid.ni_cnd.cn_pnbuf);
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
-	VOP_CLOSE(pack.ep_vp, FREAD, cred, l);
+	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 	free(pack.ep_hdr, M_EXEC);

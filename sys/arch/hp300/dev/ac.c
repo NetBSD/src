@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.19 2003/06/29 15:58:19 thorpej Exp $	*/
+/*	$NetBSD: ac.c,v 1.20 2003/06/29 22:28:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.19 2003/06/29 15:58:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac.c,v 1.20 2003/06/29 22:28:15 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,10 +186,10 @@ acattach(parent, self, aux)
 
 /*ARGSUSED*/
 int
-acopen(dev, flag, mode, l)
+acopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = minor(dev);
 	struct ac_softc *sc;
@@ -215,10 +215,10 @@ acopen(dev, flag, mode, l)
 
 /*ARGSUSED*/
 int
-acclose(dev, flag, mode, l)
+acclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ac_softc *sc = ac_cd.cd_devs[minor(dev)];
 
@@ -231,12 +231,12 @@ acclose(dev, flag, mode, l)
 
 /*ARGSUSED*/
 int
-acioctl(dev, cmd, data, flag, l)
+acioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data; 
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ac_softc *sc = ac_cd.cd_devs[minor(dev)];
 	char *dp;

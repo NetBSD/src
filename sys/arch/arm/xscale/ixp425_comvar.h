@@ -1,4 +1,4 @@
-/*      $NetBSD: ixp425_comvar.h,v 1.4 2003/06/29 10:51:31 ichiro Exp $        */
+/*      $NetBSD: ixp425_comvar.h,v 1.5 2003/06/29 22:28:12 fvdl Exp $        */
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
  *
@@ -77,19 +77,14 @@ struct ixp4xx_com_softc {
  	volatile u_int		sc_rbavail;
 
 	/* status flags */
-	int			sc_hwflags,
-				sc_swflags;
+	int			sc_hwflags, sc_swflags;
+
 	volatile u_int		sc_rx_flags,
 				sc_tx_busy,
 				sc_tx_done,
 				sc_tx_stopped,
 				sc_st_check,
 				sc_rx_ready;
-	u_int			sc_overflows,
-				sc_floods,
-				sc_errors;
-	u_int			sc_r_hiwat,
-				sc_r_lowat;
 	volatile int		sc_heldchange;
 	volatile int		sc_msr, sc_msr_delta, sc_msr_mask, sc_mcr,
 				sc_mcr_active, sc_lcr, sc_ier, sc_fcr,

@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.59 2003/06/29 15:58:20 thorpej Exp $	*/
+/*	$NetBSD: rd.c,v 1.60 2003/06/29 22:28:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.59 2003/06/29 15:58:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.60 2003/06/29 22:28:18 fvdl Exp $");
 
 #include "opt_useleds.h"
 #include "rnd.h"
@@ -576,10 +576,10 @@ rdgetinfo(dev)
 }
 
 int
-rdopen(dev, flags, mode, l)
+rdopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = rdunit(dev);
 	struct rd_softc *rs;
@@ -635,10 +635,10 @@ rdopen(dev, flags, mode, l)
 }
 
 int
-rdclose(dev, flag, mode, l)
+rdclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = rdunit(dev);
 	struct rd_softc *rs = rd_cd.cd_devs[unit];
@@ -1147,12 +1147,12 @@ rdwrite(dev, uio, flags)
 }
 
 int
-rdioctl(dev, cmd, data, flag, l)
+rdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = rdunit(dev);
 	struct rd_softc *sc = rd_cd.cd_devs[unit];

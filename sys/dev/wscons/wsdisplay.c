@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.74 2003/06/28 14:21:47 darrenr Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.75 2003/06/29 22:31:02 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.74 2003/06/28 14:21:47 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.75 2003/06/29 22:31:02 fvdl Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_compat_netbsd.h"
@@ -671,7 +671,7 @@ wsdisplay_cnattach(const struct wsscreen_descr *type, void *cookie,
  * Tty and cdevsw functions.
  */
 int
-wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
+wsdisplayopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
@@ -684,7 +684,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISWSDISPLAYSTAT(dev)) {
 		wsevent_init(&sc->evar);
-		sc->evar.io = l->l_proc;
+		sc->evar.io = p;
 		return (0);
 	}
 
@@ -713,7 +713,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 			wsdisplayparam(tp, &tp->t_termios);
 			ttsetwater(tp);
 		} else if ((tp->t_state & TS_XCLUDE) != 0 &&
-			   l->l_proc->p_ucred->cr_uid != 0)
+			   p->p_ucred->cr_uid != 0)
 			return EBUSY;
 		tp->t_state |= TS_CARR_ON;
 
@@ -736,7 +736,7 @@ wsdisplayopen(dev_t dev, int flag, int mode, struct lwp *l)
 }
 
 int
-wsdisplayclose(dev_t dev, int flag, int mode, struct lwp *l)
+wsdisplayclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
@@ -785,7 +785,7 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct lwp *l)
 	if (scr->scr_rawkbd) {
 		int kbmode = WSKBD_TRANSLATED;
 		(void)wsdisplay_internal_ioctl(sc, scr, WSKBDIO_SETMODE,
-					       (caddr_t)&kbmode, 0, l);
+					       (caddr_t)&kbmode, 0, p);
 	}
 #endif
 
@@ -847,7 +847,7 @@ wsdisplaywrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-wsdisplaypoll(dev_t dev, int events, struct lwp *l)
+wsdisplaypoll(dev_t dev, int events, struct proc *p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
@@ -856,7 +856,7 @@ wsdisplaypoll(dev_t dev, int events, struct lwp *l)
 	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 	if (ISWSDISPLAYSTAT(dev))
-		return (wsevent_poll(&sc->evar, events, l));
+		return (wsevent_poll(&sc->evar, events, p));
 
 	if (ISWSDISPLAYCTL(dev))
 		return (0);
@@ -867,7 +867,7 @@ wsdisplaypoll(dev_t dev, int events, struct lwp *l)
 		return (ENODEV);
 
 	tp = scr->scr_tty;
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
@@ -910,7 +910,7 @@ wsdisplaytty(dev_t dev)
 }
 
 int
-wsdisplayioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+wsdisplayioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct wsdisplay_softc *sc;
 	struct tty *tp;
@@ -920,16 +920,16 @@ wsdisplayioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
 
 #ifdef WSDISPLAY_COMPAT_USL
-	error = wsdisplay_usl_ioctl1(sc, cmd, data, flag, l);
+	error = wsdisplay_usl_ioctl1(sc, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 #endif
 
 	if (ISWSDISPLAYSTAT(dev))
-		return (wsdisplay_stat_ioctl(sc, cmd, data, flag, l));
+		return (wsdisplay_stat_ioctl(sc, cmd, data, flag, p));
 
 	if (ISWSDISPLAYCTL(dev))
-		return (wsdisplay_cfg_ioctl(sc, cmd, data, flag, l));
+		return (wsdisplay_cfg_ioctl(sc, cmd, data, flag, p));
 
 	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
 
@@ -938,24 +938,24 @@ wsdisplayioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 /* printf("disc\n"); */
 		/* do the line discipline ioctls first */
-		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 		if (error != EPASSTHROUGH)
 			return (error);
 
 /* printf("tty\n"); */
 		/* then the tty ioctls */
-		error = ttioctl(tp, cmd, data, flag, l);
+		error = ttioctl(tp, cmd, data, flag, p);
 		if (error != EPASSTHROUGH)
 			return (error);
 	}
 
 #ifdef WSDISPLAY_COMPAT_USL
-	error = wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, l);
+	error = wsdisplay_usl_ioctl2(sc, scr, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 #endif
 
-	return (wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, l));
+	return (wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p));
 }
 
 int
@@ -968,7 +968,7 @@ wsdisplay_param(struct device *dev, u_long cmd, struct wsdisplay_param *dp)
 
 int
 wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
-	u_long cmd, caddr_t data, int flag, struct lwp *l)
+	u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int error;
 	char namebuf[16];
@@ -991,7 +991,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 	inp = sc->sc_input;
 	if (inp == NULL)
 		return (ENXIO);
-	error = wsevsrc_display_ioctl(inp, cmd, data, flag, l);
+	error = wsevsrc_display_ioctl(inp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 #endif /* NWSKBD > 0 */
@@ -1017,7 +1017,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		    return (EINVAL);
 
 	    (void)(*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
-		    flag, l);
+		    flag, p);
 
 	    return (0);
 #undef d
@@ -1065,12 +1065,12 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 
 	/* check ioctls for display */
 	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
-	    flag, l));
+	    flag, p));
 }
 
 int
 wsdisplay_stat_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-	int flag, struct lwp *l)
+	int flag, struct proc *p)
 {
 	switch (cmd) {
 	case WSDISPLAYIO_GETACTIVESCREEN:
@@ -1083,7 +1083,7 @@ wsdisplay_stat_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 
 int
 wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-	int flag, struct lwp *l)
+	int flag, struct proc *p)
 {
 	int error;
 	char *type, typebuf[16], *emul, emulbuf[16];
@@ -1168,12 +1168,12 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 			wsmuxdata.type = WSMUX_KBD;
 			wsmuxdata.idx = d->idx;
 			return (wsevsrc_ioctl(inp, WSMUX_ADD_DEVICE,
-					      &wsmuxdata, flag, l));
+					      &wsmuxdata, flag, p));
 		case _O_WSDISPLAY_KBD_DEL:
 			wsmuxdata.type = WSMUX_KBD;
 			wsmuxdata.idx = d->idx;
 			return (wsevsrc_ioctl(inp, WSMUX_REMOVE_DEVICE,
-					      &wsmuxdata, flag, l));
+					      &wsmuxdata, flag, p));
 		default:
 			return (EINVAL);
 		}
@@ -1192,7 +1192,7 @@ wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 		inp = sc->sc_input;
 		if (inp == NULL)
 			return (ENXIO);
-		return (wsevsrc_ioctl(inp, cmd, data, flag, l));
+		return (wsevsrc_ioctl(inp, cmd, data, flag, p));
 #endif /* NWSKBD > 0 */
 
 	}

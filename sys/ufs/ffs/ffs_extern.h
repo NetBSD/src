@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.31 2003/06/29 18:43:41 thorpej Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.32 2003/06/29 22:32:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -57,23 +57,23 @@
 	{ "log_changeopt", CTLTYPE_INT }, \
 }
 
-struct cg;
 struct buf;
 struct fid;
 struct fs;
 struct inode;
-struct lwp;
-struct mbuf;
+struct ufs1_dinode;
+struct ufs2_dinode;
 struct mount;
 struct nameidata;
+struct proc;
 struct statfs;
 struct timeval;
 struct ucred;
-struct ufs1_dinode;
-struct ufs2_dinode;
 struct ufsmount;
 struct uio;
 struct vnode;
+struct mbuf;
+struct cg;
 
 extern struct pool ffs_inode_pool;	/* memory pool for inodes */
 extern struct pool ffs_dinode1_pool;	/* memory pool for UFS1 dinodes */
@@ -128,18 +128,18 @@ void ffs_reinit __P((void));
 void ffs_done __P((void));
 int ffs_mountroot __P((void));
 int ffs_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		   struct lwp *));
-int ffs_reload __P((struct mount *, struct ucred *, struct lwp *));
-int ffs_mountfs __P((struct vnode *, struct mount *, struct lwp *));
-int ffs_unmount __P((struct mount *, int, struct lwp *));
-int ffs_flushfiles __P((struct mount *, int, struct lwp *));
-int ffs_statfs __P((struct mount *, struct statfs *, struct lwp *));
-int ffs_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+		   struct proc *));
+int ffs_reload __P((struct mount *, struct ucred *, struct proc *));
+int ffs_mountfs __P((struct vnode *, struct mount *, struct proc *));
+int ffs_unmount __P((struct mount *, int, struct proc *));
+int ffs_flushfiles __P((struct mount *, int, struct proc *));
+int ffs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int ffs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int ffs_vget __P((struct mount *, ino_t, struct vnode **));
 int ffs_fhtovp __P((struct mount *, struct fid *, struct vnode **));
 int ffs_vptofh __P((struct vnode *, struct fid *));
 int ffs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		    struct lwp *));
+		    struct proc *));
 int ffs_sbupdate __P((struct ufsmount *, int));
 int ffs_cgupdate __P((struct ufsmount *, int));
 
@@ -167,7 +167,7 @@ void	softdep_initialize __P((void));
 void	softdep_reinitialize __P((void));
 int	softdep_mount __P((struct vnode *, struct mount *, struct fs *,
 	    struct ucred *));
-int	softdep_flushfiles __P((struct mount *, int, struct lwp *));
+int	softdep_flushfiles __P((struct mount *, int, struct proc *));
 void	softdep_update_inodeblock __P((struct inode *, struct buf *, int));
 void	softdep_load_inodeblock __P((struct inode *));
 void	softdep_freefile __P((void *));

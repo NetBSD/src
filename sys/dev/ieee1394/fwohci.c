@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.77 2003/06/28 14:21:35 darrenr Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.78 2003/06/29 22:30:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.77 2003/06/28 14:21:35 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.78 2003/06/29 22:30:16 fvdl Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -178,7 +178,7 @@ int fwohci_ir_ctx_clear(struct device *, ieee1394_ir_tag_t);
 int fwohci_ir_read(struct device *, ieee1394_ir_tag_t, struct uio *,
     int, int);
 int fwohci_ir_wait(struct device *, ieee1394_ir_tag_t, void *, char *name);
-int fwohci_ir_select(struct device *, ieee1394_ir_tag_t, struct lwp *);
+int fwohci_ir_select(struct device *, ieee1394_ir_tag_t, struct proc *);
 
 
 
@@ -5295,12 +5295,12 @@ fwohci_ir_wait(struct device *dev, ieee1394_ir_tag_t tag, void *wchan, char *nam
 
 /*
  * int fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag,
- *			   struct lwp *l)
+ *			   struct proc *p)
  *
  *	This function returns the number of packets in queue.
  */
 int
-fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag, struct lwp *l)
+fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag, struct proc *p)
 {
 	struct fwohci_ir_ctx *irc = (struct fwohci_ir_ctx *)tag;
 	int pktnum;
@@ -5311,7 +5311,7 @@ fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag, struct lwp *l)
 	}
 
 	if ((pktnum = fwohci_ir_ctx_packetnum(irc)) == 0) {
-		selrecord(l, &irc->irc_sel);
+		selrecord(p, &irc->irc_sel);
 	}
 
 	return pktnum;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec_aout.c,v 1.7 2003/06/28 14:21:18 darrenr Exp $	*/
+/*	$NetBSD: hpux_exec_aout.c,v 1.8 2003/06/29 22:29:18 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.7 2003/06/28 14:21:18 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec_aout.c,v 1.8 2003/06/29 22:29:18 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,8 @@ static	int exec_hpux_prep_zmagic __P((struct proc *, struct exec_package *));
 static	int exec_hpux_prep_omagic __P((struct proc *, struct exec_package *));
 
 int
-exec_hpux_makecmds(l, epp)
-	struct lwp *l;
+exec_hpux_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	struct hpux_exec *hpux_ep = epp->ep_hdr;
@@ -129,15 +129,15 @@ exec_hpux_makecmds(l, epp)
 
 	switch (magic) {
 	case OMAGIC:
-		error = exec_hpux_prep_omagic(l->l_proc, epp);
+		error = exec_hpux_prep_omagic(p, epp);
 		break;
 
 	case NMAGIC:
-		error = exec_hpux_prep_nmagic(l->l_proc, epp);
+		error = exec_hpux_prep_nmagic(p, epp);
 		break;
 
 	case ZMAGIC:
-		error = exec_hpux_prep_zmagic(l->l_proc, epp);
+		error = exec_hpux_prep_zmagic(p, epp);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.51 2003/06/28 14:22:09 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.52 2003/06/29 22:31:56 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -569,12 +569,12 @@ extern	int	iplidentify __P((char *));
       (NetBSD >= 199511) || defined(__OpenBSD__)
 #    if defined(__NetBSD__) || (_BSDI_VERSION >= 199701) || \
        defined(__OpenBSD__) || (__FreeBSD_version >= 300000)
-extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct lwp *));
+extern	int	iplioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 #    else
 extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
 #    endif
-extern	int	iplopen __P((dev_t, int, int, struct lwp *));
-extern	int	iplclose __P((dev_t, int, int, struct lwp *));
+extern	int	iplopen __P((dev_t, int, int, struct proc *));
+extern	int	iplclose __P((dev_t, int, int, struct proc *));
 #   else
 #    ifndef	linux
 extern	int	iplopen __P((dev_t, int));

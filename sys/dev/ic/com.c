@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.215 2003/06/29 14:09:21 simonb Exp $	*/
+/*	$NetBSD: com.c,v 1.216 2003/06/29 22:30:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.215 2003/06/29 14:09:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.216 2003/06/29 22:30:10 fvdl Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -810,7 +810,7 @@ com_shutdown(struct com_softc *sc)
 }
 
 int
-comopen(dev_t dev, int flag, int mode, struct lwp *l)
+comopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct com_softc *sc;
 	struct tty *tp;
@@ -837,7 +837,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (ISSET(tp->t_state, TS_ISOPEN) &&
 	    ISSET(tp->t_state, TS_XCLUDE) &&
-		l->l_proc->p_ucred->cr_uid != 0)
+		p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 
 	s = spltty();
@@ -964,7 +964,7 @@ bad:
 }
  
 int
-comclose(dev_t dev, int flag, int mode, struct lwp *l)
+comclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -1016,7 +1016,7 @@ comwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-compoll(dev_t dev, int events, struct lwp *l)
+compoll(dev_t dev, int events, struct proc *p)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
@@ -1024,7 +1024,7 @@ compoll(dev_t dev, int events, struct lwp *l)
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
  
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
@@ -1037,22 +1037,21 @@ comtty(dev_t dev)
 }
 
 int
-comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+comioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
-	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, l);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 

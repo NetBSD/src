@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.91 2003/06/28 14:22:17 darrenr Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.92 2003/06/29 22:32:17 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.91 2003/06/28 14:22:17 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.92 2003/06/29 22:32:17 fvdl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -202,7 +202,7 @@ nfs_connect(nmp, rep)
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
 		sin->sin_port = 0;
-		error = sobind(so, m, &lwp0);
+		error = sobind(so, m, &proc0);
 		m_freem(m);
 		if (error)
 			goto bad;
@@ -222,7 +222,7 @@ nfs_connect(nmp, rep)
 		sin6->sin6_family = AF_INET6;
 		sin6->sin6_addr = in6addr_any;
 		sin6->sin6_port = 0;
-		error = sobind(so, m, &lwp0);
+		error = sobind(so, m, &proc0);
 		m_freem(m);
 		if (error)
 			goto bad;
@@ -254,7 +254,7 @@ nfs_connect(nmp, rep)
 				"nfscn1", 2 * hz);
 			if ((so->so_state & SS_ISCONNECTING) &&
 			    so->so_error == 0 && rep &&
-			    (error = nfs_sigintr(nmp, rep, rep->r_lwp)) != 0){
+			    (error = nfs_sigintr(nmp, rep, rep->r_procp)) != 0){
 				so->so_state &= ~SS_ISCONNECTING;
 				splx(s);
 				goto bad;
@@ -528,7 +528,7 @@ nfs_receive(rep, aname, mp)
 	u_int32_t len;
 	struct mbuf **getnam;
 	int error, sotype, rcvflg;
-	struct lwp *l = curlwp;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 
 	/*
 	 * Set up arguments for soreceive()
@@ -595,7 +595,7 @@ tryagain:
 			auio.uio_rw = UIO_READ;
 			auio.uio_offset = 0;
 			auio.uio_resid = sizeof(u_int32_t);
-			auio.uio_lwp = l;
+			auio.uio_procp = p;
 			do {
 			   rcvflg = MSG_WAITALL;
 			   error = (*so->so_receive)(so, (struct mbuf **)0, &auio,
@@ -660,7 +660,7 @@ tryagain:
 			 * on.
 			 */
 			auio.uio_resid = len = 100000000; /* Anything Big */
-			auio.uio_lwp = l;
+			auio.uio_procp = p;
 			do {
 			    rcvflg = 0;
 			    error =  (*so->so_receive)(so, (struct mbuf **)0,
@@ -704,7 +704,7 @@ errout:
 		else
 			getnam = aname;
 		auio.uio_resid = len = 1000000;
-		auio.uio_lwp = l;
+		auio.uio_procp = p;
 		do {
 			rcvflg = 0;
 			error =  (*so->so_receive)(so, getnam, &auio, mp,
@@ -802,8 +802,7 @@ nfs_reply(myrep)
 		if (*tl != rpc_reply) {
 #ifndef NFS_V2_ONLY
 			if (nmp->nm_flag & NFSMNT_NQNFS) {
-				if (nqnfs_callback(nmp, mrep, md, dpos,
-				    myrep->r_lwp))
+				if (nqnfs_callback(nmp, mrep, md, dpos))
 					nfsstats.rpcinvalid++;
 			} else
 #endif
@@ -912,11 +911,11 @@ nfsmout:
  * nb: always frees up mreq mbuf list
  */
 int
-nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp)
+nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct nfsnode *np;
 	struct mbuf *mrest;
 	int procnum;
-	struct lwp *lwp;
+	struct proc *procp;
 	struct ucred *cred;
 	struct mbuf **mrp;
 	struct mbuf **mdp;
@@ -946,7 +945,7 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp)
 	nmp = VFSTONFS(np->n_vnode->v_mount);
 	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
 	rep->r_nmp = nmp;
-	rep->r_lwp = lwp;
+	rep->r_procp = procp;
 	rep->r_procnum = procnum;
 	i = 0;
 	m = mrest;
@@ -1075,7 +1074,7 @@ tryagain:
 	 * tprintf a response.
 	 */
 	if (!error && (rep->r_flags & R_TPRINTFMSG))
-		nfs_msg(rep->r_lwp, nmp->nm_mountp->mnt_stat.f_mntfromname,
+		nfs_msg(rep->r_procp, nmp->nm_mountp->mnt_stat.f_mntfromname,
 		    "is alive again");
 	mrep = rep->r_mrep;
 	md = rep->r_md;
@@ -1377,7 +1376,7 @@ nfs_timer(arg)
 		nmp = rep->r_nmp;
 		if (rep->r_mrep || (rep->r_flags & R_SOFTTERM))
 			continue;
-		if (nfs_sigintr(nmp, rep, rep->r_lwp)) {
+		if (nfs_sigintr(nmp, rep, rep->r_procp)) {
 			rep->r_flags |= R_SOFTTERM;
 			continue;
 		}
@@ -1399,7 +1398,7 @@ nfs_timer(arg)
 		 */
 		if ((rep->r_flags & R_TPRINTFMSG) == 0 &&
 		     rep->r_rexmit > nmp->nm_deadthresh) {
-			nfs_msg(rep->r_lwp,
+			nfs_msg(rep->r_procp,
 			    nmp->nm_mountp->mnt_stat.f_mntfromname,
 			    "not responding");
 			rep->r_flags |= R_TPRINTFMSG;
@@ -1430,10 +1429,10 @@ nfs_timer(arg)
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
 		        if (so->so_state & SS_ISCONNECTED)
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    (struct mbuf *)0, (struct mbuf *)0, (struct lwp *)0);
+			    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
 			else
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
-			    nmp->nm_nam, (struct mbuf *)0, (struct lwp *)0);
+			    nmp->nm_nam, (struct mbuf *)0, (struct proc *)0);
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 #ifdef DEBUG
@@ -1491,15 +1490,15 @@ nfs_timer(arg)
 
 /*ARGSUSED*/
 void
-nfs_exit(l, v)
-	struct lwp *l;
+nfs_exit(p, v)
+	struct proc *p;
 	void *v;
 {
 	struct nfsreq *rp;
 	int s = splsoftnet();
 
 	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
-		if (rp->r_lwp == l)
+		if (rp->r_procp == p)
 			TAILQ_REMOVE(&nfs_reqq, rp, r_chain);
 	}
 	splx(s);
@@ -1510,10 +1509,10 @@ nfs_exit(l, v)
  * This is used for NFSMNT_INT mounts.
  */
 int
-nfs_sigintr(nmp, rep, l)
+nfs_sigintr(nmp, rep, p)
 	struct nfsmount *nmp;
 	struct nfsreq *rep;
-	struct lwp *l;
+	struct proc *p;
 {
 	sigset_t ss;
 
@@ -1521,10 +1520,10 @@ nfs_sigintr(nmp, rep, l)
 		return (EINTR);
 	if (!(nmp->nm_flag & NFSMNT_INT))
 		return (0);
-	if (l) {
-		sigpending1(l->l_proc, &ss);
+	if (p) {
+		sigpending1(p, &ss);
 #if 0
-		sigminusset(&l->l_proc->p_sigctx.ps_sigignore, &ss);
+		sigminusset(&p->p_sigctx.ps_sigignore, &ss);
 #endif
 		if (sigismember(&ss, SIGINT) || sigismember(&ss, SIGTERM) ||
 		    sigismember(&ss, SIGKILL) || sigismember(&ss, SIGHUP) ||
@@ -1545,17 +1544,17 @@ nfs_sndlock(flagp, rep)
 	int *flagp;
 	struct nfsreq *rep;
 {
-	struct lwp *l;
+	struct proc *p;
 	int slpflag = 0, slptimeo = 0;
 
 	if (rep) {
-		l = rep->r_lwp;
+		p = rep->r_procp;
 		if (rep->r_nmp->nm_flag & NFSMNT_INT)
 			slpflag = PCATCH;
 	} else
-		l = (struct lwp *)0;
+		p = (struct proc *)0;
 	while (*flagp & NFSMNT_SNDLOCK) {
-		if (nfs_sigintr(rep->r_nmp, rep, l))
+		if (nfs_sigintr(rep->r_nmp, rep, p))
 			return (EINTR);
 		*flagp |= NFSMNT_WANTSND;
 		(void) tsleep((caddr_t)flagp, slpflag | (PZERO - 1), "nfsndlck",
@@ -1604,7 +1603,7 @@ nfs_rcvlock(rep)
 		slpflag = 0;
 	simple_lock(&nmp->nm_slock);
 	while (*flagp & NFSMNT_RCVLOCK) {
-		if (nfs_sigintr(rep->r_nmp, rep, rep->r_lwp)) {
+		if (nfs_sigintr(rep->r_nmp, rep, rep->r_procp)) {
 			error = EINTR;
 			goto quit;
 		}
@@ -1903,14 +1902,14 @@ nfsmout:
 }
 
 int
-nfs_msg(l, server, msg)
-	struct lwp *l;
+nfs_msg(p, server, msg)
+	struct proc *p;
 	char *server, *msg;
 {
 	tpr_t tpr;
 
-	if (l)
-		tpr = tprintf_open(l->l_proc);
+	if (p)
+		tpr = tprintf_open(p);
 	else
 		tpr = NULL;
 	tprintf(tpr, "nfs server %s: %s\n", server, msg);
@@ -1920,7 +1919,7 @@ nfs_msg(l, server, msg)
 
 #ifdef NFSSERVER
 int (*nfsrv3_procs[NFS_NPROCS]) __P((struct nfsrv_descript *,
-				    struct nfssvc_sock *, struct lwp *,
+				    struct nfssvc_sock *, struct proc *,
 				    struct mbuf **)) = {
 	nfsrv_null,
 	nfsrv_getattr,
@@ -1978,7 +1977,7 @@ nfsrv_rcv(so, arg, waitflag)
 		slp->ns_flag |= SLP_NEEDQ; goto dorecs;
 	}
 #endif
-	auio.uio_lwp = NULL;
+	auio.uio_procp = NULL;
 	if (so->so_type == SOCK_STREAM) {
 		/*
 		 * If there are already records on the queue, defer soreceive()

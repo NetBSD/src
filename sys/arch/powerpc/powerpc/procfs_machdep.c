@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.2 2003/06/29 11:02:24 darrenr Exp $	*/
+/*	$NetBSD: procfs_machdep.c,v 1.3 2003/06/29 22:28:50 fvdl Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,13 +40,13 @@ procfs_machdep_allocvp(struct vnode *vp)
 }
 
 int
-procfs_machdep_rw(struct lwp *curl, struct lwp *l, struct pfsnode *pfs,
+procfs_machdep_rw(struct proc *curp, struct lwp *l, struct pfsnode *pfs,
     struct uio *uio)
 {
 
 	switch (pfs->pfs_type) {
 	case Pmachdep_vecregs:
-		return (procfs_machdep_dovecregs(curl, l, pfs, uio));
+		return (procfs_machdep_dovecregs(curp, l, pfs, uio));
 
 	default:
 		panic("procfs_machdep_rw");
@@ -74,17 +74,17 @@ procfs_machdep_getattr(struct vnode *vp, struct vattr *vap, struct proc *procp)
 }
 
 int
-procfs_machdep_dovecregs(struct lwp *curl, struct lwp *l,
+procfs_machdep_dovecregs(struct proc *curp, struct lwp *l,
     struct pfsnode *pfs, struct uio *uio)
 {
 
-	return (process_machdep_dovecregs(curl, l, uio));
+	return (process_machdep_dovecregs(curp, l, uio));
 }
 
 int
-procfs_machdep_validvecregs(struct lwp *l, struct mount *mp)
+procfs_machdep_validvecregs(struct proc *p, struct mount *mp)
 {
 
-	return (process_machdep_validvecregs(l->l_proc));
+	return (process_machdep_validvecregs(p));
 }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_usrreq.c,v 1.18 2003/06/28 14:22:07 darrenr Exp $	*/
+/*	$NetBSD: raw_usrreq.c,v 1.19 2003/06/29 22:31:52 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.18 2003/06/28 14:22:07 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_usrreq.c,v 1.19 2003/06/29 22:31:52 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -180,21 +180,19 @@ raw_setpeeraddr(rp, nam)
 
 /*ARGSUSED*/
 int
-raw_usrreq(so, req, m, nam, control, l)
+raw_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct rawcb *rp;
-	struct proc *p;
 	int s;
 	int error = 0;
 
 	if (req == PRU_CONTROL)
 		return (EOPNOTSUPP);
 
-	p = l ? l->l_proc : NULL;
 	s = splsoftnet();
 	rp = sotorawcb(so);
 #ifdef DIAGNOSTIC
@@ -275,7 +273,7 @@ raw_usrreq(so, req, m, nam, control, l)
 				goto die;
 			}
 			error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
-			    (struct mbuf *)0, nam, (struct mbuf *)0, l);
+			    (struct mbuf *)0, nam, (struct mbuf *)0, p);
 			if (error) {
 			die:
 				m_freem(m);

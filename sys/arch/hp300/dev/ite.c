@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.59 2003/06/29 15:58:19 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.60 2003/06/29 22:28:17 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.59 2003/06/29 15:58:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60 2003/06/29 22:28:17 fvdl Exp $");
 
 #include "hil.h"
 
@@ -356,10 +356,10 @@ iteoff(ip, flag)
 
 /* ARGSUSED */
 int
-iteopen(dev, mode, devtype, l)
+iteopen(dev, mode, devtype, p)
 	dev_t dev;
 	int mode, devtype;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = ITEUNIT(dev);
 	struct tty *tp;
@@ -379,7 +379,7 @@ iteopen(dev, mode, devtype, l)
 	} else
 		tp = ip->tty;
 	if ((tp->t_state&(TS_ISOPEN|TS_XCLUDE)) == (TS_ISOPEN|TS_XCLUDE)
-	    && l->l_proc->p_ucred->cr_uid != 0)
+	    && p->p_ucred->cr_uid != 0)
 		return (EBUSY);
 	if ((ip->flags & ITE_ACTIVE) == 0) {
 		error = iteon(ip, 0);
@@ -411,10 +411,10 @@ iteopen(dev, mode, devtype, l)
 
 /*ARGSUSED*/
 int
-iteclose(dev, flag, mode, l)
+iteclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct ite_data *ip = sc->sc_data;
@@ -456,15 +456,15 @@ itewrite(dev, uio, flag)
 }
 
 int
-itepoll(dev, events, l)
+itepoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct tty *tp = sc->sc_data->tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
@@ -477,22 +477,22 @@ itetty(dev)
 }
 
 int
-iteioctl(dev, cmd, addr, flag, l)
+iteioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
 	struct ite_data *ip = sc->sc_data;
 	struct tty *tp = ip->tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, addr, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
-	return ttioctl(tp, cmd, addr, flag, l);
+	return ttioctl(tp, cmd, addr, flag, p);
 }
 
 void

@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.19 2003/06/29 18:43:28 thorpej Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.20 2003/06/29 22:31:33 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.19 2003/06/29 18:43:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.20 2003/06/29 22:31:33 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,10 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.19 2003/06/29 18:43:28 thorpej Exp 
 
 static int
 getcwd_scandir __P((struct vnode **, struct vnode **,
-    char **, char *, struct lwp *));
+    char **, char *, struct proc *));
 static int
 getcwd_getcache __P((struct vnode **, struct vnode **,
-    char **, char *, struct lwp *));
+    char **, char *));
 
 #define DIRENT_MINSIZE (sizeof(struct dirent) - (MAXNAMLEN+1) + 4)
 
@@ -102,12 +102,12 @@ getcwd_getcache __P((struct vnode **, struct vnode **,
  * On exit, *uvpp is either NULL or is a locked vnode reference.
  */
 static int
-getcwd_scandir(lvpp, uvpp, bpp, bufp, l)
+getcwd_scandir(lvpp, uvpp, bpp, bufp, p)
 	struct vnode **lvpp;
 	struct vnode **uvpp;
 	char **bpp;
 	char *bufp;
-	struct lwp *l;
+	struct proc *p;
 {
 	int     error = 0;
 	int     eofflag;
@@ -120,8 +120,7 @@ getcwd_scandir(lvpp, uvpp, bpp, bufp, l)
 	ino_t   fileno;
 	struct vattr va;
 	struct vnode *uvp = NULL;
-	struct vnode *lvp = *lvpp;
-	struct ucred *ucred = l->l_proc->p_ucred;
+	struct vnode *lvp = *lvpp;	
 	struct componentname cn;
 	int len, reclen;
 	tries = 0;
@@ -131,7 +130,7 @@ getcwd_scandir(lvpp, uvpp, bpp, bufp, l)
 	 * current directory is still locked.
 	 */
 	if (bufp != NULL) {
-		error = VOP_GETATTR(lvp, &va, ucred, l);
+		error = VOP_GETATTR(lvp, &va, p->p_ucred, p);
 		if (error) {
 			vput(lvp);
 			*lvpp = NULL;
@@ -146,8 +145,8 @@ getcwd_scandir(lvpp, uvpp, bpp, bufp, l)
 	 */
 	cn.cn_nameiop = LOOKUP;
 	cn.cn_flags = ISLASTCN | ISDOTDOT | RDONLY;
-	cn.cn_lwp = l;
-	cn.cn_cred = ucred;
+	cn.cn_proc = p;
+	cn.cn_cred = p->p_ucred;
 	cn.cn_pnbuf = NULL;
 	cn.cn_nameptr = "..";
 	cn.cn_namelen = 2;
@@ -196,11 +195,11 @@ unionread:
 		uio.uio_resid = dirbuflen;
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = UIO_READ;
-		uio.uio_lwp = l;
+		uio.uio_procp = p;
 
 		eofflag = 0;
 
-		error = VOP_READDIR(uvp, &uio, ucred, &eofflag, 0, 0);
+		error = VOP_READDIR(uvp, &uio, p->p_ucred, &eofflag, 0, 0);
 
 		off = uio.uio_offset;
 
@@ -303,11 +302,10 @@ out:
  */
 
 static int
-getcwd_getcache(lvpp, uvpp, bpp, bufp, l)
+getcwd_getcache(lvpp, uvpp, bpp, bufp)
 	struct vnode **lvpp, **uvpp;
 	char **bpp;
 	char *bufp;
-	struct lwp *l;
 {
 	struct vnode *lvp, *uvp = NULL;
 	int error;
@@ -371,17 +369,16 @@ getcwd_getcache(lvpp, uvpp, bpp, bufp, l)
  */
 
 int 
-getcwd_common (lvp, rvp, bpp, bufp, limit, flags, l)
+getcwd_common (lvp, rvp, bpp, bufp, limit, flags, p)
 	struct vnode *lvp;
 	struct vnode *rvp;
 	char **bpp;
 	char *bufp;
 	int limit;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
-	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-	struct ucred *ucred = l->l_proc->p_ucred;
+	struct cwdinfo *cwdi = p->p_cwdi;
 	struct vnode *uvp = NULL;
 	char *bp = NULL;
 	int error;
@@ -433,7 +430,7 @@ getcwd_common (lvp, rvp, bpp, bufp, limit, flags, l)
 		 * whether or not caller cares.
 		 */
 		if (flags & GETCWD_CHECK_ACCESS) {
-			error = VOP_ACCESS(lvp, perms, ucred, l);
+			error = VOP_ACCESS(lvp, perms, p->p_ucred, p);
 			if (error)
 				goto out;
 			perms = VEXEC|VREAD;
@@ -470,9 +467,9 @@ getcwd_common (lvp, rvp, bpp, bufp, limit, flags, l)
 		 * Look in the name cache; if that fails, look in the
 		 * directory..
 		 */
-		error = getcwd_getcache(&lvp, &uvp, &bp, bufp, l);
+		error = getcwd_getcache(&lvp, &uvp, &bp, bufp);
 		if (error == -1)
-			error = getcwd_scandir(&lvp, &uvp, &bp, bufp, l);
+			error = getcwd_scandir(&lvp, &uvp, &bp, bufp, p);
 		if (error)
 			goto out;
 #if DIAGNOSTIC		
@@ -508,14 +505,14 @@ out:
  * chroot() actually means something.
  */
 int
-vn_isunder(lvp, rvp, l)
+vn_isunder(lvp, rvp, p)
 	struct vnode *lvp;
 	struct vnode *rvp;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error;
 
-	error = getcwd_common (lvp, rvp, NULL, NULL, MAXPATHLEN/2, 0, l);
+	error = getcwd_common (lvp, rvp, NULL, NULL, MAXPATHLEN/2, 0, p);
 
 	if (!error)
 		return 1;
@@ -531,19 +528,19 @@ vn_isunder(lvp, rvp, l)
  */
 
 int
-proc_isunder (p1, l2)
+proc_isunder (p1, p2)
 	struct proc *p1;
-	struct lwp *l2;
+	struct proc *p2;
 {
 	struct vnode *r1 = p1->p_cwdi->cwdi_rdir;
-	struct vnode *r2 = l2->l_proc->p_cwdi->cwdi_rdir;
+	struct vnode *r2 = p2->p_cwdi->cwdi_rdir;
 
 	if (r1 == NULL)
 		return (r2 == NULL);
 	else if (r2 == NULL)
 		return 1;
 	else
-		return vn_isunder(r1, r2, l2);
+		return vn_isunder(r1, r2, p2);
 }
 
 /*
@@ -589,7 +586,7 @@ sys___getcwd(l, v, retval)
 	 * limit it to N/2 vnodes for an N byte buffer.
 	 */
 	error = getcwd_common (l->l_proc->p_cwdi->cwdi_cdir, NULL, &bp, path, 
-	    len/2, GETCWD_CHECK_ACCESS, l);
+	    len/2, GETCWD_CHECK_ACCESS, l->l_proc);
 
 	if (error)
 		goto out;

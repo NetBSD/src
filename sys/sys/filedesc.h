@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.27 2003/06/28 14:22:21 darrenr Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.28 2003/06/29 22:32:25 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -111,7 +111,7 @@ struct filedesc0 {
 /*
  * Kernel global variables and routines.
  */
-int	dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error);
+int	dupfdopen(struct proc *p, int indx, int dfd, int mode, int error);
 int	fdalloc(struct proc *p, int want, int *result);
 void	fdexpand(struct proc *p);
 int	fdavail(struct proc *p, int n);
@@ -120,14 +120,14 @@ void	ffree(struct file *);
 struct filedesc *fdcopy(struct proc *p);
 struct filedesc *fdinit(struct proc *p);
 void	fdshare(struct proc *p1, struct proc *p2);
-void	fdunshare(struct lwp *l);
+void	fdunshare(struct proc *p);
 void	fdinit1(struct filedesc0 *newfdp);
-void	fdclear(struct lwp *l);
-void	fdfree(struct lwp *l);
+void	fdclear(struct proc *p);
+void	fdfree(struct proc *p);
 void	fdremove(struct filedesc *, int);
-int	fdrelease(struct lwp *, int);
-void	fdcloseexec(struct lwp *);
-int	fdcheckstd(struct lwp *);
+int	fdrelease(struct proc *, int);
+void	fdcloseexec(struct proc *);
+int	fdcheckstd(struct proc *);
 
 struct file *fd_getfile(struct filedesc *, int);
 
@@ -137,9 +137,9 @@ void	cwdunshare(struct proc *);
 void	cwdfree(struct proc *);
 #define GETCWD_CHECK_ACCESS 0x0001
 int	getcwd_common(struct vnode *, struct vnode *, char **, char *, int,
-    int, struct lwp *);
+    int, struct proc *);
 
-int	closef(struct file *, struct lwp *);
+int	closef(struct file *, struct proc *);
 int	getsock(struct filedesc *, int, struct file **);
 #endif /* _KERNEL */
 

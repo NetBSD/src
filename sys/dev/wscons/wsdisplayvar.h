@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.24 2003/06/28 14:21:47 darrenr Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.25 2003/06/29 22:31:03 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -100,7 +100,7 @@ struct wsdisplay_char;
  */
 struct wsdisplay_accessops {
 	int	(*ioctl)(void *v, u_long cmd, caddr_t data, int flag,
-		    struct lwp *l);
+		    struct proc *p);
 	paddr_t	(*mmap)(void *v, off_t off, int prot);
 	int	(*alloc_screen)(void *, const struct wsscreen_descr *,
 				     void **, int *, int *, long *);
@@ -182,19 +182,19 @@ int wsdisplay_getactivescreen(struct wsdisplay_softc *);
 int wsscreen_switchwait(struct wsdisplay_softc *, int);
 
 int wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *,
-			     u_long cmd, caddr_t data,int flag, struct lwp *l);
+			     u_long cmd, caddr_t data,int flag, struct proc *p);
 
 int wsdisplay_usl_ioctl1(struct wsdisplay_softc *,
-			 u_long, caddr_t, int, struct lwp *);
+			 u_long, caddr_t, int, struct proc *);
 
 int wsdisplay_usl_ioctl2(struct wsdisplay_softc *, struct wsscreen *,
-			 u_long, caddr_t, int, struct lwp *);
+			 u_long, caddr_t, int, struct proc *);
 
 int wsdisplay_stat_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-			 int flag, struct lwp *l);
+			 int flag, struct proc *p);
 
 int wsdisplay_cfg_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
-			int flag, struct lwp *l);
+			int flag, struct proc *p);
 
 int wsdisplay_stat_inject(struct device *dev, u_int type, int value);
 

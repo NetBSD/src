@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.109 2003/06/28 14:20:56 darrenr Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.110 2003/06/29 22:28:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.109 2003/06/28 14:20:56 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.110 2003/06/29 22:28:26 fvdl Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -285,6 +285,7 @@ cpu_coredump(l, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
+	struct proc *p = l->l_proc;
 	struct md_core md_core;
 	struct coreseg cseg;
 	int error;
@@ -310,13 +311,13 @@ cpu_coredump(l, vp, cred, chdr)
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred,
-	    NULL, l);
+	    NULL, p);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 	if (error)
 		return error;
 
@@ -403,7 +404,6 @@ vmapbuf(bp, len)
 	vsize_t len;
 {
 	vaddr_t faddr, taddr, off;
-	struct proc *p;
 	paddr_t fpa;
 
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -425,9 +425,8 @@ vmapbuf(bp, len)
 	 * where we we just allocated (TLB will be flushed when our
 	 * mapping is removed).
 	 */
-	p = bp->b_proc;
 	while (len) {
-		(void) pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
+		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 		    faddr, &fpa);
 		pmap_kenter_pa(taddr, fpa, VM_PROT_READ|VM_PROT_WRITE);
 		faddr += PAGE_SIZE;

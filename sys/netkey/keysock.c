@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.22 2003/06/28 14:22:14 darrenr Exp $	*/
+/*	$NetBSD: keysock.c,v 1.23 2003/06/29 22:32:07 fvdl Exp $	*/
 /*	$KAME: keysock.c,v 1.23 2000/09/22 08:26:33 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.22 2003/06/28 14:22:14 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.23 2003/06/29 22:32:07 fvdl Exp $");
 
 #include "opt_inet.h"
 
@@ -73,18 +73,16 @@ struct pfkeystat pfkeystat;
  * derived from net/rtsock.c:route_usrreq()
  */
 int
-key_usrreq(so, req, m, nam, control, l)
+key_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+	struct proc *p;
 {
 	int error = 0;
 	struct keycb *kp = (struct keycb *)sotorawcb(so);
-	struct proc *p;
 	int s;
 
-	p = l ? l->l_proc : NULL;
 	s = splsoftnet();
 	if (req == PRU_ATTACH) {
 		kp = (struct keycb *)malloc(sizeof(*kp), M_PCB, M_WAITOK);
@@ -101,7 +99,7 @@ key_usrreq(so, req, m, nam, control, l)
 		key_freereg(so);
 	}
 
-	error = raw_usrreq(so, req, m, nam, control, l);
+	error = raw_usrreq(so, req, m, nam, control, p);
 	m = control = NULL;	/* reclaimed in raw_usrreq */
 	kp = (struct keycb *)sotorawcb(so);
 	if (req == PRU_ATTACH && kp) {

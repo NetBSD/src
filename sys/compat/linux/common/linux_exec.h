@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.28 2003/06/28 14:21:20 darrenr Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.29 2003/06/29 22:29:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -121,23 +121,23 @@ __BEGIN_DECLS
 extern const struct emul emul_linux;
 
 int linux_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *));
+    struct proc *));
 void linux_setregs __P((struct lwp *, struct exec_package *, u_long));
-int exec_linux_aout_makecmds __P((struct lwp *, struct exec_package *));
-int linux_aout_copyargs __P((struct lwp *, struct exec_package *,
+int exec_linux_aout_makecmds __P((struct proc *, struct exec_package *));
+int linux_aout_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
 void linux_trapsignal __P((struct lwp *, int, u_long));
 
 #ifdef EXEC_ELF32
-int linux_elf32_probe __P((struct lwp *, struct exec_package *, void *,
+int linux_elf32_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
-int linux_elf32_copyargs __P((struct lwp *, struct exec_package *,
+int linux_elf32_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
 #endif
 #ifdef EXEC_ELF64
-int linux_elf64_probe __P((struct lwp *, struct exec_package *, void *,
+int linux_elf64_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
-int linux_elf64_copyargs __P((struct lwp *, struct exec_package *,
+int linux_elf64_copyargs __P((struct proc *, struct exec_package *,
     struct ps_strings *, char **, void *));
 #endif
 __END_DECLS

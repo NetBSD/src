@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.25 2003/06/29 18:43:21 thorpej Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.26 2003/06/29 22:29:10 fvdl Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.25 2003/06/29 18:43:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.26 2003/06/29 22:29:10 fvdl Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -108,7 +108,7 @@ struct vfsops coda_vfsops = {
     coda_nb_statfs,
     coda_sync,
     coda_vget,
-    (int (*) (struct mount *, struct fid *, struct vnode **))
+    (int (*) (struct mount *, struct fid *, struct vnode ** ))
 	eopnotsupp,
     (int (*) (struct vnode *, struct fid *)) eopnotsupp,
     coda_init,
@@ -144,12 +144,12 @@ coda_vfsopstats_init(void)
  */
 /*ARGSUSED*/
 int
-coda_mount(vfsp, path, data, ndp, l)
+coda_mount(vfsp, path, data, ndp, p)
     struct mount *vfsp;		/* Allocated and initialized by mount(2) */
     const char *path;		/* path covered: ignored by the fs-layer */
     void *data;			/* Need to define a data type for this in netbsd? */
     struct nameidata *ndp;	/* Clobber this to lookup the device name */
-    struct lwp *l;		/* The ever-famous lwp pointer */
+    struct proc *p;		/* The ever-famous proc pointer */
 {
     struct vnode *dvp;
     struct cnode *cp;
@@ -176,7 +176,7 @@ coda_mount(vfsp, path, data, ndp, l)
     
     /* Validate mount device.  Similar to getmdev(). */
 
-    NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, data, l);
+    NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, data, p);
     error = namei(ndp);
     dvp = ndp->ni_vp;
 
@@ -268,24 +268,24 @@ coda_mount(vfsp, path, data, ndp, l)
 	MARK_INT_SAT(CODA_MOUNT_STATS);
 
     return set_statfs_info("/coda", UIO_SYSSPACE, "CODA", UIO_SYSSPACE, vfsp,
-	l);
+	p);
 }
 
 int
-coda_start(vfsp, flags, l)
+coda_start(vfsp, flags, p)
     struct mount *vfsp;
     int flags;
-    struct lwp *l;
+    struct proc *p;
 {
     ENTRY;
     return (0);
 }
 
 int
-coda_unmount(vfsp, mntflags, l)
+coda_unmount(vfsp, mntflags, p)
     struct mount *vfsp;
     int mntflags;
-    struct lwp *l;
+    struct proc *p;
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
     int active, error = 0;
@@ -342,8 +342,7 @@ coda_root(vfsp, vpp)
     struct coda_mntinfo *mi = vftomi(vfsp);
     struct vnode **result;
     int error;
-    struct lwp *l = curlwp;	/* XXX */
-    struct proc *p = l->l_proc;	/* XXX */
+    struct proc *p = curproc;    /* XXX - bnoble */
     ViceFid VFid;
 
     ENTRY;
@@ -364,7 +363,7 @@ coda_root(vfsp, vpp)
 	    }
     }
 
-    error = venus_root(vftomi(vfsp), p->p_cred->pc_ucred, l, &VFid);
+    error = venus_root(vftomi(vfsp), p->p_cred->pc_ucred, p, &VFid);
 
     if (!error) {
 	/*
@@ -407,12 +406,12 @@ coda_root(vfsp, vpp)
 }
 
 int
-coda_quotactl(vfsp, cmd, uid, arg, l)
+coda_quotactl(vfsp, cmd, uid, arg, p)
     struct mount *vfsp;
     int cmd;
     uid_t uid;
     caddr_t arg;
-    struct lwp *l;
+    struct proc *p;
 {
     ENTRY;
     return (EOPNOTSUPP);
@@ -422,13 +421,12 @@ coda_quotactl(vfsp, cmd, uid, arg, l)
  * Get file system statistics.
  */
 int
-coda_nb_statfs(vfsp, sbp, l)
+coda_nb_statfs(vfsp, sbp, p)
     struct mount *vfsp;
     struct statfs *sbp;
-    struct lwp *l;
+    struct proc *p;
 {
     struct coda_statfs fsstat;
-    struct proc *p = l->l_proc;
     int error;
 
     ENTRY;
@@ -445,7 +443,7 @@ coda_nb_statfs(vfsp, sbp, l)
      */
     /* Note: Normal fs's have a bsize of 0x400 == 1024 */
 
-    error = venus_statfs(vftomi(vfsp), p->p_cred->pc_ucred, l, &fsstat);
+    error = venus_statfs(vftomi(vfsp), p->p_cred->pc_ucred, p, &fsstat);
 
     if (!error) {
 	sbp->f_type = 0;
@@ -467,11 +465,11 @@ coda_nb_statfs(vfsp, sbp, l)
  * Flush any pending I/O.
  */
 int
-coda_sync(vfsp, waitfor, cred, l)
+coda_sync(vfsp, waitfor, cred, p)
     struct mount *vfsp;
     int    waitfor;
     struct ucred *cred;
-    struct lwp *l;
+    struct proc *p;
 {
     ENTRY;
     MARK_ENTRY(CODA_SYNC_STATS);
@@ -506,8 +504,7 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
     struct cfid *cfid = (struct cfid *)fhp;
     struct cnode *cp = 0;
     int error;
-    struct lwp *l = curlwp;	/* XXX */
-    struct proc *p = l->l_proc;	/* XXX */
+    struct proc *p = curproc; /* XXX -mach */
     ViceFid VFid;
     int vtype;
 
@@ -522,7 +519,7 @@ coda_fhtovp(vfsp, fhp, nam, vpp, exflagsp, creadanonp)
 	return(0);
     }
     
-    error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, p->p_cred->pc_ucred, l, &VFid, &vtype);
+    error = venus_fhtovp(vftomi(vfsp), &cfid->cfid_fid, p->p_cred->pc_ucred, p, &VFid, &vtype);
     
     if (error) {
 	CODADEBUG(CODA_VGET, myprintf(("vget error %d\n",error));)
@@ -560,14 +557,14 @@ coda_done(void)
 }
 
 int
-coda_sysctl(name, namelen, oldp, oldlp, newp, newl, l)
+coda_sysctl(name, namelen, oldp, oldlp, newp, newl, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlp;
 	void *newp;
 	size_t newl;
-	struct lwp *l;
+	struct proc *p;
 {
 
 	/* all sysctl names at this level are terminal */

@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.2 2003/06/28 14:21:32 darrenr Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.3 2003/06/29 22:30:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -185,17 +185,14 @@ add_veriexec_inode(struct veriexec_dev_list *list, unsigned long inode,
  */
 int
 verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
-		struct lwp *l)
+		struct proc *p)
 {
 	int error = 0;
-	struct verified_exec_params *params;
+	struct verified_exec_params *params = (struct verified_exec_params *)data;
 	struct nameidata nid;
 	struct vattr vattr;
-	struct proc *p;
 	struct veriexec_dev_list *dlp;
 
-	p = l->l_proc;
-	params = (struct verified_exec_params *)data;
 #ifdef VERIFIED_EXEC_DEBUG
 	printf("veriexec_ioctl: got cmd 0x%lx for file %s\n", cmd, params->file);
 #endif
@@ -213,7 +210,7 @@ verifiedexecioctl(dev_t dev, u_long cmd, caddr_t data, int flags,
 			   * exec to use later.
 			   */
                         NDINIT(&nid, LOOKUP, FOLLOW, UIO_USERSPACE,
-                               params->file, l);
+                               params->file, p);
 			if ((error = vn_open(&nid, FREAD, 0)) != 0) {
 				return(error);
 			}

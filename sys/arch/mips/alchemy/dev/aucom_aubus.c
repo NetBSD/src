@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.6 2003/06/29 13:18:24 simonb Exp $ */
+/* $NetBSD: aucom_aubus.c,v 1.7 2003/06/29 22:28:35 fvdl Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.25 2003/06/28 14:21:14 darrenr Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.26 2003/06/29 22:29:09 fvdl Exp $	*/
 
 /*
  * 
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.25 2003/06/28 14:21:14 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.26 2003/06/29 22:29:09 fvdl Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -137,11 +137,11 @@ vcodaattach(n)
  * These functions are written for NetBSD.
  */
 int 
-vc_nb_open(dev, flag, mode, l)    
+vc_nb_open(dev, flag, mode, p)    
     dev_t        dev;      
     int          flag;     
     int          mode;     
-    struct lwp *l;             /* NetBSD only */
+    struct proc *p;             /* NetBSD only */
 {
     struct vcomm *vcp;
     
@@ -169,11 +169,11 @@ vc_nb_open(dev, flag, mode, l)
 }
 
 int 
-vc_nb_close (dev, flag, mode, l)
+vc_nb_close (dev, flag, mode, p)    
     dev_t        dev;      
     int          flag;     
     int          mode;     
-    struct lwp *l;
+    struct proc *p;
 {
     struct vcomm *vcp;
     struct vmsg *vmp, *nvmp = NULL;
@@ -253,7 +253,7 @@ vc_nb_close (dev, flag, mode, l)
 #endif
     }
 
-    err = dounmount(mi->mi_vfsp, flag, l);
+    err = dounmount(mi->mi_vfsp, flag, p);
     if (err)
 	myprintf(("Error %d unmounting vfs in vcclose(%d)\n", 
 	           err, minor(dev)));
@@ -415,12 +415,12 @@ vc_nb_write(dev, uiop, flag)
 }
 
 int
-vc_nb_ioctl(dev, cmd, addr, flag, l)
+vc_nb_ioctl(dev, cmd, addr, flag, p) 
     dev_t         dev;       
     u_long        cmd;       
     caddr_t       addr;      
     int           flag;      
-    struct lwp *l;
+    struct proc  *p;
 {
     ENTRY;
 
@@ -469,10 +469,10 @@ vc_nb_ioctl(dev, cmd, addr, flag, l)
 }
 
 int
-vc_nb_poll(dev, events, l)
+vc_nb_poll(dev, events, p)         
     dev_t         dev;    
     int           events;   
-    struct lwp *l;
+    struct proc  *p;
 {
     struct vcomm *vcp;
     int event_msk = 0;
@@ -491,7 +491,7 @@ vc_nb_poll(dev, events, l)
     if (!EMPTY(vcp->vc_requests))
 	return(events & (POLLIN|POLLRDNORM));
 
-    selrecord(l, &(vcp->vc_selproc));
+    selrecord(p, &(vcp->vc_selproc));
     
     return(0);
 }
@@ -574,11 +574,10 @@ coda_call(mntinfo, inSize, outSize, buffer)
 	struct vmsg *vmp;
 	int error;
 #ifdef	CTL_C
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
+	struct proc *p = curproc;
 	sigset_t psig_omask;
 	int i;
-	psig_omask = l->l_proc->p_sigctx.ps_siglist;	/* array assignment */
+	psig_omask = p->p_sigctx.ps_siglist;	/* array assignment */
 #endif
 	if (mntinfo == NULL) {
 	    /* Unlikely, but could be a race condition with a dying warden */

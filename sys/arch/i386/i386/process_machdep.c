@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.47 2003/06/28 14:20:56 darrenr Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.48 2003/06/29 22:28:26 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.47 2003/06/28 14:20:56 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.48 2003/06/29 22:28:26 fvdl Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -456,8 +456,8 @@ process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 }
 
 int
-ptrace_machdep_dorequest(l, lt, req, addr, data)
-	struct lwp *l;
+ptrace_machdep_dorequest(p, lt, req, addr, data)
+	struct proc *p;
 	struct lwp *lt;
 	int req;
 	caddr_t addr;
@@ -484,8 +484,8 @@ ptrace_machdep_dorequest(l, lt, req, addr, data)
 			uio.uio_resid = sizeof(struct xmmregs);
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
-			uio.uio_lwp = l;
-			return (process_machdep_doxmmregs(l, lt, &uio));
+			uio.uio_procp = p;
+			return (process_machdep_doxmmregs(p, lt, &uio));
 		}
 	}
 
@@ -501,8 +501,8 @@ ptrace_machdep_dorequest(l, lt, req, addr, data)
  */
 
 int
-process_machdep_doxmmregs(curl, l, uio)
-	struct lwp *curl;		/* tracer */
+process_machdep_doxmmregs(curp, l, uio)
+	struct proc *curp;		/* tracer */
 	struct lwp *l;			/* traced */
 	struct uio *uio;
 {
@@ -511,7 +511,7 @@ process_machdep_doxmmregs(curl, l, uio)
 	char *kv;
 	int kl;
 
-	if ((error = process_checkioperm(curl, l->l_proc)) != 0)
+	if ((error = process_checkioperm(curp, l->l_proc)) != 0)
 		return (error);
 
 	kl = sizeof(r);

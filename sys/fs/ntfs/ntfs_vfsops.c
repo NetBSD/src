@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.9 2003/06/29 18:43:24 thorpej Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.10 2003/06/29 22:31:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.9 2003/06/29 18:43:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10 2003/06/29 22:31:11 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,21 +71,21 @@ static int	ntfs_mount __P((struct mount *, char *, caddr_t,
 				struct nameidata *, struct proc *));
 #else
 static int	ntfs_mount __P((struct mount *, const char *, void *,
-				struct nameidata *, struct lwp *));
+				struct nameidata *, struct proc *));
 #endif
 static int	ntfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
-				   struct lwp *));
+				   struct proc *));
 static int	ntfs_root __P((struct mount *, struct vnode **));
-static int	ntfs_start __P((struct mount *, int, struct lwp *));
+static int	ntfs_start __P((struct mount *, int, struct proc *));
 static int	ntfs_statfs __P((struct mount *, struct statfs *,
-				 struct lwp *));
+				 struct proc *));
 static int	ntfs_sync __P((struct mount *, int, struct ucred *,
-			       struct lwp *));
-static int	ntfs_unmount __P((struct mount *, int, struct lwp *));
+			       struct proc *));
+static int	ntfs_unmount __P((struct mount *, int, struct proc *));
 static int	ntfs_vget __P((struct mount *mp, ino_t ino,
 			       struct vnode **vpp));
 static int	ntfs_mountfs __P((struct vnode *, struct mount *, 
-				  struct ntfs_args *, struct lwp *));
+				  struct ntfs_args *, struct proc *));
 static int	ntfs_vptofh __P((struct vnode *, struct fid *));
 
 #if defined(__FreeBSD__)
@@ -103,7 +103,7 @@ static int	ntfs_checkexp __P((struct mount *, struct mbuf *,
 				   int *, struct ucred **));
 static int	ntfs_mountroot __P((void));
 static int	ntfs_sysctl __P((int *, u_int, void *, size_t *, void *,
-				 size_t, struct lwp *));
+				 size_t, struct proc *));
 #else
 static int	ntfs_init __P((void));
 static int	ntfs_fhtovp __P((struct mount *, struct fid *,
@@ -146,14 +146,14 @@ ntfs_checkexp(mp, nam, exflagsp, credanonp)
 
 /*ARGSUSED*/
 static int
-ntfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
+ntfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct lwp *l;
+	struct proc *p;
 {
 	return (EINVAL);
 }
@@ -162,7 +162,7 @@ static int
 ntfs_mountroot()
 {
 	struct mount *mp;
-	struct lwp *l = curlwp;	/* XXX */
+	struct proc *p = curproc;	/* XXX */
 	int error;
 	struct ntfs_args args;
 
@@ -185,7 +185,7 @@ ntfs_mountroot()
 	args.gid = 0;
 	args.mode = 0777;
 
-	if ((error = ntfs_mountfs(rootvp, mp, &args, l)) != 0) {
+	if ((error = ntfs_mountfs(rootvp, mp, &args, p)) != 0) {
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
@@ -196,7 +196,7 @@ ntfs_mountroot()
 	simple_lock(&mountlist_slock);
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
-	(void)ntfs_statfs(mp, &mp->mnt_stat, l);
+	(void)ntfs_statfs(mp, &mp->mnt_stat, p);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -266,11 +266,7 @@ ntfs_mount (
 	void *data,
 #endif
 	struct nameidata *ndp,
-#if defined(__FreeBSD__)
 	struct proc *p )
-#else
-	struct lwp *l )
-#endif
 {
 	int		err = 0;
 	struct vnode	*devvp;
@@ -357,11 +353,7 @@ ntfs_mount (
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-#ifdef __FreeBSD__
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
-#else
-	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, l);
-#endif
 	err = namei(ndp);
 	if (err) {
 		/* can't get devvp!*/
@@ -417,9 +409,9 @@ ntfs_mount (
 		 */
 		/* Save "last mounted on" info for mount point (NULL pad)*/
 		err = set_statfs_info(path, UIO_USERSPACE, args.fspec,
-		    UIO_USERSPACE, mp, l);
+		    UIO_USERSPACE, mp, p);
 		if ( !err) {
-			err = ntfs_mountfs(devvp, mp, &args, l);
+			err = ntfs_mountfs(devvp, mp, &args, p);
 		}
 	}
 	if (err) {
@@ -435,7 +427,7 @@ dostatfs:
 	 *
 	 * This code is common to root and non-root mounts
 	 */
-	(void)VFS_STATFS(mp, &mp->mnt_stat, l);
+	(void)VFS_STATFS(mp, &mp->mnt_stat, p);
 
 	goto success;
 
@@ -455,11 +447,11 @@ success:
  * Common code for mount and mountroot
  */
 int
-ntfs_mountfs(devvp, mp, argsp, l)
+ntfs_mountfs(devvp, mp, argsp, p)
 	struct vnode *devvp;
 	struct mount *mp;
 	struct ntfs_args *argsp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct buf *bp;
 	struct ntfsmount *ntmp;
@@ -479,12 +471,12 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	ncount = vcount(devvp);
 	if (ncount > 1 && devvp != rootvp)
 		return (EBUSY);
-	error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0);
+	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
 	if (error)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, l);
+	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
 	if (error)
 		return (error);
 
@@ -574,7 +566,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 		struct attrdef ad;
 
 		/* Open $AttrDef */
-		error = VFS_VGET(mp, NTFS_ATTRDEFINO, &vp);
+		error = VFS_VGET(mp, NTFS_ATTRDEFINO, &vp );
 		if(error) 
 			goto out1;
 
@@ -642,7 +634,7 @@ out:
 
 	/* lock the device vnode before calling VOP_CLOSE() */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
+	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
 	VOP_UNLOCK(devvp, 0);
 	
 	return (error);
@@ -652,7 +644,7 @@ static int
 ntfs_start (
 	struct mount *mp,
 	int flags,
-	struct lwp *l )
+	struct proc *p )
 {
 	return (0);
 }
@@ -661,7 +653,7 @@ static int
 ntfs_unmount( 
 	struct mount *mp,
 	int mntflags,
-	struct lwp *l)
+	struct proc *p)
 {
 	struct ntfsmount *ntmp;
 	int error, ronly = 0, flags, i;
@@ -703,12 +695,12 @@ ntfs_unmount(
 	if (ntmp->ntm_devvp->v_type != VBAD)
 		ntmp->ntm_devvp->v_specmountpoint = NULL;
 
-	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, l, 0, 0);
+	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
 
 	/* lock the device vnode before calling VOP_CLOSE() */
 	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
-		NOCRED, l);
+		NOCRED, p);
 	VOP_UNLOCK(ntmp->ntm_devvp, 0);
 
 	vrele(ntmp->ntm_devvp);
@@ -727,7 +719,7 @@ ntfs_unmount(
 static int
 ntfs_root(
 	struct mount *mp,
-	struct vnode **vpp)
+	struct vnode **vpp )
 {
 	struct vnode *nvp;
 	int error = 0;
@@ -750,7 +742,7 @@ ntfs_quotactl (
 	int cmds,
 	uid_t uid,
 	caddr_t arg,
-	struct lwp *l)
+	struct proc *p)
 {
 	printf("\nntfs_quotactl():\n");
 	return EOPNOTSUPP;
@@ -792,7 +784,7 @@ static int
 ntfs_statfs(
 	struct mount *mp,
 	struct statfs *sbp,
-	struct lwp *l)
+	struct proc *p)
 {
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
 	u_int64_t mftallocated;
@@ -825,7 +817,7 @@ ntfs_sync (
 	struct mount *mp,
 	int waitfor,
 	struct ucred *cred,
-	struct lwp *l)
+	struct proc *p)
 {
 	/*dprintf(("ntfs_sync():\n"));*/
 	return (0);
@@ -861,7 +853,7 @@ ntfs_fhtovp(
 		ntfhp->ntfid_ino));
 
 	error = ntfs_vgetex(mp, ntfhp->ntfid_ino, ntfhp->ntfid_attr, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curlwp, vpp); /* XXX */
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
 	if (error != 0) {
 		*vpp = NULLVP;
 		return (error);
@@ -904,7 +896,7 @@ ntfs_vgetex(
 	char *attrname,
 	u_long lkflags,
 	u_long flags,
-	struct lwp *l,
+	struct proc *p,
 	struct vnode **vpp) 
 {
 	int error;
@@ -1020,10 +1012,10 @@ static int
 ntfs_vget(
 	struct mount *mp,
 	ino_t ino,
-	struct vnode **vpp)
+	struct vnode **vpp) 
 {
 	return ntfs_vgetex(mp, ino, NTFS_A_DATA, NULL,
-			LK_EXCLUSIVE | LK_RETRY, 0, curlwp, vpp); /* XXX */
+			LK_EXCLUSIVE | LK_RETRY, 0, curproc, vpp); /* XXX */
 }
 
 #if defined(__FreeBSD__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.17 2003/06/29 12:01:34 martin Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.18 2003/06/29 22:32:10 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.17 2003/06/29 12:01:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.18 2003/06/29 22:32:10 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -182,7 +182,7 @@ nsmbattach(int num)
 #endif /* __NetBSD__ */
 
 int
-nsmb_dev_open(dev_t dev, int oflags, int devtype, struct lwp *l)
+nsmb_dev_open(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 	struct smb_dev *sdp;
 	int s;
@@ -219,7 +219,7 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype, struct lwp *l)
 }
 
 int
-nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
+nsmb_dev_close(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct smb_dev *sdp;
 	struct smb_vc *vcp;
@@ -236,7 +236,7 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 		splx(s);
 		return EBADF;
 	}
-	smb_makescred(&scred, l, NULL);
+	smb_makescred(&scred, p, NULL);
 	ssp = sdp->sd_share;
 	if (ssp != NULL) {
 		smb_share_lock(ssp, 0);
@@ -262,7 +262,7 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 
 
 int
-nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct smb_dev *sdp;
 	struct smb_vc *vcp;
@@ -276,7 +276,7 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 	if ((sdp->sd_flags & NSMBFL_OPEN) == 0)
 		return EBADF;
 
-	smb_makescred(&scred, l, NULL);
+	smb_makescred(&scred, p, NULL);
 	switch (cmd) {
 	    case SMBIOC_OPENSESSION:
 		if (sdp->sd_vc)
@@ -393,7 +393,7 @@ nsmb_dev_ioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		auio.uio_resid = rwrq->ioc_cnt;
 		auio.uio_segflg = UIO_USERSPACE;
 		auio.uio_rw = (cmd == SMBIOC_READ) ? UIO_READ : UIO_WRITE;
-		auio.uio_lwp = l;
+		auio.uio_procp = p;
 		if (cmd == SMBIOC_READ)
 			error = smb_read(ssp, rwrq->ioc_fh, &auio, &scred);
 		else
@@ -470,7 +470,7 @@ int
 smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	struct smb_share **sspp)
 {
-	struct lwp *l = scred->scr_l;
+	struct proc *p = scred->scr_p;
 	struct file *fp;
 	struct vnode *vp;
 	struct smb_dev *sdp;
@@ -478,7 +478,7 @@ smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	dev_t dev;
 	int error;
 
-	if ((fp = fd_getfile(l->l_proc->p_fd, fd)) == NULL)
+	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -488,13 +488,13 @@ smb_dev2share(int fd, int mode, struct smb_cred *scred,
 	    || (fp->f_flag & (FREAD|FWRITE)) == 0
 	    || vp->v_type != VCHR
 	    || vp->v_rdev == NODEV) {
-		FILE_UNUSE(fp, l);
+		FILE_UNUSE(fp, p);
 		return (EBADF);
 	}
 
 	dev = vp->v_rdev;
 
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 
 	sdp = SMB_GETDEV(dev);
 	if (!sdp)

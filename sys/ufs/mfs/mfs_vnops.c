@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.32 2003/06/28 14:22:28 darrenr Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.33 2003/06/29 22:32:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.32 2003/06/28 14:22:28 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.33 2003/06/29 22:32:44 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ mfs_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 
 	if (ap->a_vp->v_type != VBLK) {
@@ -239,7 +239,7 @@ mfs_close(v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		struct ucred *a_cred;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);
@@ -258,7 +258,7 @@ mfs_close(v)
 	 * we must invalidate any in core blocks, so that
 	 * we can, free up its vnode.
 	 */
-	if ((error = vinvalbuf(vp, 1, ap->a_cred, ap->a_l, 0, 0)) != 0)
+	if ((error = vinvalbuf(vp, 1, ap->a_cred, ap->a_p, 0, 0)) != 0)
 		return (error);
 	/*
 	 * There should be no way to have any more uses of this
@@ -286,7 +286,7 @@ mfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mfsnode *mfsp = VTOMFS(vp);

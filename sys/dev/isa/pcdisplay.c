@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.23 2003/06/28 14:21:37 darrenr Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.24 2003/06/29 22:30:21 fvdl Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.23 2003/06/28 14:21:37 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.24 2003/06/29 22:30:21 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ const struct wsscreen_list pcdisplay_screenlist = {
 	_pcdisplay_scrlist
 };
 
-static int pcdisplay_ioctl __P((void *, u_long, caddr_t, int, struct lwp *));
+static int pcdisplay_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 static paddr_t pcdisplay_mmap __P((void *, off_t, int));
 static int pcdisplay_alloc_screen __P((void *, const struct wsscreen_descr *,
 				       void **, int *, int *, long *));
@@ -381,12 +381,12 @@ pcdisplay_is_console(iot)
 }
 
 static int
-pcdisplay_ioctl(v, cmd, data, flag, l)
+pcdisplay_ioctl(v, cmd, data, flag, p)
 	void *v;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	/*
 	 * XXX "do something!"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.38 2003/06/28 14:22:28 darrenr Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.39 2003/06/29 22:32:47 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.38 2003/06/28 14:22:28 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.39 2003/06/29 22:32:47 fvdl Exp $");
 
 #include "opt_quota.h"
 
@@ -71,11 +71,11 @@ ufs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct lwp *l = ap->a_l;
+	struct proc *p = ap->a_p;
 	mode_t mode;
 	int error = 0;
 
@@ -96,7 +96,7 @@ ufs_inactive(v)
 			(void)chkiq(ip, -1, NOCRED, 0);
 #endif
 		if (ip->i_size != 0) {
-			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, l);
+			error = VOP_TRUNCATE(vp, (off_t)0, 0, NOCRED, p);
 		}
 		/*
 		 * Setting the mode to zero needs to wait for the inode
@@ -124,7 +124,7 @@ out:
 	 */
 
 	if (ip->i_mode == 0)
-		vrecycle(vp, NULL, l);
+		vrecycle(vp, NULL, p);
 	return (error);
 }
 
@@ -132,9 +132,9 @@ out:
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-ufs_reclaim(vp, l)
+ufs_reclaim(vp, p)
 	struct vnode *vp;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct inode *ip;
 
