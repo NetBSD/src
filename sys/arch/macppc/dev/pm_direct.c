@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.6 1999/07/11 16:59:31 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.7 1999/07/12 15:54:55 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -99,7 +99,7 @@ signed char pm_send_cmd_type[] = {
 	0x04, 0x14,   -1, 0x03,   -1,   -1,   -1,   -1,
 	0x00, 0x00, 0x02, 0x02,   -1,   -1,   -1,   -1,
 	0x01, 0x01,   -1,   -1,   -1,   -1,   -1,   -1,
-	0x00, 0x00,   -1,   -1,   -1,   -1,   -1,   -1,
+	0x00, 0x00,   -1,   -1, 0x01,   -1,   -1,   -1,
 	0x01, 0x00, 0x02, 0x02,   -1, 0x01, 0x03, 0x01,
 	0x00, 0x01, 0x00, 0x00, 0x00,   -1,   -1,   -1,
 	0x02,   -1,   -1,   -1,   -1,   -1,   -1,   -1,
@@ -1210,6 +1210,64 @@ pm_set_date_time(time)
 	p.num_data = 4;
 	p.s_buf = p.r_buf = p.data;
 	bcopy(&time, p.data, 4);
+	pmgrop(&p);
+}
+
+int
+pm_read_brightness()
+{
+	PMData p;
+
+	p.command = PMU_READ_BRIGHTNESS;
+	p.num_data = 1;		/* XXX why 1? */
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = 0;
+	pmgrop(&p);
+
+	return p.data[0];
+}
+
+void
+pm_set_brightness(val)
+	int val;
+{
+	PMData p;
+
+	val = 0x7f - val / 2;
+	if (val < 0x08)
+		val = 0x08;
+	if (val > 0x78)
+		val = 0x78;
+
+	p.command = PMU_SET_BRIGHTNESS;
+	p.num_data = 1;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = val;
+	pmgrop(&p);
+}
+
+void
+pm_init_brightness()
+{
+	int val;
+
+	val = pm_read_brightness();
+	pm_set_brightness(val);
+}
+
+void
+pm_eject_pcmcia(slot)
+	int slot;
+{
+	PMData p;
+
+	if (slot != 0 && slot != 1)
+		return;
+
+	p.command = PMU_EJECT_PCMCIA;
+	p.num_data = 1;
+	p.s_buf = p.r_buf = p.data;
+	p.data[0] = slot * 18;	/* XXX */
 	pmgrop(&p);
 }
 

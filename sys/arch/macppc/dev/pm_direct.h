@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.h,v 1.4 1999/07/11 16:59:31 tsubai Exp $	*/
+/*	$NetBSD: pm_direct.h,v 1.5 1999/07/12 15:54:55 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -51,6 +51,10 @@ void pm_read_date_time __P((u_long *));
 void pm_set_date_time __P((u_long));
 int pm_read_nvram __P((int));
 void pm_write_nvram __P((int, int));
+int pm_read_brightness __P((void));
+void pm_set_brightness __P((int));
+void pm_init_brightness __P((void));
+void pm_eject_pcmcia __P((int));
 
 /* PMU commands */
 #define PMU_POWER_OFF		0x7e	/* Turn Power off */
