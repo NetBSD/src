@@ -1,7 +1,7 @@
-/* $NetBSD: wsmoused.c,v 1.13 2003/08/06 23:58:40 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.14 2004/01/05 10:56:02 jmmv Exp $ */
 
 /*
- * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.13 2003/08/06 23:58:40 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.14 2004/01/05 10:56:02 jmmv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -527,6 +527,7 @@ main(int argc, char **argv)
 	if (Mouse.m_devname == NULL)
 		Mouse.m_devname = block_get_propval(conf, "device",
 		    _PATH_DEFAULT_MOUSE);
+	Mouse.m_fifoname = block_get_propval(conf, "fifo", NULL);
 	init_mouse();
 	if (modelist != NULL)
 		attach_modes(modelist);
