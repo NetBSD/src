@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: mem.c 1.13 89/10/08
  *	from: @(#)mem.c 7.2 (Berkeley) 5/9/91
- *	$Id: mem.c,v 1.6 1993/10/02 00:16:25 cgd Exp $
+ *	$Id: mem.c,v 1.7 1993/10/06 23:37:09 cgd Exp $
  */
 
 /*
@@ -247,9 +247,28 @@ mmmmap(dev, offset, nprot)
 			return -1;
 		return i386_btop(offset);
 
-/* minor device 0 is physical memory */
+/* minor device 1 is kernel memory */
 	case 1:
-		return i386_btop(offset);
+		/*
+		 * don't use kernacc() it doesn't check "executable"
+		 * permissions.  rather, use the (new) generalized version.
+		 */
+		if (!kerncheckprot((caddr_t) offset, NBPG, nprot)) {
+#ifdef notdef
+printf("kmem mmap request: offset 0x%x failed\n", offset);
+#endif
+			return -1;
+		}
+
+#ifdef notdef
+		printf("kmem mmap request: offset 0x%x -> page 0x%x (%d, %d)\n", offset,
+			i386_btop(vtophys(offset)),
+			ispt(vtopte(offset)) ? 1 : 0,
+			vtopte(offset)->pg_v ? 1 : 0);
+		return -1;
+#else
+		return i386_btop(vtophys(offset));
+#endif
 
 	default:
 		return -1;
