@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.120.2.14 2002/06/24 22:05:58 nathanw Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.120.2.15 2002/07/06 03:13:58 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.14 2002/06/24 22:05:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.120.2.15 2002/07/06 03:13:58 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -1143,7 +1143,7 @@ sendsig(catcher, sig, mask, code)
 		*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
 	}
 #else
-	*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
+	*(struct fpreg *)ksc.sc_fpregs = l->l_addr->u_pcb.pcb_fpregs;
 #endif
 
 	/* Save signal stack. */
