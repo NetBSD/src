@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.20 1998/08/11 00:11:39 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.21 1998/08/25 01:08:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,22 +125,6 @@
  * boundary.  HOWEVER!  This means that the RFA is misaligned!
  */
 #define	RFA_ALIGNMENT_FUDGE	2
-
-/*
- * Inline function to copy a 16-bit aligned 32-bit quantity.
- */
-static __inline void fxp_lwcopy __P((volatile u_int32_t *,
-	volatile u_int32_t *));
-static __inline void
-fxp_lwcopy(src, dst)
-	volatile u_int32_t *src, *dst;
-{
-	volatile u_int16_t *a = (u_int16_t *)src;
-	volatile u_int16_t *b = (u_int16_t *)dst;
-
-	b[0] = a[0];
-	b[1] = a[1];
-}
 
 /*
  * Template for default configuration parameters.
@@ -1429,17 +1413,19 @@ fxp_add_rfabuf(sc, rxd)
 	rfa->size = MCLBYTES - sizeof(struct fxp_rfa) - RFA_ALIGNMENT_FUDGE;
 
 	/*
-	 * Initialize the rest of the RFA.  Note that since the RFA
-	 * is misaligned, we cannot store values directly.  Instead,
-	 * we use an optimized, inline copy.
+	 * Initialize the rest of the RFA.
 	 */
 	rfa->rfa_status = 0;
 	rfa->rfa_control = FXP_RFA_CONTROL_EL;
 	rfa->actual_size = 0;
 
+	/*
+	 * Note that since the RFA is misaligned, we cannot store values
+	 * directly.  Instead, we must copy.
+	 */
 	v = -1;
-	fxp_lwcopy(&v, &rfa->link_addr);
-	fxp_lwcopy(&v, &rfa->rbd_addr);
+	memcpy((void *)&rfa->link_addr, &v, sizeof(v));
+	memcpy((void *)&rfa->rbd_addr, &v, sizeof(v));
 
 	/*
 	 * If there are other buffers already on the list, attach this
@@ -1451,7 +1437,7 @@ fxp_add_rfabuf(sc, rxd)
 		     RFA_ALIGNMENT_FUDGE);
 		sc->rfa_tail->fr_next = rxd;
 		v = rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE;
-		fxp_lwcopy(&v, &p_rfa->link_addr);
+		memcpy((void *)&p_rfa->link_addr, &v, sizeof(v));
 		p_rfa->rfa_control &= ~FXP_RFA_CONTROL_EL;
 	} else {
 		sc->rfa_head = rxd;
