@@ -1,4 +1,4 @@
-#	$NetBSD: tc.mi,v 1.1 2001/10/20 06:13:28 jmc Exp $
+#	$NetBSD: tc.mi,v 1.2 2001/11/28 04:43:09 tv Exp $
 ./usr/bin/readelf				comp-util-bin
 ./usr/include/g++/FlexLexer.h			comp-cxx-include
 ./usr/include/g++/PlotFile.h			comp-cxx-include
@@ -162,6 +162,8 @@
 ./usr/lib/libg2c.so.1				comp-c-lib
 ./usr/lib/libg2c.so.1.0				comp-c-lib
 ./usr/lib/libg2c_pic.a				comp-c-lib
+./usr/lib/libgcc_p.a				comp-c-lib
+./usr/lib/libgcc_pic.a				comp-c-lib
 ./usr/lib/libobjc.so				comp-c-lib
 ./usr/lib/libobjc.so.1				comp-c-lib
 ./usr/lib/libobjc.so.1.0			comp-c-lib
