@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ip_icmp.c	7.15 (Berkeley) 4/20/91
+ *	from: @(#)ip_icmp.c	7.15 (Berkeley) 4/20/91
+ *	$Id: ip_icmp.c,v 1.2 1993/05/20 03:50:20 cgd Exp $
  */
 
 #include "param.h"

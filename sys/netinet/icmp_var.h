@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)icmp_var.h	7.5 (Berkeley) 6/28/90
+ *	from: @(#)icmp_var.h	7.5 (Berkeley) 6/28/90
+ *	$Id: icmp_var.h,v 1.3 1993/05/20 03:49:51 cgd Exp $
  */
 
 #ifndef _NETINET_ICMP_VAR_H_
