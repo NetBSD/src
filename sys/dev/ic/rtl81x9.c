@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.12 2000/09/01 15:07:23 drochner Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.13 2000/09/25 01:07:25 enami Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1037,9 +1037,6 @@ STATIC void rtk_rxeof(sc)
 			 *
 			 */
 #if 0
-			if (rxstat & (RTK_RXSTAT_BADSYM|RTK_RXSTAT_RUNT|
-					RTK_RXSTAT_GIANT|RTK_RXSTAT_CRCERR|
-					RTK_RXSTAT_ALIGNERR)) {
 			if (rxstat & (RTK_RXSTAT_BADSYM|RTK_RXSTAT_RUNT|
 					RTK_RXSTAT_GIANT|RTK_RXSTAT_CRCERR|
 					RTK_RXSTAT_ALIGNERR)) {
