@@ -19,7 +19,8 @@ SRCS	= been_here.c bounce.c canon_addr.c cleanup_strerror.c clnt_stream.c \
 	timed_ipc.c tok822_find.c tok822_node.c tok822_parse.c \
 	tok822_resolve.c tok822_rewrite.c tok822_tree.c xtext.c bounce_log.c \
 	flush_clnt.c mail_conf_time.c mbox_conf.c mbox_open.c abounce.c \
-	verp_sender.c match_parent_style.c
+	verp_sender.c match_parent_style.c mime_state.c header_token.c \
+	strip_addr.c virtual8_maps.c hold_message.c
 OBJS	= been_here.o bounce.o canon_addr.o cleanup_strerror.o clnt_stream.o \
 	debug_peer.o debug_process.o defer.o deliver_completed.o \
 	deliver_flock.o deliver_pass.o deliver_request.o domain_list.o \
@@ -40,7 +41,8 @@ OBJS	= been_here.o bounce.o canon_addr.o cleanup_strerror.o clnt_stream.o \
 	timed_ipc.o tok822_find.o tok822_node.o tok822_parse.o \
 	tok822_resolve.o tok822_rewrite.o tok822_tree.o xtext.o bounce_log.o \
 	flush_clnt.o mail_conf_time.o mbox_conf.o mbox_open.o abounce.o \
-	verp_sender.o match_parent_style.o
+	verp_sender.o match_parent_style.o mime_state.o header_token.o \
+	strip_addr.o virtual8_maps.o hold_message.o
 HDRS	= been_here.h bounce.h canon_addr.h cleanup_user.h clnt_stream.h \
 	config.h debug_peer.h debug_process.h defer.h deliver_completed.h \
 	deliver_flock.h deliver_pass.h deliver_request.h domain_list.h \
@@ -57,7 +59,8 @@ HDRS	= been_here.h bounce.h canon_addr.h cleanup_user.h clnt_stream.h \
 	rewrite_clnt.h sent.h smtp_stream.h split_addr.h string_list.h \
 	sys_exits.h timed_ipc.h tok822.h xtext.h bounce_log.h flush_clnt.h \
 	mbox_conf.h mbox_open.h abounce.h qmqp_proto.h verp_sender.h \
-	match_parent_style.h quote_flags.h
+	match_parent_style.h quote_flags.h mime_state.h header_token.h \
+	lex_822.h strip_addr.h virtual8_maps.h hold_message.h
 TESTSRC	= rec2stream.c stream2rec.c recdump.c
 WARN	= -W -Wformat -Wimplicit -Wmissing-prototypes \
 	-Wparentheses -Wstrict-prototypes -Wswitch -Wuninitialized \
@@ -70,7 +73,8 @@ TESTPROG= domain_list dot_lockfile mail_addr_crunch mail_addr_find \
 	mail_addr_map mail_date maps mynetworks mypwd namadr_list \
 	off_cvt quote_822_local rec2stream recdump resolve_clnt \
 	resolve_local rewrite_clnt stream2rec string_list tok822_parse \
-	quote_821_local mail_conf_time
+	quote_821_local mail_conf_time mime_state strip_addr \
+	virtual8_maps
 
 LIBS	= ../../lib/libutil.a
 LIB_DIR	= ../../lib
@@ -213,12 +217,106 @@ mail_conf_time: $(LIB) $(LIBS)
 	$(CC) -DTEST $(CFLAGS) -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 	mv junk $@.o
 
-tests: tok822_test
+mime_state: $(LIB) $(LIBS)
+	mv $@.o junk
+	$(CC) -DTEST $(CFLAGS) -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+	mv junk $@.o
+
+strip_addr: $(LIB) $(LIBS)
+	mv $@.o junk
+	$(CC) -DTEST $(CFLAGS) -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+	mv junk $@.o
+
+virtual8_maps: $(LIB) $(LIBS)
+	mv $@.o junk
+	$(CC) -DTEST $(CFLAGS) -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
+	mv junk $@.o
+
+tests: tok822_test mime_test mime_nest mime_8bit mime_dom mime_trunc \
+	mime_cvt mime_cvt2 mime_cvt3 strip_addr_test tok822_limit_test \
+	virtual8_test
 
 tok822_test: tok822_parse tok822_parse.in tok822_parse.ref
 	./tok822_parse <tok822_parse.in >tok822_parse.tmp
 	diff tok822_parse.ref tok822_parse.tmp
 	rm -f tok822_parse.tmp
+
+mime_test: mime_state mime_test.in mime_test.ref
+	./mime_state <mime_test.in >mime_test.tmp
+	diff  mime_test.ref mime_test.tmp
+	rm -f mime_test.tmp
+
+mime_nest: mime_state mime_nest.in mime_nest.ref
+	./mime_state <mime_nest.in >mime_nest.tmp
+	diff  mime_nest.ref mime_nest.tmp
+	rm -f mime_nest.tmp
+
+mime_8bit: mime_state mime_8bit.in mime_8bit.ref
+	./mime_state <mime_8bit.in >mime_8bit.tmp
+	diff  mime_8bit.ref mime_8bit.tmp
+	rm -f mime_8bit.tmp
+
+mime_dom: mime_state mime_dom.in mime_dom.ref
+	./mime_state <mime_dom.in >mime_dom.tmp
+	diff  mime_dom.ref mime_dom.tmp
+	rm -f mime_dom.tmp
+
+mime_trunc: mime_state mime_trunc.in mime_trunc.ref
+	./mime_state <mime_trunc.in >mime_trunc.tmp
+	diff  mime_trunc.ref mime_trunc.tmp
+	rm -f mime_trunc.tmp
+
+mime_cvt: mime_state mime_cvt.in mime_cvt.ref
+	./mime_state <mime_cvt.in >mime_cvt.tmp
+	diff  mime_cvt.ref mime_cvt.tmp
+	rm -f mime_cvt.tmp
+
+mime_cvt2: mime_state mime_cvt.in2 mime_cvt.ref2
+	./mime_state <mime_cvt.in2 >mime_cvt.tmp
+	diff  mime_cvt.ref2 mime_cvt.tmp
+	rm -f mime_cvt.tmp
+
+mime_cvt3: mime_state mime_cvt.in3 mime_cvt.ref3
+	./mime_state <mime_cvt.in3 >mime_cvt.tmp
+	diff  mime_cvt.ref3 mime_cvt.tmp
+	rm -f mime_cvt.tmp
+
+tok822_limit_test: tok822_parse tok822_limit.in tok822_limit.ref
+	./tok822_parse <tok822_limit.in >tok822_limit.tmp
+	diff tok822_limit.ref tok822_limit.tmp
+	rm -f tok822_limit.tmp
+
+strip_addr_test: strip_addr strip_addr.ref
+	./strip_addr 2>strip_addr.tmp
+	diff strip_addr.ref strip_addr.tmp
+	rm -f strip_addr.tmp
+
+virtual8_test: virtual8_maps virtual8_map virtual8.in virtual8.ref \
+	../postmap/postmap
+	../postmap/postmap hash:virtual8_map
+	./virtual8_maps <virtual8.in hash:virtual8_map >virtual8.tmp
+	diff virtual8.ref virtual8.tmp
+	rm -f virtual8.tmp virtual8_map.db
+
+# Requires: Postfix running, root privileges
+
+rewrite_clnt_test: rewrite_clnt rewrite_clnt.in rewrite_clnt.ref
+	./rewrite_clnt <rewrite_clnt.in >rewrite_clnt.tmp
+	sed "s/MYDOMAIN/`postconf -h mydomain`/" rewrite_clnt.ref | \
+	    diff - rewrite_clnt.tmp
+	rm -f rewrite_clnt.tmp
+
+# Requires: Postfix, root, relayhost=$mydomain, no transport map
+
+resolve_clnt_test: resolve_clnt resolve_clnt.in resolve_clnt.ref
+	sed -e "s/MYDOMAIN/`postconf -h mydomain`/g" \
+	    -e "s/MYHOSTNAME/`postconf -h myhostname`/g" \
+	    resolve_clnt.in | ./resolve_clnt >resolve_clnt.tmp
+	sed -e "s/MYDOMAIN/`postconf -h mydomain`/g" \
+	    -e "s/MYHOSTNAME/`postconf -h myhostname`/g" \
+	    -e "s/RELAYHOST/`postconf -h mydomain`/g" \
+	    resolve_clnt.ref | diff - resolve_clnt.tmp
+	rm -f resolve_clnt.tmp
 
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
@@ -253,6 +351,7 @@ abounce.o: ../../include/mymalloc.h
 abounce.o: ../../include/events.h
 abounce.o: ../../include/vstream.h
 abounce.o: ../../include/vbuf.h
+abounce.o: mail_params.h
 abounce.o: mail_proto.h
 abounce.o: ../../include/iostuff.h
 abounce.o: ../../include/attr.h
@@ -334,6 +433,7 @@ defer.o: ../../include/sys_defs.h
 defer.o: ../../include/msg.h
 defer.o: ../../include/vstring.h
 defer.o: ../../include/vbuf.h
+defer.o: mail_params.h
 defer.o: mail_queue.h
 defer.o: ../../include/vstream.h
 defer.o: mail_proto.h
@@ -439,7 +539,26 @@ header_opts.o: ../../include/msg.h
 header_opts.o: ../../include/htable.h
 header_opts.o: ../../include/vstring.h
 header_opts.o: ../../include/vbuf.h
+header_opts.o: ../../include/stringops.h
 header_opts.o: header_opts.h
+header_token.o: header_token.c
+header_token.o: ../../include/sys_defs.h
+header_token.o: ../../include/msg.h
+header_token.o: ../../include/vstring.h
+header_token.o: ../../include/vbuf.h
+header_token.o: lex_822.h
+header_token.o: header_token.h
+hold_message.o: hold_message.c
+hold_message.o: ../../include/sys_defs.h
+hold_message.o: ../../include/msg.h
+hold_message.o: ../../include/set_eugid.h
+hold_message.o: ../../include/sane_fsops.h
+hold_message.o: mail_queue.h
+hold_message.o: ../../include/vstring.h
+hold_message.o: ../../include/vbuf.h
+hold_message.o: ../../include/vstream.h
+hold_message.o: mail_params.h
+hold_message.o: hold_message.h
 is_header.o: is_header.c
 is_header.o: ../../include/sys_defs.h
 is_header.o: is_header.h
@@ -471,7 +590,7 @@ mail_addr_find.o: ../../include/stringops.h
 mail_addr_find.o: ../../include/vstring.h
 mail_addr_find.o: ../../include/mymalloc.h
 mail_addr_find.o: mail_params.h
-mail_addr_find.o: split_addr.h
+mail_addr_find.o: strip_addr.h
 mail_addr_find.o: mail_addr_find.h
 mail_addr_find.o: maps.h
 mail_addr_find.o: resolve_local.h
@@ -599,6 +718,7 @@ mail_error.o: mail_error.h
 mail_error.o: ../../include/name_mask.h
 mail_flush.o: mail_flush.c
 mail_flush.o: ../../include/sys_defs.h
+mail_flush.o: mail_params.h
 mail_flush.o: mail_proto.h
 mail_flush.o: ../../include/vstream.h
 mail_flush.o: ../../include/vbuf.h
@@ -623,11 +743,14 @@ mail_params.o: ../../include/stringops.h
 mail_params.o: ../../include/vstring.h
 mail_params.o: ../../include/vbuf.h
 mail_params.o: ../../include/safe.h
+mail_params.o: ../../include/dict_db.h
+mail_params.o: ../../include/dict.h
+mail_params.o: ../../include/vstream.h
+mail_params.o: ../../include/argv.h
 mail_params.o: mynetworks.h
 mail_params.o: mail_conf.h
 mail_params.o: mail_version.h
 mail_params.o: mail_proto.h
-mail_params.o: ../../include/vstream.h
 mail_params.o: ../../include/iostuff.h
 mail_params.o: ../../include/attr.h
 mail_params.o: verp_sender.h
@@ -760,6 +883,19 @@ mbox_open.o: ../../include/myflock.h
 mbox_open.o: mbox_conf.h
 mbox_open.o: ../../include/argv.h
 mbox_open.o: mbox_open.h
+mime_state.o: mime_state.c
+mime_state.o: ../../include/sys_defs.h
+mime_state.o: ../../include/mymalloc.h
+mime_state.o: ../../include/msg.h
+mime_state.o: ../../include/vstring.h
+mime_state.o: ../../include/vbuf.h
+mime_state.o: rec_type.h
+mime_state.o: is_header.h
+mime_state.o: header_opts.h
+mime_state.o: mail_params.h
+mime_state.o: header_token.h
+mime_state.o: lex_822.h
+mime_state.o: mime_state.h
 mkmap_db.o: mkmap_db.c
 mkmap_db.o: ../../include/sys_defs.h
 mkmap_db.o: ../../include/msg.h
@@ -771,6 +907,8 @@ mkmap_db.o: ../../include/dict.h
 mkmap_db.o: ../../include/vstream.h
 mkmap_db.o: ../../include/argv.h
 mkmap_db.o: ../../include/dict_db.h
+mkmap_db.o: ../../include/myflock.h
+mkmap_db.o: mail_params.h
 mkmap_db.o: mkmap.h
 mkmap_dbm.o: mkmap_dbm.c
 mkmap_dbm.o: ../../include/sys_defs.h
@@ -783,6 +921,7 @@ mkmap_dbm.o: ../../include/dict.h
 mkmap_dbm.o: ../../include/vstream.h
 mkmap_dbm.o: ../../include/argv.h
 mkmap_dbm.o: ../../include/dict_dbm.h
+mkmap_dbm.o: ../../include/myflock.h
 mkmap_dbm.o: mkmap.h
 mkmap_open.o: mkmap_open.c
 mkmap_open.o: ../../include/sys_defs.h
@@ -795,7 +934,6 @@ mkmap_open.o: ../../include/dict_db.h
 mkmap_open.o: ../../include/dict_dbm.h
 mkmap_open.o: ../../include/sigdelay.h
 mkmap_open.o: ../../include/mymalloc.h
-mkmap_open.o: ../../include/myflock.h
 mkmap_open.o: mkmap.h
 mynetworks.o: mynetworks.c
 mynetworks.o: ../../include/sys_defs.h
@@ -1011,6 +1149,11 @@ string_list.o: ../../include/sys_defs.h
 string_list.o: ../../include/match_list.h
 string_list.o: string_list.h
 string_list.o: ../../include/match_ops.h
+strip_addr.o: strip_addr.c
+strip_addr.o: ../../include/sys_defs.h
+strip_addr.o: ../../include/mymalloc.h
+strip_addr.o: split_addr.h
+strip_addr.o: strip_addr.h
 sys_exits.o: sys_exits.c
 sys_exits.o: ../../include/sys_defs.h
 sys_exits.o: ../../include/msg.h
@@ -1040,6 +1183,7 @@ tok822_parse.o: ../../include/sys_defs.h
 tok822_parse.o: ../../include/vstring.h
 tok822_parse.o: ../../include/vbuf.h
 tok822_parse.o: ../../include/msg.h
+tok822_parse.o: lex_822.h
 tok822_parse.o: quote_822_local.h
 tok822_parse.o: quote_flags.h
 tok822_parse.o: tok822.h
@@ -1072,6 +1216,18 @@ verp_sender.o: ../../include/vstring.h
 verp_sender.o: ../../include/vbuf.h
 verp_sender.o: mail_params.h
 verp_sender.o: verp_sender.h
+virtual8_maps.o: virtual8_maps.c
+virtual8_maps.o: ../../include/sys_defs.h
+virtual8_maps.o: ../../include/msg.h
+virtual8_maps.o: ../../include/mymalloc.h
+virtual8_maps.o: maps.h
+virtual8_maps.o: ../../include/dict.h
+virtual8_maps.o: ../../include/vstream.h
+virtual8_maps.o: ../../include/vbuf.h
+virtual8_maps.o: ../../include/argv.h
+virtual8_maps.o: mail_params.h
+virtual8_maps.o: strip_addr.h
+virtual8_maps.o: virtual8_maps.h
 xtext.o: xtext.c
 xtext.o: ../../include/sys_defs.h
 xtext.o: ../../include/vstream.h

@@ -24,6 +24,20 @@ typedef int bool;
 extern char *var_mail_name;
 
  /*
+  * You want to be helped or not.
+  */
+#define VAR_HELPFUL_WARNINGS	"helpful_warnings"
+#define DEF_HELPFUL_WARNINGS	1
+extern bool var_helpful_warnings;
+
+ /*
+  * You want to be helped or not.
+  */
+#define VAR_SHOW_UNK_RCPT_TABLE	"show_user_unknown_table_name"
+#define DEF_SHOW_UNK_RCPT_TABLE	1
+extern bool var_show_unk_rcpt_table;
+
+ /*
   * What problem classes should be reported to the postmaster via email.
   * Default is bad problems only. See mail_error(3). Even when mail notices
   * are disabled, problems are still logged to the syslog daemon.
@@ -89,7 +103,7 @@ extern char *var_mydomain;
   * The default local delivery transport.
   */
 #define VAR_LOCAL_TRANSPORT	"local_transport"
-#define DEF_LOCAL_TRANSPORT	"local"
+#define DEF_LOCAL_TRANSPORT	MAIL_SERVICE_LOCAL ":$myhostname"
 extern char *var_local_transport;
 
  /*
@@ -117,6 +131,10 @@ extern char *var_error_rcpt;
 #define VAR_INET_INTERFACES	"inet_interfaces"	/* listen addresses */
 #define DEF_INET_INTERFACES	"all"
 extern char *var_inet_interfaces;
+
+#define VAR_PROXY_INTERFACES	"proxy_interfaces"	/* proxies, NATs */
+#define DEF_PROXY_INTERFACES	""
+extern char *var_proxy_interfaces;
 
  /*
   * Masquerading (i.e. subdomain stripping).
@@ -211,6 +229,9 @@ extern char *var_config_dir;
 #define DEF_CONFIG_DIRS		""
 extern char *var_config_dirs;
 
+#define MAIN_CONF_FILE		"main.cf"
+#define MASTER_CONF_FILE	"master.cf"
+
  /*
   * Preferred type of indexed files. The DEF_DB_TYPE macro value is system
   * dependent. It is defined in <sys_defs.h>.
@@ -279,9 +300,17 @@ extern bool var_disable_vrfy_cmd;
  /*
   * trivial rewrite/resolve service: mapping tables.
   */
-#define VAR_VIRTUAL_MAPS	"virtual_maps"
-#define DEF_VIRTUAL_MAPS	""
-extern char *var_virtual_maps;
+#define VAR_VIRT_ALIAS_MAPS	"virtual_alias_maps"
+#define DEF_VIRT_ALIAS_MAPS	"$virtual_maps"	/* Compatibility! */
+extern char *var_virt_alias_maps;
+
+#define VAR_VIRT_ALIAS_DOMS	"virtual_alias_domains"
+#define DEF_VIRT_ALIAS_DOMS	"$virtual_alias_maps"
+extern char *var_virt_alias_doms;
+
+#define VAR_VIRT_ALIAS_CODE	"unknown_virtual_alias_reject_code"
+#define DEF_VIRT_ALIAS_CODE	550
+extern int var_virt_alias_code;
 
 #define VAR_CANONICAL_MAPS	"canonical_maps"
 #define DEF_CANONICAL_MAPS	""
@@ -498,11 +527,11 @@ extern int var_delay_warn_time;
   * Queue manager: various in-core message and recipient limits.
   */
 #define VAR_QMGR_ACT_LIMIT	"qmgr_message_active_limit"
-#define DEF_QMGR_ACT_LIMIT	10000
+#define DEF_QMGR_ACT_LIMIT	20000
 extern int var_qmgr_active_limit;
 
 #define VAR_QMGR_RCPT_LIMIT	"qmgr_message_recipient_limit"
-#define DEF_QMGR_RCPT_LIMIT	10000
+#define DEF_QMGR_RCPT_LIMIT	20000
 extern int var_qmgr_rcpt_limit;
 
 #define VAR_QMGR_MSG_RCPT_LIMIT	"qmgr_message_recipient_minimum"
@@ -546,10 +575,6 @@ extern int var_min_delivery_slots;
 #define DEF_QMGR_FUDGE		100
 extern int var_qmgr_fudge;
 
-#define VAR_QMGR_HOG		"qmgr_site_hog_factor"
-#define DEF_QMGR_HOG		100
-extern int var_qmgr_hog;
-
  /*
   * Queue manager: default destination concurrency levels.
   */
@@ -559,7 +584,7 @@ extern int var_init_dest_concurrency;
 
 #define VAR_DEST_CON_LIMIT	"default_destination_concurrency_limit"
 #define _DEST_CON_LIMIT		"_destination_concurrency_limit"
-#define DEF_DEST_CON_LIMIT	10
+#define DEF_DEST_CON_LIMIT	20
 extern int var_dest_con_limit;
 
 #define VAR_LOCAL_CON_LIMIT	"local" _DEST_CON_LIMIT
@@ -593,10 +618,18 @@ extern int var_transport_retry_time;
 extern char *var_defer_xports;
 
  /*
+  * Queue manager: how often to warn that a destination is clogging the
+  * active queue.
+  */
+#define VAR_QMGR_CLOG_WARN_TIME	"qmgr_clog_warn_time"
+#define DEF_QMGR_CLOG_WARN_TIME	"300s"
+extern int var_qmgr_clog_warn_time;
+
+ /*
   * Master: default process count limit per mail subsystem.
   */
 #define VAR_PROC_LIMIT		"default_process_limit"
-#define DEF_PROC_LIMIT		50
+#define DEF_PROC_LIMIT		100
 extern int var_proc_limit;
 
  /*
@@ -654,11 +687,11 @@ extern int var_debug_peer_level;
   * subdirectories, and how deep the forest is.
   */
 #define VAR_HASH_QUEUE_NAMES	"hash_queue_names"
-#define DEF_HASH_QUEUE_NAMES	"incoming,active,deferred,bounce,defer,flush"
+#define DEF_HASH_QUEUE_NAMES	"incoming,active,deferred,bounce,defer,flush,hold"
 extern char *var_hash_queue_names;
 
 #define VAR_HASH_QUEUE_DEPTH	"hash_queue_depth"
-#define DEF_HASH_QUEUE_DEPTH	2
+#define DEF_HASH_QUEUE_DEPTH	1
 extern int var_hash_queue_depth;
 
  /*
@@ -675,7 +708,7 @@ extern int var_hash_queue_depth;
 extern char *var_bestmx_transp;
 
 #define VAR_SMTP_CONN_TMOUT	"smtp_connect_timeout"
-#define DEF_SMTP_CONN_TMOUT	"0s"
+#define DEF_SMTP_CONN_TMOUT	"30s"
 extern int var_smtp_conn_tmout;
 
 #define VAR_SMTP_HELO_TMOUT	"smtp_helo_timeout"
@@ -738,6 +771,10 @@ extern bool var_smtp_never_ehlo;
 #define DEF_SMTP_BIND_ADDR	""
 extern char *var_smtp_bind_addr;
 
+#define VAR_SMTP_HELO_NAME	"smtp_helo_name"
+#define DEF_SMTP_HELO_NAME	"$myhostname"
+extern char *var_smtp_helo_name;
+
 #define VAR_SMTP_RAND_ADDR	"smtp_randomize_addresses"
 #define DEF_SMTP_RAND_ADDR	1
 extern bool var_smtp_rand_addr;
@@ -776,11 +813,11 @@ extern int var_smtpd_rcpt_limit;
 extern int var_smtpd_soft_erlim;
 
 #define VAR_SMTPD_HARD_ERLIM	"smtpd_hard_error_limit"
-#define DEF_SMTPD_HARD_ERLIM	100
+#define DEF_SMTPD_HARD_ERLIM	20
 extern int var_smtpd_hard_erlim;
 
 #define VAR_SMTPD_ERR_SLEEP	"smtpd_error_sleep_time"
-#define DEF_SMTPD_ERR_SLEEP	"5s"
+#define DEF_SMTPD_ERR_SLEEP	"1s"
 extern int var_smtpd_err_sleep;
 
 #define VAR_SMTPD_JUNK_CMD	"smtpd_junk_command_limit"
@@ -807,7 +844,7 @@ extern bool var_smtpd_sasl_enable;
 extern char *var_smtpd_sasl_opts;
 
 #define VAR_SMTPD_SASL_REALM	"smtpd_sasl_local_domain"
-#define DEF_SMTPD_SASL_REALM	"$myhostname"
+#define DEF_SMTPD_SASL_REALM	""
 extern char *var_smtpd_sasl_realm;
 
 #define VAR_SMTPD_SND_AUTH_MAPS	"smtpd_sender_login_maps"
@@ -965,6 +1002,10 @@ extern int var_hopcount_limit;
 #define DEF_HEADER_LIMIT	102400
 extern int var_header_limit;
 
+#define VAR_TOKEN_LIMIT		"header_address_token_limit"
+#define DEF_TOKEN_LIMIT		10240
+extern int var_token_limit;
+
 #define VAR_EXTRA_RCPT_LIMIT	"extract_recipient_limit"
 #define DEF_EXTRA_RCPT_LIMIT	10240
 extern int var_extra_rcpt_limit;
@@ -984,9 +1025,21 @@ extern int var_queue_minfree;
 #define DEF_HEADER_CHECKS	""
 extern char *var_header_checks;
 
+#define VAR_MIMEHDR_CHECKS	"mime_header_checks"
+#define DEF_MIMEHDR_CHECKS	"$header_checks"
+extern char *var_mimehdr_checks;
+
+#define VAR_NESTHDR_CHECKS	"nested_header_checks"
+#define DEF_NESTHDR_CHECKS	"$header_checks"
+extern char *var_nesthdr_checks;
+
 #define VAR_BODY_CHECKS		"body_checks"
 #define DEF_BODY_CHECKS		""
 extern char *var_body_checks;
+
+#define VAR_BODY_CHECK_LEN	"body_checks_size_limit"
+#define DEF_BODY_CHECK_LEN	(50*1024)
+extern int var_body_check_len;
 
  /*
   * Bounce service: truncate bounce message that exceed $bounce_size_limit.
@@ -1076,6 +1129,18 @@ extern char *var_mynetworks_style;
 #define DEF_RELAY_DOMAINS	"$mydestination"
 extern char *var_relay_domains;
 
+#define VAR_RELAY_TRANSPORT	"relay_transport"
+#define DEF_RELAY_TRANSPORT	MAIL_SERVICE_RELAY
+extern char *var_relay_transport;
+
+#define VAR_RELAY_RCPT_MAPS	"relay_recipient_maps"
+#define DEF_RELAY_RCPT_MAPS	""
+extern char *var_relay_rcpt_maps;
+
+#define VAR_RELAY_RCPT_CODE	"unknown_relay_recipient_reject_code"
+#define DEF_RELAY_RCPT_CODE	550
+extern int var_relay_rcpt_code;
+
 #define VAR_CLIENT_CHECKS	"smtpd_client_restrictions"
 #define DEF_CLIENT_CHECKS	""
 extern char *var_client_checks;
@@ -1093,12 +1158,16 @@ extern char *var_helo_checks;
 extern char *var_mail_checks;
 
 #define VAR_RCPT_CHECKS		"smtpd_recipient_restrictions"
-#define DEF_RCPT_CHECKS		PERMIT_MYNETWORKS "," CHECK_RELAY_DOMAINS
+#define DEF_RCPT_CHECKS		PERMIT_MYNETWORKS ", " REJECT_UNAUTH_DEST
 extern char *var_rcpt_checks;
 
 #define VAR_ETRN_CHECKS		"smtpd_etrn_restrictions"
 #define DEF_ETRN_CHECKS		""
 extern char *var_etrn_checks;
+
+#define VAR_DATA_CHECKS		"smtpd_data_restrictions"
+#define DEF_DATA_CHECKS		""
+extern char *var_data_checks;
 
 #define VAR_REST_CLASSES	"smtpd_restriction_classes"
 #define DEF_REST_CLASSES	""
@@ -1118,6 +1187,14 @@ extern bool var_allow_untrust_route;
 #define VAR_REJECT_CODE		"reject_code"
 #define DEF_REJECT_CODE		554
 extern int var_reject_code;
+
+#define DEFER_ALL		"defer"
+#define VAR_DEFER_CODE		"defer_code"
+#define DEF_DEFER_CODE		450
+extern int var_defer_code;
+
+#define DEFER_IF_PERMIT		"defer_if_permit"
+#define DEFER_IF_REJECT		"defer_if_reject"
 
 #define REJECT_UNKNOWN_CLIENT	"reject_unknown_client"
 #define VAR_UNK_CLIENT_CODE	"unknown_client_reject_code"
@@ -1148,6 +1225,7 @@ extern int var_non_fqdn_code;
 #define REJECT_UNKNOWN_SENDDOM	"reject_unknown_sender_domain"
 #define REJECT_UNKNOWN_RCPTDOM	"reject_unknown_recipient_domain"
 #define REJECT_UNKNOWN_ADDRESS	"reject_unknown_address"
+#define CHECK_RCPT_MAPS		"check_recipient_maps"
 #define VAR_UNK_ADDR_CODE	"unknown_address_reject_code"
 #define DEF_UNK_ADDR_CODE	450
 extern int var_unk_addr_code;
@@ -1177,12 +1255,26 @@ extern int var_access_map_code;
 
 #define WARN_IF_REJECT		"warn_if_reject"
 
-#define REJECT_MAPS_RBL		"reject_maps_rbl"
+#define REJECT_RBL		"reject_rbl"	/* LaMont compatibility */
+#define REJECT_RBL_CLIENT	"reject_rbl_client"
+#define REJECT_RHSBL_CLIENT	"reject_rhsbl_client"
+#define REJECT_RHSBL_SENDER	"reject_rhsbl_sender"
+#define REJECT_RHSBL_RECIPIENT	"reject_rhsbl_recipient"
+
+#define VAR_RBL_REPLY_MAPS	"rbl_reply_maps"
+#define DEF_RBL_REPLY_MAPS	""
+extern char *var_rbl_reply_maps;
+
+#define VAR_DEF_RBL_REPLY	"default_rbl_reply"
+#define DEF_DEF_RBL_REPLY	"$rbl_code Service unavailable; $rbl_class [$rbl_what] blocked using $rbl_domain${rbl_reason?; $rbl_reason}"
+extern char *var_def_rbl_reply;
+
+#define REJECT_MAPS_RBL		"reject_maps_rbl"	/* backwards compat */
 #define VAR_MAPS_RBL_CODE	"maps_rbl_reject_code"
 #define DEF_MAPS_RBL_CODE	554
 extern int var_maps_rbl_code;
 
-#define VAR_MAPS_RBL_DOMAINS	"maps_rbl_domains"
+#define VAR_MAPS_RBL_DOMAINS	"maps_rbl_domains"	/* backwards compat */
 #define DEF_MAPS_RBL_DOMAINS	""
 extern char *var_maps_rbl_domains;
 
@@ -1196,12 +1288,22 @@ extern int var_smtpd_delay_reject;
 #define DEF_SMTPD_NULL_KEY	"<>"
 extern char *var_smtpd_null_key;
 
+#define VAR_SMTPD_EXP_FILTER	"smtpd_expansion_filter"
+#define DEF_SMTPD_EXP_FILTER	"\\t\\40!\"#$%&'()*+,-./0123456789:;<=>?@\
+ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\\\]^_`\
+abcdefghijklmnopqrstuvwxyz{|}~"
+extern char *var_smtpd_exp_filter;
+
  /*
-  * Heuristic to reject most unknown recipients at the SMTP port.
+  * Heuristic to reject unknown local recipients at the SMTP port.
   */
 #define VAR_LOCAL_RCPT_MAPS	"local_recipient_maps"
-#define DEF_LOCAL_RCPT_MAPS	""
+#define DEF_LOCAL_RCPT_MAPS	"unix:passwd.byname $alias_maps"
 extern char *var_local_rcpt_maps;
+
+#define VAR_LOCAL_RCPT_CODE	"unknown_local_recipient_reject_code"
+#define DEF_LOCAL_RCPT_CODE	550
+extern int var_local_rcpt_code;
 
  /*
   * Other.
@@ -1281,9 +1383,21 @@ extern char *var_export_environ;
  /*
   * Tunables for the "virtual" local delivery agent
   */
+#define VAR_VIRT_TRANSPORT		"virtual_transport"
+#define DEF_VIRT_TRANSPORT		MAIL_SERVICE_VIRTUAL
+extern char *var_virt_transport;
+
 #define VAR_VIRT_MAILBOX_MAPS		"virtual_mailbox_maps"
 #define DEF_VIRT_MAILBOX_MAPS		""
 extern char *var_virt_mailbox_maps;
+
+#define VAR_VIRT_MAILBOX_DOMS		"virtual_mailbox_domains"
+#define DEF_VIRT_MAILBOX_DOMS		"$virtual_mailbox_maps"
+extern char *var_virt_mailbox_doms;
+
+#define VAR_VIRT_MAILBOX_CODE		"unknown_virtual_mailbox_reject_code"
+#define DEF_VIRT_MAILBOX_CODE		550
+extern int var_virt_mailbox_code;
 
 #define VAR_VIRT_UID_MAPS		"virtual_uid_maps"
 #define DEF_VIRT_UID_MAPS		""
@@ -1328,7 +1442,7 @@ extern char *var_qmqpd_clients;
 extern int var_qmqpd_timeout;
 
 #define VAR_QMTPD_ERR_SLEEP		"qmqpd_error_delay"
-#define DEF_QMTPD_ERR_SLEEP		"5s"
+#define DEF_QMTPD_ERR_SLEEP		"1s"
 extern int var_qmqpd_err_sleep;
 
  /*
@@ -1346,6 +1460,10 @@ extern char *var_verp_filter;
 #define VAR_VERP_BOUNCE_OFF		"disable_verp_bounces"
 #define DEF_VERP_BOUNCE_OFF		0
 extern bool var_verp_bounce_off;
+
+#define VAR_VERP_CLIENTS		"authorized_verp_clients"
+#define DEF_VERP_CLIENTS		"$mynetworks"
+extern char *var_verp_clients;
 
  /*
   * Inbound mail flow control. This allows for a stiffer coupling between
@@ -1420,15 +1538,135 @@ extern int var_fault_inj_code;
 #endif
 
  /*
-  * Safety: resolve the unquoted address (technically incorrect), instead of
-  * resolving the quoted address (technically incorrect). This prevents mail
-  * relay loopholes with "user@domain"@domain when you're relaying mail for a
-  * Sendmail system or when receiving mail for a local virtual domain with an
-  * @domain catch-all rule.
+  * Safety: resolve the address with unquoted localpart (default, but
+  * technically incorrect), instead of resolving the address with quoted
+  * localpart (technically correct, but unsafe). The default prevents mail
+  * relay loopholes with "user@domain"@domain when relaying mail to a
+  * Sendmail system.
   */
 #define VAR_RESOLVE_DEQUOTED		"resolve_dequoted_address"
 #define DEF_RESOLVE_DEQUOTED		1
 extern bool var_resolve_dequoted;
+
+ /*
+  * Service names. The transport (TCP, FIFO or UNIX-domain) type is frozen
+  * because you cannot simply mix them, and accessibility (private/public) is
+  * frozen for security reasons. We list only the internal services, not the
+  * externally visible SMTP server, or the delivery agents that can already
+  * be chosen via transport mappings etc.
+  */
+#define VAR_BOUNCE_SERVICE		"bounce_service_name"
+#define DEF_BOUNCE_SERVICE		MAIL_SERVICE_BOUNCE
+extern char *var_bounce_service;
+
+#define VAR_CLEANUP_SERVICE		"cleanup_service_name"
+#define DEF_CLEANUP_SERVICE		MAIL_SERVICE_CLEANUP
+extern char *var_cleanup_service;
+
+#define VAR_DEFER_SERVICE		"defer_service_name"
+#define DEF_DEFER_SERVICE		MAIL_SERVICE_DEFER
+extern char *var_defer_service;
+
+#define VAR_PICKUP_SERVICE		"pickup_service_name"
+#define DEF_PICKUP_SERVICE		MAIL_SERVICE_PICKUP
+extern char *var_pickup_service;
+
+#define VAR_QUEUE_SERVICE		"queue_service_name"
+#define DEF_QUEUE_SERVICE		MAIL_SERVICE_QUEUE
+extern char *var_queue_service;
+
+ /* XXX resolve does not exist as a separate service */
+
+#define VAR_REWRITE_SERVICE		"rewrite_service_name"
+#define DEF_REWRITE_SERVICE		MAIL_SERVICE_REWRITE
+extern char *var_rewrite_service;
+
+#define VAR_SHOWQ_SERVICE		"showq_service_name"
+#define DEF_SHOWQ_SERVICE		MAIL_SERVICE_SHOWQ
+extern char *var_showq_service;
+
+#define VAR_ERROR_SERVICE		"error_service_name"
+#define DEF_ERROR_SERVICE		MAIL_SERVICE_ERROR
+extern char *var_error_service;
+
+#define VAR_FLUSH_SERVICE		"flush_service_name"
+#define DEF_FLUSH_SERVICE		MAIL_SERVICE_FLUSH
+extern char *var_flush_service;
+
+ /*
+  * Mailbox/maildir delivery errors that cause delivery to be tried again.
+  */
+#define VAR_MBX_DEFER_ERRS		"mailbox_defer_errors"
+#define DEF_MBX_DEFER_ERRS		"eagain, enospc, estale"
+extern char *var_mbx_defer_errs;
+
+#define VAR_MDR_DEFER_ERRS		"maildir_defer_errors"
+#define DEF_MDR_DEFER_ERRS		"enospc, estale"
+extern char *var_mdr_defer_errs;
+
+ /*
+  * Berkeley DB memory pool sizes.
+  */
+#define	VAR_DB_CREATE_BUF		"berkeley_db_create_buffer_size"
+#define DEF_DB_CREATE_BUF		(16 * 1024 *1024)
+extern int var_db_create_buf;
+
+#define	VAR_DB_READ_BUF			"berkeley_db_read_buffer_size"
+#define DEF_DB_READ_BUF			(128 *1024)
+extern int var_db_read_buf;
+
+ /*
+  * Named queue file attributes.
+  */
+#define VAR_QATTR_COUNT_LIMIT		"queue_file_attribute_count_limit"
+#define DEF_QATTR_COUNT_LIMIT		100
+extern int var_qattr_count_limit;
+
+ /*
+  * MIME support.
+  */
+#define VAR_MIME_MAXDEPTH		"mime_nesting_limit"
+#define DEF_MIME_MAXDEPTH		100
+extern int var_mime_maxdepth;
+
+#define VAR_MIME_BOUND_LEN		"mime_boundary_length_limit"
+#define DEF_MIME_BOUND_LEN		2048
+extern int var_mime_bound_len;
+
+#define VAR_DISABLE_MIME_INPUT		"disable_mime_input_processing"
+#define DEF_DISABLE_MIME_INPUT		0
+extern bool var_disable_mime_input;
+
+#define VAR_DISABLE_MIME_OCONV		"disable_mime_output_conversion"
+#define DEF_DISABLE_MIME_OCONV		0
+extern bool var_disable_mime_oconv;
+
+#define VAR_STRICT_8BITMIME		"strict_8bitmime"
+#define DEF_STRICT_8BITMIME		0
+extern bool var_strict_8bitmime;
+
+#define VAR_STRICT_7BIT_HDRS		"strict_7bit_headers"
+#define DEF_STRICT_7BIT_HDRS		0
+extern bool var_strict_7bit_hdrs;
+
+#define VAR_STRICT_8BIT_BODY		"strict_8bitmime_body"
+#define DEF_STRICT_8BIT_BODY		0
+extern bool var_strict_8bit_body;
+
+#define VAR_STRICT_ENCODING		"strict_mime_encoding_domain"
+#define DEF_STRICT_ENCODING		0
+extern bool var_strict_encoding;
+
+ /*
+  * Bizarre.
+  */
+#define VAR_SENDER_ROUTING		"sender_based_routing"
+#define DEF_SENDER_ROUTING		0
+extern bool var_sender_routing;
+
+#define VAR_XPORT_NULL_KEY	"transport_null_address_lookup_key"
+#define DEF_XPORT_NULL_KEY	"<>"
+extern char *var_xport_null_key;
 
 /* LICENSE
 /* .ad

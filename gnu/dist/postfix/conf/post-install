@@ -253,17 +253,6 @@ test -f $config_directory/postfix-files || {
     exit 1
 }
 
-#
-# LINUX by default does not synchronously update directories -
-# that's dangerous for mail.
-#
-if [ -f /usr/bin/chattr ]
-then
-    CHATTR="/usr/bin/chattr +S"
-else
-    CHATTR=echo
-fi
-
 case `uname -s` in
 HP-UX*) FMT=cat;;
      *) FMT=fmt;;
@@ -460,9 +449,18 @@ test -n "$create" && {
 
 test -n "$upgrade_conf" && {
 
+    # Add missing relay service to master.cf.
+
+    grep '^relay' $config_directory/master.cf >/dev/null || {
+	echo Editing $config_directory/master.cf, adding missing entry for relay service
+	cat >>$config_directory/master.cf <<EOF || exit 1
+relay	  unix	-	-	n	-	-	smtp
+EOF
+    }
+
     # Add missing flush service to master.cf.
 
-    grep 'flush.*flush' $config_directory/master.cf >/dev/null || {
+    grep '^flush.*flush' $config_directory/master.cf >/dev/null || {
 	echo Editing $config_directory/master.cf, adding missing entry for flush service
 	cat >>$config_directory/master.cf <<EOF || exit 1
 flush     unix  -       -       n       1000?   0       flush
@@ -500,7 +498,7 @@ EOF
 	}
     done
 
-    # With 10000 active queue files, the active queue directory should
+    # With 20000 active queue files, the active queue directory should
     # be hashed, and so should the other directories, because they
     # can contain even more mail.
     #
@@ -522,6 +520,21 @@ EOF
 	$POSTCONF -c $config_directory -e hash_queue_names="$found$missing" ||
 	    exit 1
     }
+
+    # Turn on safety nets for new features that could bounce mail that
+    # would be accepted by a previous Postfix version.
+
+    unknown_local=unknown_local_recipient_reject_code
+    has_lrm=`$POSTCONF -n local_recipient_maps`
+    has_lrjc=`$POSTCONF -n $unknown_local`
+
+    if [ -z "$has_lrm" -a -z "$has_lrjc" ]
+    then
+	echo SAFETY: editing main.cf, setting $unknown_local=450.
+	echo See the RELEASE_NOTES and LOCAL_RECIPIENT_README files for details.
+	$POSTCONF -e "$unknown_local = 450" || exit 1
+    fi
+
 }
 
 # A reminder if this is the first time Postfix is being installed.
