@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.c,v 1.4 1996/05/03 17:05:29 christos Exp $	*/
+/*	$NetBSD: ibcs2_socksys.c,v 1.5 1996/06/23 11:17:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -116,9 +116,9 @@ ibcs2_socksys(p, v, retval)
 	case SOCKSYS_ADJTIME:
 		return sys_adjtime(p, realargs + 1, retval);
 	case SOCKSYS_SETREUID:
-		return compat_43_sys_setreuid(p, realargs + 1, retval);
+		return sys_setreuid(p, realargs + 1, retval);
 	case SOCKSYS_SETREGID:
-		return compat_43_sys_setregid(p, realargs + 1, retval);
+		return sys_setregid(p, realargs + 1, retval);
 	case SOCKSYS_GETTIME:
 		return sys_gettimeofday(p, realargs + 1, retval);
 	case SOCKSYS_SETTIME:
