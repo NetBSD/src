@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.c,v 1.3 1995/07/05 13:07:12 pk Exp $	 */
+/*	$NetBSD: svr4_sockio.c,v 1.4 1995/07/05 17:08:54 christos Exp $	 */
 
 /*
  * Copyright (c) 1995 Christos Zoulas
@@ -54,32 +54,24 @@
 static int bsd_to_svr4_flags __P((int));
 
 #define bsd_to_svr4_flag(a) \
-	if (bf & __CONCAT(IFF_,a))	sf |= __CONCAT(SVR4_IFF_,a)
+	if (bf & __CONCAT(I,a))	sf |= __CONCAT(SVR4_I,a)
 
 static int
 bsd_to_svr4_flags(bf)
 	int bf;
 {
 	int sf = 0;
-	bsd_to_svr4_flag(UP);
-	bsd_to_svr4_flag(BROADCAST);
-#ifdef DEBUG
-#define XXXDEBUG
-#undef DEBUG
-#endif
-	bsd_to_svr4_flag(DEBUG);
-#ifdef XXXDEBUG
-#define DEBUG
-#undef XXXDEBUG
-#endif
-	bsd_to_svr4_flag(LOOPBACK);
-	bsd_to_svr4_flag(POINTOPOINT);
-	bsd_to_svr4_flag(NOTRAILERS);
-	bsd_to_svr4_flag(RUNNING);
-	bsd_to_svr4_flag(NOARP);
-	bsd_to_svr4_flag(PROMISC);
-	bsd_to_svr4_flag(ALLMULTI);
-	bsd_to_svr4_flag(MULTICAST);
+	bsd_to_svr4_flag(FF_UP);
+	bsd_to_svr4_flag(FF_BROADCAST);
+	bsd_to_svr4_flag(FF_DEBUG);
+	bsd_to_svr4_flag(FF_LOOPBACK);
+	bsd_to_svr4_flag(FF_POINTOPOINT);
+	bsd_to_svr4_flag(FF_NOTRAILERS);
+	bsd_to_svr4_flag(FF_RUNNING);
+	bsd_to_svr4_flag(FF_NOARP);
+	bsd_to_svr4_flag(FF_PROMISC);
+	bsd_to_svr4_flag(FF_ALLMULTI);
+	bsd_to_svr4_flag(FF_MULTICAST);
 	return sf;
 }
 
