@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.81 1998/07/27 22:58:43 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.82 1998/07/28 21:51:34 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.74 1998/07/27 22:58:07 tron Exp 
+ *	NetBSD: pcidevs,v 1.75 1998/07/28 21:50:30 thorpej Exp 
  */
 
 /*
@@ -782,6 +782,7 @@
 
 /* Integrated Micro Solutions products */
 #define	PCI_PRODUCT_IMS_8849	0x8849		/* 8849 */
+#define	PCI_PRODUCT_IMS_TT128M	0x9128		/* TwinTurbo 128M */
 
 /* Intel products */
 #define	PCI_PRODUCT_INTEL_PCEB	0x0482		/* 82375EB/SB PCI-EISA Bridge (PCEB) */
