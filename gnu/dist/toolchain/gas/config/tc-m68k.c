@@ -3799,7 +3799,7 @@ md_begin ()
     }
 
   for (i = 0; i < (int) sizeof (mklower_table); i++)
-    mklower_table[i] = (isupper (i)) ? tolower (i) : i;
+    mklower_table[i] = (char)((isupper (i)) ? tolower (i) : i);
 
   for (i = 0; i < (int) sizeof (notend_table); i++)
     {
