@@ -1,4 +1,4 @@
-/*	$NetBSD: p_acer_pica_61.c,v 1.3 2002/12/28 16:44:44 tsutsui Exp $	*/
+/*	$NetBSD: p_acer_pica_61.c,v 1.4 2003/05/04 10:01:19 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -37,16 +37,6 @@
 
 #include <arc/jazz/pica.h>
 #include <arc/jazz/jazziovar.h>
-
-#include "asc.h"
-#if NASC > 0
-#include <arc/jazz/ascvar.h>
-
-struct asc_config asc_acer_pica_61_conf = {
-	&asc_timing_25mhz,
-	0,
-};
-#endif
 
 /* ALI PICA 61 and some MAGNUM? */
 
@@ -106,8 +96,4 @@ p_acer_pica_61_init()
 
 	/* chipset-dependent jazzio bus configuration */
 	jazzio_devconfig = acer_pica_61_cpu;
-
-#if NASC > 0
-	asc_conf = &asc_acer_pica_61_conf;
-#endif
 }
