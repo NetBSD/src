@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.18 2002/04/08 22:17:37 skrll Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.19 2002/11/11 00:44:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ __ctors()
 	unsigned long i = (unsigned long) __CTOR_LIST__[0];
 	void (**p)(void);
 
-	if (i == -1)  {
+	if (i == (unsigned long) -1)  {
 		for (i = 1; __CTOR_LIST__[i] != NULL; i++)
 			;
 		i--;
