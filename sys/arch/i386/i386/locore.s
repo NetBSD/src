@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.249 2001/09/21 14:12:50 fvdl Exp $	*/
+/*	$NetBSD: locore.s,v 1.250 2002/04/02 04:02:32 gson Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1363,7 +1363,8 @@ ENTRY(fuswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
-	movl	_C_LABEL(curpcb),%ecx
+	movl	_C_LABEL(curproc),%ecx
+	movl	P_ADDR(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 	movzwl	(%edx),%eax
 	movl	$0,PCB_ONFAULT(%ecx)
@@ -1518,7 +1519,8 @@ ENTRY(suswintr)
 	movl	4(%esp),%edx
 	cmpl	$VM_MAXUSER_ADDRESS-2,%edx
 	ja	_C_LABEL(fusuaddrfault)
-	movl	_C_LABEL(curpcb),%ecx
+	movl	_C_LABEL(curproc),%ecx
+	movl	P_ADDR(%ecx),%ecx
 	movl	$_C_LABEL(fusubail),PCB_ONFAULT(%ecx)
 
 #if defined(I386_CPU)
