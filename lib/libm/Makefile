@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 12/2/92
-#	$Id: Makefile,v 1.9 1993/12/05 01:10:14 cgd Exp $
+#	$Id: Makefile,v 1.10 1993/12/06 12:11:42 cgd Exp $
 #
 # ieee		- for most IEEE machines, we hope.
 # mc68881	- the, ahem, mc68881.
@@ -34,8 +34,8 @@ HARDWARE=mc68881
 SRCS+=	acosh.c asinh.c erf.c exp__D.c exp__E.c fmod.c gamma.c lgamma.c j0.c \
 	j1.c log__D.c log__L.c logtab.c pow.c
 # mc68881
-SRCS+=	asincos.s atan.s atan2.c atanh.s cosh.s exp.s expm1.s floor.s \
-	log.s log10.s log1p.s sincos.s sinh.s sqrt.s support.s tan.s tanh.s
+SRCS+=	asincos.S atan.S atan2.c atanh.S cosh.S exp.S expm1.S floor.S \
+	log.S log10.S log1p.S sincos.S sinh.S sqrt.S support.S tan.S tanh.S
 # ieee
 SRCS+=	cabs.c cbrt.c
 
@@ -76,7 +76,7 @@ SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
 # common
 SRCS+=	atan2.c sincos.c tan.c
 # national
-SRCS+=	sqrt.s support.s
+SRCS+=	sqrt.S support.S
 # ieee
 SRCS+=	cabs.c cbrt.c
 
@@ -105,7 +105,7 @@ SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
 # common
 SRCS+=	atan2.c sincos.c tan.c
 # tahoe
-SRCS+=	cabs.s cbrt.s sqrt.s support.s infnan.s
+SRCS+=	cabs.S cbrt.S sqrt.S support.S infnan.S
 
 .elif (${MACHINE_ARCH} == "vax")
 
@@ -116,8 +116,8 @@ SRCS+=	acosh.c asincos.c asinh.c atan.c atanh.c cosh.c erf.c exp.c exp__D.c \
 	exp__E.c expm1.c floor.c fmod.c gamma.c lgamma.c j0.c j1.c jn.c log.c \
 	log10.c log1p.c log__D.c log__L.c logtab.c pow.c sinh.c tanh.c
 # vax
-SRCS+=	atan2.s cabs.s cbrt.s sqrt.s sincos.s tan.s argred.s support.s \
-	infnan.s
+SRCS+=	atan2.S cabs.S cbrt.S sqrt.S sincos.S tan.S argred.S support.S \
+	infnan.S
 
 .endif
 
@@ -135,7 +135,7 @@ MLINKS+=j0.3 j1.3 j0.3 jn.3 j0.3 y0.3 j0.3 y1.3 j0.3 yn.3
 MLINKS+=lgamma.3 gamma.3
 MLINKS+=sqrt.3 cbrt.3
 
-# can't use the standard mkdep, because there are some .s files that
+# can't use the standard mkdep, because there are some .S files that
 # are using '#' as a comment indicator and cpp thinks it's an undefined
 # control.
 
@@ -145,12 +145,12 @@ depend: .depend
 
 .include <bsd.lib.mk>
 
-.s.o:
+.S.o:
 	${AS} -o ${.TARGET} ${.IMPSRC}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-.s.po:
+.S.po:
 	sed -f ${.CURDIR}/${HARDWARE}/mcount.sed ${.IMPSRC} | \
 	    ${AS} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
