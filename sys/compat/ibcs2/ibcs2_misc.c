@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.26 1997/08/04 09:48:07 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.27 1997/09/09 21:17:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -131,8 +131,8 @@ ibcs2_sys_ulimit(p, v, retval)
 	case IBCS2_SETFSIZE:	/* XXX - fix this */
 #ifdef notyet
 		rl.rlim_cur = SCARG(uap, newlimit);
-		sra.which = RLIMIT_FSIZE;
-		sra.rlp = &rl;
+		SCARG(&sra, which) = RLIMIT_FSIZE;
+		SCARG(&sra, rlp) = &rl;
 		error = setrlimit(p, &sra, retval);
 		if (!error)
 			*retval = p->p_rlimit[RLIMIT_FSIZE].rlim_cur;
@@ -147,7 +147,7 @@ ibcs2_sys_ulimit(p, v, retval)
 		*retval = p->p_rlimit[RLIMIT_RSS].rlim_cur; /* XXX */
 		return 0;
 	case IBCS2_GETDTABLESIZE:
-		uap->cmd = IBCS2_SC_OPEN_MAX;
+		SCARG(uap, cmd) = IBCS2_SC_OPEN_MAX;
 		return ibcs2_sys_sysconf(p, uap, retval);
 	default:
 		return ENOSYS;
