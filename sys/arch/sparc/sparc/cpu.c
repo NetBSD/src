@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.101 2000/05/31 12:26:15 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.102 2000/06/02 08:12:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -301,6 +301,9 @@ static	int cpu_instance;
 		cpi = sc->sc_cpuinfo = alloc_cpuinfo_global_va(1, NULL);
 		pmap_globalize_boot_cpuinfo(cpi);
 		cpuinfo.ci_self = cpi;
+
+		/* XXX - fixup proc0.p_cpu */
+		proc0.p_cpu = cpi;
 #else
 		/* The `local' VA is global for uniprocessor. */
 		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
