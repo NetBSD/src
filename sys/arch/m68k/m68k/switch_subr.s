@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.9 2004/01/04 11:33:30 jdolecek Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.10 2004/03/04 19:53:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -545,3 +545,19 @@ ENTRY(m68k_make_fpu_idle_frame)
 	addql	#4,%sp
 	rts
 #endif
+
+/*
+ * proc_trampoline: call function in register %a2 with %a3 as an arg
+ * and then rei.
+ */
+ENTRY_NOPROFILE(proc_trampoline)
+	movl	%a3,%sp@-		| push function arg
+	jbsr	%a2@			| call function
+	addql	#4,%sp			| pop arg
+	movl	%sp@(FR_SP),%a0		| grab and load
+	movl	%a0,%usp		|   user SP
+	moveml	%sp@+,#0x7FFF		| restore most user regs
+	addql	#8,%sp			| toss SP and stack adjust
+	jra	_ASM_LABEL(rei)		| and return
+
+
