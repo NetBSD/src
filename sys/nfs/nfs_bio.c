@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.60 2001/01/30 03:47:11 thorpej Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.61 2001/02/05 12:27:18 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -230,7 +230,7 @@ nfs_bioread(vp, uio, ioflag, cred, cflag)
 		error = 0;
 		while (uio->uio_resid > 0) {
 			void *win;
-			vsize_t bytelen = min(np->n_size - uio->uio_offset,
+			vsize_t bytelen = MIN(np->n_size - uio->uio_offset,
 					      uio->uio_resid);
 
 			if (bytelen == 0)
@@ -1024,17 +1024,17 @@ nfs_getpages(v)
 	/* vnode is VOP_LOCKed, uobj is locked */
 
 	bsize = nmp->nm_rsize;
-	orignpages = min(*ap->a_count,
+	orignpages = MIN(*ap->a_count,
 			 round_page(eof - origoffset) >> PAGE_SHIFT);
 	npages = orignpages;
 	startoffset = origoffset & ~(bsize - 1);
 	endoffset = round_page((origoffset + (npages << PAGE_SHIFT)
 				+ bsize - 1) & ~(bsize - 1));
-	endoffset = min(endoffset, round_page(eof));
+	endoffset = MIN(endoffset, round_page(eof));
 	ridx = (origoffset - startoffset) >> PAGE_SHIFT;
 
 	if (!async && !write) {
-		int rapages = max(PAGE_SIZE, nmp->nm_rsize) >> PAGE_SHIFT;
+		int rapages = MAX(PAGE_SIZE, nmp->nm_rsize) >> PAGE_SHIFT;
 
 		(void) VOP_GETPAGES(vp, endoffset, NULL, &rapages, 0,
 				    VM_PROT_READ, 0, 0);
@@ -1058,9 +1058,9 @@ nfs_getpages(v)
 				pg->flags &= ~(PG_FAKE);
 			}
 		}
+		npages += ridx;
 		if (v3) {
 			simple_unlock(&uobj->vmobjlock);
-			npages += ridx;
 			goto uncommit;
 		}
 		goto out;
@@ -1081,6 +1081,7 @@ nfs_getpages(v)
 	}
 	if (i == npages) {
 		UVMHIST_LOG(ubchist, "returning cached pages", 0,0,0,0);
+		npages += ridx;
 		goto out;
 	}
 
@@ -1133,7 +1134,7 @@ nfs_getpages(v)
 	 */
 
 	totalbytes = npages << PAGE_SHIFT;
-	bytes = min(totalbytes, vp->v_uvm.u_size - startoffset);
+	bytes = MIN(totalbytes, vp->v_uvm.u_size - startoffset);
 	tailbytes = totalbytes - bytes;
 	skipbytes = 0;
 
@@ -1180,7 +1181,7 @@ nfs_getpages(v)
 			size_t b;
 
 			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
-			b = min(PAGE_SIZE, bytes);
+			b = MIN(PAGE_SIZE, bytes);
 			offset += b;
 			bytes -= b;
 			skipbytes += b;
@@ -1204,10 +1205,10 @@ nfs_getpages(v)
 			       pgs[pidx + pcount]->flags & PG_FAKE) {
 				pcount++;
 			}
-			iobytes = min(iobytes, (pcount << PAGE_SHIFT) -
+			iobytes = MIN(iobytes, (pcount << PAGE_SHIFT) -
 				      (offset - trunc_page(offset)));
 		}
-		iobytes = min(iobytes, nmp->nm_rsize);
+		iobytes = MIN(iobytes, nmp->nm_rsize);
 
 		/*
 		 * allocate a sub-buf for this piece of the i/o
@@ -1278,26 +1279,35 @@ uncommit:
 	simple_lock(&uobj->vmobjlock);
 
 out:
-	uvm_lock_pageq();
 	if (error) {
+		uvm_lock_pageq();
 		for (i = 0; i < npages; i++) {
 			if (pgs[i] == NULL) {
 				continue;
 			}
 			UVMHIST_LOG(ubchist, "examining pg %p flags 0x%x",
 				    pgs[i], pgs[i]->flags, 0,0);
-			if ((pgs[i]->flags & PG_FAKE) == 0) {
-				continue;
-			}
 			if (pgs[i]->flags & PG_WANTED) {
 				wakeup(pgs[i]);
 			}
-			uvm_pagefree(pgs[i]);
+			if (pgs[i]->flags & PG_RELEASED) {
+				uvm_unlock_pageq();
+				(uobj->pgops->pgo_releasepg)(pgs[i], NULL);
+				uvm_lock_pageq();
+				continue;
+			}
+			if (pgs[i]->flags & PG_FAKE) {
+				uvm_pagefree(pgs[i]);
+			}
 		}
-		goto done;
+		uvm_unlock_pageq();
+		simple_unlock(&uobj->vmobjlock);
+		UVMHIST_LOG(ubchist, "returning error %d", error,0,0,0);
+		return error;
 	}
 
 	UVMHIST_LOG(ubchist, "ridx %d count %d", ridx, npages, 0,0);
+	uvm_lock_pageq();
 	for (i = 0; i < npages; i++) {
 		if (pgs[i] == NULL) {
 			continue;
@@ -1314,28 +1324,27 @@ out:
 		if (i < ridx || i >= ridx + orignpages || async) {
 			UVMHIST_LOG(ubchist, "unbusy pg %p offset 0x%x",
 				    pgs[i], (int)pgs[i]->offset,0,0);
-			KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
 			if (pgs[i]->flags & PG_WANTED) {
 				wakeup(pgs[i]);
 			}
-			if (pgs[i]->wire_count == 0) {
-				uvm_pageactivate(pgs[i]);
+			if (pgs[i]->flags & PG_RELEASED) {
+				uvm_unlock_pageq();
+				(uobj->pgops->pgo_releasepg)(pgs[i], NULL);
+				uvm_lock_pageq();
+				continue;
 			}
+			uvm_pageactivate(pgs[i]);
 			pgs[i]->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pgs[i], NULL);
 		}
 	}
-
-done:
 	uvm_unlock_pageq();
 	simple_unlock(&uobj->vmobjlock);
 	if (ap->a_m != NULL) {
 		memcpy(ap->a_m, &pgs[ridx],
 		       *ap->a_count * sizeof(struct vm_page *));
 	}
-
-	UVMHIST_LOG(ubchist, "done -> %d", error, 0,0,0);
-	return error;
+	return 0;
 }
 
 /*
@@ -1376,7 +1385,7 @@ nfs_putpages(v)
 	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 
 	origoffset = pgs[0]->offset;
-	bytes = min(ap->a_count << PAGE_SHIFT, vp->v_uvm.u_size - origoffset);
+	bytes = MIN(ap->a_count << PAGE_SHIFT, vp->v_uvm.u_size - origoffset);
 	skipbytes = 0;
 
 	/*
@@ -1431,7 +1440,7 @@ nfs_putpages(v)
 	for (offset = origoffset;
 	     bytes > 0;
 	     offset += iobytes, bytes -= iobytes) {
-		iobytes = min(nmp->nm_wsize, bytes);
+		iobytes = MIN(nmp->nm_wsize, bytes);
 
 		/*
 		 * skip writing any pages which only need a commit.
@@ -1440,7 +1449,7 @@ nfs_putpages(v)
 		if ((pgs[(offset - origoffset) >> PAGE_SHIFT]->flags &
 		     PG_NEEDCOMMIT) != 0) {
 			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
-			iobytes = min(PAGE_SIZE, bytes);
+			iobytes = MIN(PAGE_SIZE, bytes);
 			skipbytes += iobytes;
 			continue;
 		}
