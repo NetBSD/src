@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 1998/02/19 04:18:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 1998/03/08 19:12:53 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,19 +155,25 @@ consinit()
 	 */
 	cninit();
 
-#ifdef KGDB
-	/* XXX - Ask on console for kgdb_dev? */
-	/* Note: this will just return if kgdb_dev<0 */
-	if (boothowto & RB_KDB)
-		kgdb_connect(1);
-#endif
 #ifdef DDB
-	/* Now that we have a console, we can stop in DDB. */
 	db_machine_init();
 	ddb_init();
-	if (boothowto & RB_KDB)
-		Debugger();
 #endif DDB
+
+	/*
+	 * Now that the console can do input as well as
+	 * output, consider stopping for a debugger.
+	 */
+	if (boothowto & RB_KDB) {
+#ifdef KGDB
+		/* XXX - Ask on console for kgdb_dev? */
+		/* Note: this will just return if kgdb_dev==NODEV */
+		kgdb_connect(1);
+#else	/* KGDB */
+		/* Either DDB or no debugger (just PROM). */
+		Debugger();
+#endif	/* KGDB */
+	}
 }
 
 /*
