@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.26 2000/06/04 02:05:13 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.26.2.1 2001/02/03 19:12:40 he Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -361,6 +361,7 @@ rf_ReconstructFailedDiskBasic(raidPtr, row, col)
 		c_label.column = col;
 		c_label.clean = RF_RAID_DIRTY;
 		c_label.status = rf_ds_optimal;
+		c_label.partitionSize = raidPtr->Disks[srow][scol].partitionSize;
 
 		/* XXXX MORE NEEDED HERE */
 		
