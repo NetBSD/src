@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.150 2000/12/09 12:57:17 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.151 2000/12/10 12:09:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -635,8 +635,6 @@ syscall(frame)
 		break;
 	default:
 	bad:
-		if (p->p_emul->e_errno)
-			error = p->p_emul->e_errno[error];
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
 		break;
