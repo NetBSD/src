@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.22 1998/07/04 22:18:18 jonathan Exp $	*/
+/*	$NetBSD: kbd.c,v 1.23 1998/07/06 02:40:43 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -42,7 +42,9 @@
  *
  * Created      : 09/10/94
  */
+
 #include "opt_ddb.h"
+#include "opt_pmap_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.26 1998/07/06 01:52:26 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.27 1998/07/06 02:40:42 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,6 +44,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_pmap_debug.h"
 #include "opt_uvm.h"
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 1998/06/02 20:41:50 mark Exp $	*/
+/*	$NetBSD: pmap.c,v 1.25 1998/07/06 02:40:43 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -57,6 +57,7 @@
     
 /* Include header files */
 
+#include "opt_pmap_debug.h"
 #include "opt_uvm.h"
 
 #include <sys/types.h>
