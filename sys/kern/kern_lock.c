@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.10 1998/09/29 07:29:53 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.11 1998/10/14 09:41:21 pk Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -58,14 +58,18 @@
 #define COUNT(p, x)
 #endif
 
-#if defined(MULTIPROCESSOR)
+#if 0 /*#was defined(MULTIPROCESSOR)*/
+/*-
 
-/*
+This macro is Bad Style and it doesn't work either... [pk, 10-14-1998]
+
+-*
  * For multiprocessor system, try spin lock first.
  *
  * This should be inline expanded below, but we cannot have #if
  * inside a multiline define.
  */
+
 int lock_wait_time = 100;
 #define PAUSE(lkp, wanted)						\
 		if (lock_wait_time > 0) {				\
