@@ -1,4 +1,4 @@
-/*	$NetBSD: loader.h,v 1.3 1995/04/16 14:48:00 leo Exp $	*/
+/*	$NetBSD: loader.h,v 1.4 1995/05/28 10:56:20 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -51,6 +51,7 @@
 #define	ADDR_CHKRAMTOP	((long*)0x5a8)	/*   above is valid (unofficial)*/
 #define	ADDR_PHYSTOP	((long*)0x42e)	/* End of ST-ram		*/
 #define	ADDR_P_COOKIE	((long**)0x5a0)	/* Pointer to cookie jar	*/
+#define	ADDR_OSHEAD	((OSH**)0x4f2)	/* Pointer Os-header		*/
 
 #define	RAM_TOP_MAGIC	(0x1357bd13)	/* Magic nr. for ADDR_CHKRAMTOP	*/
 
@@ -65,6 +66,10 @@
 #define	ATARI_68881	(1<<8)		/* 68881 or 68882 FPU		*/
 #define	ATARI_68882	(1<<9)		/* 68882 FPU			*/
 #define	ATARI_FPU40	(1<<10)		/* 68040 FPU			*/
+#define	ATARI_TT	(1L<<11)	/* This is a TT030		*/
+#define	ATARI_FALCON	(1L<<12)	/* This is a Falcon		*/
+
+#define	ATARI_CLKBROKEN	(1<<16)		/* GEMDOS has faulty year base	*/
 
 #define	ATARI_ANYCPU	(0x1f)
 #define	ATARI_ANYFPU	(0x300)
@@ -76,3 +81,13 @@
 #define	RB_ASKNAME	0x01
 #define	RB_SINGLE	0x02
 #define	RB_KDB		0x40
+
+/*
+ * Sufficient but incomplete definition os Os-header
+ */
+typedef struct osh {
+	unsigned short	os_entry;
+	unsigned short	os_version;
+	void		*reseth;
+	struct osh	*os_beg;
+} OSH;
