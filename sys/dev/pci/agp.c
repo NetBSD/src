@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.1 2001/09/10 10:01:01 fvdl Exp $	*/
+/*	$NetBSD: agp.c,v 1.2 2001/09/11 06:51:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -118,9 +118,9 @@ agpmatch(struct device *parent, struct cfdata *match, void *aux)
 		case PCI_VENDOR_AMD:
 			return agp_amd_match(parent, match, pa);
 		case PCI_VENDOR_INTEL:
-			if (agp_intel_match(parent, match, pa) != 0)
-				return 1;
-			return agp_i810_match(parent, match, pa);
+			if (agp_i810_bridgematch(pa))
+				return agp_i810_match(parent, match, pa);
+			return agp_intel_match(parent, match, pa);
 		case PCI_VENDOR_SIS:
 			return agp_sis_match(parent, match, pa);
 		case PCI_VENDOR_VIATECH:
@@ -188,7 +188,10 @@ agpattach(struct device *parent, struct device *self, void *aux)
 			ret = agp_amd_attach(parent, self, pa);
 			break;
 		case PCI_VENDOR_INTEL:
-			ret = agp_intel_attach(parent, self, pa);
+			if (agp_i810_bridgematch(pa))
+				ret = agp_i810_attach(parent, self, pa);
+			else
+				ret = agp_intel_attach(parent, self, pa);
 			break;
 		case PCI_VENDOR_SIS:
 			ret = agp_sis_attach(parent, self, pa);
