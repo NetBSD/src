@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_audio.c,v 1.3 2000/05/07 13:50:10 wiz Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.4 2000/05/07 14:43:31 veego Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.2 1999/10/28 13:58:14 roger Exp */
 /*
@@ -52,10 +52,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
-#ifdef __NetBSD__
-#include <sys/proc.h>
-static int bootverbose = 1;
-#endif
 
 #ifdef __FreeBSD__
 #include <machine/clock.h>		/* for DELAY */
@@ -69,6 +65,7 @@ static int bootverbose = 1;
 #endif
 
 #ifdef __NetBSD__
+#include <sys/proc.h>
 #include <dev/ic/bt8xx.h>	/* NetBSD location of .h files */
 #include <dev/pci/bktr/bktr_reg.h>
 #include <dev/pci/bktr/bktr_core.h>
