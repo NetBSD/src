@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.11 2004/05/31 00:46:48 heas Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.12 2004/05/31 00:51:19 heas Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -52,12 +52,12 @@
 #endif
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
-#if __NetBSD_Version__ < 200040000
-#define USE_STATFS
-#define STATFS_IN_SYS_MOUNT_H
-#else
+#if (defined(__NetBSD_Version__) && __NetBSD_Version__ > 200000000)
 #define USE_STATVFS
 #define STATVFS_IN_SYS_STATVFS_H
+#else
+#define USE_STATFS
+#define STATFS_IN_SYS_MOUNT_H
 #endif
 #define HAS_POSIX_REGEXP
 #define HAS_ST_GEN	/* struct stat contains inode generation number */
