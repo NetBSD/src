@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.39 2000/11/01 06:27:45 eeh Exp $ */
+/*	$NetBSD: sbus.c,v 1.40 2001/09/24 23:49:31 eeh Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ void sbusreset __P((int));
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
 static int sbus_get_intr __P((struct sbus_softc *, int,
 			      struct sbus_intr **, int *));
-static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
+int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			      int, bus_space_handle_t *));
 static int _sbus_bus_map __P((
 		bus_space_tag_t,
@@ -568,7 +568,7 @@ _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
 			continue;
 
 		/* We've found the connection to the parent bus */
-		paddr = sc->sc_range[i].poffset + offset;
+		paddr = sc->sc_range[i].poffset + BUS_ADDR_PADDR(offset);
 		iospace = sc->sc_range[i].pspace;
 		return (bus_space_map2(sc->sc_bustag, iospace, paddr,
 					size, flags, vaddr, hp));
@@ -592,17 +592,42 @@ sbus_bus_mmap(t, btype, paddr, flags, hp)
 
 	for (i = 0; i < sc->sc_nrange; i++) {
 		bus_addr_t paddr;
+
+		if (sc->sc_range[i].cspace != slot)
+			continue;
+
+		paddr = BUS_ADDR(sc->sc_range[i].pspace, 
+			sc->sc_range[i].poffset + offset);
+		if ((*hp = bus_space_mmap(sc->sc_bustag, paddr, 0,
+			0/*prot unused*/, flags)) != -1)
+			return (0);
+	}
+
+	return (-1);
+}
+
+bus_addr_t
+sbus_bus_addr(t, btype, offset)
+	bus_space_tag_t t;
+	u_int btype;
+	u_int offset;
+{
+	int slot = (int)btype;
+	struct sbus_softc *sc = t->cookie;
+	int i;
+
+	for (i = 0; i < sc->sc_nrange; i++) {
+		bus_addr_t baddr;
 		bus_addr_t iospace;
 
 		if (sc->sc_range[i].cspace != slot)
 			continue;
 
-		paddr = sc->sc_range[i].poffset + offset;
+		baddr = sc->sc_range[i].poffset + offset;
 		iospace = (bus_addr_t)sc->sc_range[i].pspace;
-		return (bus_space_mmap(sc->sc_bustag, iospace, paddr,
-				       flags, hp));
+		baddr = baddr|(iospace<<32);
+		return (baddr);
 	}
-
 	return (-1);
 }
 
@@ -772,7 +797,7 @@ sbus_alloc_bustag(sc)
 	sbt->cookie = sc;
 	sbt->parent = sc->sc_bustag;
 	sbt->sparc_bus_map = _sbus_bus_map;
-	sbt->sparc_bus_mmap = sbus_bus_mmap;
+	sbt->sparc_bus_mmap = sc->sc_bustag->sparc_bus_mmap;
 	sbt->sparc_intr_establish = sbus_intr_establish;
 	return (sbt);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.32 2001/09/10 21:19:23 chris Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.33 2001/09/24 23:49:31 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -607,7 +607,8 @@ sparc_vme_mmap_cookie(addr, mod, hp)
 	if (error != 0)
 		return (error);
 
-	return (bus_space_mmap(sc->sc_bustag, iospace, paddr, 0, hp));
+	return (bus_space_mmap(sc->sc_bustag, BUS_ADDR(iospace, paddr), 0, 
+		0/*prot is ignored*/, 0));
 }
 
 #if defined(SUN4M)
