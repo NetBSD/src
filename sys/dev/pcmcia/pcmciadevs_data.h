@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.64 1999/12/23 19:46:27 augustss Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.65 2000/01/08 07:35:39 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.63 1999/12/23 19:45:56 augustss Exp 
+ *	NetBSD: pcmciadevs,v 1.64 2000/01/08 07:34:49 augustss Exp 
  */
 
 /*-
@@ -612,6 +612,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Epson EEN10B"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EXP_EXPMULTIMEDIA,
+	    PCMCIA_CIS_EXP_EXPMULTIMEDIA,
+	    0,
+	    "EXP Computer Inc",
+	    "EXP IDE/ATAPI DVD Card"	},
+	},
+	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -875,6 +882,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Seiko Epson Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_EXP, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "EXP Computer Inc",
 	    NULL,
 	},
 	{ 0, 0, { NULL, NULL, NULL, NULL }, 0, NULL, NULL, }
