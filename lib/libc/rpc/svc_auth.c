@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.c,v 1.6 1998/02/13 05:52:34 lukem Exp $	*/
+/*	$NetBSD: svc_auth.c,v 1.7 1998/07/26 13:57:41 mycroft Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth.c	2.1 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth.c,v 1.6 1998/02/13 05:52:34 lukem Exp $");
+__RCSID("$NetBSD: svc_auth.c,v 1.7 1998/07/26 13:57:41 mycroft Exp $");
 #endif
 #endif
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: svc_auth.c,v 1.6 1998/02/13 05:52:34 lukem Exp $");
  *
  */
 
-static struct {
+static const struct {
 	enum auth_stat (*authenticator) __P((struct svc_req *,
     struct rpc_msg *));
 } svcauthsw[] = {
