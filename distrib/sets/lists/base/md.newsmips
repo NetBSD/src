@@ -1,4 +1,0 @@
-# $NetBSD: md.newsmips,v 1.1 1999/07/08 12:35:21 tsubai Exp $
-./usr/mdec/boot
-./usr/mdec/bootxx
-./usr/mdec/installboot
