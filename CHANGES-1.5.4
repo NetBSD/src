@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.50 2002/09/18 07:52:24 he Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.51 2002/09/18 16:01:21 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1495,3 +1495,7 @@ distrib/sets/lists/base/obsolete.mi		1.53
 
   Obsolete usr.bin/kf and libexec/kfd for security issues, and they
   are no longer needed.  Fixes SA#2002-018.
+
+sbin/rndctl/rndctl.c				1.7
+
+  Initialize sflag to zero.
