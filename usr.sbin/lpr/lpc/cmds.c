@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.8 1996/12/09 09:57:44 mrg Exp $	*/
+/*	$NetBSD: cmds.c,v 1.9 1997/07/10 05:38:54 mikel Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -282,7 +282,7 @@ sortq(a, b)
 
 	d1 = (struct dirent **)a;
 	d2 = (struct dirent **)b;
-	if (c1 = strcmp((*d1)->d_name + 3, (*d2)->d_name + 3))
+	if ((c1 = strcmp((*d1)->d_name + 3, (*d2)->d_name + 3)) != 0)
 		return(c1);
 	c1 = (*d1)->d_name[0];
 	c2 = (*d2)->d_name[0];
@@ -311,7 +311,7 @@ cleanpr()
 	printf("%s:\n", printer);
 
 	/* XXX depends on SD being non nul */
-	for (lp = line, cp = SD; *lp++ = *cp++; )
+	for (lp = line, (cp = SD) != NULL; *lp++ = *cp++; )
 		;
 	lp[-1] = '/';
 
@@ -611,7 +611,7 @@ putmsg(argc, argv)
 	cp1 = buf;
 	while (--argc >= 0) {
 		cp2 = *argv++;
-		while (*cp1++ = *cp2++)
+		while ((*cp1++ = *cp2++) != '\0')
 			;
 		cp1[-1] = ' ';
 	}
