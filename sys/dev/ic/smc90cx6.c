@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.15 1996/03/17 01:17:30 thorpej Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.16 1996/03/20 13:28:50 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -40,6 +40,12 @@
 #define BAHRETRANSMIT /**/
 /* #define BAHTIMINGS */
 /* #define BAH_DEBUG 3 */
+
+/* zeroth version of M68060 support */
+
+#if defined(M68060) && defined(BAHASMCOPY)
+#undef BAHASMCOPY
+#endif
 
 #include "bpfilter.h"
 
@@ -882,6 +888,8 @@ cleanup:
 	if (head != NULL)
 		m_freem(head);
 
+	/* mark buffer as invalid by source id 0 */
+	sc->sc_base->buffers[buffer*512*2] = 0;
 	s = splnet();
 
 	if (--sc->sc_rx_fillcount == 2 - 1) {
@@ -1074,13 +1082,23 @@ bahintr(sc)
 	if (maskedisr & ARC_RI) {
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
-		printf("%s: intr: hard rint, act %ld 2:%ld 3:%ld\n",
-		    sc->sc_dev.dv_xname,
-		    sc->sc_rx_act, sc->sc_bufstat[2], sc->sc_bufstat[3]);
+		printf("%s: intr: hard rint, act %ld\n",
+		    sc->sc_dev.dv_xname, sc->sc_rx_act);
 #endif
 	
 		buffer = sc->sc_rx_act;
-		if (++sc->sc_rx_fillcount > 1) {
+		/* look if buffer is marked invalid: */
+		if (sc->sc_base->buffers[buffer*512*2] == 0) {
+	/* invalid marked buffer (or illegally configured sender) */
+			log(LOG_WARNING, 
+			    "%s: spurious RX interrupt or sender 0 (ignored)\n",
+			    sc->sc_dev.dv_xname);
+			/*
+			 * restart receiver on same buffer.
+			 */
+			sc->sc_base->command = ARC_RXBC(buffer);
+
+		} else if (++sc->sc_rx_fillcount > 1) {
 			sc->sc_intmask &= ~ARC_RI;
 			sc->sc_base->status = sc->sc_intmask;
 		} else {
@@ -1195,7 +1213,7 @@ bah_ioctl(ifp, command, data)
  * and the int handler will have to decide not to retransmit (in case
  * retransmission is implemented).
  *
- * This one assumes being called inside splnet(), and that imp >= ipl2
+ * This one assumes being called inside splnet(), and that net >= ipl2
  */
 
 void
