@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2002/09/25 22:21:03 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71 2002/11/30 17:57:42 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 /* initialize bss, etc. from kernel start, before main() is called. */
-extern void mach_init __P((int, char **argv, char **));
+void mach_init __P((int, char **argv, char **));
 
 char *firmware_getenv __P((char *env));
 void arc_sysreset __P((bus_addr_t, bus_size_t));
