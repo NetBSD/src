@@ -1,5 +1,3 @@
-/*	$NetBSD: if_fea.c,v 1.1.1.1 1996/05/20 00:20:39 thorpej Exp $	*/
-
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
  * All rights reserved.
@@ -23,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_fea.c,v 1.5 1996/05/17 01:15:18 thomas Exp
+ * Id: if_fea.c,v 1.6 1996/06/07 20:02:25 thomas Exp
  */
 
 /*
@@ -445,7 +443,6 @@ pdq_eisa_match(
 {
     const struct eisa_attach_args * const ea = (struct eisa_attach_args *) aux;
 
-    /* must match one of our known ID strings */
     if (strncmp(ea->ea_idstring, "DEC300", 6) == 0)
 	return 1;
 
@@ -470,7 +467,7 @@ pdq_eisa_attach(
     sc->sc_if.if_softc = sc;
 
     if (bus_io_map(sc->sc_bc, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, &sc->sc_iobase)) {
-	printf(": failed to map I/O!\n");
+	printf("\n%s: failed to map I/O!\n", sc->sc_dev.dv_xname);
 	return;
     }
 
@@ -483,9 +480,10 @@ pdq_eisa_attach(
 	return;
     }
 
+    printf(" iomem 0x%x-0x%x", maddr, maddr + msize - 1);
     if (bus_mem_map(sc->sc_bc, maddr, msize, 0, &sc->sc_membase)) {
 	bus_io_unmap(sc->sc_bc, sc->sc_iobase, EISA_SLOT_SIZE);
-	printf(": failed to map memory!\n");
+	printf("\n%s: failed to map memory!\n", sc->sc_dev.dv_xname);
 	return;
     }
 #endif
