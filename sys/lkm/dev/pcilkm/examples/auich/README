@@ -1,10 +1,10 @@
-$NetBSD: README,v 1.1 2004/07/02 13:26:41 cube Exp $
+$NetBSD: README,v 1.2 2004/07/02 13:33:39 wiz Exp $
 
 The auich module is provided as an example of the use of the pcilkm layer.
 
 It should be noted that it has limitations.  First, it cannot be unloaded.
 This is because auich(4) does not provide a detach() method, thus neither
-the underlying audio(4) device not the auich(4) device ca be detached.
+the underlying audio(4) device not the auich(4) device can be detached.
 Therefore the pcilkm layer prevents the auich module from being removed.
 
 Second, auich(4) has some dependencies, listed in dev/pci/files.pci, which
