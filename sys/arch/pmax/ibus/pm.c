@@ -1,4 +1,4 @@
-/* $NetBSD: pm.c,v 1.1.2.4 1998/11/24 02:01:55 nisimura Exp $ */
+/* $NetBSD: pm.c,v 1.1.2.5 1999/01/07 06:44:22 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.4 1998/11/24 02:01:55 nisimura Exp $");
+__KERNEL_RCSID(0, "$Id: pm.c,v 1.1.2.5 1999/01/07 06:44:22 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,10 +423,8 @@ pmmmap(v, offset, prot)
 	int prot;
 {
 	struct pm_softc *sc = v;
-	off_t pmsize;
 
-	pmsize = (sc->sc_dc->dc_depth == 1) ? 0x20000 : 0x100000;
-	if (offset > pmsize)
+	if (offset >= sc->sc_dc->dc_size)
 		return -1;
 	return mips_btop(sc->sc_dc->dc_paddr + offset);
 }
