@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.662.2.7 2004/06/21 16:41:01 tron Exp $
+#	$NetBSD: files,v 1.662.2.8 2004/06/21 16:44:48 tron Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -748,7 +748,7 @@ file	dev/ic/rtl80x9.c		rtl80x9
 # Realtek 8129/8139 Ethernet controllers
 #
 device	rtk: ether, ifnet, arp, mii
-file	dev/ic/rtl81x9.c		rtk
+file	dev/ic/rtl81x9.c		rtk | re
 
 # Realtek 8169 Ethernet controllers
 #
