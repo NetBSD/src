@@ -1,29 +1,13 @@
-/*	$NetBSD: charset.c,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: charset.c,v 1.4 2001/07/26 13:43:44 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -38,22 +22,26 @@
 #include <ctype.h>
 #endif
 
+public int utf_mode = 0;
+
 /*
  * Predefined character sets,
  * selected by the LESSCHARSET environment variable.
  */
 struct charset {
 	char *name;
+	int *p_flag;
 	char *desc;
 } charsets[] = {
-	{ "ascii",	"8bcccbcc18b95.b"		},
-	{ "dos",	"8bcccbcc12bc5b95.b."		},
-	{ "ebcdic",	"5bc6bcc7bcc41b.9b7.9b5.b..8b6.10b6.b9.7b9.8b8.17b3.3b9.7b9.8b8.6b10.b.b.b." },
-	{ "iso8859",	"8bcccbcc18b95.33b."		},
-	{ "koi8-r",	"8bcccbcc18b95.b128."		},
-	{ "latin1",	"8bcccbcc18b95.33b."		},
-	{ "next",	"8bcccbcc18b95.bb125.bb"	},
-	{ NULL, NULL }
+	{ "ascii",	NULL,       "8bcccbcc18b95.b" },
+	{ "dos",	NULL,       "8bcccbcc12bc5b95.b." },
+	{ "ebcdic",	NULL,       "5bc6bcc7bcc41b.9b7.9b5.b..8b6.10b6.b9.7b9.8b8.17b3.3b9.7b9.8b8.6b10.b.b.b." },
+	{ "iso8859",	NULL,       "8bcccbcc18b95.33b." },
+	{ "koi8-r",	NULL,       "8bcccbcc18b95.b128." },
+	{ "latin1",	NULL,       "8bcccbcc18b95.33b." },
+	{ "next",	NULL,       "8bcccbcc18b95.bb125.bb" },
+	{ "utf-8",	&utf_mode,  "8bcccbcc18b." },
+	{ NULL, NULL, NULL }
 };
 
 #define	IS_BINARY_CHAR	01
@@ -152,6 +140,8 @@ icharset(name)
 		if (strcmp(name, p->name) == 0)
 		{
 			ichardef(p->desc);
+			if (p->p_flag != NULL)
+				*(p->p_flag) = 1;
 			return (1);
 		}
 	}
@@ -171,7 +161,7 @@ ilocale()
 	register int c;
 
 	setlocale(LC_ALL, "");
-	for (c = 0;  c < sizeof(chardef);  c++)
+	for (c = 0;  c < (int) sizeof(chardef);  c++)
 	{
 		if (isprint(c))
 			chardef[c] = 0;
@@ -236,6 +226,21 @@ init_charset()
 		ichardef(s);
 		return;
 	}
+
+#if HAVE_STRSTR
+	/*
+	 * Check whether LC_ALL, LC_CTYPE or LANG look like UTF-8 is used.
+	 */
+	if ((s = lgetenv("LC_ALL")) != NULL ||
+	    (s = lgetenv("LC_CTYPE")) != NULL ||
+	    (s = lgetenv("LANG")) != NULL)
+	{
+		if (strstr(s, "UTF-8") != NULL || strstr(s, "utf-8") != NULL)
+			if (icharset("utf-8"))
+				return;
+	}
+#endif
+
 #if HAVE_LOCALE
 	/*
 	 * Use setlocale.
@@ -243,9 +248,9 @@ init_charset()
 	ilocale();
 #else
 	/*
-	 * Default to "ascii".
+	 * Default to "latin1".
 	 */
-	(void) icharset("ascii");
+	(void) icharset("latin1");
 #endif
 }
 

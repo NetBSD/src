@@ -1,29 +1,13 @@
-/*	$NetBSD: version.c,v 1.2 2001/06/19 13:42:20 wiz Exp $	*/
+/*	$NetBSD: version.c,v 1.3 2001/07/26 13:43:46 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -576,7 +560,48 @@ v333    3/4/99	Changed -w to highlite new line after forward movement.
 v334    3/9/99	Avoid overflowing prompt buffer; add %d and %D.
 v335   3/20/99	Add EBCDIC support (thanks to Thomas Dorner).
               	Use HOMEDRIVE/HOMEPATH on Windows (thanks to Preston Bannister).
-
+		Posted to Web page.
+-----------------------------------------------------------------
+v336    4/8/99	Fix installation bugs.
+v337    4/9/99	Fix another installation bug.
+		Posted to Web page.
+-----------------------------------------------------------------
+v338   4/13/99	Add support for long option names.
+v339   4/18/99	Add \k, long option names to lesskey.  Add -^P.  Add :d.
+v340   4/21/99	Add regexec2.  Fix Windows build.
+		Posted to Web page.
+-----------------------------------------------------------------
+v341    5/6/99  Add -F option; %c & ?c prompt escapes.
+		(Thanks to Michele Maltoni)
+v342   7/22/99  Add system-wide lesskey file; allow GPL or Less License.
+v343   9/23/99	Support UTF-8 (Thanks to Robert Brady).
+		Add %P and ?P in prompts.
+v344  10/27/99	-w highlights target line of g and p commands.
+v345  10/29/99	Make -R pass thru ESC but not other control chars.
+		Posted to Web page.
+-----------------------------------------------------------------
+v346   11/4/99  Fix bugs in long option processing; R cmd should clear hilites.
+		Posted to Web page.
+-----------------------------------------------------------------
+v347  12/13/99	Fixes for DJGPP version (thanks to Eli Zaretskii).
+v348  12/28/99	Fix deleting file with marks (thanks to Dimitar Jekov).
+		Fix color problem in DJGPP version (thanks to Eli Zaretskii).
+v349   1/24/00	Fix minor DJGPP bugs; check environment vars for UTF-8;
+		add --with-editor (thanks to Eli, Markus Kuhn, Thomas Schoepf).
+v350   3/1/00	Fix clear-while-standout bug.
+v351   3/5/00	Change -M and = prompts to show top & bottom line number.
+		Posted to Web page.
+-----------------------------------------------------------------
+v352   3/8/00	Fix scan_option NULL dereference.
+-----------------------------------------------------------------
+v353   3/20/00	Fix SECURE compile bug, allow space after numeric option.
+v354   3/23/00	Add support for PCRE; add --with-regex configure option.
+-----------------------------------------------------------------
+v355   6/28/00	Add -# option (thanks to Andy Levinson).
+v356   7/5/00	Add -J option.
+v357   7/6/00	Support sigprocmask.
+-----------------------------------------------------------------
+v358   7/8/00	Fix problems with #stop in lesskey file.
 */
 
-char version[] = "335";
+char version[] = "358";

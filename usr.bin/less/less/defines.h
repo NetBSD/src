@@ -1,4 +1,4 @@
-/*	$NetBSD: defines.h,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: defines.h,v 1.4 2001/07/26 13:43:44 mrg Exp $	*/
 
 /* defines.h.  Generated automatically by configure.  */
 /* defines.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -57,7 +57,6 @@
  * EDIT_PGM is the name of the (default) editor to be invoked.
  */
 #define	EDITOR		(!SECURE)
-#define	EDIT_PGM	"vi"
 
 /*
  * TAGS is 1 if you wish to support tag files.
@@ -104,10 +103,12 @@
 /*
  * LESSKEYFILE is the filename of the default lesskey output file 
  * (in the HOME directory).
+ * LESSKEYFILE_SYS is the filename of the system-wide lesskey output file.
  * DEF_LESSKEYINFILE is the filename of the default lesskey input 
  * (in the HOME directory).
  */
 #define	LESSKEYFILE		".less"
+#define	LESSKEYFILE_SYS		"/etc/less.sys"
 #define	DEF_LESSKEYINFILE	".lesskey"
 
 
@@ -190,16 +191,19 @@
  * Regular expression library.
  * Define exactly one of the following to be 1:
  * HAVE_POSIX_REGCOMP: POSIX regcomp() and regex.h
+ * HAVE_PCRE: PCRE (Perl-compatible regular expression) library
  * HAVE_RE_COMP: BSD re_comp()
  * HAVE_REGCMP: System V regcmp()
  * HAVE_V8_REGCOMP: Henry Spencer V8 regcomp() and regexp.h
  * NO_REGEX: pattern matching is supported, but without metacharacters.
  */
 #define HAVE_POSIX_REGCOMP 1
+/* #undef HAVE_PCRE */
 /* #undef HAVE_RE_COMP */
 /* #undef HAVE_REGCMP */
 /* #undef HAVE_V8_REGCOMP */
 /* #undef NO_REGEX */
+/* #undef HAVE_REGEXEC2 */
 
 /* Define HAVE_VOID if your compiler supports the "void" type. */
 #define HAVE_VOID 1
@@ -229,7 +233,7 @@
 /* Define MUST_DEFINE_OSPEED if you have ospeed but it is not defined
  * in termcap.h. */
 #define HAVE_OSPEED 1
-#define MUST_DEFINE_OSPEED 1
+/* #undef MUST_DEFINE_OSPEED */
 
 /* Define HAVE_LOCALE if you have locale.h and setlocale. */
 #define HAVE_LOCALE 1
@@ -240,6 +244,15 @@
 /* Define HAVE_UPPER_LOWER if you have isupper, islower, toupper, tolower */
 #define HAVE_UPPER_LOWER 1
 
+/* Define HAVE_SIGSET_T you have the sigset_t type */
+/* #undef HAVE_SIGSET_T */
+
+/* Define HAVE_SIGEMPTYSET if you have the sigemptyset macro */
+#define HAVE_SIGEMPTYSET 1
+
+/* Define EDIT_PGM to your editor. */
+#define EDIT_PGM "vi"
+
 /* Define if you have the _setjmp function.  */
 #define HAVE__SETJMP 1
 
@@ -249,6 +262,9 @@
 /* Define if you have the popen function.  */
 #define HAVE_POPEN 1
 
+/* Define if you have the sigprocmask function.  */
+#define HAVE_SIGPROCMASK 1
+
 /* Define if you have the sigsetmask function.  */
 #define HAVE_SIGSETMASK 1
 
@@ -257,6 +273,9 @@
 
 /* Define if you have the strchr function.  */
 #define HAVE_STRCHR 1
+
+/* Define if you have the strstr function.  */
+#define HAVE_STRSTR 1
 
 /* Define if you have the system function.  */
 #define HAVE_SYSTEM 1
@@ -275,6 +294,9 @@
 
 /* Define if you have the <stdio.h> header file.  */
 #define HAVE_STDIO_H 1
+
+/* Define if you have the <stdlib.h> header file.  */
+#define HAVE_STDLIB_H 1
 
 /* Define if you have the <string.h> header file.  */
 #define HAVE_STRING_H 1

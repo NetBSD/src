@@ -1,29 +1,13 @@
-/*	$NetBSD: ifile.c,v 1.3 1999/04/06 05:57:35 mrg Exp $	*/
+/*	$NetBSD: ifile.c,v 1.4 2001/07/26 13:43:45 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -64,7 +48,7 @@ struct ifile {
  * Anchor for linked list.
  */
 static struct ifile anchor = { &anchor, &anchor, NULL, NULL, 0, 0, '\0',
-                               { NULL_POSITION, 0 } };
+				{ NULL_POSITION, 0 } };
 static int ifiles = 0;
 
 static void incr_index __P((struct ifile *, int));
@@ -82,6 +66,9 @@ incr_index(p, incr)
 		p->h_index += incr;
 }
 
+/*
+ * Link an ifile into the ifile list.
+ */
 	static void
 link_ifile(p, prev)
 	struct ifile *p;
@@ -105,6 +92,9 @@ link_ifile(p, prev)
 	ifiles++;
 }
 	
+/*
+ * Unlink an ifile from the ifile list.
+ */
 	static void
 unlink_ifile(p)
 	struct ifile *p;
@@ -156,6 +146,7 @@ del_ifile(h)
 	 * If the ifile we're deleting is the currently open ifile,
 	 * move off it.
 	 */
+	unmark(h);
 	if (h == curr_ifile)
 		curr_ifile = getoff_ifile(curr_ifile);
 	p = int_ifile(h);

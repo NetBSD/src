@@ -1,29 +1,13 @@
-/*	$NetBSD: less.h,v 1.4 2001/01/04 23:05:55 lukem Exp $	*/
+/*	$NetBSD: less.h,v 1.5 2001/07/26 13:43:45 mrg Exp $	*/
 
 /*
- * Copyright (c) 1984,1985,1989,1994,1995,1996,1999  Mark Nudelman
- * All rights reserved.
+ * Copyright (C) 1984-2000  Mark Nudelman
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice in the documentation and/or other materials provided with 
- *    the distribution.
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Less License, as specified in the README file.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR 
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR 
- * BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
- * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE 
- * OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN 
- * IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * For more information about less, or for information on how to 
+ * contact the author, see the README file.
  */
 
 
@@ -88,30 +72,47 @@
 #if HAVE_CTYPE_H
 #include <ctype.h>
 #endif
-#if STDC_HEADERS
+#if HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#if HAVE_STRING_H
 #include <string.h>
 #endif
 #ifdef _OSK
 #include <modes.h>
 #include <strings.h>
 #endif
-#if MSDOS_COMPILER==WIN32C || MSDOS_COMPILER==DJGPPC
+#if MSDOS_COMPILER==WIN32C
 #include <io.h>
 #endif
+#if MSDOS_COMPILER==DJGPPC
+#include <io.h>
+#include <sys/exceptn.h>
+#include <conio.h>
+#include <pc.h>
+#endif
 
-#if !STDC_HEADERS
+#if !HAVE_STDLIB_H
 char *getenv();
 off_t lseek();
 VOID_POINTER calloc();
 void free();
 #endif
 
+/*
+ * Simple lowercase test which can be used during option processing
+ * (before options are parsed which might tell us what charset to use).
+ */
+#define SIMPLE_IS_UPPER(c)	((c) >= 'A' && (c) <= 'Z')
+#define SIMPLE_IS_LOWER(c)	((c) >= 'a' && (c) <= 'z')
+#define	SIMPLE_TO_UPPER(c)	((c) - 'a' + 'A')
+#define	SIMPLE_TO_LOWER(c)	((c) - 'A' + 'a')
+
 #if !HAVE_UPPER_LOWER
-#define	isupper(c)	((c) >= 'A' && (c) <= 'Z')
-#define	islower(c)	((c) >= 'a' && (c) <= 'z')
-#define	toupper(c)	((c) - 'a' + 'A')
-#define	tolower(c)	((c) - 'A' + 'a')
+#define	isupper(c)	SIMPLE_IS_UPPER(c)
+#define	islower(c)	SIMPLE_IS_LOWER(c)
+#define	toupper(c)	SIMPLE_TO_UPPER(c)
+#define	tolower(c)	SIMPLE_TO_LOWER(c)
 #endif
 
 #ifndef NULL
@@ -275,6 +276,8 @@ struct textlist
 #define	CC_ERROR	2	/* Char could not be accepted due to error */
 #define	CC_PASS		3	/* Char was rejected (internal) */
 
+#define CF_QUIT_ON_ERASE 0001   /* Abort cmd if its entirely erased */
+
 /* Special chars used to tell put_line() to do something special */
 #define	AT_NORMAL	(0)
 #define	AT_UNDERLINE	(1)
@@ -357,6 +360,20 @@ struct textlist
 #define	LSIGNAL(sig,func)	os9_signal(sig,func)
 #else
 #define	LSIGNAL(sig,func)	signal(sig,func)
+#endif
+
+#if HAVE_SIGPROCMASK
+#if HAVE_SIGSET_T
+#else
+#undef HAVE_SIGPROCMASK
+#endif
+#endif
+#if HAVE_SIGPROCMASK
+#if HAVE_SIGEMPTYSET
+#else
+#undef  sigemptyset
+#define sigemptyset(mp) *(mp) = 0
+#endif
 #endif
 
 #define	S_INTERRUPT	01
