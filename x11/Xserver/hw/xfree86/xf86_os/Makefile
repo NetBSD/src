@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/19 00:36:09 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/24 05:51:20 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -20,14 +20,14 @@ SRCS.bsd+=	pm_noop.c
 .if ${MACHINE} == "i386"
 SRCS.bsd+=	bsd_apm.c
 .endif
-.if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
+.if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS.bsd+=	i386_video.c stdResource.c lnx_agp.c ioperm_noop.c
 .for _FN in ${SRCS.bsd}
 .if ${MACHINE} == "i386"
-CPPFLAGS.${_FN}+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT -DHAS_APERTURE_DRV \
-			-DHAS_MTRR_BUILTIN -DUSE_I386_IOPL 
+CPPFLAGS.${_FN}+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT -DHAS_APERTURE_DRV
 .endif
-CPPFLAGS.${_FN}+=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+CPPFLAGS.${_FN}+=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC \
+			-DHAS_MTRR_BUILTIN -DUSE_I386_IOPL 
 .endfor
 .endif
 
