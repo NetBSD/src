@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.15 1999/01/10 11:13:36 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.16 1999/01/10 19:13:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,6 @@ void uhub_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 
 USB_DECLARE_DRIVER_NAME(usb, uhub);
 
-/* FIXME what does FreeBSD need? */
 #if defined(__NetBSD__)
 struct cfattach uhub_uhub_ca = {
 	sizeof(struct uhub_softc), uhub_match, uhub_attach
