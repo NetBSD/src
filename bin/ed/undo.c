@@ -1,4 +1,4 @@
-/*	$NetBSD: undo.c,v 1.3 1997/07/20 06:35:42 thorpej Exp $	*/
+/*	$NetBSD: undo.c,v 1.4 2005/02/17 16:29:26 xtraeme Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
 /*-
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-__RCSID("$NetBSD: undo.c,v 1.3 1997/07/20 06:35:42 thorpej Exp $");
+__RCSID("$NetBSD: undo.c,v 1.4 2005/02/17 16:29:26 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,10 +46,7 @@ long u_p = 0;					/* undo stack pointer */
 
 /* push_undo_stack: return pointer to intialized undo node */
 undo_t *
-push_undo_stack(type, from, to)
-	int type;
-	long from;
-	long to;
+push_undo_stack(int type, long from, long to)
 {
 	undo_t *t;
 
@@ -93,7 +90,7 @@ long u_addr_last = -1;		/* if >= 0, undo enabled */
 
 /* pop_undo_stack: undo last change to the editor buffer */
 int
-pop_undo_stack()
+pop_undo_stack(void)
 {
 	long n;
 	long o_current_addr = current_addr;
@@ -142,7 +139,7 @@ pop_undo_stack()
 
 /* clear_undo_stack: clear the undo stack */
 void
-clear_undo_stack()
+clear_undo_stack(void)
 {
 	line_t *lp, *ep, *tl;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: re.c,v 1.18 2002/12/06 01:39:10 thorpej Exp $	*/
+/*	$NetBSD: re.c,v 1.19 2005/02/17 16:29:26 xtraeme Exp $	*/
 
 /* re.c: This file contains the regular expression interface routines for
    the ed line editor. */
@@ -33,7 +33,7 @@
 #if 0
 static char *rcsid = "@(#)re.c,v 1.6 1994/02/01 00:34:43 alm Exp";
 #else
-__RCSID("$NetBSD: re.c,v 1.18 2002/12/06 01:39:10 thorpej Exp $");
+__RCSID("$NetBSD: re.c,v 1.19 2005/02/17 16:29:26 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,7 +45,7 @@ char errmsg[MAXPATHLEN + 40] = "";
 /* get_compiled_pattern: return pointer to compiled pattern from command 
    buffer */
 pattern_t *
-get_compiled_pattern()
+get_compiled_pattern(void)
 {
 	static pattern_t *expr = NULL;
 
@@ -82,8 +82,7 @@ get_compiled_pattern()
 /* extract_pattern: copy a pattern string from the command buffer; return
    pointer to the copy */
 char *
-extract_pattern(delimiter)
-	int delimiter;
+extract_pattern(int delimiter)
 {
 	static char *lhbuf = NULL;	/* buffer */
 	static int lhbufsz = 0;		/* buffer size */
@@ -119,8 +118,7 @@ extract_pattern(delimiter)
 
 /* parse_char_class: expand a POSIX character class */
 char *
-parse_char_class(s)
-	char *s;
+parse_char_class(char *s)
 {
 	int c, d;
 
