@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127 1999/04/11 04:04:10 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.128 1999/04/25 02:56:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -210,14 +210,12 @@ consinit()
 #define	valloc(name, type, num) \
 	v = (caddr_t)(((name) = (type *)v) + (num))
 static caddr_t allocsys __P((caddr_t));
+
 static caddr_t
 allocsys(v)
 	register caddr_t v;
 {
 
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
 	valloc(callout, struct callout, ncallout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);

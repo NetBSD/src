@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.350 1999/04/11 04:04:07 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.351 1999/04/25 02:56:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -631,9 +631,7 @@ allocsys(v)
 
 #define	valloc(name, type, num) \
 	    v = (caddr_t)(((name) = (type *)v) + (num))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
+
 	valloc(callout, struct callout, ncallout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);

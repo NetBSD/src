@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 1999/04/11 04:04:09 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 1999/04/25 02:56:28 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -67,9 +67,6 @@
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/callout.h>
-#ifdef REAL_CLISTS
-#include <sys/clist.h>
-#endif
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
@@ -372,9 +369,7 @@ allocsys(v)
 
 #define	valloc(name, type, num) \
 	    v = (caddr_t)(((name) = (type *)v) + (num))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
+
 	valloc(callout, struct callout, ncallout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);

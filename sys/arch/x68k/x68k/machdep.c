@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 1999/04/11 04:04:11 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 1999/04/25 02:56:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -311,9 +311,7 @@ again:
 	    (name) = (type *)v; v = (caddr_t)((name)+(num))
 #define	valloclim(name, type, num, lim) \
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
+
 	valloc(callout, struct callout, ncallout);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
