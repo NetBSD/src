@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.4,v 1.5 1999/11/18 14:51:00 enami Exp $
+.\"	$NetBSD: wdc.4,v 1.6 2000/02/05 19:34:07 mhitch Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -46,6 +46,8 @@
 .Ss arm32
 .Cd "wdc0 at pioc? offset 0x01f0 irq 9"
 .Ss atari
+.Cd "wdc0 at mainbus0"
+.Ss amiga
 .Cd "wdc0 at mainbus0"
 .Sh DESCRIPTION
 The
