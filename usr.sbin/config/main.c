@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1997/05/25 18:42:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -60,6 +60,7 @@ static char copyright[] =
 #include <string.h>
 #include <unistd.h>
 #include "config.h"
+#include "sem.h"
 
 int	firstfile __P((const char *));
 int	yyparse __P((void));
@@ -492,7 +493,7 @@ cfcrosscheck(cf, what, nv)
 {
 	register struct devbase *dev;
 	register struct devi *pd;
-	int errs, devminor;
+	int errs, devunit;
 
 	if (maxpartitions <= 0)
 		panic("cfcrosscheck");
@@ -503,15 +504,18 @@ cfcrosscheck(cf, what, nv)
 		dev = ht_lookup(devbasetab, nv->nv_name);
 		if (dev == NULL)
 			panic("cfcrosscheck(%s)", nv->nv_name);
-		devminor = minor(nv->nv_int) / maxpartitions;
-		if (devbase_has_instances(dev, devminor))
+		if (has_attr(dev->d_attrs, s_ifnet))
+			devunit = nv->nv_ifunit;	/* XXX XXX XXX */
+		else
+			devunit = minor(nv->nv_int) / maxpartitions;
+		if (devbase_has_instances(dev, devunit))
 			continue;
 		if (devbase_has_instances(dev, STAR) &&
-		    devminor >= dev->d_umax)
+		    devunit >= dev->d_umax)
 			continue;
 		for (pd = allpseudo; pd != NULL; pd = pd->i_next)
-			if (pd->i_base == dev && devminor < dev->d_umax &&
-			    devminor >= 0)
+			if (pd->i_base == dev && devunit < dev->d_umax &&
+			    devunit >= 0)
 				goto loop;
 		(void)fprintf(stderr,
 		    "%s%d: %s says %s on %s, but there's no %s\n",
