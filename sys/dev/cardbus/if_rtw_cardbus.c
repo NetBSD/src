@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.2 2004/10/09 07:09:40 mycroft Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.3 2004/12/07 04:36:06 jdarrow Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.2 2004/10/09 07:09:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.3 2004/12/07 04:36:06 jdarrow Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -176,6 +176,9 @@ const struct rtw_cardbus_product {
 } rtw_cardbus_products[] = {
 	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8180,
 	  "Realtek RTL8180 802.11 MAC/BBP" },
+
+	{ PCI_VENDOR_BELKIN,		PCI_PRODUCT_BELKIN_F5D6020V3,
+	  "Belkin F5D6020v3 802.11b (RTL8180 MAC/BBP)" },
 
 	{ 0,				0,	NULL },
 };
