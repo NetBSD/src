@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.1.1.2 2000/04/22 14:53:20 simonb Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.2 2000/04/22 15:49:33 simonb Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -11,6 +11,8 @@
 #include <stdio.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "ntpd.h"
 #include "ntp_io.h"
@@ -537,10 +539,10 @@ process_private(
 	if (proc->sizeofitem != 0)
 	    if (proc->sizeofitem*INFO_NITEMS(inpkt->err_nitems)
 		> sizeof(inpkt->data)) {
-		    msyslog(LOG_ERR, "sizeofitem(%d)*NITEMS(%d) > data: %d > %d",
+		    msyslog(LOG_ERR, "sizeofitem(%d)*NITEMS(%d) > data: %d > %ld",
 	    		    proc->sizeofitem, INFO_NITEMS(inpkt->err_nitems),
 			    proc->sizeofitem*INFO_NITEMS(inpkt->err_nitems),
-			    sizeof(inpkt->data));
+			    (long)sizeof(inpkt->data));
 		    req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
 		    return;
 	    }
@@ -1234,7 +1236,6 @@ dns_a(
 	register struct info_dns_assoc *dp;
 	register int items;
 	struct sockaddr_in peeraddr;
-	int fl;
 
 	/*
 	 * Do a check of everything to see that it looks
@@ -1273,7 +1274,6 @@ dns_a(
 	while (items-- > 0) {
 		u_short associd;
 		size_t hnl;
-		char *cp;
 		struct peer *peer;
 		int bogon = 0;
 
@@ -1289,8 +1289,8 @@ dns_a(
 		peeraddr.sin_addr.s_addr = dp->peeraddr;
 		for (hnl = 0; dp->hostname[hnl] && hnl < sizeof dp->hostname; ++hnl) ;
 		if (hnl >= sizeof dp->hostname) {
-			msyslog(LOG_ERR, "dns_a: hnl (%d) >= %d",
-				hnl, sizeof dp->hostname);
+			msyslog(LOG_ERR, "dns_a: hnl (%ld) >= %ld",
+				(long)hnl, (long)sizeof dp->hostname);
 			++bogon;
 		}
 
@@ -1433,7 +1433,7 @@ setclr_flags(
 	if (flags & ~(SYS_FLAG_BCLIENT | SYS_FLAG_AUTHENTICATE |
 		      SYS_FLAG_NTP | SYS_FLAG_KERNEL | SYS_FLAG_MONITOR |
 		      SYS_FLAG_FILEGEN)) {
-		msyslog(LOG_ERR, "setclr_flags: extra flags: %#x",
+		msyslog(LOG_ERR, "setclr_flags: extra flags: %#lx",
 			flags & ~(SYS_FLAG_BCLIENT | SYS_FLAG_AUTHENTICATE | 
 				  SYS_FLAG_NTP | SYS_FLAG_KERNEL |
 				  SYS_FLAG_MONITOR | SYS_FLAG_FILEGEN));
@@ -1740,7 +1740,7 @@ reset_stats(
 	flags = ((struct reset_flags *)inpkt->data)->flags;
 
 	if (flags & ~RESET_ALLFLAGS) {
-		msyslog(LOG_ERR, "reset_stats: reset leaves %#x",
+		msyslog(LOG_ERR, "reset_stats: reset leaves %#lx",
 			flags & ~RESET_ALLFLAGS);
 		req_ack(srcadr, inter, inpkt, INFO_ERR_FMT);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.1.1.2 2000/04/22 14:53:22 simonb Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.2 2000/04/22 15:49:33 simonb Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -355,7 +355,7 @@ stats_config(
 		(void) fclose(fp);
 		if (   !finite(old_drift)
 		    || (fabs(old_drift) > (sys_maxfreq * 1e6))) {
-			msyslog(LOG_ERR, "invalid frequency (%lf) in %s", 
+			msyslog(LOG_ERR, "invalid frequency (%f) in %s", 
 			    old_drift, stats_drift_file);
 			exit(1);
 		}
