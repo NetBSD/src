@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.41 2000/12/19 00:06:02 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.42 2001/03/15 13:45:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ epic_attach(sc)
 	}
 
 	/*
-	 * Create the recieve buffer DMA maps.
+	 * Create the receive buffer DMA maps.
 	 */
 	for (i = 0; i < EPIC_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
@@ -695,7 +695,7 @@ epic_intr(arg)
 			ifp->if_ipackets++;
 		}
 
-		/* Update the recieve pointer. */
+		/* Update the receive pointer. */
 		sc->sc_rxptr = i;
 
 		/*
