@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.h,v 1.1 2002/03/15 17:21:26 manu Exp $ */
+/*	$NetBSD: irix_kmem.h,v 1.1.6.1 2002/05/16 04:35:49 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,10 +44,6 @@
 
 #ifdef _KERNEL
 void    irix_kmemattach __P((struct device *, struct device *, void *));
-int     irix_kmemopen __P((dev_t, int, int, struct proc *));
-int	irix_kmemread __P((dev_t, struct uio *, int));
-int	irix_kmemwrite __P((dev_t, struct uio *, int));
-int     irix_kmemclose __P((dev_t, int, int, struct proc *));
 #endif
 
 /* IRIX well-known kernel structures referenced by sysmp() */
