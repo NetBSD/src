@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnameinfo.3,v 1.25 2003/08/28 01:43:14 itojun Exp $
+.\"	$NetBSD: getnameinfo.3,v 1.26 2003/08/28 01:46:45 itojun Exp $
 .\"	$KAME: getnameinfo.3,v 1.27 2003/04/30 06:06:42 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -321,6 +321,7 @@ struct sockaddr *sa;
 socklen_t salen;
 char addr[NI_MAXHOST];
 struct addrinfo hints, *res;
+int error;
 
 error = getnameinfo(sa, salen, addr, sizeof(addr),
     NULL, 0, NI_NAMEREQD);
