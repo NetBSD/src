@@ -1,15 +1,15 @@
-# $NetBSD: files.podulebus,v 1.12 2001/07/04 14:33:43 bjh21 Exp $
+# $NetBSD: files.podulebus,v 1.13 2001/07/04 15:01:08 bjh21 Exp $
 
 device	podulebus { [slot = -1] }
 define	podloader
 
 # Oak SCSI
-device	oak: scsi, ncr5380sbc
+device	oak: scsi, ncr5380sbc, podloader
 attach	oak at podulebus
 file	dev/podulebus/oak.c			oak
 
 # HCCS 8-bit SCSI
-device	hcsc: scsi, ncr5380sbc
+device	hcsc: scsi, ncr5380sbc, podloader
 attach	hcsc at podulebus
 file	dev/podulebus/hcsc.c			hcsc
 
