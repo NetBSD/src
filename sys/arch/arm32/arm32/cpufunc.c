@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.6 1998/07/05 08:49:37 jonathan Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.7 1998/07/06 01:54:36 mark Exp $	*/
 
 /*
  * arm8 support code Copyright (c) 1997 ARM Limited
@@ -399,12 +399,6 @@ extern int pmap_debug_level;
 #endif
 #endif
 
-#ifdef POSTMORTEM
-#define DISASSEMBLE(x)	disassemble(x)
-#else
-#define DISASSEMBLE(x)
-#endif	/* POSTMORTEM */
-
 #ifdef CPU_ARM6
 /*
  * ARM6 data abort fixup
@@ -458,7 +452,7 @@ arm6_dataabt_fixup(arg)
 	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
 
@@ -475,7 +469,7 @@ arm6_dataabt_fixup(arg)
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		
 #ifdef ARM6_LATE_ABORT
@@ -486,11 +480,11 @@ arm6_dataabt_fixup(arg)
 	    || (fault_instruction & (1 << 21)) != 0) {
 		base = (fault_instruction >> 16) & 0x0f;
 		if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 			panic("Abort handler cannot fix this :-(\n");
 		}
 		if (base == 15) {
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 			panic("Abort handler cannot fix this :-(\n");
 		}
 #ifdef DEBUG_FAULT_CORRECTION
@@ -512,7 +506,7 @@ arm6_dataabt_fixup(arg)
 
 			offset = fault_instruction & 0x0f;
 			if (offset == base) {
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
                 
@@ -523,12 +517,12 @@ arm6_dataabt_fixup(arg)
 				shift = (fault_instruction >> 7) & 0x1f;
 			else {
 				if ((fault_instruction & (1 << 7)) != 0) {
-					DISASSEMBLE(fault_pc);
+					disassemble(fault_pc);
 					panic("Abort handler cannot fix this :-(\n");
 				}
 				shift = ((fault_instruction >> 8) & 0xf);
 				if (base == shift) {
-					DISASSEMBLE(fault_pc);
+					disassemble(fault_pc);
 					panic("Abort handler cannot fix this :-(\n");
 				}
 #ifdef DEBUG_FAULT_CORRECTION
@@ -554,7 +548,7 @@ arm6_dataabt_fixup(arg)
 				offset = (int)(((int)offset) >> shift);
 				break;
 			case 3 : /* Rotate right */
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 				break;
 			}
@@ -586,7 +580,7 @@ arm6_dataabt_fixup(arg)
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
 			printf("LDM/STM\n");
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 		}
 #endif	/* DEBUG_FAULT_CORRECTION */
 		if (fault_instruction & (1 << 21)) {
@@ -596,7 +590,7 @@ arm6_dataabt_fixup(arg)
 #endif	/* DEBUG_FAULT_CORRECTION */
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15) {
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 			/* Count registers transferred */
@@ -634,7 +628,7 @@ arm6_dataabt_fixup(arg)
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 
 /* Only need to fix registers if write back is turned on */
@@ -642,11 +636,11 @@ arm6_dataabt_fixup(arg)
 		if ((fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 			if (base == 15) {
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 
@@ -664,7 +658,7 @@ arm6_dataabt_fixup(arg)
 #endif	/* DEBUG_FAULT_CORRECTION */
 		}
 	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-		DISASSEMBLE(fault_pc);
+		disassemble(fault_pc);
 		panic("How did this happen ...\nWe have faulted on a non data transfer instruction");
 	}
 
@@ -763,7 +757,7 @@ arm7_dataabt_fixup(arg)
 	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
 
@@ -776,7 +770,7 @@ arm7_dataabt_fixup(arg)
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		
 	/* This is for late abort only */
@@ -785,11 +779,11 @@ arm7_dataabt_fixup(arg)
 	    || (fault_instruction & (1 << 21)) != 0) {
 		base = (fault_instruction >> 16) & 0x0f;
 		if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 			panic("Abort handler cannot fix this :-(\n");
 		}
 		if (base == 15) {
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 			panic("Abort handler cannot fix this :-(\n");
 		}
 #ifdef DEBUG_FAULT_CORRECTION
@@ -811,7 +805,7 @@ arm7_dataabt_fixup(arg)
 
 			offset = fault_instruction & 0x0f;
 			if (offset == base) {
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
                 
@@ -822,12 +816,12 @@ arm7_dataabt_fixup(arg)
 				shift = (fault_instruction >> 7) & 0x1f;
 			else {
 				if ((fault_instruction & (1 << 7)) != 0) {
-					DISASSEMBLE(fault_pc);
+					disassemble(fault_pc);
 					panic("Abort handler cannot fix this :-(\n");
 				}
 				shift = ((fault_instruction >> 8) & 0xf);
 				if (base == shift) {
-					DISASSEMBLE(fault_pc);
+					disassemble(fault_pc);
 					panic("Abort handler cannot fix this :-(\n");
 				}
 #ifdef DEBUG_FAULT_CORRECTION
@@ -853,7 +847,7 @@ arm7_dataabt_fixup(arg)
 				offset = (int)(((int)offset) >> shift);
 				break;
 			case 3 : /* Rotate right */
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 				break;
 			}
@@ -884,7 +878,7 @@ arm7_dataabt_fixup(arg)
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0) {
 			printf("LDM/STM\n");
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 		}
 #endif	/* DEBUG_FAULT_CORRECTION */
 		if (fault_instruction & (1 << 21)) {
@@ -894,7 +888,7 @@ arm7_dataabt_fixup(arg)
 #endif	/* DEBUG_FAULT_CORRECTION */
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15) {
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 			/* Count registers transferred */
@@ -932,7 +926,7 @@ arm7_dataabt_fixup(arg)
 
 #ifdef DEBUG_FAULT_CORRECTION
 		if (pmap_debug_level >= 0)
-			DISASSEMBLE(fault_pc);
+			disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 
 /* Only need to fix registers if write back is turned on */
@@ -940,11 +934,11 @@ arm7_dataabt_fixup(arg)
 		if ((fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE) {
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 			if (base == 15) {
-				DISASSEMBLE(fault_pc);
+				disassemble(fault_pc);
 				panic("Abort handler cannot fix this :-(\n");
 			}
 
@@ -962,7 +956,7 @@ arm7_dataabt_fixup(arg)
 #endif	/* DEBUG_FAULT_CORRECTION */
 		}
 	} else if ((fault_instruction & 0x0e000000) == 0x0c000000) {
-		DISASSEMBLE(fault_pc);
+		disassemble(fault_pc);
 		panic("How did this happen ...\nWe have faulted on a non data transfer instruction");
 	}
 
