@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.9 2000/06/25 23:10:18 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.10 2000/06/26 02:04:06 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -2309,7 +2309,12 @@ IDTVEC(trap07)
 	pushl	$0			# dummy error code
 	pushl	$T_DNA
 	INTRENTRY
-	PUSH_CURPROC(%eax)
+#ifdef MULTIPROCESSOR
+	GET_CPUINFO(%eax)
+	pushl	%eax
+#else
+	pushl	_C_LABEL(cpu_info_store)		
+#endif
 	call	_C_LABEL(npxdna)
 	addl	$4,%esp
 	testl	%eax,%eax

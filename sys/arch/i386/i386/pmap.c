@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.6 2000/06/25 19:37:05 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.7 2000/06/26 02:04:10 sommerfeld Exp $	*/
 
 /*
  *
@@ -3953,7 +3953,7 @@ pmap_tlb_sendipi(void)
 	for (i = 0; i < I386_MAXPROCS; i++) {
 		if (i == cpu_id || cpu_info[i] == NULL)
 			continue;
-		i386_send_ipi(i, I386_IPI_TLB);
+		i386_send_ipi(cpu_info[i], I386_IPI_TLB);
 	}
 }
 
@@ -4011,8 +4011,9 @@ pmap_tlb_shootnow ()
 	pmap_do_tlb_shootdown(); /* do *our* work. */
 #ifdef MULTIPROCESSOR
 	splx(s);
+	/* XXX should wait until ipi bit is cleared by other cpu.. */
 #if 0
-	pmap_tlb_ipispin();	/* wait for completion */
+	pmap_tlb_ipispin();	/* XXX wait for completion */
 #endif
 #endif
 }

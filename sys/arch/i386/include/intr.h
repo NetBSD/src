@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.2 2000/06/25 19:37:11 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.3 2000/06/26 02:04:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -196,6 +196,7 @@ softintr(sir, vec)
 
 #define I386_IPI_HALT		0x00000001
 #define I386_IPI_TLB		0x00000002
+#define I386_IPI_FPSAVE		0x00000004
 
 /* the following are for debugging.. */
 #define I386_IPI_GMTB		0x00000010
@@ -203,7 +204,7 @@ softintr(sir, vec)
 
 #define I386_NIPI		6
 
-void i386_send_ipi (int, int);
+void i386_send_ipi (struct cpu_info *, int);
 void i386_broadcast_ipi (int);
 void i386_ipi_handler (void);
 

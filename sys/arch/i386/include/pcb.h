@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.26.10.1 2000/02/20 17:43:29 sommerfeld Exp $	*/
+/*	$NetBSD: pcb.h,v 1.26.10.2 2000/06/26 02:04:15 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,8 +115,9 @@ struct pcb {
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
-	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 	struct pmap *pcb_pmap;		/* back pointer to our pmap */
+	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
+	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 };
 
 /*    

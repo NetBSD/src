@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.7 2000/06/25 20:44:54 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.8 2000/06/26 02:04:14 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,7 +84,8 @@ struct cpu_info {
 	 * Private members.
 	 */
 	struct proc *ci_fpcurproc;	/* current owner of the FPU */
-
+	int	ci_fpsaving;		/* save in progress */
+	
 	struct pcb *ci_curpcb;		/* VA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* VA of current PCB */
 	
@@ -142,8 +143,6 @@ extern	struct cpu_info *cpu_info[I386_MAXPROCS];
 extern	u_long cpus_running;
 
 extern void cpu_boot_secondary_processors __P((void));
-
-#define	fpcurproc	curcpu()->ci_fpcurproc
 
 #define want_resched (curcpu()->ci_want_resched)
 #define astpending (curcpu()->ci_astpending)
@@ -279,8 +278,9 @@ void	i8254_microtime __P((struct timeval *));
 void	i8254_initclocks __P((void));
 
 /* npx.c */
-void	npxdrop __P((void));
-void	npxsave __P((void));
+void	npxdrop __P((struct proc *));
+void	npxsave_proc __P((struct proc *));
+void	npxsave_cpu __P((struct cpu_info *));
 
 /* vm_machdep.c */
 int kvtop __P((caddr_t));

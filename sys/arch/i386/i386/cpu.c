@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.6 2000/06/25 20:45:45 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -372,7 +372,9 @@ cpu_hatch(void *v)
 {
 	struct cpu_info *ci = (struct cpu_info *)v;
         struct region_descriptor region;
+#if 0
 	volatile int i;
+#endif
 	
 	cpu_init_idt();
 
@@ -386,9 +388,9 @@ cpu_hatch(void *v)
 	enable_intr();
 	printf("%s: CPU %d reporting for duty, Sir!\n",ci->ci_dev.dv_xname, cpu_number());
 	printf("%s: stack is %p\n", ci->ci_dev.dv_xname, &region);
-
+#if 0
 	printf("%s: sending IPI to cpu 0\n",ci->ci_dev.dv_xname);
-	i386_send_ipi(0, I386_IPI_GMTB);
+	i386_send_ipi(cpu_primary, I386_IPI_GMTB);
 
 	/* give it a chance to be handled.. */
 	for (i=0; i<1000000; i++)
@@ -396,9 +398,11 @@ cpu_hatch(void *v)
 	
 	printf("%s: sending another IPI to cpu 0\n",
 	    ci->ci_dev.dv_xname);
-	i386_send_ipi(0, I386_IPI_GMTB);
+	i386_send_ipi(cpu_primary, I386_IPI_GMTB);
+#endif	
 	for (;;)
 		;
+
 
 }
 
