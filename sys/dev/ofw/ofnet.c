@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.27 2002/09/30 22:10:08 thorpej Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.28 2002/10/02 02:16:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.27 2002/09/30 22:10:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofnet.c,v 1.28 2002/10/02 02:16:10 thorpej Exp $");
 
 #include "ofnet.h"
 #include "opt_inet.h"
@@ -87,9 +87,8 @@ struct ofnet_softc {
 static int ofnet_match (struct device *, struct cfdata *, void *);
 static void ofnet_attach (struct device *, struct device *, void *);
 
-const struct cfattach ofnet_ca = {
-	sizeof(struct ofnet_softc), ofnet_match, ofnet_attach
-};
+CFATTACH_DECL(ofnet, sizeof(struct ofnet_softc),
+    ofnet_match, ofnet_attach, NULL, NULL);
 
 static void ofnet_read (struct ofnet_softc *);
 static void ofnet_timer (void *);
