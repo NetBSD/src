@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.41 2004/01/25 10:00:17 cube Exp $
+.\"	$NetBSD: inetd.8,v 1.42 2004/03/24 04:31:34 fair Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -438,6 +438,12 @@ and
 .Pa /etc/hosts.deny
 for access control facility configurations, as described in
 .Xr hosts_access 5 .
+.Pp
+.Sy Nota Bene:
+.Tn TCP
+wrappers do not affect/restrict
+.Tn UDP
+services.
 .Ss IPsec
 The implementation includes a tiny hack to support IPsec policy settings for
 each socket.
