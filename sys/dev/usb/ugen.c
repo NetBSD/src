@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.20 1999/08/28 21:42:35 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.21 1999/09/04 22:26:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,8 +98,8 @@ struct ugen_softc {
 
 	char sc_is_open[USB_MAX_ENDPOINTS];
 	struct ugen_endpoint sc_endpoints[USB_MAX_ENDPOINTS][2];
-#define OUT 0			/* index order is important, from UE_OUT */
-#define IN  1			/* from UE_IN */
+#define OUT 0
+#define IN  1
 
 	int sc_refcnt;
 	u_char sc_dying;
@@ -204,6 +204,7 @@ ugen_set_config(sc, configno)
 	u_int8_t niface, nendpt;
 	int ifaceno, endptno, endpt;
 	usbd_status r;
+	int dir;
 
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
 		    USBDEVNAME(sc->sc_dev), configno, sc));
@@ -229,12 +230,12 @@ ugen_set_config(sc, configno)
 		for (endptno = 0; endptno < nendpt; endptno++) {
 			ed = usbd_interface2endpoint_descriptor(iface,endptno);
 			endpt = ed->bEndpointAddress;
-			sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)]
-				               [UE_GET_IN(endpt)];
+			dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
+			sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)][dir];
 			DPRINTFN(1,("ugen_set_config: endptno %d, endpt=0x%02x"
 				    "(%d,%d), sce=%p\n", 
 				    endptno, endpt, UE_GET_ADDR(endpt),
-				    UE_GET_IN(endpt), sce));
+				    UE_GET_DIR(endpt), sce));
 			sce->sc = sc;
 			sce->edesc = ed;
 			sce->iface = iface;
@@ -696,6 +697,7 @@ ugen_set_interface(sc, ifaceidx, altno)
 	usbd_status r;
 	struct ugen_endpoint *sce;
 	u_int8_t niface, nendpt, endptno, endpt;
+	int dir;
 
 	DPRINTFN(15, ("ugen_set_interface %d %d\n", ifaceidx, altno));
 
@@ -714,7 +716,8 @@ ugen_set_interface(sc, ifaceidx, altno)
 	for (endptno = 0; endptno < nendpt; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
 		endpt = ed->bEndpointAddress;
-		sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)][UE_GET_IN(endpt)];
+		dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
+		sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)][dir];
 		sce->sc = 0;
 		sce->edesc = 0;
 		sce->iface = 0;
@@ -731,7 +734,8 @@ ugen_set_interface(sc, ifaceidx, altno)
 	for (endptno = 0; endptno < nendpt; endptno++) {
 		ed = usbd_interface2endpoint_descriptor(iface,endptno);
 		endpt = ed->bEndpointAddress;
-		sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)][UE_GET_IN(endpt)];
+		dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
+		sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)][dir];
 		sce->sc = sc;
 		sce->edesc = ed;
 		sce->iface = iface;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.39 1999/08/22 23:41:00 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.40 1999/09/04 22:26:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1276,7 +1276,7 @@ ohci_open(pipe)
 		case USB_CONTROL_ENDPOINT:
 			pipe->methods = &ohci_root_ctrl_methods;
 			break;
-		case UE_IN | OHCI_INTR_ENDPT:
+		case UE_DIR_IN | OHCI_INTR_ENDPT:
 			pipe->methods = &ohci_root_intr_methods;
 			break;
 		default:
@@ -1497,7 +1497,7 @@ usb_interface_descriptor_t ohci_ifcd = {
 usb_endpoint_descriptor_t ohci_endpd = {
 	USB_ENDPOINT_DESCRIPTOR_SIZE,
 	UDESC_ENDPOINT,
-	UE_IN | OHCI_INTR_ENDPT,
+	UE_DIR_IN | OHCI_INTR_ENDPT,
 	UE_INTERRUPT,
 	{8, 0},			/* max packet */
 	255
@@ -2026,7 +2026,7 @@ ohci_device_bulk_start(reqh)
 	ohci_soft_ed_t *sed;
 	usb_dma_t *dmap;
 	usbd_status r;
-	int s, len, isread;
+	int s, len, isread, endpt;
 
 #ifdef DIAGNOSTIC
 	if (reqh->isreq) {
@@ -2038,12 +2038,13 @@ ohci_device_bulk_start(reqh)
 
 	len = reqh->length;
 	dmap = &opipe->u.bulk.datadma;
-	isread = reqh->pipe->endpoint->edesc->bEndpointAddress & UE_IN;
+	endpt = reqh->pipe->endpoint->edesc->bEndpointAddress;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	sed = opipe->sed;
 
 	DPRINTFN(4,("ohci_device_bulk_start: reqh=%p len=%d isread=%d "
 		    "flags=%d endpt=%d\n", reqh, len, isread, reqh->flags,
-		    reqh->pipe->endpoint->edesc->bEndpointAddress));
+		    endpt));
 
 	opipe->u.bulk.isread = isread;
 	opipe->u.bulk.length = len;
