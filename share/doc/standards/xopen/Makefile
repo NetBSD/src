@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/06/01 16:51:44 jwise Exp $
+#	$NetBSD: Makefile,v 1.2 1999/06/01 18:22:52 ross Exp $
 
 DOCS=	xcu5
 .for i in ${DOCS}
@@ -18,16 +18,16 @@ all: ${TARGS}
 
 .for i in ${DOCS}
 ${i}.ps: ${i}
-	groff ${ARGS_PS}   -mdoc      ${i} > $@
+	groff ${ARGS_PS}   -mdoc      ${.ALLSRC} > $@
 
 ${i}.txt: ${i}
-	groff ${ARGS_TXT}  -mdoc      ${i} > $@
+	groff ${ARGS_TXT}  -mdoc      ${.ALLSRC} > $@
 
 ${i}.html: ${i}
-	groff ${ARGS_HTML} -mdoc2html ${i} > $@
+	groff ${ARGS_HTML} -mdoc2html ${.ALLSRC} > $@
 
 ${i}.more: ${i}
-	groff ${ARGS_MORE} -mdoc      ${i} > $@
+	groff ${ARGS_MORE} -mdoc      ${.ALLSRC} > $@
 .endfor
 
 echosrcs! ${SRCS}
