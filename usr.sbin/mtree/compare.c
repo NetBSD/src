@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)compare.c	5.7 (Berkeley) 5/25/90";*/
-static char rcsid[] = "$Id: compare.c,v 1.2 1993/08/01 17:58:27 mycroft Exp $";
+static char rcsid[] = "$Id: compare.c,v 1.3 1993/08/06 03:48:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,41 +60,41 @@ compare(name, s, p)
 	label = 0;
 	switch(s->type) {
 	case F_BLOCK:
-		if (!S_ISBLK(p->fts_statb.st_mode))
+		if (!S_ISBLK(p->fts_statp->st_mode))
 			goto typeerr;
 		break;
 	case F_CHAR:
-		if (!S_ISCHR(p->fts_statb.st_mode))
+		if (!S_ISCHR(p->fts_statp->st_mode))
 			goto typeerr;
 		break;
 	case F_DIR:
-		if (!S_ISDIR(p->fts_statb.st_mode))
+		if (!S_ISDIR(p->fts_statp->st_mode))
 			goto typeerr;
 		break;
 	case F_FIFO:
-		if (!S_ISFIFO(p->fts_statb.st_mode))
+		if (!S_ISFIFO(p->fts_statp->st_mode))
 			goto typeerr;
 		break;
 	case F_FILE:
-		if (!S_ISREG(p->fts_statb.st_mode))
+		if (!S_ISREG(p->fts_statp->st_mode))
 			goto typeerr;
 		break;
 	case F_LINK:
-		if (!S_ISLNK(p->fts_statb.st_mode))
+		if (!S_ISLNK(p->fts_statp->st_mode))
 			goto typeerr;
 		break;
 	case F_SOCK:
-		if (!S_ISFIFO(p->fts_statb.st_mode)) {
+		if (!S_ISFIFO(p->fts_statp->st_mode)) {
 typeerr:		LABEL;
 			(void)printf("\n\ttype (%s, %s)",
-			    ftype(s->type), inotype(p->fts_statb.st_mode));
+			    ftype(s->type), inotype(p->fts_statp->st_mode));
 		}
 		break;
 	}
-	if (s->flags & F_MODE && s->st_mode != (p->fts_statb.st_mode & MBITS)) {
+	if (s->flags & F_MODE && s->st_mode != (p->fts_statp->st_mode & MBITS)) {
 		LABEL;
 		(void)printf("\n\tpermissions (%#o, %#o%s",
-		    s->st_mode, p->fts_statb.st_mode & MBITS, uflag ? "" : ")");
+		    s->st_mode, p->fts_statp->st_mode & MBITS, uflag ? "" : ")");
 		if (uflag)
 			if (chmod(p->fts_accpath, s->st_mode))
 				(void)printf(", not modified: %s)",
@@ -102,10 +102,10 @@ typeerr:		LABEL;
 			else
 				(void)printf(", modified)");
 	}
-	if (s->flags & F_OWNER && s->st_uid != p->fts_statb.st_uid) {
+	if (s->flags & F_OWNER && s->st_uid != p->fts_statp->st_uid) {
 		LABEL;
 		(void)printf("\n\towner (%u, %u%s",
-		    s->st_uid, p->fts_statb.st_uid, uflag ? "" : ")");
+		    s->st_uid, p->fts_statp->st_uid, uflag ? "" : ")");
 		if (uflag)
 			if (chown(p->fts_accpath, s->st_uid, -1))
 				(void)printf(", not modified: %s)",
@@ -113,10 +113,10 @@ typeerr:		LABEL;
 			else
 				(void)printf(", modified)");
 	}
-	if (s->flags & F_GROUP && s->st_gid != p->fts_statb.st_gid) {
+	if (s->flags & F_GROUP && s->st_gid != p->fts_statp->st_gid) {
 		LABEL;
 		(void)printf("\n\tgroup (%u, %u%s",
-		    s->st_gid, p->fts_statb.st_gid, uflag ? "" : ")");
+		    s->st_gid, p->fts_statp->st_gid, uflag ? "" : ")");
 		if (uflag)
 			if (chown(p->fts_accpath, -1, s->st_gid))
 				(void)printf(", not modified: %s)",
@@ -125,15 +125,15 @@ typeerr:		LABEL;
 				(void)printf(", modified)");
 	}
 	if (s->flags & F_NLINK && s->type != F_DIR &&
-	    s->st_nlink != p->fts_statb.st_nlink) {
+	    s->st_nlink != p->fts_statp->st_nlink) {
 		LABEL;
 		(void)printf("\n\tlink count (%u, %u)",
-		    s->st_nlink, p->fts_statb.st_nlink);
+		    s->st_nlink, p->fts_statp->st_nlink);
 	}
-	if (s->flags & F_SIZE && s->st_size != p->fts_statb.st_size) {
+	if (s->flags & F_SIZE && s->st_size != p->fts_statp->st_size) {
 		LABEL;
 		(void)printf("\n\tsize (%ld, %ld)",
-		    s->st_size, p->fts_statb.st_size);
+		    s->st_size, p->fts_statp->st_size);
 	}
 	if (s->flags & F_SLINK) {
 		char *cp;
@@ -143,11 +143,11 @@ typeerr:		LABEL;
 			(void)printf("\n\tlink ref (%s, %s)", cp, s->slink);
 		}
 	}
-	if (s->flags & F_TIME && s->st_mtime != p->fts_statb.st_mtime) {
+	if (s->flags & F_TIME && s->st_mtime != p->fts_statp->st_mtime) {
 		LABEL;
 		(void)printf("\n\tmodification time (%.24s, ",
 		    ctime(&s->st_mtime));
-		(void)printf("%.24s)", ctime(&p->fts_statb.st_mtime));
+		(void)printf("%.24s)", ctime(&p->fts_statp->st_mtime));
 	}
 	if (label) {
 		exitval = 2;

@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)create.c	5.16 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: create.c,v 1.2 1993/08/01 17:58:26 mycroft Exp $";
+static char rcsid[] = "$Id: create.c,v 1.3 1993/08/06 03:48:28 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -121,30 +121,30 @@ cwalk()
 		}
 
 		label = 0;
-		if (!S_ISREG(p->fts_statb.st_mode) || notset) {
+		if (!S_ISREG(p->fts_statp->st_mode) || notset) {
 			LABEL;
-			(void)printf("type=%s", inotype(p->fts_statb.st_mode));
+			(void)printf("type=%s", inotype(p->fts_statp->st_mode));
 		}
-		if (p->fts_statb.st_uid != uid || notset) {
+		if (p->fts_statp->st_uid != uid || notset) {
 			LABEL;
-			(void)printf("owner=%u", p->fts_statb.st_uid);
+			(void)printf("owner=%u", p->fts_statp->st_uid);
 		}
-		if (p->fts_statb.st_gid != gid || notset) {
+		if (p->fts_statp->st_gid != gid || notset) {
 			LABEL;
-			(void)printf("group=%u", p->fts_statb.st_gid);
+			(void)printf("group=%u", p->fts_statp->st_gid);
 		}
-		if ((p->fts_statb.st_mode & MBITS) != mode || notset) {
+		if ((p->fts_statp->st_mode & MBITS) != mode || notset) {
 			LABEL;
-			(void)printf("mode=%#o", p->fts_statb.st_mode & MBITS);
+			(void)printf("mode=%#o", p->fts_statp->st_mode & MBITS);
 		}
-		if (p->fts_statb.st_nlink != 1 || notset) {
+		if (p->fts_statp->st_nlink != 1 || notset) {
 			LABEL;
-			(void)printf("nlink=%u", p->fts_statb.st_nlink);
+			(void)printf("nlink=%u", p->fts_statp->st_nlink);
 		}
 		LABEL;
-		(void)printf("size=%ld", p->fts_statb.st_size);
+		(void)printf("size=%ld", p->fts_statp->st_size);
 		LABEL;
-		(void)printf("time=%ld", p->fts_statb.st_mtime);
+		(void)printf("time=%ld", p->fts_statp->st_mtime);
 
 		if (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE) {
 			LABEL;
@@ -176,7 +176,7 @@ statdir(t, parent, puid, pgid, pmode, tabs)
 	mode_t savemode;
 	u_short maxgid, maxuid, maxmode, g[MAXGID], u[MAXUID], m[MAXMODE];
 
-	if (!(p = fts_children(t))) {
+	if (!(p = fts_children(t, ftsoptions))) {
 		if (errno) {
 			(void)fprintf(stderr, "mtree: %s: %s.\n",
 			    RP(parent), strerror(errno));
@@ -192,17 +192,17 @@ statdir(t, parent, puid, pgid, pmode, tabs)
 	*tabs = 1;
 	maxuid = maxgid = maxmode = 0;
 	for (; p; p = p->fts_link) {
-		mode = p->fts_statb.st_mode & MBITS;
+		mode = p->fts_statp->st_mode & MBITS;
 		if (mode < MAXMODE && ++m[mode] > maxmode) {
 			savemode = mode;
 			maxmode = m[mode];
 		}
-		gid = p->fts_statb.st_gid;
+		gid = p->fts_statp->st_gid;
 		if (gid < MAXGID && ++g[gid] > maxgid) {
 			savegid = gid;
 			maxgid = g[gid];
 		}
-		uid = p->fts_statb.st_uid;
+		uid = p->fts_statp->st_uid;
 		if (uid < MAXUID && ++u[uid] > maxuid) {
 			saveuid = uid;
 			maxuid = u[uid];
@@ -226,10 +226,10 @@ dsort(p1, p2)
 	a = *p1;
 	b = *p2;
 
-	if (S_ISDIR(a->fts_statb.st_mode)) {
-		if (!S_ISDIR(b->fts_statb.st_mode))
+	if (S_ISDIR(a->fts_statp->st_mode)) {
+		if (!S_ISDIR(b->fts_statp->st_mode))
 			return(1);
-	} else if (S_ISDIR(b->fts_statb.st_mode))
+	} else if (S_ISDIR(b->fts_statp->st_mode))
 		return(-1);
 	return(strcmp(a->fts_name, b->fts_name));
 }
