@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.1 2003/02/21 04:08:55 jtk Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.2 2003/02/21 23:55:38 martin Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -49,7 +49,6 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/param.h>		/* MAXFRAG */
-#include <ufs/ufs/dinode.h>	/* ufs_daddr_t */
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
@@ -1025,10 +1024,10 @@ markiblk(mark_callback_t fn, struct dinode * di, int bn, off_t o, int lev)
 	int i;
 	int j;
 	int tot;
-	static daddr_t indirblk1[howmany(MAXBSIZE, sizeof(daddr_t))];
-	static daddr_t indirblk2[howmany(MAXBSIZE, sizeof(daddr_t))];
-	static daddr_t indirblk3[howmany(MAXBSIZE, sizeof(daddr_t))];
-	static daddr_t *indirblks[3] = {
+	static int32_t indirblk1[howmany(MAXBSIZE, sizeof(int32_t))];
+	static int32_t indirblk2[howmany(MAXBSIZE, sizeof(int32_t))];
+	static int32_t indirblk3[howmany(MAXBSIZE, sizeof(int32_t))];
+	static int32_t *indirblks[3] = {
 		&indirblk1[0], &indirblk2[0], &indirblk3[0]
 	};
 	if (lev < 0)
@@ -1257,7 +1256,7 @@ evict_data(struct cg * cg, unsigned int minfrag, unsigned int nfrag)
 /*
  * Move all data blocks according to blkmove.  We have to be careful,
  *  because we may be updating indirect blocks that will themselves be
- *  getting moved, or inode daddr_t arrays that point to indirect
+ *  getting moved, or inode int32_t arrays that point to indirect
  *  blocks that will be moved.  We call this before
  *  update_for_data_move, and update_for_data_move does inodes first,
  *  then indirect blocks in preorder, so as to make sure that the
@@ -1311,15 +1310,15 @@ perform_data_move(void)
 	}
 }
 /*
- * This modifies an array of daddr_t, according to blkmove.  This is
+ * This modifies an array of int32_t, according to blkmove.  This is
  *  used to update inode block arrays and indirect blocks to point to
  *  the new locations of data blocks.
  *
- * Return value is the number of daddr_ts that needed updating; in
+ * Return value is the number of int32_ts that needed updating; in
  *  particular, the return value is zero iff nothing was modified.
  */
 static int
-movemap_blocks(daddr_t * vec, int n)
+movemap_blocks(int32_t * vec, int n)
 {
 	int rv;
 
@@ -1357,7 +1356,7 @@ static void
 moveindir_callback(unsigned int off, unsigned int nfrag, unsigned int nbytes, int kind)
 {
 	if (kind == MDB_INDIR_PRE) {
-		daddr_t blk[howmany(MAXBSIZE, sizeof(daddr_t))];
+		int32_t blk[howmany(MAXBSIZE, sizeof(int32_t))];
 		readat(fsbtodb(oldsb, off), &blk[0], oldsb->fs_bsize);
 		if (movemap_blocks(&blk[0], NINDIR(oldsb))) {
 			writeat(fsbtodb(oldsb, off), &blk[0], oldsb->fs_bsize);
