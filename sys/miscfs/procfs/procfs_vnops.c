@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.93 2003/01/04 15:42:35 martin Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.94 2003/02/25 21:00:32 jrf Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.93 2003/01/04 15:42:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.94 2003/02/25 21:00:32 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,7 @@ struct proc_target proc_root_targets[] = {
 	/*	  name		    type	    validp */
 	{ DT_REG, N("meminfo"),     Pmeminfo,        procfs_validfile_linux },
 	{ DT_REG, N("cpuinfo"),     Pcpuinfo,        procfs_validfile_linux },
+	{ DT_REG, N("uptime"),      Puptime,         procfs_validfile_linux },
 #undef N
 };
 static int nproc_root_targets =
@@ -542,6 +543,7 @@ procfs_getattr(v)
 		break;
 	case Pmeminfo:
 	case Pcpuinfo:
+	case Puptime:
 		vap->va_nlink = 1;
 		vap->va_uid = vap->va_gid = 0;
 		break;
@@ -645,6 +647,7 @@ procfs_getattr(v)
 	case Pcmdline:
 	case Pmeminfo:
 	case Pcpuinfo:
+	case Puptime:
 		vap->va_bytes = vap->va_size = 0;
 		break;
 	case Pmap:
