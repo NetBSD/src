@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.6 1994/01/08 18:05:35 cgd Exp $
+ *	$Id: exec_aout.c,v 1.7 1994/01/13 02:33:28 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -67,11 +67,6 @@ exec_aout_makecmds(p, epp)
 	mid = (midmag >> 16) & 0x3ff;
 	magic = midmag & 0xffff;
 
-#ifdef EXEC_DEBUG
-	printf("exec_makecmds: a_midmag is %x, magic=%x mid=%x\n",
-	    epp->ep_execp->a_midmag, magic, mid);
-#endif
-
 	midmag = mid << 16 | magic;
 
 	switch (midmag) {
@@ -92,10 +87,6 @@ exec_aout_makecmds(p, epp)
 		kill_vmcmds(&epp->ep_vmcmds);
 
 bad:
-
-#ifdef EXEC_DEBUG
-	printf("exec_makecmds returning with error = %d\n", error);
-#endif
 	return error;
 }
 
