@@ -9890,7 +9890,7 @@ make_definition (str, op)
 
   p = buf = (U_CHAR *) str;
   if (!is_idstart[*p]) {
-    error ("malformed option `-D %s'", str);
+    error ("invalid macro name in option `-D %s'", str);
     return;
   }
   while (is_idchar[*++p])
@@ -9906,7 +9906,7 @@ make_definition (str, op)
     strcpy ((char *)buf, str);
     strcat ((char *)buf, " 1");
   } else if (*p != '=') {
-    error ("malformed option `-D %s'", str);
+    error ("invalid macro name in option `-D %s'", str);
     return;
   } else {
     U_CHAR *q;
