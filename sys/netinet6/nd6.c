@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.38 2001/02/10 04:14:29 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.39 2001/02/21 16:28:43 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.118 2001/02/08 12:14:33 itojun Exp $	*/
 
 /*
@@ -200,21 +200,21 @@ nd6_setmtu(ifp)
 	u_long oldlinkmtu = ndi->linkmtu;
 
 	switch(ifp->if_type) {
-	 case IFT_ARCNET:	/* XXX MTU handling needs more work */
-		 ndi->maxmtu = MIN(60480, ifp->if_mtu);
-		 break;
-	 case IFT_ETHER:
-		 ndi->maxmtu = MIN(ETHERMTU, ifp->if_mtu);
-		 break;
-	 case IFT_ATM:
-		 ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
-		 break;
-	 case IFT_IEEE1394:
-		 ndi->maxmtu = MIN(IEEE1394MTU, ifp->if_mtu);
-		 break;
-	 default:
-		 ndi->maxmtu = ifp->if_mtu;
-		 break;
+	case IFT_ARCNET:	/* XXX MTU handling needs more work */
+		ndi->maxmtu = MIN(60480, ifp->if_mtu);
+		break;
+	case IFT_ETHER:
+		ndi->maxmtu = MIN(ETHERMTU, ifp->if_mtu);
+		break;
+	case IFT_ATM:
+		ndi->maxmtu = MIN(ATMMTU, ifp->if_mtu);
+		break;
+	case IFT_IEEE1394:
+		ndi->maxmtu = MIN(IEEE1394MTU, ifp->if_mtu);
+		break;
+	default:
+		ndi->maxmtu = ifp->if_mtu;
+		break;
 	}
 
 	if (oldmaxmtu != ndi->maxmtu) {
