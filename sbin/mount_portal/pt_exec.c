@@ -1,4 +1,4 @@
-/*	$NetBSD: pt_exec.c,v 1.4 1995/04/23 10:33:25 cgd Exp $	*/
+/*	$NetBSD: pt_exec.c,v 1.5 1997/09/15 05:58:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,11 @@
  *	@(#)pt_exec.c	8.1 (Berkeley) 6/5/93
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: pt_exec.c,v 1.5 1997/09/15 05:58:29 lukem Exp $");
+#endif /* not lint */
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -49,13 +54,13 @@
 
 #include "portald.h"
 
-int portal_exec(pcr, key, v, so, fdp)
-struct portal_cred *pcr;
-char *key;
-char **v;
-int so;
-int *fdp;
+int
+portal_exec(pcr, key, v, so, fdp)
+	struct portal_cred *pcr;
+	char *key;
+	char **v;
+	int so;
+	int *fdp;
 {
 	return (ENOEXEC);
 }
-
