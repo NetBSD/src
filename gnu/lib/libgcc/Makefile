@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2001/10/31 16:27:32 tv Exp $
+#	$NetBSD: Makefile,v 1.27 2001/11/28 04:39:55 tv Exp $
 
 REQUIRETOOLS=	yes
 
@@ -6,81 +6,45 @@ REQUIRETOOLS=	yes
 
 LIB=		gcc
 MKLINT=		no
-MKPROFILE=	no
 
 .if defined(USE_NEW_TOOLCHAIN)
 
 .include "${.CURDIR}/${MACHINE_ARCH}.mk"
 
-MKPIC=no	# XXX to be fixed
-
 TOP=		${.CURDIR}/../..
 DIST=		${TOP}/dist/toolchain
 GCCARCH=	${TOP}/usr.bin/gcc/arch/${MACHINE_ARCH}
-GCCCPINC=	${DIST}/gcc/cp/inc
-
-G_CXXSRCS=	${G_CXX_LIB2SRCS:N*/new?.cc:M*/*.cc}
-G_CSRCS=	${G_LIB2ADD:M*.c*}
 
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_MAYBE_USE_COLLECT2} ${G_INCLUDES}
-CPPFLAGS+=	-I${GCCARCH} -I${GCCCPINC} ${GCPPFLAGS:M-D*} \
-		${GCPPFLAGS:M-I*:N-I.*}
+CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
+		-I${DIST}/gcc/cp
+
+LIB2FUNCS=	${G_LIB2FUNCS:=.c} ${G_LIB2FUNCS_EH:=.c}
+CXX_LIB2FUNCS=	${G_CXX_LIB2FUNCS:Mop*:S/opdel.o/opdelete.o/:.o=.cc}
+
+SRCS+=		${LIB2FUNCS} ${CXX_LIB2FUNCS} \
+		${G_CXX_LIB2FUNCS:Nop*:.o=.cc} ${G_LIB2ADD:M*.c:T}
+
+# XXX fp-bit.c should be removed from this list after some grace period.
+CLEANFILES+=	${LIB2FUNCS} ${CXX_LIB2FUNCS} dp-bit.c fp-bit.c
+
+${LIB2FUNCS}: ${.CURDIR}/Makefile
+	printf '#define L${.PREFIX}\n#include <libgcc2.c>\n' >${.TARGET}
+
+${CXX_LIB2FUNCS}: ${.CURDIR}/Makefile
+	printf '#define L_op_${.PREFIX:S/^op//}\n#include <new1.cc>\n#include <new2.cc>\n' >${.TARGET}
+
+dp-bit.c: ${.CURDIR}/Makefile
+	printf '#define FLOAT\n#include <fp-bit.c>\n' >${.TARGET}
 
 INCS=		exception new new.h typeinfo
 INCSDIR=	/usr/include/g++
 
-.PATH: ${DIST}/gcc
-
-OBJS+=		${G_LIB2FUNCS:=.o} ${G_LIB2FUNCS_EH:=.o} \
-		${G_CXX_LIB2FUNCS:Mop*} ${G_CXXSRCS:T:R:=.o} \
-		${G_CSRCS:T:R:=.o}
-
-CLEANFILES+=	fp-bit.c dp-bit.c
-
-${G_LIB2FUNCS:=.o}: libgcc2.c
-	${COMPILE.c} -DL$* -o $@ ${>:M*.c}
-
-${G_LIB2FUNCS_EH:=.o}: libgcc2.c
-	${COMPILE.c} -fexceptions -DL$* -o $@ ${>:M*.c}
-
-.for f in new newnt
-op${f}.o: ${G_CXX_LIB2SRCS:M*/new1.cc}
-	${COMPILE.c} -DL_op_${f} -o $@ ${>:M*.cc}
-.endfor
-
-.for f in vnew vnewnt delnt vdel vdelnt
-op${f}.o: ${G_CXX_LIB2SRCS:M*/new2.cc}
-	${COMPILE.c} -DL_op_${f} -o $@ ${>:M*.cc}
-.endfor
-
-opdel.o: ${G_CXX_LIB2SRCS:M*/new2.cc}
-	${COMPILE.c} -DL_op_delete -o $@ ${>:M*.cc}
-
-.for f in ${G_CXXSRCS:T:R}
-${f}.o: ${G_CXX_LIB2SRCS:M*/${f}.cc}
-	${COMPILE.c} -o $@ ${>:M*.cc}
-.endfor
-
-.for f in ${G_CSRCS:T:R}
-${f}.o: ${G_CXX_LIB2ADD:M*/${f}.c}
-	${COMPILE.c} -o $@ ${>:M*.c}
-.endfor
-
-fp-bit.c: ${DIST}/gcc/config/fp-bit.c
-	cat $> > $@
-
-dp-bit.c: ${DIST}/gcc/config/fp-bit.c
-	echo '#define FLOAT' > $@
-	cat $> >> $@
-
-INCS=		exception new new.h typeinfo
-INCSDIR=	/usr/include/g++
-
-.PATH: ${DIST}/gcc/cp/inc
+.PATH: ${DIST}/gcc ${DIST}/gcc/cp ${DIST}/gcc/cp/inc ${DIST}/gcc/config
 
 .include <bsd.lib.mk>
 
-${OBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk
+${OBJS} ${SOBJS} ${POBJS}: ${.CURDIR}/${MACHINE_ARCH}.mk
 
 .else
 #
@@ -90,6 +54,7 @@ HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
 .if !empty(HAVE_GCC28)
 MKPIC=		no
+MKPROFILE=	no
 
 DIST=		${.CURDIR}/../../dist/gcc
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
