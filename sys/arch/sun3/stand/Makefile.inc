@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 1997/02/05 17:31:46 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1997/03/11 20:13:20 gwr Exp $
 
 .if defined(SA_PROG)
 
@@ -31,7 +31,7 @@ ${SA_PROG}.bin : ${SA_PROG}
 	-rm -f a.out
 
 ${SA_PROG} : ${OBJS} ${DPADD}
-	${LD} -N -T ${RELOC} -e start -o $@ \
+	${LD} -N -Ttext ${RELOC} -e start -o $@ \
 	  ${SRTOBJ} ${OBJS} ${LDADD} ${SRTLIB}
 	@size $@
 
