@@ -1,7 +1,6 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
- * $NetBSD: diodevs_data.h,v 1.5 1998/01/05 21:13:53 perry Exp $
  * generated from:
  *	NetBSD: diodevs,v 1.3 1997/10/09 09:06:50 jtc Exp 
  */
