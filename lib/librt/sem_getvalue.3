@@ -1,4 +1,4 @@
-.\" $NetBSD: sem_getvalue.3,v 1.1 2003/01/24 01:52:44 thorpej Exp $
+.\" $NetBSD: sem_getvalue.3,v 1.2 2005/03/21 21:55:08 kleink Exp $
 .\"
 .\" Copyright (C) 2000 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .In semaphore.h
 .Ft int
-.Fn sem_getvalue "sem_t *sem" "int *sval"
+.Fn sem_getvalue "sem_t * restrict sem" "int * restrict sval"
 .Sh DESCRIPTION
 The
 .Fn sem_getvalue
