@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.20 1995/12/19 23:07:24 cgd Exp $ */
+/*	$NetBSD: nfs_boot.c,v 1.21 1996/02/09 21:48:22 christos Exp $ */
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -51,6 +51,7 @@
 #include <nfs/nfsdiskless.h>
 #include <nfs/krpc.h>
 #include <nfs/xdr_subs.h>
+#include <nfs/nfs_var.h>
 
 #include "ether.h"
 #if NETHER == 0

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.14 1995/12/19 23:07:27 cgd Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.15 1996/02/09 21:48:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -53,6 +53,7 @@
 #include <nfs/nfsnode.h>
 #include <nfs/nfsmount.h>
 #include <nfs/nqnfs.h>
+#include <nfs/nfs_var.h>
 
 #define	NFSNOHASH(fhsum) \
 	(&nfsnodehashtbl[(fhsum) & nfsnodehash])
@@ -66,6 +67,7 @@ u_long nfsnodehash;
  * Initialize hash links for nfsnodes
  * and build nfsnode free list.
  */
+void
 nfs_nhinit()
 {
 
@@ -96,6 +98,7 @@ nfs_hash(fhp)
  * In all cases, a pointer to a
  * nfsnode structure is returned.
  */
+int
 nfs_nget(mntp, fhp, npp)
 	struct mount *mntp;
 	register nfsv2fh_t *fhp;
@@ -104,7 +107,6 @@ nfs_nget(mntp, fhp, npp)
 	register struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
 	register struct vnode *vp;
-	extern int (**nfsv2_vnodeop_p)();
 	struct vnode *nvp;
 	int error;
 
@@ -120,7 +122,8 @@ loop:
 		*npp = np;
 		return(0);
 	}
-	if (error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &nvp)) {
+	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &nvp);
+	if (error) {
 		*npp = 0;
 		return (error);
 	}
@@ -150,11 +153,13 @@ loop:
 	return (0);
 }
 
-nfs_inactive(ap)
+int
+nfs_inactive(v)
+	void *v;
+{
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct nfsnode *np;
 	register struct sillyrename *sp;
 	struct proc *p = curproc;	/* XXX */
@@ -185,11 +190,13 @@ nfs_inactive(ap)
 /*
  * Reclaim an nfsnode so that it can be used for other purposes.
  */
-nfs_reclaim(ap)
+int
+nfs_reclaim(v)
+	void *v;
+{
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct nfsnode *np = VTONFS(vp);
 	register struct nfsmount *nmp = VFSTONFS(vp->v_mount);
@@ -214,11 +221,13 @@ nfs_reclaim(ap)
 /*
  * Lock an nfsnode
  */
-nfs_lock(ap)
+int
+nfs_lock(v)
+	void *v;
+{
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 
 	/*
@@ -238,23 +247,30 @@ nfs_lock(ap)
 /*
  * Unlock an nfsnode
  */
-nfs_unlock(ap)
+int
+nfs_unlock(v)
+	void *v;
+{
+#if 0
 	struct vop_unlock_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
-
+	} */ *ap = v;
+#endif
 	return (0);
 }
 
 /*
  * Check for a locked nfsnode
  */
-nfs_islocked(ap)
+int
+nfs_islocked(v)
+	void *v;
+{
+#if 0
 	struct vop_islocked_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
+#endif
 
 	return (0);
 }
@@ -265,12 +281,13 @@ nfs_islocked(ap)
  */
 /* ARGSUSED */
 int
-nfs_abortop(ap)
+nfs_abortop(v)
+	void *v;
+{
 	struct vop_abortop_args /* {
 		struct vnode *a_dvp;
 		struct componentname *a_cnp;
-	} */ *ap;
-{
+	} */ *ap = v;
 
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
 		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
