@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.7 2004/02/24 15:12:52 wiz Exp $	*/
+/*	$NetBSD: key.c,v 1.8 2004/03/01 18:33:03 thorpej Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.7 2004/02/24 15:12:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.8 2004/03/01 18:33:03 thorpej Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -1681,6 +1681,7 @@ key_gather_mbuf(m, mhp, ndeep, nitem, va_alist)
 	return result;
 
 fail:
+	va_end(ap);
 	m_freem(result);
 	return NULL;
 }
