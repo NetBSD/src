@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.4 1995/06/07 00:13:52 cgd Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.5 1995/07/12 08:27:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -598,7 +598,8 @@ arc_ifattach(ifp)
 		log(LOG_ERR,"%s%d: link address 0 reserved for broadcasts.  Please change it and ifconfig %s%d down up\n",
 		   ifp->if_name,ifp->if_unit,ifp->if_name,ifp->if_unit); 
 	}
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+	    ifa = ifa->ifa_list.tqe_next)
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
 			sdl->sdl_type = IFT_ARCNET;
