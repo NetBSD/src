@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.4 2004/06/02 22:39:52 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.5 2004/07/10 20:57:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -59,15 +59,18 @@
  * _setcontext_u sees that bit, then it will just restore this part of the
  * context, otherwise, it will call through to setcontext(2).
  */
-#define GETC(reg)					  \
-	stw	 %r1, (_REG_R0 +  1*4)(reg)		; \
-	stmw	%r14, (_REG_R0 + 14*4)(reg)		; \
-	mfcr	 %r0					; \
-	stw	 %r0, _REG_CR(reg)			; \
-	mflr	 %r0					; \
-	stw	 %r0, _REG_LR(reg)			; \
-	stw	 %r0, _REG_PC(reg)			; \
-							; \
+
+/*
+ * Arrange to not include FP save/restore on a soft-float
+ * build. Thread switching shouldn't consume 40 system traps.
+ */	 
+#ifdef _SOFT_FLOAT
+#define FPUFLAG 0
+#define GETFP(reg)
+#define SETFP
+#else
+#define FPUFLAG _UC_FPU
+#define GETFP(reg)					  \
 	mffs	%r0					; \
 	stfd	%r0, (_REG_FPSCR - 4)(reg)		; \
 	stfd	%r14, (_REG_FP0 + 14*8)(reg)		; \
@@ -87,28 +90,9 @@
 	stfd	%r28, (_REG_FP0 + 28*8)(reg)		; \
 	stfd	%r29, (_REG_FP0 + 29*8)(reg)		; \
 	stfd	%r30, (_REG_FP0 + 30*8)(reg)		; \
-	stfd	%r31, (_REG_FP0 + 31*8)(reg)		; \
-							; \
-	li	 %r8, 1					; \
-	stw	 %r8, (_UC_FPVALID)(reg)		; \
-	slwi	 %r9, %r8, _UC_USER_BIT			; \
-	ori	 %r9, %r9, (_UC_CPU | _UC_FPU)		; \
-	stw	 %r9, (UC_FLAGS)(reg)
+	stfd	%r31, (_REG_FP0 + 31*8)(reg)
 
-#define SETC						  \
-	li	 %r9, 1					; \
-	slwi	 %r9, %r9, _UC_USER_BIT			; \
-	lwz	 %r3, (UC_FLAGS)(%r4)			; \
-	and.	 %r9, %r3, %r9				; \
-	beq	 2f					; \
-							; \
-	lwz	 %r1, (_REG_R0 +  1*4)(%r4)		; \
-	lmw	%r14, (_REG_R0 + 14*4)(%r4)		; \
-	lwz	 %r0, _REG_LR(%r4)			; \
-	mtlr	 %r0					; \
-	lwz	 %r0, _REG_PC(%r4)			; \
-	mtctr	 %r0					; \
-							; \
+#define SETFP						  \
 	andi.	 %r5, %r3, _UC_FPU			; \
 	beq	 1f					; \
 							; \
@@ -136,8 +120,43 @@
 	lfd	%r31, (_REG_FP0 + 31*8)(%r4)		; \
 	lfd	%r0, (_REG_FPSCR - 4)(%r4)		; \
 	mtfsf	0xff, %r0				; \
+1:
+#endif
+	
+
+#define GETC(reg)					  \
+	stw	 %r1, (_REG_R0 +  1*4)(reg)		; \
+	stmw	%r14, (_REG_R0 + 14*4)(reg)		; \
+	mfcr	 %r0					; \
+	stw	 %r0, _REG_CR(reg)			; \
+	mflr	 %r0					; \
+	stw	 %r0, _REG_LR(reg)			; \
+	stw	 %r0, _REG_PC(reg)			; \
 							; \
-1:							; \
+	GETFP(reg)					; \
+							; \
+	li	 %r8, 1					; \
+	stw	 %r8, (_UC_FPVALID)(reg)		; \
+	slwi	 %r9, %r8, _UC_USER_BIT			; \
+	ori	 %r9, %r9, (_UC_CPU | FPUFLAG)		; \
+	stw	 %r9, (UC_FLAGS)(reg)
+
+#define SETC						  \
+	li	 %r9, 1					; \
+	slwi	 %r9, %r9, _UC_USER_BIT			; \
+	lwz	 %r3, (UC_FLAGS)(%r4)			; \
+	and.	 %r9, %r3, %r9				; \
+	beq	 2f					; \
+							; \
+	lwz	 %r1, (_REG_R0 +  1*4)(%r4)		; \
+	lmw	%r14, (_REG_R0 + 14*4)(%r4)		; \
+	lwz	 %r0, _REG_LR(%r4)			; \
+	mtlr	 %r0					; \
+	lwz	 %r0, _REG_PC(%r4)			; \
+	mtctr	 %r0					; \
+							; \
+	SETFP						; \
+							; \
 	lwz	 %r0, _REG_CR(%r4)			; \
 	mtcr	 %r0					; \
 	bctr						; \
