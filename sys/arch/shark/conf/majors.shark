@@ -1,4 +1,4 @@
-#	$NetBSD: majors.shark,v 1.13 2005/01/05 09:15:19 tsutsui Exp $
+#	$NetBSD: majors.shark,v 1.14 2005/01/09 15:39:59 tsutsui Exp $
 #
 # Device majors for shark
 #
@@ -47,8 +47,13 @@ device-major	joy		char 56			joy
 device-major	midi		char 57			midi
 device-major	sequencer	char 58			sequencer
 device-major	vcoda		char 59			vcoda
+device-major	wsdisplay	char 60			wsdisplay
+device-major	wskbd		char 61			wskbd
+device-major	wsmouse		char 62			wsmouse
 
 device-major	raid		char 71  block 71	raid
+
+device-major	wsmux		char 73			wsmux
 
 device-major	openfirm	char 77			ofwgencfg
 
