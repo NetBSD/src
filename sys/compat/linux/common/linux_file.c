@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.27 1999/02/09 20:37:19 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.28 1999/12/05 21:24:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -834,4 +834,60 @@ linux_sys_fdatasync(p, v, retval)
 	} */ *uap = v;
 #endif
 	return sys_fsync(p, v, retval);
+}
+
+/*
+ * pread(2).
+ */
+int
+linux_sys_pread(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_pread_args /* {
+		syscallarg(int) fd;
+		syscallarg(void *) buf;
+		syscallarg(size_t) nbyte;
+		syscallarg(linux_off_t) offset;
+	} */ *uap = v;
+	struct sys_pread_args pra;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+
+	SCARG(&pra, fd) = SCARG(uap, fd);
+	SCARG(&pra, buf) = SCARG(uap, buf);
+	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, offset) = SCARG(uap, offset);
+
+	return sys_read(p, &pra, retval);
+}
+
+/*
+ * pwrite(2).
+ */
+int
+linux_sys_pwrite(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_pwrite_args /* {
+		syscallarg(int) fd;
+		syscallarg(void *) buf;
+		syscallarg(size_t) nbyte;
+		syscallarg(linux_off_t) offset;
+	} */ *uap = v;
+	struct sys_pwrite_args pra;
+	caddr_t sg;
+
+	sg = stackgap_init(p->p_emul);
+
+	SCARG(&pra, fd) = SCARG(uap, fd);
+	SCARG(&pra, buf) = SCARG(uap, buf);
+	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, offset) = SCARG(uap, offset);
+
+	return sys_write(p, &pra, retval);
 }
