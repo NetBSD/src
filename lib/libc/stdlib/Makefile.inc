@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.57 2004/08/05 00:17:02 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.58 2005/04/03 20:09:29 christos Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -15,7 +15,8 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 	strsuftoll.c strtod.c \
 	strtoimax.c strtol.c strtoll.c strtoq.c strtoul.c strtoull.c \
 	strtoumax.c strtouq.c system.c tdelete.c tfind.c tsearch.c twalk.c \
-	__unsetenv13.c unsetenv.c
+	__unsetenv13.c unsetenv.c \
+	strfmon.c
 
 # machine-dependent stdlib sources
 # m-d Makefile.inc must include sources for:
@@ -28,7 +29,8 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	grantpt.3 hcreate.3 labs.3 ldiv.3 llabs.3 lldiv.3 malloc.3 memory.3 \
 	posix_openpt.3 ptsname.3 qabs.3 \
 	qdiv.3 qsort.3 radixsort.3 rand48.3 rand.3 random.3 \
-	strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 tsearch.3 unlockpt.3
+	strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 tsearch.3 unlockpt.3 \
+	strfmon.3
 
 MLINKS+=a64l.3 l64a.3
 MLINKS+=a64l.3 l64a_r.3
