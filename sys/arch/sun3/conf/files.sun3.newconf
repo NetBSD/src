@@ -1,4 +1,4 @@
-# $Id: files.sun3.newconf,v 1.11 1994/05/04 05:55:35 gwr Exp $
+# $Id: files.sun3.newconf,v 1.12 1994/05/10 05:22:43 gwr Exp $
 # sun3-specific configuration info
 
 maxusers 2 8 64
@@ -14,42 +14,47 @@ device obctl at mainbus {addr = -1, size = -1}
 #define obio { addr = -1, size = -1, priority = -1, dvma = -1, flags = -1}
 #define obmem { addr = -1, size = -1}
 
-device le at obio: ifnet, ether
-file arch/sun3/dev/if_le.c		le
-file arch/sun3/dev/if_le_subr.c		le
+device clock at obio
+file arch/sun3/sun3/clock.c		clock
 
 device zs at obio: tty
 file arch/sun3/dev/zs.c			zs needs-count
 
-device clock at obio
-file arch/sun3/sun3/clock.c		clock
+device le at obio: ifnet, ether
 
-# define	scsi {}
-# 
-# #device	si at obio: scsi
-# #file arch/sun3/dev/si.c			si
-# device	si at obio: scsi
-# file arch/sun3/dev/scsi.c			si
-# 
-# device	scsibus at scsi { target = -1, lun = -1 }
-# file	arch/sun3/scsi/scsiconf.c	scsibus needs-flag
-# file	arch/sun3/scsi/scsi_base.c	scsi
-# file	arch/sun3/scsi/scsi_ioctl.c	scsi
-# 
-# device	cd at scsibus: disk
-# file	arch/sun3/scsi/cd.c		cd needs-flag
-# major {cd=6}
-# device	ch at scsibus: disk
-# file	arch/sun3/scsi/ch.c		ch needs-flag
-# device	sd at scsibus: disk
-# file	arch/sun3/scsi/sd.c		sd needs-flag
-# major {sd=4}
-# device	st at scsibus: tape
-# file	arch/sun3/scsi/st.c		st needs-flag
-# major {st=5}
-# file	arch/sun3/scsi/uk.c		uk needs-flag
-# file	arch/sun3/scsi/su.c		su needs-flag
-# 
+file arch/sun3/dev/if_le.c		le
+file arch/sun3/dev/if_le_subr.c		le
+
+#
+# scsi driver and associated stuff
+#
+define	scsi {}
+
+device	si at obio: scsi
+file	arch/sun3/dev/si.c		si
+
+device	scsibus at scsi { target = -1, lun = -1 }
+file	scsi/scsiconf.c 		scsibus needs-flag
+file	scsi/scsi_base.c		scsi
+file	scsi/scsi_ioctl.c		scsi
+
+device	sd at scsibus: disk
+file	scsi/sd.c			sd needs-flag
+major	{sd=7}
+
+device	st at scsibus: tape
+file	scsi/st.c			st needs-flag
+
+device	cd at scsibus: disk
+file	scsi/cd.c			cd needs-flag
+
+device	ch at scsibus: disk
+file	scsi/ch.c			ch needs-flag
+
+file	scsi/uk.c			uk needs-flag
+file	scsi/su.c			su needs-flag
+
+# Other on-board devices
 device bwtwo at obmem: sunfb
 file arch/sun3/dev/bwtwo.c		bwtwo
 
