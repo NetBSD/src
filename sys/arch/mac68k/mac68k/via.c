@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.52 1996/10/21 01:59:31 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.53 1996/10/29 05:33:37 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -444,6 +444,20 @@ mac68k_register_scsi_irq(irq_func, client_data)
 	} else {
  		via2itab[3] = via2_noint;
 		via2iarg[3] = (void *) 3;
+	}
+}
+
+void
+mac68k_register_scsi_b_irq(irq_func, client_data)
+	void	(*irq_func)(void *);
+	void	*client_data;
+{
+	if (irq_func) {
+ 		via2itab[0] = irq_func;
+		via2iarg[0] = client_data;
+	} else {
+ 		via2itab[0] = via2_noint;
+		via2iarg[0] = (void *) 0;
 	}
 }
 
