@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.45 2004/03/21 16:29:42 pk Exp $	*/
+/*	$NetBSD: ebus.c,v 1.46 2004/04/24 15:49:00 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.45 2004/03/21 16:29:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.46 2004/04/24 15:49:00 kleink Exp $");
 
 #include "opt_ddb.h"
 
@@ -179,7 +179,7 @@ ebus_attach(parent, self, aux)
 
 	printf("\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf("%s: %s, revision 0x%02x\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
