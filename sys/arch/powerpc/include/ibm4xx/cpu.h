@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2003/09/23 15:14:03 shige Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2005/01/13 17:16:33 shige Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -68,6 +68,16 @@ void ibm4xx_dumpsys(void);
 void ibm4xx_install_extint(void (*)(void));
 void calc_delayconst(void);
 void ppc4xx_reset(void) __attribute__((__noreturn__));
+
+#include <sys/param.h>
+#include <sys/device.h>
+
+/* export from ibm4xx/autoconf.c */
+extern void (*md_device_register) __P((struct device *dev, void *aux));
+
+/* export from ibm4xx/ibm4xx_autoconf.c */
+extern void ibm4xx_device_register(struct device *dev, void *aux);
+
 #endif /* _KERNEL */
 
 #include <powerpc/cpu.h>
