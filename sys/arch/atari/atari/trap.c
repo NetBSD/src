@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.10 1995/11/30 00:57:42 jtc Exp $	*/
+/*	$NetBSD: trap.c,v 1.11 1996/02/11 12:41:25 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -488,7 +488,7 @@ trap(type, code, v, frame)
 	 * Kernel Bus error
 	 */
 	case T_BUSERR:
-		if (!p->p_addr->u_pcb.pcb_onfault)
+		if (!p || !p->p_addr || !p->p_addr->u_pcb.pcb_onfault)
 			panictrap(type, code, v, &frame);
 		trapcpfault(p, &frame);
 		return;
