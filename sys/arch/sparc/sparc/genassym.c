@@ -42,7 +42,7 @@
  *	@(#)genassym.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: genassym.c,v 1.15 93/04/21 06:09:30 torek Exp  (LBL)
- * $Id: genassym.c,v 1.7 1994/08/23 11:24:53 deraadt Exp $
+ * $Id: genassym.c,v 1.8 1994/10/02 21:52:21 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -98,7 +98,6 @@ main()
 
 	/* general constants */
 	def("BSD", BSD);
-	def("UPAGES", UPAGES);
 	def("USPACE", USPACE);
 	def("SUN4_PGSHIFT", SUN4_PGSHIFT);
 	def("SUN4CM_PGSHIFT", SUN4CM_PGSHIFT);
