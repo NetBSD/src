@@ -1,7 +1,7 @@
-/* $NetBSD: sgmap_typedep.h,v 1.2 1997/06/06 23:58:05 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.h,v 1.3 1998/01/17 21:53:53 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

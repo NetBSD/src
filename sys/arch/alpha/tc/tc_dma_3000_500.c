@@ -1,7 +1,7 @@
-/* $NetBSD: tc_dma_3000_500.c,v 1.3 1997/09/02 13:20:31 thorpej Exp $ */
+/* $NetBSD: tc_dma_3000_500.c,v 1.4 1998/01/17 21:53:59 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.3 1997/09/02 13:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma_3000_500.c,v 1.4 1998/01/17 21:53:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,6 @@ tc_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 	bus_dmamap_t *dmamp;
 {
 	struct tc_dma_slot_info *tdsi = t->_cookie;
-	struct alpha_sgmap_cookie *a;
 	bus_dmamap_t map;
 	int error;
 
@@ -135,15 +134,6 @@ tc_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 		return (error);
 
 	map = *dmamp;
-
-	a = malloc(sizeof(struct alpha_sgmap_cookie), M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
-	if (a == NULL) {
-		_bus_dmamap_destroy(t, map);
-		return (ENOMEM);
-	}
-	bzero(a, sizeof(struct alpha_sgmap_cookie));
-	map->_dm_sgcookie = a;
 
 	if (flags & BUS_DMA_ALLOCNOW) {
 		error = alpha_sgmap_alloc(map, round_page(size),
@@ -164,12 +154,10 @@ tc_bus_dmamap_destroy_sgmap(t, map)
 	bus_dmamap_t map;
 {
 	struct tc_dma_slot_info *tdsi = t->_cookie;
-	struct alpha_sgmap_cookie *a = map->_dm_sgcookie;
 
-	if (a->apdc_flags & APDC_HAS_SGMAP)
-		alpha_sgmap_free(&tdsi->tdsi_sgmap, a);
+	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
+		alpha_sgmap_free(map, &tdsi->tdsi_sgmap);
 
-	free(a, M_DEVBUF);
 	_bus_dmamap_destroy(t, map);
 }
 

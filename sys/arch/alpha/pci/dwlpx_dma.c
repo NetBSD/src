@@ -1,7 +1,7 @@
-/* $NetBSD: dwlpx_dma.c,v 1.4 1998/01/17 03:40:33 thorpej Exp $ */
+/* $NetBSD: dwlpx_dma.c,v 1.5 1998/01/17 21:53:58 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.4 1998/01/17 03:40:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_dma.c,v 1.5 1998/01/17 21:53:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,6 @@ dwlpx_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 	bus_dmamap_t *dmamp;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	struct alpha_sgmap_cookie *a;
 	bus_dmamap_t map;
 	int error;
 
@@ -288,15 +287,6 @@ dwlpx_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
 		return (error);
 
 	map = *dmamp;
-
-	a = malloc(sizeof(struct alpha_sgmap_cookie), M_DEVBUF,
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
-	if (a == NULL) {
-		_bus_dmamap_destroy(t, map);
-		return (ENOMEM);
-	}
-	bzero(a, sizeof(struct alpha_sgmap_cookie));
-	map->_dm_sgcookie = a;
 
 	if (flags & BUS_DMA_ALLOCNOW) {
 		error = alpha_sgmap_alloc(map, round_page(size),
@@ -317,12 +307,10 @@ dwlpx_bus_dmamap_destroy_sgmap(t, map)
 	bus_dmamap_t map;
 {
 	struct dwlpx_config *ccp = t->_cookie;
-	struct alpha_sgmap_cookie *a = map->_dm_sgcookie;
 
-	if (a->apdc_flags & APDC_HAS_SGMAP)
-		alpha_sgmap_free(&ccp->cc_sgmap, a);
+	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
+		alpha_sgmap_free(map, &ccp->cc_sgmap);
 
-	free(a, M_DEVBUF);
 	_bus_dmamap_destroy(t, map);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_common.c,v 1.4 1998/01/17 03:37:22 thorpej Exp $ */
+/* $NetBSD: sgmap_common.c,v 1.5 1998/01/17 21:53:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.4 1998/01/17 03:37:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_common.c,v 1.5 1998/01/17 21:53:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,41 +120,40 @@ alpha_sgmap_alloc(map, len, sgmap, flags)
 	struct alpha_sgmap *sgmap;
 	int flags;
 {
-	struct alpha_sgmap_cookie *a = map->_dm_sgcookie;
 	int error;
 
 #ifdef DIAGNOSTIC
-	if (a->apdc_flags & APDC_HAS_SGMAP)
+	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
 		panic("alpha_sgmap_alloc: already have sgva space");
 #endif
 
-	a->apdc_len = round_page(len);
-	error = extent_alloc(sgmap->aps_ex, a->apdc_len, NBPG,
+	map->_dm_sgvalen = round_page(len);
+	error = extent_alloc(sgmap->aps_ex, map->_dm_sgvalen, NBPG,
 	    map->_dm_boundary, (flags & BUS_DMA_NOWAIT) ? EX_NOWAIT :
-	    EX_WAITOK, &a->apdc_sgva);
+	    EX_WAITOK, &map->_dm_sgva);
 
 	if (error == 0)
-		a->apdc_flags |= APDC_HAS_SGMAP;
+		map->_dm_flags |= DMAMAP_HAS_SGMAP;
 	else
-		a->apdc_flags &= ~APDC_HAS_SGMAP;
+		map->_dm_flags &= ~DMAMAP_HAS_SGMAP;
 	
 	return (error);
 }
 
 void
-alpha_sgmap_free(sgmap, a)
+alpha_sgmap_free(map, sgmap)
+	bus_dmamap_t map;
 	struct alpha_sgmap *sgmap;
-	struct alpha_sgmap_cookie *a;
 {
 
 #ifdef DIAGNOSTIC
-	if ((a->apdc_flags & APDC_HAS_SGMAP) == 0)
+	if ((map->_dm_flags & DMAMAP_HAS_SGMAP) == 0)
 		panic("alpha_sgmap_free: no sgva space to free");
 #endif
 
-	if (extent_free(sgmap->aps_ex, a->apdc_sgva,
-	    a->apdc_len, EX_NOWAIT))
+	if (extent_free(sgmap->aps_ex, map->_dm_sgva, map->_dm_sgvalen,
+	    EX_NOWAIT))
 		panic("alpha_sgmap_free");
 
-	a->apdc_flags &= ~APDC_HAS_SGMAP;
+	map->_dm_flags &= ~DMAMAP_HAS_SGMAP;
 }
