@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.45 2002/02/27 21:19:08 scw Exp $
+#  $NetBSD: build.sh,v 1.46 2002/03/01 20:57:26 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -216,6 +216,13 @@ export MAKEFLAGS MACHINE MACHINE_ARCH
 
 # Test make source file timestamps against installed nbmake binary,
 # if TOOLDIR is pre-set.
+#
+# Note that we do NOT try to grovel "mk.conf" here to find out if TOOLDIR
+# is set there, because it can contain make variable expansions and other
+# stuff only parseable *after* we have a working nbmake.  So this logic
+# can only work if the user has pre-set TOOLDIR in the environment or
+# used the -T option to build.sh.
+#
 make=${TOOLDIR-nonexistent}/bin/nbmake
 if [ -x $make ]; then
 	for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
@@ -347,7 +354,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.45 2002/02/27 21:19:08 scw Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.46 2002/03/01 20:57:26 tv Exp $
 #
 
 EOF
