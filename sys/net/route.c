@@ -1,4 +1,41 @@
-/*	$NetBSD: route.c,v 1.17 1997/04/02 21:17:28 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.18 1998/04/29 03:41:49 kml Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Kevin M. Lahey of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -43,6 +80,7 @@
 #include <sys/socketvar.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/kernel.h>
 #include <sys/ioctl.h>
 
 #include <net/if.h>
@@ -149,6 +187,7 @@ rtfree(rt)
 			printf("rtfree: %p not freed (neg refs)\n", rt);
 			return;
 		}
+		rt_timer_remove_all(rt);
 		ifa = rt->rt_ifa;
 		IFAFREE(ifa);
 		Free(rt_key(rt));
@@ -385,6 +424,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 			senderr(ENOBUFS);
 		Bzero(rt, sizeof(*rt));
 		rt->rt_flags = RTF_UP | flags;
+		LIST_INIT(&rt->rt_timer);
 		if (rt_setgate(rt, dst, gateway)) {
 			Free(rt);
 			senderr(ENOBUFS);
@@ -537,4 +577,190 @@ rtinit(ifa, cmd, flags)
 		rt_newaddrmsg(cmd, ifa, error, nrt);
 	}
 	return (error);
+}
+
+/*
+ * Route timer routines.  These routes allow functions to be called
+ * for various routes at any time.  This is useful in supporting
+ * path MTU discovery and redirect route deletion.
+ *
+ * This is similar to some BSDI internal functions, but it provides
+ * for multiple queues for efficiency's sake...
+ */
+
+LIST_HEAD(, rttimer_queue) rttimer_queue_head;
+static int rt_init_done = 0;
+
+#define RTTIMER_CALLOUT(r)	{				\
+	if (r->rtt_func != NULL) {				\
+		r->rtt_func(r->rtt_rt, r);			\
+	} else {						\
+		rtrequest((int) RTM_DELETE,			\
+			  (struct sockaddr *)rt_key(r->rtt_rt),	\
+			  0, 0, 0, 0);				\
+	}							\
+}
+
+/* 
+ * Some subtle order problems with domain initialization mean that
+ * we cannot count on this being run from rt_init before various
+ * protocol initializations are done.  Therefore, we make sure
+ * that this is run when the first queue is added...
+ */
+
+void	 
+rt_timer_init()
+{
+	assert(rt_init_done == 0);
+
+	LIST_INIT(&rttimer_queue_head);
+	timeout(rt_timer_timer, NULL, hz);  /* every second */
+	rt_init_done = 1;
+}
+
+
+struct rttimer_queue *
+rt_timer_queue_create(timeout)
+	u_int	timeout;
+{
+	struct rttimer_queue *rtq;
+
+	if (rt_init_done == 0)
+		rt_timer_init();
+
+	R_Malloc(rtq, struct rttimer_queue *, sizeof *rtq);
+	if (rtq == NULL)
+		return NULL;		
+
+	rtq->rtq_timeout = timeout;
+	CIRCLEQ_INIT(&rtq->rtq_head);
+	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
+
+	return rtq;
+}
+
+
+void
+rt_timer_queue_change(rtq, timeout)
+	struct rttimer_queue *rtq;
+	long timeout;
+{
+	rtq->rtq_timeout = timeout;
+}
+
+
+void
+rt_timer_queue_destroy(rtq, destroy)
+	struct rttimer_queue *rtq;
+	int destroy;
+{
+	struct rttimer *r, *r0;
+
+	r = CIRCLEQ_FIRST(&rtq->rtq_head); 
+	while (r != (struct rttimer *) &rtq->rtq_head) {
+		r0 = CIRCLEQ_NEXT(r, rtt_next);
+		CIRCLEQ_REMOVE(&rtq->rtq_head, r, rtt_next);
+		LIST_REMOVE(r, rtt_link);
+		if (destroy != 0)
+			RTTIMER_CALLOUT(r);
+		Free(r);
+		r = r0;
+	}
+
+	LIST_REMOVE(rtq, rtq_link);
+}
+
+
+void     
+rt_timer_remove_all(rt)
+	struct rtentry *rt;
+{
+	struct rttimer *r, *r0;
+
+	r = LIST_FIRST(&rt->rt_timer); 
+	while (r) { 
+		r0 = LIST_NEXT(r, rtt_link);
+		LIST_REMOVE(r, rtt_link);
+		CIRCLEQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+		Free(r);
+		r = r0;
+	}
+}
+
+
+int      
+rt_timer_add(rt, func, queue)
+	struct rtentry *rt;
+	void(*func) __P((struct rtentry *, struct rttimer *));
+	struct rttimer_queue *queue;
+{
+	struct rttimer *r, *rttimer;
+	int s;
+	long current_time;
+
+	s = splclock();
+	current_time = mono_time.tv_sec;
+	splx(s);
+
+	for (r = LIST_FIRST(&rt->rt_timer); r; r = LIST_NEXT(r, rtt_link)) {
+		if (r->rtt_func == func) {
+			LIST_REMOVE(r, rtt_link);
+			CIRCLEQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+			Free(r);
+			break;  /* only one per list, so we can quit... */
+		}
+	}
+
+	R_Malloc(rttimer, struct rttimer *, sizeof *rttimer);
+	if (rttimer == NULL)
+		return ENOBUFS;
+
+	rttimer->rtt_rt = rt;
+	rttimer->rtt_time = current_time;
+	rttimer->rtt_func = func;
+	rttimer->rtt_queue = queue;
+	LIST_INSERT_HEAD(&rt->rt_timer, rttimer, rtt_link);
+
+	r = CIRCLEQ_LAST(&queue->rtq_head);
+	while (r && r != (struct rttimer *) &queue->rtq_head && 
+	       r->rtt_time > current_time) 
+		r = CIRCLEQ_PREV(r, rtt_next);
+
+	if (r)
+		CIRCLEQ_INSERT_AFTER(&queue->rtq_head, r, rttimer, rtt_next);
+	else
+		CIRCLEQ_INSERT_HEAD(&queue->rtq_head, rttimer, rtt_next);
+
+	return 0;
+}
+
+/* ARGSUSED */
+void
+rt_timer_timer(arg)
+	void *arg;
+{
+	struct rttimer *r, *rttimer;
+	struct rttimer_queue	*rtq;
+	long current_time;
+	int s;
+	
+	s = splclock();
+	current_time = mono_time.tv_sec;
+	splx(s);
+
+	for (rtq = LIST_FIRST(&rttimer_queue_head); rtq != NULL; 
+	     rtq = LIST_NEXT(rtq, rtq_link)) {
+		rttimer = CIRCLEQ_FIRST(&rtq->rtq_head); 
+		while (rttimer != (struct rttimer *) &rtq->rtq_head && 
+		       (rttimer->rtt_time + rtq->rtq_timeout) < current_time) {
+			r = CIRCLEQ_NEXT(rttimer, rtt_next);
+			CIRCLEQ_REMOVE(&rtq->rtq_head, rttimer, rtt_next);
+			LIST_REMOVE(rttimer, rtt_link);
+			RTTIMER_CALLOUT(rttimer);
+			Free(rttimer);
+			rttimer = r;
+		}
+	}
+
+	timeout(rt_timer_timer, NULL, hz);  /* every second */
 }
