@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.43 1997/06/08 18:46:34 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.44 1997/06/08 18:49:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -4231,15 +4231,15 @@ tulip_ifstart(
 	if (sc->tulip_flags & TULIP_TXINTPENDING) {
 	    eop->d_flag |= TULIP_DFLAG_TxLASTSEG;
 #if defined(TULIP_DEBUG)
-	    sc->tulip_txpipe++;
+	    sc->tulip_dbg.dbg_txpipe++;
 #endif
 	} else {
 	    eop->d_flag |= TULIP_DFLAG_TxLASTSEG|TULIP_DFLAG_TxWANTINTR;
 	    if ((sc->tulip_flags & TULIP_TXPROBE_ACTIVE) == 0) {
 		sc->tulip_flags |= TULIP_TXINTPENDING;
 #if defined(TULIP_DEBUG)
-		sc->tulip_txpipestats[sc->tulip_txpipe]++;
-		sc->tulip_txpipe = 0;
+		sc->tulip_dbg.dbg_txpipestats[sc->tulip_dbg.dbg_txpipe]++;
+		sc->tulip_dbg.dbg_txpipe = 0;
 #endif
 	    }
 	}
