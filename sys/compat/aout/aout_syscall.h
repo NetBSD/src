@@ -1,4 +1,4 @@
-/* $NetBSD: aout_syscall.h,v 1.13 2000/12/09 05:37:01 mycroft Exp $ */
+/* $NetBSD: aout_syscall.h,v 1.14 2000/12/09 06:19:41 mycroft Exp $ */
 
 /*
  * System call numbers.
@@ -771,3 +771,4 @@
 #define	AOUT_SYS_issetugid	305
 
 #define	AOUT_SYS_MAXSYSCALL	306
+#define	AOUT_SYS_NSYSENT	512
