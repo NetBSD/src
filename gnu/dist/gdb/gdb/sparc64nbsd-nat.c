@@ -232,15 +232,13 @@ fill_gregset (gregset_t *gregsetp, int regno)
 {
   if (gdbarch_ptr_bit (current_gdbarch) == 32)
     sparcnbsd_fill_reg32((char *)gregsetp, regno);
-  else 
+  else
     sparcnbsd_fill_reg64((char *)gregsetp, regno);
 }
 
 void
 supply_fpregset (fpregset_t *fpregsetp)
 {
-  int i;
-
   if (gdbarch_ptr_bit (current_gdbarch) == 32)
     sparcnbsd_supply_fpreg32((char *)fpregsetp, -1);
   else
@@ -250,8 +248,6 @@ supply_fpregset (fpregset_t *fpregsetp)
 void
 fill_fpregset (fpregset_t *fpregsetp, int regno)
 {
-  int i;
-
   if (gdbarch_ptr_bit (current_gdbarch) == 32)
     sparcnbsd_fill_fpreg32((char *)fpregsetp, regno);
   else
