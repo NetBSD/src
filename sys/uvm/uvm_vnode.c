@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.17 1998/11/04 06:21:40 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.18 1999/01/29 12:56:17 bouyer Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -201,7 +201,7 @@ uvn_attach(arg, accessprot)
 	}
 
 	/*
-	 * if we're maping a BLK device, make sure it is a disk.
+	 * if we're mapping a BLK device, make sure it is a disk.
 	 */
 	if (vp->v_type == VBLK && bdevsw[major(vp->v_rdev)].d_type != D_DISK) {
 		simple_unlock(&uvn->u_obj.vmobjlock); /* drop lock */
@@ -292,7 +292,10 @@ uvn_attach(arg, accessprot)
 	 * make sure that the newsize fits within a vaddr_t
 	 * XXX: need to revise addressing data types
 	 */
-if (vp->v_type == VBLK) printf("used_vnode_size = %qu\n", used_vnode_size);
+#ifdef DEBUG
+	if (vp->v_type == VBLK)
+		printf("used_vnode_size = %qu\n", used_vnode_size);
+#endif
 	if (used_vnode_size > (vaddr_t) -PAGE_SIZE) {
 #ifdef DEBUG
 		printf("uvn_attach: vn %p size truncated %qx->%x\n", vp,
