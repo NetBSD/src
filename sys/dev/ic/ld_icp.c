@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.1 2002/04/22 21:05:21 ad Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.2 2002/05/31 17:34:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.1 2002/04/22 21:05:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.2 2002/05/31 17:34:08 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -124,8 +124,7 @@ ld_icp_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_IOCTL, ICP_CACHE_DRV_INFO,
 	    sc->sc_hwunit, sizeof(struct icp_cdevinfo))) {
-		printf(": unable to retrieve device info\n",
-		    ld->sc_dv.dv_xname);
+		printf(": unable to retrieve device info\n");
 		ld->sc_flags = LDF_ENABLED;
 		goto out;
 	}
