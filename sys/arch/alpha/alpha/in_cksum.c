@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.c,v 1.10 2001/05/19 00:30:35 thorpej Exp $ */
+/* $NetBSD: in_cksum.c,v 1.11 2001/05/19 14:21:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.10 2001/05/19 00:30:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.11 2001/05/19 14:21:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -211,7 +211,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	union l_util l_util; 
 	struct ipovly ipov;
 
-	if (nxt == 0) {
+	if (nxt != 0) {
 		/* pseudo header */
 		if (off < sizeof(struct ipovly))
 			panic("in4_cksum: offset too short");
