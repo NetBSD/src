@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.22 2001/02/21 00:51:28 reinoud Exp $	*/
+/*	$NetBSD: console.c,v 1.23 2001/03/18 17:03:26 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -787,7 +787,10 @@ physconkbd(key)
 
 	tp = vconsole_current->tp;
 
-	if (tp == NULL) return(1);
+	if (tp == NULL) {
+		(void)splx(s);
+		return(1);
+	}
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		(void)splx(s);
