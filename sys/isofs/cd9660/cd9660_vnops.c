@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.26 1995/12/01 00:47:33 pk Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.27 1996/02/09 14:45:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -743,6 +743,36 @@ cd9660_readlink(ap)
 	return (0);
 }
 
+int
+cd9660_link(ap)
+	struct vop_link_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;
+		struct componentname *a_cnp; 
+	} */ *ap;
+{
+
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
+int
+cd9660_symlink(ap)
+	struct vop_symlink_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+		char *a_target;
+	} */ *ap;
+{
+
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
 /*
  * Ufs abort op, called after namei() when a CREATE/DELETE isn't actually
  * done. If a buffer has been saved in anticipation of a CREATE, delete it.
@@ -754,6 +784,7 @@ cd9660_abortop(ap)
 		struct componentname *a_cnp;
 	} */ *ap;
 {
+
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
 		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
 	return (0);

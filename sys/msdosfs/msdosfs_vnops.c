@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.44 1996/02/01 00:37:36 jtc Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.45 1996/02/09 14:45:59 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -772,14 +772,14 @@ msdosfs_remove(ap)
 int
 msdosfs_link(ap)
 	struct vop_link_args /* {
+		struct vnode *a_dvp;
 		struct vnode *a_vp;
-		struct vnode *a_tdvp;
 		struct componentname *a_cnp;
 	} */ *ap;
 {
 
-	VOP_ABORTOP(ap->a_vp, ap->a_cnp);
-	vput(ap->a_vp);
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
 	return (EOPNOTSUPP);
 }
 
@@ -1334,12 +1334,10 @@ msdosfs_symlink(ap)
 		char *a_target;
 	} */ *ap;
 {
-	register struct vnode *dvp = ap->a_dvp;
-	register struct componentname *cnp = ap->a_cnp;
 
-	FREE(cnp->cn_pnbuf, M_NAMEI);
-	vput(dvp);
-	return (EINVAL);
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EOPNOTSUPP);
 }
 
 int

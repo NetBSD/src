@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.65 1996/02/08 02:54:20 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.66 1996/02/09 14:45:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -947,30 +947,23 @@ sys_link(p, v, retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
-	if (vp->v_type != VDIR ||
-	    (error = suser(p->p_ucred, &p->p_acflag)) == 0) {
-		nd.ni_cnd.cn_nameiop = CREATE;
-		nd.ni_cnd.cn_flags = LOCKPARENT;
-		nd.ni_dirp = SCARG(uap, link);
-		if ((error = namei(&nd)) == 0) {
-			if (nd.ni_vp != NULL)
-				error = EEXIST;
-			if (!error) {
-				VOP_LEASE(nd.ni_dvp, p, p->p_ucred,
-				    LEASE_WRITE);
-				VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-				error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
-			} else {
-				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-				if (nd.ni_dvp == nd.ni_vp)
-					vrele(nd.ni_dvp);
-				else
-					vput(nd.ni_dvp);
-				if (nd.ni_vp)
-					vrele(nd.ni_vp);
-			}
-		}
+	NDINIT(&nd, CREATE, LOCKPARENT, UIO_USERSPACE, SCARG(uap, link), p);
+	if ((error = namei(&nd)) != 0)
+		goto out;
+	if (nd.ni_vp) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		vrele(nd.ni_vp);
+		error = EEXIST;
+		goto out;
 	}
+	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	error = VOP_LINK(nd.ni_dvp, vp, &nd.ni_cnd);
+out:
 	vrele(vp);
 	return (error);
 }
@@ -1084,29 +1077,24 @@ sys_unlink(p, v, retval)
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
 
-	if (vp->v_type != VDIR ||
-	    (error = suser(p->p_ucred, &p->p_acflag)) == 0) {
-		/*
-		 * The root of a mounted filesystem cannot be deleted.
-		 */
-		if (vp->v_flag & VROOT)
-			error = EBUSY;
-		else
-			(void)vnode_pager_uncache(vp);
-	}
-
-	if (!error) {
-		VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-		error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
-	} else {
+	/*
+	 * The root of a mounted filesystem cannot be deleted.
+	 */
+	if (vp->v_flag & VROOT) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 		if (nd.ni_dvp == vp)
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
-		if (vp != NULLVP)
-			vput(vp);
+		vput(vp);
+		error = EBUSY;
+		goto out;
 	}
+
+	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
+	(void)vnode_pager_uncache(vp);
+	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+out:
 	return (error);
 }
 

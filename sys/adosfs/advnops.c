@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.23 1996/02/01 00:13:47 jtc Exp $	*/
+/*	$NetBSD: advnops.c,v 1.24 1996/02/09 14:45:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -324,6 +324,49 @@ reterr:
 	printf(" %d)", error);
 #endif
 	return(error);
+}
+
+int
+adosfs_link(ap) 
+	struct vop_link_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;  
+		struct componentname *a_cnp;
+	} */ *ap;
+{
+ 
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
+int
+adosfs_symlink(ap)
+	struct vop_symlink_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+		char *a_target;
+	} */ *ap;
+{
+  
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
+int
+adosfs_abortop(ap)
+	struct vop_abortop_args /* {
+		struct vnode *a_dvp;
+		struct componentname *a_cnp;
+	} */ *ap;
+{
+ 
+	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
+		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+	return (0);
 }
 
 /*
@@ -895,12 +938,10 @@ int	lease_check __P((struct vop_lease_args *));
 #define adosfs_seek ((int (*) __P((struct vop_seek_args *)))adnullop)
 #define adosfs_vfree ((int (*) __P((struct vop_vfree_args *)))adnullop)
 
-#define adosfs_abortop ((int (*) __P((struct vop_abortop_args *)))adenotsup)
 #define adosfs_advlock ((int (*) __P((struct vop_advlock_args *)))adenotsup)
 #define adosfs_blkatoff ((int (*) __P((struct vop_blkatoff_args *)))adenotsup)
 #define adosfs_bwrite ((int (*) __P((struct vop_bwrite_args *)))adenotsup)
 #define adosfs_create ((int (*) __P((struct vop_create_args *)))adenotsup)
-#define adosfs_link ((int (*) __P((struct vop_link_args *)))adenotsup)
 #define adosfs_mkdir ((int (*) __P((struct vop_mkdir_args *)))adenotsup)
 #define adosfs_mknod ((int (*) __P((struct vop_mknod_args *)))adenotsup)
 #define adosfs_mmap ((int (*) __P((struct vop_mmap_args *)))adenotsup)
@@ -908,7 +949,6 @@ int	lease_check __P((struct vop_lease_args *));
 #define adosfs_rename ((int (*) __P((struct vop_rename_args *)))adenotsup)
 #define adosfs_rmdir ((int (*) __P((struct vop_rmdir_args *)))adenotsup)
 #define adosfs_setattr ((int (*) __P((struct vop_setattr_args *)))adenotsup)
-#define adosfs_symlink ((int (*) __P((struct vop_symlink_args *)))adenotsup)
 #define adosfs_truncate ((int (*) __P((struct vop_truncate_args *)))adenotsup)
 #define adosfs_update ((int (*) __P((struct vop_update_args *)))adenotsup)
 #define adosfs_valloc ((int (*) __P((struct vop_valloc_args *)))adenotsup)

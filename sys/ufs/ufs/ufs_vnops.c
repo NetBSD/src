@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.13 1996/02/07 17:01:25 jtc Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.14 1996/02/09 14:46:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -594,6 +594,10 @@ ufs_remove(ap)
 	register struct vnode *dvp = ap->a_dvp;
 	int error;
 
+	if (vp->v_type == VDIR) {
+		error = EISDIR;
+		goto out;
+	}
 	ip = VTOI(vp);
 	if ((ip->i_flags & (IMMUTABLE | APPEND)) ||
 	    (VTOI(dvp)->i_flags & APPEND)) {
@@ -619,13 +623,13 @@ out:
 int
 ufs_link(ap)
 	struct vop_link_args /* {
+		struct vnode *a_dvp;
 		struct vnode *a_vp;
-		struct vnode *a_tdvp;
 		struct componentname *a_cnp;
 	} */ *ap;
 {
+	register struct vnode *dvp = ap->a_dvp;
 	register struct vnode *vp = ap->a_vp;
-	register struct vnode *tdvp = ap->a_tdvp;
 	register struct componentname *cnp = ap->a_cnp;
 	register struct inode *ip;
 	struct timeval tv;
@@ -635,42 +639,47 @@ ufs_link(ap)
 	if ((cnp->cn_flags & HASBUF) == 0)
 		panic("ufs_link: no name");
 #endif
-	if (vp->v_mount != tdvp->v_mount) {
-		VOP_ABORTOP(vp, cnp);
+	if (vp->v_type == VDIR) {
+		VOP_ABORTOP(dvp, cnp);
+		error = EISDIR;
+		goto out2;
+	}
+	if (dvp->v_mount != vp->v_mount) {
+		VOP_ABORTOP(dvp, cnp);
 		error = EXDEV;
 		goto out2;
 	}
-	if (vp != tdvp && (error = VOP_LOCK(tdvp))) {
-		VOP_ABORTOP(vp, cnp);
+	if (dvp != vp && (error = VOP_LOCK(vp))) {
+		VOP_ABORTOP(dvp, cnp);
 		goto out2;
 	}
-	ip = VTOI(tdvp);
+	ip = VTOI(vp);
 	if ((nlink_t)ip->i_nlink >= LINK_MAX) {
-		VOP_ABORTOP(vp, cnp);
+		VOP_ABORTOP(dvp, cnp);
 		error = EMLINK;
 		goto out1;
 	}
 	if (ip->i_flags & (IMMUTABLE | APPEND)) {
-		VOP_ABORTOP(vp, cnp);
+		VOP_ABORTOP(dvp, cnp);
 		error = EPERM;
 		goto out1;
 	}
 	ip->i_nlink++;
 	ip->i_flag |= IN_CHANGE;
 	tv = time;
-	error = VOP_UPDATE(tdvp, &tv, &tv, 1);
+	error = VOP_UPDATE(vp, &tv, &tv, 1);
 	if (!error)
-		error = ufs_direnter(ip, vp, cnp);
+		error = ufs_direnter(ip, dvp, cnp);
 	if (error) {
 		ip->i_nlink--;
 		ip->i_flag |= IN_CHANGE;
 	}
 	FREE(cnp->cn_pnbuf, M_NAMEI);
 out1:
-	if (vp != tdvp)
-		VOP_UNLOCK(tdvp);
+	if (dvp != vp)
+		VOP_UNLOCK(vp);
 out2:
-	vput(vp);
+	vput(dvp);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.39 1995/10/09 14:25:02 mycroft Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.40 1996/02/09 14:45:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -635,6 +635,49 @@ kernfs_vfree(ap)
 	return (0);
 }
 
+int
+kernfs_link(ap) 
+	struct vop_link_args /* {
+		struct vnode *a_dvp;
+		struct vnode *a_vp;  
+		struct componentname *a_cnp;
+	} */ *ap;
+{
+ 
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
+int
+kernfs_symlink(ap)
+	struct vop_symlink_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+		struct vattr *a_vap;
+		char *a_target;
+	} */ *ap;
+{
+  
+	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
+	vput(ap->a_dvp);
+	return (EROFS);
+}
+
+int
+kernfs_abortop(ap)
+	struct vop_abortop_args /* {
+		struct vnode *a_dvp;
+		struct componentname *a_cnp;
+	} */ *ap;
+{
+ 
+	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
+		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+	return (0);
+}
+
 /*
  * /dev/fd vnode unsupported operation
  */
@@ -672,14 +715,11 @@ kernfs_nullop()
 #define kernfs_fsync ((int (*) __P((struct  vop_fsync_args *)))nullop)
 #define kernfs_seek ((int (*) __P((struct  vop_seek_args *)))nullop)
 #define kernfs_remove ((int (*) __P((struct  vop_remove_args *)))kernfs_enotsupp)
-#define kernfs_link ((int (*) __P((struct  vop_link_args *)))kernfs_enotsupp)
 #define kernfs_rename ((int (*) __P((struct  vop_rename_args *)))kernfs_enotsupp)
 #define kernfs_mkdir ((int (*) __P((struct  vop_mkdir_args *)))kernfs_enotsupp)
 #define kernfs_rmdir ((int (*) __P((struct  vop_rmdir_args *)))kernfs_enotsupp)
-#define kernfs_symlink ((int (*) __P((struct vop_symlink_args *)))kernfs_enotsupp)
 #define kernfs_readlink \
 	((int (*) __P((struct  vop_readlink_args *)))kernfs_enotsupp)
-#define kernfs_abortop ((int (*) __P((struct  vop_abortop_args *)))nullop)
 #define kernfs_lock ((int (*) __P((struct  vop_lock_args *)))nullop)
 #define kernfs_unlock ((int (*) __P((struct  vop_unlock_args *)))nullop)
 #define kernfs_bmap ((int (*) __P((struct  vop_bmap_args *)))kernfs_badop)

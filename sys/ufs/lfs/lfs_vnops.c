@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.8 1996/02/01 00:07:51 jtc Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.9 1996/02/09 14:46:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -370,17 +370,17 @@ lfs_rmdir(ap)
 int
 lfs_link(ap)
 	struct vop_link_args /* {
+		struct vnode *a_dvp;
 		struct vnode *a_vp;
-		struct vnode *a_tdvp;
 		struct componentname *a_cnp;
 	} */ *ap;
 {
 	int ret;
 
-	SET_DIROP(VTOI(ap->a_vp)->i_lfs);
-	MARK_VNODE(ap->a_vp);
+	SET_DIROP(VTOI(ap->a_dvp)->i_lfs);
+	MARK_VNODE(ap->a_dvp);
 	ret = ufs_link(ap);
-	SET_ENDOP(VTOI(ap->a_vp)->i_lfs);
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs);
 	return (ret);
 }
 
