@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute6.c,v 1.3 1999/07/04 02:52:49 itojun Exp $	*/
+/*	$NetBSD: traceroute6.c,v 1.4 1999/07/30 01:19:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -78,7 +78,7 @@ static char sccsid[] = "@(#)traceroute.c	8.1 (Berkeley) 6/6/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: traceroute6.c,v 1.3 1999/07/04 02:52:49 itojun Exp $");
+__RCSID("$NetBSD: traceroute6.c,v 1.4 1999/07/30 01:19:58 itojun Exp $");
 #endif
 #endif
 
@@ -724,8 +724,10 @@ main(argc, argv)
 			(void) fflush(stdout);
 		}
 		putchar('\n');
-		if (got_there || unreachable >= nprobes-1)
+		if (got_there ||
+		    (unreachable > 0 && unreachable >= ((nprobes + 1) / 2))) {
 			exit(0);
+		}
 	}
 
 	exit(0);
