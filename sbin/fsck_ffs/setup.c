@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.74 2004/10/29 19:02:17 dsl Exp $	*/
+/*	$NetBSD: setup.c,v 1.75 2005/01/19 17:33:59 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.74 2004/10/29 19:02:17 dsl Exp $");
+__RCSID("$NetBSD: setup.c,v 1.75 2005/01/19 17:33:59 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,8 +80,7 @@ int16_t sblkpostbl[256];
  * is already clean (preen mode only).
  */
 int
-setup(dev)
-	const char *dev;
+setup(const char *dev)
 {
 	long cg, size, asked, i, j;
 	long bmapsize;
@@ -495,7 +494,7 @@ badsblabel:
 }
 
 static int
-readappleufs()
+readappleufs(void)
 {
 	daddr_t label = APPLEUFS_LABEL_OFFSET / dev_bsize;
 	struct appleufslabel *appleufs;
@@ -639,8 +638,7 @@ static off_t sblock_try[] = SBLOCKSEARCH;
  * Read in the super block and its summary info.
  */
 static int
-readsb(listerr)
-	int listerr;
+readsb(int listerr)
 {
 	daddr_t super;
 	struct fs *fs;
@@ -907,9 +905,7 @@ cmpsblks44(const struct fs *sb, struct fs *asb)
 
 
 static void
-badsb(listerr, s)
-	int listerr;
-	char *s;
+badsb(int listerr, char *s)
 {
 
 	if (!listerr)
@@ -926,10 +922,7 @@ badsb(listerr, s)
  * their needed information is available!
  */
 static int
-calcsb(dev, devfd, fs)
-	const char *dev;
-	int devfd;
-	struct fs *fs;
+calcsb(const char *dev, int devfd, struct fs *fs)
 {
 	struct disklabel *lp;
 	struct partition *pp;
@@ -984,9 +977,7 @@ calcsb(dev, devfd, fs)
 }
 
 static struct disklabel *
-getdisklabel(s, fd)
-	const char *s;
-	int	fd;
+getdisklabel(const char *s, int fd)
 {
 	static struct disklabel lab;
 
@@ -1000,9 +991,7 @@ getdisklabel(s, fd)
 }
 
 static struct partition *
-getdisklabelpart(dev, lp)
-	const char *dev;
-	struct disklabel *lp;
+getdisklabelpart(const char *dev, struct disklabel *lp)
 {
 	char *cp;
 	int c;

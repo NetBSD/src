@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.49 2004/10/08 17:33:52 dbj Exp $	*/
+/*	$NetBSD: inode.c,v 1.50 2005/01/19 17:33:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.49 2004/10/08 17:33:52 dbj Exp $");
+__RCSID("$NetBSD: inode.c,v 1.50 2005/01/19 17:33:58 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,14 +62,12 @@ __RCSID("$NetBSD: inode.c,v 1.49 2004/10/08 17:33:52 dbj Exp $");
 
 static ino_t startinum;
 
-static int iblock __P((struct inodesc *, long, u_int64_t));
+static int iblock (struct inodesc *, long, u_int64_t);
 static void swap_dinode1(union dinode *, int);
 static void swap_dinode2(union dinode *, int);
 
 int
-ckinode(dp, idesc)
-	union dinode *dp;
-	struct inodesc *idesc;
+ckinode(union dinode *dp, struct inodesc *idesc)
 {
 	int ret, offset, i;
 	union dinode dino;
@@ -174,13 +172,10 @@ ckinode(dp, idesc)
 }
 
 static int
-iblock(idesc, ilevel, isize)
-	struct inodesc *idesc;
-	long ilevel;
-	u_int64_t isize;
+iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 {
 	struct bufarea *bp;
-	int i, n, (*func) __P((struct inodesc *)), nif;
+	int i, n, (*func) (struct inodesc *), nif;
 	u_int64_t sizepb;
 	char buf[BUFSIZ];
 	char pathbuf[MAXPATHLEN + 1];
@@ -277,9 +272,7 @@ iblock(idesc, ilevel, isize)
  * Return 0 if in range, 1 if out of range.
  */
 int
-chkrange(blk, cnt)
-	daddr_t blk;
-	int cnt;
+chkrange(daddr_t blk, int cnt)
 {
 	int c;
 
@@ -324,8 +317,7 @@ chkrange(blk, cnt)
  * General purpose interface for reading inodes.
  */
 union dinode *
-ginode(inumber)
-	ino_t inumber;
+ginode(ino_t inumber)
 {
 	daddr_t iblk;
 	int blkoff;
@@ -395,8 +387,7 @@ long readcnt, readpercg, fullcnt, inobufsize, partialcnt, partialsize;
 union dinode *inodebuf;
 
 union dinode *
-getnextinode(inumber)
-	ino_t inumber;
+getnextinode(ino_t inumber)
 {
 	long size;
 	daddr_t dblk;
@@ -435,8 +426,7 @@ getnextinode(inumber)
 }
 
 void
-setinodebuf(inum)
-	ino_t inum;
+setinodebuf(ino_t inum)
 {
 
 	if (inum % sblock->fs_ipg != 0)
@@ -466,7 +456,7 @@ setinodebuf(inum)
 }
 
 void
-freeinodebuf()
+freeinodebuf(void)
 {
 
 	if (inodebuf != NULL)
@@ -482,9 +472,7 @@ freeinodebuf()
  * Enter inodes into the cache.
  */
 void
-cacheino(dp, inumber)
-	union dinode *dp;
-	ino_t inumber;
+cacheino(union dinode *dp, ino_t inumber)
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp, **ninpsort;
@@ -533,8 +521,7 @@ cacheino(dp, inumber)
  * Look up an inode cache structure.
  */
 struct inoinfo *
-getinoinfo(inumber)
-	ino_t inumber;
+getinoinfo(ino_t inumber)
 {
 	struct inoinfo *inp;
 
@@ -551,7 +538,7 @@ getinoinfo(inumber)
  * Clean up all the inode cache structure.
  */
 void
-inocleanup()
+inocleanup(void)
 {
 	struct inoinfo **inpp;
 
@@ -565,17 +552,14 @@ inocleanup()
 }
 	
 void
-inodirty()
+inodirty(void)
 {
 	
 	dirty(pbp);
 }
 
 void
-clri(idesc, type, flag)
-	struct inodesc *idesc;
-	char *type;
-	int flag;
+clri(struct inodesc *idesc, char *type, int flag)
 {
 	union dinode *dp;
 
@@ -598,8 +582,7 @@ clri(idesc, type, flag)
 }
 
 int
-findname(idesc)
-	struct inodesc *idesc;
+findname(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
@@ -612,8 +595,7 @@ findname(idesc)
 }
 
 int
-findino(idesc)
-	struct inodesc *idesc;
+findino(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
@@ -628,8 +610,7 @@ findino(idesc)
 }
 
 int
-clearentry(idesc)
-      struct inodesc *idesc;
+clearentry(struct inodesc *idesc)
 {
 	struct direct *dirp = idesc->id_dirp;
 
@@ -642,8 +623,7 @@ clearentry(idesc)
 }
 
 void
-pinode(ino)
-	ino_t ino;
+pinode(ino_t ino)
 {
 	union dinode *dp;
 	char *p;
@@ -671,10 +651,7 @@ pinode(ino)
 }
 
 void
-blkerror(ino, type, blk)
-	ino_t ino;
-	char *type;
-	daddr_t blk;
+blkerror(ino_t ino, char *type, daddr_t blk)
 {
 	struct inostat *info;
 
@@ -705,9 +682,7 @@ blkerror(ino, type, blk)
  * allocate an unused inode
  */
 ino_t
-allocino(request, type)
-	ino_t request;
-	int type;
+allocino(ino_t request, int type)
 {
 	ino_t ino;
 	union dinode *dp;
@@ -816,8 +791,7 @@ allocino(request, type)
  * deallocate an inode
  */
 void
-freeino(ino)
-	ino_t ino;
+freeino(ino_t ino)
 {
 	struct inodesc idesc;
 	union dinode *dp;

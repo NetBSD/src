@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.47 2004/06/12 01:35:46 mycroft Exp $	*/
+/*	$NetBSD: utilities.c,v 1.48 2005/01/19 17:33:59 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.47 2004/06/12 01:35:46 mycroft Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.48 2005/01/19 17:33:59 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,13 +61,12 @@ __RCSID("$NetBSD: utilities.c,v 1.47 2004/06/12 01:35:46 mycroft Exp $");
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
-static void rwerror __P((char *, daddr_t));
+static void rwerror (char *, daddr_t);
 
 extern int returntosingle;
 
 int
-ftypeok(dp)
-	union dinode *dp;
+ftypeok(union dinode *dp)
 {
 	switch (iswap16(DIP(dp, mode)) & IFMT) {
 
@@ -88,8 +87,7 @@ ftypeok(dp)
 }
 
 int
-reply(question)
-	char *question;
+reply(char *question)
 {
 	int persevere;
 	char c;
@@ -129,7 +127,7 @@ reply(question)
  * Malloc buffers and set up cache.
  */
 void
-bufinit()
+bufinit(void)
 {
 	struct bufarea *bp;
 	long bufcnt, i;
@@ -172,9 +170,7 @@ bufinit()
  * Manage a cache of directory blocks.
  */
 struct bufarea *
-getdatablk(blkno, size)
-	daddr_t blkno;
-	long size;
+getdatablk(daddr_t blkno, long size)
 {
 	struct bufarea *bp;
 
@@ -200,10 +196,7 @@ foundit:
 }
 
 void
-getblk(bp, blk, size)
-	struct bufarea *bp;
-	daddr_t blk;
-	long size;
+getblk(struct bufarea *bp, daddr_t blk, long size)
 {
 	daddr_t dblk;
 
@@ -219,9 +212,7 @@ getblk(bp, blk, size)
 }
 
 void
-flush(fd, bp)
-	int fd;
-	struct bufarea *bp;
+flush(int fd, struct bufarea *bp)
 {
 	int i, j;
 	struct csum *ccsp;
@@ -252,9 +243,7 @@ flush(fd, bp)
 }
 
 static void
-rwerror(mesg, blk)
-	char *mesg;
-	daddr_t blk;
+rwerror(char *mesg, daddr_t blk)
 {
 
 	if (preen == 0)
@@ -265,7 +254,7 @@ rwerror(mesg, blk)
 }
 
 void
-ckfini()
+ckfini(void)
 {
 	struct bufarea *bp, *nbp;
 	int ofsmodified, cnt = 0;
@@ -331,11 +320,7 @@ ckfini()
 }
 
 int
-bread(fd, buf, blk, size)
-	int fd;
-	char *buf;
-	daddr_t blk;
-	long size;
+bread(int fd, char *buf, daddr_t blk, long size)
 {
 	char *cp;
 	int i, errs;
@@ -366,11 +351,7 @@ bread(fd, buf, blk, size)
 }
 
 void
-bwrite(fd, buf, blk, size)
-	int fd;
-	char *buf;
-	daddr_t blk;
-	long size;
+bwrite(int fd, char *buf, daddr_t blk, long size)
 {
 	int i;
 	char *cp;
@@ -397,8 +378,7 @@ bwrite(fd, buf, blk, size)
  * allocate a data block with the specified number of fragments
  */
 daddr_t
-allocblk(frags)
-	long frags;
+allocblk(long frags)
 {
 	int i, j, k, cg, baseblk;
 	struct cg *cgp = cgrp;
@@ -445,9 +425,7 @@ allocblk(frags)
  * Free a previously allocated block
  */
 void
-freeblk(blkno, frags)
-	daddr_t blkno;
-	long frags;
+freeblk(daddr_t blkno, long frags)
 {
 	struct inodesc idesc;
 
@@ -460,10 +438,7 @@ freeblk(blkno, frags)
  * Find a pathname
  */
 void
-getpathname(namebuf, namebuflen, curdir, ino)
-	char *namebuf;
-	size_t namebuflen;
-	ino_t curdir, ino;
+getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 {
 	int len;
 	char *cp;
@@ -518,8 +493,7 @@ getpathname(namebuf, namebuflen, curdir, ino)
 }
 
 void
-catch(sig)
-	int sig;
+catch(int sig)
 {
 	if (!doinglevel2) {
 		markclean = 0;
@@ -534,8 +508,7 @@ catch(sig)
  * so that reboot sequence may be interrupted.
  */
 void
-catchquit(sig)
-	int sig;
+catchquit(int sig)
 {
 	int errsave = errno;
 
@@ -550,8 +523,7 @@ catchquit(sig)
  * Used by child processes in preen.
  */
 void
-voidquit(sig)
-	int sig;
+voidquit(int sig)
 {
 	int errsave = errno;
 
@@ -565,9 +537,7 @@ voidquit(sig)
  * determine whether an inode should be fixed.
  */
 int
-dofix(idesc, msg)
-	struct inodesc *idesc;
-	char *msg;
+dofix(struct inodesc *idesc, char *msg)
 {
 
 	switch (idesc->id_fix) {
@@ -604,8 +574,7 @@ dofix(idesc, msg)
 }
 
 void
-copyback_cg(blk)
-	struct bufarea *blk;
+copyback_cg(struct bufarea *blk)
 {
 
 	memcpy(blk->b_un.b_cg, cgrp, sblock->fs_cgsize);
