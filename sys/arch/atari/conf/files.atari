@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.68 2000/03/14 15:56:53 oster Exp $
+#	$NetBSD: files.atari,v 1.69 2000/05/09 14:30:47 leo Exp $
 
 maxpartitions 16
 
@@ -24,12 +24,12 @@ device	kbd: event
 attach	kbd at mainbus
 file	arch/atari/dev/kbd.c		kbd needs-flag
 
-# serial port via 68901 (modem1/serial1)
+# serial port via 68901 (ttyB0/ttyB1)
 device	ser: tty
 attach	ser at mainbus
 file	arch/atari/dev/ser.c		ser needs-flag
 
-# serial port via 85C30 (modem2/serial2)
+# serial port via 85C30 (ttyA0/ttyA1)
 device	zs: tty
 attach	zs at mainbus
 file	arch/atari/dev/zs.c		zs needs-count
@@ -169,8 +169,8 @@ attach	ncrscsi at mainbus
 file	arch/atari/dev/atari5380.c	ncrscsi
 
 # list of standard files...
-file	dev/cons.c				ite
-file	dev/cninit.c				ite
+file	dev/cons.c				ite | ser
+file	dev/cninit.c				ite | ser
 file	arch/atari/atari/atari_init.c
 file	arch/atari/atari/autoconf.c
 file	arch/atari/atari/be_bus.c		vme
