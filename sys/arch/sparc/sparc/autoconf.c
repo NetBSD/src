@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 1994/12/06 08:34:00 deraadt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.20 1994/12/16 19:02:16 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -503,7 +503,7 @@ romprop(rp, cp, node)
 	register int node;
 {
 	register int len;
-	union { char regbuf[64]; int ireg[3]; } u;
+	union { char regbuf[128]; int ireg[3]; } u;
 	static const char pl[] = "property length";
 
 	len = getprop(node, "reg", (void *)u.regbuf, sizeof u.regbuf);
