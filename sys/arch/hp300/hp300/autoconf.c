@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 1996/08/18 17:01:53 hpeyerl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 1996/10/05 07:06:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -111,12 +111,20 @@ configure()
 	 */
 	find_devs();
 
+	/* Initialize the interrupt system. */
+	isrinit();
+
+	/*
+	 * XXX Enable interrupts.  We have to do this now so that the
+	 * XXX HIL configures.
+	 */
+	(void)spl0();
+
 	/*
 	 * XXX: these should be consolidated into some kind of table
 	 */
 	hilsoftinit(0, HILADDR);
 	hilinit(0, HILADDR);
-	isrinit();
 	dmainit();
 
 	/*
@@ -139,6 +147,8 @@ configure()
 				printf("csr at %x\n", sc);
 		}
 	}
+
+	/* XXX Should enable interrupts here. */
 
 #if GENERIC
 	if ((boothowto & RB_ASKNAME) == 0)
