@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.7 2003/04/15 08:07:10 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.8 2003/07/22 03:41:28 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.28 2002/06/02 15:27:40 itojun Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ipsec.c,v 1.7 2003/04/15 08:07:10 itojun Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.8 2003/07/22 03:41:28 itojun Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -103,6 +103,12 @@ static struct val2str ipsec_ahnames[] = {
 	{ SADB_X_AALG_MD5, "md5", },
 	{ SADB_X_AALG_SHA, "sha", },
 	{ SADB_X_AALG_NULL, "null", },
+	{ SADB_X_AALG_SHA2_256, "hmac-sha2-256", },
+	{ SADB_X_AALG_SHA2_384, "hmac-sha2-384", },
+	{ SADB_X_AALG_SHA2_512, "hmac-sha2-512", },
+#ifdef SADB_X_AALG_AES_XCBC_MAC
+	{ SADB_X_AALG_AES_XCBC_MAC, "aes-xcbc-mac", },
+#endif
 	{ -1, NULL },
 };
 
@@ -113,8 +119,9 @@ static struct val2str ipsec_espnames[] = {
 	{ SADB_EALG_NULL, "null", },
 	{ SADB_X_EALG_CAST128CBC, "cast128-cbc", },
 	{ SADB_X_EALG_BLOWFISHCBC, "blowfish-cbc", },
-#ifdef SADB_X_EALG_RIJNDAELCBC
 	{ SADB_X_EALG_RIJNDAELCBC, "rijndael-cbc", },
+#ifdef SADB_X_EALG_AESCTR
+	{ SADB_X_EALG_AESCTR, "aes-ctr", },
 #endif
 	{ -1, NULL },
 };
