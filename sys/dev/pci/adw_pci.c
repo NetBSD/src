@@ -1,4 +1,4 @@
-/* $NetBSD: adw_pci.c,v 1.8 2000/12/28 22:59:11 sommerfeld Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.9 2001/11/13 07:48:40 lukem Exp $	 */
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,9 @@
  *	ASB-3940U2W-00	- Bus-Master PCI Ultra2-Wide (253 CDB)
  *	ASB-3940U3W-00	- Bus-Master PCI Ultra3-Wide (253 CDB)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: adw_pci.c,v 1.9 2001/11/13 07:48:40 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

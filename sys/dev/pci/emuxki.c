@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.3 2001/10/22 20:31:26 jdolecek Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.4 2001/11/13 07:48:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  * - Independant modification of each channel's parameters (via mixer ?)
  * - DSP FX patches (to make fx like chipmunk)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.4 2001/11/13 07:48:42 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

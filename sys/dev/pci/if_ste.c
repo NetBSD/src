@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.6 2001/07/23 17:26:50 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.7 2001/11/13 07:48:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Device driver for the Sundance Tech. ST-201 10/100
  * Ethernet controller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.7 2001/11/13 07:48:44 lukem Exp $");
 
 #include "bpfilter.h"
 

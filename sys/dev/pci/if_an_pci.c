@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.5 2001/07/08 18:02:28 thorpej Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.6 2001/11/13 07:48:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * Unlike WaveLAN, this adapter attached as PCI device using a PLX 9050
  * PCI to "dumb bus" bridge chip.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.6 2001/11/13 07:48:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 

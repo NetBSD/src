@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.10 2001/05/01 05:10:30 jmc Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.11 2001/11/13 07:48:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.11 2001/11/13 07:48:42 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.12 2001/01/20 02:26:39 thorpej Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.13 2001/11/13 07:48:41 lukem Exp $	*/
 
 /*
  * cy_pci.c
@@ -8,6 +8,9 @@
  *
  * Timo Rossi, 1996
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cy_pci.c,v 1.13 2001/11/13 07:48:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

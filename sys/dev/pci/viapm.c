@@ -1,4 +1,4 @@
-/*	$NetBSD: viapm.c,v 1.2 2000/05/12 16:42:42 thorpej Exp $	*/
+/*	$NetBSD: viapm.c,v 1.3 2001/11/13 07:48:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 2000 Johan Danielsson
@@ -38,6 +38,9 @@
  * monitoring, and an SMBus controller. A driver for the hardware monitoring
  * is provided by the viaenv driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: viapm.c,v 1.3 2001/11/13 07:48:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
