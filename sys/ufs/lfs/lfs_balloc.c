@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.40 2003/04/02 10:39:40 fvdl Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.41 2003/04/29 07:44:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.40 2003/04/02 10:39:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.41 2003/04/29 07:44:04 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -142,6 +142,7 @@ lfs_balloc(void *v)
 	fs = ip->i_lfs;
 	offset = blkoff(fs, ap->a_startoffset);
 	iosize = ap->a_size;
+	KASSERT(iosize <= fs->lfs_bsize);
 	lbn = lblkno(fs, ap->a_startoffset);
 	/* (void)lfs_check(vp, lbn, 0); */
 	bpp = ap->a_bpp;
