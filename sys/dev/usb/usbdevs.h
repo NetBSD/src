@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.24 1999/04/03 19:03:02 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.25 1999/04/27 18:09:00 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.24 1999/04/03 19:01:57 augustss Exp 
+ *	NetBSD: usbdevs,v 1.25 1999/04/27 18:08:35 augustss Exp 
  */
 
 /*
@@ -52,6 +52,7 @@
 #define	USB_VENDOR_KODAK	0x040a		/* Eastman Kodak */
 /* Computer Access Technology Corporation */
 #define	USB_VENDOR_CATC	0x0423		/* CATC */
+#define	USB_VENDOR_GRAVIS	0x0428		/* Gravis */
 #define	USB_VENDOR_NANAO	0x0440		/* Nanao */
 #define	USB_VENDOR_UNIXTAR	0x0451		/* Unixtar */
 #define	USB_VENDOR_GENIUS	0x0458		/* Genius */
@@ -73,8 +74,10 @@
 #define	USB_VENDOR_VISION	0x0533		/* Vision */
 #define	USB_VENDOR_ATEN	0x0557		/* ATen */
 #define	USB_VENDOR_PERACOM	0x0565		/* Peracom */
+#define	USB_VENDOR_WACOM	0x056a		/* Wacom */
 #define	USB_VENDOR_EIZO	0x056d		/* EIZO */
 #define	USB_VENDOR_AGILER	0x056e		/* Agiler */
+#define	USB_VENDOR_IOMEGA	0x059b		/* Iomega */
 #define	USB_VENDOR_BELKIN	0x05ab		/* Belkin */
 #define	USB_VENDOR_LOGITECH	0x05ac		/* Logitech */
 #define	USB_VENDOR_EIZONANAO	0x05e7		/* EIZO Nanao */
@@ -99,6 +102,9 @@
 
 /* CATC products */
 #define	USB_PRODUCT_CATC_ANDROMEDA	0x1237		/* Andromeda hub */
+
+/* Gravis products */
+#define	USB_PRODUCT_GRAVIS_GAMEPADPRO	0x4001		/* GamePad Pro */
 
 /* Unixtar products */
 #define	USB_PRODUCT_UNIXTAR_UTUSB41	0x1446		/* UT-USB41 hub */
@@ -161,12 +167,18 @@
 /* Peracom products */
 #define	USB_PRODUCT_PERACOM_SERIAL1	0x0001		/* Serial Converter */
 
+/* Wacom products */
+#define	USB_PRODUCT_WACOM_CT0405U	0x0000		/* CT-0405-U Tablet */
+
 /* EIZO products */
 #define	USB_PRODUCT_EIZO_HUB	0x0000		/* hub */
 #define	USB_PRODUCT_EIZO_MONITOR	0x0001		/* monitor */
 
 /* Agiler products */
 #define	USB_PRODUCT_AGILER_MOUSE29UO	0x0002		/* mouse 29UO */
+
+/* Iomega products */
+#define	USB_PRODUCT_IOMEGA_ZIP100	0x0001		/* Zip 100 */
 
 /* Belkin products */
 #define	USB_PRODUCT_BELKIN_F5U002	0x0002		/* Parallel printer adapter */
