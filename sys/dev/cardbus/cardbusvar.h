@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusvar.h,v 1.15 2000/02/04 07:59:20 haya Exp $	*/
+/*	$NetBSD: cardbusvar.h,v 1.16 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -228,7 +228,6 @@ struct cbslot_attach_args {
   bus_dma_tag_t cba_dmat;	/* DMA tag */
 
   int cba_bus;			/* cardbus bus number */
-  int cba_function;		/* slot number on this Host Bus Adaptor */
 
   cardbus_chipset_tag_t cba_cc;	/* cardbus chipset */
   cardbus_function_tag_t cba_cf; /* cardbus functions */

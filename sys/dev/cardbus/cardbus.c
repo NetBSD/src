@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.22 2000/03/07 09:36:52 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.23 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -123,20 +123,6 @@ cardbusmatch(parent, cf, aux)
   if (strcmp(cba->cba_busname, cf->cf_driver->cd_name)) {
     DPRINTF(("cardbusmatch: busname differs %s <=> %s\n",
 	     cba->cba_busname, cf->cf_driver->cd_name));
-    return 0;
-  }
-
-#if 0
-  /* which function? */
-  if (cf->cbslotcf_func != CBSLOT_UNK_FUNC &&
-      cf->cbslotcf_func != cba->cba_function) {
-    DPRINTF(("cardbusmatch: function differs %d <=> %d\n",
-	     cf->cbslotcf_func, cba->cba_function));
-    return 0;
-  }
-#endif
-
-  if (cba->cba_function < 0 || cba->cba_function > 255) {
     return 0;
   }
 
@@ -723,10 +709,12 @@ enable_function(sc, cdstatus, function)
 
     if (sc->sc_poweron_func == 0) {
 	/* switch to 3V and/or wait for power to stabilize */
-	if (cdstatus & CARDBUS_3V_CARD)
+	if (cdstatus & CARDBUS_3V_CARD) {
 	    sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_3V);
-	else
-	    sc->sc_cf->cardbus_power(sc->sc_cc, CARDBUS_VCC_5V);
+	} else {
+	    /* No cards other than 3.3V cards. */
+	    return;
+	}
 	(sc->sc_cf->cardbus_ctrl)(sc->sc_cc, CARDBUS_RESET);
     }
     sc->sc_poweron_func |= (1 << function);
