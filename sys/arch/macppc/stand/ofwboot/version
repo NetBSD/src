@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 2002/10/18 21:22:40 wrstuden Exp $
+$NetBSD: version,v 1.8 2004/03/17 20:41:17 wrstuden Exp $
 
 1.1:		Initial revision from NetBSD/powerpc.
 1.2:		Use MI loadfile().
@@ -8,3 +8,4 @@ $NetBSD: version,v 1.7 2002/10/18 21:22:40 wrstuden Exp $
 		Headers.
 1.6:		Support ustarfs.
 1.7:		Go back to using OFW-specific alloc.c.
+1.8:		Change load address to E00000 to support kernels over 5MB big
