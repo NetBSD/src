@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.7 2001/11/29 23:21:00 thorpej Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.8 2002/03/16 08:51:07 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* macppc machine dependent menus, french */
+/* news68k machine dependent menus, french */
 
 menu editfsparts, y=12, exit;
 	display action  {
