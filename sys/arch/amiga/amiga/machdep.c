@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.36 1994/07/16 19:45:32 chopps Exp $
+ *	$Id: machdep.c,v 1.37 1994/07/18 08:04:32 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -262,12 +262,10 @@ again:
 	valloc(msqids, struct msqid_ds, msginfo.msgmni);
 #endif
 	/*
-	 * Determine how many buffers to allocate.
-	 * Since HPs tend to be long on memory and short on disk speed,
-	 * we allocate more buffer space than the BSD standard of
-	 * use 10% of memory for the first 2 Meg, 5% of remaining.
-	 * We just allocate a flat 10%.  Insure a minimum of 16 buffers.
-	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
+	 * Determine how many buffers to allocate. We allocate
+	 * the BSD standard of use 10% of memory for the first 2 Meg,
+	 * 5% of remaining. Insure a minimum of 16 buffers.
+	 * We allocate 3/4 as many swap buffer headers as file i/o buffers.
 	 */
   	if (bufpages == 0)
 		if (physmem < btoc(2 * 1024 * 1024))
@@ -283,7 +281,7 @@ again:
 	}
 
 	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) &~ 1;	/* force even */
+		nswbuf = (nbuf * 3 / 4) &~ 1;	/* force even */
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
