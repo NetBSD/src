@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.18 2002/11/11 18:02:14 thorpej Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.19 2002/11/17 20:49:33 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_ntop.c,v 1.8 2001/09/27 15:08:36 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.18 2002/11/11 18:02:14 thorpej Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.19 2002/11/17 20:49:33 itojun Exp $");
 #endif
 #endif
 
@@ -300,7 +300,7 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 	snprintf(cp, ep - cp, "/%u", bits);
 	if (strlen(outbuf) + 1 > size)
 		goto emsgsize;
-	strcpy(dst, outbuf);
+	strlcpy(dst, outbuf, size);
 	
 	return (dst);
 
