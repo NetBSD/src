@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.77 2003/06/29 22:32:39 fvdl Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.78 2003/07/12 16:17:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77 2003/06/29 22:32:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.78 2003/07/12 16:17:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -96,9 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.77 2003/06/29 22:32:39 fvdl Exp $");
 
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
-
-extern int locked_queue_count;
-extern long locked_queue_bytes;
 
 static int lfs_update_seguse(struct lfs *, long, size_t);
 static int lfs_indirtrunc (struct inode *, daddr_t, daddr_t,

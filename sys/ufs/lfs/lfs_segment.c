@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.126 2003/07/02 13:43:03 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.127 2003/07/12 16:17:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.126 2003/07/02 13:43:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.127 2003/07/12 16:17:08 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -155,9 +155,6 @@ int	lfs_dirvcount = 0;		/* # active dirops */
 /* Statistics Counters */
 int lfs_dostats = 1;
 struct lfs_stats lfs_stats;
-
-extern int locked_queue_count;
-extern long locked_queue_bytes;
 
 /* op values to lfs_writevnodes */
 #define	VN_REG		0
@@ -2167,8 +2164,6 @@ lfs_cluster_aiodone(struct buf *bp)
 	struct inode *ip;
 	int s, error=0;
 	char *cp;
-	extern int locked_queue_count;
-	extern long locked_queue_bytes;
 
 	if (bp->b_flags & B_ERROR)
 		error = bp->b_error;

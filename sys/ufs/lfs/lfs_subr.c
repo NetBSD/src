@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.41 2003/07/02 13:40:53 yamt Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.42 2003/07/12 16:17:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.41 2003/07/02 13:40:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.42 2003/07/12 16:17:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,7 +367,6 @@ lfs_unmark_dirop(struct lfs *fs)
 	struct inode *ip, *nip;
 	struct vnode *vp;
 	int doit;
-	extern int lfs_dirvcount;
 
 	simple_lock(&fs->lfs_interlock);
 	doit = !(fs->lfs_flags & LFS_UNDIROP);
@@ -442,8 +441,6 @@ lfs_segunlock(struct lfs *fs)
 	unsigned long sync, ckp;
 	struct buf *bp;
 	int do_unmark_dirop = 0;
-	extern int locked_queue_count;
-	extern long locked_queue_bytes;
 	
 	sp = fs->lfs_sp;
 

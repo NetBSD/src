@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.70 2003/07/02 14:07:16 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.71 2003/07/12 16:17:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.70 2003/07/02 14:07:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.71 2003/07/12 16:17:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,13 +102,15 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.70 2003/07/02 14:07:16 yamt Exp $");
  * XXX
  * No write cost accounting is done.
  * This is almost certainly wrong for synchronous operations and NFS.
+ *
+ * protected by lfs_subsys_lock.
  */
 int	locked_queue_count   = 0;	/* Count of locked-down buffers. */
 long	locked_queue_bytes   = 0L;	/* Total size of locked buffers. */
 int	lfs_subsys_pages     = 0L;	/* Total number LFS-written pages */
 int	lfs_writing	     = 0;	/* Set if already kicked off a writer
 					   because of buffer space */
-/* Lock for lfs_subsys_pages */
+/* Lock for aboves */
 struct simplelock lfs_subsys_lock = SIMPLELOCK_INITIALIZER;
 
 extern int lfs_dostats;
@@ -128,9 +130,13 @@ int lfs_reserveavail(struct lfs *, struct vnode *vp, struct vnode *vp2, int);
 int
 lfs_fits_buf(struct lfs *fs, int n, int bytes)
 {
-	int count_fit =
+	int count_fit, bytes_fit;
+
+	LOCK_ASSERT(simple_lock_held(&lfs_subsys_lock));
+
+	count_fit =
 	    (locked_queue_count + locked_queue_rcount + n < LFS_WAIT_BUFS);
-	int bytes_fit =
+	bytes_fit =
 	    (locked_queue_bytes + locked_queue_rbytes + bytes < LFS_WAIT_BYTES);
 
 #ifdef DEBUG_LFS
@@ -157,19 +163,24 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp, struct vnode *vp2,
 	KASSERT(locked_queue_rcount >= 0);
 	KASSERT(locked_queue_rbytes >= 0);
 
+	simple_lock(&lfs_subsys_lock);
 	while (n > 0 && !lfs_fits_buf(fs, n, bytes)) {
 		int error;
 
 		lfs_flush(fs, 0);
 
-		error = tsleep(&locked_queue_count, PCATCH | PUSER,
-		    "lfsresbuf", hz * LFS_BUFWAIT);
-		if (error && error != EWOULDBLOCK)
+		error = ltsleep(&locked_queue_count, PCATCH | PUSER,
+		    "lfsresbuf", hz * LFS_BUFWAIT, &lfs_subsys_lock);
+		if (error && error != EWOULDBLOCK) {
+			simple_unlock(&lfs_subsys_lock);
 			return error;
+		}
 	}
 
 	locked_queue_rcount += n;
 	locked_queue_rbytes += bytes;
+
+	simple_unlock(&lfs_subsys_lock);
 
 	KASSERT(locked_queue_rcount >= 0);
 	KASSERT(locked_queue_rbytes >= 0);
@@ -495,12 +506,15 @@ lfs_flush_fs(struct lfs *fs, int flags)
  * when pages need to be reclaimed.  Note, we have one static count of locked
  * buffers, so we can't have more than a single file system.  To make this
  * work for multiple file systems, put the count into the mount structure.
+ *
+ * called and return with lfs_subsys_lock held.
  */
 void
 lfs_flush(struct lfs *fs, int flags)
 {
 	struct mount *mp, *nmp;
 
+	LOCK_ASSERT(simple_lock_held(&lfs_subsys_lock));
 	KDASSERT(fs == NULL || !LFS_SEGLOCK_HELD(fs));
 	
 	if (lfs_dostats) 
@@ -511,12 +525,11 @@ lfs_flush(struct lfs *fs, int flags)
 #endif
 		return;
 	}
-	/* XXX MP */
 	while (lfs_writing && (flags & SEGM_WRITERD))
-		ltsleep(&lfs_writing, PRIBIO + 1, "lfsflush", 0, 0);
+		ltsleep(&lfs_writing, PRIBIO + 1, "lfsflush", 0,
+		    &lfs_subsys_lock);
 	lfs_writing = 1;
 	
-	simple_lock(&lfs_subsys_lock);
 	lfs_subsys_pages = 0; /* XXXUBC need a better way to count this */
 	simple_unlock(&lfs_subsys_lock);
 	wakeup(&lfs_subsys_pages);
@@ -538,6 +551,8 @@ lfs_flush(struct lfs *fs, int flags)
 	simple_unlock(&mountlist_slock);
 	LFS_DEBUG_COUNTLOCKED("flush");
 
+	simple_lock(&lfs_subsys_lock);
+	KASSERT(lfs_writing);
 	lfs_writing = 0;
 	wakeup(&lfs_writing);
 }
@@ -555,7 +570,6 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	int error;
 	struct lfs *fs;
 	struct inode *ip;
-	extern int lfs_dirvcount;
 
 	error = 0;
 	ip = VTOI(vp);
@@ -605,18 +619,14 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_subsys_pages > LFS_MAX_PAGES ||
-	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0)
-	{
-		simple_unlock(&lfs_subsys_lock);
+	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
 		lfs_flush(fs, flags);
-		simple_lock(&lfs_subsys_lock);
 	}
 
 	while (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS ||
 		locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES ||
 		lfs_subsys_pages > LFS_WAIT_PAGES ||
-		lfs_dirvcount > LFS_MAX_DIROP)
-	{
+		lfs_dirvcount > LFS_MAX_DIROP) {
 		simple_unlock(&lfs_subsys_lock);
 		if (lfs_dostats)
 			++lfs_stats.wait_exceeded;
@@ -636,12 +646,11 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		 * and we weren't asked to checkpoint.	Try flushing again
 		 * to keep us from blocking indefinitely.
 		 */
+		simple_lock(&lfs_subsys_lock);
 		if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
-		    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES)
-		{
+		    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES) {
 			lfs_flush(fs, flags | SEGM_CKP);
 		}
-		simple_lock(&lfs_subsys_lock);
 	}
 	simple_unlock(&lfs_subsys_lock);
 	return (error);

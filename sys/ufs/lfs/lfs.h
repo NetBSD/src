@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.66 2003/07/02 13:43:02 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.67 2003/07/12 16:17:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -179,19 +179,23 @@ typedef struct lfs_res_blk {
 
 # define LFS_LOCK_BUF(bp) do {						\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == 0) {		\
+		simple_lock(&lfs_subsys_lock);				\
 		++locked_queue_count;					\
 		locked_queue_bytes += bp->b_bufsize;			\
+		simple_unlock(&lfs_subsys_lock);			\
 	}								\
 	(bp)->b_flags |= B_LOCKED;					\
 } while (0)
 
 # define LFS_UNLOCK_BUF(bp) do {					\
 	if (((bp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED) {	\
+		simple_lock(&lfs_subsys_lock);				\
 		--locked_queue_count;					\
 		locked_queue_bytes -= bp->b_bufsize;			\
 		if (locked_queue_count < LFS_WAIT_BUFS &&		\
 		    locked_queue_bytes < LFS_WAIT_BYTES)		\
 			wakeup(&locked_queue_count);			\
+		simple_unlock(&lfs_subsys_lock);			\
 	}								\
 	(bp)->b_flags &= ~B_LOCKED;					\
 } while (0)
@@ -203,8 +207,6 @@ typedef struct lfs_res_blk {
 # ifdef DEBUG_LOCKED_LIST
 #  define LFS_DEBUG_COUNTLOCKED(m) do {					\
 	int _s;								\
-	extern int locked_queue_count;					\
-	extern long locked_queue_bytes;					\
 	_s = splbio();							\
 	lfs_countlocked(&locked_queue_count, &locked_queue_bytes, (m));	\
 	splx(_s);							\

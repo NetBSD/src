@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.51 2003/07/02 13:40:52 yamt Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.52 2003/07/12 16:17:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -121,6 +121,12 @@ extern int lfs_allclean_wakeup;
 extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 extern struct pool lfs_dinode_pool;		/* memory pool for dinodes */
 extern struct pool lfs_inoext_pool;	/* memory pool for inode extension */
+
+extern int locked_queue_count;
+extern long locked_queue_bytes;
+extern int lfs_subsys_pages;	
+extern int lfs_dirvcount;
+extern struct simplelock lfs_subsys_lock;
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
