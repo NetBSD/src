@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2002/11/23 12:53:51 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2002/11/23 13:44:41 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,8 @@ static __inline int splraise __P((int));
 static __inline void spllower __P((int));
 static __inline void softintr __P((int));
 
+#define __splbarrier() __asm __volatile("":::"memory")
+
 /*
  * Add a mask to cpl, and return the old value of cpl.
  */
@@ -97,6 +99,7 @@ splraise(ncpl)
 	register int ocpl = cpl;
 
 	cpl = ocpl | ncpl;
+	__splbarrier();
 	return (ocpl);
 }
 
@@ -109,6 +112,7 @@ spllower(ncpl)
 	register int ncpl;
 {
 
+	__splbarrier();
 	cpl = ncpl;
 	if (ipending & ~ncpl)
 		Xspllower();
