@@ -1546,9 +1546,7 @@ EOF
       m88k-*-coff*)         fmt=coff ;;
 
       # don't change em like *-*-bsd does
-      mips*el*-*-netbsd* | mips-dec-netbsd*)
-			    fmt=elf endian=little ;;
-      mips*eb*-*-netbsd*)   fmt=elf endian=big ;;
+      mips-*-netbsd*)       fmt=elf ;;
       mips-dec-openbsd*)    fmt=elf endian=little ;;
       mips-dec-bsd*)        fmt=aout ;;
       mips-sony-bsd*)       fmt=ecoff ;;
