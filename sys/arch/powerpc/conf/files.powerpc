@@ -28,6 +28,7 @@ file	arch/powerpc/powerpc/ipkdb_glue.c	ipkdb
 file	arch/powerpc/powerpc/machdep.c
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/ofw_machdep.c
+file	arch/powerpc/powerpc/ofwmagic.S
 file	arch/powerpc/powerpc/openfirm.c
 file	arch/powerpc/powerpc/pmap.c
 file	arch/powerpc/powerpc/process_machdep.c
@@ -40,6 +41,9 @@ file	arch/powerpc/powerpc/vm_machdep.c
 file	dev/cons.c
 file	dev/cninit.c
 
+# For now, hardwire soft interrupt handling
+file	arch/powerpc/powerpc/soft_spl.c
+
 # FirePower specific code
 #device firepower: openfirm
 #attach firepower at root
@@ -47,5 +51,5 @@ file	dev/cninit.c
 #file	arch/powerpc/firepower/firedep.c	firepower needs-flag
 #file	arch/powerpc/firepower/fireirq.c	firepower
 
-# FirePower OpenFirmware Bug Workarounds
-file	arch/powerpc/powerpc/ofwreal.S		firepowerbugs
+# Firmworks OpenFirmware Bug Workarounds
+file	arch/powerpc/powerpc/ofwreal.S		firmworksbugs
