@@ -1,5 +1,3 @@
-/*	$NetBSD: des_rw.c,v 1.2 1995/03/21 07:58:30 cgd Exp $	*/
-
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,11 +32,7 @@
  */
 
 #ifndef lint
-#if 0
 static char sccsid[] = "@(#)des_rw.c	8.1 (Berkeley) 6/6/93";
-#else
-static char rcsid[] = "$NetBSD: des_rw.c,v 1.2 1995/03/21 07:58:30 cgd Exp $";
-#endif
 #endif /* not lint */
 
 #ifdef CRYPT
