@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.52 2001/11/15 21:25:08 christos Exp $	*/
+/*	$NetBSD: route.c,v 1.53 2002/02/21 15:44:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.52 2001/11/15 21:25:08 christos Exp $");
+__RCSID("$NetBSD: route.c,v 1.53 2002/02/21 15:44:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,8 @@ static int x25_makemask __P((void));
 static void interfaces __P((void));
 static void monitor __P((void));
 static void print_getmsg __P((struct rt_msghdr *, int));
-#endif
+static const char *linkstate __P((struct if_msghdr *));
+#endif /* SMALL */
 static int rtmsg __P((int, int ));
 static void mask_addr __P((void));
 static void print_rtmsg __P((struct rt_msghdr *, int));
@@ -1628,6 +1629,29 @@ char ifnetflags[] =
 char addrnames[] =
 "\1DST\2GATEWAY\3NETMASK\4GENMASK\5IFP\6IFA\7AUTHOR\010BRD";
 
+
+#ifndef SMALL
+static const char *
+linkstate(ifm)
+	struct if_msghdr *ifm;
+{
+	static char buf[64];
+
+	switch (ifm->ifm_data.ifi_link_state) {
+	case LINK_STATE_UNKNOWN:
+		return "carrier: unknown";
+	case LINK_STATE_DOWN:
+		return "carrier: no carrier";
+	case LINK_STATE_UP:
+		return "carrier: active";
+	default:
+		(void)snprintf(buf, sizeof(buf), "carrier: 0x%x",
+		    ifm->ifm_data.ifi_link_state);
+		return buf;
+	}
+}
+#endif /* SMALL */
+
 static void
 print_rtmsg(rtm, msglen)
 	struct rt_msghdr *rtm;
@@ -1652,7 +1676,13 @@ print_rtmsg(rtm, msglen)
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
-		(void) printf("if# %d, flags:", ifm->ifm_index);
+		(void) printf("if# %d, %s, flags:", ifm->ifm_index,
+#ifdef SMALL
+		    ""
+#else
+		    linkstate(ifm)
+#endif /* SMALL */
+		    );
 		bprintf(stdout, ifm->ifm_flags, ifnetflags);
 		pmsg_addrs((char *)(ifm + 1), ifm->ifm_addrs);
 		break;
