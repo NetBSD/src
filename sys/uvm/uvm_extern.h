@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.58 2001/03/15 06:10:56 chs Exp $	*/
 
 /*
  *
@@ -620,7 +620,7 @@ int			uvm_sysctl __P((int *, u_int, void *, size_t *,
 /* uvm_mmap.c */
 int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
 				vm_prot_t, vm_prot_t, int, 
-				caddr_t, voff_t, vsize_t));
+				void *, voff_t, vsize_t));
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
@@ -663,7 +663,7 @@ int			uvm_coredump32 __P((struct proc *, struct vnode *,
 				struct ucred *, struct core32 *));
 
 /* uvm_user.c */
-int			uvm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
+void			uvm_deallocate __P((vm_map_t, vaddr_t, vsize_t));
 
 /* uvm_vnode.c */
 void			uvm_vnp_setsize __P((struct vnode *, voff_t));
