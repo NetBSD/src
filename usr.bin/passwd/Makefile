@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.26 2000/06/24 06:52:10 veego Exp $
+#	$NetBSD: Makefile,v 1.27 2000/07/06 11:16:50 ad Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
 
 PROG=	passwd
-SRCS=	local_passwd.c yp_passwd.c passwd.c
+SRCS=	local_passwd.c passwd.c pwd_gensalt.c yp_passwd.c
 DPADD+= ${LIBRPCSVC} ${LIBCRYPT} ${LIBUTIL}
 LDADD+= -lrpcsvc -lcrypt -lutil
 CPPFLAGS+=-I${.CURDIR} -DYP -DLOGIN_CAP
