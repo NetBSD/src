@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.44 1999/09/02 18:11:41 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.45 1999/09/04 22:26:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1288,7 +1288,7 @@ uhci_device_bulk_start(reqh)
 	uhci_soft_qh_t *sqh;
 	usb_dma_t *dmap;
 	usbd_status r;
-	int len, isread;
+	int len, isread, endpt;
 	int s;
 
 	DPRINTFN(3, ("uhci_device_bulk_transfer: reqh=%p buf=%p len=%d "
@@ -1300,7 +1300,8 @@ uhci_device_bulk_start(reqh)
 
 	len = reqh->length;
 	dmap = &upipe->u.bulk.datadma;
-	isread = reqh->pipe->endpoint->edesc->bEndpointAddress & UE_IN;
+	endpt = reqh->pipe->endpoint->edesc->bEndpointAddress;
+	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	sqh = upipe->u.bulk.sqh;
 
 	upipe->u.bulk.isread = isread;
@@ -1865,7 +1866,7 @@ uhci_device_isoc_setbuf(pipe, bufsize, nbuf)
 	uhci_softc_t *sc = (uhci_softc_t *)dev->bus;
 	int addr = upipe->pipe.device->address;
 	int endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
-	int rd = upipe->pipe.endpoint->edesc->bEndpointAddress & UE_IN;
+	int rd = UE_GET_DIR(endpt) == UE_DIR_IN;
 	struct iso *iso;
 	int i;
 	usbd_status r;
@@ -2188,7 +2189,7 @@ uhci_open(pipe)
 		case USB_CONTROL_ENDPOINT:
 			pipe->methods = &uhci_root_ctrl_methods;
 			break;
-		case UE_IN | UHCI_INTR_ENDPT:
+		case UE_DIR_IN | UHCI_INTR_ENDPT:
 			pipe->methods = &uhci_root_intr_methods;
 			break;
 		default:
@@ -2291,7 +2292,7 @@ usb_interface_descriptor_t uhci_ifcd = {
 usb_endpoint_descriptor_t uhci_endpd = {
 	USB_ENDPOINT_DESCRIPTOR_SIZE,
 	UDESC_ENDPOINT,
-	UE_IN | UHCI_INTR_ENDPT,
+	UE_DIR_IN | UHCI_INTR_ENDPT,
 	UE_INTERRUPT,
 	{8},
 	255

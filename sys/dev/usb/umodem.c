@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.11 1999/08/28 21:42:35 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.12 1999/09/04 22:26:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -247,10 +247,10 @@ USB_ATTACH(umodem)
 				USBDEVNAME(sc->sc_dev), i);
 			goto bad;
 		}
-		if (UE_GET_IN(ed->bEndpointAddress) &&
+		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
                         sc->sc_bulkin_no = ed->bEndpointAddress;
-                } else if (!UE_GET_IN(ed->bEndpointAddress) &&
+                } else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 			   (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
                         sc->sc_bulkout_no = ed->bEndpointAddress;
                 }

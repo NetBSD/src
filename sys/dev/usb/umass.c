@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.10 1999/08/30 01:05:08 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.11 1999/09/04 22:26:12 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -275,10 +275,10 @@ USB_ATTACH(umass)
 			       USBDEVNAME(sc->sc_dev));
 			USB_ATTACH_ERROR_RETURN;
 		}
-		if (UE_GET_DIR(ed->bEndpointAddress) == UE_IN
+		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN
 		    && (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
 			sc->sc_bulkin = ed->bEndpointAddress;
-		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_OUT
+		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT
 		    && (ed->bmAttributes & UE_XFERTYPE) == UE_BULK) {
 			sc->sc_bulkout = ed->bEndpointAddress;
 		}

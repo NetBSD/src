@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.30 1999/08/29 22:45:41 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.31 1999/09/04 22:26:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -219,12 +219,11 @@ typedef struct {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bEndpointAddress;
-#define UE_IN		0x80
-#define UE_OUT		0x00
+#define UE_GET_DIR(a)	((a) & 0x80)
+#define UE_DIR_IN	0x80
+#define UE_DIR_OUT	0x00
 #define UE_ADDR		0x0f
 #define UE_GET_ADDR(a)	((a) & UE_ADDR)
-#define UE_GET_IN(a)	(((a) >> 7) & 1)
-#define UE_GET_DIR(a)	((a) & 0x80)
 	uByte		bmAttributes;
 #define UE_XFERTYPE	0x03
 #define  UE_CONTROL	0x00

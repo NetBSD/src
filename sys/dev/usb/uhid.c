@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.22 1999/08/28 21:42:35 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.23 1999/09/04 22:26:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,11 +202,11 @@ USB_ATTACH(uhid)
 		     " bInterval=%d\n",
 		     ed->bLength, ed->bDescriptorType, 
 		     ed->bEndpointAddress & UE_ADDR,
-		     ed->bEndpointAddress & UE_IN ? "in" : "out",
+		     UE_GET_DIR(ed->bEndpointAddress)==UE_DIR_IN? "in" : "out",
 		     ed->bmAttributes & UE_XFERTYPE,
 		     UGETW(ed->wMaxPacketSize), ed->bInterval));
 
-	if ((ed->bEndpointAddress & UE_IN) != UE_IN ||
+	if (UE_GET_DIR(ed->bEndpointAddress) != UE_DIR_IN ||
 	    (ed->bmAttributes & UE_XFERTYPE) != UE_INTERRUPT) {
 		printf("%s: unexpected endpoint\n", USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
