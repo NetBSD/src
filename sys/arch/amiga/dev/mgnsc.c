@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: mgnsc.c,v 1.3 1994/06/14 00:58:49 chopps Exp $
+ *	$Id: mgnsc.c,v 1.4 1994/06/16 14:28:53 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -104,6 +104,7 @@ mgnscattach(pdp, dp, auxp)
 	struct zthreebus_args *zap;
 	siop_regmap_p rp;
 
+	printf("\n");
 	zap = auxp;
 	
 	sc = (struct siop_softc *)dp;

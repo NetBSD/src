@@ -141,7 +141,7 @@ zthreeattach(pdp, dp, auxp)
 
 	if (amiga_realconfig) {
 		if (ZTHREEAVAIL)
-			printf (" I/O size 0x%08x", ZTHREEAVAIL);
+			printf(": i/o size 0x%08x", ZTHREEAVAIL);
 		printf("\n");
 	}
 

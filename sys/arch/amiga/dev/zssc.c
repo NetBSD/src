@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: zssc.c,v 1.4 1994/06/14 00:59:31 chopps Exp $
+ *	$Id: zssc.c,v 1.5 1994/06/16 14:28:58 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -104,6 +104,8 @@ zsscattach(pdp, dp, auxp)
 	struct siop_softc *sc;
 	struct ztwobus_args *zap;
 	siop_regmap_p rp;
+
+	printf("\n");
 
 	zap = auxp;
 	
