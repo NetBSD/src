@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.6 2003/03/04 17:25:30 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utxface.c,v 1.7 2003/10/31 17:21:01 mycroft Exp $");
 
 #define __UTXFACE_C__
 
@@ -328,21 +328,6 @@ AcpiInitializeObjects (
     ACPI_FUNCTION_TRACE ("AcpiInitializeObjects");
 
     /*
-     * Initialize all device objects in the namespace
-     * This runs the _STA and _INI methods.
-     */
-    if (!(Flags & ACPI_NO_DEVICE_INIT))
-    {
-        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Initializing ACPI Devices\n"));
-
-        Status = AcpiNsInitializeDevices ();
-        if (ACPI_FAILURE (Status))
-        {
-            return_ACPI_STATUS (Status);
-        }
-    }
-
-    /*
      * Initialize the objects that remain uninitialized.  This
      * runs the executable AML that is part of the declaration of OpRegions
      * and Fields.
@@ -352,6 +337,21 @@ AcpiInitializeObjects (
         ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Initializing ACPI Objects\n"));
 
         Status = AcpiNsInitializeObjects ();
+        if (ACPI_FAILURE (Status))
+        {
+            return_ACPI_STATUS (Status);
+        }
+    }
+
+    /*
+     * Initialize all device objects in the namespace
+     * This runs the _STA and _INI methods.
+     */
+    if (!(Flags & ACPI_NO_DEVICE_INIT))
+    {
+        ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "[Init] Initializing ACPI Devices\n"));
+
+        Status = AcpiNsInitializeDevices ();
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
