@@ -9,6 +9,12 @@
 #undef CPP_SUBTARGET_SPEC
 #define CPP_SUBTARGET_SPEC ""
 
+#undef MULDI3_LIBCALL
+#undef DIVDI3_LIBCALL
+#undef UDIVDI3_LIBCALL
+#undef MODDI3_LIBCALL
+#undef UMODDI3_LIBCALL
+
 #define NETBSD_ELF
 #include <netbsd.h>
 
