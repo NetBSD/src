@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.9 1996/03/17 01:46:48 thorpej Exp $	*/
+/*	$NetBSD: sfb.c,v 1.10 1996/03/17 22:02:59 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -126,7 +126,7 @@ static u_char cmap_bits [CMAP_BITS];		/* colormap for console... */
 int sfbmatch __P((struct device *, void *, void *));
 void sfbattach __P((struct device *, struct device *, void *));
 
-struct sfb_ca = {
+struct cfattach sfb_ca = {
 	sizeof(struct device), sfbmatch, sfbattach
 };
 
