@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 1999/02/19 10:22:14 christos Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 2002/09/09 14:08:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,22 @@
 	subl	$8,%esp			# make room of obj_main and exit proc
 	movl	%esp,%eax		# save stack pointer for _rtld
 	pushl	%ebx			# save ps_strings
+
+	call	1f
+1:
+	popl	%ebx
+	addl	$_GLOBAL_OFFSET_TABLE_+[.-1b],%ebx
+
+	movl	_GLOBAL_OFFSET_TABLE_@GOT(%ebx),%edx
+	movl	_GOT_END_@GOT(%ebx),%ecx
+	subl	%edx,%ecx
+	shrl	$2,%ecx
+	subl	%ebx,%edx
+1:
+	subl	%edx,(%ebx)
+	leal	4(%ebx),%ebx
+	decl	%ecx
+	jg	1b
 
 	pushl	%eax
 	call	_rtld@PLT		# _rtld(sp)
