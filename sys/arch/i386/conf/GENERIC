@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.216 1999/01/29 00:00:17 cjs Exp $
+#	$NetBSD: GENERIC,v 1.217 1999/01/30 13:44:25 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -140,6 +140,18 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 
 options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 
+# wscons options
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# different kernel output - see dev/wscons/wsdisplayvar.h
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
+# see dev/pckbc/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
+
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
 #config		netbsd	root on sd0a type ffs
@@ -203,7 +215,7 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # Console Devices
 
 # ISA console.  You can only configure one of these!
-pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
+#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #vt0	at isa? port 0x60 irq 1		# PCVT console driver
 
 # Keyboard layout configuration for pccons
@@ -211,6 +223,22 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
+
+# wscons
+pckbc0	at isa?			# pc keyboard controller
+pckbd*	at pckbc?		# PC keyboard
+# "opms" should not be enabled together with "pms" or "pmsi"
+#pms*		at pckbc?		# PS/2 mouse for wsmouse
+#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
+opms*		at pckbc?		# backwards compatible PS/2 mouse
+vga0		at isa?
+vga*		at pci?
+pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay*	at vga? console ?
+wsdisplay*	at pcdisplay? console ?
+wskbd*	at pckbd? console ?
+#wsmouse*	at pms?
+#wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
@@ -535,11 +563,18 @@ midi*	at opl?			# OPL FM synth
 # Mice
 
 # ISA busmice
+#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+#lms1	at isa? port 0x238 irq 5
+#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+#mms1	at isa? port 0x238 irq 5
+#wsmouse*	at lms?
+#wsmouse*	at mms?
+# backwards compatible versions
 olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 olms1	at isa? port 0x238 irq 5
 omms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 omms1	at isa? port 0x238 irq 5
-opms0	at pc? irq 12		# PS/2 auxiliary port mouse
+#opms0	at pc? irq 12		# PS/2 auxiliary port mouse
 #opms0	at vt? irq 12		# PS/2 auxiliary port mouse
 
 
