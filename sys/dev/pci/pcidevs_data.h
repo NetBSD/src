@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.364 2001/10/03 12:07:09 simonb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.365 2001/10/11 14:31:58 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.361 2001/10/03 12:05:49 simonb Exp 
+ *	NetBSD: pcidevs,v 1.362 2001/10/11 14:30:21 tron Exp 
  */
 
 /*
@@ -4898,6 +4898,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Silicon Integrated System",
 	    "85C601",
+	},
+	{
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_735,
+	    0,
+	    "Silicon Integrated System",
+	    "SiS 735 Host Bridge",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
