@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.11.2.3 1993/11/12 06:12:58 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.11.2.4 1993/11/20 09:23:42 cgd Exp $
  */
 
 /*
@@ -495,6 +495,8 @@ nfsmout:
 		if (lockparent || (flag != CREATE && flag != RENAME) ||
 		    *ndp->ni_next != 0)
 			nfs_lock(vp);
+		if ((flag == CREATE || flag == RENAME) && error == ENOENT)
+			error = EJUSTRETURN;
 		if (flag != LOOKUP && *ndp->ni_next == 0)
 			ndp->ni_nameiop |= SAVENAME;
 		return (error);
