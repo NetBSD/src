@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.15 2000/11/24 12:58:17 tsutsui Exp $
+# 	$NetBSD: GENERIC,v 1.16 2000/12/19 10:42:05 bouyer Exp $
 
 #	news68k GENERIC config file;
 #
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.16 $"
 
 maxusers	8
 
@@ -174,5 +174,6 @@ pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	rnd			# /dev/random and in-kernle generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.

@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.3 2000/10/04 22:26:50 itojun Exp $
+# 	$NetBSD: GENERIC,v 1.4 2000/12/19 10:42:05 bouyer Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -116,6 +116,7 @@ pseudo-device	bpfilter	16	# Berkeley Packet Filter
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	strip		1	# radio clock
 #pseudo-device	ipfilter		# ip filter
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.34 2000/11/14 06:01:09 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.35 2000/12/19 10:42:06 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.34 $"
+#ident 		"GENERIC-$Revision: 1.35 $"
 
 maxusers	32
 
@@ -136,5 +136,6 @@ pseudo-device	tun		4	# network tunneling over tty
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 #pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator

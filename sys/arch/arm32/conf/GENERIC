@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.74 2000/09/24 15:59:29 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.75 2000/12/19 10:42:03 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident 		"GENERIC-$Revision: 1.74 $"
+#ident 		"GENERIC-$Revision: 1.75 $"
 
 # estimated number of users
 maxusers	32
@@ -269,6 +269,7 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith	1		# IPv[46] tcp relay translation i/f
 #pseudo-device	stf	1		# 6to4 IPv6 over IPv4 encapsulation
 #pseudo-device	strip	4		# STarmode Radio IP (Metricon Ricochet)
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device	vnd     4               # disk-like interface to files
