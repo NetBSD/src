@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3.8.8 2002/07/15 02:15:50 gehenna Exp $	*/
+/*	$NetBSD: defs.h,v 1.3.8.9 2002/07/17 02:28:46 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -318,7 +318,7 @@ struct prefix {
  */
 struct devm {
 	TAILQ_ENTRY(devm) dm_next;
-	const char	*dm_srcfile;	/* the name of the "devsw" file */
+	const char	*dm_srcfile;	/* the name of the "majors" file */
 	u_short		dm_srcline;	/* the line number */
 	const char	*dm_name;	/* [bc]devsw name */
 	int		dm_cmajor;	/* character major */
