@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.412 2004/08/25 00:23:15 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.413 2004/08/25 03:14:02 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6806,7 +6806,15 @@ sys/netinet/fil.c				1.68
 	[chs, ticket #783]
 
 
-distrib/notes/common/main				1.264
+distrib/notes/common/main			1.264
 
 	Update list of release engineers.
 	[tron, ticket #782]
+
+bin/pax/file_subs.c				1.51
+bin/pax/extern.h				1.44
+bin/pax/ar_subs.c				1.31
+
+	Propery handle "cpio" archives where the last hardlink includes the
+	data of a file. PR#26514
+	[tron, ticket #784]
