@@ -1,9 +1,9 @@
-.\" $NetBSD: identd.8,v 1.18 2004/01/31 22:39:24 wiz Exp $
+.\" $NetBSD: identd.8,v 1.19 2005/04/03 22:15:32 peter Exp $
 .\"
 .\" This software is in the public domain.
-.\" Written by Peter Postma <peter@pointless.nl>
+.\" Written by Peter Postma <peter@NetBSD.org>
 .\"
-.Dd January 31, 2004
+.Dd March 22, 2005
 .Dt IDENTD 8
 .Os
 .Sh NAME
@@ -18,7 +18,9 @@
 .Op Fl f Ar fallback
 .Op Fl g Ar uid
 .Op Fl L Ar username
+.Op Fl m Ar filter
 .Op Fl o Ar osname
+.Op Fl P Ar address
 .Op Fl p Ar portno
 .Op Fl t Ar seconds
 .Op Fl u Ar uid
@@ -95,7 +97,8 @@ Specify a
 .Ar fallback
 username.
 If the lookup fails then this username will be returned.
-This can be useful for when running this service on a NAT host.
+This can be useful for when running this service on a NAT host and
+not using the forward/proxy functionality.
 .It Fl g Ar gid
 Specify the group id number or name which the server should switch to after
 binding itself to the TCP/IP port.
@@ -122,6 +125,40 @@ Return this name for all ident requests.
 Use
 .Xr syslogd 8
 for logging.
+.It Fl m Ar filter
+Enables forwarding of ident queries.
+The
+.Ar filter
+argument specifies which packet filter should be used to lookup the
+connections, currently
+.Sq pf
+and
+.Sq ipfilter
+are supported packet filters.
+Note that
+.Nm
+changes the ident queries to use the local port on the NAT host instead of
+the local port on the forwarding host.
+This is needed because otherwise we can't do a lookup on the proxy host.
+On the proxy host,
+.Dq proxy mode
+should be enabled with the
+.Fl P
+flag or
+.Dq lying mode
+with the
+.Fl L
+flag.
+.Nm
+will need access to
+.Pa /etc/pf
+or
+.Pa /etc/ipnat
+so you either need to run
+.Nm
+under root or adjust group owner/permissions to the device(s) and run
+.Nm
+under that group.
 .It Fl N
 Enable
 .Pa .noident
@@ -136,6 +173,12 @@ Return
 .Ar osname
 instead of the default
 .Dq UNIX .
+.It Fl P Ar address
+Specify a proxy server which will be used to receive proxied ident
+queries from.
+See also the
+.Fl m
+flag how this operates.
 .It Fl p Ar portno
 Specify an alternative port number under which the server should run.
 The default is port 113.
