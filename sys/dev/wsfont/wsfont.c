@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.26 2002/03/18 14:35:20 uch Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.27 2002/03/20 12:18:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.26 2002/03/18 14:35:20 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.27 2002/03/20 12:18:56 ad Exp $");
 
 #include "opt_wsfont.h"
 
@@ -349,6 +349,7 @@ wsfont_add0(struct wsdisplay_font *font, int copy)
 	} else {
 		ent->font = malloc(sizeof(struct wsdisplay_font), M_DEVBUF,
 		    M_WAITOK | M_ZERO);
+		memcpy(ent->font, font, sizeof(*ent->font));
 
 		size = font->fontheight * font->numchars * font->stride;
 		ent->font->data = malloc(size, M_DEVBUF, M_WAITOK);
