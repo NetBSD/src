@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2002/07/10 01:55:43 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2002/07/14 12:20:45 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -537,12 +537,10 @@ sendsig(sig, mask, code)
 	}
 
 	/* Save register context. */
-	__asm("movl %%gs,%0" : "=r" (frame.sf_sc.sc_gs));
-	__asm("movl %%fs,%0" : "=r" (frame.sf_sc.sc_fs));
-#if 0
 	frame.sf_sc.sc_es = tf->tf_es;
 	frame.sf_sc.sc_ds = tf->tf_ds;
-#endif
+	frame.sf_sc.sc_fs = tf->tf_fs;
+	frame.sf_sc.sc_gs = tf->tf_gs;
 	frame.sf_sc.sc_rflags = tf->tf_rflags;
 	frame.sf_sc.sc_r15 = tf->tf_r15;
 	frame.sf_sc.sc_r14 = tf->tf_r14;
@@ -584,12 +582,11 @@ sendsig(sig, mask, code)
 	/*
 	 * Build context to run handler in.
 	 */
-#if 0
-	__asm("movl %0,%%gs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-	__asm("movl %0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
-	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-#endif
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+
 	tf->tf_rdi = sig;
 	tf->tf_rsi = code;
 	tf->tf_rdx = (int64_t) &fp->sf_sc;
@@ -648,11 +645,10 @@ sys___sigreturn14(p, v, retval)
 	    !USERMODE(context.sc_cs, context.sc_rflags))
 		return (EINVAL);
 
-	/* %fs and %gs were restored by the trampoline. */
-#if 0
-	tf->tf_es = context.sc_es;
 	tf->tf_ds = context.sc_ds;
-#endif
+	tf->tf_es = context.sc_es;
+	tf->tf_fs = context.sc_fs;
+	tf->tf_gs = context.sc_gs;
 	tf->tf_rflags = context.sc_rflags;
 	tf->tf_rdi = context.sc_rdi;
 	tf->tf_rsi = context.sc_rsi;
@@ -1028,12 +1024,10 @@ setregs(p, pack, stack)
 	p->p_flag &= ~P_32;
 
 	tf = p->p_md.md_regs;
-#if 0
-	__asm("movl %0,%%gs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-	__asm("movl %0,%%fs" : : "r" (LSEL(LUDATA_SEL, SEL_UPL)));
-	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
-#endif
+	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_fs = LSEL(LUDATA_SEL, SEL_UPL);
+	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;

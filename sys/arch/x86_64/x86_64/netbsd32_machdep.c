@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.10 2002/07/07 23:25:37 fvdl Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.11 2002/07/14 12:20:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -97,23 +97,10 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	p->p_flag |= P_32;
 
 	tf = p->p_md.md_regs;
-#if 0
-	__asm("movl %0,%%gs" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
-	__asm("movl %0,%%fs" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
-#endif
-
-	/*
-	 * XXXfvdl needs to be revisited
-	 * if USER_LDT is going to be supported, these need
-	 * to be saved/restored.
-	 */
-#if 1
-	__asm("movl %0,%%ds" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
-	__asm("movl %0,%%es" : : "r" (LSEL(LUDATA32_SEL, SEL_UPL)));
-#else
-	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA32_SEL, SEL_UPL);
-#endif
+	tf->tf_es = LSEL(LUDATA32_SEL, SEL_UPL);
+	tf->tf_fs = LSEL(LUDATA32_SEL, SEL_UPL);
+	tf->tf_gs = LSEL(LUDATA32_SEL, SEL_UPL);
 	tf->tf_rdi = 0;
 	tf->tf_rsi = 0;
 	tf->tf_rbp = 0;
@@ -163,20 +150,11 @@ netbsd32_sendsig(int sig, sigset_t *mask, u_long code)
 	frame.sf_code = code;
 	frame.sf_scp = (u_int32_t)(u_long)&fp->sf_sc;
 
-	/*
-	 * XXXfvdl these need to be saved and restored for USER_LDT.
-	 */
-
-	/* Save register context. */
-	__asm("movl %%gs,%0" : "=r" (frame.sf_sc.sc_gs));
-	__asm("movl %%fs,%0" : "=r" (frame.sf_sc.sc_fs));
-#if 1
-	frame.sf_sc.sc_es = LSEL(LUDATA32_SEL, SEL_UPL);
-	frame.sf_sc.sc_ds = LSEL(LUDATA32_SEL, SEL_UPL);
-#else
-	frame.sf_sc.sc_es = tf->tf_es;
 	frame.sf_sc.sc_ds = tf->tf_ds;
-#endif
+	frame.sf_sc.sc_es = tf->tf_es;
+	frame.sf_sc.sc_es = tf->tf_fs;
+	frame.sf_sc.sc_es = tf->tf_gs;
+
 	frame.sf_sc.sc_eflags = tf->tf_rflags;
 	frame.sf_sc.sc_edi = tf->tf_rdi;
 	frame.sf_sc.sc_esi = tf->tf_rsi;
@@ -210,18 +188,11 @@ netbsd32_sendsig(int sig, sigset_t *mask, u_long code)
 	/*
 	 * Build context to run handler in.
 	 */
-#if 0
-	__asm("movl %0,%%gs" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
-	__asm("movl %0,%%fs" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
-#endif
-#if 1
-	/* XXXX */
-	__asm("movl %0,%%es" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
-	__asm("movl %0,%%ds" : : "r" (GSEL(GUDATA32_SEL, SEL_UPL)));
-#else
-	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
-#endif
+	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
+
 	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
 	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
@@ -264,14 +235,11 @@ netbsd32___sigreturn14(struct proc *p, void *v, register_t *retval)
 	    !USERMODE(context.sc_cs, context.sc_eflags))
 		return (EINVAL);
 
-	/* %fs and %gs were restored by the trampoline. */
-#if 1
-	__asm("movl %0,%%ds" : : "r" (context.sc_ds));
-	__asm("movl %0,%%es" : : "r" (context.sc_es));
-#else
-	tf->tf_es = context.sc_es;
 	tf->tf_ds = context.sc_ds;
-#endif
+	tf->tf_es = context.sc_es;
+	tf->tf_fs = context.sc_fs;
+	tf->tf_gs = context.sc_gs;
+
 	tf->tf_rflags = context.sc_eflags;
 	tf->tf_rdi = context.sc_edi;
 	tf->tf_rsi = context.sc_esi;
