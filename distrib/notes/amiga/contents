@@ -1,15 +1,15 @@
 [ XXX file sizes need to be upgraded in this section ]
 
-The Amiga-specific portion of the NetBSD 1.2 release is found in the
-"amiga" subdirectory of the distribution.  That subdirectory is layed
+The Amiga-specific portion of the NetBSD _VER release is found in the
+"amiga" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
 
-.../NetBSD-1.2/amiga/
+.../NetBSD-_VER/amiga/
 			binary/		Amiga binary distribution sets;
 					see below.
 
-			miniroot/	Amiga installation and upgrade
-					file system images; see below.
+			miniroot/	Amiga miniroot file system
+					image; see below.
 
 			security/	Amiga security distribution;
 					see below;
@@ -18,17 +18,16 @@ out as follows:
 					installation utilities; see
 					installation section, below.
 
-There are two Amiga file system images to be found in the "amiga/miniroot"
-subdirectory of the NetBSD 1.2 distribution.  One of them is a upgrade
-image and one is an installation image. They are described in more
-detail below.  There are gzipped versions of each available, for easier
+The Amiga now uses a single miniroot filesystem for both an initial
+installation and for an upgrade.  A gzipped version is available, for easier
 downloading.  (The gzipped version have the ".gz" extension added to
 their names.)
 
-Installation file system:
+Miniroot file system:
 
 	This file contains a BSD root file system setup to help
-	you install the rest of NetBSD.  This includes formatting
+	you install the rest of NetBSD or to upgrade a previous version of
+	NetBSD.  This includes formatting
 	and mounting your root and /usr partitions and getting
 	ready to extract (and possibly first fetching) the distribution
 	sets.  There is enough on this file system to allow you to
@@ -36,31 +35,15 @@ Installation file system:
 	NFS file system or ftp.  You can also load distribution sets from
 	a SCSI tape or from one of your existing AmigaDOS partitions.
 
-	This file is named "inst-12.fs".
-
-
-Upgrade file system:
-
-	This file contains a BSD root file system setup to help
-	you upgrade a previous version of NetBSD.  This includes
-	converting existing partitions and mounting your root and
-	/usr partitions and getting ready to extract (and possibly
-	first fetching) the distribution sets.  There is enough on
-	this file system to allow you to make a SLIP or PPP connection,
-	configure an Ethernet, mount an NFS file system or ftp.
-	You can also load distribution sets from a SCSI tape, from
-	one of your existing AmigaDOS partitions, or from an existing
-	NetBSD partition.
-
-	This file is named "upgr-12.fs".
+	This file is named "miniroot-13.fs".
 
 The NetBSD/Amiga binary distribution sets contain the binaries which
-comprise the NetBSD 1.2 release for the Amiga.  There are seven binary
+comprise the NetBSD _VER release for the Amiga.  There are seven binary
 distribution sets, and the "security" distribution set.  The binary
 distribution sets can be found in subdirectories of the "amiga/binary"
-subdirectory of the NetBSD 1.2 distribution tree, and are as follows:
+subdirectory of the NetBSD _VER distribution tree, and are as follows:
 
-	base12	The NetBSD/Amiga 1.2 base binary distribution.  You
+	base13	The NetBSD/Amiga _VER base binary distribution.  You
 		MUST install this distribution set.  It contains the
 		base NetBSD utilities that are necessary for the
 		system to run and be minimally functional.  It
@@ -68,7 +51,7 @@ subdirectory of the NetBSD 1.2 distribution tree, and are as follows:
 		everything described below.
 		[ 8M gzipped, 20M uncompressed ]
 
-	comp12	The NetBSD/Amiga Compiler tools.  All of the tools
+	comp13	The NetBSD/Amiga Compiler tools.  All of the tools
 		relating to C, C++, and FORTRAN (yes, there are two!).
 		This set includes the system include files
 		(/usr/include), the linker, the compiler tool chain,
@@ -79,7 +62,7 @@ subdirectory of the NetBSD 1.2 distribution tree, and are as follows:
 		call and library manual pages.
 		[ 6M gzipped, 15M uncompressed ]
 
-	etc12	This distribution set contains the system
+	etc13	This distribution set contains the system
 		configuration files that reside in /etc and in several
 		other places.  This set MUST be installed if you are
 		installing the system from scratch, but should NOT be
@@ -88,28 +71,28 @@ subdirectory of the NetBSD 1.2 distribution tree, and are as follows:
 		CAREFULLY upgrade your configuration files by hand.)
 		[ 77K gzipped, 340K uncompressed ]
 
-	games12	This set includes the games and their manual pages.
+	games13	This set includes the games and their manual pages.
 		[ 3M gzipped, 7M uncompressed ]
 
-	man12	This set includes all of the manual pages for the
+	man13	This set includes all of the manual pages for the
 		binaries and other software contained in the base set.
 		Note that it does not include any of the manual pages
 		that are included in the other sets.
 		[ 1M gzipped, 3M uncompressed ]
 
-	misc12	This set includes the system dictionaries (which are
+	misc13	This set includes the system dictionaries (which are
 		rather large), the typesettable document set, and
 		man pages for other architectures which happen to be
 		installed from the source tree by default.
 		[ 2M gzipped, 7M uncompressed ]
 
-	text12	This set includes NetBSD's text processing tools,
+	text13	This set includes NetBSD's text processing tools,
 		including groff, all related programs, and their
 		manual pages.
 		[ 900K gzipped, 3M uncompressed ]
 
-The Amiga security distribution set is named "secr12" and can be found
-in the "amiga/security" subdirectory of the NetBSD 1.2 distribution
+The Amiga security distribution set is named "secr13" and can be found
+in the "amiga/security" subdirectory of the NetBSD _VER distribution
 tree.  It contains crypt.c (the source file for the DES encryption
 algorithm) and the binaries which depend on it.  It can only be found
 on those sites which carry the complete NetBSD distribution and that
