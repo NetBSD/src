@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.144.2.3 2000/06/30 18:15:39 thorpej Exp $
+#	$NetBSD: Makefile,v 1.144.2.4 2000/08/06 21:14:24 thorpej Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -28,7 +28,7 @@ SUBDIR+=faithd ifmcstat mld6query mtrace6 ndp pim6dd pim6sd \
 SUBDIR+=pvcsif pvctxctl
 
 .if (${MKCRYPTO} != "no")
-SUBDIR+= kadmin kstash ktutil
+SUBDIR+= kadmin kdc kstash ktutil
 .endif
 
 .include <bsd.subdir.mk>
