@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/03/28 00:28:17 tron Exp $
+#	$NetBSD: Makefile,v 1.6 1999/07/19 12:04:03 tron Exp $
 
 .PATH:		${.CURDIR}/../man
 
@@ -15,6 +15,13 @@ LDADD=		${LIBRARY}
 CLEANFILES+=	y.tab.h named-bootconf tmp_version.c
 MAN=		${PROG}.8 named.conf.5 named-bootconf.8
 SCRIPTS=	named-bootconf.sh
+
+.include <bsd.own.mk>
+
+.if ${MKSHARE} != "no"
+FILES=		named.conf
+FILESDIR=	/usr/share/examples/named
+.endif
 
 HOSTNAMECMD=	hostname
 
