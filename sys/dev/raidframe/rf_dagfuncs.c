@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.8 2001/11/13 07:11:13 lukem Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.9 2002/09/11 03:01:23 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.8 2001/11/13 07:11:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.9 2002/09/11 03:01:23 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -708,7 +708,7 @@ rf_longword_bxor(src, dest, len, bp)
 	return (0);
 }
 
-
+#if 0
 /*
    dst = a ^ b ^ c;
    a may equal dst
@@ -893,3 +893,4 @@ rf_bxor3(dst, a, b, c, len, bp)
 	return (rf_longword_bxor3((unsigned long *) dst, (unsigned long *) a,
 		(unsigned long *) b, (unsigned long *) c, len >> RF_LONGSHIFT, bp));
 }
+#endif
