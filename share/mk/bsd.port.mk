@@ -2,7 +2,7 @@
 # ex:ts=4
 #
 #	Id: bsd.port.mk,v 1.263 1997/07/17 17:47:36 markm Exp 
-#	$NetBSD: bsd.port.mk,v 1.13 1997/10/18 23:33:25 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.14 1997/10/28 12:46:37 agc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1562,24 +1562,23 @@ _DEPENDS_USE:	.USE
 		else \
 			target=${DEPENDS_TARGET}; \
 		fi; \
+		found=not; \
 		if expr "$$prog" : \\/ >/dev/null; then \
 			if [ -e "$$prog" ]; then \
 				${ECHO_MSG} "===>  ${PKGNAME} depends on file: $$prog - found"; \
-				notfound=0; \
+				found=""; \
 			else \
 				${ECHO_MSG} "===>  ${PKGNAME} depends on file: $$prog - not found"; \
-				notfound=1; \
 			fi; \
 		else \
-			if which "$$prog" > /dev/null 2>&1 ; then \
-				${ECHO_MSG} "===>  ${PKGNAME} depends on executable: $$prog - found"; \
-				notfound=0; \
-			else \
-				${ECHO_MSG} "===>  ${PKGNAME} depends on executable: $$prog - not found"; \
-				notfound=1; \
-			fi; \
+			for d in `echo $$PATH | tr ':' ' '`; do \
+				if [ -x $$d/$$prog ]; then \
+					found=""; \
+				fi \
+			done; \
+			${ECHO_MSG} "===>  ${PKGNAME} depends on executable: $$prog - $$found found"; \
 		fi; \
-		if [ $$notfound != 0 ]; then \
+		if [ X"$$found" = Xnot ]; then \
 			${ECHO_MSG} "===>  Verifying $$target for $$prog in $$dir"; \
 			if [ ! -d "$$dir" ]; then \
 				${ECHO_MSG} ">> No directory for $$prog.  Skipping.."; \
