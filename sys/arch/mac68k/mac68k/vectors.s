@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.5 1994/12/03 23:35:10 briggs Exp $
+|	$NetBSD: vectors.s,v 1.6 1995/01/21 05:21:26 briggs Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990 Regents of the University of California.
@@ -48,7 +48,7 @@
 	.globl	_jmp0panic
 
 Lvectab:
-	.long	0x60000000+_jmp0panic	/* 0: bra 0x400:w (unused reset SSP) */
+	.long	0x60000000+_jmp0panic-2	/* 0: bra 0x400:w (unused reset SSP) */
 	.long	0		/* 1: NOT USED (reset PC) */
 	.long	_buserr		/* 2: bus error */
 	.long	_addrerr	/* 3: address error */
