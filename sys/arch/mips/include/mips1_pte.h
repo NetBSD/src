@@ -1,4 +1,4 @@
-/*	$NetBSD: mips1_pte.h,v 1.13.26.2 2004/09/18 14:37:18 skrll Exp $	*/
+/*	$NetBSD: mips1_pte.h,v 1.13.26.3 2004/09/21 13:18:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

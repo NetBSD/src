@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.elf,v 1.1.4.3 2004/09/18 14:33:26 skrll Exp $	*/
+/*	$NetBSD: ldscript.elf,v 1.1.4.4 2004/09/21 13:14:26 skrll Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)

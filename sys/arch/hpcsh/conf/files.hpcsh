@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.29.6.2 2004/09/18 14:35:07 skrll Exp $
+#	$NetBSD: files.hpcsh,v 1.29.6.3 2004/09/21 13:16:24 skrll Exp $
 #
 maxpartitions 8
 

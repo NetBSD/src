@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.28.2.2 2004/09/18 14:32:55 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.28.2.3 2004/09/21 13:13:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.2.2 2004/09/18 14:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.28.2.3 2004/09/21 13:13:54 skrll Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.60.2.3 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: ite.c,v 1.60.2.4 2004/09/21 13:15:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60.2.3 2004/09/18 14:34:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.60.2.4 2004/09/21 13:15:15 skrll Exp $");
 
 #include "hil.h"
 

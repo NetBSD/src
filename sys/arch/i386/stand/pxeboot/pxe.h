@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.h,v 1.1.22.2 2004/09/18 14:35:57 skrll Exp $	*/
+/*	$NetBSD: pxe.h,v 1.1.22.3 2004/09/21 13:17:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Alfred Perlstein <alfred@freebsd.org>

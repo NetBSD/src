@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.41.2.3 2004/09/18 14:34:19 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.41.2.4 2004/09/21 13:15:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993

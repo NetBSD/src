@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbusvar.h,v 1.1.2.3 2004/09/18 14:33:33 skrll Exp $	*/
+/*	$NetBSD: com_mainbusvar.h,v 1.1.2.4 2004/09/21 13:14:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.

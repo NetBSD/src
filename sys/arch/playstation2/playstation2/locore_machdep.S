@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.3.18.2 2004/09/18 14:38:48 skrll Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.3.18.3 2004/09/21 13:20:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

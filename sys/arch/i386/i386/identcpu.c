@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.4.2.3 2004/09/18 14:35:27 skrll Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.4.2.4 2004/09/21 13:16:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4.2.3 2004/09/18 14:35:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.4.2.4 2004/09/21 13:16:42 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"

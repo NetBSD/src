@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_ap.c,v 1.5.6.2 2004/09/18 14:38:05 skrll Exp $	*/
+/*	$NetBSD: if_sn_ap.c,v 1.5.6.3 2004/09/21 13:19:32 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.5.6.2 2004/09/18 14:38:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn_ap.c,v 1.5.6.3 2004/09/21 13:19:32 skrll Exp $");
 
 #include "opt_inet.h"
 

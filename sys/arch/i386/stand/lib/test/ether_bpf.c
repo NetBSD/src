@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_bpf.c,v 1.2.24.2 2004/09/18 14:35:57 skrll Exp $	*/
+/*	$NetBSD: ether_bpf.c,v 1.2.24.3 2004/09/21 13:17:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998

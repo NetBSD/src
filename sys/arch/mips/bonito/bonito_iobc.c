@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_iobc.c,v 1.1.20.2 2004/09/18 14:37:17 skrll Exp $	*/
+/*	$NetBSD: bonito_iobc.c,v 1.1.20.3 2004/09/21 13:18:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_iobc.c,v 1.1.20.2 2004/09/18 14:37:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_iobc.c,v 1.1.20.3 2004/09/21 13:18:38 skrll Exp $");
 
 #include <sys/param.h>
 

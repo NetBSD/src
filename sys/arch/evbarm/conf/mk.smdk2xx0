@@ -1,4 +1,4 @@
-#	$NetBSD: mk.smdk2xx0,v 1.1.4.2 2004/09/18 14:33:39 skrll Exp $
+#	$NetBSD: mk.smdk2xx0,v 1.1.4.3 2004/09/21 13:14:40 skrll Exp $
 
 SYSTEM_FIRST_OBJ=	${BOARDTYPE}_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/smdk2xx0/${BOARDTYPE}_start.S

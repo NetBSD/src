@@ -1,4 +1,4 @@
-/*	$NetBSD: volhdr.h,v 1.1.60.2 2004/09/18 14:34:32 skrll Exp $	*/
+/*	$NetBSD: volhdr.h,v 1.1.60.3 2004/09/21 13:15:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

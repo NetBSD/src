@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.6.48.2 2004/09/18 14:32:56 skrll Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.6.48.3 2004/09/21 13:14:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

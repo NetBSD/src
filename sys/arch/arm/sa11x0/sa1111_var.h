@@ -1,4 +1,4 @@
-/*	$NetBSD: sa1111_var.h,v 1.4.2.2 2004/09/18 14:32:39 skrll Exp $	*/
+/*	$NetBSD: sa1111_var.h,v 1.4.2.3 2004/09/21 13:13:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_sipvar.h,v 1.2.2.2 2004/09/18 14:32:47 skrll Exp $ */
+/*	$NetBSD: ixp425_sipvar.h,v 1.2.2.3 2004/09/21 13:13:43 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.

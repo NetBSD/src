@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.8.2.2 2004/09/18 14:37:51 skrll Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.8.2.3 2004/09/21 13:19:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt

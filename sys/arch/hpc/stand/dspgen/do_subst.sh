@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.sh,v 1.2.24.2 2004/09/18 14:34:39 skrll Exp $
+# $NetBSD: do_subst.sh,v 1.2.24.3 2004/09/21 13:15:48 skrll Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #

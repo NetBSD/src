@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.79.2.4 2004/09/18 14:35:27 skrll Exp $ */
+/*	$NetBSD: apm.c,v 1.79.2.5 2004/09/21 13:16:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.79.2.4 2004/09/18 14:35:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.79.2.5 2004/09/21 13:16:39 skrll Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -1590,10 +1590,10 @@ apm_thread(arg)
 }
 
 int
-apmopen(dev, flag, mode, p)
+apmopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = APMUNIT(dev);
 	int ctl = APMDEV(dev);
@@ -1610,7 +1610,7 @@ apmopen(dev, flag, mode, p)
 		return ENXIO;
 	
 	DPRINTF(APMDEBUG_DEVICE,
-	    ("apmopen: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
+	    ("apmopen: pid %d flag %x mode %x\n", l->l_proc->p_pid, flag, mode));
 
 	APM_LOCK(sc);
 	switch (ctl) {
@@ -1642,16 +1642,16 @@ apmopen(dev, flag, mode, p)
 }
 
 int
-apmclose(dev, flag, mode, p)
+apmclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	int ctl = APMDEV(dev);
 
 	DPRINTF(APMDEBUG_DEVICE,
-	    ("apmclose: pid %d flag %x mode %x\n", p->p_pid, flag, mode));
+	    ("apmclose: pid %d flag %x mode %x\n", l->l_proc->p_pid, flag, mode));
 
 	APM_LOCK(sc);
 	switch (ctl) {
@@ -1671,12 +1671,12 @@ apmclose(dev, flag, mode, p)
 }
 
 int
-apmioctl(dev, cmd, data, flag, p)
+apmioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	struct apm_power_info *powerp;
@@ -1796,10 +1796,10 @@ apmioctl(dev, cmd, data, flag, p)
 }
 
 int
-apmpoll(dev, events, p)
+apmpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct apm_softc *sc = apm_cd.cd_devs[APMUNIT(dev)];
 	int revents = 0;
@@ -1809,7 +1809,7 @@ apmpoll(dev, events, p)
 		if (sc->event_count)
 			revents |= events & (POLLIN | POLLRDNORM);
 		else
-			selrecord(p, &sc->sc_rsel);
+			selrecord(l, &sc->sc_rsel);
 	}
 	APM_UNLOCK(sc);
 

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: resource.h,v 1.5.10.3 2004/09/18 14:34:46 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: resource.h,v 1.5.10.4 2004/09/21 13:15:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

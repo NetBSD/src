@@ -1,4 +1,4 @@
-/*	$NetBSD: kmin.h,v 1.8.30.2 2004/09/18 14:38:56 skrll Exp $	*/
+/*	$NetBSD: kmin.h,v 1.8.30.3 2004/09/21 13:20:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

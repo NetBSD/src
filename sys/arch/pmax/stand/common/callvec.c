@@ -1,4 +1,4 @@
-/*	$NetBSD: callvec.c,v 1.13.34.2 2004/09/18 14:38:56 skrll Exp $	*/
+/*	$NetBSD: callvec.c,v 1.13.34.3 2004/09/21 13:20:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

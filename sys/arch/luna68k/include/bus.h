@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4.22.2 2004/09/18 14:36:06 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.4.22.3 2004/09/21 13:17:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.

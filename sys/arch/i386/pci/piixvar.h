@@ -1,4 +1,4 @@
-/*	$NetBSD: piixvar.h,v 1.1.34.2 2004/09/18 14:35:50 skrll Exp $	*/
+/*	$NetBSD: piixvar.h,v 1.1.34.3 2004/09/21 13:17:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

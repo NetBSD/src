@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.12.24.2 2004/09/18 14:36:17 skrll Exp $	*/
+/*	$NetBSD: profile.h,v 1.12.24.3 2004/09/21 13:17:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

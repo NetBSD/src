@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.32.2.2 2004/09/18 14:34:59 skrll Exp $ */
+/*	$NetBSD: tx39.c,v 1.32.2.3 2004/09/21 13:16:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.32.2.2 2004/09/18 14:34:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39.c,v 1.32.2.3 2004/09/21 13:16:12 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.28.6.2 2004/09/18 14:37:58 skrll Exp $
+#	$NetBSD: files.netwinder,v 1.28.6.3 2004/09/21 13:19:24 skrll Exp $
 #
 # First try for arm-specific configuration info
 #

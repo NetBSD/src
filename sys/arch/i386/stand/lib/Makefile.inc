@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11.18.2 2004/09/18 14:35:56 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.11.18.3 2004/09/21 13:17:10 skrll Exp $
 #
 #	Configuration variables (default values are below):
 #

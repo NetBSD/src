@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.4.14.2 2004/09/18 14:34:31 skrll Exp $
+/*	$NetBSD: mkboot.c,v 1.4.14.3 2004/09/21 13:15:39 skrll Exp $
 
 /*
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT(
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-__RCSID("$NetBSD: mkboot.c,v 1.4.14.2 2004/09/18 14:34:31 skrll Exp $");
+__RCSID("$NetBSD: mkboot.c,v 1.4.14.3 2004/09/21 13:15:39 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

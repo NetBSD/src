@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.5.6.2 2004/09/18 14:34:20 skrll Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.5.6.3 2004/09/21 13:15:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

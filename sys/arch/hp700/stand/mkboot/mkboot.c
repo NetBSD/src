@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.3.6.2 2004/09/18 14:34:32 skrll Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.3.6.3 2004/09/21 13:15:40 skrll Exp $	*/
 
 /*	$OpenBSD: mkboot.c,v 1.9 2001/05/17 00:57:55 pvalchev Exp $	*/
 

@@ -1,4 +1,4 @@
-# $NetBSD: BASIL,v 1.18.2.2 2004/09/18 14:31:02 skrll Exp $
+# $NetBSD: BASIL,v 1.18.2.3 2004/09/21 13:11:47 skrll Exp $
 #
 # basil.shagadelic.org -- thorpej's API UP1000
 
@@ -6,7 +6,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"BASIL-$Revision: 1.18.2.2 $"
+#ident 		"BASIL-$Revision: 1.18.2.3 $"
 
 maxusers 64
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.57.2.2 2004/09/18 14:30:30 skrll Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.57.2.3 2004/09/21 13:11:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -56,7 +56,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.57.2.2 2004/09/18 14:30:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.57.2.3 2004/09/21 13:11:20 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

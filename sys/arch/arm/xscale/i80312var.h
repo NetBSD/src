@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312var.h,v 1.7.8.2 2004/09/18 14:32:47 skrll Exp $	*/
+/*	$NetBSD: i80312var.h,v 1.7.8.3 2004/09/21 13:13:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.

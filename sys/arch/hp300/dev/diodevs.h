@@ -1,4 +1,4 @@
-/*	$NetBSD: diodevs.h,v 1.9.2.2 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: diodevs.h,v 1.9.2.3 2004/09/21 13:15:13 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

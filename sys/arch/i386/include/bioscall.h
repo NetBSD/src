@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.h,v 1.8.2.2 2004/09/18 14:35:40 skrll Exp $ */
+/*	$NetBSD: bioscall.h,v 1.8.2.3 2004/09/21 13:16:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.

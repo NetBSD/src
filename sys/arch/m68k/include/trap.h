@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.8.66.2 2004/09/18 14:36:17 skrll Exp $	*/
+/*	$NetBSD: trap.h,v 1.8.66.3 2004/09/21 13:17:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.34.2.2 2004/09/18 14:31:35 skrll Exp $ */
+/*	$NetBSD: zssc.c,v 1.34.2.3 2004/09/21 13:12:32 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.34.2.2 2004/09/18 14:31:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zssc.c,v 1.34.2.3 2004/09/21 13:12:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot1.c,v 1.1.2.2 2004/09/18 14:35:50 skrll Exp $	*/
+/*	$NetBSD: boot1.c,v 1.1.2.3 2004/09/21 13:17:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: boot1.c,v 1.1.2.2 2004/09/18 14:35:50 skrll Exp $");
+__RCSID("$NetBSD: boot1.c,v 1.1.2.3 2004/09/21 13:17:10 skrll Exp $");
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>

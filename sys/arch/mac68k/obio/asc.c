@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.44.6.2 2004/09/18 14:36:56 skrll Exp $	*/
+/*	$NetBSD: asc.c,v 1.44.6.3 2004/09/21 13:18:09 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.44.6.2 2004/09/18 14:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.44.6.3 2004/09/21 13:18:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/cdefs.h>

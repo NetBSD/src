@@ -1,4 +1,4 @@
-/*	$NetBSD: sysinfo.c,v 1.3.16.2 2004/09/18 14:33:11 skrll Exp $	*/
+/*	$NetBSD: sysinfo.c,v 1.3.16.3 2004/09/21 13:14:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

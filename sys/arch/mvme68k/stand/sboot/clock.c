@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3.24.2 2004/09/18 14:37:51 skrll Exp $ */
+/*	$NetBSD: clock.c,v 1.3.24.3 2004/09/21 13:19:17 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

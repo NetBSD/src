@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.9.6.2 2004/09/18 14:35:40 skrll Exp $	*/
+/*	$NetBSD: gdt.h,v 1.9.6.3 2004/09/21 13:16:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.

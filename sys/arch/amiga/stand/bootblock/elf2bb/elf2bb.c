@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.7.2.2 2004/09/18 14:31:55 skrll Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.7.2.3 2004/09/21 13:12:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

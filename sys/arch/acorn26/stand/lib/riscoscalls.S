@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.S,v 1.1.14.2 2004/09/18 14:30:30 skrll Exp $	*/
+/*	$NetBSD: riscoscalls.S,v 1.1.14.3 2004/09/21 13:11:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage_machdep.S,v 1.3.2.3 2004/09/18 14:35:27 skrll Exp $ */
+/*	$NetBSD: darwin_commpage_machdep.S,v 1.3.2.4 2004/09/21 13:16:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.4.6.3 2004/09/18 14:36:56 skrll Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.4.6.4 2004/09/21 13:18:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.4.6.3 2004/09/18 14:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.4.6.4 2004/09/21 13:18:19 skrll Exp $");
 
 #include "opt_inet.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.4.2.2 2004/09/18 14:30:29 skrll Exp $ */
+/* $NetBSD: except.c,v 1.4.2.3 2004/09/21 13:11:19 skrll Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4.2.2 2004/09/18 14:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.4.2.3 2004/09/21 13:11:19 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"

@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.8.16.2 2004/09/18 14:31:56 skrll Exp $ */
+/*      $NetBSD: cpu.h,v 1.8.16.3 2004/09/21 13:12:47 skrll Exp $ */
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.

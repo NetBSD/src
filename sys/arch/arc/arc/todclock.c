@@ -1,4 +1,4 @@
-/* $NetBSD: todclock.c,v 1.3.6.2 2004/09/18 14:31:56 skrll Exp $ */
+/* $NetBSD: todclock.c,v 1.3.6.3 2004/09/21 13:12:48 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.3.6.2 2004/09/18 14:31:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.3.6.3 2004/09/21 13:12:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

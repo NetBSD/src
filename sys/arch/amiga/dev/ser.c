@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.68.6.2 2004/09/18 14:31:34 skrll Exp $ */
+/*	$NetBSD: ser.c,v 1.68.6.3 2004/09/21 13:12:31 skrll Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.68.6.2 2004/09/18 14:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.68.6.3 2004/09/21 13:12:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

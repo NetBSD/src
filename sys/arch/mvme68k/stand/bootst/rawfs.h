@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.h,v 1.1.68.2 2004/09/18 14:37:51 skrll Exp $	*/
+/*	$NetBSD: rawfs.h,v 1.1.68.3 2004/09/21 13:19:17 skrll Exp $	*/
 
 /*
  * Raw file system - for stream devices like tapes.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.10.2.2 2004/09/18 14:32:39 skrll Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.10.2.3 2004/09/21 13:13:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.10.2.2 2004/09/18 14:32:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.10.2.3 2004/09/21 13:13:42 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

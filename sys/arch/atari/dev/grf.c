@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.31.6.2 2004/09/18 14:32:56 skrll Exp $	*/
+/*	$NetBSD: grf.c,v 1.31.6.3 2004/09/21 13:13:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.31.6.2 2004/09/18 14:32:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.31.6.3 2004/09/21 13:13:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

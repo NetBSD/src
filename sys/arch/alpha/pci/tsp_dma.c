@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.4.22.2 2004/09/18 14:31:13 skrll Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.4.22.3 2004/09/21 13:12:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.4.22.2 2004/09/18 14:31:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_dma.c,v 1.4.22.3 2004/09/21 13:12:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

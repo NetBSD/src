@@ -1,6 +1,6 @@
 #! /usr/bin/awk -f
 #
-#	$NetBSD: devlist2h.awk,v 1.5.48.2 2004/09/18 14:34:08 skrll Exp $
+#	$NetBSD: devlist2h.awk,v 1.5.48.3 2004/09/21 13:15:13 skrll Exp $
 #
 # Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
 # Copyright (c) 1995, 1996 Christopher G. Demetriou

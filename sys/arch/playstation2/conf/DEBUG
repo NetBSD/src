@@ -1,7 +1,7 @@
 #
 # kernel config file for debugging.
 #
-# 	$NetBSD: DEBUG,v 1.9.2.2 2004/09/18 14:38:42 skrll Exp $
+# 	$NetBSD: DEBUG,v 1.9.2.3 2004/09/21 13:20:13 skrll Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"

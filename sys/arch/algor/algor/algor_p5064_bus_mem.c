@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p5064_bus_mem.c,v 1.1.24.2 2004/09/18 14:30:43 skrll Exp $	*/
+/*	$NetBSD: algor_p5064_bus_mem.c,v 1.1.24.3 2004/09/21 13:11:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p5064_bus_mem.c,v 1.1.24.2 2004/09/18 14:30:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p5064_bus_mem.c,v 1.1.24.3 2004/09/21 13:11:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

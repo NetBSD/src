@@ -1,4 +1,4 @@
-#	$NetBSD: SWINGER,v 1.43.2.2 2004/09/18 14:35:22 skrll Exp $
+#	$NetBSD: SWINGER,v 1.43.2.3 2004/09/21 13:16:38 skrll Exp $
 #	from NetBSD: GENERIC,v 1.325 2000/04/14 14:53:32 augustss Exp
 #
 #	SWINGER -- thorpej's Abit BP6+dual Celeron
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"SWINGER-$Revision: 1.43.2.2 $"
+#ident 		"SWINGER-$Revision: 1.43.2.3 $"
 
 maxusers	64		# estimated number of users
 

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_ACPI,v 1.1.2.2 2004/09/18 14:31:22 skrll Exp $
+# $NetBSD: INSTALL_ACPI,v 1.1.2.3 2004/09/21 13:12:07 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include	"arch/amd64/conf/std.amd64"
 
-#ident 		"INSTALL-$Revision: 1.1.2.2 $"
+#ident 		"INSTALL-$Revision: 1.1.2.3 $"
 
 maxusers	32		# estimated number of users
 

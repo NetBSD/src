@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.15.2.2 2004/09/18 14:30:43 skrll Exp $	*/
+/*	$NetBSD: boot32.c,v 1.15.2.3 2004/09/21 13:11:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk

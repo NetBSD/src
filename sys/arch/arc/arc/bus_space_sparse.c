@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_sparse.c,v 1.8.2.2 2004/09/18 14:31:56 skrll Exp $	*/
+/*	$NetBSD: bus_space_sparse.c,v 1.8.2.3 2004/09/21 13:12:47 skrll Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.8.2.2 2004/09/18 14:31:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_sparse.c,v 1.8.2.3 2004/09/21 13:12:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

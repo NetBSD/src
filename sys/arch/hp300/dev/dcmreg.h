@@ -1,4 +1,4 @@
-/*	$NetBSD: dcmreg.h,v 1.6.2.2 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: dcmreg.h,v 1.6.2.3 2004/09/21 13:15:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

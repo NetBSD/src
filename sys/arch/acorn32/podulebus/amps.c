@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.8.2.2 2004/09/18 14:30:37 skrll Exp $	*/
+/*	$NetBSD: amps.c,v 1.8.2.3 2004/09/21 13:11:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.8.2.2 2004/09/18 14:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.8.2.3 2004/09/21 13:11:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

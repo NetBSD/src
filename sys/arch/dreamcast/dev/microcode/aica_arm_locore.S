@@ -1,4 +1,4 @@
-/*	$NetBSD: aica_arm_locore.S,v 1.1.4.3 2004/09/18 14:33:38 skrll Exp $	*/
+/*	$NetBSD: aica_arm_locore.S,v 1.1.4.4 2004/09/21 13:14:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.16.2 2004/09/18 14:32:16 skrll Exp $
+#	$NetBSD: Makefile,v 1.6.16.3 2004/09/21 13:13:08 skrll Exp $
 #	$OpenBSD: Makefile,v 1.2 1997/08/01 12:32:10 pefo Exp $
 
 UUDECODE_FILES	= mbr msdos5mb.gz

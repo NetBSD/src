@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.19.2.3 2004/09/18 14:34:58 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19.2.4 2004/09/21 13:16:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.3 2004/09/18 14:34:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19.2.4 2004/09/21 13:16:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,7 +332,7 @@ _hpcmips_bd_map_load_uio(bus_dma_tag_t t, bus_dmamap_t mapx, struct uio *uio,
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
+		p = uio->uio_lwp->l_proc;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
 			panic("_hpcmips_bd_map_load_uio: USERSPACE but no proc");

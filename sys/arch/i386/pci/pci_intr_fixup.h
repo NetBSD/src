@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.h,v 1.3.22.2 2004/09/18 14:35:50 skrll Exp $	*/
+/*	$NetBSD: pci_intr_fixup.h,v 1.3.22.3 2004/09/21 13:17:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1.2.2 2004/09/18 14:31:22 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.1.2.3 2004/09/21 13:12:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

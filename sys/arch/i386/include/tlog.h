@@ -1,4 +1,4 @@
-/*	$NetBSD: tlog.h,v 1.3.8.2 2004/09/18 14:35:40 skrll Exp $	*/
+/*	$NetBSD: tlog.h,v 1.3.8.3 2004/09/21 13:16:57 skrll Exp $	*/
 
 /*
  * Trap log.  Per-CPU ring buffer containing a log of the last 2**N

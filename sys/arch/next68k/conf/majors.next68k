@@ -1,4 +1,4 @@
-#	$NetBSD: majors.next68k,v 1.5.2.2 2004/09/18 14:38:10 skrll Exp $
+#	$NetBSD: majors.next68k,v 1.5.2.3 2004/09/21 13:19:40 skrll Exp $
 #
 # Device majors for next68k
 #

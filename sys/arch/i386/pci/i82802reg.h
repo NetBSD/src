@@ -1,4 +1,4 @@
-/*	$NetBSD: i82802reg.h,v 1.1.28.2 2004/09/18 14:35:49 skrll Exp $	*/
+/*	$NetBSD: i82802reg.h,v 1.1.28.3 2004/09/21 13:17:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_frodovar.h,v 1.1.4.4 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: com_frodovar.h,v 1.1.4.5 2004/09/21 13:15:13 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
  * All rights reserved.

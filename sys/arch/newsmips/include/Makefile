@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27.2.3 2004/09/18 14:38:10 skrll Exp $
+#	$NetBSD: Makefile,v 1.27.2.4 2004/09/21 13:19:33 skrll Exp $
 
 INCSDIR= /usr/include/newsmips
 

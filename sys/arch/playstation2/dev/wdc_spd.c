@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.3.6.4 2004/09/18 14:38:48 skrll Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.3.6.5 2004/09/21 13:20:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.3.6.4 2004/09/18 14:38:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.3.6.5 2004/09/21 13:20:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.6.6.2 2004/09/18 14:36:43 skrll Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.6.6.3 2004/09/21 13:18:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.6.6.2 2004/09/18 14:36:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.6.6.3 2004/09/21 13:18:05 skrll Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dvreg.h,v 1.5.66.2 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: grf_dvreg.h,v 1.5.66.3 2004/09/21 13:15:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

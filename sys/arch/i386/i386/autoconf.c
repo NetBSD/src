@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71.2.3 2004/09/18 14:35:27 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71.2.4 2004/09/21 13:16:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71.2.3 2004/09/18 14:35:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71.2.4 2004/09/21 13:16:39 skrll Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"

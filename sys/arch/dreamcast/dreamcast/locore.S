@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.5.12.2 2004/09/18 14:33:38 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.5.12.3 2004/09/21 13:14:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

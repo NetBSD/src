@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.59.2.3 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: hil.c,v 1.59.2.4 2004/09/21 13:15:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.59.2.3 2004/09/18 14:34:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.59.2.4 2004/09/21 13:15:14 skrll Exp $");
 
 #include "opt_compat_hpux.h"
 #include "ite.h"

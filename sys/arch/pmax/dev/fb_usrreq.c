@@ -1,7 +1,7 @@
-/*	$NetBSD: fb_usrreq.c,v 1.27.2.2 2004/09/18 14:38:49 skrll Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.27.2.3 2004/09/21 13:20:19 skrll Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb_usrreq.c,v 1.27.2.2 2004/09/18 14:38:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb_usrreq.c,v 1.27.2.3 2004/09/21 13:20:19 skrll Exp $");
 
 #include <sys/conf.h>
 

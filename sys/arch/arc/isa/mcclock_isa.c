@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.4.6.2 2004/09/18 14:32:08 skrll Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.4.6.3 2004/09/21 13:13:00 skrll Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4.6.2 2004/09/18 14:32:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.4.6.3 2004/09/21 13:13:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

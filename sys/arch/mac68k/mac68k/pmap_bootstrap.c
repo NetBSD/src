@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.58.2.2 2004/09/18 14:36:44 skrll Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.58.2.3 2004/09/21 13:18:07 skrll Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.58.2.2 2004/09/18 14:36:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.58.2.3 2004/09/21 13:18:07 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

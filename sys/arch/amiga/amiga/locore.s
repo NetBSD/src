@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.136.2.2 2004/09/18 14:31:23 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.136.2.3 2004/09/21 13:12:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990 The Regents of the University of California.

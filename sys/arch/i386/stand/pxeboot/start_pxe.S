@@ -1,4 +1,4 @@
-/*	$NetBSD: start_pxe.S,v 1.2.4.4 2004/09/18 14:35:57 skrll Exp $	*/
+/*	$NetBSD: start_pxe.S,v 1.2.4.5 2004/09/21 13:17:18 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.

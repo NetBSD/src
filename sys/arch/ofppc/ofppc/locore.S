@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.32.2.2 2004/09/18 14:38:24 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.32.2.3 2004/09/21 13:19:44 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

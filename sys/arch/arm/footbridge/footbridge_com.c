@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.15.2.2 2004/09/18 14:32:23 skrll Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.15.2.3 2004/09/21 13:13:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.15.2.2 2004/09/18 14:32:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_com.c,v 1.15.2.3 2004/09/21 13:13:18 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -226,11 +226,12 @@ static void fcomstart __P((struct tty *));
 static int fcomparam __P((struct tty *, struct termios *));
 
 int
-fcomopen(dev, flag, mode, p)
+fcomopen(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct fcom_softc *sc;
 	int unit = minor(dev);
 	struct tty *tp;
@@ -282,10 +283,10 @@ fcomopen(dev, flag, mode, p)
 }
 
 int
-fcomclose(dev, flag, mode, p)
+fcomclose(dev, flag, mode, l)
 	dev_t dev;
 	int flag, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -332,33 +333,34 @@ fcomwrite(dev, uio, flag)
 }
 
 int
-fcompoll(dev, events, p)
+fcompoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-fcomioctl(dev, cmd, data, flag, p)
+fcomioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->sc_tty;
 	int error;
 	
-	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p)) !=
+	if ((error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l)) !=
 	    EPASSTHROUGH)
 		return error;
-	if ((error = ttioctl(tp, cmd, data, flag, p)) != EPASSTHROUGH)
+	if ((error = ttioctl(tp, cmd, data, flag, l)) != EPASSTHROUGH)
 		return error;
 
 	switch (cmd) {

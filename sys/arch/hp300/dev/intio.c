@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.15.2.3 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: intio.c,v 1.15.2.4 2004/09/21 13:15:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.15.2.3 2004/09/18 14:34:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.15.2.4 2004/09/21 13:15:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

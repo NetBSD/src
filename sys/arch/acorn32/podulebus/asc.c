@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.12.2.2 2004/09/18 14:30:37 skrll Exp $	*/
+/*	$NetBSD: asc.c,v 1.12.2.3 2004/09/21 13:11:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -98,7 +98,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.12.2.2 2004/09/18 14:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.12.2.3 2004/09/21 13:11:28 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

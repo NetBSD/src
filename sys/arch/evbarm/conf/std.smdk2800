@@ -1,4 +1,4 @@
-#	$NetBSD: std.smdk2800,v 1.6.2.2 2004/09/18 14:33:39 skrll Exp $
+#	$NetBSD: std.smdk2800,v 1.6.2.3 2004/09/21 13:14:40 skrll Exp $
 #
 # standard NetBSD/evbarm for SMDK2800 options
 

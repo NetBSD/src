@@ -1,4 +1,4 @@
-/*	$NetBSD: stricmp.cpp,v 1.1.2.3 2004/09/18 14:34:46 skrll Exp $	*/
+/*	$NetBSD: stricmp.cpp,v 1.1.2.4 2004/09/21 13:15:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.

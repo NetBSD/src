@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_gpio.c,v 1.1.4.3 2004/09/18 14:32:47 skrll Exp $	*/
+/*	$NetBSD: i80321_gpio.c,v 1.1.4.4 2004/09/21 13:13:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.

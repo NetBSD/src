@@ -1,4 +1,4 @@
-/*	$NetBSD: picreg.h,v 1.2.2.3 2004/09/18 14:39:43 skrll Exp $	*/
+/*	$NetBSD: picreg.h,v 1.2.2.4 2004/09/21 13:21:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Steve Rumble

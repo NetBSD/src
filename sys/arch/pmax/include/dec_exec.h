@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_exec.h,v 1.6.30.2 2004/09/18 14:38:55 skrll Exp $	*/
+/*	$NetBSD: dec_exec.h,v 1.6.30.3 2004/09/21 13:20:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993

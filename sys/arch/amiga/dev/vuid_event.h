@@ -1,4 +1,4 @@
-/*	$NetBSD: vuid_event.h,v 1.2.66.2 2004/09/18 14:31:35 skrll Exp $	*/
+/*	$NetBSD: vuid_event.h,v 1.2.66.3 2004/09/21 13:12:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

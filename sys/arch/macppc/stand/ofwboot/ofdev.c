@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.11.6.2 2004/09/18 14:37:09 skrll Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.11.6.3 2004/09/21 13:18:30 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.

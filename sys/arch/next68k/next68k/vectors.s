@@ -1,4 +1,4 @@
-| $NetBSD: vectors.s,v 1.8.6.2 2004/09/18 14:38:17 skrll Exp $
+| $NetBSD: vectors.s,v 1.8.6.3 2004/09/21 13:19:44 skrll Exp $
 
 | This file was taken from from mvme68k/mvme68k/vectors.s
 | should probably be re-synced when needed.

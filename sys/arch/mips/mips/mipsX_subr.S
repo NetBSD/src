@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.12.2.2 2004/09/18 14:37:25 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.12.2.3 2004/09/21 13:18:50 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

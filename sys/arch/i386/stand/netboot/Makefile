@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26.18.2 2004/09/18 14:35:57 skrll Exp $
+#	$NetBSD: Makefile,v 1.26.18.3 2004/09/21 13:17:18 skrll Exp $
 
 SUBDIR+=	3c509
 SUBDIR+=	.WAIT

@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200priv.h,v 1.1.28.2 2004/09/18 14:34:52 skrll Exp $	*/
+/*	$NetBSD: mq200priv.h,v 1.1.28.3 2004/09/21 13:16:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMURA Shin

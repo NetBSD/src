@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.73.6.2 2004/09/18 14:31:02 skrll Exp $
+#	$NetBSD: Makefile.alpha,v 1.73.6.3 2004/09/21 13:11:48 skrll Exp $
 
 # Makefile for NetBSD
 #

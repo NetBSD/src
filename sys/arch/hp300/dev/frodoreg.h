@@ -1,4 +1,4 @@
-/*	$NetBSD: frodoreg.h,v 1.1.56.2 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: frodoreg.h,v 1.1.56.3 2004/09/21 13:15:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Smith.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2pef.c,v 1.8.22.2 2004/09/18 14:33:26 skrll Exp $	*/
+/*	$NetBSD: elf2pef.c,v 1.8.22.3 2004/09/21 13:14:26 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1997-1998 Kazuki Sakamoto (sakamoto@NetBSD.org)

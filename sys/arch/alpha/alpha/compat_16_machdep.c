@@ -1,4 +1,4 @@
-/* $NetBSD: compat_16_machdep.c,v 1.3.4.3 2004/09/18 14:30:53 skrll Exp $ */
+/* $NetBSD: compat_16_machdep.c,v 1.3.4.4 2004/09/21 13:11:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3.4.3 2004/09/18 14:30:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3.4.4 2004/09/21 13:11:44 skrll Exp $");
 
 
 #ifdef DEBUG

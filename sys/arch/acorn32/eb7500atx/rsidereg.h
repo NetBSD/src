@@ -1,4 +1,4 @@
-/*	$NetBSD: rsidereg.h,v 1.1.4.3 2004/09/18 14:30:37 skrll Exp $	*/
+/*	$NetBSD: rsidereg.h,v 1.1.4.4 2004/09/21 13:11:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Chris Gilbert

@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.1.32.1 2004/09/18 14:38:05 skrll Exp $	*/
+/*	$NetBSD: putchar.c,v 1.1.32.2 2004/09/21 13:19:31 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.8.2.2 2004/09/18 14:37:09 skrll Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.8.2.3 2004/09/21 13:18:30 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.

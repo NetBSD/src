@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.9.2.4 2004/09/18 14:36:38 skrll Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.9.2.5 2004/09/21 13:17:56 skrll Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.9.2.4 2004/09/18 14:36:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.9.2.5 2004/09/21 13:17:56 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_execfmt.h"
@@ -483,7 +483,7 @@ child_return(void *arg)
 	machine_userret(l, f, 0);
 #ifdef KTRACE
 	if (KTRPOINT(l->l_proc, KTR_SYSRET))
-		ktrsysret(l->l_proc, SYS_fork, 0, 0);
+		ktrsysret(l, SYS_fork, 0, 0);
 #endif
 }
 

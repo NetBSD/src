@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.4.3 2004/09/18 14:36:02 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.4.4 2004/09/21 13:17:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.

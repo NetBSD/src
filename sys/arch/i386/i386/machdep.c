@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.526.2.5 2004/09/18 14:35:28 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.526.2.6 2004/09/21 13:16:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526.2.5 2004/09/18 14:35:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.526.2.6 2004/09/21 13:16:42 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -2010,12 +2010,12 @@ exec_nomid(struct proc *p, struct exec_package *epp)
  * if COMPAT_NOMID is given as a kernel option.
  */
 int
-cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 
 #ifdef COMPAT_NOMID
-	if ((error = exec_nomid(p, epp)) == 0)
+	if ((error = exec_nomid(l->l_proc, epp)) == 0)
 		return error;
 #endif /* ! COMPAT_NOMID */
 

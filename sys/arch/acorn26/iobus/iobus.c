@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.8.2.2 2004/09/18 14:30:30 skrll Exp $ */
+/* $NetBSD: iobus.c,v 1.8.2.3 2004/09/21 13:11:20 skrll Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.8.2.2 2004/09/18 14:30:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iobus.c,v 1.8.2.3 2004/09/21 13:11:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

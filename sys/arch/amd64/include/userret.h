@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.1.2.2 2004/09/18 14:31:22 skrll Exp $	*/
+/*	$NetBSD: userret.h,v 1.1.2.3 2004/09/21 13:12:14 skrll Exp $	*/
 
 /*
  * XXXfvdl same as i386 counterpart, but should probably be independent.

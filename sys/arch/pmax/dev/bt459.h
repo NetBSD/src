@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.h,v 1.6.28.2 2004/09/18 14:38:49 skrll Exp $	*/
+/*	$NetBSD: bt459.h,v 1.6.28.3 2004/09/21 13:20:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993

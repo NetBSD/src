@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21.2.2 2004/09/18 14:37:58 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21.2.3 2004/09/21 13:19:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.1.2.2 2004/09/18 14:33:39 skrll Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.1.2.3 2004/09/21 13:14:47 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.1.2.2 2004/09/18 14:33:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.1.2.3 2004/09/21 13:14:47 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>

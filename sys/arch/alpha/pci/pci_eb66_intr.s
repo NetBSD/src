@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66_intr.s,v 1.1.48.1 2004/09/18 14:31:12 skrll Exp $ */
+/* $NetBSD: pci_eb66_intr.s,v 1.1.48.2 2004/09/21 13:12:02 skrll Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -44,7 +44,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66_intr.s,v 1.1.48.1 2004/09/18 14:31:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66_intr.s,v 1.1.48.2 2004/09/21 13:12:02 skrll Exp $");
 
 	.text
 LEAF(eb66_intr_enable,1)

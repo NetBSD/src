@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17.2.2 2004/09/18 14:31:56 skrll Exp $
+#	$NetBSD: Makefile,v 1.17.2.3 2004/09/21 13:12:47 skrll Exp $
 
 INCSDIR= /usr/include/amigappc
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.6.12.2 2004/09/18 14:35:13 skrll Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.6.12.3 2004/09/21 13:16:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.6.12.2 2004/09/18 14:35:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.6.12.3 2004/09/21 13:16:25 skrll Exp $");
 
 #include "debug_kloader.h"
 

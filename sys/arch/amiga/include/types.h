@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.14.16.2 2004/09/18 14:31:55 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.14.16.3 2004/09/21 13:12:46 skrll Exp $	*/
 
 #ifndef _MACHINE_TYPES_H_
 #define	_MACHINE_TYPES_H_

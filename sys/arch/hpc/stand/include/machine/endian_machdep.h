@@ -1,4 +1,4 @@
-/*	$NetBSD: endian_machdep.h,v 1.1.26.2 2004/09/18 14:34:46 skrll Exp $	*/
+/*	$NetBSD: endian_machdep.h,v 1.1.26.3 2004/09/21 13:15:59 skrll Exp $	*/
 
 /* Windows CE architecture */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.6.64.3 2004/09/18 14:36:38 skrll Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.6.64.4 2004/09/21 13:17:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990 Regents of the University of California.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.6.64.3 2004/09/18 14:36:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.6.64.4 2004/09/21 13:17:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

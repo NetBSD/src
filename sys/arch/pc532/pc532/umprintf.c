@@ -1,4 +1,4 @@
-/*	$NetBSD: umprintf.c,v 1.5.18.2 2004/09/18 14:38:35 skrll Exp $	*/
+/*	$NetBSD: umprintf.c,v 1.5.18.3 2004/09/21 13:19:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991 The Regents of the University of California.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umprintf.c,v 1.5.18.2 2004/09/18 14:38:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umprintf.c,v 1.5.18.3 2004/09/21 13:19:59 skrll Exp $");
 
 #include <machine/stdarg.h>
 static char *ksprintn __P((u_long num, int base, int *len));

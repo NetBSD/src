@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.h,v 1.1.56.2 2004/09/18 14:34:19 skrll Exp $	*/
+/*	$NetBSD: leds.h,v 1.1.56.3 2004/09/21 13:15:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

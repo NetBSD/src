@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.4.2.2 2004/09/18 14:35:28 skrll Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.4.2.3 2004/09/21 13:16:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

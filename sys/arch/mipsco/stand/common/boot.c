@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2.26.2 2004/09/18 14:37:43 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.2.26.3 2004/09/21 13:19:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

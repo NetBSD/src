@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_dma.c,v 1.3.8.2 2004/09/18 14:33:58 skrll Exp $	*/
+/*	$NetBSD: malta_dma.c,v 1.3.8.3 2004/09/21 13:15:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_dma.c,v 1.3.8.2 2004/09/18 14:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_dma.c,v 1.3.8.3 2004/09/21 13:15:01 skrll Exp $");
 
 #include <sys/param.h>
 

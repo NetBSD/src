@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.2.8.2 2004/09/18 14:35:27 skrll Exp $	*/
+/*	$NetBSD: linux_sigcode.S,v 1.2.8.3 2004/09/21 13:16:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

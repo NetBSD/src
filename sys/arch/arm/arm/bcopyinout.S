@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.10.2.2 2004/09/18 14:32:16 skrll Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.10.2.3 2004/09/21 13:13:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
 #include "bcopyinout_xscale.S"
 #else
 
-RCSID("$NetBSD: bcopyinout.S,v 1.10.2.2 2004/09/18 14:32:16 skrll Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.10.2.3 2004/09/21 13:13:08 skrll Exp $")	
 
 	.text
 	.align	0

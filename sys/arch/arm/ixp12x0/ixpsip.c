@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.6.2.2 2004/09/18 14:32:32 skrll Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.6.2.3 2004/09/21 13:13:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.6.2.2 2004/09/18 14:32:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpsip.c,v 1.6.2.3 2004/09/21 13:13:32 skrll Exp $");
 
 /*
  * Slow peripheral bus of ixp12x0 Processor

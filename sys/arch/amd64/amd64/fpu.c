@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.2.2.2 2004/09/18 14:31:13 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.2.2.3 2004/09/21 13:12:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2.2.2 2004/09/18 14:31:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.2.2.3 2004/09/21 13:12:07 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 

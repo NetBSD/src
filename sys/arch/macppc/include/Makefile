@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17.2.2 2004/09/18 14:37:08 skrll Exp $
+#	$NetBSD: Makefile,v 1.17.2.3 2004/09/21 13:18:29 skrll Exp $
 
 INCSDIR= /usr/include/macppc
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.30.2.4 2004/09/18 14:32:17 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.30.2.5 2004/09/21 13:13:09 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.30.2.4 2004/09/18 14:32:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.30.2.5 2004/09/21 13:13:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

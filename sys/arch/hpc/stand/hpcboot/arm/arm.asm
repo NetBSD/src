@@ -1,4 +1,4 @@
-;	$NetBSD: arm.asm,v 1.3.22.2 2004/09/18 14:34:39 skrll Exp $
+;	$NetBSD: arm.asm,v 1.3.22.3 2004/09/21 13:15:53 skrll Exp $	
 ;
 ; Copyright (c) 2001 The NetBSD Foundation, Inc.
 ; All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.13.22.3 2004/09/18 14:34:39 skrll Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.13.22.4 2004/09/21 13:15:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001

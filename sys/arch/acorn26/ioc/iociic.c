@@ -1,4 +1,4 @@
-/*	$NetBSD: iociic.c,v 1.1.4.3 2004/09/18 14:30:30 skrll Exp $	*/
+/*	$NetBSD: iociic.c,v 1.1.4.4 2004/09/21 13:11:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

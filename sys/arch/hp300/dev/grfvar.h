@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.16.2.3 2004/09/18 14:34:08 skrll Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.16.2.4 2004/09/21 13:15:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

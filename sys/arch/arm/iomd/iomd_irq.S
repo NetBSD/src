@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.3.8.2 2004/09/18 14:32:32 skrll Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.3.8.3 2004/09/21 13:13:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.

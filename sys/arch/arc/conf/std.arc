@@ -1,4 +1,4 @@
-#	$NetBSD: std.arc,v 1.15.2.2 2004/09/18 14:32:08 skrll Exp $
+#	$NetBSD: std.arc,v 1.15.2.3 2004/09/21 13:13:00 skrll Exp $
 # standard arc info
 
 machine arc mips

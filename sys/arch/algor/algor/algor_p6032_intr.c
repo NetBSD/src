@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.5.6.2 2004/09/18 14:30:43 skrll Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.5.6.3 2004/09/21 13:11:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.5.6.2 2004/09/18 14:30:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.5.6.3 2004/09/21 13:11:35 skrll Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.32.2.2 2004/09/18 14:38:10 skrll Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.32.2.3 2004/09/21 13:19:41 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.32.2.2 2004/09/18 14:38:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.32.2.3 2004/09/21 13:19:41 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.6.2.3 2004/09/18 14:38:35 skrll Exp $
+# $NetBSD: GENERIC,v 1.6.2.4 2004/09/21 13:20:04 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pdp10/conf/std.pdp10"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6.2.3 $"
+#ident 		"GENERIC-$Revision: 1.6.2.4 $"
 
 # Here are all different supported CPU types listed.
 options 	KL10

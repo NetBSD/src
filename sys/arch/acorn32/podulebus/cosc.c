@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.11.2.2 2004/09/18 14:30:37 skrll Exp $	*/
+/*	$NetBSD: cosc.c,v 1.11.2.3 2004/09/21 13:11:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.11.2.2 2004/09/18 14:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cosc.c,v 1.11.2.3 2004/09/21 13:11:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

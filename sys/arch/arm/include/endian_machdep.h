@@ -1,4 +1,4 @@
-/* $NetBSD: endian_machdep.h,v 1.5.8.2 2004/09/18 14:32:24 skrll Exp $ */
+/* $NetBSD: endian_machdep.h,v 1.5.8.3 2004/09/21 13:13:19 skrll Exp $ */
 
 /* GCC predefines __ARMEB__ when building for big-endian ARM. */
 #ifdef __ARMEB__

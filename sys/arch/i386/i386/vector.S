@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.9.2.2 2004/09/18 14:35:28 skrll Exp $	*/
+/*	$NetBSD: vector.S,v 1.9.2.3 2004/09/21 13:16:47 skrll Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.

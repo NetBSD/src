@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.14.2.3 2004/09/18 14:38:10 skrll Exp $	*/
+/*	$NetBSD: bus.c,v 1.14.2.4 2004/09/21 13:19:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.14.2.3 2004/09/18 14:38:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.14.2.4 2004/09/21 13:19:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,7 +427,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	iov = uio->uio_iov;
 
 	if (uio->uio_segflg == UIO_USERSPACE) {
-		p = uio->uio_procp;
+		p = uio->uio_lwp->l_proc;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
 			panic("_bus_dmamap_load_uio: USERSPACE but no proc");

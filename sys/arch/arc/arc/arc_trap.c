@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.25.2.2 2004/09/18 14:31:56 skrll Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.25.2.3 2004/09/21 13:12:47 skrll Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.25.2.2 2004/09/18 14:31:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arc_trap.c,v 1.25.2.3 2004/09/21 13:12:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

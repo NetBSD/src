@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.9.2.2 2004/09/18 14:30:29 skrll Exp $ */
+/* $NetBSD: pmap.c,v 1.9.2.3 2004/09/21 13:11:20 skrll Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9.2.2 2004/09/18 14:30:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9.2.3 2004/09/21 13:11:20 skrll Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>

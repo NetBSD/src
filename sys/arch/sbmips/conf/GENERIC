@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.21.2.2 2004/09/18 14:39:37 skrll Exp $
+# $NetBSD: GENERIC,v 1.21.2.3 2004/09/21 13:21:08 skrll Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21.2.2 $"
+#ident 		"GENERIC-$Revision: 1.21.2.3 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 options 	DEBUG		# extra kernel debugging support

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.9.2.2 2004/09/18 14:32:24 skrll Exp $	*/
+/*	$NetBSD: pcb.h,v 1.9.2.3 2004/09/21 13:13:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.

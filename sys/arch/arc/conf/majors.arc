@@ -1,4 +1,4 @@
-#	$NetBSD: majors.arc,v 1.4.2.2 2004/09/18 14:32:08 skrll Exp $
+#	$NetBSD: majors.arc,v 1.4.2.3 2004/09/21 13:13:00 skrll Exp $
 #
 # Device majors for arc
 #

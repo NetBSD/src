@@ -1,4 +1,4 @@
-# $NetBSD: VR41XX,v 1.13.2.2 2004/09/18 14:34:51 skrll Exp $
+# $NetBSD: VR41XX,v 1.13.2.3 2004/09/21 13:16:00 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
-#ident 		"GENERIC-$Revision: 1.13.2.2 $"
+#ident 		"GENERIC-$Revision: 1.13.2.3 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.15.2.2 2004/09/18 14:37:18 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.15.2.3 2004/09/21 13:18:39 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)

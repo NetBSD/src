@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.18.2.2 2004/09/18 14:35:57 skrll Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.18.2.3 2004/09/21 13:17:10 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996

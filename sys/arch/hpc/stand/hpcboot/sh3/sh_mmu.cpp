@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_mmu.cpp,v 1.3.16.2 2004/09/18 14:34:46 skrll Exp $	*/
+/*	$NetBSD: sh_mmu.cpp,v 1.3.16.3 2004/09/21 13:15:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_div.c,v 1.2.36.2 2004/09/18 14:36:16 skrll Exp $ */
+/*	$NetBSD: fpu_div.c,v 1.2.36.3 2004/09/21 13:17:35 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.2.36.2 2004/09/18 14:36:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_div.c,v 1.2.36.3 2004/09/21 13:17:35 skrll Exp $");
 
 #include <sys/types.h>
 

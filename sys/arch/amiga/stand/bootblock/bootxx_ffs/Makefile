@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.2 2004/09/18 14:31:55 skrll Exp $
+#	$NetBSD: Makefile,v 1.5.2.3 2004/09/21 13:12:46 skrll Exp $
 
 ### what we need:
 

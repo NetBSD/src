@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.8.2.2 2004/09/18 14:38:42 skrll Exp $
+# 	$NetBSD: config.playstation2,v 1.8.2.3 2004/09/21 13:20:13 skrll Exp $
 #
 
 maxusers	16

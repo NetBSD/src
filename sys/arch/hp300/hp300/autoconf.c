@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.62.2.3 2004/09/18 14:34:19 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62.2.4 2004/09/21 13:15:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62.2.3 2004/09/18 14:34:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62.2.4 2004/09/21 13:15:25 skrll Exp $");
 
 #include "hil.h"
 #include "dvbox.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sigcode.S,v 1.1.8.2 2004/09/18 14:35:27 skrll Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.S,v 1.1.8.3 2004/09/21 13:16:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

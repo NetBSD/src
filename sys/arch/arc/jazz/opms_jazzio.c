@@ -1,4 +1,4 @@
-/* $NetBSD: opms_jazzio.c,v 1.3.6.2 2004/09/18 14:32:09 skrll Exp $ */
+/* $NetBSD: opms_jazzio.c,v 1.3.6.3 2004/09/21 13:13:01 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.3.6.2 2004/09/18 14:32:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.3.6.3 2004/09/21 13:13:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

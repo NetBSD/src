@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.6.2.2 2004/09/18 14:34:20 skrll Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6.2.3 2004/09/21 13:15:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass

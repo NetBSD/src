@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.3.36.2 2004/09/18 14:34:20 skrll Exp $	*/
+/*	$NetBSD: apci.c,v 1.3.36.3 2004/09/21 13:15:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.

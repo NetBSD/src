@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12.2.2 2004/09/18 14:33:58 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.3 2004/09/21 13:15:01 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.2 2004/09/18 14:33:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.3 2004/09/21 13:15:01 skrll Exp $");
 
 #include "opt_marvell.h"
 #include "opt_ev64260.h"

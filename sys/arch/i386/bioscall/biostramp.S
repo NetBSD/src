@@ -1,4 +1,4 @@
-/*	$NetBSD: biostramp.S,v 1.11.2.2 2004/09/18 14:35:22 skrll Exp $	*/
+/*	$NetBSD: biostramp.S,v 1.11.2.3 2004/09/21 13:16:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.

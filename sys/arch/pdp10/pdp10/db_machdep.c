@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.2.4.3 2004/09/18 14:38:42 skrll Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2.4.4 2004/09/21 13:20:13 skrll Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.

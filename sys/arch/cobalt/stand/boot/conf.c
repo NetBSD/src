@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1.2.2 2004/09/18 14:33:33 skrll Exp $	*/
+/*	$NetBSD: conf.c,v 1.1.2.3 2004/09/21 13:14:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993

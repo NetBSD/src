@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.30.2.2 2004/09/18 14:31:56 skrll Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.30.2.3 2004/09/21 13:12:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
