@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.23 2000/11/01 23:51:39 eeh Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.24 2000/11/02 06:57:01 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -44,6 +44,7 @@
 #include <sys/param.h>
 #include <sys/tablet.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/ioctl.h>
 #include <sys/ioctl_compat.h>
 #include <sys/tty.h>
@@ -126,7 +127,7 @@ tbopen(dev, tp)
 {
 	struct tb *tbp;
 
-	if (tp->t_linesw && (tp->t_linesw->t_no == TABLDISC))
+	if (tp->t_linesw && (tp->t_linesw->l_no == TABLDISC))
 		return (ENODEV);
 	ttywflush(tp);
 	for (tbp = tb; tbp < &tb[NTB]; tbp++)
