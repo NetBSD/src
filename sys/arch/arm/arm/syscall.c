@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2002/01/05 22:41:47 chris Exp $	*/
+/*	$NetBSD: syscall.c,v 1.1 2002/01/12 20:02:13 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,11 +80,15 @@
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
+
+__RCSID("$NetBSD: syscall.c,v 1.1 2002/01/12 20:02:13 bjh21 Exp $");
+
+#include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/signalvar.h>
-#include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/signalvar.h>
 #include <sys/syscall.h>
+#include <sys/systm.h>
 #include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
@@ -94,42 +98,50 @@
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <arm/arm32/katelib.h>
 #include <machine/pcb.h>
 
-u_int arm700bugcount = 0;
-void syscall __P((trapframe_t *, int));
+#ifdef arm26
+#include <machine/machdep.h>
+#endif
 
-/*
- * syscall(frame):
- *
- * System call request from POSIX system call gate interface to kernel.
- */
+#ifdef CPU_ARM7
+struct evcnt arm700bugcount =
+    EVCNT_INITIALISER(EVCNT_TYPE_MISC, NULL, "cpu", "arm700swibug");
+#endif
+
 void
-syscall(frame, code)
-	trapframe_t *frame;
-	int code;
+syscall(trapframe_t *frame)
 {
-	caddr_t stackargs;
 	const struct sysent *callp;
 	struct proc *p;
-	int error;
-	u_int argsize;
-	int *args, copyargs[8], rval[2];
-	int regparams;
+	u_int32_t insn;
+	int code, error;
+	u_int nap, nargs;
+	register_t *ap, *args, copyargs[8], rval[2];
 
 	/*
 	 * Enable interrupts if they were enabled before the exception.
 	 * Since all syscalls *should* come from user mode it will always
 	 * be safe to enable them, but check anyway. 
 	 */
+#ifdef arm26
+	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
+		int_on();
+#else
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
+#endif
 
-#ifdef DEBUG
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
-		panic("syscall: not in SVC32 mode");
-#endif	/* DEBUG */
+#ifdef arm26
+	frame->tf_pc += INSN_SIZE;
+#endif
+
+	/* XXX fuword? */
+#ifdef __PROG32
+	insn = *(u_int32_t *)(frame->tf_pc - INSN_SIZE);
+#else
+	insn = *(u_int32_t *)((frame->tf_r15 & R15_PC) - INSN_SIZE);
+#endif
 
 	uvmexp.syscalls++;
 	p = curproc;
@@ -152,22 +164,22 @@ syscall(frame, code)
 	 * If the instruction that caused the exception is not a SWI
 	 * then we hit the bug.
 	 */
-	if ((ReadWord(frame->tf_pc - INSN_SIZE) & 0x0f000000) != 0x0f000000) {
+	if ((insn & 0x0f000000) != 0x0f000000) {
 		frame->tf_pc -= INSN_SIZE;
-		++arm700bugcount;
+		/*
+		 * Yuck.  arm700bugcount should be per-CPU and
+		 * attached at the same time as the CPU.
+		 */
+		if (!cold && arm700bugcount.ev_list.tqe_next == NULL)
+			evcnt_attach_static(&arm700bugcount);
+		++arm700bugcount.ev_count;
 		userret(p);
 		return;
 	}
 #endif	/* CPU_ARM7 */
 
-	/*
-	 * Support for architecture dependant SWIs
-	 */
-	if (code & 0x00f00000) {
-		/*
-		 * Support for the Architecture defined SWI's in case the
-		 * processor does not support them.
-		 */
+	switch (insn & 0xf00000) { /* Which OS is the SWI from? */
+	case 0xf00000: /* ARM-defined SWIs */
 		switch (code) {
 		case 0x00f00000 :	/* IMB */
 		case 0x00f00001 :	/* IMB_range */
@@ -178,59 +190,61 @@ syscall(frame, code)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			trapsignal(p, SIGILL, ReadWord(frame->tf_pc - INSN_SIZE));
+			trapsignal(p, SIGILL, insn);
 			break;
 		}
 
 		userret(p);
 		return;
+	case 0x000000: /* Old unofficial NetBSD range. */
+	case 0xa00000: /* New official NetBSD range. */
+		break;
+	default:
+		/* Undefined so illegal instruction */
+		trapsignal(p, SIGILL, insn);
+		userret(p);
+		return;
 	}
 
-	stackargs = (caddr_t)&frame->tf_r0;
-	regparams = 4 * sizeof(int);
+	code = insn & 0x000fffff;
+
+	ap = &frame->tf_r0;
+	nap = 4;
 	callp = p->p_emul->e_sysent;
 
 	switch (code) {	
 	case SYS_syscall:
-		/* Don't have to look in user space, we have it in the trapframe */
-/*		code = fuword(stackargs);*/
-		code = ReadWord(stackargs);
-		stackargs += sizeof(int);
-		regparams -= sizeof(int);
+		code = *ap++;
+		nap--;
 		break;
-	
         case SYS___syscall:
-		if (callp != sysent)
+#if 0
+		if (!(p->p_emul->e_flags & EMUL_HAS_SYS___syscall))
 			break;
+#endif
 
-		/* Since this will be a register we look in the trapframe not user land */
-/*		code = fuword(stackargs + _QUAD_LOWWORD * sizeof(int));*/
-		code = ReadWord(stackargs + _QUAD_LOWWORD * sizeof(int));
-		stackargs += sizeof(quad_t);
-		regparams -= sizeof(quad_t);
-		break;
-
-        default:
-		/* do nothing by default */
+		code = ap[_QUAD_LOWWORD];
+		ap += 2;
+		nap -= 2;
 		break;
 	}
 
 	code &= (SYS_NSYSENT - 1);
 	callp += code;
-	argsize = callp->sy_argsize;
-	if (argsize <= regparams)
-		args = (int *)stackargs;
+	nargs = callp->sy_argsize / sizeof(register_t);
+	if (nargs <= nap)
+		args = ap;
 	else {
-		args = copyargs;
-		bcopy(stackargs, (caddr_t)args, regparams);
-		error = copyin((caddr_t)frame->tf_usr_sp,
-		    (caddr_t)args + regparams, argsize - regparams);
+		memcpy(copyargs, ap, nap * sizeof(register_t));
+		error = copyin((void *)frame->tf_usr_sp, copyargs + nap,
+		    (nargs - nap) * sizeof(register_t));
 		if (error)
 			goto bad;
+		args = copyargs;
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, callp->sy_narg, args);
+	scdebug_call(p, code, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
@@ -245,7 +259,12 @@ syscall(frame, code)
 	case 0:
 		frame->tf_r0 = rval[0];
 		frame->tf_r1 = rval[1];
+
+#ifdef __PROG32
 		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
+#else
+		frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
+#endif
 		break;
 
 	case ERESTART:
@@ -262,7 +281,11 @@ syscall(frame, code)
 	default:
 	bad:
 		frame->tf_r0 = error;
+#ifdef __PROG32
 		frame->tf_spsr |= PSR_C_bit;	/* carry bit */
+#else
+		frame->tf_r15 |= R15_FLAG_C;	/* carry bit */
+#endif
 		break;
 	}
 
@@ -284,7 +307,11 @@ child_return(arg)
 	struct trapframe *frame = p->p_addr->u_pcb.pcb_tf;
 
 	frame->tf_r0 = 0;
-	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */	
+#ifdef __PROG32
+		frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */
+#else
+		frame->tf_r15 &= ~R15_FLAG_C;	/* carry bit */
+#endif
 
 	userret(p);
 #ifdef KTRACE
