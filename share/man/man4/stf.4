@@ -1,4 +1,4 @@
-.\"     $NetBSD: stf.4,v 1.5 2000/06/10 08:02:21 itojun Exp $
+.\"     $NetBSD: stf.4,v 1.6 2000/07/05 17:08:46 thorpej Exp $
 .\"     $KAME: stf.4,v 1.24 2000/06/07 23:35:18 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,6 +45,16 @@ interface supports
 IPv6 in IPv4 encapsulation.
 It can tunnel IPv6 traffic over IPv4, as specified in
 .Li draft-ietf-ngtrans-6to4-06.txt .
+.Pp
+.Nm
+interfaces are dynamically created and destroyed with the
+.Xr ifconfig
+.Cm create
+and
+.Cm destroy
+subcommands.  Only one
+.Nm stf
+interface may be created.
 .Pp
 For ordinary nodes in 6to4 site, you do not need
 .Nm
@@ -160,7 +170,7 @@ is equal to
 written in hexadecimals.
 .Bd -literal
 # ifconfig ne0 inet 133.4.5.6 netmask 0xffffff00
-# ifconfig stf0 inet6 2002:8504:0506:0000:a00:5aff:fe38:6f86 \\
+# ifconfig stf0 create inet6 2002:8504:0506:0000:a00:5aff:fe38:6f86 \\
 	prefixlen 16 alias
 .Ed
 .Pp
@@ -171,7 +181,7 @@ It emits 6to4 packet only for IPv6 destination 2002:0901::/32
 .Pq IPv4 destination will match Li 9.1.0.0/16 .
 .Bd -literal
 # ifconfig ne0 inet 9.1.2.3 netmask 0xffff0000
-# ifconfig stf0 inet6 2002:0901:0203:0000:a00:5aff:fe38:6f86 \\
+# ifconfig stf0 create inet6 2002:0901:0203:0000:a00:5aff:fe38:6f86 \\
 	prefixlen 32 alias
 .Ed
 .\"
