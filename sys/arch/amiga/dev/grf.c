@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.41 2002/03/17 19:40:28 atatat Exp $ */
+/*	$NetBSD: grf.c,v 1.41.4.1 2002/05/16 16:50:16 gehenna Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41 2002/03/17 19:40:28 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41.4.1 2002/05/16 16:50:16 gehenna Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -88,11 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.41 2002/03/17 19:40:28 atatat Exp $");
 int grfon(dev_t);
 int grfoff(dev_t);
 int grfsinfo(dev_t, struct grfdyninfo *);
-#ifdef BANKEDDEVPAGER
-int grfbanked_get(dev_t, off_t, int);
-int grfbanked_cur(dev_t);
-int grfbanked_set(dev_t, int);
-#endif
 
 void grfattach(struct device *, struct device *, void *);
 int grfmatch(struct device *, struct cfdata *, void *);
@@ -316,10 +311,6 @@ grfmmap(dev_t dev, off_t off, int prot)
 	 */
 	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
 		off -= gi->gd_regsize;
-#ifdef BANKEDDEVPAGER
-		if (gi->gd_bank_size)
-			off %= gi->gd_bank_size;
-#endif
 		return(((paddr_t)gi->gd_fbaddr + off) >> PGSHIFT);
 	}
 	/* bogus */
@@ -385,46 +376,4 @@ grfsinfo(dev_t dev, struct grfdyninfo *dyninfo)
 	return(error);
 }
 
-#ifdef BANKEDDEVPAGER
-
-int
-grfbanked_get(dev_t dev, off_t off, int prot)
-{
-	struct grf_softc *gp;
-	struct grfinfo *gi;
-	int error, bank;
-
-	gp = grfsp[GRFUNIT(dev)];
-	gi = &gp->g_display;
-
-	off -= gi->gd_regsize;
-	if (off < 0 || off >= gi->gd_fbsize)
-		return -1;
-
-	error = gp->g_mode(gp, GM_GRFGETBANK, &bank, off, prot);
-	return error ? -1 : bank;
-}
-
-int
-grfbanked_cur(dev_t dev)
-{
-	struct grf_softc *gp;
-	int error, bank;
-
-	gp = grfsp[GRFUNIT(dev)];
-
-	error = gp->g_mode(gp, GM_GRFGETCURBANK, &bank, 0, 0);
-	return(error ? -1 : bank);
-}
-
-int
-grfbanked_set(dev_t dev, int bank)
-{
-	struct grf_softc *gp;
-
-	gp = grfsp[GRFUNIT(dev)];
-	return(gp->g_mode(gp, GM_GRFSETBANK, &bank, 0, 0) ? -1 : 0);
-}
-
-#endif /* BANKEDDEVPAGER */
 #endif	/* NGRF > 0 */
