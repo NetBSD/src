@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2aout.c,v 1.7 1999/11/02 21:13:17 drochner Exp $	*/
+/*	$NetBSD: elf2aout.c,v 1.8 2000/01/09 11:26:01 is Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -210,6 +210,10 @@ usage:
 
 	/* We now have enough information to cons up an a.out header... */
 	aex.a_midmag = htonl((symflag << 26) | (MID_PMAX << 16) | OMAGIC);
+	if (ex.e_machine == Elf_em_ppc)
+		aex.a_midmag = htonl((symflag << 26) | (MID_POWERPC << 16)
+			| OMAGIC);
+		
 	aex.a_text = text.len;
 	aex.a_data = data.len;
 	aex.a_bss = bss.len;
