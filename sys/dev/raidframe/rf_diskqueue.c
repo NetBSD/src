@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.30 2004/02/29 04:03:50 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.31 2004/03/05 02:53:55 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.30 2004/02/29 04:03:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.31 2004/03/05 02:53:55 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -149,8 +149,7 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 
 static struct pool rf_dqd_pool;
 #define RF_MAX_FREE_DQD 256
-#define RF_DQD_INC       16
-#define RF_DQD_INITIAL   64
+#define RF_MIN_FREE_DQD  64
 
 #include <sys/buf.h>
 
@@ -193,7 +192,8 @@ rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp)
 	pool_init(&rf_dqd_pool, sizeof(RF_DiskQueueData_t), 0, 0, 0,
 		  "rf_dqd_pl", NULL);
 	pool_sethiwat(&rf_dqd_pool, RF_MAX_FREE_DQD);
-	pool_prime(&rf_dqd_pool, RF_DQD_INITIAL);
+	pool_prime(&rf_dqd_pool, RF_MIN_FREE_DQD);
+	pool_setlowat(&rf_dqd_pool, RF_MIN_FREE_DQD);
 
 	rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
 
