@@ -1,5 +1,5 @@
-.\"	$NetBSD: setkey.8,v 1.23 2003/09/07 22:21:01 itojun Exp $
-.\"	$KAME: setkey.8,v 1.87 2003/09/07 22:16:01 itojun Exp $
+.\"	$NetBSD: setkey.8,v 1.24 2003/09/08 06:18:49 itojun Exp $
+.\"	$KAME: setkey.8,v 1.90 2003/09/08 06:10:43 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -39,6 +39,9 @@
 .Sh SYNOPSIS
 .Nm setkey
 .Op Fl v
+.Ar file...
+.Nm setkey
+.Op Fl v
 .Fl c
 .Nm setkey
 .Op Fl v
@@ -72,6 +75,9 @@ if invoked with
 .Fl f Ar filename
 .Pc .
 .Bl -tag -width Ds
+.It (no flag)
+Dump the SAD entries or SPD entries contained in the specified
+.Ar file .
 .It Fl D
 Dump the SAD entries.
 If with
