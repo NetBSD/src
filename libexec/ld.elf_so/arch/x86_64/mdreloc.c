@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.10 2002/09/05 21:21:13 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.11 2002/09/05 21:31:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -172,8 +172,9 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 			if (*where32 != tmp32)
 				*where32 = tmp32;
 			rdbg(dodebug, ("32/32S %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)(unsigned long)*where32, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)(unsigned long)*where32,
+			    defobj->path));
 			break;
 		case R_TYPE(64):	/* word64 S + A */
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
@@ -186,8 +187,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 			if (*where64 != tmp64)
 				*where64 = tmp64;
 			rdbg(dodebug, ("64 %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where64, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where64, defobj->path));
 			break;
 		case R_TYPE(PC32):	/* word32 S + A - P */
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
@@ -199,8 +200,9 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 			if (*where32 != tmp32)
 				*where32 = tmp32;
 			rdbg(dodebug, ("PC32 %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)(unsigned long)*where32, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)(unsigned long)*where32,
+			    defobj->path));
 			break;
 		case R_TYPE(GLOB_DAT):	/* word64 S */
 			def = _rtld_find_symdef(symnum, obj, &defobj, false);
@@ -212,8 +214,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj, bool dodebug)
 			if (*where64 != tmp64)
 				*where64 = tmp64;
 			rdbg(dodebug, ("64 %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where64, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where64, defobj->path));
 			break;
 		case R_TYPE(RELATIVE):  /* word64 B + A */
 			tmp64 = (Elf64_Addr)(obj->relocbase + rela->r_addend);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.15 2002/09/05 21:21:12 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.16 2002/09/05 21:31:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -337,10 +337,9 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 		if (RELOC_RESOLVE_SYMBOL(type)) {
 			rdbg(dodebug, ("%s %s in %s --> %p %s",
 			    reloc_names[type],
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
-		}
-		else {
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
+		} else {
 			rdbg(dodebug, ("%s --> %p", reloc_names[type],
 			    (void *)*where));
 		}

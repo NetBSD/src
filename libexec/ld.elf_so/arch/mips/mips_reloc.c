@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.10 2002/09/05 21:21:10 mycroft Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.11 2002/09/05 21:31:33 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -197,8 +197,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				*where += (Elf_Addr)(defobj->relocbase +
 				    def->st_value);
 				rdbg(dodebug, ("REL32 %s in %s --> %p in %s",
-				    defobj->strtab + def->st_name, obj->path,
-				    (void *)*where, defobj->path));
+				    obj->strtab + obj->symtab[symnum].st_name,
+				    obj->path, (void *)*where, defobj->path));
 			}
 			break;
 

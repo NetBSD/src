@@ -54,15 +54,15 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				"%s: R_ARM_PC24 relocation @ %p to %s failed "
 				"(displacement %ld (%#lx) out of range)",
 				    obj->path, where,
-				    defobj->strtab + def->st_name, (long) tmp,
-				    (long) tmp);
+				    obj->strtab + obj->symtab[symnum].st_name,
+				    (long) tmp, (long) tmp);
 				return -1;
 			}
 			tmp >>= 2;
 			*where = (*where & 0xff000000) | (tmp & 0x00ffffff);
 			rdbg(dodebug, ("PC24 %s in %s --> %p @ %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, where, defobj->path));
 			break;
 		}
 #endif
@@ -73,8 +73,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				return -1;
 			*where += (Elf_Addr)defobj->relocbase + def->st_value;
 			rdbg(dodebug, ("ABS32 %s in %s --> %p @ %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, where, defobj->path));
 			break;
 
 		case R_TYPE(GLOB_DAT):	/* word32 B + S */
@@ -83,8 +83,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				return -1;
 			*where = (Elf_Addr)(defobj->relocbase + def->st_value);
 			rdbg(dodebug, ("GLOB_DAT %s in %s --> %p @ %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):	/* word32 B + A */

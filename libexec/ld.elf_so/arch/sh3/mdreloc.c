@@ -43,8 +43,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			if (*where != tmp)
 				*where = tmp;
 			rdbg(dodebug, ("GOT32 %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(REL32):
@@ -55,8 +55,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			*where += (Elf_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend) - (Elf_Addr)where;
 			rdbg(dodebug, ("PC32 %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 #endif
 
@@ -68,8 +68,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			*where += (Elf_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend);
 			rdbg(dodebug, ("32 %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(GLOB_DAT):
@@ -82,8 +82,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			if (*where != tmp)
 				*where = tmp;
 			rdbg(dodebug, ("GLOB_DAT %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):

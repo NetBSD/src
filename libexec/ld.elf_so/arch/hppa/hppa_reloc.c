@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.6 2002/09/05 21:21:09 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.7 2002/09/05 21:31:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -382,8 +382,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				if (*where != tmp)
 					*where = tmp;
 				rdbg(dodebug, ("DIR32 %s in %s --> %p in %s",
-				    defobj->strtab + def->st_name, obj->path,
-				    (void *)*where, defobj->path));
+				    obj->strtab + obj->symtab[symnum].st_name,
+				    obj->path, (void *)*where, defobj->path));
 			} else {
 				extern Elf_Addr	_GLOBAL_OFFSET_TABLE_[];
 				extern Elf_Addr	_GOT_END_[];
@@ -424,8 +424,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 				if (*where != tmp)
 					*where = tmp;
 				rdbg(dodebug, ("PLABEL32 %s in %s --> %p in %s",
-				    defobj->strtab + def->st_name, obj->path,
-				    (void *)*where, defobj->path));
+				    obj->strtab + obj->symtab[symnum].st_name,
+				    obj->path, (void *)*where, defobj->path));
 			} else {
 				/*
 				 * This is a PLABEL for a static function, and
