@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.199.8.1 2002/12/15 11:21:52 jmc Exp $	*/
+/*	$NetBSD: init_main.c,v 1.199.8.2 2003/06/02 09:29:21 tron Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.8.1 2002/12/15 11:21:52 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.8.2 2003/06/02 09:29:21 tron Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfsserver.h"
@@ -116,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.199.8.1 2002/12/15 11:21:52 jmc Exp 
 #include <net/raw_cb.h>
 
 const char copyright[] =
-"Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002\n"
+"Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003\n"
 "    The NetBSD Foundation, Inc.  All rights reserved.\n"
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
 "    The Regents of the University of California.  All rights reserved.\n"
