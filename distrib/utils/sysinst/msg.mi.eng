@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.16 1998/11/16 07:07:42 cgd Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.17 1998/11/16 07:08:34 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -202,11 +202,12 @@ message megname
 {meg}
 
 message layout
-{You need to choose how the NetBSD part of your disk will be partitioned.
+{NetBSD uses a BSD disklabel to carve up the NetBSD portion of the disk
+into multiple BSD partitions.  You must now set up your BSD disklabel.
 You have several choices.  They are summarized below.
--- Standard: the partitions are computed by this program.
+-- Standard: the BSD disklabel partitions are computed by this program.
 -- Standard with X: twice the swap space, space for X binaries.
--- Custom: you specify the sizes of all the partitions.
+-- Custom: you specify the sizes of all the BSD disklabel partitions.
 
 The NetBSD part of your disk is %.2f Megabytes.
 Standard requires at least %.2f Megabytes.
@@ -226,7 +227,7 @@ cylinder size, which is %d sectors.
 }
 
 message fspart
-{We now have your NetBSD partitions as follows (Size and Offset in %s):
+{We now have your BSD-disklabel partitions as (Size and Offset in %s):
 }
 
 message fspart_head
