@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.24 1998/07/31 05:28:24 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.25 1998/07/31 05:29:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -908,7 +908,7 @@ isapnp_callback(self)
 {
 	struct isapnp_softc *sc = (struct isapnp_softc *)self;
 	struct isapnp_attach_args *ipa, *lpa;
-	int found, c, d;
+	int c, d;
 
 	/*
 	 * Look for cards.  If none are found, we say so and just return.
