@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.68 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: apm.c,v 1.69 2002/09/19 12:00:11 wiz Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.68 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.69 2002/09/19 12:00:11 wiz Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -1713,7 +1713,7 @@ apmioctl(dev, cmd, data, flag, p)
 			error = EBADF;
 			break;
 		}
-		apm_suspend_now++;	/* flag for peroidic event */
+		apm_suspend_now++;	/* flag for periodic event */
 		break;
 
 	case APM_IOC_DEV_CTL:
