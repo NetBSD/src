@@ -1,12 +1,9 @@
-#	$NetBSD: TODO.hibler,v 1.3 1994/06/29 06:31:41 cgd Exp $
+#	$NetBSD: TODO.hibler,v 1.3.2.1 1994/07/20 03:17:39 cgd Exp $
 
 1. Investiate making ISOFS another UFS shared filesystem (ala FFS/MFS/LFS).
    Since it was modelled after the inode code, we might be able to merge
    them back.  It looks like a seperate (but very similar) lookup routine
    will be needed due to the associated file stuff.
-
-3. If it can't be merged with UFS, at least get them in sync.  For example,
-   it could use the same style hashing routines as in ufs/ufs_ihash.c
 
 4. It would be nice to be able to use the vfs_cluster code.
    Unfortunately, if the logical block size is smaller than the page size,
