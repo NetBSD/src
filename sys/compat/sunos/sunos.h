@@ -1,4 +1,14 @@
-/*	$NetBSD: sunos.h,v 1.11 1998/09/13 20:20:48 pk Exp $	*/
+/*	$NetBSD: sunos.h,v 1.12 2001/02/02 07:11:09 mrg Exp $	*/
+
+#ifndef _COMPAT_SUNOS_SUNOS_H_
+#define _COMPAT_SUNOS_SUNOS_H_
+
+/* used to ensure `struct sunos' types rename constantly sized. */
+#ifdef __arch64__
+typedef u_int32_t	sunos_charp;
+#else
+typedef char *		sunos_charp;
+#endif
 
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
 #define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */
@@ -17,12 +27,12 @@ struct sunos_nfs_args {
 	int	rsize;			/* read size in bytes */
 	int	timeo;			/* initial timeout in .1 secs */
 	int	retrans;		/* times to retry send */
-	char	*hostname;		/* server's hostname */
+	sunos_charp hostname;		/* server's hostname */
 	int	acregmin;		/* attr cache file min secs */
 	int	acregmax;		/* attr cache file max secs */
 	int	acdirmin;		/* attr cache dir min secs */
 	int	acdirmax;		/* attr cache dir max secs */
-	char	*netname;		/* server's netname */
+	sunos_charp netname;		/* server's netname */
 	struct	pathcnf *pathconf;	/* static pathconf kludge */
 };
 /* SunOS nfs flag values: */
@@ -146,3 +156,5 @@ __BEGIN_DECLS
 /* Defined in arch/<arch>/sunos_machdep.c */
 void	sunos_sendsig __P((sig_t, int, sigset_t *, u_long));
 __END_DECLS
+
+#endif /* _COMPAT_SUNOS_SUNOS_H_ */
