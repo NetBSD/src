@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.74 1999/01/13 20:35:30 pk Exp $
+# 	$NetBSD: GENERIC,v 1.75 1999/01/16 13:43:50 pk Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -155,7 +155,7 @@ options 	NS		# Xerox NS networking
 options 	ISO,TPIP	# OSI networking
 options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
-options 	NETATALK	# AppleTalk (over Ethernet) protocol
+#options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 #options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
@@ -255,6 +255,10 @@ magma*	at sbus? slot ? offset ?
 mtty*	at magma?
 mbpp*	at magma?
 
+## PCMCIA serial interfaces
+com*	at pcmcia?
+pcmcom*	at pcmcia?
+com*	at pcmcom?
 
 #### Disk controllers and disks
 
@@ -316,6 +320,11 @@ scsibus* at si?
 sw0	at obio0 addr 0x0a000000 level 3
 scsibus* at sw?
 
+## PCMCIA SCSI controllers
+aic*	at pcmcia?
+scsibus* at aic?
+
+
 ## These entries find devices on all SCSI busses and assign
 ## unit numbers dynamically.
 sd*	at scsibus? target ? lun ?		# SCSI disks
@@ -346,6 +355,10 @@ xy*	at xyc? drive ?
 fdc0	at mainbus0				# sun4c controller
 fdc0	at obio0				# sun4m controller
 fd*	at fdc0					# the drive itself
+
+## PCMCIA IDE controllers
+wdc*	at pcmcia?
+wd*	at wdc?
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
@@ -398,11 +411,28 @@ ie4	at vme0 addr 0x2dff02 pri 3 vec 0x7c		# VME
 
 ## qec/be, qec/hme
 qec*		at sbus? slot ? offset ?
-#be*		at qec?
-#hme*		at qec?
+be*		at qec?
+#qe*		at qec?
 
 # midway ATM
 en0	at sbus? slot ? offset ?
+
+# PCMCIA ethernet devices
+ep*	at pcmcia?
+mbe*	at pcmcia?
+ne*	at pcmcia?
+sm*	at pcmcia?
+
+# MII/PHY support
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 ## Loopback network interface; required
 pseudo-device	loop
