@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.45 2003/05/16 19:48:29 dsl Exp $	*/
+/*	$NetBSD: menus.md,v 1.1 2003/05/16 19:48:29 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,14 +50,10 @@ menu getboottype, title MSG_Bootblocks_selection;
 	option MSG_Use_serial_115200_bootblocks, exit, action
 	    {boottype = "serial115200";};
 
-menu fullpart, title  MSG_Select_your_choice;
-	option MSG_Use_only_part_of_the_disk, exit, action  {usefull = 0;};
-	option MSG_Use_the_entire_disk, 	    exit, action  {usefull = 1;};
-
 menu wdtype, title MSG_Select_type;
 	display action { msg_display (MSG_wdtype, diskdev); };
-	option "IDE", 	exit;
-	option "ESDI", 	exit, action
+	option "IDE",	exit;
+	option "ESDI",	exit, action
 		{ msg_display (MSG_sectforward);
 		  process_menu (MENU_yesno);
 		  if (yesno)
@@ -86,50 +82,6 @@ menu dlgeom, title MSG_Choose_an_option;
 			disk->dd_head = dlhead;
 			disk->dd_sec = dlsec;
 		};
-
-menu editparttable, title MSG_Choose_your_partition, exit;
-	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part(&mbr.mbr_parts[0], activepart, -1);
-			};
-	option MSG_Edit_partition_0,  sub menu editpart,
-		action  { editpart = 0; };
-	option MSG_Edit_partition_1,  sub menu editpart,
-		action  { editpart = 1; };
-	option MSG_Edit_partition_2,  sub menu editpart,
-		action  { editpart = 2; };
-	option MSG_Edit_partition_3,  sub menu editpart,
-		action  { editpart = 3; };
-	option MSG_Reselect_size_specification,
-		action  { reask_sizemult(bcylsize); }; 
-
-menu editpart, title MSG_Select_to_change;
-	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part(&mbr.mbr_parts[0], editpart, -1);
-			   msg_display_add(MSG_newline);
-			};
-	option MSG_Kind, sub menu chooseid;
-	option MSG_Start_and_size, action { edit_ptn_bounds(); };
-	option MSG_Set_active, action { activepart = editpart; };
-	option MSG_Partition_OK, exit;
-
-menu chooseid, title MSG_Partition_Kind;
-	option MSG_NetBSD, 	exit,	action
-	{
-		part[editpart].mbrp_typ = MBR_PTYPE_NETBSD;
-	};
-	option MSG_DOS_LT_32_Meg,	exit,	action
-	{
-		part[editpart].mbrp_typ = MBR_PTYPE_FAT16S;
-	};
-	option MSG_DOS_GT_32_Meg,	exit,	action
-	{
-		part[editpart].mbrp_typ = MBR_PTYPE_FAT16B;
-	};
-	option MSG_unused,	exit,	action
-	{
-		part[editpart].mbrp_typ = 0;
-	};
-	option MSG_dont_change,	exit;
 
 menu cyl1024;
 	display action {
@@ -182,24 +134,24 @@ menu editfsparts, y=13, exit;
 
 menu md_distcustom, x=26, y=5, exit, title MSG_Selection_toggles_inclusion;
 	display action { show_cur_distsets (); };
-	option MSG_Kernel_GENERIC,	 action { toggle_getit (0); };
-	option MSG_Kernel_GENERIC_TINY, action { toggle_getit (1); };
-	option MSG_Kernel_GENERIC_LAPTOP, action { toggle_getit (2); };
-	option MSG_Kernel_GENERIC_DIAGNOSTIC, action { toggle_getit (3); };
-	option MSG_Kernel_GENERIC_PS2TINY, action { toggle_getit (4); };
-	option MSG_Base,			 action { toggle_getit (5); };
-	option MSG_System_etc,	 action { toggle_getit (6); };
-	option MSG_Compiler_Tools, 	 action { toggle_getit (7); };
-	option MSG_Games, 		 action { toggle_getit (8); };
-	option MSG_Online_Manual_Pages, 	 action { toggle_getit (9); };
-	option MSG_Miscellaneous, 	 action { toggle_getit (10); };
-	option MSG_Text_Processing_Tools, action { toggle_getit (11); };
-	option MSG_X11_base_and_clients,	 action { toggle_getit (12); };
-	option MSG_X11_fonts,		 action { toggle_getit (13); };
-	option MSG_X11_servers,		 action { toggle_getit (14); };
-	option MSG_X_contrib_clients,	 action { toggle_getit (15); };
-	option MSG_X11_programming,	 action { toggle_getit (16); };
-	option MSG_X11_Misc,		 action { toggle_getit (17); };
+	option MSG_Kernel_GENERIC,		action { toggle_getit (0); };
+	option MSG_Kernel_GENERIC_TINY,		action { toggle_getit (1); };
+	option MSG_Kernel_GENERIC_LAPTOP,	action { toggle_getit (2); };
+	option MSG_Kernel_GENERIC_DIAGNOSTIC,	action { toggle_getit (3); };
+	option MSG_Kernel_GENERIC_PS2TINY,	action { toggle_getit (4); };
+	option MSG_Base,			action { toggle_getit (5); };
+	option MSG_System_etc,			action { toggle_getit (6); };
+	option MSG_Compiler_Tools,		action { toggle_getit (7); };
+	option MSG_Games,			action { toggle_getit (8); };
+	option MSG_Online_Manual_Pages,		action { toggle_getit (9); };
+	option MSG_Miscellaneous,		action { toggle_getit (10); };
+	option MSG_Text_Processing_Tools,	action { toggle_getit (11); };
+	option MSG_X11_base_and_clients,	action { toggle_getit (12); };
+	option MSG_X11_fonts,			action { toggle_getit (13); };
+	option MSG_X11_servers,			action { toggle_getit (14); };
+	option MSG_X_contrib_clients,		action { toggle_getit (15); };
+	option MSG_X11_programming,		action { toggle_getit (16); };
+	option MSG_X11_Misc,			action { toggle_getit (17); };
 
 menu biosonematch;
 	option MSG_This_is_the_correct_geometry, exit, action {
@@ -243,41 +195,3 @@ menu biosmultmatch;
 		set_bios_geom(dlcyl, dlhead, dlsec);
 		biosdisk = NULL;
 	};
-
-menu configbootsel, y=16, title MSG_Change_a_bootmenu_item, exit;
-        display action  { disp_bootsel(); };
-        option MSG_Edit_menu_entry_0,
-		action { edit_bootsel_entry(0); };
-        option MSG_Edit_menu_entry_1,
-		action { edit_bootsel_entry(1); };
-        option MSG_Edit_menu_entry_2,
-		action { edit_bootsel_entry(2); };
-        option MSG_Edit_menu_entry_3,
-		action { edit_bootsel_entry(3); };
-	option MSG_Set_timeout_value,
-		action { edit_bootsel_timeout(); };
-	option MSG_Set_default_option, sub menu defaultbootsel;
-
-menu defaultbootsel, title MSG_Pick_a_default_partition_or_disk_to_boot;
-	option MSG_First_active_partition, exit,
-		action { mbs->mbrb_defkey = SCAN_ENTER; };
-	option MSG_Partition_0, exit,
-		action { edit_bootsel_default_ptn(0); };
-	option MSG_Partition_1, exit,
-		action { edit_bootsel_default_ptn(1); };
-	option MSG_Partition_2, exit,
-		action { edit_bootsel_default_ptn(2); };
-	option MSG_Partition_3, exit,
-		action { edit_bootsel_default_ptn(3); };
-	option MSG_Harddisk_0, exit,
-		action { edit_bootsel_default_disk(0); };
-	option MSG_Harddisk_1, exit,
-		action { edit_bootsel_default_disk(1); };
-	option MSG_Harddisk_2, exit,
-		action { edit_bootsel_default_disk(2); };
-	option MSG_Harddisk_3, exit,
-		action { edit_bootsel_default_disk(3); };
-	option MSG_Harddisk_4, exit,
-		action { edit_bootsel_default_disk(4); };
-	option MSG_Harddisk_5, exit,
-		action { edit_bootsel_default_disk(5); };
