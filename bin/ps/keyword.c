@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.32 2003/03/06 09:04:21 dsl Exp $	*/
+/*	$NetBSD: keyword.c,v 1.33 2003/03/08 06:46:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.32 2003/03/06 09:04:21 dsl Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.33 2003/03/08 06:46:22 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,7 +179,8 @@ VAR var[] = {
 	{"svgroup", "SVGROUP", LJUST, svgname},
 	UID("svuid", "SVUID", p_svuid),
 	{"svuser", "SVUSER", LJUST, svuname},
-	{"tdev", "TDEV", 0, tdev, POFF(p_tdev), UINT32},
+	/* tdev is UINT32, but we do this for sorting purposes */
+	{"tdev", "TDEV", 0, tdev, POFF(p_tdev), INT32},
 	{"time", "TIME", 0, cputime, 0, CPUTIME},
 	PID("tpgid", "TGPID", p_tpgid),
 	PVAR("tsess", "TSESS", 0, p_tsess, KPTR, PRIx64),
