@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.60 2004/06/29 22:44:59 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.61 2004/07/08 02:52:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -1981,7 +1981,8 @@ natinfo_t *ni;
 		 * Whilst not optimized for the case where
 		 * pmin == pmax, the gain is not significant.
 		 */
-		if (np->in_pmin != np->in_pmax) {
+		if (((np->in_flags & IPN_FIXEDDPORT) == 0) &&
+		    np->in_pmin != np->in_pmax) {
 			nport = ntohs(dport) - ntohs(np->in_pmin) +
 				ntohs(np->in_pnext);
 			nport = htons(nport);
