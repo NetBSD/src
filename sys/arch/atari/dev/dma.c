@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.3 1995/04/30 12:04:48 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.4 1995/05/14 15:46:17 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -46,7 +46,8 @@
  *	st_dmafree:	free exclusive access to the DMA circuitry
  *	st_dmawanted:	somebody is queued waiting for DMA-access
  *	dmaint:		DMA interrupt routine, switches to the current driver
- *	st_dmaaddr:	specify 24 bit RAM address
+ *	st_dmaaddr_set:	specify 24 bit RAM address
+ *	st_dmaaddr_get:	get address of last DMA-op
  *	st_dmacomm:	program DMA, flush FIFO first
  */
 
@@ -210,8 +211,25 @@ long	sr;	/* sr at time of interrupt */
 
 static void cdmasoft()
 {
+	int	s;
+	void 	(*int_func)();
+	void	*softc;
+
+	/*
+	 * Prevent a race condition here. DMA might be freed while
+	 * the callback was pending!
+	 */
+	s = splhigh();
 	sched_soft = 0;
-	(*dma_active.tqh_first->int_func)(dma_active.tqh_first->softc);
+	if(dma_active.tqh_first != NULL) {
+		int_func = dma_active.tqh_first->int_func;
+		softc    = dma_active.tqh_first->softc;
+	}
+	else int_func = NULL;
+	splx(s);
+
+	if(int_func != NULL)
+		(*int_func)(softc);
 }
 
 /*
@@ -219,7 +237,7 @@ static void cdmasoft()
  * Note: The order _is_ important!
  */
 void
-st_dmaaddr(address)
+st_dmaaddr_set(address)
 caddr_t	address;
 {
 	register u_long ad = (u_long)address;
@@ -230,15 +248,30 @@ caddr_t	address;
 }
 
 /*
+ * Get address from DMA unit.
+ */
+u_long
+st_dmaaddr_get()
+{
+	register u_long ad = 0;
+
+	ad  = (DMA->dma_addr[AD_LOW ] & 0xff);
+	ad |= (DMA->dma_addr[AD_MID ] & 0xff) << 8;
+	ad |= (DMA->dma_addr[AD_HIGH] & 0xff) <<16;
+	return(ad);
+}
+
+/*
  * Program the DMA-controller to transfer 'nblk' blocks of 512 bytes.
  * The DMA_WRBIT trick flushes the FIFO before doing DMA.
  */
 void
-st_dmacomm(mode, data)
-int	mode, data;
+st_dmacomm(mode, nblk)
+int	mode, nblk;
 {
 	DMA->dma_mode = mode;
 	DMA->dma_mode = mode ^ DMA_WRBIT;
 	DMA->dma_mode = mode;
-	DMA->dma_data = data;
+	DMA->dma_data = nblk;
+	DMA->dma_mode = DMA_SCREG | (mode & DMA_WRBIT);
 }
