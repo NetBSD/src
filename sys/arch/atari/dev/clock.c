@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1995/05/28 19:38:49 leo Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1995/09/23 20:23:28 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,10 +51,9 @@
 #include <machine/mfp.h>
 #include <atari/dev/clockreg.h>
 
-#if defined(PROF) && defined(PROFTIMER)
-#include <sys/PROF.h>
+#if defined(GPROF) && defined(PROFTIMER)
+#include <machine/profile.h>
 #endif
-
 
 /*
  * Machine-dependent clock routines.
@@ -295,7 +294,7 @@ stopprofclock()
   ciab.crb = ciab.crb & 0xc0;
 }
 
-#ifdef PROF
+#ifdef GPROF
 /*
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
