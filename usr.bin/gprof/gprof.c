@@ -323,8 +323,6 @@ getsymtab(nfile)
 gettextspace( nfile )
     FILE	*nfile;
 {
-    char	*malloc();
-    
     if ( cflag == 0 ) {
 	return;
     }

@@ -37,6 +37,7 @@
 #include <sys/stat.h>
 #include <a.out.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "gmon.h"
 
 #if vax
