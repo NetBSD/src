@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.23 1997/06/24 12:25:58 chopps Exp $
+#	$NetBSD: gcc2netbsd,v 1.24 1997/06/24 16:55:05 kleink Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -2105,7 +2105,22 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
  /* Provide a CPP_SPEC appropriate for NetBSD.  Current we just deal with
     the GCC option `-posix'.  */
  
-@@ -58,8 +65,13 @@
+@@ -48,18 +55,26 @@
+ #define ASM_SPEC " %| %{fpic:-k} %{fPIC:-k -K}"
+ 
+ /* Provide a LIB_SPEC appropriate for NetBSD.  Just select the appropriate
+-   libc, depending on whether we're doing profiling.  */
++   libc, depending on whether we're doing profiling; if `-posix' is specified,
++   link against the appropriate libposix first.  */
+ 
+ #undef LIB_SPEC
+-#define LIB_SPEC "%{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
++#define LIB_SPEC							\
++  "%{posix:%{!p:%{!pg:-lposix}}%{p:-lposix_p}%{pg:-lposix_p}}		\
++   %{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}"
+ 
+ /* Provide a LINK_SPEC appropriate for NetBSD.  Here we provide support
+    for the special GCC options -static, -assert, and -nostdlib.  */
  
  #undef LINK_SPEC
  #define LINK_SPEC \
@@ -2120,7 +2135,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
  
  /* We have atexit(3).  */
  
-@@ -68,22 +80,28 @@
+@@ -68,22 +83,28 @@
  /* Implicit library calls should use memcpy, not bcopy, etc.  */
  
  #define TARGET_MEM_FUNCTIONS
