@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: cd.c,v 1.23 1994/03/29 04:29:22 mycroft Exp $
+ *      $Id: cd.c,v 1.24 1994/04/11 02:23:41 mycroft Exp $
  */
 
 /*
@@ -219,7 +219,7 @@ cdopen(dev)
 	 * In case it is a funny one, tell it to start
 	 * not needed for some drives
 	 */
-	scsi_start_unit(sc_link, SCSI_ERR_OK | SCSI_SILENT);
+	scsi_start(sc_link, SSS_START, SCSI_ERR_OK | SCSI_SILENT);
 
 	/*
 	 * Next time actually take notice of error returns
@@ -745,11 +745,11 @@ cdioctl(dev, cmd, addr, flag)
 	case CDIOCPAUSE:
 		return cd_pause(cd, 0);
 	case CDIOCSTART:
-		return scsi_start_unit(cd->sc_link, 0);
+		return scsi_start(cd->sc_link, SSS_START, 0);
 	case CDIOCSTOP:
-		return scsi_stop_unit(cd->sc_link, 0, 0);
+		return scsi_start(cd->sc_link, SSS_STOP, 0);
 	case CDIOCEJECT:
-		return scsi_stop_unit(cd->sc_link, 1, 0);
+		return scsi_start(cd->sc_link, SSS_LOEJ, 0);
 	case CDIOCALLOW:
 		return scsi_prevent(cd->sc_link, PR_ALLOW, 0);
 	case CDIOCPREVENT:
