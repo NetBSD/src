@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.32 2003/01/24 21:37:03 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.33 2003/02/02 19:07:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.32 2003/01/24 21:37:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.33 2003/02/02 19:07:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,6 +68,7 @@ static struct pool mach_right_pool;
 
 struct mach_port *mach_bootstrap_port;
 struct mach_port *mach_clock_port;
+struct mach_port *mach_io_master_port;
 struct mach_port *mach_saved_bootstrap_port;
 
 int
@@ -144,6 +145,32 @@ mach_port_deallocate(args)
 {
 	mach_port_deallocate_request_t *req = args->smsg;
 	mach_port_deallocate_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	mach_port_t mn;
+	struct mach_right *mr;
+
+	mn = req->req_name;
+	if ((mr = mach_right_check(mn, l, MACH_PORT_TYPE_REF_RIGHTS)) != NULL) 
+		mach_right_put(mr, MACH_PORT_TYPE_REF_RIGHTS);
+
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int 
+mach_port_destroy(args)
+	struct mach_trap_args *args;
+{
+	mach_port_destroy_request_t *req = args->smsg;
+	mach_port_destroy_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	mach_port_t mn;
@@ -397,6 +424,7 @@ mach_port_init(void)
 
 	mach_bootstrap_port = mach_port_get();
 	mach_clock_port = mach_port_get();
+	mach_io_master_port = mach_port_get();
 	mach_saved_bootstrap_port = mach_bootstrap_port;
 
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.17 2003/01/21 04:06:08 matt Exp $ */
+/*	$NetBSD: mach_port.h,v 1.18 2003/02/02 19:07:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -202,6 +202,21 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_port_move_member_reply_t;
 
+/* port_destroy */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_port_name_t req_name;
+} mach_port_destroy_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_trailer_t rep_trailer;
+} mach_port_destroy_reply_t;
+
 int mach_port_deallocate(struct mach_trap_args *);
 int mach_port_allocate(struct mach_trap_args *);
 int mach_port_insert_right(struct mach_trap_args *);
@@ -209,8 +224,10 @@ int mach_port_type(struct mach_trap_args *);
 int mach_port_set_attributes(struct mach_trap_args *);
 int mach_port_insert_member(struct mach_trap_args *);
 int mach_port_move_member(struct mach_trap_args *);
+int mach_port_destroy(struct mach_trap_args *);
 
 extern struct mach_port *mach_clock_port;
+extern struct mach_port *mach_io_master_port;
 extern struct mach_port *mach_bootstrap_port;
 extern struct mach_port *mach_saved_bootstrap_port;
 
