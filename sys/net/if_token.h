@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.2 1999/03/28 17:13:47 kleink Exp $	*/
+/*	$NetBSD: if_token.h,v 1.2.2.1 1999/04/08 21:44:00 bad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_tr.h	8.1 (Berkeley) 6/10/93
- *	from: $NetBSD: if_fddi.h,v 1.2 1995/08/19 04:35:28 cgd Exp
+ *	from: NetBSD: if_fddi.h,v 1.2 1995/08/19 04:35:28 cgd Exp
  */
 
 #ifndef _NET_IF_TOKEN_H_
