@@ -113,6 +113,9 @@ available but BOOTP is.   In that case, it may be advantageous to
 arrange with the network administrator for an entry on the BOOTP
 database, so that the host can boot quickly on that network rather
 than cycling through the list of old leases.
+.PP
+If dhclient receives the signal SIGHUP, it re-initialize the leases.
+On receipt of the signal SIGTERM, it release the leases, then exits.
 .SH COMMAND LINE
 .PP
 The names of the network interfaces that dhclient should attempt to
