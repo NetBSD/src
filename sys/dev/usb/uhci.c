@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.39 1999/08/19 19:52:38 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.40 1999/08/20 16:42:38 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -410,9 +410,9 @@ uhci_init(sc)
 /*
  * Handle suspend/resume.
  *
- * Must use delay() here since we are called from an interrupt
- * context, but since we are close to being inactive anyway
- * it doesn't matter.
+ * We need to switch to polling mode here, because this routine is
+ * called from an intterupt context.  This is all right since we
+ * are almost suspended anyway.
  */
 void
 uhci_power(why, v)
@@ -437,9 +437,10 @@ uhci_power(why, v)
 		if (sc->sc_has_timo)
 			usb_untimeout(uhci_timo, sc->sc_has_timo, 
 				      sc->sc_has_timo->timo_handle);
+		sc->sc_bus.use_polling = 1;
 		uhci_run(sc, 0); /* stop the controller */
 		UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter global suspend */
-		delay(USB_RESUME_WAIT * 1000);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 		sc->sc_suspend = why;
 		DPRINTF(("uhci_power: cmd=0x%x\n", UREAD2(sc, UHCI_CMD)));
 	} else {
@@ -452,12 +453,13 @@ uhci_power(why, v)
 		if (cmd & UHCI_CMD_RS)
 			uhci_run(sc, 0); /* in case BIOS has started it */
 		UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force global resume */
-		delay(USB_RESUME_DELAY * 1000);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 		UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
 		UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE | 
 			UHCI_INTR_IOCE | UHCI_INTR_SPIE); /* re-enable intrs */
 		uhci_run(sc, 1); /* and start traffic again */
-		delay(USB_RESUME_RECOVERY * 1000);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
+		sc->sc_bus.use_polling = 0;
 		if (sc->sc_has_timo)
 			usb_timeout(uhci_timo, sc->sc_has_timo, 
 				    sc->sc_ival, sc->sc_has_timo->timo_handle);
