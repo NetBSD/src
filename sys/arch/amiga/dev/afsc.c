@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.12 1996/03/17 01:16:58 thorpej Exp $	*/
+/*	$NetBSD: afsc.c,v 1.13 1996/03/18 04:58:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -213,8 +213,8 @@ afsc_dump()
 {
 	int i;
 
-	for (i = 0; i < afcd_cd.cd_ndevs; ++i)
-		if (afcd_cd.cd_devs[i])
-			siop_dump(afcd_cd.cd_devs[i]);
+	for (i = 0; i < afsc_cd.cd_ndevs; ++i)
+		if (afsc_cd.cd_devs[i])
+			siop_dump(afsc_cd.cd_devs[i]);
 }
 #endif

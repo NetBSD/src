@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.14 1996/03/17 01:17:01 thorpej Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.15 1996/03/18 04:58:37 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -350,8 +350,8 @@ atzsc_dump()
 {
 	int i;
 
-	for (i = 0; i < atzsccd.cd_ndevs; ++i)
-		if (atzsccd.cd_devs[i])
-			sbic_dump(atzsccd.cd_devs[i]);
+	for (i = 0; i < atzsc_cd.cd_ndevs; ++i)
+		if (atzsc_cd.cd_devs[i])
+			sbic_dump(atzsc_cd.cd_devs[i]);
 }
 #endif
