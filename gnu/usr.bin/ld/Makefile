@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.7 1993/10/26 06:56:08 cgd Exp $
+# $Id: Makefile,v 1.8 1993/11/03 13:01:36 cgd Exp $
 #
 
 PROG=	ld
@@ -7,6 +7,8 @@ CFLAGS += -g -I$(.CURDIR) -I$(.CURDIR)/$(MACHINE)
 
 LDADD+=	-lgnumalloc
 DPADD+= /usr/lib/libgnumalloc.a
+
+SUBDIR=	ldconfig ldd rtld
 
 .PATH: $(.CURDIR)/$(MACHINE)
 
