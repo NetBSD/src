@@ -35,8 +35,9 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+	.text
 	/*.asciz "from: @(#)udivsi3.s	5.1 (Berkeley) 5/15/90"*/
-	.asciz "$Id: udivsi3.s,v 1.2 1993/08/01 18:40:45 mycroft Exp $"
+	.asciz "$Id: udivsi3.s,v 1.3 1993/08/26 02:13:30 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 	.globl ___udivsi3

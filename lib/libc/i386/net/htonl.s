@@ -35,8 +35,9 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+	.text
 	/*.asciz "from: @(#)htonl.s	5.3 (Berkeley) 12/17/90"*/
-	.asciz "$Id: htonl.s,v 1.2 1993/08/01 18:40:39 mycroft Exp $"
+	.asciz "$Id: htonl.s,v 1.3 1993/08/26 02:13:35 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* netorder = htonl(hostorder) */

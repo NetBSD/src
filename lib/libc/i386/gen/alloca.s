@@ -35,8 +35,9 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+	.text
 	/*.asciz "from: @(#)alloca.s	5.2 (Berkeley) 5/14/90"*/
-	.asciz "$Id: alloca.s,v 1.2 1993/08/01 18:40:55 mycroft Exp $"
+	.asciz "$Id: alloca.s,v 1.3 1993/08/26 02:13:23 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* like alloc, but automatic automatic free in return */

@@ -36,8 +36,9 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+	.text
 	/*.asciz "from: @(#)strcmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strcmp.s,v 1.2 1993/08/01 18:41:35 mycroft Exp $"
+	.asciz "$Id: strcmp.s,v 1.3 1993/08/26 02:12:53 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
