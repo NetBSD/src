@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.22 1999/03/26 21:58:39 mycroft Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.22.2.1 1999/04/16 16:28:45 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -244,7 +244,7 @@ uvm_km_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			/* null?  attempt to allocate the page */
 			if (ptmp == NULL) {
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL);
+				    NULL, 0);
 				if (ptmp) {
 					/* new page */
 					ptmp->flags &= ~(PG_BUSY|PG_FAKE);
@@ -334,7 +334,7 @@ uvm_km_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			if (ptmp == NULL) {
 
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL);	/* alloc */
+				    NULL, 0);
 
 				/* out of RAM? */
 				if (ptmp == NULL) {
@@ -700,7 +700,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	loopva = kva;
 	while (size) {
 		simple_lock(&obj->vmobjlock);
-		pg = uvm_pagealloc(obj, offset, NULL);
+		pg = uvm_pagealloc(obj, offset, NULL, 0);
 		if (pg) {
 			pg->flags &= ~PG_BUSY;	/* new page */
 			UVM_PAGE_OWN(pg, NULL);
@@ -849,7 +849,7 @@ uvm_km_alloc1(map, size, zeroit)
 		}
 		
 		/* allocate ram */
-		pg = uvm_pagealloc(uvm.kernel_object, offset, NULL);
+		pg = uvm_pagealloc(uvm.kernel_object, offset, NULL, 0);
 		if (pg) {
 			pg->flags &= ~PG_BUSY;	/* new page */
 			UVM_PAGE_OWN(pg, NULL);
@@ -1000,7 +1000,7 @@ uvm_km_alloc_poolpage1(map, obj, waitok)
 	vaddr_t va;
 
  again:
-	pg = uvm_pagealloc(NULL, 0, NULL);
+	pg = uvm_pagealloc(NULL, 0, NULL, 0);
 	if (pg == NULL) {
 		if (waitok) {
 			uvm_wait("plpg");
