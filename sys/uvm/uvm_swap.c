@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.55 2001/11/01 03:49:30 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.56 2001/11/06 05:44:25 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1561,11 +1561,11 @@ uvm_swap_put(swslot, ppsp, npages, flags)
 	int npages;
 	int flags;
 {
-	int result;
+	int error;
 
-	result = uvm_swap_io(ppsp, swslot, npages, B_WRITE |
+	error = uvm_swap_io(ppsp, swslot, npages, B_WRITE |
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
-	return (result);
+	return error;
 }
 
 /*
@@ -1579,26 +1579,27 @@ uvm_swap_get(page, swslot, flags)
 	struct vm_page *page;
 	int swslot, flags;
 {
-	int	result;
+	int error;
 
 	uvmexp.nswget++;
 	KASSERT(flags & PGO_SYNCIO);
 	if (swslot == SWSLOT_BAD) {
 		return EIO;
 	}
-	result = uvm_swap_io(&page, swslot, 1, B_READ |
+	error = uvm_swap_io(&page, swslot, 1, B_READ |
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
-	if (result == 0) {
+	if (error == 0) {
 
 		/*
 		 * this page is no longer only in swap.
 		 */
 
 		simple_lock(&uvm.swap_data_lock);
+		KASSERT(uvmexp.swpgonly > 0);
 		uvmexp.swpgonly--;
 		simple_unlock(&uvm.swap_data_lock);
 	}
-	return (result);
+	return error;
 }
 
 /*
