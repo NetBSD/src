@@ -1,7 +1,7 @@
 I'm pleased to (finally) announce the release of NetBSD/Alpha.
 
-As some of you may know, NetBSD is a freely-available and
-freely-redistributable BSD-derived system that runs on a variety of hardware
+As some of you may know, NetBSD is a freely-available and freely-
+redistributable BSD-derived system that runs on a variety of hardware
 platforms, including i386's, Amigas, SPARCs, and DECstations.  The Alpha
 port is unique, because it's the first port of NetBSD to a 64-bit
 architecture.
