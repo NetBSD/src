@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.2 1999/10/24 08:37:30 takemura Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.3 1999/11/03 13:55:41 enami Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -335,7 +335,7 @@ detect_key(chip)
 	for (i = 0; i < KIU_NSCANLINE / 2; i++) {
 		modified = scandata[i] ^ chip->kc_scandata[i];
 		mask = 1;
-		for (j = 0; j < 16; j++) {
+		for (j = 0; j < 16; j++, mask <<= 1) {
 			/* XXX: The order of keys can be a problem.
 			   If CTRL and normal key are pushed simultaneously,
 			   normal key can be entered in queue first. 
@@ -362,7 +362,6 @@ detect_key(chip)
 						    keytrans[key]);
 				}
 			}
-			mask <<= 1;
 		}
 		chip->kc_scandata[i] = scandata[i];
 	}
