@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.22 1994/02/06 10:05:50 mycroft Exp $
+ *	$Id: sd.c,v 1.23 1994/03/24 04:32:44 cgd Exp $
  */
 
 #include "sd.h"
@@ -1186,8 +1186,28 @@ sd_interpret_sense(int unit, struct scsi_xfer *xs)
 			}
 			return EIO;
 		case 0x4:
-			if(!silent)
-				printf("sd%d: non-media hardware failure\n ", unit); 
+			if(!silent) {
+				printf("sd%d: non-media hardware failure\n",
+				    unit); 
+				printf("sd%d: (extended) sense data:\n", unit);
+				printf("sd%d: segment = 0x%x, sense_key = %d",
+				    unit, sense->ext.extended.segment,
+				    sense->ext.extended.sense_key);
+				if (sense->ext.extended.ili)
+					printf(", ili");
+				if (sense->ext.extended.eom)
+					printf(", eom");
+				if (sense->ext.extended.filemark)
+					printf(", filemark");
+				printf("\n");
+				printf("sd%d: info: 0x%x 0x%x 0x%x 0x%x\n",
+				    unit, sense->ext.extended.info[0],
+				    sense->ext.extended.info[1],
+				    sense->ext.extended.info[2],
+				    sense->ext.extended.info[3]);
+				printf("sd%d: extra len: %d\n", unit,
+				    sense->ext.extended.extra_len);
+			}
 			return EIO;
 		case 0x5:
 			if(!silent)
