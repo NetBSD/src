@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.7 2003/10/22 16:18:48 kleink Exp $	*/
+/*	$NetBSD: float.h,v 1.8 2003/10/22 21:28:08 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -85,4 +85,12 @@
 #define LDBL_MAX	DBL_MAX
 #define LDBL_MAX_10_EXP	DBL_MAX_10_EXP
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#define	DECIMAL_DIGIT	18		/* ceil((1+p*log10(b))-(b==10) */
+#endif
 #endif	/* _VAX_FLOAT_H_ */
