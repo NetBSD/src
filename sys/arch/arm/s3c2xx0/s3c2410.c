@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2410.c,v 1.2 2003/08/04 12:15:22 bsh Exp $ */
+/*	$NetBSD: s3c2410.c,v 1.3 2003/08/05 11:26:54 bsh Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.2 2003/08/04 12:15:22 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.3 2003/08/05 11:26:54 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,12 +152,14 @@ s3c2410_attach(struct device *parent, struct device *self, void *aux)
 
 	/* calculate current clock frequency */
 	s3c24x0_clock_freq(&sc->sc_sx);
-	aprint_normal(": fclk %d MHz hclk %d MHz pclk %d MHz\n",
+	printf(": fclk %d MHz hclk %d MHz pclk %d MHz",
 	       sc->sc_sx.sc_fclk / 1000000, sc->sc_sx.sc_hclk / 1000000,
 	       sc->sc_sx.sc_pclk / 1000000);
 
-	aprint_naive("\n");
+	printf("\n");
 
+	/* get busdma tag for the platform */
+	sc->sc_sx.sc_dmat = s3c2xx0_bus_dma_init(&s3c2xx0_bus_dma);
 
 	/*
 	 *  Attach devices.
@@ -184,6 +186,8 @@ s3c2410_search(struct device * parent, struct cfdata * cf, void *aux)
 	aa.sa_size = cf->cf_loc[SSIOCF_SIZE];
 	aa.sa_index = cf->cf_loc[SSIOCF_INDEX];
 	aa.sa_intr = cf->cf_loc[SSIOCF_INTR];
+
+	aa.sa_dmat = sc->sc_sx.sc_dmat;
 
 	if (config_match(parent, cf, &aa))
 		config_attach(parent, cf, &aa, s3c2410_print);
