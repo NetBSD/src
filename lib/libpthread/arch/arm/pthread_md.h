@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2003/01/18 10:34:18 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2003/01/18 18:40:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -58,7 +58,7 @@ pthread__sp(void)
  */
 #ifdef __APCS_26__
 #define _INITCONTEXT_U_MD(ucp)						\
-/* Set R15_MODE_USR in the PC */
+/* Set R15_MODE_USR in the PC */					\
 	(ucp)->uc_mcontext.__gregs[_REG_PC] =				\
 	 ((ucp)->uc_mcontext.__gregs[_REG_PC] & 0x3fffffc) | 0x0;
 #else
