@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.44.2.4 1999/04/30 04:32:06 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.44.2.5 1999/05/30 14:57:45 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1381,9 +1381,6 @@ nfs_getpages(v)
 				UVM_PAGE_OWN(pgs[i], NULL);
 				
 			}
-
-			/* XXX for now, disable putpages clustering. */
-			pgs[i]->blkno = 0;
 			pgs[i]->flags &= ~PG_FAKE;
 			pmap_clear_modify(PMAP_PGARG(pgs[i]));
 			uvm_pageactivate(pgs[i]);
