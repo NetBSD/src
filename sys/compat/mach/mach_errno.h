@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.h,v 1.6 2002/12/24 15:53:46 manu Exp $ */
+/*	$NetBSD: mach_errno.h,v 1.7 2003/02/09 22:13:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -92,6 +92,12 @@ extern int native_to_mach_errno[];
 #define MACH_KERN_NOT_WAITING			48
 #define	MACH_KERN_OPERATION_TIMED_OUT		49
 
+/* IOKit errors */
+#define MACH_IOKIT_ENOMEM       0xe00002bd
+#define MACH_IOKIT_ENODEV       0xe00002c0
+#define MACH_IOKIT_EAGAIN       0xe00002be
+#define MACH_IOKIT_EPERM        0xe00002c1
+#define MACH_IOKIT_EINVAL       0xe00002c2
 
 typedef struct {
 	mach_msg_header_t rep_msgh;
@@ -101,5 +107,6 @@ typedef struct {
 } mach_error_reply_t;
 
 int mach_msg_error(struct mach_trap_args *, int);
+int mach_iokit_error(struct mach_trap_args *, int);
 
 #endif	/* _MACH_ERRNO_H_ */
