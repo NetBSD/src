@@ -1,6 +1,2 @@
-usr/X11R6
-usr/X11R6/bin
-usr/X11R6/bin/Xprt
-usr/X11R6/man
-usr/X11R6/man/cat1
-usr/X11R6/man/cat1/Xserver.0
+./usr/X11R6/bin/Xprt
+./usr/X11R6/man/cat1/Xserver.0
