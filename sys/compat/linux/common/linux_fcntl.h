@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.2 1998/10/01 01:16:42 erh Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.3 1998/10/03 20:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_FCNTL_H
-#define _COMMON_LINUX_FCNTL_H
+#ifndef _LINUX_FCNTL_H
+#define _LINUX_FCNTL_H
 
 /*
  * The arguments in the flock structure have a different order from the
@@ -89,4 +89,12 @@ struct linux_flock {
 	linux_pid_t l_pid;
 };
 
-#endif /* !_COMMON_LINUX_FCNTL_H */
+#if defined(__i386__)
+#include <compat/linux/arch/i386/linux_fcntl.h>
+#elif defined(__alpha__)
+#include <compat/linux/arch/alpha/linux_fcntl.h>
+#else
+#error Undefined linux_fcntl.h machine type.
+#endif
+
+#endif /* !_LINUX_FCNTL_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sockio.h,v 1.6 1998/10/01 03:53:01 erh Exp $	*/
+/*	$NetBSD: linux_sockio.h,v 1.7 1998/10/03 20:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_SOCKIO_H
-#define _COMMON_LINUX_SOCKIO_H
+#ifndef _LINUX_SOCKIO_H
+#define _LINUX_SOCKIO_H
 
 #define	LINUX_SIOCGIFCONF	_LINUX_IO(0x89, 0x12)
 #define	LINUX_SIOCGIFFLAGS	_LINUX_IO(0x89, 0x13)
@@ -79,4 +79,4 @@
 #define LINUX_SIOCADDMULTI	_LINUX_IO(0x89, 0x31)
 #define LINUX_SIOCDELMULTI	_LINUX_IO(0x89, 0x32)
 
-#endif /* !_COMMON_LINUX_SOCKIO_H */
+#endif /* !_LINUX_SOCKIO_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.14 1998/10/01 02:27:34 erh Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.15 1998/10/03 20:17:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,10 +80,11 @@
 
 #include <sys/syscallargs.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_util.h>
+
 #include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_util.h>
 
 /* Used on: arm, i386, m68k, mips, sparc, sparc64 */
 /* Not used on: alpha */

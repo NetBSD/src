@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.23 1998/10/01 03:22:11 erh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.24 1998/10/03 20:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,14 +89,14 @@
 
 #include <sys/syscallargs.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_signal.h>
-#include <compat/linux/linux_siginfo.h>
-#include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_fcntl.h>
-#include <compat/linux/linux_util.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
+#include <compat/linux/common/linux_fcntl.h>
+#include <compat/linux/common/linux_util.h>
+#include <compat/linux/common/linux_machdep.h>
 
-#include <compat/linux/linux_machdep.h>
+#include <compat/linux/linux_syscallargs.h>
 
 static int linux_to_bsd_ioflags __P((int));
 static int bsd_to_linux_ioflags __P((int));

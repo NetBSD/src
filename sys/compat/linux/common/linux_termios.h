@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.3 1998/10/01 01:52:59 erh Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.4 1998/10/03 20:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_TERMIOS_H
-#define _COMMON_LINUX_TERMIOS_H
+#ifndef _LINUX_TERMIOS_H
+#define _LINUX_TERMIOS_H
 
 struct linux_winsize {
 	unsigned short ws_row;
@@ -109,4 +109,11 @@ struct linux_termios {
 #define	LINUX_N_X25		6
 #define	LINUX_N_6PACK		7
 
-#endif /* !_COMMON_LINUX_TERMIOS_H */
+#if defined(__i386__)
+#include <compat/linux/arch/i386/linux_termios.h>
+#elif defined(__alpha__)
+#include <compat/linux/arch/alpha/linux_termios.h>
+#else
+#error Undefined linux_termios.h machine type.
+#endif
+#endif /* !_LINUX_TERMIOS_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.31 1998/10/01 03:11:33 erh Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.32 1998/10/03 20:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,15 +93,15 @@
 #include <machine/cpu.h>
 #include <machine/reg.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_syscall.h>
-#include <compat/linux/linux_signal.h>
-#include <compat/linux/linux_siginfo.h>
-#include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_util.h>
-#include <compat/linux/linux_exec.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
+#include <compat/linux/common/linux_util.h>
+#include <compat/linux/common/linux_exec.h>
+#include <compat/linux/common/linux_machdep.h>
 
-#include <compat/linux/linux_machdep.h>
+#include <compat/linux/linux_syscallargs.h>
+#include <compat/linux/linux_syscall.h>
 
 static int ELFNAME2(linux,signature) __P((struct proc *, struct exec_package *,
 	Elf_Ehdr *));

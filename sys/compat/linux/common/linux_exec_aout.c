@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.31 1998/10/01 03:11:33 erh Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.32 1998/10/03 20:17:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,17 +86,19 @@
 #include <vm/vm_param.h>
 #include <vm/vm_map.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_syscall.h>
-#include <compat/linux/linux_signal.h>
-#include <compat/linux/linux_siginfo.h>
-#include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_util.h>
-#include <compat/linux/linux_exec.h>
-
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <compat/linux/linux_machdep.h>
+
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
+#include <compat/linux/common/linux_util.h>
+#include <compat/linux/common/linux_exec.h>
+#include <compat/linux/common/linux_machdep.h>
+
+#include <compat/linux/linux_syscallargs.h>
+#include <compat/linux/linux_syscall.h>
+
 
 static void *linux_aout_copyargs __P((struct exec_package *,
     struct ps_strings *, void *, void *));

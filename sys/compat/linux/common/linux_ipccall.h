@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.h,v 1.3 1998/10/01 03:29:46 erh Exp $	*/
+/*	$NetBSD: linux_ipccall.h,v 1.4 1998/10/03 20:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,9 +67,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MULTIARCH_LINUX_IPCCALL_H
-#define _MULTIARCH_LINUX_IPCCALL_H
+#ifndef _LINUX_IPCCALL_H
+#define _LINUX_IPCCALL_H
 
+/*
+ * All linux architectures except alpha use the sys_ipc
+ * syscall and need the associated defines.
+ */
+# if !defined(__alpha__)
 /* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
 /* Not used on: alpha */
 
@@ -91,29 +96,30 @@
 #define LINUX_SYS_shmctl	24
 
 
-#ifdef SYSVSEM
+#  ifdef SYSVSEM
 inline int linux_semop __P((struct proc *, struct linux_sys_ipc_args *,
-				register_t *));
+    register_t *));
 inline int linux_semget __P((struct proc *, struct linux_sys_ipc_args *,
-				register_t *));
-#endif
+    register_t *));
+#  endif
 
 
-#ifdef SYSVMSG
+#  ifdef SYSVMSG
 inline int linux_msgsnd __P((struct proc *, struct linux_sys_ipc_args *,
-				register_t *));
+    register_t *));
 inline int linux_msgrcv __P((struct proc *, struct linux_sys_ipc_args *,
-				register_t *));
+    register_t *));
 inline int linux_msgget __P((struct proc *, struct linux_sys_ipc_args *,
-				register_t *));
-#endif
+    register_t *));
+#  endif
 
 
-#ifdef SYSVSHM
+#  ifdef SYSVSHM
 inline int linux_shmdt __P((struct proc *, struct linux_sys_ipc_args *,
-				register_t *));
+    register_t *));
 inline int linux_shmget __P((struct proc *, struct linux_sys_ipc_args *,
-				register_t *));
-#endif
+    register_t *));
+#  endif
 
-#endif /* !_MULTIARCH_LINUX_IPCCALL_H */
+# endif
+#endif /* !_LINUX_IPCCALL_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.48 1998/10/01 18:53:37 perry Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.49 1998/10/03 20:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,14 +124,17 @@
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_fcntl.h>
-#include <compat/linux/linux_mmap.h>
-#include <compat/linux/linux_signal.h>
-#include <compat/linux/linux_dirent.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+
 #include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_util.h>
-#include <compat/linux/linux_misc.h>
+
+#include <compat/linux/common/linux_fcntl.h>
+#include <compat/linux/common/linux_mmap.h>
+#include <compat/linux/common/linux_dirent.h>
+#include <compat/linux/common/linux_util.h>
+#include <compat/linux/common/linux_misc.h>
+
 
 /* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));

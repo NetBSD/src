@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.2 1998/10/01 00:53:45 erh Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.3 1998/10/03 20:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_MMAP_H
-#define _COMMON_LINUX_MMAP_H
+#ifndef _LINUX_MMAP_H
+#define _LINUX_MMAP_H
 
 #define LINUX_PROT_NONE		0x00
 #define LINUX_PROT_READ		0x01
@@ -78,4 +78,29 @@
 #define LINUX_MAP_SHARED	0x0001
 #define LINUX_MAP_PRIVATE	0x0002
 
-#endif /* !_COMMON_LINUX_MMAP_H */
+#if defined(__i386__)
+#include <compat/linux/arch/i386/linux_mmap.h>
+#include <compat/linux/common/linux_oldmmap.h>
+#elif defined(__alpha__)
+#include <compat/linux/arch/alpha/linux_mmap.h>
+/*
+ * XXX ERH: All below here are guesses.  The header
+ * XXX ERH: files are correct but the defined(*)
+ * XXX ERH: probably aren't
+ *
+ * XXX ERH: Can probably drop some of these headers: linux
+ * XXX ERH: is stupid about compat stuff.  It doesn't really
+ * XXX ERH: use all the defines, but I don't want to go looking
+ * XXX ERH: through all the kernel sources right now.
+ */
+#elif defined(__mips__)
+#include <compat/linux/arch/mips/linux_mmap.h>
+#elif defined(__powerpc__)
+#include <compat/linux/arch/powerpc/linux_mmap.h>
+#elif defined(sparc)
+#include <compat/linux/arch/sparc/linux_mmap.h>
+#else
+#error Undefined linux_mmap.h machine type.
+#endif
+
+#endif /* !_LINUX_MMAP_H */

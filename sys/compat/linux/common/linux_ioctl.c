@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.19 1998/10/01 03:24:28 erh Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.20 1998/10/03 20:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,10 +85,11 @@
 
 #include <sys/syscallargs.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_ioctl.h>
+
 #include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_ioctl.h>
 
 #include <compat/ossaudio/ossaudio.h>
 #define LINUX_TO_OSS(v) (v)	/* do nothing, same ioctl() encoding */

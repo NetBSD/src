@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_msg.h,v 1.3 1998/10/01 03:48:32 erh Exp $	*/
+/*	$NetBSD: linux_msg.h,v 1.4 1998/10/03 20:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_MSG_H
-#define _COMMON_LINUX_MSG_H
+#ifndef _LINUX_MSG_H
+#define _LINUX_MSG_H
 
 #include <sys/msg.h>
 
@@ -148,4 +148,4 @@ __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVMSG */
 
-#endif /* !_COMMON_LINUX_MSG_H */
+#endif /* !_LINUX_MSG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscallargs.h,v 1.33 1998/10/01 04:20:19 erh Exp $	*/
+/*	$NetBSD: linux_syscallargs.h,v 1.34 1998/10/03 20:17:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
 #define _LINUX_SYSCALLARGS_H
 
 #if defined(i386)
-#include <compat/linux/i386/linux_syscallargs.h>
+#include <compat/linux/arch/i386/linux_syscallargs.h>
 #elif defined(__alpha__)
-#include <compat/linux/alpha/linux_syscallargs.h>
+#include <compat/linux/arch/alpha/linux_syscallargs.h>
 #else
 #error Undefined linux_syscallargs.h machine type.
 #endif

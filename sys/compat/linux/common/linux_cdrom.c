@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.2 1998/10/01 02:30:37 erh Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.3 1998/10/03 20:17:40 christos Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,12 +44,13 @@
 
 #include <sys/syscallargs.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_ioctl.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_ioctl.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_util.h>
+#include <compat/linux/common/linux_cdrom.h>
+
 #include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_util.h>
-#include <compat/linux/linux_cdrom.h>
 
 #if 0
 #define DPRINTF(x) printf x

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_error.c,v 1.5 1998/10/01 02:32:24 erh Exp $	*/
+/*	$NetBSD: linux_error.c,v 1.6 1998/10/03 20:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <compat/linux/linux_errno.h>
+#include <compat/linux/common/linux_errno.h>
 
 /*
  * This list is used to translate NetBSD errors to linux errors

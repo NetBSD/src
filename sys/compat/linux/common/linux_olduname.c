@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.48 1998/10/01 18:57:05 perry Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.49 1998/10/03 20:17:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,9 +79,10 @@
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_mmap.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_mmap.h>
+#include <compat/linux/common/linux_signal.h>
+
 #include <compat/linux/linux_syscallargs.h>
 
 /* Used on: (alpha), arm, i386, mips, ppc */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.6 1998/10/01 01:31:11 erh Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.7 1998/10/03 20:17:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,10 +67,40 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* Note: Machine dependant portions of this file exist. */
+#ifndef _LINUX_TYPES_H
+#define _LINUX_TYPES_H
 
-#ifndef _COMMON_LINUX_TYPES_H
-#define _COMMON_LINUX_TYPES_H
+#if defined(__i386__)
+#include <compat/linux/arch/i386/linux_types.h>
+#include <compat/linux/common/linux_olduname.h>	/* XXX maybe */
+#elif defined(__alpha__)
+#include <compat/linux/arch/alpha/linux_types.h>
+#include <compat/linux/common/linux_oldmmap.h>
+#include <compat/linux/common/linux_oldselect.h>
+#include <compat/linux/common/linux_olduname.h>
+#include <compat/linux/common/linux_oldolduname.h>
+/*
+ * The rest are not written yet:
+ */
+#elif defined(__arm32__)
+#include <compat/linux/arch/arm32/linux_types.h>
+#include <compat/linux/common/linux_oldmmap.h>
+#include <compat/linux/common/linux_oldselect.h>
+#include <compat/linux/common/linux_olduname.h>
+#include <compat/linux/common/linux_oldolduname.h>
+#elif defined(__m68k__)
+#include <compat/linux/arch/m68k/linux_types.h>
+#include <compat/linux/common/linux_oldmmap.h>
+#include <compat/linux/common/linux_oldselect.h>
+#elif defined(__mips__)
+#include <compat/linux/arch/mips/linux_types.h>
+#include <compat/linux/common/linux_olduname.h>
+#include <compat/linux/common/linux_oldolduname.h>
+#elif defined(__powerpc__)
+#include <compat/linux/arch/power/linux_types.h>
+#include <compat/linux/common/linux_olduname.h>
+#include <compat/linux/common/linux_oldolduname.h>
+#endif
 
 /*
  * Structure for uname(2)
@@ -106,4 +136,4 @@ struct linux___sysctl {
 	unsigned long __unused[4];
 };
 
-#endif /* !_COMMON_LINUX_TYPES_H */
+#endif /* !_LINUX_TYPES_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.8 1998/10/01 01:33:04 erh Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.9 1998/10/03 20:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _COMMON_LINUX_IOCTL_H
-#define _COMMON_LINUX_IOCTL_H
+#ifndef _LINUX_IOCTL_H
+#define _LINUX_IOCTL_H
 
 struct linux_sys_ioctl_args;
 
@@ -84,4 +84,12 @@ int linux_ioctl_socket __P((struct proc *, struct linux_sys_ioctl_args *,
 __END_DECLS
 #endif	/* !_KERNEL */
 
-#endif /* !_COMMON_LINUX_IOCTL_H */
+#if defined(__i386__)
+#include <compat/linux/arch/i386/linux_ioctl.h>
+#elif defined(__alpha__)
+#include <compat/linux/arch/alpha/linux_ioctl.h>
+#else
+#error Undefined linux_ioctl.h machine type.
+#endif
+
+#endif /* !_LINUX_IOCTL_H */

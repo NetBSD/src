@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.14 1998/10/01 02:27:33 erh Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.15 1998/10/03 20:17:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Eric Haszlakiewicz
@@ -63,10 +63,11 @@
 
 #include <sys/syscallargs.h>
 
-#include <compat/linux/linux_types.h>
-#include <compat/linux/linux_signal.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_util.h>
+
 #include <compat/linux/linux_syscallargs.h>
-#include <compat/linux/linux_util.h>
 
 /* Locally used defines (in bsd<->linux conversion functions): */
 /* XXX XAX rename to linux_old.  Add stuff for new type linux_sigset_t
