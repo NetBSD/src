@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *      $Id: bt742a.c,v 1.8.4.5 1993/11/29 00:11:09 mycroft Exp $
+ *      $Id: bt742a.c,v 1.8.4.6 1993/11/29 00:36:00 mycroft Exp $
  */
 
 /*
@@ -534,6 +534,7 @@ btprobe(parent, cf, aux)
 		printf("bt%d: cannot malloc!\n", unit);
 		return 0;
 	}
+	bzero(bt, sizeof(*bt));
 	btdata[unit] = bt;
 	bt->bt_base = iobase;
 

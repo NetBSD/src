@@ -12,7 +12,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: aha1542.c,v 1.14.2.6 1993/11/28 23:35:43 mycroft Exp $
+ *	$Id: aha1542.c,v 1.14.2.7 1993/11/29 00:35:52 mycroft Exp $
  */
 
 /*
@@ -514,6 +514,7 @@ ahaprobe(parent, cf, aux)
 		printf("aha%d: cannot malloc!\n", unit);
 		return 0;
 	}
+	bzero(aha, sizeof(*aha));
 	ahadata[unit] = aha;
 	aha->aha_base = iobase;
 

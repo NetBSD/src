@@ -14,7 +14,7 @@
  *
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  *
- *      $Id: aha1742.c,v 1.14.2.2 1993/11/29 00:32:00 mycroft Exp $
+ *      $Id: aha1742.c,v 1.14.2.3 1993/11/29 00:35:57 mycroft Exp $
  */
 
 #include "ahb.h"
@@ -477,6 +477,7 @@ ahbprobe1(parent, cf, ia)
 		printf("ahb%d: cannot malloc!\n", unit);
 		return 0;
 	}
+	bzero(ahb, sizeof(*ahb));
 	ahbdata[unit] = ahb;
 	ahb->baseport = ia->ia_iobase;
 

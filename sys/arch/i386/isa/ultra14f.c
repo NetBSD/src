@@ -19,7 +19,7 @@
  * commenced: Sun Sep 27 18:14:01 PDT 1992
  * slight mod to make work with 34F as well: Wed Jun  2 18:05:48 WST 1993
  *
- *      $Id: ultra14f.c,v 1.13.2.6 1993/11/28 23:46:30 mycroft Exp $
+ *      $Id: ultra14f.c,v 1.13.2.7 1993/11/29 00:36:03 mycroft Exp $
  */
 
 #include "uha.h"
@@ -411,6 +411,7 @@ uhaprobe(parent, cf, aux)
 		printf("uha%d: cannot malloc!\n", unit);
 		return 0;
 	}
+	bzero(uha, sizeof(*uha));
 	uhadata[unit] = uha;
 	uha->baseport = iobase;
 
