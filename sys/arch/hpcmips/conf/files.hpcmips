@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.89 2002/12/15 09:24:25 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.90 2003/05/01 07:01:58 igy Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -57,9 +57,12 @@ file	arch/hpc/hpc/kloader.c			kloader
 file	arch/hpcmips/hpcmips/kloader_machdep.c	kloader
 file	arch/hpcmips/hpcmips/kloader_vr41.S	vr41xx & kloader
 file	arch/hpcmips/hpcmips/kloader_tx39.S	tx39xx & kloader
+defflag	opt_no_symbolsz_entry.h		NO_SYMBOLSZ_ENTRY
 defflag	opt_kloader.h			KLOADER
 defflag	debug_kloader.h			KLOADER_DEBUG
 defparam opt_kloader_kernel_path.h	KLOADER_KERNEL_PATH
+
+defparam opt_memsize.h			MEMSIZE
 
 #
 # H/PC Platform common files.
@@ -112,6 +115,9 @@ file arch/hpcmips/vr/vr4102ip.c		vr4102ip
 device vr4122ip: vripif
 attach vr4122ip at mainbus: vrip_common
 file arch/hpcmips/vr/vr4122ip.c		vr4122ip
+device vr4181ip: vripif
+attach vr4181ip at mainbus: vrip_common
+file arch/hpcmips/vr/vr4181ip.c		vr4181ip
 
 device vrbcu
 attach vrbcu at vripif
@@ -131,6 +137,10 @@ device	vrisabif {[platform = -1], [isaportoffset=0], [isamemoffset=0]}		# GIU at
 device vrgiu: vrisabif, hpcioif
 attach vrgiu at vripif
 file arch/hpcmips/vr/vrgiu.c			vrgiu
+
+device vr4181giu: vrisabif, hpcioif
+attach vr4181giu at vripif
+file arch/hpcmips/vr/vr4181giu.c		vr4181giu
 
 device vrisab: isabus
 attach vrisab at vrisabif
@@ -388,6 +398,10 @@ attach	pcic at isa with pcic_isa
 file	dev/isa/i82365_isa.c			pcic_isa
 file	dev/isa/i82365_isasubr.c		pcic_isa
 
+# PCIC pcmcia controller on vrip bus.
+attach	pcic at vripif with pcic_vrip
+file	arch/hpcmips/vr/vrecu.c			pcic_vrip
+
 #
 # Machine-independent PCMCIA drivers
 #
@@ -419,5 +433,15 @@ file arch/hpcmips/vr/vrdcu.c	vrdcu
 device vraiu: audiobus
 attach vraiu at vripif
 file arch/hpcmips/vr/vraiu.c	vraiu
+
+# VR4181 Audio Interface Unit
+device vr4181aiu
+attach vr4181aiu at vripif
+file arch/hpcmips/vr/vr4181aiu.c	vr4181aiu	needs-flag
+
+# Flash memory on L-card+	XXX should not be here
+device flash
+attach flash at vripif with flash_vrip
+file arch/hpcmips/vr/flash_vrip.c	flash_vrip	needs-flag
 
 include "arch/hpcmips/conf/majors.hpcmips"
