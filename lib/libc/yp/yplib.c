@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
+/*	$NetBSD: yplib.c,v 1.18 1996/05/09 22:52:24 christos Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $";
+static char rcsid[] = "$NetBSD: yplib.c,v 1.18 1996/05/09 22:52:24 christos Exp $";
 #endif
 
 #include <sys/param.h>
@@ -665,14 +665,21 @@ again:
 	r = clnt_call(ysd->dom_client, YPPROC_ORDER,
 		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_order, &ypro, tv);
 	if (r != RPC_SUCCESS) {
-		clnt_perror(ysd->dom_client, "yp_order: clnt_call");
+	        clnt_perror(ysd->dom_client, "yp_order: clnt_call");
+	        if (r == RPC_PROCUNAVAIL) {
+			/* Case of NIS+ server in NIS compat mode */
+			r = YPERR_YPERR;
+			goto bail;
+	        } 
 		ysd->dom_vers = -1;
 		goto again;
 	}
 	*outorder = ypro.ordernum;
 	xdr_free(xdr_ypresp_order, (char *) &ypro);
+	r = ypprot_err(ypro.status);
+bail:
 	_yp_unbind(ysd);
-	return ypprot_err(ypro.status);
+	return r;
 }
 
 int
