@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8.6.8 2001/12/17 21:31:26 nathanw Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8.6.9 2001/12/17 22:00:31 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -203,6 +203,8 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
+
+	extern char sigcode[], upcallcode[];
 
 	tf = trapframe(l);
 
