@@ -1,9 +1,9 @@
-/*	$NetBSD: in6.c,v 1.17 2000/02/07 05:42:59 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.18 2000/02/24 12:43:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -274,7 +274,7 @@ in6_ifproxy_request(int cmd, struct in6_ifaddr *ia)
 {
 	int error = 0;
 
-	/* 
+	/*
 	 * If we have an IPv6 dstaddr on adding p2p interface,
 	 * join dstaddr's solicited multicast on necessary interface.
 	 */
@@ -313,7 +313,7 @@ in6_ifproxy_request(int cmd, struct in6_ifaddr *ia)
 			llsol.s6_addr16[1] = htons(ia_lan->ia_ifp->if_index);
 			llsol.s6_addr32[1] = 0;
 			llsol.s6_addr32[2] = htonl(1);
-			llsol.s6_addr32[3] = 
+			llsol.s6_addr32[3] =
 				ia->ia_dstaddr.sin6_addr.s6_addr32[3];
 			llsol.s6_addr8[12] = 0xff;
 
@@ -630,7 +630,7 @@ in6_control(so, cmd, data, ifp, p)
 	case SIOCGIFAFLAG_IN6:
 		ifr->ifr_ifru.ifru_flags6 = ia->ia6_flags;
 		break;
- 
+
 	case SIOCGIFSTAT_IN6:
 		if (ifp == NULL)
 			return EINVAL;
@@ -824,7 +824,7 @@ in6_control(so, cmd, data, ifp, p)
 			ia->ia6_lifetime.ia6t_preferred = 0;
 
 		/*
-		 * Perform DAD, if needed. 
+		 * Perform DAD, if needed.
 		 * XXX It may be of use, if we can administratively
 		 * disable DAD.
 		 */
@@ -1269,7 +1269,7 @@ in6_ifinit(ifp, ia, sin6, scrub)
 		in6_ifscrub(ifp, ia);
 		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
 	}
-	/* xxx 
+	/* xxx
 	 * in_socktrim
 	 */
 	/*
@@ -1393,7 +1393,7 @@ in6_purgemkludge(ifp)
 }
 
 /*
- * Add an address to the list of IP6 multicast addresses for a 
+ * Add an address to the list of IP6 multicast addresses for a
  * given interface.
  */
 struct	in6_multi *
@@ -1497,7 +1497,7 @@ in6_delmulti(in6m)
 			IFAFREE(&in6m->in6m_ia->ia_ifa); /* release reference */
 
 		/*
-		 * Notify the network driver to update its multicast 
+		 * Notify the network driver to update its multicast
 		 * reception filter.
 		 */
 		bzero(&ifr.ifr_addr, sizeof(struct sockaddr_in6));
@@ -1657,7 +1657,7 @@ struct in6_addr *addr;
 	if (addr->s6_addr8[0] == 0xff) {
 		scope = addr->s6_addr8[1] & 0x0f;
 
-		/* 
+		/*
 		 * due to other scope such as reserved,
 		 * return scope doesn't work.
 		 */
@@ -1779,7 +1779,7 @@ in6_ifawithscope(ifp, dst)
 	dep[0] = dep[1] = NULL;
 
 	/*
-	 * We first look for addresses in the same scope. 
+	 * We first look for addresses in the same scope.
 	 * If there is one, return it.
 	 * If two or more, return one which matches the dst longest.
 	 * If none, return one of global addresses assigned other ifs.
@@ -1812,7 +1812,7 @@ in6_ifawithscope(ifp, dst)
 					blen = tlen;
 					besta = (struct in6_ifaddr *)ifa;
 				}
-			} else 
+			} else
 				besta = (struct in6_ifaddr *)ifa;
 		}
 	}
@@ -1820,7 +1820,7 @@ in6_ifawithscope(ifp, dst)
 		return besta;
 
 	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
-		if (IPV6_ADDR_SCOPE_GLOBAL != 
+		if (IPV6_ADDR_SCOPE_GLOBAL !=
 		    in6_addrscope(&(ia->ia_addr.sin6_addr)))
 			continue;
 		/* XXX: is there any case to allow anycast? */
@@ -1865,7 +1865,7 @@ in6_ifawithifp(ifp, dst)
 	dep[0] = dep[1] = NULL;
 
 	/*
-	 * We first look for addresses in the same scope. 
+	 * We first look for addresses in the same scope.
 	 * If there is one, return it.
 	 * If two or more, return one which matches the dst longest.
 	 * If none, return one of global addresses assigned other ifs.
@@ -1898,7 +1898,7 @@ in6_ifawithifp(ifp, dst)
 					blen = tlen;
 					besta = (struct in6_ifaddr *)ifa;
 				}
-			} else 
+			} else
 				besta = (struct in6_ifaddr *)ifa;
 		}
 	}
