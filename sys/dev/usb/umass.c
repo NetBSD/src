@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.16 1999/09/11 21:45:28 thorpej Exp $	*/
+/*	$NetBSD: umass.c,v 1.17 1999/09/12 02:40:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,6 +129,9 @@ typedef struct umass_softc {
 	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_interface_handle	sc_iface;	/* the interface we use */
 
+	u_int8_t		sc_subclass;	/* our USB subclass */
+	u_int8_t		sc_protocol;	/* our USB protocol */
+
 	u_int8_t		sc_bulkout;	/* bulk-out Endpoint Address */
 	usbd_pipe_handle	sc_bulkout_pipe;
 	u_int8_t		sc_bulkin;	/* bulk-in Endpoint Address */
@@ -241,6 +244,7 @@ USB_ATTACH(umass)
 	usbd_status err;
 	int i;
 	u_int8_t maxlun;
+	const char *subclass, *protocol;
 
 	sc->sc_iface = uaa->iface;
 	sc->sc_bulkout_pipe = NULL;
@@ -250,9 +254,38 @@ USB_ATTACH(umass)
 	USB_ATTACH_SETUP;
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
-	printf("%s: %s, iclass %d/%d/%d\n", USBDEVNAME(sc->sc_dev), devinfo,
-	       id->bInterfaceClass, id->bInterfaceSubClass,
-	       id->bInterfaceProtocol);
+
+	sc->sc_subclass = id->bInterfaceSubClass;
+	sc->sc_protocol = id->bInterfaceProtocol;
+
+	switch (sc->sc_subclass) {
+#if 0
+	case USUBCLASS_RBC:		subclass = "RBC";	break;
+	case USUBCLASS_SFF8020I:	subclass = "8020i";	break;
+	case USUBCLASS_QIC157:		subclass = "QIC157";	break;
+	case USUBCLASS_UFI:		subclass = "UFI";	break;
+	case USUBCLASS_SFF8070I:	subclass = "8070i";	break;
+#endif
+	case USUBCLASS_SCSI:		subclass = "SCSI";	break;
+	default:
+		panic("umass_attach: impossible subclass");
+	}
+
+	switch (sc->sc_protocol) {
+#if 0
+	case UPROTO_MASS_CBI_I:		protocol = "CBI with CCI"; break;
+	case UPROTO_MASS_CBI:		protocol = "CBI";	break;
+#endif
+	case UPROTO_MASS_BULK2:		/* XXX Is this really right? */
+	case UPROTO_MASS_BULK:		protocol = "Bulk-Only";	break;
+	default:
+		panic("umass_attach: impossible protocol");
+	}
+
+	printf("%s: %s\n", USBDEVNAME(sc->sc_dev), devinfo);
+	printf("%s: %s over %s (iclass %d/%d/%d)\n", USBDEVNAME(sc->sc_dev),
+	    subclass, protocol, id->bInterfaceClass, id->bInterfaceSubClass,
+	    id->bInterfaceProtocol);
 
 	/*
 	 * A Bulk-Only Mass Storage device supports the following endpoints,
