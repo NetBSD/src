@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /* static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95"; */
-static char *rcsid = "$NetBSD: edquota.c,v 1.12 1997/03/08 08:01:27 mikel Exp $";
+static char *rcsid = "$NetBSD: edquota.c,v 1.13 1997/03/08 21:39:06 mikel Exp $";
 #endif /* not lint */
 
 /*
@@ -78,6 +78,22 @@ struct quotause {
 	char	qfname[1];	/* actually longer */
 } *getprivs();
 #define	FOUND	0x01
+
+void	usage __P((void));
+int	getentry __P((char *, int));
+struct quotause *
+	getprivs __P((long, int));
+void	putprivs __P((long, int, struct quotause *));
+int	editit __P((char *));
+int	writeprivs __P((struct quotause *, int, char *, int));
+int	readprivs __P((struct quotause *, int));
+int	writetimes __P((struct quotause *, int, int));
+int	readtimes __P((struct quotause *, int));
+char *	cvtstoa __P((time_t));
+int	cvtatos __P((time_t, char *, time_t *));
+void	freeprivs __P((struct quotause *));
+int	alldigits __P((char *));
+int	hasquota __P((struct fstab *, int, char **));
 
 int
 main(argc, argv)
