@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.40 2000/12/01 11:52:54 simonb Exp $	*/
+/*	$NetBSD: newfs.c,v 1.41 2000/12/01 12:48:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.40 2000/12/01 11:52:54 simonb Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.41 2000/12/01 12:48:09 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,15 +192,14 @@ extern char *__progname;
 int
 main(int argc, char *argv[])
 {
-	int ch;
 	struct partition *pp;
 	struct disklabel *lp;
 	struct disklabel mfsfakelabel;
 	struct partition oldpartition;
 	struct stat st;
 	struct statfs *mp;
-	int fsi = 0, fso, len, n, maxpartitions;
-	char *cp = NULL, *s1, *s2, *special, *opstring;
+	int ch, fsi = 0, fso, len, maxpartitions, n;
+	char *cp = NULL, *endp, *opstring, *s1, *s2, *special;
 #ifdef MFS
 	char mountfromname[100];
 	pid_t pid, res;
@@ -321,7 +320,18 @@ main(int argc, char *argv[])
 				errx(1, "%s: bad revolutions/minute", optarg);
 			break;
 		case 's':
-			if ((fssize = atoi(optarg)) <= 0)
+			fssize = (int)strtol(optarg, &endp, 10);
+			if (*endp) {
+				if (mfs) {	/* Only do 'm' for mfs */
+					if (*endp == 'm' || *endp == 'M')
+						fssize *= 1024 * 1024 / 512;
+					else
+						fssize = -1;	/* error */
+				}
+				else
+					fssize = -1;	/* error */
+			}
+			if (fssize <= 0)
 				errx(1, "%s: bad file system size", optarg);
 			break;
 		case 't':
