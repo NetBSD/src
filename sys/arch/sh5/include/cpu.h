@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2002/07/11 14:10:39 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2002/07/11 21:21:58 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -104,10 +104,25 @@
 #define	SH5_KSEG0_SIZE		0x20000000
 #define	SH5_KSEG1_SIZE		0x20000000
 
-
+/*
+ * Default to NEFF == 32 if port-specific code doesn't define it
+ */
 #ifndef SH5_NEFF_BITS
 #define	SH5_NEFF_BITS 32
 #endif
+
+/*
+ * This hairy macro evaluates true if (register_t)`eff' is a valid
+ * effective address for the CPU's Implemented Effective Address space.
+ */
+#if SH5_NEFF_BITS < 64
+#define	SH5_EFF_IS_VALID(eff)	(((((eff) & (1ULL << 63)) ?	\
+    ((eff) ^ 0xffffffff00000000ULL) : (eff)) &			\
+	~((1ULL << SH5_NEFF_BITS) - 1)) == 0)
+#else
+#define	SH5_EFF_IS_VALID(eff)	1	/* Everything's valid in this case */
+#endif
+
 
 #ifndef SH5_ASID_BITS
 #define	SH5_ASID_BITS 8
