@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.2 2002/02/05 11:22:28 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.3 2002/02/06 16:12:18 lukem Exp $
 
 .include "../Makefile.inc"
 .include <bsd.own.mk>
@@ -14,10 +14,39 @@ IMAGEENDIAN=	le
 IMAGEDEPENDS+= 	${CRUNCHBIN} dot.profile termcap.mini \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
-		${_SRC_TOP_}/etc/services ${_SRC_TOP_}/etc/etc.i386/MAKEDEV \
-		${DESTDIR}/usr/mdec/biosboot.sym ${DESTDIR}/usr/mdec/mbr \
-		${DESTDIR}/usr/mdec/mbr_bootsel
+		${_SRC_TOP_}/etc/services ${DESTDIR}/usr/mdec/biosboot.sym \
+		${DESTDIR}/usr/mdec/mbr ${DESTDIR}/usr/mdec/mbr_bootsel
 POPULATEENV+=	BOOTMODEL=${BOOTMODEL:Q}
+
+
+.if defined(MAKEDEV_DEVS)
+#
+#	MAKEDEV_DEVS is set; add those devices to the mtree spec that's
+#	used to build the file system
+#
+MAKEDEVSCRIPT=	${_SRC_TOP_}/etc/etc.i386/MAKEDEV
+_MAKEDEVWRAP=	${_SRC_TOP_}/distrib/common/MAKEDEV.wrapper
+_MAKEDEV2SPEC=	${_SRC_TOP_}/distrib/common/makedev2spec.awk
+
+MAKEDEVSPEC=	devices.spec
+MTREECONF+=	${MAKEDEVSPEC}
+
+${MAKEDEVSPEC}:	${MAKEDEVSCRIPT} ${_MAKEDEVWRAP} ${_MAKEDEV2SPEC}
+	-rm -f ${.TARGET} ${.TARGET}.tmp
+	MAKEDEVSCRIPT=${MAKEDEVSCRIPT:Q} sh ${_MAKEDEVWRAP} ${MAKEDEV_DEVS} | \
+	    awk -f ${_MAKEDEV2SPEC} > ${.TARGET}.tmp \
+	&& sort -o ${.TARGET} ${.TARGET}.tmp
+
+CLEANFILES+=	${MAKEDEVSPEC} ${MAKEDEVSPEC}.tmp
+
+.else	# ! MAKEDEV_DEVS
+#
+#	MAKEDEV_DEVS isn't set; copy in /dev/MAKEDEV and rely upon
+#	init(8) to mount an mfs /dev and recreated the devices
+#
+LISTS+=		${.CURDIR}/../common/list.makedev
+IMAGEDEPENDS+=	${_SRC_TOP_}/etc/etc.i386/MAKEDEV
+.endif	# ! MAKEDEV_DEVS
 
 
 realall: ${IMAGE}
