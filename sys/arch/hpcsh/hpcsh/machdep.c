@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2002/01/29 18:53:02 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2002/01/31 16:25:55 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -427,11 +427,12 @@ cpu_reboot(int howto, char *bootstr)
 	/* If "always halt" was specified as a boot flag, obey. */
 	if ((boothowto & RB_HALT) != 0) {
 		howto |= RB_HALT;
-	} else {
+	}
+
 #ifdef KLOADER_KERNEL_PATH
+	if ((howto & RB_HALT) == 0)
 		kloader_reboot_setup(KLOADER_KERNEL_PATH);
 #endif
-	}
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0) {
