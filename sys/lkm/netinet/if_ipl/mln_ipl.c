@@ -1,3 +1,5 @@
+/*	$NetBSD: mln_ipl.c,v 1.5 1997/03/29 01:42:35 thorpej Exp $	*/
+
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -39,11 +41,12 @@
 #include <sys/exec.h>
 #include <sys/mbuf.h>
 #if defined(__NetBSD__) || (defined(__FreeBSD_version) && \
-    (__FreeBSD_version >= 199607))
+    (__FreeBSD_version >= 199511))
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
+#include <net/route.h>
 #include <netinet/ip_var.h>
 #include <netinet/tcp.h>
 #include <netinet/tcpip.h>
@@ -58,6 +61,9 @@
 #ifndef	IPL_NAME
 #define	IPL_NAME	"/dev/ipl"
 #endif
+#define	IPL_NAT		"/dev/ipnat"
+#define	IPL_STATE	"/dev/ipstate"
+
 #if !defined(VOP_LEASE) && defined(LEASE_CHECK)
 #define	VOP_LEASE	LEASE_CHECK
 #endif
@@ -66,35 +72,37 @@
 #define	MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 
-extern	int	lkmenodev(), lkmexists(), lkmdispatch();
+extern	int	lkmenodev __P((void));
 
-extern	int	ipfilterattach(), iplopen(), iplclose(), iplioctl(), ipfilterdetach();
+
 #ifdef NETBSD_PF
 #include <net/pfil.h>
 #endif
-#ifdef	IPFILTER_LOG
-extern	int	iplread();
-#else
-#ifdef NETBSD_PF
-#define iplread enodev
-#else
-#define	iplread	nodev
+#ifndef IPFILTER_LOG
+# ifdef NETBSD_PF
+# define iplread enodev
+# else
+# define	iplread	nodev
+# endif
 #endif
-#endif
-extern	int	iplidentify();
 
 #ifdef NETBSD_PF
 int        (*fr_checkp) __P((struct ip *, int, struct ifnet *, int, struct mbuf **)) = NULL;
 #endif
 
-static int ipl_unload(), ipl_load();
+static	int	ipl_unload __P((void));
+static	int	ipl_load __P((void));
+static	int	ipl_remove __P((void));
+int	xxxinit __P((struct lkm_table *, int, int));
+
+
 #if (defined(NetBSD1_0) && (NetBSD1_0 > 1)) || \
     (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199511))
 struct	cdevsw	ipldevsw = 
 {
 	iplopen,		/* open */
 	iplclose,		/* close */
-	(void*)iplread,		/* read */
+	iplread,		/* read */
 	0,			/* write */
 	iplioctl,		/* ioctl */
 	0,			/* stop */
@@ -119,11 +127,12 @@ struct	cdevsw	ipldevsw =
 	NULL			/* strategy */
 };
 #endif
+static	struct	cdevsw	cdev_sav;
 int	ipl_major = 0;
 
 MOD_DEV(IPL_VERSION, LM_DT_CHAR, -1, &ipldevsw);
 
-extern int vd_unuseddev();
+extern int vd_unuseddev __P((void));
 extern struct cdevsw cdevsw[];
 extern int nchrdev;
 
@@ -145,22 +154,17 @@ int cmd;
 			if (cdevsw[i].d_open == lkmenodev ||
 			    cdevsw[i].d_open == iplopen)
 				break;
-		if (i == nchrdev)
+		if (i == nchrdev) {
+			printf("IP Filter: No free cdevsw slots\n");
 			return ENODEV;
+		}
 
 		ipl_major = i;
-		if (cdevsw[i].d_open != iplopen) {
-			bcopy(&cdevsw[i], &args->lkm_olddev.cdev,
-				sizeof(struct cdevsw));
-			bcopy(args->lkm_dev.cdev, &cdevsw[i],
-				sizeof(struct cdevsw));
-		}
 		args->lkm_offset = i;   /* slot in cdevsw[] */
+		printf("IP Filter: loaded into slot %d\n", ipl_major);
 		return ipl_load();
 	case LKM_E_UNLOAD :
-		i = args->lkm_offset;
-		bcopy(&args->lkm_olddev.cdev, &cdevsw[i],
-			sizeof(struct cdevsw));
+		printf("IP Filter: unloaded from slot %d\n", ipl_major);
 		return ipl_unload();
 	case LKM_E_STAT :
 		break;
@@ -172,7 +176,7 @@ int cmd;
 }
 
 
-static int ipl_remove()
+static int ipl_remove __P((void))
 {
 	struct nameidata nd;
 	int error;
@@ -183,7 +187,23 @@ static int ipl_remove()
 	VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
 	VOP_LOCK(nd.ni_vp);
 	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
-	return VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+	(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+
+	NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, IPL_NAT, curproc);
+	if ((error = namei(&nd)))
+		return (error);
+	VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
+	VOP_LOCK(nd.ni_vp);
+	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+	(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+
+	NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, IPL_STATE, curproc);
+	if ((error = namei(&nd)))
+		return (error);
+	VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
+	VOP_LOCK(nd.ni_vp);
+	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+	(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 }
 
 
@@ -193,7 +213,7 @@ static int ipl_unload()
 
 	error = ipfilterdetach();
 #ifdef NETBSD_PF
-	pfil_remove_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
+	pfil_remove_hook(fr_check, PFIL_IN|PFIL_OUT);
 #endif
 	if (!error)
 		error = ipl_remove();
@@ -211,10 +231,11 @@ static int ipl_load()
 	if (error)
 		return error;
 #ifdef NETBSD_PF
-	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
+	pfil_add_hook(fr_check, PFIL_IN|PFIL_OUT);
 #endif
 	(void) ipl_remove();
 	error = 0;
+
 	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPL_NAME, curproc);
 	if (error = namei(&nd))
 		return error;
@@ -232,7 +253,51 @@ static int ipl_load()
 	vattr.va_mode = (fmode & 07777);
 	vattr.va_rdev = ipl_major<<8;
 	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
-	return VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	if (error)
+		return error;
+
+	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPL_NAT, curproc);
+	if (error = namei(&nd))
+		return error;
+	if (nd.ni_vp != NULL) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		vrele(nd.ni_vp);
+		return (EEXIST);
+	}
+	VATTR_NULL(&vattr);
+	vattr.va_type = VCHR;
+	vattr.va_mode = (fmode & 07777);
+	vattr.va_rdev = (ipl_major<<8)|1;
+	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	if (error)
+		return error;
+
+	NDINIT(&nd, CREATE, LOCKPARENT, UIO_SYSSPACE, IPL_STATE, curproc);
+	if (error = namei(&nd))
+		return error;
+	if (nd.ni_vp != NULL) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == nd.ni_vp)
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		vrele(nd.ni_vp);
+		return (EEXIST);
+	}
+	VATTR_NULL(&vattr);
+	vattr.va_type = VCHR;
+	vattr.va_mode = (fmode & 07777);
+	vattr.va_rdev = (ipl_major<<8)|2;
+	VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	if (error)
+		return error;
 }
 
 
