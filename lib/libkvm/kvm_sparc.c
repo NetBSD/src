@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.10 1996/11/09 23:47:34 pk Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.11 1997/04/02 21:07:03 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_sparc.c,v 1.10 1996/11/09 23:47:34 pk Exp $";
+static char *rcsid = "$NetBSD: kvm_sparc.c,v 1.11 1997/04/02 21:07:03 pk Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -175,7 +175,7 @@ _kvm_kvatop44c(kd, va, pa)
 	sp = &cpup->segmap_store[(vr-NUREG)*NSEGRG + vs];
 	if (sp->sg_npte == 0)
 		goto err;
-	if (sp->sg_pmeg == cpup->npmeg /* =seginval */)
+	if (sp->sg_pmeg == cpup->npmeg - 1) /* =seginval */
 		goto err;
 	pte = ptes[sp->sg_pmeg * nptesg + VA_VPG(va)];
 	if ((pte & PG_V) != 0) {
