@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.11 2005/01/13 16:39:22 he Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.12 2005/01/16 14:27:42 he Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -199,3 +199,46 @@ distrib/sets/lists/xserver/md.sgimips		1.7
 	Build and install libshadow.a and liblayer.a.
 	Fixes PR#27156.
 	[rtr, tickets 905, 906, 907]
+
+etc/rc.d/syslogd				1.15
+
+	Use "load_rc_config `basename chrootdirscript`" in a subshell
+	to determine the rc.conf(5) setting for chrootdirscript, incase
+	the configuration for that is in /etc/rc.conf.d/chrootdirscript.
+	Fixes PR#26478.
+	[lukem, ticket #912]
+
+usr.bin/passwd/krb5_passwd.c			1.12
+
+	Switch to krb5_set_password that can handle the RFC3244 (as
+	well as the older change password protocol).  Should enable
+	changing password in a Windows2000 (or later) domain.
+	[lha, ticket #917]
+
+sys/arch/sparc64/dev/auxio.c			1.13
+
+	In auxio_blink(), only toggle the AUXIO_LED_LED bit, don't
+	clear the others.  It looks like bit 3 control the on-board
+	le's link test, clearing it breaks the interface (no link
+	detected on the remote end). Bit 3 is defined as AUXIO4M_LTE
+	(link-test enable) for sun4m systems (maybe all the AUXIO4M_*
+	bits are valid on the Ultra/1 too?).
+	Tested on Ultra/1 and Ultra/5.  Fixes PR#25039.
+	[bouyer, ticket #924]
+
+lib/libc/citrus/citrus_mmap.c			1.2
+
+	Correct check for mmap return value.  Also clean up
+	the error path, convert to KNF, and use the proper stat
+	macro.  Fixes PR#27283.
+	[christos, ticket #931]
+
+sys/fs/smbfs/smbfs_vnops.c			1.45
+
+	Import a change from FreeBSD: use DENYNONE to give unixy
+	semantics of permitting everything not forbidden by
+	permissions.  I.e. denial is up to the server with
+	clients/openers needing to use advisory locks for further
+	control.  Fixes file access problem when the file is already
+	open on the server.
+	[peter, ticket #933]
