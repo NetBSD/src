@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.444 2002/01/24 14:49:16 martti Exp $
+# $NetBSD: mi,v 1.445 2002/02/06 21:06:32 jdolecek Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -664,7 +664,6 @@
 ./usr/share/man/cat4/i386/fdc.0			man-sys-catman
 ./usr/share/man/cat4/i386/intro.0		man-sys-catman
 ./usr/share/man/cat4/i386/io.0			man-sys-catman
-./usr/share/man/cat4/i386/joy.0			man-sys-catman
 ./usr/share/man/cat4/i386/kmem.0		man-sys-catman
 ./usr/share/man/cat4/i386/lms.0			man-sys-catman
 ./usr/share/man/cat4/i386/lpt.0			man-sys-catman
@@ -718,6 +717,7 @@
 ./usr/share/man/cat4/isp.0			man-sys-catman
 ./usr/share/man/cat4/ix.0			man-sys-catman
 ./usr/share/man/cat4/iy.0			man-sys-catman
+./usr/share/man/cat4/joy.0			man-sys-catman
 ./usr/share/man/cat4/kue.0			man-sys-catman
 ./usr/share/man/cat4/lc.0			man-sys-catman
 ./usr/share/man/cat4/ld.0			man-sys-catman
@@ -2332,7 +2332,6 @@
 ./usr/share/man/man4/i386/fdc.4			man-sys-man
 ./usr/share/man/man4/i386/intro.4		man-sys-man
 ./usr/share/man/man4/i386/io.4			man-sys-man
-./usr/share/man/man4/i386/joy.4			man-sys-man
 ./usr/share/man/man4/i386/kmem.4		man-sys-man
 ./usr/share/man/man4/i386/lms.4			man-sys-man
 ./usr/share/man/man4/i386/lpt.4			man-sys-man
@@ -2386,6 +2385,7 @@
 ./usr/share/man/man4/isp.4			man-sys-man
 ./usr/share/man/man4/ix.4			man-sys-man
 ./usr/share/man/man4/iy.4			man-sys-man
+./usr/share/man/man4/joy.4			man-sys-man
 ./usr/share/man/man4/kue.4			man-sys-man
 ./usr/share/man/man4/lc.4			man-sys-man
 ./usr/share/man/man4/ld.4			man-sys-man
