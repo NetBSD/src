@@ -15,12 +15,12 @@
  *
  *	%W% (Berkeley) %G%
  *
- * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.3.2.1 1993/09/14 18:24:21 mycroft Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.3.2.2 1993/11/14 21:07:04 mycroft Exp $ (LBL)
  */
 
-#include "param.h"
-#include "device.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
 
 /*
  * Autoconfiguration subroutines.
