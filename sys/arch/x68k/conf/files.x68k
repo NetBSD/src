@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.22.2.5 1999/01/31 10:34:25 minoura Exp $
+#	$NetBSD: files.x68k,v 1.22.2.6 1999/02/02 23:47:11 minoura Exp $
 #
 # new style config file for x68k architecture
 #
@@ -65,13 +65,6 @@ file	arch/x68k/dev/spc.c		spc needs-count
 device	mha: scsi
 attach	mha at mainbus
 file	arch/x68k/dev/mha.c		mha needs-count
-
-device	fdc { unit = -1 }
-attach	fdc at mainbus
-
-device	fd: disk
-attach	fd at fdc
-file	arch/x68k/dev/fd.c		fd needs-flag
 
 device	xcom: tty
 attach	xcom at mainbus
@@ -158,6 +151,13 @@ device	opm
 attach	opm at intio
 file	arch/x68k/dev/opm.c		opm
 
+device	fdc { unit = -1 }
+attach	fdc at intio
+
+device	fd: disk
+attach	fd at fdc
+file	arch/x68k/dev/fd.c		fd needs-flag
+
 pseudo-device bell
 file	arch/x68k/dev/opmbell.c		bell needs-flag
 
@@ -165,7 +165,6 @@ pseudo-device sram
 file	arch/x68k/dev/sram.c		sram needs-flag
 pseudo-device pow
 file	arch/x68k/dev/pow.c		pow needs-count
-file	arch/x68k/dev/dma.c		fdc
 
 # memory disk
 file	arch/x68k/dev/md_root.c		memory_disk_hooks
