@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)route.c	5.35 (Berkeley) 6/27/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/route/route.c,v 1.3 1993/03/23 00:30:08 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/route/route.c,v 1.4 1993/04/18 19:02:31 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -99,7 +99,7 @@ int	s;
 int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, Cflag, keyword();
 int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
-struct	sockaddr_in sin = { sizeof(sin), AF_INET };
+struct	sockaddr_in s_in = { sizeof(s_in), AF_INET };
 struct	rt_metrics rt_metrics;
 u_long  rtm_inits;
 struct	in_addr inet_makeaddr();
@@ -707,9 +707,9 @@ newroute(argc, argv)
 }
 
 void
-inet_makenetandmask(net, sin)
+inet_makenetandmask(net, s_in)
 	u_long net;
-	register struct sockaddr_in *sin;
+	register struct sockaddr_in *s_in;
 {
 	u_long addr, mask = 0;
 	register char *cp;
@@ -737,15 +737,15 @@ inet_makenetandmask(net, sin)
 		else
 			mask = -1;
 	}
-	sin->sin_addr.s_addr = htonl(addr);
-	sin = &so_mask.sin;
-	sin->sin_addr.s_addr = htonl(mask);
-	sin->sin_len = 0;
-	sin->sin_family = 0;
-	cp = (char *)(&sin->sin_addr + 1);
-	while (*--cp == 0 && cp > (char *)sin)
+	s_in->sin_addr.s_addr = htonl(addr);
+	s_in = &so_mask.sin;
+	s_in->sin_addr.s_addr = htonl(mask);
+	s_in->sin_len = 0;
+	s_in->sin_family = 0;
+	cp = (char *)(&s_in->sin_addr + 1);
+	while (*--cp == 0 && cp > (char *)s_in)
 		;
-	sin->sin_len = 1 + cp - (char *)sin;
+	s_in->sin_len = 1 + cp - (char *)s_in;
 }
 
 /*
