@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.68 2002/01/31 16:25:54 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.69 2002/01/31 17:56:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2002/01/31 16:25:54 uch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.69 2002/01/31 17:56:33 uch Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -106,8 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2002/01/31 16:25:54 uch Exp $");
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 #include <machine/kloader.h>
-
-#include <hpcmips/hpcmips/machdep.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -167,8 +165,7 @@ extern void	tx_init(void);
 static struct bootinfo bi_copy;
 struct bootinfo *bootinfo;
 char booted_kernel[128];
-struct device *booted_device;
-int booted_partition;
+extern void makebootdev(const char *);
 
 /* maps for VM objects */
 struct vm_map *exec_map;
