@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.3 2003/09/28 16:30:18 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2003/09/30 19:05:41 matt Exp $
 
-SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
+SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S __sigtramp3.S
