@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1.1.1 1995/03/26 07:12:18 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 1995/05/28 19:11:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -78,6 +78,7 @@ struct cpu_disklabel	*clp;
 	char		*msg;
 	int		i;
 	int		usr_part = RAW_PART;
+	int		have_root = 0;
 
 	bzero(sizes, sizeof(sizes));
 	if((msg = rd_tosparts(sizes, dev, strat, lp)) != NULL)
@@ -116,7 +117,6 @@ struct cpu_disklabel	*clp;
 	lp->d_partitions[RAW_PART].p_offset = sizes[0].blkoff;
 
 	for(i = 0; sizes[i].nblocks; i++) {
-		int		have_root = 0;
 		int		pno;
 
 		if(!have_root && (sizes[i].type & ROOT_FLAG)) {
@@ -132,6 +132,7 @@ struct cpu_disklabel	*clp;
 					break;
 			case FS_BSDFFS:
 			case FS_MSDOS:
+			case FS_OTHER:
 					pno = ++usr_part;
 					break;
 			default:
