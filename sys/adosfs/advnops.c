@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.29 1996/09/01 23:47:48 mycroft Exp $	*/
+/*	$NetBSD: advnops.c,v 1.30 1996/09/07 12:40:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -55,7 +55,7 @@ int	adosfs_getattr	__P((void *));
 int	adosfs_read	__P((void *));
 int	adosfs_write	__P((void *));
 int	adosfs_ioctl	__P((void *));
-#define	adosfs_select	genfs_select
+#define	adosfs_poll	genfs_poll
 int	adosfs_strategy	__P((void *));
 int	adosfs_link	__P((void *));
 int	adosfs_symlink	__P((void *));
@@ -112,7 +112,7 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_write_desc, adosfs_write },		/* write */
 	{ &vop_lease_desc, adosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
-	{ &vop_select_desc, adosfs_select },		/* select */
+	{ &vop_poll_desc, adosfs_poll },		/* poll */
 	{ &vop_mmap_desc, adosfs_mmap },		/* mmap */
 	{ &vop_fsync_desc, adosfs_fsync },		/* fsync */
 	{ &vop_seek_desc, adosfs_seek },		/* seek */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 1996/02/10 17:12:51 christos Exp $
+	$NetBSD: syscalls.master,v 1.18 1996/09/07 12:40:52 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -35,7 +35,9 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/poll.h>
 #include <sys/syscallargs.h>
+
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_time.h>
 #include <compat/svr4/svr4_signal.h>
@@ -152,8 +154,8 @@
 			    struct svr4_strbuf *dat, int *flags); }
 86	STD		{ int svr4_sys_putmsg(int fd, struct svr4_strbuf *ctl, \
 			    struct svr4_strbuf *dat, int flags); }
-87	STD		{ int svr4_sys_poll(struct svr4_pollfd *fds, \
-			    long nfds, int timeout); }
+87	NOARGS		{ int sys_poll(struct pollfd *fds, size_t nfds, \
+			    int timeout); }
 88	STD		{ int svr4_sys_lstat(char *path, \
 			    struct svr4_stat *ub); }
 89	NOARGS		{ int sys_symlink(char *path, char *link); }

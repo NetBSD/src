@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.34 1996/09/01 23:48:00 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.35 1996/09/07 12:41:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -97,7 +97,7 @@ int	fdesc_setattr	__P((void *));
 int	fdesc_read	__P((void *));
 int	fdesc_write	__P((void *));
 int	fdesc_ioctl	__P((void *));
-int	fdesc_select	__P((void *));
+int	fdesc_poll	__P((void *));
 #define	fdesc_mmap	genfs_eopnotsupp
 #define	fdesc_fsync	genfs_nullop
 #define	fdesc_seek	genfs_nullop
@@ -143,7 +143,7 @@ struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_read_desc, fdesc_read },			/* read */
 	{ &vop_write_desc, fdesc_write },		/* write */
 	{ &vop_ioctl_desc, fdesc_ioctl },		/* ioctl */
-	{ &vop_select_desc, fdesc_select },		/* select */
+	{ &vop_poll_desc, fdesc_poll },			/* poll */
 	{ &vop_mmap_desc, fdesc_mmap },			/* mmap */
 	{ &vop_fsync_desc, fdesc_fsync },		/* fsync */
 	{ &vop_seek_desc, fdesc_seek },			/* seek */
@@ -849,29 +849,27 @@ fdesc_ioctl(v)
 }
 
 int
-fdesc_select(v)
+fdesc_poll(v)
 	void *v;
 {
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int a_which;
-		int a_fflags;
-		struct ucred *a_cred;
+		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
-	int error;
+	int revents;
 
 	switch (VTOFDESC(ap->a_vp)->fd_type) {
 	case Fctty:
-		error = cttyselect(devctty, ap->a_which, ap->a_p);
+		revents = cttypoll(devctty, ap->a_events, ap->a_p);
 		break;
 
 	default:
-		error = genfs_select(v);
+		revents = genfs_poll(v);
 		break;
 	}
 
-	return (error);
+	return (revents);
 }
 
 int

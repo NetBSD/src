@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.11 1996/09/01 23:48:02 mycroft Exp $	*/
+/*	$NetBSD: fifo.h,v 1.12 1996/09/07 12:41:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -51,7 +51,7 @@ int	fifo_read	__P((void *));
 int	fifo_write	__P((void *));
 #define fifo_lease_check genfs_nullop
 int	fifo_ioctl	__P((void *));
-int	fifo_select	__P((void *));
+int	fifo_poll	__P((void *));
 #define fifo_mmap	genfs_badop
 #define fifo_fsync	genfs_nullop
 #define fifo_seek	genfs_badop

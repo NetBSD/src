@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.21 1996/09/01 23:48:43 mycroft Exp $	*/
+/*	$NetBSD: denode.h,v 1.22 1996/09/07 12:41:22 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -267,7 +267,7 @@ int	lease_check		__P((void *));
 #define	msdosfs_lease_check genfs_nullop
 #endif
 int	msdosfs_ioctl		__P((void *));
-#define	msdosfs_select		genfs_select
+#define	msdosfs_poll		genfs_poll
 int	msdosfs_mmap		__P((void *));
 #define	msdosfs_fsync		genfs_fsync
 #define	msdosfs_seek		genfs_nullop

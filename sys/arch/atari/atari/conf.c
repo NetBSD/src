@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1996/09/05 15:46:32 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 1996/09/07 12:40:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -91,19 +91,19 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/* open, close, ioctl, select, mmap -- XXX should be a map device */
+/* open, close, ioctl, poll, mmap -- XXX should be a map device */
 #define	cdev_grf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, (dev_type_tty((*))) nullop, \
-	dev_init(c,n,select), dev_init(c,n,mmap) }
+	dev_init(c,n,poll), dev_init(c,n,mmap) }
 
-/* open, close, ioctl, select, mmap -- XXX should be a map device */
+/* open, close, ioctl, poll, mmap -- XXX should be a map device */
 #define	cdev_view_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, (dev_type_tty((*))) nullop, \
-	dev_init(c,n,select), dev_init(c,n,mmap) }
+	dev_init(c,n,poll), dev_init(c,n,mmap) }
 
 /* open, close, write, ioctl */
 #define	cdev_lpt_init(c,n) { \

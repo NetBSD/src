@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.17 1996/09/01 23:49:14 mycroft Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.18 1996/09/07 12:41:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -174,7 +174,7 @@ int	nfsspec_write	__P((void *));
 int	nfsfifo_read	__P((void *));
 int	nfsfifo_write	__P((void *));
 #define nfs_ioctl	((int (*)	__P((void *)))enoioctl)
-#define	nfs_select	genfs_select
+#define	nfs_poll	genfs_poll
 #ifdef Lite2_integrated
 #define nfs_revoke	vop_revoke
 #endif

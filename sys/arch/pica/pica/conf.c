@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1996/09/05 15:46:50 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1996/09/07 12:40:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 #define cdev_pc_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
+	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
 
 /* open, close, write, ioctl */
 #define	cdev_lpt_init(c,n) { \
@@ -150,7 +150,7 @@ cdev_decl(ipl);
 #define	cdev_gen_ipf(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev, 0 }
 #ifdef IPFILTER
 #define NIPF 1

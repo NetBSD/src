@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.31 1996/09/05 09:26:16 thorpej Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.32 1996/09/07 12:41:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -77,7 +77,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_write_desc, spec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
-	{ &vop_select_desc, spec_select },		/* select */
+	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
@@ -433,14 +433,12 @@ spec_ioctl(v)
 
 /* ARGSUSED */
 int
-spec_select(v)
+spec_poll(v)
 	void *v;
 {
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int a_which;
-		int a_fflags;
-		struct ucred *a_cred;
+		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
 	register dev_t dev;
@@ -449,10 +447,10 @@ spec_select(v)
 
 	case VCHR:
 		dev = ap->a_vp->v_rdev;
-		return (*cdevsw[major(dev)].d_select)(dev, ap->a_which, ap->a_p);
+		return (*cdevsw[major(dev)].d_poll)(dev, ap->a_events, ap->a_p);
 
 	default:
-		return (genfs_select(v));
+		return (genfs_poll(v));
 	}
 }
 /*
