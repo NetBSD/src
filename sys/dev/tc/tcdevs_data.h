@@ -1,10 +1,10 @@
-/*	$NetBSD: tcdevs_data.h,v 1.11 1998/05/27 02:51:02 matt Exp $	*/
+/*	$NetBSD: tcdevs_data.h,v 1.12 1998/06/18 23:29:46 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.8 1998/01/30 02:24:58 thorpej Exp 
+ *	NetBSD: tcdevs,v 1.10 1998/06/18 23:28:12 jonathan Exp 
  */
 
 /*
@@ -39,6 +39,11 @@
  */
 
 struct tc_knowndev tc_knowndevs[] = {
+	{
+	    "AV01B-AA",
+	    TC_DEVICE_AV01B_AA,
+	    TC_DESCRIPTION_AV01B_AA,
+	},
 	{
 	    "DGLTA-FA",
 	    TC_DEVICE_DGLTA_FA,
