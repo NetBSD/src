@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_start.S,v 1.1 2003/05/23 00:57:27 ichiro Exp $ */
+/*	$NetBSD: ixdp425_start.S,v 1.2 2003/05/24 01:59:32 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -57,7 +57,7 @@ _C_LABEL(ixdp425_start):
 	 * Setup coprocessor 15.
 	 */
 	/*
-	 *ZAO425 with CSR(microengine code produced by Intel Corp.)
+	 *IXDP425 with CSR(microengine code produced by Intel Corp.)
 	 *  running well on BigEndian, because CSR written on bigendian
 	 */
         mrc     p15, 0, r2, c1, c0, 0
