@@ -40,8 +40,10 @@ code 16, unit numers might be something like the following:
 
                    Miniroot installation via network
 	           ---------------------------------
-NOTE:  BOOTING SYS_INST VIA THE NETWORK IS ONLY POSSIBLE IF YOUR BOOTROM
-IS `REV. C' OR LATER.
+NOTE:  BOOTING SYS_INST VIA THE NETWORK ON EARLY HP300 MODELS IS ONLY
+POSSIBLE IF YOUR BOOTROM IS `REV. C' OR LATER.  When checking the
+revision of your BOOTROM, use what it printed on the console during
+the self-test, not what may be printed on a sticker on the chip itself.
 
 In order to complete this process, you will need the following from the
 `.../install' directory of the distribution:
