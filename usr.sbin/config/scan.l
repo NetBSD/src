@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.33 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: scan.l,v 1.34 2002/11/07 20:07:07 jrf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -172,6 +172,12 @@ with		return WITH;
 \n	{
 		yyline++;
 		return '\n';
+	}
+\00	{
+		/* Detect NULL characters in the config file and
+		 * error out.
+		 */
+		error("NULL character detected at line %i\n", yyline);
 	}
 #.*	{ /* ignored (comment) */; }
 [ \t]+	{ /* ignored (white space) */; }
