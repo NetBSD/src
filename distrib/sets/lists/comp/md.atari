@@ -74,3 +74,7 @@
 ./usr/lib/libtermcap_pic.a
 ./usr/lib/libutil_pic.a
 ./usr/lib/scrt0.o
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0

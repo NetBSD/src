@@ -7,6 +7,7 @@
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
 ./usr/include/m68k/ieeefp.h
+./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
 ./usr/include/m68k/profile.h
 ./usr/include/m68k/psl.h

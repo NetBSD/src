@@ -7,6 +7,7 @@
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
 ./usr/include/m68k/ieeefp.h
+./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
 ./usr/include/m68k/profile.h
 ./usr/include/m68k/psl.h
@@ -81,3 +82,7 @@
 ./usr/lib/libutil_pic.a
 ./usr/lib/scrt0.o
 ./usr/sbin/dbsym
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0
