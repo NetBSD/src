@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.76 1997/02/13 02:54:06 tls Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.77 1997/02/20 04:52:44 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -429,12 +429,12 @@ sys_sync(p, v, retval)
 	register struct mount *mp, *nmp;
 	int asyncflag;
 
-	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		/*
-		 * Get the next pointer in case we hang on vfs_busy
+		 * Get the prev pointer in case we hang on vfs_busy
 		 * while we are being unmounted.
 		 */
-		nmp = mp->mnt_list.cqe_next;
+		nmp = mp->mnt_list.cqe_prev;
 		/*
 		 * The lock check below is to avoid races with mount
 		 * and unmount.
@@ -448,10 +448,10 @@ sys_sync(p, v, retval)
 			if (asyncflag)
 				mp->mnt_flag |= MNT_ASYNC;
 			/*
-			 * Get the next pointer again, as the next filesystem
+			 * Get the prev pointer again, as the prior filesystem
 			 * might have been unmounted while we were sync'ing.
 			 */
-			nmp = mp->mnt_list.cqe_next;
+			nmp = mp->mnt_list.cqe_prev;
 			vfs_unbusy(mp);
 		}
 	}
