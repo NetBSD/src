@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.62 1996/10/17 19:41:00 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.63 1996/12/10 05:28:15 tls Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -340,8 +340,8 @@ extern vm_map_t phys_map;
  *	B_PHYS:		User "raw" IO request.
  *			Address is VA in user's address space.
  *
- * All requests are (re)mapped into kernel VA space via the useriomap
- * (a name with only slightly more meaning than "kernelmap")
+ * All requests are (re)mapped into kernel VA space via the phys_map
+ * (a name with only slightly more meaning than "kernel_map")
  */
 void
 vmapbuf(bp, len)
