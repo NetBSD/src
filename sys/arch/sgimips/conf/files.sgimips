@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.13 2001/11/14 18:15:34 thorpej Exp $
+#	$NetBSD: files.sgimips,v 1.14 2001/11/18 08:24:33 thorpej Exp $
 
 maxpartitions 16
 
@@ -55,7 +55,7 @@ device	zstty: tty
 attach	zstty at zsc
 file 	dev/ic/z8530tty.c			zstty needs-flag
 file	arch/sgimips/dev/zs_kgdb.c		kgdb
-file 	arch/sgimips/dev/zs.c			zsc needs-count
+file 	arch/sgimips/dev/zs.c			zsc needs-flag
 file 	dev/ic/z8530sc.c			zsc
 
 file dev/arcbios/arcbios.c
