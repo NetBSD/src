@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.108 2003/02/02 20:33:07 kleink Exp $
+.\"	$NetBSD: sysctl.3,v 1.109 2003/02/27 01:42:10 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -216,7 +216,9 @@ privilege may change the value.
 .It HW\_NCPU	integer	no
 .It HW\_BYTEORDER	integer	no
 .It HW\_PHYSMEM	integer	no
+.It HW\_PHYSPAGES quad no
 .It HW\_USERMEM	integer	no
+.It HW\_USERPAGES quad no
 .It HW\_PAGESIZE	integer	no
 .\".It HW\_DISKNAMES	struct	no
 .\".It HW\_DISKSTATS	struct	no
@@ -238,8 +240,12 @@ The number of cpus.
 The byteorder (4,321, or 1,234).
 .It Li HW_PHYSMEM
 The bytes of physical memory.
+.It Li HW_PHYSPAGES
+The number of pages of physical memory.
 .It Li HW_USERMEM
 The bytes of non-kernel memory.
+.It Li HW_USERPAGES
+The number of pages of non-kernel memory.
 .It Li HW_PAGESIZE
 The software page size.
 .It Li HW_DISKNAMES
