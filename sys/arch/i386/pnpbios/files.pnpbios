@@ -1,4 +1,4 @@
-# $NetBSD: files.pnpbios,v 1.8 2000/06/16 03:47:24 thorpej Exp $
+# $NetBSD: files.pnpbios,v 1.9 2001/01/28 00:37:52 nathanw Exp $
 
 defopt PNPBIOSVERBOSE
 
@@ -39,3 +39,6 @@ file arch/i386/pnpbios/fdc_pnpbios.c fdc_pnpbios
 
 attach npx at pnpbios with npx_pnpbios
 file arch/i386/pnpbios/npx_pnpbios.c npx_pnpbios
+
+attach joy at pnpbios with joy_pnpbios
+file arch/i386/pnpbios/joy_pnpbios.c joy_pnpbios
