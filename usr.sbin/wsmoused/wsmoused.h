@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.h,v 1.4 2003/08/06 18:07:53 jmmv Exp $ */
+/* $NetBSD: wsmoused.h,v 1.5 2003/08/06 23:58:40 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,6 +76,13 @@ struct block {
 	struct block *b_child[MAX_BLOCKS];
 	struct block *b_parent;
 };
+
+/* Prototypes for wsmoused.c */
+void log_err(int, const char *, ...);
+void log_errx(int, const char *, ...);
+void log_info(const char *, ...);
+void log_warn(const char *, ...);
+void log_warnx(const char *, ...);
 
 /* Prototypes for config.c */
 struct prop *prop_new(void);
