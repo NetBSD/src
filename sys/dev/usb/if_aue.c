@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.21 2000/02/02 20:06:55 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.22 2000/02/12 15:02:21 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -170,6 +170,7 @@ static struct aue_type aue_devs[] = {
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650TX },
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650TX_PNA },
 	{ USB_VENDOR_SMC, USB_PRODUCT_SMC_2202USB },
+	{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TX },
 	{ 0, 0 }
 };
 
