@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.13 1997/10/16 04:23:36 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.13.2.1 1998/01/29 11:44:02 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,6 +58,18 @@
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <compat/freebsd/freebsd_exec.h>
 #include <compat/freebsd/freebsd_ptrace.h>
+
+void
+freebsd_setregs(p, epp, stack)
+	struct proc *p;
+	struct exec_package *epp;
+	u_long stack;
+{
+	register struct pcb *pcb = &p->p_addr->u_pcb;
+
+	setregs(p, epp, stack);
+	pcb->pcb_savefpu.sv_env.en_cw = __FreeBSD_NPXCW__;
+}
 
 /*
  * signal support
