@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.16 2001/07/31 22:31:47 bjh21 Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.17 2001/11/08 15:01:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -215,6 +215,14 @@ db_elf_find_strtab(stab)
 	Elf_Shdr *shp = STAB_TO_SHDR(stab, elf);
 	int i;
 
+	/*
+	 * We don't load ELF header for ELF modules.
+	 * Find out if this is a loadable module. If so,
+	 * string table comes right after symbol table.
+	 */
+	if ((Elf_Sym *)elf == STAB_TO_SYMSTART(stab)) {
+		return ((char *)STAB_TO_SYMEND(stab));
+	}
 	for (i = 0; i < elf->e_shnum; i++) {
 		if (shp[i].sh_type == SHT_SYMTAB)
 			return ((char*)elf + shp[shp[i].sh_link].sh_offset);
