@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.h,v 1.3 2004/02/13 18:02:05 wiz Exp $	*/
+/*	$NetBSD: altq_fifoq.h,v 1.4 2004/06/22 12:45:57 itojun Exp $	*/
 /*	$KAME: altq_fifoq.h,v 1.6 2000/12/14 08:12:45 thorpej Exp $	*/
 
 /*
@@ -30,6 +30,7 @@
 #ifndef _ALTQ_ALTQ_FIFOQ_H_
 #define	_ALTQ_ALTQ_FIFOQ_H_
 
+#ifdef _KERNEL
 typedef struct fifoq_state {
 	struct fifoq_state *q_next;	/* next fifoq_state in the list */
 	struct ifaltq *q_ifq;		/* backpointer to ifaltq */
@@ -46,6 +47,7 @@ typedef struct fifoq_state {
 		u_int		period;
 	} q_stats;
 } fifoq_state_t;
+#endif
 
 struct fifoq_interface {
 	char	fifoq_ifname[IFNAMSIZ];
