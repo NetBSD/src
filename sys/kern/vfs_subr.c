@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.163 2001/11/29 21:21:29 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.164 2001/11/30 10:06:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.163 2001/11/29 21:21:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.164 2001/11/30 10:06:46 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2729,7 +2729,7 @@ vfs_buf_print(bp, full, pr)
 	bitmask_snprintf(bp->b_flags, buf_flagbits, buf, sizeof(buf));
 	(*pr)("  error %d flags 0x%s\n", bp->b_error, buf);
 
-	(*pr)("  bufsize 0x%x bcount 0x%x resid 0x%x\n",
+	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n",
 		  bp->b_bufsize, bp->b_bcount, bp->b_resid);
 	(*pr)("  data %p saveaddr %p dep %p\n",
 		  bp->b_data, bp->b_saveaddr, LIST_FIRST(&bp->b_dep));
@@ -2794,7 +2794,7 @@ vfs_vnode_print(vp, full, pr)
 	(*pr)("mp %p numoutput %d size 0x%llx\n",
 	      vp->v_mount, vp->v_numoutput, vp->v_size);
 
-	(*pr)("data %p usecount %d writecount %d holdcnt %d numoutput %d\n",
+	(*pr)("data %p usecount %d writecount %ld holdcnt %ld numoutput %d\n",
 	      vp->v_data, vp->v_usecount, vp->v_writecount,
 	      vp->v_holdcnt, vp->v_numoutput);
 
@@ -2805,7 +2805,7 @@ vfs_vnode_print(vp, full, pr)
 		vp->v_tag < sizeof(vnode_tags) / sizeof(vnode_tags[0])) ?
 		vnode_tags[vp->v_tag] : "UNKNOWN";
 	
-	(*pr)("type %s(%d) tag %s(%d) id 0x%x mount %p typedata %p\n",
+	(*pr)("type %s(%d) tag %s(%d) id 0x%lu mount %p typedata %p\n",
 	      vtype, vp->v_type, vtag, vp->v_tag,
 	      vp->v_id, vp->v_mount, vp->v_mountedhere);
 
