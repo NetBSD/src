@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.7.2.7 2002/08/01 02:43:20 nathanw Exp $	*/
+/*	$NetBSD: ofw.c,v 1.7.2.8 2002/08/27 06:03:20 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1050,7 +1050,9 @@ ofw_callbackhandler(args)
 
 			ap_bits >>= 10;
 			for (; npages > 0; pte++, pa += NBPG, npages--)
-				*pte = (pa | L2_AP(ap_bits) | L2_TYPE_S | cb_bits);
+				*pte = (pa | L2_AP(ap_bits) | L2_TYPE_S |
+				    cb_bits);
+			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
 		}
 
 		/* Clean out tlb. */
@@ -1092,6 +1094,7 @@ ofw_callbackhandler(args)
 
 			for (; npages > 0; pte++, npages--)
 				*pte = 0;
+			PTE_SYNC_RANGE(vtopte(va), size >> PGSHIFT);
 		}
 
 		/* Clean out tlb. */
@@ -1451,7 +1454,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		pmap_map_entry(L1pagetable,
 		    proc0_pagedir.pv_va + NBPG * i,
 		    proc0_pagedir.pv_pa + NBPG * i,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/*
 	 * Construct the proc0 L2 pagetables that map page tables.
@@ -1461,12 +1464,12 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 	pmap_map_entry(L1pagetable,
 	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    proc0_pt_sys.pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	for (i = 0; i < KERNEL_IMG_PTS; i++)
 		pmap_map_entry(L1pagetable,
 		    PTE_BASE + ((KERNEL_BASE + i * 0x00400000) >> (PGSHIFT-2)),
 		    proc0_pt_kernel[i].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_entry(L1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    proc0_pt_pte.pv_pa,
@@ -1475,17 +1478,17 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 		pmap_map_entry(L1pagetable,
 		    PTE_BASE + ((KERNEL_VM_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		pmap_map_entry(L1pagetable,
 		    PTE_BASE + ((OFW_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_ofw[i].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
 		pmap_map_entry(L1pagetable,
 		    PTE_BASE + ((IO_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_io[i].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =

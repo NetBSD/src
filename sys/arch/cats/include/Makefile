@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7.6.4 2002/08/13 02:18:04 nathanw Exp $
+#	$NetBSD: Makefile,v 1.7.6.5 2002/08/27 06:03:18 thorpej Exp $
 
 KDIR=	/sys/arch/cats/include
 INCSDIR= /usr/include/cats
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bswap.h bus.h \
+	bswap.h bus.h byte_swap.h \
 	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \

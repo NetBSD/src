@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.2.6 2002/08/13 02:17:54 nathanw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.2.7 2002/08/27 06:03:17 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -223,6 +223,19 @@ extern vaddr_t	pmap_curmaxkvaddr;
  * Useful macros and constants 
  */
 
+/*
+ * While the ARM MMU's L1 descriptors describe a 1M "section", each
+ * one pointing to a 1K L2 table, NetBSD's VM system allocates the
+ * page tables in 4K chunks, and thus we describe 4M "super sections".
+ *
+ * We'll lift terminology from another architecture and refer to this as
+ * the "page directory" size.
+ */
+#define	PD_SIZE		(L1_S_SIZE * 4)		/* 4M */
+#define	PD_OFFSET	(PD_SIZE - 1)
+#define	PD_FRAME	(~PD_OFFSET)
+#define	PD_SHIFT	22
+
 /* Virtual address to page table entry */
 #define vtopte(va) \
 	(((pt_entry_t *)PTE_BASE) + arm_btop((vaddr_t) (va)))
@@ -230,6 +243,16 @@ extern vaddr_t	pmap_curmaxkvaddr;
 /* Virtual address to physical address */
 #define vtophys(va) \
 	((*vtopte(va) & L2_S_FRAME) | ((vaddr_t) (va) & L2_S_OFFSET))
+
+#define	PTE_SYNC(pte) \
+	cpu_dcache_wb_range((vaddr_t)(pte), sizeof(pt_entry_t))
+#define	PTE_FLUSH(pte) \
+	cpu_dcache_wbinv_range((vaddr_t)(pte), sizeof(pt_entry_t))
+
+#define	PTE_SYNC_RANGE(pte, cnt) \
+	cpu_dcache_wb_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
+#define	PTE_FLUSH_RANGE(pte) \
+	cpu_dcache_wbinv_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
 
 #define	l1pte_valid(pde)	((pde) != 0)
 #define	l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)
