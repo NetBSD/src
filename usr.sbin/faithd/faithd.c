@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.10.2.3 2000/10/18 17:01:51 tv Exp $	*/
+/*	$NetBSD: faithd.c,v 1.10.2.4 2001/11/24 21:08:21 he Exp $	*/
 /*	$KAME: faithd.c,v 1.31 2000/10/05 22:20:37 itojun Exp $	*/
 
 /*
@@ -572,7 +572,7 @@ map6to4(struct sockaddr_in6 *dst6, struct sockaddr_in *dst4)
 
 	if (dst4->sin_addr.s_addr == INADDR_ANY
 	 || dst4->sin_addr.s_addr == INADDR_BROADCAST
-	 || IN_MULTICAST(dst4->sin_addr.s_addr))
+	 || IN_MULTICAST(ntohl(dst4->sin_addr.s_addr)))
 		return 0;
 
 	return 1;
