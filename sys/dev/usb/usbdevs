@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.149 2001/03/15 20:09:50 abs Exp $
+$NetBSD: usbdevs,v 1.150 2001/03/16 12:47:51 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ vendor MYSON		0x04cf	Myson Technology Inc.
 vendor DIGI2		0x04d0	Digi International
 vendor ITTCANON		0x04d1	ITT Canon
 vendor ALTEC		0x04d2	Altec Lansing Technologies, Inc.
+vendor PANASONIC	0x04da	Panasonic (Matsushita)
 vendor SHUTTLE		0x04e6	Shuttle Technology
 vendor ANNABOOKS	0x04ed	Annabooks
 vendor CHICONY		0x04f2	Chicony Electronics Co., Ltd.
@@ -679,8 +680,11 @@ product NIKON E990		0x0102	Digital Camera E990
 product OMNIVISION OV511	0x0511	OV511 Camera
 product OMNIVISION OV511PLUS	0xa511	OV511+ Camera
 
-/* Palm Computing, Inc. */
+/* Palm Computing, Inc. product */
 product PALM SERIAL		0x0080	USB Serial Adaptor
+
+/* Panasonic products */
+product PANASONIC SDCAAE	0x1b00	MultiMediaCard Adapter
 
 /* Peracom products */
 product PERACOM SERIAL1		0x0001	Serial Converter
