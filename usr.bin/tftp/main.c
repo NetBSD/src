@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1996/09/07 21:05:37 explorer Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1997/10/07 09:19:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,17 +33,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: main.c,v 1.8 1997/10/07 09:19:42 mrg Exp $");
 #endif
-static char rcsid[] = "$NetBSD: main.c,v 1.7 1996/09/07 21:05:37 explorer Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -86,7 +84,6 @@ int	margc;
 char	*margv[20];
 char	*prompt = "tftp";
 jmp_buf	toplevel;
-void	intr();
 struct	servent *sp;
 
 void	get __P((int, char **));
@@ -102,6 +99,10 @@ void	settimeout __P((int, char **));
 void	settrace __P((int, char **));
 void	setverbose __P((int, char **));
 void	status __P((int, char **));
+char	*tail __P((char *));
+int	main __P((int, char *[]));
+void	intr __P((int));
+struct cmd *getcmd __P((char *));
 
 static __dead void command __P((void));
 
@@ -149,11 +150,6 @@ struct cmd cmdtab[] = {
 	{ 0 }
 };
 
-struct	cmd *getcmd();
-char	*tail();
-char	*index();
-char	*rindex();
-
 int
 main(argc, argv)
 	int argc;
@@ -187,6 +183,7 @@ main(argc, argv)
 	if (setjmp(toplevel) != 0)
 		(void)putchar('\n');
 	command();
+	return (0);
 }
 
 char    hostname[100];
@@ -569,7 +566,8 @@ status(argc, argv)
 }
 
 void
-intr()
+intr(dummy)
+	int dummy;
 {
 
 	signal(SIGALRM, SIG_IGN);

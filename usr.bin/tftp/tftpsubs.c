@@ -1,4 +1,4 @@
-/*	$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $	*/
+/*	$NetBSD: tftpsubs.c,v 1.4 1997/10/07 09:19:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tftpsubs.c	8.1 (Berkeley) 6/6/93";
+#else
+__RCSID("$NetBSD: tftpsubs.c,v 1.4 1997/10/07 09:19:45 mrg Exp $");
 #endif
-static char rcsid[] = "$NetBSD: tftpsubs.c,v 1.3 1994/12/08 09:51:31 jtc Exp $";
 #endif /* not lint */
 
 /* Simple minded read-ahead/write-behind subroutines for tftp user and
@@ -81,10 +83,10 @@ static int current;		/* index of buffer in use */
 int newline = 0;		/* fillbuf: in middle of newline expansion */
 int prevchar = -1;		/* putbuf: previous char (cr check) */
 
-static struct tftphdr *rw_init();
+static struct tftphdr *rw_init __P((int));
 
-struct tftphdr *w_init() { return rw_init(0); }         /* write-behind */
-struct tftphdr *r_init() { return rw_init(1); }         /* read-ahead */
+struct tftphdr *w_init() { return rw_init(0); }	/* write-behind */
+struct tftphdr *r_init() { return rw_init(1); }	/* read-ahead */
 
 static struct tftphdr *
 rw_init(x)			/* init for either read-ahead or write-behind */
@@ -98,7 +100,6 @@ rw_init(x)			/* init for either read-ahead or write-behind */
 	nextone = x;                    /* ahead or behind? */
 	return (struct tftphdr *)bfs[0].buf;
 }
-
 
 /* Have emptied current buffer by sending to net and getting ack.
    Free it and return next buffer filled with data.
