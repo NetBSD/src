@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.58 2000/02/25 02:21:12 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.59 2000/02/25 02:42:30 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -176,7 +176,7 @@ static void InitBP(struct buf * bp, struct vnode *, unsigned rw_flag,
 		   RF_SectorCount_t numSect, caddr_t buf,
 		   void (*cbFunc) (struct buf *), void *cbArg, 
 		   int logBytesPerSector, struct proc * b_proc);
-static int raidinit __P((dev_t, RF_Raid_t *, int));
+static void raidinit __P((RF_Raid_t *));
 
 void raidattach __P((int));
 int raidsize __P((dev_t));
@@ -205,14 +205,12 @@ struct raidbuf {
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
    or if it should be used in conjunction with that... 
-   Note: Don't use sc_dev until the raidinit(0,_,_) call in 
-   rf_auto_config_set() actually passes in a real dev_t!  */
+*/
 
 struct raid_softc {
 	int     sc_flags;	/* flags */
 	int     sc_cflags;	/* configuration flags */
 	size_t  sc_size;        /* size of the raid device */
-	dev_t   sc_dev;	        /* our device.. */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
 	struct pool sc_cbufpool;	/* component buffer pool */
@@ -937,8 +935,8 @@ raidioctl(dev, cmd, data, flag, p)
 			   this RAID device */
 			raidPtr->openings = RAIDOUTSTANDING;
 					
-			retcode = raidinit(dev, raidPtr, unit);
-			rf_markalldirty( raidPtr );
+			raidinit(raidPtr);
+			rf_markalldirty(raidPtr);
 		}
 		/* free the buffers.  No return code here. */
 		if (k_cfg->layoutSpecificSize) {
@@ -1439,16 +1437,14 @@ raidioctl(dev, cmd, data, flag, p)
    RAIDframe device.  */
 
 
-static int
-raidinit(dev, raidPtr, unit)
-	dev_t   dev;
+static void
+raidinit(raidPtr)
 	RF_Raid_t *raidPtr;
-	int     unit;
 {
-	int     retcode;
 	struct raid_softc *rs;
+	int     unit;
 
-	retcode = 0;
+	unit = raidPtr->raidid;
 
 	rs = &raid_softc[unit];
 	pool_init(&rs->sc_cbufpool, sizeof(struct raidbuf), 0,
@@ -1472,9 +1468,7 @@ raidinit(dev, raidPtr, unit)
 	 * protectedSectors, as used in RAIDframe.  */
 
 	rs->sc_size = raidPtr->totalSectors;
-	rs->sc_dev = dev;
 
-	return (retcode);
 }
 
 /* wake up the daemon & tell it to get us a spare table
@@ -2499,18 +2493,7 @@ void
 rf_mountroot_hook(dev)
 	struct device *dev;
 {
-#if 1
-	printf("rf_mountroot_hook called for %s\n",dev->dv_xname);
-#endif	
-	if (boothowto & RB_ASKNAME) {
-		/* We don't auto-config... */
-	} else {
-		/* They didn't ask, and we found something bootable... */
-		/* XXX pretend for now.. */
-if (raidautoconfig) {
-		rootspec = raid_rooty;
-}
-	}
+
 }
 
 
@@ -3110,11 +3093,9 @@ rf_auto_config_set(cset,unit)
 		printf("Calling raidinit()\n");
 #endif
 				/* XXX the 0 below is bogus! */
-		retcode = raidinit(0, raidPtrs[raidID], raidID);
-		if (retcode) {
-			printf("init returned: %d\n",retcode);
-		}
-		rf_markalldirty( raidPtrs[raidID] );
+		raidinit(raidPtrs[raidID]);
+
+		rf_markalldirty(raidPtrs[raidID]);
 		raidPtrs[raidID]->autoconfigure = 1; /* XXX do this here? */
 		if (cset->ac->clabel->root_partition==1) {
 			/* everything configured just fine.  Make a note
