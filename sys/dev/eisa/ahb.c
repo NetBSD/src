@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.8 1997/03/28 23:47:14 mycroft Exp $	*/
+/*	$NetBSD: ahb.c,v 1.8.2.1 1997/05/13 03:00:00 thorpej Exp $	*/
 
 #undef	AHBDEBUG
 #ifdef DDB
@@ -6,6 +6,43 @@
 #else
 #define	integrate	static inline
 #endif
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -83,13 +120,14 @@
 #define	ECB_HASH_SHIFT	9
 #define ECB_HASH(x)	((((long)(x))>>ECB_HASH_SHIFT) & (ECB_HASH_SIZE - 1))
 
-#define	KVTOPHYS(x)	vtophys(x)
+#define AHB_MAXXFER	((AHB_NSEG - 1) << PGSHIFT)
 
 struct ahb_softc {
 	struct device sc_dev;
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_dma_tag_t sc_dmat;
 	void *sc_ih;
 
 	struct ahb_ecb *sc_ecbhash[ECB_HASH_SIZE];
@@ -117,6 +155,7 @@ void	ahbminphys __P((struct buf *));
 int	ahb_scsi_cmd __P((struct scsi_xfer *));
 int	ahb_poll __P((struct ahb_softc *, struct scsi_xfer *, int));
 void	ahb_timeout __P((void *));
+int	ahb_create_ecbs __P((struct ahb_softc *));
 
 integrate void ahb_reset_ecb __P((struct ahb_softc *, struct ahb_ecb *));
 integrate void ahb_init_ecb __P((struct ahb_softc *, struct ahb_ecb *));
@@ -148,6 +187,9 @@ struct cfdriver ahb_cd = {
 };
 
 #define	AHB_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
+
+/* XXX Should put this in a better place. */
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /*
  * Check the slots looking for a board we recognise
@@ -217,6 +259,7 @@ ahbattach(parent, self, aux)
 
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
+	sc->sc_dmat = ea->ea_dmat;
 	if (ahb_find(iot, ioh, &apd))
 		panic("ahbattach: ahb_find failed!");
 
@@ -284,7 +327,12 @@ ahb_send_mbox(sc, opcode, ecb)
 		Debugger();
 	}
 
-	bus_space_write_4(iot, ioh, MBOXOUT0, KVTOPHYS(ecb)); /* don't know this will work */
+	/*
+	 * don't know if this will work.
+	 * XXX WHAT DOES THIS COMMENT MEAN?!  --thorpej
+	 */
+	bus_space_write_4(iot, ioh, MBOXOUT0,
+	    ecb->dmamap_self->dm_segs[0].ds_addr);
 	bus_space_write_1(iot, ioh, ATTN, opcode | ecb->xs->sc_link->target);
 
 	if ((ecb->xs->flags & SCSI_POLL) == 0)
@@ -433,23 +481,85 @@ ahb_free_ecb(sc, ecb)
 	splx(s);
 }
 
+/*
+ * Create a set of ecbs and add them to the free list.
+ */
 integrate void
 ahb_init_ecb(sc, ecb)
 	struct ahb_softc *sc;
 	struct ahb_ecb *ecb;
 {
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	int hashnum;
 
+	/*
+	 * XXX Should we put a DIAGNOSTIC check for multiple
+	 * XXX ECB inits here?
+	 */
+
 	bzero(ecb, sizeof(struct ahb_ecb));
+
+	/*
+	 * Create the DMA maps for this ECB.
+	 */
+	if (bus_dmamap_create(dmat, sizeof(struct ahb_ecb), 1, 
+	    sizeof(struct ahb_ecb), 0, BUS_DMA_NOWAIT, &ecb->dmamap_self) ||
+
+					/* XXX What's a good value for this? */
+	    bus_dmamap_create(dmat, AHB_MAXXFER, AHB_NSEG, AHB_MAXXFER,
+	    0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &ecb->dmamap_xfer))
+		panic("ahb_init_ecb: can't create DMA maps");
+
+	/*
+	 * Load the permanent DMA maps.
+	 */
+	if (bus_dmamap_load(dmat, ecb->dmamap_self, ecb,
+	    sizeof(struct ahb_ecb), NULL, BUS_DMA_NOWAIT))
+		panic("ahb_init_ecb: can't load permanent maps");
+
 	/*
 	 * put in the phystokv hash table
 	 * Never gets taken out.
 	 */
-	ecb->hashkey = KVTOPHYS(ecb);
+	ecb->hashkey = ecb->dmamap_self->dm_segs[0].ds_addr;
 	hashnum = ECB_HASH(ecb->hashkey);
 	ecb->nexthash = sc->sc_ecbhash[hashnum];
 	sc->sc_ecbhash[hashnum] = ecb;
 	ahb_reset_ecb(sc, ecb);
+}
+
+int
+ahb_create_ecbs(sc)
+	struct ahb_softc *sc;
+{
+	bus_dma_segment_t seg;
+	bus_size_t size;
+	struct ahb_ecb *ecb;
+	int rseg, error;
+
+	size = NBPG;
+	error = bus_dmamem_alloc(sc->sc_dmat, size, &seg, 1, &rseg,
+	    BUS_DMA_NOWAIT);
+	if (error)
+		return (error);
+
+	error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, size,
+	    (caddr_t *)&ecb, BUS_DMA_NOWAIT|BUS_DMAMEM_NOSYNC);
+	if (error) {
+		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
+		return (error);
+	}
+
+	bzero(ecb, size);
+	while (size > sizeof(struct ahb_ecb)) {
+		ahb_init_ecb(sc, ecb);
+		sc->sc_numecbs++;
+		TAILQ_INSERT_TAIL(&sc->sc_free_ecb, ecb, chain);
+		(caddr_t)ecb += ALIGN(sizeof(struct ahb_ecb));
+		size -= ALIGN(sizeof(struct ahb_ecb));
+	}
+
+	return (0);
 }
 
 /*
@@ -479,16 +589,12 @@ ahb_get_ecb(sc, flags)
 			break;
 		}
 		if (sc->sc_numecbs < AHB_ECB_MAX) {
-			ecb = (struct ahb_ecb *) malloc(sizeof(struct ahb_ecb),
-			    M_TEMP, M_NOWAIT);
-			if (!ecb) {
-				printf("%s: can't malloc ecb\n",
+			if (ahb_create_ecbs(sc)) {
+				printf("%s: can't allocate ecbs\n",
 				    sc->sc_dev.dv_xname);
 				goto out;
 			}
-			ahb_init_ecb(sc, ecb);
-			sc->sc_numecbs++;
-			break;
+			continue;
 		}
 		if ((flags & SCSI_NOSLEEP) != 0)
 			goto out;
@@ -530,10 +636,23 @@ ahb_done(sc, ecb)
 	struct ahb_softc *sc;
 	struct ahb_ecb *ecb;
 {
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct scsi_sense_data *s1, *s2;
 	struct scsi_xfer *xs = ecb->xs;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("ahb_done\n"));
+
+	/*
+	 * If we were a data transfer, unload the map that described
+	 * the data buffer.
+	 */
+	if (xs->datalen) {
+		bus_dmamap_sync(dmat, ecb->dmamap_xfer,
+		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(dmat, ecb->dmamap_xfer);
+	}
+
 	/*
 	 * Otherwise, put the results of the operation
 	 * into the xfer and call whoever started it
@@ -689,8 +808,8 @@ ahbminphys(bp)
 	struct buf *bp;
 {
 
-	if (bp->b_bcount > ((AHB_NSEG - 1) << PGSHIFT))
-		bp->b_bcount = ((AHB_NSEG - 1) << PGSHIFT);
+	if (bp->b_bcount > AHB_MAXXFER)
+		bp->b_bcount = AHB_MAXXFER;
 	minphys(bp);
 }
 
@@ -704,14 +823,12 @@ ahb_scsi_cmd(xs)
 {
 	struct scsi_link *sc_link = xs->sc_link;
 	struct ahb_softc *sc = sc_link->adapter_softc;
+	bus_dma_tag_t dmat = sc->sc_dmat;
 	struct ahb_ecb *ecb;
-	struct ahb_dma_seg *sg;
-	int seg;		/* scatter gather seg being worked on */
-	u_long thiskv, thisphys, nextphys;
-	int bytes_this_seg, bytes_this_page, datalen, flags;
-	int s;
+	int error, seg, flags, s;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ahb_scsi_cmd\n"));
+
 	/*
 	 * get a ecb (mbox-out) to use. If the transfer
 	 * is from a buf (possibly from interrupt time)
@@ -759,96 +876,65 @@ ahb_scsi_cmd(xs)
 	ecb->opt1 = ECB_SES /*| ECB_DSB*/ | ECB_ARS;
 	ecb->opt2 = sc_link->lun | ECB_NRB;
 	bcopy(xs->cmd, &ecb->scsi_cmd, ecb->scsi_cmd_length = xs->cmdlen);
-	ecb->sense_ptr = KVTOPHYS(&ecb->ecb_sense);
+	ecb->sense_ptr = ecb->dmamap_self->dm_segs[0].ds_addr +
+	    offsetof(struct ahb_ecb, ecb_sense);
 	ecb->req_sense_length = sizeof(ecb->ecb_sense);
-	ecb->status = KVTOPHYS(&ecb->ecb_status);
+	ecb->status = ecb->dmamap_self->dm_segs[0].ds_addr +
+	    offsetof(struct ahb_ecb, ecb_status);
 	ecb->ecb_status.host_stat = 0x00;
 	ecb->ecb_status.target_stat = 0x00;
 
 	if (xs->datalen) {
-		sg = ecb->ahb_dma;
-		seg = 0;
-#ifdef	TFS
+		/*
+		 * Map the DMA transfer.
+		 */
+#ifdef TFS
 		if (flags & SCSI_DATA_UIO) {
-			struct iovec *iovp = ((struct uio *) xs->data)->uio_iov;
-			datalen = ((struct uio *) xs->data)->uio_iovcnt;
-			xs->datalen = 0;
-			while (datalen && seg < AHB_NSEG) {
-				sg->seg_addr = (physaddr)iovp->iov_base;
-				sg->seg_len = iovp->iov_len;
-				xs->datalen += iovp->iov_len;
-				SC_DEBUGN(sc_link, SDEV_DB4, ("(0x%x@0x%x)",
-				    iovp->iov_len, iovp->iov_base));
-				sg++;
-				iovp++;
-				seg++;
-				datalen--;
-			}
-		}
-		else
-#endif /*TFS */
+			error = bus_dmamap_load_uio(sc->sc_dmat,
+			    ecb->dmamap_xfer, (struct uio *)xs->data,
+			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    BUS_DMA_WAITOK);
+		} else
+#endif /* TFS */
 		{
-			/*
-			 * Set up the scatter gather block
-			 */
-			SC_DEBUG(sc_link, SDEV_DB4,
-			    ("%d @0x%x:- ", xs->datalen, xs->data));
-			datalen = xs->datalen;
-			thiskv = (long) xs->data;
-			thisphys = KVTOPHYS(thiskv);
-
-			while (datalen && seg < AHB_NSEG) {
-				bytes_this_seg = 0;
-
-				/* put in the base address */
-				sg->seg_addr = thisphys;
-
-				SC_DEBUGN(sc_link, SDEV_DB4, ("0x%x", thisphys));
-
-				/* do it at least once */
-				nextphys = thisphys;
-				while (datalen && thisphys == nextphys) {
-					/*
-					 * This page is contiguous (physically)
-					 * with the the last, just extend the
-					 * length
-					 */
-					/* how far to the end of the page */
-					nextphys = (thisphys & ~PGOFSET) + NBPG;
-					bytes_this_page = nextphys - thisphys;
-					/**** or the data ****/
-					bytes_this_page = min(bytes_this_page,
-							      datalen);
-					bytes_this_seg += bytes_this_page;
-					datalen -= bytes_this_page;
-
-					/* get more ready for the next page */
-					thiskv = (thiskv & ~PGOFSET) + NBPG;
-					if (datalen)
-						thisphys = KVTOPHYS(thiskv);
-				}
-				/*
-				 * next page isn't contiguous, finish the seg
-				 */
-				SC_DEBUGN(sc_link, SDEV_DB4,
-				    ("(0x%x)", bytes_this_seg));
-				sg->seg_len = bytes_this_seg;
-				sg++;
-				seg++;
-			}
+			error = bus_dmamap_load(sc->sc_dmat,
+			    ecb->dmamap_xfer, xs->data, xs->datalen, NULL,
+			    (flags & SCSI_NOSLEEP) ? BUS_DMA_NOWAIT :
+			    BUS_DMA_WAITOK);
 		}
-		/*end of iov/kv decision */
-		SC_DEBUGN(sc_link, SDEV_DB4, ("\n"));
-		if (datalen) {
-			/*
-			 * there's still data, must have run out of segs!
-			 */
-			printf("%s: ahb_scsi_cmd, more than %d dma segs\n",
-			    sc->sc_dev.dv_xname, AHB_NSEG);
+
+		if (error) {
+			if (error == EFBIG) {
+				printf("%s: ahb_scsi_cmd, more than %d"
+				    " dma segments\n",
+				    sc->sc_dev.dv_xname, AHB_NSEG);
+			} else {
+				printf("%s: ahb_scsi_cmd, error %d loading"
+				    " dma map\n",
+				    sc->sc_dev.dv_xname, error);
+			}
 			goto bad;
 		}
-		ecb->data_addr = KVTOPHYS(ecb->ahb_dma);
-		ecb->data_length = seg * sizeof(struct ahb_dma_seg);
+
+		bus_dmamap_sync(dmat, ecb->dmamap_xfer,
+		    (flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Load the hardware scatter/gather map with the
+		 * contents of the DMA map.
+		 */
+		for (seg = 0; seg < ecb->dmamap_xfer->dm_nsegs; seg++) {
+			ecb->ahb_dma[seg].seg_addr =
+			    ecb->dmamap_xfer->dm_segs[seg].ds_addr;
+			ecb->ahb_dma[seg].seg_len =
+			    ecb->dmamap_xfer->dm_segs[seg].ds_len;
+		}
+
+		ecb->data_addr = ecb->dmamap_self->dm_segs[0].ds_addr +
+		    offsetof(struct ahb_ecb, ahb_dma);
+		ecb->data_length = ecb->dmamap_xfer->dm_nsegs *
+		    sizeof(struct ahb_dma_seg);
 		ecb->opt1 |= ECB_S_G;
 	} else {	/* No data xfer, use non S/G values */
 		ecb->data_addr = (physaddr)0;
