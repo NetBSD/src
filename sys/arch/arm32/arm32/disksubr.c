@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.9 1998/03/27 23:39:57 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.10 1998/05/24 17:13:30 mark Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -65,8 +65,8 @@ u_int
 filecore_checksum(bootblock)
 	u_char *bootblock;
 {
-	register u_int sum;
-	register u_int loop;
+	u_int sum;
+	u_int loop;
 
 	/*
 	 * A boot block of all zeros has a zero checksum
@@ -117,7 +117,7 @@ readdisklabel(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct disklabel *dlp;
 	char *msg = NULL;
 	int cyl, netbsdpartoff, i;
@@ -160,6 +160,7 @@ readdisklabel(dev, strat, lp, osdep)
 	cyl = LABELSECTOR / lp->d_secpercyl;
 
 	if (osdep) {
+/*		struct riscbsd_partition *rp = osdep->partitions;*/ 
 		struct filecore_bootblock *bb;
 		int heads;
 		int sectors;
@@ -360,8 +361,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 	u_long openmask;
 	struct cpu_disklabel *osdep;
 {
-	register i;
-	register struct partition *opp, *npp;
+	int i;
+	struct partition *opp, *npp;
 
 	/* sanity clause */
 
@@ -421,7 +422,7 @@ writedisklabel(dev, strat, lp, osdep)
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct disklabel *dlp;
 	int cyl, netbsdpartoff;
 	int error = 0;
@@ -437,6 +438,7 @@ writedisklabel(dev, strat, lp, osdep)
 	cyl = LABELSECTOR / lp->d_secpercyl;
 
 	if (osdep) {
+/*		struct riscbsd_partition *rp = osdep->partitions;*/
 		struct filecore_bootblock *bb;
 		int heads;
 		int sectors;
