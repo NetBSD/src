@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.109 2004/01/10 14:43:05 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.110 2004/01/15 09:03:26 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.109 2004/01/10 14:43:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.110 2004/01/15 09:03:26 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1425,7 +1425,7 @@ sysctl_dobuf(SYSCTLFN_ARGS)
 	simple_lock(&bqueue_slock);
 	for (i = 0; i < BQUEUES; i++) {
 		TAILQ_FOREACH(bp, &bufqueues[i], b_freelist) {
-			if (len >= sizeof(elem_size)) {
+			if (len >= elem_size) {
 				error = copyout(bp, dp, elem_size);
 				if (error)
 					goto cleanup;
