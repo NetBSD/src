@@ -1,4 +1,5 @@
 /*-
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.9 1993/10/11 01:51:22 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.10 1993/10/12 23:30:55 mycroft Exp $
  */
 
 #include "param.h"
