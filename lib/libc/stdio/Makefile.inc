@@ -1,20 +1,22 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.16 1998/07/27 16:41:40 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.17 1998/08/28 21:33:10 perry Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
 
 CPPFLAGS+=-DFLOATING_POINT
 
-SRCS+=	clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c fgetc.c fgetln.c \
-	fgetpos.c fgets.c fileno.c findfp.c flags.c fopen.c fprintf.c \
-	fpurge.c fputc.c fputs.c fread.c freopen.c fscanf.c fseek.c fsetpos.c \
-	ftell.c funopen.c fvwrite.c fwalk.c fwrite.c getc.c getchar.c \
-	gettemp.c getw.c makebuf.c mkdtemp.c mkstemp.c perror.c \
-	printf.c putc.c putchar.c puts.c putw.c refill.c remove.c rewind.c \
-	rget.c scanf.c setbuf.c setbuffer.c setvbuf.c snprintf.c sscanf.c \
-	stdio.c tmpfile.c ungetc.c vfprintf.c vfscanf.c vprintf.c vscanf.c \
+SRCS+=	asprintf.c clrerr.c fclose.c fdopen.c feof.c ferror.c fflush.c \
+	fgetc.c fgetln.c fgetpos.c fgets.c fileno.c findfp.c flags.c \
+	fopen.c fprintf.c fpurge.c fputc.c fputs.c fread.c freopen.c \
+	fscanf.c fseek.c fsetpos.c ftell.c funopen.c fvwrite.c \
+	fwalk.c fwrite.c getc.c getchar.c gettemp.c getw.c makebuf.c \
+	mkdtemp.c mkstemp.c perror.c printf.c putc.c putchar.c puts.c \
+	putw.c refill.c remove.c rewind.c rget.c scanf.c setbuf.c \
+	setbuffer.c setvbuf.c snprintf.c sscanf.c stdio.c tmpfile.c \
+	ungetc.c vasprintf.c vfprintf.c vfscanf.c vprintf.c vscanf.c \
 	vsnprintf.c vsscanf.c wbuf.c wsetup.c
+
 .if !defined(AUDIT)
 SRCS+=	gets.c sprintf.c vsprintf.c tempnam.c tmpnam.c mktemp.c
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.26 1998/07/30 00:44:16 mycroft Exp $	*/
+/*	$NetBSD: stdio.h,v 1.27 1998/08/28 21:37:12 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -163,6 +163,7 @@ __END_DECLS
 #define	__SNPT	0x0800		/* do not do fseek() optimisation */
 #define	__SOFF	0x1000		/* set iff _offset is in fact correct */
 #define	__SMOD	0x2000		/* true => fgetln modified _p text */
+#define	__SALC	0x4000		/* allocate string space dynamically */
 
 /*
  * The following three definitions are for ANSI C, which took them
@@ -327,10 +328,14 @@ __END_DECLS
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE)
 __BEGIN_DECLS
+int	 asprintf __P((char **, const char *, ...))
+		__attribute__((format (printf, 2, 3)));
 char	*fgetln __P((FILE *, size_t *));
 int	 fpurge __P((FILE *));
 void	 setbuffer __P((FILE *, char *, int));
 int	 setlinebuf __P((FILE *));
+int	 vasprintf __P((char **, const char *, _BSD_VA_LIST_))
+		__attribute__((format (printf, 2, 0)));
 int	 vscanf __P((const char *, _BSD_VA_LIST_))
 	    __attribute__((__format__(__scanf__, 1, 0)));
 int	 vsscanf __P((const char *, const char *, _BSD_VA_LIST_))
