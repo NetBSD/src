@@ -52,13 +52,14 @@
 
 #include "cons.h"
 
-#include "promcn.h"
+#include "prom.h"
+
 
 int promcnprobe(), promcninit(), promcngetc(), promcnputc();
 
 struct	consdev constab[] = {
-#if NPROMCN
-    {promcnprobe, promcninit, promcngetc, promcnputc}
+#if NPROM
+    {promcnprobe, promcninit, promcngetc, promcnputc},
 #endif
     { 0 },
 };

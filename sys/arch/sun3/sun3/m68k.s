@@ -1,4 +1,3 @@
-#include "asm.h"
 
 ENTRY(getvbr)
 	movc vbr, d0

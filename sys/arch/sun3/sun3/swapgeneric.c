@@ -42,6 +42,8 @@
 
 /*#include "../dev/device.h"*/
 
+#include "sd.h"
+
 /*
  * Generic configuration;  all in one
  */
@@ -58,8 +60,9 @@ struct	genericconf {
 	char	*gc_name;
 	dev_t	gc_root;
 } genericconf[] = {
-	{ (caddr_t)&rddriver,	"rd",	makedev(2, 0),	},
+#if NSD > 0
 	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
+#endif
 	{ 0 },
 };
 

@@ -42,6 +42,7 @@
 #include "../include/control.h"
 #include "../include/param.h"
 #include "../include/memmap.h"
+#include <sys/errno.h>
 
 main()
 {
@@ -61,6 +62,10 @@ main()
     printf("#define\tMAINMEM_MONMAP %d\n",    MAINMEM_MONMAP);
 				/* kernel-isms */
     printf("#define\tKERNBASE %d\n",    KERNBASE);
+				/* errno-isms */
+    printf("#define EFAULT %d\n",        EFAULT);
+    printf("#define ENAMETOOLONG %d\n",  ENAMETOOLONG);
+    
 
     exit(0);
 }

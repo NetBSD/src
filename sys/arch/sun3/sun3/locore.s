@@ -1,5 +1,6 @@
 #include "assym.s"
-
+#include "../include/asm.h"
+#include "syscall.h"
 					| remember this is a fun project :)
 
 
@@ -63,4 +64,35 @@ bsszero: clrl a0@
 	movl #_start, sp
 	jsr _bootstrap
 
+.text
+/*
+ * Icode is copied out to process 1 to exec init.
+ * If the exec fails, process 1 exits.
+ */
+	.globl	_icode,_szicode
+	.text
+_icode:
+	clrl	sp@-
+	pea	pc@((argv-.)+2)
+	pea	pc@((init-.)+2)
+	clrl	sp@-
+	moveq	#SYS_execve,d0
+	trap	#0
+	moveq	#SYS_exit,d0
+	trap	#0
+init:
+	.asciz	"/sbin/init"
+	.even
+argv:
+	.long	init+6-_icode		| argv[0] = "init" ("/sbin/init" + 6)
+	.long	eicode-_icode		| argv[1] follows icode after copyout
+	.long	0
+eicode:
+
+_szicode:
+	.long	_szicode-_icode
+
 #include "lib.s"
+#include "copy.s"
+#include "m68k.s"
+#include "signal.s"

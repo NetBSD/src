@@ -1,5 +1,3 @@
-#include "asm.h"
-#include "assym.s"
 /*
  * Primitives
  */ 
