@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.19 1994/08/15 14:49:14 mycroft Exp $
+ *	$Id: param.h,v 1.20 1994/08/24 19:32:36 mycroft Exp $
  */
 
 /*
@@ -83,6 +83,7 @@
 #define	SSIZE	1		/* initial stack size/NBPG */
 #define	SINCR	1		/* increment of stack/NBPG */
 #define	UPAGES	2		/* pages of u-area */
+#define	USPACE	(UPAGES * NBPG)	/* total size of u-area */
 
 /*
  * Constants related to network buffer management.
