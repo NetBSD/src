@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.30 1998/09/13 11:34:05 pk Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.31 1998/12/15 16:06:15 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -602,10 +602,14 @@ svr4_trap(type, p)
 		 */
 		{
 			struct timeval  tv;
+			u_quad_t tm;
 
 			microtime(&tv);
-			tf->tf_out[0] = tv.tv_sec;
-			tf->tf_out[1] = tv.tv_usec * 1000;
+
+			tm = (u_quad_t) tv.tv_sec * 1000000000 +
+			    (u_quad_t) tv.tv_usec * 1000;
+			tf->tf_out[0] = ((u_int32_t *) &tm)[0];
+			tf->tf_out[1] = ((u_int32_t *) &tm)[1];
 		}
 		break;
 
