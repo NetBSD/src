@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.24 1997/06/24 16:55:05 kleink Exp $
+#	$NetBSD: gcc2netbsd,v 1.25 1997/06/25 03:31:56 mrg Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -257,7 +257,7 @@ $srcdir = $ENV{'SRCDIR'};
 $targetdir = $ENV{'TARGETDIR'};
 $incdirs = "-I. -I$srcdir/config -I$srcdir";
 
-if (!$srcdir | !targetdir) {
+if (!$srcdir | !$targetdir) {
     die "You must define the environment variables SRCDIR and TARGETDIR.\n"
 } 
 print "Making the NetBSD directory tree.\n";
@@ -562,9 +562,15 @@ libinstall::
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
 %% NetBSD
 
+.if	(${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "m68k") || \
+	(${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "sparc") || \
+	(${MACHINE_ARCH} == "vax") || \
+	(${MACHINE_ARCH} == "arm32") || \
+	(${MACHINE_ARCH} == "mips")
 PROG=           gcc
 %% srcs cc
-MAN=		gcc.1
 BINDIR=		/usr/bin
 CFLAGS+=-I${.CURDIR} -I${.CURDIR}/../common -I${.CURDIR}/../arch \
 	-I${.CURDIR}/../arch/$(MACHINE_ARCH) \
@@ -575,9 +581,12 @@ LDADD+=		-lgnumalloc
 DPADD+=		${LIBGNUMALLOC}
 
 LINKS+=		${BINDIR}/gcc ${BINDIR}/cc 
-MLINKS=		gcc.1 cc.1
 
 .PATH:		$(.CURDIR)/../common 
+.endif
+
+MAN=		gcc.1
+MLINKS=		gcc.1 cc.1
 
 .include <bsd.prog.mk>
 %% file cc1/Makefile
@@ -621,6 +630,13 @@ CLEANFILES+=	objc-parse.c
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
 %% NetBSD
 
+.if	(${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "m68k") || \
+	(${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "sparc") || \
+	(${MACHINE_ARCH} == "vax") || \
+	(${MACHINE_ARCH} == "arm32") || \
+	(${MACHINE_ARCH} == "mips")
 PROG=	cpp
 BINDIR=	/usr/libexec
 %% srcs cpp
@@ -633,11 +649,10 @@ LDADD+=	-lgnumalloc
 DPADD+=	${LIBGNUMALLOC}
 YFLAGS=
 
-MLINKS=	cpp.1 cccp.1 cpp.1 gcpp.1
-
 CLEANFILES+= cexp.c
 
 .PATH:		$(.CURDIR)/../common
+.endif
 
 LINKS=	/usr/bin/cpp /usr/bin/gcpp
 FILES=usr.bin.cpp.sh
@@ -645,14 +660,23 @@ FILESNAME=cpp
 FILESDIR=/usr/bin
 FILESMODE=${BINMODE}
 
+MAN=	cpp.1
+MLINKS=	cpp.1 cccp.1 cpp.1 gcpp.1
+
 .include <bsd.prog.mk>
 %% file g++/Makefile
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
 %% NetBSD
 
+.if	(${MACHINE_ARCH} == "i386") || \
+	(${MACHINE_ARCH} == "m68k") || \
+	(${MACHINE_ARCH} == "ns32k") || \
+	(${MACHINE_ARCH} == "sparc") || \
+	(${MACHINE_ARCH} == "vax") || \
+	(${MACHINE_ARCH} == "arm32") || \
+	(${MACHINE_ARCH} == "mips")
 PROG=	g++
 %% srcs g++
-MAN=	g++.1
 BINDIR=	/usr/bin
 CFLAGS+=-I$(.CURDIR) -I$(.CURDIR)/../common \
 	-I$(.CURDIR)/../arch -I$(.CURDIR)/../arch/$(MACHINE_ARCH) \
@@ -661,9 +685,12 @@ LDADD+=	-lgnumalloc
 DPADD+=	${LIBGNUMALLOC}
 
 LINKS+=	${BINDIR}/g++ ${BINDIR}/c++
-MLINKS=	g++.1 c++.1
 
 .PATH:          $(.CURDIR)/../common 
+.endif
+
+MAN=	g++.1
+MLINKS=	g++.1 c++.1
 
 .include <bsd.prog.mk>
 %% file libgcc/Makefile
