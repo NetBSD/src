@@ -1,4 +1,4 @@
-/*	$NetBSD: envstat.c,v 1.17 2004/02/02 10:36:19 soren Exp $ */
+/*	$NetBSD: envstat.c,v 1.18 2004/03/21 10:52:26 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.17 2004/02/02 10:36:19 soren Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.18 2004/03/21 10:52:26 mrg Exp $");
 #endif
 
 #include <fcntl.h>
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 	while ((c = getopt(argc, argv, "cfi:ln:rs:w:r")) != -1) {
 		switch(c) {
 		case 'r':
-			rflag= 1;
+			rflag = 1;
 			break;
 		case 'i':	/* wait time between displays */
 			interval = atoi(optarg);
@@ -163,6 +163,9 @@ main(int argc, char **argv)
 		int i;
 
 		for (i = 0 ; i < ns ; i++) {
+			if (cetds[i] == 0)
+				continue;
+
 			if ((etds[i].validflags & ENVSYS_FCURVALID) == 0)
 				continue;
 
