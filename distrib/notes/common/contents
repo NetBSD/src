@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.6 2002/06/19 00:56:52 lukem Exp $
+.\"	$NetBSD: contents,v 1.52.2.7 2002/06/26 11:21:13 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -401,6 +401,7 @@ includes shared library support, and excludes
 everything described below.
 .br
 .if r_acorn26 .Em 20.2 MB gzipped, ? MB uncompressed
+.if r_acorn32 .Em 20.2 MB gzipped, ? MB uncompressed
 .if r_alpha .Em 22.7 MB gzipped, 59.8 MB uncompressed
 .if r_amiga .Em 15.6 MB gzipped, 41.4 MB uncompressed
 .if r_arc .Em 19.5 MB gzipped, 61.4 MB uncompressed
@@ -436,6 +437,7 @@ all of the utilities it contains, as well as the
 system call and library manual pages.
 .br
 .if r_acorn26 .Em 16.0 MB gzipped, ? MB uncompressed
+.if r_acorn32 .Em 16.0 MB gzipped, ? MB uncompressed
 .if r_alpha .Em 18.1 MB gzipped, 81.2 MB uncompressed
 .if r_amiga .Em 11.8 MB gzipped, 39.5 MB uncompressed
 .if r_arc .Em 13.9 MB gzipped, 59.3 MB uncompressed
@@ -502,6 +504,7 @@ kernel, named
 install this distribution set.
 .br
 .if r_acorn26 .Em 1.0 MB gzipped, ? MB uncompressed
+.if r_acorn32 .Em 1.0 MB gzipped, ? MB uncompressed
 .if r_alpha .Em 2.1 MB gzipped, 5.0 MB uncompressed
 .if r_amiga .Em 1.1 MB gzipped, 2.4 MB uncompressed
 .if r_arc .Em 1.5 MB gzipped, 3.7 MB uncompressed
@@ -676,6 +679,13 @@ Miscellaneous X programs.
 .if r_sparc64 .Em 13 KB gzipped, 50 KB uncompressed
 .if r_vax .Em ? MB gzipped, ? MB uncompressed
 .
+.
+.if r_acorn32 \{\
+.It Sy xserver
+The Xarm32VIDC and Xprt servers.
+.br
+.Em 1.8 MB gzipped, 4.6 MB uncompressed
+.\}
 .
 .if r_alpha \{\
 .It Sy xserver
