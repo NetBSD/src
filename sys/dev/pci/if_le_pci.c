@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_pci.c,v 1.3 1996/05/12 02:30:03 thorpej Exp $	*/
+/*	$NetBSD: if_le_pci.c,v 1.4 1996/05/12 22:23:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -48,6 +48,10 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_param.h>
+
 #include <net/if.h>
 
 #ifdef INET
@@ -69,6 +73,12 @@
 
 #include <dev/pci/if_levar.h>
 
+#ifdef __alpha__			/* XXX */
+#include <machine/intr.h>
+/* XXX XXX NEED REAL DMA MAPPING SUPPORT XXX XXX */ 
+#define vtophys(va)     (vtophys(va) | 0x40000000) 
+#endif
+
 int le_pci_match __P((struct device *, void *, void *));
 void le_pci_attach __P((struct device *, struct device *, void *));
 
@@ -84,8 +94,6 @@ hide u_int16_t le_pci_rdcsr __P((struct am7990_softc *, u_int16_t));
  * XXX These should be in a common file!
  */
 #define PCI_CBIO	0x10		/* Configuration Base IO Address */
-
-extern vm_offset_t kvtop __P((caddr_t));	/* XXX */
 
 hide void
 le_pci_wrcsr(sc, port, val)
@@ -144,6 +152,7 @@ le_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	bus_io_addr_t iobase;
 	bus_io_size_t iosize;
+	bus_io_handle_t ioh;
 	bus_chipset_tag_t bc = pa->pa_bc;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t csr;
@@ -163,13 +172,11 @@ le_pci_attach(parent, self, aux)
 
 	printf(": %s\n", model);
 
-	lesc->sc_bc = bc;
-
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
 		printf("%s: can't find I/O base\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	if (bus_io_map(bc, iobase, iosize, &lesc->sc_ioh)) {
+	if (bus_io_map(bc, iobase, iosize, &ioh)) {
 		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -178,7 +185,7 @@ le_pci_attach(parent, self, aux)
 	 * Extract the physical MAC address from the ROM.
 	 */
 	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
-		sc->sc_arpcom.ac_enaddr[i] = inb(iobase + i);
+		sc->sc_arpcom.ac_enaddr[i] = bus_io_read_1(bc, ioh, i);
 
 	sc->sc_mem = malloc(16384, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_mem == 0) {
@@ -187,8 +194,11 @@ le_pci_attach(parent, self, aux)
 		return;
 	}
 
+	lesc->sc_bc = bc;
+	lesc->sc_ioh = ioh;
+
 	sc->sc_conf3 = 0;
-	sc->sc_addr = kvtop(sc->sc_mem);	/* XXX XXX XXX */
+	sc->sc_addr = vtophys(sc->sc_mem);	/* XXX XXX XXX */
 	sc->sc_memsize = 16384;
 
 	sc->sc_copytodesc = am7990_copytobuf_contig;
