@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.84 2002/06/05 17:53:52 drochner Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.85 2002/08/26 11:34:27 scw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.84 2002/06/05 17:53:52 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.85 2002/08/26 11:34:27 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -242,7 +242,7 @@ panic(fmt, va_alist)
 			intrace=1;
 			printf("Begin traceback...\n");
 			db_stack_trace_print(
-			    (db_expr_t)__builtin_frame_address(0),
+			    (db_expr_t)(intptr_t)__builtin_frame_address(0),
 			    TRUE, 65535, "", printf);
 			printf("End traceback...\n");
 			intrace=0;
