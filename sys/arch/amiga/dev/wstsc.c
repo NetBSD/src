@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.19 1997/08/27 11:23:24 bouyer Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.20 1998/01/12 10:40:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -88,10 +88,6 @@ int supradma_pseudo = 0;	/* 0=none, 1=byte, 2=word */
 
 struct cfattach wstsc_ca = {
 	sizeof(struct sci_softc), wstscmatch, wstscattach
-};
-
-struct cfdriver wstsc_cd = {
-	NULL, "wstsc", DV_DULL, NULL, 0
 };
 
 /*

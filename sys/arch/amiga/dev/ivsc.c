@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.22 1997/08/27 11:23:11 bouyer Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.23 1998/01/12 10:39:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -86,10 +86,6 @@ int ivsdma_pseudo = 1;		/* 0=off, 1=on */
 
 struct cfattach ivsc_ca = {
 	sizeof(struct sci_softc), ivscmatch, ivscattach
-};
-
-struct cfdriver ivsc_cd = {
-	NULL, "ivsc", DV_DULL, NULL, 0
 };
 
 /*

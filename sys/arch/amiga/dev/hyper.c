@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.1 1997/10/18 23:31:40 is Exp $ */
+/*	$NetBSD: hyper.c,v 1.2 1998/01/12 10:39:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -65,10 +65,6 @@ int hyperprint __P((void *auxp, const char *));
 
 struct cfattach hyper_ca = {
 	sizeof(struct hyper_softc), hypermatch, hyperattach
-};
-
-struct cfdriver hyper_cd = {
-	NULL, "hyper", DV_DULL
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.21 1997/08/27 11:23:02 bouyer Exp $	*/
+/*	$NetBSD: afsc.c,v 1.22 1998/01/12 10:39:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -81,16 +81,8 @@ struct cfattach afsc_ca = {
 	sizeof(struct siop_softc), afscmatch, afscattach
 };
 
-struct cfdriver afsc_cd = {
-	NULL, "afsc", DV_DULL, NULL, 0
-};
-
 struct cfattach aftsc_ca = {
 	sizeof(struct siop_softc), afscmatch, afscattach
-};
-
-struct cfdriver aftsc_cd = {
-	NULL, "aftsc", DV_DULL, NULL, 0
 };
 
 /*
@@ -205,6 +197,7 @@ afsc_dmaintr(arg)
 void
 afsc_dump()
 {
+	extern struct cfdriver afsc_cd;
 	int i;
 
 	for (i = 0; i < afsc_cd.cd_ndevs; ++i)

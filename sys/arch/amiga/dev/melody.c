@@ -1,4 +1,4 @@
-/*	$NetBSD: melody.c,v 1.1 1997/10/16 23:58:31 is Exp $	*/
+/*	$NetBSD: melody.c,v 1.2 1998/01/12 10:39:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Ignatios Souvatzis. All rights reserved.
@@ -62,10 +62,6 @@ void melody_intack __P((struct tav_softc *));
 
 struct cfattach melody_ca = {
         sizeof(struct melody_softc), melody_match, melody_attach
-};
-
-struct cfdriver melody_cd = {
-	NULL, "melody", DV_DULL
 };
 
 int

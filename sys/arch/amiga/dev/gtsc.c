@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.22 1997/08/27 11:23:09 bouyer Exp $	*/
+/*	$NetBSD: gtsc.c,v 1.23 1998/01/12 10:39:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -91,10 +91,6 @@ int gtsc_debug = 0;
 
 struct cfattach gtsc_ca = {
 	sizeof(struct sbic_softc), gtscmatch, gtscattach
-};
-
-struct cfdriver gtsc_cd = {
-	NULL, "gtsc", DV_DULL, NULL, 0
 };
 
 int
@@ -360,6 +356,7 @@ gtsc_dmanext(dev)
 void
 gtsc_dump()
 {
+	extern struct cfdriver gtsc_cd;
 	int i;
 
 	for (i = 0; i < gtsc_cd.cd_ndevs; ++i)

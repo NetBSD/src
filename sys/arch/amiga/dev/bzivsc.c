@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.1 1997/10/10 04:53:32 mhitch Exp $	*/
+/*	$NetBSD: bzivsc.c,v 1.2 1998/01/12 10:39:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -68,10 +68,6 @@ int	bzivscmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach bzivsc_ca = {
 	sizeof(struct bzivsc_softc), bzivscmatch, bzivscattach
-};
-
-struct cfdriver bzivsc_cd = {
-	NULL, "bzivsc", DV_DULL
 };
 
 struct scsipi_adapter bzivsc_switch = {

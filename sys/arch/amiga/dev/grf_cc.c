@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.23 1996/12/23 09:10:02 veego Exp $	*/
+/*	$NetBSD: grf_cc.c,v 1.24 1998/01/12 10:39:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -67,10 +67,6 @@ void grf_cc_on __P((struct grf_softc *));
 
 struct cfattach grfcc_ca = {
 	sizeof(struct grf_softc), grfccmatch, grfccattach
-};
-
-struct cfdriver grfcc_cd = {
-	NULL, "grfcc", DV_DULL, NULL, 0
 };
 
 /* 

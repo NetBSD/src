@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.1 1997/10/19 21:22:23 is Exp $ */
+/*	$NetBSD: gvpio.c,v 1.2 1998/01/12 10:39:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -71,10 +71,6 @@ int gvp_com_intr __P((void *));
 
 struct cfattach gvpio_ca = {
 	sizeof(struct gvpio_softc), gvpiomatch, gvpioattach
-};
-
-struct cfdriver gvpio_cd = {
-	NULL, "gvpio", DV_DULL
 };
 
 int

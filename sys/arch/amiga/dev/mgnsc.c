@@ -1,4 +1,4 @@
-/*	$NetBSD: mgnsc.c,v 1.25 1997/08/27 11:23:12 bouyer Exp $	*/
+/*	$NetBSD: mgnsc.c,v 1.26 1998/01/12 10:40:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -78,10 +78,6 @@ struct scsipi_device mgnsc_scsidev = {
 
 struct cfattach mgnsc_ca = {
 	sizeof(struct siop_softc), mgnscmatch, mgnscattach
-};
-
-struct cfdriver mgnsc_cd = {
-	NULL, "mgnsc", DV_DULL, NULL, 0
 };
 
 /*
@@ -191,6 +187,7 @@ mgnsc_dmaintr(arg)
 void
 mgnsc_dump()
 {
+	extern struct cfdriver mgnsc_cd;
 	int i;
 
 	for (i = 0; i < mgnsc_cd.cd_ndevs; ++i)

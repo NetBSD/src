@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.23 1997/08/27 11:23:24 bouyer Exp $	*/
+/*	$NetBSD: zssc.c,v 1.24 1998/01/12 10:40:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -78,10 +78,6 @@ struct scsipi_device zssc_scsidev = {
 
 struct cfattach zssc_ca = {
 	sizeof(struct siop_softc), zsscmatch, zsscattach
-};
-
-struct cfdriver zssc_cd = {
-	NULL, "zssc", DV_DULL, NULL, 0
 };
 
 /*
@@ -192,6 +188,7 @@ zssc_dmaintr(arg)
 void
 zssc_dump()
 {
+	extern struct cfdriver zssc_cd;
 	int i;
 
 	for (i = 0; i < zssc_cd.cd_ndevs; ++i)

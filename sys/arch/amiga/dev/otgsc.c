@@ -1,4 +1,4 @@
-/*	$NetBSD: otgsc.c,v 1.18 1997/08/27 11:23:13 bouyer Exp $	*/
+/*	$NetBSD: otgsc.c,v 1.19 1998/01/12 10:40:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -83,10 +83,6 @@ extern int sci_data_wait;
 
 struct cfattach otgsc_ca = {
 	sizeof(struct sci_softc), otgscmatch, otgscattach
-};
-
-struct cfdriver otgsc_cd = {
-	NULL, "otgsc", DV_DULL, NULL, 0
 };
 
 /*

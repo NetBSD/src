@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.20 1997/07/29 17:46:24 veego Exp $	*/
+/*	$NetBSD: grf_cl.c,v 1.21 1998/01/12 10:39:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -187,9 +187,6 @@ struct cfattach grfcl_ca = {
 	sizeof(struct grf_softc), grfclmatch, grfclattach
 };
 
-struct cfdriver grfcl_cd = {
-	NULL, "grfcl", DV_DULL, NULL, 0
-};
 static struct cfdata *cfdata;
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.18 1997/03/17 17:55:54 is Exp $	*/
+/*	$NetBSD: if_es.c,v 1.19 1998/01/12 10:39:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -127,10 +127,6 @@ void esattach __P((struct device *, struct device *, void *));
 
 struct cfattach es_ca = {
 	sizeof(struct es_softc), esmatch, esattach
-};
-
-struct cfdriver es_cd = {
-	NULL, "es", DV_IFNET
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: drsupio.c,v 1.3 1997/09/27 22:44:20 is Exp $ */
+/*	$NetBSD: drsupio.c,v 1.4 1998/01/12 10:39:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -64,10 +64,6 @@ void drlptintack __P((void *));
 
 struct cfattach drsupio_ca = {
 	sizeof(struct drsupio_softc), drsupiomatch, drsupioattach
-};
-
-struct cfdriver drsupio_cd = {
-	NULL, "drsupio", DV_DULL
 };
 
 int

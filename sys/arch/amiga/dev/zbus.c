@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.36 1997/10/19 21:22:28 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.37 1998/01/12 10:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -227,10 +227,6 @@ aconflookup(mid, pid)
 
 struct cfattach zbus_ca = {
 	sizeof(struct device), zbusmatch, zbusattach
-};
-
-struct cfdriver zbus_cd = {
-	NULL, "zbus", DV_DULL, NULL, 0
 };
 
 static struct cfdata *early_cfdata;
