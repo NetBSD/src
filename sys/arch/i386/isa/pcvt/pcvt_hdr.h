@@ -100,6 +100,7 @@
 #include <i386/isa/isavar.h>
 #endif
 #include <machine/cpufunc.h>
+#include <machine/intr.h>
 #else
 #include <i386/isa/isa_device.h>
 #endif
