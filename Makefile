@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.199 2003/01/26 06:19:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.200 2003/02/22 03:20:45 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -162,6 +162,7 @@ BUILDTARGETS+=	do-distrib-dirs
 BUILDTARGETS+=	includes
 .endif
 BUILDTARGETS+=	do-lib-csu do-lib-libc do-lib do-gnu-lib do-ld.so do-build
+BUILDTARGETS+=	do-obsolete
 
 #
 # Enforce proper ordering of some rules.
@@ -307,6 +308,9 @@ do-build:
 .for targ in dependall install
 	(cd ${.CURDIR} && ${MAKE} ${targ} BUILD_tools=no BUILD_lib=no)
 .endfor
+
+do-obsolete:
+	(cd ${.CURDIR}/etc && ${MAKE} install-obsolete-lists)
 
 #
 # Speedup stubs for some subtrees that don't need to run these rules.
