@@ -427,6 +427,7 @@
 ./usr/include/g++/procbuf.h
 ./usr/include/g++/projectn.h
 ./usr/include/g++/queue
+./usr/include/g++/random.cc
 ./usr/include/g++/rx.h
 ./usr/include/g++/set
 ./usr/include/g++/set.h
@@ -434,6 +435,7 @@
 ./usr/include/g++/stack.h
 ./usr/include/g++/std
 ./usr/include/g++/std.h
+./usr/include/g++/std/bastring.cc
 ./usr/include/g++/std/bastring.h
 ./usr/include/g++/std/cassert.h
 ./usr/include/g++/std/cctype.h
@@ -445,6 +447,7 @@
 ./usr/include/g++/std/clocale.h
 ./usr/include/g++/std/cmath.h
 ./usr/include/g++/std/complex.h
+./usr/include/g++/std/complext.cc
 ./usr/include/g++/std/complext.h
 ./usr/include/g++/std/csetjmp.h
 ./usr/include/g++/std/csignal.h
@@ -479,7 +482,9 @@
 ./usr/include/g++/strstream.h
 ./usr/include/g++/swap.h
 ./usr/include/g++/sysent.h
+./usr/include/g++/tempbuf.cc
 ./usr/include/g++/tempbuf.h
+./usr/include/g++/tree.cc
 ./usr/include/g++/tree.h
 ./usr/include/g++/typeinfo
 ./usr/include/g++/typemacros.h
