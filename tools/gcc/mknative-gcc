@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.14 2004/08/24 20:24:43 thorpej Exp $
+#	$NetBSD: mknative-gcc,v 1.15 2004/12/10 13:58:11 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -10,7 +10,7 @@
 _TMPDIR=$2
 _TOP=$3
 _PLATFORM=$4
-_VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*= ,,'`
+_VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*=[ 	]*,,'`
 _GNU_DIST=`cd ${_VPATH}; pwd`
 
 . $_TOP/tools/gcc/mknative.common
