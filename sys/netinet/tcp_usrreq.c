@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.69 2002/02/28 20:26:17 martin Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.70 2002/03/11 10:06:12 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.69 2002/02/28 20:26:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.70 2002/03/11 10:06:12 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -945,22 +945,22 @@ tcp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		} else {
 			switch (name[0]) {
 			case TCPCTL_MSSDFLT:
-			    saved_value = tcp_mssdflt;
-			    break;
+				saved_value = tcp_mssdflt;
+				break;
 			}
-			error = (sysctl_int(oldp, oldlenp, newp, newlen,
-			    tcp_ctlvars[name[0]].var));
+			error = sysctl_int(oldp, oldlenp, newp, newlen,
+			    tcp_ctlvars[name[0]].var);
 			if (error)
-			    return error;
+				return (error);
 			switch (name[0]) {
 			case TCPCTL_MSSDFLT:
-			    if (tcp_mssdflt < 32) {
-				tcp_mssdflt = saved_value;
-				return EINVAL;
-			    }
-			    break;
+				if (tcp_mssdflt < 32) {
+					tcp_mssdflt = saved_value;
+					return (EINVAL);
+				}
+				break;
 			}
-			return 0;
+			return (0);
 		}
 	}
 
