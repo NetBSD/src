@@ -1,4 +1,4 @@
-/*	$NetBSD: utf2.c,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
+/*	$NetBSD: utf2.c,v 1.4 2000/12/30 05:05:58 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)utf2.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: utf2.c,v 1.3 2000/12/28 05:22:27 itojun Exp $");
+__RCSID("$NetBSD: utf2.c,v 1.4 2000/12/30 05:05:58 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,6 +66,7 @@ static int _utf_count[16] = {
 };
 
 typedef struct {
+	void *runelocale;	/* reserved for future thread-safeness */
 	char ch[3];
 	int chlen;
 } _UTF2State;

@@ -1,4 +1,4 @@
-/*	$NetBSD: big5.c,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
+/*	$NetBSD: big5.c,v 1.4 2000/12/30 05:05:57 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)big5.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: big5.c,v 1.3 2000/12/28 05:22:27 itojun Exp $");
+__RCSID("$NetBSD: big5.c,v 1.4 2000/12/30 05:05:57 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,6 +69,7 @@ void _BIG5_packstate __P((_RuneLocale *, mbstate_t *, void *));
 void _BIG5_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
 
 typedef struct {
+	void *runelocale;	/* reserved for future thread-safeness */
 	char ch[2];
 	int chlen;
 } _BIG5State;
