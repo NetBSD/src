@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.3 1996/10/13 01:38:18 christos Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.4 1996/10/21 22:56:29 thorpej Exp $	*/
 
 /*
  * cy_pci.c
@@ -27,9 +27,9 @@
 static int cy_probe_pci __P((struct device *, void *, void *));
 static void cy_attach_pci  __P((struct device *, struct device *, void *));
 static int cy_map_pci __P((struct pci_attach_args *, struct cy_softc *,
-    bus_io_handle_t *, bus_mem_size_t  *, bus_io_size_t *));
-static void cy_unmap_pci __P((struct cy_softc *, bus_io_handle_t,
-    bus_mem_size_t, bus_io_size_t));
+    bus_space_handle_t *, bus_size_t  *, bus_size_t *));
+static void cy_unmap_pci __P((struct cy_softc *, bus_space_handle_t,
+    bus_size_t, bus_size_t));
 
 struct cfattach cy_pci_ca = {
 	sizeof(struct cy_softc), cy_probe_pci, cy_attach_pci
@@ -39,12 +39,12 @@ static int
 cy_map_pci(pa, sc, ioh, iosize, memsize)
 	struct pci_attach_args *pa;
 	struct cy_softc *sc;
-	bus_io_handle_t *ioh;
-	bus_mem_size_t  *memsize;
-	bus_io_size_t *iosize;
+	bus_space_handle_t *ioh;
+	bus_size_t  *memsize;
+	bus_size_t *iosize;
 {
-	bus_io_addr_t iobase;
-	bus_mem_addr_t  memaddr;
+	bus_addr_t iobase;
+	bus_addr_t  memaddr;
 	int cacheable;
 
 	if (pci_mem_find(pa->pa_pc, pa->pa_tag, 0x18, &memaddr, memsize,
@@ -53,7 +53,8 @@ cy_map_pci(pa, sc, ioh, iosize, memsize)
 		return 0;
 	}
 	/* map the memory (non-cacheable) */
-	if (bus_mem_map(sc->sc_bc, memaddr, *memsize, 0, &sc->sc_memh) != 0) {
+	if (bus_space_map(sc->sc_memt, memaddr, *memsize, 0,
+	    &sc->sc_bsh) != 0) {
 		printf("%s: couldn't map PCI memory region\n",
 		    sc->sc_dev.dv_xname);
 		return 0;
@@ -64,29 +65,29 @@ cy_map_pci(pa, sc, ioh, iosize, memsize)
 		    sc->sc_dev.dv_xname);
 		goto unmapmem;
 	}
-	if (bus_io_map(sc->sc_bc, iobase, *iosize, ioh) != 0) {
+	if (bus_space_map(sc->sc_iot, iobase, *iosize, 0, ioh) != 0) {
 		printf("%s: couldn't map PCI io region\n", sc->sc_dev.dv_xname);
 		goto unmapio;
 	}
 	return 1;
 
 unmapio:
-	bus_io_unmap(sc->sc_bc, *ioh, *iosize);
+	bus_space_unmap(sc->sc_iot, *ioh, *iosize);
 unmapmem:
-	bus_mem_unmap(sc->sc_bc, sc->sc_memh, *memsize);
+	bus_space_unmap(sc->sc_memt, sc->sc_bsh, *memsize);
 	return 0;
 }
 
 static void
 cy_unmap_pci(sc, ioh, iosize, memsize)
 	struct cy_softc *sc;
-	bus_io_handle_t ioh;
-	bus_io_size_t iosize;
-	bus_mem_size_t  memsize;
+	bus_space_handle_t ioh;
+	bus_size_t iosize;
+	bus_size_t  memsize;
 
 {
-	bus_io_unmap(sc->sc_bc, ioh, iosize);
-	bus_mem_unmap(sc->sc_bc, sc->sc_memh, memsize);
+	bus_space_unmap(sc->sc_iot, ioh, iosize);
+	bus_space_unmap(sc->sc_memt, sc->sc_bsh, memsize);
 }
 
 static int
@@ -95,9 +96,9 @@ cy_probe_pci(parent, match, aux)
 	void           *match, *aux;
 {
 	struct pci_attach_args *pa = aux;
-	bus_io_handle_t ioh;
-	bus_mem_size_t  memsize;
-	bus_io_size_t iosize;
+	bus_space_handle_t ioh;
+	bus_size_t  memsize;
+	bus_size_t iosize;
 	int rv = 0;
 	struct cy_softc sc;
 
@@ -116,9 +117,11 @@ cy_probe_pci(parent, match, aux)
 #ifdef CY_DEBUG
 	printf("cy: Found Cyclades PCI device, id = 0x%x\n", pa->pa_id);
 #endif
+	/* XXX THIS IS TOTALLY WRONG! XXX */
 	memcpy(&sc.sc_dev, match, sizeof(struct device));
 
-	sc.sc_bc = pa->pa_bc;
+	sc.sc_iot = pa->pa_iot;
+	sc.sc_memt = pa->pa_memt;
 	sc.sc_bustype = CY_BUSTYPE_PCI;
 
 	if (cy_map_pci(pa, &sc, &ioh, &iosize, &memsize) == 0)
@@ -145,12 +148,13 @@ cy_attach_pci(parent, self, aux)
 {
 	struct cy_softc *sc = (void *) self;
 	pci_intr_handle_t intrhandle;
-	bus_io_handle_t ioh;
-	bus_mem_size_t  memsize;
-	bus_io_size_t iosize;
+	bus_space_handle_t ioh;
+	bus_size_t  memsize;
+	bus_size_t iosize;
 	struct pci_attach_args *pa = aux;
 
-	sc->sc_bc = pa->pa_bc;
+	sc->sc_iot = pa->pa_iot;
+	sc->sc_memt = pa->pa_memt;
 	sc->sc_bustype = CY_BUSTYPE_PCI;
 
 	if (cy_map_pci(pa, sc, &ioh, &iosize, &memsize) == 0)
@@ -162,8 +166,8 @@ cy_attach_pci(parent, self, aux)
 	cy_attach(parent, self, aux);
 
 	/* Enable PCI card interrupts */
-	bus_io_write_2(sc->sc_bc, ioh, CY_PCI_INTENA,
-	    bus_io_read_2(sc->sc_bc, ioh, CY_PCI_INTENA) | 0x900);
+	bus_space_write_2(sc->sc_iot, ioh, CY_PCI_INTENA,
+	    bus_space_read_2(sc->sc_iot, ioh, CY_PCI_INTENA) | 0x900);
 
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &intrhandle) != 0)
