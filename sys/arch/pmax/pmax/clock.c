@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 1997/06/22 07:42:38 jonathan Exp $	*/
+/* $NetBSD: clock.c,v 1.20 1997/06/22 09:34:43 jonathan Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,22 +42,50 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.20 1997/06/22 09:34:43 jonathan Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/clock_machdep.h>
 #include <machine/autoconf.h>
-#include <machine/bus.h>	/* XXX wbflush() */
-#include <pmax/pmax/clockreg.h>
 
-#include "tc.h"			/* Is a Turbochannel configured? */
+#include <dev/tc/clockvar.h>
 
-#if NTC>0
-#include <dev/tc/tcvar.h>
-#include <dev/tc/ioasicvar.h>
+#define	SECMIN	((unsigned)60)			/* seconds per minute */
+#define	SECHOUR	((unsigned)(60*SECMIN))		/* seconds per hour */
+#define	SECDAY	((unsigned)(24*SECHOUR))	/* seconds per day */
+#define	SECYR	((unsigned)(365*SECDAY))	/* seconds per common year */
+
+#define	LEAPYEAR(year)	(((year) % 4) == 0)
+
+struct device *clockdev;
+const struct clockfns *clockfns;
+int clockinitted;
+
+void
+clockattach(dev, fns)
+	struct device *dev;
+	const struct clockfns *fns;
+{
+
+	/*
+	 * Just bookkeeping.
+	 */
+	printf("\n");
+
+	if (clockfns != NULL)
+		panic("clockattach: multiple clocks");
+	clockdev = dev;
+	clockfns = fns;
+#ifdef EVCNT_COUNTERS
+	evcnt_attach(dev, "intr", &clock_intr_evcnt);
 #endif
-
+}
 
 /*
  * Machine-dependent clock routines.
@@ -72,186 +100,6 @@
  * Resettodr restores the time of day hardware after a time change.
  */
 
-volatile struct chiptime *Mach_clock_addr;
-
-
-/* Some values for rates for the RTC interrupt */
-#define RATE_32_HZ	0xB	/* 31.250 ms */
-#define RATE_64_HZ	0xA	/* 15.625 ms */
-#define RATE_128_HZ	0x9	/* 7.8125 ms */
-#define RATE_256_HZ	0x8	/* 3.90625 ms */
-#define RATE_512_HZ	0x7	/* 1953.125 us*/
-#define RATE_1024_HZ	0x6	/* 976.562 us */
-#define RATE_2048_HZ	0x5	/* 488.281 usecs/interrupt */
-
-#undef SELECTED_RATE
-#if (HZ == 64)
-# define SELECTED_RATE RATE_64_HZ	/* 4.4bsd default on pmax */
-# define SHIFT_HZ 6
-# else	/* !64 Hz */
-#if (HZ == 128)
-# define SELECTED_RATE RATE_128_HZ
-# define SHIFT_HZ 7
-#else	/* !128 Hz */
-#if (HZ == 256)
-# define SELECTED_RATE RATE_256_HZ
-# define SHIFT_HZ 8
-#else /*!256Hz*/
-#if (HZ == 512)
-# define SELECTED_RATE RATE_512_HZ
-# define SHIFT_HZ 9
-#else /*!512hz*/
-#if (HZ == 1024)
-# define SELECTED_RATE RATE_1024_HZ
-# define SHIFT_HZ 10
-#else /* !1024hz*/
-# error RTC interrupt rate HZ not recognised; must be a power of 2
-#endif /*!64Hz*/
-#endif /*!1024Hz*/
-#endif /*!512 Hz*/
-#endif /*!256 Hz*/
-#endif /*!128Hz*/
-
-/*
- * RTC interrupt rate: pick one of 64, 128, 256, 512, 1024, 2048.
- * The appropriate rate is machine-dependent, or even model-dependent.
- *
- * Unless a machine has a hardware free-running clock, the RTC interrupt
- * rate is an upper limit on gettimeofday(), context switch interval,
- * and generally the resolution of real-time.  The standard 4.4bsd pmax
- * RTC tick rate is 64Hz, which has low overhead but is ludicrous when
- * doing serious performance measurement.  For machines faster than 3100s,
- * 1024Hz gives millisecond resolution.   Alphas have an on-chip counter,
- * and at least some IOASIC Decstations have  a turbochannel cycle-counter,
- * either of which which can be interpolated between RTC interrupts, to
- * give resolution in ns or tens of ns.
- */
-
-#ifndef HZ
-#ifdef __mips__
-/*#define HZ 64*/	/* conveniently divides 1 sec */
-#define HZ 256	/* default on Ultrix */
-#else
-# error Kernel config parameter HZ not defined
-#endif
-#endif
-
-/* Compute value to program clock with, given config parameter RTC_HZ */
-
-
-
-/* global autoconfiguration variables -- bus type*/
-extern struct cfdriver mainbus_cd;
-#if NTC>0
-extern struct cfdriver ioasic_cd;
-extern struct cfdriver tc_cd;
-#endif
-
-
-/* Definition of the driver for autoconfig. */
-static int	clockmatch __P((struct device *, void *, void *));
-static void	clockattach __P((struct device *, struct device *, void *));
-
-struct cfattach clock_ca = {
-	sizeof(struct device), clockmatch, clockattach
-};
-
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL
-};
-
-#ifdef notyet
-static void	clock_startintr __P((void *));
-static void	clock_stopintr __P((void *));
-#endif
-
-volatile struct chiptime *Mach_clock_addr;
-
-static int
-clockmatch(parent, cfdata, aux)
-	struct device *parent;
-	void *cfdata;
-	void *aux;
-{
-	struct cfdata *cf = cfdata;
-	struct confargs *ca = aux;
-#if NTC>0
-	struct ioasicdev_attach_args *d = aux;
-#endif
-#ifdef notdef /* XXX */
-	struct tc_cfloc *asic_locp = (struct asic_cfloc *)cf->cf_loc;
-#endif
-	int nclocks;
-
-#if NTC>0
-	if (parent->dv_cfdata->cf_driver != &ioasic_cd &&
-	    parent->dv_cfdata->cf_driver != &tc_cd &&
-	    parent->dv_cfdata->cf_driver != &mainbus_cd)
-#else
-	if (parent->dv_cfdata->cf_driver != &mainbus_cd)
-#endif
-		return(0);
-
-	/* make sure that we're looking for this type of device. */
-#if NTC>0
-	if (parent->dv_cfdata->cf_driver != &mainbus_cd) {
-		if (strcmp(d->iada_modname, "mc146818") != 0)
-			return (0);
-	} else
-#endif
-	if (strcmp(ca->ca_name, "mc146818") != 0)
-		return (0);
-
-	/* All known decstations have a Dallas RTC */
-	nclocks = 1;
-
-	/* if it can't have the one mentioned, reject it */
-	if (cf->cf_unit >= nclocks)
-		return (0);
-
-	return (1);
-}
-
-static void
-clockattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	struct confargs *ca = aux;
-#if NTC>0
-	struct ioasicdev_attach_args *d = aux;
-#endif
-#ifndef pmax
-	register volatile struct chiptime *c;
-#endif
-
-#if NTC>0
-	if (parent->dv_cfdata->cf_driver != &mainbus_cd)
-		Mach_clock_addr = (struct chiptime *)
-			MIPS_PHYS_TO_KSEG1(d->iada_addr);
-	else
-#endif
-		Mach_clock_addr = (struct chiptime *)
-			MIPS_PHYS_TO_KSEG1(ca->ca_addr);
-
-#ifdef pmax
-	printf("\n");
-	return;
-#endif
-
-#ifndef pmax	/* Turn interrupts off, just in case. */
-	
-	c = Mach_clock_addr;
-	c->regb = REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	wbflush();
-#endif
-
-#ifdef notyet /*XXX*/ /*FIXME*/
-	BUS_INTR_ESTABLISH(ca, (intr_handler_t)hardclock, NULL);
-#endif
-}
-
 /*
  * Start the real-time and statistics clocks. Leave stathz 0 since there
  * are no other timers available.
@@ -259,21 +107,13 @@ clockattach(parent, self, aux)
 void
 cpu_initclocks()
 {
-	register volatile struct chiptime *c;
 	extern int tickadj;
-#ifdef NTP
-	extern int fixtick;
-#endif
-	register long tmp;
 
-	if (Mach_clock_addr == NULL)
-		panic("cpu_initclocks: no clock to initialize");
+	if (clockfns == NULL)
+		panic("cpu_initclocks: no clock attached");
 
-	hz = HZ;		/* Clock Hz is a configuration parameter */
+	hz = CLOCK_RATE;	/* 256 Hz clock */
 	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-#ifdef NTP
-	fixtick =
-#endif
 	tickfix = 1000000 - (hz * tick);
 	if (tickfix) {
 		int ftp;
@@ -283,19 +123,26 @@ cpu_initclocks()
 		tickfixinterval = hz >> (ftp - 1);
         }
 
-	c = Mach_clock_addr;
-	c->rega = REGA_TIME_BASE | SELECTED_RATE;
-	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	wbflush();		/* Alpha needs this */
+	/*
+	 * Establish the clock interrupt; it's a special case.
+	 *
+	 * We establish the clock interrupt this late because if
+	 * we do it at clock attach time, we may have never been at
+	 * spl0() since taking over the system.  Some versions of
+	 * PALcode save a clock interrupt, which would get delivered
+	 * when we spl0() in autoconf.c.  If established the clock
+	 * interrupt handler earlier, that interrupt would go to
+	 * hardclock, which would then fall over because p->p_stats
+	 * isn't set at that time.
+	 */
+#ifdef 	alpha
+	set_clockintr();
+#endif
 
 	/*
-	 * Reset tickadj to ntp's idea of what it should be
-	 * XXX this should be in conf/param.c
+	 * Get the clock started.
 	 */
-	tmp = (long) tick * 500L;
-	tickadj = (int)(tmp / 1000000L);
-	if (tmp % 1000000L > 0)
-		tickadj++;
+	(*clockfns->cf_init)(clockdev);
 }
 
 /*
@@ -307,23 +154,9 @@ void
 setstatclockrate(newhz)
 	int newhz;
 {
+
 	/* nothing we can do */
 }
-
-/*
- * This is the amount to add to the value stored in the clock chip
- * to get the current year.
- *
- * Experimentation (and passing years) show that Decstation PROMS
- * assume the kernel uses the clock chip as a time-of-year clock.
- * The PROM assumes the clock is always set to 1972 or 1973, and contains
- * time-of-year in seconds.   The PROM checks the clock at boot time,
- * and if it's outside that range, sets it to 1972-01-01.
- */
-#define YR_OFFSET	25	/* good until dec 31, 1998 */
-#define DAY_OFFSET	/*1*/ 0
-
-#define	BASE_YEAR	1972
 
 /*
  * This code is defunct after 2099.
@@ -334,7 +167,7 @@ static short dayyr[12] = {
 };
 
 /*
- * Initialize the time of day register, based on the time base which is, e.g.
+ * Initialze the time of day register, based on the time base which is, e.g.
  * from a filesystem.  Base provides the time to within six months,
  * and the time of year clock (if any) provides the rest.
  */
@@ -342,11 +175,10 @@ void
 inittodr(base)
 	time_t base;
 {
-	register volatile struct chiptime *c;
 	register int days, yr;
-	int sec, min, hour, day, mon, year;
-	long deltat;
-	int badbase, s;
+	struct clocktime ct;
+	time_t deltat;
+	int badbase;
 
 	if (base < 5*SECYR) {
 		printf("WARNING: preposterous time in file system");
@@ -356,39 +188,15 @@ inittodr(base)
 	} else
 		badbase = 0;
 
-	c = Mach_clock_addr;
+	(*clockfns->cf_get)(clockdev, base, &ct);
+	clockinitted = 1;
 
-	/*
-	 * Don't read clock registers while they are being updated,
-	 * and make sure we don't re-read the clock's registers
-	 * too often while waiting.
-	 */
-	s = splclock();
-	while ((c->rega & REGA_UIP) == 1) {
-		splx(s);
-		DELAY(10);
-		s = splclock();
-	}
-
-	sec = c->sec;
-	min = c->min;
-	hour = c->hour;
-	day = c->day;
-	mon = c->mon;
-	year = c->year;
-
-	splx(s);
-
-#ifdef	DEBUG_CLOCK
-	printf("inittodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
-#endif
-	/* convert from PROM time-of-year convention to actual time */
-	day  += DAY_OFFSET;
-	year += YR_OFFSET;
+	/* Perform MD RTC-toto-system-time conversion */
+	clk_rtc_to_systime(&ct, base);
 
 	/* simple sanity checks */
-	if (year < 70 || mon < 1 || mon > 12 || day < 1 || day > 31 ||
-	    hour > 23 || min > 59 || sec > 59) {
+	if (ct.year < 70 || ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
+	    ct.day > 31 || ct.hour > 23 || ct.min > 59 || ct.sec > 59) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
@@ -401,13 +209,14 @@ inittodr(base)
 		goto bad;
 	}
 	days = 0;
-	for (yr = 70; yr < year; yr++)
+	for (yr = 70; yr < ct.year; yr++)
 		days += LEAPYEAR(yr) ? 366 : 365;
-	days += dayyr[mon - 1] + day - 1;
-	if (LEAPYEAR(yr) && mon > 2)
+	days += dayyr[ct.mon - 1] + ct.day - 1;
+	if (LEAPYEAR(yr) && ct.mon > 2)
 		days++;
 	/* now have days since Jan 1, 1970; the rest is easy... */
-	time.tv_sec = days * SECDAY + hour * 3600 + min * 60 + sec;
+	time.tv_sec =
+	    days * SECDAY + ct.hour * SECHOUR + ct.min * SECMIN + ct.sec;
 
 	if (!badbase) {
 		/*
@@ -419,8 +228,9 @@ inittodr(base)
 			deltat = -deltat;
 		if (deltat < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %ld days",
-		    time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
+		printf("WARNING: clock %s %d days",
+		    time.tv_sec < base ? "lost" : "gained",
+		       (int) (deltat / SECDAY));
 	}
 bad:
 	printf(" -- CHECK AND RESET THE DATE!\n");
@@ -436,83 +246,43 @@ bad:
 void
 resettodr()
 {
-	register volatile struct chiptime *c;
 	register int t, t2;
-	int sec, min, hour, day, dow, mon, year;
-	int s;
+	struct clocktime ct;
+
+	if (!clockinitted)
+		return;
 
 	/* compute the day of week. */
 	t2 = time.tv_sec / SECDAY;
-	dow = (t2 + 4) % 7;	/* 1/1/1970 was thursday */
+	ct.dow = (t2 + 4) % 7;	/* 1/1/1970 was thursday */
 
 	/* compute the year */
-	t = t2;
-	year = 69;
+	ct.year = 69;
+	t = t2;			/* XXX ? */
 	while (t2 >= 0) {	/* whittle off years */
 		t = t2;
-		year++;
-		t2 -= LEAPYEAR(year) ? 366 : 365;
+		ct.year++;
+		t2 -= LEAPYEAR(ct.year) ? 366 : 365;
 	}
 
 	/* t = month + day; separate */
-	t2 = LEAPYEAR(year);
-	for (mon = 1; mon < 12; mon++)
-		if (t < dayyr[mon] + (t2 && mon > 1))
+	t2 = LEAPYEAR(ct.year);
+	for (ct.mon = 1; ct.mon < 12; ct.mon++)
+		if (t < dayyr[ct.mon] + (t2 && ct.mon > 1))
 			break;
 
-	day = t - dayyr[mon - 1] + 1;
-	if (t2 && mon > 2)
-		day--;
+	ct.day = t - dayyr[ct.mon - 1] + 1;
+	if (t2 && ct.mon > 2)
+		ct.day--;
 
 	/* the rest is easy */
 	t = time.tv_sec % SECDAY;
-	hour = t / 3600;
+	ct.hour = t / SECHOUR;
 	t %= 3600;
-	min = t / 60;
-	sec = t % 60;
+	ct.min = t / SECMIN;
+	ct.sec = t % SECMIN;
 
-	c = Mach_clock_addr;
+	clk_systime_to_rtc(&ct, time.tv_sec);
 
-	/* convert to the  format the PROM uses */
-	day  -= DAY_OFFSET;
- 	year -= YR_OFFSET;
-
-	s = splclock();
-	t = c->regd;				/* reset VRT */
-	c->regb = REGB_SET_TIME | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	wbflush();
-	c->rega = 0x70;				/* reset time base */
-	wbflush();
-
-	c->sec = sec;
-	c->min = min;
-	c->hour = hour;
-	/*c->dayw = dow;*/
-	c->day = day;
-	c->mon = mon;
-	c->year = year;
-	wbflush();
-
-	c->rega = REGA_TIME_BASE | SELECTED_RATE;
-	c->regb = REGB_PER_INT_ENA | REGB_DATA_MODE | REGB_HOURS_FORMAT;
-	wbflush();
-	splx(s);
-#ifdef	DEBUG_CLOCK
-	printf("resettodr(): todr hw yy/mm/dd= %d/%d/%d\n", year, mon, day);
-#endif
-
-	c->nvram[48*4] |= 1;		/* Set PROM time-valid bit */
-	wbflush();
-}
-
-/*XXX*/
-/*
- * Wait "n" microseconds.
- * (scsi code needs this).
-*/
-void
-delay(n)
-	int n;
-{
-	DELAY(n);
+	(*clockfns->cf_set)(clockdev, &ct);
 }
