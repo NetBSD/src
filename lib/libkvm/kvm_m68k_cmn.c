@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.4 1997/08/15 02:22:00 mikel Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.5 1997/08/26 08:21:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.4 1997/08/15 02:22:00 mikel Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.5 1997/08/26 08:21:40 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,7 +120,7 @@ _kvm_cmn_kvatop(kd, va, pa)
 	}
 
 	/*
-	 * 68040 and 68040 use same translation functions,
+	 * 68040 and 68060 use same translation functions,
 	 * as do 68030, 68851, HP MMU.
 	 */
 	if (m->mmutype == MMU_68040 || m->mmutype == MMU_68060)
