@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.43 2001/01/08 21:40:29 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.44 2001/02/21 21:39:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -580,7 +580,7 @@ do {									\
 #define	TULIP_SP_FIELD(x, f)	TULIP_SP_FIELD_C(((u_int16_t *)(x))[(f)])
 
 #ifdef _KERNEL
-extern const char *tlp_chip_names[];
+extern const char * const tlp_chip_names[];
 
 extern const struct tulip_mediasw tlp_21040_mediasw;
 extern const struct tulip_mediasw tlp_21040_tp_mediasw;

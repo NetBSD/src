@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.17 2000/11/08 14:28:15 ad Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.18 2001/02/21 21:39:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -87,7 +87,7 @@ u_long nfsrvhash;
 /*
  * Static array that defines which nfs rpc's are nonidempotent
  */
-int nonidempotent[NFS_NPROCS] = {
+const int nonidempotent[NFS_NPROCS] = {
 	FALSE,
 	FALSE,
 	TRUE,
@@ -117,7 +117,7 @@ int nonidempotent[NFS_NPROCS] = {
 };
 
 /* True iff the rpc reply is an nfs status ONLY! */
-static int nfsv2_repstat[NFS_NPROCS] = {
+static const int nfsv2_repstat[NFS_NPROCS] = {
 	FALSE,
 	FALSE,
 	FALSE,
