@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.56 2000/01/04 08:33:52 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.57 2000/01/05 01:50:45 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,9 +71,11 @@ static void get_ifinterface_info __P((void));
 
 static void write_etc_hosts(FILE *f);
 
+#ifdef INET6
 static int is_v6kernel __P((void));
 static void init_v6kernel __P((int));
 static int get_v6wait __P((void));
+#endif
 
 /*
  * URL encode unsafe characters.  See RFC 1738.
@@ -470,7 +472,7 @@ again:
 		     *net_namesvr6 == '\0' ? "<none>" : net_namesvr6
 #else
 		     "<not supported>",
-		     "<not supported>",
+		     "<not supported>"
 #endif
 		     );
 	process_menu(MENU_yesno);
