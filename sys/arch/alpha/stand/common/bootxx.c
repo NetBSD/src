@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.4 1999/05/26 06:22:04 cgd Exp $ */
+/* $NetBSD: bootxx.c,v 1.5 1999/11/12 13:11:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -69,7 +69,6 @@
  */
 
 #include <lib/libsa/stand.h>
-#include <lib/libkern/libkern.h>
 
 #include <sys/param.h>
 #include <sys/exec.h>
