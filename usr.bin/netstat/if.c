@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.19 1996/06/07 21:43:26 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.20 1997/03/26 01:51:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.19 1996/06/07 21:43:26 thorpej Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.20 1997/03/26 01:51:25 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -47,6 +47,7 @@ static char *rcsid = "$NetBSD: if.c,v 1.19 1996/06/07 21:43:26 thorpej Exp $";
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netns/ns.h>
@@ -142,6 +143,8 @@ intpr(interval, ifnetaddr)
 			printf("%-11.11s ", "none");
 			printf("%-15.15s ", "none");
 		} else {
+			char hexsep = '.';		/* for hexprint */
+			const char *hexfmt = "%x%c";	/* for hexprint */
 			if (kread(ifaddraddr, (char *)&ifaddr, sizeof ifaddr)) {
 				ifaddraddr = 0;
 				continue;
@@ -206,6 +209,9 @@ intpr(interval, ifnetaddr)
 				struct sockaddr_dl *sdl =
 					(struct sockaddr_dl *)sa;
 				    cp = (char *)LLADDR(sdl);
+				    if (sdl->sdl_type == IFT_FDDI
+					|| sdl->sdl_type == IFT_ETHER)
+					    hexsep = ':', hexfmt = "%02x%c";
 				    n = sdl->sdl_alen;
 				}
 				m = printf("%-11.11s ", "<Link>");
@@ -218,8 +224,8 @@ intpr(interval, ifnetaddr)
 				cp = sa->sa_data;
 			hexprint:
 				while (--n >= 0)
-					m += printf("%x%c", *cp++ & 0xff,
-						    n > 0 ? '.' : ' ');
+					m += printf(hexfmt, *cp++ & 0xff,
+						    n > 0 ? hexsep : ' ');
 				m = 30 - m;
 				while (m-- > 0)
 					putchar(' ');

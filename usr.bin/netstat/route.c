@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.19 1997/03/18 03:40:10 mycroft Exp $	*/
+/*	$NetBSD: route.c,v 1.20 1997/03/26 01:51:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$NetBSD: route.c,v 1.19 1997/03/18 03:40:10 mycroft Exp $";
+static char *rcsid = "$NetBSD: route.c,v 1.20 1997/03/26 01:51:27 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -397,6 +397,7 @@ p_sockaddr(sa, mask, flags, width)
 		    sdl->sdl_slen == 0)
 			(void) sprintf(workbuf, "link#%d", sdl->sdl_index);
 		else switch (sdl->sdl_type) {
+		case IFT_FDDI:
 		case IFT_ETHER:
 		    {
 			register int i;
@@ -405,7 +406,7 @@ p_sockaddr(sa, mask, flags, width)
 
 			cplim = "";
 			for (i = 0; i < sdl->sdl_alen; i++, lla++) {
-				cp += sprintf(cp, "%s%x", cplim, *lla);
+				cp += sprintf(cp, "%s%02x", cplim, *lla);
 				cplim = ":";
 			}
 			cp = workbuf;
