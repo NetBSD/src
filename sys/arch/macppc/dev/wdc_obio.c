@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.28 2003/09/25 19:29:49 mycroft Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.29 2003/10/08 11:12:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.28 2003/09/25 19:29:49 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.29 2003/10/08 11:12:36 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ wdc_obio_attach(parent, self, aux)
 		out32rb(OHARE_FEATURE_REG, x);
 	}
 
-	wdcattach(&sc->sc_wdcdev);
+	wdcattach(chp);
 }
 
 /* Multiword DMA transfer timings */
