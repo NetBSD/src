@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_io.c,v 1.2 1998/06/28 07:27:52 thorpej Exp $	*/
+/*	$NetBSD: iomd_io.c,v 1.3 1998/07/05 23:31:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -122,7 +122,7 @@ struct bus_space iomd_bs_tag = {
 /* bus space functions */
 
 int
-iomd_map(t, bpa, size, cacheable, bshp)
+iomd_bs_map(t, bpa, size, cacheable, bshp)
 	void *t;
 	bus_addr_t bpa;
 	bus_size_t size;
@@ -139,7 +139,7 @@ iomd_map(t, bpa, size, cacheable, bshp)
 	}
 
 int
-iomd_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
+iomd_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
     bpap, bshp)
 	void *t;
 	bus_addr_t rstart, rend;
@@ -153,7 +153,7 @@ iomd_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 
 
 void
-iomd_unmap(t, bsh, size)
+iomd_bs_unmap(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -164,7 +164,7 @@ iomd_unmap(t, bsh, size)
 }
 
 void    
-iomd_free(t, bsh, size)
+iomd_bs_free(t, bsh, size)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t size;
@@ -176,7 +176,7 @@ iomd_free(t, bsh, size)
 }
 
 int
-iomd_subregion(t, bsh, offset, size, nbshp)
+iomd_bs_subregion(t, bsh, offset, size, nbshp)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, size;
@@ -188,7 +188,7 @@ iomd_subregion(t, bsh, offset, size, nbshp)
 }
 
 void
-iomd_barrier(t, bsh, offset, len, flags)
+iomd_bs_barrier(t, bsh, offset, len, flags)
 	void *t;
 	bus_space_handle_t bsh;
 	bus_size_t offset, len;
