@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_socket.c	7.23 (Berkeley) 4/20/91
- *	$Id: nfs_socket.c,v 1.9 1993/12/18 00:45:14 mycroft Exp $
+ *	$Id: nfs_socket.c,v 1.10 1993/12/22 04:13:50 cgd Exp $
  */
 
 /*
@@ -911,7 +911,7 @@ nfsmout:
  * - fill in the cred struct.
  */
 nfs_getreq(so, prog, vers, maxproc, nam, mrp, mdp, dposp, retxid, procnum, cr,
-	msk, mtch, wascomp, repstat)				/* 08 Aug 92*/
+	msk, mtch, wascomp, repstat)
 	struct socket *so;
 	u_long prog;
 	u_long vers;
@@ -924,7 +924,7 @@ nfs_getreq(so, prog, vers, maxproc, nam, mrp, mdp, dposp, retxid, procnum, cr,
 	u_long *procnum;
 	register struct ucred *cr;
 	struct mbuf *msk, *mtch;
-	int *wascomp, *repstat;					/* 08 Aug 92*/
+	int *wascomp, *repstat;
 {
 	register int i;
 	register u_long *tl;
@@ -934,7 +934,7 @@ nfs_getreq(so, prog, vers, maxproc, nam, mrp, mdp, dposp, retxid, procnum, cr,
 	struct mbuf *mrep, *md;
 	int len;
 
-	*repstat = 0;						/* 08 Aug 92*/
+	*repstat = 0;
 	if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
 		error = nfs_receive(so, nam, &mrep, (struct nfsreq *)0);
 	} else {
@@ -959,20 +959,20 @@ nfs_getreq(so, prog, vers, maxproc, nam, mrp, mdp, dposp, retxid, procnum, cr,
 	dpos = mtod(mrep, caddr_t);
 	nfsm_disect(tl, u_long *, 10*NFSX_UNSIGNED);
 	*retxid = fxdr_unsigned(u_long, *tl++);
-	if (*tl++ != rpc_call || *tl++ != rpc_vers) {		/* 08 Aug 92*/
+	if (*tl++ != rpc_call || *tl++ != rpc_vers) {
 		*mrp = mrep;
 		*procnum = NFSPROC_NOOP;
 		*repstat = ERPCMISMATCH;
 		return (0);
 	}
 	if (*tl++ != prog) {
-		*mrp = mrep;					/* 08 Aug 92*/
+		*mrp = mrep;
 		*procnum = NFSPROC_NOOP;
 		*repstat = EPROGUNAVAIL;
 		return (0);
 	}
 	if (*tl++ != vers) {
-		*mrp = mrep;					/* 08 Aug 92*/
+		*mrp = mrep;
 		*procnum = NFSPROC_NOOP;
 		*repstat = EPROGMISMATCH;
 		return (0);
@@ -983,7 +983,7 @@ nfs_getreq(so, prog, vers, maxproc, nam, mrp, mdp, dposp, retxid, procnum, cr,
 		return (0);
 	}
 	if (*procnum > maxproc || *tl++ != rpc_auth_unix) {
-		*mrp = mrep;					/* 08 Aug 92*/
+		*mrp = mrep;
 		*procnum = NFSPROC_NOOP;
 		*repstat = EPROCUNAVAIL;
 		return (0);
