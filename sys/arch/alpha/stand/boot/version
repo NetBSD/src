@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.14 2001/08/02 12:24:05 bjh21 Exp $
+$NetBSD: version,v 1.15 2001/11/09 19:53:11 scw Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -19,3 +19,4 @@ is taken as the current.
 1.10:	The Great Boot Block Cleanup of April 1999.
 1.11:	Add support for booting off RAIDframe RAID1 mirrors.
 1.12:	loadfile() update:  ELF symbols no longer need backward seeks.
+1.13:	loadfile() update to avoid backwards seeks for ELF Program Headers.
