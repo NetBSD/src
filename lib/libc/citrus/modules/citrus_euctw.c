@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euctw.c,v 1.7 2003/06/26 12:09:57 tshiozak Exp $	*/
+/*	$NetBSD: citrus_euctw.c,v 1.8 2003/10/14 12:50:03 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -56,7 +56,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euctw.c,v 1.7 2003/06/26 12:09:57 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_euctw.c,v 1.8 2003/10/14 12:50:03 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -213,6 +213,8 @@ _citrus_EUCTW_mbrtowc_priv(_EUCTWEncodingInfo * __restrict ei,
 		*nresult = 0; /* state independent */
 		return (0);
 	}
+
+	chlenbak = psenc->chlen;
 
 	/* make sure we have the first byte in the buffer */
 	switch (psenc->chlen) {
