@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2004/04/10 23:50:23 cl Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2004/04/17 12:50:45 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2004/04/10 23:50:23 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2004/04/17 12:50:45 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2004/04/10 23:50:23 cl Exp $");
 #include <machine/xen.h>
 #include <machine/hypervisor.h>
 #include <machine/events.h>
+#include <machine/cpu_counter.h>
 
 #include <dev/clock_subr.h>
 
@@ -63,7 +64,8 @@ static int timeset;
  * Reads a consistent set of time-base values from Xen, into a shadow data
  * area.  Must be called at splclock.
  */
-static void get_time_values_from_xen(void)
+static void
+get_time_values_from_xen(void)
 {
 	do {
 		shadow_time_version = HYPERVISOR_shared_info->time_version2;
@@ -119,6 +121,9 @@ fstime:
 void
 resettodr()
 {
+#ifdef DEBUG_CLOCK
+	struct clock_ymdhms dt;
+#endif
 
 	/*
 	 * We might have been called by boot() due to a crash early
@@ -126,19 +131,19 @@ resettodr()
 	 */
 	if (!timeset)
 		return;
+
+#ifdef DEBUG_CLOCK
+	clock_secs_to_ymdhms(time.tv_sec - rtc_offset * 60, &dt);
+
+	printf("setclock: %d/%d/%d %02d:%02d:%02d\n", dt.dt_year,
+	    dt.dt_mon, dt.dt_day, dt.dt_hour, dt.dt_min, dt.dt_sec);
+#endif
 }
 
 void
 startrtclock()
 {
-	uint64_t __cpu_khz;
-	unsigned long cpu_khz;
-    
-	__cpu_khz = HYPERVISOR_shared_info->cpu_freq;
-	cpu_khz = (u32) (__cpu_khz/1000);
 
-	printf("Xen reported: %lu.%03lu MHz processor.\n", 
-	    cpu_khz / 1000, cpu_khz % 1000);
 }
 
 /*
@@ -147,15 +152,24 @@ startrtclock()
 void
 xen_delay(int n)
 {
-	int k;
+	long last;
 
-	for (k = 0; k < 10 * n; k++);
+	get_time_values_from_xen();
+	last = shadow_tv.tv_usec;
+	while (n > 0) {
+		get_time_values_from_xen();
+		while (last != shadow_tv.tv_usec) {
+			last++;
+			n--;
+		}
+	}
 }
 
 void
 xen_microtime(struct timeval *tv)
 {
-	printf("xen_microtime %p\n", tv);
+
+	*tv = time;
 }
 
 void
@@ -170,6 +184,30 @@ xen_initclocks()
 static int
 xen_timer_handler(void *arg, struct trapframe *regs)
 {
+#if defined(I586_CPU) || defined(I686_CPU)
+	static int microset_iter; /* call cc_microset once/sec */
+	struct cpu_info *ci = curcpu();
+	
+	/*
+	 * If we have a cycle counter, do the microset thing.
+	 */
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		if (
+#if defined(MULTIPROCESSOR)
+		    CPU_IS_PRIMARY(ci) &&
+#endif
+		    (microset_iter--) == 0) {
+			microset_iter = hz - 1;
+#if defined(MULTIPROCESSOR)
+			x86_broadcast_ipi(X86_IPI_MICROSET);
+#endif
+			cc_microset_time = time;
+			cc_microset(ci);
+		}
+	}
+#endif
+
+	get_time_values_from_xen();
 
 	hardclock((struct clockframe *)regs);
 
