@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rain.c	5.6 (Berkeley) 2/28/91";*/
-static char rcsid[] = "$Id: rain.c,v 1.3 1993/12/08 08:18:22 mycroft Exp $";
+static char rcsid[] = "$Id: rain.c,v 1.4 1994/04/05 23:35:16 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -80,6 +80,9 @@ main(argc, argv)
 	long cols, lines, random();
 	int xpos[5], ypos[5];
 	static void onsig();
+#ifdef TIOCGWINSZ
+	struct winsize ws;
+#endif
 
 	if (!(term = getenv("TERM"))) {
 		fprintf(stderr, "%s: TERM: parameter not set\n", *argv);
@@ -104,10 +107,19 @@ main(argc, argv)
 		DN = "\n";
 	if (!(ND = tgetstr("nd", &tcp)))
 		ND = " ";
-	if ((cols = tgetnum("co")) == -1)
-		cols = 80;
-	if ((lines = tgetnum("li")) == -1)
-		lines = 24;
+#ifdef TIOCGWINSZ
+	if (ioctl(fileno(stdout), TIOCGWINSZ, &ws) != -1 &&
+	    ws.ws_col && ws.ws_row) {
+		cols = ws.ws_col;
+		lines = ws.ws_row;
+	} else
+#endif
+	{
+		if ((cols = tgetnum("co")) == -1)
+			cols = 80;
+		if ((lines = tgetnum("li")) == -1)
+			lines = 24;
+	}
 	cols -= 4;
 	lines -= 4;
 	TE = tgetstr("te", &tcp);
