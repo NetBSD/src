@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1998/07/26 13:36:34 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1998/11/15 17:21:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,8 +31,8 @@
 
 __BEGIN_DECLS
 int __getlogin __P((char *, size_t));
-const char *__strerror __P((int , char *, int));
-const char *__strsignal __P((int , char *, int));
+const char *__strerror __P((int , char *, size_t));
+const char *__strsignal __P((int , char *, size_t));
 char *__dtoa __P((double, int, int, int *, int *, char **));
 int __sysctl __P((int *, unsigned int, void *, size_t *, void *, size_t));
 __END_DECLS
