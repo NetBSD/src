@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 1998/06/25 21:19:13 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.62 1998/06/25 23:41:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_compat_sunos.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
