@@ -1,4 +1,4 @@
-/*	$NetBSD: atareg.h,v 1.3 1998/11/18 16:32:29 kenh Exp $	*/
+/*	$NetBSD: atareg.h,v 1.4 1998/12/01 13:06:37 tsubai Exp $	*/
 
 /*
  * Drive parameter structure for ATA/ATAPI.
@@ -49,10 +49,17 @@ struct ataparams {
 #define	ATAPI_CAP_OVERLP	0X2000
 #define ATAPI_CAP_ATA_RST	0x1000
     u_int16_t	atap_capabilities2;	/* 50: capability flags (ATA) */
+#if BYTE_ORDER == LITTLE_ENDIAN
     u_int8_t	__junk2;
     u_int8_t	atap_oldpiotiming;	/* 51: old PIO timing mode */
     u_int8_t	__junk3;
     u_int8_t	atap_olddmatiming;	/* 52: old DMA timing mode (ATA) */
+#else
+    u_int8_t	atap_oldpiotiming;	/* 51: old PIO timing mode */
+    u_int8_t	__junk2;
+    u_int8_t	atap_olddmatiming;	/* 52: old DMA timing mode (ATA) */
+    u_int8_t	__junk3;
+#endif
     u_int16_t	atap_extensions;	/* 53: extentions supported */
 #define WDC_EXT_UDMA_MODES	0x0004
 #define WDC_EXT_MODES		0x0002
@@ -67,10 +74,17 @@ struct ataparams {
 #define WDC_MULTI_MASK  0x00ff
     u_int16_t	atap_capacity[2];  	/* 60-61: total capacity (LBA only) */
     u_int16_t	__retired4;
+#if BYTE_ORDER == LITTLE_ENDIAN
     u_int8_t	atap_dmamode_supp; 	/* 63: multiword DMA mode supported */
     u_int8_t	atap_dmamode_act; 	/*     multiword DMA mode active */
     u_int8_t	atap_piomode_supp;       /* 64: PIO mode supported */
     u_int8_t	__junk4;
+#else
+    u_int8_t	atap_dmamode_act; 	/*     multiword DMA mode active */
+    u_int8_t	atap_dmamode_supp; 	/* 63: multiword DMA mode supported */
+    u_int8_t	__junk4;
+    u_int8_t	atap_piomode_supp;       /* 64: PIO mode supported */
+#endif
     u_int16_t	atap_dmatiming_mimi;	/* 65: minimum DMA cycle time */
     u_int16_t	atap_dmatiming_recom;	/* 66: recomended DMA cycle time */
     u_int16_t	atap_piotiming;    	/* 67: mini PIO cycle time without FC */
@@ -116,8 +130,13 @@ struct ataparams {
     u_int16_t	atap_cmd2_en;		/* 86: cmd/features enabled */
 /* bits are the same as atap_cmd_set2 */
     u_int16_t	atap_cmd_def;		/* 87: cmd/features default */
+#if BYTE_ORDER == LITTLE_ENDIAN
     u_int8_t	atap_udmamode_supp; 	/* 88: Ultra-DMA mode supported */
     u_int8_t	atap_udmamode_act; 	/*     Ultra-DMA mode active */
+#else
+    u_int8_t	atap_udmamode_act; 	/*     Ultra-DMA mode active */
+    u_int8_t	atap_udmamode_supp; 	/* 88: Ultra-DMA mode supported */
+#endif
 /* 89-92 are ATA-only */
     u_int16_t	atap_seu_time;		/* 89: Sec. Erase Unit compl. time */
     u_int16_t	atap_eseu_time;		/* 90: Enhanced SEU compl. time */
