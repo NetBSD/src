@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/07 13:02:54 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/08 12:29:49 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,8 @@ DPADD+=	${DPADD.dix} ${DPADD.mi} ${DPADD.os} ${LIBXAU} ${LIBXDMCP} ${DPADD.hw/ne
 	${DPADD.GL/glx} ${DPADD.GL/GLcore} ${DPADD.xtrap} ${LIBCWRAPPER} \
 	${LIBXFONT} ${LIBFREETYPE} ${DPADD.dix/xpstubs} \
 	${LIBXEXT} ${LIBX11} ${LIBZ} ${LIBM}
+
+SYMLINKS=	${X11BINDIR}/X68k ${X11BINDIR}/X
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
