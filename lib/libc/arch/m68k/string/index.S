@@ -38,12 +38,16 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)index.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: index.S,v 1.1 1993/11/25 23:38:29 paulus Exp $"
+	.asciz "$Id: index.S,v 1.2 1993/12/08 21:01:56 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
+#ifdef STRCHR
+ENTRY(strchr)
+#else
 ENTRY(index)
+#endif
 	movl	sp@(4),a0	/* string */
 	movb	sp@(11),d0	/* char to look for */
 ixloop:
