@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.h	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.h,v 1.4 1996/12/04 22:59:13 thorpej Exp $
+ *	$Id: fsinfo.h,v 1.5 1997/03/16 17:20:48 veego Exp $
  */
 
 /*
@@ -80,7 +80,7 @@ typedef char *voidp;
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 
 #include <string.h>
 #include <stdlib.h>
