@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.4 1997/10/11 11:15:00 oki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.5 1998/08/05 16:08:37 minoura Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -263,7 +263,9 @@ struct zschan {
 };
 
 struct zsdevice {
-	struct zschan zs_chan[2];	  /* channel A = 1, B = 0 : 8 bytes */
+	/* Yes, they are backwards. */
+	struct zschan zs_chan_b;
+	struct zschan zs_chan_a;
 	char pad4; unsigned char bstat;   /* external only        : 2 bytes */
 	char pad[6];			  /* ---                  : 6 bytes */
 };

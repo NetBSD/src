@@ -1,4 +1,4 @@
-#	$NetBSD: JUPITER,v 1.10 1998/06/26 01:54:14 lukem Exp $
+#	$NetBSD: JUPITER,v 1.11 1998/08/05 16:08:34 minoura Exp $
 
 #
 #	JUPITER
@@ -97,7 +97,9 @@ config		netbsd root on ? type ?
 
 mainbus0	at root
 
-zs0		at mainbus0		# Zilog serial
+zsc0		at mainbus0
+zstty0		at zsc0 channel 0	# built-in RS-232C
+ms0		at zsc0 channel 1	# standard mouse
 par0		at mainbus0		# builtin parallel port
 spc0		at mainbus0		# scsi
 scsibus*	at spc?
@@ -136,7 +138,6 @@ pseudo-device	bpfilter	16	# packet filter
 pseudo-device	tun		4	# tunnel
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	kbd			# kbd
-pseudo-device 	mouse			# mouse
 pseudo-device	sram			# static RAM
 pseudo-device	bell			# OPM bell
 pseudo-device	pow		2	# software power switch
