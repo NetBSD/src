@@ -1011,9 +1011,6 @@ int	switch_page		= -1;		/* which page to switch to */
 #if PCVT_SCREENSAVER
 u_char	reset_screen_saver	= 1;		/* reset the saver next time */
 u_char	scrnsv_active		= 0;		/* active flag */
-#endif /* PCVT_SCREENSAVER */
-
-#if XSERVER || PCVT_SCREENSAVER
 unsigned scrnsv_timeout		= 0;		/* initially off */
 #endif /* XSERVER || PCVT_SCREENSAVER */
 
