@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.1 2001/03/15 17:30:56 uch Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.2 2001/03/20 16:03:28 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,8 +57,6 @@
 #include <hpcsh/dev/hd64461/hd64461reg.h>
 #include <hpcsh/dev/hd64461/hd64461intcvar.h>
 
-#include <hpcsh/dev/hd64461/hd64461uartvar.h>
-
 static struct hd64461uart_chip {
 	struct hpcsh_bus_space __tag_body;
 	bus_space_tag_t io_tag;
@@ -100,15 +98,6 @@ static void hd64461uart_info(struct hd64461uart_softc *);
 #endif
 
 void
-hd64461uart_cnattach()
-{
-	hd64461uart_init();
-
-	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ, 
-		    CONMODE);	
-}
-
-void
 comcnprobe(struct consdev *cp)
 {
 	int maj;
@@ -126,6 +115,11 @@ comcnprobe(struct consdev *cp)
 void
 comcninit(struct consdev *cp)
 {
+	hd64461uart_init();
+
+	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ, 
+		    CONMODE);	
+
 	hd64461uart_chip.console = 1;
 }
 
@@ -146,8 +140,6 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 	u_int16_t r16;
 
 	sc->sc_chip = &hd64461uart_chip;
-	if (sc->sc_chip->console)
-		printf(": console\n");
 
 	sc->sc_module_id = ha->ha_module_id;
 
@@ -178,13 +170,11 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 		hd64461_reg_write_2(HD64461_SYSSTBCR_REG16, r16);
 		return;
 	}
-	printf("\n");
 
 	com_attach_subr(csc);
 
 	hd64461_intr_establish(HD64461_IRQ_UART, IST_LEVEL, IPL_TTY,
 			       comintr, self);
-
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.1 2001/03/15 17:30:56 uch Exp $	*/
+/*	$NetBSD: console.c,v 1.2 2001/03/20 16:03:28 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,10 +69,6 @@
 #include <hpcsh/dev/pfckbdvar.h>
 #endif
 
-#if NHD64461IF > 0 && NCOM > 0
-#include <hpcsh/dev/hd64461/hd64461uartvar.h>
-#endif
-
 /* serial console */
 #define scicnpollc	nullcnpollc
 cdev_decl(sci);
@@ -98,63 +94,57 @@ struct consdev constab[] = {
 #if NSCIF > 0
 	cons_init(scif),
 #endif
-#if NCOM > 0
+#if NHD64461IF > 0 && NCOM > 0
 	cons_init(com),
 #endif
 	{ 0 } /* terminator */
 };
 #define CN_SELECTED	(CN_REMOTE + 1)		/* highest priority */
+#define CN_ENABLE(x)	set_console(x##cnputc, x##cnprobe)
 
 static int initialized;
-
-static void
-set_console(void (*probe_func)(struct consdev *))
-{
-	struct consdev *cp;
-
-	for (cp = constab; cp->cn_probe; cp++) {
-		if (cp->cn_probe == probe_func) {
-			cp->cn_pri = CN_SELECTED;
-			initialized = 1;
-			break;
-		}
-	}
-}
+static void set_console(void (*)(dev_t, int), void (*)(struct consdev *));
+static void disable_console(void);
+static void cn_nonprobe(struct consdev *);
 
 void
 consinit()
 {
-	struct consdev *cp;
-
 	if (initialized)
 		return;
 
 	/* select console */
-	for (cp = constab; cp->cn_probe; cp++)
-		cp->cn_pri = CN_DEAD;
+	disable_console();
 
 	switch (bootinfo->bi_cnuse) {
 	case BI_CNUSE_BUILTIN:
 #if NBICONSDEV > 0
-		set_console(biconscnprobe);
+		CN_ENABLE(bicons);
 #endif
 		break;
 	case BI_CNUSE_SCI:
 #if NSCI > 0
-		set_console(scicnprobe);
+		CN_ENABLE(sci);
 #endif
 		break;
 	case BI_CNUSE_SCIF:
 #if NSCIF > 0
-		set_console(scifcnprobe);
+		CN_ENABLE(scif);
 #endif
 		break;
 	case BI_CNUSE_HD64461COM:
 #if NHD64461IF > 0 && NCOM > 0
-		set_console(comcnprobe);
+		CN_ENABLE(com);
 #endif
 		break;
 	}
+
+#if NBICONSDEV > 0
+	if (!initialized) { /* use builtin console instead */
+		bootinfo->bi_cnuse = BI_CNUSE_BUILTIN;
+		CN_ENABLE(bicons);
+	}
+#endif
 
 	if (initialized)
 		cninit();
@@ -167,4 +157,34 @@ consinit()
 		hpcfb_cnattach(0);
 #endif
 	}
+}
+
+static void
+set_console(void (*putc_func)(dev_t, int),
+	    void (*probe_func)(struct consdev *))
+{
+	struct consdev *cp;
+
+	for (cp = constab; cp->cn_probe; cp++) {
+		if (cp->cn_putc == putc_func) {
+			cp->cn_probe = probe_func;
+			initialized = 1;
+			break;
+		}
+	}
+}
+
+static void
+disable_console()
+{
+	struct consdev *cp;	
+
+	for (cp = constab; cp->cn_probe; cp++)
+		cp->cn_probe = cn_nonprobe;
+}
+
+static void
+cn_nonprobe(struct consdev *cp)
+{
+	cp->cn_pri = CN_DEAD;
 }

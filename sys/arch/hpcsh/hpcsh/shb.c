@@ -1,4 +1,4 @@
-/*	$NetBSD: shb.c,v 1.4 2001/03/15 17:30:56 uch Exp $	*/
+/*	$NetBSD: shb.c,v 1.5 2001/03/20 16:03:28 uch Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -596,7 +596,8 @@ init_soft_intr_handler(void)
 {
 #include	"sci.h"
 #include	"scif.h"
-#if ((NSCI > 0) || (NSCIF > 0))
+#include	"com.h"
+#if (NSCI > 0) || (NSCIF > 0) || (NCOM > 0)
 	shb_intr_establish(SIR_SERIAL, IST_LEVEL, IPL_SOFTSERIAL,
 		      	(int (*) (void *))Xsoftserial, NULL);
 #endif
@@ -608,9 +609,10 @@ init_soft_intr_handler(void)
 		      (int (*) (void *))Xsoftclock, NULL);
 }
 
-#if ((NSCI > 0) || (NSCIF > 0))
+#if (NSCI > 0) || (NSCIF > 0) || (NCOM > 0)
 void scisoft __P((void *));
 void scifsoft __P((void *));
+void comsoft __P((void *));
 
 void
 Xsoftserial(void)
@@ -621,8 +623,11 @@ Xsoftserial(void)
 #if (NSCIF > 0)
 	scifsoft(NULL);
 #endif
-}
+#if (NCOM > 0)
+	comsoft(NULL);
 #endif
+}	
+#endif /* NSCI > 0 || NSCIF > 0 || NCOM > 0 */
 
 void
 Xsoftnet(void)
