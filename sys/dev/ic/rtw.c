@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.40 2005/01/04 01:00:30 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.41 2005/01/04 01:04:52 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.40 2005/01/04 01:00:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.41 2005/01/04 01:04:52 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -750,7 +750,7 @@ rtw_srom_read(struct rtw_regs *regs, uint32_t flags, struct rtw_srom *sr,
 	}
 
 	ecr &= ~(RTW_9346CR_EEDI | RTW_9346CR_EEDO | RTW_9346CR_EESK |
-	    RTW_9346CR_EEM_MASK);
+	    RTW_9346CR_EEM_MASK | RTW_9346CR_EECS);
 	ecr |= RTW_9346CR_EEM_PROGRAM;
 
 	RTW_WRITE8(regs, RTW_9346CR, ecr);
