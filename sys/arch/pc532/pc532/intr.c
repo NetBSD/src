@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 1996/10/13 03:30:40 christos Exp $  */
+/*	$NetBSD: intr.c,v 1.11 1996/11/24 13:35:12 matthias Exp $  */
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -39,13 +39,13 @@
 
 #define INTS	32
 struct iv ivt[INTS];
-static int next_sir = 16;
+static int next_sir = SOFTINT;
 unsigned int imask[NIPL] = {0xffffffff};
 unsigned int Cur_pl = 0xffffffff, sirpending, astpending;
 
-static void softnet();
-static void badhard(struct intrframe *);
-static void badsoft(void *);
+static void softnet __P((void *));
+static void badhard __P((void *));
+static void badsoft __P((void *));
 
 /*
  * Initialize the interrupt system.
@@ -53,7 +53,7 @@ static void badsoft(void *);
 void
 intr_init()
 {
-	int i;
+	int i, clk, net, sir;
 	for (i = 0; i < 16; i++)
 		ivt[i].iv_vec = badhard;
 
@@ -62,27 +62,53 @@ intr_init()
 		ivt[i].iv_arg = (void *)i;
 	}
 
-	intr_establish(SOFTINT, softclock, NULL, "softclock", IPL_CLOCK, 0);
-	intr_establish(SOFTINT, softnet,   NULL, "softnet",   IPL_NET,   0);
+	/*
+	 * Initialize the software interrupt system.
+	 * To trigger a software interrupt, the corresponding bit is
+	 * set in sir_pending. Then an unused ICU interrupt (IR_SOFT)
+	 * is used to call check_sir as soon as the current priority
+	 * level drops to spl0. check_sir then calls all handlers that
+	 * have their bit set in sir_pending.
+	 */
+
+	/* Install check_sir as the handler for IR_SOFT. */
+	sir = intr_establish(IR_SOFT, check_sir, NULL,
+				"softint", IPL_NONE, LOW_LEVEL);
+	if (sir != IR_SOFT)
+		panic("Could not allocate IR_SOFT");
+
+	/* Disable IR_SOFT in all priority levels other then IPL_ZERO. */
+	for (i = 1; i < NIPL; i++)
+		imask[i] |= 1 << IR_SOFT;
+
+	/* Allocate softclock at IPL_NET as splnet() has to block softclock. */
+	clk = intr_establish(SOFTINT, (void (*)(void *))softclock, NULL,
+				"softclock", IPL_NET, 0);
+	net = intr_establish(SOFTINT, softnet, NULL, "softnet", IPL_NET, 0);
+	if (clk != SIR_CLOCK || net != SIR_NET)
+		panic("Wrong clock or net softint allocated");
 }
 
 /*
  * Handle pending software interrupts.
- * This function has to be entered with interrupts disabled and
- * it will return with interrupts disabled. While the function
- * runs interrupts are enabled.
  */
 void
-check_sir(not_cpl)
-	int not_cpl;
+check_sir(arg)
+	void *arg;
 {
 	register unsigned int cirpending, mask;
 	register struct iv *iv;
 
-	while (cirpending = (sirpending & not_cpl)) {
-		sirpending &= ~not_cpl;
+#ifdef DIAGNOSTIC
+	if (Cur_pl != (imask[IPL_ZERO] | (1 << IR_SOFT)))
+		panic("check_sir called with ipl > 0");
+#endif
+
+	di();
+	while (cirpending = sirpending) {
+		sirpending &= ~SIR_ALLMASK;
 		ei();
-		for (iv = ivt + 16, mask = 0x10000;
+		for (iv = ivt + SOFTINT, mask = 0x10000;
 		     cirpending & -mask; mask <<= 1, iv++) {
 			if ((cirpending & mask) != 0) {
 				cnt.v_soft++;
@@ -92,6 +118,9 @@ check_sir(not_cpl)
 		}
 		di();
 	}
+	/* Avoid unneeded calls to check_sir. */
+	clrsofticu(IR_SOFT);
+	ei();
 	return;
 }
 
@@ -100,8 +129,13 @@ check_sir(not_cpl)
  * is allocated.
  */
 int
-intr_establish(int intr, void (*vector)(), void *arg, char *use,
-		int level, int mode)
+intr_establish(intr, vector, arg, use, level, mode)
+	int intr;
+	void (*vector) __P((void *));
+	void *arg;
+	char *use;
+	int level;
+	int mode;
 {
 	di();
 	if (intr == SOFTINT) {
@@ -163,17 +197,20 @@ intr_establish(int intr, void (*vector)(), void *arg, char *use,
 	return(intr);
 }
 
-
 /*
  * Network software interrupt routine
  */
 static void
-softnet()
+softnet(arg)
+	void *arg;
 {
-	register int isr;
+	register int isr, s;
 
 	di(); isr = netisr; netisr = 0; ei();
 	if (isr == 0) return;
+
+	s = splnet();
+
 #ifdef INET
 #include "ether.h"
 #if NETHER > 0
@@ -197,14 +234,17 @@ softnet()
 #if NPPP > 0
 	if (isr & (1 << NETISR_PPP)) pppintr();
 #endif
+	splx(s);
 }
 
 /*
  * Default hardware interrupt handler
  */
 static void
-badhard(struct intrframe *frame)
+badhard(arg)
+	void *arg;
 {
+	struct intrframe *frame = arg;
 	static int bad_count = 0;
 	di();
 	bad_count++;
@@ -221,13 +261,14 @@ badhard(struct intrframe *frame)
  * Default software interrupt handler
  */
 static void
-badsoft(void *n)
+badsoft(arg)
+	void *arg;
 {
 	static int bad_count = 0;
 	bad_count++;
 	if (bad_count < 5)
-		printf("Unknown software interrupt: vec=%d\n", (int)n);
-	
+		printf("Unknown software interrupt: vec=%d\n", (int)arg);
+
 	if (bad_count == 5)
 		printf("Too many unknown software interrupts, quitting reporting them.\n");
 }
