@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.2 2001/08/20 12:20:05 wiz Exp $	*/
+/*	$NetBSD: scsi.c,v 1.3 2003/08/01 01:25:45 tsutsui Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -58,9 +58,9 @@
 #include <lib/libsa/stand.h>
 
 #define _IOCTL_
-#include <hp300/dev/scsireg.h>
 
 #include <hp300/stand/common/device.h>
+#include <hp300/stand/common/scsireg.h>
 #include <hp300/stand/common/scsivar.h>
 #include <hp300/stand/common/samachdep.h>
 
