@@ -1,7 +1,8 @@
-/*	$NetBSD: pci.c,v 1.26 1996/12/05 01:25:30 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.27 1997/04/10 23:12:22 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1995, 1996, 1997
+ *     Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -149,7 +150,7 @@ pciattach(parent, self, aux)
 
 	for (device = 0; device < maxndevs; device++) {
 		pcitag_t tag;
-		pcireg_t id, class, intr, bhlcr;
+		pcireg_t id, class, intr, bhlcr, csr;
 		struct pci_attach_args pa;
 		int pin;
 
@@ -166,6 +167,7 @@ pciattach(parent, self, aux)
 			id = pci_conf_read(pc, tag, PCI_ID_REG);
 			if (id == 0 || id == 0xffffffff)
 				continue;
+			csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 			class = pci_conf_read(pc, tag, PCI_CLASS_REG);
 			intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 
@@ -177,6 +179,15 @@ pciattach(parent, self, aux)
 			pa.pa_tag = tag;
 			pa.pa_id = id;
 			pa.pa_class = class;
+
+			/* set up memory and I/O enable flags as appropriate */
+			pa.pa_flags = 0;
+			if ((pba->pba_flags & PCI_FLAGS_IO_ENABLED) &&
+			    (csr & PCI_COMMAND_IO_ENABLE))
+				pa.pa_flags |= PCI_FLAGS_IO_ENABLED;
+			if ((pba->pba_flags & PCI_FLAGS_MEM_ENABLED) &&
+			    (csr & PCI_COMMAND_MEM_ENABLE))
+				pa.pa_flags |= PCI_FLAGS_MEM_ENABLED;
 
 			if (bus == 0) {
 				pa.pa_intrswiz = 0;
@@ -221,6 +232,11 @@ pciprint(aux, pnp)
 		printf("%s at %s", devinfo, pnp);
 	}
 	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
+#if 0
+	printf(" (%si/o, %smem)",
+	    pa->pa_flags & PCI_FLAGS_IO_ENABLED ? "" : "no ",
+	    pa->pa_flags & PCI_FLAGS_MEM_ENABLED ? "" : "no ");
+#endif
 	return (UNCONF);
 }
 

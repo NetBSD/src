@@ -1,8 +1,8 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 1997/01/27 10:19:33 leo Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 1997/04/10 23:12:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
- * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
+ * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -92,6 +92,7 @@ void		*auxp;
 	pba.pba_busname = "pci";
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
+	pba.pba_flags	= PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
 	printf("\n");
 
