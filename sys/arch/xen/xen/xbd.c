@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.14 2005/03/11 15:51:25 bouyer Exp $ */
+/* $NetBSD: xbd.c,v 1.15 2005/03/26 21:22:45 bouyer Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.14 2005/03/11 15:51:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.15 2005/03/26 21:22:45 bouyer Exp $");
 
 #include "xbd.h"
 #include "rnd.h"
@@ -1412,7 +1412,7 @@ xbd_response_handler(void *arg)
 	BLKIF_RING_IDX i, rp;
 
 	rp = blk_ring->resp_prod;
-	__insn_barrier(); /* Ensure we see queued responses up to 'rp'. */
+	x86_lfence(); /* Ensure we see queued responses up to 'rp'. */
 
 	for (i = resp_cons; i != rp; i++) {
 		ring_resp = &blk_ring->ring[MASK_BLKIF_IDX(i)].resp;
