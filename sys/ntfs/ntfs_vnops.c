@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.17 1999/09/29 15:36:08 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.18 1999/10/09 14:27:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -216,9 +216,9 @@ ntfs_getattr(ap)
 	dprintf(("ntfs_getattr: %d, flags: %d\n",ip->i_number,ip->i_flag));
 
 #if defined(__FreeBSD__)
-	vap->va_fsid = dev2udev(fp->f_dev);
+	vap->va_fsid = dev2udev(ip->i_dev);
 #else /* NetBSD */
-	vap->va_fsid = fp->f_dev;
+	vap->va_fsid = ip->i_dev;
 #endif
 	vap->va_fileid = ip->i_number;
 	vap->va_mode = ip->i_mode;
@@ -234,7 +234,7 @@ ntfs_getattr(ap)
 	vap->va_flags = ip->i_flag;
 	vap->va_gen = 0;
 	vap->va_blocksize = ip->i_mp->ntm_spc * ip->i_mp->ntm_bps;
-	vap->va_type = fp->f_type;
+	vap->va_type = vp->v_type;
 	vap->va_filerev = 0;
 	return (0);
 }
@@ -301,15 +301,14 @@ ntfs_reclaim(ap)
 
 	/* Purge old data structures associated with the inode. */
 	cache_purge(vp);
-	if (fp->f_devvp) {
-		vrele(fp->f_devvp);
-		fp->f_devvp = NULL;
+	if (ip->i_devvp) {
+		vrele(ip->i_devvp);
+		ip->i_devvp = NULL;
 	}
-
-	ntfs_frele(fp);
 
 	vp->v_data = NULL;
 
+	ntfs_frele(fp);
 	ntfs_ntput(ip);
 
 	return (0);

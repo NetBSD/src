@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.18 1999/10/01 20:01:20 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.19 1999/10/09 14:27:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -360,17 +360,9 @@ ntfs_ntget(ip)
 	dprintf(("ntfs_ntget: get ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
 
+	simple_lock(&ip->i_interlock);
 	ip->i_usecount++;
-
-restart:
-	if (ip->i_lock) {
-		while (ip->i_lock) {
-			ip->i_lock = -1;
-			tsleep(&ip->i_lock, PVM, "ntnode", 0);
-		}
-		goto restart;
-	}
-	ip->i_lock = 1;
+	lockmgr(&ip->i_lock, LK_EXCLUSIVE|LK_INTERLOCK, &ip->i_interlock);
 
 	return 0;
 }
@@ -400,7 +392,7 @@ ntfs_ntlookup(
 				ino, ip, ip->i_usecount));
 			return (0);
 		}
-	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+	} while (lockmgr(&ntfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, NULL));
 
 	MALLOC(ip, struct ntnode *, sizeof(struct ntnode),
 	       M_NTFSNTNODE, M_WAITOK);
@@ -408,21 +400,24 @@ ntfs_ntlookup(
 	bzero((caddr_t) ip, sizeof(struct ntnode));
 
 	/* Generic initialization */
+	ip->i_devvp = ntmp->ntm_devvp;
+	ip->i_dev = ntmp->ntm_dev;
 	ip->i_number = ino;
 	ip->i_mp = ntmp;
-	ip->i_dev = ntmp->ntm_dev;
 	ip->i_uid = ntmp->ntm_uid;
 	ip->i_gid = ntmp->ntm_gid;
 	ip->i_mode = ntmp->ntm_mode;
-	ip->i_usecount++;
-
-	ip->i_lock = 1;
 
 	LIST_INIT(&ip->i_fnlist);
 
+	/* init lock and lock the newborn ntnode */
+	lockinit(&ip->i_lock, PINOD, "ntnode", 0, LK_EXCLUSIVE);
+	simple_lock_init(&ip->i_interlock);
+	ntfs_ntget(ip);
+
 	ntfs_nthashins(ip);
 
-	lockmgr(&ntfs_hashlock, LK_RELEASE, 0);
+	lockmgr(&ntfs_hashlock, LK_RELEASE, NULL);
 
 	*ipp = ip;
 
@@ -444,17 +439,20 @@ ntfs_ntput(
 {
 	struct ntvattr *vap;
 
-	if (!ip->i_lock) printf("ntfs_ntput: NOT LOCKED");
-
 	dprintf(("ntfs_ntput: rele ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
 
+	simple_lock(&ip->i_interlock);
 	ip->i_usecount--;
 
+#ifdef DIAGNOSTIC
 	if (ip->i_usecount < 0) {
 		panic("ntfs_ntput: ino: %d usecount: %d \n",
 		      ip->i_number,ip->i_usecount);
-	} else if (ip->i_usecount == 0) {
+	}
+#endif
+
+	if (ip->i_usecount == 0) {
 		dprintf(("ntfs_ntput: deallocating ntnode: %d\n",
 			ip->i_number));
 
@@ -470,9 +468,7 @@ ntfs_ntput(
 		}
 		FREE(ip, M_NTFSNTNODE);
 	} else {
-		if (ip->i_lock < 0)
-			wakeup(&ip->i_lock);
-		ip->i_lock = 0;
+		lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
 	}
 }
 
@@ -480,26 +476,27 @@ ntfs_ntput(
  * Decrement usecount of ntnode.
  */
 void
-ntfs_ntrele(
-	    struct ntnode * ip)
+ntfs_ntrele(ip)
+	struct ntnode * ip;
 {
 	dprintf(("ntfs_ntrele: rele ntnode %d: %p, usecount: %d\n",
 		ip->i_number, ip, ip->i_usecount));
 
+	simple_lock(&ip->i_interlock);
 	ip->i_usecount--;
 
 	if (ip->i_usecount < 0)
 		panic("ntfs_ntrele: ino: %d usecount: %d \n",
 		      ip->i_number,ip->i_usecount);
+	simple_unlock(&ip->i_interlock);
 }
 
 /*
- * Deallocate all memory allocated for ntvattr by call to
- * ntfs_attrtontvattr and some other functions.
+ * Deallocate all memory allocated for ntvattr
  */
 void
-ntfs_freentvattr(
-		 struct ntvattr * vap)
+ntfs_freentvattr(vap)
+	struct ntvattr * vap;
 {
 	if (vap->va_flag & NTFS_AF_INRUN) {
 		if (vap->va_vruncn)
@@ -749,9 +746,6 @@ ntfs_fget(
 	bzero(fp, sizeof(struct fnode));
 	dprintf(("ntfs_fget: allocating fnode: %p\n",fp));
 
-	fp->f_devvp = ntmp->ntm_devvp;
-	fp->f_dev = ntmp->ntm_dev;
-
 	fp->f_ip = ip;
 	fp->f_attrname = attrname;
 	if (fp->f_attrname) fp->f_flag |= FN_AATTRNAME;
@@ -870,6 +864,7 @@ ntfs_ntlookupfile(
 	char *attrname = NULL;
 	struct fnode   *nfp;
 	struct vnode   *nvp;
+	enum vtype	f_type;
 
 
 	error = ntfs_ntget(ip);
@@ -986,11 +981,11 @@ ntfs_ntlookupfile(
 			if((nfp->f_fflag & NTFS_FFLAG_DIR) &&
 			   (nfp->f_attrtype == NTFS_A_DATA) &&
 			   (nfp->f_attrname == NULL))
-				nfp->f_type = VDIR;	
+				f_type = VDIR;	
 			else
-				nfp->f_type = VREG;	
+				f_type = VREG;	
 
-			nvp->v_type = nfp->f_type;
+			nvp->v_type = f_type;
 
 			if ((nfp->f_attrtype == NTFS_A_DATA) &&
 			    (nfp->f_attrname == NULL))
