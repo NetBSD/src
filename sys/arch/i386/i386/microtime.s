@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.13 1994/11/06 20:33:35 mycroft Exp $	*/
+/*	$NetBSD: microtime.s,v 1.14 1994/11/06 21:51:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -111,8 +111,8 @@ ENTRY(microtime)
 	leal	(%edx,%eax,8),%eax	# a = 8a + d = 3433d
 	shrl	$12,%eax		# a = a/4096 = 3433d/4096
 
-	movl	time,%edx	# get time.tv_sec
-	addl	time+4,%eax	# add time.tv_usec
+	movl	_time,%edx	# get time.tv_sec
+	addl	_time+4,%eax	# add time.tv_usec
 
 	sti			# enable interrupts
 	
