@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.13 2002/11/15 14:32:34 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.14 2002/11/20 16:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.13 2002/11/15 14:32:34 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.14 2002/11/20 16:50:08 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -449,29 +449,23 @@ cv_search(EditLine *el, int dir)
 	char tmpbuf[EL_BUFSIZ];
 	int tmplen;
 
-	tmplen = 0;
 #ifdef ANCHOR
-	tmpbuf[tmplen++] = '.';
-	tmpbuf[tmplen++] = '*';
-#endif
-
-	el->el_line.buffer[0] = '\0';
-	el->el_line.lastchar = el->el_line.buffer;
-	el->el_line.cursor = el->el_line.buffer;
-	el->el_search.patdir = dir;
-
-	c_insert(el, 2);	/* prompt + '\n' */
-	*el->el_line.cursor++ = '\n';
-	*el->el_line.cursor++ = dir == ED_SEARCH_PREV_HISTORY ? '/' : '?';
-	re_refresh(el);
-
-#ifdef ANCHOR
+	tmpbuf[0] = '.';
+	tmpbuf[1] = '*';
 #define	LEN	2
 #else
 #define	LEN	0
 #endif
+	tmplen = LEN;
 
-	tmplen = c_gets(el, &tmpbuf[LEN]) + LEN;
+	el->el_search.patdir = dir;
+
+	tmplen = c_gets(el, &tmpbuf[LEN],
+		dir == ED_SEARCH_PREV_HISTORY ? "\n/" : "\n?" );
+	if (tmplen == -1)
+		return CC_REFRESH;
+
+	tmplen += LEN;
 	ch = tmpbuf[tmplen];
 	tmpbuf[tmplen] = '\0';
 
@@ -480,9 +474,6 @@ cv_search(EditLine *el, int dir)
 		 * Use the old pattern, but wild-card it.
 		 */
 		if (el->el_search.patlen == 0) {
-			el->el_line.buffer[0] = '\0';
-			el->el_line.lastchar = el->el_line.buffer;
-			el->el_line.cursor = el->el_line.buffer;
 			re_refresh(el);
 			return (CC_ERROR);
 		}
@@ -513,19 +504,15 @@ cv_search(EditLine *el, int dir)
 	el->el_state.lastcmd = (el_action_t) dir;	/* avoid c_setpat */
 	el->el_line.cursor = el->el_line.lastchar = el->el_line.buffer;
 	if ((dir == ED_SEARCH_PREV_HISTORY ? ed_search_prev_history(el, 0) :
-		ed_search_next_history(el, 0)) == CC_ERROR) {
+	    ed_search_next_history(el, 0)) == CC_ERROR) {
 		re_refresh(el);
 		return (CC_ERROR);
-	} else {
-		if (ch == 0033) {
-			re_refresh(el);
-			*el->el_line.lastchar++ = '\n';
-			*el->el_line.lastchar = '\0';
-			re_goto_bottom(el);
-			return (CC_NEWLINE);
-		} else
-			return (CC_REFRESH);
 	}
+	if (ch == 0033) {
+		re_refresh(el);
+		return ed_newline(el, 0);
+	}
+	return (CC_REFRESH);
 }
 
 

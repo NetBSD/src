@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.17 2002/11/15 14:32:32 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.18 2002/11/20 16:50:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.17 2002/11/15 14:32:32 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.18 2002/11/20 16:50:08 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -654,51 +654,64 @@ el_deletestr(EditLine *el, int n)
  *	Get a string
  */
 protected int
-c_gets(EditLine *el, char *buf)
+c_gets(EditLine *el, char *buf, const char *prompt)
 {
 	char ch;
-	int len = 0;
+	int len;
+	char *cp = el->el_line.buffer;
 
-	for (ch = 0; ch == 0;) {
-		if (el_getc(el, &ch) != 1)
-			return (ed_end_of_file(el, 0));
+	if (prompt) {
+		len = strlen(prompt);
+		memcpy(cp, prompt, len + 0u);
+		cp += len;
+	}
+	len = 0;
+
+	for (;;) {
+		el->el_line.cursor = cp;
+		*cp = ' ';
+		el->el_line.lastchar = cp + 1;
+		re_refresh(el);
+
+		if (el_getc(el, &ch) != 1) {
+			ed_end_of_file(el, 0);
+			len = -1;
+			break;
+		}
+
 		switch (ch) {
+
 		case 0010:	/* Delete and backspace */
 		case 0177:
-			if (len > 1) {
-				*el->el_line.cursor-- = '\0';
-				el->el_line.lastchar = el->el_line.cursor;
-				buf[len--] = '\0';
-			} else {
-				el->el_line.buffer[0] = '\0';
-				el->el_line.lastchar = el->el_line.buffer;
-				el->el_line.cursor = el->el_line.buffer;
-				return (CC_REFRESH);
+			if (len <= 0) {
+				len = -1;
+				break;
 			}
-			re_refresh(el);
-			ch = 0;
-			break;
+			cp--;
+			continue;
 
 		case 0033:	/* ESC */
 		case '\r':	/* Newline */
 		case '\n':
+			buf[len] = ch;
 			break;
 
 		default:
-			if (len >= EL_BUFSIZ)
+			if (len >= EL_BUFSIZ - 16)
 				term_beep(el);
 			else {
 				buf[len++] = ch;
-				*el->el_line.cursor++ = ch;
-				el->el_line.lastchar = el->el_line.cursor;
+				*cp++ = ch;
 			}
-			re_refresh(el);
-			ch = 0;
-			break;
+			continue;
 		}
+		break;
 	}
-	buf[len] = ch;
-	return (len);
+
+	el->el_line.buffer[0] = '\0';
+	el->el_line.lastchar = el->el_line.buffer;
+	el->el_line.cursor = el->el_line.buffer;
+	return len;
 }
 
 
