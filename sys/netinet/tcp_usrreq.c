@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.64 2001/07/25 23:28:02 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.65 2001/09/10 20:15:14 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -592,15 +592,6 @@ tcp_usrreq(so, req, m, nam, control, p)
 		if (in6p)
 			in6_setpeeraddr(in6p, nam);
 #endif
-		break;
-
-	/*
-	 * TCP slow timer went off; going through this
-	 * routine for tracing's sake.
-	 */
-	case PRU_SLOWTIMO:
-		tp = tcp_timers(tp, (long)nam);
-		req |= (long)nam << 8;		/* for debug's sake */
 		break;
 
 	default:
