@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 1995/03/01 03:48:44 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 1995/03/26 15:53:36 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -529,7 +529,6 @@ sendsig(catcher, sig, mask, code)
 	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
-
 /*printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);*/
 
 	frame = (struct frame *)p->p_md.md_regs;
@@ -538,6 +537,21 @@ sendsig(catcher, sig, mask, code)
 
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == EMUL_SUNOS) {
+		/*
+		 * if this is a hardware fault (ft >= FMT9), sun_sendsig
+		 * can't currently handle it. Reset signal actions and
+		 * have the process die unconditionally.
+		 */
+		if (ft >= FMT9) {
+			SIGACTION(p, sig) = SIG_DFL;
+			mask = sigmask(sig);
+			p->p_sigignore &= ~sig;
+			p->p_sigcatch &= ~sig;
+			p->p_sigmask &= ~sig;
+			psignal(p, sig);
+			return;
+		}
+
 		/*
 		 * build the short SunOS frame instead
 		 */
@@ -794,11 +808,6 @@ sigreturn(p, uap, retval)
 	struct sigstate tstate;
 	extern short exframesize[];
 
-#ifdef COMPAT_SUNOS
-	if (p->p_emul == EMUL_SUNOS)
-		return(sunos_sigreturn(p, uap, retval));
-#endif
-
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -810,6 +819,29 @@ sigreturn(p, uap, retval)
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
+#ifdef COMPAT_SUNOS
+	if (p->p_emul == EMUL_SUNOS) {
+	    struct sunos_sigcontext {
+		int ssc_onstack;
+                int ssc_mask;
+		int ssc_sp;
+		int ssc_pc;
+		int ssc_ps;
+	    } *sscp, stsigc;
+
+	    sscp = (struct sunos_sigcontext *) scp;
+	    if (useracc((caddr_t)sscp, sizeof (*sscp), B_WRITE) == 0 ||
+		copyin((caddr_t)sscp, (caddr_t)&stsigc, sizeof stsigc))
+		    return (EINVAL);
+	    sscp = &stsigc;
+	    context.sc_onstack = sscp->ssc_onstack;
+	    context.sc_mask = sscp->ssc_mask;
+	    context.sc_sp = sscp->ssc_sp;
+	    context.sc_ps = sscp->ssc_ps;
+	    context.sc_pc = sscp->ssc_pc;
+	}
+	else
+#endif /* COMPAT_SUNOS */
 	if (useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
 	    copyin(scp, &context, sizeof(context)))
 		return(EINVAL);
@@ -826,9 +858,18 @@ sigreturn(p, uap, retval)
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
-	frame->f_regs[A6] = scp->sc_fp;
+#ifdef COMPAT_SUNOS
+	if (p->p_emul != EMUL_SUNOS)
+#endif
+	    frame->f_regs[A6] = scp->sc_fp;
 	frame->f_pc = scp->sc_pc;
 	frame->f_sr = scp->sc_ps;
+
+#ifdef COMPAT_SUNOS
+	if (p->p_emul == EMUL_SUNOS)
+	    return EJUSTRETURN;
+#endif
+
 	/*
 	 * Grab pointer to hardware state information.
 	 * If zero, the user is probably doing a longjmp.
@@ -907,62 +948,6 @@ sigreturn(p, uap, retval)
 #endif
 	return (EJUSTRETURN);
 }
-
-#ifdef COMPAT_SUNOS
-/*
- * this is a "light weight" version of the NetBSD sigreturn, just for
- * SunOS processes. We don't have to restore any hardware frames,
- * registers, fpu stuff, that's all done in user space.
- */
-struct sunos_sigreturn_args {
-	struct sunos_sigcontext *sigcntxp;
-};
-
-int
-sunos_sigreturn(p, uap, retval)
-	struct proc *p;
-	struct sunos_sigreturn_args *uap;
-	register_t *retval;
-{
-	register struct sunos_sigcontext *scp;
-	register struct frame *frame;
-	register int rf;
-	struct sunos_sigcontext tsigc;
-	int flags;
-
-	scp = uap->sigcntxp;
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sunos_sigreturn: pid %d, scp %x\n", p->p_pid, scp);
-#endif
-	if ((int)scp & 1)
-		return (EINVAL);
-	/*
-	 * Test and fetch the context structure.
-	 * We grab it all at once for speed.
-	 */
-	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
-		return (EINVAL);
-	scp = &tsigc;
-	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
-		return (EINVAL);
-	/*
-	 * Restore the user supplied information
-	 */
-	if (scp->sc_onstack & 1)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
-	else 
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
-	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_md.md_regs;
-	frame->f_regs[SP] = scp->sc_sp;
-	frame->f_pc = scp->sc_pc;
-	frame->f_sr = scp->sc_ps;
-
-	return EJUSTRETURN;
-}
-#endif /* COMPAT_SUNOS */
 
 int	waittime = -1;
 
