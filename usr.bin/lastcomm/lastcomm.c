@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.16 2004/10/30 19:34:01 dsl Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.17 2005/03/28 22:10:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: lastcomm.c,v 1.16 2004/10/30 19:34:01 dsl Exp $");
+__RCSID("$NetBSD: lastcomm.c,v 1.17 2005/03/28 22:10:06 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -144,8 +144,8 @@ main(argc, argv)
 			     t / (double)AHZ, ctime(&ab.ac_btime));
 			delta = expand(ab.ac_etime) / (double)AHZ;
 			printf(" (%1.0f:%02.0f:%05.2f)\n",
-			       delta / SECSPERHOUR,
-			       fmod(delta, SECSPERHOUR) / SECSPERMIN,
+			       floor(delta / SECSPERHOUR),
+			       floor(fmod(delta, SECSPERHOUR) / SECSPERMIN),
 			       fmod(delta, SECSPERMIN));
 		}
 		/* are we at the beginning of the file yet? */
