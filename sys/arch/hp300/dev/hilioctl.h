@@ -35,10 +35,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: hilioctl.h 1.1 90/07/09$
- *
+ *	from: Utah Hdr: hilioctl.h 1.1 90/07/09
  *	from: @(#)hilioctl.h	7.2 (Berkeley) 11/4/90
- *	$Id: hilioctl.h,v 1.2 1993/05/22 07:56:18 cgd Exp $
+ *	$Id: hilioctl.h,v 1.3 1993/09/02 19:04:41 mycroft Exp $
  */
 
 struct _hilbell {
