@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:23 pk Exp $
+#	$NetBSD: MAKEDEV,v 1.6 1997/06/01 09:23:57 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -56,6 +56,7 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
+#	ipl	IP Filter device
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/etc
@@ -69,7 +70,7 @@ all)
 	sh $0 st0 st1 ch0 cd0 cd1 lpa0 lpt0 vnd0 vnd1 
 	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 lkm
-	sh $0 local
+	sh $0 ipl local
 	;;
 
 std)
@@ -240,6 +241,15 @@ lkm)
 	mknod lkm c 24 0
 	chown root.kmem lkm
 	chmod 640 lkm
+	;;
+
+ipl)
+	rm -f ipl ipnat ipstate
+	mknod ipl c 7 0
+	mknod ipnat c 7 1
+	mknod ipstate c 7 2
+	chown root.wheel ipl ipnat ipstate
+	chmod 600 ipl ipnat ipstate
 	;;
 
 local)
