@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.69 2001/07/13 20:30:24 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.70 2001/07/26 20:20:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -1329,7 +1329,8 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	SEGSUM *ssp;
 	dev_t i_dev;
 	char *datap, *dp;
-	int do_again, i, nblocks, s, el_size;
+	int do_again, i, nblocks, s;
+	size_t el_size;
 #ifdef LFS_TRACK_IOS
 	int j;
 #endif
