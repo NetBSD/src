@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)diskpart.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: diskpart.8,v 1.4 1997/03/08 14:28:52 mouse Exp $
+.\"	$NetBSD: diskpart.8,v 1.5 1997/06/21 09:07:07 lukem Exp $
 .\"
 .Dd June 6, 1993
 .Dt DISKPART 8
@@ -39,27 +39,27 @@
 .Nm diskpart
 .Nd calculate default disk partition sizes
 .Sh SYNOPSIS
-.Nm diskpart
-.Op Fl p
+.Nm
 .Op Fl d
+.Op Fl p
 .Op Fl s Ar size
 .Ar disk-type
 .Sh DESCRIPTION
-.Nm Diskpart
+.Nm
 is used to calculate the disk partition sizes based on the
 default rules used at Berkeley.
 .Pp
 Available options and operands:
 .Bl -tag -width Fl
-.It Fl p
-Tables suitable for inclusion in a device driver
-are produced.
 .It Fl d
 An entry suitable for inclusion in the disk
 description file
 .Pa /etc/disktab
 is generated; for example,
 .Xr disktab 5 .
+.It Fl p
+Tables suitable for inclusion in a device driver
+are produced.
 .It Fl s Ar size
 The size of the disk may be limited to
 .Ar size
