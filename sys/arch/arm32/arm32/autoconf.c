@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1 1996/01/31 23:15:09 mark Exp $ */
+/* $NetBSD: autoconf.c,v 1.2 1996/03/06 23:11:36 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * Autoconfiguration functions
  *
  * Created      : 08/10/94
- * Last updated : 28/08/95
- *
- *	$Id: autoconf.c,v 1.1 1996/01/31 23:15:09 mark Exp $
  */
 
 #include <sys/param.h>
@@ -201,19 +198,6 @@ swapconf()
 	int s;		/* The spl stuff was here for debugging reaons */
 
 	/*
-	 * The swapsize arg is redundant and scheduled for deletion */
-	 	
-        if (boot_args) {
-		ptr = strstr(boot_args, "swapsize=");
-		if (ptr) {
-			ptr += 9;
-			swapsize = (int)strtoul(ptr, NULL, 10);
-
-			printf("boot specified swapsize = %08x\n", swapsize);
-		}
-	}
-
-	/*
 	 * Loop round all the defined swap device configuring them.
 	 */
 
@@ -222,14 +206,14 @@ swapconf()
 		if (maj > nblkdev)
 			break;
 		if (bdevsw[maj].d_psize) {
-			s = splhigh();
+			s = spltty();
 			printf("swap dev %04x ", swp->sw_dev);
 			(void)splx(s);
 			if (swapsize == -1)
 				nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
   		  	else
 				nblks = swapsize;
-			s = splhigh();
+			s = spltty();
 			if (nblks == -1)
 				printf("-> device not configured for swap\n");
 			else
@@ -289,7 +273,7 @@ configure()
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
 	    irqmasks[IPL_CLOCK], irqmasks[IPL_IMP]);
 
-/* Time to start taking interrupts */
+/* Time to start taking interrupts so lets open the flood gates .... */
          
 	(void)spl0();
 }
