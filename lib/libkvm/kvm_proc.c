@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.20 1997/08/15 17:52:46 drochner Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.21 1998/02/03 19:12:44 perry Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.20 1997/08/15 17:52:46 drochner Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.21 1998/02/03 19:12:44 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,8 +107,8 @@ _kvm_uread(kd, p, va, cnt)
 	u_long va;
 	u_long *cnt;
 {
-	register u_long addr, head;
-	register u_long offset;
+	u_long addr, head;
+	u_long offset;
 	struct vm_map_entry vme;
 	struct vm_object vmo;
 	int rv;
@@ -333,7 +333,7 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 	struct kinfo_proc *bp;
 	int maxcnt;
 {
-	register int cnt = 0;
+	int cnt = 0;
 	struct eproc eproc;
 	struct pgrp pgrp;
 	struct session sess;
@@ -458,8 +458,8 @@ kvm_deadprocs(kd, what, arg, a_allproc, a_zombproc, maxcnt)
 	u_long a_zombproc;
 	int maxcnt;
 {
-	register struct kinfo_proc *bp = kd->procbase;
-	register int acnt, zcnt;
+	struct kinfo_proc *bp = kd->procbase;
+	int acnt, zcnt;
 	struct proc *p;
 
 	if (KREAD(kd, a_allproc, &p)) {
@@ -596,14 +596,14 @@ static char **
 kvm_argv(kd, p, addr, narg, maxcnt)
 	kvm_t *kd;
 	const struct proc *p;
-	register u_long addr;
-	register int narg;
-	register int maxcnt;
+	u_long addr;
+	int narg;
+	int maxcnt;
 {
-	register char *np, *cp, *ep, *ap;
-	register u_long oaddr = -1;
-	register int len, cc;
-	register char **argv;
+	char *np, *cp, *ep, *ap;
+	u_long oaddr = -1;
+	int len, cc;
+	char **argv;
 
 	/*
 	 * Check that there aren't an unreasonable number of agruments,
@@ -665,9 +665,9 @@ kvm_argv(kd, p, addr, narg, maxcnt)
 		if (ep != 0)
 			cc = ep - cp + 1;
 		if (len + cc > kd->arglen) {
-			register int off;
-			register char **pp;
-			register char *op = kd->argspc;
+			int off;
+			char **pp;
+			char *op = kd->argspc;
 
 			kd->arglen *= 2;
 			kd->argspc = (char *)_kvm_realloc(kd, kd->argspc,
@@ -760,8 +760,8 @@ kvm_doargv(kd, kp, nchr, info)
 	int nchr;
 	void (*info)(struct ps_strings *, u_long *, int *);
 {
-	register const struct proc *p = &kp->kp_proc;
-	register char **ap;
+	const struct proc *p = &kp->kp_proc;
+	char **ap;
 	u_long addr;
 	int cnt;
 	struct ps_strings arginfo;
@@ -816,17 +816,17 @@ kvm_getenvv(kd, kp, nchr)
 ssize_t
 kvm_uread(kd, p, uva, buf, len)
 	kvm_t *kd;
-	register const struct proc *p;
-	register u_long uva;
-	register char *buf;
-	register size_t len;
+	const struct proc *p;
+	u_long uva;
+	char *buf;
+	size_t len;
 {
-	register char *cp;
+	char *cp;
 
 	cp = buf;
 	while (len > 0) {
-		register int cc;
-		register char *dp;
+		int cc;
+		char *dp;
 		u_long cnt;
 
 		dp = _kvm_uread(kd, p, uva, &cnt);

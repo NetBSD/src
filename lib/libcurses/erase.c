@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.9 1997/07/22 07:36:39 mikel Exp $	*/
+/*	$NetBSD: erase.c,v 1.10 1998/02/03 19:12:22 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.9 1997/07/22 07:36:39 mikel Exp $");
+__RCSID("$NetBSD: erase.c,v 1.10 1998/02/03 19:12:22 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -50,11 +50,11 @@ __RCSID("$NetBSD: erase.c,v 1.9 1997/07/22 07:36:39 mikel Exp $");
  */
 int
 werase(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
 
-	register int minx, y;
-	register __LDATA *sp, *end, *start, *maxx;
+	int minx, y;
+	__LDATA *sp, *end, *start, *maxx;
 
 #ifdef DEBUG
 	__CTRACE("werase: (%0.2o)\n", win);

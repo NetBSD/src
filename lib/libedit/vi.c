@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.3 1997/07/06 18:25:39 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.4 1998/02/03 19:12:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.3 1997/07/06 18:25:39 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.4 1998/02/03 19:12:40 perry Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -62,7 +62,7 @@ cv_action(el, c)
     EditLine *el;
     int c;
 {
-    register char *cp, *kp;
+    char *cp, *kp;
 
     if (el->el_chared.c_vcmd.action & DELETE) {
 	el->el_chared.c_vcmd.action = NOP;

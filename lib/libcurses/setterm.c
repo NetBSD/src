@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.9 1998/01/30 04:33:34 perry Exp $	*/
+/*	$NetBSD: setterm.c,v 1.10 1998/02/03 19:12:35 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.9 1998/01/30 04:33:34 perry Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.10 1998/02/03 19:12:35 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,11 +89,11 @@ char *ttytype;
 
 int
 setterm(type)
-	register char *type;
+	char *type;
 {
 	static char genbuf[1024];
 	static char __ttytype[1024];
-	register int unknown;
+	int unknown;
 	struct winsize win;
 	char *p;
 
@@ -178,11 +178,11 @@ setterm(type)
 static void
 zap()
 {
-	register char *namp, ***sp;
-	register char **fp;
+	char *namp, ***sp;
+	char **fp;
 	char tmp[3];
 #ifdef DEBUG
-	register char	*cp;
+	char	*cp;
 #endif
 	tmp[2] = '\0';
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: deleteln.c,v 1.8 1997/07/22 07:36:37 mikel Exp $	*/
+/*	$NetBSD: deleteln.c,v 1.9 1998/02/03 19:12:21 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)deleteln.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: deleteln.c,v 1.8 1997/07/22 07:36:37 mikel Exp $");
+__RCSID("$NetBSD: deleteln.c,v 1.9 1998/02/03 19:12:21 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -52,10 +52,10 @@ __RCSID("$NetBSD: deleteln.c,v 1.8 1997/07/22 07:36:37 mikel Exp $");
  */
 int
 wdeleteln(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
-	register int y, i;
-	register __LINE *temp;
+	int y, i;
+	__LINE *temp;
 
 #ifdef DEBUG
 	__CTRACE("deleteln: (%0.2o)\n", win);

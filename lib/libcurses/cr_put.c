@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.9 1997/07/22 07:36:30 mikel Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.10 1998/02/03 19:12:19 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.9 1997/07/22 07:36:30 mikel Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.10 1998/02/03 19:12:19 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -94,8 +94,8 @@ static void
 fgoto(in_refresh)
 	int in_refresh;
 {
-	register int c, l;
-	register char *cgp;
+	int c, l;
+	char *cgp;
 
 	if (destcol >= COLS) {
 		destline += destcol / COLS;
@@ -203,7 +203,7 @@ static int
 plod(cnt, in_refresh)
 	int cnt, in_refresh;
 {
-	register int i, j, k, soutcol, soutline;
+	int i, j, k, soutcol, soutline;
 
 	plodcnt = plodflg = cnt;
 	soutcol = outcol;

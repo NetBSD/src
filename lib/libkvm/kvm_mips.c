@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mips.c,v 1.8 1997/10/20 19:43:26 jonathan Exp $	*/
+/*	$NetBSD: kvm_mips.c,v 1.9 1998/02/03 19:12:43 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_mips.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_mips.c,v 1.8 1997/10/20 19:43:26 jonathan Exp $");
+__RCSID("$NetBSD: kvm_mips.c,v 1.9 1998/02/03 19:12:43 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,7 +135,7 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	register struct vmstate *vm;
+	struct vmstate *vm;
 	u_long pte, addr, offset;
 
 	u_int pgshift, pg_v, pg_frame;

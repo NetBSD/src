@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.8 1997/07/22 07:36:48 mikel Exp $	*/
+/*	$NetBSD: insch.c,v 1.9 1998/02/03 19:12:26 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.8 1997/07/22 07:36:48 mikel Exp $");
+__RCSID("$NetBSD: insch.c,v 1.9 1998/02/03 19:12:26 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -52,11 +52,11 @@ __RCSID("$NetBSD: insch.c,v 1.8 1997/07/22 07:36:48 mikel Exp $");
  */
 int
 winsch(win, ch)
-	register WINDOW *win;
+	WINDOW *win;
 	int ch;
 {
 
-	register __LDATA *end, *temp1, *temp2;
+	__LDATA *end, *temp1, *temp2;
 
 	end = &win->lines[win->cury]->line[win->curx];
 	temp1 = &win->lines[win->cury]->line[win->maxx - 1];

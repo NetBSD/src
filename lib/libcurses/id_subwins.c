@@ -1,4 +1,4 @@
-/*	$NetBSD: id_subwins.c,v 1.7 1997/07/22 07:36:44 mikel Exp $	*/
+/*	$NetBSD: id_subwins.c,v 1.8 1998/02/03 19:12:25 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)id_subwins.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: id_subwins.c,v 1.7 1997/07/22 07:36:44 mikel Exp $");
+__RCSID("$NetBSD: id_subwins.c,v 1.8 1998/02/03 19:12:25 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -50,10 +50,10 @@ __RCSID("$NetBSD: id_subwins.c,v 1.7 1997/07/22 07:36:44 mikel Exp $");
  */
 void
 __id_subwins(orig)
-	register WINDOW *orig;
+	WINDOW *orig;
 {
-	register WINDOW *win;
-	register int oy, realy, y;
+	WINDOW *win;
+	int oy, realy, y;
 
 	realy = orig->begy + orig->cury;
 	for (win = orig->nextp; win != orig; win = win->nextp) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: emacs.c,v 1.4 1997/07/06 18:25:25 christos Exp $	*/
+/*	$NetBSD: emacs.c,v 1.5 1998/02/03 19:12:39 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)emacs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: emacs.c,v 1.4 1997/07/06 18:25:25 christos Exp $");
+__RCSID("$NetBSD: emacs.c,v 1.5 1998/02/03 19:12:39 perry Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -399,7 +399,7 @@ em_exchange_mark(el, c)
     EditLine *el;
     int c;
 {
-    register char *cp;
+    char *cp;
 
     cp = el->el_line.cursor;
     el->el_line.cursor = el->el_chared.c_kill.mark;

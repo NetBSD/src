@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.11 1997/07/22 07:36:20 mikel Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.12 1998/02/03 19:12:16 perry Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.11 1997/07/22 07:36:20 mikel Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.12 1998/02/03 19:12:16 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -53,13 +53,13 @@ __RCSID("$NetBSD: addbytes.c,v 1.11 1997/07/22 07:36:20 mikel Exp $");
  */
 int
 __waddbytes(win, bytes, count, so)
-	register WINDOW *win;
-	register const char *bytes;
-	register int count;
+	WINDOW *win;
+	const char *bytes;
+	int count;
 	int so;
 {
 	static char blanks[] = "        ";
-	register int c, newx, x, y;
+	int c, newx, x, y;
 	char stand;
 	__LINE *lp;
 

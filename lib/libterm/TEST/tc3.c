@@ -1,4 +1,4 @@
-/*	$NetBSD: tc3.c,v 1.2 1998/01/09 03:16:42 perry Exp $	*/
+/*	$NetBSD: tc3.c,v 1.3 1998/02/03 19:12:49 perry Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -86,7 +86,7 @@ main(argc, argv) char **argv; {
 }
 
 pr(p)
-register char *p;
+char *p;
 {
 	for (; *p; p++)
 		printf("%s", rdchar(*p));
@@ -101,7 +101,7 @@ char *rdchar(c)
 char c;
 {
 	static char ret[4];
-	register char *p = ret;
+	char *p = ret;
 
 	if ((c&0377) > 0177)
 		*p++ = '\'';

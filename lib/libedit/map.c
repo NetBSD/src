@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.4 1997/07/06 18:25:29 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.5 1998/02/03 19:12:40 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.4 1997/07/06 18:25:29 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.5 1998/02/03 19:12:40 perry Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -969,7 +969,7 @@ map_init_meta(el)
     EditLine *el;
 {
     char    buf[3];
-    register int i;
+    int i;
     el_action_t *map = el->el_map.key;
     el_action_t *alt = el->el_map.alt;
 
@@ -1011,7 +1011,7 @@ protected void
 map_init_vi(el)
     EditLine *el;
 {
-    register int i;
+    int i;
     el_action_t *key = el->el_map.key;
     el_action_t *alt = el->el_map.alt;
     el_action_t *vii = el->el_map.vii;

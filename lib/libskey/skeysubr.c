@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.10 1997/06/28 01:12:19 christos Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.11 1998/02/03 19:12:48 perry Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -43,7 +43,7 @@ char *passwd;	/* Password, any length */
 	MD4_CTX md;
 	unsigned int buflen;
 	int i;
-	register int tmp;
+	int tmp;
 	u_int32_t hash[4];
 	
 	buflen = strlen(seed) + strlen(passwd);
@@ -87,7 +87,7 @@ f(x)
 	char *x;
 {
 	MD4_CTX md;
-	register int tmp;
+	int tmp;
 	u_int32_t hash[4];
 
 	MD4Init(&md);
@@ -210,10 +210,10 @@ trapped(sig)
  */
 int
 atob8(out, in)
-	register char *out, *in;
+	char *out, *in;
 {
-	register int i;
-	register int val;
+	int i;
+	int val;
 
 	if (in == NULL || out == NULL)
 		return -1;
@@ -237,9 +237,9 @@ atob8(out, in)
 /* Convert 8-byte binary array to hex-ascii string */
 int
 btoa8(out, in)
-	register char *out, *in;
+	char *out, *in;
 {
-	register int i;
+	int i;
 
 	if (in == NULL || out == NULL)
 		return -1;
@@ -255,7 +255,7 @@ btoa8(out, in)
 /* Convert hex digit to binary integer */
 int
 htoi(c)
-	register char c;
+	char c;
 {
 	if ('0' <= c && c <= '9')
 		return c - '0';
@@ -268,7 +268,7 @@ htoi(c)
 
 char *
 skipspace(cp)
-	register char *cp;
+	char *cp;
 {
 	while (*cp == ' ' || *cp == '\t')
 		cp++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k.c,v 1.5 1997/08/15 02:07:40 mikel Exp $	*/
+/*	$NetBSD: kvm_m68k.c,v 1.6 1998/02/03 19:12:46 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k.c,v 1.5 1997/08/15 02:07:40 mikel Exp $");
+__RCSID("$NetBSD: kvm_m68k.c,v 1.6 1998/02/03 19:12:46 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,9 +135,9 @@ _kvm_vatop(kd, sta, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	register struct vmstate *vm;
-	register u_long lowram;
-	register u_long addr;
+	struct vmstate *vm;
+	u_long lowram;
+	u_long addr;
 	int p, ste, pte;
 	int offset;
 

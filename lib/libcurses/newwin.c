@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.8 1997/07/22 07:36:53 mikel Exp $	*/
+/*	$NetBSD: newwin.c,v 1.9 1998/02/03 19:12:30 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.8 1997/07/22 07:36:53 mikel Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.9 1998/02/03 19:12:30 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -58,12 +58,12 @@ void	 __set_subwin __P((WINDOW *, WINDOW *));
  */
 WINDOW *
 newwin(nl, nc, by, bx)
-	register int nl, nc, by, bx;
+	int nl, nc, by, bx;
 {
-	register WINDOW *win;
-	register __LINE *lp;
-	register int  i, j;
-	register __LDATA *sp;
+	WINDOW *win;
+	__LINE *lp;
+	int  i, j;
+	__LDATA *sp;
 
 	if (nl == 0)
 		nl = LINES - by;
@@ -95,12 +95,12 @@ newwin(nl, nc, by, bx)
 
 WINDOW *
 subwin(orig, nl, nc, by, bx)
-	register WINDOW *orig;
-	register int by, bx, nl, nc;
+	WINDOW *orig;
+	int by, bx, nl, nc;
 {
 	int i;
 	__LINE *lp;
-	register WINDOW *win;
+	WINDOW *win;
 
 	/* Make sure window fits inside the original one. */
 #ifdef	DEBUG
@@ -132,7 +132,7 @@ subwin(orig, nl, nc, by, bx)
  */
 void
 __set_subwin(orig, win)
-	register WINDOW *orig, *win;
+	WINDOW *orig, *win;
 {
 	int i;
 	__LINE *lp, *olp;
@@ -159,11 +159,11 @@ __set_subwin(orig, win)
  */
 static WINDOW *
 __makenew(nl, nc, by, bx, sub)
-	register int by, bx, nl, nc;
+	int by, bx, nl, nc;
 	int sub;
 {
-	register WINDOW *win;
-	register __LINE *lp;
+	WINDOW *win;
+	__LINE *lp;
 	int i;
 	
 
@@ -238,7 +238,7 @@ __makenew(nl, nc, by, bx, sub)
 
 void
 __swflags(win)
-	register WINDOW *win;
+	WINDOW *win;
 {
 	win->flags &= ~(__ENDLINE | __FULLWIN | __SCROLLWIN | __LEAVEOK);
 	if (win->begx + win->maxx == COLS) {

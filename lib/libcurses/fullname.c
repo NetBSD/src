@@ -1,4 +1,4 @@
-/*	$NetBSD: fullname.c,v 1.7 1997/07/22 07:36:41 mikel Exp $	*/
+/*	$NetBSD: fullname.c,v 1.8 1998/02/03 19:12:23 perry Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fullname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fullname.c,v 1.7 1997/07/22 07:36:41 mikel Exp $");
+__RCSID("$NetBSD: fullname.c,v 1.8 1998/02/03 19:12:23 perry Exp $");
 #endif
 #endif	/* not lint */
 
@@ -51,9 +51,9 @@ __RCSID("$NetBSD: fullname.c,v 1.7 1997/07/22 07:36:41 mikel Exp $");
  */
 char *
 fullname(bp, def)
-	register char *bp, *def;
+	char *bp, *def;
 {
-	register char *cp;
+	char *cp;
 
 	*def = '\0';		/* In case no name. */
 
