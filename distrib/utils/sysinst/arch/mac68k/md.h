@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 2001/11/29 23:24:24 thorpej Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2002/06/29 17:00:18 scottr Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -40,29 +40,22 @@
 
 /* md.h -- Machine specific definitions for the mac68k */
 
+#define LIB_COUNT 0
+#define LIB_MOVE 1
+
+/*
+ * Define partition types
+ */
+#define ROOT_PART 1
+#define UFS_PART 2
+#define SWAP_PART 3
+#define HFS_PART 4
+#define SCRATCH_PART 5
+
 EXTERN int bcyl, bhead, bsec, bsize, bcylsize;
 EXTERN int part[4][5] INIT({{0}});
 EXTERN int bsdpart;			/* partition in use by NetBSD */
 EXTERN int usefull;			/* on install, clobber entire disk */
-
-/*  
- * Known partition types on a MacOS initialized disk
- *  Note: Setting the usable field on the last entry defines
- *        how unknown partition types will be handled.
- */ 
-typedef struct {
-        int usable;             /* Use type: 0=>reserved */
-        char *partype;
-        char *fstyp;
-} PTYPES;
-
-/*    
- * Define the classes of partitions types we can handle 
- */   
-#define TYP_RSRVD 0             /* Unusable low-level part of disk */
-#define TYP_AVAIL 1             /* Anything not used by MacOS or NetBSD */ 
-#define TYP_HFS   2             /* In use by MacOS */
-#define TYP_BSD   3             /* In use by NetBSD */
 
 typedef struct {
         int size;               /* number of blocks in map for I/O */
@@ -88,14 +81,22 @@ EXTERN MAP map;
 
 int	edit_diskmap (void);		
 void	disp_selected_part (int sel);
-int	part_type(int entry, char *fstyp, char *use, char *name);
-int	strnicmp(const char *c1, const char *c2, int n);
+int	whichType(struct part_map_entry *);
+char	*getFstype(struct part_map_entry *, int, char *);
+char	*getUse(struct part_map_entry *, int, char *);
+char	*getName(struct part_map_entry *, int, char *);
+int	stricmp(const char *c1, const char *c2);
+int	getFreeLabelEntry(char *);
+int	findStdType(int, char *, int, int *, int);
+void	setpartition(struct part_map_entry *, char *, int);
 void	sortmerge(void);
-void	reset_part_flags(int part);
+void	reset_part_flags(struct part_map_entry *);
 int	check_for_errors(void);
 void	report_errors(void);
 void	set_fdisk_info (void);		/* write incore info into disk */
 int	get_diskmap_info (void);
+void	md_select_kernel(void);
+int	md_debug_dump(char *);
 
 /* constants and defines */
 
@@ -113,7 +114,8 @@ typedef struct {
 	unsigned int root : 1;	/* FS contains a Root FS */
 	unsigned int usr  : 1;	/* FS contains a Usr FS */
 	unsigned int crit : 1;	/* FS contains a "Critical"? FS */
-	unsigned int      : 8;
+	unsigned int used : 1;  /* FS in use */
+	unsigned int      : 7;
 	unsigned int slice : 5;	/* Slice number to assocate with plus one */
 	unsigned int part  : 16; /* reserved, but we'll hide disk part here */
     } flags;
