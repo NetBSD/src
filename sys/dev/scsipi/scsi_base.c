@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.26 1995/01/16 21:34:10 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.27 1995/01/26 11:56:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -303,57 +303,6 @@ scsi_start(sc_link, type, flags)
 	return scsi_scsi_cmd(sc_link, (struct scsi_generic *) &scsi_cmd,
 			     sizeof(scsi_cmd), 0, 0, 2,
 			     type == SSS_START ? 30000 : 10000, NULL, flags);
-}
-
-int
-scsi_start_and_wait(sc_link, n, flags)
-	struct scsi_link *sc_link;
-	int n;
-	int flags;
-{
-	int silent = flags & SCSI_SILENT;
-	struct scsi_xfer *xs;
-	struct scsi_start_stop scsi_cmd;
-	int error;
-
-	flags |= SCSI_SILENT | SCSI_IGNORE_MEDIA_CHANGE;
-
-	bzero(&scsi_cmd, sizeof(scsi_cmd));
-	scsi_cmd.opcode = START_STOP;
-	scsi_cmd.byte2 = 0x01;
-	scsi_cmd.how = SSS_START;
-
-	if ((xs = scsi_make_xs(sc_link, (struct scsi_generic *)&scsi_cmd,
-	    sizeof(scsi_cmd), 0, 0, 2, 1000, NULL, flags)) == NULL)
-		return ENOMEM;
-
-	if ((error = scsi_execute_xs(xs)) != EIO ||
-	    xs->error != XS_SENSE ||
-	    (xs->sense.error_code & SSD_ERRCODE) != 0x70 ||
-	    (xs->sense.extended_flags & SSD_KEY) != 0x2)
-		goto out;
-	if (!silent) {
-		sc_print_addr(sc_link);
-		printf("waiting for device to come ready\n");
-	}
-	for (; n; n--) {
-		if ((flags & SCSI_POLL) != 0)
-			delay(1000000);
-		else
-			tsleep(&lbolt, PRIBIO, "scisaw", 0);
-		if ((error = scsi_execute_xs(xs)) != EIO ||
-		    xs->error != XS_SENSE ||
-		    (xs->sense.error_code & SSD_ERRCODE) != 0x70 ||
-		    (xs->sense.extended_flags & SSD_KEY) != 0x2)
-			break;
-	}
-	if (!silent) {
-		sc_print_addr(sc_link);
-		printf("%sready\n", n ? "" : "not ");
-	}
-out:
-	scsi_free_xs(xs, SCSI_NOSLEEP);
-	return error;
 }
 
 /*
