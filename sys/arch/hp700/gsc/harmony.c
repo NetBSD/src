@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.2.2.1 2005/01/03 16:44:00 kent Exp $	*/
+/*	$NetBSD: harmony.c,v 1.2.2.2 2005/01/09 08:42:44 kent Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -68,7 +68,7 @@ void    harmony_close(void *);
 int     harmony_query_encoding(void *, struct audio_encoding *);
 int     harmony_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-int     harmony_round_blocksize(void *, int);
+int     harmony_round_blocksize(void *, int, int, const audio_params_t *);
 int     harmony_commit_settings(void *);
 int     harmony_halt_output(void *);
 int     harmony_halt_input(void *);
@@ -597,7 +597,8 @@ harmony_set_params(void *vsc, int setmode, int usemode,
 }
 
 int
-harmony_round_blocksize(void *vsc, int blk)
+harmony_round_blocksize(void *vsc, int blk,
+			int mode, const audio_params_t *param)
 {
 	return (HARMONY_BUFSIZE);
 }

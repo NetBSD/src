@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.5.2.1 2005/01/02 20:03:10 kent Exp $	*/
+/*	$NetBSD: auacer.c,v 1.5.2.2 2005/01/09 08:42:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.5.2.1 2005/01/02 20:03:10 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.5.2.2 2005/01/09 08:42:45 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,12 +169,10 @@ int	auacer_intr(void *);
 CFATTACH_DECL(auacer, sizeof(struct auacer_softc),
     auacer_match, auacer_attach, NULL, NULL);
 
-int	auacer_open(void *, int);
-void	auacer_close(void *);
 int	auacer_query_encoding(void *, struct audio_encoding *);
 int	auacer_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 	    stream_filter_list_t *, stream_filter_list_t *);
-int	auacer_round_blocksize(void *, int);
+int	auacer_round_blocksize(void *, int, int, const audio_params_t *);
 int	auacer_halt_output(void *);
 int	auacer_halt_input(void *);
 int	auacer_getdev(void *, struct audio_device *);
@@ -204,8 +202,8 @@ void	auacer_finish_attach(struct device *);
 static void auacer_reset(struct auacer_softc *sc);
 
 struct audio_hw_if auacer_hw_if = {
-	auacer_open,
-	auacer_close,
+	NULL,			/* open */
+	NULL,			/* close */
 	NULL,			/* drain */
 	auacer_query_encoding,
 	auacer_set_params,
@@ -487,19 +485,6 @@ auacer_reset(struct auacer_softc *sc)
 }
 
 int
-auacer_open(void *v, int flags)
-{
-	DPRINTF(ALI_DEBUG_API, ("auacer_open: flags=%d\n", flags));
-	return 0;
-}
-
-void
-auacer_close(void *v)
-{
-	DPRINTF(ALI_DEBUG_API, ("auacer_close\n"));
-}
-
-int
 auacer_query_encoding(void *v, struct audio_encoding *aep)
 {
 	struct auacer_softc *sc;
@@ -594,7 +579,7 @@ auacer_set_params(void *v, int setmode, int usemode, audio_params_t *play,
 }
 
 int
-auacer_round_blocksize(void *v, int blk)
+auacer_round_blocksize(void *v, int blk, int mode, const audio_params_t *param)
 {
 
 	return (blk & ~0x3f);		/* keep good alignment */

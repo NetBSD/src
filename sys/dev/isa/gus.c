@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.85.2.2 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: gus.c,v 1.85.2.3 2005/01/09 08:42:45 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.85.2.2 2005/01/03 16:40:26 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.85.2.3 2005/01/09 08:42:45 kent Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -370,7 +370,7 @@ int	gus_set_params __P((void *, int, int, audio_params_t *,
 	    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *));
 int	gusmax_set_params __P((void *, int, int, audio_params_t *,
 	    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *));
-int	gus_round_blocksize __P((void *, int));
+int	gus_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	gus_commit_settings __P((void *));
 int	gus_dma_output __P((void *, void *, int, void (*)(void *), void *));
 int	gus_dma_input __P((void *, void *, int, void (*)(void *), void *));
@@ -378,7 +378,7 @@ int	gus_halt_out_dma __P((void *));
 int	gus_halt_in_dma __P((void *));
 int	gus_speaker_ctl __P((void *, int));
 int	gusmaxopen __P((void *, int));
-int	gusmax_round_blocksize __P((void *, int));
+int	gusmax_round_blocksize __P((void *, int, int, const audio_params_t *));
 int	gusmax_commit_settings __P((void *));
 int	gusmax_dma_output __P((void *, void *, int, void (*)(void *), void *));
 int	gusmax_dma_input __P((void *, void *, int, void (*)(void *), void *));
@@ -1140,7 +1140,8 @@ gusopen(addr, flags)
 			gus_mic_ctl(sc, SPKR_ON);
 	}
 	if (sc->sc_nbufs == 0)
-	    gus_round_blocksize(sc, GUS_BUFFER_MULTIPLE); /* default blksiz */
+	    gus_round_blocksize(sc, GUS_BUFFER_MULTIPLE, /* default blksiz */
+				0, NULL); /* XXX */
 	return 0;
 }
 
@@ -2358,21 +2359,25 @@ gus_set_params(addr, setmode, usemode, p, r, pfil, rfil)
  */
 
 int
-gusmax_round_blocksize(addr, blocksize)
+gusmax_round_blocksize(addr, blocksize, mode, param)
 	void * addr;
 	int blocksize;
+	int mode;
+	const audio_params_t *param;
 {
 	struct ad1848_isa_softc *ac = addr;
 	struct gus_softc *sc = ac->sc_ad1848.parent;
 
-/*	blocksize = ad1848_round_blocksize(ac, blocksize);*/
-	return gus_round_blocksize(sc, blocksize);
+/*	blocksize = ad1848_round_blocksize(ac, blocksize, mode, param);*/
+	return gus_round_blocksize(sc, blocksize, mode, param);
 }
 
 int
-gus_round_blocksize(addr, blocksize)
+gus_round_blocksize(addr, blocksize, mode, param)
 	void * addr;
 	int blocksize;
+	int mode;
+	const audio_params_t *param;
 {
 	struct gus_softc *sc = addr;
 

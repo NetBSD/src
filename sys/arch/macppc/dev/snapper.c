@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.2.2.1 2005/01/03 16:45:00 kent Exp $	*/
+/*	$NetBSD: snapper.c,v 1.2.2.2 2005/01/09 08:42:45 kent Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 
 /*-
@@ -85,12 +85,11 @@ int snapper_match(struct device *, struct cfdata *, void *);
 void snapper_attach(struct device *, struct device *, void *);
 void snapper_defer(struct device *);
 int snapper_intr(void *);
-int snapper_open(void *, int);
 void snapper_close(void *);
 int snapper_query_encoding(void *, struct audio_encoding *);
 int snapper_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
-int snapper_round_blocksize(void *, int);
+int snapper_round_blocksize(void *, int, int, const audio_params_t *);
 int snapper_halt_output(void *);
 int snapper_halt_input(void *);
 int snapper_getdev(void *, struct audio_device *);
@@ -128,7 +127,7 @@ struct cfattach snapper_ca = {
 };
 
 const struct audio_hw_if snapper_hw_if = {
-	snapper_open,
+	NULL,			/* open */
 	snapper_close,
 	NULL,
 	snapper_query_encoding,
@@ -405,14 +404,6 @@ snapper_intr(v)
 	return 1;
 }
 
-int
-snapper_open(h, flags)
-	void *h;
-	int flags;
-{
-	return 0;
-}
-
 /*
  * Close function is called at splaudio().
  */
@@ -533,9 +524,11 @@ snapper_set_params(h, setmode, usemode, play, rec, pfil, rfil)
 }
 
 int
-snapper_round_blocksize(h, size)
+snapper_round_blocksize(h, size, mode, param)
 	void *h;
 	int size;
+	int mode;
+	const audio_params_t *param;
 {
 	if (size < NBPG)
 		size = NBPG;

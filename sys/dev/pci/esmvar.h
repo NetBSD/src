@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.10.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.10.2.2 2005/01/09 08:42:46 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -214,10 +214,8 @@ int	esm_trigger_input(void *, void *, void *, int, void (*)(void *),
 	    void *, const audio_params_t *);
 int	esm_halt_output(void *);
 int	esm_halt_input(void *);
-int	esm_open(void *, int);
-void	esm_close(void *);
 int	esm_getdev(void *, struct audio_device *);
-int	esm_round_blocksize(void *, int);
+int	esm_round_blocksize(void *, int, int, const audio_params_t *);
 int	esm_query_encoding(void *, struct audio_encoding *);
 int	esm_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 	    stream_filter_list_t *, stream_filter_list_t *);

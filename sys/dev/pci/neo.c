@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.24.2.1 2005/01/02 20:03:11 kent Exp $	*/
+/*	$NetBSD: neo.c,v 1.24.2.2 2005/01/09 08:42:46 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.24.2.1 2005/01/02 20:03:11 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.24.2.2 2005/01/09 08:42:46 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,12 +180,10 @@ int	neo_match(struct device *, struct cfdata *, void *);
 void	neo_attach(struct device *, struct device *, void *);
 int	neo_intr(void *);
 
-int	neo_open(void *, int);
-void	neo_close(void *);
 int	neo_query_encoding(void *, struct audio_encoding *);
 int	neo_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 		       stream_filter_list_t *, stream_filter_list_t *);
-int	neo_round_blocksize(void *, int);
+int	neo_round_blocksize(void *, int, int, const audio_params_t *);
 int	neo_trigger_output(void *, void *, void *, int, void (*)(void *),
 	    void *, const audio_params_t *);
 int	neo_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -246,8 +244,8 @@ static const struct audio_format neo_formats[NEO_NFORMATS] = {
 /* -------------------------------------------------------------------- */
 
 const struct audio_hw_if neo_hw_if = {
-	neo_open,
-	neo_close,
+	NULL,				/* open */
+	NULL,				/* close */
 	NULL,				/* drain */
 	neo_query_encoding,
 	neo_set_params,
@@ -691,21 +689,6 @@ neo_flags_codec(void *v)
 }
 
 int
-neo_open(void *addr, int flags)
-{
-
-	return (0);
-}
-
-/*
- * Close function is called at splaudio().
- */
-void
-neo_close(void *addr)
-{
-}
-
-int
 neo_query_encoding(void *addr, struct audio_encoding *fp)
 {
 
@@ -818,7 +801,7 @@ neo_set_params(void *addr, int setmode, int usemode, audio_params_t *play,
 }
 
 int
-neo_round_blocksize(void *addr, int blk)
+neo_round_blocksize(void *addr, int blk, int mode, const audio_params_t *param)
 {
 
 	return (NM_BUFFSIZE / 2);

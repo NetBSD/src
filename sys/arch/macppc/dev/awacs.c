@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.21.2.1 2005/01/03 16:45:00 kent Exp $	*/
+/*	$NetBSD: awacs.c,v 1.21.2.2 2005/01/09 08:42:44 kent Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.21.2.1 2005/01/03 16:45:00 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.21.2.2 2005/01/09 08:42:44 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -90,12 +90,11 @@ int awacs_match(struct device *, struct cfdata *, void *);
 void awacs_attach(struct device *, struct device *, void *);
 int awacs_intr(void *);
 
-int awacs_open(void *, int);
 void awacs_close(void *);
 int awacs_query_encoding(void *, struct audio_encoding *);
 int awacs_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 			 stream_filter_list_t *, stream_filter_list_t *);
-int awacs_round_blocksize(void *, int);
+int awacs_round_blocksize(void *, int, int, const audio_params_t *);
 int awacs_trigger_output(void *, void *, void *, int, void (*)(void *),
 			     void *, const audio_params_t *);
 int awacs_trigger_input(void *, void *, void *, int, void (*)(void *),
@@ -121,7 +120,7 @@ CFATTACH_DECL(awacs, sizeof(struct awacs_softc),
     awacs_match, awacs_attach, NULL, NULL);
 
 const struct audio_hw_if awacs_hw_if = {
-	awacs_open,
+	NULL,			/* open */
 	awacs_close,
 	NULL,
 	awacs_query_encoding,
@@ -396,14 +395,6 @@ awacs_intr(v)
 	return 1;
 }
 
-int
-awacs_open(h, flags)
-	void *h;
-	int flags;
-{
-	return 0;
-}
-
 /*
  * Close function is called at splaudio().
  */
@@ -539,9 +530,11 @@ awacs_set_params(h, setmode, usemode, play, rec, pfil, rfil)
 }
 
 int
-awacs_round_blocksize(h, size)
+awacs_round_blocksize(h, size, mode, param)
 	void *h;
 	int size;
+	int mode;
+	const audio_params_t *param;
 {
 	if (size < PAGE_SIZE)
 		size = PAGE_SIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.12 2005/01/03 16:40:26 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.13 2005/01/09 08:42:45 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -188,7 +188,7 @@ struct audio_hw_if {
 		    stream_filter_list_t *);
 
 	/* Hardware may have some say in the blocksize to choose */
-	int	(*round_blocksize)(void *, int);
+	int	(*round_blocksize)(void *, int, int, const audio_params_t *);
 
 	/*
 	 * Changing settings may require taking device out of "data mode",
