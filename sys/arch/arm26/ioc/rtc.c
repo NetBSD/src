@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.2 2000/06/28 15:25:03 bjh21 Exp $	*/
+/*	$NetBSD: rtc.c,v 1.3 2000/07/27 23:51:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -46,8 +46,9 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: rtc.c,v 1.2 2000/06/28 15:25:03 bjh21 Exp $");
+__RCSID("$NetBSD: rtc.c,v 1.3 2000/07/27 23:51:43 bjh21 Exp $");
 
+#include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
@@ -63,12 +64,17 @@ struct rtc_softc {
 #define RTC_BROKEN	1
 #define RTC_OPEN	2
 	int		sc_addr;
+	struct todr_chip_handle sc_ct;
 };
 
 static int rtcmatch(struct device *parent, struct cfdata *cf, void *aux);
 static void rtcattach(struct device *parent, struct device *self, void *aux);
-static int rtc_gettime(struct device *, struct timeval *);
-static int rtc_settime(struct device *, struct timeval *);
+static int rtc_gettime(todr_chip_handle_t, struct timeval *);
+static int rtc_settime(todr_chip_handle_t, struct timeval *);
+static int rtc_getcal(todr_chip_handle_t, int *);
+static int rtc_setcal(todr_chip_handle_t, int);
+static int cmos_read(struct device *, int);
+static int cmos_write(struct device *, int, int);
 
 #define RTC_ADDR_YEAR     	0xc0
 #define RTC_ADDR_CENT     	0xc1
@@ -156,13 +162,19 @@ rtcattach(parent, self, aux)
 		sc->sc_flags &= ~RTC_BROKEN;
 	}
 
+	/* Set up MI todr(9) stuff (not really used) */
+	sc->sc_ct.cookie = sc;
+	sc->sc_ct.todr_settime = rtc_settime;
+	sc->sc_ct.todr_gettime = rtc_gettime;
+	sc->sc_ct.todr_getcal = rtc_getcal;
+	sc->sc_ct.todr_setcal = rtc_setcal;
  out:
 	printf("\n");
 }
 
 /* Read a byte from CMOS RAM */
 
-int
+static int
 cmos_read(struct device *self, int location)
 {
 	u_char buff;
@@ -181,7 +193,7 @@ cmos_read(struct device *self, int location)
 
 /* Write a byte to CMOS RAM */
 
-int
+static int
 cmos_write(struct device *self, int location, int value)
 {
 	u_char buff[2];
@@ -197,9 +209,9 @@ cmos_write(struct device *self, int location, int value)
 }
 
 static int
-rtc_settime(struct device *self, struct timeval *tv)
+rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 {
-	struct rtc_softc *sc = (struct rtc_softc *)self;
+	struct rtc_softc *sc = handle->cookie;
 	u_char buff[8];
 	struct clock_ymdhms ymdhms;
 
@@ -216,20 +228,23 @@ rtc_settime(struct device *self, struct timeval *tv)
 	buff[PCF8583_REG_WKDYMON] = TOBCD(ymdhms.dt_mon) |
 	    ((ymdhms.dt_wday % 4) << PCF8583_WKDY_SHIFT);
 
-	if (iic_control(self->dv_parent, sc->sc_addr | IIC_WRITE, buff, 7))
-		return -1;
+	if (iic_control(sc->sc_dev.dv_parent,
+			sc->sc_addr | IIC_WRITE, buff, 7))
+		return EIO;
 
-	if (cmos_write(self, RTC_ADDR_YEAR, ymdhms.dt_year % 100))
-		return -1;
-	if (cmos_write(self, RTC_ADDR_CENT, ymdhms.dt_year / 100))
-		return -1;
-	return(0);
+	if (cmos_write(&sc->sc_dev, RTC_ADDR_YEAR, ymdhms.dt_year % 100))
+		return EIO;
+	if (cmos_write(&sc->sc_dev, RTC_ADDR_CENT, ymdhms.dt_year / 100))
+		return EIO;
+	return 0;
 }
 
 void
 inittodr(time_t base)
 {
 	int check;
+	todr_chip_handle_t chip;
+	struct timeval todrtime;
 
 	check = 0;
 	if (rtc_cd.cd_ndevs == 0 || rtc_cd.cd_devs[0] == NULL) {
@@ -238,15 +253,23 @@ inittodr(time_t base)
 		time.tv_usec = 0;
 		check = 1;
 	} else {
-		rtc_gettime(rtc_cd.cd_devs[0], &time);
-		if (time.tv_sec > base + 3 * SECDAY) {
-			printf("inittodr: Clock has gained %ld days",
-			       (time.tv_sec - base) / SECDAY);
+		chip = &((struct rtc_softc *)(rtc_cd.cd_devs[0]))->sc_ct;
+		if (todr_gettime(chip, &todrtime) != 0) {
+			printf("inittodr: Error reading clock");
+			time.tv_sec = base;
+			time.tv_usec = 0;
 			check = 1;
-		} else if (time.tv_sec + SECDAY < base) {
-			printf("inittodr: Clock has lost %ld day(s)",
-			       (base - time.tv_sec) / SECDAY);
-			check = 1;
+		} else {
+			time = todrtime;
+			if (time.tv_sec > base + 3 * SECDAY) {
+				printf("inittodr: Clock has gained %ld days",
+				       (time.tv_sec - base) / SECDAY);
+				check = 1;
+			} else if (time.tv_sec + SECDAY < base) {
+				printf("inittodr: Clock has lost %ld day(s)",
+				       (base - time.tv_sec) / SECDAY);
+				check = 1;
+			}
 		}
 	}
 	if (check)
@@ -255,20 +278,20 @@ inittodr(time_t base)
 
 
 static int
-rtc_gettime(struct device *self, struct timeval *tv)
+rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 {
 	u_char buff[8];
 	int byte, centi;
-	struct rtc_softc *sc = (struct rtc_softc *)self;
+	struct rtc_softc *sc = handle->cookie;
 	struct clock_ymdhms ymdhms;
     
 	buff[0] = 0;
 
-	if (iic_control(self->dv_parent, sc->sc_addr | IIC_WRITE, buff, 1))
-		return -1;
+	if (iic_control(sc->sc_dev.dv_parent, sc->sc_addr | IIC_WRITE,buff, 1))
+		return EIO;
 
-	if (iic_control(self->dv_parent, sc->sc_addr | IIC_READ, buff, 8))
-		return -1;
+	if (iic_control(sc->sc_dev.dv_parent, sc->sc_addr | IIC_READ, buff, 8))
+		return EIO;
 
 	centi          = FROMBCD(buff[PCF8583_REG_CENTI]);
 	ymdhms.dt_sec  = FROMBCD(buff[PCF8583_REG_SEC]);
@@ -288,18 +311,19 @@ rtc_gettime(struct device *self, struct timeval *tv)
 	ymdhms.dt_mon = FROMBCD(buff[PCF8583_REG_WKDYMON] &
 				PCF8583_MON_MASK);
 
-	byte = cmos_read(self, RTC_ADDR_YEAR);
+	byte = cmos_read(&sc->sc_dev, RTC_ADDR_YEAR);
 	if (byte == -1)
-		return -1;
+		return EIO;
 	ymdhms.dt_year = byte;
-	byte = cmos_read(self, RTC_ADDR_CENT);
+	byte = cmos_read(&sc->sc_dev, RTC_ADDR_CENT);
 	if (byte == -1)
-		return -1;
+		return EIO;
 	ymdhms.dt_year += 100 * byte;
 
 	/* Try to notice if the year's rolled over. */
 	if (buff[PCF8583_REG_CSR] & PCF8583_CSR_MASK)
-		printf("%s: cannot check year in mask mode\n", self->dv_xname);
+		printf("%s: cannot check year in mask mode\n",
+		       sc->sc_dev.dv_xname);
 	else
 		while (ymdhms.dt_year % 4 !=
 		       (buff[PCF8583_REG_YEARDATE] &
@@ -310,6 +334,21 @@ rtc_gettime(struct device *self, struct timeval *tv)
 	tv->tv_usec = centi * 10000;
 	return 0;
 }
+
+static int
+rtc_getcal(todr_chip_handle_t handle, int *vp)
+{
+
+	return EOPNOTSUPP;
+}
+
+static int
+rtc_setcal(todr_chip_handle_t handle, int v)
+{
+
+	return EOPNOTSUPP;
+}
+
 
 #if 0
 int
