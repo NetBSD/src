@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 1999/06/22 00:57:08 cgd Exp $ */
+/*	$NetBSD: md.c,v 1.29.2.1 1999/06/23 18:04:27 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -527,17 +527,19 @@ nogeom:
 	} else if (nip->ni_nmatches == 1) {
 		bip = &disklist->dl_biosdisks[nip->ni_biosmatches[0]];
 		msg_display(MSG_onebiosmatch);
-		msg_printf_add("%6x%10d%7d%10d\n", bip->bi_dev - 0x80,
+		msg_printf_add("%x\t%d\t%d\t%d\n", bip->bi_dev - 0x80,
 		    bip->bi_cyl, bip->bi_head, bip->bi_sec);
+		msg_printf_add("\n");
 		process_menu(MENU_biosonematch);
 	} else {
 		msg_display(MSG_biosmultmatch);
 		for (i = 0; i < nip->ni_nmatches; i++) {
 			bip = &disklist->dl_biosdisks[nip->ni_biosmatches[i]];
-			msg_printf_add("%d: %6x%10d%7d%10d\n", i,
+			msg_printf_add("%d:\t%x\t%d\t%d\t%d\n", i,
 			    bip->bi_dev - 0x80, bip->bi_cyl, bip->bi_head,
 			    bip->bi_sec);
 		}
+		msg_printf_add("\n");
 		process_menu(MENU_biosmultmatch);
 	}
 	if (biosdisk != NULL && (biosdisk->bi_flags & BIFLAG_EXTINT13))

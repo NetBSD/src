@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.27 1999/06/20 06:08:14 cgd Exp $ */
+/*	$NetBSD: disks.c,v 1.27.2.1 1999/06/23 18:04:26 cgd Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -197,17 +197,17 @@ void disp_cur_fspart(int disp, int showall)
 			else
 				pend = (bsdlabel[i].pi_offset +
 				bsdlabel[i].pi_size) / sizemult - 1;
-			msg_printf_add(" %c: %9d %9d %9d %6s",
+			msg_printf_add("%c:\t%d\t%d\t%9d\t%6s",
 					'a'+i, psize, poffset, pend,
 					fstypenames[bsdlabel[i].pi_fstype]);
 			if (bsdlabel[i].pi_fstype == FS_BSDFFS)
-				msg_printf_add("%6d%6d %s",
+				msg_printf_add("\t%d\t%6d\t%s",
 						bsdlabel[i].pi_bsize,
 						bsdlabel[i].pi_fsize,
 						fsmount[i]);
 			else if (bsdlabel[i].pi_fstype == FS_MSDOS)
-				msg_printf_add("%12s %s", "", fsmount[i]);
-			msg_printf_add("\n");
+				msg_printf_add("\t%12s\t%s", "", fsmount[i]);
+			msg_printf_add(" \n");
 		}
 	}
 	msg_printf_add("\n");

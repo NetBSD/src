@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.5 1999/06/20 06:42:06 cgd Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.5.2.1 1999/06/23 18:04:27 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -100,7 +100,7 @@ Do you wish to exclude the last cylinder?
 }
 
 message part_head
-{No   Start(%s)   Size(%s)   End(%s)  Kind\n}
+{No	Start(%s)	Size(%s)	End(%s)	Kind\n}
 
 message setbiosgeom
 {You will be prompted for the geometry.  Please enter the values you

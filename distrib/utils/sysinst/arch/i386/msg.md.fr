@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.10 1999/06/20 06:08:20 cgd Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.10.2.1 1999/06/23 18:04:27 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,7 +69,7 @@ géom réelle: %d cylindres, %d têtes, %d secteurs
 }
 
 message part_head
-{Part Début(%s)  Taille(%s)      Fin(%s) Type\n}
+{Part	Début(%s)	Taille(%s)	Fin(%s)	Type\n}
 
 message setbiosgeom
 {On va vous demander la géométrie. SVP entrer les valeur que vous désirez.
@@ -193,12 +193,12 @@ en dessous de cette limite. Vous pouvez: }
 message onebiosmatch
 {Ce disque correspond au disque du BIOS suivant:
 
-BIOS #  cylinders  heads  sectors\n}
+BIOS #	cyl.	heads	sectors\n}
 
 message biosmultmatch
 {Ce disque correspond aux disques du BIOS suivants:
 
-  BIOS #  cylinders  heads  sectors\n}
+	BIOS #	cyl.	heads	sectors\n}
 
 message pickdisk
 {Choisissez un disque: }
