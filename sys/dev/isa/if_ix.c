@@ -1,5 +1,4 @@
-/*	$NetBSD: if_ix.c,v 1.3 1998/03/03 20:51:20 pk Exp $ */
-/*	$Id: if_ix.c,v 1.3 1998/03/03 20:51:20 pk Exp $ */
+/*	$NetBSD: if_ix.c,v 1.4 1998/04/15 01:45:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
