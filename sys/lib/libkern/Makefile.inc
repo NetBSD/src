@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 1996/09/09 18:03:46 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.21 1996/09/23 05:00:45 ghudson Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -14,7 +14,7 @@ KERNMAKE= \
 	    AS='${AS}' AFLAGS='${AFLAGS}' \
 	    LD='${LD}' STRIP='${STRIP}' \
 	    MACHINE='${MACHINE}' MACHINE_ARCH='${MACHINE_ARCH}' \
-	    KERNCPPFLAGS='${CPPFLAGS:S@^-I.$@-I${.OBJDIR}@}'
+	    KERNCPPFLAGS='${CPPFLAGS:S@^-I.@-I../../.@g}'
 
 ${KERNLIB}:		.NOTMAIN __always_make_kernlib
 	@echo making sure the kern library is up to date...
