@@ -39,43 +39,35 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)chroot.c	5.8 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: chroot.c,v 1.3 1993/08/01 18:00:20 mycroft Exp $";
+static char rcsid[] = "$Id: chroot.c,v 1.4 1994/01/07 20:34:23 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
-#include <paths.h>
+#include <stdlib.h>
 #include <string.h>
+#include <paths.h>
+#include <err.h>
 
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int errno;
-	char *shell, *getenv();
+	char *shell;
 
 	if (argc < 2) {
 		(void)fprintf(stderr, "usage: chroot newroot [command]\n");
 		exit(1);
 	}
 	if (chdir(argv[1]) || chroot("."))
-		fatal(argv[1]);
+		err(1, "%s", argv[1]);
 	if (argv[2]) {
 		execvp(argv[2], &argv[2]);
-		fatal(argv[2]);
+		err(1, "%s", argv[2]);
 	} else {
 		if (!(shell = getenv("SHELL")))
 			shell = _PATH_BSHELL;
 		execlp(shell, shell, "-i", (char *)NULL);
-		fatal(shell);
+		err(1, "%s", shell);
 	}
 	/* NOTREACHED */
-}
-
-fatal(msg)
-	char *msg;
-{
-	extern int errno;
-
-	(void)fprintf(stderr, "chroot: %s: %s\n", msg, strerror(errno));
-	exit(1);
 }
