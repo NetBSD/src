@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.610 2004/01/28 17:06:09 chs Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.611 2004/02/26 17:12:53 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.610 2004/01/28 17:05:40 chs Exp 
+ *	NetBSD: pcidevs,v 1.611 2004/02/26 17:12:09 drochner Exp 
  */
 
 /*
@@ -1694,6 +1694,7 @@
 #define	PCI_PRODUCT_INTEL_E7500_HI_C2	0x2546		/* E7500 MCH HI_C vppb 2 */
 #define	PCI_PRODUCT_INTEL_E7500_HI_D1	0x2547		/* E7500 MCH HI_D vppb 1 */
 #define	PCI_PRODUCT_INTEL_E7500_HI_D2	0x2548		/* E7500 MCH HI_D vppb 2 */
+#define	PCI_PRODUCT_INTEL_E7501_HB	0x254c		/* E7501 MCH Host */
 #define	PCI_PRODUCT_INTEL_E7505_HB	0x2550		/* E7505 MCH Host */
 #define	PCI_PRODUCT_INTEL_E7505_RAS	0x2551		/* E7505 MCH RAS Controller */
 #define	PCI_PRODUCT_INTEL_E7505_AGP	0x2552		/* E7505 MCH Host-to-AGP Bridge */
