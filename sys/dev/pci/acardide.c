@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.13 2004/08/20 06:39:38 thorpej Exp $	*/
+/*	$NetBSD: acardide.c,v 1.14 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -183,7 +183,7 @@ acard_setup_channel(struct ata_channel *chp)
 	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int channel = chp->ch_channel;
-	int drive;
+	int drive, s;
 	u_int32_t idetime, udma_mode;
 	u_int32_t idedma_ctl;
 
@@ -242,7 +242,9 @@ acard_setup_channel(struct ata_channel *chp)
 		} else if ((atac->atac_cap & ATAC_CAP_DMA) &&
 		    (drvp->drive_flags & DRIVE_DMA)) {
 			/* use Multiword DMA */
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_UDMA;
+			splx(s);
 			if (ACARD_IS_850(sc)) {
 				idetime |= ATP850_SETTIME(drive,
 				    acard_act_dma[drvp->DMA_mode],
@@ -255,7 +257,9 @@ acard_setup_channel(struct ata_channel *chp)
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 		} else {
 			/* PIO only */
+			s = splbio();
 			drvp->drive_flags &= ~(DRIVE_UDMA | DRIVE_DMA);
+			splx(s);
 			if (ACARD_IS_850(sc)) {
 				idetime |= ATP850_SETTIME(drive,
 				    acard_act_pio[drvp->PIO_mode],

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.88 2004/08/20 06:39:39 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.89 2004/08/21 00:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.88 2004/08/20 06:39:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.89 2004/08/21 00:28:34 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -255,6 +255,7 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 	struct ata_drive_datas *drvp = &chp->ch_drive[target];
 	struct scsipibus_attach_args sa;
 	char serial_number[21], model[41], firmware_revision[9];
+	int s;
 
 	/* skip if already attached */
 	if (scsipi_lookup_periph(chan, target, 0) != NULL)
@@ -288,8 +289,11 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 		periph->periph_type = ATAPI_CFG_TYPE(id->atap_config);
 		if (id->atap_config & ATAPI_CFG_REMOV)
 			periph->periph_flags |= PERIPH_REMOVABLE;
-		if (periph->periph_type == T_SEQUENTIAL)
+		if (periph->periph_type == T_SEQUENTIAL) {
+			s = splbio();
 			drvp->drive_flags |= DRIVE_ATAPIST;
+			splx(s);
+		}
 
 		sa.sa_periph = periph;
 		sa.sa_inqbuf.type =  ATAPI_CFG_TYPE(id->atap_config);
@@ -314,10 +318,15 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 
 		if (drvp->drv_softc)
 			ata_probe_caps(drvp);
-		else
+		else {
+			s = splbio();
 			drvp->drive_flags &= ~DRIVE_ATAPI;
+			splx(s);
+		}
 	} else {
+		s = splbio();
 		drvp->drive_flags &= ~DRIVE_ATAPI;
+		splx(s);
 	}
 }
 
