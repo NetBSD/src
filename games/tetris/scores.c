@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.6 1999/09/12 09:02:23 jsm Exp $	*/
+/*	$NetBSD: scores.c,v 1.7 1999/09/17 20:44:51 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
  *
  * Major whacks since then.
  */
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -122,14 +123,10 @@ getscores(fpp)
 			setegid(gid);
 			return;
 		}
-		(void)fprintf(stderr, "tetris: cannot open %s for %s: %s\n",
-		    _PATH_SCOREFILE, human, strerror(errno));
-		exit(1);
+		err(1, "cannot open %s for %s", _PATH_SCOREFILE, human);
 	}
 	if ((sf = fdopen(sd, mstr)) == NULL) {
-		(void)fprintf(stderr, "tetris: cannot fdopen %s for %s: %s\n",
-		    _PATH_SCOREFILE, human, strerror(errno));
-		exit(1);
+		err(1, "cannot fdopen %s for %s", _PATH_SCOREFILE, human);
 	}
 	setegid(gid);
 
@@ -137,15 +134,12 @@ getscores(fpp)
 	 * Grab a lock.
 	 */
 	if (flock(sd, lck))
-		(void)fprintf(stderr,
-		    "tetris: warning: score file %s cannot be locked: %s\n",
-		    _PATH_SCOREFILE, strerror(errno));
+		warn("warning: score file %s cannot be locked",
+		    _PATH_SCOREFILE);
 
 	nscores = fread(scores, sizeof(scores[0]), MAXHISCORES, sf);
 	if (ferror(sf)) {
-		(void)fprintf(stderr, "tetris: error reading %s: %s\n",
-		    _PATH_SCOREFILE, strerror(errno));
-		exit(1);
+		err(1, "error reading %s", _PATH_SCOREFILE);
 	}
 
 	if (fpp)
@@ -210,8 +204,7 @@ savescore(level)
 		rewind(sf);
 		if (fwrite(scores, sizeof(*sp), nscores, sf) != nscores ||
 		    fflush(sf) == EOF)
-			(void)fprintf(stderr,
-			    "tetris: error writing %s: %s -- %s\n",
+			warnx("error writing %s: %s -- %s\n",
 			    _PATH_SCOREFILE, strerror(errno),
 			    "high scores may be damaged");
 	}
