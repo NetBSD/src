@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpreg.h,v 1.3 1997/03/12 13:53:14 christos Exp $	*/
+/*	$NetBSD: isapnpreg.h,v 1.4 1997/03/20 10:48:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -90,7 +90,7 @@
 #define			ISAPNP_IRQ_HIGH			2
 
 #define ISAPNP_NUM_DRQ					8
-#define ISAPNP_DRQ_DESC { 0x74, 0x72 }
+#define ISAPNP_DRQ_DESC { 0x74, 0x75 }
 
 #define ISAPNP_NUM_MEM32				4
 #define ISAPNP_MEM32_DESC { 0x76, 0x80, 0x90, 0xa0 }
