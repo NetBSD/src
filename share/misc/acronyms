@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.39 1999/09/11 17:28:40 ross Exp $
+$NetBSD: acronyms,v 1.40 1999/09/16 12:47:31 kleink Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -47,6 +47,7 @@ ISTM	it seems to me
 ISTR	I seem to recall
 JMO	just my opinion
 JTLYK	just to let you know
+KISS	keep it simple, stupid
 L8R	later
 LMSO	laughing my socks off
 LOL	laughing out loud
