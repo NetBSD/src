@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.4 1995/11/30 00:58:39 jtc Exp $
+#	$NetBSD: INSTALL,v 1.5 1996/06/26 04:31:35 phil Exp $
 #
 # INSTALL -- install kernel
 #
@@ -43,8 +43,7 @@ membus0 at root
 rd0 at membus?
 options 	RD_SIZE=0x200000
 
-#ncr0 at membus?
-oldncr0 at membus?
+ncr0 at membus?
 scsibus0 at scsi?
 
 sd* at scsibus? target ? lun ?
