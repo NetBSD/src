@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.16 2002/05/28 16:40:03 drochner Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.17 2003/10/22 00:35:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.16 2002/05/28 16:40:03 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.17 2003/10/22 00:35:41 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -107,6 +107,7 @@ static const struct {
 { 0x08, 0x00, "Logical Unit Communication Failure" },
 { 0x08, 0x01, "Logical Unit Communication Timeout" },
 { 0x08, 0x02, "Logical Unit Communication Parity Error" },
+{ 0x08, 0x03, "Logical Unit Communication CRC Error" },
 { 0x09, 0x00, "Track Following Error" },
 { 0x09, 0x01, "Tracking Servo Failure" },
 { 0x09, 0x02, "Focus Servo Failure" },
