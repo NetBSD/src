@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.17 1997/02/06 21:16:41 gwr Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.18 1997/02/12 00:59:46 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -83,8 +83,17 @@ db_regs_t	ddb_regs;		/* register state */
 #define inst_load(ins)		0
 #define inst_store(ins)		0
 
+/*
+ * Things needed by kgdb:
+ */
+typedef long kgdb_reg_t;
+#define KGDB_NUMREGS	(16+2)
+#define KGDB_BUFLEN	512
+
+
 #ifdef _KERNEL
 
+void	Debugger __P((void));	/* XXX */
 void	kdb_kintr __P((db_regs_t *));
 int	kdb_trap __P((int, db_regs_t *));
 
