@@ -1,4 +1,4 @@
-/*	$NetBSD: getusershell.c,v 1.20 2000/01/22 22:19:11 mycroft Exp $	*/
+/*	$NetBSD: getusershell.c,v 1.21 2000/07/07 08:03:37 itohy Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getusershell.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getusershell.c,v 1.20 2000/01/22 22:19:11 mycroft Exp $");
+__RCSID("$NetBSD: getusershell.c,v 1.21 2000/07/07 08:03:37 itohy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -151,7 +151,8 @@ _local_initshells(rv, cb_data, ap)
 		if (*cp == '#' || *cp == '\0')
 			continue;
 		sp = cp;
-		while (!isspace(*cp) && *cp != '#' && *cp != '\0')
+		while (!isspace((unsigned char) *cp) && *cp != '#'
+		    && *cp != '\0')
 			cp++;
 		*cp++ = '\0';
 		if (sl_add(sl, strdup(sp)) == -1)
