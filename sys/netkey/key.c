@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.19 2000/06/12 10:40:46 itojun Exp $	*/
-/*	$KAME: key.c,v 1.127 2000/06/12 07:01:12 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.20 2000/06/14 03:16:23 itojun Exp $	*/
+/*	$KAME: key.c,v 1.129 2000/06/14 02:51:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1665,9 +1665,9 @@ key_spdadd(so, m, mhp)
     	}
 
     {
-	struct mbuf *n;
+	struct mbuf *n, *mpolicy;
 	struct sadb_msg *newmsg;
-	int len;
+	int off;
 
 	/* create new sadb_msg to reply. */
 	n = key_gather_mbuf(m, mhp, 2, 4, SADB_EXT_RESERVED,
@@ -1675,21 +1675,28 @@ key_spdadd(so, m, mhp)
 	if (!n)
 		return key_senderror(so, m, ENOBUFS);
 
-	len = PFKEY_ALIGN8(sizeof(struct sadb_msg)) +
-	    mhp->extlen[SADB_X_EXT_POLICY];
-	if (n->m_len < len) {
-		n = m_pullup(n, len);
-		if (n == NULL)
+	if (n->m_len < sizeof(*newmsg)) {
+		n = m_pullup(n, sizeof(*newmsg));
+		if (!n)
 			return key_senderror(so, m, ENOBUFS);
 	}
-
-	xpl = (struct sadb_x_policy *)
-	    (mtod(n, caddr_t) + PFKEY_ALIGN8(sizeof(struct sadb_msg)));
-	xpl->sadb_x_policy_id = newsp->id;
-
 	newmsg = mtod(n, struct sadb_msg *);
 	newmsg->sadb_msg_errno = 0;
 	newmsg->sadb_msg_len = PFKEY_UNIT64(n->m_pkthdr.len);
+
+	off = 0;
+	mpolicy = m_pulldown(n, PFKEY_ALIGN8(sizeof(struct sadb_msg)),
+	    sizeof(*xpl), &off);
+	if (mpolicy == NULL) {
+		/* n is already freed */
+		return key_senderror(so, m, ENOBUFS);
+	}
+	xpl = (struct sadb_x_policy *)(mtod(mpolicy, caddr_t) + off);
+	if (xpl->sadb_x_policy_exttype != SADB_X_EXT_POLICY) {
+		m_freem(n);
+		return key_senderror(so, m, EINVAL);
+	}
+	xpl->sadb_x_policy_id = newsp->id;
 
 	m_freem(m);
 	return key_sendup_mbuf(so, n, KEY_SENDUP_ALL);
