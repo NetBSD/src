@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.13 2004/01/10 06:30:35 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.14 2004/01/10 07:03:28 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.13 2004/01/10 06:30:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.14 2004/01/10 07:03:28 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -494,15 +494,15 @@ atw_print_regs(struct atw_softc *sc, const char *where)
 void
 atw_attach(struct atw_softc *sc)
 {
+	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	int country_code, error, i, nrate;
 	u_int32_t reg;
 	static const char *type_strings[] = {"Intersil (not supported)",
 	    "RFMD", "Marvel (not supported)"};
-	static const u_int8_t empty_macaddr[IEEE80211_ADDR_LEN] = {
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-	};
 
 	sc->sc_txth = atw_txthresh_tab_lo;
 
@@ -573,6 +573,8 @@ atw_attach(struct atw_softc *sc)
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
 			goto fail_5;
 		}
+	}
+	for (i = 0; i < ATW_NRXDESC; i++) {
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
@@ -956,7 +958,7 @@ atw_init(ifp)
 	    LSHIFT(0xb0, ATW_PLCPHD_SERVICE_MASK);
 	ATW_WRITE(sc, ATW_PLCPHD, reg);
 
-	/* XXX */
+	/* XXX this magic can probably be figured out from the RFMD docs */
 	reg = LSHIFT(4, ATW_TOFS2_PWR1UP_MASK)    | /* 8 ms = 4 * 2 ms */
 	      LSHIFT(13, ATW_TOFS2_PWR0PAPE_MASK) | /* 13 us */
 	      LSHIFT(8, ATW_TOFS2_PWR1PAPE_MASK)  | /* 8 us */
@@ -994,7 +996,7 @@ atw_init(ifp)
 	    ATW_TOFS0_TUCNT_MASK /* set all bits in TUCNT */);
 
 	/* Initialize interframe spacing.  EIFS=0x64 is used by a binary-only
-	 * driver. go figure.
+	 * driver. Go figure.
 	 */
 	reg = LSHIFT(IEEE80211_DUR_DS_SLOT, ATW_IFST_SLOT_MASK) |
 	      LSHIFT(22 * IEEE80211_DUR_DS_SIFS /* # of 22MHz cycles */,
@@ -1004,6 +1006,7 @@ atw_init(ifp)
 
 	ATW_WRITE(sc, ATW_IFST, reg);
 
+	/* XXX More magic. Might relate to ACK timing. */
 	ATW_WRITE(sc, ATW_RSPT, LSHIFT(0xffff, ATW_RSPT_MART_MASK) |
 	    LSHIFT(0xff, ATW_RSPT_MIRT_MASK));
 
@@ -1176,7 +1179,6 @@ atw_init(ifp)
 
 	sc->sc_linkint_mask = ATW_INTR_LINKON | ATW_INTR_LINKOFF |
 	    ATW_INTR_BCNTC | ATW_INTR_TSFTF | ATW_INTR_TSCZ;
-
 	sc->sc_rxint_mask = ATW_INTR_RCI | ATW_INTR_RDU;
 	sc->sc_txint_mask = ATW_INTR_TCI | ATW_INTR_TUF | ATW_INTR_TLT |
 	    ATW_INTR_TRT;
@@ -1470,8 +1472,8 @@ out:
 	return rc;
 }
 
-/* Baseline initialization of RF3000 BBP: set CCA mode, enable antenna
- * diversity, and write some magic.
+/* Baseline initialization of RF3000 BBP: set CCA mode and enable antenna
+ * diversity.
  *
  * Call this w/ Tx/Rx suspended.
  */
@@ -2932,7 +2934,7 @@ atw_linkintr(sc, linkstatus)
 		case IEEE80211_M_IBSS:
 			if (ic->ic_flags & IEEE80211_F_SIBSS)
 				return;
-			/* FALL THROUGH */
+			/*FALLTHROUGH*/
 		case IEEE80211_M_STA:
 			sc->sc_rescan_timer = 3;
 			ic->ic_if.if_timer = 1;
@@ -2974,7 +2976,13 @@ atw_rxintr(sc)
 		if (rxstat & ATW_RXSTAT_OWN)
 			break; /* We have processed all receive buffers. */
 
-		ATW_DPRINTF3(("%s: rssi %d\n", sc->sc_dev.dv_xname, rssi));
+		DPRINTF3(sc,
+		    ("%s: rx stat %08x rssi %08x buf1 %08x buf2 %08x\n",
+		    sc->sc_dev.dv_xname,
+		    sc->sc_rxdescs[i].ar_stat,
+		    sc->sc_rxdescs[i].ar_rssi,
+		    sc->sc_rxdescs[i].ar_buf1,
+		    sc->sc_rxdescs[i].ar_buf2));
 
 		/*
 		 * Make sure the packet fit in one buffer.  This should
