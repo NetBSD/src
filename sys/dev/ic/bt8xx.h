@@ -1,4 +1,4 @@
-/*	$NetBSD: bt8xx.h,v 1.3 2000/12/30 16:52:36 wiz Exp $	*/
+/*	$NetBSD: bt8xx.h,v 1.4 2000/12/30 16:55:24 wiz Exp $	*/
 
 /* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */
 /* The copyright below only applies to the ioctl_meteor.h part of this file. */
@@ -345,8 +345,8 @@ struct bktr_msp_control {
 };
 
 #define BT848_MSP_RESET _IO('x', 76)				/* MSP chip reset */
-#define BT848_MSP_READ  _IOWR('x', 77, struct bktr_msp_control)	/* MSP chip reset */
-#define BT848_MSP_WRITE _IOWR('x', 78, struct bktr_msp_control)	/* MSP chip reset */
+#define BT848_MSP_READ  _IOWR('x', 77, struct bktr_msp_control)	/* MSP chip read */
+#define BT848_MSP_WRITE _IOWR('x', 78, struct bktr_msp_control)	/* MSP chip write */
 
 /* Support for radio tuner */
 #define RADIO_SETMODE	 _IOW('x', 58, unsigned int)  /* set radio modes */
