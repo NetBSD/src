@@ -1,3 +1,5 @@
+/*	$NetBSD: rbootd.c,v 1.4 1995/08/21 17:05:18 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
  *	for Software Science (CSS).
@@ -39,7 +41,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rbootd.c	8.1 (Berkeley) 6/4/93
- *	      $Id: rbootd.c,v 1.3 1995/08/21 16:57:57 thorpej Exp $
  *
  * From: Utah Hdr: rbootd.c 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
@@ -53,7 +54,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rbootd.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: rbootd.c,v 1.3 1995/08/21 16:57:57 thorpej Exp $";
+static char rcsid[] = "$NetBSD: rbootd.c,v 1.4 1995/08/21 17:05:18 thorpej Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
