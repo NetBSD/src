@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.74 2001/04/09 10:22:02 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.75 2001/06/06 17:00:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -123,6 +123,7 @@ sys_dup(struct proc *p, void *v, register_t *retval)
 	fdp = p->p_fd;
 	old = SCARG(uap, fd);
 
+ restart:
 	if ((u_int)old >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[old]) == NULL ||
 	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
@@ -132,6 +133,8 @@ sys_dup(struct proc *p, void *v, register_t *retval)
 
 	if ((error = fdalloc(p, 0, &new)) != 0) {
 		FILE_UNUSE(fp, p);
+		if (error == ERESTART)
+			goto restart;
 		return (error);
 	}
 
@@ -158,6 +161,7 @@ sys_dup2(struct proc *p, void *v, register_t *retval)
 	old = SCARG(uap, from);
 	new = SCARG(uap, to);
 
+ restart:
 	if ((u_int)old >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[old]) == NULL ||
 	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
@@ -174,13 +178,18 @@ sys_dup2(struct proc *p, void *v, register_t *retval)
 	if (new >= fdp->fd_nfiles) {
 		if ((error = fdalloc(p, new, &i)) != 0) {
 			FILE_UNUSE(fp, p);
+			if (error == ERESTART)
+				goto restart;
 			return (error);
 		}
 		if (new != i)
 			panic("dup2: fdalloc");
-	} else {
-		(void) fdrelease(p, new);
 	}
+
+	/*
+	 * finishdup() will close the file that's in the `new'
+	 * slot, if there's one there.
+	 */
 
 	/* finishdup() will unuse the descriptors for us */
 	return (finishdup(p, old, new, retval));
@@ -209,6 +218,7 @@ sys_fcntl(struct proc *p, void *v, register_t *retval)
 	error = 0;
 	flg = F_POSIX;
 
+ restart:
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
 	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
@@ -231,8 +241,13 @@ sys_fcntl(struct proc *p, void *v, register_t *retval)
 			error = EINVAL;
 			goto out;
 		}
-		if ((error = fdalloc(p, newmin, &i)) != 0)
+		if ((error = fdalloc(p, newmin, &i)) != 0) {
+			if (error == ERESTART) {
+				FILE_UNUSE(fp, p);
+				goto restart;
+			}
 			goto out;
+		}
 
 		/* finishdup() will unuse the descriptors for us */
 		return (finishdup(p, fd, i, retval));
@@ -390,21 +405,37 @@ int
 finishdup(struct proc *p, int old, int new, register_t *retval)
 {
 	struct filedesc	*fdp;
-	struct file	*fp;
+	struct file	*fp, *delfp;
 
 	fdp = p->p_fd;
 
 	/*
+	 * If there is a file in the new slot, remember it so we
+	 * can close it after we've finished the dup.  We need
+	 * to do it after the dup is finished, since closing
+	 * the file may block.
+	 *
 	 * Note: `old' is already used for us.
 	 */
+	delfp = fdp->fd_ofiles[new];
 
 	fp = fdp->fd_ofiles[old];
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
 	fp->f_count++;
-	fd_used(fdp, new);
+	/*
+	 * Note, don't have to mark it "used" in the table if there
+	 * was already a file in the `new' slot.
+	 */
+	if (delfp == NULL)
+		fd_used(fdp, new);
 	*retval = new;
 	FILE_UNUSE(fp, p);
+
+	if (delfp != NULL) {
+		FILE_USE(delfp);
+		(void) closef(delfp, p);
+	}
 	return (0);
 }
 
@@ -421,7 +452,6 @@ fdrelease(struct proc *p, int fd)
 {
 	struct filedesc	*fdp;
 	struct file	**fpp, *fp;
-	char		*pf;
 
 	fdp = p->p_fd;
 	fpp = &fdp->fd_ofiles[fd];
@@ -431,13 +461,8 @@ fdrelease(struct proc *p, int fd)
 
 	FILE_USE(fp);
 
-	pf = &fdp->fd_ofileflags[fd];
-	if (*pf & UF_MAPPED) {
-		/* XXX: USELESS? XXXCDC check it */
-		p->p_fd->fd_ofileflags[fd] &= ~UF_MAPPED;
-	}
 	*fpp = NULL;
-	*pf = 0;
+	fdp->fd_ofileflags[fd] = 0;
 	fd_unused(fdp, fd);
 	return (closef(fp, p));
 }
@@ -555,7 +580,7 @@ int
 fdalloc(struct proc *p, int want, int *result)
 {
 	struct filedesc	*fdp;
-	int		i, lim, last, nfiles;
+	int		i, lim, last, nfiles, rv = 0;
 	struct file	**newofile;
 	char		*newofileflags;
 
@@ -577,7 +602,7 @@ fdalloc(struct proc *p, int want, int *result)
 				if (want <= fdp->fd_freefile)
 					fdp->fd_freefile = i;
 				*result = i;
-				return (0);
+				return (rv);
 			}
 		}
 
@@ -590,6 +615,7 @@ fdalloc(struct proc *p, int want, int *result)
 			nfiles = NDEXTENT;
 		else
 			nfiles = 2 * fdp->fd_nfiles;
+		rv = ERESTART;
 		newofile = malloc(nfiles * OFILESIZE, M_FILEDESC, M_WAITOK);
 		newofileflags = (char *) &newofile[nfiles];
 		/*
@@ -659,8 +685,12 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	struct file	*fp, *fq;
 	int		error, i;
 
-	if ((error = fdalloc(p, 0, &i)) != 0)
+ restart:
+	if ((error = fdalloc(p, 0, &i)) != 0) {
+		if (error == ERESTART)
+			goto restart;
 		return (error);
+	}
 	if (nfiles >= maxfiles) {
 		tablefull("file", "increase kern.maxfiles or MAXFILES");
 		return (ENFILE);

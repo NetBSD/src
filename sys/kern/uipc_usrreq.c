@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.48 2000/06/05 16:29:45 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.49 2001/06/06 17:00:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -806,7 +806,7 @@ unp_externalize(rights)
 	int i, *fdp;
 	struct file **rp;
 	struct file *fp;
-	int nfds, f, error = 0;
+	int nfds, f, error = 0, err;
 
 	nfds = (cm->cmsg_len - CMSG_ALIGN(sizeof(*cm))) /
 	    sizeof(struct file *);
@@ -861,8 +861,13 @@ unp_externalize(rights)
 		fp->f_msgcount--;
 		unp_rights--;
 		
-		if (fdalloc(p, 0, &f))
-			panic("unp_externalize");
+		if ((err = fdalloc(p, 0, &f)) != 0) {
+			/*
+			 * XXXSMP -- FIX ME, PLEASE.
+			 */
+			if (err != ERESTART)
+				panic("unp_externalize");
+		}
 		p->p_fd->fd_ofiles[f] = fp;
 		*fdp++ = f;
 	}
