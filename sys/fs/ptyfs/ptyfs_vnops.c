@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.5 2004/11/29 13:55:59 atatat Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.6 2004/12/18 05:26:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.5 2004/11/29 13:55:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.6 2004/12/18 05:26:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,6 @@ int	ptyfs_kqfilter	(void *);
 int	ptyfs_readdir	(void *);
 #define	ptyfs_readlink	genfs_eopnotsupp
 #define	ptyfs_abortop	genfs_abortop
-int	ptyfs_inactive	(void *);
 int	ptyfs_reclaim	(void *);
 #define	ptyfs_lock	genfs_lock
 #define	ptyfs_unlock	genfs_unlock
@@ -197,7 +196,7 @@ const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 	{ &vop_readdir_desc, ptyfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ptyfs_readlink },		/* readlink */
 	{ &vop_abortop_desc, ptyfs_abortop },		/* abortop */
-	{ &vop_inactive_desc, ptyfs_inactive },		/* inactive */
+	{ &vop_inactive_desc, spec_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ptyfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ptyfs_lock },			/* lock */
 	{ &vop_unlock_desc, ptyfs_unlock },		/* unlock */
@@ -218,35 +217,6 @@ const struct vnodeopv_entry_desc ptyfs_vnodeop_entries[] = {
 };
 const struct vnodeopv_desc ptyfs_vnodeop_opv_desc =
 	{ &ptyfs_vnodeop_p, ptyfs_vnodeop_entries };
-
-/*
- * _inactive is called when the ptyfsnode
- * is vrele'd and the reference count goes
- * to zero.  (vp) will be on the vnode free
- * list, so to get it back vget() must be
- * used.
- *
- * for ptyfs, check if the pty is still
- * in use and if it isn't then just throw away
- * the vnode by calling vgone(). 
- *
- * (vp) is locked on entry, but must be unlocked on exit.
- */
-int
-ptyfs_inactive(void *v)
-{
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct ptyfsnode *ptyfs = VTOPTYFS(ap->a_vp);
-
-	VOP_UNLOCK(ap->a_vp, 0);
-	if (pty_isfree(ptyfs->ptyfs_pty, 1))
-		vgone(ap->a_vp);
-
-	return 0;
-}
 
 /*
  * _reclaim is called when getnewvnode()
