@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.2 1996/11/23 03:23:49 mark Exp 
+ *	NetBSD: podules,v 1.3 1997/01/03 23:21:28 mark Exp 
  */
 
 /*
@@ -59,6 +59,7 @@
 #define	MANUFACTURER_BRINI	0x0050		/* Brini */
 #define	MANUFACTURER_ANT	0x0053		/* ANT */
 #define	MANUFACTURER_ALSYSTEMS	0x005b		/* Alsystems */
+#define	MANUFACTURER_YES	0x0060		/* Yellowstone Educational Solutions */
 #define	MANUFACTURER_MCS	0x0063		/* MCS */
 
 /*
@@ -112,5 +113,7 @@
 #define	PODULE_ANT_ETHERB	0x00e4		/* ether B network slot interface */
 
 #define	PODULE_ALSYSTEMS_SCSI	0x0107		/* SCSI II host adapter */
+
+#define	PODULE_YES_RAPIDE	0x0114		/* RapIDE32 interface */
 
 #define	PODULE_MCS_SCSI	0x0125		/* Connect32 SCSI II interface */

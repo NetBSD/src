@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.2 1996/11/23 03:23:49 mark Exp 
+ *	NetBSD: podules,v 1.3 1997/01/03 23:21:28 mark Exp 
  */
 
 /*
@@ -143,6 +143,11 @@ static struct podule_description podules_alsystems[] = {
 	{ 0x0000, NULL }
 };
 
+static struct podule_description podules_yes[] = {
+	{ PODULE_YES_RAPIDE,	"RapIDE32 interface" },
+	{ 0x0000, NULL }
+};
+
 static struct podule_description podules_mcs[] = {
 	{ PODULE_MCS_SCSI,	"Connect32 SCSI II interface" },
 	{ 0x0000, NULL }
@@ -169,6 +174,7 @@ struct podule_list known_podules[] = {
 	{ MANUFACTURER_BRINI, 		"Brini", 	podules_brini },
 	{ MANUFACTURER_ANT, 		"ANT", 	podules_ant },
 	{ MANUFACTURER_ALSYSTEMS, 	"Alsystems", 	podules_alsystems },
+	{ MANUFACTURER_YES, 		"Yellowstone Educational Solutions", 	podules_yes },
 	{ MANUFACTURER_MCS, 		"MCS", 	podules_mcs },
 	{ 0, NULL, NULL }
 };
