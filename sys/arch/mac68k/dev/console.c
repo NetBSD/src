@@ -31,9 +31,9 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
-#ident "$Id: console.c,v 1.1.1.1 1993/09/29 06:09:29 briggs Exp $"
 /*
  * The console device driver for Alice.
+ * $Id: console.c,v 1.2 1993/11/29 00:32:25 briggs Exp $
  *
  * April 11th, 1992 LK
  *  Original
@@ -44,6 +44,17 @@
  *  ioctls to move monitors
  * September 19th, 1993 LK
  *  Added multi-font support
+ *  Integrated AKB 19 Sept.
+ * September 28th-ish, 1993 LK
+ *  Added reversepixel and updated reversecursor.
+ *  Integrated AKB 1 Oct.
+ * October 12th, 1993 AKB
+ *  Fixed bugs in 6-bit code.  Also changed x,y in VT
+ *  structure to SIGNED ints because of VT100 parsing...
+ *  (see ESC [ ; H, e.g.)
+ * October 14th, 1993 AKB
+ *  Added support for T_REVERSE and T_UNDERLINE
+ *  for drawweirdcharacter.
  */
 
 /* Received from MacBSDBoot, stored by Locore: */
@@ -81,8 +92,6 @@ char serial_boot_echo=0;
 
 extern struct grf_softc grf_softc[NGRF];
 
-#define CHARX 8
-#define CHARY 14
 #define NFONT 2
 #define OUTBUFLEN 128
 #define CONBUFLEN 128
@@ -99,8 +108,8 @@ struct font {
 };
 
 struct vt {
-  unsigned int x;		/* Cursor position [0..numtcols-1]	*/
-  unsigned int y;		/* Cursor position [0..numtrows-1]	*/
+  int x;			/* Cursor position [0..numtcols-1]	*/
+  int y;			/* Cursor position [0..numtrows-1]	*/
   unsigned int oldx, oldy;	/* Saved cursor position		*/
   unsigned int attr, fgcolor, bgcolor;  /* Current attribute & color	*/
   unsigned int hanging_cursor;	/* Cursor at last column		*/
@@ -113,6 +122,8 @@ struct vt {
 
   unsigned int numtcols;	/* # of text columns on the screen	*/
   unsigned int numtrows;	/* # of text lines on the screen	*/
+  unsigned int toptrow;		/* Top line of text scroll region	*/
+  unsigned int bottrow;		/* Bottom line of text scroll region	*/
   unsigned int numgcols;	/* # of visible pixels across		*/
   unsigned int numgrows;	/* # of visible pixels down		*/
   unsigned int linelen;		/* # of bytes/line (incl. non-visible)	*/
@@ -137,6 +148,8 @@ static struct font font[NFONT]; /* for now, 0 = large, 1 = small */
 int curvt; /* Current virtual terminal -- Used by adb */
 int numsb;  /* Number of lines scrolling back -- Used by adb */
 static int cursoron, cursorlit, cursortype = C_BLOCK | C_SOLID;
+
+void	macconputchar(int, u_char);
 
 static getvideoparams()
 {
@@ -192,11 +205,34 @@ static putpixel(struct vt *v, int xx, int yy, int c)
   }
 }
 
+static void reversepixel (struct vt *v, unsigned int xx, unsigned int yy)
+{
+  unsigned int i;
+
+  switch (v->numbits)
+  {
+    case 1: i = yy * v->linelen + (xx / 8);
+            v->screen[i] ^= 0x80 >> (xx % 8);
+            break;
+    case 2: i = yy * v->linelen + (xx / 4);
+            v->screen[i] ^= 0xC0 >> ((xx % 4) * 2);
+            break;
+    case 4: i = yy * v->linelen + (xx / 2);
+            v->screen[i] ^= 0xF0 >> ((xx % 2) * 4);
+            break;
+    case 8: v->screen[yy * v->linelen + xx] ^= 0xFF; 
+            break;
+  }
+}
+
 static reversecursor(int vtnum)
 {
-  unsigned int i, p, linelen;
+  unsigned int i, p, linelongs, px, py, offset, plx;
+  int x, y;
   struct vt *v = &vt[vtnum];
-  register unsigned char *sc;
+  register unsigned long *sc;
+  unsigned long mask;
+  static int	__p=0;
 
   if (v->y + numsb >= v->numtrows)
   {
@@ -206,45 +242,59 @@ static reversecursor(int vtnum)
 
   cursorlit = !cursorlit;
 
-  p = (v->y+numsb)*v->font->height*v->linelen +
-      v->x*v->font->width*v->numbits/8;
-  linelen = v->linelen;
+  px = v->x * v->font->width;
+  linelongs = v->linelen/4;
 
   switch (v->numbits)
   {
     case 1:
+      plx = px & ~31;
+      if (((px + v->font->width - 1) & ~31) > plx)
+        plx += 16;
+      p = (v->y+numsb) * v->font->height * v->linelen + plx/8;
+      offset = 32 - v->font->width + (plx % 32) - (px % 32);
+      mask = ((1L << v->font->width) - 1) << offset;
       if (cursortype & C_BLOCK)
       {
-        sc = &(v->screen[p]);
+        sc = (unsigned long *)&(v->screen[p]);
         if (v->font->height == 14)
         {
-#define RB *sc ^= 255; sc += linelen;
-          RB; RB; RB; RB; RB; RB; RB;
-          RB; RB; RB; RB; RB; RB; RB;
-#undef RB
+#define RL *sc ^= mask; sc += linelongs;
+          RL; RL; RL; RL; RL; RL; RL;
+          RL; RL; RL; RL; RL; RL; RL;
+#undef RL
         }
         else
         {
           for (i = 0; i < v->font->height; i++) {
-            *sc ^= 255;
-            sc += linelen;
+            *sc ^= mask;
+            sc += linelongs;
           }
         }
       }
       else
       {
-        sc = &(v->screen[p+(v->font->height-2)*v->linelen]);
-        *sc ^= 255;
-        *(sc+v->linelen) ^= 255;
+        sc = (unsigned long *)&(v->screen[p+(v->font->height-2)*v->linelen]);
+        *sc ^= mask;
+        *(sc+linelongs) ^= mask;
       }
       break;
     case 2:
     case 4:
     case 8:
-      /* Hmmm.  Do something here... */
+      /* Okay, this is a real quick hack so that people in non-1-bit mode
+      will see a cursor.  It's real slow and should be fixed later. */
+      px = v->x * v->font->width;
+      py = v->y * v->font->height;
+      for (y = v->font->height-1; y >= 0; y--) {
+        for (x = v->font->width-1; x >= 0; x--) {
+          reversepixel (v, x + px, y + py);
+        }
+      }
       break;
   }
 }
+
 
 static drawcursor(int vtnum)
 {
@@ -308,10 +358,15 @@ static clearscreen(int vtnum, int which)
     v->screen[i] = 0;
 }
 
-static int consoleinit()
+extern void conattach(int n)
 {
+static int	initt=0;
   int i;
 
+if (initt) {
+	return;
+}
+  initt = 1;
   getvideoparams();
   cursoron = 0;
   cursorlit = 0;
@@ -350,8 +405,11 @@ static int consoleinit()
       vt[i].font = &font[1];
     vt[i].numtcols = vt[i].numgcols/vt[i].font->width;
     vt[i].numtrows = vt[i].numgrows/vt[i].font->height;
-    if (i==0)
+    vt[i].toptrow = 1;
+    vt[i].bottrow = vt[i].numtrows;
+    if (i==0) {
     	vt[i].visible=1;
+    }
     else
     	vt[i].visible=0;
 
@@ -393,7 +451,7 @@ static void drawweirdcharacter (struct vt *v, int x, int y, int attr,
 
   unsigned int px, py;
   signed int offset;
-  unsigned long mask;
+  unsigned long mask, attrmask;
   register unsigned long *sc, *savesc;
   unsigned char *saveca;
   struct font *font = v->font;
@@ -426,37 +484,77 @@ static void drawweirdcharacter (struct vt *v, int x, int y, int attr,
    * Maybe the case for height = 10 should be unrolled.  A minimal
    * effort has been made to make it easy for the compiler to optimize this.
    */
+  attrmask = (((unsigned long) 1 << (font->width+1)) - 1);
   if (offset >= 0) { /* Easy case first... */
     /* Thank goodness mac is big-endian... :-) */
-    mask = ~((((unsigned long) 1 << font->width) - 1) << offset);
-    for (y = font->height; y > 0; y--) {
-      *sc &= mask;
-      *sc |= (unsigned long)*ca << offset;
-      ca++;
-      sc += v->linelen/4;
+    mask = ~((((unsigned long) 1 << font->width) - 1) << (offset+1));
+    if (attr & T_REVERSE) {
+      for (y = font->height; y > 0; y--) {
+        *sc &= mask;
+        *sc |= ((unsigned long)*ca ^ attrmask) << offset;
+        ca++;
+        sc += v->linelen/4;
+      }
+    } else {
+      for (y = font->height; y > 0; y--) {
+        *sc &= mask;
+        *sc |= (unsigned long)*ca << offset;
+        ca++;
+        sc += v->linelen/4;
+      }
+    }
+    if (attr & T_UNDERLINE) {
+        sc -= v->linelen/4;
+        *sc |= (attrmask << offset);
     }
   } else {
     /* First long... */
     offset = -offset;
-    mask = ~((((unsigned long) 1 << font->width) - 1) >> offset);
+    mask = ~((((unsigned long) 1 << font->width) - 1) >> (offset-1));
     savesc = sc;
     saveca = ca;
-    for (y = font->height; y > 0; y--) {
-      *sc &= mask;
-      *sc |= (unsigned long)*ca >> offset;
-      ca++;
-      sc += v->linelen/4;
+    if (attr & T_REVERSE) {
+      for (y = font->height; y > 0; y--) {
+        *sc &= mask;
+        *sc |= ((unsigned long)*ca ^ attrmask) >> offset;
+        ca++;
+        sc += v->linelen/4;
+      }
+    } else {
+      for (y = font->height; y > 0; y--) {
+        *sc &= mask;
+        *sc |= (unsigned long)*ca >> offset;
+        ca++;
+        sc += v->linelen/4;
+      }
+    }
+    if (attr & T_UNDERLINE) {
+        sc -= v->linelen/4;
+        *sc |= (attrmask >> offset);
     }
     /* Second long... */
     offset = 32 - offset;
     mask = ~((((unsigned long) 1 << font->width) - 1) << offset);
     sc = savesc + 1;
     ca = saveca;
-    for (y = font->height; y > 0; y--) {
-      *sc &= mask;
-      *sc |= (unsigned long)*ca << offset;
-      ca++;
-      sc += v->linelen/4;
+    if (attr & T_REVERSE) {
+      for (y = font->height; y > 0; y--) {
+        *sc &= mask;
+        *sc |= ((unsigned long)*ca ^ attrmask) << offset;
+        ca++;
+        sc += v->linelen/4;
+      }
+    } else {
+      for (y = font->height; y > 0; y--) {
+        *sc &= mask;
+        *sc |= (unsigned long)*ca << offset;
+        ca++;
+        sc += v->linelen/4;
+      }
+    }
+    if (attr & T_UNDERLINE) {
+        sc -= v->linelen/4;
+        *sc |= (attrmask << offset);
     }
   }
 }
@@ -616,11 +714,13 @@ static putcharacter(int vtnum, char c)
     drawcharacter(v, v->x, v->y, v->attr, c);
 }
 
+#define splconsole	spl3
+
 static scrollup(int vtnum)
 {
   /* scrolls the screen up by one text line */
 
-  register int i, j;
+  register int i, j, x, maxx;
   register long *from, *to;
   register struct vt *v = &vt[vtnum];
   char tempbuf[129];
@@ -628,30 +728,29 @@ static scrollup(int vtnum)
 
   /* Save the top line: */
   for (j = 0; j < v->numtcols; j++)
-    tempbuf[j] = v->scr[0][j];
+    tempbuf[j] = v->scr[v->toptrow-1][j];
   tempbuf[j++] = '\n'; /* End of line */
   buflen = j;
-  s = splhigh(); /* Exclusive access to sblen */
-  while (v->sblen + buflen > SCROLLBACK)
-  {
-    while (v->sb[v->sbtail] != '\n')
-    {
+  if (v->toptrow == 1) {
+    s = splconsole(); /* Exclusive access to sblen */
+    while (v->sblen + buflen > SCROLLBACK) {
+      while (v->sb[v->sbtail] != '\n') {
+	v->sbtail = (v->sbtail + 1) % SCROLLBACK;
+     	v->sblen--;
+      }
       v->sbtail = (v->sbtail + 1) % SCROLLBACK;
       v->sblen--;
     }
-    v->sbtail = (v->sbtail + 1) % SCROLLBACK;
-    v->sblen--;
+    for (i = 0; i < buflen; i++) {
+      v->sb[v->sbhead] = tempbuf[i];
+      v->sbhead = (v->sbhead + 1) % SCROLLBACK;
+      v->sblen++;
+    }
+    splx(s);
   }
-  for (i = 0; i < buflen; i++)
-  {
-    v->sb[v->sbhead] = tempbuf[i];
-    v->sbhead = (v->sbhead + 1) % SCROLLBACK;
-    v->sblen++;
-  }
-  splx(s);
 
   /* Scroll: */
-  for (i = 0; i < v->numtrows-1; i++)
+  for (i = v->toptrow-1; i < v->bottrow-1; i++)
     for (j = 0; j < v->numtcols; j++)
     {
       v->scr[i][j] = v->scr[i+1][j];
@@ -659,30 +758,43 @@ static scrollup(int vtnum)
     }
   for (j = 0; j < v->numtcols; j++)
   {
-    v->scr[v->numtrows-1][j] = 32;
-    v->att[v->numtrows-1][j] = T_NORMAL;
+    v->scr[v->bottrow-1][j] = 32;
+    v->att[v->bottrow-1][j] = T_NORMAL;
   }
 
   if (!v->visible)
     return;
 
-  from = (long *)&v->screen[v->font->height * v->linelen];
-  to = (long *)&v->screen[0];
-  j = v->linelen / 4 - 20;
-  for (i = (v->numtrows-1)*v->font->height; i; i--)
+  from = (long *)&v->screen[v->toptrow*v->font->height * v->linelen];
+  to = (long *)&v->screen[(v->toptrow-1)*v->font->height * v->linelen];
+  maxx = v->numbits*(v->numgcols+31)/32;
+  j = v->linelen / 4 - maxx;
+  for (i = (v->bottrow-v->toptrow)*v->font->height; i; i--)
   {
     int depth;
     for (depth = v->numbits ; depth ; depth --) {
-      CL; CL; CL; CL;
-      CL; CL; CL; CL;
-      CL; CL; CL; CL;
-      CL; CL; CL; CL;
-      CL; CL; CL; CL;
+      x = maxx;
+      while (x >= 16) { /* assume at least 512 pixel wide screen. */
+        CL; CL; CL; CL;
+        CL; CL; CL; CL;
+        CL; CL; CL; CL;
+        CL; CL; CL; CL;
+        x -= 16;
+      }
+      if (x)
+      switch (x) {
+	case 15: CL; case 14: CL; case 13: CL;
+        case 12: CL; case 11: CL; case 10: CL;
+        case 9: CL; case 8: CL; case 7: CL;
+        case 6: CL; case 5: CL; case 4: CL;
+	case 3: CL; case 2: CL; case 1: CL;
+	default:
+      }
     }
     to += j;
     from += j;
   }
-  to -= j;
+  to = (long *)&v->screen[(v->bottrow-1)*v->font->height * v->linelen];
   for (i = v->font->height * v->linelen/4; i; i--)
     *to++ = 0;
 }
@@ -691,7 +803,7 @@ static clearline(int vtnum, int which)
 {
   /* which=0=to end of line, 1=to beginning of line, 2=all line */
 
-  int start , end, i, j;
+  int start , end, i, j, b;
   struct vt *v = &vt[vtnum];
 
   switch (which)
@@ -709,11 +821,26 @@ static clearline(int vtnum, int which)
   if (!v->visible )
     return;
 
-  start = v->y*v->font->height*v->linelen + start*v->font->width*v->numbits/8;
-  end =   v->y*v->font->height*v->linelen + end*v->font->width*v->numbits/8;
-  for (i = start; i <= end; i++)
-    for (j = 0; j < v->font->height; j++)
-      v->screen[i + j * v->linelen] = 0;
+  if (v->font->width%8 == 0 || v->numbits == 8) {
+    start = v->y*v->font->height*v->linelen + start*v->font->width*v->numbits/8;
+    end   = v->y*v->font->height*v->linelen + end*v->font->width*v->numbits/8;
+    for (i = start; i <= end; i++)
+      for (j = 0; j < v->font->height; j++)
+        v->screen[i + j * v->linelen] = 0;
+  } else {
+    if (b = (start*v->font->width*v->numbits % 8)) {
+      start = i = v->y*v->font->height*v->linelen + start*v->font->width*v->numbits/8;
+      for (j = 0; j < v->font->height; j++)
+	v->screen[i + j * v->linelen] &= ~((1<<(8-b))-1);
+      start++;
+    } else {
+    	start = v->y*v->font->height*v->linelen + start*v->font->width*v->numbits/8;
+    }
+    end   = v->y*v->font->height*v->linelen + end*v->font->width*v->numbits/8;
+    for (i = start; i <= end; i++)
+      for (j = 0; j < v->font->height; j++)
+        v->screen[i + j * v->linelen] = 0;
+  }
 }
 
 static movecursordown(int vtnum)
@@ -753,11 +880,11 @@ static scrolldown(int vtnum)
 {
   /* scrolls the screen down by one text line */
 
-  register int i, j;
+  register int i, j, x, maxx;
   register long *from, *to;
   struct vt *v = &vt[vtnum];
 
-  for (i = v->numtrows - 1; i > 0; i--)
+  for (i = v->bottrow - 1; i >= v->toptrow; i--)
     for (j = 0; j < v->numtcols; j++)
     {
       v->scr[i][j] = v->scr[i-1][j];
@@ -772,22 +899,36 @@ static scrolldown(int vtnum)
   if (!v->visible )
     return;
 
-  from = (long *)&v->screen[(v->numtrows-1)*v->font->height*v->linelen-v->linelen];
-  to = (long *)&v->screen[v->numtrows*v->font->height*v->linelen-v->linelen];
-  for (i = (v->numtrows-1)*v->font->height; i; i--)
+  from = (long *)&v->screen[(v->bottrow-1)*v->font->height*v->linelen-v->linelen];
+  to = (long *)&v->screen[v->bottrow*v->font->height*v->linelen-v->linelen];
+  maxx = v->numbits*(v->numgcols+31)/32;
+  j = v->linelen / 4 + maxx;
+  for (i = (v->bottrow-v->toptrow)*v->font->height; i; i--)
   { 
     int depth;
     for (depth = v->numbits ; depth ; depth --) {
-      CL; CL; CL; CL;
-      CL; CL; CL; CL;
-      CL; CL; CL; CL;
-      CL; CL; CL; CL;
-      CL; CL; CL; CL;
+      x = maxx;
+      while (x >= 16) { /* assume at least 512 pixel wide screen. */
+        CL; CL; CL; CL;
+        CL; CL; CL; CL;
+        CL; CL; CL; CL;
+        CL; CL; CL; CL;
+        x -= 16;
+      }
+      if (x)
+      switch (x) {
+	case 15: CL; case 14: CL; case 13: CL;
+        case 12: CL; case 11: CL; case 10: CL;
+        case 9: CL; case 8: CL; case 7: CL;
+        case 6: CL; case 5: CL; case 4: CL;
+	case 3: CL; case 2: CL; case 1: CL;
+	default:
+      }
     }
-    to -= 20 + v->linelen/4;
-    from -= 20 + v->linelen/4;
+    to -= j;
+    from -= j;
   }
-  to = (long *)v->screen;
+  to = (long *)&v->screen[(v->toptrow-1)*v->font->height*v->linelen];
   for (i = v->font->height*v->linelen/4; i; i--)
     *to++ = 0;
 }
@@ -944,7 +1085,7 @@ static parseVT100(int vtnum, char *s)
     case 'H':  /* Move Cursor */
     case 'f':  /* Move cursor */
       v->x=n[1]-1;
-      v->y=n[0]-1;
+      v->y=n[0]-1 + v->toptrow-1;
       if (v->x < 0) v->x=0;
       if (v->y < 0) v->y=0;
       if (v->x >= v->numtcols) v->x = v->numtcols-1;
@@ -997,6 +1138,28 @@ static parseVT100(int vtnum, char *s)
         /* Returns ^[0n */;
       if (n[0] == 6)			/* Cursor position report	*/
         /* Returns ^[[Pl;PcR */;
+      break;
+    case 'r':
+      if (num == 0) {
+	/* I think this should return something like ncols;nrows */
+      } else {
+      	if (num == 1)
+          n[1] = v->bottrow;
+	if (n[0] < 1) n[0] = 1;
+	if (n[1] < 1) n[1] = 1;
+	if (n[0] > v->bottrow) n[0] = v->bottrow;
+	if (n[1] > v->bottrow) n[1] = v->bottrow;
+	if (n[0] < n[1]) {
+	  v->toptrow = n[0];
+	  v->bottrow = n[1];
+	} else {
+	  /* This isn't right.		      */
+	  /* But it's better than nothing :-) */
+	  /* And I don't know what "right" is */
+	  v->toptrow = n[1];
+	  v->bottrow = n[0];
+	}
+      }
       break;
     default:
       puts (vtnum, "Unknown VT100 code: \"");
@@ -1063,7 +1226,7 @@ static int writechar(int vtnum, unsigned char c)
              while (v->x%8);
              break;
     case 10: movecursordown(vtnum);			/* Line feed	*/
-             v->x=0; /* <-- Should not always do this, but when?	*/
+             /* v->x=0; <-- Should not always do this, but when?	*/
              v->hanging_cursor = 0;	/* Should I do this here?	*/
              break;
     case 13: v->x=0;				/* Carriage return	*/
@@ -1325,6 +1488,7 @@ conopen(dev_t dev, int mode, int flag, struct proc *p)
          adb_poll_setup = 1;
       }
    }
+
    return (error);
 }
 
@@ -1576,7 +1740,7 @@ macinit(struct consdev *cntab)
   if (alreadyinit) return;
   alreadyinit = 1;
 
-  consoleinit();
+  conattach(NCON);
 
   if (serial_boot_echo) {
     chr = ser_init_str;
@@ -1648,7 +1812,7 @@ con_intr(caddr_t unused)  /* One arg here we could use */
 
   if (conlen > 0)
   {
-    s = splhigh();
+    s = splconsole();
     erasecursor(0);
     while (conlen > 0)
     {
@@ -1674,7 +1838,7 @@ macconputchar(int vtnum, u_char c)
       /* DO NOTHING */;
     conbuf[conhead] = c;
     conhead = (conhead + 1) % CONBUFLEN;
-    s = splhigh();
+    s = splconsole();
     conlen++; /* Must be exclusive access to "conlen" */
     splx(s);
 
@@ -1690,7 +1854,7 @@ macconputchar(int vtnum, u_char c)
     /* This should be atomic because interrupt could want to
     display something: */
 
-    s = splhigh();
+    s = splconsole();
     erasecursor(vtnum);
     writechar(vtnum, (char)c);
     drawcursor(vtnum);

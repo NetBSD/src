@@ -30,8 +30,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id: device.h,v 1.2 1993/11/29 00:32:29 briggs Exp $
  */
-#ident "$Id: device.h,v 1.1.1.1 1993/09/29 06:09:28 briggs Exp $"
 
 #include "nubus.h"
 
@@ -82,15 +82,6 @@ struct	devqueue {
 #define MAXADB		16	/* Max number of ADB devices. */
 
 
-struct nubus_hw{
-   int found;			/* If there is a card there	*/
-   caddr_t addr;		/* Phys addr of start of card	*/
-   caddr_t rom;			/* Phys addr of start of ROM	*/
-   int claimed;			/* TRUE if a driver claims this */
-   struct slot Slot;		/* MF NUBUS STUFF */
-   /* any other Nubus stuff we can think of when we get */
-   /*  the NuBus documentation */
-};
 
 struct adb_hw{
    int found;			/* is there a device at this address */

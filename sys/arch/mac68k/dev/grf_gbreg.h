@@ -37,9 +37,9 @@
  *
  * from: Utah $Hdr: grf_gbreg.h 1.1 90/07/09$
  *
- *	@(#)grf_gbreg.h	7.2 (Berkeley) 11/4/90
+ *	from: @(#)grf_gbreg.h	7.2 (Berkeley) 11/4/90
+ *	$Id: grf_gbreg.h,v 1.2 1993/11/29 00:32:36 briggs Exp $
  */
-#ident "$Id: grf_gbreg.h,v 1.1.1.1 1993/09/29 06:09:30 briggs Exp $"
 
 /*
  * Gatorbox driver regs

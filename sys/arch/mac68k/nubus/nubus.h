@@ -30,12 +30,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * $Id: nubus.h,v 1.2 1993/11/29 00:32:52 briggs Exp $
+ *
  */
-#ident "$Id: nubus.h,v 1.1.1.1 1993/09/29 06:09:25 briggs Exp $"
 
-#define NUBUS_VIDEO 3
-#define NUBUS_NETWORK 4
-#define NUBUS_MOTHERBOARD 0x0a
+#define NUBUS_VIDEO		3
+#define NUBUS_NETWORK		4
+#define NUBUS_MOTHERBOARD	0x0a
+#define NUBUS_MAXSLOTS		16
 
 struct imagedata{
 	long whatTheHellIsThis;
@@ -85,3 +87,12 @@ struct slot {
 	char manufacturer[40];
 };
 
+struct nubus_hw{
+   int found;			/* If there is a card there	*/
+   caddr_t addr;		/* Phys addr of start of card	*/
+   caddr_t rom;			/* Phys addr of start of ROM	*/
+   int claimed;			/* TRUE if a driver claims this */
+   struct slot Slot;		/* MF NUBUS STUFF */
+   /* any other Nubus stuff we can think of when we get */
+   /*  the NuBus documentation */
+};

@@ -37,9 +37,9 @@
  *
  * from: Utah $Hdr: grf_gb.c 1.16 91/04/02$
  *
- *	@(#)grf_gb.c	7.4 (Berkeley) 5/7/91
+ *	from: @(#)grf_gb.c	7.4 (Berkeley) 5/7/91
+ *	$Id: grf_gb.c,v 1.2 1993/11/29 00:32:34 briggs Exp $
  */
-#ident "$Id: grf_gb.c,v 1.1.1.1 1993/09/29 06:09:30 briggs Exp $"
 
 #include "grf.h"
 #if NGRF > 0
