@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.10 1997/10/14 01:16:43 lukem Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.11 1997/10/16 06:52:52 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.10 1997/10/14 01:16:43 lukem Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.11 1997/10/16 06:52:52 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: telnetd.c,v 1.10 1997/10/14 01:16:43 lukem Exp $");
 
 #include <termcap.h>
 
-#include <sys/cdefs.h>
 #define P __P
 
 #if	defined(_SC_CRAY_SECURE_SYS) && !defined(SCM_SECURITY)
@@ -802,7 +801,7 @@ doit(who)
 #else
 	for (;;) {
 		char *lp;
-		extern char *line, *getpty();
+		extern char *line;
 
 		if ((lp = getpty()) == NULL)
 			fatal(net, "Out of ptys");
