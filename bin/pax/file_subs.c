@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.43 2004/04/25 16:20:24 christos Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.44 2004/04/27 13:45:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.43 2004/04/25 16:20:24 christos Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.44 2004/04/27 13:45:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,10 +73,16 @@ static int warn_broken;
  * routines that deal with file operations such as: creating, removing;
  * and setting access modes, uid/gid and times of files
  */
+#define SET_BITS		(S_ISUID | S_ISGID)
+#define FILE_BITS		(S_IRWXU | S_IRWXG | S_IRWXO)
+#define A_BITS			(FILE_BITS | SET_BITS | S_ISVTX)
 
-#define FILEBITS		(S_ISVTX | S_IRWXU | S_IRWXG | S_IRWXO)
-#define SETBITS			(S_ISUID | S_ISGID)
-#define ABITS			(FILEBITS | SETBITS)
+/*
+ * The S_ISVTX (sticky bit) can be set by non-superuser on directories
+ * but not other kinds of files.
+ */
+#define FILEBITS(dir)		((dir) ? (FILE_BITS | S_ISVTX) : FILE_BITS)
+#define SETBITS(dir)		((dir) ? SET_BITS : (SET_BITS | S_ISVTX))
 
 /*
  * file_creat()
@@ -177,11 +183,11 @@ file_close(ARCHD *arcn, int fd)
 	 * set uid/gid bits but restore the file modes (since mkstemp doesn't).
 	 */
 	if (!pmode || res)
-		arcn->sb.st_mode &= ~(SETBITS);
+		arcn->sb.st_mode &= ~SETBITS(0);
 	if (pmode)
 		set_pmode(arcn->tmp_name, arcn->sb.st_mode);
 	else
-		set_pmode(arcn->tmp_name, arcn->sb.st_mode & FILEBITS);
+		set_pmode(arcn->tmp_name, arcn->sb.st_mode & FILEBITS(0));
 	if (patime || pmtime)
 		set_ftime(arcn->tmp_name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
 #if HAVE_STRUCT_STAT_ST_FLAGS
@@ -398,7 +404,7 @@ node_creat(ARCHD *arcn)
 	 * file and link creation routines, this method seems to exhibit the
 	 * best performance in general use workloads.
 	 */
-	file_mode = arcn->sb.st_mode & FILEBITS;
+	file_mode = arcn->sb.st_mode & FILEBITS(arcn->type == PAX_DIR);
 
 	for (;;) {
 		switch(arcn->type) {
@@ -503,7 +509,7 @@ badlink:
 	 * set uid/gid bits
 	 */
 	if (!pmode || res)
-		arcn->sb.st_mode &= ~(SETBITS);
+		arcn->sb.st_mode &= ~SETBITS(arcn->type == PAX_DIR);
 	if (pmode)
 		set_pmode(arcn->name, arcn->sb.st_mode);
 
@@ -529,8 +535,9 @@ badlink:
 				 * restored AS CREATED and not as stored if
 				 * pmode is not set.
 				 */
-				set_pmode(nm,
-				    ((sb.st_mode & FILEBITS) | S_IRWXU));
+				set_pmode(nm, ((sb.st_mode &
+				    FILEBITS(arcn->type == PAX_DIR)) |
+				    S_IRWXU));
 				if (!pmode)
 					arcn->sb.st_mode = sb.st_mode;
 			}
@@ -623,7 +630,7 @@ unlnk_exist(char *name, int type)
  */
 
 int
-chk_path( char *name, uid_t st_uid, gid_t st_gid)
+chk_path(char *name, uid_t st_uid, gid_t st_gid)
 {
 	char *spt = name;
 	struct stat sb;
@@ -686,7 +693,8 @@ chk_path( char *name, uid_t st_uid, gid_t st_gid)
 		 */
 		if ((access(name, R_OK | W_OK | X_OK) < 0) &&
 		    (lstat(name, &sb) == 0)) {
-			set_pmode(name, ((sb.st_mode & FILEBITS) | S_IRWXU));
+			set_pmode(name, ((sb.st_mode & FILEBITS(0)) |
+			    S_IRWXU));
 			add_dir(name, spt - name, &sb, 1);
 		}
 		*(spt++) = '/';
@@ -779,7 +787,7 @@ set_ids(char *fnm, uid_t uid, gid_t gid)
 void
 set_pmode(char *fnm, mode_t mode)
 {
-	mode &= ABITS;
+	mode &= A_BITS;
 	if (lchmod(fnm, mode)) {
 		(void)fflush(listf);
 		syswarn(1, errno, "Cannot set permissions on %s", fnm);
