@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.1.1.1 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.5 1993/09/30 23:31:23 jtc Exp $
+#	$Id: Makefile,v 1.6 1994/02/10 01:54:34 cgd Exp $
 
 #Missing: 01.begin 02.learn 03.shell 05.dc 06.bc 08.mh 12.edtut 13.edadv
 #	  17.jove 18.sed 19.awk 20.msmacros 24.troff 25.trofftut 26.eqn
@@ -14,9 +14,6 @@ SUBDIR=	04.csh 07.Mail \
 	16.ex 21.msdiffs 22.memacros \
 	23.meref \
 	33.rogue 34.trek
-
-beforeinstall:
-	@install -d -o root -g wheel -m 755 ${DESTDIR}${BINDIR}
 
 realinstall:
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
