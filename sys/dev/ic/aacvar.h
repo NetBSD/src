@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.5 2005/02/27 00:27:00 perry Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.6 2005/03/01 03:31:45 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -148,7 +148,14 @@ struct aac_softc;
 /*
  * Quirk listings.
  */
-#define	AAC_QUIRK_PERC2QC	0x0001
+#define AAC_QUIRK_PERC2QC	(1 << 0)	/* Dell PERC 2QC */
+#define AAC_QUIRK_SG_64BIT	(1 << 4)	/* Use 64-bit S/G addresses */
+#define AAC_QUIRK_4GB_WINDOW	(1 << 5)	/* Device can access host mem
+						 * in 2GB-4GB range */
+#define AAC_QUIRK_NO4GB		(1 << 6)	/* Can't access host mem >2GB */
+#define AAC_QUIRK_256FIBS	(1 << 7)	/* Can only handle 256 cmds */
+#define AAC_QUIRK_BROKEN_MMAP	(1 << 8)	/* Broken HostPhysMemPages */
+
 
 /*
  * We gather a number of adapter-visible items into a single structure.
@@ -190,7 +197,7 @@ struct aac_interface {
 	void	(*aif_set_istatus)(struct aac_softc *, int);
 	void	(*aif_set_mailbox)(struct aac_softc *, u_int32_t,
 				   u_int32_t, u_int32_t, u_int32_t, u_int32_t);
-	int	(*aif_get_mailboxstatus)(struct aac_softc *);
+	uint32_t (*aif_get_mailbox)(struct aac_softc *, int);
 	void	(*aif_set_interrupts)(struct aac_softc *, int);
 };
 
@@ -205,8 +212,8 @@ struct aac_interface {
 		((sc)->sc_if.aif_set_mailbox((sc), (command), (arg0),	\
 		    (arg1), (arg2), (arg3)));				\
 	} while(0)
-#define AAC_GET_MAILBOXSTATUS(sc) \
-	((sc)->sc_if.aif_get_mailboxstatus(sc))
+#define AAC_GET_MAILBOX(sc, mb)		((sc)->sc_if.aif_get_mailbox(sc, mb))
+#define AAC_GET_MAILBOXSTATUS(sc)	(AAC_GET_MAILBOX(sc, 0))
 #define	AAC_MASK_INTERRUPTS(sc)	\
 	((sc)->sc_if.aif_set_interrupts((sc), 0))
 #define AAC_UNMASK_INTERRUPTS(sc) \
@@ -288,6 +295,7 @@ struct aac_softc {
 	struct aac_drive	sc_hdr[AAC_MAX_CONTAINERS];
 	int			sc_nunits;
 	int			sc_flags;
+	uint32_t		sc_supported_options;
 };
 #define AAC_HWIF_I960RX		0
 #define AAC_HWIF_STRONGARM	1
