@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.34 1999/11/18 23:32:29 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.35 1999/11/24 23:13:19 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -63,9 +63,9 @@
 #include <dev/usb/usbdivar.h>
 
 #ifdef UHUB_DEBUG
-#define DPRINTF(x)	if (usbdebug) logprintf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
-extern int	usbdebug;
+#define DPRINTF(x)	if (uhubdebug) logprintf x
+#define DPRINTFN(n,x)	if (uhubdebug>(n)) logprintf x
+int	uhubdebug;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -364,9 +364,10 @@ uhub_explore(dev)
 		}
 		status = UGETW(up->status.wPortStatus);
 		change = UGETW(up->status.wPortChange);
-		DPRINTFN(5, ("uhub_explore: port %d status 0x%04x 0x%04x\n",
-			     port, status, change));
+		DPRINTFN(3,("uhub_explore: port %d status 0x%04x 0x%04x\n",
+			    port, status, change));
 		if (change & UPS_C_PORT_ENABLED) {
+			DPRINTF(("uhub_explore: C_PORT_ENABLED\n"));
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
 			if (status & UPS_PORT_ENABLED) {
 				printf("%s: illegal enable change, port %d\n",
@@ -386,6 +387,8 @@ uhub_explore(dev)
 			}
 		}
 		if (!(change & UPS_C_CONNECT_STATUS)) {
+			DPRINTFN(3,("uhub_explore: port=%d !C_CONNECT_"
+				    "STATUS\n", port));
 			/* No status change, just do recursive explore. */
 			if (up->device && up->device->hub)
 				up->device->hub->explore(up->device);
@@ -405,14 +408,17 @@ uhub_explore(dev)
 	disco:
 		if (up->device != NULL) {
 			/* Disconnected */
-			DPRINTF(("uhub_explore: device %d disappeared "
+			DPRINTF(("uhub_explore: device addr=%d disappeared "
 				 "on port %d\n", up->device->address, port));
 			usb_disconnect_port(up, USBDEV(sc->sc_dev));
 			usbd_clear_port_feature(dev, port, 
 						UHF_C_PORT_CONNECTION);
 		}
-		if (!(status & UPS_CURRENT_CONNECT_STATUS))
+		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
+			DPRINTFN(3,("uhub_explore: port=%d !CURRENT_CONNECT"
+				    "_STATUS\n", port));
 			continue;
+		}
 
 		/* Connected */
 		up->restartcnt = 0;
@@ -421,9 +427,11 @@ uhub_explore(dev)
 		usbd_delay_ms(dev, USB_PORT_POWERUP_DELAY);
 
 		/* Reset port, which implies enabling it. */
-		if (usbd_reset_port(dev, port, &up->status) != 
-		    USBD_NORMAL_COMPLETION)
+		if (usbd_reset_port(dev, port, &up->status)) {
+			DPRINTF(("uhub_explore: port=%d reset failed\n",
+				 port));
 			continue;
+		}
 
 		/* Get device info and set its address. */
 		err = usbd_new_device(USBDEV(sc->sc_dev), dev->bus, 
