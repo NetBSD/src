@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.50 2002/03/08 20:48:47 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.50.2.1 2002/03/11 21:28:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.50 2002/03/08 20:48:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.50.2.1 2002/03/11 21:28:53 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -457,10 +457,10 @@ uao_free(aobj)
 	 */
 
 	if (swpgonlydelta > 0) {
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm.swap_data_mutex);
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
 		uvmexp.swpgonly -= swpgonlydelta;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm.swap_data_mutex);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.31 2001/09/15 20:36:44 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.31.6.1 2002/03/11 21:28:52 thorpej Exp $	*/
 
 /*
  *
@@ -42,6 +42,8 @@
 #include "opt_multiprocessor.h"
 #include "opt_uvmhist.h"
 #endif
+
+#include <sys/mutex.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -116,7 +118,7 @@ struct uvm {
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
 
 	/* swap-related items */
-	struct simplelock swap_data_lock;
+	kmutex_t swap_data_mutex;
 
 	/* kernel object: to support anonymous pageable kernel memory */
 	struct uvm_object *kernel_object;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.56 2002/03/07 20:15:32 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.56.2.1 2002/03/11 21:28:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.56 2002/03/07 20:15:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.56.2.1 2002/03/11 21:28:54 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -314,10 +314,10 @@ uvm_km_pgremove(uobj, start, end)
 	simple_unlock(&uobj->vmobjlock);
 
 	if (swpgonlydelta > 0) {
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm.swap_data_mutex);
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
 		uvmexp.swpgonly -= swpgonlydelta;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm.swap_data_mutex);
 	}
 }
 
