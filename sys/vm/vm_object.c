@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.25 1994/09/07 20:25:10 mycroft Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.26 1994/10/29 07:35:16 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -315,7 +315,7 @@ vm_object_terminate(object)
 	 * Wait until the pageout daemon is through with the object.
 	 */
 	while (object->paging_in_progress) {
-		vm_object_sleep((int)object, object, FALSE);
+		vm_object_sleep((long)object, object, FALSE);
 		vm_object_lock(object);
 	}
 
@@ -420,7 +420,7 @@ again:
 	 * Wait until the pageout daemon is through with the object.
 	 */
 	while (object->paging_in_progress) {
-		vm_object_sleep((int)object, object, FALSE);
+		vm_object_sleep((long)object, object, FALSE);
 		vm_object_lock(object);
 	}
 	/*
@@ -875,7 +875,7 @@ vm_object_setpager(object, pager, paging_offset,
  */
 
 #define vm_object_hash(pager) \
-	(((unsigned)pager)%VM_OBJECT_HASH_COUNT)
+	(((unsigned long)pager)%VM_OBJECT_HASH_COUNT)
 
 /*
  *	vm_object_lookup looks in the object cache for an object with the
@@ -1429,14 +1429,15 @@ _vm_object_print(object, full, pr)
 	if (object == NULL)
 		return;
 
-	iprintf(pr, "Object 0x%x: size=0x%x, res=%d, ref=%d, ",
-		(int) object, (int) object->size,
+	iprintf(pr, "Object 0x%lx: size=0x%lx, res=%d, ref=%d, ",
+		(long) object, (long) object->size,
 		object->resident_page_count, object->ref_count);
-	(*pr)("pager=0x%x+0x%x, shadow=(0x%x)+0x%x\n",
-	       (int) object->pager, (int) object->paging_offset,
-	       (int) object->shadow, (int) object->shadow_offset);
-	(*pr)("cache: next=0x%x, prev=0x%x\n",
-	       object->cached_list.tqe_next, object->cached_list.tqe_prev);
+	(*pr)("pager=0x%lx+0x%lx, shadow=(0x%lx)+0x%lx\n",
+	       (long) object->pager, (long) object->paging_offset,
+	       (long) object->shadow, (long) object->shadow_offset);
+	(*pr)("cache: next=0x%lx, prev=0x%lx\n",
+	       (long)object->cached_list.tqe_next,
+	       (long)object->cached_list.tqe_prev);
 
 	if (!full)
 		return;
