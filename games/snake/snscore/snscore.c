@@ -1,4 +1,4 @@
-/*	$NetBSD: snscore.c,v 1.12 2000/01/21 00:27:03 jsm Exp $	*/
+/*	$NetBSD: snscore.c,v 1.13 2000/05/08 07:56:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: snscore.c,v 1.12 2000/01/21 00:27:03 jsm Exp $");
+__RCSID("$NetBSD: snscore.c,v 1.13 2000/05/08 07:56:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ main()
 	struct	passwd	*p;
 
 	/* Revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	fd = fopen(recfile, "r");
 	if (fd == NULL)

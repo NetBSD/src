@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1999/09/17 20:45:49 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2000/05/08 07:56:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1999/09/17 20:45:49 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2000/05/08 07:56:04 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ main(argc, argv)
 	int ch;
 
 	/* Revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	while ((ch = getopt(argc, argv, "d:")) != -1) {
 		switch (ch) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcd.c,v 1.9 1999/07/28 02:12:33 hubertf Exp $	*/
+/*	$NetBSD: bcd.c,v 1.10 2000/05/08 07:56:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: bcd.c,v 1.9 1999/07/28 02:12:33 hubertf Exp $");
+__RCSID("$NetBSD: bcd.c,v 1.10 2000/05/08 07:56:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,7 +138,7 @@ main(argc, argv)
 	char cardline[80];
 
 	/* revoke setgid privileges */
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	/*
 	 * The original bcd prompts with a "%" when reading from stdin,

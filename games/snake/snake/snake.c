@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.15 1999/10/26 06:38:31 cgd Exp $	*/
+/*	$NetBSD: snake.c,v 1.16 2000/05/08 07:56:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.15 1999/10/26 06:38:31 cgd Exp $");
+__RCSID("$NetBSD: snake.c,v 1.16 2000/05/08 07:56:05 mycroft Exp $");
 #endif
 #endif				/* not lint */
 
@@ -163,7 +163,7 @@ main(argc, argv)
 		warn("fopen %s", _PATH_LOGFILE);
 		sleep(2);
 	}
-	setregid(getgid(), getgid());
+	setgid(getgid());
 
 	(void) time(&tv);
 
