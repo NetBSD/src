@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.17 2004/12/10 17:11:53 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.18 2005/01/06 17:33:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.17 2004/12/10 17:11:53 nathanw Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.18 2005/01/06 17:33:36 mycroft Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: pthread_cond.c,v 1.17 2004/12/10 17:11:53 nathanw Exp $");
 #define SDPRINTF(x)
 #endif
 
-int	_sys_select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
+int	_sys_nanosleep(const struct timespec *, struct timespec *);
 
 extern int pthread__started;
 
@@ -363,32 +363,26 @@ static int
 pthread_cond_wait_nothread(pthread_t self, pthread_mutex_t *mutex,
     const struct timespec *abstime)
 {
-	struct timeval now, tv, *tvp;
+	struct timespec now, diff;
 	int retval;
 
-	if (abstime == NULL)
-		tvp = NULL;
-	else {
-		tvp = &tv;
-		gettimeofday(&now, NULL);
-		TIMESPEC_TO_TIMEVAL(tvp, abstime);
-
-		if  (timercmp(tvp, &now, <))
-			timerclear(tvp);
+	if (abstime == NULL) {
+		diff.tv_sec = 99999999;
+		diff.tv_nsec = 0;
+	} else {
+		clock_gettime(CLOCK_REALTIME, &now);
+		if  (timespeccmp(abstime, &now, <))
+			timespecclear(&diff);
 		else
-			timersub(tvp, &now, tvp);
+			timespecsub(abstime, &now, &diff);
 	}
 
-	/*
-	 * The libpthread select() wrapper has cancellation tests, but
-	 * we need to have the mutex locked when testing for
-	 * cancellation and unlocked while we sleep.  So, skip the
-	 * wrapper.
-	 */
-	pthread__testcancel(self);
-	pthread_mutex_unlock(mutex);
-	retval = _sys_select(0, NULL, NULL, NULL, tvp);
-	pthread_mutex_lock(mutex);
+	do {
+		pthread__testcancel(self);
+		pthread_mutex_unlock(mutex);
+		retval = _sys_nanosleep(&diff, NULL);
+		pthread_mutex_lock(mutex);
+	} while (abstime == NULL && retval == 0);
 	pthread__testcancel(self);
 
 	if (retval == 0)
