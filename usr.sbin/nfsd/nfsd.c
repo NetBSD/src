@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsd.c	5.10 (Berkeley) 4/24/91";*/
-static char rcsid[] = "$Id: nfsd.c,v 1.9 1993/12/05 13:41:07 deraadt Exp $";
+static char rcsid[] = "$Id: nfsd.c,v 1.10 1994/04/14 03:16:39 cgd Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -64,9 +64,6 @@ static char rcsid[] = "$Id: nfsd.c,v 1.9 1993/12/05 13:41:07 deraadt Exp $";
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
 
-#include <machine/vmparam.h>	/* these are for PS_STRINGS */
-#include <sys/exec.h>
-
 /* Global defs */
 #ifdef DEBUG
 #define	syslog(e, s)	fprintf(stderr,(s))
@@ -79,8 +76,6 @@ struct hadr {
 	struct hadr *ha_next;
 };
 struct	hadr hphead;
-char	**Argv = NULL;		/* pointer to argument vector */
-char	*LastArg = NULL;	/* end of argv */
 void	reapchild(),not_nfsserver();;
 
 /*
@@ -116,16 +111,6 @@ main(argc, argv, envp)
 	bzero((char *)&msk, sizeof msk);
 	bzero((char *)&mtch, sizeof mtch);
 
-	/*
-	 *  Save start and extent of argv for setproctitle.
-	 */
-
-	Argv = argv;
-	if (envp == 0 || *envp == 0)
-		envp = argv;
-	while (*envp)
-		envp++;
-	LastArg = envp[-1] + strlen(envp[-1]);
 	while ((opt = getopt(argc, argv, "rt:u:")) != EOF)
 		switch (opt) {
 		case 'r':
@@ -254,8 +239,7 @@ main(argc, argv, envp)
 		 */
 		for (i = 0; i < udpcnt; i++)
 			if (fork() == 0) {
-				setproctitle("nfsd-udp",
-				    (struct sockaddr_in *)NULL);
+				setproctitle("udp");
 				ret = nfssvc(sock, &msk, sizeof(msk),
 						&mtch, sizeof(mtch));
 				if (ret < 0)
@@ -293,7 +277,7 @@ main(argc, argv, envp)
 			syslog(LOG_ERR, "Can't register with portmap");
 			exit(1);
 		}
-		setproctitle("nfsd-listen", (struct sockaddr_in *)NULL);
+		setproctitle("listen");
 		/*
 		 * Loop forever accepting connections and sending the children
 		 * into the kernel to service the mounts.
@@ -322,7 +306,8 @@ main(argc, argv, envp)
 			}
 			if (fork() == 0) {
 				close(sock);
-				setproctitle("nfsd-tcp", &peername);
+				setproctitle("tcp [%s]",
+					inet_ntoa(peername.sin_addr));
 				if (setsockopt(msgsock, SOL_SOCKET,
 				    SO_KEEPALIVE, (char *) &on, sizeof(on)) < 0)
 					syslog(LOG_ERR,
@@ -352,21 +337,6 @@ reapchild()
 
 	while (wait3((int *) NULL, WNOHANG, (struct rusage *) NULL))
 		;
-}
-
-setproctitle(a, sin)
-	char *a;
-	struct sockaddr_in *sin;
-{
-	register char *cp;
-	static char buf[80];
-
-	if (sin)
-		(void) sprintf(buf, "%s [%s]", a, inet_ntoa(sin->sin_addr));
-	else
-		(void) sprintf(buf, "%s", a);
-	PS_STRINGS->ps_nargvstr = 1;
-	PS_STRINGS->ps_argvstr = buf;
 }
 
 void not_nfsserver()

@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpd.c	5.40 (Berkeley) 7/2/91";*/
-static char rcsid[] = "$Id: ftpd.c,v 1.5 1994/04/06 20:50:05 cgd Exp $";
+static char rcsid[] = "$Id: ftpd.c,v 1.6 1994/04/14 03:15:41 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -145,11 +145,9 @@ int	swaitint = SWAITINT;
 void	lostconn(), myoob();
 FILE	*getdatasock(), *dataconn();
 
-#ifdef SETPROCTITLE
-char	**Argv = NULL;		/* pointer to argument vector */
-char	*LastArgv = NULL;	/* end of argv */
+#ifdef HASSETPROCTITLE
 char	proctitle[BUFSIZ];	/* initial part of title */
-#endif /* SETPROCTITLE */
+#endif /* HASSETPROCTITLE */
 
 main(argc, argv, envp)
 	int argc;
@@ -181,15 +179,6 @@ main(argc, argv, envp)
 #endif
 	data_source.sin_port = htons(ntohs(ctrl_addr.sin_port) - 1);
 	debug = 0;
-#ifdef SETPROCTITLE
-	/*
-	 *  Save start and extent of argv for setproctitle.
-	 */
-	Argv = argv;
-	while (*envp)
-		envp++;
-	LastArgv = envp[-1] + strlen(envp[-1]);
-#endif /* SETPROCTITLE */
 
 	argc--, argv++;
 	while (argc > 0 && *argv[0] == '-') {
@@ -527,21 +516,21 @@ pass(passwd)
 	}
 	if (guest) {
 		reply(230, "Guest login ok, access restrictions apply.");
-#ifdef SETPROCTITLE
+#ifdef HASSETPROCTITLE
 		sprintf(proctitle, "%s: anonymous/%.*s", remotehost,
 		    sizeof(proctitle) - sizeof(remotehost) -
 		    sizeof(": anonymous/"), passwd);
 		setproctitle(proctitle);
-#endif /* SETPROCTITLE */
+#endif /* HASSETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO, "ANONYMOUS FTP LOGIN FROM %s, %s",
 			    remotehost, passwd);
 	} else {
 		reply(230, "User %s logged in.", pw->pw_name);
-#ifdef SETPROCTITLE
+#ifdef HASSETPROCTITLE
 		sprintf(proctitle, "%s: %s", remotehost, pw->pw_name);
 		setproctitle(proctitle);
-#endif /* SETPROCTITLE */
+#endif /* HASSETPROCTITLE */
 		if (logging)
 			syslog(LOG_INFO, "FTP LOGIN FROM %s, %s",
 			    remotehost, pw->pw_name);
@@ -1195,10 +1184,10 @@ dolog(sin)
 	else
 		(void) strncpy(remotehost, inet_ntoa(sin->sin_addr),
 		    sizeof (remotehost));
-#ifdef SETPROCTITLE
+#ifdef HASSETPROCTITLE
 	sprintf(proctitle, "%s: connected", remotehost);
 	setproctitle(proctitle);
-#endif /* SETPROCTITLE */
+#endif /* HASSETPROCTITLE */
 
 	if (logging) {
 		t = time((time_t *) 0);
@@ -1470,39 +1459,3 @@ send_file_list(whichfiles)
 	data = -1;
 	pdata = -1;
 }
-
-#ifdef SETPROCTITLE
-/*
- * clobber argv so ps will show what we're doing.
- * (stolen from sendmail)
- * warning, since this is usually started from inetd.conf, it
- * often doesn't have much of an environment or arglist to overwrite.
- */
-
-/*VARARGS1*/
-setproctitle(fmt, a, b, c)
-char *fmt;
-{
-	register char *p, *bp, ch;
-	register int i;
-	char buf[BUFSIZ];
-
-	(void) sprintf(buf, fmt, a, b, c);
-
-	/* make ps print our process name */
-	p = Argv[0];
-	*p++ = '-';
-
-	i = strlen(buf);
-	if (i > LastArgv - p - 2) {
-		i = LastArgv - p - 2;
-		buf[i] = '\0';
-	}
-	bp = buf;
-	while (ch = *bp++)
-		if (ch != '\n' && ch != '\r')
-			*p++ = ch;
-	while (p < LastArgv)
-		*p++ = ' ';
-}
-#endif /* SETPROCTITLE */
