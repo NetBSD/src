@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 1999/06/20 06:08:20 cgd Exp $	*/
+/*	$NetBSD: md.h,v 1.3 1999/06/20 06:42:06 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -193,7 +193,7 @@ EXTERN	char *disk_names[]
  * #define DISKLABEL_CMD
  */
 
-/* Definition of files to retreive from ftp. */
+/* Definition of files to retrieve from ftp. */
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
