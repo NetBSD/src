@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.14 1999/04/14 14:13:11 minoura Exp $
+#	$NetBSD: INSTALL,v 1.15 1999/04/18 15:43:22 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -236,6 +236,8 @@ zstty0	at zsc0 channel 0		# built-in RS-232C
 
 #xcom0	at mainbus0			# NS16550 fast serial
 #xcom1	at mainbus0
+
+#par0	at mainbus0			# Builtin printer port
 
 ## Audio device; broken
 #okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3

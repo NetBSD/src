@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.31 1999/03/31 15:38:32 minoura Exp $
+#	$NetBSD: GENERIC,v 1.32 1999/04/18 15:43:22 minoura Exp $
 
 #
 #	GENERIC
@@ -227,6 +227,8 @@ pseudo-device	bell			# OPM bell
 
 xcom0	at mainbus0			# NS16550 fast serial
 xcom1	at mainbus0
+
+par0	at mainbus0			# Builtin printer port
 
 ## Audio device; broken
 #okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3
