@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.10 1997/02/05 16:35:47 oki Exp $	*/
+/*	$NetBSD: fd.c,v 1.11 1997/04/02 17:10:41 oki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -1357,6 +1357,7 @@ fdcretry(fdc)
 {
 	struct fd_softc *fd;
 	struct buf *bp;
+	char bits[64];
 
 	DPRINTF(("fdcretry:\n"));
 	fd = fdc->sc_drives.tqh_first;
