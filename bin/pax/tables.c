@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.13 2000/03/21 02:15:24 thorpej Exp $	*/
+/*	$NetBSD: tables.c,v 1.14 2001/10/24 11:28:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.13 2000/03/21 02:15:24 thorpej Exp $");
+__RCSID("$NetBSD: tables.c,v 1.14 2001/10/24 11:28:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -658,7 +658,7 @@ sub_name(oname, onamelen)
 
 	while (pt != NULL) {
 		/*
-		 * walk down the hash cahin looking for a match
+		 * walk down the hash chain looking for a match
 		 */
 		if (strcmp(oname, pt->oname) == 0) {
 			/*
