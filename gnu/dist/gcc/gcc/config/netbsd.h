@@ -53,15 +53,19 @@ Boston, MA 02111-1307, USA.  */
 #undef GPLUSPLUS_INCLUDE_DIR
 #define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
 
+#undef GPLUSPLUS_BACKWARD_INCLUDE_DIR
+#define GPLUSPLUS_BACKWARD_INCLUDE_DIR "/usr/include/g++/backward"
+
 #undef GCC_INCLUDE_DIR
 #define GCC_INCLUDE_DIR "/usr/include"
 
 #undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS			\
-  {						\
-    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
-    { GCC_INCLUDE_DIR, "GCC", 0, 0 },		\
-    { 0, 0, 0, 0 }				\
+#define INCLUDE_DEFAULTS				\
+  {							\
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },		\
+    { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1 },	\
+    { GCC_INCLUDE_DIR, "GCC", 0, 0 },			\
+    { 0, 0, 0, 0 }					\
   }
 
 /* Under NetBSD, the normal location of the compiler back ends is the
