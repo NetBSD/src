@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
+/*	$NetBSD: adb.c,v 1.7 2000/12/19 02:50:11 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -162,8 +162,8 @@ adbattach(parent, self, aux)
 
 int
 adbprint(args, name)
-        void *args;
-        const char *name;
+	void *args;
+	const char *name;
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)args;
 	int rv = UNCONF;
@@ -172,7 +172,7 @@ adbprint(args, name)
 		rv = UNSUPP; /* most ADB device types are unsupported */
 
 		/* print out what kind of ADB device we have found */
-		printf("%s addr %d: ", name, aa_args->origaddr);
+		printf("%s addr %d: ", name, aa_args->adbaddr);
 		switch(aa_args->origaddr) {
 #ifdef DIAGNOSTIC
 		case 0:
@@ -226,17 +226,7 @@ adbprint(args, name)
 #endif /* DIAGNOSTIC */
 		}
 	} else		/* a device matched and was configured */
-                printf(" addr %d: ", aa_args->origaddr);
+                printf(" addr %d: ", aa_args->adbaddr);
 
-	return (rv);
-}
-
-void
-extdms_complete(buffer, compdata, cmd)
-	caddr_t buffer, compdata;
-	int cmd;
-{
-	long *p = (long *)compdata;
-
-	*p= -1;
+	return rv;
 }
