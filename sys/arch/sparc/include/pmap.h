@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36 1999/03/26 23:41:34 mycroft Exp $ */
+/*	$NetBSD: pmap.h,v 1.36.2.1 1999/07/02 16:59:17 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -266,7 +266,7 @@ void		pmap_redzone __P((void));
 void		kvm_uncache __P((caddr_t, int));
 struct user;
 void		switchexit __P((struct proc *));
-int		mmu_pagein __P((struct pmap *pm, int, int));
+int		mmu_pagein __P((struct pmap *pm, vaddr_t, int));
 void		pmap_writetext __P((unsigned char *, int));
 
 #if !defined(MACHINE_NEW_CONCONTIG)
