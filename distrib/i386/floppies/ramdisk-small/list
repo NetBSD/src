@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.13 2003/01/19 12:26:52 tsutsui Exp $
+#	$NetBSD: list,v 1.14 2003/06/05 14:30:14 dsl Exp $
 
 PROG	bin/cat
 PROG	bin/chio
@@ -49,7 +49,8 @@ PROG	usr/bin/more	usr/bin/less
 PROG	usr/bin/sed
 PROG	usr/bin/tip
 
-PROG	usr/mdec/installboot
+# sysinst doesn't use installboot
+# PROG	usr/sbin/installboot
 
 PROG	usr/sbin/bad144
 PROG	usr/sbin/chown	usr/bin/chgrp
@@ -61,8 +62,5 @@ SPECIAL	more		srcdir	distrib/utils/more
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
-
-# we have not switched to MI usr.sbin/installboot yet.
-SPECIAL	installboot	srcdir	sys/arch/${MACHINE}/stand/installboot
 
 LIBS	libhack.o -lbz2 -lutil -lcurses -ltermcap -lcrypt -ll -lm -lrmt
