@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fixsb,v 1.9 2004/04/21 19:35:13 christos Exp $
+# $NetBSD: fixsb,v 1.10 2004/04/23 10:59:47 keihan Exp $
 #
 
 # PROVIDE: fixsb
@@ -56,7 +56,7 @@ readsbfield()
 #   3 for ok fslevel 3 filesystem
 #   4 for ok fslevel 4 filesystem
 #
-# dbj@netbsd.org 2004-04-12T18:15:06-0400
+# dbj@NetBSD.org 2004-04-12T18:15:06-0400
 check_part()
 {
 	verbose -n "Checking $1 ... "
