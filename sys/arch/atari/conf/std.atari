@@ -1,11 +1,8 @@
-#	$NetBSD: std.atari,v 1.13 1998/09/02 14:28:58 mrg Exp $
+#	$NetBSD: std.atari,v 1.14 1999/01/16 20:11:51 chuck Exp $
 #
 # standard atari information
 #
 machine		atari m68k
-
-options 	MACHINE_NEW_NONCONTIG	# old interface isn't supported anymore
-					# (required)
 
 options 	EXEC_SCRIPT		# Support #!
 options 	EXEC_AOUT		# a.out format executables
