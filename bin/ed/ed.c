@@ -1,11 +1,8 @@
 /* ed.c: This file contains the main control and user-interface routines
    for the ed line editor. */
 /*-
- * Copyright (c) 1993 The Regents of the University of California.
+ * Copyright (c) 1993 Andrew Moore, Talke Studio.
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley
- * by Andrew Moore, Talke Studio.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,18 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -35,38 +25,25 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/*-
- * Kernighan/Plauger, "Software Tools in Pascal," (c) 1981 by
- * Addison-Wesley Publishing Company, Inc.  Reprinted with permission of
- * the publisher.
- */
 
 #ifndef lint
 char copyright1[] =
-"@(#) Copyright (c) 1993 The Regents of the University of California.\n\
+"@(#) Copyright (c) 1993 Andrew Moore, Talke Studio.\n\
  All rights reserved.\n";
-char copyright2[] =
-"@(#) Kernighan/Plauger, Software Tools in Pascal, (c) 1981 by\n\
- Addison-Wesley Publishing Company, Inc.  Reprinted with permission of\n\
- the publisher.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ed.c	5.5 (Berkeley) 3/28/93";*/
-static char rcsid[] = "$Id: ed.c,v 1.17 1993/08/30 02:20:22 alm Exp $";
+static char sccsid[] = "@(#)ed.c	5.5 (Talke Studio) 3/28/93";
 #endif /* not lint */
 
 /*
  * CREDITS
- *	The buf.c algorithm is attributed to Rodney Ruddock of
+ *	The buffering algorithm is attributed to Rodney Ruddock of
  *	the University of Guelph, Guelph, Ontario.
  *
  *	The cbc.c encryption code is adapted from
  *	the bdes program by Matt Bishop of Dartmouth College,
  *	Hanover, NH.
- *
- *	Addison-Wesley Publishing Company generously granted
- *	permission to distribute this program over Internet.
  *
  */
 
@@ -188,7 +165,7 @@ top:
 		fputs("\n?\n", stderr);
 		sprintf(errmsg, "interrupt");
 	} else {
-		init_buf();
+		inited();
 		sigactive = 1;			/* enable signal handlers */
 		if (argc && **argv && ckfn(*argv)) {
 			if (doread(0, *argv) < 0 && !isatty(0))
@@ -279,109 +256,103 @@ top:
 long line1, line2, nlines;
 
 /* getlist: get line numbers from the command buffer until an illegal
-   address is seen.  return range status */
+   address is seen; return status */
 getlist()
 {
-	long num;
+	long addr;
 
-	nlines = line2 = 0;
-	while ((num = getone()) >= 0) {
-		line1 = line2;
-		line2 = num;
+	nlines = 0;
+	line1 = line2 = curln;
+	while ((addr = getone()) >= 0) {
 		nlines++;
+		line1 = line2;
+		line2 = addr;
 		if (*ibufp != ',' && *ibufp != ';')
 			break;
 		else if (*ibufp++ == ';')
-			curln = num;
+			curln = addr;
 	}
-	nlines = min(nlines, 2);
-	if (nlines == 0)
-		line2 = curln;
-	if (nlines <= 1)
+	if ((nlines = min(nlines, 2)) == 1 || line2 != addr)
 		line1 = line2;
-	return  (num == ERR) ? ERR : nlines;
+	return (addr == ERR) ? ERR : 0;
 }
 
+#define ckfirst() \
+	if (!first) { sprintf(errmsg, "invalid address"); return ERR; }
 
 /*  getone: return the next line number in the command buffer */
 long
 getone()
 {
+	char *hd;
+	long addr = curln;
+	int first = 1;
 	int c;
-	long i, num;
-
-	if ((num = getnum(1)) < 0)
-		return num;
-	for (;;) {
-		c = isspace(*ibufp);
-		skipblanks();
-		c = c && isdigit(*ibufp);
-		if (!c && *ibufp != '+' && *ibufp != '-' && *ibufp != '^')
-			break;
-		c = c ? '+' : *ibufp++;
-		if ((i = getnum(0)) < 0) {
-			sprintf(errmsg, "invalid address");
-			return  i;
-		}
-		if (c == '+')
-			num += i;
-		else	num -= i;
-	}
-	if (num > lastln || num < 0) {
-		sprintf(errmsg, "invalid address");
-		return ERR;
-	}
-	return num;
-}
-
-
-/* getnum:  return a relative line number from the command buffer */
-long
-getnum(first)
-	int first;
-{
-	pattern_t *pat;
-	char c;
 
 	skipblanks();
-	if (isdigit(*ibufp))
-		return strtol(ibufp, &ibufp, 10);
-	switch(c = *ibufp) {
-	case '.':
-		ibufp++;
-		return first ? curln : ERR;
-	case '$':
-		ibufp++;
-		return first ? lastln : ERR;
-	case '/':
-	case '?':
-		if ((pat = optpat()) == NULL)
-			return ERR;
-		else if (*ibufp == c)
+	for (hd = ibufp;; first = 0)
+		switch (c = *ibufp) {
+		case '+':
+		case '\t':
+		case ' ':
+		case '-':
+		case '^':
 			ibufp++;
-		return first ? patscan(pat, (c == '/') ? 1 : 0) : ERR;
-	case '^':
-	case '-':
-	case '+':
-		return first ? curln : 1;
-	case '\'':
-		ibufp++;
-		return first ? getmark(*ibufp++) : ERR;
-	case '%':
-	case ',':
-	case ';':
-		if (first) {
+			skipblanks();
+			c = (c == '-' || c == '^') ? -1 : 1;
+			if (isdigit(*ibufp))
+				addr += c * strtol(ibufp, &ibufp, 10);
+			else
+				addr += c;
+			break;
+		case '0': case '1': case '2':
+		case '3': case '4': case '5':
+		case '6': case '7': case '8': case '9':
+			ckfirst();
+			addr = strtol(ibufp, &ibufp, 10);
+			break;
+		case '.':
+		case '$':
+			ckfirst();
 			ibufp++;
-			line2 = (c == ';') ? curln : 1;
-			nlines++;
-			return lastln;
+			addr = (c == '.') ? curln : lastln;
+			break;
+		case '/':
+		case '?':
+			ckfirst();
+			if ((addr = patscan(optpat(), (c == '/') ? 1 : 0)) < 0)
+				return ERR;
+			if (c == *ibufp)
+				ibufp++;
+			break;
+		case '\'':
+			ckfirst();
+			ibufp++;
+			if ((addr = getmark(*ibufp++)) < 0)
+				return ERR;
+			break;
+		case '%':
+		case ',':
+		case ';':
+			if (first) {
+				ibufp++;
+				nlines++;
+				line2 = (c == ';') ? curln : 1;
+				addr = lastln;
+				break;
+			}
+			/* FALL THROUGH */
+		default:
+			if (ibufp == hd)
+				return EOF;
+			else if (addr < 0 || lastln < addr) {
+				sprintf(errmsg, "invalid address");
+				return ERR;
+			} else
+				return addr;
 		}
-		return 1;
-	default:
-		return  first ? EOF : 1;
-	}
+	/* NOTREACHED */
 }
-
 
 /* gflags */
 #define GLB 001		/* global command */
@@ -423,7 +394,6 @@ ckglob()
 	pattern_t *pat;
 	char c, delim;
 	char *s;
-	int nomatch;
 	long n;
 	line_t *lp;
 	int gflag = 0;			/* print suffix of interactive cmd */
@@ -443,17 +413,16 @@ ckglob()
 		ibufp++;
 	if (gflag)
 		VRFYCMD();			/* get print suffix */
+	clractive();
 	for (lp = getlp(n = 1); n <= lastln; n++, lp = lp->next) {
 		if ((s = gettxt(lp)) == NULL)
 			return ERR;
-		lp->len &= ~ACTV;			/* zero ACTV  bit */
 		if (isbinary)
-			s = nultonl(s, lp->len & ~ACTV);
+			s = nultonl(s, lp->len);
 		if (line1 <= n && n <= line2
-		 && (!(nomatch = regexec(pat, s, 0, NULL, 0))
-		 && (c == 'g'  || c == 'G')
-		 || nomatch && (c == 'v' || c == 'V')))
-			lp->len |= ACTV;
+		 && !regexec(pat, s, 0, NULL, 0) == (c == 'g'  || c == 'G'))
+			if (insactive(lp) < 0)
+				return ERR;
 	}
 	return gflag | GSG;
 }
@@ -469,7 +438,6 @@ doglob(gflag)
 	static int ocmdsz = 0;
 
 	line_t *lp = NULL;
-	long lc;
 	int status;
 	int n;
 	int interact = gflag & ~GSG;		/* GLB & gflag ? */
@@ -486,14 +454,9 @@ doglob(gflag)
 		return ERR;
 #endif
 	ureset();
-	for (;;) {
-		for (lp = getlp(lc = 1); lc <= lastln; lc++, lp = lp->next)
-			if (lp->len & ACTV)		/* active line */
-				break;
-		if (lc > lastln)
-			break;
-		lp->len ^= ACTV;			/* zero ACTV bit */
-		curln = lc;
+	while ((lp = nextactive()) != NULL) {
+		if ((curln = getaddr(lp)) < 0)
+			return ERR;
 		if (interact) {
 			/* print curln and get a command in global syntax */
 			if (doprint(curln, curln, 0) < 0)
@@ -533,6 +496,85 @@ doglob(gflag)
 	return ((interact & ~GLB ) && doprint(curln, curln, interact) < 0) ? ERR : curln;
 }
 
+line_t **active_list;		/* list of lines active in a global command */
+long active_last;		/* index of last active line in active_list */
+long active_size;		/* size of active_list */
+long active_ptr;		/* active_list index (non-decreasing) */
+long active_ndx;		/* active_list index (modulo active_last) */
+
+/* insactive: add a line node to the global-active list */
+insactive(lp)
+	line_t *lp;
+{
+	if (active_last + 1 > active_size) {
+		int ti = active_size;
+		line_t **ts;
+		spl1();
+#if defined(sun) || defined(NO_REALLOC_NULL)
+		if (active_list != NULL) {
+#endif
+			if ((ts = (line_t **) realloc(active_list, (ti += MINBUFSZ) * sizeof(line_t **))) == NULL)
+			{
+				fprintf(stderr, "%s\n", strerror(errno));
+				sprintf(errmsg, "out of memory");
+				spl0();
+				return ERR;
+			}
+#if defined(sun) || defined(NO_REALLOC_NULL)
+		} else {
+			if ((ts = (line_t **) malloc((ti += MINBUFSZ) * sizeof(line_t **))) == NULL)
+			{
+				fprintf(stderr, "%s\n", strerror(errno));
+				sprintf(errmsg, "out of memory");
+				spl0();
+				return ERR;
+			}
+		}
+#endif
+		active_size = ti;
+		active_list = ts;
+		spl0();
+	}
+	active_list[active_last++] = lp;
+	return 0;
+}
+
+/* remactive: remove a line node from the global-active list */
+void
+remactive(lp)
+	line_t *lp;
+{
+	long i;
+
+	for (i = 0; i < active_last; i++)
+		if (active_list[active_ndx] == lp) {
+			active_list[active_ndx] = NULL;
+			if (++active_ndx >= active_last) active_ndx = 0;
+			break;
+		} else  {
+			if (++active_ndx >= active_last) active_ndx = 0;
+		}
+}
+
+/* nextactive: return the next global-active line node */
+line_t *
+nextactive()
+{
+	while (active_ptr < active_last && active_list[active_ptr] == NULL)
+		active_ptr++;
+	return (active_ptr < active_last) ? active_list[active_ptr++] : NULL;
+}
+
+/* clractive: clear the global-active list */
+void
+clractive()
+{
+	spl1();
+	active_size = active_last = active_ptr = active_ndx = 0;
+	free(active_list);
+	active_list = NULL;
+	spl0();
+}
 
 #ifdef BACKWARDS
 /* GETLINE3: get a legal address from the command buffer */
@@ -612,7 +654,7 @@ docmd(glob)
 			return ERR;
 		VRFYCMD();
 		if (!glob) ureset();
-		if (lndelete(line1, line2) < 0 || append(curln, glob) < 0)
+		if (lndelete(line1, line2, glob) < 0 || append(curln, glob) < 0)
 			return ERR;
 		break;
 	case 'd':
@@ -620,7 +662,7 @@ docmd(glob)
 			return ERR;
 		VRFYCMD();
 		if (!glob) ureset();
-		if (lndelete(line1, line2) < 0)
+		if (lndelete(line1, line2, glob) < 0)
 			return ERR;
 		else if (nextln(curln, lastln) != 0)
 			curln = nextln(curln, lastln);
@@ -640,7 +682,7 @@ docmd(glob)
 		} else if ((fnp = getfn()) == NULL)
 			return ERR;
 		VRFYCMD();
-		if (lndelete(1, lastln) < 0)
+		if (lndelete(1, lastln, glob) < 0)
 			return ERR;
 		ureset();
 		if (sbclose() < 0)
@@ -713,7 +755,7 @@ docmd(glob)
 			return ERR;
 		VRFYCMD();
 		if (!glob) ureset();
-		if (line1 != line2 && join(line1, line2) < 0)
+		if (line1 != line2 && join(line1, line2, glob) < 0)
 			return ERR;
 		break;
 	case 'k':
@@ -721,7 +763,7 @@ docmd(glob)
 		if (line2 == 0) {
 			sprintf(errmsg, "invalid address");
 			return ERR;
-		} 
+		}
 		VRFYCMD();
 		if (putmark(c, getlp(line2)) < 0)
 			return ERR;
@@ -885,7 +927,7 @@ docmd(glob)
 			return ERR;
 		VRFYCMD();
 		if (!glob) ureset();
-		if ((n = subst(pat, sgflag)) < 0)
+		if ((n = subst(pat, sgflag, glob)) < 0)
 			return ERR;
 		else if (n)
 			modified = 1;
@@ -999,7 +1041,7 @@ docmd(glob)
 			return ERR;
 		else {
 			if (!glob) ureset();
-			if (lndelete(line1, line2) < 0)
+			if (lndelete(line1, line2, glob) < 0)
 				return ERR;
 			line2 = curln;
 			modified = 1;
@@ -1054,12 +1096,13 @@ patscan(pat, dir)
 	long n = curln;
 	line_t *lp;
 
+	if (!pat) return ERR;
 	do {
 		if (n = dir ? nextln(n, lastln) : prevln(n, lastln)) {
 			if ((s = gettxt(lp = getlp(n))) == NULL)
 				return ERR;
 			if (isbinary)
-				s = nultonl(s, lp->len & ~ACTV);
+				s = nultonl(s, lp->len);
 			if (!regexec(pat, s, 0, NULL, 0))
 				return n;
 		}
@@ -1296,9 +1339,10 @@ append(n, glob)
 
 /* subst: change all text matching a pattern in a range of lines according to
    a substitution template; return status  */
-subst(pat, gflag)
+subst(pat, gflag, glob)
 	pattern_t *pat;
 	int gflag;
+	int glob;
 {
 	undo_t *up;
 	char *txt;
@@ -1315,7 +1359,7 @@ subst(pat, gflag)
 			return ERR;
 		else if (len) {
 			up = NULL;
-			if (lndelete(curln, curln) < 0)
+			if (lndelete(curln, curln, glob) < 0)
 				return ERR;
 			txt = rbuf;
 			eot = rbuf + len;
@@ -1356,7 +1400,6 @@ regsub(pat, lp, gflag)
 	int kth = gflag >> 8;		/* substitute kth match only */
 	int chngd = 0;
 	int matchno = 0;
-	int len;
 	int i = 0;
 	regmatch_t rm[SE_MAX];
 	char *txt;
@@ -1364,9 +1407,8 @@ regsub(pat, lp, gflag)
 
 	if ((txt = gettxt(lp)) == NULL)
 		return ERR;
-	len = lp->len & ~ACTV;
-	eot = txt + len;
-	if (isbinary) txt = nultonl(txt, len);
+	if (isbinary) txt = nultonl(txt, lp->len);
+	eot = txt + lp->len;
 	if (!regexec(pat, txt, SE_MAX, rm, 0)) {
 		do {
 			if (!kth || kth == ++matchno) {
@@ -1375,7 +1417,7 @@ regsub(pat, lp, gflag)
 				CKBUF(rbuf, rbufsz, off + i, ERR);
 				if (isbinary) txt = nltonul(txt, rm[0].rm_eo);
 				memcpy(rbuf + off, txt, i);
-				if ((off = catsub(txt, rm, off += i)) < 0)
+				if ((off = catsub(txt, rm, off += i, pat->re_nsub)) < 0)
 					return ERR;
 			} else {
 				i = rm[0].rm_eo;
@@ -1402,29 +1444,28 @@ regsub(pat, lp, gflag)
 
 
 /* join: replace a range of lines with the joined text of those lines */
-join(from, to)
+join(from, to, glob)
 	long from;
 	long to;
+	int glob;
 {
 	static char *buf = NULL;
 	static int n;
 
 	char *s;
-	int len = 0;
 	int size = 0;
 	line_t *bp, *ep;
 
 	ep = getlp(nextln(to, lastln));
-	for (bp = getlp(from); bp != ep; bp = bp->next, size += len) {
+	for (bp = getlp(from); bp != ep; size += bp->len, bp = bp->next) {
 		if ((s = gettxt(bp)) == NULL)
 			return ERR;
-		len = bp->len & ~ACTV;
-		CKBUF(buf, n, size + len, ERR);
-		memcpy(buf + size, s, len);
+		CKBUF(buf, n, size + bp->len, ERR);
+		memcpy(buf + size, s, bp->len);
 	}
 	CKBUF(buf, n, size + 2, ERR);
 	memcpy(buf + size, "\n", 2);
-	if (lndelete(from, to) < 0)
+	if (lndelete(from, to, glob) < 0)
 		return ERR;
 	curln = from - 1;
 	spl1();
@@ -1471,7 +1512,7 @@ move(num, glob)
 	}
 	if (glob)
 		for (lp = b2->next; lp != a2; lp = lp->next)
-			lp->len &= ~ACTV;		/* zero ACTV  bit */
+			remactive(lp);
 	spl0();
 	return 0;
 }
@@ -1522,10 +1563,11 @@ transfer(num)
 
 
 /* lndelete: delete a range of lines */
-lndelete(from, to)
+lndelete(from, to, glob)
 	long from, to;
+	int glob;
 {
-	line_t *before, *after;
+	line_t *before, *after, *lp;
 
 	spl1();
 	if (upush(UDEL, from, to) == NULL) {
@@ -1534,6 +1576,9 @@ lndelete(from, to)
 	}
 	after = getlp(nextln(to, lastln));
 	before = getlp(prevln(from, lastln));		/* this getlp last! */
+	if (glob)
+		for (lp = before->next; lp != after; lp = lp->next)
+			remactive(lp);
 	requeue(before, after);
 	lastln -= to - from + 1;
 	curln = prevln(from, lastln);
@@ -1544,13 +1589,15 @@ lndelete(from, to)
 
 /* catsub: modify text according to a substitution template;
    return offset to end of modified text */
-catsub(boln, rm, off)
+catsub(boln, rm, off, re_nsub)
 	char *boln;
 	regmatch_t *rm;
 	int off;
+	int re_nsub;
 {
 	int j = 0;
 	int k = 0;
+	int n;
 	char *sub = rhbuf;
 
 	for (; sub - rhbuf < rhbufi; sub++)
@@ -1561,10 +1608,9 @@ catsub(boln, rm, off)
 			while (j < k)
 				rbuf[off++] = boln[j++];
 		} else if (*sub == '\\' && '1' <= *++sub && *sub <= '9'
-		      && rm[*sub - '0'].rm_so >= 0
-		      && rm[*sub - '0'].rm_eo >= 0) {
-			j = rm[*sub - '0'].rm_so;
-			k = rm[*sub - '0'].rm_eo;
+		      && (n = *sub - '0') <= re_nsub) {
+			j = rm[n].rm_so;
+			k = rm[n].rm_eo;
 			CKBUF(rbuf, rbufsz, off + k - j, ERR);
 			while (j < k)
 				rbuf[off++] = boln[j++];
@@ -1595,7 +1641,7 @@ doprint(from, to, gflag)
 	for (bp = getlp(from); bp != ep; bp = bp->next) {
 		if ((s = gettxt(bp)) == NULL)
 			return ERR;
-		putstr(s, bp->len & ~ACTV, curln = from++, gflag);
+		putstr(s, bp->len, curln = from++, gflag);
 	}
 	return 0;
 }
@@ -1624,6 +1670,9 @@ putstr(s, l, n, gflag)
 		}
 		if (gflag & GLS) {
 			switch (*s) {
+			case '\a':
+				fputs("\\a", stdout);
+				break;
 			case '\b':
 				fputs("\\b", stdout);
 				break;
@@ -1743,7 +1792,7 @@ dowrite(n, m, fn, mode)
 		for (lp = getlp(n); n <= m; n++, lp = lp->next) {
 			if ((s = gettxt(lp)) == NULL)
 				return ERR;
-			len = lp->len & ~ACTV;
+			len = lp->len;
 			if (n != lastln || !isbinary || !newline_added)
 				s[len++] = '\n';
 			if ((ct = fwrite(s, sizeof(char), len, fp)) < 0 || ct != len) {
@@ -1757,7 +1806,7 @@ dowrite(n, m, fn, mode)
 		for (lp = getlp(n); n <= m; n++, lp = lp->next) {
 			if ((s = gettxt(lp)) == NULL)
 				return ERR;
-			len = lp->len & ~ACTV;
+			len = lp->len;
 			while (len--) {
 				if (desputc(*s++, fp) == EOF && ferror(fp)) {
 					fprintf(stderr, "%s: %s\n", fn, strerror(errno));
@@ -1773,7 +1822,7 @@ dowrite(n, m, fn, mode)
 				}
 				size++;			/* for '\n' */
 			}
-			size += (lp->len & ~ACTV);
+			size += lp->len;
 		}
 	if (des) {
 		desflush(fp);				/* flush buffer */
@@ -1845,7 +1894,6 @@ undo(glob)
 	long n;
 	long ocurln = curln;
 	long olastln = lastln;
-	line_t *lp, *np;
 
 	if (ucurln == -1 || ulastln == -1) {
 		sprintf(errmsg, "nothing to undo");
@@ -1880,8 +1928,7 @@ undo(glob)
 	for (n = u_p; n-- > (u_p + 1)/ 2;)
 		USWAP(ustack[n], ustack[u_p - 1 - n]);
 	if (glob)
-		for (lp = np = getlp(0); (lp = lp->next) != np;)
-			lp->len &= ~ACTV;		/* zero ACTV bit */
+		clractive();
 	curln = ucurln, ucurln = ocurln;
 	lastln = ulastln, ulastln = olastln;
 	spl0();
@@ -1919,7 +1966,7 @@ int markno;				/* line marker count */
 long
 getmark(n)
 	int n;
-{ 	
+{
 	if (!islower(n)) {
 		sprintf(errmsg, "invalid mark character");
 		return ERR;
@@ -1942,6 +1989,7 @@ putmark(n, lp)
 	mark[n - 'a'] = lp;
 	return 0;
 }
+
 
 /* clrmark: clear line node marks */
 void
@@ -2086,7 +2134,7 @@ lpdup(lp)
 		return NULL;
 	}
 	np->seek = lp->seek;
-	np->len = (lp->len & ~ACTV);	/* zero ACTV bit */
+	np->len = lp->len;
 	return np;
 }
 

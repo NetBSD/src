@@ -1,14 +1,10 @@
 /* cbc.c: This file contains the encryption routines for the ed line editor */
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
+ * Copyright (c) 1993 The Regents of the University of California.
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * Matt Bishop of Dartmouth College.
- *
- * The United States Government has rights in this work pursuant
- * to contract no. NAG 2-680 between the National Aeronautics and
- * Space Administration and Dartmouth College.
+ * Copyright (c) 1993 Andrew Moore, Talke Studio.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,26 +33,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	from: @(#)bdes.c	5.5 (Berkeley) 6/27/91
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)cbc.c	5.5 (Berkeley) 6/27/91";*/
-static char rcsid[] = "$Id: cbc.c,v 1.5 1993/08/01 18:59:49 mycroft Exp $";
+static char sccsid[] = "@(#)cbc.c	5.5 (Talke Studio) 6/27/91";
 #endif /* not lint */
-
-/* Author: Matt Bishop
- *	   Department of Mathematics and Computer Science
- *	   Dartmouth College
- *	   Hanover, NH  03755
- * Email:  Matt.Bishop@dartmouth.edu
- *	   ...!decvax!dartvax!Matt.Bishop
- *
- * See Technical Report PCS-TR91-158, Department of Mathematics and Computer
- * Science, Dartmouth College, for a detailed description of the implemen-
- * tation and differences between it and Sun's.  The DES is described in
- * FIPS PUB 46, and the modes in FIPS PUB 81 (see either the manual page
- * or the technical report for a complete reference).
- */
 
 #include <errno.h>
 #include <pwd.h>

@@ -1,11 +1,8 @@
 /* buf.c: This file contains the scratch-file buffer rountines for the
    ed line editor. */
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
+ * Copyright (c) 1993 Andrew Moore, Talke Studio.
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Rodney Ruddock of the University of Guelph.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,18 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -35,10 +25,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
 #ifndef lint
-/*static char sccsid[] = "from: @(#)buf.c	5.5 (Berkeley) 3/28/93";*/
-static char rcsid[] = "$Id: buf.c,v 1.8 1993/08/01 18:59:50 mycroft Exp $";
+static char sccsid[] = "@(#)buf.c	5.5 (Talke Studio) 3/28/93";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -78,7 +66,7 @@ gettxt(lp)
 			return NULL;
 		}
 	}
-	len = lp->len & ~ACTV;
+	len = lp->len;
 	CKBUF(sfbuf, sfbufsz, len + 1, NULL);
 	if ((ct = fread(sfbuf, sizeof(char), len, sfp)) <  0 || ct != len) {
 		fprintf(stderr, "%s\n", strerror(errno));
@@ -116,7 +104,7 @@ puttxt(cs)
 		sprintf(errmsg, "line too long");
 		return NULL;
 	}
-	len = (s - cs) & ~ACTV;
+	len = (s - cs);
 	/* out of position */
 	if (seek_write) {
 		if (fseek(sfp, 0L, SEEK_END) < 0) {
@@ -253,9 +241,9 @@ quit(n)
 
 unsigned char ctab[256];		/* character translation table */
 
-/* init_buf: open scratch buffer; initialize line queue */
+/* inited: open scratch buffer; initialize line queue */
 void
-init_buf()
+inited()
 {
 	int i = 0;
 
@@ -285,5 +273,3 @@ translit(s, len, from, to)
 		*us = ctab[*us];
 	return s;
 }
-
-

@@ -1,10 +1,7 @@
 /* ed.h: type and constant definitions for the ed editor. */
 /*
- * Copyright (c) 1993 The Regents of the University of California.
+ * Copyright (c) 1993 Andrew Moore
  * All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Andrew Moore, Talke Studio.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,13 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -34,8 +24,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ed.h	5.5 (Berkeley) 3/28/93
- *	$Id: ed.h,v 1.15 1993/08/30 02:20:26 alm Exp $
+ *	@(#)ed.h	5.5 (Talke Studio) 3/28/93
  */
 
 #include <unistd.h>
@@ -45,12 +34,9 @@
 #endif
 #include <regex.h>
 #include <signal.h>
-
-#define BITSPERBYTE 8
-#define BITS(type)  (BITSPERBYTE * (int)sizeof(type))
-#define CHARBITS    BITS(char)
-#define INTBITS     BITS(int)
-#define INTHIBIT    (unsigned) (1 << (INTBITS - 1))
+#ifdef sun
+# include <limits.h>
+#endif
 
 #define ERR		(-2)
 #define EMOD		(-3)
@@ -62,8 +48,12 @@
 
 #define MAXFNAME MAXPATHLEN	/* max file name size */
 #define MINBUFSZ 512		/* minimum buffer size - must be > 0 */
-#define LINECHARS (INTHIBIT - 1) /* max chars per line */
 #define SE_MAX 30		/* max subexpressions in a regular expression */
+#ifdef INT_MAX
+# define LINECHARS INT_MAX	/* max chars per line */
+#else
+# define LINECHARS MAXINT	/* max chars per line */
+#endif
 
 typedef regex_t pattern_t;
 
@@ -72,9 +62,6 @@ typedef struct	line {
 	struct line	*next;
 	struct line	*prev;
 	off_t		seek;		/* address of line in scratch buffer */
-
-#define ACTV INTHIBIT			/* active bit: high bit of len */
-
 	int		len;		/* length of line */
 } line_t;
 
@@ -102,7 +89,7 @@ typedef struct undo {
 /* nextln: return line after l mod k */
 #define nextln(l,k)	((l)+1 > (k) ? 0 : (l)+1)
 
-/* nextln: return line before l mod k */
+/* prevln: return line before l mod k */
 #define prevln(l,k)	((l)-1 < 0 ? (k) : (l)-1)
 
 #define	skipblanks() while (isspace(*ibufp) && *ibufp != '\n') ibufp++
@@ -193,31 +180,32 @@ if ((i) > (n)) { \
 # endif
 #endif
 
-/* local function declarations */
+/* Local Function Declarations */
 int append __P((long, int));
+int catsub __P((char *, regmatch_t *, int, int));
 int cbcdec __P((char *, FILE *));
 int cbcenc __P((char *, int, FILE *));
+char *ccl __P((char *));
 char *ckfn __P((char *));
 int ckglob __P((void));
 int ckrange __P((long, long));
+void clractive __P((void));
+void clrmark __P((line_t *));
+void cvtkey __P((char *, char *));
 int desflush __P((FILE *));
 int desgetc __P((FILE *));
 void desinit __P((void));
 int desputc __P((int, FILE *));
 int docmd __P((int));
-void err __P((char *));
-char *ccl __P((char *));
-void clrmark __P((line_t *));
-void cvtkey __P((char *, char *));
 long doglob __P((int));
 void dohup __P((int));
 void dointr __P((int));
-void dowinch __P((int));
 int doprint __P((long, long, int));
 long doread __P((long, char *));
+void dowinch __P((int));
 long dowrite __P((long, long, char *, char *));
+void err __P((char *));
 char *esctos __P((char *));
-long patscan __P((pattern_t *, int));
 long getaddr __P((line_t *));
 char *getcmdv __P((int *, int));
 char *getfn __P((void));
@@ -225,21 +213,23 @@ int getkey __P((void));
 char *getlhs __P((int));
 int getline __P((void));
 int getlist __P((void));
-long getmark __P((int));
-long getnum __P((int));
-long getone __P((void));
 line_t *getlp __P((long));
+long getmark __P((int));
+long getone __P((void));
 int getrhs __P((int));
 int getshcmd __P((void));
 char *gettxt __P((line_t *));
-void init_buf __P((void));
-int join __P((long, long));
-int lndelete __P((long, long));
+void inited __P((void));
+int insactive __P((line_t *));
+int join __P((long, long, int));
+int lndelete __P((long, long, int));
 line_t *lpdup __P((line_t *));
 void lpqueue __P((line_t *));
+long patscan __P((pattern_t *, int));
 void makekey __P((char *));
 char *makesub __P((int));
 int move __P((long, int));
+line_t *nextactive __P(());
 int oddesc __P((char *, char *));
 void onhup __P((int));
 void onintr __P((int));
@@ -249,18 +239,17 @@ void putstr __P((char *, int, long, int));
 char *puttxt __P((char *));
 void quit __P((int));
 int regsub __P((pattern_t *, line_t *, int));
+void remactive __P((line_t *));
 int sbclose __P((void));
 int sbopen __P((void));
 int sgetline __P((FILE *));
-int catsub __P((char *, regmatch_t *, int));
-int subst __P((pattern_t *, int));
+int subst __P((pattern_t *, int, int));
 int tobinhex __P((int, int));
 int transfer __P((long));
 char *translit __P((char *, int, int, int));
 int undo __P((int));
 undo_t *upush __P((int, long, long));
 void ureset __P((void));
-
 
 extern char *sys_errlist[];
 extern int mutex;
