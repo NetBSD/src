@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.10 2002/10/02 16:02:11 thorpej Exp $ */
+/*	$NetBSD: timer.c,v 1.11 2002/11/26 14:43:39 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,15 +129,17 @@ timerattach(cntreg, limreg)
 	intr_establish(14, &level14);
 }
 
-#if defined(SUN4) || defined(SUN4M)
 /*
+ * Both sun4 and sun4m can attach a timer on obio.
  * The sun4m OPENPROM calls the timer the "counter".
  * The sun4 timer must be probed.
  */
 static int
 timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 {
+#if defined(SUN4M)
 	union obio_attach_args *uoba = aux;
+#endif
 #if defined(SUN4)
 	struct obio4_attach_args *oba;
 #endif
@@ -147,12 +149,12 @@ timermatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 		return (strcmp("counter", uoba->uoba_sbus.sa_name) == 0);
 #endif /* SUN4M */
 
-#if defined(SUN4)
 	if (CPU_ISSUN4 == 0) {
 		printf("timermatch_obio: attach args mixed up\n");
 		return (0);
 	}
 
+#if defined(SUN4)
 	/* Only these sun4s have "timer" (others have "oclock") */
 	if (cpuinfo.cpu_type != CPUTYP_4_300 &&
 	    cpuinfo.cpu_type != CPUTYP_4_400)
@@ -174,22 +176,21 @@ timerattach_obio(struct device *parent, struct device *self, void *aux)
 {
 	union obio_attach_args *uoba = aux;
 
-#if defined(SUN4M)
 	if (uoba->uoba_isobio4 == 0) {
+#if defined(SUN4M)
 		/* sun4m timer at obio */
 		timerattach_obio_4m(parent, self, aux);
+#endif /* SUN4M */
 		return;
 	}
-#endif /* SUN4M */
 
-#if defined(SUN4)
 	if (uoba->uoba_isobio4 != 0) {
+#if defined(SUN4)
 		/* sun4 timer at obio */
 		timerattach_obio_4(parent, self, aux);
-	}
 #endif /* SUN4 */
+	}
 }
 
 CFATTACH_DECL(timer_obio, sizeof(struct device),
     timermatch_obio, timerattach_obio, NULL, NULL);
-#endif /* SUN4 || SUN4M */
