@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.37 1994/10/20 13:33:36 mycroft Exp $	*/
+/*	$NetBSD: sd.c,v 1.38 1994/10/20 13:50:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -505,8 +505,7 @@ sdstart(unit)
 			p = &sd->sc_dk.dk_label.d_partitions[SDPART(bp->b_dev)];
 			blkno += p->p_offset;
 		}
-		nblks = (bp->b_bcount + (sd->params.blksize - 1)) /
-		    sd->params.blksize;
+		nblks = howmany(bp->b_bcount, sd->sc_dk.dk_label.d_secsize);
 
 		/*
 		 *  Fill out the scsi command
