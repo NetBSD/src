@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.11 2001/09/06 06:24:17 leo Exp $	*/
+/*	$NetBSD: installboot.c,v 1.12 2001/10/14 19:45:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -168,7 +168,7 @@ main (argc, argv)
 static void
 oscheck ()
 {
-	struct nlist	kbv[] = { { ___STRING(_C_LABEL(bootversion)) },
+	struct nlist	kbv[] = { { "_bootversion" },
 				  { NULL } };
 	kvm_t		*kd_kern;
 	char		errbuf[_POSIX2_LINE_MAX];
