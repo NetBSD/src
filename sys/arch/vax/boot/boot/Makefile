@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2001/12/23 02:21:35 matt Exp $
+#	$NetBSD: Makefile,v 1.23 2002/02/09 09:36:02 lukem Exp $
 
 S=	${.CURDIR}/../../../..
 NOMAN=	# defined
@@ -57,13 +57,13 @@ ${PROG}: machine-links ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	${SIZE} ${PROG}
 
 install:
-	${INSTALL} ${COPY} -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} \
-	    ${DESTDIR}${BINDIR}
-	${INSTALL} ${COPY} -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG} \
-	    ${DESTDIR}${MDEC_DIR}
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
+		${PROG} ${DESTDIR}${BINDIR}
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
+		${PROG} ${DESTDIR}${MDEC_DIR}
 .if ${OBJECT_FMT} != "ELF"
-	${INSTALL} ${COPY} -m 555 -o ${BINOWN} -g ${BINGRP} ${PROG}.mop \
-	    ${DESTDIR}${MDEC_DIR}
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
+		${PROG}.mop ${DESTDIR}${MDEC_DIR}
 .endif
 
 .include <bsd.prog.mk>
