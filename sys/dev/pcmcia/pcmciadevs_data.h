@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.201 2004/07/17 19:55:28 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.202 2004/08/05 17:24:00 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.200 2004/07/17 19:55:14 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.201 2004/08/05 17:23:47 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -209,6 +209,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "ARtem",
 	    "ARtem Onair Wireless LAN",	}
+	,
+	{
+	    PCMCIA_VENDOR_ASUSTEK, PCMCIA_PRODUCT_ASUSTEK_WL_100,
+	    PCMCIA_CIS_ASUSTEK_WL_100,
+	    0,
+	    "Asustek Computer",
+	    "SpaceLink WL-100 Wireless LAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_650,
@@ -2050,6 +2057,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ASUSTEK,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Asustek Computer",
 	    NULL,
 	},
 	{
