@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.19 2000/01/21 17:08:38 mycroft Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.19.4.1 2003/08/11 18:34:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1250,6 +1250,11 @@ void *v;
                                 char rcs_release[STRINGLENGTH];
 
 				tmpnam(rcs_file);
+				fd = open(rcs_file, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
+				if (fd < 0)
+					goaway("We died trying to create temp file");
+				close(fd);
+				fd = -1;
                                 if (strcmp(&t->Tname[strlen(t->Tname)-2], ",v") == 0) {
                                         t->Tname[strlen(t->Tname)-2] = '\0';
 					ac = 0;
@@ -1298,6 +1303,12 @@ void *v;
                                         }
                                         else if (docompress) {
                                                 tmpnam(temp_file);
+						fd = open(temp_file,
+						    (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
+						if (fd < 0)
+							goaway("We died trying to create temp file");
+						close(fd);
+						fd = -1;
 						av[0] = "gzip";
 						av[1] = "-cf";
 						av[2] = NULL;
