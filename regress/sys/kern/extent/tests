@@ -1,4 +1,4 @@
-# $NetBSD: tests,v 1.4 2000/06/27 21:30:03 pk Exp $
+# $NetBSD: tests,v 1.5 2000/07/02 22:36:50 pk Exp $
 
 #fill up an extent, should coalesce into one allocation
 extent test1 0 0x4f
@@ -37,18 +37,18 @@ print
 
 #check allocation beyond last boundary line (to be fixed)
 # last two allocations should succeed without boundary "fixups"
-extent test6 0 12
+extent test6 0 11
 boundary 8
-alloc_subregion 0 12 8
-alloc_subregion 0 12 2
-alloc_subregion 0 12 2
+alloc_subregion 0 11 8
+alloc_subregion 0 11 2
+alloc_subregion 0 11 2
 print
 
 #check allocation beyond last boundary line (to be fixed)
 # last allocation should be bumped to the next boundary and exactly fit
 # the remaining space
-extent test7 0 12
+extent test7 0 11
 boundary 8
-alloc_subregion 0 12 7
-alloc_subregion 0 12 4
+alloc_subregion 0 11 7
+alloc_subregion 0 11 4
 print
