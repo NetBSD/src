@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.7 1998/09/13 09:15:51 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.8 1998/09/21 17:16:26 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,6 +74,9 @@ GLOBAL(intrcnt)
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
 
+GLOBAL(ofbat)
+	.long	0,0			/* batu, batl */
+
 /*
  * File-scope for locore.S
  */
@@ -81,8 +84,8 @@ idle_u:
 	.long	0			/* fake uarea during idle after exit */
 openfirmware_entry:
 	.long	0			/* openfirmware entry point */
-ofw_msr:
-	.long	0			/* msr used in OpenFirmware */
+ofmsr:
+	.long	0			/* msr used in Open Firmware */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -108,8 +111,8 @@ __start:
 1:
 #endif
 	mfmsr	0
-	lis	9,ofw_msr@ha
-	stw	0,ofw_msr@l(9)
+	lis	9,ofmsr@ha
+	stw	0,ofmsr@l(9)
 
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
@@ -163,12 +166,21 @@ ENTRY(openfirmware)
 	lwz	4,openfirmware_entry@l(4)
 	mtlr	4
 
-	lis	4,ofw_msr@ha		/* OpenFirmware msr */
-	lwz	4,ofw_msr@l(4)
+	lis	4,_C_LABEL(ofbat)@ha	/* map Open Firmware work area */
+	lwz	4,_C_LABEL(ofbat)@l(4)
+	mtibatu 2,4
+	mtdbatu 2,4
+	lis	4,_C_LABEL(ofbat)+4@ha
+	lwz	4,_C_LABEL(ofbat)+4@l(4)
+	mtibatl 2,4
+	mtdbatl 2,4
+
+	lis	4,ofmsr@ha		/* Open Firmware msr */
+	lwz	4,ofmsr@l(4)
 	mtmsr	4
 	isync
 
-	blrl				/* call OpenFirmware */
+	blrl				/* call Open Firmware */
 
 	lwz	4,8(1)			/* restore msr */
 	mtmsr	4
