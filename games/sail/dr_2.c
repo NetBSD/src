@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_2.c,v 1.6 1997/10/13 21:03:18 christos Exp $	*/
+/*	$NetBSD: dr_2.c,v 1.7 1998/07/25 10:52:14 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_2.c,v 1.6 1997/10/13 21:03:18 christos Exp $");
+__RCSID("$NetBSD: dr_2.c,v 1.7 1998/07/25 10:52:14 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -170,7 +170,7 @@ char onlytemp;
 	row = fp->row;
 	col = fp->col;
 	drift = fp->drift;
-	move(movement, ship, &fp->dir, &fp->row, &fp->col, &drift);
+	move_ship(movement, ship, &fp->dir, &fp->row, &fp->col, &drift);
 	if (!*movement)
 		(void) strcpy(movement, "d");
 
@@ -190,7 +190,7 @@ char onlytemp;
 }
 
 void
-move(p, ship, dir, row, col, drift)
+move_ship(p, ship, dir, row, col, drift)
 char *p;
 struct ship *ship;
 unsigned char *dir;
