@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.189 2002/11/16 12:28:04 wiz Exp $
+.\"	$NetBSD: options.4,v 1.190 2002/11/19 04:16:02 simonb Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -113,7 +113,7 @@ option is set, the kernel will read (pre) 1.1 style disk labels as a
 last resort.
 When a disklabel is re-written, the old style label will be replaced
 with a post 1.1 style label.
-This also enables
+This also enables the
 .Em EXEC_ELF_NOTELESS
 option.
 .It Cd options COMPAT_12
@@ -128,7 +128,7 @@ The syscall numbers were changed post 1.2 to add functionality to the
 syscall, and the new
 .Xr swapctl 2
 interface was introduced.
-This also enables
+This also enables the
 .Em EXEC_ELF_NOTELESS
 option.
 .It Cd options COMPAT_13
