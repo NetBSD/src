@@ -1,4 +1,4 @@
-.\"	$NetBSD: vacation.1,v 1.14 2002/02/08 01:36:36 ross Exp $
+.\"	$NetBSD: vacation.1,v 1.15 2002/09/30 11:09:16 grant Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,9 +51,11 @@ indication
 .Sh DESCRIPTION
 .Nm
 returns a message to the sender of a message telling them that you
-are currently not reading your mail.  The intended use is in a
+are currently not reading your mail.
+The intended use is in a
 .Pa .forward
-file.  For example, your
+file.
+For example, your
 .Pa .forward
 file might have:
 .Bd -literal -offset indent
@@ -73,20 +75,23 @@ Handle messages for
 in the same manner as those received for the user's
 login name.
 .It Fl i
-Initialize the vacation database files.  It should be used
-before you modify your
+Initialize the vacation database files.
+It should be used before you modify your
 .Pa .forward
 file.
 .It Fl r
 Set the reply interval to
 .Ar interval
-days.  The default is one week.  An interval of
+days.
+The default is one week.
+An interval of
 .Dq 0
 means that
 a reply is sent to each message, and an interval of
 .Dq Li infinite
 (actually, any non-numeric character) will never send more than
-one reply.  It should be noted that intervals of
+one reply.
+It should be noted that intervals of
 .Dq Li \&0
 are quite
 dangerous, as it allows mailers to get into
@@ -129,8 +134,9 @@ in your home directory.
 expects a file
 .Pa .vacation.msg ,
 in your home directory, containing a message to be sent back to each
-sender.  It should be an entire message (including headers).  For
-example, it might contain:
+sender.
+It should be an entire message (including headers).
+For example, it might contain:
 .Pp
 .Bd -literal -offset indent -compact
 From: eric@CS.Berkeley.EDU (Eric Allman)
@@ -138,7 +144,7 @@ Subject: I am on vacation
 Delivered-By-The-Graces-Of: The Vacation program
 Precedence: bulk
 
-I am on vacation until July 22.  If you have something urgent,
+I am on vacation until July 22. If you have something urgent,
 please contact Keith Bostic \*[Lt]bostic@CS.Berkeley.EDU\*[Gt].
 --eric
 .Ed

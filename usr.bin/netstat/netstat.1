@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.35 2002/07/03 01:42:59 enami Exp $
+.\"	$NetBSD: netstat.1,v 1.36 2002/09/30 11:09:07 grant Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -218,14 +218,15 @@ virtual address
 .Ar pcbaddr .
 This address may be obtained using the
 .Fl A
-flag.  The default protocol is TCP, but may be overridden using the
+flag.
+The default protocol is TCP, but may be overridden using the
 .Fl p
 flag.
 .It Fl p Ar protocol
 Show statistics about
 .Ar protocol  ,
-which is either a well-known name for a protocol or an alias for it.  Some
-protocol names and aliases are listed in the file
+which is either a well-known name for a protocol or an alias for it.
+Some protocol names and aliases are listed in the file
 .Pa /etc/protocols .
 A null response typically means that there are no interesting numbers to
 report.
@@ -262,7 +263,8 @@ according to the data bases
 .Pa /etc/hosts
 and
 .Pa /etc/networks ,
-respectively.  If a symbolic name for an address is unknown, or if
+respectively.
+If a symbolic name for an address is unknown, or if
 the
 .Fl n
 option is specified, the address is printed numerically, according
@@ -283,10 +285,13 @@ The network addresses of the interface
 and the maximum transmission unit (``mtu'') are also displayed.
 .Pp
 The routing table display indicates the available routes and
-their status.  Each route consists of a destination host or network
-and a gateway to use in forwarding packets.  The flags field shows
+their status.
+Each route consists of a destination host or network
+and a gateway to use in forwarding packets.
+The flags field shows
 a collection of information about the route stored as
-binary choices.  The individual flags are discussed in more
+binary choices.
+The individual flags are discussed in more
 detail in the
 .Xr route 8
 and
@@ -314,20 +319,25 @@ Direct routes are created for each
 interface attached to the local host;
 the gateway field for such entries shows the address of the outgoing interface.
 The refcnt field gives the
-current number of active uses of the route.  Connection oriented
+current number of active uses of the route.
+Connection oriented
 protocols normally hold on to a single route for the duration of
 a connection while connectionless protocols obtain a route while sending
 to the same destination.
 The use field provides a count of the number of packets
-sent using that route.  The mtu entry shows the mtu associated with
-that route.  This mtu value is used as the basis for the TCP maximum
-segment size.  The 'L' flag appended to the mtu value indicates that
+sent using that route.
+The mtu entry shows the mtu associated with
+that route.
+This mtu value is used as the basis for the TCP maximum
+segment size.
+The 'L' flag appended to the mtu value indicates that
 the value is locked, and that path mtu discovery is turned off for
 that route.
 A
 .Sq -
 indicates that the mtu for this route has not been set, and a default
-TCP maximum segment size will be used.  The interface entry indicates
+TCP maximum segment size will be used.
+The interface entry indicates
 the network interface utilized for the route.
 .Pp
 When
@@ -347,7 +357,8 @@ The primary interface may be replaced with another interface with the
 .Fl I
 option.
 The first line of each screen of information contains a summary since the
-system was last rebooted.  Subsequent lines of output show values
+system was last rebooted.
+Subsequent lines of output show values
 accumulated over the preceding interval.
 .Sh SEE ALSO
 .Xr fstat 1 ,

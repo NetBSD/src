@@ -1,4 +1,4 @@
-.\"	$NetBSD: uuencode.5,v 1.7 2002/08/06 15:26:04 soren Exp $
+.\"	$NetBSD: uuencode.5,v 1.8 2002/09/30 11:09:15 grant Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -123,7 +123,8 @@ Obviously, not every input file will be a multiple of three bytes in size.
 In these cases,
 .Xr uuencode 1
 will pad the remaining one or two bytes of data with garbage bytes until
-a three byte group is created.  The byte count in a line containing
+a three byte group is created.
+The byte count in a line containing
 garbage padding will reflect the actual number of bytes encoded, making
 it possible to convey how many bytes are garbage.
 .Pp

@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.86 2002/08/27 13:11:02 christos Exp $
+.\" 	$NetBSD: ftp.1,v 1.87 2002/09/30 11:09:02 grant Exp $
 .\"
 .\" Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -935,14 +935,17 @@ will send a
 .Dv PASV
 command for all data connections instead of a
 .Dv PORT
-command.  The
+command.
+The
 .Dv PASV
 command requests that the remote server open a port for the data connection
-and return the address of that port.  The remote server listens on that
-port and the client connects to it.  When using the more traditional
+and return the address of that port.
+The remote server listens on that port and the client connects to it.
+When using the more traditional
 .Dv PORT
 command, the client listens on a port and sends that address to the remote
-server, who connects back to it.  Passive mode is useful when using
+server, who connects back to it.
+Passive mode is useful when using
 .Nm
 through a gateway router or host that controls the directionality of
 traffic.
@@ -1455,7 +1458,8 @@ interpretation of the argument.
 Supported suffixes are:
 .Bl -tag -width 3n -offset indent -compact
 .It Li b
-Causes no modification. (Optional)
+Causes no modification.
+(Optional)
 .It Li k
 Kilo; multiply the argument by 1024
 .It Li m

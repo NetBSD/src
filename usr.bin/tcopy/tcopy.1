@@ -1,4 +1,4 @@
-.\"	$NetBSD: tcopy.1,v 1.6 1999/03/22 18:16:44 garbled Exp $
+.\"	$NetBSD: tcopy.1,v 1.7 2002/09/30 11:09:12 grant Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,15 +47,19 @@
 .Oc
 .Sh DESCRIPTION
 .Nm
-is designed to copy magnetic tapes.  The only assumption made
+is designed to copy magnetic tapes.
+The only assumption made
 about the tape is that there are two tape marks at the end.
 .Nm
 with only a source tape
 .Pf ( Ar /dev/rst0
 by default) specified will print
-information about the sizes of records and tape files.  If a destination
-is specified a copy will be made of the source tape.  The blocking on the
-destination tape will be identical to that used on the source tape.  Copying
+information about the sizes of records and tape files.
+If a destination
+is specified a copy will be made of the source tape.
+The blocking on the
+destination tape will be identical to that used on the source tape.
+Copying
 a tape will yield the same output as if just printing the sizes.
 .Pp
 Options:

@@ -1,4 +1,4 @@
-.\"	$NetBSD: bdes.1,v 1.8 2002/02/08 01:36:19 ross Exp $
+.\"	$NetBSD: bdes.1,v 1.9 2002/09/30 11:08:57 grant Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,8 @@ This flag applies to
 .Em both
 the key and initialization vector.
 .It Fl b
-Use electronic code book mode.  This is not recommended for messages
+Use electronic code book mode.
+This is not recommended for messages
 longer than 8 bytes, as patterns in the input will show through to the
 output.
 .It Fl d
@@ -138,8 +139,9 @@ It is used only if the key is given in ASCII.
 .It Fl v Ar vector
 Set the initialization vector to
 .Ar vector ;
-the vector is interpreted in the same way as the key.  The vector is
-ignored in electronic codebook mode.  For best security, a different
+the vector is interpreted in the same way as the key.
+The vector is ignored in electronic codebook mode.
+For best security, a different
 initialization vector should be used for each file.
 .El
 .Pp
@@ -186,7 +188,8 @@ The DES is considered a very strong cryptosystem hobbled by a short
 key, and other than table lookup attacks, key search attacks, and
 Hellman's time-memory tradeoff (all of which are very expensive and
 time-consuming), no practical cryptanalytic methods for breaking the
-DES are known in the open literature.  As of this writing, the best
+DES are known in the open literature.
+As of this writing, the best
 known cryptanalytic method is linear cryptanalysis, which requires an
 average of
 .if t 2\u\s-343\s0\d
@@ -319,13 +322,15 @@ SUCH DAMAGE.
 When this document was originally written, there was a controversy
 raging over whether the DES would still be secure in a few years.
 There is now near-universal consensus in the cryptographic community
-that the key length of the DES is far too short.  The advent of
+that the key length of the DES is far too short.
+The advent of
 special-purpose hardware could reduce the cost of any of the methods
 of attack named above so that they are no longer computationally
 infeasible; in addition, the explosive growth in the number and speed
 of modern microprocessors as well as advances in programmable logic
 devices has brought an attack using only commodity hardware into the
-realm of possibility.  Schneier and others currently recommend using
+realm of possibility.
+Schneier and others currently recommend using
 cryptosystems with keys of at least 90 bits when long-term security is
 needed.
 .Pp

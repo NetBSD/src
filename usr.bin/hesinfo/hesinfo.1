@@ -1,4 +1,4 @@
-.\"	$NetBSD: hesinfo.1,v 1.4 2002/02/08 01:36:24 ross Exp $
+.\"	$NetBSD: hesinfo.1,v 1.5 2002/09/30 11:09:03 grant Exp $
 .\"
 .\" from: #Id: hesinfo.1,v 1.9 1996/11/07 01:57:12 ghudson Exp #
 .\"
@@ -25,7 +25,8 @@ hesinfo \fI[-bl]\fR \fIHesiodName\fR \fIHesiodNameType\fR
 .SH DESCRIPTION
 .I hesinfo
 takes two arguments, a name to be resolved and a string, known
-as a HesiodNameType.  It then prints the information returned by
+as a HesiodNameType.
+It then prints the information returned by
 the Hesiod nameserver.
 .PP
 The value returned by
@@ -116,7 +117,8 @@ calls (e.g.
 .B prclusterlist
 ) do not require a specific
 .I HesiodName
-argument.  However, you must include a dummy string (e.g. 'foo') for
+argument.
+However, you must include a dummy string (e.g. 'foo') for
 .B hesinfo
  to work properly.
 

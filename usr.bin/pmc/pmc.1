@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmc.1,v 1.5 2002/06/07 01:38:17 gmcgarry Exp $
+.\"	$NetBSD: pmc.1,v 1.6 2002/09/30 11:09:08 grant Exp $
 .\"
 .\" Copyright (c) 2000 Zembu Labs, Inc.
 .\" All rights reserved.
@@ -53,7 +53,8 @@
 .Sh DESCRIPTION
 .Nm
 is a means of using a processor's performance-monitoring counter (PMC)
-facility to measure various aspects of a program's execution.  It is
+facility to measure various aspects of a program's execution.
+It is
 meant to be used in a fashion similar to
 .Xr time 1 .
 .Pp
@@ -73,9 +74,11 @@ while running the command.
 .Bl -diag
 .It PMC support is not compiled into the kernel
 Performance-monitoring counter support has not been compiled into the
-kernel.  It may be included using the
+kernel.
+It may be included using the
 .Em PERFCTRS
-option.  See
+option.
+See
 .Xr options 4
 for details.
 .It PMC counters are not supported by CPU

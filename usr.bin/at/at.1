@@ -1,4 +1,4 @@
-.\" $NetBSD: at.1,v 1.18 2002/02/08 01:36:18 ross Exp $
+.\" $NetBSD: at.1,v 1.19 2002/09/30 11:08:56 grant Exp $
 .\" $OpenBSD: at.1,v 1.6 1998/06/05 00:47:46 deraadt Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd October 15, 2000
@@ -62,7 +62,8 @@ In that case, everybody's jobs are listed.
 .It Nm atrm
 Deletes jobs.
 .It Nm batch
-Executes commands when system load levels permit.  In other words, when
+Executes commands when system load levels permit.
+In other words, when
 the load average drops below 1.5, or the value specified in the invocation of
 .Xr atrun 8 .
 .El
@@ -70,7 +71,8 @@ the load average drops below 1.5, or the value specified in the invocation of
 .Nm
 allows some moderately complex
 .Ar time
-specifications.  It accepts times of the form
+specifications.
+It accepts times of the form
 .Ar HHMM
 or
 .Ar HH:MM
@@ -153,7 +155,8 @@ command invoked from a
 .Xr su 1
 shell will retain the current userid.
 The user will be mailed standard error and standard output from his
-commands, if any. Mail will be sent using the command
+commands, if any.
+Mail will be sent using the command
 .Xr sendmail 8 .
 If
 .Nm
@@ -201,7 +204,8 @@ the time may be specified in a language-neutral format consisting of:
 .It Ar CC
 The first two digits of the year (the century).
 .It Ar YY
-The second two digits of the year.  If
+The second two digits of the year.
+If
 .Ar YY
 is specified, but
 .Ar CC
@@ -209,7 +213,8 @@ is not, a value for
 .Ar YY
 between 69 and 99 results in a
 .Ar CC
-value of 19.  Otherwise, a
+value of 19.
+Otherwise, a
 .Ar CC
 value of 20 is used.
 .It Ar MM
@@ -225,7 +230,8 @@ The second of the minute, from 00 to 61.
 .El
 .It Fl q Ar queue
 Uses the specified queue.
-A queue designation consists of a single letter.  Valid queue designations
+A queue designation consists of a single letter.
+Valid queue designations
 range from
 .Sq a
 to
@@ -270,8 +276,8 @@ Is an alias for
 .It Fl v
 For
 .Nm atq ,
-shows completed but not yet deleted jobs in the queue.  Otherwise
-shows the time the job will be executed.
+shows completed but not yet deleted jobs in the queue.
+Otherwise shows the time the job will be executed.
 .It Fl c
 Cats the jobs listed on the command line to standard output.
 .El

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsplit.1,v 1.6 2001/12/01 16:43:14 wiz Exp $
+.\"	$NetBSD: fsplit.1,v 1.7 2002/09/30 11:09:01 grant Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,8 @@ form
 where
 .Ar name
 is the name of the program unit (e.g. function, subroutine, block data or
-program).  The name for unnamed block data subprograms has the form
+program).
+The name for unnamed block data subprograms has the form
 .Ar blkdtaNNN.f
 where NNN is three digits and a file of this name does not already exist.
 For unnamed main programs the name has the form
@@ -71,10 +72,12 @@ does not already exist.
 .Pp
 .Bl -tag -width Fl
 .It Fl e Ar efile
-Normally each subprogram unit is split into a separate file.  When the
+Normally each subprogram unit is split into a separate file.
+When the
 .Fl e
 option is used, only the specified subprogram units are split into separate
-files.  E.g.:
+files.
+E.g.:
 .Pp
 .Dl fsplit -e readit -e doit prog.f
 .Pp
@@ -96,7 +99,8 @@ Asa Romberger and Jerry Berkman
 .Sh BUGS
 .Nm
 assumes the subprogram name is on the first noncomment line of the subprogram
-unit.  Nonstandard source formats may confuse
+unit.
+Nonstandard source formats may confuse
 .Nm "" .
 .Pp
 It is hard to use

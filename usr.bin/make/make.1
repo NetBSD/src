@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.66 2002/09/24 15:31:30 wiz Exp $
+.\"	$NetBSD: make.1,v 1.67 2002/09/30 11:09:05 grant Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -177,7 +177,8 @@ cooperate to avoid overloading the system.
 .It Fl j Ar max_jobs
 Specify the maximum number of jobs that
 .Nm
-may have running at any one time. Turns compatibility mode off, unless the
+may have running at any one time.
+Turns compatibility mode off, unless the
 .Ar B
 flag is also specified.
 .It Fl k
@@ -185,7 +186,8 @@ Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.
 .It Fl m Ar directory
 Specify a directory in which to search for sys.mk and makefiles included
-via the \*[Lt]...\*[Gt] style.  Multiple directories can be added to form a search path.
+via the \*[Lt]...\*[Gt] style.
+Multiple directories can be added to form a search path.
 This path will override the default system include path: /usr/share/mk.
 Furthermore the system include path will be appended to the search path used
 for "..."-style inclusions (see the
@@ -452,7 +454,8 @@ expands to a single dollar
 sign.
 .Pq Va argv[0]
 .It Va .ALLTARGETS
-The list of all targets encountered in the Makefile.  If evaluated during
+The list of all targets encountered in the Makefile.
+If evaluated during
 Makefile parsing, lists only those targets encountered thus far.
 .It Va .CURDIR
 A path to the directory where
@@ -483,7 +486,8 @@ on the command line, so that they may be exported as part of
 .Ql Ev MAKEFLAGS .
 This behaviour can be disabled by assigning an empty value to
 .Ql Va .MAKEOVERRIDES
-within a makefile.  Extra variables can be exported from a makefile
+within a makefile.
+Extra variables can be exported from a makefile
 by appending their names to
 .Ql Va .MAKEOVERRIDES .
 .Ql Ev MAKEFLAGS
@@ -500,7 +504,8 @@ as well as the value of any variables named in
 .It Va .newline
 This variable is simply assigned a newline character as its value.
 This allows expansions using the :@ modifier to put a newline between
-iterations of the loop rather than a space.  For example, the printing of
+iterations of the loop rather than a space.
+For example, the printing of
 .Ql Va MAKE_PRINT_VAR_ON_ERROR
 could be done as ${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'${.newline}@}.
 .It Va .OBJDIR
@@ -533,7 +538,8 @@ sets
 .Ql Va .CURDIR
 to the value of
 .Ql Ev PWD
-instead.  This behaviour is disabled if
+instead.
+This behaviour is disabled if
 .Ql Ev MAKEOBJDIRPREFIX
 is set.
 .Ql Ev PWD
@@ -655,13 +661,16 @@ simple strings, are a regular expression (see
 .Xr regex 3 )
 and an
 .Xr ed 1 Ns \-style
-replacement string.  Normally, the first occurrence of the pattern in
-each word of the value is changed.  The
+replacement string.
+Normally, the first occurrence of the pattern in
+each word of the value is changed.
+The
 .Ql 1
 modifier causes the substitution to apply to at most one word; the
 .Ql g
 modifier causes the substitution to apply to as many instances of the
-search pattern as occur in the word or words it is found in.  Note that
+search pattern as occur in the word or words it is found in.
+Note that
 .Ql 1
 and
 .Ql g
@@ -691,7 +700,8 @@ do not contain the pattern matching character
 .Ar %
 then it is assumed that they are
 anchored at the end of each word, so only suffixes or entire
-words may be replaced. Otherwise
+words may be replaced.
+Otherwise
 .Ar %
 is the substring of
 .Ar old_string
@@ -701,24 +711,27 @@ to be replaced in
 .No Ar string Cm @
 .Xc
 This is the loop expansion mechanism from the OSF Development
-Environment (ODE) make.  Unlike
+Environment (ODE) make.
+Unlike
 .Cm \&.for
 loops expansion occurs at the time of
-reference.  Assign
+reference.
+Assign
 .Ar temp
 to each word in the variable and evaluate
 .Ar string .
 The ODE convention is that
 .Ar temp
-should start and end with a period. For example.
+should start and end with a period.
+For example.
 .Dl ${LINKS:@.LINK.@${LN} ${TARGET} ${.LINK.}@}
 .It Cm U Ar newval
 If the variable is undefined
 .Ar newval
 is the value.
 If the variable is defined, the existing value is returned.
-This is another ODE make feature.  It is handy for
-setting per-target CFLAGS for instance:
+This is another ODE make feature.
+It is handy for setting per-target CFLAGS for instance:
 .Dl ${_${.TARGET:T}_CFLAGS:U${DEF_CFLAGS}}
 If a value is only required if the variable is undefined, use:
 .Dl ${VAR:D:Unewval}
@@ -730,7 +743,8 @@ is the value.
 The name of the variable is the value.
 .It Cm P
 The path of the node which has the same name as the variable
-is the value.  If no such node exists or its path is null, then the
+is the value.
+If no such node exists or its path is null, then the
 name of the variable is used.
 .It Cm ! Ar cmd Cm !
 The output of running
@@ -742,16 +756,19 @@ becomes the new value.
 .It Cm \&:= Ar str
 The variable is assigned the value
 .Ar str
-after substitution.  This modifier and its variations are useful in
+after substitution.
+This modifier and its variations are useful in
 obscure situations such as wanting to apply modifiers to
 .Cm \&.for
 loop iteration variables which won't work due to the way
 .Cm \&.for
-loops are implemented.  These assignment modifiers always expand to
+loops are implemented.
+These assignment modifiers always expand to
 nothing, so if appearing in a rule line by themselves should be
 preceded with something to keep
 .Nm
-happy.  As in:
+happy.
+As in:
 .Bd -literal
 use_foo: \&.USE
 \&.for i in ${\&.TARGET} ${\&.TARGET:R}\&.gz
@@ -806,7 +823,8 @@ makefile directory.
 For compatibility with other versions of
 .Nm
 .Ql include file ...
-is also accepted. If the include statement is written as
+is also accepted.
+If the include statement is written as
 .Cm .-include
 or as
 .Cm .sinclude
@@ -956,11 +974,14 @@ has been defined and has commands associated with it.
 .El
 .Pp
 .Ar Expression
-may also be an arithmetic or string comparison.  Variable expansion is
+may also be an arithmetic or string comparison.
+Variable expansion is
 performed on both sides of the comparison, after which the integral
-values are compared.  A value is interpreted as hexadecimal if it is
+values are compared.
+A value is interpreted as hexadecimal if it is
 preceded by 0x, otherwise it is decimal; octal numbers are not supported.
-The standard C relational operators are all supported.  If after
+The standard C relational operators are all supported.
+If after
 variable expansion, either the left or right hand side of a
 .Ql Ic ==
 or
@@ -1016,8 +1037,8 @@ The syntax of a for loop is:
 .Pp
 After the for
 .Ic expression
-is evaluated, it is split into words. On each iteration of the loop,
-one word is taken and assigned to each
+is evaluated, it is split into words.
+On each iteration of the loop, one word is taken and assigned to each
 .Ic variable ,
 in order, and these
 .Ic variables
@@ -1091,7 +1112,8 @@ target commands to the target.
 If special
 .Ic .WAIT
 source is appears in a dependency line, the sources that precede it are
-made before the sources that succeed it in the line.  Loops are not being
+made before the sources that succeed it in the line.
+Loops are not being
 detected and targets that form loops will be silently ignored.
 .El
 .Sh SPECIAL TARGETS
@@ -1148,7 +1170,8 @@ no effect.
 .It Ic .NOPATH
 Apply the
 .Ic .NOPATH
-attribute to any specified sources. Targets with this attribute are not
+attribute to any specified sources.
+Targets with this attribute are not
 searched for in the directories specified by
 .Ic .PATH .
 .It Ic .NOTPARALLEL
@@ -1173,7 +1196,8 @@ directory is searched last.
 .It Ic .PHONY
 Apply the
 .Ic .PHONY
-attribute to any specified sources. Targets with this attribute do not
+attribute to any specified sources.
+Targets with this attribute do not
 correspond to actual files; they are always considered to be out of date,
 and will not be created with the
 .Fl t
