@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.4 2000/12/11 04:55:09 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.5 2000/12/14 18:10:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@ int linux_restore_sigcontext __P((struct proc *, struct linux_sigcontext,
 				  sigset_t *));
 void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
 dev_t linux_fakedev __P((dev_t));
+void linux_syscall_intern __P((struct proc *));
 __END_DECLS
 #endif /* !_KERNEL */
 
