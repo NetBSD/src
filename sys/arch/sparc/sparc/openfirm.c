@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.8 2003/07/30 15:58:36 mrg Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.9 2004/03/21 14:02:39 pk Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,22 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.8 2003/07/30 15:58:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.9 2004/03/21 14:02:39 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/psl.h>
 #include <machine/stdarg.h>
-
-#include <machine/openfirm.h>
-
+#include <machine/promlib.h>
 #include <lib/libkern/libkern.h>
-
-#define min(x,y)	((x<y)?(x):(y))
-
-extern void	*romp;
-#define openfirmware(a)	((*((int (*)__P((void *)))romp))(a))
-
 
 int
 OF_peer(phandle)
@@ -81,7 +73,7 @@ OF_child(phandle)
 		cell_t phandle;
 		cell_t child;
 	} args;
-	
+
 	args.name = ADR2CELL("child");
 	args.nargs = 1;
 	args.nreturns = 1;
@@ -102,7 +94,7 @@ OF_parent(phandle)
 		cell_t phandle;
 		cell_t parent;
 	} args;
-	
+
 	args.name = ADR2CELL("parent");
 	args.nargs = 1;
 	args.nreturns = 1;
@@ -123,7 +115,7 @@ OF_instance_to_package(ihandle)
 		cell_t ihandle;
 		cell_t phandle;
 	} args;
-	
+
 	args.name = ADR2CELL("instance-to-package");
 	args.nargs = 1;
 	args.nreturns = 1;
@@ -147,7 +139,7 @@ OF_getproplen(handle, prop)
 		cell_t prop;
 		cell_t size;
 	} args;
-	
+
 	args.name = ADR2CELL("getproplen");
 	args.nargs = 2;
 	args.nreturns = 1;
@@ -175,7 +167,7 @@ OF_getprop(handle, prop, buf, buflen)
 		cell_t buflen;
 		cell_t size;
 	} args;
-	
+
 	if (buflen > NBPG)
 		return -1;
 	args.name = ADR2CELL("getprop");
@@ -207,7 +199,7 @@ OF_setprop(handle, prop, buf, buflen)
 		cell_t buflen;
 		cell_t size;
 	} args;
-	
+
 	if (buflen > NBPG)
 		return -1;
 	args.name = ADR2CELL("setprop");
@@ -237,7 +229,7 @@ OF_nextprop(handle, prop, buf)
 		cell_t buf;
 		cell_t next;
 	} args;
-	
+
 	args.name = ADR2CELL("nextprop");
 	args.nargs = 3;
 	args.nreturns = 1;
@@ -260,7 +252,7 @@ char *name;
 		cell_t device;
 		cell_t phandle;
 	} args;
-	
+
 	args.name = ADR2CELL("finddevice");
 	args.nargs = 1;
 	args.nreturns = 1;
@@ -285,7 +277,7 @@ OF_instance_to_path(ihandle, buf, buflen)
 		cell_t buflen;
 		cell_t length;
 	} args;
-	
+
 	if (buflen > NBPG)
 		return -1;
 	args.name = ADR2CELL("instance-to-path");
@@ -314,7 +306,7 @@ OF_package_to_path(phandle, buf, buflen)
 		cell_t buflen;
 		cell_t length;
 	} args;
-	
+
 	if (buflen > NBPG)
 		return -1;
 	args.name = ADR2CELL("package-to-path");
@@ -353,7 +345,7 @@ OF_call_method(method, ihandle, nargs, nreturns, va_alist)
 		cell_t args_n_results[12];
 	} args;
 	long *ip, n;
-	
+
 	if (nargs > 6)
 		return -1;
 	args.name = ADR2CELL("call-method");
@@ -399,7 +391,7 @@ OF_call_method_1(method, ihandle, nargs, va_alist)
 		cell_t args_n_results[16];
 	} args;
 	long *ip, n;
-	
+
 	if (nargs > 6)
 		return -1;
 	args.name = ADR2CELL("call-method");
@@ -430,10 +422,10 @@ OF_open(dname)
 		cell_t handle;
 	} args;
 	int l;
-	
+
 	if ((l = strlen(dname)) >= NBPG)
 		return -1;
-	args.name = ADR2CELL("open");	
+	args.name = ADR2CELL("open");
 	args.nargs = 1;
 	args.nreturns = 1;
 	args.dname = ADR2CELL(dname);
@@ -452,7 +444,7 @@ OF_close(handle)
 		cell_t nreturns;
 		cell_t handle;
 	} args;
-	
+
 	args.name = ADR2CELL("close");
 	args.nargs = 1;
 	args.nreturns = 0;
@@ -471,7 +463,7 @@ OF_test(service)
 		cell_t service;
 		cell_t status;
 	} args;
-	
+
 	args.name = ADR2CELL("test");
 	args.nargs = 1;
 	args.nreturns = 1;
@@ -494,18 +486,19 @@ OF_test_method(service, method)
 		cell_t method;
 		cell_t status;
 	} args;
-	
+
 	args.name = ADR2CELL("test-method");
 	args.nargs = 2;
 	args.nreturns = 1;
 	args.service = HDL2CELL(service);
 	args.method = ADR2CELL(method);
-	openfirmware(&args);
+	if (openfirmware(&args) == -1)
+		return -1;
 	return args.status;
 }
-  
-    
-/* 
+
+
+/*
  * This assumes that character devices don't read in multiples of NBPG.
  */
 int
@@ -524,14 +517,14 @@ OF_read(handle, addr, len)
 		cell_t actual;
 	} args;
 	int l, act = 0;
-	
-	args.name = ADR2CELL("read");	
+
+	args.name = ADR2CELL("read");
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
 	for (; len > 0; len -= l, (u_long)addr += l) {
-		l = min(NBPG, len);
+		l = MIN(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
 			return -1;
@@ -547,8 +540,6 @@ OF_read(handle, addr, len)
 	}
 	return act;
 }
-
-void prom_printf __P((const char *fmt, ...));	/* XXX for below */
 
 int
 OF_write(handle, addr, len)
@@ -566,15 +557,17 @@ OF_write(handle, addr, len)
 		cell_t actual;
 	} args;
 	int l, act = 0;
-		
+
+	if (len > 1024) {
+		panic("OF_write(len = %d)\n", len);
+	}
 	args.name = ADR2CELL("write");
 	args.nargs = 3;
 	args.nreturns = 1;
 	args.ihandle = HDL2CELL(handle);
 	args.addr = ADR2CELL(addr);
-if (len>1024) { prom_printf("OF_write() > 1024\n"); }
 	for (; len > 0; len -= l, (u_long)addr += l) {
-		l = min(NBPG, len);
+		l = MIN(NBPG, len);
 		args.len = l;
 		if (openfirmware(&args) == -1)
 			return -1;
@@ -599,7 +592,7 @@ OF_seek(handle, pos)
 		cell_t poslo;
 		cell_t status;
 	} args;
-	
+
 	args.name = ADR2CELL("seek");
 	args.nargs = 3;
 	args.nreturns = 1;
@@ -622,10 +615,10 @@ OF_boot(bootspec)
 		cell_t bootspec;
 	} args;
 	int l;
-	
+
 	if ((l = strlen(bootspec)) >= NBPG)
 		panic("OF_boot");
-	args.name = ADR2CELL("boot");	
+	args.name = ADR2CELL("boot");
 	args.nargs = 1;
 	args.nreturns = 0;
 	args.bootspec = ADR2CELL(bootspec);
@@ -641,7 +634,7 @@ OF_enter()
 		cell_t nargs;
 		cell_t nreturns;
 	} args;
-	
+
 	args.name = ADR2CELL("enter");
 	args.nargs = 0;
 	args.nreturns = 0;
@@ -662,7 +655,7 @@ OF_exit()
 		cell_t nargs;
 		cell_t nreturns;
 	} args;
-	
+
 	args.name = ADR2CELL("exit");
 	args.nargs = 0;
 	args.nreturns = 0;
@@ -684,7 +677,7 @@ OF_poweroff()
 		cell_t nargs;
 		cell_t nreturns;
 	} args;
-	
+
 	args.name = ADR2CELL("SUNW,power-off");
 	args.nargs = 0;
 	args.nreturns = 0;
@@ -693,8 +686,8 @@ OF_poweroff()
 }
 
 void
-(*OF_set_callback(newfunc)) __P((void *))
-	void (*newfunc) __P((void *));
+(*OF_set_callback(newfunc))(void *)
+	void (*newfunc)(void *);
 {
 	struct {
 		cell_t name;
@@ -703,7 +696,7 @@ void
 		cell_t newfunc;
 		cell_t oldfunc;
 	} args;
-	
+
 	args.name = ADR2CELL("set-callback");
 	args.nargs = 1;
 	args.nreturns = 1;
@@ -713,7 +706,7 @@ void
 	return (void*)(long)args.oldfunc;
 }
 
-void 
+void
 OF_set_symbol_lookup(s2v, v2s)
 	void (*s2v)(void *);
 	void (*v2s)(void *);
@@ -725,7 +718,7 @@ OF_set_symbol_lookup(s2v, v2s)
 		cell_t sym2val;
 		cell_t val2sym;
 	} args;
-		
+
 	args.name = ADR2CELL("set-symbol-lookup");
 	args.nargs = 2;
 	args.nreturns = 0;
@@ -735,23 +728,42 @@ OF_set_symbol_lookup(s2v, v2s)
 	(void)openfirmware(&args);
 }
 
-void
-OF_interpret(s)
-	char *s;
+int
+#ifdef __STDC__
+OF_interpret(char *cmd, int nargs, int nreturns, ...)
+#else
+OF_interpret(cmd, nargs, nreturns, va_alist)
+	char *cmd;
+	int nargs;
+	int nreturns;
+	va_dcl
+#endif
 {
+	va_list ap;
 	struct {
 		cell_t name;
 		cell_t nargs;
 		cell_t nreturns;
-		cell_t verbs;
-		cell_t status;
+		cell_t slot[16];
 	} args;
-	
+	cell_t status;
+	int i = 0;
+
 	args.name = ADR2CELL("interpret");
-	args.nargs = 1;
-	args.nreturns = 1;
-	args.verbs = ADR2CELL(s);
-	openfirmware(&args);
+	args.nargs = ++nargs;
+	args.nreturns = ++nreturns;
+	args.slot[i++] = ADR2CELL(cmd);
+	va_start(ap, nreturns);
+	while (i < nargs) {
+		args.slot[i++] = va_arg(ap, cell_t);
+	}
+	if (openfirmware(&args) == -1)
+		return (-1);
+	status = args.slot[i++];
+	while (i < nargs+nreturns) {
+		*va_arg(ap, cell_t *) = args.slot[i++];
+	}
+	return (status);
 }
 
 int
@@ -763,12 +775,38 @@ OF_milliseconds()
 		cell_t nreturns;
 		cell_t ticks;
 	} args;
-	
+
 	args.name = ADR2CELL("milliseconds");
 	args.nargs = 0;
 	args.nreturns = 1;
-	openfirmware(&args);
+	if (openfirmware(&args) == -1)
+		return -1;
 	return (args.ticks);
+}
+
+/* Claim an area of memory. */
+void *
+OF_claim(void *virt, u_int size, u_int align)
+{
+	static struct {
+		cell_t	name;
+		cell_t	nargs;
+		cell_t	nreturns;
+		cell_t	virt;
+		cell_t	size;
+		cell_t	align;
+		cell_t	baseaddr;
+	} args;
+
+	args.name = ADR2CELL("claim");
+	args.nargs = 3;
+	args.nreturns = 1;
+	args.virt = ADR2CELL(virt);
+	args.size = size;
+	args.align = align;
+	if (openfirmware(&args) == -1)
+		return (void *)-1;
+	return (void *)(long)args.baseaddr;
 }
 
 #if defined(_KERNEL_OPT)
@@ -793,29 +831,29 @@ void OF_sym2val(cells)
 		cell_t result;
 		cell_t value;
 	} *args = (struct args*)cells;
-	db_sym_t symbol;
+	char *symbol;
 	db_expr_t value;
 
 	/* Set data segment pointer */
-	__asm __volatile("clr %%g4" : :); 
+	__asm __volatile("clr %%g4" : :);
 
 	/* No args?  Nothing to do. */
-	if (!args->nargs || 
-	    !args->nreturns) return;
+	if (args->nargs == 0 || args->nreturns == 0)
+		return;
 
 	/* Do we have a place for the value? */
 	if (args->nreturns != 2) {
 		args->nreturns = 1;
 		args->result = -1;
 		return;
-	} 
-	symbol = (db_sym_t)args->symbol;
+	}
+
+	symbol = (char *)(u_long)args->symbol;
 	if (obp_symbol_debug)
 		prom_printf("looking up symbol %s\n", symbol);
-	db_symbol_values(symbol, (char**)NULL, &value);
+	args->result = (db_value_of_name(symbol, &value) == TRUE) ? 0 : -1;
 	if (obp_symbol_debug)
-		prom_printf("%s is %lx\r\n", symbol, value);
-	args->result = 0;
+		prom_printf("%s is %lx\n", symbol, value);
 	args->value = ADR2CELL(value);
 }
 
@@ -838,32 +876,32 @@ void OF_val2sym(cells)
 	__asm __volatile("clr %%g4" : :);
 
 	if (obp_symbol_debug)
-		prom_printf("OF_val2sym: nargs %lx nreturns %lx\r\n",
+		prom_printf("OF_val2sym: nargs %lx nreturns %lx\n",
 			args->nargs, args->nreturns);
+
 	/* No args?  Nothing to do. */
-	if (!args->nargs || 
-	    !args->nreturns) return;
+	if (args->nargs == 0 || args->nreturns == 0)
+		return;
 
 	/* Do we have a place for the value? */
 	if (args->nreturns != 2) {
 		args->nreturns = 1;
 		args->offset = -1;
 		return;
-	} 
-	
+	}
+
 	value = args->value;
 	if (obp_symbol_debug)
 		prom_printf("looking up value %ld\n", value);
 	symbol = db_search_symbol(value, 0, &offset);
 	if (symbol == DB_SYM_NULL) {
 		if (obp_symbol_debug)
-			prom_printf("OF_val2sym: not found\r\n");
+			prom_printf("OF_val2sym: not found\n");
 		args->nreturns = 1;
 		args->offset = -1;
-		return;		
+		return;
 	}
 	args->offset = offset;
 	args->symbol = ADR2CELL(symbol);
-       
 }
 #endif
