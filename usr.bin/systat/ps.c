@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.4 1999/07/22 18:18:27 thorpej Exp $  */
+/*      $NetBSD: ps.c,v 1.5 1999/07/23 08:56:13 veego Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.4 1999/07/22 18:18:27 thorpej Exp $");
+__RCSID("$NetBSD: ps.c,v 1.5 1999/07/23 08:56:13 veego Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -179,7 +179,7 @@ state2str(kp)
 		break;
 
 	case SZOMB:
-	case SDYING:
+	case SDEAD:
 		*cp = 'Z';
 		break;
 
