@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cfparse.y,v 1.13 2003/05/16 22:59:50 dsl Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.14 2003/07/13 12:40:17 itojun Exp $	*/
 
 /*
  * Configuration file parser for mrouted.
@@ -206,8 +206,7 @@ stmt	: error
 					fatal("Too many named boundaries (max %d)", MAXBOUNDS);
 				      }
 
-				      boundlist[numbounds].name = malloc(strlen($2) + 1);
-				      strcpy(boundlist[numbounds].name, $2);
+				      boundlist[numbounds].name = strdup($2);
 				      boundlist[numbounds++].bound = $3;
 				    }
 	| SYSNAM STRING    {
