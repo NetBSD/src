@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.77 2000/09/09 16:42:04 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.78 2000/09/10 17:29:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -102,6 +102,7 @@ static int sysctl_msgbuf __P((void *, size_t *));
 static int sysctl_doeproc __P((int *, u_int, void *, size_t *));
 static void fill_kproc2 __P((struct proc *, struct kinfo_proc2 *));
 static int sysctl_procargs __P((int *, u_int, void *, size_t *, struct proc *));
+static int sysctl_pty __P((void *, size_t *, void *, size_t));
 
 /*
  * The `sysctl_memlock' is intended to keep too many processes from
@@ -253,10 +254,6 @@ int defcorenamelen = sizeof(DEFCORENAME);
 extern	int	kern_logsigexit;
 extern	fixpt_t	ccpu;
 
-#if NPTY > 0
-extern int nptys, maxptys;
-#endif
-
 /*
  * kernel related system variables.
  */
@@ -273,9 +270,6 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int error, level, inthostid;
 	int old_autonicetime;
 	int old_vnodes;
-#if NPTY > 0
-	int old_maxptys;
-#endif
 	dev_t consdev;
 
 	/* All sysctl names at this level, except for a few, are terminal. */
@@ -482,13 +476,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    sizeof consdev));
 #if NPTY > 0
 	case KERN_MAXPTYS:
-		old_maxptys = maxptys;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxptys);
-		if (old_maxptys > maxptys) {
-			maxptys = old_maxptys;
-			return (EINVAL);
-		}
-		return (error);
+		return sysctl_pty(oldp, oldlenp, newp, newlen);
 #endif
 	default:
 		return (EOPNOTSUPP);
@@ -1798,3 +1786,38 @@ done:
 	free(arg, M_TEMP);
 	return (error);
 }
+
+#if NPTY > 0
+int pty_maxptys __P((int, int));	/* defined in kern/tty_pty.c */
+
+/*
+ * Validate parameters and get old / set new parameters
+ * for pty sysctl function.
+ */
+static int
+sysctl_pty(oldp, oldlenp, newp, newlen)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	int error = 0;
+	int oldmax = 0, newmax = 0;
+
+	/* get current value of maxptys */
+	oldmax = pty_maxptys(0, NULL);
+
+	SYSCTL_SCALAR_CORE_TYP(oldp, oldlenp, &oldmax, int)
+
+	if (!error && newp) {
+		SYSCTL_SCALAR_NEWPCHECK_TYP(newp, newlen, int)
+		SYSCTL_SCALAR_NEWPCOP_TYP(newp, &newmax, int)
+
+		if (newmax != pty_maxptys(newmax, (newp != NULL)))
+			return (EINVAL);
+
+	}
+
+	return (error);
+}
+#endif /* NPTY > 0 */
