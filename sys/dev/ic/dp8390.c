@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.46 2001/07/07 15:59:37 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.47 2001/08/09 11:54:32 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1595,7 +1595,7 @@ dp8390_ipkdb_send(kip, buf, l)
 	mb.m_next = NULL;
 	mb.m_pkthdr.len = mb.m_len = l;
 	mtod(&mb, u_char *) = buf;
-	mb.m_flags = M_EXT | M_PKTHDR | M_EOR;
+	mb.m_flags = M_EXT | M_PKTHDR;
 	mb.m_type = MT_DATA;
 
 	l = sc->write_mbuf(sc, &mb,
