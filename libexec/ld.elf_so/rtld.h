@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.20 1999/12/05 18:36:25 fredb Exp $	 */
+/*	$NetBSD: rtld.h,v 1.21 1999/12/13 09:09:35 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -110,6 +110,20 @@ typedef struct _rtld_search_path_t {
 	size_t          sp_pathlen;
 }               Search_Path;
 
+
+#define RTLD_MAX_ENTRY 10
+#define RTLD_MAX_LIBRARY 4
+typedef struct _rtld_library_xform_t {
+	struct _rtld_library_xform_t *next;
+	char *name;
+	int   ctl;
+	int   ctltype;
+	struct {
+		char *value;
+		char *library[RTLD_MAX_LIBRARY];
+	} entry[RTLD_MAX_ENTRY];
+} Library_Xform;
+
 /*
  * Shared object descriptor.
  *
@@ -207,6 +221,7 @@ extern Obj_Entry **_rtld_objtail;
 extern Obj_Entry *_rtld_objmain;
 extern Obj_Entry _rtld_objself;
 extern Search_Path *_rtld_paths;
+extern Library_Xform *_rtld_xforms;
 extern bool _rtld_trust;
 extern const char *_rtld_error_message;
 extern unsigned long _rtld_curmark;
@@ -235,12 +250,13 @@ Obj_Entry *_rtld_digest_phdr __P((const Elf_Phdr *, int, caddr_t));
 
 /* load.c */
 Obj_Entry *_rtld_load_object __P((char *, bool));
-int _rtld_load_needed_objects __P((Obj_Entry *));
+int _rtld_load_needed_objects __P((Obj_Entry *, bool));
 int _rtld_preload __P((const char *, bool));
 
 /* path.c */
 void _rtld_add_paths __P((Search_Path **, const char *, bool));
-void _rtld_process_hints __P((Search_Path **, const char *, bool));
+void _rtld_process_hints __P((Search_Path **, Library_Xform **, const char *,
+    bool));
 
 /* reloc.c */
 int _rtld_do_copy_relocations __P((const Obj_Entry *, bool));

@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.5 1999/11/07 00:21:12 mycroft Exp $	 */
+/*	$NetBSD: load.c,v 1.6 1999/12/13 09:09:34 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -46,11 +46,15 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/mman.h>
+#include <sys/sysctl.h>
 #include <dirent.h>
 
 #include "debug.h"
 #include "rtld.h"
+
+static Obj_Entry *_rtld_load_by_name __P((const char *, Obj_Entry *, bool));
 
 /*
  * Load a shared object into memory, if it is not already loaded.  The
@@ -128,14 +132,103 @@ _rtld_load_object(filepath, dodebug)
 	return obj;
 }
 
+static Obj_Entry *
+_rtld_load_by_name(name, obj, dodebug)
+	const char *name;
+	Obj_Entry *obj;
+	bool dodebug;
+{
+	Library_Xform *x = _rtld_xforms;
+	Obj_Entry *o = NULL;
+	size_t i, j;
+	int ctlname[2];
+	char *libpath;
+	union {
+		int i;
+		char s[16];
+	} val;
+
+	ctlname[0] = CTL_MACHDEP;
+	if (dodebug)
+		dbg(("load by name %s %p", name, x));
+	for (; x; x = x->next) {
+		if (strcmp(x->name, name) != 0)
+			continue;
+
+		ctlname[1] = x->ctl;
+
+		i = sizeof(val);
+
+		if (sysctl(ctlname, 2, &val, &i, NULL, 0) == -1) {
+			warn("sysctl");
+			break;
+		}
+
+		switch (x->ctltype) {
+		case CTLTYPE_INT:
+			xsnprintf(val.s, sizeof(val.s), "%d", val.i);
+			break;
+		case CTLTYPE_STRING:
+			break;
+		default:
+			warnx("unsupport sysctl type %d", x->ctltype);
+			break;
+		}
+
+		if (dodebug)
+			dbg(("sysctl returns %s", val.s));
+
+		for (i = 0; i < RTLD_MAX_ENTRY && x->entry[i].value != NULL;
+		    i++) {
+		if (dodebug)
+			dbg(("entry %d", i));
+			if (strcmp(x->entry[i].value, val.s) == 0)
+				break;
+		}
+
+		if (i == RTLD_MAX_ENTRY) {
+			warnx("sysctl value %s not found for lib%s",
+			    val.s, name);
+			break;
+		}
+		/* XXX: This can mess up debuggers, cause we lie about
+		 * what we loaded in the needed objects */
+		for (j = 0; j < RTLD_MAX_LIBRARY &&
+		    x->entry[i].library[j] != NULL; j++) {
+			libpath = _rtld_find_library(
+			    x->entry[i].library[j], obj);
+			if (libpath == NULL) {
+				warnx("could not load lib%s for lib%s",
+				    x->entry[i].library[j], name);
+				continue;
+			}
+			o = _rtld_load_object(libpath, true);
+			if (o == NULL)
+				continue;
+		}
+		
+	}
+
+	if (o != NULL)
+		return o;
+
+	libpath = _rtld_find_library(name, obj);
+	if (libpath == NULL)
+		return NULL;
+	return _rtld_load_object(libpath, true);
+
+}
+
+
 /*
  * Given a shared object, traverse its list of needed objects, and load
  * each of them.  Returns 0 on success.  Generates an error message and
  * returns -1 on failure.
  */
 int
-_rtld_load_needed_objects(first)
+_rtld_load_needed_objects(first, dodebug)
 	Obj_Entry *first;
+	bool dodebug;
 {
 	Obj_Entry *obj;
 	int status = 0;
@@ -146,15 +239,9 @@ _rtld_load_needed_objects(first)
 		for (needed = obj->needed; needed != NULL;
 		    needed = needed->next) {
 			const char *name = obj->strtab + needed->name;
-			char *libpath = _rtld_find_library(name, obj);
-
-			if (libpath == NULL) {
-				status = -1;
-			} else {
-				needed->obj = _rtld_load_object(libpath, true);
-				if (needed->obj == NULL)
-					status = -1;	/* FIXME - cleanup */
-			}
+			needed->obj = _rtld_load_by_name(name, obj, dodebug);
+			if (needed->obj == NULL)
+				status = -1;	/* FIXME - cleanup */
 #ifdef RTLD_LOADER
 			if (status == -1)
 				return status;
