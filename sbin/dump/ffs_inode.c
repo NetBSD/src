@@ -1,8 +1,8 @@
-/*      $NetBSD: ffs_inode.c,v 1.3.8.1 2001/11/25 19:25:41 he Exp $ */
+/*      $NetBSD: ffs_inode.c,v 1.3.8.2 2002/01/16 09:56:06 he Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
- *      The Regents of the University of California.  All rights reserved.
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,8 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -36,32 +36,24 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
-        The Regents of the University of California.  All rights reserved.\n");
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: ffs_inode.c,v 1.3.8.1 2001/11/25 19:25:41 he Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.3.8.2 2002/01/16 09:56:06 he Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/stat.h>
-#ifdef sunos
-#include <sys/vnode.h>
-
-#include <ufs/fs.h>
-#include <ufs/fsdir.h>
-#include <ufs/inode.h>
-#else
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
-#endif
 
 #include <protocols/dumprestore.h>
 
@@ -95,7 +87,7 @@ fs_read_sblock(char *sblock_buf)
 	rawread(SBOFF, (char *) sblock, SBSIZE);
 	if (sblock->fs_magic != FS_MAGIC) {
 		if (sblock->fs_magic == bswap32(FS_MAGIC)) {
-			ffs_sb_swap(sblock, sblock);
+			ffs_sb_swap(sblock, sblock, 0);
 			needswap = 1;
 		} else
 			quit("bad sblock magic number\n");
