@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 1998/04/25 06:48:05 scottr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 1998/04/26 20:06:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -269,9 +269,17 @@
 /*
  * Constants which control the way the VM system deals with memory segments.
  * Most mac68k systems have only 1 physical memory segment, but some have 2.
+ *
+ * On the systems that have multiple segments, specifically the IIsi and
+ * IIci, the optimal configuration is to put the higher-density SIMMs in
+ * bank B.  This is because the on-board video uses main memory in bank A
+ * for the framebuffer, and a memory controller prevents access during
+ * video refresh cycles.  Even if both banks contain the same amount of
+ * RAM, a minimum of ~320KB will be subtracted from the amount in bank A
+ * for the framebuffer (if on-board video is in use).
  */
 #define	VM_PHYSSEG_MAX		2
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #define	VM_PHYSSEG_NOADD
 
 /*
