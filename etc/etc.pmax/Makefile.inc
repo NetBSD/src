@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/11/29 22:45:59 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/02/09 09:27:20 lukem Exp $
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
@@ -17,9 +17,8 @@ NFSKERNDIR=		${KERNOBJDIR}/${NFSCONF}
 NFSKERN=		${NFSKERNDIR}/${NFSKERNNAME}
 
 snap_md_post: ${DISKIMAGE} ${DISKIMAGE_TAR} ${INSTALLKERN}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
-		-m ${BINMODE} ${NFSKERN}.ecoff \
-		${RELEASEDIR}/binary/kernel/${NFSKERNNAME}
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${BINMODE} \
+	    	${NFSKERN}.ecoff ${RELEASEDIR}/binary/kernel/${NFSKERNNAME}
 	gzip -9 ${RELEASEDIR}/binary/kernel/${NFSKERNNAME}
 	cd ${.CURDIR}/../distrib/pmax && \
 	    ${MAKE} depend && ${MAKE} ${_J} && ${MAKE} install
