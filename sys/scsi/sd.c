@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.81 1995/12/07 19:11:37 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.82 1995/12/07 19:46:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -587,6 +587,13 @@ sdminphys(bp)
 	/*
 	 * If the device is ancient, we want to make sure that
 	 * the transfer fits into a 6-byte cdb.
+	 *
+	 * XXX Note that the SCSI-I spec says that 256-block transfers
+	 * are allowed in a 6-byte read/write, and are specified
+	 * by settng the "length" to 0.  However, we're conservative
+	 * here, allowing only 255-block transfers in case an
+	 * ancient device gets confused by length == 0.  A length of 0
+	 * in a 10-byte read/write actually means 0 blocks.
 	 */
 	if (sd->flags & SDF_ANCIENT) {
 		max = sd->sc_dk.dk_label.d_secsize * 0xff;
