@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.89 1997/04/07 16:09:28 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.90 1997/05/16 21:39:59 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1926,17 +1926,18 @@ ttyinfo(tp)
 		    stime.tv_usec / 10000);
 
 #define	pgtok(a)	(((u_long) ((a) * NBPG) / 1024))
-		/* Print percentage cpu, resident set size. */
+		/* Print percentage cpu. */
 		tmp = (pick->p_pctcpu * 10000 + FSCALE / 2) >> FSHIFT;
-		ttyprintf(tp, "%d%% %ldk\n",
-		    tmp / 100,
-		    pick->p_stat == SIDL || pick->p_stat == SZOMB ? 0 :
-#ifdef pmap_resident_count
-			pgtok(pmap_resident_count(&pick->p_vmspace->vm_pmap))
-#else
-			pgtok(pick->p_vmspace->vm_rssize)
-#endif
-			);
+		ttyprintf(tp, "%d%% ", tmp / 100);
+
+		/* Print resident set size. */
+		if (pick->p_stat == SIDL || pick->p_stat == SZOMB)
+			tmp = 0;
+		else {
+			register struct vmspace *vm = pick->p_vmspace;
+			tmp = pgtok(vm_resident_count(vm));
+		}
+		ttyprintf(tp, "%ldk\n", tmp);
 	}
 	tp->t_rocount = 0;	/* so pending input will be retyped if BS */
 }
