@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2002/02/21 22:15:29 manu Exp $
+	$NetBSD: syscalls.master,v 1.25 2002/03/03 20:12:17 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -131,7 +131,7 @@
 #else
 53	UNIMPL		semsys
 #endif
-54	NOARGS		{ int svr4_sys_ioctl(int fd, u_long com, \
+54	STD		{ int irix_sys_ioctl(int fd, u_long com, \
 			    caddr_t data); }
 55	UNIMPL		uadmin
 56	STD		{ int irix_sys_sysmp(int cmd, void *arg1, void *arg2, \
