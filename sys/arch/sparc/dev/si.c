@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.16 1996/02/25 21:53:57 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.17 1996/02/29 03:28:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe
@@ -635,17 +635,6 @@ si_dma_alloc(ncr_sc)
 	if ((sc->sc_options & SI_ENABLE_DMA) == 0)
 		return;
 #endif
-
-	/*
-	 * If the transfer flags say "poll", that means we're
-	 * probably doing:
-	 *	- autoconfiguration
-	 *	- crash dump
-	 * Doing DVMA during a crash dump can be potentially dangerous,
-	 * so we avoid it here.
-	 */
-	if (xs->flags & SCSI_POLL)
-		return;
 
 	addr = (u_long) ncr_sc->sc_dataptr;
 	xlen = ncr_sc->sc_datalen;
