@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.8 1999/01/21 08:02:18 garbled Exp $	*/
+/*	$NetBSD: label.c,v 1.9 1999/03/31 00:44:48 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.8 1999/01/21 08:02:18 garbled Exp $");
+__RCSID("$NetBSD: label.c,v 1.9 1999/03/31 00:44:48 fvdl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -76,7 +76,7 @@ boringpart(lp, i, rawpart, bsdpart)
 {
 
 	if (i == rawpart || i == bsdpart ||
-	    lp[i][D_FSTYPE] == T_UNUSED || lp[i][D_SIZE] == 0)
+	    lp[i].pi_fstype == FS_UNUSED || lp[i].pi_size == 0)
 		return 1;
 	return 0;
 }
@@ -105,7 +105,7 @@ checklabel(lp, nparts, rawpart, bsdpart, ovly1, ovly2)
 	*ovly2 = -1;
 
 	for (i = 0; i < nparts - 1; i ++ ) {
-		int *ip = lp[i];
+		partinfo *ip = &lp[i];
 		int istart, istop;
 
 		/* skip unused or reserved partitions */
@@ -116,19 +116,19 @@ checklabel(lp, nparts, rawpart, bsdpart, ovly1, ovly2)
 		 * check succeding partitions for overlap.
 		 * O(n^2), but n is small (currently <= 16).
 		 */
-		istart = ip[D_OFFSET];
-		istop = istart + ip[D_SIZE];
+		istart = ip->pi_offset;
+		istop = istart + ip->pi_size;
 
 		for (j = i+1; j < nparts; j++) {
-			int  *jp = lp[j];
+			partinfo *jp = &lp[j];
 			int jstart, jstop;
 
 			/* skip unused or reserved partitions */
 			if (boringpart(lp, j, rawpart, bsdpart))
 				continue;
 
-			jstart = jp[D_OFFSET];
-			jstop = jstart + jp[D_SIZE];
+			jstart = jp->pi_offset;
+			jstop = jstart + jp->pi_size;
 
 			/* overlap? */
 			if ((istart <= jstart && jstart < istop) ||
@@ -190,11 +190,11 @@ emptylabel(lp)
 	maxpart = getmaxpartitions();
 
 	for (i = 0; i < maxpart; i++) {
-		lp[i][D_FSTYPE] = T_UNUSED;
-		lp[i][D_OFFSET] = 0;
-		lp[i][D_SIZE] = 0;
-		lp[i][D_BSIZE] = 0;
-		lp[i][D_FSIZE] = 0;
+		lp[i].pi_fstype = FS_UNUSED;
+		lp[i].pi_offset = 0;
+		lp[i].pi_size = 0;
+		lp[i].pi_bsize = 0;
+		lp[i].pi_fsize = 0;
 	}
 }
 
@@ -238,22 +238,22 @@ savenewlabel(lp, nparts)
 	}
 	for (i = 0; i < nparts; i++) {
 		(void)fprintf(f, "\t:p%c#%d:o%c#%d:t%c=%s:",
-		    'a'+i, bsdlabel[i][D_SIZE],
-		    'a'+i, bsdlabel[i][D_OFFSET],
-		    'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
+		    'a'+i, bsdlabel[i].pi_size,
+		    'a'+i, bsdlabel[i].pi_offset,
+		    'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
 		if (scripting)
 			(void)fprintf(script, "\t:p%c#%d:o%c#%d:t%c=%s:",
-			    'a'+i, bsdlabel[i][D_SIZE],
-			    'a'+i, bsdlabel[i][D_OFFSET],
-			    'a'+i, fstype[bsdlabel[i][D_FSTYPE]]);
-		if (bsdlabel[i][D_FSTYPE] == T_42BSD) {
+			    'a'+i, bsdlabel[i].pi_size,
+			    'a'+i, bsdlabel[i].pi_offset,
+			    'a'+i, fstypenames[bsdlabel[i].pi_fstype]);
+		if (bsdlabel[i].pi_fstype == FS_BSDFFS) {
 			(void)fprintf (f, "b%c#%d:f%c#%d:ta=4.2BSD:",
-				       'a'+i, bsdlabel[i][D_BSIZE],
-				       'a'+i, bsdlabel[i][D_FSIZE]);
+				       'a'+i, bsdlabel[i].pi_bsize,
+				       'a'+i, bsdlabel[i].pi_fsize);
 			if (scripting)
 				(void)fprintf (script, "b%c#%d:f%c#%d:ta=4.2BSD:",
-					       'a'+i, bsdlabel[i][D_BSIZE],
-					       'a'+i, bsdlabel[i][D_FSIZE]);
+					       'a'+i, bsdlabel[i].pi_bsize,
+					       'a'+i, bsdlabel[i].pi_fsize);
 		}
 		if (i < 7)
 			(void)fprintf(f, "\\\n");
@@ -274,38 +274,38 @@ savenewlabel(lp, nparts)
 }
 
 
+/*
+ * XXX MSDOS?
+ */
 void
 translate_partinfo(lp, pp)
 	partinfo *lp;
 	struct partition *pp;
 {
 
+	lp->pi_fstype = pp->p_fstype;
+
 	switch (pp->p_fstype) {
 
 	case FS_UNUSED:				/* XXX */
-		(*lp)[D_FSTYPE] = T_UNUSED;
-		break;
-
 	case FS_SWAP:
-		(*lp)[D_FSTYPE] = T_SWAP;
 		break;
 
 	case FS_BSDFFS:
-		(*lp)[D_FSTYPE] = T_42BSD;
-		(*lp)[D_OFFSET] = 0;
-		(*lp)[D_SIZE] = 0;
-		(*lp)[D_BSIZE] = pp->p_fsize * pp->p_frag;
-		(*lp)[D_FSIZE] = pp->p_fsize;
+		(*lp).pi_offset = 0;
+		(*lp).pi_size = 0;
+		(*lp).pi_bsize = pp->p_fsize * pp->p_frag;
+		(*lp).pi_fsize = pp->p_fsize;
 		break;
 
 	case FS_EX2FS:
-		(*lp)[D_FSTYPE] = T_UNUSED;	/* XXX */
-		(*lp)[D_BSIZE] = pp->p_fsize * pp->p_frag;
-		(*lp)[D_FSIZE] = pp->p_fsize;
+		(*lp).pi_fstype = FS_UNUSED;	/* XXX why? */
+		(*lp).pi_bsize = pp->p_fsize * pp->p_frag;
+		(*lp).pi_fsize = pp->p_fsize;
 		break;
 
 	default:
-		(*lp)[D_FSTYPE] = T_UNUSED;
+		(*lp).pi_fstype = FS_UNUSED;
 		break;
 	}
 }
