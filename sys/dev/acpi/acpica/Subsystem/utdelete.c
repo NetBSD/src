@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utdelete - object deletion and reference count utilities
- *              xRevision: 95 $
+ *              $Revision: 1.1.1.6 $
  *
  ******************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdelete.c,v 1.1.1.5 2003/03/04 16:44:04 kochi Exp $");
 
 #define __UTDELETE_C__
 

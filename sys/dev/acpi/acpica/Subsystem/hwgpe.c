@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: hwgpe - Low level GPE enable/disable/clear functions
- *              xRevision: 47 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwgpe.c,v 1.1.1.5 2003/03/04 16:43:33 kochi Exp $");
 
 #include "acpi.h"
 #include "acevents.h"

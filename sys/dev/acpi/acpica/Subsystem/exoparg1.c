@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg1 - AML execution - opcodes with 1 argument
- *              xRevision: 147 $
+ *              $Revision: 1.1.1.5 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg1.c,v 1.1.1.4 2003/03/04 16:43:25 kochi Exp $");
 
 #define __EXOPARG1_C__
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psparse - Parser top level AML parse routines
- *              xRevision: 139 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psparse.c,v 1.1.1.5 2003/03/04 16:43:47 kochi Exp $");
 
 /*
  * Parse the AML and build an operation tree as most interpreters,

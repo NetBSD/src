@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              xRevision: 17 $
+ *              $Revision: 1.1.1.5 $
  *
  *****************************************************************************/
 
@@ -115,9 +115,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.1.1.4 2003/03/04 16:43:26 kochi Exp $");
 
 #define __EXOPARG3_C__
 

@@ -3,7 +3,7 @@
  *
  * Module Name: hwregs - Read/write access functions for the various ACPI
  *                       control and status registers.
- *              xRevision: 142 $
+ *              $Revision: 1.1.1.6 $
  *
  ******************************************************************************/
 
@@ -115,9 +115,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.1.1.5 2003/03/04 16:43:33 kochi Exp $");
 
 #define __HWREGS_C__
 

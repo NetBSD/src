@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmbuffer - AML disassembler, buffer and string support
- *              xRevision: 10 $
+ *              $Revision: 1.1.1.4 $
  *
  ******************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmbuffer.c,v 1.1.1.3 2003/03/04 16:43:02 kochi Exp $");
 
 #include "acpi.h"
 #include "acdisasm.h"

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: hwacpi - ACPI Hardware Initialization/Mode Interface
- *              xRevision: 62 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwacpi.c,v 1.1.1.5 2003/03/04 16:43:32 kochi Exp $");
 
 #define __HWACPI_C__
 

@@ -3,7 +3,7 @@
  * Name: amlcode.h - Definitions for AML, as included in "definition blocks"
  *                   Declarations and definitions contained herein are derived
  *                   directly from the ACPI specification.
- *       xRevision: 73 $
+ *       $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 

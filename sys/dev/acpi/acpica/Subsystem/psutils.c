@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psutils - Parser miscellaneous utilities (Parser only)
- *              xRevision: 55 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psutils.c,v 1.1.1.5 2003/03/04 16:43:49 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"

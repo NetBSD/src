@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg6 - AML execution - opcodes with 6 arguments
- *              xRevision: 12 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -115,9 +115,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg6.c,v 1.1.1.3 2003/03/04 16:43:26 kochi Exp $");
 
 #define __EXOPARG6_C__
 

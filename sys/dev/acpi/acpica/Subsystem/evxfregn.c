@@ -2,7 +2,7 @@
  *
  * Module Name: evxfregn - External Interfaces, ACPI Operation Regions and
  *                         Address Spaces.
- *              xRevision: 53 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evxfregn.c,v 1.1.1.5 2003/03/04 16:43:18 kochi Exp $");
 
 #define __EVXFREGN_C__
 

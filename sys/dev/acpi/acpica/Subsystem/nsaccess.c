@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsaccess - Top-level functions for accessing ACPI namespace
- *              xRevision: 171 $
+ *              $Revision: 1.1.1.6 $
  *
  ******************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsaccess.c,v 1.1.1.5 2003/03/04 16:43:35 kochi Exp $");
 
 #define __NSACCESS_C__
 

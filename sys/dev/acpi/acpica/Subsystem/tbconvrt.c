@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbconvrt - ACPI Table conversion utilities
- *              xRevision: 47 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbconvrt.c,v 1.1.1.5 2003/03/04 16:43:57 kochi Exp $");
 
 #define __TBCONVRT_C__
 

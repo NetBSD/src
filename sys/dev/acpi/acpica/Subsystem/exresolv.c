@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exresolv - AML Interpreter object resolution
- *              xRevision: 119 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresolv.c,v 1.1.1.5 2003/03/04 16:43:29 kochi Exp $");
 
 #define __EXRESOLV_C__
 

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsmethod - Parser/Interpreter interface - control method parsing
- *              xRevision: 90 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.1.1.5 2003/03/04 16:43:07 kochi Exp $");
 
 #define __DSMETHOD_C__
 

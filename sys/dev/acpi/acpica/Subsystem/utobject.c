@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: utobject - ACPI object create/delete/size/cache routines
- *              xRevision: 82 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utobject.c,v 1.1.1.5 2003/03/04 16:44:08 kochi Exp $");
 
 #define __UTOBJECT_C__
 

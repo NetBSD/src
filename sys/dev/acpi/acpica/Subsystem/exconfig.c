@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconfig - Namespace reconfiguration (Load/Unload opcodes)
- *              xRevision: 71 $
+ *              $Revision: 1.1.1.6 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.1.1.5 2003/03/04 16:43:19 kochi Exp $");
 
 #define __EXCONFIG_C__
 

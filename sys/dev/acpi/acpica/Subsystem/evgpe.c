@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: evgpe - General Purpose Event handling and dispatch
- *              xRevision: 12 $
+ *              $Revision: 1.1.1.4 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evgpe.c,v 1.1.1.3 2003/03/04 16:43:14 kochi Exp $");
 
 #include "acpi.h"
 #include "acevents.h"
