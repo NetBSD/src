@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.56 2003/06/13 22:27:03 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.57 2003/06/25 15:41:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@ message newline {\n}
 
 message yes {Oui}
 message no {Non}
-message all {All}	/* XXX translate */
+message all {Tout}
 message some {Some}	/* XXX translate */
 message none {None}	/* XXX translate */
 
@@ -61,10 +61,11 @@ message upgrade
 
 message hello
 {Bienvenue dans sysinst, l'outil d'installation de NetBSD-@@VERSION@@.
-Cet utilitaire a été conçu pour vous aider à installer ou à mettre à jour
+Cet utilitaire a été conçu pour vous aider à installer ou mettre à jour
 NetBSD sur votre disque dur avec un minimum de travail.
 Dans les menus suivants, vous pourrez changer de sélection soit en tapant la
-lettre en référence (a, b, c, d,...) ou en utilisant les flèches.
+lettre en référence (a, b, c, d,...) ou en utilisant les touches
+flèches du clavier.
 La sélection courante est activée en appuyant sur entrée.
 
 }
@@ -88,21 +89,26 @@ On continue ?
 }
 
 message upgradeusure
-{D'accord, mettons à jour NetBSD sur votre disque dur. Comme d'habitude, cela
-va changer les informations contenues sur votre disque dur. Vous devriez faire
-une sauvegarde complète de celui ci avant de continuer la procédure de mise à
-jour. Voulez vous vraiment mettre à jour NetBSD ?
-(Ceci est le dernier avertissement avant que cette procédure ne commence à
-modifier votre disque.)
+{Mettons maintenant à jour NetBSD sur votre disque dur.
+Comme d'habitude, cela va changer les informations contenues
+sur votre disque dur.
+Vous devriez faire une sauvegarde complète de celui-ci avant de
+continuer la procédure de mise à jour.
+Voulez vous vraiment mettre à jour NetBSD ?
+(Ceci est le dernier avertissement avant que cette
+procédure ne commence à modifier votre disque.)
 }
 
 message reinstallusure
-{Bien, décompactons les composants de NetBSD sur un disque dur bootable.
+{Décompressons maintenant les composants de NetBSD sur un disque dur
+démarrable.
 Cette procédure se contente de rapatrier et décompater les composants
-sur un disque bootable déjà partitionnné. Elle n'inscrit pas de label
-sur le disque, n'installe pas de nouveau secteurs d'ammorcage et ne sauve
-pas les fichiers de configuration existants (Quittez et choisissez
-`installer' ou `mettre à jour'). Vous devriez déjà avoir fait une installation
+sur un disque démarrable déjà partitionnné.
+Elle n'inscrit pas de label sur le disque,
+n'installe pas de nouveau secteurs d'ammorcage et ne sauve
+pas les fichiers de configuration existants
+(Quittez et choisissez `installer' ou `mettre à jour').
+Vous devriez déjà avoir fait une installation
 ou une mise à jour avant de démarrer cette procédure !
 
 Voulez-vous réellement réinstaller les composants NetBSD ?
@@ -116,7 +122,7 @@ au menu précédent.
 }
 
 message onedisk
-{J'ai juste trouvé un disque : %s. Je suppose donc que vous voulez %s
+{Je n'ai trouvé qu'un disque : %s. Je suppose donc que vous voulez %s
 NetBSD dessus.
 }
 
@@ -126,15 +132,15 @@ message askdisk
 
 
 message badname
-{Vous n'avez pas choisi un disque dans la liste. SVP réessayez.
+{Vous n'avez pas choisi un disque dans la liste. Veuillez en choisir un..
 Les disques suivants sont disponibles : %s
 \nSur quel disque voulez vous installer NetBSD ?}
 
 message pleasemountroot
-{Le système de fichiers racine n'est pas monté. SVP, montez le.
+{Le système de fichiers racine n'est pas monté. Veuillez le monter.
 
 Votre disque de destination %s contient aussi le système de fichiers racine.
-J'ai besoin de savoir si je suis entrain de m'exécuter hors de la racine de
+J'ai besoin de savoir si je suis exécuté hors de la racine de
 destination (%sa), ou hors d'une racine alternative (disons %sb,
 votre partition de swap).
 Je ne peux pas le savoir tant que vous ne montez pas la racine de destination.
@@ -173,78 +179,82 @@ message secname
 {sec}
 
 message megname
-{mo}
+{Mo}
 
-/* XXX translate me */
 message layout
-{NetBSD utilise un disklabel BSD pour séparer la portion du disque réservée à
-NetBSD en de multiples partitions BSD. Vous devez maintenant paramétrer le
-disklabel BSD. Vous avez différent choix: 
--- Standard : les partitions sont calculées par ce programme. 
--- Use existing: use current partitions. You must assign mount points.
+{NetBSD utilise un disklabel BSD pour diviser la portion du disque réservée à
+NetBSD en de multiples partitions BSD. Vous devez paramétrer le
+disklabel BSD. Vous avez différents choix: 
+-- Standard : les partitions sont automatiquement calculées. 
+-- Use existing: les partitions déjà existantes seront utilisées. Vous devez toutefois assigner les points de montage.
 
-La taille allouée pour NetBSD sur votre disque est de %d Megaoctets. 
-L'installation standard requière au moins %d Megaoctets. 
-L'installation standard avec X requière au moins %d Megaoctets.
+La taille allouée pour NetBSD sur votre disque est de %d Mo. 
+L'installation standard requière au moins %d Mo. 
+L'installation standard avec X requière au moins %d Mo.
 }
 
 message sizechoice
-{Vous avez choisi de définir vous même vos partitions (pour le disklabel BSD
-ou, pour certains ports, le MBR). Vous devez spécifier l'unité que vous voulez
-utiliser. Si vous choisissez le megaoctets, la taille sera proche de votre
-choix tout en conservant un nombre entier de cylindres. Si vous choisissez le
-secteur, vous pourrez plus précisément choisir les tailles. Sur les disques
-modernes, la taille réelle des cylindres est variable et il y a peu d'intéret
-à aligner les partitions sur les cylindres. Pour les disques plus ancien, il
-est plus efficace de choisir des tailles de partitions multiples de la
-taille d'un cylindre.
+{Vous avez choisi de définir vous même vos partitions
+(pour le disklabel BSD ou, pour certains portages, le MBR).
+Vous devez spécifier l'unité que vous voulez utiliser.
+Si vous choisissez par "Mega-octets", la taille sera proche de votre
+choix tout en conservant un nombre entier de cylindres.
+Si vous choisissez par "Secteurs", vous pourrez choisir précisément
+les tailles.
+Sur les disques modernes, la taille réelle des cylindres est variable
+et il y a peu d'intéret à aligner les partitions sur les cylindres.
+Pour les disques plus ancien, il est plus efficace de choisir des tailles
+de partitions multiples de la taille d'un cylindre.
 }
 
 message defaultunit
-{Tailles et offsets sont en %s, sauf si vous spécifiez une unitée ('M' pour
-mégactets, 'c' pour cylindres, 's' pour secteurs) à la fin de votre nombre.
+{Tailles et décalages ("offsets") sont en %s, sauf si vous spécifiez une unitée ('M' pour
+Mega-octets, 'c' pour cylindres, 's' pour secteurs) à la fin de votre nombre.
 }
 
-message ptnsizes	/* XXX translate */
-{You can now change the sizes for the system partitions.  The default is
-to allocate all the space to the root filesystem, however you may wish
-to have separate /usr (additional system files), /var (log files etc)
-or /home (users' home directories).
+message ptnsizes
+{Vous pouvez désormais changer la taille des partitions système.
+Par défaut, tout l'espace sera alloué à la partition racine principale,
+mais vous pouvez sub-diviser cette partition en plusieurs
+systèmes de fichiers: /usr (fichiers système additionnels),
+/var (fichiers des journaux, etc.)
+et /home (regroupant les répertoires des utilisateurs).
 
-Free space will be added to the partition marked with a '+'.
+L'espace libre sera ajouté à la partition marquée par un '+'.
 }
 
-message ptnheaders	/* XXX translate */
+
+message ptnheaders
 {
-       MB Cylinders   Sectors    Filesystem
+       Mo Cylindres  Secteurs    Système de fichier
 }
 
-message askfsmount	/* XXX translate */
-{Mount pount?}
+message askfsmount
+{Point de montage?}
 
-message askfssize	/* XXX translate */
-{Size for %s in %s?}
+message askfssize
+{Taille pour %s en %s?}
 
-message askunits	/* XXX translate */
-{Change input units (sectors/cylinders/MB)}
+message askunits
+{Changer d'unité (secteurs/cylindres/Mo)}
 
 message NetBSD_partition_cant_change
-{Partition de NetBSD - Changement impossible}
+{Partition de NetBSD - pas de changement}
 
 message Whole_disk_cant_change
-{Totalité du disque - Changement impossible}
+{Totalité du disque - pas de changement}
 
 message Boot_partition_cant_change
-{Partition de démarrer - Changement impossible}
+{Partition de démarrer - pas de changement}
 
-message add_another_ptn	/* XXX translate */
-{Add a user defined partition}
+message add_another_ptn
+{Ajouter une nouvelle partition manuellement}
 
-message fssizesok	/* XXX translate */
-{Accept partition sizes.  Free space %d %s, %d free partitions.}
+message fssizesok
+{Taille de la partition acceptée. Libre: espace %d %s, %d partition}
 
-message fssizesbad	/* XXX translate */
-{Reduce partition sizes by %d %s (%d sectors).}
+message fssizesbad
+{Réduire la taille de la partition par %d %s (%d secteurs).}
 
 message startoutsidedisk
 {La valeur que vous avez spécifiée est en dehors du disque
@@ -256,24 +266,24 @@ La taille de la partition a été tronquée à %d %s.
 }
 
 message fspart
-{Vos partitions NetBSD sont les suivantes (taille et offset en %s) :
+{Vos partitions NetBSD sont les suivantes (taille et décalages en %s) :
 
 
 }
 
-message fspart_header		/* XXX translate */
-{       Start       End      Size FStype Bsize Fsize Preserve Mount point
-   --------- --------- --------- ------ ----- ----- -------- -----------
+message fspart_header
+{       Debut       Fin    Taille   Type Bsize Fsize Preserver Point de montage
+   --------- --------- --------- ------ ----- ----- --------- ----------------
 }
 
 message fspart_row_start
 {%9d %9d %9d %-6s }
 
 message fspart_row_end_bsd
-{%5d %5d %-8s %s\n}
+{%5d %5d %-9s %s\n}
 
 message fspart_row_end_msdos
-{                     %s\n}
+{                      %s\n}
 
 message fspart_row_end_other
 {\n}
@@ -285,62 +295,63 @@ message partition_sizes_ok		/* XXX translate */
 {Partition sizes ok}
 
 message edfspart
-{Vous devez d'abord préciser le type de système de fichier (FS), et ensuite les
-autres valeurs.
+{Vous devez d'abord préciser le type de système de fichier (FS),
+et ensuite les autres valeurs.
 Les valeurs actuelles pour la partition %c sont :
 
 }
 
 message fstype_fmt	/* XXX translate */
-{  FStype: %9s}
+{       FStype: %9s}
 
-message start_fmt	/* XXX translate */
-{   start: %9d %9d %9d}
+message start_fmt
+{        debut: %9d %9d %9d}
 
-message size_fmt	/* XXX translate */
-{    size: %9d %9d %9d}
+message size_fmt
+{       taille: %9d %9d %9d}
 
-message end_fmt		/* XXX translate */
-{     end: %9d %9d %9d}
+message end_fmt
+{          fin: %9d %9d %9d}
 
 message bsize_fmt	/* XXX translate */
-{   bsize: %9d bytes}
+{        bsize: %9d bytes}
 
 message fsize_fmt	/* XXX translate */
-{   fsize: %9d bytes}
+{        fsize: %9d bytes}
 
-message preserve_fmt	/* XXX translate */
-{preserve: %9s}
+message preserve_fmt
+{    préserver: %9s}
 
-message mount_fmt	/* XXX translate */
-{mount pt: %9s}
+message mount_fmt
+{Pt de montage: %9s}
 
 message restore		/* XXX translate */
 {Restore original values}
 
 message not42bsd
-{La partition %c n'est pas du type 4.2BSD et ne doit pas avoir de taille de
-block et de fragment spécifiée.
+{La partition %c n'est pas de type 4.2BSD, et vous devez également
+spécifier sa taille de bloc et fragment.
 }
 
 message Select_the_type
 {Selection du type de système de fichier}
 
-message label_size	/* XXX translate */
-{%s
-Special values that can be entered for the size value:
-    -1:   use until the end of the NetBSD part of the disk
-   a-%c:   end this partition where partition X starts
 
-size (%s)}
+message label_size
+{
+Valeurs spéciales pouvant être rentrées pour définir la taille de la partition:
+    -1:  Utiliser jusqu'à la fin de la partie NetBSD du disque
+   a-%c: Terminer cette partition ou la partition X débute
 
-message label_offset	/* XXX translate */
-{%s
-Special values that can be entered for the offset value:
-    -1:   start at the beginning of the NetBSD part of the disk
-   a-%c:   start at the end of previous partition (a, b, ..., %c)
+taille (%s)}
 
-start (%s)}
+message label_offset
+{
+Valeurs spéciales pouvant être rentrées pour définir la valeur de l'offset:
+    -1:  Commencer au début de la partie NetBSD du disque
+   a-%c: Commencer a la suite de la partition précédente (a, b, ..., %c)
+
+debut (%s)}
 
 message invalid_sector_number	/* XXX translate */
 {Badly formed sector number
@@ -358,27 +369,28 @@ message f2_per_block {2 per block}	/* XXX translate */
 message f1_per_block {1 per block}	/* XXX translate */
 
 message packname
-{SVP donnez un nom à votre disque NetBSD.}
+{veuillez donnez un nom à votre disque.}
 
 message lastchance
-{Bon, nous sommes prêt à installer NetBSD sur votre disque (%s). Rien n'a été
-écrit pour l'instant. C'est votre dernière chance de quitter cette procédure en
+{Nous sommes prêt à installer NetBSD sur votre disque (%s).
+Rien n'a été écrit pour l'instant.
+C'est votre dernière chance de quitter cette procédure en
 laissant votre disque intact. On continue ?
 }
 
 message disksetupdone
-{Bien, la première partie de la procédure est terminée.
+{La première partie de la procédure est terminée.
 Sysinst a écrit, sur votre disque de destination, un disklabel,
-créé (newfs) et testé (fsck) vos nouvelles partitions.
+créé (via newfs) et testé (via fsck) vos nouvelles partitions.
 
 L'étape suivant consiste a recopier les différents composants.
 Appuyer sur <entrée> pour continuer.
 }
 
 message disksetupdoneupdate
-{Bien, la première partie de la procédure est terminée.
+{La première partie de la procédure est terminée.
 Sysinst a écrit, sur votre disque de destination, un disklabel
-et testé (fsck) vos nouvelles partitions.
+et testé (via fsck) vos nouvelles partitions.
 
 L'étape suivant consiste a recopier les différents composants.
 Appuyer sur <entrée> pour continuer.
@@ -402,17 +414,17 @@ message rename_fail
 }
 
 message deleting_files
-{Pour la procédure de mise à jour, les fichiers suivant doivent etre
+{Pour la procédure de mise à jour, les fichiers suivants doivent être
 supprimés:
 }
 
 message deleting_dirs
 {Pour la procédude de mise à jour, les répertoires suivants doivent
-etre supprimés (je renomerais ceux qui ne sont pas vides):
+être supprimés (les fichiers déjà existants seront renommés):
 }
 
 message renamed_dir
-{Le répertoire %s a été renomé en %s.
+{Le répertoire %s a été renomé %s.
 }
 
 message cleanup_warn
@@ -422,66 +434,70 @@ suivant.
 }
 
 message nomount
-{La partition %c n'est ni 4.2BSD, ni msdos c'est pour cela qu'elle n'a pas de
-point de montage.
+{La partition %c n'est ni 4.2BSD,
+ni msdos et ne dispose donc d'aucun point de montage.
 }
 
 message mountfail
 {Le montage de %s sur %s a échoué.
 }
 
-message extractcomplete	/* XXX translate */
-{The extraction of the selected sets for NetBSD-@@VERSION@@ is complete.
-The system is now able to boot from the selected harddisk. To complete
-the installation, sysinst will give you the opportunity to configure
-some essential things first.
+message extractcomplete
+{L'extraction des composants sélectionnés de NetBSD-@@VERSION@@
+est complète.
+Le système peut désormais démarrer directement depuis le disque.
+Pour compléter l'installation, sysinst va maintenant vous
+permettre de configurer quelques réglages essentiels.
 }
 
 message instcomplete
 {L'installation de NetBSD-@@VERSION@@ est terminée. L'ordinateur devrait
 redémarrer depuis le disque dur. Suivez les instructions du document
-d'installation (INSTALL en anglais) pour finir de configurer votre ordinateur.
+d'installation (INSTALL) pour finir de configurer votre ordinateur.
 
-Vous devez au minimum entrer un mot de passe pour root et parametrer
+Vous devez au moins entrer un mot de passe pour root et parametrer
 /etc/rc.conf pour vos besoins.
 }
 
 message unpackcomplete
-{La mise à jour de NetBSD-@@VERSION@@ est terminée. Suivez les instructions du
-document d'installation (INSTALL en anglais) pour finir de reconfigurer votre
-ordinateur. Votre ancien /etc a été sauvegardé sous /etc.old .
+{La mise à jour de NetBSD-@@VERSION@@ est terminée.
+Suivez les instructions du document d'installation (INSTALL) pour finir
+de reconfigurer votre ordinateur.
+Votre ancien /etc a été sauvegardé sous /etc.old .
 
-Vous devez au minimum éditer /etc/rc.conf pour votre environnement local
-et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en
-multi-utilisateur.
+Vous devez éditer /etc/rc.conf et ajouter la variable
+"RC_CONFIGURED=yes" pour redémarrer en mode multi-utilisateur.
 }
 
 message upgrcomplete
 { L'installation de composants de NetBSD-@@VERSION@@ supplémentaires est
-terminée. L'installation a modifié le /etc de destination. un /etc.old sauvé
-par une mise à jour précédente n'a pas été touché. Suivez les instructions du
-document d'installation (INSTALL en anglais) afin de reconfigurer votre
-ordinateur.
+terminée. L'installation a modifié le /etc de destination.
+un /etc.old sauvé par une mise à jour précédente
+n'a pas été touché.
+Suivez les instructions du document d'installation (INSTALL) afin de
+reconfigurer votre ordinateur.
 
-Vous devez au minimum éditer /etc/rc.conf pour votre environnement local
-et mettre RC_CONFIGURED à `YES' avant de pouvoir démarrer en
-multi-utilisateur.
+Vous devez éditer /etc/rc.conf et ajouter la variable
+"RC_CONFIGURED=yes" pour redémarrer en mode multi-utilisateur.
 }
 
 message distmedium
-{Votre disque est maintenant prêt pour installer un noyau et les différents
-composants. Comme indiqué dans le document d'installation, vous avez
-plusieurs possibilités. Pour une installation via nfs ou ftp, vous devez être
-connecté au réseau et avoir accès au bon serveur. Si vous n'êtes pas prêt pour
-terminer l'installation maintenant, choisissez aucun et vous retournerez au
-menu principal. Plus tard, quand vous serez prêt, choisissez l'option
-"mise à jour" pour terminer l'installation.
+{Votre disque est maintenant prêt pour installer un noyau et les
+différents composants.
+Comme indiqué dans le document d'installation, vous avez
+plusieurs possibilités.
+Pour une installation via nfs ou ftp, vous devez être
+connecté au réseau et avoir accès au bon serveur.
+Si vous n'êtes pas prêt pour terminer l'installation maintenant,
+choisissez "aucun" puis retournerez au menu principal.
+Vous pourrez choisir l'option "mise à jour" pour terminer l'installation.
 }
 
 message distset
-{La distribution de NetBSD est découpée en plusieurs composant. Certains sont
-impératifs, d'autres non. Vous pouvez choisir de les installer tous
-(Installation complète) ou vous pouvez choisir d'installer séparément les
+{La distribution de NetBSD est découpée en plusieurs composants.
+Certains sont impératifs, d'autres non.
+Vous pouvez choisir de les installer tous
+(Installation complète) ou bien d'installer séparément les
 composants optionnels.
 }
 
@@ -513,7 +529,7 @@ message proxy
 {proxy}
 
 message email
-{ adresse e-mail }
+{adresse e-mail}
 
 message dev
 {device}
@@ -531,8 +547,8 @@ message nfsbadmount
 {Le répertoire %s n'est pas montable par nfs.}
 
 message cdromsource
-{Donnez le nom de device du CDROM à utiliser ainsi que le répertoire du CDROM
-contenant les composants. Rappelez vous que le répertoire doit contenir les
+{Donnez le nom de périphérique du CD-Rom à utiliser ainsi que le répertoire
+qui contient les composants. Rappelez-vous que le répertoire doit contenir les
 fichiers .tgz .
 
 device:		%s
@@ -541,7 +557,7 @@ répertoire:	%s
 
 
 message localfssource
-{Donnez le nom du device local (non-monté) à utiliser ainsi que le répertoire
+{Donnez le nom du périphérique local (non-monté) à utiliser ainsi que le répertoire
 contenant les composants. Rappelez vous que le répertoire doit contenir les
 fichiers .tgz .
 
@@ -574,8 +590,8 @@ message badsetdir
  Etes-vous sur que c'est le bon répertoire ?}
 
 message nonet
-{Je ne peux trouver aucune interface réseau utilisable par NetBSD. Vous allez
-retourner au menu précédent.
+{Je ne trouve aucune interface réseau utilisable.
+Vous allez retourner au menu précédent.
 }
 
 message asknetdev
@@ -583,7 +599,8 @@ message asknetdev
 \nLa quelle dois je utiliser ?}
 
 message badnet
-{Vous n'avez pas choisi une interface réseau dans la liste. SVP réessayez.
+{Vous n'avez pas choisi une interface réseau dans la liste.
+Veuillez essayer à nouveau.
 Les interface réseau suivantes sont disponibles : %s
 \nLa quelle dois je utiliser ?}
 
@@ -601,13 +618,13 @@ message net_host
 {Votre nom de machine}
 
 message net_ip6autoconf
-{IPv6 autoconfiguration}
+{Autoconfiguration IPv6}
 
 message net_ip
-{Votre numéro IPv4}
+{Votre adresse IPv4}
 
 message net_mask
-{Votre masque de réseau (IPv4 netmask)}
+{Votre masque de réseau (IPv4)}
 
 message net_namesrv6
 {L'adresse IPv6 de votre serveur de nom}
@@ -616,13 +633,13 @@ message net_namesrv
 {L'adresse IPv4 de votre serveur de nom}
 
 message net_defroute
-{L'adresee IPv4 de votre passerelle ("gateway")}
+{L'adresee IPv4 de votre passerelle}
 
 message net_media
 {Type de réseau (media)}
 
 message netok
-{Vous avez spécifié les valeurs suivantes. Sont elles exactes?
+{Vous avez spécifié les valeurs suivantes. Veuillez confirmer.
 
 Domaine (DNS):			 %s 
 Nom de machine:			 %s 
@@ -639,17 +656,17 @@ Adresse du serveur de noms IPv6: %s
 }
 
 message netagain
-{SVP redonnez les informations sur votre réseau. Vos dernières réponses seront
-celles par défaut.
-
+{Veuillez indiquer à nouveau les informations sur votre réseau.
 }
 
 message resolv
-{Impossible de créer le fichier /etc/resol.conf. L'installation a échoué.
+{Impossible de créer le fichier /etc/resolv.conf.
+L'installation a échoué.
 }
 
 message realdir
-{Impossible de se déplacer sur le répertoire %s. L'installation a échoué.
+{Impossible de se déplacer sur le répertoire %s.
+L'installation a échoué.
 }
 
 message ftperror_cont
@@ -662,7 +679,8 @@ message distdir
 {Quel répertoire dois je utiliser pour %s ?}
 
 message verboseextract
-{Pendant la procédure d'extraction des fichiers, qu'est-ce que vous voulez
+{Pendant la procédure d'extraction des fichiers,
+voulez-vous voir les noms de fichiers au fur et à mesure ?
 voir pendant qu'ils seront extraits ?
 }
 
@@ -672,15 +690,16 @@ message notarfile
 Voulez-vous continuer à extraire les composants ?}
 
 message endtarok
-{Tous les fichiers ont étés extraits. SVP appuyer sur <entrée> pour continuer.}
+{Tous les fichiers sont extraits. Veuillez appuyer sur <entrée> pour continuer.}
 
 message endtar
-{Il y a eu des problèmes au décompactage des composants. Votre installation
-est incomplète.
+{Il y a eu des problèmes au décompactage des composants.
+Votre installation est terminée.
 
 Vous aviez selectionné %d composants. %d n'ont pas été trouvés et
-%d ont été ignorés après qu'une erreur se soit produite. Sur les %d
-qui ont été traités, %d ont été extrait sans erreurs et %d avec erreurs.
+%d ont été ignorés à cause d'erreurs survenues.
+Sur les %d qui ont été traités,
+%d ont été extrait et %d ont provoqué un erreur.
 
 La procédure d'installation a échoué. Vérifiez vos composants et
 envisagez une réinstallation des composants depuis le menu principal.}
@@ -691,19 +710,19 @@ message abort
 }
 
 message abortinst
-{La distribution n'a pas été correctement chargée. Vous allez devoir terminer à
-la main. L'installation a échoué.
+{La distribution n'a pas été correctement chargée.
+Vous allez devoir terminer à la main. L'installation a échoué.
 }
 
 message abortupgr
-{La distribution n'a pas été correctement chargée. Vous allez devoir la
-terminer à la main. La mise à jour a échoué.
+{La distribution n'a pas été correctement chargée.
+Vous allez devoir la terminer à la main. La mise à jour a échoué.
 }
 
 message abortunpack
-{Les composants supplémentaires n'ont pu etre décompactées. Vous allez
-devoir procéder à la main, ou choisir une source differente pour les
-composants et essayer à nouveau.
+{Les composants supplémentaires n'ont pu etre décompactées.
+Vous allez devoir procéder à la main, ou choisir une source
+differente pour les composants et essayer à nouveau.
 }
 
 message openmsgbuf
@@ -711,64 +730,71 @@ message openmsgbuf
 }
 
 message createfstab
-{Il y a un gros problème!  Impossible de créer /mnt/etc/fstab. On quitte!
+{Erreur fatale ! Impossible de créer /mnt/etc/fstab.
+Nous devons quitter immédiatement !
 }
 
 message noetcfstab
-{A l'aide! Il n'y a pas de fichier /etc/fstab sur le disque cible %s.
+{Erreur fatale ! Il n'y a pas de fichier /etc/fstab sur le disque cible %s.
 Arrêt de la mise à jour.
 }
 
 message badetcfstab
-{A l'aide! Impossible de décoder /etc/fstab sur le disque cible %s.
+{Erreur fatale ! Impossible de décoder /etc/fstab sur le disque cible %s.
 Arrêt de la mise à jour.
 }
 
 message etc_oldexists
 {Impossible de sauvegarder /etc en /etc.old. Le disque cible a déjà un /etc.old.
-Merci de corriger ceci avant de continuer.
+Veuillez corriger avant de continuer.
 
-Une solution est de démarrer un shell du menu `Utilitaires', et d'examiner
-les répertoires /etc et /etc.old sur le disque destination. Si /etc.old
-provient d'une mise à jour complète, vous pouvez effacer /etc.old.
-Si /etc.old provient d'une mise à jour récente et incomplete, vous pouvez
-effacer /etc et renommer /etc.old en /etc.
+Une solution est de démarrer un shell depuis le menu `Utilitaires'
+et d'examiner les répertoires /etc et /etc.old sur le disque destination.
+Si /etc.old provient d'une mise à jour précédente,
+vous pouvez l'effacer.
+Si /etc.old provient d'une mise à jour récente et incomplete,
+vous pouvez effacer /etc et renommer /etc.old en /etc.
 
 Arrêt de la mise à jour.
 }
 
-message X_oldexists	/* XXX translate */
-{I cannot save /usr/X11R6/bin/X as /usr/X11R6/bin/X.old, because the
-target disk already has an /usr/X11R6/bin/X.old. Please fix this before
-continuing.
+message X_oldexists
+{Je n'ai pas pu sauvegarder /usr/X11R6/bin/X sous /usr/X11R6/bin/X.old car
+le disque de destination contient déjà un /usr/X11R6/bin/X.old.
+Veuillez corriger avant de poursuivre.
 
-One way is to start a shell from the Utilities menu, examine the
-target /usr/X11R6/bin/X and /usr/X11R6/bin/X.old.  If
-/usr/X11R6/bin/X.old is from a completed upgrade, you can rm -f
-/usr/X11R6/bin/X.old and restart.  Or if /usr/X11R6/bin/X.old is from
-a recent, incomplete upgrade, you can rm -f /usr/X11R6/bin/X and mv
-/usr/X11R6/bin/X.old to /usr/X11R6/bin/X.
+Vous pouvez démarrer un shell depuis le menu "Utilitaires" pour
+examiner le disque de destination.
+Si le /usr/X11R6/bin/X.old existant provient d'une ancienne
+mise à jour vous pouvez le supprimer et recommencer.
+Si ce dernier provient d'une mise à jour incomplète,
+vous pouvez effacer /usr/X11R6/bin/X et renommer
+/usr/X11R6/bin/X.old en /usr/X11R6/bin/X.
 
-Aborting upgrade.}
+Arrêt de la mise à jour}
 
 
 message netnotup
-{Il y'a eu un problème lors de la configuration de votre réseau. Ou votre
-serveur de noms, ou bien votre gateway ne peuvent être atteint par un ping
-Voulez vous configurer de nouveau votre réseau ? (Non arrêtera l'installation)
+{Il y'a eu un problème lors de la configuration de votre réseau.
+Votre serveur de noms, ou bien votre passerelle ne peuvent
+être atteints par un ping
+Voulez vous configurer de nouveau votre réseau ?
+(Non arrêtera l'installation)
 }
 
 message netnotup_continueanyway
-{Would you like to continue the install process anyway, and assume
-that the network is working?  (No aborts the install process.)
+{Voulez-vous poursuivre malgré tout le processus d'installation
+et suppposer que le réseau fonctionne correctement ?
+("Non" arrêtera l'installation)
 }
 
 message makedev
-{Création des fichiers de device ...
+{Création des fichiers des périphériques ...
 }
 
 message badfs
-{%s%s n'est pas un systèmes de fichier BSD ou alors le fsck s'est mal passé.
+{%s%s n'est pas un système de fichiers BSD ou bien sa vérification
+par fsck a rencontré un problème.
 La mise à jour a été interrompue avec un code erreur %d.
 }
 
@@ -778,37 +804,36 @@ Arrêt de la mise à jour
 }
 
 message rootmissing
-{ La racine du système cible %s manque.
+{ La racine du système cible %s est introuvable.
 }
 
 message badroot
-{Un test de contrôle du nouveau système de fichier racine s'est mal passé.
-Etes vous sure d'avoir bien installé tous les composants requis?
+{La vérification du nouveau système de fichier a rencontré un problème.
+Avez-vous bien installé tous les composants indispensables ?
 }
 
 message fddev
 {Quel lecteur de disquette voulez vous utiliser? }
 
 message fdmount
-{SVP insérer la disquette contenant le fichier "%s". }
+{Veuillez insérer la disquette contenant le fichier "%s". }
 
 message fdnotfound
-{Impossible de trouver le fichier "%s" sur la disquette. SVP insérer la
-disquette contenant ce fichier.
+{Impossible de trouver le fichier "%s" sur la disquette.
 }
 
 message fdremount
 {La disquette n'a pas été montée correctement. Vous devez :
 
-Réessayer en inserrant la disquette contenant le fichier %s.
+Insérer une disquette contenant le fichier %s.
 
 Ne plus charger d'autre fichiers depuis la disquette et interrompre le
 processus
 }
 
 message mntnetconfig
-{Est ce que les informations réseau correspondent bien à cette machine en
-utilisation normale et désirez vous l'enregistrer sous /etc ?}
+{Les informations réseau correspondent-elles à la configuration
+dont vous souhaitez disposer au redémarrage ?}
 
 message cur_distsets
 {Vous trouverez ci dessous la liste des composants qui seront installées.
@@ -816,8 +841,8 @@ message cur_distsets
 }
 
 message cur_distsets_header
-{      Composant        Installe?
----------------------- ---------
+{      Composant                 Installe?
+------------------------------- ---------
 }
 
 message set_base
@@ -842,7 +867,7 @@ message set_text_tools
 {Outils de manipulation de textes}
 
 message set_X11
-{X11 toute}
+{X11 tout}
 
 message set_X11_base
 {X11 base et clients}
@@ -863,7 +888,7 @@ message set_X11_misc
 {X11 Misc.}
 
 message cur_distsets_row
-{%-27s %3s\n}
+{%-33s %3s\n}
 
 message select_all	/* XXX translate */
 {Select all the above sets}
@@ -887,7 +912,7 @@ message partitions_overlap
 
 message edit_partitions_again
 {
-Vous pouvez soit éditer la table des partitions à la main, ou abandonner et
+Vous pouvez éditer la table des partitions à la main, ou abandonner et
 retourner au menu principal
 
 Voulez-vous éditer la table des partitions à nouveau ?
@@ -897,7 +922,7 @@ message not_regular_file
 {Le fichier de configuration %s n'est pas un fichier régulier.\n}
 
 message out_of_memory
-{Pas assez de mémoire (malloc() a échoué).\n}
+{Votre macihne ne dispose pas d'assez de mémoire : échec du malloc()\n}
 
 message config_open_error
 {Impossible d'ouvrir le fichier de configuration %s.\n}
@@ -911,81 +936,81 @@ message cmdfail
 ne s'est pas executée correctement. Impossible de continuer.}
 
 message noactivepart
-{Vous n'avez pas choisi de partition active. Cela peut empêcher votre système
-de démarrer correctement. Dois-je marquer la partition NetBSD active?}
+{Vous n'avez pas choisi de partition active.
+Cela peut empêcher votre système de démarrer correctement.
+Dois-je marquer la partition NetBSD active?}
 
 message upgradeparttype
 {La seule partition disponible pour installer NetBSD est de l'ancien type
-NetBSD/386BSD/FreeBSD. Voulez-vous le changer pour le nouveau type
-dédié à NetBSD ?}
+NetBSD/386BSD/FreeBSD. Voulez-vous le changer pour le nouveau ? }
 
 message continue
-{Continuez?}
+{Continuer?}
 
-message choose_timezone	/* XXX translate */
-{Please choose the timezone that fits you best from the list below.
-Press RETURN to select an entry. Press 'x' followed by RETURN to quit
-the timezone selection. 
+message choose_timezone	
+{Sélectionnez votre zone horaire dans la liste suivante.
+Appuyez sur ENTREE pour confirmer votre choix. Appuyez sur 'x' puis ENTREE
+pour quitter la selection de la zone horaire.
 
- Default:	%s 
- Selected:	%s 
- Local time: 	%s %s 
+ Défaut:	%s
+ Séléctionée:	%s
+ Heure Locale:	%s %s
 }
 
-message choose_crypt	/* XXX translate */
-{Please choose the password cipher to use. NetBSD can be configured to use
-either the DES, MD5 or Blowfish schemes.
+message choose_crypt	
+{Sélectionez le type de hachage des mots de passe. NetBSD peut être
+configuré pour utiliser DES, MD5 ou Blowfish.
 
-The traditional DES scheme is compatible with most other Unix-like operating
-systems, but only the first 8 characters of any password will be recognised.
-The MD5 and Blowfish scheme allows for longer passwords, and some would
-argue that it's more secure.
+Le DES est compatible avec la plupart des Systèmes d'exploitation
+de type Unix, mais le mot de passe ne peut dépasser 8 caractères.
+MD5 et Blowfish vous offrent une meilleure sécurité avec une taille de mot de passe bien supérieure.
 
-If you have a network and intend to use NIS, please bear in mind the
-capabilities of other machines on your network.
+Si vous un réseau et l'intention d'utiliser NIS, vérifier la capacitée des 
+autres machines de votre réseau.
 
-If you are upgrading and would like to keep configuration unchanged,
-choose the last option "do not change".
+Si vous mettez a jour et voulez conserver la même configuration
+déjà existante, choisissez "ne rien changer".
 }
 
-message swapactive	/* XXX translate */
-{The disk that you selected has a swap partition that may currently be
-in use if your system is low on memory. Because you are going to
-repartition this disk, this swap partition will be disabled now. Please
-beware that this might lead to out of swap errors. Should you get such
-an error, please restart the system and try again.}
+message swapactive
+{Le disque que vous avez sélectionné a une partition de swap 
+qui peut être en cours d'utilisation si votre système dispose de peut de mémoire.
+Sur le point de repartitionner ce disque, la partition de swap 
+va être désactivée. Prenez garde, cette opération peut entrainer des erreurs de swap.
+Si vous avez ces erreurs, vous devrez redémarrer et tenter à nouveau.}
 
-message swapdelfailed	/* XXX translate */
-{Sysinst failed to deactivate the swap partition on the disk that you
-chose for installation. Please reboot and try again.}
+message swapdelfailed
+{Sysinst n'a pas réussit a désactiver la partition de swap du disque  
+sélectionné pour l'installation. Redémarrez et essayez une nouvelle
+fois.}
 
-message rootpw	/* XXX translate */
-{The root password of the newly installed system has not yet been initialized,
-and is thus empty.  Do you want to set a root password for the system now?}
+message rootpw	
+{Le mot de passe root du système installé n'a pas encore été
+initialisé et est par consequent vide. Souhaitez vous définir un mot de passe root 
+pour le système maintenant ?}
 
-message rootsh	/* XXX translate */
-{You can now select which shell to use for the root user. The default is
-/bin/csh, but you may prefer another one.}
+message rootsh	
+{Vous pouvez maintenant choisir quel shell utiliser pour l'utilisateur root.
+Par default il s'agit de /bin/csh}
 
-message postuseexisting		/* XXX translate */
+message postuseexisting
 {
-Don't forget to fill in the file system mount points for each of the
-file systems that are to be mounted.  Press <return> to continue.
+N'oubliez pas d'indiquer pour chaque partition un point de
+montage. Appuyez sur <entrée> pour continuer.
 }
 
-message no_root_fs		/* XXX translate */
-{
-There is no defined root file system.  You need to define at least
-one mount point with "/".
+message no_root_fs
+{Il n'y a pas de partition racine définie. Vous devez définir au moins 
+un point de montage "/".
 
-Press <return> to continue.
+Appuyer sur <entrée> pour continuer.
 }
 
 .if AOUT2ELF
-message aoutfail 	/* XXX translate */
-{The directory where the old a.out shared libraries should be moved to could  
-not be created. Please try the upgrade procedure again and make sure you
-have mounted all file systems.}
+message aoutfail
+{Le répertoire où se situent les anciennes librairies a.out devrait être déplacé.
+Veuillez suivre la procédure de mise a jour et vérifier que vous avez 
+bien monté tous les systèmes de fichiers}
 
 message emulbackup
 {Ou /emul/aout ou répertoire d' /emul sur votre système était un
