@@ -1,3 +1,5 @@
+/*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
+
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,8 +40,10 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)ktrace.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: ktrace.c,v 1.3 1995/01/03 07:04:18 glass Exp $";
+#if 0
+static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
+#endif
+static char *rcsid = "$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
