@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.5 2000/10/24 12:18:33 tsubai Exp $ */
+/*	$NetBSD: installboot.c,v 1.6 2001/07/22 11:29:48 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -454,7 +454,7 @@ writeapplepartmap(fd)
 		return -1;
 
 	/* block 1: Apple Partition Map */
-	bzero(&pme, sizeof(pme));
+	memset(&pme, 0, sizeof(pme));
 	pme.pmSig = DPME_MAGIC;
 	pme.pmMapBlkCnt = 2;
 	pme.pmPyPartStart = 1;
@@ -470,7 +470,7 @@ writeapplepartmap(fd)
 		return -1;
 
 	/* block 2: NetBSD partition */
-	bzero(&pme, sizeof(pme));
+	memset(&pme, 0, sizeof(pme));
 	pme.pmSig = DPME_MAGIC;
 	pme.pmMapBlkCnt = 2;
 	pme.pmPyPartStart = 4;

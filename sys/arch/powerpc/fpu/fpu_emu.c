@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.2 2001/06/22 03:25:39 simonb Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.3 2001/07/22 11:29:44 wiz Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -446,7 +446,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				break;
 			case	OPC63_FNEG:
 				DPRINTF(FPE_INSN, ("fpu_execute: FNEGABS\n"));
-				bcopy(&fs->fpreg[rb],	&fs->fpreg[rt],
+				memcpy(&fs->fpreg[rt], &fs->fpreg[rb],
 					sizeof(double));
 				a = (int *)&fs->fpreg[rt];
 				*a ^= (1 << 31);
@@ -473,7 +473,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				break;
 			case	OPC63_FMR:
 				DPRINTF(FPE_INSN, ("fpu_execute: FMR\n"));
-				bcopy(&fs->fpreg[rb],	&fs->fpreg[rt],
+				memcpy(&fs->fpreg[rt], &fs->fpreg[rb],
 					sizeof(double));
 				break;
 			case	OPC63_MTFSFI:
@@ -488,21 +488,21 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 				break;
 			case	OPC63_FNABS:
 				DPRINTF(FPE_INSN, ("fpu_execute: FABS\n"));
-				bcopy(&fs->fpreg[rb],	&fs->fpreg[rt],
+				memcpy(&fs->fpreg[rt], &fs->fpreg[rb],
 					sizeof(double));
 				a = (int *)&fs->fpreg[rt];
 				*a |= (1 << 31);
 				break;
 			case	OPC63_FABS:
 				DPRINTF(FPE_INSN, ("fpu_execute: FABS\n"));
-				bcopy(&fs->fpreg[rb],	&fs->fpreg[rt],
+				memcpy(&fs->fpreg[rt], &fs->fpreg[rb],
 					sizeof(double));
 				a = (int *)&fs->fpreg[rt];
 				*a &= ~(1 << 31);
 				break;
 			case	OPC63_MFFS:
 				DPRINTF(FPE_INSN, ("fpu_execute: MFFS\n"));
-				bcopy(&fs->fpscr, &fs->fpreg[rt], 
+				memcpy(&fs->fpreg[rt], &fs->fpscr,
 					sizeof(fs->fpscr));
 				break;
 			case	OPC63_MTFSF:
@@ -579,7 +579,7 @@ fpu_execute(struct trapframe *tf, struct fpemu *fe, union instr *insn)
 					/* fra < 0 */
 					rc = rb;
 				DPRINTF(FPE_INSN, ("f%d => f%d\n", rc, rt));
-				bcopy(&fs->fpreg[rc],	&fs->fpreg[rt],
+				memcpy(&fs->fpreg[rt], &fs->fpreg[rc],
 					sizeof(double));
 				break;
 			case	OPC59_FRES:

@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.5 2001/07/05 08:38:25 toshii Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.6 2001/07/22 11:29:46 wiz Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,7 +50,7 @@ setregs(p, pack, stack)
 	struct trapframe *tf = trapframe(p);
 	struct ps_strings arginfo;
 
-	bzero(tf, sizeof *tf);
+	memset(tf, 0, sizeof *tf);
 	tf->fixreg[1] = -roundup(-stack + 8, 16);
 
 	/*
