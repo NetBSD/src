@@ -1,4 +1,4 @@
-/*	$NetBSD: backupfile.c,v 1.12 2003/07/12 13:47:43 itojun Exp $	*/
+/*	$NetBSD: backupfile.c,v 1.13 2003/07/30 08:51:04 itojun Exp $	*/
 
 /* backupfile.c -- make Emacs style backup file names
    Copyright (C) 1990 Free Software Foundation, Inc.
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: backupfile.c,v 1.12 2003/07/12 13:47:43 itojun Exp $");
+__RCSID("$NetBSD: backupfile.c,v 1.13 2003/07/30 08:51:04 itojun Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -136,7 +136,7 @@ make_version_name(char *file, int version)
   char *backup_name;
 
   backup_name = xmalloc(strlen (file) + 16);
-  sprintf (backup_name, "%s.~%d~", file, version);
+  snprintf(backup_name, strlen(file) + 16, "%s.~%d~", file, version);
   return backup_name;
 }
 
@@ -167,11 +167,10 @@ static char *
 concat(const char *str1, const char *str2)
 {
   char *newstr;
-  char str1_length = strlen (str1);
+  size_t l = strlen(str1) + strlen(str2) + 1;
 
-  newstr = xmalloc(str1_length + strlen (str2) + 1);
-  strcpy (newstr, str1);
-  strcpy (newstr + str1_length, str2);
+  newstr = xmalloc(l);
+  snprintf(newstr, l, "%s%s", str1, str2);
   return newstr;
 }
 

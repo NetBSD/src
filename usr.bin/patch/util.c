@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.17 2003/07/12 13:53:08 itojun Exp $	*/
+/*	$NetBSD: util.c,v 1.18 2003/07/30 08:51:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.17 2003/07/12 13:53:08 itojun Exp $");
+__RCSID("$NetBSD: util.c,v 1.18 2003/07/30 08:51:04 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -69,16 +69,16 @@ move_file(char *from, char *to)
 	}
 
 	if (origprae) {
-		Strcpy(bakname, origprae);
-		Strcat(bakname, to);
+		strlcpy(bakname, origprae, sizeof(bakname));
+		strlcat(bakname, to, sizeof(bakname));
 	} else {
 #ifndef NODIR
 		char *backupname = find_backup_file_name(to);
-		Strcpy(bakname, backupname);
+		strlcpy(bakname, backupname, sizeof(bakname));
 		free(backupname);
 #else /* NODIR */
-		Strcpy(bakname, to);
-    		Strcat(bakname, simple_backup_suffix);
+		strlcpy(bakname, to, sizeof(bakname));
+    		strlcat(bakname, simple_backup_suffix, sizeof(bakname));
 #endif /* NODIR */
 	}
 
@@ -383,7 +383,7 @@ makedirs(char *filename, bool striplast)
 	if (dirvp < 0)
 		return;
 
-	strcpy(buf, "mkdir");
+	strlcpy(buf, "mkdir", sizeof(buf));
 	s = buf;
 	for (i = 0; i <= dirvp; i++) {
 		struct stat sbuf;
@@ -392,7 +392,7 @@ makedirs(char *filename, bool striplast)
 			while (*s)
 				s++;
 			*s++ = ' ';
-			strcpy(s, tmpbuf);
+			strlcpy(s, tmpbuf, sizeof(buf) - (s - buf));
 		}
 		*dirv[i] = '/';
 	}
@@ -464,9 +464,11 @@ fetchname(char *at, int strip_leading, int assume_exists)
 		tmpbuf[pathlen] = '\0';
 
 #define try(f, a1, a2) \
-    (Sprintf(tmpbuf + pathlen, f, a1, a2), stat(tmpbuf, &filestat) == 0)
+    (snprintf(tmpbuf + pathlen, sizeof(tmpbuf) - pathlen, f, a1, a2), \
+     stat(tmpbuf, &filestat) == 0)
 #define try1(f, a1) \
-    (Sprintf(tmpbuf + pathlen, f, a1), stat(tmpbuf, &filestat) == 0)
+    (snprintf(tmpbuf + pathlen, sizeof(tmpbuf) - pathlen, f, a1), \
+     stat(tmpbuf, &filestat) == 0)
 		if (try("RCS/%s%s", filebase, RCSSUFFIX) ||
 		    try1("RCS/%s"  , filebase) ||
 		    try(    "%s%s", filebase, RCSSUFFIX) ||
