@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.200 2000/01/25 08:45:24 augustss Exp $
+# $NetBSD: mi,v 1.201 2000/01/28 19:32:44 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -217,6 +217,7 @@
 ./usr/share/man/cat1/patch.0
 ./usr/share/man/cat1/pawd.0
 ./usr/share/man/cat1/pax.0
+./usr/share/man/cat1/pim6stat.0
 ./usr/share/man/cat1/pkg_add.0
 ./usr/share/man/cat1/pkg_admin.0
 ./usr/share/man/cat1/pkg_create.0
@@ -609,6 +610,7 @@
 ./usr/share/man/cat5/passwd.0
 ./usr/share/man/cat5/phones.0
 ./usr/share/man/cat5/pim6dd.conf.0
+./usr/share/man/cat5/pim6sd.conf.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
 ./usr/share/man/cat5/ranlib.0
@@ -791,6 +793,7 @@
 ./usr/share/man/cat8/mrinfo.0
 ./usr/share/man/cat8/mrouted.0
 ./usr/share/man/cat8/mtrace.0
+./usr/share/man/cat8/mtrace6.0
 ./usr/share/man/cat8/mtree.0
 ./usr/share/man/cat8/named-bootconf.0
 ./usr/share/man/cat8/named-xfer.0
@@ -818,6 +821,7 @@
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
 ./usr/share/man/cat8/pim6dd.0
+./usr/share/man/cat8/pim6sd.0
 ./usr/share/man/cat8/ping.0
 ./usr/share/man/cat8/ping6.0
 ./usr/share/man/cat8/portmap.0
@@ -1150,6 +1154,7 @@
 ./usr/share/man/man1/patch.1
 ./usr/share/man/man1/pawd.1
 ./usr/share/man/man1/pax.1
+./usr/share/man/man1/pim6stat.1
 ./usr/share/man/man1/pkg_add.1
 ./usr/share/man/man1/pkg_admin.1
 ./usr/share/man/man1/pkg_create.1
@@ -1543,6 +1548,7 @@
 ./usr/share/man/man5/passwd.5
 ./usr/share/man/man5/phones.5
 ./usr/share/man/man5/pim6dd.conf.5
+./usr/share/man/man5/pim6sd.conf.5
 ./usr/share/man/man5/printcap.5
 ./usr/share/man/man5/protocols.5
 ./usr/share/man/man5/ranlib.5
@@ -1725,6 +1731,7 @@
 ./usr/share/man/man8/mrinfo.8
 ./usr/share/man/man8/mrouted.8
 ./usr/share/man/man8/mtrace.8
+./usr/share/man/man8/mtrace6.8
 ./usr/share/man/man8/mtree.8
 ./usr/share/man/man8/named-bootconf.8
 ./usr/share/man/man8/named-xfer.8
@@ -1752,6 +1759,7 @@
 ./usr/share/man/man8/pac.8
 ./usr/share/man/man8/pcnfsd.8
 ./usr/share/man/man8/pim6dd.8
+./usr/share/man/man8/pim6sd.8
 ./usr/share/man/man8/ping.8
 ./usr/share/man/man8/ping6.8
 ./usr/share/man/man8/portmap.8

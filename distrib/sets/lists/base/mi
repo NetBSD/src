@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.142 2000/01/20 19:26:43 wrstuden Exp $
+# $NetBSD: mi,v 1.143 2000/01/28 19:32:44 itojun Exp $
 .
 ./altroot
 ./bin
@@ -596,6 +596,7 @@
 ./usr/sbin/mrinfo
 ./usr/sbin/mrouted
 ./usr/sbin/mtrace
+./usr/sbin/mtrace6
 ./usr/sbin/mtree
 ./usr/sbin/named
 ./usr/sbin/named-bootconf
@@ -612,6 +613,8 @@
 ./usr/sbin/ntptrace
 ./usr/sbin/pac
 ./usr/sbin/pim6dd
+./usr/sbin/pim6sd
+./usr/sbin/pim6stat
 ./usr/sbin/pkg_add
 ./usr/sbin/pkg_admin
 ./usr/sbin/pkg_create
