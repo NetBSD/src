@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.47 1999/05/01 05:41:56 cgd Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.48 1999/05/01 05:49:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -160,79 +160,6 @@ osf1_sys_reboot(p, v, retval)
 	SCARG(&a, bootstr) = NULL;
 
 	return sys_reboot(p, &a, retval);
-}
-
-/*
- * OSF/1 defines _POSIX_SAVED_IDS, which means that our normal
- * setuid() won't work.
- *
- * Instead, by P1003.1b-1993, setuid() is supposed to work like:
- *	If the process has appropriate [super-user] priviledges, the
- *	    setuid() function sets the real user ID, effective user
- *	    ID, and the saved set-user-ID to uid.
- *	If the process does not have appropriate priviledges, but uid
- *	    is equal to the real user ID or the saved set-user-ID, the
- *	    setuid() function sets the effective user ID to uid; the
- *	    real user ID and saved set-user-ID remain unchanged by
- *	    this function call.
- */
-int
-osf1_sys_setuid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_setuid_args *uap = v;
-	struct pcred *pc = p->p_cred;
-	uid_t uid = SCARG(uap, uid);
-	int error;
-
-	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
-	    uid != pc->p_ruid && uid != pc->p_svuid)
-		return (error);
-
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_uid = uid;
-	if (error == 0) {
-	        (void)chgproccnt(pc->p_ruid, -1);
-	        (void)chgproccnt(uid, 1);
-		pc->p_ruid = uid;
-		pc->p_svuid = uid;
-	}
-	p->p_flag |= P_SUGID;
-	return (0);
-}
-
-/*
- * OSF/1 defines _POSIX_SAVED_IDS, which means that our normal
- * setgid() won't work.
- *
- * If you change "uid" to "gid" in the discussion, above, about
- * setuid(), you'll get a correct description of setgid().
- */
-int
-osf1_sys_setgid(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_setgid_args *uap = v;
-	struct pcred *pc = p->p_cred;
-	gid_t gid = SCARG(uap, gid);
-	int error;
-
-	if ((error = suser(pc->pc_ucred, &p->p_acflag)) != 0 &&
-	    gid != pc->p_rgid && gid != pc->p_svgid)
-		return (error);
-
-	pc->pc_ucred = crcopy(pc->pc_ucred);
-	pc->pc_ucred->cr_gid = gid;
-	if (error == 0) {
-		pc->p_rgid = gid;
-		pc->p_svgid = gid;
-	}
-	p->p_flag |= P_SUGID;
-	return (0);
 }
 
 int
