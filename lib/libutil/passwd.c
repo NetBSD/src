@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: passwd.c,v 1.2 1996/06/02 19:25:43 ghudson Exp $";
+static char rcsid[] = "$NetBSD: passwd.c,v 1.3 1996/12/09 22:23:34 thorpej Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,6 +41,7 @@ static char rcsid[] = "$NetBSD: passwd.c,v 1.2 1996/06/02 19:25:43 ghudson Exp $
 #include <sys/resource.h>
 #include <sys/wait.h>
 
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -145,24 +146,58 @@ pw_edit(notsetuid, filename)
 	int notsetuid;
 	const char *filename;
 {
-	int pstat;
+	int i, j, xargc, pstat;
 	char *p, *editor;
+	char **xargv;
 
-	if (!filename)
+	if (filename == NULL)
 		filename = _PATH_MASTERPASSWD_LOCK;
-	if (!(editor = getenv("EDITOR")))
-		editor = _PATH_VI;
+	if ((editor = getenv("EDITOR")) == NULL)
+		editor = strdup(_PATH_VI);
+	else
+		editor = strdup(editor);
 	if (p = strrchr(editor, '/'))
 		++p;
-	else 
+	else
 		p = editor;
+
+	/* Scan editor string, count spaces, allocate arg vector. */
+	for (i = 0, xargc = 0; p[i] != '\0'; i++) {
+		if (isspace(p[i])) {
+			while (isspace(p[i++]))
+				/* skip white space */ ;
+			if (p[i] == '\0')
+				break;
+			xargc++;
+		}
+	}
+
+	/* argv[0] + <xargc args> + filename + NULL */
+	xargv = (char **)malloc(sizeof(char *) * (xargc + 3));
+	if (xargv == NULL)
+		pw_error("malloc failed", 1, 1);
+
+	i = 0;
+	xargv[i++] = p;
+	for (; *p != '\0'; p++) {
+		if (isspace(*p)) {
+			while(isspace(*p))
+				*p++ = '\0';	/* blast whitespace */
+			if (*p == '\0')
+				break;
+			xargv[i++] = p;
+		}
+	}
+
+	xargv[i++] = (char *)filename;
+	xargv[i] = NULL;
 
 	if (!(editpid = vfork())) {
 		if (notsetuid) {
 			setgid(getgid());
 			setuid(getuid());
 		}
-		execlp(editor, p, filename, NULL);
+		execvp(editor, xargv);
 		_exit(1);
 	}
 	for (;;) {
@@ -177,6 +212,8 @@ pw_edit(notsetuid, filename)
 			pw_error(editor, 1, 1);
 	}
 	editpid = -1;
+	free(editor);
+	free(xargv);
 }
 
 void
