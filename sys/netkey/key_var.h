@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.12 2002/09/23 13:43:42 itojun Exp $	*/
+/*	$NetBSD: key_var.h,v 1.13 2003/09/12 00:27:59 itojun Exp $	*/
 /*	$KAME: key_var.h,v 1.12 2001/11/06 03:48:29 itojun Exp $	*/
 
 /*
@@ -66,21 +66,6 @@
 	{ "esp_keymin", CTLTYPE_INT }, \
 	{ "esp_auth", CTLTYPE_INT }, \
 	{ "ah_keymin", CTLTYPE_INT }, \
-}
-
-#define KEYCTL_VARS { \
-	0, \
-	0, \
-	&key_spi_trycnt, \
-	&key_spi_minval, \
-	&key_spi_maxval, \
-	&key_int_random, \
-	&key_larval_lifetime, \
-	&key_blockacq_count, \
-	&key_blockacq_lifetime, \
-	&ipsec_esp_keymin, \
-	&ipsec_esp_auth, \
-	&ipsec_ah_keymin, \
 }
 
 #ifdef _KERNEL
