@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fs.c,v 1.9 2003/07/15 09:01:19 itojun Exp $	*/
+/*	$NetBSD: mount_fs.c,v 1.10 2003/10/21 02:39:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -725,7 +725,7 @@ compute_nfs_args(nfs_args_t *nap, mntent_t *mntp, int genflags, struct netconfig
 
 #if defined(MNT2_NFS_OPT_MAXGRPS) && defined(MNTTAB_OPT_MAXGROUPS)
   nap->maxgrouplist = hasmntval(mntp, MNTTAB_OPT_MAXGROUPS);
-  if (nap->maxgrouplist != NULL)
+  if (nap->maxgrouplist != 0)
     nap->flags |= MNT2_NFS_OPT_MAXGRPS;
 #endif /* defined(MNT2_NFS_OPT_MAXGRPS) && defined(MNTTAB_OPT_MAXGROUPS) */
 
