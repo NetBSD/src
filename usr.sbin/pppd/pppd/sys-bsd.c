@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.43 2003/06/09 13:35:10 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.44 2003/08/17 21:36:56 itojun Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.43 2003/06/09 13:35:10 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.44 2003/08/17 21:36:56 itojun Exp $");
 #endif
 #endif
 
@@ -118,6 +118,7 @@ __RCSID("$NetBSD: sys-bsd.c,v 1.43 2003/06/09 13:35:10 christos Exp $");
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #endif
+#include <ifaddrs.h>
 
 #if RTM_VERSION >= 3
 #include <sys/param.h>
@@ -1725,75 +1726,67 @@ get_ether_addr(ipaddr, hwaddr)
     u_int32_t ipaddr;
     struct sockaddr_dl *hwaddr;
 {
-    struct ifreq *ifr, *ifend, *ifp;
     u_int32_t ina, mask;
     struct sockaddr_dl *dla;
-    struct ifreq ifreq;
-    struct ifconf ifc;
-    struct ifreq ifs[MAX_IFS];
-
-    ifc.ifc_len = sizeof(ifs);
-    ifc.ifc_req = ifs;
-    if (ioctl(sock_fd, SIOCGIFCONF, &ifc) < 0) {
-	error("ioctl(SIOCGIFCONF): %m");
-	return 0;
-    }
+    struct ifaddrs *ifap, *ifa, *ifp;
 
     /*
      * Scan through looking for an interface with an Internet
      * address on the same subnet as `ipaddr'.
      */
-    ifend = (struct ifreq *) (ifc.ifc_buf + ifc.ifc_len);
-    for (ifr = ifc.ifc_req; ifr < ifend; ifr = (struct ifreq *)
-	 	((char *)&ifr->ifr_addr + ifr->ifr_addr.sa_len)) {
-	if (ifr->ifr_addr.sa_family == AF_INET) {
-	    ina = ((struct sockaddr_in *) &ifr->ifr_addr)->sin_addr.s_addr;
-	    strlcpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name));
-	    /*
-	     * Check that the interface is up, and not point-to-point
-	     * or loopback.
-	     */
-	    if (ioctl(sock_fd, SIOCGIFFLAGS, &ifreq) < 0)
-		continue;
-	    if ((ifreq.ifr_flags &
-		 (IFF_UP|IFF_BROADCAST|IFF_POINTOPOINT|IFF_LOOPBACK|IFF_NOARP))
-		 != (IFF_UP|IFF_BROADCAST))
-		continue;
-	    /*
-	     * Get its netmask and check that it's on the right subnet.
-	     */
-	    if (ioctl(sock_fd, SIOCGIFNETMASK, &ifreq) < 0)
-		continue;
-	    mask = ((struct sockaddr_in *) &ifreq.ifr_addr)->sin_addr.s_addr;
-	    if ((ipaddr & mask) != (ina & mask))
-		continue;
-
-	    break;
-	}
+    if (getifaddrs(&ifap) != 0) {
+	error("getifaddrs: %m");
+	return 0;
     }
 
-    if (ifr >= ifend)
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	if (ifa->ifa_addr->sa_family != AF_INET)
+	    continue;
+	ina = ((struct sockaddr_in *) ifa->ifa_addr)->sin_addr.s_addr;
+	/*
+	 * Check that the interface is up, and not point-to-point
+	 * or loopback.
+	 */
+	if ((ifa->ifa_flags &
+	     (IFF_UP|IFF_BROADCAST|IFF_POINTOPOINT|IFF_LOOPBACK|IFF_NOARP))
+	     != (IFF_UP|IFF_BROADCAST))
+	    continue;
+	/*
+	 * Get its netmask and check that it's on the right subnet.
+	 */
+	mask = ((struct sockaddr_in *) ifa->ifa_netmask)->sin_addr.s_addr;
+	if ((ipaddr & mask) != (ina & mask))
+	    continue;
+	break;
+    }
+
+    if (!ifa) {
+	freeifaddrs(ifap);
 	return 0;
-    info("found interface %s for proxy arp", ifr->ifr_name);
+    }
+    info("found interface %s for proxy arp", ifa->ifa_name);
+
+    ifp = ifa;
 
     /*
      * Now scan through again looking for a link-level address
      * for this interface.
      */
-    ifp = ifr;
-    for (ifr = ifc.ifc_req; ifr < ifend; ) {
-	if (strcmp(ifp->ifr_name, ifr->ifr_name) == 0
-	    && ifr->ifr_addr.sa_family == AF_LINK) {
-	    /*
-	     * Found the link-level address - copy it out
-	     */
-	    dla = (struct sockaddr_dl *) &ifr->ifr_addr;
-	    BCOPY(dla, hwaddr, dla->sdl_len);
-	    return 1;
-	}
-	ifr = (struct ifreq *) ((char *)&ifr->ifr_addr + ifr->ifr_addr.sa_len);
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	if (strcmp(ifp->ifa_name, ifa->ifa_name) != 0)
+	    continue;
+	if (ifa->ifa_addr->sa_family != AF_LINK)
+	    continue;
+	/*
+	 * Found the link-level address - copy it out
+	 */
+	dla = (struct sockaddr_dl *) &ifa->ifa_addr;
+	BCOPY(dla, hwaddr, dla->sdl_len);
+	freeifaddrs(ifap);
+	return 1;
     }
 
+    freeifaddrs(ifap);
     return 0;
 }
 
@@ -1831,38 +1824,33 @@ get_if_hwaddr(addr, name)
 char *
 get_first_ethernet()
 {
-    struct ifreq *ifr, *ifend;
-    static struct ifreq ifreq;
-    struct ifconf ifc;
-    struct ifreq ifs[MAX_IFS];
+    static char ifname[IFNAMSIZ];
+    struct ifaddrs *ifap, *ifa;
 
     /*
      * Scan through the system's network interfaces.
      */
-    ifc.ifc_len = sizeof(ifs);
-    ifc.ifc_req = ifs;
-    if (ioctl(sock_fd, SIOCGIFCONF, &ifc) < 0) {
-	warn("ioctl(SIOCGIFCONF): %m");
+    if (getifaddrs(&ifap) != 0) {
+	warn("getifaddrs: %m");
 	return NULL;
     }
-    ifend = (struct ifreq *) (ifc.ifc_buf + ifc.ifc_len);
-    for (ifr = ifc.ifc_req; ifr < ifend; ifr = (struct ifreq *)
-	((char *)&ifr->ifr_addr + ifr->ifr_addr.sa_len)) {
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 	/*
 	 * Check the interface's internet address.
 	 */
-	if (ifr->ifr_addr.sa_family != AF_INET)
+	if (ifa->ifa_addr->sa_family != AF_INET)
 	    continue;
 	/*
 	 * Check that the interface is up, and not point-to-point or loopback.
 	 */
-	strlcpy(ifreq.ifr_name, ifr->ifr_name, sizeof(ifreq.ifr_name));
-	if (ioctl(sock_fd, SIOCGIFFLAGS, &ifreq) < 0)
-	    continue;
-	if ((ifreq.ifr_flags & (IFF_UP|IFF_POINTOPOINT|IFF_LOOPBACK))
-	    != IFF_UP)
-	    return ifreq.ifr_name;
+	if ((ifa->ifa_flags & (IFF_UP|IFF_POINTOPOINT|IFF_LOOPBACK))
+	    != IFF_UP) {
+	    strlcpy(ifname, ifa->ifa_name, sizeof(ifname));
+	    freeifaddrs(ifap);
+	    return ifname;
+	}
     }
+    freeifaddrs(ifap);
     return NULL;
 }
 
