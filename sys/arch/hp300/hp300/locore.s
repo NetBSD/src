@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.6 (Berkeley) 5/27/94
- *	$Id: locore.s,v 1.28 1994/09/09 03:11:31 mycroft Exp $
+ *	$Id: locore.s,v 1.29 1994/09/09 03:58:38 mycroft Exp $
  */
 
 /*
@@ -402,11 +402,13 @@ _trap0:
 	movl	d0,sp@-			| push syscall number
 	jbsr	_syscall		| handle it
 	addql	#4,sp			| pop syscall arg
+	tstl	_astpending
+	jne	Lrei2
 	movl	sp@(FR_SP),a0		| grab and restore
 	movl	a0,usp			|   user SP
 	moveml	sp@+,#0x7FFF		| restore most registers
 	addql	#8,sp			| pop SP and stack adjust
-	jra	rei			| all done
+	jra	Lchksir			| all done
 
 /*
  * Routines for traps 1 and 2.  The meaning of the two traps depends
@@ -714,6 +716,7 @@ Lrei1:
 	moveml	#0xFFFF,sp@-		| save all registers
 	movl	usp,a1			| including
 	movl	a1,sp@(FR_SP)		|    the users SP
+Lrei2:
 	clrl	sp@-			| VA == none
 	clrl	sp@-			| code == none
 	movl	#T_ASTFLT,sp@-		| type == async system trap
