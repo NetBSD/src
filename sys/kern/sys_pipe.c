@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.47 2003/12/04 19:38:24 atatat Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.48 2004/02/22 17:51:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.47 2003/12/04 19:38:24 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.48 2004/02/22 17:51:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ pipeselwakeup(selp, sigp, data, code)
 /*###406 [cc] warning: `band' might be used uninitialized in this function%%%*/
 	int band;
 
-	selnotify(&selp->pipe_sel, 0);
+	selnotify(&selp->pipe_sel, NOTE_SUBMIT);
 
 	if (sigp == NULL || (sigp->pipe_state & PIPE_ASYNC) == 0)
 		return;
@@ -1372,7 +1372,8 @@ filt_piperead(struct knote *kn, long hint)
 	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
 	struct pipe *wpipe = rpipe->pipe_peer;
 
-	PIPE_LOCK(rpipe);
+	if ((hint & NOTE_SUBMIT) == 0)
+		PIPE_LOCK(rpipe);
 	kn->kn_data = rpipe->pipe_buffer.cnt;
 	if ((kn->kn_data == 0) && (rpipe->pipe_state & PIPE_DIRECTW))
 		kn->kn_data = rpipe->pipe_map.cnt;
@@ -1381,10 +1382,12 @@ filt_piperead(struct knote *kn, long hint)
 	if ((rpipe->pipe_state & PIPE_EOF) ||
 	    (wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_flags |= EV_EOF;
-		PIPE_UNLOCK(rpipe);
+		if ((hint & NOTE_SUBMIT) == 0)
+			PIPE_UNLOCK(rpipe);
 		return (1);
 	}
-	PIPE_UNLOCK(rpipe);
+	if ((hint & NOTE_SUBMIT) == 0)
+		PIPE_UNLOCK(rpipe);
 	return (kn->kn_data > 0);
 }
 
@@ -1395,19 +1398,22 @@ filt_pipewrite(struct knote *kn, long hint)
 	struct pipe *rpipe = (struct pipe *)kn->kn_fp->f_data;
 	struct pipe *wpipe = rpipe->pipe_peer;
 
-	PIPE_LOCK(rpipe);
+	if ((hint & NOTE_SUBMIT) == 0)
+		PIPE_LOCK(rpipe);
 	/* XXXSMP: race for peer */
 	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_data = 0;
 		kn->kn_flags |= EV_EOF; 
-		PIPE_UNLOCK(rpipe);
+		if ((hint & NOTE_SUBMIT) == 0)
+			PIPE_UNLOCK(rpipe);
 		return (1);
 	}
 	kn->kn_data = wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt;
 	if (wpipe->pipe_state & PIPE_DIRECTW)
 		kn->kn_data = 0;
 
-	PIPE_UNLOCK(rpipe);
+	if ((hint & NOTE_SUBMIT) == 0)
+		PIPE_UNLOCK(rpipe);
 	return (kn->kn_data >= PIPE_BUF);
 }
 

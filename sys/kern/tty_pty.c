@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.72 2003/08/07 16:31:56 agc Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.73 2004/02/22 17:51:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.72 2003/08/07 16:31:56 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.73 2004/02/22 17:51:26 jdolecek Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -468,7 +468,7 @@ ptsstart(tp)
 		pti->pt_send = TIOCPKT_START;
 	}
 
-	selnotify(&pti->pt_selr, 0);
+	selnotify(&pti->pt_selr, NOTE_SUBMIT);
 	wakeup((caddr_t)&tp->t_outq.c_cf);
 }
 
@@ -493,11 +493,11 @@ ptsstop(tp, flush)
 
 	/* change of perspective */
 	if (flush & FREAD) {
-		selnotify(&pti->pt_selw, 0);
+		selnotify(&pti->pt_selw, NOTE_SUBMIT);
 		wakeup((caddr_t)&tp->t_rawq.c_cf);
 	}
 	if (flush & FWRITE) {
-		selnotify(&pti->pt_selr, 0);
+		selnotify(&pti->pt_selr, NOTE_SUBMIT);
 		wakeup((caddr_t)&tp->t_outq.c_cf);
 	}
 }
@@ -511,11 +511,11 @@ ptcwakeup(tp, flag)
 
 	TTY_LOCK(tp);
 	if (flag & FREAD) {
-		selnotify(&pti->pt_selr, 0);
+		selnotify(&pti->pt_selr, NOTE_SUBMIT);
 		wakeup((caddr_t)&tp->t_outq.c_cf);
 	}
 	if (flag & FWRITE) {
-		selnotify(&pti->pt_selw, 0);
+		selnotify(&pti->pt_selw, NOTE_SUBMIT);
 		wakeup((caddr_t)&tp->t_rawq.c_cf);
 	}
 	TTY_UNLOCK(tp);
@@ -660,7 +660,7 @@ ptcread(dev, uio, flag)
 			CLR(tp->t_state, TS_ASLEEP);
 			wakeup((caddr_t)&tp->t_outq);
 		}
-		selnotify(&tp->t_wsel, 0);
+		selnotify(&tp->t_wsel, NOTE_SUBMIT);
 	}
 out:
 	TTY_UNLOCK(tp);
