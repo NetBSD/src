@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1998/01/02 22:43:29 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 1998/01/28 18:26:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -753,9 +753,8 @@ pmap_activate(p)
  *	Deactivate the address space of the specified process.
  */
 void
-pmap_deactivate(pmap, pcb)
-	pmap_t pmap;
-	struct pcb *pcb;
+pmap_deactivate(p)
+	struct proc *p;
 {
 }
 
