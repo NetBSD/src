@@ -70,6 +70,7 @@ vm_offset_t avail_start, avail_end;
 #define	NKSEG	(NSEGMAP - (KERNBASE / NBSG)) /* is KERNBASE ok? */
 #define	NUSEG	(NSEGMAP-NKSEG)			
 
+#define splpmap splbio
 /*
  * pv support, i.e stuff that maps from physical pages to virtual addresses
  *

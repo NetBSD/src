@@ -5,6 +5,7 @@ arch/sun3/sun3/cons.c		standard
 arch/sun3/sun3/control.c	standard
 arch/sun3/sun3/disksubr.c	standard
 arch/sun3/sun3/machdep.c	standard
+arch/sun3/sun3/mem.c		standard
 arch/sun3/sun3/pmap.c		standard
 arch/sun3/sun3/stub.c		standard
 arch/sun3/sun3/sun3_startup.c	standard
