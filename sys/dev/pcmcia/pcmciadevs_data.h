@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.3 2000/12/13 15:50:12 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.4 2001/01/05 17:36:24 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.103 2000/12/08 18:37:24 drochner Exp 
+ *	NetBSD: pcmciadevs,v 1.107 2000/12/20 06:05:13 haya Exp 
  */
 
 /*-
@@ -829,6 +829,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IO-DATA PCLA/T"	},
 	},
 	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_IODATA_CBIDE2,
+	    PCMCIA_CIS_IODATA_CBIDE2,
+	    0,
+	    "I-O DATA",
+	    "IO-DATA CBIDE2/16-bit mode"	},
+	},
+	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_EPSON_EEN10B,
 	    PCMCIA_CIS_EPSON_EEN10B,
 	    0,
@@ -890,6 +897,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Melco Corporation",
 	    "Melco LPC2-TX"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_SMC_2632W,
+	    PCMCIA_CIS_SMC_2632W,
+	    0,
+	    "Standard Microsystems Corporation",
+	    "SMC 2632 EZ Connect Wireless PC Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,

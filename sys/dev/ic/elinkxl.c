@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.15.2.2 2000/11/22 16:03:18 bouyer Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.15.2.3 2001/01/05 17:35:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -435,6 +435,7 @@ ex_config(sc)
 	ifp->if_stop = ex_stop;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames.
@@ -920,8 +921,9 @@ ex_start(ifp)
 	volatile struct ex_fraghdr *fr = NULL;
 	volatile struct ex_dpd *dpd = NULL, *prevdpd = NULL;
 	struct ex_txdesc *txp;
+	struct mbuf *mb_head;
 	bus_dmamap_t dmamap;
-	int offset, totlen;
+	int offset, totlen, segment, error;
 
 	if (sc->tx_head || sc->tx_free == NULL)
 		return;
@@ -932,14 +934,13 @@ ex_start(ifp)
 	 * We're finished if there is nothing more to add to the list or if
 	 * we're all filled up with buffers to transmit.
 	 */
-	while (ifp->if_snd.ifq_head != NULL && sc->tx_free != NULL) {
-		struct mbuf *mb_head;
-		int segment, error;
-
+	while (sc->tx_free != NULL) {
 		/*
 		 * Grab a packet to transmit.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, mb_head);
+		IFQ_DEQUEUE(&ifp->if_snd, mb_head);
+		if (mb_head == NULL)
+			break;
 
 		/*
 		 * Get pointer to next available tx desc.
@@ -1252,7 +1253,7 @@ ex_intr(arg)
 	}
 
 	/* no more interrupts */
-	if (ret && ifp->if_snd.ifq_head)
+	if (ret && IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		ex_start(ifp);
 	return ret;
 }

@@ -1,4 +1,4 @@
-# $NetBSD: gen_workspace.sh,v 1.1.6.2 2000/11/20 20:46:56 bouyer Exp $
+# $NetBSD: gen_workspace.sh,v 1.1.6.3 2001/01/05 17:34:21 bouyer Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -33,6 +33,8 @@ if [ `uname` = SunOS ]; then
 	AWK=nawk
 fi
 
+vc_ver=$1
+shift
 WORKSPACE_FILE=$1
 shift
 SORTED_PROJECTS=`(for project in $*; do
@@ -40,8 +42,21 @@ SORTED_PROJECTS=`(for project in $*; do
 		done) | sort`
 
 (
+case $vc_ver in
+"vc6")
+    echo "Microsoft Developer Studio Workspace File, Format Version 6.00"
+    suffix=dsp
+    ;;
+"evc3")
+    echo "Microsoft eMbedded Visual Tools Workspace File, Format Version 3.00"
+    suffix=vcp
+    ;;
+*)
+    echo "Unsupported Visual C++ version." 1>&2
+    exit 1
+esac
+
 cat << __EOF__
-Microsoft Developer Studio Workspace File, Format Version 6.00
 # WARNING: DO NOT EDIT OR DELETE THIS WORKSPACE FILE!
 
 ###############################################################################
@@ -49,7 +64,7 @@ __EOF__
 
 for project in $SORTED_PROJECTS; do
 	echo ""
-	echo "Project: \"$project\"=.\\$project\\$project.dsp - Package Owner=<4>"
+	echo "Project: \"$project\"=.\\$project\\$project.$suffix - Package Owner=<4>"
 	echo ""
 	echo "Package=<5>"
 	echo "{{{"
@@ -57,7 +72,7 @@ for project in $SORTED_PROJECTS; do
 	echo ""
 	echo "Package=<4>"
 	echo "{{{"
-	for libdep in `sh $project/$project.config --show-libdeps`; do
+	for libdep in `( . $project/$project.config; echo $LIBDEP_LIST )`; do
 		echo "    Begin Project Dependency"
 		echo "    Project_Dep_Name $libdep"
 		echo "    End Project Dependency"

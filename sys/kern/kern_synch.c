@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.66.2.2 2000/11/22 16:05:22 bouyer Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.66.2.3 2001/01/05 17:36:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -822,10 +822,14 @@ mi_switch(struct proc *p)
 	 */
 	rlim = &p->p_rlimit[RLIMIT_CPU];
 	if (s >= rlim->rlim_cur) {
+		/*
+		 * XXXSMP: we're inside the scheduler lock perimeter;
+		 * use sched_psignal.
+		 */
 		if (s >= rlim->rlim_max)
-			psignal(p, SIGKILL);
+			sched_psignal(p, SIGKILL);
 		else {
-			psignal(p, SIGXCPU);
+			sched_psignal(p, SIGXCPU);
 			if (rlim->rlim_cur < rlim->rlim_max)
 				rlim->rlim_cur += 5;
 		}
@@ -914,8 +918,8 @@ setrunnable(struct proc *p)
 		 * while we were stopped), check for a signal from the debugger.
 		 */
 		if ((p->p_flag & P_TRACED) != 0 && p->p_xstat != 0) {
-			sigaddset(&p->p_siglist, p->p_xstat);
-			p->p_sigcheck = 1;
+			sigaddset(&p->p_sigctx.ps_siglist, p->p_xstat);
+			p->p_sigctx.ps_sigcheck = 1;
 		}
 	case SSLEEP:
 		unsleep(p);		/* e.g. when sending signals */

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.23.2.1 2000/11/20 20:08:06 bouyer Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.23.2.2 2001/01/05 17:34:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -424,7 +424,6 @@ hpux_sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct hpuxsigframe *fp, kf;
 	struct frame *frame;
-	struct sigacts *psp = p->p_sigacts;
 	short ft;
 	int onstack, fsize;
 
@@ -433,14 +432,14 @@ hpux_sendsig(catcher, sig, mask, code)
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	fsize = sizeof(struct hpuxsigframe);
 	if (onstack)
-		fp = (struct hpuxsigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						      psp->ps_sigstk.ss_size);
+		fp = (struct hpuxsigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct hpuxsigframe *)(frame->f_regs[SP]);
 	fp--;
@@ -516,7 +515,7 @@ hpux_sendsig(catcher, sig, mask, code)
 	kf.hsf_sc.hsc_pc	= frame->f_pc;
 
 	/* Save the signal stack. */
-	kf.hsf_sc.hsc_onstack	= psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	kf.hsf_sc.hsc_onstack	= p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 
 	bsdtohpuxmask(mask, &kf.hsf_sc.hsc_mask);
 
@@ -548,11 +547,11 @@ hpux_sendsig(catcher, sig, mask, code)
 
 	/* Set up the registers to return to sigcode. */
 	frame->f_regs[SP] = (int)fp;
-	frame->f_pc = (int)psp->ps_sigcode;
+	frame->f_pc = (int)p->p_sigctx.ps_sigcode;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_KSTACK) && p->p_pid == hpuxsigpid)
@@ -691,13 +690,13 @@ hpux_sys_sigreturn(p, v, retval)
 	frame->f_sr = scp->hsc_ps;
 
 	if (scp->hsc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
-	hpuxtobsdmask(scp->hsc_mask, &p->p_sigmask);
-	sigminusset(&sigcantmask, &p->p_sigmask);
+	hpuxtobsdmask(scp->hsc_mask, &p->p_sigctx.ps_sigmask);
+	sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
 
 #ifdef DEBUG
 	if ((hpuxsigdebug & SDB_FPSTATE) && *(char *)&tstate.hss_fpstate)

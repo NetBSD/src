@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.42.2.3 2000/12/08 09:08:27 bouyer Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.42.2.4 2001/01/05 17:35:26 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
 #include <compat/linux/linux_syscall.h>
 
 static int ELFNAME2(linux,signature) __P((struct proc *, struct exec_package *,
-	Elf_Ehdr *));
+	Elf_Ehdr *, char *));
 #ifdef LINUX_GCC_SIGNATURE
 static int ELFNAME2(linux,gcc_signature) __P((struct proc *p,
 	struct exec_package *, Elf_Ehdr *));
@@ -95,18 +95,18 @@ ELFNAME2(linux,gcc_signature)(p, epp, eh)
 	struct exec_package *epp;
 	Elf_Ehdr *eh;
 {
-	size_t shsize = sizeof(Elf_Shdr) * eh->e_shnum;
+	size_t shsize;
 	size_t i;
 	static const char signature[] = "\0GCC: (GNU) ";
 	char buf[sizeof(signature) - 1];
 	Elf_Shdr *sh;
 	int error;
 
-	error = ENOEXEC;
+	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-
-	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_shoff,
-	    (caddr_t) sh, shsize)) != 0)
+	error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_shoff, (caddr_t)sh,
+	    shsize);
+	if (error)
 		goto out;
 
 	for (i = 0; i < eh->e_shnum; i++) {
@@ -123,9 +123,10 @@ ELFNAME2(linux,gcc_signature)(p, epp, eh)
 		    s->sh_size < sizeof(signature) - 1)
 			continue;
 
-		if ((error = ELFNAME(read_from)(p, epp->ep_vp, s->sh_offset,
-		    (caddr_t) buf, sizeof(signature) - 1)) != 0)
-			goto out;
+		error = ELFNAME(read_from)(p, epp->ep_vp, s->sh_offset,
+		    (caddr_t)buf, sizeof(signature) - 1);
+		if (error)
+			continue;
 
 		/*
 		 * error is 0, if the signatures match we are done.
@@ -133,115 +134,90 @@ ELFNAME2(linux,gcc_signature)(p, epp, eh)
 #ifdef DEBUG_LINUX
 		printf("linux_gcc_sig: sig=%s\n", buf);
 #endif
-		if (memcmp(buf, signature, sizeof(signature) - 1) == 0)
+		if (!memcmp(buf, signature, sizeof(signature) - 1)) {
+			error = 0;
 			goto out;
+		}
 	}
+	error = ENOEXEC;
 
 out:
 	free(sh, M_TEMP);
-#ifdef DEBUG_LINUX
-	printf("linux_gcc_sig: returning %d\n", error);
-#endif
-	return error;
+	return (error);
 }
 #endif
 
 static int
-ELFNAME2(linux,signature)(p, epp, eh)
+ELFNAME2(linux,signature)(p, epp, eh, itp)
 	struct proc *p;
 	struct exec_package *epp;
 	Elf_Ehdr *eh;
+	char *itp;
 {
 	size_t i;
 	Elf_Phdr *ph;
-	Elf_Nhdr *notep;
 	size_t phsize;
-	int error = ENOEXEC;
+	int error;
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-	if ((error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff,
-					(caddr_t) ph, phsize)) != 0)
-		goto out1;
+	error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)ph,
+	    phsize);
+	if (error)
+		goto out;
 
 	for (i = 0; i < eh->e_phnum; i++) {
 		Elf_Phdr *ephp = &ph[i];
-		u_int32_t ostype;
+		Elf_Nhdr *np;
+		u_int32_t *abi;
 
-		if (ephp->p_type != PT_INTERP /* XAX PT_NOTE */
-#if 0
-		    || ephp->p_flags != 0
-		    || ephp->p_filesz < sizeof(Elf_Nhdr))
-#endif
-		    )
+		if (ephp->p_type != PT_NOTE ||
+		    ephp->p_filesz > 1024 ||
+		    ephp->p_filesz < sizeof(Elf_Nhdr) + 20)
 			continue;
 
-		notep = (Elf_Nhdr *)malloc(ephp->p_filesz+1, M_TEMP, M_WAITOK);
-		if ((error = ELFNAME(read_from)(p, epp->ep_vp, ephp->p_offset,
-					(caddr_t)notep, ephp->p_filesz)) != 0)
-			goto out3;
+		np = (Elf_Nhdr *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
+		error = ELFNAME(read_from)(p, epp->ep_vp, ephp->p_offset,
+		    (caddr_t)np, ephp->p_filesz);
+		if (error)
+			goto next;
 
-		/* Check for "linux" in the intepreter name. */
-		if (ephp->p_filesz < 8 + 5) {
-			error = ENOEXEC;
-			goto out3;
-		}
-#ifdef DEBUG_LINUX
-		printf("linux_signature: interp=%s\n", (char *)notep);
-#endif
-		if (strncmp(&((char *)notep)[8], "linux", 5) == 0 ||
-		    strncmp((char *)notep, "/lib/ld.so.", 11) == 0) {
+		if (np->n_type != ELF_NOTE_TYPE_ABI_TAG ||
+		    np->n_namesz != ELF_NOTE_ABI_NAMESZ ||
+		    np->n_descsz != ELF_NOTE_ABI_DESCSZ ||
+		    memcmp((caddr_t)(np + 1), ELF_NOTE_ABI_NAME,
+		    ELF_NOTE_ABI_NAMESZ))
+			goto next;
+
+		/* Make sure the OS is Linux. */
+		abi = (u_int32_t *)((caddr_t)np + sizeof(Elf_Nhdr) +
+		    np->n_namesz);
+		if (abi[0] == ELF_NOTE_ABI_OS_LINUX)
 			error = 0;
-			goto out3;
-		}
+		else
+			error = ENOEXEC;
+		free(np, M_TEMP);
+		goto out;
 
-		goto out2;
+	next:
+		free(np, M_TEMP);
+		continue;
+	}
 
-		/* XXX XAX Should handle NETBSD_TYPE_EMULNAME */
-		if (notep->n_type != ELF_NOTE_TYPE_OSVERSION) {
-			free(notep, M_TEMP);
-			continue;
-		}
-
-		/* Check the name and description sizes. */
-		if (notep->n_namesz != ELF_NOTE_GNU_NAMESZ ||
-		    notep->n_descsz != ELF_NOTE_GNU_DESCSZ)
-			goto out2;
-
-		/* Is the name "GNU\0"? */
-		if (memcmp((notep + sizeof(Elf_Nhdr)),
-			   ELF_NOTE_GNU_NAME, ELF_NOTE_GNU_NAMESZ))
-			goto out2;
-
-		/* Make sure the OS is Linux */
-		ostype = (u_int32_t)(*((u_int32_t *)notep + sizeof(Elf_Nhdr) +
-		    notep->n_namesz)) & ELF_NOTE_GNU_OSMASK;
-		if (ostype != ELF_NOTE_GNU_OSLINUX)
-			goto out2;
-
-		/* All checks succeeded. */
-		error = 0;
-		goto out3;
+	/* Check for certain intepreter names. */
+	if (itp[0]) {
+		if (!strncmp(itp, "/lib/ld-linux", 13) ||
+		    !strncmp(itp, "/lib/ld.so.", 11))
+			error = 0;
+		else
+			error = ENOEXEC;
+		goto out;
 	}
 
 	error = ENOEXEC;
-
-out1:
+out:
 	free(ph, M_TEMP);
-#ifdef DEBUG_LINUX
-	printf("linux_signature: out1=%d\n", error);
-#endif
-	return error;
-
-out2:
-	error = ENOEXEC;
-out3:
-	free(notep, M_TEMP);
-	free(ph, M_TEMP);
-#ifdef DEBUG_LINUX
-	printf("linux_signature: out2,3=%d\n", error);
-#endif
-	return error;
+	return (error);
 }
 
 int
@@ -256,7 +232,7 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	int error;
 	size_t len;
 
-	if ((error = ELFNAME2(linux,signature)(p, epp, eh)) != 0)
+	if ((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0)
 #ifdef LINUX_GCC_SIGNATURE
 		if ((error = ELFNAME2(linux,gcc_signature)(p, epp, eh)) != 0)
 			return error;

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.6.2.2 2000/11/20 20:02:35 bouyer Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.6.2.3 2001/01/05 17:34:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.6.2.2 2000/11/20 20:02:35 bouyer Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.6.2.3 2001/01/05 17:34:01 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -194,20 +194,19 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 
 	tf = p->p_addr->u_pcb.pcb_tf;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
+		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+						p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->tf_r13;
 	fp--;
@@ -237,7 +236,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	frame.sf_sc.sc_r15 = tf->tf_r15;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -259,11 +258,11 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	tf->tf_r2 = (int)frame.sf_scp;
 	tf->tf_r3 = (int)frame.sf_handler;
 	tf->tf_r13 = (int)fp;
-	tf->tf_r15 = (int)psp->ps_sigcode;
+	tf->tf_r15 = (int)p->p_sigctx.ps_sigcode;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -321,9 +320,9 @@ sys___sigreturn14(p, v, retval)
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
@@ -351,10 +350,6 @@ cpu_swapout(struct proc *p)
  * do not need to pass an access_type to pmap_enter().
  */
 /* This code was originally stolen from the alpha port. */
-/*
- * This needs some care, since the user mapping of the buffer is (sometimes?)
- * wired, so we have to unwire it, and put it all back when we've finished.
- */
 void
 vmapbuf(bp, len)
 	struct buf *bp;
@@ -363,6 +358,7 @@ vmapbuf(bp, len)
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
 	struct proc *p;
+	vm_prot_t prot;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -373,50 +369,35 @@ vmapbuf(bp, len)
 	taddr = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(taddr + off);
 	len = atop(len);
+	prot = bp->b_flags & B_READ ? VM_PROT_READ :
+				      VM_PROT_READ | VM_PROT_WRITE;
 	while (len--) {
 		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map), faddr,
 		    &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		/* XXX is this allowed? */
-		pmap_unwire(vm_map_pmap(&p->p_vmspace->vm_map), faddr);
 		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-		    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		    prot, prot | PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 	}
 }
 
 /*
- * Unmap a previously-mapped user I/O request.  Put it back in user memory.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
 	vsize_t len;
 {
-	vaddr_t faddr, taddr, off;
-	paddr_t pa;
-	struct proc *p;
+	vaddr_t addr, off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	p = bp->b_proc;
-	faddr = trunc_page((vaddr_t)bp->b_data);
-	taddr = trunc_page((vaddr_t)bp->b_saveaddr);
-	off = (vaddr_t)bp->b_data - faddr;
+	addr = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-	/* XXX Re-map buffer into user space? */
-	len = atop(len);
-	while (len--) {
-		if (pmap_extract(vm_map_pmap(phys_map), faddr, &pa) == FALSE)
-			panic("vmapbuf: null page frame");
-		pmap_unwire(vm_map_pmap(phys_map), faddr);
-		pmap_enter(vm_map_pmap(&p->p_vmspace->vm_map), taddr,
-		    trunc_page(pa), VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
-		faddr += PAGE_SIZE;
-		taddr += PAGE_SIZE;
-	}
-	uvm_km_free_wakeup(phys_map, faddr, ptoa(len));
+	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }

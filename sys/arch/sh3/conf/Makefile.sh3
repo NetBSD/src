@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.1.2.1 2000/11/20 20:24:26 bouyer Exp $
+#	$NetBSD: Makefile.sh3,v 1.1.2.2 2001/01/05 17:34:59 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/sh3/conf/Makefile.sh3
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 .include <bsd.own.mk>
 
@@ -35,13 +29,17 @@ RANLIB?=ranlib
 SIZE?=	size
 STRIP?=	strip
 TSORT?=	tsort -q
+OBJCOPY?=objcopy
 
-COPTS?=	-O2
+# pkgsrc/cross/sh* dies with -O2, use -O1 for now
+#COPTS?=	-O2
+COPTS?=	-O1
 
 # source tree is located via $S relative to the compilation directory
 .ifndef S
 S!=	cd ../../../..; pwd
 .endif
+THISSH3=$S/arch/${TARGET_MACHINE}
 SH3=	$S/arch/sh3
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
@@ -57,10 +55,14 @@ CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-e start -T ../../conf/sh.x
+LINKFLAGS?=	-e start -T ../../conf/${LDSCRIPTBASE}
 STRIPFLAGS=	--strip-debug
-MACHINE=sh3
-MACHINE_ARCH=sh3
+
+.if exists(${THISSH3}/conf/Makefile.${TARGET_MACHINE}.inc)
+.include "${THISSH3}/conf/Makefile.${TARGET_MACHINE}.inc"
+.endif
+
+%INCLUDES
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -116,9 +118,9 @@ LINKFLAGS+=
 
 %LOAD
 
-assym.h: $S/kern/genassym.sh ${SH3}/sh3/genassym.cf
+assym.h: $S/kern/genassym.sh ${THISSH3}/${TARGET_MACHINE}/genassym.cf
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} \
-	    < ${SH3}/sh3/genassym.cf > assym.h.tmp && \
+	    < ${THISSH3}/${TARGET_MACHINE}/genassym.cf > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
@@ -165,17 +167,18 @@ links:
 	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
 	sh makelinks && rm -f dontlink
 
-SRCS=	${SH3}/sh3/locore.s \
+# ${SH3}/sh3/locore.s ?
+SRCS=	${THISSH3}/${TARGET_MACHINE}/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend: .depend
 .depend: ${SRCS} assym.h param.c
-	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${SH3}/sh3/locore.s
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${THISSH3}/${TARGET_MACHINE}/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if ${SFILES} != ""
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
 .endif
 	sh $S/kern/genassym.sh ${MKDEP} -f assym.dep ${CFLAGS} \
-	  ${CPPFLAGS} < ${SH3}/sh3/genassym.cf
+	  ${CPPFLAGS} < ${THISSH3}/${TARGET_MACHINE}/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
 
@@ -194,7 +197,7 @@ machdep.o: Makefile
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-locore.o: ${SH3}/sh3/locore.s assym.h
+locore.o: ${THISSH3}/${TARGET_MACHINE}/locore.s assym.h
 	${NORMAL_S}
 
 # XXX compile ffs_inode.c always with -O0 to avoid egcs-1.1.2 bug.

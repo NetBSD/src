@@ -1,4 +1,4 @@
-/*	$NetBSD: mkboot.c,v 1.1 1997/02/04 03:53:04 thorpej Exp $	*/
+/*	$NetBSD: mkboot.c,v 1.1.26.1 2001/01/05 17:34:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,27 +35,33 @@
  *	@(#)mkboot.c	8.1 (Berkeley) 7/15/93
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #ifdef notdef
 static char sccsid[] = "@(#)mkboot.c	7.2 (Berkeley) 12/16/90";
 #endif
-static char rcsid[] = "$NetBSD: mkboot.c,v 1.1 1997/02/04 03:53:04 thorpej Exp $";
+__RCSID("$NetBSD: mkboot.c,v 1.1.26.1 2001/01/05 17:34:14 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/file.h>
-#include <a.out.h>
+#include <sys/stat.h>
+
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "volhdr.h"
-
-#include <stdio.h>
-#include <ctype.h>
+#include "loadfile.h"
 
 #define LIF_NUMDIR	8
 
@@ -68,13 +74,19 @@ static char rcsid[] = "$NetBSD: mkboot.c,v 1.1 1997/02/04 03:53:04 thorpej Exp $
 #define btolifs(b)	(((b) + (SECTSIZE - 1)) / SECTSIZE)
 #define lifstob(s)	((s) * SECTSIZE)
 
-int lpflag;
-int loadpoint;
-struct load ld;
-struct lifvol lifv;
-struct lifdir lifd[LIF_NUMDIR];
-struct exec ex;
-char buf[10240];
+int	lpflag;
+int	loadpoint;
+int	entrypoint;
+struct	load ld;
+struct	lifvol lifv;
+struct	lifdir lifd[LIF_NUMDIR];
+char	buf[10240];
+
+int	 main(int, char **);
+void	 bcddate(char *, char *);
+char	*lifname(char *);
+void	 putfile(char *, int);
+void	 usage(void);
 
 /*
  * Old Format:
@@ -92,64 +104,46 @@ char buf[10240];
  *	sector 4-31:	disklabel (~300 bytes right now)
  *	sector 32-:	LIF file 0, LIF file 1, etc.
  */
-main(argc, argv)
-	char **argv;
+int
+main(int argc, char **argv)
 {
-	int ac;
-	char **av;
-	int from1, from2, from3, to;
-	register int n;
-	char *n1, *n2, *n3, *lifname();
+	char *n1, *n2, *n3;
+	int n, to;
 
-	ac = --argc;
-	av = ++argv;
-	if (ac == 0)
+	--argc;
+	++argv;
+	if (argc == 0)
 		usage();
-	if (!strcmp(av[0], "-l")) {
-		av++;
-		ac--;
-		if (ac == 0)
+	if (!strcmp(argv[0], "-l")) {
+		argv++;
+		argc--;
+		if (argc == 0)
 			usage();
-		sscanf(av[0], "0x%x", &loadpoint);
+		sscanf(argv[0], "0x%x", &loadpoint);
 		lpflag++;
-		av++;
-		ac--;
+		argv++;
+		argc--;
 	}
-	if (ac == 0)
+	if (argc == 0)
 		usage();
-	from1 = open(av[0], O_RDONLY, 0);
-	if (from1 < 0) {
-		perror("open");
-		exit(1);
-	}
-	n1 = av[0];
-	av++;
-	ac--;
-	if (ac == 0)
+	n1 = argv[0];
+	argv++;
+	argc--;
+	if (argc == 0)
 		usage();
-	if (ac > 1) {
-		from2 = open(av[0], O_RDONLY, 0);
-		if (from2 < 0) {
-			perror("open");
-			exit(1);
-		}
-		n2 = av[0];
-		av++;
-		ac--;
-		if (ac > 1) {
-			from3 = open(av[0], O_RDONLY, 0);
-			if (from3 < 0) {
-				perror("open");
-				exit(1);
-			}
-			n3 = av[0];
-			av++;
-			ac--;
+	if (argc > 1) {
+		n2 = argv[0];
+		argv++;
+		argc--;
+		if (argc > 1) {
+			n3 = argv[0];
+			argv++;
+			argc--;
 		} else
-			from3 = -1;
+			n3 = NULL;
 	} else
-		from2 = from3 = -1;
-	to = open(av[0], O_WRONLY | O_TRUNC | O_CREAT, 0644);
+		n2 = n3 = NULL;
+	to = open(argv[0], O_WRONLY | O_TRUNC | O_CREAT, 0644);
 	if (to < 0) {
 		perror("open");
 		exit(1);
@@ -170,131 +164,99 @@ main(argc, argv)
 	lifv.vol_dirsize = btolifs(LIF_DIRSIZE);
 	lifv.vol_version = 1;
 	/* output bootfile one */
-	lseek(to, LIF_FILESTART, 0);
-	putfile(from1, to);
+	lseek(to, LIF_FILESTART, SEEK_SET);
+	putfile(n1, to);
 	n = btolifs(ld.count + sizeof(ld));
 	strcpy(lifd[0].dir_name, lifname(n1));
 	lifd[0].dir_type = DIR_TYPE;
 	lifd[0].dir_addr = btolifs(LIF_FILESTART);
 	lifd[0].dir_length = n;
-	bcddate(from1, lifd[0].dir_toc);
+	bcddate(n1, lifd[0].dir_toc);
 	lifd[0].dir_flag = DIR_FLAG;
-	lifd[0].dir_exec = lpflag? loadpoint + ex.a_entry : ex.a_entry;
+	lifd[0].dir_exec = lpflag? loadpoint + entrypoint : entrypoint;
 	lifv.vol_length = lifd[0].dir_addr + lifd[0].dir_length;
 	/* if there is an optional second boot program, output it */
-	if (from2 >= 0) {
-		lseek(to, LIF_FILESTART+lifstob(n), 0);
-		putfile(from2, to);
+	if (n2) {
+		lseek(to, LIF_FILESTART+lifstob(n), SEEK_SET);
+		putfile(n2, to);
 		n = btolifs(ld.count + sizeof(ld));
 		strcpy(lifd[1].dir_name, lifname(n2));
 		lifd[1].dir_type = DIR_TYPE;
 		lifd[1].dir_addr = lifv.vol_length;
 		lifd[1].dir_length = n;
-		bcddate(from2, lifd[1].dir_toc);
+		bcddate(n2, lifd[1].dir_toc);
 		lifd[1].dir_flag = DIR_FLAG;
-		lifd[1].dir_exec = lpflag? loadpoint + ex.a_entry : ex.a_entry;
+		lifd[1].dir_exec = lpflag? loadpoint + entrypoint : entrypoint;
 		lifv.vol_length = lifd[1].dir_addr + lifd[1].dir_length;
 	}
 	/* ditto for three */
-	if (from3 >= 0) {
-		lseek(to, LIF_FILESTART+lifstob(lifd[0].dir_length+n), 0);
-		putfile(from3, to);
+	if (n3) {
+		lseek(to, LIF_FILESTART+lifstob(lifd[0].dir_length+n), SEEK_SET);
+		putfile(n3, to);
 		n = btolifs(ld.count + sizeof(ld));
 		strcpy(lifd[2].dir_name, lifname(n3));
 		lifd[2].dir_type = DIR_TYPE;
 		lifd[2].dir_addr = lifv.vol_length;
 		lifd[2].dir_length = n;
-		bcddate(from3, lifd[2].dir_toc);
+		bcddate(n3, lifd[2].dir_toc);
 		lifd[2].dir_flag = DIR_FLAG;
-		lifd[2].dir_exec = lpflag? loadpoint + ex.a_entry : ex.a_entry;
+		lifd[2].dir_exec = lpflag? loadpoint + entrypoint : entrypoint;
 		lifv.vol_length = lifd[2].dir_addr + lifd[2].dir_length;
 	}
 	/* output volume/directory header info */
-	lseek(to, LIF_VOLSTART, 0);
+	lseek(to, LIF_VOLSTART, SEEK_SET);
 	write(to, &lifv, LIF_VOLSIZE);
-	lseek(to, LIF_DIRSTART, 0);
+	lseek(to, LIF_DIRSTART, SEEK_SET);
 	write(to, lifd, LIF_DIRSIZE);
 	exit(0);
 }
 
+void
 putfile(from, to)
+	char *from;
+	int to;
 {
-	register int n, tcnt, dcnt;
+	int fd;
+	u_long bp;
+	u_long marks[MARK_MAX];
 
-	n = read(from, &ex, sizeof(ex));
-	if (n != sizeof(ex)) {
-		fprintf(stderr, "error reading file header\n");
+	marks[MARK_START] = 0;
+	if ((fd = loadfile(from, marks, COUNT_TEXT|COUNT_DATA)) == -1)
 		exit(1);
-	}
-	if (N_GETMAGIC(ex) == OMAGIC) {
-		tcnt = ex.a_text;
-		dcnt = ex.a_data;
-	}
-	else if (N_GETMAGIC(ex) == NMAGIC) {
-		tcnt = (ex.a_text + PGOFSET) & ~PGOFSET;
-		dcnt = ex.a_data;
-	}
-	else {
-		fprintf(stderr, "bad magic number\n");
+	(void)close(fd);
+
+	entrypoint = marks[MARK_ENTRY];
+	ld.address = lpflag ? loadpoint : entrypoint;
+	ld.count = marks[MARK_END] - marks[MARK_START];
+	bp = (u_long)malloc(ld.count);
+	marks[MARK_START] = bp - marks[MARK_START];
+
+	if ((fd = loadfile(from, marks, LOAD_TEXT|LOAD_DATA)) == -1)
 		exit(1);
-	}
-	ld.address = lpflag ? loadpoint : ex.a_entry;
-	ld.count = tcnt + dcnt;
+	(void)close(fd);
+
 	write(to, &ld, sizeof(ld));
-	while (tcnt) {
-		n = sizeof(buf);
-		if (n > tcnt)
-			n = tcnt;
-		n = read(from, buf, n);
-		if (n < 0) {
-			perror("read");
-			exit(1);
-		}
-		if (n == 0) {
-			fprintf(stderr, "short read\n");
-			exit(1);
-		}
-		if (write(to, buf, n) < 0) {
-			perror("write");
-			exit(1);
-		}
-		tcnt -= n;
-	}
-	while (dcnt) {
-		n = sizeof(buf);
-		if (n > dcnt)
-			n = dcnt;
-		n = read(from, buf, n);
-		if (n < 0) {
-			perror("read");
-			exit(1);
-		}
-		if (n == 0) {
-			fprintf(stderr, "short read\n");
-			exit(1);
-		}
-		if (write(to, buf, n) < 0) {
-			perror("write");
-			exit(1);
-		}
-		dcnt -= n;
-	}
+	write(to, (void *)bp, ld.count);
 }
 
-usage()
+void
+usage(void)
 {
+
 	fprintf(stderr,
 		"usage:	 mkboot [-l loadpoint] prog1 [ prog2 ] outfile\n");
 	exit(1);
 }
 
 char *
-lifname(str)
- char *str;
+lifname(char *str)
 {
 	static char lname[10] = "SYS_XXXXX";
-	register int i;
+	char *cp;
+	int i;
 
+	if ((cp = strrchr(str, '/')) != NULL)
+		str = ++cp;
 	for (i = 4; i < 9; i++) {
 		if (islower(*str))
 			lname[i] = toupper(*str);
@@ -309,17 +271,13 @@ lifname(str)
 	return(lname);
 }
 
-#include <sys/stat.h>
-#include <time.h>	/* XXX */
-
-bcddate(fd, toc)
-	int fd;
-	char *toc;
+void
+bcddate(char *name, char *toc)
 {
 	struct stat statb;
 	struct tm *tm;
 
-	fstat(fd, &statb);
+	stat(name, &statb);
 	tm = localtime(&statb.st_ctime);
 	*toc = ((tm->tm_mon+1) / 10) << 4;
 	*toc++ |= (tm->tm_mon+1) % 10;

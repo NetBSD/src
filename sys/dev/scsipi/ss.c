@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.26.2.3 2000/11/20 09:59:28 bouyer Exp $	*/
+/*	$NetBSD: ss.c,v 1.26.2.4 2001/01/05 17:36:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -42,6 +42,7 @@
 #include <sys/user.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 #include <sys/scanio.h>
 
 #include <dev/scsipi/scsi_all.h>
@@ -54,6 +55,7 @@
 
 #define SSMODE(z)	( minor(z)       & 0x03)
 #define SSUNIT(z)	((minor(z) >> 4)       )
+#define SSNMINOR 16
 
 /*
  * If the mode is 3 (e.g. minor = 3,7,11,15)
@@ -64,11 +66,13 @@
 #define MODE_NONREWIND	1
 #define MODE_CONTROL	3
 
-int ssmatch __P((struct device *, struct cfdata *, void *));
-void ssattach __P((struct device *, struct device *, void *));
+int ssmatch(struct device *, struct cfdata *, void *);
+void ssattach(struct device *, struct device *, void *);
+int ssdetach(struct device *self, int flags);
+int ssactivate(struct device *self, enum devact act);
 
 struct cfattach ss_ca = {
-	sizeof(struct ss_softc), ssmatch, ssattach
+	sizeof(struct ss_softc), ssmatch, ssattach, ssdetach, ssactivate
 };
 
 extern struct cfdriver ss_cd;
@@ -102,10 +106,7 @@ struct scsipi_inquiry_pattern ss_patterns[] = {
 };
 
 int
-ssmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+ssmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct scsipibus_attach_args *sa = aux;
 	int priority;
@@ -123,9 +124,7 @@ ssmatch(parent, match, aux)
  * special handlers into the ss_softc structure
  */
 void
-ssattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ssattach(struct device *parent, struct device *self, void *aux)
 {
 	struct ss_softc *ss = (void *)self;
 	struct scsipibus_attach_args *sa = aux;
@@ -148,10 +147,11 @@ ssattach(parent, self, aux)
 	 * look for non-standard scanners with help of the quirk table
 	 * and install functions for special handling
 	 */
-	SC_DEBUG(periph, SCSIPI_DB2, ("ssattach:\n"));
-	if (!bcmp(sa->sa_inqbuf.vendor, "MUSTEK", 6))
+	SC_DEBUG(sc_link, SDEV_DB2, ("ssattach:\n"));
+	if (memcmp(sa->sa_inqbuf.vendor, "MUSTEK", 6) == 0)
 		mustek_attach(ss, sa);
-	if (!bcmp(sa->sa_inqbuf.vendor, "HP      ", 8))
+	if (memcmp(sa->sa_inqbuf.vendor, "HP      ", 8) == 0 &&
+	    memcmp(sa->sa_inqbuf.product, "ScanJet 5300C", 13) != 0)
 		scanjet_attach(ss, sa);
 	if (ss->special == NULL) {
 		/* XXX add code to restart a SCSI2 scanner, if any */
@@ -164,15 +164,65 @@ ssattach(parent, self, aux)
 	ss->flags &= ~SSF_AUTOCONF;
 }
 
+int
+ssdetach(struct device *self, int flags)
+{
+	struct ss_softc *ss = (struct ss_softc *) self;
+	struct buf *bp;
+	int s, cmaj, mn;
+
+	/* locate the major number */
+	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == ssopen)
+			break;
+
+	s = splbio();
+
+	/* Kill off any queued buffers. */
+	while ((bp = BUFQ_FIRST(&ss->buf_queue)) != NULL) {
+		BUFQ_REMOVE(&ss->buf_queue, bp);
+		bp->b_error = EIO;
+		bp->b_flags |= B_ERROR;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+	}
+
+	/* Kill off any pending commands. */
+	scsipi_kill_pending(ss->sc_link);
+
+	splx(s);
+
+	/* Nuke the vnodes for any open instances */
+	mn = SSUNIT(self->dv_unit);
+	vdevgone(cmaj, mn, mn+SSNMINOR-1, VCHR);
+
+	return (0);
+}
+
+int
+ssactivate(struct device *self, enum devact act)
+{
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		/*
+		 * Nothing to do; we key off the device's DVF_ACTIVE.
+		 */
+		break;
+	}
+	return (rv);
+}
+
 /*
  * open the device.
  */
 int
-ssopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+ssopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit;
 	u_int ssmode;
@@ -187,6 +237,9 @@ ssopen(dev, flag, mode, p)
 	ss = ss_cd.cd_devs[unit];
 	if (!ss)
 		return (ENXIO);
+
+	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	ssmode = SSMODE(dev);
 
@@ -241,11 +294,7 @@ bad:
  * occurence of an open device
  */
 int
-ssclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+ssclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
@@ -282,8 +331,7 @@ ssclose(dev, flag, mode, p)
  * minphys
  */
 void
-ssminphys(bp)
-	struct buf *bp;
+ssminphys(struct buf *bp)
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
@@ -314,6 +362,9 @@ ssread(dev, uio, flag)
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error;
 
+	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
+
 	/* if the scanner has not yet been started, do it now */
 	if (!(ss->flags & SSF_TRIGGERED)) {
 		if (ss->special && ss->special->trigger_scanner) {
@@ -341,6 +392,18 @@ ssstrategy(bp)
 
 	SC_DEBUG(ss->sc_periph, SCSIPI_DB1,
 	    ("ssstrategy %ld bytes @ blk %d\n", bp->b_bcount, bp->b_blkno));
+
+	/*
+	 * If the device has been made invalid, error out
+	 */
+	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+		bp->b_flags |= B_ERROR;
+		if (ss->sc_link->flags & SDEV_OPEN)
+			bp->b_error = EIO;
+		else
+			bp->b_error = ENODEV;
+		goto done;
+	}
 
 	/* If negative offset, error */
 	if (bp->b_blkno < 0) {
@@ -450,6 +513,9 @@ ssioctl(dev, cmd, addr, flag, p)
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(dev)];
 	int error = 0;
 	struct scan_io *sio;
+
+	if ((ss->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENODEV);
 
 	switch (cmd) {
 	case SCIOCGET:

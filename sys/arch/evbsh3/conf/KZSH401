@@ -1,9 +1,12 @@
-#	$NetBSD: KZSH401,v 1.8.2.2 2000/11/20 20:07:34 bouyer Exp $
+#	$NetBSD: KZSH401,v 1.8.2.3 2001/01/05 17:34:10 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
-include "arch/evbsh3/conf/std.evbsh3"
+# for big endian
+include "arch/evbsh3/conf/std.evbsh3.eb"
+# for little endian
+#include "arch/evbsh3/conf/std.evbsh3.el"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -44,9 +47,6 @@ options		BSC_RTCOR_VAL	=0xa541
 options		BSC_RFCR_VAL	=0xa400
 options		FRQCR_VAL	=0x0e13
 options		BSC_SDMR2_VAL	=0xff90008c
-
-makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian
-#makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
 
 options		LED_ADDR=0xa8000000
 

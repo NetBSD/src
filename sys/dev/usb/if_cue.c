@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.26.2.3 2000/11/22 16:05:02 bouyer Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.26.2.4 2001/01/05 17:36:29 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -701,6 +701,8 @@ USB_ATTACH(cue)
 #endif
 	strncpy(ifp->if_xname, USBDEVNAME(sc->cue_dev), IFNAMSIZ);
 
+	IFQ_SET_READY(&ifp->if_snd);
+
 	/* Attach the interface. */
 	if_attach(ifp);
 	Ether_ifattach(ifp, eaddr);
@@ -1061,7 +1063,7 @@ cue_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	m_freem(c->cue_mbuf);
 	c->cue_mbuf = NULL;
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		cue_start(ifp);
 #endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
@@ -1156,15 +1158,16 @@ cue_start(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IF_DEQUEUE(&ifp->if_snd, m_head);
+	IFQ_POLL(&ifp->if_snd, m_head);
 	if (m_head == NULL)
 		return;
 
 	if (cue_send(sc, m_head, 0)) {
-		IF_PREPEND(&ifp->if_snd, m_head);
 		ifp->if_flags |= IFF_OACTIVE;
 		return;
 	}
+
+	IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
 #if NBPFILTER > 0
 	/*
@@ -1433,7 +1436,7 @@ cue_watchdog(struct ifnet *ifp)
 	cue_init(sc);
 	usbd_set_polling(sc->cue_udev, 0);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		cue_start(ifp);
 }
 

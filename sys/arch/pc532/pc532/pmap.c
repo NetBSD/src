@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45.2.1 2000/11/20 20:19:23 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45.2.2 2001/01/05 17:34:56 bouyer Exp $	*/
 
 /*
  *
@@ -263,6 +263,11 @@ simple_lock_data_t pmap_tmpptp_lock;
 #define PMAP_HEAD_TO_MAP_UNLOCK() \
      lockmgr(&pmap_main_lock, LK_RELEASE, (void *) 0)
 
+#define PMAP_SIMPLE_LOCK(x) \
+     simle_lock(x)
+#define PMAP_SIMPLE_UNLOCK(x) \
+     simle_lock(x)
+
 #else
 
 #define PMAP_MAP_TO_HEAD_LOCK()		/* null */
@@ -270,6 +275,9 @@ simple_lock_data_t pmap_tmpptp_lock;
 
 #define PMAP_HEAD_TO_MAP_LOCK()		/* null */
 #define PMAP_HEAD_TO_MAP_UNLOCK()	/* null */
+
+#define PMAP_SIMPLE_LOCK(x)		/* null */
+#define PMAP_SIMPLE_UNLOCK(x)		/* null */
 
 #endif
 
@@ -436,7 +444,7 @@ __inline static vaddr_t
 pmap_tmpmap_pa(pa)
 	paddr_t pa;
 {
-	simple_lock(&pmap_tmpptp_lock);
+	PMAP_SIMPLE_LOCK(&pmap_tmpptp_lock);
 #if defined(DIAGNOSTIC)
 	if (*ptp_pte)
 		panic("pmap_tmpmap_pa: ptp_pte in use?");
@@ -460,7 +468,7 @@ pmap_tmpunmap_pa()
 #endif
 	*ptp_pte = 0;		/* zap! */
 	pmap_update_pg((vaddr_t)ptpp);
-	simple_unlock(&pmap_tmpptp_lock);
+	PMAP_SIMPLE_UNLOCK(&pmap_tmpptp_lock);
 }
 
 /*
@@ -931,7 +939,7 @@ pmap_alloc_pv(pmap, mode)
 	struct pv_page *pvpage;
 	struct pv_entry *pv;
 
-	simple_lock(&pvalloc_lock);
+	PMAP_SIMPLE_LOCK(&pvalloc_lock);
 
 	if (pv_freepages.tqh_first != NULL) {
 		pvpage = pv_freepages.tqh_first;
@@ -964,7 +972,7 @@ pmap_alloc_pv(pmap, mode)
 			(void) pmap_alloc_pvpage(pmap, ALLOCPV_NONEED);
 	}
 
-	simple_unlock(&pvalloc_lock);
+	PMAP_SIMPLE_UNLOCK(&pvalloc_lock);
 	return(pv);
 }
 
@@ -1248,7 +1256,7 @@ pmap_free_pv(pmap, pv)
 	struct pmap *pmap;
 	struct pv_entry *pv;
 {
-	simple_lock(&pvalloc_lock);
+	PMAP_SIMPLE_LOCK(&pvalloc_lock);
 	pmap_free_pv_doit(pv);
 
 	/*
@@ -1259,7 +1267,7 @@ pmap_free_pv(pmap, pv)
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
-	simple_unlock(&pvalloc_lock);
+	PMAP_SIMPLE_UNLOCK(&pvalloc_lock);
 }
 
 /*
@@ -1275,7 +1283,7 @@ pmap_free_pvs(pmap, pvs)
 {
 	struct pv_entry *nextpv;
 
-	simple_lock(&pvalloc_lock);
+	PMAP_SIMPLE_LOCK(&pvalloc_lock);
 
 	for ( /* null */ ; pvs != NULL ; pvs = nextpv) {
 		nextpv = pvs->pv_next;
@@ -1290,7 +1298,7 @@ pmap_free_pvs(pmap, pvs)
 	    pmap != pmap_kernel())
 		pmap_free_pvpage();
 
-	simple_unlock(&pvalloc_lock);
+	PMAP_SIMPLE_UNLOCK(&pvalloc_lock);
 }
 
 
@@ -1488,7 +1496,7 @@ pmap_steal_ptp(obj, offset)
 	int idx, lcv;
 	boolean_t caller_locked, we_locked;
 
-	simple_lock(&pmaps_lock);
+	PMAP_SIMPLE_LOCK(&pmaps_lock);
 	if (pmaps_hand == NULL)
 		pmaps_hand = LIST_FIRST(&pmaps);
 	firstpmap = pmaps_hand;
@@ -1566,7 +1574,7 @@ pmap_steal_ptp(obj, offset)
 
 	} while (ptp == NULL && pmaps_hand != firstpmap);
 
-	simple_unlock(&pmaps_lock);
+	PMAP_SIMPLE_UNLOCK(&pmaps_lock);
 	return(ptp);
 }
 
@@ -1664,7 +1672,7 @@ pmap_pinit(pmap)
 	 * malloc since malloc allocates out of a submap and we should have
 	 * already allocated kernel PTPs to cover the range...
 	 */
-	simple_lock(&pmaps_lock);
+	PMAP_SIMPLE_LOCK(&pmaps_lock);
 	/* put in kernel VM PDEs */
 	movsdnu(&PDP_BASE[PDSLOT_KERN], &pmap->pm_pdir[PDSLOT_KERN],
 		nkpde * sizeof(pd_entry_t) / 4);
@@ -1674,7 +1682,7 @@ pmap_pinit(pmap)
 	/* wire in i/o page */
 	pmap->pm_pdir[PDSLOT_APTE + 1] = PDP_BASE[PDSLOT_APTE + 1];
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
-	simple_unlock(&pmaps_lock);
+	PMAP_SIMPLE_UNLOCK(&pmaps_lock);
 }
 
 /*
@@ -1726,11 +1734,11 @@ pmap_release(pmap)
 	 * remove it from global list of pmaps
 	 */
 
-	simple_lock(&pmaps_lock);
+	PMAP_SIMPLE_LOCK(&pmaps_lock);
 	if (pmap == pmaps_hand)
 		pmaps_hand = LIST_NEXT(pmaps_hand, pm_list);
 	LIST_REMOVE(pmap, pm_list);
-	simple_unlock(&pmaps_lock);
+	PMAP_SIMPLE_UNLOCK(&pmaps_lock);
 
 	/*
 	 * free any remaining PTPs
@@ -1874,7 +1882,7 @@ void
 pmap_zero_page(pa)
 	paddr_t pa;
 {
-	simple_lock(&pmap_zero_page_lock);
+	PMAP_SIMPLE_LOCK(&pmap_zero_page_lock);
 #ifdef DIAGNOSTIC
 	if (*zero_pte)
 		panic("pmap_zero_page: lock botch");
@@ -1884,7 +1892,7 @@ pmap_zero_page(pa)
 	memset(zerop, 0, NBPG);				/* zero */
 	*zero_pte = 0;				/* zap! */
 	pmap_update_pg((vaddr_t)zerop);		/* flush TLB */
-	simple_unlock(&pmap_zero_page_lock);
+	PMAP_SIMPLE_UNLOCK(&pmap_zero_page_lock);
 }
 
 /*
@@ -1895,7 +1903,7 @@ void
 pmap_copy_page(srcpa, dstpa)
 	paddr_t srcpa, dstpa;
 {
-	simple_lock(&pmap_copy_page_lock);
+	PMAP_SIMPLE_LOCK(&pmap_copy_page_lock);
 #ifdef DIAGNOSTIC
 	if (*csrc_pte || *cdst_pte)
 		panic("pmap_copy_page: lock botch");
@@ -1906,7 +1914,7 @@ pmap_copy_page(srcpa, dstpa)
 	movsdnu(csrcp, cdstp, NBPG / 4);
 	*csrc_pte = *cdst_pte = 0;			/* zap! */
 	pmap_update_2pg((vaddr_t)csrcp, (vaddr_t)cdstp);
-	simple_unlock(&pmap_copy_page_lock);
+	PMAP_SIMPLE_UNLOCK(&pmap_copy_page_lock);
 }
 
 /*
@@ -3405,13 +3413,13 @@ pmap_growkernel(maxkvaddr)
 		kpm->pm_pdir[PDSLOT_KERN + nkpde] &= ~PG_u;
 
 		/* distribute new kernel PTP to all active pmaps */
-		simple_lock(&pmaps_lock);
+		PMAP_SIMPLE_LOCK(&pmaps_lock);
 		for (pm = pmaps.lh_first; pm != NULL;
 		     pm = pm->pm_list.le_next) {
 			pm->pm_pdir[PDSLOT_KERN + nkpde] =
 				kpm->pm_pdir[PDSLOT_KERN + nkpde];
 		}
-		simple_unlock(&pmaps_lock);
+		PMAP_SIMPLE_UNLOCK(&pmaps_lock);
 	}
 
 	simple_unlock(&kpm->pm_obj.vmobjlock);

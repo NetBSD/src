@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.94.2.2 2000/11/22 16:05:21 bouyer Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.94.2.3 2001/01/05 17:36:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -104,59 +104,59 @@ struct pool sigacts_pool;	/* memory pool for sigacts structures */
 void
 signal_init()
 {
-
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
 	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
 }
 
 /*
- * Create an initial sigacts structure, using the same signal state
- * as p.
+ * Create an initial sigctx structure, using the same signal state
+ * as p. If 'share' is set, share the sigctx_proc part, otherwise just
+ * copy it from parent.
  */
-struct sigacts *
-sigactsinit(p)
-	struct proc *p;
+void
+sigactsinit(np, pp, share)
+	struct proc *np;	/* new process */
+	struct proc *pp;	/* parent process */
+	int share;
 {
 	struct sigacts *ps;
 
-	ps = pool_get(&sigacts_pool, PR_WAITOK);
-	memcpy(ps, p->p_sigacts, sizeof(struct sigacts));
-	ps->ps_refcnt = 1;
-	return (ps);
+	if (share) {
+		np->p_sigacts = pp->p_sigacts;
+		pp->p_sigacts->sa_refcnt++;
+	} else {
+		ps = pool_get(&sigacts_pool, PR_WAITOK);
+		if (pp)
+			memcpy(ps, pp->p_sigacts, sizeof(struct sigacts));
+		else
+			memset(ps, '\0', sizeof(struct sigacts));
+		ps->sa_refcnt = 1;
+		np->p_sigacts = ps;
+	}
 }
 
 /*
- * Make p2 share p1's sigacts.
- */
-void
-sigactsshare(p1, p2)
-	struct proc *p1, *p2;
-{
-
-	p2->p_sigacts = p1->p_sigacts;
-	p1->p_sigacts->ps_refcnt++;
-}
-
-/*
- * Make this process not share its sigacts, maintaining all
+ * Make this process not share its sigctx, maintaining all
  * signal state.
  */
 void
 sigactsunshare(p)
 	struct proc *p;
 {
-	struct sigacts *newps;
+	struct sigacts *oldps;
 
-	if (p->p_sigacts->ps_refcnt == 1)
+	if (p->p_sigacts->sa_refcnt == 1)
 		return;
 
-	newps = sigactsinit(p);
-	sigactsfree(p);
-	p->p_sigacts = newps;
+	oldps = p->p_sigacts;
+	sigactsinit(p, NULL, 0);
+
+	if (--oldps->sa_refcnt == 0)
+		pool_put(&sigacts_pool, oldps);
 }
 
 /*
- * Release a sigacts structure.
+ * Release a sigctx structure.
  */
 void
 sigactsfree(p)
@@ -164,10 +164,8 @@ sigactsfree(p)
 {
 	struct sigacts *ps = p->p_sigacts;
 
-	if (--ps->ps_refcnt > 0)
+	if (--ps->sa_refcnt > 0)
 		return;
-
-	p->p_sigacts = NULL;
 
 	pool_put(&sigacts_pool, ps);
 }
@@ -186,7 +184,7 @@ sigaction1(p, signum, nsa, osa)
 		return (EINVAL);
 
 	if (osa)
-		*osa = ps->ps_sigact[signum];
+		*osa = SIGACTION_PS(ps, signum);
 
 	if (nsa) {
 		if (nsa->sa_flags & ~SA_ALLBITS)
@@ -197,10 +195,10 @@ sigaction1(p, signum, nsa, osa)
 			return (EINVAL);
 
 		(void) splsched();	/* XXXSMP */
-		ps->ps_sigact[signum] = *nsa;
-		sigminusset(&sigcantmask, &ps->ps_sigact[signum].sa_mask);
+		SIGACTION_PS(ps, signum) = *nsa;
+		sigminusset(&sigcantmask, &SIGACTION_PS(ps, signum).sa_mask);
 		if ((prop & SA_NORESET) != 0)
-			ps->ps_sigact[signum].sa_flags &= ~SA_RESETHAND;
+			SIGACTION_PS(ps, signum).sa_flags &= ~SA_RESETHAND;
 		if (signum == SIGCHLD) {
 			if (nsa->sa_flags & SA_NOCLDSTOP)
 				p->p_flag |= P_NOCLDSTOP;
@@ -221,27 +219,27 @@ sigaction1(p, signum, nsa, osa)
 				p->p_flag &= ~P_NOCLDWAIT;
 		}
 		if ((nsa->sa_flags & SA_NODEFER) == 0)
-			sigaddset(&ps->ps_sigact[signum].sa_mask, signum);
+			sigaddset(&SIGACTION_PS(ps, signum).sa_mask, signum);
 		else
-			sigdelset(&ps->ps_sigact[signum].sa_mask, signum);
+			sigdelset(&SIGACTION_PS(ps, signum).sa_mask, signum);
 		/*
-	 	* Set bit in p_sigignore for signals that are set to SIG_IGN,
+	 	* Set bit in p_sigctx.ps_sigignore for signals that are set to SIG_IGN,
 	 	* and for signals set to SIG_DFL where the default is to ignore.
-	 	* However, don't put SIGCONT in p_sigignore,
+	 	* However, don't put SIGCONT in p_sigctx.ps_sigignore,
 	 	* as we have to restart the process.
 	 	*/
 		if (nsa->sa_handler == SIG_IGN ||
 		    (nsa->sa_handler == SIG_DFL && (prop & SA_IGNORE) != 0)) {
-			sigdelset(&p->p_siglist, signum);	/* never to be seen again */
+			sigdelset(&p->p_sigctx.ps_siglist, signum);	/* never to be seen again */
 			if (signum != SIGCONT)
-				sigaddset(&p->p_sigignore, signum);	/* easier in psignal */
-			sigdelset(&p->p_sigcatch, signum);
+				sigaddset(&p->p_sigctx.ps_sigignore, signum);	/* easier in psignal */
+			sigdelset(&p->p_sigctx.ps_sigcatch, signum);
 		} else {
-			sigdelset(&p->p_sigignore, signum);
+			sigdelset(&p->p_sigctx.ps_sigignore, signum);
 			if (nsa->sa_handler == SIG_DFL)
-				sigdelset(&p->p_sigcatch, signum);
+				sigdelset(&p->p_sigctx.ps_sigcatch, signum);
 			else
-				sigaddset(&p->p_sigcatch, signum);
+				sigaddset(&p->p_sigctx.ps_sigcatch, signum);
 		}
 		(void) spl0();
 	}
@@ -306,22 +304,22 @@ siginit(p)
 		if (prop & SA_CANTMASK)
 			sigaddset(&sigcantmask, signum);
 		if (prop & SA_IGNORE && signum != SIGCONT)
-			sigaddset(&p->p_sigignore, signum);
-		sigemptyset(&ps->ps_sigact[signum].sa_mask);
-		ps->ps_sigact[signum].sa_flags = SA_RESTART;
+			sigaddset(&p->p_sigctx.ps_sigignore, signum);
+		sigemptyset(&SIGACTION_PS(ps, signum).sa_mask);
+		SIGACTION_PS(ps, signum).sa_flags = SA_RESTART;
 	}
-	sigemptyset(&p->p_sigcatch);
+	sigemptyset(&p->p_sigctx.ps_sigcatch);
 	p->p_flag &= ~P_NOCLDSTOP;
 
 	/*
 	 * Reset stack state to the user stack.
 	 */
-	ps->ps_sigstk.ss_flags = SS_DISABLE;
-	ps->ps_sigstk.ss_size = 0;
-	ps->ps_sigstk.ss_sp = 0;
+	p->p_sigctx.ps_sigstk.ss_flags = SS_DISABLE;
+	p->p_sigctx.ps_sigstk.ss_size = 0;
+	p->p_sigctx.ps_sigstk.ss_sp = 0;
 
 	/* One reference. */
-	ps->ps_refcnt = 1;
+	ps->sa_refcnt = 1;
 }
 
 /*
@@ -337,31 +335,31 @@ execsigs(p)
 
 	/*
 	 * Reset caught signals.  Held signals remain held
-	 * through p_sigmask (unless they were caught,
+	 * through p_sigctx.ps_sigmask (unless they were caught,
 	 * and are now ignored by default).
 	 */
 	for (signum = 1; signum < NSIG; signum++) {
-		if (sigismember(&p->p_sigcatch, signum)) {
+		if (sigismember(&p->p_sigctx.ps_sigcatch, signum)) {
 			prop = sigprop[signum];
 			if (prop & SA_IGNORE) {
 				if ((prop & SA_CONT) == 0)
-					sigaddset(&p->p_sigignore, signum);
-				sigdelset(&p->p_siglist, signum);
+					sigaddset(&p->p_sigctx.ps_sigignore, signum);
+				sigdelset(&p->p_sigctx.ps_siglist, signum);
 			}
-			ps->ps_sigact[signum].sa_handler = SIG_DFL;
+			SIGACTION_PS(ps, signum).sa_handler = SIG_DFL;
 		}
-		sigemptyset(&ps->ps_sigact[signum].sa_mask);
-		ps->ps_sigact[signum].sa_flags = SA_RESTART;
+		sigemptyset(&SIGACTION_PS(ps, signum).sa_mask);
+		SIGACTION_PS(ps, signum).sa_flags = SA_RESTART;
 	}
-	sigemptyset(&p->p_sigcatch);
+	sigemptyset(&p->p_sigctx.ps_sigcatch);
 	p->p_flag &= ~P_NOCLDSTOP;
 
 	/*
 	 * Reset stack state to the user stack.
 	 */
-	ps->ps_sigstk.ss_flags = SS_DISABLE;
-	ps->ps_sigstk.ss_size = 0;
-	ps->ps_sigstk.ss_sp = 0;
+	p->p_sigctx.ps_sigstk.ss_flags = SS_DISABLE;
+	p->p_sigctx.ps_sigstk.ss_size = 0;
+	p->p_sigctx.ps_sigstk.ss_sp = 0;
 }
 
 int
@@ -373,27 +371,27 @@ sigprocmask1(p, how, nss, oss)
 {
 
 	if (oss)
-		*oss = p->p_sigmask;
+		*oss = p->p_sigctx.ps_sigmask;
 
 	if (nss) {
 		(void)splsched();	/* XXXSMP */
 		switch (how) {
 		case SIG_BLOCK:
-			sigplusset(nss, &p->p_sigmask);
+			sigplusset(nss, &p->p_sigctx.ps_sigmask);
 			break;
 		case SIG_UNBLOCK:
-			sigminusset(nss, &p->p_sigmask);
-			p->p_sigcheck = 1;
+			sigminusset(nss, &p->p_sigctx.ps_sigmask);
+			p->p_sigctx.ps_sigcheck = 1;
 			break;
 		case SIG_SETMASK:
-			p->p_sigmask = *nss;
-			p->p_sigcheck = 1;
+			p->p_sigctx.ps_sigmask = *nss;
+			p->p_sigctx.ps_sigcheck = 1;
 			break;
 		default:
 			(void)spl0();	/* XXXSMP */
 			return (EINVAL);
 		}
-		sigminusset(&sigcantmask, &p->p_sigmask);
+		sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
 		(void)spl0();		/* XXXSMP */
 	}
 
@@ -443,8 +441,8 @@ sigpending1(p, ss)
 	sigset_t *ss;
 {
 
-	*ss = p->p_siglist;
-	sigminusset(&p->p_sigmask, ss);
+	*ss = p->p_sigctx.ps_siglist;
+	sigminusset(&p->p_sigctx.ps_sigmask, ss);
 }
 
 /* ARGSUSED */
@@ -475,15 +473,15 @@ sigsuspend1(p, ss)
 		 * When returning from sigpause, we want
 		 * the old mask to be restored after the
 		 * signal handler has finished.  Thus, we
-		 * save it here and mark the sigacts structure
+		 * save it here and mark the sigctx structure
 		 * to indicate this.
 		 */
-		ps->ps_oldmask = p->p_sigmask;
-		ps->ps_flags |= SAS_OLDMASK;
+		p->p_sigctx.ps_oldmask = p->p_sigctx.ps_sigmask;
+		p->p_sigctx.ps_flags |= SAS_OLDMASK;
 		(void) splsched();	/* XXXSMP */
-		p->p_sigmask = *ss;
-		p->p_sigcheck = 1;
-		sigminusset(&sigcantmask, &p->p_sigmask);
+		p->p_sigctx.ps_sigmask = *ss;
+		p->p_sigctx.ps_sigcheck = 1;
+		sigminusset(&sigcantmask, &p->p_sigctx.ps_sigmask);
 		(void) spl0();		/* XXXSMP */
 	}
 
@@ -526,23 +524,21 @@ sigaltstack1(p, nss, oss)
 	const struct sigaltstack *nss;
 	struct sigaltstack *oss;
 {
-	struct sigacts *ps = p->p_sigacts;
-
 	if (oss)
-		*oss = ps->ps_sigstk;
+		*oss = p->p_sigctx.ps_sigstk;
 
 	if (nss) {
 		if (nss->ss_flags & ~SS_ALLBITS)
 			return (EINVAL);
 
 		if (nss->ss_flags & SS_DISABLE) {
-			if (ps->ps_sigstk.ss_flags & SS_ONSTACK)
+			if (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
 				return (EINVAL);
 		} else {
 			if (nss->ss_size < MINSIGSTKSZ)
 				return (ENOMEM);
 		}
-		ps->ps_sigstk = *nss;
+		p->p_sigctx.ps_sigstk = *nss;
 	}
 
 	return (0);
@@ -711,29 +707,29 @@ trapsignal(p, signum, code)
 	struct sigacts *ps = p->p_sigacts;
 
 	if ((p->p_flag & P_TRACED) == 0 &&
-	    sigismember(&p->p_sigcatch, signum) &&
-	    !sigismember(&p->p_sigmask, signum)) {
+	    sigismember(&p->p_sigctx.ps_sigcatch, signum) &&
+	    !sigismember(&p->p_sigctx.ps_sigmask, signum)) {
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
 			ktrpsig(p, signum,
-			    ps->ps_sigact[signum].sa_handler, &p->p_sigmask,
-			    code);
+			    SIGACTION_PS(ps, signum).sa_handler,
+			    &p->p_sigctx.ps_sigmask, code);
 #endif
-		(*p->p_emul->e_sendsig)(ps->ps_sigact[signum].sa_handler,
-		    signum, &p->p_sigmask, code);
+		(*p->p_emul->e_sendsig)(SIGACTION_PS(ps, signum).sa_handler,
+		    signum, &p->p_sigctx.ps_sigmask, code);
 		(void) splsched();	/* XXXSMP */
-		sigplusset(&ps->ps_sigact[signum].sa_mask, &p->p_sigmask);
-		if (ps->ps_sigact[signum].sa_flags & SA_RESETHAND) {
-			sigdelset(&p->p_sigcatch, signum);
+		sigplusset(&SIGACTION_PS(ps, signum).sa_mask, &p->p_sigctx.ps_sigmask);
+		if (SIGACTION_PS(ps, signum).sa_flags & SA_RESETHAND) {
+			sigdelset(&p->p_sigctx.ps_sigcatch, signum);
 			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
-				sigaddset(&p->p_sigignore, signum);
-			ps->ps_sigact[signum].sa_handler = SIG_DFL;
+				sigaddset(&p->p_sigctx.ps_sigignore, signum);
+			SIGACTION_PS(ps, signum).sa_handler = SIG_DFL;
 		}
 		(void) spl0();		/* XXXSMP */
 	} else {
-		ps->ps_code = code;	/* XXX for core dump/debugger */
-		ps->ps_sig = signum;	/* XXX to verify code */
+		p->p_sigctx.ps_code = code;	/* XXX for core dump/debugger */
+		p->p_sigctx.ps_sig = signum;	/* XXX to verify code */
 		psignal(p, signum);
 	}
 }
@@ -783,15 +779,15 @@ psignal1(p, signum, dolock)
 		/*
 		 * If the signal is being ignored,
 		 * then we forget about it immediately.
-		 * (Note: we don't set SIGCONT in p_sigignore,
+		 * (Note: we don't set SIGCONT in p_sigctx.ps_sigignore,
 		 * and if it is set to SIG_IGN,
 		 * action will be SIG_DFL here.)
 		 */
-		if (sigismember(&p->p_sigignore, signum))
+		if (sigismember(&p->p_sigctx.ps_sigignore, signum))
 			return;
-		if (sigismember(&p->p_sigmask, signum))
+		if (sigismember(&p->p_sigctx.ps_sigmask, signum))
 			action = SIG_HOLD;
-		else if (sigismember(&p->p_sigcatch, signum))
+		else if (sigismember(&p->p_sigctx.ps_sigcatch, signum))
 			action = SIG_CATCH;
 		else {
 			action = SIG_DFL;
@@ -811,13 +807,13 @@ psignal1(p, signum, dolock)
 	}
 
 	if (prop & SA_CONT)
-		sigminusset(&stopsigmask, &p->p_siglist);
+		sigminusset(&stopsigmask, &p->p_sigctx.ps_siglist);
 
 	if (prop & SA_STOP)
-		sigminusset(&contsigmask, &p->p_siglist);
+		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 
-	sigaddset(&p->p_siglist, signum);
-	p->p_sigcheck = 1;
+	sigaddset(&p->p_sigctx.ps_siglist, signum);
+	p->p_sigctx.ps_sigcheck = 1;
 
 	/*
 	 * Defer further processing for signals which are held,
@@ -853,7 +849,7 @@ psignal1(p, signum, dolock)
 		 * be awakened.
 		 */
 		if ((prop & SA_CONT) && action == SIG_DFL) {
-			sigdelset(&p->p_siglist, signum);
+			sigdelset(&p->p_sigctx.ps_siglist, signum);
 			goto out;
 		}
 		/*
@@ -867,7 +863,7 @@ psignal1(p, signum, dolock)
 			 */
 			if (p->p_flag & P_PPWAIT)
 				goto out;
-			sigdelset(&p->p_siglist, signum);
+			sigdelset(&p->p_sigctx.ps_siglist, signum);
 			p->p_xstat = signum;
 			if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0) {
 				/*
@@ -903,16 +899,16 @@ psignal1(p, signum, dolock)
 		if (prop & SA_CONT) {
 			/*
 			 * If SIGCONT is default (or ignored), we continue the
-			 * process but don't leave the signal in p_siglist, as
+			 * process but don't leave the signal in p_sigctx.ps_siglist, as
 			 * it has no further action.  If SIGCONT is held, we
 			 * continue the process and leave the signal in
-			 * p_siglist.  If the process catches SIGCONT, let it
+			 * p_sigctx.ps_siglist.  If the process catches SIGCONT, let it
 			 * handle the signal itself.  If it isn't waiting on
 			 * an event, then it goes back to run state.
 			 * Otherwise, process goes back to sleep state.
 			 */
 			if (action == SIG_DFL)
-				sigdelset(&p->p_siglist, signum);
+				sigdelset(&p->p_sigctx.ps_siglist, signum);
 			if (action == SIG_CATCH)
 				goto runfast;
 			if (p->p_wchan == 0)
@@ -926,7 +922,7 @@ psignal1(p, signum, dolock)
 			 * Already stopped, don't need to stop again.
 			 * (If we did the shell could get confused.)
 			 */
-			sigdelset(&p->p_siglist, signum);
+			sigdelset(&p->p_sigctx.ps_siglist, signum);
 			goto out;
 		}
 
@@ -1024,16 +1020,16 @@ issignal(p)
 			sigminusset(&stopsigmask, &ss);
 		signum = firstsig(&ss);
 		if (signum == 0) {		 	/* no signal to send */
-			p->p_sigcheck = 0;
+			p->p_sigctx.ps_sigcheck = 0;
 			return (0);
 		}
-		sigdelset(&p->p_siglist, signum);	/* take the signal! */
+		sigdelset(&p->p_sigctx.ps_siglist, signum);	/* take the signal! */
 
 		/*
 		 * We should see pending but ignored signals
 		 * only if P_TRACED was on when they were posted.
 		 */
-		if (sigismember(&p->p_sigignore, signum) &&
+		if (sigismember(&p->p_sigctx.ps_sigignore, signum) &&
 		    (p->p_flag & P_TRACED) == 0)
 			continue;
 
@@ -1065,10 +1061,10 @@ issignal(p)
 			 * signals.
 			 */
 			signum = p->p_xstat;
-			/* `p->p_siglist |= mask' is done in setrunnable(). */
-			if (sigismember(&p->p_sigmask, signum))
+			/* `p->p_sigctx.ps_siglist |= mask' is done in setrunnable(). */
+			if (sigismember(&p->p_sigctx.ps_sigmask, signum))
 				continue;
-			sigdelset(&p->p_siglist, signum);	/* take the signal! */
+			sigdelset(&p->p_sigctx.ps_siglist, signum);	/* take the signal! */
 		}
 
 		prop = sigprop[signum];
@@ -1078,7 +1074,7 @@ issignal(p)
 		 * Return the signal's number, or fall through
 		 * to clear it from the pending mask.
 		 */
-		switch ((long)p->p_sigacts->ps_sigact[signum].sa_handler) {
+		switch ((long)SIGACTION(p, signum).sa_handler) {
 
 		case (long)SIG_DFL:
 			/*
@@ -1148,8 +1144,8 @@ issignal(p)
 	/* NOTREACHED */
 
 keep:
-	sigaddset(&p->p_siglist, signum);	/* leave the signal for later */
-	p->p_sigcheck = 1;
+	sigaddset(&p->p_sigctx.ps_siglist, signum);	/* leave the signal for later */
+	p->p_sigctx.ps_sigcheck = 1;
 	return (signum);
 }
 
@@ -1191,13 +1187,13 @@ postsig(signum)
 
 	KERNEL_PROC_LOCK(p);
 
-	sigdelset(&p->p_siglist, signum);
-	action = ps->ps_sigact[signum].sa_handler;
+	sigdelset(&p->p_sigctx.ps_siglist, signum);
+	action = SIGACTION_PS(ps, signum).sa_handler;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG))
 		ktrpsig(p,
-		    signum, action, ps->ps_flags & SAS_OLDMASK ?
-		    &ps->ps_oldmask : &p->p_sigmask, 0);
+		    signum, action, p->p_sigctx.ps_flags & SAS_OLDMASK ?
+		    &p->p_sigctx.ps_oldmask : &p->p_sigctx.ps_sigmask, 0);
 #endif
 	if (action == SIG_DFL) {
 		/*
@@ -1211,7 +1207,7 @@ postsig(signum)
 		 * If we get here, the signal must be caught.
 		 */
 #ifdef DIAGNOSTIC
-		if (action == SIG_IGN || sigismember(&p->p_sigmask, signum))
+		if (action == SIG_IGN || sigismember(&p->p_sigctx.ps_sigmask, signum))
 			panic("postsig action");
 #endif
 		/*
@@ -1223,27 +1219,27 @@ postsig(signum)
 		 * mask from before the sigpause is what we want
 		 * restored after the signal processing is completed.
 		 */
-		if (ps->ps_flags & SAS_OLDMASK) {
-			returnmask = &ps->ps_oldmask;
-			ps->ps_flags &= ~SAS_OLDMASK;
+		if (p->p_sigctx.ps_flags & SAS_OLDMASK) {
+			returnmask = &p->p_sigctx.ps_oldmask;
+			p->p_sigctx.ps_flags &= ~SAS_OLDMASK;
 		} else
-			returnmask = &p->p_sigmask;
+			returnmask = &p->p_sigctx.ps_sigmask;
 		p->p_stats->p_ru.ru_nsignals++;
-		if (ps->ps_sig != signum) {
+		if (p->p_sigctx.ps_sig != signum) {
 			code = 0;
 		} else {
-			code = ps->ps_code;
-			ps->ps_code = 0;
-			ps->ps_sig = 0;
+			code = p->p_sigctx.ps_code;
+			p->p_sigctx.ps_code = 0;
+			p->p_sigctx.ps_sig = 0;
 		}
 		(*p->p_emul->e_sendsig)(action, signum, returnmask, code);
 		(void) splsched();	/* XXXSMP */
-		sigplusset(&ps->ps_sigact[signum].sa_mask, &p->p_sigmask);
-		if (ps->ps_sigact[signum].sa_flags & SA_RESETHAND) {
-			sigdelset(&p->p_sigcatch, signum);
+		sigplusset(&SIGACTION_PS(ps, signum).sa_mask, &p->p_sigctx.ps_sigmask);
+		if (SIGACTION_PS(ps, signum).sa_flags & SA_RESETHAND) {
+			sigdelset(&p->p_sigctx.ps_sigcatch, signum);
 			if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
-				sigaddset(&p->p_sigignore, signum);
-			ps->ps_sigact[signum].sa_handler = SIG_DFL;
+				sigaddset(&p->p_sigctx.ps_sigignore, signum);
+			SIGACTION_PS(ps, signum).sa_handler = SIG_DFL;
 		}
 		(void) spl0();		/* XXXSMP */
 	}
@@ -1295,7 +1291,7 @@ sigexit(p, signum)
 
 	p->p_acflag |= AXSIG;
 	if (sigprop[signum] & SA_CORE) {
-		p->p_sigacts->ps_sig = signum;
+		p->p_sigctx.ps_sig = signum;
 		if ((error = coredump(p)) == 0)
 			exitsig |= WCOREFLAG;
 
@@ -1400,8 +1396,8 @@ coredump(p)
 	core.c_midmag = 0;
 	strncpy(core.c_name, p->p_comm, MAXCOMLEN);
 	core.c_nseg = 0;
-	core.c_signo = p->p_sigacts->ps_sig;
-	core.c_ucode = p->p_sigacts->ps_code;
+	core.c_signo = p->p_sigctx.ps_sig;
+	core.c_ucode = p->p_sigctx.ps_code;
 	core.c_cpusize = 0;
 	core.c_tsize = (u_long)ctob(vm->vm_tsize);
 	core.c_dsize = (u_long)ctob(vm->vm_dsize);
@@ -1478,8 +1474,8 @@ coredump32(p, vp)
 	core.c_midmag = 0;
 	strncpy(core.c_name, p->p_comm, MAXCOMLEN);
 	core.c_nseg = 0;
-	core.c_signo = p->p_sigacts->ps_sig;
-	core.c_ucode = p->p_sigacts->ps_code;
+	core.c_signo = p->p_sigctx.ps_sig;
+	core.c_ucode = p->p_sigctx.ps_code;
 	core.c_cpusize = 0;
 	core.c_tsize = (u_long)ctob(vm->vm_tsize);
 	core.c_dsize = (u_long)ctob(vm->vm_dsize);
@@ -1595,6 +1591,6 @@ sigismasked(p, sig)
 	struct proc *p;
 	int sig;
 {
-	return sigismember(&p->p_sigignore, SIGTTOU)
-		|| sigismember(&p->p_sigmask, SIGTTOU);
+	return sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU)
+		|| sigismember(&p->p_sigctx.ps_sigmask, SIGTTOU);
 }

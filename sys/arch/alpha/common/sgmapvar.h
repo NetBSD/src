@@ -1,4 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.10 1998/08/14 16:50:02 thorpej Exp $ */
+/* $NetBSD: sgmapvar.h,v 1.10.12.1 2001/01/05 17:33:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -84,12 +84,16 @@ struct sgmap_log_entry {
 extern	vaddr_t alpha_sgmap_prefetch_spill_page_va;
 extern	bus_addr_t alpha_sgmap_prefetch_spill_page_pa;
 
-void	alpha_sgmap_init __P((bus_dma_tag_t, struct alpha_sgmap *,
+void	alpha_sgmap_init(bus_dma_tag_t, struct alpha_sgmap *,
 	    const char *, bus_addr_t, bus_addr_t, bus_size_t, size_t, void *,
-	    bus_size_t));
+	    bus_size_t);
 
-int	alpha_sgmap_alloc __P((bus_dmamap_t, bus_size_t,
-	    struct alpha_sgmap *, int));
-void	alpha_sgmap_free __P((bus_dmamap_t, struct alpha_sgmap *));
+int	alpha_sgmap_alloc(bus_dmamap_t, bus_size_t,
+	    struct alpha_sgmap *, int);
+void	alpha_sgmap_free(bus_dmamap_t, struct alpha_sgmap *);
+
+int	alpha_sgmap_dmamap_create(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+void	alpha_sgmap_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
 
 #endif	/* _ALPHA_COMMON_SGMAPVAR_H */

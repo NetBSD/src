@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.24 1998/08/13 06:28:41 mrg Exp $	*/
+/*	$NetBSD: audioio.h,v 1.24.12.1 2001/01/05 17:36:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -231,6 +231,7 @@ typedef struct mixer_devinfo {
 		struct audio_mixer_value {
 			audio_mixer_name_t units;
 			int num_channels;
+			int delta;
 		} v;
 	} un;
 } mixer_devinfo_t;

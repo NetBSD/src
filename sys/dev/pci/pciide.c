@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.44.2.3 2000/12/08 09:12:37 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.44.2.4 2001/01/05 17:36:16 bouyer Exp $	*/
 
 
 /*
@@ -369,22 +369,22 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 
 const struct pciide_product_desc pciide_promise_products[] =  {
 	{ PCI_PRODUCT_PROMISE_ULTRA33,
-	  IDE_PCI_CLASS_OVERRIDE /* |IDE_16BIT_IOSPACE */,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra33/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA66,
-	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra66/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA100,
-	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra100/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
 	{ PCI_PRODUCT_PROMISE_ULTRA100X,
-	  IDE_PCI_CLASS_OVERRIDE|IDE_16BIT_IOSPACE,
+	  IDE_PCI_CLASS_OVERRIDE,
 	  "Promise Ultra100/ATA Bus Master IDE Accelerator",
 	  pdc202xx_chip_map,
 	},
@@ -639,8 +639,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	cp->compat = 0;
 
 	if (sc->sc_pci_ih == NULL) {
-		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-		    pa->pa_intrline, &intrhandle) != 0) {
+		if (pci_intr_map(pa, &intrhandle) != 0) {
 			printf("%s: couldn't map native-PCI interrupt\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname);
 			return 0;
@@ -956,7 +955,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 #ifdef DIAGNOSTIC
 	if (dma_maps->dmamap_table->dm_segs[0].ds_addr & ~IDEDMA_TBL_MASK) {
 		printf("pciide_dma_init: addr 0x%lx not properly aligned\n",
-		    dma_maps->dmamap_table->dm_segs[0].ds_addr);
+		    (u_long)dma_maps->dmamap_table->dm_segs[0].ds_addr);
 		panic("pciide_dma_init: table align");
 	}
 #endif
@@ -1344,8 +1343,10 @@ piix_chip_map(sc, pa)
 	sc->sc_wdcdev.DMA_cap = 2;
 	switch(sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_INTEL_82801AA_IDE:
-	case PCI_PRODUCT_INTEL_82801BA_IDE:
 		sc->sc_wdcdev.UDMA_cap = 4;
+		break;
+	case PCI_PRODUCT_INTEL_82801BA_IDE:
+		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
 		sc->sc_wdcdev.UDMA_cap = 2;
@@ -1370,7 +1371,8 @@ piix_chip_map(sc, pa)
 			    DEBUG_PROBE);
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -1420,7 +1422,8 @@ piix_chip_map(sc, pa)
 			    DEBUG_PROBE);
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
 			WDCDEBUG_PRINT((", IDE_CONTROL 0x%x",
 			    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_CONFIG)),
 			    DEBUG_PROBE);
@@ -1579,8 +1582,27 @@ piix3_4_setup_channel(chp)
 			goto pio;
 
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE ||
-		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE) {
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AB_IDE ||
+		    sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
 			ideconf |= PIIX_CONFIG_PINGPONG;
+		}
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801BA_IDE) {
+			/* setup Ultra/100 */
+			if (drvp->UDMA_mode > 2 &&
+			    (ideconf & PIIX_CONFIG_CR(channel, drive)) == 0)
+				drvp->UDMA_mode = 2;
+			if (drvp->UDMA_mode > 4) {
+				ideconf |= PIIX_CONFIG_UDMA100(channel, drive);
+			} else {
+				ideconf &= ~PIIX_CONFIG_UDMA100(channel, drive);
+				if (drvp->UDMA_mode > 2) {
+					ideconf |= PIIX_CONFIG_UDMA66(channel,
+					    drive);
+				} else {
+					ideconf &= ~PIIX_CONFIG_UDMA66(channel,
+					    drive);
+				}
+			}
 		}
 		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801AA_IDE) {
 			/* setup Ultra/66 */
@@ -1978,7 +2000,7 @@ apollo_setup_channel(chp)
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM);
 	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
 	datatim_reg &= ~APO_DATATIM_MASK(chp->channel);
-	udmatim_reg &= ~AP0_UDMA_MASK(chp->channel);
+	udmatim_reg &= ~APO_UDMA_MASK(chp->channel);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -2304,6 +2326,7 @@ cmd0643_9_setup_channel(chp)
 		if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
 			if (drvp->drive_flags & DRIVE_UDMA) {
 				/* UltraDMA on a 646U2, 0648 or 0649 */
+				drvp->drive_flags &= ~DRIVE_DMA;
 				udma_reg = pciide_pci_read(sc->sc_pc,
 				    sc->sc_tag, CMD_UDMATIM(chp->channel));
 				if (drvp->UDMA_mode > 2 &&
@@ -2897,11 +2920,11 @@ hpt_chip_map(sc, pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 4;
 
 	sc->sc_wdcdev.set_modes = hpt_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	if (revision == HPT366_REV) {
+		sc->sc_wdcdev.UDMA_cap = 4;
 		/*
 		 * The 366 has 2 PCI IDE functions, one for primary and one
 		 * for secondary. So we need to call pciide_mapregs_compat()
@@ -2919,6 +2942,7 @@ hpt_chip_map(sc, pa)
 		sc->sc_wdcdev.nchannels = 1;
 	} else {
 		sc->sc_wdcdev.nchannels = 2;
+		sc->sc_wdcdev.UDMA_cap = 5;
 	}
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
@@ -2959,7 +2983,6 @@ hpt_chip_map(sc, pa)
 	return;
 }
 
-
 void
 hpt_setup_channel(chp)
 	struct channel_softc *chp;
@@ -2990,6 +3013,8 @@ hpt_setup_channel(chp)
 
                 /* add timing values, setup DMA if needed */
                 if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
 			if ((cable & HPT_CSEL_CBLID(chp->channel)) != 0 &&
 			    drvp->UDMA_mode > 2)
 				drvp->UDMA_mode = 2;
@@ -3254,6 +3279,8 @@ pdc202xx_setup_channel(chp)
 			continue;
 		mode = 0;
 		if (drvp->drive_flags & DRIVE_UDMA) {
+			/* use Ultra/DMA */
+			drvp->drive_flags &= ~DRIVE_DMA;
 			mode = PDC2xx_TIM_SET_MB(mode,
 			    pdc2xx_udma_mb[drvp->UDMA_mode]);
 			mode = PDC2xx_TIM_SET_MC(mode,

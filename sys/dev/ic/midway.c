@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.39.2.2 2000/12/13 15:50:04 bouyer Exp $	*/
+/*	$NetBSD: midway.c,v 1.39.2.3 2001/01/05 17:35:43 bouyer Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -1679,7 +1679,6 @@ struct ifnet *ifp;
 #else
     struct en_softc *sc = (struct en_softc *) ifp->if_softc;
 #endif
-    struct ifqueue *ifq = &ifp->if_snd; /* if INPUT QUEUE */
     struct mbuf *m, *lastm, *prev;
     struct atm_pseudohdr *ap, *new_ap;
     int txchan, mlen, got, need, toadd, cellcnt, first;
@@ -1696,7 +1695,7 @@ struct ifnet *ifp;
 
     while (1) {
 
-      IF_DEQUEUE(ifq, m);
+      IFQ_DEQUEUE(&ifp->if_snd, m);
       if (m == NULL)
 	return;		/* EMPTY: >>> exit here <<< */
     

@@ -1,4 +1,4 @@
-/*	$NetBSD: localedef.h,v 1.4 1996/04/09 20:55:31 cgd Exp $	*/
+/*	$NetBSD: localedef.h,v 1.4.30.1 2001/01/05 17:36:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -65,6 +65,12 @@ typedef struct
 	char n_sep_by_space;
 	char p_sign_posn;
 	char n_sign_posn;
+	char int_p_cs_precedes;
+	char int_n_cs_precedes;
+	char int_p_sep_by_space;
+	char int_n_sep_by_space;
+	char int_p_sign_posn;
+	char int_n_sign_posn;
 } _MonetaryLocale;
 
 extern const _MonetaryLocale *_CurrentMonetaryLocale;

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.2.8.1 2000/11/20 20:13:01 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.2.8.2 2001/01/05 17:34:41 bouyer Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,3 +78,13 @@ define	CI_CURPROC	offsetof(struct cpu_info, ci_curproc)
 define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
 define	CI_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
+define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
+define	CI_CPL		offsetof(struct cpu_info, ci_cpl)
+define	CI_INTRDEPTH	offsetof(struct cpu_info, ci_intrdepth)
+define	CI_INTSTK	offsetof(struct cpu_info, ci_intstk)
+define	CI_SPILLSTK	offsetof(struct cpu_info, ci_spillstk)
+define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_tempsave)
+define	CI_DDBSAVE	offsetof(struct cpu_info, ci_ddbsave)
+define	CI_IPKDBSAVE	offsetof(struct cpu_info, ci_ipkdbsave)
+define	CI_DISISAVE	offsetof(struct cpu_info, ci_disisave)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.21.2.4 2000/11/22 16:04:40 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.21.2.5 2001/01/05 17:36:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,16 +114,37 @@ struct wdc_pcmcia_product {
 	  PCMCIA_CIS_EXP_EXPMULTIMEDIA,
 	  PCMCIA_STR_EXP_EXPMULTIMEDIA },
 
-	/* Mobile Dock 2, which doesn't have vendor ID nor product ID */
+	/* Mobile Dock 2, neither vendor ID nor product ID */
 	{ -1, -1, 0,
 	  { "SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL},
 	  "SHUTTLE TECHNOLOGY IDE/ATAPI Adapter"
 	},
 
-	/* Toshiba Portege 3110 CD, with neither vendor ID nor product ID */
+	/* Toshiba Portege 3110 CD, neither vendor ID nor product ID */
 	{ -1, -1, 0,
 	  { "FREECOM", "PCCARD-IDE", NULL, NULL},
 	  "FREECOM PCCARD-IDE"
+	},
+
+	/* Random CD-ROM, (badged AMACOM), neither vendor ID nor product ID */ 
+	{ -1, -1, 0,
+	  { "PCMCIA", "CD-ROM", NULL, NULL},
+	  "PCMCIA CD-ROM"
+	},
+
+	/* IO DATA CBIDE2, with neither vendor ID nor product ID */
+	{ -1, -1, 0,
+	  PCMCIA_CIS_IODATA_CBIDE2,
+	  PCMCIA_STR_IODATA_CBIDE2
+	},
+
+	/* 
+	 * Novac PCMCIA-IDE Card for HD530P IDE Box, 
+	 * with neither vendor ID nor product ID
+	 */
+	{ -1, -1, 0,
+	  { "PCMCIA", "PnPIDE", NULL, NULL},
+	  "Novac PCCARD-IDE"
 	},
 
 	{ 0, 0, 0, { NULL, NULL, NULL, NULL}, NULL }

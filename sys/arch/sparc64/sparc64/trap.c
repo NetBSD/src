@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30.2.3 2000/12/13 15:49:37 bouyer Exp $ */
+/*	$NetBSD: trap.c,v 1.30.2.4 2001/01/05 17:35:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1056,9 +1056,10 @@ data_access_fault(type, addr, pc, tf)
 			printf("NULL proc\n");
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-				curproc->p_pid, curproc->p_comm,
+			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
-				curproc->p_sigmask.__bits[0], curproc->p_sigcatch.__bits[0]);
+			       curproc->p_sigctx.ps_sigmask.__bits[0], 
+			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
 	/* Now munch on protections... */
@@ -1333,9 +1334,10 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 			printf("NULL proc\n");
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-				curproc->p_pid, curproc->p_comm,
+			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
-				curproc->p_sigmask.__bits[0], curproc->p_sigcatch.__bits[0]);
+			       curproc->p_sigctx.ps_sigmask.__bits[0], 
+			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
 	/* Now munch on protections... */
@@ -1675,9 +1677,10 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 			printf("NULL proc\n");
 		else
 			printf("pid %d(%s); sigmask %x, sigcatch %x\n",
-				curproc->p_pid, curproc->p_comm,
+			       curproc->p_pid, curproc->p_comm,
 				/* XXX */
-				curproc->p_sigmask.__bits[0], curproc->p_sigcatch.__bits[0]);
+			       curproc->p_sigctx.ps_sigmask.__bits[0], 
+			       curproc->p_sigctx.ps_sigcatch.__bits[0]);
 	}
 #endif
 	/* Now munch on protections... */

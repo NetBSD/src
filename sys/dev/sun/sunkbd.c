@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.4.2.3 2000/11/22 16:04:52 bouyer Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.4.2.4 2001/01/05 17:36:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -185,7 +185,7 @@ sunkbd_attach(parent, self, aux)
 	}
 	k->k_cc = cc;
 
-	printf("attached \n");
+	printf("\n");
 
 	callout_init(&k->k_repeat_ch);
 

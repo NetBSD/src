@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.32.2.1 2000/11/20 11:43:27 bouyer Exp $	*/
+/*	$NetBSD: uhub.c,v 1.32.2.2 2001/01/05 17:36:32 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 /*
- * USB spec: http://www.usb.org/developers/docs.htm
+ * USB spec: http://www.usb.org/developers/data/usbspec.zip
  */
 
 #include <sys/param.h>

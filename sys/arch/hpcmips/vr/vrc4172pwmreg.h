@@ -1,4 +1,4 @@
-/* $NetBSD: vrc4172pwmreg.h,v 1.1.2.2 2000/11/22 16:00:14 bouyer Exp $ */
+/* $Id: vrc4172pwmreg.h,v 1.1.2.3 2001/01/05 17:34:27 bouyer Exp $ */
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
  *
@@ -28,7 +28,7 @@
  * Vrc4172 PWM unit register definition
  */
 
-#define VRC2_PWM_LCDDUTYEN	0x00		/* LCDBAK control enable */
+#define VRC2_PWM_LCDDUTYEN	0x00	/* LCDBAK control enable */
 #define		VRC2_PWM_LCDEN_MASK	0x01
 #define 	VRC2_PWM_LCD_EN		0x01	/* enable */
 #define		VRC2_PWM_LCD_DIS	0x00	/* disable */

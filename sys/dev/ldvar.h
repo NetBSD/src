@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.2.2.2 2000/12/08 09:12:15 bouyer Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.2.2.3 2001/01/05 17:35:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_DEV_LD_LDVAR_H_
-#define	_DEV_LD_LDVAR_H_
+#ifndef	_DEV_LDVAR_H_
+#define	_DEV_LDVAR_H_
 
 struct ld_softc {
 	struct	device sc_dv;
@@ -75,5 +75,6 @@ struct ld_softc {
 void	ldattach(struct ld_softc *);
 void	lddetach(struct ld_softc *);
 void	lddone(struct ld_softc *, struct buf *);
+int	lddrain(struct ld_softc *, int);
 
-#endif	/* !_DEV_LD_LDVAR_H_ */
+#endif	/* !_DEV_LDVAR_H_ */

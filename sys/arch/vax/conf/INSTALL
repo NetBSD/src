@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.2.2.3 2000/12/13 15:49:39 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.2.2.4 2001/01/05 17:35:13 bouyer Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -201,6 +201,5 @@ pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
 #pseudo-device	vnd	4
 #pseudo-device	ccd	4
 #pseudo-device	raid	4		# RAIDframe disk driver
-# rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	md	1

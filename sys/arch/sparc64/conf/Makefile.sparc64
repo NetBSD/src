@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.12.2.2 2000/12/08 09:30:32 bouyer Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.12.2.3 2001/01/05 17:35:03 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/sparc64/conf/Makefile.sparc64
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.

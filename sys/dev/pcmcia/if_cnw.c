@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.2.2.2 2000/11/22 16:04:34 bouyer Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.2.2.3 2001/01/05 17:36:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -587,6 +587,7 @@ cnw_attach(parent, self, aux)
 	ifp->if_watchdog = cnw_watchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX |
 	    IFF_NOTRAILERS;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Attach the interface */
 	if_attach(ifp);
@@ -697,7 +698,7 @@ cnw_start(ifp)
 
 		sc->sc_stats.nws_tx++;
 
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == 0)
 			break;
 

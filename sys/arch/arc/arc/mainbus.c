@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12.4.2 2000/11/20 20:00:22 bouyer Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12.4.3 2001/01/05 17:33:54 bouyer Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -109,7 +109,7 @@ mbattach(parent, self, aux)
 	case NEC_RAx94:
 	case NEC_RD94:
 	case NEC_R96:
-		nca.ca_name = "pica";
+		nca.ca_name = "jazzio";
 		nca.ca_slot = 0;
 		nca.ca_offset = 0;
 		nca.ca_bus = &sc->sc_bus;

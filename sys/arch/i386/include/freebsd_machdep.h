@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.h,v 1.2 1998/09/11 12:50:07 mycroft Exp $	*/
+/*	$NetBSD: freebsd_machdep.h,v 1.2.12.1 2001/01/05 17:34:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -158,5 +158,6 @@ struct freebsd_ptrace_reg {
 #define FREEBSD___LDPGSZ	4096
 
 void freebsd_sendsig __P((sig_t, int, sigset_t *, u_long));
+void freebsd_syscall_intern __P((struct proc *));
 
 #endif /* _FREEBSD_MACHDEP_H */

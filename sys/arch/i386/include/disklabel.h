@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.8 1999/01/27 20:54:57 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.8.8.1 2001/01/05 17:34:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -33,10 +33,24 @@
 #ifndef _MACHINE_DISKLABEL_H_
 #define _MACHINE_DISKLABEL_H_
 
-#define	LABELSECTOR	1		/* sector containing label */
-#define	LABELOFFSET	0		/* offset of label in sector */
-#define	MAXPARTITIONS	8		/* number of partitions */
-#define	RAW_PART	3		/* raw partition: XX?d (XXX) */
+#define	LABELSECTOR		1	/* sector containing label */
+#define	LABELOFFSET		0	/* offset of label in sector */
+#define	MAXPARTITIONS		16	/* number of partitions */
+#define	OLDMAXPARTITIONS 	8	/* number of partitions before 1.6 */
+#define	RAW_PART		3	/* raw partition: XX?d (XXX) */
+
+/*
+ * We use the highest bit of the minor number for the partition number.
+ * This maintains backward compatibility with device nodes created before
+ * MAXPARTITIONS was increased.
+ */
+#define __I386_MAXDISKS	((1 << 20) / MAXPARTITIONS)
+#define DISKUNIT(dev)	((minor(dev) / OLDMAXPARTITIONS) % __I386_MAXDISKS)
+#define DISKPART(dev)	((minor(dev) % OLDMAXPARTITIONS) + \
+    ((minor(dev) / (__I386_MAXDISKS * OLDMAXPARTITIONS)) * OLDMAXPARTITIONS))
+#define	DISKMINOR(unit, part) \
+    (((unit) * OLDMAXPARTITIONS) + ((part) % OLDMAXPARTITIONS) + \
+     ((part) / OLDMAXPARTITIONS) * (__I386_MAXDISKS * OLDMAXPARTITIONS))
 
 /* Pull in MBR partition definitions. */
 #include <sys/disklabel_mbr.h>

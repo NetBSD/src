@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.4.2.1 2000/11/20 20:08:10 bouyer Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.4.2.2 2001/01/05 17:34:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -65,10 +65,10 @@ extern	int howto;
 extern	int cons_scode;
 extern	u_int opendev;
 extern	u_int bootdev;
-extern	char *getmachineid();
+char	*getmachineid __P((void));
 
 extern	int userom;
-extern	void romputchar __P((int));
+void	romputchar __P((int));
 
 void	transfer __P((char *entry, int howto, int opendev, int conscode,
 	    char *lowram, char *esym));

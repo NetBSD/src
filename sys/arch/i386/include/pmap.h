@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.42.2.2 2000/12/08 09:26:38 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42.2.3 2001/01/05 17:34:33 bouyer Exp $	*/
 
 /*
  *
@@ -322,20 +322,6 @@ struct pmap_remove_record {
 	vaddr_t prr_vas[PMAP_RR_MAX];
 };
 
-#if 0
-/*
- * pmap_transfer_location: used to pass the current location in the
- * pmap between pmap_transfer and pmap_transfer_ptes [e.g. during
- * a pmap_copy].
- */
-
-struct pmap_transfer_location {
-	vaddr_t addr;			/* the address (page-aligned) */
-	pt_entry_t *pte;		/* the PTE that maps address */
-	struct vm_page *ptp;		/* the PTP that the PTE lives in */
-};
-#endif
-
 /*
  * global kernel variables
  */
@@ -354,7 +340,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-#define	pmap_update()			tlbflush()
+#define	pmap_update()			/* nothing (yet) */
 
 #define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
 #define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
@@ -380,8 +366,6 @@ static void	pmap_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
 boolean_t	pmap_test_attrs __P((struct vm_page *, int));
-void		pmap_transfer __P((struct pmap *, struct pmap *, vaddr_t,
-				   vsize_t, vaddr_t, boolean_t));
 static void	pmap_update_pg __P((vaddr_t));
 static void	pmap_update_2pg __P((vaddr_t,vaddr_t));
 void		pmap_write_protect __P((struct pmap *, vaddr_t,
@@ -412,7 +396,7 @@ pmap_update_pg(va)
 {
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 	else
 #endif
 		invlpg((u_int) va);
@@ -428,7 +412,7 @@ pmap_update_2pg(va, vb)
 {
 #if defined(I386_CPU)
 	if (cpu_class == CPUCLASS_386)
-		pmap_update();
+		tlbflush();
 	else
 #endif
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9.2.2 2000/11/20 20:07:10 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9.2.3 2001/01/05 17:34:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -147,12 +147,14 @@ pci_conf_write(pc, tag, reg, data)
 }
 
 int
-pci_intr_map(pc, intrtag, pin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t intrtag;
-	int pin, line;
+pci_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t intrtag = pc->pa_intrtag;
+	int pin = pa->pa_intrpin;
+	int line = pa->pa_intrline;
 	int bus, dev, func;
 
 	pci_decompose_tag(pc, intrtag, &bus, &dev, &func);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.9.2.1 2000/11/20 18:11:36 bouyer Exp $	*/
+/*	$NetBSD: sockio.h,v 1.9.2.2 2001/01/05 17:37:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -105,5 +105,6 @@
 #define	SIOCIFCREATE	 _IOW('i', 122, struct ifreq)	/* create clone if */
 #define	SIOCIFDESTROY	 _IOW('i', 121, struct ifreq)	/* destroy clone if */
 #define	SIOCIFGCLONERS	_IOWR('i', 120, struct if_clonereq) /* get cloners */
+#define	SIOCGIFDLT	_IOWR('i', 119, struct ifreq)	/* get DLT */
 
 #endif /* !_SYS_SOCKIO_H_ */

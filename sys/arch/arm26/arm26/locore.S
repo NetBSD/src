@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.4.2.4 2000/12/13 15:49:18 bouyer Exp $ */
+/* $NetBSD: locore.S,v 1.4.2.5 2001/01/05 17:34:01 bouyer Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -38,7 +38,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: locore.S,v 1.4.2.4 2000/12/13 15:49:18 bouyer Exp $")
+/* RCSID is at the end of the file in case it gets put in the text segment. */
 
 #include <sys/syscall.h>
 #include <machine/armreg.h>
@@ -180,7 +180,7 @@ _C_LABEL(page0_end):
 	cmp	r1, #0			/* AST pending? */
 	bne	2f			/* If not, return */
 	mov	r0, sp			/* Reuse old trapframe */
-	bl	_C_FUNC(ast_handler)	/* Handle AST */
+	bl	_C_LABEL(ast_handler)	/* Handle AST */
 	b	1b			/* Try again */
 
 2:
@@ -205,23 +205,23 @@ Lreset_panicmsg:
 
 	.global	undefined_entry
 undefined_entry:
-	HANDLER	_C_FUNC(undefined_handler), 4
+	HANDLER	_C_LABEL(undefined_handler), 4
 
 	.global	swi_entry
 swi_entry:
-	HANDLER	_C_FUNC(swi_handler), 4
+	HANDLER	_C_LABEL(swi_handler), 4
 
 	.global	prefetch_abort_entry
 prefetch_abort_entry:
-	HANDLER	_C_FUNC(prefetch_abort_handler), 4
+	HANDLER	_C_LABEL(prefetch_abort_handler), 4
 
 	.global	data_abort_entry
 data_abort_entry:
-	HANDLER	_C_FUNC(data_abort_handler), 8
+	HANDLER	_C_LABEL(data_abort_handler), 8
 
 	.global	address_exception_entry
 address_exception_entry:
-	HANDLER	_C_FUNC(address_exception_handler), 8
+	HANDLER	_C_LABEL(address_exception_handler), 8
 
 /*
  * The stack frame messing is different here since we're handling an
@@ -254,7 +254,7 @@ irq_entry:
 	MODE_CHANGE_NOP
 
 	mov	r0, sp
-	bl	_C_FUNC(irq_handler)
+	bl	_C_LABEL(irq_handler)
 
 	mov	r0, sp
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_IRQ)
@@ -282,7 +282,7 @@ Lirq_from_usr:
 
 	mov	fp, #0			/* This is the top of the stack */
 	mov	r0, sp
-	bl	_C_FUNC(irq_handler)
+	bl	_C_LABEL(irq_handler)
 
 	ldr	r0, Lastpending
 	ldr	r0, [r0]
@@ -308,7 +308,7 @@ Lirq_to_ast:
 	mov	fp, #0
 Last_again:
 	mov	r0, sp
-	bl	_C_FUNC(ast_handler)
+	bl	_C_LABEL(ast_handler)
 
 	teqp	r15, #(R15_IRQ_DISABLE | R15_MODE_SVC)
 	ldr	r0, Lastpending
@@ -393,7 +393,7 @@ ENTRY(cpu_loswitch)
 ENTRY(proc_trampoline)
 	mov	fp, #0			/* Tie knot in top of stack */
 	mov	r0, #0
-	bl	_C_FUNC(lowerspl)		/* spl0() */
+	bl	_C_LABEL(lowerspl)		/* spl0() */
 	cmp	r4, #0			/* Function to call? */
 	beq	Lproc_trampoline_nofunc
 	mov	r0, r5
@@ -426,7 +426,7 @@ ENTRY(cpu_Debugger)
 	stmfd	r13!, {r0-r15}		/* Save all SVC-mode regs */
 	mov	r1, r13
 	mov	r0, #0
-	bl	_C_FUNC(kdb_trap)
+	bl	_C_LABEL(kdb_trap)
 	add	r13, r13, #(4 * 16)
 	ldmfd	r13!, {pc}^
 
@@ -459,3 +459,5 @@ ENTRY_NP(sigcode)
 	.align	0
         .global _C_LABEL(esigcode)
 _C_LABEL(esigcode):
+
+RCSID("$NetBSD: locore.S,v 1.4.2.5 2001/01/05 17:34:01 bouyer Exp $")

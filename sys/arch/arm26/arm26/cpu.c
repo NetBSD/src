@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.6.4 2000/12/13 15:49:18 bouyer Exp $ */
+/* $NetBSD: cpu.c,v 1.1.6.5 2001/01/05 17:34:00 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.4 2000/12/13 15:49:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.5 2001/01/05 17:34:00 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1.6.4 2000/12/13 15:49:18 bouyer Exp $");
 
 static int cpu_match(struct device *, struct cfdata *, void *);
 static void cpu_attach(struct device *, struct device *, void *);
+static int cpu_search(struct device *, struct cfdata *, void *);
 static register_t cpu_identify(void);
 #ifdef CPU_ARM3
 static void cpu_arm3_setup(struct device *, int);
@@ -115,8 +116,19 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: WARNING: CPU type not supported by kernel\n",
 		       self->dv_xname);
 	config_interrupts(self, cpu_delay_calibrate);
+	config_search(cpu_search, self, NULL);
 }
+
+static int
+cpu_search(struct device *parent, struct cfdata *cf, void *aux)
+{
 	
+	if ((cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+		config_attach(parent, cf, NULL, NULL);
+
+	return 0;
+}
+
 static register_t
 cpu_identify()
 {

@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.28.2.1 2000/11/20 11:41:26 bouyer Exp $
+$NetBSD: isapnpdevs,v 1.28.2.2 2001/01/05 17:35:55 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ $NetBSD: isapnpdevs,v 1.28.2.1 2000/11/20 11:41:26 bouyer Exp $
  */
 driver	aha	Adaptec SCSI
 driver	aic	Adaptec SCSI
+driver	an	Aironet 802.11
 driver	com	National Semiconductor Serial
 driver	ep	3Com 3CXXX Ethernet
 driver	ess	ESS Audio Drive
@@ -69,6 +70,11 @@ devlogic	aic	ADP1520		0	Adaptec AHA-1520B
 devlogic	aic	ADP1502		0	Adaptec AHA-1502P
 devlogic	aic	ADP1505		0	Adaptec AVA-1505A
 devcompat	aic	ADP1530		0	(Adaptec AVA-1505A)
+
+/*
+ * an
+ */
+devlogic	an	AOL0001		0	Aironet 4500/4800
 
 /*
  * com
@@ -166,6 +172,7 @@ devlogic	sb	CTL0044		0	SB AWE64 Gold
 devlogic	sb	CTL0045		0	SB AWE64 Value
 devlogic	sb	OPT9250		0	Televideo card, Opti
 devlogic	sb	@X@0001		0	CMI8330. Audio Adapter
+devlogic	sb	@@@1001		0	Avance Logic ALS100+
 devcompat	sb	PNPB000		0	Generic SB 1.5
 devcompat	sb	PNPB001		0	Generic SB 2.0
 devcompat	sb	PNPB002		0	Generic SB Pro

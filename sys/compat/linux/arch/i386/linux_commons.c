@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_commons.c,v 1.1.8.1 2000/12/13 15:49:46 bouyer Exp $	*/
+/*	$NetBSD: linux_commons.c,v 1.1.8.2 2001/01/05 17:35:23 bouyer Exp $	*/
 
 /*
  * This file includes C files from the common
@@ -12,11 +12,13 @@
  * C files doesn't use it.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_sysv.h"
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "fs_nfs.h"
 #include "fs_lfs.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

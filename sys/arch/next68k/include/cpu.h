@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11.2.1 2000/11/20 20:18:14 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11.2.2 2001/01/05 17:34:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -197,9 +197,6 @@ int	kvtop __P((caddr_t));
 
 /* clock.c functions */
 void	next68k_calibrate_delay __P((void));
-
-/* trap.c function */
-void	child_return __P((void *));
 
 #endif /* _KERNEL */
 

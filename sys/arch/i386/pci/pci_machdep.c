@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.34.8.1 2000/11/20 20:09:35 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34.8.2 2001/01/05 17:34:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -466,12 +466,12 @@ not2:
 }
 
 int
-pci_intr_map(pc, intrtag, pin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t intrtag;
-	int pin, line;
+pci_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	int pin = pa->pa_intrpin;
+	int line = pa->pa_intrline;
 
 	if (pin == 0) {
 		/* No IRQ used. */

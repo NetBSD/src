@@ -1,5 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20.2.3 2000/12/13 15:49:37 bouyer Exp $ */
-#define DEBUG
+/*	$NetBSD: vm_machdep.c,v 1.20.2.4 2001/01/05 17:35:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996

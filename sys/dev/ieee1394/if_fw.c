@@ -1,4 +1,6 @@
-/*	$NetBSD: if_fw.c,v 1.2.2.3 2000/12/13 15:50:08 bouyer Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.2.2.4 2001/01/05 17:35:49 bouyer Exp $	*/
+
+/* XXX ALTQ XXX */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

@@ -41,7 +41,7 @@ CPP=clmips.exe
 # PROP Intermediate_Dir "WMIPSRel"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /ML /W3 /O2 /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /YX /QMRWCE /c
-# ADD CPP /nologo /ML /W3 /O2 /I "." /I "../../../.." /I "../include" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /D "LIBSA_RENAME_PRINTF" /QMRWCE /c
+# ADD CPP /nologo /ML /W3 /O2 /I "." /I "../../../.." /I "../include" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "NDEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /D "__signed=signed" /D "LIBSA_RENAME_PRINTF" /D "__COMPILER_INT64__=__int64" /QMRWCE /c
 # SUBTRACT CPP /YX
 BSC32=bscmake.exe
 # ADD BASE BSC32 /NOLOGO
@@ -63,7 +63,7 @@ LIB32=link.exe -lib
 # PROP Intermediate_Dir "WMIPSDbg"
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MLd /W3 /Zi /Od /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /YX /QMRWCE /c
-# ADD CPP /nologo /MLd /W3 /Zi /Od /I "." /I "../../../.." /I "../include" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /D "LIBSA_RENAME_PRINTF" /QMRWCE /c
+# ADD CPP /nologo /MLd /W3 /Zi /Od /I "." /I "../../../.." /I "../include" /D _WIN32_WCE=$(CEVersion) /D "$(CEConfigName)" /D "DEBUG" /D "MIPS" /D "_MIPS_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_STANDALONE" /D "__STDC__" /D "__signed=signed" /D "LIBSA_RENAME_PRINTF" /D "__COMPILER_INT64__=__int64" /QMRWCE /c
 # SUBTRACT CPP /YX
 BSC32=bscmake.exe
 # ADD BASE BSC32 /NOLOGO

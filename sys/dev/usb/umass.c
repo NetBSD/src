@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.21.2.5 2000/12/13 15:50:15 bouyer Exp $	*/
+/*	$NetBSD: umass.c,v 1.21.2.6 2001/01/05 17:36:32 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -29,9 +29,11 @@
  */
 
 /*
- * Universal Serial Bus Mass Storage Class Bulk-Only Transport
- * http://www.usb.org/developers/usbmassbulk_09.pdf
- * XXX Add URL to CBI spec in www.usb.org
+ * Universal Serial Bus Mass Storage Class specs:
+ * http://www.usb.org/developers/data/devclass/usbmassover_11.pdf
+ * http://www.usb.org/developers/data/devclass/usbmassbulk_10.pdf
+ * http://www.usb.org/developers/data/devclass/usbmass-cbi10.pdf
+ * http://www.usb.org/developers/data/devclass/usbmass-ufi10.pdf
  */
 
 /*
@@ -1198,12 +1200,14 @@ scsipiprint(void *aux, const char *pnp)
 		return (scsiprint(aux, pnp));
 	else {
 #if NATAPIBUS > 0
-		return (atapiprint(aux, pnp));
-#else
+		struct ata_atapi_attach *aa_link = aux;
+#endif
 		if (pnp)
 			printf("atapibus at %s", pnp);
-		return (UNCONF);
+#if NATAPIBUS > 0
+		printf(" channel %d", aa_link->aa_channel);
 #endif
+		return (UNCONF);
 	}
 }
 

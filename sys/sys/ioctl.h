@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl.h,v 1.25 1999/04/30 05:29:20 cgd Exp $	*/
+/*	$NetBSD: ioctl.h,v 1.25.2.1 2001/01/05 17:36:59 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -64,6 +64,28 @@ struct ttysize {
 #include <sys/dkio.h>
 #include <sys/filio.h>
 #include <sys/sockio.h>
+
+/*
+ * Passthrough ioctl commands. These are passed through to devices
+ * as they are, it is expected that the device (an LKM, for example),
+ * will know how to deal with them. One for each emulation, so that
+ * no namespace clashes will occur between them, for devices that
+ * may be dealing with specific ioctls for multiple emulations.
+ */
+
+struct ioctl_pt {
+	unsigned long com;
+	void *data;
+};
+
+#define PTIOCNETBSD	_IOW('Z', 0, struct ioctl_pt)
+#define PTIOCSUNOS	_IOW('Z', 1, struct ioctl_pt)
+#define PTIOCSVR4	_IOW('Z', 2, struct ioctl_pt)
+#define PTIOCLINUX	_IOW('Z', 3, struct ioctl_pt)
+#define PTIOCFREEBSD	_IOW('Z', 4, struct ioctl_pt)
+#define PTIOCOSF1	_IOW('Z', 5, struct ioctl_pt)
+#define PTIOCULTRIX	_IOW('Z', 6, struct ioctl_pt)
+#define PTIOCWIN32	_IOW('Z', 7, struct ioctl_pt)
 
 #ifndef _KERNEL
 

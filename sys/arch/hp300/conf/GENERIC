@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47.2.1 2000/11/20 20:08:02 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.47.2.2 2001/01/05 17:34:11 bouyer Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -6,7 +6,7 @@
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.47.2.1 $"
+#ident 		"GENERIC-$Revision: 1.47.2.2 $"
 
 # Support for various CPU types
 options 	HP320
@@ -89,11 +89,11 @@ options 	SE_KEYBOARD	# include Swedish HIL keymap
 #
 options 	COMPAT_HPUX	# HP-UX binary compatibility
 
+options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 options 	COMPAT_M68K4K	# compat. with NetBSD/m68k4k binaries
 
 #options 	COMPAT_LINUX	# Linux/m68k binary compatibility
 #options 	COMPAT_SVR4	# SVR4 binary compatibility
-#options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 
 # Debugging options
 options 	DIAGNOSTIC	# Extra kernel sanity checks
@@ -190,5 +190,5 @@ pseudo-device	ipfilter 		# IP Filter package
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
-# rnd is EXPERIMENTAL
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	rnd			# /dev/random and in-kernel generator

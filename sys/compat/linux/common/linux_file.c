@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.27.8.2 2000/12/08 09:08:27 bouyer Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.27.8.3 2001/01/05 17:35:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -642,13 +642,14 @@ linux_sys_chmod(p, v, retval)
 	return sys_chmod(p, uap, retval);
 }
 
+#if defined(__i386__) || defined(__m68k__)
 int
-linux_sys_chown(p, v, retval)
+linux_sys_chown16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_chown_args /* {
+	struct linux_sys_chown16_args /* {
 		syscallarg(const char *) path;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
@@ -668,12 +669,12 @@ linux_sys_chown(p, v, retval)
 }
 
 int
-linux_sys_fchown(p, v, retval)
+linux_sys_fchown16(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_fchown_args /* {
+	struct linux_sys_fchown16_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) uid;
 		syscallarg(int) gid;
@@ -690,6 +691,49 @@ linux_sys_fchown(p, v, retval)
 }
 
 int
+linux_sys_lchown16(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_lchown16_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) uid;
+		syscallarg(int) gid;
+	} */ *uap = v;
+	struct sys___posix_lchown_args bla;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	SCARG(&bla, path) = SCARG(uap, path);
+	SCARG(&bla, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
+		(uid_t)-1 : SCARG(uap, uid);
+	SCARG(&bla, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
+		(gid_t)-1 : SCARG(uap, gid);
+
+	return sys___posix_lchown(p, &bla, retval);
+}
+
+int
+linux_sys_chown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_chown_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) uid;
+		syscallarg(int) gid;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return sys___posix_chown(p, uap, retval);
+}
+
+int
 linux_sys_lchown(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -700,17 +744,14 @@ linux_sys_lchown(p, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
-	struct sys___posix_lchown_args bla;
+	caddr_t sg = stackgap_init(p->p_emul);
 
-	SCARG(&bla, path) = SCARG(uap, path);
-	SCARG(&bla, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bla, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
-	return sys___posix_lchown(p, &bla, retval);
+	return sys___posix_lchown(p, uap, retval);
 }
-	
+#endif /* __i386__ || __m68k__ */
+
 int
 linux_sys_rename(p, v, retval)
 	struct proc *p;
@@ -778,6 +819,24 @@ linux_sys_symlink(p, v, retval)
 	CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
 
 	return sys_symlink(p, uap, retval);
+}
+
+int
+linux_sys_link(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_link_args /* {
+		syscallarg(const char *) path;
+		syscallarg(const char *) link;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
+
+	return sys_link(p, uap, retval);
 }
 
 int

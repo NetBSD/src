@@ -1,4 +1,4 @@
-#	$NetBSD: std.hp300,v 1.5.2.1 2000/11/20 20:08:03 bouyer Exp $
+#	$NetBSD: std.hp300,v 1.5.2.2 2001/01/05 17:34:12 bouyer Exp $
 #
 # Options/devices that all hp300s should have
 #
@@ -6,4 +6,5 @@
 machine hp300 m68k
 
 options 	EXEC_AOUT	# support for exec'ing a.out
+options 	EXEC_ELF32	# support for exec'ing ELF
 options 	EXEC_SCRIPT	# support for #! scripts

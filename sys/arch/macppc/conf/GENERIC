@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.39.2.4 2000/12/13 15:49:32 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.39.2.5 2001/01/05 17:34:38 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.39.2.4 $"
+#ident 		"GENERIC-$Revision: 1.39.2.5 $"
 
 maxusers	32
 
@@ -136,6 +136,11 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
+tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
+#options 	TLP_MATCH_21040
+#options 	TLP_MATCH_21041
+#options 	TLP_MATCH_21140
+#options 	TLP_MATCH_21142
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
@@ -219,6 +224,7 @@ wdc*	at obio? flags 0x1
 wd*	at pciide? channel ? drive ?
 wd*	at wdc? channel ? drive ? flags 0x0000
 
+atapibus* at pciide? channel ?
 atapibus* at wdc? channel ?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
@@ -329,6 +335,7 @@ pseudo-device	tun		4	# network tunneling over tty
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm

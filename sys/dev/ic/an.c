@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.5.4.2 2000/12/13 15:50:00 bouyer Exp $	*/
+/*	$NetBSD: an.c,v 1.5.4.3 2001/01/05 17:35:33 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -142,6 +142,7 @@ static const char rcsid[] =
 
 /* These are global because we need them in sys/pci/if_an_p.c. */
 static void an_reset		__P((struct an_softc *));
+static void an_wait		__P((struct an_softc *));
 static int an_ioctl		__P((struct ifnet *, u_long, caddr_t));
 static int an_init		__P((struct ifnet *));
 static void an_stop		__P((struct ifnet *, int));
@@ -172,57 +173,23 @@ static int an_media_change __P((struct ifnet *ifp));
 static void an_media_status __P((struct ifnet *ifp, struct ifmediareq *imr));
 #endif
 
-/* 
- * We probe for an Aironet 4500/4800 card by attempting to
- * read the default SSID list. On reset, the first entry in
- * the SSID list will contain the name "tsunami." If we don't
- * find this, then there's no card present.
- */
-int an_probe(sc)
-	struct an_softc *sc;
-{
-	struct an_ltv_ssidlist	ssid;
-
-	bzero((char *)&ssid, sizeof(ssid));
-
-	ssid.an_len = sizeof(ssid);
-	ssid.an_type = AN_RID_SSIDLIST;
-
-        /* Make sure interrupts are disabled. */
-        CSR_WRITE_2(sc, AN_INT_EN, 0);
-        CSR_WRITE_2(sc, AN_EVENT_ACK, 0xFFFF);
-
-	an_reset(sc);
-
-	if (an_cmd(sc, AN_CMD_READCFG, 0))
-		return(0);
-
-	if (an_read_record(sc, (struct an_ltv_gen *)&ssid))
-		return(0);
-
-	/* See if the ssid matches what we expect ... but doesn't have to */
-	if (strcmp(ssid.an_ssid1, AN_DEF_SSID))
-		return(0);
-	
-	return(AN_IOSIZ);
-}
-
-int an_attach(sc)
-	struct an_softc *sc;
+int
+an_attach(struct an_softc *sc)
 {
 	struct ifnet		*ifp = &sc->arpcom.ec_if;
+	int i, s;
 #ifdef IFM_IEEE80211
-	int i, mtype;
+	int mtype;
 	struct ifmediareq imr;
 #endif
 
+	s = splnet();
 	sc->an_associated = 0;
-
-	/* Reset the NIC. */
-	an_reset(sc);
+	an_wait(sc);
 
 	/* Load factory config */
 	if (an_cmd(sc, AN_CMD_READCFG, 0)) {
+		splx(s);
 		printf("%s: failed to load config data\n", sc->an_dev.dv_xname);
 		return(EIO);
 	}
@@ -231,6 +198,7 @@ int an_attach(sc)
 	sc->an_config.an_type = AN_RID_GENCONFIG;
 	sc->an_config.an_len = sizeof(struct an_ltv_genconfig);
 	if (an_read_record(sc, (struct an_ltv_gen *)&sc->an_config)) {
+		splx(s);
 		printf("%s: read record failed\n", sc->an_dev.dv_xname);
 		return(EIO);
 	}
@@ -239,6 +207,7 @@ int an_attach(sc)
 	sc->an_caps.an_type = AN_RID_CAPABILITIES;
 	sc->an_caps.an_len = sizeof(struct an_ltv_caps);
 	if (an_read_record(sc, (struct an_ltv_gen *)&sc->an_caps)) {
+		splx(s);
 		printf("%s: read record failed\n", sc->an_dev.dv_xname);
 		return(EIO);
 	}
@@ -247,6 +216,7 @@ int an_attach(sc)
 	sc->an_ssidlist.an_type = AN_RID_SSIDLIST;
 	sc->an_ssidlist.an_len = sizeof(struct an_ltv_ssidlist);
 	if (an_read_record(sc, (struct an_ltv_gen *)&sc->an_ssidlist)) {
+		splx(s);
 		printf("%s: read record failed\n", sc->an_dev.dv_xname);
 		return(EIO);
 	}
@@ -255,6 +225,7 @@ int an_attach(sc)
 	sc->an_aplist.an_type = AN_RID_APLIST;
 	sc->an_aplist.an_len = sizeof(struct an_ltv_aplist);
 	if (an_read_record(sc, (struct an_ltv_gen *)&sc->an_aplist)) {
+		splx(s);
 		printf("%s: read record failed\n", sc->an_dev.dv_xname);
 		return(EIO);
 	}
@@ -270,6 +241,7 @@ int an_attach(sc)
 	ifp->if_init = an_init;
 	ifp->if_stop = an_stop;
 	ifp->if_watchdog = an_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	memcpy(ifp->if_xname, sc->an_dev.dv_xname, IFNAMSIZ);
 
@@ -325,13 +297,13 @@ int an_attach(sc)
 	ifmedia_set(&sc->sc_media, imr.ifm_active);
 #endif
 	callout_init(&sc->an_stat_ch);
+	splx(s);
 
 	return(0);
 }
 
 int
-an_detach(sc)
-	struct an_softc *sc;
+an_detach(struct an_softc *sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ec_if;
 	int s;
@@ -346,9 +318,7 @@ an_detach(sc)
 }
 
 int
-an_activate(self, act)
-	struct device *self;
-	enum devact act;
+an_activate(struct device *self, enum devact act)
 {
 	struct an_softc *sc = (struct an_softc *)self;
 	int s, error = 0;
@@ -366,6 +336,41 @@ an_activate(self, act)
 	splx(s);
 
 	return error;
+}
+
+void
+an_power(int why, void *arg)
+{
+	int s;
+	struct an_softc *sc = arg;
+	struct ifnet *ifp = &sc->arpcom.ec_if;
+
+	if (!sc->sc_enabled)
+		return;
+
+	s = splnet();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		an_stop(ifp, 0);
+		break;
+	case PWR_RESUME:
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+	splx(s);
+}
+
+void
+an_shutdown(void *arg)
+{
+	struct an_softc		*sc = arg;
+
+	an_stop(&sc->arpcom.ec_if, 1);
+	return;
 }
 
 static void an_rxeof(sc)
@@ -532,14 +537,11 @@ void an_stats_update(xsc)
 	return;
 }
 
-int an_intr(xsc)
-	void			*xsc;
+int an_intr(void *arg)
 {
-	struct an_softc		*sc;
+	struct an_softc		*sc = arg;
 	struct ifnet		*ifp;
 	u_int16_t		status;
-
-	sc = (struct an_softc*)xsc;
 
 	if (!sc->sc_enabled)
 		return 0;
@@ -588,21 +590,30 @@ int an_intr(xsc)
 	if (status & AN_EV_ALLOC)
 		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_ALLOC);
 
+	if (status & AN_EV_CMD) {
+		wakeup(sc);
+		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CMD);
+	}
+
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, AN_INT_EN, AN_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		an_start(ifp);
 
 	return 1;
 }
 
-static int an_cmd(sc, cmd, val)
-	struct an_softc		*sc;
-	int			cmd;
-	int			val;
+static int
+an_cmd(struct an_softc *sc, int cmd, int val)
 {
-	int			i, s = 0;
+	int i, stat;
+
+	/* make sure that previous command completed */
+	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY) {
+		printf("%s: command busy\n", sc->an_dev.dv_xname);
+		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
+	}
 
 	CSR_WRITE_2(sc, AN_PARAM0, val);
 	CSR_WRITE_2(sc, AN_PARAM1, 0);
@@ -612,31 +623,32 @@ static int an_cmd(sc, cmd, val)
 	for (i = 0; i < AN_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, AN_EVENT_STAT) & AN_EV_CMD)
 			break;
-		else {
-			if (CSR_READ_2(sc, AN_COMMAND) == cmd)
-				CSR_WRITE_2(sc, AN_COMMAND, cmd);
-		}
+		/* make sure the command is accepted */
+		if (CSR_READ_2(sc, AN_COMMAND) == cmd)
+			CSR_WRITE_2(sc, AN_COMMAND, cmd);
+		DELAY(10);
 	}
 
-	for (i = 0; i < AN_TIMEOUT; i++) {
-		CSR_READ_2(sc, AN_RESP0);
-		CSR_READ_2(sc, AN_RESP1);
-		CSR_READ_2(sc, AN_RESP2);
-		s = CSR_READ_2(sc, AN_STATUS);
-		if ((s & AN_STAT_CMD_CODE) == (cmd & AN_STAT_CMD_CODE))
-			break;
-	}
+	stat = CSR_READ_2(sc, AN_STATUS);
+#if 0
+	CSR_READ_2(sc, AN_RESP0);
+	CSR_READ_2(sc, AN_RESP1);
+	CSR_READ_2(sc, AN_RESP2);
+#endif
+
+	/* clear stuck command busy if necessary */
+	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY)
+		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
 
 	/* Ack the command */
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CMD);
 
-	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY)
-		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
-
 	if (i == AN_TIMEOUT)
-		return(ETIMEDOUT);
+		return ETIMEDOUT;
+	if (stat & AN_STAT_CMD_RESULT)
+		return EIO;
 
-	return(0);
+	return 0;
 }
 
 /*
@@ -644,12 +656,12 @@ static int an_cmd(sc, cmd, val)
  * most reliable method I've found to really kick the NIC in the
  * head and force it to reboot correctly.
  */
-static void an_reset(sc)
-	struct an_softc		*sc;
+static void
+an_reset(struct an_softc *sc)
 {
 	if (!sc->sc_enabled)
 		return;
-        
+
 	an_cmd(sc, AN_CMD_ENABLE, 0);
 	an_cmd(sc, AN_CMD_FW_RESTART, 0);
 	an_cmd(sc, AN_CMD_NOOP2, 0);
@@ -660,6 +672,26 @@ static void an_reset(sc)
 	an_cmd(sc, AN_CMD_DISABLE, 0);
 
 	return;
+}
+
+/*
+ * Wait for firmware come up after power enabled.
+ */
+static void
+an_wait(struct an_softc *sc)
+{
+	int i;
+
+	if (!sc->sc_enabled)
+		return;
+
+	CSR_WRITE_2(sc, AN_COMMAND, AN_CMD_NOOP2);
+	for (i = 0; i < 3*hz; i++) {
+		if (CSR_READ_2(sc, AN_EVENT_STAT) & AN_EV_CMD)
+			break;
+		(void)tsleep(sc, PWAIT, "anatch", 1);
+	}
+	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CMD);
 }
 
 /*
@@ -677,13 +709,15 @@ static int an_read_record(sc, ltv)
 
 	/* Tell the NIC to enter record read mode. */
 	if (an_cmd(sc, AN_CMD_ACCESS|AN_ACCESS_READ, ltv->an_type)) {
-		printf("%s: RID access failed\n", sc->an_dev.dv_xname);
+		printf("%s: RID 0x%04x access failed\n", sc->an_dev.dv_xname,
+		    ltv->an_type);
 		return(EIO);
 	}
 
 	/* Seek to the record. */
 	if (an_seek(sc, ltv->an_type, 0, AN_BAP1)) {
-		printf("%s: seek to record failed\n", sc->an_dev.dv_xname);
+		printf("%s: RID 0x%04x seek to record failed\n",
+		    sc->an_dev.dv_xname, ltv->an_type);
 		return(EIO);
 	}
 
@@ -694,8 +728,9 @@ static int an_read_record(sc, ltv)
 	 */
 	len = CSR_READ_2(sc, AN_DATA1);
 	if (len > ltv->an_len) {
-		printf("%s: record length mismatch -- expected %d, "
-		    "got %d\n", sc->an_dev.dv_xname, ltv->an_len, len);
+		printf("%s: RID 0x%04x record length mismatch -- expected %d, "
+		    "got %d\n", sc->an_dev.dv_xname,
+		    ltv->an_type, ltv->an_len, len);
 		return(ENOSPC);
 	}
 
@@ -764,6 +799,7 @@ static int an_seek(sc, id, off, chan)
 	for (i = 0; i < AN_TIMEOUT; i++) {
 		if (!(CSR_READ_2(sc, offreg) & (AN_OFF_BUSY|AN_OFF_ERR)))
 			break;
+		DELAY(10);
 	}
 
 	if (i == AN_TIMEOUT)
@@ -846,6 +882,7 @@ static int an_alloc_nicmem(sc, len, id)
 	for (i = 0; i < AN_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, AN_EVENT_STAT) & AN_EV_ALLOC)
 			break;
+		DELAY(10);
 	}
 
 	if (i == AN_TIMEOUT)
@@ -902,6 +939,8 @@ static void an_setdef(sc, areq)
 		sc->an_tx_rate = sp->an_val;
 		break;
 	case AN_RID_WEP_VOLATILE:
+		memcpy(&sc->an_temp_keys, areq, sizeof(sc->an_temp_keys));
+
 		/* Disable the MAC. */
 		an_cmd(sc, AN_CMD_DISABLE, 0);
 		
@@ -981,14 +1020,19 @@ static int an_ioctl(ifp, command, data)
 	u_long			command;
 	caddr_t			data;
 {
+	int			i, s;
 	int			error = 0;
 	struct an_softc		*sc;
 	struct an_req		areq;
 	struct ifreq		*ifr;
-	struct ieee80211_nwid nwid;
+	struct an_ltv_wepkey	*akey;
+	struct ieee80211_nwid	nwid;
+	struct ieee80211_nwkey	*nwkey;
+	struct ieee80211_power	*power;
 
 	sc = ifp->if_softc;
 	ifr = (struct ifreq *)data;
+	s = splnet();
 
 	switch(command) {
 	case SIOCSIFFLAGS:
@@ -1072,6 +1116,62 @@ static int an_ioctl(ifp, command, data)
 		}
 		error = copyout(&nwid, ifr->ifr_data, sizeof(nwid));
 		break;
+	case SIOCS80211NWKEY:
+		nwkey = (struct ieee80211_nwkey *)data;
+		sc->an_config.an_authtype &= AN_AUTHTYPE_MASK;
+		if (nwkey->i_wepon)
+			sc->an_config.an_authtype |= (AN_AUTHTYPE_MASK + 1);
+		akey = (struct an_ltv_wepkey *)&areq;
+		memset(akey, 0, sizeof(struct an_ltv_wepkey));
+		akey->an_type = AN_RID_WEP_VOLATILE;
+		akey->an_len = sizeof(struct an_ltv_wepkey);
+		akey->an_key_index = 0;
+		akey->an_mac_addr[0] = 1;	/* default mac */
+		akey->an_key_len = nwkey->i_key[0].i_keylen;
+		if (akey->an_key_len > sizeof(akey->an_key)) {
+			error = EINVAL;
+			break;
+		}
+		if (nwkey->i_key[0].i_keydat != NULL) {
+			if ((error = copyin(nwkey->i_key[0].i_keydat,
+			    akey->an_key, akey->an_key_len)) != 0)
+				break;
+		}
+		memcpy(&sc->an_temp_keys, akey, sizeof(struct an_ltv_wepkey));
+		if (sc->sc_enabled)
+			an_init(ifp);
+		break;
+	case SIOCG80211NWKEY:
+		nwkey = (struct ieee80211_nwkey *)data;
+		nwkey->i_wepon =
+		    sc->an_config.an_authtype & ~AN_AUTHTYPE_MASK ? 1 : 0;
+		nwkey->i_defkid = 1;
+		if (nwkey->i_key[0].i_keydat == NULL)
+			break;
+		/* do not show any keys to non-root user */
+		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+			break;
+		akey = &sc->an_temp_keys;
+		nwkey->i_key[0].i_keylen = akey->an_key_len;
+		for (i = 1; i < IEEE80211_WEP_NKID; i++)
+			nwkey->i_key[i].i_keylen = 0;
+		error = copyout(akey->an_key, nwkey->i_key[0].i_keydat,
+		    akey->an_key_len);
+		break;
+	case SIOCS80211POWER:
+		power = (struct ieee80211_power *)data;
+		sc->an_config.an_psave_mode = power->i_enabled ?
+		    AN_PSAVE_PSP : AN_PSAVE_NONE;
+		sc->an_config.an_listen_interval = power->i_maxsleep;
+		if (sc->sc_enabled)
+			an_init(ifp);
+		break;
+	case SIOCG80211POWER:
+		power = (struct ieee80211_power *)data;
+		power->i_enabled =
+		    sc->an_config.an_psave_mode != AN_PSAVE_NONE ? 1 : 0;
+		power->i_maxsleep = sc->an_config.an_listen_interval;
+		break;
 #ifdef IFM_IEEE80211
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
@@ -1083,6 +1183,7 @@ static int an_ioctl(ifp, command, data)
 		break;
 	}
 out:
+	splx(s);
 	return(error);
 }
 
@@ -1184,13 +1285,19 @@ static int an_init_tx_ring(sc)
 	return(0);
 }
 
-static int an_init(ifp)
-	struct ifnet *ifp;
+static int
+an_init(struct ifnet *ifp)
 {
-	struct an_softc		*sc = (struct an_softc *)ifp->if_softc;
+	struct an_softc *sc = (struct an_softc *)ifp->if_softc;
 
 	if (ifp->if_flags & IFF_RUNNING)
 		an_stop(ifp, 0);
+	else if (sc->sc_enabled) {
+		/* re-enable to power on after resume ... */
+		if (sc->sc_disable)
+			(*sc->sc_disable)(sc);
+		sc->sc_enabled = 0;
+	}
 
 	sc->an_associated = 0;
 
@@ -1198,6 +1305,7 @@ static int an_init(ifp)
 		if (sc->sc_enable)
 			(*sc->sc_enable)(sc);
 		sc->sc_enabled = 1;
+		an_wait(sc);
 	}
 
 	/* Allocate the TX buffers */
@@ -1254,6 +1362,13 @@ static int an_init(ifp)
 		return ENXIO;
 	}
 
+	/* Set the WEP Keys */
+	if ((sc->an_config.an_authtype & ~AN_AUTHTYPE_MASK) != 0) {
+		sc->an_temp_keys.an_len = sizeof(struct an_ltv_wepkey);
+		sc->an_temp_keys.an_type = AN_RID_WEP_VOLATILE;
+		an_write_record(sc, (struct an_ltv_gen *)&sc->an_temp_keys);
+	}
+
 	/* Enable the MAC */
 	if (an_cmd(sc, AN_CMD_ENABLE, 0)) {
 		printf("%s: failed to enable MAC\n", sc->an_dev.dv_xname);
@@ -1296,7 +1411,7 @@ static void an_start(ifp)
 	bzero((char *)&tx_frame_802_3, sizeof(tx_frame_802_3));
 
 	while(sc->an_rdata.an_tx_ring[idx] == 0) {
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 
@@ -1381,6 +1496,7 @@ void an_stop(ifp, disable)
 		an_cmd(sc, AN_CMD_DEALLOC_MEM, sc->an_rdata.an_tx_fids[i]);
 
 	ifp->if_flags &= ~(IFF_RUNNING|IFF_OACTIVE);
+	ifp->if_timer = 0;
 
 	if (disable) {
 		if (sc->sc_disable)
@@ -1406,15 +1522,6 @@ static void an_watchdog(ifp)
 	an_init(ifp);
 
 	ifp->if_oerrors++;
-	return;
-}
-
-void an_shutdown(dev)
-	struct device *		dev;
-{
-	struct an_softc		*sc = (struct an_softc *)dev;
-	an_stop(&sc->arpcom.ec_if, 1);
-
 	return;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.115.2.3 2000/12/08 09:26:35 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.115.2.4 2001/01/05 17:34:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -242,7 +242,6 @@ cdev_decl(esh_fp);
 cdev_decl(scsibus);
 #include "bktr.h"
 
-#ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
 #define cdev_i4bctl_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -288,7 +287,6 @@ cdev_decl(i4bctl);
 cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
-#endif
 
 /* open, close, read, write, ioctl, mmap */
 #define cdev_vmegen_init(c,n) { \
@@ -301,12 +299,14 @@ cdev_decl(vmegeneric);
 #include "iop.h"
 cdev_decl(iop);
 
+#include <altq/altqconf.h>
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
-	cdev_disk_init(NWD,wd),	/* 3: ST506/ESDI/IDE disk */
+	cdev_disk_init(NWD,wd),		/* 3: ST506/ESDI/IDE disk */
 	cdev_swap_init(1,sw),		/* 4: /dev/drum (swap pseudo-device) */
 	cdev_tty_init(NPTY,pts),	/* 5: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 6: pseudo-tty master */
@@ -360,20 +360,11 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSKBD, wskbd), /* 48: keyboards */
 	cdev_mouse_init(NWSMOUSE,
 			wsmouse),       /* 49: mice */
-	/* reserve range for i4b (distributed separately) */
-#ifdef __I4B_IS_INTEGRATED
 	cdev_i4b_init(NI4B, i4b),		/* 50: i4b main device */
 	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 51: i4b control device */
 	cdev_i4brbch_init(NI4BRBCH, i4brbch), /* 52: i4b raw b-channel access */
 	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 53: i4b trace device */
 	cdev_i4btel_init(NI4BTEL, i4btel),	/* 54: i4b phone device */
-#else
-	cdev_notdef(),			/* 50 */
-	cdev_notdef(),			/* 51 */
-	cdev_notdef(),			/* 52 */
-	cdev_notdef(),			/* 53 */
-	cdev_notdef(),			/* 54 */
-#endif
 	cdev_usb_init(NUSB,usb),	/* 55: USB controller */
 	cdev_usbdev_init(NUHID,uhid),	/* 56: USB generic HID */
 	cdev_lpt_init(NULPT,ulpt),	/* 57: USB printer */
@@ -396,6 +387,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ses_init(NSES,ses),	/* 74: SCSI SES/SAF-TE */
 	cdev_ugen_init(NUSCANNER,uscanner),/* 75: USB scanner */
 	cdev__oci_init(NIOP,iop),	/* 76: I2O IOP control interface */
+	cdev_altq_init(NALTQ,altq),	/* 77: ALTQ control interface */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -513,7 +505,8 @@ static int chrtoblktbl[] = {
 	/* 73 */	NODEV,
 	/* 74 */	NODEV,
 	/* 75 */	NODEV,
-	/* 76 */	NODEV
+	/* 76 */	NODEV,
+	/* 77 */	NODEV,
 };
 
 /*

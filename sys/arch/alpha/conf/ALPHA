@@ -1,18 +1,18 @@
-# $NetBSD: ALPHA,v 1.107.2.3 2000/12/08 09:23:34 bouyer Exp $
+# $NetBSD: ALPHA,v 1.107.2.4 2001/01/05 17:33:43 bouyer Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.107.2.3 $"
+ident		"ALPHA-$Revision: 1.107.2.4 $"
 
 maxusers 32
 
 # CPU Support
 options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
-#options 	DEC_2100_A500	# Sable:	AlphaServer 2100
-#options 	DEC_2100A_A500	# Lynx:		AlphaServer 2100A
+options 	DEC_2100_A500	# Sable:	AlphaServer 2100
+options 	DEC_2100A_A500	# Lynx:		AlphaServer 2100A
 options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 options 	DEC_3000_300	# Pelican etc:	3000/300*
 options 	DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
@@ -98,6 +98,9 @@ options 	COMPAT_14
 # OSF/1 binary compatibility
 options 	COMPAT_OSF1
 
+# Linux binary compatibility
+options 	COMPAT_LINUX
+
 # System V-like message queues
 options 	SYSVMSG
 
@@ -121,6 +124,7 @@ options 	MIIVERBOSE		# verbose PHY autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
+#options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	EXTENT_DEBUG		# extent alloc/dealloc code debugging
 options 	FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
@@ -200,15 +204,15 @@ lca*	at	mainbus?
 dwlpx*	at	kft?
 mcpcia*	at	mcbus? mid ?
 tsp*	at	tsc?
-#ttwoga*	at	mainbus?
+ttwoga*	at	mainbus?
 
 # Sable PCI and STDIO bus and devices
-#ttwopci* at	ttwoga? hose ?
-#sableio* at	ttwopci? bus ?
-#com*	at	sableio? port ?
-#lpt*	at	sableio? port ?
-#pckbc*	at	sableio? port ?
-#fdc*	at	sableio? port ?
+ttwopci* at	ttwoga? hose ?
+sableio* at	ttwopci? bus ?
+com*	at	sableio? port ?
+lpt*	at	sableio? port ?
+pckbc*	at	sableio? port ?
+fdc*	at	sableio? port ?
 
 # PCI bus support
 pci*	at	apecs?
@@ -219,7 +223,7 @@ pci*	at	ppb?
 pci*	at	dwlpx?
 pci*	at	mcpcia?
 pci*	at	tsp?
-#pci*	at	ttwopci?
+pci*	at	ttwopci?
 
 # PCI devices
 adv*	at	pci? dev ? function ?		# AdvanSys SCSI
@@ -298,6 +302,7 @@ eisa*	at	jensenio?
 isa*	at	pceb?
 eisa*	at	pceb?
 isa*	at	sio?
+#isapnp*	at isa?
 
 # ISA devices
 mcclock* at	isa? port 0x70
@@ -307,11 +312,15 @@ pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
 spkr0	at	pcppi?				# IBM BASIC emulation
 isabeep0 at	pcppi?				# "keyboard" beep
+midi*	at	pcppi?
 com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
 ec0	at	isa? port 0x250 iomem 0xd8000 irq 9 # 3Com 3c503 Ethernet
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+#ep*	at	isapnp?
+#ix0	at	isa? port 0x300 irq 10		# EtherExpress/16
+#iy0	at	isa? port 0x360 irq ?		# EtherExpress PRO
 fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 lc0	at	isa? port 0x300 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 lc1	at	isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
@@ -322,9 +331,11 @@ lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 vga*	at	isa?				# ISA (EISA: XXX) VGA
 wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 wdc1	at	isa? port 0x170 irq 15
+#wdc*	at	isapnp?
 we0     at 	isa? port 0x280 iomem 0xd0000 irq 9  # WD/SMC Ethernet
 we1     at 	isa? port 0x300 iomem 0xcc000 irq 10
 #wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
+#wss*	at	isapnp?
 #audio*	at	wss?
 #midi*	at	wss?
 sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
@@ -479,6 +490,7 @@ pseudo-device	vnd		4
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too

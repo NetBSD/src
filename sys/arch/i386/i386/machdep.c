@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366.2.4 2000/12/13 15:49:26 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.366.2.5 2001/01/05 17:34:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -323,6 +323,7 @@ cpu_startup()
 	int sz, x;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+	char buf[160];				/* about 2 line */
 	char pbuf[9];
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
@@ -362,11 +363,12 @@ cpu_startup()
 	}
 	if (cpu_l2cache_info)
 		printf("cpu0: L2 cache %s\n", cpu_l2cache_info->cai_string);
-	if (cpu_feature) {
-		char buf[1024];
+	if ((cpu_feature & CPUID_MASK1) != 0) {
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
 		    buf, sizeof(buf));
 		printf("cpu0: features %s\n", buf);
+	}
+	if ((cpu_feature & CPUID_MASK2) != 0) {
 		bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
 		    buf, sizeof(buf));
 		printf("cpu0: features %s\n", buf);
@@ -1158,20 +1160,19 @@ sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 
 	tf = p->p_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (SIGACTION_PS(psp, sig).sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	if (onstack)
-		fp = (struct sigframe *)((caddr_t)psp->ps_sigstk.ss_sp +
-						  psp->ps_sigstk.ss_size);
+		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+					  p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->tf_esp;
 	fp--;
@@ -1215,7 +1216,7 @@ sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_err = tf->tf_err;
 
 	/* Save signal stack. */
-	frame.sf_sc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
@@ -1246,7 +1247,7 @@ sendsig(catcher, sig, mask, code)
 	__asm("movl %w0,%%fs" : : "r" (GSEL(GUDATA_SEL, SEL_UPL)));
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)psp->ps_sigcode;
+	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
@@ -1254,7 +1255,7 @@ sendsig(catcher, sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -1332,9 +1333,9 @@ sys___sigreturn14(p, v, retval)
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
@@ -2442,7 +2443,7 @@ cpu_reset()
 	 * entire address space and doing a TLB flush.
 	 */
 	memset((caddr_t)PTD, 0, PAGE_SIZE);
-	pmap_update(); 
+	tlbflush(); 
 #endif
 
 	for (;;);

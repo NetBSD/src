@@ -1,4 +1,4 @@
-/* $NetBSD: sfbreg.h,v 1.1.10.2 2000/11/20 11:43:16 bouyer Exp $ */
+/* $NetBSD: sfbreg.h,v 1.1.10.3 2001/01/05 17:36:28 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -34,6 +34,9 @@
  *
  * All definitions are in "dense" TURBOchannel space.
  */
+
+#ifndef _DEV_TC_SFBREG_H_
+#define _DEV_TC_SFBREG_H_
 
 /*
  * Size of the SFB address space.
@@ -86,3 +89,49 @@
 #define	SFB_ASIC_ENABLE_INTR	0x0074	/* Enable/Disable Interrupts (W) */
 #define	SFB_ASIC_TCCLK		0x0078	/* TCCLK count (R/W) */
 #define	SFB_ASIC_VIDCLK		0x007c	/* VIDCLK count (R/W) */
+
+/*
+ * Same as above but in 32-bit units, and named like the corrseponding
+ * TGA registers, for easy comparison.
+ */
+typedef u_int32_t sfb_reg_t;
+
+#define	SFB_REG_GCBR0	0x000		/* Copy buffer 0 */
+#define	SFB_REG_GCBR1	0x001		/* Copy buffer 1 */
+#define	SFB_REG_GCBR2	0x002		/* Copy buffer 2 */
+#define	SFB_REG_GCBR3	0x003		/* Copy buffer 3 */
+#define	SFB_REG_GCBR4	0x004		/* Copy buffer 4 */
+#define	SFB_REG_GCBR5	0x005		/* Copy buffer 5 */
+#define	SFB_REG_GCBR6	0x006		/* Copy buffer 6 */
+#define	SFB_REG_GCBR7	0x007		/* Copy buffer 7 */
+
+#define	SFB_REG_GFGR	0x008		/* Foreground */
+#define	SFB_REG_GBGR	0x009		/* Background */
+#define	SFB_REG_GPMR	0x00a		/* Plane Mask */
+#define	SFB_REG_GPXR_S	0x00b		/* Pixel Mask (one-shot) */
+#define	SFB_REG_GMOR	0x00c		/* Mode */
+#define	SFB_REG_GOPR	0x00d		/* Raster Operation */
+#define	SFB_REG_GPSR	0x00e		/* Pixel Shift */
+#define	SFB_REG_GADR	0x00f		/* Address */
+
+#define	SFB_REG_GB1R	0x010		/* Bresenham 1 */
+#define	SFB_REG_GB2R	0x011		/* Bresenham 2 */
+#define	SFB_REG_GB3R	0x012		/* Bresenham 3 */
+
+#define	SFB_REG_GCTR	0x013		/* Continue */
+#define	SFB_REG_GDER	0x014		/* Deep */
+#define SFB_REG_GREV	0x015		/* Start/Version on SFB,
+
+ 					 * Revision on SFB2 */
+#define SFB_REG_CINT	0x016		/* Clear Interrupt */
+/* 0x017 - unused */
+#define SFB_REG_VRFR	0x018		/* Video Refresh */
+#define	SFB_REG_VHCR	0x019		/* Horizontal Control */
+#define	SFB_REG_VVCR	0x01a		/* Vertical Control */
+#define	SFB_REG_VVBR	0x01b		/* Video Base Address */
+#define	SFB_REG_VVVR	0x01c		/* Video Valid */
+#define	SFB_REG_SISR	0x01d		/* Enable/Disable Interrupts */
+#define	SFB_REG_TCCLK	0x01e		/* TCCLK count (R/W) */
+#define	SFB_REG_VIDCLK	0x01f		/* VIDCLK count (R/W) */
+
+#endif /* _DEV_TC_SFBREG_H_ */

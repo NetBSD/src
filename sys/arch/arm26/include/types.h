@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.1.6.2 2000/11/20 20:02:47 bouyer Exp $ */
+/* $NetBSD: types.h,v 1.1.6.3 2001/01/05 17:34:03 bouyer Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
 #define	_ARM32_TYPES_H_
 
 #include <sys/cdefs.h>
+#include <machine/int_types.h>
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
@@ -56,16 +57,14 @@ typedef vm_size_t	vsize_t;
  * not possible for a machine/compiler combination.
  */
 #define	__BIT_TYPES_DEFINED__
-typedef	__signed char		   int8_t;
-typedef	unsigned char		 u_int8_t;
-typedef	short			  int16_t;
-typedef	unsigned short		u_int16_t;
-typedef	int			  int32_t;
-typedef	unsigned int		u_int32_t;
-/* LONGLONG */
-typedef	long long		  int64_t;
-/* LONGLONG */
-typedef	unsigned long long	u_int64_t;
+typedef	__int8_t	   int8_t;
+typedef	__uint8_t	 u_int8_t;
+typedef	__int16_t	  int16_t;
+typedef	__uint16_t	u_int16_t;
+typedef	__int32_t	  int32_t;
+typedef	__uint32_t	u_int32_t;
+typedef	__int64_t	  int64_t;
+typedef	__uint64_t	u_int64_t;
 
 typedef int32_t                 register_t;
 

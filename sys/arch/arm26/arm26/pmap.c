@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.7.2.2 2000/11/20 20:02:33 bouyer Exp $ */
+/* $NetBSD: pmap.c,v 1.7.2.3 2001/01/05 17:34:01 bouyer Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -32,24 +32,44 @@
  */
 
 /*
+ * The MMU on ARM2 and ARM3 systems is an Acorn custom chip called MEMC
+ * (Anna to her friends).  Each MEMC can handle up to 4MB of local DRAM,
+ * split into 128 pages.  Thus, a system with 16MB of RAM will have four
+ * MEMCs co-operating to run it.  In addition the the MMU, the master MEMC
+ * in a system handles video and sound DMA, the system clocks and the
+ * address decoding necessary to control accesses to the I/O system, ROMs
+ * and VIDC.
+ * 
+ * The memory layout provided by the MEMC is mostly fixed, with the bottom
+ * 32 MB being logically-mapped RAM and the next 16 MB being physically-
+ * mapped RAM.
+ *
+ * The MEMC provides some rudimentary access control over memory and I/O
+ * devices.  Code running in USR mode is allowed access to ROM and to those
+ * parts of logical RAM to which it's been granted access.  Code running in
+ * SVC mode can access everything.  The fact that SVC-mode code can't be
+ * prevented from writing to RAM makes it very difficult to emulate modified
+ * bits for pages that might be accessed from SVC mode.
+ *
+ * The page tables in the MEMC are implemented using content-addressable
+ * memory, with one cell for each physical page.  This means that it's
+ * impossible to have one physical page mapped in two locations.  For this
+ * reason, we try to treat the MEMC as a TLB, and to keep enough information
+ * around to quickly re-load mappings without troubling uvm_fault().
+ * Having multiple physical pages mapped to the same logical page is possible,
+ * and we arrange to map all unused physical pages in the same place.
+ * Accessing the logical page in question has undefined results, though, as
+ * it may end up with multiple DRAMs trying to drive the data bus at once.
+ *
  * The MEMC has variable page sizes, and moreover it's necessary to
  * change the page size depending on the amount of DRAM under the
  * MEMC's control.  This code currently only handles 32k pages.
  *
  * The bottom 32k of logically-mapped RAM is zero page, and is mapped
  * in all address spaces (though it's not accessible in user mode).
- * This contains interrupt vectors, and probably context-switching
- * code.  It doesn't appear in any pmap as it's never unmapped.
- * 
- * Wired pages are an interesting proposition.  We aren't allowed to
- * let page faults on them reach the MI fault handler, and in general
- * we shouldn't let them get dropped from the map in the MEMC at all.
- * This is tricky when we have kernel and user space shared, as we
- * have to ensure that no wired page in the kernel is mapped by any
- * user process or vice versa.
- */
-
-/*
+ * This contains exception vectors.  It doesn't appear in any pmap as
+ * it's never unmapped.
+ *
  * On an ARM3, the cache must be flushed whenever:
  * 
  * 1 - We remove read access to a page, since we need to ensure reads
@@ -63,9 +83,7 @@
  *     /dev/mem.  In all other cases, a physical page should only be
  *     accessed through one of its mappings (virtual if it has one,
  *     physical if it doesn't).  pmap_find is useful for this.
- */
-
-/*
+ *
  * We assume the following rules apply:
  *
  * Accesses to memory managed by user pmaps will always be from USR
@@ -73,7 +91,8 @@
  * the MEMC).
  *
  * Accesses to memory managed by the kernel pmap will always be from
- * SVC mode.
+ * SVC mode, and pmap_enter() will be explicitly told what to do to
+ * the referenced/modified bits.
  *
  * Breaking these rules (especially the first) is likely to upset
  * referenced/modified emulation.
@@ -81,11 +100,12 @@
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
+#include "opt_uvmhist.h"
 #include "arcvideo.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.2 2000/11/20 20:02:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.3 2001/01/05 17:34:01 bouyer Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -93,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7.2.2 2000/11/20 20:02:33 bouyer Exp $");
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_stat.h>
 
 #include <machine/intr.h>
 #include <machine/machdep.h>
@@ -155,6 +176,11 @@ static struct pool *pmap_pool;
 
 static pmap_t active_pmap;
 
+UVMHIST_DECL(pmaphist);
+static struct uvm_history_ent pmaphistbuf[100];
+
+       void pmap_init2(void);
+
 static void pv_update(struct pv_entry *);
 static struct pv_entry *pv_alloc(void);
 static void pv_free(struct pv_entry *pv);
@@ -203,7 +229,10 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	int i;
 	struct pmap *pmap;
 	size_t pv_table_size;
+	UVMHIST_FUNC("pmap_bootstrap");
 
+	UVMHIST_INIT_STATIC(pmaphist, pmaphistbuf);
+	UVMHIST_CALLED(pmaphist);
 	/* Set up the bootstrap pv_table */
 	pv_table_size = round_page(physmem * sizeof(struct pv_entry));
 	pv_table =
@@ -239,7 +268,9 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	int i;
 	vaddr_t addr;
-	
+	UVMHIST_FUNC("pmap_steal_memory");
+
+	UVMHIST_CALLED(pmaphist);
 	addr = NULL;
 	size = round_page(size);
 	for (i = 0; i < vm_nphysseg; i++) {
@@ -266,35 +297,64 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 void
 pmap_init()
 {
+	UVMHIST_FUNC("pmap_init");
 
+	UVMHIST_CALLED(pmaphist);
 	/* All deferred to pmap_create, because malloc() is nice. */
+}
+
+/*
+ * pmap_init2: third stage pmap initialisation.
+ *
+ * This is invoked the first time pmap_create is called.  It sets up the pool
+ * for allocating user pmaps, and frees some unnecessary memory.
+ */
+void
+pmap_init2()
+{
+	struct pmap *pmap;
+	struct pv_entry *new_pv_table, *old_pv_table;
+	size_t pv_table_size;
+	int lpn;
+	UVMHIST_FUNC("pmap_init2");
+
+	UVMHIST_CALLED(pmaphist);
+	/* We can now call malloc().  Rationalise our memory usage. */
+	pv_table_size = physmem * sizeof(struct pv_entry);
+	new_pv_table = malloc(pv_table_size, M_VMPMAP, M_WAITOK);
+	memcpy(new_pv_table, pv_table, pv_table_size);
+	old_pv_table = pv_table;
+	pv_table = new_pv_table;
+
+	/* Fix up the kernel pmap to point at new pv_entries. */
+	pmap = pmap_kernel();
+	for (lpn = 0; lpn < 1024; lpn++)
+		if (pmap->pm_entries[lpn] ==
+		    old_pv_table + pmap->pm_entries[lpn]->pv_ppn)
+			pmap->pm_entries[lpn] =
+			    pv_table + pmap->pm_entries[lpn]->pv_ppn;
+
+	uvm_pagefree(PHYS_TO_VM_PAGE(
+	    PMAP_UNMAP_POOLPAGE((vaddr_t)old_pv_table)));
+
+	/* Create pmap pool */
+	pmap_pool = pool_create(sizeof(struct pmap), 0, 0, 0,
+	    "pmappool", 0, NULL, NULL, M_VMPMAP);
+	pmap_initialised = 1;
 }
 
 struct pmap *
 pmap_create()
 {
 	struct pmap *pmap;
-	struct pv_entry *new_pv_table, *old_pv_table;
-	size_t pv_table_size;
+	UVMHIST_FUNC("pmap_create");
 
-	if (!pmap_initialised) {
-		/* We can now call malloc().  Rationalise our memory usage. */
-		pv_table_size = physmem * sizeof(struct pv_entry);
-		new_pv_table = malloc(pv_table_size, M_VMPMAP, M_WAITOK);
-		memcpy(new_pv_table, pv_table, pv_table_size);
-		old_pv_table = pv_table;
-		pv_table = new_pv_table;
-		uvm_pagefree(PHYS_TO_VM_PAGE(
-		    PMAP_UNMAP_POOLPAGE((vaddr_t)old_pv_table)));
-
-		/* Create pmap pool */
-		pmap_pool = pool_create(sizeof(struct pmap), 0, 0, 0,
-		    "pmappool", 0, NULL, NULL, M_VMPMAP);
-		pmap_initialised = 1;
-	}
-
+	UVMHIST_CALLED(pmaphist);
+	if (!pmap_initialised) 
+		pmap_init2();
 	pmap = pool_get(pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
+	pmap->pm_count = 1;
 	return pmap;
 }
 
@@ -304,7 +364,9 @@ pmap_destroy(pmap_t pmap)
 #ifdef DIAGNOSTIC
 	int i;
 #endif
+	UVMHIST_FUNC("pmap_destroy");
 
+	UVMHIST_CALLED(pmaphist);
 	if (--pmap->pm_count > 0)
 		return;
 #ifdef DIAGNOSTIC
@@ -322,16 +384,16 @@ pmap_activate(struct proc *p)
 {
 	pmap_t pmap;
 	int i;
+	UVMHIST_FUNC("pmap_activate");
 
+	UVMHIST_CALLED(pmaphist);
 	pmap = p->p_vmspace->vm_map.pmap;
 
 	if (pmap == pmap_kernel())
 		return; /* kernel pmap is always active */
 
-#ifdef DIAGNOSTIC
-	if (active_pmap != NULL || (pmap->pm_flags & PM_ACTIVE) != 0)
-		panic("pmap_activate");
-#endif
+	KASSERT(active_pmap == NULL);
+	KASSERT((pmap->pm_flags & PM_ACTIVE) == 0);
 
 	active_pmap = pmap;
 	pmap->pm_flags |= PM_ACTIVE;
@@ -345,16 +407,16 @@ pmap_deactivate(struct proc *p)
 {
 	pmap_t pmap;
 	int i;
+	UVMHIST_FUNC("pmap_deactivate");
 
+	UVMHIST_CALLED(pmaphist);
 	pmap = p->p_vmspace->vm_map.pmap;
 
 	if (pmap == pmap_kernel())
 		return; /* kernel pmap is always active */
 
-#ifdef DIAGNOSTIC
-	if (active_pmap != pmap || (pmap->pm_flags & PM_ACTIVE) == 0)
-		panic("pmap_deactivate");
-#endif
+	KASSERT(pmap == active_pmap);
+	KASSERT(pmap->pm_flags & PM_ACTIVE);
 
 	active_pmap = NULL;
 	pmap->pm_flags &=~ PM_ACTIVE;
@@ -368,7 +430,9 @@ void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_unwire");
 
+	UVMHIST_CALLED(pmaphist);
 	if (pmap == NULL) return;
 	pv = pmap->pm_entries[atop(va)];
 	if (pv == NULL) return;
@@ -379,6 +443,9 @@ void
 pmap_collect(pmap)
 	pmap_t pmap;
 {
+	UVMHIST_FUNC("pmap_collect");
+
+	UVMHIST_CALLED(pmaphist);
 	/* This is allowed to be a no-op. */
 }
 
@@ -388,6 +455,9 @@ pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
 	vaddr_t dst_addr, src_addr;
 	vsize_t len;
 {
+	UVMHIST_FUNC("pmap_copy");
+
+	UVMHIST_CALLED(pmaphist);
 	/* This is allowed to be a no-op. */
 }
 
@@ -400,27 +470,17 @@ pv_update(struct pv_entry *pv)
 {
 	int ppl;
 	int pflags;
+	UVMHIST_FUNC("pv_update");
 
+	UVMHIST_CALLED(pmaphist);
 	pflags = pv_table[pv->pv_ppn].pv_pflags;
-	if (pv->pv_pmap == pmap_kernel()) {
-		if (1) {
-			/* Don't risk faults till everything's happy */
-			ppl = MEMC_PPL_NOACCESS;
-			pv_table[pv->pv_ppn].pv_pflags |=
-			    PV_REFERENCED | PV_MODIFIED;
-		} else 	if ((pflags & PV_REFERENCED) && (pflags & PV_MODIFIED))
-			ppl = MEMC_PPL_NOACCESS;
-		else {
-			/*
-			 * To keep SVC mode from seeing a page, we
-			 * have to unmap it entirely.
-			 */
-			pv->pv_ppl = MEMC_PPL_NOACCESS;
-			pv->pv_activate = pv->pv_deactivate =
-			    PMAP_UNMAP_ENTRY_32K(pv->pv_ppn);
-			return;
-		}
-	} else {
+	if (pv->pv_pmap == pmap_kernel())
+		/*
+		 * Referenced/modified emulation is almost impossible in
+		 * SVC mode.
+		 */
+		ppl = MEMC_PPL_NOACCESS;
+	else {
 		if ((pv->pv_prot & VM_PROT_WRITE) &&
 		    (pflags & PV_REFERENCED) && (pflags & PV_MODIFIED))
 			ppl = MEMC_PPL_RDWR;
@@ -457,19 +517,28 @@ static struct pv_entry *
 pv_get(pmap_t pmap, int ppn, int lpn)
 {
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pv_get");
 
+	UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p, ppn=%d, lpn=%d)", pmap, ppn, lpn, 0);
 	/* If the head entry's free use that. */
 	pv = &pv_table[ppn];
-	if (pv->pv_pmap == NULL)
+	if (pv->pv_pmap == NULL) {
+		UVMHIST_LOG(pmaphist, "<-- head (pv=%p)", pv, 0, 0, 0);
 		return pv;
+	}
 	/* If this mapping exists already, use that. */
 	for (pv = pv; pv != NULL; pv = pv->pv_next)
-		if (pv->pv_pmap == pmap && pv->pv_lpn == lpn)
+		if (pv->pv_pmap == pmap && pv->pv_lpn == lpn) {
+			UVMHIST_LOG(pmaphist, "<-- existing (pv=%p)",
+			    pv, 0, 0, 0);
 			return pv;
+		}
 	/* Otherwise, allocate a new entry and link it in after the head. */
 	pv = pv_alloc();
 	pv->pv_next = pv_table[ppn].pv_next;
 	pv_table[ppn].pv_next = pv;
+	UVMHIST_LOG(pmaphist, "<-- new (pv=%p)", pv, 0, 0, 0);
 	return pv;
 }
 
@@ -480,7 +549,10 @@ static void
 pv_release(pmap_t pmap, int ppn, int lpn)
 {
 	struct pv_entry *pv, *npv;
+	UVMHIST_FUNC("pv_release");
 
+	UVMHIST_CALLED(pmaphist);
+	UVMHIST_LOG(pmaphist, "(pmap=%p, ppn=%d, lpn=%d)", pmap, ppn, lpn, 0);
 	pv = &pv_table[ppn];
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -491,23 +563,24 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 	if (pmap == pv->pv_pmap && lpn == pv->pv_lpn) {
 		npv = pv->pv_next;
 		if (npv) {
+			UVMHIST_LOG(pmaphist, "pv=%p; pull-up", pv, 0, 0, 0);
 			/* Pull up first entry from chain. */
 			npv->pv_pflags = pv->pv_pflags;
 			*pv = *npv;
-			pv->pv_pmap->pm_entries[lpn] = pv;
+			pv->pv_pmap->pm_entries[pv->pv_lpn] = pv;
 			pv_free(npv);
-		} else
+		} else {
+			UVMHIST_LOG(pmaphist, "pv=%p; empty", pv, 0, 0, 0);
 			pv->pv_pmap = NULL;
+		}
 	} else {
 		for (npv = pv->pv_next; npv; npv = npv->pv_next) {
 			if (pmap == npv->pv_pmap && lpn == npv->pv_lpn)
 				break;
 			pv = npv;
 		}
-#ifdef DIAGNOSTIC
-		if (npv == NULL)
-			panic("pv_release");
-#endif
+		KASSERT(npv != NULL);
+		UVMHIST_LOG(pmaphist, "pv=%p; tail", pv, 0, 0, 0);
 		pv->pv_next = npv->pv_next;
 		pv_free(npv);
 	}
@@ -528,53 +601,15 @@ int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	int ppn, lpn, s;
-	struct pv_entry *pv;
+	struct pv_entry *pv, *ppv;
+	UVMHIST_FUNC("pmap_enter");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(pa); lpn = atop(va);
 
-#if 0
-	printf("pmap_enter: mapping ppn %d at lpn %d in pmap %p\n",
-	       ppn, lpn, pmap);
-#endif
+	UVMHIST_LOG(pmaphist, "mapping ppn %d at lpn %d in pmap %p",
+	       ppn, lpn, pmap, 0);
 	s = splimp();
-	/* Check if the physical page is mapped already elsewhere. */
-	if (pmap == pmap_kernel()) {
-		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
-			if (pv->pv_pmap != NULL &&
-			    (pv->pv_pmap != pmap || pv->pv_lpn != lpn)) {
-				if (pv->pv_vflags & PV_WIRED) {
-					printf("new: pmap = %p, ppn = %d, "
-					       "lpn = %d\n", pmap, ppn, lpn);
-					printf("old: pmap = %p, ppn = %d, "
-					       "lpn = %d\n", pv->pv_pmap,
-					       pv->pv_ppn, pv->pv_lpn);
-					panic("Mapping clash not handled");
-				} else {
-					pmap_remove(pv->pv_pmap,
-						    pv->pv_lpn * PAGE_SIZE,
-						    (pv->pv_lpn+1) *
-						    PAGE_SIZE);
-				}
-			}
-	} else {
-		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
-			if (pv->pv_pmap == pmap_kernel() ||
-			    (pv->pv_pmap == pmap && pv->pv_lpn != lpn)) {
-				if (pv->pv_vflags & PV_WIRED) {
-					printf("new: pmap = %p, ppn = %d, "
-					       "lpn = %d\n", pmap, ppn, lpn);
-					printf("old: pmap = %p, ppn = %d, "
-					       "lpn = %d\n", pv->pv_pmap,
-					       pv->pv_ppn, pv->pv_lpn);
-					panic("Mapping clash not handled");
-				} else {
-					pmap_remove(pv->pv_pmap,
-						    pv->pv_lpn * PAGE_SIZE,
-						    (pv->pv_lpn+1) *
-						    PAGE_SIZE);
-				}
-			}
-	}
 
 	/* Remove any existing mapping at this lpn */
 	if (pmap->pm_entries[lpn] != NULL &&
@@ -583,14 +618,19 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/* Make a note */
 	pv = pv_get(pmap, ppn, lpn);
+	ppv = &pv_table[ppn];
 	pv->pv_pmap = pmap;
 	pv->pv_ppn = ppn;
 	pv->pv_lpn = lpn;
 	pv->pv_prot = prot;
 	pv->pv_vflags = 0;
-	pv->pv_pflags = 0;
+	/* pv->pv_pflags = 0; */
 	if (flags & PMAP_WIRED)
 		pv->pv_vflags |= PV_WIRED;
+	if (flags & VM_PROT_WRITE)
+		ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
+	else if (flags & (VM_PROT_ALL))
+		ppv->pv_pflags |= PV_REFERENCED;
 	pv_update(pv);
 	pmap->pm_entries[lpn] = pv;
 	splx(s);
@@ -607,12 +647,12 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	int slpn, elpn, lpn, s;
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_remove");
 
+	UVMHIST_CALLED(pmaphist);
 	slpn = atop(sva); elpn = atop(eva);
-#if 0
-	printf("pmap_remove: clearing from lpn %d to lpn %d in pmap %p\n",
-	       slpn, elpn - 1, pmap);
-#endif
+	UVMHIST_LOG(pmaphist, "clearing from lpn %d to lpn %d in pmap %p",
+	       slpn, elpn - 1, pmap, 0);
 	s = splimp();
 	for (lpn = slpn; lpn < elpn; lpn++) {
 		pv = pmap->pm_entries[lpn];
@@ -632,7 +672,9 @@ boolean_t
 pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 {
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_extract");
 
+	UVMHIST_CALLED(pmaphist);
 	pv = pmap->pm_entries[atop(va)];
 	if (pv == NULL)
 		return FALSE;
@@ -643,14 +685,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *ppa)
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
+	UVMHIST_FUNC("pmap_kenter_pa");
 
-	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	UVMHIST_CALLED(pmaphist);
+	pmap_enter(pmap_kernel(), va, pa, prot, prot | PMAP_WIRED);
 }
 
 void
 pmap_kenter_pgs(vaddr_t va, struct vm_page **pages, int npages)
 {
+	UVMHIST_FUNC("pmap_kenter_pgs");
 
+	UVMHIST_CALLED(pmaphist);
 	while (npages > 0) {
 		pmap_kenter_pa(va, (*pages)->phys_addr, VM_PROT_ALL);
 		va += NBPG;
@@ -662,7 +708,9 @@ pmap_kenter_pgs(vaddr_t va, struct vm_page **pages, int npages)
 void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
+	UVMHIST_FUNC("pmap_kremove");
 
+	UVMHIST_CALLED(pmaphist);
 	pmap_remove(pmap_kernel(), va, va+len);
 }
 
@@ -671,7 +719,9 @@ pmap_is_modified(page)
 	struct vm_page *page;
 {
 	int ppn;
+	UVMHIST_FUNC("pmap_is_modified");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	return (pv_table[ppn].pv_pflags & PV_MODIFIED) != 0;
 }
@@ -681,7 +731,9 @@ pmap_is_referenced(page)
 	struct vm_page *page;
 {
 	int ppn;
+	UVMHIST_FUNC("pmap_is_referenced");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	return (pv_table[ppn].pv_pflags & PV_REFERENCED) != 0;
 }
@@ -690,7 +742,9 @@ static void
 pmap_update_page(int ppn)
 {
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_update_page");
 
+	UVMHIST_CALLED(pmaphist);
 	for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
 		if (pv->pv_pmap != NULL) {
 			pv_update(pv);
@@ -708,7 +762,9 @@ pmap_clear_modify(struct vm_page *page)
 {
 	int ppn;
 	boolean_t rv;
+	UVMHIST_FUNC("pmap_clear_modify");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	rv = pmap_is_modified(page);
 	pv_table[ppn].pv_pflags &= ~PV_MODIFIED;
@@ -721,7 +777,9 @@ pmap_clear_reference(struct vm_page *page)
 {
 	int ppn;
 	boolean_t rv;
+	UVMHIST_FUNC("pmap_clear_reference");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	rv = pmap_is_referenced(page);
 	pv_table[ppn].pv_pflags &= ~PV_REFERENCED;
@@ -739,7 +797,9 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 {
 	int lpn, ppn;
 	struct pv_entry *pv, *ppv;
+	UVMHIST_FUNC("pmap_fault");
 
+	UVMHIST_CALLED(pmaphist);
 	lpn = atop(va);
 	pv = pmap->pm_entries[lpn];
 	if (pv == NULL)
@@ -771,6 +831,26 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 			return TRUE;
 		}
 	}
+	/*
+	 * It wasn't a referenced/modified fault.
+	 * If it looks like the access should have been allowed, try pushing
+	 * the mapping back into the MEMC.
+	 */
+	if ((atype & ~pv->pv_prot) == 0) {
+		UVMHIST_LOG(pmaphist,
+		    "MEMC miss; pmap = %p, lpn = %d, ppn = %d",
+		    pmap, lpn, ppn, 0);
+		MEMC_WRITE(pv->pv_activate);
+		/*
+		 * If the new mapping is writeable, we should flush the cache
+		 * so that stale data for an existing mapping doesn't get
+		 * reused.
+		 * XXX: Should this be done more lazily?
+		 */
+		if (pv->pv_prot & VM_PROT_WRITE)
+			cpu_cache_flush();
+		return TRUE;
+	}
 	return FALSE;
 }
 
@@ -779,12 +859,12 @@ pmap_page_protect(struct vm_page *page, vm_prot_t prot)
 {
 	int ppn;
 	struct pv_entry *pv;
+	UVMHIST_FUNC("pmap_page_protect");
 
+	UVMHIST_CALLED(pmaphist);
 	ppn = atop(page->phys_addr);
 	if (prot == VM_PROT_NONE) {
-#if 0
-		printf("pmap_page_protect: removing ppn %d\n", ppn);
-#endif
+		UVMHIST_LOG(pmaphist, "removing ppn %d\n", ppn, 0, 0, 0);
 		pv = &pv_table[ppn];
 		while (pv->pv_pmap != NULL) {
 			if (pv->pv_pmap->pm_flags & PM_ACTIVE) {
@@ -817,7 +897,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	struct pv_entry *pv;
 	int s, slpn, elpn, lpn;
+	UVMHIST_FUNC("pmap_protect");
 
+	UVMHIST_CALLED(pmaphist);
 	if (prot == VM_PROT_NONE) {
 		pmap_remove(pmap, sva, eva);
 		return;
@@ -844,7 +926,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 void
 pmap_reference(pmap_t pmap)
 {
+	UVMHIST_FUNC("pmap_reference");
 
+	UVMHIST_CALLED(pmaphist);
 	pmap->pm_count++;
 }
 
@@ -858,7 +942,9 @@ pmap_reference(pmap_t pmap)
 void
 pmap_update()
 {
+	UVMHIST_FUNC("pmap_update");
 
+	UVMHIST_CALLED(pmaphist);
 	/* Do nothing */
 }
 
@@ -873,7 +959,11 @@ pmap_find(paddr_t pa)
 {
 #ifdef CPU_ARM3
 	struct pv_entry *pv;
-		
+#endif
+	UVMHIST_FUNC("pmap_find");
+
+	UVMHIST_CALLED(pmaphist);
+#ifdef CPU_ARM3
 	for (pv = &pv_table[atop(pa)]; pv != NULL; pv = pv->pv_next)
 		if (pv->pv_pmap != NULL && (pv->pv_pmap->pm_flags & PM_ACTIVE))
 			return (caddr_t)ptoa(pv->pv_lpn);
@@ -884,7 +974,9 @@ pmap_find(paddr_t pa)
 void
 pmap_zero_page(paddr_t pa)
 {
+	UVMHIST_FUNC("pmap_zero_page");
 
+	UVMHIST_CALLED(pmaphist);
 	bzero(pmap_find(pa), PAGE_SIZE);
 	pv_table[atop(pa)].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
 }
@@ -892,7 +984,9 @@ pmap_zero_page(paddr_t pa)
 void
 pmap_copy_page(paddr_t src, paddr_t dest)
 {
+	UVMHIST_FUNC("pmap_copy_page");
 
+	UVMHIST_CALLED(pmaphist);
 	memcpy(pmap_find(dest), pmap_find(src), PAGE_SIZE);
 	pv_table[atop(src)].pv_pflags |= PV_REFERENCED;
 	pv_table[atop(dest)].pv_pflags |= PV_MODIFIED | PV_REFERENCED;
@@ -908,33 +1002,13 @@ pmap_copy_page(paddr_t src, paddr_t dest)
 void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
-	
+	UVMHIST_FUNC("pmap_virtual_space");
+
+	UVMHIST_CALLED(pmaphist);
 	if (vstartp != NULL)
 		*vstartp = VM_MIN_KERNEL_ADDRESS;
 	if (vendp != NULL)
 		*vendp = VM_MAX_KERNEL_ADDRESS - PAGE_SIZE;
-}
-
-/*
- * Check if the given access should have aborted.  Used in various abort
- * handlers to work out what happened.
- */
-boolean_t
-pmap_confess(vaddr_t va, vm_prot_t atype)
-{
-	pmap_t pmap;
-	struct pv_entry *pv;
-
-	/* XXX Assume access was from user mode (or equiv). */
-	pmap = va < VM_MIN_KERNEL_ADDRESS ? active_pmap : pmap_kernel();
-	pv = pmap->pm_entries[atop(va)];
-	if (pv == NULL)
-		return TRUE;
-	if (pv->pv_ppl == MEMC_PPL_NOACCESS)
-		return TRUE;
-	if (pv->pv_ppl == MEMC_PPL_RDONLY && (atype & VM_PROT_WRITE))
-		return TRUE;
-	return FALSE;
 }
 
 #ifdef DDB

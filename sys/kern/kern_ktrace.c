@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.38.2.2 2000/12/13 15:50:20 bouyer Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.38.2.3 2001/01/05 17:36:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,8 +37,6 @@
 
 #include "opt_ktrace.h"
 
-#ifdef KTRACE
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -53,6 +51,8 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#ifdef KTRACE
 
 int	ktrace_common(struct proc *, int, int, int, struct file *);
 void	ktrinitheader(struct ktr_header *, struct proc *, int);
@@ -172,12 +172,12 @@ void
 ktremul(struct proc *p)
 {
 	struct ktr_header kth;
-	char *emul = p->p_emul->e_name;
+	const char *emul = p->p_emul->e_name;
 
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_EMUL);
 	kth.ktr_len = strlen(emul);
-	kth.ktr_buf = emul;
+	kth.ktr_buf = (caddr_t)emul;
 
 	(void) ktrwrite(p, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
@@ -274,6 +274,41 @@ ktrcsw(struct proc *p, int out, int user)
 
 	(void) ktrwrite(p, &kth);
 	p->p_traceflag &= ~KTRFAC_ACTIVE;
+}
+
+void
+ktruser(p, id, addr, len, ustr)
+	struct proc *p;
+	const char *id;
+	void *addr;
+	size_t len;
+	int ustr;
+{
+	struct ktr_header kth;
+	struct ktr_user *ktp;
+	caddr_t user_dta;
+
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	ktrinitheader(&kth, p, KTR_USER);
+	ktp = malloc(sizeof(struct ktr_user) + len, M_TEMP, M_WAITOK);
+	if (ustr) {
+		if (copyinstr(id, ktp->ktr_id, KTR_USER_MAXIDLEN, NULL) != 0)
+			ktp->ktr_id[0] = '\0';
+	} else
+		strncpy(ktp->ktr_id, id, KTR_USER_MAXIDLEN);
+	ktp->ktr_id[KTR_USER_MAXIDLEN-1] = '\0';
+
+	user_dta = (caddr_t) ((char *)ktp + sizeof(struct ktr_user));
+	if (copyin(addr, (void *) user_dta, len) != 0)
+		len = 0;
+
+	kth.ktr_buf = (void *)ktp;
+	kth.ktr_len = sizeof(struct ktr_user) + len;
+	(void) ktrwrite(p, &kth);
+
+	free(ktp, M_TEMP);
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+
 }
 
 /* Interface and common routines */
@@ -618,3 +653,30 @@ ktrcanset(struct proc *callp, struct proc *targetp)
 	return (0);
 }
 #endif /* KTRACE */
+
+/*
+ * Put user defined entry to ktrace records.
+ */
+int
+sys_utrace(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#ifdef KTRACE
+	struct sys_utrace_args /* {
+		syscallarg(const char *) id;
+		syscallarg(void *) addr;
+		syscallarg(size_t) len;
+	} */ *uap = v;
+
+	if (!KTRPOINT(p, KTR_USER))
+		return (0);
+
+	ktruser(p, SCARG(uap, id), SCARG(uap, addr), SCARG(uap, len), 1);
+
+	return (0);
+#else /* !KTRACE */
+	return ENOSYS;
+#endif /* KTRACE */
+}

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.184.2.3 2000/12/08 09:23:24 bouyer Exp $ */
+/* $NetBSD: machdep.c,v 1.184.2.4 2001/01/05 17:33:39 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.3 2000/12/08 09:23:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.4 2001/01/05 17:33:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +121,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184.2.3 2000/12/08 09:23:24 bouyer Exp
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
+#endif
+
+#ifdef DEBUG
+#include <machine/sigdebug.h>
 #endif
 
 #include <machine/alpha.h>
@@ -1464,12 +1468,6 @@ regdump(framep)
 	printregs(&reg);
 }
 
-#ifdef DEBUG
-int sigdebug = 0;
-int sigpid = 0;
-#define	SDB_FOLLOW	0x01
-#define	SDB_KSTACK	0x02
-#endif
 
 /*
  * Send an interrupt to process.
@@ -1484,23 +1482,22 @@ sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct sigcontext *scp, ksc;
 	struct trapframe *frame;
-	struct sigacts *psp = p->p_sigacts;
 	int onstack, fsize, rndfsize;
 
 	frame = p->p_md.md_tf;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
-	    (psp->ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
-	    (psp->ps_sigact[sig].sa_flags & SA_ONSTACK) != 0;
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
 	fsize = sizeof(ksc);
 	rndfsize = ((fsize + 15) / 16) * 16;
 
 	if (onstack)
-		scp = (struct sigcontext *)((caddr_t)psp->ps_sigstk.ss_sp +
-						     psp->ps_sigstk.ss_size);
+		scp = (struct sigcontext *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+					p->p_sigctx.ps_sigstk.ss_size);
 	else
 		scp = (struct sigcontext *)(alpha_pal_rdusp());
 	scp = (struct sigcontext *)((caddr_t)scp - rndfsize);
@@ -1531,7 +1528,7 @@ sendsig(catcher, sig, mask, code)
 	bzero(ksc.sc_xxx, sizeof ksc.sc_xxx);			/* XXX */
 
 	/* Save signal stack. */
-	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
 
 	/* Save signal mask. */
 	ksc.sc_mask = *mask;
@@ -1578,7 +1575,7 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	/* Set up the registers to return to sigcode. */
-	frame->tf_regs[FRAME_PC] = (u_int64_t)psp->ps_sigcode;
+	frame->tf_regs[FRAME_PC] = (u_int64_t)p->p_sigctx.ps_sigcode;
 	frame->tf_regs[FRAME_A0] = sig;
 	frame->tf_regs[FRAME_A1] = code;
 	frame->tf_regs[FRAME_A2] = (u_int64_t)scp;
@@ -1587,7 +1584,7 @@ sendsig(catcher, sig, mask, code)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -1657,9 +1654,9 @@ sys___sigreturn14(p, v, retval)
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);

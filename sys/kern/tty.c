@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.115.2.2 2000/11/22 16:05:26 bouyer Exp $	*/
+/*	$NetBSD: tty.c,v 1.115.2.3 2001/01/05 17:36:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1356,8 +1356,8 @@ loop:	lflag = tp->t_lflag;
 	 * Hang process if it's in the background.
 	 */
 	if (isbackground(p, tp)) {
-		if (sigismember(&p->p_sigignore, SIGTTIN) ||
-		    sigismember(&p->p_sigmask, SIGTTIN) ||
+		if (sigismember(&p->p_sigctx.ps_sigignore, SIGTTIN) ||
+		    sigismember(&p->p_sigctx.ps_sigmask, SIGTTIN) ||
 		    p->p_flag & P_PPWAIT || p->p_pgrp->pg_jobc == 0)
 			return (EIO);
 		pgsignal(p->p_pgrp, SIGTTIN, 1);
@@ -1606,8 +1606,8 @@ loop:
 	p = curproc;
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
-	    !sigismember(&p->p_sigignore, SIGTTOU) &&
-	    !sigismember(&p->p_sigmask, SIGTTOU)) {
+	    !sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU) &&
+	    !sigismember(&p->p_sigctx.ps_sigmask, SIGTTOU)) {
 		if (p->p_pgrp->pg_jobc == 0) {
 			error = EIO;
 			goto out;

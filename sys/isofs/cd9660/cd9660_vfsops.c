@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.3 2000/12/08 09:13:15 bouyer Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.4 2001/01/05 17:36:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -918,7 +918,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	case VSOCK:
 	case VDIR:
 	case VBAD:
+		break;
 	case VREG:
+		uvm_vnp_setsize(vp, ip->i_size);
 		break;
 	}
 	

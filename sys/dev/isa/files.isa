@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.90.2.2 2000/11/22 16:03:44 bouyer Exp $
+#	$NetBSD: files.isa,v 1.90.2.3 2001/01/05 17:35:50 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -433,6 +433,21 @@ file	dev/isa/midi_pcppi.c    midi_pcppi
 attach  lm at isa with lm_isa
 file    dev/isa/lm_isa.c	lm_isa
 
+# ISDN devices
+attach isic at isa with isa_isic
+file dev/isa/isa_isic.c              isa_isic
+attach daic at isa with isa_daic
+file dev/isa/isadaic.c		     isa_daic
+
+defopt	opt_isicisa.h	ISICISA_TEL_S0_8 ISICISA_TEL_S0_16 ISICISA_TEL_S0_16_3
+			ISICISA_AVM_A1 ISICISA_USR_STI ISICISA_ITKIX1
+
+file dev/isa/i4b_tel_s08.c        isa_isic
+file dev/isa/i4b_tel_s016.c       isa_isic
+file dev/isa/i4b_tel_s0163.c      isa_isic
+file dev/isa/i4b_avm_a1.c         isa_isic
+file dev/isa/i4b_usr_sti.c        isa_isic
+file dev/isa/i4b_itk_ix1.c        isa_isic
 
 #
 # ISA Plug 'n Play autoconfiguration glue.
@@ -440,3 +455,4 @@ file    dev/isa/lm_isa.c	lm_isa
 # ISA PnP devices often use `device' declarations listed in this file.
 #
 include "dev/isapnp/files.isapnp"
+

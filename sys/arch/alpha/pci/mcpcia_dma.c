@@ -1,4 +1,4 @@
-/* $NetBSD: mcpcia_dma.c,v 1.12.2.1 2000/11/20 19:57:11 bouyer Exp $ */
+/* $NetBSD: mcpcia_dma.c,v 1.12.2.2 2001/01/05 17:33:47 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.12.2.1 2000/11/20 19:57:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.12.2.2 2001/01/05 17:33:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,11 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: mcpcia_dma.c,v 1.12.2.1 2000/11/20 19:57:11 bouyer E
 #include <alpha/pci/pci_kn300.h>
 
 bus_dma_tag_t mcpcia_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
-
-int	mcpcia_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-
-void	mcpcia_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 int	mcpcia_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
@@ -147,8 +142,8 @@ mcpcia_dma_init(ccp)
 	t->_boundary = 0;
 	t->_sgmap = &ccp->cc_pci_sgmap;
 	t->_get_tag = mcpcia_dma_get_tag;
-	t->_dmamap_create = mcpcia_bus_dmamap_create_sgmap;
-	t->_dmamap_destroy = mcpcia_bus_dmamap_destroy_sgmap;
+	t->_dmamap_create = alpha_sgmap_dmamap_create;
+	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
 	t->_dmamap_load = mcpcia_bus_dmamap_load_sgmap;
 	t->_dmamap_load_mbuf = mcpcia_bus_dmamap_load_mbuf_sgmap;
 	t->_dmamap_load_uio = mcpcia_bus_dmamap_load_uio_sgmap;
@@ -173,8 +168,8 @@ mcpcia_dma_init(ccp)
 	t->_boundary = 0;
 	t->_sgmap = &ccp->cc_isa_sgmap;
 	t->_get_tag = mcpcia_dma_get_tag;
-	t->_dmamap_create = mcpcia_bus_dmamap_create_sgmap;
-	t->_dmamap_destroy = mcpcia_bus_dmamap_destroy_sgmap;
+	t->_dmamap_create = alpha_sgmap_dmamap_create;
+	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
 	t->_dmamap_load = mcpcia_bus_dmamap_load_sgmap;
 	t->_dmamap_load_mbuf = mcpcia_bus_dmamap_load_mbuf_sgmap;
 	t->_dmamap_load_uio = mcpcia_bus_dmamap_load_uio_sgmap;
@@ -291,55 +286,6 @@ mcpcia_dma_get_tag(t, bustype)
 	default:
 		panic("mcpcia_dma_get_tag: shouldn't be here, really...");
 	}
-}
-
-/*
- * Create a MCPCIA SGMAP-mapped DMA map.
- */
-int
-mcpcia_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
-{
-	bus_dmamap_t map;
-	int error;
-
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
-	    boundary, flags, dmamp);
-	if (error)
-		return (error);
-
-	map = *dmamp;
-
-	if (flags & BUS_DMA_ALLOCNOW) {
-		error = alpha_sgmap_alloc(map, round_page(size),
-		    t->_sgmap, flags);
-		if (error)
-			mcpcia_bus_dmamap_destroy_sgmap(t, map);
-	}
-
-	return (error);
-}
-
-/*
- * Destroy a MCPCIA SGMAP-mapped DMA map.
- */
-void
-mcpcia_bus_dmamap_destroy_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-{
-
-	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		alpha_sgmap_free(map, t->_sgmap);
-
-	_bus_dmamap_destroy(t, map);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.17.2.2 2000/12/13 15:50:10 bouyer Exp $
+#	$NetBSD: files.pcmcia,v 1.17.2.3 2001/01/05 17:36:21 bouyer Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -106,3 +106,15 @@ file	dev/pcmcia/if_tr_pcmcia.c		tr_pcmcia
 # Aironet PC4500/PC4800
 attach	an at pcmcia with an_pcmcia
 file	dev/pcmcia/if_an_pcmcia.c		an_pcmcia
+
+# ISDN devices
+attach isic at pcmcia with pcmcia_isic
+file dev/pcmcia/pcmcia_isic.c			pcmcia_isic
+
+defopt	opt_isicpcmcia.h	ISICPCMCIA_AVM_A1 ISICPCMCIA_ELSA_ISDNMC
+				ISICPCMCIA_ELSA_MCALL
+
+file dev/pcmcia/i4b_avm_fritz_pcmcia.c		pcmcia_isic
+file dev/pcmcia/i4b_elsa_isdnmc.c		pcmcia_isic
+file dev/pcmcia/i4b_elsa_mcall.c		pcmcia_isic
+

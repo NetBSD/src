@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.3.2.3 2000/12/13 15:50:11 bouyer Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.3.2.4 2001/01/05 17:36:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -215,6 +215,12 @@ static struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_STR_SAMSUNG_SWL_2000N,
 	  1 },
 
+	{ PCMCIA_VENDOR_LUCENT,
+	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
+	  PCMCIA_CIS_SMC_2632W,
+	  PCMCIA_STR_SMC_2632W,
+	  1 },
+
 	{ 0,
 	  0,
 	  { NULL, NULL, NULL, NULL },
@@ -398,6 +404,7 @@ wi_attach(parent, self, aux)
 	ifp->if_init = wi_init;
 	ifp->if_stop = wi_stop;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	(void)wi_set_ssid(&sc->wi_nodeid, WI_DEFAULT_NODENAME,
 	    sizeof(WI_DEFAULT_NODENAME) - 1);
@@ -520,6 +527,10 @@ static void wi_rxeof(sc)
 		ifp->if_ierrors++;
 		return;
 	}
+
+	/* Align the data after the ethernet header */
+	m->m_data = (caddr_t) ALIGN(m->m_data + sizeof(struct ether_header)) 
+	    - sizeof(struct ether_header);
 
 	eh = mtod(m, struct ether_header *);
 	m->m_pkthdr.rcvif = ifp;
@@ -730,7 +741,7 @@ int wi_intr(arg)
 	/* Re-enable interrupts. */
 	CSR_WRITE_2(sc, WI_INT_EN, WI_INTRS);
 
-	if (ifp->if_snd.ifq_head != NULL)
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		wi_start(ifp);
 
 #if NRND > 0
@@ -1577,7 +1588,7 @@ static void wi_start(ifp)
 	if (ifp->if_flags & IFF_OACTIVE)
 		return;
 
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 	if (m0 == NULL)
 		return;
 

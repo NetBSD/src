@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.12.2.2 2000/11/22 16:03:22 bouyer Exp $ */
+/* $NetBSD: lemac.c,v 1.12.2.3 2001/01/05 17:35:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -628,17 +628,20 @@ lemac_ifstart(
     struct ifnet *ifp)
 {
     lemac_softc_t * const sc = LEMAC_IFP_TO_SOFTC(ifp);
-    struct ifqueue * const ifq = &ifp->if_snd;
 
     if ((ifp->if_flags & IFF_RUNNING) == 0)
 	return;
 
     LEMAC_INTR_DISABLE(sc);
 
-    while (ifq->ifq_head != NULL) {
+    for (;;) {
 	struct mbuf *m;
 	struct mbuf *m0;
 	int tx_pg;
+
+	IFQ_POLL(&ifp->if_snd, m);
+	if (m == NULL)
+	    break;
 
 	if ((sc->sc_csr.csr_tqc = LEMAC_INB(sc, LEMAC_REG_TQC)) >= lemac_txmax) {
 	    sc->sc_cntrs.cntr_txfull++;
@@ -659,7 +662,7 @@ lemac_ifstart(
 	    break;
 	}
 
-	IF_DEQUEUE(ifq, m);
+	IFQ_DEQUEUE(&ifp->if_snd, m);
 
 	/*
 	 * The first four bytes of each transmit buffer are for
@@ -1033,6 +1036,8 @@ lemac_ifattach(
 
     if (sc->sc_flags & LEMAC_ALIVE) {
 	int media;
+
+	IFQ_SET_READY(&ifp->if_snd);
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);

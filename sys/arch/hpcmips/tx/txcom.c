@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.10.2.3 2000/11/22 16:00:12 bouyer Exp $ */
+/*	$NetBSD: txcom.c,v 1.10.2.4 2001/01/05 17:34:26 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -276,9 +276,9 @@ txcom_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (IS_COM0(slot)) {
 		/* install DCD, CTS hooks. */
-		config_hook(CONFIG_HOOK_EVENT, CONFIG_HOOK_EVENT_COM0_DCD,
+		config_hook(CONFIG_HOOK_EVENT, CONFIG_HOOK_COM0_DCD,
 			    CONFIG_HOOK_EXCLUSIVE, txcom_dcd_hook, sc);
-		config_hook(CONFIG_HOOK_EVENT, CONFIG_HOOK_EVENT_COM0_CTS,
+		config_hook(CONFIG_HOOK_EVENT, CONFIG_HOOK_COM0_CTS,
 			    CONFIG_HOOK_EXCLUSIVE, txcom_cts_hook, sc);
 	}
 
@@ -592,8 +592,8 @@ txcom_modem(struct txcom_softc *sc, int on)
 
 	/* assert DTR */
 	if (IS_COM0(slot)) {
-		config_hook_call(CONFIG_HOOK_OUT, 
-				 CONFIG_HOOK_OUT_COM0_DTR,
+		config_hook_call(CONFIG_HOOK_SET, 
+				 CONFIG_HOOK_COM0_DTR,
 				 (void *)on);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.1.8.2 2000/11/20 20:09:36 bouyer Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.1.8.3 2001/01/05 17:34:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,8 +65,15 @@
 int	fdc_pnpbios_match(struct device *, struct cfdata *, void *);
 void	fdc_pnpbios_attach(struct device *, struct device *, void *);
 
+struct fdc_pnpbios_softc {
+        struct fdc_softc sc_fdc;        /* base fdc device */
+
+        bus_space_handle_t sc_baseioh;  /* base I/O handle */
+};
+
+
 struct cfattach fdc_pnpbios_ca = {
-	sizeof(struct fdc_softc), fdc_pnpbios_match,
+	sizeof(struct fdc_pnpbios_softc), fdc_pnpbios_match,
 	    fdc_pnpbios_attach,
 };
 
@@ -89,20 +96,74 @@ fdc_pnpbios_attach(struct device *parent,
     void *aux)
 {
 	struct fdc_softc *fdc = (void *) self;
+        struct fdc_pnpbios_softc *pdc = (void *) self;
 	struct pnpbiosdev_attach_args *aa = aux;
-
+        int size, base;
+        
 	printf("\n");
 
 	fdc->sc_ic = aa->ic;
 
-	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &fdc->sc_iot, &fdc->sc_ioh)) {
+	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &fdc->sc_iot,
+            &pdc->sc_baseioh)) {
 		printf("%s: unable to map I/O space\n", fdc->sc_dev.dv_xname);
 		return;
 	}
 
-	if (pnpbios_io_map(aa->pbt, aa->resc, 1, &fdc->sc_iot,
-	    &fdc->sc_fdctlioh)) {
-		printf("%s: unable to map CTL I/O space\n",
+	/* 
+         * Start accounting for "odd" pnpbios's. Some probe as 4 ports,
+         * some as 6 and some don't give the ctl port back. 
+         */
+
+        if (pnpbios_getiosize(aa->pbt, aa->resc, 0, &size)) {
+                printf("%s: can't get iobase size\n", fdc->sc_dev.dv_xname);
+                return;
+        }
+
+        switch (size) {
+
+        /* Easy case. This matches right up with what the fdc code expects. */
+        case 4:
+                fdc->sc_ioh = pdc->sc_baseioh;
+                break;
+
+        /* Map a subregion so this all lines up with the fdc code. */
+        case 6:
+                if (bus_space_subregion(fdc->sc_iot, pdc->sc_baseioh, 2, 4,
+                    &fdc->sc_ioh)) {
+                        printf("%s: unable to subregion I/O space\n",
+                            fdc->sc_dev.dv_xname);
+                        return;
+                }
+                break;
+        default:
+                printf ("%s: unknown size: %d of io mapping\n",
+                    fdc->sc_dev.dv_xname, size);
+                return;
+        }
+        
+        /* 
+         * XXX: This is bad. If the pnpbios claims only 1 I/O range then it's
+         * omitting the controller I/O port. (One has to exist for there to
+         * be a working fdc). Just try and force the mapping in. 
+         */
+
+        if (aa->resc->numio == 1) {
+
+                if (pnpbios_getiobase(aa->pbt, aa->resc, 0, 0, &base)) {
+                        printf ("%s: can't get iobase\n",
+                            fdc->sc_dev.dv_xname);
+                        return;
+                }
+                if (bus_space_map(fdc->sc_iot, base + size + 1, 1, 0,
+                    &fdc->sc_fdctlioh)) {
+                        printf("%s: unable to force map CTL I/O space\n", 
+                            fdc->sc_dev.dv_xname);
+                        return;
+                }
+        } else if (pnpbios_io_map(aa->pbt, aa->resc, 1, &fdc->sc_iot,
+            &fdc->sc_fdctlioh)) {
+                printf("%s: unable to map CTL I/O space\n",
 		    fdc->sc_dev.dv_xname);
 		return;
 	}
@@ -114,6 +175,9 @@ fdc_pnpbios_attach(struct device *parent,
 	}
 
 	pnpbios_print_devres(self, aa);
+        if (aa->resc->numio == 1)
+                printf("%s: ctl io %x didn't probe. Forced attach\n",
+                    fdc->sc_dev.dv_xname, base + size + 1);
 
 	fdc->sc_ih = pnpbios_intr_establish(aa->pbt, aa->resc, 0, IPL_BIO,
 	    fdcintr, fdc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_prefix.c,v 1.3.2.1 2000/11/20 18:10:49 bouyer Exp $	*/
+/*	$NetBSD: in6_prefix.c,v 1.3.2.2 2001/01/05 17:36:56 bouyer Exp $	*/
 /*	$KAME: in6_prefix.c,v 1.29 2000/06/07 05:59:38 itojun Exp $	*/
 
 /*
@@ -598,14 +598,16 @@ add_each_addr(struct socket *so, struct rr_prefix *rpp, struct rp_addr *rap)
 	if (ia6 != NULL) {
 		if (ia6->ia6_ifpr == NULL) {
 			/* link this addr and the prefix each other */
-			IFAFREE(&rap->ra_addr->ia_ifa);
+			if (rap->ra_addr)
+				IFAFREE(&rap->ra_addr->ia_ifa);
 			rap->ra_addr = ia6;
 			IFAREF(&rap->ra_addr->ia_ifa);
 			ia6->ia6_ifpr = rp2ifpr(rpp);
 			return;
 		}
 		if (ia6->ia6_ifpr == rp2ifpr(rpp)) {
-			IFAFREE(&rap->ra_addr->ia_ifa);
+			if (rap->ra_addr)
+				IFAFREE(&rap->ra_addr->ia_ifa);
 			rap->ra_addr = ia6;
 			IFAREF(&rap->ra_addr->ia_ifa);
 			return;

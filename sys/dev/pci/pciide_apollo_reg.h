@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_apollo_reg.h,v 1.4.8.1 2000/11/20 11:42:34 bouyer Exp $	*/
+/*	$NetBSD: pciide_apollo_reg.h,v 1.4.8.2 2001/01/05 17:36:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -79,7 +79,7 @@
 
 /* Ultra-DMA/33 control (586A/B only) */
 #define APO_UDMA 0x50
-#define AP0_UDMA_MASK(channel) (0xffff << ((1 - (channel)) << 4))
+#define APO_UDMA_MASK(channel) (0xffff << ((1 - (channel)) << 4))
 #define APO_UDMA_TIME(channel, drive, x) (((x) & 0x3) << \
 	(((1 - (channel)) << 4) + ((1 - (drive)) << 3)))
 #define APO_UDMA_PIO_MODE(channel, drive) (0x20 << \

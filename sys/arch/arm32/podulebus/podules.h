@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.12.12.4 2000/12/13 15:49:23 bouyer Exp $	*/
+/*	$NetBSD: podules.h,v 1.12.12.5 2001/01/05 17:34:06 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.15 2000/12/07 21:23:32 bjh21 Exp 
+ *	NetBSD: podules,v 1.16 2000/12/19 00:36:26 bjh21 Exp 
  */
 
 /*
@@ -143,8 +143,9 @@
 /* cards made by i-cubed for Acorn */
 #define	PODULE_ICUBED_ETHERLAN100AEH	0x011c		/* AEH77 (EtherLan 102) */
 #define	PODULE_ICUBED_ETHERLAN200AEH	0x011d		/* AEH79 (EtherLan 210) */
-#define	PODULE_ICUBED_ETHERLAN600AEH	0x011e		/* AEH60/AEH78 (EtherLan 602) */
-#define	PODULE_ICUBED_ETHERLAN500AEH	0x011f		/* AEH54/AEH75 (EtherLan 512) */
+#define	PODULE_ICUBED_ETHERLAN600AEH	0x011e		/* AEH62/78/99 (EtherLan 602) */
+#define	PODULE_ICUBED_ETHERLAN500AEH	0x011f		/* AEH75 (EtherLan 512) */
+#define	PODULE_ICUBED_ETHERLAN700AEH	0x012e		/* AEH98 (EtherLan 700-series) */
 /* XXX Not listed by Design IT. */
 #define	PODULE_ICUBED_ETHERLAN100XXX	0x00c4		/* EtherLan 100??? */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.65.2.3 2000/12/08 09:12:31 bouyer Exp $
+#	$NetBSD: files.pci,v 1.65.2.4 2001/01/05 17:36:03 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -303,6 +303,10 @@ file	dev/pci/uhci_pci.c		uhci_pci
 attach	ohci at pci with ohci_pci
 file	dev/pci/ohci_pci.c		ohci_pci
 
+# EHCI USB controller
+attach	ehci at pci with ehci_pci
+file	dev/pci/ehci_pci.c		ehci_pci
+
 # OHCI IEEE 1394 controller
 attach	fwohci at pci with fwohci_pci
 file	dev/pci/fwohci_pci.c		fwohci_pci
@@ -379,3 +383,18 @@ file dev/pci/viaenv.c	viaenv needs-flag
 device	hifn {}
 attach	hifn at pci
 file	dev/pci/hifn7751.c		hifn
+
+# Aironet PC4500/PC4800
+attach	an at pci with an_pci
+file	dev/pci/if_an_pci.c		an_pci
+
+
+# ISDN devices
+attach isic at pci with pci_isic
+file dev/pci/pci_isic.c				pci_isic
+
+defopt	opt_isicpci.h	ISICPCI_ELSA_QS1PCI ISICPCI_AVM_A1
+
+file dev/pci/i4b_elsa_qs1p.c			pci_isic
+file dev/pci/i4b_avm_fritz_pci.c		pci_isic
+

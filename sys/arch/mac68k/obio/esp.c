@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.23.2.2 2000/11/20 20:12:26 bouyer Exp $	*/
+/*	$NetBSD: esp.c,v 1.23.2.3 2001/01/05 17:34:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -246,6 +246,7 @@ espattach(parent, self, aux)
 		via2_register_irq(VIA2_SCSIIRQ, esp_intr, esc);
 		esc->irq_mask = V2IF_SCSIIRQ;
 		if (reg_offset == 0x10000) {
+			/* From the Q650 developer's note */
 			sc->sc_freq = 16500000;
 		} else {
 			sc->sc_freq = 25000000;
@@ -295,9 +296,13 @@ espattach(parent, self, aux)
 	 */
 	sc->sc_minsync = 1000 / sc->sc_freq;
 
-	sc->sc_minsync = 0;	/* No synchronous xfers w/o DMA */
-	/* Really no limit, but since we want to fit into the TCR... */
-	sc->sc_maxxfer = 8 * 1024; /*64 * 1024; XXX */
+	/* We need this to fit into the TCR... */
+	sc->sc_maxxfer = 64 * 1024;
+
+	if (!quick) {
+		sc->sc_minsync = 0;	/* No synchronous xfers w/o DMA */
+		sc->sc_maxxfer = 8 * 1024;
+	}
 
 	/*
 	 * Configure interrupts.
@@ -397,8 +402,8 @@ esp_dma_intr(sc)
 		return 0;
 	}
 
-	cnt = *esc->sc_dmalen;
-	if (*esc->sc_dmalen == 0) {
+	cnt = esc->sc_dmasize;
+	if (esc->sc_dmasize == 0) {
 		printf("data interrupt, but no count left.");
 	}
 
@@ -445,9 +450,9 @@ esp_dma_intr(sc)
 	sc->sc_espstat = (u_char) espstat;
 	sc->sc_espintr = (u_char) espintr;
 	*esc->sc_dmaaddr = p;
-	*esc->sc_dmalen = cnt;
+	esc->sc_dmasize = cnt;
 
-	if (*esc->sc_dmalen == 0) {
+	if (esc->sc_dmasize == 0) {
 		esc->sc_tc = NCRSTAT_TC;
 	}
 	sc->sc_espstat |= esc->sc_tc;
@@ -498,6 +503,10 @@ esp_quick_write_reg(sc, reg, val)
 	esc->sc_reg[reg * 16] = val;
 }
 
+#if DEBUG
+int mac68k_esp_debug=0;
+#endif
+
 int
 esp_quick_dma_intr(sc)
 	struct ncr53c9x_softc *sc;
@@ -513,24 +522,15 @@ esp_quick_dma_intr(sc)
 	if (esc->sc_dmasize == 0) {
 		int	res;
 
-		res = 65536;
-		res -= NCR_READ_REG(sc, NCR_TCL);
-		res -= NCR_READ_REG(sc, NCR_TCM) << 8;
-		printf("dmaintr: discarded %d b (last transfer was %d b).\n",
-			res, esc->sc_prevdmasize);
+		res = NCR_READ_REG(sc, NCR_TCL);
+		res += NCR_READ_REG(sc, NCR_TCM) << 8;
+		printf("dmaintr: DMA xfer of zero xferred %d\n", res);
 		return 0;
-	}
-
-	if (esc->sc_datain &&
-	    (resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
-		printf("dmaintr: empty FIFO of %d\n", resid);
-		DELAY(1);
 	}
 
 	if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
 		resid += NCR_READ_REG(sc, NCR_TCL);
 		resid += NCR_READ_REG(sc, NCR_TCM) << 8;
-
 		if (resid == 0)
 			resid = 65536;
 	}
@@ -538,10 +538,15 @@ esp_quick_dma_intr(sc)
 	trans = esc->sc_dmasize - resid;
 	if (trans < 0) {
 		printf("dmaintr: trans < 0????");
-		trans = esc->sc_dmasize;
+		trans = *esc->sc_dmalen;
 	}
 
 	NCR_DMA(("dmaintr: trans %d, resid %d.\n", trans, resid));
+#if DEBUG
+	if (mac68k_esp_debug) {
+		printf("eqd_intr: trans %d, resid %d.\n", trans, resid);
+	}
+#endif
 	*esc->sc_dmaaddr += trans;
 	*esc->sc_dmalen -= trans;
 
@@ -561,18 +566,27 @@ esp_quick_dma_setup(sc, addr, len, datain, dmasize)
 	esc->sc_dmaaddr = addr;
 	esc->sc_dmalen = len;
 
-	esc->sc_pdmaddr = (u_int16_t *) *addr;
-	esc->sc_pdmalen = *len;
-	if (esc->sc_pdmalen & 1) {
-		esc->sc_pdmalen--;
+	if (*len & 1) {
 		esc->sc_pad = 1;
 	} else {
 		esc->sc_pad = 0;
 	}
 
 	esc->sc_datain = datain;
-	esc->sc_prevdmasize = esc->sc_dmasize;
 	esc->sc_dmasize = *dmasize;
+
+#if DIAGNOSTIC
+	if (esc->sc_dmasize == 0) {
+		printf("esp_quick_dma_setup called with %lx, %lx, %d, %lx\n",
+		    (long) *addr, (long) *len, datain, (long) esc->sc_dmasize);
+	}
+#endif
+#if DEBUG
+	if (mac68k_esp_debug) {
+	printf("eqd_setup: addr %lx, len %lx, in? %d, dmasize %lx\n",
+	    (long) *addr, (long) *len, datain, (long) esc->sc_dmasize);
+	}
+#endif
 
 	return 0;
 }
@@ -581,10 +595,7 @@ static __inline__ int
 esp_dafb_have_dreq(esc)
 	struct esp_softc *esc;
 {
-	u_int32_t r;
-
-	r = bus_space_read_4(esc->sc_tag, esc->sc_bsh, 0);
-	return (r & 0x200);
+	return (*(volatile u_int32_t *)(esc->sc_bsh.base) & 0x200);
 }
 
 static __inline__ int
@@ -594,92 +605,264 @@ esp_iosb_have_dreq(esc)
 	return (via2_reg(vIFR) & V2IF_SCSIDRQ);
 }
 
-static int espspl=-1;
-#define __splx(s) __asm __volatile ("movew %0,sr" : : "di" (s));
-#define __spl2()  __splx(PSL_S|PSL_IPL2)
-#define __spl6()  __splx(PSL_S|PSL_IPL6)
+static volatile int espspl=-1;
 
+/*
+ * Apple "DMA" is weird.
+ *
+ * Basically, the CPU acts like the DMA controller.  The DREQ/ off the
+ * chip goes to a register that we've mapped at attach time (on the
+ * IOSB or DAFB, depending on the machine).  Apple also provides some
+ * space for which the memory controller handshakes data to/from the
+ * NCR chip with the DACK/ line.  This space appears to be mapped over
+ * and over, every 4 bytes, but only the lower 16 bits are valid (but
+ * reading the upper 16 bits will handshake DACK/ just fine, so if you
+ * read *u_int16_t++ = *u_int16_t++ in a loop, you'll get
+ * <databyte><databyte>0xff0xff<databyte><databyte>0xff0xff...
+ *
+ * When you're attempting to read or write memory to this DACK/ed space,
+ * and the NCR is not ready for some timeout period, the system will
+ * generate a bus error.  This might be for one of several reasons:
+ *
+ *	1) (on write) The FIFO is full and is not draining.
+ *	2) (on read) The FIFO is empty and is not filling.
+ *	3) An interrupt condition has occurred.
+ *	4) Anything else?
+ *
+ * So if a bus error occurs, we first turn off the nofault bus error handler,
+ * then we check for an interrupt (which would render the first two
+ * possibilities moot).  If there's no interrupt, check for a DREQ/.  If we
+ * have that, then attempt to resume stuffing (or unstuffing) the FIFO.  If
+ * neither condition holds, pause briefly and check again.
+ *
+ * NOTE!!!  In order to make allowances for the hardware structure of
+ *          the mac, spl values in here are hardcoded!!!!!!!!!
+ *          This is done to allow serial interrupts to get in during
+ *          scsi transfers.  This is ugly.
+ */
 void
 esp_quick_dma_go(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
+	extern long mac68k_a2_fromfault;
 	extern int *nofault;
 	label_t faultbuf;
 	u_int16_t volatile *pdma;
+	u_int16_t *addr;
+	int		len, res;
+	u_short		cnt32, cnt2;
 	u_char volatile *statreg;
 
 	esc->sc_active = 1;
 
-	espspl = spl2();
+	espspl = splhigh();
+
+	addr = (u_int16_t *) *esc->sc_dmaaddr;
+	len  = esc->sc_dmasize;
 
 restart_dmago:
+#if DEBUG
+	if (mac68k_esp_debug) {
+		printf("eqdg: a %lx, l %lx, in? %d ... ",
+		    (long) addr, (long) len, esc->sc_datain);
+	}
+#endif
 	nofault = (int *) &faultbuf;
 	if (setjmp((label_t *) nofault)) {
 		int	i=0;
 
 		nofault = (int *) 0;
+#if DEBUG
+		if (mac68k_esp_debug) {
+			printf("be\n");
+		}
+#endif
+		/*
+		 * Bus error...
+		 * So, we first check for an interrupt.  If we have
+		 * one, go handle it.  Next we check for DREQ/.  If
+		 * we have it, then we restart the transfer.  If
+		 * neither, then loop until we get one or the other.
+		 */
 		statreg = esc->sc_reg + NCR_STAT * 16;
 		for (;;) {
+			spl2();		/* Give serial a chance... */
+			splhigh();	/* That's enough... */
+
 			if (*statreg & 0x80) {
 				goto gotintr;
 			}
 
 			if (esp_have_dreq(esc)) {
+				/*
+				 * Get the length from the address
+				 * differential.
+				 */
+				addr = (u_int16_t *) mac68k_a2_fromfault;
+				len = esc->sc_dmasize -
+				    ((long) addr - (long) *esc->sc_dmaaddr);
+
+				if (esc->sc_datain == 0) {
+					/*
+					 * Let the FIFO drain before we read
+					 * the transfer count.
+					 * Do we need to do this?
+					 * Can we do this?
+					 */
+					while (NCR_READ_REG(sc, NCR_FFLAG)
+					    & 0x1f);
+					/*
+					 * Get the length from the transfer
+					 * counters.
+					 */
+					res = NCR_READ_REG(sc, NCR_TCL);
+					res += NCR_READ_REG(sc, NCR_TCM) << 8;
+					/*
+					 * If they don't agree,
+					 * adjust accordingly.
+					 */
+					while (res > len) {
+						len+=2; addr--;
+					}
+					if (res != len) {
+						panic("esp_quick_dma_go: res %d != len %d\n",
+							res, len);
+					}
+				}
 				break;
 			}
 
 			DELAY(1);
-			if (i++ > 10000)
-				panic("esp_dma_go: Argh!");
+			if (i++ > 1000000)
+				panic("esp_dma_go: Bus error, but no condition!  Argh!");
 		}
 		goto restart_dmago;
 	}
 
+	len &= ~1;
+
 	statreg = esc->sc_reg + NCR_STAT * 16;
 	pdma = (u_int16_t *) (esc->sc_reg + 0x100);
 
-#define WAIT while (!esp_have_dreq(esc)) if (*statreg & 0x80) goto gotintr
-
+	/*
+	 * These loops are unrolled into assembly for two reasons:
+	 * 1) We can make sure that they are as efficient as possible, and
+	 * 2) (more importantly) we need the address that we are reading
+	 *    from or writing to to be in a2.
+	 */
+	cnt32 = len / 32;
+	cnt2 = (len % 32) / 2;
 	if (esc->sc_datain == 0) {
-		while (esc->sc_pdmalen) {
-			WAIT;
-			__spl6(); *pdma = *(esc->sc_pdmaddr)++; __spl2()
-			esc->sc_pdmalen -= 2;
-		}
+		/* while (cnt32--) { 16 instances of *pdma = *addr++; } */
+		/* while (cnt2--) { *pdma = *addr++; } */
+		__asm __volatile ("
+				movl %1, %%a2
+				movl %2, %%a3
+				movw %3, %%d2
+				cmpw #0, %%d2
+				beq  2f
+				subql #1, %%d2
+			1:	movw %%a2@+,%%a3@; movw %%a2@+,%%a3@
+				movw %%a2@+,%%a3@; movw %%a2@+,%%a3@
+				movw %%a2@+,%%a3@; movw %%a2@+,%%a3@
+				movw %%a2@+,%%a3@; movw %%a2@+,%%a3@
+				movw %%a2@+,%%a3@; movw %%a2@+,%%a3@
+				movw %%a2@+,%%a3@; movw %%a2@+,%%a3@
+				movw %%a2@+,%%a3@; movw %%a2@+,%%a3@
+				movw %%a2@+,%%a3@; movw %%a2@+,%%a3@
+				movw #8704,%%sr
+				movw #9728,%%sr
+				dbra %%d2, 1b
+			2:	movw %4, %%d2
+				cmpw #0, %%d2
+				beq  4f
+				subql #1, %%d2
+			3:	movw %%a2@+,%%a3@
+				dbra %%d2, 3b
+			4:	movl %%a2, %0"
+			: "=g" (addr)
+			: "0" (addr), "g" (pdma), "g" (cnt32), "g" (cnt2)
+			: "a2", "a3", "d2");
 		if (esc->sc_pad) {
-			unsigned short	us;
 			unsigned char	*c;
-			c = (unsigned char *) esc->sc_pdmaddr;
-			us = *c;
-			WAIT;
-			__spl6(); *pdma = us; __spl2()
+			c = (unsigned char *) addr;
+			/* Wait for DREQ */
+			while (!esp_have_dreq(esc)) {
+				if (*statreg & 0x80) {
+					nofault = (int *) 0;
+					goto gotintr;
+				}
+			}
+			*(unsigned char *)pdma = *c;
 		}
 	} else {
-		while (esc->sc_pdmalen) {
-			WAIT;
-			__spl6(); *(esc->sc_pdmaddr)++ = *pdma; __spl2()
-			esc->sc_pdmalen -= 2;
-		}
+		/* while (cnt32--) { 16 instances of *addr++ = *pdma; } */
+		/* while (cnt2--) { *addr++ = *pdma; } */
+		__asm __volatile ("
+				movl %1, %%a2
+				movl %2, %%a3
+				movw %3, %%d2
+				cmpw #0, %%d2
+				beq  6f
+				subql #1, %%d2
+			5:	movw %%a3@,%%a2@+; movw %%a3@,%%a2@+
+				movw %%a3@,%%a2@+; movw %%a3@,%%a2@+
+				movw %%a3@,%%a2@+; movw %%a3@,%%a2@+
+				movw %%a3@,%%a2@+; movw %%a3@,%%a2@+
+				movw %%a3@,%%a2@+; movw %%a3@,%%a2@+
+				movw %%a3@,%%a2@+; movw %%a3@,%%a2@+
+				movw %%a3@,%%a2@+; movw %%a3@,%%a2@+
+				movw %%a3@,%%a2@+; movw %%a3@,%%a2@+
+				movw #8704,%%sr
+				movw #9728,%%sr
+				dbra %%d2, 5b
+			6:	movw %4, %%d2
+				cmpw #0, %%d2
+				beq  8f
+				subql #1, %%d2
+			7:	movw %%a3@,%%a2@+
+				dbra %%d2, 7b
+			8:	movl %%a2, %0"
+			: "=g" (addr)
+			: "0" (addr), "g" (pdma), "g" (cnt32), "g" (cnt2)
+			: "a2", "a3", "d2");
 		if (esc->sc_pad) {
-			unsigned short	us;
 			unsigned char	*c;
-			WAIT;
-			__spl6(); us = *pdma; __spl2()
-			c = (unsigned char *) esc->sc_pdmaddr;
-			*c = us & 0xff;
+			c = (unsigned char *) addr;
+			/* Wait for DREQ */
+			while (!esp_have_dreq(esc)) {
+				if (*statreg & 0x80) {
+					nofault = (int *) 0;
+					goto gotintr;
+				}
+			}
+			*c = *(unsigned char *)pdma;
 		}
 	}
-#undef WAIT
 
 	nofault = (int *) 0;
 
+	/*
+	 * If we have not received an interrupt yet, we should shortly,
+	 * and we can't prevent it, so return and wait for it.
+	 */
 	if ((*statreg & 0x80) == 0) {
+#if DEBUG
+		if (mac68k_esp_debug) {
+			printf("g.\n");
+		}
+#endif
 		if (espspl != -1) splx(espspl); espspl = -1;
 		return;
 	}
 
 gotintr:
+#if DEBUG
+	if (mac68k_esp_debug) {
+		printf("g!\n");
+	}
+#endif
 	ncr53c9x_intr(sc);
 	if (espspl != -1) splx(espspl); espspl = -1;
 }
@@ -689,39 +872,21 @@ esp_intr(sc)
 	void *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
-	int	i = 0;
 
-	do {
-		if (esc->sc_reg[NCR_STAT * 16] & 0x80) {
-			ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
-			i++;
-		}
-
-		if (!i) {
-			delay(10000);
-		}
-	} while (!i++);
+	if (esc->sc_reg[NCR_STAT * 16] & 0x80) {
+		ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
+	}
 }
 
 void
 esp_dualbus_intr(sc)
 	void *sc;
 {
-	int	i = 0;
+	if (esp0 && (esp0->sc_reg[NCR_STAT * 16] & 0x80)) {
+		ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
+	}
 
-	do {
-		if (esp0 && (esp0->sc_reg[NCR_STAT * 16] & 0x80)) {
-			ncr53c9x_intr((struct ncr53c9x_softc *) esp0);
-			i++;
-		}
-
-		if (esp1 && (esp1->sc_reg[NCR_STAT * 16] & 0x80)) {
-			ncr53c9x_intr((struct ncr53c9x_softc *) esp1);
-			i++;
-		}
-
-		if (!i) {
-			delay(10000);
-		}
-	} while (!i++);
+	if (esp1 && (esp1->sc_reg[NCR_STAT * 16] & 0x80)) {
+		ncr53c9x_intr((struct ncr53c9x_softc *) esp1);
+	}
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.3.2.2 2000/11/20 20:00:40 bouyer Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.3.2.3 2001/01/05 17:33:59 bouyer Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -41,7 +41,8 @@
 #include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
-#include <arc/pica/pica.h>
+#include <arc/jazz/jazziovar.h>
+#include <arc/jazz/pica.h>
 #include <arc/jazz/vga_jazziovar.h>
 
 #include <dev/wscons/wsconsio.h>
@@ -106,10 +107,10 @@ vga_jazzio_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot, memt;
 
-	if(!BUS_MATCHNAME(ca, "vga"))
+	if(strcmp(ja->ja_name, "vga") != 0)
 		return(0);
 
 	vga_jazzio_init_tag(&iot, &memt);

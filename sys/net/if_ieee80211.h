@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.5.2.3 2000/12/13 15:50:31 bouyer Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.5.2.4 2001/01/05 17:36:51 bouyer Exp $	*/
 
 
 #ifndef _NET_IF_IEEE80211_H_
@@ -15,6 +15,17 @@ struct ieee80211_frame {
 	u_int8_t	i_addr3[ETHER_ADDR_LEN];
 	u_int8_t	i_seq[2];
 	/* possibly followed by addr4[ETHER_ADDR_LEN]; */
+	/* see below */
+};
+
+struct ieee80211_frame_addr4 {
+	u_int8_t	i_fc[2];
+	u_int8_t	i_dur[2];
+	u_int8_t	i_addr1[ETHER_ADDR_LEN];
+	u_int8_t	i_addr2[ETHER_ADDR_LEN];
+	u_int8_t	i_addr3[ETHER_ADDR_LEN];
+	u_int8_t	i_seq[2];
+	u_int8_t	i_addr4[ETHER_ADDR_LEN];
 };
 
 #define	IEEE80211_FC0_VERSION_MASK		0x03

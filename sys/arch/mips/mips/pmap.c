@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72.2.4 2000/12/13 15:49:33 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72.2.5 2001/01/05 17:34:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72.2.4 2000/12/13 15:49:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72.2.5 2001/01/05 17:34:44 bouyer Exp $");
 
 /*
  *	Manages physical address maps.
@@ -267,7 +267,7 @@ pmap_bootstrap()
 	 * Figure out how many PTE's are necessary to map the kernel.
 	 * We also reserve space for kmem_alloc_pageable() for vm_fork().
 	 */
-	Sysmapsize = (VM_PHYS_SIZE +
+	Sysmapsize = (VM_PHYS_SIZE + ubc_nwins * ubc_winsize +
 		nbuf * MAXBSIZE + 16 * NCARGS + PAGER_MAP_SIZE) / NBPG +
 		(maxproc * UPAGES) + nkmempages;
 

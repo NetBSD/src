@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3.2.5 2000/12/13 15:49:19 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.3.2.6 2001/01/05 17:34:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -44,7 +44,6 @@
 #define	MACHINE		"arm26"
 #define	_MACHINE_ARCH	arm26
 #define	MACHINE_ARCH	"arm26"
-#define	MID_MACHINE	MID_ARM2
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value
@@ -85,7 +84,7 @@
 
 /*
  * Constants related to network buffer management.
- * MCLBYTES must be no larger than CLBYTES (the software page size), and,
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
  * on machines that exchange pages of input or output buffers with mbuf
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.

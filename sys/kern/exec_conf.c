@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.37.2.4 2000/12/13 15:50:18 bouyer Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.37.2.5 2001/01/05 17:36:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -209,7 +209,7 @@ const struct execsw execsw_builtin[] = {
 	  { elf_probe_func: ELF32NAME2(freebsd,probe) },
 	  &emul_freebsd, EXECSW_PRIO_ANY,
 	  FREEBSD_ELF_AUX_ARGSIZ,
-	  elf32_copyargs, setregs },	/* FreeBSD 32bit ELF bins (not 64bit safe )*/
+	  elf32_copyargs, freebsd_setregs },	/* FreeBSD 32bit ELF bins (not 64bit safe )*/
 #endif
 #ifdef COMPAT_LINUX
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,

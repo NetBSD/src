@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.29.2.1 2000/11/20 11:42:22 bouyer Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.29.2.2 2001/01/05 17:36:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -481,8 +481,7 @@ pdq_pci_attach(
 
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
 
-    if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-		     pa->pa_intrline, &intrhandle)) {
+    if (pci_intr_map(pa, &intrhandle)) {
 	printf("%s: couldn't map interrupt\n", self->dv_xname);
 	return;
     }

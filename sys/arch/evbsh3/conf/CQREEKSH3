@@ -1,9 +1,12 @@
-#	$NetBSD: CQREEKSH3,v 1.4.2.1 2000/11/20 20:07:34 bouyer Exp $
+#	$NetBSD: CQREEKSH3,v 1.4.2.2 2001/01/05 17:34:10 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
-include "arch/evbsh3/conf/std.evbsh3"
+# for big endian
+include "arch/evbsh3/conf/std.evbsh3.eb"
+# for little endian
+#include "arch/evbsh3/conf/std.evbsh3.el"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -33,9 +36,6 @@ options		BSC_RTCSR_VAL	=0xa510
 options		BSC_RTCNT_VAL	=0xa500	# XXX
 options		BSC_RTCOR_VAL	=0xa53a
 options		FRQCR_VAL	=0x0102
-
-makeoptions 	LDSCRIPTBASE="sh.x"	# for big endian
-#makeoptions 	LDSCRIPTBASE="shl.x"	# for little endian
 
 # CPU-related options.
 #options 	MATH_EMULATE	# floating point emulation

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.35 1999/10/18 05:11:39 itohy Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.35.2.1 2001/01/05 17:35:55 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -103,6 +103,11 @@ sb_isapnp_attach(parent, self, aux)
 	struct isapnp_attach_args *ipa = aux;
 
 	printf("\n");
+
+	/* Avance logic ALS100+ does not like being frobbed 
+	   trying to set irq/drq so set that quirk skip over it */
+	if(!strcmp(ipa->ipa_devlogic, "@@@1001"))
+		sc->sc_quirks = SB_QUIRK_NO_INIT_DRQ;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
 		printf("%s: error in region allocation\n", 

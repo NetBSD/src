@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.6.2.5 2000/12/13 15:49:19 bouyer Exp $
+# $NetBSD: files.arm26,v 1.6.2.6 2001/01/05 17:34:02 bouyer Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -41,10 +41,16 @@ major   {sd = 5}
 major   {cd = 6}
 
 # CPU
-device	cpu
+device	cpu { }
 attach	cpu at root
 defopt	opt_cputypes.h	CPU_ARM2 CPU_ARM250 CPU_ARM3
 file	arch/arm26/arm26/cpu.c			cpu
+
+# Floating-point unit
+device	fpu
+attach	fpu at cpu
+defopt	opt_fputypes.h	FPU_FPPC FPU_FPA
+file	arch/arm26/arm26/fpu.c			fpu		needs-flag
 
 # I/O bus (on the far side of the address and data latches)
 device iobus { base = -1 }
@@ -118,7 +124,9 @@ device	unixbp
 attach	unixbp at ioc
 device	podulebus { [slot = -1] }
 attach	podulebus at ioc
+define	podloader
 file	arch/arm26/podulebus/podulebus.c	podulebus
+file	arch/arm26/podulebus/podloader_asm.S	podloader	needs-flag
 file	arch/arm26/podulebus/unixbp.c		unixbp		needs-flag
 
 # Acorn ST506 interface (usually at bank 5 irq 11, or sometimes on a podule)
@@ -172,7 +180,7 @@ attach	ea at podulebus
 file	arch/arm26/podulebus/if_ea.c		ea
 
 # i-cubed EtherLAN 100, 200 and 500
-device	eh: ether, ifnet, arp, dp8390nic
+device	eh: ether, ifnet, arp, dp8390nic, podloader
 attach	eh at podulebus
 file	arch/arm26/podulebus/if_eh.c		eh
 
@@ -192,7 +200,7 @@ file	arch/arm26/podulebus/asc.c		asc needs-flag
 
 
 # Memory disk for installation (or ROM versions?)
-file	arch/arm26/arm26/md_root.c		memory_disk_hooks
+file	dev/md_root.c				memory_disk_hooks
 major	{ md = 1 }
 
 ####
@@ -214,8 +222,6 @@ file	arch/arm26/arm26/db_trace.c		ddb
 file	arch/arm26/arm26/disksubr.c		disk
 file	arch/arm26/arm26/disksubr_mbr.c		disk
 file	arch/arm26/arm26/disksubr_acorn.c	disk
-
-file	arch/arm26/arm26/aout_machdep.c		exec_aout
 
 file	arch/arm26/arm26/start.c
 file	arch/arm26/arm26/autoconf.c

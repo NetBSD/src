@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1.8.2 2000/11/20 20:08:09 bouyer Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.1.8.3 2001/01/05 17:34:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,54 +36,52 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * XXX THIS DOES NOT WORK PROPERLY YET!
- */
+#ifndef _HP300_LOADFILE_MACHDEP_H_
+#define	_HP300_LOADFILE_MACHDEP_H_
 
-#define ELFSIZE 32
+#define	BOOT_AOUT
+#define	BOOT_ELF
+#define	ELFSIZE 32
 
-#define LOAD_KERNEL	(LOAD_ALL & ~LOAD_HDR)
-#define COUNT_KERNEL	(COUNT_ALL & ~COUNT_HDR)
+#define	LOAD_KERNEL	LOAD_ALL
+#define	COUNT_KERNEL	COUNT_ALL
 
 #ifdef _STANDALONE
 
-#define LOADADDR(a)		((a) + offset)
-#define ALIGNENTRY(a)		0
-#define READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
-#define BCOPY(s, d, c)		vpbcopy((s), (void *)LOADADDR(d), (c))
-#define BZERO(d, c)		pbzero((void *)LOADADDR(d), (c))
+#define	LOADADDR(a)		((a) + offset)
+#define	ALIGNENTRY(a)		0
+#define	READ(f, b, c)		pread((f), (void *)LOADADDR(b), (c))
+#define	BCOPY(s, d, c)		vpbcopy((s), (void *)LOADADDR(d), (c))
+#define	BZERO(d, c)		pbzero((void *)LOADADDR(d), (c))
 #define	WARN(a)			(void)(printf a, \
 				    printf((errno ? ": %s\n" : "\n"), \
 				    strerror(errno)))
-#define PROGRESS(a)		(void) printf a
-#define ALLOC(a)		alloc(a)
-#define FREE(a, b)		free(a, b)
-#define OKMAGIC(a)		((a) == OMAGIC || (a) == NMAGIC ||	\
+#define	PROGRESS(a)		(void) printf a
+#define	ALLOC(a)		alloc(a)
+#define	FREE(a, b)		free(a, b)
+#define	OKMAGIC(a)		((a) == OMAGIC || (a) == NMAGIC ||	\
 				 (a) == ZMAGIC)
 
 #define	vpbcopy bcopy
 #define	pbzero  bzero
-#define pread   read
+#define	pread   read
 
 #else
 
-/*
- * XXX Not right, and we don't use it in userland yet.
- */
-
-#define LOADADDR(a)		(((u_long)(a)) + offset)
-#define ALIGNENTRY(a)		((u_long)(a))
-#define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
-#define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
-#define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
-#define WARN(a)			warn a
-#define PROGRESS(a)		/* nothing */
-#define ALLOC(a)		malloc(a)
-#define FREE(a, b)		free(a)
-#define OKMAGIC(a)		((a) == OMAGIC)
+#define	LOADADDR(a)		(((u_long)(a)) + offset)
+#define	ALIGNENTRY(a)		((u_long)(a))
+#define	READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
+#define	BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
+#define	BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
+#define	WARN(a)			warn a
+#define	PROGRESS(a)		/* nothing */
+#define	ALLOC(a)		malloc(a)
+#define	FREE(a, b)		free(a)
+#define	OKMAGIC(a)		((a) == OMAGIC)
 
 ssize_t vread __P((int, u_long, u_long *, size_t));
 void vcopy __P((u_long, u_long, u_long *, size_t));
 void vzero __P((u_long, u_long *, size_t));
 
 #endif
+#endif /* ! _HP300_LOADFILE_MACHDEP_H_ */

@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.28.2.2 2000/11/20 20:45:45 bouyer Exp $
+#	$NetBSD: TX3912,v 1.28.2.3 2001/01/05 17:34:17 bouyer Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -137,8 +137,8 @@ txin*	at txioman3 id BTN_APP0		evtype BUTTON group 1 port 5 edge 1
 txin*	at txioman3 id PME_AC		evtype EVENT group 0 port 28 edge 1
 txin*	at txioman3 id COM0_DCD		evtype EVENT group 0 port 30 edge 3
 txin*	at txioman3 id COM0_CTS		evtype EVENT group 0 port 5  edge 3
-txout*	at txioman3 id COM0_DTR		evtype OUT   group 0 port 31
-txout*	at txioman3 id COM0_RTS		evtype OUT   group 0 port 6
+txout*	at txioman3 id COM0_DTR		evtype SET   group 0 port 31
+txout*	at txioman3 id COM0_RTS		evtype SET   group 0 port 6
 txioman30 at txsim? platform COMPAQ_C_810
 txout*	at txioman30 id BTN_LIGHT	evtype BUTTON group 2 port 5
 
@@ -151,8 +151,8 @@ txin*	at txioman5 id BTN_APP0		evtype BUTTON group 0 port 31 edge 1
 txin*	at txioman5 id BTN_COVER	evtype BUTTON group 0 port 29 edge 1
 #txin*	at txioman5 id COM0_CTS		evtype EVENT  group 1 port 4 edge 3 # DANGER
 #txin*	at txioman5 id COM0_DCD		evtype EVENT  group 1 port 6 edge 3 # DANGER
-txout*	at txioman5 id COM0_RTS		evtype OUT    group 1 port 5
-txout*	at txioman5 id COM0_DTR		evtype OUT    group 0 port 15
+txout*	at txioman5 id COM0_RTS		evtype SET    group 1 port 5
+txout*	at txioman5 id COM0_DTR		evtype SET    group 0 port 15
 
 # Chip select manager
 txcsbus3	at tx39biu? platform COMPAQ_C

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.18.2.5 2000/12/16 19:40:30 bouyer Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.18.2.6 2001/01/05 17:35:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -364,10 +364,10 @@ struct ncr53c9x_softc {
 #define SEND_INIT_DET_ERR	0x0004
 #define SEND_REJECT		0x0008
 #define SEND_IDENTIFY  		0x0010
-#define SEND_TAG		0x0020
-#define SEND_ABORT		0x0040
-#define SEND_SDTR		0x0080
-#define SEND_WDTR		0x0100
+#define SEND_ABORT		0x0020
+#define SEND_SDTR		0x0040
+#define SEND_WDTR		0x0080
+#define SEND_TAG		0x0100
 
 /* SCSI Status codes */
 #define ST_MASK			0x3e /* bit 0,6,7 is reserved */

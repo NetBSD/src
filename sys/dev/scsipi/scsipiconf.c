@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.8.10.3 2000/11/20 09:59:26 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.8.10.4 2001/01/05 17:36:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,6 +65,8 @@
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
+
+#define	STRVIS_ISWHITE(x) ((x) == ' ' || (x) == '\0' || (x) == (u_char)'\377')
 
 int
 scsipi_command(periph, cmd, cmdlen, data_addr, datalen, retries, timeout, bp,
@@ -254,9 +256,9 @@ scsipi_strvis(dst, dlen, src, slen)
 {
 
 	/* Trim leading and trailing blanks and NULs. */
-	while (slen > 0 && (src[0] == ' ' || src[0] == '\0'))
+	while (slen > 0 && STRVIS_ISWHITE(src[0]))
 		++src, --slen;
-	while (slen > 0 && (src[slen-1] == ' ' || src[slen-1] == '\0'))
+	while (slen > 0 && STRVIS_ISWHITE(src[slen - 1]))
 		--slen;
 
 	while (slen > 0) {

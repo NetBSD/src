@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.19.2.1 2000/11/20 11:43:01 bouyer Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.19.2.2 2001/01/05 17:36:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.19.2.1 2000/11/20 11:43:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.19.2.2 2001/01/05 17:36:25 bouyer Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -234,7 +234,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 	ri->ri_origbits = ri->ri_bits;
 
 	if ((ri->ri_flg & RI_CENTER) != 0) {
-		ri->ri_bits += ((ri->ri_stride - ri->ri_emustride) >> 1) & ~3;
+		ri->ri_bits += ((ri->ri_width - ri->ri_emustride) >> 1) & ~3;
 		ri->ri_bits += ((ri->ri_height - ri->ri_emuheight) >> 1) *
 		    ri->ri_stride;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_aout.c,v 1.1.2.2 2000/12/08 09:08:34 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_exec_aout.c,v 1.1.2.3 2001/01/05 17:35:28 bouyer Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -55,11 +55,13 @@ int netbsd32_copyinargs __P((struct exec_package *, struct ps_strings *,
 			     void *, size_t, const void *, const void *));
 
 static int netbsd32_exec_aout_prep_zmagic __P((struct proc *,
-	struct exec_package *));
+					       struct exec_package *));
 static int netbsd32_exec_aout_prep_nmagic __P((struct proc *,
-	struct exec_package *));
+					       struct exec_package *));
 static int netbsd32_exec_aout_prep_omagic __P((struct proc *,
-	struct exec_package *));
+					       struct exec_package *));
+int netbsd32_exec_aout_setup_stack __P((struct proc *p,
+					struct exec_package *epp));
 
 /*
  * exec_netbsd32_makecmds(): Check if it's an netbsd32 a.out format
@@ -171,7 +173,7 @@ netbsd32_exec_aout_prep_zmagic(p, epp)
 	    epp->ep_daddr + execp->a_data, NULLVP, 0,
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return netbsd32_exec_aout_setup_stack(p, epp);
 }
 
 /*
@@ -210,7 +212,7 @@ netbsd32_exec_aout_prep_nmagic(p, epp)
 		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, bsize, baddr,
 		    NULLVP, 0, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
-	return exec_aout_setup_stack(p, epp);
+	return netbsd32_exec_aout_setup_stack(p, epp);
 }
 
 /*
@@ -254,5 +256,46 @@ netbsd32_exec_aout_prep_omagic(p, epp)
 	 */
 	dsize = epp->ep_dsize + execp->a_text - roundup(execp->a_text, NBPG);
 	epp->ep_dsize = (dsize > 0) ? dsize : 0;
-	return exec_aout_setup_stack(p, epp);
+	return netbsd32_exec_aout_setup_stack(p, epp);
+}
+
+/*
+ * netbsd32_exec_aout_setup_stack(): Set up the stack segment for an a.out
+ * executable.
+ *
+ * Note that the ep_ssize parameter must be set to be the current stack
+ * limit; this is adjusted in the body of execve() to yield the
+ * appropriate stack segment usage once the argument length is
+ * calculated.
+ *
+ * This function returns an int for uniformity with other (future) formats'
+ * stack setup functions.  They might have errors to return.
+ */
+int
+netbsd32_exec_aout_setup_stack(struct proc *p, struct exec_package *epp)
+{
+
+	epp->ep_maxsaddr = USRSTACK32 - MAXSSIZ;
+	epp->ep_minsaddr = USRSTACK32;
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+
+	/*
+	 * set up commands for stack.  note that this takes *two*, one to
+	 * map the part of the stack which we can access, and one to map
+	 * the part which we can't.
+	 *
+	 * arguably, it could be made into one, but that would require the
+	 * addition of another mapping proc, which is unnecessary
+	 *
+	 * note that in memory, things assumed to be: 0 ... ep_maxsaddr
+	 * <stack> ep_minsaddr
+	 */
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
+	    ((epp->ep_minsaddr - epp->ep_ssize) - epp->ep_maxsaddr),
+	    epp->ep_maxsaddr, NULLVP, 0, VM_PROT_NONE);
+	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, epp->ep_ssize,
+	    (epp->ep_minsaddr - epp->ep_ssize), NULLVP, 0,
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	return 0;
 }

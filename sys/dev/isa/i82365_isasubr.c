@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.4.2.2 2000/12/13 15:50:08 bouyer Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.4.2.3 2001/01/05 17:35:51 bouyer Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -263,7 +263,7 @@ pcic_isa_probe_interrupts(sc, h)
 	}
 	sc->intr_mask[h->chip] = mask;
 
-	printf("%s\n", sc->intr_mask ? "" : " none");
+	printf("%s\n", sc->intr_mask[h->chip] ? "" : " none");
 }
 
 /*
@@ -472,12 +472,22 @@ pcic_isa_chip_intr_establish(pch, pf, ipl, fct, arg)
 	void *ih;
 	int reg;
 
+	/*
+	 * PLEASE NOTE:
+	 * The IRQLEVEL bit has no bearing on what happens on the host side of
+	 * the PCMCIA controller.  ISA interrupts are defined to be edge-
+	 * triggered, and as this attachment is for ISA devices, the interrupt
+	 * *must* be configured for edge-trigger.  If you think you should
+	 * change this to use IST_LEVEL, you are *wrong*.  You should figure
+	 * out what your real problem is and leave this code alone rather than
+	 * breaking everyone else's systems.  - mycroft
+	 */
 	if (pf->cfe->flags & PCMCIA_CFE_IRQLEVEL)
-		ist = IST_EDGE;
+		ist = IST_EDGE;		/* SEE COMMENT ABOVE */
 	else if (pf->cfe->flags & PCMCIA_CFE_IRQPULSE)
-		ist = IST_PULSE;
+		ist = IST_PULSE;	/* SEE COMMENT ABOVE */
 	else
-		ist = IST_EDGE;
+		ist = IST_EDGE;		/* SEE COMMENT ABOVE */
 
 	if (isa_intr_alloc(ic, sc->intr_mask[h->chip], ist, &irq))
 		return (NULL);

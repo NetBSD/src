@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.46.2.1 2000/11/20 11:43:27 bouyer Exp $        */
+/*      $NetBSD: ukbd.c,v 1.46.2.2 2001/01/05 17:36:32 bouyer Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /*
- * HID spec: http://www.usb.org/developers/data/usbhid10.pdf
+ * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
  */
 
 #include <sys/param.h>

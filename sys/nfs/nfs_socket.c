@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.53.2.2 2000/12/13 15:50:38 bouyer Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.53.2.3 2001/01/05 17:36:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -916,6 +916,7 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct nfsnode *np;
 #endif
 
+	KASSERT(cred != NULL);
 	nmp = VFSTONFS(vp->v_mount);
 	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
 	rep->r_nmp = nmp;
@@ -1480,7 +1481,7 @@ nfs_sigintr(nmp, rep, p)
 	if (p) {
 		sigpending1(p, &ss);
 #if 0
-		sigminusset(&p->p_sigignore, &ss);
+		sigminusset(&p->p_sigctx.ps_sigignore, &ss);
 #endif
 		if (sigismember(&ss, SIGINT) || sigismember(&ss, SIGTERM) ||
 		    sigismember(&ss, SIGKILL) || sigismember(&ss, SIGHUP) ||

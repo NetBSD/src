@@ -1,4 +1,4 @@
-/* $NetBSD: compat_13_machdep.c,v 1.6.2.2 2000/12/08 09:23:19 bouyer Exp $ */
+/* $NetBSD: compat_13_machdep.c,v 1.6.2.3 2001/01/05 17:33:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6.2.2 2000/12/08 09:23:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6.2.3 2001/01/05 17:33:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,9 @@ compat_13_sys_sigreturn(p, v, retval)
 
 	/* Restore signal stack. */
 	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/*
 	 * Restore signal mask.  Note the mask is a "long" in the stack

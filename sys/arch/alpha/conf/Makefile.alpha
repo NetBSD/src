@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.53.2.4 2000/12/13 15:49:17 bouyer Exp $
+# $NetBSD: Makefile.alpha,v 1.53.2.5 2001/01/05 17:33:44 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -11,12 +11,6 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/alpha/conf/Makefile.alpha
 # after which config should be rerun for all machines of that type.
-#
-# N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
-#	IF YOU CHANGE THE DEFINITION OF ANY OF THESE RECOMPILE EVERYTHING
-#
-# -DTRACE	compile in kernel tracing hooks
-# -DQUOTA	compile in file system quotas
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.

@@ -1,4 +1,4 @@
-/* $NetBSD: lca_dma.c,v 1.12.12.1 2000/11/20 19:57:11 bouyer Exp $ */
+/* $NetBSD: lca_dma.c,v 1.12.12.2 2001/01/05 17:33:47 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.12.12.1 2000/11/20 19:57:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.12.12.2 2001/01/05 17:33:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,11 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: lca_dma.c,v 1.12.12.1 2000/11/20 19:57:11 bouyer Exp
 #include <alpha/pci/lcavar.h>
 
 bus_dma_tag_t lca_dma_get_tag __P((bus_dma_tag_t, alpha_bus_t));
-
-int	lca_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-
-void	lca_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 int	lca_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
@@ -143,8 +138,8 @@ lca_dma_init(lcp)
 	t->_boundary = 0;
 	t->_sgmap = &lcp->lc_sgmap;
 	t->_get_tag = lca_dma_get_tag;
-	t->_dmamap_create = lca_bus_dmamap_create_sgmap;
-	t->_dmamap_destroy = lca_bus_dmamap_destroy_sgmap;
+	t->_dmamap_create = alpha_sgmap_dmamap_create;
+	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;
 	t->_dmamap_load = lca_bus_dmamap_load_sgmap;
 	t->_dmamap_load_mbuf = lca_bus_dmamap_load_mbuf_sgmap;
 	t->_dmamap_load_uio = lca_bus_dmamap_load_uio_sgmap;
@@ -236,55 +231,6 @@ lca_dma_get_tag(t, bustype)
 	default:
 		panic("lca_dma_get_tag: shouldn't be here, really...");
 	}
-}
-
-/*
- * Create an LCA SGMAP-mapped DMA map.
- */
-int
-lca_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags;
-	bus_dmamap_t *dmamp;
-{
-	bus_dmamap_t map;
-	int error;
-
-	error = _bus_dmamap_create(t, size, nsegments, maxsegsz,
-	    boundary, flags, dmamp);
-	if (error)
-		return (error);
-
-	map = *dmamp;
-
-	if (flags & BUS_DMA_ALLOCNOW) {
-		error = alpha_sgmap_alloc(map, round_page(size),
-		    t->_sgmap, flags);
-		if (error)
-			lca_bus_dmamap_destroy_sgmap(t, map);
-	}
-
-	return (error);
-}
-
-/*
- * Destroy an LCA SGMAP-mapped DMA map.
- */
-void
-lca_bus_dmamap_destroy_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-{
-
-	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
-		alpha_sgmap_free(map, t->_sgmap);
-
-	_bus_dmamap_destroy(t, map);
 }
 
 /*

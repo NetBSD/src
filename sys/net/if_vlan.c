@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.24.2.3 2000/11/22 16:05:56 bouyer Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.24.2.4 2001/01/05 17:36:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,9 +82,6 @@
  *
  *	- Need some way to notify vlan interfaces when the parent
  *	  interface changes MTU.
- *
- *	- Need a way to facilitate parent interfaces that can do
- *	  tag insertion and/or extraction in hardware.
  */
 
 #include "opt_inet.h"
@@ -521,19 +518,13 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 
 	case SIOCADDMULTI:
-		if (ifv->ifv_p != NULL) {
-			error = (*ifv->ifv_msw->vmsw_addmulti)(ifv, ifr);
-		} else {
-			error = EINVAL;
-		}
+		error = (ifv->ifv_p != NULL) ?
+		    (*ifv->ifv_msw->vmsw_addmulti)(ifv, ifr) : EINVAL;
 		break;
 
 	case SIOCDELMULTI:
-		if (ifv->ifv_p != NULL) {
-			error = (*ifv->ifv_msw->vmsw_delmulti)(ifv, ifr);
-		} else {
-			error = EINVAL;
-		}
+		error = (ifv->ifv_p != NULL) ?
+		    (*ifv->ifv_msw->vmsw_delmulti)(ifv, ifr) : EINVAL;
 		break;
 
 	default:

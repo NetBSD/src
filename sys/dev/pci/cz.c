@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.11.2.3 2000/11/22 16:04:01 bouyer Exp $	*/
+/*	$NetBSD: cz.c,v 1.11.2.4 2001/01/05 17:36:02 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -346,8 +346,7 @@ cz_attach(struct device *parent,
 	 * Now that we're ready to roll, map and establish the interrupt
 	 * handler.
 	 */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-	    pa->pa_intrline, &ih) != 0) {
+	if (pci_intr_map(pa, &ih) != 0) {
 		/*
 		 * The common case is for Cyclades-Z boards to run
 		 * in polling mode, and thus not have an interrupt

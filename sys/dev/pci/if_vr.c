@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.26.2.2 2000/11/22 16:04:07 bouyer Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.26.2.3 2001/01/05 17:36:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -948,9 +948,10 @@ vr_start(ifp)
 		/*
 		 * Grab a packet off the queue.
 		 */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
+		m = NULL;
 
 		/*
 		 * Get the next available transmit descriptor.
@@ -971,7 +972,6 @@ vr_start(ifp)
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
 				    sc->vr_dev.dv_xname);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
 			if (m0->m_pkthdr.len > MHLEN) {
@@ -980,22 +980,24 @@ vr_start(ifp)
 					printf("%s: unable to allocate Tx "
 					    "cluster\n", sc->vr_dev.dv_xname);
 					m_freem(m);
-					IF_PREPEND(&ifp->if_snd, m0);
 					break;
 				}
 			}
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			m_freem(m0);
-			m0 = m;
 			error = bus_dmamap_load_mbuf(sc->vr_dmat,
-			    ds->ds_dmamap, m0, BUS_DMA_NOWAIT);
+			    ds->ds_dmamap, m, BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->vr_dev.dv_xname, error);
-				IF_PREPEND(&ifp->if_snd, m0);
 				break;
 			}
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
+		if (m != NULL) {
+			m_freem(m0);
+			m0 = m;
 		}
 
 		/* Sync the DMA map. */
@@ -1507,8 +1509,7 @@ vr_attach(parent, self, aux)
 		}
 
 		/* Allocate interrupt */
-		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-				pa->pa_intrline, &intrhandle)) {
+		if (pci_intr_map(pa, &intrhandle)) {
 			printf("%s: couldn't map interrupt\n",
 				sc->vr_dev.dv_xname);
 			return;
@@ -1625,6 +1626,8 @@ vr_attach(parent, self, aux)
 	ifp->if_watchdog = vr_watchdog;
 	ifp->if_init = vr_init;
 	ifp->if_stop = vr_stop;
+	IFQ_SET_READY(&ifp->if_snd);
+
 	bcopy(sc->vr_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*

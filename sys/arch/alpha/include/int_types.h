@@ -1,4 +1,4 @@
-/* $NetBSD: int_types.h,v 1.2.2.2 2000/11/20 22:35:41 bouyer Exp $ */
+/* $NetBSD: int_types.h,v 1.2.2.3 2001/01/05 17:33:45 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,8 +50,13 @@ typedef	short int		__int16_t;
 typedef	unsigned short int     __uint16_t;
 typedef	int			__int32_t;
 typedef	unsigned int	       __uint32_t;
+#ifdef __COMPILER_INT64__
+typedef	__COMPILER_INT64__		__int64_t;
+typedef	unsigned __COMPILER_INT64__	__uint64_t;
+#else
 typedef	long int		__int64_t;
 typedef	unsigned long int      __uint64_t;
+#endif
 
 /* 7.18.1.4 Integer types capable of holding object pointers */
 

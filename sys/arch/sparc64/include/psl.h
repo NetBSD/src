@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.11.2.1 2000/11/20 20:26:49 bouyer Exp $ */
+/*	$NetBSD: psl.h,v 1.11.2.2 2001/01/05 17:35:04 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,8 +92,8 @@
 #define PIL_SER		12
 #define PIL_AUD		13
 #define	PIL_HIGH	15
-#define	PIL_SCHED	PIL_HIGH
-#define	PIL_LOCK	PIL_SCHED
+#define	PIL_SCHED	PIL_CLOCK
+#define	PIL_LOCK	PIL_HIGH
 
 /* 
  * SPARC V9 CCR register

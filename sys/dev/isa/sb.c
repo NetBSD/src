@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.69 1999/10/10 00:08:24 mycroft Exp $	*/
+/*	$NetBSD: sb.c,v 1.69.2.1 2001/01/05 17:35:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -182,7 +182,7 @@ sbmatch(sc)
 		}
 	}
 
-	if (ISSB16CLASS(sc)) {
+	if (ISSB16CLASS(sc) && !(sc->sc_quirks & SB_QUIRK_NO_INIT_DRQ)) {
 		int w, r;
 #if 0
 		printf("%s: old drq conf %02x\n", sc->sc_dev.dv_xname,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_if.c,v 1.18.2.2 2000/12/08 09:14:03 bouyer Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.18.2.3 2001/01/05 17:36:42 bouyer Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
@@ -7,7 +7,7 @@
  * Created from the file:
  *	NetBSD: vnode_if.src,v 1.26 2000/11/27 08:39:45 chs Exp 
  * by the script:
- *	NetBSD: vnode_if.sh,v 1.21 2000/09/13 16:09:27 thorpej Exp 
+ *	NetBSD: vnode_if.sh,v 1.25 2000/12/22 20:05:35 fvdl Exp 
  */
 
 /*
@@ -49,6 +49,8 @@
  */
 #ifdef LKM
 #define	VNODE_OP_NOINLINE
+#else
+#include "opt_vnode_op_noinline.h"
 #endif
 
 #include <sys/param.h>

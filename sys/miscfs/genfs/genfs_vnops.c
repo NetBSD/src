@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.13.2.3 2000/12/13 15:50:26 bouyer Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.13.2.4 2001/01/05 17:36:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -665,13 +665,7 @@ genfs_getpages(v)
 		while ((pgs[pidx]->flags & PG_FAKE) == 0) {
 			size_t b;
 
-#ifdef DEBUG
-			if (offset & (PAGE_SIZE - 1)) {
-				panic("genfs_getpages: skipping from middle "
-				      "of page");
-			}
-#endif
-
+			KASSERT((offset & (PAGE_SIZE - 1)) == 0);
 			b = min(PAGE_SIZE, bytes);
 			offset += b;
 			bytes -= b;
@@ -798,7 +792,7 @@ loopdone:
 	pool_put(&bufpool, mbp);
 	splx(s);
 	uvm_pagermapout(kva, npages);
-	raoffset = offset;
+	raoffset = startoffset + totalbytes;
 
 	/*
 	 * if this we encountered a hole then we have to do a little more work.
@@ -830,7 +824,7 @@ loopdone:
 	 */
 
 raout:
-	if (!async && !write && ((int)raoffset & 0xffff) == 0 &&
+	if (!error && !async && !write && ((int)raoffset & 0xffff) == 0 &&
 	    PAGE_SHIFT <= 16) {
 		int racount;
 
@@ -1068,6 +1062,6 @@ genfs_size(v)
 	int bsize;
 
 	bsize = 1 << ap->a_vp->v_mount->mnt_fs_bshift;
-	*ap->a_eobp = (ap->a_size + bsize) & ~(bsize - 1);
+	*ap->a_eobp = (ap->a_size + bsize - 1) & ~(bsize - 1);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.5.8.1 2000/11/20 19:57:14 bouyer Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.5.8.2 2001/01/05 17:33:48 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.5.8.1 2000/11/20 19:57:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.5.8.2 2001/01/05 17:33:48 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.5.8.1 2000/11/20 19:57:14 bouyer 
 #include <alpha/pci/siovar.h>
 #endif
 
-int	dec_eb64plus_intr_map __P((void *, pcitag_t, int, int,
+int	dec_eb64plus_intr_map __P((struct pci_attach_args *,
 	    pci_intr_handle_t *));
 const char *dec_eb64plus_intr_string __P((void *, pci_intr_handle_t));
 const struct evcnt *dec_eb64plus_intr_evcnt __P((void *, pci_intr_handle_t));
@@ -160,14 +160,13 @@ pci_eb64plus_pickintr(acp)
 }
 
 int     
-dec_eb64plus_intr_map(acv, bustag, buspin, line, ihp)
-        void *acv;
-        pcitag_t bustag; 
-        int buspin, line;
+dec_eb64plus_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
         pci_intr_handle_t *ihp;
 {
-	struct apecs_config *acp = acv;
-	pci_chipset_tag_t pc = &acp->ac_pc;
+	pcitag_t bustag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin, line = pa->pa_intrline;
+	pci_chipset_tag_t pc = pa->pa_pc;
 	int bus, device, function;
 
 	if (buspin == 0) {

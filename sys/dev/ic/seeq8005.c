@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.6.2.3 2000/11/22 16:03:30 bouyer Exp $ */
+/* $NetBSD: seeq8005.c,v 1.6.2.4 2001/01/05 17:35:47 bouyer Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -58,7 +58,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.6.2.3 2000/11/22 16:03:30 bouyer Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.6.2.4 2001/01/05 17:35:47 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -228,16 +228,17 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 	ifp->if_stop = ea_stop;
 	ifp->if_watchdog = ea_watchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_NOTRAILERS;
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/* Now we can attach the interface. */
 
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
 
-	printf("\n");
-
 	/* Test the RAM */
 	ea_ramtest(sc);
+
+	printf("\n");
 }
 
 
@@ -742,7 +743,7 @@ eatxpacket(struct seeq8005_softc *sc)
 	ifp = &sc->sc_ethercom.ec_if;
 
 	/* Dequeue the next packet. */
-	IF_DEQUEUE(&ifp->if_snd, m0);
+	IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 	/* If there's nothing to send, return. */
 	if (!m0) {

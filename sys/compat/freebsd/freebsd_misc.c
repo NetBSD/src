@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.4.14.2 2000/12/08 09:08:12 bouyer Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.4.14.3 2001/01/05 17:35:20 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -37,6 +37,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ntp.h"
+#include "opt_ktrace.h"
 #endif
 
 #include <sys/param.h>
@@ -45,6 +46,10 @@
 #include <sys/mount.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/malloc.h>
+#ifdef KTRACE
+#include <sys/ktrace.h>
+#endif
 
 #include <sys/syscallargs.h>
 
@@ -150,4 +155,26 @@ freebsd_sys_sigaction4(p, v, retval)
 			return (error);
 	}
 	return (0);
+}
+
+int
+freebsd_sys_utrace(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#ifdef KTRACE
+	struct freebsd_sys_utrace_args /* {
+		syscallarg(void *) addr;
+		syscallarg(size_t) len;
+	} */ *uap = v;
+
+	if (KTRPOINT(p, KTR_USER))
+		ktruser(p, "FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len),
+			0);
+	
+	return (0);
+#else
+	return (ENOSYS);
+#endif
 }

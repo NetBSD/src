@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.4.2.2 2000/12/13 15:50:30 bouyer Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.4.2.3 2001/01/05 17:36:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -135,6 +135,7 @@ faith_clone_create(ifc, unit)
 	sc->sc_if.if_type = IFT_FAITH;
 	sc->sc_if.if_hdrlen = 0;
 	sc->sc_if.if_addrlen = 0;
+	sc->sc_if.if_dlt = DLT_NULL;
 	if_attach(&sc->sc_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.18.4.2 2000/11/22 16:04:43 bouyer Exp $	*/
+/*	$NetBSD: dz.c,v 1.18.4.3 2001/01/05 17:36:24 bouyer Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -52,10 +52,6 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
-
-#ifdef DDB
-#include <dev/cons.h>
-#endif
 
 #include <machine/bus.h>
 
@@ -178,7 +174,8 @@ dzrint(void *arg)
 		tp = sc->sc_dz[line].dz_tty;
 
 		/* Must be caught early */
-		if (sc->sc_catch && (*sc->sc_catch)(line, cc))
+		if (sc->sc_dz[line].dz_catch &&
+		    (*sc->sc_dz[line].dz_catch)(sc->sc_dz[line].dz_private, cc))
 			continue;
 
 		if (!(tp->t_state & TS_ISOPEN)) {
@@ -198,17 +195,6 @@ dzrint(void *arg)
 		if (c & DZ_RBUF_PARITY_ERR)
 			cc |= TTY_PE;
 
-#if defined(DDB) && (defined(VAX410) || defined(VAX43) || defined(VAX46))
-		if (tp->t_dev == cn_tab->cn_dev) {
-			int j = kdbrint(cc);
-
-			if (j == 1)	/* Escape received, just return */
-				continue;
-
-			if (j == 2)	/* Second char wasn't 'D' */
-				(*tp->t_linesw->l_rint)(27, tp);
-		}
-#endif
 		(*tp->t_linesw->l_rint)(cc, tp);
 	}
 }
@@ -264,6 +250,8 @@ dzxint(void *arg)
 		tcr &= 255;
 		tcr &= ~(1 << line);
 		DZ_WRITE_BYTE(dr_tcr, tcr);
+		if (sc->sc_dz[line].dz_catch)
+			continue;
 
 		if (tp->t_state & TS_FLUSH)
 			tp->t_state &= ~TS_FLUSH;
@@ -294,6 +282,10 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	if (line >= sc->sc_type)
 		return ENXIO;
+
+	/* if some other device is using the line, it's busy */
+	if (sc->sc_dz[line].dz_catch)
+		return EBUSY;
 
 	tp = sc->sc_dz[line].dz_tty;
 	if (tp == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.15.2.5 2000/12/13 15:49:23 bouyer Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.15.2.6 2001/01/05 17:34:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.15.2.5 2000/12/13 15:49:23 bouyer Exp $";
+    "$Id: hpcfb.c,v 1.15.2.6 2001/01/05 17:34:18 bouyer Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ struct hpcfb_devconfig {
 	int dc_scrno;
 	int	dc_memsize;
 #endif /* HPCFB_MULTI */
+	u_char *dc_fbaddr;
 };
 
 #define HPCFB_MAX_SCREEN 5
@@ -191,9 +192,7 @@ static int	hpcfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 static void	hpcfb_free_screen __P((void *, void *));
 static int	hpcfb_show_screen __P((void *, void *, int,
 				    void (*) (void *, int, int), void *));
-#ifdef notyet
 static void     hpcfb_pollc __P((void *, int));
-#endif /* notyet */
 static void	hpcfb_power __P((int, void *));
 static void	hpcfb_cmap_reorder __P((struct hpcfb_fbconf *,
 					struct hpcfb_devconfig *));
@@ -211,6 +210,7 @@ void    hpcfb_redraw __P((void *c, int row, int nrows, int all));
 void    hpcfb_copyrows __P((void *c, int srcrow, int dstrow, int nrows));
 void    hpcfb_eraserows __P((void *c, int row, int nrows, long attr));
 int     hpcfb_alloc_attr __P((void *c, int fg, int bg, int flags, long *attr));
+void    hpcfb_cursor_raw __P((void *c, int on, int row, int col));
 
 #ifdef HPCFB_JUMP
 void	hpcfb_scroll_update __P((void *));
@@ -261,9 +261,7 @@ struct wsdisplay_accessops hpcfb_accessops = {
 	hpcfb_free_screen,
 	hpcfb_show_screen,
 	0 /* load_font */,
-#ifdef notyet
 	hpcfb_pollc
-#endif /* not yet */
 };
 
 void    hpcfb_tv_putchar __P((struct hpcfb_devconfig *, int, int, u_int, long));
@@ -319,7 +317,6 @@ hpcfbattach(parent, self, aux)
 #endif /* HPCFB_MULTI */
 		sc->sc_dc = &hpcfb_console_dc;
 		sc->nscreens = 1;
-		sc->sc_dc->dc_state |= HPCFB_DC_CURRENT;
 		hpcfb_console_dc.dc_sc = sc;
 	} else {
 #ifdef HPCFB_MULTI
@@ -332,7 +329,8 @@ hpcfbattach(parent, self, aux)
 		if (hpcfb_init(&ha->ha_fbconflist[0], sc->sc_dc) != 0) {
 			return;
 		}
-		sc->sc_dc->dc_state |= HPCFB_DC_CURRENT;
+		sc->sc_dc->dc_tvram = hpcfb_console_tvram;
+		bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
 		sc->sc_dc->dc_sc = sc;
 	}
 	sc->sc_polling = 0; /* XXX */
@@ -356,6 +354,12 @@ hpcfbattach(parent, self, aux)
 		sc->sc_accessops->setclut(sc->sc_accessctx, 
 					  &hpcfb_console_dc.dc_rinfo);
 	}
+
+	/* set font for hardware accel */
+	if (sc->sc_accessops->font) {
+		sc->sc_accessops->font(sc->sc_accessctx, 
+					sc->sc_dc->dc_rinfo.ri_font);
+	}	
 
 	/* Add a power hook to power management */
 	sc->sc_powerhook = powerhook_establish(hpcfb_power, sc);
@@ -407,13 +411,13 @@ hpcfb_thread(arg)
 	 * Loop forever, doing a periodic check for APM events.
 	 */
 	for (;;) {
-		/* HPCFB_LOCK(apmsc); */
+		/* HPCFB_LOCK(sc); */
 		sc->sc_dc->dc_state |= HPCFB_DC_SCRTHREAD;	
-		if (sc->sc_mapping)
+		if (!sc->sc_mapping) /* draw only EMUL mode */
 			hpcfb_scroll_update(sc->sc_dc);
 		sc->sc_dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
-		/* APM_UNLOCK(apmsc); */
-		(void) tsleep(sc, PWAIT, "hpcfb",  (8 * hz) / 7);
+		/* APM_UNLOCK(sc); */
+		(void) tsleep(sc, PWAIT, "hpcfb",  (8 * hz) / 7 / 10);
 	}
 }
 #endif /* HPCFB_JUMP */
@@ -437,7 +441,6 @@ hpcfb_cnattach(fbconf)
 	struct hpcfb_fbconf __fbconf __attribute__((__unused__));
 	long defattr;
 
-	bzero(&hpcfb_console_dc, sizeof(struct hpcfb_devconfig));
 #if NBIVIDEO > 0
 	if (fbconf == 0) {
 		memset(&__fbconf, 0, sizeof(struct hpcfb_fbconf));
@@ -446,8 +449,12 @@ hpcfb_cnattach(fbconf)
 		fbconf = &__fbconf;
 	}
 #endif /* NBIVIDEO > 0 */
+	bzero(&hpcfb_console_dc, sizeof(struct hpcfb_devconfig));
 	if (hpcfb_init(fbconf, &hpcfb_console_dc) != 0)
 		return (ENXIO);
+
+	hpcfb_console_dc.dc_tvram = hpcfb_console_tvram;
+	bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
 
 	hpcfb_console_wsscreen = hpcfb_stdscreen;
 	hpcfb_console_wsscreen.nrows = hpcfb_console_dc.dc_rows;
@@ -470,6 +477,7 @@ hpcfb_init(fbconf, dc)
 	vaddr_t fbaddr;
 
 	fbaddr = (vaddr_t)fbconf->hf_baseaddr;
+	dc->dc_fbaddr = (u_char *)fbaddr;
 
 	/* init rasops */
 	ri = &dc->dc_rinfo;
@@ -495,14 +503,13 @@ hpcfb_init(fbconf, dc)
 	dc->dc_cury = -1;
 	dc->dc_rows = dc->dc_rinfo.ri_rows;
 	dc->dc_cols = dc->dc_rinfo.ri_cols;
+	dc->dc_state |= HPCFB_DC_CURRENT;
 #ifdef HPCFB_JUMP
 	dc->dc_max_row = 0;
 	dc->dc_min_row = dc->dc_rows;
 	dc->dc_scroll = 0;
 	callout_init(&dc->dc_scroll_ch);
 #endif /* HPCFB_JUMP */
-	dc->dc_tvram = hpcfb_console_tvram;
-	bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
 #if defined(HPCFB_MULTI)
 	dc->dc_memsize = ri->ri_stride * ri->ri_height;
 #endif /*  defined(HPCFB_MULTI) */
@@ -603,17 +610,23 @@ hpcfb_ioctl(v, cmd, data, flag, p)
 		return 0;		
 	
 	case WSDISPLAYIO_SMODE:
-		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){
-			if (sc->sc_mapping)
+		if (*(int *)data == WSDISPLAYIO_MODE_EMUL){ 
+			if (sc->sc_mapping){
+				sc->sc_mapping = 0;
 				hpcfb_refresh_screen(sc);
-			sc->sc_mapping = 0;
+			}
 		} else {
 #ifdef HPCFB_JUMP
-			if (!sc->sc_mapping)
+			if (!sc->sc_mapping) {
+				sc->sc_mapping = 1;
 				hpcfb_check_scroll(dc);
-#endif /* HPCFB_JUMP */
+			}
+#else /* HPCFB_JUMP */
 			sc->sc_mapping = 1;
+#endif /* HPCFB_JUMP */
 		}
+		if (sc && sc->sc_accessops->iodone)
+			(*sc->sc_accessops->iodone)(sc->sc_accessctx);
 		return 0;	
 
 	case WSDISPLAYIO_GETCMAP:
@@ -692,6 +705,9 @@ hpcfb_refresh_screen(sc)
 	struct hpcfb_devconfig *dc = sc->sc_dc;
 	int x, y;
 
+	if (dc == NULL)
+		return;
+
 #ifdef HPCFB_JUMP
 	if (dc->dc_state&HPCFB_DC_SCROLLPENDING) {
 		dc->dc_state &= ~HPCFB_DC_SCROLLPENDING;
@@ -705,11 +721,11 @@ hpcfb_refresh_screen(sc)
 	x = dc->dc_curx;
 	y = dc->dc_cury;
 	if (0 <= x && 0 <= y)
-		hpcfb_cursor(dc, 0,  y, x); /* disable cursor */
+		hpcfb_cursor_raw(dc, 0,  y, x); /* disable cursor */
 	/* redraw all text */
 	hpcfb_redraw(dc, 0, dc->dc_rows, 1);
 	if (0 <= x && 0 <= y)
-		hpcfb_cursor(dc, 1,  y, x); /* enable cursor */
+		hpcfb_cursor_raw(dc, 1,  y, x); /* enable cursor */
 }
 
 static int
@@ -728,28 +744,46 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	DPRINTF(("%s(%d): hpcfb_alloc_screen()\n", __FILE__, __LINE__));
 
 #ifdef HPCFB_MULTI
+	if (!hpcfbconsole && sc->nscreens > 0)	/* XXXXX */
+		return ENOMEM;
+
 	if (sc->nscreens > HPCFB_MAX_SCREEN)
 		return (ENOMEM);
-
 
 	if (sc->screens[sc->nscreens] == NULL){
 		sc->screens[sc->nscreens] =
 			malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
+		if (sc->screens[sc->nscreens] == NULL)
+			return ENOMEM;
 		bzero(sc->screens[sc->nscreens], sizeof(struct hpcfb_devconfig));
 	}
 	dc = sc->screens[sc->nscreens];
 	dc->dc_sc = sc;
+
+	/* copy master raster info */
 	dc->dc_rinfo = sc->sc_dc->dc_rinfo;
+	if (sc->sc_accessops->font) {
+		sc->sc_accessops->font(sc->sc_accessctx, 
+					sc->sc_dc->dc_rinfo.ri_font);
+	}	
+
+	dc->dc_fbaddr = dc->dc_rinfo.ri_bits;
+	dc->dc_rows = dc->dc_rinfo.ri_rows;
+	dc->dc_cols = dc->dc_rinfo.ri_cols;
+	dc->dc_memsize = dc->dc_rinfo.ri_stride * dc->dc_rinfo.ri_height;
+
 	dc->dc_scrno = sc->nscreens;
 	dc->dc_curx = -1;
 	dc->dc_cury = -1;
-	dc->dc_rows = sc->sc_dc->dc_rinfo.ri_rows;
-	dc->dc_cols = sc->sc_dc->dc_rinfo.ri_cols;
-	dc->dc_memsize = sc->sc_dc->dc_rinfo.ri_stride * sc->sc_dc->dc_rinfo.ri_height;
 	if (dc->dc_tvram == NULL){
 		dc->dc_tvram = 
 			malloc(sizeof(struct hpcfb_tvrow)*dc->dc_rows,
 				M_DEVBUF, M_WAITOK);
+		if (dc->dc_tvram == NULL){
+			free(sc->screens[sc->nscreens], M_DEVBUF);
+			sc->screens[sc->nscreens] = NULL;
+			return ENOMEM;
+		}
 		bzero(dc->dc_tvram, 
 				sizeof(struct hpcfb_tvrow)*dc->dc_rows);
 	}
@@ -759,7 +793,6 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	sc->nscreens++;
 	*cookiep = dc; 
 	hpcfb_alloc_attr(*cookiep, 7, 0, 0, attrp);
-	hpcfb_eraserows(*cookiep, 0, dc->dc_rows, *attrp);
 #else /* HPCFB_MULTI */
 	if (sc->nscreens > 0)
 		return (ENOMEM);
@@ -803,6 +836,7 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 	struct hpcfb_softc *sc = v;
 #ifdef HPCFB_MULTI
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
+	struct hpcfb_devconfig *odc;
 #endif /* HPCFB_MULTI */
 
 	DPRINTF(("%s(%d): hpcfb_show_screen()\n", __FILE__, __LINE__));
@@ -811,24 +845,31 @@ hpcfb_show_screen(v, cookie, waitok, cb, cbarg)
 #ifdef HPCFB_JUMP
 	hpcfb_check_scroll(dc);
 #endif /* HPCFB_JUMP */
-	/* save current screen image */
-	dc->dc_rinfo.ri_bits = sc->sc_dc->dc_rinfo.ri_bits;
-	sc->sc_dc->dc_state &= ~HPCFB_DC_CURRENT;
-	/* switch screen image */
-	dc->dc_state |= HPCFB_DC_CURRENT;
+	odc = sc->sc_dc;
 
+	if (dc == NULL || odc == dc) {
+		hpcfb_refresh_screen(sc);
+		return 0;
+	}
+
+	if (odc->dc_curx >= 0 && odc->dc_cury >= 0)
+		hpcfb_cursor_raw(odc, 0,  odc->dc_cury, odc->dc_curx); /* disable cursor */
+	/* disable old screen */
+	odc->dc_state &= ~HPCFB_DC_CURRENT;
+	odc->dc_rinfo.ri_bits = NULL;
+
+	/* switch screen to new one */
+	dc->dc_state |= HPCFB_DC_CURRENT;
+	dc->dc_rinfo.ri_bits = dc->dc_fbaddr;
 	sc->sc_dc = dc;
-	hpcfb_redraw(dc, 0, dc->dc_rows, 1);
-	if (dc->dc_curx > 0 && dc->dc_cury > 0)
-		hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
-#else /* HPCFB_MULTI */
+
+#endif /* HPCFB_MULTI */
+	/* redraw screen image */
 	hpcfb_refresh_screen(sc);
-#endif /* !HPCFB_MULTI */
 
 	return (0);
 }
 
-#ifdef notyet
 static void
 hpcfb_pollc(v, on)
 	void *v;
@@ -837,10 +878,12 @@ hpcfb_pollc(v, on)
 	struct hpcfb_softc *sc = v;
 
 	sc->sc_polling = on;
+	if (sc && sc->sc_accessops->iodone)
+		(*sc->sc_accessops->iodone)(sc->sc_accessctx);
 
 	return;
 }
-#endif /* notyet */
+
 /*
  * cursor
  */
@@ -850,10 +893,6 @@ hpcfb_cursor(cookie, on, row, col)
 	int on, row, col;
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
-	struct hpcfb_softc *sc = dc->dc_sc;
-	struct rasops_info *ri = &dc->dc_rinfo;
-	int curwidth, curheight;
-	int xoff, yoff;
 
 	if (on) {
 		dc->dc_curx = col;
@@ -863,12 +902,28 @@ hpcfb_cursor(cookie, on, row, col)
 		dc->dc_cury = -1;
 	}
 
+	hpcfb_cursor_raw(cookie, on, row, col);
+}
+
+void
+hpcfb_cursor_raw(cookie, on, row, col)
+	void *cookie;
+	int on, row, col;
+{
+	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)cookie;
+	struct hpcfb_softc *sc = dc->dc_sc;
+	struct rasops_info *ri = &dc->dc_rinfo;
+	int curwidth, curheight;
+	int xoff, yoff;
+
 #ifdef HPCFB_JUMP
 	if (dc->dc_state&HPCFB_DC_SCROLLPENDING) {
 		dc->dc_state |= HPCFB_DC_UPDATE;
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 
 	if (ri->ri_bits == NULL)
 		return;
@@ -964,12 +1019,15 @@ hpcfb_putchar(cookie, row, col, uc, attr)
 	}
 #endif /* HPCFB_JUMP */
 
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 
 	dc->dc_state |= HPCFB_DC_DRAWING;
 	if (sc && sc->sc_accessops->putchar 
 	       && (dc->dc_state&HPCFB_DC_CURRENT)) {
+		font = ri->ri_font;
 		yoff = row * ri->ri_font->fontheight;
 		xoff =  col * ri->ri_font->fontwidth;
 		fclr = ri->ri_devcmap[((u_int)attr >> 24) & 15];
@@ -1038,6 +1096,8 @@ hpcfb_copycols(cookie, row, srccol, dstcol, ncols)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1111,6 +1171,8 @@ hpcfb_erasecols(cookie, row, startcol, ncols, attr)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1203,6 +1265,11 @@ hpcfb_redraw(cookie, row, num, all)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if (dc->dc_sc != NULL && dc->dc_sc->sc_mapping)
+		return;
+
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (vscn == 0)
 		return;
 
@@ -1218,7 +1285,7 @@ hpcfb_redraw(cookie, row, num, all)
 			rasops_emul.putchar(ri, row + i, j, svc->c, svc->attr);
 		}
 		if (all)
-			cols = dc->dc_cols;
+			cols = dc->dc_cols-1;
 		else
 			cols = vscn[row+i].spacecol;
 		for (; j <= cols; j++) {
@@ -1243,7 +1310,7 @@ hpcfb_scroll_update(v)
 	/* callout_stop(&dc->dc_scroll_ch); */
 	dc->dc_state &= ~HPCFB_DC_SCROLLPENDING;
 	if (dc->dc_curx > 0 && dc->dc_cury > 0)
-		hpcfb_cursor(dc, 0,  dc->dc_cury, dc->dc_curx); 
+		hpcfb_cursor_raw(dc, 0,  dc->dc_cury, dc->dc_curx); 
 	if ((dc->dc_state&HPCFB_DC_UPDATE)) {
 		hpcfb_redraw(dc, dc->dc_min_row, 
 				dc->dc_max_row - dc->dc_min_row, 0);
@@ -1251,7 +1318,7 @@ hpcfb_scroll_update(v)
 		hpcfb_redraw(dc, dc->dc_scroll_dst, dc->dc_scroll_num, 0);
 	}
 	if (dc->dc_curx > 0 && dc->dc_cury > 0)
-		hpcfb_cursor(dc, 1,  dc->dc_cury, dc->dc_curx); 
+		hpcfb_cursor_raw(dc, 1,  dc->dc_cury, dc->dc_curx); 
 }
 
 void
@@ -1263,8 +1330,12 @@ hpcfb_do_scroll(v)
 	dc->dc_state |= HPCFB_DC_SCRTHREAD;	
 	if (dc->dc_state&(HPCFB_DC_DRAWING|HPCFB_DC_TDRAWING))
 		dc->dc_state |= HPCFB_DC_SCRDELAY;
-	else if (!dc->dc_sc->sc_mapping)
+	else if (dc->dc_sc != NULL && dc->dc_sc->sc_thread)
+		wakeup(dc->dc_sc);
+	else if (dc->dc_sc != NULL && !dc->dc_sc->sc_mapping) {
+		/* draw only EMUL mode */
 		hpcfb_scroll_update(v);
+	}
 	dc->dc_state &= ~HPCFB_DC_SCRTHREAD;	
 }
 
@@ -1274,7 +1345,9 @@ hpcfb_check_scroll(v)
 {
 	struct hpcfb_devconfig *dc = (struct hpcfb_devconfig *)v;
 
-	if (dc->dc_sc->sc_polling && (dc->dc_state&HPCFB_DC_SCROLLPENDING)){
+	if (dc->dc_sc != NULL 
+		&& dc->dc_sc->sc_polling 
+		&& (dc->dc_state&HPCFB_DC_SCROLLPENDING)){
 		callout_stop(&dc->dc_scroll_ch);
 		dc->dc_state &= ~HPCFB_DC_SCRDELAY;
 		hpcfb_scroll_update(v);
@@ -1299,6 +1372,8 @@ hpcfb_copyrows(cookie, src, dst, num)
 
 	hpcfb_tv_copyrows(cookie, src, dst, num);
 
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 
@@ -1315,7 +1390,7 @@ hpcfb_copyrows(cookie, src, dst, num)
 	}
 	else {
 #ifdef HPCFB_JUMP
-		if (dc->dc_sc->sc_polling) {
+		if (sc && sc->sc_polling) {
 			hpcfb_check_scroll(dc);
 		} else if ((dc->dc_state&HPCFB_DC_SCROLLPENDING) == 0) {
 			dc->dc_state |= HPCFB_DC_SCROLLPENDING;
@@ -1406,6 +1481,8 @@ hpcfb_eraserows(cookie, row, nrow, attr)
 		return;
 	}
 #endif /* HPCFB_JUMP */
+	if ((dc->dc_state&HPCFB_DC_CURRENT) == 0)
+		return;
 	if (ri->ri_bits == NULL)
 		return;
 

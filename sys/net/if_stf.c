@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.5.2.3 2000/12/13 15:50:32 bouyer Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.5.2.4 2001/01/05 17:36:52 bouyer Exp $	*/
 /*	$KAME: if_stf.c,v 1.39 2000/06/07 23:35:18 itojun Exp $	*/
 
 /*
@@ -237,6 +237,7 @@ stf_clone_create(ifc, unit)
 	sc->sc_if.if_ioctl  = stf_ioctl;
 	sc->sc_if.if_output = stf_output;
 	sc->sc_if.if_type   = IFT_STF;
+	sc->sc_if.if_dlt    = DLT_NULL;
 #if defined(__FreeBSD__) && __FreeBSD__ >= 4
 	sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
 #endif

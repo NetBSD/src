@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.8.2.2 2000/12/13 15:49:30 bouyer Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8.2.3 2001/01/05 17:34:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.

@@ -1,14 +1,14 @@
-# $NetBSD: DRACO,v 1.41.2.1 2000/11/20 19:58:24 bouyer Exp $
+# $NetBSD: DRACO,v 1.41.2.2 2001/01/05 17:33:51 bouyer Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
 # Created from: 
-#$ NetBSD: GENERIC,v 1.150 2000/10/04 03:35:54 itojun Exp $
+#$ NetBSD: GENERIC,v 1.154 2000/12/29 22:31:56 is Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.41.2.1 $"
+#ident  		"GENERIC-$Revision: 1.41.2.2 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -201,7 +201,7 @@ lpt0		at drsupio? port ?	# DraCo parallel
 
 #Ethernet cards:
 le*		at zbus0		# A2065, Ameristar, Ariadne
-ne*		at zbus0		# AriadneII
+ne*		at zbus0		# AriadneII, X-surf
 ed*		at zbus0		# Hydra, ASDG LanRover
 es*		at zbus0		# CEI A4066 EthernetPLUS
 qn*		at zbus0		# Quicknet
@@ -232,6 +232,7 @@ pseudo-device	ipfilter		# IP Filter package
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 pseudo-device	view		4	# views (needed for grfcc)
 pseudo-device	pty			# pseudo-terminals
@@ -241,7 +242,6 @@ pseudo-device	ccd		4	# concatenated disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 
-#rnd is EXPERIMENTAL at this point.
 pseudo-device  rnd                     # /dev/random and in-kernel generator
 #options        RND_COM                 # use "com" randomness as well (BROKEN)
 

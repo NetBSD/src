@@ -1,4 +1,4 @@
-/* $NetBSD: btvmei.c,v 1.1.4.1 2000/11/20 11:42:14 bouyer Exp $ */
+/* $NetBSD: btvmei.c,v 1.1.4.2 2001/01/05 17:36:02 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -138,8 +138,7 @@ b3_617_attach(parent, self, aux)
 	sc->sc_vmet = pa->pa_memt; /* XXX needed for VME mappings */
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.31.2.2 2000/12/08 09:22:08 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.31.2.3 2001/01/05 17:36:48 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -1068,13 +1068,6 @@ extendfile(dep, count, bpp, ncp, flags)
 				}					
 			}
 		}
-	}
-
-	if ((flags & DE_CLEAR) && !(dep->de_Attributes & ATTR_DIRECTORY)) {
-		int cnshift = pmp->pm_cnshift;
-
-		uvm_vnp_zerorange(DETOV(dep), frcn << cnshift,
-				  origcount << cnshift);
 	}
 
 	return (0);

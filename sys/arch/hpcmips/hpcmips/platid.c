@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.c,v 1.1.1.1.2.1 2000/11/20 20:46:38 bouyer Exp $	*/
+/*	$NetBSD: platid.c,v 1.1.1.1.2.2 2001/01/05 17:34:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -34,6 +34,7 @@
  *
  */
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <machine/platid.h>
 
@@ -127,4 +128,15 @@ platid_name(platid_t *platid)
 		return (match->name);
 	else
 		return ("UNKNOWN");
+}
+
+struct platid_data *
+platid_search(platid_t *platid, struct platid_data *datap)
+{
+
+	while (datap->mask != NULL && !platid_match(platid, datap->mask))
+		datap++;
+	if (datap->mask == NULL && datap->data == NULL)
+		return NULL;
+	return datap;
 }

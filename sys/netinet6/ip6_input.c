@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.8.2.2 2000/11/22 16:06:22 bouyer Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.8.2.3 2001/01/05 17:36:56 bouyer Exp $	*/
 /*	$KAME: ip6_input.c,v 1.121 2000/08/31 06:07:29 itojun Exp $	*/
 
 /*
@@ -188,8 +188,8 @@ ip6_init()
 
 #ifdef PFIL_HOOKS
 	/* Register our Packet Filter hook. */
-	inet6_pfil_hook.ph_key = (void *)(u_long) AF_INET6;
-	inet6_pfil_hook.ph_dlt = DLT_RAW;
+	inet6_pfil_hook.ph_type = PFIL_TYPE_AF;
+	inet6_pfil_hook.ph_af   = AF_INET6;
 	i = pfil_head_register(&inet6_pfil_hook);
 	if (i != 0)
 		printf("ip6_init: WARNING: unable to register pfil hook, "
@@ -337,6 +337,14 @@ ip6_input(m)
 		}
 		if (!m)
 			return;
+	}
+#endif
+
+#ifdef ALTQ
+	/* XXX Temporary until ALTQ is changed to use a pfil hook */
+	if (altq_input != NULL && (*altq_input)(m, AF_INET6) == 0) {
+		/* packet is dropped by traffic conditioner */
+		return;
 	}
 #endif
 

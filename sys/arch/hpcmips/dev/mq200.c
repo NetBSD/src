@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200.c,v 1.2.2.3 2000/12/08 09:26:31 bouyer Exp $	*/
+/*	$NetBSD: mq200.c,v 1.2.2.4 2001/01/05 17:34:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -136,7 +136,7 @@ mq200_attach(sc)
 
 	mq200_fbinit(&sc->sc_fbconf);
 	sc->sc_fbconf.hf_baseaddr = (u_long)bootinfo->fb_addr;
-	sc->sc_fbconf.hf_offset	= (u_long)sc->sc_baseaddr -
+	sc->sc_fbconf.hf_offset	= (u_long)sc->sc_fbconf.hf_baseaddr -
 	    MIPS_PHYS_TO_KSEG1(mips_ptob(mips_btop(sc->sc_baseaddr)));
 	DPRINTF(("hf_baseaddr=%lx\n", sc->sc_fbconf.hf_baseaddr));
 	DPRINTF(("hf_offset=%lx\n", sc->sc_fbconf.hf_offset));
@@ -358,6 +358,7 @@ mq200_ioctl(v, cmd, data, flag, p)
 	struct hpcfb_fbconf *fbconf;
 	struct hpcfb_dspconf *dspconf;
 	struct wsdisplay_cmap *cmap;
+	struct wsdisplay_param *dispparam;
 
 	switch (cmd) {
 	case WSDISPLAYIO_GETCMAP:
@@ -387,6 +388,40 @@ mq200_ioctl(v, cmd, data, flag, p)
 		 * This driver can't set color map.
 		 */
 		return (EINVAL);
+
+	case WSDISPLAYIO_GETPARAM:
+		dispparam = (struct wsdisplay_param*)data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			VPRINTF(("mq200_ioctl: GETPARAM:BACKLIGHT\n"));
+			return (EINVAL);
+		case WSDISPLAYIO_PARAM_CONTRAST:
+			VPRINTF(("mq200_ioctl: GETPARAM:CONTRAST\n"));
+			return (EINVAL);
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			VPRINTF(("mq200_ioctl: GETPARAM:BRIGHTNESS\n"));
+			return (EINVAL);
+		default:
+			return (EINVAL);
+		}
+		return (0);
+
+	case WSDISPLAYIO_SETPARAM:
+		dispparam = (struct wsdisplay_param*)data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+			VPRINTF(("mq200_ioctl: GETPARAM:BACKLIGHT\n"));
+			return (EINVAL);
+		case WSDISPLAYIO_PARAM_CONTRAST:
+			VPRINTF(("mq200_ioctl: GETPARAM:CONTRAST\n"));
+			return (EINVAL);
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			VPRINTF(("mq200_ioctl: GETPARAM:BRIGHTNESS\n"));
+			return (EINVAL);
+		default:
+			return (EINVAL);
+		}
+		return (0);
 
 	case HPCFBIO_GCONF:
 		fbconf = (struct hpcfb_fbconf *)data;

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.18.2.2 2000/12/08 09:30:54 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.18.2.3 2001/01/05 17:35:18 bouyer Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.18.2.2 $"
+#ident 		"INSTALL-$Revision: 1.18.2.3 $"
 
 makeoptions     COPTS="-Os"             # Optimise for space. Implies -O2
 
@@ -28,6 +28,10 @@ options 	MINIROOTSIZE=2400
 options 	M68030
 options 	M68040
 options 	M68060
+## If you want an optimized kernel for a specific processor, use either:
+#makeoptions	CMACHFLAGS="-m68030"
+#makeoptions	CMACHFLAGS="-m68040 -Wa,-m68030 -Wa,-m68851"
+#makeoptions	CMACHFLAGS="-m68060 -Wa,-m68030 -Wa,-m68851"
 
 
 #### System options specific to the x68k port

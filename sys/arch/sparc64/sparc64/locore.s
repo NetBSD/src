@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.46.2.3 2000/12/08 09:30:38 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.46.2.4 2001/01/05 17:35:06 bouyer Exp $	*/
 /*
  * Copyright (c) 1996-2000 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -243,7 +243,7 @@
 
 /*
  * A handy macro for maintaining instrumentation counters.
- * Note that this clobbers %o0 and %o1.  Normal usage is
+ * Note that this clobbers %o0, %o1 and %o2.  Normal usage is
  * something like:
  *	foointr:
  *		TRAP_SETUP(...)		! makes %o registers safe
@@ -251,9 +251,14 @@
  */
 #define INCR(what) \
 	sethi	%hi(what), %o0; \
-	ldsw	[%o0 + %lo(what)], %o1; \
-	inc	%o1; \
-	stw	%o1, [%o0 + %lo(what)]
+	or	%o0, %lo(what), %o0; \
+99:	\
+	lduw	[%o0], %o1; \
+	add	%o1, 1, %o2; \
+	casa	[%o0] ASI_P, %o1, %o2; \
+	cmp	%o1, %o2; \
+	bne,pn	%icc, 99b; \
+	 nop
 
 /*
  * A couple of handy macros to save and restore globals to/from
@@ -3077,7 +3082,7 @@ datafault:
 
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
 Ldatafault_internal:
-	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1) should not fault
+	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1,%o2) should not fault
 !	ldx	[%sp + CC64FSZ + STKB + TF_FAULT], %g1		! DEBUG make sure this has not changed
 	mov	%g1, %o5				! Move these to the out regs so we can save the globals
 	mov	%g2, %o1
@@ -3356,7 +3361,7 @@ textfault:
 	membar	#Sync					! No real reason for this XXXX
 
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
-	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1,%o2)
 
 	mov	%g3, %o2
 
@@ -4295,7 +4300,7 @@ _C_LABEL(sparc_interrupt):
 
 	flushw			! Do not remove this insn -- causes interrupt loss
 	rd	%y, %l6
-	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1)
+	INCR(_C_LABEL(uvmexp)+V_INTR)	! cnt.v_intr++; (clobbers %o0,%o1,%o2)
 	rdpr	%tt, %l5		! Find out our current IPL
 	rdpr	%tstate, %l0
 	rdpr	%tpc, %l1
@@ -7677,8 +7682,8 @@ ENTRY(switchexit)
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_lock_idle)	! Acquire sched_lock
-	 nop
 #endif
+	 wrpr	%g0, PIL_SCHED, %pil		! Set splsched()
 
 	/*
 	 * Now fall through to `the last switch'.  %g6 was set to
@@ -7757,8 +7762,7 @@ idle:
 	ld	[%l2 + %lo(_C_LABEL(sched_whichqs))], %o3
 	brnz,pt	%o3, notidle		! Something to run
 	 nop
-
-#if 1
+#ifdef UVM_PAGE_IDLE_ZERO
 	! Check uvm.page_idle_zero
 	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
 	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
@@ -7772,7 +7776,7 @@ idle:
 	ba,a,pt	%xcc, 1b
 	 nop				! spitfire bug
 notidle:
-	wrpr	%g0, PIL_HIGH, %pil	! (void) splhigh();
+	wrpr	%g0, PIL_SCHED, %pil	! (void) splhigh();
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	call	_C_LABEL(sched_lock_idle)	! Grab sched_lock
 	 add	%o7, (Lsw_scan-.-4), %o7	! Return to Lsw_scan directly
@@ -8027,7 +8031,7 @@ Lsw_scan:
 	brz,pn	%l4, Lsw_load		! if no old process, go load
 	 wrpr	%g0, PSTATE_KERN, %pstate
 
-	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1
+	INCR(_C_LABEL(nswitchdiff))	! clobbers %o0,%o1,%o2
 wb1:
 	flushw				! save all register windows except this one
 	stx	%i7, [%l5 + PCB_PC]	! Save rpc
@@ -8082,8 +8086,7 @@ Lsw_load:
 2:
 #endif
 	ldx	[%l1 + PCB_SP], %i6
-!	call	_C_LABEL(blast_vcache)		! Clear out I$ and D$
-	 ldx	[%l1 + PCB_PC], %i7
+	ldx	[%l1 + PCB_PC], %i7
 	wrpr	%g0, 0, %otherwin	! These two insns should be redundant
 	wrpr	%g0, 0, %canrestore
 	rdpr	%ver, %l7
@@ -8307,7 +8310,6 @@ ENTRY(snapshot)
  * to user mode. This happens in two known cases: after execve(2) of init,
  * and when returning a child to user mode after a fork(2).
  */
-	nop; nop					! Make sure we don't get lost getting here.
 ENTRY(proc_trampoline)
 #ifdef SCHED_DEBUG
 	nop; nop; nop; nop				! Try to make sure we don't vector into the wrong instr
@@ -8863,7 +8865,7 @@ ENTRY(pmap_zero_page)
 #endif
 
 	rdpr	%pil, %g1
-	wrpr	%g0, 15, %pil			! s = splhigh()
+	wrpr	%g0, PIL_HIGH, %pil			! s = splhigh()
 
 	fzero	%f0				! Set up FPU
 	fzero	%f2
@@ -9422,7 +9424,8 @@ ENTRY(pseg_get)
  *			paddr_t spare %o3);
  *
  * Set a pseg entry to a particular TTE value.  Returns 0 on success,
- * 1 if it needs to fill a pseg, and -1 if the address is in the virtual hole.
+ * 1 if it needs to fill a pseg, 2 if it succeeded but didn't need the
+ * spare page, and -1 if the address is in the virtual hole.
  * (NB: nobody in pmap checks for the virtual hole, so the system will hang.)
  * Allocate a page, pass the phys addr in as the spare, and try again.
  * If spare is not NULL it is assumed to be the address of a zeroed physical
@@ -9530,8 +9533,9 @@ ENTRY(pseg_set)
 	tne	1
 	mov	%o4, %o7
 #endif
+	mov	2, %o0					! spare unused?
 	retl
-	 clr	%o0
+	 movrz	%o3, %g0, %o0				! No. return 0
 1:
 	retl
 	 mov	1, %o0

@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.3.2.2 2000/12/08 09:26:30 bouyer Exp $
+# 	$NetBSD: GENERIC,v 1.3.2.3 2001/01/05 17:34:17 bouyer Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.3.2.2 $"
+#ident 		"GENERIC-$Revision: 1.3.2.3 $"
 
 maxusers	8
 
@@ -203,7 +203,9 @@ button2 at vrgiu? platform NEC_MCR_530 id BTN_APP0  port 2
 button2 at vrgiu? platform IBM_WORKPAD id BTN_APP0  port 2 active 0
 button3 at vrgiu? platform NEC_MCCS id BTN_LIGHT port 8
 pwctl0 at vrgiu? platform NEC_MCR_3XX id PWCTL_COM0 port 14
-pwctl0 at vrgiu? platform NEC_MCR_5XX id PWCTL_COM0 port 14
+pwctl0 at vrgiu? platform NEC_MCR_500 id PWCTL_COM0 port 14
+pwctl0 at vrgiu? platform NEC_MCR_530 id PWCTL_COM0 port 46
+#pwctl0 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM0 port 46
 pwctl0 at vrgiu? platform NEC_MCR_7XX id PWCTL_COM0 port 46
 pwctl0 at vrgiu? platform NEC_MCCS id PWCTL_COM0 port 14
 pwctl1 at vrgiu? platform NEC_MCR_300 id PWCTL_LCDLIGHT port 45
@@ -220,6 +222,8 @@ pwctl3 at vrgiu? platform NEC_MCR_510 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_520 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform NEC_MCR_530 id PWCTL_SPEAKER port 44
 pwctl3 at vrgiu? platform IBM_WORKPAD id PWCTL_SPEAKER port 49
+#pwctl4 at vrgiu? platform NEC_MCR_530 id PWCTL_COM1 port 47
+#pwctl4 at vrgiu? platform NEC_MCR_SIGMARION id PWCTL_COM1 port 47
 vrisab0 at vrgiu? platform NEC_MCR
 vrisab0 at vrgiu? platform NEC_MCCS
 vrisab0 at vrgiu? platform IBM_WORKPAD isaportoffset 0x1000000
@@ -309,9 +313,11 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 awi*	at pcmcia? function ?		# WLI-PCM
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
 
 # PCMCIA Serial interfaces
 com*	at pcmcia? function ?		# Modems and serial cards
@@ -352,3 +358,4 @@ pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation

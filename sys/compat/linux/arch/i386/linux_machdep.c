@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.47.2.3 2000/12/13 15:49:46 bouyer Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.47.2.4 2001/01/05 17:35:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -150,7 +150,6 @@ linux_sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
-	struct sigacts *psp = p->p_sigacts;
 
 	tf = p->p_md.md_regs;
 
@@ -214,7 +213,7 @@ linux_sendsig(catcher, sig, mask, code)
 	 */
 	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
-	tf->tf_eip = (int)psp->ps_sigcode;
+	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
 	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
 	tf->tf_esp = (int)fp;
@@ -306,7 +305,7 @@ linux_sys_sigreturn(p, v, retval)
 	tf->tf_ss = context.sc_ss;
 
 	/* Restore signal stack. */
-	p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_old_to_native_sigset(&context.sc_mask, &mask);
@@ -615,6 +614,7 @@ linux_machdepioctl(p, v, retval)
 	u_long start, biostotal, realtotal;
 	u_char heads, sectors;
 	u_int cylinders;
+	struct ioctl_pt pt;
 
 	fd = SCARG(uap, fd);
 	SCARG(&bia, fd) = fd;
@@ -643,6 +643,10 @@ linux_machdepioctl(p, v, retval)
 		break;
 	case LINUX_KDSETMODE:
 		com = KDSETMODE;
+		break;
+	case LINUX_KDGETMODE:
+		/* KD_* values are equal to the wscons numbers */
+		com = WSDISPLAYIO_GMODE;
 		break;
 	case LINUX_KDENABIO:
 		com = KDENABIO;
@@ -772,17 +776,23 @@ linux_machdepioctl(p, v, retval)
 
 	default:
 		/*
-		 * XXX just pass all for LKMs?
-		 * XXX this means that device drivers specifically dealing
-	 	 * XXX with Linux binaries will need to do copyin/copyout
-		 * XXX handling themselves.
+		 * Unknown to us. If it's on a device, just pass it through
+		 * using PTIOCLINUX, the device itself might be able to
+		 * make some sense of it.
+		 * XXX hack: if the function returns EJUSTRETURN,
+		 * it has stuffed a sysctl return value in pt.data.
 		 */
-		if (com > LINUX_IOCTL_MIN_PASS &&
-		    com < LINUX_IOCTL_MAX_PASS) {
-			FILE_USE(fp);
-			ioctlf = fp->f_ops->fo_ioctl;
-			error = ioctlf(fp, com, SCARG(uap, data), p);
+		FILE_USE(fp);
+		ioctlf = fp->f_ops->fo_ioctl;
+		pt.com = SCARG(uap, com);
+		pt.data = SCARG(uap, data);
+		error = ioctlf(fp, PTIOCLINUX, (caddr_t)&pt, p);
+		FILE_UNUSE(fp, p);
+		if (error == EJUSTRETURN) {
+			retval[0] = (register_t)pt.data;
+			error = 0;
 		}
+
 		if (error == EINVAL)
 			printf("linux_machdepioctl: invalid ioctl %08lx\n",
 			    com);

@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.2.2.2 2000/11/20 11:42:34 bouyer Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.2.2.3 2001/01/05 17:36:17 bouyer Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -125,4 +125,5 @@ static u_int32_t hpt370_pio[] =
 static u_int32_t hpt370_dma[] =
 	{0x26514e97, 0x26514e33, 0x26514e21};
 static u_int32_t hpt370_udma[] = 
-	{0x16514e31, 0x164d4e31, 0x16494e31, 0x166d4e31, 0x16454e31};
+	{0x16514e31, 0x164d4e31, 0x16494e31, 0x166d4e31, 0x16454e31,
+	 0x1a85f442};

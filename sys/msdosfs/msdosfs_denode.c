@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.36.8.3 2000/12/08 09:22:08 bouyer Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.36.8.4 2001/01/05 17:36:48 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -490,7 +490,7 @@ deextend(dep, length, cred)
 	struct ucred *cred;
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
-	u_long count;
+	u_long count, osize;
 	int error;
 
 	/*
@@ -523,8 +523,12 @@ deextend(dep, length, cred)
 		}
 	}
 
+	osize = dep->de_FileSize;
 	dep->de_FileSize = length;
+	uvm_vnp_setsize(DETOV(dep), (voff_t)dep->de_FileSize);
 	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
+	uvm_vnp_zerorange(DETOV(dep), (off_t)osize,
+	    (size_t)(dep->de_FileSize - osize));
 	return (deupdat(dep, 1));
 }
 

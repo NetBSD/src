@@ -1,6 +1,6 @@
-/*	$NetBSD: bktr_os.c,v 1.14.2.3 2000/11/22 16:04:31 bouyer Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.14.2.4 2001/01/05 17:36:20 bouyer Exp $	*/
 
-/* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.18 2000/10/15 14:18:06 phk Exp */
+/* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -1445,8 +1445,7 @@ bktr_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * map interrupt
 	 */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-			 pa->pa_intrline, &ih)) {
+	if (pci_intr_map(pa, &ih)) {
 		printf("%s: couldn't map interrupt\n",
 		       bktr_name(bktr));
 		return;

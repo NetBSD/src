@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.12.2.1 2000/11/20 18:08:04 bouyer Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.12.2.2 2001/01/05 17:35:19 bouyer Exp $	*/
 
 /*
  * 
@@ -494,7 +494,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 	struct proc *p = curproc;
 	sigset_t psig_omask;
 	int i;
-	psig_omask = p->p_siglist;	/* array assignment */
+	psig_omask = p->p_sigctx.ps_siglist;	/* array assignment */
 #endif
 	if (mntinfo == NULL) {
 	    /* Unlikely, but could be a race condition with a dying warden */
@@ -556,42 +556,42 @@ coda_call(mntinfo, inSize, outSize, buffer)
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep TIMEOUT %d sec\n", 2+2*i);
 #endif
-    	    } else if (sigismember(&p->p_siglist, SIGIO)) {
-		    sigaddset(&p->p_sigmask, SIGIO);
+    	    } else if (sigismember(&p->p_sigctx.ps_siglist, SIGIO)) {
+		    sigaddset(&p->p_sigctx.ps_sigmask, SIGIO);
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep returns %d SIGIO, cnt %d\n", error, i);
 #endif
-    	    } else if (sigismember(&p->p_siglist, SIGALRM)) {
-		    sigaddset(&p->p_sigmask, SIGALRM);
+    	    } else if (sigismember(&p->p_sigctx.ps_siglist, SIGALRM)) {
+		    sigaddset(&p->p_sigctx.ps_sigmask, SIGALRM);
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep returns %d SIGALRM, cnt %d\n", error, i);
 #endif
 	    } else {
 		    sigset_t tmp;
-		    tmp = p->p_siglist;		/* array assignment */
-		    sigminusset(&p->p_sigmask, &tmp);
+		    tmp = p->p_sigctx.ps_siglist;	/* array assignment */
+		    sigminusset(&p->p_sigctx.ps_sigmask, &tmp);
 
 #ifdef	CODA_VERBOSE
 		    printf("coda_call: tsleep returns %d, cnt %d\n", error, i);
 		    printf("coda_call: siglist = %x.%x.%x.%x, sigmask = %x.%x.%x.%x, mask %x.%x.%x.%x\n",
-			    p->p_siglist.__bits[0], p->p_siglist.__bits[1],
-			    p->p_siglist.__bits[2], p->p_siglist.__bits[3],
-			    p->p_sigmask.__bits[0], p->p_sigmask.__bits[1],
-			    p->p_sigmask.__bits[2], p->p_sigmask.__bits[3],
+			    p->p_sigctx.ps_siglist.__bits[0], p->p_sigctx.ps_siglist.__bits[1],
+			    p->p_sigctx.ps_siglist.__bits[2], p->p_sigctx.ps_siglist.__bits[3],
+			    p->p_sigctx.ps_sigmask.__bits[0], p->p_sigctx.ps_sigmask.__bits[1],
+			    p->p_sigctx.ps_sigmask.__bits[2], p->p_sigctx.ps_sigmask.__bits[3],
 			    tmp.__bits[0], tmp.__bits[1], tmp.__bits[2], tmp.__bits[3]);
 #endif
 		    break;
 #ifdef	notyet
-		    sigminusset(&p->p_sigmask, &p->p_siglist);
+		    sigminusset(&p->p_sigctx.ps_sigmask, &p->p_sigctx.ps_siglist);
 		    printf("coda_call: siglist = %x.%x.%x.%x, sigmask = %x.%x.%x.%x\n", 
-			    p->p_siglist.__bits[0], p->p_siglist.__bits[1],
-			    p->p_siglist.__bits[2], p->p_siglist.__bits[3],
-			    p->p_sigmask.__bits[0], p->p_sigmask.__bits[1],
-			    p->p_sigmask.__bits[2], p->p_sigmask.__bits[3]);
+			    p->p_sigctx.ps_siglist.__bits[0], p->p_sigctx.ps_siglist.__bits[1],
+			    p->p_sigctx.ps_siglist.__bits[2], p->p_sigctx.ps_siglist.__bits[3],
+			    p->p_sigctx.ps_sigmask.__bits[0], p->p_sigctx.ps_sigmask.__bits[1],
+			    p->p_sigctx.ps_sigmask.__bits[2], p->p_sigctx.ps_sigmask.__bits[3]);
 #endif
 	    }
 	} while (error && i++ < 128 && VC_OPEN(vcp));
-	p->p_siglist = psig_omask;	/* array assignment */
+	p->p_sigctx.ps_siglist = psig_omask;	/* array assignment */
 #else
 	(void) tsleep(&vmp->vm_sleep, coda_call_sleep, "coda_call", 0);
 #endif

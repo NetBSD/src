@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.28.8.2 2000/12/08 09:20:11 bouyer Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.28.8.3 2001/01/05 17:37:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -494,7 +494,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 
 	bap = (ufs_daddr_t *)bp->b_data;
 	if (lastbn >= 0) {
-		MALLOC(copy, ufs_daddr_t *, fs->fs_bsize, M_TEMP, M_WAITOK);
+		copy = (ufs_daddr_t *) malloc(fs->fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->fs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,
 		  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (ufs_daddr_t));

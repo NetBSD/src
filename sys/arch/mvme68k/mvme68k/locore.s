@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.55.2.4 2000/12/13 15:49:34 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.55.2.5 2001/01/05 17:34:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1571,14 +1571,17 @@ ENTRY(ecacheoff)
 ENTRY_NOPROFILE(getsp)
 	movl	%sp,%d0			| get current SP
 	addql	#4,%d0			| compensate for return address
+	movl	%d0,%a0
 	rts
 
 ENTRY_NOPROFILE(getsfc)
 	movc	%sfc,%d0
+	movl	%d0,%a0
 	rts
 
 ENTRY_NOPROFILE(getdfc)
 	movc	%dfc,%d0
+	movl	%d0,%a0
 	rts
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.35.2.2 2000/11/22 16:03:46 bouyer Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.35.2.3 2001/01/05 17:35:52 bouyer Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -326,6 +326,8 @@ iyattach(parent, self, aux)
 	ifp->if_ioctl = iyioctl;
 	ifp->if_watchdog = iywatchdog;
 
+	IFQ_SET_READY(&ifp->if_snd);
+
 	(void)eepromreadall(iot, ioh, eaddr, 8);
 	sc->hard_vers = eaddr[EEPW6] & EEPP_BoardRev;
 
@@ -650,7 +652,10 @@ struct ifnet *ifp;
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
-	while ((m0 = ifp->if_snd.ifq_head) != NULL) {
+	for (;;) {
+		IFQ_POLL(&ifp->if_snd, m0);
+		if (m0 == NULL)
+			break;
 #ifdef IYDEBUG
 		printf("%s: trying to write another packet to the hardware\n",
 		    sc->sc_dev.dv_xname);
@@ -707,7 +712,7 @@ struct ifnet *ifp;
 		}
 	
 		/* we know it fits in the hardware now, so dequeue it */
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		
 		last = sc->tx_end;
 		end = last + pad + len + I595_XMT_HDRLEN; 

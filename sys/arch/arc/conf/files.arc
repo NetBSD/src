@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.24.2.3 2000/11/22 15:59:52 bouyer Exp $
+#	$NetBSD: files.arc,v 1.24.2.4 2001/01/05 17:33:55 bouyer Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -12,7 +12,6 @@ maxusers 2 8 64
 file	arch/arc/arc/autoconf.c
 file	arch/arc/arc/conf.c
 file	arch/arc/arc/disksubr.c
-file	arch/arc/dev/dma.c
 file	arch/arc/arc/machdep.c
 #file	arch/arc/arc/minidebug.c
 file	arch/arc/arc/arc_trap.c
@@ -54,13 +53,14 @@ attach cpu at mainbus
 file arch/arc/arc/cpu.c			cpu
 
 #
-#	Magnum and PICA bus autoconfiguration devices
+#	Magnum and Jazz-Internal bus autoconfiguration devices
 #
-device	pica {}
-attach	pica at mainbus			# optional
-file	arch/arc/pica/picabus.c		pica
-file	arch/arc/jazz/jazzdmatlb.c	# XXX pica
-file	arch/arc/jazz/bus_dma_jazz.c	# XXX pica
+device	jazzio {}
+attach	jazzio at mainbus		# optional
+file	arch/arc/jazz/jazzio.c		jazzio
+file	arch/arc/jazz/dma.c		# XXX jazzio
+file	arch/arc/jazz/jazzdmatlb.c	# XXX jazzio
+file	arch/arc/jazz/bus_dma_jazz.c	# XXX jazzio
 
 #
 #	ALGOR bus autoconfiguration devices
@@ -91,10 +91,10 @@ device	necpb: pcibus
 attach	necpb at mainbus		# optional
 file	arch/arc/pci/necpb.c		necpb
 
-#	Ethernet chip on PICA bus
+#	Ethernet chip on Jazz-Internal bus
 device	sn: ifnet, ether, arp
-attach	sn at pica
-file	arch/arc/dev/if_sn.c		sn
+attach	sn at jazzio
+file	arch/arc/jazz/if_sn.c		sn
 
 #
 # Machine-independent MII/PHY drivers.
@@ -111,33 +111,33 @@ include	"dev/scsipi/files.scsipi"
 major	{sd = 0}
 major	{cd = 3}
 
-#	Symbios 53C94 SCSI interface driver on PICA bus
+#	Symbios 53C94 SCSI interface driver on Jazz-Internal bus
 device	asc: scsi
-attach	asc at pica
-file	arch/arc/dev/asc.c		asc
+attach	asc at jazzio
+file	arch/arc/jazz/asc.c		asc
 
-#	Floppy disk controller on PICA bus
+#	Floppy disk controller on Jazz-internal bus
 device	fdc {drive = -1}
-attach	fdc at pica
+attach	fdc at jazzio
 device	fd: disk
 attach	fd at fdc
-file	arch/arc/dev/fd.c		fdc	needs-flag
+file	arch/arc/jazz/fd.c		fdc	needs-flag
 major	{fd = 7}
 
 #	bus independent raster console glue
 device	rasdisplay: wsemuldisplaydev, pcdisplayops
 file	arch/arc/dev/rasdisplay.c	rasdisplay
 
-#	raster console glue on PICA bus
-attach	rasdisplay at pica with rasdisplay_jazzio
+#	raster console glue on Jazz-Internal bus
+attach	rasdisplay at jazzio with rasdisplay_jazzio
 file	arch/arc/jazz/rasdisplay_jazzio.c rasdisplay_jazzio needs-flag
 
-#	VGA display driver on PICA bus
-attach	vga at pica with vga_jazzio
+#	VGA display driver on Jazz-Internal bus
+attach	vga at jazzio with vga_jazzio
 file	arch/arc/jazz/vga_jazzio.c	vga_jazzio needs-flag
 
-#	PC keyboard controller on PICA bus
-attach  pckbc at pica with pckbc_jazzio
+#	PC keyboard controller on Jazz-Internal bus
+attach  pckbc at jazzio with pckbc_jazzio
 file    arch/arc/jazz/pckbc_jazzio.c	pckbc_jazzio needs-flag
 
 #
@@ -152,19 +152,20 @@ file arch/arc/pci/pciide_machdep.c		pciide
 
 #	Real time clock, must have one..
 device	aclock
-attach	aclock at pica with aclock_pica
+attach	aclock at jazzio with aclock_jazzio
 attach	aclock at isa with aclock_isa
 attach	aclock at algor with aclock_algor
-file	arch/arc/arc/clock.c	aclock & (aclock_isa | aclock_pica | aclock_algor) needs-flag
-file	arch/arc/arc/clock_mc.c	aclock & (aclock_isa | aclock_pica | aclock_algor) needs-flag
+file	arch/arc/arc/clock.c		aclock needs-flag
+file	arch/arc/arc/clock_mc.c		aclock needs-flag
+file	arch/arc/jazz/clock_jazzio.c	aclock & aclock_jazzio needs-flag
 
 #	Console driver on PC-style graphics
 device	pc: tty
-attach	pc at pica with pc_pica
+attach	pc at jazzio with pc_jazzio
 attach	pc at isa with pc_isa
 device	opms: tty
-attach	opms at pica
-file	arch/arc/dev/pccons.c	pc & (pc_pica | pc_isa | opms) needs-flag
+attach	opms at jazzio
+file	arch/arc/dev/pccons.c	pc & (pc_jazzio | pc_isa | opms) needs-flag
 
 #	BusLogic BT-445C VLB SCSI Controller. Special on TYNE local bus.
 device	btl: scsi
@@ -172,9 +173,11 @@ attach	btl at isa
 file	arch/arc/dti/btl.c		btl
 
 #	NS16450/16550 Serial line driver
-attach	com at pica with com_pica
+attach	com at jazzio with com_jazzio
+file	arch/arc/jazz/com_jazzio.c	com & com_jazzio
+
 attach	com at algor with com_algor
-file	arch/arc/dev/com_lbus.c		com & (com_pica | com_algor)
+file	arch/arc/algor/com_algor.c	com & com_algor
 
 # Game adapter (joystick)
 device	joy
@@ -191,9 +194,11 @@ file	arch/arc/isa/joy.c		joy needs-flag
 #file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
 
 #	Parallel printer port driver
-attach	lpt at pica with lpt_pica
+attach	lpt at jazzio with lpt_jazzio
+file	arch/arc/jazz/lpt_jazzio.c	lpt & lpt_jazzio
+
 attach	lpt at algor with lpt_algor
-file	arch/arc/dev/lpt_lbus.c		lpt & (lpt_pica | lpt_algor)
+file	arch/arc/algor/lpt_algor.c	lpt & lpt_algor
 
 
 #
@@ -209,7 +214,7 @@ file	arch/arc/pci/pci_vga.c		pcivga
 # Specials.
 #
 # memory disk for installation
-file arch/arc/dev/md_root.c		memory_disk_hooks
+file dev/md_root.c			memory_disk_hooks
 major {md = 8}
 
 # RAIDframe

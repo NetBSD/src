@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.58.10.3 2000/12/08 09:14:01 bouyer Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.58.10.4 2001/01/05 17:36:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -54,7 +54,6 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/trace.h>
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.10.2.1 2000/11/20 11:42:41 bouyer Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.10.2.2 2001/01/05 17:36:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -275,7 +275,7 @@ static const keysym_t pckbd_keydesc_fr[] = {
     KC(30),  KS_q,
     KC(39),  KS_m,
     KC(40),  KS_ugrave,		KS_percent,
-    KC(41),  KS_twosuperior,
+    KC(41),  KS_twosuperior,	KS_asciitilde,
     KC(43),  KS_asterisk,	KS_mu,
     KC(44),  KS_w,
     KC(50),  KS_comma,		KS_question,

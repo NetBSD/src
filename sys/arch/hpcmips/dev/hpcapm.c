@@ -1,7 +1,8 @@
-/*	$NetBSD: hpcapm.c,v 1.4.2.2 2000/11/20 20:45:51 bouyer Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.4.2.3 2001/01/05 17:34:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
+ * Copyright (c) 2000 SATO Kazumi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +30,7 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <arch/hpcmips/dev/apm/apmvar.h>
@@ -86,8 +88,14 @@ struct apmhpc_softc {
 	void *sc_apmdev;
 	volatile unsigned int events;
 	volatile int power_state;
+	volatile int battery_state;
+	volatile int ac_state;
 	config_hook_tag	sc_standby_hook;
 	config_hook_tag	sc_suspend_hook;
+	config_hook_tag sc_battery_hook;
+	config_hook_tag sc_ac_hook;
+	int battery_life;
+	int minutes_left;
 };
 
 struct apm_accessops hpcapm_accessops = {
@@ -131,6 +139,10 @@ hpcapm_attach(parent, self, aux)
 
 	sc->events = 0;
 	sc->power_state = APM_SYS_READY;
+	sc->battery_state = APM_BATT_FLAG_UNKNOWN;
+	sc->ac_state = APM_AC_UNKNOWN;
+	sc->battery_life = APM_BATT_LIFE_UNKNOWN;
+	sc->minutes_left = 0;
 	sc->sc_standby_hook = config_hook(CONFIG_HOOK_PMEVENT,
 					  CONFIG_HOOK_PMEVENT_STANDBYREQ,
 					  CONFIG_HOOK_EXCLUSIVE,
@@ -138,6 +150,16 @@ hpcapm_attach(parent, self, aux)
 	sc->sc_suspend_hook = config_hook(CONFIG_HOOK_PMEVENT,
 					  CONFIG_HOOK_PMEVENT_SUSPENDREQ,
 					  CONFIG_HOOK_EXCLUSIVE,
+					  hpcapm_hook, sc);
+
+	sc->sc_battery_hook = config_hook(CONFIG_HOOK_PMEVENT,
+					  CONFIG_HOOK_PMEVENT_BATTERY,
+					  CONFIG_HOOK_SHARE,
+					  hpcapm_hook, sc);
+
+	sc->sc_battery_hook = config_hook(CONFIG_HOOK_PMEVENT,
+					  CONFIG_HOOK_PMEVENT_AC,
+					  CONFIG_HOOK_SHARE,
 					  hpcapm_hook, sc);
 
 	aaa.accessops = &hpcapm_accessops;
@@ -156,8 +178,18 @@ hpcapm_hook(ctx, type, id, msg)
 {
 	struct apmhpc_softc *sc;
 	int s;
+	int charge;
+	int message;
 
 	sc = ctx;
+
+	if (type != CONFIG_HOOK_PMEVENT)
+		return 1; 
+
+	if (CONFIG_HOOK_VALUEP(msg))
+		message = (int)msg;
+	else
+		message = *(int *)msg;
 
 	s = splhigh();
 	switch (id) {
@@ -174,6 +206,77 @@ hpcapm_hook(ctx, type, id, msg)
 			sc->events |= (1 << APM_USER_SUSPEND_REQ);
 		} else {
 			sc->events |= (1 << APM_NORMAL_RESUME);
+		}
+		break;
+	case CONFIG_HOOK_PMEVENT_BATTERY: 
+		switch (message) {
+		case CONFIG_HOOK_BATT_CRITICAL:
+			DPRINTF(("hpcapm: battery state critical\n"));
+			charge = sc->battery_state&APM_BATT_FLAG_CHARGING;
+			sc->battery_state = APM_BATT_FLAG_CRITICAL;
+			sc->battery_state |= charge;
+			sc->battery_life = 0;
+			break;
+		case CONFIG_HOOK_BATT_LOW:
+			DPRINTF(("hpcapm: battery state low\n"));
+			charge = sc->battery_state&APM_BATT_FLAG_CHARGING;
+			sc->battery_state = APM_BATT_FLAG_LOW;
+			sc->battery_state |= charge;
+			break;
+		case CONFIG_HOOK_BATT_HIGH:
+			DPRINTF(("hpcapm: battery state high\n"));
+			charge = sc->battery_state&APM_BATT_FLAG_CHARGING;
+			sc->battery_state = APM_BATT_FLAG_HIGH;
+			sc->battery_state |= charge;
+			break;
+		case CONFIG_HOOK_BATT_20P:
+			DPRINTF(("hpcapm: battery life 20%%\n"));
+			sc->battery_life = 20;
+			break;
+		case CONFIG_HOOK_BATT_50P:
+			DPRINTF(("hpcapm: battery life 50%%\n"));
+			sc->battery_life = 50;
+			break;
+		case CONFIG_HOOK_BATT_80P:
+			DPRINTF(("hpcapm: battery life 80%%\n"));
+			sc->battery_life = 80;
+			break;
+		case CONFIG_HOOK_BATT_100P:
+			DPRINTF(("hpcapm: battery life 100%%\n"));
+			sc->battery_life = 100;
+			break;
+		case CONFIG_HOOK_BATT_UNKNOWN:
+			DPRINTF(("hpcapm: battery state unknown\n"));
+			sc->battery_state = APM_BATT_FLAG_UNKNOWN;
+			sc->battery_life = APM_BATT_LIFE_UNKNOWN;
+			break;
+		case CONFIG_HOOK_BATT_NO_SYSTEM_BATTERY:
+			DPRINTF(("hpcapm: battery state no system battery?\n"));
+			sc->battery_state = APM_BATT_FLAG_NO_SYSTEM_BATTERY;
+			sc->battery_life = APM_BATT_LIFE_UNKNOWN;
+			break;
+		}
+		break;
+	case CONFIG_HOOK_PMEVENT_AC:
+		switch (message) {
+		case CONFIG_HOOK_AC_OFF:
+			DPRINTF(("hpcapm: ac not connect\n"));
+			sc->battery_state &= ~APM_BATT_FLAG_CHARGING;
+			sc->ac_state = APM_AC_OFF;
+			break;
+		case CONFIG_HOOK_AC_ON_CHARGE:
+			DPRINTF(("hpcapm: charging\n"));
+			sc->battery_state |= APM_BATT_FLAG_CHARGING;
+			sc->ac_state = APM_AC_ON;
+			break;
+		case CONFIG_HOOK_AC_ON_NOCHARGE:
+			DPRINTF(("hpcapm: ac connect\n"));
+			sc->battery_state &= ~APM_BATT_FLAG_CHARGING;
+			sc->ac_state = APM_AC_ON;
+			break;
+		case CONFIG_HOOK_AC_UNKNOWN:
+			sc->ac_state = APM_AC_UNKNOWN;
+			break;
 		}
 		break;
 	}
@@ -221,7 +324,43 @@ hpcapm_set_powstate(scx, devid, powstat)
 		break;
 	case APM_SYS_STANDBY:
 		DPRINTF(("hpcapm: set power state STANDBY\n"));
+		s = splhigh();
+		config_hook_call(CONFIG_HOOK_PMEVENT, 
+				 CONFIG_HOOK_PMEVENT_HARDPOWER,
+				 (void *)PWR_STANDBY);
 		sc->power_state = APM_SYS_STANDBY;
+#if NVRIP > 0
+		if (platid_match(&platid, &platid_mask_CPU_MIPS_VR_41XX)) {
+			/*
+			 * disable all interrupts except PIU interrupt
+			 */
+			vrip_intr_suspend();
+			_spllower(~MIPS_INT_MASK_0);
+
+			/*
+			 * STANDBY instruction puts the CPU into power saveing
+			 * state until some interrupt occuer.
+			 * It sleeps until you push the power button.
+			 */
+			__asm(".set noreorder");
+			__asm(__CONCAT(".word	",___STRING(VR_OPCODE_STANDBY)));
+			__asm("nop");
+			__asm("nop");
+			__asm("nop");
+			__asm("nop");
+			__asm("nop");
+			__asm(".set reorder");
+
+			splhigh();
+			vrip_intr_resume();
+			delay(1000); /* 1msec */
+		}
+#endif
+		config_hook_call(CONFIG_HOOK_PMEVENT, 
+				 CONFIG_HOOK_PMEVENT_HARDPOWER,
+				 (void *)PWR_RESUME);
+		DPRINTF(("hpcapm: resume\n"));
+		splx(s);
 		break;
 	case APM_SYS_SUSPEND:
 		DPRINTF(("hpcapm: set power state SUSPEND...\n"));
@@ -254,6 +393,7 @@ hpcapm_set_powstate(scx, devid, powstat)
 
 			splhigh();
 			vrip_intr_resume();
+			delay(1000); /* 1msec */
 		}
 #endif /* NVRIP > 0 */
 #ifdef TX39XX
@@ -290,8 +430,9 @@ hpcapm_get_powstat(scx, pinfo)
 
 	sc = scx;
 
-	memset(pinfo, 0, sizeof(*pinfo));
-
+	pinfo->ac_state = sc->ac_state;
+	pinfo->battery_state = sc->battery_state;
+	pinfo->battery_life = sc->battery_life;
 	return (0);
 }
 

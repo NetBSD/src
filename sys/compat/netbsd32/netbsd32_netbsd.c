@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.19.2.3 2000/12/13 15:49:50 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.19.2.4 2001/01/05 17:35:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -2042,7 +2042,7 @@ netbsd32_execve(p, v, retval)
 	/* copy out the process's signal trapoline code */
 	if (szsigcode) {
 		if (copyout((char *)pack.ep_es->es_emul->e_sigcode,
-		    p->p_sigacts->ps_sigcode = (char *)p->p_psstr - szsigcode,
+		    p->p_sigctx.ps_sigcode = (char *)p->p_psstr - szsigcode,
 		    szsigcode)) {
 #ifdef DEBUG
 			printf("execve: sig trampoline copyout failed\n");

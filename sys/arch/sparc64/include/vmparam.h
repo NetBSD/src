@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6.2.1 2000/11/20 20:26:49 bouyer Exp $ */
+/*	$NetBSD: vmparam.h,v 1.6.2.2 2001/01/05 17:35:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,10 +56,11 @@
  * is the top (end) of the user stack.
  */
 #define	USRTEXT		0x2000			/* Start of user text */
+#define USRSTACK32	0xffffe000L
 #ifdef __arch64__
 #define USRSTACK	0xffffffffffffe000L
 #else
-#define USRSTACK	0xffffe000L
+#define USRSTACK	USRSTACK32
 #endif
 
 /*
@@ -68,16 +69,16 @@
  * XXXX -- These need to be updated to 64-bits.
  */
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(64*1024*1024)		/* max text size */
+#define	MAXTSIZ		(256*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(64*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(256*1024*1024)		/* max data size */
+#define	MAXDSIZ		(1024*1024*1024)	/* max data size */
 #endif
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
+#define	DFLSSIZ		(1024*1024)		/* initial stack size limit */
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		MAXDSIZ			/* max stack size */
