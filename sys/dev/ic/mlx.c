@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.10 2001/06/10 10:34:44 ad Exp $	*/
+/*	$NetBSD: mlx.c,v 1.11 2001/07/19 16:25:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1907,7 +1907,8 @@ mlx_ccb_map(struct mlx_softc *mlx, struct mlx_ccb *mc, void *data, int size,
 	xfer = mc->mc_xfer_map;
 
 	rv = bus_dmamap_load(mlx->mlx_dmat, xfer, data, size, NULL,
-	    BUS_DMA_NOWAIT | BUS_DMA_STREAMING);
+	    BUS_DMA_NOWAIT | BUS_DMA_STREAMING |
+	    ((dir & MC_XFER_IN) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (rv != 0)
 		return (rv);
 

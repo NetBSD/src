@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.32 2001/07/07 16:13:45 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.33 2001/07/19 16:25:23 thorpej Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -679,7 +679,9 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 			error = bus_dmamap_load_uio(dmat,
 				ccb->dmamap_xfer, (struct uio *) xs->data,
 			        ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-			         BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+			         BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				 ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				  BUS_DMA_WRITE));
 		} else
 #endif		/* TFS */
 		{
@@ -687,7 +689,9 @@ adw_build_req(ADW_SOFTC *sc, ADW_CCB *ccb)
 			      ccb->dmamap_xfer, xs->data, xs->datalen, NULL,
 			      ((xs->xs_control & XS_CTL_NOSLEEP) ?
 			       BUS_DMA_NOWAIT : BUS_DMA_WAITOK) |
-			       BUS_DMA_STREAMING);
+			       BUS_DMA_STREAMING |
+			       ((xs->xs_control & XS_CTL_DATA_IN) ?
+			        BUS_DMA_READ : BUS_DMA_WRITE));
 		}
 
 		switch (error) {

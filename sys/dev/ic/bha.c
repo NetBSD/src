@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.44 2001/07/07 15:53:17 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.45 2001/07/19 16:25:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -345,7 +345,9 @@ bha_scsipi_request(chan, req, arg)
 				error = bus_dmamap_load_uio(dmat,
 				    ccb->dmamap_xfer, (struct uio *)xs->data,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			} else
 #endif /* TFS */
 			{
@@ -353,7 +355,9 @@ bha_scsipi_request(chan, req, arg)
 				    ccb->dmamap_xfer, xs->data, xs->datalen,
 				    NULL,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			}
 
 			switch (error) {

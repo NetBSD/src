@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.54 2001/07/07 16:13:48 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.55 2001/07/19 16:25:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -969,7 +969,7 @@ ex_start(ifp)
 		 */
  reload:
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-		    mb_head, BUS_DMA_NOWAIT);
+		    mb_head, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 		switch (error) {
 		case 0:
 			/* Success. */
@@ -1716,7 +1716,8 @@ ex_add_rxbuf(sc, rxd)
 		if (oldm != NULL)
 			bus_dmamap_unload(sc->sc_dmat, rxmap);
 		error = bus_dmamap_load(sc->sc_dmat, rxmap,
-		    m->m_ext.ext_buf, MCLBYTES, NULL, BUS_DMA_NOWAIT);
+		    m->m_ext.ext_buf, MCLBYTES, NULL,
+		    BUS_DMA_READ|BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: can't load rx buffer, error = %d\n",
 			    sc->sc_dev.dv_xname, error);
