@@ -1,4 +1,4 @@
-/*	$NetBSD: hdr.h,v 1.7 1999/07/16 01:38:20 hubertf Exp $	*/
+/*	$NetBSD: hdr.h,v 1.8 1999/07/28 23:23:39 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,9 +60,9 @@
 
 #include <signal.h>
 
-int     datfd;			/* message file descriptor */
-volatile sig_atomic_t delhit;
-int     yea;
+extern int     datfd;			/* message file descriptor */
+extern volatile sig_atomic_t delhit;
+extern int     yea;
 extern char data_file[];	/* Virtual data file */
 
 #define TAB     011
@@ -70,81 +70,77 @@ extern char data_file[];	/* Virtual data file */
 #define FLUSHLINE do { int flushline_ch; while ((flushline_ch = getchar()) != EOF && flushline_ch != '\n'); } while (0)
 #define FLUSHLF   while (next()!=LF)
 
-int     loc, newloc, oldloc, oldlc2, wzdark, gaveup, kq, k, k2;
-char   *wd1, *wd2;		/* the complete words */
-int     verb, obj, spk;
+extern int     loc, newloc, oldloc, oldlc2, wzdark, gaveup, kq, k, k2;
+extern char   *wd1, *wd2;		/* the complete words */
+extern int     verb, obj, spk;
 extern int blklin;
-int     saveday, savet, mxscor, latncy;
+extern int     saveday, savet, mxscor, latncy;
 
 #define SHORT 50		/* How short is a demo game? */
 
 #define MAXSTR  20		/* max length of user's words */
 
 #define HTSIZE  512		/* max number of vocab words */
-struct hashtab {		/* hash table for vocabulary */
+extern struct hashtab {		/* hash table for vocabulary */
 	int     val;		/* word type &index (ktab) */
 	char   *atab;		/* pointer to actual string */
 }       voc[HTSIZE];
 #define SEED 1815622		/* "Encryption" seed */
 
 struct text
-#ifdef OLDSTUFF
-{
-	int     seekadr;	/* DATFILE must be < 2**16 */
-#endif /* OLDSTUFF */
 	{
 		char   *seekadr;/* Msg start in virtual disk */
 		int     txtlen;	/* length of msg starting here */
 	};
 
 #define RTXSIZ  205
-	struct text rtext[RTXSIZ];	/* random text messages */
+extern	struct text rtext[RTXSIZ];	/* random text messages */
 
 #define MAGSIZ  35
-	struct text mtext[MAGSIZ];	/* magic messages */
+extern	struct text mtext[MAGSIZ];	/* magic messages */
 
-	int     clsses;
+extern	int     clsses;
 #define CLSMAX  12
-	struct text ctext[CLSMAX];	/* classes of adventurer */
-	int     cval[CLSMAX];
+extern	struct text ctext[CLSMAX];	/* classes of adventurer */
+extern	int     cval[CLSMAX];
 
-	struct text ptext[101];		/* object descriptions */
+extern	struct text ptext[101];		/* object descriptions */
 
 #define LOCSIZ  141			/* number of locations */
-	struct text ltext[LOCSIZ];	/* long loc description */
-	struct text stext[LOCSIZ];	/* short loc descriptions */
+extern	struct text ltext[LOCSIZ];	/* long loc description */
+extern	struct text stext[LOCSIZ];	/* short loc descriptions */
 
-	struct travlist {		/* direcs & conditions of travel */
+extern	struct travlist {		/* direcs & conditions of travel */
 		struct travlist *next;	/* ptr to next list entry */
 		int     conditions;	/* m in writeup (newloc / 1000) */
 		int     tloc;		/* n in writeup (newloc % 1000) */
 		int     tverb;		/* the verb that takes you there */
 	}      *travel[LOCSIZ], *tkk;	/* travel is closer to keys(...) */
 
-	int     atloc[LOCSIZ];
+extern	int     atloc[LOCSIZ];
 
-	int     plac[101];		/* initial object placement */
-	int     fixd[101], fixed[101];	/* location fixed? */
+extern	int     plac[101];		/* initial object placement */
+extern	int     fixd[101], fixed[101];	/* location fixed? */
 
-	int     actspk[35];		/* rtext msg for verb <n> */
+extern	int     actspk[35];		/* rtext msg for verb <n> */
 
-	int     cond[LOCSIZ];		/* various condition bits */
+extern	int     cond[LOCSIZ];		/* various condition bits */
 
 	extern int setbit[16];		/* bit defn masks 1,2,4,... */
 
-	int     hntmax;
-	int     hints[20][5];		/* info on hints */
-	int     hinted[20], hintlc[20];
+extern	int     hntmax;
+extern	int     hints[20][5];		/* info on hints */
+extern	int     hinted[20], hintlc[20];
 
-	int     place[101], prop[101], links[201];
-	int     abb[LOCSIZ];
+extern	int     place[101], prop[101], links[201];
+extern	int     abb[LOCSIZ];
 
-	int     maxtrs, tally, tally2;	/* treasure values */
+extern	int     maxtrs, tally, tally2;	/* treasure values */
 
 #define FALSE   0
 #define TRUE    1
 
-	int     keys, lamp, grate, cage, rod, rod2, steps,	/* mnemonics */
+extern	int     keys, lamp, grate, cage, rod, rod2, steps,	/* mnemonics */
 	        bird, door, pillow, snake, fissur, tablet, clam, oyster,
 	        magzin, dwarf, knife, food, bottle, water, oil, plant, plant2,
 	        axe, mirror, dragon, chasm, troll, troll2, bear, messag,
@@ -153,15 +149,15 @@ struct text
 	        null, entrnc, dprssn, enter, stream, pour, say, lock, throw,
 	        find, invent;
 
-	int     chloc, chloc2, dseen[7], dloc[7],	/* dwarf stuff */
+extern	int     chloc, chloc2, dseen[7], dloc[7],	/* dwarf stuff */
 	        odloc[7], dflag, daltlc;
 
-	int     tk[21], stick, dtotal, attack;
-	int     turns, lmwarn, iwest, knfloc, detail,	/* various flags and
+extern	int     tk[21], stick, dtotal, attack;
+extern	int     turns, lmwarn, iwest, knfloc, detail,	/* various flags and
 							 * counters */
 	        abbnum, maxdie, numdie, holdng, dkill, foobar, bonus, clock1,
 	        clock2, saved, closng, panic, closed, scorng;
 
-	int     demo, newloc, limit;
+extern	int     demo, newloc, limit;
 
 #define DECR(a,b,c,d,e) decr(a+'+',b+'-',c+'#',d+'&',e+'%')
