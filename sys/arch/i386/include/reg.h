@@ -54,17 +54,16 @@
 #define	tEDI	(2)
 #define	tESI	(3)
 #define	tEBP	(4)
-#define	tISP	(5)
-#define	tEBX	(6)
-#define	tEDX	(7)
-#define	tECX	(8)
-#define	tEAX	(9)
+#define	tEBX	(5)
+#define	tEDX	(6)
+#define	tECX	(7)
+#define	tEAX	(8)
 
-#define	tEIP	(12)
-#define	tCS	(13)
-#define	tEFLAGS	(14)
-#define	tESP	(15)
-#define	tSS	(16)
+#define	tEIP	(11)
+#define	tCS	(12)
+#define	tEFLAGS	(13)
+#define	tESP	(14)
+#define	tSS	(15)
 
 /*
  * Registers accessible to ptrace(2) syscall for debugger
@@ -73,20 +72,20 @@
  * is all invisible to the user.
  */
 struct reg {
-	unsigned int	r_es;
-	unsigned int	r_ds;
-	unsigned int	r_edi;
-	unsigned int	r_esi;
-	unsigned int	r_ebp;
-	unsigned int	r_ebx;
-	unsigned int	r_edx;
-	unsigned int	r_ecx;
-	unsigned int	r_eax;
-	unsigned int	r_eip;
-	unsigned int	r_cs;
-	unsigned int	r_eflags;
-	unsigned int	r_esp;
-	unsigned int	r_ss;
+	int	r_es;
+	int	r_ds;
+	int	r_edi;
+	int	r_esi;
+	int	r_ebp;
+	int	r_ebx;
+	int	r_edx;
+	int	r_ecx;
+	int	r_eax;
+	int	r_eip;
+	int	r_cs;
+	int	r_eflags;
+	int	r_esp;
+	int	r_ss;
 };
 
 #endif /* !_I386_REG_H_ */

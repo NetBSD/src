@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: process_machdep.c,v 1.8.2.1 1994/08/15 16:55:12 mycroft Exp $
+ *	$Id: process_machdep.c,v 1.8.2.2 1994/10/11 10:01:24 mycroft Exp $
  */
 
 /*
@@ -86,23 +86,23 @@ process_read_regs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	ptr = (char *) p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
+	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
 	tf = ptr;
 
-	regs->r_es = tf->tf_es;
-	regs->r_ds = tf->tf_ds;
-	regs->r_edi = tf->tf_edi;
-	regs->r_esi = tf->tf_esi;
-	regs->r_ebp = tf->tf_ebp;
-	regs->r_ebx = tf->tf_ebx;
-	regs->r_edx = tf->tf_edx;
-	regs->r_ecx = tf->tf_ecx;
-	regs->r_eax = tf->tf_eax;
-	regs->r_eip = tf->tf_eip;
-	regs->r_cs = tf->tf_cs;
+	regs->r_es     = tf->tf_es;
+	regs->r_ds     = tf->tf_ds;
+	regs->r_edi    = tf->tf_edi;
+	regs->r_esi    = tf->tf_esi;
+	regs->r_ebp    = tf->tf_ebp;
+	regs->r_ebx    = tf->tf_ebx;
+	regs->r_edx    = tf->tf_edx;
+	regs->r_ecx    = tf->tf_ecx;
+	regs->r_eax    = tf->tf_eax;
+	regs->r_eip    = tf->tf_eip;
+	regs->r_cs     = tf->tf_cs;
 	regs->r_eflags = tf->tf_eflags;
-	regs->r_esp = tf->tf_esp;
-	regs->r_ss = tf->tf_ss;
+	regs->r_esp    = tf->tf_esp;
+	regs->r_ss     = tf->tf_ss;
 
 	return (0);
 }
@@ -119,7 +119,7 @@ process_write_regs(p, regs)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	ptr = (char *)p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
+	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
 	tf = ptr;
 
 	eflags = regs->r_eflags;
@@ -128,20 +128,20 @@ process_write_regs(p, regs)
 	    (eflags & PSL_IOPL) > (tf->tf_eflags & PSL_IOPL))
 		return (EPERM);
 
-	tf->tf_ebp = regs->r_ebp;
-	tf->tf_esp = regs->r_esp;
-	tf->tf_eip = regs->r_eip;
+	tf->tf_es     = regs->r_es;
+	tf->tf_ds     = regs->r_ds;
+	tf->tf_edi    = regs->r_edi;
+	tf->tf_esi    = regs->r_esi;
+	tf->tf_ebp    = regs->r_ebp;
+	tf->tf_ebx    = regs->r_ebx;
+	tf->tf_edx    = regs->r_edx;
+	tf->tf_ecx    = regs->r_ecx;
+	tf->tf_eax    = regs->r_eax;
+	tf->tf_eip    = regs->r_eip;
+	tf->tf_cs     = regs->r_cs;
 	tf->tf_eflags = eflags;
-	tf->tf_eax = regs->r_eax;
-	tf->tf_ebx = regs->r_ebx;
-	tf->tf_ecx = regs->r_ecx;
-	tf->tf_edx = regs->r_edx;
-	tf->tf_esi = regs->r_esi;
-	tf->tf_edi = regs->r_edi;
-	tf->tf_cs = regs->r_cs;
-	tf->tf_ds = regs->r_ds;
-	tf->tf_es = regs->r_es;
-	tf->tf_ss = regs->r_ss;
+	tf->tf_esp    = regs->r_esp;
+	tf->tf_ss     = regs->r_ss;
 
 	return (0);
 }
@@ -156,7 +156,7 @@ process_sstep(p, sstep)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	ptr = (char *) p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
+	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
 	tf = ptr;
 
 	if (sstep)
@@ -178,10 +178,10 @@ process_set_pc(p, addr)
 	if ((p->p_flag & P_INMEM) == 0)
 		return (EIO);
 
-	ptr = (char *) p->p_addr + ((char *) p->p_md.md_regs - (char *) kstack);
+	ptr = (char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack);
 	tf = ptr;
 
-	tf->tf_eip = (u_int)addr;
+	tf->tf_eip = (int)addr;
 
 	return (0);
 }
