@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.14 2004/07/09 11:50:21 wiz Exp $	*/
+/*	$NetBSD: comm.c,v 1.15 2005/02/17 17:31:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)comm.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: comm.c,v 1.14 2004/07/09 11:50:21 wiz Exp $");
+__RCSID("$NetBSD: comm.c,v 1.15 2005/02/17 17:31:28 xtraeme Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -57,15 +57,12 @@ __RCSID("$NetBSD: comm.c,v 1.14 2004/07/09 11:50:21 wiz Exp $");
 
 char *tabs[] = { "", "\t", "\t\t" };
 
-FILE   *file __P((const char *));
-int	main __P((int, char **));
-void	show __P((FILE *, char *, char *));
-void	usage __P((void));
+FILE   *file(const char *);
+void	show(FILE *, char *, char *);
+void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int comp, file1done, file2done, read1, read2;
 	int ch, flag1, flag2, flag3;
@@ -167,17 +164,14 @@ main(argc, argv)
 }
 
 void
-show(fp, offset, buf)
-	FILE *fp;
-	char *offset, *buf;
+show(FILE *fp, char *offset, char *buf)
 {
 	while (printf("%s%s", offset, buf) >= 0 && fgets(buf, MAXLINELEN, fp))
 		;
 }
 
 FILE *
-file(name)
-	const char *name;
+file(const char *name)
 {
 	FILE *fp;
 
@@ -189,7 +183,7 @@ file(name)
 }
 
 void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: comm [-123f] file1 file2\n");
