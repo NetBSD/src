@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.9 1999/07/02 15:29:03 itojun Exp $	*/
+/*	$NetBSD: show.c,v 1.10 1999/07/12 20:46:15 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.9 1999/07/02 15:29:03 itojun Exp $");
+__RCSID("$NetBSD: show.c,v 1.10 1999/07/12 20:46:15 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,13 +189,13 @@ p_rtentry(rtm)
 		pr_rthdr();
 	}
 	if (rtm->rtm_addrs == RTA_DST)
-		p_sockaddr(sa, 0, 36);
+		p_sockaddr(sa, 0, WID_DST + 1 + WID_GW + 1);
 	else {
-		p_sockaddr(sa, rtm->rtm_flags, 16);
+		p_sockaddr(sa, rtm->rtm_flags, WID_DST);
 		if (sa->sa_len == 0)
 			sa->sa_len = sizeof(long);
 		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
-		p_sockaddr(sa, 0, 18);
+		p_sockaddr(sa, 0, WID_GW);
 	}
 	p_flags(rtm->rtm_flags & interesting, "%-6.6s ");
 	putchar('\n');
