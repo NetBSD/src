@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2001/06/10 03:16:30 briggs Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2001/06/21 16:30:05 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,3 +47,4 @@
 #define	KERNBASE	0x3100
 
 #include <powerpc/param.h>
+
