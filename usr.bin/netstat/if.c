@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.49 2001/10/06 18:48:30 bjh21 Exp $	*/
+/*	$NetBSD: if.c,v 1.50 2002/06/08 14:56:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.49 2001/10/06 18:48:30 bjh21 Exp $");
+__RCSID("$NetBSD: if.c,v 1.50 2002/06/08 14:56:26 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ intpr(interval, ifnetaddr, pfunc)
 			printf("%-17.17s ", "none");
 		} else {
 			char hexsep = '.';		/* for hexprint */
-			const char hexfmt[] = "%02x%c";	/* for hexprint */
+			static const char hexfmt[] = "%02x%c";	/* for hexprint */
 			if (kread(ifaddraddr, (char *)&ifaddr, sizeof ifaddr)) {
 				ifaddraddr = 0;
 				continue;
