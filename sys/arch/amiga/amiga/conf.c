@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.57 2000/01/31 22:49:12 mhitch Exp $	*/
+/*	$NetBSD: conf.c,v 1.57.4.1 2001/05/01 10:42:25 he Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -124,7 +124,7 @@ cdev_decl(wd);
 /* open, close, read, write */
 #define       cdev_i4brbch_init(c,n) { \
       dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-      dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+      dev_init(c,n,write), dev_init(c,n,ioctl), \
       (dev_type_stop((*))) enodev, \
       0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
 
