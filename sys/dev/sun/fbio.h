@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.2 2001/08/05 18:07:53 jdolecek Exp $ */
+/*	$NetBSD: fbio.h,v 1.3 2001/09/19 18:29:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -73,6 +73,20 @@
 #define	FBTYPE_P9100		21	/* tadpole 3gx p9100 controller */
 
 #define	FBTYPE_LASTPLUSONE	22	/* max number of fbs (change as add) */
+
+/*
+ * XXX These really shouldn't be here, but this is what the pmax
+ * XXX port did ages ago.
+ */
+#define	PMAX_FBTYPE_PM_MONO	1
+#define	PMAX_FBTYPE_PM_COLOR	2
+#define	PMAX_FBTYPE_CFB		3
+#define	PMAX_FBTYPE_XCFB	4
+#define	PMAX_FBTYPE_MFB		5
+#define	PMAX_FBTYPE_SFB		6
+#define	PMAX_FBTYPE_PX		7
+
+#define	PMAX_FBTYPE_LASTPLUSONE	8
 
 /*
  * Frame buffer descriptor as returned by FBIOGTYPE.
