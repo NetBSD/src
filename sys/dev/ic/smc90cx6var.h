@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6var.h,v 1.1 1998/09/02 22:32:08 is Exp $	*/
+/*	$NetBSD: smc90cx6var.h,v 1.2 1998/10/20 22:18:14 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Ignatios Souvatzis
@@ -53,7 +53,8 @@ struct bah_softc {
 	bus_space_tag_t		sc_bst_r, sc_bst_m;
 	bus_space_handle_t 	sc_regs, sc_mem;
 	void 	(*sc_reset)(struct bah_softc *, int);
-	void 	*sc_softcookie;
+	void 	*sc_rxcookie;		/* softcallback cookies */
+	void	*sc_txcookie;
 	u_long	sc_recontime;		/* seconds only, I'm lazy */
 	u_long	sc_reconcount;		/* for the above */
 	u_long	sc_reconcount_excessive; /* for the above */
