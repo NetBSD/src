@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.138 1999/06/19 04:51:42 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.139 1999/06/27 15:15:00 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.131 1999/06/19 04:49:52 augustss Exp 
+ *	NetBSD: pcidevs,v 1.132 1999/06/27 15:13:54 drochner Exp 
  */
 
 /*
@@ -510,10 +510,12 @@
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_NVIDIA_SGS	0x12d2		/* Nvidia Corporation & SGS Thomson Microelectric */
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
+#define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
 #define	PCI_VENDOR_AVANCE2	0x4005		/* Avance Logic (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_ADDTRON	0x4033		/* Addtron Technology */
 #define	PCI_VENDOR_NETVIN	0x4a14		/* NetVin */
 #define	PCI_VENDOR_BUSLOGIC2	0x4b10		/* Buslogic (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_S3	0x5333		/* S3 */
@@ -579,6 +581,9 @@
 #define	PCI_PRODUCT_ACARD_AEC6712D	0x8040		/* AEC6712D SCSI */
 #define	PCI_PRODUCT_ACARD_AEC6712SUW	0x8050		/* AEC6712SUW SCSI */
 
+/* Accton products */
+#define	PCI_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX 5030/5038 Ethernet */
+
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI Bridge */
 
@@ -619,6 +624,9 @@
 #define	PCI_PRODUCT_ADP2_7890	0x001f		/* AIC-7890/1 */
 #define	PCI_PRODUCT_ADP2_3940U2	0x0050		/* AHA-3940 Ultra2 */
 #define	PCI_PRODUCT_ADP2_7896	0x005f		/* AIC-7896/7 */
+
+/* Addtron Products */
+#define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 Ethernet */
 
 /* Advanced System Products */
 #define	PCI_PRODUCT_ADVSYS_1200A	0x1100	
@@ -806,6 +814,9 @@
 #define	PCI_PRODUCT_DEC_21152	0x0024		/* DECchip 21152 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI Bridge */
+
+/* Delta products */
+#define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 Ethernet */
 
 /* Diamond products */
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */
