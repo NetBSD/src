@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.10 2003/09/08 19:31:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.10 2003/09/08 19:31:00 mycroft Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -289,13 +289,6 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		cmdlen = xs->cmdlen;
 
 		/* XXX should use transform */
-
-		if (cmd->opcode == START_STOP &&
-		    (sc->sc_quirks & UMASS_QUIRK_NO_START_STOP)) {
-			/*printf("%s: START_STOP\n", USBDEVNAME(sc->sc_dev));*/
-			xs->error = XS_NOERROR;
-			goto done;
-		}
 
 		if (cmd->opcode == INQUIRY &&
 		    (sc->sc_quirks & UMASS_QUIRK_FORCE_SHORT_INQUIRY)) {
