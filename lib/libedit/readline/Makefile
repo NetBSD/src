@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/08/19 13:35:07 lukem Exp $	
+#	$NetBSD: Makefile,v 1.7 2003/08/03 09:23:15 lukem Exp $	
 
 NOOBJ=		# defined
 
@@ -8,9 +8,6 @@ NOOBJ=		# defined
 
 INCS=		readline.h
 INCSDIR=	/usr/include/readline
-SYMLINKS=	readline.h ${INCSDIR}/history.h
-
-
-incinstall:: linksinstall
+INCSYMLINKS=	readline.h ${INCSDIR}/history.h
 
 .include <bsd.prog.mk>
