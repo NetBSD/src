@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.426 2001/01/01 22:13:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.427 2001/01/09 03:45:49 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -1882,8 +1882,11 @@ init386(first_avail)
 			 * XXX Chop the last page off the size so that
 			 * XXX it can fit in avail_end.
 			 */
-			if (seg_end == 0x100000000ULL)
+			if (seg_end == 0x100000000ULL) {
 				seg_end -= PAGE_SIZE;
+				if (seg_end <= seg_start)
+					continue;
+			}
 
 			/*
 			 * Allocate the physical addresses used by RAM
