@@ -1,4 +1,4 @@
-/*	$NetBSD: isofs.c,v 1.1 1999/02/18 06:09:25 lukem Exp $	*/
+/*	$NetBSD: isofs.c,v 1.2 2003/02/01 18:31:09 tron Exp $	*/
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,9 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isofs.c,v 1.1 1999/02/18 06:09:25 lukem Exp $");
+__RCSID("$NetBSD: isofs.c,v 1.2 2003/02/01 18:31:09 tron Exp $");
 
 #include <sys/param.h>
+#define _KERNEL
+#include <sys/mallocvar.h>
+#undef _KERNEL
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/user.h>
