@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:20:26 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/01/05 10:16:18 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/input
 
@@ -7,7 +7,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules/input
 .include <bsd.own.mk>
 
 MODULE=	kbd_drv
-MAN=	kbd.4
+MAN=	kbd.4 keyboard.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/keyboard
 
 SRCS=	kbd.c
