@@ -37,7 +37,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)_setjmp.s	5.1 (Berkeley) 4/23/90"*/
-	.asciz "$Id: _setjmp.S,v 1.1 1993/10/07 00:18:57 cgd Exp $"
+	.asciz "$Id: _setjmp.S,v 1.2 1993/10/20 18:50:15 jtc Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -61,7 +61,7 @@ ENTRY(_setjmp)
 	movl	%ebp,12(%eax)
 	movl	%esi,16(%eax)
 	movl	%edi,20(%eax)
-	movl	$0,%eax
+	xorl	%eax,%eax
 	ret
 
 ENTRY(_longjmp)
@@ -73,8 +73,8 @@ ENTRY(_longjmp)
 	movl	12(%edx),%ebp
 	movl	16(%edx),%esi
 	movl	20(%edx),%edi
-	cmpl	$0,%eax
-	jne	1f
-	movl	$1,%eax
+	testl	%eax,%eax
+	jnz	1f
+	incl	%eax
 1:	movl	%ecx,0(%esp)
 	ret
