@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.30 2000/03/14 15:56:55 oster Exp $
+#	$NetBSD: files.macppc,v 1.31 2000/03/26 08:34:20 tsubai Exp $
 #
 # macppc-specific configuration info
 
@@ -29,6 +29,7 @@ major {md = 9}
 # RAIDframe
 #
 major {raid = 12}
+
 #
 # Machine-independent SCSI drivers
 #
@@ -108,7 +109,6 @@ device mediabay: obio
 attach mediabay at obio
 file arch/macppc/dev/mediabay.c			mediabay
 
-device esp: scsi, ncr53c9x
 attach esp at obio
 file arch/macppc/dev/esp.c			esp
 
