@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.11 2002/09/25 16:35:08 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.12 2002/09/25 22:25:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -151,8 +151,12 @@ _rtld_bind_start_0:	# (y, x)
 
 	ldx	[%o0 + (10*4)], %o0	/* Load object pointer from PLT2 */
 
-	sdivx	%l0, 5120, %l1		/* Calculate i/5120 */
-	sub	%l0, %l1, %l2		/* And i%5120 */
+	sethi	%hi(5120), %l1
+	sdivx	%l0, %l1, %l1		/* Calculate i/5120 */
+	sllx	%l1, 2, %l2
+	add	%l2, %l1, %l2
+	sllx	%l2, 10, %l2
+	sub	%l0, %l2, %l2		/* And i%5120 */
 	
 	/* Let the division churn for a bit. */
 	sdivx	%l2, 24, %l4		/* (i%5120)/24 */
