@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
+/*	$NetBSD: output.c,v 1.5 1997/01/15 07:24:25 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $";
+static char rcsid[] = "$NetBSD: output.c,v 1.5 1997/01/15 07:24:25 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,11 +113,15 @@ output_prefix()
 	++outline;
 	fprintf(code_file, "#define yyss %sss\n", symbol_prefix);
 	++outline;
+	fprintf(code_file, "#define yysslim %ssslim\n", symbol_prefix);
+	++outline;
 	fprintf(code_file, "#define yyssp %sssp\n", symbol_prefix);
 	++outline;
 	fprintf(code_file, "#define yyvs %svs\n", symbol_prefix);
 	++outline;
 	fprintf(code_file, "#define yyvsp %svsp\n", symbol_prefix);
+	++outline;
+	fprintf(code_file, "#define yystacksize %sstacksize\n", symbol_prefix);
 	++outline;
 	fprintf(code_file, "#define yylhs %slhs\n", symbol_prefix);
 	++outline;
