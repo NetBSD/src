@@ -681,7 +681,7 @@ boot(arghowto)
 		 */
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
-		sync((struct proc *)0, (void *)0, (int *)0);
+		sync(&proc0, (void *)0, (int *)0);
 
 		/*
 		 * Unmount filesystems
