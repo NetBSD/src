@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.7 1995/05/16 07:30:42 phil Exp $	*/
+/*	$NetBSD: psl.h,v 1.8 1995/06/18 07:13:50 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,9 +69,6 @@
 #ifdef _KERNEL
 #include <machine/icu.h>
 
-enum {HIGH_LEVEL, LOW_LEVEL, RAISING_EDGE, FALLING_EDGE} int_modes;
-#define ICU(n)	*((unsigned short *)(ICU_ADR + n))
-
 struct iv {
 	void (*iv_vec)();
 	void *iv_arg;
@@ -104,13 +101,13 @@ extern struct iv ivt[];
 
 #define intr_disable(ir) do { \
 		di(); \
-		ICU(IMSK) = Cur_pl | (idisabled |= (1 << ir)); \
+		ICUW(IMSK) = Cur_pl | (idisabled |= (1 << ir)); \
 		ei(); \
 	} while(0)
 
 #define intr_enable(ir) do { \
 		di(); \
-		ICU(IMSK) = Cur_pl | (idisabled &= ~(1 << ir)); \
+		ICUW(IMSK) = Cur_pl | (idisabled &= ~(1 << ir)); \
 		ei(); \
 	} while(0)
 
@@ -124,7 +121,7 @@ splraise(register int ncpl)
 	di();
 	ocpl = Cur_pl;
 	ncpl |= ocpl;
-	ICU(IMSK) = ncpl | idisabled;
+	ICUW(IMSK) = ncpl | idisabled;
 	Cur_pl = ncpl;
 	ei();
 	return(ocpl);
@@ -146,7 +143,7 @@ splx(register int ncpl)
 	register int ocpl;
 	di();
 	ocpl = Cur_pl;
-	ICU(IMSK) = ncpl | idisabled;
+	ICUW(IMSK) = ncpl | idisabled;
 	Cur_pl = ncpl;
 	ei();
 	if (ncpl == imask[IPL_ZERO])
