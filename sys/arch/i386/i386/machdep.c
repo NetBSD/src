@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.74 1994/01/11 19:19:01 brezak Exp $
+ *	$Id: machdep.c,v 1.75 1994/01/11 21:46:49 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -527,24 +527,28 @@ sigreturn(p, uap, retval)
 	 * are suspect.
 	 */
 #define max_ldt_sel(pcb) \
-	((((pcb)->pcb_ldt)? \
-	    (gdt_segs[GUSERLDT_SEL].ssd_limit + 1) : \
-		sizeof(ldt))/sizeof(union descriptor))
+	((pcb)->pcb_ldt ? (pcb)->pcb_ldt_len : (sizeof(ldt) / sizeof(ldt[0])))
 
-#define valid_sel(sel) \
-	(((sel) == 0) || \
-	  (ISPL((sel)) == SEL_UPL && ISLDT((sel))) || \
-	  (ISLDT((sel)) && IDXSEL((sel)) < max_ldt_sel((struct pcb *)(p->p_addr))))
+#define valid_ldt_sel(sel) \
+	(ISLDT(sel) && ISPL(sel) == SEL_UPL && \
+	 IDXSEL(sel) < max_ldt_sel(&p->p_addr->u_pcb))
 
-	if (scp->sc_cs&0xffff != _ucodesel || scp->sc_ss&0xffff != _udatasel ||
-	    scp->sc_ds&0xffff != _udatasel || scp->sc_es&0xffff != _udatasel) {
-		if (!valid_sel(scp->sc_cs) || !valid_sel(scp->sc_ss) ||
-		    !valid_sel(scp->sc_ds) || !valid_sel(scp->sc_es)) {
-		    trapsignal(p, SIGBUS, T_PROTFLT);
-		    return(EINVAL);
-		}
+#define null_sel(sel) \
+	(!ISLDT(sel) && IDXSEL(sel) == 0)
+
+	if ((scp->sc_cs&0xffff != _ucodesel && !valid_ldt_sel(scp->sc_cs)) ||
+	    (scp->sc_ss&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ss)) ||
+	    (scp->sc_ds&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ds) &&
+	     !null_sel(scp->sc_ds)) ||
+	    (scp->sc_ds&0xffff != _udatasel && !valid_ldt_sel(scp->sc_ds) &&
+	     !null_sel(scp->sc_es))) {
+		trapsignal(p, SIGBUS, T_PROTFLT);
+		return(EINVAL);
 	}
-#undef valid_sel
+
+#undef max_ldt_sel
+#undef valid_ldt_sel
+#undef null_sel
 
 	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~
