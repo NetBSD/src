@@ -1,3 +1,5 @@
+/*	$NetBSD: sunos.h,v 1.2 1994/10/26 02:57:08 cgd Exp $	*/
+
 #define	SUNM_RDONLY	0x01	/* mount fs read-only */
 #define	SUNM_NOSUID	0x02	/* mount fs with setuid disallowed */
 #define	SUNM_NEWTYPE	0x04	/* type is string (char *), not int */

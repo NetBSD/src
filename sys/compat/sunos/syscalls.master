@@ -1,4 +1,5 @@
-	$NetBSD: syscalls.master,v 1.19 1994/10/26 01:03:43 deraadt Exp $
+	$NetBSD: syscalls.master,v 1.20 1994/10/26 02:57:11 cgd Exp $
+
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
 ; NetBSD COMPAT_SUNOS system call name/number "master" file.
