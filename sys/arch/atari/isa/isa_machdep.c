@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.8 1998/06/09 00:08:12 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.9 1998/06/11 08:32:00 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -81,7 +81,7 @@ isabusattach(pdp, dp, auxp)
 struct device	*pdp, *dp;
 void		*auxp;
 {
-	struct isabus_softc *sc = (struct isabus_softc *)self;
+	struct isabus_softc *sc = (struct isabus_softc *)dp;
 	struct isabus_attach_args	iba;
 	bus_space_tag_t			leb_alloc_bus_space_tag __P((void));
 
