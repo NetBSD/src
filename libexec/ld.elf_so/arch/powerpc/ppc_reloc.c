@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.2 1999/03/01 16:40:08 christos Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.3 1999/03/05 04:50:28 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -59,7 +59,7 @@ _rtld_bind_powerpc(obj, reloff)
 	const Elf_RelA *rela;
 
 	if (reloff < 0 || reloff >= 0x8000) {
-		dbg("_rtld_bind_powerpc: broken reloff %x", reloff);
+		dbg(("_rtld_bind_powerpc: broken reloff %x", reloff));
 		_rtld_die();
 	}
 
@@ -121,9 +121,9 @@ _rtld_bind_pltgot(obj, rela)
 
 	def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
 				&defobj, true);
-	dbg("sym='%s'", def ? defobj->strtab + def->st_name : "??");
+	dbg(("sym='%s'", def ? defobj->strtab + def->st_name : "??"));
 	if (def == NULL) {
-		dbg("symbol not found");
+		dbg(("symbol not found"));
 		return 0;
 	}
 
