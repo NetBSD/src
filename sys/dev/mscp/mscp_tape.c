@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.21 2002/10/23 09:13:28 jdolecek Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.21.6.1 2004/08/12 16:17:15 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.21 2002/10/23 09:13:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_tape.c,v 1.21.6.1 2004/08/12 16:17:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -205,10 +205,10 @@ mt_putonline(mt)
  */
 /*ARGSUSED*/
 int
-mtopen(dev, flag, fmt, p)
+mtopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	struct mt_softc *mt;
 	int unit;
@@ -237,10 +237,10 @@ mtopen(dev, flag, fmt, p)
 
 /* ARGSUSED */
 int
-mtclose(dev, flags, fmt, p)
+mtclose(dev, flags, fmt, l)
 	dev_t dev;
 	int flags, fmt;
-	struct	proc *p;
+	struct	lwp *l;
 {
 	int unit = mtunit(dev);
 	struct mt_softc *mt = mt_cd.cd_devs[unit];
@@ -433,12 +433,12 @@ mtioerror(usc, mp, bp)
  * I/O controls.
  */
 int
-mtioctl(dev, cmd, data, flag, p)
+mtioctl(dev, cmd, data, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = mtunit(dev);
 	struct mt_softc *mt = mt_cd.cd_devs[unit];

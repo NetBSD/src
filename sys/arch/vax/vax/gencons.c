@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.39.6.1 2004/08/03 10:42:36 skrll Exp $	*/
+/*	$NetBSD: gencons.c,v 1.39.6.2 2004/08/12 16:17:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.39.6.1 2004/08/03 10:42:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.39.6.2 2004/08/12 16:17:15 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -93,10 +93,11 @@ const struct cdevsw gen_cdevsw = {
 };
 
 int
-gencnopen(dev_t dev, int flag, int mode, struct proc *p)
+gencnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit;
 	struct tty *tp;
+	struct proc *p = l->l_proc;
 
 	unit = minor(dev);
 	if (unit >= maxttys)
@@ -129,7 +130,7 @@ gencnopen(dev_t dev, int flag, int mode, struct proc *p)
 }
 
 int
-gencnclose(dev_t dev, int flag, int mode, struct proc *p)
+gencnclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
 
@@ -162,23 +163,23 @@ gencnwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-gencnpoll(dev_t dev, int events, struct proc *p)
+gencnpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
  
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 int
-gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+gencnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct tty *tp = gc_softc[minor(dev)].gencn_tty;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		return error;
-	return ttioctl(tp, cmd, data, flag, p);
+	return ttioctl(tp, cmd, data, flag, l);
 }
 
 void
