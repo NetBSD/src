@@ -1,0 +1,57 @@
+#	$NetBSD: RAQ,v 1.1 2000/03/19 23:07:44 soren Exp $
+
+include		"arch/cobalt/conf/std.cobalt"
+
+maxusers	32
+
+options 	KTRACE
+
+options 	DDB
+options 	DDB_HISTORY_SIZE=100
+#options 	DEBUG
+options 	DIAGNOSTIC
+makeoptions 	DEBUG="-g"
+
+options 	EXEC_ECOFF
+
+file-system	FFS
+file-system	EXT2FS
+file-system	NFS
+file-system	KERNFS
+
+options 	FFS_EI
+
+options 	SOFTDEP
+
+options 	INET
+
+options 	PCIVERBOSE
+options 	SCSIVERBOSE
+
+options 	NFS_BOOT_DHCP
+
+config		netbsd root on ? type ?
+
+mainbus0 	at root
+cpu0 		at mainbus?
+options 	COM16650
+com0		at mainbus? addr 0x1c800000 level 3
+#zsc0		at mainbus? addr 0x1c800000 level 3
+#panel0 	at mainbus? addr 0xdeadbeef
+gt0 		at mainbus? addr 0x14000000
+pci* 		at gt0
+pchb* 		at pci? dev ? function ?
+pcib* 		at pci? dev ? function ?
+tlp* 		at pci? dev ? function ?
+options 	TLP_MATCH_21142
+lxtphy* 	at mii? phy ?
+#uhci* 		at pci? dev ? function ?
+ncr* 		at pci? dev ? function ?
+#scsibus* 	at ncr?
+#sd* 		at scsibus?
+#st* 		at scsibus?
+pciide* 	at pci? dev ? function ?
+wd* 		at pciide? channel ? drive ?
+
+pseudo-device	loop
+pseudo-device	pty		64
