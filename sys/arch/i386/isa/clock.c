@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.9 1993/06/27 06:42:19 andrew Exp $
+ *	$Id: clock.c,v 1.10 1993/07/03 12:32:38 cgd Exp $
  */
 
 /*
@@ -235,11 +235,11 @@ resettodr()
 /*
  * Wire clock interrupt in.
  */
-#define V(s)	__CONCAT(V, s)
-extern V(clk)();
+#define VEC(s)	__CONCAT(X, s)
+extern VEC(clk)();
 void
 enablertclock() {
-	setidt(ICU_OFFSET+0, &V(clk), SDT_SYS386IGT, SEL_KPL);
+	setidt(ICU_OFFSET+0, &VEC(clk), SDT_SYS386IGT, SEL_KPL);
 	INTREN(IRQ0);
 }
 

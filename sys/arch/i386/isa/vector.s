@@ -186,9 +186,9 @@
 			  icu_num, icu_enables, reg) \
 	.globl	handler ; \
 	.text ; \
-	.globl	_V/**/name ; \
+	.globl	_X/**/name ; \
 	SUPERALIGN_TEXT ; \
-_V/**/name: ; \
+_X/**/name: ; \
 	FAST_INTR(unit, irq_num, id_num, handler, ENABLE_ICU/**/icu_enables)
 
 #undef BUILD_VECTOR
@@ -196,9 +196,9 @@ _V/**/name: ; \
 		     icu_num, icu_enables, reg) \
 	.globl	handler ; \
 	.text ; \
-	.globl	_V/**/name ; \
+	.globl	_X/**/name ; \
 	SUPERALIGN_TEXT ; \
-_V/**/name: ; \
+_X/**/name: ; \
 	INTR(unit,irq_num,id_num, mask, handler, IO_ICU/**/icu_num, \
 	     ENABLE_ICU/**/icu_enables, reg,)
 

@@ -747,7 +747,7 @@ struct device *dp;
   
   if(dp->d_irq==-2)
     return ("NULL");
-  sprintf(buf, "V%.32s%d", dp->d_name, dp->d_unit);
+  sprintf(buf, "X%.32s%d", dp->d_name, dp->d_unit);
   return buf;
 }
 #endif
