@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)netisr.h	7.8 (Berkeley) 5/7/91
- *	$Id: netisr.h,v 1.5 1994/04/18 23:20:26 mycroft Exp $
+ *	$Id: netisr.h,v 1.6 1994/04/18 23:31:41 mycroft Exp $
  */
 
 #ifndef _NET_NETISR_H_
@@ -55,7 +55,6 @@
  * interrupt used for scheduling the network code to calls
  * on the lowest level routine of each protocol.
  */
-#define	NETISR_RAW	0		/* same as AF_UNSPEC */
 #define	NETISR_IP	2		/* same as AF_INET */
 #define	NETISR_IMP	3		/* same as AF_IMPLINK */
 #define	NETISR_NS	6		/* same as AF_NS */
