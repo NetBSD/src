@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.15 1995/10/09 06:34:41 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.16 1995/10/10 04:45:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -61,6 +61,14 @@
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
 #define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
+
+#ifdef VM86
+#define	USERMODE(c, f)		(ISPL(c) == SEL_UPL || ((f) & PSL_VM) != 0)
+#define	KERNELMODE(c, f)	(ISPL(c) == SEL_KPL && ((f) & PSL_VM) == 0)
+#else
+#define	USERMODE(c, f)		(ISPL(c) == SEL_UPL)
+#define	KERNELMODE(c, f)	(ISPL(c) == SEL_KPL)
+#endif
 
 #ifndef LOCORE
 
