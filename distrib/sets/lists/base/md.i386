@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.64 2000/05/06 06:27:42 mycroft Exp $
+# $NetBSD: md.i386,v 1.65 2000/05/13 20:03:32 jdolecek Exp $
 ./dev/audio
 ./dev/audioctl
 ./dev/mixer
@@ -31,6 +31,7 @@
 ./usr/mdec/biosboot.sym
 ./usr/mdec/biosboot_com0.sym
 ./usr/mdec/biosboot_resetvideo.sym
+./usr/mdec/biosboot_ps2.sym
 ./usr/mdec/dosboot.com
 ./usr/mdec/installboot
 ./usr/mdec/mbr
