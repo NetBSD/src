@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.23.4.5 2000/11/05 01:27:04 tv Exp $
+.\"	$NetBSD: install,v 1.23.4.6 2000/11/09 22:43:54 tv Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -226,9 +226,23 @@ From the OpenBoot prompt, boot the floppy with the following command:
 After the initial probe messages you'll be asked to insert the floppy
 labeled
 .Dq NetBSD disk2 .
-After the installation tools have been loaded from the
-.Li disk2
-floppy, you'll be asked to start the install or upgrade procedure.
+If the floppy is not automatically ejected, you can either use a
+straightened paperclip to eject the disk or do the following:
+.Pp
+Press the
+.Key STOP
+key (sometimes called the
+.Key L1
+key, found on the left side of your keyboard) and the
+.Key a
+key, which will halt your system and give you a PROM prompt.
+.Dl ok Ic "eject"
+.Dl ok Ic "go"
+.Pp
+Now, insert the floppy labeled
+.Li disk2 .
+After the installation tools have been loaded,
+you'll be asked to start the install or upgrade procedure.
 Proceed to the section
 .Sx Running the installation scripts.
 below.
@@ -469,10 +483,27 @@ below.
 .
 .Ss2 Running the installation scripts
 .
-If you booted your system using the
-.Pa miniroot.fs
-image or the CD-ROM image, you will be presented with a choice of two
-installation methods:  a new full-screen
+The first thing that the installation scripts will inquire about is the
+type of console you're using on your machine. If you're using a Sun
+frame buffer display, choose the terminal type
+.Ic sun
+.Pq this is presented as the default .
+.(Note
+if your frame buffer device is a cgsix Sbus board, you should
+change the terminal type to
+.Ic sun-cgsix
+to avoid triggering a bug in the board's firmware code that can garble
+your screen.
+.Note)
+.Pp
+If you're using a terminal device connected to a serial port, choose a
+terminal type appropriate for that device, e.g.
+.Ic vt100
+or
+.Ic vt200 .
+.Pp
+Next, you will be presented with a choice of two installation methods:
+a new full-screen
 .Ic sysinst
 program, or the traditional script-based
 .Ic miniroot
