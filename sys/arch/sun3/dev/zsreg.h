@@ -42,7 +42,7 @@
  *	@(#)zsreg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: zsreg.h,v 1.7 92/11/26 01:27:18 torek Exp  (LBL)
- * $Id: zsreg.h,v 1.1 1994/02/23 08:29:03 glass Exp $
+ * $Id: zsreg.h,v 1.2 1994/03/15 07:40:34 glass Exp $
  */
 
 /*
