@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.26 2001/03/29 19:06:39 kleink Exp $	*/
+/*	$NetBSD: time.h,v 1.27 2001/03/31 18:29:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -113,6 +113,10 @@ void tzset __P((void));
  */
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (_XOPEN_SOURCE - 0) >= 4
+extern int daylight;
+#ifndef __LIBC12_SOURCE__
+extern long int timezone __RENAME(__timezone13);
+#endif
 char *strptime __P((const char * __restrict, const char * __restrict,
     struct tm * __restrict));
 #endif
@@ -149,7 +153,9 @@ time_t posix2time __P((time_t));
 time_t timegm __P((struct tm *const));
 time_t timeoff __P((struct tm *const, const long));
 time_t timelocal __P((struct tm *const));
+#ifdef __LIBC12_SOURCE__
 char *timezone __P((int, int));
+#endif
 void tzsetwall __P((void));
 struct tm *offtime __P((const time_t *const, const long));
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzset.3,v 1.12 2001/03/29 20:56:30 kleink Exp $
+.\"	$NetBSD: tzset.3,v 1.13 2001/03/31 18:29:21 kleink Exp $
 .TH TZSET 3
 .SH NAME
 tzset \- initialize time conversion information
@@ -8,6 +8,8 @@ Standard C Library (libc, -lc)
 .nf
 .B void tzset(void);
 .PP
+.B extern long int timezone;
+.B extern int daylight;
 .fi
 .SH DESCRIPTION
 .I Tzset
@@ -215,6 +217,16 @@ environment variable does not specify a
 .IR tzfile (5)-format
 and cannot be interpreted as a direct specification,
 UTC is used.
+.PP
+.I Tzset
+sets the external variable
+.I timezone
+to the difference, in seconds, between Coordinated Universal Time (UTC)
+and local standard time.
+The external variable
+.I daylight
+is set to 0 if Daylight Savings Time conversions should never be applied
+for the time zone in use; otherwise non-zero.
 .SH FILES
 .ta \w'/usr/share/zoneinfo/posixrules\0\0'u
 /etc/localtime	local time zone file
