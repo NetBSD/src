@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.3 2001/11/26 20:49:04 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.4 2001/11/29 17:10:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -71,15 +71,6 @@ userret(p)
 		postsig(sig);
 
 	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
-
-#ifdef DEBUG
-	if (current_spl_level != _SPL_0) {
-		printf("userret: spl level=%d on exit\n", current_spl_level);
-#ifdef DDB
-		Debugger();
-#endif	/* DDB */
-	}
-#endif	/* DEBUG */
 }
 
 
