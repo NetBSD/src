@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.168 2000/10/29 05:16:53 jmc Exp $
+#	$NetBSD: Makefile,v 1.169 2000/10/30 21:48:20 thorpej Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -249,7 +249,6 @@ distribution: distrib-dirs
 .endif
 .ifndef NO_SENDMAIL
 	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
-	${DESTDIR}/usr/libexec/sendmail/sendmail -C ${DESTDIR}/etc/mail/sendmail.cf -O AliasFile=${DESTDIR}/etc/mail/aliases -O DontBlameSendmail=MapInUnsafeDirPath -bi
 .endif
 
 distrib-dirs:
