@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: newsyslog,v 1.2 2001/08/18 19:50:19 ad Exp $
+# $NetBSD: newsyslog,v 1.3 2002/03/22 04:16:39 lukem Exp $
 #
 
 # PROVIDE: newsyslog
@@ -19,7 +19,7 @@ stop_cmd=":"
 newsyslog_start()
 {
 	echo -n "Trimming log files:"
-	/usr/bin/newsyslog -s $newsyslog_flags
+	/usr/bin/newsyslog -s $rc_flags
 	echo " done."
 }
 

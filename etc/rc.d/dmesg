@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: dmesg,v 1.6 2001/04/25 23:23:37 lukem Exp $
+# $NetBSD: dmesg,v 1.7 2002/03/22 04:16:39 lukem Exp $
 #
 
 # PROVIDE: dmesg
@@ -17,7 +17,7 @@ stop_cmd=":"
 do_dmesg()
 {
 	rm -f ${dmesg_file}
-	( umask 022 ; /sbin/dmesg $dmesg_flags > ${dmesg_file} )
+	( umask 022 ; /sbin/dmesg $rc_flags > ${dmesg_file} )
 }
 
 load_rc_config $name

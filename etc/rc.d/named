@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.8 2001/10/11 07:10:08 lukem Exp $
+# $NetBSD: named,v 1.9 2002/03/22 04:16:39 lukem Exp $
 #
 
 # PROVIDE: named
@@ -51,7 +51,7 @@ named_precmd()
 
 	#	Change run_rc_commands()'s internal copy of $named_flags
 	#
-	_flags="-u named -g named -t ${named_chrootdir} $_flags"
+	rc_flags="-u named -g named -t ${named_chrootdir} $rc_flags"
 }
 
 load_rc_config $name
