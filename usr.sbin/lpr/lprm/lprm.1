@@ -1,4 +1,4 @@
-.\" $NetBSD: lprm.1,v 1.5 1995/11/15 22:52:20 pk Exp $
+.\" $NetBSD: lprm.1,v 1.6 1997/07/09 02:04:30 jtc Exp $
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -120,12 +120,12 @@ the default printer is assumed from
 .Ev PRINTER .
 .El
 .Sh FILES
-.Bl -tag -width /var/spool/*/lock/ -compact
+.Bl -tag -width /var/spool/output/*/lock/ -compact
 .It Pa /etc/printcap
 Printer characteristics file.
-.It Pa /var/spool/*
+.It Pa /var/spool/output/*
 Spooling directories.
-.It Pa /var/spool/*/lock
+.It Pa /var/spool/output/*/lock
 Lock file used to obtain the pid of the current
 daemon and the job number of the currently active job.
 .El

@@ -1,4 +1,4 @@
-.\" $NetBSD: lpd.8,v 1.7 1996/09/21 15:57:21 perry Exp $
+.\" $NetBSD: lpd.8,v 1.8 1997/07/09 02:04:28 jtc Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -227,12 +227,12 @@ for the programs
 and
 .Xr lprm 1 .
 .Sh FILES
-.Bl -tag -width "/var/spool/*/minfree" -compact
+.Bl -tag -width "/var/spool/output/*/minfree" -compact
 .It Pa /etc/printcap
 printer description file
-.It Pa /var/spool/*
+.It Pa /var/spool/output/*
 spool directories
-.It Pa /var/spool/*/minfree
+.It Pa /var/spool/output/*/minfree
 minimum free space to leave
 .It Pa /dev/lp*
 line printer devices
