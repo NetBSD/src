@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.11.4.3 2005/01/18 14:50:09 bouyer Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.11.4.4 2005/02/16 13:40:54 bouyer Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11.4.3 2005/01/18 14:50:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.11.4.4 2005/02/16 13:40:54 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -179,9 +179,12 @@ static int nxennet_media = (sizeof(xennet_media)/sizeof(xennet_media[0]));
 static int
 xennet_wait_for_interfaces(void)
 {
-
-	while (netctrl.xc_interfaces != netctrl.xc_connected)
-		HYPERVISOR_yield();
+	int i = 1000;
+	while (netctrl.xc_interfaces != netctrl.xc_connected) {
+		delay(1000);
+		if (i-- < 0)
+			return 1;
+	}
 	return 0;
 }
 
