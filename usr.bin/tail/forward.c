@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.8 1997/10/19 23:45:08 lukem Exp $	*/
+/*	$NetBSD: forward.c,v 1.9 1998/02/09 22:39:41 cjs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: forward.c,v 1.8 1997/10/19 23:45:08 lukem Exp $");
+__RCSID("$NetBSD: forward.c,v 1.9 1998/02/09 22:39:41 cjs Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -91,6 +91,15 @@ forward(fp, style, off, sbp)
 {
 	int ch;
 	struct timeval second;
+	int dostat = 0;
+	struct stat statbuf;
+	off_t lastsize = 0;
+	dev_t lastdev;
+	ino_t lastino;
+
+	/* Keep track of file's previous incarnation. */
+	lastdev = sbp->st_dev;
+	lastino = sbp->st_ino;
 
 	switch(style) {
 	case FBYTES:
@@ -166,9 +175,11 @@ forward(fp, style, off, sbp)
 	}
 
 	for (;;) {
-		while ((ch = getc(fp)) != EOF)
+		while ((ch = getc(fp)) != EOF)  {
+			lastsize++;	/* track size changes between stats */
 			if (putchar(ch) == EOF)
 				oerr();
+		}
 		if (ferror(fp)) {
 			ierr();
 			return;
@@ -186,6 +197,39 @@ forward(fp, style, off, sbp)
 		if (select(0, NULL, NULL, NULL, &second) == -1)
 			err(1, "select: %s", strerror(errno));
 		clearerr(fp);
+
+		if (fflag == 1)
+			continue;
+		/*
+		 * We restat the original filename every five seconds. If
+		 * the size is ever smaller than the last time we read it,
+		 * the file has probably been truncated; if the inode or
+		 * or device number are different, it has been rotated.
+		 * This causes us to close it, reopen it, and continue
+		 * the tail -f. If stat returns an error (say, because
+		 * the file has been removed), just continue with what
+		 * we've got open now.
+		 */
+		if (dostat > 0)  {
+			dostat -= 1;
+		} else {
+			dostat = 5;
+			if (stat(fname, &statbuf) == 0)  {
+				if (statbuf.st_dev != lastdev ||
+				    statbuf.st_ino != lastino ||
+				    statbuf.st_size < lastsize)  {
+					lastdev = statbuf.st_dev;
+					lastino = statbuf.st_ino;
+					lastsize = 0;
+					fclose(fp);
+					if ((fp = fopen(fname, "r")) == NULL)
+						err(1, "can't reopen %s: %s",
+						    fname, strerror(errno));
+				} else {
+					lastsize = statbuf.st_size;
+				}
+			}
+		}
 	}
 }
 
