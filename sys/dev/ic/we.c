@@ -1,4 +1,4 @@
-/*	$NetBSD: we.c,v 1.4 2001/11/13 13:14:46 lukem Exp $	*/
+/*	$NetBSD: we.c,v 1.4.10.1 2003/01/27 05:27:05 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.4 2001/11/13 13:14:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: we.c,v 1.4.10.1 2003/01/27 05:27:05 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,6 +372,11 @@ we_write_mbuf(sc, m, buf)
 		for (; m != NULL; buf += m->m_len, m = m->m_next)
 			bus_space_write_region_1(memt, memh,
 			    buf, mtod(m, u_int8_t *), m->m_len);
+		if (savelen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+			bus_space_set_region_1(memt, memh,
+			    buf, 0, ETHER_MIN_LEN - ETHER_CRC_LEN - savelen);
+			savelen = ETHER_MIN_LEN - ETHER_CRC_LEN;
+		}
 		goto out;
 	}
 
@@ -436,6 +441,12 @@ we_write_mbuf(sc, m, buf)
 		savebyte[1] = 0;
 		bus_space_write_stream_2(memt, memh, buf,
 		    *(u_int16_t *)savebyte);
+		buf += 2;
+	}
+	if (savelen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+		bus_space_set_region_2(memt, memh,
+		    buf, 0, (ETHER_MIN_LEN - ETHER_CRC_LEN - savelen) >> 1);
+		savelen = ETHER_MIN_LEN - ETHER_CRC_LEN;
 	}
 
  out:
