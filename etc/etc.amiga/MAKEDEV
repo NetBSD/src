@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.58 2000/10/29 13:03:37 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.59 2001/01/08 06:21:19 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -51,6 +51,7 @@
 #	floppy	devices needed for install floppies
 #	std	standard devices
 #	local	configuration specific devices
+#	isdn	make ISDN devices
 #
 # Tapes:
 #	st*	SCSI tapes
@@ -85,6 +86,13 @@
 # Printers:
 #	par0	Amiga motherboard parallel port
 #	lpt*	lpt parallel port (DraCo mainboard, HyperCom etc.)
+#
+# ISDN devices:
+#	i4b	comunication between userland isdnd and kernel
+#	i4bctl	control device
+#	i4brbch* raw b-channel access
+#	i4btel*	telephonie device
+#	i4btrc*	trace device
 #
 # Special purpose devices:
 #	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
@@ -132,6 +140,7 @@ all)
 	sh $0 tun0 tun1 lkm ipl random local
 	sh $0 audio0 audio1 audio2 audio3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
+	sh $0 isdn
 	;;
 
 floppy)
@@ -140,6 +149,10 @@ floppy)
 	sh $0 grf0 grf1 grf2 grf3 grf4 grf5 grf6 grf7
 	sh $0 tty00 ttyA0 ttyB0 ttyC0
 	sh $0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 st0 wd0 wd1 md0
+	;;
+
+isdn)
+	sh $0 i4b i4bctl i4brbch0 i4brbch1 i4btel0 i4btel1 i4btrc0 i4btrc1
 	;;
 
 std)
@@ -547,6 +560,39 @@ scsibus*)
 	mknod scsibus$unit c 44 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+i4b)
+	rm -f i4b
+	mknod i4b c 45 0
+	chmod 600 i4b
+	;;
+
+i4bctl)
+	rm -f i4bctl
+	mknod i4bctl c 46 0
+	chmod 600 i4bctl
+	;;
+
+i4brbch*)
+	unit=${i#i4brbch};
+	rm -f i4brbch$unit
+	mknod i4brbch$unit c 47 $unit
+	chmod 600 i4brbch$unit
+	;;
+
+i4btel*)
+	unit=${i#i4btel};
+	rm -f i4btel$unit
+	mknod i4btel$unit c 49 $unit
+	chmod 600 i4btel$unit
+	;;
+
+i4btrc*)
+	unit=${i#i4btrc};
+	rm -f i4btrc$unit
+	mknod i4btrc$unit c 48 $unit
+	chmod 600 i4btrc$unit
 	;;
 
 local)
