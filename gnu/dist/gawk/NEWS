@@ -1,3 +1,490 @@
+Changes from 3.1.2 to 3.1.3
+---------------------------
+
+1. Gawk now follows POSIX in handling of local numeric formats for
+   input, output and number/string conversions.
+
+2. Multibyte detection improved.  See README_d/README.multibyte for more
+   info about multibyte locales.
+
+3. Handling of `close' made more POSIX-compliant for POSIXLY_CORRECT,
+   see the documentation.
+
+4. The record reading code was redone, again.  This time it's much
+   better. Really!
+
+5. For RS = "\n" and RS = "", gawk now only sets RT when it has changed.
+   This provides considerable performance improvement.
+
+6. `match' now sets all the subscripts in the third argument array
+   correctly, even if not all subexpressions matched.
+
+7. Updated to Automake 1.7.5.  configure.in renamed configure.ac.
+
+8. C-style switch statements are available, but must be enabled at
+   compile time via `configure --enable-switch'.  For 3.2 they'll be
+   enabled by default. Thanks to Michael Benzinger for the initial
+   code.
+
+9. %c now always prints no more than one character, whatever
+   precision is provided.
+
+10. strtonum(<number>) now works again.
+
+11. Gawk is now much better about scalar/array typing of global
+    uninitiailzed variables passed as parameters. Once the parameter
+    is then used one way or the other, the global var's type is
+    adjusted accordingly.  Thanks to Stepan Kasal for the original
+    (considerable) changes.
+
+12. Dynamic function loading under Windows32 should now be possible. See
+    README_d/README.pcdynamic. Thanks to Patrick T.J. McPhee for the changes.
+
+13. Updated to gettext 0.12.1.
+
+14. Gawk now follows historical practice and POSIX for the return
+    value of `rand': It's now  0 <= N < 1.
+
+Changes from 3.1.1 to 3.1.2
+---------------------------
+
+1. Loops of the form:
+
+	for (iggy in foo)
+		next
+
+   no longer leak memory.
+
+2. gawk -v FIELDWIDTHS="..." now sets PROCINFO["FS"] correctly.
+
+3. All builtin operations and functions should now fully evaluate their
+   arguments so that side effects take place correctly.
+
+4. Fixed a logic bug in gsub/gensub for matches to null strings that occurred
+   later in the string after a nonnull match.
+
+5. getgroups code now works on Ultrix again.
+
+6. Completely new version of the full GNU regex engine now in place.
+
+7. Argument parsing and variable assignment has been cleaned up.
+
+8. An I/O bug on HP-UX has been documented and worked around. See
+   README_d/README.hpux.
+
+9. awklib/grcat should now compile correctly.
+
+10. Updated to automake 1.7.3, autoconf 2.57 and gettext 0.11.5 ; thanks to
+    Paul Eggert for the initial automake and autoconf work.
+
+11. As a result of #6, removed the use of the dfa code from GNU grep.
+
+12. It is now possible to use ptys for |& two-way pipes instead of
+    pipes.  The basic plumbing for this was provided by Paolo Bonzini.
+    To make this happen:
+
+    	command = "unix command etc"
+	PROCINFO[command, "pty"] = 1
+
+	print ... |& command
+	command |& getline stuff
+
+    In other words, set the element in PROCINFO *before* opening the
+    two-way pipe, and then gawk will use ptys instead of pipes.
+
+    On systems without ptys or where all the ptys are in use, gawk
+    will fall back to using plain pipes.
+
+13. Fixed a regex matching across buffer boundaries bug, with a
+    heuristic.  See io.c:rsre_get_a_record.
+
+14. Profiling no longer dumps core if there are extension functions in place.
+
+15. Grammar and scanner cleaned up, courtesy of Stepen Kasal, to hopefully
+    once and for all fix the `/=' operator vs. `/=.../' regex ambiguity.
+    Lots of other grammar simplifications applied, as well.
+
+16. BINMODE should work now on more Windows ports.
+
+17. Updated to bison 1.875.  Includes fix to bisonfix.sed script.
+
+18. The NODE structure is now 20% (8 bytes) smaller (on x86, anyway), which
+    should help conserve memory.
+
+19. Builds not in the source directory should work again.
+
+20. Arrays now use 2 NODE's per element instead of three. Combined with
+    #18, (on the x86) this reduces the overhead from 120 bytes per element
+    to just 64 bytes: almost a 50% improvement.
+
+21. Programs that make heavy use of changing IGNORECASE should now be
+    much faster, particularly if using a regular expression for FS or RS.
+    IGNORECASE now correctly affects RS regex record splitting, as well.
+
+22. IGNORECASE no longer affects single-character field splitting (FS = "c"),
+    or single-character record splitting (RS = "c").
+
+    This cleans up some weird behavior, and makes gawk better match the
+    documentation, which says it only affects regex-based field splitting
+    and record splitting.
+
+    The documentation on this was improved, too.
+
+23. The framework in test/ has been simplified, making it much easier to
+    add new tests while keeping the size of Makefile.am reasonable. Thanks
+    for this to Stepan Kasal.
+
+24. --lint=invalid causes lint warnings only about stuff that's actually
+    invalid.  This needs additional work.
+
+25. More translations.
+
+26. The `get_a_record' routine has been revamped (currently by splitting it
+    into three variants).  This should improve long-term maintainability.
+
+27. `match' now adds more entries to 3rd array arg:
+	match("the big dog", /([a-z]+) ([a-z]+) ([a-z]+)/, data)
+    fills in variables:
+    	data[1, "start"], data[1, "length"], and so on.
+
+28. New `asorti' function with same interface as `asort', but sorts indices
+    instead of values.  
+
+29. Documentation updated to FDL 1.2.
+
+30. New `configure' option --disable-lint at compile time disables lint
+    checking.  With GCC dead-code-elimination, cuts almost 200K off the
+    executable size on GNU/Linux x86.  Presumably speeds up runtime.
+
+    Using this will cause some of the tests in the test suite to fail.
+    This option may be removed at a later date.
+
+31. Various minor cleanups, see the ChangeLog for details.
+
+Changes from 3.1.0 to 3.1.1
+---------------------------
+
+1. Six new translations.
+
+2. Having more than 4 different value for OFMT and/or CONVFMT now works.
+
+3. The handling of dynamic regexes is now more more sane, esp. w.r.t.
+   the profiling code.  The profiling code has been fixed in several
+   places.
+
+4. The return value of index("", "") is now 1.
+
+5. Gawk should no longer close fd 0 in child processes.
+
+6. Fixed test for strtod semantics and regenerated configure.
+
+7. Gawk can now be built with byacc; an accidental bison dependency was
+   removed.
+
+8. `yyerror' will no longer dump core on long source lines.
+
+9. Gawk now correctly queries getgroups(2) to figure out how many groups
+   the process has.
+
+10. New configure option to force use of included strftime, e.g. on
+    Solaris systems. See `./configure --help' for the details. Replaced
+    the included strftime.c with the one from textutils.
+
+11. OS/2 port has been updated.
+
+12. Multi-byte character support has been added, courtesy of IBM Japan.
+
+13. The `for (iggy in foo) delete foo[iggy]' -> `delete foo' optimisation
+    now works.
+
+14. Upgraded to gettext 0.11.2 and automake 1.5.
+
+15. Full gettext compatibility (new dcngettext function).
+
+16. The O'Reilly copyedits and indexing changes for the documentation have
+    been folded into the texinfo version of the manuals.
+
+17. A humongously long value for the AWKPATH environment variable will no
+    longer dump core.
+
+18. Configuration / Installation issues have been straightened out in
+    Makefile.am.
+
+Changes from 3.0.6 to 3.1.0
+---------------------------
+
+1. A new PROCINFO array provides info about the process. The non-I/O /dev/xxx
+   files are now obsolete, and their use always generates a warning.
+
+2. A new `mktime' builtin function was added for creating time stamps. The
+   `mktime' function written in awk was removed from the user's guide.
+
+3. New `--gen-po' option creates GNU gettext .po files for strings marked
+   with a leading underscore.
+
+4. Gawk now completely interprets special file names internally, ignoring the
+   existence of real /dev/stdin, /dev/stdout files, etc.
+
+5. The mmap code was removed. It was a worthwhile experiment that just
+   didn't work out.
+
+6. The BINMODE variable is new; on non-UNIX systems it affects how gawk
+   opens files for text vs. binary.
+
+7. The atari port is now unsupported.
+
+8. Gawk no longer supports `next file' as two words.
+
+9. On systems that support it, gawk now sets the `close on exec' flag on all
+   files and pipes it opens. This makes sure that child processes run via
+   `system' or pipes have plenty of file descriptors available.
+
+10. New ports: Tandem and BeOS.  The Tandem port is unsupported.
+
+11. If `--posix' is in effect, newlines are not allowed after ?:.
+
+12. Weird OFMT/CONVFMT formats no longer cause fatal errors.
+
+13. Diagnostics about array parameters now include the parameter's name,
+    not just its number.
+
+14. configure should now automatically add -D_SYSV3 for ISC Unix.
+    (This seems to have made it into the gawk 3.0.x line long ago.)
+
+15. It is now possible to open a two-way pipe via the `|&' operator.
+    See the discussion in the manual about putting `sort' into such a pipeline,
+    though.  (NOTE!  This is borrowed from ksh: it is not the same as
+    the same operator in csh!)
+
+16. The `close' function now takes an optional second string argument
+    that allows closing one or the other end of the two-way pipe to
+    a co-process.  This is needed to use `sort' in a co-process, see
+    the doc.
+
+17. If TCP/IP is available, special file names beginning with `/inet'
+    can be used with `|&' for IPC. Thanks to Juergen Kahrs for the initial
+    code.
+
+18. With `--enable-portals' on the configure command line, gawk will also
+    treat file names that start with `/p/' as a 4.4 BSD type portal file,
+    i.e., a two-way pipe for `|&'.
+
+19. Unrecognized escapes, such as "\q" now always generate a warning.
+
+20. The LINT variable is new; it provides dynamic control over the --lint
+    option.
+
+21. Lint warnings can be made fatal by using --lint=fatal or `LINT = "fatal"'.
+    Use this if you're really serious about portable code.
+
+22. Due to an enhanced sed script, there is no longer any need to worry
+    about finding or using alloca.  alloca.c is thus now gone.
+
+23. A number of lint warnings have been added.  Most notably, gawk will
+    detect if a variable is used before assigned to.  Warnings for
+    when a string that isn't a number gets converted to a number are
+    in the code but disabled; they seem to be too picky in practice.
+
+    Also, gawk will now warn about function parameter names that shadow
+    global variable names.
+
+24. It is now possible to dynamically add builtin functions on systems
+    that support dlopen. This facility is not (yet) as portable or well
+    integrated as it might be.  *** WARNING *** THIS FEATURE WILL EVOLVE!
+
+25. There are *many* new tests in the test suite.
+
+26. Profiling has been added!  A separate version of gawk, named pgawk, is
+    built and generates a run-time execution profile.  The --profile option
+    can be used to change the default output file.   In regular gawk, this
+    option pretty-prints the parse tree.
+
+27. Gawk has been internationalized, using GNU gettext.  Translations for
+    future distributions are most welcome.  Simultaneously, gawk was switched
+    over to using automake.  You need Automake 1.4a (from the CVS archive)
+    if you want to muck with the Makefile.am files.
+
+28. New `asort' function for sorting arrays.  See the doc for details.
+
+29. The match function takes an optional array third argument to hold
+    the text matched by parenthesized sub-expressions.
+
+30. The bit op functions and octal and hex source code constants are on by
+    default, no longer a configure-time option.  Recognition of non-decimal
+    data is now enabled at runtime with --non-decimal-data command line option.
+
+31. Internationalization features available at the awk level: new TEXTDOMAIN
+    variable and `bindtextdomain' and `dcgettext' functions. printf formats
+    may contain the "%2$3.5d" kind of notation for use in translations.  See
+    the texinfo manual for details.
+
+32. The return value from `close' has been rationalized.  Most notably,
+    closing something that wasn't open returns -1 but remains non-fatal.
+
+33. The array effeciency change from 3.0.5 was reverted; the semantics were
+    not right.  Additionally, index values of previously stored elements
+    can no longer change dynamically.
+
+34. The new option --dump-variables dumps a list of all global variables and
+    their final types and values to a file you give, or to `awkvars.out'.
+
+35. Gawk now uses a recent version of random.c courtesy of the FreeBSD
+    project.
+
+36. The gawk source code now uses ANSI C function definitions (new style),
+    with ansi2knr to translate code for old compilers.
+
+37. `for (iggy in foo)' loops should be more robust now in the face of
+    adding/deleting elements in the middle; they loop over just the elements
+    that are present in the array when the loop starts.
+
+Changes from 3.0.5 to 3.0.6
+---------------------------
+
+This is a bug fix release only, pending further development on 3.1.0.
+
+Bugs fixed and changes made:
+
+1. Subscripting an array with a variable that is just a number no
+   longer magically converts the variable into a string.
+
+2. Similarly, running a `for (iggy in foo)' loop where `foo' is a
+   function parameter now works correctly.
+
+3. Similarly, `i = ""; v[i] = a; if (i in v) ...' now works again.
+
+4. Gawk now special cases `for (iggy in foo) delete foo[iggy]' and
+   treats it as the moral equivalent of `delete foo'.  This should be
+   a major efficiency win when portably deleting large arrays.
+
+5. VMS port brought up to date.
+
+Changes from 3.0.4 to 3.0.5
+---------------------------
+
+This is a bug fix release only, pending further development on 3.1.0.
+
+Bugs Fixed:
+
+ 1. `function foo(foo)' is now a fatal error.
+
+ 2. Array indexing is now much more efficient: where possible, only one
+    copy of an index string is kept, even if used in multiple arrays.
+
+ 3. Support was added for MacOS X and an `install-strip' target.
+
+ 4. [s]printf formatting for `0' flag and floating point formats now
+    works correctly.
+
+ 5. HP-UX large file support with GCC 2.95.1 now works.
+
+ 6. Arguments that contain `=' but that aren't syntactically valid are
+    now treated as filenames, instead of as fatal errors.
+
+ 7. `-v NF=foo' now works.
+
+ 8. Non-ascii alphanumeric characters are now treated as such in the
+    right locales by regex.c.  Similarly, a Latin-1 y-umlaut (decimal
+    value 255) in the program text no longer acts like EOF.
+
+ 9. Array indexes are always compared as strings; fixes an obscure bug
+    when user input gets used for the `x in array' test.
+
+10. The usage message now points users to the documentation for how
+    to report bugs.
+
+11. `/=' now works after an array.
+
+12. `b += b += 1' now works correctly.
+
+13. IGNORECASE changing with calls `match' now works better. (Fix for
+    semi-obscure bug.)
+
+14. Multicharacter values for RS now generate a lint warning.
+
+15. The gawk open file caching is now much more efficient.
+
+16. Global arrays passed to functions are now managed better.  In particular,
+    test/arynocls.awk won't crash referencing freed memory.
+
+17. In obscure cases, `getline var' can no longer clobber $0.
+
+Changes from 3.0.3 to 3.0.4
+---------------------------
+
+This is a bug fix release only, pending further development on 3.1.0.
+
+Bugs Fixed:
+
+ 1. A memory leak when turning a function parameter into an array was
+    fixed.
+
+ 2. The non-decimal data option now works correctly.
+
+ 3. Using an empty pair of brackets as an array subscript no longer causes
+    a core dump during parsing.  In general, syntax errors should not
+    cause core dumps any more.
+ 
+ 4. Standard input is no longer closed if it provides program source,
+    avoiding strange I/O problems.
+
+ 5. Memory corruption during printing with `print' has been fixed.
+
+ 6. The gsub function now correctly counts the number of matches.
+
+ 7. A typo in doc/Makefile.in has been fixed, making installation work.
+
+ 8. Calling `next' or `nextfile' from a BEGIN or END rule is now fatal.
+
+ 9. Subtle problems in rebuilding $0 when fields were changed have been
+    fixed.
+
+10. `FS = FS' now correctly turns off the use of FIELDWIDTHS.
+
+11. Gawk now parses fields correctly when FS is a single character.
+
+12. It is now possible for RS to be the NUL character ("\0").
+
+13. Weird problems with number conversions on MIPS and other systems
+    have been fixed.
+
+14. When parsing using FIELDWIDTHS is in effect, `split' with no third
+    argument will still use the value of FS.
+
+15. Large File Support for Solaris, HP-UX, AIX, and IRIX is now enabled at
+    compile time, thanks to Paul Eggert.
+
+16. Attempting to use the name of a function as a variable or array
+    from within the function is now caught as a fatal error, instead
+    of as a core dump.
+
+17. A bug in parsing hex escapes was fixed.
+
+18. A weird bug with concatenation where one expression has side effects
+    that changes another was fixed.
+
+19. printf/sprintf now behave much better for uses of the '0' and '#' flags
+    and with precisions and field widths.
+
+20. Further strangenesses with concatenation and multiple accesses of some
+    of the special variables was fixed.
+
+21. The Atari port is marked as no longer supported.
+
+22. Build problems on HP-UX have been fixed.
+
+23. Minor fixes and additional explanations added to the documentation.
+
+24. For RS = "", even a single leading newline is now correctly stripped.
+
+25. Obscure parsing problems for regex constants like /=.../ fixed, so
+    that a regex constant is recognized, and not the /= operator.
+
+26. Fixed a bug when closing a redirection that matched the current
+    or last FILENAME.
+
+27. Build problems on AIX fixed.
+
 Changes from 3.0.2 to 3.0.3
 ---------------------------
 
@@ -6,7 +493,7 @@ The horrendous per-record memory leak introduced in 3.0.1 is gone, finally.
 The `amiga' directory is now gone; Amiga support is now entirely handled
 by the POSIX support.
 
-Win32 support has been added in the `pc' directory. See `README_d/README.pc'
+Windows32 support has been added in the `pc' directory. See `README_d/README.pc'
 for more info.
 
 The mmap changes are disabled in io.c, and will be removed entirely
@@ -60,7 +547,7 @@ Troff source for a handy-dandy five color reference card is now provided.
 Thanks to SSC for their macros.
 
 Gawk now behaves like Unix awk and mawk, in that newline acts as white
-space for separating fields and for split(), by default.  In posix mode,
+space for separating fields and for `split', by default.  In posix mode,
 only space and tab separate fields. The documentation has been updated to
 reflect this.
 
