@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.13 1994/12/28 19:42:52 mycroft Exp $	*/
+/*	$NetBSD: ch.c,v 1.14 1995/01/16 21:31:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -364,12 +364,6 @@ ch_position(ch, stat, chm, to, flags)
 		*stat = 0;
 	return error;
 }
-
-#ifdef	__STDC__
-#define b2tol(a)	(((unsigned)(a##_1) << 8) | (unsigned)a##_0)
-#else
-#define b2tol(a)	(((unsigned)(a/**/_1) << 8) | (unsigned)a/**/_0)
-#endif
 
 /*
  * Get the scsi driver to send a full inquiry to the

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.48 1995/01/13 10:51:14 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.49 1995/01/16 21:31:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -1102,8 +1102,6 @@ cd_read_toc(cd, mode, start, data, len)
 	    sizeof(struct scsi_read_toc), (u_char *)data, len, CDRETRIES,
 	    5000, NULL, SCSI_DATA_IN);
 }
-
-#define b2tol(a)	(((unsigned)(a##_1) << 8) + (unsigned)a##_0)
 
 /*
  * Get the scsi driver to send a full inquiry to the device and use the
