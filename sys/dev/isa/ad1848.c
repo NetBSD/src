@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.23 1997/04/05 23:50:23 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.24 1997/04/06 17:21:45 jtk Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -307,7 +307,7 @@ ad1848_probe(sc)
     
     if (!AD1848_BASE_VALID(sc->sc_iobase)) {
 #ifdef AUDIO_DEBUG
-	printf("ad1848: configured iobase %04x invalid\n", iobase);
+	printf("ad1848: configured iobase %04x invalid\n", sc->sc_iobase);
 #endif
 	return 0;
     }
