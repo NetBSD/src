@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.39 2005/01/03 03:25:06 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.40 2005/01/04 01:00:30 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.39 2005/01/03 03:25:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.40 2005/01/04 01:00:30 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2975,11 +2975,29 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	return (*sc->sc_mtbl.mt_newstate)(ic, nstate, arg);
 }
 
-static void
-rtw_recv_beacon(struct rtw_softc *sc, struct mbuf *m,
-    struct ieee80211_node *ni, int subtype, int rssi, uint32_t rstamp)
+/* Extend a 32-bit TSF timestamp to a 64-bit timestamp. */
+static uint64_t
+rtw_tsf_extend(struct rtw_regs *regs, uint32_t rstamp)
 {
-	(*sc->sc_mtbl.mt_recv_mgmt)(&sc->sc_ic, m, ni, subtype, rssi, rstamp);
+	uint32_t tsftl, tsfth;
+
+	tsfth = RTW_READ(regs, RTW_TSFTRH);
+	tsftl = RTW_READ(regs, RTW_TSFTRL);
+	if (tsftl < rstamp)	/* Compensate for rollover. */
+		tsfth--;
+	return ((uint64_t)tsfth << 32) | rstamp;
+}
+
+static void
+rtw_ibss_merge(struct rtw_softc *sc, struct ieee80211_node *ni, uint32_t rstamp)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+
+	if (le64toh(ni->ni_tsf) >= rtw_tsf_extend(&sc->sc_regs, rstamp) &&
+	    ieee80211_ibss_merge(ic, ni) == ENETRESET) {
+		rtw_join_bss(sc, ic->ic_bss->ni_bssid, ic->ic_opmode,
+		    ic->ic_bss->ni_intval);
+	}
 	return;
 }
 
@@ -2989,16 +3007,17 @@ rtw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 {
 	struct rtw_softc *sc = (struct rtw_softc*)ic->ic_softc;
 
+	(*sc->sc_mtbl.mt_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
+
 	switch (subtype) {
-	case IEEE80211_FC0_SUBTYPE_PROBE_REQ:
-		/* do nothing: hardware answers probe request XXX */
-		break;
 	case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
 	case IEEE80211_FC0_SUBTYPE_BEACON:
-		rtw_recv_beacon(sc, m, ni, subtype, rssi, rstamp);
+		if (ic->ic_opmode != IEEE80211_M_IBSS ||
+		    ic->ic_state != IEEE80211_S_RUN)
+			return;
+		rtw_ibss_merge(sc, ni, rstamp);
 		break;
 	default:
-		(*sc->sc_mtbl.mt_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
 		break;
 	}
 	return;
