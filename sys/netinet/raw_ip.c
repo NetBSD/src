@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.63 2002/10/22 02:34:47 simonb Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.64 2002/10/22 02:44:34 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.63 2002/10/22 02:34:47 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.64 2002/10/22 02:44:34 simonb Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
@@ -149,6 +149,7 @@ rip_input(m, va_alist)
 	va_list ap;
 
 	va_start(ap, m);
+	(void)va_arg(ap, int);		/* ignore value, advance ap */
 	proto = va_arg(ap, int);
 	va_end(ap);
 
