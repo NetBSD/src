@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.40 1997/01/27 19:41:10 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.41 1997/01/27 19:56:33 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -62,8 +62,7 @@
 #include <machine/control.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
-
-#include "machdep.h"
+#include <machine/machdep.h>
 
 int cold;
 
@@ -254,7 +253,7 @@ static const int bustype_to_pmaptype[4] = {
 	PMAP_VME32,
 };
 
-char *
+void *
 bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
@@ -290,7 +289,7 @@ bus_mapin(bustype, paddr, sz)
 	} while ((sz -= NBPG) > 0);
 #endif
 
-	return ((char*)retval);
+	return ((void*)retval);
 }
 
 int
