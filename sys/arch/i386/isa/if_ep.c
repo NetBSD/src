@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.42 1994/07/01 23:08:11 deraadt Exp $
+ *	$Id: if_ep.c,v 1.42.2.1 1994/07/21 05:10:47 cgd Exp $
  */
 
 #include "bpfilter.h"
@@ -159,21 +159,31 @@ epprobe(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	static int firsttime;
 	int slot, port, i;
+	u_short vendor, model;
 	u_short k, k2;
 
 	if (firsttime==0) {
 		firsttime = 1;
 
 		/* find all EISA cards */
-		for (slot = 1; slot < 8; slot++) {
+		for (slot = 1; slot < 16; slot++) {
 			port = 0x1000 * slot;
+
+			vendor = htons(inw(port + EISA_VENDOR));
+			if (vendor != MFG_ID)
+				continue;
+
+			model = htons(inw(port + EISA_MODEL));
+			if ((model & 0xfff0) != PROD_ID) {
+#ifndef trusted
+				printf("epprobe: ignoring model %04x\n", model);
+#endif
+				continue;
+			}
+
 			outw(port + EP_COMMAND, GLOBAL_RESET);
 			delay(1000);
-			if (inw(port + EP_W0_MFG_ID) != MFG_ID)
-				continue;
-			k = inw(port + EP_W0_PRODUCT_ID);
-			if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
-				continue;
+
 			k = inw(port + EP_W0_ADDRESS_CFG);
 			k = (k & 0x1f) * 0x10 + 0x200;
 			k2 = inw(port + EP_W0_RESOURCE_CFG);
@@ -182,7 +192,9 @@ epprobe(parent, self, aux)
 		}
 
 		/* find all isa cards */
+#if 0
 		outw(BASE + EP_COMMAND, GLOBAL_RESET);
+#endif
 		delay(1000);
 		elink_reset();	/* global reset to ELINK_ID_PORT */
 		delay(1000);
@@ -192,14 +204,21 @@ epprobe(parent, self, aux)
 			elink_idseq(ELINK_509_POLY);
 			delay(1000);
 
-			k = epreadeeprom(ELINK_ID_PORT, EEPROM_MFG_ID);
-			if (k == 0xff)
+			vendor =
+			    htons(epreadeeprom(ELINK_ID_PORT, EEPROM_MFG_ID));
+			if (vendor == 0xff00)
 				continue;	/* no more isa cards */
-			if (k != MFG_ID)
+			if (vendor != MFG_ID)
 				continue;
-			k = epreadeeprom(ELINK_ID_PORT, EEPROM_PROD_ID);
-			if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
+
+			model =
+			    htons(epreadeeprom(ELINK_ID_PORT, EEPROM_PROD_ID));
+			if ((model & 0xfff0) != PROD_ID) {
+#ifndef trusted
+				printf("epprobe: ignoring model %04x\n", model);
+#endif
 				continue;
+			}
 
 			k = epreadeeprom(ELINK_ID_PORT, EEPROM_ADDR_CFG);
 			k = (k & 0x1f) * 0x10 + 0x200;
