@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.4 1997/02/21 20:33:09 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.5 1997/04/25 15:35:27 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,35 +79,34 @@ obio_match(parent, cf, aux)
  * and all OBIO device addresses are known and fixed foerver.
  * Therefore, this uses a list of addresses to attach.
  * XXX - Any other way to control search/attach order?
+ *
+ * Warning: This whole list is very carefully ordered!
+ * In general, anything not already shown here should
+ * be added at or near the end.
  */
 static int obio_alist[] = {
+
+	/* Misc. registers - needed by many things */
+	OBIO_ENABLEREG,
+	OBIO_BUSERRREG,
+	OBIO_DIAGREG,	/* leds.c */
+	OBIO_IDPROM1,	/* idprom.c (3/470) */
+	OBIO_MEMREG,	/* memerr.c */
+	OBIO_INTERREG,	/* intreg.c */
+
+	/* Zilog UARTs */
 	OBIO_ZS_KBD_MS,
 	OBIO_ZS_TTY_AB,
 
-	OBIO_EEPROM,	/* the next two are part of the eeprom */
-	OBIO_IDPROM2,	/* 3/80 only */
-	OBIO_CLOCK2,	/* 3/80 only */
-	OBIO_CLOCK1,	/* 3/470 only */
+	/* eeprom.c */
+	OBIO_EEPROM,
 
-	/* These are all in the same page - could be just one driver... */
-	OBIO_ENABLEREG,
-	OBIO_BUSERRREG,
-	OBIO_DIAGREG,
-	OBIO_IDPROM1,
-	OBIO_MEMREG,
-	OBIO_INTERREG,
+	/* Note: This must come after OBIO_IDPROM1. */
+	OBIO_IDPROM2,	/* idprom.c (3/80) */
 
-	/*
-	 * The addresses listed before this point were already found
-	 * and mapped in by the startup code, so keep those in the
-	 * order shown, and separated from what follows.
-	 * (Just to be honest about attach order.)
-	 *
-	 * The following are carefully ordered.
-	 */
-
-	/* This is used by video board drivers... */
-	OBIO_P4_REG,
+	/* Note: Must probe for the Intersil first! */
+	OBIO_CLOCK1,	/* clock.c (3/470) */
+	OBIO_CLOCK2,	/* clock.c (3/80) */
 
 	/* This is used by the Ethernet and SCSI drivers. */
 	OBIO_IOMMU,
@@ -135,10 +134,11 @@ obio_attach(parent, self, aux)
 
 	printf("\n");
 
-	/* Configure these in order of address. */
+	/* Configure these in the order listed above. */
 	for (i = 0; i < OBIO_ALIST_LEN; i++) {
-		/* We know ca_bustype == BUS_OBIO */
+		/* Our parent set ca->ca_bustype already. */
 		ca->ca_paddr = obio_alist[i];
+		/* These are filled-in by obio_submatch. */
 		ca->ca_intpri = -1;
 		ca->ca_intvec = -1;
 		(void) config_found_sm(self, ca, obio_print, obio_submatch);
@@ -154,18 +154,13 @@ obio_print(args, name)
 	void *args;
 	const char *name;
 {
-	struct confargs *ca = args;
 
 	/* Be quiet about empty OBIO locations. */
 	if (name)
 		return(QUIET);
 
-	if (ca->ca_paddr != -1)
-		printf(" addr 0x%x", ca->ca_paddr);
-	if (ca->ca_intpri != -1)
-		printf(" level %d", ca->ca_intpri);
-
-	return(UNCONF);
+	/* Otherwise do the usual. */
+	return(bus_print(args, name));
 }
 
 int
@@ -178,9 +173,11 @@ obio_submatch(parent, cf, aux)
 	cfmatch_t submatch;
 
 	/*
-	 * Default addresses are mostly useless for OBIO.
-	 * The address assignments are fixed for all time,
-	 * so our config files might as well reflect that.
+	 * Note that a defaulted address locator can never match
+	 * the value of ca->ca_paddr set by the obio_attach loop.
+	 * Without this diagnostic, any device with a defaulted
+	 * address locator would always be silently unmatched.
+	 * Therefore, just disallow default addresses on OBIO.
 	 */
 #ifdef	DIAGNOSTIC
 	if (cf->cf_paddr == -1)
@@ -188,9 +185,22 @@ obio_submatch(parent, cf, aux)
 			cf->cf_driver->cd_name, cf->cf_unit);
 #endif
 
-	/* This enforces exact address match. */
+	/*
+	 * Note that obio_attach calls config_found_sm() with
+	 * this function as the "submatch" and ca->ca_paddr
+	 * set to each of the possible OBIO locations, so we
+	 * want to reject any unmatched address here.
+	 */
 	if (cf->cf_paddr != ca->ca_paddr)
 		return 0;
+
+	/*
+	 * Copy the locators into our confargs for the child.
+	 * Note: ca->ca_bustype was set by our parent driver
+	 * (mainbus) and ca->ca_paddr was set by obio_attach.
+	 */
+	ca->ca_intpri = cf->cf_intpri;
+	ca->ca_intvec = cf->cf_intvec;
 
 	/* Now call the match function of the potential child. */
 	submatch = cf->cf_attach->ca_match;
@@ -215,10 +225,10 @@ obio_submatch(parent, cf, aux)
 static struct prom_map {
 	vm_offset_t pa, va;
 } prom_mappings[] = {
+	{ OBIO_ENABLEREG, 0 },	/* regs: Sys ENA, Bus ERR, etc. */
 	{ OBIO_ZS_KBD_MS, 0 },	/* Keyboard and Mouse */
 	{ OBIO_ZS_TTY_AB, 0 },	/* Serial Ports */
 	{ OBIO_EEPROM,    0 },	/* EEPROM/IDPROM/clock */
-	{ OBIO_ENABLEREG, 0 },	/* regs: Sys ENA, Bus ERR, etc. */
 };
 #define PROM_MAP_CNT (sizeof(prom_mappings) / \
 		      sizeof(prom_mappings[0]))
@@ -323,24 +333,32 @@ obio_init()
 	save_prom_mappings();
 	make_required_mappings();
 
-	/* Init drivers that use the required OBIO mappings. */
-	idprom_init();
-	eeprom_init();
-	zs_init();
-
 	enable_reg = (short*) obio_find_mapping(OBIO_ENABLEREG, 2);
+
+	/*
+	 * Find the interrupt reg mapping and turn off the
+	 * interrupts, otherwise the PROM clock interrupt
+	 * would poll the zs and toggle some LEDs...
+	 */
 	intreg_init();
-	clock_init();
+
+	/* Turn on the LEDs so we know power is on. */
+	leds_init();
+
+	/* Make the zs driver ready for console duty. */
+	zs_init();
+	cninit();
 }
 
 caddr_t
-obio_alloc(obio_addr, obio_size)
+obio_mapin(obio_addr, obio_size)
 	int obio_addr, obio_size;
 {
 	caddr_t cp;
 
 	cp = obio_find_mapping((vm_offset_t)obio_addr, obio_size);
-	if (cp) return (cp);
+	if (cp)
+		return (cp);
 
 	cp = bus_mapin(BUS_OBIO, obio_addr, obio_size);
 	return (cp);
