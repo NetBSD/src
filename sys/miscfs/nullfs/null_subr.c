@@ -1,4 +1,4 @@
-/*	$NetBSD: null_subr.c,v 1.2 1994/06/29 06:34:32 cgd Exp $	*/
+/*	$NetBSD: null_subr.c,v 1.2.2.1 1994/08/19 12:13:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,6 @@
 
 #define LOG2_SIZEVNODE 7		/* log2(sizeof struct vnode) */
 #define	NNULLNODECACHE 16
-#define	NULL_NHASH(vp) ((((u_long)vp)>>LOG2_SIZEVNODE) & (NNULLNODECACHE-1))
 
 /*
  * Null layer cache:
@@ -61,39 +60,21 @@
  * alias is removed the lower vnode is vrele'd.
  */
 
-/*
- * Cache head
- */
-struct null_node_cache {
-	struct null_node	*ac_forw;
-	struct null_node	*ac_back;
-};
-
-static struct null_node_cache null_node_cache[NNULLNODECACHE];
+#define	NULL_NHASH(vp) \
+	(&null_node_hashtbl[(((u_long)vp)>>LOG2_SIZEVNODE) & null_node_hash])
+LIST_HEAD(null_node_hashhead, null_node) *null_node_hashtbl;
+u_long null_node_hash;
 
 /*
  * Initialise cache headers
  */
 nullfs_init()
 {
-	struct null_node_cache *ac;
+
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_init\n");		/* printed during system boot */
 #endif
-
-	for (ac = null_node_cache; ac < null_node_cache + NNULLNODECACHE; ac++)
-		ac->ac_forw = ac->ac_back = (struct null_node *) ac;
-}
-
-/*
- * Compute hash list for given lower vnode
- */
-static struct null_node_cache *
-null_node_hash(lowervp)
-struct vnode *lowervp;
-{
-
-	return (&null_node_cache[NULL_NHASH(lowervp)]);
+	null_node_hashtbl = hashinit(NNULLNODECACHE, M_CACHE, &null_node_hash);
 }
 
 /*
@@ -104,7 +85,7 @@ null_node_find(mp, lowervp)
 	struct mount *mp;
 	struct vnode *lowervp;
 {
-	struct null_node_cache *hd;
+	struct null_node_hashhead *hd;
 	struct null_node *a;
 	struct vnode *vp;
 
@@ -114,9 +95,9 @@ null_node_find(mp, lowervp)
 	 * the lower vnode.  If found, the increment the null_node
 	 * reference count (but NOT the lower vnode's VREF counter).
 	 */
-	hd = null_node_hash(lowervp);
+	hd = NULL_NHASH(lowervp);
 loop:
-	for (a = hd->ac_forw; a != (struct null_node *) hd; a = a->null_forw) {
+	for (a = hd->lh_first; a != 0; a = a->null_hash.le_next) {
 		if (a->null_lowervp == lowervp && NULLTOV(a)->v_mount == mp) {
 			vp = NULLTOV(a);
 			/*
@@ -147,7 +128,7 @@ null_node_alloc(mp, lowervp, vpp)
 	struct vnode *lowervp;
 	struct vnode **vpp;
 {
-	struct null_node_cache *hd;
+	struct null_node_hashhead *hd;
 	struct null_node *xp;
 	struct vnode *othervp, *vp;
 	int error;
@@ -174,8 +155,8 @@ null_node_alloc(mp, lowervp, vpp)
 		return 0;
 	};
 	VREF(lowervp);   /* Extra VREF will be vrele'd in null_node_create */
-	hd = null_node_hash(lowervp);
-	insque(xp, hd);
+	hd = NULL_NHASH(lowervp);
+	LIST_INSERT_HEAD(hd, xp, null_hash);
 	return 0;
 }
 

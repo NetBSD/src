@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.11 1994/06/29 06:42:35 cgd Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.11.2.1 1994/08/19 12:10:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,8 +58,8 @@ struct sillyrename {
  */
 
 struct nfsnode {
-	struct	nfsnode *n_forw;	/* hash, forward */
-	struct	nfsnode **n_back;	/* hash, backward */
+	LIST_ENTRY(nfsnode) n_hash;	/* Hash chain */
+	CIRCLEQ_ENTRY(nfsnode) n_timer;	/* Nqnfs timer chain */
 	nfsv2fh_t n_fh;			/* NFS File Handle */
 	long	n_flag;			/* Flag for locking.. */
 	struct	vnode *n_vnode;		/* vnode associated with this node */
@@ -74,8 +74,6 @@ struct nfsnode {
 	u_quad_t n_brev;		 /* Modify rev when cached */
 	u_quad_t n_lrev;		 /* Modify rev for lease */
 	time_t	n_expiry;		 /* Lease expiry time */
-	struct	nfsnode *n_tnext;	 /* Nqnfs timer chain */
-	struct	nfsnode *n_tprev;		
 	struct	lockf *n_lockf;		/* Advisory lock records */
 	struct	sillyrename n_silly;	/* Silly rename struct */
 	struct	timeval n_atim;		/* Special file times */
@@ -105,7 +103,7 @@ struct nfsnode {
 /*
  * Queue head for nfsiod's
  */
-TAILQ_HEAD(nfsbufs, buf) nfs_bufq;
+TAILQ_HEAD(, buf) nfs_bufq;
 
 #ifdef KERNEL
 /*
