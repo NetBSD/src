@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.58 2001/04/25 14:37:33 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.59 2001/04/27 10:39:41 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -2032,7 +2032,7 @@ usr.bin/vi/vi/vs_refresh.c			1.6
 
   Pull in a patch from nvi 1.79 to prevent the repainting code from
   messing up.  Fixes annoying ``Error: move: l(4294967295) c(0)
-  o(0)" core dumps.
+  o(0)'' core dumps.
 
 sys/dev/pci/com_puc.c				1.2
 
@@ -4111,3 +4111,84 @@ distrib/sets/lists/base/mi			patch
 distrib/sets/lists/base/obsolete.mi		patch
 
   The Asia/Thimpu time zone file is no more.
+
+usr.sbin/lpr/common_source/common.c		1.22
+
+  Fix possible security problem (euid swapout in error handling).
+
+gnu/usr.bin/send-pr/categories			1.31
+
+  One entry for port-news68k is enough.
+
+usr.bin/make/make.1				1.48 via patch
+usr.bin/rlogin/rlogin.1				1.10
+usr.bin/rpcinfo/rpcinfo.8			1.7
+usr.bin/login/login.1				1.20 via patch
+usr.bin/rsh/rsh.1				1.10
+usr.bin/su/su.1					1.22
+usr.bin/window/window.1				1.8
+libexec/ftpd/ftpusers.5				1.9
+libexec/rlogind/rlogind.8			1.12
+libexec/talkd/talkd.8				1.7
+share/man/man4/atalk.4				1.11 via patch
+share/man/man4/awi.4				1.10
+share/man/man4/esis.4				1.8
+share/man/man4/options.4			1.134 via patch
+share/man/man4/vlan.4				1.9 via patch
+share/man/man4/man4.hp300/intro.4		1.7
+share/man/man4/ipsec.4				1.13
+share/man/man5/daily.conf.5			1.9 via patch
+share/man/man5/login.conf.5			1.9
+share/man/man5/rc.conf.5			1.44
+share/man/man8/compat_pecoff.8			1.7
+share/man/man9/pool.9				1.16
+usr.sbin/mopd/mopprobe/mopprobe.1		1.4
+usr.sbin/pppd/chat/chat.8			1.14
+usr.sbin/pppd/pppd/pppd.8			1.31
+usr.sbin/timed/timed/timed.8			1.9
+share/man/man4/isa.4				1.24-1.27
+lib/libusb/usb.3				1.14 via patch
+dist/am-utils/scripts/amd.conf.5		1.3
+gnu/dist/sendmail/mailstats/mailstats.8		1.4
+lib/libc/sys/getfsstat.2			1.16
+lib/libc/sys/intro.2				1.25
+lib/libc/rpc/getnetconfig.3			1.2
+lib/libc/rpc/getnetpath.3			1.2
+lib/libc/rpc/rpc.3				1.11
+lib/libc/rpc/rpc_svc_reg.3			1.2
+lib/libc/rpc/rpcbind.3				1.3
+bin/ksh/ksh.Man					1.2
+usr.bin/vmstat/vmstat.8				1.20-1.21
+dist/ipf/ipsend/ipsend.1			1.4
+share/man/man7/hier.7				1.33
+share/man/man9/ucom.9				1.3-1.4
+usr.sbin/bootp/bootpd/bootptab.5		1.6
+share/man/man7/mdoc.7				1.22
+usr.sbin/timed/timedc/timedc.8			1.8
+usr.sbin/lpr/lpd/lpd.8				1.19-1.20 via patch
+share/man/man9/time.9				1.7
+share/man/man8/yp.8				1.16-1.17
+usr.bin/vgrind/vgrind.1				1.9
+usr.bin/ul/ul.1					1.7
+usr.bin/tput/tput.1				1.10
+usr.bin/tip/tip.1				1.12
+usr.bin/cksum/cksum.1				1.16
+usr.bin/mail/mail.1				1.18
+usr.bin/rwho/rwho.1				1.7
+usr.bin/rusers/rusers.1				1.11
+usr.bin/join/join.1				1.7
+usr.bin/lastcomm/lastcomm.1			1.9
+
+  Lots of manual page fixups:
+   o Correct and/or add section numbers in cross references
+   o Whitespace, punctuation, markup and cleanup fixes
+   o Sort SEE ALSO section
+   o Remove references to manual pages not in the base system
+   o Note that vlan(4) first appeared in 1.5.1
+   o Add mention of quite a bit more drivers in isa(4); kill ie(4)
+   o One instance of cleaning up Nm uses
+   o Add note on enabling ``secure'' maps to yp(8); fixes PR#12149
+
+sys/dev/ic/tulip.c				patch
+
+  Fix build problem.  Fixes PR#12738.
