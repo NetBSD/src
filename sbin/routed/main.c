@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 1999/06/06 02:00:32 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2000/03/02 20:59:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@ static char sccsid[] __attribute__((unused)) = "@(#)main.c	8.1 (Berkeley) 6/5/93
 #define __COPYRIGHT(a) char copyright[] = a;
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.23 1999/06/06 02:00:32 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2000/03/02 20:59:40 christos Exp $");
 #endif
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
@@ -76,6 +76,7 @@ int	auth_ok = 1;			/* 1=ignore auth if we do not care */
 
 struct timeval epoch;			/* when started */
 struct timeval clk, prev_clk;
+static int usec_fudge;
 struct timeval now;			/* current idea of time */
 time_t	now_stale;
 time_t	now_expire;
@@ -132,8 +133,7 @@ main(int argc,
 	now_garbage = EPOCH - GARBAGE_TIME;
 	wtime.tv_sec = 0;
 
-	(void)gethostname(myname, sizeof(myname));
-	myname[sizeof(myname) - 1] = '\0';
+	(void)gethostname(myname, sizeof(myname) - 1);
 	(void)gethost(myname, &myaddr);
 
 	while ((n = getopt(argc, argv, "sqdghmpAtvT:F:P:")) != -1) {
@@ -222,7 +222,7 @@ main(int argc,
 		case 'v':
 			/* display version */
 			verbose++;
-			msglog("version 2.16");
+			msglog("version 2.19");
 			break;
 
 		default:
@@ -360,17 +360,31 @@ usage:
 	for (;;) {
 		prev_clk = clk;
 		gettimeofday(&clk, 0);
-		timevalsub(&t2, &clk, &prev_clk);
-		if (t2.tv_sec < 0
-		    || t2.tv_sec > wtime.tv_sec + 5) {
-			/* Deal with time changes before other housekeeping to
-			 * keep everything straight.
+		if (prev_clk.tv_sec == clk.tv_sec
+		    && prev_clk.tv_usec == clk.tv_usec+usec_fudge) {
+			/* Much of `routed` depends on time always advancing.
+			 * On systems that do not guarantee that gettimeofday()
+			 * produces unique timestamps even if called within
+			 * a single tick, use trickery like that in classic
+			 * BSD kernels.
 			 */
-			dt = t2.tv_sec;
-			if (dt > 0)
-				dt -= wtime.tv_sec;
-			trace_act("time changed by %d sec", (int)dt);
-			epoch.tv_sec += dt;
+			clk.tv_usec += ++usec_fudge;
+
+		} else {
+			usec_fudge = 0;
+
+			timevalsub(&t2, &clk, &prev_clk);
+			if (t2.tv_sec < 0
+			    || t2.tv_sec > wtime.tv_sec + 5) {
+				/* Deal with time changes before other
+				 * housekeeping to keep everything straight.
+				 */
+				dt = t2.tv_sec;
+				if (dt > 0)
+					dt -= wtime.tv_sec;
+				trace_act("time changed by %d sec", (int)dt);
+				epoch.tv_sec += dt;
+			}
 		}
 		timevalsub(&now, &clk, &epoch);
 		now_stale = now.tv_sec - STALE_TIME;
@@ -786,7 +800,7 @@ rtmalloc(size_t size,
 {
 	void *p = malloc(size);
 	if (p == 0)
-		logbad(1,"malloc(%ld) failed in %s", (long)size, msg);
+		logbad(1,"malloc(%lu) failed in %s", (u_long)size, msg);
 	return p;
 }
 
