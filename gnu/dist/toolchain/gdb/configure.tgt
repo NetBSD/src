@@ -238,6 +238,7 @@ powerpcle-*-eabi* | powerpcle-*-sysv* | powerpcle-*-elf*)
 			fi ;;
 powerpc-*-linux*)	gdb_target=linux ;;
 powerpc-*-vxworks*)	gdb_target=vxworks ;;
+powerpc-*-netbsd*)	gdb_target=nbsd ;;
 
 # OBSOLETE pyramid-*-*)		gdb_target=pyramid ;;
 
