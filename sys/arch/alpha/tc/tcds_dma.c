@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.18 1997/04/07 23:41:03 cgd Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.19 1997/05/08 01:33:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -32,7 +32,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.18 1997/04/07 23:41:03 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.19 1997/05/08 01:33:49 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,7 @@ tcds_dma_intr(sc)
 
 	if (!sc->sc_iswrite &&
 	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
-		NCRCMD(nsc, NCRCMD_FLUSH);
+		NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
 		DELAY(1);
 	}
 
