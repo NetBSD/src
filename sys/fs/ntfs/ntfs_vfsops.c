@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.3 2003/04/09 16:18:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.2 2003/02/01 06:23:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.3 2003/04/09 16:18:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,19 +461,9 @@ ntfs_mountfs(devvp, mp, argsp, p)
 	if (error)
 		return (error);
 	ncount = vcount(devvp);
-#if defined(__FreeBSD__)
-	if (devvp->v_object)
-		ncount -= 1;
-#endif
 	if (ncount > 1 && devvp != rootvp)
 		return (EBUSY);
-#if defined(__FreeBSD__)
-	VN_LOCK(devvp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-	VOP__UNLOCK(devvp, 0, p);
-#else
-	error = vinvalbuf(devvp, V_SAVE, p->p_ucred, p, 0, 0);
-#endif
 	if (error)
 		return (error);
 
@@ -634,14 +624,10 @@ out:
 	if (bp)
 		brelse(bp);
 
-#if defined __NetBSD__
 	/* lock the device vnode before calling VOP_CLOSE() */
-	VN_LOCK(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-	VOP__UNLOCK(devvp, 0, p);
-#else
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p);
-#endif
+	VOP_UNLOCK(devvp, 0);
 	
 	return (error);
 }
@@ -703,16 +689,11 @@ ntfs_unmount(
 
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
 
-#if defined(__NetBSD__)
 	/* lock the device vnode before calling VOP_CLOSE() */
 	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
-	VOP__UNLOCK(ntmp->ntm_devvp, 0, p);
-#else
-	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
-		NOCRED, p);
-#endif
+	VOP_UNLOCK(ntmp->ntm_devvp, 0);
 
 	vrele(ntmp->ntm_devvp);
 
@@ -990,7 +971,7 @@ ntfs_vgetex(
 
 	if (FTOV(fp)) {
 		/* vget() returns error if the vnode has been recycled */
-		if (VGET(FTOV(fp), lkflags, p) == 0) {
+		if (vget(FTOV(fp), lkflags) == 0) {
 			*vpp = FTOV(fp);
 			return (0);
 		}
@@ -1015,7 +996,7 @@ ntfs_vgetex(
 		vp->v_flag |= VROOT;
 
 	if (lkflags & LK_TYPE_MASK) {
-		error = VN_LOCK(vp, lkflags, p);
+		error = vn_lock(vp, lkflags);
 		if (error) {
 			vput(vp);
 			return (error);
