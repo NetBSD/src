@@ -1,4 +1,4 @@
-/* $NetBSD: qp.c,v 1.4 2003/02/06 20:23:35 petrov Exp $ */
+/* $NetBSD: qp.c,v 1.5 2003/05/01 21:24:13 martin Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ float
 unsigned int
 _Qp_qtoui(float128 *a)
 {
-	return (unsigned int)float128_to_int32(*a);
+	return (unsigned int)float128_to_int64(*a);
 }
 
 
