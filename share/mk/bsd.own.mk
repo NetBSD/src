@@ -1,5 +1,4 @@
-#	from: @(#)bsd.own.mk	0.1 (RGrimes) 4/4/93
-#	$Id: bsd.own.mk,v 1.10 1994/01/19 21:26:11 jtc Exp $
+#	$Id: bsd.own.mk,v 1.11 1994/03/27 02:30:42 cgd Exp $
 
 # where the system object and source trees are kept; can be configurable
 # by the user in case they want them in ~/foosrc and ~/fooobj, for example
