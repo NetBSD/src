@@ -1,3 +1,4 @@
+/*	$NetBSD: spamd.c,v 1.2 2004/06/22 16:04:40 itojun Exp $	*/
 /*	$OpenBSD: spamd.c,v 1.64 2004/03/17 14:42:20 beck Exp $	*/
 
 /*
@@ -91,6 +92,7 @@ int      parse_configline(char *);
 void     parse_configs(void);
 void     do_config(void);
 int      append_error_string (struct con *, size_t, char *, int, void *);
+char	*loglists(struct con *);
 void     build_reply(struct  con *);
 void     doreply(struct con *);
 void     setlog(char *, size_t, char *);
@@ -102,7 +104,9 @@ void     handler(struct con *);
 void     handlew(struct con *, int one);
 
 char hostname[MAXHOSTNAMELEN];
+#ifdef HAVE_SYSLOG_R
 struct syslog_data sdata = SYSLOG_DATA_INIT;
+#endif
 char *reply = NULL;
 char *nreply = "450";
 char *spamd = "spamd IP-based SPAM blocker";
@@ -583,10 +587,17 @@ closecon(struct con *cp)
 	time_t t;
 
 	time(&t);
+#ifdef HAVE_SYSLOG_R
 	syslog_r(LOG_INFO, &sdata, "%s: disconnected after %ld seconds.%s%s",
 	    cp->addr, (long)(t - cp->s),
 	    ((cp->lists == NULL) ? "" : " lists:"),
 	    ((cp->lists == NULL) ? "": cp->lists));
+#else
+	syslog(LOG_INFO, "%s: disconnected after %ld seconds.%s%s",
+	    cp->addr, (long)(t - cp->s),
+	    ((cp->lists == NULL) ? "" : " lists:"),
+	    ((cp->lists == NULL) ? "": cp->lists));
+#endif
 	if (debug > 0)
 		printf("%s connected for %ld seconds.\n", cp->addr,
 		    (long)(t - cp->s));
@@ -686,12 +697,21 @@ nextstate(struct con *cp)
 			cp->state = 6;
 			cp->w = t + cp->stutter;
 			if (cp->mail[0] && cp->rcpt[0]) {
-				if (verbose)
+				if (verbose) {
+#ifdef HAVE_SYSLOG_R
 					syslog_r(LOG_DEBUG, &sdata,
 					    "(%s) %s: %s -> %s",
 					    cp->blacklists ? "BLACK" : "GREY",
 					    cp->addr, cp->mail,
 					    cp->rcpt);
+#else
+					syslog(LOG_DEBUG,
+					    "(%s) %s: %s -> %s",
+					    cp->blacklists ? "BLACK" : "GREY",
+					    cp->addr, cp->mail,
+					    cp->rcpt);
+#endif
+				}
 				if (debug)
 					fprintf(stderr, "(%s) %s: %s -> %s\n",
 					    cp->blacklists ? "BLACK" : "GREY",
@@ -727,7 +747,11 @@ nextstate(struct con *cp)
 			cp->state = 60;
 			if (window && setsockopt(cp->fd, SOL_SOCKET, SO_RCVBUF,
 			    &window, sizeof(window)) == -1) {
+#ifdef HAVE_SYSLOG_R
 				syslog_r(LOG_DEBUG, &sdata,"setsockopt: %m");
+#else
+				syslog(LOG_DEBUG,"setsockopt: %m");
+#endif
 				/* don't fail if this doesn't work. */
 			}
 		} else {
@@ -750,13 +774,25 @@ nextstate(struct con *cp)
 		}
 		if (!cp->data_body && !*cp->ibuf)
 			cp->data_body = 1;
-		if (verbose && cp->data_body && *cp->ibuf)
+		if (verbose && cp->data_body && *cp->ibuf) {
+#ifdef HAVE_SYSLOG_R
 			syslog_r(LOG_DEBUG, &sdata, "%s: Body: %s", cp->addr,
 			    cp->ibuf);
+#else
+			syslog(LOG_DEBUG, "%s: Body: %s", cp->addr,
+			    cp->ibuf);
+#endif
+		}
 		else if (verbose && (match(cp->ibuf, "FROM:") ||
-		    match(cp->ibuf, "TO:") || match(cp->ibuf, "SUBJECT:")))
+		    match(cp->ibuf, "TO:") || match(cp->ibuf, "SUBJECT:"))) {
+#ifdef HAVE_SYSLOG_R
 			syslog_r(LOG_INFO, &sdata, "%s: %s", cp->addr,
 			    cp->ibuf);
+#else
+			syslog(LOG_INFO, "%s: %s", cp->addr,
+			    cp->ibuf);
+#endif
+		}
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
 		cp->r = t;
@@ -808,9 +844,15 @@ handler(struct con *cp)
 			cp->ip--;
 		*cp->ip = '\0';
 		cp->r = 0;
-		if (verbose)
+		if (verbose) {
+#ifdef HAVE_SYSLOG_R
 			syslog_r(LOG_DEBUG, &sdata, "%s: says '%s'", cp->addr,
 			    cp->ibuf);
+#else
+			syslog(LOG_DEBUG, "%s: says '%s'", cp->addr,
+			    cp->ibuf);
+#endif
+		}
 		nextstate(cp);
 	}
 }
@@ -870,9 +912,12 @@ main(int argc, char *argv[])
 	struct servent *ent;
 	struct rlimit rlp;
 	char *bind_address = NULL;
+	long p, g, w;
 
 	tzset();
+#ifdef HAVE_SYSLOG_R
 	openlog_r("spamd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
+#endif
 
 	if ((ent = getservbyname("spamd", "tcp")) == NULL)
 		errx(1, "Can't find service \"spamd\" in /etc/services");
@@ -916,9 +961,11 @@ main(int argc, char *argv[])
 			greylist = 1;
 			break;
 		case 'G':
-			if (sscanf(optarg, "%d:%d:%d", &passtime, &greyexp,
-			    &whiteexp) != 3)
+			if (sscanf(optarg, "%ld:%ld:%ld", &p, &g, &w) != 3)
 				usage();
+			passtime = p;
+			greyexp = g;
+			whiteexp = w;
 			/* convert to seconds from minutes */
 			passtime *= 60;
 			/* convert to seconds from hours */
@@ -1081,7 +1128,11 @@ jail:
 
 	if (debug != 0)
 		printf("listening for incoming connections.\n");
+#ifdef HAVE_SYSLOG_R
 	syslog_r(LOG_WARNING, &sdata, "listening for incoming connections.");
+#else
+	syslog(LOG_WARNING, "listening for incoming connections.");
+#endif
 
 	while (1) {
 		struct timeval tv, *tvp;
@@ -1180,6 +1231,7 @@ jail:
 				close(s2);
 			else {
 				initcon(&con[i], s2, &sin);
+#ifdef HAVE_SYSLOG_R
 				syslog_r(LOG_INFO, &sdata,
 				    "%s: connected (%d/%d)%s%s",
 				    con[i].addr, clients, blackcount,
@@ -1187,6 +1239,15 @@ jail:
 				    ", lists:"),
 				    ((con[i].lists == NULL) ? "":
 				    con[i].lists));
+#else
+				syslog(LOG_INFO,
+				    "%s: connected (%d/%d)%s%s",
+				    con[i].addr, clients, blackcount,
+				    ((con[i].lists == NULL) ? "" :
+				    ", lists:"),
+				    ((con[i].lists == NULL) ? "":
+				    con[i].lists));
+#endif
 			}
 		}
 		if (FD_ISSET(conflisten, fdsr)) {
