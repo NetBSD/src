@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312var.h,v 1.7 2002/08/01 19:55:03 thorpej Exp $	*/
+/*	$NetBSD: i80312var.h,v 1.8 2003/10/06 16:06:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -158,6 +158,21 @@ struct i80312_softc {
 	/* GPIO state */
 	uint8_t sc_gpio_dir;	/* GPIO pin direction (1 == output) */
 	uint8_t sc_gpio_val;	/* GPIO output pin value */
+
+	/* DMA tag for local devices. */
+	struct arm32_bus_dma_tag sc_local_dmat;
+};
+
+/*
+ * Arguments used to attach IOP built-ins.
+ */
+struct iopxs_attach_args {
+	const char *ia_name;	/* name of device */
+	bus_space_tag_t ia_st;	/* space tag */
+	bus_space_handle_t ia_sh;/* handle of IOP base */
+	bus_dma_tag_t ia_dmat;	/* DMA tag */
+	bus_addr_t ia_offset;	/* offset of device from IOP base */
+	bus_size_t ia_size;	/* size of sub-device */
 };
 
 extern struct bus_space i80312_bs_tag;

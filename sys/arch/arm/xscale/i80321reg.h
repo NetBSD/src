@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.11 2003/07/28 16:53:31 thorpej Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.12 2003/10/06 16:06:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #define	VERDE_EXTMEM_BASE		0x90020000UL
 
 #define	VERDE_PMMR_BASE			0xffffe000UL
-#define	VERDE_PMMR_SIZE			0x00000900UL
+#define	VERDE_PMMR_SIZE			0x00001700UL
 
 /*
  * Peripheral Memory Mapped Registers.  Defined as offsets
@@ -98,7 +98,10 @@
 #define	VERDE_AAU_SIZE			0x0100
 
 #define	VERDE_I2C_BASE			0x1680
+#define	VERDE_I2C_BASE0			(VERDE_I2C_BASE + 0x00)
+#define	VERDE_I2C_BASE1			(VERDE_I2C_BASE + 0x20)
 #define	VERDE_I2C_SIZE			0x0080
+#define	VERDE_I2C_CHSIZE		0x0020
 
 /*
  * Address Translation Unit
