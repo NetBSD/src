@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.8 1995/10/29 00:49:42 pk Exp $	*/
+/*	$NetBSD: tip.c,v 1.9 1996/12/29 10:34:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tip.c,v 1.8 1995/10/29 00:49:42 pk Exp $";
+static char rcsid[] = "$NetBSD: tip.c,v 1.9 1996/12/29 10:34:10 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -360,7 +360,7 @@ tipin()
 			if (!(gch = escape()))
 				continue;
 		} else if (!cumode && gch == character(value(RAISECHAR))) {
-			boolean(value(RAISE)) = !boolean(value(RAISE));
+			setboolean(value(RAISE), !boolean(value(RAISE)));
 			continue;
 		} else if (gch == '\r') {
 			bol = 1;
