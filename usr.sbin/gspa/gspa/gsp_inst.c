@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_inst.c,v 1.2 1997/10/17 06:58:59 lukem Exp $	*/
 /*
  * TMS34010 GSP assembler - Instruction encoding
  *
@@ -29,9 +30,15 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gsp_inst.c,v 1.2 1997/10/17 06:58:59 lukem Exp $");
+#endif
+
+#include <string.h>
 #include "gsp_ass.h"
 #include "gsp_code.h"
-#include <string.h>
 
 struct inst {
 	char	*opname;
@@ -104,152 +111,152 @@ struct inst {
  * N.B. This list must be sorted in order of opname.
  */
 struct inst instructions[] = {
-	".BLKB", BLKB,	PSEUDO,	{0,	0,	0,	0},
-	".BLKL", BLKL,	PSEUDO,	{0,	0,	0,	0},
-	".BLKW", BLKW,	PSEUDO,	{0,	0,	0,	0},
+	{".BLKB", BLKB,	PSEUDO,	{0,	0,	0,	0}},
+	{".BLKL", BLKL,	PSEUDO,	{0,	0,	0,	0}},
+	{".BLKW", BLKW,	PSEUDO,	{0,	0,	0,	0}},
 #ifdef EQU
-	".EQU",	EQU,	PSEUDO,	{0,	0,	0,	0},
+	{".EQU", EQU,	PSEUDO,	{0,	0,	0,	0}},
 #endif
-	".INCLUDE", INCL, PSEUDO, {0,	0,	0,	0},
-	".LONG",LONG,	PSEUDO,	{0,	0,	0,	0},
-	".ORG",	ORG,	PSEUDO,	{0,	0,	0,	0},
-	".START",START,	PSEUDO,	{0,	0,	0,	0},
-	".WORD",WORD,	PSEUDO,	{0,	0,	0,	0},
-	"ABS",	0x0380,	ONEREG,	{REG,	0,	0,	0},
-	"ADD",	0x4000,	ADD,	{EXREG,	REG,	OPTSPEC,0},
-	"ADDC",	0x4200,	TWOREG,	{REG,	REG,	0,	0},
-	"ADDI",	0x0B20,	IMMREG,	{EXPR,	REG,	OPTSPEC,0},
-	"ADDK",	0x1000,	K32REG,	{EXPR,	REG,	0,	0},
-	"ADDXY",0xE000,	TWOREG,	{REG,	REG,	0,	0},
-	"AND",	0x5000,	AND,	{EXREG,	REG,	0,	0},
-	"ANDI",	0x0B80,	LIMREGC,{EXPR,	REG,	0,	0},
-	"ANDN",	0x5200,	OR,	{EXREG,	REG,	0,	0},
-	"ANDNI",0x0B80,	LIMREG,	{EXPR,	REG,	0,	0},
-	"BTST",	0x1C00,	BTST,	{EXREG,	REG,	0,	0},
-	"CALL",	0x0920,	CALL,	{EXREG,	0,	0,	0},
-	"CALLA",0x0D5F,	CALL,	{EXPR,	0,	0,	0},
-	"CALLR",0x0D3F,	CALL,	{EXPR,	0,	0,	0},
-	"CLR",	0x5600,	CLR,	{REG,	0,	0,	0},
-	"CLRC",	0x0320,	NOP,	{0,	0,	0,	0},
-	"CMP",	0x4800,	CMP,	{EXREG,	REG,	OPTSPEC,0},
-	"CMPI",	0x0B60,	IMMREGC,{EXPR,	REG,	OPTSPEC,0},
-	"CMPXY",0xE400,	TWOREG,	{REG,	REG,	0,	0},
-	"CPW",	0xE600,	TWOREG,	{REG,	REG,	0,	0},
-	"CVXYL",0xE800,	TWOREG,	{REG,	REG,	0,	0},
-	"DEC",	0x1420,	ONEREG,	{REG,	0,	0,	0},
-	"DINT",	0x0360,	NOP,	{0,	0,	0,	0},
-	"DIVS",	0x5800,	TWOREG,	{REG,	REG,	0,	0},
-	"DIVU",	0x5A00,	TWOREG,	{REG,	REG,	0,	0},
-	"DRAV",	0xF600,	TWOREG,	{REG,	REG,	0,	0},
-	"DSJ",	0x0D80,	DSJ,	{REG,	EXPR,	0,	0},
-	"DSJEQ",0x0DA0,	DSJEQ,	{REG,	EXPR,	0,	0},
-	"DSJNE",0x0DC0,	DSJEQ,	{REG,	EXPR,	0,	0},
-	"DSJS",	0x3800,	DSJS,	{REG,	EXPR,	0,	0},
-	"EINT",	0x0D60,	NOP,	{0,	0,	0,	0},
-	"EMU",	0x0100,	NOP,	{0,	0,	0,	0},
-	"EXGF",	0xD500,	EXGF,	{REG,	OPTSPEC,0,	0},
-	"EXGPC",0x0120,	ONEREG,	{REG,	0,	0,	0},
-	"FILL",	0x0FC0,	FILL,	{SPEC,	0,	0,	0},
-	"GETPC",0x0140,	ONEREG,	{REG,	0,	0,	0},
-	"GETST",0x0180,	ONEREG,	{REG,	0,	0,	0},
-	"INC",	0x1020,	ONEREG,	{REG,	0,	0,	0},
-	"JAB",	0xC880,	JUMP,	{EXPR,	0,	0,	0},
-	"JAC",	0xC880,	JUMP,	{EXPR,	0,	0,	0},
-	"JAEQ",	0xCA80,	JUMP,	{EXPR,	0,	0,	0},
-	"JAGE",	0xC580,	JUMP,	{EXPR,	0,	0,	0},
-	"JAGT",	0xC780,	JUMP,	{EXPR,	0,	0,	0},
-	"JAHI",	0xC380,	JUMP,	{EXPR,	0,	0,	0},
-	"JAHS",	0xC980,	JUMP,	{EXPR,	0,	0,	0},
-	"JALE",	0xC680,	JUMP,	{EXPR,	0,	0,	0},
-	"JALO",	0xC880,	JUMP,	{EXPR,	0,	0,	0},
-	"JALS",	0xC280,	JUMP,	{EXPR,	0,	0,	0},
-	"JALT",	0xC480,	JUMP,	{EXPR,	0,	0,	0},
-	"JAN",	0xCE80,	JUMP,	{EXPR,	0,	0,	0},
-	"JANB",	0xC980,	JUMP,	{EXPR,	0,	0,	0},
-	"JANC",	0xC980,	JUMP,	{EXPR,	0,	0,	0},
-	"JANE",	0xCB80,	JUMP,	{EXPR,	0,	0,	0},
-	"JANN",	0xCF80,	JUMP,	{EXPR,	0,	0,	0},
-	"JANV",	0xCD80,	JUMP,	{EXPR,	0,	0,	0},
-	"JANZ",	0xCB80,	JUMP,	{EXPR,	0,	0,	0},
-	"JAP",	0xC180,	JUMP,	{EXPR,	0,	0,	0},
-	"JAUC",	0xC080,	JUMP,	{EXPR,	0,	0,	0},
-	"JAV",	0xCC80,	JUMP,	{EXPR,	0,	0,	0},
-	"JAZ",	0xCA80,	JUMP,	{EXPR,	0,	0,	0},
-	"JRB",	0xC800,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRC",	0xC800,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JREQ",	0xCA00,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRGE",	0xC500,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRGT",	0xC700,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRHI",	0xC300,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRHS",	0xC900,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRLE",	0xC600,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRLO",	0xC800,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRLS",	0xC200,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRLT",	0xC400,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRN",	0xCE00,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRNB",	0xC900,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRNC",	0xC900,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRNE",	0xCB00,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRNN",	0xCF00,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRNV",	0xCD00,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRNZ",	0xCB00,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRP",	0xC100,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRUC",	0xC000,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRV",	0xCC00,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JRZ",	0xCA00,	JUMP,	{EXPR,	OPTSPEC,0,	0},
-	"JUMP",	0x0160,	JUMP,	{EXREG,	OPTSPEC,0,	0},
-	"LINE",	0xDF1A,	LINE,	{SPEC,	0,	0,	0},
-	"LMO",	0x6A00,	TWOREG,	{REG,	REG,	0,	0},
-	"MMFM",	0x09A0,	MMFM,	{REG,	OPTXREG,OPTREG,	OPTREG},
-	"MMTM",	0x0980,	MMFM,	{REG,	OPTXREG,OPTREG,	OPTREG},
-	"MODS",	0x6C00,	TWOREG,	{REG,	REG,	0,	0},
-	"MODU",	0x6E00,	TWOREG,	{REG,	REG,	0,	0},
-	"MOVB",	0,	MOVB,	{EAREG,	EAREG,	0,	0},
-	"MOVE",	0x4C00,	MOVEK,	{EXAREG,EAREG,	OPTSPEC,0},
-	"MOVI",	0x09E0,	IMMREG,	{EXPR,	REG,	OPTSPEC,0},
-	"MOVK",	0x1800,	K32REG,	{EXPR,	REG,	0,	0},
-	"MOVX",	0xEC00,	TWOREG,	{REG,	REG,	0,	0},
-	"MOVY",	0xEE00,	TWOREG,	{REG,	REG,	0,	0},
-	"MPYS",	0x5C00,	TWOREG,	{REG,	REG,	0,	0},
-	"MPYU",	0x5E00,	TWOREG,	{REG,	REG,	0,	0},
-	"NEG",	0x03A0,	ONEREG,	{REG,	0,	0,	0},
-	"NEGB",	0x03C0,	ONEREG,	{REG,	0,	0,	0},
-	"NOP",	0x0300,	NOP,	{0,	0,	0,	0},
-	"NOT",	0x03E0,	ONEREG,	{REG,	0,	0,	0},
-	"OR",	0x5400,	OR,	{EXREG,	REG,	0,	0},
-	"ORI",	0x0BA0,	LIMREG,	{EXPR,	REG,	0,	0},
-	"PIXBLT",0x0F00,PIXBLT,	{SPEC,	SPEC,	0,	0},
-	"PIXT",	0,	PIXT,	{EAREG,	EAREG,	0,	0},
-	"POPST",0x01C0,	NOP,	{0,	0,	0,	0},
-	"PUSHST",0x01E0,NOP,	{0,	0,	0,	0},
-	"PUTST",0x01A0,	ONEREG,	{REG,	0,	0,	0},
-	"RETI",	0x0940,	NOP,	{0,	0,	0,	0},
-	"RETS",	0x0960,	RETS,	{OPTEXPR,0,	0,	0},
-	"REV",	0x0020,	ONEREG,	{REG,	0,	0,	0},
-	"RL",	0x3000,	KREG,	{EXREG,	REG,	0,	0},
-	"SETC",	0x0DE0,	NOP,	{0,	0,	0,	0},
-	"SETF",	0x0540,	SETF,	{EXPR,	EXPR,	OPTSPEC,0},
-	"SEXT",	0x0500,	EXGF,	{REG,	OPTSPEC,0,	0},
-	"SLA",	0x2000,	KREG,	{EXREG,	REG,	0,	0},
-	"SLL",	0x2400,	KREG,	{EXREG,	REG,	0,	0},
-	"SRA",	0x2800,	SRA,	{EXREG,	REG,	0,	0},
-	"SRL",	0x2C00,	SRA,	{EXREG,	REG,	0,	0},
-	"SUB",	0x4400,	SUB,	{EXREG,	REG,	OPTSPEC,0},
-	"SUBB",	0x4600,	TWOREG,	{REG,	REG,	0,	0},
-	"SUBI",	0x0D00,	IMMREGC,{EXPR,	REG,	OPTSPEC,0},
-	"SUBK",	0x1400,	K32REG,	{EXPR,	REG,	0,	0},
-	"SUBXY",0xE200,	TWOREG,	{REG,	REG,	0,	0},
-	"TRAP",	0x0900,	RETS,	{EXPR,	0,	0,	0},
-	"XOR",	0x5600,	OR,	{EXREG,	REG,	0,	0},
-	"XORI",	0x0BC0,	LIMREG,	{EXPR,	REG,	0,	0},
-	"ZEXT",	0x0520,	EXGF,	{REG,	OPTSPEC,0,	0},
-	NULL
+	{".INCLUDE", INCL, PSEUDO, {0,	0,	0,	0}},
+	{".LONG", LONG,	PSEUDO,	{0,	0,	0,	0}},
+	{".ORG", ORG,	PSEUDO,	{0,	0,	0,	0}},
+	{".START",START,PSEUDO,	{0,	0,	0,	0}},
+	{".WORD",WORD,	PSEUDO,	{0,	0,	0,	0}},
+	{"ABS",	0x0380,	ONEREG,	{REG,	0,	0,	0}},
+	{"ADD",	0x4000,	ADD,	{EXREG,	REG,	OPTSPEC,0}},
+	{"ADDC",0x4200, TWOREG,	{REG,	REG,	0,	0}},
+	{"ADDI",0x0B20,	IMMREG,	{EXPR,	REG,	OPTSPEC,0}},
+	{"ADDK",0x1000,	K32REG,	{EXPR,	REG,	0,	0}},
+	{"ADDXY",0xE000,TWOREG,	{REG,	REG,	0,	0}},
+	{"AND",	0x5000,	AND,	{EXREG,	REG,	0,	0}},
+	{"ANDI",0x0B80,	LIMREGC,{EXPR,	REG,	0,	0}},
+	{"ANDN",0x5200,	OR,	{EXREG,	REG,	0,	0}},
+	{"ANDNI",0x0B80,LIMREG,	{EXPR,	REG,	0,	0}},
+	{"BTST",0x1C00,	BTST,	{EXREG,	REG,	0,	0}},
+	{"CALL",0x0920,	CALL,	{EXREG,	0,	0,	0}},
+	{"CALLA",0x0D5F,CALL,	{EXPR,	0,	0,	0}},
+	{"CALLR",0x0D3F,CALL,	{EXPR,	0,	0,	0}},
+	{"CLR",	0x5600,	CLR,	{REG,	0,	0,	0}},
+	{"CLRC",0x0320,	NOP,	{0,	0,	0,	0}},
+	{"CMP",	0x4800,	CMP,	{EXREG,	REG,	OPTSPEC,0}},
+	{"CMPI",0x0B60,	IMMREGC,{EXPR,	REG,	OPTSPEC,0}},
+	{"CMPXY",0xE400,TWOREG,	{REG,	REG,	0,	0}},
+	{"CPW",	0xE600,	TWOREG,	{REG,	REG,	0,	0}},
+	{"CVXYL",0xE800,TWOREG,	{REG,	REG,	0,	0}},
+	{"DEC",	0x1420,	ONEREG,	{REG,	0,	0,	0}},
+	{"DINT",0x0360,	NOP,	{0,	0,	0,	0}},
+	{"DIVS",0x5800,	TWOREG,	{REG,	REG,	0,	0}},
+	{"DIVU",0x5A00,	TWOREG,	{REG,	REG,	0,	0}},
+	{"DRAV",0xF600,	TWOREG,	{REG,	REG,	0,	0}},
+	{"DSJ",	0x0D80,	DSJ,	{REG,	EXPR,	0,	0}},
+	{"DSJEQ",0x0DA0,DSJEQ,	{REG,	EXPR,	0,	0}},
+	{"DSJNE",0x0DC0,DSJEQ,	{REG,	EXPR,	0,	0}},
+	{"DSJS",0x3800,	DSJS,	{REG,	EXPR,	0,	0}},
+	{"EINT",0x0D60,	NOP,	{0,	0,	0,	0}},
+	{"EMU",	0x0100,	NOP,	{0,	0,	0,	0}},
+	{"EXGF",0xD500,	EXGF,	{REG,	OPTSPEC,0,	0}},
+	{"EXGPC",0x0120,ONEREG,	{REG,	0,	0,	0}},
+	{"FILL",0x0FC0,	FILL,	{SPEC,	0,	0,	0}},
+	{"GETPC",0x0140,ONEREG,	{REG,	0,	0,	0}},
+	{"GETST",0x0180,ONEREG,	{REG,	0,	0,	0}},
+	{"INC",	0x1020,	ONEREG,	{REG,	0,	0,	0}},
+	{"JAB",	0xC880,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAC",	0xC880,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAEQ",0xCA80,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAGE",0xC580,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAGT",0xC780,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAHI",0xC380,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAHS",0xC980,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JALE",0xC680,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JALO",0xC880,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JALS",0xC280,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JALT",0xC480,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAN",	0xCE80,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JANB",0xC980,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JANC",0xC980,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JANE",0xCB80,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JANN",0xCF80,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JANV",0xCD80,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JANZ",0xCB80,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAP",	0xC180,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAUC",0xC080,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAV",	0xCC80,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JAZ",	0xCA80,	JUMP,	{EXPR,	0,	0,	0}},
+	{"JRB",	0xC800,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRC",	0xC800,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JREQ",0xCA00,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRGE",0xC500,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRGT",0xC700,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRHI",0xC300,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRHS",0xC900,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRLE",0xC600,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRLO",0xC800,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRLS",0xC200,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRLT",0xC400,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRN",	0xCE00,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRNB",0xC900,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRNC",0xC900,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRNE",0xCB00,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRNN",0xCF00,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRNV",0xCD00,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRNZ",0xCB00,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRP",	0xC100,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRUC",0xC000,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRV",	0xCC00,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JRZ",	0xCA00,	JUMP,	{EXPR,	OPTSPEC,0,	0}},
+	{"JUMP",0x0160,	JUMP,	{EXREG,	OPTSPEC,0,	0}},
+	{"LINE",0xDF1A,	LINE,	{SPEC,	0,	0,	0}},
+	{"LMO",	0x6A00,	TWOREG,	{REG,	REG,	0,	0}},
+	{"MMFM",0x09A0,	MMFM,	{REG,	OPTXREG,OPTREG,	OPTREG}},
+	{"MMTM",0x0980,	MMFM,	{REG,	OPTXREG,OPTREG,	OPTREG}},
+	{"MODS",0x6C00,	TWOREG,	{REG,	REG,	0,	0}},
+	{"MODU",0x6E00,	TWOREG,	{REG,	REG,	0,	0}},
+	{"MOVB",0,	MOVB,	{EAREG,	EAREG,	0,	0}},
+	{"MOVE",0x4C00,	MOVEK,	{EXAREG,EAREG,	OPTSPEC,0}},
+	{"MOVI",0x09E0,	IMMREG,	{EXPR,	REG,	OPTSPEC,0}},
+	{"MOVK",0x1800,	K32REG,	{EXPR,	REG,	0,	0}},
+	{"MOVX",0xEC00,	TWOREG,	{REG,	REG,	0,	0}},
+	{"MOVY",0xEE00,	TWOREG,	{REG,	REG,	0,	0}},
+	{"MPYS",0x5C00,	TWOREG,	{REG,	REG,	0,	0}},
+	{"MPYU",0x5E00,	TWOREG,	{REG,	REG,	0,	0}},
+	{"NEG",	0x03A0,	ONEREG,	{REG,	0,	0,	0}},
+	{"NEGB",0x03C0,	ONEREG,	{REG,	0,	0,	0}},
+	{"NOP",	0x0300,	NOP,	{0,	0,	0,	0}},
+	{"NOT",	0x03E0,	ONEREG,	{REG,	0,	0,	0}},
+	{"OR",	0x5400,	OR,	{EXREG,	REG,	0,	0}},
+	{"ORI",	0x0BA0,	LIMREG,	{EXPR,	REG,	0,	0}},
+	{"PIXBLT",0x0F00,PIXBLT,{SPEC,	SPEC,	0,	0}},
+	{"PIXT",0,	PIXT,	{EAREG,	EAREG,	0,	0}},
+	{"POPST",0x01C0,NOP,	{0,	0,	0,	0}},
+	{"PUSHST",0x01E0,NOP,	{0,	0,	0,	0}},
+	{"PUTST",0x01A0,ONEREG,	{REG,	0,	0,	0}},
+	{"RETI",0x0940,	NOP,	{0,	0,	0,	0}},
+	{"RETS",0x0960,	RETS,	{OPTEXPR,0,	0,	0}},
+	{"REV",	0x0020,	ONEREG,	{REG,	0,	0,	0}},
+	{"RL",	0x3000,	KREG,	{EXREG,	REG,	0,	0}},
+	{"SETC",0x0DE0,	NOP,	{0,	0,	0,	0}},
+	{"SETF",0x0540,	SETF,	{EXPR,	EXPR,	OPTSPEC,0}},
+	{"SEXT",0x0500,	EXGF,	{REG,	OPTSPEC,0,	0}},
+	{"SLA",	0x2000,	KREG,	{EXREG,	REG,	0,	0}},
+	{"SLL",	0x2400,	KREG,	{EXREG,	REG,	0,	0}},
+	{"SRA",	0x2800,	SRA,	{EXREG,	REG,	0,	0}},
+	{"SRL",	0x2C00,	SRA,	{EXREG,	REG,	0,	0}},
+	{"SUB",	0x4400,	SUB,	{EXREG,	REG,	OPTSPEC,0}},
+	{"SUBB",0x4600,	TWOREG,	{REG,	REG,	0,	0}},
+	{"SUBI",0x0D00,	IMMREGC,{EXPR,	REG,	OPTSPEC,0}},
+	{"SUBK",0x1400,	K32REG,	{EXPR,	REG,	0,	0}},
+	{"SUBXY",0xE200,TWOREG,	{REG,	REG,	0,	0}},
+	{"TRAP",0x0900,	RETS,	{EXPR,	0,	0,	0}},
+	{"XOR",	0x5600,	OR,	{EXREG,	REG,	0,	0}},
+	{"XORI",0x0BC0,	LIMREG,	{EXPR,	REG,	0,	0}},
+	{"ZEXT",0x0520,	EXGF,	{REG,	OPTSPEC,0,	0}},
+	{NULL}
 };
 
-
+int check_spec(int spec, char *valid, char *what);
 void do_statement(char *opcode, operand operands);
-int encode_instr(struct inst *ip, operand ops,
-		 int *spec, u_int16_t *iwords);
+int encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords);
+int specifier(operand op);
 
 void
 statement(char *opcode, operand operands)
@@ -261,9 +268,9 @@ statement(char *opcode, operand operands)
 void
 do_statement(char *opcode, operand operands)
 {
-	register struct inst *ip;
-	register int i, nop, req;
-	register operand op;
+	struct inst *ip;
+	int i, nop, req;
+	operand op;
 	int spec[3];
 	u_int16_t iwords[6];
 
@@ -328,9 +335,8 @@ char *specs[] = { "B", "L", "W", "XY", NULL };
 int
 specifier(operand op)
 {
-	register int i, k;
-	register char **sl;
-	register expr e;
+	char **sl;
+	expr e;
 	char sp[4];
 
 	if( op->type != EXPR )
@@ -354,7 +360,7 @@ specifier(operand op)
 int
 check_spec(int spec, char *valid, char *what)
 {
-	register char *p;
+	char *p;
 
 	if( spec == 0 )
 		return 0;
@@ -385,56 +391,57 @@ u_int16_t code_to_imm[] = {
 u_int16_t move_opc[7][7] = {
 /*				Source */
 /*	Reg	*Reg	*Reg+	*-Reg	*Reg.XY	*Reg(n)	@addr 	  Dest */
-	0x4C00,	0x8400,	0x9400,	0xA400,	0,	0xB400,	0x05A0,	/* R */
-	0x8000,	0x8800,	0,	0,	0,	0,	0,	/* *R */
-	0x9000,	0,	0x9800,	0,	0,	0xD000,	0xD400,	/* *R+ */
-	0xA000,	0,	0,	0xA800,	0,	0,	0,	/* *-R */
-	0,	0,	0,	0,	0,	0,	0,	/* *R.XY */
-	0xB000,	0,	0,	0,	0,	0xB800,	0,	/* *R(n) */
-	0x0580,	0,	0,	0,	0,	0,	0x05C0,	/* @adr */
+	{0x4C00,0x8400,	0x9400,	0xA400,	0,	0xB400,	0x05A0}, /* R */
+	{0x8000,0x8800,	0,	0,	0,	0,	0},	/* *R */
+	{0x9000,0,	0x9800,	0,	0,	0xD000,	0xD400}, /* *R+ */
+	{0xA000,0,	0,	0xA800,	0,	0,	0},	/* *-R */
+	{0,	0,	0,	0,	0,	0,	0},	/* *R.XY */
+	{0xB000,0,	0,	0,	0,	0xB800,	0},	/* *R(n) */
+	{0x0580,0,	0,	0,	0,	0,	0x05C0}	/* @adr */
 };
 
 /* Opcodes for MOVB instruction */
 u_int16_t movb_opc[7][7] = {
 /*				Source */
 /*	Reg	*Reg	*Reg+	*-Reg	*Reg.XY	*Reg(n)	@addr 	  Dest */
-	0,	0x8E00,	0,	0,	0,	0xAE00,	0x07E0,	/* R */
-	0x8C00,	0x9C00,	0,	0,	0,	0,	0,	/* *R */
-	0,	0,	0,	0,	0,	0,	0,	/* *R+ */
-	0,	0,	0,	0,	0,	0,	0,	/* *-R */
-	0,	0,	0,	0,	0,	0,	0,	/* *R.XY */
-	0xAC00,	0,	0,	0,	0,	0xBC00,	0,	/* *R(n) */
-	0x05E0,	0,	0,	0,	0,	0,	0x0340,	/* @adr */
+	{0,	0x8E00,	0,	0,	0,	0xAE00,	0x07E0},/* R */
+	{0x8C00,0x9C00,	0,	0,	0,	0,	0},	/* *R */
+	{0,	0,	0,	0,	0,	0,	0},	/* *R+ */
+	{0,	0,	0,	0,	0,	0,	0},	/* *-R */
+	{0,	0,	0,	0,	0,	0,	0},	/* *R.XY */
+	{0xAC00,0,	0,	0,	0,	0xBC00,	0},	/* *R(n) */
+	{0x05E0,0,	0,	0,	0,	0,	0x0340}	/* @adr */
 };
 
 /* Opcodes for PIXT instruction */
 u_int16_t pixt_opc[7][7] = {
 /*				Source */
 /*	Reg	*Reg	*Reg+	*-Reg	*Reg.XY	*Reg(n)	@addr 	  Dest */
-	0,	0xFA00,	0,	0,	0xF200,	0,	0,	/* R */
-	0xF800,	0xFC00,	0,	0,	0,	0,	0,	/* *R */
-	0,	0,	0,	0,	0,	0,	0,	/* *R+ */
-	0,	0,	0,	0,	0,	0,	0,	/* *-R */
-	0xF000,	0,	0,	0,	0xF400,	0,	0,	/* *R.XY */
-	0,	0,	0,	0,	0,	0,	0,	/* *R(n) */
-	0,	0,	0,	0,	0,	0,	0,	/* @adr */
+	{0,	0xFA00,	0,	0,	0xF200,	0,	0},	/* R */
+	{0xF800,0xFC00,	0,	0,	0,	0,	0},	/* *R */
+	{0,	0,	0,	0,	0,	0,	0},	/* *R+ */
+	{0,	0,	0,	0,	0,	0,	0},	/* *-R */
+	{0xF000,0,	0,	0,	0xF400,	0,	0},	/* *R.XY */
+	{0,	0,	0,	0,	0,	0,	0},	/* *R(n) */
+	{0,	0,	0,	0,	0,	0,	0}	/* @adr */
 };
 
 #define USES_REG(op)	((op)->type == REG \
-			 || (op)->type == EA && (op)->mode != M_ABSOLUTE)
+			 || ((op)->type == EA && (op)->mode != M_ABSOLUTE))
 #define USES_EXPR(op)	((op)->type == EXPR \
-			 || (op)->type == EA && (op)->mode >= M_INDEX)
+			 || ((op)->type == EA && (op)->mode >= M_INDEX))
 
 int
 encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 {
-	register int rs, rd;
+	int rs, rd;
 	int opc, nw, class, flags, ms, md, off;
 	int mask, file, bit, i;
-	register operand op0, op1;
+	operand op0, op1;
 	unsigned line[2];
 	int32_t val[2];
 
+	rs = rd = 0;
 	opc = ip->opcode;
 	nw = 1;
 	op0 = ops;
@@ -518,8 +525,8 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 			val[0] = ~ val[0];
 		i = check_spec(spec[2], " WL", "length");
 		if( i == 1
-		   || i == 0 && (flags & NOIMM16) == 0 && line[0] <= lineno
-		      && (int16_t)val[0] == val[0] ){
+		   || (i == 0 && (flags & NOIMM16) == 0 && line[0] <= lineno
+		      && (int16_t)val[0] == val[0] )){
 			if( (int16_t) val[0] != val[0] )
 				perr("Value truncated to 16 bits");
 			opc -= 0x20;
@@ -534,8 +541,8 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 		break;
 	case KREG:			/* short immediate, reg */
 		opc |= rd & 0x1F;
-		if( val[0] < 0 || (flags & K32) == 0 && val[0] > 31
-		   || (flags & K32) != 0 && val[0] <= 0 || val[0] > 32 )
+		if( val[0] < 0 || ((flags & K32) == 0 && val[0] > 31)
+		   || ((flags & K32) != 0 && val[0] <= 0) || val[0] > 32 )
 			perr("5-bit constant out of range");
 		rs = val[0];
 		if( (flags & IMMCOM) != 0 )

@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_gram.y,v 1.2 1997/10/17 06:58:57 lukem Exp $	*/
 /*
  * Yacc syntax for GSP assembler
  *
@@ -33,6 +34,12 @@
 /* declarations */
 
 %{
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gsp_gram.y,v 1.2 1997/10/17 06:58:57 lukem Exp $");
+#endif
+
+#include <stdio.h>
 #include "gsp_ass.h"
 %}
 

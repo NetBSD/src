@@ -1,3 +1,4 @@
+/*	$NetBSD: gsp_eval.c,v 1.2 1997/10/17 06:58:54 lukem Exp $	*/
 /*
  * GSP assembler - expression evaluation
  *
@@ -29,6 +30,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: gsp_eval.c,v 1.2 1997/10/17 06:58:54 lukem Exp $");
+#endif
+
+#include <stdlib.h>
 #include "gsp_ass.h"
 #include "y.tab.h"
 
@@ -36,10 +44,10 @@ int32_t eval_op(int, int32_t, int32_t);
 int32_t eval_subtree(expr, unsigned *);
 
 expr
-fold(register expr x)
+fold(expr x)
 {
-	register int32_t l;
-	register expr lp, rp;
+	int32_t l;
+	expr lp, rp;
 
 	switch( x->e_op ){
 	case SYM:
@@ -67,7 +75,7 @@ fold(register expr x)
 }
 
 int32_t
-eval_op(int op, register int32_t l, register int32_t r)
+eval_op(int op, int32_t l, int32_t r)
 {
 	switch( op ){
 	case NEG:	l = -l;		break;
@@ -108,7 +116,7 @@ eval_expr(expr e, int32_t *vp, unsigned *lp)
 int32_t
 eval_subtree(expr e, unsigned *lp)
 {
-	register symbol s;
+	symbol s;
 	int32_t v1, v2;
 	unsigned l2;
 
