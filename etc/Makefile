@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.78.2.5 1997/12/15 06:11:25 mellon Exp $
+#	$NetBSD: Makefile,v 1.78.2.6 1998/07/20 15:22:21 mellon Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 TZDIR=		/usr/share/zoneinfo
@@ -23,7 +23,7 @@ BINOWN= root
 BINGRP= wheel
 BIN1+=	aliases bootptab changelist csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers ftpwelcome \
-	gettytab group hosts hosts.lpd inetd.conf lkm.conf \
+	gettytab group hosts hosts.lpd inetd.conf ld.so.conf lkm.conf \
 	man.conf monthly monthly.conf mrouted.conf netstart networks \
 	newsyslog.conf phones printcap profile protocols rbootd.conf rc \
 	rc.conf rc.lkm rc.local rc.subr remote rpc security security.conf \
