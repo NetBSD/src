@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101 1998/10/13 12:05:44 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.102 1998/10/14 14:47:20 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3926,9 +3926,8 @@ _cpu_hatch:
 	set	USRSTACK - CCFSZ, %fp	! as if called from user code
 	sethi	%hi(_cpu_hatchstack), %o0
 	ld	[%o0+%lo(_cpu_hatchstack)], %o0
-
-	set	USPACE - CCFSZ - 80, %sp	! XXX - stack length
-	add	%o0, %sp, %sp
+	set	USPACE - CCFSZ - 80, %sp
+	add	%sp, %o0, %sp
 
 	/* Enable traps */
 	rd	%psr, %l0
@@ -3941,6 +3940,10 @@ _cpu_hatch:
 	 ld	[%o0+%lo(_cpu_hatch_sc)], %o0
 
 	/* Idle here .. */
+	rd	%psr, %l0
+	andn	%l0, PSR_PIL, %l0	! psr &= ~PSR_PIL;
+	wr	%l0, 0, %psr		! (void) spl0();
+	nop; nop; nop
 9:	ba 9b
 	 nop
 	/*NOTREACHED*/
