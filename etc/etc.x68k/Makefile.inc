@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1996/05/21 15:15:18 oki Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1998/06/28 09:38:44 fair Exp $
 #
 #	etc.x68k/Makefile.inc -- x68k-specific etc Makefile targets
 #
@@ -6,20 +6,21 @@
 .ifdef DESTDIR
 LOCALTIME=	Japan
 
-snap_md: netbsd-generic netbsd-all
-	cp ${.CURDIR}/../sys/arch/x68k/compile/GENERIC/netbsd.gz \
-	    ${DESTDIR}/snapshot/netbsd-generic.gz
-	cp ${.CURDIR}/../sys/arch/x68k/compile/ALL/netbsd.gz \
-	    ${DESTDIR}/snapshot/netbsd-all.gz
+# the regular expression does a basename(1) on .CURDIR so that we don't
+# have to keep looking up .. at compile time.
 
-netbsd-generic:
-	cd ${.CURDIR}/../sys/arch/x68k/conf && config GENERIC
-	cd ${.CURDIR}/../sys/arch/x68k/compile/GENERIC && \
-	    make clean && make depend && make && gzip -9 netbsd
+KERNSRCDIR?=	${.CURDIR:C/[^\/]+$//}sys
+KERNOBJDIR?=	${KERNSRCDIR}/arch/${MACHINE}/compile
+KERNCONFDIR?=	${KERNSRCDIR}/arch/${MACHINE}/conf
 
-netbsd-all:
-	cd ${.CURDIR}/../sys/arch/x68k/conf && config ALL
-	cd ${.CURDIR}/../sys/arch/x68k/compile/ALL && \
-	    make clean && make depend && make && gzip -9 netbsd
+snap_md:
+.for kernel in GENERIC ALL
+	cd ${KERNCONFDIR} && config \
+		-b ${KERNOBJDIR}/${kernel} \
+		-s ${KERNSRCDIR} \
+		${kernel}
+	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make && \
+		gzip -c -9 netbsd > ${DESTDIR}/snapshot/netbsd.${kernel}.gz
+.endfor
 
 .endif	# DESTDIR check
