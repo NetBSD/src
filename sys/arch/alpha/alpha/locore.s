@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.58 1999/03/12 23:03:31 perry Exp $ */
+/* $NetBSD: locore.s,v 1.59 1999/03/22 09:17:11 ross Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.58 1999/03/12 23:03:31 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.59 1999/03/22 09:17:11 ross Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -1456,7 +1456,6 @@ END(copyerr)
  * {fu,su},{byte,sword,word}, fetch or store a byte, short or word to
  * user data space.
  */
-#ifdef notdef
 LEAF(fuword, 1)
 XLEAF(fuiword, 1)
 	LDGP(pv)
@@ -1526,7 +1525,6 @@ XLEAF(fuibyte, 1)
 	.set at
 	RET
 	END(fubyte)
-#endif /* notdef */
 
 LEAF(suword, 2)
 	LDGP(pv)
