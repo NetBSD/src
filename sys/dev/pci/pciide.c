@@ -1,8 +1,8 @@
-/*	$NetBSD: pciide.c,v 1.68.2.23 2001/04/24 23:05:30 he Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.24 2001/05/15 20:52:51 he Exp $	*/
 
 
 /*
- * Copyright (c) 1999 Manuel Bouyer.
+ * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -162,8 +162,8 @@ static u_int32_t piix_setup_idetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
 static u_int32_t piix_setup_idetim_drvs __P((struct ata_drive_datas*));
 static u_int32_t piix_setup_sidetim_timings __P((u_int8_t, u_int8_t, u_int8_t));
 
-void amd756_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void amd756_setup_channel __P((struct channel_softc*));
+void amd7x6_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
+void amd7x6_setup_channel __P((struct channel_softc*));
 
 void apollo_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void apollo_setup_channel __P((struct channel_softc*));
@@ -269,6 +269,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -276,11 +277,17 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC756_IDE,
 	  0,
 	  "Advanced Micro Devices AMD756 IDE Controller",
-	  amd756_chip_map
+	  amd7x6_chip_map
+	},
+	{ PCI_PRODUCT_AMD_PBC766_IDE,
+	  0,
+	  "Advanced Micro Devices AMD766 IDE Controller",
+	  amd7x6_chip_map
 	},
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -313,23 +320,25 @@ const struct pciide_product_desc pciide_cmd_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
 const struct pciide_product_desc pciide_via_products[] =  {
 	{ PCI_PRODUCT_VIATECH_VT82C586_IDE,
 	  0,
-	  "VIA Tech VT82C586 IDE Controller",
+	  NULL,
 	  apollo_chip_map,
 	 },
 	{ PCI_PRODUCT_VIATECH_VT82C586A_IDE,
 	  0,
-	  "VIA Tech VT82C586A IDE Controller",
+	  NULL,
 	  apollo_chip_map,
 	},
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -342,6 +351,7 @@ const struct pciide_product_desc pciide_cypress_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -354,6 +364,7 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -366,6 +377,7 @@ const struct pciide_product_desc pciide_acer_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -393,6 +405,7 @@ const struct pciide_product_desc pciide_promise_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -415,18 +428,20 @@ const struct pciide_product_desc pciide_opti_products[] =  {
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
 const struct pciide_product_desc pciide_triones_products[] =  {
 	{ PCI_PRODUCT_TRIONES_HPT366,
 	  IDE_PCI_CLASS_OVERRIDE,
-	  "Triones/Highpoint HPT366/370 IDE Controller",
+	  NULL,
 	  hpt_chip_map,
 	},
 	{ 0,
 	  0,
 	  NULL,
+	  NULL
 	}
 };
 
@@ -492,11 +507,11 @@ pciide_lookup_product(id)
 	if ((pp = vp->ide_products) == NULL)
 		return NULL;
 
-	for (; pp->ide_name != NULL; pp++)
+	for (; pp->chip_map != NULL; pp++)
 		if (PCI_PRODUCT(id) == pp->ide_product)
 			break;
     
-	if (pp->ide_name == NULL)
+	if (pp->chip_map == NULL)
 		return NULL;
 	return pp;
 }
@@ -553,7 +568,10 @@ pciide_attach(parent, self, aux)
 	} else
 		displaydev = sc->sc_pp->ide_name;
 
-	printf(": %s (rev. 0x%02x)\n", displaydev, PCI_REVISION(pa->pa_class));
+	/* if displaydev == NULL, printf is done in chip-specific map */
+	if (displaydev)
+		printf(": %s (rev. 0x%02x)\n", displaydev,
+		    PCI_REVISION(pa->pa_class));
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
@@ -1779,7 +1797,7 @@ piix_setup_sidetim_timings(mode, dma, channel)
 }
 
 void
-amd756_chip_map(sc, pa)
+amd7x6_chip_map(sc, pa)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
@@ -1804,20 +1822,24 @@ amd756_chip_map(sc, pa)
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 4;
-	sc->sc_wdcdev.set_modes = amd756_setup_channel;
+
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_AMD_PBC766_IDE)
+		sc->sc_wdcdev.UDMA_cap = 5;
+	else
+		sc->sc_wdcdev.UDMA_cap = 4;
+	sc->sc_wdcdev.set_modes = amd7x6_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-	chanenable = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_CHANSTATUS_EN);
+	chanenable = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_CHANSTATUS_EN);
 
-	WDCDEBUG_PRINT(("amd756_chip_map: Channel enable=0x%x\n", chanenable),
+	WDCDEBUG_PRINT(("amd7x6_chip_map: Channel enable=0x%x\n", chanenable),
 	    DEBUG_PROBE);
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
 		if (pciide_chansetup(sc, channel, interface) == 0)
 			continue;
 
-		if ((chanenable & AMD756_CHAN_EN(channel)) == 0) {
+		if ((chanenable & AMD7X6_CHAN_EN(channel)) == 0) {
 			printf("%s: %s channel ignored (disabled)\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, cp->name);
 			continue;
@@ -1826,20 +1848,20 @@ amd756_chip_map(sc, pa)
 		    pciide_pci_intr);
 
 		if (pciide_chan_candisable(cp))
-			chanenable &= ~AMD756_CHAN_EN(channel);
+			chanenable &= ~AMD7X6_CHAN_EN(channel);
 		pciide_map_compat_intr(pa, cp, channel, interface);
 		if (cp->hw_ok == 0)
 			continue;
 
-		amd756_setup_channel(&cp->wdc_channel);
+		amd7x6_setup_channel(&cp->wdc_channel);
 	}
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD756_CHANSTATUS_EN,
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_CHANSTATUS_EN,
 	    chanenable);
 	return;
 }
 
 void
-amd756_setup_channel(chp)
+amd7x6_setup_channel(chp)
 	struct channel_softc *chp;
 {
 	u_int32_t udmatim_reg, datatim_reg;
@@ -1854,10 +1876,10 @@ amd756_setup_channel(chp)
 #endif
 
 	idedma_ctl = 0;
-	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_DATATIM);
-	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_UDMA);
-	datatim_reg &= ~AMD756_DATATIM_MASK(chp->channel);
-	udmatim_reg &= ~AMD756_UDMA_MASK(chp->channel);
+	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_DATATIM);
+	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD7X6_UDMA);
+	datatim_reg &= ~AMD7X6_DATATIM_MASK(chp->channel);
+	udmatim_reg &= ~AMD7X6_UDMA_MASK(chp->channel);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
@@ -1877,10 +1899,10 @@ amd756_setup_channel(chp)
 		    (drvp->drive_flags & DRIVE_UDMA)) {
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
-			udmatim_reg |= AMD756_UDMA_EN(chp->channel, drive) |
-			    AMD756_UDMA_EN_MTH(chp->channel, drive) |
-			    AMD756_UDMA_TIME(chp->channel, drive,
-				amd756_udma_tim[drvp->UDMA_mode]);
+			udmatim_reg |= AMD7X6_UDMA_EN(chp->channel, drive) |
+			    AMD7X6_UDMA_EN_MTH(chp->channel, drive) |
+			    AMD7X6_UDMA_TIME(chp->channel, drive,
+				amd7x6_udma_tim[drvp->UDMA_mode]);
 			/* can use PIO timings, MW DMA unused */
 			mode = drvp->PIO_mode;
 		} else {
@@ -1893,7 +1915,9 @@ amd756_setup_channel(chp)
 			 * PCIIDE_AMD756_ENABLEDMA. It causes a hard hang if
 			 * triggered. 
 			 */
-			if (AMD756_CHIPREV_DISABLEDMA(rev)) {
+			if (sc->sc_pp->ide_product ==
+			      PCI_PRODUCT_AMD_PBC756_IDE &&
+			    AMD756_CHIPREV_DISABLEDMA(rev)) {
 				printf("%s:%d:%d: multi-word DMA disabled due "
 				    "to chip revision\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname,
@@ -1921,10 +1945,10 @@ pio:		/* setup PIO mode */
 			drvp->DMA_mode = mode - 2;
 		}
 		datatim_reg |=
-		    AMD756_DATATIM_PULSE(chp->channel, drive,
-			amd756_pio_set[mode]) |
-		    AMD756_DATATIM_RECOV(chp->channel, drive,
-			amd756_pio_rec[mode]);
+		    AMD7X6_DATATIM_PULSE(chp->channel, drive,
+			amd7x6_pio_set[mode]) |
+		    AMD7X6_DATATIM_RECOV(chp->channel, drive,
+			amd7x6_pio_rec[mode]);
 	}
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
@@ -1933,8 +1957,8 @@ pio:		/* setup PIO mode */
 		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD756_DATATIM, datatim_reg);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD756_UDMA, udmatim_reg);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_DATATIM, datatim_reg);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, AMD7X6_UDMA, udmatim_reg);
 }
 
 void
@@ -1944,13 +1968,56 @@ apollo_chip_map(sc, pa)
 {
 	struct pciide_channel *cp;
 	pcireg_t interface = PCI_INTERFACE(pa->pa_class);
-	int rev = PCI_REVISION(pa->pa_class);
 	int channel;
-	u_int32_t ideconf, udma_conf, old_udma_conf;
+	u_int32_t ideconf;
 	bus_size_t cmdsize, ctlsize;
+	pcitag_t pcib_tag;
+	pcireg_t pcib_id, pcib_class;
 
 	if (pciide_chipen(sc, pa) == 0)
 		return;
+	/* get a PCI tag for the ISA bridge (function 0 of the same device) */
+	pcib_tag = pci_make_tag(pa->pa_pc, pa->pa_bus, pa->pa_device, 0);
+	/* and read ID and rev of the ISA bridge */
+	pcib_id = pci_conf_read(sc->sc_pc, pcib_tag, PCI_ID_REG);
+	pcib_class = pci_conf_read(sc->sc_pc, pcib_tag, PCI_CLASS_REG);
+	printf(": VIA Technologies ");
+	switch (PCI_PRODUCT(pcib_id)) {
+	case PCI_PRODUCT_VIATECH_VT82C586_ISA:
+		printf("VT82C586 (Apollo VP) ");
+		if(PCI_REVISION(pcib_class) >= 0x02) {
+			printf("ATA33 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 2;
+		} else {
+			printf("controller\n");
+			sc->sc_wdcdev.UDMA_cap = 0;
+		}
+		break;
+	case PCI_PRODUCT_VIATECH_VT82C596A:
+		printf("VT82C596A (Apollo Pro) ");
+		if (PCI_REVISION(pcib_class) >= 0x12) {
+			printf("ATA66 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 4;
+		} else {
+			printf("ATA33 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 2;
+		}
+		break;
+	case PCI_PRODUCT_VIATECH_VT82C686A_ISA:
+		printf("VT82C686A (Apollo KX133) ");
+		if (PCI_REVISION(pcib_class) >= 0x40) {
+			printf("ATA100 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 5;
+		} else {
+			printf("ATA66 controller\n");
+			sc->sc_wdcdev.UDMA_cap = 4;
+		}
+		break;
+	default:
+		printf("unknown ATA controller\n");
+		sc->sc_wdcdev.UDMA_cap = 0;
+	}
+			
 	printf("%s: bus-master DMA support present",
 	    sc->sc_wdcdev.sc_dev.dv_xname);
 	pciide_mapreg_dma(sc, pa);
@@ -1960,50 +2027,22 @@ apollo_chip_map(sc, pa)
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
-		if (sc->sc_pp->ide_product == PCI_PRODUCT_VIATECH_VT82C586A_IDE
-		    && rev >= 6)
+		if (sc->sc_wdcdev.UDMA_cap > 0)
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 	}
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
-	sc->sc_wdcdev.UDMA_cap = 2;
 	sc->sc_wdcdev.set_modes = apollo_setup_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
-	old_udma_conf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
 	WDCDEBUG_PRINT(("apollo_chip_map: old APO_IDECONF=0x%x, "
 	    "APO_CTLMISC=0x%x, APO_DATATIM=0x%x, APO_UDMA=0x%x\n",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_CTLMISC),
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM),
-	    old_udma_conf),
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA)),
 	    DEBUG_PROBE);
-	pci_conf_write(sc->sc_pc, sc->sc_tag,
-	    old_udma_conf | (APO_UDMA_PIO_MODE(0, 0) | APO_UDMA_EN(0, 0) |
-	    APO_UDMA_EN_MTH(0, 0) | APO_UDMA_CLK66(0)),
-	    APO_UDMA);
-	udma_conf = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
-	WDCDEBUG_PRINT(("apollo_chip_map: APO_UDMA now 0x%x\n", udma_conf),
-	    DEBUG_PROBE);
-	if ((udma_conf & (APO_UDMA_PIO_MODE(0, 0) | APO_UDMA_EN(0, 0) |
-	    APO_UDMA_EN_MTH(0, 0))) ==
-	    (APO_UDMA_PIO_MODE(0, 0) | APO_UDMA_EN(0, 0) |
-	    APO_UDMA_EN_MTH(0, 0))) {
-		if ((udma_conf & APO_UDMA_CLK66(0)) ==
-		    APO_UDMA_CLK66(0)) {
-			printf("%s: Ultra/66 capable\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			sc->sc_wdcdev.UDMA_cap = 4;
-		} else {
-			printf("%s: Ultra/33 capable\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
-			sc->sc_wdcdev.UDMA_cap = 2;
-		}
-	} else {
-		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_UDMA;
-	}
-	pci_conf_write(sc->sc_pc, sc->sc_tag, old_udma_conf, APO_UDMA);
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
@@ -2051,28 +2090,10 @@ apollo_setup_channel(chp)
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM);
 	udmatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_UDMA);
 	datatim_reg &= ~APO_DATATIM_MASK(chp->channel);
-	udmatim_reg &= ~AP0_UDMA_MASK(chp->channel);
+	udmatim_reg &= ~APO_UDMA_MASK(chp->channel);
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
-
-	/*
-	 * We can't mix Ultra/33 and Ultra/66 on the same channel, so
-	 * downgrade to Ultra/33 if needed
-	 */
-	if ((chp->ch_drive[0].drive_flags & DRIVE_UDMA) &&
-	    (chp->ch_drive[1].drive_flags & DRIVE_UDMA)) {
-		/* both drives UDMA */
-		if (chp->ch_drive[0].UDMA_mode > 2 && 
-		    chp->ch_drive[1].UDMA_mode <= 2) {
-			/* drive 0 Ultra/66, drive 1 Ultra/33 */
-			chp->ch_drive[0].UDMA_mode = 2;
-		} else if (chp->ch_drive[1].UDMA_mode > 2 &&
-		    chp->ch_drive[0].UDMA_mode <= 2) {
-			/* drive 1 Ultra/66, drive 0 Ultra/33 */
-			chp->ch_drive[1].UDMA_mode = 2;
-		}
-	}
 
 	for (drive = 0; drive < 2; drive++) {
 		drvp = &chp->ch_drive[drive];
@@ -2090,12 +2111,22 @@ apollo_setup_channel(chp)
 			/* use Ultra/DMA */
 			drvp->drive_flags &= ~DRIVE_DMA;
 			udmatim_reg |= APO_UDMA_EN(chp->channel, drive) |
-			    APO_UDMA_EN_MTH(chp->channel, drive) |
-			    APO_UDMA_TIME(chp->channel, drive,
-				apollo_udma_tim[drvp->UDMA_mode]);
-			if (drvp->UDMA_mode > 2)
-				udmatim_reg |=
-				    APO_UDMA_CLK66(chp->channel);
+			    APO_UDMA_EN_MTH(chp->channel, drive);
+			if (sc->sc_wdcdev.UDMA_cap == 5) {
+				/* 686b */
+				udmatim_reg |= APO_UDMA_CLK66(chp->channel);
+				udmatim_reg |= APO_UDMA_TIME(chp->channel,
+				    drive, apollo_udma100_tim[drvp->UDMA_mode]);
+			} else if (sc->sc_wdcdev.UDMA_cap == 4) {
+				/* 596b or 686a */
+				udmatim_reg |= APO_UDMA_CLK66(chp->channel);
+				udmatim_reg |= APO_UDMA_TIME(chp->channel,
+				    drive, apollo_udma66_tim[drvp->UDMA_mode]);
+			} else {
+				/* 596a or 586b */
+				udmatim_reg |= APO_UDMA_TIME(chp->channel,
+				    drive, apollo_udma33_tim[drvp->UDMA_mode]);
+			}
 			/* can use PIO timings, MW DMA unused */
 			mode = drvp->PIO_mode;
 		} else {
@@ -2968,6 +2999,11 @@ hpt_chip_map(sc, pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 	revision = PCI_REVISION(pa->pa_class);
+	printf(": Triones/Highpoint ");
+	if (revision == HPT370_REV)
+		printf("HPT370 IDE Controller\n");
+	else
+		printf("HPT366 IDE Controller\n");
 
 	/* 
 	 * when the chip is in native mode it identifies itself as a
