@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.12.6.3 2002/06/24 22:07:19 nathanw Exp $	*/
+/*	$NetBSD: Locore.c,v 1.12.6.4 2002/10/07 03:11:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include <sys/user.h>
 #include <sys/sched.h>
 #include <sys/proc.h>
+#include <sys/ras.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -135,8 +136,19 @@ cpu_switch_search(struct lwp *oldlwp)
 	l->l_stat = LSONPROC;
 
 	if (l != oldlwp) {
+		struct proc *p = l->l_proc;
+
 		curpcb = l->l_md.md_pcb;
 		pmap_activate(l);
+
+		/* Check for Restartable Atomic Sequences. */
+		if (p->p_nras != 0) {
+			caddr_t pc;
+
+			pc = ras_lookup(p, (caddr_t) l->l_md.md_regs->tf_spc);
+			if (pc != (caddr_t) -1)
+				l->l_md.md_regs->tf_spc = (int) pc;
+		}
 	}
 	curlwp = l;
 
