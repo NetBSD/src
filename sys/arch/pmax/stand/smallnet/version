@@ -1,8 +1,7 @@
-$NetBSD: version,v 1.1 1999/05/13 08:38:05 simonb Exp $
+$NetBSD: version,v 1.2 2000/07/13 22:18:13 jdolecek Exp $
 
-# The newvers.sh looks for the line below.  We use this method
-# rather than $3 of the dollar-NetBSD-dollar line above so that
-# this version can be on branch-files also.
-Version: 1.0
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
 
 1.0:	Initial compressed kernel network boot
