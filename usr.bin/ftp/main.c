@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 4/3/94";*/
-static char *rcsid = "$Id: main.c,v 1.6 1994/08/31 21:32:33 mycroft Exp $";
+static char *rcsid = "$Id: main.c,v 1.7 1994/12/24 16:42:19 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -58,6 +58,7 @@ static char *rcsid = "$Id: main.c,v 1.6 1994/08/31 21:32:33 mycroft Exp $";
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "ftp_var.h"
