@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45 1999/11/17 01:22:09 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.46 2000/03/21 19:38:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -405,7 +405,8 @@ findroot(devpp, partp)
 			}
 
 			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ca")) {
 				/*
 				 * Don't trust BIOS device numbers, try
 				 * to match the information passed by the
@@ -418,7 +419,7 @@ findroot(devpp, partp)
 				goto found;
 			}
 
-			/* no "fd", "wd" or "sd" */
+			/* no "fd", "wd", "sd" or "ca" */
 			continue;
 
 found:
