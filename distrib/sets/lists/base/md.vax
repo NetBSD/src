@@ -1,7 +1,9 @@
-# $NetBSD: md.vax,v 1.8 2000/01/24 07:25:03 mycroft Exp $
+# $NetBSD: md.vax,v 1.9 2000/03/04 16:32:11 ragge Exp $
 ./boot
 ./pcs750.bin
 ./sbin/ldconfig
+./usr/mdec/boot
+./usr/mdec/boot.mop
 ./usr/lib/libg2c.so.0.0
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libstdc++.so.2.0
@@ -23,4 +25,6 @@
 ./usr/lkm/umapfs.o
 ./usr/mdec/hpboot
 ./usr/mdec/raboot
+./usr/mdec/rdboot
+./usr/mdec/sdboot
 ./usr/mdec/xxboot
