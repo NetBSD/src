@@ -1026,6 +1026,7 @@
 ./usr/share/man/cat2/intro.0
 ./usr/share/man/cat2/ioctl.0
 ./usr/share/man/cat2/kill.0
+./usr/share/man/cat2/ktrace.0
 ./usr/share/man/cat2/link.0
 ./usr/share/man/cat2/listen.0
 ./usr/share/man/cat2/lseek.0
@@ -1091,6 +1092,7 @@
 ./usr/share/man/cat2/setuid.0
 ./usr/share/man/cat2/shmat.0
 ./usr/share/man/cat2/shmctl.0
+./usr/share/man/cat2/shmdt.0
 ./usr/share/man/cat2/shmget.0
 ./usr/share/man/cat2/shutdown.0
 ./usr/share/man/cat2/sigaction.0
