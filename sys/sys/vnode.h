@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.59.4.3 1999/08/02 22:56:00 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.59.4.4 1999/08/11 05:42:52 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -155,7 +155,7 @@ struct vnode {
 #define VLAYER		0x2000	/* vnode is on a layer filesystem */
 #define VDIRTY		0x4000	/* vnode possibly has dirty pages */
 
-#define VSIZENOTSET	((vsize_t)-1)
+#define VSIZENOTSET	((voff_t)-1)
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
