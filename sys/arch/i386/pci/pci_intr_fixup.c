@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.10.2.2 2000/11/20 20:09:35 bouyer Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.10.2.3 2001/01/18 09:22:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -142,7 +142,9 @@ const struct pciintr_icu_table {
 	  opti82c700_init },
 
 	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C586_ISA,
-	  via82c586_init, },
+	  via82c586_init },
+	{ PCI_VENDOR_VIATECH,	PCI_PRODUCT_VIATECH_VT82C686A_ISA,
+	  via82c586_init },
 
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_85C503,
 	  sis85c503_init },

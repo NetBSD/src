@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.3.2.2 2000/11/20 20:16:17 bouyer Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.3.2.3 2001/01/18 09:22:49 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -94,7 +94,7 @@ pmap_bootstrap(nextpa, firstpa)
 	paddr_t nextpa;
 	paddr_t firstpa;
 {
-	paddr_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, iiopa, eiopa, kptmpa, p0upa;
 	u_int nptpages, kstsize;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
@@ -120,8 +120,6 @@ pmap_bootstrap(nextpa, firstpa)
 	 *   the total to a page boundary with IO maps at the end. ]
 	 *
 	 *	kptmpa		kernel PT map		1 page
-	 *
-	 *	lkptpa		last kernel PT page	1 page
 	 *
 	 *	p0upa		proc 0 u-area		UPAGES pages
 	 *
@@ -154,8 +152,6 @@ pmap_bootstrap(nextpa, firstpa)
 	eiopa = nextpa - eiomapsize * sizeof(pt_entry_t);
 	iiopa = eiopa - iiomapsize * sizeof(pt_entry_t);
 	kptmpa = nextpa;
-	nextpa += NBPG;
-	lkptpa = nextpa;
 	nextpa += NBPG;
 	p0upa = nextpa;
 	nextpa += USPACE;
@@ -244,17 +240,6 @@ pmap_bootstrap(nextpa, firstpa)
 		pte = &((u_int *)kstpa)[kstsize*NPTEPG - SG4_LEV2SIZE];
 		*ste = (u_int)pte | SG_U | SG_RW | SG_V;
 		/*
-		 * Now initialize the final portion of that block of
-		 * descriptors to map the "last PT page".
-		 */
-		pte = &((u_int *)kstpa)[kstsize*NPTEPG - NPTEPG/SG4_LEV3SIZE];
-		epte = &pte[NPTEPG/SG4_LEV3SIZE];
-		protoste = lkptpa | SG_U | SG_RW | SG_V;
-		while (pte < epte) {
-			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
-		}
-		/*
 		 * Initialize Sysptmap
 		 */
 		pte = (u_int *)kptmpa;
@@ -267,11 +252,10 @@ pmap_bootstrap(nextpa, firstpa)
 		/*
 		 * Invalidate all but the last remaining entry.
 		 */
-		epte = &((u_int *)kptmpa)[NPTEPG-1];
+		epte = &((u_int *)kptmpa)[NPTEPG];
 		while (pte < epte) {
 			*pte++ = PG_NV;
 		}
-		*pte = lkptpa | PG_RW | PG_CI | PG_V;
 	} else
 #endif
 	{
@@ -294,34 +278,12 @@ pmap_bootstrap(nextpa, firstpa)
 		/*
 		 * Invalidate all but the last remaining entries in both.
 		 */
-#if 1 /* XXX lkptpa is needed only hp300? */
-		epte = &((u_int *)kptmpa)[NPTEPG-1];
-#else
 		epte = &((u_int *)kptmpa)[NPTEPG];
-#endif
 		while (pte < epte) {
 			*ste++ = SG_NV;
 			*pte++ = PG_NV;
 		}
-		/*
-		 * Initialize the last to point to point to the page
-		 * table page allocated earlier.
-		 */
-#if 1
-		*ste = lkptpa | SG_RW | SG_V;
-		*pte = lkptpa | PG_RW | PG_CI | PG_V;
-#endif
 	}
-	/*
-	 * Invalidate all but the final entry in the last kernel PT page
-	 * (u-area PTEs will be validated later).  The final entry maps
-	 * the last page of physical memory.
-	 */
-	pte = (u_int *)lkptpa;
-	epte = &pte[NPTEPG];
-	while (pte < epte)
-		*pte++ = PG_NV;
-
 	/*
 	 * Initialize kernel page table.
 	 * Start by invalidating the `nptpages' that we have allocated.

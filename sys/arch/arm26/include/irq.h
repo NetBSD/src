@@ -1,4 +1,4 @@
-/* $NetBSD: irq.h,v 1.2.2.4 2000/12/13 15:49:19 bouyer Exp $ */
+/* $NetBSD: irq.h,v 1.2.2.5 2001/01/18 09:22:16 bouyer Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -65,13 +65,14 @@
 
 struct irq_handler;
 
-extern void irq_init __P((void));
+extern void irq_init(void);
 /* irq_handler is declared in machdep.h */
 /* splx, raisespl and lowerspl are declared in intr.h */
-extern struct irq_handler *irq_establish __P((int irqnum, int ipl,
-					      int func(void *), void *arg));
-extern char const *irq_string __P((struct irq_handler *h));
-extern void irq_enable __P((struct irq_handler *h));
-extern void irq_disable __P((struct irq_handler *h));
-extern void irq_genmasks __P((void));
+extern struct irq_handler *irq_establish(int, int, int(*)(void *), void *,
+    char const *);
+extern char const *irq_string(struct irq_handler *);
+extern void irq_enable(struct irq_handler *);
+extern void irq_disable(struct irq_handler *);
+extern void irq_genmasks(void);
+extern void irq_stat(void (*)(const char *, ...));
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.h,v 1.8.2.3 2001/01/05 17:36:34 bouyer Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.8.2.4 2001/01/18 09:23:39 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.h,v 1.9 1999/11/12 23:31:03 n_hibma Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ struct usbd_quirks {
 #define UQ_POWER_CLAIM	0x0200	/* hub lies about power status */
 #define UQ_AU_NO_FRAC	0x0400	/* don't adjust for fractional samples */
 #define UQ_AU_INP_ASYNC	0x0800	/* input is async despite claim of adaptive */
+#define UQ_ASSUME_CM_OVER_DATA 0x1000 /* modem device breaks on cm over data */
 };
 
 extern struct usbd_quirks usbd_no_quirk;

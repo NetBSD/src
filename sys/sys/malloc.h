@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.47.2.2 2000/11/22 16:06:38 bouyer Exp $	*/
+/*	$NetBSD: malloc.h,v 1.47.2.3 2001/01/18 09:24:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,11 +43,6 @@
 #include "opt_malloclog.h"
 #include "opt_lockdebug.h"
 #endif
-
-/*
- * XXX
- */
-#define splmem splimp
 
 /*
  * flags to malloc
@@ -393,7 +388,7 @@ struct kmembuckets {
 #else /* do not collect statistics */
 #define	MALLOC(space, cast, size, type, flags) do { \
 	register struct kmembuckets *kbp = &bucket[BUCKETINDX(size)]; \
-	long s = splmem(); \
+	long s = splvm(); \
 	if (kbp->kb_next == NULL) { \
 		(space) = (cast)malloc((u_long)(size), type, flags); \
 	} else { \
@@ -406,7 +401,7 @@ struct kmembuckets {
 #define	FREE(addr, type) do { \
 	register struct kmembuckets *kbp; \
 	register struct kmemusage *kup = btokup(addr); \
-	long s = splmem(); \
+	long s = splvm(); \
 	if (1 << kup->ku_indx > MAXALLOCSAVE) { \
 		free((caddr_t)(addr), type); \
 	} else { \

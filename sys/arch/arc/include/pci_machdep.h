@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.1.6.2 2000/11/20 20:00:37 bouyer Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.1.6.3 2001/01/18 09:22:12 bouyer Exp $ */
 /* NetBSD: pci_machdep.h,v 1.3 1999/03/19 03:40:46 cgd Exp  */
 
 /*
@@ -33,6 +33,11 @@
  */
 
 /*
+ * Forward declarations.
+ */
+struct pci_attach_args;
+
+/*
  * Types provided to machine-independent PCI code
  */
 typedef struct arc_pci_chipset *pci_chipset_tag_t;
@@ -52,8 +57,8 @@ struct arc_pci_chipset {
 			    int));
 	void		(*pc_conf_write) __P((pci_chipset_tag_t, pcitag_t, int,
 			    pcireg_t));
-	int		(*pc_intr_map) __P((pci_chipset_tag_t, pcitag_t, int,
-			    int, pci_intr_handle_t *));
+	int		(*pc_intr_map) __P((struct pci_attach_args *,
+			    pci_intr_handle_t *));
 	const char	*(*pc_intr_string) __P((pci_chipset_tag_t,
 			    pci_intr_handle_t));
 	void		*(*pc_intr_establish) __P((pci_chipset_tag_t,
@@ -75,8 +80,8 @@ struct arc_pci_chipset {
     (*(c)->pc_conf_read)((c), (t), (r))
 #define	pci_conf_write(c, t, r, v)					\
     (*(c)->pc_conf_write)((c), (t), (r), (v))
-#define	pci_intr_map(c, it, ip, il, ihp)				\
-    (*(c)->pc_intr_map)((c), (it), (ip), (il), (ihp))
+#define	pci_intr_map(pa, ihp)						\
+    (*(pa)->pa_pc->pc_intr_map)((pa), (ihp))
 #define	pci_intr_string(c, ih)						\
     (*(c)->pc_intr_string)((c), (ih))
 #define	pci_intr_establish(c, ih, l, h, a)				\

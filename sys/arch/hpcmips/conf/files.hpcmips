@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.1.1.1.2.1 2000/11/20 20:45:46 bouyer Exp $
+#	$NetBSD: files.hpcmips,v 1.1.1.1.2.2 2001/01/18 09:22:30 bouyer Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -55,6 +55,7 @@ file	arch/hpcmips/hpcmips/bus_space.c
 file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/disksubr.c	disk
 file	arch/hpcmips/hpcmips/config_hook.c
+file	arch/hpcmips/hpcmips/procfs_machdep.c	procfs
 
 # Console autoconfiguration code: selects between a framebuffers
 file	dev/cons.c

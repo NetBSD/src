@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.17.2.3 2001/01/05 17:36:27 bouyer Exp $
+#	$NetBSD: files.tc,v 1.17.2.4 2001/01/18 09:23:36 bouyer Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
@@ -83,3 +83,8 @@ file	dev/tc/tcds.c			tcds
 #device	asc: scsi, ncr53c9x
 #attach	asc at tcds with asc_tcds
 #file	dev/tc/asc_tcds.c		asc_tcds
+
+# HX+ PMAGD
+#device sfbp: wsemuldisplaydev, rasops32, rasops8
+#attach sfbp at tc
+#file	dev/tc/sfbplus.c		sfbp needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.2.6.3 2001/01/05 17:34:00 bouyer Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.2.6.4 2001/01/18 09:22:13 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,6 +33,7 @@
 
 #include <machine/bus.h>
 #include <machine/db_machdep.h>
+#include <machine/irq.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
@@ -112,3 +113,13 @@ db_bus_write_cmd(addr, have_addr, count, modif)
 	db_skip_to_eol();
 }
 
+void
+db_irqstat_cmd(addr, have_addr, count, modif)
+	db_expr_t       addr;
+	int             have_addr;
+	db_expr_t       count;
+	char            *modif;
+{
+
+	irq_stat(db_printf);
+}

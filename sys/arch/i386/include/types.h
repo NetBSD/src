@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20.8.3 2001/01/05 17:34:33 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.20.8.4 2001/01/18 09:22:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,5 +79,6 @@ typedef int32_t			register_t;
 #define __HAVE_CPU_COUNTER
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
+#define __HAVE_OLD_DISKLABEL
 
 #endif	/* _MACHTYPES_H_ */

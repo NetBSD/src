@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7.8.1 2000/11/20 20:30:22 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.7.8.2 2001/01/18 09:23:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,8 @@
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
+#include <dev/clock_subr.h>
 
 #include <arch/x68k/dev/mfp.h>
 #include <arch/x68k/dev/rtclock_var.h>
@@ -491,8 +493,8 @@ microtime(tvp)
 
 /* this is a hook set by a clock driver for the configured realtime clock,
    returning plain current unix-time */
-long (*gettod) __P((void)) = 0;
-long (*settod) __P((long)) = 0;
+time_t (*gettod) __P((void)) = 0;
+int    (*settod) __P((long)) = 0;
 
 /*
  * Initialize the time of day register, based on the time base which is, e.g.

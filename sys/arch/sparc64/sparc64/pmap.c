@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44.2.5 2001/01/05 17:35:09 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.2.6 2001/01/18 09:23:04 bouyer Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -95,7 +95,7 @@ pseg_check(struct pmap *pm, vaddr_t addr, int64_t tte, paddr_t spare)
 
 	if (!spare) return pseg_set(pm, addr, tte, spare);
 
-	s = splimp();
+	s = splvm();
 	if ((paddr_t)pm->pm_segs == spare) panic("pseg_check: pm_segs == %llx\n", spare);
 	for (i=0; i<STSZ; i++) {
 		if ((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
@@ -1476,7 +1476,7 @@ pmap_growkernel(maxkvaddr)
 	paddr_t pg;
 	struct pmap *pm = pmap_kernel();
 	
-	s = splimp();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 	DPRINTF(PDB_GROW, 
 		("pmap_growkernel(%lx...%lx)\n", kbreak, maxkvaddr));
@@ -1589,7 +1589,7 @@ pmap_reference(pm)
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 	pm->pm_refs++;
 	simple_unlock(&pm->pm_lock);
@@ -1630,7 +1630,7 @@ pmap_release(pm)
 		panic("pmap_release: releasing pmap_kernel()");
 #endif
 
-	s=splimp();
+	s=splvm();
 	simple_lock(&pm->pm_lock);
 	for(i=0; i<STSZ; i++) {
 		paddr_t psegentp = (paddr_t)(u_long)&pm->pm_segs[i];
@@ -1750,7 +1750,7 @@ pmap_collect(pm)
 	/* NEVER GARBAGE COLLECT THE KERNEL PMAP */
 	if (pm == pmap_kernel()) return;
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 	for (i=0; i<STSZ; i++) {
 		if ((pdir = (paddr_t *)(u_long)ldxa((vaddr_t)&pm->pm_segs[i], ASI_PHYS_CACHED))) {
@@ -1836,7 +1836,7 @@ pmap_activate(p)
 	 * the new context.
 	 */
 
-	s = splpmap();
+	s = splvm();
 	if (p == curproc) {
 		write_user_windows();
 		if (pmap->pm_ctx == NULL)
@@ -1887,7 +1887,7 @@ pmap_kenter_pa(va, pa, prot)
 	/*
 	 * Construct the TTE.
 	 */
-	s = splimp();
+	s = splvm();
 #if 0
 	/* Not needed -- all operations are atomic. */
 	simple_lock(&pm->pm_lock);
@@ -2016,7 +2016,7 @@ pmap_kremove(va, size)
 	int64_t data;
 	int i, s, flush = 0;
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 #ifdef DEBUG
 	if (pmapdebug & PDB_DEMAP) {
@@ -2141,7 +2141,7 @@ pmap_enter(pm, va, pa, prot, flags)
 	/*
 	 * XXXX If a mapping at this address already exists, remove it.
 	 */
-	s = splimp();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 	if ((tte.data.data = pseg_get(pm, va))<0) {
 		simple_unlock(&pm->pm_lock);
@@ -2304,7 +2304,7 @@ pmap_remove(pm, va, endva)
 	 * free it.  It's just that linear scans of 8K pages gets expensive.
 	 */
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 #ifdef DEBUG
 	if (pmapdebug & PDB_REMOVE)
@@ -2428,7 +2428,7 @@ pmap_protect(pm, sva, eva, prot)
 		return;
 	}
 		
-	s = splimp();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 	sva = sva & ~PGOFSET;
 	while (sva < eva) {
@@ -2528,7 +2528,7 @@ pmap_extract(pm, va, pap)
 	} else {
 		int s;
 
-		s = splimp();
+		s = splvm();
 		simple_lock(&pm->pm_lock);
 		pa = (pseg_get(pm, va)&TLB_PA_MASK)+(va&PGOFSET);
 #ifdef DEBUG
@@ -2744,7 +2744,7 @@ tsb_enter(ctx, va, data)
 	int64_t pa;
 
 	i = ptelookup_va(va);
-	s = splimp();
+	s = splvm();
 	pa = tsb[i].data.data&TLB_PA_MASK;
 	/* 
 	 * If we use fast DMMU access fault handlers to track
@@ -2795,7 +2795,7 @@ pmap_clear_modify(pg)
 	modified = pmap_is_modified(pg);
 #endif
 	/* Clear all mappings */
-	s = splimp();
+	s = splvm();
 	pv = pa_to_pvh(pa);
 #ifdef DEBUG
 	if (pv->pv_va & PV_MOD)
@@ -2893,7 +2893,7 @@ pmap_clear_reference(pg)
 	referenced = pmap_is_referenced(pg);
 #endif
 	/* Clear all references */
-	s = splimp();
+	s = splvm();
 	pv = pa_to_pvh(pa);
 #ifdef NOT_DEBUG
 	if (pv->pv_va & PV_MOD)
@@ -2991,7 +2991,7 @@ pmap_is_modified(pg)
 		return 0;
 	}
 	/* Check if any mapping has been modified */
-	s = splimp();
+	s = splvm();
 	pv = pa_to_pvh(pa);
 	if (pv->pv_va&PV_MOD) i = 1;
 #ifdef HWREF
@@ -3047,7 +3047,7 @@ pmap_is_referenced(pg)
 	}
 
 	/* Check if any mapping has been referenced */
-	s = splimp();
+	s = splvm();
 	pv = pa_to_pvh(pa);
 	if (pv->pv_va&PV_REF) i = 1;
 #ifdef HWREF 
@@ -3116,7 +3116,7 @@ pmap_unwire(pmap, va)
 		OF_enter();
 		return;
 	}
-	s = splimp();
+	s = splvm();
 	simple_lock(&pmap->pm_lock);
 	data = pseg_get(pmap, va&PV_VAMASK);
 
@@ -3182,7 +3182,7 @@ pmap_page_protect(pg, prot)
 			set |= TLB_EXEC_ONLY;
 
 		pv = pa_to_pvh(pa);
-		s = splimp();
+		s = splvm();
 #ifdef DEBUG	
 		if (pv->pv_next && !pv->pv_pmap) {
 			printf("pmap_page_protect: npv but no pmap for pv %p\n", pv);
@@ -3242,7 +3242,7 @@ pmap_page_protect(pg, prot)
 #endif
 			       
 		firstpv = pv = pa_to_pvh(pa);
-		s = splimp();
+		s = splvm();
 		if (firstpv->pv_pmap) simple_lock(&firstpv->pv_pmap->pm_lock);
 
 		/* First remove the entire list of continuation pv's*/
@@ -3374,7 +3374,7 @@ pmap_count_res(pm)
 	/* Almost the same as pmap_collect() */
 
 	/* Don't want one of these pages reused while we're reading it. */
-	s = splimp();
+	s = splvm();
 	simple_lock(&pm->pm_lock);
 	n = 0;
 	for (i=0; i<STSZ; i++) {
@@ -3417,7 +3417,7 @@ ctx_alloc(pm)
 #endif
 		return (0);
 	}
-	s = splpmap();
+	s = splvm();
 	cnum = next;
 	do {
 		if (cnum >= numctx-1) 
@@ -3499,7 +3499,7 @@ pmap_enter_pv(pmap, va, pa)
 	int s;
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter: pv %p: was %lx/%p/%p\n",
@@ -3621,7 +3621,7 @@ pmap_remove_pv(pmap, va, pa)
 	}
 	pv_check();
 	opv = pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	/*
 	 * If it is the first entry on the list, it is actually
 	 * in the header and we must copy the following entry up
@@ -3724,7 +3724,7 @@ pmap_page_cache(pm, pa, mode)
 		return;
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 
 	while (pv) {
 		vaddr_t va;

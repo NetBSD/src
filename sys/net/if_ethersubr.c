@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.50.2.4 2001/01/05 17:36:49 bouyer Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.50.2.5 2001/01/18 09:23:49 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -823,10 +823,9 @@ ether_sprintf(const u_char *ap)
 void
 ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 {
-	struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_ETHER;
-	ifp->if_addrlen = 6;
+	ifp->if_addrlen = ETHER_ADDR_LEN;
 	ifp->if_hdrlen = 14;
 	ifp->if_dlt = DLT_EN10MB;
 	ifp->if_mtu = ETHERMTU;
@@ -834,12 +833,10 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	ifp->if_input = ether_input;
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
-	if ((sdl = ifp->if_sadl) &&
-	    sdl->sdl_family == AF_LINK) {
-		sdl->sdl_type = IFT_ETHER;
-		sdl->sdl_alen = ifp->if_addrlen;
-		bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
-	}
+
+	if_alloc_sadl(ifp);
+	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 #if NBPFILTER > 0
@@ -851,7 +848,6 @@ void
 ether_ifdetach(struct ifnet *ifp)
 {
 	struct ethercom *ec = (void *) ifp;
-	struct sockaddr_dl *sdl = ifp->if_sadl;
 	struct ether_multi *enm;
 	int s;
 
@@ -872,9 +868,7 @@ ether_ifdetach(struct ifnet *ifp)
 	}
 	splx(s);
 
-	memset(LLADDR(sdl), 0, ETHER_ADDR_LEN);
-	sdl->sdl_alen = 0;
-	sdl->sdl_type = 0;
+	if_free_sadl(ifp);
 }
 
 #if 0
@@ -1148,6 +1142,24 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCSIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
+		case AF_LINK:
+		    {
+			struct sockaddr_dl *sdl =
+			    (struct sockaddr_dl *) ifa->ifa_addr;
+
+			if (sdl->sdl_type != IFT_ETHER ||
+			    sdl->sdl_alen != ifp->if_addrlen) {
+				error = EINVAL;
+				break;
+			}
+
+			memcpy(LLADDR(ifp->if_sadl), LLADDR(sdl),
+			    ifp->if_addrlen);
+
+			/* Set new address. */
+			error = (*ifp->if_init)(ifp);
+			break;
+		    }
 #ifdef INET
 		case AF_INET:
 			if ((error = (*ifp->if_init)(ifp)) != 0)

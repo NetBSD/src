@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1.1.1.2.1 2000/11/20 20:46:32 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.1.1.2.2 2001/01/18 09:22:31 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  *
  */
-/*	$NetBSD: bus_space.c,v 1.1.1.1.2.1 2000/11/20 20:46:32 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.1.1.2.2 2001/01/18 09:22:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ bus_space_map(t, bpa, size, flags, bshp)
 	int cacheable = flags & BUS_SPACE_MAP_CACHEABLE;
 
 	if (!t->t_extent) { /* Before autoconfiguration, can't use extent */
-		DPRINTF(("bus_space_map: map temprary region:0x%08x-0x%08x\n", bpa, bpa+size));
+		DPRINTF(("bus_space_map: map temporary region:0x%08x-0x%08x\n", bpa, bpa+size));
 		bpa += t->t_base;
 	} else {
 		bpa += t->t_base;

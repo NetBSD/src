@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.13.8.1 2000/11/20 20:28:00 bouyer Exp $	*/
+/*	$NetBSD: intreg.c,v 1.13.8.2 2001/01/18 09:23:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ soft1intr(arg)
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
 			sir.sir_which[SIR_CLOCK] = 0;
-			softclock();
+			softclock(NULL);
 		}
 		if (sir.sir_which[SIR_SPARE2]) {
 			sir.sir_which[SIR_SPARE2] = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.19.14.1 2000/11/20 18:10:05 bouyer Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.19.14.2 2001/01/18 09:23:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -48,11 +48,12 @@ struct sl_softc {
 	struct	ifnet sc_if;		/* network-visible interface */
 	int	sc_unit;		/* XXX unit number */
 	struct	ifqueue sc_fastq;	/* interactive output queue */
+	struct	ifqueue sc_inq;		/* input queue */
 	struct	tty *sc_ttyp;		/* pointer to tty structure */
 	u_char	*sc_mp;			/* pointer to next available buf char */
 	u_char	*sc_ep;			/* pointer to last available buf char */
-	u_char	*sc_buf;		/* input buffer */
-	u_char	*sc_xxx;		/* XXX don't ask... */
+	u_char	*sc_pktstart;		/* pointer to beginning of packet */
+	struct mbuf *sc_mbuf;		/* input buffer */
 	u_int	sc_flags;		/* see below */
 	u_int	sc_escape;	/* =1 if last char input was FRAME_ESCAPE */
 	long	sc_lasttime;		/* last time a char arrived */
@@ -60,6 +61,9 @@ struct sl_softc {
 	long	sc_starttime;		/* time of first abort in window */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	void	*sc_si;			/* softintr handle */
+#endif
 #ifdef __NetBSD__
 	int	sc_oldbufsize;		/* previous output buffer size */
 	int	sc_oldbufquot;		/* previous output buffer quoting */

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.97.2.3 2000/12/08 09:19:44 bouyer Exp $	*/
+/*	$NetBSD: systm.h,v 1.97.2.4 2001/01/18 09:24:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -237,7 +237,9 @@ int	hzto __P((struct timeval *tv));
 void	realitexpire __P((void *));
 
 void	hardclock __P((struct clockframe *frame));
-void	softclock __P((void));
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
+void	softclock __P((void *));
+#endif
 void	statclock __P((struct clockframe *frame));
 #ifdef NTP
 void	hardupdate __P((long offset));

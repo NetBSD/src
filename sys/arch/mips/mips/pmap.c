@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.72.2.5 2001/01/05 17:34:44 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.72.2.6 2001/01/18 09:22:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72.2.5 2001/01/05 17:34:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.72.2.6 2001/01/18 09:22:44 bouyer Exp $");
 
 /*
  *	Manages physical address maps.
@@ -498,7 +498,7 @@ pmap_pinit(pmap)
 	simple_lock_init(&pmap->pm_lock);
 	pmap->pm_count = 1;
 	if (free_segtab) {
-		s = splimp();
+		s = splvm();
 		pmap->pm_segtab = free_segtab;
 		free_segtab = *(struct segtab **)free_segtab;
 		pmap->pm_segtab->seg_tab[0] = NULL;
@@ -522,7 +522,7 @@ pmap_pinit(pmap)
 		pmap->pm_segtab = stp = (struct segtab *)
 			MIPS_PHYS_TO_KSEG0(VM_PAGE_TO_PHYS(mem));
 		i = NBPG / sizeof(struct segtab);
-		s = splimp();
+		s = splvm();
 		while (--i != 0) {
 			stp++;
 			*(struct segtab **)stp = free_segtab;
@@ -617,7 +617,7 @@ pmap_release(pmap)
 
 			pmap->pm_segtab->seg_tab[i] = NULL;
 		}
-		s = splimp();
+		s = splvm();
 		*(struct segtab **)pmap->pm_segtab = free_segtab;
 		free_segtab = pmap->pm_segtab;
 		splx(s);
@@ -816,7 +816,7 @@ pmap_page_protect(pg, prot)
 	case VM_PROT_READ:
 	case VM_PROT_READ|VM_PROT_EXECUTE:
 		pv = pa_to_pvh(pa);
-		s = splimp();
+		s = splvm();
 		/*
 		 * Loop over all current mappings setting/clearing as appropos.
 		 */
@@ -839,7 +839,7 @@ pmap_page_protect(pg, prot)
 	/* remove_all */
 	default:
 		pv = pa_to_pvh(pa);
-		s = splimp();
+		s = splvm();
 		while (pv->pv_pmap != NULL) {
 			pmap_remove(pv->pv_pmap, pv->pv_va,
 				    pv->pv_va + PAGE_SIZE);
@@ -1039,7 +1039,7 @@ pmap_page_cache(paddr_t pa, int mode)
 	asid = pv->pv_pmap->pm_asid;
 	needupdate = (pv->pv_pmap->pm_asidgen == pmap_asid_generation);
 
-	s = splimp();
+	s = splvm();
 	while (pv) {
 		pv->pv_flags = (pv->pv_flags & ~PV_UNCACHED) | mode;
 		if (pv->pv_pmap == pmap_kernel()) {
@@ -1820,7 +1820,7 @@ pmap_enter_pv(pmap, va, pa, npte)
 	int s;
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter: pv %p: was %lx/%p/%p\n",
@@ -1977,7 +1977,7 @@ pmap_remove_pv(pmap, va, pa)
 	if (!PAGE_IS_MANAGED(pa))
 		return;
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	/*
 	 * If it is the first entry on the list, it is actually
 	 * in the header and we must copy the following entry up

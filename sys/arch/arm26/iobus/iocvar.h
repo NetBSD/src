@@ -1,4 +1,4 @@
-/* $NetBSD: iocvar.h,v 1.1.6.2 2000/11/20 20:02:49 bouyer Exp $ */
+/* $NetBSD: iocvar.h,v 1.1.6.3 2001/01/18 09:22:17 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 1999 Ben Harris
  * All rights reserved.
@@ -53,20 +53,19 @@ struct ioc_attach_args {
 
 /* Public IOC functions */
 
-extern u_int ioc_ctl_read __P((struct device *self));
-extern void ioc_ctl_write __P((struct device *self, u_int value, u_int mask));
+extern u_int ioc_ctl_read(struct device *);
+extern void ioc_ctl_write(struct device *, u_int, u_int);
 
-extern struct irq_handler *ioc_irq_establish __P((struct device *self, int irq, int level, int handler __P((void *)), void *cookie));
-extern int ioc_irq_status __P((struct device *self, int irq));
-extern void ioc_irq_waitfor __P((struct device *self, int irq));
-extern void ioc_irq_clear __P((struct device *self, int mask));
-extern u_int32_t ioc_irq_status_full __P((struct device *self));
-extern void ioc_irq_setmask __P((struct device *self, u_int32_t mask));
+extern int ioc_irq_status(struct device *, int);
+extern void ioc_irq_waitfor(struct device *, int);
+extern void ioc_irq_clear(struct device *, int);
+extern u_int32_t ioc_irq_status_full(struct device *);
+extern void ioc_irq_setmask(struct device *, u_int32_t);
 
-extern void ioc_counter_start __P((struct device *self, int counter, int value));
+extern void ioc_counter_start(struct device *, int, int);
 
-extern void ioc_initclocks __P((struct device *self));
-extern void ioc_setstatclockrate __P((struct device *self, int hzrate));
-extern void ioc_microtime __P((struct device *self, struct timeval *tv));
+extern void ioc_initclocks(struct device *);
+extern void ioc_setstatclockrate(struct device *, int);
+extern void ioc_microtime(struct device *, struct timeval *);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.11.2.2 2000/12/08 09:21:03 bouyer Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.11.2.3 2001/01/18 09:24:06 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -92,7 +92,7 @@ uvm_lock_fpageq()
 {
 	int s;
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.fpageqlock);
 	return (s);
 }
@@ -131,7 +131,7 @@ uvm_pagelookup(obj, off)
 
 	buck = &uvm.page_hash[uvm_pagehash(obj,off)];
 
-	s = splimp();
+	s = splvm();
 	simple_lock(&uvm.hashlock);
 	TAILQ_FOREACH(pg, buck, hashq) {
 		if (pg->uobject == obj && pg->offset == off) {

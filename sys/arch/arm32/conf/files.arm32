@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.78.2.2 2000/11/22 16:00:00 bouyer Exp $
+#	$NetBSD: files.arm32,v 1.78.2.3 2001/01/18 09:22:20 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -347,6 +347,7 @@ file	arch/arm32/arm32/fault.c
 file	arch/arm32/arm32/undefined.c
 file	arch/arm32/arm32/mem.c
 file	arch/arm32/arm32/process_machdep.c
+file	arch/arm32/arm32/procfs_machdep.c	procfs
 file	arch/arm32/arm32/machdep.c
 file	arch/arm32/arm32/sys_machdep.c
 file	arch/arm32/arm32/vm_machdep.c
@@ -359,10 +360,6 @@ file	arch/arm32/arm32/setstack.S
 file	arch/arm32/arm32/spl.S
 file	arch/arm32/arm32/intr.c
 file	arch/arm32/dev/bus_space_notimpl.S
-
-file	arch/arm32/arm32/in_cksum_arm32.c	inet
-file	netinet/in4_cksum.c			inet
-file	netns/ns_cksum.c			ns
 
 # library functions
 file	arch/arm32/arm32/strstr.c
@@ -377,9 +374,6 @@ file	arch/arm32/kshell/kshell_disassem.c	kshell
 file	arch/arm32/kshell/kshell_dumphex.c	kshell
 file	arch/arm32/kshell/kshell_debug.c	kshell
 
-# files related to debugging
-file	arch/arm32/arm32/disassem.c
-
 file    dev/cons.c
 file	dev/cninit.c				!footbridge
 
@@ -389,7 +383,6 @@ file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # DDB
-file	arch/arm32/arm32/db_disasm.c		ddb
 file	arch/arm32/arm32/db_interface.c		ddb
 file	arch/arm32/arm32/db_trace.c		ddb
 file	arch/arm32/arm32/db_machdep.c		ddb

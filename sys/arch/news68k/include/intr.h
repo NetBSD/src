@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.2.3 2000/12/08 09:28:46 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.4 2001/01/18 09:22:48 bouyer Exp $	*/
 
 /*
  *
@@ -57,10 +57,10 @@
 #define	splnet()	splraise4()
 #define	spltty()	splraise5()
 #define	splimp()	splraise5()
+#define	splvm()		splraise5()
 #define	splserial()     splraise5()
 #define	splclock()	splraise6()
 #define	splstatclock()	splclock()
-#define	splvm()		spl6()
 #define	splhigh()	spl7()
 #define	splsched()	spl7()
 #define	spllock()	spl7()

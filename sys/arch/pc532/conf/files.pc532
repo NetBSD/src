@@ -1,4 +1,4 @@
-#	$NetBSD: files.pc532,v 1.41.2.1 2000/11/20 20:19:18 bouyer Exp $
+#	$NetBSD: files.pc532,v 1.41.2.2 2001/01/18 09:22:53 bouyer Exp $
 #
 # new style config file for pc532 architecture
 #
@@ -68,6 +68,7 @@ file	arch/pc532/pc532/machdep.c
 file	arch/pc532/pc532/mem.c
 file	arch/pc532/pc532/pmap.c
 file	arch/pc532/pc532/process_machdep.c
+file	arch/pc532/pc532/procfs_machdep.c	procfs
 file	arch/pc532/pc532/sys_machdep.c
 file	arch/pc532/pc532/trap.c
 file	arch/pc532/pc532/vm_machdep.c

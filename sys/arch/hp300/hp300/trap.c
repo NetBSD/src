@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72.2.4 2001/01/05 17:34:13 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.72.2.5 2001/01/18 09:22:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -530,7 +530,7 @@ trap(type, code, v, frame)
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			uvmexp.softs++;
-			softclock();
+			softclock(NULL);
 		}
 		/*
 		 * If this was not an AST trap, we are all done.

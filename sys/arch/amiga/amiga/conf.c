@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.56.2.2 2001/01/05 17:33:50 bouyer Exp $	*/
+/*	$NetBSD: conf.c,v 1.56.2.3 2001/01/18 09:22:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -120,14 +120,14 @@ cdev_decl(wd);
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, read, write */
+/* open, close, read, write, poll */
 #define	cdev_i4brbch_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
-/* open, close, read, write */
+/* open, close, read, write, poll */
 #define	cdev_i4btel_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
@@ -141,13 +141,12 @@ cdev_decl(wd);
 	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
-/* open, close, read, poll, ioctl */
+/* open, close, read, ioctl, poll */
 #define cdev_i4b_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
 	(dev_type_mmap((*))) enodev }	
-      
 
 #include "i4b.h"
 #include "i4bctl.h"

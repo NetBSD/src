@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.45.8.4 2001/01/05 17:36:57 bouyer Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.45.8.5 2001/01/18 09:24:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1421,7 +1421,7 @@ nfs_putpages(v)
 	mbp->b_flags = B_BUSY|B_WRITE|B_AGE |
 		(async ? B_CALL|B_ASYNC : 0) |
 		(curproc == uvm.pagedaemon_proc ? B_PDAEMON : 0);
-	mbp->b_iodone = uvm_aio_aiodone;
+	mbp->b_iodone = uvm_aio_biodone;
 	mbp->b_vp = vp;
 	LIST_INIT(&mbp->b_dep);
 

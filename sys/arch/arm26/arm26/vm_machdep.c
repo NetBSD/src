@@ -1,7 +1,7 @@
-/* $NetBSD: vm_machdep.c,v 1.6.2.3 2001/01/05 17:34:01 bouyer Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.6.2.4 2001/01/18 09:22:14 bouyer Exp $ */
 
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2001 Ben Harris
  * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.6.2.3 2001/01/05 17:34:01 bouyer Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.6.2.4 2001/01/18 09:22:14 bouyer Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -231,9 +231,13 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	frame.sf_sc.sc_r10 = tf->tf_r10;
 	frame.sf_sc.sc_r11 = tf->tf_r11;
 	frame.sf_sc.sc_r12 = tf->tf_r12;
-	frame.sf_sc.sc_r13 = tf->tf_r13;
-	frame.sf_sc.sc_r14 = tf->tf_r14;
-	frame.sf_sc.sc_r15 = tf->tf_r15;
+	frame.sf_sc.sc_usr_sp = tf->tf_r13;
+	frame.sf_sc.sc_usr_lr = tf->tf_r14;
+	frame.sf_sc.sc_pc  = tf->tf_r15;
+
+	/* Dummy values for registers that don't exist in ARMv2. */
+	frame.sf_sc.sc_svc_lr = 0;
+	frame.sf_sc.sc_spsr = 0;
 
 	/* Save signal stack. */
 	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -274,10 +278,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
  * fault.
  */
 int
-sys___sigreturn14(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 {
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
@@ -295,8 +296,8 @@ sys___sigreturn14(p, v, retval)
 		return EFAULT;
 
 	/* Make sure the processor mode has not been tampered with. */
-	if ((context.sc_r15 & R15_MODE) != R15_MODE_USR ||
-	    (context.sc_r15 & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
+	if ((context.sc_pc & R15_MODE) != R15_MODE_USR ||
+	    (context.sc_pc & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)
 		return EINVAL;
 
 	/* Restore register context. */
@@ -314,9 +315,9 @@ sys___sigreturn14(p, v, retval)
 	tf->tf_r10 = context.sc_r10;
 	tf->tf_r11 = context.sc_r11;
 	tf->tf_r12 = context.sc_r12;
-	tf->tf_r13 = context.sc_r13;
-	tf->tf_r14 = context.sc_r14;
-	tf->tf_r15 = context.sc_r15;
+	tf->tf_r13 = context.sc_usr_sp;
+	tf->tf_r14 = context.sc_usr_lr;
+	tf->tf_r15 = context.sc_pc;
 
 	/* Restore signal stack. */
 	if (context.sc_onstack & SS_ONSTACK)
@@ -351,9 +352,7 @@ cpu_swapout(struct proc *p)
  */
 /* This code was originally stolen from the alpha port. */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t pa;
@@ -386,9 +385,7 @@ vmapbuf(bp, len)
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12.2.2 2000/11/20 20:16:16 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.3 2001/01/18 09:22:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,9 +64,14 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 
+#ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#ifdef __ELF__
+#include <sys/exec_elf.h>
+#endif
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -1117,7 +1122,7 @@ init_sir()
 {
 
 	sir_routines[SIR_NET]   = (void (*) __P((void *)))netintr;
-	sir_routines[SIR_CLOCK] = (void (*) __P((void *)))softclock;
+	sir_routines[SIR_CLOCK] = softclock;
 	next_sir = NEXT_SIR;
 }
 
@@ -1244,7 +1249,12 @@ consinit()
 		extern int end;
 		extern int *esym;
 
+#ifndef __ELF__
 		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+#else
+		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		    (void *)&end, esym);
+#endif
 	}
 	if (boothowto & RB_KDB)
 		Debugger();

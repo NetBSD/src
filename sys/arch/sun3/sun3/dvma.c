@@ -1,4 +1,4 @@
-/*	$NetBSD: dvma.c,v 1.17.2.2 2000/11/22 16:02:03 bouyer Exp $	*/
+/*	$NetBSD: dvma.c,v 1.17.2.3 2001/01/18 09:23:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ dvma_mapin(kva, len, canwait)
 	seg_kva -= seg_off;
 	seg_len = m68k_round_seg(seg_len + seg_off);
 
-	s = splimp();
+	s = splvm();
 
 	/* Allocate the DVMA segment(s) */
 	seg_dma = rmalloc(dvma_segmap, seg_len);
@@ -254,7 +254,7 @@ dvma_mapout(dma, len)
 	seg_dma -= seg_off;
 	seg_len = m68k_round_seg(seg_len + seg_off);
 
-	s = splimp();
+	s = splvm();
 
 	/* Flush cache and remove DVMA mappings. */
 	v = seg_dma;

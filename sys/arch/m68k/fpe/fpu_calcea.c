@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.8.2.1 2000/11/20 20:11:36 bouyer Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.8.2.2 2001/01/18 09:22:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -35,6 +35,7 @@
 #include <sys/signal.h>
 #include <sys/systm.h>
 #include <machine/frame.h>
+#include <m68k/m68k.h>
 
 #include "fpu_emulate.h"
 
@@ -96,12 +97,14 @@ fpu_decode_ea(frame, insn, ea, modreg)
      * rest of the address modes need to be separately
      * handled for the LC040 and the others.
      */
-    else if (frame->f_format == 4) {
+#if 0 /* XXX */
+    else if (frame->f_format == 4 && frame->f_fmt4.f_fa) {
 	/* LC040 */
 	ea->ea_flags = EA_FRAME_EA;
 	ea->ea_fea = frame->f_fmt4.f_fa;
 #ifdef DEBUG_FPE
-	printf("decode_ea: 68LC040 - in-frame EA (%p)\n", (void *)ea->ea_fea);
+	printf("decode_ea: 68LC040 - in-frame EA (%p) size %d\n",
+		(void *)ea->ea_fea, insn->is_datasize);
 #endif
 	if ((modreg & 070) == 030) {
 	    /* postincrement mode */
@@ -109,8 +112,17 @@ fpu_decode_ea(frame, insn, ea, modreg)
 	} else if ((modreg & 070) == 040) {
 	    /* predecrement mode */
 	    ea->ea_flags |= EA_PREDECR;
+#ifdef M68060
+#if defined(M68020) || defined(M68030) || defined(M68040)
+	    if (cputype == CPU_68060)
+#endif
+		if (insn->is_datasize == 12)
+			ea->ea_fea -= 8;
+#endif
 	}
-    } else {
+    }
+#endif /* XXX */
+    else {
 	/* 020/030 */
 	switch (modreg & 070) {
 

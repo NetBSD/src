@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.164.2.4 2001/01/05 17:36:14 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.164.2.5 2001/01/18 09:23:29 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.283 2001/01/03 23:14:39 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.290 2001/01/15 23:29:04 thorpej Exp 
  */
 
 /*
@@ -350,6 +350,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Accton Technology",
 	    "MPX 5030/5038 Ethernet",
+	},
+	{
+	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN2242,
+	    0,
+	    "Accton Technology",
+	    "EN2242 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
@@ -1624,6 +1630,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "EX110TX PCI Fast Ethernet Adapter",
 	},
 	{
+	    PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2,
+	    0,
+	    "COMPAL Electronics, Inc.",
+	    "COMPAL 38W2 OEM Notebook",
+	},
+	{
 	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE,
 	    0,
 	    "Compaq",
@@ -1946,6 +1958,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Digital Equipment",
 	    "Compaq SMART RAID 42xx",
+	},
+	{
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_SWXCR,
+	    0,
+	    "Digital Equipment",
+	    "SWXCR RAID",
 	},
 	{
 	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
@@ -3010,6 +3028,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "SSI",
 	},
 	{
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_T1,
+	    0,
+	    "LAN Media Corporation",
+	    "T1 Interface",
+	},
+	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
 	    0,
 	    "LeadTek Research",
@@ -3400,6 +3424,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "53c860",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510D,
+	    0,
+	    "Symbios Logic",
+	    "53c1510D",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_896,
 	    0,
 	    "Symbios Logic",
@@ -3442,6 +3472,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "53c1010",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1010_2,
+	    0,
+	    "Symbios Logic",
+	    "53c1010 (66MHz)",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
 	    0,
 	    "Symbios Logic",
@@ -3482,6 +3518,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "NEC",
 	    "uPD72871 IEEE 1394 OHCI Host Controller",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D,
+	    0,
+	    "NEC",
+	    "NEC Versa Pro LX VA26D",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX,
+	    0,
+	    "NEC",
+	    "NEC Versa LX",
 	},
 	{
 	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2070,
@@ -8491,6 +8539,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_AIRONET, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Aironet Wireless Communications",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_COMPAL, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "COMPAL Electronics, Inc.",
 	    NULL,
 	},
 	{

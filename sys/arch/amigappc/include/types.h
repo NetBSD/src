@@ -1,3 +1,5 @@
-/*	$NetBSD: types.h,v 1.1.6.2 2000/11/20 19:59:51 bouyer Exp $ */
+/*	$NetBSD: types.h,v 1.1.6.3 2001/01/18 09:22:11 bouyer Exp $ */
 
 #include <powerpc/types.h>
+
+#define	__HAVE_GENERIC_SOFT_INTERRUPTS

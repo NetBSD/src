@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.74.2.4 2000/11/22 16:03:34 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.74.2.5 2001/01/18 09:23:21 bouyer Exp $ */
 
 
 /*
@@ -167,6 +167,7 @@ wdcprobe(chp)
 	u_int8_t st0, st1, sc, sn, cl, ch;
 	u_int8_t ret_value = 0x03;
 	u_int8_t drive;
+	int found;
 
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
@@ -224,9 +225,25 @@ wdcprobe(chp)
 	 * something here assume it's ATA or OLD. Ghost will be killed later in
 	 * attach routine.
 	 */
+	found = 0;
 	for (drive = 0; drive < 2; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
+		if (1 < ++found && chp->wdc != NULL &&
+		    (chp->wdc->cap & WDC_CAPABILITY_SINGLE_DRIVE)) {
+			/*
+			 * Ignore second drive if WDC_CAPABILITY_SINGLE_DRIVE
+			 * is set.
+			 *
+			 * Some CF Card (for ex. IBM MicroDrive and SanDisk) 
+			 * doesn't seem to implement drive select command. In
+			 * this case, you can't eliminate ghost drive properly.
+			 */
+			WDCDEBUG_PRINT(("%s:%d:%d: ignored.\n",
+			    chp->wdc->sc_dev.dv_xname,
+			    chp->channel, drive), DEBUG_PROBE);
+			break;
+		}
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | (drive << 4));
 		delay(10);

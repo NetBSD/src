@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.28.2.3 2000/12/08 09:15:01 bouyer Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.28.2.4 2001/01/18 09:23:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -158,6 +158,8 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 	case Pmap:	/* /proc/N/map = -r--r--r-- */
 	case Pstatus:	/* /proc/N/status = -r--r--r-- */
 	case Pcmdline:	/* /proc/N/cmdline = -r--r--r-- */
+	case Pmeminfo:	/* /proc/meminfo = -r--r--r-- */
+	case Pcpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
@@ -243,6 +245,11 @@ procfs_rw(v)
 
 	case Pcmdline:
 		return (procfs_docmdline(curp, p, pfs, uio));
+
+	case Pmeminfo:
+		return (procfs_domeminfo(curp, p, pfs, uio));
+	case Pcpuinfo:
+		return (procfs_docpuinfo(curp, p, pfs, uio));
 
 	default:
 		return (EOPNOTSUPP);

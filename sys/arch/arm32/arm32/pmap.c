@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64.2.1 2000/11/20 20:03:52 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64.2.2 2001/01/18 09:22:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -380,7 +380,7 @@ pmap_collect_pv()
 	for (ph = &pv_table[npages - 1]; ph >= &pv_table[0]; ph--) {
 		if (ph->pv_pmap == 0)
 			continue;
-		s = splimp();
+		s = splvm();
 		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
 			pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
@@ -430,7 +430,7 @@ pmap_enter_pv(pmap, va, pv, flags)
 		panic("pmap_enter_pv: !pmap_initialized");
 #endif
 
-	s = splimp();
+	s = splvm();
 
 	PDEBUG(5, printf("pmap_enter_pv: pv %p: %08lx/%p/%p\n",
 	    pv, pv->pv_va, pv->pv_pmap, pv->pv_next));
@@ -488,7 +488,7 @@ pmap_remove_pv(pmap, va, pv)
 		panic("pmap_remove_pv: !pmap_initialized");
 #endif
 
-	s = splimp();
+	s = splvm();
 
 	/*
 	 * If it is the first entry on the list, it is actually
@@ -550,7 +550,7 @@ pmap_modify_pv(pmap, va, pv, bic_mask, eor_mask)
 		panic("pmap_modify_pv: !pmap_initialized");
 #endif
 
-	s = splimp();
+	s = splvm();
 
 	PDEBUG(5, printf("pmap_modify_pv: pv %p: %08lx/%p/%p/%08x ",
 	    pv, pv->pv_va, pv->pv_pmap, pv->pv_next, pv->pv_flags));
@@ -1368,8 +1368,8 @@ pmap_clean_page(pv)
 	int cache_needs_cleaning = 0;
 	vm_offset_t page_to_clean = 0;
 
-	/* Go to splimp() so we get exclusive lock for a mo */
-	s = splimp();
+	/* Go to splvm() so we get exclusive lock for a mo */
+	s = splvm();
 	if (pv->pv_pmap) {
 		cache_needs_cleaning = 1;
 		if (!pv->pv_next)
@@ -1377,7 +1377,7 @@ pmap_clean_page(pv)
 	}
 	splx(s);
 
-	/* Do cache ops outside the splimp. */
+	/* Do cache ops outside the splvm. */
 	if (page_to_clean)
 		cpu_cache_purgeID_rng(page_to_clean, NBPG);
 	else if (cache_needs_cleaning) {
@@ -1815,7 +1815,7 @@ pmap_remove_all(pa)
 	pv = ph = pmap_find_pv(pa);
 	pmap_clean_page(pv);
 
-	s = splimp();
+	s = splvm();
 
 	if (ph->pv_pmap == NULL) {
 		PDEBUG(0, printf("free page\n"));
@@ -2543,7 +2543,7 @@ pmap_clearbit(pa, maskbits)
 	if ((bank = vm_physseg_find(atop(pa), &off)) == -1)
 		return;
 	pv = &vm_physmem[bank].pmseg.pvent[off];
-	s = splimp();
+	s = splvm();
 
 	/*
 	 * Clear saved attributes (modify, reference)

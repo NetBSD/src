@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18.2.9 2001/01/05 17:35:41 bouyer Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.10 2001/01/18 09:23:19 bouyer Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -706,7 +706,7 @@ isp_async(isp, cmd, arg)
 		    isp_internal_restart, isp);
 		isp_prt(isp, ISP_LOGINFO, "Loop UP");
 		break;
-	case ISPASYNC_PDB_CHANGED:
+	case ISPASYNC_LOGGED_INOUT:
 	if (IS_FC(isp) && isp->isp_dblev) {
 		const char fmt[] = "Target %d (Loop 0x%x) Port ID 0x%x "
 		    "role %s %s\n Port WWN 0x%08x%08x\n Node WWN 0x%08x%08x";
@@ -731,9 +731,14 @@ isp_async(isp, cmd, arg)
 		    (u_int32_t) (lp->node_wwn & 0xffffffffLL));
 		break;
 	}
-#ifdef	ISP2100_FABRIC
 	case ISPASYNC_CHANGE_NOTIFY:
-		isp_prt(isp, ISP_LOGINFO, "Name Server Database Changed");
+		if (arg == (void *) 1) {
+			isp_prt(isp, ISP_LOGINFO,
+			    "Name Server Database Changed");
+		} else {
+			isp_prt(isp, ISP_LOGINFO,
+			    "Name Server Database Changed");
+		}
 		break;
 	case ISPASYNC_FABRIC_DEV:
 	{
@@ -785,7 +790,6 @@ isp_async(isp, cmd, arg)
 		lp->portid = portid;
 		break;
 	}
-#endif
 	default:
 		break;
 	}

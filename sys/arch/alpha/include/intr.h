@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.21.2.3 2000/12/08 09:23:37 bouyer Exp $ */
+/* $NetBSD: intr.h,v 1.21.2.4 2001/01/18 09:22:07 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -140,6 +140,7 @@ _splraise(int s)
 #define splnet()		_splraise(ALPHA_PSL_IPL_IO)
 #define splbio()		_splraise(ALPHA_PSL_IPL_IO)
 #define splimp()		_splraise(ALPHA_PSL_IPL_IO)
+#define splvm()			_splraise(ALPHA_PSL_IPL_IO)
 #define spltty()		_splraise(ALPHA_PSL_IPL_IO)
 #define splserial()		_splraise(ALPHA_PSL_IPL_IO)
 #define splclock()		_splraise(ALPHA_PSL_IPL_CLOCK)
@@ -211,7 +212,6 @@ extern u_int64_t ssir;
 
 #define	setsoft(x)	atomic_setbits_ulong(&ssir, 1 << (x))
 
-#define	__GENERIC_SOFT_INTERRUPTS
 struct alpha_soft_intrhand {
 	LIST_ENTRY(alpha_soft_intrhand)
 		sih_q;
@@ -243,10 +243,8 @@ do {									\
 
 /* XXX For legacy software interrupts. */
 extern struct alpha_soft_intrhand *softnet_intrhand;
-extern struct alpha_soft_intrhand *softclock_intrhand;
 
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
-#define	setsoftclock()	softintr_schedule(softclock_intrhand)
 
 struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int, unsigned int);
 int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5.2.2 2000/11/22 16:00:08 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5.2.3 2001/01/18 09:22:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1195,8 +1195,6 @@ sh4_cache_flush(addr)
 #endif
 }
 #endif
-
-#include <machine/mmeye.h>
 
  /* XXX This value depends on physical available memory */
 #define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.17 1999/08/25 02:04:05 christos Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.17.2.1 2001/01/18 09:23:51 bouyer Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -144,6 +144,5 @@ struct ifpppcstatsreq {
 
 #if defined(_KERNEL) || defined(KERNEL)
 void pppattach __P((void));
-void pppintr __P((void));
 #endif
 #endif /* _NET_IF_PPP_H_ */

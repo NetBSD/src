@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.3.6.2 2000/11/20 20:16:18 bouyer Exp $
+#	$NetBSD: Makefile,v 1.3.6.3 2001/01/18 09:22:50 bouyer Exp $
 
 COMMON=	${.CURDIR}/../common
-.ifnmake(print-objdir)
-COMMONOBJ!=	cd ${COMMON}; ${MAKE} print-objdir
-.endif
+COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}
 
 .PATH:	${COMMON}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.13.2.1 2000/11/20 18:11:53 bouyer Exp $	*/
+/*	$NetBSD: inode.h,v 1.13.2.2 2001/01/18 09:24:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -40,6 +40,7 @@
  *	@(#)inode.h	8.9 (Berkeley) 5/14/95
  */
 
+#include <sys/vnode.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
@@ -83,6 +84,7 @@ struct inode {
 #define	i_lfs	inode_u.lfs
 #define	i_e2fs	inode_u.e2fs
 
+	struct	 buflists i_pcbufhd;	/* softdep pagecache buffer head */
 	struct	 dquot *i_dquot[MAXQUOTAS]; /* Dquot structures. */
 	u_quad_t i_modrev;	/* Revision level for NFS lease. */
 	struct	 lockf *i_lockf;/* Head of byte-level lock list. */

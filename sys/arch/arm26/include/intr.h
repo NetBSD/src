@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.4.2.2 2000/11/20 20:02:42 bouyer Exp $ */
+/* $NetBSD: intr.h,v 1.4.2.3 2001/01/18 09:22:16 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -70,6 +70,7 @@
 #define spltty()	raisespl(IPL_TTY)
 #define spllpt()	raisespl(IPL_LPT)
 #define splimp()	raisespl(IPL_IMP)
+#define splvm()		raisespl(IPL_IMP)
 #define	splaudio()	raisespl(IPL_AUDIO)
 #define splserial()	raisespl(IPL_SERIAL)
 #define splclock()	raisespl(IPL_CLOCK)
@@ -105,11 +106,9 @@ extern int hardsplx(int);
  */
 
 /* Old-fashioned soft interrupts */
-extern void setsoftclock(void);
 extern void setsoftnet(void);
 
 /* New-fangled generic soft interrupts */
-#define __GENERIC_SOFT_INTERRUPTS
 extern void *softintr_establish(int, void (*)(void *), void *);
 extern void softintr_disestablish(void *);
 extern void softintr_schedule(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.10.2.2 2000/12/13 15:50:32 bouyer Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.10.2.3 2001/01/18 09:23:51 bouyer Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -84,6 +84,9 @@ struct ppp_softc {
 	void	*sc_rc_state;		/* receive decompressor state */
 	time_t	sc_last_sent;		/* time (secs) last NP pkt sent */
 	time_t	sc_last_recv;		/* time (secs) last NP pkt rcvd */
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	void	*sc_si;			/* software interrupt handle */
+#endif
 #ifdef PPP_FILTER
 	/* Filter for packets to pass. */
 	struct	bpf_program sc_pass_filt_in;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.4.2 2000/12/08 09:30:35 bouyer Exp $ */
+/*	$NetBSD: intr.h,v 1.1.4.3 2001/01/18 09:23:03 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,8 +52,6 @@
 #define	IPL_SCHED	PIL_SCHED	/* scheduler */
 #define	IPL_LOCK	PIL_LOCK	/* locks */
 #define	IPL_HIGH	PIL_HIGH	/* everything */
-
-#define	__GENERIC_SOFT_INTERRUPTS
 
 void *
 softintr_establish __P((int level, void (*fun)(void *), void *arg));

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.7.2.3 2001/01/05 17:36:26 bouyer Exp $	*/
+/*	$NetBSD: qe.c,v 1.7.2.4 2001/01/18 09:23:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1036,7 +1036,7 @@ qeinit(sc)
 #if defined(SUN4U) || defined(__GNUC__)
 	(void)&t;
 #endif
-	s = splimp();
+	s = splnet();
 
 	qestop(sc);
 

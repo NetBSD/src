@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.5.2.4 2001/01/05 17:36:52 bouyer Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.5.2.5 2001/01/18 09:23:52 bouyer Exp $	*/
 /*	$KAME: if_stf.c,v 1.39 2000/06/07 23:35:18 itojun Exp $	*/
 
 /*
@@ -186,11 +186,7 @@ static int stf_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	struct rtentry *));
 static int stf_checkaddr4 __P((struct in_addr *, struct ifnet *));
 static int stf_checkaddr6 __P((struct in6_addr *, struct ifnet *));
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
 static void stf_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
-#else
-static void stf_rtrequest __P((int, struct rtentry *, struct sockaddr *));
-#endif
 #if defined(__FreeBSD__) && __FreeBSD__ < 3
 static int stf_ioctl __P((struct ifnet *, int, caddr_t));
 #else
@@ -242,6 +238,7 @@ stf_clone_create(ifc, unit)
 	sc->sc_if.if_snd.ifq_maxlen = IFQ_MAXLEN;
 #endif
 	if_attach(&sc->sc_if);
+	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
 	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int));
 #endif
@@ -684,14 +681,10 @@ in_stf_input(m, va_alist)
 
 /* ARGSUSED */
 static void
-stf_rtrequest(cmd, rt, sa)
+stf_rtrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-#if defined(__bsdi__) && _BSDI_VERSION >= 199802
-	struct rt_addrinfo *sa;
-#else
-	struct sockaddr *sa;
-#endif
+	struct rt_addrinfo *info;
 {
 
 	if (rt)

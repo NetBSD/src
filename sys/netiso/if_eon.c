@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.26.2.1 2000/11/20 18:11:03 bouyer Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.26.2.2 2001/01/18 09:23:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -161,6 +161,7 @@ eonattach()
 	ifp->if_hdrlen = EONIPLEN;
 	ifp->if_flags = IFF_BROADCAST;
 	if_attach(ifp);
+	if_alloc_sadl(ifp);
 	eonioctl(ifp, SIOCSIFADDR, (caddr_t) ifp->if_addrlist.tqh_first);
 	eon_llinfo.el_qhdr.link =
 		eon_llinfo.el_qhdr.rlink = &(eon_llinfo.el_qhdr);
@@ -278,14 +279,15 @@ eoniphdr(hdr, loc, ro, class, zero)
  * RETURNS:			nothing
  */
 void
-eonrtrequest(cmd, rt, gate)
+eonrtrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-	struct sockaddr *gate;
+	struct rt_addrinfo *info;
 {
 	unsigned long   zerodst = 0;
 	caddr_t         ipaddrloc = (caddr_t) & zerodst;
 	struct eon_llinfo *el = (struct eon_llinfo *) rt->rt_llinfo;
+	struct sockaddr *gate;
 
 	/*
 	 * Common Housekeeping
@@ -313,7 +315,7 @@ eonrtrequest(cmd, rt, gate)
 		el->el_rt = rt;
 		break;
 	}
-	if (gate || (gate = rt->rt_gateway))
+	if (info || (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
 		switch (gate->sa_family) {
 		case AF_LINK:
 #define SDL(x) ((struct sockaddr_dl *)x)

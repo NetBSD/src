@@ -1,4 +1,4 @@
-/*	$NetBSD: pbcpcibus.c,v 1.5.2.2 2000/11/20 20:00:41 bouyer Exp $	*/
+/*	$NetBSD: pbcpcibus.c,v 1.5.2.3 2001/01/18 09:22:12 bouyer Exp $	*/
 /*	$OpenBSD: pbcpcibus.c,v 1.7 1998/03/25 11:52:48 pefo Exp $ */
 
 /*
@@ -72,8 +72,7 @@ void	 pbc_decompose_tag __P((pci_chipset_tag_t, pcitag_t, int *, int *,
 pcireg_t pbc_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
 void	 pbc_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
 
-int      pbc_intr_map __P((pci_chipset_tag_t, pcitag_t, int, int,
-	    pci_intr_handle_t *));
+int      pbc_intr_map __P((struct pci_attach_args *, pci_intr_handle_t *));
 const char *pbc_intr_string __P((pci_chipset_tag_t, pci_intr_handle_t));
 void     *pbc_intr_establish __P((pci_chipset_tag_t, pci_intr_handle_t,
 	    int, int (*)(void *), void *));
@@ -473,12 +472,13 @@ pbc_ether_hw_addr(p)
 #endif
 
 int
-pbc_intr_map(pc, bustag, buspin, line, ihp)
-	pci_chipset_tag_t pc;
-	pcitag_t bustag;
-	int buspin, line;
+pbc_intr_map(pa, ihp)
+	struct pci_attach_args *pa;
 	pci_intr_handle_t *ihp;
 {
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pcitag_t intrtag = pa->pa_intrtag;
+	int buspin = pa->pa_intrpin;
 	int device, pirq;
 
         if (buspin == 0) {
@@ -492,7 +492,7 @@ pbc_intr_map(pc, bustag, buspin, line, ihp)
                 return 1;
         }
 
-	pbc_decompose_tag(pc, bustag, NULL, &device, NULL);
+	pbc_decompose_tag(pc, intrtag, NULL, &device, NULL);
 	pirq = buspin - 1;
 
 	switch(device) {

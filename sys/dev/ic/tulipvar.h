@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.18.2.1 2000/11/20 11:41:01 bouyer Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.18.2.2 2001/01/18 09:23:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -591,6 +591,7 @@ extern const struct tulip_mediasw tlp_sio_mii_mediasw;
 extern const struct tulip_mediasw tlp_pnic_mediasw;
 extern const struct tulip_mediasw tlp_pmac_mediasw;
 extern const struct tulip_mediasw tlp_al981_mediasw;
+extern const struct tulip_mediasw tlp_an985_mediasw;
 extern const struct tulip_mediasw tlp_dm9102_mediasw;
 
 void	tlp_attach __P((struct tulip_softc *, const u_int8_t *));

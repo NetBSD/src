@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.14.2.1 2000/11/20 19:58:49 bouyer Exp $	*/
+/*	$NetBSD: psl.h,v 1.14.2.2 2001/01/18 09:22:11 bouyer Exp $	*/
 
 #ifndef _MACHINE_PSL_H_
 #define _MACHINE_PSL_H_
@@ -34,18 +34,17 @@ extern u_int16_t	amiga_serialspl;
 #define splserial()	_splraise(amiga_serialspl)
 #define spltty()	splraise4()
 #define splimp()	spltty()	/* XXX for the full story, see i386 */
+#define	splvm()		splimp()
 
 #ifndef LEV6_DEFER
 #define splclock()	splraise6()
 #define splstatclock()	splraise6()
-#define splvm()		splraise6()
 #define splhigh()	spl7()
 #define splsched()	spl7()
 #define spllock()	spl7()
 #else
 #define splclock()	splraise4()
 #define splstatclock()	splraise4()
-#define splvm()		splraise4()
 #define splhigh()	splraise4()
 #define splsched()	splraise4()
 #define spllock()	splraise4()

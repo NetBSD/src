@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.2.3 2000/12/08 09:30:20 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.2.4 2001/01/18 09:22:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ set_sint(pending)
 #define spltty()	splraise(imask[IPL_TTY])
 #define splclock()	splraise(imask[IPL_CLOCK])
 #define splimp()	splraise(imask[IPL_IMP])
+#define splvm()		splraise(imask[IPL_IMP])
 #define splaudio()	splraise(imask[IPL_AUDIO])
 #define	splserial()	splraise(imask[IPL_SERIAL])
 #define splstatclock()	splclock()

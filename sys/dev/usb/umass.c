@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.21.2.7 2001/01/15 09:27:45 bouyer Exp $	*/
+/*	$NetBSD: umass.c,v 1.21.2.8 2001/01/18 09:23:39 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -583,6 +583,8 @@ Static int umass_cam_detach(struct umass_softc *sc);
 
 #define UMASS_SCSIID_HOST	0x00
 #define UMASS_SCSIID_DEVICE	0x01
+
+#define UMASS_ATAPI_DRIVE	0
 
 #define UMASS_MAX_TRANSFER_SIZE	MAXBSIZE
 
@@ -3163,7 +3165,9 @@ umass_scsipi_request(struct scsipi_channel *chan,
 		}
 
 #ifdef UMASS_DEBUG
-		if (periph->periph_target != UMASS_SCSIID_DEVICE) {
+		if (chan->chan_bustype->bustype_type == SCSIPI_BUSTYPE_ATAPI ?
+		    periph->periph_target != UMASS_ATAPI_DRIVE : 
+		    periph->periph_target != UMASS_SCSIID_DEVICE) {
 			DPRINTF(UDMASS_SCSI, ("%s: wrong SCSI ID %d\n",
 			    USBDEVNAME(sc->sc_dev),
 			    periph->periph_target));
@@ -3507,7 +3511,7 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	DPRINTF(UDMASS_SCSI,("umass_atapi_probe_device: atapi=%p target=%d\n",
 			     atapi, target));
 
-	if (target != 0)	/* only probe drive 0 */
+	if (target != UMASS_ATAPI_DRIVE)	/* only probe drive 0 */
 		return;
 
 	/* skip if already attached */
@@ -3530,8 +3534,10 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	/* Now go ask the device all about itself. */
 	memset(&inqbuf, 0, sizeof(inqbuf));
 	if (scsipi_inquire(periph, &inqbuf,
-	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0)
-		goto bad;
+	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0) {
+		free(periph, M_DEVBUF);
+		return;
+	}
 
 	scsipi_strvis(vendor, 33, inqbuf.vendor, 8);
 	scsipi_strvis(product, 65, inqbuf.product, 16);
@@ -3549,13 +3555,10 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 	sa.sa_inqbuf.revision = revision;
 	sa.sa_inqptr = NULL;
 
+	DPRINTF(UDMASS_SCSI, ("umass_atapi_probedev: doing atapi_probedev on "
+			      "'%s' '%s' '%s'\n", vendor, product, revision));
 	drvp->drv_softc = atapi_probe_device(atapi, target, periph, &sa);
 	/* atapi_probe_device() frees the periph when there is no device. */
-	return;
-
-bad:
-	free(periph, M_DEVBUF);
-	return;
 }
 #endif
 #endif

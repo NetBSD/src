@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.52.2.2 2000/12/13 15:50:16 bouyer Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.52.2.3 2001/01/18 09:23:39 bouyer Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -209,6 +209,18 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 	return (buf);
 }
 
+static void
+usbd_trim_trailings_spaces(char *p)
+{
+	char *q;
+
+	if (p == NULL)
+		return;
+	q = p + strlen(p);
+	while (--q >= p && *q == ' ')
+		*q = 0;
+}
+
 void
 usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 {
@@ -225,7 +237,9 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 
 	if (usedev) {
 		vendor = usbd_get_string(dev, udd->iManufacturer, v);
+		usbd_trim_trailings_spaces(vendor);
 		product = usbd_get_string(dev, udd->iProduct, p);
+		usbd_trim_trailings_spaces(product);
 	} else {
 		vendor = NULL;
 		product = NULL;
@@ -241,9 +255,9 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 				break;
 		}
 		if (kdp->vendorname != NULL) {
-			if (!vendor)
+			if (vendor == NULL)
 			    vendor = kdp->vendorname;
-			if (!product)
+			if (product == NULL)
 			    product = (kdp->flags & USB_KNOWNDEV_NOPROD) == 0 ?
 				kdp->productname : NULL;
 		}

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mipsco,v 1.4.2.2 2000/11/20 20:14:01 bouyer Exp $
+#	$NetBSD: files.mipsco,v 1.4.2.3 2001/01/18 09:22:45 bouyer Exp $
 
 #  MIPS Computer Corp -specific configuration info
 
@@ -46,6 +46,7 @@ file dev/ic/z8530tty.c			zstty needs-count
 file arch/mipsco/mipsco/autoconf.c
 file arch/mipsco/mipsco/conf.c
 file arch/mipsco/mipsco/machdep.c
+file arch/mipsco/mipsco/procfs_machdep.c	procfs
 file arch/mipsco/mipsco/mips_3x30.c
 file arch/mipsco/mipsco/disksubr.c
 file arch/mipsco/mipsco/mainbus.c

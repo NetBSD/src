@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32.2.2 2001/01/05 17:34:08 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32.2.3 2001/01/18 09:22:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -151,16 +151,17 @@ extern int	want_resched;	/* resched() was called */
 #define ATARI_68030	(1L<<3)		/* 68030 CPU			*/
 #define ATARI_68040	(1L<<4)		/* 68040 CPU			*/
 #define ATARI_68060	(1L<<6)		/* 68060 CPU			*/
-#define	ATARI_TT	(1L<<11)
-#define	ATARI_FALCON	(1L<<12)
-#define	ATARI_HADES	(1L<<13)
+#define	ATARI_TT	(1L<<11)	/* This is a TT030		*/
+#define	ATARI_FALCON	(1L<<12)	/*           Falcon		*/
+#define	ATARI_HADES	(1L<<13)	/*           Hades		*/
+#define	ATARI_MILAN	(1L<<14)	/*           Milan		*/
 
 #define	ATARI_CLKBROKEN	(1L<<16)
 
 #define	ATARI_ANYCPU	(ATARI_68000|ATARI_68010|ATARI_68020|ATARI_68030 \
 			|ATARI_68040|ATARI_68060)
 
-#define	ATARI_ANYMACH	(ATARI_TT|ATARI_FALCON|ATARI_HADES)
+#define	ATARI_ANYMACH	(ATARI_TT|ATARI_FALCON|ATARI_HADES|ATARI_MILAN)
 
 #ifdef _KERNEL
 extern int machineid;

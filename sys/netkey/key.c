@@ -1,5 +1,5 @@
-/*	$NetBSD: key.c,v 1.11.2.1 2000/11/20 18:11:08 bouyer Exp $	*/
-/*	$KAME: key.c,v 1.170 2000/10/07 12:03:02 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.11.2.2 2001/01/18 09:23:58 bouyer Exp $	*/
+/*	$KAME: key.c,v 1.180 2001/01/10 16:35:27 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -5525,18 +5525,15 @@ key_acquire(saidx, sp)
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	struct secacq *newacq;
 #endif
-	struct secpolicyindex *spidx = NULL;
 	u_int8_t satype;
 	int error = -1;
 	u_int32_t seq;
 
 	/* sanity check */
-	if (saidx == NULL || sp == NULL)
+	if (saidx == NULL)
 		panic("key_acquire: NULL pointer is passed.\n");
 	if ((satype = key_proto2satype(saidx->proto)) == 0)
 		panic("key_acquire: invalid proto is passed.\n");
-
-	spidx = &sp->spidx;
 
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	/*
@@ -5600,12 +5597,14 @@ key_acquire(saidx, sp)
 	/* XXX proxy address (optional) */
 
 	/* set sadb_x_policy */
-	m = key_setsadbxpolicy(sp->policy, sp->spidx.dir, sp->id);
-	if (!m) {
-		error = ENOBUFS;
-		goto fail;
+	if (sp) {
+		m = key_setsadbxpolicy(sp->policy, sp->spidx.dir, sp->id);
+		if (!m) {
+			error = ENOBUFS;
+			goto fail;
+		}
+		m_cat(result, m);
 	}
-	m_cat(result, m);
 
 	/* XXX identity (optional) */
 #if 0

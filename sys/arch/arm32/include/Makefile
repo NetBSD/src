@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.6.2.1 2000/11/20 20:03:59 bouyer Exp $
+#	$NetBSD: Makefile,v 1.6.2.2 2001/01/18 09:22:21 bouyer Exp $
 
 KDIR=	/sys/arch/arm32/include
 INCSDIR= /usr/include/arm32
 
 INCS=	ansi.h aout_machdep.h asm.h beep.h bootconfig.h bswap.h bus.h cdefs.h \
 	conf.h cpu.h cpufunc.h cpus.h db_machdep.h devmap.h disklabel.h \
-	disklabel_acorn.h endian.h endian_machdep.h float.h fp.h frame.h \
-	ieee.h ieeefp.h iic.h int_types.h intr.h io.h ipkdb.h irqhandler.h \
-	joystick.h katelib.h kbd.h limits.h lock.h math.h mouse.h \
+	disklabel_acorn.h elf_machdep.h endian.h endian_machdep.h float.h \
+	fp.h frame.h ieee.h ieeefp.h iic.h int_types.h intr.h io.h ipkdb.h \
+	irqhandler.h joystick.h katelib.h kbd.h limits.h lock.h math.h mouse.h \
 	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h reg.h \
 	rtc.h setjmp.h signal.h stdarg.h sysarch.h trap.h types.h \
 	undefined.h varargs.h vconsole.h vidc.h vmparam.h

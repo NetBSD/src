@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.3.2.4 2001/01/05 17:36:51 bouyer Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.3.2.5 2001/01/18 09:23:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -632,7 +632,6 @@ ieee1394_sprintf(const u_int8_t *laddr)
 void
 ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 {
-	struct sockaddr_dl *sdl;
 	struct ieee1394_hwaddr *baddr;
 	struct ieee1394com *ic = (struct ieee1394com *)ifp;
 
@@ -648,11 +647,10 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	ifp->if_timer = 1;
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(100);
-	if ((sdl = ifp->if_sadl) && sdl->sdl_family == AF_LINK) {
-		sdl->sdl_type = ifp->if_type;
-		sdl->sdl_alen = ifp->if_addrlen;
-		memcpy(LLADDR(sdl), hwaddr, ifp->if_addrlen);
-	}
+
+	if_alloc_sadl(ifp);
+	memcpy(LLADDR(sdl), hwaddr, ifp->if_addrlen);
+
 	ifp->if_broadcastaddr = malloc(ifp->if_addrlen, M_DEVBUF, M_WAITOK);
 	baddr = (struct ieee1394_hwaddr *)ifp->if_broadcastaddr;
 	memset(baddr->iha_uid, 0xff, IEEE1394_ADDR_LEN);
@@ -671,14 +669,12 @@ ieee1394_ifdetach(struct ifnet *ifp)
 	struct sockaddr_dl *sdl = ifp->if_sadl;
 
 	ieee1394_drain(ifp);
-	free(ifp->if_broadcastaddr, M_DEVBUF);
-	ifp->if_broadcastaddr = NULL;
-	memset(LLADDR(sdl), 0, sizeof(struct ieee1394_hwaddr));
-	sdl->sdl_alen = 0;
-	sdl->sdl_type = 0;
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
+	free(ifp->if_broadcastaddr, M_DEVBUF);
+	ifp->if_broadcastaddr = NULL;
+	if_free_sadl(ifp);
 }
 
 int

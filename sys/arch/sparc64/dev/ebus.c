@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.3.4.2 2000/12/08 09:30:32 bouyer Exp $	*/
+/*	$NetBSD: ebus.c,v 1.3.4.3 2001/01/18 09:23:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -361,17 +361,18 @@ ebus_find_node(pa)
 	int pcibus, bus, dev, fn;
 
 	DPRINTF(EDB_PROM, ("ebus_find_node: looking at pci node %08x\n", node));
+
+	/* pull the PCI bus out of the pa_tag */
+	pcibus = (pa->pa_tag >> 16) & 0xff;
+	DPRINTF(EDB_PROM, ("; pcibus %d dev %d fn %d\n", pcibus, pa->pa_device, pa->pa_function));
+
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		char *name = getpropstring(node, "name");
 
-		DPRINTF(EDB_PROM, ("ebus_find_node: looking at PCI device `%s', node = %08x\n", name, node));
+		DPRINTF(EDB_PROM, ("; looking at PCI device `%s', node = %08x\n", name, node));
 		/* must be "ebus" */
 		if (strcmp(name, "ebus") != 0)
 			continue;
-
-		/* pull the PCI bus out of the pa_tag */
-		pcibus = (pa->pa_tag >> 16) & 0xff;
-		DPRINTF(EDB_PROM, ("; pcibus %d dev %d fn %d\n", pcibus, pa->pa_device, pa->pa_function));
 
 		/* get the PCI bus/device/function for this node */
 		ap = NULL;
@@ -382,8 +383,9 @@ ebus_find_node(pa)
 		bus = (ap[0] >> 16) & 0xff;
 		dev = (ap[0] >> 11) & 0x1f;
 		fn = (ap[0] >> 8) & 0x7;
+		free(ap, M_DEVBUF);
 
-		DPRINTF(EDB_PROM, ("; looking for bus %d dev %d fn %d\n", pcibus, pa->pa_device, pa->pa_function));
+		DPRINTF(EDB_PROM, ("; looking at ebus node: bus %d dev %d fn %d\n", bus, dev, fn));
 		if (pa->pa_device != dev ||
 		    pa->pa_function != fn ||
 		    pcibus != bus)
@@ -391,7 +393,6 @@ ebus_find_node(pa)
 
 		DPRINTF(EDB_PROM, ("; found it, returning %08x\n", node));
 		/* found it! */
-		free(ap, M_DEVBUF);
 		return (node);
 	}
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.166.2.4 2001/01/05 17:36:13 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.166.2.5 2001/01/18 09:23:28 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.283 2001/01/03 23:14:39 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.290 2001/01/15 23:29:04 thorpej Exp 
  */
 
 /*
@@ -533,6 +533,7 @@
 #define	PCI_VENDOR_ASKEY	0x144f		/* Askey Computer Corp. */
 #define	PCI_VENDOR_AVERMEDIA	0x1461		/* Avermedia Technologies */
 #define	PCI_VENDOR_AIRONET	0x14b9		/* Aironet Wireless Communications */
+#define	PCI_VENDOR_COMPAL	0x14c0		/* COMPAL Electronics, Inc. */
 #define	PCI_VENDOR_INVERTEX	0x14e1		/* Invertex */
 #define	PCI_VENDOR_CONEXANT	0x14f1		/* Conexant Systems */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
@@ -635,6 +636,7 @@
 
 /* Accton products */
 #define	PCI_PRODUCT_ACCTON_MPX5030	0x1211		/* MPX 5030/5038 Ethernet */
+#define	PCI_PRODUCT_ACCTON_EN2242	0x1216		/* EN2242 10/100 Ethernet */
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 VL-PCI Bridge */
@@ -918,6 +920,9 @@
 /* Cogent Data Technologies products */
 #define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX PCI Fast Ethernet Adapter */
 
+/* COMPAL products */
+#define	PCI_PRODUCT_COMPAL_38W2	0x0011		/* COMPAL 38W2 OEM Notebook */
+
 /* Compaq products */
 #define	PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE	0x0001		/* PCI-EISA Bridge */
 #define	PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE	0x0002		/* PCI-ISA Bridge */
@@ -990,6 +995,7 @@
 #define	PCI_PRODUCT_DEC_21153	0x0025		/* DECchip 21153 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21154	0x0026		/* DECchip 21154 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_CPQ42XX	0x0046		/* Compaq SMART RAID 42xx */
+#define	PCI_PRODUCT_DEC_SWXCR	0x1065		/* SWXCR RAID */
 
 /* Delta products */
 #define	PCI_PRODUCT_DELTA_8139	0x1360		/* 8139 Ethernet */
@@ -1231,6 +1237,7 @@
 #define	PCI_PRODUCT_LMC_HSSI	0x0003		/* HSSI Interface */
 #define	PCI_PRODUCT_LMC_DS3	0x0004		/* DS3 Interface */
 #define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
+#define	PCI_PRODUCT_LMC_T1	0x0006		/* T1 Interface */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
@@ -1324,6 +1331,7 @@
 #define	PCI_PRODUCT_SYMBIOS_815	0x0004		/* 53c815 */
 #define	PCI_PRODUCT_SYMBIOS_810AP	0x0005		/* 53c810AP */
 #define	PCI_PRODUCT_SYMBIOS_860	0x0006		/* 53c860 */
+#define	PCI_PRODUCT_SYMBIOS_1510D	0x000a		/* 53c1510D */
 #define	PCI_PRODUCT_SYMBIOS_896	0x000b		/* 53c896 */
 #define	PCI_PRODUCT_SYMBIOS_895	0x000c		/* 53c895 */
 #define	PCI_PRODUCT_SYMBIOS_885	0x000d		/* 53c885 */
@@ -1331,6 +1339,7 @@
 #define	PCI_PRODUCT_SYMBIOS_1510	0x0010		/* 53c1510 */
 #define	PCI_PRODUCT_SYMBIOS_895A	0x0012		/* 53c895A */
 #define	PCI_PRODUCT_SYMBIOS_1010	0x0020		/* 53c1010 */
+#define	PCI_PRODUCT_SYMBIOS_1010_2	0x0021		/* 53c1010 (66MHz) */
 #define	PCI_PRODUCT_SYMBIOS_875J	0x008f		/* 53c875J */
 
 /* Packet Engines products */
@@ -1342,6 +1351,8 @@
 #define	PCI_PRODUCT_NEC_PD72872	0x0063		/* uPD72872 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72870	0x00cd		/* uPD72870 IEEE 1394 OHCI Host Controller */
 #define	PCI_PRODUCT_NEC_PD72871	0x00ce		/* uPD72871 IEEE 1394 OHCI Host Controller */
+#define	PCI_PRODUCT_NEC_VA26D	0x803c		/* NEC Versa Pro LX VA26D */
+#define	PCI_PRODUCT_NEC_VERSALX	0x8058		/* NEC Versa LX */
 
 /* Neomagic products */
 #define	PCI_PRODUCT_NEOMAGIC_NMMG2070	0x0001		/* MagicGraph NM2070 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.20.2.1 2000/11/20 20:18:19 bouyer Exp $        */
+/*	$NetBSD: pmap.c,v 1.20.2.2 2001/01/18 09:22:51 bouyer Exp $        */
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap.c
@@ -677,7 +677,7 @@ pmap_collect_pv()
 	for (ph = &pv_table[page_cnt - 1]; ph >= &pv_table[0]; ph--) {
 		if (ph->pv_pmap == 0)
 			continue;
-		s = splimp();
+		s = splvm();
 		for (ppv = ph; (pv = ppv->pv_next) != 0; ) {
 			pvp = (struct pv_page *) trunc_page((vaddr_t)pv);
 			if (pvp->pvp_pgi.pgi_nfree == -1) {
@@ -1058,7 +1058,7 @@ pmap_page_protect(pg, prot)
 		break;
 	}
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	while (pv->pv_pmap != NULL) {
 		pt_entry_t *pte;
 
@@ -1337,7 +1337,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		enter_stats.managed++;
 #endif
 		pv = pa_to_pvh(pa);
-		s = splimp();
+		s = splvm();
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("enter: pv at %p: %lx/%p/%p\n",
@@ -1734,7 +1734,7 @@ pmap_collect(pmap)
 #ifdef PMAPSTATS
 	kpt_stats.collectscans++;
 #endif
-	s = splimp();
+	s = splvm();
 	for (bank = 0; bank < vm_nphysseg; bank++)
 		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
 				    ptoa(vm_physmem[bank].end));
@@ -2203,7 +2203,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 */
 	pv = pa_to_pvh(pa);
 	ste = ST_ENTRY_NULL;
-	s = splimp();
+	s = splvm();
 	/*
 	 * If it is the first entry on the list, it is actually
 	 * in the header and we must copy the following entry up
@@ -2363,7 +2363,7 @@ pmap_testbit(pa, bit)
 		return(FALSE);
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	/*
 	 * Check saved info first
 	 */
@@ -2429,7 +2429,7 @@ pmap_changebit(pa, bit, setem)
 		chgp->clrcalls++;
 #endif
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
@@ -2622,7 +2622,7 @@ pmap_enter_ptpage(pmap, va)
 	if (pmap == pmap_kernel()) {
 		struct kpt_page *kpt;
 
-		s = splimp();
+		s = splvm();
 		if ((kpt = kpt_free_list) == (struct kpt_page *)0) {
 			/*
 			 * No PT pages available.
@@ -2710,7 +2710,7 @@ pmap_enter_ptpage(pmap, va)
 	 * the STE when we remove the mapping for the page.
 	 */
 	pv = pa_to_pvh(ptpa);
-	s = splimp();
+	s = splvm();
 	if (pv) {
 		pv->pv_flags |= PV_PTPAGE;
 		do {

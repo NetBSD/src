@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.13.2.5 2001/01/05 17:34:01 bouyer Exp $ */
+/* $NetBSD: except.c,v 1.13.2.6 2001/01/18 09:22:13 bouyer Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.5 2001/01/05 17:34:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.6 2001/01/18 09:22:13 bouyer Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_ddb.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: except.c,v 1.13.2.5 2001/01/05 17:34:01 bouyer Exp $
 #include <machine/pcb.h>
 
 #ifdef DEBUG
-#include <arm32/arm32/disassem.h>
+#include <arch/arm/arm/disassem.h>
 #endif
 
 #ifdef DDB

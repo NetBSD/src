@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12.2.1 2000/11/20 20:13:34 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.12.2.2 2001/01/18 09:22:43 bouyer Exp $
 #
 # Copyright (c) 1997
 #  Jonathan Stone.  All rights reserved.
@@ -64,6 +64,8 @@ define	SONPROC			SONPROC
 define	P_MD_REGS		offsetof(struct proc, p_md.md_regs)
 define	P_MD_UPTE_0		offsetof(struct proc, p_md.md_upte[0])
 define	P_MD_UPTE_1		offsetof(struct proc, p_md.md_upte[1])
+define	P_MD_ASTPENDING		offsetof(struct proc, p_md.md_astpending)
+define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
 
 define	U_PCB_FPREGS		offsetof(struct user, u_pcb.pcb_fpregs)
 define	U_PCB_CONTEXT		offsetof(struct user, u_pcb.pcb_context)

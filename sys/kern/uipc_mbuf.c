@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.43.2.2 2000/11/22 16:05:30 bouyer Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.43.2.3 2001/01/18 09:23:46 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ m_reclaim(how)
 	struct domain *dp;
 	struct protosw *pr;
 	struct ifnet *ifp;
-	int s = splimp();
+	int s = splvm();
 
 	for (dp = domains; dp; dp = dp->dom_next)
 		for (pr = dp->dom_protosw;

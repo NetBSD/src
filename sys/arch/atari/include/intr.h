@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.2.1 2000/11/20 20:05:29 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.2.2 2001/01/18 09:22:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -66,12 +66,12 @@
 #define splnet()		_splraise(PSL_S|PSL_IPL3)
 #define spltty()		_splraise(PSL_S|PSL_IPL4)
 #define splimp()		_splraise(PSL_S|PSL_IPL4)
+#define splvm()			_splraise(PSL_S|PSL_IPL4)
 
 #define spllpt()		spltty()
 
 #define splclock()		splraise6()
 #define splstatclock()		splraise6()
-#define splvm()			splraise6()
 #define splhigh()		spl7()
 #define splsched()		spl7()
 #define spllock()		spl7()

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.15.2.1 2000/11/20 20:13:34 bouyer Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.15.2.2 2001/01/18 09:22:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -358,7 +358,21 @@ NESTED_NOPROFILE(mips1_UserGenException, CALLFRAME_SIZ, ra)
  */
 	jal	_C_LABEL(trap)
 	mtc0	t0, MIPS_COP_0_STATUS
-
+/*
+ * Check pending asynchronous traps.
+ */
+	lw	t0, _C_LABEL(curproc)		# t0 = curproc
+	nop
+	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
+	nop
+	beq	t0, zero, 1f			# if no, skip ast processing
+	nop
+/*
+ * We have pending asynchronous traps; all the state is already saved.
+ */
+	jal	_C_LABEL(ast)
+	lw	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+1:
 	la	ra, _C_LABEL(mips1_xcpt_return)
 	j	ra				# pretend function return
 	nop
@@ -390,22 +404,23 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	sw	a1, FRAME_A1(k1)
 	sw	a2, FRAME_A2(k1)
 	sw	a3, FRAME_A3(k1)
+	lw	a0, _C_LABEL(curproc)		# 1st arg is curproc
 	mfhi	v1
 	#sw	t0, FRAME_T0(k1)		# no need to save temp regs
 	#sw	t1, FRAME_T1(k1)
 	#sw	t2, FRAME_T2(k1)
 	#sw	t3, FRAME_T3(k1)
-	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
+	mfc0	a1, MIPS_COP_0_STATUS		# 2nd arg is STATUS
 	#sw	t4, FRAME_T4(k1)
 	#sw	t5, FRAME_T5(k1)
 	#sw	t6, FRAME_T6(k1)
 	sw	t7, FRAME_T7(k1)
-	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
+	mfc0	a2, MIPS_COP_0_CAUSE		# 3rd arg is CAUSE
 	sw	s0, FRAME_S0(k1)
 	sw	s1, FRAME_S1(k1)
 	sw	s2, FRAME_S2(k1)
 	sw	s3, FRAME_S3(k1)
-	mfc0	a2, MIPS_COP_0_EXC_PC		# 3rd arg is PC
+	mfc0	a3, MIPS_COP_0_EXC_PC		# 4th arg is PC
 	sw	s4, FRAME_S4(k1)
 	sw	s5, FRAME_S5(k1)
 	sw	s6, FRAME_S6(k1)
@@ -416,26 +431,41 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	sw	sp, FRAME_SP(k1)
 	sw	s8, FRAME_S8(k1)
 	sw	ra, FRAME_RA(k1)
-	sw	a0, FRAME_SR(k1)
+	sw	a1, FRAME_SR(k1)
 	sw	v0, FRAME_MULLO(k1)
 	sw	v1, FRAME_MULHI(k1)
-	sw	a2, FRAME_EPC(k1)
+	sw	a3, FRAME_EPC(k1)
 	addu	sp, k1, -CALLFRAME_SIZ		# switch to kernel SP
 #ifdef __GP_SUPPORT__
 	la	gp, _C_LABEL(_gp)		# switch to kernel GP
 #endif
 #if defined(DDB) || defined(DEBUG) || defined(KGDB)
-	move	ra, a2
+	move	ra, a3
 	sw	ra, CALLFRAME_RA(sp)
 #endif
-	ori	t0, a0, MIPS_SR_INT_IE		# turn on IEc, enable intr.
+	lw	t1, P_MD_SYSCALL(a0)		# t1 = syscall
+	ori	t0, a1, MIPS_SR_INT_IE		# turn on IEc, enable intr.
 	and	t0, t0, ~MIPS_SR_COP_1_BIT	# turn off FPU
 /*
  * Call the system call handler.
  */
-	jal	_C_LABEL(syscall)
+	jal	t1
 	mtc0	t0, MIPS_COP_0_STATUS
-
+/*
+ * Check pending asynchronous traps.
+ */
+	lw	t0, _C_LABEL(curproc)		# t0 = curproc
+	nop
+	lw	t0, P_MD_ASTPENDING(t0)		# any pending ast?
+	nop
+	beq	t0, zero, 1f
+	nop
+/*
+ * We have pending asynchronous traps; all the state is already saved.
+ */
+	jal	_C_LABEL(ast)
+	lw	a0, CALLFRAME_SIZ + FRAME_EPC(sp)
+1:
 	la	ra, _C_LABEL(mips1_xcpt_return)
 	j	ra				# pretend function return
 	nop
@@ -607,9 +637,10 @@ NESTED_NOPROFILE(mips1_UserIntr, CALLFRAME_SIZ, ra)
 /*
  * Check pending asynchoronous traps.
  */
+	lw	v0, _C_LABEL(curproc)		# v0 = curproc
 	addu	a1, sp, CALLFRAME_SIZ
 	lw	a0, FRAME_SR(a1)
-	lw	v0, _C_LABEL(astpending)	# any pending ast?
+	lw	v0, P_MD_ASTPENDING(v0)		# any pending ast?
 	mtc0	a0, MIPS_COP_0_STATUS		# restore SR, disable intrs
 	beq	v0, zero, 1f			# if no, skip ast processing
 	nop					# -delay slot-

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.83.2.2 2001/01/05 17:33:51 bouyer Exp $
+#	$NetBSD: Makefile.amiga,v 1.83.2.3 2001/01/18 09:22:09 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -93,7 +93,8 @@ NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 
 .g.o: ; echo This is a dummy rule and should not be executed.
 
-NORMAL_G=	gspa < $< | gspahextoc > $*.c; ${CC} -c ${CFLAGS} ${PROF} $*.c
+NORMAL_G=	gspa < $< | gspahextoc > $*.c && \
+		${CC} -c ${CFLAGS} ${CPPFLAGS} ${PROF} $*.c
 
 %OBJS
 

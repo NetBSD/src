@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366.2.5 2001/01/05 17:34:30 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.366.2.6 2001/01/18 09:22:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -193,7 +193,9 @@ int	dumpmem_low;
 int	dumpmem_high;
 int	boothowto;
 int	cpu_class;
-int	i386_fpu_present = 0;
+int	i386_fpu_present;
+int	i386_fpu_exception;
+int	i386_fpu_fdivbug;
 
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 
@@ -1882,8 +1884,11 @@ init386(first_avail)
 			 * XXX Chop the last page off the size so that
 			 * XXX it can fit in avail_end.
 			 */
-			if (seg_end == 0x100000000ULL)
+			if (seg_end == 0x100000000ULL) {
 				seg_end -= PAGE_SIZE;
+				if (seg_end <= seg_start)
+					continue;
+			}
 
 			/*
 			 * Allocate the physical addresses used by RAM

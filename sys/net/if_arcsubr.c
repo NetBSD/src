@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.28.2.3 2001/01/05 17:36:49 bouyer Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.28.2.4 2001/01/18 09:23:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -664,13 +664,8 @@ arc_storelladdr(ifp, lla)
 	struct ifnet *ifp;
 	u_int8_t lla;
 {
-	struct sockaddr_dl *sdl;
-	if ((sdl = ifp->if_sadl) &&
-	   sdl->sdl_family == AF_LINK) {
-		sdl->sdl_type = IFT_ARCNET;
-		sdl->sdl_alen = ifp->if_addrlen;
-		*(LLADDR(sdl)) = lla;
-	}
+
+	*(LLADDR(ifp->if_sadl)) = lla;
 	ifp->if_mtu = ARC_PHDS_MAXMTU;
 }
 
@@ -705,6 +700,7 @@ arc_ifattach(ifp, lla)
 		   ifp->if_xname, ifp->if_xname); 
 	}
 	if_attach(ifp);
+	if_alloc_sadl(ifp);
 	arc_storelladdr(ifp, lla);
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;

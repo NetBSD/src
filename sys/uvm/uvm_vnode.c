@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.26.2.4 2001/01/05 17:37:04 bouyer Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.26.2.5 2001/01/18 09:24:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -343,14 +343,15 @@ uvn_releasepg(pg, nextpgp)
  * uvn_flush: flush pages out of a uvm object.
  *
  * => object should be locked by caller.   we may _unlock_ the object
- *	if (and only if) we need to clean a page (PGO_CLEANIT).
+ *	if (and only if) we need to clean a page (PGO_CLEANIT), or
+ *	if PGO_SYNCIO is set and there are pages busy.
  *	we return with the object locked.
- * => if PGO_CLEANIT is set, we may block (due to I/O).   thus, a caller
- *	might want to unlock higher level resources (e.g. vm_map)
- *	before calling flush.
- * => if PGO_CLEANIT is not set, then we will neither unlock the object
- *	or block.
- * => if PGO_ALLPAGE is set, then all pages in the object are valid targets
+ * => if PGO_CLEANIT or PGO_SYNCIO is set, we may block (due to I/O).
+ *	thus, a caller might want to unlock higher level resources
+ *	(e.g. vm_map) before calling flush.
+ * => if neither PGO_CLEANIT nor PGO_SYNCIO is set, then we will neither
+ *	unlock the object nor block.
+ * => if PGO_ALLPAGES is set, then all pages in the object are valid targets
  *	for flushing.
  * => NOTE: we rely on the fact that the object's memq is a TAILQ and
  *	that new pages are inserted on the tail end of the list.   thus,
@@ -529,8 +530,7 @@ uvn_flush(uobj, start, stop, flags)
 
 		if ((flags & PGO_CLEANIT) == 0 || (pp->flags & PG_BUSY) != 0) {
 			needs_clean = FALSE;
-			if ((flags & (PGO_CLEANIT|PGO_SYNCIO)) ==
-			             (PGO_CLEANIT|PGO_SYNCIO))
+			if (flags & PGO_SYNCIO)
 				need_iosync = TRUE;
 		} else {
 

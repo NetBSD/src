@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.19.2.4 2000/11/22 16:03:35 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.19.2.5 2001/01/18 09:23:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,6 +100,7 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA 0x0200 /* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_IRQACK 0x0400 /* callback to ack interrupt */
+#define WDC_CAPABILITY_SINGLE_DRIVE 0x0800 /* Don't probe second drive */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.2.2.3 2001/01/05 17:34:04 bouyer Exp $ */
+/* $NetBSD: if_ei.c,v 1.2.2.4 2001/01/18 09:22:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ei.c,v 1.2.2.3 2001/01/05 17:34:04 bouyer Exp $");
+__RCSID("$NetBSD: if_ei.c,v 1.2.2.4 2001/01/18 09:22:17 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -192,7 +192,7 @@ ei_attach(struct device *parent, struct device *self, void *aux)
 		      NULL, 0, 0);
 
 	sc->sc_ih = podulebus_irq_establish(self->dv_parent, pa->pa_slotnum,
-					    IPL_NET, i82586_intr, self);
+	    IPL_NET, i82586_intr, self, self->dv_xname);
 	if (bootverbose)
 		printf("%s: interrupting at %s\n", self->dv_xname,
 		    irq_string(sc->sc_ih));

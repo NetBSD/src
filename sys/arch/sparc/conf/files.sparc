@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.85.2.2 2000/11/22 16:01:36 bouyer Exp $
+#	$NetBSD: files.sparc,v 1.85.2.3 2001/01/18 09:23:01 bouyer Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -232,6 +232,7 @@ file	arch/sparc/sparc/mem.c
 file	arch/sparc/sparc/promlib.c
 file	arch/sparc/sparc/openfirm.c
 file	arch/sparc/sparc/openprom.c
+file	arch/sparc/sparc/procfs_machdep.c	procfs
 file	arch/sparc/sparc/pmap.c
 # the following overrides the generic "sys_process.c"
 # commented out by deraadt

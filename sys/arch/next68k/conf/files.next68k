@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.14.2.1 2000/11/20 20:18:12 bouyer Exp $
+# $NetBSD: files.next68k,v 1.14.2.2 2001/01/18 09:22:51 bouyer Exp $
 
 # next68k-specific configuration info
 
@@ -41,6 +41,7 @@ file	arch/next68k/next68k/trap.c
 file	arch/next68k/next68k/mem.c
 file	arch/next68k/next68k/pmap.c
 file	arch/next68k/next68k/pmap_bootstrap.c
+file	arch/next68k/next68k/procfs_machdep.c	procfs
 file	arch/next68k/next68k/vm_machdep.c
 file	arch/next68k/next68k/machdep.c
 file	arch/next68k/next68k/clock.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32.2.1 2000/11/20 20:13:30 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32.2.2 2001/01/18 09:22:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -148,7 +148,6 @@ struct clockframe {
 #define	CLKF_BASEPRI(framep)	MIPS1_CLKF_BASEPRI(framep)
 #endif
 
-
 #if defined(MIPS3) && defined(MIPS1)
 #define CLKF_USERMODE(framep) \
     ((CPUISMIPS3) ? MIPS3_CLKF_USERMODE(framep):  MIPS1_CLKF_USERMODE(framep))
@@ -156,30 +155,44 @@ struct clockframe {
     ((CPUISMIPS3) ? MIPS3_CLKF_BASEPRI(framep):  MIPS1_CLKF_BASEPRI(framep))
 #endif
 
+/*
+ * This is used during profiling to integrate system time.  It can safely
+ * assume that the process is resident.
+ */
+#define	PROC_PC(p)							\
+	(((struct frame *)(p)->p_md.md_regs)->f_regs[37])	/* XXX PC */
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-#define	need_resched(ci)	{ want_resched = 1; aston(); }
+#define	need_resched(ci)						\
+do {									\
+	want_resched = 1;						\
+	if (curproc != NULL)						\
+		aston(curproc);						\
+} while (/*CONSTCOND*/0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the MIPS, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
+#define	need_proftick(p)						\
+do {									\
+	(p)->p_flag |= P_OWEUPC;					\
+	aston(p);							\
+} while (/*CONSTCOND*/0)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)	aston()
+#define	signotify(p)	aston(p)
 
-#define aston()		(astpending = 1)
+#define aston(p)	((p)->p_md.md_astpending = 1)
 
-extern int astpending;	/* need to trap before returning to user mode */
-extern int want_resched;	/* resched() was called */
+extern int want_resched;		/* resched() was called */
 #ifdef MIPS3
 extern u_int	mips_L2CacheSize;
 extern int	mips_L2CacheIsSnooping; /* L2 cache snoops uncached writes ? */

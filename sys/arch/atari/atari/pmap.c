@@ -959,7 +959,7 @@ pmap_page_protect(pg, prot)
 	/* remove_all */
 	default:
 		pv = pa_to_pvh(pa);
-		s = splimp();
+		s = splvm();
 		while (pv->pv_pmap != NULL) {
 		    pt_entry_t	*pte;
 
@@ -1202,7 +1202,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		enter_stats.managed++;
 #endif
 		pv = pa_to_pvh(pa);
-		s = splimp();
+		s = splvm();
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("enter: pv at %p: %lx/%p/%p\n",
@@ -1540,7 +1540,7 @@ pmap_collect(pmap)
 		printf("pmap_collect(%p)\n", pmap);
 	kpt_stats.collectscans++;
 #endif
-	s = splimp();
+	s = splvm();
 
 	for (bank = 0; bank < vm_nphysseg; bank++)
 		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
@@ -1695,7 +1695,7 @@ pmap_deactivate(p)
  *	machine dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *	      (Actually, we go to splimp(), and since we don't
+ *	      (Actually, we go to splvm(), and since we don't
  *	      support multiple processors, this is sufficient.)
  */
 void
@@ -1720,7 +1720,7 @@ pmap_zero_page(phys)
 	}
 #endif
 
-	s = splimp();
+	s = splvm();
 
 	*CMAP1 = phys | dst_pte;
 	TBIS((vaddr_t)CADDR1);
@@ -1746,7 +1746,7 @@ pmap_zero_page(phys)
  *	dependent page at a time.
  *
  *	Note: WE DO NOT CURRENTLY LOCK THE TEMPORARY ADDRESSES!
- *	      (Actually, we go to splimp(), and since we don't
+ *	      (Actually, we go to splvm(), and since we don't
  *	      support multiple processors, this is sufficient.)
  */
 void
@@ -1772,7 +1772,7 @@ pmap_copy_page(src, dst)
 	}
 #endif
 
-	s = splimp();
+	s = splvm();
 	*CMAP1 = src | src_pte;
 	TBIS((vaddr_t)CADDR1);
 	*CMAP2 = dst | dst_pte;
@@ -2027,7 +2027,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 	 */
 	pv = pa_to_pvh(pa);
 	ste = ST_ENTRY_NULL;
-	s = splimp();
+	s = splvm();
 	/*
 	 * If it is the first entry on the list, it is actually
 	 * in the header and we must copy the following entry up
@@ -2236,7 +2236,7 @@ pmap_testbit(pa, bit)
 		return(FALSE);
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	/*
 	 * Check saved info first
 	 */
@@ -2284,7 +2284,7 @@ pmap_changebit(pa, bit, setem)
 		return;
 
 	pv = pa_to_pvh(pa);
-	s = splimp();
+	s = splvm();
 	/*
 	 * Clear saved attributes (modify, reference)
 	 */
@@ -2448,7 +2448,7 @@ pmap_enter_ptpage(pmap, va)
 	if (pmap == pmap_kernel()) {
 		register struct kpt_page *kpt;
 
-		s = splimp();
+		s = splvm();
 		if ((kpt = kpt_free_list) == (struct kpt_page *)0) {
 			/*
 			 * No PT pages available.
@@ -2531,7 +2531,7 @@ pmap_enter_ptpage(pmap, va)
 	 * the STE when we remove the mapping for the page.
 	 */
 	pv = pa_to_pvh(ptpa);
-	s = splimp();
+	s = splvm();
 	if (pv) {
 		pv->pv_flags |= PV_PTPAGE;
 		do {

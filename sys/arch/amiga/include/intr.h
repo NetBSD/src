@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8.8.1 2000/11/20 19:58:48 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.8.2 2001/01/18 09:22:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@
 #include <amiga/amiga/isr.h>
 #include <amiga/include/mtpr.h>
 
-#define __GENERIC_SOFT_INTERRUPTS
 #define IPL_SOFTSERIAL 1
 #define IPL_SOFTNET 1
 

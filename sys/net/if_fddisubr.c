@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.28.2.3 2001/01/05 17:36:50 bouyer Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.28.2.4 2001/01/18 09:23:50 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -858,21 +858,11 @@ fddi_input(ifp, m)
 /*
  * Perform common duties while attaching to interface list
  */
-#if defined(__NetBSD__)
 void
 fddi_ifattach(ifp, lla)
 	struct ifnet *ifp;
 	caddr_t lla;
-#else
-void
-fddi_ifattach(ifp)
-	struct ifnet *ifp;
-#endif
 {
-#if !defined(__NetBSD__)
-	struct ifaddr *ifa;
-#endif
-	struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_FDDI;
 	ifp->if_addrlen = 6;
@@ -885,24 +875,12 @@ fddi_ifattach(ifp)
 #ifdef IFF_NOTRAILERS
 	ifp->if_flags |= IFF_NOTRAILERS;
 #endif
-#if defined(__NetBSD__)
-	if ((sdl = ifp->if_sadl) != NULL && sdl->sdl_family == AF_LINK) {
-	    sdl->sdl_type = IFT_FDDI;
-	    sdl->sdl_alen = ifp->if_addrlen;
-	    bcopy(lla, LLADDR(sdl), ifp->if_addrlen);
-	}
+
+	if_alloc_sadl(ifp);
+	memcpy(LLADDR(ifp->if_sadl), lla, ifp->if_addrlen);
+
 	ifp->if_broadcastaddr = fddibroadcastaddr;
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_FDDI, sizeof(struct fddi_header));
 #endif /* NBPFILTER > 0 */
-#else
-	for (ifa = ifp->if_addrlist; ifa != NULL; ifa = ifa->ifa_next)
-		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-		    sdl->sdl_family == AF_LINK) {
-			sdl->sdl_type = IFT_FDDI;
-			sdl->sdl_alen = ifp->if_addrlen;
-			bcopy(FDDIADDR(ifp), LLADDR(sdl), ifp->if_addrlen);
-			break;
-		}
-#endif
 }

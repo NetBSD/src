@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.38.2.1 2000/11/20 18:10:34 bouyer Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.38.2.2 2001/01/18 09:23:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -117,6 +117,7 @@ struct ipoption {
  */
 struct ip_moptions {
 	struct	  ifnet *imo_multicast_ifp; /* ifp for outgoing multicasts */
+	struct in_addr imo_multicast_addr; /* ifindex/addr on MULTICAST_IF */
 	u_int8_t  imo_multicast_ttl;	/* TTL for outgoing multicasts */
 	u_int8_t  imo_multicast_loop;	/* 1 => hear sends if a member */
 	u_int16_t imo_num_memberships;	/* no. memberships this socket */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.43.2.2 2000/11/22 16:00:26 bouyer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.43.2.3 2001/01/18 09:22:36 bouyer Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -531,11 +531,18 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 		if (type == intrtype[irq])
 			break;
 	case IST_PULSE:
-		if (type != IST_NONE)
-			panic("intr_establish: irq %d can't share %s with %s",
-			      irq,
-			      isa_intr_typename(intrtype[irq]),
-			      isa_intr_typename(type));
+		if (type != IST_NONE) {
+			/*
+			 * We can't share interrupts in this case.
+			 */
+#ifdef DEBUG
+			printf("intr_establish: irq %d can't share %s "
+			    "with %s\n", irq,
+			    isa_intr_typename(intrtype[irq]),
+			    isa_intr_typename(type));
+#endif
+			return (NULL);
+		}
 		break;
 	}
 

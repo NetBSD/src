@@ -1,8 +1,8 @@
-#	$NetBSD: std.arm32,v 1.9.8.1 2000/11/20 20:03:55 bouyer Exp $
+#	$NetBSD: std.arm32,v 1.9.8.2 2001/01/18 09:22:21 bouyer Exp $
 #
 # standard NetBSD/arm32 options
 
-machine	arm32
+machine	arm32 arm
 
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT

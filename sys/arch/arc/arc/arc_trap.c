@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.16.2.3 2001/01/05 17:33:53 bouyer Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.16.2.4 2001/01/18 09:22:11 bouyer Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -197,6 +197,6 @@ cpu_intr(status, cause, pc, ipending)
 		clearsoftclock();
 		uvmexp.softs++;
 		intrcnt[SOFTCLOCK_INTR]++;
-		softclock();
+		softclock(NULL);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12.2.3 2000/12/08 09:28:25 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12.2.4 2001/01/18 09:22:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.3 2000/12/08 09:28:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12.2.4 2001/01/18 09:22:46 bouyer Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -744,7 +744,7 @@ cpu_intr(status, cause, pc, ipending)
 		_clrsoftintr(MIPS_SOFT_INT_MASK_0);
 		uvmexp.softs++;
 		soft_evcnt[IPL_SOFTCLOCK].ev_count++;
-		softclock();
+		softclock(NULL);
 	}
 }
 

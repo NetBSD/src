@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3.2.2 2000/11/20 19:59:43 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.3.2.3 2001/01/18 09:22:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@
 #include <amiga/amiga/isr.h>
 #include <amiga/include/mtpr.h>
 
-#define __GENERIC_SOFT_INTERRUPTS
 /* ADAM: commented out
 #define IPL_SOFTSERIAL 1
 #define IPL_SOFTNET 1
@@ -98,9 +97,6 @@ struct intrhand {
 	int	ih_irq;
 };
 
-/*
-void setsoftclock __P((void));
-*/
 void clearsoftclock __P((void));
 int  splsoftclock __P((void));
 /*
@@ -226,13 +222,13 @@ softintr(ipl)
  * Miscellaneous
  */
 #define splimp()	splraise(imask[IPL_IMP])
+#define splvm()		splraise(imask[IPL_IMP])
 #define	splhigh()	splraise(imask[IPL_HIGH])
 #define	splsched()	splhigh()
 #define	spllock()	splhigh()
 #define	spl0()		spllower(0)
 
 /*
-#define	setsoftclock()	softintr(SIR_CLOCK)
 #define	setsoftnet()	softintr(SIR_NET)
 #define	setsoftserial()	softintr(SIR_SERIAL)
 */

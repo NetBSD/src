@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5.2.3 2000/12/13 15:49:34 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.2.4 2001/01/18 09:22:47 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -82,10 +82,10 @@
 #define splnet()		splraise3()
 #define spltty()		splraise3()
 #define splimp()		splraise3()
+#define splvm()			splraise3()
 #define splserial()		splraise4()
 #define splclock()		splraise5()
 #define splstatclock()		splraise5()
-#define splvm()			splraise5()
 #define splhigh()		spl7()
 #define splsched()		spl7()
 #define spllock()		spl7()
@@ -130,7 +130,6 @@ spl0(void)
 
 #define setsoft(x)		x = 0
 
-#define __GENERIC_SOFT_INTERRUPTS
 struct mvme68k_soft_intrhand {
 	LIST_ENTRY(mvme68k_soft_intrhand) sih_q;
 	struct mvme68k_soft_intr *sih_intrhead;
@@ -160,10 +159,8 @@ void	softintr_dispatch(void);
 
 /* XXX For legacy software interrupts */
 extern struct mvme68k_soft_intrhand *softnet_intrhand;
-extern struct mvme68k_soft_intrhand *softclock_intrhand;
 
 #define setsoftnet()	softintr_schedule(softnet_intrhand)
-#define setsoftclock()	softintr_schedule(softclock_intrhand)
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

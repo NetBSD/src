@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3.2.1 2000/11/20 20:24:31 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.3.2.2 2001/01/18 09:23:00 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -326,6 +326,8 @@ cpu_initclocks()
 	SHREG_TSTR |= TSTR_STR1;
 
 	(void)shb_intr_establish(TMU1_IRQ, IST_EDGE, IPL_CLOCK, clockintr, 0);
+
+	printf("cpu_initclocks completed\n");
 }
 
 void
@@ -349,8 +351,13 @@ void
 inittodr(base)
 	time_t base;
 {
+#ifdef DREAMCAST
+	volatile unsigned int *rtc = (volatile unsigned int *)0xa0710000;
+	unsigned int old = 0, new;
+#else
 	struct clock_ymdhms dt;
 	int doreset = 0;
+#endif
 
 	/*
 	 * We mostly ignore the suggested time and go for the RTC clock time
@@ -366,6 +373,24 @@ inittodr(base)
 		base = 17*SECYR + 186*SECDAY + SECDAY/2;
 	}
 
+#ifdef DREAMCAST
+
+	for(;;) {
+	  int i;
+	  for(i=0; i<3; i++) {
+	    new = ((rtc[0]&0xffff)<<16)|(rtc[1]&0xffff);
+	    if(new != old)
+	      break;
+	  }
+	  if(i<3)
+	    old = new;
+	  else
+	    break;
+	}
+	
+	time.tv_sec = new-631152000;
+	
+#else
 #ifdef SH4
 #define	FROMBCD2(x)	((((x) & 0xf000) >> 12) * 1000 + \
 			 (((x) & 0x0f00) >> 8) * 100 + \
@@ -409,6 +434,7 @@ inittodr(base)
 		time.tv_sec = 0;
 	} else
 		time.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
+#endif
 
 #ifndef INITTODR_ALWAYS_USE_RTC
 	if (base < time.tv_sec - 5*SECYR)

@@ -33,9 +33,9 @@
  *	isa_isic.c - ISA bus frontend for i4b_isic driver
  *	--------------------------------------------------
  *
- *	$Id: isa_isic.c,v 1.1.1.1.2.2 2001/01/05 17:35:52 bouyer Exp $ 
+ *	$Id: isa_isic.c,v 1.1.1.1.2.3 2001/01/18 09:23:22 bouyer Exp $ 
  *
- *      last edit-date: [Fri Jan  5 11:37:22 2001]
+ *      last edit-date: [Tue Jan  9 01:43:45 2001]
  *
  *	-mh	original implementation
  *      -hm     NetBSD patches from Martin
@@ -174,7 +174,7 @@ isa_isic_probe(parent, cf, aux)
 	/* probe card */
 	switch(flags)
 	{
-#ifdef DYNALINK
+#ifdef ISICISA_DYNALINK
 #ifdef __bsdi__
 		case FLAG_DYNALINK:
 			ret = isic_probe_Dyn(&args);
@@ -258,7 +258,7 @@ isa_isic_probe(parent, cf, aux)
 					if (ret)
 						break;
 				}
-#endif /* AVM_A1 */
+#endif /* ISICISA_AVM_A1 */
 #ifdef ISICISA_USR_STI
 				args_unmap(&args.ia_num_mappings, &args.ia_maps[0]);
 				args.ia_flags = FLAG_USR_ISDN_TA_INT;
@@ -410,7 +410,7 @@ isicattach(int flags, struct l1_softc *sc)
 	/* card dependent setup */
 	switch(FLAGS)
 	{
-#ifdef DYNALINK
+#ifdef ISICISA_DYNALINK
 #if defined(__bsdi__) || defined(__FreeBSD__)
 		case FLAG_DYNALINK:
 			ret = isic_attach_Dyn(PARM2);
@@ -418,43 +418,43 @@ isicattach(int flags, struct l1_softc *sc)
 #endif
 #endif
 
-#ifdef TEL_S0_8
+#ifdef ISICISA_TEL_S0_8
 		case FLAG_TELES_S0_8:
 			ret = isic_attach_s08(PARM);
 			break;
 #endif
 
-#ifdef TEL_S0_16
+#ifdef ISICISA_TEL_S0_16
 		case FLAG_TELES_S0_16:
 			ret = isic_attach_s016(PARM);
 			break;
 #endif
 
-#ifdef TEL_S0_16_3
+#ifdef ISICISA_TEL_S0_16_3
 		case FLAG_TELES_S0_163:
 			ret = isic_attach_s0163(PARM);		
 			break;
 #endif
 
-#ifdef AVM_A1
+#ifdef ISICISA_AVM_A1
 		case FLAG_AVM_A1:
 			ret = isic_attach_avma1(PARM);
 			break;
 #endif
 
-#ifdef USR_STI
+#ifdef ISICISA_USR_STI
 		case FLAG_USR_ISDN_TA_INT:
 			ret = isic_attach_usrtai(PARM);		
 			break;
 #endif
 
-#ifdef ITKIX1
+#ifdef ISICISA_ITKIX1
 		case FLAG_ITK_IX1:
 			ret = isic_attach_itkix1(PARM);
 			break;
 #endif
 
-#ifdef ELSA_PCC16
+#ifdef ISICISA_ELSA_PCC16
 		case FLAG_ELSA_PCC16:
 			ret = isic_attach_Eqs1pi(dev, 0);
 			break;

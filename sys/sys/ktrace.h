@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.18.2.2 2001/01/05 17:36:59 bouyer Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.18.2.3 2001/01/18 09:24:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -145,6 +145,7 @@ struct ktr_csw {
  */
 #define	KTR_USER	8
 #define KTR_USER_MAXIDLEN	20
+#define KTR_USER_MAXLEN		2048	/* maximum length of passed data */
 struct ktr_user {
 	char 	ktr_id[KTR_USER_MAXIDLEN];	/* string id of caller */
 	/*

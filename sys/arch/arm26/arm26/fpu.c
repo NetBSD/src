@@ -1,7 +1,7 @@
-/*	$NetBSD: fpu.c,v 1.1.2.2 2001/01/05 17:34:01 bouyer Exp $	*/
+/*	$NetBSD: fpu.c,v 1.1.2.3 2001/01/18 09:22:13 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 2000 Ben Harris
+ * Copyright (c) 2000, 2001 Ben Harris
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1.2.2 2001/01/05 17:34:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1.2.3 2001/01/18 09:22:13 bouyer Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1.2.2 2001/01/05 17:34:01 bouyer Exp $");
 #include <sys/user.h>
 #include <machine/fpureg.h>
 #include <machine/pcb.h>
+#include <arch/arm26/arm26/fpuvar.h>
 
 #include "opt_fputypes.h"
 
@@ -48,53 +49,54 @@ static int fpu_match(struct device *, struct cfdata *, void *);
 static void fpu_attach(struct device *, struct device *, void *);
 static register_t fpu_identify(void);
 
-register_t fpu_type;
-
-struct fpu_softc {
-	struct device sc_dev;
-};
-
 struct cfattach fpu_ca = {
 	sizeof(struct fpu_softc), fpu_match, fpu_attach
 };
 
-/* cf_flags bits */
-#define CFF_ENABLE	0x00000001
+struct fpu_softc *the_fpu;
 
 static int
 fpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	if (cf->cf_unit != 0)
-		return 0;
-	return fpu_identify() != 0;
+	return the_fpu == NULL && fpu_identify() != 0;
 }
 
 static void
 fpu_attach(struct device *parent, struct device *self, void *aux)
 {
 	int supported;
+	struct fpu_softc *sc = (void *)self;
 
+	the_fpu = sc;
 	printf(": ");
-	fpu_type = fpu_identify();
+	sc->sc_fputype = fpu_identify();
 	supported = 0;
-	switch (fpu_type) {
+	switch (sc->sc_fputype) {
 	case FPSR_SYSID_FPPC:
 		printf("FPPC/WE32206");
 #ifdef FPU_FPPC
 		/* XXX Uncomment when we have minimal support. */
-		/* supported = 1; */
+		supported = 1;
+		sc->sc_ctxload = fpctx_load_fppc;
+		sc->sc_ctxsave = fpctx_save_fppc;
+		sc->sc_enable = fpu_enable_fppc;
+		sc->sc_disable = fpu_disable_fppc;
 #endif
 		break;
 	case FPSR_SYSID_FPA:
 		printf("FPA");
 #ifdef FPU_FPA
 		/* XXX Uncomment when we have minimal support. */
-		/* supported = 1; */
+		supported = 1;
+		sc->sc_ctxload = fpctx_load_fpa;
+		sc->sc_ctxsave = fpctx_save_fpa;
+		sc->sc_enable = fpu_enable_fpa;
+		sc->sc_disable = fpu_disable_fpa;
 #endif
 		break;
 	default:
-		printf("Unknown type, ID=0x%02x", fpu_type >> 24);
+		printf("Unknown type, ID=0x%02x", sc->sc_fputype >> 24);
 		break;
 	}
 	printf("\n");
@@ -116,4 +118,18 @@ fpu_identify()
 	}
 	curproc->p_addr->u_pcb.pcb_onundef_lj = NULL;
 	return fpsr & FPSR_SYSID_MASK;
+}
+
+void
+fpu_swapout(struct proc *p)
+{
+	struct pcb *pcb;
+
+	pcb = &p->p_addr->u_pcb;
+	if (pcb->pcb_flags & PCB_OWNFPU) {
+		the_fpu->sc_ctxsave(&pcb->pcb_ff);
+		the_fpu->sc_disable();
+		the_fpu->sc_owner = NULL;
+		pcb->pcb_flags &= ~PCB_OWNFPU;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.2.4.1 2000/11/20 22:35:41 bouyer Exp $	*/
+/*	$NetBSD: pio.h,v 1.2.4.2 2001/01/18 09:22:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifndef _ALPHA_PIO_H_
 #define	_ALPHA_PIO_H_
 
+#include <sys/cdefs.h>
 #include <machine/bus.h>
 
 #ifdef _KERNEL
@@ -53,8 +54,6 @@ struct alpha_pci_io_ops {
 	void		(*apio_outl)(bus_addr_t, u_int32_t);
 };
 
-extern const struct alpha_pci_io_ops *alpha_pci_io_switch;
-
 #define	inb(addr)	(*alpha_pci_io_switch->apio_inb)((addr))
 #define	inw(addr)	(*alpha_pci_io_switch->apio_inw)((addr))
 #define	inl(addr)	(*alpha_pci_io_switch->apio_inl)((addr))
@@ -63,7 +62,11 @@ extern const struct alpha_pci_io_ops *alpha_pci_io_switch;
 #define	outw(addr, val)	(*alpha_pci_io_switch->apio_outw)((addr), (val))
 #define	outl(addr, val)	(*alpha_pci_io_switch->apio_outl)((addr), (val))
 
+__BEGIN_DECLS
+extern const struct alpha_pci_io_ops *alpha_pci_io_switch;
+
 int	alpha_pci_io_enable(int);
+__END_DECLS
 #endif /* _KERNEL */
 
 #endif /* _ALPHA_PIO_H_ */

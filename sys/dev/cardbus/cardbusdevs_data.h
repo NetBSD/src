@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.1.2.1 2000/11/20 11:39:53 bouyer Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.1.2.2 2001/01/18 09:23:16 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.12 2000/08/28 10:33:58 haya Exp 
+ *	NetBSD: cardbusdevs,v 1.13 2001/01/16 18:42:56 thorpej Exp 
  */
 
 /*
@@ -76,6 +76,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "3CXFEM656C 10/100 Ethernet",
 	},
 	{
+	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500,
+	    0,
+	    "AboCom Systems",
+	    "FE2500 10/100 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
 	    0,
 	    "Adaptec",
@@ -86,6 +92,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "Accton Technology",
 	    "MPX 5030/5038 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_EN2242,
+	    0,
+	    "Accton Technology",
+	    "EN2242 10/100 Ethernet",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
@@ -175,6 +187,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_ACCTON, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Accton Technology",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ABOCOM, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "AboCom Systems",
 	    NULL,
 	},
 	{

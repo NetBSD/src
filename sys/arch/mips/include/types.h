@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20.2.2 2001/01/05 17:34:42 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.20.2.3 2001/01/18 09:22:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -48,7 +48,6 @@
  * Note that mips_reg_t is distinct from the register_t defined
  * in <types.h> to allow these structures to be as hidden from
  * the rest of the operating system as possible.
- *
  */
 
 #if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
@@ -102,6 +101,8 @@ typedef int32_t			register_t;
 
 #define	__SWAP_BROKEN
 
+#define	__HAVE_AST_PERPROC
+#define	__HAVE_SYSCALL_INTERN
 #ifdef MIPS3
 #define __HAVE_CPU_COUNTER
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.30.8.1 2000/11/20 11:40:27 bouyer Exp $	*/
+/*	$NetBSD: comvar.h,v 1.30.8.2 2001/01/18 09:23:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,6 +31,10 @@
  */
 
 #include "rnd.h"
+#include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
+#include "opt_com.h"
+
 #if NRND > 0 && defined(RND_COM)
 #include <sys/rnd.h>
 #endif
@@ -146,7 +150,7 @@ int cominit __P((bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
 int com_detach __P((struct device *, int));
 int com_activate __P((struct device *, enum devact));
 
-#ifndef __GENERIC_SOFT_INTERRUPTS
+#ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 #ifdef __NO_SOFT_SERIAL_INTERRUPT
 #define	IPL_SERIAL	IPL_TTY
 #define	splserial()	spltty()

@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.6.2.6 2001/01/05 17:34:02 bouyer Exp $
+# $NetBSD: files.arm26,v 1.6.2.7 2001/01/18 09:22:15 bouyer Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -51,6 +51,7 @@ device	fpu
 attach	fpu at cpu
 defopt	opt_fputypes.h	FPU_FPPC FPU_FPA
 file	arch/arm26/arm26/fpu.c			fpu		needs-flag
+file	arch/arm26/arm26/fpu_asm.S		fpu
 
 # I/O bus (on the far side of the address and data latches)
 device iobus { base = -1 }
@@ -210,11 +211,6 @@ major	{ md = 1 }
 file	dev/cons.c
 file	dev/cninit.c
 
-file	arch/arm32/arm32/in_cksum_arm32.c	inet
-file	netinet/in4_cksum.c			inet
-file	netns/ns_cksum.c			ns
-
-file	arch/arm26/arm26/db_disasm.c		ddb
 file	arch/arm26/arm26/db_interface.c		ddb
 file	arch/arm26/arm26/db_machdep.c		ddb
 file	arch/arm26/arm26/db_trace.c		ddb
@@ -231,14 +227,13 @@ file	arch/arm26/arm26/cons_machdep.c
 file	arch/arm26/arm26/copyinout.S
 file	arch/arm26/arm26/except.c
 file	arch/arm26/arm26/irq.c
-file	arch/arm26/arm26/intrnames.S
 file	arch/arm26/arm26/Locore.c
 file	arch/arm26/arm26/machdep.c
 file	arch/arm26/arm26/mem.c
 file	arch/arm26/arm26/pmap.c
 file	arch/arm26/arm26/process_machdep.c
+file	arch/arm26/arm26/procfs_machdep.c	procfs
 #file	arch/arm26/arm26/rscons.c
 file 	arch/arm26/arm26/softintr.c
 file	arch/arm26/arm26/stubs.c
 file	arch/arm26/arm26/vm_machdep.c
-file	arch/arm32/arm32/disassem.c

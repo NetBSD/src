@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.3.2.3 2001/01/05 17:34:00 bouyer Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.3.2.4 2001/01/18 09:22:13 bouyer Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -206,10 +206,12 @@ db_write_bytes(addr, size, data)
 void db_show_panic_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_bus_write_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
+void db_irqstat_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 
 struct db_command arm26_db_command_table[] = {
 	{ "bsw",	db_bus_write_cmd,	CS_MORE, NULL },
 	{ "frame",	db_show_frame_cmd,	0, NULL },
+	{ "irqstat",	db_irqstat_cmd,		0, NULL },
 	{ "panic",	db_show_panic_cmd,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };

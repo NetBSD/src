@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.40.2.2 2001/01/05 17:36:49 bouyer Exp $	*/
+/*	$NetBSD: if.h,v 1.40.2.3 2001/01/18 09:23:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -391,6 +391,7 @@ struct ifaddr_data {
  * are allocated and attached when an address is set, and are linked
  * together so all addresses for an interface can be located.
  */
+struct rt_addrinfo;
 struct ifaddr {
 	struct	sockaddr *ifa_addr;	/* address of interface */
 	struct	sockaddr *ifa_dstaddr;	/* other end of p-to-p link */
@@ -400,7 +401,7 @@ struct ifaddr {
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
 	struct	ifaddr_data	ifa_data;	/* statistics on the address */
 	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
-		    __P((int, struct rtentry *, struct sockaddr *));
+		    __P((int, struct rtentry *, struct rt_addrinfo *));
 	u_int	ifa_flags;		/* mostly rt_flags for cloning */
 	int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
@@ -714,6 +715,8 @@ void	ether_ifattach __P((struct ifnet *, const u_int8_t *));
 void	ether_ifdetach __P((struct ifnet *));
 char	*ether_sprintf __P((const u_char *));
 
+void	if_alloc_sadl __P((struct ifnet *));
+void	if_free_sadl __P((struct ifnet *));
 void	if_attach __P((struct ifnet *));
 void	if_deactivate __P((struct ifnet *));
 void	if_detach __P((struct ifnet *));
@@ -735,7 +738,7 @@ struct	ifaddr *ifa_ifwithroute __P((int, struct sockaddr *,
 					struct sockaddr *));
 struct	ifaddr *ifaof_ifpforaddr __P((struct sockaddr *, struct ifnet *));
 void	ifafree __P((struct ifaddr *));
-void	link_rtrequest __P((int, struct rtentry *, struct sockaddr *));
+void	link_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 
 void	if_clone_attach __P((struct if_clone *));
 void	if_clone_detach __P((struct if_clone *));
@@ -747,7 +750,7 @@ int	loioctl __P((struct ifnet *, u_long, caddr_t));
 void	loopattach __P((int));
 int	looutput __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));
-void	lortrequest __P((int, struct rtentry *, struct sockaddr *));
+void	lortrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 
 /*
  * These are exported because they're an easy way to tell if

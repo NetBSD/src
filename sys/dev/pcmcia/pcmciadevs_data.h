@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.4 2001/01/05 17:36:24 bouyer Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.52.2.5 2001/01/18 09:23:32 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.107 2000/12/20 06:05:13 haya Exp 
+ *	NetBSD: pcmciadevs,v 1.110 2001/01/16 15:56:48 nonaka Exp 
  */
 
 /*-
@@ -584,6 +584,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Contec C-NET(PC)C"	},
 	},
 	{
+	    PCMCIA_VENDOR_ROLAND, PCMCIA_PRODUCT_ROLAND_SCP55,
+	    PCMCIA_CIS_ROLAND_SCP55,
+	    0,
+	    "Roland",
+	    "Roland SCP-55"	},
+	},
+	{
 	    PCMCIA_VENDOR_ALLIEDTELESIS, PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM,
 	    PCMCIA_CIS_ALLIEDTELESIS_LA_PCM,
 	    0,
@@ -666,6 +673,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "MACNICA",
 	    "MACNICA ME1 for JEIDA"	},
+	},
+	{
+	    PCMCIA_VENDOR_EMTAC, PCMCIA_PRODUCT_EMTAC_WLAN,
+	    PCMCIA_CIS_EMTAC_WLAN,
+	    0,
+	    "EMTAC Technology Corporation",
+	    "EMTAC A2424i 11Mbps WLAN Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_MEGAHERTZ_XJ2288,
@@ -904,6 +918,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Standard Microsystems Corporation",
 	    "SMC 2632 EZ Connect Wireless PC Card"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_NANOSPEED_PRISM2,
+	    PCMCIA_CIS_NANOSPEED_PRISM2,
+	    0,
+	    "",
+	    "NANOSPEED ROOT-RZ2000 WLAN Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
@@ -1165,6 +1186,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_ROLAND, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Roland",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_COREGA, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -1190,6 +1218,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "RATOC System Inc.",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_EMTAC, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "EMTAC Technology Corporation",
 	    NULL,
 	},
 	{

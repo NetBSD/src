@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.3.2.3 2000/12/08 09:30:23 bouyer Exp $	*/
+/*	$NetBSD: extintr.c,v 1.3.2.4 2001/01/18 09:22:58 bouyer Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.12 1999/06/15 02:40:05 rahnds Exp $	*/
 
 /*-
@@ -405,7 +405,7 @@ do_pending_int()
 	}
 	if ((ipending & ~pcpl) & SINT_CLOCK) {
 		ipending &= ~SINT_CLOCK;
-		softclock();
+		softclock(NULL);
 	}
 	if ((ipending & ~pcpl) & SINT_NET) {
 		ipending &= ~SINT_NET;

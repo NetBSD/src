@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.22.14.1 2000/11/20 18:11:13 bouyer Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.22.14.2 2001/01/18 09:24:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -119,6 +119,7 @@ nsipattach()
 	ifp->if_start = nsipstart;
 	ifp->if_flags = IFF_POINTOPOINT;
 	if_attach(ifp);
+	if_alloc_sadl(ifp);
 
 	/*
 	 * XXX Emulate the side effect of incrementing nsipif.if_unit
