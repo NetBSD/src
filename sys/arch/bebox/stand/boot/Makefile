@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/04/09 16:05:37 sakamoto Exp $
+#	$NetBSD: Makefile,v 1.17 2003/10/08 01:36:19 simonb Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -12,6 +12,7 @@ CSRCS+= kbd.c ns16550.c vreset.c vga.c video.c
 
 CLEANFILES+= vers.c vers.o ${BOOTPROG}
 
+COPTS+= -ffreestanding
 CPPFLAGS= -I${.CURDIR} -I${.CURDIR}/../elf2pef -I${.CURDIR}/../../..
 CPPFLAGS+= -I${S} -I${S}/lib/libsa
 CPPFLAGS+= -D_STANDALONE -DDBMONITOR -DRELOC=${RELOC}
