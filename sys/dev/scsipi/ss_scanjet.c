@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.35 2004/09/18 00:08:16 mycroft Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.36 2004/09/18 00:21:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.35 2004/09/18 00:08:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.36 2004/09/18 00:21:03 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,10 +50,10 @@ __KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.35 2004/09/18 00:08:16 mycroft Exp 
 #include <sys/scanio.h>
 #include <sys/kernel.h>
 
-#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_scanner.h>
-#include <dev/scsipi/scsiconf.h>
+#include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsipi_base.h>
 #include <dev/scsipi/ssvar.h>
 

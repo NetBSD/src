@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.26 2004/09/17 23:43:17 mycroft Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.27 2004/09/18 00:21:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,15 +55,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.26 2004/09/17 23:43:17 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.27 2004/09/18 00:21:03 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>

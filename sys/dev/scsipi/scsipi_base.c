@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.116 2004/09/18 00:08:16 mycroft Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.117 2004/09/18 00:21:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.116 2004/09/18 00:08:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.117 2004/09/18 00:21:03 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -1056,20 +1056,20 @@ scsipi_size(struct scsipi_periph *periph, int flags)
 int
 scsipi_test_unit_ready(struct scsipi_periph *periph, int flags)
 {
-	int retries;
 	struct scsipi_test_unit_ready cmd;
+	int retries;
 
 	/* some ATAPI drives don't support TEST_UNIT_READY. Sigh */
 	if (periph->periph_quirks & PQUIRK_NOTUR)
 		return (0);
 
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = TEST_UNIT_READY;
-
 	if (flags & XS_CTL_DISCOVERY)
 		retries = 0;
 	else
 		retries = SCSIPIRETRIES;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = TEST_UNIT_READY;
 
 	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd), 0, 0,
 	    retries, 10000, NULL, flags));
@@ -1084,12 +1084,9 @@ int
 scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
     int flags)
 {
-	int retries;
 	struct scsipi_inquiry cmd;
 	int error;
-
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.opcode = INQUIRY;
+	int retries;
 
 	if (flags & XS_CTL_DISCOVERY)
 		retries = 0;
@@ -1107,15 +1104,24 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 	 * data iff the "additional length" field indicates there is more.
 	 * - mycroft, 2003/10/16
 	 */
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.opcode = INQUIRY;
 	cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI2;
 	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
 	    (void *)inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI2, retries,
-	    10000, NULL, XS_CTL_DATA_IN | flags);
-	if (!error && inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
+	    10000, NULL, flags | XS_CTL_DATA_IN);
+	if (!error &&
+	    inqbuf->additional_length > SCSIPI_INQUIRY_LENGTH_SCSI2 - 4) {
+#if 0
+printf("inquire: addlen=%d, retrying\n", inqbuf->additional_length);
+#endif
 		cmd.length = SCSIPI_INQUIRY_LENGTH_SCSI3;
 		error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
 		    (void *)inqbuf, SCSIPI_INQUIRY_LENGTH_SCSI3, retries,
-		    10000, NULL, XS_CTL_DATA_IN | flags);
+		    10000, NULL, flags | XS_CTL_DATA_IN);
+#if 0
+printf("inquire: error=%d\n", error);
+#endif
 	}
 	
 #ifdef SCSI_OLD_NOINQUIRY
@@ -1144,10 +1150,10 @@ scsipi_inquire(struct scsipi_periph *periph, struct scsipi_inquiry_data *inqbuf,
 	 * This board gives an empty response to an INQUIRY command.
 	 */
 	else if (error == 0 && 
-		 inqbuf->device == (SID_QUAL_LU_PRESENT | T_DIRECT) &&
-		 inqbuf->dev_qual2 == 0 &&
-		 inqbuf->version == 0 &&
-		 inqbuf->response_format == SID_FORMAT_SCSI1) {
+	    inqbuf->device == (SID_QUAL_LU_PRESENT | T_DIRECT) &&
+	    inqbuf->dev_qual2 == 0 &&
+	    inqbuf->version == 0 &&
+	    inqbuf->response_format == SID_FORMAT_SCSI1) {
 		/*
 		 * Fill out the INQUIRY response.
 		 */
@@ -1210,7 +1216,6 @@ scsipi_mode_sense(struct scsipi_periph *periph, int byte2, int page,
     int timeout)
 {
 	struct scsipi_mode_sense cmd;
-	int error;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = MODE_SENSE;
@@ -1218,11 +1223,8 @@ scsipi_mode_sense(struct scsipi_periph *periph, int byte2, int page,
 	cmd.page = page;
 	cmd.length = len & 0xff;
 
-	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN);
-	SC_DEBUG(periph, SCSIPI_DB2,
-	    ("scsipi_mode_sense: error=%d\n", error));
-	return (error);
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN));
 }
 
 int
@@ -1231,7 +1233,6 @@ scsipi_mode_sense_big(struct scsipi_periph *periph, int byte2, int page,
     int timeout)
 {
 	struct scsipi_mode_sense_big cmd;
-	int error;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = MODE_SENSE_BIG;
@@ -1239,11 +1240,8 @@ scsipi_mode_sense_big(struct scsipi_periph *periph, int byte2, int page,
 	cmd.page = page;
 	_lto2b(len, cmd.length);
 
-	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN);
-	SC_DEBUG(periph, SCSIPI_DB2,
-	    ("scsipi_mode_sense_big: error=%d\n", error));
-	return (error);
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_IN));
 }
 
 int
@@ -1252,18 +1250,14 @@ scsipi_mode_select(struct scsipi_periph *periph, int byte2,
     int timeout)
 {
 	struct scsipi_mode_select cmd;
-	int error;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = MODE_SELECT;
 	cmd.byte2 = byte2;
 	cmd.length = len & 0xff;
 
-	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT);
-	SC_DEBUG(periph, SCSIPI_DB2,
-	    ("scsipi_mode_select: error=%d\n", error));
-	return (error);
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT));
 }
 
 int
@@ -1272,18 +1266,14 @@ scsipi_mode_select_big(struct scsipi_periph *periph, int byte2,
     int timeout)
 {
 	struct scsipi_mode_select_big cmd;
-	int error;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = MODE_SELECT_BIG;
 	cmd.byte2 = byte2;
 	_lto2b(len, cmd.length);
 
-	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
-	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT);
-	SC_DEBUG(periph, SCSIPI_DB2,
-	    ("scsipi_mode_select_big: error=%d\n", error));
-	return (error);
+	return (scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)data, len, retries, timeout, NULL, flags | XS_CTL_DATA_OUT));
 }
 
 /*
@@ -1669,7 +1659,7 @@ scsipi_request_sense(struct scsipi_xfer *xs)
 	    0, 1000, NULL, flags);
 	periph->periph_flags &= ~PERIPH_SENSE;
 	periph->periph_xscheck = NULL;
-	switch(error) {
+	switch (error) {
 	case 0:
 		/* we have a valid sense */
 		xs->error = XS_SENSE;

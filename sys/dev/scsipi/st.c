@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.170 2004/09/18 00:08:16 mycroft Exp $ */
+/*	$NetBSD: st.c,v 1.171 2004/09/18 00:21:03 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.170 2004/09/18 00:08:16 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.171 2004/09/18 00:21:03 mycroft Exp $");
 
 #include "opt_scsi.h"
 
@@ -76,10 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.170 2004/09/18 00:08:16 mycroft Exp $");
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 
+#include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_tape.h>
-#include <dev/scsipi/stvar.h>
+#include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/scsipi_base.h>
+#include <dev/scsipi/stvar.h>
 
 /* Defines for device specific stuff */
 #define DEF_FIXED_BSIZE  512
