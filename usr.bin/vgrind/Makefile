@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/05/30 21:40:50 itojun Exp $
+#	$NetBSD: Makefile,v 1.15 2003/05/18 08:20:35 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 .include <bsd.own.mk>
@@ -26,16 +26,16 @@ realall: vfontedpr vgrindefs.src.db
 
 .include <bsd.endian.mk>
 .if ${TARGET_ENDIANNESS} == "1234"
-TARGET_ENDIANNESS=	-l
+CAP_MKDB_ENDIAN=	-l
 .elif ${TARGET_ENDIANNESS} == "4321"
-TARGET_ENDIANNESS=	-b
+CAP_MKDB_ENDIAN=	-b
 .else
-TARGET_ENDIANNESS=
+CAP_MKDB_ENDIAN=
 .endif
 
 .if ${MKSHARE} != "no"
 vgrindefs.src.db: vgrindefs.src
-	${CAP_MKDB} ${TARGET_ENDIANNESS} -f vgrindefs.src \
+	${CAP_MKDB} ${CAP_MKDB_ENDIAN} -f vgrindefs.src \
 	    ${.CURDIR}/vgrindefs.src
 .else
 vgrindefs.src.db:
