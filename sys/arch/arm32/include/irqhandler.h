@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.18 2001/07/09 21:46:19 reinoud Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.19 2001/07/10 00:04:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -116,17 +116,6 @@
 #define IRQ_EXTENDED	0x0B
 #define IRQ_PODULE	0x0D
 
-#define ARM7500_IOC_IRQ_EXPCARD0	0x20
-/*
-	define IRQ_EXPCARD1	0x21
-	define IRQ_EXPCARD2	0x22
-	define IRQ_EXPCARD3	0x23
-	define IRQ_EXPCARD4	0x24
-	define IRQ_EXPCARD5	0x25
-	define IRQ_EXPCARD6	0x26
-	define IRQ_EXPCARD7	0x27
-*/
-
 #endif	/* RC7500 */
 
 
@@ -162,16 +151,6 @@
 /*#define IRQ_RESERVED3	0x16*/
 /*#define IRQ_RESERVED4	0x17*/
 
-#define RPC600_IOMD_IRQ_EXPCARD0	0x18
-/*
-	define IRQ_EXPCARD1	0x19
-	define IRQ_EXPCARD2	0x1A
-	define IRQ_EXPCARD3	0x1B
-	define IRQ_EXPCARD4	0x1C
-	define IRQ_EXPCARD5	0x1D
-	define IRQ_EXPCARD6	0x1E
-	define IRQ_EXPCARD7	0x1F
-*/
 
 #endif	/* RISCPC */
 
