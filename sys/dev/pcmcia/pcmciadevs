@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.156 2001/12/29 15:00:45 pooka Exp $
+$NetBSD: pcmciadevs,v 1.157 2002/01/13 10:38:47 aymeric Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -102,6 +102,7 @@ vendor RATOC			0xc015  RATOC System Inc.
 vendor EMTAC			0xc250	EMTAC Technology Corporation
 vendor LINKSYS2			0x0274  The Linksys Group
 vendor ELSA			0xd601  Elsa 
+vendor EDIMAX			0x890f	Edimax Technology Inc.
 
 /*
  * List of known products.  Grouped by vendor, sorted by number within the
@@ -171,6 +172,9 @@ product DLINK_2 DMF560TX	0xc0ab D-Link DMF-650TX
 
 /* Dual */
 product DUAL NE2000		0x0100 Dual NE2000
+
+/* Edimax Products */
+product EDIMAX	EP4000A		0x0100 Edimax EP4000A
 
 /* ELSA Products */
 product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
