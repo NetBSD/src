@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.38 2001/03/15 06:10:38 chs Exp $	*/
+/*	$NetBSD: grf.c,v 1.39 2001/04/04 16:43:04 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -654,7 +654,6 @@ grfunmap(dev, addr, p)
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
 	struct grf_data *gp = sc->sc_data;
 	vsize_t size;
-	int rv;
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
