@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.79 2003/01/11 19:44:05 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.80 2003/01/11 22:32:43 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1063,6 +1063,8 @@ set_crypt_type(void)
 	msg_display(MSG_choose_crypt);
 	process_menu(MENU_crypttype);
 	fn = strdup(target_expand("/etc/passwd.conf"));
+	if (fn == NULL)
+		return -1;
 
 	switch (yesno) {
 	case 0:
