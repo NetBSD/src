@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.45 1995/06/27 14:42:38 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.46 1995/07/05 19:36:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -253,7 +253,7 @@ int keep;	/* true: steal, false: clear */
 	}
 }
 
-#ifdef	DDB
+#if defined(DDB) && !defined(SYMTAB_SPACE)
 /*
  * Preserve DDB symbols and strings by setting esym.
  */
@@ -312,7 +312,7 @@ sun3_save_symtab(kehp)
 
 	mon_printf(" %d + %d\n", *symsz, *strsz);
 }
-#endif	/* DDB */
+#endif	/* DDB && !SYMTAB_SPACE */
 
 /*
  * This is called just before pmap_bootstrap()
@@ -338,7 +338,7 @@ void sun3_vm_init(kehp)
 	 * some special-purpose pages before rounding to a segment.
 	 */
 	esym = end;
-#ifdef	DDB
+#if defined(DDB) && !defined(SYMTAB_SPACE)
 	/* This will advance esym past the symbols. */
 	sun3_save_symtab(kehp);
 #endif
