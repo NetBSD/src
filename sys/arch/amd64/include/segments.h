@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.2 2003/08/07 16:26:36 agc Exp $	*/
+/*	$NetBSD: segments.h,v 1.3 2003/10/13 18:40:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -332,5 +332,20 @@ void cpu_init_idt __P((void));
 #define LDT_SIZE	144
 
 #define LSYSRETBASE_SEL	LUCODE32_SEL
+
+/*
+ * Checks for valid user selectors. If USER_LDT ever gets implemented
+ * for amd64, these must check the ldt length and SEL_UPL if a user
+ * ldt is active.
+ */
+#define VALID_USER_DSEL32(s) \
+    ((s) == GSEL(GUDATA32_SEL, SEL_UPL) || (s) == LSEL(LUDATA32_SEL, SEL_UPL))
+#define VALID_USER_CSEL32(s) \
+    ((s) == GSEL(GUCODE32_SEL, SEL_UPL) || (s) == LSEL(LUCODE32_SEL, SEL_UPL))
+
+#define VALID_USER_CSEL(s) \
+    ((s) == GSEL(GUCODE_SEL, SEL_UPL) || (s) == LSEL(LUCODE_SEL, SEL_UPL))
+#define VALID_USER_DSEL(s) \
+    ((s) == GSEL(GUDATA_SEL, SEL_UPL) || (s) == LSEL(LUDATA_SEL, SEL_UPL))
 
 #endif /* _AMD64_SEGMENTS_H_ */
