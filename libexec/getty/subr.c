@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.24 2000/09/19 16:17:48 mjl Exp $	*/
+/*	$NetBSD: subr.c,v 1.25 2001/11/10 17:35:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: subr.c,v 1.24 2000/09/19 16:17:48 mjl Exp $");
+__RCSID("$NetBSD: subr.c,v 1.25 2001/11/10 17:35:54 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,14 +60,13 @@ __RCSID("$NetBSD: subr.c,v 1.24 2000/09/19 16:17:48 mjl Exp $");
 
 extern	struct termios tmode, omode;
 
-static void	compatflags __P((long));
+static void	compatflags(long);
 
 /*
  * Get a table entry.
  */
 void
-gettable(name, buf)
-	char *name, *buf;
+gettable(char *name, char *buf)
 {
 	struct gettystrs *sp;
 	struct gettynums *np;
@@ -112,7 +111,7 @@ gettable(name, buf)
 }
 
 void
-gendefaults()
+gendefaults(void)
 {
 	struct gettystrs *sp;
 	struct gettynums *np;
@@ -132,7 +131,7 @@ gendefaults()
 }
 
 void
-setdefaults()
+setdefaults(void)
 {
 	struct gettystrs *sp;
 	struct gettynums *np;
@@ -165,7 +164,7 @@ charvars[] = {
 };
 
 void
-setchars()
+setchars(void)
 {
 	int i;
 	char *p;
@@ -185,8 +184,7 @@ setchars()
 #define	ISSET(t, f)	((t) & (f))
 
 void
-setflags(n)
-	int n;
+setflags(int n)
 {
 	tcflag_t iflag, oflag, cflag, lflag;
 
@@ -367,8 +365,7 @@ out:
  * Old TTY => termios, snatched from <sys/kern/tty_compat.c>
  */
 void
-compatflags(flags)
-	long flags;
+compatflags(long flags)
 {
 	tcflag_t iflag, oflag, cflag, lflag;
 
@@ -535,7 +532,7 @@ struct delayval	tbdelay[] = {
 };
 
 int
-delaybits()
+delaybits(void)
 {
 	int f;
 
@@ -548,9 +545,7 @@ delaybits()
 }
 
 int
-adelay(ms, dp)
-	ms;
-	struct delayval *dp;
+adelay(int ms, struct delayval *dp)
 {
 	if (ms == 0)
 		return (0);
@@ -563,8 +558,7 @@ adelay(ms, dp)
 char	editedhost[MAXHOSTNAMELEN];
 
 void
-edithost(pat)
-	char *pat;
+edithost(char *pat)
 {
 	char *host = HN;
 	char *res = editedhost;
@@ -603,8 +597,7 @@ edithost(pat)
 }
 
 void
-makeenv(env)
-	char *env[];
+makeenv(char *env[])
 {
 	static char termbuf[128] = "TERM=";
 	char *p, *q;
@@ -652,7 +645,7 @@ struct	portselect {
 };
 
 char *
-portselector()
+portselector(void)
 {
 	char c, baud[20], *type = "default";
 	struct portselect *ps;
@@ -687,7 +680,7 @@ portselector()
 #include <sys/time.h>
 
 char *
-autobaud()
+autobaud(void)
 {
 	int rfds;
 	struct timeval timeout;
