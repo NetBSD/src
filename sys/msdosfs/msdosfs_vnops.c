@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.35 1995/06/02 15:33:29 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.36 1995/07/24 21:20:34 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -446,16 +446,6 @@ msdosfs_read(ap)
 			return (error);
 		}
 		error = uiomove(bp->b_data + on, (int) n, uio);
-		/*
-		 * If we have read everything from this block or have read
-		 * to end of file then we are done with this block.  Mark
-		 * it to say the buffer can be reused if need be.
-		 */
-#if 0
-		if (n + on == pmp->pm_bpcluster ||
-		    uio->uio_offset == dep->de_FileSize)
-			bp->b_flags |= B_AGE;
-#endif
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 	return (error);
@@ -645,10 +635,9 @@ msdosfs_write(ap)
 		 */
 		if (ioflag & IO_SYNC)
 			(void) bwrite(bp);
-		else if (n + croffset == pmp->pm_bpcluster) {
-			bp->b_flags |= B_AGE;
+		else if (n + croffset == pmp->pm_bpcluster)
 			bawrite(bp);
-		} else
+		else
 			bdwrite(bp);
 		dep->de_flag |= DE_UPDATE;
 	} while (error == 0 && uio->uio_resid > 0);
@@ -1489,17 +1478,6 @@ msdosfs_readdir(ap)
 				}
 			}
 		}
-
-#if 0
-		/*
-		 * If we have read everything from this block or have read
-		 * to end of file then we are done with this block.  Mark
-		 * it to say the buffer can be reused if need be.
-		 */
-		if (n + on == pmp->pm_bpcluster ||
-		    dep->de_FileSize - (offset - bias) == 0)
-			bp->b_flags |= B_AGE;
-#endif /* if 0 */
 		brelse(bp);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cluster.c,v 1.7 1994/12/13 09:14:35 mycroft Exp $	*/
+/*	$NetBSD: vfs_cluster.c,v 1.8 1995/07/24 21:19:50 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -717,6 +717,10 @@ redo:
 
 		tbp->b_bufsize -= size;
 		tbp->b_flags &= ~(B_READ | B_DONE | B_ERROR | B_DELWRI);
+		/*
+		 * We might as well AGE the buffer here; it's either empty, or
+		 * contains data that we couldn't get rid of (but wanted to).
+		 */
 		tbp->b_flags |= (B_ASYNC | B_AGE);
 		s = splbio();
 		reassignbuf(tbp, tbp->b_vp);		/* put on clean list */

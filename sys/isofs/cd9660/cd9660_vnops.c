@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.23 1995/06/28 05:10:45 cgd Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.24 1995/07/24 21:19:27 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -307,9 +307,6 @@ cd9660_read(ap)
 		}
 
 		error = uiomove(bp->b_data + on, (int)n, uio);
-		if (n + on == imp->logical_block_size ||
-		    uio->uio_offset == (off_t)ip->i_size)
-			bp->b_flags |= B_AGE;
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 	return (error);

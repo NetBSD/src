@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.25 1995/07/08 00:42:45 cgd Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.26 1995/07/24 21:20:11 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -279,8 +279,6 @@ spec_read(ap)
 				return (error);
 			}
 			error = uiomove((char *)bp->b_data + on, n, uio);
-			if (n + on == bsize)
-				bp->b_flags |= B_AGE;
 			brelse(bp);
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);
@@ -361,10 +359,9 @@ spec_write(ap)
 				return (error);
 			}
 			error = uiomove((char *)bp->b_data + on, n, uio);
-			if (n + on == bsize) {
-				bp->b_flags |= B_AGE;
+			if (n + on == bsize)
 				bawrite(bp);
-			} else
+			else
 				bdwrite(bp);
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
 		return (error);

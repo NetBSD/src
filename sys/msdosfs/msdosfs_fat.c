@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.17 1995/03/19 20:52:36 ws Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.18 1995/07/24 21:20:28 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -963,10 +963,8 @@ extendfile(dep, count, bpp, ncp, flags)
 				if (bpp) {
 					*bpp = bp;
 					bpp = NULL;
-				} else {
-					bp->b_flags |= B_AGE;
-					bawrite(bp);
-				}
+				} else
+					bdwrite(bp);
 			}
 		}
 	}
