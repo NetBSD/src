@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.2 1998/10/13 14:43:37 kleink Exp $	*/
+/*	$NetBSD: isinf.c,v 1.3 1998/11/14 19:31:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -41,7 +41,7 @@ int
 isnan(d)
 	double d;
 {
-	register struct ieee_double *p = (struct ieee_double *)&d;
+	register struct ieee_double *p = (struct ieee_double *)(void *)&d;
 
 	return (p->dbl_exp == DBL_EXP_INFNAN &&
 	    (p->dbl_frach || p->dbl_fracl));
@@ -51,7 +51,7 @@ int
 isinf(d)
 	double d;
 {
-	register struct ieee_double *p = (struct ieee_double *)&d;
+	register struct ieee_double *p = (struct ieee_double *)(void *)&d;
 
 	return (p->dbl_exp == DBL_EXP_INFNAN &&
 	    !p->dbl_frach && !p->dbl_fracl);
