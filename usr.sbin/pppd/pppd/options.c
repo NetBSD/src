@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.32 2000/07/16 22:10:14 tron Exp $	*/
+/*	$NetBSD: options.c,v 1.33 2000/09/23 22:39:37 christos Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: options.c,v 1.69 1999/12/23 01:28:52 paulus Exp "
+#define RCSID	"Id: options.c,v 1.76 2000/08/01 01:38:30 paulus Exp "
 #else
-__RCSID("$NetBSD: options.c,v 1.32 2000/07/16 22:10:14 tron Exp $");
+__RCSID("$NetBSD: options.c,v 1.33 2000/09/23 22:39:37 christos Exp $");
 #endif
 #endif
 
@@ -81,18 +81,9 @@ int	debug = 0;		/* Debug flag */
 int	kdebugflag = 0;		/* Tell kernel to print debug messages */
 int	default_device = 1;	/* Using /dev/tty or equivalent */
 char	devnam[MAXPATHLEN];	/* Device name */
-int	crtscts = 0;		/* Use hardware flow control */
-bool	modem = 1;		/* Use modem control lines */
-int	inspeed = 0;		/* Input/Output speed requested */
 u_int32_t netmask = 0;		/* IP netmask to set on interface */
-bool	lockflag = 0;		/* Create lock file to lock the serial dev */
 bool	nodetach = 0;		/* Don't detach from controlling tty */
 bool	updetach = 0;		/* Detach once link is up */
-char	*initializer = NULL;	/* Script to initialize physical link */
-char	*connect_script = NULL;	/* Script to establish physical link */
-char	*disconnect_script = NULL; /* Script to disestablish physical link */
-char	*welcomer = NULL;	/* Script to run after phys link estab. */
-char	*ptycommand = NULL;	/* Command to run on other side of pty */
 int	maxconnect = 0;		/* Maximum connect time */
 char	user[MAXNAMELEN];	/* Username for PAP */
 char	passwd[MAXSECRETLEN];	/* Password for PAP */
@@ -103,19 +94,17 @@ char	*ipparam = NULL;	/* Extra parameter for ip up/down scripts */
 int	idle_time_limit = 0;	/* Disconnect if idle for this many seconds */
 int	holdoff = 30;		/* # seconds to pause before reconnecting */
 bool	holdoff_specified;	/* true if a holdoff value has been given */
-bool	notty = 0;		/* Stdin/out is not a tty */
-char	*record_file = NULL;	/* File to record chars sent/received */
-int	using_pty = 0;
-bool	sync_serial = 0;	/* Device is synchronous serial device */
 int	log_to_fd = 1;		/* send log messages to this fd too */
 int	maxfail = 10;		/* max # of unsuccessful connection attempts */
 char	linkname[MAXPATHLEN];	/* logical name for link */
 bool	tune_kernel;		/* may alter kernel settings */
 int	connect_delay = 1000;	/* wait this many ms after connect script */
+int	req_unit = -1;		/* requested interface unit */
+bool	multilink = 0;		/* Enable multilink operation */
+char	*bundle_name = NULL;	/* bundle name for multilink */
 
 extern option_t auth_options[];
 extern struct stat devstat;
-extern int prepass;		/* Doing pre-pass to find device name */
 
 struct option_info initializer_info;
 struct option_info connect_script_info;
@@ -140,6 +129,8 @@ char *current_option;		/* the name of the option being parsed */
 int  privileged_option;		/* set iff the current option came from root */
 char *option_source;		/* string saying where the option came from */
 bool log_to_file;		/* log_to_fd is a file opened by us */
+bool log_to_specific_fd;	/* log_to_fd was specified by user option */
+bool no_override;		/* don't override previously-set options */
 
 /*
  * Prototypes
@@ -150,7 +141,6 @@ static int setspeed __P((char *));
 static int noopt __P((char **));
 static int setdomain __P((char **));
 static int setnetmask __P((char **));
-static int setxonxoff __P((char **));
 static int readfile __P((char **));
 static int callfile __P((char **));
 static int showversion __P((char **));
@@ -203,56 +193,19 @@ option_t general_options[] = {
       "Set time in seconds before retrying connection" },
     { "idle", o_int, &idle_time_limit,
       "Set time in seconds before disconnecting idle link" },
-    { "lock", o_bool, &lockflag,
-      "Lock serial device with UUCP-style lock file", 1 },
-    { "-all", o_special_noarg, noopt,
+    { "-all", o_special_noarg, (void *)noopt,
       "Don't request/allow any LCP or IPCP options (useless)" },
-    { "init", o_string, &initializer,
-      "A program to initialize the device",
-      OPT_A2INFO | OPT_PRIVFIX, &initializer_info },
-    { "connect", o_string, &connect_script,
-      "A program to set up a connection",
-      OPT_A2INFO | OPT_PRIVFIX, &connect_script_info },
-    { "disconnect", o_string, &disconnect_script,
-      "Program to disconnect serial device",
-      OPT_A2INFO | OPT_PRIVFIX, &disconnect_script_info },
-    { "welcome", o_string, &welcomer,
-      "Script to welcome client",
-      OPT_A2INFO | OPT_PRIVFIX, &welcomer_info },
-    { "pty", o_string, &ptycommand,
-      "Script to run on pseudo-tty master side",
-      OPT_A2INFO | OPT_PRIVFIX | OPT_DEVNAM, &ptycommand_info },
-    { "notty", o_bool, &notty,
-      "Input/output is not a tty", OPT_DEVNAM | 1 },
-    { "record", o_string, &record_file,
-      "Record characters sent/received to file" },
     { "maxconnect", o_int, &maxconnect,
       "Set connection time limit", OPT_LLIMIT|OPT_NOINCR|OPT_ZEROINF },
-    { "crtscts", o_int, &crtscts,
-      "Set hardware (RTS/CTS) flow control", OPT_NOARG|OPT_VAL(1) },
-    { "nocrtscts", o_int, &crtscts,
-      "Disable hardware flow control", OPT_NOARG|OPT_VAL(-1) },
-    { "-crtscts", o_int, &crtscts,
-      "Disable hardware flow control", OPT_NOARG|OPT_VAL(-1) },
-    { "cdtrcts", o_int, &crtscts,
-      "Set alternate hardware (DTR/CTS) flow control", OPT_NOARG|OPT_VAL(2) },
-    { "nocdtrcts", o_int, &crtscts,
-      "Disable hardware flow control", OPT_NOARG|OPT_VAL(-1) },
-    { "xonxoff", o_special_noarg, setxonxoff,
-      "Set software (XON/XOFF) flow control" },
-    { "domain", o_special, setdomain,
+    { "domain", o_special, (void *)setdomain,
       "Add given domain name to hostname" },
     { "mtu", o_int, &lcp_allowoptions[0].mru,
       "Set our MTU", OPT_LIMITS, NULL, MAXMRU, MINMRU },
-    { "netmask", o_special, setnetmask,
+    { "netmask", o_special, (void *)setnetmask,
       "set netmask" },
-    { "modem", o_bool, &modem,
-      "Use modem control lines", 1 },
-    { "local", o_bool, &modem,
-      "Don't use modem control lines" },
-    { "file", o_special, readfile,
+    { "file", o_special, (void *)readfile,
       "Take options from a file", OPT_PREPASS },
-    { "call", o_special, callfile,
+    { "call", o_special, (void *)callfile,
       "Take options from a privileged file", OPT_PREPASS },
     { "persist", o_bool, &persist,
       "Keep on reopening connection after close", 1 },
@@ -260,17 +213,16 @@ option_t general_options[] = {
       "Turn off persist option" },
     { "demand", o_bool, &demand,
       "Dial on demand", OPT_INITONLY | 1, &persist },
-    { "--version", o_special_noarg, showversion,
+    { "--version", o_special_noarg, (void *)showversion,
       "Show version number" },
-    { "--help", o_special_noarg, showhelp,
+    { "--help", o_special_noarg, (void *)showhelp,
       "Show brief listing of options" },
-    { "-h", o_special_noarg, showhelp,
+    { "-h", o_special_noarg, (void *)showhelp,
       "Show brief listing of options" },
-    { "sync", o_bool, &sync_serial,
-      "Use synchronous HDLC serial encoding", 1 },
     { "logfd", o_int, &log_to_fd,
-      "Send log messages to this file descriptor" },
-    { "logfile", o_special, setlogfile,
+      "Send log messages to this file descriptor",
+      0, &log_to_specific_fd },
+    { "logfile", o_special, (void *)setlogfile,
       "Append log messages to this file" },
     { "nolog", o_int, &log_to_fd,
       "Don't send log messages to any file",
@@ -289,8 +241,22 @@ option_t general_options[] = {
       "Don't alter kernel settings", 0 },
     { "connect-delay", o_int, &connect_delay,
       "Maximum time (in ms) to wait after connect script finishes" },
+    { "unit", o_int, &req_unit,
+      "PPP interface unit number to use if possible", OPT_LLIMIT, 0, 0 },
+#ifdef HAVE_MULTILINK
+    { "multilink", o_bool, &multilink,
+      "Enable multilink operation", 1 },
+    { "nomultilink", o_bool, &multilink,
+      "Disable multilink operation", 0 },
+    { "mp", o_bool, &multilink,
+      "Enable multilink operation", 1 },
+    { "nomp", o_bool, &multilink,
+      "Disable multilink operation", 0 },
+    { "bundle", o_string, &bundle_name,
+      "Bundle name for multilink" },
+#endif /* HAVE_MULTILINK */
 #ifdef PLUGIN
-    { "plugin", o_special, loadplugin,
+    { "plugin", o_special, (void *)loadplugin,
       "Load a plug-in module into pppd", OPT_PRIV },
 #endif
 
@@ -335,8 +301,6 @@ See pppd(8) for more options.\n\
 
 /*
  * parse_args - parse a string of arguments from the command line.
- * If prepass is true, we are scanning for the device name and only
- * processing a few options, so error messages are suppressed.
  */
 int
 parse_args(argc, argv)
@@ -376,8 +340,7 @@ parse_args(argc, argv)
 	 */
 	if ((ret = setdevname(arg)) == 0
 	    && (ret = setspeed(arg)) == 0
-	    && (ret = setipaddr(arg)) == 0
-	    && !prepass) {
+	    && (ret = setipaddr(arg)) == 0) {
 	    option_error("unrecognized option '%s'", arg);
 	    usage();
 	    return 0;
@@ -451,9 +414,12 @@ options_from_file(filename, must_exist, check_prot, priv)
     if (check_prot)
 	seteuid(0);
     if (f == NULL) {
-	if (!must_exist && err == ENOENT)
-	    return 1;
 	errno = err;
+	if (!must_exist) {
+	    if (err != ENOENT && err != ENOTDIR)
+		warn("Warning: can't open options file %s: %m", filename);
+	    return 1;
+	}
 	option_error("Can't open options file %s: %m", filename);
 	return 0;
     }
@@ -482,7 +448,7 @@ options_from_file(filename, must_exist, check_prot, priv)
 		argv[i] = args[i];
 	    }
 	    current_option = cmd;
-	    if ((opt->flags & OPT_DEVEQUIV) && devnam_fixed) {
+	    if ((opt->flags & OPT_DEVEQUIV) && no_override) {
 		option_error("the %s option may not be used in the %s file",
 			     cmd, filename);
 		goto err;
@@ -543,6 +509,9 @@ options_from_user()
 /*
  * options_for_tty - See if an options file exists for the serial
  * device, and if so, interpret options from it.
+ * We only allow the per-tty options file to override anything from
+ * the command line if it is something that the user can't override
+ * once it has been set by root.
  */
 int
 options_for_tty()
@@ -565,7 +534,9 @@ options_for_tty()
     for (p = path + strlen(_PATH_TTYOPT); *p != 0; ++p)
 	if (*p == '/')
 	    *p = '.';
+    no_override = 1;
     ret = options_from_file(path, 0, 0, 1);
+    no_override = 0;
     free(path);
     return ret;
 }
@@ -672,8 +643,14 @@ process_option(opt, argv)
     char *sv;
     int (*parser) __P((char **));
 
-    if ((opt->flags & OPT_PREPASS) == 0 && prepass)
-	return 1;
+    if (no_override && (opt->flags & OPT_SEENIT)) {
+	struct option_info *ip = (struct option_info *) opt->addr2;
+	if (!(privileged && (opt->flags & OPT_PRIVFIX)))
+	    return 1;
+	if (!ip || ip->priv)
+	    return 1;
+	warn("%s option from per-tty file overrides command line", opt->name);
+    }
     if ((opt->flags & OPT_INITONLY) && phase != PHASE_INITIALIZE) {
 	option_error("it's too late to use the %s option", opt->name);
 	return 0;
@@ -693,6 +670,7 @@ process_option(opt, argv)
 	    return 0;
 	}
     }
+    opt->flags |= OPT_SEENIT;
 
     switch (opt->type) {
     case o_bool:
@@ -877,10 +855,6 @@ option_error __V((char *fmt, ...))
     va_start(args);
     fmt = va_arg(args, char *);
 #endif
-    if (prepass) {
-	va_end(args);
-	return;
-    }
     vslprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
     if (phase == PHASE_INITIALIZE)
@@ -1374,12 +1348,13 @@ setspeed(arg)
     char *ptr;
     int spd;
 
-    if (prepass)
+    if (no_override && inspeed != 0)
 	return 1;
     spd = strtol(arg, &ptr, 0);
     if (ptr == arg || *ptr != 0 || spd == 0)
 	return 0;
-    inspeed = spd;
+    if (!no_override || inspeed == 0)
+	inspeed = spd;
     return 1;
 }
 
@@ -1420,7 +1395,8 @@ setdevname(cp)
     if (phase != PHASE_INITIALIZE) {
 	option_error("device name cannot be changed after initialization");
 	return -1;
-    } else if (devnam_fixed) {
+    }
+    if (no_override) {
 	option_error("per-tty options file may not specify device name");
 	return -1;
     }
@@ -1451,19 +1427,18 @@ setipaddr(arg)
     char *colon;
     u_int32_t local, remote;
     ipcp_options *wo = &ipcp_wantoptions[0];
-  
+    static int seen_local = 0, seen_remote = 0;
+
     /*
      * IP address pair separated by ":".
      */
     if ((colon = strchr(arg, ':')) == NULL)
 	return 0;
-    if (prepass)
-	return 1;
   
     /*
      * If colon first character, then no local addr.
      */
-    if (colon != arg) {
+    if (colon != arg && !(no_override && seen_local)) {
 	*colon = '\0';
 	if ((local = inet_addr(arg)) == (u_int32_t) -1) {
 	    if ((hp = gethostbyname(arg)) == NULL) {
@@ -1480,12 +1455,13 @@ setipaddr(arg)
 	if (local != 0)
 	    wo->ouraddr = local;
 	*colon = ':';
+	seen_local = 1;
     }
   
     /*
      * If colon last character, then no remote addr.
      */
-    if (*++colon != '\0') {
+    if (*++colon != '\0' && !(no_override && seen_remote)) {
 	if ((remote = inet_addr(colon)) == (u_int32_t) -1) {
 	    if ((hp = gethostbyname(colon)) == NULL) {
 		option_error("unknown host: %s", colon);
@@ -1502,6 +1478,7 @@ setipaddr(arg)
 	}
 	if (remote != 0)
 	    wo->hisaddr = remote;
+	seen_remote = 1;
     }
 
     return 1;
@@ -1515,39 +1492,20 @@ static int
 setnetmask(argv)
     char **argv;
 {
-    u_int32_t mask, b;
-    int n, ok;
-    char *p, *endp;
+    u_int32_t mask;
+    int n;
+    char *p;
 
     /*
      * Unfortunately, if we use inet_addr, we can't tell whether
      * a result of all 1s is an error or a valid 255.255.255.255.
      */
     p = *argv;
-    ok = 0;
-    mask = 0;
-    for (n = 3;; --n) {
-	b = strtoul(p, &endp, 0);
-	if (endp == p)
-	    break;
-	if (b > 255) {
-	    if (n == 3) {
-		/* accept e.g. 0xffffff00 */
-		p = endp;
-		mask = b;
-	    }
-	    break;
-	}
-	mask |= b << (n * 8);
-	p = endp;
-	if (*p != '.' || n == 0)
-	    break;
-	++p;
-    }
+    n = parse_dotted_ip(p, &mask);
 
     mask = htonl(mask);
 
-    if (*p != 0 || (netmask & ~mask) != 0) {
+    if (n == 0 || p[n] != 0 || (netmask & ~mask) != 0) {
 	option_error("invalid netmask value '%s'", *argv);
 	return 0;
     }
@@ -1556,15 +1514,37 @@ setnetmask(argv)
     return (1);
 }
 
-static int
-setxonxoff(argv)
-    char **argv;
+int
+parse_dotted_ip(p, vp)
+    char *p;
+    u_int32_t *vp;
 {
-    lcp_wantoptions[0].asyncmap |= 0x000A0000;	/* escape ^S and ^Q */
-    lcp_wantoptions[0].neg_asyncmap = 1;
+    int n;
+    u_int32_t v, b;
+    char *endp, *p0 = p;
 
-    crtscts = -2;
-    return (1);
+    v = 0;
+    for (n = 3;; --n) {
+	b = strtoul(p, &endp, 0);
+	if (endp == p)
+	    return 0;
+	if (b > 255) {
+	    if (n < 3)
+		return 0;
+	    /* accept e.g. 0xffffff00 */
+	    *vp = b;
+	    return endp - p0;
+	}
+	v |= b << (n * 8);
+	p = endp;
+	if (n == 0)
+	    break;
+	if (*p != '.')
+	    return 0;
+	++p;
+    }
+    *vp = v;
+    return p - p0;
 }
 
 static int
@@ -1611,7 +1591,7 @@ loadplugin(argv)
 	option_error("Couldn't load plugin %s", arg);
 	return 0;
     }
-    init = dlsym(handle, "plugin_init");
+    init = (void (*)(void))dlsym(handle, "plugin_init");
     if (init == 0) {
 	option_error("%s has no initialization entry point", arg);
 	dlclose(handle);

@@ -1,4 +1,4 @@
-/*	$NetBSD: upap.h,v 1.9 2000/07/16 22:10:15 tron Exp $	*/
+/*	$NetBSD: upap.h,v 1.10 2000/09/23 22:39:40 christos Exp $	*/
 
 /*
  * upap.h - User/Password Authentication Protocol definitions.

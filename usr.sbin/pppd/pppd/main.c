@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.36 2000/07/16 22:10:13 tron Exp $	*/
+/*	$NetBSD: main.c,v 1.37 2000/09/23 22:39:37 christos Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -22,9 +22,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-#define RCSID	"Id: main.c,v 1.88 1999/12/23 01:28:27 paulus Exp "
+#define RCSID	"Id: main.c,v 1.100 2000/07/06 11:17:02 paulus Exp "
 #else
-__RCSID("$NetBSD: main.c,v 1.36 2000/07/16 22:10:13 tron Exp $");
+__RCSID("$NetBSD: main.c,v 1.37 2000/09/23 22:39:37 christos Exp $");
 #endif
 #endif
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: main.c,v 1.36 2000/07/16 22:10:13 tron Exp $");
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "pppd.h"
 #include "magic.h"
@@ -63,6 +64,7 @@ __RCSID("$NetBSD: main.c,v 1.36 2000/07/16 22:10:13 tron Exp $");
 #include "ccp.h"
 #include "pathnames.h"
 #include "patchlevel.h"
+#include "tdb.h"
 
 #ifdef CBCP_SUPPORT
 #include "cbcp.h"
@@ -87,38 +89,36 @@ char *progname;			/* Name of this program */
 char hostname[MAXNAMELEN];	/* Our hostname */
 static char pidfilename[MAXPATHLEN];	/* name of pid file */
 static char linkpidfile[MAXPATHLEN];	/* name of linkname pid file */
-static char ppp_devnam[MAXPATHLEN]; /* name of PPP tty (maybe ttypx) */
-static uid_t uid;		/* Our real user-id */
-static int conn_running;	/* we have a [dis]connector running */
+char ppp_devnam[MAXPATHLEN];	/* name of PPP tty (maybe ttypx) */
+uid_t uid;			/* Our real user-id */
+struct notifier *pidchange = NULL;
+struct notifier *phasechange = NULL;
+struct notifier *exitnotify = NULL;
+struct notifier *sigreceived = NULL;
 
-int ttyfd;			/* Serial port file descriptor */
-mode_t tty_mode = -1;		/* Original access permissions to tty */
-int baud_rate;			/* Actual bits/second for serial device */
 int hungup;			/* terminal has been hung up */
 int privileged;			/* we're running as real uid root */
 int need_holdoff;		/* need holdoff period before restarting */
 int detached;			/* have detached from terminal */
-struct stat devstat;		/* result of stat() on devnam */
-int prepass = 0;		/* doing prepass to find device name */
-int devnam_fixed;		/* set while in options.ttyxx file */
 volatile int status;		/* exit status for pppd */
 int unsuccess;			/* # unsuccessful connection attempts */
 int do_callback;		/* != 0 if we should do callback next */
 int doing_callback;		/* != 0 if we are doing callback */
-char *callback_script;		/* script for doing callback */
+TDB_CONTEXT *pppdb;		/* database for storing status etc. */
+char db_key[32];
 
 int (*holdoff_hook) __P((void)) = NULL;
 int (*new_phase_hook) __P((int)) = NULL;
 
+static int conn_running;	/* we have a [dis]connector running */
+static int devfd;		/* fd of underlying device */
 static int fd_ppp = -1;		/* fd for talking PPP */
 static int fd_loop;		/* fd for getting demand-dial packets */
-static int pty_master;		/* fd for master side of pty */
-static int pty_slave;		/* fd for slave side of pty */
-static int real_ttyfd;		/* fd for actual serial port (not pty) */
 
 int phase;			/* where the link is at */
 int kill_link;
 int open_ccp_flag;
+int listen_time;
 
 static int waiting;
 static sigjmp_buf sigjmp;
@@ -132,8 +132,7 @@ u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
 static int n_children;		/* # child processes still running */
 static int got_sigchld;		/* set if we have received a SIGCHLD */
 
-static int locked;		/* lock() has succeeded */
-static int privopen;		/* don't lock, open device as root */
+int privopen;			/* don't lock, open device as root */
 
 char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
 
@@ -145,8 +144,6 @@ static struct timeval start_time;	/* Time when link was started. */
 struct pppd_stats link_stats;
 int link_connect_time;
 int link_stats_valid;
-
-static int charshunt_pid;	/* Process ID for charshunt */
 
 /*
  * We maintain a list of child process pids and
@@ -164,10 +161,10 @@ static struct subprocess *children;
 
 /* Prototypes for procedures local to this file. */
 
+static void setup_signals __P((void));
 static void create_pidfile __P((void));
 static void create_linkpidfile __P((void));
 static void cleanup __P((void));
-static void close_tty __P((void));
 static void get_input __P((void));
 static const char *protocol_name __P((int));
 static void calltimeout __P((void));
@@ -180,14 +177,11 @@ static void toggle_debug __P((int));
 static void open_ccp __P((int));
 static void bad_signal __P((int));
 static void holdoff_end __P((void *));
-static int device_script __P((char *, int, int, int));
 static int reap_kids __P((int waitfor));
-static void record_child __P((int, char *, void (*) (void *), void *));
-static int start_charshunt __P((int, int));
-static void charshunt_done __P((void *));
-static void charshunt __P((int, int, char *));
-static int record_write __P((FILE *, int code, u_char *buf, int nb,
-			     struct timeval *));
+static void update_db_entry __P((void));
+static void add_db_key __P((const char *));
+static void delete_db_key __P((const char *));
+static void cleanup_db __P((void));
 
 extern	char	*ttyname __P((int));
 extern	char	*getlogin __P((void));
@@ -228,19 +222,24 @@ struct protent *protocols[] = {
     NULL
 };
 
+/*
+ * If PPP_DRV_NAME is not defined, use the default "ppp" as the device name.
+ */
+#if !defined(PPP_DRV_NAME)
+#define PPP_DRV_NAME	"ppp"
+#endif /* !defined(PPP_DRV_NAME) */
+
 int
 main(argc, argv)
     int argc;
     char *argv[];
 {
-    int i, fdflags, t;
-    struct sigaction sa;
-    char *p, *connector;
+    int i, t;
+    char *p;
     struct passwd *pw;
     struct timeval timo;
     sigset_t mask;
     struct protent *protp;
-    struct stat statbuf;
     char numbuf[16];
 
     new_phase(PHASE_INITIALIZE);
@@ -274,7 +273,7 @@ main(argc, argv)
     uid = getuid();
     privileged = uid == 0;
     slprintf(numbuf, sizeof(numbuf), "%d", uid);
-    script_setenv("ORIG_UID", numbuf);
+    script_setenv("ORIG_UID", numbuf, 0);
 
     ngroups = getgroups(NGROUPS_MAX, groups);
 
@@ -285,54 +284,28 @@ main(argc, argv)
     magic_init();
 
     /*
-     * Initialize to the standard option set, then parse, in order,
-     * the system options file, the user's options file,
-     * the tty's options file, and the command line arguments.
+     * Initialize each protocol.
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         (*protp->init)(0);
+    tty_init();
 
     progname = *argv;
 
-    prepass = 0;
+    /*
+     * Parse, in order, the system options file, the user's options file,
+     * and the command line arguments.
+     */
     if (!options_from_file(_PATH_SYSOPTIONS, !privileged, 0, 1)
-	|| !options_from_user())
+	|| !options_from_user()
+	|| !parse_args(argc-1, argv+1))
 	exit(EXIT_OPTION_ERROR);
 
-    /* scan command line and options files to find device name */
-    prepass = 1;
-    parse_args(argc-1, argv+1);
-    prepass = 0;
-
     /*
-     * Work out the device name, if it hasn't already been specified.
+     * Work out the device name, if it hasn't already been specified,
+     * and parse the tty's options file.
      */
-    using_pty = notty || ptycommand != NULL;
-    if (!using_pty && default_device) {
-	char *p;
-	if (!isatty(0) || (p = ttyname(0)) == NULL) {
-	    option_error("no device specified and stdin is not a tty");
-	    exit(EXIT_OPTION_ERROR);
-	}
-	strlcpy(devnam, p, sizeof(devnam));
-	if (stat(devnam, &devstat) < 0)
-	    fatal("Couldn't stat default device %s: %m", devnam);
-    }
-
-    /*
-     * Parse the tty options file and the command line.
-     * The per-tty options file should not change
-     * ptycommand, notty or devnam.
-     */
-    devnam_fixed = 1;
-    if (!using_pty) {
-	if (!options_for_tty())
-	    exit(EXIT_OPTION_ERROR);
-    }
-
-    devnam_fixed = 0;
-    if (!parse_args(argc-1, argv+1))
-	exit(EXIT_OPTION_ERROR);
+    tty_device_check();
 
     /*
      * Check that we are running as root.
@@ -354,59 +327,13 @@ main(argc, argv)
     if (!sys_check_options())
 	exit(EXIT_OPTION_ERROR);
     auth_check_options();
+#ifdef HAVE_MULTILINK
+    mp_check_options();
+#endif
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->check_options != NULL)
 	    (*protp->check_options)();
-    if (demand && connect_script == 0) {
-	option_error("connect script is required for demand-dialling\n");
-	exit(EXIT_OPTION_ERROR);
-    }
-    /* default holdoff to 0 if no connect script has been given */
-    if (connect_script == 0 && !holdoff_specified)
-	holdoff = 0;
-
-    if (using_pty) {
-	if (!default_device) {
-	    option_error("%s option precludes specifying device name",
-			 notty? "notty": "pty");
-	    exit(EXIT_OPTION_ERROR);
-	}
-	if (ptycommand != NULL && notty) {
-	    option_error("pty option is incompatible with notty option");
-	    exit(EXIT_OPTION_ERROR);
-	}
-	default_device = notty;
-	lockflag = 0;
-	modem = 0;
-	if (notty && log_to_fd <= 1)
-	    log_to_fd = -1;
-    } else {
-	/*
-	 * If the user has specified a device which is the same as
-	 * the one on stdin, pretend they didn't specify any.
-	 * If the device is already open read/write on stdin,
-	 * we assume we don't need to lock it, and we can open it as root.
-	 */
-	if (fstat(0, &statbuf) >= 0 && S_ISCHR(statbuf.st_mode)
-	    && statbuf.st_rdev == devstat.st_rdev) {
-	    default_device = 1;
-	    fdflags = fcntl(0, F_GETFL);
-	    if (fdflags != -1 && (fdflags & O_ACCMODE) == O_RDWR)
-		privopen = 1;
-	}
-    }
-    if (default_device)
-	nodetach = 1;
-
-    /*
-     * Don't send log messages to the serial port, it tends to
-     * confuse the peer. :-)
-     */
-    if (log_to_fd >= 0 && fstat(log_to_fd, &statbuf) >= 0
-	&& S_ISCHR(statbuf.st_mode) && statbuf.st_rdev == devstat.st_rdev)
-	log_to_fd = -1;
-
-    script_setenv("DEVICE", devnam);
+    tty_check_options();
 
     /*
      * Initialize system-dependent stuff.
@@ -414,6 +341,18 @@ main(argc, argv)
     sys_init();
     if (debug)
 	setlogmask(LOG_UPTO(LOG_DEBUG));
+
+    pppdb = tdb_open(_PATH_PPPDB, 0, 0, O_RDWR|O_CREAT, 0644);
+    if (pppdb != NULL) {
+	slprintf(db_key, sizeof(db_key), "pppd%d", getpid());
+	update_db_entry();
+    } else {
+	warn("Warning: couldn't open ppp database %s", _PATH_PPPDB);
+	if (multilink) {
+	    warn("Warning: disabling multilink");
+	    multilink = 0;
+	}
+    }
 
     /*
      * Detach ourselves from the terminal, if required,
@@ -431,7 +370,285 @@ main(argc, argv)
     }
     syslog(LOG_NOTICE, "pppd %s.%d%s started by %s, uid %d",
 	   VERSION, PATCHLEVEL, IMPLEMENTATION, p, uid);
-    script_setenv("PPPLOGNAME", p);
+    script_setenv("PPPLOGNAME", p, 0);
+
+    if (devnam[0])
+	script_setenv("DEVICE", devnam, 1);
+    slprintf(numbuf, sizeof(numbuf), "%d", getpid());
+    script_setenv("PPPD_PID", numbuf, 1);
+
+    setup_signals();
+
+    waiting = 0;
+
+    create_linkpidfile();
+
+    /*
+     * If we're doing dial-on-demand, set up the interface now.
+     */
+    if (demand) {
+	/*
+	 * Open the loopback channel and set it up to be the ppp interface.
+	 */
+	tdb_writelock(pppdb);
+	fd_loop = open_ppp_loopback();
+	set_ifunit(1);
+	tdb_writeunlock(pppdb);
+
+	/*
+	 * Configure the interface and mark it up, etc.
+	 */
+	demand_conf();
+    }
+
+    do_callback = 0;
+    for (;;) {
+
+	listen_time = 0;
+	need_holdoff = 1;
+	devfd = -1;
+	status = EXIT_OK;
+	++unsuccess;
+	doing_callback = do_callback;
+	do_callback = 0;
+
+	if (demand && !doing_callback) {
+	    /*
+	     * Don't do anything until we see some activity.
+	     */
+	    kill_link = 0;
+	    new_phase(PHASE_DORMANT);
+	    demand_unblock();
+	    add_fd(fd_loop);
+	    for (;;) {
+		if (sigsetjmp(sigjmp, 1) == 0) {
+		    sigprocmask(SIG_BLOCK, &mask, NULL);
+		    if (kill_link || got_sigchld) {
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
+		    } else {
+			waiting = 1;
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
+			wait_input(timeleft(&timo));
+		    }
+		}
+		waiting = 0;
+		calltimeout();
+		if (kill_link) {
+		    if (!persist)
+			break;
+		    kill_link = 0;
+		}
+		if (get_loop_output())
+		    break;
+		if (got_sigchld)
+		    reap_kids(0);
+	    }
+	    remove_fd(fd_loop);
+	    if (kill_link && !persist)
+		break;
+
+	    /*
+	     * Now we want to bring up the link.
+	     */
+	    demand_block();
+	    info("Starting link");
+	}
+
+	new_phase(PHASE_SERIALCONN);
+
+	devfd = connect_tty();
+	if (devfd < 0)
+	    goto fail;
+
+	/* set up the serial device as a ppp interface */
+	tdb_writelock(pppdb);
+	fd_ppp = establish_ppp(devfd);
+	if (fd_ppp < 0) {
+	    tdb_writeunlock(pppdb);
+	    status = EXIT_FATAL_ERROR;
+	    goto disconnect;
+	}
+
+	if (!demand && ifunit >= 0)
+	    set_ifunit(1);
+	tdb_writeunlock(pppdb);
+
+	/*
+	 * Start opening the connection and wait for
+	 * incoming events (reply, timeout, etc.).
+	 */
+	notice("Connect: %s <--> %s", ifname, ppp_devnam);
+	gettimeofday(&start_time, NULL);
+	link_stats_valid = 0;
+	script_unsetenv("CONNECT_TIME");
+	script_unsetenv("BYTES_SENT");
+	script_unsetenv("BYTES_RCVD");
+	lcp_lowerup(0);
+
+	/*
+	 * If we are initiating this connection, wait for a short
+	 * time for something from the peer.  This can avoid bouncing
+	 * our packets off his tty before he has it set up.
+	 */
+	add_fd(fd_ppp);
+	if (listen_time != 0) {
+	    struct timeval t;
+	    t.tv_sec = listen_time / 1000;
+	    t.tv_usec = listen_time % 1000;
+	    wait_input(&t);
+	}
+
+	lcp_open(0);		/* Start protocol */
+	open_ccp_flag = 0;
+	status = EXIT_NEGOTIATION_FAILED;
+	new_phase(PHASE_ESTABLISH);
+	while (phase != PHASE_DEAD) {
+	    if (sigsetjmp(sigjmp, 1) == 0) {
+		sigprocmask(SIG_BLOCK, &mask, NULL);
+		if (kill_link || open_ccp_flag || got_sigchld) {
+		    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+		} else {
+		    waiting = 1;
+		    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+		    wait_input(timeleft(&timo));
+		}
+	    }
+	    waiting = 0;
+	    calltimeout();
+	    get_input();
+	    if (kill_link) {
+		lcp_close(0, "User request");
+		kill_link = 0;
+	    }
+	    if (open_ccp_flag) {
+		if (phase == PHASE_NETWORK || phase == PHASE_RUNNING) {
+		    ccp_fsm[0].flags = OPT_RESTART; /* clears OPT_SILENT */
+		    (*ccp_protent.open)(0);
+		}
+		open_ccp_flag = 0;
+	    }
+	    if (got_sigchld)
+		reap_kids(0);	/* Don't leave dead kids lying around */
+	}
+
+	/*
+	 * Print connect time and statistics.
+	 */
+	if (link_stats_valid) {
+	    int t = (link_connect_time + 5) / 6;    /* 1/10ths of minutes */
+	    info("Connect time %d.%d minutes.", t/10, t%10);
+	    info("Sent %d bytes, received %d bytes.",
+		 link_stats.bytes_out, link_stats.bytes_in);
+	}
+
+	/*
+	 * Delete pid file before disestablishing ppp.  Otherwise it
+	 * can happen that another pppd gets the same unit and then
+	 * we delete its pid file.
+	 */
+	if (!demand) {
+	    if (pidfilename[0] != 0
+		&& unlink(pidfilename) < 0 && errno != ENOENT) 
+		warn("unable to delete pid file %s: %m", pidfilename);
+	    pidfilename[0] = 0;
+	}
+
+	/*
+	 * If we may want to bring the link up again, transfer
+	 * the ppp unit back to the loopback.  Set the
+	 * real serial device back to its normal mode of operation.
+	 */
+	remove_fd(fd_ppp);
+	clean_check();
+	if (demand)
+	    restore_loop();
+	disestablish_ppp(devfd);
+	fd_ppp = -1;
+	if (!hungup)
+	    lcp_lowerdown(0);
+	if (!demand)
+	    script_unsetenv("IFNAME");
+
+	/*
+	 * Run disconnector script, if requested.
+	 * XXX we may not be able to do this if the line has hung up!
+	 */
+    disconnect:
+	new_phase(PHASE_DISCONNECT);
+	disconnect_tty();
+
+    fail:
+	cleanup_tty();
+
+	if (!demand) {
+	    if (pidfilename[0] != 0
+		&& unlink(pidfilename) < 0 && errno != ENOENT) 
+		warn("unable to delete pid file %s: %m", pidfilename);
+	    pidfilename[0] = 0;
+	}
+
+	if (!persist || (maxfail > 0 && unsuccess >= maxfail))
+	    break;
+
+	kill_link = 0;
+	if (demand)
+	    demand_discard();
+	t = need_holdoff? holdoff: 0;
+	if (holdoff_hook)
+	    t = (*holdoff_hook)();
+	if (t > 0) {
+	    new_phase(PHASE_HOLDOFF);
+	    TIMEOUT(holdoff_end, NULL, t);
+	    do {
+		if (sigsetjmp(sigjmp, 1) == 0) {
+		    sigprocmask(SIG_BLOCK, &mask, NULL);
+		    if (kill_link || got_sigchld) {
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
+		    } else {
+			waiting = 1;
+			sigprocmask(SIG_UNBLOCK, &mask, NULL);
+			wait_input(timeleft(&timo));
+		    }
+		}
+		waiting = 0;
+		calltimeout();
+		if (kill_link) {
+		    kill_link = 0;
+		    new_phase(PHASE_DORMANT); /* allow signal to end holdoff */
+		}
+		if (got_sigchld)
+		    reap_kids(0);
+	    } while (phase == PHASE_HOLDOFF);
+	    if (!persist)
+		break;
+	}
+    }
+
+    /* Wait for scripts to finish */
+    /* XXX should have a timeout here */
+    while (n_children > 0) {
+	if (debug) {
+	    struct subprocess *chp;
+	    dbglog("Waiting for %d child processes...", n_children);
+	    for (chp = children; chp != NULL; chp = chp->next)
+		dbglog("  script %s, pid %d", chp->prog, chp->pid);
+	}
+	if (reap_kids(1) < 0)
+	    break;
+    }
+
+    die(status);
+    return 0;
+}
+
+/*
+ * setup_signals - initialize signal handling.
+ */
+static void
+setup_signals()
+{
+    struct sigaction sa;
+    sigset_t mask;
 
     /*
      * Compute mask of all interesting signals and install signal handlers
@@ -506,471 +723,23 @@ main(argc, argv)
      * be sufficient.
      */
     signal(SIGPIPE, SIG_IGN);
+}
 
-    waiting = 0;
-
-    create_linkpidfile();
-
-    /*
-     * If we're doing dial-on-demand, set up the interface now.
-     */
-    if (demand) {
-	/*
-	 * Open the loopback channel and set it up to be the ppp interface.
-	 */
-	fd_loop = open_ppp_loopback();
-
-	syslog(LOG_INFO, "Using interface ppp%d", ifunit);
-	slprintf(ifname, sizeof(ifname), "ppp%d", ifunit);
-	script_setenv("IFNAME", ifname);
-
+/*
+ * set_ifunit - do things we need to do once we know which ppp
+ * unit we are using.
+ */
+void
+set_ifunit(iskey)
+    int iskey;
+{
+    info("Using interface %s%d", PPP_DRV_NAME, ifunit);
+    slprintf(ifname, sizeof(ifname), "%s%d", PPP_DRV_NAME, ifunit);
+    script_setenv("IFNAME", ifname, iskey);
+    if (iskey) {
 	create_pidfile();	/* write pid to file */
-
-	/*
-	 * Configure the interface and mark it up, etc.
-	 */
-	demand_conf();
+	create_linkpidfile();
     }
-
-    do_callback = 0;
-    for (;;) {
-
-	need_holdoff = 1;
-	ttyfd = -1;
-	real_ttyfd = -1;
-	status = EXIT_OK;
-	++unsuccess;
-	doing_callback = do_callback;
-	do_callback = 0;
-
-	if (demand && !doing_callback) {
-	    /*
-	     * Don't do anything until we see some activity.
-	     */
-	    kill_link = 0;
-	    new_phase(PHASE_DORMANT);
-	    demand_unblock();
-	    add_fd(fd_loop);
-	    for (;;) {
-		if (sigsetjmp(sigjmp, 1) == 0) {
-		    sigprocmask(SIG_BLOCK, &mask, NULL);
-		    if (kill_link || got_sigchld) {
-			sigprocmask(SIG_UNBLOCK, &mask, NULL);
-		    } else {
-			waiting = 1;
-			sigprocmask(SIG_UNBLOCK, &mask, NULL);
-			wait_input(timeleft(&timo));
-		    }
-		}
-		waiting = 0;
-		calltimeout();
-		if (kill_link) {
-		    if (!persist)
-			break;
-		    kill_link = 0;
-		}
-		if (get_loop_output())
-		    break;
-		if (got_sigchld)
-		    reap_kids(0);
-	    }
-	    remove_fd(fd_loop);
-	    if (kill_link && !persist)
-		break;
-
-	    /*
-	     * Now we want to bring up the link.
-	     */
-	    demand_block();
-	    info("Starting link");
-	}
-
-	new_phase(PHASE_SERIALCONN);
-
-	/*
-	 * Get a pty master/slave pair if the pty, notty, or record
-	 * options were specified.
-	 */
-	strlcpy(ppp_devnam, devnam, sizeof(ppp_devnam));
-	pty_master = -1;
-	pty_slave = -1;
-	if (ptycommand != NULL || notty || record_file != NULL) {
-	    if (!get_pty(&pty_master, &pty_slave, ppp_devnam, uid)) {
-		error("Couldn't allocate pseudo-tty");
-		status = EXIT_FATAL_ERROR;
-		goto fail;
-	    }
-	    set_up_tty(pty_slave, 1);
-	}
-
-	/*
-	 * Lock the device if we've been asked to.
-	 */
-	status = EXIT_LOCK_FAILED;
-	if (lockflag && !privopen) {
-	    if (lock(devnam) < 0)
-		goto fail;
-	    locked = 1;
-	}
-
-	/*
-	 * Open the serial device and set it up to be the ppp interface.
-	 * First we open it in non-blocking mode so we can set the
-	 * various termios flags appropriately.  If we aren't dialling
-	 * out and we want to use the modem lines, we reopen it later
-	 * in order to wait for the carrier detect signal from the modem.
-	 */
-	hungup = 0;
-	kill_link = 0;
-	connector = doing_callback? callback_script: connect_script;
-	if (devnam[0] != 0) {
-	    for (;;) {
-		/* If the user specified the device name, become the
-		   user before opening it. */
-		int err;
-		if (!devnam_info.priv && !privopen)
-		    seteuid(uid);
-		ttyfd = open(devnam, O_NONBLOCK | O_RDWR, 0);
-		err = errno;
-		if (!devnam_info.priv && !privopen)
-		    seteuid(0);
-		if (ttyfd >= 0)
-		    break;
-		errno = err;
-		if (err != EINTR) {
-		    error("Failed to open %s: %m", devnam);
-		    status = EXIT_OPEN_FAILED;
-		}
-		if (!persist || err != EINTR)
-		    goto fail;
-	    }
-	    if ((fdflags = fcntl(ttyfd, F_GETFL)) == -1
-		|| fcntl(ttyfd, F_SETFL, fdflags & ~O_NONBLOCK) < 0)
-		warn("Couldn't reset non-blocking mode on device: %m");
-
-	    /*
-	     * Do the equivalent of `mesg n' to stop broadcast messages.
-	     */
-	    if (fstat(ttyfd, &statbuf) < 0
-		|| fchmod(ttyfd, statbuf.st_mode & ~(S_IWGRP | S_IWOTH)) < 0) {
-		warn("Couldn't restrict write permissions to %s: %m", devnam);
-	    } else
-		tty_mode = statbuf.st_mode;
-
-	    /*
-	     * Set line speed, flow control, etc.
-	     * If we have a non-null connection or initializer script,
-	     * on most systems we set CLOCAL for now so that we can talk
-	     * to the modem before carrier comes up.  But this has the
-	     * side effect that we might miss it if CD drops before we
-	     * get to clear CLOCAL below.  On systems where we can talk
-	     * successfully to the modem with CLOCAL clear and CD down,
-	     * we could clear CLOCAL at this point.
-	     */
-	    set_up_tty(ttyfd, ((connector != NULL && connector[0] != 0)
-			       || initializer != NULL));
-	    real_ttyfd = ttyfd;
-	}
-
-	/*
-	 * If the notty and/or record option was specified,
-	 * start up the character shunt now.
-	 */
-	status = EXIT_PTYCMD_FAILED;
-	if (ptycommand != NULL) {
-	    if (record_file != NULL) {
-		int ipipe[2], opipe[2], ok;
-
-		if (pipe(ipipe) < 0 || pipe(opipe) < 0)
-		    fatal("Couldn't create pipes for record option: %m");
-		ok = device_script(ptycommand, opipe[0], ipipe[1], 1) == 0
-		    && start_charshunt(ipipe[0], opipe[1]);
-		close(ipipe[0]);
-		close(ipipe[1]);
-		close(opipe[0]);
-		close(opipe[1]);
-		if (!ok)
-		    goto fail;
-	    } else {
-		if (device_script(ptycommand, pty_master, pty_master, 1) < 0)
-		    goto fail;
-		ttyfd = pty_slave;
-		close(pty_master);
-		pty_master = -1;
-	    }
-	} else if (notty) {
-	    if (!start_charshunt(0, 1))
-		goto fail;
-	} else if (record_file != NULL) {
-	    if (!start_charshunt(ttyfd, ttyfd))
-		goto fail;
-	}
-
-	/* run connection script */
-	if ((connector && connector[0]) || initializer) {
-	    if (real_ttyfd != -1) {
-		/* XXX do this if doing_callback == CALLBACK_DIALIN? */
-		if (!default_device && modem) {
-		    setdtr(real_ttyfd, 0);	/* in case modem is off hook */
-		    sleep(1);
-		    setdtr(real_ttyfd, 1);
-		}
-	    }
-
-	    if (initializer && initializer[0]) {
-		if (device_script(initializer, ttyfd, ttyfd, 0) < 0) {
-		    error("Initializer script failed");
-		    status = EXIT_INIT_FAILED;
-		    goto fail;
-		}
-		if (kill_link)
-		    goto disconnect;
-
-		info("Serial port initialized.");
-	    }
-
-	    if (connector && connector[0]) {
-		if (device_script(connector, ttyfd, ttyfd, 0) < 0) {
-		    error("Connect script failed");
-		    status = EXIT_CONNECT_FAILED;
-		    goto fail;
-		}
-		if (kill_link)
-		    goto disconnect;
-
-		info("Serial connection established.");
-	    }
-
-	    /* set line speed, flow control, etc.;
-	       clear CLOCAL if modem option */
-	    if (real_ttyfd != -1)
-		set_up_tty(real_ttyfd, 0);
-
-	    if (doing_callback == CALLBACK_DIALIN)
-		connector = NULL;
-	}
-
-	/* reopen tty if necessary to wait for carrier */
-	if (connector == NULL && modem && devnam[0] != 0) {
-	    for (;;) {
-		if ((i = open(devnam, O_RDWR)) >= 0)
-		    break;
-		if (errno != EINTR) {
-		    error("Failed to reopen %s: %m", devnam);
-		    status = EXIT_OPEN_FAILED;
-		}
-		if (!persist || errno != EINTR || hungup || kill_link)
-		    goto fail;
-	    }
-	    close(i);
-	}
-
-	slprintf(numbuf, sizeof(numbuf), "%d", baud_rate);
-	script_setenv("SPEED", numbuf);
-
-	/* run welcome script, if any */
-	if (welcomer && welcomer[0]) {
-	    if (device_script(welcomer, ttyfd, ttyfd, 0) < 0)
-		warn("Welcome script failed");
-	}
-
-	/* set up the serial device as a ppp interface */
-	fd_ppp = establish_ppp(ttyfd);
-	if (fd_ppp < 0) {
-	    status = EXIT_FATAL_ERROR;
-	    goto disconnect;
-	}
-
-	if (!demand) {
-	    
-	    info("Using interface ppp%d", ifunit);
-	    slprintf(ifname, sizeof(ifname), "ppp%d", ifunit);
-	    script_setenv("IFNAME", ifname);
-
-	    create_pidfile();	/* write pid to file */
-	}
-
-	/*
-	 * Start opening the connection and wait for
-	 * incoming events (reply, timeout, etc.).
-	 */
-	notice("Connect: %s <--> %s", ifname, ppp_devnam);
-	gettimeofday(&start_time, NULL);
-	link_stats_valid = 0;
-	script_unsetenv("CONNECT_TIME");
-	script_unsetenv("BYTES_SENT");
-	script_unsetenv("BYTES_RCVD");
-	lcp_lowerup(0);
-
-	/*
-	 * If we are initiating this connection, wait for a short
-	 * time for something from the peer.  This can avoid bouncing
-	 * our packets off his tty before he has it set up.
-	 */
-	add_fd(fd_ppp);
-	if (connect_delay != 0 && (connector != NULL || ptycommand != NULL)) {
-	    struct timeval t;
-	    t.tv_sec = connect_delay / 1000;
-	    t.tv_usec = connect_delay % 1000;
-	    wait_input(&t);
-	}
-
-	lcp_open(0);		/* Start protocol */
-	open_ccp_flag = 0;
-	status = EXIT_NEGOTIATION_FAILED;
-	new_phase(PHASE_ESTABLISH);
-	while (phase != PHASE_DEAD) {
-	    if (sigsetjmp(sigjmp, 1) == 0) {
-		sigprocmask(SIG_BLOCK, &mask, NULL);
-		if (kill_link || open_ccp_flag || got_sigchld) {
-		    sigprocmask(SIG_UNBLOCK, &mask, NULL);
-		} else {
-		    waiting = 1;
-		    sigprocmask(SIG_UNBLOCK, &mask, NULL);
-		    wait_input(timeleft(&timo));
-		}
-	    }
-	    waiting = 0;
-	    calltimeout();
-	    get_input();
-	    if (kill_link) {
-		lcp_close(0, "User request");
-		kill_link = 0;
-	    }
-	    if (open_ccp_flag) {
-		if (phase == PHASE_NETWORK || phase == PHASE_RUNNING) {
-		    ccp_fsm[0].flags = OPT_RESTART; /* clears OPT_SILENT */
-		    (*ccp_protent.open)(0);
-		}
-		open_ccp_flag = 0;
-	    }
-	    if (got_sigchld)
-		reap_kids(0);	/* Don't leave dead kids lying around */
-	}
-
-	/*
-	 * Print connect time and statistics.
-	 */
-	if (link_stats_valid) {
-	    int t = (link_connect_time + 5) / 6;    /* 1/10ths of minutes */
-	    info("Connect time %d.%d minutes.", t/10, t%10);
-	    info("Sent %d bytes, received %d bytes.",
-		 link_stats.bytes_out, link_stats.bytes_in);
-	}
-
-	/*
-	 * Delete pid file before disestablishing ppp.  Otherwise it
-	 * can happen that another pppd gets the same unit and then
-	 * we delete its pid file.
-	 */
-	if (!demand) {
-	    if (pidfilename[0] != 0
-		&& unlink(pidfilename) < 0 && errno != ENOENT) 
-		warn("unable to delete pid file %s: %m", pidfilename);
-	    pidfilename[0] = 0;
-	}
-
-	/*
-	 * If we may want to bring the link up again, transfer
-	 * the ppp unit back to the loopback.  Set the
-	 * real serial device back to its normal mode of operation.
-	 */
-	remove_fd(fd_ppp);
-	clean_check();
-	if (demand)
-	    restore_loop();
-	disestablish_ppp(ttyfd);
-	fd_ppp = -1;
-	if (!hungup)
-	    lcp_lowerdown(0);
-
-	/*
-	 * Run disconnector script, if requested.
-	 * XXX we may not be able to do this if the line has hung up!
-	 */
-    disconnect:
-	if (disconnect_script && !hungup) {
-	    new_phase(PHASE_DISCONNECT);
-	    if (real_ttyfd >= 0)
-		set_up_tty(real_ttyfd, 1);
-	    if (device_script(disconnect_script, ttyfd, ttyfd, 0) < 0) {
-		warn("disconnect script failed");
-	    } else {
-		info("Serial link disconnected.");
-	    }
-	}
-
-    fail:
-	if (pty_master >= 0)
-	    close(pty_master);
-	if (pty_slave >= 0)
-	    close(pty_slave);
-	if (real_ttyfd >= 0)
-	    close_tty();
-	if (locked) {
-	    unlock();
-	    locked = 0;
-	}
-
-	if (!demand) {
-	    if (pidfilename[0] != 0
-		&& unlink(pidfilename) < 0 && errno != ENOENT) 
-		warn("unable to delete pid file %s: %m", pidfilename);
-	    pidfilename[0] = 0;
-	}
-
-	if (!persist || (maxfail > 0 && unsuccess >= maxfail))
-	    break;
-
-	kill_link = 0;
-	if (demand)
-	    demand_discard();
-	t = need_holdoff? holdoff: 0;
-	if (holdoff_hook)
-	    t = (*holdoff_hook)();
-	if (t > 0) {
-	    new_phase(PHASE_HOLDOFF);
-	    TIMEOUT(holdoff_end, NULL, t);
-	    do {
-		if (sigsetjmp(sigjmp, 1) == 0) {
-		    sigprocmask(SIG_BLOCK, &mask, NULL);
-		    if (kill_link || got_sigchld) {
-			sigprocmask(SIG_UNBLOCK, &mask, NULL);
-		    } else {
-			waiting = 1;
-			sigprocmask(SIG_UNBLOCK, &mask, NULL);
-			wait_input(timeleft(&timo));
-		    }
-		}
-		waiting = 0;
-		calltimeout();
-		if (kill_link) {
-		    kill_link = 0;
-		    new_phase(PHASE_DORMANT); /* allow signal to end holdoff */
-		}
-		if (got_sigchld)
-		    reap_kids(0);
-	    } while (phase == PHASE_HOLDOFF);
-	    if (!persist)
-		break;
-	}
-    }
-
-    /* Wait for scripts to finish */
-    /* XXX should have a timeout here */
-    while (n_children > 0) {
-	if (debug) {
-	    struct subprocess *chp;
-	    dbglog("Waiting for %d child processes...", n_children);
-	    for (chp = children; chp != NULL; chp = chp->next)
-		dbglog("  script %s, pid %d", chp->prog, chp->pid);
-	}
-	if (reap_kids(1) < 0)
-	    break;
-    }
-
-    die(status);
-    return 0;
 }
 
 /*
@@ -980,6 +749,7 @@ void
 detach()
 {
     int pid;
+    char numbuf[16];
 
     if (detached)
 	return;
@@ -989,8 +759,7 @@ detach()
     }
     if (pid != 0) {
 	/* parent */
-	if (locked)
-	    relock(pid);
+	notify(pidchange, pid);
 	exit(0);		/* parent dies */
     }
     setsid();
@@ -999,12 +768,15 @@ detach()
     close(1);
     close(2);
     detached = 1;
-    log_to_fd = -1;
+    if (!log_to_file && !log_to_specific_fd)
+	log_to_fd = -1;
     /* update pid files if they have been written already */
     if (pidfilename[0])
 	create_pidfile();
     if (linkpidfile[0])
 	create_linkpidfile();
+    slprintf(numbuf, sizeof(numbuf), "%d", getpid());
+    script_setenv("PPPD_PID", numbuf, 1);
 }
 
 /*
@@ -1028,7 +800,6 @@ static void
 create_pidfile()
 {
     FILE *pidfile;
-    char numbuf[16];
 
     slprintf(pidfilename, sizeof(pidfilename), "%s%s.pid",
 	     _PATH_VARRUN, ifname);
@@ -1039,10 +810,6 @@ create_pidfile()
 	error("Failed to create pid file %s: %m", pidfilename);
 	pidfilename[0] = 0;
     }
-    slprintf(numbuf, sizeof(numbuf), "%d", getpid());
-    script_setenv("PPPD_PID", numbuf);
-    if (linkpidfile[0])
-	create_linkpidfile();
 }
 
 static void
@@ -1052,18 +819,18 @@ create_linkpidfile()
 
     if (linkname[0] == 0)
 	return;
+    script_setenv("LINKNAME", linkname, 1);
     slprintf(linkpidfile, sizeof(linkpidfile), "%sppp-%s.pid",
 	     _PATH_VARRUN, linkname);
     if ((pidfile = fopen(linkpidfile, "w")) != NULL) {
 	fprintf(pidfile, "%d\n", getpid());
-	if (pidfilename[0])
+	if (ifname[0])
 	    fprintf(pidfile, "%s\n", ifname);
 	(void) fclose(pidfile);
     } else {
 	error("Failed to create pid file %s: %m", linkpidfile);
 	linkpidfile[0] = 0;
     }
-    script_setenv("LINKNAME", linkname);
 }
 
 /*
@@ -1253,6 +1020,7 @@ new_phase(p)
     phase = p;
     if (new_phase_hook)
 	(*new_phase_hook)(p);
+    notify(phasechange, p);
 }
 
 /*
@@ -1263,6 +1031,7 @@ die(status)
     int status;
 {
     cleanup();
+    notify(exitnotify, status);
     syslog(LOG_INFO, "Exit.");
     exit(status);
 }
@@ -1277,9 +1046,8 @@ cleanup()
     sys_cleanup();
 
     if (fd_ppp >= 0)
-	disestablish_ppp(ttyfd);
-    if (real_ttyfd >= 0)
-	close_tty();
+	disestablish_ppp(devfd);
+    cleanup_tty();
 
     if (pidfilename[0] != 0 && unlink(pidfilename) < 0 && errno != ENOENT) 
 	warn("unable to delete pid file %s: %m", pidfilename);
@@ -1288,37 +1056,8 @@ cleanup()
 	warn("unable to delete pid file %s: %m", linkpidfile);
     linkpidfile[0] = 0;
 
-    if (locked)
-	unlock();
-}
-
-/*
- * close_tty - restore the terminal device and close it.
- */
-static void
-close_tty()
-{
-    /* drop dtr to hang up */
-    if (!default_device && modem) {
-	setdtr(real_ttyfd, 0);
-	/*
-	 * This sleep is in case the serial port has CLOCAL set by default,
-	 * and consequently will reassert DTR when we close the device.
-	 */
-	sleep(1);
-    }
-
-    restore_tty(real_ttyfd);
-
-    if (tty_mode != (mode_t) -1) {
-	if (fchmod(real_ttyfd, tty_mode) != 0) {
-	    /* XXX if devnam is a symlink, this will change the link */
-	    chmod(devnam, tty_mode);
-	}
-    }
-
-    close(real_ttyfd);
-    real_ttyfd = -1;
+    if (pppdb != NULL)
+	cleanup_db();
 }
 
 /*
@@ -1338,11 +1077,11 @@ update_link_stats(u)
     link_stats_valid = 1;
 
     slprintf(numbuf, sizeof(numbuf), "%d", link_connect_time);
-    script_setenv("CONNECT_TIME", numbuf);
+    script_setenv("CONNECT_TIME", numbuf, 0);
     slprintf(numbuf, sizeof(numbuf), "%d", link_stats.bytes_out);
-    script_setenv("BYTES_SENT", numbuf);
+    script_setenv("BYTES_SENT", numbuf, 0);
     slprintf(numbuf, sizeof(numbuf), "%d", link_stats.bytes_in);
-    script_setenv("BYTES_RCVD", numbuf);
+    script_setenv("BYTES_RCVD", numbuf, 0);
 }
 
 
@@ -1505,8 +1244,7 @@ hup(sig)
     if (conn_running)
 	/* Send the signal to the [dis]connector process(es) also */
 	kill_my_pg(sig);
-    if (charshunt_pid)
-	kill(charshunt_pid, sig);
+    notify(sigreceived, sig);
     if (waiting)
 	siglongjmp(sigjmp, 1);
 }
@@ -1529,8 +1267,7 @@ term(sig)
     if (conn_running)
 	/* Send the signal to the [dis]connector process(es) also */
 	kill_my_pg(sig);
-    if (charshunt_pid)
-	kill(charshunt_pid, sig);
+    notify(sigreceived, sig);
     if (waiting)
 	siglongjmp(sigjmp, 1);
 }
@@ -1600,23 +1337,23 @@ bad_signal(sig)
     error("Fatal signal %d", sig);
     if (conn_running)
 	kill_my_pg(SIGTERM);
-    if (charshunt_pid)
-	kill(charshunt_pid, SIGTERM);
+    notify(sigreceived, sig);
     die(127);
 }
 
 
 /*
- * device_script - run a program to talk to the serial device
+ * device_script - run a program to talk to the specified fds
  * (e.g. to run the connector or disconnector script).
+ * stderr gets connected to the log fd or to the _PATH_CONNERRS file.
  */
-static int
+int
 device_script(program, in, out, dont_wait)
     char *program;
     int in, out;
     int dont_wait;
 {
-    int pid;
+    int pid, fd;
     int status = -1;
     int errfd;
 
@@ -1629,68 +1366,67 @@ device_script(program, in, out, dont_wait)
 	return -1;
     }
 
-    if (pid == 0) {
-	sys_close();
-	closelog();
-	if (in == 2) {
-	    /* aargh!!! */
-	    int newin = dup(in);
-	    if (in == out)
-		out = newin;
-	    in = newin;
-	} else if (out == 2) {
-	    out = dup(out);
-	}
-	if (log_to_fd >= 0) {
-	    if (log_to_fd != 2)
-		dup2(log_to_fd, 2);
+    if (pid != 0) {
+	if (dont_wait) {
+	    record_child(pid, program, NULL, NULL);
+	    status = 0;
 	} else {
-	    close(2);
-	    errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0600);
-	    if (errfd >= 0 && errfd != 2) {
-		dup2(errfd, 2);
-		close(errfd);
+	    while (waitpid(pid, &status, 0) < 0) {
+		if (errno == EINTR)
+		    continue;
+		fatal("error waiting for (dis)connection process: %m");
 	    }
+	    --conn_running;
 	}
-	if (in != 0) {
-	    if (out == 0)
-		out = dup(out);
-	    dup2(in, 0);
-	}
-	if (out != 1) {
-	    dup2(out, 1);
-	}
-	if (real_ttyfd > 2)
-	    close(real_ttyfd);
-	if (pty_master > 2)
-	    close(pty_master);
-	if (pty_slave > 2)
-	    close(pty_slave);
-	setuid(uid);
-	if (getuid() != uid) {
-	    error("setuid failed");
-	    exit(1);
-	}
-	setgid(getgid());
-	execl("/bin/sh", "sh", "-c", program, (char *)0);
-	error("could not exec /bin/sh: %m");
-	exit(99);
-	/* NOTREACHED */
+	return (status == 0 ? 0 : -1);
     }
 
-    if (dont_wait) {
-	record_child(pid, program, NULL, NULL);
-	status = 0;
+    /* here we are executing in the child */
+    /* make sure fds 0, 1, 2 are occupied */
+    while ((fd = dup(in)) >= 0) {
+	if (fd > 2) {
+	    close(fd);
+	    break;
+	}
+    }
+
+    /* dup in and out to fds > 2 */
+    in = dup(in);
+    out = dup(out);
+    if (log_to_fd >= 0) {
+	errfd = dup(log_to_fd);
     } else {
-	while (waitpid(pid, &status, 0) < 0) {
-	    if (errno == EINTR)
-		continue;
-	    fatal("error waiting for (dis)connection process: %m");
-	}
-	--conn_running;
+	errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0600);
     }
 
-    return (status == 0 ? 0 : -1);
+    /* close fds 0 - 2 and any others we can think of */
+    close(0);
+    close(1);
+    close(2);
+    sys_close();
+    tty_close_fds();
+    closelog();
+
+    /* dup the in, out, err fds to 0, 1, 2 */
+    dup2(in, 0);
+    close(in);
+    dup2(out, 1);
+    close(out);
+    if (errfd >= 0) {
+	dup2(errfd, 2);
+	close(errfd);
+    }
+
+    setuid(uid);
+    if (getuid() != uid) {
+	error("setuid failed");
+	exit(1);
+    }
+    setgid(getgid());
+    execl("/bin/sh", "sh", "-c", program, (char *)0);
+    error("could not exec /bin/sh: %m");
+    exit(99);
+    /* NOTREACHED */
 }
 
 
@@ -1750,9 +1486,7 @@ run_program(prog, args, must_exist, done, arg)
 	close (0);
 	close (1);
 	close (2);
-	close (ttyfd);  /* tty interface to the ppp device */
-	if (real_ttyfd >= 0)
-	    close(real_ttyfd);
+	tty_close_fds();
 
         /* Don't pass handles to the PPP device, even by accident. */
 	new_fd = open (_PATH_DEVNULL, O_RDWR);
@@ -1797,7 +1531,7 @@ run_program(prog, args, must_exist, done, arg)
  * record_child - add a child process to the list for reap_kids
  * to use.
  */
-static void
+void
 record_child(pid, prog, done, arg)
     int pid;
     char *prog;
@@ -1838,9 +1572,9 @@ reap_kids(waitfor)
 	return 0;
     while ((pid = waitpid(-1, &status, (waitfor? 0: WNOHANG))) != -1
 	   && pid != 0) {
-	--n_children;
 	for (prevp = &children; (chp = *prevp) != NULL; prevp = &chp->next) {
 	    if (chp->pid == pid) {
+		--n_children;
 		*prevp = chp->next;
 		break;
 	    }
@@ -1865,6 +1599,62 @@ reap_kids(waitfor)
     return 0;
 }
 
+/*
+ * add_notifier - add a new function to be called when something happens.
+ */
+void
+add_notifier(notif, func, arg)
+    struct notifier **notif;
+    notify_func func;
+    void *arg;
+{
+    struct notifier *np;
+
+    np = malloc(sizeof(struct notifier));
+    if (np == 0)
+	novm("notifier struct");
+    np->next = *notif;
+    np->func = func;
+    np->arg = arg;
+    *notif = np;
+}
+
+/*
+ * remove_notifier - remove a function from the list of things to
+ * be called when something happens.
+ */
+void
+remove_notifier(notif, func, arg)
+    struct notifier **notif;
+    notify_func func;
+    void *arg;
+{
+    struct notifier *np;
+
+    for (; (np = *notif) != 0; notif = &np->next) {
+	if (np->func == func && np->arg == arg) {
+	    *notif = np->next;
+	    free(np);
+	    break;
+	}
+    }
+}
+
+/*
+ * notify - call a set of functions registered with add_notify.
+ */
+void
+notify(notif, val)
+    struct notifier *notif;
+    int val;
+{
+    struct notifier *np;
+
+    while ((np = notif) != 0) {
+	notif = np->next;
+	(*np->func)(np->arg, val);
+    }
+}
 
 /*
  * novm - log an error message saying we ran out of memory, and die.
@@ -1881,24 +1671,32 @@ novm(msg)
  * for scripts that we run (e.g. ip-up, auth-up, etc.)
  */
 void
-script_setenv(var, value)
+script_setenv(var, value, iskey)
     char *var, *value;
+    int iskey;
 {
-    size_t vl = strlen(var) + strlen(value) + 2;
+    size_t varl = strlen(var);
+    size_t vl = varl + strlen(value) + 2;
     int i;
     char *p, *newstring;
 
-    newstring = (char *) malloc(vl);
+    newstring = (char *) malloc(vl+1);
     if (newstring == 0)
 	return;
+    *newstring++ = iskey;
     slprintf(newstring, vl, "%s=%s", var, value);
 
     /* check if this variable is already set */
     if (script_env != 0) {
 	for (i = 0; (p = script_env[i]) != 0; ++i) {
-	    if (strncmp(p, var, vl) == 0 && p[vl] == '=') {
-		free(p);
+	    if (strncmp(p, var, varl) == 0 && p[varl] == '=') {
+		if (p[-1] && pppdb != NULL)
+		    delete_db_key(p);
+		free(p-1);
 		script_env[i] = newstring;
+		if (iskey && pppdb != NULL)
+		    add_db_key(newstring);
+		update_db_entry();
 		return;
 	    }
 	}
@@ -1924,6 +1722,12 @@ script_setenv(var, value)
 
     script_env[i] = newstring;
     script_env[i+1] = 0;
+
+    if (pppdb != NULL) {
+	if (iskey)
+	    add_db_key(newstring);
+	update_db_entry();
+    }
 }
 
 /*
@@ -1942,297 +1746,94 @@ script_unsetenv(var)
 	return;
     for (i = 0; (p = script_env[i]) != 0; ++i) {
 	if (strncmp(p, var, vl) == 0 && p[vl] == '=') {
-	    free(p);
+	    if (p[-1] && pppdb != NULL)
+		delete_db_key(p);
+	    free(p-1);
 	    while ((script_env[i] = script_env[i+1]) != 0)
 		++i;
 	    break;
 	}
     }
+    if (pppdb != NULL)
+	update_db_entry();
 }
 
 /*
- * start_charshunt - create a child process to run the character shunt.
+ * update_db_entry - update our entry in the database.
  */
-static int
-start_charshunt(ifd, ofd)
-    int ifd, ofd;
-{
-    int cpid;
-
-    cpid = fork();
-    if (cpid == -1) {
-	error("Can't fork process for character shunt: %m");
-	return 0;
-    }
-    if (cpid == 0) {
-	/* child */
-	close(pty_slave);
-	setuid(uid);
-	if (getuid() != uid)
-	    fatal("setuid failed");
-	setgid(getgid());
-	if (!nodetach)
-	    log_to_fd = -1;
-	charshunt(ifd, ofd, record_file);
-	exit(0);
-    }
-    charshunt_pid = cpid;
-    close(pty_master);
-    pty_master = -1;
-    ttyfd = pty_slave;
-    record_child(cpid, "pppd (charshunt)", charshunt_done, NULL);
-    return 1;
-}
-
 static void
-charshunt_done(arg)
-    void *arg;
+update_db_entry()
 {
-    charshunt_pid = 0;
+    TDB_DATA key, dbuf;
+    int vlen, i;
+    char *p, *q, *vbuf;
+
+    if (script_env == NULL)
+	return;
+    vlen = 0;
+    for (i = 0; (p = script_env[i]) != 0; ++i)
+	vlen += strlen(p) + 1;
+    vbuf = malloc(vlen);
+    if (vbuf == 0)
+	novm("database entry");
+    q = vbuf;
+    for (i = 0; (p = script_env[i]) != 0; ++i)
+	q += slprintf(q, vbuf + vlen - q, "%s;", p);
+
+    key.dptr = db_key;
+    key.dsize = strlen(db_key);
+    dbuf.dptr = vbuf;
+    dbuf.dsize = vlen;
+    if (tdb_store(pppdb, key, dbuf, TDB_REPLACE))
+	error("tdb_store failed: %s", tdb_error(pppdb));
+
 }
 
 /*
- * charshunt - the character shunt, which passes characters between
- * the pty master side and the serial port (or stdin/stdout).
- * This runs as the user (not as root).
- * (We assume ofd >= ifd which is true the way this gets called. :-).
+ * add_db_key - add a key that we can use to look up our database entry.
  */
 static void
-charshunt(ifd, ofd, record_file)
-    int ifd, ofd;
-    char *record_file;
+add_db_key(str)
+    const char *str;
 {
-    int n, nfds;
-    fd_set ready, writey;
-    u_char *ibufp, *obufp;
-    int nibuf, nobuf;
-    int flags;
-    int pty_readable, stdin_readable;
-    struct timeval lasttime;
-    FILE *recordf = NULL;
+    TDB_DATA key, dbuf;
 
-    /*
-     * Reset signal handlers.
-     */
-    signal(SIGHUP, SIG_IGN);		/* Hangup */
-    signal(SIGINT, SIG_DFL);		/* Interrupt */
-    signal(SIGTERM, SIG_DFL);		/* Terminate */
-    signal(SIGCHLD, SIG_DFL);
-    signal(SIGUSR1, SIG_DFL);
-    signal(SIGUSR2, SIG_DFL);
-    signal(SIGABRT, SIG_DFL);
-    signal(SIGALRM, SIG_DFL);
-    signal(SIGFPE, SIG_DFL);
-    signal(SIGILL, SIG_DFL);
-    signal(SIGPIPE, SIG_DFL);
-    signal(SIGQUIT, SIG_DFL);
-    signal(SIGSEGV, SIG_DFL);
-#ifdef SIGBUS
-    signal(SIGBUS, SIG_DFL);
-#endif
-#ifdef SIGEMT
-    signal(SIGEMT, SIG_DFL);
-#endif
-#ifdef SIGPOLL
-    signal(SIGPOLL, SIG_DFL);
-#endif
-#ifdef SIGPROF
-    signal(SIGPROF, SIG_DFL);
-#endif
-#ifdef SIGSYS
-    signal(SIGSYS, SIG_DFL);
-#endif
-#ifdef SIGTRAP
-    signal(SIGTRAP, SIG_DFL);
-#endif
-#ifdef SIGVTALRM
-    signal(SIGVTALRM, SIG_DFL);
-#endif
-#ifdef SIGXCPU
-    signal(SIGXCPU, SIG_DFL);
-#endif
-#ifdef SIGXFSZ
-    signal(SIGXFSZ, SIG_DFL);
-#endif
-
-    /*
-     * Open the record file if required.
-     */
-    if (record_file != NULL) {
-	recordf = fopen(record_file, "a");
-	if (recordf == NULL)
-	    error("Couldn't create record file %s: %m", record_file);
-    }
-
-    /* set all the fds to non-blocking mode */
-    flags = fcntl(pty_master, F_GETFL);
-    if (flags == -1
-	|| fcntl(pty_master, F_SETFL, flags | O_NONBLOCK) == -1)
-	warn("couldn't set pty master to nonblock: %m");
-    flags = fcntl(ifd, F_GETFL);
-    if (flags == -1
-	|| fcntl(ifd, F_SETFL, flags | O_NONBLOCK) == -1)
-	warn("couldn't set %s to nonblock: %m", (ifd==0? "stdin": "tty"));
-    if (ofd != ifd) {
-	flags = fcntl(ofd, F_GETFL);
-	if (flags == -1
-	    || fcntl(ofd, F_SETFL, flags | O_NONBLOCK) == -1)
-	    warn("couldn't set stdout to nonblock: %m");
-    }
-
-    nibuf = nobuf = 0;
-    ibufp = obufp = NULL;
-    pty_readable = stdin_readable = 1;
-    nfds = (ofd > pty_master? ofd: pty_master) + 1;
-    if (recordf != NULL) {
-	gettimeofday(&lasttime, NULL);
-	putc(7, recordf);	/* put start marker */
-	putc(lasttime.tv_sec >> 24, recordf);
-	putc(lasttime.tv_sec >> 16, recordf);
-	putc(lasttime.tv_sec >> 8, recordf);
-	putc(lasttime.tv_sec, recordf);
-	lasttime.tv_usec = 0;
-    }
-
-    while (nibuf != 0 || nobuf != 0 || pty_readable || stdin_readable) {
-	FD_ZERO(&ready);
-	FD_ZERO(&writey);
-	if (nibuf != 0)
-	    FD_SET(pty_master, &writey);
-	else if (stdin_readable)
-	    FD_SET(ifd, &ready);
-	if (nobuf != 0)
-	    FD_SET(ofd, &writey);
-	else if (pty_readable)
-	    FD_SET(pty_master, &ready);
-	if (select(nfds, &ready, &writey, NULL, NULL) < 0) {
-	    if (errno != EINTR)
-		fatal("select");
-	    continue;
-	}
-	if (FD_ISSET(ifd, &ready)) {
-	    ibufp = inpacket_buf;
-	    nibuf = read(ifd, ibufp, sizeof(inpacket_buf));
-	    if (nibuf < 0 && errno == EIO)
-		nibuf = 0;
-	    if (nibuf < 0) {
-		if (!(errno == EINTR || errno == EAGAIN)) {
-		    error("Error reading standard input: %m");
-		    break;
-		}
-		nibuf = 0;
-	    } else if (nibuf == 0) {
-		/* end of file from stdin */
-		stdin_readable = 0;
-		/* do a 0-length write, hopefully this will generate
-		   an EOF (hangup) on the slave side. */
-		write(pty_master, inpacket_buf, 0);
-		if (recordf)
-		    if (!record_write(recordf, 4, NULL, 0, &lasttime))
-			recordf = NULL;
-	    } else {
-		FD_SET(pty_master, &writey);
-		if (recordf)
-		    if (!record_write(recordf, 2, ibufp, nibuf, &lasttime))
-			recordf = NULL;
-	    }
-	}
-	if (FD_ISSET(pty_master, &ready)) {
-	    obufp = outpacket_buf;
-	    nobuf = read(pty_master, obufp, sizeof(outpacket_buf));
-	    if (nobuf < 0 && errno == EIO)
-		nobuf = 0;
-	    if (nobuf < 0) {
-		if (!(errno == EINTR || errno == EAGAIN)) {
-		    error("Error reading pseudo-tty master: %m");
-		    break;
-		}
-		nobuf = 0;
-	    } else if (nobuf == 0) {
-		/* end of file from the pty - slave side has closed */
-		pty_readable = 0;
-		stdin_readable = 0;	/* pty is not writable now */
-		nibuf = 0;
-		close(ofd);
-		if (recordf)
-		    if (!record_write(recordf, 3, NULL, 0, &lasttime))
-			recordf = NULL;
-	    } else {
-		FD_SET(ofd, &writey);
-		if (recordf)
-		    if (!record_write(recordf, 1, obufp, nobuf, &lasttime))
-			recordf = NULL;
-	    }
-	}
-	if (FD_ISSET(ofd, &writey)) {
-	    n = write(ofd, obufp, nobuf);
-	    if (n < 0) {
-		if (errno != EIO) {
-		    error("Error writing standard output: %m");
-		    break;
-		}
-		pty_readable = 0;
-		nobuf = 0;
-	    } else {
-		obufp += n;
-		nobuf -= n;
-	    }
-	}
-	if (FD_ISSET(pty_master, &writey)) {
-	    n = write(pty_master, ibufp, nibuf);
-	    if (n < 0) {
-		if (errno != EIO) {
-		    error("Error writing pseudo-tty master: %m");
-		    break;
-		}
-		stdin_readable = 0;
-		nibuf = 0;
-	    } else {
-		ibufp += n;
-		nibuf -= n;
-	    }
-	}
-    }
-    exit(0);
+    key.dptr = (char *) str;
+    key.dsize = strlen(str);
+    dbuf.dptr = db_key;
+    dbuf.dsize = strlen(db_key);
+    if (tdb_store(pppdb, key, dbuf, TDB_REPLACE))
+	error("tdb_store key failed: %s", tdb_error(pppdb));
 }
 
-static int
-record_write(f, code, buf, nb, tp)
-    FILE *f;
-    int code;
-    u_char *buf;
-    int nb;
-    struct timeval *tp;
+/*
+ * delete_db_key - delete a key for looking up our database entry.
+ */
+static void
+delete_db_key(str)
+    const char *str;
 {
-    struct timeval now;
-    int diff;
+    TDB_DATA key;
 
-    gettimeofday(&now, NULL);
-    now.tv_usec /= 100000;	/* actually 1/10 s, not usec now */
-    diff = (now.tv_sec - tp->tv_sec) * 10 + (now.tv_usec - tp->tv_usec);
-    if (diff > 0) {
-	if (diff > 255) {
-	    putc(5, f);
-	    putc(diff >> 24, f);
-	    putc(diff >> 16, f);
-	    putc(diff >> 8, f);
-	    putc(diff, f);
-	} else {
-	    putc(6, f);
-	    putc(diff, f);
-	}
-	*tp = now;
-    }
-    putc(code, f);
-    if (buf != NULL) {
-	putc(nb >> 8, f);
-	putc(nb, f);
-	fwrite(buf, nb, 1, f);
-    }
-    fflush(f);
-    if (ferror(f)) {
-	error("Error writing record file: %m");
-	return 0;
-    }
-    return 1;
+    key.dptr = (char *) str;
+    key.dsize = strlen(str);
+    tdb_delete(pppdb, key);
+}
+
+/*
+ * cleanup_db - delete all the entries we put in the database.
+ */
+static void
+cleanup_db()
+{
+    TDB_DATA key;
+    int i;
+    char *p;
+
+    key.dptr = db_key;
+    key.dsize = strlen(db_key);
+    tdb_delete(pppdb, key);
+    for (i = 0; (p = script_env[i]) != 0; ++i)
+	if (p[-1])
+	    delete_db_key(p);
 }

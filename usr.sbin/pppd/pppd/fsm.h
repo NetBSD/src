@@ -1,4 +1,4 @@
-/*	$NetBSD: fsm.h,v 1.9 2000/07/16 22:10:12 tron Exp $	*/
+/*	$NetBSD: fsm.h,v 1.10 2000/09/23 22:39:35 christos Exp $	*/
 
 /*
  * fsm.h - {Link, IP} Control Protocol Finite State Machine definitions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: chap.c,v 1.15 2000/07/16 22:10:12 tron Exp $	*/
+/*	$NetBSD: chap.c,v 1.16 2000/09/23 22:39:34 christos Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -38,9 +38,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-define RCSID	"Id: chap.c,v 1.24 1999/11/15 01:51:50 paulus Exp "
+#define RCSID	"Id: chap.c,v 1.24 1999/11/15 01:51:50 paulus Exp "
 #else
-__RCSID("$NetBSD: chap.c,v 1.15 2000/07/16 22:10:12 tron Exp $");
+__RCSID("$NetBSD: chap.c,v 1.16 2000/09/23 22:39:34 christos Exp $");
 #endif
 #endif
 

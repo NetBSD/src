@@ -1,4 +1,4 @@
-/*	$NetBSD: chap_ms.c,v 1.10 1999/08/25 02:07:42 christos Exp $	*/
+/*	$NetBSD: chap_ms.c,v 1.11 2000/09/23 22:39:34 christos Exp $	*/
 
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.
@@ -38,7 +38,7 @@
 #if 0
 #define RCSID	"Id: chap_ms.c,v 1.15 1999/08/13 06:46:12 paulus Exp "
 #else
-__RCSID("$NetBSD: chap_ms.c,v 1.10 1999/08/25 02:07:42 christos Exp $");
+__RCSID("$NetBSD: chap_ms.c,v 1.11 2000/09/23 22:39:34 christos Exp $");
 #endif
 #endif
 
