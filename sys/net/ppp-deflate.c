@@ -1,4 +1,5 @@
-/*	$NetBSD: ppp-deflate.c,v 1.3 1996/10/13 02:11:08 christos Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.4 1997/03/12 20:26:56 christos Exp $	*/
+/*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
  * ppp_deflate.c - interface the zlib procedures for Deflate compression
@@ -40,6 +41,8 @@
 #include <net/ppp-comp.h>
 
 #if DO_DEFLATE
+
+#define DEFLATE_DEBUG	1
 
 /*
  * State for a Deflate (de)compressor.
@@ -272,7 +275,7 @@ z_compress(arg, mret, mp, orig_len, maxolen)
 	r = deflate(&state->strm, flush);
 	if (r != Z_OK) {
 	    printf("z_compress: deflate returned %d (%s)\n",
-		r, (state->strm.msg? state->strm.msg: ""));
+		   r, (state->strm.msg? state->strm.msg: ""));
 	    break;
 	}
 	if (flush != Z_NO_FLUSH && state->strm.avail_out != 0)
@@ -482,7 +485,7 @@ z_decompress(arg, mi, mop)
     if (seq != state->seqno) {
 	if (state->debug)
 	    printf("z_decompress%d: bad seq # %d, expected %d\n",
-		state->unit, seq, state->seqno);
+		   state->unit, seq, state->seqno);
 	return DECOMP_ERROR;
     }
     ++state->seqno;
@@ -531,9 +534,11 @@ z_decompress(arg, mi, mop)
     for (;;) {
 	r = inflate(&state->strm, flush);
 	if (r != Z_OK) {
+#if !DEFLATE_DEBUG
 	    if (state->debug)
+#endif
 		printf("z_decompress%d: inflate returned %d (%s)\n",
-		    state->unit, r, (state->strm.msg? state->strm.msg: ""));
+		       state->unit, r, (state->strm.msg? state->strm.msg: ""));
 	    m_freem(mo_head);
 	    return DECOMP_FATALERROR;
 	}
@@ -578,6 +583,11 @@ z_decompress(arg, mi, mop)
 	return DECOMP_ERROR;
     }
     olen += (mo->m_len = ospace - state->strm.avail_out);
+#if DEFLATE_DEBUG
+    if (olen > state->mru + PPP_HDRLEN)
+	printf("ppp_deflate%d: exceeded mru (%d > %d)\n",
+	       state->unit, olen, state->mru + PPP_HDRLEN);
+#endif
 
     state->stats.unc_bytes += olen;
     state->stats.unc_packets++;
@@ -627,10 +637,11 @@ z_incomp(arg, mi)
 	r = inflateIncomp(&state->strm);
 	if (r != Z_OK) {
 	    /* gak! */
-	    if (state->debug) {
+#if !DEFLATE_DEBUG
+	    if (state->debug)
+#endif
 		printf("z_incomp%d: inflateIncomp returned %d (%s)\n",
-		    state->unit, r, (state->strm.msg? state->strm.msg: ""));
-	    }
+		       state->unit, r, (state->strm.msg? state->strm.msg: ""));
 	    return;
 	}
 	mi = mi->m_next;
