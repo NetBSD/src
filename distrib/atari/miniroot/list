@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.7.10.1 2000/08/29 08:37:08 leo Exp $
+#	$NetBSD: list,v 1.7.10.2 2000/11/14 16:18:34 tv Exp $
 
-# Usage of libhack.o reduces the instbin-size with approx. 64MB!
+# Usage of libhack.o reduces the instbin-size with approx. 64KB!
 LIBS	libhack.o
 
 # Atari extra's
@@ -15,14 +15,14 @@ LINK	instbin			usr/sbin/loadkmap
 ARGVLINK mount_msdos	msdos
 
 # crunchgen source directory specials
-CRUNCHSPECIAL	ahdilabel srcdir /usr/src/sys/arch/atari/stand/ahdilabel/
-CRUNCHSPECIAL	loadkmap srcdir /usr/src/sys/arch/atari/stand/loadkmap/
+CRUNCHSPECIAL	ahdilabel srcdir sys/arch/atari/stand/ahdilabel/
+CRUNCHSPECIAL	loadkmap srcdir sys/arch/atari/stand/loadkmap/
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
 SPECIAL	cd dev; sh MAKEDEV floppy
-SPECIAL	/bin/rm dev/MAKEDEV
+SPECIAL	/bin/rm dev/MAKEDEV dev/MAKEDEV.local
 
 # various files that we need in /etc for the install
 COPY	${ARCHDIR}/disktab.shadow		etc/disktab.shadow
@@ -47,3 +47,6 @@ SPECIAL	mkdir kern
 # remove the /usr/share/zoneinfo directory, so the installation script
 # can determine that the atari install does not support it.
 SPECIAL	rmdir usr/share/zoneinfo
+
+# strip /etc/services - not enough space... (leaves ftp in).
+SPECIAL grep ftp ${DESTDIR}/etc/services > etc/services
