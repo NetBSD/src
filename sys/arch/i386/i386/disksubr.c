@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.35 1998/11/07 01:08:00 jonathan Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.36 1998/11/07 01:30:57 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -154,12 +154,15 @@ readdisklabel(dev, strat, lp, osdep)
 					ourdp = &dp[i];
 	 				/*
 					 * If more than one matches, take last,
-					 * as our  install tool does.
+					 * as NetBSD install tool does.
 					 */
+#if 0
+					break;
+#endif
 				}
 			}
 		}
-#endif
+#endif	/* COMPAT_386BSD_MBRPART */
 		for (i = 0; i < NDOSPART; i++, dp++) {
 			/* Install in partition e, f, g, or h. */
 			pp = &lp->d_partitions[RAW_PART + 1 + i];
@@ -394,11 +397,17 @@ writedisklabel(dev, strat, lp, osdep)
 				if (dp[i].dp_typ == DOSPTYP_386BSD) {
 					printf("WARNING: old BSD partition ID!\n");
 					ourdp = &dp[i];
+	 				/*
+					 * If more than one matches, take last,
+					 * as NetBSD install tool does.
+					 */
+#if 0
 					break;
+#endif
 				}
 			}
 		}
-#endif
+#endif	/* COMPAT_386BSD_MBRPART */
 		if (ourdp) {
 			/* need sector address for SCSI/IDE,
 			 cylinder for ESDI/ST506/RLL */
