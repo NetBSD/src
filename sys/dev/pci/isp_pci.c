@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.44 1999/10/17 01:22:08 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.45 1999/10/17 02:40:26 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  * Matthew Jacob (mjacob@nas.nasa.gov)
@@ -187,7 +187,7 @@ struct isp_pcisoftc {
 	bus_dmamap_t		pci_scratch_dmap;	/* for fcp only */
 	bus_dmamap_t		pci_rquest_dmap;
 	bus_dmamap_t		pci_result_dmap;
-	bus_dmamap_t		pci_xfer_dmap[MAXISPREQUEST];
+	bus_dmamap_t		*pci_xfer_dmap;
 	void *			pci_ih;
 	int16_t			pci_poff[_NREG_BLKS];
 };
@@ -447,7 +447,7 @@ isp_pci_attach(parent, self, aux)
 	/*
 	 * Create the DMA maps for the data transfers.
 	 */
-	for (i = 0; i < RQUEST_QUEUE_LEN; i++) {
+	for (i = 0; i < isp->isp_maxcmds; i++) {
 		if (bus_dmamap_create(pcs->pci_dmat, MAXPHYS,
 		    (MAXPHYS / NBPG) + 1, MAXPHYS, 0, BUS_DMA_NOWAIT,
 		    &pcs->pci_xfer_dmap[i])) {
@@ -590,15 +590,19 @@ isp_pci_mbxdma(isp)
 	if (isp->isp_rquest_dma)	/* been here before? */
 		return (0);
 
-	isp->isp_xflist = (ISP_SCSI_XFER_T **)
-	    malloc(isp->isp_maxcmds * sizeof (ISP_SCSI_XFER_T),
-	    M_DEVBUF, M_WAITOK);
-
+	len = isp->isp_maxcmds * sizeof (ISP_SCSI_XFER_T);
+	isp->isp_xflist = (ISP_SCSI_XFER_T **) malloc(len, M_DEVBUF, M_WAITOK);
 	if (isp->isp_xflist == NULL) {
 		printf("%s: cannot malloc xflist array\n", isp->isp_name);
 		return (1);
 	}
-	bzero(isp->isp_xflist, isp->isp_maxcmds * sizeof (ISP_SCSI_XFER_T));
+	bzero(isp->isp_xflist, len);
+	len = isp->isp_maxcmds * sizeof (bus_dmamap_t);
+	pci->pci_xfer_dmap = (bus_dmamap_t *) malloc(len, M_DEVBUF, M_WAITOK);
+	if (pci->pci_xfer_dmap == NULL) {
+		printf("%s: cannot malloc xflist array\n", isp->isp_name);
+		return (1);
+	}
 
 	/*
 	 * Allocate and map the request queue.
