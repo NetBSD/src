@@ -1,8 +1,6 @@
-#	$NetBSD: files.news68k,v 1.22 2002/11/05 07:41:34 chs Exp $
+#	$NetBSD: files.news68k,v 1.23 2003/06/24 19:57:05 martin Exp $
 
 #	NEWS68K-specific configuration info
-
-defflag	opt_fpuemulate.h	FPU_EMULATE
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
