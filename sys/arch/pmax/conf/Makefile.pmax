@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.37 1996/09/30 02:35:34 jonathan Exp $
+#	$NetBSD: Makefile.pmax,v 1.38 1996/11/22 18:53:31 jonathan Exp $
 
 # Makefile for NetBSD
 #
@@ -23,6 +23,7 @@
 
 CC?=	cc
 LD?=	ld
+KERNLD?=	ld.old	# GNU binutils 2.7 ld can't link kernels, use 2.6
 MKDEP?=	mkdep
 STRIP?=	strip
 
@@ -86,8 +87,8 @@ SYSTEM_OBJ=	locore.o fp.o locore_machdep.o \
 		param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@rm -f $@
-SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
-		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD=	@echo ${KERNLD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o ; \
+		${KERNLD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
 
 DEBUG?=
