@@ -1,4 +1,4 @@
-/*	$NetBSD: nl.c,v 1.1 1999/02/15 15:07:15 kleink Exp $	*/
+/*	$NetBSD: nl.c,v 1.2 1999/02/16 17:31:25 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: nl.c,v 1.1 1999/02/15 15:07:15 kleink Exp $");
+__RCSID("$NetBSD: nl.c,v 1.2 1999/02/16 17:31:25 kleink Exp $");
 #endif    
 
 #include <errno.h>
@@ -307,6 +307,9 @@ filter()
 	adjblank = 0;
 	line = startnum;
 	section = BODY;
+#ifdef __GNUC__
+	(void)&donumber;	/* avoid bogus `uninitialized' warning */
+#endif
 
 	while (fgets(buffer, (int)buffersize, stdin) != NULL) {
 		for (idx = FOOTER; idx <= NP_LAST; idx++) {
