@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.37 2003/10/29 05:03:41 mycroft Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.37 2003/10/29 05:03:41 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2003/10/30 08:44:13 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -618,15 +618,12 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	}
 
 	/*
-	 * If the mapping is not the kernel's and also not the
-	 * current process's (XXX actually, vmspace), then we
-	 * don't have anything to do, since the cache is Wb-Inv'd
-	 * on context switch.
-	 *
-	 * XXX REVISIT WHEN WE DO FCSE!
+	 * If the mapping belongs to a non-kernel vmspace, and the
+	 * vmspace has not been active since the last time a full
+	 * cache flush was performed, we don't need to do anything.
 	 */
 	if (__predict_false(map->_dm_proc != NULL &&
-	    curlwp != NULL && map->_dm_proc != curproc))
+	    map->_dm_proc->p_vmspace->vm_map.pmap->pm_cstate.cs_cache_d == 0))
 		return;
 
 	switch (map->_dm_buftype) {
