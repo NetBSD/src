@@ -1,4 +1,4 @@
-/*	$NetBSD: wscons_emul.c,v 1.3 1996/10/10 23:51:51 christos Exp $	*/
+/*	$NetBSD: wscons_emul.c,v 1.4 1996/10/13 03:00:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -226,7 +226,7 @@ wscons_emul_docontrol(we, c)
 	int n, m;
 
 #if 0
-	kprintf("control: %c: %d, %d\n", c, we->ac_args[0], we->ac_args[1]);
+	printf("control: %c: %d, %d\n", c, we->ac_args[0], we->ac_args[1]);
 #endif
 	switch (c) {
 	case 'A':	/* Cursor Up */

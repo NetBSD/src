@@ -1,4 +1,4 @@
-/*	$NetBSD: tcasic.c,v 1.9 1996/10/10 23:51:41 christos Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.10 1996/10/13 03:00:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -89,7 +89,7 @@ tcasicattach(parent, self, aux)
 	void (*iointr) __P((void *, unsigned long));
 	struct alpha_bus_chipset bc;
 
-	kprintf("\n");
+	printf("\n");
 	tcasicfound = 1;
 
 	switch (cputype) {
@@ -149,6 +149,6 @@ tcasicprint(aux, pnp)
 
 	/* only TCs can attach to tcasics; easy. */
 	if (pnp)
-		kprintf("tc at %s", pnp);
+		printf("tc at %s", pnp);
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.2 1996/10/11 00:46:49 christos Exp $	*/
+/*	$NetBSD: md_root.c,v 1.3 1996/10/13 03:00:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -54,7 +54,7 @@ rd_attach_hook(unit, rd)
 		if ((*rd_read_image)(&rd->rd_size, &rd->rd_addr) != 0)
 			panic("rd_attach");
 		rd->rd_type = RD_KMEM_FIXED;
-		kprintf("rd0: fixed, %d blocks", rd->rd_size >> DEV_BSHIFT);
+		printf("rd0: fixed, %d blocks", rd->rd_size >> DEV_BSHIFT);
 	}
 }
 

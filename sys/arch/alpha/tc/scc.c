@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.21 1996/10/10 23:51:35 christos Exp $	*/
+/*	$NetBSD: scc.c,v 1.22 1996/10/13 03:00:33 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -379,12 +379,12 @@ sccattach(parent, self, aux)
 		cn_tab = &scccons;
 		cn_tab->cn_dev = makedev(SCCDEV, sc->sc_dv.dv_unit * 2);
 
-		kprintf(": console\n");
+		printf(": console\n");
 
 		/* wire carrier for console. */
 		sc->scc_softCAR |= SCCLINE(cn_tab->cn_dev);
 	} else
-		kprintf("\n");
+		printf("\n");
 }
 
 /*
@@ -1256,7 +1256,7 @@ rr(msg, regs)
 	u_char value;
 	int r0, r1, r2, r3, r10, r15;
 
-	kprintf("%s: register: %lx\n", msg, regs);
+	printf("%s: register: %lx\n", msg, regs);
 #define	L(reg, r) {							\
 	SCC_READ_REG(regs, SCC_CHANNEL_A, reg, value);			\
 	r = value;							\
@@ -1267,7 +1267,7 @@ rr(msg, regs)
 	L(ZSRR_IPEND, r3);
 	L(SCC_RR10, r10);
 	L(SCC_RR15, r15);
-	kprintf("A: 0: %x  1: %x    2(vec): %x  3: %x  10: %x  15: %x\n",
+	printf("A: 0: %x  1: %x    2(vec): %x  3: %x  10: %x  15: %x\n",
 	    r0, r1, r2, r3, r10, r15);
 #undef L
 #define	L(reg, r) {							\
@@ -1279,7 +1279,7 @@ rr(msg, regs)
 	L(ZSRR_IVEC, r2);
 	L(SCC_RR10, r10);
 	L(SCC_RR15, r15);
-	kprintf("B: 0: %x  1: %x  2(state): %x        10: %x  15: %x\n",
+	printf("B: 0: %x  1: %x  2(state): %x        10: %x  15: %x\n",
 	    r0, r1, r2, r10, r15);
 }
 #endif

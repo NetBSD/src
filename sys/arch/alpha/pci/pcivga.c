@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivga.c,v 1.10 1996/10/10 23:51:12 christos Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.11 1996/10/13 03:00:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -179,16 +179,16 @@ pcivgaattach(parent, self, aux)
 	}
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	kprintf(": %s (rev. 0x%02x)\n", devinfo,
+	printf(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 #if 0
 	if (sc->sc_dc->dc_tgaconf == NULL) {
-		kprintf("unknown board configuration\n");
+		printf("unknown board configuration\n");
 		return;
 	}
-	kprintf("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
-	kprintf("%s: %d x %d, %dbpp, %s RAMDAC\n", sc->sc_dev.dv_xname,
+	printf("board type %s\n", sc->sc_dc->dc_tgaconf->tgac_name);
+	printf("%s: %d x %d, %dbpp, %s RAMDAC\n", sc->sc_dev.dv_xname,
 	    sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_tgaconf->tgac_phys_depth, 
 	    sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_name);
@@ -199,7 +199,7 @@ pcivgaattach(parent, self, aux)
 	if (PCI_INTERRUPT_PIN(pci_intrdata) != PCI_INTERRUPT_PIN_NONE) {
 		sc->sc_intr = pci_map_int(sc->sc_pcitag, IPL_TTY, tgaintr, sc);
 		if (sc->sc_intr == NULL)
-			kprintf("%s: WARNING: couldn't map interrupt\n",
+			printf("%s: WARNING: couldn't map interrupt\n",
 			    sc->sc_dev.dv_xname);
 	}
 #endif
@@ -225,7 +225,7 @@ pcivgaprint(aux, pnp)
 {
 
 	if (pnp)
-		kprintf("wscons at %s", pnp);
+		printf("wscons at %s", pnp);
 	return (UNCONF);
 }
 
@@ -305,7 +305,7 @@ pcivga_cursor(id, on, row, col)
 	int pos;
 
 #if 0
-	kprintf("pcivga_cursor: %d %d\n", row, col);
+	printf("pcivga_cursor: %d %d\n", row, col);
 #endif
         /* turn the cursor off */
         if (!on) {

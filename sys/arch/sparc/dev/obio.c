@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.26 1996/10/11 00:46:51 christos Exp $	*/
+/*	$NetBSD: obio.c,v 1.27 1996/10/13 03:00:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -130,12 +130,12 @@ busprint(args, obio)
 		ca->ca_ra.ra_name = "<unknown>";
 
 	if (obio)
-		kprintf("[%s at %s]", ca->ca_ra.ra_name, obio);
+		printf("[%s at %s]", ca->ca_ra.ra_name, obio);
 
-	kprintf(" addr %p", ca->ca_ra.ra_paddr);
+	printf(" addr %p", ca->ca_ra.ra_paddr);
 
 	if (CPU_ISSUN4 && ca->ca_ra.ra_intr[0].int_vec != -1)
-		kprintf(" vec 0x%x", ca->ca_ra.ra_intr[0].int_vec);
+		printf(" vec 0x%x", ca->ca_ra.ra_intr[0].int_vec);
 
 	return (UNCONF);
 }
@@ -170,10 +170,10 @@ obioattach(parent, self, args)
 
 	if (CPU_ISSUN4) {
 		if (self->dv_unit > 0) {
-			kprintf(" unsupported\n");
+			printf(" unsupported\n");
 			return;
 		}
-		kprintf("\n");
+		printf("\n");
 
 		(void)config_search(obio_scan, self, args);
 		bus_untmp();
@@ -188,11 +188,11 @@ obioattach(parent, self, args)
 	 * How about VME?
 	 */
 	if (sc->sc_dev.dv_unit > 0) {
-		kprintf(" unsupported\n");
+		printf(" unsupported\n");
 		return;
 	}
 
-	kprintf("\n");
+	printf("\n");
 
 	if (ra->ra_bp != NULL && strcmp(ra->ra_bp->name, "obio") == 0)
 		oca.ca_ra.ra_bp = ra->ra_bp + 1;
@@ -210,7 +210,7 @@ obioattach(parent, self, args)
 	node0 = firstchild(ra->ra_node);
 	for (ssp = special4m ; *(sp = *ssp) != 0; ssp++) {
 		if ((node = findnode(node0, sp)) == 0) {
-			kprintf("could not find %s amongst obio devices\n", sp);
+			printf("could not find %s amongst obio devices\n", sp);
 			panic(sp);
 		}
 		if (!romprop(&oca.ca_ra, sp, node))
@@ -248,10 +248,10 @@ vmesattach(parent, self, args)
 	void *args;
 {
 	if (CPU_ISSUN4M || self->dv_unit > 0) {
-		kprintf(" unsupported\n");
+		printf(" unsupported\n");
 		return;
 	}
-	kprintf("\n");
+	printf("\n");
 
 	if (vmeints == NULL) {
 		vmeints = (struct intrhand **)malloc(256 *
@@ -268,10 +268,10 @@ vmelattach(parent, self, args)
 	void *args;
 {
 	if (CPU_ISSUN4M || self->dv_unit > 0) {
-		kprintf(" unsupported\n");
+		printf(" unsupported\n");
 		return;
 	}
-	kprintf("\n");
+	printf("\n");
 
 	if (vmeints == NULL) {
 		vmeints = (struct intrhand **)malloc(256 *
@@ -316,7 +316,7 @@ busattach(parent, child, args, bustype)
 	}
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
-		kprintf(" indirect devices not supported\n");
+		printf(" indirect devices not supported\n");
 		return 0;
 	}
 
@@ -434,7 +434,7 @@ vmeintr(arg)
 	vec = ldcontrolb((caddr_t)
 	    (AC_VMEINTVEC | (pil_to_vme[level] << 1) | 1));
 	if (vec == -1) {
-		kprintf("vme: spurious interrupt\n");
+		printf("vme: spurious interrupt\n");
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en_sbus.c,v 1.2 1996/10/11 00:46:42 christos Exp $	*/
+/*	$NetBSD: if_en_sbus.c,v 1.3 1996/10/13 02:59:55 christos Exp $	*/
 
 /*
  *
@@ -131,10 +131,10 @@ void *aux;
   struct confargs *ca = aux;
   int lcv, iplcode;
 
-  kprintf("\n");
+  printf("\n");
 
   if (CPU_ISSUN4M) {
-    kprintf("%s: sun4m DMA not supported yet\n", sc->sc_dev.dv_xname);
+    printf("%s: sun4m DMA not supported yet\n", sc->sc_dev.dv_xname);
     return;
   }
 
@@ -144,19 +144,19 @@ void *aux;
   if (ca->ca_ra.ra_nintr == 1) {
     sc->ipl = ca->ca_ra.ra_intr[0].int_pri;
   } else {
-    kprintf("%s: claims to be at the following IPLs: ", sc->sc_dev.dv_xname);
+    printf("%s: claims to be at the following IPLs: ", sc->sc_dev.dv_xname);
     iplcode = 0;
     for (lcv = 0 ; lcv < ca->ca_ra.ra_nintr ; lcv++) {
-      kprintf("%d ", ca->ca_ra.ra_intr[lcv].int_pri);
+      printf("%d ", ca->ca_ra.ra_intr[lcv].int_pri);
       if (EN_IPL == ca->ca_ra.ra_intr[lcv].int_pri)
         iplcode = lcv;
     }
     if (!iplcode) {
-      kprintf("%s: can't find the IPL we want (%d)\n", sc->sc_dev.dv_xname,
+      printf("%s: can't find the IPL we want (%d)\n", sc->sc_dev.dv_xname,
 		EN_IPL);
       return;
     }
-    kprintf("\n%s: we choose IPL %d\n", sc->sc_dev.dv_xname, EN_IPL);
+    printf("\n%s: we choose IPL %d\n", sc->sc_dev.dv_xname, EN_IPL);
     sc->ipl = iplcode;
   }
   scs->sc_ih.ih_fun = en_intr;

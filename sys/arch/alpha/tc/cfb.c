@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.4 1996/10/10 23:51:28 christos Exp $	*/
+/*	$NetBSD: cfb.c,v 1.5 1996/10/13 03:00:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -177,10 +177,10 @@ cfbattach(parent, self, aux)
 		cfb_getdevconfig(ta->ta_addr, sc->sc_dc);
 	}
 	if (sc->sc_dc->dc_vaddr == NULL) {
-		kprintf(": couldn't map memory space; punt!\n");
+		printf(": couldn't map memory space; punt!\n");
 		return;
 	}
-	kprintf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
+	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
 	/* Establish an interrupt handler, and clear any pending interrupts */
@@ -209,7 +209,7 @@ cfbprint(aux, pnp)
 {
 
 	if (pnp)
-		kprintf("wscons at %s", pnp);
+		printf("wscons at %s", pnp);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.6 1996/10/11 00:47:20 christos Exp $ */
+/*	$NetBSD: iommu.c,v 1.7 1996/10/13 03:00:35 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -87,7 +87,7 @@ iommu_print(args, iommu)
 	register struct confargs *ca = args;
 
 	if (iommu)
-		kprintf("%s at %s", ca->ca_ra.ra_name, iommu);
+		printf("%s at %s", ca->ca_ra.ra_name, iommu);
 	return (UNCONF);
 }
 
@@ -133,7 +133,7 @@ iommu_attach(parent, self, aux)
 	 * address children on others
 	 */
 	if (sc->sc_dev.dv_unit > 0) {
-		kprintf(" unsupported\n");
+		printf(" unsupported\n");
 		return;
 	}
 	node = ra->ra_node;
@@ -232,7 +232,7 @@ iommu_attach(parent, self, aux)
 	IOMMU_FLUSHALL(sc);
 	splx(s);
 
-	kprintf(": version %x/%x, page-size %d, range %dMB\n",
+	printf(": version %x/%x, page-size %d, range %dMB\n",
 		(sc->sc_reg->io_cr & IOMMU_CTL_VER) >> 24,
 		(sc->sc_reg->io_cr & IOMMU_CTL_IMPL) >> 28,
 		sc->sc_pagesize,
@@ -313,8 +313,8 @@ iommu_error()
 	struct iommu_softc *sc = X;
 	struct iommureg *iop = sc->sc_reg;
 
-	kprintf("iommu: afsr %x, afar %x\n", iop->io_afsr, iop->io_afar);
-	kprintf("iommu: mfsr %x, mfar %x\n", iop->io_mfsr, iop->io_mfar);
+	printf("iommu: afsr %x, afar %x\n", iop->io_afsr, iop->io_afar);
+	printf("iommu: mfsr %x, mfar %x\n", iop->io_mfsr, iop->io_mfar);
 }
 int
 iommu_alloc(va, len)
