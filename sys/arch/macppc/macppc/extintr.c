@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.4 1998/08/15 03:02:41 mycroft Exp $	*/
+/*	$NetBSD: extintr.c,v 1.5 1998/10/07 04:58:23 tsubai Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -95,6 +95,12 @@ intr_calculatemasks()
 				irqs |= 1 << irq;
 		imask[level] = irqs;
 	}
+
+	/*
+	 * IPL_CLOCK should mask clock interrupt even if interrupt handler
+	 * is not registered.
+	 */
+	imask[IPL_CLOCK] |= 1 << SPL_CLOCK;
 
 	/*
 	 * Initialize soft interrupt masks to block themselves.
