@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.59 2001/08/22 06:59:38 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.60 2001/08/26 11:47:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2001/08/22 06:59:38 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.60 2001/08/26 11:47:24 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,20 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2001/08/22 06:59:38 nisimura Exp $
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include "rz.h"
-#include "tz.h"
 #include "opt_dec_3100.h"
 #include "opt_dec_5100.h"
 
-#if NRZ > 0 || NTZ > 0
-#include <pmax/dev/device.h>
-#endif
-
-struct intrhand intrtab[MAX_DEV_NCOOKIES];
-struct device *booted_device;
-static struct device *booted_controller;
-static int	booted_slot, booted_unit, booted_partition;
-static char	*booted_protocol;
+struct intrhand		 intrtab[MAX_DEV_NCOOKIES];
+struct device		*booted_device;
+static struct device	*booted_controller;
+static int		 booted_slot, booted_unit, booted_partition;
+static char		*booted_protocol;
 
 /*
  * Configure all devices on system
@@ -99,10 +93,6 @@ cpu_configure()
 
 	/* Configuration is finished, turn on interrupts. */
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
-#if NRZ > 0 || NTZ > 0
-	printf("Beginning old-style SCSI device autoconfiguration\n");
-	configure_scsi();
-#endif
 }
 
 /*
@@ -163,26 +153,6 @@ makebootdev(cp)
 void
 cpu_rootconf()
 {
-#if NRZ > 0
-	struct device *dv;
-	char name[5];
-
-	if (booted_device == NULL && strcmp(booted_protocol, "SCSI") == 0) {
-		int ctlr_no;
-
-		if (booted_controller)
-			ctlr_no = booted_controller->dv_unit;
-		else
-			ctlr_no = 0;
-		snprintf(name, sizeof(name), "rz%d", booted_unit + ctlr_no * 8);
-		for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
-			if (dv->dv_class == DV_DISK && !strcmp(dv->dv_xname, name)) {
-				booted_device = dv;
-				break;
-			}
-		}
-	}
-#endif
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
@@ -227,9 +197,7 @@ device_register(dev, aux)
 	/*
 	 * Check for ASC controller on either IOASIC or TC option card.
 	 */
-	if (scsiboot && (
-	    strcmp(cd->cd_name, "asc") == 0 ||
-	    strcmp(cd->cd_name, "xasc") == 0)) {
+	if (scsiboot && strcmp(cd->cd_name, "asc") == 0) {
 		struct tc_attach_args *ta = aux;
 
 		/*
@@ -249,9 +217,7 @@ device_register(dev, aux)
 	 * If an SII device is configured, it's currently the only
 	 * possible SCSI boot device.
 	 */
-	if (scsiboot && (
-	    strcmp(cd->cd_name, "sii") == 0 ||
-	    strcmp(cd->cd_name, "xsii") == 0)) {
+	if (scsiboot && strcmp(cd->cd_name, "sii") == 0) {
 		booted_controller = dev;
 		return;
 	}
@@ -272,21 +238,6 @@ device_register(dev, aux)
 		booted_device = dev;
 		found = 1;
 		return;
-	}
-
-	/*
-	 * XXX rz devices don't call device_register?
-	 */
-	if (booted_controller && (strcmp(cd->cd_name, "rz") == 0 ||
-	    strcmp(cd->cd_name, "tz") == 0)) {
-		int sd_ctlr = (int)aux;
-
-		if (booted_unit == (dev->dv_unit & 7)) {
-			if (booted_controller->dv_unit == sd_ctlr)
-				booted_device = dev;
-				found = 1;
-				return;
-		}
 	}
 
 	/*

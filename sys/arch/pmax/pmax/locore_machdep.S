@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.16 2001/08/22 08:23:10 nisimura Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.17 2001/08/26 11:47:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,7 +66,7 @@
 
 	.set	noreorder
 
-#if NSII > 0 || NXSII > 0
+#if NSII > 0
 /*
  * Copy data to a DMA buffer padded with 16 bits of data, 16
  * bits of padding per 32bit word (e.g., for pmin/pmax sii DMA).
@@ -139,7 +139,7 @@ LEAF(CopyFromBuffer)
 	j	ra
 	nop
 END(CopyFromBuffer)
-#endif	/* NSII > 0 || NXSII > 0 */
+#endif	/* NSII > 0 */
 
 /*
  * Write-buffer flush for writebuffer hardware on DEC mips r2000a

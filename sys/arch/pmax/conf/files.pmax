@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.93 2001/08/22 06:59:44 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.94 2001/08/26 11:47:20 simonb Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -91,7 +91,6 @@ file	arch/pmax/ibus/mcclock_ibus.c	mcclock_ibus
 include "dev/scsipi/files.scsipi"
 major { sd = 19 }
 major { cd = 25 }
-major { rz = 21 }
 
 # Memory Disk
 file	dev/md_root.c			memory_disk_hooks
@@ -100,52 +99,23 @@ major { md = 17 }
 # RAIDframe
 major { raid = 32 }
 
-#
-# Old 4.4BSD pmax-specific SCSI driver (deprecated).
-#
-define	oldscsi {}
-device oldscsibus {target = -1, drive = -1}
-attach oldscsibus at oldscsi
-file	arch/pmax/dev/scsi.c		oldscsi
-file	arch/pmax/pmax/conf-glue.c	oldscsi
 
-# asc: SCSI interface in TC option slot or in IOASIC slot
-device asc: oldscsi
-file	dev/tc/asc.c			asc needs-flag
-attach asc at ioasic with asc_ioasic
-file	dev/tc/asc_ioasic.c		asc_ioasic
-attach asc at tc with asc_tc
-file	dev/tc/asc_tc.c			asc_tc
-
-# sii: kn01 SCSI interface
-device sii: oldscsi
-device  xsii: ncr53c9x,scsi
-file	arch/pmax/dev/sii.c		sii | xsii needs-flag
-attach sii at ibus with sii_ds
-attach xsii at ibus with xsii_ds
-file	arch/pmax/dev/sii_ds.c		sii_ds | xsii_ds
-
-device	tz: tape
-attach	tz at oldscsibus
-file	arch/pmax/dev/tz.c		tz needs-count
-
-device	rz: disk
-attach	rz at oldscsibus
-file	arch/pmax/dev/rz.c		rz needs-count
-
-#
 # MI SCSI driver; to be moved into dev/tc/ replacing existings, eventually.
 #
-device  xasc: ncr53c9x,scsi
-attach  xasc at tc with xasc_pmaz
-file    arch/pmax/tc/asc_pmaz.c         xasc_pmaz
-attach  xasc at ioasic with xasc_ioasic   
-file    arch/pmax/tc/asc_ioasic.c       xasc_ioasic
-
-# XXX waiting on pmax MI scsi being `asc'.
-# 53C[F]90 SCSI
-attach	xasc at tcds with asc_tcds
+device	asc: ncr53c9x,scsi
+attach	asc at tc with asc_pmaz
+file	arch/pmax/tc/asc_pmaz.c		asc_pmaz
+attach	asc at ioasic with asc_ioasic
+file	arch/pmax/tc/asc_ioasic.c	asc_ioasic
+attach	asc at tcds with asc_tcds
 file	dev/tc/asc_tcds.c		asc_tcds
+
+# sii: kn01 SCSI interface
+device	sii: ncr53c9x,scsi
+file	arch/pmax/dev/sii.c		sii needs-flag
+attach	sii at ibus with sii_ds
+file	arch/pmax/dev/sii_ds.c		sii_ds
+
 
 # DC7085 (DZ-like four-port serial device) on ibus
 device dc: tty
