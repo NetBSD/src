@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.80 2001/03/30 20:25:11 fvdl Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.81 2001/04/14 13:25:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -1058,7 +1058,7 @@ procfs_readdir(v)
 				d.d_fileno = PROCFS_FILENO(p->p_pid, Pproc);
 				d.d_namlen = sprintf(d.d_name, "%ld",
 				    (long)p->p_pid);
-				d.d_type = DT_REG;
+				d.d_type = DT_DIR;
 				p = p->p_list.le_next;
 				break;
 			}
