@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.63 2004/04/09 16:11:19 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.64 2004/04/09 16:14:11 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -681,3 +681,9 @@ sys/sys/mbuf.h					1.91
 	kernel, so they must use sys/systm.h instead.
 
 	[atatat, ticket #105]
+
+xfree/xc/lib/X11/ConnDis.c			1.2
+
+	Don't core when there exist (bogus) IPv6 XDM-AUTHORIZATION-1 records 
+	in the ${XAUTHORITY} file. PR#25098
+	[tron, ticket #104]
