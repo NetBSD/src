@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.37 1998/01/12 10:21:17 thorpej Exp $ */
+/* $NetBSD: scc.c,v 1.38 1998/01/15 22:22:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.37 1998/01/12 10:21:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.38 1998/01/15 22:22:09 thorpej Exp $");
 
 #include "scc.h"
 #if NSCC > 0
@@ -329,6 +329,7 @@ sccmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	extern struct cfdriver ioasic_cd;		/* XXX */
 	struct ioasicdev_attach_args *d = aux;
 	void *sccaddr;
 
