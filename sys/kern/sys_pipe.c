@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.5.2.8 2002/09/06 08:48:08 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.5.2.9 2002/09/21 19:40:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.5.2.8 2002/09/06 08:48:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.5.2.9 2002/09/21 19:40:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1905,6 +1905,20 @@ static void
 filt_pipedetach(struct knote *kn)
 {
 	struct pipe *cpipe = (struct pipe *)kn->kn_fp->f_data;
+
+	switch(kn->kn_filter) {
+	case EVFILT_WRITE:
+		/* need the peer structure, not our own */
+		cpipe = cpipe->pipe_peer;
+		break;
+	default:
+		/* nothing to do */
+	}
+
+#ifdef DIAGNOSTIC
+	if (kn->kn_hook != cpipe)
+		panic("filt_pipedetach: inconsistent knote");
+#endif
 
 	PIPE_LOCK(cpipe);
 	SLIST_REMOVE(&cpipe->pipe_sel.si_note, kn, knote, kn_selnext);
