@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.22.2.4 2001/04/06 01:37:35 he Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.22.2.5 2002/02/26 20:14:36 he Exp $	*/
 /*	$KAME: ip6_input.c,v 1.119 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
@@ -313,9 +313,9 @@ ip6_input(m)
 		pfh = NULL;
 	else
 		pfh = pfil_hook_get(PFIL_IN,
-		    &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
+		    &inet6sw[ip6_protox[IPPROTO_IPV6]].pr_pfh);
 #else
-	pfh = pfil_hook_get(PFIL_IN, &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
+	pfh = pfil_hook_get(PFIL_IN, &inet6sw[ip6_protox[IPPROTO_IPV6]].pr_pfh);
 #endif
 	for (; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {

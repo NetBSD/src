@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.23.2.5 2001/04/22 18:11:17 he Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.23.2.6 2002/02/26 20:14:37 he Exp $	*/
 /*	$KAME: ip6_output.c,v 1.109 2000/05/31 05:03:09 jinmei Exp $	*/
 
 /*
@@ -92,6 +92,7 @@
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
+#include <netinet6/ip6protosw.h>
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -841,7 +842,8 @@ skip_ipsec2:;
 	 * Run through list of hooks for output packets.
 	 */
 	m1 = m;
-	pfh = pfil_hook_get(PFIL_OUT, &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
+	pfh = pfil_hook_get(PFIL_OUT,
+		&inet6sw[ip6_protox[IPPROTO_IPV6]].pr_pfh);
 	for (; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
 		    	rv = pfh->pfil_func(ip6, sizeof(*ip6), ifp, 1, &m1);
