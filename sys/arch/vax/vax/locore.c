@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.18 1997/02/19 10:04:22 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.19 1997/03/15 16:11:25 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 
@@ -52,10 +53,8 @@
 void	start __P((void));
 void	main __P((void));
 
-u_int	proc0paddr;
-int	*Sysmap, boothowto;
-char	*esym;
-extern	int bootdev;
+u_int	proc0paddr, esym;
+int	*Sysmap, bootdev;
 
 /* 
  * We set up some information about the machine we're
@@ -89,37 +88,29 @@ extern struct cpu_dep ka650_calls;
  * in kernel. Kernel stack is setup somewhere in a safe place;
  * but we need to move it to a better known place. Memory
  * management is disabled, and no interrupt system is active.
- * We shall be at kernel stack when called; not interrupt stack.
  */
 void
 start()
 {
+	register __boothowto asm ("r11");
+	register __bootdev asm ("r10");
+	register __esym asm ("r9");
+	register __physmem asm ("r8");
+	extern vm_offset_t avail_end;
 	extern	u_int *end;
 	extern	void *scratch;
 	register tmpptr;
 
-	mtpr(0x1f, PR_IPL); /* No interrupts before istack is ok, please */
-
 	/*
-	 * We can be running either in system or user space when
-	 * getting here. Need to figure out which and take care
-	 * of it. We also save all registers if panic gets called.
+	 * We get parameters passed in registers from boot, put
+	 * them in memory to save.
 	 */
-	asm("
-	bisl2	$0x80000000, r9
-	movl	r9, _esym
-	movl	r10, _bootdev
-	movl	r11, _boothowto
-	jsb	ett
-ett:	cmpl	(sp)+, $0x80000000
-	bleq	tvo	# New boot
-	pushl	$0x001f0000
-	pushl	$tokmem
-	rei
-tvo:	movl	(sp)+,_boothowto
-	movl	(sp)+,_bootdev
-tokmem: movw	$0xfff, _panic
-	");
+	boothowto = __boothowto;
+	bootdev = __bootdev;
+	esym = __esym & 0x80000000;
+	avail_end = __physmem; /* Better to take from RPB, if available */
+
+	asm("pushl $0x001f0000;pushl $to;rei;to:movw $0xfff, _panic");
 
 	/*
 	 * FIRST we must set up kernel stack, directly after end.
@@ -233,14 +224,6 @@ tokmem: movw	$0xfff, _panic
 		/* CPU not supported, just give up */
 		asm("halt");
 	}
-
-	/*
-	 * before doing anything else, we need to setup the console
-	 * so that output (eg. debug and error messages) are visible.
-	 * They way console-output is done is different for different
-	 * VAXen, thus vax_cputype and vax_boardtype are setup/used.
-	 */
-	cninit();
 
 	pmap_bootstrap();
 
