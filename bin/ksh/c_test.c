@@ -1,4 +1,4 @@
-/*	$NetBSD: c_test.c,v 1.4 2003/06/23 11:38:53 agc Exp $	*/
+/*	$NetBSD: c_test.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_test.c,v 1.4 2003/06/23 11:38:53 agc Exp $");
+__RCSID("$NetBSD: c_test.c,v 1.5 2004/07/07 19:20:09 mycroft Exp $");
 #endif
 
 
@@ -132,10 +132,10 @@ c_test(wp)
 	te.pos.wp = wp + 1;
 	te.wp_end = wp + argc;
 
-	/* 
+	/*
 	 * Handle the special cases from POSIX.2, section 4.62.4.
-	 * Implementation of all the rules isn't necessary since 
-	 * our parser does the right thing for the ommited steps.
+	 * Implementation of all the rules isn't necessary since
+	 * our parser does the right thing for the omitted steps.
 	 */
 	if (argc <= 5) {
 		char **owp = wp;
@@ -246,7 +246,7 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 			if (not)
 				res = !res;
 		}
-		return res; 
+		return res;
 	  case TO_FILRD: /* -r */
 		return test_eaccess(opnd1, R_OK) == 0;
 	  case TO_FILWR: /* -w */
@@ -464,10 +464,12 @@ test_eaccess(path, mode)
 	}
 #endif /* !HAVE_DEV_FD */
 
-	/* On most (all?) unixes, access() says everything is executable for
+	res = eaccess(path, mode);
+	/*
+	 * On most (all?) unixes, access() says everything is executable for
 	 * root - avoid this on files by using stat().
 	 */
-	if ((mode & X_OK) && ksheuid == 0) {
+	if (res == 0 && ksheuid == 0 && (mode & X_OK)) {
 		struct stat statb;
 
 		if (stat(path, &statb) < 0)
@@ -477,13 +479,7 @@ test_eaccess(path, mode)
 		else
 			res = (statb.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH))
 				? 0 : -1;
-		/* Need to check other permissions?  If so, use access() as
-		 * this will deal with root on NFS.
-		 */
-		if (res == 0 && (mode & (R_OK|W_OK)))
-			res = eaccess(path, mode);
-	} else
-		res = eaccess(path, mode);
+	}
 
 	return res;
 }
