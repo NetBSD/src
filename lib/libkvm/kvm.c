@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.75 2002/09/17 19:50:48 drochner Exp $	*/
+/*	$NetBSD: kvm.c,v 1.76 2002/09/17 20:34:08 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.75 2002/09/17 19:50:48 drochner Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.76 2002/09/17 20:34:08 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,6 +58,8 @@ __RCSID("$NetBSD: kvm.c,v 1.75 2002/09/17 19:50:48 drochner Exp $");
 #include <sys/kcore.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <machine/cpu.h>
 
 #include <ctype.h>
 #include <db.h>
@@ -262,8 +264,30 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	}
 
 	ufgiven = (uf != NULL);
-	if (!ufgiven)
-		uf = _PATH_UNIX;
+	if (!ufgiven) {
+#ifdef CPU_BOOTED_KERNEL
+		/* 130 is 128 + '/' + '\0' */
+		static char booted_kernel[130];
+		int mib[2], rc;
+		size_t len;
+
+		mib[0] = CTL_MACHDEP;
+		mib[1] = CPU_BOOTED_KERNEL;
+		booted_kernel[0] = '/';
+		booted_kernel[1] = '\0';
+		len = sizeof(booted_kernel) - 2;
+		rc = sysctl(&mib[0], 2, &booted_kernel[1], &len, NULL, 0);
+		booted_kernel[sizeof(booted_kernel) - 1] = '\0';
+		uf = (booted_kernel[1] == '/') ?
+		    &booted_kernel[1] : &booted_kernel[0];
+		if (rc != -1)
+			rc = stat(uf, &st);
+		if (rc != -1 && !S_ISREG(st.st_mode))
+			rc = -1;
+		if (rc == -1)
+#endif /* CPU_BOOTED_KERNEL */
+			uf = _PATH_UNIX;
+	}
 	else if (strlen(uf) >= MAXPATHLEN) {
 		_kvm_err(kd, kd->program, "exec file name too long");
 		goto failed;
