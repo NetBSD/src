@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.64 2000/02/07 20:16:58 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.65 2000/02/14 20:12:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -97,6 +97,11 @@ TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 int needbuffer;
 
 /*
+ * Buffer pool for I/O buffers.
+ */
+struct pool bufpool;
+
+/*
  * Insq/Remq for the buffer free lists.
  */
 #define	binsheadfree(bp, dp)	TAILQ_INSERT_HEAD(dp, bp, b_freelist)
@@ -143,6 +148,14 @@ bufinit()
 	struct bqueues *dp;
 	register int i;
 	int base, residual;
+
+	/*
+	 * Initialize the buffer pool.  This pool is used for buffers
+	 * which are strictly I/O control blocks, not buffer cache
+	 * buffers.
+	 */
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpl", 0,
+	    NULL, NULL, M_DEVBUF);
 
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);

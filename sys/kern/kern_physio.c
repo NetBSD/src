@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.39 2000/01/21 23:21:46 thorpej Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.40 2000/02/14 20:12:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -283,8 +283,11 @@ struct buf *
 getphysbuf()
 {
 	struct buf *bp;
+	int s;
 
-	bp = malloc(sizeof(*bp), M_TEMP, M_WAITOK);
+	s = splbio();
+	bp = pool_get(&bufpool, PR_WAITOK);
+	splx(s);
 	memset(bp, 0, sizeof(*bp));
 
 	/* XXXCDC: are the following two lines necessary? */
@@ -301,6 +304,7 @@ void
 putphysbuf(bp)
         struct buf *bp;
 {
+	int s;
 
 	/* XXXCDC: is this necesary? */
 	if (bp->b_vp)
@@ -308,8 +312,9 @@ putphysbuf(bp)
 
 	if (bp->b_flags & B_WANTED)
 		panic("putphysbuf: private buf B_WANTED");
-	free(bp, M_TEMP);
-
+	s = splbio();
+	pool_put(&bufpool, bp);
+	splx(s);
 }
 
 /*
