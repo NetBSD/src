@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.15 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: ath.c,v 1.16 2003/11/16 09:32:01 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.15 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.16 2003/11/16 09:32:01 dyoung Exp $");
 #endif
 
 /*
@@ -2136,6 +2136,9 @@ ath_rx_proc(void *arg, int npending)
 
 	ath_hal_rxmonitor(ah);			/* rx signal state monitoring */
 	ath_hal_rxena(ah);			/* in case of RXEOL */
+
+	if ((ifp->if_flags & IFF_OACTIVE) == 0 && !IFQ_IS_EMPTY(&ifp->if_snd))
+		ath_start(ifp);
 }
 
 /*
