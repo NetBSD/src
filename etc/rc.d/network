@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.11.4.1 2000/06/20 17:53:32 itojun Exp $
+# $NetBSD: network,v 1.11.4.2 2000/07/25 19:12:20 jdolecek Exp $
 #
 
 # PROVIDE: network
@@ -151,6 +151,7 @@ network_start()
 			while [ $# -ge 2 ]; do
 				addr=$1 ; net=$2 ; shift 2
 				if [ "$net" = "-" ]; then
+					# for compatibility only, obsolete
 					ifconfig $int inet alias $addr
 				else
 					ifconfig $int inet alias $addr \
@@ -178,6 +179,7 @@ network_start()
 		fi
 		while read addr int net; do
 			if [ -z "$net" ]; then
+				# for compatibility only, obsolete
 				ifconfig $int inet alias $addr
 			else
 				ifconfig $int inet alias $addr netmask $net
