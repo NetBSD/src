@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.10 1998/12/19 16:43:39 christos Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.11 2001/02/07 18:32:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.10 1998/12/19 16:43:39 christos Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.11 2001/02/07 18:32:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,34 @@ int deprecated;
 static void odoffset __P((int, char ***));
 static void odprecede __P((void));
 
+
+/*
+ * formats used for -t
+ */
+static const char *fmt[4][4] = {
+	{
+		"16/1 \"%3d \" \"\\n\"",
+		"8/2  \"  %05d \" \"\\n\"",
+		"4/4  \"     %010d \" \"\\n\"",
+		"2/8  \" %019d \" \"\\n\""
+	}, {
+		"16/1 \"%03o \" \"\\n\"",
+		"8/2  \" %06o \" \"\\n\"",
+		"4/4  \"    %011o\" \"\\n\"",
+		"2/8  \" %022o \" \"\\n\""
+	}, {
+		"16/1 \"%03u \" \"\\n\"",
+		"8/2  \"  %05u \" \"\\n\"",
+		"4/4  \"     %010u \" \"\\n\"",
+		"2/8  \" %020u \" \"\\n\""
+	}, {
+		"16/1 \" %02x \" \"\\n\"",
+		"8/2  \"   %04x \" \"\\n\"",
+		"4/4  \"       %08x \" \"\\n\"",
+		"2/8  \" %16x \" \"\\n\""
+	}
+};
+
 void
 oldsyntax(argc, argvp)
 	int argc;
@@ -64,10 +92,11 @@ oldsyntax(argc, argvp)
 {
 	int ch;
 	char **argv;
+	int x, y;
 
 	deprecated = 1;
 	argv = *argvp;
-	while ((ch = getopt(argc, argv, "aBbcDdeFfHhIiLlOoPpswvXx")) != -1)
+	while ((ch = getopt(argc, argv, "aBbcDdeFfHhIiLlOoPpst:wvXx")) != -1)
 		switch (ch) {
 		case 'a':
 			odprecede();
@@ -127,6 +156,77 @@ oldsyntax(argc, argvp)
 		case 'O':
 			odprecede();
 			add("4/4 \"    %011o \" \"\\n\"");
+			break;
+		case 't':
+			for (ch = 0; optarg[ch]; ) {
+				odprecede();
+				switch (optarg[ch]) {
+				case 'a':
+					ch++;
+					add("16/1 \"%3_u \" \"\\n\"");
+					break;
+				case 'c':
+					ch++;
+					add("16/1 \"%3_c \" \"\\n\"");
+					break;
+				case 'f':
+					ch++;
+					if      (optarg[ch] == 'F' ||
+						 optarg[ch] == '4') {
+						ch++;
+						add("4/4 \" %14.7e\" \"\\n\"");
+					}
+					else if (optarg[ch] == 'L' ||
+						 optarg[ch] == '8') {
+						ch++;
+						add("2/8 \" %16.14e\" \"\\n\"");
+					}
+					else if (optarg[ch] == 'D')
+						/* long doubles vary in size */
+						usage();
+					else
+						add("2/8 \" %16.14e\" \"\\n\"");
+					break;
+				case 'd':
+					x = 0;
+					goto extensions;
+				case 'o':
+					x = 1;
+					goto extensions;
+				case 'u':
+					x = 2;
+					goto extensions;
+				case 'x':
+					x = 3;
+				extensions:
+					ch++;
+					y = 2;
+					if      (optarg[ch] == 'C' ||
+						 optarg[ch] == '1') {
+						ch++;
+						y = 0;
+					}
+					else if (optarg[ch] == 'S' ||
+						 optarg[ch] == '2') {
+						ch++;
+						y = 1;
+					}
+					else if (optarg[ch] == 'I' ||
+						 optarg[ch] == '4') {
+						ch++;
+						y = 2;
+					}
+					else if (optarg[ch] == 'L' ||
+						 optarg[ch] == '8') {
+						ch++;
+						y = 3;
+					}
+					add(fmt[x][y]);
+					break;
+				default:
+					usage();
+				}
+			}
 			break;
 		case 'v':
 			vflag = ALL;
