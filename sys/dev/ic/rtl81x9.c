@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.42 2002/10/22 00:01:56 fair Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.43 2002/11/07 07:51:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.42 2002/10/22 00:01:56 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.43 2002/11/07 07:51:10 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -979,7 +979,7 @@ STATIC void rtk_rxeof(sc)
         struct mbuf		*m;
         struct ifnet		*ifp;
 	caddr_t			rxbufpos, dst;
-	int			total_len, wrap = 0;
+	u_int			total_len, wrap = 0;
 	u_int32_t		rxstat;
 	u_int16_t		cur_rx, new_rx;
 	u_int16_t		limit;

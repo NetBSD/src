@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.67 2002/10/22 00:01:56 fair Exp $	*/
+/*	$NetBSD: i82557.c,v 1.68 2002/11/07 07:46:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.67 2002/10/22 00:01:56 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.68 2002/11/07 07:46:39 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2040,7 +2040,7 @@ static const uint32_t fxp_ucode_d102c[] = D102_C_RCVBUNDLE_UCODE;
 #define	UCODE(x)	x, sizeof(x)
 
 static const struct ucode {
-	uint32_t	revision;
+	int32_t		revision;
 	const uint32_t	*ucode;
 	size_t		length;
 	uint16_t	int_delay_offset;

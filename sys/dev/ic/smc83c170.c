@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.50 2002/10/22 00:01:57 fair Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.51 2002/11/07 07:48:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.50 2002/10/22 00:01:57 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.51 2002/11/07 07:48:35 thorpej Exp $");
 
 #include "bpfilter.h"
 
@@ -116,7 +116,8 @@ epic_attach(sc)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int i, rseg, error, miiflags;
+	int rseg, error, miiflags;
+	u_int i;
 	bus_dma_segment_t seg;
 	u_int8_t enaddr[ETHER_ADDR_LEN], devname[12 + 1];
 	u_int16_t myea[ETHER_ADDR_LEN / 2], mydevname[6];
@@ -574,7 +575,8 @@ epic_intr(arg)
 	struct epic_descsoft *ds;
 	struct mbuf *m;
 	u_int32_t intstat;
-	int i, len, claimed = 0;
+	int i, claimed = 0;
+	u_int len;
 
  top:
 	/*
