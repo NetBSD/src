@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.43 1994/04/22 22:53:40 mycroft Exp $
+#	$Id: files.i386,v 1.44 1994/04/24 19:48:03 mycroft Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/db_disasm.c	optional ddb
@@ -19,11 +19,12 @@ arch/i386/i386/trap.c		standard
 arch/i386/i386/vm_machdep.c	standard
 arch/i386/isa/aha1542.c		optional aha requires isa scsi not bt
 arch/i386/isa/aha1742.c		optional ahb requires isa scsi
+arch/i386/isa/aic6360.c		optional aic requires isa scsi
+arch/i386/isa/ast.c		optional ast device-driver requires com isa
 arch/i386/isa/bsd_audio.c	optional audio device-driver
 arch/i386/isa/bt742a.c		optional bt requires isa scsi not aha
 arch/i386/isa/clock.c		optional isa
 arch/i386/isa/com.c		optional com device-driver requires isa
-arch/i386/isa/ast.c		optional ast device-driver requires com isa
 arch/i386/isa/cy.c		optional cy device-driver requires isa
 arch/i386/isa/dma.c		standard
 arch/i386/isa/elink.c		optional ep or ie
