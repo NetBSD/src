@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.40.2.3 2000/09/20 21:47:16 hubertf Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.40.2.4 2000/10/19 13:21:57 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,13 +70,13 @@ menu netbsd, title "NetBSD-@@VERSION@@ Install System",
 	option "Re-install sets or install additional sets",
 		action { do_reinstall_sets(); };
 	option "Reboot the computer", exit,
-		action (endwin) { run_prog(0, 0, NULL, "/sbin/reboot"); };
+		action (endwin) { run_prog(0, NULL, "/sbin/reboot"); };
 	option "Utility menu", sub menu utility;
 
 menu utility, title "NetBSD-@@VERSION@@ Utilities", exit;
 	option "Run /bin/sh",
 		action (endwin) { system("/bin/sh"); };
-/*	option "test", action { run_prog(0, 1, NULL, "/bin/pwd"); }; */
+/*	option "test", action { run_prog(RUN_DISPLAY, NULL, "/bin/pwd"); }; */
 	option "Set timezone", 
 		action {
 			set_timezone();
@@ -91,7 +91,7 @@ menu utility, title "NetBSD-@@VERSION@@ Utilities", exit;
 /*	option "Partition a disk"; XXX add later.  */
 	option "Logging functions", action { do_logging(); };
 	option "Halt the system", exit,
-		action { run_prog(0, 0, NULL, "/sbin/halt"); };
+		action { run_prog(0, NULL, "/sbin/halt"); };
 
 menu yesno, title "yes or no?";
 	option "Yes", exit, action  {yesno = 1;};
