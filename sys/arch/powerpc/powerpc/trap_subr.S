@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.55 2004/06/08 19:07:00 kleink Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.56 2004/06/09 23:24:51 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -97,20 +97,35 @@
 
 /*
  * User SRs are loaded through a pointer to the current pmap.
+ * Note: oea_init() relies on the 601 instruction sequence.
  */
-#define RESTORE_USER_SRS(pmap,sr) \
-	GET_CPUINFO(pmap); \
-	ldptr	pmap,CI_CURPM(pmap); \
-	ldregu	sr,PM_SR(pmap); \
-	RESTORE_SRS(pmap,sr)
+#define RESTORE_USER_SRS(pmap,sr)					\
+	GET_CPUINFO(pmap);						\
+	ldptr	pmap,CI_CURPM(pmap);					\
+	ldregu	sr,PM_SR(pmap);						\
+	RESTORE_SRS(pmap,sr);						\
+	/* Obliterate BATs on 601; reuse temporary registers. */	\
+	li	sr,0;							\
+	mtibatl	0,sr;							\
+	mtibatl	1,sr;							\
+	mtibatl	2,sr;							\
+	mtibatl	3,sr
 
 /*
- * Kernel SRs are loaded directly from kernel_pmap_
+ * Kernel SRs are loaded directly from kernel_pmap_.
+ * Note: oea_init() relies on the 601 instruction sequence.
  */
-#define RESTORE_KERN_SRS(pmap,sr) \
-	lis	pmap,_C_LABEL(kernel_pmap_)@ha;	\
-	ldregu	sr,_C_LABEL(kernel_pmap_)+PM_SR@l(pmap); \
-	RESTORE_SRS(pmap,sr)
+#define RESTORE_KERN_SRS(pmap,sr)					\
+	lis	pmap,_C_LABEL(kernel_pmap_)@ha;				\
+	ldregu	sr,_C_LABEL(kernel_pmap_)+PM_SR@l(pmap);		\
+	RESTORE_SRS(pmap,sr);						\
+	/* Restore fixed BATs on 601; reuse temporary registers. */	\
+	lis	pmap,_C_LABEL(battable)@ha;				\
+	ldregu	sr,_C_LABEL(battable)@l(pmap);				\
+				mtibatu 0,sr;				\
+	ldreg	sr,4(pmap);	mtibatl 0,sr;				\
+	ldreg	sr,8(pmap);	mtibatu 1,sr;				\
+	ldreg	sr,12(pmap);	mtibatl 1,sr
 #endif /* !defined(PPC_OEA64) */
 
 /*
@@ -609,35 +624,6 @@ _C_LABEL(ipkdblow):
 _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 #endif	/* IPKDB */
 
-#ifdef	CPU601_KERN_ENTRY_HOOK
-#define	CPU601_KERN_ENTRY(_s1_,_s2_)					\
-	mfpvr	_s1_;							\
-	srwi	_s1_,_s1_,16;						\
-	cmpi	%cr0,_s1_,MPC601;					\
-	bne	98f;			/* skip if not 601 */		\
-	CPU601_KERN_ENTRY_HOOK(_s1_,_s2_);				\
-98:
-#else
-#define	CPU601_KERN_ENTRY(_s1_,_s2_)	/* nothing */
-#endif
-
-#ifdef CPU601_KERN_LEAVE_HOOK
-#define	CPU601_KERN_LEAVE(_pmap_,_s1_)					\
-	mfpvr	_s1_;							\
-	srwi	_s1_,_s1_,16;						\
-	cmpi	%cr0,_s1_,MPC601;					\
-	bne	99f;			/* skip if not 601 */		\
-	CPU601_KERN_LEAVE_HOOK(_pmap_,_s1_);				\
-	li	_s1_,0;							\
-	mtibatl	0,_s1_;			/* obliterate BATs */		\
-	mtibatl	1,_s1_;							\
-	mtibatl	2,_s1_;							\
-	mtibatl	3,_s1_;							\
-99:
-#else
-#define	CPU601_KERN_LEAVE(_pmap_,_s1_)	/* nothing */
-#endif
-
 /*
  * FRAME_SETUP assumes:
  *	SPRG1		SP (%r1)
@@ -783,7 +769,6 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtcr	%r3;							\
 	bf	17,1f;			/* branch if PSL_PR is false */	\
 /* Restore user SRs */							\
-	CPU601_KERN_LEAVE(%r2,%r3);					\
 	RESTORE_USER_SRS(%r2,%r3);					\
 1:	mfsprg1	%r2;			/* restore cr */		\
 	mtcr	%r2;							\
@@ -863,7 +848,6 @@ u_trap:
  */
 
 	RESTORE_KERN_SRS(%r30,%r31)	/* First enable KERNEL mapping */
-	CPU601_KERN_ENTRY(%r30,%r31)
 
 k_trap:
 	FRAME_SETUP(CI_TEMPSAVE)
@@ -920,7 +904,6 @@ s_sctrap:
 	ldptr	%r1,CI_CURPCB(%r1)
 	addi	%r1,%r1,USPACE		/* stack is top of user struct */
 	RESTORE_KERN_SRS(%r30,%r31)	/* First enable KERNEL mapping */
-	CPU601_KERN_ENTRY(%r30,%r31)
 	FRAME_SETUP(CI_TEMPSAVE)
 /* Now we can recover interrupts again: */
 	mfmsr	%r7
@@ -991,7 +974,6 @@ _C_LABEL(sctrapexit):
 	bf	17,99f;	/* branch if PSL_PR is false */		\
 /* interrupts are recoverable here, and enable translation */		\
 	RESTORE_KERN_SRS(%r3,%r4);					\
-	CPU601_KERN_ENTRY(%r3,%r4);					\
 99:	mfmsr	%r5;							\
 	ori	%r5,%r5,(PSL_IR|PSL_DR|PSL_RI);				\
 	mtmsr	%r5;							\
@@ -1037,7 +1019,6 @@ intr_exit:
 	mtcr	%r6			/* saved SRR1 */
 	bf	17,1f			/* branch if PSL_PR is false */
 
-	CPU601_KERN_LEAVE(%r3,%r4)
 	RESTORE_USER_SRS(%r3,%r4)
 	ldint	%r3,CI_ASTPENDING(%r5)	/* Test AST pending */
 	andi.	%r3,%r3,1
