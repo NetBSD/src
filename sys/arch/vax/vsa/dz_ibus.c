@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.15 1999/08/27 17:50:42 ragge Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.16 2000/01/24 02:40:35 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -112,7 +112,6 @@ dz_vsbus_match(parent, cf, aux)
 	dzP->tcr = 1;
 	DELAY(100000);
 	dzP->tcr = i;
-	va->va_ivec = dzxint;
 
 	/* If the device doesn't exist, no interrupt has been generated */
 	return 1;
@@ -144,7 +143,10 @@ dz_vsbus_attach(parent, self, aux)
 	sc->sc_type = DZ_DZV;
 
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
-	scb_vecalloc(va->va_cvec - 4, dzrint, self->dv_unit, SCB_ISTACK);
+
+	scb_vecalloc(va->va_cvec, dzxint, sc, SCB_ISTACK);
+	scb_vecalloc(va->va_cvec - 4, dzrint, sc, SCB_ISTACK);
+
 	printf("\n%s: 4 lines", self->dv_xname);
 
 	dzattach(sc);

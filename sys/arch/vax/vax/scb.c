@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.8 1999/09/17 20:07:20 thorpej Exp $ */
+/*	$NetBSD: scb.c,v 1.9 2000/01/24 02:40:34 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,7 +44,7 @@
 #include <machine/sid.h>
 #include <machine/mtpr.h>
 
-static	void scb_stray __P((int));
+static	void scb_stray __P((void *));
 
 static	struct ivec_dsp *scb_vec;
 static	volatile int vector, ipl, gotintr;
@@ -68,8 +68,9 @@ scb_init(avail_start)
 	for (i = 0; i < (scb_size * VAX_NBPG)/4; i++) {
 		ivec[i] = &scb_vec[i];
 		(int)ivec[i] |= 1; /* On istack, please */
-		memcpy(&scb_vec[i], &idsptch, sizeof(struct ivec_dsp));
+		scb_vec[i] = idsptch;
 		scb_vec[i].hoppaddr = scb_stray;
+		scb_vec[i].pushlarg = (void *) (i * 4);
 	}
 	/*
 	 * Copy all pre-set interrupt vectors to the new SCB.
@@ -93,13 +94,13 @@ scb_init(avail_start)
  */
 void
 scb_stray(arg)
-	int arg;
+	void *arg;
 {
 	struct	callsframe *cf = FRAMEOFFSET(arg);
 	int *a = &cf->ca_arg1;
 
 	gotintr = 1;
-	vector = ((cf->ca_pc - (u_int)scb_vec)/4) & ~3;
+	vector = ((int) arg) & ~3;
 	ipl = mfpr(PR_IPL);
 	if (cold == 0)
 		printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
@@ -148,16 +149,13 @@ scb_vecref(rvec, ripl)
 void
 scb_vecalloc(vecno, func, arg, stack)
 	int vecno;
-	void (*func) __P((int));
-	int arg, stack;
+	void (*func) __P((void *));
+	void *arg;
+	int stack;
 {
+	struct ivec_dsp *dsp = &scb_vec[vecno / 4];
 	u_int *iscb = (u_int *)scb; /* XXX */
-#ifdef DIAGNOSTIC
-	if ((unsigned)arg > 63)
-		panic("scb_vecalloc: vecno 0x%x func %p arg %d",
-		    vecno, func, arg);
-#endif
-	scb_vec[vecno/4].pushlarg = arg;
-	scb_vec[vecno/4].hoppaddr = func;
-	iscb[vecno/4] = (u_int)(&scb_vec[vecno/4]) | stack;
+	dsp->hoppaddr = func;
+	dsp->pushlarg = arg;
+	iscb[vecno/4] = (u_int)(dsp) | stack;
 }
