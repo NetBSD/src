@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.15 2000/01/22 22:19:12 mycroft Exp $	*/
+/*	$NetBSD: readdir.c,v 1.16 2003/05/28 20:03:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,11 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.15 2000/01/22 22:19:12 mycroft Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.16 2003/05/28 20:03:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include "reentrant.h"
 #include <sys/param.h>
 
 #include <dirent.h>
@@ -51,14 +52,14 @@ __RCSID("$NetBSD: readdir.c,v 1.15 2000/01/22 22:19:12 mycroft Exp $");
 
 #ifdef __weak_alias
 __weak_alias(readdir,_readdir)
+__weak_alias(readdir_r,_readdir_r)
 #endif
 
 /*
  * get next entry in a directory.
  */
-struct dirent *
-readdir(dirp)
-	DIR *dirp;
+static struct dirent *
+_readdir_unlocked(DIR *dirp)
 {
 	struct dirent *dp;
 
@@ -90,4 +91,59 @@ readdir(dirp)
 			continue;
 		return (dp);
 	}
+}
+
+struct dirent *
+readdir(dirp)
+	DIR *dirp;
+{
+	struct dirent	*dp;
+
+#ifdef _REENTRANT
+	if (__isthreaded) {
+		mutex_lock((mutex_t *)dirp->dd_lock);
+		dp = _readdir_unlocked(dirp);
+		mutex_unlock((mutex_t *)dirp->dd_lock);
+	}
+	else
+#endif
+		dp = _readdir_unlocked(dirp);
+	return (dp);
+}
+
+int
+readdir_r(dirp, entry, result)
+	DIR *dirp;
+	struct dirent *entry;
+	struct dirent **result;
+{
+	struct dirent *dp;
+	int saved_errno;
+
+	saved_errno = errno;
+	errno = 0;
+#ifdef _REENTRANT
+	if (__isthreaded) {
+		mutex_lock((mutex_t *)dirp->dd_lock);
+		if ((dp = _readdir_unlocked(dirp)) != NULL)
+			memcpy(entry, dp, DIRENT_SIZE(dp));
+		mutex_unlock((mutex_t *)dirp->dd_lock);
+	}
+	else 
+#endif
+		if ((dp = _readdir_unlocked(dirp)) != NULL)
+			memcpy(entry, dp, DIRENT_SIZE(dp));
+
+	if (errno != 0) {
+		if (dp == NULL)
+			return (errno);
+	} else
+		errno = saved_errno;
+
+	if (dp != NULL)
+		*result = entry;
+	else
+		*result = NULL;
+
+	return (0);
 }
