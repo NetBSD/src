@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.50 2004/03/13 17:31:33 bjh21 Exp $
+#	$NetBSD: files.arc,v 1.51 2004/07/08 22:07:47 drochner Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -249,9 +249,6 @@ file	arch/arc/dti/btl.c		btl needs-flag
 #	NS16450/16550 Serial line driver
 attach	com at jazzio with com_jazzio
 file	arch/arc/jazz/com_jazzio.c	com & com_jazzio
-
-# Game adapter (joystick)
-file	arch/arc/isa/joy_timer.c	joy
 
 #	Parallel printer port driver
 attach	lpt at jazzio with lpt_jazzio
