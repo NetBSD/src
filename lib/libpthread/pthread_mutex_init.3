@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex_init.3,v 1.2 2003/06/08 06:44:32 thorpej Exp $
+.\" $NetBSD: pthread_mutex_init.3,v 1.2.6.1 2005/03/22 15:22:42 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@
 .Sh SYNOPSIS
 .In pthread.h
 .Ft int
-.Fn pthread_mutex_init "pthread_mutex_t *mutex" "const pthread_mutexattr_t *attr"
+.Fn pthread_mutex_init "pthread_mutex_t * restrict mutex" "const pthread_mutexattr_t * restrict attr"
 .Sh DESCRIPTION
 The
 .Fn pthread_mutex_init
