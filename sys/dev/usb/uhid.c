@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.2 1998/07/13 10:49:41 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.3 1998/08/01 20:52:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -203,6 +203,9 @@ uhid_disco(p)
 	void *p;
 {
 	struct uhid_softc *sc = p;
+
+	DPRINTF(("ums_hid: sc=%p\n", sc));
+	usbd_abort_pipe(sc->sc_intrpipe);
 	sc->sc_disconnected = 1;
 }
 
