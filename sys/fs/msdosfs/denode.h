@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.3 2003/06/29 22:31:09 fvdl Exp $	*/
+/*	$NetBSD: denode.h,v 1.4 2003/09/07 22:09:11 itojun Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -221,18 +221,18 @@ struct denode {
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
 #define	DETOV(de)	((de)->de_vnode)
 
-#define	DETIMES(dep, acc, mod, cre) \
+#define	DETIMES(dep, acc, mod, cre, gmtoff) \
 	if ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) { \
 		(dep)->de_flag |= DE_MODIFIED; \
 		if ((dep)->de_flag & DE_UPDATE) { \
-			unix2dostime((mod), &(dep)->de_MDate, &(dep)->de_MTime, NULL); \
+			unix2dostime((mod), gmtoff, &(dep)->de_MDate, &(dep)->de_MTime, NULL); \
 			(dep)->de_Attributes |= ATTR_ARCHIVE; \
 		} \
 		if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
 			if ((dep)->de_flag & DE_ACCESS) \
-				unix2dostime((acc), &(dep)->de_ADate, NULL, NULL); \
+				unix2dostime((acc), gmtoff, &(dep)->de_ADate, NULL, NULL); \
 			if ((dep)->de_flag & DE_CREATE) \
-				unix2dostime((cre), &(dep)->de_CDate, &(dep)->de_CTime, &(dep)->de_CHun); \
+				unix2dostime((cre), gmtoff, &(dep)->de_CDate, &(dep)->de_CTime, &(dep)->de_CHun); \
 		} \
 		(dep)->de_flag &= ~(DE_UPDATE | DE_CREATE | DE_ACCESS); \
 	}
