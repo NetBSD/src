@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.77 2003/01/23 14:56:06 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.78 2003/01/23 19:54:35 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -357,6 +357,7 @@ nmi_soft(tf)
 static void xcallintr(void *v)
 {
 
+	/* notyet - cpuinfo.msg.received = 1; */
 	switch (cpuinfo.msg.tag) {
 	case XPMSG_FUNC:
 	    {
@@ -367,7 +368,8 @@ static void xcallintr(void *v)
 		break;
 	    }
 	}
-	cpuinfo.flags |= CPUFLG_GOTMSG;
+	cpuinfo.msg.tag = 0;
+	cpuinfo.msg.complete = 1;
 }
 #endif /* MULTIPROCESSOR */
 #endif /* SUN4M || SUN4D */
