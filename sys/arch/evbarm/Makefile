@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 2001/10/27 16:23:05 rearnsha Exp $
+#	$NetBSD: Makefile,v 1.2 2001/11/09 23:36:52 thorpej Exp $
 
 # Makefile for evbarm tags file and boot blocks
 
 TEVBARM=	../evbarm/tags
 SEVBARM=	../evbarm/integrator/*.[ch] ../evbarm/include/*.h \
 		../evbarm/dev/*.[ch] ../evbarm/ifpga/*.[ch] \
-		../evbarm/iq80310/*.[ch]
-		../evbarm/integrator_fpga/*.[ch]
-AEVBARM=	../evbarm/integrator/*.S ../evbarm/ifpga/*.S
+		../evbarm/iq80310/*.[ch] \
+		../evbarm/integrator_fpga/*.[ch] \
+AEVBARM=	../evbarm/integrator/*.S ../evbarm/ifpga/*.S \
 
 # Directories in which to place tags links
 DEVBARM=	include
