@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.12 1998/02/28 12:10:13 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.13 1998/03/20 16:36:20 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -117,21 +117,30 @@ Xmain()
 
                 break;
 	default:
-		printf("unknown cpu type %d\nRegister dump:\n", vax_cputype);
-		for (io = 0; io < 16; io++)
-			printf("r%d 0x%x\n", io, bootregs[io]);
+		nprint(vax_cputype, 10);
+		sprint(": Unknown CPU type, regs:\n");
+		for (io = 0; io < 16; io++) {
+			nprint(bootregs[io], 16);
+			putchar('\n');
+		}
 		asm("halt");
         }
 
 	bootset = getbootdev();
 
-	printf("\nhowto 0x%x, bdev 0x%x, booting...", boothowto, bootdev);
+	sprint("\nhowto 0x");
+	nprint(boothowto, 16);
+	sprint(", bdev 0x");
+	nprint(bootdev, 16);
+	sprint(", booting...");
 	io = open(hej, 0);
 
 	if (io >= 0 && io < SOPEN_MAX) {
 		copyunix(io);
 	} else {
-		printf("Boot failed, saerrno %d\n", errno);
+		sprint("Boot failed, saerrno ");
+		nprint(errno, 10);
+		putchar('\n');
 	}
 }
 
@@ -144,7 +153,7 @@ copyunix(aio)
 
 	i = read(io, (char *) &x, sizeof(x));
 	if (i != sizeof(x) || N_BADMAG(x)) {
-		printf("Bad format\n");
+		sprint("Bad format\n");
 		return;
 	}
 
@@ -166,12 +175,12 @@ copyunix(aio)
 		*addr++ = 0;
 	for (i = 0; i < 128 * 512; i++)	/* slop */
 		*addr++ = 0;
-	printf("done. (%d+%d)\n", x.a_text + x.a_data, x.a_bss);
+	sprint("done.\n");
 	hoppabort(x.a_entry, boothowto, bootset);
 	(*((int (*) ()) x.a_entry)) ();
 	return;
 shread:
-	printf("Short read\n");
+	sprint("Short read\n");
 	return;
 }
 
@@ -229,7 +238,7 @@ getbootdev()
 		break;
 
 	default:
-		printf("Unsupported boot device %d, trying anyway.\n", bootdev);
+		sprint("Unsupported boot device, trying anyway.\n");
 		boothowto |= (RB_SINGLE | RB_ASKNAME);
 	}
 	return MAKEBOOTDEV(bootdev, adaptor, controller, unit, partition);
@@ -309,8 +318,10 @@ devopen(f, fname, file)
 	 */
 	if ((bootdev != BDEV_TK) && (bootdev != BDEV_CNSL)) {
 		msg = getdisklabel(LABELOFFSET + &start, &lp);
-		if (msg)
-			printf("getdisklabel: %s\n", msg);
+		if (msg) {
+			sprint(msg);
+			putchar('\n');
+		}
 	}
 	return 0;
 }
@@ -396,8 +407,11 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	case VAX_750:
 		if (bootdev != BDEV_HP) {
 			while (size > 0) {
-				while ((read750(block, bootregs) & 0x01) == 0)
-					printf("Retrying read bn# %d\n", block);
+				while ((read750(block, bootregs) & 0x01) == 0){
+					sprint("Retrying read bn# ");
+					nprint(block, 10);
+					putchar('\n');
+				}
 				bcopy(0, buf, 512);
 				size -= 512;
 				buf += 512;
@@ -439,4 +453,28 @@ hpread(block, size, buf)
 		return 1;
 	}
 	return 0;
+}
+
+sprint(s)
+	char *s;
+{
+	while(*s)
+		putchar(*s++);
+}
+
+nprint(nr, base)
+{
+
+	do {
+		putchar("0123456789abcdef"[nr % base]);
+	} while (nr /= base);
+}
+
+void
+twiddle()
+{
+        static int pos;
+
+        putchar("|/-\\"[pos++ & 3]);
+        putchar('\b');
 }
