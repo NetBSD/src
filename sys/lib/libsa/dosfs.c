@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfs.c,v 1.5 2002/12/30 16:41:53 veego Exp $	*/
+/*	$NetBSD: dosfs.c,v 1.6 2003/07/15 13:27:07 scw Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Robert Nordier
@@ -467,7 +467,7 @@ namede(DOS_FS * fs, const char *path, const struct direntry ** dep)
 static int
 lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 {
-	DOS_DIR *dir;
+	static DOS_DIR *dir = NULL;
 	u_char  lfn[261];
 	u_char  sfn[13];
 	u_int   nsec, lsec, xdn, chk, sec, ent, x;
@@ -480,7 +480,11 @@ lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 				return 0;
 			}
 
-	dir = alloc(sizeof(DOS_DIR) * DEPSEC);
+	if (dir == NULL) {
+		dir = alloc(sizeof(DOS_DIR) * DEPSEC);
+		if (dir == NULL)
+			return (ENOMEM);
+	}
 
 	if (!clus && fs->fatsz == 32)
 		clus = fs->rdcl;
@@ -538,7 +542,7 @@ lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 						}
 						if (ok) {
 							*dep = &dir[ent].de;
-							goto out;
+							goto out2;
 						}
 					}
 				}
@@ -555,6 +559,8 @@ lookup(DOS_FS * fs, u_int clus, const char *name, const struct direntry ** dep)
 	err = ENOENT;
  out:
 	free(dir, sizeof(DOS_DIR) * DEPSEC);
+	dir = NULL;
+ out2:
 	return (err);
 }
 
