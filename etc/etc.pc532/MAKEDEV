@@ -212,7 +212,7 @@ st*)
 #cd*|mcd*)
 #	umask 2 ; unit=`expr $i : '.*cd\(.*\)'`
 #	case $i in
-#	cd*) name=cd; blk=6; chr=15;;
+#	cd*) name=cd; blk=4; chr=12;;
 #	mcd*) name=mcd; blk=7; chr=39;;
 #	esac
 #	rm -f $name$unit? r$name$unit?
@@ -232,15 +232,16 @@ st*)
 #	umask 77
 #	;;
 
-#vnd*)
-#	unit=`expr $i : '...\(.*\)'`
-#	name=vnd; blk=14; chr=41
-#	rm -f ${name}${unit}c r${name}${unit}c
-#	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
-#	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
-#	chgrp operator ${name}${unit}c r${name}${unit}c
-#	chmod 640 ${name}${unit}c r${name}${unit}c
-#	;;
+# vnode disk driver ???
+vnd*)
+	unit=`expr $i : '...\(.*\)'`
+	name=vnd; blk=5; chr=13
+	rm -f ${name}${unit}c r${name}${unit}c
+	mknod ${name}${unit}c	b $blk `expr $unit '*' 8 + 2`
+	mknod r${name}${unit}c	c $chr `expr $unit '*' 8 + 2`
+	chgrp operator ${name}${unit}c r${name}${unit}c
+	chmod 640 ${name}${unit}c r${name}${unit}c
+	;;
 
 #bpf*)
 #	unit=`expr $i : 'bpf\(.*\)'`
