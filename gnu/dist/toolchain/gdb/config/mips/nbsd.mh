@@ -1,7 +1,0 @@
-# Host: Mips (either-endian) running NetBSD
-XDEPFILES= ser-tcp.o
-XM_FILE= xm-nbsd.h
-XM_CLIBS=-lkvm
-NAT_FILE= nm-nbsd.h
-NATDEPFILES= infptrace.o inftarg.o fork-child.o corelow.o mipsnbsd-nat.o \
-	kcore-nbsd.o solib.o
