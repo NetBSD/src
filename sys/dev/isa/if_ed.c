@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.88 1996/03/16 06:18:39 cgd Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.89 1996/03/16 06:41:20 cgd Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -110,6 +110,15 @@ struct ed_softc {
 
 int edprobe __P((struct device *, void *, void *));
 void edattach __P((struct device *, struct device *, void *));
+int ed_find __P((struct ed_softc *, struct cfdata *,
+    struct isa_attach_args *ia));
+int ed_probe_generic8390 __P((int));
+int ed_find_WD80x3 __P((struct ed_softc *, struct cfdata *,
+    struct isa_attach_args *ia));
+int ed_find_3Com __P((struct ed_softc *, struct cfdata *,
+    struct isa_attach_args *ia));
+int ed_find_Novell __P((struct ed_softc *, struct cfdata *,
+    struct isa_attach_args *ia));
 int edintr __P((void *));
 int edioctl __P((struct ifnet *, u_long, caddr_t));
 void edstart __P((struct ifnet *));
@@ -155,11 +164,25 @@ edprobe(parent, match, aux)
 	struct cfdata *cf = sc->sc_dev.dv_cfdata;
 	struct isa_attach_args *ia = aux;
 
-	if (ed_probe_WD80x3(sc, cf, ia))
+	return (ed_find(match, sc->sc_dev.dv_cfdata, aux));
+}
+
+/*
+ * Fill in softc (if given), based on device type, cfdata and attach args.
+ * Return 1 if successful, 0 otherwise.
+ */
+int
+ed_find(sc, cf, ia)
+	struct ed_softc *sc;
+	struct cfdata *cf;
+	struct isa_attach_args *ia;
+{
+
+	if (ed_find_WD80x3(sc, cf, ia))
 		return (1);
-	if (ed_probe_3Com(sc, cf, ia))
+	if (ed_find_3Com(sc, cf, ia))
 		return (1);
-	if (ed_probe_Novell(sc, cf, ia))
+	if (ed_find_Novell(sc, cf, ia))
 		return (1);
 	return (0);
 }
@@ -186,10 +209,9 @@ edprobe(parent, match, aux)
  * Return 1 if 8390 was found, 0 if not.
  */
 int
-ed_probe_generic8390(sc)
-	struct ed_softc *sc;
+ed_probe_generic8390(nicbase)
+	int nicbase;
 {
-	int nicbase = sc->nic_addr;
 
 	if ((NIC_GET(nicbase, ED_P0_CR) &
 	     (ED_CR_RD2 | ED_CR_TXP | ED_CR_STA | ED_CR_STP)) !=
@@ -208,7 +230,7 @@ int ed_wd790_irq[] = { IRQUNK, 9, 3, 5, 7, 10, 11, 15 };
  * Probe and vendor-specific initialization routine for SMC/WD80x3 boards.
  */
 int
-ed_probe_WD80x3(sc, cf, ia)
+ed_find_WD80x3(sc, cf, ia)
 	struct ed_softc *sc;
 	struct cfdata *cf;
 	struct isa_attach_args *ia;
@@ -583,7 +605,7 @@ int ed_3com_irq[] = {IRQUNK, IRQUNK, IRQUNK, IRQUNK, 9, 3, 4, 5};
  * Probe and vendor-specific initialization routine for 3Com 3c503 boards.
  */
 int
-ed_probe_3Com(sc, cf, ia)
+ed_find_3Com(sc, cf, ia)
 	struct ed_softc *sc;
 	struct cfdata *cf;
 	struct isa_attach_args *ia;
@@ -820,7 +842,7 @@ ed_probe_3Com(sc, cf, ia)
  * Probe and vendor-specific initialization routine for NE1000/2000 boards.
  */
 int
-ed_probe_Novell(sc, cf, ia)
+ed_find_Novell(sc, cf, ia)
 	struct ed_softc *sc;
 	struct cfdata *cf;
 	struct isa_attach_args *ia;
@@ -865,7 +887,7 @@ ed_probe_Novell(sc, cf, ia)
 	delay(5000);
 
 	/* Make sure that we really have an 8390 based board. */
-	if (!ed_probe_generic8390(sc))
+	if (!ed_probe_generic8390(sc->nic_addr))
 		return (0);
 
 	sc->vendor = ED_VENDOR_NOVELL;
@@ -1895,7 +1917,7 @@ edread(sc, buf, len)
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-    	struct mbuf *m;
+	struct mbuf *m;
 	struct ether_header *eh;
 
 	/* Pull packet off interface. */
