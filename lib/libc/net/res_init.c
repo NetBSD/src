@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.13 1997/07/13 19:58:02 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.14 1997/07/20 13:33:31 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -57,9 +57,9 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
-static char rcsid[] = "Id: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp";
+static char rcsid[] = "$Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.13 1997/07/13 19:58:02 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.14 1997/07/20 13:33:31 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,7 +118,7 @@ res_init()
 	register FILE *fp;
 	register char *cp, **pp, *net;
 	register int n;
-	char buf[BUFSIZ];
+	char buf[MAXDNAME];
 	int nserv = 0;    /* number of nameserver records read from file */
 	int haveenv = 0;
 	int havesearch = 0;

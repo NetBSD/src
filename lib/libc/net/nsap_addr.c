@@ -1,4 +1,4 @@
-/*	$NetBSD: nsap_addr.c,v 1.3 1997/07/13 19:57:54 christos Exp $	*/
+/*	$NetBSD: nsap_addr.c,v 1.4 1997/07/20 13:33:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,9 +51,9 @@
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char rcsid[] = "Id: nsap_addr.c,v 8.3 1996/08/05 08:31:35 vixie Exp";
+static char rcsid[] = "$Id: nsap_addr.c,v 8.3 1996/08/05 08:31:35 vixie Exp ";
 #else
-__RCSID("$NetBSD: nsap_addr.c,v 1.3 1997/07/13 19:57:54 christos Exp $");
+__RCSID("$NetBSD: nsap_addr.c,v 1.4 1997/07/20 13:33:27 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
