@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.43 1996/02/18 11:53:56 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.44 1996/03/13 00:38:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -522,7 +522,9 @@ nfs_decode_args(nmp, argp)
 		nmp->nm_readdirsize &= ~(NFS_DIRBLKSIZ - 1);
 		if (nmp->nm_readdirsize < NFS_DIRBLKSIZ)
 			nmp->nm_readdirsize = NFS_DIRBLKSIZ;
-	}
+	} else if (argp->flags & NFSMNT_RSIZE)
+		nmp->nm_readdirsize = nmp->nm_rsize;
+
 	if (nmp->nm_readdirsize > maxio)
 		nmp->nm_readdirsize = maxio;
 
