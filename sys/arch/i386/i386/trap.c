@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.164 2002/02/16 16:22:04 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.165 2002/02/18 15:58:02 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.164 2002/02/16 16:22:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165 2002/02/18 15:58:02 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -170,7 +170,7 @@ trap(frame)
 {
 	register struct proc *p = curproc;
 	int type = frame.tf_trapno;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb;
 	extern char fusubail[],
 		    resume_iret[], resume_pop_ds[], resume_pop_es[],
 		    resume_pop_fs[], resume_pop_gs[],
@@ -182,6 +182,7 @@ trap(frame)
 
 	uvmexp.traps++;
 
+	pcb = (p != NULL) ? &p->p_addr->u_pcb : NULL;
 #ifdef DEBUG
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
