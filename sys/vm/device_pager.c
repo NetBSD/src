@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)device_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: device_pager.c,v 1.8 1993/11/10 08:11:47 cgd Exp $
+ *	$Id: device_pager.c,v 1.9 1993/11/10 08:22:05 cgd Exp $
  */
 
 /*
@@ -346,7 +346,6 @@ dev_pager_getfake(paddr)
 	 *	m->flags = PG_BUSY | PG_CLEAN | PG_FAKE | PG_FICTITIOUS;
 	 * to ours:
 	 */
-	m->absent = 0;		/* no analog in the 4.4 flags */
 	m->inactive = 0;
 	m->active = 0;
 	m->laundry = 0;
