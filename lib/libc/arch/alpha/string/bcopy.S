@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.1 1995/08/13 00:42:27 cgd Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.2 1995/09/26 03:37:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -63,7 +63,7 @@ LEAF(FUNCTION,3)
 
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	/* set up return value, while we still can */
-	mov	SRCREG,v0
+	mov	DSTREG,v0
 #endif
 
 	/* Check for negative length */
