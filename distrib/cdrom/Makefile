@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2000/11/29 16:35:03 tv Exp $
+# $NetBSD: Makefile,v 1.2 2000/11/29 19:56:19 tv Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -69,24 +69,23 @@ SUBDIR+=	macppc_installboot
 ##### Default paths for programs #####
 
 MKISOFS?=	/usr/pkg/bin/mkisofs
-MKSUNBOOTCD?=	/usr/pkg/sbin/mksunbootcd
+MKSUNBOOTCD?=	/usr/src/distrib/utils/mksunbootcd/mksunbootcd
 RSYNC?=		/usr/pkg/bin/rsync
 ALPHA_IBOOT?=	/sys/arch/alpha/stand/installboot/installboot
 PMAX_IBOOT?=	/sys/arch/pmax/stand/installboot/installboot
 VAX_IBOOT?=	/sys/arch/vax/stand/installboot/installboot
 .if !empty(ALL_PORTS:Mmacppc)
 MACPPC_IBOOTDIR!= cd ${.CURDIR}/macppc_installboot && ${MAKE} print-objdir
-MACPPC_IBOOT=	${MACPPC_IBOOTDIR}/macppc_installboot
 .endif
 
 RSYNC_SITE?=	ftp.netbsd.org:/pub/NetBSD/
 RSYNC_ARGS?=	-va --delete --rsh=ssh
 RSYNC_EXCLUDE+=	--exclude=/* --exclude=Split --exclude=cdrom
 
-DISTDIR?=	./download
-STAGEDIR?=	./staging
-IMAGEDIR?=	.
-EXTFILEDIR?=	./extfiles
+DISTDIR?=	${.OBJDIR}/download
+STAGEDIR?=	${.OBJDIR}/staging
+IMAGEDIR?=	${.OBJDIR}
+EXTFILEDIR?=	${.OBJDIR}/extfiles
 EASTER_EGG?=	/dev/null
 
 RELEASE_SUBDIR?=${RELEASENAME}
@@ -182,20 +181,16 @@ MKISOFS_ARGS.${image}+=	-b ${BOOTFILE.i386} -c boot.catalog
 
 # Mac (mac68k, macppc)
 
-.if !empty(ports:Mmac*)
-MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
-			--macbin
-
 .if !empty(ports:Mmacppc)
-MKISOFS_ARGS.${image}+= -boot-hfs-file macppc_installboot/macppcboot.raw
-.endif
-
-.elif defined(USE_APPLE_ISO)
+MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
+			--macbin -boot-hfs-file ${MACPPC_IBOOTDIR}/macppcboot.raw
+.elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
 MKISOFS_ARGS.${image}+=	-apple --macbin
 .endif
 
 # Sun (sparc, sparc64, sun3)
 
+SUN_BOOT_ARGS.${image}:=
 .if !empty(ports:Msparc*) || !empty(ports:Msun3*)
 SUN_BOOT.123:=	/dev/null
 SUN_BOOT.4:=	/dev/null
@@ -228,6 +223,10 @@ SUN_BOOT.5:=	${BOOTFILE.sparc64}
 .endif
 
 SUN_BOOT_ARGS.${image}:= ${SUN_BOOT.123} ${SUN_BOOT.123} ${SUN_BOOT.123} ${SUN_BOOT.4} ${SUN_BOOT.5}
+
+.if empty(SUN_BOOT_ARGS.${image}:N/dev/null)
+SUN_BOOT_ARGS.${image}:=
+.endif
 .endif
 
 .endfor
@@ -318,7 +317,11 @@ ${file:C/^.*://}: .PHONY
 # 4. Add bootfile sizes rounded up to 512 bytes for pmax and vax.
 # 5. Round up to a 32k boundary, then add another 32k for TAO padding.
 
-size-${image}:
+.if !empty(BASE_PORTS.${image}:Mmacppc)
+size-${image}: all-macppc_installboot
+.endif
+
+size-${image}: stage-${image} extfileprep fileprep-${image}
 	@size=$$((`cd ${STAGEDIR}/${image} && ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -print-size . 2>&1 | tee /dev/stderr | sed '/=/!d;s/^[^=]*=//'` * 2048)) && \
 	if [ "${SUN_BOOT_ARGS.${image}}" != "" ]; then \
 		size=$$(($$(($$size + 327679)) / 327680 * 327680)) && \
@@ -342,14 +345,16 @@ size-${image}:
 	echo "Projected size of ${image}.iso: $$size bytes ($${sizek}K)." && \
 	if [ $$sizek -gt 666000 ]; then echo "Image too large for 74-minute CD!"; false; fi
 
-${IMAGEDIR}/${image}.iso: fetch stage-${image} extfileprep fileprep-${image} size-${image}
-	cd ${STAGEDIR}/${image} && ${MKISOFS} -o ${.CURDIR}/$@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} .
-.if defined(SUN_BOOT_ARGS.${image})
+# Actually build the image with all the bootstrap goo....
+
+${IMAGEDIR}/${image}.iso: fetch size-${image}
+	cd ${STAGEDIR}/${image} && ${MKISOFS} -o $@ ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} .
+.if !empty(SUN_BOOT_ARGS.${image})
 	${MKSUNBOOTCD} -c 640 $@ ${SUN_BOOT_ARGS.${image}}
 .endif
 .if !empty(BASE_PORTS.${image}:Mmacppc)
 	@blknum=$$((`ls -l $@ | awk '{print $$5}'` / 512)) && \
-	${MACPPC_IBOOT} $@ $$blknum 756
+	${MACPPC_IBOOTDIR}/macppc_installboot $@ $$blknum 756
 	dd if=${EXTFILEDIR}/macppc.ofwboot bs=64k count=1 conv=sync >>$@ 2>/dev/null
 .endif
 .if !empty(BASE_PORTS.${image}:Mpmax)
@@ -381,7 +386,7 @@ cleandir distclean: cleandistdir
 
 cleanimages:
 .for image in ${CD_IMAGES}
-	-rm -f ${image}.iso
+	-rm -f ${IMAGEDIR}/${image}.iso
 .endfor
 
 cleanstagedir:
