@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.12 2000/05/26 00:36:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.13 2000/05/26 12:57:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -887,16 +887,9 @@ XL_switch_error:
 	mov.l	r0, @r1		/* r8->p_back = 0 */
 
 	/* Process now running on a processor. */
-	mov	r8, r4
-	mov	#P_STAT, r2
-	add	r2, r4
-
-	mov.l	XL_ConvVtoP, r0
-	jsr	@r0
-	nop
-
-	mov	#SONPROC, r1	/* p->p_stat = SONPROC */
-	mov.b	r1, @r0
+	mov	#P_STAT, r0
+	mov	#SONPROC, r1
+	mov.b	r1, @(r0, r8)	/* p->p_stat = SONPROC */
 
 	/* Record new process. */
 	mov.l	XXXLcurproc, r0
