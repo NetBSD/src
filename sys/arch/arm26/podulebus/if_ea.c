@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.24 2001/03/17 20:34:43 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.25 2001/03/17 21:56:06 bjh21 Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: if_ea.c,v 1.24 2001/03/17 20:34:43 bjh21 Exp $");
+__RCSID("$NetBSD: if_ea.c,v 1.25 2001/03/17 21:56:06 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/socket.h>
@@ -120,7 +120,7 @@ eaattach(struct device *parent, struct device *self, void *aux)
 /*	dprintf(("Attaching %s...\n", sc->sc_dev.dv_xname));*/
 
 	/* Set the address of the controller for easy access */
-	bus_space_shift(pa->pa_memc_t, pa->pa_memc_h, EA_8005_SHIFT,
+	bus_space_shift(pa->pa_mod_t, pa->pa_mod_h, EA_8005_SHIFT,
 			&sc->sc_8005.sc_iot, &sc->sc_8005.sc_ioh);
 
 	/* Get the Ethernet address from the device description string. */

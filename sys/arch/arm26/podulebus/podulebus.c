@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.8 2001/01/23 23:58:32 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.9 2001/03/17 21:56:07 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.8 2001/01/23 23:58:32 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.9 2001/03/17 21:56:07 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -138,12 +138,18 @@ podulebus_probe_podule(struct device *self, int slotnum)
 				    slotnum * PODULE_GAP, PODULE_GAP,
 				    &pa.pa_sync_h);
 		/* XXX This is a hack! */
-		pa.pa_memc_t = 2;
-		bus_space_subregion(pa.pa_memc_t,
+		pa.pa_mod_t = 2;
+		bus_space_subregion(pa.pa_mod_t,
 		    (bus_space_handle_t)MEMC_IO_BASE, slotnum * PODULE_GAP,
-		    PODULE_GAP, &pa.pa_memc_h);
+		    PODULE_GAP, &pa.pa_mod_h);
 		bus_space_read_region_1(id_bst, id_bsh, 0,
 					extecid, EXTECID_SIZE);
+		/* XXX If you thought that was a hack... */
+		pa.pa_mod_base = pa.pa_mod_h;
+		pa.pa_fast_base = pa.pa_fast_h;
+		pa.pa_medium_base = pa.pa_medium_h;
+		pa.pa_slow_base = pa.pa_slow_h;
+		pa.pa_sync_base = pa.pa_sync_h;
 		pa.pa_ecid = ecid;
 		pa.pa_flags1 = extecid[EXTECID_F1];
 		pa.pa_manufacturer = (extecid[EXTECID_MLO] |
@@ -164,6 +170,7 @@ podulebus_probe_podule(struct device *self, int slotnum)
 							  CHUNK_DEV_DESCR);
 			}
 		}
+		pa.pa_slotflags = 0;
 		config_found_sm(self, &pa,
 				podulebus_print, podulebus_submatch);
 		if (pa.pa_chunks)

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.4 2001/03/17 20:34:43 bjh21 Exp $	*/
+/*	$NetBSD: asc.c,v 1.5 2001/03/17 21:56:06 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -150,7 +150,7 @@ ascattach(pdp, dp, auxp)
 	 * eveything is a valid dma address
 	 */
 	sbic->sc_dmamask = 0;
-	sbic->sc_sbicp = (sbic_regmap_p) (pa->pa_memc_h + ASC_SBIC);
+	sbic->sc_sbicp = (sbic_regmap_p) (pa->pa_mod_base + ASC_SBIC);
 	sbic->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 
 	sbic->sc_adapter.scsipi_cmd = asc_scsicmd;
