@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.34 1994/03/02 03:40:46 mycroft Exp $
+ *	$Id: if_ed.c,v 1.35 1994/03/02 22:47:36 mycroft Exp $
  */
 
 #include "ed.h"
@@ -283,16 +283,20 @@ ed_probe_WD80x3(isa_dev)
 	sc->type = inb(sc->asic_addr + ED_WD_CARD_ID);
 
 	/* Set initial values for width/size. */
+	memsize = 8192;
+	isa16bit = 0;
 	switch (sc->type) {
 	case ED_TYPE_WD8003S:
 		sc->type_str = "WD8003S";
-		memsize = 8192;
-		isa16bit = 0;
 		break;
 	case ED_TYPE_WD8003E:
 		sc->type_str = "WD8003E";
-		memsize = 8192;
-		isa16bit = 0;
+		break;
+	case ED_TYPE_WD8003EB:
+		sc->type_str = "WD8003EB";
+		break;
+	case ED_TYPE_WD8003W:
+		sc->type_str = "WD8003W";
 		break;
 	case ED_TYPE_WD8013EBT:
 		sc->type_str = "WD8013EBT";
@@ -309,11 +313,8 @@ ed_probe_WD80x3(isa_dev)
 			isa16bit = 1;
 			memsize = 16384;
 			sc->type_str = "WD8013EP";
-		} else {
-			isa16bit = 0;
-			memsize = 8192;
+		} else
 			sc->type_str = "WD8003EP";
-		}
 		break;
 	case ED_TYPE_WD8013WC:
 		sc->type_str = "WD8013WC";
@@ -356,8 +357,6 @@ ed_probe_WD80x3(isa_dev)
 #endif
 	default:
 		sc->type_str = NULL;
-		memsize = 8192;
-		isa16bit = 0;
 		break;
 	}
 	/*
