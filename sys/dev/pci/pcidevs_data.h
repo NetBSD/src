@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.555 2003/07/27 01:41:46 jonathan Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.556 2003/07/27 02:39:16 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.555 2003/07/27 01:16:10 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.556 2003/07/27 02:34:38 jonathan Exp 
  */
 
 /*
@@ -2330,6 +2330,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "c't Magazin",
 	    "GPPCI",
+	},
+	{
+	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX,
+	    0,
+	    "Cavium",
+	    "Nitrox XL",
 	},
 	{
 	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_64310,
@@ -12703,6 +12709,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIBYTE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Broadcom Corp. (SiByte)",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_CAVIUM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Cavium",
 	    NULL,
 	},
 	{

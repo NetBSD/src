@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.557 2003/07/27 01:41:46 jonathan Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.558 2003/07/27 02:39:15 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.555 2003/07/27 01:16:10 jonathan Exp 
+ *	NetBSD: pcidevs,v 1.556 2003/07/27 02:34:38 jonathan Exp 
  */
 
 /*
@@ -566,6 +566,7 @@
 #define	PCI_VENDOR_EUMITCOM	0x1638		/* Eumitcom */
 #define	PCI_VENDOR_NETSEC	0x1660		/* NetSec */
 #define	PCI_VENDOR_SIBYTE	0x166d		/* Broadcom Corp. (SiByte) */
+#define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems, Inc. */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
@@ -1075,6 +1076,9 @@
 
 /* c't Magazin products */
 #define	PCI_PRODUCT_C4T_GPPCI	0x6773		/* GPPCI */
+
+/* Cavium products */
+#define	PCI_PRODUCT_CAVIUM_NITROX	0x0001		/* Nitrox XL */
 
 /* Chips and Technologies products */
 #define	PCI_PRODUCT_CHIPS_64310	0x00b8		/* 64310 */
