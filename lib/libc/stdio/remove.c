@@ -1,4 +1,4 @@
-/*	$NetBSD: remove.c,v 1.8 1997/10/06 00:28:14 hubertf Exp $	*/
+/*	$NetBSD: remove.c,v 1.9 1997/10/07 00:02:44 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)remove.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: remove.c,v 1.8 1997/10/06 00:28:14 hubertf Exp $");
+__RCSID("$NetBSD: remove.c,v 1.9 1997/10/07 00:02:44 hubertf Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,9 +56,8 @@ remove(file)
 {
 	struct stat sb;
 
-	if (stat(file, &sb) < 0)
-		if (lstat(file, &sb) < 0)
-			return (-1);
+	if (lstat(file, &sb) < 0)
+		return (-1);
 
 	/*
 	 * The file system may prohibit using unlink(2) on directories,
