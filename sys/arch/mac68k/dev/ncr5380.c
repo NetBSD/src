@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.27 1996/05/05 06:16:54 briggs Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.28 1996/05/06 22:26:26 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -29,7 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -78,9 +77,9 @@ static volatile int	main_running = 0;
  */
 static u_char	busy;
 
-static void	ncr5380_minphys(struct buf *bp);
-static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
-static int	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
+static void	ncr5380_minphys __P((struct buf *bp));
+static int	ncr5380_scsi_cmd __P((struct scsi_xfer *xs));
+static void	ncr5380_show_scsi_cmd __P((struct scsi_xfer *xs));
 
 struct scsi_adapter ncr5380_switch = {
 	ncr5380_scsi_cmd,		/* scsi_cmd()			*/
@@ -108,7 +107,8 @@ static SC_REQ	*free_head = NULL;	/* Free request structures	*/
 /*
  * Determine the size of a SCSI command.
  */
-extern __inline__ int command_size(u_char opcode)
+extern __inline__ int command_size(opcode)
+u_char	opcode;
 {
 	switch ((opcode >> 4) & 0xf) {
 		case 0:
@@ -450,7 +450,7 @@ ncr5380_minphys(struct buf *bp)
 }
 #undef MIN_PHYS
 
-static int
+static void
 ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 {
 	u_char	*b = (u_char *) xs->cmd;
@@ -470,7 +470,6 @@ ncr5380_show_scsi_cmd(struct scsi_xfer *xs)
 		printf("(%d:%d:%d)-RESET-\n",
 		    xs->sc_link->scsibus,xs->sc_link->target, xs->sc_link->lun);
 	}
-	return 0;
 }
 
 /*
@@ -694,6 +693,7 @@ struct ncr_softc *sc;
 				reselect(sc);
 			else {
 #ifdef REAL_DMA
+			    int	dma_done;
 			    if (!(dma_done = dma_ready())) {
 				transfer_dma(connected, connected->phase, 0);
 				return;
@@ -725,6 +725,7 @@ struct ncr_softc *sc;
 static int
 scsi_select(reqp, code)
 SC_REQ	*reqp;
+int	code;
 {
 	u_char			tmp[1];
 	u_char			phase;
@@ -1721,7 +1722,7 @@ u_long		 len;
 	return (-1);
 }
 
-static void
+void
 scsi_reset()
 {
 	SC_REQ	*tmp, *next;
@@ -1961,7 +1962,8 @@ ncr_aprint(struct ncr_softc *sc, char *fmt, ...)
  *		Start Debugging Functions				    *
  ****************************************************************************/
 static void
-show_data_sense(struct scsi_xfer *xs)
+show_data_sense(xs)
+struct scsi_xfer	*xs;
 {
 	u_char	*p1, *p2;
 	int	i;
@@ -2029,7 +2031,7 @@ scsi_show()
 	int	i;
 
 	printf("scsi_show: scsi_main is%s running\n",
-		main_running?"":" not");
+		main_running ? "" : " not");
 	for (tmp = issue_q; tmp; tmp = tmp->next)
 		show_request(tmp, "ISSUED");
 	for (tmp = discon_q; tmp; tmp = tmp->next)
