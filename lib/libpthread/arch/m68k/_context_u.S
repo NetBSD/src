@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.2 2003/01/18 10:34:19 thorpej Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.3 2003/03/01 11:51:59 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
  *
  * We only need to save the `callee' saved registers.
  */
+#ifndef __mc68010__
 #define	GETC	\
 	moveml	%d2-%d7,%a0@(UC_REGS + (_REG_D2 * 4))	;	\
 	moveml	%a2-%a7,%a0@(UC_REGS + (_REG_A2 * 4))	;	\
@@ -56,6 +57,14 @@
 	fmovem	%fpiar,%a0@(UC_FPREGS + _FPREG_PIADDR)	;	\
 	fmovem	%fp0-%fp7,%a0@(UC_FPREGS + _FPREG_FP0)	;	\
 	movl	#(_UC_CPU+_UC_FPU+_UC_USER),%a0@/*(UC_FLAGS)*/
+#else
+#define	GETC	\
+	moveml	%d2-%d7,%a0@(UC_REGS + (_REG_D2 * 4))	;	\
+	moveml	%a2-%a7,%a0@(UC_REGS + (_REG_A2 * 4))	;	\
+	movl	%a1,%a0@(UC_REGS + (_REG_PC * 4))	;	\
+	clrl	%a0@(UC_REGS + (_REG_PS * 4))		;	\
+	movl	#(_UC_CPU+UC_USER),%a0@/*(UC_FLAGS)*/
+#endif
 
 /*
  * Restore the complete context from the ucontext_t structure pointed
@@ -65,6 +74,7 @@
  * a chance the ucontext_t structure is allocated at the base of the new
  * context's stack.
  */
+#ifndef __mc68010__
 #define	SETC	\
 	movl	%a0@/*(UC_FLAGS)*/,%d0			;	\
 	btstl	#_UC_USER_BIT,%d0			;	\
@@ -84,10 +94,25 @@
 	movl	%a1,%sp					;	\
 	rts						;	\
 2:	pea	%a0@					;	\
-	jbsr	PIC_PLT(_C_LABEL(setcontext))
+	jbsr	PIC_PLT(_C_LABEL(setcontext))		;	\
 	/* NOTREACHED */
+#else
+#define	SETC	\
+	movl	%a0@/*(UC_FLAGS)*/,%d0			;	\
+	btstl	#_UC_USER_BIT,%d0			;	\
+	beqs	1f					;	\
+	moveml	%a0@(UC_REGS + (_REG_D2 * 4)),%d2-%d7	;	\
+	moveml	%a0@(UC_REGS + (_REG_A2 * 4)),%a2-%a6	;	\
+	movl	%a0@(UC_REGS + (_REG_SP * 4)),%a1	;	\
+	movl	%a0@(UC_REGS + (_REG_PC * 4)),%a1@-	;	\
+	movw	%a0@(UC_REGS + (_REG_PS * 4) + 2),%cc	;	\
+	movl	%a1,%sp					;	\
+	rts						;	\
+1:	pea	%a0@					;	\
+	jbsr	PIC_PLT(_C_LABEL(setcontext))		;	\
+	/* NOTREACHED */
+#endif
 
-#if 1
 /*
  * int _getcontext_u(ucontext_t *ctx)
  *	Store the current context in the provided ctx structure.
@@ -118,15 +143,3 @@ ENTRY_NOPROFILE(_setcontext_u)
 	movl	%sp@(4),%a0
 	SETC
 	/* NOTREACHED */
-
-
-#else
-ENTRY_NOPROFILE(_getcontext_u)
-	jbra	PIC_PLT(_C_LABEL(getcontext))
-
-ENTRY_NOPROFILE(_swapcontext_u)
-	jbra	PIC_PLT(_C_LABEL(swapcontext))
-
-ENTRY_NOPROFILE(_setcontext_u)
-	jbra	PIC_PLT(_C_LABEL(setcontext))
-#endif
