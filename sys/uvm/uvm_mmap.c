@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.25 1999/06/18 05:13:47 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.26 1999/06/19 00:11:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1171,9 +1171,9 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			 */
 			if ((atop(size) + uvmexp.wired) > uvmexp.wiredmax
 #ifdef pmap_wired_count
-			    || (lockedlimit != 0 && (size +
+			    || (locklimit != 0 && (size +
 			         ptoa(pmap_wired_count(vm_map_pmap(map)))) >
-			        lockedlimit)
+			        locklimit)
 #endif
 			) {
 				retval = KERN_RESOURCE_SHORTAGE;
