@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $	*/
+/*	$NetBSD: job.h,v 1.6 1998/03/26 19:20:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -227,7 +227,8 @@ void Job_Init __P((int, int));
 Boolean Job_Full __P((void));
 Boolean Job_Empty __P((void));
 ReturnStatus Job_ParseShell __P((char *));
-int Job_End __P((void));
+int Job_Finish __P((void));
+void Job_End __P((void));
 void Job_Wait __P((void));
 void Job_AbortAll __P((void));
 void JobFlagForMigration __P((int));

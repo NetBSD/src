@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.14 1997/09/23 21:15:09 fair Exp $	*/
+/*	$NetBSD: nonints.h,v 1.15 1998/03/26 19:20:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -92,10 +92,8 @@ void Parse_FromString __P((char *));
 Lst Parse_MainName __P((void));
 
 /* str.c */
-void str_init __P((void));
-void str_end __P((void));
 char *str_concat __P((char *, char *, int));
-char **brk_string __P((char *, int *, Boolean));
+char **brk_string __P((char *, int *, Boolean, char **));
 char *Str_FindSubstring __P((char *, char *));
 int Str_Match __P((char *, char *));
 char *Str_SYSVMatch __P((char *, char *, int *len));
