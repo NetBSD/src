@@ -1,4 +1,4 @@
-/*	$NetBSD: strcspn.c,v 1.6 1998/01/30 23:38:32 perry Exp $	*/
+/*	$NetBSD: strcspn.c,v 1.7 1998/02/03 18:49:19 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)strcspn.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strcspn.c,v 1.6 1998/01/30 23:38:32 perry Exp $");
+__RCSID("$NetBSD: strcspn.c,v 1.7 1998/02/03 18:49:19 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,10 +53,10 @@ __RCSID("$NetBSD: strcspn.c,v 1.6 1998/01/30 23:38:32 perry Exp $");
 size_t
 strcspn(s1, s2)
 	const char *s1;
-	register const char *s2;
+	const char *s2;
 {
-	register const char *p, *spanp;
-	register char c, sc;
+	const char *p, *spanp;
+	char c, sc;
 
 	/*
 	 * Stop as soon as we find any character from s2.  Note that there

@@ -1,4 +1,4 @@
-/*	$NetBSD: swab.c,v 1.6 1998/01/30 23:38:46 perry Exp $	*/
+/*	$NetBSD: swab.c,v 1.7 1998/02/03 18:49:26 perry Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)swab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: swab.c,v 1.6 1998/01/30 23:38:46 perry Exp $");
+__RCSID("$NetBSD: swab.c,v 1.7 1998/02/03 18:49:26 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,9 +53,9 @@ swab(from, to, len)
 	void *to;
 	size_t len;
 {
-	register unsigned long temp;
-	register int n;
-	register char *fp, *tp;
+	unsigned long temp;
+	int n;
+	char *fp, *tp;
 
 	n = (len >> 1) + 1;
 	fp = (char *)from;

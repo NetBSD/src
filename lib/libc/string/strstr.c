@@ -1,4 +1,4 @@
-/*	$NetBSD: strstr.c,v 1.6 1998/01/30 23:38:43 perry Exp $	*/
+/*	$NetBSD: strstr.c,v 1.7 1998/02/03 18:49:24 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)strstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strstr.c,v 1.6 1998/01/30 23:38:43 perry Exp $");
+__RCSID("$NetBSD: strstr.c,v 1.7 1998/02/03 18:49:24 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,10 +52,10 @@ __RCSID("$NetBSD: strstr.c,v 1.6 1998/01/30 23:38:43 perry Exp $");
  */
 char *
 strstr(s, find)
-	register const char *s, *find;
+	const char *s, *find;
 {
-	register char c, sc;
-	register size_t len;
+	char c, sc;
+	size_t len;
 
 	if ((c = *find++) != 0) {
 		len = strlen(find);

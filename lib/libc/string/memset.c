@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.7 1998/01/30 23:38:23 perry Exp $	*/
+/*	$NetBSD: memset.c,v 1.8 1998/02/03 18:49:16 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.7 1998/01/30 23:38:23 perry Exp $");
+__RCSID("$NetBSD: memset.c,v 1.8 1998/02/03 18:49:16 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,7 @@ __RCSID("$NetBSD: memset.c,v 1.7 1998/01/30 23:38:23 perry Exp $");
 void
 bzero(dst0, length)
 	void *dst0;
-	register size_t length;
+	size_t length;
 #else
 #define	RETURN	return (dst0)
 #define	VAL	c0
@@ -75,13 +75,13 @@ bzero(dst0, length)
 void *
 memset(dst0, c0, length)
 	void *dst0;
-	register int c0;
-	register size_t length;
+	int c0;
+	size_t length;
 #endif
 {
-	register size_t t;
-	register u_int c;
-	register u_char *dst;
+	size_t t;
+	u_int c;
+	u_char *dst;
 
 	dst = dst0;
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.7 1998/01/30 23:38:36 perry Exp $	*/
+/*	$NetBSD: strmode.c,v 1.8 1998/02/03 18:49:20 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.7 1998/01/30 23:38:36 perry Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.8 1998/02/03 18:49:20 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,8 +48,8 @@ __RCSID("$NetBSD: strmode.c,v 1.7 1998/01/30 23:38:36 perry Exp $");
 
 void
 strmode(mode, p)
-	register mode_t mode;
-	register char *p;
+	mode_t mode;
+	char *p;
 {
 	 /* print type */
 	switch (mode & S_IFMT) {
