@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.18 1999/01/16 13:04:13 is Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.19 1999/01/16 14:08:05 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -399,9 +399,6 @@ arc_defrag(ifp, m)
 		}
 
 		ah = mtod(m, struct arc_header *);
-		ah->arc_shost = src;
-		ah->arc_dhost = dst;
-		ah->arc_type = typ;
 	}
 
 	af = &ac->ac_fragtab[src];
@@ -443,12 +440,12 @@ arc_defrag(ifp, m)
 			goto outofseq;
 		}
 
-		if (ah->arc_type != ah1->arc_type) {
+		if (typ != ah1->arc_type) {
 			s = "type differs";
 			goto outofseq;
 		}
 
-		if (ah->arc_dhost != ah1->arc_dhost) {
+		if (dst != ah1->arc_dhost) {
 			s = "dest host differs";
 			goto outofseq;
 		}
