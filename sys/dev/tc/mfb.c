@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.19 1999/11/29 07:50:55 nisimura Exp $ */
+/* $NetBSD: mfb.c,v 1.20 1999/12/06 19:26:00 drochner Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.19 1999/11/29 07:50:55 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.20 1999/12/06 19:26:00 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,8 @@ static int  mfbmmap __P((void *, off_t, int));
 static int  mfb_alloc_screen __P((void *, const struct wsscreen_descr *,
 				      void **, int *, int *, long *));
 static void mfb_free_screen __P((void *, void *));
-static void mfb_show_screen __P((void *, void *));
+static int mfb_show_screen __P((void *, void *, int,
+				void (*) (void *, int, int), void *));
 
 static const struct wsdisplay_accessops mfb_accessops = {
 	mfbioctl,
@@ -458,11 +459,16 @@ mfb_free_screen(v, cookie)
 	sc->nscreens--;
 }
 
-static void
-mfb_show_screen(v, cookie)
+static int
+mfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
+	int waitok;
+	void (*cb) __P((void *, int, int));
+	void *cbarg;
 {
+
+	return (0);
 }
 
 /* EXPORT */ int
