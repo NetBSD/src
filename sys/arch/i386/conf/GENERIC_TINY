@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.37 2002/04/17 02:22:50 mycroft Exp $
+#	$NetBSD: GENERIC_TINY,v 1.38 2002/04/18 12:06:12 bouyer Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -285,6 +285,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 #isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 #siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+#options 	SIOP_SYMLED		# drive the act. LED in software
 
 # EISA SCSI controllers
 #ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
