@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.34 1997/12/13 22:22:53 enami Exp $	*/
+/*	$NetBSD: tape.c,v 1.35 1998/03/30 02:13:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.34 1997/12/13 22:22:53 enami Exp $");
+__RCSID("$NetBSD: tape.c,v 1.35 1998/03/30 02:13:35 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,7 +159,7 @@ void
 newtapebuf(size)
 	long size;
 {
-	static tapebufsize = -1;
+	static int tapebufsize = -1;
 
 	ntrec = size;
 	if (size <= tapebufsize)
