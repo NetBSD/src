@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.77 1998/08/26 14:18:26 dante Exp $
+$NetBSD: pcidevs,v 1.78 1998/08/26 19:59:16 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -951,13 +951,17 @@ product SGSTHOMSON 2000	0x0008	STG 2000X
 product SGSTHOMSON 1764	0x1746	STG 1764X
 
 /* Silicon Integrated System products */
-product SIS 86C201	0x0001	86C201
-product SIS 86C202	0x0002	86C202
-product SIS 86C205	0x0005	86C205
-product SIS 85C503	0x0008	85C503
-product SIS 85C501	0x0406	85C501
-product SIS 85C496	0x0496	85C496
-product SIS 85C601	0x0601	85C601
+product SIS 86C201		0x0001	86C201
+product SIS 86C202		0x0002	86C202
+product SIS 86C205		0x0005	86C205
+product SIS 85C503		0x0008	85C503 or 5597/5598 ISA bridge
+product SIS 5597_VGA	0x0200	5597/5598 integrated VGA
+product SIS 85C501		0x0406	85C501
+product SIS 85C496		0x0496	85C496
+product SIS 85C601		0x0601	85C601
+product SIS 5597_IDE	0x5513	5597/5598 IDE controller
+product SIS 5597_HB		0x5597	5597/5598 host bridge
+product SIS 5597_USB	0x7001	5597/5598 USB host controller
 
 /* SMC products */
 product SMC 37C665	0x1000	FDC 37C665
