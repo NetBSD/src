@@ -111,27 +111,27 @@ void
 gdt_resize(newsize)
 	int newsize;
 {
-	size_t len, oldlen;
-	union descriptor *new_gdt, *ogdt;
+	size_t old_len, new_len;
+	union descriptor *old_gdt, *new_gdt;
 	struct region_descriptor region;
 
-	ogdt = dynamic_gdt;
-	len = newsize * sizeof(union descriptor);
-	new_gdt = (union descriptor *)kmem_alloc(kernel_map, len);
-	oldlen = gdt_size * sizeof(union descriptor);
-	if (len > oldlen) {
-		bcopy(ogdt, new_gdt, oldlen);
-		bzero(new_gdt + gdt_size, len - oldlen);
-	} else
-		bcopy(ogdt, new_gdt, len);
-
-	setregion(&region, new_gdt, len - 1);
-	lgdt(&region);
-	dynamic_gdt = new_gdt;
+	old_len = gdt_size * sizeof(union descriptor);
+	old_gdt = dynamic_gdt;
 	gdt_size = newsize;
+	new_len = gdt_size * sizeof(union descriptor);
+	new_gdt = (union descriptor *)kmem_alloc(kernel_map, new_len);
+	if (new_len > old_len) {
+		bcopy(old_gdt, new_gdt, old_len);
+		bzero((caddr_t)new_gdt + old_len, new_len - old_len);
+	} else
+		bcopy(old_gdt, new_gdt, new_len);
+	dynamic_gdt = new_gdt;
 
-	if (ogdt != gdt)
-		kmem_free(kernel_map, (vm_offset_t)ogdt, oldlen);
+	setregion(&region, new_gdt, new_len - 1);
+	lgdt(&region);
+
+	if (old_gdt != gdt)
+		kmem_free(kernel_map, (vm_offset_t)old_gdt, old_len);
 }
 
 /*
