@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.13 2001/12/19 17:43:54 thorpej Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.14 2002/10/05 17:12:09 chs Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,6 @@ GENASSYM_EXTRAS+=	${HPCARM}/hpcarm/genassym.cf
 ##
 CPPFLAGS+=	-Dhpcarm -Darm32
 CWARNFLAGS+=	-Wcomment
-LOOSE_PROTOTYPES= yes
 AFLAGS+=	-x assembler-with-cpp
 
 ##

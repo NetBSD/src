@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.10 2002/10/02 05:02:31 thorpej Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.11 2002/10/05 17:12:10 chs Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -132,7 +132,9 @@ static	void	sacom_attach_subr(struct sacom_softc *);
 #if defined(DDB) || defined(KGDB)
 static	void	sacom_enable_debugport(struct sacom_softc *);
 #endif
+int		sacom_detach(struct device *, int);
 void		sacom_config(struct sacom_softc *);
+int		sacom_activate(struct device *, enum devact);
 void		sacom_shutdown(struct sacom_softc *);
 static	u_int	cflag2cr0(tcflag_t);
 int		sacomparam(struct tty *, struct termios *);
@@ -146,6 +148,11 @@ void		sacom_modem(struct sacom_softc *, int);
 void		tiocm_to_sacom(struct sacom_softc *, u_long, int);
 int		sacom_to_tiocm(struct sacom_softc *);
 void		sacom_iflush(struct sacom_softc *);
+
+int		sacominit(bus_space_tag_t, bus_addr_t, int, tcflag_t,
+			  bus_space_handle_t *);
+int		sacom_is_console(bus_space_tag_t, bus_addr_t,
+				 bus_space_handle_t *);
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 void 		sacomsoft(void *);
