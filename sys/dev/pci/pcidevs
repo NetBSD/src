@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.401 2002/02/16 16:35:48 thorpej Exp $
+$NetBSD: pcidevs,v 1.402 2002/02/20 23:45:50 simonb Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -548,7 +548,7 @@ vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
 vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
-vendor SIBYTE		0x166d	SiByte, Inc.
+vendor SIBYTE		0x166d	Broadcom Corp. (SiByte)
 vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
