@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.59 1999/05/13 21:58:37 thorpej Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.60 1999/07/22 18:28:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -244,15 +244,17 @@ again:
 	 * Put the proc on allproc before unlocking PID allocation
 	 * so that waiters won't grab it as soon as we unlock.
 	 */
+
+	p2->p_stat = SIDL;			/* protect against others */
+	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
+
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
+
+	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
 
 	/*
 	 * END PID ALLOCATION.  (Unlock PID allocation variables).
 	 */
-
-	p2->p_stat = SIDL;			/* protect against others */
-	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
-	LIST_INSERT_HEAD(PIDHASH(p2->p_pid), p2, p_hash);
 
 	/*
 	 * Make a proc table entry for the new process.
