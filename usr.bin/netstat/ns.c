@@ -1,4 +1,4 @@
-/*	$NetBSD: ns.c,v 1.13 2001/06/19 13:42:22 wiz Exp $	*/
+/*	$NetBSD: ns.c,v 1.14 2003/08/07 11:15:21 agc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: ns.c,v 1.13 2001/06/19 13:42:22 wiz Exp $");
+__RCSID("$NetBSD: ns.c,v 1.14 2003/08/07 11:15:21 agc Exp $");
 #endif
 #endif /* not lint */
 
