@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.46 1996/12/21 21:53:16 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.47 1997/01/03 22:39:05 scottr Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -172,9 +172,9 @@ static int		ld_warn_non_pure_code;
 
 static int		ld_tracing;
 
-static void		*__dlopen __P((char *, int));
+static void		*__dlopen __P((const char *, int));
 static int		__dlclose __P((void *));
-static void		*__dlsym __P((void *, char *));
+static void		*__dlsym __P((void *, const char *));
 static int		__dlctl __P((void *, int, void *));
 static void		__dlexit __P((void));
 
@@ -199,9 +199,9 @@ static void		reloc_map __P((struct so_map *));
 static void		reloc_copy __P((struct so_map *));
 static void		call_map __P((struct so_map *, char *));
 static char		*rtfindlib __P((char *, int, int, int *, char *));
-static struct nzlist	*lookup __P((char *, struct so_map **, int));
-static inline struct rt_symbol	*lookup_rts __P((char *));
-static struct rt_symbol	*enter_rts __P((char *, long, int, caddr_t,
+static struct nzlist	*lookup __P((const char *, struct so_map **, int));
+static inline struct rt_symbol	*lookup_rts __P((const char *));
+static struct rt_symbol	*enter_rts __P((const char *, long, int, caddr_t,
 						long, struct so_map *));
 static void		maphints __P((void));
 static void		unmaphints __P((void));
@@ -887,7 +887,7 @@ hash_string(key)
 
 static inline struct rt_symbol *
 lookup_rts(key)
-	char *key;
+	const char *key;
 {
 	register int			hashval;
 	register struct rt_symbol	*rtsp;
@@ -907,7 +907,7 @@ lookup_rts(key)
 
 static struct rt_symbol *
 enter_rts(name, value, type, srcaddr, size, smp)
-	char		*name;
+	const char	*name;
 	long		value;
 	int		type;
 	caddr_t		srcaddr;
@@ -953,7 +953,7 @@ enter_rts(name, value, type, srcaddr, size, smp)
  */
 static struct nzlist *
 lookup(name, src_map, strong)
-	char		*name;
+	const char	*name;
 	struct so_map	**src_map;	/* IN/OUT */
 	int		strong;
 {
@@ -994,7 +994,7 @@ restart:
 		/*
 		 * Compute bucket in which the symbol might be found.
 		 */
-		for (hashval = 0, cp = name; *cp; cp++)
+		for (hashval = 0, cp = (char *) name; *cp; cp++)
 			hashval = (hashval << 1) + *cp;
 
 		hashval = (hashval & 0x7fffffff) % buckets;
@@ -1473,8 +1473,8 @@ backout:
 
 static void *
 __dlopen(name, mode)
-	char	*name;
-	int	mode;
+	const char	*name;
+	int		mode;
 {
 	struct sod	*sodp;
 	struct so_map	*smp;
@@ -1539,8 +1539,8 @@ xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refc
 
 static void *
 __dlsym(fd, sym)
-	void	*fd;
-	char	*sym;
+	void		*fd;
+	const char	*sym;
 {
 	struct so_map	*smp = (struct so_map *)fd, *src_map = NULL;
 	struct nzlist	*np;
