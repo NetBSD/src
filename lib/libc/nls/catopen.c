@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.9 1996/06/21 06:21:04 jtc Exp $	*/
+/*	$NetBSD: catopen.c,v 1.10 1997/04/22 12:28:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,18 +67,21 @@ _catopen(name, oflag)
 	nl_catd catd;
 		
 	if (name == NULL || *name == '\0')
-		return (nl_catd) -1;
+		return (nl_catd)-1;
 
 	/* absolute or relative path? */
-	if (strchr (name, '/'))
+	if (strchr(name, '/'))
 		return load_msgcat(name);
 
-	if ((nlspath = getenv ("NLSPATH")) == NULL) {
+	/*
+	 * XXX potential security problem here if this is used in a
+	 * set-id program, and NLSPATH or LANG are set to read files
+	 * the user normally does not have access to.
+	 */
+	if ((nlspath = getenv("NLSPATH")) == NULL)
 		nlspath = NLS_DEFAULT_PATH;
-	}
-	if ((lang = getenv ("LANG")) == NULL) {
+	if ((lang = getenv("LANG")) == NULL)
 		lang = NLS_DEFAULT_LANG;
-	}
 
 	s = nlspath;
 	t = tmppath;	
@@ -113,7 +116,7 @@ _catopen(name, oflag)
 
 		*t = '\0';
 		catd = load_msgcat(tmppath);
-		if (catd != (nl_catd) -1)
+		if (catd != (nl_catd)-1)
 			return catd;
 
 		if (*s)
@@ -121,7 +124,7 @@ _catopen(name, oflag)
 		t = tmppath;
 	} while (*s);
 
-	return (nl_catd) -1;
+	return (nl_catd)-1;
 }
 
 static nl_catd
@@ -133,30 +136,30 @@ load_msgcat(path)
 	void *data;
 	int fd;
 
-	if ((fd = open (path, O_RDONLY)) == -1)
-		return (nl_catd) -1;
+	if ((fd = open(path, O_RDONLY)) == -1)
+		return (nl_catd)-1;
 
 	if (fstat(fd, &st) != 0) {
 		close (fd);
-		return (nl_catd) -1;
+		return (nl_catd)-1;
 	}
 
-	data = mmap(0, (size_t) st.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	data = mmap(0, (size_t)st.st_size, PROT_READ, MAP_SHARED, fd, 0);
 	close (fd);
 
-	if (data == (void *) -1) {
-		munmap(data, (size_t) st.st_size);
-		return (nl_catd) -1;
+	if (data == (void *)-1) {
+		munmap(data, (size_t)st.st_size);
+		return (nl_catd)-1;
 	}
 
-	if (ntohl(((struct _nls_cat_hdr *) data)->__magic) != _NLS_MAGIC) {
-		munmap(data, (size_t) st.st_size);
-		return (nl_catd) -1;
+	if (ntohl(((struct _nls_cat_hdr *)data)->__magic) != _NLS_MAGIC) {
+		munmap(data, (size_t)st.st_size);
+		return (nl_catd)-1;
 	}
 
-	if ((catd = malloc (sizeof (*catd))) == 0) {
-		munmap(data, (size_t) st.st_size);
-		return (nl_catd) -1;
+	if ((catd = malloc(sizeof (*catd))) == 0) {
+		munmap(data, (size_t)st.st_size);
+		return (nl_catd)-1;
 	}
 
 	catd->__data = data;
