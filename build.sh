@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.70 2002/10/20 15:48:01 lukem Exp $
+#  $NetBSD: build.sh,v 1.71 2002/11/05 01:53:58 enami Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -104,7 +104,7 @@ resolvepath () {
 usage () {
 	cat <<_usage_
 Usage:
-$0 [-bdorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-k kernel]
+`basename $0` [-bdnortUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-k kernel]
 	   [-M obj] [-m mach] [-O obj] [-R release] [-T tools] [-w wrapper]
 
     -a arch	set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
@@ -120,7 +120,7 @@ $0 [-bdorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-k kernel]
     -O obj	set obj root directory to obj (sets a MAKEOBJDIR pattern)
     -o		set MKOBJDIRS=no (do not create objdirs at start of build)
     -R release	build a release (and set RELEASEDIR to release)
-    -r remove	contents of TOOLDIR and DESTDIR before building
+    -r		remove contents of TOOLDIR and DESTDIR before building
     -T tools	set TOOLDIR to tools
     -t		build and install tools only (implies -b)
     -U		set UNPRIVED
@@ -404,7 +404,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.70 2002/10/20 15:48:01 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.71 2002/11/05 01:53:58 enami Exp $
 #
 
 EOF
