@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.228 2004/01/27 01:45:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.229 2004/01/27 04:22:25 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -390,16 +390,4 @@ ${.CURDIR}/BUILDING: doc/BUILDING.mdoc
 # Display current make(1) parameters
 #
 params: .PHONY
-.for var in	BSDSRCDIR BSDOBJDIR BUILDID DESTDIR EXTERNAL_TOOLCHAIN \
-		KERNARCHDIR KERNCONFDIR KERNOBJDIR KERNSRCDIR \
-		MACHINE MACHINE_ARCH MAKECONF MAKEFLAGS \
-		MAKEOBJDIR MAKEOBJDIRPREFIX \
-		MKOBJDIRS MKUNPRIVED MKUPDATE \
-		RELEASEDIR TOOLCHAIN_MISSING TOOLDIR \
-		USETOOLS
-.if defined(${var})
-	@printf "%20s = '%-s'\n" ${var} ${${var}:Q}
-.else
-	@printf "%20s = (undefined)\n" ${var}
-.endif
-.endfor
+	(cd ${.CURDIR}/etc && ${MAKE} params)
