@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbio.c,v 1.5 2002/01/29 18:53:12 uch Exp $	*/
+/*	$NetBSD: ucbio.c,v 1.6 2002/09/27 20:32:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct ucbio_softc {
 	struct hpcio_chip sc_hc;
 };
 
-struct cfattach ucbio_ca = {
+const struct cfattach ucbio_ca = {
 	sizeof(struct ucbio_softc), ucbio_match, ucbio_attach
 };
 

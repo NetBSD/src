@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.12 2002/09/27 02:24:22 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.13 2002/09/27 20:35:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -145,7 +145,7 @@ void sq_trace_dump(struct sq_softc* sc);
 	}								\
 } while (0)
 
-struct cfattach sq_ca = {
+const struct cfattach sq_ca = {
 	sizeof(struct sq_softc), sq_match, sq_attach
 };
 

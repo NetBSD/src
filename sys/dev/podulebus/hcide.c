@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.2 2001/11/13 07:23:15 lukem Exp $	*/
+/*	$NetBSD: hcide.c,v 1.3 2002/09/27 20:41:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.2 2001/11/13 07:23:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.3 2002/09/27 20:41:11 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -57,7 +57,7 @@ struct hcide_softc {
 static void hcide_attach (struct device *, struct device *, void *);
 static int  hcide_match  (struct device *, struct cfdata *, void *);
 
-struct cfattach hcide_ca = {
+const struct cfattach hcide_ca = {
 	sizeof(struct hcide_softc), hcide_match, hcide_attach
 };
 

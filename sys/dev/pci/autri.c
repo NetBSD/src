@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.5 2002/05/30 17:04:13 someya Exp $	*/
+/*	$NetBSD: autri.c,v 1.6 2002/09/27 20:39:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -114,7 +114,7 @@ static void autri_enable_loop_interrupt(void *sc);
 static void autri_disable_loop_interrupt(void *sc);
 #endif
 
-struct cfattach autri_ca = {
+const struct cfattach autri_ca = {
 	sizeof(struct autri_softc), autri_match, autri_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.91 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: fd.c,v 1.92 2002/09/27 20:35:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -186,10 +186,10 @@ void	fdcattach_obio __P((struct device *, struct device *, void *));
 
 int	fdcattach __P((struct fdc_softc *, int));
 
-struct cfattach fdc_mainbus_ca = {
+const struct cfattach fdc_mainbus_ca = {
 	sizeof(struct fdc_softc), fdcmatch_mainbus, fdcattach_mainbus
 };
-struct cfattach fdc_obio_ca = {
+const struct cfattach fdc_obio_ca = {
 	sizeof(struct fdc_softc), fdcmatch_obio, fdcattach_obio
 };
 
@@ -262,7 +262,7 @@ struct fd_softc {
 int	fdmatch __P((struct device *, struct cfdata *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
-struct cfattach fd_ca = {
+const struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdmatch, fdattach
 };
 

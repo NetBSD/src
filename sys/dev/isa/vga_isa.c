@@ -1,4 +1,4 @@
-/* $NetBSD: vga_isa.c,v 1.12 2002/07/09 06:55:09 junyoung Exp $ */
+/* $NetBSD: vga_isa.c,v 1.13 2002/09/27 20:38:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.12 2002/07/09 06:55:09 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.13 2002/09/27 20:38:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: vga_isa.c,v 1.12 2002/07/09 06:55:09 junyoung Exp $"
 int	vga_isa_match(struct device *, struct cfdata *, void *);
 void	vga_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach vga_isa_ca = {
+const struct cfattach vga_isa_ca = {
 	sizeof(struct vga_softc), vga_isa_match, vga_isa_attach,
 };
 

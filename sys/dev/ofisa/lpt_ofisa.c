@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa.c,v 1.4 2002/06/08 17:07:54 yamt Exp $	*/
+/*	$NetBSD: lpt_ofisa.c,v 1.5 2002/09/27 20:39:34 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.4 2002/06/08 17:07:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.5 2002/09/27 20:39:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -65,7 +65,7 @@ struct lpt_ofisa_softc {
 int lpt_ofisa_probe __P((struct device *, struct cfdata *, void *));
 void lpt_ofisa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach lpt_ofisa_ca = {
+const struct cfattach lpt_ofisa_ca = {
 	sizeof(struct lpt_ofisa_softc), lpt_ofisa_probe, lpt_ofisa_attach
 };
 

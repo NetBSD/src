@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.82 2002/08/12 21:33:41 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.83 2002/09/27 20:40:26 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.82 2002/08/12 21:33:41 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.83 2002/09/27 20:40:26 thorpej Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -307,7 +307,7 @@ struct isp_pcisoftc {
 	int16_t			pci_poff[_NREG_BLKS];
 };
 
-struct cfattach isp_pci_ca = {
+const struct cfattach isp_pci_ca = {
 	sizeof (struct isp_pcisoftc), isp_pci_probe, isp_pci_attach
 };
 

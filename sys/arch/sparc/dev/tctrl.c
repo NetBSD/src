@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.15 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.16 2002/09/27 20:35:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ static int tctrl_apm_record_event __P((struct tctrl_softc *sc,
 	u_int event_type));
 static void tctrl_init_lcd __P((void));
 
-struct cfattach tctrl_ca = {
+const struct cfattach tctrl_ca = {
 	sizeof(struct tctrl_softc), tctrl_match, tctrl_attach
 };
 

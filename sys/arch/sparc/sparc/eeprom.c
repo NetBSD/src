@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.1 2002/03/28 11:54:17 pk Exp $ */
+/*	$NetBSD: eeprom.c,v 1.2 2002/09/27 20:36:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ extern char	*eeprom_va;
 static int	eeprom_match(struct device *, struct cfdata *, void *);
 static void	eeprom_attach(struct device *, struct device *, void *);
 
-struct cfattach eeprom_ca = {
+const struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
 };
 

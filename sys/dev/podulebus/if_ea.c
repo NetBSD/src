@@ -1,4 +1,4 @@
-/* $NetBSD: if_ea.c,v 1.6 2002/05/22 22:43:14 bjh21 Exp $ */
+/* $NetBSD: if_ea.c,v 1.7 2002/09/27 20:41:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.6 2002/05/22 22:43:14 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ea.c,v 1.7 2002/09/27 20:41:12 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -76,7 +76,7 @@ void eaattach(struct device *, struct device *, void *);
 
 /* driver structure for autoconf */
 
-struct cfattach ea_ca = {
+const struct cfattach ea_ca = {
 	sizeof(struct ea_softc), eaprobe, eaattach
 };
 

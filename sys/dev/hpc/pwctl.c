@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.8 2001/11/13 12:47:56 lukem Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.9 2002/09/27 20:38:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.8 2001/11/13 12:47:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwctl.c,v 1.9 2002/09/27 20:38:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ static int	pwctl_hook(void *, int, long, void *);
 static int	pwctl_ghook(void *, int, long, void *);
 int	pwctl_hardpower(void *, int, long, void *);
 
-struct cfattach pwctl_ca = {
+const struct cfattach pwctl_ca = {
 	sizeof(struct pwctl_softc), pwctl_match, pwctl_attach
 };
 

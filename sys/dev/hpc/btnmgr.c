@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.7 2002/09/27 02:24:29 thorpej Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.8 2002/09/27 20:37:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.7 2002/09/27 02:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btnmgr.c,v 1.8 2002/09/27 20:37:56 thorpej Exp $");
 
 #define BTNMGRDEBUG
 
@@ -89,7 +89,7 @@ static int btnmgr_hook(void *, int, long, void *);
 /*
  * global/static data
  */
-struct cfattach btnmgr_ca = {
+const struct cfattach btnmgr_ca = {
 	sizeof(struct btnmgr_softc), btnmgrmatch, btnmgrattach
 };
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.15 2001/11/13 07:48:49 lukem Exp $ */
+/*      $NetBSD: sv.c,v 1.16 2002/09/27 20:40:42 thorpej Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.15 2001/11/13 07:48:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.16 2002/09/27 20:40:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ struct sv_dma {
 #define DMAADDR(p) ((p)->map->dm_segs[0].ds_addr)
 #define KERNADDR(p) ((void *)((p)->addr))
 
-struct cfattach sv_ca = {
+const struct cfattach sv_ca = {
 	sizeof(struct sv_softc), sv_match, sv_attach
 };
 

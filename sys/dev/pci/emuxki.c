@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.9 2002/02/02 18:10:28 jdolecek Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.10 2002/09/27 20:39:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.9 2002/02/02 18:10:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.10 2002/09/27 20:39:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,7 +175,7 @@ static enum ac97_host_flags emuxki_ac97_flags(void *);
 /*
  * Autoconfig goo.
  */
-struct cfattach emuxki_ca = {
+const struct cfattach emuxki_ca = {
         sizeof(struct emuxki_softc),
         emuxki_match,
         emuxki_attach,

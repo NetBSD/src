@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.7 2002/01/12 16:21:07 tsutsui Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.8 2002/09/27 20:38:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.7 2002/01/12 16:21:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.8 2002/09/27 20:38:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ struct pckbc_isa_softc {
 	int sc_irq[PCKBC_NSLOTS];
 };
 
-struct cfattach pckbc_isa_ca = {
+const struct cfattach pckbc_isa_ca = {
 	sizeof(struct pckbc_isa_softc), pckbc_isa_match, pckbc_isa_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.6 2002/09/27 03:17:55 thorpej Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.7 2002/09/27 20:32:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ struct tx39uart_softc {
 	int sc_enabled;
 };
 
-struct cfattach tx39uart_ca = {
+const struct cfattach tx39uart_ca = {
 	sizeof(struct tx39uart_softc), tx39uart_match, tx39uart_attach
 };
 

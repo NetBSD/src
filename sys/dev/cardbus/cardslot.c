@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.18 2002/09/27 03:18:10 thorpej Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.19 2002/09/27 20:37:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.18 2002/09/27 03:18:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.19 2002/09/27 20:37:41 thorpej Exp $");
 
 #include "opt_cardslot.h"
 
@@ -74,7 +74,7 @@ STATIC int cardslot_cb_print __P((void *aux, const char *pcic));
 static int cardslot_16_print __P((void *, const char *));
 static int cardslot_16_submatch __P((struct device *, struct cfdata *,void *));
 
-struct cfattach cardslot_ca = {
+const struct cfattach cardslot_ca = {
 	sizeof(struct cardslot_softc), cardslotmatch, cardslotattach
 };
 

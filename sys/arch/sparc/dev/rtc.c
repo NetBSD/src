@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.5 2002/09/27 02:24:24 thorpej Exp $ */
+/*	$NetBSD: rtc.c,v 1.6 2002/09/27 20:35:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -61,7 +61,7 @@ struct rtc_ebus_softc {
 static int	rtcmatch_ebus(struct device *, struct cfdata *, void *);
 static void	rtcattach_ebus(struct device *, struct device *, void *);
 
-struct cfattach rtc_ebus_ca = {
+const struct cfattach rtc_ebus_ca = {
 	sizeof(struct rtc_ebus_softc), rtcmatch_ebus, rtcattach_ebus
 };
 

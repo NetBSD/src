@@ -1,4 +1,4 @@
-/* $NetBSD: gtp.c,v 1.1 2002/09/03 18:54:41 augustss Exp $ */
+/* $NetBSD: gtp.c,v 1.2 2002/09/27 20:40:00 thorpej Exp $ */
 /*	$OpenBSD: gtp.c,v 1.1 2002/06/03 16:13:21 mickey Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ struct gtp_softc {
 	struct tea5757_t	tea;
 };
 
-struct cfattach gtp_ca = {
+const struct cfattach gtp_ca = {
 	sizeof(struct gtp_softc), gtp_match, gtp_attach
 };
 

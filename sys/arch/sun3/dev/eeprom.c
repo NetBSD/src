@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.21 2001/09/05 14:03:48 tsutsui Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.22 2002/09/27 20:36:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ static int ee_busy, ee_want; /* serialization */
 static int  eeprom_match __P((struct device *, struct cfdata *, void *));
 static void eeprom_attach __P((struct device *, struct device *, void *));
 
-struct cfattach eeprom_ca = {
+const struct cfattach eeprom_ca = {
 	sizeof(struct device), eeprom_match, eeprom_attach
 };
 

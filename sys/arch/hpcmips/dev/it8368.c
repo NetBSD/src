@@ -1,4 +1,4 @@
-/*	$NetBSD: it8368.c,v 1.14 2002/09/27 03:17:53 thorpej Exp $ */
+/*	$NetBSD: it8368.c,v 1.15 2002/09/27 20:32:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ static struct pcmcia_chip_functions it8368_functions = {
 	it8368_chip_socket_disable
 };
 
-struct cfattach it8368e_ca = {
+const struct cfattach it8368e_ca = {
 	sizeof(struct it8368e_softc), it8368e_match, it8368e_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.154 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: pccons.c,v 1.155 2002/09/27 20:33:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.154 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.155 2002/09/27 20:33:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -210,7 +210,7 @@ void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 void pcinit __P((void));
 
-struct cfattach pc_ca = {
+const struct cfattach pc_ca = {
 	sizeof(struct pc_softc), pcprobe, pcattach
 };
 
@@ -225,7 +225,7 @@ int pcconskbdprobe __P((struct device *, struct cfdata *, void *));
 void pcconskbdattach __P((struct device *, struct device *, void *));
 void pcinput __P((void *, int));
 
-struct cfattach pcconskbd_ca = {
+const struct cfattach pcconskbd_ca = {
 	sizeof(struct pcconskbd_softc), pcconskbdprobe, pcconskbdattach
 };
 

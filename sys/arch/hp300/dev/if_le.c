@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.49 2002/03/15 05:55:36 gmcgarry Exp $	*/
+/*	$NetBSD: if_le.c,v 1.50 2002/09/27 20:31:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.49 2002/03/15 05:55:36 gmcgarry Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.50 2002/09/27 20:31:50 thorpej Exp $");                                                  
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.49 2002/03/15 05:55:36 gmcgarry Exp $");
 int	lematch __P((struct device *, struct cfdata *, void *));
 void	leattach __P((struct device *, struct device *, void *));
 
-struct cfattach le_ca = {
+const struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
 

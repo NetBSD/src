@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.6 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.7 2002/09/27 20:34:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -180,7 +180,7 @@ int zs_ap_match __P((struct device *, struct cfdata *, void *));
 void zs_ap_attach __P((struct device *, struct device *, void *));
 int zs_print __P((void *, const char *name));
 
-struct cfattach zsc_ap_ca = {
+const struct cfattach zsc_ap_ca = {
 	sizeof(struct zsc_softc), zs_ap_match, zs_ap_attach
 };
 

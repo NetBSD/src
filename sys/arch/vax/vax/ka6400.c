@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.1 2000/07/06 17:40:00 ragge Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.2 2002/09/27 20:36:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -110,7 +110,7 @@ struct ka6400_softc {
 	int sc_nodeid;		/* CPU node ID */
 };
 
-struct cfattach cpu_xmi_ca = {
+const struct cfattach cpu_xmi_ca = {
 	sizeof(struct ka6400_softc), ka6400_match, ka6400_attach
 };
 
@@ -197,7 +197,7 @@ struct mem_xmi_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-struct cfattach mem_xmi_ca = {
+const struct cfattach mem_xmi_ca = {
 	sizeof(struct mem_xmi_softc), ms6400_match, ms6400_attach
 };
 

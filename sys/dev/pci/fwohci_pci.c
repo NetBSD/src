@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.13 2002/01/26 16:30:00 ichiro Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.14 2002/09/27 20:39:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.13 2002/01/26 16:30:00 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.14 2002/09/27 20:39:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ struct fwohci_pci_softc {
 static int fwohci_pci_match __P((struct device *, struct cfdata *, void *));
 static void fwohci_pci_attach __P((struct device *, struct device *, void *));
 
-struct cfattach fwohci_pci_ca = {
+const struct cfattach fwohci_pci_ca = {
 	sizeof(struct fwohci_pci_softc), fwohci_pci_match, fwohci_pci_attach,
 #if 0
 	fwohci_pci_detach, fwohci_activate

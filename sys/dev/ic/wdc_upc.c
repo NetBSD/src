@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.3 2001/11/13 13:14:46 lukem Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.4 2002/09/27 20:38:07 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.3 2001/11/13 13:14:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.4 2002/09/27 20:38:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ struct wdc_upc_softc {
 	struct channel_softc sc_channel;
 };
 
-struct cfattach wdc_upc_ca = {
+const struct cfattach wdc_upc_ca = {
 	sizeof(struct wdc_upc_softc), wdc_upc_match, wdc_upc_attach
 };
 

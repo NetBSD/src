@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.11 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: mly.c,v 1.12 2002/09/27 20:40:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.11 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.12 2002/09/27 20:40:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ static int	mly_user_health(struct mly_softc *, struct mly_user_health *);
 
 extern struct	cfdriver mly_cd;
 
-struct cfattach mly_ca = {
+const struct cfattach mly_ca = {
 	sizeof(struct mly_softc), mly_match, mly_attach
 };
 

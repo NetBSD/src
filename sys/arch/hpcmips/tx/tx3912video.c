@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.31 2002/09/27 15:36:05 provos Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.32 2002/09/27 20:32:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ void	tx3912video_clut_get(struct tx3912video_softc *, u_int32_t *, int,
 static int __get_color8(int);
 static int __get_color4(int);
 
-struct cfattach tx3912video_ca = {
+const struct cfattach tx3912video_ca = {
 	sizeof(struct tx3912video_softc), tx3912video_match, 
 	tx3912video_attach
 };

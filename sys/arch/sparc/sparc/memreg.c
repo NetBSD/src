@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.32 2002/03/11 16:27:04 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.33 2002/09/27 20:36:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,11 +72,11 @@ static void	memregattach_mainbus
 static void	memregattach_obio
 			__P((struct device *, struct device *, void *));
 
-struct cfattach memreg_mainbus_ca = {
+const struct cfattach memreg_mainbus_ca = {
 	sizeof(struct device), memregmatch_mainbus, memregattach_mainbus
 };
 
-struct cfattach memreg_obio_ca = {
+const struct cfattach memreg_obio_ca = {
 	sizeof(struct device), memregmatch_obio, memregattach_obio
 };
 

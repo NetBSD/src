@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_eisa.c,v 1.5 2002/01/25 16:10:37 ad Exp $	*/
+/*	$NetBSD: cac_eisa.c,v 1.6 2002/09/27 20:37:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.5 2002/01/25 16:10:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_eisa.c,v 1.6 2002/09/27 20:37:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ void	cac_eisa_l0_intr_enable(struct cac_softc *, int);
 int	cac_eisa_l0_intr_pending(struct cac_softc *);
 void	cac_eisa_l0_submit(struct cac_softc *, struct cac_ccb *);
 
-struct cfattach cac_eisa_ca = {
+const struct cfattach cac_eisa_ca = {
 	sizeof(struct cac_softc), cac_eisa_match, cac_eisa_attach
 };
 

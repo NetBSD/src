@@ -1,4 +1,4 @@
-/*	$NetBSD: iwic_pci.c,v 1.1 2002/09/24 22:05:19 pooka Exp $	*/
+/*	$NetBSD: iwic_pci.c,v 1.2 2002/09/27 20:40:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Dave Boyce. All rights reserved.
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.1 2002/09/24 22:05:19 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwic_pci.c,v 1.2 2002/09/27 20:40:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -63,7 +63,7 @@ static int iwic_pci_probe(struct device * dev, struct cfdata * match, void *aux)
 static void iwic_pci_attach(struct device * parent, struct device * dev, void *aux);
 static int iwic_pci_activate(struct device * dev, enum devact);
 
-struct cfattach iwic_pci_ca = {
+const struct cfattach iwic_pci_ca = {
 	sizeof(struct iwic_softc),
 	iwic_pci_probe,
 	iwic_pci_attach,

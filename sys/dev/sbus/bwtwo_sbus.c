@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_sbus.c,v 1.8 2002/09/27 02:24:32 thorpej Exp $ */
+/*	$NetBSD: bwtwo_sbus.c,v 1.9 2002/09/27 20:41:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.8 2002/09/27 02:24:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo_sbus.c,v 1.9 2002/09/27 20:41:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ struct bwtwo_sbus_softc {
 	struct sbusdev bss_sd;
 };
 
-struct cfattach bwtwo_sbus_ca = {
+const struct cfattach bwtwo_sbus_ca = {
 	sizeof(struct bwtwo_sbus_softc), bwtwomatch_sbus, bwtwoattach_sbus
 };
 

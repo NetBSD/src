@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $	*/
+/*	$NetBSD: if_de.c,v 1.12 2002/09/27 20:41:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.11 2001/11/13 07:11:24 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.12 2002/09/27 20:41:16 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -155,7 +155,7 @@ static	void derecv(struct de_softc *);
 static	void deintr(void *);
 static	void deshutdown(void *);
 
-struct	cfattach de_ca = {
+const struct cfattach de_ca = {
 	sizeof(struct de_softc), dematch, deattach
 };
 

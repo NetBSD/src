@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.3 2001/11/15 07:03:35 lukem Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.4 2002/09/27 20:33:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.3 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.4 2002/09/27 20:33:07 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -75,7 +75,7 @@ struct fdc_pnpbios_softc {
 };
 
 
-struct cfattach fdc_pnpbios_ca = {
+const struct cfattach fdc_pnpbios_ca = {
 	sizeof(struct fdc_pnpbios_softc), fdc_pnpbios_match,
 	    fdc_pnpbios_attach,
 };

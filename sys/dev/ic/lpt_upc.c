@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_upc.c,v 1.2 2001/11/13 13:14:41 lukem Exp $ */
+/* $NetBSD: lpt_upc.c,v 1.3 2002/09/27 20:38:07 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_upc.c,v 1.2 2001/11/13 13:14:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_upc.c,v 1.3 2002/09/27 20:38:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_upc.c,v 1.2 2001/11/13 13:14:41 lukem Exp $");
 static int lpt_upc_match(struct device *, struct cfdata *, void *);
 static void lpt_upc_attach(struct device *, struct device *, void *);
 
-struct cfattach lpt_upc_ca = {
+const struct cfattach lpt_upc_ca = {
 	sizeof(struct lpt_softc), lpt_upc_match, lpt_upc_attach
 };
 

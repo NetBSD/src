@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.9 2002/09/27 03:18:15 thorpej Exp $	*/
+/*	$NetBSD: mca.c,v 1.10 2002/09/27 20:39:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.9 2002/09/27 03:18:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.10 2002/09/27 20:39:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.9 2002/09/27 03:18:15 thorpej Exp $");
 int	mca_match __P((struct device *, struct cfdata *, void *));
 void	mca_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mca_ca = {
+const struct cfattach mca_ca = {
 	sizeof(struct device), mca_match, mca_attach
 };
 

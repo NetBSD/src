@@ -1,4 +1,4 @@
-/*	$NetBSD: isabeep.c,v 1.2 2000/06/29 07:47:52 mrg Exp $	*/
+/*	$NetBSD: isabeep.c,v 1.3 2002/09/27 20:35:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -46,7 +46,7 @@
 int isabeepmatch __P((struct device *, struct cfdata *, void *));
 void isabeepattach __P((struct device *, struct device *, void *));
 
-struct cfattach isabeep_ca = {
+const struct cfattach isabeep_ca = {
 	sizeof(struct device), isabeepmatch, isabeepattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.5 2002/05/22 16:03:17 wiz Exp $	*/
+/*	$NetBSD: if_il.c,v 1.6 2002/09/27 20:41:17 thorpej Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.5 2002/05/22 16:03:17 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.6 2002/09/27 20:41:17 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -132,7 +132,7 @@ static	void ilwatch(struct ifnet *);
 static	void iltotal(struct il_softc *);
 static	void ilstop(struct ifnet *, int);
 
-struct	cfattach il_ca = {
+const struct cfattach il_ca = {
 	sizeof(struct il_softc), ilmatch, ilattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.6 2002/09/27 20:32:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ void hd64465uartcninit(struct consdev *);
 STATIC int hd64465uart_match(struct device *, struct cfdata *, void *);
 STATIC void hd64465uart_attach(struct device *, struct device *, void *);
 
-struct cfattach hd64465uart_ca = {
+const struct cfattach hd64465uart_ca = {
 	sizeof(struct hd64465uart_softc), hd64465uart_match,
 	hd64465uart_attach
 };

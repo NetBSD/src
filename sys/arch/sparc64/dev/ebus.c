@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.31 2002/03/16 14:00:00 mrg Exp $	*/
+/*	$NetBSD: ebus.c,v 1.32 2002/09/27 20:36:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -98,7 +98,7 @@ struct ebus_softc {
 int	ebus_match __P((struct device *, struct cfdata *, void *));
 void	ebus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ebus_ca = {
+const struct cfattach ebus_ca = {
 	sizeof(struct ebus_softc), ebus_match, ebus_attach
 };
 

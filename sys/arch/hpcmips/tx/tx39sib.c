@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.10 2002/09/27 03:17:54 thorpej Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.11 2002/09/27 20:32:26 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ __inline int	__txsibsf0_ready(tx_chipset_tag_t);
 void	tx39sib_dump(struct tx39sib_softc *);
 #endif
 
-struct cfattach tx39sib_ca = {
+const struct cfattach tx39sib_ca = {
 	sizeof(struct tx39sib_softc), tx39sib_match, tx39sib_attach
 };
 

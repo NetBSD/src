@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.22 2002/08/23 16:30:10 itojun Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.23 2002/09/27 20:40:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -433,7 +433,7 @@ void	wm_attach(struct device *, struct device *, void *);
 
 int	wm_copy_small = 0;
 
-struct cfattach wm_ca = {
+const struct cfattach wm_ca = {
 	sizeof(struct wm_softc), wm_match, wm_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.32 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: smg.c,v 1.33 2002/09/27 20:37:04 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -116,7 +116,7 @@ struct	smg_softc {
 	struct	device ss_dev;
 };
 
-struct cfattach smg_ca = {
+const struct cfattach smg_ca = {
 	sizeof(struct smg_softc), smg_match, smg_attach,
 };
 

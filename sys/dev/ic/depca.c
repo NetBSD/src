@@ -1,4 +1,4 @@
-/*	$NetBSD: depca.c,v 1.5 2002/09/27 02:24:29 thorpej Exp $	*/
+/*	$NetBSD: depca.c,v 1.6 2002/09/27 20:38:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.5 2002/09/27 02:24:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca.c,v 1.6 2002/09/27 20:38:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ struct le_depca_softc {
 int	le_depca_match(struct device *, struct cfdata *, void *);
 void	le_depca_attach(struct device *, struct device *, void *);
 
-struct cfattach le_depca_ca = {
+const struct cfattach le_depca_ca = {
 	sizeof(struct le_depca_softc), le_depca_match, le_depca_attach
 };
 

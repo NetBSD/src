@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.12 2002/01/07 21:47:14 thorpej Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.13 2002/09/27 20:38:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.12 2002/01/07 21:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.13 2002/09/27 20:38:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ static int	detect_mad16 __P((struct wss_softc *, int));
 int		wss_isa_probe __P((struct device *, struct cfdata *, void *));
 void		wss_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach wss_isa_ca = {
+const struct cfattach wss_isa_ca = {
 	sizeof(struct wss_softc), wss_isa_probe, wss_isa_attach
 };
 

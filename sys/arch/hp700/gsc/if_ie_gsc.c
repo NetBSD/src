@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.5 2002/08/25 20:20:00 fredette Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.6 2002/09/27 20:32:02 thorpej Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -121,7 +121,7 @@ struct ie_gsc_softc {
 int	ie_gsc_probe __P((struct device *, struct cfdata *, void *));
 void	ie_gsc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ie_gsc_ca = {
+const struct cfattach ie_gsc_ca = {
 	sizeof(struct ie_gsc_softc), ie_gsc_probe, ie_gsc_attach
 };
 

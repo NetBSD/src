@@ -1,4 +1,4 @@
-/*	$NetBSD: msiiep.c,v 1.11 2002/08/25 17:55:04 thorpej Exp $ */
+/*	$NetBSD: msiiep.c,v 1.12 2002/09/27 20:36:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.11 2002/08/25 17:55:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msiiep.c,v 1.12 2002/09/27 20:36:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -68,7 +68,7 @@ static int	msiiep_match(struct device *, struct cfdata *, void *);
 static void	msiiep_attach(struct device *, struct device *, void *);
 /* static int	msiiep_print(void *, const char *); */
 
-struct cfattach msiiep_ca = {
+const struct cfattach msiiep_ca = {
 	sizeof(struct device), msiiep_match, msiiep_attach
 };
 
@@ -83,7 +83,7 @@ static int	mspcic_match(struct device *, struct cfdata *, void *);
 static void	mspcic_attach(struct device *, struct device *, void *);
 static int	mspcic_print(void *, const char *);
 
-struct cfattach mspcic_ca = {
+const struct cfattach mspcic_ca = {
 	sizeof(struct mspcic_softc), mspcic_match, mspcic_attach
 };
 

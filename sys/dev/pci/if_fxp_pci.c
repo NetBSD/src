@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.26 2002/09/27 14:54:08 itojun Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.27 2002/09/27 20:40:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.26 2002/09/27 14:54:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.27 2002/09/27 20:40:09 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -101,7 +101,7 @@ void	fxp_pci_disable __P((struct fxp_softc *));
 static void	fxp_pci_confreg_restore __P((struct fxp_pci_softc *psc));
 static void	fxp_pci_power __P((int why, void *arg));
 
-struct cfattach fxp_pci_ca = {
+const struct cfattach fxp_pci_ca = {
 	sizeof(struct fxp_pci_softc), fxp_pci_match, fxp_pci_attach
 };
 

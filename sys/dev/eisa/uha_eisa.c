@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.18 2002/04/05 18:27:48 bouyer Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.19 2002/09/27 20:37:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.18 2002/04/05 18:27:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.19 2002/09/27 20:37:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: uha_eisa.c,v 1.18 2002/04/05 18:27:48 bouyer Exp $")
 int	uha_eisa_match __P((struct device *, struct cfdata *, void *));
 void	uha_eisa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach uha_eisa_ca = {
+const struct cfattach uha_eisa_ca = {
 	sizeof(struct uha_softc), uha_eisa_match, uha_eisa_attach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_cs_pcmcia.c,v 1.2 2001/11/26 19:17:07 yamt Exp $ */
+/* $NetBSD: if_cs_pcmcia.c,v 1.3 2002/09/27 20:40:58 thorpej Exp $ */
 
 /*-
  * Copyright (c)2001 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.2 2001/11/26 19:17:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cs_pcmcia.c,v 1.3 2002/09/27 20:40:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,7 @@ struct cs_pcmcia_softc {
 #define CS_PCMCIA_FLAGS_IO_ALLOCATED 1
 #define CS_PCMCIA_FLAGS_IO_MAPPED 2
 
-struct cfattach cs_pcmcia_ca = {
+const struct cfattach cs_pcmcia_ca = {
 	sizeof(struct cs_pcmcia_softc),
 	cs_pcmcia_match,
 	cs_pcmcia_attach,

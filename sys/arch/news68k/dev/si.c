@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.7 2002/09/27 15:36:28 provos Exp $	*/
+/*	$NetBSD: si.c,v 1.8 2002/09/27 20:34:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ void si_dma_poll __P((struct ncr5380_softc *));
 void si_dma_eop __P((struct ncr5380_softc *));
 void si_dma_stop __P((struct ncr5380_softc *));
 
-struct cfattach si_ca = {
+const struct cfattach si_ca = {
 	sizeof(struct si_softc), si_match, si_attach
 };
 

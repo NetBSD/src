@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.8 2002/08/31 05:18:05 ad Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.9 2002/09/27 20:40:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.8 2002/08/31 05:18:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx_pci.c,v 1.9 2002/09/27 20:40:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ struct mlx_pci_ident {
 	},
 };
 
-struct cfattach mlx_pci_ca = {
+const struct cfattach mlx_pci_ca = {
 	sizeof(struct mlx_softc), mlx_pci_match, mlx_pci_attach
 };
 

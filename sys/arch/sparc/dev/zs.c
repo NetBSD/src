@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.88 2002/09/27 02:24:24 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.89 2002/09/27 20:35:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ static void zs_attach_obio __P((struct device *, struct device *, void *));
 static int  zs_match_bootbus __P((struct device *, struct cfdata *, void *));
 static void zs_attach_bootbus __P((struct device *, struct device *, void *));
 
-struct cfattach zs_bootbus_ca = {
+const struct cfattach zs_bootbus_ca = {
 	sizeof(struct zsc_softc), zs_match_bootbus, zs_attach_bootbus
 };
 #endif /* SUN4D */
@@ -185,11 +185,11 @@ struct cfattach zs_bootbus_ca = {
 static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
 
-struct cfattach zs_mainbus_ca = {
+const struct cfattach zs_mainbus_ca = {
 	sizeof(struct zsc_softc), zs_match_mainbus, zs_attach_mainbus
 };
 
-struct cfattach zs_obio_ca = {
+const struct cfattach zs_obio_ca = {
 	sizeof(struct zsc_softc), zs_match_obio, zs_attach_obio
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.17 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.18 2002/09/27 20:39:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.17 2002/09/06 13:18:43 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.18 2002/09/27 20:39:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -64,7 +64,7 @@ static int stdin, stdout;
 static int ofcons_match __P((struct device *, struct cfdata *, void *));
 static void ofcons_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ofcons_ca = {
+const struct cfattach ofcons_ca = {
 	sizeof(struct ofcons_softc), ofcons_match, ofcons_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: upa.c,v 1.10 2002/09/27 02:24:25 thorpej Exp $ */
+/*	$NetBSD: upa.c,v 1.11 2002/09/27 20:36:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ static void *upa_intr_establish __P((
 int	upa_match_mainbus __P((struct device *, struct cfdata *, void *));
 void	upa_attach_mainbus __P((struct device *, struct device *, void *));
 
-struct cfattach upa_ca = {
+const struct cfattach upa_ca = {
 	sizeof(struct upa_softc), upa_match, upa_attach
 };
 

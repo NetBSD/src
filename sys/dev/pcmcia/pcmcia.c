@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.31 2002/09/27 03:18:17 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.32 2002/09/27 20:41:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.31 2002/09/27 03:18:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.32 2002/09/27 20:41:08 thorpej Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -80,7 +80,7 @@ int pcmcia_card_intr __P((void *));
 int pcmcia_card_intrdebug __P((void *));
 #endif
 
-struct cfattach pcmcia_ca = {
+const struct cfattach pcmcia_ca = {
 	sizeof(struct pcmcia_softc), pcmcia_match, pcmcia_attach
 };
 

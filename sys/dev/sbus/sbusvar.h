@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.18 2002/08/23 02:53:11 thorpej Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.19 2002/09/27 20:41:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -119,7 +119,6 @@ struct sbus_softc {
 	int	sc_burst;		/* burst transfer sizes supported */
 	/* machdep stuff follows here */
 	int	*sc_intr2ipl;		/* Interrupt level translation */
-	int	*sc_intr_compat;	/* `intr' property to sbus compat */
 };
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.13 2002/03/10 13:57:11 itohy Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.14 2002/09/27 20:39:08 thorpej Exp $ */
 
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.13 2002/03/10 13:57:11 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.14 2002/09/27 20:39:08 thorpej Exp $");
 
 #include "mpu_ym.h"
 
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: ym_isapnp.c,v 1.13 2002/03/10 13:57:11 itohy Exp $")
 int	ym_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	ym_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ym_isapnp_ca = {
+const struct cfattach ym_isapnp_ca = {
 	sizeof(struct ym_softc), ym_isapnp_match, ym_isapnp_attach
 };
 
