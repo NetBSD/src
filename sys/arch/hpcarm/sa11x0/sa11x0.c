@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.4 2001/02/24 20:13:59 reinoud Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.5 2001/03/10 13:34:34 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -146,10 +146,9 @@ sa11x0_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
 	struct sa11x0_softc *sc = (struct sa11x0_softc*)self;
 
-	sc->sc_iot = ma->mb_iot;
+	sc->sc_iot = &sa11x0_bs_tag;
 
 	/* Map the SAIP */
 	if (bus_space_map(sc->sc_iot, SAIPIC_BASE, SAIPIC_NPORTS,
