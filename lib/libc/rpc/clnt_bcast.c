@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_bcast.c,v 1.2 2000/06/03 14:55:43 fvdl Exp $	*/
+/*	$NetBSD: clnt_bcast.c,v 1.3 2000/07/06 03:05:20 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -65,6 +65,7 @@ static char sccsid[] = "@(#)clnt_bcast.c 1.15 89/04/21 Copyr 1988 Sun Micro";
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_rmt.h>
 #endif
+#include <rpc/nettype.h>
 #include <arpa/inet.h>
 #ifdef RPC_DEBUG
 #include <stdio.h>
@@ -167,18 +168,20 @@ __rpc_getbroadifs(int af, int proto, int socktype, broadlist_t *list)
 		if (ifap->ifa_flags & IFF_BROADCAST) {
 #endif
 			memcpy(&bip->broadaddr, ifap->ifa_broadaddr,
-			    ifap->ifa_broadaddr->sa_len);
-			sin = (struct sockaddr_in *)&bip->broadaddr;
+			    (size_t)ifap->ifa_broadaddr->sa_len);
+			sin = (struct sockaddr_in *)(void *)&bip->broadaddr;
 			sin->sin_port =
-			    ((struct sockaddr_in *)res->ai_addr)->sin_port;
+			    ((struct sockaddr_in *)
+			    (void *)res->ai_addr)->sin_port;
 #ifdef INET6
 		} else if (af == AF_INET6) {
-			sin6 = (struct sockaddr_in6 *)&bip->broadaddr;
+			sin6 = (struct sockaddr_in6 *)(void *)&bip->broadaddr;
 			inet_pton(af, RPCB_MULTICAST_ADDR, &sin6->sin6_addr);
 			sin6->sin6_family = af;
 			sin6->sin6_len = sizeof *sin6;
 			sin6->sin6_port =
-			    ((struct sockaddr_in6 *)res->ai_addr)->sin6_port;
+			    ((struct sockaddr_in6 *)
+			    (void *)res->ai_addr)->sin6_port;
 			sin6->sin6_scope_id = bip->index;
 #endif
 		}
@@ -206,6 +209,7 @@ __rpc_freebroadifs(broadlist_t *list)
 }
 
 int
+/*ARGSUSED*/
 __rpc_broadenable(int af, int s, struct broadif *bip)
 {
 	int o = 1;
@@ -242,7 +246,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 {
 	enum clnt_stat	stat = RPC_SUCCESS; /* Return status */
 	XDR 		xdr_stream; /* XDR stream */
-	register XDR 	*xdrs = &xdr_stream;
+	XDR 		*xdrs = &xdr_stream;
 	struct rpc_msg	msg;	/* RPC message */
 	struct timeval	t;
 	char 		*outbuf = NULL;	/* Broadcast msg buffer */
@@ -267,10 +271,10 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 		broadlist_t nal;
 	} fdlist[MAXBCAST];
 	struct pollfd pfd[MAXBCAST];
-	register int 	fdlistno = 0;
+	size_t fdlistno = 0;
 	struct r_rpcb_rmtcallargs barg;	/* Remote arguments */
 	struct r_rpcb_rmtcallres bres; /* Remote results */
-	int outlen, outlen_pmap;
+	size_t outlen, outlen_pmap;
 	struct netconfig *nconf;
 	int msec;
 	int pollretval;
@@ -285,7 +289,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	u_int udpbufsz = 0;
 #endif				/* PORTMAP */
 
-	if (sys_auth == (AUTH *)NULL) {
+	if (sys_auth == NULL) {
 		return (RPC_SYSTEMERROR);
 	}
 	/*
@@ -297,10 +301,10 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 
 	if (nettype == NULL)
 		nettype = "datagram_n";
-	if ((handle = __rpc_setconf((char *)nettype)) == NULL) {
+	if ((handle = __rpc_setconf(nettype)) == NULL) {
 		return (RPC_UNKNOWNPROTO);
 	}
-	while ((nconf = __rpc_getconf(handle))) {
+	while ((nconf = __rpc_getconf(handle)) != NULL) {
 		int fd;
 		struct __rpc_sockinfo si;
 
@@ -367,8 +371,8 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	}
 
 	/* Serialize all the arguments which have to be sent */
-	(void) gettimeofday(&t, (struct timezone *)0);
-	msg.rm_xid = getpid() ^ t.tv_sec ^ t.tv_usec;
+	(void) gettimeofday(&t, NULL);
+	msg.rm_xid = __RPC_GETXID(&t);
 	msg.rm_direction = CALL;
 	msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	msg.rm_call.cb_prog = RPCBPROG;
@@ -386,7 +390,8 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 	msg.rm_call.cb_verf = sys_auth->ah_verf;
 	xdrmem_create(xdrs, outbuf, maxbufsize, XDR_ENCODE);
 	if ((!xdr_callmsg(xdrs, &msg)) ||
-	    (!xdr_rpcb_rmtcallargs(xdrs, (struct rpcb_rmtcallargs *)&barg))) {
+	    (!xdr_rpcb_rmtcallargs(xdrs,
+	    (struct rpcb_rmtcallargs *)(void *)&barg))) {
 		stat = RPC_CANTENCODEARGS;
 		goto done_broad;
 	}
@@ -451,7 +456,8 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				if (!__rpc_lowvers)
 					if (sendto(fdlist[i].fd, outbuf,
 					    outlen, 0, (struct sockaddr*)addr,
-					    fdlist[i].asize) != outlen) {
+					    (size_t)fdlist[i].asize) !=
+					    outlen) {
 #ifdef RPC_DEBUG
 						perror("sendto");
 #endif
@@ -474,7 +480,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 				if (fdlist[i].proto == IPPROTO_UDP) {
 					if (sendto(fdlist[i].fd, outbuf_pmap,
 					    outlen_pmap, 0, addr,
-					    fdlist[i].asize) !=
+					    (size_t)fdlist[i].asize) !=
 						outlen_pmap) {
 						warnx("clnt_bcast: "
 				"Cannot send broadcast packet");
@@ -535,7 +541,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 #endif
 		try_again:
 			inlen = recvfrom(fdlist[i].fd, inbuf, fdlist[i].dsize,
-			    0, (struct sockaddr *)&fdlist[i].raddr,
+			    0, (struct sockaddr *)(void *)&fdlist[i].raddr,
 			    &fdlist[i].asize);
 			if (inlen < 0) {
 				if (errno == EINTR)
@@ -552,21 +558,22 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 			 * If so, decode the results. If return id is xid + 1
 			 * it was a PORTMAP reply
 			 */
-			if (*((u_int32_t *)(inbuf)) == *((u_int32_t *)(outbuf))) {
+			if (*((u_int32_t *)(void *)(inbuf)) ==
+			    *((u_int32_t *)(void *)(outbuf))) {
 				pmap_reply_flag = 0;
 				msg.acpted_rply.ar_verf = _null_auth;
 				msg.acpted_rply.ar_results.where =
-					(caddr_t)&bres;
+					(caddr_t)(void *)&bres;
 				msg.acpted_rply.ar_results.proc =
 					(xdrproc_t)xdr_rpcb_rmtcallres;
 #ifdef PORTMAP
 			} else if (pmap_flag &&
-				*((u_int32_t *)(inbuf)) ==
-				*((u_int32_t *)(outbuf_pmap))) {
+				*((u_int32_t *)(void *)(inbuf)) ==
+				*((u_int32_t *)(void *)(outbuf_pmap))) {
 				pmap_reply_flag = 1;
 				msg.acpted_rply.ar_verf = _null_auth;
 				msg.acpted_rply.ar_results.where =
-					(caddr_t)&bres_pmap;
+					(caddr_t)(void *)&bres_pmap;
 				msg.acpted_rply.ar_results.proc =
 					(xdrproc_t)xdr_rmtcallres;
 #endif				/* PORTMAP */
@@ -582,7 +589,7 @@ rpc_broadcast_exp(prog, vers, proc, xargs, argsp, xresults, resultsp,
 #ifdef PORTMAP
 					if (pmap_flag && pmap_reply_flag) {
 						sin = (struct sockaddr_in *)
-						    &fdlist[i].raddr;
+						    (void *)&fdlist[i].raddr;
 						sin->sin_port =
 						    htons((u_short)port);
 						taddr.len = taddr.maxlen = 
