@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.28 1995/06/12 00:09:56 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.29 1995/07/23 20:37:11 mycroft Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -425,8 +425,11 @@ void
 lereset(sc)
 	struct le_softc *sc;
 {
+	int s;
 
+	s = splimp();
 	leinit(sc);
+	splx(s);
 }
 
 void
@@ -437,6 +440,7 @@ lewatchdog(unit)
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
+
 	lereset(sc);
 }
 
@@ -528,11 +532,8 @@ leinit(sc)
 	register struct le_softc *sc;
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	int s;
 	register int timo;
 	u_long a;
-
-	s = splimp();
 
 	/* Don't want to get in a weird state. */
 	lewrcsr(sc, 0, LE_STOP);
@@ -568,8 +569,6 @@ leinit(sc)
 		lestart(ifp);
 	} else
 		printf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
-	
-	(void) splx(s);
 }
 
 /*
