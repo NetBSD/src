@@ -40,6 +40,9 @@
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
  */
 
+
+#include <machine/pte.h>
+
 /*
  * Machine dependent constants for HP300
  */
