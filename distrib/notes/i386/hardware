@@ -30,7 +30,6 @@ Supported devices include:
 		Buslogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
-		Intel EtherExpress 100 Fast Ethernet adapters
 		Qlogic ISP [12]0x0 SCSI/FibreChannel boards
 		Seagate/Future Domain ISA SCSI adapter cards, including
 			ST01/02
@@ -107,6 +106,7 @@ Supported devices include:
 			Allied-Telesis RE2000 series
 		Intel EtherExpress 16
 		Intel EtherExpress PRO/10 [*]
+		Intel EtherExpress 100 Fast Ethernet adapters
 		Novell NE1000, NE2000 (ISA, PCI, PCMCIA, ISA PnP)
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
@@ -254,7 +254,7 @@ SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
 3COM 3c509 or 3COM 3c579 Ethernet boards
 		ep0 	any  	any
 
-3COM 3x59X PCI Ethernet boards
+3COM 3x59X or 3COM 3x90X PCI Ethernet boards
 		ep0 	any  	any	[you must assign an interrupt in your
 		    	    	   	 PCI BIOS, or let it do so for you]
 
@@ -265,6 +265,10 @@ EtherExpress 16 Ethernet boards
 
 Intel EtherExpress PRO 10 ISA
 		iy0	any	any
+
+Intel EtherExpress 100 Fast Ethernet adapters
+		fxp0	any	any	[you must assign an interrupt in your
+					 PCI BIOS, or let it do so for you]
 
 SMC91C9x based Ethernet cards
 		sm0	0x300	10
