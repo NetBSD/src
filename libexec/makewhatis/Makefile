@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.16 2002/09/18 06:24:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2003/05/18 07:57:32 lukem Exp $
 
-.ifndef HOSTPROG
 .include <bsd.own.mk>
-.endif
 
 PROG=	makewhatis
 SRCS=	makewhatis.c manconf.c
@@ -14,6 +12,6 @@ MAN=	${PROG}.8
 .ifndef HOSTPROG
 DPADD=	${LIBZ}
 LDADD=	-lz
+.endif
 
 .include <bsd.prog.mk>
-.endif

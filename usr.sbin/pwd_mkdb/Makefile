@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.17 2002/09/18 03:54:35 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2003/05/18 07:57:40 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,6 @@ CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/include -D__DBINTERFACE_PRIVATE
 .ifndef HOSTPROG
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
+.endif
 
 .include <bsd.prog.mk>
-.endif

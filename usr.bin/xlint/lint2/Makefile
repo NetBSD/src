@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/09/18 14:00:44 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2003/05/18 07:57:38 lukem Exp $
 
 NOMAN=		# defined
 
@@ -9,7 +9,4 @@ LINTFLAGS=	-abehrz
 WFORMAT=1		# hopeless
 BINDIR=		/usr/libexec
 
-.ifndef HOSTPROG
 .include <bsd.prog.mk>
-.endif
-
