@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+#	$NetBSD: MAKEDEV,v 1.17 1995/10/09 02:23:07 chopps Exp $
+#
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
 #
@@ -30,8 +32,6 @@
 # LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
-#
-#	$Id: MAKEDEV,v 1.16 1995/09/30 07:11:20 chopps Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -72,8 +72,9 @@
 #	par*	motherboard parallel port
 #
 # Special purpose devices:
-#	grf*	custom chip (grf0) or Retina Z2/Z3 (grf1/grf2),
-#		Cirrus boards (grf3) or A2410 (grf4) video
+#	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
+#		Cirrus boards (grf3), A2410 (grf4) video or
+#		CyberVision 64 (grf5)
 #	kbd	Amiga keyboard
 #	view*	generic interface to graphic displays.
 #	aconf	autoconfig information (not yet)
@@ -88,7 +89,7 @@ do
 case $i in
 all)
 	sh MAKEDEV std fd st0 ttye0 ttye1 ttye2 ttye3 ttye4 mouse0 mouse1
-	sh MAKEDEV tty00 ttyA0 ttyA1 grf0 grf1 grf2 grf3 grf4
+	sh MAKEDEV tty00 ttyA0 ttyA1 grf0 grf1 grf2 grf3 grf4 grf5
 	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 vnd0 vnd1 vnd2
 	sh MAKEDEV vnd3 vnd4 view00 view01 view02 view03 view04 view05 pty0 
 	sh MAKEDEV vnd5 vnd6 cd0 fd0 fd1 fd2 fd3 bpf0 bpf1 bpf2 bpf3
@@ -98,7 +99,7 @@ all)
 
 floppy)
 	sh MAKEDEV std kbd pty0 tty00 ttyA0 ttyA1 tun0 tun1
-	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 ttye0 ttye1 ttye2 ttye3 ttye4
+	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 grf5 ttye0 ttye1 ttye2 ttye3 ttye4
 	sh MAKEDEV cd0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 st0
 	sh MAKEDEV fd0 fd1 fd2 fd3 
 	;;
@@ -327,7 +328,7 @@ grf*)
 	unit=`expr $i : 'grf\(.*\)'`
 	rm -f grf${unit}
 	case $unit in
-	0|1|2|3|4)
+	0|1|2|3|4|5)
 		mknod grf${unit} c 10 ${unit}; chmod 666 grf${unit}
 		;;
 	*)
