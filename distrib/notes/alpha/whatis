@@ -1,4 +1,4 @@
-.\"	$NetBSD: whatis,v 1.9 2002/07/08 14:42:47 lukem Exp $
+.\"	$NetBSD: whatis,v 1.10 2002/07/09 08:39:51 lukem Exp $
 .
 There have been many \*M-specific enhancements since the
 .Nx 1.5
@@ -26,7 +26,6 @@ DEC/Alpha Processor, Inc. UP2000+
 API CS20
 .It
 Compaq DS20
-.It
 .bullet)
 .bullet)
 .Pp
