@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.6 2005/01/12 03:32:52 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.7 2005/01/12 05:27:35 christos Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.6 2005/01/12 03:32:52 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.7 2005/01/12 05:27:35 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: bcrypt.c,v 1.6 2005/01/12 03:32:52 christos Exp $");
 #include <string.h>
 #include <pwd.h>
 #include <errno.h>
+#include <limits.h>
 
 #include "crypt.h"
 #include "blowfish.c"
@@ -71,7 +72,7 @@ __RCSID("$NetBSD: bcrypt.c,v 1.6 2005/01/12 03:32:52 christos Exp $");
 
 static void encode_salt(char *, u_int8_t *, u_int16_t, u_int8_t);
 static void encode_base64(u_int8_t *, u_int8_t *, u_int16_t);
-static void decode_base64(u_int8_t *, u_int16_t, u_int8_t *);
+static void decode_base64(u_int8_t *, u_int16_t, const u_int8_t *);
 
 char *__bcrypt(const char *, const char *);	/* XXX */
 
@@ -102,10 +103,10 @@ const static u_int8_t index_64[128] =
 #define CHAR64(c)  ( (c) > 127 ? 255 : index_64[(c)])
 
 static void
-decode_base64(u_int8_t *buffer, u_int16_t len, u_int8_t *data)
+decode_base64(u_int8_t *buffer, u_int16_t len, const u_int8_t *data)
 {
 	u_int8_t *bp = buffer;
-	u_int8_t *p = data;
+	const u_int8_t *p = data;
 	u_int8_t c1, c2, c3, c4;
 	while (bp < buffer + len) {
 		c1 = CHAR64(*p);
@@ -115,7 +116,7 @@ decode_base64(u_int8_t *buffer, u_int16_t len, u_int8_t *data)
 		if (c1 == 255 || c2 == 255)
 			break;
 
-		*bp++ = (c1 << 2) | ((c2 & 0x30) >> 4);
+		*bp++ = ((u_int32_t)c1 << 2) | (((u_int32_t)c2 & 0x30) >> 4);
 		if (bp >= buffer + len)
 			break;
 
@@ -123,7 +124,7 @@ decode_base64(u_int8_t *buffer, u_int16_t len, u_int8_t *data)
 		if (c3 == 255)
 			break;
 
-		*bp++ = ((c2 & 0x0f) << 4) | ((c3 & 0x3c) >> 2);
+		*bp++ = (((u_int32_t)c2 & 0x0f) << 4) | (((uint32_t)c3 & 0x3c) >> 2);
 		if (bp >= buffer + len)
 			break;
 
@@ -155,11 +156,20 @@ __gensalt_blowfish(char *salt, size_t saltlen, const char *option)
 	size_t i;
 	u_int32_t seed = 0;
 	u_int8_t csalt[BCRYPT_MAXSALT];
+	unsigned long nrounds;
+	char *ep;
 
 	if (saltlen < BCRYPT_MAXSALTLEN) {
 		errno = ENOSPC;
 		return -1;
 	}
+	nrounds = strtoul(option, &ep, 0);
+	if (option == ep || *ep) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (errno == ERANGE && nrounds == ULONG_MAX)
+		return -1;
 
 	if (nrounds > 255) {
 		errno = EINVAL;
@@ -175,7 +185,7 @@ __gensalt_blowfish(char *salt, size_t saltlen, const char *option)
 		csalt[i] = seed & 0xff;
 		seed = seed >> 8;
 	}
-	encode_salt(salt, csalt, BCRYPT_MAXSALT, nrounds);
+	encode_salt(salt, csalt, BCRYPT_MAXSALT, (u_int8_t)nrounds);
 	return 0;
 }
 
@@ -252,16 +262,16 @@ __bcrypt(key, salt)
 		return error;
 
 	/* We dont want the base64 salt but the raw data */
-	decode_base64(csalt, BCRYPT_MAXSALT, (u_int8_t *) salt);
+	decode_base64(csalt, BCRYPT_MAXSALT, (const u_int8_t *)salt);
 	salt_len = BCRYPT_MAXSALT;
 	key_len = strlen(key) + (minor >= 'a' ? 1 : 0);
 
 	/* Setting up S-Boxes and Subkeys */
 	Blowfish_initstate(&state);
 	Blowfish_expandstate(&state, csalt, salt_len,
-	    (u_int8_t *) key, key_len);
+	    (const u_int8_t *) key, key_len);
 	for (k = 0; k < rounds; k++) {
-		Blowfish_expand0state(&state, (u_int8_t *) key, key_len);
+		Blowfish_expand0state(&state, (const u_int8_t *) key, key_len);
 		Blowfish_expand0state(&state, csalt, salt_len);
 	}
 
@@ -308,14 +318,14 @@ encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
 	u_int8_t c1, c2;
 	while (p < data + len) {
 		c1 = *p++;
-		*bp++ = Base64Code[(c1 >> 2)];
+		*bp++ = Base64Code[((u_int32_t)c1 >> 2)];
 		c1 = (c1 & 0x03) << 4;
 		if (p >= data + len) {
 			*bp++ = Base64Code[c1];
 			break;
 		}
 		c2 = *p++;
-		c1 |= (c2 >> 4) & 0x0f;
+		c1 |= ((u_int32_t)c2 >> 4) & 0x0f;
 		*bp++ = Base64Code[c1];
 		c1 = (c2 & 0x0f) << 2;
 		if (p >= data + len) {
@@ -323,7 +333,7 @@ encode_base64(u_int8_t *buffer, u_int8_t *data, u_int16_t len)
 			break;
 		}
 		c2 = *p++;
-		c1 |= (c2 >> 6) & 0x03;
+		c1 |= ((u_int32_t)c2 >> 6) & 0x03;
 		*bp++ = Base64Code[c1];
 		*bp++ = Base64Code[c2 & 0x3f];
 	}
