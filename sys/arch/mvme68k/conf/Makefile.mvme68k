@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.2 1995/08/10 19:18:02 chuck Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.3 1995/09/19 23:50:22 thorpej Exp $
 
 #	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
@@ -36,7 +36,7 @@ MVME68K=	../..
 
 INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dmvme68k -DFPCOPROC
-CFLAGS=	-O ${COPTS}
+CFLAGS=	-O -Werror -fno-builtin ${COPTS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
