@@ -1,4 +1,4 @@
-/* $NetBSD: xbdvar.h,v 1.5.2.2 2004/05/22 15:58:45 he Exp $ */
+/* $NetBSD: xbdvar.h,v 1.5.2.3 2004/09/16 03:19:01 jmc Exp $ */
 
 /*
  *
@@ -42,6 +42,9 @@ struct xbd_softc {
 	struct dk_intf		*sc_di;		/* pseudo-disk interface */
 	struct simplelock	sc_slock;	/* our lock */
 	int			sc_shutdown;	/* about to be removed */
+#if NRND > 0
+	rndsource_element_t	rnd_source;
+#endif
 };
 
 struct xbd_attach_args {
