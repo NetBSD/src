@@ -1,4 +1,4 @@
-/*	$NetBSD: wwpty.c,v 1.4 1997/11/21 08:37:40 lukem Exp $	*/
+/*	$NetBSD: wwpty.c,v 1.5 1997/11/21 08:49:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)wwpty.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: wwpty.c,v 1.4 1997/11/21 08:37:40 lukem Exp $");
+__RCSID("$NetBSD: wwpty.c,v 1.5 1997/11/21 08:49:12 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: wwpty.c,v 1.4 1997/11/21 08:37:40 lukem Exp $");
 #include <sys/ioctl.h>
 #endif
 #include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
 #include "ww.h"
 
