@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 2002/03/16 13:29:42 manu Exp $
+	$NetBSD: syscalls.master,v 1.29 2002/03/26 10:52:52 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -221,8 +221,8 @@
 			    int len); }
 111	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
 			    int len); }
-112	UNIMPL		truncate
-113	UNIMPL		ftruncate
+112	NOARGS		{ int sys_truncate(const char *path, long length); }
+113	NOARGS		{ int sys_ftruncate(int fd, long length); }
 114	NOARGS		{ int sys_rename(const char *from, const char *to); }
 115	NOARGS		{ int sys_symlink(const char *path, \
 			    const char *link); }
@@ -315,8 +315,10 @@
 			    const struct iovec *iovp, int iovcnt); }
 182	NOARGS		{ ssize_t sys_writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-183	UNIMPL		truncate64
-184	UNIMPL		ftruncate64
+183	NOARGS		{ int sys_truncate(const char *path, int pad, \
+			    off_t length); } truncate64
+184	NOARGS		{ int sys_ftruncate(int fd, int pad, off_t length); } \
+			    ftruncate64
 185	UNIMPL		mmap64
 186	UNIMPL		dmi
 187	UNIMPL		pread
