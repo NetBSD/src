@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.10 2002/04/11 02:51:36 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.11 2002/04/24 05:29:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -240,7 +240,10 @@ pthread__signal(pthread_t t, int sig, int code)
 	/* Ensure the victim is not running.
 	 * In a MP world, it could be on another processor somewhere.
 	 */
-
+	/* XXX As long as this is uniprocessor, encountering a running
+	 * target process is a bug.
+	 */
+	assert(target->pt_state != PT_STATE_RUNNING);
 	/* Locking the state lock blocks out cancellation and any other
 	 * attempts to set this thread up to take a signal.
 	 */
@@ -315,6 +318,7 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
 	 * the first thing we do will be to jump back to the previous context.
 	 */
 	next = pthread__next(self);
+	next->pt_state = PT_STATE_RUNNING;
 	pthread_spinlock(self, &self->pt_statelock);
 	if (oldstate == PT_STATE_RUNNABLE) {
 		pthread_spinlock(self, &runqueue_lock);

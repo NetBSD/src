@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.1.2.11 2002/02/08 22:18:59 nathanw Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.1.2.12 2002/04/24 05:29:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ pthread__block(pthread_t self, pthread_spin_t *queuelock)
 	pthread_t next;
 	
 	next = pthread__next(self);
+	next->pt_state = PT_STATE_RUNNING;
 	SDPRINTF(("(calling locked_switch %p, %p) spinlock %d, %d\n",
  		self, next, self->pt_spinlocks, next->pt_spinlocks));
 	pthread__locked_switch(self, next, queuelock);
