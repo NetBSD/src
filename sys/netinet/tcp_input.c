@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.190 2004/03/10 18:50:45 drochner Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.191 2004/03/29 04:59:02 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.190 2004/03/10 18:50:45 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.191 2004/03/29 04:59:02 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1356,6 +1356,7 @@ findpcb:
 
 #ifdef IPSEC
 				switch (af) {
+#ifdef INET
 				case AF_INET:
 					if (ipsec4_in_reject_so(m, so)) {
 						ipsecstat.in_polvio++;
@@ -1363,6 +1364,7 @@ findpcb:
 						goto dropwithreset;
 					}
 					break;
+#endif
 #ifdef INET6
 				case AF_INET6:
 					if (ipsec6_in_reject_so(m, so)) {
