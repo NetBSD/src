@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.10 2002/02/12 20:38:35 scw Exp $	*/
+/* $NetBSD: bus_dma.h,v 1.11 2003/01/28 01:08:03 kent Exp $	*/
 
 /*
  * This file was extracted from from next68k/include/bus.h
@@ -91,6 +91,7 @@
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /*
  * Flags to constrain the physical memory allocated for DMA

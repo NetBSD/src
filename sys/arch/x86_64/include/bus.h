@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2002/01/25 22:01:42 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2003/01/28 01:08:09 kent Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -1067,6 +1067,7 @@ x86_64_memio_copy_region_4(t, h1, o1, h2, o2, c)
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
