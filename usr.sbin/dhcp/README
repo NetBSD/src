@@ -1,17 +1,15 @@
 		     Internet Software Consortium
 	   Dynamic Host Configuration Protocol Distribution
-			 Development Snapshot
-			  November 22, 1997
+		   Version 2, Beta 1, Patchlevel 0
+			   December 6, 1997
 
-This is a development snapshot of work in progress on version 2.0 of
-the Internet Software Consortium DHCP Distribution.  In version 2.0,
-this distribution includes a DHCP server, a DHCP client, and a
-BOOTP/DHCP relay agent.  The engineering snapshot has become a lot
-more stable since the last snapshot, and will soon go into beta.
-However, DHCP server users running a production environment should
-probably still use the latest version on the 1.0 release branch, which
-is more stable, having been in a feature freeze since November of
-1996.
+This is the first Beta release of Version 2 of the Internet Software
+Consortium DHCP Distribution.  In version 2.0, this distribution
+includes a DHCP server, a DHCP client, and a BOOTP/DHCP relay agent.
+This beta is believed to be fairly stable.  However, DHCP server users
+running a production environment should probably still use version
+1.0, which is more stable, having been in a feature freeze since
+November of 1996.
 
 In this release, the server and relay agent currently work well on
 Digital Alpha OSF/1, SunOS 4.1.4, NetBSD, FreeBSD, BSD/OS and Ultrix.
@@ -59,8 +57,9 @@ programming or debugging on your own to get the DHCP Distribution working.
 
 				LINUX
 
-There are two big LINUX issues: the all-ones broadcast address, and
-operations with more than one  network interface.
+There are three big LINUX issues: the all-ones broadcast address,
+Linux 2.1 ip_bootp_agent enabling, and operations with more than one
+network interface.
 
                               BROADCAST
 
@@ -97,6 +96,14 @@ Another route that has worked for some users is:
 If you are not using eth0 as your network interface, you should
 specify the network interface you *are* using in your route command.
 
+			    IP BOOTP AGENT
+
+Some versions of the Linux 2.1 kernel apparently prevent dhcpd from
+working unless you enable it by doing the following:
+
+	      echo 1 >/proc/sys/net/ipv4/ip_bootp_agent
+
+
                         MULTIPLE INTERFACES
 
 Most older versions of the Linux kernel do not provide a networking
@@ -118,9 +125,8 @@ soon.
 
 If you are running a Linux 2.1 kernel, this does not guarantee that you
 have SO_BINDTODEVICE.   Linux 2.0.31 was released quite a while after 2.1
-kernel development began.   I do not know what version of Linux 2.1 has
-this feature.   To find out if yours does, check /usr/include/sys/sock*.h
-to see if SO_BINDTODEVICE is defined.
+kernel development began.   The earliest Linux kernel in the 2.1
+development stream with SO_BINDTODEVICE is version 2.1.68.
 
 We have heard reports that you must still add routes to 255.255.255.255
 in order for the all-ones broadcast to work, even on 2.0.31 kernels.

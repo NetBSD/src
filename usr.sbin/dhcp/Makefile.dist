@@ -30,7 +30,7 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SUBDIRS=	common server client relay statmsg sysconfd
+SUBDIRS=	common server client relay
 
 all:
 	@for dir in ${SUBDIRS}; do \

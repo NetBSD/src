@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhcrelay.c,v 1.1.1.3 1997/11/22 09:14:30 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.1.1.4 1998/05/18 06:54:00 mellon Exp $ Copyright (c) 1997 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -205,7 +205,7 @@ int main (argc, argv, envp)
 				warn ("Can't fdopen %s: %m",
 				      path_dhcrelay_pid);
 			else {
-				fprintf (pf, "%d\n", getpid ());
+				fprintf (pf, "%ld\n", (long)getpid ());
 				fclose (pf);
 			}	
 		}
@@ -241,7 +241,7 @@ void relay (ip, packbuf, length, from_port, from, hfrom)
 	if (packet -> op == BOOTREPLY) {
 #ifndef USE_FALLBACK
 		if (!(packet -> flags & htons (BOOTP_BROADCAST))) {
-			to.sin_addr = packet -> ciaddr;
+			to.sin_addr = packet -> yiaddr;
 			to.sin_port = remote_port;
 		} else
 #endif

@@ -5,7 +5,8 @@
    Based on a configuration originally supplied by Jonathan Stone. */
 
 /*
- * Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
+ * Copyright (c) 1996, 1998 The Internet Software Consortium.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -61,10 +62,15 @@ extern int h_errno;
 
 #include <net/if.h>
 #include <net/route.h>
-#include <linux/if_arp.h>
+
+#if defined (LINUX_1_X)
+# include <linux/if_arp.h>
+# include <linux/time.h>		/* also necessary */
+#else
+# include <net/if_arp.h>
+#endif
 
 #include <sys/time.h>		/* gettimeofday()*/
-#include <linux/time.h>		/* also necessary */
 
 #ifndef _PATH_DHCPD_PID
 #define _PATH_DHCPD_PID	"/var/run/dhcpd.pid"
