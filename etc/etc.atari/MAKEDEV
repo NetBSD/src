@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.14 1997/05/27 07:05:50 leo Exp $
+#	$NetBSD: MAKEDEV,v 1.15 1997/05/31 23:53:09 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,6 +86,7 @@
 #	uk*	SCSI unknown
 #	ch	SCSI changer
 #	rtc	Atari RealTimeClock
+#	ipl	IP Filter device
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 77
