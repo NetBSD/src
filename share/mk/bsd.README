@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.56 1999/12/01 03:33:52 sommerfeld Exp $
+#	$NetBSD: bsd.README,v 1.57 2000/01/06 19:09:35 drochner Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -590,7 +590,7 @@ bsd.crypto.mk will use the following algorithm to set the variable:
 Note that it is legal for the user to set CRYPTOBASE to a relative
 path outside of the source directory.  For example:
 
-	CRYPTOPATH= ../cryptosrc-intl/crypto-intl
+	CRYPTOBASE= ../cryptosrc-intl/crypto-intl
 
 If CRYPTOBASE is set and not set to "none", bsd.crypto.mk will use
 CRYPTOBASE to set the "CRYPTOPATH" variable.  CRYPTOPATH is set to
