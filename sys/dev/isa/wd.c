@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.132 1995/03/23 11:33:32 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.133 1995/03/23 12:12:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -395,14 +395,6 @@ wdstrategy(bp)
 		bp->b_error = EINVAL;
 		goto bad;
 	}
-    
-#if 0
-	/* "Soft" write protect check. */
-	if ((wd->sc_flags & WDF_WRITEPROT) && (bp->b_flags & B_READ) == 0) {
-		bp->b_error = EROFS;
-		goto bad;
-	}
-#endif
     
 	/* If it's a null transfer, return immediately. */
 	if (bp->b_bcount == 0)
@@ -927,6 +919,15 @@ wdopen(dev, flag, fmt)
 
 		wdunlock(wd);
 	}
+
+#if 0
+	/* Check for read-only media. */
+	if ((flag & FWRITE) != 0 &&
+	    (wd->sc_flags & WDF_WRITEPROT) != 0) {
+		error = EROFS;
+		goto bad;
+	}
+#endif
 
 	/* Check that the partition exists. */
 	if (part != RAW_PART &&
