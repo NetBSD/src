@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.22 1995/07/24 07:37:44 cgd Exp $ */
+/*	$NetBSD: esp.c,v 1.23 1995/08/18 10:43:46 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy
@@ -62,7 +62,7 @@
 #include <sparc/dev/espreg.h>
 #include <sparc/dev/espvar.h>
 
-int esp_debug = ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS; /**/ 
+int esp_debug = 0; /*ESP_SHOWPHASE|ESP_SHOWMISC|ESP_SHOWTRAC|ESP_SHOWCMDS;*/ 
 
 /*static*/ void	espattach	__P((struct device *, struct device *, void *));
 /*static*/ int	espmatch	__P((struct device *, void *, void *));
@@ -156,6 +156,8 @@ espgetbyte(sc, v)
 	volatile caddr_t esp = sc->sc_reg;
 
 	if (!(esp[ESP_FFLAG] & ESPFIFO_FF)) {
+ESPCMD(sc, ESPCMD_FLUSH);
+DELAY(1);
 		ESPCMD(sc, ESPCMD_TRANS);
 		while (!DMA_ISINTR(sc->sc_dma))
 			DELAY(1);
@@ -413,11 +415,12 @@ espattach(parent, self, aux)
 	case BUS_SBUS:
 		if (bp != NULL && strcmp(bp->name, "esp") == 0 &&
 		    SAME_ESP(sc, bp, ca))
-			sc->sc_bp = bp + 1;
+			bootpath_store(1, bp + 1);
 		break;
 	default:
-		if (bp != NULL && strcmp(bp->name, "esp") == 0)
-			sc->sc_bp = bp + 1;
+		if (bp != NULL && strcmp(bp->name, "esp") == 0 &&
+			bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit)
+			bootpath_store(1, bp + 1);
 		break;
 	}
 
@@ -425,6 +428,8 @@ espattach(parent, self, aux)
 	 * Now try to attach all the sub-devices
 	 */
 	config_found(self, &sc->sc_link, espprint);
+
+	bootpath_store(1, NULL);
 }
 
 /*
@@ -773,7 +778,7 @@ esp_done(ecb)
 	}
 	xs->flags |= ITSDONE;
 
-#if ESP_DEBUG > 1
+#ifdef ESP_DEBUG
 	if (esp_debug & ESP_SHOWMISC) {
 		printf("err=0x%02x ",xs->error);
 		if (xs->error == XS_SENSE)
@@ -980,7 +985,7 @@ esp_msgin(sc)
 				struct scsi_link *sc_link = ecb->xs->sc_link;
 				printf("esp: %d extra bytes from %d:%d\n",
 				    -sc->sc_dleft, sc_link->target, sc_link->lun);
-				ecb->dleft = 0;
+				sc->sc_dleft = 0;
 			}
 			ESPCMD(sc, ESPCMD_MSGOK);
 			ecb->xs->resid = ecb->dleft = sc->sc_dleft;
@@ -1519,11 +1524,13 @@ espintr(sc)
 			break;
 		case DATA_OUT_PHASE:
 			ESP_PHASE(("DATA_OUT_PHASE [%d] ",  sc->sc_dleft));
+			ESPCMD(sc, ESPCMD_FLUSH);
 			DMA_START(sc->sc_dma, &sc->sc_dp, &sc->sc_dleft, 0);
 			sc->sc_prevphase = DATA_OUT_PHASE;
 			break;
 		case DATA_IN_PHASE:
 			ESP_PHASE(("DATA_IN_PHASE "));
+			ESPCMD(sc, ESPCMD_FLUSH);
 			DMA_DRAIN(sc->sc_dma);
 			DMA_START(sc->sc_dma, &sc->sc_dp, &sc->sc_dleft,
 			    D_WRITE);

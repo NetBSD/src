@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.9 1995/03/01 21:09:19 pk Exp $ */
+/*	$NetBSD: dma.c,v 1.10 1995/08/18 10:43:49 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -233,6 +233,7 @@ dma_isintr(sc)
 			    (16 * 1024 * 1024) : (64 * 1024))
 #define DMAMAX(a)	(0x01000000 - ((a) & 0x00ffffff))
 
+/*!!!*/int xdmadebug = 0;
 /*
  * start a dma transfer or keep it going
  */
@@ -245,15 +246,12 @@ dma_start(sc, addr, len, datain)
 {
 	/* we do the loading of the transfer counter */
 	volatile caddr_t esp = sc->sc_esp->sc_reg;
-	int size;
+	size_t size;
 
 	sc->sc_dmaaddr = addr;
 	sc->sc_dmalen = len;
 
-#if ESP_DEBUG
-	printf("%s: start %d@0x%08x,%d\n", sc->sc_dev.dv_xname, *sc->sc_dmalen,
-	    *sc->sc_dmaaddr, datain ? 1 : 0);
-#endif
+	ESP_DMA(("%s: start %d@0x%08x,%d\n", sc->sc_dev.dv_xname, *sc->sc_dmalen, *sc->sc_dmaaddr, datain ? 1 : 0));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
@@ -264,9 +262,7 @@ dma_start(sc, addr, len, datain)
 	size = min(size, DMAMAX((size_t) *sc->sc_dmaaddr));
 	sc->sc_dmasize = size;
 
-#if ESP_DEBUG
-	printf("dma_start: dmasize = %d\n", sc->sc_dmasize);
-#endif
+	ESP_DMA(("dma_start: dmasize = %d\n", sc->sc_dmasize));
 
 	esp[ESP_TCL] = size;
 	esp[ESP_TCM] = size >> 8;
@@ -289,8 +285,14 @@ dma_start(sc, addr, len, datain)
 	if (!datain)
 		DMACSR(sc) &= ~D_WRITE;
 
-	/* and kick the SCSI */
-	ESPCMD(sc->sc_esp, ESPCMD_TRANS|ESPCMD_DMA);
+	/*
+	 * and kick the SCSI
+	 * Note that if `size' is 0, we've already transceived all
+	 * the bytes we want but we're still in the DATA PHASE.
+	 * Apparently, the device needs padding. Also, a transfer
+	 * size of 0 means "maximum" to the chip DMA logic.
+	 */
+	ESPCMD(sc->sc_esp, (size==0?ESPCMD_TRPAD:ESPCMD_TRANS)|ESPCMD_DMA);
 
 	sc->sc_active = 1;
 }
@@ -309,9 +311,7 @@ dmaintr(sc)
 	volatile caddr_t esp = sc->sc_esp->sc_reg;
 	int trans = 0, resid = 0;
 
-#if ESP_DEBUG
-	printf("%s: intr\n", sc->sc_dev.dv_xname);
-#endif
+	ESP_DMA(("%s: intr\n", sc->sc_dev.dv_xname));
 
 	if (DMACSR(sc) & D_ERR_PEND) {
 		printf("%s: error", sc->sc_dev.dv_xname);
@@ -326,6 +326,12 @@ dmaintr(sc)
 	/* DMA has stopped */
 	DMACSR(sc) &= ~D_EN_DMA;
 	sc->sc_active = 0;
+
+	if (sc->sc_dmasize == 0) {
+		/* A "Transfer Pad" operation completed */
+		ESP_DMA(("dmaintr: discarded %d bytes (tcl=%d, tcm=%d)\n", esp[ESP_TCL] | (esp[ESP_TCM] << 8), esp[ESP_TCL], esp[ESP_TCM]));
+		return 0;
+	}
 
 	if (!(DMACSR(sc) & D_WRITE) &&
 	    (resid = (esp[ESP_FFLAG] & ESPFIFO_FF)) != 0) {
@@ -342,13 +348,12 @@ dmaintr(sc)
 		    sc->sc_dev.dv_xname, trans, sc->sc_dmasize);
 		trans = sc->sc_dmasize;
 	}
-#if ESP_DEBUG
-	printf("dmaintr: tcl=%d, tcm=%ds, tch=%d\n", esp[ESP_TCL],
-	    esp[ESP_TCM], esp[ESP_TCH]);
-	printf("dmaintr: resid=%d, trans=%d\n", resid, trans);
-#endif
+
+	ESP_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d; resid=%d, trans=%d\n", esp[ESP_TCL],esp[ESP_TCM], esp[ESP_TCH], trans, resid));
+
 	if (DMACSR(sc) & D_WRITE)
 		cache_flush(*sc->sc_dmaaddr, trans);
+
 	*sc->sc_dmalen -= trans;
 	*sc->sc_dmaaddr += trans;
 
