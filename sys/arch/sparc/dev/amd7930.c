@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.10 1996/03/31 22:38:29 pk Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.11 1996/05/28 13:36:09 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -915,6 +915,7 @@ amd7930hwintr(au0)
 		}
 	}
 
+	*(au->au_intrcnt)++;
 	return (1);
 }
 #endif /* AUDIO_C_HANDLER */
