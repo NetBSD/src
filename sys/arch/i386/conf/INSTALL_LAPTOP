@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.57.2.3 2004/07/15 20:15:44 he Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.57.2.4 2004/07/23 23:34:14 he Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -467,10 +467,12 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
+ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 uhci*	at pci?				# Universal Host Controller (Intel)
 ohci*	at pci?				# Open Host Controller
 
 # USB bus support
+usb*	at ehci?
 usb*	at uhci?
 usb*	at ohci?
 
