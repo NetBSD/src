@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.62 1999/01/21 11:58:00 pk Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.63 1999/01/27 22:04:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.62 1999/01/21 11:58:00 pk Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.63 1999/01/27 22:04:51 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,11 +138,9 @@ static int	debug;
 #endif
 
 #ifdef __i386__
-static struct dos_partition *dosdp;	/* i386 DOS partition, if found */
+static struct mbr_partition *dosdp;	/* i386 DOS partition, if found */
 static int mbrpt_nobsd; /* MBR partition table exists, but no BSD partition */
-static struct dos_partition *readmbr __P((int));
-#define MBRSIGOFS 0x1fe
-static u_char mbrsig[2] = {0x55, 0xaa};
+static struct mbr_partition *readmbr __P((int));
 #endif
 #ifdef __arm32__
 static u_int filecore_partition_offset;
@@ -478,7 +476,7 @@ writelabel(f, boot, lp)
 		 * wants to convert the drive for dedicated use.
 		 */
 		if (dosdp) {
-			if (dosdp->dp_start != pp->p_offset)
+			if (dosdp->mbrp_start != pp->p_offset)
 				confirm("Write outside MBR partition");
 		        sectoffset = (off_t)pp->p_offset * lp->d_secsize;
 		} else {
@@ -609,15 +607,16 @@ l_perror(s)
 /*
  * Fetch DOS partition table from disk.
  */
-static struct dos_partition *
+static struct mbr_partition *
 readmbr(f)
 	int f;
 {
 	static char mbr[DEV_BSIZE];
-	struct dos_partition *dp = (struct dos_partition *)&mbr[DOSPARTOFF];
+	struct mbr_partition *dp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
+	u_int16_t *mbrmagicp;
 	int part;
 
-	if (lseek(f, (off_t)DOSBBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
+	if (lseek(f, (off_t)MBR_BBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
 		err(4, "can't read master boot record");
 		
@@ -627,17 +626,18 @@ readmbr(f)
 	 * disklabel from there.
 	 */
 	/* Check if table is valid. */
-	if (memcmp(&mbr[MBRSIGOFS], mbrsig, sizeof(mbrsig)))
-		return(0);
+	mbrmagicp = (u_int16_t *)(&mbr[MBR_MAGICOFF]);
+	if (*mbrmagicp != MBR_MAGIC)
+		return (0);
 	/* Find NetBSD partition. */
-	for (part = 0; part < NDOSPART; part++) {
-		if (dp[part].dp_typ == DOSPTYP_NETBSD)
+	for (part = 0; part < NMBRPART; part++) {
+		if (dp[part].mbrp_typ == MBR_PTYPE_NETBSD)
 			return (&dp[part]);
 	}
 #ifdef COMPAT_386BSD_MBRPART
 	/* didn't find it -- look for 386BSD partition */
-	for (part = 0; part < NDOSPART; part++) {
-		if (dp[part].dp_typ == DOSPTYP_386BSD) {
+	for (part = 0; part < NMBRPART; part++) {
+		if (dp[part].mbrp_typ == MBR_PTYPE_386BSD) {
 			warnx("old BSD partition ID!");
 			return (&dp[part]);
 		}
@@ -820,7 +820,7 @@ readlabel(f)
 
 #ifdef __i386__
 		if (dosdp)
-			sectoffset = (off_t)dosdp->dp_start * DEV_BSIZE;
+			sectoffset = (off_t)dosdp->mbrp_start * DEV_BSIZE;
 #endif
 #ifdef __arm32__
 		/* XXX */
@@ -891,7 +891,7 @@ makebootarea(boot, dp, f)
 
 #ifdef __i386__
 			if (dosdp)
-				sectoffset = (off_t)dosdp->dp_start * DEV_BSIZE;
+				sectoffset = (off_t)dosdp->mbrp_start * DEV_BSIZE;
 #endif
 #ifdef __arm32__
 			/* XXX */
@@ -1699,10 +1699,10 @@ checklabel(lp)
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
 #ifdef __i386__notyet__
-	if (dosdp && lp->d_secperunit > dosdp->dp_start + dosdp->dp_size) {
+	if (dosdp && lp->d_secperunit > dosdp->mbrp_start + dosdp->mbrp_size) {
 		warnx("exceeds DOS partition size");
 		errors++;
-		lp->d_secperunit = dosdp->dp_start + dosdp->dp_size;
+		lp->d_secperunit = dosdp->mbrp_start + dosdp->mbrp_size;
 	}
 	/* XXX should also check geometry against BIOS's idea */
 #endif
