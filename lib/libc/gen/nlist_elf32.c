@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_elf32.c,v 1.24 2003/07/26 19:24:43 salo Exp $ */
+/* $NetBSD: nlist_elf32.c,v 1.25 2004/12/27 20:07:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -153,7 +153,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 			kg.kg_sym = &sym;
 			if (ioctl(fd, KIOCGSYMBOL, &kg) == 0) {
 				p->n_value = sym.st_value;
-				switch (ELFDEFNNAME(ST_TYPE)(sym.st_info)) {
+				switch (ELF_ST_TYPE(sym.st_info)) {
 				case STT_NOTYPE:
 					p->n_type = N_UNDF;
 					break;
@@ -171,7 +171,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 					/* catch other enumerations for gcc */
 					break;
 				}
-				if (ELFDEFNNAME(ST_BIND)(sym.st_info) !=
+				if (ELF_ST_BIND(sym.st_info) !=
 				    STB_LOCAL)
 					p->n_type |= N_EXT;
 			} else {
