@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.406 2003/04/27 12:35:20 fvdl Exp $
+# $NetBSD: mi,v 1.407 2003/04/27 15:28:24 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1223,6 +1223,7 @@
 ./usr/share/man/cat8/acorn32		base-man-share
 ./usr/share/man/cat8/algor		base-man-share
 ./usr/share/man/cat8/alpha		base-man-share
+./usr/share/man/cat8/amd64		base-man-share
 ./usr/share/man/cat8/amiga		base-man-share
 ./usr/share/man/cat8/arc		base-man-share
 ./usr/share/man/cat8/atari		base-man-share
@@ -1268,7 +1269,6 @@
 ./usr/share/man/cat8/sun3		base-man-share
 ./usr/share/man/cat8/vax		base-man-share
 ./usr/share/man/cat8/x68k		base-man-share
-./usr/share/man/cat8/amd64		base-man-share
 ./usr/share/man/cat9		base-man-share
 ./usr/share/man/cat9/acorn26		base-man-share
 ./usr/share/man/cat9/alpha		base-man-share
@@ -1319,6 +1319,7 @@
 ./usr/share/man/html8/acorn32		base-man-share
 ./usr/share/man/html8/algor		base-man-share
 ./usr/share/man/html8/alpha		base-man-share
+./usr/share/man/html8/amd64		base-man-share
 ./usr/share/man/html8/amiga		base-man-share
 ./usr/share/man/html8/arc		base-man-share
 ./usr/share/man/html8/atari		base-man-share
@@ -1364,7 +1365,6 @@
 ./usr/share/man/html8/sun3		base-man-share
 ./usr/share/man/html8/vax		base-man-share
 ./usr/share/man/html8/x68k		base-man-share
-./usr/share/man/html8/amd64		base-man-share
 ./usr/share/man/html9			base-man-share
 ./usr/share/man/html9/acorn26		base-man-share
 ./usr/share/man/html9/alpha		base-man-share
@@ -1416,6 +1416,7 @@
 ./usr/share/man/man8/acorn32		base-man-share
 ./usr/share/man/man8/algor		base-man-share
 ./usr/share/man/man8/alpha		base-man-share
+./usr/share/man/man8/amd64		base-man-share
 ./usr/share/man/man8/amiga		base-man-share
 ./usr/share/man/man8/arc		base-man-share
 ./usr/share/man/man8/atari		base-man-share
@@ -1461,7 +1462,6 @@
 ./usr/share/man/man8/sun3		base-man-share
 ./usr/share/man/man8/vax		base-man-share
 ./usr/share/man/man8/x68k		base-man-share
-./usr/share/man/man8/amd64		base-man-share
 ./usr/share/man/man9			base-man-share
 ./usr/share/man/man9/acorn26		base-man-share
 ./usr/share/man/man9/alpha		base-man-share
