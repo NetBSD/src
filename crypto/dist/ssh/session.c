@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.29 2003/03/24 18:25:22 lukem Exp $	*/
+/*	$NetBSD: session.c,v 1.30 2003/03/26 11:16:13 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -790,6 +790,67 @@ child_set_env(char ***envp, u_int *envsizep, const char *name,
 	snprintf(env[i], strlen(name) + 1 + strlen(value) + 1, "%s=%s", name, value);
 }
 
+#ifdef HAVE_LOGIN_CAP
+/*
+ * Sets any environment variables specified in login.conf.
+ * Taken from:
+ *	NetBSD: login_cap.c,v 1.11 2001/07/22 13:34:01 wiz Exp 
+ * Modified to use child_set_env instead of setenv.
+ */
+static void
+lc_setuserenv(char ***env, u_int *envsize, login_cap_t *lc)
+{
+	const char *stop = ", \t";
+	int i, count;
+	char *ptr;
+	char **res;
+	char *str = login_getcapstr(lc, "setenv", NULL, NULL);
+		  
+	if (str == NULL || *str == '\0')
+		return;
+	
+	/* count the sub-strings */
+	for (i = 1, ptr = str; *ptr; i++) {
+		ptr += strcspn(ptr, stop);
+		if (*ptr)
+			ptr++;
+	}
+
+	/* allocate ptr array and string */
+	count = i;
+	res = malloc(count * sizeof(char *) + strlen(str) + 1);
+
+	if (!res)
+		return;
+	
+	ptr = (char *)res + count * sizeof(char *);
+	strcpy(ptr, str);
+
+	/* split string */
+	for (i = 0; *ptr && i < count; i++) {
+		res[i] = ptr;
+		ptr += strcspn(ptr, stop);
+		if (*ptr)
+			*ptr++ = '\0';
+	}
+	
+	res[i] = NULL;
+
+	for (i = 0; i < count && res[i]; i++) {
+		if (*res[i] != '\0') {
+			if ((ptr = strchr(res[i], '=')) != NULL)
+				*ptr++ = '\0';
+			else 
+				ptr = "";
+			child_set_env(env, envsize, res[i], ptr);
+		}
+	}
+	
+	free(res);
+	return;
+}
+#endif
+
 /*
  * Reads environment variables from the given file and adds/overrides them
  * into the environment.  If the file does not exist, this does nothing.
@@ -849,6 +910,9 @@ do_setup_env(Session *s, const char *shell)
 	env[0] = NULL;
 
 	if (!options.use_login) {
+#ifdef HAVE_LOGIN_CAP
+		lc_setuserenv(&env, &envsize, lc);
+#endif
 		/* Set basic environment. */
 		child_set_env(&env, &envsize, "USER", pw->pw_name);
 		child_set_env(&env, &envsize, "LOGNAME", pw->pw_name);
