@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.3 1995/02/19 23:52:18 mycroft Exp $	*/
+/*	$NetBSD: rpc.c,v 1.4 1995/02/20 11:04:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -47,7 +47,8 @@
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
-#undef NFSX_FATTR
+#include <nfs/xdr_subs.h>
+
 #include <string.h>
 
 #include "stand.h"
@@ -58,11 +59,7 @@
 /* XXX Data part of nfs rpc reply (also the largest thing we receive) */
 struct nfs_reply_data {
 	u_long	errno;
-#ifndef NFSX_FATTR
-	struct	nfsv2_fattr fa;
-#else
 	u_char	fa[NFSX_FATTR(0)];
-#endif
 	u_long	count;
 	u_char	data[1200];
 };
@@ -82,27 +79,26 @@ static struct pmap_list {
 static	int pmap_num = 1;
 
 /* Local forwards */
-static	int recvrpc __P((struct iodesc *, void *, int));
+static	size_t recvrpc __P((struct iodesc *, void *, size_t, time_t));
 
 /* Make a rpc call; return length of answer */
-int
+size_t
 callrpc(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	register struct iodesc *d;
 	register u_long prog, vers, proc;
 	register void *sdata;
-	register int slen;
+	register size_t slen;
 	register void *rdata;
-	register int rlen;
+	register size_t rlen;
 {
-	register int cc;
-	register struct rpc_call *rpc;
+	register size_t cc;
+	register u_long *tl;
 	struct {
 		u_char	header[HEADER_SIZE];
-		struct	rpc_call wrpc;
-		u_char	data[sizeof(struct nfs_reply_data)]; /* XXX */
+		u_long	data[96];	/* XXX */
 	} wbuf;
 	struct {
-		u_char header[HEADER_SIZE];
+		u_char	header[HEADER_SIZE];
 		struct	rpc_reply rrpc;
 		union {
 			u_long	errno;
@@ -120,28 +116,52 @@ callrpc(d, prog, vers, proc, sdata, slen, rdata, rlen)
 
 	d->destport = getport(d, prog, vers);
 
-	rpc = &wbuf.wrpc;
+	tl = wbuf.data;
 
-	bzero(rpc, sizeof(*rpc));
+	/* Fill in RPC call structure. */
+	*tl++ = txdr_unsigned(d->xid);
+	*tl++ = txdr_unsigned(RPC_CALL);
+	*tl++ = txdr_unsigned(RPC_VER2);
+	*tl++ = txdr_unsigned(prog);
+	*tl++ = txdr_unsigned(vers);
+	*tl++ = txdr_unsigned(proc);
 
-	rpc->rp_xid = d->xid;
-	rpc->rp_rpcvers = htonl(RPC_MSG_VERSION);
-	rpc->rp_prog = htonl(prog);
-	rpc->rp_vers = htonl(vers);
-	rpc->rp_proc = htonl(proc);
-	bcopy(sdata, wbuf.data, slen);
+	/* Fill in authorization info. */
+	if (prog != NFS_PROG) {
+		*tl++ = txdr_unsigned(RPCAUTH_NULL);
+		*tl++ = txdr_unsigned(0);
+	} else {
+		*tl++ = txdr_unsigned(RPCAUTH_UNIX);
+		*tl++ = txdr_unsigned(3*NFSX_UNSIGNED);
+		*tl++ = txdr_unsigned(0);	/* time */
+		*tl++ = txdr_unsigned(0);	/* host name length */
+		*tl++ = txdr_unsigned(0);	/* uid */
+		*tl++ = txdr_unsigned(0);	/* gid */
+		*tl++ = txdr_unsigned(0);	/* gid list length */
+	}
+	*tl++ = txdr_unsigned(RPCAUTH_NULL);
+	*tl++ = txdr_unsigned(0);
 
-	cc = sendrecv(d, sendudp, rpc, sizeof(*rpc) + slen, recvrpc,
-	    ((u_char *)&rbuf.rrpc) - HEADER_SIZE, sizeof(rbuf) - HEADER_SIZE);
+	/* Fill in RPC call arguments. */
+	bcopy(sdata, tl, slen);
+
+	cc = sendrecv(d,
+	    sendudp, wbuf.data,
+	    (tl - wbuf.data) * NFSX_UNSIGNED + slen,
+	    recvrpc, &rbuf.rrpc,
+	    sizeof(struct rpc_reply) + sizeof(struct nfs_reply_data));
+
 #ifdef RPC_DEBUG
 	if (debug)
 		printf("callrpc: cc=%d rlen=%d, rp_stat=%d\n", cc, rlen,
 		    rbuf.rrpc.rp_stat);
 #endif
 
-	/* Bump xid so next request will be unique */
+	/* Bump xid so next request will be unique. */
 	++d->xid;
 
+	if (cc == -1)
+		return (-1);
 	if (cc < rlen) {
 		/* Check for an error return */
 		if (cc >= sizeof(rbuf.ru.errno) && rbuf.ru.errno != 0) {
@@ -158,11 +178,12 @@ callrpc(d, prog, vers, proc, sdata, slen, rdata, rlen)
 }
 
 /* Returns true if packet is the one we're waiting for */
-static int
-recvrpc(d, pkt, len)
+static size_t
+recvrpc(d, pkt, len, tleft)
 	register struct iodesc *d;
 	register void *pkt;
-	int len;
+	register size_t len;
+	time_t tleft;
 {
 	register struct rpc_reply *rpc;
 
@@ -171,41 +192,40 @@ recvrpc(d, pkt, len)
 	if (debug)
 		printf("recvrpc: called len=%d\n", len);
 #endif
-	rpc = (struct rpc_reply *)checkudp(d, pkt, &len);
-	if (rpc == NULL || len < sizeof(*rpc)) {
-#ifdef RPC_DEBUG
-		if (debug)
-			printf("recvrpc: bad response rpc=%x len=%d\n",
-				(u_int)rpc, len);
-#endif
-		return (-1);
-	}
-#ifdef RPC_DEBUG
-	if (debug)
-		printf("recvrpc: got response len=%d\n", len);
-#endif
 
+	len = readudp(d, pkt, len, tleft);
+	if (len == -1 || len < sizeof(struct rpc_reply))
+		goto bad;
+
+	rpc = (struct rpc_reply *)pkt;
+	NTOHL(rpc->rp_xid);
 	NTOHL(rpc->rp_direction);
 	NTOHL(rpc->rp_stat);
 
-	if (rpc->rp_xid != d->xid || rpc->rp_direction != REPLY ||
-	    rpc->rp_stat != MSG_ACCEPTED) {
+	if (rpc->rp_xid != d->xid ||
+	    rpc->rp_direction != RPC_REPLY ||
+	    rpc->rp_stat != RPC_MSGACCEPTED) {
 #ifdef RPC_DEBUG
 		if (debug) {
 			if (rpc->rp_xid != d->xid)
 				printf("recvrpc: rp_xid %d != xid %d\n",
-					rpc->rp_xid, d->xid);
-			if (rpc->rp_direction != REPLY)
-				printf("recvrpc: %d != REPLY\n", rpc->rp_direction);
-			if (rpc->rp_stat != MSG_ACCEPTED)
-				printf("recvrpc: %d != MSG_ACCEPTED\n", rpc->rp_stat);
+				    rpc->rp_xid, d->xid);
+			if (rpc->rp_direction != RPC_REPLY)
+				printf("recvrpc: rp_direction %d != RPC_REPLY\n",
+				    rpc->rp_direction);
+			if (rpc->rp_stat != RPC_MSGACCEPTED)
+				printf("recvrpc: rp_stat %d != RPC_MSGACCEPTED\n",
+				    rpc->rp_stat);
 		}
 #endif
-		return (-1);
+		goto bad;
 	}
 
 	/* Return data count (thus indicating success) */
 	return (len - sizeof(*rpc));
+
+bad:
+	return (-1);
 }
 
 /* Request a port number from the port mapper */
