@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_sigcode.s,v 1.5 2002/03/20 20:06:51 ross Exp $	*/
+/*	$NetBSD: ibcs2_sigcode.s,v 1.6 2002/06/24 10:05:54 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,11 +85,13 @@
 
 /* LINTSTUB: Var: char ibcs2_sigcode[1], ibcs2_esigcode[1]; */
 NENTRY(ibcs2_sigcode)
-	call    *SIGF_HANDLER(%esp)
-	leal    SIGF_SC(%esp),%eax      # scp (the call may have clobbered the
-					# copy at SIGF_SCP(%esp))
-	pushl   %eax
-	pushl   %eax                    # junk to fake return address
+	/*
+	 * Handler has returned here as if we called it.  The sigcontext
+	 * is on the stack after the 3 args "we" pushed.
+	 */
+	leal    12(%esp),%eax           # get pointer to sigcontext
+	movl    %eax,4(%esp)            # put it in the argument slot
+					# fake return address already there
 	movl    $IBCS2_SYS_sigreturn,%eax
 	int     $0x80                   # enter kernel with args on stack
 	movl    $IBCS2_SYS_exit,%eax
