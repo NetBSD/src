@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.27 2000/03/14 04:23:14 nisimura Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.28 2000/04/04 20:59:17 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.27 2000/03/14 04:23:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.28 2000/04/04 20:59:17 nathanw Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -241,7 +241,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 		ri->ri_yorigin = (int)(ri->ri_bits - ri->ri_origbits) 
 		   / ri->ri_stride;
 		ri->ri_xorigin = (((int)(ri->ri_bits - ri->ri_origbits) 
-		   % ri->ri_stride) * bpp) >> 3;
+		   % ri->ri_stride) * 8 / bpp);
 	} else
 		ri->ri_xorigin = ri->ri_yorigin = 0;
 
