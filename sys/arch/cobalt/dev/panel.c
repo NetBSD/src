@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.3 2003/09/12 14:59:14 tsutsui Exp $ */
+/* $NetBSD: panel.c,v 1.4 2005/01/08 20:21:00 joff Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.3 2003/09/12 14:59:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.4 2005/01/08 20:21:00 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,8 +68,9 @@ static void	panel_attach(struct device *, struct device *, void *);
 
 static void	panel_soft(void *);
 
-static void	panel_cbt_rwrite(bus_space_tag_t, bus_space_handle_t, u_int8_t);
-static u_int8_t	panel_cbt_rread(bus_space_tag_t, bus_space_handle_t);
+static u_int8_t	panel_cbt_kprread(bus_space_tag_t, bus_space_handle_t);
+static u_int8_t	panel_cbt_hdreadreg(struct hd44780_chip *, u_int32_t);
+static void	panel_cbt_hdwritereg(struct hd44780_chip *, u_int32_t, u_int8_t);
 
 dev_type_open(panelopen);
 dev_type_close(panelclose);
@@ -125,8 +126,9 @@ panel_attach(parent, self, aux)
 	sc->sc_lcd.sc_vrows = 40;
 	sc->sc_lcd.sc_flags = HD_8BIT | HD_MULTILINE | HD_KEYPAD;
 
-	sc->sc_lcd.sc_rwrite = panel_cbt_rwrite;
-	sc->sc_lcd.sc_rread = panel_cbt_rread;
+	sc->sc_lcd.sc_writereg = panel_cbt_hdwritereg;
+	sc->sc_lcd.sc_readreg = panel_cbt_hdreadreg;
+	sc->sc_lcd.sc_dev = self;
 
 	hd44780_attach_subr(&sc->sc_lcd);
 
@@ -135,7 +137,7 @@ panel_attach(parent, self, aux)
 
 	sc->sc_kp.sc_knum = sizeof(keys) / sizeof(struct lcdkp_xlate);
 	sc->sc_kp.sc_kpad = keys;
-	sc->sc_kp.sc_rread = panel_cbt_rread;
+	sc->sc_kp.sc_rread = panel_cbt_kprread;
 
 	lcdkp_attach_subr(&sc->sc_kp);
 
@@ -144,23 +146,39 @@ panel_attach(parent, self, aux)
 	printf("\n");
 }
 
-static void
-panel_cbt_rwrite(iot, ioh, cmd)
+static u_int8_t
+panel_cbt_kprread(iot, ioh)
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	u_int8_t cmd;
 {
-	bus_space_write_4(iot, ioh, 0x00, cmd << 24);
-	delay(TIMEOUT_NORMAL);
+	delay(HD_TIMEOUT_NORMAL);
+	return (bus_space_read_4(iot, ioh, 0x00) >> 24) & 0xff;
+}
+
+
+static void
+panel_cbt_hdwritereg(hd, rs, dat)
+	struct hd44780_chip *hd;
+	u_int32_t rs;
+	u_int8_t dat;
+{
+	if (rs) 
+		bus_space_write_4(hd->sc_iot, hd->sc_iodr, 0x00, dat << 24);
+	else
+		bus_space_write_4(hd->sc_iot, hd->sc_ioir, 0x00, dat << 24);
+	delay(HD_TIMEOUT_NORMAL);
 }
 
 static u_int8_t
-panel_cbt_rread(iot, ioh)
-	bus_space_tag_t iot;
-	bus_space_handle_t ioh;
+panel_cbt_hdreadreg(hd, rs)
+	struct hd44780_chip *hd;
+	u_int32_t rs;
 {
-	delay(TIMEOUT_NORMAL);
-	return (bus_space_read_4(iot, ioh, 0x00) >> 24) & 0xff;
+	delay(HD_TIMEOUT_NORMAL);
+	if (rs)
+		return (bus_space_read_4(hd->sc_iot, hd->sc_iodr, 0x00) >> 24) & 0xff;
+	else
+		return (bus_space_read_4(hd->sc_iot, hd->sc_ioir, 0x00) >> 24) & 0xff;
 }
 
 int
