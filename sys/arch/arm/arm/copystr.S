@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.2 2002/08/12 20:34:47 bjh21 Exp $	*/
+/*	$NetBSD: copystr.S,v 1.3 2002/08/12 20:37:31 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -40,6 +40,9 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+
+RCSID("$NetBSD: copystr.S,v 1.3 2002/08/12 20:37:31 bjh21 Exp $")
+
 #include <sys/errno.h>
 
 	.text
