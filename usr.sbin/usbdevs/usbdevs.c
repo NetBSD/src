@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.15 2000/12/30 13:57:44 augustss Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.16 2001/01/09 17:35:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,7 +62,8 @@ extern char *__progname;
 void
 usage()
 {
-	fprintf(stderr, "Usage: %s [-v] [-a addr] [-f dev]\n", __progname);
+	fprintf(stderr, "Usage: %s [-a addr] [-d] [-f dev] [-v]\n",
+	    __progname);
 	exit(1);
 }
 
@@ -170,7 +171,7 @@ main(int argc, char **argv)
 	int addr = 0;
 	int ncont;
 
-	while ((ch = getopt(argc, argv, "a:df:v")) != -1) {
+	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
 		switch(ch) {
 		case 'a':
 			addr = atoi(optarg);
