@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1997/06/14 08:43:28 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1997/06/18 19:05:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@ void	logwtmp __P((char *, char *, char *));
 void	lreply __P((int, const char *, ...));
 void	makedir __P((char *));
 void	nack __P((char *));
-void	parse_conf __P((const char *));
+void	parse_conf __P((char *));
 void	pass __P((char *));
 void	passive __P((void));
 void	perror_reply __P((int, char *));
@@ -75,19 +75,19 @@ void	yyerror __P((char *));
 
 struct ftpconv {
 	struct ftpconv	*next;
-	const char	*suffix;	/* Suffix of requested name */
-	const char	*types;		/* Valid file types */
-	const char	*disable;	/* File to disable conversions */
-	const char	*command;	/* Command to do the conversion */
+	char		*suffix;	/* Suffix of requested name */
+	char		*types;		/* Valid file types */
+	char		*disable;	/* File to disable conversions */
+	char		*command;	/* Command to do the conversion */
 };
 
 struct ftpclass {
-	const char	*classname;	/* Current class */
+	char		*classname;	/* Current class */
 	struct ftpconv 	*conversions;	/* List of conversions */
-	const char	*display;	/* Files to display upon chdir */
+	char		*display;	/* Files to display upon chdir */
 	unsigned int	 maxtimeout;	/* Maximum permitted timeout */
 	int		 modify;	/* Allow dele, mkd, rmd, umask, chmod */
-	const char	*notify;	/* Files to notify about upon chdir */
+	char		*notify;	/* Files to notify about upon chdir */
 	unsigned int	 timeout;	/* Default timeout */
 	mode_t		 umask;		/* Umask to use */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.5 1997/06/18 19:05:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,11 +34,13 @@
  *
  */
 
+
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $";
+__RCSID("$NetBSD: logwtmp.c,v 1.5 1997/06/18 19:05:51 christos Exp $");
 #endif
 #endif /* not lint */
 

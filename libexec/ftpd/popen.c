@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.7 1997/06/14 08:43:33 lukem Exp $	*/
+/*	$NetBSD: popen.c,v 1.8 1997/06/18 19:05:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -37,11 +37,12 @@
  *
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: popen.c,v 1.7 1997/06/14 08:43:33 lukem Exp $";
+__RCSID("$NetBSD: popen.c,v 1.8 1997/06/18 19:05:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +59,7 @@ static char rcsid[] = "$NetBSD: popen.c,v 1.7 1997/06/14 08:43:33 lukem Exp $";
 
 #include "extern.h"
 
+#define INCR	100
 /*
  * Special version of popen which avoids call to shell.  This ensures noone
  * may create a pipe to a hidden program as a side effect of a list or dir
@@ -72,9 +74,17 @@ ftpd_popen(program, type, nostderr)
 	int nostderr;
 {
 	char *cp;
-	FILE *iop;
+	FILE *iop = NULL;
 	int argc, gargc, pdes[2], pid;
-	char **pop, *argv[100], *gargv[1000];
+	char **pop, **np;
+	char **argv = NULL, **gargv = NULL;
+	size_t nargc = 100, ngargc = 100;
+#ifdef __GNUC__
+	(void) &iop;
+	(void) &gargc;
+	(void) &gargv;
+	(void) &argv;
+#endif
 
 	if ((*type != 'r' && *type != 'w') || type[1])
 		return (NULL);
@@ -89,10 +99,27 @@ ftpd_popen(program, type, nostderr)
 	if (pipe(pdes) < 0)
 		return (NULL);
 
+	if ((argv = malloc(nargc * sizeof(char *))) == NULL)
+		return NULL;
+
+#define CHECKMORE(c, v, n) \
+	if (c >= n + 2) { \
+		n += INCR; \
+		if ((np = realloc(v, n * sizeof(char *))) == NULL) \
+			goto pfree; \
+		else \
+			v = np; \
+	}
+
 	/* break up string into pieces */
-	for (argc = 0, cp = program;; cp = NULL)
+	for (argc = 0, cp = program;; cp = NULL) {
+		CHECKMORE(argc, argv, nargc)
 		if (!(argv[argc++] = strtok(cp, " \t\n")))
 			break;
+	}
+
+	if ((gargv = malloc(ngargc * sizeof(char *))) == NULL)
+		goto pfree;
 
 	/* glob each piece */
 	gargv[0] = argv[0];
@@ -101,16 +128,21 @@ ftpd_popen(program, type, nostderr)
 		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
 
 		memset(&gl, 0, sizeof(gl));
-		if (glob(argv[argc], flags, NULL, &gl))
-			gargv[gargc++] = strdup(argv[argc]);
+		if (glob(argv[argc], flags, NULL, &gl)) {
+			CHECKMORE(gargc, gargv, ngargc)
+			if ((gargv[gargc++] = strdup(argv[argc])) == NULL)
+				goto pfree;
+		}
 		else
-			for (pop = gl.gl_pathv; *pop; pop++)
-				gargv[gargc++] = strdup(*pop);
+			for (pop = gl.gl_pathv; *pop; pop++) {
+				CHECKMORE(gargc, gargv, ngargc)
+				if ((gargv[gargc++] = strdup(*pop)) == NULL)
+					goto pfree;
+			}
 		globfree(&gl);
 	}
 	gargv[gargc] = NULL;
 
-	iop = NULL;
 	switch(pid = vfork()) {
 	case -1:			/* error */
 		(void)close(pdes[0]);
@@ -148,8 +180,13 @@ ftpd_popen(program, type, nostderr)
 	}
 	pids[fileno(iop)] = pid;
 
-pfree:	for (argc = 1; gargv[argc] != NULL; argc++)
-		free(gargv[argc]);
+pfree:	if (gargv) {
+		for (argc = 1; argc < gargc; argc++)
+			free(gargv[argc]);
+		free(gargv);
+	}
+	if (argv)
+		free(argv);
 
 	return (iop);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.12 1997/06/14 08:43:29 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.13 1997/06/18 19:05:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -41,12 +41,13 @@
  */
 
 %{
+#include <sys/cdefs.h>
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: ftpcmd.y,v 1.12 1997/06/14 08:43:29 lukem Exp $";
+__RCSID("$NetBSD: ftpcmd.y,v 1.13 1997/06/18 19:05:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -517,8 +518,6 @@ cmd
 rcmd
 	: RNFR check_login SP pathname CRLF
 		{
-			char *renamefrom();
-
 			restart_point = (off_t) 0;
 			if ($2 && $4) {
 				fromname = renamefrom($4);
