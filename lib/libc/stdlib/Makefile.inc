@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 6/4/91
-#	$Id: Makefile.inc,v 1.5 1993/09/17 19:23:38 phil Exp $
+#	$Id: Makefile.inc,v 1.6 1993/10/07 00:23:55 cgd Exp $
 
 # stdlib sources
-.PATH: ${.CURDIR}/${MACHINE}/stdlib ${.CURDIR}/stdlib
+.PATH: ${.CURDIR}/arch/${MACHINE}/stdlib ${.CURDIR}/stdlib
 
 SRCS+=	abort.c atexit.c atoi.c atof.c atol.c bsearch.c calloc.c div.c exit.c \
 	getenv.c getopt.c heapsort.c labs.c ldiv.c malloc.c multibyte.c \

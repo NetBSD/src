@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.3 (Berkeley) 2/21/91
-#	$Id: Makefile.inc,v 1.6 1993/09/17 19:23:15 phil Exp $
+#	$Id: Makefile.inc,v 1.7 1993/10/07 00:23:27 cgd Exp $
 
 # net sources
-.PATH: ${.CURDIR}/${MACHINE}/net ${.CURDIR}/net
+.PATH: ${.CURDIR}/arch/${MACHINE}/net ${.CURDIR}/net
 
 SRCS+=	gethostnamadr.c getnetbyaddr.c getnetbyname.c getnetent.c \
 	getproto.c getprotoent.c getprotoname.c getservbyname.c \
