@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp_var.h,v 1.61 2001/12/23 12:23:02 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.62 2001/12/26 09:40:16 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
