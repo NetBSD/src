@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eco.h,v 1.1 2001/09/10 23:11:06 bjh21 Exp $	*/
+/*	$NetBSD: if_eco.h,v 1.2 2001/09/15 17:27:24 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -45,7 +45,9 @@
 #define ECO_ADDR_LEN	2	/* Length of an Econet address */
 #define ECO_HDR_LEN	6	/* Two addresses, a port and a control byte */
 #define ECO_SHDR_LEN	4	/* "Short" Econet header: just two addresses */
-#define ECO_MTU	8192	/* Default MTU */
+/* #define ECO_MTU	8192	 * Default MTU */
+#define ECO_IPMTU	1280	/* MTU for IP used by RISC iX */
+#define ECO_MTU		ECO_IPMTU
 
 struct eco_header {
 	u_int8_t	eco_dhost[ECO_ADDR_LEN];
@@ -94,11 +96,21 @@ struct eco_header {
 #define ECO_CTL_MACHINEPEEK	0x88
 #define ECO_CTL_GETREGISTERS	0x89
 
+/* Control bytes for IP */
+#define ECO_CTL_IP		0x81
+#define ECO_CTL_ARP_REQUEST	0xA1
+#define ECO_CTL_ARP_REPLY	0xA2
+
+struct eco_arp {
+	u_int8_t ecar_spa[4];
+	u_int8_t ecar_tpa[4];
+};
+
 /*
  * Common structure used to store state about an Econet interface.
  */
 enum eco_state {
-	ECO_IDLE, ECO_SCOUT_RCVD,
+	ECO_UNKNOWN, ECO_IDLE, ECO_SCOUT_RCVD,
 	ECO_SCOUT_SENT, ECO_DATA_SENT, ECO_IMMED_SENT,
 	ECO_DONE
 };
@@ -115,6 +127,7 @@ struct ecocom {
 #ifdef _KERNEL
 void	eco_ifattach(struct ifnet *, const u_int8_t *);
 void	eco_ifdetach(struct ifnet *);
+int	eco_init(struct ifnet *);
 
 char	*eco_sprintf(const u_int8_t *);
 
