@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.21 2004/06/03 07:25:21 mbw Exp $
+.\"	$NetBSD: netboot,v 1.22 2004/06/10 05:59:05 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -304,7 +304,6 @@ group {
                 #
                 # Name of the bootloader or kernel
                 # to download via tftp.
-                #
 .if \n[sparc] \{\
 
                 #
@@ -313,12 +312,15 @@ group {
                 filename                "bootjs.net";
 .\}
 .ie \n[hp700] \{\
+                #
                 filename                "SYSNBSD";
 .\}
 .ie \n[macppc] \{\
+                #
                 filename                "ofwboot.xcf";
 .\}
 .el .if \n[next68k] \{\
+                #
                 filename                "boot";
 .\} \" \n[next68k]
 .\} \" !\n[hp300]
@@ -339,6 +341,11 @@ group {
                 # If your DHCP server is not your NFS server, supply the
                 # address of the NFS server. Since we assume you run everything
                 # on one server, this is not needed.
+.if \n[macppc] \{\
+                #
+                # macppc machines will look for their bootloader, 
+                # ofwboot.xcf, on the next-server as well.
+.\}
                 #
                 # next-server server.test.net;
         }
