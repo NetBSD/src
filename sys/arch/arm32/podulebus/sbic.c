@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.16 2000/06/26 14:20:37 mrg Exp $ */
+/* $NetBSD: sbic.c,v 1.17 2000/06/27 09:09:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -58,8 +58,7 @@
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 #include <vm/vm.h>
-/*#include <machine/pmap.h>
-#include <machine/cpu.h>*/
+/*#include <machine/cpu.h>*/
 #include <machine/io.h>
 #include <machine/irqhandler.h>
 #include <arm32/podulebus/podulebus.h>
@@ -68,8 +67,6 @@
 #include <arm32/podulebus/ascreg.h>
 
 /* These are for bounce buffers */
-
-/*#include <vm/pmap.h>*/
 
 /* Since I can't find this in any other header files */
 #define SCSI_PHASE(reg)	(reg&0x07)
