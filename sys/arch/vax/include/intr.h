@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.3 2000/06/02 22:14:10 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.4 2000/06/11 23:33:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -78,6 +78,13 @@
 	val;							\
 })
 
+#define _splset(reg)						\
+((void)({							\
+	__asm __volatile ("mtpr %0,$0x12"			\
+				: 				\
+				: "g" (reg));			\
+}))
+
 #define _splraise(reg)						\
 ({								\
 	register int val;					\
@@ -85,22 +92,21 @@
 				: "&=g" (val)			\
 				: );				\
 	if ((reg) > val) {					\
-		__asm __volatile ("mtpr %0,$0x12"		\
-				:				\
-				: "g" (reg));			\
+		_splset(reg);					\
 	}							\
 	val;							\
 })
+
 #define _setsirr(reg)						\
-({								\
+do {								\
 	__asm __volatile ("mtpr %0,$0x14"			\
 				:				\
 				: "g" (reg));			\
-})
+} while (0)
 #endif
 
-#define spl0()		splx(IPL_NONE)			/* IPL0  */
-#define spllowersoftclock() splx(IPL_SOFTCLOCK)		/* IPL08 */
+#define spl0()		_splset(IPL_NONE)		/* IPL00 */
+#define spllowersoftclock() _splset(IPL_SOFTCLOCK)	/* IPL08 */
 #define splsoftclock()	_splraise(IPL_SOFTCLOCK)	/* IPL08 */
 #define splsoftnet()	_splraise(IPL_SOFTNET)		/* IPL0C */
 #define splsoftserial()	_splraise(IPL_SOFTSERIAL)	/* IPL0D */
