@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.25 2004/09/25 04:47:02 thorpej Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.26 2004/09/25 16:13:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.25 2004/09/25 04:47:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ed_mca.c,v 1.26 2004/09/25 16:13:42 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -191,8 +191,11 @@ ed_mca_attach(parent, self, aux)
 
 	ed->sc_flags |= EDF_INIT;
 
-	/* Discover wedges on this disk. */
-	dkwedge_discover(&ed->sc_dk);
+	/*
+	 * XXX We should try to discovery wedges here, but
+	 * XXX that would mean being able to do I/O.  Should
+	 * XXX use config_defer() here.
+	 */
 }
 
 /*
