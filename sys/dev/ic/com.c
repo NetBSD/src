@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.204 2003/03/14 02:21:01 simonb Exp $	*/
+/*	$NetBSD: com.c,v 1.205 2003/04/21 03:43:18 gson Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.204 2003/03/14 02:21:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.205 2003/04/21 03:43:18 gson Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -1769,6 +1769,13 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 			    comdiag, sc);
 	}
 
+	/* If not yet open, drop the entire buffer content here */
+	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+		get += cc << 1;
+		if (get >= end)
+			get -= com_rbuf_size << 1;
+		cc = 0;
+	}
 	while (cc) {
 		code = get[0];
 		lsr = get[1];
