@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2003/06/14 17:01:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2003/07/15 01:37:33 lukem Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -76,6 +76,9 @@
  *	@(#)machdep.c   8.3 (Berkeley) 1/12/94
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2003/07/15 01:37:33 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"

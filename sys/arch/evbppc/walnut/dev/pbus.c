@@ -1,4 +1,4 @@
-/*	$NetBSD: pbus.c,v 1.2 2003/01/01 01:31:50 thorpej Exp $	*/
+/*	$NetBSD: pbus.c,v 1.3 2003/07/15 01:37:38 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -64,6 +64,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pbus.c,v 1.3 2003/07/15 01:37:38 lukem Exp $");
 
 #include "locators.h"
 #include "pckbc.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pb1000_intr.c,v 1.1 2002/07/29 16:22:58 simonb Exp $	*/
+/*	$NetBSD: pb1000_intr.c,v 1.2 2003/07/15 01:37:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  * The Alchemy Semiconductor Pb1000's interrupts are wired to two internal
  * interrupt controllers.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pb1000_intr.c,v 1.2 2003/07/15 01:37:31 lukem Exp $");
 
 #include "opt_ddb.h"
 

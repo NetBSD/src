@@ -1,4 +1,4 @@
-/*	$NetBSD: com_elb.c,v 1.1 2003/03/11 10:57:56 hannken Exp $	*/
+/*	$NetBSD: com_elb.c,v 1.2 2003/07/15 01:37:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.2 2003/07/15 01:37:36 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

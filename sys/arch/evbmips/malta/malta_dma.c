@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_dma.c,v 1.3 2002/07/12 00:23:04 simonb Exp $	*/
+/*	$NetBSD: malta_dma.c,v 1.4 2003/07/15 01:37:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Platform-specific DMA support for the MIPS Malta.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: malta_dma.c,v 1.4 2003/07/15 01:37:33 lukem Exp $");
 
 #include <sys/param.h>
 

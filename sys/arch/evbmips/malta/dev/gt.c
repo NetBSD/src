@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.6 2003/06/15 23:08:59 fvdl Exp $	*/
+/*	$NetBSD: gt.c,v 1.7 2003/07/15 01:37:34 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.7 2003/07/15 01:37:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.25 2003/02/15 02:36:52 itohy Exp $	*/
+/*	$NetBSD: maple.c,v 1.26 2003/07/15 01:31:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,6 +67,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.26 2003/07/15 01:31:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

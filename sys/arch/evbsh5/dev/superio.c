@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.13 2003/01/01 01:32:52 thorpej Exp $	*/
+/*	$NetBSD: superio.c,v 1.14 2003/07/15 01:37:39 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -39,6 +39,9 @@
  * Cayman's "Super IO" device, which looks like an ISA bus once
  * we're finished with it.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: superio.c,v 1.14 2003/07/15 01:37:39 lukem Exp $");
 
 #include "locators.h"
 #include "com.h"

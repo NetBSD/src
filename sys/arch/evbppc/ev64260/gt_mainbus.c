@@ -1,4 +1,4 @@
-/*	$NetBSD: gt_mainbus.c,v 1.8 2003/06/12 19:21:09 scw Exp $	*/
+/*	$NetBSD: gt_mainbus.c,v 1.9 2003/07/15 01:37:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,7 +35,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gt_mainbus.c,v 1.9 2003/07/15 01:37:35 lukem Exp $");
+
 #include "opt_ev64260.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1743.c,v 1.1 2002/12/09 12:16:23 scw Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.2 2003/07/15 01:37:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
@@ -36,6 +36,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.2 2003/07/15 01:37:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
