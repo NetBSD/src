@@ -1,4 +1,4 @@
-#	$NetBSD: LAMB,v 1.9 2001/08/13 11:21:40 itojun Exp $
+#	$NetBSD: LAMB,v 1.10 2001/11/06 01:57:08 enami Exp $
 #
 #	LAMB -- for "LAMB" router, http://www.wildlab.com/
 #	Be sure to check pkgsrc/sysutils/lambd as well.
@@ -54,10 +54,10 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options	SEMMNI=10	# number of semaphore identifiers
-#options	SEMMNS=60	# number of semaphores in system
-#options	SEMUME=10	# max number of undo entries per process
-#options	SEMMNU=30	# number of undo structures in system
+#options 	SEMMNI=10	# number of semaphore identifiers
+#options 	SEMMNS=60	# number of semaphores in system
+#options 	SEMUME=10	# max number of undo entries per process
+#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
@@ -92,8 +92,8 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options	COMPAT_MACH	# binary compatibility with Mach binaries
-#options	EXEC_MACHO	# exec MACH-O binaries
+#options 	COMPAT_MACH	# binary compatibility with Mach binaries
+#options 	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
@@ -147,7 +147,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
+#options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 

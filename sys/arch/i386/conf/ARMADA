@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADA,v 1.7 2001/11/04 09:00:38 yamt Exp $
+#	$NetBSD: ARMADA,v 1.8 2001/11/06 01:57:06 enami Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.7 $"
+#ident		"CARDBUS-$Revision: 1.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -147,7 +147,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
+#options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 #options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
@@ -284,8 +284,8 @@ cardslot*	at cbb?
 # CardBus bus support
 # following makes ARMADA M700's happy
 options         RBUS_MIN_START=0x20000000 
-options		RBUS_IO_BASE=0x600
-options		RBUS_IO_SIZE=0x100
+options 	RBUS_IO_BASE=0x600
+options 	RBUS_IO_SIZE=0x100
 cardbus*	at cardslot?
 pcmcia*		at cardslot?
 

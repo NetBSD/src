@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.56 2001/08/22 15:39:06 hubertf Exp $
+#	$NetBSD: HOMEWORLD,v 1.57 2001/11/06 01:57:07 enami Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	HOMEWORLD - TNF mail/gnats
@@ -155,7 +155,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 # use a large software cursor that doesn't blink
-#options	PCDISPLAY_SOFTCURSOR
+#options 	PCDISPLAY_SOFTCURSOR
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

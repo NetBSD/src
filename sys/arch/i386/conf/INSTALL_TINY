@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.40 2001/09/21 23:44:22 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.41 2001/11/06 01:57:08 enami Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -139,7 +139,7 @@ options 	INET		# IP + ICMP + TCP + UDP
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options	I2OVERBOSE	# verbose I2O driver messages
+#options 	I2OVERBOSE	# verbose I2O driver messages
 
 # Squeeze...
 options 	NVNODE=50

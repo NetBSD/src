@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.12 2001/11/04 09:00:39 yamt Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.13 2001/11/06 01:57:07 enami Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -51,7 +51,7 @@ options 	MATH_EMULATE	# floating point emulation
 #options 	REALEXTMEM=...	# size of extended memory
 
 # Avoid irq 5 and 7, the most likely cause of problems on modern laptops.
-options		PCIC_ISA_INTR_ALLOC_MASK=0xff5f
+options 	PCIC_ISA_INTR_ALLOC_MASK=0xff5f
 
 # Standard system options
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.174 2001/11/03 17:08:57 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.175 2001/11/06 01:57:07 enami Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -148,7 +148,7 @@ options 	INET6		# IPv6
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
-#options	I2OVERBOSE	# verbose I2O driver messages
+#options 	I2OVERBOSE	# verbose I2O driver messages
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
