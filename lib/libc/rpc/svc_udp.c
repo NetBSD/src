@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.8 1997/07/13 20:13:26 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $";
+#if 0
+static char *sccsid = "@(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: svc_udp.c,v 1.8 1997/07/13 20:13:26 christos Exp $");
+#endif
 #endif
 
 /*
@@ -46,6 +50,7 @@ static char *rcsid = "$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <errno.h>
@@ -54,12 +59,14 @@ static char *rcsid = "$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $";
 #define rpc_buffer(xprt) ((xprt)->xp_p1)
 #define MAX(a, b)     ((a > b) ? a : b)
 
-static bool_t		svcudp_recv();
-static bool_t		svcudp_reply();
-static enum xprt_stat	svcudp_stat();
-static bool_t		svcudp_getargs();
-static bool_t		svcudp_freeargs();
-static void		svcudp_destroy();
+static enum xprt_stat svcudp_stat __P((SVCXPRT *));
+static bool_t svcudp_recv __P((SVCXPRT *, struct rpc_msg *));
+static bool_t svcudp_reply __P((SVCXPRT *, struct rpc_msg *));
+static bool_t svcudp_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
+static bool_t svcudp_freeargs __P((SVCXPRT *, xdrproc_t, caddr_t));
+static void svcudp_destroy __P((SVCXPRT *));
+static void cache_set __P((SVCXPRT *, u_long));
+static int cache_get __P((SVCXPRT *, struct rpc_msg *, char **, u_long *));
 
 static struct xp_ops svcudp_op = {
 	svcudp_recv,
@@ -179,7 +186,6 @@ svcudp_recv(xprt, msg)
 	register int rlen;
 	char *reply;
 	u_long replylen;
-	static int cache_get();
 
     again:
 	xprt->xp_addrlen = sizeof(struct sockaddr_in);
@@ -213,7 +219,6 @@ svcudp_reply(xprt, msg)
 	register XDR *xdrs = &(su->su_xdrs);
 	register int slen;
 	register bool_t stat = FALSE;
-	static void cache_set();
 
 	xdrs->x_op = XDR_ENCODE;
 	XDR_SETPOS(xdrs, 0);
