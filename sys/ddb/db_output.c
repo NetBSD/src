@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.13 1996/04/01 17:27:14 christos Exp $	*/
+/*	$NetBSD: db_output.c,v 1.14 1996/09/25 21:03:06 christos Exp $	*/
 
 /* 
  * Mach Operating System
@@ -292,6 +292,7 @@ db_printf_guts(fmt, ap)
 		neg = 0;
 reswitch:	switch (ch = *(u_char *)fmt++) {
 		case '0':
+		case '.':
 			padc = '0';
 			goto reswitch;
 		case '1': case '2': case '3': case '4':

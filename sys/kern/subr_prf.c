@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.26 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.27 1996/09/25 21:03:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -392,6 +392,7 @@ kprintf(fmt, flags, tp, ap)
 		lflag = 0;
 reswitch:	switch (ch = *(u_char *)fmt++) {
 		case '0':
+		case '.':
 			padc = '0';
 			goto reswitch;
 		case '1': case '2': case '3': case '4':
