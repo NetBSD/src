@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.47 1999/09/17 20:04:49 thorpej Exp $	*/
+/*	$NetBSD: rz.c,v 1.48 1999/11/19 03:14:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.47 1999/09/17 20:04:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rz.c,v 1.48 1999/11/19 03:14:22 simonb Exp $");
 
 /*
  * SCSI CCS (Command Command Set) disk driver.
@@ -520,7 +520,8 @@ rzprobe(xxxsd)
 			if (revl[i] != ' ')
 				break;
 		revl[i+1] = 0;
-		printf(" %s %s rev %s", vid, pid, revl);
+		printf(" %s %s rev %s (SCSI-%d)", vid, pid, revl,
+		    inqbuf.version);
 	}
 
 	printf ("%s\n",
