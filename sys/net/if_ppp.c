@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.43 1998/07/06 13:51:32 jtk Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.44 1998/07/08 18:05:48 sommerfe Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -473,11 +473,11 @@ pppioctl(sc, cmd, data, flag, p)
 	    if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	    if (npi->mode != sc->sc_npmode[npx]) {
-		s = splsoftnet();
+		s = splimp();
 		sc->sc_npmode[npx] = npi->mode;
 		if (npi->mode != NPMODE_QUEUE) {
 		    ppp_requeue(sc);
-		    (*sc->sc_start)(sc);
+		    ppp_restart(sc);
 		}
 		splx(s);
 	    }
@@ -773,7 +773,7 @@ pppoutput(ifp, m0, dst, rtp)
     /*
      * Put the packet on the appropriate queue.
      */
-    s = splsoftnet();
+    s = splimp();
     if (mode == NPMODE_QUEUE) {
 	/* XXX we should limit the number of packets on this queue */
 	*sc->sc_npqtail = m0;
@@ -790,7 +790,7 @@ pppoutput(ifp, m0, dst, rtp)
 	    goto bad;
 	}
 	IF_ENQUEUE(ifq, m0);
-	(*sc->sc_start)(sc);
+	ppp_restart(sc);
     }
     ifp->if_lastchange = time;
     ifp->if_opackets++;
@@ -807,7 +807,7 @@ bad:
 /*
  * After a change in the NPmode for some NP, move packets from the
  * npqueue to the send queue or the fast queue as appropriate.
- * Should be called at splsoftnet.
+ * Should be called at splimp, since we muck with the queues.
  */
 static void
 ppp_requeue(sc)
@@ -884,14 +884,18 @@ ppp_dequeue(sc)
     struct mbuf *m, *mp;
     u_char *cp;
     int address, control, protocol;
+    int s;
 
     /*
      * Grab a packet to send: first try the fast queue, then the
      * normal queue.
      */
+    s = splimp();    
     IF_DEQUEUE(&sc->sc_fastq, m);
     if (m == NULL)
 	IF_DEQUEUE(&sc->sc_if.if_snd, m);
+    splx(s);
+    
     if (m == NULL)
 	return NULL;
 
