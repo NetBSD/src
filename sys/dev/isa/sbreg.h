@@ -1,4 +1,4 @@
-/*	$NetBSD: sbreg.h,v 1.24 1997/08/24 23:24:51 augustss Exp $	*/
+/*	$NetBSD: sbreg.h,v 1.25 1998/08/07 00:01:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -173,6 +173,7 @@
 
 #define SBP_NPORT 24
 #define SB_NPORT 16
+#define SB_NMPUPORT 2
 
 /*
  * DSP commands.  This unit handles MIDI and audio capabilities.

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.25 1998/03/03 09:16:16 augustss Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.26 1998/08/07 00:00:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -119,12 +119,13 @@ struct midi_info {
 	char	*name;		/* Name of MIDI hardware */
 	int	props;
 };
-#define MIDI_PROP_OUT_INTR 1
+#define MIDI_PROP_OUT_INTR  1
+#define MIDI_PROP_CAN_INPUT 2
 
 struct midi_hw_if {
 	int	(*open)__P((void *, int, 	/* open hardware */
-			    void (*)__P((void *, int)),
-			    void (*)__P((void *)),
+			    void (*)__P((void *, int)), /* input callback */
+			    void (*)__P((void *)), /* output callback */
 			    void *));
 	void	(*close)__P((void *));		/* close hardware */
 	int	(*output)__P((void *, int));	/* output a byte */
