@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.38 2003/11/13 03:09:29 chs Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.39 2004/03/09 03:18:03 atatat Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.38 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.39 2004/03/09 03:18:03 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -461,8 +461,7 @@ irix_syssgi_sysconf(name, l, retval)
 	struct proc *p = l->l_proc;
 	int error = 0;
 	int mib[2], value;
-	int len = sizeof(value);
-	struct sys___sysctl_args cup;
+	size_t len = sizeof(value);
 	caddr_t sg = stackgap_init(p, 0);
 
 	switch (name) {
@@ -518,20 +517,14 @@ irix_syssgi_sysconf(name, l, retval)
 		break;
 	}
 
-	SCARG(&cup, name) = stackgap_alloc(p, &sg, sizeof(mib));
-	if ((error = copyout(&mib, SCARG(&cup, name), sizeof(mib))) != 0)
-		return error;
-	SCARG(&cup, namelen) = sizeof(mib);
-	SCARG(&cup, old) = stackgap_alloc(p, &sg, sizeof(value));
-	if ((copyout(&value, SCARG(&cup, old), sizeof(value))) != 0)
-		return error;
-	SCARG(&cup, oldlenp) = stackgap_alloc(p, &sg, sizeof(len));
-	if ((copyout(&len, SCARG(&cup, oldlenp), sizeof(len))) != 0)
-		return error;
-	SCARG(&cup, new) = NULL;
-	SCARG(&cup, newlen) = 0;
-
-	return sys___sysctl(l, &cup, retval);
+	/*
+	 * calling into sysctl with superuser privs, but we don't mind
+	 * 'cause we're only querying a value.
+	 */
+	error = old_sysctl(&mib[0], 2, &value, &len, NULL, 0, NULL);
+	if (error == 0)
+		*retval = value;
+	return (error);
 }
 
 static int 
