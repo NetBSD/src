@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.7 2001/01/27 23:48:32 jdolecek Exp $
+# $NetBSD: Makefile,v 1.8 2002/12/24 02:56:10 david Exp $
 
-SUBDIR+=	adosfs filecorefs isofs miscfs msdosfs ntfs ufs coda
+SUBDIR+=	adosfs filecorefs miscfs msdosfs ntfs ufs coda
 
 .include <bsd.subdir.mk>
