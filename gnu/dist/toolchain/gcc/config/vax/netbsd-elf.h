@@ -46,27 +46,12 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef  DWARF_DEBUGGING_INFO
 #undef  DWARF2_DEBUGGING_INFO
 
-/* Function CSE screws up PLT .vs. GOT usage.
- */
-#define	NO_FUNCTION_CSE
-
 /* Profiling routines */
 
 /* Redefine this to use %eax instead of %edx.  */
 #undef  FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)  \
   fprintf (FILE, "\tmovab .LP%d,r0\n\tjsb __mcount+2\n", (LABELNO))
-
-/* Put relocations in the constant pool in the writable data section.  */
-#undef  SELECT_RTX_SECTION
-#define SELECT_RTX_SECTION(MODE,RTX)		\
-{						\
-  if ((flag_pic || TARGET_HALFPIC)		\
-      && vax_symbolic_operand ((RTX), (MODE)))	\
-    data_section ();				\
-  else						\
-    readonly_data_section ();			\
-}
 
 /* Use sjlj exceptions. */
 #undef DWARF2_UNWIND_INFO		/* just to be safe */
@@ -87,40 +72,9 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef  ASM_OUTPUT_BEFORE_CASE_LABEL
 #define ASM_OUTPUT_BEFORE_CASE_LABEL(FILE, PREFIX, NUM, TABLE)
 
-/* This makes use of a hook in varasm.c to mark all external functions
-   for us.  We use this to make sure that external functions are correctly
-   referenced from the PLT.  */
-
-#define	NO_EXTERNAL_INDIRECT_ADDRESS
-
 /* Get the udiv/urem calls out of the user's namespace */
 
 #undef  UDIVSI3_LIBCALL
 #define UDIVSI3_LIBCALL "*__udiv"
 #undef  UMODSI3_LIBCALL
 #define UMODSI3_LIBCALL "*__urem"
-
-/* Define this macro if references to a symbol must be treated
-   differently depending on something about the variable or
-   function named by the symbol (such as what section it is in).
-
-   On the VAX, if using PIC, mark a SYMBOL_REF for a non-global
-   symbol so that we may use indirect accesses with it.  */
-
-#define ENCODE_SECTION_INFO(DECL)				\
-do								\
-  {								\
-    if ((flag_pic | TARGET_HALFPIC))				\
-      {								\
-	rtx rtl = (TREE_CODE_CLASS (TREE_CODE (DECL)) != 'd'	\
-		   ? TREE_CST_RTL (DECL) : DECL_RTL (DECL));	\
-								\
-	if (GET_CODE (rtl) == MEM)				\
-	  {							\
-	    SYMBOL_REF_FLAG (XEXP (rtl, 0))			\
-	      = (TREE_CODE_CLASS (TREE_CODE (DECL)) != 'd'	\
-		 || ! TREE_PUBLIC (DECL));			\
-	  }							\
-      }								\
-  }								\
-while (0)
