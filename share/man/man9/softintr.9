@@ -1,4 +1,4 @@
-.\" $NetBSD: softintr.9,v 1.4 2001/01/18 04:17:47 augustss Exp $
+.\" $NetBSD: softintr.9,v 1.5 2001/01/21 00:50:48 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .Sh SYNOPSIS
 .Fd #include <machine/intr.h>
 .Ft void *
-.Fn softintr_establish "int level" "int (*fun)(void *)" "void *arg"
+.Fn softintr_establish "int level" "void (*fun)(void *)" "void *arg"
 .Ft void
 .Fn softintr_disestablish "void *cookie"
 .Ft void
