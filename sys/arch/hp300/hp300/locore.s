@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.36 1995/02/08 14:51:08 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.37 1995/04/12 08:30:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -848,7 +848,7 @@ Ldorte1:
  */
 	.data
 	.set	_kstack,USRSTACK
-	.set	_kstackatbase,USRSTACK+UPAGES*NBPG-4
+	.set	_kstackatbase,USRSTACK+USPACE-4
 	.globl	_kstackatbase
 _Umap:	.long	0
 	.globl	_kstack, _Umap
@@ -1088,7 +1088,7 @@ Lfinish:
 	jbsr	_vm_set_page_size	| select software page size
 /* set kernel stack, user SP, and initial pcb */
 	lea	_kstack,a1		| proc0 kernel stack
-	lea	a1@(UPAGES*NBPG-4),sp	| set kernel stack to end of area
+	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 	movl	_proc0paddr,a1		| get proc0 pcb addr
