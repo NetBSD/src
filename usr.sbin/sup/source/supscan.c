@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.7 1998/07/06 07:05:48 mrg Exp $	*/
+/*	$NetBSD: supscan.c,v 1.8 1999/04/12 20:48:08 pk Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
