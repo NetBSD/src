@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.2 2000/05/22 19:17:04 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.3 2000/07/03 03:31:47 matt Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -34,8 +34,7 @@
  * we can use as well.  Since the VAX has perfectly PIC code, we don't
  * need to relocate anything upon startup.
  */
-ENTRY(_rtld_start)
-	.word	0x0101		/* nops to be safe */
+ENTRY(_rtld_start, 0)
 
 	/* Allocate space on the stack for the cleanup and obj_main
 	 * entries that _rtld() will provide for us.
@@ -50,7 +49,7 @@ ENTRY(_rtld_start)
 /*
  * Lazy binding entry point, called via PLT.
  */
-ENTRY(_rtld_bind_start):
+ALTENTRY(_rtld_bind_start)
 	pushr	$0x3f		/* save R0-R5 */
 	movq	24(sp),r0	/* get addresses of plt.got & reloc index */
 	pushl	(r1)		/* push relocation index */
@@ -63,7 +62,7 @@ ENTRY(_rtld_bind_start):
 	bicw3	6(fp),(r0),r0	/* does the entry mask save any additional regs */
 	popr	$0x3f		/* restore r0 to r5 (cond flags aren't modified) */
 	bneq	2f		/* yes? do it the hard way */
-	addl4	$4,sp		/* no? skip past plt.got on stack */
+	addl2	$4,sp		/* no? skip past plt.got on stack */
 	addl2	$2,(sp)		/*    skip past the mask */
 	rsb			/*    and jump to it */
 2:	callg	(ap),*(sp)+	/* return value from _rtld_bind() == actual */
