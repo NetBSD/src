@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.44 2004/06/01 16:15:31 minskim Exp $	*/
+/*	$NetBSD: plist.c,v 1.45 2004/11/02 00:38:23 erh Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.44 2004/06/01 16:15:31 minskim Exp $");
+__RCSID("$NetBSD: plist.c,v 1.45 2004/11/02 00:38:23 erh Exp $");
 #endif
 #endif
 
@@ -323,7 +323,7 @@ write_plist(package_t *pkg, FILE * fp, char *realprefix)
  * run it too in cases of failure.
  */
 int
-delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
+delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg, Boolean NoDeleteFiles)
 {
 	plist_t *p;
 	char   *Where = ".", *last_file = "";
@@ -353,6 +353,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 			break;
 
 		case PLIST_UNEXEC:
+			if (NoDeleteFiles)
+				break;
 			format_cmd(tmp, sizeof(tmp), p->name, Where, last_file);
 			if (Verbose)
 				printf("Execute `%s'\n", tmp);
@@ -369,6 +371,8 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 				warnx("attempting to delete directory `%s' as a file\n"
 				    "this packing list is incorrect - ignoring delete request", tmp);
 			} else {
+				int     restored = 0;	/* restored from preserve? */
+
 				if (p->next && p->next->type == PLIST_COMMENT) {
 					if (strncmp(p->next->name, CHECKSUM_HEADER, ChecksumHeaderLen) == 0) {
 						char   *cp, buf[LegibleChecksumLen];
@@ -418,11 +422,9 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 						}
 					}
 				}
-				if (Verbose)
+				if (Verbose && !NoDeleteFiles)
 					printf("Delete file %s\n", tmp);
-				if (!Fake) {
-					int     restored = 0;	/* restored from preserve? */
-
+				if (!Fake && !NoDeleteFiles) {
 					if (delete_hierarchy(tmp, ign_err, nukedirs))
 						fail = FAIL;
 					if (preserve && name) {
@@ -438,7 +440,9 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 							}
 						}
 					}
+				}
 
+				if (!Fake) {
 					if (!restored) {
 #ifdef PKGDB_DEBUG
 						printf("pkgdb_remove(\"%s\")\n", tmp);	/* HF */
@@ -459,6 +463,9 @@ delete_package(Boolean ign_err, Boolean nukedirs, package_t *pkg)
 			break;
 
 		case PLIST_DIR_RM:
+			if (NoDeleteFiles)
+				break;
+
 			(void) snprintf(tmp, sizeof(tmp), "%s/%s", Where, p->name);
 			if (fexists(tmp)) {
 			    if (!isdir(tmp)) {
