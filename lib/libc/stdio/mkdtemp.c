@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdtemp.c,v 1.3 1999/09/20 04:39:31 lukem Exp $	*/
+/*	$NetBSD: mkdtemp.c,v 1.4 2002/03/31 18:04:13 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mkdtemp.c,v 1.3 1999/09/20 04:39:31 lukem Exp $");
+__RCSID("$NetBSD: mkdtemp.c,v 1.4 2002/03/31 18:04:13 bjh21 Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,7 +47,15 @@ __RCSID("$NetBSD: mkdtemp.c,v 1.3 1999/09/20 04:39:31 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#if HAVE_CONFIG_H
+#include "config.h"
+extern int __gettemp(char *, int *, int);
+#else
 #include "local.h"
+#endif
+
+#if !HAVE_MKDTEMP
 
 char *
 mkdtemp(path)
@@ -57,3 +65,5 @@ mkdtemp(path)
 
 	return (__gettemp(path, (int *)NULL, 1) ? path : (char *)NULL);
 }
+
+#endif

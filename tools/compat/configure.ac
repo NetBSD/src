@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.12 2002/03/31 12:58:54 bjh21 Exp $
+#	$NetBSD: configure.ac,v 1.13 2002/03/31 18:04:12 bjh21 Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -88,7 +88,7 @@ AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 AC_SEARCH_LIBS(fparseln, util)
 AC_CHECK_FUNCS(asprintf asnprintf basename dirfd dirname \
 	fgetln flock fparseln futimes getopt getopt_long \
-	isblank lchmod lchown lutimes pread pwcache_userdb \
+	isblank lchmod lchown lutimes mkdtemp pread pwcache_userdb \
 	pwrite setenv setgroupent setprogname setpassent \
 	snprintf strlcat strlcpy strsep vasprintf vasnprintf vsnprintf)
 
