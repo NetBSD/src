@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.12 1997/07/24 08:53:06 phil Exp $	*/
+/*	$NetBSD: chpass.c,v 1.13 1997/07/25 06:40:32 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: chpass.c,v 1.12 1997/07/24 08:53:06 phil Exp $";
+static char rcsid[] = "$NetBSD: chpass.c,v 1.13 1997/07/25 06:40:32 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,12 +93,16 @@ main(argc, argv)
 	int ch, pfd, tfd, dfd;
 	char *arg, *username = NULL, tempname[] = "/etc/pw.XXXXXX";
 
+#ifdef __GNUC__
+	pw = NULL;		/* XXX gcc -Wuninitialized */
+	arg = NULL;
+#endif
 #ifdef	YP
 	use_yp = _yp_check(NULL);
 #endif
 
 	op = EDITENTRY;
-	while ((ch = getopt(argc, argv, "a:s:ly")) != EOF)
+	while ((ch = getopt(argc, argv, "a:s:ly")) != -1)
 		switch(ch) {
 		case 'a':
 			op = LOADENTRY;
