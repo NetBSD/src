@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.129 2002/10/14 21:03:22 gmcgarry Exp $
+#       $NetBSD: Makefile,v 1.130 2002/10/20 05:16:32 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -10,9 +10,10 @@ MAN=	access.9 altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	cpu_fork.9 \
 	cpu_initclocks.9 cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
 	cpu_startup.9 cpu_swapout.9 cpu_sysctl.9 cpu_wait.9 \
-	ctxsw.9 curproc.9 delay.9 disk.9 disklabel.9 \
+	cred.9 \
+	ctxsw.9 curproc.9 delay.9 disk.9 disklabel.9 dofileread.9 \
 	dopowerhooks.9 doshutdownhooks.9 driver.9 ethersubr.9 evcnt.9 \
-	extent.9 fetch.9 fork1.9 \
+	extent.9 fetch.9 file.9 filedesc.9 fork1.9 \
 	hash.9 hardclock.9 humanize_number.9 hz.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 ipkdb.9 isa.9 \
 	isapnp.9 itimerfix.9 kcopy.9 \
@@ -132,6 +133,12 @@ MLINKS+=cpu_dumpconf.9 cpu_dump.9 cpu_dumpconf.9 cpu_dumpsize.9 \
 	cpu_dumpconf.9 dumpsys.9
 MLINKS+=cpu_fork.9 child_return.9 cpu_fork.9 proc_trampoline.9
 MLINKS+=cpu_swapout.9 cpu_swapin.9
+MLINKS+=cred.9 crfree.9 \
+	cred.9 crhold.9 \
+	cred.9 crcopy.9 \
+	cred.9 crdup.9 \
+	cred.9 crget.9 \
+	cred.9 crcvt.9
 MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
 MLINKS+=curproc.9 curcpu.9
 MLINKS+=delay.9 DELAY.9
@@ -140,6 +147,9 @@ MLINKS+=disk.9 disk_init.9 disk.9 disk_attach.9 disk.9 disk_detach.9 \
 	disk.9 disk_resetstat.9
 MLINKS+=disklabel.9 readdisklabel.9 disklabel.9 writedisklabel.9 \
 	disklabel.9 setdisklabel.9 disklabel.9 bounds_check_with_label.9
+MLINKS+=dofileread.9 dofilewrite.9 \
+	dofileread.9 dofilereadv.9 \
+	dofileread.9 dofilewritev.9
 MLINKS+=ethersubr.9 ether_ifattach.9 ethersubr.9 ether_addmulti.9 \
 	ethersubr.9 ether_delmulti.9 ethersubr.9 ETHER_IS_MULTICAST.9 \
 	ethersubr.9 ETHER_FIRST_MULTI.9 ethersubr.9 ETHER_NEXT_MULTI.9 \
@@ -153,6 +163,28 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 	extent.9 extent_print.9
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
+MLINKS+=file.9 closef.9 \
+	file.9 ffree.9 \
+	file.9 FILE_IS_USABLE.9 \
+	file.9 FILE_USE.9 \
+	file.9 FILE_UNUSE.9 \
+	file.9 FILE_SET_MATURE.9
+MLINKS+=filedesc.9 falloc.9 \
+	filedesc.9 fd_getfile.9 \
+	filedesc.9 dupfdopen.9 \
+	filedesc.9 fdalloc.9 \
+	filedesc.9 fdavail.9 \
+	filedesc.9 fdcheckstd.9 \
+	filedesc.9 fdclear.9 \
+	filedesc.9 fdcloseexec.9 \
+	filedesc.9 fdcopy.9 \
+	filedesc.9 fdexpand.9 \
+	filedesc.9 fdfree.9 \
+	filedesc.9 fdinit.9 \
+	filedesc.9 fdrelease.9 \
+	filedesc.9 fdremove.9 \
+	filedesc.9 fdshare.9 \
+	filedesc.9 fdunshare.9
 MLINKS+=hash.9 hash32_buf.9 hash.9 hash32_str.9 hash.9 hash32_strn.9
 MLINKS+=humanize_number.9 format_bytes.9
 MLINKS+=in4_cksum.9 in_cksum.9 \
@@ -543,3 +575,6 @@ SUBDIR= man9.i386 man9.sun3
 
 .include <bsd.man.mk>
 .include <bsd.subdir.mk>
+
+
+
