@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.18 1999/09/20 04:48:11 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.19 1999/12/03 16:23:58 mjl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.18 1999/09/20 04:48:11 lukem Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.19 1999/12/03 16:23:58 mjl Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -91,6 +91,9 @@ pw_mkdb()
 	pid_t pid;
 
 	pid = vfork();
+	if (pid == -1)
+		return (-1);
+
 	if (pid == 0) {
 		execl(_PATH_PWD_MKDB, "pwd_mkdb", "-p",
 		      _PATH_MASTERPASSWD_LOCK, NULL);
@@ -155,64 +158,42 @@ pw_edit(notsetuid, filename)
 	int notsetuid;
 	const char *filename;
 {
-	int i, xargc, pstat;
+	int pstat;
 	char *p, *editor;
-	char **xargv;
+	char *argp[] = { "sh", "-c", NULL, NULL };
+
 #ifdef __GNUC__
 	(void) &editor;
 #endif
 
 	if (filename == NULL)
 		filename = _PATH_MASTERPASSWD_LOCK;
+
 	if ((editor = getenv("EDITOR")) == NULL)
-		editor = strdup(_PATH_VI);
-	else
-		editor = strdup(editor);
-	if ((p = strrchr(editor, '/')) != NULL)
-		++p;
-	else
-		p = editor;
+		editor = _PATH_VI;
 
-	/* Scan editor string, count spaces, allocate arg vector. */
-	for (i = 0, xargc = 0; p[i] != '\0'; i++) {
-		if (isspace(p[i])) {
-			while (isspace(p[i++]))
-				/* skip white space */ ;
-			if (p[i] == '\0')
-				break;
-			xargc++;
-		}
-	}
+	p = malloc(strlen(editor) + 1 + strlen(filename) + 1);
+	if (p == NULL)
+		return;
 
-	/* argv[0] + <xargc args> + filename + NULL */
-	xargv = (char **)malloc(sizeof(char *) * (xargc + 3));
-	if (xargv == NULL)
-		pw_error("malloc failed", 1, 1);
+	sprintf(p, "%s %s", editor, filename);
+	argp[2] = p;
 
-	i = 0;
-	xargv[i++] = p;
-	for (; *p != '\0'; p++) {
-		if (isspace(*p)) {
-			while(isspace(*p))
-				*p++ = '\0';	/* blast whitespace */
-			if (*p == '\0')
-				break;
-			xargv[i++] = p;
-		}
-	}
-
-	/*LINTED*/
-	xargv[i++] = (char *)filename;
-	xargv[i] = NULL;
-
-	if (!(editpid = vfork())) {
+	switch(editpid = vfork()) {
+	case -1:
+		free(p);
+		return;
+	case 0:
 		if (notsetuid) {
 			setgid(getgid());
 			setuid(getuid());
 		}
-		execvp(editor, xargv);
+		execvp(_PATH_BSHELL, argp);
 		_exit(1);
 	}
+
+	free(p);
+
 	for (;;) {
 		editpid = waitpid(editpid, (int *)&pstat, WUNTRACED);
 		if (editpid == -1)
@@ -225,8 +206,6 @@ pw_edit(notsetuid, filename)
 			pw_error(editor, 1, 1);
 	}
 	editpid = -1;
-	free(editor);
-	free(xargv);
 }
 
 void
