@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.10 1997/12/07 21:27:10 bad Exp $	*/
+/*	$NetBSD: quit.c,v 1.11 2000/02/10 12:34:43 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.10 1997/12/07 21:27:10 bad Exp $");
+__RCSID("$NetBSD: quit.c,v 1.11 2000/02/10 12:34:43 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -275,7 +275,7 @@ nolock:
 	}
 	for (mp = &message[0]; mp < &message[msgCount]; mp++)
 		if (mp->m_flag & MBOX)
-			if (send(mp, obuf, saveignore, NOSTR) < 0) {
+			if (sendmessage(mp, obuf, saveignore, NOSTR) < 0) {
 				perror(mbox);
 				Fclose(ibuf);
 				Fclose(obuf);
@@ -404,7 +404,7 @@ writeback(res)
 	for (mp = &message[0]; mp < &message[msgCount]; mp++)
 		if ((mp->m_flag&MPRESERVE)||(mp->m_flag&MTOUCH)==0) {
 			p++;
-			if (send(mp, obuf, (struct ignoretab *)0, NOSTR) < 0) {
+			if (sendmessage(mp, obuf, (struct ignoretab *)0, NOSTR) < 0) {
 				perror(mailname);
 				Fclose(obuf);
 				return(-1);
@@ -525,7 +525,7 @@ edstop()
 		if ((mp->m_flag & MDELETED) != 0)
 			continue;
 		c++;
-		if (send(mp, obuf, (struct ignoretab *) NULL, NOSTR) < 0) {
+		if (sendmessage(mp, obuf, (struct ignoretab *) NULL, NOSTR) < 0) {
 			perror(mailname);
 			relsesigs();
 			reset(0);
