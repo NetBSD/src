@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.13 2004/03/08 11:28:48 simonb Exp $ */
+/* $NetBSD: sbmac.c,v 1.14 2004/03/14 10:55:45 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.13 2004/03/08 11:28:48 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.14 2004/03/14 10:55:45 simonb Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1688,6 +1688,7 @@ static void
 sbmac_intr(void *xsc, uint32_t status, uint32_t pc)
 {
 	struct sbmac_softc *sc = (struct sbmac_softc *) xsc;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint64_t isr;
 
 	for (;;) {
@@ -1715,6 +1716,9 @@ sbmac_intr(void *xsc, uint32_t status, uint32_t pc)
 		if (isr & (M_MAC_INT_CHANNEL << S_MAC_RX_CH0))
 			sbdma_rx_process(sc, &(sc->sbm_rxdma));
 	}
+
+	/* try to get more packets going */
+	sbmac_start(ifp);
 }
 
 
