@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdHardware.c,v 1.8 2004/03/30 11:12:32 kochi Exp $	*/
+/*	$NetBSD: OsdHardware.c,v 1.9 2004/04/11 06:52:38 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.8 2004/03/30 11:12:32 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdHardware.c,v 1.9 2004/04/11 06:52:38 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -83,10 +83,10 @@ AcpiOsReadPort(ACPI_IO_ADDRESS Address, UINT32 *Value, UINT32 Width)
 		break;
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -112,10 +112,10 @@ AcpiOsWritePort(ACPI_IO_ADDRESS Address, UINT32 Value, UINT32 Width)
 		break;
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -131,7 +131,7 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 *Value, UINT32 Width)
 
 	rv = AcpiOsMapMemory(Address, Width / 8, &LogicalAddress);
 	if (rv != AE_OK)
-		return (rv);
+		return rv;
 
 	switch (Width) {
 	case 8:
@@ -152,7 +152,7 @@ AcpiOsReadMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 *Value, UINT32 Width)
 
 	AcpiOsUnmapMemory(LogicalAddress, Width / 8);
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -168,7 +168,7 @@ AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
 
 	rv = AcpiOsMapMemory(Address, Width / 8, &LogicalAddress);
 	if (rv != AE_OK)
-		return (rv);
+		return rv;
 
 	switch (Width) {
 	case 8:
@@ -189,7 +189,7 @@ AcpiOsWriteMemory(ACPI_PHYSICAL_ADDRESS Address, UINT32 Value, UINT32 Width)
 
 	AcpiOsUnmapMemory(LogicalAddress, Width / 8);
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -224,10 +224,10 @@ AcpiOsReadPciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register, void *Value,
 		break;
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 /*
@@ -265,12 +265,12 @@ AcpiOsWritePciConfiguration(ACPI_PCI_ID *PciId, UINT32 Register,
 		break;
 
 	default:
-		return (AE_BAD_PARAMETER);
+		return AE_BAD_PARAMETER;
 	}
 
 	pci_conf_write(acpi_softc->sc_pc, tag, Register & ~3, tmp);
 
-	return (AE_OK);
+	return AE_OK;
 }
 
 /* get PCI bus# from root bridge recursively */
@@ -291,7 +291,7 @@ get_bus_number(
 
 	rv = AcpiGetParent(chandle, &handle);
 	if (ACPI_FAILURE(rv))
-		return (0);
+		return 0;
 
 	/*
 	 * When handle == rhandle, we have valid PciId->Bus
@@ -303,12 +303,12 @@ get_bus_number(
 
 		rv = AcpiGetType(handle, &type);
 		if (ACPI_FAILURE(rv) || type != ACPI_TYPE_DEVICE)
-			return (bus);
+			return bus;
 
 		rv = acpi_eval_integer(handle, METHOD_NAME__ADR, &v);
 
 		if (ACPI_FAILURE(rv))
-			return (bus);
+			return bus;
 
 		id->Bus = bus;
 		id->Device = ACPI_HIWORD((ACPI_INTEGER)v);
@@ -326,7 +326,7 @@ get_bus_number(
 		}
 	}
 
-	return (id->Bus);
+	return id->Bus;
 }
 
 /*
