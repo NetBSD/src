@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.43 2002/05/09 16:28:11 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.44 2002/05/10 05:45:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.43 2002/05/09 16:28:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.44 2002/05/10 05:45:50 thorpej Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -74,8 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.43 2002/05/09 16:28:11 thorpej
 #include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <miscfs/procfs/procfs.h>
 
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -489,7 +487,7 @@ ptrace_machdep_dorequest(p, t, req, addr, data)
 
 	case PT_GETXMMREGS:
 		/* write = 0 done above. */
-		if (!procfs_machdep_validxmmregs(t, NULL))
+		if (!process_machdep_validxmmregs(t))
 			return (EINVAL);
 		else {
 			iov.iov_base = addr;
@@ -501,7 +499,7 @@ ptrace_machdep_dorequest(p, t, req, addr, data)
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_procp = p;
-			return (procfs_machdep_doxmmregs(p, t, NULL, &uio));
+			return (process_machdep_doxmmregs(p, t, &uio));
 		}
 	}
 
