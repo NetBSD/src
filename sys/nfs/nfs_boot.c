@@ -1,4 +1,4 @@
-/*    $NetBSD: nfs_boot.c,v 1.7 1994/07/16 11:43:12 paulus Exp $ */
+/*    $NetBSD: nfs_boot.c,v 1.8 1994/07/19 02:23:27 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass, Gordon Ross
@@ -152,7 +152,7 @@ nfs_boot_init(nd, procp)
 	if ((error = revarpwhoarewe(ifp, &srv_ip, &my_ip)) != 0)
 		panic("revarp failed, error=%d", error);
 	printf("nfs_boot: client=0x%x, server=0x%x\n",
-	    my_ip.s_addr, srv_ip.s_addr);
+	    ntohl(my_ip.s_addr), ntohl(srv_ip.s_addr));
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface can
@@ -186,32 +186,37 @@ nfs_boot_init(nd, procp)
 
 #ifdef	NFS_BOOT_GATEWAY
 	/*
-	 * XXX - Server supplied gateway is usually bogus...
-	 * (At least for SunOS 4.1.3 servers it is.)
+	 * XXX - This code is conditionally compiled only because
+	 * many bootparam servers (in particular, SunOS 4.1.3)
+	 * always set the gateway address to their own address.
+	 * The bootparam server is not necessarily the gateway.
+	 * We could just believe the server, and at worst you would
+	 * need to delete the incorrect default route before adding
+	 * the correct one, but for simplicity, ignore the gateway.
 	 * If your server is OK, you can turn on this option.
 	 *
 	 * If the gateway address is set, add a default route.
 	 * (The mountd RPCs may go across a gateway.)
 	 */
 	if (gw_ip.s_addr) {
+		struct sockaddr dst, gw, mask;
 		/* Destination: (default) */
-		struct sockaddr_in dst, gw;
 		bzero(&dst, sizeof(dst));
-		dst.sin_len = sizeof(dst);
-		dst.sin_family = AF_INET;
+		dst.sa_len = sizeof(dst);
+		dst.sa_family = AF_INET;
 		/* Gateway: */
 		bzero(&gw, sizeof(gw));
-		gw.sin_len = sizeof(gw);
-		gw.sin_family = AF_INET;
-		gw.sin_addr.s_addr = gw_ip.s_addr;
-		/* Netmask: */
-		error = ifioctl(so, SIOCGIFNETMASK, (caddr_t)&ireq, procp);
-		if (error)
-			panic("nfs_boot: get netmask, error=%d", error);
+		sin = (struct sockaddr_in *)&gw;
+		sin->sin_len = sizeof(gw);
+		sin->sin_family = AF_INET;
+		sin->sin_addr.s_addr = gw_ip.s_addr;
+		/* Mask: (zero length) */
+		bzero(&mask, sizeof(mask));
 
+		printf("nfs_boot: gateway=0x%x\n", ntohl(gw_ip.s_addr));
 		/* add, dest, gw, mask, flags, 0 */
-		error = rtrequest(RTM_ADD, &dst, &gw, &ifr.ifr_addr,
-		    (RTF_UP | RTF_GATEWAY), NULL);
+		error = rtrequest(RTM_ADD, &dst, (struct sockaddr *)&gw,
+		    &mask, (RTF_UP | RTF_GATEWAY | RTF_STATIC), NULL);
 		if (error)
 			printf("nfs_boot: add route, error=%d\n", error);
 	}
