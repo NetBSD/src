@@ -1,4 +1,4 @@
-/*	$NetBSD: rdvar.h,v 1.7 1997/03/31 07:40:02 scottr Exp $	*/
+/*	$NetBSD: rdvar.h,v 1.7.16.1 2000/10/12 21:32:09 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,6 +79,9 @@ struct	rd_softc {
 	struct	rd_clearcmd sc_clear;
 	struct	buf sc_tab;		/* buffer queue */
 	struct	rdstats sc_stats;
+#if NRND > 0
+	rndsource_element_t rnd_source;
+#endif
 };
 
 /* sc_flags values */
