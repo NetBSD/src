@@ -1,5 +1,5 @@
 #
-#       $NetBSD: termcap.rcons,v 1.2 1999/03/13 09:03:29 itohy Exp $
+#       $NetBSD: termcap.rcons,v 1.3 1999/05/24 20:39:33 ad Exp $
 #
 #	termcap customized for pmax installation
 #	From:
@@ -28,10 +28,16 @@ rcons|sun-il:\
 	:..sa=\E[0%?%p6%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;m:\
 	:se=\E[m:sf=^J:so=\E[7m:ta=^I:ue=\E[m:up=\E[A:us=\E[4m:
 #
-pmax|cfb|DecStation 5000/*,3100 console, 1024x864pixel:\
-	:li#57:tc=rcons:
+rcons-color:\
+	:AF=\E[3%dm:AB=\E[4%dm:Co#8:pa#64:op=\E[m:ut:tc=rcons:
 #
-sfb|mfb|DecStation 5000/*,3100 console, 1280x1024pixel:\
+cfb|Color DECstation 5000/*,3100 console, 1024x864pixel:\
+	:li#57:tc=rcons-color:
+#
+px|pxg|sfb|Color DECstation 5000/* console, 1280x1024pixel:\
+	:li#67:tc=rcons-color:
+#
+mfb|Mono DECstation 5000/* console, 1280x1024pixel:\
 	:li#67:tc=rcons:
 #
 vt100:\
