@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.37 1999/02/23 14:56:26 scottr Exp $
+#	$NetBSD: MAKEDEV,v 1.38 1999/03/26 08:45:25 ender Exp $
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering -- at least one of each except ch*
@@ -101,8 +101,8 @@ std)
 	;;
 
 raminst)
-	sh $0 std
-	sh $0 sd0 sd1 sd2 sd3 st0 st1 cd0 cd1
+	sh $0 std 
+	sh $0 sd0 sd1 sd2 sd3 st0 st1 cd0 cd1 md0
 	sh $0 adb grf0 grf1 ttye0
 	sh $0 tty0 tty1 pty0
 	;;
