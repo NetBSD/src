@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.2 2002/08/07 21:20:54 briggs Exp $
+# $NetBSD: md.cats,v 1.3 2002/08/26 13:37:46 chris Exp $
 ./usr/include/cats			comp-c-include
 ./usr/include/cats/_G_config.h		comp-c-include
 ./usr/include/cats/ansi.h		comp-c-include
@@ -6,6 +6,7 @@
 ./usr/include/cats/asm.h		comp-c-include
 ./usr/include/cats/bswap.h		comp-c-include
 ./usr/include/cats/bus.h		comp-c-include
+./usr/include/cats/byte_swap.h		comp-c-include
 ./usr/include/cats/cdefs.h		comp-c-include
 ./usr/include/cats/cpu.h		comp-c-include
 ./usr/include/cats/db_machdep.h		comp-c-include
