@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.25 1997/03/21 06:50:48 mikel Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.26 1997/05/16 21:39:57 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -726,15 +726,10 @@ fill_eproc(p, ep)
 	} else {
 		register struct vmspace *vm = p->p_vmspace;
 
-#ifdef pmap_resident_count
-		ep->e_vm.vm_rssize = pmap_resident_count(&vm->vm_pmap); /*XXX*/
-#else
-		ep->e_vm.vm_rssize = vm->vm_rssize;
-#endif
+		ep->e_vm.vm_rssize = vm_resident_count(vm);
 		ep->e_vm.vm_tsize = vm->vm_tsize;
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
-		ep->e_vm.vm_pmap = vm->vm_pmap;
 	}
 	if (p->p_pptr)
 		ep->e_ppid = p->p_pptr->p_pid;

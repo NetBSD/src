@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.h,v 1.13 1994/06/29 06:47:52 cgd Exp $	*/
+/*	$NetBSD: vm.h,v 1.14 1997/05/16 21:39:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -76,7 +76,10 @@ typedef struct pager_struct *vm_pager_t;
  */
 struct vmspace {
 	struct	vm_map vm_map;	/* VM address map */
+#ifdef	__VM_PMAP_HACK
+	/* XXX - All should use vm_map.pmap instead. */
 	struct	pmap vm_pmap;	/* private physical map */
+#endif
 	int	vm_refcnt;	/* number of references */
 	caddr_t	vm_shm;		/* SYS5 shared memory private data XXX */
 /* we copy from vm_startcopy to the end of the structure on fork */
@@ -90,4 +93,11 @@ struct vmspace {
 	caddr_t	vm_daddr;	/* user virtual address of data XXX */
 	caddr_t vm_maxsaddr;	/* user VA at max stack growth */
 };
+
+#ifdef	pmap_resident_count
+#define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
+#else
+#define vm_resident_count(vm) ((vm)->vm_rssize)
+#endif
+
 #endif /* VM_H */

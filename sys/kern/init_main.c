@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.98 1997/03/26 22:38:45 gwr Exp $	*/
+/*	$NetBSD: init_main.c,v 1.99 1997/05/16 21:39:55 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -240,12 +240,9 @@ main(framep)
 	limit0.p_refcnt = 1;
 
 	/* Allocate a prototype map so we have something to fork. */
-	p->p_vmspace = &vmspace0;
-	vmspace0.vm_refcnt = 1;
-	pmap_pinit(&vmspace0.vm_pmap);
-	vm_map_init(&p->p_vmspace->vm_map, round_page(VM_MIN_ADDRESS),
-	    trunc_page(VM_MAX_ADDRESS), TRUE);
-	vmspace0.vm_map.pmap = &vmspace0.vm_pmap;
+	p->p_vmspace = vmspace_alloc(round_page(VM_MIN_ADDRESS),
+				     trunc_page(VM_MAX_ADDRESS), TRUE);
+
 	p->p_addr = proc0paddr;				/* XXX */
 
 	/*
