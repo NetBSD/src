@@ -1,5 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.5 2002/03/29 00:15:07 matt Exp $
+# $NetBSD: Makefile.inc,v 1.6 2002/03/29 01:22:21 matt Exp $
 
+MAKEFS_FLAGS=	-o density=5k
 IMAGESIZE=	7m
 IMAGEENDIAN=	le
 MAKEDEVTARGETS=	all
