@@ -1,3 +1,5 @@
+/*	$NetBSD: open_lock.h,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
+
 #ifndef _OPEN_LOCK_H_INCLUDED_
 #define _OPEN_LOCK_H_INCLUDED_
 

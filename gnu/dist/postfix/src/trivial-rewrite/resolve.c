@@ -1,3 +1,5 @@
+/*	$NetBSD: resolve.c,v 1.1.1.8 2004/05/31 00:24:54 heas Exp $	*/
+
 /*++
 /* NAME
 /*	resolve 3

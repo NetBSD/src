@@ -1,3 +1,5 @@
+/*	$NetBSD: mbox_conf.c,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
+
 /*++
 /* NAME
 /*	mbox_conf 3

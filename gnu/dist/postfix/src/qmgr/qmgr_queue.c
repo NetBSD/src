@@ -1,3 +1,5 @@
+/*	$NetBSD: qmgr_queue.c,v 1.1.1.4 2004/05/31 00:24:44 heas Exp $	*/
+
 /*++
 /* NAME
 /*	qmgr_queue 3

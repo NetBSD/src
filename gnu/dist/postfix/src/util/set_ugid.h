@@ -1,3 +1,5 @@
+/*	$NetBSD: set_ugid.h,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+
 #ifndef _SET_UGID_H_INCLUDED_
 #define _SET_UGID_H_INCLUDED_
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: lmtp.c,v 1.1.1.8 2004/05/31 00:24:36 heas Exp $	*/
+
 /*++
 /* NAME
 /*	lmtp 8

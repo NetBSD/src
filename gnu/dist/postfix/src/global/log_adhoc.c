@@ -1,3 +1,5 @@
+/*	$NetBSD: log_adhoc.c,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+
 /*++
 /* NAME
 /*	log_adhoc 3

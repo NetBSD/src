@@ -1,3 +1,5 @@
+/*	$NetBSD: sys_exits.c,v 1.1.1.2 2004/05/31 00:24:35 heas Exp $	*/
+
 /*++
 /* NAME
 /*	sys_exits 3

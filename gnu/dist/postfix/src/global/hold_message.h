@@ -1,3 +1,5 @@
+/*	$NetBSD: hold_message.h,v 1.1.1.2 2004/05/31 00:24:31 heas Exp $	*/
+
 #ifndef _HOLD_MESSAGE_H_INCLUDED_
 #define _HOLD_MESSAGE_H_INCLUDED_
 

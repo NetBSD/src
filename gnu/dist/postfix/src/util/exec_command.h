@@ -1,3 +1,5 @@
+/*	$NetBSD: exec_command.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+
 #ifndef _EXEC_COMMAND_H_INCLUDED_
 #define _EXEC_COMMAND_H_INCLUDED_
 

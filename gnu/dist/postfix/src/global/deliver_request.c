@@ -1,3 +1,5 @@
+/*	$NetBSD: deliver_request.c,v 1.1.1.5 2004/05/31 00:24:29 heas Exp $	*/
+
 /*++
 /* NAME
 /*	deliver_request 3

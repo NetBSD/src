@@ -1,3 +1,5 @@
+/*	$NetBSD: dict_ni.h,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+
 #ifndef _DICT_NI_H_INCLUDED_
 #define _DICT_NI_H_INCLUDED_
 

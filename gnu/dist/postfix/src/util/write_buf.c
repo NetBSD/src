@@ -1,3 +1,5 @@
+/*	$NetBSD: write_buf.c,v 1.1.1.2 2004/05/31 00:25:02 heas Exp $	*/
+
 /*++
 /* NAME
 /*	write_buf 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: inet_addr_local.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
+
 #ifndef _INET_ADDR_LOCAL_H_INCLUDED_
 #define _INET_ADDR_LOCAL_H_INCLUDED_
 

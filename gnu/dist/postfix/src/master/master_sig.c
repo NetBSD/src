@@ -1,3 +1,5 @@
+/*	$NetBSD: master_sig.c,v 1.1.1.5 2004/05/31 00:24:38 heas Exp $	*/
+
 /*++
 /* NAME
 /*	master_sig 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: error.c,v 1.1.1.4 2004/05/31 00:24:28 heas Exp $	*/
+
 /*++
 /* NAME
 /*	error 8

@@ -1,3 +1,5 @@
+/*	$NetBSD: off_cvt.c,v 1.1.1.3 2004/05/31 00:24:34 heas Exp $	*/
+
 /*++
 /* NAME
 /*	off_cvt 3

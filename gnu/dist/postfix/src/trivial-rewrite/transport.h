@@ -1,3 +1,5 @@
+/*	$NetBSD: transport.h,v 1.1.1.4 2004/05/31 00:24:54 heas Exp $	*/
+
 /*++
 /* NAME
 /*	transport 3h

@@ -1,3 +1,5 @@
+/*	$NetBSD: recipient.c,v 1.1.1.4 2004/05/31 00:24:37 heas Exp $	*/
+
 /*++
 /* NAME
 /*	recipient 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: username.h,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+
 #ifndef _USERNAME_H_INCLUDED_
 #define _USERNAME_H_INCLUDED_
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: smtpd_chat.h,v 1.1.1.2 2004/05/31 00:24:48 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtpd_chat 3h

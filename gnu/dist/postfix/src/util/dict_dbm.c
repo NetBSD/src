@@ -1,3 +1,5 @@
+/*	$NetBSD: dict_dbm.c,v 1.1.1.5 2004/05/31 00:24:57 heas Exp $	*/
+
 /*++
 /* NAME
 /*	dict_dbm 3

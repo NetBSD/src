@@ -1,3 +1,5 @@
+/*	$NetBSD: postlock.c,v 1.1.1.3 2004/05/31 00:24:42 heas Exp $	*/
+
 /*++
 /* NAME
 /*	postlock 1

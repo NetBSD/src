@@ -1,3 +1,5 @@
+/*	$NetBSD: virtual.c,v 1.1.1.6 2004/05/31 00:25:03 heas Exp $	*/
+
 /*++
 /* NAME
 /*	virtual 8

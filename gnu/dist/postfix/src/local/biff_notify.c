@@ -1,3 +1,5 @@
+/*	$NetBSD: biff_notify.c,v 1.1.1.2 2004/05/31 00:24:37 heas Exp $	*/
+
 /*++
 /* NAME
 /*	biff_notify 3

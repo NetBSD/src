@@ -1,3 +1,5 @@
+/*	$NetBSD: post_mail.h,v 1.1.1.4 2004/05/31 00:24:34 heas Exp $	*/
+
 #ifndef _POST_MAIL_H_INCLUDED_
 #define _POST_MAIL_H_INCLUDED_
 

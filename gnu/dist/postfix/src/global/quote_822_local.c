@@ -1,3 +1,5 @@
+/*	$NetBSD: quote_822_local.c,v 1.1.1.4 2004/05/31 00:24:34 heas Exp $	*/
+
 /*++
 /* NAME
 /*	quote_822_local 3

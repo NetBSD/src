@@ -1,3 +1,5 @@
+/*	$NetBSD: connect.h,v 1.1.1.2 2004/05/31 00:24:57 heas Exp $	*/
+
 #ifndef _CONNECT_H_INCLUDED_
 #define _CONNECT_H_INCLUDED_
 

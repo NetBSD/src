@@ -1,3 +1,5 @@
+/*	$NetBSD: events.h,v 1.1.1.4 2004/05/31 00:24:59 heas Exp $	*/
+
 #ifndef _EVENTS_H_INCLUDED_
 #define _EVENTS_H_INCLUDED_
 

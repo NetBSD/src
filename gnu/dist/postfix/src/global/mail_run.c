@@ -1,3 +1,5 @@
+/*	$NetBSD: mail_run.c,v 1.1.1.3 2004/05/31 00:24:32 heas Exp $	*/
+
 /*++
 /* NAME
 /*	mail_run 3

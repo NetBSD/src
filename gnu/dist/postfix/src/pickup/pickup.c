@@ -1,3 +1,5 @@
+/*	$NetBSD: pickup.c,v 1.1.1.8 2004/05/31 00:24:41 heas Exp $	*/
+
 /*++
 /* NAME
 /*	pickup 8

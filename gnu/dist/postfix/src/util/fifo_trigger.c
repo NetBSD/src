@@ -1,3 +1,5 @@
+/*	$NetBSD: fifo_trigger.c,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+
 /*++
 /* NAME
 /*	fifo_trigger 3

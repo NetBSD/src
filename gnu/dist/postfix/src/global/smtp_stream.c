@@ -1,3 +1,5 @@
+/*	$NetBSD: smtp_stream.c,v 1.1.1.4 2004/05/31 00:24:35 heas Exp $	*/
+
 /*++
 /* NAME
 /*	smtp_stream 3

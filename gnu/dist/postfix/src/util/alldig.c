@@ -1,3 +1,5 @@
+/*	$NetBSD: alldig.c,v 1.1.1.2 2004/05/31 00:24:55 heas Exp $	*/
+
 /*++
 /* NAME
 /*	alldig 3

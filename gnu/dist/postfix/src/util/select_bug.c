@@ -1,3 +1,5 @@
+/*	$NetBSD: select_bug.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+
 /*++
 /* NAME
 /*	select_bug 1

@@ -1,3 +1,5 @@
+/*	$NetBSD: local.c,v 1.1.1.6 2004/05/31 00:24:37 heas Exp $	*/
+
 /*++
 /* NAME
 /*	local 8

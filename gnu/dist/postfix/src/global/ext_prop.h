@@ -1,3 +1,5 @@
+/*	$NetBSD: ext_prop.h,v 1.1.1.3 2004/05/31 00:24:30 heas Exp $	*/
+
 #ifndef _EXT_PROP_INCLUDED_
 #define _EXT_PROP_INCLUDED_
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: showq.c,v 1.1.1.7 2004/05/31 00:24:45 heas Exp $	*/
+
 /*++
 /* NAME
 /*	showq 8

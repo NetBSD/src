@@ -1,3 +1,5 @@
+/*	$NetBSD: qmgr_rcpt_list.c,v 1.1.1.2 2004/05/31 00:24:39 heas Exp $	*/
+
 /*++
 /* NAME
 /*	qmgr_rcpt_list 3

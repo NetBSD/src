@@ -1,3 +1,5 @@
+/*	$NetBSD: attr_scan_plain.c,v 1.1.1.2 2004/05/31 00:24:55 heas Exp $	*/
+
 /*++
 /* NAME
 /*	attr_scan_plain 3

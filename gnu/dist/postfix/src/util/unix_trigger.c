@@ -1,3 +1,5 @@
+/*	$NetBSD: unix_trigger.c,v 1.1.1.3 2004/05/31 00:25:01 heas Exp $	*/
+
 /*++
 /* NAME
 /*	unix_trigger 3

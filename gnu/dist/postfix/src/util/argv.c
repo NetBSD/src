@@ -1,3 +1,5 @@
+/*	$NetBSD: argv.c,v 1.1.1.4 2004/05/31 00:24:55 heas Exp $	*/
+
 /*++
 /* NAME
 /*	argv 3

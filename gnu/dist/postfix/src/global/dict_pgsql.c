@@ -1,3 +1,5 @@
+/*	$NetBSD: dict_pgsql.c,v 1.1.1.2 2004/05/31 00:24:30 heas Exp $	*/
+
 /*++
 /* NAME
 /*	dict_pgsql 3

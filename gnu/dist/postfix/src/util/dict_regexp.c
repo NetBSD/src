@@ -1,3 +1,5 @@
+/*	$NetBSD: dict_regexp.c,v 1.1.1.6 2004/05/31 00:24:58 heas Exp $	*/
+
 /*++
 /* NAME
 /*	dict_regexp 3

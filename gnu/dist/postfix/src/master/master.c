@@ -1,3 +1,5 @@
+/*	$NetBSD: master.c,v 1.1.1.6 2004/05/31 00:24:38 heas Exp $	*/
+
 /*++
 /* NAME
 /*	master 8

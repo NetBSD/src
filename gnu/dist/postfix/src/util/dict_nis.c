@@ -1,3 +1,5 @@
+/*	$NetBSD: dict_nis.c,v 1.1.1.3 2004/05/31 00:24:57 heas Exp $	*/
+
 /*++
 /* NAME
 /*	dict_nis 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: sent.h,v 1.1.1.5 2004/05/31 00:24:30 heas Exp $	*/
+
 #ifndef _SENT_H_INCLUDED_
 #define _SENT_H_INCLUDED_
 

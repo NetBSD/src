@@ -1,3 +1,5 @@
+/*	$NetBSD: lmtp_proto.c,v 1.1.1.9 2004/05/31 00:24:36 heas Exp $	*/
+
 /*++
 /* NAME
 /*	lmtp_proto 3

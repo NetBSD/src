@@ -1,3 +1,5 @@
+/*	$NetBSD: proxymap.c,v 1.1.1.4 2004/05/31 00:24:43 heas Exp $	*/
+
 /*++
 /* NAME
 /*	proxymap 8

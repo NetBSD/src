@@ -1,3 +1,5 @@
+/*	$NetBSD: mac_expand.c,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+
 /*++
 /* NAME
 /*	mac_expand 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: dict_alloc.c,v 1.1.1.3 2004/05/31 00:24:55 heas Exp $	*/
+
 /*++
 /* NAME
 /*	dict_alloc 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: attr_scan64.c,v 1.1.1.4 2004/05/31 00:24:56 heas Exp $	*/
+
 /*++
 /* NAME
 /*	attr_scan64 3

@@ -1,3 +1,5 @@
+/*	$NetBSD: dir_forest.c,v 1.1.1.3 2004/05/31 00:24:58 heas Exp $	*/
+
 /*++
 /* NAME
 /*	dir_forest 3

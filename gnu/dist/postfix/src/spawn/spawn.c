@@ -1,3 +1,5 @@
+/*	$NetBSD: spawn.c,v 1.1.1.4 2004/05/31 00:24:51 heas Exp $	*/
+
 /*++
 /* NAME
 /*	spawn 8

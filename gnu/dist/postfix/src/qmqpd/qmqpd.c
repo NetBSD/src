@@ -1,3 +1,5 @@
+/*	$NetBSD: qmqpd.c,v 1.1.1.6 2004/05/31 00:24:45 heas Exp $	*/
+
 /*++
 /* NAME
 /*	qmqpd 8

@@ -1,3 +1,5 @@
+/*	$NetBSD: stream_test.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
+
 #include "sys_defs.h"
 #include <sys/stat.h>
 #include <unistd.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: is_header.c,v 1.1.1.4 2004/05/31 00:24:31 heas Exp $	*/
+
 /*++
 /* NAME
 /*	is_header 3

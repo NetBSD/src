@@ -1,3 +1,5 @@
+/*	$NetBSD: verify_clnt.h,v 1.1.1.2 2004/05/31 00:24:36 heas Exp $	*/
+
 #ifndef _VRFY_CLNT_H_INCLUDED_
 #define _VRFY_CLNT_H_INCLUDED_
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: htable.c,v 1.1.1.3 2004/05/31 00:24:59 heas Exp $	*/
+
 /*++
 /* NAME
 /*	htable 3

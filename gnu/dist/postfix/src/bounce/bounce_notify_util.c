@@ -1,3 +1,5 @@
+/*	$NetBSD: bounce_notify_util.c,v 1.1.1.7 2004/05/31 00:24:26 heas Exp $	*/
+
 /*++
 /* NAME
 /*	bounce_notify_util 3
