@@ -1,4 +1,4 @@
-$NetBSD: tcdevs,v 1.7 1997/02/05 22:14:18 cgd Exp $
+$NetBSD: tcdevs,v 1.8 1998/01/30 02:24:58 thorpej Exp $
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -50,6 +50,10 @@ device	PMAGD		sfbp	Smart Frame Buffer Plus, unknown bpp
 device	PMAGD-AA	sfbp	Smart Frame Buffer Plus, 8bpp
 device	PMAGD-BA	sfbp	Smart Frame Buffer Plus, 32bpp
 device	PMAZ-AA		asc	53c94 SCSI
+device	PMAZ-DS		tcds	53c94 TCDS SCSI (baseboard)
+device	PMAZ-FS		tcds	53c94 TCDS Fast SCSI (baseboard)
+device	PMAZB-AA	tcds	53c94 TCDS SCSI option card
+device	PMAZC-AA	tcds	53c94 TCDS Fast SCSI option card
 device	T1D4PKT		ds	DECWRL Turbochannel T1
 device	T3PKT		tt	DECWRL Turbochannel T3
 
