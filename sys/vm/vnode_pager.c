@@ -1,4 +1,5 @@
-/* NetBSD $Id: vnode_pager.c,v 1.15 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: vnode_pager.c,v 1.16 1994/06/29 06:48:47 cgd Exp $	*/
+
 /*
  * Copyright (c) 1990 University of Utah.
  * Copyright (c) 1991, 1993

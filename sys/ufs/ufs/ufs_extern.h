@@ -1,3 +1,5 @@
+/*	$NetBSD: ufs_extern.h,v 1.2 1994/06/29 06:47:25 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ufs_extern.h	8.3 (Berkeley) 4/16/94
- *	$Id: ufs_extern.h,v 1.1 1994/06/08 11:43:15 mycroft Exp $
+ *	@(#)ufs_extern.h	8.3 (Berkeley) 4/16/94
  */
 
 struct buf;

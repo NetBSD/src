@@ -1,4 +1,5 @@
-/* NetBSD $Id: dkstat.h,v 1.5 1994/06/27 19:31:00 cgd Exp $ */
+/*	$NetBSD: dkstat.h,v 1.6 1994/06/29 06:43:58 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_all.h,v 1.5 1994/06/29 06:42:57 cgd Exp $	*/
+
 /*
  * SCSI general  interface description
  */
@@ -17,8 +19,6 @@
  * functioning of this software in any circumstances.
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
- *
- *	$Id: scsi_all.h,v 1.4 1994/05/09 07:40:50 chopps Exp $
  */
 
 #ifndef	_SCSI_SCSI_ALL_H

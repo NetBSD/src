@@ -1,4 +1,5 @@
-/* NetBSD $Id: device.h,v 1.3 1994/06/27 19:30:52 cgd Exp $ */
+/*	$NetBSD: device.h,v 1.4 1994/06/29 06:43:49 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

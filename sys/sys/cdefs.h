@@ -1,4 +1,5 @@
-/* NetBSD $Id: cdefs.h,v 1.9 1994/06/27 19:30:43 cgd Exp $ */
+/*	$NetBSD: cdefs.h,v 1.10 1994/06/29 06:43:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.

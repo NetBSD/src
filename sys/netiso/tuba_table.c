@@ -1,3 +1,5 @@
+/*	$NetBSD: tuba_table.c,v 1.2 1994/06/29 06:40:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tuba_table.c	8.2 (Berkeley) 11/15/93
- *	$Id: tuba_table.c,v 1.1 1994/05/13 06:10:04 mycroft Exp $
+ *	@(#)tuba_table.c	8.2 (Berkeley) 11/15/93
  */
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,5 @@
-/* NetBSD $Id: malloc.h,v 1.18 1994/06/27 19:31:29 cgd Exp $ */
+/*	$NetBSD: malloc.h,v 1.19 1994/06/29 06:44:34 cgd Exp $	*/
+
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.

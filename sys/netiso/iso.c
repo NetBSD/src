@@ -1,3 +1,5 @@
+/*	$NetBSD: iso.c,v 1.7 1994/06/29 06:39:39 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)iso.c	8.2 (Berkeley) 11/15/93
- *	$Id: iso.c,v 1.6 1994/05/13 06:08:50 mycroft Exp $
+ *	@(#)iso.c	8.2 (Berkeley) 11/15/93
  */
 
 /***********************************************************

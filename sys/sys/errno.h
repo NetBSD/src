@@ -1,4 +1,5 @@
-/* NetBSD $Id: errno.h,v 1.7 1994/06/27 19:31:03 cgd Exp $ */
+/*	$NetBSD: errno.h,v 1.8 1994/06/29 06:44:02 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_nqlease.c,v 1.2 1994/06/29 06:42:11 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfs_nqlease.c	8.3 (Berkeley) 1/4/94
- *	$Id: nfs_nqlease.c,v 1.1 1994/06/08 11:36:54 mycroft Exp $
+ *	@(#)nfs_nqlease.c	8.3 (Berkeley) 1/4/94
  */
 
 /*

@@ -1,4 +1,5 @@
-/* NetBSD $Id: clist.h,v 1.5 1994/06/27 19:30:49 cgd Exp $ */
+/*	$NetBSD: clist.h,v 1.6 1994/06/29 06:43:45 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

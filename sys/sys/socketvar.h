@@ -1,4 +1,5 @@
-/* NetBSD $Id: socketvar.h,v 1.10 1994/06/27 19:32:05 cgd Exp $ */
+/*	$NetBSD: socketvar.h,v 1.11 1994/06/29 06:45:30 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$NetBSD: scsi_disk.h,v 1.5 1994/06/29 06:43:04 cgd Exp $	*/
+
 /*
  * SCSI interface description
  */
@@ -45,8 +47,6 @@
  * functioning of this software in any circumstances.
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
- *
- *	$Id: scsi_disk.h,v 1.4 1994/03/29 04:29:32 mycroft Exp $
  */
 
 /*

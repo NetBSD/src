@@ -1,3 +1,5 @@
+/*	$NetBSD: if_eon.c,v 1.8 1994/06/29 06:39:37 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_eon.c	8.1 (Berkeley) 6/10/93
- *	$Id: if_eon.c,v 1.7 1994/05/13 06:08:46 mycroft Exp $
+ *	@(#)if_eon.c	8.1 (Berkeley) 6/10/93
  */
 
 /***********************************************************

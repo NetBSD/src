@@ -1,4 +1,5 @@
-/* NetBSD $Id: chio.h,v 1.5 1994/06/27 19:30:48 cgd Exp $ */
+/*	$NetBSD: chio.h,v 1.6 1994/06/29 06:43:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.

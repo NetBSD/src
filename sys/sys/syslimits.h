@@ -1,4 +1,5 @@
-/* NetBSD $Id: syslimits.h,v 1.10 1994/06/27 19:32:11 cgd Exp $ */
+/*	$NetBSD: syslimits.h,v 1.11 1994/06/29 06:45:37 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.

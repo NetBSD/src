@@ -1,4 +1,5 @@
-/* NetBSD $Id: dkbad.h,v 1.6 1994/06/27 19:30:59 cgd Exp $ */
+/*	$NetBSD: dkbad.h,v 1.7 1994/06/29 06:43:57 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.

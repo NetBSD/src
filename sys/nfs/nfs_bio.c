@@ -1,3 +1,5 @@
+/*	$NetBSD: nfs_bio.c,v 1.15 1994/06/29 06:42:05 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfs_bio.c	8.5 (Berkeley) 1/4/94
- *	$Id: nfs_bio.c,v 1.14 1994/06/22 14:07:37 pk Exp $
+ *	@(#)nfs_bio.c	8.5 (Berkeley) 1/4/94
  */
 
 #include <sys/param.h>

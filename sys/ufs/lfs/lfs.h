@@ -1,3 +1,5 @@
+/*	$NetBSD: lfs.h,v 1.2 1994/06/29 06:46:46 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lfs.h	8.3 (Berkeley) 9/23/93
- *	$Id: lfs.h,v 1.1 1994/06/08 11:42:23 mycroft Exp $
+ *	@(#)lfs.h	8.3 (Berkeley) 9/23/93
  */
 
 #define	LFS_LABELPAD	8192		/* LFS label size */

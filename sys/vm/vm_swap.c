@@ -1,4 +1,5 @@
-/* NetBSD $Id: vm_swap.c,v 1.22 1994/06/27 04:55:46 cgd Exp $ */
+/*	$NetBSD: vm_swap.c,v 1.23 1994/06/29 06:48:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.

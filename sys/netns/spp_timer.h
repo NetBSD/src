@@ -1,3 +1,5 @@
+/*	$NetBSD: spp_timer.h,v 1.5 1994/06/29 06:41:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)spp_timer.h	8.1 (Berkeley) 6/10/93
- *	$Id: spp_timer.h,v 1.4 1994/05/13 06:11:34 mycroft Exp $
+ *	@(#)spp_timer.h	8.1 (Berkeley) 6/10/93
  */
 
 /*

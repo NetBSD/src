@@ -1,3 +1,5 @@
+/*	$NetBSD: rpcv2.h,v 1.6 1994/06/29 06:42:43 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)rpcv2.h	8.1 (Berkeley) 6/10/93
- *	$Id: rpcv2.h,v 1.5 1994/06/08 11:37:19 mycroft Exp $
+ *	@(#)rpcv2.h	8.1 (Berkeley) 6/10/93
  */
 
 /*
