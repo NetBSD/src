@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2005/03/20 02:43:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.27 2005/03/20 02:44:25 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -23,7 +23,9 @@ SRCS= ifconfig.c
 
 SRCS+= af_atalk.c
 SRCS+= af_inet.c
+.if (${USE_INET6} != "no")
 SRCS+= af_inet6.c
+.endif
 SRCS+= af_iso.c
 SRCS+= af_ns.c
 
