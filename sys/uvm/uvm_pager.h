@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.h,v 1.16 2000/06/26 14:21:18 mrg Exp $	*/
+/*	$NetBSD: uvm_pager.h,v 1.17 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
  *
@@ -115,8 +115,6 @@ struct uvm_pagerops {
 	int			(*pgo_get)	/* get/read page */
 			 __P((struct uvm_object *, voff_t,
 				 vm_page_t *, int *, int, vm_prot_t, int, int));
-	int			(*pgo_asyncget)	/* start async get */
-			 __P((struct uvm_object *, voff_t, int));
 	int			(*pgo_put)	/* put/write page */
 			 __P((struct uvm_object *, vm_page_t *, 
 				 int, boolean_t));
@@ -127,8 +125,6 @@ struct uvm_pagerops {
 			 __P((struct uvm_object *, struct vm_page **,
 				 int *, struct vm_page *, int, voff_t,
 				 voff_t));
-	void			(*pgo_aiodone)		/* async iodone */
-			 __P((struct uvm_aiodesc *));
 	boolean_t		(*pgo_releasepg)	/* release page */
 			 __P((struct vm_page *, struct vm_page **));
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.35 2000/06/27 17:29:37 mrg Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -86,8 +86,6 @@ lock_data_t uvn_sync_lock;			/* locks sync operation */
  * functions
  */
 
-static int		   uvn_asyncget __P((struct uvm_object *, voff_t,
-					    int));
 static void		   uvn_cluster __P((struct uvm_object *, voff_t,
 					   voff_t *, voff_t *));
 static void                uvn_detach __P((struct uvm_object *));
@@ -116,11 +114,9 @@ struct uvm_pagerops uvm_vnodeops = {
 	NULL,			/* no specialized fault routine required */
 	uvn_flush,
 	uvn_get,
-	uvn_asyncget,
 	uvn_put,
 	uvn_cluster,
 	uvm_mk_pcluster, /* use generic version of this: see uvm_pager.c */
-	NULL,		 /* AIO-DONE function (not until we have asyncio) */
 	uvn_releasepg,
 };
 
@@ -1545,28 +1541,6 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 
 	simple_unlock(&uobj->vmobjlock);
 	return (VM_PAGER_OK);
-}
-
-/*
- * uvn_asyncget: start async I/O to bring pages into ram
- *
- * => caller must lock object(???XXX: see if this is best)
- * => could be called from uvn_get or a madvise() fault-ahead.
- * => if it fails, it doesn't matter.
- */
-
-static int
-uvn_asyncget(uobj, offset, npages)
-	struct uvm_object *uobj;
-	voff_t offset;
-	int npages;
-{
-
-	/*
-	 * XXXCDC: we can't do async I/O yet
-	 */
-	printf("uvn_asyncget called\n");
-	return (KERN_SUCCESS);
 }
 
 /*
