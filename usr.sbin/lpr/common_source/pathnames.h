@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.5 1995/11/28 19:43:27 jtc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.6 1997/03/14 01:17:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #define	_PATH_DEFSPOOL		"/var/spool/output/lpd"
 #define	_PATH_HOSTSEQUIV	"/etc/hosts.equiv"
 #define	_PATH_HOSTSLPD		"/etc/hosts.lpd"
-#define	_PATH_MASTERLOCK	"/var/spool/output/lpd.lock"
+#define	_PATH_MASTERLOCK	"/var/run/lpd.pid"
 #define	_PATH_PR		"/usr/bin/pr"
 #define	_PATH_PRINTCAP		"/etc/printcap"
 #define	_PATH_SOCKETNAME	"/var/run/printer"
