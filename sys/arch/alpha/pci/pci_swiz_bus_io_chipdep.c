@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.30 2000/02/26 18:53:13 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.31 2000/04/17 17:30:48 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -106,6 +106,9 @@ int		__C(CHIP,_io_alloc) __P((void *, bus_addr_t, bus_addr_t,
                     bus_space_handle_t *));
 void		__C(CHIP,_io_free) __P((void *, bus_space_handle_t,
 		    bus_size_t));
+
+/* get kernel virtual address */
+void *		__C(CHIP,_io_vaddr) __P((void *, bus_space_handle_t));
 
 /* barrier */
 inline void	__C(CHIP,_io_barrier) __P((void *, bus_space_handle_t,
@@ -241,6 +244,9 @@ __C(CHIP,_bus_io_init)(t, v)
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_io_alloc);
 	t->abs_free = 		__C(CHIP,_io_free);
+
+	/* get kernel virtual address */
+	t->abs_vaddr =		__C(CHIP,_io_vaddr);
 
 	/* barrier */
 	t->abs_barrier =	__C(CHIP,_io_barrier);
@@ -596,6 +602,18 @@ __C(CHIP,_io_free)(v, bsh, size)
 
 	/* Unmap does all we need to do. */
 	__C(CHIP,_io_unmap)(v, bsh, size, 1);
+}
+
+void *
+__C(CHIP,_io_vaddr)(v, bsh)
+	void *v;
+	bus_space_handle_t bsh;
+{
+	/*
+	 * _io_translate() catches BUS_SPACE_MAP_LINEAR,
+	 * so we shouldn't get here
+	 */
+	panic("_io_vaddr");
 }
 
 inline void
