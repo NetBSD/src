@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.4 1996/09/08 15:43:41 jtk Exp $ */
+/*	$NetBSD: apm.c,v 1.5 1996/09/10 11:22:33 jtk Exp $ */
 
 /*-
  * Copyright (c) 1995,1996 John T. Kohl.  All rights reserved.
@@ -623,7 +623,6 @@ apmprobe(parent, match, aux)
 	struct apm_attach_args *aaa = aux;
 	extern int biosbasemem;
 	struct apmregs regs;
-	u_char signature[] = { 'P', 'M' };
 
 	if (apminited)
 		return 0;
