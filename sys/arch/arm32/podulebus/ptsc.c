@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.27 2001/03/17 20:34:45 bjh21 Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.28 2001/03/18 16:58:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -188,21 +188,17 @@ ptscattach(pdp, dp, auxp)
 
 	printf(": host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
-	sc->sc_softc.sc_ih.ih_func = ptsc_intr;
-	sc->sc_softc.sc_ih.ih_arg  = &sc->sc_softc;
-	sc->sc_softc.sc_ih.ih_level = IPL_BIO;
-	sc->sc_softc.sc_ih.ih_name = "scsi: ptsc";
-	sc->sc_softc.sc_ih.ih_maskaddr = sc->sc_specific.sc_podule->irq_addr;
-	sc->sc_softc.sc_ih.ih_maskbits = sc->sc_specific.sc_podule->irq_mask;
-
 	/* initialise the card */
 /*	*rp->term = 0;*/
 	*rp->inten = (PTSC_POLL?0:1);
 	*rp->led = 0;
 
 #if PTSC_POLL == 0
-	if (irq_claim(IRQ_PODULE /*IRQ_EXPCARD0 + sc->sc_specific.sc_podule_number */,
-		      &sc->sc_softc.sc_ih))
+	evcnt_attach_dynamic(&sc->sc_softc.sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    dp->dv_xname, "intr");
+	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+	    ptsc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
+	if (sc->sc_softc.sc_ih == NULL)
 	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
 #else
 	printf(" polling");
