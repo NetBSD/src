@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.46 1999/04/21 02:31:49 mrg Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.47 1999/04/21 02:37:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -757,13 +757,8 @@ setroot(bootdv, bootpartition, nam2blk)
 	} else if (rootdv->dv_class == DV_IFNET)
 		goto nodumpdev;
 	else {
-#if 0 /* DUMPCTL */
-		dumpdv = dumpdev = NULL;
-		goto nodumpdev;
-#else
 		dumpdv = rootdv;
 		dumpdev = MAKEDISKDEV(major(rootdev), dumpdv->dv_unit, 1);
-#endif
 	}
 
  out:

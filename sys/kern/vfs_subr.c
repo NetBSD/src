@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.101 1999/04/21 02:31:50 mrg Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.102 1999/04/21 02:37:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1471,10 +1471,6 @@ printlockedvnodes()
 extern const char *mountcompatnames[];
 extern const int nmountcompatnames;
 
-/*
- * XXX
- * This belongs in sys/compat/common/vfs_44.c
- */
 /*
  * Top level filesystem related information gathering.
  */
