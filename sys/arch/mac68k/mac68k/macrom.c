@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.1 1994/12/03 23:34:59 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.2 1995/03/26 18:10:23 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -587,17 +587,19 @@ void mrg_init()
 		if((i % 100000) == 0)printf(".");
 	printf("\n");
 
+#if defined(MRG_TRACE)
 	printf("Turning on a trace\n");
 	tron();
 	printf("We are now tracing\n");
 	troff();
 	printf("Turning off trace\n");
 	dumptrace();
+#endif /* MRG_TRACE */
 
 	for(i = 0; i < 500000; i++)
 		if((i % 100000) == 0)printf(".");
 	printf("\n");
-#endif
+#endif /* MRG_TEST */
 
 #if defined(MRG_DEBUG)
 	printf("after setting jump points\n");
