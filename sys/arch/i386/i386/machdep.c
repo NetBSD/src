@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.340 1999/03/09 15:48:15 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.341 1999/03/09 16:05:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -861,7 +861,7 @@ struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				"K5", "K5", "K5", "K5", 0, 0, "K6",
-				"K6", "K6-3D", 0, 0, 0, 0, 0, 0, 0,
+				"K6", "K6-2", "K6-III", 0, 0, 0, 0, 0, 0,
 				"K5 or K6"		/* Default */
 			},
 			NULL
