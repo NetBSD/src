@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipnat.8,v 1.2 2000/05/06 15:39:02 veego Exp $
+.\"	$NetBSD: ipnat.8,v 1.2.4.1 2000/08/06 17:04:23 thorpej Exp $
 .\"
 .TH IPNAT 8
 .SH NAME
@@ -20,36 +20,16 @@ is added to the kernels internal lists if there are no parsing problems.
 Rules are added to the end of the internal lists, matching the order in
 which they appear when given to \fBipnat\fP.
 .PP
-\fBPlease Note\fP
-that
-\fBipnat\fP
-is not functional without
+Note that if
 \fBipf(8)\fP
-running. In addition, the following kernel options need to be turned on
-in order to use
-\fBipnat\fP:
-\fIIPFORWARDING\fP
-and
-\fIPFIL_HOOKS\fP.
-The
-\fIGATEWAY\fP
-kernel option includes the
-\fIIPFORWARDING\fP
-option.
-The sysctl command:
-.LP
-.nf
-        sysctl net.inet.ip.forwarding
-.fi     
-.PP     
-will inform you if
-\fIIPFORWARDING\fP
-is currently turned on in your kernel.
-Please see
+is not enabled when NAT is configured, it will be enabled
+automatically, as the same kernel facilities are used for
+NAT functionality.  In addition, packet forwarding must be
+enabled.  See
 \fBoptions(4)\fP
 and
 \fBsysctl(8)\fP
-for more information on turning these parameters on.
+for more information.
 .SH OPTIONS
 .TP
 .B \-C
