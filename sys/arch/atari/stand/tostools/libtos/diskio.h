@@ -1,4 +1,4 @@
-/*	$NetBSD: libtos.h,v 1.4 2002/02/24 20:51:08 leo Exp $	*/
+/*	$NetBSD: diskio.h,v 1.1 2002/02/24 20:51:08 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -30,55 +30,46 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LIBTOS_H
-#define _LIBTOS_H
+#ifndef DISKIO_H
+#define DISKIO_H
 
-#ifdef __STDC__
-#define	PROTO(x)	x
-#define EXTERN
-#else
-#define	PROTO(x)	()
-#define	EXTERN		extern
-#endif
+#define MINOR(bus, target, lun)	(lun)
+#define MAJOR(bus, target, lun)	(((bus) << 3) + (target))
 
-#ifdef __GNUC__
-#if (__GNUC__ > 2) || ((__GNUC__ == 2) && (__GNUC_MINOR__ >= 5))
-#define NORETURN	__attribute__((noreturn))
-#else
-#define	NORETURN
-#endif
-#endif
+#define LUN(major, minor)	(minor)
+#define TARGET(major, minor)	((major) & 0x0007)
+#define BUS(major, minor)	(((major) >> 3) & 0x1FFF)
+#define BIOSDEV(major, minor)	(((minor) == 0) ? ((major) + 2) : 0)
 
-#include <sys/types.h>
-#include <stdarg.h>
+typedef enum {
+	ACSI = 0,
+	SCSI = 1,
+	IDE  = 2
+} bus_t;
 
-#ifndef int8_t
+typedef struct {
+	u_int		major;		/* XHDI major number		*/
+	u_int		minor;		/* XHDI minor number		*/
+	char *		sname;		/* short name (s00)		*/
+	char *		fname;		/* full name (scsi target 0 lun 0)*/
+	char *		product;	/* product name			*/
+	u_long		bsize;		/* block size in bytes		*/
+	u_long		msize;		/* medium size in blocks	*/
+	void 		*xtra_info;	/* application specific info	*/
+} disk_t;
+
 /*
- * My TOS/MiNT installation does not define these (Leo 09/10/2001).
+ * diskio.c
  */
-typedef	unsigned char	u_int8_t;
-typedef	unsigned short	u_int16_t;
-typedef	unsigned long	u_int32_t;
-#endif /* int8_t */
+EXTERN disk_t *	disk_open  PROTO((char *));
+EXTERN void	disk_close PROTO((disk_t *));
+EXTERN void *	disk_read  PROTO((disk_t *, u_int, u_int));
+EXTERN int	disk_write PROTO((disk_t *, u_int, u_int, void *));
 
-struct kparamb;
-struct osdsc;
-
-EXTERN int	aout_load	 PROTO((int, struct osdsc *, char **, int));
-EXTERN void	bsd_startup      PROTO((struct kparamb *)) NORETURN;
-EXTERN int	elf_load	 PROTO((int, struct osdsc *, char **, int));
-EXTERN int	eprintf          PROTO((char *, ...));
-EXTERN void	error            PROTO((int, char *, ...));
-EXTERN void	fatal            PROTO((int, char *, ...)) NORETURN;
-EXTERN void	init_toslib      PROTO((char *));
-EXTERN int	key_wait         PROTO((char *));
-EXTERN void	press_any_key    PROTO((void));
-EXTERN void	redirect_output  PROTO((char *));
-EXTERN void	set_wait_for_key PROTO((void));
-EXTERN void	sys_info	 PROTO((struct osdsc *));
-EXTERN int	veprintf         PROTO((char *, va_list));
-EXTERN void	xexit            PROTO((int)) NORETURN;
-EXTERN void *	xmalloc          PROTO((size_t));
-EXTERN void *	xrealloc         PROTO((void *, size_t));
-
-#endif	/* !_LIBTOS_H */
+/*
+ *	biosrw.s
+ */
+EXTERN int	bios_read   PROTO((void *, u_int, u_int, u_int));
+EXTERN int	bios_write  PROTO((void *, u_int, u_int, u_int));
+EXTERN void	bios_critic PROTO((void));
+#endif	/* DISKIO_H */
