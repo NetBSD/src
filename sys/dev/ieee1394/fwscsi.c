@@ -1,4 +1,4 @@
-/*	$NetBSD: fwscsi.c,v 1.7 2002/09/27 20:38:10 thorpej Exp $	*/
+/*	$NetBSD: fwscsi.c,v 1.8 2002/09/30 21:21:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.7 2002/09/27 20:38:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwscsi.c,v 1.8 2002/09/30 21:21:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,9 +90,8 @@ struct fwscsi_softc {
 	TAILQ_HEAD(, sbp2_orb) sc_orbs;
 };
 
-const struct cfattach fwscsi_ca = {
-	sizeof(struct fwscsi_softc), fwscsi_match, fwscsi_attach, fwscsi_detach
-};
+CFATTACH_DECL(fwscsi, sizeof(struct fwscsi_softc),
+    fwscsi_match, fwscsi_attach, fwscsi_detach, NULL)
 
 static int
 fwscsi_match(struct device *parent, struct cfdata *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.82 2002/09/27 20:38:08 thorpej Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.83 2002/09/30 21:17:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.82 2002/09/27 20:38:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.83 2002/09/30 21:17:58 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -215,9 +215,8 @@ struct zstty_softc {
 static int	zstty_match(struct device *, struct cfdata *, void *);
 static void	zstty_attach(struct device *, struct device *, void *);
 
-const struct cfattach zstty_ca = {
-	sizeof(struct zstty_softc), zstty_match, zstty_attach
-};
+CFATTACH_DECL(zstty, sizeof(struct zstty_softc),
+    zstty_match, zstty_attach, NULL, NULL)
 
 extern struct cfdriver zstty_cd;
 

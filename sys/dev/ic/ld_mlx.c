@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_mlx.c,v 1.5 2002/09/27 20:38:06 thorpej Exp $	*/
+/*	$NetBSD: ld_mlx.c,v 1.6 2002/09/30 21:17:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.5 2002/09/27 20:38:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_mlx.c,v 1.6 2002/09/30 21:17:58 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -80,12 +80,8 @@ static void	ld_mlx_handler(struct mlx_ccb *);
 static int	ld_mlx_match(struct device *, struct cfdata *, void *);
 static int	ld_mlx_start(struct ld_softc *, struct buf *);
 
-const struct cfattach ld_mlx_ca = {
-	sizeof(struct ld_mlx_softc),
-	ld_mlx_match,
-	ld_mlx_attach,
-	ld_mlx_detach
-};
+CFATTACH_DECL(ld_mlx, sizeof(struct ld_mlx_softc),
+    ld_mlx_match, ld_mlx_attach, ld_mlx_detach, NULL)
 
 static int
 ld_mlx_match(struct device *parent, struct cfdata *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.4 2002/09/27 20:38:04 thorpej Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.5 2002/09/30 21:17:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.4 2002/09/27 20:38:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.5 2002/09/30 21:17:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,8 @@ int	icpsp_match(struct device *, struct cfdata *, void *);
 void	icpsp_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
 			     void *);
 
-const struct cfattach icpsp_ca = {
-	sizeof(struct icpsp_softc), icpsp_match, icpsp_attach
-};
+CFATTACH_DECL(icpsp, sizeof(struct icpsp_softc),
+    icpsp_match, icpsp_attach, NULL, NULL)
 
 int
 icpsp_match(struct device *parent, struct cfdata *match, void *aux)
