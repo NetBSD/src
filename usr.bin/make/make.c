@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.16 1997/05/06 23:51:31 mycroft Exp $	*/
+/*	$NetBSD: make.c,v 1.17 1997/06/07 16:41:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: make.c,v 1.16 1997/05/06 23:51:31 mycroft Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.17 1997/06/07 16:41:09 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -637,7 +637,10 @@ MakeAddAllSrc (cgnp, pgnp)
 	char *child;
 	char *p1 = NULL;
 
-	child = cgn->path ? cgn->path : cgn->name;
+	if (cgn->type & OP_ARCHV)
+	    child = Var_Value (MEMBER, cgn, &p1);
+	else
+	    child = cgn->path ? cgn->path : cgn->name;
 	Var_Append (ALLSRC, child, pgn);
 	if (pgn->type & OP_JOIN) {
 	    if (cgn->made == MADE) {
@@ -899,6 +902,20 @@ Make_ExpandUse (targs)
 	     * Make sure that the TARGET is set, so that we can make
 	     * expansions.
 	     */
+	    if (gn->type & OP_ARCHV) {
+		char *eoa, *eon;
+		eoa = strchr(gn->name, '(');
+		eon = strchr(gn->name, ')');
+		if (eoa == NULL || eon == NULL)
+		    continue;
+		*eoa = '\0';
+		*eon = '\0';
+		Var_Set (MEMBER, eoa + 1, gn);
+		Var_Set (ARCHIVE, gn->name, gn);
+		*eoa = '(';
+		*eon = ')';
+	    }
+
 	    Dir_MTime(gn);
 	    Var_Set (TARGET, gn->path ? gn->path : gn->name, gn);
 	    Lst_ForEach (gn->children, MakeHandleUse, (ClientData)gn);
