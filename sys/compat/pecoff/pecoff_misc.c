@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.2 2002/03/29 17:04:46 kent Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.3 2002/07/07 18:06:02 oki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.2 2002/03/29 17:04:46 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.3 2002/07/07 18:06:02 oki Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -547,6 +547,34 @@ pecoff_sys_lutimes(p, v, retval)
 	return sys_lutimes(p, v, retval);
 }
 
+int
+pecoff_sys___stat13(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct pecoff_sys___stat13_args *uap = v;
+	caddr_t sg = stackgap_init(p, 0);
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return sys___stat13(p, v, retval);
+}
+
+
+int
+pecoff_sys___lstat13(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct pecoff_sys___lstat13_args *uap = v;
+	caddr_t sg = stackgap_init(p, 0);
+
+	CHECK_ALT_SYMLINK(p, &sg, SCARG(uap, path));
+
+	return sys___lstat13(p, v, retval);
+}
 
 int
 pecoff_sys___posix_chown(p, v, retval)
