@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.1 1996/05/06 21:36:59 is Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.2 1996/05/07 01:55:28 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -112,7 +112,7 @@ struct iy_softc {
 #endif
 };
 
-void iywatchdog __P((int));
+void iywatchdog __P((struct ifnet *));
 int iyioctl __P((struct ifnet *, u_long, caddr_t));
 int iyintr __P((void *));
 void iyinit __P((struct iy_softc *));
@@ -283,8 +283,8 @@ iyattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = iy_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = iystart;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 					/* XXX todo: | IFF_MULTICAST */
@@ -494,7 +494,7 @@ struct ifnet *ifp;
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
                 return;
 
-	sc = iy_cd.cd_devs[ifp->if_unit];
+	sc = ifp->if_softc;
 	iobase = sc->sc_iobase;
 
 	while ((m0 = ifp->if_snd.ifq_head) != NULL) {
@@ -726,10 +726,10 @@ eepromread(io, offset)
  * an interrupt after a transmit has been started on it.
  */
 void
-iywatchdog(unit)
-	int unit;
+iywatchdog(ifp)
+	struct ifnet *ifp
 {
-	struct iy_softc *sc = iy_cd.cd_devs[unit];
+	struct iy_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1087,13 +1087,13 @@ iyioctl(ifp, cmd, data)
 	struct ifreq *ifr;
 	int s, error = 0;
 
-	sc = iy_cd.cd_devs[ifp->if_unit];
+	sc = ifp->if_softc;
 	ifa = (struct ifaddr *)data;
 	ifr = (struct ifreq *)data;
 
 #ifdef IYDEBUG
-	printf("iyioctl called with ifp 0x%p (unit %d) cmd 0x%x data 0x%p\n", 
-	    ifp, ifp->if_unit, cmd, data);
+	printf("iyioctl called with ifp 0x%p (%s) cmd 0x%x data 0x%p\n", 
+	    ifp, ifp->if_xname, cmd, data);
 #endif
 
 	s = splimp();
