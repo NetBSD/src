@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.223 2002/12/09 14:03:53 scw Exp $
+.\"	$NetBSD: main,v 1.224 2003/02/24 07:47:17 kochi Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1788,6 +1788,7 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Thomas Klausner Ta Mt wiz@netbsd.org
 .It Ta Klaus Klein Ta Mt kleink@netbsd.org
 .It Ta Wayne Knowles Ta Mt wdk@netbsd.org
+.It Ta Takayoshi Kochi Ta Mt kochi@netbsd.org
 .It Ta John Kohl Ta Mt jtk@netbsd.org
 .It Ta Paul Kranenburg Ta Mt pk@netbsd.org
 .It Ta Martti Kuparinen Ta Mt martti@netbsd.org
