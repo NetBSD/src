@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.79 2000/06/04 19:15:03 cgd Exp $	*/
+/*	$NetBSD: zs.c,v 1.80 2000/07/09 20:57:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -60,8 +60,8 @@
 
 #include <machine/bsd_openprom.h>
 #include <machine/autoconf.h>
+#include <machine/intr.h>
 #include <machine/conf.h>
-#include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
 #include <machine/z8530var.h>
@@ -188,7 +188,6 @@ extern struct cfdriver zs_cd;
 /* Interrupt handlers. */
 static int zshard __P((void *));
 static int zssoft __P((void *));
-static struct intrhand levelsoft = { zssoft };
 
 static int zs_get_speed __P((struct zs_chanstate *));
 
@@ -451,8 +450,12 @@ zs_attach(zsc, zsd, pri)
 	if (!didintr) {
 		didintr = 1;
 		prevpri = pri;
-		bus_intr_establish(zsc->zsc_bustag, pri, 0, zshard, NULL);
-		intr_establish(PIL_TTY, &levelsoft);
+		bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0,
+				   zshard, NULL);
+		bus_intr_establish(zsc->zsc_bustag, PIL_TTY,
+				   IPL_SOFTSERIAL,
+				   BUS_INTR_ESTABLISH_SOFTINTR,
+				   zssoft, NULL);
 	} else if (pri != prevpri)
 		panic("broken zs interrupt scheme");
 

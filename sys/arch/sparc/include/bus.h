@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.22 2000/06/26 04:56:06 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.23 2000/07/09 20:57:48 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -125,7 +125,9 @@ struct sparc_bus_space_tag {
 
 	void	*(*sparc_intr_establish) __P((
 				bus_space_tag_t,
-				int,			/*level*/
+				int,			/*bus-specific intr*/
+				int,			/*device class level,
+							  see machine/intr.h*/
 				int,			/*flags*/
 				int (*) __P((void *)),	/*handler*/
 				void *));		/*handler arg*/
@@ -192,7 +194,9 @@ static int	bus_space_mmap __P((
 				bus_space_handle_t *));
 static void	*bus_intr_establish __P((
 				bus_space_tag_t,
-				int,			/*level*/
+				int,			/*bus-specific intr*/
+				int,			/*device class level,
+							  see machine/intr.h*/
 				int,			/*flags*/
 				int (*) __P((void *)),	/*handler*/
 				void *));		/*handler arg*/
@@ -260,14 +264,15 @@ bus_space_mmap(t, bt, a, f, hp)
 }
 
 __inline__ void *
-bus_intr_establish(t, l, f, h, a)
+bus_intr_establish(t, p, l, f, h, a)
 	bus_space_tag_t t;
+	int	p;
 	int	l;
 	int	f;
 	int	(*h)__P((void *));
 	void	*a;
 {
-	_BS_CALL(t, sparc_intr_establish)(t, l, f, h, a);
+	_BS_CALL(t, sparc_intr_establish)(t, p, l, f, h, a);
 }
 
 __inline__ void
