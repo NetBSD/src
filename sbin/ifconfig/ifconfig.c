@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.74 2000/03/18 21:10:50 castor Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.75 2000/03/20 21:10:03 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.74 2000/03/18 21:10:50 castor Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.75 2000/03/20 21:10:03 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -830,9 +830,9 @@ setifflags(vname, value)
 	char *vname;
 	int value;
 {
+	(void) strncpy(flagreq.ifr_name, name, sizeof (flagreq.ifr_name));
  	if (ioctl(s, SIOCGIFFLAGS, (caddr_t)&flagreq) < 0)
 		err(1, "SIOCGIFFLAGS");
-	(void) strncpy(flagreq.ifr_name, name, sizeof (flagreq.ifr_name));
  	flags = flagreq.ifr_flags;
 
 	if (value < 0) {
