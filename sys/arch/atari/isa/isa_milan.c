@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.3 2001/05/28 08:41:37 leo Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.4 2001/05/29 05:58:18 leo Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ milan_isa_intr(vector, sr)
 	int	vector, sr;
 {
 	isa_intr_info_t *iinfo_p;
+	int		s;
 
 	if (vector >= MILAN_MAX_ISA_INTS) {
 		printf("milan_isa_intr: Bogus vector %d\n", vector);
