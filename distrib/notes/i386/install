@@ -31,12 +31,18 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-	Boot your machine using of the appropriate kernel-copy floppy.
-	When presented with the boot prompt (the prompt begins with
-	"Boot" and ends with ":-"), hit return.  If the boot prompt
-	does not appear in a reasonable amount of time, you either
-	have a bad boot floppy or a hardware problem.  Try writing the
-	kernel-copy floppy image to a different disk, and using that.
+        Boot your machine using of the appropriate installation
+        floppy.  The boot loader will start, and will print a
+        countdown and begin booting. You will likely see one "file not
+        found" warning from the boot loader -- ignore this as it is
+        normal, and indicates the boot loader failed to find a normal
+        kernel to boot before trying to boot a compressed kernel.
+
+        If the boot loader messages do not appear in a reasonable
+        amount of time, you either have a bad boot floppy or a
+        hardware problem.  Try writing the install floppy image to
+        a different disk, and using that.
+
 	If that doesn't work, try booting after disabling your CPU's
 	internal and external caches (if any).  If it still doesn't
 	work, NetBSD probably can't be run on your hardware.  This can
@@ -45,19 +51,7 @@ process again from scratch.
 	configuration as you can.
 
 	It will take a while to load the kernel from the floppy,
-	probably around a minute or so.  After its loaded, you will be
-	presented with the message:
-		"Insert file system floppy"
-	If you do not see that message after a reasonable time has
-	elapsed, or the spinning cursor has stopped and nothing
-	further has happened, either your boot floppy is bad or you
-	are having hardware problems, and should proceed as outlined
-	above.
-
-	Once you have reached that prompt, remove the kernel-copy
-	floppy from the floppy drive.  Make sure that the installation
-	disk (the "inst-12" floppy) is writable, insert it into the
-	floppy drive, and hit any key.
+	probably around a minute or so.
 
 	You will then be presented with the NetBSD kernel boot
 	messages.  You will want to read them, to determine your
@@ -67,6 +61,13 @@ process again from scratch.
 	disk's geometry when creating NetBSD's partitions.  You will
 	also need to know the name, to tell the install tools what
 	disk to install on.
+
+        Note that, once the system has finished booting, you need no
+        longer leave the floppy in the disk drive. Earlier version of
+        the NetBSD install floppies mounted the floppy as the system's
+        root partition, but the new installation floppies use a
+        ramdisk file system and are no longer dependent on the floppy
+        once it has booted.
 
 	While booting, you will probably see several warnings.  You
 	should be warned that no swap space is present, and that
@@ -179,22 +180,21 @@ process again from scratch.
 	section of the installation.  If there are, restart from the
 	beginning of the installation process.
 
-	You will be placed at a shell prompt ("#").  The remaining
-	tasks are to copy the kernel from the kernel copy floppy to
-	the hard drive's root filesystem and install the distribution
-	sets.  The flow of installation differs depending on your
-	hardware resources, and on what media the distribution sets
-	reside.
+        You will be placed at a shell prompt ("#").  The task is to
+        install the distribution sets.  The flow of installation
+        differs depending on your hardware resources, and on what
+        media the distribution sets reside.
+
+        NOTE: In previous versions of NetBSD, the kernel from the
+        install floppy was copied onto the hard drive in a special
+        step. In the new install system, the kernel on the floppy is
+        unsuited to being copied onto the hard drive. Instead, a new
+        set, "kern", has been added which contains a generic kernel to
+        be unloaded onto the drive. It must be extracted in addition
+        to "base" and "etc" in order to have a minimally functioning
+        system.
 
 	To install from floppy:
-		If you only have only one floppy drive, the order of
-		installation is different.  Follow the directions in
-		the "Kernel installation" section which will help you
-		install a kernel on the hard drive and then boot off
-		the hard drive, then continue with the rest of the
-		process described here to install the distribution
-		sets from floppy:
-
 		The first thing you should do is pick a temporary
 		directory where the distribution files can be stored.
 		To do this, enter the command "Set_tmp_dir", and enter
@@ -209,9 +209,8 @@ process again from scratch.
 		You will be asked which floppy drive to use.  Enter
 		"0" (zero) if you're using the first floppy drive
 		(i.e. what DOS would call "A:"), or enter "1" if
-		you're using the second.  (Remember that you CANNOT
-		use the floppy drive that you booted from.  If you
-		booted from "A:", you must load from "B:".)
+		you're using the second (i.e. what DOS would call
+		"B:")
 
 		You will be prompted to insert a floppy into the drive,
 		to have its contents copied to your hard disk.  Do so,
@@ -221,13 +220,13 @@ process again from scratch.
 		one.  When the last is read, and you are being
 		prompted for another, hit Control-C.
 
-		Run the "Extract" command once for each distribution
-		set you wish to install.  For instance, if you wish to
-		install the "base12" distribution set, followed by the
-		"man12" distribution set, and finally the "etc12"
-		distribution set, use the commands:
+                Run the "Extract" command once for each distribution
+                set you wish to install.  For instance, if you wish to
+                install the "kern12D" distribution set, followed by the
+                "base12" distribution set, and finally the "etc12"
+                distribution set, use the commands:
+			Extract kern12D
 			Extract base12
-			Extract man12
 			Extract etc12
 
 		For each extraction, it will ask you if the extraction
@@ -400,58 +399,28 @@ process again from scratch.
 		set at a time, extract it, then delete it, to save
 		space.)
 
-	Once you have finished extracting all of the distribution sets
-	that you wish to install, and are back at the "#" prompt, you
-	are ready to configure your system.  The configuration utility
-	expects that you have installed the "base12" and "etc12"
-	distribution sets.  If you have not, you will not be able to
-	run it successfully (nor will you have a functional system, in
-	any case).  To configure your newly-installed NetBSD system,
-	run the command "Configure".  It will ask you for the system's
-	host name, domain name, and other network configuration
-	information.  It will set up your configuration files and make
-	the device nodes for the newly-installed system.
+Completing your installation:
+        Once you have finished extracting all of the distribution sets
+        that you wish to install, and are back at the "#" prompt, you
+        are ready to configure your system.  The configuration utility
+        expects that you have installed the "kern12D", "base12" and
+        "etc12" distribution sets.  If you have not, you will not be
+        able to run it successfully (nor will you have a functional
+        system, in any case).  To configure your newly-installed
+        NetBSD system, run the command "Configure".  It will ask you
+        for the system's host name, domain name, and other network
+        configuration information.  It will set up your configuration
+        files and make the device nodes for the newly-installed
+        system.
 
-Kernel Installation:
 
-	Enter "halt" at the prompt to halt the system.  When the
-	system is halted, remove the "inst-12" floppy from the floppy
-	drive, and replace it with the NetBSD 1.2 kernel-copy floppy
-	that you previously booted from.  Reboot with that floppy.
-	with that floppy.
-
-	Once again, you will be prompted to insert a file system
-	floppy.  DO NOT replace the kernel-copy floppy, just hit any
-	key.
-
-	Again, While booting, you may see several warnings.  You may
-	be warned that no swap space is present, that init(8) cannot
-	find /etc/rc, and that one or more databases with names like
-	"pwd.db" cannot be found.  Do not be alarmed, as, again, these
-	are completely normal.  Hit return at the prompt asking you
-	for a shell name.
-
-	You will be presented with a shell prompt, at which you should
-	enter the "copy_kernel" command.  It will ask you what
-	partition to copy the kernel to, and you should reply with the
-	name of your root partition (e.g. sd0a or wd0a).
-
-	You will be asked if you are sure that you want to copy the
-	kernel.  Reply affirmatively, and it will check the file
-	system on your root partition, mount it, and copy the kernel.
-	Once the kernel is copied, you should use "halt" to halt the
-	system.
-
-	Once the system is halted, remove the kernel-copy floppy from
-	the floppy disk drive, and hit any key to reboot.
-
-Congratulations, you have successfully installed NetBSD 1.2.  When you
+Congratulations, you have successfully installed NetBSD 1.2D.  When you
 reboot into NetBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
 protect it and the "root" account with good passwords.
 
-Some of the files in the NetBSD 1.2 distribution might need to be
+Some of the files in the NetBSD 1.2D distribution might need to be
 tailored for your site.  In particular, the /etc/sendmail.cf file will
 almost definitely need to be adjusted, and other files in /etc will
 probably need to be modified, as well.  If you are unfamiliar with
