@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.364 2000/08/04 11:51:37 augustss Exp $
+#	$NetBSD: GENERIC,v 1.365 2000/08/10 21:33:18 soda Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.364 $"
+#ident 		"GENERIC-$Revision: 1.365 $"
 
 maxusers	32		# estimated number of users
 
@@ -229,11 +229,12 @@ pci*	at ppb? bus ?
 # Configure PCI using BIOS information
 #options 	PCIBIOS			# PCI BIOS support
 #options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
+#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
+#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
 #options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
 #options 	PCIBIOS_IRQS_HINT=0x0a00 # PCI interrupts hint. IRQ 9 or 11
+#options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
-#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
-#options 	PCIBIOS_ADDR_FIXUP	# fixup PCI I/O addresses
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
