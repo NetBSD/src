@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.76.2.1 1999/04/16 16:26:01 chs Exp $	 */
+/* $NetBSD: machdep.c,v 1.76.2.2 1999/12/16 22:49:20 he Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -770,7 +770,8 @@ process_write_regs(p, regs)
 	tf->fp = regs->fp;
 	tf->sp = regs->sp;
 	tf->pc = regs->pc;
-	tf->psl = regs->psl;
+	tf->psl = (regs->psl|PSL_U|PSL_PREVU) &
+	    ~(PSL_MBZ|PSL_IS|PSL_IPL1F|PSL_CM); /* Allow compat mode? */
 	return 0;
 }
 
