@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.25 2004/07/15 03:53:44 atatat Exp $
+#	$NetBSD: NC,v 1.26 2004/08/20 15:15:26 thorpej Exp $
 #
 #	NC - with vidcconsole
 #
@@ -181,7 +181,7 @@ pioc0	at mainbus? base 0x00210000
 #wdc*	at pioc? offset 0x0170 irq -1
 
 # ATA (IDE) bus support
-atabus* at ata?
+#atabus* at ata?
 
 #wd*	at atabus? drive ?
 #atapibus* at atapi?
