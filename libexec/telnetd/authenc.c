@@ -1,4 +1,4 @@
-/*	$NetBSD: authenc.c,v 1.4 1997/10/08 08:45:08 mrg Exp $	*/
+/*	$NetBSD: authenc.c,v 1.5 1997/10/16 06:46:50 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)authenc.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: authenc.c,v 1.4 1997/10/08 08:45:08 mrg Exp $");
+__RCSID("$NetBSD: authenc.c,v 1.5 1997/10/16 06:46:50 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,6 @@ telnet_spin()
 telnet_getenv(val)
 	char *val;
 {
-	extern char *getenv();
 	return(getenv(val));
 }
 
