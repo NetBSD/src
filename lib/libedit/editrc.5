@@ -1,4 +1,4 @@
-.\"	$NetBSD: editrc.5,v 1.16 2003/06/27 18:57:09 wiz Exp $
+.\"	$NetBSD: editrc.5,v 1.17 2003/10/18 22:24:34 christos Exp $
 .\"
 .\" Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -251,6 +251,7 @@ No sanity checking is done.
 .Op Ar +mode
 .Op Ar -mode
 .Op Ar mode
+.Op Ar char=c
 .Xc
 Control which tty modes that
 .Nm
@@ -291,6 +292,15 @@ fixes
 on or off or removes control of
 .Ar mode
 in the chosen set.
+.Pp
+.Ic Setty
+can also be used to set tty characters to particular values using
+.Ar char=value .
+If
+.Ar value
+is empty
+then the character is set to
+.Dv _POSIX_VDISABLE .
 .El
 .Sh EDITOR COMMANDS
 The following editor commands are available for use in key bindings:
