@@ -1,5 +1,5 @@
 .\"	@(#)getrpcent.3n	2.2 88/08/02 4.0 RPCSRC; from 1.11 88/03/14 SMI
-.\"	$NetBSD: getrpcent.3,v 1.7 2001/09/16 02:17:40 wiz Exp $
+.\"	$NetBSD: getrpcent.3,v 1.8 2001/09/16 18:09:58 wiz Exp $
 .\"
 .Dd December 14, 1987
 .Dt GETRPCENT 3
@@ -78,16 +78,16 @@ of the file until a matching rpc program name or
 program number is found, or until end-of-file is encountered.
 .Sh FILES
 .Pa /etc/rpc
-.Sh SEE ALSO
-.Xr rpc 5 ,
-.Xr rpcinfo 8 ,
-.Xr ypserv 8
 .Sh DIAGNOSTICS
 A
 .Dv NULL
 pointer is returned on
 .Dv EOF
 or error.
+.Sh SEE ALSO
+.Xr rpc 5 ,
+.Xr rpcinfo 8 ,
+.Xr ypserv 8
 .Sh BUGS
 All information
 is contained in a static area
