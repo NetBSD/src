@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mfs_vnops.c	7.22 (Berkeley) 4/16/91
- *	$Id: mfs_vnops.c,v 1.5 1993/12/23 07:03:11 cgd Exp $
+ *	$Id: mfs_vnops.c,v 1.6 1994/02/06 10:13:03 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -140,7 +140,7 @@ mfs_strategy(bp)
 	if (mfsp->mfs_pid == p->p_pid) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
 	} else {
-		bp->av_forw = mfsp->mfs_buflist;
+		bp->b_actf = mfsp->mfs_buflist;
 		mfsp->mfs_buflist = bp;
 		wakeup((caddr_t)vp);
 	}
@@ -200,7 +200,7 @@ mfs_close(vp, flag, cred, p)
 	 * Finish any pending I/O requests.
 	 */
 	while (bp = mfsp->mfs_buflist) {
-		mfsp->mfs_buflist = bp->av_forw;
+		mfsp->mfs_buflist = bp->b_actf;
 		mfs_doio(bp, mfsp->mfs_baseoff);
 		wakeup((caddr_t)bp);
 	}
