@@ -497,7 +497,7 @@ sendfromto(s, buf, buflen, src, dst, cnt)
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"%d times of %d bytes message will be sent "
 				"to %s\n",
-				i + 1, len, saddr2str(src));
+				i + 1, len, saddr2str(dst));
 		}
 		plogdump(LLV_DEBUG, (char *)buf, buflen);
 
@@ -570,7 +570,7 @@ sendfromto(s, buf, buflen, src, dst, cnt)
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"%d times of %d bytes message will be sent "
 				"to %s\n",
-				i + 1, len, saddr2str(src));
+				i + 1, len, saddr2str(dst));
 		}
 		plogdump(LLV_DEBUG, (char *)buf, buflen);
 
@@ -749,6 +749,7 @@ str2saddr(host, port)
 		return NULL;
 	}
 	memcpy(saddr, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
 
 	return saddr;
 }
