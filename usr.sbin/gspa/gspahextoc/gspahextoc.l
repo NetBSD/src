@@ -1,4 +1,4 @@
-/*	$NetBSD: gspahextoc.l,v 1.5 1999/02/16 23:34:13 is Exp $	*/
+/*	$NetBSD: gspahextoc.l,v 1.6 1999/05/22 21:15:18 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 %{
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gspahextoc.l,v 1.5 1999/02/16 23:34:13 is Exp $");
+__RCSID("$NetBSD: gspahextoc.l,v 1.6 1999/05/22 21:15:18 is Exp $");
 #endif
 %}
 
@@ -127,7 +127,7 @@ main(argc, argv)
 		    " * a TMS34010 assembler output file.\n");
 	}
 
-	printf(" * Do not edit manually..\n");
+	printf(" * Do not edit manually.\n");
 	printf(" */\n");
 	printf("#include <sys/types.h>\n");
 	printf("u_int16_t tmscode[] = {\n\t");
