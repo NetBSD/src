@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.336 2001/06/18 13:19:07 onoe Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.337 2001/06/20 05:46:24 imp Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.330 2001/06/18 13:18:08 onoe Exp 
+ *	NetBSD: pcidevs,v 1.331 2001/06/20 05:44:33 imp Exp 
  */
 
 /*
@@ -1080,7 +1080,11 @@
 #define	PCI_PRODUCT_ESSTECH2_MAESTRO1	0x0100		/* Maestro 1 PCI Audio Accelerator */
 
 /* O2 Micro Inc */
-#define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832 CardBus Controller */
+#define	PCI_PRODUCT_O2MICRO_OZ6729	0x6729		/* OZ6729 PCI-PCMCIA Bridge */
+#define	PCI_PRODUCT_O2MICRO_OZ6730	0x673A		/* OZ6730 PCI-PCMCIA Bridge */
+#define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832/OZ6833 PCI-CardBus Bridge */
+#define	PCI_PRODUCT_O2MICRO_OZ6860	0x6836		/* OZ6860 PCI-Cardbus Bridge */
+#define	PCI_PRODUCT_O2MICRO_OZ6872	0x6872		/* OZ6812/OZ6872 PCI-Cardbus Bridge */
 
 /* Evans & Sutherland products */
 #define	PCI_PRODUCT_ES_FREEDOM	0x0001		/* Freedom PCI-GBus Interface */
