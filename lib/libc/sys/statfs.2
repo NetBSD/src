@@ -1,4 +1,4 @@
-.\"	$NetBSD: statfs.2,v 1.13 1997/12/18 07:24:23 mikel Exp $
+.\"	$NetBSD: statfs.2,v 1.14 1998/02/02 05:20:37 perry Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
+.\"	@(#)statfs.2	8.5 (Berkeley) 5/24/95
 .\"
-.Dd February 11, 1994
+.Dd May 24, 1995
 .Dt STATFS 2
 .Os
 .Sh NAME
@@ -80,6 +80,38 @@ struct statfs {
     char    f_mntfromname[MNAMELEN];  /* mounted file system */
 };
 .Ed
+The flags that may be returned include:
+.Bl -tag -width MNT_ASYNCHRONOUS
+.It Dv MNT_RDONLY
+The filesystem is mounted read-only;
+Even the super-user may not write on it.
+.It Dv MNT_NOEXEC
+Files may not be executed from the filesystem.
+.It Dv MNT_NOSUID
+Setuid and setgid bits on files are not honored when they are executed.
+.It Dv MNT_NODEV
+Special files in the filesystem may not be opened.
+.It Dv MNT_SYNCHRONOUS
+All I/O to the filesystem is done synchronously.
+.It Dv MNT_ASYNCHRONOUS
+No filesystem I/O is done synchronously.
+.It Dv MNT_LOCAL
+The filesystem resides locally.
+.It Dv MNT_QUOTA
+The filesystem has quotas enabled on it.
+.It Dv MNT_ROOTFS
+Identifies the root filesystem.
+.It Dv MNT_EXRDONLY
+The filesystem is exported read-only.
+.It Dv MNT_EXPORTED
+The filesystem is exported for both reading and writing.
+.It Dv MNT_DEFEXPORTED
+The filesystem is exported for both reading and writing to any Internet host.
+.It Dv MNT_EXPORTANON
+The filesystem maps all remote accesses to the anonymous user.
+.It Dv MNT_EXKERB
+The filesystem is exported with Kerberos uid mapping.
+.El
 .Pp
 Fields that are undefined for a particular file system are set to -1.
 .Fn Fstatfs
