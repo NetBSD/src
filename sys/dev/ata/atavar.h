@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.61 2004/08/20 17:19:44 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.62 2004/08/20 20:52:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -380,6 +380,8 @@ struct atac_softc {
 	struct ata_channel **atac_channels;
 	int		     atac_nchannels;
 
+	const struct ata_bustype *atac_bustype_ata;
+
 	/*
 	 * Glue between ATA and SCSIPI for the benefit of ATAPI.
 	 *
@@ -387,6 +389,7 @@ struct atac_softc {
 	 * devices.
 	 */
 	struct atapi_adapter atac_atapi_adapter;
+	void (*atac_atapibus_attach)(struct atabus_softc *);
 
 	/* Driver callback to probe for drives. */
 	void (*atac_probe)(struct ata_channel *);
