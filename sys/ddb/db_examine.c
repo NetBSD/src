@@ -1,4 +1,4 @@
-/*	$NetBSD: db_examine.c,v 1.22 2001/11/12 22:54:04 lukem Exp $	*/
+/*	$NetBSD: db_examine.c,v 1.23 2002/02/15 07:33:50 simonb Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.22 2001/11/12 22:54:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.23 2002/02/15 07:33:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_examine.c,v 1.22 2001/11/12 22:54:04 lukem Exp $"
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
 
-char	db_examine_format[TOK_STRING_SIZE] = "x";
+static char	db_examine_format[TOK_STRING_SIZE] = "x";
+
+static void	db_examine(db_addr_t, char *, int);
+static void	db_search(db_addr_t, int, db_expr_t, db_expr_t, unsigned int);
 
 /*
  * Examine (print) data.  Syntax is:
@@ -58,11 +61,7 @@ char	db_examine_format[TOK_STRING_SIZE] = "x";
  */
 /*ARGSUSED*/
 void
-db_examine_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_examine_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	if (modif[0] != '\0')
 		db_strcpy(db_examine_format, modif);
@@ -73,11 +72,8 @@ db_examine_cmd(addr, have_addr, count, modif)
 	db_examine((db_addr_t) addr, db_examine_format, count);
 }
 
-void
-db_examine(addr, fmt, count)
-	db_addr_t	addr;
-	char *		fmt;	/* format string */
-	int		count;	/* repeat count */
+static void
+db_examine(db_addr_t addr, char *fmt, int count)
 {
 	int		i, c;
 	db_expr_t	value;
@@ -130,19 +126,19 @@ db_examine(addr, fmt, count)
 				db_printf("%-*lx", width, value);
 				break;
 			case 'm':	/* hex dump */
-				/* 
+				/*
 				 * Print off in chunks of size. Try to print 16
-				 * bytes at a time into 4 columns. This 
+				 * bytes at a time into 4 columns. This
 				 * loops modify's count extra times in order
 				 * to get the nicely formatted lines.
 				 */
-				
+
 				bytes = 0;
 				do {
 					for (i = 0; i < size; i++) {
-						value = 
+						value =
  						    db_get_value(addr+bytes, 1,
-						        FALSE);
+							FALSE);
 						db_printf("%02lx", value);
 						bytes++;
 						if (!(bytes % 4))
@@ -160,7 +156,7 @@ db_examine(addr, fmt, count)
 						db_printf("%c", (char)value);
 					else
 						db_printf(".");
-				}				
+				}
 				db_printf("\n");
 				break;
 			case 'z':	/* signed hex */
@@ -223,15 +219,11 @@ db_examine(addr, fmt, count)
 /*
  * Print value.
  */
-char	db_print_format = 'x';
+static char	db_print_format = 'x';
 
 /*ARGSUSED*/
 void
-db_print_cmd(addr, have_addr, count, modif)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char *		modif;
+db_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	db_expr_t	value;
 
@@ -282,19 +274,18 @@ db_print_cmd(addr, have_addr, count, modif)
 }
 
 void
-db_print_loc_and_inst(loc)
-	db_addr_t	loc;
+db_print_loc_and_inst(db_addr_t loc)
 {
+
 	db_printsym(loc, DB_STGY_PROC, db_printf);
 	db_printf(":\t");
 	(void) db_disasm(loc, FALSE);
 }
 
 void
-db_strcpy(dst, src)
-	char *dst;
-	char *src;
+db_strcpy(char *dst, char *src)
 {
+
 	while ((*dst++ = *src++) != '\0')
 		;
 }
@@ -305,11 +296,7 @@ db_strcpy(dst, src)
  */
 /*ARGSUSED*/
 void
-db_search_cmd(daddr, have_addr, dcount, modif)
-	db_expr_t	daddr;
-	int		have_addr;
-	db_expr_t	dcount;
-	char *		modif;
+db_search_cmd(db_expr_t daddr, int have_addr, db_expr_t dcount, char *modif)
 {
 	int		t;
 	db_addr_t	addr;
@@ -373,13 +360,9 @@ db_search_cmd(daddr, have_addr, dcount, modif)
 	db_search(addr, size, value, mask, count);
 }
 
-void
-db_search(addr, size, value, mask, count)
-	db_addr_t	addr;
-	int		size;
-	db_expr_t	value;
-	db_expr_t	mask;
-	unsigned int	count;
+static void
+db_search(db_addr_t addr, int size, db_expr_t value, db_expr_t mask,
+    unsigned int count)
 {
 	while (count-- != 0) {
 		db_prev = addr;
