@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.64 1998/09/06 21:14:57 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.65 1998/09/07 23:02:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,6 +56,15 @@
 #include <sys/device.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h>
+#else
+#define uvm_km_valloc(m,s)	kmem_alloc_pageable(m,s)
+#define uvm_pglistalloc(s,l,h,a,b,m,n,f) \
+				vm_page_alloc_memory(s,l,h,a,b,m,n,f)
+#endif
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -72,12 +81,16 @@
 #include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/memreg.h>
 
+struct cpu_softc {
+	struct device	sc_dv;		/* generic device info */
+	struct cpu_info	*sc_cpuinfo;
+};
+
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
 
-int		 foundfpu;
 struct proc	*fpproc;
 
 /* The CPU configuration driver. */
@@ -90,8 +103,8 @@ struct cfattach cpu_ca = {
 
 static char *fsrtoname __P((int, int, int, char *));
 void cache_print __P((struct cpu_softc *));
-void cpu_spinup __P((struct cpu_softc *));
-void fpu_init __P((struct cpu_softc *));
+void cpu_spinup __P((struct cpu_info *));
+void fpu_init __P((struct cpu_info *));
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
 #define	IU_VERS(psr)	(((psr) >> 24) & 0xf)
@@ -99,6 +112,62 @@ void fpu_init __P((struct cpu_softc *));
 #define SRMMU_IMPL(mmusr)	((u_int)(mmusr) >> 28)
 #define SRMMU_VERS(mmusr)	(((mmusr) >> 24) & 0xf)
 
+
+struct cpu_info	*alloc_cpuinfo __P((void));
+
+
+struct cpu_info *
+alloc_cpuinfo()
+{
+	int align;
+	vaddr_t sva, va;
+	vsize_t sz, esz;
+	vaddr_t low, high;
+	vm_page_t m;
+	struct pglist mlist;
+
+	/*
+	 * Allocate aligned KVA.
+	 */
+	align = NBPG;
+	if (cpuinfo.cacheinfo.c_totalsize > align)
+		/* Assumes `c_totalsize' is power of two */
+		align = cpuinfo.cacheinfo.c_totalsize;
+
+	sz = (sizeof(struct cpu_info) + NBPG - 1) & -NBPG;
+	esz = sz + align - NBPG;
+
+	if ((sva = uvm_km_valloc(kernel_map, esz)) == 0)
+		panic("alloc_cpuinfo: no virtual space");
+
+	va = sva + (((CPUINFO_VA & (align - 1)) + align - sva) & (align - 1));
+
+	/* Return excess virtual memory space */
+	if (va != sva)
+		(void)uvm_unmap(kernel_map, sva, va, 0);
+	if (va + sz != sva + esz)
+		(void)uvm_unmap(kernel_map, va + sz, sva + esz, 0);
+
+	/* Allocate physical pages */
+	low = vm_first_phys;
+	high = vm_first_phys + vm_num_phys - NBPG;
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc(sz, low, high, NBPG, 0, &mlist, 1, 0) != 0)
+		panic("alloc_cpuinfo: no pages");
+
+	sva = va;	/* re-use sva */
+
+	/* Map the pages */
+	for (m = TAILQ_FIRST(&mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		paddr_t pa = VM_PAGE_TO_PHYS(m);
+		pmap_enter(pmap_kernel(), va, pa,
+			   VM_PROT_READ|VM_PROT_WRITE, 1);
+		va += NBPG;
+	}
+
+	bzero((void *)sva, sizeof(struct cpu_info));
+	return ((struct cpu_info *)sva);
+}
 
 #ifdef notdef
 /*
@@ -161,62 +230,54 @@ cpu_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+static	struct cpu_softc *bootcpu;
 	struct mainbus_attach_args *ma = aux;
 	struct cpu_softc *sc = (struct cpu_softc *)self;
-	register int node;
-	register char *fpuname;
+	struct cpu_info *cip;
+	int node, mid;
+	char *fpuname;
 	char fpbuf[40];
 
-	sc->node = node = ma->ma_node;
+	node = ma->ma_node;
 
 	/*
 	 * First, find out if we're attaching the boot CPU.
 	 */
-	if (node == 0)
-		sc->master = 1;
-	else {
-		sc->mid = getpropint(node, "mid", 0);
-		if (sc->mid != 0)
-			printf(": mid %d", sc->mid);
-		if (sc->mid == 0 || sc->mid == getmid() + 8 /*XXX*/)
-			sc->master = 1;
+	mid = getpropint(node, "mid", 0);
+	if (bootcpu == NULL) {
+		bootcpu = sc;
+		cip = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
+		cip->master = 1;
+	} else {
+		cip = alloc_cpuinfo();
 	}
 
-	if (sc->master) {
-		/*
-		 * Gross, but some things in cpuinfo may already have
-		 * been setup by early routines like pmap_bootstrap().
-		 */
-		bcopy(&sc->dv, &cpuinfo, sizeof(sc->dv));
-		bcopy(&cpuinfo, sc, sizeof(cpuinfo));
-	}
+	if (mid != 0)
+		printf(": mid %d", mid);
+	cip->mid = mid;
 
-	getcpuinfo(sc, node);
+	getcpuinfo(cip, node);
 
 	fpuname = "no";
-	if (sc->master) {
-		if (sc->hotfix)
-			sc->hotfix(sc);
+	if (cip->master) {
+		if (cip->hotfix)
+			cip->hotfix(cip);
 
-		fpu_init(sc);
-		if (foundfpu)
-			fpuname = fsrtoname(sc->cpu_impl, sc->cpu_vers,
-					    sc->fpuvers, fpbuf);
-	}
-	/* XXX - multi-processor: take care of `cpu_model' and `foundfpu' */
+		fpu_init(cip);
+		if (cip->fpupresent)
+			fpuname = fsrtoname(cip->cpu_impl, cip->cpu_vers,
+					    cip->fpuvers, fpbuf);
 
-	sprintf(cpu_model, "%s @ %s MHz, %s FPU",
-		sc->cpu_name,
-		clockfreq(sc->hz), fpuname);
-	printf(": %s\n", cpu_model);
+		sprintf(cpu_model, "%s @ %s MHz, %s FPU",
+			cip->cpu_name,
+			clockfreq(cip->hz), fpuname);
+		printf(": %s\n", cpu_model);
 
-	if (sc->cacheinfo.c_totalsize != 0)
-		cache_print(sc);
+		if (cip->cacheinfo.c_totalsize != 0)
+			cache_print(sc);
 
-	if (sc->master) {
-		bcopy(sc, &cpuinfo, sizeof(cpuinfo));
 		/* Enable the cache */
-		sc->cache_enable();
+		cip->cache_enable();
 		return;
 	}
 
@@ -225,7 +286,7 @@ cpu_attach(parent, self, aux)
 
 #if 0
 void
-cpu_(sc)
+cpu_hatch(sc)
 	struct cpu_softc *sc;
 {
 	if (sc->hotfix)
@@ -241,16 +302,19 @@ cpu_(sc)
 
 void
 cpu_spinup(sc)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 {
 #if 0
 	pmap_cpusetup();
 #endif
 }
 
+/*
+ * fpu_init() must be run on associated CPU.
+ */
 void
 fpu_init(sc)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 {
 	struct fpstate fpstate;
 
@@ -271,16 +335,16 @@ fpu_init(sc)
 		(fpstate.fs_fsr >> FSR_VER_SHIFT) & (FSR_VER >> FSR_VER_SHIFT);
 
 	if (sc->fpuvers != 7)
-		foundfpu = 1;
+		sc->fpupresent = 1;
 }
 
 void
 cache_print(sc)
 	struct cpu_softc *sc;
 {
-	struct cacheinfo *ci = &sc->cacheinfo;
+	struct cacheinfo *ci = &sc->sc_cpuinfo->cacheinfo;
 
-	printf("%s:", sc->dv.dv_xname);
+	printf("%s:", sc->sc_dv.dv_xname);
 
 	if (ci->c_split) {
 		char *sep = "";
@@ -319,21 +383,21 @@ cache_print(sc)
 /*------------*/
 
 
-void cpumatch_unknown __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_sun4 __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_sun4c __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_viking __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_hypersparc __P((struct cpu_softc *, struct module_info *, int));
-void cpumatch_turbosparc __P((struct cpu_softc *, struct module_info *, int));
+void cpumatch_unknown __P((struct cpu_info *, struct module_info *, int));
+void cpumatch_sun4 __P((struct cpu_info *, struct module_info *, int));
+void cpumatch_sun4c __P((struct cpu_info *, struct module_info *, int));
+void cpumatch_viking __P((struct cpu_info *, struct module_info *, int));
+void cpumatch_hypersparc __P((struct cpu_info *, struct module_info *, int));
+void cpumatch_turbosparc __P((struct cpu_info *, struct module_info *, int));
 
-void getcacheinfo_sun4 __P((struct cpu_softc *, int node));
-void getcacheinfo_sun4c __P((struct cpu_softc *, int node));
-void getcacheinfo_obp __P((struct cpu_softc *, int node));
+void getcacheinfo_sun4 __P((struct cpu_info *, int node));
+void getcacheinfo_sun4c __P((struct cpu_info *, int node));
+void getcacheinfo_obp __P((struct cpu_info *, int node));
 
-void sun4_hotfix __P((struct cpu_softc *));
-void viking_hotfix __P((struct cpu_softc *));
-void turbosparc_hotfix __P((struct cpu_softc *));
-void swift_hotfix __P((struct cpu_softc *));
+void sun4_hotfix __P((struct cpu_info *));
+void viking_hotfix __P((struct cpu_info *));
+void turbosparc_hotfix __P((struct cpu_info *));
+void swift_hotfix __P((struct cpu_info *));
 
 void ms1_mmu_enable __P((void));
 void viking_mmu_enable __P((void));
@@ -357,7 +421,7 @@ struct module_info module_unknown = {
 
 void
 cpumatch_unknown(sc, mp, node)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 	struct module_info *mp;
 	int	node;
 {
@@ -390,7 +454,7 @@ struct module_info module_sun4 = {
 
 void
 getcacheinfo_sun4(sc, node)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 	int	node;
 {
 	struct cacheinfo *ci = &sc->cacheinfo;
@@ -448,7 +512,7 @@ void	getidprom __P((struct idprom *, int size));
 
 void
 cpumatch_sun4(sc, mp, node)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 	struct module_info *mp;
 	int	node;
 {
@@ -514,7 +578,7 @@ struct module_info module_sun4c = {
 
 void
 cpumatch_sun4c(sc, mp, node)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 	struct module_info *mp;
 	int	node;
 {
@@ -531,7 +595,7 @@ cpumatch_sun4c(sc, mp, node)
 
 void
 getcacheinfo_sun4c(sc, node)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 	int node;
 {
 	struct cacheinfo *ci = &sc->cacheinfo;
@@ -575,7 +639,7 @@ getcacheinfo_sun4c(sc, node)
 
 void
 sun4_hotfix(sc)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 {
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0) {
 		kvm_uncache((caddr_t)trapbase, 1);
@@ -587,7 +651,7 @@ sun4_hotfix(sc)
 #if defined(SUN4M)
 void
 getcacheinfo_obp(sc, node)
-	struct	cpu_softc *sc;
+	struct	cpu_info *sc;
 	int	node;
 {
 	struct cacheinfo *ci = &sc->cacheinfo;
@@ -757,7 +821,7 @@ struct module_info module_swift = {		/* UNTESTED */
 
 void
 swift_hotfix(sc)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 {
 	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
@@ -794,7 +858,7 @@ struct module_info module_viking = {		/* UNTESTED */
 
 void
 cpumatch_viking(sc, mp, node)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 	struct module_info *mp;
 	int	node;
 {
@@ -804,7 +868,7 @@ cpumatch_viking(sc, mp, node)
 
 void
 viking_hotfix(sc)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 {
 	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
 
@@ -873,7 +937,7 @@ struct module_info module_hypersparc = {		/* UNTESTED */
 
 void
 cpumatch_hypersparc(sc, mp, node)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 	struct module_info *mp;
 	int	node;
 {
@@ -941,7 +1005,7 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 
 void
 cpumatch_turbosparc(sc, mp, node)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 	struct module_info *mp;
 	int	node;
 {
@@ -976,7 +1040,7 @@ cpumatch_turbosparc(sc, mp, node)
 
 void
 turbosparc_hotfix(sc)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 {
 	int pcf;
 
@@ -1037,7 +1101,7 @@ struct cpu_conf {
 
 void
 getcpuinfo(sc, node)
-	struct cpu_softc *sc;
+	struct cpu_info *sc;
 	int	node;
 {
 	struct cpu_conf *mp;
@@ -1143,7 +1207,7 @@ getcpuinfo(sc, node)
 		}
 
 		/*
-		 * Copy CPU/MMU/Cache specific routines into cpu_softc.
+		 * Copy CPU/MMU/Cache specific routines into cpu_info.
 		 */
 #define MPCOPY(x)	if (sc->x == 0) sc->x = mp->minfo->x;
 		MPCOPY(hotfix);
