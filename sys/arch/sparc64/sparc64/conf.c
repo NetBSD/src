@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2000/05/19 05:26:18 eeh Exp $ */
+/*	$NetBSD: conf.c,v 1.8 2000/05/23 05:11:28 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,6 +74,7 @@
 #include "kbd.h"
 #include "ms.h"
 #include "zstty.h"
+#include "pcons.h"
 
 #include "fdc.h"		/* has NFDC and NFD; see files.sparc */
 #include "bwtwo.h"
@@ -244,7 +245,7 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 119: random source pseudo-device */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 120: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 121: RAIDframe disk driver */
-	cdev_tty_init(1,pcons),		/* 122: PROM console */
+	cdev_tty_init(NPCONS,pcons),	/* 122: PROM console */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
