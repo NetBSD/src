@@ -95,7 +95,7 @@ const char *X509_verify_cert_error_string(long n)
 	case X509_V_ERR_CRL_NOT_YET_VALID:
 		return("CRL is not yet valid");
 	case X509_V_ERR_CERT_HAS_EXPIRED:
-		return("Certificate has expired");
+		return("certificate has expired");
 	case X509_V_ERR_CRL_HAS_EXPIRED:
 		return("CRL has expired");
 	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
@@ -132,6 +132,15 @@ const char *X509_verify_cert_error_string(long n)
 		return ("certificate rejected");
 	case X509_V_ERR_APPLICATION_VERIFICATION:
 		return("application verification failure");
+	case X509_V_ERR_SUBJECT_ISSUER_MISMATCH:
+		return("subject issuer mismatch");
+	case X509_V_ERR_AKID_SKID_MISMATCH:
+		return("authority and subject key identifier mismatch");
+	case X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH:
+		return("authority and issuer serial number mismatch");
+	case X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
+		return("key usage does not include certificate signing");
+
 	default:
 		sprintf(buf,"error number %ld",n);
 		return(buf);

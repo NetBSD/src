@@ -64,7 +64,7 @@
 #include <openssl/objects.h>
 #include <openssl/asn1_mac.h>
 
-#ifdef NEG_PUBKEY_BUG
+#ifndef NO_NEG_PUBKEY_BUG
 #define d2i_ASN1_INTEGER d2i_ASN1_UINTEGER
 #endif
 
@@ -84,6 +84,7 @@ DSA *d2i_DSAparams(DSA **a, unsigned char **pp, long length)
 	if ((ret->g=BN_bin2bn(bs->data,bs->length,ret->g)) == NULL) goto err_bn;
 
 	M_ASN1_BIT_STRING_free(bs);
+	bs = NULL;
 
 	M_ASN1_D2I_Finish_2(a);
 

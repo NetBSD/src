@@ -188,7 +188,7 @@ void bn_sqr_normal(BN_ULONG *r, BN_ULONG *a, int n, BN_ULONG *tmp)
 
 #ifdef BN_RECURSION
 /* r is 2*n words in size,
- * a and b are both n words in size.
+ * a and b are both n words in size.    (There's not actually a 'b' here ...)
  * n must be a power of 2.
  * We multiply and return the result.
  * t must be 2*n words in size
@@ -245,7 +245,7 @@ printf(" bn_sqr_recursive %d * %d\n",n2,n2);
 	if (!zero)
 		bn_sqr_recursive(&(t[n2]),t,n,p);
 	else
-		memset(&(t[n2]),0,n*sizeof(BN_ULONG));
+		memset(&(t[n2]),0,n2*sizeof(BN_ULONG));
 	bn_sqr_recursive(r,a,n,p);
 	bn_sqr_recursive(&(r[n2]),&(a[n]),n,p);
 

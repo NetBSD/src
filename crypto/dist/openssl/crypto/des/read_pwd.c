@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#if !defined(MSDOS) && !defined(VMS) && !defined(WIN32)
+#if !defined(MSDOS) && !defined(VMS) && !defined(WIN32) && !defined(VXWORKS)
 #include <openssl/opensslconf.h>
 #ifdef OPENSSL_UNISTD
 # include OPENSSL_UNISTD
@@ -133,6 +133,12 @@
 #define SGTTY
 #endif
 
+#if defined(VXWORKS)
+#undef TERMIOS
+#undef TERMIO
+#undef SGTTY
+#endif
+
 #ifdef TERMIOS
 #include <termios.h>
 #define TTY_STRUCT		struct termios
@@ -161,7 +167,7 @@
 #include <sys/ioctl.h>
 #endif
 
-#ifdef MSDOS
+#if defined(MSDOS) && !defined(__CYGWIN32__)
 #include <conio.h>
 #define fgets(a,b,c) noecho_fgets(a,b,c)
 #endif
@@ -240,7 +246,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	long status;
 	unsigned short channel = 0;
 #else
-#ifndef MSDOS
+#if !defined(MSDOS) && !defined(VXWORKS)
 	TTY_STRUCT tty_orig,tty_new;
 #endif
 #endif
@@ -265,13 +271,17 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 	is_a_tty=1;
 	tty=NULL;
 
-#ifndef MSDOS
-	if ((tty=fopen("/dev/tty","r")) == NULL)
-		tty=stdin;
-#else /* MSDOS */
+#ifdef MSDOS
 	if ((tty=fopen("con","r")) == NULL)
 		tty=stdin;
-#endif /* MSDOS */
+#elif defined(MAC_OS_pre_X) || defined(VXWORKS)
+	tty=stdin;
+#else
+#ifndef MPE
+	if ((tty=fopen("/dev/tty","r")) == NULL)
+#endif
+		tty=stdin;
+#endif
 
 #if defined(TTY_get) && !defined(VMS)
 	if (TTY_get(fileno(tty),&tty_orig) == -1)
@@ -310,7 +320,11 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 
 #if defined(TTY_set) && !defined(VMS)
 	if (is_a_tty && (TTY_set(fileno(tty),&tty_new) == -1))
+#ifdef MPE 
+		; /* MPE lies -- echo really has been disabled */
+#else
 		return(-1);
+#endif
 #endif
 #ifdef VMS
 	tty_new[0] = tty_orig[0];
@@ -358,7 +372,7 @@ int des_read_pw(char *buf, char *buff, int size, const char *prompt,
 
 error:
 	fprintf(stderr,"\n");
-#ifdef DEBUG
+#if 0
 	perror("fgets(tty)");
 #endif
 	/* What can we do if there is an error? */

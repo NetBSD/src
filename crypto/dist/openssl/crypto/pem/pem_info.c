@@ -237,9 +237,9 @@ start:
 		else	{
 			/* unknown */
 			}
-		if (name != NULL) Free(name);
-		if (header != NULL) Free(header);
-		if (data != NULL) Free(data);
+		if (name != NULL) OPENSSL_free(name);
+		if (header != NULL) OPENSSL_free(header);
+		if (data != NULL) OPENSSL_free(data);
 		name=NULL;
 		header=NULL;
 		data=NULL;
@@ -268,9 +268,9 @@ err:
 		ret=NULL;
 		}
 		
-	if (name != NULL) Free(name);
-	if (header != NULL) Free(header);
-	if (data != NULL) Free(data);
+	if (name != NULL) OPENSSL_free(name);
+	if (header != NULL) OPENSSL_free(header);
+	if (data != NULL) OPENSSL_free(data);
 	return(ret);
 	}
 
@@ -305,7 +305,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 		{
 		if ( (xi->enc_data!=NULL) && (xi->enc_len>0) )
 			{
-			/* copy from wierdo names into more normal things */
+			/* copy from weirdo names into more normal things */
 			iv=xi->enc_cipher.iv;
 			data=(unsigned char *)xi->enc_data;
 			i=xi->enc_len;
@@ -326,7 +326,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 			/* create the right magic header stuff */
 			buf[0]='\0';
 			PEM_proc_type(buf,PEM_TYPE_ENCRYPTED);
-			PEM_dek_info(buf,objstr,8,(char *)iv);
+			PEM_dek_info(buf,objstr,enc->iv_len,(char *)iv);
 
 			/* use the normal code to write things out */
 			i=PEM_write_bio(bp,PEM_STRING_RSA,buf,data,i);
@@ -346,7 +346,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 		}
 
 	/* if we have a certificate then write it out now */
-	if ((xi->x509 != NULL) || (PEM_write_bio_X509(bp,xi->x509) <= 0))
+	if ((xi->x509 != NULL) && (PEM_write_bio_X509(bp,xi->x509) <= 0))
 		goto err;
 
 	/* we are ignoring anything else that is loaded into the X509_INFO

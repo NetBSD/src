@@ -88,7 +88,7 @@ int MAIN(int argc, char **argv)
 	int informat,outformat;
 	char *infile,*outfile,*prog;
 	int print_certs=0,text=0,noout=0;
-	int ret=0;
+	int ret=1;
 
 	apps_startup();
 
@@ -196,7 +196,15 @@ bad:
 		}
 
 	if (outfile == NULL)
+		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifdef VMS
+		{
+		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+		out = BIO_push(tmpbio, out);
+		}
+#endif
+		}
 	else
 		{
 		if (BIO_write_filename(out,outfile) <= 0)
@@ -280,6 +288,6 @@ bad:
 end:
 	if (p7 != NULL) PKCS7_free(p7);
 	if (in != NULL) BIO_free(in);
-	if (out != NULL) BIO_free(out);
+	if (out != NULL) BIO_free_all(out);
 	EXIT(ret);
 	}

@@ -85,16 +85,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, BIGNUM *a, BIGNUM *b,
 
 	if (a == b)
 		{
-#if 0
-		bn_wexpand(tmp,a->top*2);
-		bn_wexpand(tmp2,a->top*4);
-		bn_sqr_recursive(tmp->d,a->d,a->top,tmp2->d);
-		tmp->top=a->top*2;
-		if (tmp->d[tmp->top-1] == 0)
-			tmp->top--;
-#else
 		if (!BN_sqr(tmp,a,ctx)) goto err;
-#endif
 		}
 	else
 		{
@@ -157,7 +148,22 @@ int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 #endif
 	for (i=0; i<nl; i++)
 		{
+#ifdef __TANDEM
+                {
+                   long long t1;
+                   long long t2;
+                   long long t3;
+                   t1 = rp[0] * (n0 & 0177777);
+                   t2 = 037777600000l;
+                   t2 = n0 & t2;
+                   t3 = rp[0] & 0177777;
+                   t2 = (t3 * t2) & BN_MASK2;
+                   t1 = t1 + t2;
+                   v=bn_mul_add_words(rp,np,nl,(BN_ULONG) t1);
+                }
+#else
 		v=bn_mul_add_words(rp,np,nl,(rp[0]*n0)&BN_MASK2);
+#endif
 		nrp++;
 		rp++;
 		if (((nrp[-1]+=v)&BN_MASK2) >= v)
@@ -175,6 +181,7 @@ int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 #if 0
 	BN_rshift(ret,r,mont->ri);
 #else
+	ret->neg = r->neg;
 	x=ri;
 	rp=ret->d;
 	ap= &(r->d[x]);
@@ -217,7 +224,7 @@ int BN_from_montgomery(BIGNUM *ret, BIGNUM *a, BN_MONT_CTX *mont,
 
 	if (!BN_mul(t1,t2,&mont->N,ctx)) goto err;
 	if (!BN_add(t2,a,t1)) goto err;
-	BN_rshift(ret,t2,mont->ri);
+	if (!BN_rshift(ret,t2,mont->ri)) goto err;
 #endif /* MONT_WORD */
 
 	if (BN_ucmp(ret, &(mont->N)) >= 0)
@@ -234,7 +241,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 	{
 	BN_MONT_CTX *ret;
 
-	if ((ret=(BN_MONT_CTX *)Malloc(sizeof(BN_MONT_CTX))) == NULL)
+	if ((ret=(BN_MONT_CTX *)OPENSSL_malloc(sizeof(BN_MONT_CTX))) == NULL)
 		return(NULL);
 
 	BN_MONT_CTX_init(ret);
@@ -260,7 +267,7 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
 	BN_free(&(mont->N));
 	BN_free(&(mont->Ni));
 	if (mont->flags & BN_FLG_MALLOCED)
-		Free(mont);
+		OPENSSL_free(mont);
 	}
 
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
@@ -277,48 +284,56 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		BN_ULONG buf[2];
 
 		mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
-		BN_zero(R);
-		BN_set_bit(R,BN_BITS2);			/* R */
+		if (!(BN_zero(R))) goto err;
+		if (!(BN_set_bit(R,BN_BITS2))) goto err;	/* R */
 
 		buf[0]=mod->d[0]; /* tmod = N mod word size */
 		buf[1]=0;
 		tmod.d=buf;
 		tmod.top=1;
-		tmod.max=2;
+		tmod.dmax=2;
 		tmod.neg=mod->neg;
 							/* Ri = R^-1 mod N*/
 		if ((BN_mod_inverse(&Ri,R,&tmod,ctx)) == NULL)
 			goto err;
-		BN_lshift(&Ri,&Ri,BN_BITS2);		/* R*Ri */
+		/* R*Ri */
+		if (!(BN_lshift(&Ri,&Ri,BN_BITS2))) goto err;
 		if (!BN_is_zero(&Ri))
-			BN_sub_word(&Ri,1);
+			{
+		   	if (!BN_sub_word(&Ri,1)) goto err;
+			}
 		else /* if N mod word size == 1 */
-			BN_set_word(&Ri,BN_MASK2);  /* Ri-- (mod word size) */
-		BN_div(&Ri,NULL,&Ri,&tmod,ctx);	/* Ni = (R*Ri-1)/N,
-		                                 * keep only least significant word: */
+		   	/* Ri-- (mod word size) */
+			{
+			if (!BN_set_word(&Ri,BN_MASK2)) goto err;
+			}
+		/* Ni = (R*Ri-1)/N, keep only least significant word: */
+                if (!(BN_div(&Ri,NULL,&Ri,&tmod,ctx))) goto err;
 		mont->n0=Ri.d[0];
 		BN_free(&Ri);
 		}
 #else /* !MONT_WORD */
 		{ /* bignum version */
 		mont->ri=BN_num_bits(mod);
-		BN_zero(R);
-		BN_set_bit(R,mont->ri);			/* R = 2^ri */
+		if (!(BN_zero(R))) goto err;
+		/* R = 2^ri */
+		if (!(BN_set_bit(R,mont->ri))) goto err;
 							/* Ri = R^-1 mod N*/
 		if ((BN_mod_inverse(&Ri,R,mod,ctx)) == NULL)
 			goto err;
-		BN_lshift(&Ri,&Ri,mont->ri);		/* R*Ri */
-		BN_sub_word(&Ri,1);
+		/* R*Ri */
+		if (!(BN_lshift(&Ri,&Ri,mont->ri))) goto err;
+		if (!(BN_sub_word(&Ri,1))) goto err;
 							/* Ni = (R*Ri-1) / N */
-		BN_div(&(mont->Ni),NULL,&Ri,mod,ctx);
+		if (!(BN_div(&(mont->Ni),NULL,&Ri,mod,ctx))) goto err;
 		BN_free(&Ri);
 		}
 #endif
 
 	/* setup RR for conversions */
-	BN_zero(&(mont->RR));
-	BN_set_bit(&(mont->RR),mont->ri*2);
-	BN_mod(&(mont->RR),&(mont->RR),&(mont->N),ctx);
+	if (!(BN_zero(&(mont->RR)))) goto err;
+	if (!(BN_set_bit(&(mont->RR),mont->ri*2))) goto err;
+	if (!(BN_mod(&(mont->RR),&(mont->RR),&(mont->N),ctx))) goto err;
 
 	return(1);
 err:
@@ -329,9 +344,9 @@ BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
 	{
 	if (to == from) return(to);
 
-	BN_copy(&(to->RR),&(from->RR));
-	BN_copy(&(to->N),&(from->N));
-	BN_copy(&(to->Ni),&(from->Ni));
+	if (!(BN_copy(&(to->RR),&(from->RR)))) return NULL;
+	if (!(BN_copy(&(to->N),&(from->N)))) return NULL;
+	if (!(BN_copy(&(to->Ni),&(from->Ni)))) return NULL;
 	to->ri=from->ri;
 	to->n0=from->n0;
 	return(to);

@@ -12,7 +12,7 @@ $rm='del';
 
 # C compiler stuff
 $cc='cl';
-$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN';
+$cflags=' /MD /W3 /WX /G5 /Ox /O2 /Ob2 /Gs0 /GF /Gy /nologo -DWIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
 $lflags="/nologo /subsystem:console /machine:I386 /opt:ref";
 $mlflags='';
 
@@ -22,7 +22,7 @@ $inc_def="inc32";
 
 if ($debug)
 	{
-	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWIN32 -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG";
+	$cflags=" /MDd /W3 /WX /Zi /Yd /Od /nologo -DWIN32 -D_DEBUG -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -DDEBUG -DDSO_WIN32";
 	$lflags.=" /debug";
 	$mlflags.=' /debug';
 	}
@@ -67,24 +67,24 @@ $bf_enc_src='';
 
 if (!$no_asm)
 	{
-	$bn_asm_obj='crypto\bn\asm\bn-win32.obj';
-	$bn_asm_src='crypto\bn\asm\bn-win32.asm';
-	$des_enc_obj='crypto\des\asm\d-win32.obj crypto\des\asm\y-win32.obj';
-	$des_enc_src='crypto\des\asm\d-win32.asm crypto\des\asm\y-win32.asm';
-	$bf_enc_obj='crypto\bf\asm\b-win32.obj';
-	$bf_enc_src='crypto\bf\asm\b-win32.asm';
-	$cast_enc_obj='crypto\cast\asm\c-win32.obj';
-	$cast_enc_src='crypto\cast\asm\c-win32.asm';
-	$rc4_enc_obj='crypto\rc4\asm\r4-win32.obj';
-	$rc4_enc_src='crypto\rc4\asm\r4-win32.asm';
-	$rc5_enc_obj='crypto\rc5\asm\r5-win32.obj';
-	$rc5_enc_src='crypto\rc5\asm\r5-win32.asm';
-	$md5_asm_obj='crypto\md5\asm\m5-win32.obj';
-	$md5_asm_src='crypto\md5\asm\m5-win32.asm';
-	$sha1_asm_obj='crypto\sha\asm\s1-win32.obj';
-	$sha1_asm_src='crypto\sha\asm\s1-win32.asm';
-	$rmd160_asm_obj='crypto\ripemd\asm\rm-win32.obj';
-	$rmd160_asm_src='crypto\ripemd\asm\rm-win32.asm';
+	$bn_asm_obj='crypto\bn\asm\bn_win32.obj';
+	$bn_asm_src='crypto\bn\asm\bn_win32.asm';
+	$des_enc_obj='crypto\des\asm\d_win32.obj crypto\des\asm\y_win32.obj';
+	$des_enc_src='crypto\des\asm\d_win32.asm crypto\des\asm\y_win32.asm';
+	$bf_enc_obj='crypto\bf\asm\b_win32.obj';
+	$bf_enc_src='crypto\bf\asm\b_win32.asm';
+	$cast_enc_obj='crypto\cast\asm\c_win32.obj';
+	$cast_enc_src='crypto\cast\asm\c_win32.asm';
+	$rc4_enc_obj='crypto\rc4\asm\r4_win32.obj';
+	$rc4_enc_src='crypto\rc4\asm\r4_win32.asm';
+	$rc5_enc_obj='crypto\rc5\asm\r5_win32.obj';
+	$rc5_enc_src='crypto\rc5\asm\r5_win32.asm';
+	$md5_asm_obj='crypto\md5\asm\m5_win32.obj';
+	$md5_asm_src='crypto\md5\asm\m5_win32.asm';
+	$sha1_asm_obj='crypto\sha\asm\s1_win32.obj';
+	$sha1_asm_src='crypto\sha\asm\s1_win32.asm';
+	$rmd160_asm_obj='crypto\ripemd\asm\rm_win32.obj';
+	$rmd160_asm_src='crypto\ripemd\asm\rm_win32.asm';
 	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
 	}
 
@@ -112,7 +112,8 @@ sub do_lib_rule
 	if (!$shlib)
 		{
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
-		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs\n<<\n";
+		$ex =' advapi32.lib';
+		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
 	else
 		{
