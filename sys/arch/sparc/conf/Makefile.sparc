@@ -1,5 +1,5 @@
 # from:	@(#)Makefile.sparc	8.1 (Berkeley) 7/19/93
-# $Id: Makefile.sparc,v 1.7 1994/03/17 09:24:05 pk Exp $
+# $Id: Makefile.sparc,v 1.8 1994/04/13 10:26:48 deraadt Exp $
 # Makefile for 4.4 BSD
 #
 # This makefile is constructed from a machine description:
@@ -114,7 +114,7 @@ assym.s: genassym
 	./genassym >assym.s
 
 genassym: genassym.o
-	${CC} -o $@ genassym.o
+	${CC} -static -o $@ genassym.o
 
 genassym.o: ${SPARC}/sparc/genassym.c
 	${CC} -c ${CFLAGS} -I/usr/include ${PARAM} $<
