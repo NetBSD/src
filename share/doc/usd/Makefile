@@ -3,6 +3,9 @@
 #Missing: 01.begin 02.learn 03.shell 05.dc 06.bc 08.mh 12.edtut 13.edadv
 #	  17.jove 18.sed 19.awk 20.msmacros 24.troff 25.trofftut 26.eqn
 #	  27.eqnguide 28.tbl 29.refer 30.invert 31.bib 32.diction
+#
+#Broken:  11.notes
+
 BINDIR=	/usr/share/doc/usd
 FILES=	00.contents Makefile Title
 SUBDIR=	04.csh 07.Mail \
