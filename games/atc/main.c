@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1998/09/13 15:20:31 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -55,7 +55,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1998/09/13 15:20:31 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ main(ac, av)
 	int			seed;
 	int			f_usage = 0, f_list = 0, f_showscore = 0;
 	int			f_printpath = 0;
-	char			*file = NULL;
+	const char		*file = NULL;
 	char			*name, *ptr;
 	struct sigaction	sa;
 #ifdef BSD
@@ -222,7 +222,7 @@ main(ac, av)
 
 int
 read_file(s)
-	char	*s;
+	const char	*s;
 {
 	extern FILE	*yyin;
 	int		retval;
@@ -242,7 +242,7 @@ read_file(s)
 		return (0);
 }
 
-char	*
+const char	*
 default_game()
 {
 	FILE		*fp;
@@ -267,13 +267,14 @@ default_game()
 	return (file);
 }
 
-char	*
+const char	*
 okay_game(s)
-	char	*s;
+	const char	*s;
 {
 	FILE		*fp;
 	static char	file[256];
-	char		*ret = NULL, line[256], games[256];
+	const char	*ret = NULL;
+	char		line[256], games[256];
 
 	strcpy(games, _PATH_GAMES);
 	strcat(games, GAMES);

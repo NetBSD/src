@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.7 1998/07/24 23:22:26 hubertf Exp $	*/
+/*	$NetBSD: log.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)log.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: log.c,v 1.7 1998/07/24 23:22:26 hubertf Exp $");
+__RCSID("$NetBSD: log.c,v 1.8 1998/11/10 13:43:31 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -61,10 +61,10 @@ int
 compar(va, vb)
 	const void *va, *vb;
 {
-	SCORE	*a, *b;
+	const SCORE	*a, *b;
 
-	a = (SCORE *)va;
-	b = (SCORE *)vb;
+	a = (const SCORE *)va;
+	b = (const SCORE *)vb;
 	if (b->planes == a->planes)
 		return (b->time - a->time);
 	else
@@ -81,7 +81,7 @@ compar(va, vb)
 #define MIN(t)		(((t) % SECAHOUR) / SECAMIN)
 #define SEC(t)		((t) % SECAMIN)
 
-char	*
+const char	*
 timestr(t)
 	int t;
 {

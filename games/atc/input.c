@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.10 1998/09/13 15:20:31 hubertf Exp $	*/
+/*	$NetBSD: input.c,v 1.11 1998/11/10 13:43:31 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.10 1998/09/13 15:20:31 hubertf Exp $");
+__RCSID("$NetBSD: input.c,v 1.11 1998/11/10 13:43:31 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -70,8 +70,8 @@ __RCSID("$NetBSD: input.c,v 1.10 1998/09/13 15:20:31 hubertf Exp $");
 typedef struct {
 	int	token;
 	int	to_state;
-	char	*str;
-	char	*(*func) __P((char));
+	const char	*str;
+	const char	*(*func) __P((char));
 } RULE;
 
 typedef struct {
@@ -233,7 +233,7 @@ int
 getcommand()
 {
 	int	c, i, done;
-	char	*s, *(*func) __P((char));
+	const char	*s, *(*func) __P((char));
 	PLANE	*pp;
 
 	rezero();
@@ -359,7 +359,7 @@ gettoken()
 		return (tval);
 }
 
-char	*
+const char	*
 setplane(c)
 	char c;
 {
@@ -373,7 +373,7 @@ setplane(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 turn(c)
 	char c;
 {
@@ -382,7 +382,7 @@ turn(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 circle(c)
 	char c;
 {
@@ -392,7 +392,7 @@ circle(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 left(c)
 	char c;
 {
@@ -403,7 +403,7 @@ left(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 right(c)
 	char c;
 {
@@ -414,7 +414,7 @@ right(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 Left(c)
 	char c;
 {
@@ -424,7 +424,7 @@ Left(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 Right(c)
 	char c;
 {
@@ -434,7 +434,7 @@ Right(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 delayb(c)
 	char c;
 {
@@ -480,7 +480,7 @@ delayb(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 beacon(c)
 	char c;
 {
@@ -488,7 +488,7 @@ beacon(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 ex_it(c)
 	char c;
 {
@@ -496,7 +496,7 @@ ex_it(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 airport(c)
 	char c;
 {
@@ -504,7 +504,7 @@ airport(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 climb(c)
 	char c;
 {
@@ -512,7 +512,7 @@ climb(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 descend(c)
 	char c;
 {
@@ -520,7 +520,7 @@ descend(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 setalt(c)
 	char c;
 {
@@ -530,7 +530,7 @@ setalt(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 setrelalt(c)
 	char c;
 {
@@ -555,7 +555,7 @@ setrelalt(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 benum(c)
 	char c;
 {
@@ -587,7 +587,7 @@ benum(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 to_dir(c)
 	char c;
 {
@@ -595,7 +595,7 @@ to_dir(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 rel_dir(c)
 	char c;
 {
@@ -620,7 +620,7 @@ rel_dir(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 mark(c)
 	char c;
 {
@@ -632,7 +632,7 @@ mark(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 unmark(c)
 	char c;
 {
@@ -644,7 +644,7 @@ unmark(c)
 	return (NULL);
 }
 
-char	*
+const char	*
 ignore(c)
 	char c;
 {

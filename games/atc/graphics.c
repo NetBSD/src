@@ -1,4 +1,4 @@
-/*	$NetBSD: graphics.c,v 1.4 1997/10/10 02:07:11 lukem Exp $	*/
+/*	$NetBSD: graphics.c,v 1.5 1998/11/10 13:43:30 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)graphics.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: graphics.c,v 1.4 1997/10/10 02:07:11 lukem Exp $");
+__RCSID("$NetBSD: graphics.c,v 1.5 1998/11/10 13:43:30 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,10 +130,11 @@ init_gr()
 
 void
 setup_screen(scp)
-	C_SCREEN	*scp;
+	const C_SCREEN	*scp;
 {
 	int	i, j;
-	char	str[3], *airstr;
+	char	str[3];
+	const char *airstr;
 
 	str[2] = '\0';
 
@@ -224,7 +225,7 @@ void
 draw_line(w, x, y, lx, ly, s)
 	WINDOW	*w;
 	int	 x, y, lx, ly;
-	char	*s;
+	const char	*s;
 {
 	int	dx, dy;
 
@@ -262,7 +263,7 @@ iomove(pos)
 void
 ioaddstr(pos, str)
 	int	 pos;
-	char	*str;
+	const char	*str;
 {
 	wmove(input, 0, pos);
 	waddstr(input, str);
@@ -281,7 +282,7 @@ ioclrtobot()
 void
 ioerror(pos, len, str)
 	int	 pos, len;
-	char	*str;
+	const char	*str;
 {
 	int	i;
 
@@ -380,8 +381,8 @@ planewin()
 
 void
 loser(p, s)
-	PLANE	*p;
-	char	*s;
+	const PLANE	*p;
+	const char	*s;
 {
 	int			c;
 #ifdef BSD

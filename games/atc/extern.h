@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 1998/09/13 15:27:26 hubertf Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 1998/11/10 13:43:30 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -47,7 +47,8 @@
  * For more info on this and all of my stuff, mail edjames@berkeley.edu.
  */
 
-extern char		GAMES[], *file;
+extern char		GAMES[];
+extern const char	*file;
 
 extern int		clck, safe_planes, start_time, test_mode;
 
@@ -76,23 +77,23 @@ int		dir_deg __P((int));
 int		dir_no __P((char));
 void		done_screen __P((void));
 void		draw_all __P((void));
-void		draw_line __P((WINDOW *, int, int, int, int, char *));
+void		draw_line __P((WINDOW *, int, int, int, int, const char *));
 void		erase_all __P((void));
 int		getAChar __P((void));
 int		getcommand __P((void));
 int		gettoken __P((void));
 void		init_gr __P((void));
-void		ioaddstr __P((int, char *));
+void		ioaddstr __P((int, const char *));
 void		ioclrtobot __P((void));
 void		ioclrtoeol __P((int));
-void		ioerror __P((int, int, char *));
+void		ioerror __P((int, int, const char *));
 void		iomove __P((int));
 int		list_games __P((void));
 int		log_score __P((int));
 void		log_score_quit __P((int)) __attribute__((__noreturn__));
-void		loser __P((PLANE *, char *)) __attribute__((__noreturn__));
+void		loser __P((const PLANE *, const char *)) __attribute__((__noreturn__));
 int		main __P((int, char *[]));
-char		name __P((PLANE *));
+char		name __P((const PLANE *));
 int		next_plane __P((void));
 void		noise __P((void));
 int		number __P((char));
@@ -100,39 +101,39 @@ void		planewin __P((void));
 int		pop __P((void));
 void		push __P((int, int));
 void		quit __P((int));
-int		read_file __P((char *));
+int		read_file __P((const char *));
 void		redraw __P((void));
 void		rezero __P((void));
-void		setup_screen __P((C_SCREEN *));
-int		too_close __P((PLANE *p1, PLANE *p2, int));
+void		setup_screen __P((const C_SCREEN *));
+int		too_close __P((const PLANE *p1, const PLANE *p2, int));
 void		update __P((int));
 int		yyerror __P((const char *));
 int		yylex __P((void));
 int		yyparse __P((void));
-char	       *Left __P((char));
-char	       *Right __P((char));
-char	       *airport __P((char));
-char	       *beacon __P((char));
-char	       *benum __P((char));
-char	       *circle __P((char));
-char	       *climb __P((char));
-char	       *command __P((PLANE *));
-char	       *default_game __P((void));
-char	       *delayb __P((char));
-char	       *descend __P((char));
-char	       *ex_it __P((char));
+const char     *Left __P((char));
+const char     *Right __P((char));
+const char     *airport __P((char));
+const char     *beacon __P((char));
+const char     *benum __P((char));
+const char     *circle __P((char));
+const char     *climb __P((char));
+const char     *command __P((const PLANE *));
+const char     *default_game __P((void));
+const char     *delayb __P((char));
+const char     *descend __P((char));
+const char     *ex_it __P((char));
 PLANE	       *findplane __P((int));
-char	       *ignore __P((char));
-char	       *left __P((char));
-char	       *mark __P((char));
+const char     *ignore __P((char));
+const char     *left __P((char));
+const char     *mark __P((char));
 PLANE	       *newplane __P((void));
-char	       *okay_game __P((char *));
-char	       *rel_dir __P((char));
-char	       *right __P((char));
-char	       *setalt __P((char));
-char	       *setplane __P((char));
-char	       *setrelalt __P((char));
-char	       *timestr __P((int));
-char	       *to_dir __P((char));
-char	       *turn __P((char));
-char	       *unmark __P((char));
+const char     *okay_game __P((const char *));
+const char     *rel_dir __P((char));
+const char     *right __P((char));
+const char     *setalt __P((char));
+const char     *setplane __P((char));
+const char     *setrelalt __P((char));
+const char     *timestr __P((int));
+const char     *to_dir __P((char));
+const char     *turn __P((char));
+const char     *unmark __P((char));
