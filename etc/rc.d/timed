@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: timed,v 1.1.1.1 2000/03/10 11:53:24 lukem Exp $
+# $NetBSD: timed,v 1.2 2000/03/13 04:04:10 lukem Exp $
 #
 
 # PROVIDE: timed
-# REQUIRE: daemon
+# REQUIRE: DAEMON
 
 . /etc/rc.subr
 . /etc/rc.conf
