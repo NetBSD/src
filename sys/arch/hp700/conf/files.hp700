@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.11 2004/07/29 19:10:23 jkunz Exp $
+#	$NetBSD: files.hp700,v 1.12 2004/08/26 16:48:06 jkunz Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -19,6 +19,7 @@ include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 
 include "dev/pckbport/files.pckbport"
+
 #
 # Machine-independent SCSI drivers
 #
@@ -125,9 +126,9 @@ file	arch/hp700/dev/dino.c		dino
 attach	com at dino with com_dino
 file	arch/hp700/dev/com_dino.c	com_dino
 
-device	sti: wsemuldisplaydev
 attach	sti at mainbus with sti_sgc
-file	arch/hp700/dev/sti_sgc.c		sti_sgc
+attach	sti at phantomas with sti_phantomas
+file	arch/hp700/dev/sti_sgc.c		sti_sgc | sti_phantomas
 
 ###
 
@@ -180,8 +181,9 @@ device	hil: tty
 attach	hil at gsc
 file	arch/hp700/gsc/hil.c		hil
 
-attach	pckbc at gsc with pckbc_gsc
-file	arch/hp700/gsc/pckbc_gsc.c	pckbc_gsc
+device	gsckbc: pckbport
+attach	gsckbc at gsc
+file	arch/hp700/gsc/gsckbc.c		gsckbc
 
 # PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
 device	aone: audiobus, mulaw, auconv

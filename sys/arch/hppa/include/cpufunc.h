@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2 2002/08/19 18:58:29 fredette Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.3 2004/08/26 16:48:06 jkunz Exp $	*/
 
 /*	$OpenBSD: cpufunc.h,v 1.17 2000/05/15 17:22:40 mickey Exp $	*/
 
@@ -183,6 +183,11 @@ void pdcache __P((pa_space_t sp, vaddr_t va, vsize_t size));
 void fcacheall __P((void));
 void ptlball __P((void));
 hppa_hpa_t cpu_gethpa __P((int n));
+
+#define PCXL2_ACCEL_IO_START		0xf4000000
+#define PCXL2_ACCEL_IO_END		(0xfc000000 - 1)
+#define PCXL2_ACCEL_IO_ADDR2MASK(a)	(0x8 >> ((((a) >> 25) - 2) & 3))
+void eaio_l2(int);
 
 /*
  * These flush or purge the data cache for a item whose total 
