@@ -1,4 +1,4 @@
-/*	$NetBSD: trsp.c,v 1.6 2001/02/19 23:22:48 cgd Exp $	*/
+/*	$NetBSD: trsp.c,v 1.7 2002/07/20 08:40:21 grant Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)trsp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: trsp.c,v 1.6 2001/02/19 23:22:48 cgd Exp $");
+__RCSID("$NetBSD: trsp.c,v 1.7 2002/07/20 08:40:21 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,11 +242,11 @@ main(argc, argv)
 
 		if (kvm_write(kd, nl[N_SPP_DEBX].n_value, &spp_debx,
 		    sizeof(spp_debx)) != sizeof(spp_debx))
-			errx(4, "write spp_debx: %s\n", kvm_geterr(kd));
+			errx(4, "write spp_debx: %s", kvm_geterr(kd));
 		
 		if (kvm_write(kd, nl[N_SPP_DEBUG].n_value, spp_debug,
 		    sizeof(spp_debug)) != sizeof(spp_debug))
-			errx(4, "write spp_debug: %s\n", kvm_geterr(kd));
+			errx(4, "write spp_debug: %s", kvm_geterr(kd));
 
 		exit(0);
 	}

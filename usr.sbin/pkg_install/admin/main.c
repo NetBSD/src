@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.27 2002/07/19 19:04:35 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2002/07/20 08:40:19 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.27 2002/07/19 19:04:35 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2002/07/20 08:40:19 grant Exp $");
 #endif
 
 /*
@@ -75,7 +75,7 @@ check1pkg(const char *pkgdir)
 	read_plist(&Plist, f);
 	p = find_plist(&Plist, PLIST_NAME);
 	if (p == NULL)
-		errx(1, "Package %s has no @name, aborting.\n",
+		errx(1, "Package %s has no @name, aborting.",
 		    pkgdir);
 	PkgName = p->name;
 	for (p = Plist.head; p; p = p->next) {
@@ -200,7 +200,7 @@ rebuild(void)
 		read_plist(&Plist, f);
 		p = find_plist(&Plist, PLIST_NAME);
 		if (p == NULL)
-			errx(1, "Package %s has no @name, aborting.\n",
+			errx(1, "Package %s has no @name, aborting.",
 			    de->d_name);
 		PkgName = p->name;
 		for (p = Plist.head; p; p = p->next) {
