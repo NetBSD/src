@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.44 1998/08/18 18:30:08 thorpej Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.45 1998/09/08 20:02:52 rvb Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -838,6 +838,8 @@ linux_sys_getdents(p, v, retval)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
+	if (vp->v_type != VDIR)
+		return (EINVAL);
 
 	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
 		return error;
