@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.c,v 1.9 2004/07/30 15:22:42 jmmv Exp $ */
+/*	$NetBSD: wsconsctl.c,v 1.10 2005/01/19 20:37:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -55,12 +55,10 @@ extern int keyboard_field_tab_len;
 extern int mouse_field_tab_len;
 extern int display_field_tab_len;
 
-static void usage __P((char *));
-int main __P((int, char **));
+static void usage(char *);
 
 static void
-usage(msg)
-	char *msg;
+usage(char *msg)
 {
 	const char *progname = getprogname();
 
@@ -79,17 +77,15 @@ usage(msg)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int i, ch, fd;
 	int aflag, dflag, kflag, mflag, wflag;
 	char *file, *sep, *p;
 	struct field *f, *field_tab;
 	int do_merge, field_tab_len;
-	void (*getval) __P((int));
-	void (*putval) __P((int));
+	void (*getval)(int);
+	void (*putval)(int);
 
 	aflag = 0;
 	dflag = 0;

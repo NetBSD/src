@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.6 2004/07/30 15:22:42 jmmv Exp $ */
+/*	$NetBSD: keyboard.c,v 1.7 2005/01/19 20:37:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -82,8 +82,7 @@ int keyboard_field_tab_len = sizeof(keyboard_field_tab)/
 			      sizeof(keyboard_field_tab[0]);
 
 void
-keyboard_get_values(fd)
-	int fd;
+keyboard_get_values(int fd)
 {
 	if (field_by_value(&kbtype)->flags & FLG_GET)
 		if (ioctl(fd, WSKBDIO_GTYPE, &kbtype) < 0)
@@ -163,8 +162,7 @@ keyboard_get_values(fd)
 }
 
 void
-keyboard_put_values(fd)
-	int fd;
+keyboard_put_values(int fd)
 {
 	bell.which = 0;
 	if (field_by_value(&bell.pitch)->flags & FLG_SET)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
+/*	$NetBSD: mouse.c,v 1.4 2005/01/19 20:37:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,8 +56,7 @@ int mouse_field_tab_len = sizeof(mouse_field_tab)/
 			   sizeof(mouse_field_tab[0]);
 
 void
-mouse_get_values(fd)
-	int fd;
+mouse_get_values(int fd)
 {
 	if (field_by_value(&mstype)->flags & FLG_GET)
 		if (ioctl(fd, WSMOUSEIO_GTYPE, &mstype) < 0)
@@ -65,8 +64,7 @@ mouse_get_values(fd)
 }
 
 void
-mouse_put_values(fd)
-	int fd;
+mouse_put_values(int fd)
 {
 	int tmp;
 

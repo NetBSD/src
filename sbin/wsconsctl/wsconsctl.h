@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsctl.h,v 1.6 2004/07/30 15:22:42 jmmv Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.7 2005/01/19 20:37:53 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -79,24 +79,24 @@ struct field {
 	int flags;
 };
 
-void field_setup __P((struct field *, int));
-struct field *field_by_name __P((char *));
-struct field *field_by_value __P((void *));
-void field_disable_by_value __P((void *));
-void pr_field __P((struct field *, char *));
-void rd_field __P((struct field *, char *, int));
-int name2ksym __P((char *));
-char *ksym2name __P((int));
-keysym_t ksym_upcase __P((keysym_t));
-void keyboard_get_values __P((int));
-void keyboard_put_values __P((int));
-void mouse_get_values __P((int));
-void mouse_put_values __P((int));
-void display_get_values __P((int));
-void display_put_values __P((int));
+void field_setup(struct field *, int);
+struct field *field_by_name(char *);
+struct field *field_by_value(void *);
+void field_disable_by_value(void *);
+void pr_field(struct field *, char *);
+void rd_field(struct field *, char *, int);
+int name2ksym(char *);
+char *ksym2name(int);
+keysym_t ksym_upcase(keysym_t);
+void keyboard_get_values(int);
+void keyboard_put_values(int);
+void mouse_get_values(int);
+void mouse_put_values(int);
+void display_get_values(int);
+void display_put_values(int);
 #ifndef YYEMPTY
-int yyparse __P((void));
+int yyparse(void);
 #endif
-void yyerror __P((char *));
-int yylex __P((void));
-void map_scan_setinput __P((char *));
+void yyerror(char *);
+int yylex(void);
+void map_scan_setinput(char *);

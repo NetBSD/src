@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.20 2004/07/30 11:08:03 jmmv Exp $ */
+/*	$NetBSD: util.c,v 1.21 2005/01/19 20:37:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,22 +164,19 @@ static struct nameint attr_tab[] = {
 static struct field *field_tab;
 static int field_tab_len;
 
-static char *int2name __P((int, int, struct nameint *, int));
-static int name2int __P((char *, struct nameint *, int));
-static void print_kmap __P((struct wskbd_map_data *));
+static char *int2name(int, int, struct nameint *, int);
+static int name2int(char *, struct nameint *, int);
+static void print_kmap(struct wskbd_map_data *);
 
 void
-field_setup(ftab, len)
-	struct field *ftab;
-	int len;
+field_setup(struct field *ftab, int len)
 {
 	field_tab = ftab;
 	field_tab_len = len;
 }
 
 struct field *
-field_by_name(name)
-	char *name;
+field_by_name(char *name)
 {
 	int i;
 
@@ -191,8 +188,7 @@ field_by_name(name)
 }
 
 struct field *
-field_by_value(addr)
-	void *addr;
+field_by_value(void *addr)
 {
 	int i;
 
@@ -204,8 +200,7 @@ field_by_value(addr)
 }
 
 void
-field_disable_by_value(addr)
-	void *addr;
+field_disable_by_value(void *addr)
 {
 	struct field *f;
 
@@ -214,11 +209,7 @@ field_disable_by_value(addr)
 }
 
 static char *
-int2name(val, uflag, tab, len)
-	int val;
-	int uflag;
-	struct nameint *tab;
-	int len;
+int2name(int val, int uflag, struct nameint *tab, int len)
 {
 	static char tmp[20];
 	int i;
@@ -235,10 +226,7 @@ int2name(val, uflag, tab, len)
 }
 
 static int
-name2int(val, tab, len)
-	char *val;
-	struct nameint *tab;
-	int len;
+name2int(char *val, struct nameint *tab, int len)
 {
 	int i;
 
@@ -249,9 +237,7 @@ name2int(val, tab, len)
 }
 
 void
-pr_field(f, sep)
-	struct field *f;
-	char *sep;
+pr_field(struct field *f, char *sep)
 {
 	char *p;
 	u_int flags;
@@ -328,10 +314,7 @@ pr_field(f, sep)
 }
 
 void
-rd_field(f, val, merge)
-	struct field *f;
-	char *val;
-	int merge;
+rd_field(struct field *f, char *val, int merge)
 {
 	int i;
 	u_int u;
@@ -420,8 +403,7 @@ rd_field(f, val, merge)
 }
 
 static void
-print_kmap(map)
-	struct wskbd_map_data *map;
+print_kmap(struct wskbd_map_data *map)
 {
 	int i;
 	struct wscons_keymap *mp;
