@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2002/08/05 20:58:36 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2002/08/19 18:58:29 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -162,16 +162,31 @@ struct pdc_cache pdc_cache PDC_ALIGNMENT;
 struct pdc_btlb pdc_btlb PDC_ALIGNMENT;
 
 /*
- * A record of inserted BTLB mappings.
+ * The BTLB slots.
  */
-struct btlb_entry {
-	pa_space_t btlb_entry_va_space;
-	vaddr_t	btlb_entry_va_frame;
-	paddr_t btlb_entry_pa_frame;
-	vsize_t btlb_entry_frames;
-	u_int btlb_entry_tlbprot;
-	int btlb_entry_num;
-} btlb_entries[32]; /* XXX assumed to be big enough */
+static struct btlb_slot {
+
+	/* The number associated with this slot. */
+	int btlb_slot_number;
+	
+	/* The flags associated with this slot. */
+	int btlb_slot_flags;
+#define	BTLB_SLOT_IBTLB			(1 << 0)
+#define	BTLB_SLOT_DBTLB			(1 << 1)
+#define	BTLB_SLOT_CBTLB			(BTLB_SLOT_IBTLB | BTLB_SLOT_DBTLB)
+#define	BTLB_SLOT_VARIABLE_RANGE	(1 << 2)
+
+	/*
+	 * The mapping information.  A mapping is free
+	 * if its btlb_slot_frames member is zero.
+	 */
+	pa_space_t btlb_slot_va_space;
+	vaddr_t	btlb_slot_va_frame;
+	paddr_t btlb_slot_pa_frame;
+	vsize_t btlb_slot_frames;
+	u_int btlb_slot_tlbprot;
+} *btlb_slots;
+int	btlb_slots_count;
 
 	/* w/ a little deviation should be the same for all installed cpus */
 u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
@@ -189,10 +204,6 @@ int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
  */
 int (*cpu_desidhash) __P((void));
 int (*cpu_hpt_init) __P((vaddr_t hpt, vsize_t hptsize));
-int (*cpu_ibtlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
-int (*cpu_dbtlb_ins) __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-	    vsize_t sz, u_int prot));
 
 dev_t	bootdev;
 int	totalphysmem, physmem, esym;
@@ -255,18 +266,6 @@ extern const u_int itlb_x[], dtlb_x[], dtlbna_x[], tlbd_x[];
 extern const u_int itlb_s[], dtlb_s[], dtlbna_s[], tlbd_s[];
 extern const u_int itlb_t[], dtlb_t[], dtlbna_t[], tlbd_t[];
 extern const u_int itlb_l[], dtlb_l[], dtlbna_l[], tlbd_l[];
-int iibtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int idbtlb_s __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int ibtlb_t __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int ibtlb_l __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int ibtlb_g __P((int i, pa_space_t sp, vaddr_t va, paddr_t pa,
-    vsize_t sz, u_int prot));
-int pbtlb_g __P((int i));
-int hpti_l __P((vaddr_t, vsize_t));
 int hpti_g __P((vaddr_t, vsize_t));
 int desidhash_x __P((void));
 int desidhash_s __P((void));
@@ -277,14 +276,14 @@ int desidhash_g __P((void));
 	  NULL, \
 	  NULL, 0, \
 	  NULL, NULL, NULL, NULL, NULL, \
-	  NULL, NULL, NULL
+	  NULL
 const struct hppa_cpu_info hppa_cpu_pa7000_pcx = {
 	  "PA7000",
 #ifdef HP7000_CPU
 	  NULL, 
 	  "PCX", HPPA_PA_SPEC_MAKE(1, 0, '\0'),
 	  desidhash_x, itlb_x, dtlb_x, dtlbna_x, tlbd_x,
-	  ibtlb_g, NULL, pbtlb_g 
+	  NULL
 #else  /* !HP7000_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP7000_CPU */
@@ -295,7 +294,7 @@ const struct hppa_cpu_info hppa_cpu_pa7000_pcxs = {
 	  NULL, 
 	  "PCX-S", HPPA_PA_SPEC_MAKE(1, 1, 'a'),
 	  desidhash_s, itlb_s, dtlb_s, dtlbna_s, tlbd_s,
-	  ibtlb_g, NULL, pbtlb_g
+	  NULL
 #else  /* !HP7000_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP7000_CPU */
@@ -306,7 +305,6 @@ const struct hppa_cpu_info hppa_cpu_pa7100 = {
 	  "T-Bird",
 	  "PCX-T", HPPA_PA_SPEC_MAKE(1, 1, 'b'),
 	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
-	  ibtlb_g, NULL, pbtlb_g,
 	  hpti_g
 #else  /* !HP7100_CPU */
 	  _HPPA_CPU_UNSUPP
@@ -318,7 +316,6 @@ const struct hppa_cpu_info hppa_cpu_pa7150 = {
 	  "T-Bird",
 	  "PCX-T", HPPA_PA_SPEC_MAKE(1, 1, 'b'),
 	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
-	  ibtlb_g, NULL, pbtlb_g,
 	  hpti_g
 #else  /* !HP7100_CPU */
 	  _HPPA_CPU_UNSUPP
@@ -330,7 +327,7 @@ const struct hppa_cpu_info hppa_cpu_pa7200 = {
 	  "T-Bird",
 	  "PCX-T'", HPPA_PA_SPEC_MAKE(1, 1, 'd'),
 	  desidhash_t, itlb_t, dtlb_t, dtlbna_t, tlbd_t,
-	  ibtlb_g, NULL, pbtlb_g
+	  NULL
 #else  /* !HP7200_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP7200_CPU */
@@ -341,7 +338,7 @@ const struct hppa_cpu_info hppa_cpu_pa7100lc = {
 	  "Hummingbird",
 	  "PCX-L", HPPA_PA_SPEC_MAKE(1, 1, 'c'),
 	  desidhash_l, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g
+	  hpti_g
 #else  /* !HP7100LC_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP7100LC_CPU */
@@ -352,7 +349,7 @@ const struct hppa_cpu_info hppa_cpu_pa7300lc = {
 	  "Velociraptor",
 	  "PCX-L2", HPPA_PA_SPEC_MAKE(1, 1, 'e'),
 	  desidhash_l, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g
+	  hpti_g
 #else  /* !HP7300LC_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP7300LC_CPU */
@@ -363,7 +360,7 @@ const struct hppa_cpu_info hppa_cpu_pa8000 = {
 	  "Onyx",
 	  "PCX-U", HPPA_PA_SPEC_MAKE(2, 0, '\0'),
 	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g
+	  hpti_g
 #else  /* !HP8000_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP8000_CPU */
@@ -374,7 +371,7 @@ const struct hppa_cpu_info hppa_cpu_pa8200 = {
 	  NULL,
 	  "PCX-W", HPPA_PA_SPEC_MAKE(2, 0, '\0'),
 	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g
+	  hpti_g
 #else  /* !HP8200_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP8200_CPU */
@@ -385,7 +382,7 @@ const struct hppa_cpu_info hppa_cpu_pa8500 = {
 	  "Barra'Cuda",
 	  "PCX-W", HPPA_PA_SPEC_MAKE(2, 0, '\0'),
 	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g
+	  hpti_g
 #else  /* !HP8500_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP8500_CPU */
@@ -396,7 +393,7 @@ const struct hppa_cpu_info hppa_cpu_pa8600 = {
 	  NULL,
 	  "PCX-W+", HPPA_PA_SPEC_MAKE(2, 0, '\0'),
 	  desidhash_g, itlb_l, dtlb_l, dtlbna_l, tlbd_l,
-	  ibtlb_g, NULL, pbtlb_g, hpti_g
+	  hpti_g
 #else  /* !HP8600_CPU */
 	  _HPPA_CPU_UNSUPP
 #endif /* !HP8600_CPU */
@@ -413,6 +410,8 @@ hppa_init(start)
 	u_int *p, *q;
 	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
 	const char *model;
+	struct btlb_slot *btlb_slot;
+	int btlb_slot_i;
 
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
@@ -649,8 +648,6 @@ hptsize=256;	/* XXX one page for now */
 	extern u_int trap_ep_T_ITLBMISS[];
 	extern u_int trap_ep_T_ITLBMISSNA[];
 
-	cpu_ibtlb_ins = hppa_cpu_info->ibtlbins;
-	cpu_dbtlb_ins = hppa_cpu_info->dbtlbins;
 	cpu_hpt_init  = hppa_cpu_info->hptinit;
 	cpu_desidhash = hppa_cpu_info->desidhash;
 
@@ -707,6 +704,30 @@ hptsize=256;	/* XXX one page for now */
 	    EX_NOCOALESCE|EX_NOWAIT);
 	vstart += DMA24_SIZE;
 	vstart = hppa_round_page(vstart);
+
+	/* Allocate and initialize the BTLB slots array. */
+	btlb_slots = (struct btlb_slot *) ALIGN(vstart);
+	btlb_slot = btlb_slots;
+#define BTLB_SLOTS(count, flags)					\
+do {									\
+	for (btlb_slot_i = 0;						\
+	     btlb_slot_i < pdc_btlb.count;				\
+	     btlb_slot_i++) {						\
+		btlb_slot->btlb_slot_number = (btlb_slot - btlb_slots);	\
+		btlb_slot->btlb_slot_flags = flags;			\
+		btlb_slot->btlb_slot_frames = 0;			\
+		btlb_slot++;						\
+	}								\
+} while (/* CONSTCOND */ 0)
+	BTLB_SLOTS(finfo.num_i, BTLB_SLOT_IBTLB);
+	BTLB_SLOTS(finfo.num_d, BTLB_SLOT_DBTLB);
+	BTLB_SLOTS(finfo.num_c, BTLB_SLOT_CBTLB);
+	BTLB_SLOTS(vinfo.num_i, BTLB_SLOT_IBTLB | BTLB_SLOT_VARIABLE_RANGE);
+	BTLB_SLOTS(vinfo.num_d, BTLB_SLOT_DBTLB | BTLB_SLOT_VARIABLE_RANGE);
+	BTLB_SLOTS(vinfo.num_c, BTLB_SLOT_CBTLB | BTLB_SLOT_VARIABLE_RANGE);
+#undef BTLB_SLOTS
+	btlb_slots_count = (btlb_slot - btlb_slots);
+	vstart = hppa_round_page((vaddr_t) btlb_slot);
 	
 	/* Calculate the OS_TOC handler checksum. */
 	p = (u_int *) &os_toc;
@@ -1017,46 +1038,19 @@ hpti_g(hpt, hptsize)
 	    &pdc_hwtlb, hpt, hptsize, PDC_TLB_CURRPDE);
 }
 
-int
-pbtlb_g(i)
-	int i;
-{
-	return -1;
-}
-
-int
-ibtlb_g(i, sp, va, pa, sz, prot)
-	int i;
-	pa_space_t sp;
-	vaddr_t va;
-	paddr_t pa;
-	vsize_t sz;
-	u_int prot;
-{
-	int error;
-
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB, PDC_BTLB_INSERT,
-	    sp, va, pa, sz, prot, i)) < 0) {
-#ifdef BTLBDEBUG
-		printf("WARNING: BTLB insert failed (%d)\n", error);
-#endif
-	}
-	return error;
-}
-
 /*
- * This inserts a recorded BTLB entry.
+ * This inserts a recorded BTLB slot.
  */
-static int _btlb_insert __P((struct btlb_entry *));
+static int _hp700_btlb_insert __P((struct btlb_slot *));
 static int
-_btlb_insert(struct btlb_entry *btlb_entry)
+_hp700_btlb_insert(struct btlb_slot *btlb_slot)
 {
 	int error;
 #ifdef DEBUG
 	const char *prot;
 
 	/* Display the protection like a file protection. */
-	switch (btlb_entry->btlb_entry_tlbprot & TLB_AR_MASK) {
+	switch (btlb_slot->btlb_slot_tlbprot & TLB_AR_MASK) {
 	case TLB_AR_NA:		prot = "------"; break;
 	case TLB_AR_KR:		prot = "r-----"; break;
 	case TLB_AR_KRW:	prot = "rw----"; break;
@@ -1069,58 +1063,79 @@ _btlb_insert(struct btlb_entry *btlb_entry)
 	default:		prot = "??????"; break;
 	}
 
-	printf("  [ BTLB entry %d: %s 0x%08x @ 0x%x:0x%08x len 0x%08x ]  ",
-		btlb_entry->btlb_entry_num,
+	printf("  [ BTLB slot %d: %s 0x%08x @ 0x%x:0x%08x len 0x%08x ]  ",
+		btlb_slot->btlb_slot_number,
 		prot,
-		(u_int)btlb_entry->btlb_entry_pa_frame << PGSHIFT,
-		btlb_entry->btlb_entry_va_space,
-		(u_int)btlb_entry->btlb_entry_va_frame << PGSHIFT,
-		(u_int)btlb_entry->btlb_entry_frames << PGSHIFT);
+		(u_int)btlb_slot->btlb_slot_pa_frame << PGSHIFT,
+		btlb_slot->btlb_slot_va_space,
+		(u_int)btlb_slot->btlb_slot_va_frame << PGSHIFT,
+		(u_int)btlb_slot->btlb_slot_frames << PGSHIFT);
+
 	/*
 	 * Non-I/O space mappings are entered by the pmap,
 	 * so we do print a newline to make things look better.
 	 */
-	if (btlb_entry->btlb_entry_pa_frame < (HPPA_IOSPACE >> PGSHIFT))
+	if (btlb_slot->btlb_slot_pa_frame < (HPPA_IOSPACE >> PGSHIFT))
 		printf("\n");
 #endif
-	error = (*cpu_dbtlb_ins)(btlb_entry->btlb_entry_num, 
-				 btlb_entry->btlb_entry_va_space, 
-				 btlb_entry->btlb_entry_va_frame, 
-				 btlb_entry->btlb_entry_pa_frame, 
-				 btlb_entry->btlb_entry_frames, 
-				 btlb_entry->btlb_entry_tlbprot);
+
+	/* Insert this mapping. */
+	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB, PDC_BTLB_INSERT,
+		btlb_slot->btlb_slot_va_space,
+		btlb_slot->btlb_slot_va_frame,
+		btlb_slot->btlb_slot_pa_frame,
+		btlb_slot->btlb_slot_frames,
+		btlb_slot->btlb_slot_tlbprot,
+		btlb_slot->btlb_slot_number)) < 0) {
+#ifdef BTLBDEBUG
+		printf("WARNING: BTLB insert failed (%d)\n", error);
+#endif
+	}
 	return (error ? EINVAL : 0);
 }
 
 /*
- * This records and inserts a new BTLB entry.  It returns a cookie
- * that one day will be used with a btlb_purge function.
- * XXX - currently we only support machines with a combined BTLB.
+ * This records and inserts a new BTLB entry.
  */
 int
-btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, 
+hppa_btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa, 
 		vsize_t *sizep, u_int tlbprot)
 {
-	struct btlb_entry *btlb_entry, *btlb_entry_end;
+	struct btlb_slot *btlb_slot, *btlb_slot_best, *btlb_slot_end;
 	vsize_t frames;
 	int error;
+	int need_dbtlb, need_ibtlb, need_variable_range;
+	int btlb_slot_score, btlb_slot_best_score;
+	vsize_t slot_mapped_frames, total_mapped_frames;
 
-	/* First, find a free BTLB entry record. */
-	btlb_entry = btlb_entries;
-	btlb_entry_end = btlb_entries + pdc_btlb.finfo.num_c;
-	while (btlb_entry < btlb_entry_end && btlb_entry->btlb_entry_frames)
-		btlb_entry++;
-	if (btlb_entry == btlb_entry_end) {
-#ifdef BTLBDEBUG
-		printf("BTLB full\n");
-#endif
-		return -(ENOMEM);
+	/*
+	 * All entries need data translation.  Those that
+	 * allow execution also need instruction translation.
+	 */
+	switch (tlbprot & TLB_AR_MASK) {
+	case TLB_AR_KR:	
+	case TLB_AR_KRW:
+	case TLB_AR_UR:
+	case TLB_AR_URW:
+		need_dbtlb = TRUE;
+		need_ibtlb = FALSE;
+		break;
+	case TLB_AR_KRX:
+	case TLB_AR_KRWX:
+	case TLB_AR_URX:
+	case TLB_AR_URWX:
+		need_dbtlb = TRUE;
+		need_ibtlb = TRUE;
+		break;
+	default:
+		panic("btlb_insert: bad tlbprot");
 	}
 
 	/*
-	 * Now calculate the number of pages (frames) that this
-	 * BTLB entry will map.  It must be a power of two at
-	 * least as big as the BTLB minimum size.
+	 * If this entry isn't aligned to the size required
+	 * for a fixed-range slot, it requires a variable-range
+	 * slot.  This also converts pa and va to page frame
+	 * numbers.
 	 */
 	frames = pdc_btlb.min_size << PGSHIFT;
 	while (frames < *sizep)
@@ -1129,40 +1144,107 @@ btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa,
 	if (frames > pdc_btlb.max_size) {
 #ifdef BTLBDEBUG
 		printf("btlb_insert: too big (%u < %u < %u)\n",
-		    pdc_btlb.min_size, frames, pdc_btlb.max_size);
+		    pdc_btlb.min_size, (u_int) frames, pdc_btlb.max_size);
 #endif
 		return -(ENOMEM);
 	}
+	pa >>= PGSHIFT;
+	va >>= PGSHIFT;
+	need_variable_range = 
+		((pa & (frames - 1)) != 0 || (va & (frames - 1)) != 0);
 
 	/* I/O space must be mapped uncached. */
 	if (pa >= HPPA_IOBEGIN)
 		tlbprot |= TLB_UNCACHEABLE;
 
 	/*
- 	 * Turn the physical and virtual addresses into frame numbers
- 	 * and check their alignment.
+	 * Loop while we still need slots.
 	 */
-	pa >>= PGSHIFT;
-	va >>= PGSHIFT;
-	if (pa & (frames - 1))
-		printf("WARNING: BTLB address misaligned\n");
+	btlb_slot_end = btlb_slots + btlb_slots_count;
+	total_mapped_frames = 0;
+	while (need_dbtlb || need_ibtlb) {
 
-	/*
-	 * Now fill this BTLB entry record and insert the entry.
-	 */
-	btlb_entry->btlb_entry_va_space = space;
-	btlb_entry->btlb_entry_va_frame = va;
-	btlb_entry->btlb_entry_pa_frame = pa;
-	btlb_entry->btlb_entry_frames = frames;
-	btlb_entry->btlb_entry_tlbprot = tlbprot;
-	btlb_entry->btlb_entry_num = (btlb_entry - btlb_entries);
-	error = _btlb_insert(btlb_entry);
-	if (error)
-		return -(error);
+		/*
+		 * Find an applicable slot.
+		 */
+		btlb_slot_best = NULL;
+		for (btlb_slot = btlb_slots;
+		     btlb_slot < btlb_slot_end;
+		     btlb_slot++) {
+			
+			/*
+			 * Skip this slot if it's in use, or if we need a 
+			 * variable-range slot and this isn't one.
+			 */
+			if (btlb_slot->btlb_slot_frames != 0 ||
+			    (need_variable_range &&
+			     !(btlb_slot->btlb_slot_flags &
+			       BTLB_SLOT_VARIABLE_RANGE)))
+				continue;
+
+			/*
+			 * Score this slot.
+			 */
+			btlb_slot_score = 0;
+			if (need_dbtlb &&
+			    (btlb_slot->btlb_slot_flags & BTLB_SLOT_DBTLB))
+				btlb_slot_score++;
+			if (need_ibtlb &&
+			    (btlb_slot->btlb_slot_flags & BTLB_SLOT_IBTLB))
+				btlb_slot_score++;
+
+			/*
+			 * Update the best slot.
+			 */
+			if (btlb_slot_score > 0 &&
+			    (btlb_slot_best == NULL ||
+			     btlb_slot_score > btlb_slot_best_score)) {
+				btlb_slot_best = btlb_slot;
+				btlb_slot_best_score = btlb_slot_score;
+			}
+		}
+
+		/*
+		 * If there were no applicable slots.
+		 */
+		if (btlb_slot_best == NULL) {
+#ifdef BTLBDEBUG
+			printf("BTLB full\n");
+#endif
+			return -(ENOMEM);
+		}
+			
+		/*
+		 * Now fill this BTLB slot record and insert the entry.
+		 */
+		if (btlb_slot->btlb_slot_flags & BTLB_SLOT_VARIABLE_RANGE)
+			slot_mapped_frames = ((*sizep + PGOFSET) >> PGSHIFT);
+		else
+			slot_mapped_frames = frames;
+		if (slot_mapped_frames > total_mapped_frames)
+			total_mapped_frames = slot_mapped_frames;
+		btlb_slot = btlb_slot_best;
+		btlb_slot->btlb_slot_va_space = space;
+		btlb_slot->btlb_slot_va_frame = va;
+		btlb_slot->btlb_slot_pa_frame = pa;
+		btlb_slot->btlb_slot_tlbprot = tlbprot;
+		btlb_slot->btlb_slot_frames = slot_mapped_frames;
+		error = _hp700_btlb_insert(btlb_slot);
+		if (error)
+			return -error;
+
+		/*
+		 * Note what slots we no longer need.
+		 */
+		if (btlb_slot->btlb_slot_flags & BTLB_SLOT_DBTLB)
+			need_dbtlb = FALSE;
+		if (btlb_slot->btlb_slot_flags & BTLB_SLOT_IBTLB)
+			need_ibtlb = FALSE;
+	}
 
 	/* Success. */
-	*sizep = (frames << PGSHIFT);
-	return (btlb_entry - btlb_entries);
+	*sizep = (total_mapped_frames << PGSHIFT);
+	return 0;
 }
 
 /*
@@ -1171,22 +1253,59 @@ btlb_insert(pa_space_t space, vaddr_t va, paddr_t pa,
 int
 hppa_btlb_reload(void)
 {
-	struct btlb_entry *btlb_entry, *btlb_entry_end;
+	struct btlb_slot *btlb_slot, *btlb_slot_end;
 	int error;
 
 	/* Insert all recorded BTLB entries. */
-	btlb_entry = btlb_entries;
-	btlb_entry_end = btlb_entries + 
-		(sizeof(btlb_entries) / sizeof(btlb_entries[0]));
+	btlb_slot = btlb_slots;
+	btlb_slot_end = btlb_slots + btlb_slots_count;
 	error = 0;
-	while (error == 0 && btlb_entry < btlb_entry_end) {
-		if (btlb_entry->btlb_entry_frames)
-			error = _btlb_insert(btlb_entry);
-		btlb_entry++;
+	while (error == 0 && btlb_slot < btlb_slot_end) {
+		if (btlb_slot->btlb_slot_frames != 0)
+			error = _hp700_btlb_insert(btlb_slot);
+		btlb_slot++;
 	}
 #ifdef DEBUG
 	printf("\n");
 #endif
+	return (error);
+}
+
+/*
+ * This purges a BTLB entry.
+ */
+int
+hppa_btlb_purge(pa_space_t space, vaddr_t va, vsize_t size)
+{
+	struct btlb_slot *btlb_slot, *btlb_slot_end;
+	int error;
+
+	/*
+	 * Purge all slots that map this virtual address.
+	 */
+	error = ENOENT;
+	va >>= PGSHIFT;
+	btlb_slot_end = btlb_slots + btlb_slots_count;
+	for (btlb_slot = btlb_slots;
+	     btlb_slot < btlb_slot_end;
+	     btlb_slot++) {
+		if (btlb_slot->btlb_slot_frames != 0 &&
+		    btlb_slot->btlb_slot_va_space == space &&
+		    btlb_slot->btlb_slot_va_frame == va) {
+			if ((error = pdc_call((iodcio_t)pdc, 0,
+				PDC_BLOCK_TLB, PDC_BTLB_PURGE,
+				btlb_slot->btlb_slot_va_space,
+				btlb_slot->btlb_slot_va_frame,
+				btlb_slot->btlb_slot_number,
+				btlb_slot->btlb_slot_frames)) < 0) {
+#ifdef BTLBDEBUG
+				printf("WARNING: BTLB purge failed (%d)\n",
+					error);
+#endif
+				return (error);
+			}
+		}
+	}
 	return (error);
 }
 
