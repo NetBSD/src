@@ -36,37 +36,37 @@ YFLAGS = -d
 
 OFILES = b.o main.o parse.o proctab.o tran.o lib.o run.o lex.o
 
-SOURCE = awk.h ytab.c ytab.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c lib.c run.c tran.c proctab.c missing95.c
+SOURCE = awk.h awkgram.c awkgram.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c lib.c run.c tran.c proctab.c missing95.c
 
 LISTING = awk.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c lib.c run.c tran.c missing95.c
 
-SHIP = README FIXES $(SOURCE) ytab[ch].bak makefile awk.1 buildwin.bat mac.code
+SHIP = README FIXES $(SOURCE) awkgram[ch].bak makefile awk.1 buildwin.bat mac.code
 
-a.out:	ytab.o $(OFILES)
-	$(CC) $(CFLAGS) ytab.o $(OFILES) $(ALLOC)  -lm
+a.out:	awkgram.o $(OFILES)
+	$(CC) $(CFLAGS) awkgram.o $(OFILES) $(ALLOC)  -lm
 
-$(OFILES):	awk.h ytab.h proto.h
+$(OFILES):	awk.h awkgram.h proto.h
 
-ytab.o:	awk.h proto.h awkgram.y
+awkgram.o:	awk.h proto.h awkgram.y
 	$(YACC) $(YFLAGS) awkgram.y
-	mv y.tab.c ytab.c
-	mv y.tab.h ytab.h
-	$(CC) $(CFLAGS) -c ytab.c
+	mv y.tab.c awkgram.c
+	mv y.tab.h awkgram.h
+	$(CC) $(CFLAGS) -c awkgram.c
 
 proctab.c:	maketab
 	./maketab >proctab.c
 
-maketab:	ytab.h maketab.c
+maketab:	awkgram.h maketab.c
 	$(CC) $(CFLAGS) maketab.c -o maketab
 
 bundle:
-	@cp ytab.h ytabh.bak
-	@cp ytab.c ytabc.bak
+	@cp awkgram.h awkgramh.bak
+	@cp awkgram.c awkgramc.bak
 	@bundle $(SHIP)
 
 tar:
-	@cp ytab.h ytabh.bak
-	@cp ytab.c ytabc.bak
+	@cp awkgram.h awkgramh.bak
+	@cp awkgram.c awkgramc.bak
 	@bundle $(SHIP) >awk.shar
 	@tar cf awk.tar $(SHIP)
 	gzip awk.tar
