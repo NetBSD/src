@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.123 1999/11/06 22:44:52 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.124 2000/03/04 08:10:51 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1714,6 +1714,97 @@ pte_level_five:
 	jra	pte_got_it
 pte_level_six:
 	ptestr	#FC_USERD,a0@,#6,a1 | search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+
+ENTRY_NOPROFILE(get_pte_s)
+	subql	#4,sp		| make temporary space
+
+	lea	_ASM_LABEL(longscratch),a0
+	movl	#0x00ff8710,a0@	| Set up FC 1 r/w access
+	.long	0xf0100800	| pmove a0@,tt0
+
+	movl	sp@(8),a0	| logical address to look up
+	movl	#0,a1		| clear in case of failure
+	ptestr	#FC_SUPERD,a0@,#7,a1 | search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	movl	sp@(16),a0	| where to store the psr
+	movw	d1,a0@		| send back to caller
+	andw	#0xc400,d1	| if bus error, exceeded limit, or invalid
+	jne	get_pte_fail1	| leave now
+	tstl	a1		| check address we got back
+	jeq	get_pte_fail2	| if 0, then was not set -- fail
+
+	movl	a1,d0
+	movl	d0,_ASM_LABEL(pte_tmp)	| save for later
+
+	| send first long back to user
+	movl	sp@(12),a0	| address of where to put pte
+	movsl	a1@,d0		|
+	movl	d0,a0@		| first long
+
+	andl	#3,d0		| dt bits of pte
+	cmpl	#1,d0		| should be 1 if page descriptor
+	jne	get_pte_fail3	| if not, get out now
+
+	movl	sp@(16),a0	| addr of stored psr
+	movw	a0@,d0		| get psr again
+	andw	#7,d0		| number of levels it found
+	addw	#-1,d0		| find previous level
+	movl	sp@(8),a0	| logical address to look up
+	movl	#0,a1		| clear in case of failure
+
+	cmpl	#0,d0
+	jeq	pte_s_level_zero
+	cmpl	#1,d0
+	jeq	pte_s_level_one
+	cmpl	#2,d0
+	jeq	pte_s_level_two
+	cmpl	#3,d0
+	jeq	pte_s_level_three
+	cmpl	#4,d0
+	jeq	pte_s_level_four
+	cmpl	#5,d0
+	jeq	pte_s_level_five
+	cmpl	#6,d0
+	jeq	pte_s_level_six
+	jra	get_pte_fail4	| really should have been one of these...
+
+pte_s_level_zero:
+	| must get CRP to get length of entries at first level
+	lea	_ASM_LABEL(longscratch),a0 | space for two longs
+	pmove	crp,a0@		| save root pointer
+	movl	a0@,d0		| load high long
+	jra	pte_got_parent
+pte_s_level_one:
+	ptestr	#FC_SUPERD,a0@,#1,a1 | search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_s_level_two:
+	ptestr	#FC_SUPERD,a0@,#2,a1 | search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_s_level_three:
+	ptestr	#FC_SUPERD,a0@,#3,a1 | search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_s_level_four:
+	ptestr	#FC_SUPERD,a0@,#4,a1 | search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_s_level_five:
+	ptestr	#FC_SUPERD,a0@,#5,a1 | search for logical address
+	pmove	psr,sp@		| store processor status register
+	movw	sp@,d1
+	jra	pte_got_it
+pte_s_level_six:
+	ptestr	#FC_SUPERD,a0@,#6,a1 | search for logical address
 	pmove	psr,sp@		| store processor status register
 	movw	sp@,d1
 
