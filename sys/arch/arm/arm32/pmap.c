@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 2002/03/24 21:32:18 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 2002/03/25 03:00:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2002/03/24 21:32:18 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2002/03/25 03:00:28 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -187,7 +187,7 @@ struct pmap     kernel_pmap_store;
  * linked list of all non-kernel pmaps
  */
 
-static struct pmap_head pmaps;
+static LIST_HEAD(, pmap) pmaps;
 
 /*
  * pool that pmap structures are allocated from
@@ -267,11 +267,23 @@ static struct pv_entry	*pmap_remove_pv __P((struct vm_page *, struct pmap *,
 static u_int pmap_modify_pv __P((struct pmap *, vaddr_t, struct vm_page *,
 	u_int, u_int));
 
+/*
+ * Structure that describes and L1 table.
+ */
+struct l1pt {
+	SIMPLEQ_ENTRY(l1pt)	pt_queue;	/* Queue pointers */
+	struct pglist		pt_plist;	/* Allocated page list */
+	vaddr_t			pt_va;		/* Allocated virtual address */
+	int			pt_flags;	/* Flags */ 
+};
+#define	PTFLAG_STATIC		0x01		/* Statically allocated */
+#define	PTFLAG_KPT		0x02		/* Kernel pt's are mapped */
+#define	PTFLAG_CLEAN		0x04		/* L1 is clean */
+
 static void pmap_free_l1pt __P((struct l1pt *));
 static int pmap_allocpagedir __P((struct pmap *));
 static int pmap_clean_page __P((struct pv_entry *, boolean_t));
 static void pmap_remove_all __P((struct vm_page *));
-
 
 vsize_t npages;
 

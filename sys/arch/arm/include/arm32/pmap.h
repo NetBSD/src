@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.39 2002/03/25 02:51:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.40 2002/03/25 03:00:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -72,30 +72,6 @@
  */
 
 /*
- * Data structures used by pmap
- */
-
-/*
- * Structure that describes a Level 1 page table and the flags
- * associated with it.
- */
-struct l1pt {
-	SIMPLEQ_ENTRY(l1pt)	pt_queue;	/* Queue pointers */
-	struct pglist		pt_plist;	/* Allocated page list */
-	vaddr_t			pt_va;		/* Allocated virtual address */
-	int	                pt_flags;	/* Flags */
-};
-#define	PTFLAG_STATIC		1		/* Statically allocated */
-#define PTFLAG_KPT		2		/* Kernel pt's are mapped */
-#define PTFLAG_CLEAN		4		/* L1 is clean */
-
-/*
- * we maintain a list of all non-kernel pmaps
- */
-
-LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
-
-/*
  * The pmap structure itself.
  */
 struct pmap {
@@ -103,11 +79,11 @@ struct pmap {
 #define	pm_lock	pm_obj.vmobjlock	
 	LIST_ENTRY(pmap)	pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
-	struct l1pt		*pm_l1pt;	/* L1 descriptor */
+	struct l1pt		*pm_l1pt;	/* L1 table metadata */
 	paddr_t                 pm_pptpt;	/* PA of pt's page table */
 	vaddr_t                 pm_vptpt;	/* VA of pt's page table */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	struct vm_page *pm_ptphint;		/* pointer to a PTP in our pmap */
+	struct vm_page		*pm_ptphint;	/* recently used PT */
 };
 
 typedef struct pmap *pmap_t;
