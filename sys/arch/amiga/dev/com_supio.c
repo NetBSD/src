@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.8 1998/08/09 22:08:40 is Exp $	*/
+/*	$NetBSD: com_supio.c,v 1.9 1998/08/10 18:43:06 is Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -103,13 +103,11 @@ com_supio_match(parent, match, aux)
 #if 0
 	/* if it's in use as console, it's there. */
 	if (iobase != comconsaddr || comconsattached) {
-#endif
 		if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh)) {
 			return 0;
 		}
 		rv = comprobe1(iot, ioh, iobase);
 		bus_space_unmap(iot, ioh, COM_NPORTS);
-#if 0
 	}
 #endif
 	return (rv);
