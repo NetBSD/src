@@ -49,7 +49,6 @@
 #	define NULL	0
 #endif
 
-void *malloc();
 #define mem_alloc(bsize)	malloc(bsize)
 #define mem_free(ptr, bsize)	free(ptr)
 
@@ -57,12 +56,5 @@ void *malloc();
 #include <sys/types.h>
 #endif
 #include <sys/time.h>
-
-#ifndef INADDR_LOOPBACK
-#define       INADDR_LOOPBACK         (u_long)0x7F000001
-#endif
-#ifndef MAXHOSTNAMELEN
-#define        MAXHOSTNAMELEN  64
-#endif
 
 #endif /* !_RPC_TYPES_H */
