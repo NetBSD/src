@@ -1255,12 +1255,10 @@ md_estimate_size_before_relax (fragP, segment)
 	  old_fr_fix = fragP->fr_fix;
 	  p = fragP->fr_literal + old_fr_fix;
 #ifndef OBJ_VMS
-	  /*
-	   * If this is to undefined symbol, then if it's an indirect
-	   * reference indicate that is can mutated into a GLOB_DAT
-	   * by the loader.  We restrict ourselves to no offset due to
-	   * a limitation in the NetBSD linker.
-	   */
+	  /* If this is to an undefined symbol, then if it's an indirect
+	     reference indicate that is can mutated into a GLOB_DAT or
+	     JUMP_SLOT by the loader.  We restrict ourselves to no offset
+	     due to a limitation in the NetBSD linker.  */
 #ifdef OBJ_AOUT
 	  if ((p[0] & 0x10) == 0 && !fragP->fr_offset && !flag_want_pic)
 	    {
@@ -1274,6 +1272,7 @@ md_estimate_size_before_relax (fragP, segment)
 	  if ((GOT_symbol == NULL || fragP->fr_symbol != GOT_symbol)
 	      && (PLT_symbol == NULL || fragP->fr_symbol != PLT_symbol)
 	      && fragP->fr_symbol != NULL
+	      && flag_want_pic
 	      && (!S_IS_DEFINED (fragP->fr_symbol)
 #ifdef OBJ_ELF
 	          || S_IS_WEAK (fragP->fr_symbol)
