@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.9 2002/02/11 18:03:05 uch Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.10 2002/02/12 15:26:48 uch Exp $	*/
 
 /*
  * Copyright (c) 1993 Charles Hannum.
@@ -133,7 +133,8 @@ enable_intr(void)
 static __inline void
 breakpoint()
 {
-	__asm __volatile ("trapa #0xc3");
+
+	__asm __volatile("trapa #0xc3");
 }
 
 #endif /* _KERNEL */
