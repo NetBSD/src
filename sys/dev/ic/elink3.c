@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.7 1996/05/14 22:22:05 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.7.4.1 1997/03/04 18:40:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -144,6 +144,33 @@ epconfig(sc, conn)
 	}
 
 	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
+	/*
+	 * 100 Mbps cards allow 4500 byte packets, which an 11-bit address
+	 * isn't big enough to hold. In commands to these cards we give the
+	 * packet size in 32-bit words. To detect these cards, we write a
+	 * transmit threshold and see if it was interpreted as bytes or as
+	 * words. This idea is from Tom Killian (tom@research.att.com)).
+	 */
+	bus_io_write_2(bc, ioh, EP_COMMAND, SET_TX_AVAIL_THRESH | 1800 ); 
+	GO_WINDOW(5);
+	i = bus_io_read_2(bc, ioh, EP_W5_TX_AVAIL_THRESH);
+	GO_WINDOW(1);
+	switch (i)  {
+ 
+	case 1800:
+		sc->txashift = 0;
+		break;
+ 
+	case 7200:
+		sc->txashift = 2;
+		break;
+ 
+	default:
+		printf("%s: TX_AVAIL_THRESH = %d; interface disabled",
+		    sc->sc_dev.dv_xname, (int) i);
+		return;
+	}
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
@@ -338,7 +365,7 @@ startagain:
 
 	if (bus_io_read_2(bc, ioh, EP_W1_FREE_TX) < len + pad + 4) {
 		bus_io_write_2(bc, ioh, EP_COMMAND,
-		    SET_TX_AVAIL_THRESH | (len + pad + 4));
+		    SET_TX_AVAIL_THRESH | ((len + pad + 4) >> sc->txashift) );
 		/* not enough room in FIFO */
 		ifp->if_flags |= IFF_OACTIVE;
 		return;

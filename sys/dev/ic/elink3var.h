@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.5 1996/05/14 22:22:06 thorpej Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.5.4.1 1997/03/04 18:40:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -48,6 +48,7 @@ struct ep_softc {
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
 	int	tx_succ_ok;		/* # packets sent in sequence   */
 					/* w/o underrun			*/
+	u_char	txashift;		/* shift packet size		*/
 	u_char	bustype;
 #define EP_BUS_ISA	  	0x0
 #define	EP_BUS_PCMCIA	  	0x1
