@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.13 2000/06/29 08:53:02 mrg Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.14 2001/10/29 17:32:57 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -133,7 +133,7 @@ cpu_reboot(howto, bootstr)
 
 
 /*
- * vm_offset_t initarm(ofw_handle_t handle)
+ * vaddr_t initarm(ofw_handle_t handle)
  *
  * Initial entry point on startup for a GENERIC OFW
  * system.  Called with MMU on, running in the OFW
@@ -148,7 +148,7 @@ cpu_reboot(howto, bootstr)
  * Return the new stackptr (va) for the SVC frame.
  *
  */
-vm_offset_t
+vaddr_t
 initarm(ofw_handle)
 	ofw_handle_t ofw_handle;
 {
@@ -275,6 +275,6 @@ ofrootfound(void)
 		panic("No OFW root");
 	aa.oba_busname = "ofw";
 	aa.oba_phandle = node;
-	if (!config_rootfound("ofroot", &aa))
+	if (!config_rootfound("ofbus", &aa))
 		panic("ofw root ofbus not configured");
 }
