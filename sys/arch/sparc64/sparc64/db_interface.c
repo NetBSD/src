@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.54 2001/01/18 10:54:29 jdolecek Exp $ */
+/*	$NetBSD: db_interface.c,v 1.55 2001/01/22 13:57:00 jdolecek Exp $ */
 
 /*
  * Mach Operating System
@@ -863,7 +863,7 @@ db_uvmhistdump(addr, have_addr, count, modif)
 extern void db_esp(db_expr_t, int, db_expr_t, char*);
 #endif
 
-struct db_command sparc_db_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },
@@ -889,12 +889,6 @@ struct db_command sparc_db_command_table[] = {
 	{ "window",	db_dump_window,	0,	0 },
 	{ (char *)0, }
 };
-
-void
-db_machine_init()
-{
-	db_machine_commands_install(sparc_db_command_table);
-}
 
 /*
  * support for SOFTWARE_SSTEP:

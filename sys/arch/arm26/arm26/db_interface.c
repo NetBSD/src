@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 2001/01/18 10:55:30 jdolecek Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7 2001/01/22 13:57:01 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -208,7 +208,7 @@ void db_show_frame_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char
 void db_bus_write_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 void db_irqstat_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 
-struct db_command arm26_db_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "bsw",	db_bus_write_cmd,	CS_MORE, NULL },
 	{ "frame",	db_show_frame_cmd,	0, NULL },
 	{ "irqstat",	db_irqstat_cmd,		0, NULL },
@@ -237,13 +237,6 @@ db_trapper(addr, inst, frame, fault_code)
 
 extern u_int esym;
 extern u_int end;
-
-void
-db_machine_init()
-{
-
-	db_machine_commands_install(arm26_db_command_table);
-}
 
 u_int
 db_fetch_reg(reg, db_regs)
