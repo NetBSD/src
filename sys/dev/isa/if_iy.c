@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.36 2000/03/30 12:45:33 augustss Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.37 2000/06/23 13:54:50 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -1247,8 +1247,10 @@ iy_mc_setup(sc)
 	avail = sc->tx_start - sc->tx_end;
 	if (avail <= 0)
 		avail += sc->tx_size;
-	printf("iy_mc_setup called, %d addresses, %d/%d bytes needed/avail\n",
-	    ecp->ec_multicnt, len + I595_XMT_HDRLEN, avail);
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: iy_mc_setup called, %d addresses, "
+		    "%d/%d bytes needed/avail\n", ifp->if_xname, 
+		    ecp->ec_multicnt, len + I595_XMT_HDRLEN, avail);
 
 	last = sc->rx_size;
 
@@ -1293,7 +1295,8 @@ iy_mc_setup(sc)
 		if (temp & 0x20) {
 			printf("%s: mc setup failed, %d usec\n",
 			    sc->sc_dev.dv_xname, timeout * 2);
-		} else if ((temp & 0x0f) == 0x03) {
+		} else if (((temp & 0x0f) == 0x03) &&
+			    (ifp->if_flags & IFF_DEBUG)) {
 				printf("%s: mc setup done, %d usec\n",
 			    sc->sc_dev.dv_xname, timeout * 2);
 		}
