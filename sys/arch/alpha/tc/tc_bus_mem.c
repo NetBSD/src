@@ -1,4 +1,4 @@
-/* $NetBSD: tc_bus_mem.c,v 1.21 2000/02/26 18:53:13 thorpej Exp $ */
+/* $NetBSD: tc_bus_mem.c,v 1.22 2000/04/17 17:30:48 drochner Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.21 2000/02/26 18:53:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_bus_mem.c,v 1.22 2000/04/17 17:30:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,9 @@ int		tc_mem_alloc __P((void *, bus_addr_t, bus_addr_t, bus_size_t,
 		    bus_size_t, bus_addr_t, int, bus_addr_t *,
 		    bus_space_handle_t *));
 void		tc_mem_free __P((void *, bus_space_handle_t, bus_size_t));
+
+/* get kernel virtual address */
+void *		tc_mem_vaddr __P((void *, bus_space_handle_t));
 
 /* barrier */
 inline void	tc_mem_barrier __P((void *, bus_space_handle_t,
@@ -170,6 +173,9 @@ static struct alpha_bus_space tc_mem_space = {
 	/* allocation/deallocation */
 	tc_mem_alloc,
 	tc_mem_free,
+
+	/* get kernel virtual address */
+	tc_mem_vaddr;
 
 	/* barrier */
 	tc_mem_barrier,
@@ -342,6 +348,23 @@ tc_mem_free(v, bsh, size)
 
 	/* XXX XXX XXX XXX XXX XXX */
 	panic("tc_mem_free unimplemented");
+}
+
+void *
+tc_mem_vaddr(v, bsh)
+	void *v;
+	bus_space_handle_t bsh;
+{
+#ifdef DIAGNOSTIC
+	if ((bsh & TC_SPACE_SPARSE) != 0) {
+		/*
+		 * tc_mem_map() catches linear && !cacheable,
+		 * so we shouldn't come here
+		 */
+		panic("tc_mem_vaddr");
+	}
+#endif
+	return ((void *)bsh);
 }
 
 inline void
