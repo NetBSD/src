@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63 1998/08/30 21:27:32 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.64 1998/09/16 13:39:48 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -659,27 +659,19 @@ timerattach_obio(parent, self, aux)
 #if defined(SUN4M)
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
 		bus_space_handle_t bh;
-		struct rom_reg *rr = NULL;
-		int nreg;
 		int i;
 
-		/* Get full-size register property */
-		if (getprop(sa->sa_node, "reg", sizeof(*rr),
-			    &nreg, (void **)&rr) != 0) {
-			printf("%s: can't map register\n", self->dv_xname);
-			return;
-		}
-
-		if (nreg < 2) {
+		if (sa->sa_nreg < 2) {
 			printf("%s: only %d register sets\n", self->dv_xname,
-				nreg);
+				sa->sa_nreg);
 			return;
 		}
 
 		/* Map the system timer */
+		i = sa->sa_nreg - 1;
 		if (sbus_bus_map(sa->sa_bustag,
-				 rr[nreg-1].rr_iospace,
-				 (int)rr[nreg-1].rr_paddr,
+				 sa->sa_reg[i].sbr_slot,
+				 sa->sa_reg[i].sbr_offset,
 				 sizeof(struct timer_4m),
 				 BUS_SPACE_MAP_LINEAR,
 				 TIMERREG_VA, &bh) != 0) {
@@ -688,12 +680,13 @@ timerattach_obio(parent, self, aux)
 		}
 		timerreg4m = (struct timer_4m *)TIMERREG_VA;
 
-		for (i = 0; i < nreg - 1; i++) {
-			if (i != 0)
-				break;
+		/* Map each CPU's counter */
+		for (i = 0; i < sa->sa_nreg - 1; i++) {
+			if (cpus[i] == NULL)
+				continue;
 			if (sbus_bus_map(sa->sa_bustag,
-					 rr[i].rr_iospace,
-					 (int)rr[i].rr_paddr,
+					 sa->sa_reg[i].sbr_slot,
+					 sa->sa_reg[i].sbr_offset,
 					 sizeof(struct timer_4m),
 					 BUS_SPACE_MAP_LINEAR,
 					 0, &bh) != 0) {
@@ -701,7 +694,7 @@ timerattach_obio(parent, self, aux)
 					self->dv_xname);
 				return;
 			}
-			cpuinfo.counterreg_4m = (struct counter_4m *)bh;
+			cpus[i]->counterreg_4m = (struct counter_4m *)bh;
 		}
 
 		/* Put processor counter in "timer" mode */
