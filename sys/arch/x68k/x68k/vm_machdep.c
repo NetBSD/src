@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 1999/11/13 00:32:21 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28 1999/12/04 21:21:50 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,7 +222,7 @@ pagemove(from, to, size)
 	boolean_t rv;
 
 #ifdef DEBUG
-	if (size & CLOFSET)
+	if (size & PGOFSET)
 		panic("pagemove");
 #endif
 	while (size > 0) {

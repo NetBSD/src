@@ -1,4 +1,4 @@
-/*	$NetBSD: fbdefs.h,v 1.2 1999/02/15 04:36:34 hubertf Exp $	*/
+/*	$NetBSD: fbdefs.h,v 1.3 1999/12/04 21:20:58 ragge Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -178,7 +178,7 @@ extern mergeRopRec	mergeRopBits[];
 #define TypeAt(m, p)		((m)->fm_vaddr + (p) - (m)->fm_offset)
 
 #ifdef CPU_DOUBLE
-# define _TypeAt(m, p)		((m)->fm_addr[(p)>>CLSHIFT] + (CLOFSET&(p)))
+# define _TypeAt(m, p)		((m)->fm_addr[(p)>>PGSHIFT] + (PGOFSET&(p)))
 #else /* CPU_DOUBLE */
 # define _TypeAt(m, p)		((m)->fm_vaddr + (p) - (m)->fm_offset)
 #endif /* CPU_DOUBLE */

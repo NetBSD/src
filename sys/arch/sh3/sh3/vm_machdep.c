@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 1999/11/13 00:30:44 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 1999/12/04 21:21:27 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -252,7 +252,7 @@ pagemove(from, to, size)
 {
 	register pt_entry_t *fpte, *tpte;
 
-	if (size % CLBYTES)
+	if (size % NBPG)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
