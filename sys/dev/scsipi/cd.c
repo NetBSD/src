@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.35 1994/10/14 18:27:47 cgd Exp $	*/
+/*	$NetBSD: cd.c,v 1.36 1994/10/20 14:03:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -93,9 +93,6 @@ struct cd_data {
 		u_int32 blksize;
 		u_long disksize;	/* total number sectors */
 	} params;
-	int partflags[MAXPARTITIONS];	/* per partition flags */
-#define CDOPEN	0x01
-	u_int32 openparts;	/* one bit for each open partition */
 	u_int32 xfer_block_wait;
 	struct buf buf_queue;
 };
@@ -181,8 +178,10 @@ cdattach(parent, self, aux)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 int 
-cdopen(dev)
+cdopen(dev, flag, fmt, p)
 	dev_t dev;
+	int flag, fmt;
+	struct proc *p;
 {
 	int error = 0;
 	int unit, part;
@@ -208,7 +207,8 @@ cdopen(dev)
 	 * If it's been invalidated, and not everybody has closed it then
 	 * forbid re-entry.  (may have changed media)
 	 */
-	if (!(sc_link->flags & SDEV_MEDIA_LOADED) && cd->openparts)
+	if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0 &&
+	    cd->sc_dk.dk_openpart != 0)
 		return ENXIO;
 
 	/*
@@ -255,30 +255,32 @@ cdopen(dev)
 	SC_DEBUG(sc_link, SDEV_DB3, ("Disklabel fabricated "));
 
 	/*
-	 * Check the partition is legal
-	 */
-	if (part >= cd->sc_dk.dk_label.d_npartitions && part != RAW_PART) {
-		error = ENXIO;
-		goto bad;
-	}
-	SC_DEBUG(sc_link, SDEV_DB3, ("partition ok"));
-
-	/*
 	 *  Check that the partition exists
 	 */
-	if (cd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED &&
-	    part != RAW_PART) {
+	if (part != RAW_PART &&
+	    (part >= cd->sc_dk.dk_label.d_npartitions ||
+	     cd->sc_dk.dk_label.d_partitions[part].p_fstype == FS_UNUSED)) {
 		error = ENXIO;
 		goto bad;
 	}
-	cd->partflags[part] |= CDOPEN;
-	cd->openparts |= (1 << part);
+
+	/* Insure only one open at a time. */
+	switch (fmt) {
+	case S_IFCHR:
+		cd->sc_dk.dk_copenpart |= (1 << part);
+		break;
+	case S_IFBLK:
+		cd->sc_dk.dk_bopenpart |= (1 << part);
+		break;
+	}
+	cd->sc_dk.dk_openpart = cd->sc_dk.dk_copenpart | cd->sc_dk.dk_bopenpart;
+
 	SC_DEBUG(sc_link, SDEV_DB3, ("open complete\n"));
 	sc_link->flags |= SDEV_MEDIA_LOADED;
 	return 0;
 
 bad:
-	if (!cd->openparts) {
+	if (cd->sc_dk.dk_openpart == 0) {
 		scsi_prevent(sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		sc_link->flags &= ~SDEV_OPEN;
 	}
@@ -293,15 +295,20 @@ int
 cdclose(dev)
 	dev_t dev;
 {
-	int unit, part;
-	struct cd_data *cd;
+	struct cd_data *cd = cdcd.cd_devs[CDUNIT(dev)];
+	int part = CDPART(dev);
 
-	unit = CDUNIT(dev);
-	part = CDPART(dev);
-	cd = cdcd.cd_devs[unit];
-	cd->partflags[part] &= ~CDOPEN;
-	cd->openparts &= ~(1 << part);
-	if (!cd->openparts) {
+	switch (fmt) {
+	case S_IFCHR:
+		cd->sc_dk.dk_copenpart &= ~(1 << part);
+		break;
+	case S_IFBLK:
+		cd->sc_dk.dk_bopenpart &= ~(1 << part);
+		break;
+	}
+	cd->sc_dk.dk_openpart = cd->sc_dk.dk_copenpart | cd->sc_dk.dk_bopenpart;
+
+	if (cd->sc_dk.dk_openpart == 0) {
 		scsi_prevent(cd->sc_link, PR_ALLOW, SCSI_ERR_OK | SCSI_SILENT);
 		cd->sc_link->flags &= ~SDEV_OPEN;
 	}
@@ -334,7 +341,6 @@ void
 cdstrategy(bp)
 	struct buf *bp;
 {
-	struct buf *dp;
 	int opri;
 	struct cd_data *cd;
 	int unit;
@@ -377,13 +383,13 @@ cdstrategy(bp)
 			goto done;
 		/* otherwise, process transfer request */
 	}
+
 	opri = splbio();
-	dp = &cd->buf_queue;
 
 	/*
 	 * Place it in the queue of disk activities for this disk
 	 */
-	disksort(dp, bp);
+	disksort(&cd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -397,7 +403,6 @@ cdstrategy(bp)
 bad:
 	bp->b_flags |= B_ERROR;
 done:
-
 	/*
 	 * Correctly set the buf to indicate a completed xfer
 	 */
@@ -477,13 +482,13 @@ cdstart(unit)
 		 * of the logical blocksize of the device.  Really a bit silly
 		 * until we have real partitions, but.
 		 */
-		blkno = bp->b_blkno / (cd->params.blksize / DEV_BSIZE);
+		blkno =
+		    bp->b_blkno / (cd->sc_dk.dk_label.d_secsize / DEV_BSIZE);
 		if (CDPART(bp->b_dev) != RAW_PART) {
 			p = &cd->sc_dk.dk_label.d_partitions[CDPART(bp->b_dev)];
 			blkno += p->p_offset;
 		}
-		nblks = (bp->b_bcount + (cd->params.blksize - 1)) /
-		    cd->params.blksize;
+		nblks = howmany(bp->b_bcount, cd->sc_dk.dk_label.d_secsize);
 
 		/*
 		 *  Fill out the scsi command
@@ -501,7 +506,7 @@ cdstart(unit)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *) &cmd,
+		if (scsi_scsi_cmd(sc_link, (struct scsi_generic *)&cmd,
 		    sizeof(cmd), (u_char *) bp->b_data, bp->b_bcount,
 		    CDRETRIES, 30000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT))
@@ -544,12 +549,12 @@ cdioctl(dev, cmd, addr, flag)
 		return EINVAL;
 
 	case DIOCGDINFO:
-		*(struct disklabel *) addr = cd->sc_dk.dk_label;
+		*(struct disklabel *)addr = cd->sc_dk.dk_label;
 		return 0;
 
 	case DIOCGPART:
-		((struct partinfo *) addr)->disklab = &cd->sc_dk.dk_label;
-		((struct partinfo *) addr)->part =
+		((struct partinfo *)addr)->disklab = &cd->sc_dk.dk_label;
+		((struct partinfo *)addr)->part =
 		    &cd->sc_dk.dk_label.d_partitions[CDPART(dev)];
 		return 0;
 
@@ -562,14 +567,14 @@ cdioctl(dev, cmd, addr, flag)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		error = setdisklabel(&cd->sc_dk.dk_label,
-		    (struct disklabel *) addr, 0, 0);
+		    (struct disklabel *)addr, 0, (struct cpu_disklabel *)0);
 		return error;
 
 	case DIOCWLABEL:
 		return EBADF;
 
 	case CDIOCPLAYTRACKS: {
-		struct ioc_play_track *args = (struct ioc_play_track *) addr;
+		struct ioc_play_track *args = (struct ioc_play_track *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -582,7 +587,7 @@ cdioctl(dev, cmd, addr, flag)
 	}
 	case CDIOCPLAYMSF: {
 		struct ioc_play_msf *args
-		= (struct ioc_play_msf *) addr;
+		= (struct ioc_play_msf *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -595,7 +600,7 @@ cdioctl(dev, cmd, addr, flag)
 	}
 	case CDIOCPLAYBLOCKS: {
 		struct ioc_play_blocks *args
-		= (struct ioc_play_blocks *) addr;
+		= (struct ioc_play_blocks *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -607,7 +612,7 @@ cdioctl(dev, cmd, addr, flag)
 	}
 	case CDIOCREADSUBCHANNEL: {
 		struct ioc_read_subchannel *args
-		= (struct ioc_read_subchannel *) addr;
+		= (struct ioc_read_subchannel *)addr;
 		struct cd_sub_channel_info data;
 		u_int32 len = args->data_len;
 		if (len > sizeof(data) ||
@@ -635,7 +640,7 @@ cdioctl(dev, cmd, addr, flag)
 			struct cd_toc_entry entries[65];
 		} data;
 		struct ioc_read_toc_entry *te =
-		(struct ioc_read_toc_entry *) addr;
+		(struct ioc_read_toc_entry *)addr;
 		struct ioc_toc_header *th;
 		u_int32 len = te->data_len;
 		th = &data.header;
@@ -644,7 +649,7 @@ cdioctl(dev, cmd, addr, flag)
 		    len < sizeof(struct cd_toc_entry))
 			return EINVAL;
 		if (error = cd_read_toc(cd, te->address_format,
-		    te->starting_track, (struct cd_toc_entry *) &data,
+		    te->starting_track, (struct cd_toc_entry *)&data,
 		    len + sizeof(struct ioc_toc_header)))
 			return error;
 		len = min(len, ntohs(th->len) - (sizeof(th->starting_track) +
@@ -652,7 +657,7 @@ cdioctl(dev, cmd, addr, flag)
 		return copyout(data.entries, te->data, len);
 	}
 	case CDIOCSETPATCH: {
-		struct ioc_patch *arg = (struct ioc_patch *) addr;
+		struct ioc_patch *arg = (struct ioc_patch *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -663,7 +668,7 @@ cdioctl(dev, cmd, addr, flag)
 		return cd_set_mode(cd, &data);
 	}
 	case CDIOCGETVOL: {
-		struct ioc_vol *arg = (struct ioc_vol *) addr;
+		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -674,7 +679,7 @@ cdioctl(dev, cmd, addr, flag)
 		return 0;
 	}
 	case CDIOCSETVOL: {
-		struct ioc_vol *arg = (struct ioc_vol *) addr;
+		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -687,7 +692,7 @@ cdioctl(dev, cmd, addr, flag)
 		return cd_set_mode(cd, &data);
 	}
 	case CDIOCSETMONO: {
-		struct ioc_vol *arg = (struct ioc_vol *) addr;
+		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -700,7 +705,7 @@ cdioctl(dev, cmd, addr, flag)
 		return cd_set_mode(cd, &data);
 	}
 	case CDIOCSETSTEREO: {
-		struct ioc_vol *arg = (struct ioc_vol *) addr;
+		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -711,7 +716,7 @@ cdioctl(dev, cmd, addr, flag)
 		return cd_set_mode(cd, &data);
 	}
 	case CDIOCSETMUTE: {
-		struct ioc_vol *arg = (struct ioc_vol *) addr;
+		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -722,7 +727,7 @@ cdioctl(dev, cmd, addr, flag)
 		return cd_set_mode(cd, &data);
 	}
 	case CDIOCSETLEFT: {
-		struct ioc_vol *arg = (struct ioc_vol *) addr;
+		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -733,7 +738,7 @@ cdioctl(dev, cmd, addr, flag)
 		return cd_set_mode(cd, &data);
 	}
 	case CDIOCSETRIGHT: {
-		struct ioc_vol *arg = (struct ioc_vol *) addr;
+		struct ioc_vol *arg = (struct ioc_vol *)addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
 			return error;
@@ -848,8 +853,8 @@ cd_size(cd, flags)
 	 * If the command works, interpret the result as a 4 byte
 	 * number of blocks and a blocksize
 	 */
-	error = scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) &rdcap, sizeof(rdcap), CDRETRIES,
+	error = scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)&rdcap, sizeof(rdcap), CDRETRIES,
 	    20000, NULL, SCSI_DATA_IN | flags);
 	if (error == EBUSY) {
 		if (!(flags & SCSI_SILENT))
@@ -860,8 +865,8 @@ cd_size(cd, flags)
 		else
 			tsleep(cd, PRIBIO + 1, "cd_size", 2 * hz);
 		error = scsi_scsi_cmd(cd->sc_link,
-		    (struct scsi_generic *) &scsi_cmd, sizeof(scsi_cmd),
-		    (u_char *) &rdcap, sizeof(rdcap), CDRETRIES, 20000, NULL,
+		    (struct scsi_generic *)&scsi_cmd, sizeof(scsi_cmd),
+		    (u_char *)&rdcap, sizeof(rdcap), CDRETRIES, 20000, NULL,
 		    SCSI_DATA_IN | flags);
 	}
 
@@ -904,8 +909,8 @@ cd_get_mode(cd, data, page)
 	scsi_cmd.op_code = MODE_SENSE;
 	scsi_cmd.page = page;
 	scsi_cmd.length = sizeof(*data) & 0xff;
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) data, sizeof(*data), CDRETRIES, 20000,
+	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)data, sizeof(*data), CDRETRIES, 20000,
 	    NULL, SCSI_DATA_IN);
 }
 
@@ -924,8 +929,8 @@ cd_set_mode(cd, data)
 	scsi_cmd.byte2 |= SMS_PF;
 	scsi_cmd.length = sizeof(*data) & 0xff;
 	data->header.data_length = 0;
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(scsi_cmd), (u_char *) data, sizeof(*data), CDRETRIES, 20000,
+	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(scsi_cmd), (u_char *)data, sizeof(*data), CDRETRIES, 20000,
 	    NULL, SCSI_DATA_OUT);
 }
 
@@ -947,7 +952,7 @@ cd_play(cd, blkno, nblks)
 	scsi_cmd.blk_addr[3] = blkno & 0xff;
 	scsi_cmd.xfer_len[0] = (nblks >> 8) & 0xff;
 	scsi_cmd.xfer_len[1] = nblks & 0xff;
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
+	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 200000, NULL, 0);
 }
 
@@ -971,7 +976,7 @@ cd_play_big(cd, blkno, nblks)
 	scsi_cmd.xfer_len[1] = (nblks >> 16) & 0xff;
 	scsi_cmd.xfer_len[2] = (nblks >> 8) & 0xff;
 	scsi_cmd.xfer_len[3] = nblks & 0xff;
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
+	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 20000, NULL, 0);
 }
 
@@ -991,7 +996,7 @@ cd_play_tracks(cd, strack, sindex, etrack, eindex)
 	scsi_cmd.start_index = sindex;
 	scsi_cmd.end_track = etrack;
 	scsi_cmd.end_index = eindex;
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
+	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 20000, NULL, 0);
 }
 
@@ -1013,7 +1018,7 @@ cd_play_msf(cd, startm, starts, startf, endm, ends, endf)
 	scsi_cmd.end_m = endm;
 	scsi_cmd.end_s = ends;
 	scsi_cmd.end_f = endf;
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
+	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 2000, NULL, 0);
 }
 
@@ -1030,7 +1035,7 @@ cd_pause(cd, go)
 	bzero(&scsi_cmd, sizeof(scsi_cmd));
 	scsi_cmd.op_code = PAUSE;
 	scsi_cmd.resume = go;
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
+	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), 0, 0, CDRETRIES, 2000, NULL, 0);
 }
 
@@ -1066,8 +1071,8 @@ cd_read_subchannel(cd, mode, format, track, data, len)
 	scsi_cmd.track = track;
 	scsi_cmd.data_len[0] = (len) >> 8;
 	scsi_cmd.data_len[1] = (len) & 0xff;
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(struct scsi_read_subchannel), (u_char *) data, len,
+	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(struct scsi_read_subchannel), (u_char *)data, len,
 	    CDRETRIES, 5000, NULL, SCSI_DATA_IN);
 }
 
@@ -1094,8 +1099,8 @@ cd_read_toc(cd, mode, start, data, len)
 	scsi_cmd.from_track = start;
 	scsi_cmd.data_len[0] = (ntoc) >> 8;
 	scsi_cmd.data_len[1] = (ntoc) & 0xff;
-	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *) &scsi_cmd,
-	    sizeof(struct scsi_read_toc), (u_char *) data, len, CDRETRIES,
+	return scsi_scsi_cmd(cd->sc_link, (struct scsi_generic *)&scsi_cmd,
+	    sizeof(struct scsi_read_toc), (u_char *)data, len, CDRETRIES,
 	    5000, NULL, SCSI_DATA_IN);
 }
 
