@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.30 2001/01/21 19:30:35 augustss Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.31 2001/01/21 22:09:23 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -513,8 +513,10 @@ USB_ATTACH(cue)
 	sc->cue_product = uaa->product;
 	sc->cue_vendor = uaa->vendor;
 
-	sc->cue_task.fun = cue_tick_task;
-	sc->cue_task.arg = sc;
+	sc->cue_tick_task.fun = cue_tick_task;
+	sc->cue_tick_task.arg = sc;
+	sc->cue_stop_task.fun = (void (*)(void *))cue_stop;
+	sc->cue_stop_task.arg = sc;
 
 	err = usbd_device2interface_handle(dev, CUE_IFACE_IDX, &iface);
 	if (err) {
@@ -918,7 +920,7 @@ cue_tick(void *xsc)
 	DPRINTFN(2,("%s: %s: enter\n", USBDEVNAME(sc->cue_dev), __FUNCTION__));
 
 	/* Perform statistics update in process context. */
-	usb_add_task(sc->cue_udev, &sc->cue_task);
+	usb_add_task(sc->cue_udev, &sc->cue_tick_task);
 }
 
 Static void
@@ -976,7 +978,8 @@ cue_send(struct cue_softc *sc, struct mbuf *m, int idx)
 	if (err != USBD_IN_PROGRESS) {
 		printf("%s: cue_send error=%s\n", USBDEVNAME(sc->cue_dev),
 		       usbd_errstr(err));
-		cue_stop(sc);
+		/* Stop the interface from process context. */
+		usb_add_task(sc->cue_udev, &sc->cue_stop_task);
 		return (EIO);
 	}
 
