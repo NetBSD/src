@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.38 2003/10/21 00:30:05 fvdl Exp $	*/
+/*	$NetBSD: setterm.c,v 1.39 2004/07/24 13:10:47 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.38 2003/10/21 00:30:05 fvdl Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.39 2004/07/24 13:10:47 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,8 +52,6 @@ static int zap(SCREEN *screen);
 
 static int does_esc_m(char *cap);
 static int does_ctrl_o(char *cap);
-
-struct tinfo *_cursesi_genbuf;
 
 static char	*sflags[] = {
 /*	      am        bs        cc        da        eo */
@@ -418,7 +416,7 @@ zap(SCREEN *screen)
 char	*
 getcap(char *name)
 {
-	return (t_agetstr(_cursesi_genbuf, name));
+	return (t_agetstr(_cursesi_screen->cursesi_genbuf, name));
 }
 
 /*
