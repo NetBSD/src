@@ -1,4 +1,4 @@
-/* $NetBSD: comvar.h,v 1.1 1996/06/03 22:30:40 mark Exp $ */
+/*	$NetBSD: comvar.h,v 1.2 1997/01/13 00:41:00 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -28,15 +28,15 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	from: comvar.h,v 1.5 1996/05/05
  */
 
-int comprobe1 __P((bus_chipset_tag_t, bus_io_handle_t, int));
+int comprobe1 __P((bus_space_tag_t, bus_space_handle_t, int));
 int comintr __P((void *));
 
+/* For other ports that use 'com' as console (alpha). */
 extern int comconsaddr;
 extern int comconsattached;
-extern bus_chipset_tag_t comconsbc;
-extern bus_io_handle_t comconsioh;
+extern bus_space_tag_t comconstag;
+extern bus_space_handle_t comconsbah;
 extern tcflag_t comconscflag;
+void cominit __P((bus_space_tag_t, bus_space_handle_t, int));
