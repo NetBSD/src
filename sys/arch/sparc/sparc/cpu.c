@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.22 1996/05/16 15:57:15 abrown Exp $ */
+/*	$NetBSD: cpu.c,v 1.23 1996/06/12 14:56:09 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -244,10 +244,16 @@ cpu_attach(parent, dev, aux)
 			 */
 			clk = getpropint(findroot(), "clock-frequency", 0);
 		}
-		sprintf(cpu_model, "%s (%s @ %s MHz, %s FPU)",
-			getpropstring(node, "name"),
-			psrtoname(impl, vers, fver, iubuf),
-			clockfreq(clk), fpuname);
+		if (CPU_ISSUN4C)
+			sprintf(cpu_model, "%s (%s @ %s MHz, %s FPU)",
+				getpropstring(node, "name"),
+				psrtoname(impl, vers, fver, iubuf),
+				clockfreq(clk), fpuname);
+		else
+			/* On sun4m, the "name" property identifies CPU */
+			sprintf(cpu_model, "%s @ %s MHz, %s FPU",
+				getpropstring(node, "name"),
+				clockfreq(clk), fpuname);
 		printf(": %s\n", cpu_model);
 
 		/*
@@ -256,75 +262,86 @@ cpu_attach(parent, dev, aux)
 		 */
 		/*bzero(&cacheinfo, sizeof(cacheinfo));*/
 #if defined(SUN4M)
-		if (node_has_property(node, "cache-physical?")) {
+		if (CPU_ISSUN4M) {
 			cacheinfo.c_physical = 1;
-			vactype = VAC_NONE;
+			vactype = node_has_property(node, "cache-physical?")
+				? VAC_NONE
+				: VAC_WRITETHROUGH; /* ??? */
 			/*
-			 * Sun4M physical caches are nice since we never
+			 * Sun4m physical caches are nice since we never
 			 * have to flush them. Unfortunately it is a pain
 			 * to determine what size they are, since they may
 			 * be split...
 			 */
 			switch (mmumod) {
-			    case SUN4M_MMU_SS:
-			    case SUN4M_MMU_MS1:
+			case SUN4M_MMU_SS:
+			case SUN4M_MMU_MS1:
 				cacheinfo.c_split = 1;
-				cacheinfo.c_linesize = l = getpropint(node,
-						       "icache-line-size",0);
+				cacheinfo.ic_linesize = l =
+					getpropint(node, "icache-line-size", 0);
 				for (i = 0; (1 << i) < l && l; i++)
-				    /* void */;
+					/* void */;
 				if ((1 << i) != l && l)
-				    panic("bad icache line size %d", l);
-				cacheinfo.c_l2linesize = i;
-				cacheinfo.c_totalsize = getpropint(node,
-							"icache-nlines", 64)*
-							getpropint(node,
-							"icache-associativity",
-							1)*l;
+					panic("bad icache line size %d", l);
+				cacheinfo.ic_l2linesize = i;
+				cacheinfo.ic_totalsize = l *
+				    getpropint(node, "icache-nlines", 64) *
+				    getpropint(node, "icache-associativity", 1);
 
-				cacheinfo.dc_linesize = l = getpropint(node,
-						       "dcache-line-size",0);
+				cacheinfo.dc_linesize = l =
+					getpropint(node, "dcache-line-size",0);
 				for (i = 0; (1 << i) < l && l; i++)
-				    /* void */;
+					/* void */;
 				if ((1 << i) != l && l)
-				    panic("bad dcache line size %d", l);
+					panic("bad dcache line size %d", l);
 				cacheinfo.dc_l2linesize = i;
-				cacheinfo.dc_totalsize = getpropint(node,
-							"dcache-nlines",128)*
-							getpropint(node,
-							"dcache-associativity",
-							1)*l;
+				cacheinfo.dc_totalsize = l *
+				    getpropint(node, "dcache-nlines", 128) *
+				    getpropint(node, "dcache-associativity", 1);
 
-				cacheinfo.ec_linesize = l = getpropint(node,
-						       "ecache-line-size",0);
+				cacheinfo.ec_linesize = l =
+				    getpropint(node, "ecache-line-size", 0);
 				for (i = 0; (1 << i) < l && l; i++)
-				    /* void */;
+					/* void */;
 				if ((1 << i) != l && l)
-				    panic("bad ecache line size %d", l);
+					panic("bad ecache line size %d", l);
 				cacheinfo.ec_l2linesize = i;
-				cacheinfo.ec_totalsize = getpropint(node,
-							"ecache-nlines", 32768)*
-							getpropint(node,
-							"ecache-associativity",
-							1)*l;
+				cacheinfo.ec_totalsize = l *
+				    getpropint(node, "ecache-nlines", 32768) *
+				    getpropint(node, "ecache-associativity", 1);
+
+				/*
+				 * XXX - The following will have to do until
+				 * we have per-cpu cache handling.
+				 */
+				cacheinfo.c_l2linesize =
+					min(cacheinfo.ic_l2linesize,
+					    cacheinfo.dc_l2linesize);
+				cacheinfo.c_linesize =
+					min(cacheinfo.ic_linesize,
+					    cacheinfo.dc_linesize);
+				cacheinfo.c_totalsize =
+					cacheinfo.ic_totalsize +
+					cacheinfo.dc_totalsize;
 				break;
-			    case SUN4M_MMU_HS:
+			case SUN4M_MMU_HS:
 				printf("Warning, guessing on HyperSPARC cache...\n");
 				cacheinfo.c_split = 0;
 				i = lda(SRMMU_PCR, ASI_SRMMU);
 				if (i & SRMMU_PCR_CS)
-				    cacheinfo.c_totalsize = 256 * 1024;
+					cacheinfo.c_totalsize = 256 * 1024;
 				else
-				    cacheinfo.c_totalsize = 128 * 1024;
-				cacheinfo.c_linesize=l=cacheinfo.c_totalsize /
-				    4096; /* manual says it has 4096 lines */
+					cacheinfo.c_totalsize = 128 * 1024;
+				/* manual says it has 4096 lines */
+				cacheinfo.c_linesize = l =
+					cacheinfo.c_totalsize / 4096;
 				for (i = 0; (1 << i) < l; i++)
-				    /* void */;
+					/* void */;
 				if ((1 << i) != l)
-				    panic("bad cache line size %d", l);
+					panic("bad cache line size %d", l);
 				cacheinfo.c_l2linesize = i;
 				break;
-			    default:
+			default:
 				printf("warning: couldn't identify cache\n");
 				cacheinfo.c_totalsize = 0;
 			}
@@ -342,7 +359,7 @@ cpu_attach(parent, dev, aux)
 			for (i = 0; (1 << i) < l; i++)
 			    /* void */;
 			if ((1 << i) != l)
-			    panic("bad cache line size %d", l);
+				panic("bad cache line size %d", l);
 			cacheinfo.c_l2linesize = i;
 			vactype = VAC_WRITETHROUGH;
 		}
@@ -362,22 +379,24 @@ cpu_attach(parent, dev, aux)
 		    dev->dv_xname);
 	}
 
-	if (cacheinfo.c_totalsize && !cacheinfo.c_physical) {
+	if (cacheinfo.c_totalsize == 0)
+		return;
+
+	if (!cacheinfo.c_physical) {
 		printf("%s: %d byte write-%s, %d bytes/line, %cw flush ",
 		    dev->dv_xname, cacheinfo.c_totalsize,
 		    (vactype == VAC_WRITETHROUGH) ? "through" : "back",
 		    cacheinfo.c_linesize,
 		    cacheinfo.c_hwflush ? 'h' : 's');
 		cache_enable();
-	}
-	if (cacheinfo.c_physical && cacheinfo.c_totalsize) {
+	} else {
 		sep = " ";
 		if (cacheinfo.c_split) {
 			printf("%s: physical", dev->dv_xname);
-			if (cacheinfo.c_totalsize > 0) {
+			if (cacheinfo.ic_totalsize > 0) {
 				printf("%s%dK instruction (%d b/l)", sep,
-				    cacheinfo.c_totalsize/1024,
-				    cacheinfo.c_linesize);
+				    cacheinfo.ic_totalsize/1024,
+				    cacheinfo.ic_linesize);
 				    sep = ", ";
 			}
 			if (cacheinfo.dc_totalsize > 0) {
@@ -393,10 +412,10 @@ cpu_attach(parent, dev, aux)
 			}
 			printf(" ");
 		} else
-		    printf("%s: physical %dK combined cache (%d bytes/"
-			   "line) ", dev->dv_xname,
-			   cacheinfo.c_totalsize/1024,
-			   cacheinfo.c_linesize);
+			printf("%s: physical %dK combined cache (%d bytes/"
+				"line) ", dev->dv_xname,
+				cacheinfo.c_totalsize/1024,
+				cacheinfo.c_linesize);
 		cache_enable();
 	}
 }
@@ -409,8 +428,6 @@ cpu_attach(parent, dev, aux)
  *
  * The table contents (and much of the structure here) are from Guy Harris.
  *
- * NOTE: we have Sun-4m cpu types here, even though this only runs on the
- * Sun-4c (yet)...
  */
 struct info {
 	u_char	valid;
@@ -465,6 +482,7 @@ static struct info fpu_types[] = {
 	{ 1, 0x0, ANY, 1, "MB86911 or WTL1164/5" },
 	{ 1, 0x0, ANY, 2, "L64802 or ACT8847" },
 	{ 1, 0x0, ANY, 3, "WTL3170/2" },
+	{ 1, 0x0, 4,   4, "on-chip" },		/* Swift */
 	{ 1, 0x0, ANY, 4, "L64804" },
 
 	/*
