@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: rc,v 1.153 2000/08/21 23:09:50 lukem Exp $
+# $NetBSD: rc,v 1.154 2000/12/15 00:00:09 lukem Exp $
 #
-# rc.sh --
+# rc --
 #	Run the scripts in /etc/rc.d with rcorder.
 
-#	System startup script run by init on autoboot or after single-user.
+#	System startup script run by init(8) on autoboot or after single-user.
 #	Output and error are redirected to console by init, and the console
 #	is the controlling terminal.
 
