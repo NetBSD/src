@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.47 2000/08/01 00:53:09 wiz Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.48 2000/08/12 22:41:55 thorpej Exp $	*/
 
 /*
  *
@@ -507,7 +507,7 @@ void			uvm_page_physload __P((paddr_t, paddr_t,
 void			uvm_setpagesize __P((void));
 
 /* uvm_pdaemon.c */
-void			uvm_pageout __P((void));
+void			uvm_pageout __P((void *));
 
 /* uvm_pglist.c */
 int			uvm_pglistalloc __P((psize_t, paddr_t,
