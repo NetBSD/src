@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.43 1998/04/07 20:20:03 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.44 1998/08/21 14:07:37 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ static	int obio_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       int, bus_space_handle_t *));
 static	int _obio_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			       bus_size_t, int,
-			       vm_offset_t, bus_space_handle_t *));
+			       vaddr_t, bus_space_handle_t *));
 
 static struct sparc_bus_space_tag obio_space_tag = {
 	NULL,				/* cookie */
@@ -204,7 +204,7 @@ _obio_bus_map(t, btype, paddr, size, flags, vaddr, hp)
 	bus_addr_t paddr;
 	bus_size_t size;
 	int	flags;
-	vm_offset_t vaddr;
+	vaddr_t vaddr;
 	bus_space_handle_t *hp;
 {
 	struct obio4_softc *sc = t->cookie;
