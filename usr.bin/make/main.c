@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.69 2001/06/09 05:57:31 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.70 2001/06/10 02:31:00 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.69 2001/06/09 05:57:31 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.70 2001/06/10 02:31:00 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.69 2001/06/09 05:57:31 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.70 2001/06/10 02:31:00 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1665,8 +1665,9 @@ ExportMAKEFLAGS(first)
 	return;
     once = 0;
     
-    strncpy(tmp, "${.MAKEFLAGS} ${.MAKEOVERRIDES}", sizeof(tmp));
-    s = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+    strncpy(tmp, "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}",
+	    sizeof(tmp));
+    s = Var_Subst(NULL, tmp, VAR_CMD, 0);
     if (s && *s) {
 #ifdef POSIX
 	setenv("MAKEFLAGS", s, 1);
