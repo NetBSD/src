@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2000/06/29 08:07:48 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2000/08/24 11:35:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -406,7 +406,7 @@ dumpsys()
 
 #if 0	/* XXX this doesn't work.  grr. */
         /* toss any characters present prior to dump */
-	while (sget() != NULL); /*syscons and pccons differ */
+	while (sget() != NULL); /* syscons and pccons differ */
 #endif
 
 	bytes = ctob(dumpmem_high) + IOM_END;
@@ -543,9 +543,9 @@ initSH3(pc)
 	nkpde = 8;	/* XXX nkpde = kernel page dir area (32 Mbyte) */
 
 	/*
-	 *	Construct a page table directory
-	 *	In SH3 H/W does not support PTD,
-	 *	these structures are used by S/W.
+	 * Construct a page table directory
+	 * In SH3 H/W does not support PTD,
+	 * these structures are used by S/W.
 	 */
 	pte = (pt_entry_t)pagetab;
 	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
