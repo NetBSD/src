@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.22 1998/02/27 04:03:00 thorpej Exp $ */
+/* $NetBSD: prom.c,v 1.23 1998/05/19 18:35:11 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.22 1998/02/27 04:03:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.23 1998/05/19 18:35:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,15 +60,15 @@ rom_lev1map()
 {
 	struct alpha_pcb *apcb;
 	extern u_long curpcb;
-	extern pt_entry_t *Lev1map;
+	extern pt_entry_t *kernel_lev1map;
 
 	/*
 	 * We may be called before the first context switch
 	 * after alpha_init(), in which case we just need
-	 * to use the kernel Lev1map.
+	 * to use the kernel kernel_lev1map.
 	 */
 	if (curpcb == 0)
-		return (Lev1map);
+		return (kernel_lev1map);
 
 	/*
 	 * Find the level 1 map that we're currently running on.

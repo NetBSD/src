@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.47 1998/03/22 07:26:32 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.48 1998/05/19 18:35:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.47 1998/03/22 07:26:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.48 1998/05/19 18:35:11 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -611,7 +611,7 @@ Lsavectx1: LDGP(pv)
 
 IMPORT(whichqs, 4)
 IMPORT(want_resched, 8)
-IMPORT(Lev1map, 8)
+IMPORT(kernel_lev1map, 8)
 
 /*
  * When no processes are on the runq, cpu_switch branches to idle
