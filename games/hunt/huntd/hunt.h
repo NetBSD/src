@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.10 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hunt.h,v 1.11 2004/02/08 22:23:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -417,8 +417,8 @@ extern FLAG	no_beep;
 
 void		add_shot(int, int, int, char, int, PLAYER *, int, char);
 int		answer(void);
-void		bad_con(void);
-void		bad_ver(void);
+void		bad_con(void) __attribute__((__noreturn__));
+void		bad_ver(void) __attribute__((__noreturn__));
 int		broadcast_vec(int, struct	sockaddr **);
 void		ce(PLAYER *);
 void		cgoto(PLAYER *, int, int);
@@ -475,7 +475,7 @@ char		translate(char);
 SIGNAL_TYPE	cleanup(int) __attribute__((__noreturn__));
 SIGNAL_TYPE	intr(int);
 SIGNAL_TYPE	sigalrm(int);
-SIGNAL_TYPE	sigemt(int);
-SIGNAL_TYPE	sigterm(int);
-SIGNAL_TYPE	sigusr1(int);
+SIGNAL_TYPE	sigemt(int) __attribute__((__noreturn__));
+SIGNAL_TYPE	sigterm(int) __attribute__((__noreturn__));
+SIGNAL_TYPE	sigusr1(int) __attribute__((__noreturn__));
 SIGNAL_TYPE	tstp(int);
