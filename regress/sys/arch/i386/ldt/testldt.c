@@ -1,4 +1,4 @@
-/*	$NetBSD: testldt.c,v 1.4 1995/04/20 22:42:38 cgd Exp $	*/
+/*	$NetBSD: testldt.c,v 1.5 1997/11/01 06:20:50 lukem Exp $	*/
 
 #include <stdio.h>
 #include <signal.h>
@@ -161,7 +161,7 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	while ((ch = getopt(argc, argv, "v")) != EOF) {
+	while ((ch = getopt(argc, argv, "v")) != -1) {
 		switch (ch) {
 		case 'v':
 		    verbose++;
