@@ -38,7 +38,7 @@
  * partially based on:
  *      libnetboot/rpc.c
  *               @(#) Header: rpc.c,v 1.12 93/09/28 08:31:56 leres Exp  (LBL)
- *   $Id: krpc_subr.c,v 1.1 1994/04/18 06:18:19 glass Exp $
+ *   $Id: krpc_subr.c,v 1.2 1994/06/13 15:28:55 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -106,8 +106,16 @@ struct rpc_reply {
 #define MIN_REPLY_HDR 16	/* xid, dir, astat, errno */
 
 /*
+ * What is the longest we will wait before re-sending a request?
+ * Note this is also the frequency of "RPC timeout" messages.
+ * The re-send loop count sup linearly to this maximum, so the
+ * first complaint will happen after (1+2+3+4+5)=15 seconds.
+ */
+#define	MAX_RESEND_DELAY 5	/* seconds */
+
+/*
  * Call portmap to lookup a port number for a particular rpc program
- * Returns the port number in host order, or  ZERO if it couldn't.
+ * Returns non-zero error on failure.
  */
 int
 krpc_portmap(sa,  prog, vers, portp)
@@ -134,10 +142,11 @@ krpc_portmap(sa,  prog, vers, portp)
 		return 0;
 	}
 
-	m = m_get(M_WAIT, MT_DATA);
+	m = m_gethdr(M_WAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
 	m->m_len = sizeof(*sdata);
+	m->m_pkthdr.len = m->m_len;
 	sdata = mtod(m, struct sdata *);
 
 	/* Do the RPC to get it. */
@@ -146,8 +155,8 @@ krpc_portmap(sa,  prog, vers, portp)
 	sdata->proto = htonl(IPPROTO_UDP);
 	sdata->port = 0;
 
-	error = krpc_call(sa, PMAPPROG, PMAPVERS, PMAPPROC_GETPORT,
-			  &m, sizeof(*rdata));
+	error = krpc_call(sa, PMAPPROG, PMAPVERS,
+					  PMAPPROC_GETPORT, &m);
 	if (error) 
 		return error;
 
@@ -162,11 +171,10 @@ krpc_portmap(sa,  prog, vers, portp)
  * Do a remote procedure call (RPC) and wait for its reply.
  */
 int
-krpc_call(sa, prog, vers, func, data, want)
+krpc_call(sa, prog, vers, func, data)
 	struct sockaddr *sa;
 	u_long prog, vers, func;
 	struct mbuf **data;	/* input/output */
-	int want;		/* required response data length */
 {
 	struct socket *so;
 	struct sockaddr_in *sin;
@@ -224,14 +232,27 @@ krpc_call(sa, prog, vers, func, data, want)
 		goto out;
 
 	/*
-	 * Build the RPC message header.
+	 * Prepend RPC message header.
 	 */
-	mhead = m_gethdr(M_WAIT, MT_DATA);
+	m = *data;
+	*data = NULL;
+#ifdef	DIAGNOSTIC
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("krpc_call: send data w/o pkthdr");
+	if (m->m_pkthdr.len < m->m_len)
+		panic("krpc_call: pkthdr.len not set");
+#endif
+	mhead = m_prepend(m, sizeof(*call), M_WAIT);
 	if (mhead == NULL) {
 		error = ENOBUFS;
 		goto out;
 	}
-	mhead->m_len = sizeof(*call);
+	mhead->m_pkthdr.len += sizeof(*call);
+	mhead->m_pkthdr.rcvif = NULL;
+
+	/*
+	 * Fill in the RPC header
+	 */
 	call = mtod(mhead, struct rpc_call *);
 	bzero((caddr_t)call, sizeof(*call));
 	call->rp_xid = ++xid;	/* no need to put in network order */
@@ -244,34 +265,30 @@ krpc_call(sa, prog, vers, func, data, want)
 	/* call->rp_verf = 0; */
 
 	/*
-	 * Prepend RPC header and setup packet header.
-	 */
-	for (len = 0, m = *data; m ; m = m->m_next)
-		len += m->m_len;
-	mhead->m_next = *data;
-	mhead->m_pkthdr.len = mhead->m_len + len;
-	mhead->m_pkthdr.rcvif = NULL;
-	*data = NULL;
-
-	/*
-	 * Send it, repeatedly, until a reply is received, but
-	 * delay each send by an increasing amount. (10 sec. max)
-	 * When the send delay hits 10 sec. start complaining.
+	 * Send it, repeatedly, until a reply is received,
+	 * but delay each re-send by an increasing amount.
+	 * If the delay hits the maximum, start complaining.
 	 */
 	timo = 0;
 	for (;;) {
 		/* Send RPC request (or re-send). */
 		m = m_copym(mhead, 0, M_COPYALL, M_WAIT);
-		error = sosend(so, nam, NULL, m, NULL, 0);
-		if (error)
+		if (m == NULL) {
+			error = ENOBUFS;
 			goto out;
+		}
+		error = sosend(so, nam, NULL, m, NULL, 0);
+		if (error) {
+			printf("krpc_call: sosend: %d\n", error);
+			goto out;
+		}
 		m = NULL;
 
-		/* Determine new timeout (1 to 10) */
-		if (timo < 10)
+		/* Determine new timeout. */
+		if (timo < MAX_RESEND_DELAY)
 			timo++;
 		else
-			printf("RPC timeout for server 0x%X\n",
+			printf("RPC timeout for server 0x%x\n",
 			       ntohl(sin->sin_addr.s_addr));
 
 		/*
@@ -310,30 +327,47 @@ krpc_call(sa, prog, vers, func, data, want)
  gotreply:
 
 	/*
-	 * Got the reply.  Check and strip header.
+	 * Make result buffer contiguous.
+	 */
+#ifdef	DIAGNOSTIC
+	if ((m->m_flags & M_PKTHDR) == 0)
+		panic("krpc_call: received pkt w/o header?");
+#endif
+	len = m->m_pkthdr.len;
+	if (m->m_len < len) {
+		m = m_pullup(m, len);
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto out;
+		}
+	}
+	reply = mtod(m, struct rpc_reply *);
+
+	/*
+	 * Check RPC acceptance and status.
 	 */
 	if (reply->rp_astatus != 0) {
 		error = reply->rp_u.rpu_errno;
+		printf("rpc denied, error=%d\n", error);
 		m_freem(m);
 		goto out;
 	}
+	if ((error = reply->rp_u.rpu_ok.rp_rstatus) != 0) {
+		printf("rpc status=%d\n", error);
+		m_freem(m);
+		goto out;
+	}
+
+	/*
+	 * Strip RPC header
+	 */
 	len = sizeof(*reply);
 	if (reply->rp_u.rpu_ok.rp_auth.rp_atype != 0) {
 		len += ntohl(reply->rp_u.rpu_ok.rp_auth.rp_alen);
 		len = (len + 3) & ~3; /* XXX? */
 	}
 	m_adj(m, len);
-	if (m == NULL) {
-		error = ENOBUFS;
-		goto out;
-	}
-	if (m->m_len < want) {
-		m = m_pullup(m, want);
-		if (m == NULL) {
-			error = ENOBUFS;
-			goto out;
-		}
-	}
+
 	/* result */
 	*data = m;
 
@@ -343,5 +377,3 @@ krpc_call(sa, prog, vers, func, data, want)
 	soclose(so);
 	return error;
 }
-
-
