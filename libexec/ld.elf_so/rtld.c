@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.29 2000/02/07 19:02:49 kleink Exp $	 */
+/*	$NetBSD: rtld.c,v 1.30 2000/04/15 05:27:49 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -674,51 +674,51 @@ _rtld_dlsym(handle, name)
 	def = NULL;
 	defobj = NULL;
 	
-#if 1
-	if (handle == NULL) {
-#else
-		if (handle == NULL || handle == RTLD_NEXT) {
+	if (handle == NULL
+#if 0
+	    || handle == RTLD_NEXT
 #endif
-			void *retaddr;
+	) {
+		void *retaddr;
 
-			retaddr = __builtin_return_address(0); /* __GNUC__ only */
-			if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
-				_rtld_error("Cannot determine caller's shared object");
-				return NULL;
-			}
-			if (handle == NULL) { /* Just the caller's shared object. */
-				def = _rtld_symlook_obj(name, hash, obj, true);
-				defobj = obj;
-			} else { /* All the shared objects after the caller's */
-				while ((obj = obj->next) != NULL) {
-					if ((def = _rtld_symlook_obj(name, hash, obj, true)) != NULL) {
-						defobj = obj;
-						break;
-					}
+		retaddr = __builtin_return_address(0); /* __GNUC__ only */
+		if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
+			_rtld_error("Cannot determine caller's shared object");
+			return NULL;
+		}
+		if (handle == NULL) { /* Just the caller's shared object. */
+			def = _rtld_symlook_obj(name, hash, obj, true);
+			defobj = obj;
+		} else { /* All the shared objects after the caller's */
+			while ((obj = obj->next) != NULL) {
+				if ((def = _rtld_symlook_obj(name, hash, obj, true)) != NULL) {
+					defobj = obj;
+					break;
 				}
 			}
-		} else {
-			if ((obj = _rtld_dlcheck(handle)) == NULL)
-				return NULL;
-			
-			if (obj->mainprog) {
-				/* Search main program and all libraries loaded by it. */
-				_rtld_curmark++;
-				def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, true);
-			} else {
-				/*
-				 * XXX - This isn't correct.  The search should include the whole
-				 * DAG rooted at the given object.
-				 */
-				def = _rtld_symlook_obj(name, hash, obj, true);
-				defobj = obj;
-			}
 		}
+	} else {
+		if ((obj = _rtld_dlcheck(handle)) == NULL)
+			return NULL;
 		
-		if (def != NULL)
-			return defobj->relocbase + def->st_value;
-		
-		_rtld_error("Undefined symbol \"%s\"", name);
+		if (obj->mainprog) {
+			/* Search main program and all libraries loaded by it. */
+			_rtld_curmark++;
+			def = _rtld_symlook_list(name, hash, &_rtld_list_main, &defobj, true);
+		} else {
+			/*
+			 * XXX - This isn't correct.  The search should include the whole
+			 * DAG rooted at the given object.
+			 */
+			def = _rtld_symlook_obj(name, hash, obj, true);
+			defobj = obj;
+		}
+	}
+	
+	if (def != NULL)
+		return defobj->relocbase + def->st_value;
+	
+	_rtld_error("Undefined symbol \"%s\"", name);
 	return NULL;
 }
 
