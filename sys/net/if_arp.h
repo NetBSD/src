@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_arp.h	7.4 (Berkeley) 6/28/90
- *	$Id: if_arp.h,v 1.3 1993/05/20 03:05:57 cgd Exp $
+ *	$Id: if_arp.h,v 1.4 1993/08/03 01:51:16 glass Exp $
  */
 
 #ifndef _NET_IF_ARP_H_
@@ -60,10 +60,10 @@ struct	arphdr {
  * The remaining fields are variable in size,
  * according to the sizes above.
  */
-/*	u_char	ar_sha[];	/* sender hardware address */
-/*	u_char	ar_spa[];	/* sender protocol address */
-/*	u_char	ar_tha[];	/* target hardware address */
-/*	u_char	ar_tpa[];	/* target protocol address */
+/*	u_char	ar_sha[];	 * sender hardware address */
+/*	u_char	ar_spa[];	 * sender protocol address */
+/*	u_char	ar_tha[];	 * target hardware address */
+/*	u_char	ar_tpa[];	 * target protocol address */
 };
 
 /*
