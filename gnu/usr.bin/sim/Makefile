@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/01/22 17:02:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2002/02/10 17:38:24 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,6 @@
 SUBDIR+=	ppc
 .endif
 
-.include <bsd.subdir.mk>
-
 .endif
+
+.include <bsd.subdir.mk>
