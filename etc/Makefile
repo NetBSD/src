@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.176 2001/01/21 15:03:22 itojun Exp $
+#	$NetBSD: Makefile,v 1.177 2001/08/04 18:41:18 tsutsui Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -116,6 +116,22 @@ PCS=	pcs750.bin
 
 # find out endianness of target and set proper flag for pwd_mkdb so that
 # it creates database in same endianness
+<<<<<<< Makefile
+.if	(${MACHINE_ARCH} == "alpha")   || \
+	(${MACHINE_ARCH} == "arm26")   || \
+	(${MACHINE_ARCH} == "arm32")   || \
+	(${MACHINE_ARCH} == "i386")    || \
+	(${MACHINE_ARCH} == "mipsel")  || \
+	(${MACHINE_ARCH} == "ns32k")   || \
+	(${MACHINE_ARCH} == "vax") 
+TARGET_ENDIANNESS?= -L
+.elif	(${MACHINE_ARCH} == "m68k")    || \
+	(${MACHINE_ARCH} == "mipseb")  || \
+	(${MACHINE_ARCH} == "powerpc") || \
+	(${MACHINE_ARCH} == "sparc")   || \
+	(${MACHINE_ARCH} == "sparc64")
+TARGET_ENDIANNESS?= -B
+=======
 .if exists(${DESTDIR}/usr/include/machine/endian_machdep.h)
 TARGET_ENDIANNESS!= \
 	( echo "\#include <machine/endian_machdep.h>" ; echo _BYTE_ORDER ) | \
@@ -128,7 +144,9 @@ TARGET_ENDIANNESS=
 TARGET_ENDIANNESS= -L
 .elif ${TARGET_ENDIANNESS} == "_BIG_ENDIAN"
 TARGET_ENDIANNESS= -B
+>>>>>>> 1.176
 .else
+# XXX sh3 should be split into sh3eb and sh3el
 TARGET_ENDIANNESS=
 .endif
 
@@ -272,7 +290,7 @@ distribution: distrib-dirs
 
 distrib-dirs:
 	${INSTALL} ${INSTPRIV} -d -o root -g wheel -m 755 ${DESTDIR}
-	-mtree -def mtree/NetBSD.dist -p ${DESTDIR}/ -u
+	mtree -def mtree/NetBSD.dist -p ${DESTDIR}/ -U
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 
 .if !defined(RELEASEDIR)
