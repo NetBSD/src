@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.tmpl,v 1.1 1997/10/19 15:29:10 oki Exp $
+#	$NetBSD: install.tmpl,v 1.2 1998/10/01 16:49:10 minoura Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -306,15 +306,12 @@ echo -n	"	:nc#${cyls_per_disk}:ns#${sects_per_track}" >> $DT
 echo	":nt#${tracks_per_cyl}:\\" >> $DT
 echo	"	:se#${bytes_per_sect}:${sect_fwd}\\" >> $DT
 _size=$(( $root * $sizemult ))
-_offset=$(( $root_offset * $sizemult ))
+_offset=$(( $root_offset * $sizemult + 64 ))
 echo -n	"	:pa#${_size}:oa#${_offset}" >> $DT
 echo	":ta=4.2BSD:ba#${blocksize}:fa#${fragsize}:\\" >> $DT
 _size=$(( $swap * $sizemult ))
-_offset=$(( $swap_offset * $sizemult ))
+_offset=$(( $swap_offset * $sizemult + 64 ))
 echo	"	:pb#${_size}:ob#${_offset}:tb=swap:\\" >> $DT
-_size=$(( $partition * $sizemult ))
-_offset=$(( $part_offset * $sizemult ))
-echo	"	:pc#${_size}:oc#${_offset}:\\" >> $DT
 
 echo	"You will now have to enter information about any other partitions"
 echo	"to be created in the NetBSD portion of the disk.  This process will"
@@ -431,6 +428,13 @@ fi
 echo	"Initializing root filesystem, and mounting..."
 $DONTDOIT newfs /dev/r${drivename}a $name
 $DONTDOIT mount -v $ASYNC /dev/${drivename}a /mnt
+if [ "$dname" != "" ]; then
+	echo	""
+	echo	"Initializing $dname filesystem, and mounting..."
+	$DONTDOIT newfs /dev/r${drivename}d $name
+	$DONTDOIT mkdir -p /mnt/$dname
+	$DONTDOIT mount -v $ASYNC /dev/${drivename}d /mnt/$dname
+fi
 if [ "$ename" != "" ]; then
 	echo	""
 	echo	"Initializing $ename filesystem, and mounting..."
@@ -469,17 +473,20 @@ echo	""
 echo -n	"Creating an fstab..."
 echo /dev/${drivename}a / ffs rw 1 1 | sed -e s,//,/, > $FSTAB
 echo /dev/${drivename}b none swap sw 0 0 | sed -e s,//,/, >> $FSTAB
+if [ "$dname" != "" ]; then
+	echo /dev/${drivename}d /$dname ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
+fi
 if [ "$ename" != "" ]; then
-	echo /dev/${drivename}e /$ename ffs rw 1 2 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}e /$ename ffs rw 1 3 | sed -e s,//,/, >> $FSTAB
 fi
 if [ "$fname" != "" ]; then
-	echo /dev/${drivename}f /$fname ffs rw 1 3 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}f /$fname ffs rw 1 4 | sed -e s,//,/, >> $FSTAB
 fi
 if [ "$gname" != "" ]; then
-	echo /dev/${drivename}g /$gname ffs rw 1 4 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}g /$gname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
 fi
 if [ "$hname" != "" ]; then
-	echo /dev/${drivename}h /$hname ffs rw 1 5 | sed -e s,//,/, >> $FSTAB
+	echo /dev/${drivename}h /$hname ffs rw 1 6 | sed -e s,//,/, >> $FSTAB
 fi
 sync
 echo	" done."
