@@ -1,4 +1,4 @@
-#	$NetBSD: TODO.kqueue,v 1.1 2002/10/22 23:47:40 jdolecek Exp $
+#	$NetBSD: TODO.kqueue,v 1.2 2002/10/30 21:50:47 jdolecek Exp $
 
 items todo from bill sommerfeld/thorpej:
 	- multiple entry points
@@ -10,6 +10,7 @@ items todo from bill sommerfeld/thorpej:
 	- kqfilter entry points for:
 		- smb_trantcp
 		- dev/pci/bktr/bktr_os.c		??? doesn't poll?
+	- kqfilter for systrace (would it be useful?)
 
 	- Test-compile the following ports:
 		- amigappc		XXX not compilable even on trunk
@@ -19,13 +20,11 @@ items todo from bill sommerfeld/thorpej:
 		- x86_64		XXX no intree toolchain available
 
 merge in from FreeBSD:
-	usr.bin/tail
 	pkgsrc/devel/py-kqueue
 	lib/libc/net/res_send.c
 	sys/netinet/tcp_subr.c	1.93 (?)
 	libc/libc_r/uthread (?)
 	pkgsrc/security/l0pht-watch (?)
-	pkgsrc/www/thttpd
 	sys/fs/fifofs/fifo_vnops.c rev. 1.54
 	  - jdolecek: this change seems to be bogus, but perhaps I just
 	    miss something?
@@ -35,8 +34,6 @@ to fix:
 	- look for XXXLUKEM in the comments. these usually indicate
 	  areas to either fix or sanity check they're ok (and remove
 	  the XXXLUKEM comment)
-
-	- kqfilter for systrace (evaluate feasibility)
 
 not implemented:
 	- aio support
