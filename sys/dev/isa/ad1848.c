@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.46 1998/02/24 02:12:09 cgd Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.47 1998/03/11 09:26:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -429,7 +429,7 @@ ad1848_probe(sc)
     for (i = 0; i < 16; i++)
 	if ((tmp1 = ad_read(sc, i)) != (tmp2 = ad_read(sc, i + 16))) {
 	    DPRINTF(("ad_detect_F(%d/%x/%x)\n", i, tmp1, tmp2));
-	    goto bad;
+	    if (i != SP_TEST_AND_INIT) goto bad;
 	}
 
     /*
