@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.156 2000/01/09 03:56:01 simonb Exp $ */
+/*	$NetBSD: machdep.c,v 1.157 2000/01/09 14:34:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,13 +39,11 @@
  * SUCH DAMAGE.
  *
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
+ * 	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2000/01/09 03:56:01 simonb Exp $");
-
-/* from: Utah Hdr: machdep.c 1.63 91/04/24 */
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2000/01/09 14:34:33 ad Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -68,12 +66,12 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2000/01/09 03:56:01 simonb Exp $")
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#include <sys/sysctl.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <uvm/uvm_extern.h>
 
-#include <sys/sysctl.h>
 #include <dev/cons.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
@@ -97,6 +95,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2000/01/09 03:56:01 simonb Exp $")
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 #endif
+
+#include "opt_dec_3min.h"
+#include "opt_dec_maxine.h"
+#include "opt_dec_3maxplus.h"
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
@@ -131,7 +133,6 @@ void (*tc_enable_interrupt) __P((unsigned, int (*)(void *), void *, int));
 
 void	mach_init __P((int, char *[], int, int, u_int, char *));	/* XXX */
 
-
 /* Motherboard or system-specific initialization vector */
 static void	unimpl_bus_reset __P((void));
 static void	unimpl_cons_init __P((void));
@@ -139,7 +140,6 @@ static void	unimpl_device_register __P((struct device *, void *));
 static int	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
 static int	unimpl_memsize __P((caddr_t));
 static unsigned	nullwork __P((void));
-
 
 struct platform platform = {
 	"iobus not set",
@@ -370,7 +370,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Put the first 8M of RAM onto a lower-priority free list, since
 	 * some TC boards (e.g. PixelStamp boards) are only able to DMA
 	 * into this region, and we want them to have a fighting chance of
-	 * allocating their DMA memory during autoconfiguratoin.
+	 * allocating their DMA memory during autoconfiguration.
 	 */
 	first = round_page(MIPS_KSEG0_TO_PHYS(kernend));
 	last = mem_clusters[0].start + mem_clusters[0].size;
@@ -406,10 +406,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 	pmap_bootstrap();
 }
 
-
 /*
- * Machine-dependent startup code.
- * allocate memory for variable-sized tables, initialize cpu.
+ * Machine-dependent startup code: allocate memory for variable-sized tables, 
+ * initialize cpu.
  */
 void
 cpu_startup()
@@ -520,7 +519,6 @@ cpu_startup()
 	bufinit();
 }
 
-
 /*
  * Machine dependent system variables.
  */
@@ -556,7 +554,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 /*
- * lookup_bootinfo:
  * Look up information in bootinfo of boot loader.
  */
 void *
@@ -586,6 +583,7 @@ cpu_reboot(howto, bootstr)
 	volatile int howto;	/* XXX volatile to keep gcc happy */
 	char *bootstr;
 {
+
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
 		savectx((struct user *)curpcb);
@@ -626,7 +624,7 @@ cpu_reboot(howto, bootstr)
 #if 0
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 #else
-	if (howto & RB_DUMP)
+	if ((howto & RB_DUMP) != 0)
 #endif
 		dumpsys();
 
@@ -636,14 +634,10 @@ haltsys:
 	doshutdownhooks();
 
 	/* Finally, halt/reboot the system. */
-	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
+	printf("%s\n\n", (howto & RB_HALT != 0) ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT, bootstr);
 	/*NOTREACHED*/
 }
-
-#include "opt_dec_3min.h"
-#include "opt_dec_maxine.h"
-#include "opt_dec_3maxplus.h"
 
 /*
  * Return the best possible estimate of the time in the timeval to
@@ -684,6 +678,7 @@ void
 delay(n)
         int n;
 {
+
         DELAY(n);
 }
 
@@ -723,8 +718,7 @@ memsize_scan(first)
 
 	/* clear any memory error conditions possibly caused by probe */
 	(*platform.bus_reset)();
-
-	return mem;
+	return (mem);
 }
 
 /*
@@ -734,9 +728,9 @@ int
 memsize_bitmap(first)
 	caddr_t first;
 {
+
 	panic("memsize_bitmap not implemented");
 }
-
 
 /*
  *  Ensure all platform vectors are always initialized.
@@ -744,13 +738,15 @@ memsize_bitmap(first)
 static void
 unimpl_bus_reset()
 {
-	panic("sysconf.init didnt set bus_reset");
+
+	panic("sysconf.init didn't set bus_reset");
 }
 
 static void
 unimpl_cons_init()
 {
-	panic("sysconf.init didnt set cons_init");
+
+	panic("sysconf.init didn't set cons_init");
 }
 
 static void
@@ -758,8 +754,8 @@ unimpl_device_register(sc, arg)
 	struct device *sc;
 	void *arg;
 {
-	panic("sysconf.init didnt set device_register");
 
+	panic("sysconf.init didn't set device_register");
 }
 
 static int
@@ -769,18 +765,21 @@ unimpl_iointr(mask, pc, statusreg, causereg)
 	u_int statusreg;
 	u_int causereg;
 {
-	panic("sysconf.init didnt set intr");
+
+	panic("sysconf.init didn't set intr");
 }
 
 static int
 unimpl_memsize(first)
 	caddr_t first;
 {
-	panic("sysconf.init didnt set memsize");
+
+	panic("sysconf.init didn't set memsize");
 }
 
 static unsigned
 nullwork()
 {
-	return 0;
+
+	return (0);
 }	
