@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.9 1997/09/14 14:56:58 lukem Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.10 1997/09/15 01:45:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.9 1997/09/14 14:56:58 lukem Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.10 1997/09/15 01:45:36 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -202,7 +202,7 @@ helpfn(argc, argv)
 	int     argc;
 	char   *argv[];
 {
-	register struct cmdtable *cmdtp;
+	struct cmdtable *cmdtp;
 
 	printf("Commands are:\n%-10s %5s %5s   %s\n",
 	    "command", "min argc", "max argc", "what");
@@ -395,7 +395,7 @@ static int
 scannames(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 
 	printf("slot %d ino %d reclen %d: %s, `%.*s'\n",
 	    slot++, dirp->d_ino, dirp->d_reclen, typename[dirp->d_type],
@@ -514,7 +514,7 @@ static int
 chinumfunc(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 
 	if (slotcount++ == desired) {
 		dirp->d_ino = idesc->id_parent;
@@ -557,7 +557,7 @@ static int
 chnamefunc(idesc)
 	struct inodesc *idesc;
 {
-	register struct direct *dirp = idesc->id_dirp;
+	struct direct *dirp = idesc->id_dirp;
 	struct direct testdir;
 
 	if (slotcount++ == desired) {
