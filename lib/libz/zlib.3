@@ -1,4 +1,4 @@
-.\"	$NetBSD: zlib.3,v 1.4 2004/03/05 01:30:52 wiz Exp $
+.\"	$NetBSD: zlib.3,v 1.5 2004/05/01 07:54:50 mrg Exp $
 .\"	$OpenBSD: zlib.3,v 1.1 2003/09/25 09:12:09 jmc Exp $
 .\"
 .\"  Copyright (C) 1995-2002 Jean-loup Gailly and Mark Adler
@@ -22,7 +22,7 @@
 .\" Converted to mdoc format for the OpenBSD project
 .\" by Jason McIntyre <jmc@openbsd.org>
 .\"
-.Dd January 29, 2004
+.Dd May 1, 2004
 .Dt ZLIB 3
 .Os
 .Sh NAME
@@ -76,11 +76,7 @@
 .Ft gzFile
 .Fn gzopen "const char *path" "const char *mode"
 .Ft gzFile
-.Fn gzopenfull "const char *path" "const char *mode" "const char *savename" "u_int32_t mtime"
-.Ft gzFile
 .Fn gzdopen "int fd" "const char *mode"
-.Ft int
-.Fn gzdopenfull "int fd" "const char *mode" "const char *savename" "u_int32_t mtime"
 .Ft int
 .Fn gzsetparams "gzFile file" "int level" "int strategy"
 .Ft int
@@ -1233,20 +1229,6 @@ error is
 .Dv Z_MEM_ERROR ) .
 .It Xo
 .Fa gzFile
-.Fn gzopenfull "const char *path" "const char *mode" "const char *savename" "u_int32_t mtime" ;
-.Xc
-.Pp
-The
-.Fn gzopenfull
-function performs the same function as
-.Fn gzopen
-as well as setting the
-.Ar mtime
-in the gzip header and saving
-.Ar savename
-as the original file name in the gzip header.
-.It Xo
-.Fa gzFile
 .Fn gzdopen "int fd" "const char *mode" ;
 .Xc
 .Pp
@@ -1278,20 +1260,6 @@ If you want to keep fd open, use gzdopen(dup(fd), mode).
 returns
 .Dv NULL
 if there was insufficient memory to allocate the (de)compression state.
-.It Xo
-.Fa gzFile
-.Fn gzdopenfull "int fd" "const char *mode" "const char *savename" "u_int32_t mtime" ;
-.Xc
-.Pp
-The
-.Fn gzdopenfull
-function performs the same function as
-.Fn gzdopen
-as well as setting the
-.Ar mtime
-in the gzip header and saving
-.Ar savename
-as the original file name in the gzip header.
 .It Xo
 .Fa int
 .Fn gzsetparams "gzFile file" "int level" "int strategy" ;
