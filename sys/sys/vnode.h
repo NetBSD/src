@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.32 1995/03/26 20:25:05 jtc Exp $	*/
+/*	$NetBSD: vnode.h,v 1.32.2.1 1996/02/02 07:55:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -349,6 +349,7 @@ struct vop_generic_args {
  * Public vnode manipulation functions.
  */
 struct file;
+struct filedesc;
 struct mount;
 struct nameidata;
 struct proc;
@@ -363,6 +364,7 @@ int 	bdevvp __P((dev_t dev, struct vnode **vpp));
 int 	cdevvp __P((dev_t dev, struct vnode **vpp));
 int 	getnewvnode __P((enum vtagtype tag,
 	    struct mount *mp, int (**vops)(), struct vnode **vpp));
+int	getvnode __P((struct filedesc *fdp, int fd, struct file **fpp));
 void 	vattr_null __P((struct vattr *vap));
 int 	vcount __P((struct vnode *vp));
 void	vflushbuf __P((struct vnode *vp, int sync));
