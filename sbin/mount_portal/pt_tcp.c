@@ -36,7 +36,7 @@
  *
  *	from: Id: pt_tcp.c,v 1.1 1992/05/25 21:43:09 jsp Exp jsp
  *	from: @(#)pt_tcp.c	8.2 (Berkeley) 1/14/94
- *	$Id: pt_tcp.c,v 1.3 1994/01/14 19:47:02 cgd Exp $
+ *	$Id: pt_tcp.c,v 1.4 1994/05/30 09:55:56 mycroft Exp $
  */
 
 #include <stdio.h>
@@ -121,7 +121,7 @@ int *fdp;
 	if (sp != 0)
 		s_port = sp->s_port;
 	else {
-		s_port = atoi(port);
+		s_port = htons(atoi(port));
 		if (s_port == 0)
 			return (EINVAL);
 	}
