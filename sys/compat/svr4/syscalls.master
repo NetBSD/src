@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.45 2000/06/06 18:07:33 soren Exp $
+	$NetBSD: syscalls.master,v 1.46 2000/08/07 17:59:36 bjh21 Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -31,6 +31,7 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
+#include "opt_ntp.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -403,5 +404,10 @@
 246	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, int valsize); }
 247	UNIMPL		sockconfig
+; For some reason, ntp_gettime doesn't want to raise SIGSYS when it's excluded.
 248	NOARGS		{ int sys_ntp_gettime(struct ntptimeval *ntvp); }
+#if defined(NTP) || !defined(_KERNEL)
 249	NOARGS		{ int sys_ntp_adjtime(struct timex *tp); }
+#else
+249	EXCL		ntp_adjtime
+#endif
