@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.63 2001/04/17 00:59:58 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.64 2001/04/17 01:37:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.63 2001/04/17 00:59:58 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.64 2001/04/17 01:37:04 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,6 @@ __RCSID("$NetBSD: ftpcmd.y,v 1.63 2001/04/17 00:59:58 lukem Exp $");
 
 #include <ctype.h>
 #include <errno.h>
-#include <glob.h>
 #include <pwd.h>
 #include <setjmp.h>
 #include <signal.h>
@@ -1082,27 +1081,33 @@ pathname
 			 * others.
 			 */
 			if (logged_in && $1 && *$1 == '~') {
-				glob_t gl;
-				int flags = GLOB_BRACE | GLOB_NOCHECK | \
-					    GLOB_TILDE | GLOB_LIMIT;
+				char	*path, *home, *result;
+				size_t	len;
 
+				path = strchr($1 + 1, '/');
+				if (path != NULL)
+					*path++ = '\0';
 				if ($1[1] == '\0')
-					$$ = xstrdup(homedir);
+					home = homedir;
 				else {
-					memset(&gl, 0, sizeof(gl));
-					if (glob($1, flags, NULL, &gl) ||
-					    gl.gl_pathc == 0) {
-						reply(550, "%s: Not found",
-						    $1);
-						$$ = NULL;
-					} else if (gl.gl_matchc > 1) {
-						reply(550,
-						    "%s: Too many matches", $1);
-						$$ = NULL;
-					} else
-						$$ = xstrdup(gl.gl_pathv[0]);
-					globfree(&gl);
+					struct passwd	*pw;
+
+					if ((pw = getpwnam($1 + 1)) != NULL)
+						home = pw->pw_dir;
+					else
+						home = $1;
 				}
+				len = strlen(home) + 1;
+				if (path != NULL)
+					len += strlen(path) + 1;
+				if ((result = malloc(len)) == NULL)
+					fatal("Local resource failure: malloc");
+				strlcpy(result, home, len);
+				if (path != NULL) {
+					strlcat(result, "/", len);
+					strlcat(result, path, len);
+				}
+				$$ = result;
 				free($1);
 			} else
 				$$ = $1;
