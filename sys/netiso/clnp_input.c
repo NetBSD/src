@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_input.c,v 1.14 1996/10/13 02:04:16 christos Exp $	*/
+/*	$NetBSD: clnp_input.c,v 1.14.6.1 1997/02/18 18:34:48 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,6 +75,8 @@ SOFTWARE.
 #include <net/if.h>
 #include <net/if_types.h>
 #include <net/route.h>
+
+#include <net/if_ether.h>
 
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>

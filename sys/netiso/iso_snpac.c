@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.16 1996/10/13 02:04:31 christos Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.16.6.1 1997/02/18 18:34:46 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -79,6 +79,8 @@ SOFTWARE.
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/route.h>
+
+#include <net/if_ether.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -261,9 +263,11 @@ iso_setmcasts(ifp, req)
 	for (cpp = (caddr_t *) addrlist; *cpp; cpp++) {
 		bcopy(*cpp, (caddr_t) ifr.ifr_addr.sa_data, 6);
 		if (req == RTM_ADD)
-			if (ether_addmulti(&ifr, (struct arpcom *) ifp) == ENETRESET)
+			if (ether_addmulti(&ifr, (struct ethercom *)ifp) 
+			    == ENETRESET)
 				doreset++;
-			else if (ether_delmulti(&ifr, (struct arpcom *) ifp) == ENETRESET)
+			else if (ether_delmulti(&ifr, (struct ethercom *)ifp)
+			    == ENETRESET)
 				doreset++;
 	}
 	if (doreset) {
