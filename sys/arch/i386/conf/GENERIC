@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.1 1994/11/03 18:14:50 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.2 1994/11/03 18:27:13 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -80,15 +80,15 @@ npx0	at isa? port 0xf0 irq 13	# math coprocessor
 pc0	at isa? port 0x60 irq 1		# generic PC console device
 #vt0	at isa? port 0x60 irq 1
 
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+#com3	at isa? port 0x2e8 irq 9
 #ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
 #com*	at ast? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
 
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9
 #cy0	at isa? ...
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
