@@ -1,4 +1,4 @@
-.\"	$NetBSD: crash.8,v 1.5 1997/10/19 13:03:39 mrg Exp $
+.\"	$NetBSD: crash.8,v 1.6 1998/01/03 09:03:27 mikel Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -79,14 +79,14 @@ or the system is attempting to use the wrong device as root filesystem.
 Usually, an alternative copy of the system binary or an alternative root
 filesystem can be used to bring up the system to investigate.
 .Pp
-.It Sy "Can't exec /etc/init"
+.It Sy "Can't exec /sbin/init"
 This is not a panic message, as reboots are likely to be futile.
 Late in the bootstrap procedure, the system was unable to locate
 and execute the initialization process,
 .Xr init 8 .
 The root filesystem is incorrect or has been corrupted, or the mode
 or type of
-.Pa /etc/init
+.Pa /sbin/init
 forbids execution.
 .Pp
 .It Sy "IO err in push"
@@ -216,7 +216,7 @@ For more details consult
 .%T "MC68020 32-bit Microprocessor User's Manual"
 .Re
 .Rs
-.%T "Using ADB to Debug the UNIX Kernel
+.%T "Using ADB to Debug the UNIX Kernel"
 .Re
 .Rs
 .%T "4.3BSD for the HP300"
@@ -224,4 +224,5 @@ For more details consult
 .Sh HISTORY
 A
 .Nm
-man page appeared in Version 6 AT&T UNIX.
+man page appeared in
+.At v6 .
