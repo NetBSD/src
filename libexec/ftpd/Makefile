@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.42 2000/06/20 06:00:34 thorpej Exp $
+#	$NetBSD: Makefile,v 1.43 2000/07/03 03:34:25 matt Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 PROG=	ftpd
 SRCS=	cmds.c conf.c ftpd.c ftpcmd.y logutmp.c logwtmp.c popen.c
-CPPFLAGS+=-DHASSETPROCTITLE
+CPPFLAGS+=-DHASSETPROCTITLE -I${.CURDIR}
 # CPPFLAGS+=-DDEBUG		# XXX for lukem testing
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 LDADD+=	-lcrypt -lutil
