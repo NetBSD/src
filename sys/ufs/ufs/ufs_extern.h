@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.18 1999/07/08 01:06:07 wrstuden Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.19 1999/08/03 19:22:44 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,10 +34,6 @@
  *
  *	@(#)ufs_extern.h	8.10 (Berkeley) 5/14/95
  */
-
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_ffs.h"
-#endif
 
 struct buf;
 struct componentname;
@@ -165,13 +161,3 @@ int ufs_makeinode __P((int, struct vnode *, struct vnode **,
 		       struct componentname *));
 
 __END_DECLS
-
-/* Macros to access UFS flags */
-#ifdef FFS_EI
-#define	UFS_MPNEEDSWAP(mp)	(VFSTOUFS(mp)->um_flags & UFS_NEEDSWAP)
-#define	UFS_IPNEEDSWAP(ip) \
-	(VFSTOUFS(ITOV(ip)->v_mount)->um_flags & UFS_NEEDSWAP)
-#else
-#define	UFS_MPNEEDSWAP(mp) (0)
-#define	UFS_IPNEEDSWAP(ip) (0)
-#endif
