@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.16.2.2 2003/01/11 23:13:17 jmc Exp $	*/
+/*	$NetBSD: cmds.c,v 1.16.2.3 2004/08/31 01:35:21 jmc Exp $	*/
 
 /*
- * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -48,11 +48,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -101,7 +97,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.16.2.2 2003/01/11 23:13:17 jmc Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.16.2.3 2004/08/31 01:35:21 jmc Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -111,7 +107,6 @@ __RCSID("$NetBSD: cmds.c,v 1.16.2.2 2003/01/11 23:13:17 jmc Exp $");
 
 #include <dirent.h>
 #include <errno.h>
-#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -335,11 +330,11 @@ opts(const char *command)
 		*ep++ = '\0';
 	c = lookup(cmdtab, command);
 	if (c == NULL) {
-		reply(502, "Unknown command %s.", command);
+		reply(502, "Unknown command '%s'.", command);
 		return;
 	}
 	if (! CMD_IMPLEMENTED(c)) {
-		reply(501, "%s command not implemented.", c->name);
+		reply(502, "%s command not implemented.", c->name);
 		return;
 	}
 	if (! CMD_HAS_OPTIONS(c)) {
@@ -812,7 +807,7 @@ static void
 mlsname(FILE *fp, factelem *fe)
 {
 	char realfile[MAXPATHLEN];
-	int i, userf;
+	int i, userf = 0;
 
 	for (i = 0; i < FACTTABSIZE; i++) {
 		if (facttab[i].enabled)
