@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.439 2001/05/11 04:47:56 matt Exp $
+#	$NetBSD: files,v 1.440 2001/05/13 04:54:47 jmc Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -587,7 +587,7 @@ define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus { }			# TurboChannel attachment
 define	mcabus { }			# MicroChannel attachment
 define	usbus { }			# USB attachment
-define	fwbus { }			# IEEE 1394 attachment
+define	fwbus {[idhi=-1],[idlo=-1]}	# IEEE 1394 attachment
 define	vmebus { }			# VME bus attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
