@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.7 2003/02/03 23:02:43 matt Exp $	*/
+/*	$NetBSD: md_root.c,v 1.8 2003/02/05 15:20:29 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.7 2003/02/03 23:02:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.8 2003/02/05 15:20:29 briggs Exp $");
 
 #include "opt_md.h"
 
@@ -59,10 +59,6 @@ char *md_root_image;
 #endif
 #define ROOTBYTES (MEMORY_DISK_ROOT_SIZE << DEV_BSHIFT)
 
-#ifndef MEMORY_RBFLAGS
-#define MEMORY_RBFLAGS	RB_SINGLE	/* force single user */
-#endif
-
 /*
  * This array will be patched to contain a file-system image.
  * See the program mdsetimage(8) for details.
@@ -70,6 +66,10 @@ char *md_root_image;
 u_int32_t md_root_size = ROOTBYTES;
 char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
 #endif /* MEMORY_DISK_DYNAMIC */
+
+#ifndef MEMORY_RBFLAGS
+#define MEMORY_RBFLAGS	RB_SINGLE	/* force single user */
+#endif
 
 #ifdef MEMORY_DISK_DYNAMIC
 void
