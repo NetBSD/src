@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.5 2001/02/02 03:09:16 thorpej Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.6 2001/02/22 15:34:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -91,6 +91,8 @@ struct wskbd_mapdata mkbd_keymapdata = {
 
 static struct mkbd_softc *mkbd_console_softc = NULL;
 
+static int mkbd_console_initted = 0;
+
 /* Driver definition. */
 struct cfattach mkbd_ca = {
 	sizeof(struct mkbd_softc), mkbdmatch, mkbdattach
@@ -116,7 +118,6 @@ mkbdattach(parent, self, aux)
 	struct maple_attach_args *ma = aux;
 #if NWSKBD > 0
 	struct wskbddev_attach_args a;
-	static int mkbd_console_initted = 0;
 #endif
 	u_int32_t kbdtype;
 
@@ -145,7 +146,8 @@ mkbdattach(parent, self, aux)
 	printf("\n");
 
 #if NWSKBD > 0
-	a.console = (++mkbd_console_initted == 1);
+	a.console = ((sc->sc_dev.dv_unit == 0) && (mkbd_console_initted == 1))
+		? 1 : 0;
 	a.keymap = &mkbd_keymapdata;
 	a.accessops = &mkbd_accessops;
 	a.accesscookie = sc;
@@ -167,6 +169,7 @@ mkbd_enable(v, on)
 	void *v;
 	int on;
 {
+
 	return 0;
 }
 
@@ -185,6 +188,7 @@ mkbd_ioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
@@ -207,7 +211,9 @@ mkbd_ioctl(v, cmd, data, flag, p)
 int
 mkbd_cnattach()
 {
+
 	wskbd_cnattach(&mkbd_consops, NULL, &mkbd_keymapdata);
+	mkbd_console_initted = 1;
 
 	return 0;
 }
@@ -239,6 +245,7 @@ mkbd_intr(sc, kbddata, sz)
 	struct mkbd_condition *kbddata;
 	int sz;
 {
+
 	if (sz >= sizeof(struct mkbd_condition)) {
 	  int i, j, v;
 
