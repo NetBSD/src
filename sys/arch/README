@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.22 2002/03/24 15:56:59 bjh21 Exp $
+$NetBSD: README,v 1.23 2002/05/30 08:51:06 augustss Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm)
@@ -38,6 +38,7 @@ ofppc:		Open Firmware based PowerPC machines (powerpc)
 pc532:		"PC-532" kit computer, based on NS 32532 CPU (ns32k)
 playstation2:	SONY PlayStation 2 (mips)
 pmax:		Digital Equipment Corp. MIPS based machines (mips)
+pmppc:		Artesyn PMPPC card (powerpc)
 prep:		PowerPC Reference Platform machines (powerpc)
 sandpoint:	Motorola Sandpoint reference platform (powerpc)
 sbmips:		Broadcom's SiByte processor evaluation boards (mips)
