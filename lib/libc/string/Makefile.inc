@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.55 2005/03/13 15:15:13 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.56 2005/03/14 03:13:53 perry Exp $
 
 # string sources
 .PATH: ${ARCHDIR}/string ${.CURDIR}/string
@@ -39,7 +39,7 @@ SRCS+=	memccpy.c
 SRCS+=	memcpy.c
 .endif
 .if empty(SRCS:Mmemmem.S)
-SRCS+=	memmove.c
+SRCS+=	memmem.c
 .endif
 .if empty(SRCS:Mmemmove.S)
 SRCS+=	memmove.c
