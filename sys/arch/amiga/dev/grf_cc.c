@@ -679,8 +679,9 @@ cc_init(gp, ad)
 #endif
 #endif
 
-  gi->gd_regaddr = (caddr_t) fb; /* XXX */
-  gi->gd_regsize = 0;
+  gp->g_data = (caddr_t) fb;
+  gi->gd_regaddr = 0xdff000;
+  gi->gd_regsize = sizeof (custom);
 
   gi->gd_fbaddr  = fb->fb - (u_char *) CHIPMEMADDR;
 #if 0

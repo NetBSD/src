@@ -24,7 +24,7 @@ void retina_init(struct ite_softc *ip)
   if (ip->grf == 0)
     ip->grf = &grf_softc[ip - ite_softc];
 
-  ip->priv = ip->grf->g_display.gd_regaddr;
+  ip->priv = ip->grf->g_data;
   md = (struct MonDef *) ip->priv;
   
   ip->cols = md->TX;
