@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.35 2001/07/07 14:21:00 simonb Exp $	*/
+/* 	$NetBSD: px.c,v 1.36 2001/09/18 18:15:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.35 2001/07/07 14:21:00 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.36 2001/09/18 18:15:51 wiz Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -441,7 +441,7 @@ px_init(fi, slotbase, unit, console)
 }
 
 /*
- * Initalize our DISGUSTING little hack so we can use the qvss event-buffer
+ * Initialize our DISGUSTING little hack so we can use the qvss event-buffer
  * stuff for the X server.
  */
 static void
@@ -494,7 +494,7 @@ px_bt459_init(pxi)
 
 	tc_wmb();
 
-	/* Finish the initalization */
+	/* Finish the initialization */
 	BT459_SELECT(vdac, BT459_IREG_COMMAND_1);
 	BT459_WRITE_REG(vdac, 0x000000);
 	BT459_WRITE_REG(vdac, 0xc2c2c2);
