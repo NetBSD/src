@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.19 2001/04/14 12:31:34 martin Exp $	*/
+/*	$NetBSD: interface.h,v 1.20 2001/05/06 07:57:08 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -240,7 +240,9 @@ extern void ospf_print(const u_char *, u_int, const u_char *);
 extern void igmp_pim_print(const u_char *, u_int);
 extern void pim_print(const u_char *, u_int);
 extern void ppp_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
-extern void pppoe_if_print(u_char *, const struct pcap_pkthdr *, const u_char *);
+extern void pppoe_if_print(u_char *, const struct pcap_pkthdr *,
+	const u_char *);
+extern void pppoe_encap_print(const u_char *, u_int, u_int);
 extern void ppp_bsdos_if_print(u_char *, const struct pcap_pkthdr *,
 	const u_char *);
 extern void ppp_netbsd_serial_if_print(u_char *, const struct pcap_pkthdr *,

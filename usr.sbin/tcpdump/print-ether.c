@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ether.c,v 1.8 2000/07/26 10:48:15 ad Exp $	*/
+/*	$NetBSD: print-ether.c,v 1.9 2001/05/06 07:57:08 tron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ether.c,v 1.44 97/05/26 17:18:13 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ether.c,v 1.8 2000/07/26 10:48:15 ad Exp $");
+__RCSID("$NetBSD: print-ether.c,v 1.9 2001/05/06 07:57:08 tron Exp $");
 #endif
 #endif
 
@@ -229,7 +229,11 @@ ether_encap_print(u_short ethertype, const u_char *p,
 				default_print(p - 18, caplen + 4);
 		}
 		return (1);
-		
+
+	case ETHERTYPE_PPPOE:
+		pppoe_encap_print(p, length, caplen);
+		return (1);
+
 	case ETHERTYPE_LAT:
 	case ETHERTYPE_SCA:
 	case ETHERTYPE_MOPRC:
