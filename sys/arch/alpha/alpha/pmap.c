@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.198 2003/05/08 18:13:12 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.199 2003/05/09 05:33:53 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.198 2003/05/08 18:13:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.199 2003/05/09 05:33:53 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3157,7 +3157,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 				 * be handled a little differently.
 				 */
 				ptaddr = ALPHA_K0SEG_TO_PHYS(
-				    pmap_steal_memory(PAGE_SIZE, NULL, NULL));
+				    pmap_steal_memory(PAGE_SIZE));
 			} else if (pmap_physpage_alloc(PGU_NORMAL,
 				   &ptaddr) == FALSE)
 				goto die;
@@ -3196,7 +3196,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			 * See above.
 			 */
 			ptaddr = ALPHA_K0SEG_TO_PHYS(
-			    pmap_steal_memory(PAGE_SIZE, NULL, NULL));
+			    pmap_steal_memory(PAGE_SIZE));
 		} else if (pmap_physpage_alloc(PGU_NORMAL, &ptaddr) == FALSE)
 			goto die;
 		*l2pte = (atop(ptaddr) << PG_SHIFT) |
