@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2001/09/10 21:19:20 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.59.2.1 2001/11/13 22:24:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2001/09/10 21:19:20 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59.2.1 2001/11/13 22:24:11 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -86,6 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2001/09/10 21:19:20 chris Exp $");
 #include <machine/apbus.h>
 #include <machine/apcall.h>
 #include <mips/locore.h>		/* wbflush() */
+
+#define	_NEWSMIPS_BUS_DMA_PRIVATE
+#include <machine/bus.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -280,6 +283,13 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 * Clear out the I and D caches.
 	 */
 	mips_vector_init();
+
+	/*
+	 * We know the CPU type now.  Initialize our DMA tags (might
+	 * need this early).
+	 */
+	newsmips_bus_dma_init();
+
 #if 0
 	if (systype == NEWS5000) {
 		mips_L2CacheSize = 1024 * 1024;		/* XXX to be safe */
