@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.40 2000/12/30 02:05:20 sommerfeld Exp $	*/
+/*	$NetBSD: job.c,v 1.41 2000/12/30 02:51:21 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.40 2000/12/30 02:05:20 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.41 2000/12/30 02:51:21 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.40 2000/12/30 02:05:20 sommerfeld Exp $");
+__RCSID("$NetBSD: job.c,v 1.41 2000/12/30 02:51:21 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2359,6 +2359,7 @@ Job_CatchOutput()
 #endif
 
     (void) fflush(stdout);
+    Job_TokenRelease();
 #ifdef RMT_WILL_WATCH
     pnJobs = nJobs;
 
@@ -2976,6 +2977,7 @@ JobInterrupt(runINTERRUPT, signo)
 int
 Job_Finish()
 {
+    Job_TokenRelease();
     if (postCommands != NILGNODE && !Lst_IsEmpty(postCommands->commands)) {
 	if (errors) {
 	    Error("Errors reported so .END ignored");
@@ -3317,7 +3319,7 @@ void Job_ServerStart(maxproc)
  * this tracks the number of tokens currently "out" to build jobs.
  */
 static int tokensOutstanding = 0;
-
+static int tokensFree = 0;
 /*-
  *-----------------------------------------------------------------------
  * Job_TokenReturn --
@@ -3333,7 +3335,7 @@ Job_TokenReturn()
     if (tokensOutstanding < 0)
 	Punt("token botch");
     if (tokensOutstanding)
-	JobTokenAdd();
+	tokensFree++;
 }
 
 /*-
@@ -3369,6 +3371,12 @@ Job_TokenWithdraw()
 	wantToken = FALSE;
 	return TRUE;
     }
+    if (tokensFree > 0) {
+	tokensFree--;
+	tokensOutstanding++;
+	wantToken = FALSE;
+	return TRUE;
+    }
     count = read(job_pipe[0], &tok, 1);
     if (count == 0)
 	Fatal("eof on job pipe!");
@@ -3386,5 +3394,23 @@ Job_TokenWithdraw()
     if (DEBUG(JOB))
 	printf("withdrew token\n");
     return TRUE;
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * Job_TokenRelease --
+ *	Return free tokens to the pool.
+ *
+ *-----------------------------------------------------------------------
+ */
+
+void
+Job_TokenRelease()
+{
+    if (compatMake) return;
+	
+    while (tokensFree-- > 0) {
+	JobTokenAdd();
+    }
 }
 
