@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.6 1999/03/28 10:35:06 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.7 1999/03/30 19:33:31 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -219,6 +219,7 @@ play_error:
 			if (write(audiofd, addr, (size_t)filesize) != (ssize_t)filesize)
 				err(1, "final write failed");
 
+			ioctl(audiofd, AUDIO_DRAIN);
 			if (munmap(oaddr, (size_t)filesize) < 0)
 				err(1, "munmap failed");
 
@@ -261,6 +262,7 @@ play_error:
 			if (write(audiofd, buffer, n) != n)
 				err(1, "write failed");
 		} while ((n = read(STDIN_FILENO, buffer, bufsize)));
+		ioctl(audiofd, AUDIO_DRAIN);
 	}
 
 	exit(0);
