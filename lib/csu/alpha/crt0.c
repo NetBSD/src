@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.5 1997/03/10 23:13:31 cgd Exp $	*/
+/*	$NetBSD: crt0.c,v 1.6 1997/03/10 23:17:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -81,11 +81,12 @@ void		rtld_setup __P((void (*)(void), const Obj_Entry *obj));
 const Obj_Entry *__mainprog_obj;
 
 /*
- * Arrange for _DYNAMIC to exist weakly at address zero.  That way,
+ * Arrange for _DYNAMIC to be weak and undefined (and therefore to show up
+ * as being at address zero, unless something else defines it).  That way,
  * if we happen to be compiling without -static but with without any
  * shared libs present, things will still work.
  */
-asm(".weak _DYNAMIC; _DYNAMIC = 0");
+asm(".weak _DYNAMIC");
 extern int _DYNAMIC;
 #endif /* DYNAMIC */
 
