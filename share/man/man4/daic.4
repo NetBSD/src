@@ -1,3 +1,5 @@
+.\" $NetBSD: daic.4,v 1.3 2001/04/09 13:15:47 wiz Exp $
+.\"
 .\" Copyright (c) 1997 Martin Husemann <martin@rumolt.teuto.de>
 .\" All rights reserved.
 .\"
@@ -20,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: daic.4,v 1.2 2001/01/15 13:59:00 jdolecek Exp $
+.\"	$Id: daic.4,v 1.3 2001/04/09 13:15:47 wiz Exp $
 .\"
 .\"	last edit-date: [Tue Dec 14 22:14:17 1999]
 .\"
@@ -36,22 +38,21 @@
 .Nm daic
 .Nd isdn4bsd driver for EICON.Diehl active isdn cards
 .Sh SYNOPSIS
+.Cd "daic0 at isa? iomem 0xd8000 irq 10"
+.Sh DESCRIPTION
 The
 .Nm
 driver supports the old Diehl active cards:
 .Em S, SX, SXn, SCOM
 and
-.Em QUADRO.
-.Pp
-Use a config line like this
-.Cd "daic0 at isa? iomem 0xd8000 irq 10"
+.Em QUADRO .
 .Pp
 For a
 .Em QUADRO
-card use the same, the driver will detect the board type and use
+card, the driver will detect the board type and use
 all four ports, each attached as a controller of its own to the
-ISDN4BSD system, which can be listed using the isdnctl utility.
-.Sh DESCRIPTION
+isdn4bsd system, which can be listed using the daicctl utility.
+.Pp
 The
 .Nm
 driver interfaces the isdn card to the ISDN4BSD kernel subsystem.
@@ -61,7 +62,7 @@ for your card, but the driver has only been tested with the DSS1
 protocol and some parts of the cards interface are isdn protocol
 dependend.
 .Pp
-The 
+The
 .Nm
 driver is written to conform to the software interface documented
 by Diehl in their
@@ -70,13 +71,13 @@ from 1992.
 .Sh MICROCODE DOWNLOAD
 Every active card needs its own operating software before it can
 work. You have to download this to the card before using it with
-ISDN4BSD. Use the isdnctl utility to do this, i.e. call
-.Nm "isdnctl -d te_etsi.sx 1"
+isdn4bsd. Use the daicctl utility to do this, i.e. call
+.Nm "daicctl -d te_etsi.sx 1"
 to download the file
 .Nm te_etsi.sx
-to controller number 1. Use 
-.Nm "isdnctl -l"
-to list all available controllers (and ports). You have to select the 
+to controller number 1. Use
+.Nm "daicctl -l"
+to list all available controllers (and ports). You have to select the
 correct isdn protocol file for your isdn interface, see the Diehl documentation
 for details.
 .Pp
@@ -93,8 +94,6 @@ if you forget to do this. Due to copright restrictions we cannot distribute
 the driver with this file integrated. But if you own a card, you do have
 the file (or can get it from the Diehl web server).
 .Sh BUGS
-The driver is not yet finished. It will only compile on NetBSD and
-even there will not work. This should be fixed soon and the driver
-will be ported to FreeBSD.
+The driver is not yet finished.
 .Sh SEE ALSO
-.Xr isdnctl 1
+.Xr daicctl 1
