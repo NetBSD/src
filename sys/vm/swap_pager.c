@@ -38,7 +38,7 @@
  * from: Utah $Hdr: swap_pager.c 1.4 91/04/30$
  *
  *	from: @(#)swap_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: swap_pager.c,v 1.13 1993/12/20 12:39:59 cgd Exp $
+ *	$Id: swap_pager.c,v 1.14 1994/01/07 20:33:14 mycroft Exp $
  */
 
 /*
@@ -913,13 +913,16 @@ swap_pager_iodone(bp)
 		bswlist.b_flags &= ~B_WANTED;
 		thread_wakeup((int)&bswlist);
 	}
-#ifdef notyet /* XXX */
 	/*
 	 * Only kick the pageout daemon if we are really hurting
 	 * for pages, otherwise this page will be picked up later.
 	 */
+#ifdef notyet /* XXX */
 	if (cnt.v_free_count < cnt.v_free_min)
-		thread_wakeup((int) &vm_pages_needed);
+#else
+	/* XXX shouldn't this be the same test as in vm_page_alloc()? */
+	if (vm_page_free_count < vm_page_free_min)
 #endif
+		thread_wakeup((int) &vm_pages_needed);
 	splx(s);
 }
