@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.198 2003/01/06 17:40:18 lukem Exp $
+#	$NetBSD: Makefile,v 1.199 2003/01/26 06:19:12 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -239,6 +239,13 @@ installworld:
 	    ${MAKE} DESTDIR=${INSTALLWORLDDIR} postinstall-check)
 	@echo   "make ${.TARGET} started at:  ${START_TIME}"
 	@printf "make ${.TARGET} finished at: " && date
+
+#
+# Create sets from $DESTDIR into $RELEASEDIR
+#
+
+sets:
+	(cd ${.CURDIR}/distrib/sets && ${MAKE} maketars)
 
 #
 # Build a release or snapshot (implies "make build").  Note that
