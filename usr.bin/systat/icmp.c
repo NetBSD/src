@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp.c,v 1.1 1999/05/30 20:26:21 ad Exp $ */
+/*	$NetBSD: icmp.c,v 1.2 2000/01/08 23:12:37 itojun Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: icmp.c,v 1.1 1999/05/30 20:26:21 ad Exp $");
+__RCSID("$NetBSD: icmp.c,v 1.2 2000/01/08 23:12:37 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,8 @@ __RCSID("$NetBSD: icmp.c,v 1.1 1999/05/30 20:26:21 ad Exp $");
 #define LHD(row, str) mvwprintw(wnd, row, 10, str)
 #define RHD(row, str) mvwprintw(wnd, row, 45, str);
 #define BD(row, str) LHD(row, str); RHD(row, str)
-#define SHOW(stat, row, col) mvwprintw(wnd, row, col, "%9lu", stats.stat)
+#define SHOW(stat, row, col) \
+    mvwprintw(wnd, row, col, "%9llu", (unsigned long long)stats.stat)
 #define SHOW2(type, row) SHOW(icps_inhist[type], row, 0); \
     SHOW(icps_outhist[type], row, 35)
 

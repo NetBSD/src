@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2000/01/07 04:47:23 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 2000/01/08 23:12:37 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -172,3 +172,19 @@ void	 vmstat_boot __P((char *args));
 void	 vmstat_run __P((char *args));
 void	 vmstat_time __P((char *args));
 void	 vmstat_zero __P((char *args));
+#ifdef INET6
+void	 closeip6 __P ((WINDOW *));
+void	 fetchip6 __P((void));
+int	 initip6 __P((void));
+void	 labelip6 __P((void));
+WINDOW	*openip6 __P((void));
+void	 showip6 __P((void));
+#endif
+#ifdef IPSEC
+void	 closeipsec __P ((WINDOW *));
+void	 fetchipsec __P((void));
+int	 initipsec __P((void));
+void	 labelipsec __P((void));
+WINDOW	*openipsec __P((void));
+void	 showipsec __P((void));
+#endif

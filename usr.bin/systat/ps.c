@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.12 1999/12/22 14:46:15 kleink Exp $  */
+/*      $NetBSD: ps.c,v 1.13 2000/01/08 23:12:37 itojun Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.12 1999/12/22 14:46:15 kleink Exp $");
+__RCSID("$NetBSD: ps.c,v 1.13 2000/01/08 23:12:37 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -82,6 +82,10 @@ static time_t now;
 
 #define SHOWUSER_ANY	(uid_t)-1
 static uid_t showuser = SHOWUSER_ANY;
+
+#ifndef P_ZOMBIE
+#define P_ZOMBIE(p)	((p)->p_stat == SZOMB)
+#endif
 
 void
 labelps ()
@@ -187,7 +191,9 @@ state2str(kp)
 		break;
 
 	case SZOMB:
+#ifdef SDEAD
 	case SDEAD:
+#endif
 		*cp = 'Z';
 		break;
 
