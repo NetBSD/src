@@ -33,37 +33,37 @@
 
 (define_insn "tstsi"
   [(set (cc0)
-	(match_operand:SI 0 "nonimmediate_operand" "g"))]
+	(match_operand:SI 0 "vax_nonimmediate_operand" "g"))]
   ""
   "tstl %0")
 
 (define_insn "tsthi"
   [(set (cc0)
-	(match_operand:HI 0 "nonimmediate_operand" "g"))]
+	(match_operand:HI 0 "vax_nonimmediate_operand" "g"))]
   ""
   "tstw %0")
 
 (define_insn "tstqi"
   [(set (cc0)
-	(match_operand:QI 0 "nonimmediate_operand" "g"))]
+	(match_operand:QI 0 "vax_nonimmediate_operand" "g"))]
   ""
   "tstb %0")
 
 (define_insn "tstdf"
   [(set (cc0)
-	(match_operand:DF 0 "general_operand" "gF"))]
+	(match_operand:DF 0 "vax_general_operand" "gF"))]
   ""
   "tst%# %0")
 
 (define_insn "tstsf"
   [(set (cc0)
-	(match_operand:SF 0 "general_operand" "gF"))]
+	(match_operand:SF 0 "vax_general_operand" "gF"))]
   ""
   "tstf %0")
 
 (define_expand "cmpsi"
   [(set (cc0)
-	(compare (match_operand:SI 0 "nonimmediate_operand" "g")
+	(compare (match_operand:SI 0 "vax_nonimmediate_operand" "g")
 		 (match_operand:SI 1 "compare_operand" "g")))]
   ""
   "
@@ -82,7 +82,7 @@
 
 (define_insn ""
   [(set (cc0)
-	(compare (match_operand:SI 0 "nonimmediate_operand" "g")
+	(compare (match_operand:SI 0 "vax_nonimmediate_operand" "g")
 		 (match_operand:SI 1 "compare_operand" "g")))]
   ""
   "*
@@ -94,22 +94,22 @@
 
 (define_insn "cmphi"
   [(set (cc0)
-	(compare (match_operand:HI 0 "nonimmediate_operand" "g")
-		 (match_operand:HI 1 "general_operand" "g")))]
+	(compare (match_operand:HI 0 "vax_nonimmediate_operand" "g")
+		 (match_operand:HI 1 "vax_general_operand" "g")))]
   ""
   "cmpw %0,%1")
 
 (define_insn "cmpqi"
   [(set (cc0)
-	(compare (match_operand:QI 0 "nonimmediate_operand" "g")
-		 (match_operand:QI 1 "general_operand" "g")))]
+	(compare (match_operand:QI 0 "vax_nonimmediate_operand" "g")
+		 (match_operand:QI 1 "vax_general_operand" "g")))]
   ""
   "cmpb %0,%1")
 
 (define_insn "cmpdf"
   [(set (cc0)
-	(compare (match_operand:DF 0 "general_operand" "gF,gF")
-		 (match_operand:DF 1 "general_operand" "G,gF")))]
+	(compare (match_operand:DF 0 "vax_general_operand" "gF,gF")
+		 (match_operand:DF 1 "vax_general_operand" "G,gF")))]
   ""
   "@
    tst%# %0
@@ -117,8 +117,8 @@
 
 (define_insn "cmpsf"
   [(set (cc0)
-	(compare (match_operand:SF 0 "general_operand" "gF,gF")
-		 (match_operand:SF 1 "general_operand" "G,gF")))]
+	(compare (match_operand:SF 0 "vax_general_operand" "gF,gF")
+		 (match_operand:SF 1 "vax_general_operand" "G,gF")))]
   ""
   "@
    tstf %0
@@ -126,22 +126,22 @@
 
 (define_insn ""
   [(set (cc0)
-	(and:SI (match_operand:SI 0 "general_operand" "g")
-		(match_operand:SI 1 "general_operand" "g")))]
+	(and:SI (match_operand:SI 0 "vax_general_operand" "g")
+		(match_operand:SI 1 "vax_general_operand" "g")))]
   ""
   "bitl %0,%1")
 
 (define_insn ""
   [(set (cc0)
-	(and:HI (match_operand:HI 0 "general_operand" "g")
-		(match_operand:HI 1 "general_operand" "g")))]
+	(and:HI (match_operand:HI 0 "vax_general_operand" "g")
+		(match_operand:HI 1 "vax_general_operand" "g")))]
   ""
   "bitw %0,%1")
 
 (define_insn ""
   [(set (cc0)
-	(and:QI (match_operand:QI 0 "general_operand" "g")
-		(match_operand:QI 1 "general_operand" "g")))]
+	(and:QI (match_operand:QI 0 "vax_general_operand" "g")
+		(match_operand:QI 1 "vax_general_operand" "g")))]
   ""
   "bitb %0,%1")
 
@@ -160,28 +160,28 @@
 ;; -- Ken Raeburn (Raeburn@Watch.COM) 24 August 1991.
 
 (define_insn "sltu"
-  [(set (match_operand:SI 0 "general_operand" "=ro")
+  [(set (match_operand:SI 0 "vax_general_operand" "=ro")
 	(ltu (cc0) (const_int 0)))]
   ""
   "clrl %0\;adwc $0,%0")
 
 (define_insn "sgeu"
-  [(set (match_operand:SI 0 "general_operand" "=ro")
+  [(set (match_operand:SI 0 "vax_general_operand" "=ro")
 	(geu (cc0) (const_int 0)))]
   ""
   "movl $1,%0\;sbwc $0,%0")
 
 (define_insn "movdf"
-  [(set (match_operand:DF 0 "general_operand" "=g,g")
-	(match_operand:DF 1 "general_operand" "G,gF"))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g,g")
+	(match_operand:DF 1 "vax_general_operand" "G,gF"))]
   ""
   "@
    clr%# %0
    mov%# %1,%0")
 
 (define_insn "movsf"
-  [(set (match_operand:SF 0 "general_operand" "=g,g")
-	(match_operand:SF 1 "general_operand" "G,gF"))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g,g")
+	(match_operand:SF 1 "vax_general_operand" "G,gF"))]
   ""
   "@
    clrf %0
@@ -189,18 +189,21 @@
 
 ;; Some vaxes don't support this instruction.
 ;;(define_insn "movti"
-;;  [(set (match_operand:TI 0 "general_operand" "=g")
-;;	(match_operand:TI 1 "general_operand" "g"))]
+;;  [(set (match_operand:TI 0 "vax_general_operand" "=g")
+;;	(match_operand:TI 1 "vax_general_operand" "g"))]
 ;;  ""
 ;;  "movh %1,%0")
 
 (define_insn "movdi"
-  [(set (match_operand:DI 0 "general_operand" "=g,g")
-	(match_operand:DI 1 "general_operand" "I,g"))]
+  [(set (match_operand:DI 0 "vax_general_operand" "g")
+	(match_operand:DI 1 "vax_general_operand" "g"))]
   ""
-  "@
-   clrq %0
-   movq %D1,%0")
+  "*
+{
+  if (operands[1] == const0_rtx)
+      return \"clrq %0\";
+  return \"movq %D1,%0\";
+}")
 
 
 ;; General case of fullword move.
@@ -213,8 +216,8 @@
 ;; In both the PIC and non-PIC cases the patterns generated will
 ;; matched by the next define_insn.
 (define_expand "movsi"
-  [(set (match_operand:SI 0 "general_operand" "")
-	(match_operand:SI 1 "general_operand" ""))]
+  [(set (match_operand:SI 0 "vax_general_operand" "")
+	(match_operand:SI 1 "vax_general_operand" ""))]
   ""
   "
 {
@@ -247,8 +250,8 @@
 ;;  Loads of constants between 64 and 128 used to be done with
 ;; "addl3 $63,#,dst" but this is slower than movzbl and takes as much space.
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(match_operand:SI 1 "general_operand" "g"))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(match_operand:SI 1 "vax_general_operand" "g"))]
   ""
   "*
 {
@@ -292,8 +295,8 @@
 }")
 
 (define_insn "movhi"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(match_operand:HI 1 "general_operand" "g"))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(match_operand:HI 1 "vax_general_operand" "g"))]
   ""
   "*
 {
@@ -326,7 +329,7 @@
 
 (define_insn "movstricthi"
   [(set (strict_low_part (match_operand:HI 0 "register_operand" "=g"))
-	(match_operand:HI 1 "general_operand" "g"))]
+	(match_operand:HI 1 "vax_general_operand" "g"))]
   ""
   "*
 {
@@ -346,8 +349,8 @@
 }")
 
 (define_insn "movqi"
-  [(set (match_operand:QI 0 "general_operand" "=g")
-	(match_operand:QI 1 "general_operand" "g"))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g")
+	(match_operand:QI 1 "vax_general_operand" "g"))]
   ""
   "*
 {
@@ -376,7 +379,7 @@
 
 (define_insn "movstrictqi"
   [(set (strict_low_part (match_operand:QI 0 "register_operand" "=g"))
-	(match_operand:QI 1 "general_operand" "g"))]
+	(match_operand:QI 1 "vax_general_operand" "g"))]
   ""
   "*
 {
@@ -394,9 +397,9 @@
 ;; This is here to accept 4 arguments and pass the first 3 along
 ;; to the movstrhi1 pattern that really does the work.
 (define_expand "movstrhi"
-  [(set (match_operand:BLK 0 "general_operand" "=g")
-	(match_operand:BLK 1 "general_operand" "g"))
-   (use (match_operand:HI 2 "general_operand" "g"))
+  [(set (match_operand:BLK 0 "vax_general_operand" "=g")
+	(match_operand:BLK 1 "vax_general_operand" "g"))
+   (use (match_operand:HI 2 "vax_general_operand" "g"))
    (match_operand 3 "" "")]
   ""
   "
@@ -409,9 +412,9 @@
 ;; that anything generated as this insn will be recognized as one
 ;; and that it won't successfully combine with anything.
 (define_insn "movstrhi1"
-  [(set (match_operand:BLK 0 "general_operand" "=g")
-	(match_operand:BLK 1 "general_operand" "g"))
-   (use (match_operand:HI 2 "general_operand" "g"))
+  [(set (match_operand:BLK 0 "vax_general_operand" "=g")
+	(match_operand:BLK 1 "vax_general_operand" "g"))
+   (use (match_operand:HI 2 "vax_general_operand" "g"))
    (clobber (reg:SI 0))
    (clobber (reg:SI 1))
    (clobber (reg:SI 2))
@@ -424,153 +427,153 @@
 ;; Extension and truncation insns.
 
 (define_insn "truncsiqi2"
-  [(set (match_operand:QI 0 "general_operand" "=g")
-	(truncate:QI (match_operand:SI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g")
+	(truncate:QI (match_operand:SI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtlb %1,%0")
 
 (define_insn "truncsihi2"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(truncate:HI (match_operand:SI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(truncate:HI (match_operand:SI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtlw %1,%0")
 
 (define_insn "trunchiqi2"
-  [(set (match_operand:QI 0 "general_operand" "=g")
-	(truncate:QI (match_operand:HI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g")
+	(truncate:QI (match_operand:HI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtwb %1,%0")
 
 (define_insn "extendhisi2"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(sign_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(sign_extend:SI (match_operand:HI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtwl %1,%0")
 
 (define_insn "extendqihi2"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(sign_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(sign_extend:HI (match_operand:QI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtbw %1,%0")
 
 (define_insn "extendqisi2"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(sign_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(sign_extend:SI (match_operand:QI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtbl %1,%0")
 
 (define_insn "extendsfdf2"
-  [(set (match_operand:DF 0 "general_operand" "=g")
-	(float_extend:DF (match_operand:SF 1 "general_operand" "gF")))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g")
+	(float_extend:DF (match_operand:SF 1 "vax_general_operand" "gF")))]
   ""
   "cvtf%# %1,%0")
 
 (define_insn "truncdfsf2"
-  [(set (match_operand:SF 0 "general_operand" "=g")
-	(float_truncate:SF (match_operand:DF 1 "general_operand" "gF")))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g")
+	(float_truncate:SF (match_operand:DF 1 "vax_general_operand" "gF")))]
   ""
   "cvt%#f %1,%0")
 
 (define_insn "zero_extendhisi2"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(zero_extend:SI (match_operand:HI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(zero_extend:SI (match_operand:HI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "movzwl %1,%0")
 
 (define_insn "zero_extendqihi2"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(zero_extend:HI (match_operand:QI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(zero_extend:HI (match_operand:QI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "movzbw %1,%0")
 
 (define_insn "zero_extendqisi2"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(zero_extend:SI (match_operand:QI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(zero_extend:SI (match_operand:QI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "movzbl %1,%0")
 
 ;; Fix-to-float conversion insns.
 
 (define_insn "floatsisf2"
-  [(set (match_operand:SF 0 "general_operand" "=g")
-	(float:SF (match_operand:SI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g")
+	(float:SF (match_operand:SI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtlf %1,%0")
 
 (define_insn "floatsidf2"
-  [(set (match_operand:DF 0 "general_operand" "=g")
-	(float:DF (match_operand:SI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g")
+	(float:DF (match_operand:SI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtl%# %1,%0")
 
 (define_insn "floathisf2"
-  [(set (match_operand:SF 0 "general_operand" "=g")
-	(float:SF (match_operand:HI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g")
+	(float:SF (match_operand:HI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtwf %1,%0")
 
 (define_insn "floathidf2"
-  [(set (match_operand:DF 0 "general_operand" "=g")
-	(float:DF (match_operand:HI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g")
+	(float:DF (match_operand:HI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtw%# %1,%0")
 
 (define_insn "floatqisf2"
-  [(set (match_operand:SF 0 "general_operand" "=g")
-	(float:SF (match_operand:QI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g")
+	(float:SF (match_operand:QI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtbf %1,%0")
 
 (define_insn "floatqidf2"
-  [(set (match_operand:DF 0 "general_operand" "=g")
-	(float:DF (match_operand:QI 1 "nonimmediate_operand" "g")))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g")
+	(float:DF (match_operand:QI 1 "vax_nonimmediate_operand" "g")))]
   ""
   "cvtb%# %1,%0")
 
 ;; Float-to-fix conversion insns.
 
 (define_insn "fix_truncsfqi2"
-  [(set (match_operand:QI 0 "general_operand" "=g")
-	(fix:QI (fix:SF (match_operand:SF 1 "general_operand" "gF"))))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g")
+	(fix:QI (fix:SF (match_operand:SF 1 "vax_general_operand" "gF"))))]
   ""
   "cvtfb %1,%0")
 
 (define_insn "fix_truncsfhi2"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(fix:HI (fix:SF (match_operand:SF 1 "general_operand" "gF"))))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(fix:HI (fix:SF (match_operand:SF 1 "vax_general_operand" "gF"))))]
   ""
   "cvtfw %1,%0")
 
 (define_insn "fix_truncsfsi2"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(fix:SI (fix:SF (match_operand:SF 1 "general_operand" "gF"))))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(fix:SI (fix:SF (match_operand:SF 1 "vax_general_operand" "gF"))))]
   ""
   "cvtfl %1,%0")
 
 (define_insn "fix_truncdfqi2"
-  [(set (match_operand:QI 0 "general_operand" "=g")
-	(fix:QI (fix:DF (match_operand:DF 1 "general_operand" "gF"))))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g")
+	(fix:QI (fix:DF (match_operand:DF 1 "vax_general_operand" "gF"))))]
   ""
   "cvt%#b %1,%0")
 
 (define_insn "fix_truncdfhi2"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(fix:HI (fix:DF (match_operand:DF 1 "general_operand" "gF"))))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(fix:HI (fix:DF (match_operand:DF 1 "vax_general_operand" "gF"))))]
   ""
   "cvt%#w %1,%0")
 
 (define_insn "fix_truncdfsi2"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(fix:SI (fix:DF (match_operand:DF 1 "general_operand" "gF"))))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(fix:SI (fix:DF (match_operand:DF 1 "vax_general_operand" "gF"))))]
   ""
   "cvt%#l %1,%0")
 
 ;;- All kinds of add instructions.
 
 (define_insn "adddf3"
-  [(set (match_operand:DF 0 "general_operand" "=g,g,g")
-	(plus:DF (match_operand:DF 1 "general_operand" "0,gF,gF")
-		 (match_operand:DF 2 "general_operand" "gF,0,gF")))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g,g,g")
+	(plus:DF (match_operand:DF 1 "vax_general_operand" "0,gF,gF")
+		 (match_operand:DF 2 "vax_general_operand" "gF,0,gF")))]
   ""
   "@
    add%#2 %2,%0
@@ -578,9 +581,9 @@
    add%#3 %1,%2,%0")
 
 (define_insn "addsf3"
-  [(set (match_operand:SF 0 "general_operand" "=g,g,g")
-	(plus:SF (match_operand:SF 1 "general_operand" "0,gF,gF")
-		 (match_operand:SF 2 "general_operand" "gF,0,gF")))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g,g,g")
+	(plus:SF (match_operand:SF 1 "vax_general_operand" "0,gF,gF")
+		 (match_operand:SF 2 "vax_general_operand" "gF,0,gF")))]
   ""
   "@
    addf2 %2,%0
@@ -601,9 +604,9 @@
 
 
 (define_insn "addsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(plus:SI (match_operand:SI 1 "general_operand" "g")
-		 (match_operand:SI 2 "general_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(plus:SI (match_operand:SI 1 "vax_general_operand" "g")
+		 (match_operand:SI 2 "vax_general_operand" "g")))]
   ""
   "*
 {
@@ -692,9 +695,9 @@
 }")
 
 (define_insn "addhi3"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(plus:HI (match_operand:HI 1 "general_operand" "g")
-		 (match_operand:HI 2 "general_operand" "g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(plus:HI (match_operand:HI 1 "vax_general_operand" "g")
+		 (match_operand:HI 2 "vax_general_operand" "g")))]
   ""
   "*
 {
@@ -718,9 +721,9 @@
 }")
 
 (define_insn "addqi3"
-  [(set (match_operand:QI 0 "general_operand" "=g")
-	(plus:QI (match_operand:QI 1 "general_operand" "g")
-		 (match_operand:QI 2 "general_operand" "g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g")
+	(plus:QI (match_operand:QI 1 "vax_general_operand" "g")
+		 (match_operand:QI 2 "vax_general_operand" "g")))]
   ""
   "*
 {
@@ -745,9 +748,9 @@
 
 ;; The add-with-carry (adwc) instruction only accepts two operands.
 (define_insn "adddi3"
-  [(set (match_operand:DI 0 "general_operand" "=ro>,ro>")
-	(plus:DI (match_operand:DI 1 "general_operand" "%0,ro>")
-		 (match_operand:DI 2 "general_operand" "Fro,F")))]
+  [(set (match_operand:DI 0 "vax_general_operand" "=ro>,ro>")
+	(plus:DI (match_operand:DI 1 "vax_general_operand" "%0,ro>")
+		 (match_operand:DI 2 "vax_general_operand" "Fro,F")))]
   ""
   "*
 {
@@ -790,45 +793,45 @@
 ;;- All kinds of subtract instructions.
 
 (define_insn "subdf3"
-  [(set (match_operand:DF 0 "general_operand" "=g,g")
-	(minus:DF (match_operand:DF 1 "general_operand" "0,gF")
-		  (match_operand:DF 2 "general_operand" "gF,gF")))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g,g")
+	(minus:DF (match_operand:DF 1 "vax_general_operand" "0,gF")
+		  (match_operand:DF 2 "vax_general_operand" "gF,gF")))]
   ""
   "@
    sub%#2 %2,%0
    sub%#3 %2,%1,%0")
 
 (define_insn "subsf3"
-  [(set (match_operand:SF 0 "general_operand" "=g,g")
-	(minus:SF (match_operand:SF 1 "general_operand" "0,gF")
-		  (match_operand:SF 2 "general_operand" "gF,gF")))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g,g")
+	(minus:SF (match_operand:SF 1 "vax_general_operand" "0,gF")
+		  (match_operand:SF 2 "vax_general_operand" "gF,gF")))]
   ""
   "@
    subf2 %2,%0
    subf3 %2,%1,%0")
 
 (define_insn "subsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g,g")
-	(minus:SI (match_operand:SI 1 "general_operand" "0,g")
-		  (match_operand:SI 2 "general_operand" "g,g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g,g")
+	(minus:SI (match_operand:SI 1 "vax_general_operand" "0,g")
+		  (match_operand:SI 2 "vax_general_operand" "g,g")))]
   ""
   "@
    subl2 %2,%0
    subl3 %2,%1,%0")
 
 (define_insn "subhi3"
-  [(set (match_operand:HI 0 "general_operand" "=g,g")
-	(minus:HI (match_operand:HI 1 "general_operand" "0,g")
-		  (match_operand:HI 2 "general_operand" "g,g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g,g")
+	(minus:HI (match_operand:HI 1 "vax_general_operand" "0,g")
+		  (match_operand:HI 2 "vax_general_operand" "g,g")))]
   ""
   "@
    subw2 %2,%0
    subw3 %2,%1,%0")
 
 (define_insn "subqi3"
-  [(set (match_operand:QI 0 "general_operand" "=g,g")
-	(minus:QI (match_operand:QI 1 "general_operand" "0,g")
-		  (match_operand:QI 2 "general_operand" "g,g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g,g")
+	(minus:QI (match_operand:QI 1 "vax_general_operand" "0,g")
+		  (match_operand:QI 2 "vax_general_operand" "g,g")))]
   ""
   "@
    subb2 %2,%0
@@ -836,9 +839,9 @@
 
 ;; The subtract-with-carry (sbwc) instruction only takes two operands.
 (define_insn "subdi3"
-  [(set (match_operand:DI 0 "general_operand" "=or>,or>")
-	(minus:DI (match_operand:DI 1 "general_operand" "0,or>")
-		  (match_operand:DI 2 "general_operand" "For,F")))]
+  [(set (match_operand:DI 0 "vax_general_operand" "=or>,or>")
+	(minus:DI (match_operand:DI 1 "vax_general_operand" "0,or>")
+		  (match_operand:DI 2 "vax_general_operand" "For,F")))]
   ""
   "*
 {
@@ -881,9 +884,9 @@
 ;;- Multiply instructions.
 
 (define_insn "muldf3"
-  [(set (match_operand:DF 0 "general_operand" "=g,g,g")
-	(mult:DF (match_operand:DF 1 "general_operand" "0,gF,gF")
-		 (match_operand:DF 2 "general_operand" "gF,0,gF")))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g,g,g")
+	(mult:DF (match_operand:DF 1 "vax_general_operand" "0,gF,gF")
+		 (match_operand:DF 2 "vax_general_operand" "gF,0,gF")))]
   ""
   "@
    mul%#2 %2,%0
@@ -891,9 +894,9 @@
    mul%#3 %1,%2,%0")
 
 (define_insn "mulsf3"
-  [(set (match_operand:SF 0 "general_operand" "=g,g,g")
-	(mult:SF (match_operand:SF 1 "general_operand" "0,gF,gF")
-		 (match_operand:SF 2 "general_operand" "gF,0,gF")))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g,g,g")
+	(mult:SF (match_operand:SF 1 "vax_general_operand" "0,gF,gF")
+		 (match_operand:SF 2 "vax_general_operand" "gF,0,gF")))]
   ""
   "@
    mulf2 %2,%0
@@ -901,9 +904,9 @@
    mulf3 %1,%2,%0")
 
 (define_insn "mulsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g,g,g")
-	(mult:SI (match_operand:SI 1 "general_operand" "0,g,g")
-		 (match_operand:SI 2 "general_operand" "g,0,g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g,g,g")
+	(mult:SI (match_operand:SI 1 "vax_general_operand" "0,g,g")
+		 (match_operand:SI 2 "vax_general_operand" "g,0,g")))]
   ""
   "@
    mull2 %2,%0
@@ -911,9 +914,9 @@
    mull3 %1,%2,%0")
 
 (define_insn "mulhi3"
-  [(set (match_operand:HI 0 "general_operand" "=g,g,")
-	(mult:HI (match_operand:HI 1 "general_operand" "0,g,g")
-		 (match_operand:HI 2 "general_operand" "g,0,g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g,g,")
+	(mult:HI (match_operand:HI 1 "vax_general_operand" "0,g,g")
+		 (match_operand:HI 2 "vax_general_operand" "g,0,g")))]
   ""
   "@
    mulw2 %2,%0
@@ -921,9 +924,9 @@
    mulw3 %1,%2,%0")
 
 (define_insn "mulqi3"
-  [(set (match_operand:QI 0 "general_operand" "=g,g,g")
-	(mult:QI (match_operand:QI 1 "general_operand" "0,g,g")
-		 (match_operand:QI 2 "general_operand" "g,0,g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g,g,g")
+	(mult:QI (match_operand:QI 1 "vax_general_operand" "0,g,g")
+		 (match_operand:QI 2 "vax_general_operand" "g,0,g")))]
   ""
   "@
    mulb2 %2,%0
@@ -931,33 +934,33 @@
    mulb3 %1,%2,%0")
 
 (define_insn "mulsidi3"
-  [(set (match_operand:DI 0 "general_operand" "=g")
+  [(set (match_operand:DI 0 "vax_general_operand" "=g")
 	(mult:DI (sign_extend:DI
-		  (match_operand:SI 1 "nonimmediate_operand" "g"))
+		  (match_operand:SI 1 "vax_nonimmediate_operand" "g"))
 		 (sign_extend:DI
-		  (match_operand:SI 2 "nonimmediate_operand" "g"))))]
+		  (match_operand:SI 2 "vax_nonimmediate_operand" "g"))))]
   ""
   "emul %1,%2,$0,%0")
 
 (define_insn ""
-  [(set (match_operand:DI 0 "general_operand" "=g")
+  [(set (match_operand:DI 0 "vax_general_operand" "=g")
 	(plus:DI
 	 (mult:DI (sign_extend:DI
-		   (match_operand:SI 1 "nonimmediate_operand" "g"))
+		   (match_operand:SI 1 "vax_nonimmediate_operand" "g"))
 		  (sign_extend:DI
-		   (match_operand:SI 2 "nonimmediate_operand" "g")))
-	 (sign_extend:DI (match_operand:SI 3 "nonimmediate_operand" "g"))))]
+		   (match_operand:SI 2 "vax_nonimmediate_operand" "g")))
+	 (sign_extend:DI (match_operand:SI 3 "vax_nonimmediate_operand" "g"))))]
   ""
   "emul %1,%2,%3,%0")
 
 ;; 'F' constraint means type CONST_DOUBLE
 (define_insn ""
-  [(set (match_operand:DI 0 "general_operand" "=g")
+  [(set (match_operand:DI 0 "vax_general_operand" "=g")
 	(plus:DI
 	 (mult:DI (sign_extend:DI
-		   (match_operand:SI 1 "nonimmediate_operand" "g"))
+		   (match_operand:SI 1 "vax_nonimmediate_operand" "g"))
 		  (sign_extend:DI
-		   (match_operand:SI 2 "nonimmediate_operand" "g")))
+		   (match_operand:SI 2 "vax_nonimmediate_operand" "g")))
 	 (match_operand:DI 3 "immediate_operand" "F")))]
   "GET_CODE (operands[3]) == CONST_DOUBLE 
     && CONST_DOUBLE_HIGH (operands[3]) == (CONST_DOUBLE_LOW (operands[3]) >> 31)"
@@ -971,45 +974,45 @@
 ;;- Divide instructions.
 
 (define_insn "divdf3"
-  [(set (match_operand:DF 0 "general_operand" "=g,g")
-	(div:DF (match_operand:DF 1 "general_operand" "0,gF")
-		(match_operand:DF 2 "general_operand" "gF,gF")))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g,g")
+	(div:DF (match_operand:DF 1 "vax_general_operand" "0,gF")
+		(match_operand:DF 2 "vax_general_operand" "gF,gF")))]
   ""
   "@
    div%#2 %2,%0
    div%#3 %2,%1,%0")
 
 (define_insn "divsf3"
-  [(set (match_operand:SF 0 "general_operand" "=g,g")
-	(div:SF (match_operand:SF 1 "general_operand" "0,gF")
-		(match_operand:SF 2 "general_operand" "gF,gF")))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g,g")
+	(div:SF (match_operand:SF 1 "vax_general_operand" "0,gF")
+		(match_operand:SF 2 "vax_general_operand" "gF,gF")))]
   ""
   "@
    divf2 %2,%0
    divf3 %2,%1,%0")
 
 (define_insn "divsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g,g")
-	(div:SI (match_operand:SI 1 "general_operand" "0,g")
-		(match_operand:SI 2 "general_operand" "g,g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g,g")
+	(div:SI (match_operand:SI 1 "vax_general_operand" "0,g")
+		(match_operand:SI 2 "vax_general_operand" "g,g")))]
   ""
   "@
    divl2 %2,%0
    divl3 %2,%1,%0")
 
 (define_insn "divhi3"
-  [(set (match_operand:HI 0 "general_operand" "=g,g")
-	(div:HI (match_operand:HI 1 "general_operand" "0,g")
-		(match_operand:HI 2 "general_operand" "g,g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g,g")
+	(div:HI (match_operand:HI 1 "vax_general_operand" "0,g")
+		(match_operand:HI 2 "vax_general_operand" "g,g")))]
   ""
   "@
    divw2 %2,%0
    divw3 %2,%1,%0")
 
 (define_insn "divqi3"
-  [(set (match_operand:QI 0 "general_operand" "=g,g")
-	(div:QI (match_operand:QI 1 "general_operand" "0,g")
-		(match_operand:QI 2 "general_operand" "g,g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g,g")
+	(div:QI (match_operand:QI 1 "vax_general_operand" "0,g")
+		(match_operand:QI 2 "vax_general_operand" "g,g")))]
   ""
   "@
    divb2 %2,%0
@@ -1018,20 +1021,20 @@
 ;This is left out because it is very slow;
 ;we are better off programming around the "lack" of this insn.
 ;(define_insn "divmoddisi4"
-;  [(set (match_operand:SI 0 "general_operand" "=g")
-;	(div:SI (match_operand:DI 1 "general_operand" "g")
-;		(match_operand:SI 2 "general_operand" "g")))
-;   (set (match_operand:SI 3 "general_operand" "=g")
-;	(mod:SI (match_operand:DI 1 "general_operand" "g")
-;		(match_operand:SI 2 "general_operand" "g")))]
+;  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+;	(div:SI (match_operand:DI 1 "vax_general_operand" "g")
+;		(match_operand:SI 2 "vax_general_operand" "g")))
+;   (set (match_operand:SI 3 "vax_general_operand" "=g")
+;	(mod:SI (match_operand:DI 1 "vax_general_operand" "g")
+;		(match_operand:SI 2 "vax_general_operand" "g")))]
 ;  ""
 ;  "ediv %2,%1,%0,%3")
 
 ;; Bit-and on the vax is done with a clear-bits insn.
 (define_expand "andsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(and:SI (not:SI (match_operand:SI 1 "general_operand" "g"))
-		(match_operand:SI 2 "general_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(and:SI (not:SI (match_operand:SI 1 "vax_general_operand" "g"))
+		(match_operand:SI 2 "vax_general_operand" "g")))]
   ""
   "
 {
@@ -1052,9 +1055,9 @@
 }")
 
 (define_expand "andhi3"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(and:HI (not:HI (match_operand:HI 1 "general_operand" "g"))
-		(match_operand:HI 2 "general_operand" "g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(and:HI (not:HI (match_operand:HI 1 "vax_general_operand" "g"))
+		(match_operand:HI 2 "vax_general_operand" "g")))]
   ""
   "
 {
@@ -1074,9 +1077,9 @@
 }")
 
 (define_expand "andqi3"
-  [(set (match_operand:QI 0 "general_operand" "=g")
-	(and:QI (not:QI (match_operand:QI 1 "general_operand" "g"))
-		(match_operand:QI 2 "general_operand" "g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g")
+	(and:QI (not:QI (match_operand:QI 1 "vax_general_operand" "g"))
+		(match_operand:QI 2 "vax_general_operand" "g")))]
   ""
   "
 {
@@ -1096,27 +1099,27 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g,g")
-	(and:SI (not:SI (match_operand:SI 1 "general_operand" "g,g"))
-		(match_operand:SI 2 "general_operand" "0,g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g,g")
+	(and:SI (not:SI (match_operand:SI 1 "vax_general_operand" "g,g"))
+		(match_operand:SI 2 "vax_general_operand" "0,g")))]
   ""
   "@
    bicl2 %1,%0
    bicl3 %1,%2,%0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "general_operand" "=g,g")
-	(and:HI (not:HI (match_operand:HI 1 "general_operand" "g,g"))
-		(match_operand:HI 2 "general_operand" "0,g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g,g")
+	(and:HI (not:HI (match_operand:HI 1 "vax_general_operand" "g,g"))
+		(match_operand:HI 2 "vax_general_operand" "0,g")))]
   ""
   "@
    bicw2 %1,%0
    bicw3 %1,%2,%0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "general_operand" "=g,g")
-	(and:QI (not:QI (match_operand:QI 1 "general_operand" "g,g"))
-		(match_operand:QI 2 "general_operand" "0,g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g,g")
+	(and:QI (not:QI (match_operand:QI 1 "vax_general_operand" "g,g"))
+		(match_operand:QI 2 "vax_general_operand" "0,g")))]
   ""
   "@
    bicb2 %1,%0
@@ -1128,8 +1131,8 @@
 ;; opportunities in combine.c.
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g,g")
-	(and:SI (match_operand:SI 1 "general_operand" "0,g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g,g")
+	(and:SI (match_operand:SI 1 "vax_general_operand" "0,g")
 		(match_operand:SI 2 "const_int_operand" "n,n")))]
   ""
   "@
@@ -1137,8 +1140,8 @@
    bicl3 %N2,%1,%0")
 
 (define_insn ""
-  [(set (match_operand:HI 0 "general_operand" "=g,g")
-	(and:HI (match_operand:HI 1 "general_operand" "0,g")
+  [(set (match_operand:HI 0 "vax_general_operand" "=g,g")
+	(and:HI (match_operand:HI 1 "vax_general_operand" "0,g")
 		(match_operand:HI 2 "const_int_operand" "n,n")))]
   ""
   "@
@@ -1146,8 +1149,8 @@
    bicw3 %H2,%1,%0")
 
 (define_insn ""
-  [(set (match_operand:QI 0 "general_operand" "=g,g")
-	(and:QI (match_operand:QI 1 "general_operand" "0,g")
+  [(set (match_operand:QI 0 "vax_general_operand" "=g,g")
+	(and:QI (match_operand:QI 1 "vax_general_operand" "0,g")
 		(match_operand:QI 2 "const_int_operand" "n,n")))]
   ""
   "@
@@ -1157,9 +1160,9 @@
 ;;- Bit set instructions.
 
 (define_insn "iorsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g,g,g")
-	(ior:SI (match_operand:SI 1 "general_operand" "0,g,g")
-		(match_operand:SI 2 "general_operand" "g,0,g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g,g,g")
+	(ior:SI (match_operand:SI 1 "vax_general_operand" "0,g,g")
+		(match_operand:SI 2 "vax_general_operand" "g,0,g")))]
   ""
   "@
    bisl2 %2,%0
@@ -1167,9 +1170,9 @@
    bisl3 %2,%1,%0")
 
 (define_insn "iorhi3"
-  [(set (match_operand:HI 0 "general_operand" "=g,g,g")
-	(ior:HI (match_operand:HI 1 "general_operand" "0,g,g")
-		(match_operand:HI 2 "general_operand" "g,0,g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g,g,g")
+	(ior:HI (match_operand:HI 1 "vax_general_operand" "0,g,g")
+		(match_operand:HI 2 "vax_general_operand" "g,0,g")))]
   ""
   "@
    bisw2 %2,%0
@@ -1177,9 +1180,9 @@
    bisw3 %2,%1,%0")
 
 (define_insn "iorqi3"
-  [(set (match_operand:QI 0 "general_operand" "=g,g,g")
-	(ior:QI (match_operand:QI 1 "general_operand" "0,g,g")
-		(match_operand:QI 2 "general_operand" "g,0,g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g,g,g")
+	(ior:QI (match_operand:QI 1 "vax_general_operand" "0,g,g")
+		(match_operand:QI 2 "vax_general_operand" "g,0,g")))]
   ""
   "@
    bisb2 %2,%0
@@ -1189,9 +1192,9 @@
 ;;- xor instructions.
 
 (define_insn "xorsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g,g,g")
-	(xor:SI (match_operand:SI 1 "general_operand" "0,g,g")
-		(match_operand:SI 2 "general_operand" "g,0,g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g,g,g")
+	(xor:SI (match_operand:SI 1 "vax_general_operand" "0,g,g")
+		(match_operand:SI 2 "vax_general_operand" "g,0,g")))]
   ""
   "@
    xorl2 %2,%0
@@ -1199,9 +1202,9 @@
    xorl3 %2,%1,%0")
 
 (define_insn "xorhi3"
-  [(set (match_operand:HI 0 "general_operand" "=g,g,g")
-	(xor:HI (match_operand:HI 1 "general_operand" "0,g,g")
-		(match_operand:HI 2 "general_operand" "g,0,g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g,g,g")
+	(xor:HI (match_operand:HI 1 "vax_general_operand" "0,g,g")
+		(match_operand:HI 2 "vax_general_operand" "g,0,g")))]
   ""
   "@
    xorw2 %2,%0
@@ -1209,9 +1212,9 @@
    xorw3 %2,%1,%0")
 
 (define_insn "xorqi3"
-  [(set (match_operand:QI 0 "general_operand" "=g,g,g")
-	(xor:QI (match_operand:QI 1 "general_operand" "0,g,g")
-		(match_operand:QI 2 "general_operand" "g,0,g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g,g,g")
+	(xor:QI (match_operand:QI 1 "vax_general_operand" "0,g,g")
+		(match_operand:QI 2 "vax_general_operand" "g,0,g")))]
   ""
   "@
    xorb2 %2,%0
@@ -1219,50 +1222,50 @@
    xorb3 %2,%1,%0")
 
 (define_insn "negdf2"
-  [(set (match_operand:DF 0 "general_operand" "=g")
-	(neg:DF (match_operand:DF 1 "general_operand" "gF")))]
+  [(set (match_operand:DF 0 "vax_general_operand" "=g")
+	(neg:DF (match_operand:DF 1 "vax_general_operand" "gF")))]
   ""
   "mneg%# %1,%0")
 
 (define_insn "negsf2"
-  [(set (match_operand:SF 0 "general_operand" "=g")
-	(neg:SF (match_operand:SF 1 "general_operand" "gF")))]
+  [(set (match_operand:SF 0 "vax_general_operand" "=g")
+	(neg:SF (match_operand:SF 1 "vax_general_operand" "gF")))]
   ""
   "mnegf %1,%0")
 
 (define_insn "negsi2"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(neg:SI (match_operand:SI 1 "general_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(neg:SI (match_operand:SI 1 "vax_general_operand" "g")))]
   ""
   "mnegl %1,%0")
 
 (define_insn "neghi2"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(neg:HI (match_operand:HI 1 "general_operand" "g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(neg:HI (match_operand:HI 1 "vax_general_operand" "g")))]
   ""
   "mnegw %1,%0")
 
 (define_insn "negqi2"
-  [(set (match_operand:QI 0 "general_operand" "=g")
-	(neg:QI (match_operand:QI 1 "general_operand" "g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g")
+	(neg:QI (match_operand:QI 1 "vax_general_operand" "g")))]
   ""
   "mnegb %1,%0")
 
 (define_insn "one_cmplsi2"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(not:SI (match_operand:SI 1 "general_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(not:SI (match_operand:SI 1 "vax_general_operand" "g")))]
   ""
   "mcoml %1,%0")
 
 (define_insn "one_cmplhi2"
-  [(set (match_operand:HI 0 "general_operand" "=g")
-	(not:HI (match_operand:HI 1 "general_operand" "g")))]
+  [(set (match_operand:HI 0 "vax_general_operand" "=g")
+	(not:HI (match_operand:HI 1 "vax_general_operand" "g")))]
   ""
   "mcomw %1,%0")
 
 (define_insn "one_cmplqi2"
-  [(set (match_operand:QI 0 "general_operand" "=g")
-	(not:QI (match_operand:QI 1 "general_operand" "g")))]
+  [(set (match_operand:QI 0 "vax_general_operand" "=g")
+	(not:QI (match_operand:QI 1 "vax_general_operand" "g")))]
   ""
   "mcomb %1,%0")
 
@@ -1272,9 +1275,9 @@
 ;; prevents converting shifts to ZERO_EXTRACTs with negative positions,
 ;; which isn't valid.
 (define_expand "ashrsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(ashiftrt:SI (match_operand:SI 1 "general_operand" "g")
-		   (match_operand:QI 2 "general_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(ashiftrt:SI (match_operand:SI 1 "vax_general_operand" "g")
+		   (match_operand:QI 2 "vax_general_operand" "g")))]
   ""
   "
 {
@@ -1283,23 +1286,23 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(ashiftrt:SI (match_operand:SI 1 "general_operand" "g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(ashiftrt:SI (match_operand:SI 1 "vax_general_operand" "g")
 		     (match_operand:QI 2 "const_int_operand" "n")))]
   ""
   "ashl $%n2,%1,%0")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(ashiftrt:SI (match_operand:SI 1 "general_operand" "g")
-		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(ashiftrt:SI (match_operand:SI 1 "vax_general_operand" "g")
+		     (neg:QI (match_operand:QI 2 "vax_general_operand" "g"))))]
   ""
   "ashl %2,%1,%0")
 
 (define_insn "ashlsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(ashift:SI (match_operand:SI 1 "general_operand" "g")
-		   (match_operand:QI 2 "general_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(ashift:SI (match_operand:SI 1 "vax_general_operand" "g")
+		   (match_operand:QI 2 "vax_general_operand" "g")))]
   ""
   "*
 {
@@ -1321,9 +1324,9 @@
 
 ;; Arithmetic right shift on the vax works by negating the shift count.
 (define_expand "ashrdi3"
-  [(set (match_operand:DI 0 "general_operand" "=g")
-	(ashiftrt:DI (match_operand:DI 1 "general_operand" "g")
-		     (match_operand:QI 2 "general_operand" "g")))]
+  [(set (match_operand:DI 0 "vax_general_operand" "=g")
+	(ashiftrt:DI (match_operand:DI 1 "vax_general_operand" "g")
+		     (match_operand:QI 2 "vax_general_operand" "g")))]
   ""
   "
 {
@@ -1331,16 +1334,16 @@
 }")
 
 (define_insn "ashldi3"
-  [(set (match_operand:DI 0 "general_operand" "=g")
-	(ashift:DI (match_operand:DI 1 "general_operand" "g")
-		   (match_operand:QI 2 "general_operand" "g")))]
+  [(set (match_operand:DI 0 "vax_general_operand" "=g")
+	(ashift:DI (match_operand:DI 1 "vax_general_operand" "g")
+		   (match_operand:QI 2 "vax_general_operand" "g")))]
   ""
   "ashq %2,%1,%0")
 
 (define_insn ""
-  [(set (match_operand:DI 0 "general_operand" "=g")
-	(ashiftrt:DI (match_operand:DI 1 "general_operand" "g")
-		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
+  [(set (match_operand:DI 0 "vax_general_operand" "=g")
+	(ashiftrt:DI (match_operand:DI 1 "vax_general_operand" "g")
+		     (neg:QI (match_operand:QI 2 "vax_general_operand" "g"))))]
   ""
   "ashq %2,%1,%0")
 
@@ -1353,7 +1356,7 @@
   [(set (match_dup 3)
 	(minus:QI (const_int 32)
 		  (match_dup 4)))
-   (set (match_operand:SI 0 "general_operand" "=g")
+   (set (match_operand:SI 0 "vax_general_operand" "=g")
 	(zero_extract:SI (match_operand:SI 1 "register_operand" "r")
 			 (match_dup 3)
 			 (match_operand:SI 2 "register_operand" "g")))]
@@ -1366,9 +1369,9 @@
 
 ;; Rotate right on the vax works by negating the shift count.
 (define_expand "rotrsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(rotatert:SI (match_operand:SI 1 "general_operand" "g")
-		     (match_operand:QI 2 "general_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(rotatert:SI (match_operand:SI 1 "vax_general_operand" "g")
+		     (match_operand:QI 2 "vax_general_operand" "g")))]
   ""
   "
 {
@@ -1377,32 +1380,32 @@
 }")
 
 (define_insn "rotlsi3"
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(rotate:SI (match_operand:SI 1 "general_operand" "g")
-		   (match_operand:QI 2 "general_operand" "g")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(rotate:SI (match_operand:SI 1 "vax_general_operand" "g")
+		   (match_operand:QI 2 "vax_general_operand" "g")))]
   ""
   "rotl %2,%1,%0")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(rotatert:SI (match_operand:SI 1 "general_operand" "g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(rotatert:SI (match_operand:SI 1 "vax_general_operand" "g")
 		     (match_operand:QI 2 "const_int_operand" "n")))]
   ""
   "rotl %R2,%1,%0")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
-	(rotatert:SI (match_operand:SI 1 "general_operand" "g")
-		     (neg:QI (match_operand:QI 2 "general_operand" "g"))))]
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+	(rotatert:SI (match_operand:SI 1 "vax_general_operand" "g")
+		     (neg:QI (match_operand:QI 2 "vax_general_operand" "g"))))]
   ""
   "rotl %2,%1,%0")
 
 ;This insn is probably slower than a multiply and an add.
 ;(define_insn ""
-;  [(set (match_operand:SI 0 "general_operand" "=g")
-;	(mult:SI (plus:SI (match_operand:SI 1 "general_operand" "g")
-;			  (match_operand:SI 2 "general_operand" "g"))
-;		 (match_operand:SI 3 "general_operand" "g")))]
+;  [(set (match_operand:SI 0 "vax_general_operand" "=g")
+;	(mult:SI (plus:SI (match_operand:SI 1 "vax_general_operand" "g")
+;			  (match_operand:SI 2 "vax_general_operand" "g"))
+;		 (match_operand:SI 3 "vax_general_operand" "g")))]
 ;  ""
 ;  "index %1,$0x80000000,$0x7fffffff,%3,%2,%0")
 
@@ -1415,7 +1418,7 @@
   [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "+ro")
 			 (match_operand:QI 1 "const_int_operand" "n")
 			 (match_operand:SI 2 "const_int_operand" "n"))
-	(match_operand:SI 3 "general_operand" "g"))]
+	(match_operand:SI 3 "vax_general_operand" "g"))]
    "(INTVAL (operands[1]) == 8 || INTVAL (operands[1]) == 16)
    && INTVAL (operands[2]) % INTVAL (operands[1]) == 0
    && (GET_CODE (operands[0]) == REG
@@ -1438,7 +1441,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=&g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=&g")
 	(zero_extract:SI (match_operand:SI 1 "register_operand" "ro")
 			 (match_operand:QI 2 "const_int_operand" "n")
 			 (match_operand:SI 3 "const_int_operand" "n")))]
@@ -1463,7 +1466,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(sign_extract:SI (match_operand:SI 1 "register_operand" "ro")
 			 (match_operand:QI 2 "const_int_operand" "n")
 			 (match_operand:SI 3 "const_int_operand" "n")))]
@@ -1493,9 +1496,9 @@
   [(set (cc0)
 	(compare
 	 (sign_extract:SI (match_operand:SI 0 "register_operand" "r")
-			  (match_operand:QI 1 "general_operand" "g")
-			  (match_operand:SI 2 "general_operand" "g"))
-	 (match_operand:SI 3 "general_operand" "g")))]
+			  (match_operand:QI 1 "vax_general_operand" "g")
+			  (match_operand:SI 2 "vax_general_operand" "g"))
+	 (match_operand:SI 3 "vax_general_operand" "g")))]
   ""
   "cmpv %2,%1,%0,%3")
 
@@ -1503,9 +1506,9 @@
   [(set (cc0)
 	(compare
 	 (zero_extract:SI (match_operand:SI 0 "register_operand" "r")
-			  (match_operand:QI 1 "general_operand" "g")
-			  (match_operand:SI 2 "general_operand" "g"))
-	 (match_operand:SI 3 "general_operand" "g")))]
+			  (match_operand:QI 1 "vax_general_operand" "g")
+			  (match_operand:SI 2 "vax_general_operand" "g"))
+	 (match_operand:SI 3 "vax_general_operand" "g")))]
   ""
   "cmpzv %2,%1,%0,%3")
 
@@ -1515,10 +1518,10 @@
 ;; anyway, we can't allow immediate values for the primary source operand.
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(sign_extract:SI (match_operand:SI 1 "register_operand" "ro")
-			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "g")))]
+			 (match_operand:QI 2 "vax_general_operand" "g")
+			 (match_operand:SI 3 "vax_general_operand" "g")))]
   ""
   "*
 {
@@ -1532,10 +1535,10 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(zero_extract:SI (match_operand:SI 1 "register_operand" "ro")
-			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "g")))]
+			 (match_operand:QI 2 "vax_general_operand" "g")
+			 (match_operand:SI 3 "vax_general_operand" "g")))]
   ""
   "*
 {
@@ -1561,27 +1564,27 @@
   [(set (cc0)
 	(compare
 	 (sign_extract:SI (match_operand:QI 0 "memory_operand" "m")
-			  (match_operand:QI 1 "general_operand" "g")
-			  (match_operand:SI 2 "general_operand" "g"))
-	 (match_operand:SI 3 "general_operand" "g")))]
+			  (match_operand:QI 1 "vax_general_operand" "g")
+			  (match_operand:SI 2 "vax_general_operand" "g"))
+	 (match_operand:SI 3 "vax_general_operand" "g")))]
   ""
   "cmpv %2,%1,%0,%3")
 
 (define_insn ""
   [(set (cc0)
 	(compare
-	 (zero_extract:SI (match_operand:QI 0 "nonimmediate_operand" "rm")
-			  (match_operand:QI 1 "general_operand" "g")
-			  (match_operand:SI 2 "general_operand" "g"))
-	 (match_operand:SI 3 "general_operand" "g")))]
+	 (zero_extract:SI (match_operand:QI 0 "vax_nonimmediate_operand" "rm")
+			  (match_operand:QI 1 "vax_general_operand" "g")
+			  (match_operand:SI 2 "vax_general_operand" "g"))
+	 (match_operand:SI 3 "vax_general_operand" "g")))]
   ""
   "cmpzv %2,%1,%0,%3")
 
 (define_insn "extv"
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(sign_extract:SI (match_operand:QI 1 "memory_operand" "m")
-			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "g")))]
+			 (match_operand:QI 2 "vax_general_operand" "g")
+			 (match_operand:SI 3 "vax_general_operand" "g")))]
   ""
   "*
 {
@@ -1599,18 +1602,18 @@
 }")
 
 (define_expand "extzv"
-  [(set (match_operand:SI 0 "general_operand" "")
-	(zero_extract:SI (match_operand:SI 1 "general_operand" "")
-			 (match_operand:QI 2 "general_operand" "")
-			 (match_operand:SI 3 "general_operand" "")))]
+  [(set (match_operand:SI 0 "vax_general_operand" "")
+	(zero_extract:SI (match_operand:SI 1 "vax_general_operand" "")
+			 (match_operand:QI 2 "vax_general_operand" "")
+			 (match_operand:SI 3 "vax_general_operand" "")))]
   ""
   "")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(zero_extract:SI (match_operand:QI 1 "memory_operand" "m")
-			 (match_operand:QI 2 "general_operand" "g")
-			 (match_operand:SI 3 "general_operand" "g")))]
+			 (match_operand:QI 2 "vax_general_operand" "g")
+			 (match_operand:SI 3 "vax_general_operand" "g")))]
   ""
   "*
 {
@@ -1629,26 +1632,26 @@
 }")
 
 (define_expand "insv"
-  [(set (zero_extract:SI (match_operand:SI 0 "general_operand" "")
-			 (match_operand:QI 1 "general_operand" "")
-			 (match_operand:SI 2 "general_operand" ""))
-	(match_operand:SI 3 "general_operand" ""))]
+  [(set (zero_extract:SI (match_operand:SI 0 "vax_general_operand" "")
+			 (match_operand:QI 1 "vax_general_operand" "")
+			 (match_operand:SI 2 "vax_general_operand" ""))
+	(match_operand:SI 3 "vax_general_operand" ""))]
   ""
   "")
 
 (define_insn ""
   [(set (zero_extract:SI (match_operand:QI 0 "memory_operand" "+g")
-			 (match_operand:QI 1 "general_operand" "g")
-			 (match_operand:SI 2 "general_operand" "g"))
-	(match_operand:SI 3 "general_operand" "g"))]
+			 (match_operand:QI 1 "vax_general_operand" "g")
+			 (match_operand:SI 2 "vax_general_operand" "g"))
+	(match_operand:SI 3 "vax_general_operand" "g"))]
   ""
   "insv %3,%2,%1,%0")
 
 (define_insn ""
   [(set (zero_extract:SI (match_operand:SI 0 "register_operand" "+r")
-			 (match_operand:QI 1 "general_operand" "g")
-			 (match_operand:SI 2 "general_operand" "g"))
-	(match_operand:SI 3 "general_operand" "g"))]
+			 (match_operand:QI 1 "vax_general_operand" "g")
+			 (match_operand:SI 2 "vax_general_operand" "g"))
+	(match_operand:SI 3 "vax_general_operand" "g"))]
   ""
   "insv %3,%2,%1,%0")
 
@@ -1769,7 +1772,7 @@
 	(if_then_else
 	 (ne (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q,g")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
+			      (match_operand:SI 1 "vax_general_operand" "I,g"))
 	     (const_int 0))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))]
@@ -1783,7 +1786,7 @@
 	(if_then_else
 	 (eq (zero_extract:SI (match_operand:QI 0 "memory_operand" "Q,g")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
+			      (match_operand:SI 1 "vax_general_operand" "I,g"))
 	     (const_int 0))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))]
@@ -1797,7 +1800,7 @@
 	(if_then_else
 	 (ne (zero_extract:SI (match_operand:SI 0 "register_operand" "r,r")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
+			      (match_operand:SI 1 "vax_general_operand" "I,g"))
 	     (const_int 0))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))]
@@ -1811,7 +1814,7 @@
 	(if_then_else
 	 (eq (zero_extract:SI (match_operand:SI 0 "register_operand" "r,r")
 			      (const_int 1)
-			      (match_operand:SI 1 "general_operand" "I,g"))
+			      (match_operand:SI 1 "vax_general_operand" "I,g"))
 	     (const_int 0))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))]
@@ -1829,7 +1832,7 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (gt (plus:SI (match_operand:SI 0 "general_operand" "+g")
+	 (gt (plus:SI (match_operand:SI 0 "vax_general_operand" "+g")
 		      (const_int -1))
 	     (const_int 0))
 	 (label_ref (match_operand 1 "" ""))
@@ -1843,7 +1846,7 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (ge (plus:SI (match_operand:SI 0 "general_operand" "+g")
+	 (ge (plus:SI (match_operand:SI 0 "vax_general_operand" "+g")
 		      (const_int -1))
 	     (const_int 0))
 	 (label_ref (match_operand 1 "" ""))
@@ -1858,9 +1861,9 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (lt (plus:SI (match_operand:SI 0 "general_operand" "+g")
+	 (lt (plus:SI (match_operand:SI 0 "vax_general_operand" "+g")
 		      (const_int 1))
-	     (match_operand:SI 1 "general_operand" "g"))
+	     (match_operand:SI 1 "vax_general_operand" "g"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
    (set (match_dup 0)
@@ -1872,8 +1875,8 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (lt (match_operand:SI 0 "general_operand" "+g")
-	     (match_operand:SI 1 "general_operand" "g"))
+	 (lt (match_operand:SI 0 "vax_general_operand" "+g")
+	     (match_operand:SI 1 "vax_general_operand" "g"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
    (set (match_dup 0)
@@ -1885,9 +1888,9 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (le (plus:SI (match_operand:SI 0 "general_operand" "+g")
+	 (le (plus:SI (match_operand:SI 0 "vax_general_operand" "+g")
 		      (const_int 1))
-	     (match_operand:SI 1 "general_operand" "g"))
+	     (match_operand:SI 1 "vax_general_operand" "g"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
    (set (match_dup 0)
@@ -1899,8 +1902,8 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (le (match_operand:SI 0 "general_operand" "+g")
-	     (match_operand:SI 1 "general_operand" "g"))
+	 (le (match_operand:SI 0 "vax_general_operand" "+g")
+	     (match_operand:SI 1 "vax_general_operand" "g"))
 	 (label_ref (match_operand 2 "" ""))
 	 (pc)))
    (set (match_dup 0)
@@ -1915,7 +1918,7 @@
 (define_insn ""
   [(set (pc)
 	(if_then_else
-	 (ne (match_operand:SI 0 "general_operand" "g")
+	 (ne (match_operand:SI 0 "vax_general_operand" "g")
 	     (const_int 0))
 	 (label_ref (match_operand 1 "" ""))
 	 (pc)))
@@ -2039,7 +2042,7 @@
 ;; If you are tempted to try `g', please don't--it's not worth
 ;; the risk we will reopen the same bug.
 (define_insn "indirect_jump"
-  [(set (pc) (match_operand:SI 0 "general_operand" "r"))]
+  [(set (pc) (match_operand:SI 0 "vax_general_operand" "r"))]
   ""
   "jmp (%0)")
 
@@ -2047,9 +2050,9 @@
 ;; and pass the first 4 along to the casesi1 pattern that really does the work.
 (define_expand "casesi"
   [(set (pc)
-	(if_then_else (leu (minus:SI (match_operand:SI 0 "general_operand" "g")
-				     (match_operand:SI 1 "general_operand" "g"))
-			   (match_operand:SI 2 "general_operand" "g"))
+	(if_then_else (leu (minus:SI (match_operand:SI 0 "vax_general_operand" "g")
+				     (match_operand:SI 1 "vax_general_operand" "g"))
+			   (match_operand:SI 2 "vax_general_operand" "g"))
 		      (plus:SI (sign_extend:SI
 				(mem:HI
 				 (plus:SI (pc)
@@ -2067,9 +2070,9 @@
 
 (define_insn "casesi1"
   [(set (pc)
-	(if_then_else (leu (minus:SI (match_operand:SI 0 "general_operand" "g")
-				     (match_operand:SI 1 "general_operand" "g"))
-			   (match_operand:SI 2 "general_operand" "g"))
+	(if_then_else (leu (minus:SI (match_operand:SI 0 "vax_general_operand" "g")
+				     (match_operand:SI 1 "vax_general_operand" "g"))
+			   (match_operand:SI 2 "vax_general_operand" "g"))
 		      (plus:SI (sign_extend:SI
 				(mem:HI
 				 (plus:SI (pc)
@@ -2085,8 +2088,8 @@
 ;; if operand 1 is zero.  Perhaps it is no longer necessary.
 (define_insn ""
   [(set (pc)
-	(if_then_else (leu (match_operand:SI 0 "general_operand" "g")
-			   (match_operand:SI 1 "general_operand" "g"))
+	(if_then_else (leu (match_operand:SI 0 "vax_general_operand" "g")
+			   (match_operand:SI 1 "vax_general_operand" "g"))
 		      (plus:SI (sign_extend:SI
 				(mem:HI
 				 (plus:SI (pc)
@@ -2107,19 +2110,28 @@
 ;; because < matches any autodecrement, not just a push.
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(match_operand:QI 1 "address_operand" "p"))]
   ""
   "*
 {
-  if (push_operand (operands[0], SImode))
+  if (push_operand (operands[0], SImode)) {
+    /* if (GET_CODE (operands[1]) == REG
+	|| GET_CODE (operands[1]) == MEM
+	|| GET_CODE (operands[1]) == CONST_INT)
+      return \"pushl %1\"; */
     return \"pushab %a1\";
-  else
+  } else {
+    /* if (GET_CODE (operands[1]) == REG
+	|| GET_CODE (operands[1]) == MEM
+	|| GET_CODE (operands[1]) == CONST_INT)
+      return \"movl %1,%0\"; */
     return \"movab %a1,%0\";
+  }
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(match_operand:HI 1 "address_operand" "p"))]
   ""
   "*
@@ -2131,7 +2143,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(match_operand:SI 1 "address_operand" "p"))]
   ""
   "*
@@ -2143,7 +2155,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(match_operand:DI 1 "address_operand" "p"))]
   ""
   "*
@@ -2155,7 +2167,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(match_operand:SF 1 "address_operand" "p"))]
   ""
   "*
@@ -2167,7 +2179,7 @@
 }")
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=g")
 	(match_operand:DF 1 "address_operand" "p"))]
   ""
   "*
@@ -2192,8 +2204,8 @@
 ;; above sequences to before attempting to recognize the new insn.
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=ro")
-	(and:SI (ashiftrt:SI (match_operand:SI 1 "general_operand" "g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=ro")
+	(and:SI (ashiftrt:SI (match_operand:SI 1 "vax_general_operand" "g")
 			     (match_operand:QI 2 "const_int_operand" "n"))
 		(match_operand:SI 3 "const_int_operand" "n")))]
   "(INTVAL (operands[3]) & ~((1 << (32 - INTVAL (operands[2]))) - 1)) == 0"
@@ -2214,8 +2226,8 @@
 ;; optimized away.
 
 (define_insn ""
-  [(set (match_operand:SI 0 "general_operand" "=ro")
-	(and:SI (ashift:SI (match_operand:SI 1 "general_operand" "g")
+  [(set (match_operand:SI 0 "vax_general_operand" "=ro")
+	(and:SI (ashift:SI (match_operand:SI 1 "vax_general_operand" "g")
 			   (match_operand:QI 2 "const_int_operand" "n"))
 		(match_operand:SI 3 "const_int_operand" "n")))]
   ""
