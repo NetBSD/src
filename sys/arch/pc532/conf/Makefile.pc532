@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.73 2003/10/27 09:27:25 simonb Exp $
+#	$NetBSD: Makefile.pc532,v 1.74 2003/11/04 02:18:49 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -59,7 +59,7 @@ locore.o: ${PC532}/pc532/locore.s assym.h
 ##
 ## (5) link settings
 ##
-CHECK!= {LD} --version 2>&1; :
+CHECK!= ${LD} --version 2>&1; :
 .if ${CHECK:Minvalid} == ""
 TEXTADDR?=      E0002020
 .else
