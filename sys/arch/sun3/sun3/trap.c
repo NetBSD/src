@@ -38,7 +38,7 @@
  *
  *	from: Utah Hdr: trap.c 1.37 92/12/20
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.23 1994/06/29 05:35:59 gwr Exp $
+ *	$Id: trap.c,v 1.24 1994/06/30 12:42:05 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -201,10 +201,9 @@ trap(type, code, v, frame)
 	ucode = 0;
 	sig = 0;
 
-#ifdef	DIAGNOSTIC
+	/* I have verified that this DOES happen! -gwr */
 	if (p == NULL)
-		panic("trap: curproc == NULL");
-#endif
+		p = &proc0;
 
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
