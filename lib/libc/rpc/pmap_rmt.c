@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.19 1999/01/31 20:45:31 christos Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.20 1999/03/25 01:16:11 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.19 1999/01/31 20:45:31 christos Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.20 1999/03/25 01:16:11 lukem Exp $");
 #endif
 #endif
 
@@ -123,8 +123,6 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout,
 	} else {
 		stat = RPC_FAILED;
 	}
-	if (sock != -1)
-		(void)close(sock);
 	addr->sin_port = 0;
 	return (stat);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.21 1999/01/20 11:37:39 lukem Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.22 1999/03/25 01:16:11 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.21 1999/01/20 11:37:39 lukem Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.22 1999/03/25 01:16:11 lukem Exp $");
 #endif
 #endif
 
@@ -295,7 +295,8 @@ svctcp_destroy(xprt)
 	struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
 
 	xprt_unregister(xprt);
-	(void)close(xprt->xp_sock);
+	if (xprt->xp_sock != -1)
+		(void)close(xprt->xp_sock);
 	if (xprt->xp_port != 0) {
 		/* a rendezvouser socket */
 		xprt->xp_port = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.16 1999/01/20 11:37:40 lukem Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.17 1999/03/25 01:16:11 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_udp.c,v 1.16 1999/01/20 11:37:40 lukem Exp $");
+__RCSID("$NetBSD: svc_udp.c,v 1.17 1999/03/25 01:16:11 lukem Exp $");
 #endif
 #endif
 
@@ -287,7 +287,8 @@ svcudp_destroy(xprt)
 	struct svcudp_data *su = su_data(xprt);
 
 	xprt_unregister(xprt);
-	(void)close(xprt->xp_sock);
+	if (xprt->xp_sock != -1)
+		(void)close(xprt->xp_sock);
 	XDR_DESTROY(&(su->su_xdrs));
 	mem_free(rpc_buffer(xprt), su->su_iosz);
 	mem_free(su, sizeof(struct svcudp_data));
