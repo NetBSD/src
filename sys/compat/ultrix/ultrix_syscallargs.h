@@ -1,4 +1,4 @@
-/* $NetBSD: ultrix_syscallargs.h,v 1.37 2001/01/27 08:02:10 thorpej Exp $ */
+/* $NetBSD: ultrix_syscallargs.h,v 1.38 2001/05/30 11:37:33 mrg Exp $ */
 
 /*
  * System call argument lists.
@@ -8,7 +8,7 @@
  */
 
 #ifndef _ULTRIX_SYS__SYSCALLARGS_H_
-#define _ULTRIX_SYS__SYSCALLARGS_H_
+#define	_ULTRIX_SYS__SYSCALLARGS_H_
 
 #ifdef	syscallarg
 #undef	syscallarg
