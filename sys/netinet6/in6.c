@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.46 2001/07/18 13:12:27 itojun Exp $	*/
+/*	$NetBSD: in6.c,v 1.47 2001/07/25 06:59:51 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -267,6 +267,8 @@ in6_ifindex2scopeid(idx)
 	if (idx < 0 || if_index < idx)
 		return -1;
 	ifp = ifindex2ifnet[idx];
+	if (!ifp)
+		return -1;
 
 	for (ifa = ifp->if_addrlist.tqh_first; ifa; ifa = ifa->ifa_list.tqe_next)
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.50 2001/07/20 20:26:35 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.51 2001/07/25 06:59:52 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -183,6 +183,10 @@ nd6_ifattach(ifp)
 	if (ND.basereachable)
 		return;
 
+#ifdef DIAGNOSTIC
+	if (!ifindex2ifnet[ifp->if_index])
+		panic("nd6_ifattach: ifindex2ifnet is NULL");
+#endif
 	ND.linkmtu = ifindex2ifnet[ifp->if_index]->if_mtu;
 	ND.chlim = IPV6_DEFHLIM;
 	ND.basereachable = REACHABLE_TIME;
