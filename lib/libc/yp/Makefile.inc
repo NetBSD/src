@@ -3,5 +3,5 @@
 # compat-43 sources
 .PATH: ${.CURDIR}/${MACHINE}/yp ${.CURDIR}/yp
 
-SRCS+=	xdryp.c xdryppasswd.c yplib.c
+SRCS+=	xdryp.c yplib.c
 
