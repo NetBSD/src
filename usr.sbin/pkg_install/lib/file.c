@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.59 2003/04/10 05:08:55 grant Exp $	*/
+/*	$NetBSD: file.c,v 1.60 2003/04/10 16:25:25 grant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.59 2003/04/10 05:08:55 grant Exp $");
+__RCSID("$NetBSD: file.c,v 1.60 2003/04/10 16:25:25 grant Exp $");
 #endif
 #endif
 
@@ -526,18 +526,23 @@ int
 unpack(const char *pkg, const char *flist)
 {
 	char    args[10] = "-";
-	const char *suffix;
+	const char *decompress_cmd;
+	const char *suf;
 
 	if (!IS_STDIN(pkg)) {
-		suffix = suffix_of(pkg);
-		if (!strcmp(suffix, "tbz"))
-			strcat(args, "j");
-		else if (!strcmp(suffix, "tgz"))
-			strcat(args, "z");
+		suf = suffix_of(pkg);
+		if (!strcmp(suf, "tbz") || !strcmp(suf, "bz2"))
+			decompress_cmd = BZIP2_CMD " -c -d";
+		else if (!strcmp(suf, "tgz") || !strcmp(suf, "gz"))
+			decompress_cmd = GZIP_CMD " -c -d";
+		else if (!strcmp(suf, "tar"))
+			decompress_cmd = "cat";
+		else
+			errx(EXIT_FAILURE, "don't know how to decompress %s, sorry", pkg);
 	} else
-		strcat(args, "z");
-	strcat(args, "xpf");
-	if (vsystem("%s %s %s %s", TAR_CMD, args, pkg, flist ? flist : "")) {
+		decompress_cmd = GZIP_CMD " -c -d";
+	strcat(args, "xpf -");
+	if (vsystem("%s %s | %s %s %s", decompress_cmd, pkg, TAR_CMD, args, flist ? flist : "")) {
 		warnx("%s extract of %s failed!", TAR_CMD, pkg);
 		return 1;
 	}
