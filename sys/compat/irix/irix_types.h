@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_types.h,v 1.8 2001/12/25 19:04:19 manu Exp $ */
+/*	$NetBSD: irix_types.h,v 1.9 2001/12/26 11:04:20 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,12 +50,14 @@ typedef struct {
 } irix_sigset_t;
 
 /* From IRIX's <sys/types.h> */
+typedef __int32_t irix_app32_int_t;
 typedef __uint32_t irix_app32_ulong_t;
 typedef __int32_t irix_app32_long_t;
 typedef __uint64_t irix_app32_ulong_long_t;
 typedef __int64_t irix_app32_long_long_t;
 typedef __uint32_t irix_ino_t;
 typedef __int32_t irix_off_t;
+typedef __uint32_t irix_app32_ptr_t;
 
 #if 1 /* _MIPS_SZLONG == 32 */
 typedef unsigned long irix_mode_t;
@@ -84,6 +86,9 @@ typedef __int64_t irix_blkcnt64_t;
 
 /* From IRIX's <sys/ktypes.h> */
 typedef irix_app32_long_long_t irix_irix5_n32_off_t;
+typedef irix_app32_long_t irix_irix5_uid_t;
+typedef irix_app32_long_t irix_irix5_clock_t;
+typedef irix_app32_long_t irix_irix5_pid_t;
 
 /* From IRIX's <sys/ktime.h> */
 typedef irix_app32_long_t irix_irix5_time_t;
