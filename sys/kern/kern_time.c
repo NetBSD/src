@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.35 1998/07/31 22:50:51 perry Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.36 1998/08/18 06:27:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -429,11 +429,12 @@ sys_getitimer(p, v, retval)
 		 * current time and time for the timer to go off.
 		 */
 		aitv = p->p_realtimer;
-		if (timerisset(&aitv.it_value))
+		if (timerisset(&aitv.it_value)) {
 			if (timercmp(&aitv.it_value, &time, <))
 				timerclear(&aitv.it_value);
 			else
 				timersub(&aitv.it_value, &time, &aitv.it_value);
+		}
 	} else
 		aitv = p->p_stats->p_timer[which];
 	splx(s);
