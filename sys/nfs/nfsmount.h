@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsmount.h	7.7 (Berkeley) 4/16/91
+ *	from: @(#)nfsmount.h	7.7 (Berkeley) 4/16/91
+ *	$Id: nfsmount.h,v 1.2 1993/05/20 03:19:09 cgd Exp $
  */
 
 #ifndef _NFS_NFSMOUNT_H_

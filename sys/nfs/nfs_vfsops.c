@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
+ *	from: @(#)nfs_vfsops.c	7.31 (Berkeley) 5/6/91
+ *	$Id: nfs_vfsops.c,v 1.2 1993/05/20 03:18:53 cgd Exp $
  */
 
 #include "param.h"

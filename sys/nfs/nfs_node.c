@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_node.c	7.34 (Berkeley) 5/15/91
+ *	from: @(#)nfs_node.c	7.34 (Berkeley) 5/15/91
+ *	$Id: nfs_node.c,v 1.2 1993/05/20 03:18:42 cgd Exp $
  */
 
 #include "param.h"

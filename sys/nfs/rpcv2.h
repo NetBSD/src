@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rpcv2.h	7.4 (Berkeley) 6/28/90
+ *	from: @(#)rpcv2.h	7.4 (Berkeley) 6/28/90
+ *	$Id: rpcv2.h,v 1.3 1993/05/20 03:19:16 cgd Exp $
  */
 
 #ifndef _NFS_RPCV2_H_

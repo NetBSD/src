@@ -33,15 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfsv2.h	7.8 (Berkeley) 6/28/90
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00053
- * --------------------         -----   ----------------------
- *
- * 08 Sep 92    Rick "gopher I"         Fix "reserved port" bug, fixed for
- *                                              AIX3.2 NFS clients
+ *	from: @(#)nfsv2.h	7.8 (Berkeley) 6/28/90
+ *	$Id: nfsv2.h,v 1.4 1993/05/20 03:19:14 cgd Exp $
  */
 
 #ifndef _NFS_NFSV2_H_
