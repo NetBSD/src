@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.27 2003/08/07 16:31:13 agc Exp $	*/
+/*	$NetBSD: dl.c,v 1.28 2004/03/22 18:36:14 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 /*
+ * Copyright (c) 1997  Ben Harris.  All rights reserved.
  * Copyright (c) 1982, 1986, 1990, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -69,7 +70,6 @@
  */
 
 /*
- * Copyright (c) 1997  Ben Harris.  All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.27 2003/08/07 16:31:13 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.28 2004/03/22 18:36:14 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
