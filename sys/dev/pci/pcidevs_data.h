@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.203 2000/03/14 01:46:56 tsarna Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.204 2000/03/16 23:41:31 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.198 2000/03/14 01:45:11 tsarna Exp 
+ *	NetBSD: pcidevs,v 1.199 2000/03/16 23:36:44 thorpej Exp 
  */
 
 /*
@@ -1904,6 +1904,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82434LX/NX PCI, Cache and Memory Controller (PCMC)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
+	    0,
+	    "Intel",
+	    "InBusiness Fast Ethernet LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82092AA,
