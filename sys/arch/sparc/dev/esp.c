@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.71 1998/01/12 20:23:47 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.72 1998/03/21 20:14:13 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -123,8 +123,9 @@
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
-#include <machine/cpu.h>
+#include <machine/bus.h>
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/ic/ncr53c9xvar.h>
@@ -134,12 +135,23 @@
 #include <sparc/dev/dmavar.h>
 #include <sparc/dev/espvar.h>
 
-void	espattach	__P((struct device *, struct device *, void *));
-int	espmatch	__P((struct device *, struct cfdata *, void *));
+void	espattach_sbus	__P((struct device *, struct device *, void *));
+void	espattach_obio	__P((struct device *, struct device *, void *));
+void	espattach_dma	__P((struct device *, struct device *, void *));
+int	espmatch_sbus	__P((struct device *, struct cfdata *, void *));
+int	espmatch_obio	__P((struct device *, struct cfdata *, void *));
+
+void	espattach	__P((struct esp_softc *));
 
 /* Linkup to the rest of the kernel */
-struct cfattach esp_ca = {
-	sizeof(struct esp_softc), espmatch, espattach
+struct cfattach esp_sbus_ca = {
+	sizeof(struct esp_softc), espmatch_sbus, espattach_sbus
+};
+struct cfattach esp_dma_ca = {
+	sizeof(struct esp_softc), espmatch_sbus, espattach_dma
+};
+struct cfattach esp_obio_ca = {
+	sizeof(struct esp_softc), espmatch_obio, espattach_obio
 };
 
 struct scsipi_adapter esp_switch = {
@@ -184,106 +196,231 @@ struct ncr53c9x_glue esp_glue = {
 };
 
 int
-espmatch(parent, cf, aux)
+espmatch_sbus(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	register struct confargs *ca = aux;
-	register struct romaux *ra = &ca->ca_ra;
+	struct sbus_attach_args *sa = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
+	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+}
+
+int
+espmatch_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
+
+	if (uoba->uoba_isobio4 == 0)
 		return (0);
-	if (ca->ca_bustype == BUS_SBUS)
-		return (1);
-	ra->ra_len = NBPG;
-	return (probeget(ra->ra_vaddr, 1) != -1);
+
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
+			       0, 1, NULL, NULL));
+}
+
+void
+espattach_sbus(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct esp_softc *esc = (void *)self;
+	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
+	struct sbus_attach_args *sa = aux;
+
+	esc->sc_bustag = sa->sa_bustag;
+	esc->sc_dmatag = sa->sa_dmatag;
+
+	sc->sc_id = getpropint(sa->sa_node, "initiator-id", 7);
+	sc->sc_freq = getpropint(sa->sa_node, "clock-frequency", -1);
+	if (sc->sc_freq < 0)
+		sc->sc_freq = ((struct sbus_softc *)
+		    sc->sc_dev.dv_parent)->sc_clockfreq;
+
+	/*
+	 * Find the DMA by poking around the dma device structures
+	 *
+	 * What happens here is that if the dma driver has not been
+	 * configured, then this returns a NULL pointer. Then when the
+	 * dma actually gets configured, it does the opposing test, and
+	 * if the sc->sc_esp field in it's softc is NULL, then tries to
+	 * find the matching esp driver.
+	 */
+	esc->sc_dma = (struct dma_softc *)getdevunit("dma", sc->sc_dev.dv_unit);
+
+	/*
+	 * and a back pointer to us, for DMA
+	 */
+	if (esc->sc_dma)
+		esc->sc_dma->sc_esp = esc;
+	else {
+		printf("\n");
+		panic("espattach: no dma found");
+	}
+
+	/*
+	 * Map my registers in, if they aren't already in virtual
+	 * address space.
+	 */
+	if (sa->sa_promvaddr)
+		esc->sc_reg = (volatile u_char *) sa->sa_promvaddr;
+	else {
+		bus_space_handle_t bh;
+		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+				 sa->sa_offset,
+				 sa->sa_size,
+				 BUS_SPACE_MAP_LINEAR,
+				 0, &bh) != 0) {
+			printf("%s @ sbus: cannot map registers\n",
+				self->dv_xname);
+			return;
+		}
+		esc->sc_reg = (volatile u_char *)bh;
+	}
+
+	esc->sc_pri = sa->sa_pri;
+
+	/* add me to the sbus structures */
+	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
+	sbus_establish(&esc->sc_sd, &sc->sc_dev);
+
+	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, "esp") == 0 &&
+	    SAME_ESP(sc, sa->sa_bp, sa))
+		bootpath_store(1, sa->sa_bp + 1);
+
+	espattach(esc);
+}
+
+void
+espattach_dma(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct esp_softc *esc = (void *)self;
+	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
+	struct sbus_attach_args *sa = aux;
+
+	esc->sc_bustag = sa->sa_bustag;
+	esc->sc_dmatag = sa->sa_dmatag;
+
+	sc->sc_id = getpropint(sa->sa_node, "initiator-id", 7);
+	sc->sc_freq = getpropint(sa->sa_node, "clock-frequency", -1);
+
+	esc->sc_dma = (struct dma_softc *)parent;
+	esc->sc_dma->sc_esp = esc;
+
+	/*
+	 * Map my registers in, if they aren't already in virtual
+	 * address space.
+	 */
+	if (sa->sa_promvaddr)
+		esc->sc_reg = (volatile u_char *) sa->sa_promvaddr;
+	else {
+		bus_space_handle_t bh;
+		if (bus_space_map2(sa->sa_bustag,
+				   sa->sa_slot,
+				   sa->sa_offset,
+				   sa->sa_size,
+				   BUS_SPACE_MAP_LINEAR,
+				   0, &bh) != 0) {
+			printf("%s @ dma: cannot map registers\n",
+				self->dv_xname);
+			return;
+		}
+		esc->sc_reg = (volatile u_char *)bh;
+	}
+
+	/* Establish interrupt handler */
+	esc->sc_pri = sa->sa_pri;
+
+	/* Assume SBus is grandparent */
+	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
+	sbus_establish(&esc->sc_sd, parent);
+
+	if (sa->sa_bp != NULL && strcmp(sa->sa_bp->name, "esp") == 0 &&
+	    SAME_ESP(sc, sa->sa_bp, sa))
+		bootpath_store(1, sa->sa_bp + 1);
+
+	espattach(esc);
+}
+
+void
+espattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	struct esp_softc *esc = (void *)self;
+	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
+	bus_space_handle_t bh;
+
+	esc->sc_bustag = oba->oba_bustag;
+	esc->sc_dmatag = oba->oba_dmatag;
+
+	sc->sc_id = 7;
+	sc->sc_freq = 24000000;
+
+	/*
+	 * Find the DMA by poking around the dma device structures
+	 */
+	esc->sc_dma = (struct dma_softc *)getdevunit("dma", sc->sc_dev.dv_unit);
+
+	/*
+	 * and a back pointer to us, for DMA
+	 */
+	if (esc->sc_dma)
+		esc->sc_dma->sc_esp = esc;
+	else {
+		printf("\n");
+		panic("espattach: no dma found");
+	}
+
+	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+			 0,	/* offset */
+			 16,	/* size */
+			 0,	/* flags */
+			 0, &bh) != 0) {
+		printf("%s @ obio: cannot map registers\n", self->dv_xname);
+		return;
+	}
+
+	esc->sc_reg = (volatile u_char *)bh;
+	esc->sc_pri = oba->oba_pri;
+
+	if (oba->oba_bp != NULL && strcmp(oba->oba_bp->name, "esp") == 0 &&
+	    oba->oba_bp->val[0] == -1 &&
+	    oba->oba_bp->val[1] == sc->sc_dev.dv_unit)
+		bootpath_store(1, oba->oba_bp + 1);
+
+	espattach(esc);
 }
 
 /*
  * Attach this instance, and then all the sub-devices
  */
 void
-espattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+espattach(esc)
+	struct esp_softc *esc;
 {
-	register struct confargs *ca = aux;
-	struct esp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	struct bootpath *bp;
-	int dmachild = strncmp(parent->dv_xname, "dma", 3) == 0;
+	void *icookie;
 
 	/*
 	 * Set up glue for MI code early; we use some of it here.
 	 */
 	sc->sc_glue = &esp_glue;
 
-	/*
-	 * Make sure things are sane. I don't know if this is ever
-	 * necessary, but it seem to be in all of Torek's code.
-	 */
-	if (ca->ca_ra.ra_nintr != 1) {
-		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
-		return;
-	}
-
-	esc->sc_pri = ca->ca_ra.ra_intr[0].int_pri;
+#if 0
 	printf(" pri %d", esc->sc_pri);
-
-	/*
-	 * Map my registers in, if they aren't already in virtual
-	 * address space.
-	 */
-	if (ca->ca_ra.ra_vaddr)
-		esc->sc_reg = (volatile u_char *) ca->ca_ra.ra_vaddr;
-	else {
-		esc->sc_reg = (volatile u_char *)
-		    mapiodev(ca->ca_ra.ra_reg, 0, ca->ca_ra.ra_len);
-	}
-
-	/* Other settings */
-	esc->sc_node = ca->ca_ra.ra_node;
-	if (ca->ca_bustype == BUS_SBUS) {
-		sc->sc_id = getpropint(esc->sc_node, "initiator-id", 7);
-		sc->sc_freq = getpropint(esc->sc_node, "clock-frequency", -1);
-	} else {
-		sc->sc_id = 7;
-		sc->sc_freq = 24000000;
-	}
-	if (sc->sc_freq < 0)
-		sc->sc_freq = ((struct sbus_softc *)
-		    sc->sc_dev.dv_parent)->sc_clockfreq;
+#endif
 
 	/* gimme Mhz */
 	sc->sc_freq /= 1000000;
-
-	if (dmachild) {
-		esc->sc_dma = (struct dma_softc *)parent;
-		esc->sc_dma->sc_esp = esc;
-	} else {
-		/*
-		 * find the DMA by poking around the dma device structures
-		 *
-		 * What happens here is that if the dma driver has not been
-		 * configured, then this returns a NULL pointer. Then when the
-		 * dma actually gets configured, it does the opposing test, and
-		 * if the sc->sc_esp field in it's softc is NULL, then tries to
-		 * find the matching esp driver.
-		 */
-		esc->sc_dma = (struct dma_softc *)
-			getdevunit("dma", sc->sc_dev.dv_unit);
-
-		/*
-		 * and a back pointer to us, for DMA
-		 */
-		if (esc->sc_dma)
-			esc->sc_dma->sc_esp = esc;
-		else {
-			printf("\n");
-			panic("espattach: no dma found");
-		}
-	}
 
 	/*
 	 * XXX More of this should be in ncr53c9x_attach(), but
@@ -363,41 +500,13 @@ espattach(parent, self, aux)
 		break;
 	}
 
-	/* add me to the sbus structures */
-	esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
-#if defined(SUN4C) || defined(SUN4M)
-	if (ca->ca_bustype == BUS_SBUS) {
-		if (dmachild)
-			sbus_establish(&esc->sc_sd, sc->sc_dev.dv_parent);
-		else
-			sbus_establish(&esc->sc_sd, &sc->sc_dev);
-	}
-#endif /* SUN4C || SUN4M */
+	/* Establish interrupt channel */
+	icookie = bus_intr_establish(esc->sc_bustag,
+				     esc->sc_pri, 0,
+				     (int(*)__P((void*)))ncr53c9x_intr, sc);
 
-	/* and the interuppts */
-	esc->sc_ih.ih_fun = (void *) ncr53c9x_intr;
-	esc->sc_ih.ih_arg = sc;
-	intr_establish(esc->sc_pri, &esc->sc_ih);
+	/* register interrupt stats */
 	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
-
-	/*
-	 * If the boot path is "esp" at the moment and it's me, then
-	 * walk our pointer to the sub-device, ready for the config
-	 * below.
-	 */
-	bp = ca->ca_ra.ra_bp;
-	switch (ca->ca_bustype) {
-	case BUS_SBUS:
-		if (bp != NULL && strcmp(bp->name, "esp") == 0 &&
-		    SAME_ESP(sc, bp, ca))
-			bootpath_store(1, bp + 1);
-		break;
-	default:
-		if (bp != NULL && strcmp(bp->name, "esp") == 0 &&
-			bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit)
-			bootpath_store(1, bp + 1);
-		break;
-	}
 
 	/* Do the common parts of attachment. */
 	ncr53c9x_attach(sc, &esp_switch, &esp_dev);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.10 1998/02/10 14:11:32 mrg Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.11 1998/03/21 20:11:30 pk Exp $ */
 
 /*
  * Copyright (c) 1996 
@@ -144,17 +144,8 @@ cgfourteenmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
-
-	/*
-	 * Mask out invalid flags from the user.
-	 */
-	cf->cf_flags &= FB_USERMASK;
-
-	/* Check driver name */
-	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
-		return (0);
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
 	/*
 	 * The cgfourteen is a local-bus video adaptor, accessed directly
@@ -162,102 +153,105 @@ cgfourteenmatch(parent, cf, aux)
 	 * bus. Thus we look _only_ at the obio bus.
 	 * Additionally, these things exist only on the Sun4m.
 	 */
-	if (CPU_ISSUN4M && ca->ca_bustype == BUS_OBIO)
-		return(1);
-	return (0);
+
+	if (uoba->uoba_isobio4 != 0 || !CPU_ISSUN4M)
+		return (0);
+
+	/* Check driver name */
+	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
 }
 
 /*
  * Attach a display.  We need to notice if it is the console, too.
  */
 void
-cgfourteenattach(parent, self, args)
+cgfourteenattach(parent, self, aux)
 	struct device *parent, *self;
-	void *args;
+	void *aux;
 {
-	register struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
-	register struct confargs *ca = args;
-	register int node = 0, ramsize;
-	register u_int32_t *lut;
+	union obio_attach_args *uoba = aux;
+	struct sbus_attach_args *sa = &uoba->uoba_sbus;
+	struct cgfourteen_softc *sc = (struct cgfourteen_softc *)self;
+	struct fbdevice *fb = &sc->sc_fb;
+	bus_space_handle_t bh;
+	int nreg;
+	int node, ramsize;
+	u_int32_t *lut;
 	int i, isconsole;
+	void *p;
 
-	sc->sc_fb.fb_driver = &cgfourteenfbdriver;
-	sc->sc_fb.fb_device = &sc->sc_dev;
-	sc->sc_fb.fb_flags = sc->sc_dev.dv_cfdata->cf_flags;
+	node = sa->sa_node;
+
+	/* Remember cookies for cgfourteenmmap() */
+	sc->sc_bustag = sa->sa_bustag;
+
+	fb->fb_driver = &cgfourteenfbdriver;
+	fb->fb_device = &sc->sc_dev;
+	/* Mask out invalid flags from the user. */
+	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
 
 	/*
 	 * We're emulating a cg3/8, so represent ourselves as one
 	 */
 #ifdef CG14_CG8
-	sc->sc_fb.fb_type.fb_type = FBTYPE_MEMCOLOR;
+	fb->fb_type.fb_type = FBTYPE_MEMCOLOR;
+	fb->fb_type.fb_depth = 32;
 #else
-	sc->sc_fb.fb_type.fb_type = FBTYPE_SUN3COLOR;
+	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
+	fb->fb_type.fb_depth = 8;
 #endif
+	fb_setsize_obp(fb, sc->sc_fb.fb_type.fb_depth, 1152, 900, node);
 
-	node = ca->ca_ra.ra_node;
-#ifdef CG14_CG8
-	sc->sc_fb.fb_type.fb_depth = 32;
-#else
-	sc->sc_fb.fb_type.fb_depth = 8;
-#endif
-	fb_setsize(&sc->sc_fb, sc->sc_fb.fb_type.fb_depth,
-	    1152, 900, node, ca->ca_bustype);
+	ramsize = roundup(fb->fb_type.fb_height * fb->fb_linebytes, NBPG);
+	fb->fb_type.fb_cmsize = CG14_CLUT_SIZE;
+	fb->fb_type.fb_size = ramsize;
 
-	ramsize = roundup(sc->sc_fb.fb_type.fb_height * sc->sc_fb.fb_linebytes,
-		NBPG);
-
-	sc->sc_fb.fb_type.fb_cmsize = CG14_CLUT_SIZE;
-	sc->sc_fb.fb_type.fb_size = ramsize;
+	p = sc->sc_physadr;
+	if (getpropA(node, "reg", sizeof(struct rom_reg), &nreg, &p) != 0) {
+		printf("%s: cannot get register property\n", self->dv_xname);
+		return;
+	}
+	if (nreg < 2) {
+		printf("%s: only %d register sets\n", self->dv_xname, nreg);
+		return;
+	}
 
 	/*
 	 * Now map in the 8 useful pages of registers
 	 */
-	if (ca->ca_ra.ra_len < 0x10000) {
+	if (sa->sa_size < 0x10000) {
 #ifdef DIAGNOSTIC
 		printf("warning: can't find all cgfourteen registers...\n");
 #endif
-		ca->ca_ra.ra_len = 0x10000;
+		sa->sa_size = 0x10000;
 	}
-	sc->sc_ctl = (struct cg14ctl *) mapiodev(ca->ca_ra.ra_reg, 0, 
-						 ca->ca_ra.ra_len);
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
+			 sa->sa_offset,
+			 sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("%s: cannot map control registers\n", self->dv_xname);
+		return;
+	}
 
-	sc->sc_hwc = (struct cg14curs *) ((u_int)sc->sc_ctl + 
-					  CG14_OFFSET_CURS);
-	sc->sc_dac = (struct cg14dac *) ((u_int)sc->sc_ctl +
-					 CG14_OFFSET_DAC);
-	sc->sc_xlut = (struct cg14xlut *) ((u_int)sc->sc_ctl +
-					   CG14_OFFSET_XLUT);
-	sc->sc_clut1 = (struct cg14clut *) ((u_int)sc->sc_ctl +
-					    CG14_OFFSET_CLUT1);
-	sc->sc_clut2 = (struct cg14clut *) ((u_int)sc->sc_ctl +
-					    CG14_OFFSET_CLUT2);
-	sc->sc_clut3 = (struct cg14clut *) ((u_int)sc->sc_ctl +
-					    CG14_OFFSET_CLUT3);
-	sc->sc_clutincr = (u_int *) ((u_int)sc->sc_ctl +
-				     CG14_OFFSET_CLUTINCR);
-	
-	/*
-	 * Stash the physical address of the framebuffer for use by mmap
-	 */
-	if (ca->ca_ra.ra_nreg < 2)
-		panic("cgfourteen with only one register set; can't find"
-		      " framebuffer");
-	sc->sc_phys = ca->ca_ra.ra_reg[1];
-
-#if defined(DEBUG) && defined(CG14_MAP_REGS)
-	/* Store the physical address of the control registers */
-	sc->sc_regphys = ca->ca_ra.ra_reg[0];
-#endif
+	sc->sc_ctl   = (struct cg14ctl  *) (bh);
+	sc->sc_hwc   = (struct cg14curs *) (bh + CG14_OFFSET_CURS);
+	sc->sc_dac   = (struct cg14dac  *) (bh + CG14_OFFSET_DAC);
+	sc->sc_xlut  = (struct cg14xlut *) (bh + CG14_OFFSET_XLUT);
+	sc->sc_clut1 = (struct cg14clut *) (bh + CG14_OFFSET_CLUT1);
+	sc->sc_clut2 = (struct cg14clut *) (bh + CG14_OFFSET_CLUT2);
+	sc->sc_clut3 = (struct cg14clut *) (bh + CG14_OFFSET_CLUT3);
+	sc->sc_clutincr =        (u_int *) (bh + CG14_OFFSET_CLUTINCR);
 
 	/*
 	 * Let the user know that we're here
 	 */
 #ifdef CG14_CG8
 	printf(": cgeight emulated at %dx%dx24bpp",
-	    sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
+		fb->fb_type.fb_width, fb->fb_type.fb_height);
 #else
 	printf(": cgthree emulated at %dx%dx8bpp",
-	       sc->sc_fb.fb_type.fb_width, sc->sc_fb.fb_type.fb_height);
+		fb->fb_type.fb_width, fb->fb_type.fb_height);
 #endif
 	/*
 	 * Enable the video, but don't change the pixel depth.
@@ -274,30 +268,15 @@ cgfourteenattach(parent, self, args)
 	/* See if we're the console */
 	isconsole = node == fbnode && fbconstty != NULL;
 
-	/*
-	 * We don't use the raster console since the cg14 is fast enough
-	 * already.
-	 */
-#ifdef notdef
-	/*
-	 * When the ROM has mapped in a cgfourteen display, the address
-	 * maps only the video RAM, so in any case we have to map the
-	 * registers ourselves.  We only need the video RAM if we are
-	 * going to print characters via rconsole.
-	 */
-	if ((sc->sc_fb.fb_pixels = ca->ca_ra.ra_vaddr) == NULL && isconsole) {
-		/* this probably cannot happen, but what the heck */
-		sc->sc_fb.fb_pixels = mapiodev(ca->ca_ra.ra_reg, CG3REG_MEM,
-					       ramsize);
-	}
-#endif /* notdef */
-
-
 	if (isconsole) {
 		printf(" (console)\n");
 #ifdef notdef
+		/*
+		 * We don't use the raster console since the cg14 is
+		 * fast enough already.
+		 */
 #ifdef RASTERCONSOLE
-		fbrcons_init(&sc->sc_fb);
+		fbrcons_init(fb);
 #endif
 #endif /* notdef */
 	} else
@@ -322,7 +301,7 @@ cgfourteenopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	register struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	int unit = minor(dev);
 	int s, oldopens;
 
@@ -347,7 +326,7 @@ cgfourteenclose(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	register struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	int s, opens;
 
 	s = splhigh();
@@ -369,12 +348,12 @@ int
 cgfourteenioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
-	register caddr_t data;
+	caddr_t data;
 	int flags;
 	struct proc *p;
 {
-	register struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
-	register struct fbgattr *fba;
+	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct fbgattr *fba;
 	union cg14cursor_cmap tcm;
 	int v, error;
 	u_int count;
@@ -573,7 +552,7 @@ cgfourteenmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
+	struct cgfourteen_softc *sc = cgfourteen_cd.cd_devs[minor(dev)];
 	
 #define CG3START		(128*1024 + 128*1024)
 #define CG8START		(256*1024)
@@ -589,7 +568,11 @@ cgfourteenmmap(dev, off, prot)
 	 */
 	if ((u_int)off >= 0x10000000 && (u_int)off < 0x10000000 + 16*4096) {
 		off -= 0x10000000;
-		return (REG2PHYS(&sc->sc_regphys, off, 0) | PMAP_NC);
+		return (bus_space_mmap(
+				sc->sc_bustag,
+				sc->sc_physadr[CG14_CTL_IDX].rr_iospace,
+				sc->sc_physadr[CG14_CTL_IDX].rr_paddr + off,
+				BUS_SPACE_MAP_LINEAR));
 	}
 #endif
 	
@@ -616,11 +599,10 @@ cgfourteenmmap(dev, off, prot)
 		return (-1);
 	}
 
-	/*
-	 * Use PMAP_NC to disable the cache, since otherwise refresh is
-	 * very confused.
-	 */
-	return (REG2PHYS(&sc->sc_phys, off) | PMAP_NC);
+	return (bus_space_mmap (sc->sc_bustag,
+				sc->sc_physadr[CG14_PXL_IDX].rr_iospace,
+				sc->sc_physadr[CG14_PXL_IDX].rr_paddr + off,
+				BUS_SPACE_MAP_LINEAR));
 }
 
 int
@@ -642,9 +624,9 @@ static void
 cg14_init(sc)
 	struct cgfourteen_softc *sc;
 {
-	register u_int32_t *clut;
-	register u_int8_t  *xlut;
-	register int i;
+	u_int32_t *clut;
+	u_int8_t  *xlut;
+	int i;
 
 	/*
 	 * We stash away the following to restore on close:
@@ -688,9 +670,9 @@ static void
 cg14_reset(sc)	/* Restore the state saved on cg14_init */
 	struct cgfourteen_softc *sc;
 {
-	register u_int32_t *clut;
-	register u_int8_t  *xlut;
-	register int i;
+	u_int32_t *clut;
+	u_int8_t  *xlut;
+	int i;
 
 	/*
 	 * We restore the following, saved in cg14_init:
@@ -753,12 +735,12 @@ cg14_get_video(sc)
 /* Read the software shadow colormap */
 static int 
 cg14_get_cmap(p, cm, cmsize)
-	register struct fbcmap *p;
+	struct fbcmap *p;
 	union cg14cmap *cm;
 	int cmsize;
 {
-        register u_int i, start, count;
-        register u_char *cp;
+        u_int i, start, count;
+        u_char *cp;
  
         start = p->index;
         count = p->count;
@@ -795,12 +777,12 @@ cg14_get_cmap(p, cm, cmsize)
 /* Write the software shadow colormap */
 static int
 cg14_put_cmap(p, cm, cmsize)
-        register struct fbcmap *p;
+        struct fbcmap *p;
         union cg14cmap *cm;
         int cmsize;
 {
-        register u_int i, start, count;
-        register u_char *cp;
+        u_int i, start, count;
+        u_char *cp;
  
         start = p->index;
         count = p->count;
@@ -837,14 +819,14 @@ cg14_put_cmap(p, cm, cmsize)
 
 static void
 cg14_load_hwcmap(sc, start, ncolors)
-	register struct cgfourteen_softc *sc;
-	register int start, ncolors;
+	struct cgfourteen_softc *sc;
+	int start, ncolors;
 {
 	/* XXX switch to auto-increment, and on retrace intr */
 	
 	/* Setup pointers to source and dest */
-	register u_int32_t *colp = &sc->sc_cmap.cm_chip[start];
-	volatile register u_int32_t *lutp = &sc->sc_clut1->clut_lut[start];
+	u_int32_t *colp = &sc->sc_cmap.cm_chip[start];
+	volatile u_int32_t *lutp = &sc->sc_clut1->clut_lut[start];
 
 	/* Copy by words */
 	while (--ncolors >= 0)
@@ -856,7 +838,7 @@ cg14_load_hwcmap(sc, start, ncolors)
  */
 static void
 cg14_setcursor(sc)
-	register struct cgfourteen_softc *sc;
+	struct cgfourteen_softc *sc;
 {
 	/* we need to subtract the hot-spot value here */
 #define COORD(f) (sc->sc_cursor.cc_pos.f - sc->sc_cursor.cc_hot.f)
@@ -870,11 +852,11 @@ cg14_setcursor(sc)
 
 static void
 cg14_loadcursor(sc)
-	register struct cgfourteen_softc *sc;
+	struct cgfourteen_softc *sc;
 {
-	register volatile struct cg14curs *hwc;
-	register u_int edgemask, m;
-	register int i;
+	volatile struct cg14curs *hwc;
+	u_int edgemask, m;
+	int i;
 
 	/*
 	 * Keep the top size.x bits.  Here we *throw out* the top
@@ -897,7 +879,7 @@ cg14_loadcursor(sc)
 
 static void
 cg14_loadomap(sc)
-	register struct cgfourteen_softc *sc;
+	struct cgfourteen_softc *sc;
 {
 	/* set background color */
 	sc->sc_hwc->curs_color1 = sc->sc_cursor.cc_color.cm_chip[0];

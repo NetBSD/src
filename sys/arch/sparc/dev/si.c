@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.44 1998/02/06 00:24:37 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.45 1998/03/21 20:14:14 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -175,6 +175,8 @@ struct si_softc {
 	volatile struct si_regs	*sc_regs;
 	struct intrhand	sc_ih;
 	int		sc_adapter_type;
+#define BOARD_ID_SI	0
+#define BOARD_ID_SW	1
 	int		sc_adapter_iv_am; /* int. vec + address modifier */
 	struct si_dma_handle *sc_dma;
 	int		sc_xlen;	/* length of current DMA segment. */
@@ -270,23 +272,22 @@ sw_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	struct romaux *ra = &ca->ca_ra;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
 
 	/* Nothing but a Sun 4/100 is going to have these devices. */
 	if (cpuinfo.cpu_type != CPUTYP_4_100)
 		return (0);
 
-	/*
-	 * Default interrupt priority always is 3.  At least, that's
-	 * what my board seems to be at.  --thorpej
-	 */
-	if (ra->ra_intr[0].int_pri == -1)
-		ra->ra_intr[0].int_pri = 3;
-
+	if (uoba->uoba_isobio4 == 0)
+		return (0);
 
 	/* Make sure there is something there... */
-	return (probeget(ra->ra_vaddr + 1, 1) != -1);
+	oba = &uoba->uoba_oba4;
+	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
+			       1, /* offset */
+			       1, /* probe size */
+			       NULL, NULL));
 }
 
 static int
@@ -346,6 +347,7 @@ si_attach(parent, self, aux)
 
 	sc->sc_options = si_options;
 	reset_adapter = si_reset_adapter;
+	sc->sc_adapter_type = BOARD_ID_SI;
 
 	ncr_sc->sc_dma_setup = si_vme_dma_setup;
 	ncr_sc->sc_dma_start = si_vme_dma_start;
@@ -379,16 +381,24 @@ sw_attach(parent, self, aux)
 {
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
-	struct confargs *ca = aux;
-	struct romaux	*ra = &ca->ca_ra;
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	bus_space_handle_t bh;
 	struct bootpath *bp;
 
 	/* Map the controller registers. */
-	sc->sc_regs = (struct si_regs *)
-		mapiodev(ra->ra_reg, 0, sizeof(struct si_regs));
+	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+			 0,
+			 sizeof(struct si_regs),
+			 BUS_SPACE_MAP_LINEAR,
+			 0, &bh) != 0) {
+		printf("%s: cannot map registers\n", self->dv_xname);
+		return;
+	}
+	sc->sc_regs = (struct si_regs *)bh;
 
 	sc->sc_options = sw_options;
-	sc->sc_adapter_type = ca->ca_bustype;
+	sc->sc_adapter_type = BOARD_ID_SW;
 	reset_adapter = sw_reset_adapter;
 
 	ncr_sc->sc_dma_setup = si_obio_dma_setup;
@@ -398,20 +408,27 @@ sw_attach(parent, self, aux)
 	ncr_sc->sc_intr_on   = si_obio_intr_on;
 	ncr_sc->sc_intr_off  = si_obio_intr_off;
 
-	/* Establish the interrupt. */
-	sc->sc_ih.ih_fun = si_intr;
-	sc->sc_ih.ih_arg = sc;
-	intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih);
+	/*
+	 * Establish interrupt channel.
+	 * Default interrupt priority always is 3.  At least, that's
+	 * what my board seems to be at.  --thorpej
+	 */
+	if (oba->oba_pri == -1)
+		oba->oba_pri = 3;
 
-	printf(" pri %d\n", ra->ra_intr[0].int_pri);
+	(void)bus_intr_establish(oba->oba_bustag,
+				 oba->oba_pri, 0,
+				 si_intr, sc);
+
+	printf(" pri %d\n", oba->oba_pri);
 
 	/*
 	 * If the boot path is "sw" or "si" at the moment and it's me, then
 	 * walk out pointer to the sub-device, ready for the config
 	 * below.
 	 */
-	bp = ra->ra_bp;
-	if (bp != NULL && strcmp(bp->name, ra->ra_name) == 0 &&
+	bp = oba->oba_bp;
+	if (bp != NULL && strcmp(bp->name, "sw") == 0 &&
 	    bp->val[0] == -1 && bp->val[1] == ncr_sc->sc_dev.dv_unit)
 		bootpath_store(1, bp + 1);
 
@@ -540,7 +557,7 @@ si_intr(void *arg)
 	dma_error = 0;
 
 	/* SBC interrupt? DMA interrupt? */
-	if (sc->sc_adapter_type == BUS_OBIO)
+	if (sc->sc_adapter_type == BOARD_ID_SW)
 		csr = si->sw_csr;
 	else
 		csr = si->si_csr;
@@ -775,7 +792,7 @@ si_dma_poll(ncr_sc)
 
 	tmo = 50000;	/* X100 = 5 sec. */
 	for (;;) {
-		if (sc->sc_adapter_type == BUS_OBIO)
+		if (sc->sc_adapter_type == BOARD_ID_SW)
 			csr = si->sw_csr;
 		else
 			csr = si->si_csr;
