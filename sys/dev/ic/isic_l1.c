@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.6 2002/03/30 19:13:44 martin Exp $ */
+/* $NetBSD: isic_l1.c,v 1.7 2002/04/01 12:14:27 martin Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.6 2002/03/30 19:13:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.7 2002/04/01 12:14:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,17 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.6 2002/03/30 19:13:44 martin Exp $");
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
+#include <dev/ic/ipac.h>
 #include <dev/ic/hscx.h>
 
 unsigned int i4b_l1_debug = L1_DEBUG_DEFAULT;
 
-static int isic_std_enable(isdn_layer1token, int);
 static int isic_std_ph_data_req(isdn_layer1token, struct mbuf *, int);
 static int isic_std_ph_activate_req(isdn_layer1token);
 static int isic_std_mph_command_req(isdn_layer1token, int, void*);
 
 const struct isdn_layer1_bri_driver isic_std_driver = {
-	isic_std_enable,
 	isic_std_ph_data_req,
 	isic_std_ph_activate_req,
 	isic_std_mph_command_req
@@ -259,11 +258,44 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 	return(0);
 }
 
-static int
-isic_std_enable(isdn_layer1token token, int enable)
+void
+isic_enable_intr(struct isic_softc *sc, int enabled)
 {
-	struct isic_softc * sc = (struct isic_softc*)token;
-	printf("%s: enable = %d\n", sc->sc_dev.dv_xname, enable);
-	return 0;
-}
+	if (sc->sc_ipac) {
+		if (enabled) {
+			IPAC_WRITE(IPAC_MASK, 0xc0);
+		} else {
+			IPAC_WRITE(IPAC_MASK, 0xff);
+		}
+	} else {
+		if (enabled) {
+			ISAC_WRITE(I_MASK, ISAC_IMASK);
+		} else {
+			ISAC_WRITE(I_MASK, 0xff);
+		}
+	}
+	if (enabled == 0) {
+		/* try to clear any pending interrupts */
+		u_int8_t v;
 
+
+		if (sc->sc_ipac) {
+			v = IPAC_READ(IPAC_ISTA);
+			v = ISAC_READ(I_STAR);
+			v = ISAC_READ(I_MODE);
+			v = ISAC_READ(I_ADF2);
+			v = ISAC_READ(I_STAR);
+			if (v & ISAC_ISTA_EXI)
+				v = ISAC_READ(I_EXIR);
+		} else {
+			v = ISAC_READ(I_STAR);
+			v = ISAC_READ(I_MODE);
+			v = ISAC_READ(I_ADF2);
+			v = ISAC_READ(I_STAR);
+			if (v & ISAC_ISTA_EXI)
+				v = ISAC_READ(I_EXIR);
+		}
+		if (sc->clearirq)
+			sc->clearirq(sc);
+	}
+}

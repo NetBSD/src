@@ -1,4 +1,4 @@
-/* $NetBSD: i4b_l1l2.h,v 1.4 2002/03/24 20:35:58 martin Exp $ */
+/* $NetBSD: i4b_l1l2.h,v 1.5 2002/04/01 12:14:26 martin Exp $ */
 
 /*
  * Copyright (c) 2001-2002 Martin Husemann. All rights reserved.
@@ -52,9 +52,6 @@ typedef void * isdn_layer1token;
  * Layer 1 functions called from layer 2:
  */
 struct isdn_layer1_bri_driver {
-	/* Activate card and enable interrupts or disable it. */
-	int (*enable)(isdn_layer1token, int);
-
 	/* Request to transmit data. */
 	int (*ph_data_req)(isdn_layer1token, struct mbuf *, int);
 
