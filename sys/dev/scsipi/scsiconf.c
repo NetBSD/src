@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.108 1998/09/08 07:34:02 mjacob Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.109 1998/10/08 18:46:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -549,6 +549,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 
 	{{T_PROCESSOR, T_FIXED,
 	 "LITRONIC", "PCMCIA          ", ""},     SDEV_NOLUNS},
+
+	{{T_CHANGER, T_REMOV,
+	 "SONY    ", "CDL1100         ", ""},     SDEV_NOLUNS},
 };
 
 /*
