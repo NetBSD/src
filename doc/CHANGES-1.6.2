@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.81 2003/06/30 02:43:38 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.82 2003/06/30 02:45:35 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -940,3 +940,9 @@ distrib/utils/sysinst/arch/sgimips/md.c		1.4
 	While I'm there use get_real_geom() instead of custom code to get the
 	existing disklabel.
 	[bouyer, ticket #1348]
+
+share/man/man4/vlan.4				1.21
+
+	Add tl(4), while I'm there add a few others adapters that are known to
+	support ETHERCAP_VLAN_MTU.
+	[bouyer, ticket #1349]
