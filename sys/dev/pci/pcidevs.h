@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.657 2004/10/13 14:14:41 drochner Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.658 2004/10/13 18:44:09 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.655 2004/10/13 14:14:19 drochner Exp 
+ *	NetBSD: pcidevs,v 1.656 2004/10/13 18:42:17 augustss Exp 
  */
 
 /*
@@ -738,6 +738,7 @@
 #define	PCI_PRODUCT_ALI_M1531	0x1531		/* M1531 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1541	0x1541		/* M1541 Host-PCI Bridge */
 #define	PCI_PRODUCT_ALI_M1543	0x1533		/* M1543 PCI-ISA Bridge */
+#define	PCI_PRODUCT_ALI_M1563	0x1563		/* M1563 PCI-ISA Bridge */
 #define	PCI_PRODUCT_ALI_M3309	0x3309		/* M3309 MPEG Decoder */
 #define	PCI_PRODUCT_ALI_M4803	0x5215		/* M4803 */
 #define	PCI_PRODUCT_ALI_M5257	0x5257		/* M5257 PCI Software Modem */
