@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixreg.h,v 1.2 2000/08/26 16:06:22 eeh Exp $ */
+/*	$NetBSD: cgsixreg.h,v 1.3 2001/01/10 13:26:52 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -166,7 +166,8 @@ struct cg6_tec_xxx {
  * stuff canned values in them (eg, offx).
  */
 struct cg6_fbc {
-	u_int32_t fbc_pad1[2];
+	u_int32_t fbc_pad1[1];
+	u_int32_t fbc_mode;		/* mode setting */
 	u_int32_t fbc_clip;		/* function unknown */
 	u_int32_t fbc_pad2[1];
 	u_int32_t fbc_s;		/* global status */
