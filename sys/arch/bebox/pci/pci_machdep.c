@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.9 2001/02/12 06:01:46 briggs Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.10 2001/06/06 17:42:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,7 +52,7 @@
 
 #include <uvm/uvm_extern.h>
 
-#define _BEBOX_BUS_DMA_PRIVATE
+#define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
@@ -64,7 +64,7 @@
 
 #include <bebox/isa/icu.h>
 
-struct bebox_bus_dma_tag pci_bus_dma_tag = {
+struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,

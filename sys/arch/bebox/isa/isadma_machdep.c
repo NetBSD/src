@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.17 2000/11/15 19:31:36 thorpej Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.18 2001/06/06 17:42:31 matt Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -47,7 +47,7 @@
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 
-#define _BEBOX_BUS_DMA_PRIVATE
+#define _POWERPC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/pio.h>
@@ -128,7 +128,7 @@ void	_isa_dma_free_bouncebuf __P((bus_dma_tag_t, bus_dmamap_t));
  * the generic functions that understand how to deal with bounce
  * buffers, if necessary.
  */
-struct bebox_bus_dma_tag isa_bus_dma_tag = {
+struct powerpc_bus_dma_tag isa_bus_dma_tag = {
 	ISA_DMA_BOUNCE_THRESHOLD,
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.12 2000/11/15 19:31:35 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.13 2001/06/06 17:42:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ void	isa_intr_disestablish(isa_chipset_tag_t ic, void *handler);
 #define	isa_outb(x,y)	outb(BEBOX_BUS_SPACE_IO + (x), y)
 #define isa_inb(x)	inb(BEBOX_BUS_SPACE_IO + (x))
 
-extern struct bebox_bus_dma_tag isa_bus_dma_tag;
+extern struct powerpc_bus_dma_tag isa_bus_dma_tag;
 
 /*
  * XXX Various seemingly PC-specific constants, some of which may be
