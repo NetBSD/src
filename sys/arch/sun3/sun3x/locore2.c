@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.1.1.1 1997/01/14 20:57:07 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.2 1997/01/16 21:53:07 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@
 /* This is defined in locore.s */
 extern char kernel_text[];
 
+/* This is set by locore.s with the monitor's root ptr. */
+extern struct mmu_rootptr mon_crp;
+
 /* These are defined by the linker */
 extern char etext[], edata[], end[];
 char *esym;	/* DDB */
@@ -104,6 +107,8 @@ sun3x_mode_monitor __P((void))
 	set_clk_mode(0, IREG_CLOCK_ENAB_5, 0);
 	setvbr(old_vector_table);
 	set_clk_mode(IREG_CLOCK_ENAB_7, 0, 1);
+
+	loadcrp((int)&mon_crp);
 }
 
 /*
@@ -112,10 +117,17 @@ sun3x_mode_monitor __P((void))
 static void
 sun3x_mode_normal __P((void))
 {
+	struct pcb *pcb;
+
 	/* Install our vector table and disable the NMI clock. */
 	set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
 	setvbr((void**)vector_table);
 	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
+
+	pcb = curpcb ? curpcb :
+		pcb = &proc0paddr->u_pcb;
+
+	loadcrp(pcb->pcb_mmuctx);
 }
 
 /*
@@ -158,9 +170,17 @@ void sun3x_mon_halt()
 	/*NOTREACHED*/
 }
 
+/*
+ * Caller must pass a string that is in our data segment.
+ */
 void sun3x_mon_reboot(bootstring)
 	char *bootstring;
 {
+#ifdef	DIAGNOSTIC
+	if (bootstring > end)
+		bootstring = "?";
+#endif
+
 	(void) splhigh();
 	sun3x_mode_monitor();
 	mon_reboot(bootstring);
