@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.5 2005/03/19 18:02:58 tron Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.6 2005/03/19 18:26:27 jwise Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -55,6 +55,12 @@ sys/sys/select.h				1.23
 	from Juergen Hannken-Illjes.
 	[kleink, ticket #14]
 
+doc/3DPARTY					1.305
+
+	Update XFree86 Information.
+
+	[tron, ticket #12]
+
 etc/pam.d/sshd					1.6-1.7
 
 	Make the SSH daemon work again if PAM is enabled.
@@ -85,4 +91,3 @@ libexec/telnetd/utility.c			1.28
 
 	Handle printing ptyfs pty names.
 	[christos, ticket #25]
-
