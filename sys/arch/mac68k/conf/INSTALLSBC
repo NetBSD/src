@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALLSBC,v 1.9 2002/04/27 19:29:08 shiba Exp $
+#	$NetBSD: INSTALLSBC,v 1.10 2002/06/19 04:30:46 itojun Exp $
 #
 # INSTALLSBC
 
@@ -171,6 +171,7 @@ mc*	at obio?			# MACE-based
 ae*	at nubus?			# DP8390-based
 sn*	at nubus?			# SONIC-based (DP83932, DP83916)
 sm*	at nubus?			# SMC-based
+netdock*	at nubus?		# Asante NetDock, Newer Ether MicroDock
 
 nsphy*	at mii? phy ?
 ukphy*	at mii? phy ?
