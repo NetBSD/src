@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam.conf.5,v 1.1 2005/03/07 02:26:31 thorpej Exp $
+.\"	$NetBSD: pam.conf.5,v 1.2 2005/03/07 02:44:33 christos Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,7 +67,7 @@ PAM's configuration is based on
 .Dq stacking
 different modules together to form a processing chain for the task.
 A standard PAM configuration stanza is structured as follows:
-.Bd -offset indent
+.Bd -filled -offset indent
 .Op Ar service-name
 .Ar module-type
 .Ar control-flag
@@ -149,7 +149,7 @@ In addition to the standard configuration stanza format, there an additional
 stanza format availble when
 .Pa /etc/pam.d/
 is in use:
-.Bd -offset indent
+.Bd -filled -offset indent
 .Ar module-type
 include
 .Ar service-name
