@@ -1,4 +1,4 @@
-.\"	$NetBSD: dge.4,v 1.1 2004/03/18 20:38:30 ragge Exp $
+.\"	$NetBSD: dge.4,v 1.2 2004/03/18 20:40:59 wiz Exp $
 .\"
 .\" Copyright (c) 2004, SUNET, Swedish University Computer Network.
 .\" All rights reserved.
@@ -35,10 +35,10 @@
 .Dd Mars 18, 2004
 .Dt DGE 4
 .Os
-.ds nummer "i82597EX 
+.ds nummer "i82597EX
 .Sh NAME
 .Nm dge
-.Nd Intel 
+.Nd Intel
 .nummer
 Ten Gigabit Ethernet driver
 .Sh SYNOPSIS
@@ -46,14 +46,14 @@ Ten Gigabit Ethernet driver
 .Sh DESCRIPTION
 The
 .Nm
-device driver supports the Intel 
+device driver supports the Intel
 .nummer
 PRO/10GbE LR Ethernet adapter,
 which uses a single mode fiber (1310nm) interface.
 .Pp
-The 
+The
 .nummer
-supports IPv4/TCP/UDP checksumming in hardware, as well 
+supports IPv4/TCP/UDP checksumming in hardware, as well
 as TCP Segmentation Offloading (TSO).  The driver does currently
 only support the hardware checksumming features.
 See
@@ -63,10 +63,10 @@ for information on how to enable the hardware checksum calculations.
 The driver also makes use of the
 .Xr ifconfig 8
 link flags
-.Ar link0 
+.Ar link0
 and
-.Ar link1 
-to set the PCIX burst size. The burst size is set according to 
+.Ar link1
+to set the PCIX burst size. The burst size is set according to
 this table:
 .Pp
 .Bl -column "link0" "link1" "burst size"
@@ -78,18 +78,18 @@ this table:
 .El
 .Pp
 A larger burst size will increase the transmit capacity of the card
-dramatically but may have negative effect on other devices in 
+dramatically but may have negative effect on other devices in
 the system.
 .Sh DIAGNOSTICS
 .Bl -diag
 .It dge%d: Tx packet consumes too many DMA segments, dropping...
 The packet consisted of too many small mbufs and could therefore
 not be loaded into a DMA map.  This is most unlikely, the driver
-can currently handle up to 100 segments, but over 80 segments 
+can currently handle up to 100 segments, but over 80 segments
 has been seen using large (16k) jumbo frames.
 .Pp
 .It dge%s: device timeout (txfree %d txsfree %d txnext %d)
-The 
+The
 .nummer
 had been given packets to send, but didn't interrupt
 within 5 seconds.  This diagnostic is most likely the result of
@@ -97,7 +97,7 @@ a hardware failure, and the chip will be reset to resume normal
 operation.
 .Pp
 .It dge%d: Receive overrun
-If the computer is is heavy loaded the software may not be able to 
+If the computer is is heavy loaded the software may not be able to
 keep up removing received datagrams from the receive queue, and
 will therefore loose datagrams.  To avoid this, check that the other
 end is using the XON/XOFF protocol, if possible, or increase the
@@ -118,7 +118,7 @@ will most likely not function correctly.
 .Pp
 .It "dge%d: unable to allocate or map rx buffer %d error = %d
 The driver was not able to map a mbuf cluster page to a receive
-descriptor entry in the receive ring.  Most likely the system has 
+descriptor entry in the receive ring.  Most likely the system has
 run out of mbuf clusters or have a too small cluster map.  See
 the errno for more information.
 .El
