@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.526 2003/01/24 01:54:52 thorpej Exp $
+#	$NetBSD: mi,v 1.527 2003/01/28 20:31:41 kleink Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1922,6 +1922,7 @@
 ./usr/share/man/cat3/finite.0	comp-c-catman
 ./usr/share/man/cat3/finitef.0	comp-c-catman
 ./usr/share/man/cat3/flash.0		comp-c-catman
+./usr/share/man/cat3/flockfile.0	comp-c-catman
 ./usr/share/man/cat3/floor.0	comp-c-catman
 ./usr/share/man/cat3/floorf.0	comp-c-catman
 ./usr/share/man/cat3/flushinp.0		comp-c-catman
@@ -1993,6 +1994,7 @@
 ./usr/share/man/cat3/ftello.0	comp-c-catman
 ./usr/share/man/cat3/ftime.0	comp-c-catman
 ./usr/share/man/cat3/ftok.0	comp-c-catman
+./usr/share/man/cat3/ftrylockfile.0	comp-c-catman
 ./usr/share/man/cat3/fts.0	comp-c-catman
 ./usr/share/man/cat3/fts_children.0	comp-c-catman
 ./usr/share/man/cat3/fts_close.0	comp-c-catman
@@ -2000,6 +2002,7 @@
 ./usr/share/man/cat3/fts_read.0	comp-c-catman
 ./usr/share/man/cat3/fts_set.0	comp-c-catman
 ./usr/share/man/cat3/fullname.0		comp-c-catman
+./usr/share/man/cat3/funlockfile.0	comp-c-catman
 ./usr/share/man/cat3/funopen.0	comp-c-catman
 ./usr/share/man/cat3/fwide.0	comp-c-catman
 ./usr/share/man/cat3/fwopen.0	comp-c-catman
@@ -4949,6 +4952,7 @@
 ./usr/share/man/man3/finite.3		comp-c-man
 ./usr/share/man/man3/finitef.3		comp-c-man
 ./usr/share/man/man3/flash.3		comp-c-man
+./usr/share/man/man3/flockfile.3		comp-c-man
 ./usr/share/man/man3/floor.3		comp-c-man
 ./usr/share/man/man3/floorf.3		comp-c-man
 ./usr/share/man/man3/flushinp.3		comp-c-man
@@ -5020,6 +5024,7 @@
 ./usr/share/man/man3/ftello.3		comp-c-man
 ./usr/share/man/man3/ftime.3		comp-c-man
 ./usr/share/man/man3/ftok.3		comp-c-man
+./usr/share/man/man3/ftrylockfile.3		comp-c-man
 ./usr/share/man/man3/fts.3		comp-c-man
 ./usr/share/man/man3/fts_children.3		comp-c-man
 ./usr/share/man/man3/fts_close.3		comp-c-man
@@ -5027,6 +5032,7 @@
 ./usr/share/man/man3/fts_read.3		comp-c-man
 ./usr/share/man/man3/fts_set.3		comp-c-man
 ./usr/share/man/man3/fullname.3		comp-c-man
+./usr/share/man/man3/funlockfile.3		comp-c-man
 ./usr/share/man/man3/funopen.3		comp-c-man
 ./usr/share/man/man3/fwide.3		comp-c-man
 ./usr/share/man/man3/fwopen.3		comp-c-man
