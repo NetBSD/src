@@ -63,9 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef NO_RC2
-#error RC2 is disabled.
-#endif
 
 #include <sys/types.h>
 #define	RC2_INT	u_int32_t

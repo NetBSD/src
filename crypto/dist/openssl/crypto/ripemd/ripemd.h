@@ -63,9 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef NO_RIPEMD
-#error RIPEMD is disabled.
-#endif
 
 #include <sys/types.h>
 #define RIPEMD160_LONG	u_int32_t
