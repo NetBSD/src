@@ -1,4 +1,4 @@
-/*	$NetBSD: lastcomm.c,v 1.7 1995/08/31 22:31:06 jtc Exp $	*/
+/*	$NetBSD: lastcomm.c,v 1.8 1995/10/12 03:03:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: lastcomm.c,v 1.7 1995/08/31 22:31:06 jtc Exp $";
+static char rcsid[] = "$NetBSD: lastcomm.c,v 1.8 1995/10/12 03:03:49 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -140,11 +140,11 @@ main(argc, argv)
 			continue;
 
 		t = expand(ab.ac_utime) + expand(ab.ac_stime);
-		(void)printf("%-*s %-7s %-*s %-*s %6.2f secs %.16s\n",
-			fldsiz(acct, ac_comm), ab.ac_comm, flagbits(ab.ac_flag),
-			UT_NAMESIZE, user_from_uid(ab.ac_uid, 0),
-			UT_LINESIZE, getdev(ab.ac_tty),
-			t / (double)AHZ, ctime(&ab.ac_btime));
+		(void)printf("%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s\n",
+		    fldsiz(acct, ac_comm), fldsiz(acct, ac_comm), ab.ac_comm,
+		    flagbits(ab.ac_flag), UT_NAMESIZE, UT_NAMESIZE,
+		    user_from_uid(ab.ac_uid, 0), UT_LINESIZE, UT_LINESIZE,
+		    getdev(ab.ac_tty), t / (double)AHZ, ctime(&ab.ac_btime));
 	}
 	exit(0);
 }
