@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+#	$NetBSD: shar.sh,v 1.2 1994/12/21 08:42:04 jtc Exp $
+#
 # Copyright (c) 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
