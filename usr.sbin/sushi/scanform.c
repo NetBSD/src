@@ -1,4 +1,4 @@
-/*      $NetBSD: scanform.c,v 1.21.2.2 2002/07/29 14:39:55 lukem Exp $       */
+/*      $NetBSD: scanform.c,v 1.21.2.3 2002/07/29 14:52:08 lukem Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -408,7 +408,6 @@ get_request(WINDOW *w)			/* virtual key mapping */
 static int 
 my_driver(FORM * form, int c, char *path)
 {
-	WINDOW *subwindow;
 	CDKSCROLL *plist;
 	CDKSELECTION *slist;
 	CDKENTRY *entry;
@@ -483,9 +482,8 @@ my_driver(FORM * form, int c, char *path)
 	case SHOWHELP:
 	        if (simple_lang_handler(path, HELPFILE, handle_help) == -2)
 			nohelp();
-		subwindow = form_win(form);
-		touchwin(subwindow);
-		wrefresh(subwindow);
+		touchwin(stdscr);
+		wrefresh(stdscr);
 		return(FALSE);
 		/* NOTREACHED */
 		break;
