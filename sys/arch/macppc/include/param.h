@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2000/02/11 19:25:16 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2000/02/13 17:01:47 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -95,7 +95,7 @@
  * logical pages.
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((48 * 1024 * 1024) >> PAGE_SHIFT)
 
 /*
  * pages ("clicks") to disk blocks
