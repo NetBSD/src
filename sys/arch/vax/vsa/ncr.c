@@ -1,8 +1,5 @@
-/*	$NetBSD: ncr.c,v 1.11 1998/01/12 20:53:04 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.12 1998/04/13 12:17:31 ragge Exp $	*/
 
-/* #define DEBUG	/* */
-/* #define TRACE	/* */
-/* #define POLL_MODE	/* */
 #define USE_VMAPBUF
 
 /*
@@ -95,6 +92,7 @@
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/syslog.h>
+#include <sys/malloc.h>
 
 /* #include <sys/errno.h> */
 
@@ -235,8 +233,6 @@ int si_options = 3;	/* bertram: 3 or 7 ??? */
 int si_dma_intr_timo = 500;	/* ticks (sec. X 100) */
 
 integrate char si_name[] = "ncr";
-integrate int	si_match();
-integrate void	si_attach();
 integrate int	si_intr __P((void *));
 
 integrate void	si_minphys __P((struct buf *bp));
@@ -274,6 +270,8 @@ static struct scsipi_device si_dev = {
 	NULL,		/* Use default "done" routine.	    */
 };
 
+integrate int si_match(struct device *, struct cfdata *, void *);
+integrate void si_attach(struct device *, struct device *, void *);
 
 struct cfattach ncr_ca = {
 	sizeof(struct si_softc), si_match, si_attach,
@@ -293,15 +291,16 @@ dk_establish(p,q)
 integrate int
 si_match(parent, match, aux)
 	struct device	*parent;
-	void		*match, *aux;
+	struct cfdata *match;
+	void	*aux;
 {
-	struct cfdata	*cf = match;
 	struct confargs *ca = aux;
 	volatile int *base;
 	int res;
 
 	trace(("ncr_match(0x%x, %d, %s)\n", parent, cf->cf_unit, ca->ca_name));
 
+return 0;
 	if (strcmp(ca->ca_name, "ncr") &&
 	    strcmp(ca->ca_name, "ncr5380") &&
 	    strcmp(ca->ca_name, "NCR5380"))
@@ -327,9 +326,11 @@ si_match(parent, match, aux)
 		printf("SCSI controller found.\n");
 		return (1);
 	}
-	printf("unexpected/strange result 0x%x during probe.\n");
+	printf("unexpected/strange result 0x%x during probe.\n", res);
         return (0);
 }
+
+integrate void si_set_portid(int, int);
 
 integrate void
 si_set_portid(pid,port)
@@ -375,7 +376,6 @@ si_attach(parent, self, aux)
 	volatile struct si_regs *regs;
 	struct confargs *ca = aux;
 	int i;
-	int *ip = aux;;
 
 	trace (("ncr_attach(0x%x, 0x%x, %s)\n", parent, self, ca->ca_name));
 
@@ -451,7 +451,7 @@ si_attach(parent, self, aux)
 	 * Initialize fields used only here in the MD code.
 	 */
 	i = SCI_OPENINGS * sizeof(struct si_dma_handle);
-	sc->sc_dma = (struct si_dma_handle *) malloc(i);
+	sc->sc_dma = (struct si_dma_handle *) malloc(i, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_dma == NULL)
 		panic("si: dvma_malloc failed\n");
 	for (i = 0; i < SCI_OPENINGS; i++)
@@ -461,7 +461,7 @@ si_attach(parent, self, aux)
 	
 #ifdef	DEBUG
 	if (si_debug)
-		printf("si: Set TheSoftC=%x TheRegs=%x\n", sc, regs);
+		printf("si: Set TheSoftC=%p TheRegs=%p\n", sc, regs);
 	ncr_sc->sc_link.flags |= si_link_flags;
 #endif
 
@@ -476,8 +476,10 @@ si_attach(parent, self, aux)
 	/* 
 	 * Now ready for interrupts. 
 	 */
+#if 0
 	vsbus_intr_register(sc->sc_cfargs, si_intr, (void *)sc);
 	vsbus_intr_enable(sc->sc_cfargs);
+#endif
 }
 
 integrate void
@@ -489,7 +491,7 @@ si_minphys(struct buf *bp)
 	if (bp->b_bcount > MAX_DMA_LEN) {
 #ifdef	DEBUG
 		if (si_debug) {
-			printf("si_minphys len = 0x%x.\n", bp->b_bcount);
+			printf("si_minphys len = 0x%lx.\n", bp->b_bcount);
 #ifdef DDB
 			Debugger();
 #endif
@@ -571,7 +573,6 @@ si_intr(arg)
 			printf("DMA incomplete (%d/%d) status = %b\n",
 			       ntrans, resid, csr, NCR5380_CSRBITS);
 			if(csr != lastCSR) {
-				int k = (csr & ~lastCSR) | (~csr & lastCSR);
 				debug(("Changed status bits: %b\n",
 				       k, NCR5380_CSRBITS));
 				lastCSR = csr & 0xFF;
@@ -614,8 +615,6 @@ si_intr(arg)
 integrate void
 si_reset_adapter(struct ncr5380_softc *ncr_sc)
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
 
 #ifdef	DEBUG
 	if (si_debug) {
@@ -716,7 +715,7 @@ found:
 		return;
 	}
 	if (bp->b_bcount < 0 || bp->b_bcount > MAX_DMA_LEN) {
-		printf("ncr.c: invalid bcount %d (0x%x)\n", 
+		printf("ncr.c: invalid bcount %ld (0x%lx)\n", 
 		       bp->b_bcount, bp->b_bcount);
 		dh->dh_flags = 0;
 		return;
@@ -755,10 +754,7 @@ void
 si_dma_free(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
-	struct scsipi_xfer *xs = sr->sr_xs;
-	struct buf *bp = sr->sr_xs->bp;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 
 	trace (("si_dma_free()\n"));
@@ -817,12 +813,12 @@ si_dmaLockBus(ncr_sc, lt)
 
 	if ((ncr_sc->sc_current != NULL) && (lt == VSDMA_REGBUSY)) {
 		printf("trying to use regs while sc_current is set.\n");
-		printf("lt=%x, fl=%x, cur=%x\n", 
+		printf("lt=%x, fl=%x, cur=%p\n", 
 		       lt, sc->sc_dflags, ncr_sc->sc_current);
 	}
 	if ((ncr_sc->sc_current == NULL) && (lt != VSDMA_REGBUSY)) {
 		printf("trying to use/prepare DMA without current.\n");
-		printf("lt=%x, fl=%x, cur=%x\n", 
+		printf("lt=%x, fl=%x, cur=%p\n", 
 		       lt, sc->sc_dflags, ncr_sc->sc_current);
 	}
 
@@ -932,6 +928,7 @@ si_dmaLockBus(ncr_sc, lt)
 		return (0);
 
 	printf("spurious %x in si_dmaLockBus(%x)\n", lt, sc->sc_dflags);
+	return 0;
 }
 
 /*
@@ -964,8 +961,8 @@ si_dmaReleaseBus(ncr_sc, lt)
 		struct si_softc *sc = (struct si_softc *)ncr_sc;
 		vsbus_unlockDMA(sc->sc_cfargs);
 		sc->sc_dflags = 0;
-		return (0);
 	}
+	return 0;
 }
 
 /*
@@ -992,6 +989,7 @@ si_dmaToggleLock(ncr_sc, lt1, lt2)
 	}
 	printf("cannot toggle locking from %x to %x (current = %x)\n",
 	       lt1, lt2, sc->sc_dflags);
+	return 0;
 }
 
 /*
@@ -1061,8 +1059,6 @@ si_dma_start(ncr_sc)
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
-	volatile struct si_regs *si = sc->sc_regs;
-	long data_pa;
 	int xlen;
 
 	trace(("si_dma_start(%x)\n", sr->sr_dma_hand));
@@ -1111,8 +1107,8 @@ si_dma_start(ncr_sc)
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=0x%x, pa=0x%x, xlen=%d, creg=0x%x\n",
-			   dh, data_pa, xlen, *sc->sc_dcreg);
+		printf("si_dma_start: dh=%p, xlen=%d, creg=0x%x\n",
+			   dh, xlen, *sc->sc_dcreg);
 	}
 #endif
 
@@ -1167,6 +1163,8 @@ si_dma_start(ncr_sc)
 #endif
 }
 
+#if 0
+void si_vme_dma_eop(struct ncr5380_softc *);
 
 void
 si_vme_dma_eop(ncr_sc)
@@ -1175,6 +1173,7 @@ si_vme_dma_eop(ncr_sc)
 	trace (("si_vme_dma_eop() !!!\n"));
 	/* Not needed - DMA was stopped prior to examining sci_csr */
 }
+#endif
 
 /*
  * si_dma_stop() has now become almost a nop-routine, since DMA-buffer
@@ -1187,7 +1186,6 @@ si_dma_stop(ncr_sc)
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
-	volatile struct si_regs *si = sc->sc_regs;
 	int resid, ntrans;
 
 	if ((ncr_sc->sc_state & NCR_DOINGDMA) == 0) {
@@ -1272,10 +1270,12 @@ void
 si_dma_poll(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
+#ifdef POLL_MODE
 	struct sci_req *sr = ncr_sc->sc_current;
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 	int i, timeout;
+#endif
 
 	if (! cold) 
 		printf("spurious call of DMA-poll ???");

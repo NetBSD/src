@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.8 1998/01/24 14:16:15 ragge Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.9 1998/04/13 12:17:31 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,8 +40,8 @@
  *	Mike Young
  */
 
-/* #define DEBUG	/* */
-/* #define TRACE	/* */
+/* #define DEBUG	*/
+/* #define TRACE	*/
 static int haveLock = 0;
 static int keepLock = 0;
 
@@ -385,7 +385,7 @@ rdattach(parent, self, aux)
 	}
 	else {
 		hdc_getdata(hdc, rd, rd->sc_drive);
-		printf("%s, %d MB, %d LBN, %d cyl, %d head, %d sect/track\n",
+		printf("%s, %ld MB, %ld LBN, %d cyl, %d head, %d sect/track\n",
 		       rp->diskname, rp->diskblks/2048, rp->disklbns, 
 		       rp->cylinders, rp->heads, rp->sectors);
 	}
@@ -396,6 +396,7 @@ rdattach(parent, self, aux)
 		booted_from = self;
 }
 
+int hdc_strategy(struct hdcsoftc *, struct rdsoftc *, int, int, int, int, char *);
 /*
  * Read/write routine for a buffer.  For now we poll the controller, 
  * thus this routine waits for the transfer to complete.
@@ -407,7 +408,7 @@ rdstrategy(bp)
 	struct rdsoftc *rd = rd_cd.cd_devs[HDCUNIT(bp->b_dev)];
 	struct hdcsoftc *hdc = (void *)rd->sc_dev.dv_parent;
 	struct partition *p;
-	int blkno, i, s;
+	int blkno;
 
 	trace (("rdstrategy(#%d/%d)\n", bp->b_blkno, bp->b_bcount));
 
@@ -434,7 +435,6 @@ rdstrategy(bp)
 			 blkno, bp->b_bcount, bp->b_data) == 0)
 		goto done;
 	/*------------------------------*/
-bad:
 	bp->b_flags |= B_ERROR;
 done:
 	/*
@@ -582,18 +582,20 @@ hdc_strategy(hdc, rd, unit, func, dblk, size, buf)
 
 char hdc_iobuf[17*512];		/* we won't need more */
 
+void hdc_mid2str(long, char *);
 #ifdef DEBUG
+void hdc_printgeom( struct rdgeom *);
 /*
  * display the contents of the on-disk geometry structure
  */
-int
+void
 hdc_printgeom(p)
 	struct rdgeom *p;
 {
 	char dname[8];
 	hdc_mid2str(p->media_id, dname);
 
-	printf ("**DiskData**	 XBNs: %d, DBNs: %d, LBNs: %d, RBNs: %d\n",
+	printf ("**DiskData**	 XBNs: %ld, DBNs: %ld, LBNs: %ld, RBNs: %ld\n",
 		p->xbn_count, p->dbn_count, p->lbn_count, p->rbn_count);
 	printf ("sec/track: %d, tracks: %d, cyl: %d, precomp/reduced: %d/%d\n",
 		p->nspt, p->ntracks, p->ncylinders, p->precomp, p->reduced);
@@ -610,7 +612,7 @@ hdc_printgeom(p)
 /*
  * Convert media_id to string/name (encoding is documented in mscp.h)
  */
-int
+void
 hdc_mid2str(media_id, name)
 	long media_id;
 	char *name;
@@ -704,9 +706,12 @@ hdc_getlabel(hdc, rd, unit)
 	return (0);
 }
 
+bdev_decl(hdc);
+int hdcsize(dev_t);
 /*
  * Return the size of a partition, if known, or -1 if not.
  */
+int
 hdcsize(dev)
 	dev_t dev;
 {
@@ -717,7 +722,7 @@ hdcsize(dev)
 
 	trace (("hdcsize(%x == %d/%d)\n", dev, unit, part));
 
-	if (hdcopen(dev, 0, S_IFBLK) != 0)
+	if (hdcopen(dev, 0, S_IFBLK, 0) != 0)
 		return (-1);
 #if 0
 	if (rd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
@@ -725,7 +730,7 @@ hdcsize(dev)
 	else
 #endif
 		size = rd->sc_dk.dk_label->d_partitions[part].p_size;
-	if (hdcclose(dev, 0, S_IFBLK) != 0)
+	if (hdcclose(dev, 0, S_IFBLK, 0) != 0)
 		return (-1);
 	debug (("hdcsize: size=%d\n", size));
 	return (size);
@@ -735,16 +740,15 @@ hdcsize(dev)
  *
  */
 int
-hdcopen (dev, flag, fmt)
+hdcopen (dev, flag, fmt, p)
 	dev_t dev;
 	int flag;
 	int fmt;
+	struct proc *p;
 {
 	int unit = HDCUNIT(dev);
-	int part = HDCPART(dev);
 	struct hdcsoftc *hdc;
 	struct rdsoftc *rd;
-	int res, error;
 
 	trace (("hdcopen(0x%x = %d/%d)\n", dev, unit, part));
 
@@ -771,9 +775,10 @@ hdcopen (dev, flag, fmt)
  *
  */
 int
-hdcclose (dev, flag)
+hdcclose (dev, flag, type, p)
 	dev_t dev;
-	int flag;
+	int flag, type;
+	struct proc *p;
 {
 	trace (("hdcclose()\n"));
 	return (0);
@@ -797,13 +802,12 @@ hdcstrategy(bp)
 int
 hdcioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;	/* aka: addr */
 	int flag;
 	struct proc *p;
 {
 	struct rdsoftc *rd = rd_cd.cd_devs[HDCUNIT(dev)];
-	struct hdcsoftc *hdc = (void *)rd->sc_dev.dv_parent;
 	int error;
 
 	trace (("hdcioctl(%x, %x)\n", dev, cmd));
@@ -862,27 +866,21 @@ hdcioctl(dev, cmd, data, flag, p)
 	default:
 		if (HDCPART(dev) != RAW_PART)
 			return ENOTTY;
-		printf ("IOCTL %x not implemented.\n", cmd);
+		printf ("IOCTL %lx not implemented.\n", cmd);
 		return (-1);
 	}
 }
 
-/*
- *
- */
-int 
-hdcintr() 
-{
-	trace (("hdcintr()\n"));
-}
+cdev_decl(hdc);
 
 /*
  * 
  */
 int
-hdcread (dev, uio)
+hdcread (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	trace (("hdcread()\n"));
 	return (physio (hdcstrategy, NULL, dev, B_READ, minphys, uio));
@@ -892,9 +890,10 @@ hdcread (dev, uio)
  *
  */
 int
-hdcwrite (dev, uio)
+hdcwrite (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	trace (("hdcwrite()\n"));
 	return (physio (hdcstrategy, NULL, dev, B_WRITE, minphys, uio));
@@ -904,12 +903,17 @@ hdcwrite (dev, uio)
  *
  */
 int
-hdcdump(dev)
+hdcdump(dev, daddr, addr, size)
 	dev_t dev;
+	daddr_t daddr;
+	caddr_t addr;
+	size_t size;
 {
 	trace (("hdcdump (%x)\n", dev));
+	return 0;
 }
 
+void hdc_readregs (struct hdcsoftc *);
 /*
  * we have to wait 0.7 usec between two accesses to any of the
  * dkc-registers, on a VS2000 with 1 MIPS, this is roughly one
@@ -929,6 +933,8 @@ hdc_readregs(sc)
 	for (i=0; i<10; i++)
 		*p++ = sc->sc_dkc->dkc_reg;	/* dkc_reg auto-increments */
 }
+
+void hdc_writeregs( struct hdcsoftc *);
 
 void
 hdc_writeregs(sc)
@@ -956,7 +962,6 @@ hdc_command(sc, cmd)
 {
 	volatile u_char *intreq = (void*)uvax_phys2virt(KA410_INTREQ);
 	volatile u_char *intclr = (void*)uvax_phys2virt(KA410_INTCLR);
-	volatile u_char *intmsk = (void*)uvax_phys2virt(KA410_INTMSK);
 	int i, c;
 
 	trace (("hdc_command(%x)\n", cmd));
@@ -985,7 +990,7 @@ hdc_command(sc, cmd)
 	  haveLock = 0;
 	}
 
-	if (sc->sc_status != DKC_ST_DONE|DKC_TC_SUCCESS) {
+	if (sc->sc_status != (DKC_ST_DONE|DKC_TC_SUCCESS)) {
 		printf ("command 0x%x completed with status 0x%x\n",
 			cmd, sc->sc_status);
 		return (-1);
@@ -1007,13 +1012,15 @@ hdc_reset(sc)
 	sc->sc_dkc->dkc_cmd = DKC_CMD_RESET;	/* issue RESET command */
 	hdc_readregs(sc);			/* read the status registers */
 	sc->sc_status = sc->sc_dkc->dkc_stat;
-	if (sc->sc_status != DKC_ST_DONE|DKC_TC_SUCCESS) {
+	if (sc->sc_status != (DKC_ST_DONE|DKC_TC_SUCCESS)) {
 		printf ("RESET command completed with status 0x%x\n",
 			sc->sc_status);
 		return (-1);
 	}
 	return (0);
 }
+
+int hdc_rxselect(struct hdcsoftc *, int);
 
 int
 hdc_rxselect(sc, unit)
@@ -1045,11 +1052,11 @@ hdc_rxselect(sc, unit)
 	 */
 	error = hdc_command (sc, DKC_CMD_DRSEL_RX33 | unit);
 
-	if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 0)) {
+	if ((error != 0) || ((q->udc_dstat & UDC_DS_READY) == 0)) {
 	  printf("\nfloppy-drive not ready (new floppy inserted?)\n\n");
 	  p->udc_rtcnt &= ~UDC_RC_INVRDY;	/* clear INVRDY-flag */
 	  error = hdc_command(sc, DKC_CMD_DRSEL_RX33 | unit);
-	  if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 0)) {
+	  if ((error != 0) || ((q->udc_dstat & UDC_DS_READY) == 0)) {
 	    printf("diskette not ready(1): %x/%x\n", error, q->udc_dstat);
 	    printf("floppy-drive offline?\n");
 	    return (-1);
@@ -1060,7 +1067,7 @@ hdc_rxselect(sc, unit)
 	  else						    /* else */
 	    error = hdc_command(sc, DKC_CMD_STEPOUT_FDD);  /* step outwards */
 
-	  if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 1)) {
+	  if ((error != 0) || ((q->udc_dstat & UDC_DS_READY) == UDC_DS_READY)) {
 	    printf("diskette not ready(2): %x/%x\n", error, q->udc_dstat);
 	    printf("No floppy inserted or drive offline\n");
 	    /* return (-1); */
@@ -1068,7 +1075,7 @@ hdc_rxselect(sc, unit)
 
 	  p->udc_rtcnt |= UDC_RC_INVRDY;
 	  error = hdc_command(sc, DKC_CMD_DRSEL_RX33 | unit);
-	  if ((error != 0) || (q->udc_dstat & UDC_DS_READY == 0)) {
+	  if ((error != 0) || ((q->udc_dstat & UDC_DS_READY) == 0)) {
 	    printf("diskette not ready(3): %x/%x\n", error, q->udc_dstat);
 	    printf("no floppy inserted or floppy-door open\n");
 	    return(-1);
@@ -1081,13 +1088,14 @@ hdc_rxselect(sc, unit)
 	return (error);
 }
 
+int hdc_rdselect (struct hdcsoftc *, int);
+
 int
 hdc_rdselect(sc, unit)
 	struct hdcsoftc *sc;
 	int unit;
 {
 	register struct hdc9224_UDCreg *p = &sc->sc_creg;
-	register struct hdc9224_UDCreg *q = &sc->sc_sreg;
 	int error;
 
 	/*

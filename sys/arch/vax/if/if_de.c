@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.29 1998/01/24 14:17:04 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.30 1998/04/13 12:19:23 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -454,9 +454,10 @@ deintr(unit)
 					printf("de%d: oerror, flags=%s ",
 					    unit, bitmask_snprintf(rp->r_flags,
 					    XFLG_BITS, bits, sizeof(bits)));
-					printf("tdrerr%s (len=%d)\n",
-					    rp->r_tdrerr, XERR_BITS,
-					    bits, sizeof(bits));
+					printf("tdrerr=%s (len=%d)\n",
+					    bitmask_snprintf(rp->r_tdrerr,
+					    XERR_BITS, bits, sizeof(bits)),
+					    rp->r_slen);
 				}
 			} else if (rp->r_flags & XFLG_ONE) {
 				/* one collision */

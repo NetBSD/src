@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.5 1998/03/21 10:02:40 ragge Exp $	*/
+/*	$NetBSD: qd.c,v 1.6 1998/04/13 12:15:56 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -235,9 +235,9 @@ int QDlast_DMAtype;             /* type of the last DMA operation */
  */
 #define TOY ((time.tv_sec * 100) + (time.tv_usec / 10000))
 
-int qdprobe();
-int qdattach();
-int qdopen();
+void qd_attach __P((struct device *, struct device *, void *));
+static int qd_match __P((struct device *, struct cfdata *, void *));
+
 static void qddint(int);			/* DMA gate array intrpt service */
 static void qdaint(int);			/* Dragon ADDER intrpt service */
 static void qdiint(int);
@@ -323,9 +323,19 @@ extern	char *q_special[];
  * virtual console support.
  */
 extern struct cdevsw *consops;
-int qdcnputc();
-int qdcngetc();
-int qdpoll();
+cons_decl(qd);
+cdev_decl(qd);
+void setup_dragon __P((int));
+void init_shared __P((int));
+void clear_qd_screen __P((int));
+void ldfont __P((int));
+void ldcursor __P((int, short *));
+void setup_input __P((int));
+void blitc __P((int, u_char));
+void scroll_up __P((volatile struct adder *));
+void write_ID __P((volatile struct adder *, short, short));
+int wait_status __P((volatile struct adder *, int));
+void led_control __P((int, int, int));
 void qdstart(struct tty *);
 int qdpolling = 0;
 
@@ -356,8 +366,6 @@ struct q_keyboard {
  */
 void *qd_ubaio;
 
-int qdcninit(struct consdev *);
-
 /* This is the QDSS unit 0 CSR.  It is hard-coded in here so that the 
  * QDSS can be used as the console.  The console routines don't get
  * any config info.  The ROM also autodetects at this address, so
@@ -384,6 +392,9 @@ qdcnprobe(cndev)
 
         cndev->cn_pri = CN_DEAD;
    
+	if (mfpr(PR_MAPEN) == 0)
+		return; /* Cannot use qd if vm system is OFF */
+
         /* Make sure we're running on a system that can have a QDSS */
         if (vax_boardtype == VAX_BTYP_630)  {
                 /*
@@ -438,13 +449,12 @@ qdcnprobe(cndev)
 /*
  * Init QDSS as console (before probe routine)
  */
-int
+void
 qdcninit(cndev)
         struct  consdev *cndev;
 {
 	caddr_t phys_adr;		/* physical QDSS base adrs */
 	u_int mapix;			/* index into QVmap[] array */
-	u_short *devptr;		/* vitual device space */
         int unit;
 
         /* qdaddr must point to CSR for this unit! */
@@ -522,12 +532,12 @@ qdcninit(cndev)
 static int
 qd_match(parent, match, aux)
         struct device *parent;
-        void *match, *aux;
+	struct cfdata *match;
+        void *aux;
 {
         struct uba_attach_args *ua = aux;
         struct uba_softc *uh = (void *)parent;
         register int *reg = (int *)(ua->ua_addr);
-        register int br, cvec;
 	register int unit;
 	volatile struct dga *dga;       /* pointer to gate array structure */
 	int vector;
@@ -769,6 +779,7 @@ struct cfattach qd_ca = {
 
    
 /*ARGSUSED*/
+int
 qdopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -855,6 +866,7 @@ qdopen(dev, flag, mode, p)
 } /* qdopen */
 
 /*ARGSUSED*/
+int
 qdclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -1045,6 +1057,7 @@ qdclose(dev, flag, mode, p)
 
 } /* qdclose */
 
+int
 qdioctl(dev, cmd, datap, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -1471,6 +1484,7 @@ qdioctl(dev, cmd, datap, flags, p)
 } /* qdioctl */
 
 
+int
 qdpoll(dev, events, p)
         dev_t dev;
         int events;
@@ -1553,6 +1567,7 @@ qdpoll(dev, events, p)
 void qd_strategy(struct buf *bp);
 
 /*ARGSUSED*/
+int
 qdwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -1581,6 +1596,7 @@ qdwrite(dev, uio, flag)
 }
 
 /*ARGSUSED*/
+int
 qdread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -1616,7 +1632,8 @@ qdread(dev, uio, flag)
 
 int ubasetup __P((struct uba_softc *, struct buf *, int));
 
-void qd_strategy(bp)
+void
+qd_strategy(bp)
 	register struct buf *bp;
 {
 	volatile register struct dga *dga;
@@ -1635,11 +1652,11 @@ void qd_strategy(bp)
 	/*
 	* init pointers 
 	*/
+	dga = (struct dga *) qdmap[unit].dga;
 	if ((QBAreg = ubasetup(uh, bp, 0)) == 0) {
 		printf("qd%d: qd_strategy: QBA setup error\n", unit);
 		goto STRAT_ERR;
 	}
-	dga = (struct dga *) qdmap[unit].dga;
 	s = spl5();
 	qdflags[unit].user_dma = -1;
 	dga->csr |= DMA_IE;
@@ -1752,7 +1769,7 @@ qdstop(tp, flag)
 /*
  *  Output a character to the QDSS screen
  */
-
+void
 blitc(unit, chr)
 	int unit;
 	u_char chr;
@@ -1952,8 +1969,6 @@ blitc(unit, chr)
 	}
 
 } /* blitc */
-
-qdreset() { }
 
 /*
  *  INTERRUPT SERVICE ROUTINES
@@ -2245,7 +2260,6 @@ qdiint(qd)
 	volatile struct dga *dga;
 	volatile struct duart *duart;
 	struct mouse_report *new_rep;
-	struct uba_device *ui;
 	struct tty *tp;
 	u_short chr;
 	u_short status;
@@ -2741,10 +2755,10 @@ GET_TBUTTON:
 			case LOCK:
 				q_keyboard.lock ^= 0xffff;	/* toggle */
 				if (q_keyboard.lock)
-					(void)led_control(qd, LK_LED_ENABLE,
+					led_control(qd, LK_LED_ENABLE,
 							  LK_LED_LOCK);
 				else
-					(void)led_control(qd, LK_LED_DISABLE,
+					led_control(qd, LK_LED_DISABLE,
 							  LK_LED_LOCK);
 				return;
 
@@ -2831,6 +2845,7 @@ GET_TBUTTON:
  *   bitmap
  *
  */
+void
 clear_qd_screen(unit)
 	int unit;
 {
@@ -2863,6 +2878,7 @@ clear_qd_screen(unit)
 /*
  *  kernel console output to the glass tty
  */
+void
 qdcnputc(dev, chr)
         dev_t dev;
 	int chr;
@@ -2883,6 +2899,7 @@ qdcnputc(dev, chr)
 /*
  *  load the mouse cursor's template RAM bitmap
  */
+void
 ldcursor(unit, bitmap)
 	int unit;
         short *bitmap;
@@ -2917,6 +2934,7 @@ ldcursor(unit, bitmap)
 /*
  *  Put the console font in the QDSS off-screen memory
  */
+void
 ldfont(unit)
 	int unit;
 {
@@ -3047,6 +3065,7 @@ ldfont(unit)
  * Disable or enable polling.  This is used when entering or leaving the 
  * kernel debugger.
  */
+void
 qdcnpollc(dev, onoff)
         dev_t dev;
         int onoff;
@@ -3058,6 +3077,7 @@ qdcnpollc(dev, onoff)
 /*
  *  Get a character from the LK201 (polled)
  */
+int
 qdcngetc(dev)
         dev_t dev;
 {
@@ -3097,9 +3117,9 @@ LOOP:
 	case LOCK:
 		q_keyboard.lock ^= 0xffff;	/* toggle */
 		if (q_keyboard.lock)
-			(void)led_control(0, LK_LED_ENABLE, LK_LED_LOCK);
+			led_control(0, LK_LED_ENABLE, LK_LED_LOCK);
 		else
-			(void)led_control(0, LK_LED_DISABLE, LK_LED_LOCK);
+			led_control(0, LK_LED_DISABLE, LK_LED_LOCK);
 		goto LOOP;
 
 	case SHIFT:
@@ -3155,6 +3175,7 @@ LOOP:
 /*
  *  led_control()... twiddle LK-201 LED's
  */
+void
 led_control(unit, cmd, led_mask)
 	int unit, cmd, led_mask;
 {
@@ -3175,15 +3196,14 @@ led_control(unit, cmd, led_mask)
 			break;
 		}
 	}
-	if (i == 0)
-		return(BAD);
-	return(GOOD);
+	return;
 
 } /* led_control */
 
 /*
  *  scroll_up()... move the screen up one character height
  */
+void
 scroll_up(adder)
 	volatile struct adder *adder;
 {
@@ -3246,6 +3266,7 @@ scroll_up(adder)
 /*
  *  init shared memory pointers and structures
  */
+void
 init_shared(unit)
         int unit;
 {
@@ -3308,6 +3329,7 @@ init_shared(unit)
 /*
  * init the ADDER, VIPER, bitmaps, & color map
  */
+void
 setup_dragon(unit)
 	int unit;
 {
@@ -3562,6 +3584,7 @@ setup_dragon(unit)
 /*
  * Init the DUART and set defaults in input
  */
+void
 setup_input(unit)
 	int unit;
 {
@@ -3728,6 +3751,7 @@ OUT:
  *		      vertical sync status bit
  *		GOOD otherwise
  */
+int
 wait_status(adder, mask)
 	volatile struct adder *adder;
         int mask;
@@ -3750,6 +3774,7 @@ wait_status(adder, mask)
 /*
  * write out onto the ID bus
  */
+void
 write_ID(adder, adrs, data)
         volatile struct adder *adder;
 	short adrs;
