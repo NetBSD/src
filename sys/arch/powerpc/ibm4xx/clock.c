@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 2002/08/06 06:14:36 chs Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 2002/08/23 11:40:07 scw Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -151,9 +151,6 @@ calc_delayconst(void)
 
 	ticks_per_sec = processor_freq;
 	ns_per_tick = 1000000000 / ticks_per_sec;
-
-	/* Make sure that timers run at CPU frequency */
-	mtdcr(DCR_CPC0_CR1, mfdcr(DCR_CPC0_CR1) & ~CPC0_CR1_CETE);
 }
 
 /*
