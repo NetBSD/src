@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.25 2000/06/12 23:38:03 matt Exp $ */
+/* $NetBSD: boot.c,v 1.26 2001/07/22 15:17:31 wiz Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,12 +143,12 @@ main(long fd)
 	/*
 	 * Fill in the bootinfo for the kernel.
 	 */
-	bzero(&bootinfo_v1, sizeof(bootinfo_v1));
+	memset(&bootinfo_v1, 0, sizeof(bootinfo_v1));
 	bootinfo_v1.ssym = marks[MARK_SYM];
 	bootinfo_v1.esym = marks[MARK_END];
-	bcopy(name, bootinfo_v1.booted_kernel,
+	memcpy(bootinfo_v1.booted_kernel, name,
 	    sizeof(bootinfo_v1.booted_kernel));
-	bcopy(boot_flags, bootinfo_v1.boot_flags,
+	memcpy(bootinfo_v1.boot_flags, boot_flags,
 	    sizeof(bootinfo_v1.boot_flags));
 	bootinfo_v1.hwrpb = (void *)HWRPB_ADDR;
 	bootinfo_v1.hwrpbsize = ((struct rpb *)HWRPB_ADDR)->rpb_size;
