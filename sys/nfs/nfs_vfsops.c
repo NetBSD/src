@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.81 1999/02/26 23:44:47 wrstuden Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.82 1999/03/05 07:27:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -177,15 +177,15 @@ nfs_statfs(mp, sbp, p)
 	if (v3) {
 		sbp->f_bsize = NFS_FABLKSIZE;
 		fxdr_hyper(&sfp->sf_tbytes, &tquad);
-		sbp->f_blocks = (long)(tquad / ((u_quad_t)NFS_FABLKSIZE));
+		sbp->f_blocks = (long)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
 		fxdr_hyper(&sfp->sf_fbytes, &tquad);
-		sbp->f_bfree = (long)(tquad / ((u_quad_t)NFS_FABLKSIZE));
+		sbp->f_bfree = (long)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
 		fxdr_hyper(&sfp->sf_abytes, &tquad);
-		sbp->f_bavail = (long)(tquad / ((u_quad_t)NFS_FABLKSIZE));
-		sbp->f_files = (fxdr_unsigned(int32_t,
-		    sfp->sf_tfiles.nfsuquad[1]) & 0x7fffffff);
-		sbp->f_ffree = (fxdr_unsigned(int32_t,
-		    sfp->sf_ffiles.nfsuquad[1]) & 0x7fffffff);
+		sbp->f_bavail = (long)((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
+		fxdr_hyper(&sfp->sf_tfiles, &tquad);
+		sbp->f_files = (long)tquad;
+		fxdr_hyper(&sfp->sf_ffiles, &tquad);
+		sbp->f_ffree = (long)tquad;
 	} else {
 		sbp->f_bsize = fxdr_unsigned(int32_t, sfp->sf_bsize);
 		sbp->f_blocks = fxdr_unsigned(int32_t, sfp->sf_blocks);
