@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.3 2002/03/18 10:01:12 yamt Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.4 2002/03/25 19:10:45 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -297,6 +297,7 @@ _FUNCNAME(wcsrtombs_priv)(_ENCODING_INFO * __restrict ei, char * __restrict s,
 				_FUNCNAME(init_state)(ei, psenc);
 			}
 			pwcs0 = 0;
+			cnt += siz - 1; /* don't include terminating null */
 			break;
 		}
 		if (s)
