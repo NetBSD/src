@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplayvar.h,v 1.4 1998/07/24 16:12:18 drochner Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.5 1999/02/12 11:25:24 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -82,7 +82,7 @@ void	pcdisplay_cursor __P((void *, int, int, int));
 #if 0
 unsigned int pcdisplay_mapchar_simple __P((void *, int));
 #endif
-unsigned int pcdisplay_mapchar __P((void *, int));
+int pcdisplay_mapchar __P((void *, int, unsigned int *));
 void	pcdisplay_putchar __P((void *, int, int, u_int, long));
 void	pcdisplay_copycols __P((void *, int, int, int,int));
 void	pcdisplay_erasecols __P((void *, int, int, int, long));

@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.12 1999/02/02 18:37:21 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.13 1999/02/12 11:25:24 drochner Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,7 +67,7 @@ struct cfattach smg_ca = {
 };
 
 static void	smg_cursor __P((void *, int, int, int));
-unsigned int	smg_mapchar __P((void *, int));
+static int	smg_mapchar __P((void *, int, unsigned int *));
 static void	smg_putchar __P((void *, int, int, u_int, long));
 static void	smg_copycols __P((void *, int, int, int,int));
 static void	smg_erasecols __P((void *, int, int, int, long));
@@ -204,12 +204,16 @@ smg_cursor(id, on, row, col)
 }
 
 unsigned int
-smg_mapchar(id, uni)
+smg_mapchar(id, uni, index)
 	void *id;
 	int uni;
+	unsigned int *index;
 {
-	if (uni < 256)
-		return (uni);
+	if (uni < 256) {
+		*index = uni;
+		return (5);
+	}
+	*index = ' ';
 	return (0);
 }
 

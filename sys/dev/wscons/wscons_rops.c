@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_rops.c,v 1.4 1998/06/26 21:12:49 drochner Exp $ */
+/* $NetBSD: wscons_rops.c,v 1.5 1999/02/12 11:25:23 drochner Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -94,13 +94,18 @@ rcons_cursor(id, on, row, col)
 	rc->rc_bits ^= RC_CURSOR;
 }
 
-unsigned int
-rcons_mapchar(id, uni)
+int
+rcons_mapchar(id, uni, index)
 	void *id;
 	int uni;
+	unsigned int *index;
 {
-	if (uni < 128)
-		return (uni);
+
+	if (uni < 128) {
+		*index = uni;
+		return (5);
+	}
+	*index = ' ';
 	return (0);
 }
 
