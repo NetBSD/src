@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.102 2004/04/27 15:35:55 heas Exp $
+# $NetBSD: mi,v 1.103 2004/05/18 05:38:18 christos Exp $
 ./etc/mtree/set.misc				misc-sys-root
 ./usr/share/dict/README				misc-reference-share	share
 ./usr/share/dict/eign				misc-reference-share	share
@@ -360,25 +360,25 @@
 ./usr/share/doc/smm/08.sendmailop/op.me		misc-smm-doc		sendmail,doc
 ./usr/share/doc/smm/09.sendmail/Makefile	misc-smm-doc		obsolete
 ./usr/share/doc/smm/09.sendmail/intro.me	misc-smm-doc		obsolete
-./usr/share/doc/smm/10.named/00macs.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/00title.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/Makefile		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/ack.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/build.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/files.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/intro.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/manage.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/named.boot.cache	misc-smm-doc		doc
-./usr/share/doc/smm/10.named/named.boot.primary	misc-smm-doc		doc
-./usr/share/doc/smm/10.named/named.boot.secondary	misc-smm-doc		doc
-./usr/share/doc/smm/10.named/named.local	misc-smm-doc		doc
-./usr/share/doc/smm/10.named/ns.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/resolv.conf	misc-smm-doc		doc
-./usr/share/doc/smm/10.named/root.cache		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/setup.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/types.me		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/ucbhosts		misc-smm-doc		doc
-./usr/share/doc/smm/10.named/ucbhosts.rev	misc-smm-doc		doc
+./usr/share/doc/smm/10.named/00macs.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/00title.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/Makefile		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/ack.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/build.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/files.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/intro.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/manage.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/named.boot.cache	misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/named.boot.primary	misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/named.boot.secondary	misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/named.local	misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/ns.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/resolv.conf	misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/root.cache		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/setup.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/types.me		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/ucbhosts		misc-smm-doc		obsolete
+./usr/share/doc/smm/10.named/ucbhosts.rev	misc-smm-doc		obsolete
 ./usr/share/doc/smm/11.timedop/Makefile		misc-smm-doc		doc
 ./usr/share/doc/smm/11.timedop/timed.ms		misc-smm-doc		doc
 ./usr/share/doc/smm/12.timed/Makefile		misc-smm-doc		doc
@@ -531,7 +531,7 @@
 ./usr/share/examples/mount_portal/sysctlfs.sh	misc-sys-examples	share
 ./usr/share/examples/mount_portal/tcp.1		misc-sys-examples	share
 ./usr/share/examples/mount_portal/tcp.1.conf	misc-sys-examples	share
-./usr/share/examples/named/named.conf		misc-bind-examples	share
+./usr/share/examples/named/named.conf		misc-bind-examples	obsolete
 ./usr/share/examples/openssl/CA.pl		misc-crypto-examples	crypto,share
 ./usr/share/examples/openssl/CA.sh		misc-crypto-examples	crypto,share
 ./usr/share/examples/openssl/der_chop		misc-crypto-examples	crypto,share
