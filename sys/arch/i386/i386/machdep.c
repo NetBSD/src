@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.26 2001/06/24 19:29:52 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.27 2001/07/19 08:57:28 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include "opt_cpureset_delay.h"
 #include "opt_compat_svr4.h"
 #include "opt_realmem.h"
+#include "opt_compat_mach.h"	/* need to get the right segment def */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2184,6 +2185,9 @@ extern vector *IDTVEC(exceptions)[];
 #ifdef COMPAT_SVR4
 extern vector IDTVEC(svr4_fasttrap);
 #endif /* COMPAT_SVR4 */
+#ifdef COMPAT_MACH
+extern vector IDTVEC(mach_trap);
+#endif
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
 
@@ -2682,10 +2686,15 @@ init386(first_avail)
 	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
 	    0);
 #endif
+#ifdef GMACHCALLS_SEL
+	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
+	    SDT_SYS386CGT, SEL_UPL);
+#endif
 
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
 	    SDT_SYS386CGT, SEL_UPL);
+
 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
 	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
 	ldt[LSOL26CALLS_SEL] = ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];

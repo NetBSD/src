@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.15 2001/05/26 22:13:10 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.16 2001/07/19 08:57:30 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -232,7 +232,8 @@ struct i386_soft_intr {
 
 #define	i386_softintr_lock(si, s)					\
 do {									\
-	(s) = splhigh();						\
+	/* XXX splhigh braindamage on i386 */				\
+	(s) = splserial();						\
 } while (/*CONSTCOND*/ 0)
 
 #define	i386_softintr_unlock(si, s)					\
