@@ -1,16 +1,21 @@
-#	$NetBSD: Makefile,v 1.1 2002/01/22 16:55:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2002/09/19 01:58:07 lukem Exp $
 
-TOP=	${.CURDIR}/../../../..
+NOMAN=	# defined
+
+.include <bsd.own.mk>
+
+TOP=	${NETBSDSRCDIR}/gnu
+DIST=	${TOP}/dist/toolchain
 
 PROG=	psim
 SRCS=	main.c
 CPPFLAGS+=	-I${SIMDIR} -I${.CURDIR}/../../arch/powerpc
-NOMAN=
 
 LDADD+=	-lintl
 DPADD+=	${LIBINTL}
 
 .include <bsd.prog.mk>
+.include "../../../Makefile.inc"
 
 SIMDIR!=	cd ${TOP}/usr.bin/sim/ppc && ${PRINTOBJDIR}
 
