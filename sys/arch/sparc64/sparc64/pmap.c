@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.129 2002/10/01 20:41:22 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.130 2002/11/11 10:15:46 chs Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1877,15 +1877,6 @@ pmap_enter(pm, va, pa, prot, flags)
 	 */
 	KASSERT(pm != pmap_kernel() || va < INTSTACK || va > EINTSTACK);
 	KASSERT(pm != pmap_kernel() || va < kdata || va > ekdata);
-
-#ifdef DEBUG
-	/* Trap mapping of page zero */
-	if (va == NULL) {
-		prom_printf("pmap_enter: NULL va=%08x pa=%x:%08x\r\n", 
-			    va, (int)(pa>>32), (int)pa);
-		OF_enter();
-	}
-#endif
 
 	/*
 	 * If a mapping at this address already exists, check if we're
