@@ -1,21 +1,15 @@
-#	$NetBSD: Makefile,v 1.7 1997/04/17 07:41:05 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 1997/06/01 03:39:29 mrg Exp $
 
-R=	..
-.PATH:	${.CURDIR}/${R}
-PROG=	bootxx
-SRCS=	srt0.S bootxx.c promdev.c dvma.c
-KOBJS=	__main.o bzero.o urem.o udiv.o
-NOMAN=	1
+PROG=		bootxx
+PROGSOURCE=	bootxx.c
+
+.include "../Makefile.buildboot"
+
+CPPFLAGS+=	-DBOOTXX
 STRIPFLAG=
-BINDIR=	/usr/mdec
-CFLAGS= -DBOOTXX
 
-LIBS!=	cd ${.CURDIR}/${R}; ${MAKE} sadep
-KOBJDIR!= cd ${.CURDIR}/${R}; ${MAKE} kernlibdir
-_KOBJS=${KOBJS:S,^,${KOBJDIR}/,g}
-
-${PROG}:${OBJS} ${_KOBJS} ${LIBS}
-	${LD} -o ${.TARGET} -N -T ${RELOC} -e start ${OBJS} ${_KOBJS} ${LIBS}
+${PROG}: ${OBJS} ${LIBSA} ${LIBKERN}
+	${LD} -o ${.TARGET} -N -T ${RELOC} -e start ${OBJS} ${LIBSA} ${LIBKERN}
 	@size ${.TARGET}
 
 .include <bsd.prog.mk>

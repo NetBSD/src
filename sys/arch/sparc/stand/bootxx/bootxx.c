@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 1995/09/27 09:03:13 pk Exp $ */
+/*	$NetBSD: bootxx.c,v 1.1 1997/06/01 03:39:31 mrg Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -34,8 +34,9 @@
 #include <sys/time.h>
 #include <a.out.h>
 
-#include <stand.h>
-#include "promdev.h"
+#include <lib/libsa/stand.h>
+
+#include <sparc/stand/common/promdev.h>
 
 int debug;
 int netif_debug;

@@ -1,0 +1,40 @@
+#	$NetBSD: Makefile.buildboot,v 1.1 1997/06/01 03:39:04 mrg Exp $
+
+S=	${.CURDIR}/../../../..
+
+.PATH: ${.CURDIR}/../common
+
+COMMONSOURCE=	srt0.S promdev.c dvma.c
+
+SRCS=		${COMMONSOURCE} ${PROGSOURCE}
+NOMAN=
+BINMODE=	444
+
+RELOC_SUN4=	0x240000
+RELOC_SUN4C=	0x340000
+RELOC_SUN4M=	0x440000
+
+# Note: a `RELOC' value of 0x340000 seems to work on most machines
+RELOC?=		${RELOC_SUN4C}
+
+CPPFLAGS+=	-DSTANDALONE -DRELOC=${RELOC} -DSUN4 -DSUN4C -DSUN_BOOTPARAMS
+
+CPPFLAGS+=	-I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CFLAGS=		-O2
+
+### find out what to use for libkern
+KERN_AS=	library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=	${KERNLIB}
+
+.ifdef INCLUDE_LIBZ
+### find out what to use for libz
+Z_AS=		library
+.include "${S}/lib/libz/Makefile.inc"
+LIBZ=		${ZLIB}
+.endif
+
+### find out what to use for libsa
+SA_AS=		library
+.include "${S}/lib/libsa/Makefile.inc"
+LIBSA=		${SALIB}

@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.16 1995/11/14 15:04:01 pk Exp $ */
+/*	$NetBSD: promdev.c,v 1.1 1997/06/01 03:39:38 mrg Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -41,10 +41,9 @@
 #include <machine/oldmon.h>
 #include <machine/ctlreg.h>
 
-#include <stand.h>
+#include <lib/libsa/stand.h>
 
-#include "promdev.h"
-
+#include <sparc/stand/common/promdev.h>
 
 int	obp_close __P((struct open_file *));
 int	obp_strategy __P((void *, int, daddr_t, size_t, void *, size_t *));
