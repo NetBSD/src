@@ -1,4 +1,4 @@
-.\"	$NetBSD: ae.4,v 1.2 1995/08/18 15:49:58 chopps Exp $
+.\"	$NetBSD: ae.4,v 1.3 1995/10/07 18:09:11 chopps Exp $
 .\"
 .\" Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
 .\" Copyright (c) 1992, 1993
@@ -81,19 +81,18 @@ UTP, also known as twisted pair
 .Pp
 The card uses an autoselect between UTP and BNC, so it uses UTP when an
 active UTP line is connected or otherwise BNC.
-.\" support not yet ready
-.\" To choose an alternate port, use the following flag combinations with
-.\" .Xr ifconfig 8
-.\" or in your /etc/hostname.ae? file.
-.\" .Pp
-.\" .Bl -tag -width xxxxxxxxxxxxxxxxxxxx
-.\" .It -link0
-.\" Use the autoselect between UTP and BNC (default).
-.\" .It \ link0 -link1
-.\" Use the BNC port.
-.\" .It \ link0 \ link1
-.\" Use the UTP port.
-.\" .El
+To choose an alternate port, use the following flag combinations with
+.Xr ifconfig 8
+or in your /etc/hostname.ae? file.
+.Pp
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxx
+.It -link0
+Use the autoselect between UTP and BNC (default).
+.It \ link0 -link1
+Use the BNC port.
+.It \ link0 \ link1
+Use the UTP port.
+.El
 .Pp
 .Sh HARDWARE
 The
