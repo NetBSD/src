@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.13 2003/10/23 17:41:59 fvdl Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.14 2003/11/02 10:31:06 wiz Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2218,7 +2218,7 @@ struct bge_ring_data {
 /*
  * Number of DMA segments in a TxCB. Note that this is carefully
  * chosen to make the total struct size an even power of two. It's
- * critical that no TxCB be split across a page boundry since
+ * critical that no TxCB be split across a page boundary since
  * no attempt is made to allocate physically contiguous memory.
  * 
  */
