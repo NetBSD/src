@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL-FLOPPY,v 1.12 1998/07/01 09:14:02 ross Exp $
+# $NetBSD: INSTALL-FLOPPY,v 1.13 1998/08/11 00:28:53 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -107,7 +107,14 @@ pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
+tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+
+# MII/PHY support
+inphy*	at	mii? phy ?
+nsphy*	at	mii? phy ?
+qsphy*	at	mii? phy ? 
+tlphy*	at	mii? phy ?
 
 # ISA/EISA bus support
 isa*	at	pceb?
