@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.12 2003/08/07 11:14:09 agc Exp $	*/
+/*	$NetBSD: io.c,v 1.13 2003/10/16 06:51:22 itojun Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -68,7 +68,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.12 2003/08/07 11:14:09 agc Exp $");
+__RCSID("$NetBSD: io.c,v 1.13 2003/10/16 06:51:22 itojun Exp $");
 #endif
 #endif				/* not lint */
 
@@ -390,6 +390,7 @@ fill_buffer(void)
 	char   *p;
 	int     i;
 	FILE   *f = input;
+	char   *n;
 
 	if (bp_save != 0) {	/* there is a partly filled input buffer left */
 		buf_ptr = bp_save;	/* dont read anything, just switch
@@ -404,9 +405,10 @@ fill_buffer(void)
 		if (p >= in_buffer_limit) {
 			int     size = (in_buffer_limit - in_buffer) * 2 + 10;
 			int     offset = p - in_buffer;
-			in_buffer = (char *) realloc(in_buffer, size);
-			if (in_buffer == 0)
+			n = (char *) realloc(in_buffer, size);
+			if (n == 0)
 				errx(1, "input line too long");
+			in_buffer = n;
 			p = in_buffer + offset;
 			in_buffer_limit = in_buffer + size - 2;
 		}

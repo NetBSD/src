@@ -1,4 +1,4 @@
-/*	$NetBSD: col.c,v 1.12 2003/08/07 11:13:23 agc Exp $	*/
+/*	$NetBSD: col.c,v 1.13 2003/10/16 06:45:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)col.c	8.5 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: col.c,v 1.12 2003/08/07 11:13:23 agc Exp $");
+__RCSID("$NetBSD: col.c,v 1.13 2003/10/16 06:45:22 itojun Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -517,9 +517,11 @@ xmalloc(p, size)
 	void *p;
 	size_t size;
 {
+	void *q;
 
-	if (!(p = (void *)realloc(p, size)))
+	if (!(q = (void *)realloc(p, size)))
 		err(EXIT_FAILURE, "realloc");
+	p = q;
 	return (p);
 }
 

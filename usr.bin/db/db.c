@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.10 2003/06/23 20:02:54 aymeric Exp $	*/
+/*	$NetBSD: db.c,v 1.11 2003/10/16 06:47:22 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.10 2003/06/23 20:02:54 aymeric Exp $");
+__RCSID("$NetBSD: db.c,v 1.11 2003/10/16 06:47:22 itojun Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -536,13 +536,15 @@ int
 encode_data(size_t len, char *data, char **edata)
 {
 	static char	*buf = NULL;
+	char		*nbuf;
 	static size_t	buflen = 0;
 	size_t		elen;
 
 	elen = 1 + (len * 4);
 	if (elen > buflen) {
-		if ((buf = realloc(buf, elen)) == NULL)
+		if ((nbuf = realloc(buf, elen)) == NULL)
 			err(1, "Cannot allocate encoding buffer");
+		buf = nbuf;
 		buflen = elen;
 	}
 	*edata = buf;
