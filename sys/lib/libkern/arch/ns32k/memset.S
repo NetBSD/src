@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.3 1998/04/03 22:59:29 matthias Exp $	*/
+/*	$NetBSD: memset.S,v 1.3.28.1 2002/01/10 20:00:32 thorpej Exp $	*/
 
 /* 
  * Written by Matthias Pfaller, 1996
@@ -8,7 +8,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: memset.S,v 1.3 1998/04/03 22:59:29 matthias Exp $")
+	RCSID("$NetBSD: memset.S,v 1.3.28.1 2002/01/10 20:00:32 thorpej Exp $")
 # if defined(BZERO)
 	RCSID("$Masqueraded: as bzero $")
 # endif
@@ -109,7 +109,7 @@ KENTRY(bzero, 8)
 	beq	5f
 
 	/*
-	 * Zero out blocks shorter then four bytes.
+	 * Zero out blocks shorter than four bytes.
 	 */
 4:	SETMEMB(-1(r1)[r2:b])
 	acbd	-1,r2,4b
@@ -124,7 +124,7 @@ KENTRY(bzero, 8)
 #endif
 
 	/*
-	 * For blocks smaller then 20 bytes
+	 * For blocks smaller than 20 bytes
 	 * this is faster.
 	 */
 	.align	2

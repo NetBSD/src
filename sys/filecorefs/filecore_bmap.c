@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_bmap.c,v 1.3 1998/10/29 23:18:57 mark Exp $	*/
+/*	$NetBSD: filecore_bmap.c,v 1.3.26.1 2002/01/10 19:59:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -35,6 +35,9 @@
  *
  *	filecore_bmap.c		1.1	1998/6/26
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: filecore_bmap.c,v 1.3.26.1 2002/01/10 19:59:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

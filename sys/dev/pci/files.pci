@@ -1,18 +1,18 @@
-#	$NetBSD: files.pci,v 1.132.2.3 2001/09/13 01:15:53 thorpej Exp $
+#	$NetBSD: files.pci,v 1.132.2.4 2002/01/10 19:56:34 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
-defopt	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
-			PCI_NETBSD_ENABLE_IDE
+defflag	opt_pci.h	PCIVERBOSE PCI_CONFIG_DUMP PCI_NETBSD_CONFIGURE
+defparam opt_pci.h	PCI_NETBSD_ENABLE_IDE
 
-defopt	opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
+defflag	opt_bktr.h	BKTR_430_FX_MODE BKTR_GPIO_ACCESS BKTR_NO_MSP_RESET
+			BKTR_REVERSE_MUTE BKTR_SIS_VIA_MODE BKTR_USE_PLL
+defparam opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 			BKTR_OVERRIDE_MSP BKTR_SYSTEM_DEFAULT
-			BKTR_USE_PLL BKTR_GPIO_ACCESS BKTR_NO_MSP_RESET
-			BKTR_430_FX_MODE BKTR_SIS_VIA_MODE
 
-defopt	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
+defflag	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
 			PCIIDE_CMD0646U_ENABLEUDMA
 
 device	pci {[dev = -1], [function = -1]}
@@ -21,6 +21,7 @@ file	dev/pci/pci.c			pci			needs-flag
 file	dev/pci/pci_map.c		pci
 file	dev/pci/pci_quirks.c		pci
 file	dev/pci/pci_subr.c		pci
+file	dev/pci/pci_usrreq.c		pci
 file	dev/pci/pciconf.c		pci_netbsd_configure
 
 # Cypress 82c693 hyperCache(tm) Stand-Alone PCI Peripheral Controller
@@ -144,6 +145,21 @@ file	dev/pci/siop_pci.c		siop_pci
 attach	iha at pci with iha_pci
 file	dev/pci/iha_pci.c		iha_pci
 
+# Tekram DC-395U/UW/F and DC-315/U SCSI controllers
+device	trm: scsi
+attach	trm at pci
+file	dev/pci/trm.c			trm
+
+# Guillemot Maxi Radio FM 2000 Radio Card
+device	mr: radiodev
+attach	mr at pci
+file	dev/pci/maxiradio.c		mr
+
+# MediaForte SoundForte SF64-PCR Radio card
+#device	sf4r: radiodev, tea5757
+#attach	sf4r at pci
+#file	dev/pci/sf64pcr.c		sf4r
+
 # PCI IDE controllers
 device	pciide {[channel = -1]}: cy82c693, wdc_base, ata, atapi
 attach	pciide at pci
@@ -171,9 +187,13 @@ file	dev/pci/if_fxp_pci.c		fxp_pci
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c		hme_pci
 
+# Sun GEM-network
+attach	gem at pci with gem_pci
+file	dev/pci/if_gem_pci.c		gem_pci
+
 # NE2000-compatible PCI Ethernet cards
 defparam opt_ipkdb.h	IPKDB_NE_PCISLOT	: IPKDB_NE_PCI
-defopt	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE IPKDB_NE_PCISLOT
+defflag	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE IPKDB_NE_PCISLOT
 attach	ne at pci with ne_pci: rtl80x9
 file	dev/pci/if_ne_pci.c		ne_pci | IPKDB_NE_PCI
 
@@ -211,9 +231,10 @@ file	dev/pci/tga.c			tga			needs-flag
 file	dev/pci/tga_conf.c		tga
 file	dev/ic/bt485.c			tga
 file	dev/ic/bt463.c			tga
+file	dev/ic/ibm561.c			tga
 
 # Brooktree Bt848 video capture
-device	bktr: pcibus
+device	bktr: pcibus, radiodev
 attach	bktr at pci
 file	dev/pci/bktr/bktr_audio.c	bktr
 file	dev/pci/bktr/bktr_card.c	bktr
@@ -265,6 +286,11 @@ device	neo: audio, auconv, mulaw, ac97
 attach	neo at pci
 file	dev/pci/neo.c			neo
 
+# ESS Allegro-1 / Maestro3
+device	esa: audio, auconv, mulaw, ac97
+attach	esa at pci
+file	dev/pci/esa.c			esa
+
 # ESS Solo-1 PCI AudioDrive
 device	eso { }: audio, auconv, mulaw, midibus
 attach	eso at pci
@@ -311,6 +337,16 @@ file	dev/pci/opl_yds.c		opl_yds
 attach	mpu at yds with mpu_yds
 file	dev/pci/mpu_yds.c		mpu_yds
 
+# Creative Labs EMU10k1 (SBLive! series and PCI512)
+device	emuxki: audio, auconv, mulaw, ac97
+attach	emuxki at pci
+file	dev/pci/emuxki.c		emuxki
+
+# Trident 4DWAVE AC'97 audio (including SiS 7018,ALi M5451)
+device	autri: audio, auconv, mulaw, ac97, midibus
+attach	autri at pci
+file	dev/pci/autri.c			autri
+
 # SMC EPIC/100 Fast Ethernet on PCI
 attach	epic at pci with epic_pci
 file	dev/pci/if_epic_pci.c		epic_pci
@@ -326,7 +362,7 @@ attach	com at puc with com_puc
 file	dev/pci/com_puc.c		com_puc
 
 # Console device support for puc drivers
-defopt	opt_puccn.h			PUCCN
+defflag	opt_puccn.h	PUCCN
 file	dev/pci/puccn.c			puccn
 
 # XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
@@ -348,6 +384,8 @@ file	dev/pci/ohci_pci.c		ohci_pci
 # EHCI USB controller
 attach	ehci at pci with ehci_pci
 file	dev/pci/ehci_pci.c		ehci_pci
+
+file	dev/pci/usb_pci.c		ehci_pci | ehci_cardbus
 
 # OHCI IEEE 1394 controller
 attach	fwohci at pci with fwohci_pci
@@ -372,10 +410,28 @@ device	gsip: ether, ifnet, arp, mii, mii_bitbang
 attach	gsip at pci
 file	dev/pci/if_gsip.c		gsip
 
+# Level One LXT-1001 Gigabit Ethernet
+device	glxt: ether, ifnet, arp, mii
+attach	glxt at pci
+file	dev/pci/if_glxt.c		glxt
+
 # Sundance Tech./Tamarack TC9021 Gigabit Ethernet
 device	stge: ether, ifnet, arp, mii, mii_bitbang
 attach	stge at pci
 file	dev/pci/if_stge.c		stge
+
+# SysKonnect SKNET-GE Gigabit Ethernet  
+device	skgec { port = -1 }
+attach	skgec at pci
+file	dev/pci/if_skge.c		skgec
+
+device	skge: ether, ifnet, arp, mii
+attach	skge at skgec   
+
+# Intel i8254x Gigabit Ethernet
+device	wm: ether, ifnet, arp, mii, mii_bitbang
+attach	wm at pci
+file	dev/pci/if_wm.c			wm
 
 # Realtek 8129/8139 Ethernet controllers
 attach	rtk at pci with rtk_pci
@@ -383,7 +439,7 @@ file	dev/pci/if_rtk_pci.c		rtk_pci
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 attach	tlp at pci with tlp_pci
-defopt	opt_tlp.h	TLP_MATCH_21040 TLP_MATCH_21041
+defflag	opt_tlp.h	TLP_MATCH_21040 TLP_MATCH_21041
 			TLP_MATCH_21140 TLP_MATCH_21142
 
 file	dev/pci/if_tlp_pci.c		tlp_pci
@@ -443,13 +499,27 @@ file	dev/pci/hifn7751.c		hifn
 attach	an at pci with an_pci
 file	dev/pci/if_an_pci.c		an_pci
 
+# Intersil Prism2.5 Mini-PCI
+attach	wi at pci with wi_pci
+file	dev/pci/if_wi_pci.c		wi_pci
 
 # ISDN devices
 attach	isic at pci with isic_pci
 file	dev/pci/isic_pci.c		isic_pci
 
-defopt	opt_isicpci.h	ISICPCI_ELSA_QS1PCI ISICPCI_AVM_A1
+defflag	opt_isicpci.h	ISICPCI_ELSA_QS1PCI ISICPCI_AVM_A1
 
 file	dev/pci/isic_pci_elsa_qs1p.c	isic_pci
 file	dev/pci/isic_pci_avm_fritz_pci.c isic_pci
 
+# IrDA devices
+#  Toshiba Fast Infrared Type O IrDA driver
+device oboe: irbus, irdasir
+attach oboe at pci
+file	dev/pci/oboe.c			oboe
+
+# Middle Digital, Inc. PCI-Weasel serial console board control
+# devices (watchdog timer, etc.)
+device	weasel: sysmon_wdog
+attach	weasel at pci with weasel_pci
+file	dev/pci/weasel_pci.c		weasel

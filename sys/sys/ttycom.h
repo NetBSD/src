@@ -1,4 +1,4 @@
-/*	$NetBSD: ttycom.h,v 1.10 2000/11/01 23:46:55 eeh Exp $	*/
+/*	$NetBSD: ttycom.h,v 1.10.4.1 2002/01/10 20:04:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -152,5 +152,6 @@ typedef char linedn_t[TTLINEDNAMELEN];
 #define SUNKBDDISC	7		/* Sun keyboard discipline */
 #define	SUNMSDISC	8		/* Sun mouse discipline */
 #define	HDLCDISC	9		/* HDLC discipline */
+#define	IRFRAMEDISC	10		/* IrDA frame discipline */
 
 #endif /* !_SYS_TTYCOM_H_ */

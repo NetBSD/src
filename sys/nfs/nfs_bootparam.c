@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.17 2000/10/03 17:18:15 chs Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.17.4.1 2002/01/10 20:04:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Support for NFS diskless booting, Sun-style (RPC/bootparams)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.17.4.1 2002/01/10 20:04:21 thorpej Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -309,7 +312,7 @@ bp_whoami(bpsin, my_ip, gw_ip)
 
 	struct mbuf *m, *from;
 	struct sockaddr_in *sin;
-	int error, msg_len;
+	int error;
 	int16_t port;
 
 	/*
@@ -346,7 +349,6 @@ bp_whoami(bpsin, my_ip, gw_ip)
 	}
 	reply = mtod(m, struct callit_reply *);
 	port = fxdr_unsigned(u_int32_t, reply->port);
-	msg_len = fxdr_unsigned(u_int32_t, reply->encap_len);
 	m_adj(m, sizeof(*reply));
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_cksum.c,v 1.15.6.1 2001/08/03 04:14:08 lukem Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.15.6.2 2002/01/10 20:05:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,9 @@
  *	@(#)lfs_cksum.c	8.2 (Berkeley) 10/9/94
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.15.6.2 2002/01/10 20:05:11 thorpej Exp $");
+
 #include <sys/param.h>
 #ifdef _KERNEL
 # include <sys/systm.h>
@@ -79,7 +81,6 @@
 # include <stddef.h>
 #endif
 #include <sys/mount.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/lfs/lfs.h>
 

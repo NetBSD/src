@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.78.4.5 2001/09/08 00:40:27 thorpej Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.78.4.6 2002/01/10 20:05:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -39,6 +39,9 @@
  *
  *	@(#)ufs_vnops.c	8.28 (Berkeley) 7/31/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.78.4.6 2002/01/10 20:05:26 thorpej Exp $");
 
 #include "opt_quota.h"
 #include "fs_lfs.h"
@@ -322,7 +325,7 @@ ufs_getattr(void *v)
 	vap->va_gid = ip->i_ffs_gid;
 	vap->va_rdev = ufs_rw32((dev_t)ip->i_ffs_rdev,
 	    UFS_MPNEEDSWAP(vp->v_mount));
-	vap->va_size = ip->i_ffs_size;
+	vap->va_size = vp->v_size;
 	vap->va_atime.tv_sec = ip->i_ffs_atime;
 	vap->va_atime.tv_nsec = ip->i_ffs_atimensec;
 	vap->va_mtime.tv_sec = ip->i_ffs_mtime;
@@ -1235,7 +1238,6 @@ ufs_mkdir(void *v)
 		softdep_change_linkcnt(ip);
 	if (cnp->cn_flags & ISWHITEOUT)
 		ip->i_ffs_flags |= UF_OPAQUE;
-	error = VOP_UPDATE(tvp, NULL, NULL, UPDATE_WAIT|UPDATE_DIROP);
 
 	/*
 	 * Bump link count in parent directory to reflect work done below.
@@ -1473,6 +1475,7 @@ ufs_symlink(void *v)
 		ip = VTOI(vp);
 		memcpy((char *)ip->i_ffs_shortlink, ap->a_target, len);
 		ip->i_ffs_size = len;
+		uvm_vnp_setsize(vp, ip->i_ffs_size);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	} else
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
@@ -1916,7 +1919,7 @@ ufs_advlock(void *v)
  * Initialize the vnode associated with a new inode, handle aliased
  * vnodes.
  */
-int
+void
 ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	struct vnode **vpp)
 {
@@ -1969,7 +1972,6 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	SETHIGH(ip->i_modrev, mono_time.tv_sec);
 	SETLOW(ip->i_modrev, mono_time.tv_usec * 4294);
 	*vpp = vp;
-	return (0);
 }
 
 /*

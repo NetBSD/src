@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.56.6.2 2001/08/25 06:17:18 thorpej Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.56.6.3 2002/01/10 20:05:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *	@(#)lfs_syscalls.c	8.10 (Berkeley) 5/14/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.56.6.3 2002/01/10 20:05:15 thorpej Exp $");
+
 #define LFS		/* for prototypes in syscallargs.h */
 
 #include <sys/param.h>
@@ -83,7 +86,6 @@
 
 #include <sys/syscallargs.h>
 
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
@@ -246,12 +248,12 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	struct mount *mntp;
 	struct vnode *vp;
 #ifdef DEBUG_LFS
-	int vputc=0, iwritten=0;
+	int vputc = 0, iwritten = 0;
 #endif
 	ino_t lastino;
 	ufs_daddr_t b_daddr, v_daddr;
 	int cnt, error, lfs_fastvget_unlock;
-	int do_again=0;
+	int do_again = 0;
 	int s;
 #ifdef CHECK_COPYIN
 	int i;
@@ -259,7 +261,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 #ifdef LFS_TRACK_IOS
 	int j;
 #endif
-	int numlocked=0, numrefed=0;
+	int numlocked = 0, numrefed = 0;
 	ino_t maxino;
 
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
@@ -291,22 +293,22 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 #ifdef DEBUG_LFS
 	/* Run through and count the inodes */
 	lastino = LFS_UNUSED_INUM;
-	for(blkp = blkiov; cnt--; ++blkp) {
-		if(lastino != blkp->bi_inode) {
+	for (blkp = blkiov; cnt--; ++blkp) {
+		if (lastino != blkp->bi_inode) {
 			lastino = blkp->bi_inode;
 			vputc++;
 		}
 	}
 	cnt = blkcnt;
 	printf("[%d/",vputc);
-	iwritten=0;
+	iwritten = 0;
 #endif /* DEBUG_LFS */
 	/* these were inside the initialization for the for loop */
 	v_daddr = LFS_UNUSED_DADDR;
 	lastino = LFS_UNUSED_INUM;
 	for (blkp = blkiov; cnt--; ++blkp)
 	{
-		if(blkp->bi_daddr == LFS_FORCE_WRITE)
+		if (blkp->bi_daddr == LFS_FORCE_WRITE)
 			printf("lfs_markv: warning: force-writing ino %d lbn %d\n",
 			       blkp->bi_inode, blkp->bi_lbn);
 #ifdef LFS_TRACK_IOS
@@ -315,9 +317,9 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		 * the cleaner probably does not have the right information.
 		 * Send it packing.
 		 */
-		for(j=0;j<LFS_THROTTLE;j++) {
-			if(fs->lfs_pending[j] != LFS_UNUSED_DADDR
-			   && dtosn(fs,fs->lfs_pending[j])==dtosn(fs,blkp->bi_daddr)
+		for (j = 0; j < LFS_THROTTLE; j++) {
+			if (fs->lfs_pending[j] != LFS_UNUSED_DADDR
+			   && dtosn(fs,fs->lfs_pending[j]) == dtosn(fs,blkp->bi_daddr)
 			   && blkp->bi_daddr != LFS_FORCE_WRITE)
 			{
 				printf("lfs_markv: attempt to clean pending segment? (#%d)\n",
@@ -340,12 +342,12 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 * Finish the old file, if there was one.  The presence
 			 * of a usable vnode in vp is signaled by a valid v_daddr.
 			 */
-			if(v_daddr != LFS_UNUSED_DADDR) {
+			if (v_daddr != LFS_UNUSED_DADDR) {
 #ifdef DEBUG_LFS
-				if(ip->i_flag & (IN_MODIFIED|IN_CLEANING))
+				if (ip->i_flag & (IN_MODIFIED|IN_CLEANING))
 					iwritten++;
 #endif
-				if(lfs_fastvget_unlock) {
+				if (lfs_fastvget_unlock) {
 					VOP_UNLOCK(vp, 0);
 					numlocked--;
 				}
@@ -378,19 +380,19 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			}
 
 			/* Get the vnode/inode. */
-			error=lfs_fastvget(mntp, blkp->bi_inode, v_daddr, 
+			error = lfs_fastvget(mntp, blkp->bi_inode, v_daddr, 
 					   &vp,
-					   (blkp->bi_lbn==LFS_UNUSED_LBN
+					   (blkp->bi_lbn == LFS_UNUSED_LBN
 					    ? blkp->bi_bp
 					    : NULL),
 					   &lfs_fastvget_unlock);
-			if(lfs_fastvget_unlock)
+			if (lfs_fastvget_unlock)
 				numlocked++;
 
-			if(!error) {
+			if (!error) {
 				numrefed++;
 			}
-			if(error) {
+			if (error) {
 #ifdef DEBUG_LFS
 				printf("lfs_markv: lfs_fastvget failed with %d (ino %d, segment %d)\n", 
 				       error, blkp->bi_inode,
@@ -409,12 +411,12 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				 * so as not to test this over and over
 				 * again.
 				 */
-				if(error == EAGAIN) {
+				if (error == EAGAIN) {
 					error = 0;
 					do_again++;
 				}
 #ifdef DIAGNOSTIC
-				else if(error != ENOENT)
+				else if (error != ENOENT)
 					panic("lfs_markv VFS_VGET FAILED");
 #endif
 				/* lastino = LFS_UNUSED_INUM; */
@@ -441,7 +443,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			/* XXX but only write the inode if it's the right one */
 			if (blkp->bi_inode != LFS_IFILE_INUM) {
 				LFS_IENTRY(ifp, fs, blkp->bi_inode, bp);
-				if(ifp->if_daddr == blkp->bi_daddr
+				if (ifp->if_daddr == blkp->bi_daddr
 				   || blkp->bi_daddr == LFS_FORCE_WRITE)
 				{
 					LFS_SET_UINO(ip, IN_CLEANING);
@@ -452,11 +454,11 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		}
 
 		b_daddr = 0;
-		if(blkp->bi_daddr != LFS_FORCE_WRITE) {
+		if (blkp->bi_daddr != LFS_FORCE_WRITE) {
 			if (VOP_BMAP(vp, blkp->bi_lbn, NULL, &b_daddr, NULL) ||
 			    dbtofsb(fs, b_daddr) != blkp->bi_daddr)
 			{
-				if(dtosn(fs,dbtofsb(fs, b_daddr))
+				if (dtosn(fs,dbtofsb(fs, b_daddr))
 				   == dtosn(fs,blkp->bi_daddr))
 				{
 					printf("lfs_markv: wrong da same seg: %x vs %x\n",
@@ -479,10 +481,10 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		 * the extension in bread()/getblk().  Check the size
 		 * here.
 		 */
-		if(blkp->bi_size < fs->lfs_bsize) {
+		if (blkp->bi_size < fs->lfs_bsize) {
 			s = splbio();
 			bp = incore(vp, blkp->bi_lbn);
-			if(bp && bp->b_bcount > blkp->bi_size) {
+			if (bp && bp->b_bcount > blkp->bi_size) {
 				printf("lfs_markv: %ld > %d (fixed)\n",
 				       bp->b_bcount, blkp->bi_size);
 				blkp->bi_size = bp->b_bcount;
@@ -512,7 +514,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				 * us, because we have the segment lock.
 				 */
 				error = copyin(blkp->bi_bp, bp->b_data, blkp->bi_size);
-				if(error)
+				if (error)
 					goto err2;
 			}
 		}
@@ -523,12 +525,12 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	/*
 	 * Finish the old file, if there was one
 	 */
-	if(v_daddr != LFS_UNUSED_DADDR) {
+	if (v_daddr != LFS_UNUSED_DADDR) {
 #ifdef DEBUG_LFS
-		if(ip->i_flag & (IN_MODIFIED|IN_CLEANING))
+		if (ip->i_flag & (IN_MODIFIED|IN_CLEANING))
 			iwritten++;
 #endif
-		if(lfs_fastvget_unlock) {
+		if (lfs_fastvget_unlock) {
 			VOP_UNLOCK(vp, 0);
 			numlocked--;
 		}
@@ -548,22 +550,22 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 
 #ifdef DEBUG_LFS
 	printf("%d]",iwritten);
-	if(numlocked != 0 || numrefed != 0) {
+	if (numlocked != 0 || numrefed != 0) {
 		panic("lfs_markv: numlocked=%d numrefed=%d", numlocked, numrefed);
 	}
 #endif
 	
 	vfs_unbusy(mntp);
-	if(error)
+	if (error)
 		return (error);
-	else if(do_again)
+	else if (do_again)
 		return EAGAIN;
 
 	return 0;
 	
  err2:
 	printf("lfs_markv err2\n");
-	if(lfs_fastvget_unlock) {
+	if (lfs_fastvget_unlock) {
 		VOP_UNLOCK(vp, 0);
 		--numlocked;
 	}
@@ -573,16 +575,16 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	/* Free up fakebuffers -- have to take these from the LOCKED list */
  again:
 	s = splbio();
-	for(bp = bufqueues[BQ_LOCKED].tqh_first; bp; bp=nbp) {
+	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp; bp = nbp) {
 		nbp = bp->b_freelist.tqe_next;
-		if(bp->b_flags & B_CALL) {
-			if(bp->b_flags & B_BUSY) { /* not bloody likely */
+		if (bp->b_flags & B_CALL) {
+			if (bp->b_flags & B_BUSY) { /* not bloody likely */
 				bp->b_flags |= B_WANTED;
 				tsleep(bp, PRIBIO+1, "markv", 0);
 				splx(s);
 				goto again;
 			}
-			if(bp->b_flags & B_DELWRI) 
+			if (bp->b_flags & B_DELWRI) 
 				fs->lfs_avail += btofsb(fs, bp->b_bcount);
 			bremfree(bp);
 			splx(s);
@@ -594,7 +596,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	lfs_segunlock(fs);
 	vfs_unbusy(mntp);
 #ifdef DEBUG_LFS
-	if(numlocked != 0 || numrefed != 0) {
+	if (numlocked != 0 || numrefed != 0) {
 		panic("lfs_markv: numlocked=%d numrefed=%d", numlocked, numrefed);
 	}
 #endif
@@ -712,8 +714,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	struct vnode *vp;
 	ino_t lastino;
 	ufs_daddr_t v_daddr;
-	int cnt, error, need_unlock=0;
-	int numlocked=0, numrefed=0;
+	int cnt, error, need_unlock = 0;
+	int numlocked = 0, numrefed = 0;
 #ifdef LFS_TRACK_IOS
 	int j;
 #endif
@@ -752,9 +754,9 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		 * the cleaner probably does not have the right information.
 		 * Send it packing.
 		 */
-		for(j=0;j<LFS_THROTTLE;j++) {
-			if(fs->lfs_pending[j] != LFS_UNUSED_DADDR
-			   && dtosn(fs,fs->lfs_pending[j])==dtosn(fs,blkp->bi_daddr))
+		for (j = 0; j < LFS_THROTTLE; j++) {
+			if (fs->lfs_pending[j] != LFS_UNUSED_DADDR
+			   && dtosn(fs,fs->lfs_pending[j]) == dtosn(fs,blkp->bi_daddr))
 			{
 				printf("lfs_bmapv: attempt to clean pending segment? (#%d)\n",
 				       dtosn(fs, fs->lfs_pending[j]));
@@ -774,8 +776,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 			 * of a usable vnode in vp is signaled by a valid
 			 * v_daddr.
 			 */
-			if(v_daddr != LFS_UNUSED_DADDR) {
-				if(need_unlock) {
+			if (v_daddr != LFS_UNUSED_DADDR) {
+				if (need_unlock) {
 					VOP_UNLOCK(vp, 0);
 					numlocked--;
 				}
@@ -811,7 +813,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 					continue;
 				}
 				numrefed++;
-				if(VOP_ISLOCKED(vp)) {
+				if (VOP_ISLOCKED(vp)) {
 #ifdef DEBUG_LFS
 					printf("lfs_bmapv: inode %d inlocked\n",ip->i_number);
 #endif
@@ -827,7 +829,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 				}
 			} else {
 				error = VFS_VGET(mntp, blkp->bi_inode, &vp);
-				if(error) {
+				if (error) {
 #ifdef DEBUG_LFS
 					printf("lfs_bmapv: vget of ino %d failed with %d",blkp->bi_inode,error);
 #endif
@@ -858,7 +860,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 
 		/* Past this point we are guaranteed that vp, ip are valid. */
 
-		if(blkp->bi_lbn == LFS_UNUSED_LBN) {
+		if (blkp->bi_lbn == LFS_UNUSED_LBN) {
 			/*
 			 * We just want the inode address, which is
 			 * conveniently in v_daddr.
@@ -867,7 +869,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		} else {
 			error = VOP_BMAP(vp, blkp->bi_lbn, NULL,
 					 &(blkp->bi_daddr), NULL);
-			if(error)
+			if (error)
 			{
 				blkp->bi_daddr = LFS_UNUSED_DADDR;
 				continue;
@@ -880,8 +882,8 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	 * Finish the old file, if there was one.  The presence
 	 * of a usable vnode in vp is signaled by a valid v_daddr.
 	 */
-	if(v_daddr != LFS_UNUSED_DADDR) {
-		if(need_unlock) {
+	if (v_daddr != LFS_UNUSED_DADDR) {
+		if (need_unlock) {
 			VOP_UNLOCK(vp, 0);
 			numlocked--;
 		}
@@ -889,7 +891,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		numrefed--;
 	}
 	
-	if(numlocked != 0 || numrefed != 0) {
+	if (numlocked != 0 || numrefed != 0) {
 		panic("lfs_bmapv: numlocked=%d numrefed=%d", numlocked,
 		      numrefed);
 	}
@@ -1115,7 +1117,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	 * Wait until the filesystem is fully mounted before allowing vget
 	 * to complete.  This prevents possible problems with roll-forward.
 	 */
-	while(fs->lfs_flags & LFS_NOTYET) {
+	while (fs->lfs_flags & LFS_NOTYET) {
 		tsleep(&fs->lfs_flags, PRIBIO+1, "lfs_fnotyet", 0);
 	}
 	/*
@@ -1175,7 +1177,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 			*vpp = NULL;
 			return (error);
 		}
-		if(ip->i_number != ino)
+		if (ip->i_number != ino)
 			panic("lfs_fastvget: I was fed the wrong inode!");
 	} else {
 		error = bread(ump->um_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
@@ -1206,19 +1208,11 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	 * Initialize the vnode from the inode, check for aliases.  In all
 	 * cases re-init ip, the underlying vnode/inode may have changed.
 	 */
-	error = ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
-	if (error) {
-		/* This CANNOT happen (see ufs_vinit) */
-		printf("lfs_fastvget: ufs_vinit returned %d for ino %d\n", error, ino);
-		lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
-		lfs_vunref(vp);
-		*vpp = NULL;
-		return (error);
-	}
+	ufs_vinit(mp, lfs_specop_p, lfs_fifoop_p, &vp);
 #ifdef DEBUG_LFS
-	if(vp->v_type == VNON) {
+	if (vp->v_type == VNON) {
 		printf("lfs_fastvget: ino %d is type VNON! (ifmt=%o, dinp=%p)\n",
-		       ip->i_number, (ip->i_ffs_mode & IFMT)>>12, dinp);
+		       ip->i_number, (ip->i_ffs_mode & IFMT) >> 12, dinp);
 		lfs_dump_dinode(&ip->i_din.ffs_din);
 #ifdef DDB
 		Debugger();
@@ -1228,6 +1222,8 @@ lfs_fastvget(struct mount *mp, ino_t ino, ufs_daddr_t daddr, struct vnode **vpp,
 	/*
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
+
+	genfs_node_init(vp, &lfs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 	*vpp = vp;
@@ -1247,7 +1243,7 @@ lfs_fakebuf(struct vnode *vp, int lbn, size_t size, caddr_t uaddr)
 #ifndef ALLOW_VFLUSH_CORRUPTION
 	bp = lfs_newbuf(VTOI(vp)->i_lfs, vp, lbn, size);
 	error = copyin(uaddr, bp->b_data, size);
-	if(error) {
+	if (error) {
 		lfs_freebuf(bp);
 		return NULL;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_ofisa.c,v 1.4 2000/12/26 09:42:21 mycroft Exp $	*/
+/*	$NetBSD: if_cs_ofisa.c,v 1.4.4.1 2002/01/10 19:56:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_cs_ofisa.c,v 1.4.4.1 2002/01/10 19:56:21 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/socket.h>
@@ -63,14 +66,15 @@
 #include <dev/isa/isavar.h>
 #include <dev/ofisa/ofisavar.h>
 
-#include <dev/isa/cs89x0reg.h>
-#include <dev/isa/cs89x0var.h>
+#include <dev/ic/cs89x0reg.h>
+#include <dev/ic/cs89x0var.h>
+#include <dev/isa/cs89x0isavar.h>
 
 int	cs_ofisa_match __P((struct device *, struct cfdata *, void *));
 void	cs_ofisa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach cs_ofisa_ca = {
-	sizeof(struct cs_softc), cs_ofisa_match, cs_ofisa_attach
+	sizeof(struct cs_softc_isa), cs_ofisa_match, cs_ofisa_attach
 };
 
 int
@@ -103,6 +107,7 @@ cs_ofisa_attach(parent, self, aux)
 	void *aux;
 {
 	struct cs_softc *sc = (struct cs_softc *) self;
+	struct cs_softc_isa *isc = (void *)sc;
 	struct ofisa_attach_args *aa = aux;
 	struct ofisa_reg_desc reg[2];
 	struct ofisa_intr_desc intr;
@@ -113,7 +118,7 @@ cs_ofisa_attach(parent, self, aux)
 	const char *message = NULL;
 	u_int8_t enaddr[6];
 
-	sc->sc_ic = aa->ic;
+	isc->sc_ic = aa->ic;
 	sc->sc_iot = aa->iot;
 	sc->sc_memt = aa->memt;
 
@@ -181,13 +186,13 @@ cs_ofisa_attach(parent, self, aux)
 		return;
 	}
 
-	sc->sc_drq = ISACF_DRQ_DEFAULT;
+	isc->sc_drq = ISACF_DRQ_DEFAULT;
 	n = ofisa_dma_get(aa->oba.oba_phandle, &dma, 1);
 #ifdef _CS_OFISA_MD_DMA_FIXUP
 	n = cs_ofisa_md_dma_fixup(parent, self, aux, &dma, 1, n);
 #endif
 	if (n == 1)
-		sc->sc_drq = dma.drq;
+		isc->sc_drq = dma.drq;
 
 	if (io_addr == (bus_addr_t) -1) {
 		printf(": no I/O space\n");
@@ -248,7 +253,7 @@ cs_ofisa_attach(parent, self, aux)
 		defmedia = media[0];	/* XXX What to do? */
 	}
 
-	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq, intr.share,
+	sc->sc_ih = isa_intr_establish(isc->sc_ic, sc->sc_irq, intr.share,
 	    IPL_NET, cs_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: unable to establish interrupt\n",
@@ -259,6 +264,10 @@ cs_ofisa_attach(parent, self, aux)
 #ifdef _CS_OFISA_MD_CFGFLAGS_FIXUP
 	sc->sc_cfgflags |= cs_ofisa_md_cfgflags_fixup(parent, self, aux);
 #endif
+
+	sc->sc_dma_chipinit = cs_isa_dma_chipinit;
+	sc->sc_dma_attach = cs_isa_dma_attach;
+	sc->sc_dma_process_rx = cs_process_rx_dma;
 
 	cs_attach(sc, enaddr, media, nmedia, defmedia);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.28.4.1 2001/08/03 04:14:08 lukem Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.28.4.2 2002/01/10 20:05:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs_balloc.c	8.4 (Berkeley) 5/8/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.28.4.2 2002/01/10 20:05:10 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -166,7 +169,7 @@ lfs_balloc(void *v)
 			if ((error = lfs_fragextend(vp, osize, fs->lfs_bsize,
 						    lastblock, &bp,
 						    ap->a_cred)))
-				return(error);
+				return (error);
 			ip->i_ffs_size = (lastblock + 1) * fs->lfs_bsize;
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
@@ -260,7 +263,7 @@ lfs_balloc(void *v)
 			 * If that is the case mark it UNWRITTEN to keep
 			 * the accounting straight.
 			 */
-			if (((daddr_t *)ibp->b_data)[indirs[i].in_off]==0)
+			if (((daddr_t *)ibp->b_data)[indirs[i].in_off] == 0)
 				((daddr_t *)ibp->b_data)[indirs[i].in_off] =
 					UNWRITTEN;
 			idaddr = ((daddr_t *)ibp->b_data)[indirs[i].in_off];
@@ -323,7 +326,7 @@ lfs_balloc(void *v)
 			bp->b_blkno = daddr;
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);
-			return(biowait(bp));
+			return (biowait(bp));
 		}
 	}
 	

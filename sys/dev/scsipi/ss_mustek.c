@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.13.2.1 2001/08/03 04:13:33 lukem Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.13.2.2 2002/01/10 19:58:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -45,7 +45,9 @@
  * other traffic from the bus while a transfer is active.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ss_mustek.c,v 1.13.2.2 2002/01/10 19:58:28 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>

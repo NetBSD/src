@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.2.2.1 2001/08/03 04:13:46 lukem Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.2.2.2 2002/01/10 20:01:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,12 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.2.2.2 2002/01/10 20:01:10 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <machine/elf_machdep.h>
 #ifndef ELFSIZE
@@ -55,17 +59,26 @@ int exec_svr4_elf_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_svr4_elf =
 #if ELFSIZE == 32
-	{ sizeof (Elf_Ehdr), exec_elf32_makecmds,
+	/* SVR4 Elf32 */
+	{ sizeof (Elf_Ehdr),
+	  exec_elf32_makecmds,
 	  { ELFNAME2(svr4,probe) },
-	  NULL, EXECSW_PRIO_ANY,
+	  NULL,
+	  EXECSW_PRIO_ANY,
 	  SVR4_AUX_ARGSIZ,
-	  svr4_copyargs, svr4_setregs };	/* SVR4 32bit ELF bins (not 64bit safe) */
+	  svr4_copyargs,
+	  NULL,
+	  coredump_elf32 };
 #else
-	{ sizeof (Elf64_Ehdr), exec_elf64_makecmds,
+	/* SVR4 Elf64 */
+	{ sizeof (Elf64_Ehdr),
+	  exec_elf64_makecmds,
 	  { ELFNAME2(svr4,probe) },
 	  NULL, EXECSW_PRIO_ANY,
 	  SVR4_AUX_ARGSIZ64,
-	  svr4_copyargs64, svr4_setregs };	/* SVR4 64bit ELF bins (not 64bit safe) */
+	  svr4_copyargs64,
+	  NULL,
+	  coredump_elf64 };
 #endif
 
 /*

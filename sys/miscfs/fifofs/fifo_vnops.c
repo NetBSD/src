@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.30.4.2 2001/09/07 22:01:54 thorpej Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.30.4.3 2002/01/10 20:01:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -34,6 +34,9 @@
  *
  *	@(#)fifo_vnops.c	8.10 (Berkeley) 5/27/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.30.4.3 2002/01/10 20:01:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +125,7 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, fifo_update },		/* update */
 	{ &vop_bwrite_desc, fifo_bwrite },		/* bwrite */
+	{ &vop_putpages_desc, fifo_putpages }, 		/* putpages */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =

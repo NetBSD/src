@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_frag.c,v 1.12.8.1 2001/08/25 06:17:08 thorpej Exp $	*/
+/*	$NetBSD: clnp_frag.c,v 1.12.8.2 2002/01/10 20:03:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,9 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clnp_frag.c,v 1.12.8.2 2002/01/10 20:03:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,9 +265,9 @@ clnp_fragment(ifp, m, first_hop, total_len, segoff, flags, rt)
 #endif				/* TROLL */
 
 			/*
-			 * Tough situation: if the error occured on the last
+			 * Tough situation: if the error occurred on the last
 			 * fragment, we can not send an ER, as the if_output
-			 * routine consumed the packet. If the error occured
+			 * routine consumed the packet. If the error occurred
 			 * on any intermediate packets, we can send an ER
 			 * because we still have the original header in (m).
 			 */

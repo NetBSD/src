@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_subr.c,v 1.13 2001/04/13 23:30:19 thorpej Exp $	*/
+/*	$NetBSD: hd_subr.c,v 1.13.2.1 2002/01/10 20:02:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -39,6 +39,9 @@
  *
  *	@(#)hd_subr.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd_subr.c,v 1.13.2.1 2002/01/10 20:02:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,7 +266,7 @@ hd_writeinternal(hdp, frametype, pf)
 	/* Assume a response - address structure for DTE */
 	frame->address = ADDRESS_A;
 	buf->m_len = 2;
-	buf->m_act = buf->m_next = NULL;
+	buf->m_nextpkt = buf->m_next = NULL;
 
 	switch (frametype) {
 	case RR:
@@ -335,9 +338,9 @@ hd_remove(q)
 
 	m = q->head;
 	if (m) {
-		if ((q->head = m->m_act) == NULL)
+		if ((q->head = m->m_nextpkt) == NULL)
 			q->tail = NULL;
-		m->m_act = 0;
+		m->m_nextpkt = 0;
 	}
 	return (m);
 }
@@ -348,11 +351,11 @@ hd_append(q, m)
 	struct mbuf *m;
 {
 
-	m->m_act = NULL;
+	m->m_nextpkt = NULL;
 	if (q->tail == NULL)
 		q->head = m;
 	else
-		q->tail->m_act = m;
+		q->tail->m_nextpkt = m;
 	q->tail = m;
 }
 

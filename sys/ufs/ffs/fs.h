@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.13.6.2 2001/09/13 01:16:30 thorpej Exp $	*/
+/*	$NetBSD: fs.h,v 1.13.6.3 2002/01/10 20:05:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -37,8 +37,6 @@
 
 #ifndef	_UFS_FFS_FS_H_
 #define	_UFS_FFS_FS_H_
-
-#include <ufs/ufs/dinode.h>
 
 /*
  * Each disk drive contains some number of file systems.
@@ -241,7 +239,7 @@ struct fs {
 	int8_t	 fs_flags;		/* see FS_ flags below */
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */
 /* these fields retain the current block allocation info */
-	int32_t	 fs_cgrotor;		/* last cg searched */
+	int32_t	 fs_cgrotor;		/* last cg searched (UNUSED) */
 	void 	*fs_ocsp[NOCSPTRS];	/* padding; was list of fs_cs buffers */
 	u_int16_t *fs_contigdirs;	/* # of contiguously allocated dirs */
 	struct csum *fs_csp;		/* cg summary info buffer for fs_cs */
@@ -251,7 +249,9 @@ struct fs {
 	int32_t	 fs_snapinum[20];	/* RESERVED for snapshot inode nums */
 	int32_t	 fs_avgfilesize;	/* expected average file size */
 	int32_t	 fs_avgfpdir;		/* expected # of files per directory */
-	int32_t	 fs_sparecon[28];	/* RESERVED for future constants */
+	int32_t	 fs_sparecon[26];	/* RESERVED for future constants */
+	int32_t  fs_pendingblocks;	/* blocks in process of being freed */
+	int32_t  fs_pendinginodes;	/* inodes in process of being freed */
 	int32_t	 fs_contigsumsize;	/* size of cluster summary array */
 	int32_t	 fs_maxsymlinklen;	/* max length of an internal symlink */
 	int32_t	 fs_inodefmt;		/* format of on-disk inodes */

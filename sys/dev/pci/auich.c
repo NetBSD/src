@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.3 2000/12/28 22:59:11 sommerfeld Exp $	*/
+/*	$NetBSD: auich.c,v 1.3.4.1 2002/01/10 19:56:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,6 +78,9 @@
  *
  *	- Add support for the microphone input.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.3.4.1 2002/01/10 19:56:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,6 +249,7 @@ struct audio_hw_if auich_hw_if = {
 	auich_get_props,
 	auich_trigger_output,
 	auich_trigger_input,
+	NULL,			/* dev_ioctl */
 };
 
 int	auich_attach_codec(void *, struct ac97_codec_if *);

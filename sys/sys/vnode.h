@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.91.2.2 2001/09/08 00:40:25 thorpej Exp $	*/
+/*	$NetBSD: vnode.h,v 1.91.2.3 2002/01/10 20:04:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,6 @@
 #include <uvm/uvm_pglist.h>	/* XXX */
 #include <uvm/uvm_object.h>	/* XXX */
 #include <uvm/uvm_extern.h>	/* XXX */
-#include <uvm/uvm_vnode.h>	/* XXX */
 
 /*
  * The vnode is the focus of all file activity in UNIX.  There is a
@@ -69,7 +68,7 @@ enum vtagtype	{
 	VT_NON, VT_UFS, VT_NFS, VT_MFS, VT_MSDOSFS, VT_LFS, VT_LOFS, VT_FDESC,
 	VT_PORTAL, VT_NULL, VT_UMAP, VT_KERNFS, VT_PROCFS, VT_AFS, VT_ISOFS,
 	VT_UNION, VT_ADOSFS, VT_EXT2FS, VT_CODA, VT_FILECORE, VT_NTFS, VT_VFS,
-	VT_OVERLAY
+	VT_OVERLAY, VT_SMBFS
 };
 
 /*
@@ -86,14 +85,14 @@ LIST_HEAD(buflists, buf);
  *     locked by the v_interlock simple lock
  */
 struct vnode {
-	struct uvm_vnode v_uvm;			/* uvm data */
-#define	v_flag		v_uvm.u_flags
-#define	v_usecount	v_uvm.u_obj.uo_refs
-#define	v_interlock	v_uvm.u_obj.vmobjlock
-#define	v_numoutput	v_uvm.u_nio
+	struct uvm_object v_uobj;		/* the VM object */
+#define	v_usecount	v_uobj.uo_refs
+#define	v_interlock	v_uobj.vmobjlock
+	voff_t		v_size;			/* size of file */
+	int		v_flag;			/* flags */
+	int		v_numoutput;		/* number of pending writes */
 	long		v_writecount;		/* reference count of writers */
 	long		v_holdcnt;		/* page & buffer references */
-	daddr_t		v_lastr;		/* last read (read-ahead) */
 	u_long		v_id;			/* capability identifier */
 	struct mount	*v_mount;		/* ptr to vfs we are in */
 	int		(**v_op) __P((void *));	/* vnode operations vector */
@@ -102,7 +101,6 @@ struct vnode {
 	struct buflists	v_cleanblkhd;		/* clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* dirty blocklist head */
 	LIST_ENTRY(vnode) v_synclist;		/* vnodes with dirty buffers */
-	enum vtype	v_type;			/* vnode type */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */
 		struct socket	*vu_socket;	/* unix ipc (VSOCK) */
@@ -110,16 +108,10 @@ struct vnode {
 		struct fifoinfo	*vu_fifoinfo;	/* fifo (VFIFO) */
 	} v_un;
 	struct nqlease	*v_lease;		/* Soft reference to lease */
-	daddr_t		v_lastw;		/* last write (write cluster) */
-	daddr_t		v_cstart;		/* start block of cluster */
-	daddr_t		v_lasta;		/* last allocation */
-	int		v_clen;			/* length of current cluster */
-	int		v_ralen;		/* Read-ahead length */
-	daddr_t		v_maxra;		/* last readahead block */
-	struct lock	v_lock;			/* lock for this vnode */
-	struct lock	v_glock;		/* getpage lock */
-	struct lock	*v_vnlock;		/* pointer to vnode lock */
+	enum vtype	v_type;			/* vnode type */
 	enum vtagtype	v_tag;			/* type of underlying data */
+	struct lock	v_lock;			/* lock for this vnode */
+	struct lock	*v_vnlock;		/* pointer to lock */
 	void 		*v_data;		/* private data for fs */
 	struct klist	v_klist;		/* knotes attached to vnode */
 };
@@ -149,6 +141,7 @@ struct vnode {
 #define	VSYSTEM		0x0004	/* vnode being used by kernel */
 	/* VISTTY used when reading dead vnodes */
 #define	VISTTY		0x0008	/* vnode represents a tty */
+#define	VEXECMAP	0x0010	/* vnode has PROT_EXEC mappings */
 #define	VXLOCK		0x0100	/* vnode is locked to change underlying type */
 #define	VXWANT		0x0200	/* process is waiting for vnode */
 #define	VBWAIT		0x0400	/* waiting for output to complete */
@@ -546,7 +539,7 @@ void	vn_syncer_remove_from_worklist(struct vnode *vp);
 int	vn_write(struct file *fp, off_t *offset, struct uio *uio,
 	    struct ucred *cred, int flags);
 int	vn_writechk(struct vnode *vp);
-void	vn_marktext(struct vnode *vp);
+void	vn_markexec(struct vnode *vp);
 int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct proc *p);
 struct vnode *
 	checkalias(struct vnode *vp, dev_t nvp_rdev, struct mount *mp);

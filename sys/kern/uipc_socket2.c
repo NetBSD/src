@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.39.2.4 2001/09/08 02:33:51 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.39.2.5 2002/01/10 20:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)uipc_socket2.c	8.2 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.39.2.5 2002/01/10 20:00:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

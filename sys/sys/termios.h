@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.23 2000/09/20 10:16:49 kleink Exp $	*/
+/*	$NetBSD: termios.h,v 1.23.4.1 2002/01/10 20:04:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -181,13 +181,13 @@
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define EXTPROC         0x00000800      /* external processing */
 #endif  /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
-#define TOSTOP		0x00400000	/* stop background jobs from output */
+#define TOSTOP		0x00400000	/* stop background jobs on output */
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 #define FLUSHO		0x00800000	/* output being flushed (state) */
 #define	NOKERNINFO	0x02000000	/* no kernel output from VSTATUS */
-#define PENDIN		0x20000000	/* XXX retype pending input (state) */
+#define PENDIN		0x20000000	/* re-echo input buffer at next read */
 #endif  /* !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) */
-#define	NOFLSH		0x80000000	/* don't flush after interrupt */
+#define	NOFLSH		0x80000000	/* don't flush output on signal */
 
 typedef unsigned int	tcflag_t;
 typedef unsigned char	cc_t;

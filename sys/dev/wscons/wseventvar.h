@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.1.28.1 2001/09/08 04:55:31 thorpej Exp $ */
+/* $NetBSD: wseventvar.h,v 1.1.28.2 2002/01/10 19:59:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -99,17 +99,17 @@ struct wseventvar {
 	selnotify(&(ev)->sel, 0); \
 	if ((ev)->wanted) { \
 		(ev)->wanted = 0; \
-		wakeup((caddr_t)(ev)); \
+		wakeup((ev)); \
 	} \
 	if ((ev)->async) \
 		psignal((ev)->io, SIGIO); \
 }
 
-void	wsevent_init __P((struct wseventvar *));
-void	wsevent_fini __P((struct wseventvar *));
-int	wsevent_read __P((struct wseventvar *, struct uio *, int));
-int	wsevent_poll __P((struct wseventvar *, int, struct proc *));
-int	wsevent_kqfilter __P((struct wseventvar *ev, struct knote *kn));
+void	wsevent_init(struct wseventvar *);
+void	wsevent_fini(struct wseventvar *);
+int	wsevent_read(struct wseventvar *, struct uio *, int);
+int	wsevent_poll(struct wseventvar *, int, struct proc *);
+int	wsevent_kqfilter(struct wseventvar *ev, struct knote *kn);
 
 /*
  * PWSEVENT is set just above PSOCK, which is just above TTIPRI, on the

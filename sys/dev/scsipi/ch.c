@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.46.2.3 2001/09/08 18:12:20 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.46.2.4 2002/01/10 19:58:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.46.2.4 2002/01/10 19:58:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.17 2000/07/22 05:11:27 matt Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.17.4.1 2002/01/10 20:01:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -40,6 +40,9 @@
  *	@(#)bpf_filter.c	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.17.4.1 2002/01/10 20:01:58 thorpej Exp $");
+
 #if 0
 #if !(defined(lint) || defined(KERNEL))
 static const char rcsid[] =
@@ -48,7 +51,6 @@ static const char rcsid[] =
 #endif
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/time.h>
 
 #if !defined(UNALIGNED_ACCESS)

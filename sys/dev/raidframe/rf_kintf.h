@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_kintf.h,v 1.15 2000/10/20 02:24:45 oster Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.15.4.1 2002/01/10 19:57:48 thorpej Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -34,7 +34,7 @@
 #ifndef _RF__RF_KINTF_H_
 #define _RF__RF_KINTF_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
 int     rf_GetSpareTableFromDaemon(RF_SparetWait_t * req);
 

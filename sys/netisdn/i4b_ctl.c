@@ -27,13 +27,16 @@
  *	i4b_ctl.c - i4b system control port driver
  *	------------------------------------------
  *
- *	$Id: i4b_ctl.c,v 1.4 2001/07/08 10:33:58 martin Exp $
+ *	$Id: i4b_ctl.c,v 1.4.2.1 2002/01/10 20:03:34 thorpej Exp $
  *
  * $FreeBSD$
  *
  *	last edit-date: [Fri Jan  5 11:33:46 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_ctl.c,v 1.4.2.1 2002/01/10 20:03:34 thorpej Exp $");
 
 #include "i4bctl.h"
 

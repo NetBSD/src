@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/08 23:05:44 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2002/01/10 20:01:07 thorpej Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/osf1
 
 CPPFLAGS+=	-nostdinc -I$S -D_KERNEL -DEXEC_ECOFF
-
-MKMAN=	no
 
 KMOD=	exec_osf1_ecoff
 

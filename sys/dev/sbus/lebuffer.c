@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.7 2000/04/14 08:22:49 mrg Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.7.8.1 2002/01/10 19:58:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.8.1 2002/01/10 19:58:12 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -128,7 +130,7 @@ lebufattach(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	sc->sc_burst = getpropint(node, "burst-sizes", -1);
+	sc->sc_burst = PROM_getpropint(node, "burst-sizes", -1);
 	if (sc->sc_burst == -1)
 		/* take SBus burst sizes */
 		sc->sc_burst = sbusburst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_ipkdb.c,v 1.10 2000/03/23 20:33:37 ws Exp $	*/
+/*	$NetBSD: ipkdb_ipkdb.c,v 1.10.8.1 2002/01/10 19:59:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 Wolfgang Solfrank.
@@ -30,6 +30,10 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipkdb_ipkdb.c,v 1.10.8.1 2002/01/10 19:59:32 thorpej Exp $");
+
 #include "opt_ipkdb.h"
 
 #include <sys/param.h>

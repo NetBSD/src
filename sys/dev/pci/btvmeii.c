@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.3 2001/07/07 16:37:38 thorpej Exp $ */
+/* $NetBSD: btvmeii.c,v 1.3.2.1 2002/01/10 19:56:27 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -30,6 +30,9 @@
  * Driver for the Bit3/SBS PCI-VME adapter Model 2706.
  * Uses the common Tundra Universe code.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.3.2.1 2002/01/10 19:56:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

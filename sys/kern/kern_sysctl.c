@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.91.2.1 2001/08/03 04:13:42 lukem Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.91.2.2 2002/01/10 19:59:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,6 +42,9 @@
  * sysctl system call.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.91.2.2 2002/01/10 19:59:57 thorpej Exp $");
+
 #include "opt_ddb.h"
 #include "opt_insecure.h"
 #include "opt_defcorename.h"
@@ -74,6 +77,7 @@
 #define	__SYSCTL_PRIVATE
 #include <sys/sysctl.h>
 #include <sys/lock.h>
+#include <sys/namei.h>
 
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)
 #include <sys/ipc.h>
@@ -351,6 +355,10 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if (old_vnodes > desiredvnodes) {
 		        desiredvnodes = old_vnodes;
 			return (EINVAL);
+		}
+		if (error == 0) {
+			vfs_reinit();
+			nchreinit();
 		}
 		return (error);
 	case KERN_MAXPROC:
@@ -753,7 +761,8 @@ proc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 				newplim = limcopy(ptmp->p_limit);
 				limfree(ptmp->p_limit);
 				ptmp->p_limit = newplim;
-			} else if (ptmp->p_limit->pl_corename != defcorename) {
+			}
+			if (ptmp->p_limit->pl_corename != defcorename) {
 				free(ptmp->p_limit->pl_corename, M_TEMP);
 			}
 			ptmp->p_limit->pl_corename = tmps;

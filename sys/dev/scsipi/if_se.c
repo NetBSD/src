@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.34.2.1 2001/08/03 04:13:30 lukem Exp $	*/
+/*	$NetBSD: if_se.c,v 1.34.2.2 2002/01/10 19:58:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -58,6 +58,9 @@
  * Normal operation does not require any special userland program.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.34.2.2 2002/01/10 19:58:19 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
@@ -65,7 +68,6 @@
 #include "opt_ns.h"
 #include "bpfilter.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.42 2001/05/12 19:18:57 christos Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.42.2.1 2002/01/10 19:58:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  *                  http://www.usb.org/developers/data/devclass/frmts10.pdf
  *                  http://www.usb.org/developers/data/devclass/termt10.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.42.2.1 2002/01/10 19:58:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +306,7 @@ Static struct audio_hw_if uaudio_hw_if = {
 	uaudio_get_props,
 	uaudio_trigger_output,
 	uaudio_trigger_input,
+	NULL,
 };
 
 Static struct audio_device uaudio_device = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.21 2001/06/11 01:50:57 wiz Exp $	*/
+/*	$NetBSD: nd6.h,v 1.21.2.1 2002/01/10 20:03:28 thorpej Exp $	*/
 /*	$KAME: nd6.h,v 1.52 2001/02/19 04:40:37 itojun Exp $	*/
 
 /*
@@ -134,8 +134,8 @@ struct	in6_ndifreq {
 
 
 /* protocol constants */
-#define MAX_RTR_SOLICITATION_DELAY	1	/*1sec*/
-#define RTR_SOLICITATION_INTERVAL	4	/*4sec*/
+#define MAX_RTR_SOLICITATION_DELAY	1	/* 1sec */
+#define RTR_SOLICITATION_INTERVAL	4	/* 4sec */
 #define MAX_RTR_SOLICITATIONS		3
 
 #define ND6_INFINITE_LIFETIME		0xffffffff
@@ -255,7 +255,7 @@ extern struct callout nd6_timer_ch;
 extern int nd6_defifindex;
 
 union nd_opts {
-	struct nd_opt_hdr *nd_opt_array[9];
+	struct nd_opt_hdr *nd_opt_array[8];
 	struct {
 		struct nd_opt_hdr *zero;
 		struct nd_opt_hdr *src_lladdr;
@@ -291,7 +291,6 @@ struct	rtentry *nd6_lookup __P((struct in6_addr *, int, struct ifnet *));
 void nd6_setmtu __P((struct ifnet *));
 void nd6_timer __P((void *));
 void nd6_purge __P((struct ifnet *));
-struct llinfo_nd6 *nd6_free __P((struct rtentry *));
 void nd6_nud_hint __P((struct rtentry *, struct in6_addr *, int));
 int nd6_resolve __P((struct ifnet *, struct rtentry *,
 		     struct mbuf *, struct sockaddr *, u_char *));
@@ -300,19 +299,19 @@ void nd6_p2p_rtrequest __P((int, struct rtentry *, struct rt_addrinfo *));
 int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
 struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
 	char *, int, int, int));
-/* for test */
 int nd6_output __P((struct ifnet *, struct ifnet *, struct mbuf *,
 		    struct sockaddr_in6 *, struct rtentry *));
 int nd6_storelladdr __P((struct ifnet *, struct rtentry *, struct mbuf *,
 			 struct sockaddr *, u_char *));
+int nd6_need_cache __P((struct ifnet *));
 
 /* nd6_nbr.c */
 void nd6_na_input __P((struct mbuf *, int, int));
-void nd6_na_output __P((struct ifnet *, struct in6_addr *,
- 			struct in6_addr *, u_long, int, struct sockaddr *));
+void nd6_na_output __P((struct ifnet *, const struct in6_addr *,
+ 			const struct in6_addr *, u_long, int, struct sockaddr *));
 void nd6_ns_input __P((struct mbuf *, int, int));
-void nd6_ns_output __P((struct ifnet *, struct in6_addr *,
-			struct in6_addr *, struct llinfo_nd6 *, int));
+void nd6_ns_output __P((struct ifnet *, const struct in6_addr *,
+			const struct in6_addr *, struct llinfo_nd6 *, int));
 caddr_t nd6_ifptomac __P((struct ifnet *));
 void nd6_dad_start __P((struct ifaddr *, int *));
 void nd6_dad_stop __P((struct ifaddr *));

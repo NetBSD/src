@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.68 2001/06/02 16:17:09 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.68.2.1 2002/01/10 20:02:45 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,7 +9,8 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_fil.c,v 1.68 2001/06/02 16:17:09 thorpej Exp $";
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_fil.c,v 1.68.2.1 2002/01/10 20:02:45 thorpej Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 darrenr Exp";
@@ -45,7 +46,6 @@ static const char rcsid[] = "@(#)Id: ip_fil.c,v 2.42.2.17 2000/10/19 15:39:42 da
 # include <fcntl.h>
 #endif
 #include <sys/errno.h>
-#include <sys/types.h>
 #include <sys/file.h>
 #if __FreeBSD_version >= 220000 && defined(_KERNEL)
 # include <sys/fcntl.h>
@@ -1499,7 +1499,7 @@ frdest_t *fdp;
 		ip->ip_len = htons(ip->ip_len);
 		ip->ip_off = htons(ip->ip_off);
 # if defined(__NetBSD__) && defined(M_CSUM_IPv4)
-		if (ifp->if_csum_flags & M_CSUM_IPv4)
+		if (ifp->if_csum_flags_tx & M_CSUM_IPv4)
 			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 		else if (ip->ip_sum == 0)
 			ip->ip_sum = in_cksum(m, hlen);
@@ -1536,7 +1536,7 @@ frdest_t *fdp;
 
     {
 	int mhlen, firstlen = len;
-	struct mbuf **mnext = &m->m_act;
+	struct mbuf **mnext = &m->m_nextpkt;
 
 	/*
 	 * Loop through length of segment after first fragment,
@@ -1587,7 +1587,7 @@ frdest_t *fdp;
 		mhip->ip_sum = 0;
 		mhip->ip_sum = in_cksum(m, mhlen);
 		*mnext = m;
-		mnext = &m->m_act;
+		mnext = &m->m_nextpkt;
 	}
 	/*
 	 * Update first fragment by trimming what's been copied out
@@ -1600,8 +1600,8 @@ frdest_t *fdp;
 	ip->ip_sum = in_cksum(m0, hlen);
 sendorfree:
 	for (m = m0; m; m = m0) {
-		m0 = m->m_act;
-		m->m_act = 0;
+		m0 = m->m_nextpkt;
+		m->m_nextpkt = 0;
 		if (error == 0)
 # if BSD >= 199306
 			error = (*ifp->if_output)(ifp, m,

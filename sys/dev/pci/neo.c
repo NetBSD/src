@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.8.4.1 2001/09/13 01:15:55 thorpej Exp $	*/
+/*	$NetBSD: neo.c,v 1.8.4.2 2002/01/10 19:56:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -30,6 +30,9 @@
  * FreeBSD: src/sys/dev/sound/pci/neomagic.c,v 1.8 2000/03/20 15:30:50 cg Exp
  * OpenBSD: neo.c,v 1.4 2000/07/19 09:04:37 csapuntz Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.8.4.2 2002/01/10 19:56:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,6 +261,7 @@ struct audio_hw_if neo_hw_if = {
 	neo_get_props,
 	neo_trigger_output,
 	neo_trigger_input,
+	NULL,
 };
 
 /* -------------------------------------------------------------------- */

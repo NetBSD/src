@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.8 2001/02/10 04:14:29 itojun Exp $	*/
+/*	$NetBSD: route6.c,v 1.8.4.1 2002/01/10 20:03:32 thorpej Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.8.4.1 2002/01/10 20:03:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -137,7 +140,7 @@ ip6_rthdr0(m, ip6, rh0)
 		) {
 		/*
 		 * Type 0 routing header can't contain more than 23 addresses.
-		 * RFC 2462: this limitation was removed since stict/loose
+		 * RFC 2462: this limitation was removed since strict/loose
 		 * bitmap field was deleted.
 		 */
 		ip6stat.ip6s_badoptions++;

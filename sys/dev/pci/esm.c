@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.10 2001/04/25 03:06:11 simonb Exp $      */
+/*      $NetBSD: esm.c,v 1.10.4.1 2002/01/10 19:56:33 thorpej Exp $      */
 
 /*-
  * Copyright (c) 2000, 2001 Rene Hexel <rh@netbsd.org>
@@ -61,6 +61,9 @@
  * Munehiro Matsuda <haro@tk.kubota.co.jp>,
  * who brought patches based on the Linux driver with some simplification.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.10.4.1 2002/01/10 19:56:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +174,8 @@ struct audio_hw_if esm_hw_if = {
 	esm_mappage,
 	esm_get_props,
 	esm_trigger_output,
-	esm_trigger_input
+	esm_trigger_input,
+	NULL,
 };
 
 struct audio_device esm_device = {

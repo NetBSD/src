@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.30 2001/01/22 12:17:37 jdolecek Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.30.4.1 2002/01/10 20:01:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)dead_vnops.c	8.2 (Berkeley) 11/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.30.4.1 2002/01/10 20:01:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +95,7 @@ int	dead_print	__P((void *));
 #define dead_update	genfs_nullop
 #define dead_bwrite	genfs_nullop
 #define dead_revoke	genfs_nullop
+#define dead_putpages	genfs_null_putpages
 
 int	chkvnlock __P((struct vnode *));
 
@@ -142,7 +146,8 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_truncate_desc, dead_truncate },		/* truncate */
 	{ &vop_update_desc, dead_update },		/* update */
 	{ &vop_bwrite_desc, dead_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_putpages_desc, dead_putpages },		/* putpages */
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc dead_vnodeop_opv_desc =
 	{ &dead_vnodeop_p, dead_vnodeop_entries };

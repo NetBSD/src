@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.68.2.1 2001/08/03 04:13:43 lukem Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.68.2.2 2002/01/10 20:00:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,9 @@
  * ptrace() requests should actually do, and its text is quoted several times
  * in this file.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.68.2.2 2002/01/10 20:00:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +181,11 @@ sys_ptrace(p, v, retval)
 #ifdef PT_SETFPREGS
 	case  PT_SETFPREGS:
 #endif
+
+#ifdef __HAVE_PTRACE_MACHDEP
+	PTRACE_MACHDEP_REQUEST_CASES
+#endif
+
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -390,6 +398,13 @@ sys_ptrace(p, v, retval)
 			uio.uio_procp = p;
 			return (procfs_dofpregs(p, t, NULL, &uio));
 		}
+#endif
+
+#ifdef __HAVE_PTRACE_MACHDEP
+	PTRACE_MACHDEP_REQUEST_CASES
+		return (ptrace_machdep_dorequest(p, t,
+		    SCARG(uap, req), SCARG(uap, addr),
+		    SCARG(uap, data)));
 #endif
 	}
 

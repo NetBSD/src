@@ -27,13 +27,16 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.3 2001/03/24 12:40:32 martin Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.3.2.1 2002/01/10 20:03:39 thorpej Exp $ 
  *
  * $FreeBSD$
  *
  *      last edit-date: [Fri Jan  5 11:33:47 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.3.2.1 2002/01/10 20:03:39 thorpej Exp $");
 
 #include "i4b.h"
 

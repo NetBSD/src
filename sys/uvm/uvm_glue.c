@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.50.2.1 2001/09/13 01:16:32 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.50.2.2 2002/01/10 20:05:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -65,6 +65,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.50.2.2 2002/01/10 20:05:35 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sysv.h"
@@ -204,7 +207,7 @@ uvm_chgkprot(addr, len, rw)
 #endif
 
 /*
- * vslock: wire user memory for I/O
+ * uvm_vslock: wire user memory for I/O
  *
  * - called from physio and sys___sysctl
  * - XXXCDC: consider nuking this (or making it a macro?)
@@ -224,12 +227,12 @@ uvm_vslock(p, addr, len, access_type)
 	map = &p->p_vmspace->vm_map;
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
-	error = uvm_fault_wire(map, start, end, access_type);
+	error = uvm_fault_wire(map, start, end, VM_FAULT_WIRE, access_type);
 	return error;
 }
 
 /*
- * vslock: wire user memory for I/O
+ * uvm_vsunlock: unwire user memory wired by uvm_vslock()
  *
  * - called from physio and sys___sysctl
  * - XXXCDC: consider nuking this (or making it a macro?)
@@ -274,9 +277,9 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 
 	if (shared == TRUE) {
 		p2->p_vmspace = NULL;
-		uvmspace_share(p1, p2);			/* share vmspace */
+		uvmspace_share(p1, p2);
 	} else
-		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
+		p2->p_vmspace = uvmspace_fork(p1->p_vmspace);
 
 	/*
 	 * Wire down the U-area for the process, which contains the PCB
@@ -287,8 +290,8 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 	 * Note the kernel stack gets read/write accesses right off
 	 * the bat.
 	 */
-	error = uvm_fault_wire(kernel_map, (vaddr_t)up,
-	    (vaddr_t)up + USPACE, VM_PROT_READ | VM_PROT_WRITE);
+	error = uvm_fault_wire(kernel_map, (vaddr_t)up, (vaddr_t)up + USPACE,
+	    VM_FAULT_WIRE, VM_PROT_READ | VM_PROT_WRITE);
 	if (error)
 		panic("uvm_fork: uvm_fault_wire failed: %d", error);
 
@@ -330,7 +333,6 @@ uvm_exit(p)
 
 	uvmspace_free(p->p_vmspace);
 	p->p_flag &= ~P_INMEM;
-	uvm_fault_unwire(kernel_map, va, va + USPACE);
 	uvm_km_free(kernel_map, va, USPACE);
 	p->p_addr = NULL;
 }
@@ -376,12 +378,15 @@ uvm_swapin(p)
 	struct proc *p;
 {
 	vaddr_t addr;
-	int s;
+	int s, error;
 
 	addr = (vaddr_t)p->p_addr;
 	/* make P_INMEM true */
-	uvm_fault_wire(kernel_map, addr, addr + USPACE,
+	error = uvm_fault_wire(kernel_map, addr, addr + USPACE, VM_FAULT_WIRE,
 	    VM_PROT_READ | VM_PROT_WRITE);
+	if (error) {
+		panic("uvm_swapin: rewiring stack failed: %d", error);
+	}
 
 	/*
 	 * Some architectures need to be notified when the user area has
@@ -605,6 +610,7 @@ uvm_swapout(p)
 		remrunqueue(p);
 	SCHED_UNLOCK(s);
 	p->p_swtime = 0;
+	p->p_stats->p_ru.ru_nswap++;
 	++uvmexp.swapouts;
 
 	/*
@@ -615,3 +621,63 @@ uvm_swapout(p)
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 }
 
+/*
+ * uvm_coredump_walkmap: walk a process's map for the purpose of dumping
+ * a core file.
+ */
+
+int
+uvm_coredump_walkmap(p, vp, cred, func, cookie)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+	int (*func)(struct proc *, struct vnode *, struct ucred *,
+	    struct uvm_coredump_state *);
+	void *cookie;
+{
+	struct uvm_coredump_state state;
+	struct vmspace *vm = p->p_vmspace;
+	struct vm_map *map = &vm->vm_map;
+	struct vm_map_entry *entry;
+	vaddr_t maxstack;
+	int error;
+
+	maxstack = trunc_page(USRSTACK - ctob(vm->vm_ssize));
+
+	for (entry = map->header.next; entry != &map->header;
+	     entry = entry->next) {  
+		/* Should never happen for a user process. */
+		if (UVM_ET_ISSUBMAP(entry))
+			panic("uvm_coredump_walkmap: user process with "
+			    "submap?");
+
+		state.cookie = cookie;
+		state.start = entry->start;
+		state.end = entry->end;
+		state.prot = entry->protection;
+		state.flags = 0;
+
+		if (state.start >= VM_MAXUSER_ADDRESS)  
+			continue;
+
+		if (state.end > VM_MAXUSER_ADDRESS)
+			state.end = VM_MAXUSER_ADDRESS;
+
+		if (state.start >= (vaddr_t)vm->vm_maxsaddr) {
+			if (state.end <= maxstack)
+				continue;
+			if (state.start < maxstack)
+				state.start = maxstack;
+			state.flags |= UVM_COREDUMP_STACK;
+		}
+
+		if ((entry->protection & VM_PROT_WRITE) == 0)
+			state.flags |= UVM_COREDUMP_NODUMP;
+
+		error = (*func)(p, vp, cred, &state);
+		if (error)
+			return (error);
+	}
+
+	return (0);
+}

@@ -37,6 +37,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.2.4.1 2002/01/10 20:01:16 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>

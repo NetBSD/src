@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.49 2001/01/21 19:00:06 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.49.4.1 2002/01/10 19:58:58 thorpej Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -41,6 +41,9 @@
 /*
  * USB spec: http://www.usb.org/developers/data/usbspec.zip
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.49.4.1 2002/01/10 19:58:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,6 +270,7 @@ USB_ATTACH(uhub)
 	 *  For all ports
 	 *     get port status
 	 *     if device connected
+	 *        wait 100 ms
 	 *        turn on reset
 	 *        wait
 	 *        clear C_PORT_RESET
@@ -322,6 +326,7 @@ uhub_explore(usbd_device_handle dev)
 	struct uhub_softc *sc = dev->hub->hubsoftc;
 	struct usbd_port *up;
 	usbd_status err;
+	int speed;
 	int port;
 	int change, status;
 
@@ -344,8 +349,8 @@ uhub_explore(usbd_device_handle dev)
 		}
 		status = UGETW(up->status.wPortStatus);
 		change = UGETW(up->status.wPortChange);
-		DPRINTFN(3,("uhub_explore: port %d status 0x%04x 0x%04x\n",
-			    port, status, change));
+		DPRINTFN(3,("uhub_explore: %s port %d status 0x%04x 0x%04x\n",
+			    USBDEVNAME(sc->sc_dev), port, status, change));
 		if (change & UPS_C_PORT_ENABLED) {
 			DPRINTF(("uhub_explore: C_PORT_ENABLED\n"));
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
@@ -371,8 +376,14 @@ uhub_explore(usbd_device_handle dev)
 			DPRINTFN(3,("uhub_explore: port=%d !C_CONNECT_"
 				    "STATUS\n", port));
 			/* No status change, just do recursive explore. */
-			if (up->device && up->device->hub)
+			if (up->device != NULL && up->device->hub != NULL)
 				up->device->hub->explore(up->device);
+#if 0 && defined(DIAGNOSTIC)
+			if (up->device == NULL && 
+			    (status & UPS_CURRENT_CONNECT_STATUS))
+				printf("%s: connected, no device\n",
+				       USBDEVNAME(sc->sc_dev));
+#endif
 			continue;
 		}
 
@@ -416,15 +427,38 @@ uhub_explore(usbd_device_handle dev)
 
 		/* Reset port, which implies enabling it. */
 		if (usbd_reset_port(dev, port, &up->status)) {
-			printf("uhub_explore: port=%d reset failed\n",
-				 port);
+			printf("%s: port %d reset failed\n",
+			       USBDEVNAME(sc->sc_dev), port);
+			continue;
+		}
+		/* Get port status again, it might have changed during reset */
+		err = usbd_get_port_status(dev, port, &up->status);
+		if (err) {
+			DPRINTF(("uhub_explore: get port status failed, "
+				 "error=%s\n", usbd_errstr(err)));
+			continue;
+		}
+		status = UGETW(up->status.wPortStatus);
+		change = UGETW(up->status.wPortChange);
+		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
+			/* Nothing connected, just ignore it. */
+#ifdef DIAGNOSTIC
+			printf("%s: port %d, device disappeared after reset\n",
+			       USBDEVNAME(sc->sc_dev), port);
+#endif
 			continue;
 		}
 
+		/* Figure out device speed */
+		if (status & UPS_HIGH_SPEED)
+			speed = USB_SPEED_HIGH;
+		else if (status & UPS_LOW_SPEED)
+			speed = USB_SPEED_LOW;
+		else
+			speed = USB_SPEED_FULL;
 		/* Get device info and set its address. */
 		err = usbd_new_device(USBDEV(sc->sc_dev), dev->bus, 
-			  dev->depth + 1, status & UPS_LOW_SPEED, 
-			  port, up);
+			  dev->depth + 1, speed, port, up);
 		/* XXX retry a few times? */
 		if (err) {
 			DPRINTFN(-1,("uhub_explore: usb_new_device failed, "
@@ -565,10 +599,10 @@ uhub_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 	struct uhub_softc *sc = addr;
 
 	DPRINTFN(5,("uhub_intr: sc=%p\n", sc));
-	if (status != USBD_NORMAL_COMPLETION)
+	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
-
-	usb_needs_explore(sc->sc_hub);
+	else if (status == USBD_NORMAL_COMPLETION)
+		usb_needs_explore(sc->sc_hub);
 }
 
 #if defined(__FreeBSD__)

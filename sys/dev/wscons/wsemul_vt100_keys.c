@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_keys.c,v 1.3 1999/04/22 20:06:02 mycroft Exp $ */
+/* $NetBSD: wsemul_vt100_keys.c,v 1.3.16.1 2002/01/10 19:59:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_keys.c,v 1.3.16.1 2002/01/10 19:59:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,10 +87,7 @@ static char *vt100_numpad[] = {
 };
 
 int
-wsemul_vt100_translate(cookie, in, out)
-	void *cookie;
-	keysym_t in;
-	char **out;
+wsemul_vt100_translate(void *cookie, keysym_t in, char **out)
 {
 	struct wsemul_vt100_emuldata *edp = cookie;
 	static char c;

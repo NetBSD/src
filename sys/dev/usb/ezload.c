@@ -1,4 +1,4 @@
-/*	$NetBSD: ezload.c,v 1.2.4.1 2001/08/03 04:13:35 lukem Exp $	*/
+/*	$NetBSD: ezload.c,v 1.2.4.2 2002/01/10 19:58:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ezload.c,v 1.2.4.2 2002/01/10 19:58:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

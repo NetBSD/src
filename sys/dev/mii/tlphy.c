@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.30.2.2 2001/09/13 01:15:47 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.30.2.3 2002/01/10 19:56:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
 /*
  * Driver for Texas Instruments's ThunderLAN PHYs
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.30.2.3 2002/01/10 19:56:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

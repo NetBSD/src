@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mca.c,v 1.2 2001/04/23 06:10:08 jdolecek Exp $	*/
+/*	$NetBSD: if_ne_mca.c,v 1.2.6.1 2002/01/10 19:56:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * supported by this driver. However, NetBSD driver was only tested
  * with the Novell adapter so far.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mca.c,v 1.2.6.1 2002/01/10 19:56:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

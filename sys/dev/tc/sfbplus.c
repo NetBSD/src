@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.9.4.1 2001/08/25 06:16:36 thorpej Exp $ */
+/* $NetBSD: sfbplus.c,v 1.9.4.2 2002/01/10 19:58:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Tohru Nishimura.  All rights reserved.
@@ -30,9 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.9.4.1 2001/08/25 06:16:36 thorpej Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.9.4.2 2002/01/10 19:58:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

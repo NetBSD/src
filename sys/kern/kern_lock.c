@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.56 2001/07/08 17:41:14 wiz Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.56.2.1 2002/01/10 19:59:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -79,6 +79,9 @@
  *	@(#)kern_lock.c	8.18 (Berkeley) 5/21/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.56.2.1 2002/01/10 19:59:49 thorpej Exp $");
+
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_ddb.h"
@@ -101,7 +104,7 @@
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-int	lock_debug_syslog = 0;	/* defaults to syslog, but can be patched */
+int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 
 #ifdef DDB
 #include <ddb/ddbvar.h>
@@ -257,7 +260,7 @@ do {									\
 do {									\
 	if (((lkp)->lk_flags & LK_SPIN) == 0 && (lkp)->lk_waitcount) {	\
 		/* XXX Cast away volatile. */				\
-		wakeup_one((void *)(lkp));				\
+		wakeup((void *)(lkp));					\
 	}								\
 } while (/*CONSTCOND*/0)
 
@@ -791,7 +794,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	      (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) == 0 &&
 	     lkp->lk_sharecount == 0 && lkp->lk_waitcount == 0)) {
 		lkp->lk_flags &= ~LK_WAITDRAIN;
-		wakeup_one((void *)&lkp->lk_flags);
+		wakeup((void *)&lkp->lk_flags);
 	}
 	/*
 	 * Note that this panic will be a recursive panic, since
@@ -970,8 +973,12 @@ int simple_lock_debugger = 1;	/* more serious on MP */
 int simple_lock_debugger = 0;
 #endif
 #define	SLOCK_DEBUGGER()	if (simple_lock_debugger) Debugger()
+#define	SLOCK_TRACE()							\
+	db_stack_trace_print((db_expr_t)__builtin_frame_address(0),	\
+	    TRUE, 65535, "", printf);
 #else
 #define	SLOCK_DEBUGGER()	/* nothing */
+#define	SLOCK_TRACE()		/* nothing */
 #endif /* } */
 
 #ifdef MULTIPROCESSOR
@@ -983,6 +990,7 @@ int simple_lock_debugger = 0;
 
 #define	SLOCK_WHERE(str, alp, id, l)					\
 do {									\
+	lock_printf("\n");						\
 	lock_printf(str);						\
 	lock_printf("lock: %p, currently at: %s:%d\n", (alp), (id), (l)); \
 	SLOCK_MP();							\
@@ -992,6 +1000,7 @@ do {									\
 	if ((alp)->unlock_file != NULL)					\
 		lock_printf("last unlocked: %s:%d\n", (alp)->unlock_file, \
 		    (alp)->unlock_line);				\
+	SLOCK_TRACE()							\
 	SLOCK_DEBUGGER();						\
 } while (/*CONSTCOND*/0)
 
@@ -1194,8 +1203,7 @@ simple_lock_dump(void)
 	s = spllock();
 	SLOCK_LIST_LOCK();
 	lock_printf("all simple locks:\n");
-	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
-	     alp = TAILQ_NEXT(alp, list)) {
+	TAILQ_FOREACH(alp, &simplelock_list, list) {
 		lock_printf("%p CPU %lu %s:%d\n", alp, alp->lock_holder,
 		    alp->lock_file, alp->lock_line);
 	}
@@ -1211,8 +1219,7 @@ simple_lock_freecheck(void *start, void *end)
 
 	s = spllock();
 	SLOCK_LIST_LOCK();
-	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
-	     alp = TAILQ_NEXT(alp, list)) {
+	TAILQ_FOREACH(alp, &simplelock_list, list) {
 		if ((void *)alp >= start && (void *)alp < end) {
 			lock_printf("freeing simple_lock %p CPU %lu %s:%d\n",
 			    alp, alp->lock_holder, alp->lock_file,
@@ -1247,8 +1254,7 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 	}
 	s = spllock();
 	SLOCK_LIST_LOCK();
-	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
-	     alp = TAILQ_NEXT(alp, list)) {
+	TAILQ_FOREACH(alp, &simplelock_list, list) {
 		if (alp == lp)
 			continue;
 		if (alp->lock_holder == cpu_id)
@@ -1258,14 +1264,11 @@ simple_lock_only_held(volatile struct simplelock *lp, const char *where)
 	splx(s);
 
 	if (alp != NULL) {
-		lock_printf("%s with held simple_lock %p "
+		lock_printf("\n%s with held simple_lock %p "
 		    "CPU %lu %s:%d\n",
 		    where, alp, alp->lock_holder, alp->lock_file,
 		    alp->lock_line);
-#ifdef DDB
-		db_stack_trace_print((db_expr_t)__builtin_frame_address(0),
-		    TRUE, 65535, "", printf);
-#endif
+		SLOCK_TRACE();
 		SLOCK_DEBUGGER();
 	}
 }

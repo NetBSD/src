@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.64.2.2 2001/09/08 03:29:22 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.64.2.3 2002/01/10 20:01:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,9 +44,11 @@
  * /dev/fd Filesystem
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.64.2.3 2002/01/10 20:01:32 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>	/* boottime */
@@ -129,6 +131,7 @@ int	fdesc_pathconf	__P((void *));
 #define	fdesc_update	genfs_nullop
 #define	fdesc_bwrite	genfs_eopnotsupp
 #define fdesc_revoke	genfs_revoke
+#define fdesc_putpages	genfs_null_putpages
 
 static int fdesc_attr __P((int, struct vattr *, struct ucred *, struct proc *));
 
@@ -178,7 +181,8 @@ const struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_truncate_desc, fdesc_truncate },		/* truncate */
 	{ &vop_update_desc, fdesc_update },		/* update */
 	{ &vop_bwrite_desc, fdesc_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_putpages_desc, fdesc_putpages },		/* putpages */
+	{ NULL, NULL }
 };
 
 const struct vnodeopv_desc fdesc_vnodeop_opv_desc =

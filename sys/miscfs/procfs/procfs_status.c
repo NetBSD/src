@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.16 2000/12/30 23:14:52 david Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.16.4.1 2002/01/10 20:01:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -38,6 +38,9 @@
  *
  *	@(#)procfs_status.c	8.4 (Berkeley) 6/15/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.16.4.1 2002/01/10 20:01:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

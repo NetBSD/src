@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.36 2001/06/11 13:49:18 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.36.2.1 2002/01/10 20:03:22 thorpej Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.36.2.1 2002/01/10 20:03:22 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -380,7 +383,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 				break;
 			default:
 				printf("ip6_output (ipsec): error code %d\n", error);
-				/*fall through*/
+				/* fall through */
 			case ENOENT:
 				/* don't show these error codes to the user */
 				error = 0;
@@ -504,7 +507,7 @@ skip_ipsec2:;
 				break;
 			default:
 				printf("ip6_output (ipsec): error code %d\n", error);
-				/*fall through*/
+				/* fall through */
 			case ENOENT:
 				/* don't show these error codes to the user */
 				error = 0;
@@ -515,7 +518,7 @@ skip_ipsec2:;
 
 		exthdrs.ip6e_ip6 = m;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 
 	if (!IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst)) {
 		/* Unicast */
@@ -750,6 +753,11 @@ skip_ipsec2:;
 		mtu = nd_ifinfo[ifp->if_index].linkmtu;
 	}
 
+	if (mtu > IPV6_MMTU &&
+	    (flags & IPV6_MINMTU)) {
+		mtu = IPV6_MMTU;
+	}
+
 	/* Fake scoped addresses */
 	if ((ifp->if_flags & IFF_LOOPBACK) != 0) {
 		/*
@@ -862,6 +870,7 @@ skip_ipsec2:;
 		ip6 = mtod(m, struct ip6_hdr *);
 		ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 		if (ia6) {
+			/* Record statistics for this interface address. */
 			ia6->ia_ifa.ifa_data.ifad_outbytes +=
 				m->m_pkthdr.len;
 		}
@@ -870,12 +879,7 @@ skip_ipsec2:;
 		/* clean ipsec history once it goes out of the node */
 		ipsec_delaux(m);
 #endif
-#ifdef OLDIP6OUTPUT
-		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
-					  ro->ro_rt);
-#else
 		error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
-#endif
 		goto done;
 	} else if (mtu < IPV6_MMTU) {
 		/*
@@ -932,7 +936,8 @@ skip_ipsec2:;
 
 		/*
 		 * Loop through length of segment after first fragment,
-		 * make new header and copy data of each part and link onto chain.
+		 * make new header and copy data of each part and link onto
+		 * chain.
 		 */
 		m0 = m;
 		for (off = hlen; off < tlen; off += len) {
@@ -949,8 +954,8 @@ skip_ipsec2:;
 			mhip6 = mtod(m, struct ip6_hdr *);
 			*mhip6 = *ip6;
 			m->m_len = sizeof(*mhip6);
- 			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
- 			if (error) {
+			error = ip6_insertfraghdr(m0, m, hlen, &ip6f);
+			if (error) {
 				ip6stat.ip6s_odropped++;
 				goto sendorfree;
 			}
@@ -996,6 +1001,10 @@ sendorfree:
 			ip6 = mtod(m, struct ip6_hdr *);
 			ia6 = in6_ifawithifp(ifp, &ip6->ip6_src);
 			if (ia6) {
+				/*
+				 * Record statistics for this interface
+				 * address.
+				 */
 				ia6->ia_ifa.ifa_data.ifad_outbytes +=
 					m->m_pkthdr.len;
 			}
@@ -1004,13 +1013,7 @@ sendorfree:
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
 #endif
-#ifdef OLDIP6OUTPUT
-			error = (*ifp->if_output)(ifp, m,
-						  (struct sockaddr *)dst,
-						  ro->ro_rt);
-#else
 			error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
-#endif
 		} else
 			m_freem(m);
 	}
@@ -1255,77 +1258,84 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_PKTINFO:
 			case IPV6_HOPLIMIT:
 			case IPV6_RTHDR:
-			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
-#ifndef INET6_BINDV6ONLY
-			case IPV6_BINDV6ONLY:
-#endif
-				if (!m || m->m_len != sizeof(int))
+			case IPV6_V6ONLY:
+				if (!m || m->m_len != sizeof(int)) {
 					error = EINVAL;
-				else {
-					optval = *mtod(m, int *);
-					switch (optname) {
+					break;
+				}
+				optval = *mtod(m, int *);
+				switch (optname) {
 
-					case IPV6_UNICAST_HOPS:
-						if (optval < -1 || optval >= 256)
-							error = EINVAL;
-						else {
-							/* -1 = kernel default */
-							in6p->in6p_hops = optval;
-						}
-						break;
-#define OPTSET(bit) \
-	if (optval) \
-		in6p->in6p_flags |= bit; \
-	else \
-		in6p->in6p_flags &= ~bit;
-
-					case IPV6_RECVOPTS:
-						OPTSET(IN6P_RECVOPTS);
-						break;
-
-					case IPV6_RECVRETOPTS:
-						OPTSET(IN6P_RECVRETOPTS);
-						break;
-
-					case IPV6_RECVDSTADDR:
-						OPTSET(IN6P_RECVDSTADDR);
-						break;
-
-					case IPV6_PKTINFO:
-						OPTSET(IN6P_PKTINFO);
-						break;
-
-					case IPV6_HOPLIMIT:
-						OPTSET(IN6P_HOPLIMIT);
-						break;
-
-					case IPV6_HOPOPTS:
-						OPTSET(IN6P_HOPOPTS);
-						break;
-
-					case IPV6_DSTOPTS:
-						OPTSET(IN6P_DSTOPTS);
-						break;
-
-					case IPV6_RTHDR:
-						OPTSET(IN6P_RTHDR);
-						break;
-
-					case IPV6_CHECKSUM:
-						in6p->in6p_cksum = optval;
-						break;
-
-					case IPV6_FAITH:
-						OPTSET(IN6P_FAITH);
-						break;
-
-#ifndef INET6_BINDV6ONLY
-					case IPV6_BINDV6ONLY:
-						OPTSET(IN6P_BINDV6ONLY);
-						break;
-#endif
+				case IPV6_UNICAST_HOPS:
+					if (optval < -1 || optval >= 256)
+						error = EINVAL;
+					else {
+						/* -1 = kernel default */
+						in6p->in6p_hops = optval;
 					}
+					break;
+#define OPTSET(bit) \
+if (optval) \
+	in6p->in6p_flags |= bit; \
+else \
+	in6p->in6p_flags &= ~bit;
+
+				case IPV6_RECVOPTS:
+					OPTSET(IN6P_RECVOPTS);
+					break;
+
+				case IPV6_RECVRETOPTS:
+					OPTSET(IN6P_RECVRETOPTS);
+					break;
+
+				case IPV6_RECVDSTADDR:
+					OPTSET(IN6P_RECVDSTADDR);
+					break;
+
+				case IPV6_PKTINFO:
+					OPTSET(IN6P_PKTINFO);
+					break;
+
+				case IPV6_HOPLIMIT:
+					OPTSET(IN6P_HOPLIMIT);
+					break;
+
+				case IPV6_HOPOPTS:
+					OPTSET(IN6P_HOPOPTS);
+					break;
+
+				case IPV6_DSTOPTS:
+					OPTSET(IN6P_DSTOPTS);
+					break;
+
+				case IPV6_RTHDR:
+					OPTSET(IN6P_RTHDR);
+					break;
+
+				case IPV6_FAITH:
+					OPTSET(IN6P_FAITH);
+					break;
+
+				case IPV6_V6ONLY:
+					/*
+					 * make setsockopt(IPV6_V6ONLY)
+					 * available only prior to bind(2).
+					 * see ipng mailing list, Jun 22 2001.
+					 */
+					if (in6p->in6p_lport ||
+					    !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
+					{
+						error = EINVAL;
+						break;
+					}
+#ifdef INET6_BINDV6ONLY
+					if (!optval)
+						error = EINVAL;
+#else
+					OPTSET(IN6P_IPV6_V6ONLY);
+#endif
+					break;
 				}
 				break;
 #undef OPTSET
@@ -1437,11 +1447,8 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_PKTINFO:
 			case IPV6_HOPLIMIT:
 			case IPV6_RTHDR:
-			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
-#ifndef INET6_BINDV6ONLY
-			case IPV6_BINDV6ONLY:
-#endif
+			case IPV6_V6ONLY:
 				*mp = m = m_get(M_WAIT, MT_SOOPTS);
 				m->m_len = sizeof(int);
 				switch (optname) {
@@ -1497,19 +1504,13 @@ ip6_ctloutput(op, so, level, optname, mp)
 					optval = OPTBIT(IN6P_RTHDR);
 					break;
 
-				case IPV6_CHECKSUM:
-					optval = in6p->in6p_cksum;
-					break;
-
 				case IPV6_FAITH:
 					optval = OPTBIT(IN6P_FAITH);
 					break;
 
-#ifndef INET6_BINDV6ONLY
-				case IPV6_BINDV6ONLY:
-					optval = OPTBIT(IN6P_BINDV6ONLY);
+				case IPV6_V6ONLY:
+					optval = OPTBIT(IN6P_IPV6_V6ONLY);
 					break;
-#endif
 				}
 				*mtod(m, int *) = optval;
 				break;
@@ -1792,16 +1793,9 @@ ip6_setmoptions(optname, im6op, m)
 		 * Everything looks good; add a new record to the multicast
 		 * address list for the given interface.
 		 */
-		imm = malloc(sizeof(*imm), M_IPMADDR, M_WAITOK);
-		if (imm == NULL) {
-			error = ENOBUFS;
+		imm = in6_joingroup(ifp, &mreq->ipv6mr_multiaddr, &error);
+		if (!imm)
 			break;
-		}
-		if ((imm->i6mm_maddr =
-		     in6_addmulti(&mreq->ipv6mr_multiaddr, ifp, &error)) == NULL) {
-			free(imm, M_IPMADDR);
-			break;
-		}
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm, i6mm_chain);
 		break;
 
@@ -1864,8 +1858,7 @@ ip6_setmoptions(optname, im6op, m)
 		 * membership points.
 		 */
 		LIST_REMOVE(imm, i6mm_chain);
-		in6_delmulti(imm->i6mm_maddr);
-		free(imm, M_IPMADDR);
+		in6_leavegroup(imm);
 		break;
 
 	default:
@@ -1948,9 +1941,7 @@ ip6_freemoptions(im6o)
 
 	while ((imm = im6o->im6o_memberships.lh_first) != NULL) {
 		LIST_REMOVE(imm, i6mm_chain);
-		if (imm->i6mm_maddr)
-			in6_delmulti(imm->i6mm_maddr);
-		free(imm, M_IPMADDR);
+		in6_leavegroup(imm);
 	}
 	free(im6o, M_IPMOPTS);
 }

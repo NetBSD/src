@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.36.2.1 2001/08/03 04:13:37 lukem Exp $	*/
+/*	$NetBSD: xd.c,v 1.36.2.2 2002/01/10 19:59:13 thorpej Exp $	*/
 
 /*
  *
@@ -49,6 +49,9 @@
  * different sizes.   the 753 is a 6U VME card, while the 7053 is a 9U
  * VME card (found in many VME based suns).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.36.2.2 2002/01/10 19:59:13 thorpej Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -1627,7 +1630,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	/* init iorq and load iopb from it */
 	xdc_rqinit(iorq, xdcsc, xdsc, XD_SUB_NORM | XD_MODE_VERBO, block,
 		   bp->b_bcount / XDFM_BPS,
-		   (caddr_t)iorq->dmamap->dm_segs[0].ds_addr,
+		   (caddr_t)(u_long)iorq->dmamap->dm_segs[0].ds_addr,
 		   bp);
 
 	xdc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XDCMD_RD : XDCMD_WR, 0);

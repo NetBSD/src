@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.41.2.1 2001/08/25 06:17:05 thorpej Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.41.2.2 2002/01/10 20:03:20 thorpej Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -65,6 +65,9 @@
  *	@(#)ip_input.c	8.2 (Berkeley) 1/4/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.41.2.2 2002/01/10 20:03:20 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -82,6 +85,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -97,7 +101,7 @@
 #ifdef INET
 #include <netinet/ip.h>
 #include <netinet/ip_icmp.h>
-#endif /*INET*/
+#endif /* INET */
 #include <netinet/ip6.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6_var.h>
@@ -116,9 +120,12 @@
 /* we need it for NLOOP. */
 #include "loop.h"
 #include "faith.h"
-
 #include "gif.h"
 #include "bpfilter.h"
+
+#if NGIF > 0
+#include <netinet6/in6_gif.h>
+#endif
 
 #include <net/net_osdep.h>
 
@@ -243,14 +250,12 @@ ip6_input(m)
 	 * should the inner packet be considered authentic?
 	 * see comment in ah4_input().
 	 */
-	if (m) {
-		m->m_flags &= ~M_AUTHIPHDR;
-		m->m_flags &= ~M_AUTHIPDGM;
-	}
+	m->m_flags &= ~M_AUTHIPHDR;
+	m->m_flags &= ~M_AUTHIPDGM;
 #endif
 
 	/*
-	 * mbuf statistics by kazu
+	 * mbuf statistics
 	 */
 	if (m->m_flags & M_EXT) {
 		if (m->m_next)
@@ -261,7 +266,7 @@ ip6_input(m)
 #define M2MMAX	(sizeof(ip6stat.ip6s_m2m)/sizeof(ip6stat.ip6s_m2m[0]))
 		if (m->m_next) {
 			if (m->m_flags & M_LOOP) {
-				ip6stat.ip6s_m2m[loif[0].if_index]++;	/*XXX*/
+				ip6stat.ip6s_m2m[loif[0].if_index]++; /* XXX */
 			} else if (m->m_pkthdr.rcvif->if_index < M2MMAX)
 				ip6stat.ip6s_m2m[m->m_pkthdr.rcvif->if_index]++;
 			else
@@ -324,11 +329,9 @@ ip6_input(m)
 	}
 #endif /* PFIL_HOOKS */
 
-
 	ip6stat.ip6s_nxthist[ip6->ip6_nxt]++;
 
 #ifdef ALTQ
-	/* XXX Temporary until ALTQ is changed to use a pfil hook */
 	if (altq_input != NULL && (*altq_input)(m, AF_INET6) == 0) {
 		/* packet is dropped by traffic conditioner */
 		return;
@@ -336,7 +339,7 @@ ip6_input(m)
 #endif
 
 	/*
-	 * Scope check
+	 * Check against address spoofing/corruption.
 	 */
 	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst)) {
@@ -345,16 +348,16 @@ ip6_input(m)
 		goto bad;
 	}
 	/*
-	 * The following check is not documented in the spec.  Malicious party
-	 * may be able to use IPv4 mapped addr to confuse tcp/udp stack and
-	 * bypass security checks (act as if it was from 127.0.0.1 by using
-	 * IPv6 src ::ffff:127.0.0.1).	Be cautious.
+	 * The following check is not documented in specs.  A malicious
+	 * party may be able to use IPv4 mapped addr to confuse tcp/udp stack
+	 * and bypass security checks (act as if it was from 127.0.0.1 by using
+	 * IPv6 src ::ffff:127.0.0.1).  Be cautious.
 	 *
-	 * This check chokes if we are in SIIT cloud.  As none of BSDs support
-	 * IPv4-less kernel compilation, we cannot support SIIT environment
-	 * at all.  So, it makes more sense for us to reject any malicious
-	 * packets for non-SIIT environment, than try to do a partical support
-	 * for SIIT environment.
+	 * This check chokes if we are in an SIIT cloud.  As none of BSDs
+	 * support IPv4-less kernel compilation, we cannot support SIIT
+	 * environment at all.  So, it makes more sense for us to reject any
+	 * malicious packets for non-SIIT environment, than try to do a
+	 * partical support for SIIT environment.
 	 */
 	if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
@@ -543,7 +546,7 @@ ip6_input(m)
 		 && ip6_forward_rt.ro_rt->rt_ifp->if_type == IFT_FAITH) {
 			/* XXX do we need more sanity checks? */
 			ours = 1;
-			deliverifp = ip6_forward_rt.ro_rt->rt_ifp; /*faith*/
+			deliverifp = ip6_forward_rt.ro_rt->rt_ifp; /* faith */
 			goto hbhcheck;
 		}
 	}
@@ -604,7 +607,7 @@ ip6_input(m)
 		ip6 = mtod(m, struct ip6_hdr *);
 
 		/*
-		 * if the payload length field is 0 and the next header field  
+		 * if the payload length field is 0 and the next header field
 		 * indicates Hop-by-Hop Options header, then a Jumbo Payload
 		 * option MUST be included.
 		 */
@@ -1323,6 +1326,8 @@ ip6_nexthdr(m, off, proto, nxtp)
 		if (nxtp)
 			*nxtp = ip6e.ip6e_nxt;
 		off += (ip6e.ip6e_len + 2) << 2;
+		if (m->m_pkthdr.len < off)
+			return -1;
 		return off;
 
 	case IPPROTO_HOPOPTS:
@@ -1334,6 +1339,8 @@ ip6_nexthdr(m, off, proto, nxtp)
 		if (nxtp)
 			*nxtp = ip6e.ip6e_nxt;
 		off += (ip6e.ip6e_len + 1) << 3;
+		if (m->m_pkthdr.len < off)
+			return -1;
 		return off;
 
 	case IPPROTO_NONE:
@@ -1393,9 +1400,6 @@ u_char	inet6ctlerrmap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
-
 int
 ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
@@ -1443,9 +1447,11 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case IPV6CTL_DEFMCASTHLIM:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&ip6_defmcasthlim);
+#if NGIF > 0
 	case IPV6CTL_GIF_HLIM:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				&ip6_gif_hlim);
+#endif
 	case IPV6CTL_KAME_VERSION:
 		return sysctl_rdstring(oldp, oldlenp, newp, __KAME_VERSION);
 	case IPV6CTL_USE_DEPRECATED:
@@ -1453,10 +1459,11 @@ ip6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				&ip6_use_deprecated);
 	case IPV6CTL_RR_PRUNE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_rr_prune);
-#ifndef INET6_BINDV6ONLY
-	case IPV6CTL_BINDV6ONLY:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				&ip6_bindv6only);
+	case IPV6CTL_V6ONLY:
+#ifdef INET6_BINDV6ONLY
+		return sysctl_rdint(oldp, oldlenp, newp, ip6_v6only);
+#else
+		return sysctl_int(oldp, oldlenp, newp, newlen, &ip6_v6only);
 #endif
 	case IPV6CTL_ANONPORTMIN:
 		old = ip6_anonportmin;

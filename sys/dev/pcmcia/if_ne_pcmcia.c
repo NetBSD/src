@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.78.2.2 2001/08/25 06:16:29 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.78.2.3 2002/01/10 19:57:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.78.2.3 2002/01/10 19:57:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,6 +330,11 @@ static const struct ne2000dev {
     { PCMCIA_STR_COREGA_ETHER_PCC_T,
       PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_PCC_T,
       PCMCIA_CIS_COREGA_ETHER_PCC_T,
+      0, -1, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_STR_COREGA_ETHER_PCC_TD,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_PCC_TD,
+      PCMCIA_CIS_COREGA_ETHER_PCC_TD,
       0, -1, { 0x00, 0x00, 0xf4 } },
 
     { PCMCIA_STR_COREGA_ETHER_II_PCC_T,
@@ -850,7 +858,7 @@ ne_pcmcia_get_enaddr(psc, maddr, myea)
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pcmcia_mem_handle pcmh;
-	bus_addr_t offset;
+	bus_size_t offset;
 	u_int8_t *enaddr = NULL;
 	int j, mwindow;
 
@@ -909,7 +917,7 @@ ne_pcmcia_ax88190_set_iobase(psc)
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pcmcia_mem_handle pcmh;
-	bus_addr_t offset;
+	bus_size_t offset;
 	int rv = 1, mwindow;
 	u_int last_liobase, new_liobase;
 

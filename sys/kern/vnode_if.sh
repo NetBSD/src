@@ -33,7 +33,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.29.2.1 2002/01/10 20:00:24 thorpej Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -265,6 +265,11 @@ exec > $out_c
 echo -n "$warning" | sed -e 's/\$//g;s/@/\$/g'
 echo ""
 echo -n "$copyright"
+echo "
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, \"\$NetBSD\$\");
+"
+
 echo '
 /*
  * If we have LKM support, always include the non-inline versions for

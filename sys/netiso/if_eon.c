@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.34 2001/06/14 05:44:26 itojun Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.34.2.1 2002/01/10 20:03:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,6 +70,9 @@ SOFTWARE.
  * for the nsel
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.34.2.1 2002/01/10 20:03:48 thorpej Exp $");
+
 #include "opt_eon.h"
 
 #ifdef EON
@@ -84,7 +87,6 @@ SOFTWARE.
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/types.h>
 
 #include <machine/cpu.h>	/* XXX for setsoftnet().  This must die. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.12.2.1 2001/07/10 14:00:39 lukem Exp $	*/
+/*	$NetBSD: genfs.h,v 1.12.2.2 2002/01/10 20:01:34 thorpej Exp $	*/
 
 int	genfs_badop		__P((void *));
 int	genfs_nullop		__P((void *));
@@ -26,4 +26,5 @@ int	genfs_unlock		__P((void *));
 int	genfs_mmap		__P((void *));
 int	genfs_getpages		__P((void *));
 int	genfs_putpages		__P((void *));
-int	genfs_size		__P((void *));
+int	genfs_null_putpages	__P((void *));
+int	genfs_compat_getpages	__P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.20 2000/11/14 22:13:20 thorpej Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.20.4.1 2002/01/10 19:59:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_aout.c,v 1.20.4.1 2002/01/10 19:59:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +126,7 @@ exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
 #endif
 		return ETXTBSY;
 	}
-	vn_marktext(epp->ep_vp);
+	epp->ep_vp->v_flag |= VTEXT;
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, round_page(execp->a_text),

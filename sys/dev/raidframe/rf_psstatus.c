@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.5.8.1 2001/08/03 04:13:28 lukem Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.5.8.2 2002/01/10 19:57:55 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,11 @@
  *
  *****************************************************************************/
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.5.8.2 2002/01/10 19:57:55 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_general.h"
 #include "rf_debugprint.h"

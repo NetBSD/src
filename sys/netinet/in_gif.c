@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.21.2.2 2001/08/25 06:17:01 thorpej Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.21.2.3 2002/01/10 20:02:41 thorpej Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.21.2.3 2002/01/10 20:02:41 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_iso.h"
 
@@ -44,6 +47,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/protosw.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -78,7 +82,13 @@ int ip_gif_ttl = GIF_TTL;
 int ip_gif_ttl = 0;
 #endif
 
-extern struct protosw in_gif_protosw;
+extern struct domain inetdomain;
+struct protosw in_gif_protosw =
+{ SOCK_RAW,	&inetdomain,	0/* IPPROTO_IPV[46] */,	PR_ATOMIC|PR_ADDR,
+  in_gif_input, rip_output,	0,		rip_ctloutput,
+  rip_usrreq,
+  0,            0,              0,              0,
+};
 
 int
 in_gif_output(ifp, family, m)
@@ -117,7 +127,7 @@ in_gif_output(ifp, family, m)
 		tos = ip->ip_tos;
 		break;
 	    }
-#endif /*INET*/
+#endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 	    {
@@ -132,7 +142,7 @@ in_gif_output(ifp, family, m)
 		tos = (ntohl(ip6->ip6_flow) >> 20) & 0xff;
 		break;
 	    }
-#endif /*INET6*/
+#endif /* INET6 */
 #ifdef ISO
 	case AF_ISO:
 		proto = IPPROTO_EON;
@@ -328,8 +338,7 @@ gif_validate4(ip, sc, ifp)
 		return 0;
 	}
 	/* reject packets with broadcast on source */
-	for (ia4 = in_ifaddr.tqh_first; ia4; ia4 = ia4->ia_list.tqe_next)
-	{
+	TAILQ_FOREACH(ia4, &in_ifaddr, ia_list) {
 		if ((ia4->ia_ifa.ifa_ifp->if_flags & IFF_BROADCAST) == 0)
 			continue;
 		if (ip->ip_src.s_addr == ia4->ia_broadaddr.sin_addr.s_addr)

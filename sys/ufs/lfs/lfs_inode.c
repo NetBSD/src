@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.51.4.1 2001/08/03 04:14:08 lukem Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.51.4.2 2002/01/10 20:05:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,9 @@
  *
  *	@(#)lfs_inode.c	8.9 (Berkeley) 5/8/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.51.4.2 2002/01/10 20:05:12 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -149,7 +152,6 @@ lfs_update(void *v)
 				  } */ *ap = v;
 	struct inode *ip;
 	struct vnode *vp = ap->a_vp;
-	int oflag;
 	struct timespec ts;
 	struct lfs *fs = VFSTOUFS(vp->v_mount)->um_lfs;
 	
@@ -164,7 +166,7 @@ lfs_update(void *v)
 	 * will cause a panic.  So, we must wait until any pending write
 	 * for our inode completes, if we are called with UPDATE_WAIT set.
 	 */
-	while((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
+	while ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT &&
 	    WRITEINPROG(vp)) {
 #ifdef DEBUG_LFS
 		printf("lfs_update: sleeping on inode %d (in-progress)\n",
@@ -172,7 +174,6 @@ lfs_update(void *v)
 #endif
 		tsleep(vp, (PRIBIO+1), "lfs_update", 0);
 	}
-	oflag = ip->i_flag;
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	LFS_ITIMES(ip,
 		   ap->a_access ? ap->a_access : &ts,
@@ -182,17 +183,17 @@ lfs_update(void *v)
 	}
 	
 	/* If sync, push back the vnode and any dirty blocks it may have. */
-	if((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP))==UPDATE_WAIT) {
+	if ((ap->a_flags & (UPDATE_WAIT|UPDATE_DIROP)) == UPDATE_WAIT) {
 		/* Avoid flushing VDIROP. */
 		++fs->lfs_diropwait;
-		while(vp->v_flag & VDIROP) {
+		while (vp->v_flag & VDIROP) {
 #ifdef DEBUG_LFS
 			printf("lfs_update: sleeping on inode %d (dirops)\n",
 			       ip->i_number);
 			printf("lfs_update: vflags 0x%lx, iflags 0x%x\n",
 				vp->v_flag, ip->i_flag);
 #endif
-			if(fs->lfs_dirops == 0)
+			if (fs->lfs_dirops == 0)
 				lfs_flush_fs(fs, SEGM_SYNC);
 			else
 				tsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
@@ -275,7 +276,6 @@ lfs_truncate(void *v)
 	fs = oip->i_lfs;
 	lfs_imtime(fs);
 	osize = oip->i_ffs_size;
-	ovp->v_lasta = ovp->v_clen = ovp->v_cstart = ovp->v_lastw = 0;
 
 	/*
 	 * Lengthen the size of the file. We must ensure that the
@@ -314,7 +314,7 @@ lfs_truncate(void *v)
 	 * hold the inode lock; draining the seglock is sufficient.)
 	 */
 	if (ovp != fs->lfs_unlockvp) {
-		while(fs->lfs_seglock) {
+		while (fs->lfs_seglock) {
 			tsleep(&fs->lfs_seglock, PRIBIO+1, "lfs_truncate", 0);
 		}
 	}

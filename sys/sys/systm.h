@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.136 2001/07/07 17:07:26 perry Exp $	*/
+/*	$NetBSD: systm.h,v 1.136.2.1 2002/01/10 20:04:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -180,19 +180,21 @@ enum hashtype {
 
 void	*hashinit __P((int, enum hashtype, int, int, u_long *));
 void	hashdone __P((void *, int));
-int	seltrue __P((dev_t dev, int events, struct proc *p));
+int	seltrue __P((dev_t, int, struct proc *));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 
+#ifdef _KERNEL
 void	printf __P((const char *, ...))
     __attribute__((__format__(__printf__,1,2)));
-int	sprintf __P((char *buf, const char *, ...))
+int	sprintf __P((char *, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
-int	snprintf __P((char *buf, size_t, const char *, ...))
+int	snprintf __P((char *, size_t, const char *, ...))
     __attribute__((__format__(__printf__,3,4)));
 void	vprintf __P((const char *, _BSD_VA_LIST_));
-int	vsprintf __P((char *buf, const char *, _BSD_VA_LIST_));
-int	vsnprintf __P((char *buf, size_t, const char *, _BSD_VA_LIST_));
+int	vsprintf __P((char *, const char *, _BSD_VA_LIST_));
+int	vsnprintf __P((char *, size_t, const char *, _BSD_VA_LIST_));
+#endif /* _KERNEL */
 
 void	panic __P((const char *, ...))
     __attribute__((__noreturn__,__format__(__printf__,1,2)));
@@ -210,9 +212,11 @@ void	tablefull __P((const char *, const char *));
 
 int	kcopy __P((const void *, void *, size_t));
 
+#ifdef _KERNEL
 #define bcopy(src, dst, len)	memcpy((dst), (src), (len))
 #define bzero(src, len)		memset((src), 0, (len))
 #define bcmp(a, b, len)		memcmp((a), (b), (len))
+#endif /* KERNEL */
 
 int	copystr __P((const void *, void *, size_t, size_t *));
 int	copyinstr __P((const void *, void *, size_t, size_t *));
@@ -236,14 +240,14 @@ int	fuswintr __P((const void *));
 long	fuword __P((const void *));
 long	fuiword __P((const void *));
 
-int	hzto __P((struct timeval *tv));
+int	hzto __P((struct timeval *));
 void	realitexpire __P((void *));
 
-void	hardclock __P((struct clockframe *frame));
+void	hardclock __P((struct clockframe *));
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
 void	softclock __P((void *));
 #endif
-void	statclock __P((struct clockframe *frame));
+void	statclock __P((struct clockframe *));
 #ifdef NTP
 void	hardupdate __P((long offset));
 #ifdef PPS_SYNC
@@ -258,7 +262,7 @@ void	cpu_initclocks __P((void));
 
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));
-void	setstatclockrate __P((int hzrate));
+void	setstatclockrate __P((int));
 
 /*
  * Shutdown hooks.  Functions to be run with all interrupts disabled
@@ -306,9 +310,7 @@ int	uiomove __P((void *, int, struct uio *));
 caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));
 #define	ALLOCSYS(base, name, type, num) \
 	    (name) = (type *)(base); (base) = (caddr_t)ALIGN((name)+(num))
-#endif
 
-#ifdef _KERNEL
 int	setjmp	__P((label_t *));
 void	longjmp	__P((label_t *));
 #endif
@@ -326,9 +328,6 @@ void	kmstartup __P((void));
 
 #ifdef _KERNEL
 #include <lib/libkern/libkern.h>
-#endif
-
-#ifdef _KERNEL
 
 /*
  * Stuff to handle debugger magic key sequences.
@@ -348,7 +347,7 @@ typedef struct cnm_state {
 #define cn_trap()	console_debugger()
 #endif
 #ifndef cn_isconsole
-#define cn_isconsole(d)	((d) == cn_tab->cn_dev)
+#define cn_isconsole(d)	(cn_tab != NULL && (d) == cn_tab->cn_dev)
 #endif
 
 void cn_init_magic __P((cnm_state_t *cnm));

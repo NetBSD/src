@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_timer.c,v 1.8 2000/03/30 13:53:37 augustss Exp $	*/
+/*	$NetBSD: pk_timer.c,v 1.8.8.1 2002/01/10 20:02:35 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -41,6 +41,9 @@
  *
  *	@(#)pk_timer.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pk_timer.c,v 1.8.8.1 2002/01/10 20:02:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_cmpci.c,v 1.1.4.2 2001/09/13 01:15:55 thorpej Exp $	*/
+/*	$NetBSD: mpu_cmpci.c,v 1.1.4.3 2002/01/10 19:56:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.1.4.3 2002/01/10 19:56:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

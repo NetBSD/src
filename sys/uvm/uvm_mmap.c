@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.54.2.1 2001/08/25 06:17:22 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.54.2.2 2002/01/10 20:05:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -49,6 +49,10 @@
  * uvm_mmap.c: system call interface into VM system, plus kernel vm_mmap
  * function.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.54.2.2 2002/01/10 20:05:41 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/file.h>
@@ -68,7 +72,6 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
-#include <uvm/uvm_vnode.h>
 
 
 /*
@@ -131,7 +134,7 @@ sys_mincore(p, v, retval)
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
 	} */ *uap = v;
-	struct vm_page *m;
+	struct vm_page *pg;
 	char *vec, pgi;
 	struct uvm_object *uobj;
 	struct vm_amap *amap;
@@ -155,17 +158,16 @@ sys_mincore(p, v, retval)
 	if (end <= start)
 		return (EINVAL);
 
-	npgs = len >> PAGE_SHIFT;
-
-	if (uvm_useracc(vec, npgs, B_WRITE) == FALSE)
-		return (EFAULT);
-
 	/*
 	 * Lock down vec, so our returned status isn't outdated by
 	 * storing the status byte for a page.
 	 */
 
-	uvm_vslock(p, vec, npgs, VM_PROT_WRITE);
+	npgs = len >> PAGE_SHIFT;
+	error = uvm_vslock(p, vec, npgs, VM_PROT_WRITE);
+	if (error) {
+		return error;
+	}
 	vm_map_lock_read(map);
 
 	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
@@ -196,8 +198,7 @@ sys_mincore(p, v, retval)
 
 		if (UVM_ET_ISOBJ(entry)) {
 			KASSERT(!UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj));
-			if (entry->object.uvm_obj->pgops->pgo_releasepg
-			    == NULL) {
+			if (!UVM_OBJ_IS_VNODE(entry->object.uvm_obj)) {
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)
 					subyte(vec, 1);
@@ -232,9 +233,9 @@ sys_mincore(p, v, retval)
 			}
 			if (uobj != NULL && pgi == 0) {
 				/* Check the bottom layer. */
-				m = uvm_pagelookup(uobj,
+				pg = uvm_pagelookup(uobj,
 				    entry->offset + (start - entry->start));
-				if (m != NULL) {
+				if (pg != NULL) {
 
 					/*
 					 * Object has the page for this entry
@@ -373,7 +374,10 @@ sys_mmap(p, v, retval)
 		    vp->v_type != VBLK)
 			return (ENODEV);  /* only REG/CHR/BLK support mmap */
 
-		if (vp->v_type == VREG && (pos + size) < pos)
+		if (vp->v_type != VCHR && pos < 0)
+			return (EINVAL);
+
+		if (vp->v_type != VCHR && (pos + size) < pos)
 			return (EOVERFLOW);		/* no offset wrapping */
 
 		/* special case: catch SunOS style /dev/zero */
@@ -996,9 +1000,8 @@ sys_munlockall(p, v, retval)
 /*
  * uvm_mmap: internal version of mmap
  *
- * - used by sys_mmap, exec, and sysv shm
- * - handle is a vnode pointer or NULL for MAP_ANON (XXX: not true,
- *	sysv shm uses "named anonymous memory")
+ * - used by sys_mmap and various framebuffers
+ * - handle is a vnode pointer or NULL for MAP_ANON
  * - caller must page-align the file offset
  */
 
@@ -1036,12 +1039,12 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 	 */
 
 	if ((flags & MAP_FIXED) == 0) {
-		*addr = round_page(*addr);	/* round */
+		*addr = round_page(*addr);
 	} else {
 		if (*addr & PAGE_MASK)
 			return(EINVAL);
 		uvmflag |= UVM_FLAG_FIXED;
-		(void) uvm_unmap(map, *addr, *addr + size);	/* zap! */
+		(void) uvm_unmap(map, *addr, *addr + size);
 	}
 
 	/*
@@ -1061,6 +1064,15 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 
 	} else {
 		vp = (struct vnode *)handle;
+
+		/*
+		 * Don't allow mmap for EXEC if the file system
+		 * is mounted NOEXEC.
+		 */
+		if ((prot & PROT_EXEC) != 0 &&
+		    (vp->v_mount->mnt_flag & MNT_NOEXEC) != 0)
+			return (EACCES);
+
 		if (vp->v_type != VCHR) {
 			error = VOP_MMAP(vp, 0, curproc->p_ucred, curproc);
 			if (error) {
@@ -1072,6 +1084,13 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 
 			/* XXX for now, attach doesn't gain a ref */
 			VREF(vp);
+
+			/*
+			 * If the vnode is being mapped with PROT_EXEC,
+			 * then mark it as text.
+			 */
+			if (prot & PROT_EXEC)
+				vn_markexec(vp);
 		} else {
 			uobj = udv_attach((void *) &vp->v_rdev,
 			    (flags & MAP_SHARED) ? maxprot :

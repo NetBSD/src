@@ -1,4 +1,4 @@
-/*	$NetBSD: newskeymap.c,v 1.1 2001/01/25 13:13:59 tsutsui Exp $	*/
+/*	$NetBSD: newskeymap.c,v 1.1.6.1 2002/01/10 19:56:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: newskeymap.c,v 1.1.6.1 2002/01/10 19:56:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.4 2001/05/17 02:24:00 chs Exp $	*/
+/*	$NetBSD: sunms.c,v 1.4.2.1 2002/01/10 19:58:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,9 @@
  * the "zsc" driver for a Sun mouse.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.4.2.1 2002/01/10 19:58:35 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -80,7 +83,11 @@
 #include "ms.h"
 #if NMS > 0
 
-int	sunms_bps = MS_BPS;
+#ifdef SUN_MS_BPS
+int	sunms_bps = SUN_MS_BPS;
+#else
+int	sunms_bps = MS_DEFAULT_BPS;
+#endif
 
 static int	sunms_match(struct device *, struct cfdata *, void *);
 static void	sunms_attach(struct device *, struct device *, void *);
@@ -177,7 +184,7 @@ sunmsiopen(dev, flags)
 	tp->t_ospeed = 0;
 	t.c_ispeed = sunms_bps;
 	t.c_ospeed = sunms_bps;
-	t.c_cflag =  CLOCAL;
+	t.c_cflag =  CLOCAL|CS8;
 	(*tp->t_param)(tp, &t);
 
 	return (0);

@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.2.2.1 2001/08/03 04:13:34 lukem Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.2.2.2 2002/01/10 19:58:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,11 +66,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.2.2.2 2002/01/10 19:58:37 thorpej Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.2.2.1 2001/08/03 04:13:34 lukem Exp $");
-
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

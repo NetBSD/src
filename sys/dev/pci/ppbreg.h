@@ -1,4 +1,4 @@
-/*	$NetBSD: ppbreg.h,v 1.3 2001/07/06 18:07:16 mcr Exp $	*/
+/*	$NetBSD: ppbreg.h,v 1.3.2.1 2002/01/10 19:57:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -50,7 +50,7 @@
 #define	PPB_REG_PREFBASE_HI32	0x28		/* Pref Mem base high bits */
 #define	PPB_REG_PREFLIM_HI32	0x2c		/* Pref Mem lim high bits */
 #define	PPB_REG_IO_HI		0x30		/* I/O base+lim high bits */
-#define	PPB_REG_BRIDGECONTROL	PCI_INTERRUPT_REG /* bridge control register */
+#define	PPB_REG_BRIDGECONTROL	0x3c		/* bridge control register */
 
 /*
  * Macros to extract the contents of the "Bus Info" register.
@@ -90,11 +90,21 @@
 
 /* 
  * bridge control register (see table 3.9 of ppb rev. 1.1)
+ *
+ * Note these are in the *upper* 16 bits if the Bridge Control
+ * Register (the bottom 16 are Interrupt Line and Interrupt Pin).
  */
-#define PPB_BC_PARITYERRORRESPONSE_ENABLE  (1<<0)
-#define PPB_BC_SERR_ENABLE                 (1<<1)
-#define PPB_BC_ISA_ENABLE                  (1<<2)
-#define PPB_BC_VGA_ENABLE                  (1<<3)
-#define PPB_BC_MASTER_ABORT_MODE           (1<<4)
-#define PPB_BC_SECONDARY_RESET             (1<<5)
+#define	PPB_BC_BITBASE			   16
 
+#define PPB_BC_PARITYERRORRESPONSE_ENABLE  (1U << (0 + PPB_BC_BITBASE))
+#define PPB_BC_SERR_ENABLE                 (1U << (1 + PPB_BC_BITBASE))
+#define PPB_BC_ISA_ENABLE                  (1U << (2 + PPB_BC_BITBASE))
+#define PPB_BC_VGA_ENABLE                  (1U << (3 + PPB_BC_BITBASE))
+#define PPB_BC_MASTER_ABORT_MODE           (1U << (5 + PPB_BC_BITBASE))
+#define PPB_BC_SECONDARY_RESET             (1U << (6 + PPB_BC_BITBASE))
+#define	PPB_BC_FAST_B2B_ENABLE		   (1U << (7 + PPB_BC_BITBASE))
+	/* PCI 2.2 */
+#define	PPB_BC_PRIMARY_DISCARD_TIMEOUT	   (1U << (8 + PPB_BC_BITBASE))
+#define	PPB_BC_SECONDARY_DISCARD_TIMEOUT   (1U << (9 + PPB_BC_BITBASE))
+#define	PPB_BC_DISCARD_TIMER_STATUS	   (1U << (10 + PPB_BC_BITBASE))
+#define	PPB_BC_DISCARD_TIMER_SERR_ENABLE   (1U << (11 + PPB_BC_BITBASE))

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.34 2001/03/29 22:41:52 fvdl Exp $	*/
+/*	$NetBSD: procfs.h,v 1.34.2.1 2002/01/10 20:01:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -39,6 +39,9 @@
  *	@(#)procfs.h	8.9 (Berkeley) 5/14/95
  */
 
+/* This also pulls in __HAVE_PROCFS_MACHDEP */
+#include <sys/ptrace.h>
+
 /*
  * The different types of node in a procfs filesystem
  */
@@ -60,6 +63,9 @@ typedef enum {
 	Pmeminfo,	/* system memory info (if -o linux) */
 	Pcpuinfo,	/* CPU info (if -o linux) */
 	Pmaps,		/* memory map, Linux style (if -o linux) */
+#ifdef __HAVE_PROCFS_MACHDEP
+	PROCFS_MACHDEP_NODE_TYPES
+#endif
 } pfstype;
 
 /*
@@ -151,6 +157,7 @@ int procfs_docpuinfo __P((struct proc *, struct proc *, struct pfsnode *,
 int procfs_checkioperm __P((struct proc *, struct proc *));
 void procfs_revoke_vnodes __P((struct proc *, void *));
 void procfs_hashinit __P((void));
+void procfs_hashreinit __P((void));
 void procfs_hashdone __P((void));
 
 /* functions to check whether or not files should be displayed */
@@ -170,5 +177,14 @@ extern int (**procfs_vnodeop_p) __P((void *));
 extern struct vfsops procfs_vfsops;
 
 int	procfs_root __P((struct mount *, struct vnode **));
+
+#ifdef __HAVE_PROCFS_MACHDEP
+struct vattr;
+
+void	procfs_machdep_allocvp(struct vnode *);
+int	procfs_machdep_rw(struct proc *, struct proc *, struct pfsnode *,
+	    struct uio *);
+int	procfs_machdep_getattr(struct vnode *, struct vattr *, struct proc *);
+#endif
 
 #endif /* _KERNEL */

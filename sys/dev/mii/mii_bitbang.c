@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.2.2.1 2001/09/13 01:15:46 thorpej Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.2.2.2 2002/01/10 19:56:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  * Common module for bit-bang'ing the MII.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mii_bitbang.c,v 1.2.2.2 2002/01/10 19:56:15 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 
@@ -73,7 +76,8 @@ do {									\
 void
 mii_bitbang_sync(struct device *sc, mii_bitbang_ops_t ops)
 {
-	int i, v;
+	int i;
+	u_int32_t v;
 
 	v = MDIRPHY | MDO;
 
@@ -93,7 +97,8 @@ void
 mii_bitbang_sendbits(struct device *sc, mii_bitbang_ops_t ops, uint32_t data,
     int nbits)
 {
-	int i, v;
+	int i;
+	u_int32_t v;
 
 	v = MDIRPHY;
 	WRITE(v);

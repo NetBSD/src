@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.14 2001/05/17 14:01:37 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.14.2.1 2002/01/10 20:03:10 thorpej Exp $	*/
 /*	$KAME: frag6.c,v 1.31 2001/05/17 13:45:34 jinmei Exp $	*/
 
 /*
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.14.2.1 2002/01/10 20:03:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -634,9 +637,6 @@ frag6_slowtimo()
 {
 	struct ip6q *q6;
 	int s = splsoftnet();
-#if 0
-	extern struct	route_in6 ip6_forward_rt;
-#endif
 
 	frag6_doing_reass = 1;
 	q6 = ip6q.ip6q_next;

@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.2.2.2 2001/09/13 01:15:49 thorpej Exp $	*/
+/*	$NetBSD: agp.c,v 1.2.2.3 2002/01/10 19:56:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -64,6 +64,9 @@
  */
 
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.2.2.3 2002/01/10 19:56:24 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -106,30 +109,114 @@ static int agp_bind_user(struct agp_softc *, agp_bind *);
 static int agp_unbind_user(struct agp_softc *, agp_unbind *);
 static int agpdev_match(struct pci_attach_args *);
 
+#include "agp_ali.h"
+#include "agp_amd.h"
+#include "agp_i810.h"
+#include "agp_intel.h"
+#include "agp_sis.h"
+#include "agp_via.h"
+
+const struct agp_product {
+	uint32_t	ap_vendor;
+	uint32_t	ap_product;
+	int		(*ap_match)(const struct pci_attach_args *);
+	int		(*ap_attach)(struct device *, struct device *, void *);
+} agp_products[] = {
+#if NAGP_ALI > 0
+	{ PCI_VENDOR_ALI,	-1,
+	  NULL,			agp_ali_attach },
+#endif
+
+#if NAGP_AMD > 0
+	{ PCI_VENDOR_AMD,	-1,
+	  agp_amd_match,	agp_amd_attach },
+#endif
+
+#if NAGP_I810 > 0
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82810_MCH,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82810_DC100_MCH,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82810E_MCH,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82815_FULL_HUB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82840_HB,
+	  NULL,			agp_i810_attach },
+#endif
+
+#if NAGP_INTEL > 0
+	{ PCI_VENDOR_INTEL,	-1,
+	  NULL,			agp_intel_attach },
+#endif
+
+#if NAGP_SIS > 0
+	{ PCI_VENDOR_SIS,	-1,
+	  NULL,			agp_sis_attach },
+#endif
+
+#if NAGP_VIA > 0
+	{ PCI_VENDOR_VIATECH,	-1,
+	  NULL,			agp_via_attach },
+#endif
+
+	{ 0,			0,
+	  NULL,			NULL },
+};
+
+static const struct agp_product *
+agp_lookup(const struct pci_attach_args *pa)
+{
+	const struct agp_product *ap;
+
+	/* First find the vendor. */
+	for (ap = agp_products; ap->ap_attach != NULL; ap++) {
+		if (PCI_VENDOR(pa->pa_id) == ap->ap_vendor)
+			break;
+	}
+
+	if (ap->ap_attach == NULL)
+		return (NULL);
+
+	/* Now find the product within the vendor's domain. */
+	for (; ap->ap_attach != NULL; ap++) {
+		if (PCI_VENDOR(pa->pa_id) != ap->ap_vendor) {
+			/* Ran out of this vendor's section of the table. */
+			return (NULL);
+		}
+		if (ap->ap_product == PCI_PRODUCT(pa->pa_id)) {
+			/* Exact match. */
+			break;
+		}
+		if (ap->ap_product == (uint32_t) -1) {
+			/* Wildcard match. */
+			break;
+		}
+	}
+
+	if (ap->ap_attach == NULL)
+		return (NULL);
+
+	/* Now let the product-specific driver filter the match. */
+	if (ap->ap_match != NULL && (*ap->ap_match)(pa) == 0)
+		return (NULL);
+
+	return (ap);
+}
+
 int
 agpmatch(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct agp_phcb_attach_args *apa = aux;
+	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
 
-	switch (PCI_VENDOR(pa->pa_id)) {
-		case PCI_VENDOR_ALI:
-			return agp_ali_match(parent, match, pa);
-		case PCI_VENDOR_AMD:
-			return agp_amd_match(parent, match, pa);
-		case PCI_VENDOR_INTEL:
-			if (agp_i810_bridgematch(pa))
-				return agp_i810_match(parent, match, pa);
-			return agp_intel_match(parent, match, pa);
-		case PCI_VENDOR_SIS:
-			return agp_sis_match(parent, match, pa);
-		case PCI_VENDOR_VIATECH:
-			return agp_via_match(parent, match, pa);
-		default:
-			return 0;
-	}
+	if (strcmp(apa->apa_busname, "agp") != 0)
+		return (0);
 
-	return (0);
+	if (agp_lookup(pa) == NULL)
+		return (0);
+
+	return (1);
 }
 
 static int agp_max[][2] = {
@@ -148,11 +235,17 @@ static int agp_max[][2] = {
 void
 agpattach(struct device *parent, struct device *self, void *aux)
 {
-	struct agp_phcb_attach_args *apa = aux;
+	struct agpbus_attach_args *apa = aux;
 	struct pci_attach_args *pa = &apa->apa_pci_args;
 	struct agp_softc *sc = (void *)self;
+	const struct agp_product *ap;
 	int memsize, i, ret;
 
+	ap = agp_lookup(pa);
+	if (ap == NULL) {
+		printf("\n");
+		panic("agpattach: impossible");
+	}
 
 	sc->as_dmat = pa->pa_dmat;
 	sc->as_pc = pa->pa_pc;
@@ -180,28 +273,7 @@ agpattach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&sc->as_memory);
 
-	switch (PCI_VENDOR(pa->pa_id)) {
-		case PCI_VENDOR_ALI:
-			ret = agp_ali_attach(parent, self, pa);
-			break;
-		case PCI_VENDOR_AMD:
-			ret = agp_amd_attach(parent, self, pa);
-			break;
-		case PCI_VENDOR_INTEL:
-			if (agp_i810_bridgematch(pa))
-				ret = agp_i810_attach(parent, self, pa);
-			else
-				ret = agp_intel_attach(parent, self, pa);
-			break;
-		case PCI_VENDOR_SIS:
-			ret = agp_sis_attach(parent, self, pa);
-			break;
-		case PCI_VENDOR_VIATECH:
-			ret = agp_via_attach(parent, self, pa);
-			break;
-		default:
-			panic("agpattach: bad chipset detection");
-	}
+	ret = (*ap->ap_attach)(parent, self, pa);
 	if (ret == 0)
 		printf(": aperture at 0x%lx, size 0x%lx\n",
 		    (unsigned long)sc->as_apaddr,
@@ -213,14 +285,16 @@ int
 agp_map_aperture(struct pci_attach_args *pa, struct agp_softc *sc)
 {
 	/*
-	 * Find and map the aperture.
+	 * Find and the aperture. Don't map it (yet), this would
+	 * eat KVA.
 	 */
-	if (pci_mapreg_map(pa, AGP_APBASE, PCI_MAPREG_TYPE_MEM,
-	    BUS_SPACE_MAP_LINEAR,
-	    &sc->as_apt, &sc->as_aph, &sc->as_apaddr, &sc->as_apsize) != 0) {
-		printf("%s: can't map aperture space\n", sc->as_dev.dv_xname);
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, AGP_APBASE,
+	    PCI_MAPREG_TYPE_MEM, &sc->as_apaddr, &sc->as_apsize,
+	    &sc->as_apflags) != 0)
 		return ENXIO;
-	}
+
+	sc->as_apt = pa->pa_memt;
+
 	return 0;
 }
 
@@ -358,8 +432,8 @@ agp_generic_alloc_memory(struct agp_softc *sc, int type, vsize_t size)
 	if (mem == NULL)
 		return NULL;
 
-	if (bus_dmamap_create(sc->as_dmat, size, 1, size, 0, BUS_DMA_NOWAIT,
-	    &mem->am_dmamap) != 0) {
+	if (bus_dmamap_create(sc->as_dmat, size, size / PAGE_SIZE + 1,
+			      size, 0, BUS_DMA_NOWAIT, &mem->am_dmamap) != 0) {
 		free(mem, M_AGP);
 		return NULL;
 	}
@@ -434,15 +508,19 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 
 	for (contigpages = 8; contigpages > 0; contigpages >>= 1) {
 		nseg = (mem->am_size / (contigpages * PAGE_SIZE)) + 1;
-		segs = malloc(sizeof *segs, M_AGP, M_WAITOK);
+		segs = malloc(nseg * sizeof *segs, M_AGP, M_WAITOK);
 		if (segs == NULL)
-			return NULL;
+			return ENOMEM;
 		if (bus_dmamem_alloc(sc->as_dmat, mem->am_size, PAGE_SIZE, 0,
-		    segs, nseg, &mem->am_nseg, BUS_DMA_WAITOK) != 0)
+				     segs, nseg, &mem->am_nseg,
+				     BUS_DMA_WAITOK) != 0) {
+			free(segs, M_AGP);
 			continue;
+		}
 		if (bus_dmamem_map(sc->as_dmat, segs, mem->am_nseg,
 		    mem->am_size, &mem->am_virtual, BUS_DMA_WAITOK) != 0) {
 			bus_dmamem_free(sc->as_dmat, segs, mem->am_nseg);
+			free(segs, M_AGP);
 			continue;
 		}
 		if (bus_dmamap_load(sc->as_dmat, mem->am_dmamap,
@@ -450,6 +528,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 			bus_dmamem_unmap(sc->as_dmat, mem->am_virtual,	
 			    mem->am_size);
 			bus_dmamem_free(sc->as_dmat, segs, mem->am_nseg);
+			free(segs, M_AGP);
 			continue;
 		}
 		mem->am_dmaseg = segs;
@@ -478,8 +557,9 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		for (j = 0; j < seg->ds_len && (done + j) < mem->am_size;
 		     j += AGP_PAGE_SIZE) {
 			pa = seg->ds_addr + j;
-			AGP_DPF("binding offset %#x to pa %#x\n",
-				offset + done + j, pa);
+			AGP_DPF("binding offset %#lx to pa %#lx\n",
+				(unsigned long)(offset + done + j),
+				(unsigned long)pa);
 			error = AGP_BIND_PAGE(sc, offset + done + j, pa);
 			if (error) {
 				/*
@@ -489,6 +569,12 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 				for (k = 0; k < done + j; k += AGP_PAGE_SIZE)
 					AGP_UNBIND_PAGE(sc, offset + k);
 
+				bus_dmamap_unload(sc->as_dmat, mem->am_dmamap);
+				bus_dmamem_unmap(sc->as_dmat, mem->am_virtual,
+						 mem->am_size);
+				bus_dmamem_free(sc->as_dmat, mem->am_dmaseg,
+						mem->am_nseg);
+				free(mem->am_dmaseg, M_AGP);
 				lockmgr(&sc->as_lock, LK_RELEASE, 0);
 				return error;
 			}
@@ -579,10 +665,12 @@ agp_release_helper(struct agp_softc *sc, enum agp_acquire_state state)
 	/*
 	 * Clear out the aperture and free any outstanding memory blocks.
 	 */
-	while ((mem = TAILQ_FIRST(&sc->as_memory)) != 0) {
-		if (mem->am_is_bound)
+	TAILQ_FOREACH(mem, &sc->as_memory, am_link) {
+		if (mem->am_is_bound) {
+			printf("agp_release_helper: mem %d is bound\n",
+			       mem->am_id);
 			AGP_UNBIND_MEMORY(sc, mem);
-		AGP_FREE_MEMORY(sc, mem);
+		}
 	}
 
 	sc->as_state = AGP_ACQUIRE_FREE;
@@ -610,8 +698,11 @@ agp_info_user(struct agp_softc *sc, agp_info *info)
 {
 	memset(info, 0, sizeof *info);
 	info->bridge_id = sc->as_id;
-	info->agp_mode = pci_conf_read(sc->as_pc, sc->as_tag,
-	     sc->as_capoff + AGP_STATUS);
+	if (sc->as_capoff != 0)
+		info->agp_mode = pci_conf_read(sc->as_pc, sc->as_tag,
+					       sc->as_capoff + AGP_STATUS);
+	else
+		info->agp_mode = 0; /* i810 doesn't have real AGP */
 	info->aper_base = sc->as_apaddr;
 	info->aper_size = AGP_GET_APERTURE(sc) >> 20;
 	info->pg_total = info->pg_system = sc->as_maxmem >> AGP_PAGE_SHIFT;
@@ -682,6 +773,9 @@ int
 agpopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 	struct agp_softc *sc = device_lookup(&agp_cd, AGPUNIT(dev));
+
+	if (sc == NULL)
+		return ENXIO;
 
 	if (sc->as_chipc == NULL)
 		return ENXIO;
@@ -757,10 +851,9 @@ agpmmap(dev_t dev, off_t offset, int prot)
 
 	if (offset > AGP_GET_APERTURE(sc))
 		return -1;
-	/*
-	 * XXX can't really use bus_dmamem_mmap here.
-	 */
-	return (sc->as_apaddr + offset) / PAGE_SIZE;
+
+	return (bus_space_mmap(sc->as_apt, sc->as_apaddr, offset, prot,
+	    BUS_SPACE_MAP_LINEAR));
 }
 
 /* Implementation of the kernel api */
@@ -787,7 +880,6 @@ agp_get_info(void *devcookie, struct agp_info *info)
 	    sc->as_capoff + AGP_STATUS);
 	info->ai_aperture_base = sc->as_apaddr;
 	info->ai_aperture_size = sc->as_apsize;	/* XXXfvdl inconsistent */
-	info->ai_aperture_vaddr = bus_space_vaddr(sc->as_apt, sc->as_aph);
 	info->ai_memory_allowed = sc->as_maxmem;
 	info->ai_memory_used = sc->as_allocated;
 }
@@ -870,7 +962,7 @@ agp_alloc_dmamem(bus_dma_tag_t tag, size_t size, int flags,
 		goto out;
 	level++;
 
-	if ((error = bus_dmamap_create(tag, size, 1, size, 0,
+	if ((error = bus_dmamap_create(tag, size, *rseg, size, 0,
 			BUS_DMA_NOWAIT, mapp)) != 0)
 		goto out;
 	level++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc_media.c,v 1.6.2.2 2001/09/13 01:15:54 thorpej Exp $	*/
+/*	$NetBSD: if_lmc_media.c,v 1.6.2.3 2002/01/10 19:56:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -38,6 +38,9 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_lmc_media.c,v 1.6.2.3 2002/01/10 19:56:41 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -72,8 +75,10 @@
 #include <net/bpfdesc.h>
 #endif
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+#if defined(__FreeBSD__)
 #include <net/if_sppp.h>
+#elif defined(__NetBSD__)
+#include <net/if_spppvar.h>
 #endif
 
 #if defined(__bsdi__)
@@ -1268,10 +1273,12 @@ lmc_set_protocol(lmc_softc_t * const sc, lmc_ctl_t *ctl)
 		}
 	}
 
+#if NBPFILTER > 0
 	/* just in case we are going to change encap type */
 	if ((sc->lmc_sppp.pp_flags & PP_CISCO) != 0)
 		bpf_change_type(&sc->lmc_if, DLT_HDLC, PPP_HEADER_LEN);
 	else
 		bpf_change_type(&sc->lmc_if, DLT_PPP, PPP_HEADER_LEN);
+#endif /* NBPFILTER > 0 */
 #endif
 }

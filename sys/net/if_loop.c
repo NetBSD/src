@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.39 2001/06/14 05:44:24 itojun Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.39.2.1 2002/01/10 20:02:08 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -67,6 +67,9 @@
 /*
  * Loopback interface driver for protocol testing and timing.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.39.2.1 2002/01/10 20:02:08 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"

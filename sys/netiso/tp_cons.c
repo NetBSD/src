@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.13 2000/03/30 13:10:12 augustss Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.13.8.1 2002/01/10 20:03:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -70,6 +70,9 @@ SOFTWARE.
  * tpcons_output: package a pkt for cons given an isopcb & some data
  * cons_chan_to_tpcb: find a tpcb based on the channel #
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_cons.c,v 1.13.8.1 2002/01/10 20:03:51 thorpej Exp $");
 
 #include "opt_iso.h"
 
@@ -244,7 +247,7 @@ tpcons_input(m, va_alist)
 	faddr = va_arg(ap, struct sockaddr *);
 	laddr = va_arg(ap, struct sockaddr *);
 	channel = va_arg(ap, caddr_t);
-
+	va_end(ap);
 
 	m = (struct mbuf *) tp_inputprep(m);
 

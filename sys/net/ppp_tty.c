@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.25.2.1 2001/08/03 04:13:52 lukem Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.25.2.2 2002/01/10 20:02:19 thorpej Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -76,8 +76,10 @@
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.25.2.2 2002/01/10 20:02:19 thorpej Exp $");
+
 #include "ppp.h"
-#if NPPP > 0
 
 #include "opt_ppp.h"
 #define VJC
@@ -1277,5 +1279,3 @@ pppdumpframe(sc, m, xmit)
 		printf("\n");
 	}
 }
-
-#endif	/* NPPP > 0 */

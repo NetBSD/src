@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.25 2001/05/13 04:23:46 jmc Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.25.2.1 2002/01/10 19:57:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -29,13 +29,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.25.2.1 2002/01/10 19:57:24 thorpej Exp $");
+
 #include "opt_pcmciaverbose.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: syncfs.h,v 1.4 2000/07/09 00:59:06 mycroft Exp $	*/
+/*	$NetBSD: syncfs.h,v 1.4.6.1 2002/01/10 20:01:47 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -42,6 +42,7 @@ int	sync_reclaim 	__P((void *));
 #define sync_unlock	genfs_nounlock
 int	sync_print	__P((void *));
 #define sync_islocked	genfs_noislocked
+#define sync_putpages	genfs_null_putpages
 
 void sched_sync __P((void *));
 void vn_initialize_syncerd __P((void));

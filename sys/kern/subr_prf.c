@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.80.2.1 2001/08/03 04:13:42 lukem Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.80.2.2 2002/01/10 20:00:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -39,6 +39,9 @@
  *
  *	@(#)subr_prf.c	8.4 (Berkeley) 5/4/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.80.2.2 2002/01/10 20:00:02 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -790,10 +793,11 @@ bitmask_snprintf(val, p, buf, buflen)
 	if (((val == 0) && (ch != '\177')) || left < 3)
 		return (buf);
 
-#define PUTBYTE(b, c, l)	\
+#define PUTBYTE(b, c, l) do {	\
 	*(b)++ = (c);		\
 	if (--(l) == 0)		\
-		goto out;
+		goto out;	\
+} while (0)
 #define PUTSTR(b, p, l) do {		\
 	int c;				\
 	while ((c = *(p)++) != 0) {	\

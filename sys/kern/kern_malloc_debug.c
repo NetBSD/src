@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.1.4.2 2001/08/25 06:16:47 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.1.4.3 2002/01/10 19:59:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -54,6 +54,9 @@
  *  - support for size >= PAGE_SIZE
  *  - add support to the fault handler to give better diagnostics if we fail.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.1.4.3 2002/01/10 19:59:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -112,7 +115,7 @@ int
 debug_malloc(unsigned long size, int type, int flags, void **addr)
 {
 	struct debug_malloc_entry *md = NULL;
-	int s, wait = flags & M_NOWAIT;
+	int s, wait = !(flags & M_NOWAIT);
 
 	/* Careful not to compare unsigned long to int -1 */
 	if ((type != debug_malloc_type && debug_malloc_type != 0) ||
@@ -151,6 +154,8 @@ debug_malloc(unsigned long size, int type, int flags, void **addr)
 	 * ends. roundup to get decent alignment.
 	 */
 	*addr = (void *)(md->md_va + PAGE_SIZE - roundup(size, sizeof(long)));
+	if (*addr != NULL && (flags & M_ZERO))
+		memset(*addr, 0, size);
 	return (1);
 }
 
@@ -235,7 +240,7 @@ debug_malloc_allocate_free(int wait)
 	if (md == NULL)
 		return;
 
-	va = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object, PAGE_SIZE * 2,
+	va = uvm_km_kmemalloc(kmem_map, NULL, PAGE_SIZE * 2,
 	    UVM_KMF_VALLOC | (wait ? UVM_KMF_NOWAIT : 0));
 	if (va == 0) {
 		pool_put(&debug_malloc_pool, md);
@@ -244,13 +249,11 @@ debug_malloc_allocate_free(int wait)
 
 	offset = va - vm_map_min(kernel_map);
 	for (;;) {
-		simple_lock(&uvmexp.kmem_object->vmobjlock);
-		pg = uvm_pagealloc(uvmexp.kmem_object, offset, NULL, 0);
+		pg = uvm_pagealloc(NULL, offset, NULL, 0);
 		if (pg) {
 			pg->flags &= ~PG_BUSY;  /* new page */
 			UVM_PAGE_OWN(pg, NULL);
 		}
-		simple_unlock(&uvmexp.kmem_object->vmobjlock);
 
 		if (pg)
 			break;

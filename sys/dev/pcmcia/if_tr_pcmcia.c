@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.4 2001/07/01 16:35:37 thorpej Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.4.2.1 2002/01/10 19:57:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -14,7 +14,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
+ *  This product includes software developed by Soren S. Jorvang.
+ *  This product includes software developed by Onno van der Linden.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
@@ -38,6 +39,9 @@
  * o IBM Turbo 16/4 Token Ring PC Card
  * o 3Com TokenLink Velocity PC Card
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.4.2.1 2002/01/10 19:57:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +137,7 @@ tr_pcmcia_attach(parent, self, aux)
 	struct tr_softc *sc = &psc->sc_tr;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	bus_addr_t offset;
+	bus_size_t offset;
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;

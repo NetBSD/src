@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.56 2001/07/07 14:53:55 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.56.2.1 2002/01/10 19:59:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -39,6 +39,9 @@
  *
  *	@(#)cd9660_vfsops.c	8.18 (Berkeley) 5/22/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.56.2.1 2002/01/10 19:59:35 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -93,11 +96,16 @@ struct vfsops cd9660_vfsops = {
 	cd9660_fhtovp,
 	cd9660_vptofh,
 	cd9660_init,
+	cd9660_reinit,
 	cd9660_done,
 	cd9660_sysctl,
 	cd9660_mountroot,
 	cd9660_check_export,
 	cd9660_vnodeopv_descs,
+};
+
+struct genfs_ops cd9660_genfsops = {
+	genfs_size,
 };
 
 /*
@@ -742,6 +750,9 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 {
 	struct iso_mnt *imp;
 	struct iso_node *ip;
+#ifdef ISODEVMAP
+	struct iso_dnode *dp;
+#endif
 	struct buf *bp;
 	struct vnode *vp, *nvp;
 	dev_t dev;
@@ -891,7 +902,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		 * if device, look at device number table for translation
 		 */
 #ifdef	ISODEVMAP
-		if (dp = iso_dmap(dev, ino, 0))
+		if ((dp = iso_dmap(dev, ino, 0)) != NULL)
 			ip->inode.iso_rdev = dp->d_dev;
 #endif
 		vp->v_op = cd9660_specop_p;
@@ -933,6 +944,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	 * XXX need generation number?
 	 */
 	
+	genfs_node_init(vp, &cd9660_genfsops);
 	*vpp = vp;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.25 2001/06/19 07:37:17 jdolecek Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.25.2.1 2002/01/10 20:04:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)spp_usrreq.c	8.2 (Berkeley) 1/9/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.25.2.1 2002/01/10 20:04:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,7 +735,7 @@ struct nspcb *nsp;
 		 sb = &nsp->nsp_socket->so_snd;
 		 cb->s_mtu = ep->ns_err_param;
 		 badseq = SI(&ep->ns_err_idp)->si_seq;
-		 for (m = sb->sb_mb; m; m = m->m_act) {
+		 for (m = sb->sb_mb; m; m = m->m_nextpkt) {
 			si = mtod(m, struct spidp *);
 			if (si->si_seq == badseq)
 				break;
@@ -1018,7 +1021,7 @@ send:
 	si = 0;
 	if (len > 0) {
 		cb->s_want = cb->s_snxt;
-		for (m = sb->sb_mb; m; m = m->m_act) {
+		for (m = sb->sb_mb; m; m = m->m_nextpkt) {
 			si = mtod(m, struct spidp *);
 			if (SSEQ_LEQ(cb->s_snxt, si->si_seq))
 				break;

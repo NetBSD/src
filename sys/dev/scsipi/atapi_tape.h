@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_tape.h,v 1.1 2001/06/18 09:05:05 bouyer Exp $	*/
+/*	$NetBSD: atapi_tape.h,v 1.1.4.1 2002/01/10 19:58:15 thorpej Exp $	*/
 
 
 /*-
@@ -51,7 +51,6 @@ struct atapi_cappage {
     u_int8_t	cap1;
 #define ATAPI_TAPE_CAP_PAGE_RO	0x01;		/* read Only Mode */
 #define ATAPI_TAPE_CAP_PAGE_REV	0x20;		/* supports reverse direction */
-#define ATAPI_TAPE_CAP_PAGE_
     u_int8_t	cap2;
 #define ATAPI_TAPE_CAP_PAGE_EF	0x08;		/* supports ERASE formatting */
 #define ATAPI_TAPE_CAP_PAGE_QFA	0x20		/* supports QFA formats */
@@ -104,17 +103,10 @@ struct ast_transferpage {
 /* ATAPI OnStream ADR vendor identification mode page (ADR unique) */
 struct ast_identifypage {
     /* mode page data header */
-    u_int8_t	data_length;			/* total length of data */
-    u_int8_t	medium_type;			/* medium type (if any) */
-    u_int8_t	dsp;				/* device specific parameter */
-    u_int8_t	blk_desc_len;			/* block Descriptor Length */
-
+    struct scsipi_mode_header header;
     /* data transfer page */
-    u_int8_t	page_code	:6;
+    u_int8_t	page_code;
 #define ATAPI_TAPE_IDENTIFY_PAGE     0x36
-
-    u_int8_t	reserved0_6	:1;
-    u_int8_t	ps		:1;		/* parameters saveable */
     u_int8_t	page_length;			/* page Length == 0x06 */
     u_int8_t	ident[4];			/* host id string */
     u_int8_t	reserved6;

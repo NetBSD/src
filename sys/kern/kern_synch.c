@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.104 2001/05/28 22:20:03 chs Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.104.2.1 2002/01/10 19:59:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
  *
  *	@(#)kern_synch.c	8.9 (Berkeley) 5/19/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.104.2.1 2002/01/10 19:59:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -390,6 +393,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 	}
 
 	KASSERT(p != NULL);
+	LOCK_ASSERT(interlock == NULL || simple_lock_held(interlock));
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
@@ -467,7 +471,7 @@ ltsleep(void *ident, int priority, const char *wmesg, int timo,
 
 #if	defined(DDB) && !defined(GPROF)
 	/* handy breakpoint location after process "wakes" */
-	asm(".globl bpendtsleep ; bpendtsleep:");
+	__asm(".globl bpendtsleep ; bpendtsleep:");
 #endif
 
 	SCHED_ASSERT_UNLOCKED();

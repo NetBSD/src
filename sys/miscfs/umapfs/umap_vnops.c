@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vnops.c,v 1.18 2001/01/22 12:17:40 jdolecek Exp $	*/
+/*	$NetBSD: umap_vnops.c,v 1.18.4.1 2002/01/10 20:01:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,10 +42,12 @@
  * Umap Layer
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umap_vnops.c,v 1.18.4.1 2002/01/10 20:01:48 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -54,7 +56,6 @@
 #include <miscfs/umapfs/umap.h>
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/layer_extern.h>
-
 
 int	umap_lookup	__P((void *));
 int	umap_getattr	__P((void *));
@@ -91,8 +92,10 @@ const struct vnodeopv_entry_desc umap_vnodeop_entries[] = {
 	{ &vop_strategy_desc,	layer_strategy },
 	{ &vop_bwrite_desc,	layer_bwrite },
 	{ &vop_bmap_desc,	layer_bmap },
+	{ &vop_getpages_desc,	layer_getpages },
+	{ &vop_putpages_desc,	layer_putpages },
 
-	{ (struct vnodeop_desc*) NULL, (int(*) __P((void *))) NULL }
+	{ NULL, NULL }
 };
 const struct vnodeopv_desc umapfs_vnodeop_opv_desc =
 	{ &umap_vnodeop_p, umap_vnodeop_entries };

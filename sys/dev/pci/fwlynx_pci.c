@@ -34,9 +34,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwlynx_pci.c,v 1.1.6.1 2002/01/10 19:56:35 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/device.h>
 

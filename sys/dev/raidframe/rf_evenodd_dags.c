@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dags.c,v 1.2 1999/02/05 00:06:11 oster Exp $	*/
+/*	$NetBSD: rf_evenodd_dags.c,v 1.2.22.1 2002/01/10 19:57:46 thorpej Exp $	*/
 /*
  * rf_evenodd_dags.c
  */
@@ -29,11 +29,15 @@
  * rights to redistribute these changes.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dags.c,v 1.2.22.1 2002/01/10 19:57:46 thorpej Exp $");
+
 #include "rf_archs.h"
 
 #if RF_INCLUDE_EVENODD > 0
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagfuncs.h"

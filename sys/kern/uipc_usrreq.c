@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.51 2001/06/14 20:32:47 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.51.2.1 2002/01/10 20:00:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  *
  *	@(#)uipc_usrreq.c	8.9 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.51.2.1 2002/01/10 20:00:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1256,7 +1259,7 @@ unp_scan(m0, op, discard)
 				break;		/* XXX, but saves time */
 			}
 		}
-		m0 = m0->m_act;
+		m0 = m0->m_nextpkt;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.12 2000/12/04 20:12:55 fvdl Exp $ */
+/*	$NetBSD: qec.c,v 1.12.4.1 2002/01/10 19:58:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.12.4.1 2002/01/10 19:58:13 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -155,7 +157,7 @@ qecattach(parent, self, aux)
 	sc->sc_bufsiz = (bus_size_t)sa->sa_reg[1].sbr_size;
 
 	/* Get number of on-board channels */
-	sc->sc_nchannels = getpropint(node, "#channels", -1);
+	sc->sc_nchannels = PROM_getpropint(node, "#channels", -1);
 	if (sc->sc_nchannels == -1) {
 		printf(": no channels\n");
 		return;
@@ -168,7 +170,7 @@ qecattach(parent, self, aux)
 	if (sbusburst == 0)
 		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
 
-	sc->sc_burst = getpropint(node, "burst-sizes", -1);
+	sc->sc_burst = PROM_getpropint(node, "burst-sizes", -1);
 	if (sc->sc_burst == -1)
 		/* take SBus burst sizes */
 		sc->sc_burst = sbusburst;
@@ -181,7 +183,7 @@ qecattach(parent, self, aux)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = getprop(node, "ranges", sizeof(struct sbus_range),
+	error = PROM_getprop(node, "ranges", sizeof(struct sbus_range),
 			 &sc->sc_nrange, (void **)&sc->sc_range);
 	switch (error) {
 	case 0:
@@ -208,7 +210,7 @@ qecattach(parent, self, aux)
 	/*
 	 * Save interrupt information for use in our qec_intr_establish()
 	 * function below. Apparently, the intr level for the quad
-	 * ethernet board (qe) is stored in the QEC node rather then
+	 * ethernet board (qe) is stored in the QEC node rather than
 	 * separately in each of the QE nodes.
 	 *
 	 * XXX - qe.c should call bus_intr_establish() with `level = 0'..

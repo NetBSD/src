@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.4 2000/02/02 23:28:09 thorpej Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.4.8.1 2002/01/10 20:02:26 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -26,9 +26,11 @@
  *	netatalk@umich.edu
  */
 
-#include <sys/errno.h>
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.4.8.1 2002/01/10 20:02:26 thorpej Exp $");
+
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>

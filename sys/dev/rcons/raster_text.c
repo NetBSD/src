@@ -1,4 +1,4 @@
-/*	$NetBSD: raster_text.c,v 1.4 2000/03/30 12:45:41 augustss Exp $ */
+/*	$NetBSD: raster_text.c,v 1.4.8.1 2002/01/10 19:58:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,8 +43,11 @@
  * Text routines for raster library.
  */
 
-#ifdef _KERNEL
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: raster_text.c,v 1.4.8.1 2002/01/10 19:58:06 thorpej Exp $");
+
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/systm.h>
 #include <dev/rcons/raster.h>
 #ifdef COLORFONT_CACHE
@@ -52,7 +55,6 @@
 #define NEW(size) malloc(size, M_DEVBUF, M_NOWAIT)
 #endif
 #else
-#include <sys/types.h>
 #include <string.h>
 #include "raster.h"
 #ifdef COLORFONT_CACHE

@@ -1,4 +1,4 @@
-/* $NetBSD: xcfb.c,v 1.22.2.1 2001/08/25 06:16:37 thorpej Exp $ */
+/* $NetBSD: xcfb.c,v 1.22.2.2 2002/01/10 19:58:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -30,9 +30,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-
-__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.22.2.1 2001/08/25 06:16:37 thorpej Exp $");
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xcfb.c,v 1.22.2.2 2002/01/10 19:58:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

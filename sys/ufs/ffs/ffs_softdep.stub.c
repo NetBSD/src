@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.stub.c,v 1.4 2001/01/10 16:45:56 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.stub.c,v 1.4.6.1 2002/01/10 20:05:04 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,10 +33,12 @@
  *	@(#)ffs_softdep.stub.c	9.1 (McKusick) 7/9/97
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.stub.c,v 1.4.6.1 2002/01/10 20:05:04 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
-#include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -65,6 +67,13 @@ softdep_mount(devvp, mp, fs, cred)
 
 void 
 softdep_initialize()
+{
+
+	return;
+}
+
+void
+softdep_reinitialize()
 {
 
 	return;
@@ -146,13 +155,14 @@ softdep_freefile(v)
 	panic("softdep_freefile called");
 }
 
-void 
-softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp)
+int
+softdep_setup_directory_add(bp, dp, diroffset, newinum, newdirbp, isnewblk)
 	struct buf *bp;
 	struct inode *dp;
 	off_t diroffset;
 	long newinum;
 	struct buf *newdirbp;
+	int isnewblk;
 {
 
 	panic("softdep_setup_directory_add called");
@@ -231,4 +241,11 @@ softdep_sync_metadata(v)
 	void *v;
 {
 	return (0);
+}
+
+void
+softdep_releasefile(ip)
+	struct inode *ip;
+{
+	panic("softdep_releasefile called");
 }

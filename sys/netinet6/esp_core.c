@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_core.c,v 1.14.6.1 2001/09/13 01:16:26 thorpej Exp $	*/
-/*	$KAME: esp_core.c,v 1.50 2000/11/02 12:27:38 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.14.6.2 2002/01/10 20:03:08 thorpej Exp $	*/
+/*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -29,6 +29,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.14.6.2 2002/01/10 20:03:08 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -160,10 +163,8 @@ esp_algorithm_lookup(idx)
 		return &esp_algorithms[3];
 	case SADB_X_EALG_CAST128CBC:
 		return &esp_algorithms[4];
-#ifdef SADB_X_EALG_RIJNDAELCBC
 	case SADB_X_EALG_RIJNDAELCBC:
 		return &esp_algorithms[5];
-#endif
 	default:
 		return NULL;
 	}
@@ -423,9 +424,7 @@ esp_cbc_mature(sav)
 	case SADB_X_EALG_BLOWFISHCBC:
 	case SADB_X_EALG_CAST128CBC:
 		break;
-#ifdef SADB_X_EALG_RIJNDAELCBC
 	case SADB_X_EALG_RIJNDAELCBC:
-#endif
 		/* allows specific key sizes only */
 		if (!(keylen == 128 || keylen == 192 || keylen == 256)) {
 			ipseclog((LOG_ERR,
@@ -512,7 +511,8 @@ esp_cast128_schedule(algo, sav)
 	struct secasvar *sav;
 {
 
-	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc));
+	set_cast128_subkey((u_int32_t *)sav->sched, _KEYBUF(sav->key_enc),
+		_KEYLEN(sav->key_enc));
 	return 0;
 }
 
@@ -629,8 +629,8 @@ esp_cbc_decrypt(m, off, sav, algo, ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0, *dp;
-	int soff, doff;	/*offset from the head of chain, to head of this mbuf */
-	int sn, dn;	/*offset from the head of the mbuf, to meat */
+	int soff, doff;	/* offset from the head of chain, to head of this mbuf */
+	int sn, dn;	/* offset from the head of the mbuf, to meat */
 	size_t ivoff, bodyoff;
 	u_int8_t iv[MAXIVLEN], *ivp;
 	u_int8_t sbuf[MAXIVLEN], *sp;
@@ -833,8 +833,8 @@ esp_cbc_encrypt(m, off, plen, sav, algo, ivlen)
 {
 	struct mbuf *s;
 	struct mbuf *d, *d0, *dp;
-	int soff, doff;	/*offset from the head of chain, to head of this mbuf */
-	int sn, dn;	/*offset from the head of the mbuf, to meat */
+	int soff, doff;	/* offset from the head of chain, to head of this mbuf */
+	int sn, dn;	/* offset from the head of the mbuf, to meat */
 	size_t ivoff, bodyoff;
 	u_int8_t iv[MAXIVLEN], *ivp;
 	u_int8_t sbuf[MAXIVLEN], *sp;
@@ -1124,7 +1124,7 @@ esp_auth(m0, skip, length, sav, sum)
 		}
 	}
 	(*algo->result)(&s, sumbuf);
-	bcopy(sumbuf, sum, siz);	/*XXX*/
+	bcopy(sumbuf, sum, siz);	/* XXX */
 	
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_pcb.c,v 1.6 2001/04/13 23:30:29 thorpej Exp $	*/
+/*	$NetBSD: natm_pcb.c,v 1.6.2.1 2002/01/10 20:04:05 thorpej Exp $	*/
 
 /*
  *
@@ -36,6 +36,9 @@
  * atm_pcb.c: manage atm protocol control blocks and keep IP and NATM
  * from trying to use each other's VCs.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: natm_pcb.c,v 1.6.2.1 2002/01/10 20:04:05 thorpej Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.5.8.1 2001/09/08 04:55:31 thorpej Exp $ */
+/* $NetBSD: wsevent.c,v 1.5.8.2 2002/01/10 19:59:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -29,9 +29,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.8.1 2001/09/08 04:55:31 thorpej Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -81,6 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.8.1 2001/09/08 04:55:31 thorpej Exp 
  * Internal "wscons_event" queue interface for the keyboard and mouse drivers.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.8.2 2002/01/10 19:59:18 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
@@ -97,25 +97,30 @@ __KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.5.8.1 2001/09/08 04:55:31 thorpej Exp 
  * Initialize a wscons_event queue.
  */
 void
-wsevent_init(ev)
-	struct wseventvar *ev;
+wsevent_init(struct wseventvar *ev)
 {
 
+#ifdef DIAGNOSTIC
+	if (ev->q != NULL) {
+		printf("wsevent_init: already init\n");
+		return;
+	}
+#endif
 	ev->get = ev->put = 0;
 	ev->q = malloc((u_long)WSEVENT_QSIZE * sizeof(struct wscons_event),
-	    M_DEVBUF, M_WAITOK);
-	memset((caddr_t)ev->q, 0, WSEVENT_QSIZE * sizeof(struct wscons_event));
+		       M_DEVBUF, M_WAITOK);
+	memset(ev->q, 0, WSEVENT_QSIZE * sizeof(struct wscons_event));
 }
 
 /*
  * Tear down a wscons_event queue.
  */
 void
-wsevent_fini(ev)
-	struct wseventvar *ev;
+wsevent_fini(struct wseventvar *ev)
 {
 
 	free(ev->q, M_DEVBUF);
+	ev->q = NULL;
 }
 
 /*
@@ -123,10 +128,7 @@ wsevent_fini(ev)
  * (User cannot write an event queue.)
  */
 int
-wsevent_read(ev, uio, flags)
-	struct wseventvar *ev;
-	struct uio *uio;
-	int flags;
+wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 {
 	int s, n, cnt, error;
 
@@ -142,7 +144,7 @@ wsevent_read(ev, uio, flags)
 			return (EWOULDBLOCK);
 		}
 		ev->wanted = 1;
-		error = tsleep((caddr_t)ev, PWSEVENT | PCATCH,
+		error = tsleep(ev, PWSEVENT | PCATCH,
 		    "wsevent_read", 0);
 		if (error) {
 			splx(s);
@@ -161,7 +163,7 @@ wsevent_read(ev, uio, flags)
 	n = howmany(uio->uio_resid, sizeof(struct wscons_event));
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->q[ev->get],
+	error = uiomove(&ev->q[ev->get],
 	    cnt * sizeof(struct wscons_event), uio);
 	n -= cnt;
 	/*
@@ -174,17 +176,14 @@ wsevent_read(ev, uio, flags)
 		return (error);
 	if (cnt > n)
 		cnt = n;
-	error = uiomove((caddr_t)&ev->q[0],
+	error = uiomove(&ev->q[0],
 	    cnt * sizeof(struct wscons_event), uio);
 	ev->get = cnt;
 	return (error);
 }
 
 int
-wsevent_poll(ev, events, p)
-	struct wseventvar *ev;
-	int events;
-	struct proc *p;
+wsevent_poll(struct wseventvar *ev, int events, struct proc *p)
 {
 	int revents = 0;
 	int s = splwsevent();

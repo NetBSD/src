@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.2.2.2 2001/09/13 01:15:51 thorpej Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.2.2.3 2002/01/10 19:56:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -27,6 +27,9 @@
  *
  *	$FreeBSD: src/sys/pci/agp_intel.c,v 1.4 2001/07/05 21:28:47 jhb Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.2.2.3 2002/01/10 19:56:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,19 +73,6 @@ struct agp_methods agp_intel_methods = {
 	agp_generic_bind_memory,
 	agp_generic_unbind_memory,
 };
-
-
-int
-agp_intel_match(struct device *parent, struct cfdata *match, void *aux)
-{
-	struct pci_attach_args *pa = aux;
-
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, NULL, NULL) 
-	    == 0)
-		return 0;
-
-	return 1;
-}
 
 int
 agp_intel_attach(struct device *parent, struct device *self, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.3 1999/02/05 00:06:06 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.3.22.1 2002/01/10 19:57:37 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,9 +32,12 @@
  *
  *****************************************************************************/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.3.22.1 2002/01/10 19:57:37 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
 
 #include "rf_archs.h"
-#include "rf_types.h"
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagutils.h"

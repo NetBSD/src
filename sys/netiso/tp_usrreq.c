@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.15 2000/03/30 13:10:16 augustss Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.15.8.1 2002/01/10 20:03:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,6 +68,9 @@ SOFTWARE.
  * contained here and called by tp_usrreq().
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.15.8.1 2002/01/10 20:03:57 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -117,11 +120,11 @@ dump_mbuf(n, str)
 		return;
 	}
 	while (n) {
-		nextrecord = n->m_act;
+		nextrecord = n->m_nextpkt;
 		printf("RECORD:\n");
 		while (n) {
 			printf("%p : Len %x Data %p A %p Nx %p Tp %x\n",
-			       n, n->m_len, n->m_data, n->m_act, n->m_next, n->m_type);
+			       n, n->m_len, n->m_data, n->m_nextpkt, n->m_next, n->m_type);
 #ifdef notdef
 			{
 				char  *p = mtod(n, char *);
@@ -207,7 +210,7 @@ restart:
 	 */
 
 	sblock(sb, M_WAITOK);
-	for (nn = &sb->sb_mb; (n = *nn) != NULL; nn = &n->m_act)
+	for (nn = &sb->sb_mb; (n = *nn) != NULL; nn = &n->m_nextpkt)
 		if (n->m_type == MT_OOBDATA)
 			break;
 
@@ -247,7 +250,7 @@ restart:
 
 	if ((inflags & MSG_PEEK) == 0) {
 		n = *nn;
-		*nn = n->m_act;
+		*nn = n->m_nextpkt;
 		for (; n; n = m_free(n))
 			sbfree(sb, n);
 	}
@@ -269,7 +272,7 @@ restart:
  *  tp_usrreq(), PRU_SENDOOB
  * FUNCTION and ARGUMENTS:
  * 	Send what's in the mbuf chain (m) as an XPD TPDU.
- * 	The mbuf may not contain more then 16 bytes of data.
+ * 	The mbuf may not contain more than 16 bytes of data.
  * 	XPD TSDUs aren't segmented, so they translate into
  * 	exactly one XPD TPDU, with EOT bit set.
  * RETURN VALUE:

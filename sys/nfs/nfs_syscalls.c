@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.48 2000/11/27 08:39:50 chs Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.48.4.1 2002/01/10 20:04:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,9 @@
  *
  *	@(#)nfs_syscalls.c	8.5 (Berkeley) 3/30/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.48.4.1 2002/01/10 20:04:26 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -282,7 +285,7 @@ sys_nfssvc(p, v, retval)
 					m_freem(nuidp->nu_nam);
 			        }
 				nuidp->nu_flag = 0;
-				nuidp->nu_cr = nsd->nsd_cr;
+				crcvt(&nuidp->nu_cr, &nsd->nsd_cr);
 				if (nuidp->nu_cr.cr_ngroups > NGROUPS)
 				    nuidp->nu_cr.cr_ngroups = NGROUPS;
 				nuidp->nu_cr.cr_ref = 1;

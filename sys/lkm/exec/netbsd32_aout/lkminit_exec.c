@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:43 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,12 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:05 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <sys/exec_aout.h>
 #include <compat/netbsd32/netbsd32_exec.h>
@@ -49,9 +53,16 @@
 int exec_netbsd32_aout_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_netbsd32_aout =
-	{ sizeof(struct netbsd32_exec), exec_netbsd32_makecmds, { NULL },
-	  NULL, EXECSW_PRIO_FIRST,
-	  0, netbsd32_copyargs, netbsd32_setregs }; /* sparc 32 bit */
+	/* 32-bit NetBSD a.out on 64-bit */
+	{ sizeof(struct netbsd32_exec),
+	  exec_netbsd32_makecmds,
+	  { NULL },
+	  NULL,
+	  EXECSW_PRIO_FIRST,
+	  0,
+	  netbsd32_copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the exec

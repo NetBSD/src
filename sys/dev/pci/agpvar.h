@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.2.2.2 2001/09/13 01:15:52 thorpej Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.2.2.3 2002/01/10 19:56:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -33,8 +33,8 @@
 
 #include <sys/lock.h>
 
-struct agp_phcb_attach_args {
-	char	*apa_busname;	/* XXX layout compat with pcibus_attach_args */
+struct agpbus_attach_args {
+	char	*apa_busname;
 	struct pci_attach_args apa_pci_args;
 };
 
@@ -56,7 +56,6 @@ struct agp_info {
 	u_int32_t	ai_mode;
 	bus_addr_t	ai_aperture_base;
 	bus_size_t	ai_aperture_size;
-	void *		ai_aperture_vaddr;
 	vsize_t		ai_memory_allowed;
 	vsize_t		ai_memory_used;
 	u_int32_t	ai_devid;
@@ -132,10 +131,10 @@ struct agp_methods {
 struct agp_softc {
 	struct device		as_dev;
 	bus_space_tag_t		as_apt;
-	bus_space_handle_t	as_aph;
 	int			as_capoff;
 	bus_addr_t		as_apaddr;
 	bus_size_t		as_apsize;
+	int			as_apflags;
 	bus_dma_tag_t		as_dmat;
 	u_int32_t		as_maxmem;	/* allocation upper bound */
 	u_int32_t		as_allocated;	/* amount allocated */
@@ -182,13 +181,7 @@ int agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 int agp_generic_unbind_memory(struct agp_softc *sc, struct agp_memory *mem);
 
 /* The vendor has already been matched when these functions are called */
-int agp_ali_match(struct device *, struct cfdata *, void *);
-int agp_amd_match(struct device *, struct cfdata *, void *);
-int agp_i810_match(struct device *, struct cfdata *, void *);
-int agp_i810_bridgematch(struct pci_attach_args *);
-int agp_intel_match(struct device *, struct cfdata *, void *);
-int agp_sis_match(struct device *, struct cfdata *, void *);
-int agp_via_match(struct device *, struct cfdata *, void *);
+int agp_amd_match(const struct pci_attach_args *);
 
 int agp_ali_attach(struct device *parent, struct device *self, void *aux);
 int agp_amd_attach(struct device *parent, struct device *self, void *aux);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.15.2.1 2001/08/03 04:13:29 lukem Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.15.2.2 2002/01/10 19:58:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -46,9 +46,11 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cd_atapi.c,v 1.15.2.2 2002/01/10 19:58:17 thorpej Exp $");
+
 #include "rnd.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -134,7 +136,7 @@ cd_atapibus_attach(parent, self, aux)
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("cdattach: "));
 
-	scsipi_strvis(cd->name, 16, sa->sa_inqbuf.product, 16);
+	strncpy(cd->name, sa->sa_inqbuf.vendor, 16);
 
 	cdattach(parent, cd, periph, &cd_atapibus_ops);
 

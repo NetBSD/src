@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2001/06/05 14:49:00 mrg Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.2.1 2002/01/10 20:01:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,12 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.2.1 2002/01/10 20:01:09 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <machine/elf_machdep.h>
 #define ELFSIZE	32
@@ -53,11 +57,16 @@
 int exec_svr4_32_elf_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_svr4_32_elf =
-	{ sizeof (Elf_Ehdr), exec_elf32_makecmds,
+	/* SVR4 Elf32 on 64-bit */
+	{ sizeof (Elf_Ehdr),
+	  exec_elf32_makecmds,
 	  { ELFNAME2(svr4_32,probe) },
-	  NULL, EXECSW_PRIO_ANY,
+	  NULL,
+	  EXECSW_PRIO_ANY,
 	  SVR4_32_AUX_ARGSIZ,
-	  svr4_32_copyargs, svr4_32_setregs };	/* SVR4_32 32bit ELF bins (not 64bit safe) */
+	  svr4_32_copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the exec

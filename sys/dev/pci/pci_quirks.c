@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_quirks.c,v 1.1 1998/05/31 06:03:44 cgd Exp $	*/
+/*	$NetBSD: pci_quirks.c,v 1.1.28.1 2002/01/10 19:56:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -33,6 +33,9 @@
 /*
  * PCI Quirk data table and lookup function.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_quirks.c,v 1.1.28.1 2002/01/10 19:56:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

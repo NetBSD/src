@@ -1,4 +1,4 @@
-/* $NetBSD: vme.c,v 1.3 1999/06/30 15:06:05 drochner Exp $ */
+/* $NetBSD: vme.c,v 1.3.16.1 2002/01/10 19:59:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -27,6 +27,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.3.16.1 2002/01/10 19:59:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

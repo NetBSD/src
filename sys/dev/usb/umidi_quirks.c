@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.1 2001/01/30 23:26:48 tshiozak Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.1.6.1 2002/01/10 19:59:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.1.6.1 2002/01/10 19:59:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,6 +123,22 @@ UMQ_DEF(ROLAND, ROLAND_UM1, 2) = {
 };
 
 
+/*
+ * ROLAND UM-880 (native mode)
+ */
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM880N, 0, 1, 1) = {
+	/* out */
+	{ 0, 9 },
+	/* in */
+	{ 1, 9 }
+};
+
+UMQ_DEF(ROLAND, ROLAND_UM880N, 0) = {
+	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM880N, 0),
+	UMQ_TERMINATOR
+};
+
+
 
 /*
  * quirk list
@@ -129,6 +147,7 @@ struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(YAMAHA, YAMAHA_UX256, ANYIFACE),
 	UMQ_REG(YAMAHA, ANYPRODUCT, ANYIFACE),
 	UMQ_REG(ROLAND, ROLAND_UM1, 2),
+	UMQ_REG(ROLAND, ROLAND_UM880N, 0),
 	UMQ_TERMINATOR
 };
 

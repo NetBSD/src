@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.44 2001/02/04 22:32:24 pk Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.44.4.1 2002/01/10 19:59:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  *
  *	@(#)kern_proc.c	8.7 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.44.4.1 2002/01/10 19:59:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

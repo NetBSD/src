@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.21 2000/06/01 14:29:01 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.21.6.1 2002/01/10 19:59:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  * memory blocks that can be used for DMA.  Using the bus_dma
  * routines directly would incur large overheads in space and time.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.21.6.1 2002/01/10 19:59:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

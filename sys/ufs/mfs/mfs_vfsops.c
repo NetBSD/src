@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.34 2001/05/30 11:57:19 mrg Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.34.4.1 2002/01/10 20:05:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -34,6 +34,9 @@
  *
  *	@(#)mfs_vfsops.c	8.11 (Berkeley) 6/19/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.34.4.1 2002/01/10 20:05:19 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -94,6 +97,7 @@ struct vfsops mfs_vfsops = {
 	ffs_fhtovp,
 	ffs_vptofh,
 	mfs_init,
+	mfs_reinit,
 	mfs_done,
 	ffs_sysctl,
 	NULL,
@@ -112,6 +116,12 @@ mfs_init()
 	 * only once.
 	 */
 	ffs_init();
+}
+
+void
+mfs_reinit()
+{
+	ffs_reinit();
 }
 
 void

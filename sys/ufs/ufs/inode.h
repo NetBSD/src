@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.24 2001/06/05 09:19:33 mrg Exp $	*/
+/*	$NetBSD: inode.h,v 1.24.4.1 2002/01/10 20:05:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -43,8 +43,10 @@
 #include <sys/vnode.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
+#include <ufs/ufs/quota.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/lfs/lfs_extern.h>
+#include <miscfs/genfs/genfs_node.h>
 
 /*
  * Per-filesystem inode extensions.
@@ -68,6 +70,7 @@ struct lfs_inode_ext {
  * active, and is put back when the file is no longer being used.
  */
 struct inode {
+	struct genfs_node i_gnode;
 	LIST_ENTRY(inode) i_hash;/* Hash chain. */
 	struct	vnode *i_vnode;	/* Vnode associated with this inode. */
 	struct	vnode *i_devvp;	/* Vnode for block I/O. */
@@ -88,6 +91,7 @@ struct inode {
 	struct	 dquot *i_dquot[MAXQUOTAS]; /* Dquot structures. */
 	u_quad_t i_modrev;	/* Revision level for NFS lease. */
 	struct	 lockf *i_lockf;/* Head of byte-level lock list. */
+
 	/*
 	 * Side effects; used during directory lookup.
 	 */
@@ -169,6 +173,7 @@ struct inode {
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
+#define IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
 
 #if defined(_KERNEL)
 #if defined(_KERNEL_OPT)

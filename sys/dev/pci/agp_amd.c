@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.1.2.2 2001/09/13 01:15:50 thorpej Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.1.2.3 2002/01/10 19:56:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -27,6 +27,9 @@
  *
  *	$FreeBSD: src/sys/pci/agp_amd.c,v 1.6 2001/07/05 21:28:46 jhb Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: agp_amd.c,v 1.1.2.3 2002/01/10 19:56:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +102,7 @@ agp_amd_alloc_gatt(struct agp_softc *sc)
 	u_int32_t entries = apsize >> AGP_PAGE_SHIFT;
 	struct agp_amd_gatt *gatt;
 	int i, npages;
+	caddr_t vdir;
 
 	gatt = malloc(sizeof(struct agp_amd_gatt), M_AGP, M_NOWAIT);
 	if (!gatt)
@@ -106,14 +110,16 @@ agp_amd_alloc_gatt(struct agp_softc *sc)
 
 	if (agp_alloc_dmamem(sc->as_dmat,
 	    AGP_PAGE_SIZE + entries * sizeof(u_int32_t), 0,
-	    &gatt->ag_dmamap, (caddr_t *)&gatt->ag_vdir, &gatt->ag_pdir,
+	    &gatt->ag_dmamap, &vdir, &gatt->ag_pdir,
 	    &gatt->ag_dmaseg, 1, &gatt->ag_nseg) != 0) {
 		printf("failed to allocate GATT\n");
+		free(gatt, M_AGP);
 		return NULL;
 	}
 
+	gatt->ag_vdir = (u_int32_t *)vdir;
 	gatt->ag_entries = entries;
-	gatt->ag_virtual = gatt->ag_vdir + AGP_PAGE_SIZE;
+	gatt->ag_virtual = (u_int32_t *)(vdir + AGP_PAGE_SIZE);
 	gatt->ag_physical = gatt->ag_pdir + AGP_PAGE_SIZE;
 	gatt->ag_size = AGP_PAGE_SIZE + entries * sizeof(u_int32_t);
 
@@ -149,16 +155,12 @@ agp_amd_free_gatt(struct agp_softc *sc, struct agp_amd_gatt *gatt)
 #endif
 
 int
-agp_amd_match(struct device *parent, struct cfdata *match, void *aux)
+agp_amd_match(const struct pci_attach_args *pa)
 {
-	struct pci_attach_args *pa = aux;
-
-	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, NULL, NULL)
-	    == 0)
-		return 0;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_SC751_SC:
+	case PCI_PRODUCT_AMD_SC762_NB:
 		return 1;
 	}
 
@@ -183,10 +185,10 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 	}
 	memset(asc, 0, sizeof *asc);
 
-	error = pci_mapreg_map(pa, AGP_AMD751_REGISTERS, PCI_MAPREG_TYPE_IO, 0,
+	error = pci_mapreg_map(pa, AGP_AMD751_REGISTERS, PCI_MAPREG_TYPE_MEM, 0,
 	    &asc->iot, &asc->ioh, NULL, NULL);
 	if (error != 0) {
-		printf(": can't map i/o space\n");
+		printf(": can't map AGP registers\n");
 		agp_generic_detach(sc);
 		return error;
 	}

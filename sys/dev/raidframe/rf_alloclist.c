@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_alloclist.c,v 1.4.16.1 2001/08/03 04:13:24 lukem Exp $	*/
+/*	$NetBSD: rf_alloclist.c,v 1.4.16.2 2002/01/10 19:57:36 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,12 @@
  *
  ***************************************************************************/
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_alloclist.c,v 1.4.16.2 2002/01/10 19:57:36 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
+
+#include "rf_options.h"
 #include "rf_threadstuff.h"
 #include "rf_alloclist.h"
 #include "rf_debugMem.h"
@@ -45,18 +50,18 @@
 #include "rf_shutdown.h"
 
 RF_DECLARE_STATIC_MUTEX(alist_mutex)
-	static unsigned int fl_hit_count, fl_miss_count;
+static unsigned int fl_hit_count, fl_miss_count;
 
-	static RF_AllocListElem_t *al_free_list = NULL;
-	static int al_free_list_count;
+static RF_AllocListElem_t *al_free_list = NULL;
+static int al_free_list_count;
 
 #define RF_AL_FREELIST_MAX 256
 
 #define DO_FREE(_p,_sz) RF_Free((_p),(_sz))
 
-	static void rf_ShutdownAllocList(void *);
+static void rf_ShutdownAllocList(void *);
 
-	static void rf_ShutdownAllocList(ignored)
+static void rf_ShutdownAllocList(ignored)
 	void   *ignored;
 {
 	RF_AllocListElem_t *p, *pt;

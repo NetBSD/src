@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.3.2.2 2001/09/13 01:16:14 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.3.2.3 2002/01/10 19:59:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -79,9 +79,11 @@
  * the 4/100 DMA code.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.3.2.3 2002/01/10 19:59:13 thorpej Exp $");
+
 #include "opt_ddb.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

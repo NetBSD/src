@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.11 2000/03/30 13:02:57 augustss Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.11.8.1 2002/01/10 20:04:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ns_error.c	8.2 (Berkeley) 9/22/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns_error.c,v 1.11.8.1 2002/01/10 20:04:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.86.2.1 2001/08/25 06:17:03 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.86.2.2 2002/01/10 20:02:54 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,6 +100,9 @@
  *
  *	@(#)ip_output.c	8.3 (Berkeley) 1/21/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.86.2.2 2002/01/10 20:02:54 thorpej Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -314,6 +317,10 @@ ip_output(m0, va_alist)
 			struct in_ifaddr *ia;
 
 			IFP_TO_IA(ifp, ia);
+			if (!ia) {
+				error = EADDRNOTAVAIL;
+				goto bad;
+			}
 			ip->ip_src = ia->ia_addr.sin_addr;
 		}
 
@@ -533,7 +540,6 @@ sendit:
 		}
 		goto bad;
 	}
-    }
 
 	/* be sure to update variables that are affected by ipsec4_output() */
 	ip = mtod(m, struct ip *);
@@ -553,8 +559,10 @@ sendit:
 		}
 	} else {
 		/* nobody uses ia beyond here */
-		ifp = ro->ro_rt->rt_ifp;
+		if (state.encap)
+			ifp = ro->ro_rt->rt_ifp;
 	}
+    }
 
 skip_ipsec:
 #endif /*IPSEC*/
@@ -592,7 +600,7 @@ skip_ipsec:
 		ip->ip_sum = 0;
 		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
 
-		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags;
+		sw_csum = m->m_pkthdr.csum_flags & ~ifp->if_csum_flags_tx;
 
 		/*
 		 * Perform any checksums that the hardware can't do
@@ -607,7 +615,7 @@ skip_ipsec:
 			in_delayed_cksum(m);
 			sw_csum &= ~(M_CSUM_TCPv4|M_CSUM_UDPv4);
 		}
-		m->m_pkthdr.csum_flags &= ifp->if_csum_flags;
+		m->m_pkthdr.csum_flags &= ifp->if_csum_flags_tx;
 
 #ifdef IPSEC
 		/* clean ipsec history once it goes out of the node */

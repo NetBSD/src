@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.8 2001/04/28 14:48:39 augustss Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.8.2.1 2002/01/10 19:59:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,9 @@
  * Read status byte on the interrupt pipe (which doesn't seem to be
  * an interrupt pipe at all).  This operation sometimes times out.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.8.2.1 2002/01/10 19:59:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

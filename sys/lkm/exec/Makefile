@@ -1,12 +1,13 @@
-#	$NetBSD: Makefile,v 1.4 2001/06/06 21:21:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2002/01/10 20:00:55 thorpej Exp $
 
-# XXX only linux_elf is actually tested for now; build LKMs on all platforms
-# as appropriate, but only install linux_elf on i386
-.if make(install)
 .if ${MACHINE} == "i386"
-SUBDIR+=	linux_elf
+SUBDIR+=	freebsd_aout freebsd_elf linux_elf svr4_elf
 .endif
-.else # !make(install)
+
+# These are untested, but do compile.  Once they are tested,
+# move them above.
+
+.if !make(install)
 
 .if ${MACHINE} == "alpha"
 SUBDIR+=	linux_aout linux_elf osf1_ecoff
@@ -17,8 +18,7 @@ SUBDIR+=	hpux_aout
 .endif
 
 .if ${MACHINE} == "i386"
-SUBDIR+=	ibcs2_coff ibcs2_elf ibcs2_xout linux_aout linux_elf
-SUBDIR+=	freebsd_aout freebsd_elf svr4_elf
+SUBDIR+=	aout ibcs2_coff ibcs2_elf ibcs2_xout linux_aout
 .endif
 
 .if ${MACHINE_ARCH} == "m68k"
@@ -26,7 +26,7 @@ SUBDIR+=	linux_aout linux_elf sunos_aout m68k4k
 .endif
 
 .if ${MACHINE_ARCH} == "sparc"
-SUBDIR+=	sunos_aout svr4_elf
+SUBDIR+=	aout sunos_aout svr4_elf
 .endif
 
 .if ${MACHINE_ARCH} == "sparc64"

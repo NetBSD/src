@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.13 2000/03/04 04:22:34 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.13.8.1 2002/01/10 19:57:43 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -65,14 +65,17 @@
  *
  ****************************************************************************/
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.13.8.1 2002/01/10 19:57:43 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
 #include "rf_raid.h"
 #include "rf_diskqueue.h"
 #include "rf_alloclist.h"
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
-#include "rf_configure.h"
 #include "rf_general.h"
 #include "rf_freelist.h"
 #include "rf_debugprint.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.47.4.1 2001/08/03 04:14:07 lukem Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.47.4.2 2002/01/10 20:05:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *	@(#)lfs_alloc.c	8.4 (Berkeley) 1/4/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.47.4.2 2002/01/10 20:05:09 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
 #endif
@@ -83,6 +86,7 @@
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -165,7 +169,7 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct proc *p,
 		LFS_PUT_HEADFREE(fs, cip, cbp, oldnext);
 	} else {
 		tino = ino;
-		while(1) {
+		while (1) {
 			LFS_IENTRY(ifp, fs, tino, bp);
 			if (ifp->if_nextfree == ino ||
 			    ifp->if_nextfree == LFS_UNUSED_INUM)
@@ -240,13 +244,13 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
 	LFS_PUT_HEADFREE(fs, cip, cbp, i);
 #ifdef DIAGNOSTIC
-	if(fs->lfs_free == LFS_UNUSED_INUM)
+	if (fs->lfs_free == LFS_UNUSED_INUM)
 		panic("inode 0 allocated [2]");
 #endif /* DIAGNOSTIC */
 	max = i + fs->lfs_ifpb;
 	/* printf("extend ifile for ino %d--%d\n", i, max); */
 
-	if(fs->lfs_version == 1) {
+	if (fs->lfs_version == 1) {
 		for (ifp_v1 = (IFILE_V1 *)bp->b_data; i < max; ++ifp_v1) {
 			ifp_v1->if_version = 1;
 			ifp_v1->if_daddr = LFS_UNUSED_DADDR;
@@ -311,7 +315,7 @@ lfs_valloc(void *v)
 	LFS_GET_HEADFREE(fs, cip, cbp, &new_ino);
 
 #ifdef DIAGNOSTIC
-	if(new_ino == LFS_UNUSED_INUM) {
+	if (new_ino == LFS_UNUSED_INUM) {
 #ifdef DEBUG
 		lfs_dump_super(fs);
 #endif /* DEBUG */
@@ -346,7 +350,7 @@ lfs_valloc(void *v)
 		}
 	}
 #ifdef DIAGNOSTIC
-	if(fs->lfs_free == LFS_UNUSED_INUM)
+	if (fs->lfs_free == LFS_UNUSED_INUM)
 		panic("inode 0 allocated [3]");
 #endif /* DIAGNOSTIC */
 
@@ -377,41 +381,39 @@ lfs_ialloc(struct lfs *fs, struct vnode *pvp, ino_t new_ino, int new_gen,
 	lockmgr(&ufs_hashlock, LK_EXCLUSIVE, 0);
 	/* Create an inode to associate with the vnode. */
 	lfs_vcreate(pvp->v_mount, new_ino, vp);
-	
+
 	ip = VTOI(vp);
 	LFS_SET_UINO(ip, IN_CHANGE | IN_MODIFIED);
 	/* Zero out the direct and indirect block addresses. */
 	bzero(&ip->i_din, sizeof(ip->i_din));
 	ip->i_din.ffs_din.di_inumber = new_ino;
-	
+
 	/* Set a new generation number for this inode. */
 	if (new_gen)
 		ip->i_ffs_gen = new_gen;
-	
+
 	/* Insert into the inode hash table. */
 	ufs_ihashins(ip);
 	lockmgr(&ufs_hashlock, LK_RELEASE, 0);
 
-	error = ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
+	ufs_vinit(vp->v_mount, lfs_specop_p, lfs_fifoop_p, &vp);
 	ip = VTOI(vp);
-	if (error) {
-		vput(vp);
-		goto errout;
-	}
 	/* printf("lfs_ialloc[2]: ino %d vp %p\n", new_ino, vp);*/
-	
+
+	uvm_vnp_setsize(vp, 0);
 	*vpp = vp;
 #if 1
-	if(!(vp->v_flag & VDIROP)) {
+	if (!(vp->v_flag & VDIROP)) {
 		(void)lfs_vref(vp);
 		++lfs_dirvcount;
 	}
 	vp->v_flag |= VDIROP;
-	
-	if(!(ip->i_flag & IN_ADIROP))
+
+	if (!(ip->i_flag & IN_ADIROP))
 		++fs->lfs_nadirop;
 	ip->i_flag |= IN_ADIROP;
 #endif
+	genfs_node_init(vp, &lfs_genfsops);
 	VREF(ip->i_devvp);
 	/* Set superblock modified bit and increment file count. */
 	fs->lfs_fmod = 1;
@@ -505,7 +507,7 @@ lfs_vfree(void *v)
 	else
 		lockmgr(&fs->lfs_freelock, LK_EXCLUSIVE, 0);
 	
-	if(vp->v_flag & VDIROP) {
+	if (vp->v_flag & VDIROP) {
 		--lfs_dirvcount;
 		vp->v_flag &= ~VDIROP;
 		wakeup(&lfs_dirvcount);
@@ -547,7 +549,7 @@ lfs_vfree(void *v)
 		LFS_PUT_TAILFREE(fs, cip, cbp, ino);
 	}
 #ifdef DIAGNOSTIC
-	if(ino == LFS_UNUSED_INUM) {
+	if (ino == LFS_UNUSED_INUM) {
 		panic("inode 0 freed");
 	}
 #endif /* DIAGNOSTIC */

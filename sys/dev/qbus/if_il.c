@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.1 2001/05/06 15:30:46 ragge Exp $	*/
+/*	$NetBSD: if_il.c,v 1.1.4.1 2002/01/10 19:57:32 thorpej Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -37,6 +37,10 @@
 /*
  * Interlan Ethernet Communications Controller interface
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.1.4.1 2002/01/10 19:57:32 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_ns.h"
 
@@ -372,7 +376,7 @@ ilinit(struct ifnet *ifp)
 		    goto too_many_multis;
 		}
 	}
-#endif MULTI
+#endif /* MULTICAST */
 	/*
 	 * Set board online.
 	 * Hang receive buffer and start any pending

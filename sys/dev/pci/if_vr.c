@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.49.2.2 2001/08/25 06:16:24 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.49.2.3 2002/01/10 19:56:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -102,6 +102,9 @@
  * frames must be copied to a new buffer which shifts the data forward
  * 2 bytes so that the payload is aligned on a 4-byte boundary.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.49.2.3 2002/01/10 19:56:47 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.7 2001/07/01 02:16:25 uwe Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.7.2.1 2002/01/10 19:57:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,9 @@
  * the Linux smc91c92_cs.c driver to find the magic details to get this
  * working!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.7.2.1 2002/01/10 19:57:23 thorpej Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"

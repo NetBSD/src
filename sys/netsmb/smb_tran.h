@@ -1,7 +1,7 @@
-/*	$NetBSD: smb_tran.h,v 1.1 2000/12/07 03:48:11 deberg Exp $	*/
+/*	$NetBSD: smb_tran.h,v 1.1.6.1 2002/01/10 20:04:16 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2000, Boris Popov
+ * Copyright (c) 2000-2001, Boris Popov
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,19 +30,29 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * FreeBSD: src/sys/netsmb/smb_tran.h,v 1.2 2001/12/02 08:47:29 bp Exp
  */
+
+#ifndef _NETSMB_SMB_TRAN_H_
+#define	_NETSMB_SMB_TRAN_H_
+
+#include <sys/socket.h>
 
 /*
  * Known transports
  */
-
 #define	SMBT_NBTCP	1
 
-struct smb_tran_ops;
+/*
+ * Transport parameters
+ */
+#define	SMBTP_SNDSZ	1		/* R  - int */
+#define	SMBTP_RCVSZ	2		/* R  - int */
+#define	SMBTP_TIMEOUT	3		/* RW - struct timespec */
+#define	SMBTP_SELECTID	4		/* RW - (void *) */
 
-#ifndef sa_family_t
-#define sa_family_t int
-#endif
+struct smb_tran_ops;
 
 struct smb_tran_desc {
 	sa_family_t	tr_type;
@@ -55,7 +65,9 @@ struct smb_tran_desc {
 	int	(*tr_recv)(struct smb_vc *vcp, struct mbuf **mpp, struct proc *p);
 	void	(*tr_timo)(struct smb_vc *vcp);
 	void	(*tr_intr)(struct smb_vc *vcp);
-	int	(*tr_bufsz)(struct smb_vc *vcp, int *sndsz, int *rcvsz);
+	int	(*tr_getparam)(struct smb_vc *vcp, int param, void *data);
+	int	(*tr_setparam)(struct smb_vc *vcp, int param, void *data);
+	int	(*tr_fatal)(struct smb_vc *vcp, int error);
 #ifdef notyet
 	int	(*tr_poll)(struct smb_vc *vcp, struct proc *p);
 	int	(*tr_cmpaddr)(void *addr1, void *addr2);
@@ -72,18 +84,8 @@ struct smb_tran_desc {
 #define	SMB_TRAN_RECV(vcp,m,p)		(vcp)->vc_tdesc->tr_recv(vcp,m,p)
 #define	SMB_TRAN_TIMO(vcp)		(vcp)->vc_tdesc->tr_timo(vcp)
 #define	SMB_TRAN_INTR(vcp)		(vcp)->vc_tdesc->tr_intr(vcp)
-#define	SMB_TRAN_BUFSZ(vcp,sndsz,rcvsz)	(vcp)->vc_tdesc->tr_bufsz(vcp,sndsz,rcvsz)
-/*
-int  smb_tran_create(int type);
-void smb_tran_free(struct smb_vc *vcp);
-int  smb_tran_bind(struct smb_vc *vcp, struct sockaddr *sap, struct proc *p);
-int  smb_tran_connect(struct smb_vc *vcp, struct sockaddr *sap, struct proc *p);
-int  smb_tran_disconnect(struct smb_vc *vcp, struct proc *p);
-int  smb_tran_send(struct smb_vc *vcp, struct mbuf *m0, struct proc *p);
-int  smb_tran_recv(struct smb_vc *vcp, struct mbuf **mpp, struct proc *p);
-void smb_tran_timo(struct smb_vc *vcp);
-*/
-#ifdef notyet
-int  smb_tran_poll(struct smb_vc *vcp, ...);
-int  smb_tran_cmpaddr(...);
-#endif
+#define	SMB_TRAN_GETPARAM(vcp,par,data)	(vcp)->vc_tdesc->tr_getparam(vcp, par, data)
+#define	SMB_TRAN_SETPARAM(vcp,par,data)	(vcp)->vc_tdesc->tr_setparam(vcp, par, data)
+#define	SMB_TRAN_FATAL(vcp, error)	(vcp)->vc_tdesc->tr_fatal(vcp, error)
+
+#endif /* _NETSMB_SMB_TRAN_H_ */

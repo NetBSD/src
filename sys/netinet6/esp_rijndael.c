@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_rijndael.c,v 1.5 2001/06/18 11:23:00 wiz Exp $	*/
+/*	$NetBSD: esp_rijndael.c,v 1.5.2.1 2002/01/10 20:03:10 thorpej Exp $	*/
 /*	$KAME: esp_rijndael.c,v 1.4 2001/03/02 05:53:05 itojun Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: esp_rijndael.c,v 1.5.2.1 2002/01/10 20:03:10 thorpej Exp $");
+
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -48,7 +51,7 @@
 
 #include <net/net_osdep.h>
 
-/* as rijndael uses asymmetric scheduled keys, we need to do it twice. */
+/* as rijndael uses assymetric scheduled keys, we need to do it twice. */
 int
 esp_rijndael_schedlen(algo)
 	const struct esp_algorithm *algo;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.14 2001/06/26 17:55:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.14.2.1 2002/01/10 20:05:35 thorpej Exp $	*/
 
 /*
  *
@@ -222,7 +222,7 @@ uvmfault_relock(ufi)
 	}
 
 	uvmexp.fltrelckok++;
-	return(TRUE);		/* got it! */
+	return(TRUE);
 }
 
 #endif /* _UVM_UVM_FAULT_I_H_ */

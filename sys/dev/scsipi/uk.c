@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.30 2001/04/25 17:53:42 bouyer Exp $	*/
+/*	$NetBSD: uk.c,v 1.30.2.1 2002/01/10 19:58:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,9 @@
  * Originally by Julian Elischer (julian@tfs.com)
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uk.c,v 1.30.2.1 2002/01/10 19:58:30 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 

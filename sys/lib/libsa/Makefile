@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.44.2.1 2001/09/13 01:16:19 thorpej Exp $
+#	$NetBSD: Makefile,v 1.44.2.2 2002/01/10 20:00:35 thorpej Exp $
 
 LIB=	sa
-MKPIC=	no
-MKPROFILE=no
+NOPIC=	# defined
+NOPROFILE=# defined
 
 SA_USE_CREAD?= no		# Read compressed kernels
 SA_INCLUDE_NET?= yes		# Netboot via TFTP, NFS
@@ -31,7 +31,8 @@ SRCS+=	cread.c
 .endif
 
 .if (${SA_USE_LOADFILE} == "yes")
-SRCS+=	loadfile.c
+SRCS+=	loadfile.c loadfile_aout.c loadfile_ecoff.c loadfile_elf32.c \
+	loadfile_elf64.c
 .endif
 .if (${SA_INCLUDE_NET} == "yes")
 # network routines
@@ -48,6 +49,7 @@ SRCS+=	lfs.c ufs.c ufs_ls.c cd9660.c ustarfs.c dosfs.c
 # only needed during build
 libinstall::
 
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

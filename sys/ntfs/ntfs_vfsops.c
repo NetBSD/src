@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.36 2001/06/19 22:14:14 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.36.2.1 2002/01/10 20:04:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -28,6 +28,8 @@
  *	Id: ntfs_vfsops.c,v 1.7 1999/05/31 11:28:30 phk Exp
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.36.2.1 2002/01/10 20:04:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +96,7 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 				 int *, struct ucred **));
 #elif defined(__NetBSD__)
 static void	ntfs_init __P((void));
+static void	ntfs_reinit __P((void));
 static void	ntfs_done __P((void));
 static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 				 struct vnode **));
@@ -108,6 +111,12 @@ static int	ntfs_fhtovp __P((struct mount *, struct fid *,
 				 struct mbuf *, struct vnode **,
 				 int *, struct ucred **));
 #endif
+
+struct genfs_ops ntfs_genfsops = {
+	NULL,
+	NULL,
+	genfs_compat_gop_write,
+};
 
 #ifdef __NetBSD__
 /*
@@ -198,6 +207,12 @@ ntfs_init()
 {
 	ntfs_nthashinit();
 	ntfs_toupper_init();
+}
+
+static void
+ntfs_reinit()
+{
+	ntfs_nthashreinit();
 }
 
 static void
@@ -772,11 +787,10 @@ ntfs_statfs(
 	struct proc *p)
 {
 	struct ntfsmount *ntmp = VFSTONTFS(mp);
-	u_int64_t mftsize,mftallocated;
+	u_int64_t mftallocated;
 
 	dprintf(("ntfs_statfs():\n"));
 
-	mftsize = VTOF(ntmp->ntm_sysvn[NTFS_MFTINO])->f_size;
 	mftallocated = VTOF(ntmp->ntm_sysvn[NTFS_MFTINO])->f_allocated;
 
 #if defined(__FreeBSD__)
@@ -997,10 +1011,10 @@ ntfs_vgetex(
 		}
 	}
 
+	genfs_node_init(vp, &ntfs_genfsops);
 	VREF(ip->i_devvp);
 	*vpp = vp;
 	return (0);
-	
 }
 
 static int
@@ -1050,6 +1064,7 @@ struct vfsops ntfs_vfsops = {
 	ntfs_fhtovp,
 	ntfs_vptofh,
 	ntfs_init,
+	ntfs_reinit,
 	ntfs_done,
 	ntfs_sysctl,
 	ntfs_mountroot,
@@ -1057,5 +1072,3 @@ struct vfsops ntfs_vfsops = {
 	ntfs_vnodeopv_descs,
 };
 #endif
-
-

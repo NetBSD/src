@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.20.2.1 2001/08/03 04:14:00 lukem Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.20.2.2 2002/01/10 20:03:21 thorpej Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -44,6 +44,9 @@
  *
  * MROUTING Revision: 3.5.1.2 + PIM-SMv2 (pimd) Support
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.20.2.2 2002/01/10 20:03:21 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -240,15 +243,15 @@ ip6_mrouter_set(cmd, so, m)
 		return EACCES;
 
 	switch (cmd) {
-	 case MRT6_OINIT:     return ip6_mrouter_init(so, m, cmd);
-	 case MRT6_INIT:      return ip6_mrouter_init(so, m, cmd);
-	 case MRT6_DONE:      return ip6_mrouter_done();
-	 case MRT6_ADD_MIF:   return add_m6if(mtod(m, struct mif6ctl *));
-	 case MRT6_DEL_MIF:   return del_m6if(mtod(m, mifi_t *));
-	 case MRT6_ADD_MFC:   return add_m6fc(mtod(m, struct mf6cctl *));
-	 case MRT6_DEL_MFC:   return del_m6fc(mtod(m, struct mf6cctl *));
-	 case MRT6_PIM:       return set_pim6(mtod(m, int *));
-	 default:            return EOPNOTSUPP;
+	case MRT6_OINIT:	return ip6_mrouter_init(so, m, cmd);
+	case MRT6_INIT:		return ip6_mrouter_init(so, m, cmd);
+	case MRT6_DONE:		return ip6_mrouter_done();
+	case MRT6_ADD_MIF:	return add_m6if(mtod(m, struct mif6ctl *));
+	case MRT6_DEL_MIF:	return del_m6if(mtod(m, mifi_t *));
+	case MRT6_ADD_MFC:	return add_m6fc(mtod(m, struct mf6cctl *));
+	case MRT6_DEL_MFC:	return del_m6fc(mtod(m, struct mf6cctl *));
+	case MRT6_PIM:		return set_pim6(mtod(m, int *));
+	default:		return EOPNOTSUPP;
 	}
 }
 
@@ -268,10 +271,11 @@ ip6_mrouter_get(cmd, so, m)
 	*m = mb = m_get(M_WAIT, MT_SOOPTS);
 
 	switch (cmd) {
-	 case MRT6_PIM:       return get_pim6(mb);
-	 default:
-		 m_free(mb);
-		 return EOPNOTSUPP;
+	case MRT6_PIM:
+		return get_pim6(mb);
+	default:
+		m_free(mb);
+		return EOPNOTSUPP;
 	}
 }
 
@@ -283,20 +287,20 @@ mrt6_ioctl(cmd, data)
 	int cmd;
 	caddr_t data;
 {
-    int error = 0;
+	int error = 0;
 
-    switch (cmd) {
-     case SIOCGETSGCNT_IN6:
-	     return(get_sg_cnt((struct sioc_sg_req6 *)data));
-	     break;		/* for safety */
-     case SIOCGETMIFCNT_IN6:
-	     return(get_mif6_cnt((struct sioc_mif_req6 *)data));
-	     break;		/* for safety */
-     default:
-	     return (EINVAL);
-	     break;
-    }
-    return error;
+	switch (cmd) {
+	case SIOCGETSGCNT_IN6:
+		return(get_sg_cnt((struct sioc_sg_req6 *)data));
+		break;		/* for safety */
+	case SIOCGETMIFCNT_IN6:
+		return(get_mif6_cnt((struct sioc_mif_req6 *)data));
+		break;		/* for safety */
+	default:
+		return (EINVAL);
+		break;
+	}
+	return error;
 }
 
 /*
@@ -969,7 +973,8 @@ ip6_mforward(ip6, ifp, m)
 			    ip6_sprintf(&ip6->ip6_src),
 			    ip6_sprintf(&ip6->ip6_dst),
 			    ip6->ip6_nxt,
-			    if_name(m->m_pkthdr.rcvif));
+			    m->m_pkthdr.rcvif ?
+			    if_name(m->m_pkthdr.rcvif) : "?");
 		}
 		return 0;
 	}

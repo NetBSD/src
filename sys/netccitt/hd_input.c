@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_input.c,v 1.15 2001/04/13 23:30:19 thorpej Exp $	*/
+/*	$NetBSD: hd_input.c,v 1.15.2.1 2002/01/10 20:02:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -39,6 +39,9 @@
  *
  *	@(#)hd_input.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd_input.c,v 1.15.2.1 2002/01/10 20:02:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,14 +397,14 @@ process_iframe(hdp, fbuf, frame)
 		fbuf->m_pkthdr.len -= HDHEADERLN;
 		fbuf->m_pkthdr.rcvif = (struct ifnet *) hdp->hd_pkp;
 #ifdef BSD4_3
-		fbuf->m_act = 0;/* probably not necessary */
+		fbuf->m_nextpkt = 0;/* probably not necessary */
 #else
 		{
 			struct mbuf *m;
 
 			for (m = fbuf; m->m_next; m = m->m_next)
-				m->m_act = (struct mbuf *) 0;
-			m->m_act = (struct mbuf *) 1;
+				m->m_nextpkt = (struct mbuf *) 0;
+			m->m_nextpkt = (struct mbuf *) 1;
 		}
 #endif
 		pk_input(fbuf);

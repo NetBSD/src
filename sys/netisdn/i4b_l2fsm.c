@@ -27,13 +27,16 @@
  *	i4b_l2fsm.c - layer 2 FSM
  *	-------------------------
  *
- *	$Id: i4b_l2fsm.c,v 1.2 2001/03/24 12:40:31 martin Exp $ 
+ *	$Id: i4b_l2fsm.c,v 1.2.2.1 2002/01/10 20:03:36 thorpej Exp $ 
  *
  * $FreeBSD$
  *
  *      last edit-date: [Fri Jan  5 11:33:47 2001]
  *
  *---------------------------------------------------------------------------*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i4b_l2fsm.c,v 1.2.2.1 2002/01/10 20:03:36 thorpej Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq921.h"

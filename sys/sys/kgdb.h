@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.5 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.5.26.1 2002/01/10 20:04:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,6 +64,7 @@
 #define KGDB_CONT	'c'
 #define KGDB_STEP	's'
 #define KGDB_KILL	'k'
+#define KGDB_DETACH	'D'
 #define KGDB_SIGNAL	'?'
 #define KGDB_DEBUG	'd'
 

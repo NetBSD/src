@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_output.c,v 1.13 2001/04/13 23:30:19 thorpej Exp $	*/
+/*	$NetBSD: hd_output.c,v 1.13.2.1 2002/01/10 20:02:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -39,6 +39,9 @@
  *
  *	@(#)hd_output.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hd_output.c,v 1.13.2.1 2002/01/10 20:02:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

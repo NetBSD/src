@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.1 2000/12/08 23:05:42 jdolecek Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,21 +36,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.1.6.1 2002/01/10 20:01:04 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/proc.h>
 #include <sys/lkm.h>
+#include <sys/signalvar.h>
 
 #include <compat/m68k4k/m68k4k_exec.h>
 
 int exec_m68k4k_lkmentry __P((struct lkm_table *, int, int));
 
 static struct execsw exec_m68k4k =
-	{ sizeof(struct exec), exec_m68k4k_makecmds, { NULL },
-	  NULL, EXECSW_PRIO_ANY,
-	  0, copyargs, setregs };	/* m68k4k a.out */
+	/* NetBSD a.out for m68k4k */
+	{ sizeof(struct exec),
+	  exec_m68k4k_makecmds,
+	  { NULL },
+	  NULL,
+	  EXECSW_PRIO_ANY,
+	  0,
+	  copyargs,
+	  NULL,
+	  coredump_netbsd };
 
 /*
  * declare the exec

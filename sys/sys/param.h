@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.128.2.1 2001/08/03 04:14:05 lukem Exp $	*/
+/*	$NetBSD: param.h,v 1.128.2.2 2002/01/10 20:04:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -67,7 +67,7 @@
  * Don't forget to change conf/osrelease.sh too.
  */
 
-#define	__NetBSD_Version__	105240000	/* NetBSD 1.5X */
+#define	__NetBSD_Version__	105270000	/* NetBSD 1.5ZA */
 
 /*
  * Historical NetBSD #define
@@ -233,7 +233,7 @@
  * size allocations should be done infrequently as they will be slow.
  *
  * Constraints: NBPG <= MAXALLOCSAVE <= 2 ** (MINBUCKET + 14), and
- * MAXALLOCSIZE must be a power of two.
+ * MAXALLOCSAVE must be a power of two.
  */
 #define	MINBUCKET	4		/* 4 => min allocation of 16 bytes */
 #define	MAXALLOCSAVE	(2 * NBPG)
@@ -252,8 +252,20 @@
 #define	FSHIFT	11		/* bits to right of fixed binary point */
 #define	FSCALE	(1<<FSHIFT)
 
+/* 
+ * The time for a process to be blocked before being very swappable. 
+ * This is a number of seconds which the system takes as being a non-trivial 
+ * amount of real time.  You probably shouldn't change this; 
+ * it is used in subtle ways (fractions and multiples of it are, that is, like 
+ * half of a ``long time'', almost a long time, etc.) 
+ * It is related to human patience and other factors which don't really 
+ * change over time. 
+ */ 
+#define        MAXSLP          20 
+
 /*
  * Defaults for Unified Buffer Cache parameters.
+ * These may be overridden in <machine/param.h>.
  */
 
 #ifndef UBC_WINSHIFT

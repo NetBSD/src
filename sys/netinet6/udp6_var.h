@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_var.h,v 1.9 2000/06/05 06:38:23 itojun Exp $	*/
+/*	$NetBSD: udp6_var.h,v 1.9.6.1 2002/01/10 20:03:33 thorpej Exp $	*/
 /*	$KAME: udp6_var.h,v 1.11 2000/06/05 00:14:31 itojun Exp $	*/
 
 /*
@@ -114,4 +114,4 @@ int	udp6_usrreq __P((struct socket *,
 			 struct proc *));
 #endif /* _KERNEL */
 
-#endif /*_NETINET6_UDP6_VAR_H_*/
+#endif /* _NETINET6_UDP6_VAR_H_ */

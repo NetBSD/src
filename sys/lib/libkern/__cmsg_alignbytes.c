@@ -1,4 +1,4 @@
-/*	$NetBSD: __cmsg_alignbytes.c,v 1.2 2000/04/19 15:16:03 itojun Exp $	*/
+/*	$NetBSD: __cmsg_alignbytes.c,v 1.2.10.1 2002/01/10 20:00:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,9 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/param.h>
+#include <sys/socket.h>
 
 int
 __cmsg_alignbytes()

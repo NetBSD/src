@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.17.2.1 2001/08/25 06:16:22 thorpej Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.17.2.2 2002/01/10 19:56:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.17.2.2 2002/01/10 19:56:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

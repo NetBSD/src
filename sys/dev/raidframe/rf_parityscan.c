@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.9.6.1 2001/08/03 04:13:27 lukem Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.9.6.2 2002/01/10 19:57:54 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,11 @@
  *
  *****************************************************************************/
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.9.6.2 2002/01/10 19:57:54 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagfuncs.h"

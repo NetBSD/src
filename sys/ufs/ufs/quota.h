@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.9 2001/02/23 02:25:11 eeh Exp $	*/
+/*	$NetBSD: quota.h,v 1.9.6.1 2002/01/10 20:05:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,8 +38,8 @@
  *	@(#)quota.h	8.3 (Berkeley) 8/19/94
  */
 
-#ifndef _QUOTA_
-#define _QUOTA_
+#ifndef	_UFS_UFS_QUOTA_H_
+#define	_UFS_UFS_QUOTA_H_
 
 /*
  * Definitions for disk quotas imposed on the average user
@@ -71,7 +71,7 @@
 	"user",		/* USRQUOTA */ \
 	"group",	/* GRPQUOTA */ \
 	"undefined", \
-};
+}
 #define	QUOTAFILENAME	"quota"
 #define	QUOTAGROUP	"operator"
 
@@ -190,6 +190,7 @@ void	dqflush __P((struct vnode *));
 int	dqget __P((struct vnode *,
 	    u_long, struct ufsmount *, int, struct dquot **));
 void	dqinit __P((void));
+void	dqreinit __P((void));
 void	dqdone __P((void));
 void	dqref __P((struct dquot *));
 void	dqrele __P((struct vnode *, struct dquot *));
@@ -215,4 +216,4 @@ int quotactl __P((const char *, int , int, void *));
 __END_DECLS
 #endif /* _KERNEL */
 
-#endif /* _QUOTA_ */
+#endif /* _UFS_UFS_QUOTA_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: llscan.c,v 1.6 2001/06/18 09:57:27 jdolecek Exp $	*/
+/*	$NetBSD: llscan.c,v 1.6.2.1 2002/01/10 20:03:59 thorpej Exp $	*/
 
 /*
  * ************************* NOTICE *******************************
@@ -9,6 +9,10 @@
  * University of Wisconsin for the ARGO project.
  * ****************************************************************
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: llscan.c,v 1.6.2.1 2002/01/10 20:03:59 thorpej Exp $");
+
 #include "xebec.h"
 #include "llparse.h"
 

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 1999/05/07 14:28:51 drochner Exp $
+#	$NetBSD: Makefile,v 1.10.16.1 2002/01/10 20:00:42 thorpej Exp $
 
 LIB=	z
-MKPIC=	no
-MKPROFILE=no
+NOPIC=	# defined
+NOPROFILE=# defined
 
 CPPFLAGS=	-I${ZDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -D_ZLIB_PRIVATE
 
@@ -23,6 +23,7 @@ CLEANFILES+= lib${LIB}.o
 # only needed during build
 libinstall::
 
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 lib${LIB}.o:: ${OBJS}

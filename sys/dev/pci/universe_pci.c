@@ -1,4 +1,4 @@
-/* $NetBSD: universe_pci.c,v 1.3 2000/12/28 22:59:15 sommerfeld Exp $ */
+/* $NetBSD: universe_pci.c,v 1.3.4.1 2002/01/10 19:57:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -30,6 +30,9 @@
  * Common functions for PCI-VME-interfaces using the
  * Newbridge/Tundra Universe II chip (CA91C142).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: universe_pci.c,v 1.3.4.1 2002/01/10 19:57:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_lookup.c,v 1.8 1999/09/05 14:26:33 jdolecek Exp $	*/
+/*	$NetBSD: filecore_lookup.c,v 1.8.16.1 2002/01/10 19:59:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -35,6 +35,9 @@
  *
  *	filecore_lookup.c	1.1	1998/6/26
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: filecore_lookup.c,v 1.8.16.1 2002/01/10 19:59:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.15 2001/04/12 20:13:26 thorpej Exp $	*/
+/*	$NetBSD: mscp.c,v 1.15.2.1 2002/01/10 19:56:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -42,6 +42,9 @@
 /*
  * MSCP generic driver routines
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mscp.c,v 1.15.2.1 2002/01/10 19:56:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

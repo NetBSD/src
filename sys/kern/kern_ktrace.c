@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.54.2.1 2001/07/10 13:51:46 lukem Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.54.2.2 2002/01/10 19:59:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)kern_ktrace.c	8.5 (Berkeley) 5/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.54.2.2 2002/01/10 19:59:48 thorpej Exp $");
 
 #include "opt_ktrace.h"
 

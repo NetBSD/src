@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.27.2.1 2001/08/03 04:13:39 lukem Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.27.2.2 2002/01/10 19:59:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.27.2.2 2002/01/10 19:59:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.44.2.2 2001/08/25 06:17:09 thorpej Exp $	*/
+/*	$NetBSD: key.c,v 1.44.2.3 2002/01/10 20:04:01 thorpej Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -34,6 +34,9 @@
  * This code is referd to RFC 2367
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.44.2.3 2002/01/10 20:04:01 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 
@@ -41,7 +44,6 @@
 #define ss_len		__ss_len
 #define ss_family	__ss_family
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -55,6 +57,7 @@
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -106,6 +109,8 @@
 #ifndef satosin
 #define satosin(s) ((struct sockaddr_in *)s)
 #endif
+
+#define FULLMASK	0xff
 
 /*
  * Note on SA reference counting:
@@ -679,7 +684,7 @@ key_do_allocsa_policy(sah, state)
  * allocating a SA entry for a *INBOUND* packet.
  * Must call key_freesav() later.
  * OUT: positive:	pointer to a sav.
- *	NULL:		not found, or error occured.
+ *	NULL:		not found, or error occurred.
  *
  * In the comparison, source address will be ignored for RFC2401 conformance.
  * To quote, from section 4.1:
@@ -1472,6 +1477,7 @@ key_gather_mbuf(m, mhp, ndeep, nitem, va_alist)
 	return result;
 
 fail:
+	va_end(ap);
 	m_freem(result);
 	return NULL;
 }
@@ -2005,7 +2011,7 @@ key_spdget(so, m, mhp)
  * send
  *   <base, policy(*)>
  * to KMD, and expect to receive
- *   <base> with SADB_X_SPDACQUIRE if error occured,
+ *   <base> with SADB_X_SPDACQUIRE if error occurred,
  * or
  *   <base, policy>
  * with SADB_X_SPDUPDATE from KMD by PF_KEY.
@@ -3163,7 +3169,7 @@ key_setdumpsa(sav, type, satype, seq, pid)
 		case SADB_EXT_ADDRESS_SRC:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
 			    (struct sockaddr *)&sav->sah->saidx.src,
-			    sav->sah->saidx.src.ss_len << 3, IPSEC_ULPROTO_ANY);
+			    FULLMASK, IPSEC_ULPROTO_ANY);
 			if (!m)
 				goto fail;
 			break;
@@ -3171,7 +3177,7 @@ key_setdumpsa(sav, type, satype, seq, pid)
 		case SADB_EXT_ADDRESS_DST:
 			m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
 			    (struct sockaddr *)&sav->sah->saidx.dst,
-			    sav->sah->saidx.dst.ss_len << 3, IPSEC_ULPROTO_ANY);
+			    FULLMASK, IPSEC_ULPROTO_ANY);
 			if (!m)
 				goto fail;
 			break;
@@ -3373,6 +3379,18 @@ key_setsadbaddr(exttype, saddr, prefixlen, ul_proto)
 	p->sadb_address_len = PFKEY_UNIT64(len);
 	p->sadb_address_exttype = exttype;
 	p->sadb_address_proto = ul_proto;
+	if (prefixlen == FULLMASK) {
+		switch (saddr->sa_family) {
+		case AF_INET:
+			prefixlen = sizeof(struct in_addr) << 3;
+			break;
+		case AF_INET6:
+			prefixlen = sizeof(struct in6_addr) << 3;
+			break;
+		default:
+			; /*XXX*/
+		}
+	}
 	p->sadb_address_prefixlen = prefixlen;
 	p->sadb_address_reserved = 0;
 
@@ -5618,7 +5636,7 @@ key_getprop(saidx)
  *   <base, SA, address(SD), (address(P)), x_policy,
  *       (identity(SD),) (sensitivity,) proposal>
  * to KMD, and expect to receive
- *   <base> with SADB_ACQUIRE if error occured,
+ *   <base> with SADB_ACQUIRE if error occurred,
  * or
  *   <base, src address, dst address, (SPI range)> with SADB_GETSPI
  * from KMD by PF_KEY.
@@ -5693,8 +5711,7 @@ key_acquire(saidx, sp)
 
 	/* set sadb_address for saidx's. */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
-	    (struct sockaddr *)&saidx->src, saidx->src.ss_len << 3,
-	    IPSEC_ULPROTO_ANY);
+	    (struct sockaddr *)&saidx->src, FULLMASK, IPSEC_ULPROTO_ANY);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -5702,8 +5719,7 @@ key_acquire(saidx, sp)
 	m_cat(result, m);
 
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
-	    (struct sockaddr *)&saidx->dst, saidx->dst.ss_len << 3,
-	    IPSEC_ULPROTO_ANY);
+	    (struct sockaddr *)&saidx->dst, FULLMASK, IPSEC_ULPROTO_ANY);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -5943,9 +5959,9 @@ key_acquire2(so, m, mhp)
 
 	/*
 	 * Error message from KMd.
-	 * We assume that if error was occured in IKEd, the length of PFKEY
+	 * We assume that if error was occurred in IKEd, the length of PFKEY
 	 * message is equal to the size of sadb_msg structure.
-	 * We do not raise error even if error occured in this function.
+	 * We do not raise error even if error occurred in this function.
 	 */
 	if (mhp->msg->sadb_msg_len == PFKEY_UNIT64(sizeof(struct sadb_msg))) {
 #ifndef IPSEC_NONBLOCK_ACQUIRE
@@ -6335,7 +6351,7 @@ key_expire(sav)
 	/* set sadb_address for source */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
 	    (struct sockaddr *)&sav->sah->saidx.src,
-	    sav->sah->saidx.src.ss_len << 3, IPSEC_ULPROTO_ANY);
+	    FULLMASK, IPSEC_ULPROTO_ANY);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -6345,7 +6361,7 @@ key_expire(sav)
 	/* set sadb_address for destination */
 	m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
 	    (struct sockaddr *)&sav->sah->saidx.dst,
-	    sav->sah->saidx.dst.ss_len << 3, IPSEC_ULPROTO_ANY);
+	    FULLMASK, IPSEC_ULPROTO_ANY);
 	if (!m) {
 		error = ENOBUFS;
 		goto fail;
@@ -7382,9 +7398,6 @@ key_alloc_mbuf(l)
 
 	return m;
 }
-
-#include <uvm/uvm_extern.h>
-#include <sys/sysctl.h>
 
 int
 key_sysctl(name, namelen, oldp, oldlenp, newp, newlen)

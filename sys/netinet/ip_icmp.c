@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.60 2001/03/08 00:17:05 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.60.2.1 2002/01/10 20:02:49 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -104,6 +104,9 @@
  *	@(#)ip_icmp.c	8.2 (Berkeley) 1/4/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.60.2.1 2002/01/10 20:02:49 thorpej Exp $");
+
 #include "opt_ipsec.h"
 
 #include <sys/param.h>
@@ -114,10 +117,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
-
-#include <uvm/uvm_extern.h>
-
+#include <sys/syslog.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -171,10 +171,28 @@ static int	ip_next_mtu __P((int, int));
 extern int icmperrppslim;
 static int icmperrpps_count = 0;
 static struct timeval icmperrppslim_last;
+static int icmp_rediraccept = 1;
+static int icmp_redirtimeout = 0;
+static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
 
 static void icmp_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
+static void icmp_redirect_timeout __P((struct rtentry *, struct rttimer *));
 
 static int icmp_ratelimit __P((const struct in_addr *, const int, const int));
+
+
+void
+icmp_init()
+{
+	/* 
+	 * This is only useful if the user initializes redirtimeout to 
+	 * something other than zero.
+	 */
+	if (icmp_redirtimeout != 0) {
+		icmp_redirect_timeout_q = 
+			rt_timer_queue_create(icmp_redirtimeout);
+	}
+}
 
 /*
  * Register a Path MTU Discovery callback.
@@ -370,6 +388,7 @@ icmp_input(m, va_alist)
 	int code;
 	int hlen;
 	va_list ap;
+	struct rtentry *rt;
 
 	va_start(ap, m);
 	hlen = va_arg(ap, int);
@@ -549,6 +568,8 @@ reflect:
 	case ICMP_REDIRECT:
 		if (code > 3)
 			goto badcode;
+		if (icmp_rediraccept == 0)
+			goto freeit;
 		if (icmplen < ICMP_ADVLENMIN || icmplen < ICMP_ADVLEN(icp) ||
 		    icp->icmp_ip.ip_hl < (sizeof(struct ip) >> 2)) {
 			icmpstat.icps_badlen++;
@@ -569,9 +590,22 @@ reflect:
 			    icp->icmp_gwaddr);
 #endif
 		icmpsrc.sin_addr = icp->icmp_ip.ip_dst;
+		rt = NULL;
 		rtredirect(sintosa(&icmpsrc), sintosa(&icmpdst),
 		    (struct sockaddr *)0, RTF_GATEWAY | RTF_HOST,
-		    sintosa(&icmpgw), (struct rtentry **)0);
+		    sintosa(&icmpgw), (struct rtentry **)&rt);
+		if (rt != NULL && icmp_redirtimeout != 0) {
+			i = rt_timer_add(rt, icmp_redirect_timeout, 
+					 icmp_redirect_timeout_q);
+			if (i)
+				log(LOG_ERR, "ICMP:  redirect failed to "
+				    "register timeout for route to %x, "
+				    "code %d\n", 
+				    icp->icmp_ip.ip_dst.s_addr, i);
+		}
+		if (rt != NULL)
+			rtfree(rt);
+
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&icmpsrc));
 #ifdef IPSEC
 		key_sa_routechange((struct sockaddr *)&icmpsrc);
@@ -637,8 +671,7 @@ icmp_reflect(m)
 
 	/* look for packet sent to broadcast address */
 	if (ia == NULL && (m->m_pkthdr.rcvif->if_flags & IFF_BROADCAST)) {
-		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
-		    ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			if (in_hosteq(t,ifatoia(ifa)->ia_broadaddr.sin_addr)) {
@@ -691,8 +724,7 @@ icmp_reflect(m)
 	   interface.  This can happen when routing is asymmetric, or
 	   when the incoming packet was encapsulated */
 	if (sin == (struct sockaddr_in *)0) {
-		for (ifa = m->m_pkthdr.rcvif->if_addrlist.tqh_first;  
-		     ifa != NULL; ifa = ifa->ifa_list.tqe_next) {
+		TAILQ_FOREACH(ifa, &m->m_pkthdr.rcvif->if_addrlist, ifa_list) {
 			if (ifa->ifa_addr->sa_family != AF_INET)
 				continue;
 			sin = &(ifatoia(ifa)->ia_addr);
@@ -707,8 +739,7 @@ icmp_reflect(m)
 	 * interface.
 	 */
 	if (sin == (struct sockaddr_in *)0)
-		for (ia = in_ifaddr.tqh_first; ia != NULL;
-		    ia = ia->ia_list.tqe_next) {
+		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
 			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
 				continue;
 			sin = &ia->ia_addr;
@@ -881,12 +912,42 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	case ICMPCTL_ERRPPSLIMIT:
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &icmperrppslim);
 		break;
+	case ICMPCTL_REDIRACCEPT:
+		error = sysctl_int(oldp, oldlenp, newp, newlen, 
+				   &icmp_rediraccept);
+		break;
+	case ICMPCTL_REDIRTIMEOUT:
+		error = sysctl_int(oldp, oldlenp, newp, newlen,
+				   &icmp_redirtimeout);
+		if (icmp_redirect_timeout_q != NULL) {
+			if (icmp_redirtimeout == 0) {
+				rt_timer_queue_destroy(icmp_redirect_timeout_q,
+						       TRUE);
+				icmp_redirect_timeout_q = NULL;
+			} else {
+				rt_timer_queue_change(icmp_redirect_timeout_q, 
+						      icmp_redirtimeout);
+			}
+		} else if (icmp_redirtimeout > 0) {
+			icmp_redirect_timeout_q = 
+				rt_timer_queue_create(icmp_redirtimeout);
+		}
+		return (error);
+
+		break;
 	default:
 		error = ENOPROTOOPT;
 		break;
 	}
 	return error;
 }
+
+/* Table of common MTUs: */
+
+static const u_int mtu_table[] = {
+	65535, 65280, 32000, 17914, 9180, 8166,
+	4352, 2002, 1492, 1006, 508, 296, 68, 0
+};
 
 void
 icmp_mtudisc(icp, faddr)
@@ -899,11 +960,6 @@ icmp_mtudisc(icp, faddr)
 	u_long mtu = ntohs(icp->icmp_nextmtu);  /* Why a long?  IPv6 */
 	int    error;
 
-	/* Table of common MTUs: */
-
-	static u_long mtu_table[] = {65535, 65280, 32000, 17914, 9180, 8166, 
-				     4352, 2002, 1492, 1006, 508, 296, 68, 0};
-    
 	rt = rtalloc1(dst, 1);
 	if (rt == 0)
 		return;
@@ -997,14 +1053,10 @@ ip_next_mtu(mtu, dir)	/* XXX */
 	int mtu;
 	int dir;
 {
-	static int mtutab[] = {
-		65535, 32000, 17914, 8166, 4352, 2002, 1492, 1006, 508, 296,
-		68, 0
-	};
 	int i;
 
-	for (i = 0; i < (sizeof mtutab) / (sizeof mtutab[0]); i++) {
-		if (mtu >= mtutab[i])
+	for (i = 0; i < (sizeof mtu_table) / (sizeof mtu_table[0]); i++) {
+		if (mtu >= mtu_table[i])
 			break;
 	}
 
@@ -1012,15 +1064,15 @@ ip_next_mtu(mtu, dir)	/* XXX */
 		if (i == 0) {
 			return 0;
 		} else {
-			return mtutab[i - 1];
+			return mtu_table[i - 1];
 		}
 	} else {
-		if (mtutab[i] == 0) {
+		if (mtu_table[i] == 0) {
 			return 0;
-		} else if(mtu > mtutab[i]) {
-			return mtutab[i];
+		} else if (mtu > mtu_table[i]) {
+			return mtu_table[i];
 		} else {
-			return mtutab[i + 1];
+			return mtu_table[i + 1];
 		}
 	}
 }
@@ -1040,6 +1092,20 @@ icmp_mtudisc_timeout(rt, r)
 		if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0) {
 			rt->rt_rmx.rmx_mtu = 0;
 		}
+	}
+}
+
+static void
+icmp_redirect_timeout(rt, r)
+	struct rtentry *rt;
+	struct rttimer *r;
+{
+	if (rt == NULL)
+		panic("icmp_redirect_timeout:  bad route to timeout");
+	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) == 
+	    (RTF_DYNAMIC | RTF_HOST)) {
+		rtrequest((int) RTM_DELETE, (struct sockaddr *)rt_key(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
 	}
 }
 

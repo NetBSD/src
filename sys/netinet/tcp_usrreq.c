@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.63.2.2 2001/09/13 01:16:25 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.63.2.3 2002/01/10 20:03:04 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,6 +101,9 @@
  *	@(#)tcp_usrreq.c	8.5 (Berkeley) 6/21/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.63.2.3 2002/01/10 20:03:04 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_debug.h"
@@ -116,10 +119,7 @@
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/proc.h>
-#include <sys/ucred.h>
 #include <sys/domain.h>
-
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 
 #include <net/if.h>
@@ -149,8 +149,7 @@
 #include <netinet/tcpip.h>
 #include <netinet/tcp_debug.h>
 
-#include "opt_tcp_recvspace.h"
-#include "opt_tcp_sendspace.h"
+#include "opt_tcp_space.h"
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>

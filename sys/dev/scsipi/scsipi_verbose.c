@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.12.2.1 2001/08/25 06:16:34 thorpej Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.12.2.2 2002/01/10 19:58:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.12.2.2 2002/01/10 19:58:24 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.29.2.1 2001/08/25 06:17:12 thorpej Exp $	*/
+/*	$NetBSD: nfs.h,v 1.29.2.2 2002/01/10 20:04:19 thorpej Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -186,7 +186,7 @@ struct nfsd_srvargs {
 	struct nfsd	*nsd_nfsd;	/* Pointer to in kernel nfsd struct */
 	uid_t		nsd_uid;	/* Effective uid mapped to cred */
 	u_int32_t	nsd_haddr;	/* Ip address of client */
-	struct ucred	nsd_cr;		/* Cred. uid maps to */
+	struct uucred	nsd_cr;		/* Cred. uid maps to */
 	int		nsd_authlen;	/* Length of auth string (ret) */
 	u_char		*nsd_authstr;	/* Auth string (ret) */
 	int		nsd_verflen;	/* and the verfier */
@@ -347,8 +347,7 @@ TAILQ_HEAD(, nfsreq) nfs_reqq;
 #endif
 #define	NMUIDHASH(nmp, uid) \
 	(&(nmp)->nm_uidhashtbl[(uid) % NFS_MUIDHASHSIZ])
-#define	NFSNOHASH(fhsum) \
-	(&nfsnodehashtbl[(fhsum) & nfsnodehash])
+#define	NFSNOHASH(fhsum) ((fhsum) & nfsnodehash)
 
 #ifndef NFS_DIRHASHSIZ
 #define NFS_DIRHASHSIZ 64

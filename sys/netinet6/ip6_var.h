@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.15 2000/08/26 11:03:46 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.15.4.1 2002/01/10 20:03:23 thorpej Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -203,6 +203,7 @@ struct	ip6stat {
 /* flags passed to ip6_output as last parameter */
 #define	IPV6_DADOUTPUT		0x01	/* DAD */
 #define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
+#define	IPV6_MINMTU		0x04	/* use minimum MTU (IPV6_USE_MIN_MTU) */
 
 extern struct	ip6stat ip6stat;	/* statistics */
 extern u_int32_t ip6_id;		/* fragment identifier */
@@ -210,13 +211,10 @@ extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */
 extern int	ip6_forward_srcrt;	/* forward src-routed? */
-extern int	ip6_gif_hlim;		/* Hop limit for gif encap packet */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
-#ifndef INET6_BINDV6ONLY
-extern int	ip6_bindv6only;
-#endif
+extern int	ip6_v6only;
 
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */

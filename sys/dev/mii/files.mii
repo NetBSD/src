@@ -1,8 +1,8 @@
-#	$NetBSD: files.mii,v 1.22.2.3 2001/09/13 01:15:45 thorpej Exp $
+#	$NetBSD: files.mii,v 1.22.2.4 2002/01/10 19:56:13 thorpej Exp $
 
 file	dev/mii/mii.c				mii
 
-defopt	opt_mii.h MIIVERBOSE
+defflag	opt_mii.h	MIIVERBOSE
 
 define	mii_phy
 file	dev/mii/mii_physubr.c			mii_phy

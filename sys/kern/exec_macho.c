@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.2.2.2 2001/08/03 04:13:39 lukem Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.2.2.3 2002/01/10 19:59:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.2.2.3 2002/01/10 19:59:41 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
@@ -226,7 +230,7 @@ exec_macho_load_dylinker(struct proc *p, struct exec_package *epp,
 static int
 exec_macho_load_dylib(struct proc *p, struct exec_package *epp,
     struct exec_macho_dylib_command *dy) {
-#ifdef notyet
+#ifdef notdef
 	const char *name = ((const char *)dy) + dy->dylib.name.offset;
 	char path[MAXPATHLEN];
 	int error;
@@ -235,7 +239,7 @@ exec_macho_load_dylib(struct proc *p, struct exec_package *epp,
 #ifdef DEBUG_MACHO
 	exec_macho_print_dylib_command(dy);
 #endif
-#ifdef notyet
+#ifdef notdef
 	(void)snprintf(path, sizeof(path), "%s%s",
 	    (const char *)epp->ep_emul_arg, name);
 	DPRINTF(("loading library %s\n", path));
@@ -539,7 +543,17 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 	    &epp->ep_entry, MACHO_MOH_EXECUTE)) != 0)
 		goto bad;
 
-	vn_marktext(epp->ep_vp);
+	/*
+	 * stash a copy of the program name in epp->ep_emul_arg because
+	 * might need it later.
+	 */
+	MALLOC(epp->ep_emul_arg, char *, MAXPATHLEN, M_EXEC, M_WAITOK);
+	if ((error = copyinstr(epp->ep_name, epp->ep_emul_arg,
+	    MAXPATHLEN, NULL)) != 0) {
+		DPRINTF(("Copyinstr %p failed\n", epp->ep_name));
+		goto bad;
+	}
+	epp->ep_vp->v_flag |= VTEXT;
 	return exec_macho_setup_stack(p, epp);
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);

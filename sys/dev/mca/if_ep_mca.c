@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_mca.c,v 1.4.2.1 2001/08/25 06:16:19 thorpej Exp $	*/
+/*	$NetBSD: if_ep_mca.c,v 1.4.2.2 2002/01/10 19:56:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * from like 5KB/s to like 800 KB/s.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ep_mca.c,v 1.4.2.2 2002/01/10 19:56:00 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h> 
@@ -114,6 +117,7 @@ const struct ep_mca_product {
 	u_int32_t	epp_prodid;	/* MCA product ID */
 	const char	*epp_name;	/* device name */
 } ep_mca_products[] = {
+	{ MCA_PRODUCT_3C529,	"3C529 Ethernet Adapter" },
 	{ MCA_PRODUCT_3C529_TP,	"3c529-TP Ethernet Adapter" },
 	{ MCA_PRODUCT_3C529_TM, "3c529 Ethernet Adapter (test mode)" },
 	{ MCA_PRODUCT_3C529_2T, "3c529 Ethernet Adapter (10base2/T)" },

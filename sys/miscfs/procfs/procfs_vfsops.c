@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.39 2001/05/30 11:57:17 mrg Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.39.2.1 2002/01/10 20:01:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -43,6 +43,9 @@
  * procfs VFS interface
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.39.2.1 2002/01/10 20:01:44 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
@@ -64,6 +67,7 @@
 #include <uvm/uvm_extern.h>			/* for PAGE_SIZE */
 
 void	procfs_init __P((void));
+void	procfs_reinit __P((void));
 void	procfs_done __P((void));
 int	procfs_mount __P((struct mount *, const char *, void *,
 			  struct nameidata *, struct proc *));
@@ -288,6 +292,12 @@ procfs_init()
 }
 
 void
+procfs_reinit()
+{
+	procfs_hashreinit();
+}
+
+void
 procfs_done()
 {
 	procfs_hashdone();
@@ -326,6 +336,7 @@ struct vfsops procfs_vfsops = {
 	procfs_fhtovp,
 	procfs_vptofh,
 	procfs_init,
+	procfs_reinit,
 	procfs_done,
 	procfs_sysctl,
 	NULL,				/* vfs_mountroot */

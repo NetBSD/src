@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.37 2001/03/29 22:41:52 fvdl Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.37.2.1 2002/01/10 20:01:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -40,6 +40,9 @@
  *	@(#)procfs_subr.c	8.6 (Berkeley) 5/14/95
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.37.2.1 2002/01/10 20:01:44 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -57,7 +60,7 @@ struct vnode *procfs_hashget __P((pid_t, pfstype, struct mount *));
 
 LIST_HEAD(pfs_hashhead, pfsnode) *pfs_hashtbl;
 u_long	pfs_ihash;	/* size of hash table - 1 */
-#define PFSPIDHASH(pid)	(&pfs_hashtbl[(pid) & pfs_ihash])
+#define PFSPIDHASH(pid)	((pid) & pfs_ihash)
 
 struct lock pfs_hashlock;
 struct simplelock pfs_hash_slock;
@@ -165,6 +168,12 @@ procfs_allocvp(mp, vpp, pid, pfs_type)
 		vp->v_type = VREG;
 		break;
 
+#ifdef __HAVE_PROCFS_MACHDEP
+	PROCFS_MACHDEP_NODETYPE_CASES
+		procfs_machdep_allocvp(vp);
+		break;
+#endif
+
 	default:
 		panic("procfs_allocvp");
 	}
@@ -208,6 +217,9 @@ procfs_rw(v)
 	case Pregs:
 	case Pfpregs:
 	case Pmem:
+#if defined(__HAVE_PROCFS_MACHDEP) && defined(PROCFS_MACHDEP_PROTECT_CASES)
+	PROCFS_MACHDEP_PROTECT_CASES
+#endif
 		/*
 		 * Do not allow init to be modified while in secure mode; it
 		 * could be duped into changing the security level.
@@ -252,8 +264,14 @@ procfs_rw(v)
 
 	case Pmeminfo:
 		return (procfs_domeminfo(curp, p, pfs, uio));
+
 	case Pcpuinfo:
 		return (procfs_docpuinfo(curp, p, pfs, uio));
+
+#ifdef __HAVE_PROCFS_MACHDEP
+	PROCFS_MACHDEP_NODETYPE_CASES
+		return (procfs_machdep_rw(curp, p, pfs, uio));
+#endif
 
 	default:
 		return (EOPNOTSUPP);
@@ -333,6 +351,33 @@ procfs_hashinit()
 	simple_lock_init(&pfs_hash_slock);
 }
 
+void
+procfs_hashreinit()
+{
+	struct pfsnode *pp;
+	struct pfs_hashhead *oldhash, *hash;
+	u_long oldmask, mask, val;
+	int i;
+
+	hash = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT, M_WAITOK,
+	    &mask);
+
+	simple_lock(&pfs_hash_slock);
+	oldhash = pfs_hashtbl;
+	oldmask = pfs_ihash;
+	pfs_hashtbl = hash;
+	pfs_ihash = mask;
+	for (i = 0; i <= oldmask; i++) {
+		while ((pp = LIST_FIRST(&oldhash[i])) != NULL) {
+			LIST_REMOVE(pp, pfs_hash);
+			val = PFSPIDHASH(pp->pfs_pid);
+			LIST_INSERT_HEAD(&hash[val], pp, pfs_hash);
+		}
+	}
+	simple_unlock(&pfs_hash_slock);
+	hashdone(oldhash, M_UFSMNT);
+}
+
 /*
  * Free pfsnode hash table.
  */
@@ -348,12 +393,14 @@ procfs_hashget(pid, type, mp)
 	pfstype type;
 	struct mount *mp;
 {
+	struct pfs_hashhead *ppp;
 	struct pfsnode *pp;
 	struct vnode *vp;
 
 loop:
 	simple_lock(&pfs_hash_slock);
-	for (pp = PFSPIDHASH(pid)->lh_first; pp; pp = pp->pfs_hash.le_next) {
+	ppp = &pfs_hashtbl[PFSPIDHASH(pid)];
+	LIST_FOREACH(pp, ppp, pfs_hash) {
 		vp = PFSTOV(pp);
 		if (pid == pp->pfs_pid && pp->pfs_type == type &&
 		    vp->v_mount == mp) {
@@ -381,7 +428,7 @@ procfs_hashins(pp)
 	lockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE, (struct simplelock *)0);
 
 	simple_lock(&pfs_hash_slock);
-	ppp = PFSPIDHASH(pp->pfs_pid);
+	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];
 	LIST_INSERT_HEAD(ppp, pp, pfs_hash);
 	simple_unlock(&pfs_hash_slock);
 }
@@ -406,13 +453,15 @@ procfs_revoke_vnodes(p, arg)
 	struct pfsnode *pfs, *pnext;
 	struct vnode *vp;
 	struct mount *mp = (struct mount *)arg;
+	struct pfs_hashhead *ppp;
 
 	if (!(p->p_flag & P_SUGID))
 		return;
 
-	for (pfs = PFSPIDHASH(p->p_pid)->lh_first; pfs; pfs = pnext) {
+	ppp = &pfs_hashtbl[PFSPIDHASH(p->p_pid)];
+	for (pfs = LIST_FIRST(ppp); pfs; pfs = pnext) {
 		vp = PFSTOV(pfs);
-		pnext = pfs->pfs_hash.le_next;
+		pnext = LIST_NEXT(pfs, pfs_hash);
 		if (vp->v_usecount > 0 && pfs->pfs_pid == p->p_pid &&
 		    vp->v_mount == mp)
 			VOP_REVOKE(vp, REVOKEALL);

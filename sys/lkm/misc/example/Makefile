@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2000/12/11 13:48:11 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2002/01/10 20:01:12 thorpej Exp $
 
 KMOD=   misc_example
-
-MKMAN=	no
 
 SRCS=   lkminit_misc.c example_misc.c
 

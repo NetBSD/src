@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_pcmcia.c,v 1.17 2001/04/25 17:53:37 bouyer Exp $	*/
+/*	$NetBSD: aic_pcmcia.c,v 1.17.2.1 2002/01/10 19:57:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: aic_pcmcia.c,v 1.17.2.1 2002/01/10 19:57:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

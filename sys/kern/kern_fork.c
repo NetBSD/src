@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.86.2.1 2001/07/10 13:52:10 lukem Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.86.2.2 2002/01/10 19:59:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@
  *
  *	@(#)kern_fork.c	8.8 (Berkeley) 2/14/95
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.86.2.2 2002/01/10 19:59:47 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -280,6 +283,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	p2->p_flag = P_INMEM | (p1->p_flag & P_SUGID);
 	p2->p_emul = p1->p_emul;
+	p2->p_execsw = p1->p_execsw;
 
 	if (p1->p_flag & P_PROFIL)
 		startprofclock(p2);

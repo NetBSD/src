@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.18 2001/02/21 21:39:58 jdolecek Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.18.4.1 2002/01/10 20:04:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,6 +43,10 @@
  *		of an NFS Server", in Proc. Winter 1989 USENIX Conference,
  *		pages 53-63. San Diego, February 1989.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.18.4.1 2002/01/10 20:04:25 thorpej Exp $");
+
 #include "opt_iso.h"
 
 #include <sys/param.h>

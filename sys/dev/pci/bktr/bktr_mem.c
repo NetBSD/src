@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_mem.c,v 1.1.1.1 2000/10/28 14:17:40 wiz Exp $	*/
+/*	$NetBSD: bktr_mem.c,v 1.1.1.1.6.1 2002/01/10 19:57:12 thorpej Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_mem.c,v 1.4 2000/09/11 12:23:50 roger Exp */
 
@@ -47,6 +47,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: bktr_mem.c,v 1.1.1.1.6.1 2002/01/10 19:57:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

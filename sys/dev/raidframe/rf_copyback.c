@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.15 2001/01/26 02:16:24 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.15.4.1 2002/01/10 19:57:38 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,7 +37,10 @@
  *
  ****************************************************************************************/
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.15.4.1 2002/01/10 19:57:38 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -73,7 +76,7 @@ rf_ConfigureCopyback(listp)
 	rf_copyback_in_progress = 0;
 	return (0);
 }
-#include <sys/types.h>
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -180,20 +183,6 @@ rf_CopybackReconstructedData(raidPtr)
 		    raidPtr->Disks[frow][fcol].numBlocks *
 		    rf_sizePercentage / 100;
 	}
-#if 0
-	/* This is the way it was done before the CAM stuff was removed */
-
-	if (rf_extract_ids(badDisk->devname, &bus, &targ, &lun)) {
-		printf("COPYBACK: unable to extract bus, target, lun from devname %s\n",
-		    badDisk->devname);
-		return;
-	}
-	/* TUR the disk that's marked as bad to be sure that it's actually
-	 * alive */
-	rf_SCSI_AllocTUR(&tur_op);
-	retcode = rf_SCSI_DoTUR(tur_op, bus, targ, lun, badDisk->dev);
-	rf_SCSI_FreeDiskOp(tur_op, 0);
-#endif
 
 	if (retcode) {
 		printf("COPYBACK: target disk failed TUR\n");

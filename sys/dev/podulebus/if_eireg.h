@@ -1,4 +1,4 @@
-/* $NetBSD: if_eireg.h,v 1.1 2001/03/19 23:58:12 bjh21 Exp $ */
+/* $NetBSD: if_eireg.h,v 1.1.4.1 2002/01/10 19:57:30 thorpej Exp $ */
 
 /*
  * 2000 Ben Harris
@@ -14,14 +14,10 @@
 #define _IF_EIREG_H_
 
 /*
- * My understanding of this card is as follows.  Note that this is
- * mostly derived from reading other people's code, so it may be
- * hideously inaccurate.
- *
  * The card has three address spaces.  The ROM is mapped into the
- * bottom n (16?) bytes of SYNC address space, and contains the
+ * bottom 32 bytes of SYNC address space, and contains the
  * expansion card ID information and the Ethernet address.  There is a
- * (write only?) set of registers at the start of the FAST address
+ * pair of write-only registers at the start of the FAST address
  * space.  One of these performs miscellaneous control functions, and
  * the other acts as a page selector for the board memory.  The board
  * has 64k of RAM, and 4k pages of this can be mapped at offset 0x2000
@@ -33,17 +29,17 @@
 /* Registers in the board's control space */
 #define EI_PAGE		0
 #define EI_CONTROL	1
-#define EI_CTL_RESET	0x01
-#define EI_CTL_LOOP	0x02
-#define EI_CTL_ATTN	0x04
-#define EI_CTL_CLI	0x08
+#define EI_CTL_RST	0x01 /* Reset */
+#define EI_CTL_LB	0x02 /* Loop-back */
+#define EI_CTL_CA	0x04 /* Channel Attention */
+#define EI_CTL_CLI	0x08 /* Clear Interrupt */
 
 /* Offset of base of memory in bus_addr_t units */
 #define EI_MEMOFF	0x2000
 
 /*
  * All addresses within board RAM are in bytes of actual RAM.  RAM is
- * 16 bis wide, and can only be accessed by word transfers
+ * 16 bits wide, and can only be accessed by word transfers
  * (bus_space_xxx_2).
  */
 #define EI_MEMSIZE	0x10000
@@ -55,8 +51,17 @@
 
 #define EI_SCP_ADDR	IE_SCP_ADDR % EI_MEMSIZE
 
-#define EI_ROMSIZE	16
-#define EI_ROM_HWREV	8
-#define EI_ROM_EADDR	9
+/*
+ * The ROM on the Ether1 is a bit oddly wired, in that the interrupt
+ * line is wired up as the high-order address line, so as to allow the
+ * interrupt status bit the the first byte to reflect the actual
+ * interrupt status.
+ */
+
+#define EI_ROMSIZE	0x20
+/* First eight bytes are standard extended podule ID. */
+#define EI_ROM_HWREV	0x08
+#define EI_ROM_EADDR	0x09
+#define EI_ROM_CRC	0x1c
 
 #endif

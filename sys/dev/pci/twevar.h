@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.7 2001/03/04 17:50:52 ad Exp $	*/
+/*	$NetBSD: twevar.h,v 1.7.4.1 2002/01/10 19:57:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.

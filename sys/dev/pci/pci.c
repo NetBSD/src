@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.53.2.2 2001/09/13 01:15:57 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.53.2.3 2002/01/10 19:56:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -35,6 +35,9 @@
  * PCI bus autoconfiguration.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.53.2.3 2002/01/10 19:56:54 thorpej Exp $");
+
 #include "opt_pci.h"
 
 #include <sys/param.h>
@@ -53,17 +56,6 @@ int pci_config_dump = 0;
 
 int pcimatch __P((struct device *, struct cfdata *, void *));
 void pciattach __P((struct device *, struct device *, void *));
-
-struct pci_softc {
-	struct device sc_dev;
-	bus_space_tag_t sc_iot, sc_memt;
-	bus_dma_tag_t sc_dmat;
-	pci_chipset_tag_t sc_pc;
-	int sc_bus, sc_maxndevs;
-	u_int sc_intrswiz;
-	pcitag_t sc_intrtag;
-	int sc_flags;
-};
 
 struct cfattach pci_ca = {
 	sizeof(struct pci_softc), pcimatch, pciattach
@@ -138,7 +130,6 @@ pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
 	struct pci_softc *sc = (struct pci_softc *)self;
 	bus_space_tag_t iot, memt;
 	pci_chipset_tag_t pc;
-	const struct pci_quirkdata *qd;
 	int bus, device, function, nfunctions, ret;
 #ifdef __PCI_BUS_DEVORDER
 	char devs[32];
@@ -147,6 +138,8 @@ pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
 #ifdef __PCI_DEV_FUNCORDER
 	char funcs[8];
 	int j;
+#else
+	const struct pci_quirkdata *qd;
 #endif
 
 	iot = sc->sc_iot;
@@ -165,6 +158,10 @@ pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
 		struct pci_attach_args pa;
 		int pin;
 
+#ifdef __PCI_DEV_FUNCORDER
+		pci_dev_funcorder(sc->sc_pc, sc->sc_bus, device, funcs);
+		nfunctions = 8;
+#else
 		tag = pci_make_tag(pc, bus, device, 0);
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
 
@@ -184,9 +181,9 @@ pci_probe_bus(struct device *self, int (*match)(struct pci_attach_args *),
 			nfunctions = 8;
 		else
 			nfunctions = 1;
+#endif /* __PCI_DEV_FUNCORDER */
 
 #ifdef __PCI_DEV_FUNCORDER
-		pci_dev_funcorder(sc->sc_pc, sc->sc_bus, device, funcs);
 		for (j = 0; (function = funcs[j]) < nfunctions &&
 		    function >= 0; j++)
 #else

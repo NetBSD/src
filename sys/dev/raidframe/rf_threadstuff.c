@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.c,v 1.5 1999/12/07 02:13:28 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.c,v 1.5.8.1 2002/01/10 19:58:01 thorpej Exp $	*/
 /*
  * rf_threadstuff.c
  */
@@ -29,7 +29,11 @@
  * rights to redistribute these changes.
  */
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_threadstuff.c,v 1.5.8.1 2002/01/10 19:58:01 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
 #include "rf_general.h"
 #include "rf_shutdown.h"

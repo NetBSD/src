@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.12.4.1 2001/08/03 04:13:22 lukem Exp $ */
+/*      $NetBSD: sv.c,v 1.12.4.2 2002/01/10 19:57:05 thorpej Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -72,6 +72,9 @@
  * S3 SonicVibes driver
  *   Heavily based on the eap driver by Lennart Augustsson
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.12.4.2 2002/01/10 19:57:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,6 +188,7 @@ struct audio_hw_if sv_hw_if = {
 	sv_get_props,
 	sv_trigger_output,
 	sv_trigger_input,
+	NULL,
 };
 
 

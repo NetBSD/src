@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.2 2001/04/18 01:35:07 tacha Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.2.4.1 2002/01/10 19:56:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -32,9 +32,11 @@
 
 /* Common functions for CS4280 and CS4281 */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.2.4.1 2002/01/10 19:56:30 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/device.h>

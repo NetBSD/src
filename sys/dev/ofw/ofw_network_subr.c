@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_network_subr.c,v 1.1 1998/07/22 22:04:14 thorpej Exp $	*/
+/*	$NetBSD: ofw_network_subr.c,v 1.1.28.1 2002/01/10 19:56:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofw_network_subr.c,v 1.1.28.1 2002/01/10 19:56:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.64.2.3 2001/09/13 01:16:28 thorpej Exp $	*/
+/*	$NetBSD: malloc.h,v 1.64.2.4 2002/01/10 20:04:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -48,11 +48,13 @@
 /*
  * flags to malloc
  */
-#define	M_WAITOK	0x0000
-#define	M_NOWAIT	0x0001
-
+#define	M_WAITOK	0x0000	/* can wait for resources */
+#define	M_NOWAIT	0x0001	/* do not wait for resources */
+#define	M_ZERO		0x0002	/* zero the allocation */
+#define	M_CANFAIL	0x0004	/* can fail if requested memory can't ever
+				 * be allocated */
 /*
- * Types of memory to be allocated
+ * Types of memory to be allocated (don't forget to update malloc.9)
  */
 #define	M_FREE		0	/* should be on free list */
 #define	M_MBUF		1	/* mbuf */
@@ -173,9 +175,24 @@
 #define	M_1394CTL	116	/* IEEE 1394 control structures */
 #define	M_1394DATA	117	/* IEEE 1394 data buffers */
 #define	M_PIPE		118	/* Pipe structures */
-#define M_AGP		119	/* AGP memory */
-#define	M_KEVENT	120	/* kevents/knotes */
-#define	M_LAST		121	/* Must be last type + 1 */
+#define	M_AGP		119	/* AGP memory */
+#define	M_PROP		120	/* Kernel properties structures */
+#define	M_NEWDIRBLK	121	/* Unclaimed new dir block (softdeps) */
+#define	M_SMBIOD	122	/* SMB network id daemon */
+#define	M_SMBCONN	123	/* SMB connection */
+#define	M_SMBRQ		124	/* SMB request */
+#define	M_SMBDATA	125	/* Misc netsmb data */
+#define	M_SMBSTR	126	/* netsmb string data */
+#define	M_SMBTEMP	127	/* Temp netsmb data */
+#define	M_ICONV		128	/* ICONV data */
+#define	M_SMBNODE	129	/* SMBFS node */
+#define	M_SMBNODENAME	130	/* SMBFS node name */
+#define	M_SMBFSDATA	131	/* SMBFS private data */
+#define	M_SMBFSHASH	132	/* SMBFS hash table */
+#define	M_KEVENT	133	/* kevents/knotes */
+#define	M_LAST		134	/* Must be last type + 1 */
+
+/* added something?  don't forget to update malloc.9 */
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -298,8 +315,21 @@
 	"1394data",	/* 117 M_1394DATA */ \
 	"pipe",		/* 118 M_PIPE */ \
 	"AGP",		/* 119 M_AGP */ \
-	"kevent",	/* 120 M_KEVENT */ \
-	NULL,		/* 121 */ \
+	"prop",		/* 120 M_PROP */ \
+	"newdirblk",	/* 121 M_NEWDIRBLK */ \
+	"smbiod",	/* 122 M_SMBIOD */ \
+	"smbconn",	/* 123 M_SMBCONN */ \
+	"smbrq",	/* 124 M_SMBRQ */ \
+	"smbdata",	/* 125 M_SMBDATA */ \
+	"smbstr",	/* 126 M_SMBDATA */ \
+	"smbtemp",	/* 127 M_SMBTEMP */ \
+	"iconv",	/* 128 M_ICONV */ \
+	"smbnode",	/* 129 M_SMBNODE */ \
+	"smbnodename",	/* 130 M_SMBNODENAME */ \
+	"smbfsdata",	/* 131 M_SMBFSDATA */ \
+	"smbfshash",	/* 132 M_SMBFSHASH */ \
+	"kevent",	/* 134 M_KEVENT */ \
+	NULL,		/* 134 */ \
 }
 
 struct kmemstats {
@@ -432,16 +462,16 @@ extern char			*kmembase;
 extern struct kmembuckets	bucket[];
 
 #ifdef MALLOCLOG
-extern void	*_malloc(unsigned long size, int type, int flags,
-		    const char *file, long line);
-extern void	_free(void *addr, int type, const char *file, long line);
+void	*_malloc(unsigned long size, int type, int flags,
+	    const char *file, long line);
+void	_free(void *addr, int type, const char *file, long line);
 #define	malloc(size, type, flags) \
-		    _malloc((size), (type), (flags), __FILE__, __LINE__)
+	    _malloc((size), (type), (flags), __FILE__, __LINE__)
 #define	free(addr, type) \
-		    _free((addr), (type), __FILE__, __LINE__)
+	    _free((addr), (type), __FILE__, __LINE__)
 #else
-extern void	*malloc(unsigned long size, int type, int flags);
-extern void	free(void *addr, int type);
+void	*malloc(unsigned long size, int type, int flags);
+void	free(void *addr, int type);
 #endif /* MALLOCLOG */
 
 #ifdef MALLOC_DEBUG
@@ -453,7 +483,9 @@ void	debug_malloc_print(void);
 void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
 #endif /* MALLOC_DEBUG */
 
-extern void	*realloc(void *curaddr, unsigned long newsize, int type,
-		    int flags);
+void	*realloc(void *curaddr, unsigned long newsize, int type,
+	    int flags);
+unsigned long
+	malloc_roundup(unsigned long);
 #endif /* _KERNEL */
 #endif /* !_SYS_MALLOC_H_ */

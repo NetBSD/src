@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_output.c,v 1.10 2000/03/30 13:02:58 augustss Exp $	*/
+/*	$NetBSD: ns_output.c,v 1.10.8.1 2002/01/10 20:04:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)ns_output.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ns_output.c,v 1.10.8.1 2002/01/10 20:04:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.38.2.2 2001/08/25 06:17:05 thorpej Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.38.2.3 2002/01/10 20:03:16 thorpej Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)in_pcb.c	8.2 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.38.2.3 2002/01/10 20:03:16 thorpej Exp $");
 
 #include "opt_ipsec.h"
 
@@ -132,17 +135,13 @@ in6_pcballoc(so, head)
 		FREE(in6p, M_PCB);
 		return error;
 	}
-#endif /*IPSEC*/
+#endif /* IPSEC */
 	in6p->in6p_next = head->in6p_next;
 	head->in6p_next = in6p;
 	in6p->in6p_prev = head;
 	in6p->in6p_next->in6p_prev = in6p;
-#ifndef INET6_BINDV6ONLY
-	if (ip6_bindv6only)
-		in6p->in6p_flags |= IN6P_BINDV6ONLY;
-#else
-	in6p->in6p_flags |= IN6P_BINDV6ONLY;	/*just for safety*/
-#endif
+	if (ip6_v6only)
+		in6p->in6p_flags |= IN6P_IPV6_V6ONLY;
 	so->so_pcb = (caddr_t)in6p;
 	return(0);
 }
@@ -178,8 +177,9 @@ in6_pcbbind(in6p, nam, p)
 
 		/*
 		 * since we do not check port number duplicate with IPv4 space,
-		 * we reject it at this moment.  If we leave it, we make normal
-		 * user to hijack port number from other users.
+		 * we reject it at this moment.  If we leave it, we would
+		 * mistakenly allow normal users to hijack tcp/udp ports from
+		 * other users.
 		 */
 		if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr))
 			return(EADDRNOTAVAIL);
@@ -201,7 +201,8 @@ in6_pcbbind(in6p, nam, p)
 			 */
 			if (so->so_options & SO_REUSEADDR)
 				reuseport = SO_REUSEADDR|SO_REUSEPORT;
-		} else if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
+		}
+		else if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
 			struct sockaddr_in sin;
 
 			bzero(&sin, sizeof(sin));
@@ -211,7 +212,8 @@ in6_pcbbind(in6p, nam, p)
 				sizeof(sin.sin_addr));
 			if (ifa_ifwithaddr((struct sockaddr *)&sin) == 0)
 				return EADDRNOTAVAIL;
-		} else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
+		}
+		else if (!IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr)) {
 			struct ifaddr *ia = NULL;
 
 			sin6->sin6_port = 0;		/* yech... */
@@ -220,8 +222,9 @@ in6_pcbbind(in6p, nam, p)
 				return(EADDRNOTAVAIL);
 
 			/*
-			 * XXX: bind to an anycast address might accidentally
-			 * cause sending a packet with anycast source address.
+			 * bind to an anycast address might accidentally
+			 * cause sending a packet with an anycast source
+			 * address, so we forbid it.
 			 */
 			if (ia &&
 			    ((struct in6_ifaddr *)ia)->ia6_flags &
@@ -255,7 +258,8 @@ in6_pcbbind(in6p, nam, p)
 				if (t && (reuseport & t->inp_socket->so_options) == 0)
 					return EADDRINUSE;
 #endif
-			} else {
+			} else
+			{
 				struct in6pcb *t;
 
 				t = in6_pcblookup(head, &zeroin6_addr, 0,
@@ -310,11 +314,14 @@ in6_pcbconnect(in6p, nam)
 
 	/* sanity check for mapped address case */
 	if (IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr)) {
+		if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY) != 0)
+			return EINVAL;
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr))
 			in6p->in6p_laddr.s6_addr16[5] = htons(0xffff);
 		if (!IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
 			return EINVAL;
-	} else {
+	} else
+	{
 		if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr))
 			return EINVAL;
 	}
@@ -352,7 +359,8 @@ in6_pcbconnect(in6p, nam)
 #else
 		return EADDRNOTAVAIL;
 #endif
-	} else {
+	} else
+	{
 		/*
 		 * XXX: in6_selectsrc might replace the bound local address
 		 * with the address specified by setsockopt(IPV6_PKTINFO).
@@ -383,7 +391,14 @@ in6_pcbconnect(in6p, nam)
 		return(EADDRINUSE);
 	if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)
 	 || (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr)
-	  && in6p->in6p_laddr.s6_addr32[3] == 0)) {
+	  && in6p->in6p_laddr.s6_addr32[3] == 0))
+	{
+		/*
+		 * XXX in IPv4 mapped address case, we should grab fresh
+		 * local port number by in_pcbbind, not in6_pcbbind.
+		 * if we are in bad luck, we may assign conflicting port number
+		 * between IPv4 and IPv6 unwillingly.
+		 */
 		if (in6p->in6p_lport == 0) {
 			(void)in6_pcbbind(in6p, (struct mbuf *)0,
 			    (struct proc *)0);
@@ -590,7 +605,7 @@ in6_pcbnotify(head, dst, fport_arg, src, lport_arg, cmd, cmdarg, notify)
 
 		/*
 		 * Detect if we should notify the error. If no source and
-		 * destination ports are specifed, but non-zero flowinfo and
+		 * destination ports are specified, but non-zero flowinfo and
 		 * local address match, notify the error. This is the case
 		 * when the error is delivered with an encrypted buffer
 		 * by ESP. Otherwise, just compare addresses and ports
@@ -650,8 +665,7 @@ in6_pcbpurgeif0(head, ifp)
 				nimm = imm->i6mm_chain.le_next;
 				if (imm->i6mm_maddr->in6m_ifp == ifp) {
 					LIST_REMOVE(imm, i6mm_chain);
-					in6_delmulti(imm->i6mm_maddr);
-					free(imm, M_IPMADDR);
+					in6_leavegroup(imm);
 				}
 			}
 		}
@@ -694,16 +708,17 @@ in6_losing(in6p)
 		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
-		if (rt->rt_flags & RTF_DYNAMIC)
+		if (rt->rt_flags & RTF_DYNAMIC) {
 			(void)rtrequest(RTM_DELETE, rt_key(rt),
 					rt->rt_gateway, rt_mask(rt), rt->rt_flags,
 					(struct rtentry **)0);
-		else
-		/*
-		 * A new route can be allocated
-		 * the next time output is attempted.
-		 */
+		} else {
+			/*
+			 * A new route can be allocated
+			 * the next time output is attempted.
+			 */
 			rtfree(rt);
+		}
 	}
 }
 
@@ -758,14 +773,10 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 		}
 		else {
 			if (IN6_IS_ADDR_V4MAPPED(laddr6)) {
-#ifndef INET6_BINDV6ONLY
-				if (in6p->in6p_flags & IN6P_BINDV6ONLY)
+				if (in6p->in6p_flags & IN6P_IPV6_V6ONLY)
 					continue;
 				else
 					wildcard++;
-#else
-				continue;
-#endif
 			} else if (!IN6_IS_ADDR_UNSPECIFIED(laddr6))
 				wildcard++;
 		}
@@ -787,14 +798,10 @@ in6_pcblookup(head, faddr6, fport_arg, laddr6, lport_arg, flags)
 		}
 		else {
 			if (IN6_IS_ADDR_V4MAPPED(faddr6)) {
-#ifndef INET6_BINDV6ONLY
-				if (in6p->in6p_flags & IN6P_BINDV6ONLY)
+				if (in6p->in6p_flags & IN6P_IPV6_V6ONLY)
 					continue;
 				else
 					wildcard++;
-#else
-				continue;
-#endif
 			} else if (!IN6_IS_ADDR_UNSPECIFIED(faddr6))
 				wildcard++;
 		}
@@ -860,6 +867,10 @@ in6_pcblookup_connect(head, faddr6, fport_arg, laddr6, lport_arg, faith)
 			continue;
 		if (!IN6_ARE_ADDR_EQUAL(&in6p->in6p_laddr, laddr6))
 			continue;
+		if ((IN6_IS_ADDR_V4MAPPED(laddr6) ||
+		     IN6_IS_ADDR_V4MAPPED(faddr6)) &&
+		    (in6p->in6p_flags & IN6P_IPV6_V6ONLY))
+			continue;
 		return in6p;
 	}
 	return NULL;
@@ -889,18 +900,15 @@ in6_pcblookup_bind(head, laddr6, lport_arg, faith)
 			continue;
 		if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
 			if (IN6_IS_ADDR_V4MAPPED(laddr6)) {
-#ifndef INET6_BINDV6ONLY
-				if (in6p->in6p_flags & IN6P_BINDV6ONLY)
+				if ((in6p->in6p_flags & IN6P_IPV6_V6ONLY))
 					continue;
 				else
 					match = in6p;
-#else
-				continue;
-#endif
 			} else
 				match = in6p;
 		}
 		else if (IN6_IS_ADDR_V4MAPPED(&in6p->in6p_laddr) &&
+			 !(in6p->in6p_flags & IN6P_IPV6_V6ONLY) &&
 			 in6p->in6p_laddr.s6_addr32[3] == 0) {
 			if (IN6_IS_ADDR_V4MAPPED(laddr6) &&
 			    laddr6->s6_addr32[3] != 0)

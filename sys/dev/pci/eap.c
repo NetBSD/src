@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.45.2.1 2001/09/13 01:15:53 thorpej Exp $	*/
+/*	$NetBSD: eap.c,v 1.45.2.2 2002/01/10 19:56:31 thorpej Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -54,6 +54,9 @@
  * ftp://ftp.alsa-project.org/pub/manuals/asahi_kasei/4531.pdf
  * ftp://download.intel.com/ial/scalableplatforms/audio/ac97r21.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.45.2.2 2002/01/10 19:56:31 thorpej Exp $");
 
 #include "midi.h"
 
@@ -230,6 +233,7 @@ struct audio_hw_if eap1370_hw_if = {
 	eap_get_props,
 	eap_trigger_output,
 	eap_trigger_input,
+	NULL,
 };
 
 struct audio_hw_if eap1371_hw_if = {
@@ -259,6 +263,7 @@ struct audio_hw_if eap1371_hw_if = {
 	eap_get_props,
 	eap_trigger_output,
 	eap_trigger_input,
+	NULL,
 };
 
 #if NMIDI > 0

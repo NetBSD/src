@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.54.2.2 2001/09/13 01:16:11 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.54.2.3 2002/01/10 19:58:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -231,6 +231,8 @@ struct scsipi_adapter {
  * scsipi_bustype:
  *
  *	This structure describes a SCSIPI bus type.
+ *	The bustype_type member is shared with struct ata_bustype
+ *	(because we can ata, atapi or scsi busses to the same controller)
  */
 struct scsipi_bustype {
 	int	bustype_type;		/* symbolic name of type */
@@ -246,6 +248,7 @@ struct scsipi_bustype {
 /* bustype_type */
 #define	SCSIPI_BUSTYPE_SCSI	0
 #define	SCSIPI_BUSTYPE_ATAPI	1
+/* #define SCSIPI_BUSTYPE_ATA	2 */
 
 
 /*
@@ -254,16 +257,13 @@ struct scsipi_bustype {
  *	This structure describes a single channel of a SCSIPI adapter.
  *	An adapter may have one or more channels.  See the comment above
  *	regarding the resource counter.
+ *	Note: chan_bustype has to be first member, as its bustype_type member
+ * 	is shared with the aa_bustype member of struct ata_atapi_attach.
  */
 struct scsipi_channel {
-	u_int8_t type; /* XXX will die, compat with ata_atapi_attach for umass */
-#define BUS_SCSI                0
-#define BUS_ATAPI               1
-/*define BUS_ATA                2*/
+	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
 
 	struct scsipi_adapter *chan_adapter; /* pointer to our adapter */
-
-	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
 
 	/*
 	 * Periphs for this channel.  2-dimensional array is dynamically
@@ -285,6 +285,7 @@ struct scsipi_channel {
 	int	chan_defquirks;		/* default device's quirks */
 
 	struct proc *chan_thread;	/* completion thread */
+	int	chan_tflags;		/* flags for the completion thread */
 
 	int	chan_qfreeze;		/* freeze count for queue */
 
@@ -300,11 +301,16 @@ struct scsipi_channel {
 };
 
 /* chan_flags */
-#define	SCSIPI_CHAN_SHUTDOWN	0x01	/* channel is shutting down */
-#define	SCSIPI_CHAN_OPENINGS	0x02	/* use chan_openings */
-#define	SCSIPI_CHAN_CANGROW	0x04	/* channel can grow resources */
-#define	SCSIPI_CHAN_NOSETTLE	0x08	/* don't wait for devices to settle */
-#define	SCSIPI_CHAN_CALLBACK	0x10	/* has to call chan_callback() */
+#define	SCSIPI_CHAN_OPENINGS	0x01	/* use chan_openings */
+#define	SCSIPI_CHAN_CANGROW	0x02	/* channel can grow resources */
+#define	SCSIPI_CHAN_NOSETTLE	0x04	/* don't wait for devices to settle */
+#define	SCSIPI_CHAN_TACTIVE	0x08	/* completion thread is active */
+
+/* chan thread flags (chan_tflags) */
+#define	SCSIPI_CHANT_SHUTDOWN	0x01	/* channel is shutting down */
+#define	SCSIPI_CHANT_CALLBACK	0x02	/* has to call chan_callback() */
+#define	SCSIPI_CHANT_KICK	0x04	/* need to run queues */
+#define	SCSIPI_CHANT_GROWRES	0x08	/* call ADAPTER_REQ_GROW_RESOURCES */
 
 #define	SCSIPI_CHAN_MAX_PERIPH(chan)					\
 	(((chan)->chan_flags & SCSIPI_CHAN_OPENINGS) ?			\
@@ -439,8 +445,10 @@ struct scsipi_periph {
 #define	PQUIRK_NOSENSE		0x00004000	/* can't REQUEST SENSE */
 #define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
 #define PQUIRK_BYTE5_ZERO	0x00010000	/* byte5 in capacity is wrong */
-#define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom page */
+#define PQUIRK_NO_FLEX_PAGE	0x00020000	/* does not support flex geom
+						   page */
 #define PQUIRK_NOBIGMODESENSE	0x00040000	/* has no big mode-sense op */
+#define PQUIRK_CAP_SYNC		0x00080000	/* SCSI1 device with sync op */
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_subr2.c,v 1.17.8.1 2001/08/25 06:17:09 thorpej Exp $	*/
+/*	$NetBSD: tp_subr2.c,v 1.17.8.2 2002/01/10 20:03:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,6 +68,9 @@ SOFTWARE.
  * tp_getoptions: initializes variables that are affected by the options
  * chosen.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tp_subr2.c,v 1.17.8.2 2002/01/10 20:03:56 thorpej Exp $");
 
 /*
  * this def'n is to cause the expansion of this macro in the routine
@@ -808,7 +811,7 @@ tp0_stash(tpcb, e)
 	if (E.e_eot) {
 		struct mbuf *n = E.e_data;
 		n->m_flags |= M_EOR;
-		n->m_act = NULL;	/* set on tp_input */
+		n->m_nextpkt = NULL;	/* set on tp_input */
 	}
 	sbappend(sb, E.e_data);
 #ifdef ARGO_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.48.2.1 2001/08/03 04:13:41 lukem Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.48.2.2 2002/01/10 19:59:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -40,6 +40,9 @@
  *
  *	@(#)kern_physio.c	8.1 (Berkeley) 6/10/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.48.2.2 2002/01/10 19:59:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,10 +275,6 @@ getphysbuf()
 	bp = pool_get(&bufpool, PR_WAITOK);
 	splx(s);
 	memset(bp, 0, sizeof(*bp));
-
-	/* XXXCDC: is the following line necessary? */
-	bp->b_vnbufs.le_next = NOLIST;
-
 	return(bp);
 }
 
@@ -287,10 +286,6 @@ putphysbuf(bp)
         struct buf *bp;
 {
 	int s;
-
-	/* XXXCDC: is this necessary? */
-	if (bp->b_vp)
-		brelvp(bp);
 
 	if (__predict_false(bp->b_flags & B_WANTED))
 		panic("putphysbuf: private buf B_WANTED");

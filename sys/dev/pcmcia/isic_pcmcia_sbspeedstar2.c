@@ -40,6 +40,9 @@
  *
  *---------------------------------------------------------------------------*/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_sbspeedstar2.c,v 1.2.6.1 2002/01/10 19:57:23 thorpej Exp $");
+
 #include "opt_isicpcmcia.h"  
 #ifdef ISICPCMCIA_SBSPEEDSTAR2
 

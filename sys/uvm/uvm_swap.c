@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.52.2.1 2001/09/13 01:16:35 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.52.2.2 2002/01/10 20:05:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -30,6 +30,9 @@
  * from: NetBSD: vm_swap.c,v 1.52 1997/12/02 13:47:37 pk Exp
  * from: Id: uvm_swap.c,v 1.1.2.42 1998/02/02 20:38:06 chuck Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.52.2.2 2002/01/10 20:05:48 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -95,7 +98,6 @@
  *  - block size
  *  - max byte count in buffer
  *  - buffer
- *  - credentials to use when doing i/o to file
  *
  * userland controls and configures swap with the swapctl(2) system call.
  * the sys_swapctl performs the following operations:
@@ -139,7 +141,6 @@ struct swapdev {
 	int			swd_maxactive;	/* max active i/o reqs */
 	struct buf_queue	swd_tab;	/* buffer list */
 	int			swd_active;	/* number of active buffers */
-	struct ucred		*swd_cred;	/* cred for file access */
 };
 
 /*
@@ -313,8 +314,8 @@ swaplist_insert(sdp, newspp, priority)
 	/*
 	 * find entry at or after which to insert the new device.
 	 */
-	for (pspp = NULL, spp = LIST_FIRST(&swap_priority); spp != NULL;
-	     spp = LIST_NEXT(spp, spi_swappri)) {
+	pspp = NULL;
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		if (priority <= spp->spi_priority)
 			break;
 		pspp = spp;
@@ -367,11 +368,9 @@ swaplist_find(vp, remove)
 	/*
 	 * search the lists for the requested vp
 	 */
-	for (spp = LIST_FIRST(&swap_priority); spp != NULL;
-	     spp = LIST_NEXT(spp, spi_swappri)) {
-		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
-		     sdp != (void *)&spp->spi_swapdev;
-		     sdp = CIRCLEQ_NEXT(sdp, swd_next))
+
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
+		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			if (sdp->swd_vp == vp) {
 				if (remove) {
 					CIRCLEQ_REMOVE(&spp->spi_swapdev,
@@ -380,6 +379,7 @@ swaplist_find(vp, remove)
 				}
 				return(sdp);
 			}
+		}
 	}
 	return (NULL);
 }
@@ -420,11 +420,8 @@ swapdrum_getsdp(pgno)
 	struct swapdev *sdp;
 	struct swappri *spp;
 
-	for (spp = LIST_FIRST(&swap_priority); spp != NULL;
-	     spp = LIST_NEXT(spp, spi_swappri))
-		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
-		     sdp != (void *)&spp->spi_swapdev;
-		     sdp = CIRCLEQ_NEXT(sdp, swd_next)) {
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
+		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			if (sdp->swd_flags & SWF_FAKE)
 				continue;
 			if (pgno >= sdp->swd_drumoffset &&
@@ -432,6 +429,7 @@ swapdrum_getsdp(pgno)
 				return sdp;
 			}
 		}
+	}
 	return NULL;
 }
 
@@ -499,8 +497,7 @@ sys_swapctl(p, v, retval)
 		sep = (struct swapent *)SCARG(uap, arg);
 		count = 0;
 
-		for (spp = LIST_FIRST(&swap_priority); spp != NULL;
-		    spp = LIST_NEXT(spp, spi_swappri)) {
+		LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 			for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
 			     sdp != (void *)&spp->spi_swapdev && misc-- > 0;
 			     sdp = CIRCLEQ_NEXT(sdp, swd_next)) {
@@ -546,19 +543,18 @@ sys_swapctl(p, v, retval)
 		error = 0;
 		goto out;
 	}
-
-	/*
-	 * all other requests require superuser privs.   verify.
-	 */
-	if ((error = suser(p->p_ucred, &p->p_acflag)))
-		goto out;
-
 	if (SCARG(uap, cmd) == SWAP_GETDUMPDEV) {
 		dev_t	*devp = (dev_t *)SCARG(uap, arg);
 
 		error = copyout(&dumpdev, devp, sizeof(dumpdev));
 		goto out;
 	}
+
+	/*
+	 * all other requests require superuser privs.   verify.
+	 */
+	if ((error = suser(p->p_ucred, &p->p_acflag)))
+		goto out;
 
 	/*
 	 * at this point we expect a path name in arg.   we will
@@ -655,13 +651,6 @@ sys_swapctl(p, v, retval)
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;
 		BUFQ_INIT(&sdp->swd_tab);
 
-		/*
-		 * XXX Is NFS elaboration necessary?
-		 */
-		if (vp->v_type == VREG) {
-			sdp->swd_cred = crdup(p->p_ucred);
-		}
-
 		swaplist_insert(sdp, spp, priority);
 		simple_unlock(&uvm.swap_data_lock);
 
@@ -682,9 +671,6 @@ sys_swapctl(p, v, retval)
 			(void) swaplist_find(vp, 1);  /* kill fake entry */
 			swaplist_trim();
 			simple_unlock(&uvm.swap_data_lock);
-			if (vp->v_type == VREG) {
-				crfree(sdp->swd_cred);
-			}
 			free(sdp->swd_path, M_VMSWAP);
 			free(sdp, M_VMSWAP);
 			break;
@@ -987,13 +973,10 @@ swap_off(p, sdp)
 	KASSERT(sdp->swd_npginuse == sdp->swd_npgbad);
 
 	/*
-	 * done with the vnode and saved creds.
+	 * done with the vnode.
 	 * drop our ref on the vnode before calling VOP_CLOSE()
 	 * so that spec_close() can tell if this is the last close.
 	 */
-	if (sdp->swd_vp->v_type == VREG) {
-		crfree(sdp->swd_cred);
-	}
 	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
@@ -1439,11 +1422,8 @@ uvm_swap_alloc(nslots, lessok)
 	simple_lock(&uvm.swap_data_lock);
 
 ReTry:	/* XXXMRG */
-	for (spp = LIST_FIRST(&swap_priority); spp != NULL;
-	     spp = LIST_NEXT(spp, spi_swappri)) {
-		for (sdp = CIRCLEQ_FIRST(&spp->spi_swapdev);
-		     sdp != (void *)&spp->spi_swapdev;
-		     sdp = CIRCLEQ_NEXT(sdp,swd_next)) {
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
+		CIRCLEQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			/* if it's not enabled, then we can't swap from it */
 			if ((sdp->swd_flags & SWF_ENABLE) == 0)
 				continue;
@@ -1467,7 +1447,7 @@ ReTry:	/* XXXMRG */
 			UVMHIST_LOG(pdhist,
 			    "success!  returning %d slots starting at %d",
 			    *nslots, result + sdp->swd_drumoffset, 0, 0);
-			return(result + sdp->swd_drumoffset);
+			return (result + sdp->swd_drumoffset);
 		}
 	}
 
@@ -1479,7 +1459,7 @@ ReTry:	/* XXXMRG */
 	/* XXXMRG: END HACK */
 
 	simple_unlock(&uvm.swap_data_lock);
-	return 0;		/* failed */
+	return 0;
 }
 
 /*
@@ -1560,65 +1540,54 @@ uvm_swap_free(startslot, nslots)
  * uvm_swap_put: put any number of pages into a contig place on swap
  *
  * => can be sync or async
- * => XXXMRG: consider making it an inline or macro
  */
+
 int
 uvm_swap_put(swslot, ppsp, npages, flags)
 	int swslot;
 	struct vm_page **ppsp;
-	int	npages;
-	int	flags;
+	int npages;
+	int flags;
 {
-	int	result;
+	int error;
 
-	result = uvm_swap_io(ppsp, swslot, npages, B_WRITE |
+	error = uvm_swap_io(ppsp, swslot, npages, B_WRITE |
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
-
-	return (result);
+	return error;
 }
 
 /*
  * uvm_swap_get: get a single page from swap
  *
  * => usually a sync op (from fault)
- * => XXXMRG: consider making it an inline or macro
  */
+
 int
 uvm_swap_get(page, swslot, flags)
 	struct vm_page *page;
 	int swslot, flags;
 {
-	int	result;
+	int error;
 
 	uvmexp.nswget++;
 	KASSERT(flags & PGO_SYNCIO);
 	if (swslot == SWSLOT_BAD) {
 		return EIO;
 	}
-
-	/*
-	 * this page is (about to be) no longer only in swap.
-	 */
-
-	simple_lock(&uvm.swap_data_lock);
-	uvmexp.swpgonly--;
-	simple_unlock(&uvm.swap_data_lock);
-
-	result = uvm_swap_io(&page, swslot, 1, B_READ |
+	error = uvm_swap_io(&page, swslot, 1, B_READ |
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
-
-	if (result != 0) {
+	if (error == 0) {
 
 		/*
-		 * oops, the read failed so it really is still only in swap.
+		 * this page is no longer only in swap.
 		 */
 
 		simple_lock(&uvm.swap_data_lock);
-		uvmexp.swpgonly++;
+		KASSERT(uvmexp.swpgonly > 0);
+		uvmexp.swpgonly--;
 		simple_unlock(&uvm.swap_data_lock);
 	}
-
-	return (result);
+	return error;
 }
 
 /*
@@ -1633,7 +1602,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	daddr_t startblk;
 	struct	buf *bp;
 	vaddr_t kva;
-	int	error, s, mapinflags, pflag;
+	int	error, s, mapinflags;
 	boolean_t write, async;
 	UVMHIST_FUNC("uvm_swap_io"); UVMHIST_CALLED(pdhist);
 
@@ -1646,39 +1615,31 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * convert starting drum slot to block number
 	 */
+
 	startblk = btodb((u_int64_t)startslot << PAGE_SHIFT);
 
 	/*
-	 * first, map the pages into the kernel (XXX: currently required
-	 * by buffer system).
+	 * first, map the pages into the kernel.
 	 */
 
-	mapinflags = !write ? UVMPAGER_MAPIN_READ : UVMPAGER_MAPIN_WRITE;
-	if (!async)
-		mapinflags |= UVMPAGER_MAPIN_WAITOK;
+	mapinflags = !write ?
+		UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_READ :
+		UVMPAGER_MAPIN_WAITOK|UVMPAGER_MAPIN_WRITE;
 	kva = uvm_pagermapin(pps, npages, mapinflags);
-	if (kva == 0)
-		return (EAGAIN);
 
 	/*
 	 * now allocate a buf for the i/o.
-	 * [make sure we don't put the pagedaemon to sleep...]
 	 */
-	s = splbio();
-	pflag = (async || curproc == uvm.pagedaemon_proc) ? 0 : PR_WAITOK;
-	bp = pool_get(&bufpool, pflag);
-	splx(s);
 
-	/*
-	 * if we failed to get a buf, return "try again"
-	 */
-	if (bp == NULL)
-		return (EAGAIN);
+	s = splbio();
+	bp = pool_get(&bufpool, PR_WAITOK);
+	splx(s);
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through
 	 * /dev/drum's vnode [swapdev_vp].
 	 */
+
 	bp->b_flags = B_BUSY | B_NOCACHE | (flags & (B_READ|B_ASYNC));
 	bp->b_proc = &proc0;	/* XXX */
 	bp->b_vnbufs.le_next = NOLIST;
@@ -1692,6 +1653,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * bump v_numoutput (counter of number of active outputs).
 	 */
+
 	if (write) {
 		s = splbio();
 		swapdev_vp->v_numoutput++;
@@ -1701,10 +1663,9 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * for async ops we must set up the iodone handler.
 	 */
+
 	if (async) {
-		/* XXXUBC pagedaemon */
-		bp->b_flags |= B_CALL | (curproc == uvm.pagedaemon_proc ?
-					 B_PDAEMON : 0);
+		bp->b_flags |= B_CALL;
 		bp->b_iodone = uvm_aio_biodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
 	}
@@ -1715,6 +1676,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * now we start the I/O, and if async, return.
 	 */
+
 	VOP_STRATEGY(bp);
 	if (async)
 		return 0;
@@ -1722,25 +1684,24 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * must be sync i/o.   wait for it to finish
 	 */
+
 	error = biowait(bp);
 
 	/*
 	 * kill the pager mapping
 	 */
+
 	uvm_pagermapout(kva, npages);
 
 	/*
-	 * now dispose of the buf
+	 * now dispose of the buf and we're done.
 	 */
+
 	s = splbio();
 	if (write)
 		vwakeup(bp);
 	pool_put(&bufpool, bp);
 	splx(s);
-
-	/*
-	 * finally return.
-	 */
 	UVMHIST_LOG(pdhist, "<- done (sync)  error=%d", error, 0, 0, 0);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.32.2.1 2001/08/03 04:14:11 lukem Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.32.2.2 2002/01/10 20:05:28 thorpej Exp $	*/
 
 /*
  *
@@ -40,6 +40,9 @@
  * this file contains functions that perform operations on amaps.  see
  * uvm_amap.h for a brief explanation of the role of amaps in uvm.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.32.2.2 2002/01/10 20:05:28 thorpej Exp $");
 
 #undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
@@ -151,12 +154,13 @@ pp_setreflen(ppref, offset, ref, len)
  */
 
 void
-amap_init()
-
+amap_init(void)
 {
+
 	/*
 	 * Initialize the vm_amap pool.
 	 */
+
 	pool_init(&uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0,
 	    "amappl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
 	    M_UVMAMAP);
@@ -173,12 +177,14 @@ amap_alloc1(slots, padslots, waitf)
 	int slots, padslots, waitf;
 {
 	struct vm_amap *amap;
-	int totalslots = slots + padslots;
+	int totalslots;
 
 	amap = pool_get(&uvm_amap_pool, (waitf == M_WAITOK) ? PR_WAITOK : 0);
 	if (amap == NULL)
 		return(NULL);
 
+	totalslots = malloc_roundup((slots + padslots) * sizeof(int)) /
+	    sizeof(int);
 	simple_lock_init(&amap->am_l);
 	amap->am_ref = 1;
 	amap->am_flags = 0;
@@ -231,12 +237,13 @@ amap_alloc(sz, padsz, waitf)
 	int slots, padslots;
 	UVMHIST_FUNC("amap_alloc"); UVMHIST_CALLED(maphist);
 
-	AMAP_B2SLOT(slots, sz);		/* load slots */
+	AMAP_B2SLOT(slots, sz);
 	AMAP_B2SLOT(padslots, padsz);
 
 	amap = amap_alloc1(slots, padslots, waitf);
 	if (amap)
-		memset(amap->am_anon, 0, (slots + padslots) * sizeof(struct vm_anon *));
+		memset(amap->am_anon, 0,
+		    amap->am_maxslot * sizeof(struct vm_anon *));
 
 	UVMHIST_LOG(maphist,"<- done, amap = 0x%x, sz=%d", amap, sz, 0, 0);
 	return(amap);
@@ -246,7 +253,7 @@ amap_alloc(sz, padsz, waitf)
 /*
  * amap_free: free an amap
  *
- * => the amap must be locked (mainly for simplelock accounting)
+ * => the amap must be unlocked
  * => the amap should have a zero reference count and be empty
  */
 void
@@ -256,8 +263,7 @@ amap_free(amap)
 	UVMHIST_FUNC("amap_free"); UVMHIST_CALLED(maphist);
 
 	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
-
+	LOCK_ASSERT(!simple_lock_held(&amap->am_l));
 	free(amap->am_slots, M_UVMAMAP);
 	free(amap->am_bckptr, M_UVMAMAP);
 	free(amap->am_anon, M_UVMAMAP);
@@ -265,9 +271,7 @@ amap_free(amap)
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		free(amap->am_ppref, M_UVMAMAP);
 #endif
-	amap_unlock(amap);	/* mainly for lock debugging */
 	pool_put(&uvm_amap_pool, amap);
-
 	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
 }
 
@@ -289,13 +293,12 @@ amap_extend(entry, addsize)
 {
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slotoff = entry->aref.ar_pageoff;
-	int slotmapped, slotadd, slotneed;
+	int slotmapped, slotadd, slotneed, slotadded, slotalloc;
 #ifdef UVM_AMAP_PPREF
 	int *newppref, *oldppref;
 #endif
-	u_int *newsl, *newbck, *oldsl, *oldbck;
+	int *newsl, *newbck, *oldsl, *oldbck;
 	struct vm_anon **newover, **oldover;
-	int slotadded;
 	UVMHIST_FUNC("amap_extend"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "  (entry=0x%x, addsize=0x%x)", entry,addsize,0,0);
@@ -364,10 +367,12 @@ amap_extend(entry, addsize)
 	 */
 
 	amap_unlock(amap);	/* unlock in case we sleep in malloc */
+	slotalloc = malloc_roundup(slotneed * sizeof(int)) / sizeof(int);
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-		newppref = malloc(slotneed * sizeof(int), M_UVMAMAP, M_NOWAIT);
+		newppref = malloc(slotalloc * sizeof(int), M_UVMAMAP,
+		    M_NOWAIT);
 		if (newppref == NULL) {
 			/* give up if malloc fails */
 			free(amap->am_ppref, M_UVMAMAP);
@@ -375,9 +380,9 @@ amap_extend(entry, addsize)
 		}
 	}
 #endif
-	newsl = malloc(slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
-	newbck = malloc(slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
-	newover = malloc(slotneed * sizeof(struct vm_anon *),
+	newsl = malloc(slotalloc * sizeof(int), M_UVMAMAP, M_WAITOK);
+	newbck = malloc(slotalloc * sizeof(int), M_UVMAMAP, M_WAITOK);
+	newover = malloc(slotalloc * sizeof(struct vm_anon *),
 	    M_UVMAMAP, M_WAITOK);
 	amap_lock(amap);			/* re-lock! */
 	KASSERT(amap->am_maxslot < slotneed);
@@ -386,7 +391,7 @@ amap_extend(entry, addsize)
 	 * now copy everything over to new malloc'd areas...
 	 */
 
-	slotadded = slotneed - amap->am_nslot;
+	slotadded = slotalloc - amap->am_nslot;
 
 	/* do am_slots */
 	oldsl = amap->am_slots;
@@ -402,7 +407,6 @@ amap_extend(entry, addsize)
 	/* do am_bckptr */
 	oldbck = amap->am_bckptr;
 	memcpy(newbck, oldbck, sizeof(int) * amap->am_nslot);
-	memset(newbck + amap->am_nslot, 0, sizeof(int) * slotadded); /* XXX: needed? */
 	amap->am_bckptr = newbck;
 
 #ifdef UVM_AMAP_PPREF
@@ -415,18 +419,16 @@ amap_extend(entry, addsize)
 		if ((slotoff + slotmapped) < amap->am_nslot)
 			amap_pp_adjref(amap, slotoff + slotmapped,
 			    (amap->am_nslot - (slotoff + slotmapped)), 1);
-		pp_setreflen(newppref, amap->am_nslot, 1, slotadded);
+		pp_setreflen(newppref, amap->am_nslot, 1,
+		    slotneed - amap->am_nslot);
 	}
 #endif
 
 	/* update master values */
 	amap->am_nslot = slotneed;
-	amap->am_maxslot = slotneed;
+	amap->am_maxslot = slotalloc;
 
-	/* unlock */
 	amap_unlock(amap);
-
-	/* and free */
 	free(oldsl, M_UVMAMAP);
 	free(oldbck, M_UVMAMAP);
 	free(oldover, M_UVMAMAP);
@@ -484,7 +486,6 @@ amap_share_protect(entry, prot)
 		if (amap->am_anon[slot]->u.an_page != NULL)
 			pmap_page_protect(amap->am_anon[slot]->u.an_page, prot);
 	}
-	return;
 }
 
 /*
@@ -504,8 +505,7 @@ amap_wipeout(amap)
 	UVMHIST_FUNC("amap_wipeout"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(amap=0x%x)", amap, 0,0,0);
 
-	LOCK_ASSERT(simple_lock_held(&amap->am_l));
-
+	amap_unlock(amap);
 	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
 		int refs;
 
@@ -515,19 +515,33 @@ amap_wipeout(amap)
 		if (anon == NULL || anon->an_ref == 0)
 			panic("amap_wipeout: corrupt amap");
 
-		simple_lock(&anon->an_lock); /* lock anon */
-
+		simple_lock(&anon->an_lock);
 		UVMHIST_LOG(maphist,"  processing anon 0x%x, ref=%d", anon,
 		    anon->an_ref, 0, 0);
-
 		refs = --anon->an_ref;
 		simple_unlock(&anon->an_lock);
 		if (refs == 0) {
+
 			/*
 			 * we had the last reference to a vm_anon. free it.
 			 */
+
 			uvm_anfree(anon);
 		}
+
+		/*
+		 * XXX
+		 * releasing the swap space held by an N anons is an O(N^2)
+		 * operation because of the implementation of extents.
+		 * if there are many anons, tearing down an exiting process'
+		 * address space can take many seconds, which causes very
+		 * annoying pauses.  we yield here to give other processes
+		 * a chance to run.  this should be removed once the performance
+		 * of swap space management is improved.
+		 */
+
+		if (curproc->p_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+			preempt(NULL);
 	}
 
 	/*
@@ -649,6 +663,7 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	if (srcamap->am_ref == 1) {		/* take it over? */
 		entry->etype &= ~UVM_ET_NEEDSCOPY;
 		amap->am_ref--;		/* drop final reference to map */
+		amap_unlock(amap);
 		amap_free(amap);	/* dispose of new (unused) amap */
 		amap_unlock(srcamap);
 		return;
@@ -671,6 +686,8 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 		amap->am_slots[amap->am_nused] = lcv;
 		amap->am_nused++;
 	}
+	memset(&amap->am_anon[lcv], 0,
+	    (amap->am_maxslot - lcv) * sizeof(struct vm_anon *));
 
 	/*
 	 * drop our reference to the old amap (srcamap) and unlock.
@@ -698,10 +715,6 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	entry->aref.ar_pageoff = 0;
 	entry->aref.ar_amap = amap;
 	entry->etype &= ~UVM_ET_NEEDSCOPY;
-
-	/*
-	 * done!
-	 */
 	UVMHIST_LOG(maphist, "<- done",0, 0, 0, 0);
 }
 
@@ -742,6 +755,7 @@ amap_cow_now(map, entry)
 	 * loop because some other process could reorder the anon's in the
 	 * am_anon[] array on us while the lock is dropped.
 	 */
+
 ReStart:
 	amap_lock(amap);
 
@@ -819,6 +833,7 @@ ReStart:
 			 * got it... now we can copy the data and replace anon
 			 * with our new one...
 			 */
+
 			uvm_pagecopy(pg, npg);		/* old -> new */
 			anon->an_ref--;			/* can't drop to zero */
 			amap->am_anon[slot] = nanon;	/* replace */
@@ -828,6 +843,7 @@ ReStart:
 			 * owner locked the whole time it can't be
 			 * PG_RELEASED | PG_WANTED.
 			 */
+
 			npg->flags &= ~(PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(npg, NULL);
 			uvm_lock_pageq();
@@ -835,14 +851,8 @@ ReStart:
 			uvm_unlock_pageq();
 			simple_unlock(&nanon->an_lock);
 		}
-
 		simple_unlock(&anon->an_lock);
-		/*
-		 * done with this anon, next ...!
-		 */
-
-	}	/* end of 'for' loop */
-
+	}
 	amap_unlock(amap);
 }
 
@@ -864,9 +874,6 @@ amap_splitref(origref, splitref, offset)
 	if (leftslots == 0)
 		panic("amap_splitref: split at zero offset");
 
-	/*
-	 * lock the amap
-	 */
 	amap_lock(origref->ar_amap);
 
 	/*
@@ -902,21 +909,17 @@ void
 amap_pp_establish(amap)
 	struct vm_amap *amap;
 {
-
 	amap->am_ppref = malloc(sizeof(int) * amap->am_maxslot,
 	    M_UVMAMAP, M_NOWAIT);
 
 	/*
 	 * if we fail then we just won't use ppref for this amap
 	 */
+
 	if (amap->am_ppref == NULL) {
 		amap->am_ppref = PPREF_NONE;	/* not using it */
 		return;
 	}
-
-	/*
-	 * init ppref
-	 */
 	memset(amap->am_ppref, 0, sizeof(int) * amap->am_maxslot);
 	pp_setreflen(amap->am_ppref, 0, amap->am_ref, amap->am_nslot);
 	return;
@@ -938,10 +941,6 @@ amap_pp_adjref(amap, curslot, slotlen, adjval)
 {
 	int stopslot, *ppref, lcv;
 	int ref, len;
-
-	/*
-	 * get init values
-	 */
 
 	stopslot = curslot + slotlen;
 	ppref = amap->am_ppref;
@@ -996,7 +995,7 @@ amap_wiperange(amap, slotoff, slots)
 	struct vm_amap *amap;
 	int slotoff, slots;
 {
-	int byanon, lcv, stop, curslot, ptr;
+	int byanon, lcv, stop, curslot, ptr, slotend;
 	struct vm_anon *anon;
 
 	/*
@@ -1012,32 +1011,30 @@ amap_wiperange(amap, slotoff, slots)
 		byanon = FALSE;
 		lcv = 0;
 		stop = amap->am_nused;
+		slotend = slotoff + slots;
 	}
 
-	/*
-	 * ok, now do it!
-	 */
-
-	for (; lcv < stop; lcv++) {
+	while (lcv < stop) {
 		int refs;
 
-		/*
-		 * verify the anon is ok.
-		 */
 		if (byanon) {
-			if (amap->am_anon[lcv] == NULL)
+			curslot = lcv++;	/* lcv advances here */
+			if (amap->am_anon[curslot] == NULL)
 				continue;
-			curslot = lcv;
 		} else {
 			curslot = amap->am_slots[lcv];
-			if (curslot < slotoff || curslot >= stop)
+			if (curslot < slotoff || curslot >= slotend) {
+				lcv++;		/* lcv advances here */
 				continue;
+			}
+			stop--;	/* drop stop, since anon will be removed */
 		}
 		anon = amap->am_anon[curslot];
 
 		/*
 		 * remove it from the amap
 		 */
+
 		amap->am_anon[curslot] = NULL;
 		ptr = amap->am_bckptr[curslot];
 		if (ptr != (amap->am_nused - 1)) {
@@ -1051,14 +1048,17 @@ amap_wiperange(amap, slotoff, slots)
 		/*
 		 * drop anon reference count
 		 */
+
 		simple_lock(&anon->an_lock);
 		refs = --anon->an_ref;
 		simple_unlock(&anon->an_lock);
 		if (refs == 0) {
+
 			/*
 			 * we just eliminated the last reference to an anon.
 			 * free it.
 			 */
+
 			uvm_anfree(anon);
 		}
 	}

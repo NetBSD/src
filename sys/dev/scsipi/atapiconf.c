@@ -1,7 +1,7 @@
-/*	$NetBSD: atapiconf.c,v 1.40 2001/05/14 20:35:27 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.40.2.1 2002/01/10 19:58:16 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
+ * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.40.2.1 2002/01/10 19:58:16 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -38,7 +40,6 @@
 #include <sys/proc.h>
 #include <sys/kthread.h>
 
-#include <dev/ata/atavar.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/atapiconf.h>
@@ -115,7 +116,22 @@ const struct scsi_quirk_inquiry_pattern atapi_quirk_patterns[] = {
 	 					PQUIRK_NO_FLEX_PAGE },
 	{{T_DIRECT, T_REMOV,		/* ZiO! MultiMediaCard */
 	  "eUSB", "MultiMediaCard", ""},	PQUIRK_NO_FLEX_PAGE },
+	{{T_DIRECT, T_REMOV,
+	  "FUJIFILM", "USB-DRIVEUNIT", "1.00"},	PQUIRK_NO_FLEX_PAGE |
+						PQUIRK_NOSENSE },
 };
+
+int
+atapiprint(aux, pnp)
+	void *aux;
+	const char *pnp; 
+{
+	struct scsipi_channel *chan = aux;
+	if (pnp)
+		printf("atapibus at %s", pnp);
+	printf(" channel %d", chan->chan_channel);
+	return (UNCONF);
+}
 
 int
 atapibusmatch(parent, cf, aux)
@@ -123,15 +139,15 @@ atapibusmatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct ata_atapi_attach *aa = aux;
+	struct scsipi_channel *chan = aux;
 
-	if (aa == NULL)
+	if (chan == NULL)
 		return (0);
 
-	if (aa->aa_type != T_ATAPI)
+	if (chan->chan_bustype->bustype_type != SCSIPI_BUSTYPE_ATAPI)
 		return (0);
 
-	if (cf->cf_loc[ATAPICF_CHANNEL] != aa->aa_channel &&
+	if (cf->cf_loc[ATAPICF_CHANNEL] != chan->chan_channel &&
 	    cf->cf_loc[ATAPICF_CHANNEL] != ATAPICF_CHANNEL_DEFAULT)
 		return (0);
 
@@ -159,11 +175,9 @@ atapibusattach(parent, self, aux)
 	void *aux;
 {
 	struct atapibus_softc *sc = (void *) self;
-	struct ata_atapi_attach *aa = aux;
-	struct scsipi_channel *chan = aa->aa_bus_private;
+	struct scsipi_channel *chan = aux;
 
 	sc->sc_channel = chan;
-	sc->sc_drvs = aa->aa_drv_data;
 
 	/* ATAPI has no LUNs. */
 	chan->chan_nluns = 1;
@@ -233,17 +247,6 @@ atapibusdetach(self, flags)
 		error = config_detach(periph->periph_dev, flags);
 		if (error)
 			return (error);
-
-		/*
-		 * We have successfully detached the child.  Drop the
-		 * direct reference for the child so that wdcdetach
-		 * won't call detach routine twice.
-		 */
-#ifdef DIAGNOSTIC
-		if (periph->periph_dev != sc->sc_drvs[target].drv_softc)
-			panic("softc mismatch");
-#endif
-		sc->sc_drvs[target].drv_softc = NULL;
 
 		scsipi_remove_periph(chan, periph);
 		free(periph, M_DEVBUF);
@@ -318,7 +321,7 @@ atapi_probe_device(sc, target, periph, sa)
 		return config_attach(&sc->sc_dev, cf, sa,
 		    atapibusprint);
 	} else {
-		atapibusprint(&sa, sc->sc_dev.dv_xname);
+		atapibusprint(sa, sc->sc_dev.dv_xname);
 		printf(" not configured\n");
 		free(periph, M_DEVBUF);
 		return NULL;

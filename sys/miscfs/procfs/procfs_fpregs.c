@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_fpregs.c,v 1.7 2001/01/17 00:09:07 fvdl Exp $	*/
+/*	$NetBSD: procfs_fpregs.c,v 1.7.4.1 2002/01/10 20:01:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -39,13 +39,15 @@
  *	@(#)procfs_fpregs.c	8.2 (Berkeley) 6/15/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_fpregs.c,v 1.7.4.1 2002/01/10 20:01:42 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
-#include <sys/ptrace.h>
 #include <machine/reg.h>
 #include <miscfs/procfs/procfs.h>
 

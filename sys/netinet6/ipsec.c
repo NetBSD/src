@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.35.2.1 2001/08/25 06:17:06 thorpej Exp $	*/
-/*	$KAME: ipsec.c,v 1.124 2001/08/05 07:03:50 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.35.2.2 2002/01/10 20:03:25 thorpej Exp $	*/
+/*	$KAME: ipsec.c,v 1.125 2001/09/12 23:01:16 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -34,6 +34,9 @@
  * IPsec controller part.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.35.2.2 2002/01/10 20:03:25 thorpej Exp $");
+
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 
@@ -49,9 +52,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -2627,6 +2628,7 @@ ipsec4_output(state, sp, flags)
 		panic("state->ro == NULL in ipsec4_output");
 	if (!state->dst)
 		panic("state->dst == NULL in ipsec4_output");
+	state->encap = 0;
 
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
 		printf("ipsec4_output: applyed SP\n");
@@ -2648,6 +2650,8 @@ ipsec4_output(state, sp, flags)
 		/* make SA index for search proper SA */
 		ip = mtod(state->m, struct ip *);
 		bcopy(&isr->saidx, &saidx, sizeof(saidx));
+		saidx.mode = isr->saidx.mode;
+		saidx.reqid = isr->saidx.reqid;
 		sin = (struct sockaddr_in *)&saidx.src;
 		if (sin->sin_len == 0) {
 			sin->sin_len = sizeof(*sin);
@@ -2762,6 +2766,8 @@ ipsec4_output(state, sp, flags)
 				state->dst = (struct sockaddr *)state->ro->ro_rt->rt_gateway;
 				dst4 = (struct sockaddr_in *)state->dst;
 			}
+
+			state->encap++;
 		} else
 			splx(s);
 
@@ -2869,6 +2875,8 @@ ipsec6_output_trans(state, nexthdrp, mprev, sp, flags, tun)
 		/* make SA index for search proper SA */
 		ip6 = mtod(state->m, struct ip6_hdr *);
 		bcopy(&isr->saidx, &saidx, sizeof(saidx));
+		saidx.mode = isr->saidx.mode;
+		saidx.reqid = isr->saidx.reqid;
 		sin6 = (struct sockaddr_in6 *)&saidx.src;
 		if (sin6->sin6_len == 0) {
 			sin6->sin6_len = sizeof(*sin6);
@@ -3037,8 +3045,47 @@ ipsec6_output_tunnel(state, sp, flags)
 	}
 
 	for (/* already initialized */; isr; isr = isr->next) {
-		/* When tunnel mode, SA peers must be specified. */
-		bcopy(&isr->saidx, &saidx, sizeof(saidx));
+		if (isr->saidx.mode == IPSEC_MODE_TUNNEL) {
+			/* When tunnel mode, SA peers must be specified. */
+			bcopy(&isr->saidx, &saidx, sizeof(saidx));
+		} else {
+			/* make SA index to look for a proper SA */
+			struct sockaddr_in6 *sin6;
+
+			bzero(&saidx, sizeof(saidx));
+			saidx.proto = isr->saidx.proto;
+			saidx.mode = isr->saidx.mode;
+			saidx.reqid = isr->saidx.reqid;
+
+			ip6 = mtod(state->m, struct ip6_hdr *);
+			sin6 = (struct sockaddr_in6 *)&saidx.src;
+			if (sin6->sin6_len == 0) {
+				sin6->sin6_len = sizeof(*sin6);
+				sin6->sin6_family = AF_INET6;
+				sin6->sin6_port = IPSEC_PORT_ANY;
+				bcopy(&ip6->ip6_src, &sin6->sin6_addr,
+				    sizeof(ip6->ip6_src));
+				if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src)) {
+					/* fix scope id for comparing SPD */
+					sin6->sin6_addr.s6_addr16[1] = 0;
+					sin6->sin6_scope_id = ntohs(ip6->ip6_src.s6_addr16[1]);
+				}
+			}
+			sin6 = (struct sockaddr_in6 *)&saidx.dst;
+			if (sin6->sin6_len == 0) {
+				sin6->sin6_len = sizeof(*sin6);
+				sin6->sin6_family = AF_INET6;
+				sin6->sin6_port = IPSEC_PORT_ANY;
+				bcopy(&ip6->ip6_dst, &sin6->sin6_addr,
+				    sizeof(ip6->ip6_dst));
+				if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst)) {
+					/* fix scope id for comparing SPD */
+					sin6->sin6_addr.s6_addr16[1] = 0;
+					sin6->sin6_scope_id = ntohs(ip6->ip6_dst.s6_addr16[1]);
+				}
+			}
+		}
+
 		if (key_checkrequest(isr, &saidx) == ENOENT) {
 			/*
 			 * IPsec processing is required, but no SA found.
@@ -3367,8 +3414,8 @@ ipsec_copypkt(m)
 	for (n = m, mpp = &m; n; n = n->m_next) {
 		if (n->m_flags & M_EXT) {
 			/*
-			 * Make a copy only if there are more than one references
-			 * to the cluster.
+			 * Make a copy only if there are more than one
+			 * references to the cluster.
 			 * XXX: is this approach effective?
 			 */
 			if (n->m_ext.ext_free || MCLISREFERENCED(n)) {
@@ -3805,4 +3852,4 @@ ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	}
 	/* NOTREACHED */
 }
-#endif /*INET6*/
+#endif /* INET6 */

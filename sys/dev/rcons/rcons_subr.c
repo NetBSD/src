@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.7 2000/04/16 21:49:49 pk Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.7.8.1 2002/01/10 19:58:07 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -44,12 +44,14 @@
  *	@(#)rcons_subr.c	8.1 (Berkeley) 6/11/93
  */
 
-#ifdef _KERNEL
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.7.8.1 2002/01/10 19:58:07 thorpej Exp $");
+
 #include <sys/param.h>
+#ifdef _KERNEL
 #include <sys/device.h>
 #include <sys/systm.h>
 #else
-#include <sys/types.h>
 #include "myfbdevice.h"
 #endif
 
@@ -65,7 +67,7 @@ extern void rcons_bell(struct rconsole *);
 #endif
 #define RCONS_ISDIGIT(c) ((c) >= '0' && (c) <= '9')
 
-/* Initalize our operations set */
+/* Initialize our operations set */
 void
 rcons_init_ops(rc)
 	struct rconsole *rc;

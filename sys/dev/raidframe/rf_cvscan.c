@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.5.16.1 2001/08/03 04:13:24 lukem Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.5.16.2 2002/01/10 19:57:38 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,10 @@
  *
  ******************************************************************************/
 
-#include "rf_types.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_cvscan.c,v 1.5.16.2 2002/01/10 19:57:38 thorpej Exp $");
+
+#include <dev/raidframe/raidframevar.h>
 #include "rf_alloclist.h"
 #include "rf_stripelocks.h"
 #include "rf_layout.h"

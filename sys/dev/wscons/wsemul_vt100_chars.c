@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_chars.c,v 1.5 2001/01/18 20:28:23 jdolecek Exp $ */
+/* $NetBSD: wsemul_vt100_chars.c,v 1.5.4.1 2002/01/10 19:59:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,6 +32,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_chars.c,v 1.5.4.1 2002/01/10 19:59:17 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -55,7 +58,7 @@ static const u_int16_t decspcgr2uni[128] = {
 	0x0058, 0x0059, 0x005a, 0x005b, 0x005c, 0x005d, 0x005e, 0x00a0,
 /* 6 */	0x25c6, 0x2592, 0x2409, 0x240c, 0x240d, 0x240a, 0x00b0, 0x00b1,
 	_e006U, 0x240b, 0x2518, 0x2510, 0x250c, 0x2514, 0x253c, _e001U,
-	_e002U, _e003U, _e004U, _e005U, 0x251c, 0x2524, 0x2534, 0x252c,
+	_e002U, 0x2500, _e004U, _e005U, 0x251c, 0x2524, 0x2534, 0x252c,
 	0x2502, 0x2264, 0x2265, 0x03c0, 0x2260, 0x00a3, 0x00b7, 0x007f,
 };
 
@@ -79,8 +82,7 @@ static const u_int16_t dectech2uni[128] = {
 };
 
 void
-vt100_initchartables(edp)
-	struct wsemul_vt100_emuldata *edp;
+vt100_initchartables(struct wsemul_vt100_emuldata *edp)
 {
 	int i;
 
@@ -142,9 +144,7 @@ static const struct {
 };
 
 void
-vt100_setnrc(edp, nrc)
-	struct wsemul_vt100_emuldata *edp;
-	int nrc;
+vt100_setnrc(struct wsemul_vt100_emuldata *edp, int nrc)
 {
 	int i;
 

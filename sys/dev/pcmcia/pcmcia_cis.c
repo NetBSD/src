@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.24 2001/07/07 16:51:47 thorpej Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.24.2.1 2002/01/10 19:57:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -29,7 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis.c,v 1.24.2.1 2002/01/10 19:57:24 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -154,6 +156,19 @@ pcmcia_scan_cis(dev, fct, arg)
 
 	while (1) {
 		while (1) {
+			/*
+			 * Perform boundary check for insane cards.
+			 * If CIS is too long, simulate CIS end.
+			 * (This check may not be sufficient for
+			 * malicious cards.)
+			 */
+			if (tuple.mult * tuple.ptr >= PCMCIA_CIS_SIZE - 1
+			    - 32 /* ad hoc value */ ) {
+				DPRINTF(("CISTPL_END (too long CIS)\n"));
+				tuple.code = PCMCIA_CISTPL_END;
+				goto cis_end;
+			}
+
 			/* get the tuple code */
 
 			DELAY(1000);
@@ -167,6 +182,7 @@ pcmcia_scan_cis(dev, fct, arg)
 				continue;
 			} else if (tuple.code == PCMCIA_CISTPL_END) {
 				DPRINTF(("CISTPL_END\n ff\n"));
+			cis_end:
 				/* Call the function for the END tuple, since
 				   the CIS semantics depend on it */
 				if ((*fct) (&tuple, arg)) {
@@ -824,7 +840,20 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			    tuple->length));
 			break;
 		}
-		if ((state->pf == NULL) || (state->gotmfc == 2)) {
+		if (state->pf) {
+			if (state->pf->function == PCMCIA_FUNCTION_UNSPEC) {
+				/*
+				 * This looks like a opportunistic function
+				 * created by a CONFIG tuple.  Just keep it.
+				 */
+			} else {
+				/*
+				 * A function is being defined, end it.
+				 */
+				state->pf = NULL;
+			}
+		}
+		if (state->pf == NULL) {
 			state->pf = malloc(sizeof(*state->pf), M_DEVBUF,
 			    M_NOWAIT);
 			memset(state->pf, 0, sizeof(*state->pf));

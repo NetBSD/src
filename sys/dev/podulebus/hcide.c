@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.1 2001/06/13 18:31:43 bjh21 Exp $	*/
+/*	$NetBSD: hcide.c,v 1.1.2.1 2002/01/10 19:57:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -30,9 +30,10 @@
  * hcide.c - Driver for the HCCS 16-bit IDE interface.
  */
 
-#include <sys/param.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.1.2.1 2002/01/10 19:57:29 thorpej Exp $");
 
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.1 2001/06/13 18:31:43 bjh21 Exp $");
+#include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/systm.h>

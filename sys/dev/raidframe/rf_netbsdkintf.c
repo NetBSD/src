@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.106.2.1 2001/08/03 04:13:27 lukem Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.106.2.2 2002/01/10 19:57:51 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -113,8 +113,11 @@
  *
  ***********************************************************/
 
-#include <sys/errno.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.106.2.2 2002/01/10 19:57:51 thorpej Exp $");
+
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 #include <sys/disk.h>
@@ -125,9 +128,6 @@
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <machine/types.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/lock.h>
@@ -135,10 +135,11 @@
 #include <sys/user.h>
 #include <sys/reboot.h>
 
+#include <dev/raidframe/raidframevar.h>
+#include <dev/raidframe/raidframeio.h>
 #include "raid.h"
 #include "opt_raid_autoconfig.h"
 #include "rf_raid.h"
-#include "rf_raidframe.h"
 #include "rf_copyback.h"
 #include "rf_dag.h"
 #include "rf_dagflags.h"
@@ -154,7 +155,6 @@
 #include "rf_parityscan.h"
 #include "rf_debugprint.h"
 #include "rf_threadstuff.h"
-#include "rf_configure.h"
 
 int     rf_kdebug_level = 0;
 
@@ -203,9 +203,11 @@ struct raidbuf {
 	RF_DiskQueueData_t *req;/* the request that this was part of.. */
 };
 
+/* component buffer pool */
+struct pool raidframe_cbufpool;
 
-#define RAIDGETBUF(rs) pool_get(&(rs)->sc_cbufpool, PR_NOWAIT)
-#define	RAIDPUTBUF(rs, cbp) pool_put(&(rs)->sc_cbufpool, cbp)
+#define RAIDGETBUF(rs) pool_get(&raidframe_cbufpool, PR_NOWAIT)
+#define	RAIDPUTBUF(rs, cbp) pool_put(&raidframe_cbufpool, cbp)
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
    or if it should be used in conjunction with that... 
@@ -217,7 +219,6 @@ struct raid_softc {
 	size_t  sc_size;        /* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
-	struct pool sc_cbufpool;	/* component buffer pool */
 	struct buf_queue buf_queue;	/* used for the device queue */
 };
 /* sc_flags */
@@ -239,7 +240,7 @@ int numraid = 0;
  * a single 64K write will typically require 64K for the old data, 
  * 64K for the old parity, and 64K for the new parity, for a total 
  * of 192K (if the parity buffer is not re-used immediately).
- * Even it if is used immedately, that's still 128K, which when multiplied
+ * Even it if is used immediately, that's still 128K, which when multiplied
  * by say 10 requests, is 1280K, *on top* of the 640K of incoming data.
  * 
  * Now in degraded mode, for example, a 64K read on the above setup may
@@ -325,7 +326,11 @@ raidattach(num)
 	if (raidPtrs == NULL) {
 		panic("raidPtrs is NULL!!\n");
 	}
-	
+
+	/* Initialize the component buffer pool. */
+	pool_init(&raidframe_cbufpool, sizeof(struct raidbuf), 0,
+	    0, 0, "raidpl", 0, NULL, NULL, M_RAIDFRAME);
+
 	rc = rf_mutex_init(&rf_sparet_wait_mutex);
 	if (rc) {
 		RF_PANIC();
@@ -379,7 +384,7 @@ raidattach(num)
 		}
 	}
 
-#if RAID_AUTOCONFIG
+#ifdef RAID_AUTOCONFIG
 	raidautoconfig = 1;
 #endif
 
@@ -640,7 +645,6 @@ raidclose(dev, flags, fmt, p)
 			/* last one, and we're going down, so
 			   lights out for this RAID set too. */
 			error = rf_Shutdown(raidPtrs[unit]);
-			pool_destroy(&rs->sc_cbufpool);
 			
 			/* It's no longer initialized... */
 			rs->sc_flags &= ~RAIDF_INITED;
@@ -973,8 +977,6 @@ raidioctl(dev, cmd, data, flag, p)
 		}
 
 		retcode = rf_Shutdown(raidPtr);
-
-		pool_destroy(&rs->sc_cbufpool);
 
 		/* It's no longer initialized... */
 		rs->sc_flags &= ~RAIDF_INITED;
@@ -1566,9 +1568,6 @@ raidinit(raidPtr)
 	unit = raidPtr->raidid;
 
 	rs = &raid_softc[unit];
-	pool_init(&rs->sc_cbufpool, sizeof(struct raidbuf), 0,
-		  0, 0, "raidpl", 0, NULL, NULL, M_RAIDFRAME);
-
 
 	/* XXX should check return code first... */
 	rs->sc_flags |= RAIDF_INITED;
@@ -2438,6 +2437,7 @@ rf_update_component_labels(raidPtr, final)
 
 	for( c = 0; c < raidPtr->numSpare ; c++) {
 		sparecol = raidPtr->numCol + c;
+		/* Need to ensure that the reconstruct actually completed! */
 		if (raidPtr->Disks[0][sparecol].status == rf_ds_used_spare) {
 			/* 
 			   
@@ -3292,7 +3292,7 @@ rf_auto_config_set(cset,unit)
 		   not taken. 
 		*/
 
-		for(raidID = numraid; raidID >= 0; raidID--) {
+		for(raidID = numraid - 1; raidID >= 0; raidID--) {
 			if (raidPtrs[raidID]->valid == 0) {
 				/* can use this one! */
 				break;

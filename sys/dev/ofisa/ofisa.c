@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.7 2001/06/19 13:42:18 wiz Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.7.2.1 2002/01/10 19:56:22 thorpej Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -32,6 +32,9 @@
  *    negligence, tort, under statute, in equity, at law or otherwise,
  *    even if advised of the possibility of such damage.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.7.2.1 2002/01/10 19:56:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

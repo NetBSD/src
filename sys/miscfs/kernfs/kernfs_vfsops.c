@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.40 2001/05/30 11:57:17 mrg Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.40.2.1 2002/01/10 20:01:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -42,6 +42,9 @@
  * Kernel params Filesystem
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.40.2.1 2002/01/10 20:01:37 thorpej Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
 #endif
@@ -49,7 +52,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/types.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -386,6 +388,7 @@ struct vfsops kernfs_vfsops = {
 	kernfs_fhtovp,
 	kernfs_vptofh,
 	kernfs_init,
+	NULL,
 	kernfs_done,
 	kernfs_sysctl,
 	NULL,				/* vfs_mountroot */

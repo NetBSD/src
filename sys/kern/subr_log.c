@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.20.6.1 2001/09/08 04:07:06 thorpej Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.20.6.2 2002/01/10 20:00:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,9 @@
 /*
  * Error log buffer for kernel printf's.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.20.6.2 2002/01/10 20:00:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

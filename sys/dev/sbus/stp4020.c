@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.11 2000/07/09 20:57:44 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.11.4.1 2002/01/10 19:58:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,9 @@
  * STP4020: SBus/PCMCIA bridge supporting two Type-3 PCMCIA cards.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.11.4.1 2002/01/10 19:58:14 thorpej Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -150,7 +152,7 @@ void	stp4020_chip_mem_free __P((pcmcia_chipset_handle_t,
 				   struct pcmcia_mem_handle *));
 int	stp4020_chip_mem_map __P((pcmcia_chipset_handle_t, int, bus_addr_t,
 				  bus_size_t, struct pcmcia_mem_handle *,
-				  bus_addr_t *, int *));
+				  bus_size_t *, int *));
 void	stp4020_chip_mem_unmap __P((pcmcia_chipset_handle_t, int));
 
 int	stp4020_chip_io_alloc __P((pcmcia_chipset_handle_t,
@@ -662,7 +664,7 @@ stp4020_chip_mem_map(pch, kind, card_addr, size, pcmhp, offsetp, windowp)
 	bus_addr_t card_addr;
 	bus_size_t size;
 	struct pcmcia_mem_handle *pcmhp;
-	bus_addr_t *offsetp;
+	bus_size_t *offsetp;
 	int *windowp;
 {
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
