@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.33 2003/06/23 12:15:04 agc Exp $	*/
+/*	$NetBSD: record.c,v 1.34 2003/07/21 00:55:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Matthew R. Green
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.33 2003/06/23 12:15:04 agc Exp $");
+__RCSID("$NetBSD: record.c,v 1.34 2003/07/21 00:55:59 mrg Exp $");
 #endif
 
 
@@ -190,7 +190,7 @@ main(argc, argv)
 	argv += optind;
 
 	/*
-	 * open the audio device, and control device
+	 * open the audio device
 	 */
 	if (device == NULL && (device = getenv("AUDIODEVICE")) == NULL &&
 	    (device = getenv("AUDIODEV")) == NULL) /* Sun compatibility */
