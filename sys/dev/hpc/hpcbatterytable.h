@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcbatterytable.h,v 1.2 2001/07/24 09:23:30 sato Exp $	*/
+/*	$NetBSD: hpcbatterytable.h,v 1.3 2001/08/02 11:21:27 sato Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 SATO Kazumi
@@ -152,6 +152,49 @@ struct hpcbattery_spec hpcbattery_z50_spec =
 	-1,	/* c_low */
 	0	/* c_flag */
 };
+
+/*
+ * NEC MC-R700/730 parameters
+ */	
+struct hpcbattery_spec hpcbattery_mcr700_spec =
+{
+	0,	/* guess_charge */
+	0,	/* guess_ac_dc */
+	0,	/* main_port */
+	10,	/* drift */
+	20,	/* ac_bias */
+	840,	/* dc_100p (100) */
+	820,	/* dc_80p (80) */		
+	790,	/* dc_50p (50) */
+	770,	/* dc_20p (20) */
+	760,	/* dc_critical (0) */
+	860,	/* ac_charge_100p */
+	850,	/* ac_100p */
+	840,	/* ac_80p */	
+	830,	/* ac_50p */
+	810,	/* ac_20p */
+	800,	/* ac_critical */
+	1,	/* main_flag */
+
+	1,	/* backup_port */
+	900,	/* b_full */
+	720,	/* b_low */
+	640,	/* b_critical */
+	1,	/* b_flag */
+
+	-1,	/* nocharge_port */
+	-1,	/* n_low */
+	0,	/* n_flag */
+
+	-1,	/* dc_ac_port */
+	-1,	/* da_low */
+	0,	/* da_flag */
+
+	-1,	/* c_ac_port */
+	-1,	/* c_low */
+	0	/* c_flag */
+};
+
 #endif /* hpcmips */
 
 /* parameter table */
@@ -165,6 +208,9 @@ struct platid_data hpcbattery_parameters[] = {
 	{ &platid_mask_MACH_NEC_MCR_530A, &hpcbattery_mcr530_spec },
 	{ &platid_mask_MACH_NEC_MCR_SIGMARION, &hpcbattery_sigmarion_spec },
 	{ &platid_mask_MACH_IBM_WORKPAD_Z50, &hpcbattery_z50_spec },
+	{ &platid_mask_MACH_NEC_MCR_700, &hpcbattery_mcr700_spec }, 
+	{ &platid_mask_MACH_NEC_MCR_700A, &hpcbattery_mcr700_spec }, /* XXX */
+	{ &platid_mask_MACH_NEC_MCR_730, &hpcbattery_mcr700_spec }, /* XXX */
 #endif /* hpcmips */
 	{ NULL, NULL }	/* terminator, don't delete */
 };
