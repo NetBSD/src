@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.19 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.20 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
@@ -83,7 +83,7 @@ void uhub_intr __P((usbd_request_handle, usbd_private_handle, usbd_status));
 
 USB_DECLARE_DRIVER_NAME(usb, uhub);
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 struct cfattach uhub_uhub_ca = {
 	sizeof(struct uhub_softc), uhub_match, uhub_attach,
 	uhub_detach, uhub_activate

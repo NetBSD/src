@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.36 1999/08/16 20:24:33 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.37 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
@@ -75,9 +75,11 @@ extern int usbdebug;
 static usbd_status	usbd_set_config __P((usbd_device_handle, int));
 char *usbd_get_string __P((usbd_device_handle, int, char *));
 int usbd_getnewaddr __P((usbd_bus_handle bus));
-#if defined(__NetBSD__)
 int usbd_print __P((void *aux, const char *pnp));
+#if defined(__NetBSD__)
 int usbd_submatch __P((bdevice *, struct cfdata *cf, void *));
+#elif defined(__OpenBSD__)
+int usbd_submatch __P((bdevice *, void *, void *));
 #endif
 void usbd_free_iface_data __P((usbd_device_handle dev, int ifcno));
 void usbd_kill_pipe __P((usbd_pipe_handle));
@@ -993,7 +995,7 @@ usbd_remove_device(dev, up)
 	free(dev, M_USB);
 }
 
-#if defined(__NetBSD__)  
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 usbd_print(aux, pnp)
 	void *aux;
@@ -1031,12 +1033,22 @@ usbd_print(aux, pnp)
 	return (UNCONF);
 }
 
+#if defined(__NetBSD__)
 int
 usbd_submatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
+#elif defined(__OpenBSD__)
+int
+usbd_submatch(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+	struct cfdata *cf = match;
+#endif
 	struct usb_attach_arg *uaa = aux;
 
 	if ((uaa->port != 0 &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.8 1999/08/14 14:49:32 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.9 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -116,8 +116,87 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
 	(config_found_sm(parent, args, print, sub))
 
+#elif defined(__OpenBSD__)
+/*
+ * OpenBSD
+ */
+#define	memcpy(d, s, l)		bcopy((s),(d),(l))
+#define	memset(d, v, l)		bzero((d),(l))
+#define bswap32(x)		swap32(x)
+#define powerhook_establish(h, sc) /* nothing */
+#define kthread_create1		kthread_create
+#define kthread_create		kthread_create_deferred
 
+#define	usbpoll			usbselect
+#define	uhidpoll		uhidselect
+#define	ugenpoll		ugenselect
 
+#define USBDEVNAME(bdev) ((bdev).dv_xname)
+
+typedef struct device bdevice;			/* base device */
+
+#define usb_timeout(f, d, t, h) timeout((f), (d), (t))
+#define usb_untimeout(f, d, h) untimeout((f), (d))
+
+#define USB_DECLARE_DRIVER_NAME_INIT(_1, dname, _2)  \
+int __CONCAT(dname,_match) __P((struct device *, void *, void *)); \
+void __CONCAT(dname,_attach) __P((struct device *, struct device *, void *)); \
+int __CONCAT(dname,_detach) __P((struct device *, int)); \
+int __CONCAT(dname,_activate) __P((struct device *, enum devact)); \
+\
+struct cfdriver __CONCAT(dname,_cd) = { \
+	NULL, #dname, DV_DULL \
+}; \
+\
+struct cfattach __CONCAT(dname,_ca) = { \
+	sizeof(struct __CONCAT(dname,_softc)), \
+	__CONCAT(dname,_match), \
+	__CONCAT(dname,_attach), \
+	__CONCAT(dname,_detach), \
+	__CONCAT(dname,_activate), \
+}
+
+#define USB_MATCH(dname) \
+int \
+__CONCAT(dname,_match)(parent, match, aux) \
+	struct device *parent; \
+	void *match; \
+	void *aux;
+
+#define USB_MATCH_START(dname, uaa) \
+	struct usb_attach_arg *uaa = aux
+
+#define USB_ATTACH(dname) \
+void \
+__CONCAT(dname,_attach)(parent, self, aux) \
+	struct device *parent; \
+	struct device *self; \
+	void *aux;
+
+#define USB_ATTACH_START(dname, sc, uaa) \
+	struct __CONCAT(dname,_softc) *sc = \
+		(struct __CONCAT(dname,_softc) *)self; \
+	struct usb_attach_arg *uaa = aux
+
+/* Returns from attach */
+#define USB_ATTACH_ERROR_RETURN	return
+#define USB_ATTACH_SUCCESS_RETURN	return
+
+#define USB_ATTACH_SETUP printf("\n")
+
+#define USB_GET_SC_OPEN(dname, unit, sc) \
+	struct __CONCAT(dname,_softc) *sc; \
+	if (unit >= __CONCAT(dname,_cd).cd_ndevs) \
+		return (ENXIO); \
+	sc = __CONCAT(dname,_cd).cd_devs[unit]; \
+	if (!sc) \
+		return (ENXIO)
+
+#define USB_GET_SC(dname, unit, sc) \
+	struct __CONCAT(dname,_softc) *sc = __CONCAT(dname,_cd).cd_devs[unit]
+
+#define USB_DO_ATTACH(dev, bdev, parent, args, print, sub) \
+	(config_found_sm(parent, args, print, sub))
 
 #elif defined(__FreeBSD__)
 /*

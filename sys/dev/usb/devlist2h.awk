@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.5 1999/04/03 18:59:51 augustss Exp $
+#	$NetBSD: devlist2h.awk,v 1.6 1999/08/17 16:06:20 augustss Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -42,6 +42,8 @@ NR == 1 {
 		printf("/*\t\$NetBSD\$\t*/\n\n") > dfile
 	else if (os == "FreeBSD")
 		printf("/*\tFreeBSD \$Id\$\t*/\n\n") > dfile
+	else if (os == "OpenBSD")
+		printf("/*\t\$OpenBSD\$\t*/\n\n") > dfile
 	else
 		printf("/* ??? */\n\n") > dfile
 	printf("/*\n") > dfile
@@ -56,6 +58,8 @@ NR == 1 {
 		printf("/*\t\$NetBSD\$\t*/\n\n") > hfile
 	else if (os == "FreeBSD")
 		printf("/*\tFreeBSD \$Id\$\t*/\n\n") > hfile
+	else if (os == "OpenBSD")
+		printf("/*\t\$OpenBSD\$\t*/\n\n") > hfile
 	else
 		printf("/* ??? */\n\n") > hfile
 	printf("/*\n") > hfile

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.36 1999/08/16 20:24:33 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.37 1999/08/17 16:06:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/device.h>
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
@@ -82,6 +82,12 @@
 #endif
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)
+
+#if defined(__OpenBSD__)
+struct cfdriver uhci_cd = {
+	NULL, "uhci", DV_DULL
+};
+#endif
 
 struct uhci_pipe {
 	struct usbd_pipe pipe;
@@ -371,7 +377,7 @@ uhci_init(sc)
 	sc->sc_bus.do_poll = uhci_poll;
 
 	sc->sc_suspend = PWR_RESUME;
-	(void)powerhook_establish(uhci_power, sc);
+	powerhook_establish(uhci_power, sc);
 
 	DPRINTFN(1,("uhci_init: enabling\n"));
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE | 
@@ -380,6 +386,7 @@ uhci_init(sc)
 	return (uhci_run(sc, 1));		/* and here we go... */
 }
 
+#if !defined(__OpenBSD__)
 /*
  * Handle suspend/resume.
  *
@@ -441,6 +448,7 @@ uhci_power(why, v)
 	}
 	splx(s);
 }
+#endif /* !defined(__OpenBSD__) */
 
 #ifdef USB_DEBUG
 static void
@@ -715,7 +723,7 @@ uhci_intr(p)
 	}
 #endif
 	status = UREAD2(sc, UHCI_STS);
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) && !defined(__OpenBSD__)
 	if (sc->sc_suspend != PWR_RESUME)
 		printf("uhci_intr: suspended sts=0x%x\n", status);
 #endif
