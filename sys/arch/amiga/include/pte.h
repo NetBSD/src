@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.14 1995/09/29 13:52:09 chopps Exp $	*/
+/*	$NetBSD: pte.h,v 1.15 1998/08/12 19:46:13 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,7 +126,6 @@ typedef u_int st_entry_t;		/* segment table entry */
  */
 #define AMIGA_MAX_COREUPT	1024
 #define AMIGA_UPTSIZE		roundup(VM_MAXUSER_ADDRESS / NPTEPG, NBPG)
-#define AMIGA_UPTBASE		0x10000000
 #define AMIGA_UPTMAXSIZE \
     roundup((AMIGA_MAX_COREUPT * AMIGA_UPTSIZE), NBPG)
 #define AMIGA_MAX_KPTSIZE \
