@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.33 2003/12/08 07:32:19 matt Exp $
+#	$NetBSD: Makefile,v 1.34 2003/12/11 17:34:09 matt Exp $
 
 S=	${.CURDIR}/../../../..
-NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 PROG=	boot
-WARNS?=	1
 DEVS=	hp.c ctu.c ra.c mfm.c if_qe.c if_le.c if_ze.c if_de.c if_ni.c
 SRCS=	srt0.S boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.S \
 	consio.c consio2.S str.S ${DEVS} findcpu.c vers.c
@@ -32,16 +30,6 @@ LIBZ=	${ZLIB}
 KERN_AS=library
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=${KERNLIB}
-
-.if ${MACHINE} == "vax"
-.PHONY: machine-links
-beforedepend: machine-links
-machine-links:
-	@rm -f machine && ln -s ${S}/arch/${MACHINE}/include machine
-	@rm -f ${MACHINE_ARCH} && ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-.NOPATH: machine ${MACHINE_ARCH}
-CLEANFILES+= machine ${MACHINE_ARCH}
-.endif
 
 .if ${OBJECT_FMT} == "ELF"
 START=start
