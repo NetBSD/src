@@ -1,4 +1,4 @@
-.\"	$NetBSD: setkey.8,v 1.14 2002/05/14 11:24:20 itojun Exp $
+.\"	$NetBSD: setkey.8,v 1.15 2003/03/15 22:25:37 wiz Exp $
 .\"	$KAME: setkey.8,v 1.73 2002/05/14 11:05:35 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -118,7 +118,7 @@ or
 .Fl f
 on the command line,
 .Nm
-accepts the following configuration sytnax.
+accepts the following configuration syntax.
 Lines starting with hash signs ('#') are treated as comment lines.
 .Bl -tag -width Ds
 .It Xo
@@ -326,7 +326,7 @@ for ESP.
 .Xc
 Specify a encryption algorithm
 .Ar ealgo ,
-as well as a payload authentication algorith
+as well as a payload authentication algorithm
 .Ar aalgo ,
 for ESP.
 .It Fl A Ar aalgo Ar key
@@ -413,7 +413,7 @@ as it requires extra reassembly at forwarding node
 .Pq not implemented at this moment .
 We have many protocols in
 .Pa /etc/protocols ,
-but protocols except of TCP, UDP and ICMP may not be suitable to use with IPSec.
+but protocols except of TCP, UDP and ICMP may not be suitable to use with IPsec.
 You have to consider and be careful to use them.
 .\"
 .Pp
