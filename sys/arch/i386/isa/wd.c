@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.75 1994/03/30 04:58:32 mycroft Exp $
+ *	$Id: wd.c,v 1.76 1994/04/07 06:51:17 mycroft Exp $
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */
@@ -131,6 +131,7 @@ struct wd_softc {
 
 struct wdc_softc {
 	struct device sc_dev;
+	struct intrhand sc_ih;
 
 	struct buf sc_q;
 	u_char	sc_flags;
@@ -142,7 +143,7 @@ struct wdc_softc {
 	int	sc_timeout;	/* timeout counter */
 };
 
-int wdcprobe(), wdprobe(), wdintr();
+int wdcprobe(), wdprobe(), wdcintr();
 void wdcattach(), wdattach();
 
 struct cfdriver wdccd = {
@@ -245,13 +246,19 @@ wdcattach(parent, self, aux)
 	void *aux;
 {
 	struct wdc_softc *wdc = (void *)self;
+	struct isa_attach_args *ia = aux;
 	struct wdc_attach_args wa;
 
-	wdctimeout(wdc);
 	printf("\n");
 
 	for (wa.wa_drive = 0; wa.wa_drive < 2; wa.wa_drive++)
 		(void)config_found(self, &wa, wdprint);
+
+	wdctimeout(wdc);
+	wdc->sc_ih.ih_fun = wdcintr;
+	wdc->sc_ih.ih_arg = wdc;
+	wdc->sc_ih.ih_level = IPL_BIO;
+	intr_establish(ia->ia_irq, &wdc->sc_ih);
 }
 
 int
@@ -527,7 +534,7 @@ loop:
 	}
 
 	/*
-	 * WDCF_ERROR is set by wdcunwedge() and wdintr() when an error is
+	 * WDCF_ERROR is set by wdcunwedge() and wdcintr() when an error is
 	 * encountered.  If we are in multi-sector mode, then we switch to
 	 * single-sector mode and retry the operation from the start.
 	 */
@@ -696,10 +703,9 @@ loop:
  * the next chunk if so.
  */
 int
-wdintr(ctrlr)
-	int ctrlr;
+wdcintr(wdc)
+	struct wdc_softc *wdc;
 {
-	struct wdc_softc *wdc = wdccd.cd_devs[ctrlr];
 	struct wd_softc *wd;
 	struct buf *bp;
 
@@ -720,7 +726,7 @@ wdintr(ctrlr)
 #endif
 
 	if (wait_for_unbusy(wdc) < 0) {
-		wderror(wd, NULL, "wdintr: timeout waiting for unbusy");
+		wderror(wd, NULL, "wdcintr: timeout waiting for unbusy");
 		wdc->sc_status |= WDCS_ERR;	/* XXX */
 	}
     
@@ -735,7 +741,7 @@ wdintr(ctrlr)
 	if (wdc->sc_status & (WDCS_ERR | WDCS_ECCCOR)) {
 	lose:
 #ifdef WDDEBUG
-		wderror(wd, NULL, "wdintr");
+		wderror(wd, NULL, "wdcintr");
 #endif
 		if ((wdc->sc_flags & WDCF_SINGLE) == 0) {
 			wdc->sc_flags |= WDCF_ERROR;
@@ -766,7 +772,7 @@ wdintr(ctrlr)
 	if (bp->b_flags & B_READ) {
 		/* Ready to receive data? */
 		if (wait_for_drq(wdc) != 0) {
-			wderror(wd, NULL, "wdintr: read error detected late");
+			wderror(wd, NULL, "wdcintr: read error detected late");
 			wdcunwedge(wdc);
 			return 1;
 		}
@@ -923,7 +929,7 @@ wdopen(dev, flag, fmt, p)
 
 /*
  * Implement operations other than read/write.
- * Called from wdcstart or wdintr during opens and formats.
+ * Called from wdcstart or wdcintr during opens and formats.
  * Uses finite-state-machine to track progress of operation in progress.
  * Returns 0 if operation still in progress, 1 if completed.
  */

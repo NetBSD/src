@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.61 1994/04/06 04:46:55 mycroft Exp $
+ *	$Id: locore.s,v 1.62 1994/04/07 06:48:35 mycroft Exp $
  */
 
 /*
@@ -1451,7 +1451,8 @@ ENTRY(remrq)
  */
 ENTRY(idle)
 	sti
-	call	_spl0			# process pending interrupts
+	movl	$0,_cpl
+	call	_spllower		# process pending interrupts
 
 	ALIGN_TEXT
 1:	cli
@@ -1636,8 +1637,8 @@ swtch_return:
 	movl	%edi,_curproc
 
 	/* Old _cpl is already on the stack. */
-	call    _splx			# restore the process's ipl
-	addl	$4,%esp
+	popl	_cpl
+	call    _spllower		# restore the process's ipl
 
 	movl	%edi,%eax		# return (p);
 	popl	%edi
@@ -1826,11 +1827,11 @@ ENTRY(proffault)
 	pushal			; \
 	pushl	%ds		; \
 	pushl	%es		; /* now the stack frame is a trap frame */ \
-	movl	$(KDSEL),%eax	; \
+	movl	$KDSEL,%eax	; \
 	movl	%ax,%ds		; \
 	movl	%ax,%es
 #define	INTREXIT \
-	jmp	doreti
+	jmp	_Xdoreti
 #define	INTRFASTEXIT \
 	popl	%es		; \
 	popl	%ds		; \
@@ -1908,9 +1909,10 @@ IDTVEC(fpu)
 	pushl	$T_ASTFLT
 	INTRENTRY
 	pushl	_cpl
-	pushl	$0			# dummy unit to finish intr frame
+	pushl	%esp
 	incl	_cnt+V_TRAP
 	call	_npxintr
+	addl	$4,%esp
 	INTREXIT
 #else
 	ZTRAP(T_ARITHTRAP)
@@ -1956,7 +1958,7 @@ calltrap:
 	 */
 	testb	$SEL_RPL_MASK,TF_CS(%esp)
 	jz	1f
-	btrl	$SIR_AST,_sir
+	btrl	$0,_astpending
 	jnc	1f
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap
@@ -1992,7 +1994,7 @@ IDTVEC(syscall)
 	 * Check for ASTs.
 	 */
 	/* Always returning to user mode here. */
-	btrl	$SIR_AST,_sir
+	btrl	$0,_astpending
 	jnc	1f
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	call	_trap

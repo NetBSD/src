@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.61 1994/03/29 04:36:23 mycroft Exp $
+ *	$Id: pccons.c,v 1.62 1994/04/07 06:51:08 mycroft Exp $
  */
 
 /*
@@ -113,6 +113,7 @@ static struct video_state {
 
 int pcprobe();
 void pcattach();
+int pcrint();
 
 struct cfdriver pccd = {
 	NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct device)
@@ -398,9 +399,16 @@ pcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct isa_attach_args *ia = aux;
+	static struct intrhand pchand;
 
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
+
+	pchand.ih_fun = pcrint;
+	pchand.ih_arg = 0;
+	pchand.ih_level = IPL_TTY;
+	intr_establish(ia->ia_irq, &pchand);
 }
 
 int
@@ -484,10 +492,9 @@ pcwrite(dev, uio, flag)
  * Catch the character, and see who it goes to.
  */
 int
-pcrint(unit)
-	int unit;
+pcrint()
 {
-	register struct tty *tp = pc_tty[unit];
+	register struct tty *tp = pc_tty[0];	/* XXX */
 	u_char *cp;
 
 	if ((inb(KBSTATP) & KBS_DIB) == 0)

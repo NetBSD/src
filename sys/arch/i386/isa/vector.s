@@ -1,284 +1,338 @@
-/*	$Id: vector.s,v 1.13 1994/04/02 08:04:32 mycroft Exp $ */
+/*
+ * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *	notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *	notice, this list of conditions and the following disclaimer in the
+ *	documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *	must display the following acknowledgement:
+ *	This product includes software developed by Charles Hannum.
+ * 4. The name of the author may not be used to endorse or promote products
+ *	derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	$Id: vector.s,v 1.14 1994/04/07 06:51:15 mycroft Exp $
+ */
 
 #include <i386/isa/icu.h>
 #include <i386/isa/isa.h>
-#include "vector.h"
 
-#define	ICU_EOI			0x20	/* XXX - define elsewhere */
+/*
+ * These macros are fairly self explanatory.  If SPECIAL_MASK_MODE is defined,
+ * we try to take advantage of the ICU's `special mask mode' by only EOIing
+ * the interrupts on return.  This avoids the requirement of masking and
+ * unmasking.  We can't do this without special mask mode, because the ICU
+ * would also hold interrupts that it thinks are of lower priority.
+ *
+ * Many machines do not support special mask mode, so by default we don't try
+ * to use it.
+ */
 
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)
 
-#ifndef AUTO_EOI_1
-#define	ENABLE_ICU1 \
-	movb	$ICU_EOI,%al ;	/* as soon as possible send EOI ... */ \
-	FASTER_NOP ;		/* ... ASAP ... */ \
-	outb	%al,$IO_ICU1	/* ... to clear in service bit */
-#else /* AUTO_EOI_1 */
-#define	ENABLE_ICU1		/* we now use auto-EOI to reduce i/o */
+#ifdef SPECIAL_MASK_MODE
+
+#define	ENABLE_ICU1(irq_num)
+#define	ENABLE_ICU1_AND_2(irqnum) \
+	movb	$(0x60|2),%al		/* specific EOI for IRQ2 */	;\
+	outb	%al,$IO_ICU1
+#define	MASK(irq_num, icu)
+#define	UNMASK(irq_num, icu) \
+	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
+	outb	%al,$icu
+
+#else /* SPECIAL_MASK_MODE */
+
+#ifndef	AUTO_EOI_1
+#define	ENABLE_ICU1(irq_num) \
+	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
+	outb	%al,$IO_ICU1
+#else
+#define	ENABLE_ICU1(irq_num)
 #endif
 
 #ifndef AUTO_EOI_2
-#define	ENABLE_ICU1_AND_2 \
-	movb	$ICU_EOI,%al ;	/* as above */ \
-	FASTER_NOP ; \
-	outb	%al,$IO_ICU2 ;	/* but do second icu first */ \
-	FASTER_NOP ; \
-	outb	%al,$IO_ICU1	/* then first icu */
-#else /* AUTO_EOI_2 */
-#define	ENABLE_ICU1_AND_2	/* data sheet says no auto-EOI on slave ... */
-				/* ... but it sometimes works */
+#define	ENABLE_ICU1_AND_2(irq_num) \
+	movb	$(0x60|(irq_num%8)),%al	/* specific EOI */		;\
+	outb	%al,$IO_ICU2		/* do the second ICU first */	;\
+	movb	$(0x60|2),%al		/* specific EOI for IRQ2 */	;\
+	outb	%al,$IO_ICU1
+#else
+#define	ENABLE_ICU1_AND_2(irq_num)
 #endif
 
+#define	MASK(irq_num, icu) \
+	movb	_imen + IRQ_BYTE(irq_num),%al				;\
+	orb	$IRQ_BIT(irq_num),%al					;\
+	movb	%al,_imen + IRQ_BYTE(irq_num)				;\
+	FASTER_NOP							;\
+	outb	%al,$(icu+1)
+
+#define	UNMASK(irq_num, icu) \
+	cli								;\
+	movb	_imen + IRQ_BYTE(irq_num),%al				;\
+	andb	$~IRQ_BIT(irq_num),%al					;\
+	movb	%al,_imen + IRQ_BYTE(irq_num)				;\
+	FASTER_NOP							;\
+	outb	%al,$(icu+1)						;\
+	sti
+
+#endif /* SPECIAL_MASK_MODE */
+
 /*
- * Macros for interrupt interrupt entry, call to handler, and exit.
+ * Macros for interrupt entry, call to handler, and exit.
  *
- * XXX - the interrupt frame is set up to look like a trap frame.  This is
- * usually a waste of time.  The only interrupt handlers that want a frame
- * are the clock handler (it wants a clock frame), the npx handler (it's
- * easier to do right all in assembler).  The interrupt return routine
- * needs a trap frame for rare AST's (it could easily convert the frame).
- * The direct costs of setting up a trap frame are two pushl's (error
- * code and trap number), an addl to get rid of these, and pushing and
- * popping the call-saved regs %esi, %edi and %ebp twice,  The indirect
- * costs are making the driver interface nonuniform so unpending of
- * interrupts is more complicated and slower (call_driver(unit) would
- * be easier than ensuring an interrupt frame for all handlers.  Finally,
- * there are some struct copies in the npx handler and maybe in the clock
- * handler that could be avoided by working more with pointers to frames
- * instead of frames.
+ * XXX
+ * The interrupt frame is set up to look like a trap frame.  This may be a
+ * waste.  The only handler which needs a frame is the clock handler, and it
+ * only needs a few bits.  doreti() needs a trap frame for handling ASTs, but
+ * it could easily convert the frame on demand.
  *
- * XXX - should we do a cld on every system entry to avoid the requirement
- * for scattered cld's?
+ * The direct costs of setting up a trap frame are two pushl's (error code and
+ * trap number), an addl to get rid of these, and pushing and popping the
+ * callee-saved registers %esi, %edi, %ebx, and %ebp twice.
  *
- * Coding notes for *.s:
+ * If the interrupt frame is made more flexible,  INTR can push %eax first and
+ * decide the ipending case with less overhead, e.g., by avoiding loading the
+ * segment registers.
  *
- * If possible, avoid operations that involve an operand size override.
- * Word-sized operations might be smaller, but the operand size override
- * makes them slower on on 486's and no faster on 386's unless perhaps
- * the instruction pipeline is depleted.  E.g.,
- *
- *	Use movl to seg regs instead of the equivalent but more descriptive
- *	movw - gas generates an irelevant (slower) operand size override.
- *
- *	Use movl to ordinary regs in preference to movw and especially
- *	in preference to movz[bw]l.  Use unsigned (long) variables with the
- *	top bits clear instead of unsigned short variables to provide more
- *	opportunities for movl.
- *
- * If possible, use byte-sized operations.  They are smaller and no slower.
- *
- * Use (%reg) instead of 0(%reg) - gas generates larger code for the latter.
- *
- * If the interrupt frame is made more flexible,  INTR can push %eax first
- * and decide the ipending case with less overhead, e.g., by avoiding
- * loading segregs.
+ * XXX
+ * Should we do a cld on every system entry to avoid the requirement for
+ * scattered cld's?
  */
 
-#define	FAST_INTR(unit, irq_num, id_num, handler, enable_icus) \
-	pushl	%eax ;		/* save only call-used registers */ \
-	pushl	%ecx ; \
-	pushl	%edx ; \
-	pushl	%ds ; \
-	pushl	%es ; \
-	movl	$KDSEL,%eax ; \
-	movl	%ax,%ds ; \
-	movl	%ax,%es ; \
-	pushl	$unit ; \
-	call	handler ;	/* do the work ASAP */ \
-	enable_icus ;		/* (re)enable ASAP (helps edge trigger?) */ \
-	addl	$4,%esp ; \
-	incl	_cnt+V_INTR ;	/* book-keeping can wait */ \
-	popl	%es ; \
-	popl	%ds ; \
-	popl	%edx; \
-	popl	%ecx; \
-	popl	%eax; \
-	iret
+	.globl	_isa_strayintr
 
-#define	INTR(unit, irq_num, id_num, mask, handler, icu, enable_icus, reg, stray) \
-	pushl	$0 ;		/* dummy error code */ \
-	pushl	$T_ASTFLT ; \
-	INTRENTRY ; \
-	movb	_imen + IRQ_BYTE(irq_num),%al ; \
-	orb	$IRQ_BIT(irq_num),%al ; \
-	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
-	FASTER_NOP ; \
-	outb	%al,$icu+1 ; \
-	enable_icus ; \
-	incl	_cnt+V_INTR ;	/* tally interrupts */ \
-	movl	_cpl,%eax ; \
-	testb	$IRQ_BIT(irq_num),%reg ; \
-	jne	2f ; \
-1: ; \
-	movl	_cpl,%eax ; \
-	pushl	%eax ; \
-	pushl	$unit ; \
-	orl	mask,%eax ; \
-	movl	%eax,_cpl ; \
-	sti ; \
-	call	handler ; \
-	movb	_imen + IRQ_BYTE(irq_num),%al ; \
-	andb	$~IRQ_BIT(irq_num),%al ; \
-	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
-	FASTER_NOP ; \
-	outb	%al,$icu+1 ; \
-	INTREXIT ; \
-; \
-	ALIGN_TEXT ; \
-2: ; \
-	movl	$1b,%eax ;	/* register resume address */ \
-				/* XXX - someday do it at attach time */ \
-	movl	%eax,Vresume + (irq_num) * 4 ;	\
-	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num) ; \
+/*
+ * Handle exceptions on vectors we don't expect.
+ */
+IDTVEC(wild)
+	sti
+	pushl	$0			/* fake interrupt frame */
+	pushl	$0
+	INTRENTRY
+	pushl	$-1
+	call	_isa_strayintr
+	addl	$4,%esp
 	INTRFASTEXIT
 
 /*
- * vector.h has defined a macro 'BUILD_VECTORS' containing a big list of info
- * about vectors, including a submacro 'BUILD_VECTOR' that operates on the
- * info about each vector.  We redefine 'BUILD_VECTOR' to expand the info
- * in different ways.  Here we expand it to a list of interrupt handlers.
- * This order is of course unimportant.  Elsewhere we expand it to inline
- * linear search code for which the order is a little more important and
- * concatenating the code with no holes is very important.
+ * Fast vectors.
  *
- * XXX - now there is BUILD_FAST_VECTOR as well as BUILD_VECTOR.
+ * Like a normal vector, but run with all interrupts off.  The handler is
+ * expected to be as fast as possible, and is expected to not change the
+ * interrupt flag.  We pass an argument in like normal vectors, but we assume
+ * that a pointer to the frame is never required.  There can be only one
+ * handler on a fast vector.
  *
- * The info consists of the following items for each vector:
- *
- *	name (identifier):	name of the vector; used to build labels
- *	unit (expression):	unit number to call the device driver with
- *	irq_num (number):	number of the IRQ to handled (0-15)
- *	id_num (number):	uniq numeric id for handler (assigned by config)
- *	mask (blank-ident):	priority mask used
- *	handler (blank-ident):	interrupt handler to call
- *	icu_num (number):	(1 + irq_num / 8) converted for label building
- *	icu_enables (number):	1 for icu_num == 1, 1_AND_2 for icu_num == 2
- *	reg (blank-ident):	al for icu_num == 1, ah for icu_num == 2
- *
- * 'irq_num' is converted in several ways at config time to get around
- * limitations in cpp.  The macros have blanks after commas iff they would
- * not mess up identifiers and numbers.
+ * XXX
+ * Note that we assume fast vectors don't do anything that would cause an AST
+ * or softintr; if so, it will be deferred until the next clock tick (or
+ * possibly sooner).
  */
+#define	FAST(irq_num, icu, enable_icus) \
+IDTVEC(fast/**/irq_num)							;\
+	pushl	%eax			/* save call-used registers */	;\
+	pushl	%ecx							;\
+	pushl	%edx							;\
+	pushl	%ds							;\
+	pushl	%es							;\
+	movl	$KDSEL,%eax						;\
+	movl	%ax,%ds							;\
+	movl	%ax,%es							;\
+	/* have to do this here because %eax is lost on call */		;\
+	movl	_intrhand + (irq_num) * 4,%eax				;\
+	incl	8(%eax)							;\
+	pushl	4(%eax)							;\
+	call	(%eax)							;\
+	enable_icus(irq_num)						;\
+	addl	$4,%esp							;\
+	incl	_cnt+V_INTR		/* statistical info */		;\
+	popl	%es							;\
+	popl	%ds							;\
+	popl	%edx							;\
+	popl	%ecx							;\
+	popl	%eax							;\
+	iret
 
-#undef BUILD_FAST_VECTOR
-#define	BUILD_FAST_VECTOR(name, unit, irq_num, id_num, mask, handler, \
-			  icu_num, icu_enables, reg) \
-	.globl	handler ; \
-	.text ; \
-	.globl	_X/**/name ; \
-	SUPERALIGN_TEXT ; \
-_X/**/name: ; \
-	FAST_INTR(unit, irq_num, id_num, handler, ENABLE_ICU/**/icu_enables)
-
-#undef BUILD_VECTOR
-#define	BUILD_VECTOR(name, unit, irq_num, id_num, mask, handler, \
-		     icu_num, icu_enables, reg) \
-	.globl	handler ; \
-	.text ; \
-	.globl	_X/**/name ; \
-	SUPERALIGN_TEXT ; \
-_X/**/name: ; \
-	INTR(unit,irq_num,id_num, mask, handler, IO_ICU/**/icu_num, \
-	     ENABLE_ICU/**/icu_enables, reg,)
-
-	BUILD_VECTORS
-
-	/* hardware interrupt catcher (IDT 32 - 47) */
-	.globl	_isa_strayintr
-
-#define	STRAYINTR(irq_num, icu_num, icu_enables, reg) \
-IDTVEC(intr/**/irq_num) ; \
-	INTR(irq_num,irq_num,irq_num, $-1,  _isa_strayintr, \
-		  IO_ICU/**/icu_num, ENABLE_ICU/**/icu_enables, reg,stray)
+FAST(0, IO_ICU1, ENABLE_ICU1)
+FAST(1, IO_ICU1, ENABLE_ICU1)
+FAST(2, IO_ICU1, ENABLE_ICU1)
+FAST(3, IO_ICU1, ENABLE_ICU1)
+FAST(4, IO_ICU1, ENABLE_ICU1)
+FAST(5, IO_ICU1, ENABLE_ICU1)
+FAST(6, IO_ICU1, ENABLE_ICU1)
+FAST(7, IO_ICU1, ENABLE_ICU1)
+FAST(8, IO_ICU2, ENABLE_ICU1_AND_2)
+FAST(9, IO_ICU2, ENABLE_ICU1_AND_2)
+FAST(10, IO_ICU2, ENABLE_ICU1_AND_2)
+FAST(11, IO_ICU2, ENABLE_ICU1_AND_2)
+FAST(12, IO_ICU2, ENABLE_ICU1_AND_2)
+FAST(13, IO_ICU2, ENABLE_ICU1_AND_2)
+FAST(14, IO_ICU2, ENABLE_ICU1_AND_2)
+FAST(15, IO_ICU2, ENABLE_ICU1_AND_2)
 
 /*
- * XXX - the mask (1 << 2) == IRQ_SLAVE will be generated for IRQ 2, instead
- * of the mask IRQ2 (defined as IRQ9 == (1 << 9)).  But IRQ 2 "can't happen".
- * In fact, all stray interrupts "can't happen" except for bugs.  The
- * "stray" IRQ 7 is documented behaviour of the 8259.  It happens when there
- * is a glitch on any of its interrupt inputs.  Does it really interrupt when
- * IRQ 7 is masked?
+ * Normal vectors.
  *
- * XXX - unpend doesn't work for these, it sends them to the real handler.
+ * We cdr down the intrhand chain, calling each handler with its appropriate
+ * argument (0 meaning a pointer to the frame, for clock interrupts).
  *
- * XXX - the race bug during initialization may be because I changed the
- * order of switching from the stray to the real interrupt handler to before
- * enabling interrupts.  The old order looked unsafe but maybe it is OK with
- * the stray interrupt handler installed.  But these handlers only reduce
- * the window of vulnerability - it is still open at the end of
- * isa_configure().
+ * The handler returns one of three values:
+ *   0 - This interrupt wasn't for me.
+ *   1 - This interrupt was for me.
+ *  -1 - This interrupt might have been for me, but I don't know.
+ * If there are no handlers, or they all return 0, we flags it as a `stray'
+ * interrupt.  On a system with level-triggered interrupts, we could terminate
+ * immediately when one of them returns 1; but this is a PC.
  *
- * XXX - many comments are stale.
+ * On exit, we jump to doreti, to process soft interrupts and ASTs.
  */
+#define	INTR(irq_num, icu, enable_icus) \
+IDTVEC(intr/**/irq_num)							;\
+	pushl	$0			/* dummy error code */		;\
+	pushl	$T_ASTFLT		/* trap # for doing ASTs */	;\
+	INTRENTRY							;\
+	MASK(irq_num, icu)		/* mask it in hardware */	;\
+	enable_icus(irq_num)		/* and allow other intrs */	;\
+	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num)		;\
+	jnz	_Xhold/**/irq_num	/* currently masked; hold it */	;\
+_Xresume/**/irq_num/**/:						;\
+	movl	_cpl,%eax		/* cpl to restore on exit */	;\
+	pushl	%eax							;\
+	orl	_intrmask + (irq_num) * 4,%eax				;\
+	movl	%eax,_cpl		/* add in this intr's mask */	;\
+	sti				/* safe to take intrs now */	;\
+	movl	_intrhand + (irq_num) * 4,%ebx	/* head of chain */	;\
+	testl	%ebx,%ebx						;\
+	jz	_Xstray/**/irq_num	/* no handlears; we're stray */	;\
+	xorl	%esi,%esi		/* nobody claimed it yet */	;\
+7:	movl	4(%ebx),%eax		/* get handler arg */		;\
+	testl	%eax,%eax						;\
+	jnz	4f							;\
+	movl	%esp,%eax		/* 0 means frame pointer */	;\
+4:	pushl	%eax							;\
+	call	(%ebx)			/* call it */			;\
+	addl	$4,%esp			/* toss the arg */		;\
+	orl	%eax,%esi		/* maybe he claimed it */	;\
+	incl	8(%ebx)			/* count the intrs */		;\
+	movl	12(%ebx),%ebx		/* next handler in chain */	;\
+	testl	%ebx,%ebx						;\
+	jnz	7b							;\
+	testl	%esi,%esi		/* no more handlers */		;\
+	jz	_Xstray/**/irq_num	/* nobody claimed it */		;\
+5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
+	INTREXIT			/* lower spl and do ASTs */	;\
+IDTVEC(stray/**/irq_num)						;\
+	pushl	$irq_num						;\
+	call	_isa_strayintr						;\
+	addl	$4,%esp							;\
+	jmp	5b							;\
+IDTVEC(hold/**/irq_num)							;\
+	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num)		;\
+	INTRFASTEXIT
 
-	STRAYINTR(0,1,1, al)
-	STRAYINTR(1,1,1, al)
-	STRAYINTR(2,1,1, al)
-	STRAYINTR(3,1,1, al)
-	STRAYINTR(4,1,1, al)
-	STRAYINTR(5,1,1, al)
-	STRAYINTR(6,1,1, al)
-	STRAYINTR(8,2,1_AND_2, ah)
-	STRAYINTR(9,2,1_AND_2, ah)
-	STRAYINTR(10,2,1_AND_2, ah)
-	STRAYINTR(11,2,1_AND_2, ah)
-	STRAYINTR(12,2,1_AND_2, ah)
-	STRAYINTR(13,2,1_AND_2, ah)
-	STRAYINTR(14,2,1_AND_2, ah)
-	STRAYINTR(15,2,1_AND_2, ah)
-IDTVEC(intrdefault)
-	STRAYINTR(7,1,1, al)	/* XXX */
-#if 0
-	INTRSTRAY(255, $-1, 255) ; call	_isa_strayintr ; INTREXIT2
-#endif
+INTR(0, IO_ICU1, ENABLE_ICU1)
+INTR(1, IO_ICU1, ENABLE_ICU1)
+INTR(2, IO_ICU1, ENABLE_ICU1)
+INTR(3, IO_ICU1, ENABLE_ICU1)
+INTR(4, IO_ICU1, ENABLE_ICU1)
+INTR(5, IO_ICU1, ENABLE_ICU1)
+INTR(6, IO_ICU1, ENABLE_ICU1)
+INTR(7, IO_ICU1, ENABLE_ICU1)
+INTR(8, IO_ICU2, ENABLE_ICU1_AND_2)
+INTR(9, IO_ICU2, ENABLE_ICU1_AND_2)
+INTR(10, IO_ICU2, ENABLE_ICU1_AND_2)
+INTR(11, IO_ICU2, ENABLE_ICU1_AND_2)
+INTR(12, IO_ICU2, ENABLE_ICU1_AND_2)
+INTR(13, IO_ICU2, ENABLE_ICU1_AND_2)
+INTR(14, IO_ICU2, ENABLE_ICU1_AND_2)
+INTR(15, IO_ICU2, ENABLE_ICU1_AND_2)
+
 /*
- * These are the interrupt counters, I moved them here from icu.s so that
- * they are with the name table.  rgrimes
+ * Recursive interrupts.
  *
- * There are now lots of counters, this has been redone to work with
- * Bruce Evans intr-0.1 code, which I modified some more to make it all
- * work with vmstat.
+ * This is a somewhat nasty hack to deal with resuming interrupts from splx().
+ * We can't just jump to the resume point, because some handlers require an
+ * interrupt frame.  Instead, we just recursively interrupt.
+ *
+ * On entry, %esi contains a pointer to where we need to return.  This is a
+ * bit faster than a call/ret/jmp to continue the loop.
+ *
+ * XXX
+ * It might be a little faster to build the interrupt frame manually and jump
+ * to the resume point.  The code would be larger, though.
  */
-	.data
-Vresume:	.space	16 * 4	/* where to resume intr handler after unpend */
-	.globl	_intrcnt
-_intrcnt:			/* used by vmstat to calc size of table */
-	.globl	_intrcnt_bad7
-_intrcnt_bad7:	.space	4	/* glitches on irq 7 */
-	.globl	_intrcnt_bad15
-_intrcnt_bad15:	.space	4	/* glitches on irq 15 */
-	.globl	_intrcnt_stray
-_intrcnt_stray:	.space	4	/* total count of stray interrupts */
-	.globl	_intrcnt_actv
-_intrcnt_actv:	.space	NR_REAL_INT_HANDLERS * 4	/* active interrupts */
+#define	RECURSE(irq_num) \
+IDTVEC(recurse/**/irq_num)						;\
+	int	$(ICU_OFFSET + irq_num)					;\
+	jmp	%esi
 
-	.globl	_eintrcnt
-_eintrcnt:			/* used by vmstat to calc size of table */
+RECURSE(0)
+RECURSE(1)
+RECURSE(2)
+RECURSE(3)
+RECURSE(4)
+RECURSE(5)
+RECURSE(6)
+RECURSE(7)
+RECURSE(8)
+RECURSE(9)
+RECURSE(10)
+RECURSE(11)
+RECURSE(12)
+RECURSE(13)
+RECURSE(14)
+RECURSE(15)
 
 /*
- * Build the interrupt name table for vmstat
+ * These tables are used by the ISA configuration code.
  */
+/* interrupt service routine entry points */
+IDTVEC(intr)
+	.long   _Xintr0, _Xintr1, _Xintr2, _Xintr3, _Xintr4, _Xintr5, _Xintr6
+	.long   _Xintr7, _Xintr8, _Xintr9, _Xintr10, _Xintr11, _Xintr12
+	.long   _Xintr13, _Xintr14, _Xintr15
+/* fast interrupt routine entry points */
+IDTVEC(fast)
+	.long   _Xfast0, _Xfast1, _Xfast2, _Xfast3, _Xfast4, _Xfast5, _Xfast6
+	.long   _Xfast7, _Xfast8, _Xfast9, _Xfast10, _Xfast11, _Xfast12
+	.long   _Xfast13, _Xfast14, _Xfast15
 
-#undef BUILD_FAST_VECTOR
-#define BUILD_FAST_VECTOR	BUILD_VECTOR
-
-#undef BUILD_VECTOR
-#define	BUILD_VECTOR(name, unit, irq_num, id_num, mask, handler, \
-		     icu_num, icu_enables, reg) \
-	.ascii	"name irq" ; \
-	.asciz	"irq_num"
 /*
- * XXX - use the STRING and CONCAT macros from <sys/cdefs.h> to stringize
- * and concatenate names above and elsewhere.
+ * These tables are used by doreti() and spllower().
  */
-
-	.text
-	.globl	_intrnames, _eintrnames
-_intrnames:
-	BUILD_VECTOR(bad,,7,,,,,,)
-	BUILD_VECTOR(bad,,15,,,,,,)
-	BUILD_VECTOR(stray,,,,,,,,)
-	BUILD_VECTORS
-
-_eintrnames:
+/* resume points for suspended interrupts */
+IDTVEC(resume)
+	.long   _Xresume0, _Xresume1, _Xresume2, _Xresume3, _Xresume4
+	.long   _Xresume5, _Xresume6, _Xresume7, _Xresume8, _Xresume9
+	.long   _Xresume10, _Xresume11, _Xresume12, _Xresume13, _Xresume14
+	.long   _Xresume15
+	/* for soft interrupts */
+	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.long	_Xsofttty, _Xsoftnet, _Xsoftclock
+/* fake interrupts to resume from splx() */
+IDTVEC(recurse)
+	.long   _Xrecurse0, _Xrecurse1, _Xrecurse2, _Xrecurse3, _Xrecurse4
+	.long   _Xrecurse5, _Xrecurse6, _Xrecurse7, _Xrecurse8, _Xrecurse9
+	.long   _Xrecurse10, _Xrecurse11, _Xrecurse12, _Xrecurse13, _Xrecurse14
+	.long   _Xrecurse15
+	/* for soft interrupts */
+	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+	.long	_Xsofttty, _Xsoftnet, _Xsoftclock

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: BSDI Id: isavar.h,v 1.5 1992/12/01 18:06:00 karels Exp 
- *	$Id: isavar.h,v 1.8 1994/03/30 18:35:11 mycroft Exp $
+ *	$Id: isavar.h,v 1.9 1994/04/07 06:50:58 mycroft Exp $
  */
 
 /*
@@ -85,9 +85,11 @@ struct intrhand {
 	void	*ih_arg;
 	u_long	ih_count;
 	struct	intrhand *ih_next;
-} *intrhand[16];
+	int	ih_level;
+};
 
-void intr_establish __P((int intr, struct intrhand *, enum devclass));
+void intr_establish __P((int intr, struct intrhand *));
+void intr_disestablish __P((int intr, struct intrhand *));
 void isa_establish __P((struct isadev *, struct device *));
 
 /*

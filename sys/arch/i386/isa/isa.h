@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.16 1994/03/29 04:34:21 mycroft Exp $
+ *	$Id: isa.h,v 1.17 1994/04/07 06:50:56 mycroft Exp $
  */
 
 /*
@@ -47,8 +47,6 @@
 unsigned char rtcin __P((int));
 void sysbeep __P((int, int));
 unsigned kbd_8042cmd __P((int));
-struct isa_device;
-int isa_irq_pending __P((struct isa_device *dvp));
 #endif
 
 

@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)npx.c	7.2 (Berkeley) 5/12/91
- *	$Id: npx.c,v 1.17 1994/04/05 17:57:02 mycroft Exp $
+ *	$Id: npx.c,v 1.18 1994/04/07 06:51:05 mycroft Exp $
  */
 #include "npx.h"
 #if NNPX > 0
@@ -108,7 +108,7 @@ extern	struct gate_descriptor idt[];
 int	npxdna		__P((void));
 void	npxexit		__P((void));
 void	npxinit		__P((u_int control));
-void	npxintr		__P((struct intrframe frame));
+int	npxintr		__P((struct intrframe *frame));
 void	npxsave		__P((struct save87 *addr));
 int	npxprobe1	__P((struct isa_attach_args *));
 
@@ -325,12 +325,18 @@ npxattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct isa_attach_args *ia = aux;
+	static struct intrhand npxhand;
 
 	if (npx_ex16)
 		printf(": using exception 16\n");
-	else if (npx_irq13)
+	else if (npx_irq13) {
 		printf("\n");
-	else {
+		npxhand.ih_fun = npxintr;
+		npxhand.ih_arg = 0;
+		npxhand.ih_level = IPL_NONE;
+		intr_establish(ia->ia_irq, &npxhand);
+	} else {
 #ifdef MATH_EMULATE
 		if (npx_exists)
 			printf("error reporting broken; using emulator\n");
@@ -393,9 +399,9 @@ npxexit()
  * Returning from the handler would be even less safe than usual because
  * IRQ13 exception handling makes exceptions even less precise than usual.
  */
-void
+int
 npxintr(frame)
-	struct intrframe frame;
+	struct intrframe *frame;
 {
 	int code;
 
@@ -438,7 +444,7 @@ npxintr(frame)
 	/*
 	 * Pass exception to process.
 	 */
-	if (ISPL(frame.if_cs) == SEL_UPL) {
+	if (ISPL(frame->if_cs) == SEL_UPL) {
 		/*
 		 * Interrupt is essentially a trap, so we can afford to call
 		 * the SIGFPE handler (if any) as soon as the interrupt
@@ -450,7 +456,7 @@ npxintr(frame)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		curproc->p_regs = (int *)&frame.if_es;
+		curproc->p_regs = (int *)&frame->if_es;
 #ifdef notyet
 		/*
 		 * Encode the appropriate code for detailed information on
@@ -478,6 +484,8 @@ npxintr(frame)
 		 */
 		psignal(npxproc, SIGFPE);
 	}
+
+	return 1;
 }
 
 /*

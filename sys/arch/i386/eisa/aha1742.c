@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.26 1994/04/05 08:53:00 mycroft Exp $
+ *      $Id: aha1742.c,v 1.27 1994/04/07 06:50:09 mycroft Exp $
  */
 
 /*
@@ -294,7 +294,7 @@ void ahb_send_mbox __P((struct ahb_softc *, int, int, struct ecb *));
 int ahb_poll __P((struct ahb_softc *, int));
 void ahb_send_immed __P((struct ahb_softc *, int, u_long));
 u_int ahb_adapter_info __P((struct ahb_softc *));
-int ahbintr __P((int));
+int ahbintr __P((struct ahb_softc *));
 void ahb_done __P((struct ahb_softc *, struct ecb *, int));
 void ahb_free_ecb __P((struct ahb_softc *, struct ecb *, int));
 struct ecb *ahb_get_ecb __P((struct ahb_softc *, int));
@@ -405,7 +405,7 @@ ahb_poll(ahb, wait)
 	}
 
 	/* don't know this will work */
-	ahbintr(ahb->sc_dev.dv_unit);
+	ahbintr(ahb);
 	return 0;
 }
 
@@ -566,11 +566,11 @@ ahbattach(parent, self, aux)
 
 #ifdef NEWCONFIG
 	isa_establish(&ahb->sc_id, &ahb->sc_dev);
+#endif
 	ahb->sc_ih.ih_fun = ahbintr;
 	ahb->sc_ih.ih_arg = ahb;
-	/* XXX and DV_TAPE, but either gives us splbio */
-	intr_establish(ia->ia_irq, &ahb->sc_ih, DV_DISK);
-#endif
+	ahb->sc_ih.ih_level = IPL_BIO;
+	intr_establish(ia->ia_irq, &ahb->sc_ih);
 
 	/*
 	 * ask the adapter what subunits are present
@@ -594,10 +594,9 @@ ahb_adapter_info(ahb)
  * Catch an interrupt from the adaptor
  */
 int
-ahbintr(unit)
-	int unit;
+ahbintr(ahb)
+	struct ahb_softc *ahb;
 {
-	struct ahb_softc *ahb = ahbcd.cd_devs[unit];
 	struct ecb *ecb;
 	u_char stat, ahbstat;
 	u_long mboxval;

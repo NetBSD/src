@@ -1482,7 +1482,7 @@ int	pcread ( Dev_t dev, struct uio *uio, int flag );
 int	pcwrite ( Dev_t dev, struct uio *uio, int flag );
 int	pcioctl ( Dev_t dev, int cmd, caddr_t data, int flag, struct proc *p );
 int	pcmmap ( Dev_t dev, int offset, int nprot );
-void	pcrint ( Dev_t dev, int irq, int cpl );
+int	pcrint ( void );
 int	pcparam ( struct tty *tp, struct termios *t );
 int	pccnprobe ( struct consdev *cp );
 int	pccninit ( struct consdev *cp );
