@@ -1,4 +1,4 @@
-/*	$NetBSD: klogin.c,v 1.5 1994/12/23 06:52:59 jtc Exp $	*/
+/*	$NetBSD: klogin.c,v 1.6 1995/03/08 19:41:36 brezak Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)klogin.c	8.3 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$NetBSD: klogin.c,v 1.5 1994/12/23 06:52:59 jtc Exp $";
+static char rcsid[] = "$NetBSD: klogin.c,v 1.6 1995/03/08 19:41:36 brezak Exp $";
 #endif /* not lint */
 
 #ifdef KERBEROS
@@ -63,6 +63,9 @@ static char rcsid[] = "$NetBSD: klogin.c,v 1.5 1994/12/23 06:52:59 jtc Exp $";
 
 extern int notickets;
 extern char *krbtkfile_env;
+extern char *tty;
+
+static char tkt_location[MAXPATHLEN];  /* a pointer to this is returned... */
 
 /*
  * Attempt to log the user in using Kerberos authentication
@@ -81,7 +84,6 @@ klogin(pw, instance, localhost, password)
 	struct hostent *hp;
 	unsigned long faddr;
 	char realm[REALM_SZ], savehost[MAXHOSTNAMELEN];
-	char tkt_location[MAXPATHLEN];
 	char *krb_get_phost();
 
 #ifdef SKEY
@@ -107,14 +109,16 @@ klogin(pw, instance, localhost, password)
 
 	/*
 	 * get TGT for local realm
-	 * tickets are stored in a file named TKT_ROOT plus uid
+	 * tickets are stored in a file named TKT_ROOT plus uid plus tty
 	 * except for user.root tickets.
 	 */
 
 	if (strcmp(instance, "root") != 0)
-		(void)sprintf(tkt_location, "%s%d", TKT_ROOT, pw->pw_uid);
+		(void)sprintf(tkt_location, "%s%d.%s",
+			      TKT_ROOT, pw->pw_uid, tty);
 	else
-		(void)sprintf(tkt_location, "%s_root_%d", TKT_ROOT, pw->pw_uid);
+		(void)sprintf(tkt_location, "%s_root_%d.%s",
+			      TKT_ROOT, pw->pw_uid, tty);
 	krbtkfile_env = tkt_location;
 	(void)krb_set_tkt_string(tkt_location);
 
@@ -163,6 +167,16 @@ klogin(pw, instance, localhost, password)
     		    "warning: TGT not verified (%s); %s.%s not registered, or srvtab is wrong?",
 		    krb_err_txt[kerror], VERIFY_SERVICE, savehost);
 		notickets = 0;
+		/*
+		 * but for security, don't allow root instances in under
+		 * this condition!
+		 */
+		if (strcmp(instance, "root") == 0) {
+		  syslog(LOG_ERR, "Kerberos %s root instance login refused\n",
+			 pw->pw_name);
+		  dest_tkt();
+		  return (1);
+		}
 		return (0);
 	}
 
