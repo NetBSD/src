@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2003/01/18 10:34:18 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2003/01/18 18:40:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,12 +80,12 @@ pthread__sp(void)
  * 0x202 is PSL_USERSET from arch/i386/include/psl.h
  */
 #define _INITCONTEXT_U_MD(ucp)						\
-	(ucp)->uc_mcontext.__gregs[_REG_GS] = 0x2b;			\
-	(ucp)->uc_mcontext.__gregs[_REG_FS] = 0x2b;			\
-	(ucp)->uc_mcontext.__gregs[_REG_ES] = 0x2b;			\
-	(ucp)->uc_mcontext.__gregs[_REG_DS] = 0x2b;			\
-	(ucp)->uc_mcontext.__gregs[_REG_CS] = 0x23;			\
-	(ucp)->uc_mcontext.__gregs[_REG_SS] = 0x2b;			\
+	(ucp)->uc_mcontext.__gregs[_REG_GS] = 0x2b,			\
+	(ucp)->uc_mcontext.__gregs[_REG_FS] = 0x2b,			\
+	(ucp)->uc_mcontext.__gregs[_REG_ES] = 0x2b,			\
+	(ucp)->uc_mcontext.__gregs[_REG_DS] = 0x2b,			\
+	(ucp)->uc_mcontext.__gregs[_REG_CS] = 0x23,			\
+	(ucp)->uc_mcontext.__gregs[_REG_SS] = 0x2b,			\
 	(ucp)->uc_mcontext.__gregs[_REG_EFL] = 0x202;
 
 /*
@@ -139,12 +139,12 @@ pthread__sp(void)
 	} while (/*CONSTCOND*/0)
 
 #define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)		       		\
-	memcpy((freg)->__data,						\
+	(void)memcpy((freg)->__data,					\
         (uc)->uc_mcontext.__fpregs.__fp_reg_set.__fpchip_state.__fp_state, \
 	sizeof(struct fpreg))
 
 #define PTHREAD_FPREG_TO_UCONTEXT(uc, freg) do {       	       		\
-	memcpy(								\
+	(void)memcpy(							\
         (uc)->uc_mcontext.__fpregs.__fp_reg_set.__fpchip_state.__fp_state, \
 	(freg)->__data, sizeof(struct fpreg));				\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\

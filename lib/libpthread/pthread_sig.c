@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.2 2003/01/18 10:34:16 thorpej Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.3 2003/01/18 18:45:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ pthread__signal_init(void)
 }
 
 int
+/*ARGSUSED*/
 pthread_kill(pthread_t thread, int sig)
 {
 
@@ -199,21 +200,21 @@ firstsig(const sigset_t *ss)
 {
 	int sig;
 
-	sig = ffs(ss->__bits[0]);
+	sig = ffs((int)ss->__bits[0]);
 	if (sig != 0)
 		return (sig);
 #if NSIG > 33
-	sig = ffs(ss->__bits[1]);
+	sig = ffs((int)ss->__bits[1]);
 	if (sig != 0)
 		return (sig + 32);
 #endif
 #if NSIG > 65
-	sig = ffs(ss->__bits[2]);
+	sig = ffs((int)ss->__bits[2]);
 	if (sig != 0)
 		return (sig + 64);
 #endif
 #if NSIG > 97
-	sig = ffs(ss->__bits[3]);
+	sig = ffs((int)ss->__bits[3]);
 	if (sig != 0)
 		return (sig + 96);
 #endif
@@ -498,15 +499,15 @@ pthread__signal(pthread_t t, int sig, int code)
 	 * handler. So we borrow a bit of space from the target's
 	 * stack, which we were adjusting anyway.
 	 */
-	maskp = (sigset_t *)((char *)target->pt_uc - STACKSPACE - 
-	    sizeof(sigset_t));
+	maskp = (sigset_t *)(void *)((char *)(void *)target->pt_uc -
+	    STACKSPACE - sizeof(sigset_t));
 	*maskp = oldmask;
 
 	/*
 	 * XXX We are blatantly ignoring SIGALTSTACK. It would screw
 	 * with our notion of stack->thread mappings.
 	 */
-	uc = (ucontext_t *)((char *)maskp - sizeof(ucontext_t));
+	uc = (ucontext_t *)(void *)((char *)(void *)maskp - sizeof(ucontext_t));
 #ifdef _UC_UCONTEXT_ALIGN
 	uc = (ucontext_t *)((uintptr_t)uc & _UC_UCONTEXT_ALIGN);
 #endif
@@ -600,6 +601,7 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
 		pthread_spinunlock(self, &self->pt_statelock);
 		pthread__switch(self, next);
 	} else {
+		/*CONSTCOND*/
 		assert(0);
 	}
 	/*
@@ -607,6 +609,6 @@ pthread__signal_tramp(int sig, int code, struct sigaction *act,
 	 * by a signal.
 	 */
 	_setcontext_u(uc);
-       	/* NOTREACHED */
+       	/*NOTREACHED*//*CONSTCOND*/
 	assert(0);
 }

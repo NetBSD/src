@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.3 2003/01/18 18:45:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,8 +105,8 @@ pthread__debuglog_init(int force)
 	void *debuglog;
 	struct pthread_msgbuf* buf;
 
-	debugshmid = shmget(PTHREAD__DEBUG_SHMKEY, PTHREAD__DEBUG_SHMSIZE,
-	    IPC_CREAT | S_IRWXU | S_IRWXG | S_IRWXO);
+	debugshmid = shmget((key_t)PTHREAD__DEBUG_SHMKEY,
+	    PTHREAD__DEBUG_SHMSIZE, IPC_CREAT | S_IRWXU | S_IRWXG | S_IRWXO);
 	
 	if (debugshmid == -1)
 		err(1, "Couldn't get shared debug log");
@@ -134,7 +134,8 @@ void
 pthread__debuglog_printf(const char *fmt, ...)
 {
 	char tmpbuf[200];
-	long len, cplen, diff1, diff2;
+	size_t len, cplen;
+	long diff1, diff2;
 	va_list ap;
 
 	if (debugbuf == NULL) 
@@ -144,21 +145,22 @@ pthread__debuglog_printf(const char *fmt, ...)
 	len = vsnprintf(tmpbuf, 200, fmt, ap);
 	va_end(ap);
 
-	diff1 = debugbuf->msg_bufw - debugbuf->msg_bufr;
+	diff1 = (long)debugbuf->msg_bufw - (long)debugbuf->msg_bufr;
 
 	if (debugbuf->msg_bufw + len > debugbuf->msg_bufs) {
 		cplen = debugbuf->msg_bufs - debugbuf->msg_bufw;
-		memcpy(&debugbuf->msg_bufc[debugbuf->msg_bufw],
+		(void)memcpy(&debugbuf->msg_bufc[debugbuf->msg_bufw],
 		    tmpbuf, cplen);
-		memcpy(&debugbuf->msg_bufc[0], tmpbuf + cplen, len - cplen);
+		(void)memcpy(&debugbuf->msg_bufc[0], tmpbuf + cplen,
+		    len - cplen);
 		debugbuf->msg_bufw = len - cplen;
 	} else {
-		memcpy(&debugbuf->msg_bufc[debugbuf->msg_bufw],
+		(void)memcpy(&debugbuf->msg_bufc[debugbuf->msg_bufw],
 		    tmpbuf, len);
 		debugbuf->msg_bufw += len;
 	}
 
-	diff2 = debugbuf->msg_bufw - debugbuf->msg_bufr;
+	diff2 = (long)debugbuf->msg_bufw - (long)debugbuf->msg_bufr;
 	
 	/* Check if we've lapped the read pointer and if so advance it. */
 	if (((diff1 < 0) && (diff2 >= 0)) || ((diff1 >= 0) && (diff2 < 0)))

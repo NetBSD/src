@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.3 2003/01/18 18:45:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ int	pthread__find(pthread_t self, pthread_t target);
 #define _INITCONTEXT_U(ucp) do {					\
 	(ucp)->uc_flags = _UC_CPU | _UC_STACK;				\
 	_INITCONTEXT_U_MD(ucp)						\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 #ifdef __PTHREAD_SIGNAL_PRIVATE
 
