@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.76.4.2 2005/01/25 12:58:28 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.76.4.3 2005/01/31 11:31:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -134,7 +134,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.76.4.2 2005/01/25 12:58:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.76.4.3 2005/01/31 11:31:42 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -657,7 +657,7 @@ uvm_km_free(map, addr, size, flags)
 	if (flags & UVM_KMF_PAGEABLE) {
 		uvm_km_pgremove(addr, addr + size);
 		pmap_remove(pmap_kernel(), addr, addr + size);
-	} else {
+	} else if (flags & UVM_KMF_WIRED) {
 		uvm_km_pgremove_intrsafe(addr, addr + size);
 		pmap_kremove(addr, size);
 	}
