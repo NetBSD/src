@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.9 1997/11/09 12:47:08 jonathan Exp $	*/
+/*	$NetBSD: install.c,v 1.10 1997/12/04 11:27:59 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,10 @@ void do_install(void)
 		return;
 	}
 
-	md_make_bsd_partitions ();
+	if (md_make_bsd_partitions () == 0) {
+		msg_display(MSG_abort);
+		return;
+	}
 
 	/* Last chance ... do you really want to do this? */
 	msg_display (MSG_lastchance);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 1997/11/19 14:06:47 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.16 1997/12/04 11:28:22 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,7 @@
 #include <curses.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <util.h>
 #include <sys/types.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -49,6 +50,20 @@
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+
+/*
+ * temporary hack
+ */
+void get_labelname __P((void));
+
+void get_labelname(void)
+{
+
+	/* Disk name */
+	msg_prompt (MSG_packname, "mydisk", bsddiskname, DISKNAME_SIZE);
+	
+}
+	
 
 /*
  * symbolic names for disk partitions
@@ -120,12 +135,14 @@ void	md_post_disklabel (void)
 /*
  * md back-end code for menu-driven  BSD disklabel editor.
  */
- void md_make_bsd_partitions (void)
+int md_make_bsd_partitions (void)
 {
 	FILE *f;
-	int i, part;
+	int i;
+	int part;	/* next available partition */
 	int remain;
 	char isize[20];
+	int maxpart = getmaxpartitions();
 
 	/*
 	 * Initialize global variables that track  space used on this disk.
@@ -151,7 +168,9 @@ void	md_post_disklabel (void)
 		multname = msg_string(MSG_megname);
 	}
 
+
 	/* Build standard partitions */
+	emptylabel(bsdlabel);
 
 	/* Partitions C is predefined (whole  disk). */
 	bsdlabel[C][D_FSTYPE] = T_UNUSED;
@@ -167,7 +186,7 @@ void	md_post_disklabel (void)
 	bsdlabel[F][D_FSTYPE] = T_UNUSED;
 	bsdlabel[G][D_FSTYPE] = T_UNUSED;
 	bsdlabel[H][D_FSTYPE] = T_UNUSED;
-
+	part = D;
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c "unused", d /usr */
@@ -202,9 +221,7 @@ void	md_post_disklabel (void)
 		bsdlabel[PART_USR][D_FSIZE] = 1024;
 		strcpy (fsmount[PART_USR], "/usr");
 
-
-		/* Verify Partitions. */
-		process_menu (MENU_fspartok);
+		part = E;
 		break;
 
 	case 3: /* custom: ask user for all sizes */
@@ -283,13 +300,20 @@ void	md_post_disklabel (void)
 		}
 		
 
-		/* Verify Partitions. */
-		process_menu(MENU_fspartok);
 		break;
 	}
 
-	/* Disk name */
-	msg_prompt (MSG_packname, "mydisk", bsddiskname, 80);
+	/*
+	 * OK, we have a partition table. Give the user the chance to
+	 * edit it and verify it's OK, or abort altogether.
+	 */
+	if (edit_and_check_label(bsdlabel, maxpart, RAW_PART, RAW_PART) == 0) {
+		msg_display(MSG_abort);
+		return 0;
+	}
+
+	/* read name for disklabel into global variable.  */
+	get_labelname();
 
 	/* Create the disktab.preinstall */
 	run_prog ("cp /etc/disktab.preinstall /etc/disktab");
@@ -324,6 +348,8 @@ void	md_post_disklabel (void)
 	}
 	fclose (f);
 
+	/* Everything looks OK. */
+	return (1);
 }
 
 
@@ -408,6 +434,11 @@ void	md_copy_filesystem (void)
 void	md_post_newfs (void)
 {
 	/* XXX boot blocks ... */
+	if (target_already_root()) {
+		/* /usr is empty and we must already have bootblocks?*/
+		return;
+	}
+	
 	printf (msg_string(MSG_dobootblks), diskdev);
 	run_prog_or_continue("/sbin/disklabel -B %s /dev/r%sc",
 			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
