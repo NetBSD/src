@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1996/05/27 12:39:01 leo Exp $
+#	$NetBSD: Makefile,v 1.5 1996/05/27 15:46:41 leo Exp $
 
 # Revision is 1.1B
 REV=		11B
@@ -25,7 +25,7 @@ MTREE=		${.CURDIR}/mtree.conf
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig -v -c ${VND_DEV} ${IMAGE}
-	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} floppybt
+	newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} miniroot
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	echo "VERSION=${REV}; export VERSION" > ${MOUNT_POINT}/VERSION
