@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.4 2001/01/12 22:19:15 bjh21 Exp $	*/
+/*	$NetBSD: disassem.c,v 1.5 2001/01/12 22:44:08 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -103,7 +103,7 @@ struct arm32_insn {
 	char* format;
 };
 
-static struct arm32_insn arm32_i[] = {
+static const struct arm32_insn arm32_i[] = {
     { 0x0fffffff, 0x0ff00000, "imb",	"c" },		/* Before swi */
     { 0x0fffffff, 0x0ff00001, "imbrange",	"c" },	/* Before swi */
     { 0x0f000000, 0x0f000000, "swi",	"c" },
@@ -199,34 +199,34 @@ static struct arm32_insn arm32_i[] = {
     { 0x00000000, 0x00000000, NULL,	NULL }
 };
 
-static char *arm32_insn_conditions[] = {
+static char * const arm32_insn_conditions[] = {
 	"eq", "ne", "cs", "cc",
 	"mi", "pl", "vs", "vc",
 	"hi", "ls", "ge", "lt",
 	"gt", "le", "",   "nv"
 };
 
-static char *insn_block_transfers[] = {
+static char * const insn_block_transfers[] = {
 	"da", "ia", "db", "ib"
 };
 
-static char *insn_stack_block_transfers[] = {
+static char * const insn_stack_block_transfers[] = {
 	"ed", "ea", "fd", "fa"
 };
 
-static char *op_shifts[] = {
+static char * const op_shifts[] = {
 	"lsl", "lsr", "asr", "ror"
 };
 
-static char *insn_fpa_rounding[] = {
+static char * const insn_fpa_rounding[] = {
 	"", "p", "m", "z"
 };
 
-static char *insn_fpa_precision[] = {
+static char * const insn_fpa_precision[] = {
 	"s", "d", "e", "p"
 };
 
-static char *insn_fpaconstants[] = {
+static char * const insn_fpaconstants[] = {
 	"0.0", "1.0", "2.0", "3.0",
 	"4.0", "5.0", "0.5", "10.0"
 };
