@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.14 1999/09/18 19:38:48 jsm Exp $	*/
+/*	$NetBSD: bog.c,v 1.15 1999/09/19 09:42:38 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.14 1999/09/18 19:38:48 jsm Exp $");
+__RCSID("$NetBSD: bog.c,v 1.15 1999/09/19 09:42:38 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,11 +238,29 @@ main(argc, argv)
 		newgame(bspec);
 		bspec = NULL;	/* reset for subsequent games */
 		playgame();
+#ifdef NEW_STYLE
+		prompt("Type <q>uit, <esc> locate, any other key to continue...");
+#else
 		prompt("Type <space> to continue, any cap to quit...");
+#endif
 		delay(50);	/* wait for user to quit typing */
 		flushin(stdin);
 		for (;;) {
 			ch = inputch();
+#ifdef NEW_STYLE
+			if (ch == '\033')
+				findword();
+			else if (ch == '\014' || ch == '\022')	/* ^l or ^r */
+				redraw();
+			else {
+				if (ch == 'q') {
+					done = 1;
+					break;
+				} else {
+					break;
+				}
+			}
+#else
 			if (ch == '\033')
 				findword();
 			else if (ch == '\014' || ch == '\022')	/* ^l or ^r */
@@ -255,6 +273,7 @@ main(argc, argv)
 				if (ch == ' ')
 					break;
 			}
+#endif
 		}
 	}
 	cleanup();
