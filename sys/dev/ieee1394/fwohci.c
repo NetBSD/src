@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.48 2002/01/09 18:50:54 drochner Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.49 2002/01/12 16:58:16 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.48 2002/01/09 18:50:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.49 2002/01/12 16:58:16 tsutsui Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -852,8 +852,7 @@ fwohci_desc_alloc(struct fwohci_softc *sc)
 	    OHCI_BUF_IR_CNT * sc->sc_isoctx + 2;
 	dsize = sizeof(struct fwohci_desc) * sc->sc_descsize;
 	mapsize = howmany(sc->sc_descsize, NBBY);
-	sc->sc_descmap = malloc(mapsize, M_DEVBUF, M_WAITOK);
-	memset(sc->sc_descmap, 0, mapsize);
+	sc->sc_descmap = malloc(mapsize, M_DEVBUF, M_WAITOK|M_ZERO);
 
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, dsize, PAGE_SIZE, 0,
 	    &sc->sc_dseg, 1, &sc->sc_dnseg, 0)) != 0) {
@@ -945,8 +944,8 @@ fwohci_ctx_alloc(struct fwohci_softc *sc, struct fwohci_ctx **fcp,
 	int buf2cnt;
 #endif
 
-	fc = malloc(sizeof(*fc) + sizeof(*fb) * bufcnt, M_DEVBUF, M_WAITOK);
-	memset(fc, 0, sizeof(*fc) + sizeof(*fb) * bufcnt);
+	fc = malloc(sizeof(*fc) + sizeof(*fb) * bufcnt, M_DEVBUF,
+	    M_WAITOK|M_ZERO);
 	LIST_INIT(&fc->fc_handler);
 	TAILQ_INIT(&fc->fc_buf);
 	fc->fc_ctx = ctx;
@@ -2560,10 +2559,9 @@ fwohci_uid_collect(struct fwohci_softc *sc)
 	if (sc->sc_uidtbl != NULL)
 		free(sc->sc_uidtbl, M_DEVBUF);
 	sc->sc_uidtbl = malloc(sizeof(*fu) * (sc->sc_rootid + 1), M_DEVBUF,
-	    M_NOWAIT);		/* XXX M_WAITOK requires locks */
+	    M_NOWAIT|M_ZERO);	/* XXX M_WAITOK requires locks */
 	if (sc->sc_uidtbl == NULL)
 		return;
-	memset(sc->sc_uidtbl, 0, sizeof(*fu) * (sc->sc_rootid + 1));
 
 	for (i = 0, fu = sc->sc_uidtbl; i <= sc->sc_rootid; i++, fu++) {
 		if (i == (sc->sc_nodeid & OHCI_NodeId_NodeNumber)) {
