@@ -1,4 +1,4 @@
-/*	$NetBSD: sunmon.c,v 1.8 1998/02/05 04:57:49 gwr Exp $	*/
+/*	$NetBSD: sunmon.c,v 1.9 1998/02/26 19:30:59 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -99,13 +99,9 @@ void sunmon_abort()
 
 	/*
 	 * Drop into the PROM in a way that allows a continue.
-	 * That's what the PROM function (romp->abortEntry) is for,
-	 * but that wants to be entered as a trap hander, so just
-	 * stuff it into the PROM interrupt vector for trap zero
-	 * and then do a trap.  Needs PROM vector table in RAM.
+	 * Already setup "trap #14" in sunmon_init().
 	 */
-	sunmon_vbr[32] = romVectorPtr->abortEntry;
-	asm(" trap #0 ; _sunmon_continued: nop");
+	asm(" trap #14 ; _sunmon_continued: nop");
 
 	/* We have continued from a PROM abort! */
 
@@ -259,6 +255,9 @@ sunmon_init()
 
 	/* Save the PROM monitor Vector Base Register (VBR). */
 	sunmon_vbr = getvbr();
+
+	/* Arrange for "trap #14" to cause a PROM abort. */
+	sunmon_vbr[32+14] = romVectorPtr->abortEntry;
 
 	/* Save and replace the "v command" handler. */
 	sunmon_vcmd = *rvec->vector_cmd;
