@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.26.2.1 2002/04/23 20:41:12 nathanw Exp $	*/
+/*	$NetBSD: keyword.c,v 1.26.2.2 2002/04/24 04:29:58 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.26.2.1 2002/04/23 20:41:12 nathanw Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.26.2.2 2002/04/24 04:29:58 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,6 +110,7 @@ VAR var[] = {
 	{"login", "LOGIN", NULL, LJUST, logname},
 	{"logname", "", "login"},
 	{"lstart", "STARTED", NULL, LJUST, lstarted},
+	{"lstate", "STAT", NULL, LJUST|LWP, lstate},
 	{"majflt", "MAJFLT", NULL, 0, pvar, 0, POFF(p_uru_majflt), ULONG, "d"},
 	{"minflt", "MINFLT", NULL, 0, pvar, 0, POFF(p_uru_minflt), ULONG, "d"},
 	{"msgrcv", "MSGRCV", NULL, 0, pvar, 0, POFF(p_uru_msgrcv), ULONG, "d"},

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.71.2.2 2002/04/23 20:41:12 nathanw Exp $	*/
+/*	$NetBSD: print.c,v 1.71.2.3 2002/04/24 04:29:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.71.2.2 2002/04/23 20:41:12 nathanw Exp $");
+__RCSID("$NetBSD: print.c,v 1.71.2.3 2002/04/24 04:29:58 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -443,6 +443,68 @@ state(arg, ve, mode)
 		*cp++ = 's';
 	if ((flag & P_CONTROLT) && k->p__pgid == k->p_tpgid)
 		*cp++ = '+';
+	if (flag & P_SA)
+		*cp++ = 'a';
+	else if (k->p_nlwps > 1)
+		*cp++ = 'l';
+	*cp = '\0';
+	strprintorsetwidth(v, buf, mode);
+}
+
+void
+lstate(arg, ve, mode)
+	void *arg;
+	VARENT *ve;
+	int mode;
+{
+	struct kinfo_lwp *k;
+	int flag, is_zombie;
+	char *cp;
+	VAR *v;
+	char buf[16];
+
+	k = arg;
+	is_zombie = 0;
+	v = ve->var;
+	flag = k->l_flag;
+	cp = buf;
+
+	switch (k->l_stat) {
+
+	case LSSTOP:
+		*cp = 'T';
+		break;
+
+	case LSSLEEP:
+		if (flag & L_SINTR)	/* interuptable (long) */
+			*cp = k->l_slptime >= maxslp ? 'I' : 'S';
+		else
+			*cp = 'D';
+		break;
+
+	case LSRUN:
+	case LSIDL:
+	case LSONPROC:
+		*cp = 'R';
+		break;
+
+	case LSZOMB:
+	case LSDEAD:
+		*cp = 'Z';
+		is_zombie = 1;
+		break;
+
+	default:
+		*cp = '?';
+	}
+	cp++;
+	if (flag & L_INMEM) {
+	} else
+		*cp++ = 'W';
+	if (k->l_holdcnt)
+		*cp++ = 'L';
+	if (flag & L_DETACHED)
+		*cp++ = '-';
 	*cp = '\0';
 	strprintorsetwidth(v, buf, mode);
 }
