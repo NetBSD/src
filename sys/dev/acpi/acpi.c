@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.44 2003/10/30 18:15:35 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.45 2003/10/30 19:33:24 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.44 2003/10/30 18:15:35 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.45 2003/10/30 19:33:24 mycroft Exp $");
 
 #include "opt_acpi.h"
 
@@ -441,7 +441,9 @@ acpi_build_tree(struct acpi_softc *sc)
 				 * so we should claim them, if possible.
 				 * Requires changes to bus_space(9).
 				 */
-				if ((ad->ad_devinfo.CurrentStatus &
+				if ((ad->ad_devinfo.Valid & ACPI_VALID_STA) ==
+				    ACPI_VALID_STA &&
+				    (ad->ad_devinfo.CurrentStatus &
 				     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
 				      ACPI_STA_DEV_OK)) !=
 				    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
