@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.770 2005/03/25 23:30:55 cube Exp $
+# $NetBSD: mi,v 1.771 2005/03/28 15:44:26 wiz Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1998,6 +1998,7 @@
 ./usr/share/man/cat8/pmppc/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/pmppc/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/portmap.0			man-obsolete		obsolete
+./usr/share/man/cat8/postinstall.0		man-sys-catman		.cat
 ./usr/share/man/cat8/powerd.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/poweroff.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/pppd.0			man-ppp-catman		.cat
@@ -4202,6 +4203,7 @@
 ./usr/share/man/man8/pmppc/boot.8		man-sys-man		.man
 ./usr/share/man/man8/pmppc/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/portmap.8			man-obsolete		obsolete
+./usr/share/man/man8/postinstall.8		man-sys-man		.man
 ./usr/share/man/man8/powerd.8			man-sysutil-man		.man
 ./usr/share/man/man8/poweroff.8			man-sysutil-man		.man
 ./usr/share/man/man8/pppd.8			man-ppp-man		.man
