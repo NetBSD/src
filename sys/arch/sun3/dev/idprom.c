@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.8 1994/11/21 21:30:49 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.9 1994/12/12 18:59:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -32,6 +32,7 @@
 
 /*
  * Machine ID PROM - system type and serial number
+ * All this to read some bytes in control space...
  */
 
 #include "sys/param.h"
@@ -45,8 +46,6 @@
 
 #include "idprom.h"
 
-extern void idpromattach __P((struct device *, struct device *, void *));
-
 struct idprom_softc {
     struct device idprom_driver;
     int           idprom_init;
@@ -55,9 +54,12 @@ struct idprom_softc {
     int           idprom_size;
 };
 
-struct cfdriver idpromcd = 
-{ NULL, "idprom", always_match, idpromattach, DV_DULL,
-      sizeof(struct idprom_softc), 0};
+static int  idprom_match __P((struct device *, void *vcf, void *args));
+static void idprom_attach __P((struct device *, struct device *, void *));
+
+struct cfdriver idpromcd = {
+	NULL, "idprom", idprom_match, idprom_attach,
+	DV_DULL, sizeof(struct idprom_softc), 0 };
 
 #define IDPROM_CHECK(unit) \
       if (unit >= idpromcd.cd_ndevs || (idpromcd.cd_devs[unit] == NULL)) \
@@ -65,21 +67,34 @@ struct cfdriver idpromcd =
 #define UNIT_TO_IDP(unit) idpromcd.cd_devs[unit]
 
 
-void idpromattach(parent, self, args)
+int idprom_match(parent, vcf, args)
+    struct device *parent;
+    void *vcf, *args;
+{
+    struct cfdata *cf = vcf;
+	struct confargs *ca = args;
+
+	/* This driver only supports one unit. */
+	if (cf->cf_unit != 0)
+		return (0);
+	if (ca->ca_paddr == -1)
+		ca->ca_paddr = IDPROM_BASE;
+	return (1);
+}
+
+void idprom_attach(parent, self, args)
      struct device *parent;
      struct device *self;
      void *args;
 {
     struct idprom_softc *idp = (struct idprom_softc *) self;
-    struct obctl_cf_loc *obctl_loc = OBCTL_LOC(self);
+    struct confargs *ca = args;
 
     idp->idprom_init = 0;
 
-    idp->idprom_addr =
-	OBCTL_DEFAULT_PARAM(char *, obctl_loc->obctl_addr, IDPROM_BASE);
-    idp->idprom_size =
-	OBCTL_DEFAULT_PARAM(int, obctl_loc->obctl_size, IDPROM_SIZE);
-    obctl_print(idp->idprom_addr, idp->idprom_size);
+    idp->idprom_addr = (char *) ca->ca_paddr;
+    idp->idprom_size = IDPROM_SIZE;
+
     printf("\n");
 }
 

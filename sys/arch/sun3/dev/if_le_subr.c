@@ -1,6 +1,7 @@
-/*	$NetBSD: if_le_subr.c,v 1.8 1994/11/21 21:30:54 gwr Exp $	*/
+/*	$NetBSD: if_le_subr.c,v 1.9 1994/12/12 18:59:15 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -31,11 +32,15 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * Machine-dependent glue for the LANCE Ethernet (le) driver.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
-#include <sys/device.h>
 #include <net/if.h>
 
 #ifdef INET
@@ -52,35 +57,27 @@
 #include <machine/obio.h>
 #include <machine/idprom.h>
 
-#include "bpfilter.h"
-
 #include "if_lereg.h"
 #include "if_le.h"
-
-extern int leintr();
+#include "if_le_subr.h"
 
 int
-le_md_match(parent, cf, args)
+le_md_match(parent, vcf, args)
 	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+	void *vcf, *args;
 {
-    caddr_t le_addr;
-    struct obio_cf_loc *obio_loc = (struct obio_cf_loc *) CFDATA_LOC(cf);
+	struct cfdata *cf = vcf;
+	struct confargs *ca = args;
+	int x;
 
-    le_addr = OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_AMD_ETHER);
-    return !obio_probe_byte(le_addr);
+	if (ca->ca_paddr == -1)
+		ca->ca_paddr = OBIO_AMD_ETHER;
+	if (ca->ca_intpri == -1)
+		ca->ca_intpri = 3;
+
+	/* The peek returns non-zero on bus error. */
+	return (!bus_peek(ca, 0, 1, &x));
 }
-
-/*
- * things to do:
- *    allocate dvma area memory for dual access
- *    use/default config parameters for lance configuration
- *    setup isr handler
- *    set ethernet address
- *    set meta address
- *
- */
 
 void
 le_md_attach(parent, self, args)
@@ -88,25 +85,22 @@ le_md_attach(parent, self, args)
 	struct device *self;
 	void *args;
 {
-	caddr_t dvma_malloc();
-	int le_addr, level;
-	struct le_softc *le = (struct le_softc *) self;
-	struct obio_cf_loc *obio_loc = OBIO_LOC(self);
-	
-	/* allocate "shared" memory */
-	le->sc_r2 = (struct lereg2 *) dvma_malloc(sizeof(struct lereg2)); 
-	if (!le->sc_r2)
-		panic(": not enough dvma space");
-	idprom_etheraddr(le->sc_addr); /* ethernet addr */
-	le_addr = OBIO_DEFAULT_PARAM(int, obio_loc->obio_addr, OBIO_AMD_ETHER);
+	struct le_softc *sc = (void *) self;
+	struct confargs *ca = args;
+	caddr_t p;
 
 	/* register access */
-	le->sc_r1 = (struct lereg1 *)
-		obio_alloc(le_addr, OBIO_AMD_ETHER_SIZE);
-	if (!le->sc_r1)
+	sc->sc_r1 = (struct lereg1 *)
+		obio_alloc(ca->ca_paddr, OBIO_AMD_ETHER_SIZE);
+	if (!sc->sc_r1)
 		panic(": not enough obio space\n");
-	level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 3);
-	obio_print(le_addr, level);
-	le->sc_machdep = NULL;
-	isr_add(level, leintr, (int)le);
+
+	/* allocate "shared" memory */
+	sc->sc_r2 = (struct lereg2 *) dvma_malloc(sizeof(struct lereg2)); 
+	if (!sc->sc_r2)
+		panic(": not enough dvma space");
+
+	/* Install interrupt handler. */
+	isr_add_autovect(le_intr, (void *)sc, ca->ca_intpri);
+	idprom_etheraddr(sc->sc_addr); /* ethernet addr */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.6 1994/12/01 22:46:26 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.7 1994/12/12 18:59:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -52,13 +52,6 @@
 
 #define BURST	64
 
-static int  kdmatch(struct device *, void *, void *);
-static void kdattach(struct device *, struct device *, void *);
-
-struct cfdriver kdcd = {
-	NULL, "kd", kdmatch, kdattach, DV_TTY,
-	sizeof(struct device), 0};
-
 struct tty *kd_tty[1];
 
 int kdopen(dev_t, int, int, struct proc *);
@@ -70,27 +63,11 @@ int kdioctl(dev_t, int, caddr_t, int, struct proc *);
 static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
 
-static int
-kdmatch(struct device *parent, void *vcf, void *aux)
+/* This is called by kbd_serial() like a pseudo-device. */
+void
+kd_attach(n)
+	int n;
 {
-	/* XXX - Enforce unit zero? */
-	return 1;
-}
-
-static void
-kdattach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
-{
-	int unit = self->dv_unit;
-
-	if (unit) {
-		printf(" not unit zero?\n");
-		return;
-	}
-	printf("\n");
-
 	kd_tty[0] = ttymalloc();
 
 	/* Tell keyboard module where to send read data. */

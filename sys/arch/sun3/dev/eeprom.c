@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.3 1994/11/21 21:30:44 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.4 1994/12/12 18:59:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,11 +36,13 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
-#include <sys/systm.h>
 #include <sys/malloc.h>
 
+#include <machine/autoconf.h>
 #include <machine/obio.h>
 #include <machine/eeprom.h>
 
@@ -51,10 +53,46 @@ static int ee_update(caddr_t buf, int off, int cnt);
 static char *eeprom_va;
 static int ee_busy, ee_want;
 
+int eeprom_match __P((struct device *, void *vcf, void *args));
+void eeprom_attach __P((struct device *, struct device *, void *));
+
+struct cfdriver eepromcd = {
+	NULL, "eeprom", eeprom_match, eeprom_attach,
+	DV_DULL, sizeof(struct device), 0 };
+
+/* Called very earyl by internal_configure. */
 void eeprom_init()
 {
 	eeprom_va = obio_find_mapping(OBIO_EEPROM, OBIO_EEPROM_SIZE);
 }
+
+int eeprom_match(parent, vcf, args)
+    struct device *parent;
+    void *vcf, *args;
+{
+    struct cfdata *cf = vcf;
+	struct confargs *ca = args;
+
+	/* This driver only supports one unit. */
+	if (cf->cf_unit != 0)
+		return (0);
+	if (eeprom_va == NULL)
+		return (0);
+	if (ca->ca_paddr == -1)
+		ca->ca_paddr = OBIO_EEPROM;
+	return (1);
+}
+
+void eeprom_attach(parent, self, args)
+	struct device *parent;
+	struct device *self;
+	void *args;
+{
+	struct confargs *ca = args;
+
+	printf("\n");
+}
+
 
 static int ee_take()	/* Take the lock. */
 {

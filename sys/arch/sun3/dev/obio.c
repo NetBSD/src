@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.13 1994/11/21 21:31:13 gwr Exp $	*/
+/*	$NetBSD: obio.c,v 1.14 1994/12/12 18:59:22 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,45 +36,35 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
-#include <machine/obio.h>
 #include <machine/pte.h>
-#include <machine/param.h>
 #include <machine/mon.h>
 #include <machine/isr.h>
+#include <machine/obio.h>
 
-extern void obioattach __P((struct device *, struct device *, void *));
+static void obio_attach __P((struct device *, struct device *, void *));
+static void obio_scan __P((struct device *, void *));
 
-struct obio_softc {
-	struct device obio_dev;
-};
-	
 struct cfdriver obiocd = {
-	NULL, "obio", always_match, obioattach, DV_DULL,
-	sizeof(struct obio_softc), 0 };
+	NULL, "obio", always_match, obio_attach, DV_DULL,
+	sizeof(struct device), 0 };
 
-void obio_print(addr, level)
-	int addr, level;
-{
-	printf(" addr 0x%x", addr);
-	if (level >= 0)
-		printf(" level %d", level);
-}
-
-void obioattach(parent, self, args)
+static void
+obio_attach(parent, self, args)
 	struct device *parent;
 	struct device *self;
 	void *args;
 {
-	struct cfdata *new_match;
-	
 	printf("\n");
-	while (1) {
-		new_match = config_search(NULL, self, NULL);
-		if (!new_match) break;
-		config_attach(self, new_match, NULL, NULL);
-	}
+	config_scan(obio_scan, self);
 }
 
+static void
+obio_scan(parent, child)
+	struct device *parent;
+	void *child;
+{
+	bus_scan(parent, child, BUS_OBIO);
+}
 
 /*
  * Spacing of "interesting" OBIO mappings.  We will
@@ -242,12 +232,4 @@ caddr_t obio_alloc(obio_addr, obio_size)
 	for (; npages ; npages--, obio_va += NBPG, obio_pa += NBPG)
 		set_pte(obio_va, pte_proto | PA_PGNUM(obio_pa));
 	return (caddr_t) va;
-}
-
-int
-obio_probe_byte(oba)
-	caddr_t oba;	/* OBIO address to probe */
-{
-	/* XXX - Not yet... */
-	return 0;
 }

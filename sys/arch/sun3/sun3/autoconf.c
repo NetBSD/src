@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 1994/11/23 07:01:01 gwr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 1994/12/12 18:59:56 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -41,13 +41,13 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>
 #include <sys/dmap.h>
 #include <sys/reboot.h>
-#include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/vmparam.h>
@@ -55,8 +55,11 @@
 #include <machine/pte.h>
 #include <machine/isr.h>
 
-extern void mainbusattach __P((struct device *, struct device *, void *));
+#include <setjmp.h>
 
+extern int soft1intr();
+
+void mainbusattach __P((struct device *, struct device *, void *));
 void conf_init(), swapgeneric();
 void swapconf(), dumpconf();
 
@@ -94,16 +97,15 @@ int nmi_intr(arg)
 void configure()
 {
 	int root_found;
-	extern int soft1intr();
 
 	/* General device autoconfiguration. */
 	root_found = config_rootfound("mainbus", NULL);
 	if (!root_found)
-		panic("configure: autoconfig failed, no device tree root found");
+		panic("configure: mainbus not found");
 
 	/* Install non-device interrupt handlers. */
-	isr_add(7, nmi_intr, 0);
-	isr_add(1, soft1intr, 0);
+	isr_add_autovect(nmi_intr, 0, 7);
+	isr_add_autovect(soft1intr, 0, 1);
 	isr_cleanup();
 
 	/* Build table for CHR-to-BLK translation, etc. */
@@ -115,14 +117,6 @@ void configure()
 #endif
 	swapconf();
 	dumpconf();
-}
-
-int always_match(parent, cf, args)
-	struct device *parent;
-	void *cf;
-	void *args;
-{
-	return 1;
 }
 
 /*
@@ -149,4 +143,133 @@ swapconf()
 			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
 	}
+}
+
+int always_match(parent, cf, args)
+	struct device *parent;
+	void *cf;
+	void *args;
+{
+	return 1;
+}
+
+/*
+ * Generic "bus" support functions.
+ */
+void bus_scan(parent, child, bustype)
+	struct device *parent;
+	void *child;
+	int bustype;
+{
+	struct cfdata *cf = child;
+	struct confargs ca;
+	cfmatch_t match;
+
+#ifdef	DIAGNOSTIC
+	if (parent->dv_cfdata->cf_driver->cd_indirect)
+		panic("bus_scan: indirect?");
+	if (cf->cf_fstate == FSTATE_STAR)
+		panic("bus_scan: FSTATE_STAR");
+#endif
+
+	ca.ca_bustype = bustype;
+	ca.ca_paddr  = cf->cf_loc[0];
+	ca.ca_intpri = cf->cf_loc[1];
+
+	if ((bustype == BUS_VME16) || (bustype == BUS_VME32)) {
+		ca.ca_intvec = cf->cf_loc[2];
+	} else {
+		ca.ca_intvec = -1;
+	}
+
+	match = cf->cf_driver->cd_match;
+	if ((*match)(parent, cf, &ca) > 0) {
+		config_attach(parent, cf, &ca, bus_print);
+	}
+}
+
+int
+bus_print(args, name)
+	void *args;
+	char *name;
+{
+	struct confargs *ca = args;
+
+	if (ca->ca_paddr != -1)
+		printf(" addr 0x%x", ca->ca_paddr);
+	if (ca->ca_intpri != -1)
+		printf(" level %d", ca->ca_intpri);
+	if (ca->ca_intvec != -1)
+		printf(" vector 0x%x", ca->ca_intvec);
+	/* XXXX print flags? */
+	return(QUIET);
+}
+
+/*
+ * Read addr with size len (1,2,4) into val.
+ * If this generates a bus error, return non-zero.
+ *
+ *	Create a temporary mapping,
+ *	Prepare for bus-error with setjmp,
+ *	Try the access,
+ *	Clean up temp. mapping
+ */
+extern caddr_t vmempage;
+int bus_peek(ca, off, len, val)
+	struct confargs *ca;
+	int off, len;
+	int *val;
+{
+#if 0	/* XXX - Not yet. */
+	int rv, x, ptype;
+	vm_offset_t va, pa;
+
+	switch (ca->ca_bustype) {
+	case BUS_OBMEM:
+		ptype = PMAP_NC;
+		break;
+	case BUS_OBIO:
+		ptype = PMAP_NC | PMAP_OBIO;
+		break;
+	case BUS_VME16:
+		ptype = PMAP_NC | PMAP_VME16;
+		break;
+	case BUS_VME32:
+		ptype = PMAP_NC | PMAP_VME32;
+		break;
+	default:
+		return (-1);
+	}
+
+	pa = ca->ca_paddr + off;
+	off = pa & PGOFSET;
+	pa -= off;
+	pa |= ptype;
+	va = vmempage + off;
+
+	pmap_enter(kernel_pmap, vmempage, pa,
+			   VM_PROT_WRITE, TRUE);
+
+	/*
+	 * OK, try the access using one of the assembly routines
+	 * that will set pcb_onfault and catch any bus errors.
+	 */
+	switch (len) {
+	case 1:
+		rv = peekb(va, &x);
+		break;
+	case 2:
+		rv = peeks(va, &x);
+		break;
+	case 4:
+		rv = peekl(va, &x);
+		break;
+	default:
+		rv = -1;
+	}
+
+	pmap_remove(kernel_pmap, vmempage, vmempage + NBPG);
+
+#endif
+	return 0;
 }

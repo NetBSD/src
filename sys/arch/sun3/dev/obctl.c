@@ -1,6 +1,7 @@
-/*	$NetBSD: obctl.c,v 1.5 1994/11/21 21:31:11 gwr Exp $	*/
+/*	$NetBSD: obctl.c,v 1.6 1994/12/12 18:59:21 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * All rights reserved.
  *
@@ -37,36 +38,28 @@
 
 #include <machine/autoconf.h>
 #include <machine/obctl.h>
-#include <machine/param.h>
 
-extern void obctlattach __P((struct device *, struct device *, void *));
-     
-struct obctl_softc {
-    struct device obctl_dev;
-};
+static void obctl_attach __P((struct device *, struct device *, void *));
+static void obctl_scan __P((struct device *, void *));
 
-struct cfdriver obctlcd = 
-{ NULL, "obctl", always_match, obctlattach, DV_DULL,
-      sizeof(struct obctl_softc), 0};
+struct cfdriver obctlcd = {
+	NULL, "obctl", always_match, obctl_attach, DV_DULL,
+	sizeof(struct device), 0 };
 
-void obctl_print(addr, size)
-     caddr_t addr;
-     int size;
+static void
+obctl_attach(parent, self, args)
+	struct device *parent;
+	struct device *self;
+	void *args;
 {
-    printf(" addr 0x%x size 0x%x", addr, size);
+	printf("\n");
+	config_scan(obctl_scan, self);
 }
 
-void obctlattach(parent, self, args)
-     struct device *parent;
-     struct device *self;
-     void *args;
+static void
+obctl_scan(parent, child)
+	struct device *parent;
+	void *child;
 {
-    struct cfdata *new_match;
-
-    printf("\n");
-    while (1) {
-	new_match = config_search(NULL, self, NULL);
-	if (!new_match) break;
-	config_attach(self, new_match, NULL, NULL);
-    }
+	bus_scan(parent, child, BUS_OBCTL);
 }

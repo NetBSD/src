@@ -1,4 +1,4 @@
-/*	$NetBSD: obmem.h,v 1.5 1994/11/21 21:33:57 gwr Exp $	*/
+/*	$NetBSD: obmem.h,v 1.6 1994/12/12 18:59:44 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -40,12 +40,4 @@
 
 #define	OBMEM_CG4_ADDR	0xff300000
 #define	OBMEM_CG4_SIZE	  0x100000
-
-/* autoconfiguration data */
-struct obmem_cf_loc {
-    int obmem_cf_addr;
-    int obmem_cf_size;
-    int obmem_cf_level;
-};
-
 
