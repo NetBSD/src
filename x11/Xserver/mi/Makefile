@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/30 06:41:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/12/20 01:29:29 rtr Exp $
 
 .include "../Makefile.serverlib"
 
@@ -27,7 +27,10 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 CPPFLAGS.miinitext.c=	${X11FLAGS.EXTENSION}
 CPPFLAGS.miscrinit.c=	${X11FLAGS.EXTENSION}
 
-XTODO=	SRCS+=	miinitext.c ?
+.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+SRCS+=  miinitext.c
+CPPFLAGS.miinitext.c+=   -UXF86MISC
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
