@@ -27,15 +27,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: memcmp.S,v 1.4 1994/02/07 20:57:05 jtc Exp $
+ *	$Id: memcmp.S,v 1.5 1994/03/12 01:40:02 jtc Exp $
  */
 
-#if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: memcmp.S,v 1.4 1994/02/07 20:57:05 jtc Exp $"
-#endif
+#include <machine/asm.h>
 
-#include "DEFS.h"
+#if defined(LIBC_SCCS)
+	RCSID("$Id: memcmp.S,v 1.5 1994/03/12 01:40:02 jtc Exp $")
+#endif
 
 /*
  * memcmp (void *b1, void *b2, size_t len)
