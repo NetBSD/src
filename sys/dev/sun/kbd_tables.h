@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_tables.h,v 1.3 1996/02/29 19:37:53 gwr Exp $	*/
+/*	$NetBSD: kbd_tables.h,v 1.4 1996/12/17 20:46:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -129,15 +129,11 @@
 
 #define KEYMAP_SIZE 128
 
-struct keymap {
-	unsigned short	keymap[KEYMAP_SIZE];
-};
-
 struct keyboard {
-	struct keymap	*k_release; 	/* Key released */
-	struct keymap	*k_control; 	/* Ctrl is down */
-	struct keymap	*k_normal;  	/* No shifts */
-	struct keymap	*k_shifted; 	/* Shift is down */
+	u_short	*k_release; 	/* Key released */
+	u_short	*k_control; 	/* Ctrl is down */
+	u_short	*k_normal;  	/* No shifts */
+	u_short	*k_shifted; 	/* Shift is down */
 };
 
 extern char kbd_stringtab[16][10];
