@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.19 2000/10/11 14:46:12 is Exp $	*/
+/*	$NetBSD: nonints.h,v 1.20 2000/12/03 02:18:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -68,10 +68,14 @@ void For_Run  __P((void));
 void Main_ParseArgLine __P((char *));
 int main __P((int, char **));
 char *Cmd_Exec __P((char *, char **));
-void Error __P((char *, ...)) __attribute__((__format__(__printf__, 1, 2)));
-void Fatal __P((char *, ...)) __attribute__((__format__(__printf__, 1, 2)));
-void Punt __P((char *, ...)) __attribute__((__format__(__printf__, 1, 2)));
-void DieHorribly __P((void));
+void Error __P((char *, ...))
+    __attribute__((__format__(__printf__, 1, 2)));
+void Fatal __P((char *, ...))
+    __attribute__((__format__(__printf__, 1, 2),__noreturn__));
+void Punt __P((char *, ...))
+    __attribute__((__format__(__printf__, 1, 2),__noreturn__));
+void DieHorribly __P((void))
+    __attribute__((__noreturn__));
 int PrintAddr __P((ClientData, ClientData));
 void Finish __P((int));
 char *estrdup __P((const char *));
