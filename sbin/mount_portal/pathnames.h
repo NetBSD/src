@@ -34,9 +34,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Id: pathnames.h,v 1.2 1992/05/27 07:09:27 jsp Exp jsp
+ *	from: Id: pathnames.h,v 1.2 1992/05/27 07:09:27 jsp Exp
  *	from: @(#)pathnames.h	8.1 (Berkeley) 6/5/93
- *	$Id: pathnames.h,v 1.1 1994/01/12 20:01:48 cgd Exp $
+ *	$Id: pathnames.h,v 1.2 1994/06/08 19:24:49 mycroft Exp $
  */
 
 #include <paths.h>
