@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.135 1998/08/17 19:30:38 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.136 1998/11/17 14:46:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -160,27 +160,6 @@ sdattach(parent, sd, sc_link, ops)
 	 * request must specify this.
 	 */
 	printf("\n");
-
-#if NSD_ATAPIBUS > 0
-	/* XXX BEGIN HACK ALERT!!! */
-	if (sc_link->type == BUS_ATAPI) {
-		/*
-		 * The ATAPI sense data handling is _TOTALLY_ broken.
-		 * In particular, it _never_ does a REQUEST_SENSE to get
-		 * sense data!  This causes UNIT ATTENTION to be not
-		 * cleared properly for some ATAPI devices (e.g. Zip),
-		 * which messes up the probe.
-		 *
-		 * This is the easiest way to get around the problem.
-		 *
-		 * YUCK!
-		 */
-		(void)scsipi_test_unit_ready(sc_link, SCSI_AUTOCONF |
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE |
-		    SCSI_IGNORE_NOT_READY);
-	}
-	/* XXX END HACK ALERT!!! */
-#endif /* NSD_ATAPIBUS > 0 */
 
 	if ((sd->sc_link->quirks & SDEV_NOSTARTUNIT) == 0) {
 		error = scsipi_start(sd->sc_link, SSS_START,
