@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsdisplay.9,v 1.6 2002/03/10 18:39:42 wiz Exp $
+.\"     $NetBSD: wsdisplay.9,v 1.7 2002/06/22 19:09:38 bjh21 Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 7, 2001
+.Dd June 22, 2002
 .Dt WSDISPLAY 9
 .Os
 .Sh NAME
@@ -322,11 +322,14 @@ function is called by the wscons interface to perform display-specific
 ioctl operations (see
 .Xr ioctl 2 ) .
 The argument
-.Fa cmd to the
+.Fa cmd
+to the
 .Fn ioctl
 function specifies the specific command to perform using the data
 data.  Valid commands are listed in
-.Pa sys/dev/wscons/wsconsio.h .
+.Pa sys/dev/wscons/wsconsio.h
+and documented in
+.Xr wsdisplay 4 .
 Operations for terminal emulation are performed using the callbacks
 defined in the
 .Em wsdisplay_emulops
@@ -353,6 +356,7 @@ operations are listed in
 .Pa sys/dev/wscons/wsconsio.h .
 .Sh SEE ALSO
 .Xr ioctl 2 ,
+.Xr wsdisplay 4 ,
 .Xr autoconf 9 ,
 .Xr driver 9 ,
 .Xr intro 9 ,
