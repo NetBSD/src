@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 1999/12/03 18:49:37 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 1999/12/11 19:39:31 sommerfeld Exp $	*/
 
 /*
  *
@@ -866,7 +866,7 @@ pmap_bootstrap(kva_start)
 	 */
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-	spinlockinit(&pmap_main_lock, "pmaplk", 0, 0);
+	spinlockinit(&pmap_main_lock, "pmaplk", 0);
 	simple_lock_init(&pvalloc_lock);
 	simple_lock_init(&pmaps_lock);
 	simple_lock_init(&pmap_copy_page_lock);
