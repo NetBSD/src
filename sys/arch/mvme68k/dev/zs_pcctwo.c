@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcctwo.c,v 1.2 2000/11/20 19:35:29 scw Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.3 2000/11/24 09:36:41 scw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -172,11 +172,11 @@ void
 zsc_pcctwocninit(cp)
 	struct consdev *cp;
 {
-	bus_space_tag_t bust = MVME68K_INTIO_BUS_SPACE;
 	bus_space_handle_t bush;
 	struct zsdevice zs;
 
-	bus_space_map(bust, MAINBUS_PCCTWO_OFFSET + MCCHIP_ZS0_OFF, 8, 0,&bush);
+	bus_space_map(&_mainbus_space_tag,
+	    intiobase_phys + MAINBUS_PCCTWO_OFFSET + MCCHIP_ZS0_OFF, 8, 0,&bush);
 
 	/* XXX: This is a gross hack. I need to bus-space zs.c ... */
 	zs.zs_chan_b.zc_csr = (volatile u_char *) bush + 1;
