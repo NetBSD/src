@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.12 1995/04/20 15:27:43 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.13 1995/04/20 15:46:56 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -662,7 +662,7 @@ struct cfdriver itecd =
 	NULL,
 	0 };
 
-iteopen(dev_t dev, int mode, int devtype, struct proc *p, struct file *fp)
+iteopen(dev_t dev, int mode, int devtype, struct proc *p)
 {
 	register struct tty *tp;
 	register int error;
