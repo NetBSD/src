@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.28 1996/10/19 12:40:31 jonathan Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.29 1997/01/31 02:20:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -282,7 +282,7 @@ done:
 	return error;
 }
 
-#if defined(NFSCLIENT)
+#if defined(NFS)
 int
 async_daemon(p, v, retval)
 	struct proc *p;
@@ -296,7 +296,7 @@ async_daemon(p, v, retval)
 
 	return (sys_nfssvc(p, &ouap, retval));
 }
-#endif /* NFSCLIENT */
+#endif /* NFS */
 
 
 #define	SUN__MAP_NEW	0x80000000	/* if not, old mmap & cannot handle */
