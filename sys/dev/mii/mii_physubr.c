@@ -1,7 +1,7 @@
-/*	$NetBSD: mii_physubr.c,v 1.14 2000/02/03 06:11:13 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.15 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,6 +50,7 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/route.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -161,6 +162,55 @@ mii_phy_auto_timeout(arg)
 	splx(s);
 }
 
+int
+mii_phy_tick(sc)
+	struct mii_softc *sc;
+{
+	struct mii_data *mii = sc->mii_pdata;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	int reg;
+
+	/* Just bail now if the interface is down. */
+	if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+		return (EJUSTRETURN);
+
+	/*
+	 * If we're not doing autonegotiation, we don't need to do
+	 * any extra work here.  However, we need to check the link
+	 * status so we can generate an announcement if the status
+	 * changes.
+	 */
+	if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
+		return (0);
+
+	/* Read the status register twice; BMSR_LINK is latch-low. */
+	reg = PHY_READ(sc, MII_BMSR) | PHY_READ(sc, MII_BMSR);
+	if (reg & BMSR_LINK) {
+		/*
+		 * See above.
+		 */
+		return (0);
+	}
+
+	/*
+	 * Only retry autonegotiation every 5 seconds.
+	 */
+	if (++sc->mii_ticks != 5)
+		return (EJUSTRETURN);
+
+	sc->mii_ticks = 0;
+	mii_phy_reset(sc);
+
+	if (mii_phy_auto(sc, 0) == EJUSTRETURN)
+		return (EJUSTRETURN);
+
+	/*
+	 * Might need to generate a status message if autonegotiation
+	 * failed.
+	 */
+	return (0);
+}
+
 void
 mii_phy_reset(sc)
 	struct mii_softc *sc;
@@ -202,6 +252,55 @@ mii_phy_status(sc)
 {
 
 	(*sc->mii_status)(sc);
+}
+
+void
+mii_phy_update(sc, cmd)
+	struct mii_softc *sc;
+	int cmd;
+{
+	struct mii_data *mii = sc->mii_pdata;
+
+	if (sc->mii_media_active != mii->mii_media_active ||
+	    sc->mii_media_status != mii->mii_media_status ||
+	    cmd == MII_MEDIACHG) {
+		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
+		mii_phy_statusmsg(sc);
+		sc->mii_media_active = mii->mii_media_active;
+		sc->mii_media_status = mii->mii_media_status;
+	}
+}
+
+void
+mii_phy_statusmsg(sc)
+	struct mii_softc *sc;
+{
+	struct mii_data *mii = sc->mii_pdata;
+	struct ifnet *ifp = mii->mii_ifp;
+	int baudrate, link_state, announce = 0;
+
+	if (mii->mii_media_status & IFM_AVALID) {
+		if (mii->mii_media_status & IFM_ACTIVE)
+			link_state = LINK_STATE_UP;
+		else
+			link_state = LINK_STATE_DOWN;
+	} else
+		link_state = LINK_STATE_UNKNOWN;
+
+	baudrate = ifmedia_baudrate(mii->mii_media_active);
+
+	if (link_state != ifp->if_link_state) {
+		ifp->if_link_state = link_state;
+		announce = 1;
+	}
+
+	if (baudrate != ifp->if_baudrate) {
+		ifp->if_baudrate = baudrate;
+		announce = 1;
+	}
+
+	if (announce)
+		rt_ifmsg(ifp);
 }
 
 /*

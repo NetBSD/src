@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.24 2000/03/06 20:56:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -198,16 +198,8 @@ exphy_service(sc, mii, cmd)
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			return (0);
 
-		/*
-		 * Is the interface even up?
-		 */
-		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
+		if (mii_phy_tick(sc) == EJUSTRETURN)
 			return (0);
-
-		/*
-		 * The 3Com PHY's autonegotiation doesn't need to be
-		 * kicked; it continues in the background.
-		 */
 		break;
 
 	case MII_DOWN:
@@ -219,10 +211,7 @@ exphy_service(sc, mii, cmd)
 	mii_phy_status(sc);
 
 	/* Callback if something changed. */
-	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->mii_dev.dv_parent);
-		sc->mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(sc, cmd);
 	return (0);
 }
 

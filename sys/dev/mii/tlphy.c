@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.24 2000/02/02 17:50:46 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.25 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -278,26 +278,10 @@ tlphy_service(self, mii, cmd)
 			return (0);
 
 		/*
-		 * Check to see if we have link.  If we do, we don't
-		 * need to restart the autonegotiation process.  Read
-		 * the BMSR twice in case it's latched.
-		 *
 		 * XXX WHAT ABOUT CHECKING LINK ON THE BNC/AUI?!
 		 */
-		reg = PHY_READ(&sc->sc_mii, MII_BMSR) |
-		    PHY_READ(&sc->sc_mii, MII_BMSR);
-		if (reg & BMSR_LINK)
-			return (0);
 
-		/*
-		 * Only retry autonegotiation every 5 seconds.
-		 */
-		if (++sc->sc_mii.mii_ticks != 5)
-			return (0);
-
-		sc->sc_mii.mii_ticks = 0;
-		mii_phy_reset(&sc->sc_mii);
-		if (tlphy_auto(sc, 0) == EJUSTRETURN)
+		if (mii_phy_tick(&sc->sc_mii) == EJUSTRETURN)
 			return (0);
 		break;
 
@@ -310,11 +294,7 @@ tlphy_service(self, mii, cmd)
 	mii_phy_status(&sc->sc_mii);
 
 	/* Callback if something changed. */
-	if (sc->sc_mii.mii_active != mii->mii_media_active ||
-	    cmd == MII_MEDIACHG) {
-		(*mii->mii_statchg)(sc->sc_mii.mii_dev.dv_parent);
-		sc->sc_mii.mii_active = mii->mii_media_active;
-	}
+	mii_phy_update(&sc->sc_mii, cmd);
 	return (0);
 }
 
