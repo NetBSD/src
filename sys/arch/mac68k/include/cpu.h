@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47 1997/04/13 05:12:41 scottr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.48 1997/05/20 03:25:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,18 +61,12 @@
  *	@(#)cpu.h	7.7 (Berkeley) 6/27/91
  */
 
-/*
-   ALICE
-	BG -- Sat May 23 23:58:23 EDT 1992
-	Exported defines and stuff unique to mac68k.
-   A lot of this stuff is really specific to the m68k, not just the macs,
-   but there isn't time to do anything about that right now...
- */
-
 #ifndef _CPU_MACHINE_
 #define _CPU_MACHINE_
 
-#include <machine/pcb.h>
+/*
+ * Exported definitions unique to mac68k/68k cpu support.
+ */
 
 /*
  * Get common m68k definitions.
@@ -92,19 +86,17 @@
 #define	cpu_swapin(p)			/* nothing */
 #define	cpu_wait(p)			/* nothing */
 #define	cpu_swapout(p)			/* nothing */
-void cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
+void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 
 /*
- * Arguments to hardclock, softclock and gatherstats
- * encapsulate the previous machine state in an opaque
- * clockframe; for hp300, use just what the hardware
- * leaves on the stack.
+ * Arguments to hardclock and gatherstats encapsulate the previous
+ * machine state in an opaque clockframe.  One the hp300, we use
+ * what the hardware pushes on an interrupt (frame format 0).
  */
-
 struct clockframe {
-	u_short	sr;
-	u_long	pc;
-	u_short	vo;
+	u_short	sr;		/* sr at time of interrupt */
+	u_long	pc;		/* pc at time of interrupt */
+	u_short	vo;		/* vector offset (4-word frame) */
 };
 
 #define	CLKF_USERMODE(framep)	(((framep)->sr & PSL_S) == 0)
@@ -290,7 +282,12 @@ extern	unsigned long		load_addr;
 #define NBMEMSIZE	0x01000000	/* 16 megs per card */
 #define NBROMOFFSET	0x00FF0000	/* Last 64K == ROM */
 
-__BEGIN_DECLS
+#ifdef _KERNEL
+
+struct frame;
+struct fpframe;
+struct pcb;
+
 /* machdep.c */
 void	mac68k_set_bell_callback __P((int (*)(void *, int, int, int), void *));
 int	mac68k_ring_bell __P((int, int, int));
@@ -313,13 +310,10 @@ int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
 void	proc_trampoline __P((void));
 
-/* trap.c */
-void	child_return __P((struct proc *, struct frame));
-
 /* vm_machdep.c */
 void	physaccess __P((caddr_t, caddr_t, register int, register int));
 void	physunaccess __P((caddr_t, register int));
 
-__END_DECLS
+#endif
 
 #endif	/* _CPU_MACHINE_ */
