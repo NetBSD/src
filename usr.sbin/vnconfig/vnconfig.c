@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.15 1997/10/18 03:54:04 lukem Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.16 1999/01/19 22:33:04 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,6 +88,7 @@
 
 #include <dev/vndvar.h>
 
+#include <disktab.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
