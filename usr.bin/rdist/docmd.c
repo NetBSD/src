@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.16 1997/10/19 14:50:58 mrg Exp $	*/
+/*	$NetBSD: docmd.c,v 1.16.2.1 1997/10/24 08:25:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.16 1997/10/19 14:50:58 mrg Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.16.2.1 1997/10/24 08:25:57 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,6 +141,7 @@ doarrow(filev, files, rhost, cmds)
 	int n, ddir, opts = options;
 
 #if __GNUC__		/* XXX borken compiler alert! */
+	(void)&ddir;
 	(void)&opts;
 #endif
 
