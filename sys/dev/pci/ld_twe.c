@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.17 2003/09/23 23:50:04 thorpej Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.18 2003/09/26 03:11:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.17 2003/09/23 23:50:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.18 2003/09/26 03:11:41 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -133,7 +133,6 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	}
 	switch (td->td_type) {
 	case TWE_AD_CONFIG_RAID0:
-	/* XXX TWE_AD_CONFIG_TwinStor? */
 	case TWE_AD_CONFIG_RAID5:
 	case TWE_AD_CONFIG_RAID10:
 		stripestr = twe_describe_code(twe_table_stripedepth,
