@@ -233,18 +233,6 @@ reg_or_mem_operand (op, mode)
 	      || GET_CODE (op) == MEM));
 }
 
-int
-ns32k_gen_operand (op, mode)
-     rtx op;
-     enum machine_mode mode;
-{
-  if (flag_pic && mode == SImode
-      && global_symbolic_reference_mentioned_p(op, 1))
-    return 0;
-  else
-    return general_operand(op,mode);
-}
-
 
 /* Split one or more DImode RTL references into pairs of SImode
    references.  The RTL can be REG, offsettable MEM, integer constant, or
@@ -654,6 +642,36 @@ global_symbolic_reference_mentioned_p (op, f)
 }
 
 
+/* Returns 1 if OP contains a symbol reference */
+
+int
+symbolic_reference_mentioned_p (op)
+     rtx op;
+{
+  register char *fmt;
+  register int i;
+
+  if (GET_CODE (op) == SYMBOL_REF || GET_CODE (op) == LABEL_REF)
+    return 1;
+
+  fmt = GET_RTX_FORMAT (GET_CODE (op));
+  for (i = GET_RTX_LENGTH (GET_CODE (op)) - 1; i >= 0; i--)
+    {
+      if (fmt[i] == 'E')
+	{
+	  register int j;
+
+	  for (j = XVECLEN (op, i) - 1; j >= 0; j--)
+	    if (symbolic_reference_mentioned_p (XVECEXP (op, i, j)))
+	      return 1;
+	}
+      else if (fmt[i] == 'e' && symbolic_reference_mentioned_p (XEXP (op, i)))
+	return 1;
+    }
+
+  return 0;
+}
+
 /* PRINT_OPERAND is defined to call this function,
    which is easier to debug than putting all the code in
    a macro definition in ns32k.h.  */
@@ -717,11 +735,30 @@ print_operand (file, x, code)
     }
   else
     {
+      if (flag_pic
+          && GET_CODE (x) == CONST
+          && symbolic_reference_mentioned_p (x))
+        {
+	  fprintf(stderr, "illegal constant for pic-mode: \n");
+	  print_rtl(stderr, x);
+          fprintf(stderr, "\nGET_CODE (x) == %d, CONST == %d, symbolic_reference_mentioned_p (x) == %d\n",
+		  GET_CODE (x), CONST, symbolic_reference_mentioned_p(x));
+	  abort ();
+	}
+      else if (flag_pic
+               && (GET_CODE (x) == SYMBOL_REF || GET_CODE (x) == LABEL_REF))
+	{
+	  output_addr_const (file, x);
+	  fprintf (file, "(sb)");
+	}
+      else
+        {
 #ifdef NO_IMMEDIATE_PREFIX_IF_SYMBOLIC
-      if (GET_CODE (x) == CONST_INT)
+          if (GET_CODE (x) == CONST_INT)
 #endif
-	PUT_IMMEDIATE_PREFIX (file);
-      output_addr_const (file, x);
+	    PUT_IMMEDIATE_PREFIX (file);
+          output_addr_const (file, x);
+	}
     }
 }
 
