@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.32 1999/07/29 19:37:00 augustss Exp $
+#	$NetBSD: GENERIC,v 1.33 1999/08/05 00:31:01 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -135,6 +135,8 @@ akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
 zsc*	at obio?
 zstty*	at zsc? channel ?
+mediabay* at obio?
+wdc*	at mediabay? flags 0
 
 wsdisplay0 at ofb? console ?
 wskbd0	at akbd? console ?
