@@ -346,3 +346,6 @@ iso-apdx.texi: ISO_639 iso-apdx.sed
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:
+
+# XXX NetBSD hack
+.MADE: gettext.info stamp-vti version.texi
