@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.32 1998/08/09 21:19:52 perry Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.33 1998/11/08 15:57:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -486,6 +486,7 @@ nfssvc_nfsd(nsd, argp, p)
 		TAILQ_INSERT_TAIL(&nfsd_head, nfsd, nfsd_chain);
 		nfs_numnfsd++;
 	}
+	p->p_holdcnt++;
 	/*
 	 * Loop getting rpc requests until SIGKILL.
 	 */
@@ -582,8 +583,10 @@ nfssvc_nfsd(nsd, argp, p)
 				nfsd->nfsd_authlen) &&
 			    !copyout(nfsd->nfsd_verfstr, nsd->nsd_verfstr,
 				nfsd->nfsd_verflen) &&
-			    !copyout((caddr_t)nsd, argp, sizeof (*nsd)))
+			    !copyout((caddr_t)nsd, argp, sizeof (*nsd))) {
+			    p->p_holdcnt--;
 			    return (ENEEDAUTH);
+			}
 			cacherep = RC_DROPIT;
 		    } else
 			cacherep = nfsrv_getcache(nd, slp, &mreq);
@@ -725,6 +728,7 @@ nfssvc_nfsd(nsd, argp, p)
 		}
 	}
 done:
+	p->p_holdcnt--;
 	TAILQ_REMOVE(&nfsd_head, nfsd, nfsd_chain);
 	splx(s);
 	free((caddr_t)nfsd, M_NFSD);
@@ -908,13 +912,14 @@ nfssvc_iod(p)
 	myiod = -1;
 	for (i = 0; i < NFS_MAXASYNCDAEMON; i++)
 		if (nfs_asyncdaemon[i] == 0) {
-			nfs_asyncdaemon[i]++;
 			myiod = i;
 			break;
 		}
 	if (myiod == -1)
 		return (EBUSY);
+	nfs_asyncdaemon[myiod] = 1;
 	nfs_numasync++;
+	p->p_holdcnt++;
 	/*
 	 * Just loop around doin our stuff until SIGKILL
 	 */
@@ -930,12 +935,10 @@ nfssvc_iod(p)
 			PWAIT | PCATCH, "nfsidl", 0);
 	    }
 	    if (error) {
-		nfs_asyncdaemon[myiod] = 0;
 		if (nmp)
 		    nmp->nm_bufqiods--;
 		nfs_iodmount[myiod] = NULL;
-		nfs_numasync--;
-		return (error);
+		break;
 	    }
 	    while ((bp = nmp->nm_bufq.tqh_first) != NULL) {
 		/* Take one off the front of the list */
@@ -960,6 +963,10 @@ nfssvc_iod(p)
 		}
 	    }
 	}
+	p->p_holdcnt--;
+	nfs_asyncdaemon[myiod] = 0;
+	nfs_numasync--;
+	return (error);
 }
 
 
