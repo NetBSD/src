@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1996/03/03 17:28:17 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1996/03/17 02:08:29 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -77,7 +77,6 @@ static int do_option __P((struct hashtab *, struct nvlist ***,
 static int crosscheck __P((void));
 static int badstar __P((void));
 static int mksymlinks __P((void));
-static int has_instances __P((struct devbase *, int));
 static int hasparent __P((struct devi *));
 static int cfcrosscheck __P((struct config *, const char *, struct nvlist *));
 
@@ -149,6 +148,7 @@ usage:
 	initfiles();
 	initsem();
 	devbasetab = ht_new();
+	devatab = ht_new();
 	selecttab = ht_new();
 	needcnttab = ht_new();
 	opttab = ht_new();
@@ -342,19 +342,36 @@ do_option(ht, nppp, name, value, type)
 
 /*
  * Return true if there is at least one instance of the given unit
- * on the given base (or any units, if unit == WILD).
+ * on the given device attachment (or any units, if unit == WILD).
  */
-static int
-has_instances(dev, unit)
-	register struct devbase *dev;
+int
+deva_has_instances(deva, unit)
+	register struct deva *deva;
 	int unit;
 {
 	register struct devi *i;
 
 	if (unit == WILD)
-		return (dev->d_ihead != NULL);
-	for (i = dev->d_ihead; i != NULL; i = i->i_bsame)
+		return (deva->d_ihead != NULL);
+	for (i = deva->d_ihead; i != NULL; i = i->i_asame)
 		if (unit == i->i_unit)
+			return (1);
+	return (0);
+}
+
+/*
+ * Return true if there is at least one instance of the given unit
+ * on the given base (or any units, if unit == WILD).
+ */
+int
+devbase_has_instances(dev, unit)
+	register struct devbase *dev;
+	int unit;
+{
+	register struct deva *da;
+
+	for (da = dev->d_ahead; da != NULL; da = da->d_bsame)
+		if (deva_has_instances(da, unit))
 			return (1);
 	return (0);
 }
@@ -366,11 +383,21 @@ hasparent(i)
 	register struct nvlist *nv;
 	int atunit = i->i_atunit;
 
-	if (i->i_atdev != NULL && has_instances(i->i_atdev, atunit))
+	if (i->i_atdev != NULL && devbase_has_instances(i->i_atdev, atunit))
 		return (1);
+	/*
+	 * XXX This does not necessarily do the right thing.  Consider
+	 * XXX the case where you have device A which can attach (via an
+	 * XXX interface attribute) to devices B and C, and you define
+	 * XXX instances of device B, but instances of A at instances of
+	 * XXX C.  This code, as well as the code to generate/pack
+	 * XXX the parent locators, get that wrong, and you end up
+	 * XXX with instances of A at instances of B, even though it should
+	 * XXX have been an error.  This bug has been here for a while.
+	 */
 	if (i->i_atattr != NULL)
 		for (nv = i->i_atattr->a_refs; nv != NULL; nv = nv->nv_next)
-			if (has_instances(nv->nv_ptr, atunit))
+			if (devbase_has_instances(nv->nv_ptr, atunit))
 				return (1);
 	return (0);
 }
@@ -383,7 +410,7 @@ cfcrosscheck(cf, what, nv)
 {
 	register struct devbase *dev;
 	register struct devi *pd;
-	int errs;
+	int errs, devminor;
 
 	for (errs = 0; nv != NULL; nv = nv->nv_next) {
 		if (nv->nv_name == NULL)
@@ -391,13 +418,15 @@ cfcrosscheck(cf, what, nv)
 		dev = ht_lookup(devbasetab, nv->nv_name);
 		if (dev == NULL)
 			panic("cfcrosscheck(%s)", nv->nv_name);
-		if (has_instances(dev, STAR) ||
-		    has_instances(dev, minor(nv->nv_int) / maxpartitions))
+		devminor = minor(nv->nv_int) / maxpartitions;
+		if (devbase_has_instances(dev, devminor))
+			continue;
+		if (devbase_has_instances(dev, STAR) &&
+		    devminor >= dev->d_umax)
 			continue;
 		for (pd = allpseudo; pd != NULL; pd = pd->i_next)
-			if (pd->i_base == dev &&
-			    (minor(nv->nv_int) / maxpartitions) < dev->d_umax &&
-			    (minor(nv->nv_int) / maxpartitions) >= 0)
+			if (pd->i_base == dev && devminor < dev->d_umax &&
+			    devminor >= 0)
 				goto loop;
 		(void)fprintf(stderr,
 		    "%s%d: %s says %s on %s, but there's no %s\n",
@@ -428,11 +457,9 @@ crosscheck()
 			continue;
 		xerror(conffile, i->i_lineno,
 		    "%s at %s is orphaned", i->i_name, i->i_at);
-		if (i->i_atunit == WILD)
-			(void)fprintf(stderr, " (no %s's declared)\n",
-			    i->i_base->d_name);
-		else
-			(void)fprintf(stderr, " (no %s declared)\n", i->i_at);
+		(void)fprintf(stderr, " (%s %s declared)\n",
+		    i->i_atunit == WILD ? "nothing matching" : "no",
+		    i->i_at);
 		errs++;
 	}
 	if (allcf == NULL) {
@@ -451,21 +478,23 @@ crosscheck()
 }
 
 /*
- * Check to see if there is more than one *'d unit for any device,
- * or a *'d unit with a needs-count file.
+ * Check to see if there is a *'d unit with a needs-count file.
  */
 int
 badstar()
 {
 	register struct devbase *d;
+	register struct deva *da;
 	register struct devi *i;
 	register int errs, n;
 
 	errs = 0;
 	for (d = allbases; d != NULL; d = d->d_next) {
-		for (i = d->d_ihead; i != NULL; i = i->i_bsame)
-			if (i->i_unit == STAR)
-				goto foundstar;
+		for (da = d->d_ahead; da != NULL; da = da->d_bsame)
+			for (i = da->d_ihead; i != NULL; i = i->i_asame) {
+				if (i->i_unit == STAR)
+					goto foundstar;
+			}
 		continue;
 	foundstar:
 		if (ht_lookup(needcnttab, d->d_name)) {
@@ -480,12 +509,6 @@ badstar()
 				n++;
 		if (n < 1)
 			panic("badstar() n<1");
-		if (n == 1)
-			continue;
-		(void)fprintf(stderr,
-		    "config: %d %s*'s in configuration; can only have 1\n",
-		    n, d->d_name);
-		errs++;
 	}
 	return (errs);
 }
