@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_pnpbios.c,v 1.7 2002/10/02 05:47:16 thorpej Exp $ */
+/*	$NetBSD: lm_pnpbios.c,v 1.8 2002/11/15 14:55:45 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.7 2002/10/02 05:47:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.8 2002/11/15 14:55:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: lm_pnpbios.c,v 1.7 2002/10/02 05:47:16 thorpej Exp $
 int lm_pnpbios_match __P((struct device *, struct cfdata *, void *));
 void lm_pnpbios_attach __P((struct device *, struct device *, void *));
 int lm_pnpbios_hints_index __P((const char *));
+u_int8_t lm_pnpbios_readreg(struct lm_softc *, int);
+void lm_pnpbios_writereg(struct lm_softc *, int, int);
 
 
 CFATTACH_DECL(lm_pnpbios, sizeof(struct lm_softc),
@@ -154,6 +156,28 @@ lm_pnpbios_attach(parent, self, aux)
 	printf("%s", self->dv_xname);
 
 	/* Bus-independant attach */
+	sc->lm_writereg = lm_pnpbios_writereg;
+	sc->lm_readreg = lm_pnpbios_readreg;
+
 	lm_attach(sc);
 }
 
+u_int8_t
+lm_pnpbios_readreg(sc, reg)
+	struct lm_softc *sc;
+	int reg;
+{
+	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
+	return (bus_space_read_1(sc->lm_iot, sc->lm_ioh, LMC_DATA));
+}
+
+
+void
+lm_pnpbios_writereg(sc, reg, val)
+	struct lm_softc *sc;
+	int reg;
+	int val;
+{
+	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_ADDR, reg);
+	bus_space_write_1(sc->lm_iot, sc->lm_ioh, LMC_DATA, val);
+}
