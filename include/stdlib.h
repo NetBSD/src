@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.26 1997/07/13 18:01:53 christos Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.27 1997/07/14 00:30:28 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -85,7 +85,8 @@ typedef struct {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-__dead void	 abort __P((void));
+__dead void
+	 abort __P((void));
 int	 abs __P((int));
 int	 atexit __P((void (*)(void)));
 double	 atof __P((const char *));
@@ -95,7 +96,8 @@ void	*bsearch __P((const void *, const void *, size_t,
 	    size_t, int (*)(const void *, const void *)));
 void	*calloc __P((size_t, size_t));
 div_t	 div __P((int, int));
-__dead void	 exit __P((int));
+__dead void
+	 exit __P((int));
 void	 free __P((void *));
 char	*getenv __P((const char *));
 long	 labs __P((long));
@@ -122,9 +124,9 @@ size_t	 wcstombs __P((char *, const wchar_t *, size_t));
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 #if defined(alloca) && (alloca == __builtin_alloca) && (__GNUC__ < 2)
-void  *alloca __P((int));     /* built-in for gcc */ 
+void	*alloca __P((int));     /* built-in for gcc */ 
 #else 
-void  *alloca __P((size_t)); 
+void	*alloca __P((size_t)); 
 #endif /* __GNUC__ */ 
 
 char	*getbsize __P((int *, long *));
@@ -189,10 +191,11 @@ void	 lcong48 __P((unsigned short[7]));
 long	 lrand48 __P((void));
 long	 mrand48 __P((void));
 long	 nrand48 __P((unsigned short[3]));
-unsigned short *seed48 __P((unsigned short[3]));
+unsigned short *
+	 seed48 __P((unsigned short[3]));
 void	 srand48 __P((long));
 #endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
 __END_DECLS
 
-#endif /* _STDLIB_H_ */
+#endif /* !_STDLIB_H_ */
