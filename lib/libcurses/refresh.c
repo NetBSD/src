@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.45 2002/01/02 10:38:28 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.46 2002/06/26 18:14:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.45 2002/01/02 10:38:28 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.46 2002/06/26 18:14:04 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -713,6 +713,11 @@ domvcur(oy, ox, ny, nx)
  * repainting the screen line by line.
  */
 
+static __LDATA buf[128];
+static  u_int last_hash;
+static  size_t last_hash_len;
+#define BLANKSIZE (sizeof(buf) / sizeof(buf[0]))
+
 static void
 quickch(void)
 {
@@ -721,7 +726,6 @@ quickch(void)
 	__LINE *clp, *tmp1, *tmp2;
 	int	bsize, curs, curw, starts, startw, i, j;
 	int	n, target, cur_period, bot, top, sc_region;
-	__LDATA buf[1024];
 	u_int	blank_hash;
 	attr_t	bcolor;
 
@@ -865,15 +869,28 @@ done:
 	}
 #endif
 
-	/* So we don't have to call __hash() each time */
-	for (i = 0; i < __virtscr->maxx; i++) {
-		buf[i].ch = ' ';
-		buf[i].bch = ' ';
-		buf[i].attr = 0;
-		buf[i].battr = 0;
+	if (buf[0].ch != ' ') {
+		for (i = 0; i < BLANKSIZE; i++) {
+			buf[i].ch = ' ';
+			buf[i].bch = ' ';
+			buf[i].attr = 0;
+			buf[i].battr = 0;
+		}
 	}
-	blank_hash = __hash((char *)(void *)buf,
-	    (int) (__virtscr->maxx * __LDATASIZE));
+
+	if (__virtscr->maxx != last_hash_len) {
+		blank_hash = 0;
+		for (i = __virtscr->maxx; i > BLANKSIZE; i -= BLANKSIZE) {
+			blank_hash = __hash_more((char *)(void *)buf, sizeof(buf),
+			    blank_hash);
+		}
+		blank_hash = __hash_more((char *)(void *)buf,
+		    i * sizeof(buf[0]), blank_hash);
+		/* cache result in static data - screen width doesn't change often */
+		last_hash_len = __virtscr->maxx;
+		last_hash = blank_hash;
+	} else
+		blank_hash = last_hash;
 
 	/*
 	 * Perform the rotation to maintain the consistency of curscr.
@@ -931,9 +948,16 @@ done:
 			if ((n > 0 && target >= top && target < top + n) ||
 			    (n < 0 && target <= bot && target > bot + n)) {
 				if (clp->hash != blank_hash || memcmp(clp->line,
-				    buf, (size_t) __virtscr->maxx * __LDATASIZE) !=0) {
-					(void)memcpy(clp->line,  buf,
-					    (size_t) __virtscr->maxx * __LDATASIZE);
+				    clp->line + 1, (__virtscr->maxx - 1) *
+				    __LDATASIZE) || memcmp(clp->line, buf,
+				    __LDATASIZE)) {
+					for (i = __virtscr->maxx; i > BLANKSIZE;
+					    i -= BLANKSIZE) {
+						(void)memcpy(clp->line + i -
+						    BLANKSIZE, buf, sizeof(buf));
+					}
+					(void)memcpy(clp->line , buf, i * 
+					    sizeof(buf[0]));
 #ifdef DEBUG
 					__CTRACE("-- blanked out: dirty\n");
 #endif
