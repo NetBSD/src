@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 1998/03/28 00:06:03 mark Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 1998/04/03 01:56:34 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -199,12 +199,12 @@ bootsync(void)
 	bootsyncdone = 1;
 
 	/* Make sure we can still manage to do things */
-
 	if (GetCPSR() & I32_bit) {
 		/*
-		 * If we get then boot has been called without RB_NOSYNC and interrupts were
-		 * disabled. This means the boot() call did not come from a user process e.g.
-		 * shutdown, but must have come from somewhere in the kernel.
+		 * If we get here then boot has been called without RB_NOSYNC
+		 * and interrupts were disabled. This means the boot() call
+		 * did not come from a user process e.g. shutdown, but must
+		 * have come from somewhere in the kernel.
 		 */
 
 		IRQenable;
@@ -352,23 +352,22 @@ cpu_startup()
 	vm_size_t bufsize;
 	int base, residual;
 
-	/* Set the cpu control register */
+	proc0paddr = (struct user *)kernelstack.virtual;
+	proc0.p_addr = proc0paddr;
 
+	/* Set the cpu control register */
 	cpu_setup(boot_args);
 
 	/* All domains MUST be clients, permissions are VERY important */
-
 	cpu_domains(DOMAIN_CLIENT);
 
 	/* Lock down zero page */
-
 	zero_page_readonly();
 
 	/*
 	 * Give pmap a chance to set up a few more things now the vm
 	 * is initialised
 	 */
-
 	pmap_postinit();
 
 	/*
@@ -376,7 +375,6 @@ cpu_startup()
 	 */
 
 	/* msgbufphys was setup during the secondary boot strap */
-
 	for (loop = 0; loop < btoc(MSGBUFSIZE); ++loop)
 		pmap_enter(pmap_kernel(),
 		    (vm_offset_t)((caddr_t)msgbufaddr + loop * NBPG),
@@ -387,7 +385,6 @@ cpu_startup()
 	 * Identify ourselves for the msgbuf (everything printed earlier will
 	 * not be buffered).
 	 */
- 
 	printf(version);
 
 	printf("real mem = %d (%d pages)\n", arm_page_to_byte(physmem), physmem);
@@ -448,28 +445,24 @@ cpu_startup()
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
 
 	/*
 	 * Allocate a submap for physio
 	 */
-
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE);
 
 	/*
 	 * Finally, allocate mbuf cluster submap.
 	 */
-
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 
 	/*
 	 * Initialise callouts
 	 */
-
 	callfree = callout;
 
 	for (loop = 1; loop < ncallout; ++loop)
@@ -486,9 +479,6 @@ cpu_startup()
 
 	bufinit();
 
-	proc0paddr = (struct user *)kernelstack.virtual;
-	proc0.p_addr = proc0paddr;
-
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_flags = 0;
 	curpcb->pcb_und_sp = (u_int)proc0.p_addr + USPACE_UNDEF_STACK_TOP;
@@ -501,7 +491,6 @@ cpu_startup()
 	/*
 	 * Configure the hardware
 	 */
- 
 	configure();
 
 	cold = 0;	/* We are warm now ... */
