@@ -49,10 +49,10 @@
 #include "altq_qop.h"
 #include "qop_red.h"
 
-static int red_attach(struct ifinfo *ifinfo);
-static int red_detach(struct ifinfo *ifinfo);
-static int red_enable(struct ifinfo *ifinfo);
-static int red_disable(struct ifinfo *ifinfo);
+static int red_attach(struct ifinfo *);
+static int red_detach(struct ifinfo *);
+static int red_enable(struct ifinfo *);
+static int red_disable(struct ifinfo *);
 
 #define RED_DEVICE	"/dev/altq/red"
 

@@ -54,27 +54,25 @@
 #include "altq_qop.h"
 #include "qop_cbq.h"
 
-static int qcmd_cbq_add_ctl_filters(const char *ifname, const char *clname);
+static int qcmd_cbq_add_ctl_filters(const char *, const char *);
 
-static int qop_cbq_enable_hook(struct ifinfo *ifinfo);
-static int qop_cbq_delete_class_hook(struct classinfo *clinfo);
+static int qop_cbq_enable_hook(struct ifinfo *);
+static int qop_cbq_delete_class_hook(struct classinfo *);
 
-static int cbq_class_spec(struct ifinfo *ifinfo, u_long parent_class,
-			  u_long borrow_class, u_int pri, int flags,
-			  u_int bandwidth, u_int maxdelay, u_int maxburst,
-			  u_int minburst, u_int av_pkt_size,
-			  u_int max_pkt_size, cbq_class_spec_t *cl_spec);
+static int cbq_class_spec(struct ifinfo *, u_long, u_long, u_int, int,
+			  u_int, u_int, u_int, u_int, u_int,
+			  u_int, cbq_class_spec_t *);
 
-static int cbq_attach(struct ifinfo *ifinfo);
-static int cbq_detach(struct ifinfo *ifinfo);
-static int cbq_clear(struct ifinfo *ifinfo);
-static int cbq_enable(struct ifinfo *ifinfo);
-static int cbq_disable(struct ifinfo *ifinfo);
-static int cbq_add_class(struct classinfo *clinfo);
-static int cbq_modify_class(struct classinfo *clinfo, void *arg);
-static int cbq_delete_class(struct classinfo *clinfo);
-static int cbq_add_filter(struct fltrinfo *fltrinfo);
-static int cbq_delete_filter(struct fltrinfo *fltrinfo);
+static int cbq_attach(struct ifinfo *);
+static int cbq_detach(struct ifinfo *);
+static int cbq_clear(struct ifinfo *);
+static int cbq_enable(struct ifinfo *);
+static int cbq_disable(struct ifinfo *);
+static int cbq_add_class(struct classinfo *);
+static int cbq_modify_class(struct classinfo *, void *);
+static int cbq_delete_class(struct classinfo *);
+static int cbq_add_filter(struct fltrinfo *);
+static int cbq_delete_filter(struct fltrinfo *);
 
 #define CTL_PBANDWIDTH	2
 #define NS_PER_MS	(1000000.0)

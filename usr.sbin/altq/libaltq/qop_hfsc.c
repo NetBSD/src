@@ -49,34 +49,31 @@
 #include "altq_qop.h"
 #include "qop_hfsc.h"
 
-static int read_sc(int *argcp, char ***argvp,
-		   int *type, u_int *m1, u_int *d, u_int *m2);
-static int qop_hfsc_enable_hook(struct ifinfo *ifinfo);
-static int qop_hfsc_delete_class_hook(struct classinfo *clinfo);
-static int validate_sc(struct service_curve *sc);
+static int read_sc(int *, char ***, int *, u_int *, u_int *, u_int *);
+static int qop_hfsc_enable_hook(struct ifinfo *);
+static int qop_hfsc_delete_class_hook(struct classinfo *);
+static int validate_sc(struct service_curve *);
 
-static void gsc_add_sc(struct gen_sc *gsc, struct service_curve *sc);
-static void gsc_sub_sc(struct gen_sc *gsc, struct service_curve *sc);
-static int is_gsc_under_sc(struct gen_sc *gsc, struct service_curve *sc);
-static void gsc_destroy(struct gen_sc *gsc);
-static struct segment *gsc_getentry(struct gen_sc *gsc, double x);
-static int gsc_add_seg(struct gen_sc *gsc,
-		       double x, double y, double d, double m);
-static int gsc_sub_seg(struct gen_sc *gsc,
-		       double x, double y, double d, double m);
-static void gsc_compress(struct gen_sc *gsc);
-static double sc_x2y(struct service_curve *sc, double x);
+static void gsc_add_sc(struct gen_sc *, struct service_curve *);
+static void gsc_sub_sc(struct gen_sc *, struct service_curve *);
+static int is_gsc_under_sc(struct gen_sc *, struct service_curve *);
+static void gsc_destroy(struct gen_sc *);
+static struct segment *gsc_getentry(struct gen_sc *, double);
+static int gsc_add_seg(struct gen_sc *, double, double, double, double);
+static int gsc_sub_seg(struct gen_sc *, double, double, double, double);
+static void gsc_compress(struct gen_sc *);
+static double sc_x2y(struct service_curve *, double);
 
-static int hfsc_attach(struct ifinfo *ifinfo);
-static int hfsc_detach(struct ifinfo *ifinfo);
-static int hfsc_clear(struct ifinfo *ifinfo);
-static int hfsc_enable(struct ifinfo *ifinfo);
-static int hfsc_disable(struct ifinfo *ifinfo);
-static int hfsc_add_class(struct classinfo *clinfo);
-static int hfsc_modify_class(struct classinfo *clinfo, void *arg);
-static int hfsc_delete_class(struct classinfo *clinfo);
-static int hfsc_add_filter(struct fltrinfo *fltrinfo);
-static int hfsc_delete_filter(struct fltrinfo *fltrinfo);
+static int hfsc_attach(struct ifinfo *);
+static int hfsc_detach(struct ifinfo *);
+static int hfsc_clear(struct ifinfo *);
+static int hfsc_enable(struct ifinfo *);
+static int hfsc_disable(struct ifinfo *);
+static int hfsc_add_class(struct classinfo *);
+static int hfsc_modify_class(struct classinfo *, void *);
+static int hfsc_delete_class(struct classinfo *);
+static int hfsc_add_filter(struct fltrinfo *);
+static int hfsc_delete_filter(struct fltrinfo *);
 
 #define HFSC_DEVICE	"/dev/altq/hfsc"
 

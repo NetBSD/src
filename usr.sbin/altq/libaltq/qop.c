@@ -1,4 +1,4 @@
-/*	$KAME: qop.c,v 1.6 2000/10/18 09:15:18 kjc Exp $	*/
+/*	$KAME: qop.c,v 1.8 2001/08/16 04:31:41 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -86,17 +86,16 @@ int	Debug_mode = 0;		/* nosched (dummy mode) */
 /*
  * internal functions
  */
-static int get_ifmtu(const char *ifname);
-static void tbr_install(const char *ifname);
-static void tbr_deinstall(const char *ifname);
-static int add_filter_rule(struct ifinfo *ifinfo, struct fltrinfo *fltrinfo,
-			   struct fltrinfo **conflict);
-static int remove_filter_rule(struct ifinfo *ifinfo,
-			      struct fltrinfo *fltrinfo);
-static int filt_check_relation(struct flow_filter *front,
-			       struct flow_filter *back);
-static int filt_disjoint(struct flow_filter *front, struct flow_filter *back);
-static int filt_subset(struct flow_filter *front, struct flow_filter *back);
+static int get_ifmtu(const char *);
+static void tbr_install(const char *);
+static void tbr_deinstall(const char *);
+static int add_filter_rule(struct ifinfo *, struct fltrinfo *,
+			   struct fltrinfo **);
+static int remove_filter_rule(struct ifinfo *,
+			      struct fltrinfo *);
+static int filt_check_relation(struct flow_filter *, struct flow_filter *);
+static int filt_disjoint(struct flow_filter *, struct flow_filter *);
+static int filt_subset(struct flow_filter *, struct flow_filter *);
 
 /*
  * QCMD (Queue Command) API
@@ -315,7 +314,7 @@ qcmd_tbr_register(const char *ifname, u_int rate, u_int size)
 	if ((info = calloc(1, sizeof(struct tbrinfo))) == NULL)
 		return (QOPERR_NOMEM);
 
-	strcpy(info->ifname, ifname);
+	strlcpy(info->ifname, ifname, sizeof(info->ifname));
 	info->tb_prof.rate = rate;
 	info->tb_prof.depth = size;
 	info->installed = 0;
@@ -664,7 +663,7 @@ qoperror(int qoperrno)
 	
 	if (qoperrno <= QOPERR_MAX)
 		return (qop_errlist[qoperrno]);
-	sprintf(buf, "unknown error %d", qoperrno);
+	snprintf(buf, sizeof(buf), "unknown error %d", qoperrno);
 	return (buf);
 }
 
@@ -1404,18 +1403,18 @@ int
 open_module(const char *devname, int flags)
 {
 #if defined(__FreeBSD__) && (__FreeBSD_version > 300000)
-	char modname[64], filename[256], *cp;
+	char modname[64], filename[MAXPATHLEN], *cp;
 	int fd;
 	struct stat sbuf;
 
 	/* turn discipline name into module name */
-	strcpy(modname, "altq_");
+	strlcpy(modname, "altq_", sizeof(modname));
 	if ((cp = strrchr(devname, '/')) == NULL)
 		return (-1);
-	strcat(modname, cp+1);
+	strlcat(modname, cp + 1, sizeof(modname));
 
 	/* check if the kld module exists */
-	sprintf(filename, "/modules/%s.ko", modname);
+	snprintf(filename, sizeof(filename), "/modules/%s.ko", modname);
 	if (stat(filename, &sbuf) < 0) {
 		/* module file doesn't exist */
 		return (-1);
@@ -1434,4 +1433,3 @@ open_module(const char *devname, int flags)
 	return (-1);
 #endif
 }
-

@@ -49,10 +49,10 @@
 #include "altq_qop.h"
 #include "qop_blue.h"
 
-static int blue_attach(struct ifinfo *ifinfo);
-static int blue_detach(struct ifinfo *ifinfo);
-static int blue_enable(struct ifinfo *ifinfo);
-static int blue_disable(struct ifinfo *ifinfo);
+static int blue_attach(struct ifinfo *);
+static int blue_detach(struct ifinfo *);
+static int blue_enable(struct ifinfo *);
+static int blue_disable(struct ifinfo *);
 
 #define BLUE_DEVICE	"/dev/altq/blue"
 
