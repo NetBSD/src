@@ -1,11 +1,11 @@
-/*	$NetBSD: pen.c,v 1.17 2000/07/24 02:54:22 hubertf Exp $	*/
+/*	$NetBSD: pen.c,v 1.18 2000/11/26 03:12:01 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.17 2000/07/24 02:54:22 hubertf Exp $");
+__RCSID("$NetBSD: pen.c,v 1.18 2000/11/26 03:12:01 hubertf Exp $");
 #endif
 #endif
 
@@ -97,7 +97,7 @@ find_play_pen(char *pen, size_t pensize, size_t sz)
 		strcpy(pen, "/var/tmp/instmp.XXXXXX");
 	else if (stat("/tmp", &sb) != FAIL && min_free("/tmp") >= sz)
 		strcpy(pen, "/tmp/instmp.XXXXXX");
-	else if ((stat("/usr/tmp", &sb) == SUCCESS || mkdir("/usr/tmp", 01777) == SUCCESS) && min_free("/usr/tmp") >= sz)
+	else if (stat("/usr/tmp", &sb) != FAIL && min_free("/usr/tmp") >= sz)
 		strcpy(pen, "/usr/tmp/instmp.XXXXXX");
 	else {
 		cleanup(0);
