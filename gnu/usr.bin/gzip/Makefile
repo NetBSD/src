@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2002/08/27 14:46:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.32 2003/01/27 09:07:13 wiz Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT & OBJECT_FMT definition
 
@@ -39,4 +39,8 @@ LINKS+=		${BINDIR}/gzip ${BINDIR}/gunzip \
 FILES=		zforce gzexe znew zmore zdiff zgrep 
 FILESMODE=	${BINMODE}
 
+TEXINFO=	gzip.info
+INFOFLAGS=	-I${.CURDIR}
+
+.include <bsd.info.mk>
 .include <bsd.prog.mk>
