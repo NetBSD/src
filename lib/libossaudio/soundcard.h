@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.5 1998/06/19 15:05:09 augustss Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.6 1998/06/29 20:48:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -276,7 +276,12 @@ typedef struct buffmem_desc {
 	int size;
 } buffmem_desc;
 
+#if 0
+/* This is what we'd like to have, but it causes prototype conflicts. */
 #define ioctl _oss_ioctl
+#else
+#define ioctl(x,y,z) _oss_ioctl(x,y,z)
+#endif
 
 #include <sys/cdefs.h>
 
