@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.17.2.2 2000/08/12 19:06:17 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.17.2.3 2000/08/21 18:18:23 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -989,7 +989,7 @@ switch_exited:
 	mov.l	@r0, r2
 	or	r1, r2
 #ifdef SH4
-	mov.l	XL_MMUCR_VBITS,r1
+	mov.l	XL_MMUCR_VBITS, r1
 	and	r1, r2
 #endif
 	mov.l	r2, @r0
@@ -1032,7 +1032,6 @@ XLwant_resched:	.long	_C_LABEL(want_resched)
 XXXLcurproc:	.long	_C_LABEL(curproc)
 XL_ConvVtoP:	.long	_ConvVtoP
 XL_KernelSp:	.long	KernelSp
-XL_MMUCR_VBITS:	.long	0xfcfcff05
 XL_SHREG_TTB:	.long	SHREG_TTB
 /*
  * switch_exit(struct proc *p);
@@ -1074,6 +1073,10 @@ ENTRY(switch_exit)
 	mov	#4, r1
 	mov.l	@r0, r2
 	or	r1, r2
+#ifdef SH4
+	mov.l	XL_MMUCR_VBITS, r1
+	and	r1, r2
+#endif
 	mov.l	r2, @r0
 
 	/* Record new pcb. */
@@ -1101,6 +1104,8 @@ ENTRY(switch_exit)
 	.globl	_C_LABEL(exit2)
 XLexit2:
 	.long	_C_LABEL(exit2)
+XL_MMUCR_VBITS:
+	.long	0xfcfcff05
 XXL_SHREG_MMUCR:
 	.long	SHREG_MMUCR
 XXLP_ADDR:
