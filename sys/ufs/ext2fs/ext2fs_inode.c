@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.16 2000/05/28 04:13:58 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.17 2000/05/28 08:44:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -454,7 +454,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	}
 
 	bap = (ufs_daddr_t *)bp->b_data;
-	if (lastbn != -1) {
+	if (lastbn >= 0) {
 		MALLOC(copy, ufs_daddr_t *, fs->e2fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->e2fs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,
