@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.6.4.18 2000/02/03 09:34:45 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.6.4.19 2000/03/14 09:39:33 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.18 2000/02/03 09:34:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.19 2000/03/14 09:39:33 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,13 +97,13 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.18 2000/02/03 09:34:45 nisimura
 #include "xcfb.h"
 
 void dec_maxine_init __P((void));
-void dec_maxine_bus_reset __P((void));
-void dec_maxine_device_register __P((struct device *, void *));
-void dec_maxine_cons_init __P((void));
-int  dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
-void kn02ca_wbflush __P((void));
-
+static void dec_maxine_bus_reset __P((void));
+static void dec_maxine_device_register __P((struct device *, void *));
+static void dec_maxine_cons_init __P((void));
+static int  dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 static unsigned kn02ca_clkread __P((void));
+static void kn02ca_wbflush __P((void));
+
 static unsigned latched_cycle_cnt;	/* high resolution timer counter */
 
 extern void prom_haltbutton __P((void));
@@ -111,6 +111,8 @@ extern void prom_findcons __P((int *, int *, int *));
 extern int xcfb_cnattach __P((void));
 extern int tcfb_cnattach __P((int));
 extern void dtikbd_cnattach __P((void));
+extern void ioasic_intr_establish __P((struct device *, void *,
+		int, int (*)(void *), void *));
 
 extern char cpu_model[];
 
@@ -136,6 +138,7 @@ dec_maxine_init()
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
 	platform.iointr = dec_maxine_intr;
+	platform.intr_establish = ioasic_intr_establish;
 	platform.memsize = memsize_scan;
 	platform.clkread = kn02ca_clkread;
 	/* MAXINE has 1 microsec. free-running high resolution timer */
@@ -183,7 +186,7 @@ dec_maxine_init()
 	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
 }
 
-void
+static void
 dec_maxine_bus_reset()
 {
 	/* clear any memory error condition */
@@ -194,7 +197,7 @@ dec_maxine_bus_reset()
 	kn02ca_wbflush();
 }
 
-void
+static void
 dec_maxine_cons_init()
 {
 	int kbd, crt, screen;
@@ -229,7 +232,7 @@ dec_maxine_cons_init()
 	zs_ioasic_cnattach(ioasic_base, 0x100000, 1);
 }
 
-void
+static void
 dec_maxine_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
@@ -237,18 +240,16 @@ dec_maxine_device_register(dev, aux)
 	panic("dec_maxine_device_register unimplemented");
 }
 
-
-#define	CHECKINTR(slot, bits)					\
+#define CHECKINTR(vvv, bits)					\
+    do {							\
 	if (can_serve & (bits)) {				\
 		ifound = 1;					\
-		intrcnt[slot] += 1;				\
-		(*intrtab[slot].ih_func)(intrtab[slot].ih_arg);	\
-	}
+		intrcnt[vvv] += 1;				\
+		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
+	}							\
+    } while (0)
 
-/*
- * Handle MAXINE interrupts.
- */
-int
+static int
 dec_maxine_intr(cpumask, pc, status, cause)
 	unsigned cpumask;
 	unsigned pc;
@@ -338,7 +339,7 @@ dec_maxine_intr(cpumask, pc, status, cause)
 	return (MIPS_SR_INT_IE | (status & ~cause & MIPS_HARD_INT_MASK));
 }
 
-void
+static void
 kn02ca_wbflush()
 {
 	/* read once IOASIC_IMSK */
@@ -346,7 +347,7 @@ kn02ca_wbflush()
 	    "i"(MIPS_PHYS_TO_KSEG1(XINE_REG_IMSK)));
 }
 
-unsigned
+static unsigned
 kn02ca_clkread()
 {
 	u_int32_t cycles;
@@ -354,9 +355,6 @@ kn02ca_clkread()
 	cycles = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
 	return cycles - latched_cycle_cnt;
 }
-
-#define KV(x)	MIPS_PHYS_TO_KSEG1(x)
-#define C(x)	(void *)(x)
 
 static struct tc_slotdesc tc_maxine_slots[] = {
     { KV(XINE_PHYS_TC_0_START), C(SYS_DEV_OPT0),  },	/* 0 - opt slot 0 */
@@ -375,7 +373,7 @@ struct tcbus_attach_args xine_tc_desc = {	/* global not a const */
 	TC_SPEED_12_5_MHZ,
 	XINE_TC_NSLOTS, tc_maxine_slots,
 	2, tc_ioasic_builtins,
-	ioasic_intr_establish, ioasic_intr_disestablish,
+	NULL, NULL,
 	NULL,
 };
 

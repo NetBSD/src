@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.2.20 2000/02/03 09:34:46 nisimura Exp $ */
+/* $NetBSD: machdep.c,v 1.120.2.21 2000/03/14 09:39:34 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.20 2000/02/03 09:34:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.21 2000/03/14 09:39:34 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -129,6 +129,8 @@ static void	unimpl_bus_reset __P((void));
 static void	unimpl_cons_init __P((void));
 static void	unimpl_device_register __P((struct device *, void *));
 static int 	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
+static void	unimpl_intr_establish __P((struct device *, void *, int,
+		    int (*)(void *), void *));
 static int	unimpl_memsize __P((caddr_t));
 static unsigned	nullwork __P((void));
 
@@ -138,6 +140,7 @@ struct platform platform = {
 	unimpl_cons_init,
 	unimpl_device_register,
 	unimpl_iointr,
+	unimpl_intr_establish,
 	unimpl_memsize,
 	(void *)nullwork,
 };
@@ -310,12 +313,11 @@ mach_init(argc, argv, code, cv, bim, bip)
 	 * Alloc u pages for proc0 stealing KSEG0 memory.
 	 */
 	proc0.p_addr = proc0paddr = (struct user *)kernend;
-	proc0.p_md.md_regs =
-	    (struct frame *)((caddr_t)kernend + UPAGES * PAGE_SIZE) - 1;
+	proc0.p_md.md_regs = (struct frame *)(kernend + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
-	memset(kernend, 0, UPAGES * PAGE_SIZE);
+	memset(proc0.p_addr, 0, USPACE);
 
-	kernend += UPAGES * PAGE_SIZE;
+	kernend += USPACE;
 
 	/*
 	 * Determine what model of computer we are running on.
@@ -758,6 +760,17 @@ unimpl_iointr(mask, pc, statusreg, causereg)
 {
 
 	panic("sysconf.init didn't set iointr");
+}
+
+static void
+unimpl_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
+	int level;
+	int (*handler) __P((void *));
+	void *arg;
+{
+	panic("sysconf.init didn't set intr_establish");
 }
 
 static int
