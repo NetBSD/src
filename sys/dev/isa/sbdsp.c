@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.93 1999/02/18 07:08:35 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.94 1999/02/18 15:47:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -210,10 +210,8 @@ sb_printsc(sc)
 	    sc->sc_o.rate, sc->sc_o.tc);
 	printf("spkron %u nintr %lu\n",
 	    sc->spkr_state, sc->sc_interrupts);
-	printf("intr8 %p arg8 %p\n",
-	    sc->sc_intr8, sc->sc_arg16);
-	printf("intr16 %p arg16 %p\n",
-	    sc->sc_intr8, sc->sc_arg16);
+	printf("intr8 %p intr16 %p\n",
+	    sc->sc_intr8, sc->sc_intr16);
 	printf("gain:");
 	for (i = 0; i < SB_NDEVS; i++)
 		printf(" %u,%u", sc->gain[i][SB_LEFT], sc->gain[i][SB_RIGHT]);
@@ -864,7 +862,7 @@ sbdsp_open(addr, flags)
 
 	sc->sc_open = SB_OPEN_AUDIO;
 	sc->sc_openflags = flags;
-	sc->sc_intrm = 0;
+
 	if (ISSBPRO(sc) &&
 	    sbdsp_wdsp(sc, SB_DSP_RECORD_MONO) < 0) {
 		DPRINTF(("sbdsp_open: can't set mono mode\n"));
@@ -1171,7 +1169,6 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 		}
 #endif
 		sc->sc_intr8 = sbdsp_block_input;
-		sc->sc_arg8 = addr;
 	} else {
 #ifdef DIAGNOSTIC
 		if (sc->sc_i.dmachan != sc->sc_drq16) {
@@ -1181,7 +1178,6 @@ sbdsp_trigger_input(addr, start, end, blksize, intr, arg, param)
 		}
 #endif
 		sc->sc_intr16 = sbdsp_block_input;
-		sc->sc_arg16 = addr;
 	}
 
 	if ((sc->sc_model == SB_JAZZ) ? (sc->sc_i.dmachan > 3) : (width == 16))
@@ -1308,7 +1304,6 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 		}
 #endif
 		sc->sc_intr8 = sbdsp_block_output;
-		sc->sc_arg8 = addr;
 	} else {
 #ifdef DIAGNOSTIC
 		if (sc->sc_o.dmachan != sc->sc_drq16) {
@@ -1318,7 +1313,6 @@ sbdsp_trigger_output(addr, start, end, blksize, intr, arg, param)
 		}
 #endif
 		sc->sc_intr16 = sbdsp_block_output;
-		sc->sc_arg16 = addr;
 	}
 
 	if ((sc->sc_model == SB_JAZZ) ? (sc->sc_o.dmachan > 3) : (width == 16))
@@ -1480,12 +1474,12 @@ sbdsp_intr(arg)
 	if (irq & SBP_IRQ_DMA8) {
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, SBP_DSP_IRQACK8);
 		if (sc->sc_intr8)
-			sc->sc_intr8(sc->sc_arg8);
+			sc->sc_intr8(arg);
 	}
 	if (irq & SBP_IRQ_DMA16) {
 		bus_space_read_1(sc->sc_iot, sc->sc_ioh, SBP_DSP_IRQACK16);
 		if (sc->sc_intr16)
-			sc->sc_intr16(sc->sc_arg16);
+			sc->sc_intr16(arg);
 	}
 #if NMIDI > 0
 	if ((irq & SBP_IRQ_MPU401) && sc->sc_hasmpu) {
@@ -2277,15 +2271,17 @@ sbdsp_midi_open(addr, flags, iintr, ointr, arg)
 	if (sbdsp_reset(sc) != 0)
 		return EIO;
 
+	sc->sc_open = SB_OPEN_MIDI;
+	sc->sc_openflags = flags;
+
 	if (sc->sc_model >= SB_20)
 		if (sbdsp_wdsp(sc, SB_MIDI_UART_INTR)) /* enter UART mode */
 			return EIO;
-	sc->sc_open = SB_OPEN_MIDI;
-	sc->sc_openflags = flags;
+
 	sc->sc_intr8 = sbdsp_midi_intr;
-	sc->sc_arg8 = addr;
 	sc->sc_intrm = iintr;
 	sc->sc_argm = arg;
+
 	return 0;
 }
 
