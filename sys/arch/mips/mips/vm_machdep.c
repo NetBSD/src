@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.50 2000/03/26 20:42:31 kleink Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.51 2000/03/28 02:58:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2000/03/26 20:42:31 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.51 2000/03/28 02:58:50 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,12 +69,12 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.50 2000/03/26 20:42:31 kleink Exp $
 /* XXX will be declared in mips/include/cpu.h XXX */
 extern struct proc *fpcurproc;
 
-extern paddr_t kvtophys __P((vaddr_t));	/* XXX */
+paddr_t kvtophys __P((vaddr_t));	/* XXX */
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
@@ -206,7 +206,7 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
-	extern void switch_exit __P((struct proc *));
+	void switch_exit __P((struct proc *));
 
 	if (fpcurproc == p)
 		fpcurproc = (struct proc *)0;
@@ -315,7 +315,7 @@ extern vm_map_t phys_map;
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)
