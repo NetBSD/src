@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)endian.h	7.8 (Berkeley) 4/3/91
- *	$Id: endian.h,v 1.10 1994/03/16 17:20:24 jtc Exp $
+ *	$Id: endian.h,v 1.10.2.1 1994/07/15 22:17:37 cgd Exp $
  */
 
 #ifndef _MACHINE_ENDIAN_H_
@@ -67,55 +67,28 @@ __END_DECLS
 
 #ifdef __GNUC__
 
-#if __GNUC__ >= 2
-
 #if defined(KERNEL) && !defined(I386_CPU)
 #define __byte_swap_long(x) \
 ({ register unsigned long __x = (x); \
    asm ("bswap %1" \
-	: "=q" (__x) \
+	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
 #else
 #define __byte_swap_long(x) \
 ({ register unsigned long __x = (x); \
    asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
-	: "=q" (__x) \
+	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
 #endif	/* KERNEL && ... */
+
 #define __byte_swap_word(x) \
 ({ register unsigned short __x = (x); \
    asm ("rorw $8, %w1" \
-	: "=q" (__x) \
-	: "0" (__x)); \
-   __x; })
-
-#else	/* __GNUC__ >= 2 */
-
-#if defined(KERNEL) && !defined(I386_CPU)
-#define __byte_swap_long(x) \
-({ register unsigned long __x = (x); \
-   asm ("bswap %1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
-#else
-#define __byte_swap_long(x) \
-({ register u_long __x = (x); \
-   asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
-#endif	/* KERNEL && ... */
-#define __byte_swap_word(x) \
-({ register u_short __x = (x); \
-   asm ("rorw $8, %w1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
-
-#endif	/* __GNUC__ >= 2 */
 
 #define	ntohl(x)	__byte_swap_long(x)
 #define	ntohs(x)	__byte_swap_word(x)
@@ -128,10 +101,10 @@ __END_DECLS
 /*
  * Macros for network/external number representation conversion.
  */
-#define	NTOHL(x)	(x) = ntohl((u_long)x)
-#define	NTOHS(x)	(x) = ntohs((u_short)x)
-#define	HTONL(x)	(x) = htonl((u_long)x)
-#define	HTONS(x)	(x) = htons((u_short)x)
+#define	NTOHL(x)	(x) = ntohl((unsigned long)(x))
+#define	NTOHS(x)	(x) = ntohs((unsigned short)(x))
+#define	HTONL(x)	(x) = htonl((unsigned long)(x))
+#define	HTONS(x)	(x) = htons((unsigned short)(x))
 
 #endif /* _POSIX_SOURCE */
 

@@ -24,7 +24,7 @@
  * rights to redistribute these changes.
  *
  *	From: Id: db_disasm.c,v 2.3 91/02/05 17:11:03 mrt (CMU)
- *	$Id: db_disasm.c,v 1.5 1994/04/05 17:31:31 mycroft Exp $
+ *	$Id: db_disasm.c,v 1.5.2.1 1994/07/15 22:17:34 cgd Exp $
  */
 
 /*
@@ -253,7 +253,7 @@ struct inst	db_inst_0fbx[] = {
 
 /*b8*/	{ "",      FALSE, NONE,  0,	      0 },
 /*b9*/	{ "",      FALSE, NONE,  0,	      0 },
-/*ba*/	{ "",      TRUE,  LONG,  op2(Is, E),  (char *)db_Grp8 },
+/*ba*/	{ "",      TRUE,  LONG,  op2(Ib, E),  (char *)db_Grp8 },
 /*bb*/	{ "btc",   TRUE,  LONG,  op2(R, E),   0 },
 /*bc*/	{ "bsf",   TRUE,  LONG,  op2(E, R),   0 },
 /*bd*/	{ "bsr",   TRUE,  LONG,  op2(E, R),   0 },
