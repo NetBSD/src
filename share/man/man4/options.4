@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.183 2002/10/16 19:48:33 jdc Exp $
+.\"	$NetBSD: options.4,v 1.184 2002/10/17 07:48:12 jdc Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1893,14 +1893,6 @@ Blink rate is full cycle every N seconds for
 N \*[Lt] then current load average.
 See
 .Xr getloadavg 3 .
-.El
-.Ss sun-specific Options
-.Bl -ohang
-.It Cd options SUN_MS_BPS
-Hard-code the mouse baud rate.
-Necessary if the PROM reports an incorrect baud rate.
-The default is 1200 baud but some Sun mice communicate at 4800 baud.
-Only used for machines with Z8530 chips (zs).
 .El
 .Ss x68k-specific Options
 .Bl -ohang
