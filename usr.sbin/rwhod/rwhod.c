@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.19 2002/08/02 02:38:15 christos Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.20 2003/02/12 17:49:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,8 +110,9 @@ void	 rt_xaddrs __P((caddr_t, caddr_t, struct rt_addrinfo *));
 int	 verify __P((char *));
 #ifdef DEBUG
 char	*interval __P((int, char *));
-void	 Sendto __P((int, char *, int, int, char *, int));
 #define	 sendto Sendto
+ssize_t	 Sendto __P((int, const void *,
+    size_t, int, const struct sockaddr *, socklen_t));
 #endif
 
 int
@@ -461,19 +462,21 @@ configure(s)
 }
 
 #ifdef DEBUG
-void
+ssize_t
 Sendto(s, buf, cc, flags, to, tolen)
 	int s;
-	char *buf;
-	int cc, flags;
-	char *to;
-	int tolen;
+	const void *buf;
+	size_t cc;
+	int flags;
+	const struct sockaddr *to;
+	socklen_t tolen;
 {
 	struct whod *w = (struct whod *)buf;
 	struct whoent *we;
 	struct sockaddr_in *sin = (struct sockaddr_in *)to;
 
-	printf("sendto %x.%d\n", ntohl(sin->sin_addr), ntohs(sin->sin_port));
+	printf("sendto %x.%d\n", ntohl(sin->sin_addr.s_addr),
+	    ntohs(sin->sin_port));
 	printf("hostname %s %s\n", w->wd_hostname,
 	   interval(ntohl(w->wd_sendtime) - ntohl(w->wd_boottime), "  up"));
 	printf("load %4.2f, %4.2f, %4.2f\n",
@@ -482,10 +485,8 @@ Sendto(s, buf, cc, flags, to, tolen)
 	cc -= WHDRSIZE;
 	for (we = w->wd_we, cc /= sizeof(struct whoent); cc > 0; cc--, we++) {
 		time_t t = ntohl(we->we_utmp.out_time);
-		printf("%-8.8s %s:%s %.12s",
-			we->we_utmp.out_name,
-			w->wd_hostname, we->we_utmp.out_line,
-			ctime(&t)+4);
+		printf("%-8.8s %s:%s %.12s", we->we_utmp.out_name,
+		    w->wd_hostname, we->we_utmp.out_line, ctime(&t)+4);
 		we->we_idle = ntohl(we->we_idle) / 60;
 		if (we->we_idle) {
 			if (we->we_idle >= 100*60)
@@ -498,6 +499,7 @@ Sendto(s, buf, cc, flags, to, tolen)
 		}
 		printf("\n");
 	}
+	return (ssize_t)cc;
 }
 
 char *
