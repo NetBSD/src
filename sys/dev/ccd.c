@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.51 1998/07/31 01:23:56 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.52 1998/11/12 22:39:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ struct ccdbuf {
 #define CBF_MIRROR	0x01		/* we're for a mirror component */
 
 /* XXX Safe to wait? */
-#define	CCD_GETBUF(cs)		pool_get(&(cs)->sc_cbufpool, PR_WAITOK)
+#define	CCD_GETBUF(cs)		pool_get(&(cs)->sc_cbufpool, PR_NOWAIT)
 #define	CCD_PUTBUF(cs, cbp)	pool_put(&(cs)->sc_cbufpool, cbp)
 
 #define CCDLABELDEV(dev)	\
