@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.42 2003/07/13 12:36:48 itojun Exp $	*/
+/*	$NetBSD: gram.y,v 1.43 2003/07/13 12:39:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -384,8 +384,9 @@ value:
 	WORD				{ $$ = $1; } |
 	EMPTY				{ $$ = $1; } |
 	signed_number			{ char bf[40];
-					    (void)sprintf(bf, FORMAT($1), $1);
-					    $$ = intern(bf); };
+					  (void)snprintf(bf, sizeof(bf),
+					      FORMAT($1), $1);
+					  $$ = intern(bf); };
 
 stringvalue:
 	QSTRING				{ $$ = $1; } |
@@ -597,13 +598,14 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 		exit(1);
 
 	/* Include arch/${MACHINE}/conf/files.${MACHINE} */
-	(void)sprintf(buf, "arch/%s/conf/files.%s", machine, machine);
+	(void)snprintf(buf, sizeof(buf), "arch/%s/conf/files.%s",
+	    machine, machine);
 	if (include(buf, ENDFILE, 0, 0) != 0)
 		exit(1);
 
 	/* Include any arch/${MACHINE_SUBARCH}/conf/files.${MACHINE_SUBARCH} */
 	for (nv = machinesubarches; nv != NULL; nv = nv->nv_next) {
-		(void)sprintf(buf, "arch/%s/conf/files.%s",
+		(void)snprintf(buf, sizeof(buf), "arch/%s/conf/files.%s",
 		    nv->nv_name, nv->nv_name);
 		if (include(buf, ENDFILE, 0, 0) != 0)
 			exit(1);
@@ -611,7 +613,7 @@ setmachine(const char *mch, const char *mcharch, struct nvlist *mchsubarches)
 
 	/* Include any arch/${MACHINE_ARCH}/conf/files.${MACHINE_ARCH} */
 	if (machinearch != NULL)
-		(void)sprintf(buf, "arch/%s/conf/files.%s",
+		(void)snprintf(buf, sizeof(buf), "arch/%s/conf/files.%s",
 		    machinearch, machinearch);
 	else
 		strlcpy(buf, _PATH_DEVNULL, sizeof(buf));
@@ -659,7 +661,7 @@ mk_nsis(const char *name, int count, struct nvlist *adefs, int opt)
 	for(i = 0; i < count; i++) {
 		if (*p == NULL)
 			*p = new_s("0");
-		sprintf(buf, "%s%c%d", name, ARRCHR, i);
+		snprintf(buf, sizeof(buf), "%s%c%d", name, ARRCHR, i);
 		(*p)->nv_name = i == 0 ? name : intern(buf);
 		(*p)->nv_int = i > 0 || opt;
 		p = &(*p)->nv_next;
@@ -677,7 +679,7 @@ mk_ns(const char *name, struct nvlist *vals)
 	int i;
 
 	for(i = 0, p = vals; p; i++, p = p->nv_next) {
-		sprintf(buf, "%s%c%d", name, ARRCHR, i);
+		snprintf(buf, sizeof(buf), "%s%c%d", name, ARRCHR, i);
 		p->nv_name = i == 0 ? name : intern(buf);
 	}
 	return vals;
