@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.15 2004/08/08 23:17:13 mycroft Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.16 2004/08/09 18:51:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.15 2004/08/08 23:17:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.16 2004/08/09 18:51:32 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,9 +392,9 @@ int
 pcmcom_enable(sc)
 	struct pcmcom_softc *sc;
 {
+	int error;
 
-	sc->sc_enabled_count++;
-	if (sc->sc_enabled_count > 1)
+	if (sc->sc_enabled_count++ != 0)
 		return (0);
 
 	/* Establish the interrupt. */
@@ -406,7 +406,11 @@ pcmcom_enable(sc)
 		return (1);
 	}
 
-	return (pcmcia_function_enable(sc->sc_pf));
+	error = pcmcia_function_enable(sc->sc_pf);
+	if (error)
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+
+	return (error);
 }
 
 void
@@ -414,8 +418,7 @@ pcmcom_disable(sc)
 	struct pcmcom_softc *sc;
 {
 
-	sc->sc_enabled_count--;
-	if (sc->sc_enabled_count != 0)
+	if (--sc->sc_enabled_count != 0)
 		return;
 
 	pcmcia_function_disable(sc->sc_pf);
