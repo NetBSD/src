@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.7 1997/10/18 12:23:37 lukem Exp $	*/
+/*	$NetBSD: at.c,v 1.8 1998/03/30 02:19:02 mrg Exp $	*/
 
 /*
  * at.c : Put file into atrun queue
@@ -64,14 +64,14 @@
 
 /* File scope variables */
 #ifndef lint
-__RCSID("$NetBSD: at.c,v 1.7 1997/10/18 12:23:37 lukem Exp $");
+__RCSID("$NetBSD: at.c,v 1.8 1998/03/30 02:19:02 mrg Exp $");
 #endif
 
 char *no_export[] =
 {
 	"TERM", "TERMCAP", "DISPLAY", "_"
 };
-static send_mail = 0;
+static int send_mail = 0;
 
 /* External variables */
 extern char **environ;
