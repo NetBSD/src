@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.169 2002/05/31 13:29:35 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.170 2002/06/01 21:03:37 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.169 2002/05/31 13:29:19 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.170 2002/06/01 21:03:14 itojun Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -696,6 +696,9 @@
 #define	PCMCIA_CIS_COREGA_ETHER_PCC_TD	{ "corega K.K.", "corega Ether PCC-TD", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_ETHER_PCC_TD	-1
 #define	PCMCIA_STR_COREGA_ETHER_PCC_TD	"Corega Ether PCC-TD"
+#define	PCMCIA_CIS_COREGA_ETHER_II_PCC_TD	{ "corega K.K.", "corega EtherII PCC-TD", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_TD	-1
+#define	PCMCIA_STR_COREGA_ETHER_II_PCC_TD	"Corega EtherII PCC-TD"
 #define	PCMCIA_CIS_COREGA_ETHER_II_PCC_T	{ "corega K.K.", "corega EtherII PCC-T", NULL, NULL }
 #define	PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T	-1
 #define	PCMCIA_STR_COREGA_ETHER_II_PCC_T	"Corega EtherII PCC-T"
