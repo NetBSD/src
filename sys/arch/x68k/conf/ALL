@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.17 1997/10/19 09:29:55 oki Exp $
+#	$NetBSD: ALL,v 1.17.2.1 1998/10/13 21:23:34 cgd Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -81,7 +81,6 @@ options 	TUN			# tunnelling
 
 # Options specific to this host.
 #options 	INSECURE		# Disable kernel security.
-options 	MACHINE_NONCONTIG	# support for noncontig memory
 options 	DEBUG			# extra kernel debugging support
 options 	FPU_EMULATE		# software fpu emulation
 options 	M060SP			# int/fp emulation for MC68060
@@ -95,6 +94,13 @@ options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 #options 	KGDB			# support for kernel gdb
 #options 	KGDBRATE=19200		# kernel gdb port rate (default 9600)
 #options 	KGDBDEV=15*256+2	# device for kernel gdb
+
+# high memory support
+# CAUTION: DO NOT UNCOMMENT BELOW UNLESS YOU HAVE THAT MEMORY
+#options 	EXTMEM_LOW=0x01000000,EXTMEM_SIZE="16*1024*1024"
+					# TS-6BE16 support
+#options 	EXTMEM_LOW=0x10000000,EXTMEM_SIZE="4*1024*1024"
+					# 060turbo onboard memory support
 
 #config		netbsd root on sd6a type ffs 
 config		netbsd root on ? type ?
