@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.25 1998/03/01 02:24:02 fvdl Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.26 1998/03/12 06:25:53 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -330,6 +330,7 @@ static int vm_physseg_find __P((vm_offset_t, int *));
 
 void		 vm_page_activate __P((vm_page_t));
 vm_page_t	 vm_page_alloc __P((vm_object_t, vm_offset_t));
+vm_page_t	 vm_page_alloc1 __P((void));
 int		 vm_page_alloc_memory __P((vm_size_t size, vm_offset_t low,
 			vm_offset_t high, vm_offset_t alignment, vm_offset_t boundary,
 			struct pglist *rlist, int nsegs, int waitok));
@@ -340,6 +341,7 @@ void		 vm_page_bootstrap __P((vm_offset_t *, vm_offset_t *));
 void		 vm_page_copy __P((vm_page_t, vm_page_t));
 void		 vm_page_deactivate __P((vm_page_t));
 void		 vm_page_free __P((vm_page_t));
+void		 vm_page_free1 __P((vm_page_t));
 void		 vm_page_insert __P((vm_page_t, vm_object_t, vm_offset_t));
 vm_page_t	 vm_page_lookup __P((vm_object_t, vm_offset_t));
 #if defined(MACHINE_NEW_NONCONTIG)
