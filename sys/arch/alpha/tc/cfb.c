@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.9 1997/04/06 22:31:48 cgd Exp $ */
+/* $NetBSD: cfb.c,v 1.10 1997/04/07 06:09:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -35,11 +35,11 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/ioctl.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/conf.h>
 
 #include <dev/tc/tcvar.h>
 #include <machine/cfbreg.h>

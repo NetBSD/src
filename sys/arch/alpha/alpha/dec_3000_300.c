@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.12 1997/04/07 05:19:05 cgd Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.13 1997/04/07 06:09:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 #include <machine/rpb.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 #include <dev/tc/tcvar.h>
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.4 1997/04/07 05:19:12 cgd Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.5 1997/04/07 06:09:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -38,7 +38,7 @@
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/comreg.h>

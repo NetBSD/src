@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.18 1997/04/07 05:19:17 cgd Exp $ */
+/* $NetBSD: mainbus.c,v 1.19 1997/04/07 06:09:07 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 struct mainbus_softc {
 	struct	device sc_dv;
