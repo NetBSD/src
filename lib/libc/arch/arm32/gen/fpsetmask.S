@@ -1,4 +1,4 @@
-/* $NetBSD: fpsetmask.S,v 1.1 1996/09/09 22:00:40 mark Exp $ */
+/*	$NetBSD: fpsetmask.S,v 1.2 1997/10/06 00:26:13 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,16 +33,16 @@
  * SUCH DAMAGE.
  */
 
-#include "DEFS.h"
-
-	.text
-	.align	0
+#include <machine/asm.h>
 
 /*
  * Set the current FP exception enable mask
  */
 
 ENTRY(fpsetmask)
+#ifdef SOFTFLOAT
+	b	_sfp_setmask
+#else
 	rfs	r1
 	bic	r1, r1, #0x001f0000
 	and	r0, r0, #0x0000001f
@@ -50,3 +50,4 @@ ENTRY(fpsetmask)
 	wfs	r0
 	mov	r0, r1, lsr #16		/* Return old mask */
 	mov	r15, r14		/* return */ 
+#endif	/* SOFTFLOAT */

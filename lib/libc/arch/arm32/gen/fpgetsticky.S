@@ -1,4 +1,4 @@
-/* $NetBSD: fpgetsticky.S,v 1.1 1996/09/09 22:00:40 mark Exp $ */
+/*	$NetBSD: fpgetsticky.S,v 1.2 1997/10/06 00:26:12 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,16 +33,17 @@
  * SUCH DAMAGE.
  */
 
-#include "DEFS.h"
-
-	.text
-	.align	0
+#include <machine/asm.h>
 
 /*
  * Return the current FP cumulative flags
  */
 
 ENTRY(fpgetsticky)
+#ifdef SOFTFLOAT
+	b	_sfp_getsticky
+#else
 	rfs	r0
 	and	r0, r0, #0x1f
 	mov	r15, r14		/* return */ 
+#endif	/* SOFTFLOAT */
