@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.61 1998/02/07 20:40:35 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.62 1998/02/11 01:28:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3197,11 +3197,7 @@ tulip_reset(
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NOTX)
 	map = M_GETCTX(m, bus_dmamap_t);
 	bus_dmamap_unload(sc->tulip_dmatag, map);
-	if (sc->tulip_txmaps_free < TULIP_TXQ_TARGET) {
-	    sc->tulip_txmaps[sc->tulip_txmaps_free++] = map;
-	} else {
-	    bus_dmamap_destroy(sc->tulip_dmatag, map);
-	}
+	sc->tulip_txmaps[sc->tulip_txmaps_free++] = map;
 #endif
 	m_freem(m);
     }
@@ -3247,11 +3243,7 @@ tulip_reset(
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NORX)
 	map = M_GETCTX(m, bus_dmamap_t);
 	bus_dmamap_unload(sc->tulip_dmatag, map);
-	if (sc->tulip_rxmaps_free < TULIP_RXQ_TARGET) {
-	    sc->tulip_rxmaps[sc->tulip_rxmaps_free++] = map;
-	} else {
-	    bus_dmamap_destroy(sc->tulip_dmatag, map);
-	}
+	sc->tulip_rxmaps[sc->tulip_rxmaps_free++] = map;
 #endif
 	m_freem(m);
     }
@@ -3418,11 +3410,7 @@ tulip_rx_intr(
 		map = M_GETCTX(me, bus_dmamap_t);
 		TULIP_RXMAP_POSTSYNC(sc, map);
 		bus_dmamap_unload(sc->tulip_dmatag, map);
-		if (sc->tulip_rxmaps_free < TULIP_RXDESCS) {
-		    sc->tulip_rxmaps[sc->tulip_rxmaps_free++] = map;
-		} else {
-		    bus_dmamap_destroy(sc->tulip_dmatag, map);
-		}
+		sc->tulip_rxmaps[sc->tulip_rxmaps_free++] = map;
 #if defined(DIAGNOSTIC)
 		M_SETCTX(me, NULL);
 #endif
@@ -3454,11 +3442,7 @@ tulip_rx_intr(
 	    bus_dmamap_sync(sc->tulip_dmatag, map, 0, me->m_len,
 			    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	    bus_dmamap_unload(sc->tulip_dmatag, map);
-	    if (sc->tulip_rxmaps_free < TULIP_RXDESCS) {
-		sc->tulip_rxmaps[sc->tulip_rxmaps_free++] = map;
-	    } else {
-		bus_dmamap_destroy(sc->tulip_dmatag, map);
-	    }
+	    sc->tulip_rxmaps[sc->tulip_rxmaps_free++] = map;
 #if defined(DIAGNOSTIC)
 	    M_SETCTX(me, NULL);
 #endif
@@ -3609,14 +3593,12 @@ tulip_rx_intr(
 	    if (sc->tulip_rxmaps_free > 0) {
 		map = sc->tulip_rxmaps[--sc->tulip_rxmaps_free];
 	    } else {
-		if (TULIP_RXMAP_CREATE(sc, &map) != 0) {
-		    m_freem(ms);
-		    sc->tulip_flags |= TULIP_RXBUFSLOW;
+		m_freem(ms);
+		sc->tulip_flags |= TULIP_RXBUFSLOW;
 #if defined(TULIP_DEBUG)
-		    sc->tulip_dbg.dbg_rxlowbufs++;
+		sc->tulip_dbg.dbg_rxlowbufs++;
 #endif
-		    break;
-		}
+		break;
 	    }
 	    M_SETCTX(ms, map);
 	    error = bus_dmamap_load(sc->tulip_dmatag, map, mtod(ms, void *),
@@ -3653,17 +3635,6 @@ tulip_rx_intr(
 	    sc->tulip_flags &= ~TULIP_RXBUFSLOW;
 	TULIP_PERFEND(rxget);
     }
-
-#if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NORX)
-    /*
-     * Free any excess dmamaps
-     */
-    while (sc->tulip_rxmaps_free > TULIP_RXQ_TARGET) {
-	bus_dmamap_destroy(sc->tulip_dmatag,
-			   sc->tulip_rxmaps[--sc->tulip_rxmaps_free]);
-    }
-#endif
-
 
 #if defined(TULIP_DEBUG)
     sc->tulip_dbg.dbg_rxintrs++;
@@ -3718,11 +3689,7 @@ tulip_tx_intr(
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NOTX)
 		    bus_dmamap_t map = M_GETCTX(m, bus_dmamap_t);
 		    TULIP_TXMAP_POSTSYNC(sc, map);
-		    if (sc->tulip_txmaps_free < TULIP_TXQ_HIGHWATER) {
-			sc->tulip_txmaps[sc->tulip_txmaps_free++] = map;
-		    } else {
-			bus_dmamap_destroy(sc->tulip_dmatag, map);
-		    }
+		    sc->tulip_txmaps[sc->tulip_txmaps_free++] = map;
 #endif /* TULIP_BUS_DMA */
 #if NBPFILTER > 0
 		    if (sc->tulip_bpf != NULL)
@@ -4221,7 +4188,7 @@ tulip_txput(
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NOTX)
     if (sc->tulip_txmaps_free > 0) {
 	map = sc->tulip_txmaps[--sc->tulip_txmaps_free];
-    } else if (TULIP_TXMAP_CREATE(sc, &map) != 0) {
+    } else {
 	sc->tulip_flags |= TULIP_WANTTXSTART;
 	goto finish;
     }
@@ -4835,17 +4802,6 @@ tulip_ifwatchdog(
 	tulip_init(sc);
     }
 
-#if defined(TULIP_BUS_DMA) & !defined(TULIP_BUS_DMA_NOTX)
-    /*
-     * If we had a sudden increase in transmit dmamaps,
-     * free them slowly...
-     */
-    if (sc->tulip_txmaps_free > TULIP_TXQ_TARGET) {
-	bus_dmamap_destroy(sc->tulip_dmatag,
-			   sc->tulip_txmaps[--sc->tulip_txmaps_free]);
-    }
-#endif
-
     TULIP_PERFEND(ifwatchdog);
     TULIP_PERFMERGE(sc, perf_intr_cycles);
     TULIP_PERFMERGE(sc, perf_ifstart_cycles);
@@ -5071,7 +5027,7 @@ tulip_busdma_init(
      * Allocate dmamaps for each transmit descriptors
      */
     if (error == 0) {
-	while (error == 0 && sc->tulip_txmaps_free < TULIP_TXQ_TARGET) {
+	while (error == 0 && sc->tulip_txmaps_free < TULIP_TXDESCS) {
 	    bus_dmamap_t map;
 	    if ((error = TULIP_TXMAP_CREATE(sc, &map)) == 0)
 		sc->tulip_txmaps[sc->tulip_txmaps_free++] = map;
@@ -5103,7 +5059,7 @@ tulip_busdma_init(
      * Allocate dmamaps for each receive descriptors
      */
     if (error == 0) {
-	while (error == 0 && sc->tulip_rxmaps_free < TULIP_RXQ_TARGET) {
+	while (error == 0 && sc->tulip_rxmaps_free < TULIP_RXDESCS) {
 	    bus_dmamap_t map;
 	    if ((error = TULIP_RXMAP_CREATE(sc, &map)) == 0)
 		sc->tulip_rxmaps[sc->tulip_rxmaps_free++] = map;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.25 1998/02/07 21:13:34 thorpej Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.26 1998/02/11 01:28:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -175,8 +175,6 @@ typedef struct {
 #define	TULIP_RXDESCS		48
 #define	TULIP_TXDESCS		32
 #define	TULIP_RXQ_TARGET	32
-#define TULIP_TXQ_TARGET	4
-#define TULIP_TXQ_HIGHWATER	12
 #if TULIP_RXQ_TARGET >= TULIP_RXDESCS
 #error TULIP_RXQ_TARGET must be less than TULIP_RXDESCS
 #endif
