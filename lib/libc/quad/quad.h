@@ -1,4 +1,4 @@
-/*	$NetBSD: quad.h,v 1.5 1997/07/13 20:01:06 christos Exp $	*/
+/*	$NetBSD: quad.h,v 1.6 1998/03/27 01:01:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,11 @@
  */
 
 #include <sys/types.h>
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <limits.h>
+#else
+#include <machine/limits.h>
+#endif
 
 /*
  * Depending on the desired operation, we view a `long long' (aka quad_t) in
