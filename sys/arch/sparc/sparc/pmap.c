@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.278 2004/04/04 18:34:35 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.279 2004/04/10 18:40:04 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.278 2004/04/04 18:34:35 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.279 2004/04/10 18:40:04 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -867,26 +867,15 @@ setpte4m(va, pte)
 	struct regmap *rp;
 	struct segmap *sp;
 
+#ifdef DEBUG
 	if (getcontext4m() != 0)
 		panic("setpte4m: user context");
+#endif
 
 	pm = pmap_kernel();
-
-	/* Note: inline version of setptesw4m() */
-#ifdef DEBUG
-	if (pm->pm_regmap == NULL)
-		panic("setpte4m: no regmap entry");
-#endif
 	rp = &pm->pm_regmap[VA_VREG(va)];
 	sp = &rp->rg_segmap[VA_VSEG(va)];
 
-#ifdef DEBUG
-	if (rp->rg_segmap == NULL)
-		panic("setpte4m: no segmap for va %lx (rp=%p)", va, rp);
-
-	if (sp->sg_pte == NULL)
-		panic("setpte4m: no pte for va %lx (rp=%p,sp=%p)", va, rp, sp);
-#endif
 	tlb_flush_page(va, 0, CPUSET_ALL);
 	setpgt4m(sp->sg_pte + VA_SUN4M_VPG(va), pte);
 }
