@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.3 1997/06/17 18:56:56 christos Exp $	*/
+/*	$NetBSD: supextern.h,v 1.4 1997/06/18 15:23:55 christos Exp $	*/
 
 
 #ifndef __P
@@ -138,6 +138,7 @@ void goaway __P((char *, ...));
 /* supcmisc.c */
 void prtime __P((void));
 int establishdir __P((char *));
+int makedir __P((char *, int, struct stat *));
 int estabd __P((char *, char *));
 void ugconvert __P((char *, char *, int *, int *, int *));
 void notify __P((char *, ...));
