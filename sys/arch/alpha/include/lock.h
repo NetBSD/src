@@ -1,4 +1,4 @@
-/* $NetBSD: lock.h,v 1.10 2000/08/14 20:28:28 thorpej Exp $ */
+/* $NetBSD: lock.h,v 1.11 2000/11/20 20:17:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -129,5 +129,22 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 		"	# END __cpu_simple_unlock"
 		: "=m" (*alp));
 }
+
+/*
+ * On the Alpha, interprocessor interrupts come in at device priority
+ * level.  This can cause some problems while waiting for r/w spinlocks
+ * from a high'ish priority level: IPIs that come in will not be processed.
+ * This can lead to deadlock.
+ *
+ * This hook allows IPIs to be processed when a spinlock's interlock
+ * is released.
+ */
+#define	SPINLOCK_INTERLOCK_RELEASE_HOOK					\
+do {									\
+	struct cpu_info *__ci = curcpu();				\
+									\
+	if (__ci->ci_ipis != 0)						\
+		alpha_ipi_process(__ci);				\
+} while (0)
 
 #endif /* _ALPHA_LOCK_H_ */
