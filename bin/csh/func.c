@@ -1,4 +1,4 @@
-/* $NetBSD: func.c,v 1.26 2003/08/07 09:05:05 agc Exp $ */
+/* $NetBSD: func.c,v 1.27 2003/12/17 17:32:16 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)func.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: func.c,v 1.26 2003/08/07 09:05:05 agc Exp $");
+__RCSID("$NetBSD: func.c,v 1.27 2003/12/17 17:32:16 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ static int keyword(Char *);
 static void toend(void);
 static void xecho(int, Char **);
 static void Unsetenv(Char *);
+static void wpfree(struct whyle *);
 
 struct biltins *
 isbfunc(struct command *t)
@@ -591,6 +592,7 @@ search(int type, int level, Char *goal)
 {
     Char wordbuf[BUFSIZE];
     Char *aword, *cp;
+    struct whyle *wp;
 
     aword = wordbuf;
     Stype = type;
@@ -627,6 +629,13 @@ search(int type, int level, Char *goal)
 		return;
 	    break;
 	case T_END:
+	    if (type == T_BRKSW) {
+		wp = whyles;
+		if (wp) {
+			whyles = wp->w_next;
+			wpfree(wp);
+		}
+	    }
 	    if (type == T_BREAK)
 		level--;
 	    break;
@@ -671,6 +680,16 @@ search(int type, int level, Char *goal)
 	}
 	(void) getword(NULL);
     } while (level >= 0);
+}
+
+static void
+wpfree(struct whyle *wp)
+{ 
+    if (wp->w_fe0)
+	blkfree(wp->w_fe0); 
+    if (wp->w_fename)
+	xfree((ptr_t) wp->w_fename);
+    xfree((ptr_t) wp);
 }
 
 static int
@@ -823,11 +842,7 @@ wfree(void)
 	    }
 	}
 
-	if (wp->w_fe0)
-	    blkfree(wp->w_fe0);
-	if (wp->w_fename)
-	    xfree((ptr_t) wp->w_fename);
-	xfree((ptr_t) wp);
+	wpfree(wp);
     }
 }
 
