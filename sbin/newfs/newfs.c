@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.37 1999/01/19 19:34:50 tron Exp $	*/
+/*	$NetBSD: newfs.c,v 1.37.2.1 2000/10/10 22:25:05 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.37 1999/01/19 19:34:50 tron Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.37.2.1 2000/10/10 22:25:05 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -614,9 +614,9 @@ havelabel:
 }
 
 #ifdef COMPAT
-char lmsg[] = "%s: can't read disk label; disk type must be specified";
+const char lmsg[] = "%s: can't read disk label; disk type must be specified";
 #else
-char lmsg[] = "%s: can't read disk label";
+const char lmsg[] = "%s: can't read disk label";
 #endif
 
 static struct disklabel *
