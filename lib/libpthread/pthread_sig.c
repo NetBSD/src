@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.29 2003/11/25 22:36:32 christos Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.30 2003/11/25 22:45:33 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.29 2003/11/25 22:36:32 christos Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.30 2003/11/25 22:45:33 cl Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -755,7 +755,7 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 {
 
 	SDPRINTF(("(pthread__kill %p) target %p sig %d code %d\n", self, target,
-	    si->si_signo));
+	    si->si_signo, si->si_code));
 
 	if (__sigismember14(&target->pt_sigmask, si->si_signo)) {
 		/* Record the signal for later delivery. */
@@ -840,7 +840,8 @@ pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 	 */
 	oldmask = target->pt_sigmask;
 	__sigplusset(&target->pt_sigmask, &act.sa_mask);
-	__sigaddset14(&target->pt_sigmask, si->si_signo);
+	if ((act.sa_flags & SA_NODEFER) == 0)
+		__sigaddset14(&target->pt_sigmask, si->si_signo);
 
 	if (target->pt_trapuc) {
 		olduc = target->pt_trapuc;
