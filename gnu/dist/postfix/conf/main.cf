@@ -1,7 +1,7 @@
-#	$NetBSD: main.cf,v 1.7 2004/03/27 00:07:48 dan Exp $
+#	$NetBSD: main.cf,v 1.8 2004/03/27 16:31:19 heas Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
-# of all 250+ parameters. See the sample-xxx.cf files for a full list.
+# of all 300+ parameters. See the sample-xxx.cf files for a full list.
 # 
 # The general format is lines with parameter = value pairs. Lines
 # that begin with whitespace continue the previous line. A value can
@@ -152,6 +152,9 @@ mail_owner = postfix
 # pattern is replaced by its contents; a type:table is matched when
 # a name matches a lookup key (the right-hand side is ignored).
 # Continue long lines by starting the next line with whitespace.
+#
+# DO NOT LIST RELAY DESTINATIONS IN MYDESTINATION.
+# SPECIFY RELAY DESTINATIONS IN RELAY_DOMAINS.
 #
 # See also below, section "REJECTING MAIL FOR UNKNOWN LOCAL USERS".
 #
@@ -333,8 +336,8 @@ unknown_local_recipient_reject_code = 450
 # 
 # A Postfix process will pause for $in_flow_delay seconds before
 # accepting a new message, when the message arrival rate exceeds the
-# message delivery rate. With the default 50 SMTP server process
-# limit, this limits the mail inflow to 50 messages a second more
+# message delivery rate. With the default 100 SMTP server process
+# limit, this limits the mail inflow to 100 messages a second more
 # than the number of messages delivered per second.
 # 
 # Specify 0 to disable the feature. Valid delays are 0..10.
@@ -565,7 +568,7 @@ unknown_local_recipient_reject_code = 450
 # most delivery transports. For the local delivery agent the default is 2.
 
 #local_destination_concurrency_limit = 2
-#default_destination_concurrency_limit = 10
+#default_destination_concurrency_limit = 20
 
 # DEBUGGING CONTROL
 #
