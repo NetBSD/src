@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.4 2002/02/28 01:53:43 uch Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.5 2002/03/03 14:32:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -513,7 +513,7 @@ sw1:	mov	#1, r1
 	and	r0, r14
 	mov.l	_L.sched_whichqs, r0
 	mov.l	r14, @r0
-#ifdef sh3_debug
+#ifdef CONTEXT_SWITCH_DEBUG
 	mova	1f, r0
 	mov	r0, r4
 	mov	r13, r5
@@ -528,7 +528,7 @@ sw1:	mov	#1, r1
 1:	.asciz	"switch[i=%d,whichqs=0x%0x]\n"
 	.align	2
 2:	.long	_C_LABEL(printf)
-#endif /* sh3_debug */
+#endif /* CONTEXT_SWITCH_DEBUG */
 
 3:
 	xor	r0, r0
