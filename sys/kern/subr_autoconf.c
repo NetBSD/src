@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_autoconf.c,v 1.20 1996/04/04 00:25:49 cgd Exp $	*/
+/*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -250,7 +250,7 @@ static char *msgs[3] = { "", " not configured\n", " unsupported\n" };
  * functions) and attach it, and return true.  If the device was
  * not configured, call the given `print' function and return 0.
  */
-int
+struct device *
 config_found_sm(parent, aux, print, submatch)
 	struct device *parent;
 	void *aux;
@@ -259,32 +259,27 @@ config_found_sm(parent, aux, print, submatch)
 {
 	void *match;
 
-	if ((match = config_search(submatch, parent, aux)) != NULL) {
-		config_attach(parent, match, aux, print);
-		return (1);
-	}
+	if ((match = config_search(submatch, parent, aux)) != NULL)
+		return (config_attach(parent, match, aux, print));
 	if (print)
 		printf(msgs[(*print)(aux, parent->dv_xname)]);
-	return (0);
+	return (NULL);
 }
 
 /*
  * As above, but for root devices.
  */
-int
+struct device *
 config_rootfound(rootname, aux)
 	char *rootname;
 	void *aux;
 {
 	void *match;
 
-	if ((match = config_rootsearch((cfmatch_t)NULL, rootname, aux))
-	    != NULL) {
-		config_attach(ROOT, match, aux, (cfprint_t)NULL);
-		return (1);
-	}
+	if ((match = config_rootsearch((cfmatch_t)NULL, rootname, aux)) != NULL)
+		return (config_attach(ROOT, match, aux, (cfprint_t)NULL));
 	printf("root device %s not configured\n", rootname);
-	return (0);
+	return (NULL);
 }
 
 /* just like sprintf(buf, "%d") except that it works from the end */
@@ -306,7 +301,7 @@ number(ep, n)
 /*
  * Attach a found device.  Allocates memory for device variables.
  */
-void
+struct device *
 config_attach(parent, match, aux, print)
 	register struct device *parent;
 	void *match;
@@ -358,6 +353,7 @@ config_attach(parent, match, aux, print)
 				cf->cf_unit++;
 		}
 	(*ca->ca_attach)(parent, dev, aux);
+	return (dev);
 }
 
 struct device *
