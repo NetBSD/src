@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.7 1998/03/30 14:33:22 kleink Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.8 1998/05/24 20:12:27 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.7 1998/03/30 14:33:22 kleink Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.8 1998/05/24 20:12:27 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,6 +118,16 @@ sysconf(name)
 		mib[1] = KERN_POSIX1;
 		break;
 
+/* 1003.1b */
+	case _SC_PAGESIZE:
+		mib[0] = CTL_HW;
+		mib[1] = HW_PAGESIZE;
+		break;
+	case _SC_FSYNC:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_FSYNC;
+		goto yesno;
+
 /* 1003.2 */
 	case _SC_BC_BASE_MAX:
 		mib[0] = CTL_USER;
@@ -186,6 +196,12 @@ sysconf(name)
 	case _SC_2_UPE:
 		mib[0] = CTL_USER;
 		mib[1] = USER_POSIX2_UPE;
+		goto yesno;
+
+/* XPG 4.2 */
+	case _SC_XOPEN_SHM:
+		mib[0] = CTL_KERN;
+		mib[1] = KERN_SYSVSHM;
 yesno:		if (sysctl(mib, 2, &value, &len, NULL, 0) == -1)
 			return (-1);
 		if (value == 0)
