@@ -1,11 +1,11 @@
-/*	$NetBSD: process_machdep.c,v 1.39 2001/12/04 19:41:47 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.40 2001/12/05 00:58:06 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum.
+ * by Charles M. Hannum; by Jason R. Thorpe of Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2001/12/04 19:41:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.40 2001/12/05 00:58:06 thorpej Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.39 2001/12/04 19:41:47 thorpej
 #include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <miscfs/procfs/procfs.h>
 
 #include <machine/psl.h>
 #include <machine/reg.h>
@@ -366,3 +368,171 @@ process_set_pc(p, addr)
 
 	return (0);
 }
+
+#ifdef __HAVE_PTRACE_MACHDEP
+int
+process_machdep_read_xmmregs(p, regs)
+	struct proc *p;
+	struct xmmregs *regs;
+{
+	union savefpu *frame = process_fpframe(p);
+
+	if (i386_use_fxsave == 0)
+		return (EINVAL);
+
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+#if NNPX > 0
+		extern struct proc *npxproc;
+
+		if (npxproc == p)
+			npxsave();
+#endif
+	} else {
+		/*
+		 * Fake a FNINIT.
+		 * The initial control word was already set by setregs(),
+		 * so save it temporarily.
+		 */
+		uint32_t mxcsr = frame->sv_xmm.sv_env.en_mxcsr;
+		uint16_t cw = frame->sv_xmm.sv_env.en_cw;
+
+		/* XXX Don't zero XMM regs? */
+		memset(&frame->sv_xmm, 0, sizeof(frame->sv_xmm));
+		frame->sv_xmm.sv_env.en_cw = cw;
+		frame->sv_xmm.sv_env.en_mxcsr = mxcsr;
+		frame->sv_xmm.sv_env.en_sw = 0x0000;
+		frame->sv_xmm.sv_env.en_tw = 0x00;
+
+		p->p_md.md_flags |= MDP_USEDFPU;  
+	}
+
+	memcpy(regs, &frame->sv_xmm, sizeof(*regs));
+	return (0);
+}
+
+int
+process_machdep_write_xmmregs(p, regs)
+	struct proc *p;
+	struct xmmregs *regs;
+{
+	union savefpu *frame = process_fpframe(p);
+
+	if (i386_use_fxsave == 0)
+		return (EINVAL);
+
+	if (p->p_md.md_flags & MDP_USEDFPU) {
+#if NNPX > 0
+		extern struct proc *npxproc;
+
+		if (npxproc == p)
+			npxdrop();
+#endif
+	} else {
+		p->p_md.md_flags |= MDP_USEDFPU;
+	}
+
+	memcpy(&frame->sv_xmm, regs, sizeof(*regs));
+	return (0);
+}
+
+int
+ptrace_machdep_dorequest(p, t, req, addr, data)
+	struct proc *p, *t;
+	int req;
+	caddr_t addr;
+	int data;
+{
+	struct uio uio;
+	struct iovec iov;
+	int write = 0;
+
+	switch (req) {
+	case PT_SETXMMREGS:
+		write = 1;
+
+	case PT_GETXMMREGS:
+		/* write = 0 done above. */
+		if (!procfs_machdep_validxmmregs(t, NULL))
+			return (EINVAL);
+		else {
+			iov.iov_base = addr;
+			iov.iov_len = sizeof(struct xmmregs);
+			uio.uio_iov = &iov;
+			uio.uio_iovcnt = 1;
+			uio.uio_offset = 0;
+			uio.uio_resid = sizeof(struct xmmregs);
+			uio.uio_segflg = UIO_USERSPACE;
+			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+			uio.uio_procp = p;
+			return (procfs_machdep_doxmmregs(p, t, NULL, &uio));
+		}
+	}
+
+#ifdef DIAGNOSTIC
+	panic("ptrace_machdep: impossible");
+#endif
+
+	return (0);
+}
+
+/*
+ * The following functions have procfs-centric names, but are in
+ * fact used by both ptrace(2) and procfs.
+ */
+
+int
+procfs_machdep_doxmmregs(curp, p, pfs, uio)
+	struct proc *curp;		/* tracer */
+	struct proc *p;			/* traced */
+	struct pfsnode *pfs;
+	struct uio *uio;
+{
+	int error;
+	struct xmmregs r;
+	char *kv;
+	int kl;
+
+	if ((error = procfs_checkioperm(curp, p)) != 0)
+		return (error);
+
+	kl = sizeof(r);
+	kv = (char *) &r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	PHOLD(p);
+
+	if (kl < 0)
+		error = EINVAL;
+	else
+		error = process_machdep_read_xmmregs(p, &r);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (p->p_stat != SSTOP)
+			error = EBUSY;
+		else
+			error = process_machdep_write_xmmregs(p, &r);
+	}
+
+	PRELE(p);
+
+	uio->uio_offset = 0;
+	return (error);
+}
+
+int
+procfs_machdep_validxmmregs(p, mp)
+	struct proc *p;
+	struct mount *mp;
+{
+
+	if (p->p_flag & P_SYSTEM)
+		return (0);
+
+	return (i386_use_fxsave);
+}
+#endif /* __HAVE_PTRACE_MACHDEP */

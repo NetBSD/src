@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.85 2001/11/10 13:33:44 lukem Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.86 2001/12/05 00:58:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.85 2001/11/10 13:33:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.86 2001/12/05 00:58:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.85 2001/11/10 13:33:44 lukem Exp 
 #include <sys/mount.h>
 #include <sys/dirent.h>
 #include <sys/resourcevar.h>
-#include <sys/ptrace.h>
 #include <sys/stat.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
@@ -103,6 +102,9 @@ const struct proc_target {
 	{ DT_REG, N("maps"),	Pmaps,		procfs_validmap },
 	{ DT_REG, N("cmdline"), Pcmdline,	NULL },
 	{ DT_REG, N("exe"),	Pfile,		procfs_validfile_linux },
+#ifdef __HAVE_PROCFS_MACHDEP
+	PROCFS_MACHDEP_NODETYPE_DEFNS
+#endif
 #undef N
 };
 static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
@@ -509,6 +511,9 @@ procfs_getattr(v)
 	case Pmem:
 	case Pregs:
 	case Pfpregs:
+#if defined(__HAVE_PROCFS_MACHDEP) && defined(PROCFS_MACHDEP_PROTECT_CASES)
+	PROCFS_MACHDEP_PROTECT_CASES
+#endif
 		/*
 		 * If the process has exercised some setuid or setgid
 		 * privilege, then rip away read/write permission so
@@ -624,6 +629,12 @@ procfs_getattr(v)
 		vap->va_blocksize = 4 * PAGE_SIZE;
 		vap->va_bytes = vap->va_size = 0;
 		break;
+
+#ifdef __HAVE_PROCFS_MACHDEP
+	PROCFS_MACHDEP_NODETYPE_CASES
+		error = procfs_machdep_getattr(ap->a_vp, vap, procp);
+		break;
+#endif
 
 	default:
 		panic("procfs_getattr");
