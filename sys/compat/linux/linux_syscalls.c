@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.32 1998/10/01 04:13:25 erh Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.33 1998/10/01 18:23:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,10 +38,10 @@
 
 /* XXX XXX This exists to keep kdump and friends happy. */
 
-#if defined(i386)
+#if defined(__i386__)
 #include "../../sys/compat/linux/i386/linux_syscalls.c"
 #elif defined(__alpha__)
 #include "../../sys/compat/linux/alpha/linux_syscalls.c"
 #else
-#error Undefined linux_syscalls.c machine type.
+char *linux_syscallnames[] = { 0 };
 #endif
