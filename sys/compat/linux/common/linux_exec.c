@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.44 2000/12/11 05:29:01 mycroft Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.45 2001/01/19 01:44:46 manu Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ const struct emul emul_linux = {
 	"/emul/linux",
 #ifndef __HAVE_MINIMAL_EMUL
 	0,
-	native_to_linux_errno,
+	(int*)native_to_linux_errno,
 	LINUX_SYS_syscall,
 	LINUX_SYS_MAXSYSCALL,
 #endif
