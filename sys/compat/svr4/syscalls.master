@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.5 1994/11/14 06:10:50 christos Exp $
+	$NetBSD: syscalls.master,v 1.6 1994/11/18 02:54:32 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 ; System call name/number master file (or rather, slave, from SunOS).
@@ -14,6 +14,7 @@
 
 #include <sys/param.h>
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
@@ -150,13 +151,14 @@
 92	NOARGS		{ int setgroups(u_int gidsetsize, gid_t *gidset); }
 93	NOARGS		{ int fchmod(int fd, int mode); }
 94	NOARGS		{ int fchown(int fd, int uid, int gid); }
-95	NOARGS		{ int sigprocmask(int how, sigset_t mask); }
+95	STD		{ int svr4_sigprocmask(int how, svr4_sigset_t *set, \
+					       svr4_sigset_t *oset); }
 96	NOARGS		{ int sigaltstack(struct sigaltstack *nss, \
 					  struct sigaltstack *oss); }
 97	NOARGS		{ int sigsuspend(int mask); }
 98	NOARGS		{ int sigaction(int signum, struct sigaction *nsa, \
 					struct sigaction *osa); }
-99	STD		{ int svr4_sigpending(int *mask); }
+99	STD		{ int svr4_sigpending(int what, svr4_sigset_t *mask); }
 100	UNIMPL		svr4_context
 101	UNIMPL		svr4_evsys
 102	UNIMPL		svr4_evtrapret
@@ -168,9 +170,12 @@
 #else
 106	UNIMPL		nosys
 #endif
-107	UNIMPL		svr4_waitsys
+107	STD		{ int svr4_waitsys(int grp, int id, \
+					   struct svr4_siginfo *info, \
+					   int options); }
 108	UNIMPL		svr4_sigsendsys
-109	UNIMPL		svr4_hrtsys
+109	STD		{ int svr4_hrtsys(int cmd, int fun, int sub, \
+					  void *rv1, void *rv2); }
 110	UNIMPL		svr4_acancel
 111	UNIMPL		svr4_async
 112	UNIMPL		svr4_priocntlsys

@@ -133,8 +133,30 @@ struct svr4_lstat_args {
 	syscallarg(struct svr4_stat *) ub;
 };
 
+struct svr4_sigprocmask_args {
+	syscallarg(int) how;
+	syscallarg(svr4_sigset_t *) set;
+	syscallarg(svr4_sigset_t *) oset;
+};
+
 struct svr4_sigpending_args {
-	syscallarg(int *) mask;
+	syscallarg(int) what;
+	syscallarg(svr4_sigset_t *) mask;
+};
+
+struct svr4_waitsys_args {
+	syscallarg(int) grp;
+	syscallarg(int) id;
+	syscallarg(struct svr4_siginfo *) info;
+	syscallarg(int) options;
+};
+
+struct svr4_hrtsys_args {
+	syscallarg(int) cmd;
+	syscallarg(int) fun;
+	syscallarg(int) sub;
+	syscallarg(void *) rv1;
+	syscallarg(void *) rv2;
 };
 
 struct svr4_mmap_args {

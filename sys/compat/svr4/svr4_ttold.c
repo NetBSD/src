@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ttold.c,v 1.1 1994/11/14 06:13:28 christos Exp $	 */
+/*	$NetBSD: svr4_ttold.c,v 1.2 1994/11/18 02:54:24 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -45,6 +45,7 @@
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_ttold.h>

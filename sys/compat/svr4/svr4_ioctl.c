@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.8 1994/11/14 06:10:38 christos Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.9 1994/11/18 02:53:47 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -45,6 +45,7 @@
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_signal.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_ioctl.h>
