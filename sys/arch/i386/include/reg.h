@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.13 1995/08/06 05:33:24 mycroft Exp $	*/
+/*	$NetBSD: reg.h,v 1.14 1995/10/11 04:20:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -87,6 +87,8 @@ struct reg {
 	int	r_ss;
 	int	r_ds;
 	int	r_es;
+	int	r_fs;
+	int	r_gs;
 };
 
 struct fpreg {

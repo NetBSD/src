@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.29 1995/05/01 08:06:44 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.30 1995/10/11 04:19:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,6 +68,8 @@ mmopen(dev, flag, mode)
 {
 
 	switch (minor(dev)) {
+#ifdef COMPAT_10
+	/* This is done by i386_iopl(3) now. */
 	case 14:
 		if (flag & FWRITE) {
 			struct trapframe *fp;
@@ -75,6 +77,7 @@ mmopen(dev, flag, mode)
 			fp->tf_eflags |= PSL_IOPL;
 		}
 		break;
+#endif
 
 	default:
 		break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.51 1995/10/09 06:34:30 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.52 1995/10/11 04:19:53 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -59,6 +59,7 @@
 #include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
+#include <machine/gdt.h>
 #include <machine/reg.h>
 #include <machine/specialreg.h>
 
@@ -80,8 +81,9 @@ cpu_fork(p1, p2)
 	register struct proc *p1, *p2;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
-	int addr, i;
-	extern char kstack[];
+	register struct trapframe *tf;
+	register struct switchframe *sf;
+	extern void proc_trampoline(), child_return();
 
 #if NNPX > 0
 	/*
@@ -96,52 +98,63 @@ cpu_fork(p1, p2)
 		npxsave();
 #endif
 
-	/* Copy the pcb. */
+	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
+	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
-	p2->p_md.md_regs = p1->p_md.md_regs;
+
+	pmap_activate(&p2->p_vmspace->vm_pmap, pcb);
+
+	/*
+	 * Pre-zero these so that gdt_compact() doesn't get confused if called
+	 * during the allocations below.
+	 */
+	pcb->pcb_tss_sel = pcb->pcb_ldt_sel = GSEL(GNULL_SEL, SEL_KPL);
 
 	/* Fix up the TSS, etc. */
 	pcb->pcb_cr0 |= CR0_TS;
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
+	tss_alloc(pcb);
 
 #ifdef USER_LDT
 	/* Copy the LDT, if necessary. */
-	if (pcb->pcb_ldt) {
+	if (pcb->pcb_flags & PCB_USER_LDT) {
 		size_t len;
 		union descriptor *new_ldt;
 
 		len = pcb->pcb_ldt_len * sizeof(union descriptor);
 		new_ldt = (union descriptor *)kmem_alloc(kernel_map, len);
 		bcopy(pcb->pcb_ldt, new_ldt, len);
-		pcb->pcb_ldt = (caddr_t)new_ldt;
-		setsegment(&pcb->pcb_ldt_desc, new_ldt, len - 1, SDT_SYSLDT,
-		    SEL_KPL, 0, 0);
-	}
+		pcb->pcb_ldt = new_ldt;
+		ldt_alloc(pcb, new_ldt, len);
+	} else
 #endif
+		pcb->pcb_ldt_sel = proc0.p_addr->u_pcb.pcb_ldt_sel;
 
 	/*
-	 * Wire top of address space of child to it's kstack.
-	 * First, fault in a page of pte's to map it.
+	 * Copy the trapframe, and arrange for the child to return directly
+	 * through rei().
 	 */
-	addr = trunc_page((u_int)vtopte(kstack));
-	vm_map_pageable(&p2->p_vmspace->vm_map, addr, addr+NBPG, FALSE);
-	for (i = 0; i < UPAGES; i++)
-		pmap_enter(&p2->p_vmspace->vm_pmap,
-		    (vm_offset_t)kstack + i * NBPG,
-		    pmap_extract(pmap_kernel(),
-			(vm_offset_t)p2->p_addr + i * NBPG),
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	*tf = *p1->p_md.md_regs;
+	sf = (struct switchframe *)tf - 1;
+	sf->sf_ppl = 0;
+	sf->sf_esi = (int)child_return;
+	sf->sf_ebx = (int)p2;
+	sf->sf_eip = (int)proc_trampoline;
+	pcb->pcb_esp = (int)sf;
 
-	pmap_activate(&p2->p_vmspace->vm_pmap, pcb);
+	return (0);
+}
 
-	/*
-	 * Copy the stack.
-	 *
-	 * When we first switch to the child, this will return from cpu_switch()
-	 * rather than savectx().  cpu_switch returns a pointer to the current
-	 * process; savectx() returns 0.  Thus we can look for a non-zero
-	 * return value to indicate that we're in the child.
-	 */
-	return (savectx(p2->p_addr, 1) != 0);
+void
+cpu_set_kpc(p, pc)
+	struct proc *p;
+	u_long pc;
+{
+	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.pcb_esp;
+
+	sf->sf_esi = pc;
 }
 
 /*
@@ -157,7 +170,6 @@ cpu_exit(p)
 	register struct proc *p;
 {
 	struct pcb *pcb;
-	extern int currentldt;
 	struct vmspace *vm;
 
 #if NNPX > 0
@@ -168,11 +180,8 @@ cpu_exit(p)
 
 #ifdef USER_LDT
 	pcb = &p->p_addr->u_pcb;
-	if (pcb->pcb_ldt) {
-		lldt(currentldt = GSEL(GLDT_SEL, SEL_KPL));
-		kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
-		    (pcb->pcb_ldt_len * sizeof(union descriptor)));
-	}
+	if (pcb->pcb_flags & PCB_USER_LDT)
+		i386_user_cleanup(pcb);
 #endif
 
 	vm = p->p_vmspace;

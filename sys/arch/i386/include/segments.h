@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.16 1995/10/10 04:45:57 mycroft Exp $	*/
+/*	$NetBSD: segments.h,v 1.17 1995/10/11 04:20:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -131,9 +131,10 @@ extern int currentldt;
 extern union descriptor gdt[], ldt[];
 extern struct gate_descriptor idt[];
 
+void setgate __P((struct gate_descriptor *, void *, int, int, int));
+void setregion __P((struct region_descriptor *, void *, size_t));
 void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
     int, int));
-void setgate __P((struct gate_descriptor *, void *, int, int, int));
 #endif /* _KERNEL */
 
 #endif /* !LOCORE */
@@ -214,12 +215,9 @@ void setgate __P((struct gate_descriptor *, void *, int, int, int));
 #define	GNULL_SEL	0	/* Null descriptor */
 #define	GCODE_SEL	1	/* Kernel code descriptor */
 #define	GDATA_SEL	2	/* Kernel data descriptor */
-#define	GLDT_SEL	3	/* LDT - eventually one per process */
 #define	GUCODE_SEL	4	/* User code descriptor */
 #define	GUDATA_SEL	5	/* User data descriptor */
-#define	GPROC0_SEL	6	/* Task state process slot zero and up */
-#define	GUSERLDT_SEL	7	/* User LDT */
-#define	NGDT 		8
+#define	NGDT 		6
 
 /*
  * Entries in the Local Descriptor Table (LDT)
