@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.13 1997/09/16 07:04:18 lukem Exp $
+.\"	$NetBSD: route.8,v 1.14 1998/04/29 09:49:14 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,8 +50,9 @@
 .Sh DESCRIPTION
 .Nm
 is a utility used to manually manipulate the network
-routing tables.  It normally is not needed, as a
-system routing table management daemon such as
+routing tables.
+It normally is not needed, as a system routing table management
+daemon such as
 .Xr routed 8 ,
 should tend to this task.
 .Pp
@@ -60,13 +61,14 @@ The
 utility supports a limited number of general options,
 but a rich command language, enabling the user to specify
 any arbitrary request that could be delivered via the
-programmatic interface discussed in 
+programmatic interface discussed in
 .Xr route 4 .
 .Pp
 .Bl -tag -width Ds
 .It Fl n
 Bypasses attempts to print host and network names symbolically
-when reporting actions.  (The process of translating between symbolic
+when reporting actions.
+(The process of translating between symbolic
 names and numerical equivalents can be quite time consuming, and
 may require correct operation of the network; thus it may be expedient
 to forgo this, especially when attempting to repair networking operations).
@@ -93,7 +95,7 @@ Change aspects of a route (such as its gateway).
 Lookup and display the route for a destination.
 .It Cm show
 Print out the route table similar to "netstat \-r" (see
-.Xr netstat 8 ).
+.Xr netstat 1 ) .
 .It Cm monitor
 Continuously report any changes to the routing information base,
 routing lookup misses, or suspected network partitionings.
@@ -114,9 +116,9 @@ The flush command has the syntax
 .Op Ar family
 .Ed
 .Pp
-If the 
+If the
 .Cm flush
-command is specified, 
+command is specified,
 .Nm
 will ``flush'' the routing tables of all gateway entries.
 When the address family is specified by any of the
@@ -151,7 +153,7 @@ The optional modifiers
 and
 .Fl host
 force the destination to be interpreted as a network or a host, respectively.
-Otherwise, if the 
+Otherwise, if the
 .Ar destination
 has a ``local address part'' of
 .Dv INADDR_ANY ,
@@ -171,14 +173,14 @@ is interpreted as
 .Fl net Li 128.32
 is interpreted as
 .Li 128.32.0.0;
-and 
+and
 .Fl net Li 128.32.130
 is interpreted as
 .Li 128.32.130.0 .
 .Pp
 If the destination is directly reachable
 via an interface requiring
-no intermediary system to act as a gateway, the 
+no intermediary system to act as a gateway, the
 .Fl interface
 modifier should be specified;
 the gateway given is the address of this host on the common network,
@@ -189,7 +191,7 @@ The optional modifiers
 .Fl osi ,
 .Fl atalk ,
 and
-.Fl link 
+.Fl link
 specify that all subsequent addresses are in the
 .Tn XNS ,
 .Tn OSI ,
@@ -250,7 +252,7 @@ These may be individually locked by preceding each such modifier to
 be locked by
 the
 .Fl lock
-meta-modifier, or one can 
+meta-modifier, or one can
 specify that all ensuing metrics may be locked by the
 .Fl lockrest
 meta-modifier.
@@ -271,7 +273,7 @@ modifiers may be used to determine the interface or interface address.
 .Pp
 All symbolic names specified for a
 .Ar destination
-or 
+or
 .Ar gateway
 are looked up first as a host name using
 .Xr gethostbyname 3 .
@@ -292,19 +294,18 @@ the routing tables.
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy "add [host \&| network ] %s: gateway %s flags %x"
-The specified route is being added to the tables.  The
-values printed are from the routing table entry supplied
-in the 
+The specified route is being added to the tables.
+The values printed are from the routing table entry supplied in the
 .Xr ioctl 2
 call.
 If the gateway address used was not the primary address of the gateway
 (the first one returned by
 .Xr gethostbyname 3 ) ,
 the gateway address is printed numerically as well as symbolically.
-.It Sy "delete [ host &| network ] %s: gateway %s flags %x" 
+.It Sy "delete [ host &| network ] %s: gateway %s flags %x"
 As above, but when deleting an entry.
 .It Sy "%s %s done"
-When the 
+When the
 .Cm flush
 command is specified, each routing table entry deleted
 is indicated with a message of this form.
@@ -320,8 +321,9 @@ An add operation was attempted, but the system was
 low on resources and was unable to allocate memory
 to create the new entry.
 .It Sy "Permission denied"
-The attempted operation is privileged.  Only root may modify the 
-routing tables.  These privileges are enforced by the kernel.
+The attempted operation is privileged.
+Only root may modify the routing tables.
+These privileges are enforced by the kernel.
 .El
 .Sh SEE ALSO
 .Xr netintro 4 ,

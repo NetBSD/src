@@ -1,4 +1,4 @@
-.\"	$NetBSD: fastboot.8,v 1.8 1997/09/15 12:41:52 lukem Exp $
+.\"	$NetBSD: fastboot.8,v 1.9 1998/04/29 09:49:11 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,16 +49,16 @@
 .Nm
 and
 .Nm fasthalt
-are shell scripts which reboot and halt the system without
-checking the file systems.  This is done by creating a
-file 
+are shell scripts which reboot or halt the system, and when next
+started, the system will skip the normal the file systems checks.
+This is done by creating a file 
 .Pa /fastboot ,
 then invoking the 
-.Xr reboot
-program.  The system startup script,
+.Xr reboot 8
+program.
+The system startup script,
 .Pa /etc/rc ,
-looks for this file and, if present, skips the normal
-invocation of
+looks for this file and, if present, skips the normal invocation of
 .Xr fsck 8 .
 .Sh SEE ALSO
 .Xr halt 8 ,
