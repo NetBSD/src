@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.7 1993/08/26 00:47:33 jtc Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.8 1993/11/03 19:32:01 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -713,7 +713,7 @@ cvt(value, ndigits, flags, sign, decpt, ch, length)
 	} else
 		*sign = '\000';
 	digits = __dtoa(value, mode, ndigits, decpt, &dsgn, &rve);
-	if (flags & ALT) {	/* Print trailing zeros */
+	if (ch != 'g' && ch != 'G' || flags & ALT) {	/* Print trailing zeros */
 		bp = digits + ndigits;
 		if (ch == 'f') {
 			if (*digits == '0' && value)
