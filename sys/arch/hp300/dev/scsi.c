@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.24 1998/01/12 18:31:08 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.25 1999/02/06 03:30:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -648,8 +648,10 @@ issue_select(hd, target, our_addr)
 
 	hd->scsi_pctl = 0;
 	hd->scsi_temp = (1 << target) | our_addr;
-	/* select timeout is hardcoded to 2ms */
-	hd->scsi_tch = 0;
+
+	/* Set selection timeout. */
+	/* XXX XXX XXX */
+	hd->scsi_tch = 15;
 	hd->scsi_tcm = 32;
 	hd->scsi_tcl = 4;
 
