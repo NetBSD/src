@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.31 2003/05/03 16:28:58 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.32 2003/05/05 13:21:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@ MALLOC_DECLARE(M_NFSRVDESC);
 MALLOC_DECLARE(M_NFSDIROFF);
 MALLOC_DECLARE(M_NFSBIGFH);
 MALLOC_DECLARE(M_NQLEASE);
-#endif
 
 struct vnode;
 struct uio;
@@ -316,3 +315,4 @@ int nfs_getnickauth __P((struct nfsmount *, struct ucred *, char **, int *,
 			 char *, int));
 int nfs_savenickauth __P((struct nfsmount *, struct ucred *, int, NFSKERBKEY_T,
 			  struct mbuf **, char **, struct mbuf *));
+#endif /* _KERNEL */
