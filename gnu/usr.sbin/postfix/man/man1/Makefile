@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/09/19 03:09:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/12/24 19:47:51 perry Exp $
 
 .include <bsd.own.mk>
 
@@ -14,5 +14,8 @@ MAN=	postalias.1 postcat.1 postconf.1 postdrop.1 \
 # These would conflict with the ones installed by sendmail. It isn't
 # clear what to do with them. The missing documentation is not too
 # interesting given that the sendmail docs are in place, though.
+# qmqp-sink.1 qmqp-source.1 smtp-sink.1 smtp-source.1
+# These are test programs. It isn't clear that they are wanted by an
+# ordinary user.
 
 .include <bsd.man.mk>
