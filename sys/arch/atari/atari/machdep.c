@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1996/01/04 22:21:47 jtc Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1996/02/22 10:10:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,7 +92,8 @@
 #include "ppp.h"
 
 static void call_sicallbacks __P((void));
-static void alloc_sicallback __P((void));
+static void identifycpu __P((void));
+static void netintr __P((void));
 
 extern vm_offset_t avail_end;
 
@@ -149,9 +150,7 @@ consinit()
 void
 cpu_startup()
 {
-	extern	 long		Usrptsize;
 	extern	 u_long		boot_ttphysize, boot_stphysize;
-	extern	 struct map	*useriomap;
 	register unsigned	i;
 	register caddr_t	v, firstaddr;
 		 int		base, residual;
@@ -161,7 +160,7 @@ cpu_startup()
 		 int		opmapdebug = pmapdebug;
 #endif
 		 vm_offset_t	minaddr, maxaddr;
-		 vm_size_t	size;
+		 vm_size_t	size = 0;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -338,11 +337,6 @@ again:
 		nbuf, bufpages * CLBYTES);
 	
 	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
-
-	/*
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
@@ -384,6 +378,7 @@ setregs(p, pack, stack, retval)
 char cpu_model[120];
 extern char version[];
  
+static void
 identifycpu()
 {
 	extern char	*fpu_describe();
@@ -417,6 +412,7 @@ identifycpu()
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -823,6 +819,7 @@ unsigned	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
 int		dumpsize = 0;		/* also for savecore		*/
 long		dumplo   = 0;
 
+void
 dumpconf()
 {
 	extern	 u_long	boot_ttphysize, boot_stphysize;
@@ -854,13 +851,14 @@ dumpsys()
 	extern	 u_long	boot_ttphysize, boot_ttphystart, boot_stphysize;
 
 	daddr_t	blkno;		/* Current block to write	*/
-	int	(*dump)();	/* Dumping function		*/
+	int	(*dump) __P((dev_t, daddr_t, caddr_t, size_t));
+				/* Dumping function		*/
 	u_long	maddr;		/* PA being dumped		*/
 	int	segbytes;	/* Number of bytes in this seg.	*/
 	int	nbytes;		/* Bytes left to dump		*/
 	int	i, n, error;
 
-	msgbufmapped = 0;
+	error = msgbufmapped = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*
@@ -987,10 +985,7 @@ void microtime(tvp)
 	splx(s);
 }
 
-initcpu()
-{
-}
-
+void
 straytrap(pc, evec)
 int pc;
 u_short evec;
@@ -1005,6 +1000,7 @@ u_short evec;
 	}
 }
 
+void
 straymfpint(pc, evec)
 int		pc;
 u_short	evec;
@@ -1016,6 +1012,7 @@ u_short	evec;
 /*
  * Simulated software interrupt handler
  */
+void
 softint()
 {
 	if(ssir & SIR_NET) {
@@ -1038,6 +1035,7 @@ softint()
 
 int	*nofault;
 
+int
 badbaddr(addr)
 	register caddr_t addr;
 {
@@ -1057,6 +1055,7 @@ badbaddr(addr)
 	return(0);
 }
 
+static void
 netintr()
 {
 #ifdef INET
@@ -1113,23 +1112,6 @@ static struct si_callback *si_free;
 static int ncb;		/* number of callback blocks allocated */
 static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
-
-static void alloc_sicallback()
-{
-	struct si_callback	*si;
-	int					s;
-
-	si = (struct si_callback *)malloc(sizeof(*si), M_TEMP, M_NOWAIT);
-	if(si == NULL)
-		return;
-	s = splhigh();
-	si->next = si_free;
-	si_free  = si;
-	splx(s);
-#ifdef DIAGNOSTIC
-	++ncb;
-#endif
-}
 
 void add_sicallback (function, rock1, rock2)
 void	(*function) __P((void *rock1, void *rock2));
@@ -1208,11 +1190,11 @@ static void call_sicallbacks()
 
 	do {
 		s = splhigh ();
-		if(si = si_callbacks)
+		if (si = si_callbacks)
 			si_callbacks = si->next;
 		splx(s);
 
-		if(si) {
+		if (si) {
 			function = si->function;
 			rock1    = si->rock1;
 			rock2    = si->rock2;
@@ -1222,9 +1204,9 @@ static void call_sicallbacks()
 			splx(s);
 			function(rock1, rock2);
 		}
-	} while(si);
+	} while (si);
 #ifdef DIAGNOSTIC
-	if(ncbd) {
+	if (ncbd) {
 #ifdef DEBUG
 		printf("call_sicallback: %d more dynamic structures %d total\n",
 		    ncbd, ncb);
@@ -1249,6 +1231,7 @@ candbtimer()
 }
 #endif
 
+void
 regdump(fp, sbytes)
 	struct frame *fp; /* must not be register */
 	int sbytes;
@@ -1293,7 +1276,7 @@ regdump(fp, sbytes)
 
 dumpmem(ptr, sz, ustack)
 	register int *ptr;
-	int sz;
+	int sz, ustack;
 {
 	register int i, val;
 	extern char *hexstr();
@@ -1319,7 +1302,7 @@ dumpmem(ptr, sz, ustack)
 
 char *
 hexstr(val, len)
-	register int val;
+	register int val, len;
 {
 	static char nbuf[9];
 	register int x, i;
@@ -1344,12 +1327,15 @@ hexstr(val, len)
  * ZMAGIC always worked the `right' way (;-)) just ignore the missing
  * MID and proceed to new zmagic code ;-)
  */
+int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
 	int error = ENOEXEC;
+#ifdef COMPAT_NOMID
 	struct exec *execp = epp->ep_hdr;
+#endif
 
 #ifdef COMPAT_NOMID
 	if (!((execp->a_midmag >> 16) & 0x0fff)
@@ -1361,8 +1347,6 @@ cpu_exec_aout_makecmds(p, epp)
 		extern sunos_exec_aout_makecmds
 		    __P((struct proc *, struct exec_package *));
 		if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
-			return(0);
-	}
 #endif
 	return(error);
 }

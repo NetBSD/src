@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.2 1995/07/25 13:49:26 leo Exp $	*/
+/*	$NetBSD: itevar.h,v 1.3 1996/02/22 10:11:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -190,7 +190,7 @@ void	itestart __P((struct tty *));
 
 /* ite functions */
 int	ite_on __P((dev_t, int));
-int	ite_off __P((dev_t, int));
+void	ite_off __P((dev_t, int));
 void	ite_reinit __P((dev_t));
 int	ite_param __P((struct tty *, struct termios *));
 void	ite_reset __P((struct ite_softc *));
