@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.8 1998/03/01 02:23:14 fvdl Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.9 1998/03/18 15:57:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,6 +43,7 @@
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
+#include <sys/mount.h>
 
 #include <vm/vm.h>
 
@@ -51,8 +52,10 @@
 #endif
 
 #include <ufs/ufs/quota.h>
+#include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
@@ -105,7 +108,8 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 #else
 			vnode_pager_setsize(vp, ip->i_ffs_size);
 #endif
-			ip->i_ffs_db[nb] = dbtofsb(fs, bp->b_blkno);
+			ip->i_ffs_db[nb] = ufs_rw32(dbtofsb(fs, bp->b_blkno),
+				UFS_MPNEEDSWAP(vp->v_mount));
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
 			if (flags & B_SYNC)
 				bwrite(bp);
@@ -117,7 +121,7 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 	 * The first NDADDR blocks are direct blocks
 	 */
 	if (lbn < NDADDR) {
-		nb = ip->i_ffs_db[lbn];
+		nb = ufs_rw32(ip->i_ffs_db[lbn], UFS_MPNEEDSWAP(vp->v_mount));
 		if (nb != 0 && ip->i_ffs_size >= (lbn + 1) * fs->fs_bsize) {
 			error = bread(vp, lbn, fs->fs_bsize, NOCRED, &bp);
 			if (error) {
@@ -162,7 +166,8 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 			if (flags & B_CLRBUF)
 				clrbuf(bp);
 		}
-		ip->i_ffs_db[lbn] = dbtofsb(fs, bp->b_blkno);
+		ip->i_ffs_db[lbn] = ufs_rw32(dbtofsb(fs, bp->b_blkno),
+			UFS_MPNEEDSWAP(vp->v_mount));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		*bpp = bp;
 		return (0);
@@ -181,13 +186,14 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 	 * Fetch the first indirect block allocating if necessary.
 	 */
 	--num;
-	nb = ip->i_ffs_ib[indirs[0].in_off];
+	nb = ufs_rw32(ip->i_ffs_ib[indirs[0].in_off],
+		UFS_MPNEEDSWAP(vp->v_mount));
 	allocib = NULL;
 	allocblk = allociblk;
 	if (nb == 0) {
 		pref = ffs_blkpref(ip, lbn, 0, (ufs_daddr_t *)0);
-	        error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
-				  cred, &newb);
+		error = ffs_alloc(ip, lbn, pref, (int)fs->fs_bsize,
+			cred, &newb);
 		if (error)
 			return (error);
 		nb = newb;
@@ -202,7 +208,7 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		if ((error = bwrite(bp)) != 0)
 			goto fail;
 		allocib = &ip->i_ffs_ib[indirs[0].in_off];
-		*allocib = nb;
+		*allocib = ufs_rw32(nb, UFS_MPNEEDSWAP(vp->v_mount));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	/*
@@ -216,7 +222,7 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 			goto fail;
 		}
 		bap = (ufs_daddr_t *)bp->b_data;
-		nb = bap[indirs[i].in_off];
+		nb = ufs_rw32(bap[indirs[i].in_off], UFS_MPNEEDSWAP(vp->v_mount));
 		if (i == num)
 			break;
 		i += 1;
@@ -245,7 +251,8 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 			brelse(bp);
 			goto fail;
 		}
-		bap[indirs[i - 1].in_off] = nb;
+		bap[indirs[i - 1].in_off] = ufs_rw32(nb,
+			UFS_MPNEEDSWAP(vp->v_mount));
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
@@ -273,7 +280,7 @@ ffs_balloc(ip, lbn, size, cred, bpp, flags)
 		nbp->b_blkno = fsbtodb(fs, nb);
 		if (flags & B_CLRBUF)
 			clrbuf(nbp);
-		bap[indirs[i].in_off] = nb;
+		bap[indirs[i].in_off] = ufs_rw32(nb, UFS_MPNEEDSWAP(vp->v_mount));
 		/*
 		 * If required, write synchronously, otherwise use
 		 * delayed write.
