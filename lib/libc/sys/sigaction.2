@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigaction.2,v 1.22 1999/12/02 21:42:39 kleink Exp $
+.\"	$NetBSD: sigaction.2,v 1.23 1999/12/11 19:35:48 msaitoh Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -200,7 +200,7 @@ process will be automatically waited for.
 If a signal is caught during the system calls listed below,
 the call may be forced to terminate
 with the error
-.Dv EINTR ,
+.Er EINTR ,
 the call may return with a data transfer shorter than requested,
 or the call may be restarted.
 Restarting of pending calls is requested
