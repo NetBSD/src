@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.60.2.2 1998/06/06 12:40:53 bouyer Exp $
+#	$NetBSD: files.isa,v 1.60.2.3 1998/06/25 10:50:25 bouyer Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -110,6 +110,7 @@ file	dev/isa/wds.c			wds
 device	mcd: disk
 attach	mcd at isa
 file	dev/isa/mcd.c			mcd needs-flag
+defopt	MCD_PROMISC			# enable "promiscuous" match
 
 # Sony CDU-3[13]A CD-ROM drives
 device	scd: disk
