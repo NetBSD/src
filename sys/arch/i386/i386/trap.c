@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.134 1999/12/04 21:20:32 ragge Exp $	*/
+/*	$NetBSD: trap.c,v 1.135 2000/05/11 16:38:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,6 +113,13 @@
 #ifdef DDB
 #include <machine/db_machdep.h>
 #endif
+
+#include "mca.h"
+#if NMCA > 0
+#include <machine/mca_machdep.h>
+#endif
+
+#include "isa.h"
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -530,8 +537,7 @@ trap(frame)
 		trapsignal(p, SIGTRAP, type &~ T_USER);
 		break;
 
-#include "isa.h"
-#if	NISA > 0
+#if	NISA > 0 || NMCA > 0
 	case T_NMI:
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
@@ -547,11 +553,20 @@ trap(frame)
 #endif
 #endif /* KGDB || DDB */
 		/* machine/parity/power fail/"kitchen sink" faults */
-		if (isa_nmi() == 0)
-			return;
-		else
+
+#if NMCA > 0
+		/* mca_nmi() takes care to call isa_nmi() if appropriate */
+		if (mca_nmi() != 0)
 			goto we_re_toast;
-#endif
+		else
+			return;
+#else /* NISA > 0 */
+		if (isa_nmi() != 0)
+			goto we_re_toast;
+		else
+			return;
+#endif /* NMCA > 0 */
+#endif /* NISA > 0 || NMCA > 0 */
 	}
 
 	if ((type & T_USER) == 0)

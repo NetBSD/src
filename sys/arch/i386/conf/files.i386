@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.158 2000/04/28 17:23:51 uch Exp $
+#	$NetBSD: files.i386,v 1.159 2000/05/11 16:38:10 jdolecek Exp $
 #
 # new style config file for i386 architecture
 #
@@ -108,8 +108,7 @@ file	arch/i386/i386/bios32.c		bios32 needs-flag
 
 define mainbus { }
 # XXX BIOS32 only if something that uses it is configured!
-# device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
-device	mainbus: isabus, eisabus, pcibus, mainbus, bios32
+device	mainbus: isabus, eisabus, mcabus, pcibus, mainbus, bios32
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -260,9 +259,9 @@ file	arch/i386/eisa/eisa_machdep.c	eisa
 # MCA-only drivers
 #
 
-# device mca {[slot = -1]} : bioscall
-# include "dev/mca/files.mca"
-# file	arch/i386/mca/mca_machdep.c	mca
+device mca {[slot = -1]} : bioscall
+include "dev/mca/files.mca"
+file	arch/i386/mca/mca_machdep.c	mca
 
 # ISA Plug 'n Play devices
 file	arch/i386/isa/isapnp_machdep.c	isapnp

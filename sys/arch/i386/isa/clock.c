@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.64 2000/05/03 21:32:59 mycroft Exp $	*/
+/*	$NetBSD: clock.c,v 1.65 2000/05/11 16:38:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -112,6 +112,11 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "pcppi.h"
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
+
+#include "mca.h"
+#if NMCA > 0
+#include <machine/mca_machdep.h>	/* for MCA_system */
+#endif
 
 #ifdef CLOCKDEBUG
 int clock_debug = 0;
@@ -402,6 +407,13 @@ clockintr(arg)
 	struct clockframe *frame = arg;		/* not strictly necessary */
 
 	hardclock(frame);
+
+#if NMCA > 0
+	if (MCA_system) {
+		/* Reset PS/2 clock interrupt by asserting bit 7 of port 0x61 */
+		outb(0x61, inb(0x61) | 0x80);
+	}
+#endif
 	return -1;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.383 2000/05/03 20:17:37 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.384 2000/05/11 16:38:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -160,6 +160,11 @@
 #include "npx.h"
 #if NNPX > 0
 extern struct proc *npxproc;
+#endif
+
+#include "mca.h"
+#if NMCA > 0
+#include <machine/mca_machdep.h>	/* for mca_busprobe() */
 #endif
 
 /* the following is used externally (sysctl_hw) */
@@ -1685,6 +1690,13 @@ init386(first_avail)
 		kgdb_debug_init = 1;
 		kgdb_connect(1);
 	}
+#endif
+
+#if NMCA > 0
+	/* check for MCA bus, needed to be done before ISA stuff - if
+	 * MCA is detected, ISA needs to use level triggered interrupts
+	 * by default */
+	mca_busprobe();
 #endif
 
 #if NISA > 0
