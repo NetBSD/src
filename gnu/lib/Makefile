@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2001/07/24 19:44:47 tv Exp $
+#	$NetBSD: Makefile,v 1.25 2001/07/28 06:59:02 matt Exp $
 
 .if defined(USE_NEW_TOOLCHAIN)
 
@@ -14,7 +14,7 @@ SUBDIR+= libbfd libmalloc
 
 .if empty(HAVE_GCC29) || make (obj) || make(cleandir) || make(clean)
 SUBDIR+= libg2c libgcc libobjc
-.if ${MACHINE_ARCH} != "sparc64"
+.if (${MACHINE_ARCH} != "sparc64") && (${MACHINE_ARCH} != "arm")
 SUBDIR+= libstdc++
 .endif
 .endif
