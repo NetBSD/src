@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.28 2000/04/27 16:32:37 itojun Exp $	*/
+/*	$NetBSD: res_query.c,v 1.29 2000/04/28 02:37:57 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.28 2000/04/27 16:32:37 itojun Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.29 2000/04/28 02:37:57 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -395,7 +395,7 @@ __hostalias(name)
 	if (_res.options & RES_NOALIASES)
 		return (NULL);
 	/*
-	 * forbid hostaliases for setuid binray, due to possible security
+	 * forbid hostaliases for setuid binary, due to possible security
 	 * breach.
 	 */
 	if (issetugid())
