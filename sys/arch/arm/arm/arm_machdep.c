@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.2.6.5 2001/11/17 21:01:36 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.2.6.6 2001/11/17 21:38:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.5 2001/11/17 21:01:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.2.6.6 2001/11/17 21:38:23 thorpej Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -207,11 +207,10 @@ cpu_upcall(struct lwp *l)
 	struct trapframe *tf;
 	void *stack, *ap;
 	ucontext_t u, *up;
-	int i, nsas, nevents, nint, error;
+	int i, nsas, nevents, nint;
 	int x, y;
 
 	extern char sigcode[], upcallcode[];
-	extern struct pool siginfo_pool;
 
 	tf = process_frame(l);
 
@@ -254,7 +253,7 @@ cpu_upcall(struct lwp *l)
 	up = stack;
 	up--;
 	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
-		pool_put(&saupcall_pool, sau);
+		sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 		printf("cpu_upcall: couldn't copyout activation ucontext"
 		    " for %d.%d\n",
@@ -274,7 +273,7 @@ cpu_upcall(struct lwp *l)
 		if (((x=copyout(sas[i], sap, sizeof(struct sa_t)) != 0)) ||
 		    ((y=copyout(&sap, sapp, sizeof(struct sa_t *)) != 0))) {
 			/* Copy onto the stack didn't work.  Die. */
-			pool_put(&saupcall_pool, sau);
+			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 			printf("cpu_upcall: couldn't copyout sa_t %d"
 			    " for %d.%d (x=%d, y=%d)\n",
@@ -292,19 +291,9 @@ cpu_upcall(struct lwp *l)
 	 */
 	if (sau->sau_arg) {
 		ap = (char *)sapp - sau->sau_argsize;
-		error = copyout(sau->sau_arg, ap, sau->sau_argsize);
-		/*
-		 * XXX We have to know what the origin of arg is in order
-		 * to do the right thing, here.  Sucks to be a non-
-		 * garbage-collected kernel.
-		 */
-		if (sau->sau_type == SA_UPCALL_SIGNAL)
-			pool_put(&siginfo_pool, sau->sau_arg);
-		else
-			panic("cpu_upcall: unknown type of non-null arg");
-
-		if (error) {
+		if (copyout(sau->sau_arg, ap, sau->sau_argsize) != 0) {
 			/* Copying onto the stack didn't work. Die. */
+			sadata_upcall_free(sau);
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
 		}
@@ -325,7 +314,7 @@ cpu_upcall(struct lwp *l)
 
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
-		pool_put(&saupcall_pool, sau);
+		sadata_upcall_free(sau);
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
@@ -341,5 +330,5 @@ cpu_upcall(struct lwp *l)
 	cpu_cache_syncI();	/* XXX really necessary? */
 #endif
 
-	pool_put(&saupcall_pool, sau);
+	sadata_upcall_free(sau);
 }
