@@ -1,4 +1,4 @@
-.\"	$NetBSD: radio.4,v 1.3 2002/01/01 22:14:05 augustss Exp $
+.\"	$NetBSD: radio.4,v 1.4 2002/01/01 22:54:11 wiz Exp $
 .\"	$RuOBSD: radio.4,v 1.4 2001/10/26 05:38:43 form Exp $
 .\"	$OpenBSD: radio.4,v 1.3 2001/12/05 10:58:54 mickey Exp $
 .\"
@@ -174,17 +174,6 @@ Informs whether the device receives a stereo or mono signal.
 .Xr rt 4 ,
 .Xr rtii 4 ,
 .Xr sf2r 4
-.Sh BUGS
-You can have only one card of the same type.
-For example, if you have two aztech FM tuners, the first card with jumper
-set to port 0x358 and the second one - to 0x350, you can use only one
-aztech card (in the kernel, that is) either with port 0x350 or 0x358.
-Don't even try to compile support for the second card into the kernel.
-.Sh AUTHORS
-The
-.Nm
-driver was written by Vladimir Popov and Maxim Tsyplakov.
-The man page was written by Vladimir Popov.
 .Sh HISTORY
 The
 .Nm
@@ -192,3 +181,14 @@ device driver appeared in
 .Ox 3.0
 and
 .Nx 1.6 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by Vladimir Popov and Maxim Tsyplakov.
+The man page was written by Vladimir Popov.
+.Sh BUGS
+You can have only one card of the same type.
+For example, if you have two aztech FM tuners, the first card with jumper
+set to port 0x358 and the second one - to 0x350, you can use only one
+aztech card (in the kernel, that is) either with port 0x350 or 0x358.
+Don't even try to compile support for the second card into the kernel.
