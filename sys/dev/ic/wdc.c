@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.69 1999/07/30 14:59:10 bouyer Exp $ */
 
 
 /*
@@ -1019,7 +1019,9 @@ wdc_exec_command(drvp, wdc_c)
 		ret = WDC_COMPLETE;
 	} else {
 		if (wdc_c->flags & AT_WAIT) {
-			tsleep(wdc_c, PRIBIO, "wdccmd", 0);
+			while ((wdc_c->flags & AT_DONE) == 0) {
+				tsleep(wdc_c, PRIBIO, "wdccmd", 0);
+			}
 			ret = WDC_COMPLETE;
 		} else {
 			ret = WDC_QUEUED;
