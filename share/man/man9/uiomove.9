@@ -1,4 +1,4 @@
-.\"	$NetBSD: uiomove.9,v 1.3 1999/03/16 00:40:48 garbled Exp $
+.\"	$NetBSD: uiomove.9,v 1.4 2001/09/04 02:51:17 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,20 +43,20 @@
 .Fn uiomove "void *buf" "int n" "struct uio *uio"
 .Sh DESCRIPTION
 
-The 
+The
 .Nm
-function copies up to 
+function copies up to
 .Fa n
 bytes between the kernel-space address pointed
-to by 
+to by
 .Fa buf
 and the addresses described by
 .Fa uio ,
-which may be in user-space or kernel-space. 
+which may be in user-space or kernel-space.
 
-The 
+The
 .Fa uio
-argument is a pointer to a 
+argument is a pointer to a
 .Fa struct uio
 as defined by
 .Aq Pa sys/uio.h :
@@ -66,20 +66,20 @@ struct uio {
 	int	uio_iovcnt;	/* number of iovecs in array */
 	off_t	uio_offset;	/* offset into file this uio corresponds to */
 	size_t	uio_resid;	/* residual i/o count */
-	enum	uio_seg uio_segflg; 
-	enum	uio_rw uio_rw;	
+	enum	uio_seg uio_segflg;
+	enum	uio_rw uio_rw;
 	struct	proc *uio_procp;/* process if UIO_USERSPACE */
 };
 .Ed
 
-A 
+A
 .Fa struct uio
 typically describes data in motion.
 Several of the fields described below reflect that expectation.
 
 .Bl -tag -width uio_xxxxxx
 .It uio_iov
-Pointer to array of 
+Pointer to array of
 .Fa struct iovecs :
 .Bd -literal
 struct iovec {
@@ -99,7 +99,7 @@ A flag indicating whether the space described is in user-space
 (UIO_USERSPACE) or kernel-space (UIO_SYSSPACE).
 .It uio_rw
 A flag indicating whether date should be read into the space
-(UIO_READ) or written from the space (UIO_WRITE). 
+(UIO_READ) or written from the space (UIO_WRITE).
 .It uio_procp
 A pointer to the process whose data area is described by the
 structure, or NULL if the area is in kernel-space.
@@ -107,36 +107,36 @@ structure, or NULL if the area is in kernel-space.
 
 The value of
 .Fa uio->uio_rw
-controls whether 
+controls whether
 .Nm
-copies data from 
+copies data from
 .Fa buf
 to
 .Fa uio
-or vice versa. 
+or vice versa.
 
-The lesser of 
+The lesser of
 .Fa n
-or 
+or
 .Fa uio->resid
-bytes are copied. 
+bytes are copied.
 
-.Nm 
+.Nm
 changes fields of the structure pointed to by
-.Fa uio , 
-such that 
+.Fa uio ,
+such that
 .Fa uio->uio_resid
-is decremented by the amount of data moved, 
-.Fa uio->uio_offset 
+is decremented by the amount of data moved,
+.Fa uio->uio_offset
 is incremented by the same amount, and the array of iovecs is adjusted
 to point that much farther into the region described.
-This allows multiple calls to 
+This allows multiple calls to
 .Nm
 to easily be used to fill or drain the region of data.
 
 
 .Sh RETURN VALUES
-.Nm 
+.Nm
 returns 0 on success or EFAULT if a bad address is encountered.
 
 .Sh SEE ALSO

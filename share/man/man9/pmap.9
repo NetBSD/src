@@ -1,11 +1,11 @@
-.\"	$NetBSD: pmap.9,v 1.6 2001/08/11 05:05:13 matt Exp $
+.\"	$NetBSD: pmap.9,v 1.7 2001/09/04 02:51:16 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\" 
+.\"
 .\" This code is derived from software contributed to The NetBSD Foundation
 .\" by Jason R. Thorpe.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -21,7 +21,7 @@
 .\" 4. Neither the name of The NetBSD Foundation nor the names of its
 .\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -32,7 +32,7 @@
 .\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
 .\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-.\" POSSIBILITY OF SUCH DAMAGE. 
+.\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd April 16, 2001
 .Dt PMAP 9
@@ -440,7 +440,7 @@ The
 argument contains protection bits (the same bits as used in the
 .Fa prot
 argument) indicating the type of access that caused the mapping to
-be created.  This information may be used to seed modified/referenced 
+be created.  This information may be used to seed modified/referenced
 information for the page being mapped, possibly avoiding redundant faults
 on platforms that track modified/referenced information in software.
 Other information provided by

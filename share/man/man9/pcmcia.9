@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcmcia.9,v 1.1 2001/07/01 04:11:14 gmcgarry Exp $
+.\"     $NetBSD: pcmcia.9,v 1.2 2001/09/04 02:51:16 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -247,7 +247,7 @@ in the chipset I/O window.  The width of data access is specified by
 .Fa width .
 Valid values for the width are:
 .Bl -tag -width PCMCIA_WIDTH_AUTO
-.It PCMCIA_WIDTH_AUTO 
+.It PCMCIA_WIDTH_AUTO
 Use the largest I/O width reported by the device.
 .It PCMCIA_WIDTH_IO8
 Force 8-bit I/O width.
@@ -431,7 +431,7 @@ file.  The database can be regenerated using the Makefile
 .%D 1995
 .Re
 .sp
-.Xr pcic 4 , 
+.Xr pcic 4 ,
 .Xr pcmcia 4 ,
 .Xr tcic 4 ,
 .Xr autoconf 9 ,

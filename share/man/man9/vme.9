@@ -1,4 +1,4 @@
-.\"     $NetBSD: vme.9,v 1.1 2001/07/01 04:11:14 gmcgarry Exp $
+.\"     $NetBSD: vme.9,v 1.2 2001/09/04 02:51:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS 
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
 .\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
 .\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
 .\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
@@ -52,7 +52,7 @@
 .Nm vme_dmamem_free ,
 .Nm vme_space_alloc ,
 .Nm vme_space_free ,
-.Nm vme_space_get 
+.Nm vme_space_get
 .Nd Versa Module Euroboard bus
 .Sh SYNOPSIS
 .Fd #include <machine/bus.h>
@@ -270,7 +270,7 @@ are described in
 .It Fo vme_dmamem_alloc
 .Fa "vc" "size" "am" "datasize" "swap" "segs" "nsegs" "rsegs" "flags"
 .Fc
-Allocates memory that is 
+Allocates memory that is
 .Do
 DMA safe
 .Dc for the VME bus managed by
@@ -340,7 +340,7 @@ Extensive DMA facilities are provided.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent 
+machine-independent
 .Nm
 subsystem can be found.  All pathnames are relative to
 .Pa /usr/src .

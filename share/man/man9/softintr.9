@@ -1,8 +1,8 @@
-.\" $NetBSD: softintr.9,v 1.5 2001/01/21 00:50:48 augustss Exp $
+.\" $NetBSD: softintr.9,v 1.6 2001/09/04 02:51:16 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -18,7 +18,7 @@
 .\"          information about NetBSD.
 .\" 4. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
 .\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -29,7 +29,7 @@
 .\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.\" 
+.\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
 .Dd May 30, 2000
@@ -119,7 +119,7 @@ by a call to
 to be executed as soon as that software interrupt is unblocked.
 This function may assume that the interrupt is currently blocked,
 so it need not check to see if the interrupt needs to be executed
-immediately.  
+immediately.
 .Fn softintr_schedule
 can safely be called multiple times before the
 callback routine is invoked.

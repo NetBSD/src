@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.16 2001/07/28 16:19:12 itojun Exp $
+.\"	$NetBSD: mbuf.9,v 1.17 2001/09/04 02:51:16 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -376,13 +376,13 @@ If we call the return value
 .Fa n ,
 the contiguous data region is available at
 .Li "mtod(n, caddr_t) + *offp" ,
-or 
+or
 .Li "mtod(n, caddr_t)"
 if
 .Fa offp
 is
 .Dv NULL .
-The top of the mbuf chain 
+The top of the mbuf chain
 .Fa m ,
 and mbufs up to
 .Fa off ,

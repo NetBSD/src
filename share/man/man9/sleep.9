@@ -1,4 +1,4 @@
-.\"	$NetBSD: sleep.9,v 1.15 2001/07/01 03:23:02 gmcgarry Exp $
+.\"	$NetBSD: sleep.9,v 1.16 2001/09/04 02:51:16 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,7 +175,7 @@ merely signals a
 .Em possible
 change to the blocking conditions.
 For example, when two or more processes are waiting for an exclusive-access
-lock 
+lock
 .Pq see Xr lock 9 ,
 only one of them will succeed in acquiring the lock when it is released.
 All others will have to go back to sleep and wait for the next opportunity.

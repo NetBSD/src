@@ -1,12 +1,12 @@
-.\"	$NetBSD: rt_timer.9,v 1.5 2001/06/11 01:50:52 wiz Exp $
+.\"	$NetBSD: rt_timer.9,v 1.6 2001/09/04 02:51:16 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
-.\" 
+.\"
 .\" This code is derived from software contributed to The NetBSD Foundation
 .\" by Kevin M. Lahey of the Numerical Aerospace Simulation Facility,
 .\" NASA Ames Research Center.
-.\" 
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -22,7 +22,7 @@
 .\" 4. Neither the name of The NetBSD Foundation nor the names of its
 .\"    contributors may be used to endorse or promote products derived
 .\"    from this software without specific prior written permission.
-.\" 
+.\"
 .\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
 .\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
 .\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -39,7 +39,7 @@
 .Dt RT_TIMER 9
 .Os
 .Sh NAME
-.Nm rt_timer , 
+.Nm rt_timer ,
 .Nm rt_timer_add ,
 .Nm rt_timer_queue_create ,
 .Nm rt_timer_queue_change ,
@@ -61,7 +61,7 @@
 .Fn rt_timer_remove_all "struct rtentry *rt"
 .Sh DESCRIPTION
 The
-.Nm 
+.Nm
 functions provide a generic route callout functionality.
 They allow a function to be called for a route at any time.
 This was originally intended to be used to remove routes added
@@ -100,14 +100,14 @@ argument is non-zero, the timeout action is performed for each entry.
 .It Fn rt_timer_add "struct rtentry *rt" \
 "void(*f)(struct rtentry *, struct rttimer *)" "struct rttimer_queue *q"
 This function adds an entry to a timeout queue.
-The function 
-.Fa f 
+The function
+.Fa f
 will be called after the timeout period for queue
-.Fa q 
-has elapsed.  
-If 
-.Fa f 
-is NULL 
+.Fa q
+has elapsed.
+If
+.Fa f
+is NULL
 the route will be deleted when the timeout expires.
 .It Fn rt_timer_remove_all "struct rtentry *rt"
 This function removes all references to the given route from the
