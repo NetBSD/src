@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.20 2000/12/03 02:18:14 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.21 2001/05/29 17:37:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -83,6 +83,7 @@ void *emalloc __P((size_t));
 void *erealloc __P((void *, size_t));
 void enomem __P((void));
 int eunlink __P((const char *));
+void execError __P((const char *));
 
 /* parse.c */
 void Parse_Error __P((int, char *, ...))

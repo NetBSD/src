@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.47 2001/05/01 03:27:50 sommerfeld Exp $	*/
+/*	$NetBSD: job.c,v 1.48 2001/05/29 17:37:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.47 2001/05/01 03:27:50 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.48 2001/05/29 17:37:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.47 2001/05/01 03:27:50 sommerfeld Exp $");
+__RCSID("$NetBSD: job.c,v 1.48 2001/05/29 17:37:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1377,10 +1377,10 @@ JobExec(job, argv)
 	    Rmt_Exec(shellPath, argv, FALSE);
 	} else
 #endif /* REMOTE */
+	{
 	   (void) execv(shellPath, argv);
-
-	(void) write(2, "Could not execute shell\n",
-		     sizeof("Could not execute shell"));
+	   execError(shellPath);
+	}
 	_exit(1);
     } else {
 #ifdef REMOTE

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.65 2001/01/16 02:37:03 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.66 2001/05/29 17:37:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.65 2001/01/16 02:37:03 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.66 2001/05/29 17:37:52 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.65 2001/01/16 02:37:03 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.66 2001/05/29 17:37:52 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -109,6 +109,10 @@ __RCSID("$NetBSD: main.c,v 1.65 2001/01/16 02:37:03 cgd Exp $");
 #include "job.h"
 #include "pathnames.h"
 #include "trace.h"
+
+#ifdef USE_IOVEC
+#include <sys/uio.h>
+#endif
 
 #ifndef	DEFMAXLOCAL
 #define	DEFMAXLOCAL DEFMAXJOBS
@@ -1567,6 +1571,37 @@ eunlink(file)
 }
 
 /*
+ * execError --
+ *	Print why exec failed, avoiding stdio.
+ */
+void
+execError(av)
+	const char *av;
+{
+#ifdef USE_IOVEC
+	int i = 0;
+	struct iovec iov[6];
+#define IOADD(s) \
+	(void)(iov[i].iov_base = (s), \
+	    iov[i].iov_len = strlen(iov[i].iov_base), \
+	    i++)
+#else
+#define	IOADD (void)write(2, s, strlen(s))
+#endif
+
+	IOADD(progname);
+	IOADD(": Exec of `");
+	IOADD((char *)av);
+	IOADD("' failed (");
+	IOADD(strerror(errno));
+	IOADD(")\n");
+
+#ifdef USE_IOVEC
+	(void)writev(2, iov, 6);
+#endif
+}
+
+/*
  * usage --
  *	exit with usage message
  */
@@ -1574,9 +1609,9 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-"usage: make [-Beiknqrst] [-D variable] [-d flags] [-f makefile ]\n\
+"Usage: %s [-Beiknqrst] [-D variable] [-d flags] [-f makefile ]\n\
             [-I directory] [-j max_jobs] [-m directory] [-V variable]\n\
-            [variable=value] [target ...]\n");
+            [variable=value] [target ...]\n", progname);
 	exit(2);
 }
 

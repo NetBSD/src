@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.10 1999/05/03 12:01:14 christos Exp $	*/
+/*	$NetBSD: config.h,v 1.11 2001/05/29 17:37:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -117,6 +117,12 @@
  *	current job dies, instead of just the one forked.
  */
 #define USE_PGRP
+
+/*
+ * USE_IOVEC
+ *	We have writev(2)
+ */
+#define USE_IOVEC
 
 #if !defined(__svr4__) && !defined(__SVR4) && !defined(__ELF__)
 # ifndef RANLIBMAG
