@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.14 1996/03/12 00:22:43 jonathan Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.15 1996/03/17 02:42:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -348,6 +348,9 @@ int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
 int sysctl_vnode __P((char *, size_t *));
 int sysctl_ntptime __P((char *, size_t *));
+#ifdef GPROF
+int sysctl_doprof __P((int *, u_int, void *, size_t *, void *, size_t));
+#endif
 
 void fill_eproc __P((struct proc *, struct eproc *));
 
@@ -367,7 +370,6 @@ int net_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
 int cpu_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 		    struct proc *));
-
 #else	/* !_KERNEL */
 #include <sys/cdefs.h>
 
