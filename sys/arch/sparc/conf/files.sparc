@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.52 1998/04/18 19:03:00 pk Exp $
+#	$NetBSD: files.sparc,v 1.53 1998/05/20 00:00:12 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -104,6 +104,16 @@ device ms: zsevent
 attach ms at zs
 file dev/sun/ms.c			ms needs-flag
 
+#
+# Magma Serial/Parallel boards
+#
+device magma {}
+attach magma at sbus                                 
+device mtty: tty
+attach mtty at magma
+device mbpp
+attach mbpp at magma
+file arch/sparc/dev/magma.c		magma | mtty | mbpp needs-flag
 
 #
 # Machine-independent SCSI drivers
