@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.31.2.1 1997/11/07 20:34:52 mrg Exp $	*/
+/*	$NetBSD: login.c,v 1.31.2.2 1998/01/29 09:08:16 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.31.2.1 1997/11/07 20:34:52 mrg Exp $");
+__RCSID("$NetBSD: login.c,v 1.31.2.2 1998/01/29 09:08:16 mellon Exp $");
 #endif /* not lint */
 
 /*
@@ -134,7 +134,7 @@ main(argc, argv)
 	struct timeval tp;
 	struct utmp utmp;
 	int ask, ch, cnt, fflag, hflag, pflag, sflag, quietlog, rootlogin, rval;
-	uid_t uid;
+	uid_t uid, saved_uid;
 	char *domain, *p, *salt, *ttyn, *pwprompt;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN];
@@ -388,6 +388,15 @@ main(argc, argv)
 	if (!rootlogin)
 		checknologin();
 
+	/* Temporarily give up special privileges so we can change */
+	/* into NFS-mounted homes that are exported for non-root */
+	/* access and have mode 7x0 */
+	saved_uid = geteuid();
+	if (rootlogin)
+		(void)seteuid(0);
+	else
+		(void)seteuid(pwd->pw_uid);
+	
 	if (chdir(pwd->pw_dir) < 0) {
 		(void)printf("No home directory %s!\n", pwd->pw_dir);
 		if (chdir("/"))
@@ -397,6 +406,9 @@ main(argc, argv)
 	}
 
 	quietlog = access(_PATH_HUSHLOGIN, F_OK) == 0;
+
+	/* regain special privileges */
+	(void)seteuid(saved_uid);
 
 	if (pwd->pw_change || pwd->pw_expire)
 		(void)gettimeofday(&tp, (struct timezone *)NULL);
