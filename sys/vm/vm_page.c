@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.6 1993/08/27 23:46:02 brezak Exp $
+ *	$Id: vm_page.c,v 1.7 1993/11/10 08:22:14 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -731,7 +731,6 @@ void		vm_page_init(mem, object, offset)
 		(mem)->tabled = FALSE; \
 		if (object) vm_page_insert((mem), (object), (offset)); \
 		else (mem)->object = NULL; \
-		(mem)->absent = FALSE; \
 		(mem)->fictitious = FALSE; \
 		(mem)->page_lock = VM_PROT_NONE; \
 		(mem)->unlock_request = VM_PROT_NONE; \
@@ -751,7 +750,6 @@ void		vm_page_init(mem, object, offset)
 		(mem)->tabled = FALSE; \
 		if (object) vm_page_insert((mem), (object), (offset)); \
 		else (mem)->object = NULL; \
-		(mem)->absent = FALSE; \
 		(mem)->fictitious = FALSE; \
 		(mem)->page_lock = VM_PROT_NONE; \
 		(mem)->unlock_request = VM_PROT_NONE; \
@@ -770,7 +768,6 @@ void		vm_page_init(mem, object, offset)
 		(mem)->busy = TRUE; \
 		(mem)->tabled = FALSE; \
 		vm_page_insert((mem), (object), (offset)); \
-		(mem)->absent = FALSE; \
 		(mem)->fictitious = FALSE; \
 		(mem)->page_lock = VM_PROT_NONE; \
 		(mem)->unlock_request = VM_PROT_NONE; \
@@ -789,7 +786,6 @@ void		vm_page_init(mem, object, offset)
 		(mem)->busy = TRUE; \
 		(mem)->tabled = FALSE; \
 		vm_page_insert((mem), (object), (offset)); \
-		(mem)->absent = FALSE; \
 		(mem)->fictitious = FALSE; \
 		(mem)->page_lock = VM_PROT_NONE; \
 		(mem)->unlock_request = VM_PROT_NONE; \
