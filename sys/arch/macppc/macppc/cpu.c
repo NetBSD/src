@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.22 2001/07/22 11:29:47 wiz Exp $	*/
+/*	$NetBSD: cpu.c,v 1.23 2001/08/22 21:09:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -127,6 +127,8 @@ cpumatch(parent, cf, aux)
 #define MPC620		20
 #define MPC750		8
 #define MPC7400		12
+#define MPC7410		0x800c
+#define MPC7450		0x8000
 
 void
 cpuattach(parent, self, aux)
@@ -145,7 +147,7 @@ cpuattach(parent, self, aux)
 #endif
 
 	asm volatile ("mfpvr %0" : "=r"(pvr));
-	vers = (pvr >> 16) & 0x0fff;
+	vers = (pvr >> 16) & 0xffff;
 
 	switch (id) {
 	case 0:
@@ -154,6 +156,8 @@ cpuattach(parent, self, aux)
 		case MPC604:
 		case MPC604ev:
 		case MPC7400:
+		case MPC7410:
+		case MPC7450:
 			asm volatile ("mtspr 1023,%0" :: "r"(id));
 		}
 		identifycpu(model);
@@ -182,9 +186,17 @@ cpuattach(parent, self, aux)
 	case MPC603ev:
 	case MPC750:
 	case MPC7400:
+	case MPC7410:
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
+		powersave = 1;
+		break;
+
+	case MPC7450:
+		/* Select NAP mode. */
+		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
+		hid0 |= HID0_NAP | HID0_DPM;
 		powersave = 1;
 		break;
 
@@ -209,6 +221,7 @@ cpuattach(parent, self, aux)
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		break;
 	case MPC7400:
+	case MPC7410:
 		hid0 &= ~HID0_SPD;
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		hid0 |= HID0_EIEC;
@@ -217,10 +230,12 @@ cpuattach(parent, self, aux)
 
 	asm volatile ("mtspr 1008,%0" :: "r"(hid0));
 
-#if 0
+#if 1
 	if (1) {
 		char hidbuf[128];
-		bitmask_snprintf(hid0, HID0_BITMASK, hidbuf, sizeof hidbuf);
+		bitmask_snprintf(hid0,
+		     vers == MPC7450 ? HID0_7450_BITMASK : HID0_BITMASK,
+		     hidbuf, sizeof hidbuf);
 		printf("%s: HID0 %s\n", self->dv_xname, hidbuf);
 	}
 #endif
@@ -241,7 +256,7 @@ struct cputab {
 	int version;
 	char *name;
 };
-static struct cputab models[] = {
+static const struct cputab models[] = {
 	{ MPC601,     "601" },
 	{ MPC602,     "602" },
 	{ MPC603,     "603" },
@@ -252,6 +267,8 @@ static struct cputab models[] = {
 	{ MPC620,     "620" },
 	{ MPC750,     "750" },
 	{ MPC7400,   "7400" },
+	{ MPC7410,   "7410" },
+	{ MPC7450,   "7450" },
 	{ 0,	       NULL }
 };
 
@@ -260,14 +277,14 @@ identifycpu(cpu_model)
 	char *cpu_model;
 {
 	u_int pvr, vers, rev;
-	struct cputab *cp = models;
+	const struct cputab *cp = models;
 
 	asm ("mfpvr %0" : "=r"(pvr));
 	vers = pvr >> 16;
 	rev = pvr & 0xffff;
 
 	while (cp->name) {
-		if (cp->version == (vers & 0x0fff))
+		if (cp->version == vers)
 			break;
 		cp++;
 	}
