@@ -1,7 +1,7 @@
-/*	$NetBSD: ip_rcmd_pxy.c,v 1.8 2002/01/24 08:23:15 martti Exp $	*/
+/*	$NetBSD: ip_rcmd_pxy.c,v 1.9 2002/01/24 08:23:45 martti Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.8 2002/01/24 08:23:15 martti Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_rcmd_pxy.c,v 1.9 2002/01/24 08:23:45 martti Exp $");
 
 /*
  * Id: ip_rcmd_pxy.c,v 1.4.2.5 2001/10/30 16:38:14 darrenr Exp
@@ -68,8 +68,8 @@ nat_t *nat;
 u_short ipf_rcmd_atoi(ptr)
 char *ptr;
 {
-	char *s = ptr, c;
-	u_short i = 0;
+	register char *s = ptr, c;
+	register u_short i = 0;
 
 	while ((c = *s++) && isdigit(c)) {
 		i *= 10;
