@@ -31,8 +31,11 @@
  *
  *  machine/setjmp.h : for support of the library routines.
  *
- *	$Id: jmpbuf.h,v 1.1.1.1 1993/09/09 23:53:47 phil Exp $
+ *	jmpbuf.h,v 1.1.1.1 1993/09/09 23:53:47 phil Exp
  */
+
+#ifndef _MACHINE_JMPBUF_H_
+#define _MACHINE_JMPBUF_H_
 
 /* These are byte offsets into the jmp buffer. */
 
@@ -46,3 +49,5 @@
 #define JMP_BUF_FP	28
 #define JMP_BUF_SB	32
 #define JMP_BUF_SIGMASK 36
+
+#endif

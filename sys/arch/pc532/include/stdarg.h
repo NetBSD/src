@@ -35,15 +35,15 @@
  *
  *	machine/stdarg.h:
  *
- *	$Id: stdarg.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	stdarg.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
 
 #include <sys/types.h>   /* to make sure _VA_LIST_ gets defined if it
 			    needs to. */
 
-#ifndef _STDARG_H
-#define _STDARG_H
+#ifndef _MACHINE_STDARG_H_
+#define _MACHINE_STDARG_H_
 
 /* The macro _VA_LIST_ is the same thing used by this file in Ultrix.  */
 #ifdef _VA_LIST_

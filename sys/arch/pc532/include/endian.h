@@ -35,6 +35,9 @@
  *	endian.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
+#ifndef _MACHINE_ENDIAN_H_
+#define _MACHINE_ENDIAN_H_
+
 /*
  * Definitions for byte order, according to byte significance from low
  * address to high.
@@ -74,4 +77,6 @@ __END_DECLS
 #define	NTOHS(x)	(x) = ntohs((u_short)x)
 #define	HTONL(x)	(x) = htonl((u_long)x)
 #define	HTONS(x)	(x) = htons((u_short)x)
+#endif
+
 #endif
