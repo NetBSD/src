@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: sysctl.c,v 1.6 1995/06/02 15:03:34 pk Exp $";
+static char *rcsid = "$Id: sysctl.c,v 1.7 1995/06/07 17:41:17 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -377,11 +377,12 @@ parse(string, flags)
 	}
 	if (special & BOOTTIME) {
 		struct timeval *btp = (struct timeval *)buf;
+		time_t boottime;
 
-		if (!nflag)
-			fprintf(stdout, "%s = %s\n", string,
-			    ctime(&btp->tv_sec));
-		else
+		if (!nflag) {
+			boottime = btp->tv_sec;
+			fprintf(stdout, "%s = %s\n", string, ctime(&boottime));
+		} else
 			fprintf(stdout, "%d\n", btp->tv_sec);
 		return;
 	}
