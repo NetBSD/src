@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.259 2001/05/17 23:23:36 fredette Exp $
+# $NetBSD: mi,v 1.260 2001/05/22 14:52:24 fredette Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -671,6 +671,7 @@
 ./usr/sbin/named-bootconf	base-bind-bin
 ./usr/sbin/named.reload		base-bind-bin
 ./usr/sbin/named.restart	base-bind-bin
+./usr/sbin/ndbootd		base-bootserver-bin
 ./usr/sbin/ndc			base-bind-bin
 ./usr/sbin/ndp			base-netutil-bin
 ./usr/sbin/netgroup_mkdb	base-nis-bin
@@ -743,7 +744,6 @@
 ./usr/sbin/sshd			base-secsh-bin
 ./usr/sbin/stdethers		base-nis-bin
 ./usr/sbin/stdhosts		base-nis-bin
-./usr/sbin/sunndd		base-bootserver-bin
 ./usr/sbin/sup			base-sup-bin
 ./usr/sbin/supfilesrv		base-sup-bin
 ./usr/sbin/supscan		base-sup-bin

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.83 2001/05/17 23:23:37 fredette Exp $
+# $NetBSD: mi,v 1.84 2001/05/22 14:52:25 fredette Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -104,6 +104,7 @@
 ./etc/rc.d/mountd			etc-nfsserver-rc
 ./etc/rc.d/mrouted			etc-router-rc
 ./etc/rc.d/named			etc-bind-rc
+./etc/rc.d/ndbootd			etc-bootserver-rc
 ./etc/rc.d/network			etc-net-rc
 ./etc/rc.d/newsyslog			etc-sys-rc
 ./etc/rc.d/nfsd				etc-nfsserver-rc
@@ -131,7 +132,6 @@
 ./etc/rc.d/securelevel			etc-sys-rc
 ./etc/rc.d/sendmail			etc-sendmail-rc
 ./etc/rc.d/sshd				etc-secsh-rc
-./etc/rc.d/sunndd			etc-bootserver-rc
 ./etc/rc.d/swap1			etc-sys-rc
 ./etc/rc.d/swap2			etc-sys-rc
 ./etc/rc.d/sysctl			etc-sys-rc
