@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.415 2003/06/27 08:41:00 tshiozak Exp $
+# $NetBSD: mi,v 1.416 2003/07/01 12:16:23 tshiozak Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1171,7 +1171,9 @@
 ./usr/share/i18n/csmapper/KS/UCS%KSC5601.mps		base-sysutil-share
 ./usr/share/i18n/csmapper/MISC				base-sysutil-share
 ./usr/share/i18n/csmapper/MISC/Big5%UCS.mps		base-sysutil-share
+./usr/share/i18n/csmapper/MISC/KOI8-R%UCS.mps		base-sysutil-share
 ./usr/share/i18n/csmapper/MISC/UCS%Big5.mps		base-sysutil-share
+./usr/share/i18n/csmapper/MISC/UCS%KOI8-R.mps		base-sysutil-share
 ./usr/share/i18n/csmapper/charset.pivot			base-sysutil-share
 ./usr/share/i18n/csmapper/charset.pivot.pvdb		base-sysutil-share
 ./usr/share/i18n/csmapper/mapper.dir			base-sysutil-share
@@ -1306,6 +1308,7 @@
 ./usr/share/i18n/esdb/MISC			base-sysutil-share
 ./usr/share/i18n/esdb/MISC/Big5.esdb		base-sysutil-share
 ./usr/share/i18n/esdb/MISC/GB18030.esdb		base-sysutil-share
+./usr/share/i18n/esdb/MISC/KOI8-R.esdb		base-sysutil-share
 ./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share
 ./usr/share/i18n/esdb/UTF			base-sysutil-share
 ./usr/share/i18n/esdb/UTF/UTF-16.esdb		base-sysutil-share
