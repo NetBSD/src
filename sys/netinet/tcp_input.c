@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.68 1998/10/04 21:33:53 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.69 1998/10/06 00:20:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1217,7 +1217,13 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (tp->t_dupacks >= tcprexmtthresh && !tcp_newreno(tp, ti)) {
+		if (tcp_do_newreno) {
+			if (tp->t_dupacks >= tcprexmtthresh &&
+			    tp->snd_cwnd > tp->snd_ssthresh)
+				tp->snd_cwnd = tp->snd_ssthresh;
+			tp->t_dupacks = 0;
+		} else if (tp->t_dupacks >= tcprexmtthresh
+		    && !tcp_newreno(tp, ti)) {
 			tp->snd_cwnd = tp->snd_ssthresh;
 			/*
 			 * Window inflation should have left us with approx.
@@ -1278,7 +1284,7 @@ after_listen:
 
 		if (cw > tp->snd_ssthresh)
 			incr = incr * incr / cw;
-		if (SEQ_GEQ(ti->ti_ack, tp->snd_recover))
+		if (!tcp_do_newreno || SEQ_GEQ(ti->ti_ack, tp->snd_recover))
 			tp->snd_cwnd = min(cw + incr,TCP_MAXWIN<<tp->snd_scale);
 		}
 		if (acked > so->so_snd.sb_cc) {
