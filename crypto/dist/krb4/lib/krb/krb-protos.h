@@ -32,792 +32,780 @@
  */
 
 /* $KTH-KRB: krb-protos.h,v 1.33 2001/08/26 01:46:51 assar Exp $
-   $NetBSD: krb-protos.h,v 1.4 2002/09/12 12:33:14 joda Exp $ */
+   $NetBSD: krb-protos.h,v 1.5 2002/09/19 19:22:53 joda Exp $ */
 
 #ifndef __krb_protos_h__
 #define __krb_protos_h__
 
-#if defined (__STDC__) || defined (_MSC_VER)
 #include <stdarg.h>
-#ifndef __P
-#define __P(x) x
-#endif
-#else
-#ifndef __P
-#define __P(x) ()
-#endif
-#endif
-
-#ifdef __STDC__
 struct in_addr;
 struct sockaddr_in;
 struct timeval;
-#endif
-
-#ifndef KRB_LIB_FUNCTION
-#if defined(__BORLANDC__)
-#define KRB_LIB_FUNCTION /* not-ready-definition-yet */
-#elif defined(_MSC_VER)
-#define KRB_LIB_FUNCTION /* not-ready-definition-yet2 */
-#else
-#define KRB_LIB_FUNCTION
-#endif
-#endif
-
-void KRB_LIB_FUNCTION
-afs_string_to_key __P((
-	const char *str,
-	const char *cell,
-	des_cblock *key));
-
-int KRB_LIB_FUNCTION
-create_ciph __P((
-	KTEXT c,
-	unsigned char *session,
-	char *service,
-	char *instance,
-	char *realm,
-	u_int32_t life,
-	int kvno,
-	KTEXT tkt,
-	u_int32_t kdc_time,
-	des_cblock *key));
-
-int KRB_LIB_FUNCTION
-cr_err_reply __P((
-	KTEXT pkt,
-	char *pname,
-	char *pinst,
-	char *prealm,
-	u_int32_t time_ws,
-	u_int32_t e,
-	char *e_string));
-
-int KRB_LIB_FUNCTION
-decomp_ticket __P((
-	KTEXT tkt,
-	unsigned char *flags,
-	char *pname,
-	char *pinstance,
-	char *prealm,
-	u_int32_t *paddress,
-	unsigned char *session,
-	int *life,
-	u_int32_t *time_sec,
-	char *sname,
-	char *sinstance,
-	des_cblock *key,
-	des_key_schedule schedule));
-
-int KRB_LIB_FUNCTION
-dest_tkt __P((void));
-
-int KRB_LIB_FUNCTION
-get_ad_tkt __P((
-	char *service,
-	char *sinstance,
-	char *realm,
-	int lifetime));
-
-int KRB_LIB_FUNCTION
-getst __P((
-	int fd,
-	char *s,
-	int n));
-
-int KRB_LIB_FUNCTION
-in_tkt __P((
-	char *pname,
-	char *pinst));
-
-int KRB_LIB_FUNCTION
-k_get_all_addrs __P((struct in_addr **l));
-
-int KRB_LIB_FUNCTION
-k_gethostname __P((
-	char *name,
-	int namelen));
-
-int KRB_LIB_FUNCTION
-k_getportbyname __P((
-	const char *service,
-	const char *proto,
-	int default_port));
-
-int KRB_LIB_FUNCTION
-k_getsockinst __P((
-	int fd,
-	char *inst,
-	size_t inst_size));
-
-int KRB_LIB_FUNCTION
-k_isinst __P((char *s));
-
-int KRB_LIB_FUNCTION
-k_isname __P((char *s));
-
-int KRB_LIB_FUNCTION
-k_isrealm __P((char *s));
-
-struct tm * KRB_LIB_FUNCTION
-k_localtime __P((u_int32_t *tp));
-
-int KRB_LIB_FUNCTION
-kname_parse __P((
-	char *np,
-	char *ip,
-	char *rp,
-	char *fullname));
-
-int KRB_LIB_FUNCTION
-krb_atime_to_life __P((char *atime));
-
-int KRB_LIB_FUNCTION
-krb_check_auth __P((
-	KTEXT packet,
-	u_int32_t checksum,
-	MSG_DAT *msg_data,
-	des_cblock *session,
-	struct des_ks_struct *schedule,
-	struct sockaddr_in *laddr,
-	struct sockaddr_in *faddr));
-
-int KRB_LIB_FUNCTION
-krb_check_tm __P((struct tm tm));
-
-KTEXT KRB_LIB_FUNCTION
-krb_create_death_packet __P((char *a_name));
-
-int KRB_LIB_FUNCTION
-krb_create_ticket __P((
-	KTEXT tkt,
-	unsigned char flags,
-	char *pname,
-	char *pinstance,
-	char *prealm,
-	int32_t paddress,
-	void *session,
-	int16_t life,
-	int32_t time_sec,
-	char *sname,
-	char *sinstance,
-	des_cblock *key));
-
-int KRB_LIB_FUNCTION
-krb_decode_as_rep __P((
-	const char *user,
-	char *instance,		/* INOUT parameter */
-	const char *realm,
-	const char *service,
-	const char *sinstance,
-	key_proc_t key_proc,
-	decrypt_proc_t decrypt_proc,
-	const void *arg,
-	KTEXT as_rep,
-	CREDENTIALS *cred));
-
-int KRB_LIB_FUNCTION
-krb_disable_debug __P((void));
-
-int KRB_LIB_FUNCTION
-krb_enable_debug __P((void));
-
-int KRB_LIB_FUNCTION
-krb_equiv __P((
-	u_int32_t a,
-	u_int32_t b));
-
-int KRB_LIB_FUNCTION
-krb_get_address __P((
-	void *from,
-	u_int32_t *to));
-
-int KRB_LIB_FUNCTION
-krb_get_admhst __P((
-	char *host,
-	char *realm,
-	int nth));
-
-int KRB_LIB_FUNCTION
-krb_get_config_bool __P((const char *variable));
-
-const char * KRB_LIB_FUNCTION
-krb_get_config_string __P((const char *variable));
-
-int KRB_LIB_FUNCTION
-krb_get_cred __P((
-        const char *service,
-        const char *instance,
-        const char *realm,
-        CREDENTIALS *c));
-
-int KRB_LIB_FUNCTION
-krb_get_cred_kdc __P((
-	const char *service,
-	const char *sinstance,
-	const char *realm,
-	int lifetime,
-	CREDENTIALS *ret_cred));
-
-int KRB_LIB_FUNCTION
-krb_get_default_principal __P((
-	char *name,
-	char *instance,
-	char *realm));
-
-char * KRB_LIB_FUNCTION
-krb_get_default_realm __P((void));
-
-const char * KRB_LIB_FUNCTION
-krb_get_default_tkt_root __P((void));
-
-const char * KRB_LIB_FUNCTION
-krb_get_default_keyfile __P((void));
-
-const char * KRB_LIB_FUNCTION
-krb_get_err_text __P((int code));
-
-struct krb_host* KRB_LIB_FUNCTION
-krb_get_host __P((
-	int nth,
-	const char *realm,
-	int admin));
-
-int KRB_LIB_FUNCTION
-krb_get_in_tkt __P((
-	char *user,
-	char *instance,
-	char *realm,
-	char *service,
-	char *sinstance,
-	int life,
-	key_proc_t key_proc,
-	decrypt_proc_t decrypt_proc,
-	void *arg));
-
-int KRB_LIB_FUNCTION
-krb_get_int __P((
-	void *f,
-	u_int32_t *to,
-	int size,
-	int lsb));
-
-int KRB_LIB_FUNCTION
-krb_get_kdc_time_diff __P((void));
-
-int KRB_LIB_FUNCTION
-krb_get_krbconf __P((
-	int num,
-	char *buf,
-	size_t len));
-
-int KRB_LIB_FUNCTION
-krb_get_krbextra __P((
-	int num,
-	char *buf,
-	size_t len));
-
-int KRB_LIB_FUNCTION
-krb_get_krbhst __P((
-	char *host,
-	char *realm,
-	int nth));
-
-int KRB_LIB_FUNCTION
-krb_get_krbrealms __P((
-	int num,
-	char *buf,
-	size_t len));
-
-int KRB_LIB_FUNCTION
-krb_get_lrealm __P((
-	char *r,
-	int n));
-
-int KRB_LIB_FUNCTION
-krb_get_nir __P((
-	void *from,
-	char *name, size_t name_len,
-	char *instance, size_t instance_len,
-	char *realm, size_t realm_len));
-
-char * KRB_LIB_FUNCTION
-krb_get_phost __P((const char *alias));
-
-int KRB_LIB_FUNCTION
-krb_get_pw_in_tkt __P((
-	const char *user,
-	const char *instance,
-	const char *realm,
-	const char *service,
-	const char *sinstance,
-	int life,
-	const char *password));
-
-int KRB_LIB_FUNCTION
-krb_get_pw_in_tkt2 __P((
-	const char *user,
-	const char *instance,
-	const char *realm,
-	const char *service,
-	const char *sinstance,
-	int life,
-	const char *password,
-	des_cblock *key));
-
-int KRB_LIB_FUNCTION
-krb_get_string __P((
-	void *from,
-	char *to,
-	size_t to_size));
-
-int KRB_LIB_FUNCTION
-krb_get_svc_in_tkt __P((
-	char *user,
-	char *instance,
-	char *realm,
-	char *service,
-	char *sinstance,
-	int life,
-	char *srvtab));
-
-int KRB_LIB_FUNCTION
-krb_get_tf_fullname __P((
-	char *ticket_file,
-	char *name,
-	char *instance,
-	char *realm));
-
-int KRB_LIB_FUNCTION
-krb_get_tf_realm __P((
-	char *ticket_file,
-	char *realm));
-
-void KRB_LIB_FUNCTION
-krb_kdctimeofday __P((struct timeval *tv));
-
-int KRB_LIB_FUNCTION
-krb_kntoln __P((
-	AUTH_DAT *ad,
-	char *lname));
-
-int KRB_LIB_FUNCTION
-krb_kuserok __P((
-	char *name,
-	char *instance,
-	char *realm,
-	char *luser));
-
-char * KRB_LIB_FUNCTION
-krb_life_to_atime __P((int life));
-
-u_int32_t KRB_LIB_FUNCTION
-krb_life_to_time __P((
-	u_int32_t start,
-	int life_));
-
-int KRB_LIB_FUNCTION
-krb_lsb_antinet_ulong_cmp __P((
-	u_int32_t x,
-	u_int32_t y));
-
-int KRB_LIB_FUNCTION
-krb_lsb_antinet_ushort_cmp __P((
-	u_int16_t x,
-	u_int16_t y));
-
-int KRB_LIB_FUNCTION
-krb_mk_as_req __P((
-	const char *user,
-	const char *instance,
-	const char *realm,
-	const char *service,
-	const char *sinstance,
-	int life,
-	KTEXT cip));
-
-int KRB_LIB_FUNCTION
-krb_mk_auth __P((
-	int32_t options,
-	KTEXT ticket,
-	char *service,
-	char *instance,
-	char *realm,
-	u_int32_t checksum,
-	char *version,
-	KTEXT buf));
-
-int32_t KRB_LIB_FUNCTION
-krb_mk_err __P((
-	u_char *p,
-	int32_t e,
-	char *e_string));
-
-int32_t KRB_LIB_FUNCTION
-krb_mk_priv __P((
-	void *in,
-	void *out,
-	u_int32_t length,
-	struct des_ks_struct *schedule,
-	des_cblock *key,
-	struct sockaddr_in *sender,
-	struct sockaddr_in *receiver));
-
-int KRB_LIB_FUNCTION
-krb_mk_req __P((
-	KTEXT authent,
-	const char *service,
-	const char *instance,
-	const char *realm,
-	int32_t checksum));
-
-int KRB_LIB_FUNCTION
-krb_get_credentials __P((const char *service, 
-			 const char *instance, 
-			 const char *realm, 
-			 CREDENTIALS *cred));
-
-int32_t KRB_LIB_FUNCTION
-krb_mk_safe __P((
-	void *in,
-	void *out,
-	u_int32_t length,
-	des_cblock *key,
-	struct sockaddr_in *sender,
-	struct sockaddr_in *receiver));
-
-int KRB_LIB_FUNCTION
-krb_net_read __P((
-	int fd,
-	void *v,
-	size_t len));
-
-int KRB_LIB_FUNCTION
-krb_net_write __P((
-	int fd,
-	const void *v,
-	size_t len));
-
-int KRB_LIB_FUNCTION
-krb_parse_name __P((
-	const char *fullname,
-	krb_principal *principal));
-
-int KRB_LIB_FUNCTION
-krb_put_address __P((
-	u_int32_t addr,
-	void *to,
-	size_t rem));
-
-int KRB_LIB_FUNCTION
-krb_put_int __P((
-	u_int32_t from,
-	void *to,
-	size_t rem,
-	int size));
-
-int KRB_LIB_FUNCTION
-krb_put_nir __P((
-	const char *name,
-	const char *instance,
-	const char *realm,
-	void *to,
-	size_t rem));
-
-int KRB_LIB_FUNCTION
-krb_put_string __P((
-	const char *from,
-	void *to,
-	size_t rem));
-
-int KRB_LIB_FUNCTION
-krb_rd_err __P((
-	u_char *in,
-	u_int32_t in_length,
-	int32_t *code,
-	MSG_DAT *m_data));
-
-int32_t KRB_LIB_FUNCTION
-krb_rd_priv __P((
-	void *in,
-	u_int32_t in_length,
-	struct des_ks_struct *schedule,
-	des_cblock *key,
-	struct sockaddr_in *sender,
-	struct sockaddr_in *receiver,
-	MSG_DAT *m_data));
-
-int KRB_LIB_FUNCTION
-krb_rd_req __P((
-	KTEXT authent,
-	char *service,
-	char *instance,
-	int32_t from_addr,
-	AUTH_DAT *ad,
-	char *fn));
-
-int32_t KRB_LIB_FUNCTION
-krb_rd_safe __P((
-	void *in,
-	u_int32_t in_length,
-	des_cblock *key,
-	struct sockaddr_in *sender,
-	struct sockaddr_in *receiver,
-	MSG_DAT *m_data));
-
-int KRB_LIB_FUNCTION
-krb_realm_parse __P((
-	char *realm,
-	int length));
-
-char * KRB_LIB_FUNCTION
-krb_realmofhost __P((const char *host));
-
-int KRB_LIB_FUNCTION
-krb_recvauth __P((
-	int32_t options,
-	int fd,
-	KTEXT ticket,
-	char *service,
-	char *instance,
-	struct sockaddr_in *faddr,
-	struct sockaddr_in *laddr,
-	AUTH_DAT *kdata,
-	char *filename,
-	struct des_ks_struct *schedule,
-	char *version));
-
-int KRB_LIB_FUNCTION
-krb_sendauth __P((
-	int32_t options,
-	int fd,
-	KTEXT ticket,
-	char *service,
-	char *instance,
-	char *realm,
-	u_int32_t checksum,
-	MSG_DAT *msg_data,
-	CREDENTIALS *cred,
-	struct des_ks_struct *schedule,
-	struct sockaddr_in *laddr,
-	struct sockaddr_in *faddr,
-	char *version));
-
-void KRB_LIB_FUNCTION
-krb_set_kdc_time_diff __P((int diff));
-
-int KRB_LIB_FUNCTION
-krb_set_key __P((
-	void *key,
-	int cvt));
-
-int KRB_LIB_FUNCTION
-krb_set_lifetime __P((int newval));
-
-void KRB_LIB_FUNCTION
-krb_set_tkt_string __P((const char *val));
-
-const char * KRB_LIB_FUNCTION
-krb_stime __P((time_t *t));
-
-int KRB_LIB_FUNCTION
-krb_time_to_life __P((
-	u_int32_t start,
-	u_int32_t end));
-
-char * KRB_LIB_FUNCTION
-krb_unparse_name __P((krb_principal *pr));
-
-char * KRB_LIB_FUNCTION
-krb_unparse_name_long __P((
-	char *name,
-	char *instance,
-	char *realm));
-
-char * KRB_LIB_FUNCTION
-krb_unparse_name_long_r __P((
-	char *name,
-	char *instance,
-	char *realm,
-	char *fullname));
-
-char * KRB_LIB_FUNCTION
-krb_unparse_name_r __P((
-	krb_principal *pr,
-	char *fullname));
-
-int KRB_LIB_FUNCTION
-krb_use_admin_server __P((int flag));
-
-int KRB_LIB_FUNCTION
-krb_verify_user __P((
-	char *name,
-	char *instance,
-	char *realm,
-	char *password,
-	int secure,
-	char *linstance));
-
-int KRB_LIB_FUNCTION
-krb_verify_user_srvtab __P((
-	char *name,
-	char *instance,
-	char *realm,
-	char *password,
-	int secure,
-	char *linstance,
-	char *srvtab));
-
-int KRB_LIB_FUNCTION
-kuserok __P((
-	AUTH_DAT *auth,
-	char *luser));
-
-u_int32_t KRB_LIB_FUNCTION
-lsb_time __P((
-	time_t t,
-	struct sockaddr_in *src,
-	struct sockaddr_in *dst));
-
-const char * KRB_LIB_FUNCTION
-month_sname __P((int n));
-
-int KRB_LIB_FUNCTION
-passwd_to_5key __P((
-	const char *user,
-	const char *instance,
-	const char *realm,
-	const void *passwd,
-	des_cblock *key));
-
-int KRB_LIB_FUNCTION
-passwd_to_afskey __P((
-	const char *user,
-	const char *instance,
-	const char *realm,
-	const void *passwd,
-	des_cblock *key));
-
-int KRB_LIB_FUNCTION
-passwd_to_key __P((
-	const char *user,
-	const char *instance,
-	const char *realm,
-	const void *passwd,
-	des_cblock *key));
-
-int KRB_LIB_FUNCTION
-read_service_key __P((
-	const char *service,
-	char *instance,
-	const char *realm,
-	int kvno,
-	const char *file,
-	void *key));
-
-int KRB_LIB_FUNCTION
-save_credentials __P((
-	char *service,
-	char *instance,
-	char *realm,
-	unsigned char *session,
-	int lifetime,
-	int kvno,
-	KTEXT ticket,
-	int32_t issue_date));
-
-int KRB_LIB_FUNCTION
-save_credentials_cred __P((
-	CREDENTIALS *cred));
-
-int KRB_LIB_FUNCTION
-send_to_kdc __P((
-	KTEXT pkt,
-	KTEXT rpkt,
-	const char *realm));
-
-int KRB_LIB_FUNCTION
-srvtab_to_key __P((
-	const char *user,
-	char *instance,		/* INOUT parameter */
-	const char *realm,
-	const void *srvtab,
-	des_cblock *key));
-
-void KRB_LIB_FUNCTION
-tf_close __P((void));
-
-int KRB_LIB_FUNCTION
-tf_create __P((char *tf_name));
-
-int KRB_LIB_FUNCTION
-tf_get_cred __P((CREDENTIALS *c));
-
-int KRB_LIB_FUNCTION
-tf_get_cred_addr __P((char *realm, size_t realm_sz, struct in_addr *addr));
-
-int KRB_LIB_FUNCTION
-tf_get_pinst __P((char *inst));
-
-int KRB_LIB_FUNCTION
-tf_get_pname __P((char *p));
-
-int KRB_LIB_FUNCTION
-tf_init __P((
-	char *tf_name,
-	int rw));
-
-int KRB_LIB_FUNCTION
-tf_put_pinst __P((const char *inst));
-
-int KRB_LIB_FUNCTION
-tf_put_pname __P((const char *p));
-
-int KRB_LIB_FUNCTION
-tf_replace_cred __P((CREDENTIALS *cred));
-
-int KRB_LIB_FUNCTION
-tf_save_cred __P((
-	char *service,
-	char *instance,
-	char *realm,
-	unsigned char *session,
-	int lifetime,
-	int kvno,
-	KTEXT ticket,
-	u_int32_t issue_date));
-
-int KRB_LIB_FUNCTION
-tf_setup __P((
-	CREDENTIALS *cred,
-	const char *pname,
-	const char *pinst));
-
-int KRB_LIB_FUNCTION
-tf_get_addr __P((
-	const char *realm,
-	struct in_addr *addr));
-
-int KRB_LIB_FUNCTION
-tf_store_addr __P((const char *realm, struct in_addr *addr));
-
-char * KRB_LIB_FUNCTION
-tkt_string __P((void));
-
-int KRB_LIB_FUNCTION
-krb_add_our_ip_for_realm __P((const char *user, const char *instance,
-			      const char *realm, const char *password));
-
-void KRB_LIB_FUNCTION
-encrypt_ktext __P((
-	KTEXT cip,
-	des_cblock *key,
-	int encrypt));
-
-int KRB_LIB_FUNCTION
-krb_get_our_ip_for_realm __P((const char *realm, struct in_addr *ip_addr));
-
-void KRB_LIB_FUNCTION
-krb_generate_random_block __P((void *, size_t));
+
+void
+afs_string_to_key (
+	const char */*pass*/,
+	const char */*cell*/,
+	des_cblock */*key*/);
+
+int
+cr_err_reply (
+	KTEXT /*pkt*/,
+	char */*pname*/,
+	char */*pinst*/,
+	char */*prealm*/,
+	u_int32_t /*time_ws*/,
+	u_int32_t /*e*/,
+	char */*e_string*/);
+
+int
+create_ciph (
+	KTEXT /*c*/,
+	unsigned char */*session*/,
+	char */*service*/,
+	char */*instance*/,
+	char */*realm*/,
+	u_int32_t /*life*/,
+	int /*kvno*/,
+	KTEXT /*tkt*/,
+	u_int32_t /*kdc_time*/,
+	des_cblock */*key*/);
+
+int
+decomp_ticket (
+	KTEXT /*tkt*/,
+	unsigned char */*flags*/,
+	char */*pname*/,
+	char */*pinstance*/,
+	char */*prealm*/,
+	u_int32_t */*paddress*/,
+	unsigned char */*session*/,
+	int */*life*/,
+	u_int32_t */*time_sec*/,
+	char */*sname*/,
+	char */*sinstance*/,
+	des_cblock */*key*/,
+	des_key_schedule /*schedule*/);
+
+int
+dest_tkt (void);
+
+void
+encrypt_ktext (
+	KTEXT /*cip*/,
+	des_cblock */*key*/,
+	int /*encrypt*/);
+
+int
+get_ad_tkt (
+	char */*service*/,
+	char */*instance*/,
+	char */*realm*/,
+	int /*lifetime*/);
+
+int
+getst (
+	int /*fd*/,
+	char */*s*/,
+	int /*n*/);
+
+int
+in_tkt (
+	char */*pname*/,
+	char */*pinst*/);
+
+int
+k_get_all_addrs (struct in_addr **/*l*/);
+
+int
+k_getportbyname (
+	const char */*service*/,
+	const char */*proto*/,
+	int /*default_port*/);
+
+int
+k_getsockinst (
+	int /*fd*/,
+	char */*inst*/,
+	size_t /*inst_size*/);
+
+int
+k_isinst (char */*s*/);
+
+int
+k_isname (char */*s*/);
+
+int
+k_isrealm (char */*s*/);
+
+struct tm *
+k_localtime (u_int32_t */*tp*/);
+
+int
+kname_parse (
+	char */*np*/,
+	char */*ip*/,
+	char */*rp*/,
+	char */*fullname*/);
+
+int
+krb_add_our_ip_for_realm (
+	const char */*user*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	const char */*password*/);
+
+int
+krb_atime_to_life (char */*atime*/);
+
+int
+krb_check_auth (
+	KTEXT /*packet*/,
+	u_int32_t /*checksum*/,
+	MSG_DAT */*msg_data*/,
+	des_cblock */*session*/,
+	struct des_ks_struct */*schedule*/,
+	struct sockaddr_in */*laddr*/,
+	struct sockaddr_in */*faddr*/);
+
+int
+krb_check_tm (struct tm /*tm*/);
+
+KTEXT
+krb_create_death_packet (char */*a_name*/);
+
+int
+krb_create_ticket (
+	KTEXT /*tkt*/,
+	unsigned char /*flags*/,
+	char */*pname*/,
+	char */*pinstance*/,
+	char */*prealm*/,
+	int32_t /*paddress*/,
+	void */*session*/,
+	int16_t /*life*/,
+	int32_t /*time_sec*/,
+	char */*sname*/,
+	char */*sinstance*/,
+	des_cblock */*key*/);
+
+int
+krb_decode_as_rep (
+	const char */*user*/,
+	char */*instance*/,
+	const char */*realm*/,
+	const char */*service*/,
+	const char */*sinstance*/,
+	key_proc_t /*key_proc*/,
+	decrypt_proc_t /*decrypt_proc*/,
+	const void */*arg*/,
+	KTEXT /*as_rep*/,
+	CREDENTIALS */*cred*/);
+
+int
+krb_disable_debug (void);
+
+int
+krb_enable_debug (void);
+
+int
+krb_equiv (
+	u_int32_t /*a*/,
+	u_int32_t /*b*/);
+
+void
+krb_generate_random_block (
+	void */*buf*/,
+	size_t /*len*/);
+
+int
+krb_get_address (
+	void */*from*/,
+	u_int32_t */*to*/);
+
+int
+krb_get_admhst (
+	char */*host*/,
+	char */*realm*/,
+	int /*nth*/);
+
+int
+krb_get_config_bool (const char */*variable*/);
+
+const char *
+krb_get_config_string (const char */*variable*/);
+
+int
+krb_get_cred (
+	const char */*service*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	CREDENTIALS */*c*/);
+
+int
+krb_get_cred_kdc (
+	const char */*service*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	int /*lifetime*/,
+	CREDENTIALS */*ret_cred*/);
+
+int
+krb_get_credentials (
+	const char */*service*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	CREDENTIALS */*cred*/);
+
+const char *
+krb_get_default_keyfile (void);
+
+int
+krb_get_default_principal (
+	char */*name*/,
+	char */*instance*/,
+	char */*realm*/);
+
+char *
+krb_get_default_realm (void);
+
+const char *
+krb_get_default_tkt_root (void);
+
+const char *
+krb_get_err_text (int /*code*/);
+
+struct krb_host*
+krb_get_host (
+	int /*nth*/,
+	const char */*realm*/,
+	int /*admin*/);
+
+int
+krb_get_in_tkt (
+	char */*user*/,
+	char */*instance*/,
+	char */*realm*/,
+	char */*service*/,
+	char */*sinstance*/,
+	int /*life*/,
+	key_proc_t /*key_proc*/,
+	decrypt_proc_t /*decrypt_proc*/,
+	void */*arg*/);
+
+int
+krb_get_int (
+	void */*f*/,
+	u_int32_t */*to*/,
+	int /*size*/,
+	int /*lsb*/);
+
+int
+krb_get_kdc_time_diff (void);
+
+int
+krb_get_krbconf (
+	int /*num*/,
+	char */*buf*/,
+	size_t /*len*/);
+
+int
+krb_get_krbextra (
+	int /*num*/,
+	char */*buf*/,
+	size_t /*len*/);
+
+int
+krb_get_krbhst (
+	char */*host*/,
+	char */*realm*/,
+	int /*nth*/);
+
+int
+krb_get_krbrealms (
+	int /*num*/,
+	char */*buf*/,
+	size_t /*len*/);
+
+int
+krb_get_lrealm (
+	char */*r*/,
+	int /*n*/);
+
+int
+krb_get_nir (
+	void */*from*/,
+	char */*name*/,
+	size_t /*name_len*/,
+	char */*instance*/,
+	size_t /*instance_len*/,
+	char */*realm*/,
+	size_t /*realm_len*/);
+
+int
+krb_get_our_ip_for_realm (
+	const char */*realm*/,
+	struct in_addr */*ip_addr*/);
+
+char *
+krb_get_phost (const char */*alias*/);
+
+int
+krb_get_pw_in_tkt (
+	const char */*user*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	const char */*service*/,
+	const char */*sinstance*/,
+	int /*life*/,
+	const char */*password*/);
+
+int
+krb_get_pw_in_tkt2 (
+	const char */*user*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	const char */*service*/,
+	const char */*sinstance*/,
+	int /*life*/,
+	const char */*password*/,
+	des_cblock */*key*/);
+
+int
+krb_get_string (
+	void */*from*/,
+	char */*to*/,
+	size_t /*to_size*/);
+
+int
+krb_get_svc_in_tkt (
+	char */*user*/,
+	char */*instance*/,
+	char */*realm*/,
+	char */*service*/,
+	char */*sinstance*/,
+	int /*life*/,
+	char */*srvtab*/);
+
+int
+krb_get_tf_fullname (
+	char */*ticket_file*/,
+	char */*name*/,
+	char */*instance*/,
+	char */*realm*/);
+
+int
+krb_get_tf_realm (
+	char */*ticket_file*/,
+	char */*realm*/);
+
+void
+krb_kdctimeofday (struct timeval */*tv*/);
+
+int
+krb_kntoln (
+	AUTH_DAT */*ad*/,
+	char */*lname*/);
+
+int
+krb_kuserok (
+	char */*name*/,
+	char */*instance*/,
+	char */*realm*/,
+	char */*luser*/);
+
+char *
+krb_life_to_atime (int /*life*/);
+
+u_int32_t
+krb_life_to_time (
+	u_int32_t /*start*/,
+	int /*life_*/);
+
+int
+krb_lsb_antinet_ulong_cmp (
+	u_int32_t /*x*/,
+	u_int32_t /*y*/);
+
+int
+krb_lsb_antinet_ushort_cmp (
+	u_int16_t /*x*/,
+	u_int16_t /*y*/);
+
+int
+krb_mk_as_req (
+	const char */*user*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	const char */*service*/,
+	const char */*sinstance*/,
+	int /*life*/,
+	KTEXT /*cip*/);
+
+int
+krb_mk_auth (
+	int32_t /*options*/,
+	KTEXT /*ticket*/,
+	char */*service*/,
+	char */*instance*/,
+	char */*realm*/,
+	u_int32_t /*checksum*/,
+	char */*version*/,
+	KTEXT /*buf*/);
+
+int32_t
+krb_mk_err (
+	u_char */*p*/,
+	int32_t /*e*/,
+	char */*e_string*/);
+
+int32_t
+krb_mk_priv (
+	void */*in*/,
+	void */*out*/,
+	u_int32_t /*length*/,
+	struct des_ks_struct */*schedule*/,
+	des_cblock */*key*/,
+	struct sockaddr_in */*sender*/,
+	struct sockaddr_in */*receiver*/);
+
+int
+krb_mk_req (
+	KTEXT /*authent*/,
+	const char */*service*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	int32_t /*checksum*/);
+
+int32_t
+krb_mk_safe (
+	void */*in*/,
+	void */*out*/,
+	u_int32_t /*length*/,
+	des_cblock */*key*/,
+	struct sockaddr_in */*sender*/,
+	struct sockaddr_in */*receiver*/);
+
+int
+krb_net_read (
+	int /*fd*/,
+	void */*buf*/,
+	size_t /*nbytes*/);
+
+int
+krb_net_write (
+	int /*fd*/,
+	const void */*buf*/,
+	size_t /*nbytes*/);
+
+int
+krb_parse_name (
+	const char */*fullname*/,
+	krb_principal */*principal*/);
+
+int
+krb_put_address (
+	u_int32_t /*addr*/,
+	void */*to*/,
+	size_t /*rem*/);
+
+int
+krb_put_int (
+	u_int32_t /*from*/,
+	void */*to*/,
+	size_t /*rem*/,
+	int /*size*/);
+
+int
+krb_put_nir (
+	const char */*name*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	void */*to*/,
+	size_t /*rem*/);
+
+int
+krb_put_string (
+	const char */*from*/,
+	void */*to*/,
+	size_t /*rem*/);
+
+int
+krb_rd_err (
+	u_char */*in*/,
+	u_int32_t /*in_length*/,
+	int32_t */*code*/,
+	MSG_DAT */*m_data*/);
+
+int32_t
+krb_rd_priv (
+	void */*in*/,
+	u_int32_t /*in_length*/,
+	struct des_ks_struct */*schedule*/,
+	des_cblock */*key*/,
+	struct sockaddr_in */*sender*/,
+	struct sockaddr_in */*receiver*/,
+	MSG_DAT */*m_data*/);
+
+int
+krb_rd_req (
+	KTEXT /*authent*/,
+	char */*service*/,
+	char */*instance*/,
+	int32_t /*from_addr*/,
+	AUTH_DAT */*ad*/,
+	char */*a_fn*/);
+
+int32_t
+krb_rd_safe (
+	void */*in*/,
+	u_int32_t /*in_length*/,
+	des_cblock */*key*/,
+	struct sockaddr_in */*sender*/,
+	struct sockaddr_in */*receiver*/,
+	MSG_DAT */*m_data*/);
+
+int
+krb_realm_parse (
+	char */*realm*/,
+	int /*length*/);
+
+char *
+krb_realmofhost (const char */*host*/);
+
+int
+krb_recvauth (
+	int32_t /*options*/,
+	int /*fd*/,
+	KTEXT /*ticket*/,
+	char */*service*/,
+	char */*instance*/,
+	struct sockaddr_in */*faddr*/,
+	struct sockaddr_in */*laddr*/,
+	AUTH_DAT */*kdata*/,
+	char */*filename*/,
+	struct des_ks_struct */*schedule*/,
+	char */*version*/);
+
+int
+krb_sendauth (
+	int32_t /*options*/,
+	int /*fd*/,
+	KTEXT /*ticket*/,
+	char */*service*/,
+	char */*instance*/,
+	char */*realm*/,
+	u_int32_t /*checksum*/,
+	MSG_DAT */*msg_data*/,
+	CREDENTIALS */*cred*/,
+	struct des_ks_struct */*schedule*/,
+	struct sockaddr_in */*laddr*/,
+	struct sockaddr_in */*faddr*/,
+	char */*version*/);
+
+void
+krb_set_kdc_time_diff (int /*diff*/);
+
+int
+krb_set_key (
+	void */*key*/,
+	int /*cvt*/);
+
+int
+krb_set_lifetime (int /*newval*/);
+
+void
+krb_set_tkt_string (const char */*val*/);
+
+const char *
+krb_stime (time_t */*t*/);
+
+int
+krb_time_to_life (
+	u_int32_t /*start*/,
+	u_int32_t /*end*/);
+
+char *
+krb_unparse_name (krb_principal */*pr*/);
+
+char *
+krb_unparse_name_long (
+	char */*name*/,
+	char */*instance*/,
+	char */*realm*/);
+
+char *
+krb_unparse_name_long_r (
+	char */*name*/,
+	char */*instance*/,
+	char */*realm*/,
+	char */*fullname*/);
+
+char *
+krb_unparse_name_r (
+	krb_principal */*pr*/,
+	char */*fullname*/);
+
+int
+krb_use_admin_server (int /*flag*/);
+
+int
+krb_verify_user (
+	char */*name*/,
+	char */*instance*/,
+	char */*realm*/,
+	char */*password*/,
+	int /*secure*/,
+	char */*linstance*/);
+
+int
+krb_verify_user_srvtab (
+	char */*name*/,
+	char */*instance*/,
+	char */*realm*/,
+	char */*password*/,
+	int /*secure*/,
+	char */*linstance*/,
+	char */*srvtab*/);
+
+int
+kuserok (
+	AUTH_DAT */*auth*/,
+	char */*luser*/);
+
+u_int32_t
+lsb_time (
+	time_t /*t*/,
+	struct sockaddr_in */*src*/,
+	struct sockaddr_in */*dst*/);
+
+const char *
+month_sname (int /*n*/);
+
+int
+passwd_to_5key (
+	const char */*user*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	const void */*passwd*/,
+	des_cblock */*key*/);
+
+int
+passwd_to_afskey (
+	const char */*user*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	const void */*passwd*/,
+	des_cblock */*key*/);
+
+int
+passwd_to_key (
+	const char */*user*/,
+	const char */*instance*/,
+	const char */*realm*/,
+	const void */*passwd*/,
+	des_cblock */*key*/);
+
+int
+read_service_key (
+	const char */*service*/,
+	char */*instance*/,
+	const char */*realm*/,
+	int /*kvno*/,
+	const char */*file*/,
+	void */*key*/);
+
+int
+save_credentials (
+	char */*service*/,
+	char */*instance*/,
+	char */*realm*/,
+	unsigned char */*session*/,
+	int /*lifetime*/,
+	int /*kvno*/,
+	KTEXT /*ticket*/,
+	int32_t /*issue_date*/);
+
+int
+save_credentials_cred (CREDENTIALS */*cred*/);
+
+int
+send_to_kdc (
+	KTEXT /*pkt*/,
+	KTEXT /*rpkt*/,
+	const char */*realm*/);
+
+int
+srvtab_to_key (
+	const char */*user*/,
+	char */*instance*/,
+	const char */*realm*/,
+	const void */*srvtab*/,
+	des_cblock */*key*/);
+
+void
+tf_close (void);
+
+int
+tf_create (char */*tf_name*/);
+
+int
+tf_get_addr (
+	const char */*realm*/,
+	struct in_addr */*addr*/);
+
+int
+tf_get_cred (CREDENTIALS */*c*/);
+
+int
+tf_get_cred_addr (
+	char */*realm*/,
+	size_t /*realm_sz*/,
+	struct in_addr */*addr*/);
+
+int
+tf_get_pinst (char */*inst*/);
+
+int
+tf_get_pname (char */*p*/);
+
+int
+tf_init (
+	char */*tf_name*/,
+	int /*rw*/);
+
+int
+tf_put_pinst (const char */*inst*/);
+
+int
+tf_put_pname (const char */*p*/);
+
+int
+tf_replace_cred (CREDENTIALS */*cred*/);
+
+int
+tf_save_cred (
+	char */*service*/,
+	char */*instance*/,
+	char */*realm*/,
+	unsigned char */*session*/,
+	int /*lifetime*/,
+	int /*kvno*/,
+	KTEXT /*ticket*/,
+	u_int32_t /*issue_date*/);
+
+int
+tf_setup (
+	CREDENTIALS */*cred*/,
+	const char */*pname*/,
+	const char */*pinst*/);
+
+int
+tf_store_addr (
+	const char */*realm*/,
+	struct in_addr */*addr*/);
+
+char *
+tkt_string (void);
 
 #endif /* __krb_protos_h__ */
