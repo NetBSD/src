@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.100 2002/06/17 05:14:22 lukem Exp $
+# $NetBSD: GENERIC,v 1.101 2002/08/08 00:11:52 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.100 $"
+#ident		"GENERIC-$Revision: 1.101 $"
 
 maxusers	64
 
@@ -129,9 +129,7 @@ options 	COMPAT_14	# Netbsd 1.4
 
 # Raster console options
 options 	FONT_BOLD8x16		# Font for fb devices
-options 	FONT_LUCIDA16x29	# Font for px devices
-#options 	FONT_GALLANT12x22
-#options 	FONT_QVSS8x15
+options 	FONT_GALLANT12x22
 
 # pmax specific
 options 	COMPAT_ULTRIX	# Ultrix compatibility
