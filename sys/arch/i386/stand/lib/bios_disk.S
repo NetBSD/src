@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.3 1998/10/27 14:08:55 ws Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.4 1998/10/30 12:16:59 ws Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -202,10 +202,9 @@ ENTRY(int13_extension)
 
 	cmpw	$0xaa55, %bx
 	sete	%dl
-	orb	%dl, %al
+	andb	%dl, %al
 
-	andb	$1, %cl
-	orb	%cl, %al
+	andb	%cl, %al
 
 	popl	%edi
 	popl	%esi
