@@ -1,27 +1,23 @@
 Things we should try and do before 1.3 release....
 
-	-- Add wrapper to install() and upgrade().
-	   On abort, unmount any filesystems mounted by sysinst.
 
-	-- check for overlapping to-be-newfs'ed partitions before newfsing.
-	   jump back to disklabel edit if any overlaps found.
-	   needs to  skip getrawpartition() (and  c on i386).
+	-- On error messages, do something to allow the user to
+	   see any errors from anything run by run_prog().
+	   Ideas suggested  maximum entropy <entropy@zippy.bernstein.com>.
+	   are:
 
-	-- Also on error messages, do something to allow the user to
-	   see any errors from anything run by run_prog().  Ideas are:
-
+	   #1:
 		if (run_prog("foo") != 0)
 			sleep(5);
-	   
-	   or:
 
+	   #2:	   
 		endwin();
 		run_prog("foo");
 		printf("press return to continue");
 		getchar();
 		initscr();
 
-	   or (modification of above):
+	   #3: (modification of #2):
 
 		endwin();
 		if (run_prog("foo") != 0) {
@@ -30,17 +26,17 @@ Things we should try and do before 1.3 release....
 		}
 		initscr();
 
-	   or:
+	   #4:
 
 		Manually fork and exec everything, dup2 fd's 1 and 2
 		onto sockets in the child, and paginate the output in
 		your curses app :-)
 
-	   Ideas from maximum entropy.
+	   We currently implement a special-case variant of #1 for untarring
+	   release sets, since the GNU tar in 1.3 fails to report many
+	   errors in its exit status.
 
-        -- From "local" distribution set choice, have a separate
-           option for an already mounted filesystem (or a new option
-           all together?). "browse" for a local directory to get the
+        -- "browse" for a local directory to get the
            distribution set from.  Maybe just allowing the user to shell
            out and look around is good enough (this needs more thought).
 
