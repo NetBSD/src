@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)bt_open.c	8.7 (Berkeley) 6/16/94";
+static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -60,6 +60,11 @@ static char sccsid[] = "@(#)bt_open.c	8.7 (Berkeley) 6/16/94";
 
 #include <db.h>
 #include "btree.h"
+
+#ifdef DEBUG
+#undef	MINPSIZE
+#define	MINPSIZE	128
+#endif
 
 static int byteorder __P((void));
 static int nroot __P((BTREE *));
@@ -157,7 +162,6 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	if ((t = (BTREE *)malloc(sizeof(BTREE))) == NULL)
 		goto err;
 	memset(t, 0, sizeof(BTREE));
-	t->bt_bcursor.pgno = P_INVALID;
 	t->bt_fd = -1;			/* Don't close unopened fd on error. */
 	t->bt_lorder = b.lorder;
 	t->bt_order = NOT;
@@ -167,9 +171,9 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 
 	if ((t->bt_dbp = dbp = (DB *)malloc(sizeof(DB))) == NULL)
 		goto err;
-	t->bt_flags = 0;
+	memset(t->bt_dbp, 0, sizeof(DB));
 	if (t->bt_lorder != machine_lorder)
-		SET(t, B_NEEDSWAP);
+		F_SET(t, B_NEEDSWAP);
 
 	dbp->type = DB_BTREE;
 	dbp->internal = t;
@@ -186,9 +190,9 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	 * open a backing temporary file.  Otherwise, it's a disk-based tree.
 	 */
 	if (fname) {
-		switch(flags & O_ACCMODE) {
+		switch (flags & O_ACCMODE) {
 		case O_RDONLY:
-			SET(t, B_RDONLY);
+			F_SET(t, B_RDONLY);
 			break;
 		case O_RDWR:
 			break;
@@ -205,7 +209,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 			goto einval;
 		if ((t->bt_fd = tmp()) == -1)
 			goto err;
-		SET(t, B_INMEM);
+		F_SET(t, B_INMEM);
 	}
 
 	if (fcntl(t->bt_fd, F_SETFD, 1) == -1)
@@ -227,28 +231,28 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 		 * don't bother to return an error, we just clear the NEEDSWAP
 		 * bit.
 		 */
-		if (m.m_magic == BTREEMAGIC)
-			CLR(t, B_NEEDSWAP);
+		if (m.magic == BTREEMAGIC)
+			F_CLR(t, B_NEEDSWAP);
 		else {
-			SET(t, B_NEEDSWAP);
-			M_32_SWAP(m.m_magic);
-			M_32_SWAP(m.m_version);
-			M_32_SWAP(m.m_psize);
-			M_32_SWAP(m.m_free);
-			M_32_SWAP(m.m_nrecs);
-			M_32_SWAP(m.m_flags);
+			F_SET(t, B_NEEDSWAP);
+			M_32_SWAP(m.magic);
+			M_32_SWAP(m.version);
+			M_32_SWAP(m.psize);
+			M_32_SWAP(m.free);
+			M_32_SWAP(m.nrecs);
+			M_32_SWAP(m.flags);
 		}
-		if (m.m_magic != BTREEMAGIC || m.m_version != BTREEVERSION)
+		if (m.magic != BTREEMAGIC || m.version != BTREEVERSION)
 			goto eftype;
-		if (m.m_psize < MINPSIZE || m.m_psize > MAX_PAGE_OFFSET + 1 ||
-		    m.m_psize & sizeof(indx_t) - 1)
+		if (m.psize < MINPSIZE || m.psize > MAX_PAGE_OFFSET + 1 ||
+		    m.psize & sizeof(indx_t) - 1)
 			goto eftype;
-		if (m.m_flags & ~SAVEMETA)
+		if (m.flags & ~SAVEMETA)
 			goto eftype;
-		b.psize = m.m_psize;
-		t->bt_flags |= m.m_flags;
-		t->bt_free = m.m_free;
-		t->bt_nrecs = m.m_nrecs;
+		b.psize = m.psize;
+		F_SET(t, m.flags);
+		t->bt_free = m.free;
+		t->bt_nrecs = m.nrecs;
 	} else {
 		/*
 		 * Set the page size to the best value for I/O to this file.
@@ -264,11 +268,11 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 
 		/* Set flag if duplicates permitted. */
 		if (!(b.flags & R_DUP))
-			SET(t, B_NODUPS);
+			F_SET(t, B_NODUPS);
 
 		t->bt_free = P_INVALID;
 		t->bt_nrecs = 0;
-		SET(t, B_METADIRTY);
+		F_SET(t, B_METADIRTY);
 	}
 
 	t->bt_psize = b.psize;
@@ -303,7 +307,7 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 	if ((t->bt_mp =
 	    mpool_open(NULL, t->bt_fd, t->bt_psize, ncache)) == NULL)
 		goto err;
-	if (!ISSET(t, B_INMEM))
+	if (!F_ISSET(t, B_INMEM))
 		mpool_filter(t->bt_mp, __bt_pgin, __bt_pgout, t);
 
 	/* Create a root page if new tree. */
@@ -312,11 +316,11 @@ __bt_open(fname, flags, mode, openinfo, dflags)
 
 	/* Global flags. */
 	if (dflags & DB_LOCK)
-		SET(t, B_DB_LOCK);
+		F_SET(t, B_DB_LOCK);
 	if (dflags & DB_SHMEM)
-		SET(t, B_DB_SHMEM);
+		F_SET(t, B_DB_SHMEM);
 	if (dflags & DB_TXN)
-		SET(t, B_DB_TXN);
+		F_SET(t, B_DB_TXN);
 
 	return (dbp);
 
@@ -432,7 +436,7 @@ __bt_fd(dbp)
 	}
 
 	/* In-memory database can't have a file descriptor. */
-	if (ISSET(t, B_INMEM)) {
+	if (F_ISSET(t, B_INMEM)) {
 		errno = ENOENT;
 		return (-1);
 	}

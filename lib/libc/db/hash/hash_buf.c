@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)hash_buf.c	8.4 (Berkeley) 6/4/94";
+static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -179,10 +179,16 @@ newbuf(hashp, addr, prev_bp)
 		/* Allocate a new one */
 		if ((bp = (BUFHEAD *)malloc(sizeof(BUFHEAD))) == NULL)
 			return (NULL);
+#ifdef PURIFY
+		memset(bp, 0xff, sizeof(BUFHEAD));
+#endif
 		if ((bp->page = (char *)malloc(hashp->BSIZE)) == NULL) {
 			free(bp);
 			return (NULL);
 		}
+#ifdef PURIFY
+		memset(bp->page, 0xff, hashp->BSIZE);
+#endif
 		if (hashp->nbufs)
 			hashp->nbufs--;
 	} else {

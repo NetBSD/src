@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)rec_delete.c	8.6 (Berkeley) 6/4/94";
+static char sccsid[] = "@(#)rec_delete.c	8.7 (Berkeley) 7/14/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -88,13 +88,13 @@ __rec_delete(dbp, key, flags)
 		status = rec_rdelete(t, nrec);
 		break;
 	case R_CURSOR:
-		if (!ISSET(t, B_SEQINIT))
+		if (!F_ISSET(&t->bt_cursor, CURS_INIT))
 			goto einval;
 		if (t->bt_nrecs == 0)
 			return (RET_SPECIAL);
-		status = rec_rdelete(t, t->bt_rcursor - 1);
+		status = rec_rdelete(t, t->bt_cursor.rcursor - 1);
 		if (status == RET_SUCCESS)
-			--t->bt_rcursor;
+			--t->bt_cursor.rcursor;
 		break;
 	default:
 einval:		errno = EINVAL;
@@ -102,7 +102,7 @@ einval:		errno = EINVAL;
 	}
 
 	if (status == RET_SUCCESS)
-		SET(t, B_MODIFIED | R_MODIFIED);
+		F_SET(t, B_MODIFIED | R_MODIFIED);
 	return (status);
 }
 

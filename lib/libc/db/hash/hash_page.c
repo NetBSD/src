@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)hash_page.c	8.6 (Berkeley) 6/16/94";
+static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -683,7 +683,7 @@ overflow_page(hashp)
 	for ( i = first_page; i <= free_page; i++ ) {
 		if (!(freep = (u_int32_t *)hashp->mapp[i]) &&
 		    !(freep = fetch_bitmap(hashp, i)))
-			return (NULL);
+			return (0);
 		if (i == free_page)
 			in_use_bits = free_bit;
 		else
@@ -713,7 +713,7 @@ overflow_page(hashp)
 	if (offset > SPLITMASK) {
 		if (++splitnum >= NCACHED) {
 			(void)write(STDERR_FILENO, OVMSG, sizeof(OVMSG) - 1);
-			return (NULL);
+			return (0);
 		}
 		hashp->OVFL_POINT = splitnum;
 		hashp->SPARES[splitnum] = hashp->SPARES[splitnum-1];
@@ -726,7 +726,7 @@ overflow_page(hashp)
 		free_page++;
 		if (free_page >= NCACHED) {
 			(void)write(STDERR_FILENO, OVMSG, sizeof(OVMSG) - 1);
-			return (NULL);
+			return (0);
 		}
 		/*
 		 * This is tricky.  The 1 indicates that you want the new page
@@ -739,9 +739,9 @@ overflow_page(hashp)
 		 * don't have to if we tell init_bitmap not to leave it clear
 		 * in the first place.
 		 */
-		if (__ibitmap(hashp, (int)OADDR_OF(splitnum, offset),
-		    1, free_page))
-			return (NULL);
+		if (__ibitmap(hashp,
+		    (int)OADDR_OF(splitnum, offset), 1, free_page))
+			return (0);
 		hashp->SPARES[splitnum]++;
 #ifdef DEBUG2
 		free_bit = 2;
@@ -751,7 +751,7 @@ overflow_page(hashp)
 			if (++splitnum >= NCACHED) {
 				(void)write(STDERR_FILENO, OVMSG,
 				    sizeof(OVMSG) - 1);
-				return (NULL);
+				return (0);
 			}
 			hashp->OVFL_POINT = splitnum;
 			hashp->SPARES[splitnum] = hashp->SPARES[splitnum-1];
@@ -795,7 +795,7 @@ found:
 	for (i = 0; (i < splitnum) && (bit > hashp->SPARES[i]); i++);
 	offset = (i ? bit - hashp->SPARES[i - 1] : bit);
 	if (offset >= SPLITMASK)
-		return (NULL);	/* Out of overflow pages */
+		return (0);	/* Out of overflow pages */
 	addr = OADDR_OF(i, offset);
 #ifdef DEBUG2
 	(void)fprintf(stderr, "OVERFLOW_PAGE: ADDR: %d BIT: %d PAGE %d\n",
