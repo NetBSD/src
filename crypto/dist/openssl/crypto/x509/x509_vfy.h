@@ -292,16 +292,6 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 		     and clash when the linker is case-insensitive, so let's
 		     hide them a little, by giving them an extra 'o' at the
 		     beginning of the name... */
-#ifdef VMS
-#undef X509v3_cleanup_extensions
-#define X509v3_cleanup_extensions oX509v3_cleanup_extensions
-#undef X509v3_add_extension
-#define X509v3_add_extension oX509v3_add_extension
-#undef X509v3_add_netscape_extensions
-#define X509v3_add_netscape_extensions oX509v3_add_netscape_extensions
-#undef X509v3_add_standard_extensions
-#define X509v3_add_standard_extensions oX509v3_add_standard_extensions
-#endif
 
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type,
 	     X509_NAME *name);

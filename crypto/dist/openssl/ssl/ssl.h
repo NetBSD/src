@@ -937,20 +937,6 @@ size_t SSL_get_peer_finished(SSL *s, void *buf, size_t count);
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
 
 /* VMS uses only 31 characters for symbols. */
-#ifdef VMS
-#undef SSL_CTX_set_cert_verify_callback
-#define SSL_CTX_set_cert_verify_callback SSL_CTX_set_cert_verify_cb
-#undef SSL_CTX_use_certificate_chain_file
-#define SSL_CTX_use_certificate_chain_file SSL_CTX_use_cert_chain_file
-#undef SSL_CTX_set_default_verify_paths
-#define SSL_CTX_set_default_verify_paths SSL_CTX_set_def_verify_paths
-#undef SSL_get_ex_data_X509_STORE_CTX_idx
-#define SSL_get_ex_data_X509_STORE_CTX_idx SSL_get_ex_data_X509_STOR_CTX_i
-#undef SSL_add_file_cert_subjects_to_stack
-#define SSL_add_file_cert_subjects_to_stack SSL_add_file_cert_sub_to_stack
-#undef SSL_add_dir_cert_subjects_to_stack
-#define SSL_add_dir_cert_subjects_to_stack SSL_add_dir_cert_sub_to_stack
-#endif
 
 BIO_METHOD *BIO_f_ssl(void);
 BIO *BIO_new_ssl(SSL_CTX *ctx,int client);
@@ -1047,9 +1033,6 @@ X509 *	SSL_get_peer_certificate(SSL *s);
 
 STACK_OF(X509) *SSL_get_peer_cert_chain(SSL *s);
 
-#ifdef VMS
-#define SSL_CTX_set_default_passwd_cb_userdata SSL_CTX_set_def_passwd_cb_ud
-#endif
 
 int SSL_CTX_get_verify_mode(SSL_CTX *ctx);
 int SSL_CTX_get_verify_depth(SSL_CTX *ctx);
