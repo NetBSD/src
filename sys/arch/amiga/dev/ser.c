@@ -561,9 +561,10 @@ sermint (register int unit)
 }
 
 int
-serioctl(dev, cmd, data, flag)
-     dev_t dev;
-     caddr_t data;
+serioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	caddr_t data;
+	struct proc *p;
 {
   register struct tty *tp;
   register int unit = SERUNIT(dev);
@@ -574,11 +575,11 @@ serioctl(dev, cmd, data, flag)
   if (! tp)
     return ENXIO;
   
-  error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+  error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
   if (error >= 0)
     return (error);
 
-  error = ttioctl(tp, cmd, data, flag);
+  error = ttioctl(tp, cmd, data, flag, p);
   if (error >= 0)
     return (error);
   
