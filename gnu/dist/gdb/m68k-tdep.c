@@ -507,6 +507,59 @@ m68k_saved_pc_after_call(frame)
     return read_memory_integer (read_register (SP_REGNUM), 4);
 }
 
+/* This used to be needed by tm-sun3.h but is probably not
+   used by any targets anymore.  Keep it for now anyway.
+   This works like blockframe.c:sigtramp_saved_pc() */
+
+#ifdef	SIG_PC_FP_OFFSET
+CORE_ADDR
+m68k_sigtramp_saved_pc (frame)
+     struct frame_info *frame;
+{
+  CORE_ADDR nextfp, pc;
+
+  if (frame->signal_handler_caller == 0)
+    abort();
+
+  nextfp = (frame)->next ?
+    (frame)->next->frame :
+    read_register (SP_REGNUM) - 8;
+  nextfp += SIG_PC_FP_OFFSET;
+
+  pc = read_memory_integer (nextfp, 4);
+
+  return pc;
+}
+#endif	/* SIG_PC_FP_OFFSET */
+
+/* For NetBSD, sigtramp is 32 bytes before STACK_END_ADDR,
+   but we don't know where that is until run-time!  */
+
+#ifdef TM_NBSD_H
+int
+nbsd_in_sigtramp (pc)
+     CORE_ADDR pc;
+{
+  static CORE_ADDR stack_end_addr;
+  struct minimal_symbol *msymbol;
+  CORE_ADDR pssaddr;
+  int rv;
+
+  if (stack_end_addr == 0) {
+    msymbol = lookup_minimal_symbol("__ps_strings", NULL, NULL);
+    if (msymbol == NULL)
+      pssaddr = 0x40a0; /* XXX return 0? */
+    else
+      pssaddr = SYMBOL_VALUE_ADDRESS(msymbol);
+    stack_end_addr = read_memory_integer (pssaddr, 4);
+    stack_end_addr = (stack_end_addr + 0xFF) & ~0xFF;
+  }
+  rv = ((pc >= (stack_end_addr - 32)) &&
+	(pc < stack_end_addr));
+  return rv;
+}
+#endif	/* TM_NBSD_H */
+
 void
 _initialize_m68k_tdep ()
 {
