@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.36 2001/07/07 12:23:43 simonb Exp $	*/
+/*	$NetBSD: libkern.h,v 1.37 2001/07/07 17:22:25 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -250,10 +250,10 @@ tolower(ch)
 #endif
 
 /* Prototypes for non-quad routines. */
-#ifdef _STANDALONE
+/* XXX notyet #ifdef _STANDALONE */
 int	 bcmp __P((const void *, const void *, size_t));
 void	 bzero __P((void *, size_t));
-#endif
+/* #endif */
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
 int	 ffs __P((int));
