@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.8 2000/02/26 05:34:43 itojun Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.9 2000/03/06 21:02:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -553,7 +553,7 @@ cnw_attach(parent, self, aux)
 #endif
 	sc->sc_resource |= CNW_RES_NET;
 
-	ifp->if_baudrate = 1 * 1024 * 1024;
+	ifp->if_baudrate = IF_Mbps(1);
 
 	/* Disable the card now, and turn it on when the interface goes up */
 	pcmcia_function_disable(sc->sc_pf);
