@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2002/08/23 13:41:55 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2002/08/23 15:03:33 scw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -366,7 +366,7 @@ char msgbuf[MSGBUFSIZE];
 void
 cpu_startup(void)
 {
-	int sz, i, eccirq;
+	int sz, i;
 	caddr_t v;
 	vaddr_t minaddr, maxaddr;
 	int base, residual;
@@ -495,14 +495,6 @@ cpu_startup(void)
 	if (board_info_set("processor-frequency", &board_data.processor_speed, 
 		sizeof(&board_data.processor_speed), PROP_CONST, 0))
 		panic("setting processor-frequency");
-
-	/*
-	 * Walnut supports ECC error reporting on irq 16
-	 */
-	eccirq = 16;
-	if (board_info_set("4xx-ecc-irq", &eccirq, sizeof(&eccirq), 0, 0))
-		panic("setting ECC interrupt");
-
 #if NCOM > 0
 	{
 		unsigned int comfreq = COM_FREQ * 6;
