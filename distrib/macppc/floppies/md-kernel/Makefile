@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/10/21 23:23:20 jmc Exp $
+#	$NetBSD: Makefile,v 1.3 2001/11/14 00:58:48 tv Exp $
 
 TOP= ${.CURDIR}/..
 
@@ -12,7 +12,7 @@ MDSETIMAGE?=	mdsetimage
 KERNELS= netbsd.INSTALL.gz netbsd.GENERIC_MD.gz
 CLEANFILES+= ${KERNELS} netbsd
 
-RAMDISKDIR!= cd ${.CURDIR}/../ramdisk; ${MAKE} print-objdir
+RAMDISKDIR!= cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK= ${RAMDISKDIR}/ramdisk.fs
 
 all dependall: ${KERNELS}
