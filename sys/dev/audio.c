@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.32 1996/10/16 01:12:22 jtk Exp $	*/
+/*	$NetBSD: audio.c,v 1.33 1996/11/01 23:05:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -707,6 +707,7 @@ audio_close(dev, flags, ifmt, p)
 	if (flags&FWRITE)
 		sc->sc_open &= ~AUOPEN_WRITE;
 
+	sc->sc_async = 0;
 	splx(s);
 	DPRINTF(("audio_close: done\n"));
 
