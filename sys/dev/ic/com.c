@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.30 1994/04/07 06:50:28 mycroft Exp $
+ *	$Id: com.c,v 1.31 1994/04/10 10:29:06 cgd Exp $
  */
 
 /*
@@ -505,6 +505,8 @@ comioctl(dev, cmd, data, flag, p)
 			driverbits |= COM_SW_CLOCAL;
 		if (userbits & TIOCFLAG_CRTSCTS)
 			driverbits |= COM_SW_CRTSCTS;
+		if (userbits & TIOCFLAG_MDMBUF)
+			driverbits |= COM_SW_MDMBUF;
 
 		sc->sc_swflags = driverbits;
 		break;
