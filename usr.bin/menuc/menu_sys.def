@@ -1,4 +1,4 @@
-/*	$NetBSD: menu_sys.def,v 1.45 2003/07/27 07:21:58 dsl Exp $	*/
+/*	$NetBSD: menu_sys.def,v 1.46 2003/09/21 02:17:39 takemura Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -691,7 +691,7 @@ new_menu(const char *title, menu_ent *opts, int numopts,
 
 	/* Find free menu entry. */
 	for (ix = DYN_MENU_START; ; ix++) {
-		if (ix > num_menus && !double_menus())
+		if (ix >= num_menus && !double_menus())
 			return -1;
 		if (!(menus[ix].mopt & MC_VALID))
 			break;
