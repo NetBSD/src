@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.2 1995/03/05 23:23:37 fvdl Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.3 1995/04/07 22:23:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -92,8 +92,11 @@ exec_linux_aout_makecmds(p, epp)
 		error = exec_linux_aout_prep_omagic(p, epp);
 		break;
 	}
-	if (error == 0)
+	if (error == 0) {
+		epp->ep_sigcode = linux_sigcode;
+		epp->ep_esigcode = linux_esigcode;
 		epp->ep_emul = EMUL_LINUX;
+	}
 	return error;
 }
 

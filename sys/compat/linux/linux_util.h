@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_util.h,v 1.2 1995/03/05 23:23:50 fvdl Exp $	*/
+/*	$NetBSD: linux_util.h,v 1.3 1995/04/07 22:23:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -48,8 +48,8 @@
 static __inline caddr_t
 stackgap_init()
 {
-	extern char     sigcode[], esigcode[];
-#define szsigcode ((caddr_t)(esigcode - sigcode))
+	extern char     linux_sigcode[], linux_esigcode[];
+#define szsigcode ((caddr_t)(linux_esigcode - linux_sigcode))
 	return STACKGAPBASE;
 }
 
