@@ -23,7 +23,7 @@
 #include "uucp.h"
 
 #if USE_RCS_ID
-const char proty_id[] = "$Id: proty.c,v 1.1 1995/08/24 05:23:00 jtc Exp $";
+const char proty_id[] = "$Id: proty.c,v 1.2 1998/02/04 14:33:23 christos Exp $";
 #endif
 
 #include "uudefs.h"
@@ -128,6 +128,7 @@ struct uuconf_cmdtab asYproto_params[] =
 
 /* Local functions.  */
 
+static boolean fyxchg_syncs P((struct sdaemon *qdaemon));
 static boolean fywait_for_packet P((struct sdaemon *qdaemon,
 				    boolean *pfexit));
 static unsigned short iychecksum P((const char *z, size_t c));

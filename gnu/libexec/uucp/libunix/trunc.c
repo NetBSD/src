@@ -25,9 +25,11 @@
 #define SEEK_SET 0
 #endif
 
+#ifndef POSIX_HEADERS
 /* External functions.  */
 #ifndef lseek
 extern off_t lseek ();
+#endif
 #endif
 
 /* Truncate a file to zero length.  If this fails, it closes and

@@ -65,7 +65,7 @@ fsysdep_wildcard_start (zfile)
     ulog (LOG_FATAL, "fsysdep_wildcard: %s: Can't happen", zfile);
 #endif
 
-  if (glob (zfile, 0, (int (*) ()) NULL, &sSglob) != 0)
+  if (glob (zfile, 0, (int (*) P((const char *, int))) NULL, &sSglob) != 0)
     sSglob.gl_pathc = 0;
   iSglob = 0;
   return TRUE;
