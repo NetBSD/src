@@ -1,4 +1,4 @@
-/*	$NetBSD: am_defs.h,v 1.5 1997/10/26 00:25:51 christos Exp $	*/
+/*	$NetBSD: am_defs.h,v 1.6 1998/03/01 23:48:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Erez Zadok
@@ -526,6 +526,9 @@ extern int errno;
 #ifdef HAVE_NFS_NFS_MOUNT_H_off
 # include <nfs/nfs_mount.h>
 #endif /* HAVE_NFS_NFS_MOUNT_H */
+#ifdef HAVE_NFS_NFSMOUNT_H
+# include <nfs/nfsmount.h>
+#endif
 #ifdef HAVE_NFS_PATHCONF_H
 # include <nfs/pathconf.h>
 #endif /* HAVE_NFS_PATHCONF_H */
@@ -976,6 +979,10 @@ extern char *nc_sperror(void);
 #ifdef HAVE_UFS_UFS_MOUNT_H
 # include <ufs/ufs_mount.h>
 #endif /* HAVE_UFS_UFS_MOUNT_H */
+
+#ifdef HAVE_UFS_UFS_UFSMOUNT_H
+# include <ufs/ufs/ufsmount.h>
+#endif /* HAVE_UFS_UFS_UFSMOUNT_H */
 
 /*
  * Are S_ISDIR, S_ISREG, et al broken?  If not, include <sys/stat.h>.

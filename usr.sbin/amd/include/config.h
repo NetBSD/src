@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.9 1998/01/09 08:08:59 perry Exp $	*/
+/*	$NetBSD: config.h,v 1.10 1998/03/01 23:48:58 fvdl Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* aux/config.h.in.  Generated automatically from ./aux/configure.in by autoheader.  */
@@ -1345,7 +1345,7 @@
 /* #undef HAVE_HSFS_HSFS_H */
 
 /* Define if you have the <isofs/cd9660/cd9660_mount.h> header file.  */
-/* #undef HAVE_ISOFS_CD9660_CD9660_MOUNT_H */
+#define HAVE_ISOFS_CD9660_CD9660_MOUNT_H
 
 /* Define if you have the <lber.h> header file.  */
 /* #undef HAVE_LBER_H */
@@ -1387,7 +1387,7 @@
 /* #undef HAVE_MOUNT_H */
 
 /* Define if you have the <msdosfs/msdosfsmount.h> header file.  */
-/* #undef HAVE_MSDOSFS_MSDOSFSMOUNT_H */
+#define HAVE_MSDOSFS_MSDOSFSMOUNT_H
 
 /* Define if you have the <ndbm.h> header file.  */
 #define HAVE_NDBM_H 1
@@ -1439,6 +1439,9 @@
 
 /* Define if you have the <nfs/nfs_mount.h> header file.  */
 /* #undef HAVE_NFS_NFS_MOUNT_H */
+
+/* Define if you have the <nfs/nfsmount.h> header file.  */
+#define HAVE_NFS_NFSMOUNT_H
 
 /* Define if you have the <nfs/nfsproto.h> header file.  */
 #define HAVE_NFS_NFSPROTO_H 1
@@ -1568,6 +1571,9 @@
 
 /* Define if you have the <sys/fs/ufs_mount.h> header file.  */
 /* #undef HAVE_SYS_FS_UFS_MOUNT_H */
+
+/* Define if you have the <ufs/ufs/ufsmount.h> header file.  */
+#define HAVE_UFS_UFS_UFSMOUNT_H
 
 /* Define if you have the <sys/fs_types.h> header file.  */
 /* #undef HAVE_SYS_FS_TYPES_H */
