@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.3 1998/02/21 23:08:17 mark Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.4 1998/02/22 00:08:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -100,6 +100,14 @@
 #ifdef RC7500
 #include <arm32/rc7500/rc7500_prom.h>
 #endif
+
+/*
+ * Address to call from cpu_reset() to reset the machine.
+ * This is machine architecture dependant as it varies depending
+ * on where the ROM appears when you turn the MMU off.
+ */
+
+u_int cpu_reset_address = 0;
 
 /* Describe different actions to take when boot() is called */
 
@@ -224,13 +232,8 @@ extern void dumpsys	__P((void));
  *
  * Reboots the system
  *
- * This gets called when a reboot is request by the user or after a panic.
- * Call boot0() will reboot the machine. For the moment we will try and be
- * clever and return to the booting environment. This may work if we
- * have be booted with the Kate boot loader as long as we have not messed
- * the system up to much. Until we have our own memory management running
- * this should work. The only use of being able to return (to RISC OS)
- * is so I don't have to wait while the machine reboots.
+ * Deal with any syncing, unmounting, dumping and shutdown hooks,
+ * then reset the CPU.
  */
 
 /* NOTE: These variables will be removed, well some of them */
@@ -281,7 +284,7 @@ cpu_reboot(howto, bootstr)
 		printf("Halted while still in the ICE age.\n");
 		printf("Hit a key to reboot\n");
 		cngetc();
-		boot0();
+		cpu_reset();
 	}
 
 	/* Disable console buffering */
@@ -396,7 +399,7 @@ cpu_reboot(howto, bootstr)
 		delay(500000);
 	}
 
-	boot0();
+	cpu_reset();
 }
 
 char bootstring[64];
