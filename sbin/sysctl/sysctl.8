@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.98 2003/09/17 18:24:47 grant Exp $
+.\"	$NetBSD: sysctl.8,v 1.99 2003/09/20 17:02:17 grant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd August 7, 2003
+.Dd September 21, 2003
 .Dt SYSCTL 8
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Sh SYNOPSIS
 .Nm sysctl
 .Op Fl n
+.Op Fl e
 .Ar name ...
 .Nm sysctl
 .Op Fl n
@@ -46,9 +47,11 @@
 .Ar name Ns Li = Ns Ar value ...
 .Nm sysctl
 .Op Fl n
+.Op Fl e
 .Fl a
 .Nm sysctl
 .Op Fl n
+.Op Fl e
 .Fl A
 .Nm sysctl
 .Op Fl n
@@ -74,6 +77,15 @@ Those with string or integer values will be printed as with the
 .Fl a
 flag; for the table values,
 the name of the utility to retrieve them is given.
+.It Fl e
+Separate the name and the value of the variable(s) with
+.Ql = .
+This is useful for producing output which can be fed back to the
+.Nm
+utility.
+This option is ignored if
+.Fl n
+is specified or a variable is being set.
 .It Fl f
 Specifies the name of a file to read and process.
 Blank lines and comments (beginning with

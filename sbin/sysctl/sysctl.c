@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.71 2003/08/07 10:04:40 agc Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.72 2003/09/20 17:02:19 grant Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.71 2003/08/07 10:04:40 agc Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.72 2003/09/20 17:02:19 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ struct list secondlevel[] = {
 	{ 0, 0},
 };
 
-int	Aflag, aflag, nflag, qflag, wflag;
+int	Aflag, aflag, eflag, nflag, qflag, wflag;
 FILE	*warnfp = stderr;
 
 /*
@@ -217,7 +217,7 @@ main(int argc, char *argv[])
 	char *fn = NULL;
 	int ch, lvl1;
 
-	while ((ch = getopt(argc, argv, "Aaf:nqw")) != -1) {
+	while ((ch = getopt(argc, argv, "Aaef:nqw")) != -1) {
 		switch (ch) {
 
 		case 'A':
@@ -226,6 +226,10 @@ main(int argc, char *argv[])
 
 		case 'a':
 			aflag = 1;
+			break;
+
+		case 'e':
+			eflag = 1;
 			break;
 
 		case 'f':
@@ -327,8 +331,13 @@ parse(char *string, int flags)
 	size_t size;
 	struct list *lp;
 	int mib[CTL_MAXNAME];
-	char *cp, *bufp, buf[BUFSIZ];
+	char *cp, *bufp, buf[BUFSIZ], *eq;
 	double loads[3];
+
+	if (eflag)
+		eq = "=";
+	else
+		eq = " = ";
 
 	bufp = buf;
 	snprintf(buf, BUFSIZ, "%s", string);
@@ -634,7 +643,7 @@ parse(char *string, int flags)
 		if (!nflag) {
 			boottime = btp->tv_sec;
 			/* ctime() provides the trailing newline */
-			printf("%s = %s", string, ctime(&boottime));
+			printf("%s%s%s", string, eq, ctime(&boottime));
 		} else
 			printf("%ld\n", (long) btp->tv_sec);
 		return;
@@ -643,7 +652,7 @@ parse(char *string, int flags)
 		dev_t dev = *(dev_t *)buf;
 
 		if (!nflag)
-			printf("%s = %s\n", string, devname(dev, S_IFCHR));
+			printf("%s%s%s\n", string, eq, devname(dev, S_IFCHR));
 		else
 			printf("0x%x\n", dev);
 		return;
@@ -702,7 +711,7 @@ parse(char *string, int flags)
 		int i;
 
 		if (!nflag)
-			printf("%s%s ", string, newsize ? ":" : " =");
+			printf("%s%s", string, eq);
 		for (i = 0; i < size - 1; i++)
 			printf("\\x%2.2x", buf[i]);
 		if (newsize != 0) {
@@ -718,7 +727,7 @@ parse(char *string, int flags)
 	case CTLTYPE_INT:
 		if (newsize == 0) {
 			if (!nflag)
-				printf("%s = ", string);
+				printf("%s%s", string, eq);
 			printf("%d\n", *(int *)buf);
 		} else {
 			if (!nflag)
@@ -733,7 +742,7 @@ parse(char *string, int flags)
 			buf[0] = '\0';
 		if (newsize == 0) {
 			if (!nflag)
-				printf("%s = ", string);
+				printf("%s%s", string, eq);
 			printf("%s\n", buf);
 		} else {
 			if (!nflag)
@@ -752,7 +761,7 @@ else \
 
 		if (newsize == 0) {
 			if (!nflag)
-				printf("%s = ", string);
+				printf("%s%s", string, eq);
 			PRINTF_LIMIT((long long)(*(quad_t *)buf));
 		} else {
 			if (!nflag) {
@@ -769,7 +778,7 @@ else \
 	case CTLTYPE_QUAD:
 		if (newsize == 0) {
 			if (!nflag)
-				printf("%s = ", string);
+				printf("%s%s", string, eq);
 			printf("%lld\n", (long long)(*(quad_t *)buf));
 		} else {
 			if (!nflag)
@@ -1257,10 +1266,10 @@ usage(void)
 
 	(void)fprintf(stderr,
 	    "Usage:\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n\t%s %s\n",
-	    progname, "[-n] variable ...",
+	    progname, "[-n] [-e] variable ...",
 	    progname, "[-n] [-q] -w variable=value ...",
-	    progname, "[-n] -a",
-	    progname, "[-n] -A",
+	    progname, "[-n] [-e] -a",
+	    progname, "[-n] [-e] -A",
 	    progname, "[-n] [-q] -f file");
 	exit(1);
 }
