@@ -1,6 +1,4 @@
-/* $NetBSD: sgmapvar.h,v 1.6 1998/01/18 00:05:34 thorpej Exp $ */
-
-#define	SGMAP_LOG
+/* $NetBSD: sgmapvar.h,v 1.7 1998/01/21 22:36:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,7 +58,6 @@ struct alpha_sgmap {
 	bus_addr_t aps_wbase;		/* base of the dma window */
 };
 
-#ifdef SGMAP_LOG
 /*
  * Log entry, used for debugging SGMAPs.
  */
@@ -74,7 +71,6 @@ struct sgmap_log_entry {
 	u_long	sl_dmaaddr;		/* dma address */
 	int	sl_ptecnt;		/* pte count */
 };
-#endif
 
 extern	vm_offset_t alpha_sgmap_prefetch_spill_page_va;
 extern	bus_addr_t alpha_sgmap_prefetch_spill_page_pa;
