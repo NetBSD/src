@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.173 2002/10/31 22:32:40 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.174 2002/11/11 13:54:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.173 2002/10/31 22:32:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.174 2002/11/11 13:54:28 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -461,6 +461,12 @@ copyfault:
 		if (simple_lock_held(&sched_lock))
 			goto we_re_toast;
 #endif
+		/*
+		 * fusubail is used by [fs]uswintr() to prevent page faulting
+		 * from inside the profiling interrupt.
+		 */
+		if (pcb->pcb_onfault == fusubail)
+			goto copyefault;
 #ifdef MULTIPROCESSOR
 		/*
 		 * process doing kernel-mode page fault must have
@@ -470,12 +476,6 @@ copyfault:
 			goto we_re_toast;
 #endif
 
-		/*
-		 * fusubail is used by [fs]uswintr() to prevent page faulting
-		 * from inside the profiling interrupt.
-		 */
-		if (pcb->pcb_onfault == fusubail)
-			goto copyefault;
 #if 0
 		/* XXX - check only applies to 386's and 486's with WP off */
 		if (frame.tf_err & PGEX_P)
