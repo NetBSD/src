@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 2002/10/04 01:50:55 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 2002/10/13 12:09:43 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -56,7 +56,6 @@ int mbmatch __P((struct device *, struct cfdata*, void*));
 int x68k_config_found __P((struct cfdata *, struct device *,
 			   void *, cfprint_t));
 
-static int simple_devprint __P((void *, const char *));
 static struct device *scsi_find __P((dev_t));
 static struct device *find_dev_byname __P((const char *));
 
@@ -91,15 +90,6 @@ cpu_rootconf()
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
-}
-
-/*ARGSUSED*/
-static int
-simple_devprint(auxp, pnp)
-	void *auxp;
-	const char *pnp;
-{
-	return(QUIET);
 }
 
 /*
@@ -337,11 +327,11 @@ mbattach(pdp, dp, auxp)
 	void *auxp;
 {
 	printf ("\n");
-	config_found(dp, "intio"  , simple_devprint);
-	config_found(dp, "grfbus" , simple_devprint);
-	config_found(dp, "par"    , simple_devprint);
-	config_found(dp, "com"    , simple_devprint);
-	config_found(dp, "com"    , simple_devprint);
-/*	config_found(dp, "adpcm"  , simple_devprint);	*/
-	config_found(dp, "*"      , simple_devprint);
+
+	config_found(dp, "intio"  , NULL);
+	config_found(dp, "grfbus" , NULL);
+	config_found(dp, "par"    , NULL);
+	config_found(dp, "com"    , NULL);
+	config_found(dp, "com"    , NULL);
+	config_found(dp, "*"      , NULL);
 }
