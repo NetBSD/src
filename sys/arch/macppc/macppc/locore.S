@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14 1999/04/29 05:15:30 tsubai Exp $	*/
+/*	$NetBSD: locore.S,v 1.15 1999/04/30 04:35:35 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -134,6 +134,8 @@ __start:
 	addi	8,8,_C_LABEL(end)@l
 #ifdef DDB
 	/* skip symbol table */
+	cmpwi	6,0
+	beq	1f
 	add	9,6,7			/* r9 = args + l */
 	lwz	9,-8(9)			/* esym */
 	cmpwi	9,0
