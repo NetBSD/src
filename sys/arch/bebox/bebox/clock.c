@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 1998/01/19 03:47:41 sakamoto Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 1998/02/02 04:59:19 sakamoto Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -41,8 +41,8 @@
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
-static u_long ticks_per_sec;
-static u_long ns_per_tick;
+u_long ticks_per_sec;
+u_long ns_per_tick;
 static long ticks_per_intr;
 static volatile u_long lasttb;
 
@@ -111,19 +111,6 @@ cpu_initclocks()
 {
 	int msr, scratch;
 
-	/*
-	 * Get CPU clock
-	 */
-	{
-		struct btinfo_clock *clockinfo;
-	
-		clockinfo =
-			(struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
-		if (!clockinfo)
-			panic("not found clock information in bootinfo");
-		ticks_per_sec = clockinfo->ticks_per_sec;
-	}
-	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
