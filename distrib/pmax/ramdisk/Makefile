@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2002/04/06 18:16:11 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.25 2002/04/12 03:28:06 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -19,7 +19,7 @@ IMAGEENDIAN=	le
 MAKEDEVTARGETS=	minimal pty0
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile \
-		${CURDIR}/../miniroot/termcap.rcons \
+		${DISTRIBDIR}/miniroot/termcap.rcons \
 		${DESTDIR}/usr/mdec/boot.pmax ${DESTDIR}/usr/mdec/bootxx_ffs \
 		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
 		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
@@ -45,7 +45,7 @@ realall: ${IMAGE} .WAIT ${DISKIMAGE}
 
 release: check_RELEASEDIR .WAIT ${DISKIMAGE}
 	-mkdir -p ${RELEASEDIR}/installation/netboot
-	cp -p ${DISKIMAGE} ${RELEASEDIR}/installation/netboot
+	${RELINSTALL} ${DISKIMAGE} ${RELEASEDIR}/installation/netboot
 
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
