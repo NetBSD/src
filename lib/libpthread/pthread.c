@@ -18,11 +18,11 @@ static void	pthread__create_tramp(void *(*start)(void *), void *arg);
 static pthread_attr_t pthread_default_attr;
 
 pt_spin_t allqueue_lock;
-struct pt_list_t allqueue;
+struct pt_queue_t allqueue;
 
 
 pt_spin_t deadqueue_lock;
-struct pt_list_t deadqueue;
+struct pt_queue_t deadqueue;
 struct pt_queue_t reidlequeue;
 
 
@@ -47,24 +47,24 @@ pthread__start(void)
 
 	/* Basic data structure setup */
 	pthread_attr_init(&pthread_default_attr);
-	LIST_INIT(&allqueue);
-	LIST_INIT(&deadqueue);
-	SIMPLEQ_INIT(&reidlequeue);
-	SIMPLEQ_INIT(&runqueue);
-	SIMPLEQ_INIT(&idlequeue);
+	PTQ_INIT(&allqueue);
+	PTQ_INIT(&deadqueue);
+	PTQ_INIT(&reidlequeue);
+	PTQ_INIT(&runqueue);
+	PTQ_INIT(&idlequeue);
 
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
 	pthread__initthread(first);
 	sigprocmask(0, NULL, &first->pt_sigmask);
-	LIST_INSERT_HEAD(&allqueue, first, pt_allq);
+	PTQ_INSERT_HEAD(&allqueue, first, pt_allq);
 
 	/* Create idle threads */
 	ret = pthread__stackalloc(&idle);
 	if (ret != 0)
 		err(1, "Couldn't allocate stack for idle thread!");
 	pthread__initthread(idle);
-	LIST_INSERT_HEAD(&allqueue, idle, pt_allq);
+	PTQ_INSERT_HEAD(&allqueue, idle, pt_allq);
 	pthread__sched_idle(first, idle);
 
 	/* Start up the SA subsystem */
@@ -86,7 +86,7 @@ pthread__initthread(pthread_t t)
 	t->pt_heldlock = NULL;
 	sigemptyset(&t->pt_siglist);
 	sigemptyset(&t->pt_sigmask);
-	SIMPLEQ_INIT(&t->pt_joiners);
+	PTQ_INIT(&t->pt_joiners);
 #ifdef PTHREAD__DEBUG
 	t->blocks = 0;
 	t->preempts = 0;
@@ -115,7 +115,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 	if (attr == NULL)
 		nattr = pthread_default_attr;
-	else if (((*attr != NULL) && ((*attr)->pta_magic == PT_ATTR_MAGIC)))
+	else if (((attr != NULL) && (attr->pta_magic == PT_ATTR_MAGIC)))
 		nattr = *attr;
 	else
 		return EINVAL;
@@ -130,7 +130,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		
 	/* 2. Set up state. */
 	pthread__initthread(newthread);
-	newthread->pt_flags = nattr->pta_flags;
+	newthread->pt_flags = nattr.pta_flags;
 	newthread->pt_sigmask = self->pt_sigmask;
 	
 	/* 3. Set up context. */
@@ -145,7 +145,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 
 	/* 4. Add to queues. */
 	pthread_spinlock(self, &allqueue_lock);
-	LIST_INSERT_HEAD(&allqueue, newthread, pt_allq);
+	PTQ_INSERT_HEAD(&allqueue, newthread, pt_allq);
 	pthread_spinunlock(self, &allqueue_lock);
 
 	pthread__sched(self, newthread);
@@ -185,7 +185,7 @@ pthread__idle(void)
 	 * a list somewhere for the thread system to know about us. 
 	 */
 	pthread_spinlock(self, &deadqueue_lock);
-	SIMPLEQ_INSERT_TAIL(&reidlequeue, self, pt_runq);
+	PTQ_INSERT_TAIL(&reidlequeue, self, pt_runq);
 	self->pt_flags |= PT_FLAG_IDLED;
 	pthread_spinunlock(self, &deadqueue_lock);
 
@@ -212,20 +212,20 @@ pthread_exit(void *retval)
 		pthread_spinunlock(self, &self->pt_join_lock);
 
 		pthread_spinlock(self, &allqueue_lock);
-		LIST_REMOVE(self, pt_allq);
+		PTQ_REMOVE(&allqueue, self, pt_allq);
 		pthread_spinunlock(self, &allqueue_lock); 
 
 		self->pt_state = PT_STATE_DEAD;
 		/* Yeah, yeah, doing work while we're dead is tacky. */
 		pthread_spinlock(self, &deadqueue_lock);
-		LIST_INSERT_HEAD(&deadqueue, self, pt_allq);
+		PTQ_INSERT_HEAD(&deadqueue, self, pt_allq);
 		pthread__block(self, &deadqueue_lock);
 	} else {
 		self->pt_state = PT_STATE_ZOMBIE;
 		/* Wake up all the potential joiners. Only one can win.
 		 * (Can you say "Thundering Herd"? I knew you could.)
 		 */
-		SIMPLEQ_FOREACH(joiner, &self->pt_joiners, pt_sleep) 
+		PTQ_FOREACH(joiner, &self->pt_joiners, pt_sleep) 
 		    pthread__sched(self, joiner);
 		pthread__block(self, &self->pt_join_lock);
 	}
@@ -258,7 +258,7 @@ pthread_join(pthread_t thread, void **valptr)
 		 * "I'm not dead yet!"
 		 * "You will be soon enough."
 		 */
-		SIMPLEQ_INSERT_TAIL(&thread->pt_joiners, self, pt_sleep);
+		PTQ_INSERT_TAIL(&thread->pt_joiners, self, pt_sleep);
 
 		self->pt_state = PT_STATE_BLOCKED;
 		pthread__block(self, &thread->pt_join_lock);
@@ -282,11 +282,11 @@ pthread_join(pthread_t thread, void **valptr)
 
 	/* Cleanup time. Move the dead thread from allqueue to the deadqueue */
 	pthread_spinlock(self, &allqueue_lock);
-	LIST_REMOVE(thread, pt_allq);
+	PTQ_REMOVE(&allqueue, thread, pt_allq);
 	pthread_spinunlock(self, &allqueue_lock);
 
 	pthread_spinlock(self, &deadqueue_lock);
-	LIST_INSERT_HEAD(&deadqueue, thread, pt_allq);
+	PTQ_INSERT_HEAD(&deadqueue, thread, pt_allq);
 	pthread_spinunlock(self, &deadqueue_lock);
 
 	return 0;
@@ -320,7 +320,7 @@ pthread_detach(pthread_t thread)
 	thread->pt_flags |= PT_FLAG_DETACHED;
 
 	/* Any joiners have to be punted now. */
-	SIMPLEQ_FOREACH(joiner, &thread->pt_joiners, pt_sleep) 
+	PTQ_FOREACH(joiner, &thread->pt_joiners, pt_sleep) 
 	    pthread__sched(self, joiner);
 
 	pthread_spinunlock(self, &thread->pt_join_lock);
@@ -340,19 +340,9 @@ sched_yield(void)
 int
 pthread_attr_init(pthread_attr_t *attr)
 {
-	pthread_attr_t newattr;
 
-	assert(attr != NULL);
-
-	/* Allocate. */
-	newattr = pthread__malloc(sizeof(struct pthread_attr_st));
-	if (newattr == NULL)
-		return ENOMEM;
-
-	newattr->pta_magic = PT_ATTR_MAGIC;
-	newattr->pta_flags = 0;
-
-	*attr = newattr;
+	attr->pta_magic = PT_ATTR_MAGIC;
+	attr->pta_flags = 0;
 
 	return 0;
 }
@@ -362,13 +352,6 @@ int
 pthread_attr_destroy(pthread_attr_t *attr)
 {
 
-	if ((attr == NULL) || (*attr == NULL) ||
-	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
-		return EINVAL;
-
-	(*attr)->pta_magic = PT_ATTR_DEAD;
-	pthread__free(*attr);
-
 	return 0;
 }
 
@@ -377,11 +360,10 @@ int
 pthread_attr_getdetachstate(pthread_attr_t *attr, int *detachstate)
 {
 
-	if ((attr == NULL) || (*attr == NULL) ||
-	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
+	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
 		return EINVAL;
 
-	*detachstate = ((*attr)->pta_flags & PT_FLAG_DETACHED);
+	*detachstate = (attr->pta_flags & PT_FLAG_DETACHED);
 
 	return 0;
 }
@@ -390,16 +372,15 @@ pthread_attr_getdetachstate(pthread_attr_t *attr, int *detachstate)
 int
 pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate)
 {
-	if ((attr == NULL) || (*attr == NULL) ||
-	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
+	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
 		return EINVAL;
 	
 	switch (detachstate) {
 	case PTHREAD_CREATE_JOINABLE:
-		(*attr)->pta_flags &= ~PT_FLAG_DETACHED;
+		attr->pta_flags &= ~PT_FLAG_DETACHED;
 		break;
 	case PTHREAD_CREATE_DETACHED:
-		(*attr)->pta_flags |= PT_FLAG_DETACHED;
+		attr->pta_flags |= PT_FLAG_DETACHED;
 		break;
 	default:
 		return EINVAL;
@@ -414,8 +395,7 @@ pthread_attr_setschedparam(pthread_attr_t *attr,
     const struct sched_param *param)
 {
 
-	if ((attr == NULL) || (*attr == NULL) ||
-	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
+	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
 		return EINVAL;
 	
 	if (param == NULL)
@@ -432,8 +412,7 @@ int
 pthread_attr_getschedparam(pthread_attr_t *attr, struct sched_param *param)
 {
 
-	if ((attr == NULL) || (*attr == NULL) ||
-	    ((*attr)->pta_magic != PT_ATTR_MAGIC))
+	if ((attr == NULL) || (attr->pta_magic != PT_ATTR_MAGIC))
 		return EINVAL;
 	
 	if (param == NULL)
