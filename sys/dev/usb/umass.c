@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.107 2003/10/28 23:37:59 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.108 2003/11/07 17:03:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -67,10 +67,10 @@
 
 /*
  * Universal Serial Bus Mass Storage Class specs:
- * http://www.usb.org/developers/data/devclass/usbmassover_11.pdf
- * http://www.usb.org/developers/data/devclass/usbmassbulk_10.pdf
- * http://www.usb.org/developers/data/devclass/usbmass-cbi10.pdf
- * http://www.usb.org/developers/data/devclass/usbmass-ufi10.pdf
+ * http://www.usb.org/developers/devclass_docs/usb_msc_overview_1.2.pdf
+ * http://www.usb.org/developers/devclass_docs/usbmassbulk_10.pdf
+ * http://www.usb.org/developers/devclass_docs/usb_msc_cbi_1.1.pdf
+ * http://www.usb.org/developers/devclass_docs/usbmass-ufi10.pdf
  */
 
 /*
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.107 2003/10/28 23:37:59 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.108 2003/11/07 17:03:25 wiz Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
