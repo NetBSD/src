@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.8 1994/02/15 06:40:34 cgd Exp $
+ *	$Id: kern_xxx.c,v 1.9 1994/02/15 06:52:25 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -200,11 +200,16 @@ oquota()
 #endif
 
 #ifdef SYSCALL_DEBUG
+int	scdebug = 1;	/* XXX */
+
 void
 scdebug_call(code, narg, args)
-	int code, narg, args[];
+	int code, narg, *args;
 {
 	int i;
+
+	if (!scdebug)
+		return;
 
 	printf("syscall ");
 	if (code < 0 || code >= nsysent) {
@@ -222,6 +227,9 @@ void
 scdebug_ret(code, error, retval)
 	int code, error, retval;
 {
+	if (!scdebug)
+		return;
+
 	printf("syscall ");
 	if (code < 0 || code >= nsysent) {
 
