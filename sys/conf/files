@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.84 1996/05/07 08:56:54 mycroft Exp $
+#	$NetBSD: files,v 1.85 1996/05/07 16:09:12 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -35,7 +35,7 @@ file	dev/ic/elink3.c		ep
 
 # LANCE and PCnet Ethernet controllers
 device	le: ether, ifnet
-file	dev/ic/am7990.c
+file	dev/ic/am7990.c		le
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
