@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.16 1995/08/15 16:52:32 mycroft Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.17 1995/08/19 04:04:50 cgd Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -46,11 +46,6 @@
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_ucontext.h>
-
-static void bsd_to_svr4_sigaction __P((const struct sigaction *bsa, 
-				       struct svr4_sigaction *ssa));
-static void svr4_to_bsd_sigaction __P((const struct svr4_sigaction *ssa,
-				       struct sigaction *bsa));
 
 #define sigemptyset(s)		bzero((s), sizeof(*(s)))
 #define sigismember(s, n)	(*(s) & sigmask(n))
