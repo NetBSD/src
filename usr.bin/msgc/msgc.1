@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.12 2000/07/06 19:30:11 jhawk Exp $
+.\"	$NetBSD: msgc.1,v 1.13 2000/07/06 20:10:42 jhawk Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -137,14 +137,21 @@ The functions
 and
 .Fn msg_standend
 respectively clear the message window, set standout mode and clear standout
-mode.  The functions
+mode.
+.Pp
+The functions
 .Fn msg_display 
 and
 .Fn msg_display_add 
 cause a defined message to be displayed in the message window and does
 the requested conversions before printing.  The difference is that
 .Fn msg_display
-clears the window before displaying the message.
+clears the window before displaying the message. These functions
+fill paragraphs for readability. The
+.Fn msg_table_add
+function behaves like
+.Fn msg_display_add
+but does not fill text.
 .Pp
 The remaining functions deal with a prompt facility.  A prompt message
 is either taken from the message directory or from a given string.  The
