@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.55 2003/02/05 12:06:52 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.56 2003/04/01 16:34:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -255,7 +255,7 @@ clockattach_sbus(parent, self, aux)
 
 	if (sbus_bus_map(bt,
 			 sa->sa_slot,
-			 (sa->sa_offset & ~NBPG),
+			 (sa->sa_offset & ~PAGE_SIZE),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_READONLY,
 			 &ci.ci_bh) != 0) {
@@ -298,7 +298,8 @@ clock_wenable(handle, onoff)
 			(vaddr_t)bus_space_vaddr(ci->ci_bt, ci->ci_bh);
 
 		if (vaddr)
-			pmap_protect(pmap_kernel(), vaddr, vaddr+NBPG, prot);
+			pmap_protect(pmap_kernel(), vaddr, vaddr+PAGE_SIZE,
+				     prot);
 		else
 			printf("clock_wenable: WARNING -- cannot get va\n");
 	}
