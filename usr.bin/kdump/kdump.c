@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.56 2003/07/13 15:19:39 he Exp $	*/
+/*	$NetBSD: kdump.c,v 1.57 2003/07/13 18:54:29 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.56 2003/07/13 15:19:39 he Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.57 2003/07/13 18:54:29 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -563,15 +563,15 @@ hexdump_buf(void *vdp, int datalen)
 			line_len = datalen;
 		cp = chars;
 		l = 0;
-		printf("0x%08lx ", (u_long)dp - (u_long)vdp);
+		printf("\t%3.3lx ", (u_long)dp - (u_long)vdp);
 		for (i = 0; i < line_len; i++) {
 			c = *dp++;
-			if ((i % 4) == 0)
-				l += printf(" 0x");
-			l += printf("%2.2x", c);
+			if (i == 8)
+				l += printf(" ");
+			l += printf(" %2.2x", c);
 			*cp++ = isgraph(c) ? c : '.';
 		} while (--i);
-		printf("%*s %.*s\n", 45 - l, "", (int)(cp - chars), chars);
+		printf("%*s %.*s\n", 50 - l, "", (int)(cp - chars), chars);
 	}
 }
 
