@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.3 2000/05/30 09:26:19 haya Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -30,10 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Id: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $ */
+/* $Id: rbus_machdep.c,v 1.3 2000/05/30 09:26:19 haya Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/extent.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -122,41 +123,48 @@ _i386_memio_unmap(t, bsh, size, adrp)
 
 
 
-/**********************************************************************
+/*
  * rbus_tag_t rbus_fakeparent_mem(struct pci_attach_args *pa)
  *
- *   This function allocates a memory space from 1 GB to 1.25 GB.
- **********************************************************************/
+ *   This function makes an rbus tag for memory space.  This rbus tag
+ *   shares the all memory region of ex_iomem.
+ */
 rbus_tag_t
 rbus_pccbb_parent_mem(pa)
-     struct pci_attach_args *pa;
+	struct pci_attach_args *pa;
 {
-  bus_addr_t start =  0x40000000; /* 1 GB */
-  bus_size_t size =  0x08000000; /* 128 MB */
-  bus_space_handle_t memh;	/* fake */
+	bus_addr_t start, offset;
+	bus_size_t size;
+	extern struct extent *iomem_ex;
 
-  start += pa->pa_function * size;
+	start = iomem_ex->ex_start;
+	if (start < 0x40000000) {
+		start = 0x40000000;	/* 1GB */
+	}
+	/*
+	 * XXX: unfortunately, iomem_ex cannot be used for the dynamic
+	 * bus_space allocatoin.  There are some hidden memory (or
+	 * some obstacles which do not recognised by the kernel) in
+	 * the region governed by iomem_ex.  So I decide to use only
+	 * very high address region.
+	 */
+	size = iomem_ex->ex_end - start;
+	offset = 0;
   
-  bus_space_map(pa->pa_memt, start, size, 0, &memh);
-
-  return rbus_new_root_delegate(pa->pa_memt, start, size, 0);
+	return rbus_new_root_share(pa->pa_memt, iomem_ex, start, size, 0);
 }
 
 
-/**********************************************************************
+/*
  * rbus_tag_t rbus_pccbb_parent_io(struct pci_attach_args *pa)
- **********************************************************************/
+ */
 rbus_tag_t
 rbus_pccbb_parent_io(pa)
-     struct pci_attach_args *pa;
+	struct pci_attach_args *pa;
 {
-  bus_addr_t start =  0x2000;
-  bus_size_t size =  0x0800;
-  bus_space_handle_t ioh;
+	extern struct extent *ioport_ex;
+	bus_addr_t start =  0x2000;
+	bus_size_t size =  0x1000;
 
-  start += pa->pa_function * size;
-
-  bus_space_map(pa->pa_iot, start, size, 0, &ioh);
-
-  return rbus_new_root_delegate(pa->pa_iot, start, size, 0);
+	return rbus_new_root_share(pa->pa_iot, ioport_ex, start, size, 0);
 }
