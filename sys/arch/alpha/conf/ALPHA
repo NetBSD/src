@@ -1,4 +1,4 @@
-#	$NetBSD: ALPHA,v 1.41 1997/03/13 01:15:52 cgd Exp $
+#	$NetBSD: ALPHA,v 1.42 1997/03/21 01:12:40 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -12,14 +12,15 @@ maxusers 8
 makeoptions	LOADADDRESS="fffffc0000300000"
 
 # CPU Support
+#options	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
+options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
 options		DEC_3000_300	# Pelican etc:	3000/300*
-options		DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
-options		DEC_KN20AA	# KN20AA:	AlphaStation 600
 options		DEC_AXPPCI_33	# NoName:	AXPpci33, etc.
 options		DEC_EB164	# EB164:	AlphaPC 164
+#options	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
+options		DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 options		DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
-#options	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 
 # Standard system options
 options		KTRACE			# System call tracing support
@@ -196,6 +197,7 @@ scsibus* at	ncr?
 cd*	at	scsibus? target ? lun ?		# SCSI CD-ROM drives
 ch*	at	scsibus? target ? lun ?		# SCSI autochangers
 sd*	at	scsibus? target ? lun ?		# SCSI disk drives
+se*	at	scsibus? target ? lun ?		# Cabletron SCSI<->Ethernet
 ss*	at	scsibus? target ? lun ?		# SCSI scanners
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 uk*	at	scsibus? target ? lun ?		# SCSI unknown
