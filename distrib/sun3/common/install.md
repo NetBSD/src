@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.7 1999/03/30 06:17:55 gwr Exp $
+#	$NetBSD: install.md,v 1.7.2.1 1999/04/22 14:25:36 perry Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -155,10 +155,9 @@ __md_prep_disklabel_1
 }
 
 md_copy_kernel() {
-	local karch;
-	karch=`sysctl hw.machine`
-	echo -n "Copying kernel for $karch..."
-	cp -p /netbsd.$karch /mnt/netbsd
+	set -- `sysctl -n hw.model`
+	echo -n "Copying $1 kernel..."
+	cp -p /netbsd.$1 /mnt/netbsd
 	echo "done."
 }
 
