@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.18 2000/01/25 06:16:34 chopps Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.19 2000/01/25 09:36:43 haya Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -309,6 +309,8 @@ struct yenta_chipinfo {
      PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
   {MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), "TI1450", CB_TI12XX,
      PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
+  {MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451), "TI1421", CB_TI12XX,
+     PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 
   /* Ricoh chips */
   {MAKEID(PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C475), "Rx5C475",
@@ -502,9 +504,6 @@ pccbbattach(parent, self, aux)
 
   sc->sc_pcmcia_flags = flags;	/* set PCMCIA facility */
 
-  /* bus bridge initialisation */
-  pccbb_chipinit(sc);
-
   shutdownhook_establish(pccbb_shutdown, sc);
 
 #if __NetBSD_Version__ > 103060000
@@ -569,6 +568,9 @@ pccbb_pci_callback(self)
 	     sock_base, pci_conf_read(pc, sc->sc_tag, PCI_SOCKBASE)));
 #endif
   }
+
+  /* bus bridge initialisation */
+  pccbb_chipinit(sc);
 
   base_memt = sc->sc_base_memt;	/* socket regs memory tag */
   base_memh = sc->sc_base_memh;	/* socket regs memory handle */
