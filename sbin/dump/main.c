@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25.6.6 2002/01/16 09:56:50 he Exp $	*/
+/*	$NetBSD: main.c,v 1.25.6.7 2002/01/16 10:01:37 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.25.6.6 2002/01/16 09:56:50 he Exp $");
+__RCSID("$NetBSD: main.c,v 1.25.6.7 2002/01/16 10:01:37 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,12 +133,16 @@ main(argc, argv)
 
 	obsolete(&argc, &argv);
 	while ((ch = getopt(argc, argv,
-	    "0123456789B:b:cd:ef:h:k:l:L:nr:s:ST:uWw")) != -1)
+	    "0123456789aB:b:cd:ef:h:k:l:L:nr:s:ST:uWw")) != -1)
 		switch (ch) {
 		/* dump level */
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			level = ch;
+			break;
+
+		case 'a':		/* `auto-size', Write to EOM. */
+			unlimited = 1;
 			break;
 
 		case 'B':		/* blocks per output file */
@@ -316,7 +320,7 @@ main(argc, argv)
 
 	if (blocksperfile)
 		blocksperfile = blocksperfile / ntrec * ntrec; /* round down */
-	else {
+	else if (!unlimited) {
 		/*
 		 * Determine how to default tape size and density
 		 *
@@ -448,7 +452,7 @@ main(argc, argv)
 		anydirskipped = mapdirs(maxino, &tapesize);
 	}
 
-	if (pipeout) {
+	if (pipeout || unlimited) {
 		tapesize += 10;	/* 10 trailer blocks */
 		msg("estimated %ld tape blocks.\n", tapesize);
 	} else {
@@ -576,9 +580,8 @@ main(argc, argv)
 static void
 usage()
 {
-
 	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",
-"usage: dump [-0123456789cnu] [-B records] [-b blocksize] [-d density]",
+"usage: dump [-0123456789acnu] [-B records] [-b blocksize] [-d density]",
 "            [-f file] [-h level] [-k read block size] [-L label]",
 "            [-l timeout] [-r read cache size] [-s feet] [-T date] filesystem",
 "       dump [-W | -w]");
