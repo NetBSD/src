@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.94 2004/12/05 15:00:47 peter Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.95 2004/12/05 15:03:13 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.94 2004/12/05 15:00:47 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.95 2004/12/05 15:03:13 christos Exp $");
 
 #include "ppp.h"
 
@@ -366,7 +366,7 @@ pppalloc(pid)
 	if (scf->sc_devp == NULL && sc == NULL)
 	    sc = scf;
     }
-    simple_lock(&ppp_list_mutex);
+    simple_unlock(&ppp_list_mutex);
 
     if (sc == NULL)
 	sc = ppp_create(ppp_cloner.ifc_name, -1);
