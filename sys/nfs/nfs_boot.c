@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.23 1996/02/13 17:53:33 gwr Exp $ */
+/*	$NetBSD: nfs_boot.c,v 1.24 1996/02/16 15:18:19 gwr Exp $ */
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -61,6 +61,15 @@ int nfs_boot_init(nd, procp)
 	struct proc *procp;
 {
 	panic("nfs_boot_init: no ether");
+}
+
+void
+nfs_boot_getfh(bpsin, key, ndmntp)
+	struct sockaddr_in *bpsin;
+	char *key;
+	struct nfs_dlmount *ndmntp;
+{
+	/* can not get here */
 }
 
 #else /* NETHER */
