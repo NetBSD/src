@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.6 2001/12/14 13:07:33 augustss Exp $	*/
+/*	$NetBSD: uirda.c,v 1.7 2001/12/14 15:44:04 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.6 2001/12/14 13:07:33 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.7 2001/12/14 15:44:04 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.6 2001/12/14 13:07:33 augustss Exp $");
 #ifdef URIO_DEBUG
 #define DPRINTF(x)	if (uirdadebug) logprintf x
 #define DPRINTFN(n,x)	if (uirdadebug>(n)) logprintf x
-int	uirdadebug = 1;
+int	uirdadebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
@@ -73,6 +73,7 @@ int	uirdadebug = 1;
  * Protocol related definitions
  */
 
+#define UIRDA_INPUT_HEADER_SIZE 1
 /* Inbound header byte */
 #define UIRDA_MEDIA_BUSY	0x80
 #define UIRDA_SPEED_MASK	0x0f
@@ -87,6 +88,7 @@ int	uirdadebug = 1;
 #define UIRDA_1152000		0x08
 #define UIRDA_4000000		0x09
 
+#define UIRDA_OUTPUT_HEADER_SIZE 1
 /* Outbound header byte */
 #define UIRDA_EB_NO_CHANGE	0x00
 #define UIRDA_EB_48		0x10
@@ -463,13 +465,13 @@ uirda_open(void *h, int flag, int mode, struct proc *p)
 		goto bad4;
 	}
 	sc->sc_rd_buf = usbd_alloc_buffer(sc->sc_rd_xfer,
-					  IRDA_MAX_FRAME_SIZE + 1);
+			    IRDA_MAX_FRAME_SIZE + UIRDA_INPUT_HEADER_SIZE);
 	if (sc->sc_rd_buf == NULL) {
 		error = ENOMEM;
 		goto bad5;
 	}
 	sc->sc_wr_buf = usbd_alloc_buffer(sc->sc_wr_xfer,
-					  IRDA_MAX_FRAME_SIZE + 1);
+			    IRDA_MAX_FRAME_SIZE + UIRDA_OUTPUT_HEADER_SIZE);
 	if (sc->sc_wr_buf == NULL) {
 		error = ENOMEM;
 		goto bad5;
@@ -571,12 +573,14 @@ uirda_read(void *h, struct uio *uio, int flag)
 		splx(s);
 		
 		lockmgr(&sc->sc_rd_buf_lk, LK_EXCLUSIVE, NULL);
-		n = sc->sc_rd_count - 1;
-		DPRINTFN(1,("%s: sc=%p n=%u\n", __FUNCTION__, sc, n));
+		n = sc->sc_rd_count - UIRDA_INPUT_HEADER_SIZE;
+		DPRINTFN(1,("%s: sc=%p n=%u, hdr=0x%02x\n", __FUNCTION__,
+			    sc, n, sc->sc_rd_buf[0]));
 		if (n > uio->uio_resid)
 			error = EINVAL;
 		else
-			error = uiomove(sc->sc_rd_buf+1, n, uio);
+			error = uiomove(sc->sc_rd_buf+UIRDA_INPUT_HEADER_SIZE,
+					n, uio);
 		sc->sc_rd_count = 0;
 		lockmgr(&sc->sc_rd_buf_lk, LK_RELEASE, NULL);
 		
@@ -619,10 +623,11 @@ uirda_write(void *h, struct uio *uio, int flag)
 	lockmgr(&sc->sc_wr_buf_lk, LK_EXCLUSIVE, NULL);
 
 	sc->sc_wr_buf[0] = UIRDA_EB_NO_CHANGE | UIRDA_NO_SPEED;
-	error = uiomove(sc->sc_wr_buf+1, n, uio);
+	error = uiomove(sc->sc_wr_buf + UIRDA_OUTPUT_HEADER_SIZE, n, uio);
 	if (!error) {
 		DPRINTFN(1, ("uirdawrite: transfer %d bytes\n", n));
 
+		n++;
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
 			  USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 			  UIRDA_WR_TIMEOUT,
@@ -768,7 +773,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		sc->sc_wr_hdr = hdr;
 		lockmgr(&sc->sc_wr_buf_lk, LK_EXCLUSIVE, NULL);
 		sc->sc_wr_buf[0] = hdr;
-		n = 1;
+		n = UIRDA_OUTPUT_HEADER_SIZE;
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
 			  USBD_FORCE_SHORT_XFER | USBD_NO_COPY,
 			  UIRDA_WR_TIMEOUT, sc->sc_wr_buf, &n, "uirdast");
@@ -850,7 +855,7 @@ uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	if (status == USBD_CANCELLED) /* this is normal */
 		return;
 	if (status) {
-		size = 1;
+		size = UIRDA_INPUT_HEADER_SIZE;
 		sc->sc_rd_err = 1;
 	} else {
 		usbd_get_xfer_status(xfer, NULL, NULL, &size, NULL);
@@ -868,7 +873,7 @@ uirda_start_read(struct uirda_softc *sc)
 	usbd_status err;
 
 	DPRINTFN(1,("%s: sc=%p, size=%d\n", __FUNCTION__, sc,
-		    sc->sc_params.maxsize+1));
+		    sc->sc_params.maxsize + UIRDA_INPUT_HEADER_SIZE));
 
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
@@ -880,7 +885,7 @@ uirda_start_read(struct uirda_softc *sc)
 	}
 
 	usbd_setup_xfer(sc->sc_rd_xfer, sc->sc_rd_pipe, sc, sc->sc_rd_buf,
-			sc->sc_params.maxsize+1,
+			sc->sc_params.maxsize + UIRDA_INPUT_HEADER_SIZE,
 			USBD_SHORT_XFER_OK | USBD_NO_COPY,
 			USBD_NO_TIMEOUT, uirda_rd_cb);
 	err = usbd_transfer(sc->sc_rd_xfer);
