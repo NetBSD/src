@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.27.6.3 2002/02/06 23:18:51 nathanw Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.27.6.4 2002/05/02 17:04:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.27.6.3 2002/02/06 23:18:51 nathanw Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.27.6.4 2002/05/02 17:04:55 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -112,11 +112,26 @@ __RCSID("$NetBSD: vfscanf.c,v 1.27.6.3 2002/02/06 23:18:51 nathanw Exp $");
 
 static const u_char *__sccl __P((char *, const u_char *));
 
+int
+__svfscanf(fp, fmt0, ap)
+	FILE *fp;
+	const char *fmt0;
+	_BSD_VA_LIST_ ap;
+{
+	int ret;
+
+	FLOCKFILE(fp);
+	ret = __svfscanf_unlocked(fp, fmt0, ap);
+	FUNLOCKFILE(fp);
+	
+	return ret;
+}
+
 /*
  * vfscanf
  */
 int
-__svfscanf(fp, fmt0, ap)
+__svfscanf_unlocked(fp, fmt0, ap)
 	FILE *fp;
 	const char *fmt0;
 	_BSD_VA_LIST_ ap;
@@ -143,7 +158,6 @@ __svfscanf(fp, fmt0, ap)
 	_DIAGASSERT(fp != NULL);
 	_DIAGASSERT(fmt0 != NULL);
 
-	FLOCKFILE(fp);
 	_SET_ORIENTATION(fp, -1);
 
 	nassigned = 0;
@@ -153,7 +167,6 @@ __svfscanf(fp, fmt0, ap)
 	for (;;) {
 		c = *fmt++;
 		if (c == 0) {
-			FUNLOCKFILE(fp);
 			return (nassigned);
 		}
 		if (isspace(c)) {
@@ -321,7 +334,6 @@ literal:
 		 * Disgusting backwards compatibility hacks.	XXX
 		 */
 		case '\0':	/* compat */
-			FUNLOCKFILE(fp);
 			return (EOF);
 
 		default:	/* compat */
@@ -714,10 +726,8 @@ literal:
 		}
 	}
 input_failure:
-	FUNLOCKFILE(fp);
 	return (nassigned ? nassigned : EOF);
 match_failure:
-	FUNLOCKFILE(fp);
 	return (nassigned);
 }
 
