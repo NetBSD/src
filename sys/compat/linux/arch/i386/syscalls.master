@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.44 2000/12/01 21:02:56 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.45 2000/12/02 16:43:50 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -202,7 +202,7 @@ endif
 113	UNIMPL		vm86old
 114	STD		{ int linux_sys_wait4(int pid, int *status, \
 			    int options, struct rusage *rusage); }
-115	UNIMPL		swapoff
+115	STD		{ int linux_sys_swapoff(const char *path); }
 116	UNIMPL		sysinfo
 117	STD		{ int linux_sys_ipc(int what, int a1, int a2, int a3, \
 			    caddr_t ptr); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.75 2000/12/01 21:14:42 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.76 2000/12/02 16:43:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1187,6 +1187,25 @@ linux_sys_swapon(p, v, retval)
 	SCARG(&ua, cmd) = SWAP_ON;
 	SCARG(&ua, arg) = (void *)SCARG(uap, name);
 	SCARG(&ua, misc) = 0;	/* priority */
+	return (sys_swapctl(p, &ua, retval));
+}
+
+/*
+ * Stop swapping to the file or block device specified by path.
+ */
+int
+linux_sys_swapoff(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_swapctl_args ua;
+	struct linux_sys_swapoff_args /* {
+		syscallarg(const char *) path;
+	} */ *uap = v;
+
+	SCARG(&ua, cmd) = SWAP_OFF;
+	SCARG(&ua, arg) = (void *)SCARG(uap, path);
 	return (sys_swapctl(p, &ua, retval));
 }
 
