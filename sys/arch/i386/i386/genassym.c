@@ -110,13 +110,8 @@ main()
 
 	def("UPAGES", UPAGES);
 	def("HIGHPAGES", HIGHPAGES);
-	def("CLSIZE", CLSIZE);
-	def("NBPG", NBPG);
-	def("NPTEPG", NPTEPG);
 	def("PGSHIFT", PGSHIFT);
 	def("PDSHIFT", PDSHIFT);
-	def("KERNBASE", KERNBASE);
-	def("KERNSIZE", KERNSIZE);
 
 	exit(0);
 }
