@@ -31,9 +31,13 @@
  * SUCH DAMAGE.
  *
  *	@(#)defs.h	8.1 (Berkeley) 6/5/93
+ *
+ *	$NetBSD: defs.h,v 1.1.1.4 1996/09/24 15:11:33 christos Exp $
  */
 
-#ident "$Revision: 1.1.1.3 $"
+#ifndef  __NetBSD__
+#ident "$Revision: 1.1.1.4 $"
+#endif
 
 /* Definitions for RIPv2 routing process.
  *
@@ -78,17 +82,19 @@
 #include <sys/ioctl.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
+#ifdef sgi
+#include <net/radix.h>
+#else
+#include "radix.h"
+#endif
 #include <net/if.h>
 #include <net/route.h>
-#include <net/radix.h>
-#ifndef sgi
-struct walkarg;
-#endif
 #include <net/if_dl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #define RIPVERSION RIPv2
 #include <protocols/routed.h>
+
 
 /* Type of an IP address.
  *	Some systems do not like to pass structures, so do not use in_addr.
@@ -99,7 +105,11 @@ struct walkarg;
 #ifdef sgi
 #define naddr __uint32_t
 #else
+#ifdef __NetBSD__
+#define naddr u_int32_t
+#else
 #define naddr u_long
+#endif
 #define _HAVE_SA_LEN
 #define _HAVE_SIN_LEN
 #endif
@@ -148,6 +158,12 @@ union pkt_buf {
 };
 
 
+/* no more routes than this, to protect ourself in case something goes
+ * whacko and starts broadcast zillions of bogus routes.
+ */
+#define MAX_ROUTES  (128*1024)
+extern int total_routes;
+
 /* Main, daemon routing table structure
  */
 struct rt_entry {
@@ -162,7 +178,6 @@ struct rt_entry {
 #	    define RS_MHOME	0x020	/* from -m */
 #	    define RS_STATIC	0x040	/* from the kernel */
 #	    define RS_RDISC     0x080	/* from router discovery */
-#	    define RS_PERMANENT (RS_MHOME | RS_STATIC | RS_NET_SYN | RS_RDISC)
 	struct sockaddr_in rt_dst_sock;
 	naddr   rt_mask;
 	struct rt_spare {
@@ -196,11 +211,12 @@ struct rt_entry {
  *	nor non-passive, remote interfaces that are not aliases
  *		(i.e. remote & metric=0)
  */
-#define AGE_RT(rt,ifp) (0 == ((rt)->rt_state & RS_PERMANENT)		\
-			&& (!((rt)->rt_state & RS_IF)			\
-			    || (ifp) == 0				\
-			    || (((ifp)->int_state & IS_REMOTE)		\
-				&& !((ifp)->int_state & IS_PASSIVE))))
+#define AGE_RT(rt_state,ifp) (0 == ((rt_state) & (RS_MHOME | RS_STATIC	    \
+						  | RS_NET_SYN | RS_RDISC)) \
+			      && (!((rt_state) & RS_IF)			    \
+				  || (ifp) == 0				    \
+				  || (((ifp)->int_state & IS_REMOTE)	    \
+				      && !((ifp)->int_state & IS_PASSIVE))))
 
 /* true if A is better than B
  * Better if
@@ -240,7 +256,7 @@ struct interface {
 	naddr	int_std_net;		/* class A/B/C network (h) */
 	naddr	int_std_mask;		/* class A/B/C netmask (h) */
 	int	int_rip_sock;		/* for queries */
-	int	int_if_flags;		/* copied from kernel */
+	int	int_if_flags;		/* some bits copied from kernel */
 	u_int	int_state;
 	time_t	int_act_time;		/* last thought healthy */
 	u_short	int_transitions;	/* times gone up-down */
@@ -263,6 +279,7 @@ struct interface {
 	struct timeval int_rdisc_timer;
 };
 
+/* bits in int_state */
 #define IS_ALIAS	    0x0000001	/* interface alias */
 #define IS_SUBNET	    0x0000002	/* interface on subnetted network */
 #define	IS_REMOTE	    0x0000004	/* interface is not on this machine */
@@ -391,6 +408,7 @@ extern int	auth_ok;		/* 1=ignore auth if we do not care */
 extern struct timeval epoch;		/* when started */
 extern struct timeval now;		/* current idea of time */
 extern time_t	now_stale;
+extern time_t	now_expire;
 extern time_t	now_garbage;
 
 extern struct timeval next_bcast;	/* next general broadcast */
@@ -412,7 +430,8 @@ extern struct timeval need_kern;	/* need to update kernel table */
 extern int	update_seqno;		/* a route has changed */
 
 extern u_int	tracelevel, new_tracelevel;
-#define MAX_TRACELEVEL 3
+#define MAX_TRACELEVEL 4
+#define TRACEKERNEL (tracelevel >= 4)	/* log kernel changes */
 #define	TRACECONTENTS (tracelevel >= 3)	/* display packet contents */
 #define TRACEPACKETS (tracelevel >= 2)	/* note packets */
 #define	TRACEACTIONS (tracelevel != 0)
@@ -449,15 +468,10 @@ extern void	logbad(int, char *, ...);
 #else
 #define	DBGERR(dump,msg) LOGERR(msg)
 #endif
-#ifdef MCAST_PPP_BUG
-extern void mcasterr(struct interface *, int, char *);
-#define MCASTERR(ifp,dump,msg) mcasterr(ifp, dump, "setsockopt(IP_"msg")")
-#else
-#define MCASTERR(ifp, dump,msg) DBGERR(dump,"setsockopt(IP_" msg ")")
-#endif
 extern	char	*naddr_ntoa(naddr);
 extern	char	*saddr_ntoa(struct sockaddr *);
 
+extern void	*rtmalloc(size_t, char *);
 extern void	timevaladd(struct timeval *, struct timeval *);
 extern void	intvl_random(struct timeval *, u_long, u_long);
 extern int	getnet(char *, naddr *, naddr *);
@@ -472,6 +486,7 @@ extern void	trace_on(char *, int);
 extern void	trace_off(char*, ...);
 extern void	trace_flush(void);
 extern void	set_tracelevel(void);
+extern void	trace_kernel(char *, ...);
 extern void	trace_act(char *, ...);
 extern void	trace_pkt(char *, ...);
 extern void	trace_add_del(char *, struct rt_entry *);
@@ -539,9 +554,6 @@ extern naddr	ripv1_mask_net(naddr, struct interface *);
 extern naddr	ripv1_mask_host(naddr,struct interface *);
 #define		on_net(a,net,mask) (((ntohl(a) ^ (net)) & (mask)) == 0)
 extern int	check_dst(naddr);
-#ifdef sgi
-extern int	sysctl(int *, u_int, void *, size_t *, void *, size_t);
-#endif
 extern void	addrouteforif(register struct interface *);
 extern void	ifinit(void);
 extern int	walk_bad(struct radix_node *, struct walkarg *);
