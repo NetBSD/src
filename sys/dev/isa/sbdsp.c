@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.83 1998/08/10 01:25:33 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.84 1998/08/10 02:12:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2310,9 +2310,10 @@ sbdsp_midi_getinfo(addr, mi)
 }
 
 int
-sbdsp_midi_intr(sc)
-	struct sbdsp_softc *sc;
+sbdsp_midi_intr(addr)
 {
+	struct sbdsp_softc *sc = addr;
+
 	sc->sc_intrm(sc->sc_argm, sbdsp_rdsp(sc));
 	return (0);
 }
