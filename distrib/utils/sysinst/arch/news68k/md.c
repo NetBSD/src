@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 2002/05/20 16:10:33 lukem Exp $	*/
+/*	$NetBSD: md.c,v 1.14 2002/06/02 16:01:00 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -238,10 +238,12 @@ void
 md_set_no_x()
 {
 
-	toggle_getit (9);
-	toggle_getit (10);
-	toggle_getit (11);
-	toggle_getit (12);
-	toggle_getit (13);
-	toggle_getit (14);
+	toggle_getit (9);	/* X11 clients */
+#if 0
+	toggle_getit (10);	/* X11 fonts */
+	toggle_getit (11);	/* X11 servers */
+#endif
+	toggle_getit (12);	/* X11 contrib */
+	toggle_getit (13);	/* X programming */
+	toggle_getit (14);	/* X11 Misc. */
 }
