@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.6 1998/08/15 10:10:52 mycroft Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.7 1998/09/12 21:40:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,9 +114,19 @@ wdc_isapnp_attach(parent, self, aux)
 	    ipa->ipa_devclass);
 
 	sc->sc_ad.iot = ipa->ipa_iot;
-	sc->sc_ad.ioh = ipa->ipa_io[0].h;
 	sc->sc_ad.auxiot = ipa->ipa_iot;
-	sc->sc_ad.auxioh = ipa->ipa_io[1].h;
+	/*
+	 * An IDE controller can feed us the regions in any order. Pass
+	 * them along with the 8-byte region in sc_ad.ioh, and the other
+	 * (2 byte) region in auxioh.
+	 */
+	if (ipa->ipa_io[0].length == 8) {
+		sc->sc_ad.ioh = ipa->ipa_io[0].h;
+		sc->sc_ad.auxioh = ipa->ipa_io[1].h;
+	} else {
+		sc->sc_ad.ioh = ipa->ipa_io[1].h;
+		sc->sc_ad.auxioh = ipa->ipa_io[0].h;
+	}
 	sc->sc_ic = ipa->ipa_ic;
 
 	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
