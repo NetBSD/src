@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/28/93
-#	$Id: Makefile,v 1.6 1994/06/13 20:50:07 mycroft Exp $
+#	$Id: Makefile,v 1.7 1994/12/22 11:32:15 cgd Exp $
 
 .include "../config/Makefile.config"
 
 PROG=	fsinfo
-MAN8=	fsinfo.0
+MAN=	fsinfo.8
 SRCS=	fsinfo.c fsi_gram.c fsi_lex.c \
 	fsi_util.c fsi_analyze.c fsi_dict.c \
 	wr_atab.c wr_bparam.c wr_dumpset.c \

@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 4/22/94
-#	$Id: Makefile,v 1.6 1994/06/13 20:46:49 mycroft Exp $
+#	$Id: Makefile,v 1.7 1994/12/22 11:32:00 cgd Exp $
 
 .include "../config/Makefile.config"
 
 PROG=	amd
-MAN8=	amd.0
+MAN=	amd.8
 SRCS=	afs_ops.c am_ops.c clock.c util.c xutil.c \
 	efs_ops.c mapc.c info_file.c info_hes.c \
 	info_ndbm.c info_passwd.c info_nis.c \

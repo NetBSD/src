@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.1 1994/03/29 12:40:06 cgd Exp $
+#	$Id: Makefile,v 1.2 1994/12/22 11:31:31 cgd Exp $
 
 PROG=	ac
-MAN8=	ac.0
+MAN=	ac.8
 
 # If "CONSOLE_TTY" is not defined, this program is compatible with the
 # traditional implementation (using SunOS 4.x as the sample traditional
