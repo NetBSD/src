@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.252 2002/06/13 11:11:08 dsainty Exp $
+$NetBSD: usbdevs,v 1.253 2002/06/16 15:00:18 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1184,6 +1184,8 @@ product SONY PS2KEYBOARDHUB	0x005d	PlayStation2 keyboard hub
 product SONY PS2MOUSE		0x0061	PlayStatoin2 mouse
 product SONY CLIE_40		0x0066	Sony Clie v4.0
 product SONY CLIE_40_MS		0x006d	Sony Clie v4.0 Memory Stick slot
+product SONY CLIE_41_MS		0x0099	Sony Clie v4.1 Memory Stick slot
+product SONY CLIE_41		0x009a	Sony Clie v4.1
 
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	USB Communicator
