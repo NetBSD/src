@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.174 2001/01/28 20:48:31 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.175 2001/01/31 15:17:42 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1323,8 +1323,11 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 #endif
 
 	/* XXX - Implement this! */
-	if (boundary)
-		panic("_bus_dma_valloc_skewed: not implemented");
+	if (boundary) {
+		printf("_bus_dma_valloc_skewed: "
+			"boundary check not implemented");
+		return (0);
+	}
 
 	/*
 	 * First, find a region large enough to contain any aligned chunk
@@ -1332,7 +1335,7 @@ _bus_dma_valloc_skewed(size, boundary, align, skew)
 	oversize = size + align - PAGE_SIZE;
 	sva = uvm_km_valloc(kernel_map, oversize);
 	if (sva == 0)
-		return (ENOMEM);
+		return (0);
 
 	/*
 	 * Compute start of aligned region
