@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: scc.4,v 1.6 2003/04/25 03:17:08 fair Exp $
+.\"	$NetBSD: scc.4,v 1.7 2003/05/01 19:31:54 fair Exp $
 .\"
 .Dd April 24, 2003
 .Dt SCC 4
@@ -49,13 +49,6 @@ Controller
 via the
 .Tn IOASIC
 found on
-.Tn DEC
-3000/300, 3000/500 and
-.Po
-supported by
-.Nx Ns /alpha
-.Pc ,
-and
 .Tn DECstation
 5000 models in the /100, /20, and /240 series
 .Po
@@ -82,14 +75,6 @@ Speeds up to 230400 are supported by the chip and the motherboard,
 but speeds higher than 57600 do not work reliably without an external
 clock signal.
 .Sh FILES
-.Ss alpha
-.Bl -tag -width Pa -compact
-.It Pa /dev/ttyB0
-.It Pa /dev/ttyB1
-.It Pa /dev/ttyB2
-.It Pa /dev/ttyB3
-.El
-.Ss pmax
 .Bl -tag -width Pa -compact
 .It Pa /dev/ttya
 .It Pa /dev/ttyb
@@ -124,6 +109,21 @@ The
 .Nm
 driver first appeared in
 .Bx 4.4 .
+.Pp
+The
+.Nm
+driver was also used for the
+.Tn IOASIC
+.Tn SCC
+found in 
+.Tn DEC
+.Tn Alpha
+model 3000
+.Tn TurboCHANNEL
+based systems;
+.Nx Ns /alpha
+has since been converted to use the machine-independent
+.Xr zstty 4 .
 .Sh BUGS
 The
 .Tn IOASIC
