@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.10 2000/05/15 23:56:49 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.11 2000/07/06 02:02:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -224,11 +224,11 @@ satlinkopen(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	int error, unit = minor(dev);
 	struct satlink_softc *sc;
+	int error;
 
-	if (unit >= satlink_cd.cd_ndevs ||
-	    (sc = satlink_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&satlink_cd, minor(dev));
+	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_flags & SATF_ISOPEN)
@@ -260,8 +260,7 @@ satlinkclose(dev, flags, fmt, p)
 	int flags, fmt;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct satlink_softc *sc = satlink_cd.cd_devs[unit];
+	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int s;
 
 	s = splsoftclock();
@@ -280,8 +279,7 @@ satlinkread(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	int unit = minor(dev);
-	struct satlink_softc *sc = satlink_cd.cd_devs[unit];
+	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int error, s, count, sptr;
 	int wrapcnt, oresid;
 
@@ -366,8 +364,7 @@ satlinkioctl(dev, cmd, data, flags, p)
 	int flags;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct satlink_softc *sc = satlink_cd.cd_devs[unit];
+	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 
 	switch (cmd) {
 	case SATIORESET:
@@ -394,8 +391,7 @@ satlinkpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	int unit = minor(dev);
-	struct satlink_softc *sc = satlink_cd.cd_devs[unit];
+	struct satlink_softc *sc = device_lookup(&satlink_cd, minor(dev));
 	int s, revents;
 
 	revents = events & (POLLOUT | POLLWRNORM);

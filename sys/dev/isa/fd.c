@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.6 2000/06/28 16:27:53 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.7 2000/07/06 02:02:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -524,7 +524,7 @@ void
 fdstrategy(bp)
 	register struct buf *bp;	/* IO operation to perform */
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(bp->b_dev)];
+	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(bp->b_dev));
 	int sz;
  	int s;
 
@@ -765,16 +765,13 @@ fdopen(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
- 	int unit;
 	struct fd_softc *fd;
 	struct fd_type *type;
 
-	unit = FDUNIT(dev);
-	if (unit >= fd_cd.cd_ndevs)
-		return ENXIO;
-	fd = fd_cd.cd_devs[unit];
-	if (fd == 0)
-		return ENXIO;
+	fd = device_lookup(&fd_cd, FDUNIT(dev));
+	if (fd == NULL)
+		return (ENXIO);
+
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL)
 		return ENXIO;
@@ -798,7 +795,7 @@ fdclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
 	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
@@ -1270,7 +1267,7 @@ fdioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 	struct fdformat_parms *form_parms;
 	struct fdformat_cmd *form_cmd;
 	struct ne7_fd_formb fd_formb;
@@ -1443,7 +1440,7 @@ fdformat(dev, finfo, p)
 	struct proc *p;
 {
 	int rv = 0, s;
-	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(dev));
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 

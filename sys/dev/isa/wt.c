@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.50 2000/06/26 14:59:04 mrg Exp $	*/
+/*	$NetBSD: wt.c,v 1.51 2000/07/06 02:02:50 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -325,11 +325,9 @@ wtopen(dev, flag, mode, p)
 	struct wt_softc *sc;
 	int error;
 
-	if (unit >= wt_cd.cd_ndevs)
-		return ENXIO;
-	sc = wt_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
+	sc = device_lookup(&wt_cd, unit);
+	if (sc == NULL)
+		return (ENXIO);
 
 	/* Check that device is not in use */
 	if (sc->flags & TPINUSE)
@@ -412,8 +410,7 @@ wtclose(dev, flags, mode, p)
 	int mode;
 	struct proc *p;
 {
-	int unit = minor(dev) & T_UNIT;
-	struct wt_softc *sc = wt_cd.cd_devs[unit];
+	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 
 	/* If rewind is pending, do nothing */
 	if (sc->flags & TPREW)
@@ -467,8 +464,7 @@ wtioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int unit = minor(dev) & T_UNIT;
-	struct wt_softc *sc = wt_cd.cd_devs[unit];
+	struct wt_softc *sc = device_lookup(&wt_cd, minor(dev) & T_UNIT);
 	int error, count, op;
 
 	switch (cmd) {
@@ -567,8 +563,7 @@ void
 wtstrategy(bp)
 	struct buf *bp;
 {
-	int unit = minor(bp->b_dev) & T_UNIT;
-	struct wt_softc *sc = wt_cd.cd_devs[unit];
+	struct wt_softc *sc = device_lookup(&wt_cd, minor(bp->b_dev) & T_UNIT);
 	int s;
 
 	bp->b_resid = bp->b_bcount;
