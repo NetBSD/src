@@ -1,4 +1,4 @@
-/*	$NetBSD: vripreg.h,v 1.7 2002/02/11 11:44:36 takemura Exp $	*/
+/*	$NetBSD: vripreg.h,v 1.8 2003/04/01 02:33:52 igy Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -58,7 +58,7 @@
 #define VR4181_FIR_ADDR		0x0a000000	/* XXX */
 #define VR4181_MEMCON_ADDR	0x0a000300
 #define VR4181_ISABRG_ADDR	0x0b0002c0
-#define VR4181_ECU_ADDR		0x0b0006e0
+#define VR4181_ECU_ADDR		0x0b0008e0
 #define VR4181_DCU81_ADDR	0x0a000020
 #define VR4181_CSI81_ADDR	0x0b000900
 #define VR4181_GIU81_ADDR	0x0b000300

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcureg.h,v 1.8 2001/09/05 16:08:46 sato Exp $	*/
+/*	$NetBSD: bcureg.h,v 1.9 2003/04/01 02:33:51 igy Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -448,12 +448,12 @@
 #define			BCUCLKSPEED_TDIV2	0x0
 #define		BCUCLKSPEED_TDIVSHFT	(12)		
 
-#define		BCU81CLKSPEED_DIVTMASK	(0x7<<12)	/* (=4181) */
+#define		BCU81CLKSPEED_DIVTMASK	(0x7<<13)	/* (=4181) */
 #define			BCU81CLKSPEED_DIVT1	0x7
 #define			BCU81CLKSPEED_DIVT2	0x3
 #define			BCU81CLKSPEED_DIVT3	0x5
 #define			BCU81CLKSPEED_DIVT4	0x6
-#define		BCU81CLKSPEED_DIVTSHFT	(12)		
+#define		BCU81CLKSPEED_DIVTSHFT	(13)		
 
 #define		BCUCLKSPEED_DIVVTMASK	(0xf<<8)	/* (= 4121) */
 #define			BCUCLKSPEED_DIVVT1	0x1
