@@ -1,4 +1,9 @@
-/*	$NetBSD: trylook.c,v 1.2 1998/01/09 08:09:17 perry Exp $	*/
+/*	$NetBSD: trylook.c,v 1.3 1998/03/14 04:39:55 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: trylook.c,v 1.3 1998/03/14 04:39:55 lukem Exp $");
+#endif
 
 /*
  * trylook.c - test program for lookup.c

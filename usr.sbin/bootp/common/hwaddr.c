@@ -1,4 +1,9 @@
-/*	$NetBSD: hwaddr.c,v 1.3 1998/01/09 08:09:10 perry Exp $	*/
+/*	$NetBSD: hwaddr.c,v 1.4 1998/03/14 04:39:54 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: hwaddr.c,v 1.4 1998/03/14 04:39:54 lukem Exp $");
+#endif
 
 /*
  * hwaddr.c - routines that deal with hardware addresses.
@@ -22,10 +27,12 @@
 #include <net/if_arp.h>
 #include <netinet/in.h>
 #include <stdio.h>
+#include <stdlib.h>
 #ifndef	NO_UNISTD
 #include <unistd.h>
 #endif
 #include <syslog.h>
+#include <arpa/inet.h>
 
 #ifndef USE_BFUNCS
 /* Yes, memcpy is OK here (no overlapped copies). */
@@ -132,7 +139,6 @@ setarp(s, ia, ha, len)
 	int status;
 	char buf[256];
 	char *a;
-	extern char *inet_ntoa();
 
 	a = inet_ntoa(*ia);
 	sprintf(buf, "arp -d %s; arp -s %s %s temp",

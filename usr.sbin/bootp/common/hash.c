@@ -20,8 +20,9 @@ ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 ************************************************************************/
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: hash.c,v 1.3 1997/10/18 04:37:01 lukem Exp $";
+__RCSID("$NetBSD: hash.c,v 1.4 1998/03/14 04:39:54 lukem Exp $");
 #endif
 
 

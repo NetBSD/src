@@ -1,4 +1,9 @@
-/*	$NetBSD: dovend.c,v 1.2 1998/01/09 08:09:06 perry Exp $	*/
+/*	$NetBSD: dovend.c,v 1.3 1998/03/14 04:39:54 lukem Exp $	*/
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: dovend.c,v 1.3 1998/03/14 04:39:54 lukem Exp $");
+#endif
 
 /*
  * dovend.c : Inserts all but the first few vendor options.
@@ -58,7 +63,9 @@ dovend_rfc1497(hp, buf, len)
 {
 	int bytesleft = len;
 	byte *vp = buf;
+#if 0
 	char *tmpstr;
+#endif
 
 	static char noroom[] = "%s: No room for \"%s\" option";
 #define	NEED(LEN, MSG) do                       \

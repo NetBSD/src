@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.4 1998/01/09 08:09:03 perry Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.5 1998/03/14 04:39:53 lukem Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -34,6 +34,11 @@
  * 09/93 Original developed by Gordon W. Ross <gwr@mc.com>
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: bootptest.c,v 1.5 1998/03/14 04:39:53 lukem Exp $");
+#endif
+
 char *usage = "bootptest [-h] server-name [vendor-data-template-file]";
 
 #include <sys/types.h>
@@ -55,10 +60,12 @@ char *usage = "bootptest [-h] server-name [vendor-data-template-file]";
 #include <ctype.h>
 #include <netdb.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include "bootp.h"
 #include "bootptest.h"
 #include "getif.h"
+#include "report.h"
 #include "patchlevel.h"
 
 #define LOG_ERR 1
@@ -108,14 +115,25 @@ unsigned char vm_cmu[4] = VM_CMU;
 unsigned char vm_rfc1048[4] = VM_RFC1048;
 short secs;						/* How long client has waited */
 
-char *get_errmsg();
-extern void bootp_print();
+
+#ifdef	__STDC__
+#define P(args) args
+#else
+#define P(args) ()
+#endif
+
+extern int getether P((char *, char *));
+int main P((int, char **));
+void send_request P((int));
+
+#undef P
 
 /*
  * Initialization such as command-line processing is done, then
  * the receiver loop is started.  Die when interrupted.
  */
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -128,7 +146,7 @@ main(argc, argv)
 	char *vendor_file = NULL;
 	char *bp_file = NULL;
 	int s;				/* Socket file descriptor */
-	int n, tolen, fromlen, recvcnt;
+	int n, fromlen, recvcnt;
 	int use_hwa = 0;
 	int32 vend_magic;
 	int32 xid;
@@ -408,7 +426,7 @@ main(argc, argv)
 		/* set globals needed by bootp_print() */
 		snaplen = n;
 		snapend = (unsigned char *) rcvbuf + snaplen;
-		bootp_print(rcvbuf, n, sin_from.sin_port, 0);
+		bootp_print((struct bootp *)rcvbuf, n, sin_from.sin_port, 0);
 		putchar('\n');
 		/*
 		 * This no longer exits immediately after receiving
@@ -421,12 +439,13 @@ main(argc, argv)
 	exit(1);
 }
 
+void
 send_request(s)
 	int s;
 {
 	/* Print the request packet. */
 	printf("Sending to %s", inet_ntoa(sin_server.sin_addr));
-	bootp_print(sndbuf, snaplen, sin_from.sin_port, 0);
+	bootp_print((struct bootp *)sndbuf, snaplen, sin_from.sin_port, 0);
 	putchar('\n');
 
 	/* Send the request packet. */
@@ -450,7 +469,7 @@ printfn(s, ep)
 	register u_char c;
 
 	putchar('"');
-	while (c = *s++) {
+	while ((c = *s++) != 0) {
 		if (s > ep) {
 			putchar('"');
 			return (1);

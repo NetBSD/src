@@ -20,8 +20,9 @@ ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 SOFTWARE.
 ************************************************************************/
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: bootpef.c,v 1.3 1997/10/18 04:36:56 lukem Exp $";
+__RCSID("$NetBSD: bootpef.c,v 1.4 1998/03/14 04:39:53 lukem Exp $");
 #endif
 
 
@@ -97,9 +98,9 @@ static char rcsid[] = "$NetBSD: bootpef.c,v 1.3 1997/10/18 04:36:56 lukem Exp $"
 #define P(args) ()
 #endif
 
-static void dovend_rfc1048 P((struct bootp *, struct host *, int32));
 static void mktagfile P((struct host *));
 static void usage P((void));
+int main P((int, char **));
 
 #undef P
 
@@ -139,7 +140,7 @@ usage()
  * Initialization such as command-line processing is done and then the
  * main server loop is started.
  */
-void
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -275,6 +276,7 @@ main(argc, argv)
 		mktagfile(hp);
 		hp = (struct host *) hash_NextEntry(nmhashtable);
 	}
+	exit(0);
 }
 
 
@@ -291,7 +293,6 @@ mktagfile(hp)
 	FILE *fp;
 	int bytesleft, len;
 	byte *vp;
-	char *tmpstr;
 
 	if (!hp->flags.exten_file)
 		return;
@@ -332,7 +333,7 @@ mktagfile(hp)
 	}
 	fclose(fp);
 
-} /* dovend_rfc1048 */
+} /* mktagfile */
 
 /*
  * Local Variables:
