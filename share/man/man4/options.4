@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.7 1997/01/30 10:44:23 tls Exp $
+.\"	$NetBSD: options.4,v 1.8 1997/01/30 22:11:47 tls Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -214,13 +214,13 @@ conditionalized debugging code. Note that many parts of the kernel
 (typically device drivers) include their own
 .Em #ifdef XXX_DEBUG
 conditionals instead.
+This option also turns on certain other options, notably the
+.Em KMEMSTATS
+option, which may decrease system performance.
 .It Cd options DIAGNOSTIC
 Adds code to the kernel that does internal consistency checks.  This
 code will cause the kernel to panic if corruption of internal data
-structures is detected.  This option also enables certain other options,
-notably the
-.Em KMEMSTATS
-option, which may decrease system performance.
+structures is detected.
 .It Cd options KTRACE
 Add hooks for the system call tracing facility, which allows users to
 watch the system call invokation behavior of processes. See
@@ -591,7 +591,8 @@ the
 .Xr ncr 4
 driver,
 and much of the networking code.
-.Em N.B. This option is enabled by the DIAGNOSTIC option.
+.Em N.B. This option is silently
+.Em turned on by the DEBUG option.
 .El
 .Ss Networking Options
 .Bl -ohang
