@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.5 2003/03/24 17:00:54 matt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.6 2003/04/08 19:37:17 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -119,6 +119,24 @@ enum gfe_hash_op {
 #define	gt32toh(a)		le32toh(a)
 #endif
 
+#define GE_RXDSYNC(sc, rxq, n, ops) \
+	bus_dmamap_sync((sc)->sc_dmat, (rxq)->rxq_desc_mem.gdm_map, \
+	    (n) * sizeof((rxq)->rxq_descs[0]), sizeof((rxq)->rxq_descs[0]), \
+	    (ops))
+#define	GE_RXDPRESYNC(sc, rxq, n) \
+	GE_RXDSYNC(sc, rxq, n, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define	GE_RXDPOSTSYNC(sc, rxq, n) \
+	GE_RXDSYNC(sc, rxq, n, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+
+#define GE_TXDSYNC(sc, txq, n, ops) \
+	bus_dmamap_sync((sc)->sc_dmat, (txq)->txq_desc_mem.gdm_map, \
+	    (n) * sizeof((txq)->txq_descs[0]), sizeof((txq)->txq_descs[0]), \
+	    (ops))
+#define	GE_TXDPRESYNC(sc, txq, n) \
+	GE_TXDSYNC(sc, txq, n, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)
+#define	GE_TXDPOSTSYNC(sc, txq, n) \
+	GE_TXDSYNC(sc, txq, n, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)
+
 #define	STATIC
 
 STATIC int gfe_match (struct device *, struct cfdata *, void *);
@@ -158,9 +176,9 @@ STATIC int gfe_intr(void *);
 
 STATIC int gfe_whack(struct gfe_softc *, enum gfe_whack_op);
 
-STATIC int gfe_hash_compute(struct gfe_softc *, const u_int8_t [ETHER_ADDR_LEN]);
+STATIC int gfe_hash_compute(struct gfe_softc *, const uint8_t [ETHER_ADDR_LEN]);
 STATIC int gfe_hash_entry_op(struct gfe_softc *, enum gfe_hash_op,
-	enum gfe_rxprio, const u_int8_t [ETHER_ADDR_LEN]);
+	enum gfe_rxprio, const uint8_t [ETHER_ADDR_LEN]);
 STATIC int gfe_hash_multichg(struct ethercom *, const struct ether_multi *,
 	u_long);
 STATIC int gfe_hash_fill(struct gfe_softc *);
@@ -522,14 +540,17 @@ gfe_ifwatchdog(struct ifnet *ifp)
 	struct gfe_txqueue *txq;
 
 	GE_FUNC_ENTER(sc, "gfe_ifwatchdog");
-	printf("%s: device timeout",
-		sc->sc_dev.dv_xname);
+	printf("%s: device timeout", sc->sc_dev.dv_xname);
 	if ((txq = sc->sc_txq[GE_TXPRIO_HI]) != NULL) {
-		unsigned int curtxdnum = (bus_space_read_4(sc->sc_gt_memt, sc->sc_gt_memh, txq->txq_ectdp) - txq->txq_desc_busaddr) / 16;
-		printf(" (fi=%d,lo=%d,cur=%d(%#x),icm=%#x) ",
-		    txq->txq_fi, txq->txq_lo, curtxdnum,
-		    txq->txq_descs[curtxdnum].ed_cmdsts,
+		uint32_t curtxdnum = (bus_space_read_4(sc->sc_gt_memt, sc->sc_gt_memh, txq->txq_ectdp) - txq->txq_desc_busaddr) / sizeof(txq->txq_descs[0]);
+		GE_TXDPOSTSYNC(sc, txq, txq->txq_fi);
+		GE_TXDPOSTSYNC(sc, txq, curtxdnum);
+		printf(" (fi=%d(%#x),lo=%d,cur=%d(%#x),icm=%#x) ",
+		    txq->txq_fi, txq->txq_descs[txq->txq_fi].ed_cmdsts,
+		    txq->txq_lo, curtxdnum, txq->txq_descs[curtxdnum].ed_cmdsts,
 		    GE_READ(sc, EICR));
+		GE_TXDPRESYNC(sc, txq, txq->txq_fi);
+		GE_TXDPRESYNC(sc, txq, curtxdnum);
 	}
 	printf("\n");
 	ifp->if_oerrors++;
@@ -659,9 +680,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		unsigned int cmdsts;
 		size_t buflen;
 
-		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
-				rxq->rxq_fi * sizeof(*rxd), sizeof(*rxd),
-				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		GE_RXDPOSTSYNC(sc, rxq, rxq->rxq_fi);
 		cmdsts = gt32toh(rxd->ed_cmdsts);
 		GE_DPRINTF(sc, (":%d=%#x", rxq->rxq_fi, cmdsts));
 		rxq->rxq_cmdsts = cmdsts;
@@ -672,9 +691,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		 */
 		buflen = gt32toh(rxd->ed_lencnt) & 0xffff;
 		if ((cmdsts & RX_CMD_O) && buflen == 0) {
-			bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
-				rxq->rxq_fi * sizeof(*rxd), sizeof(*rxd),
-				BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+			GE_RXDPRESYNC(sc, rxq, rxq->rxq_fi);
 			break;
 		}
 
@@ -755,9 +772,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    ((unsigned long *)rxd)[0], ((unsigned long *)rxd)[1],
 		    ((unsigned long *)rxd)[2], ((unsigned long *)rxd)[3]));
 #endif
-		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_desc_mem.gdm_map,
-				rxq->rxq_fi * sizeof(*rxd), sizeof(*rxd),
-				BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		GE_RXDPRESYNC(sc, rxq, rxq->rxq_fi);
 		if (++rxq->rxq_fi == GE_RXDESC_MAX)
 			rxq->rxq_fi = 0;
 		rxq->rxq_active++;
@@ -996,20 +1011,36 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	 * Have we [over]consumed our limit of descriptors?
 	 * Do we have enough free descriptors?
 	 */
-	if (GE_TXDESC_MAX == txq->txq_nactive + 1) {
+	if (GE_TXDESC_MAX == txq->txq_nactive + 2) {
 		volatile struct gt_eth_desc * const txd2 = &txq->txq_descs[txq->txq_fi];
 		uint32_t cmdsts;
 		size_t pktlen;
-		bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
-				txq->txq_fi * sizeof(*txd), sizeof(*txd),
-				BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		GE_TXDPOSTSYNC(sc, txq, txq->txq_fi);
 		cmdsts = gt32toh(txd2->ed_cmdsts);
 		if (cmdsts & TX_CMD_O) {
-			bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
-				txq->txq_fi * sizeof(*txd), sizeof(*txd),
-				BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-			GE_FUNC_EXIT(sc, "@");
-			return 0;
+			int nextin;
+			/*
+			 * Sometime the Discovery forgets to update the
+			 * last descriptor.  See if we own the descriptor
+			 * after it (since we know we've turned that to
+			 * the discovery and if we owned it, the Discovery
+			 * gave it back).  If we do, we know the Discovery
+			 * gave back this one but forgot to mark it as ours.
+			 */
+			nextin = txq->txq_fi + 1;
+			if (nextin == GE_TXDESC_MAX)
+				nextin = 0;
+			GE_TXDPOSTSYNC(sc, txq, nextin);
+			if (gt32toh(txq->txq_descs[nextin].ed_cmdsts) & TX_CMD_O) {
+				GE_TXDPRESYNC(sc, txq, txq->txq_fi);
+				GE_TXDPRESYNC(sc, txq, nextin);
+				GE_FUNC_EXIT(sc, "@");
+				return 0;
+			}
+#ifdef DEBUG
+			printf("%s: txenqueue: transmitter resynced at %d\n",
+			    sc->sc_dev.dv_xname, txq->txq_fi);
+#endif
 		}
 		if (++txq->txq_fi == GE_TXDESC_MAX)
 			txq->txq_fi = 0;
@@ -1064,11 +1095,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	    txq->txq_outptr, m->m_pkthdr.len, BUS_DMASYNC_PREWRITE);
 	txd->ed_bufptr = htogt32(txq->txq_buf_busaddr + txq->txq_outptr);
 	txd->ed_lencnt = htogt32(m->m_pkthdr.len << 16);
-#if 0
-	bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
-	    txq->txq_lo * sizeof(*txd), sizeof(*txd),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-#endif
+	GE_TXDPRESYNC(sc, txq, txq->txq_lo);
 
 	/*
 	 * Request a buffer interrupt every 2/3 of the way thru the transmit
@@ -1086,9 +1113,7 @@ gfe_tx_enqueue(struct gfe_softc *sc, enum gfe_txprio txprio)
 	    ((unsigned long *)txd)[0], ((unsigned long *)txd)[1],
 	    ((unsigned long *)txd)[2], ((unsigned long *)txd)[3]));
 #endif
-	bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
-	    txq->txq_lo * sizeof(*txd), sizeof(*txd),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	GE_TXDPRESYNC(sc, txq, txq->txq_lo);
 
 	txq->txq_outptr += roundup(m->m_pkthdr.len, dcache_line_size);
 	/*
@@ -1152,56 +1177,38 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 		uint32_t cmdsts;
 		size_t pktlen;
 
-		bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
-		    txq->txq_fi * sizeof(*txd), sizeof(*txd),
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		GE_TXDPOSTSYNC(sc, txq, txq->txq_fi);
 		if ((cmdsts = gt32toh(txd->ed_cmdsts)) & TX_CMD_O) {
-			/*
-			 * If the GT owns this descriptor and according
-			 * to the status register, the transmit engine
-			 * is not running, restart it.
-			 */
-#if 0
-			if ((GE_READ(sc, EPSR) & txq->txq_epsrbits &
-			    (ETH_EPSR_TxHigh|ETH_EPSR_TxLow)) == 0) {
-				/*
-				 * If the current transmit descriptor isn't
-				 * pointing at this descriptor, then we've
-				 * lost synch, reset it to this one before
-				 * restarting.
-				 */
-				unsigned int curtxdnum = (
-				    gt_read(sc->sc_dev.dv_parent,
-					txq->txq_ectdp) -
-				    txq->txq_desc_busaddr) / 16;
-				if (curtxdnum != txq->txq_fi) {
-					gt_write(sc->sc_dev.dv_parent,
-					    txq->txq_ectdp,
-					    txq->txq_desc_busaddr +
-					      sizeof(*ed) * txq->txq_fi);
-					GE_DPRINTF(sc,
-					    ("(oldcur=%d,newcur=fi(%d))",
-					     curtxdnum, txq->txq_fi));
-					printf("%s: transmitter synchronization"
-					    " lost at %d; repositioning"
-					    " to %d\n",
-					    sc->sc_dev.dv_xname,
-					    curtxdnum, txq->txq_fi);
-				}
-				/*
-				 * [Re-] Kick the transmit engine.
-				 */
-				GE_WRITE(sc, ESDCMR,
-				     txq->txq_esdcmrbits &
-					    (ETH_ESDCMR_TXDH|ETH_ESDCMR_TXDL));
-				GE_DPRINTF(sc, ("*"));
+			int nextin;
+
+			if (txq->txq_nactive == 1) {
+				GE_TXDPRESYNC(sc, txq, txq->txq_fi);
+				GE_FUNC_EXIT(sc, "");
+				return intrmask;
 			}
+			/*
+			 * Sometimes the Discovery forgets to update the
+			 * ownership bit in the descriptor.  See if we own the
+			 * descriptor after it (since we know we've turned
+			 * that to the Discovery and if we own it now then the
+			 * Discovery gave it back).  If we do, we know the
+			 * Discovery gave back this one but forgot to mark it
+			 * as ours.
+			 */
+			nextin = txq->txq_fi + 1;
+			if (nextin == GE_TXDESC_MAX)
+				nextin = 0;
+			GE_TXDPOSTSYNC(sc, txq, nextin);
+			if (gt32toh(txq->txq_descs[nextin].ed_cmdsts) & TX_CMD_O) {
+				GE_TXDPRESYNC(sc, txq, txq->txq_fi);
+				GE_TXDPRESYNC(sc, txq, nextin);
+				GE_FUNC_EXIT(sc, "");
+				return intrmask;
+			}
+#ifdef DEBUG
+			printf("%s: txdone: transmitter resynced at %d\n",
+			    sc->sc_dev.dv_xname, txq->txq_fi);
 #endif
-			bus_dmamap_sync(sc->sc_dmat, txq->txq_desc_mem.gdm_map,
-			    txq->txq_fi * sizeof(*txd), sizeof(*txd),
-			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-			GE_FUNC_EXIT(sc, "");
-			return intrmask;
 		}
 #if 0
 		GE_DPRINTF(sc, ("([%d]<-%08lx.%08lx.%08lx.%08lx)",
@@ -1223,7 +1230,7 @@ gfe_tx_done(struct gfe_softc *sc, enum gfe_txprio txprio, uint32_t intrmask)
 		if (cmdsts & TX_STS_ES)
 			ifp->if_oerrors++;
 
-		txd->ed_bufptr = 0;
+		/* txd->ed_bufptr = 0; */
 
 		ifp->if_timer = 5;
 		--txq->txq_nactive;
@@ -1636,7 +1643,7 @@ gfe_hash_compute(struct gfe_softc *sc, const uint8_t eaddr[ETHER_ADDR_LEN])
 
 int
 gfe_hash_entry_op(struct gfe_softc *sc, enum gfe_hash_op op,
-	enum gfe_rxprio prio, const u_int8_t eaddr[ETHER_ADDR_LEN])
+	enum gfe_rxprio prio, const uint8_t eaddr[ETHER_ADDR_LEN])
 {
 	uint64_t he;
 	uint64_t *maybe_he_p = NULL;
