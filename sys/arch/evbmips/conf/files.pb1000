@@ -1,4 +1,4 @@
-#	$NetBSD: files.pb1000,v 1.6 2003/05/25 14:08:20 tsutsui Exp $
+#	$NetBSD: files.pb1000,v 1.7 2003/10/25 14:36:50 simonb Exp $
 
 file	arch/evbmips/alchemy/pb1000_intr.c
 
@@ -31,6 +31,9 @@ file	arch/evbmips/alchemy/pb1000_obio.c		obio
 device	aupcmcia: pcmciabus
 attach	aupcmcia at obio
 file	arch/evbmips/alchemy/dev/aupcmcia.c	aupcmcia
+
+# Machine-independent SCSI drivers
+include "dev/scsipi/files.scsipi"
 
 include "dev/wscons/files.wscons"
 # Machine-independent USB device support
