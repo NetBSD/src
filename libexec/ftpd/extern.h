@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 1998/09/12 20:46:45 kleink Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 1998/12/28 04:54:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,6 +46,7 @@ void	fatal __P((char *));
 int	ftpd_pclose __P((FILE *));
 FILE   *ftpd_popen __P((char *, char *, int));
 char   *getline __P((char *, int, FILE *));
+void	logcmd __P((const char *, off_t, const char *, const char *));
 void	logwtmp __P((const char *, const char *, const char *));
 void	lreply __P((int, const char *, ...));
 void	makedir __P((char *));
@@ -104,7 +105,6 @@ extern	int		guest;
 extern	int		hasyyerrored;
 extern	struct sockaddr_in his_addr;
 extern	char		hostname[];
-extern	jmp_buf		errcatch;
 #ifdef KERBEROS5
 extern	krb5_context	kcontext;
 #endif

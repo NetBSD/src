@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.23 1998/09/07 08:11:20 lukem Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.24 1998/12/28 04:54:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.23 1998/09/07 08:11:20 lukem Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.24 1998/12/28 04:54:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,8 @@ static	int cmd_bytesz;
 char	cbuf[512];
 char	*fromname;
 int	hasyyerrored;
+
+extern	jmp_buf		errcatch;
 
 %}
 
@@ -510,8 +512,9 @@ cmd
 	| FEAT CRLF
 		{
 			lreply(211, "Features supported");
-			printf(" SIZE\r\n");
 			printf(" MDTM\r\n");
+			printf(" REST STREAM\r\n");
+			printf(" SIZE\r\n");
 			reply(211, "End");
 		}
 
@@ -1299,7 +1302,7 @@ help(ctab, s)
 		int columns, lines;
 
 		lreply(214, "The following %scommands are recognized.", type);
-		lreply(214, "(`*' = not implemented, `+' = supports options)");
+		lreply(214, "(`-' = not implemented, `+' = supports options)");
 		columns = 76 / width;
 		if (columns == 0)
 			columns = 1;
@@ -1311,7 +1314,7 @@ help(ctab, s)
 				fputs(c->name, stdout);
 				w = strlen(c->name);
 				if (! c->implemented) {
-					putchar('*');
+					putchar('-');
 					w++;
 				}
 				if (c->hasopts) {
