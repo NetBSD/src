@@ -59,6 +59,7 @@ pam_authenticate(pam_handle_t *pamh,
 	r = openpam_dispatch(pamh, PAM_SM_AUTHENTICATE, flags);
 	pam_set_item(pamh, PAM_AUTHTOK, NULL);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

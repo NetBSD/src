@@ -77,6 +77,7 @@ pam_getenvlist(pam_handle_t *pamh)
 	}
 	envlist[i] = NULL;
 	RETURNP(envlist);
+	/*NOTREACHED*/
 }
 
 /**

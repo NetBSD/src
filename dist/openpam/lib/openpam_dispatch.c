@@ -172,6 +172,7 @@ openpam_dispatch(pam_handle_t *pamh,
 	if (!fail && err != PAM_NEW_AUTHTOK_REQD)
 		err = PAM_SUCCESS;
 	RETURNC(err);
+	/*NOTREACHED*/
 }
 
 #if !defined(OPENPAM_RELAX_CHECKS)

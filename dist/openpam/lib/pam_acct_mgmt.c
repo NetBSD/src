@@ -56,6 +56,7 @@ pam_acct_mgmt(pam_handle_t *pamh,
 	ENTER();
 	r = openpam_dispatch(pamh, PAM_SM_ACCT_MGMT, flags);
 	RETURNC(r);
+	/*NOTREACHED*/
 }
 
 /*

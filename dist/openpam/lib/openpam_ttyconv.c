@@ -220,6 +220,7 @@ openpam_ttyconv(int n,
 	FREE(aresp);
 	*resp = NULL;
 	RETURNC(PAM_CONV_ERR);
+	/*NOTREACHED*/
 }
 
 /*
