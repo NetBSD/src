@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.52 1998/02/28 10:39:19 tron Exp $
+#	$NetBSD: bsd.port.mk,v 1.53 1998/02/28 16:02:21 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -1509,21 +1509,23 @@ fetch-list-recursive:
 
 .if !target(fetch-list-one-pkg)
 fetch-list-one-pkg:
-	@for file in ${DISTFILES}; do \
-		[ -z "${DIST_SUBDIR}" ] || ${ECHO} -n "${MKDIR} ${DIST_SUBDIR} && cd ${DIST_SUBDIR} && " ; \
+	@${MKDIR} ${_DISTDIR}
+	@[ -z "${_DISTDIR}" ] || ${ECHO} "${MKDIR} ${_DISTDIR}"
+	@(cd ${_DISTDIR}; \
+	for file in ${DISTFILES}; do \
 		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
-			${ECHO} -n "[ -f $$file -o -f `${BASENAME} $$file` ] || " ; \
+			${ECHO} -n "cd ${_DISTDIR} && [ -f $$file -o -f `${BASENAME} $$file` ] || " ; \
 			for site in ${MASTER_SITES} ; do \
 				${ECHO} -n ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} "${FETCH_AFTER_ARGS}" '|| ' ; \
 			done; \
 			${ECHO} "echo $${file} not fetched" ; \
 		fi \
-	done
+	done)
 .if defined(PATCHFILES)
 	@(cd ${_DISTDIR}; \
 	for file in ${PATCHFILES}; do \
 		if [ ! -f $$file -a ! -f `${BASENAME} $$file` ]; then \
-			${ECHO} -n "[ -f $$file -o -f `${BASENAME} $$file` ] || " ; \
+			${ECHO} -n "cd ${_DISTDIR} && [ -f $$file -o -f `${BASENAME} $$file` ] || " ; \
 			for site in ${PATCH_SITES}; do \
 				${ECHO} -n ${FETCH_CMD} ${FETCH_BEFORE_ARGS} $${site}$${file} "${FETCH_AFTER_ARGS}" '|| ' ; \
 			done; \
