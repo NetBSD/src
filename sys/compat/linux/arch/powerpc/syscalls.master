@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 2004/08/01 10:32:40 jdolecek Exp $  
+	$NetBSD: syscalls.master,v 1.18 2004/08/01 15:34:22 jdolecek Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -376,3 +376,65 @@
 204	STD		{ int linux_sys_fcntl64(int fd, int cmd, void *arg); }
 205	NOARGS		{ int sys_mincore(void *addr, size_t len, char *vec); }
 206	NOARGS		{ int sys_madvise(void *addr, size_t len, int behav); }
+207	UNIMPL		gettid
+208	UNIMPL		tkill
+209	UNIMPL		setxattr
+210	UNIMPL		lsetxattr
+211	UNIMPL		fsetxattr
+212	UNIMPL		getxattr
+213	UNIMPL		lgetxattr
+214	UNIMPL		fgetxattr
+215	UNIMPL		listxattr
+216	UNIMPL		llistxattr
+217	UNIMPL		flistxattr
+218	UNIMPL		removexattr
+219	UNIMPL		lremovexattr
+220	UNIMPL		fremovexattr
+221	UNIMPL		futex
+222	UNIMPL		sched_setaffinity
+223	UNIMPL		sched_getaffinity
+224	UNIMPL		/* unused */
+225	UNIMPL		tuxcall
+226	UNIMPL		sendfile64
+227	UNIMPL		io_setup
+228	UNIMPL		io_destroy
+229	UNIMPL		io_getevents
+230	UNIMPL		io_submit
+231	UNIMPL		io_cancel
+232	UNIMPL		set_tid_address
+233	UNIMPL		fadvise64
+234	UNIMPL		exit_group
+235	UNIMPL		lookup_dcookie
+236	UNIMPL		epoll_create
+237	UNIMPL		epoll_ctl
+238	UNIMPL		epoll_wait
+239	UNIMPL		remap_file_pages
+240	UNIMPL		timer_create
+241	UNIMPL		timer_settime
+242	UNIMPL		timer_gettime
+243	UNIMPL		timer_getoverrun
+244	UNIMPL		timer_delete
+245	UNIMPL		clock_settime
+246	UNIMPL		clock_gettime
+247	UNIMPL		clock_getres
+248	UNIMPL		clock_nanosleep
+249	UNIMPL		swapcontext
+250	UNIMPL		tgkill
+251	UNIMPL		utimes
+252	UNIMPL		statfs64
+253	UNIMPL		fstatfs64
+254	UNIMPL		fadvise64_64
+255	UNIMPL		rtas
+256	UNIMPL		/* reserved for sys_debug_setcontext */
+257	UNIMPL		/* reserved for vserver */
+258	UNIMPL		/* reserved for new sys_remap_file_pages */
+259	UNIMPL		/* reserved for new sys_mbind */
+260	UNIMPL		/* reserved for new sys_get_mempolicy */
+261	UNIMPL		/* reserved for new sys_set_mempolicy */
+262	UNIMPL		mq_open
+263	UNIMPL		mq_unlink
+264	UNIMPL		mq_timedsend
+265	UNIMPL		mq_timedreceive
+266	UNIMPL		mq_notify
+267	UNIMPL		mq_getsetattr
+268	UNIMPL		kexec_load

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.43 2003/08/10 20:16:23 jdolecek Exp $
+	$NetBSD: syscalls.master,v 1.44 2004/08/01 15:34:22 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -384,3 +384,16 @@
 			    struct linux_dirent64 *dent, unsigned int count); }
 221	UNIMPL		gettid
 222	UNIMPL		tkill
+223	UNIMPL		setxattr
+224	UNIMPL		lsetxattr
+225	UNIMPL		fsetxattr
+226	UNIMPL		getxattr
+227	UNIMPL		lgetxattr
+228	UNIMPL		fgetxattr
+229	UNIMPL		listxattr
+230	UNIMPL		llistxattr
+231	UNIMPL		flistxattr
+232	UNIMPL		removexattr
+233	UNIMPL		lremovexattr
+234	UNIMPL		fremovexattr
+235	UNIMPL		futex
