@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.29 2003/03/03 22:07:21 mycroft Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.30 2003/03/22 19:57:14 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.29 2003/03/03 22:07:21 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.30 2003/03/22 19:57:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.29 2003/03/03 22:07:21 mycroft Exp $")
 
 struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
-	struct	channel_softc *wdc_chanptr;
+	struct	channel_softc *wdc_chanlist[1];
 	struct	channel_softc wdc_channel;
+	struct	channel_queue wdc_chqueue;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
 	int	sc_drq;
@@ -147,8 +148,7 @@ wdc_isa_attach(parent, self, aux)
 {
 	struct wdc_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-
-	printf("\n");
+	int wdc_cf_flags = self->dv_cfdata->cf_flags;
 
 	sc->wdc_channel.cmd_iot = ia->ia_iot;
 	sc->wdc_channel.ctl_iot = ia->ia_iot;
@@ -158,8 +158,8 @@ wdc_isa_attach(parent, self, aux)
 	    bus_space_map(sc->wdc_channel.ctl_iot,
 	      ia->ia_io[0].ir_addr + WDC_ISA_AUXREG_OFFSET,
 	      WDC_ISA_AUXREG_NPORTS, 0, &sc->wdc_channel.ctl_ioh)) {
-		printf("%s: couldn't map registers\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+		printf(": couldn't map registers\n");
+		return;
 	}
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
@@ -180,28 +180,25 @@ wdc_isa_attach(parent, self, aux)
 	}
 #endif
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_PREATA;
-	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_32)
+	if (wdc_cf_flags & WDC_OPTIONS_32)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
-	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_SINGLE_DRIVE)
+	if (wdc_cf_flags & WDC_OPTIONS_SINGLE_DRIVE)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_SINGLE_DRIVE;
-	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_ATA_NOSTREAM)
+	if (wdc_cf_flags & WDC_OPTIONS_ATA_NOSTREAM)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATA_NOSTREAM;
-	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags
-						& WDC_OPTIONS_ATAPI_NOSTREAM)
+	if (wdc_cf_flags & WDC_OPTIONS_ATAPI_NOSTREAM)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATAPI_NOSTREAM;
+
 	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanptr = &sc->wdc_channel;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->wdc_channel.ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue",
-		sc->sc_wdcdev.sc_dev.dv_xname);
-		return;
-	}
+	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
+
+	printf("\n");
+
 	wdcattach(&sc->wdc_channel);
 }
 
