@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.37 2003/03/15 07:21:02 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.38 2003/04/29 15:16:14 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -69,7 +69,7 @@
 	lwz	sr,48(pmap);	mtsr	12,sr; \
 	lwz	sr,52(pmap);	mtsr	13,sr; \
 	lwz	sr,56(pmap);	mtsr	14,sr; \
-	lwz	sr,60(pmap);	mtsr	15,sr;
+	lwz	sr,60(pmap);	mtsr	15,sr; isync;
 
 /*
  * User SRs are loaded through a pointer to the current pmap.
