@@ -1,3 +1,5 @@
+/* $NetBSD: oak.c,v 1.2 1996/03/08 16:22:38 mark Exp $ */
+
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson 1996.
  * All rights reserved.
@@ -32,7 +34,6 @@
  * oak.c
  *
  * Oak SCSI Driver.
- *
  */
 
 #undef USE_OWN_PIO_ROUTINES
@@ -49,7 +50,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/buf.h>
-#include <machine/bootconfig.h>
+/*#include <machine/bootconfig.h>*/
 
 /* SCSI bus includes */
 
@@ -78,16 +79,15 @@
 /****************************************************************************/
 
 struct oak_softc {
-    struct ncr5380_softc ncr_sc;
-    int sc_podule;
-    int sc_base;
+	struct ncr5380_softc ncr_sc;
+	int sc_podule;
+	int sc_base;
 };
 
 /****************************************************************************/
 /* Function and data prototypes *********************************************/
 /****************************************************************************/
 
-struct cfdriver oakcd;
 int  oakprobe 	__P(( struct device *, void *, void * ));
 void oakattach 	__P(( struct device *, struct device *, void * ));
 int  oakprint   __P(( void *, char * ));
@@ -99,122 +99,122 @@ int oak_pio_out __P(( struct ncr5380_softc *, int, int, unsigned char * ));
 #endif
 
 struct scsi_adapter oak_adapter = {
-    ncr5380_scsi_cmd,
-    oakminphys,
-    NULL,
-    NULL,
+	ncr5380_scsi_cmd,
+	oakminphys,
+	NULL,
+	NULL,
 };
 
 struct scsi_device oak_device = {
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 };
 
 int
-oakprobe ( parent, match, aux )
-    struct device *parent;
-    void *match;
-    void *aux;
+oakprobe(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
 {
-    struct oak_softc *sc = (void *) match;
-    struct podule_attach_args *pa = (void *) aux;
-    int podule;
+	struct oak_softc *sc = (void *) match;
+	struct podule_attach_args *pa = (void *) aux;
+	int podule;
 
-    podule = findpodule ( MY_MANUFACTURER, MY_PODULE, pa->pa_podule_number );
+	podule = findpodule(MY_MANUFACTURER, MY_PODULE, pa->pa_podule_number);
 
-    if ( podule == -1 )
-	return 0;
+	if (podule == -1)
+		return 0;
 
-    sc->sc_podule = podule;
-    sc->sc_base = podules[podule].mod_base;
+	sc->sc_podule = podule;
+	sc->sc_base = podules[podule].mod_base;
 
-    return 1;
+	return 1;
 }
 
 void
-oakattach ( parent, self, aux )
-    struct device *parent;
-    struct device *self;
-    void *aux;
+oakattach(parent, self, aux)
+	struct device *parent;
+	struct device *self;
+	void *aux;
 {
-    struct oak_softc *sc = (void *) self;
-    struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
-    struct podule_attach_args *pa = (void *)aux;
+	struct oak_softc *sc = (void *) self;
+	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *)sc;
+	struct podule_attach_args *pa = (void *)aux;
 
-    printf ( " 16-bit" );
+	printf(" 16-bit");
 
-    ncr_sc->sc_link.adapter_softc = sc;
-    ncr_sc->sc_link.adapter_target = 7;
-    ncr_sc->sc_link.adapter = &oak_adapter;
-    ncr_sc->sc_link.device = &oak_device;
+	ncr_sc->sc_link.adapter_softc = sc;
+	ncr_sc->sc_link.adapter_target = 7;
+	ncr_sc->sc_link.adapter = &oak_adapter;
+	ncr_sc->sc_link.device = &oak_device;
 
-    ncr_sc->sci_r0 = (volatile u_char *)sc->sc_base + 0x00;
-    ncr_sc->sci_r1 = (volatile u_char *)sc->sc_base + 0x04;
-    ncr_sc->sci_r2 = (volatile u_char *)sc->sc_base + 0x08;
-    ncr_sc->sci_r3 = (volatile u_char *)sc->sc_base + 0x0c;
-    ncr_sc->sci_r4 = (volatile u_char *)sc->sc_base + 0x10;
-    ncr_sc->sci_r5 = (volatile u_char *)sc->sc_base + 0x14;
-    ncr_sc->sci_r6 = (volatile u_char *)sc->sc_base + 0x18;
-    ncr_sc->sci_r7 = (volatile u_char *)sc->sc_base + 0x1c;
+	ncr_sc->sci_r0 = (volatile u_char *)sc->sc_base + 0x00;
+	ncr_sc->sci_r1 = (volatile u_char *)sc->sc_base + 0x04;
+	ncr_sc->sci_r2 = (volatile u_char *)sc->sc_base + 0x08;
+	ncr_sc->sci_r3 = (volatile u_char *)sc->sc_base + 0x0c;
+	ncr_sc->sci_r4 = (volatile u_char *)sc->sc_base + 0x10;
+	ncr_sc->sci_r5 = (volatile u_char *)sc->sc_base + 0x14;
+	ncr_sc->sci_r6 = (volatile u_char *)sc->sc_base + 0x18;
+	ncr_sc->sci_r7 = (volatile u_char *)sc->sc_base + 0x1c;
 
 #ifdef USE_OWN_PIO_ROUTINES
-    printf ( ", my pio" );
-    ncr_sc->sc_pio_out = oak_pio_out;
-    ncr_sc->sc_pio_in  = oak_pio_in;
+ 	printf ( ", my pio" );
+	ncr_sc->sc_pio_out = oak_pio_out;
+	ncr_sc->sc_pio_in  = oak_pio_in;
 #else
-    printf ( ", normal pio" );
-    ncr_sc->sc_pio_out = ncr5380_pio_out;
-    ncr_sc->sc_pio_in  = ncr5380_pio_in;
+	printf ( ", normal pio" );
+	ncr_sc->sc_pio_out = ncr5380_pio_out;
+	ncr_sc->sc_pio_in  = ncr5380_pio_in;
 #endif
 
-    ncr_sc->sc_dma_alloc = NULL;
-    ncr_sc->sc_dma_free  = NULL;
-    ncr_sc->sc_dma_poll  = NULL;
-    ncr_sc->sc_dma_setup  = NULL;
-    ncr_sc->sc_dma_start  = NULL;
-    ncr_sc->sc_dma_eop  = NULL;
-    ncr_sc->sc_dma_stop  = NULL;
+	ncr_sc->sc_dma_alloc = NULL;
+	ncr_sc->sc_dma_free  = NULL;
+	ncr_sc->sc_dma_poll  = NULL;
+	ncr_sc->sc_dma_setup  = NULL;
+	ncr_sc->sc_dma_start  = NULL;
+	ncr_sc->sc_dma_eop  = NULL;
+	ncr_sc->sc_dma_stop  = NULL;
 
-    printf ( ", polling" );
-    ncr_sc->sc_intr_on   = NULL;
-    ncr_sc->sc_intr_off  = NULL;
+	printf(", polling");
+	ncr_sc->sc_intr_on   = NULL;
+	ncr_sc->sc_intr_off  = NULL;
 
-    ncr_sc->sc_flags  = NCR5380_FORCE_POLLING;
+	ncr_sc->sc_flags  = NCR5380_FORCE_POLLING;
 
-    ncr5380_init(ncr_sc);
-    ncr5380_reset_scsibus(ncr_sc);
+	ncr5380_init(ncr_sc);
+	ncr5380_reset_scsibus(ncr_sc);
 
-    printf ( " UNDER DEVELOPMENT\n" );
+	printf(" UNDER DEVELOPMENT\n");
 
-    config_found ( self, &(ncr_sc->sc_link), oakprint );
+	config_found(self, &(ncr_sc->sc_link), oakprint);
 }
 
 int
-oakprint ( aux, name )
-    void *aux;
-    char *name;
+oakprint(aux, name)
+	void *aux;
+	char *name;
 {
-    if ( name!=NULL )
-	printf ( "%s: scsibus ", name );
-    return UNCONF;
+	if (name != NULL)
+		printf("%s: scsibus ", name);
+	return UNCONF;
 }
 
 void
-oakminphys ( bp )
-    struct buf *bp;
+oakminphys(bp)
+	struct buf *bp;
 {
-    if ( bp->b_bcount > MAX_DMA_LEN ) {
-	printf ( "oak: DEBUG reducing dma length\n" );
-	bp->b_bcount = MAX_DMA_LEN;
-    }
-    return (minphys(bp));
+	if (bp->b_bcount > MAX_DMA_LEN) {
+		printf("oak: DEBUG reducing dma length\n");
+		bp->b_bcount = MAX_DMA_LEN;
+	}
+	return (minphys(bp));
 }
 
 struct cfdriver oakcd = {
-    NULL, "oak", oakprobe, oakattach, DV_DISK, sizeof(struct oak_softc),
-    NULL, 0,
+	NULL, "oak", oakprobe, oakattach, DV_DISK, sizeof(struct oak_softc),
+	NULL, 0,
 };
 
 #ifdef USE_OWN_PIO_ROUTINES
@@ -272,7 +272,7 @@ oak_pio_out(sc, phase, count, data)
 	register int		resid;
 	register int		error;
 
-printf ( "oak: pio_out %d %d\n", phase, count );
+	printf("oak: pio_out %d %d\n", phase, count);
 
 	icmd = *(sc->sci_icmd) & SCI_ICMD_RMASK;
 
@@ -331,7 +331,7 @@ oak_pio_in(sc, phase, count, data)
 	register int		resid;
 	register int		error;
 
-printf ( "oak: pio_in %d %d\n", phase, count );
+	printf("oak: pio_in %d %d\n", phase, count);
 
 	icmd = *(sc->sci_icmd) & SCI_ICMD_RMASK;
 
