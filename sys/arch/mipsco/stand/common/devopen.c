@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 2000/09/26 09:48:35 wdk Exp $	*/
+/*	$NetBSD: devopen.c,v 1.3 2002/11/16 08:51:27 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
  */
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 /*
  * Decode the string 'fname', open the device and return the remaining
