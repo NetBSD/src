@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.33.2.1 1999/10/19 17:47:01 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.33.2.2 1999/10/19 22:39:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ void	bha_finish_ccbs __P((struct bha_softc *));
 struct bha_ccb *bha_ccb_phys_kv __P((struct bha_softc *, bus_addr_t));
 void	bha_create_ccbs __P((struct bha_softc *, int));
 int	bha_init_ccb __P((struct bha_softc *, struct bha_ccb *));
-struct bha_ccb *bha_get_ccb __P((struct bha_softc *, int));
+struct bha_ccb *bha_get_ccb __P((struct bha_softc *));
 void	bha_free_ccb __P((struct bha_softc *, struct bha_ccb *));
 
 #define BHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
@@ -306,7 +306,7 @@ bha_scsipi_request(chan, req, arg)
 		flags = xs->xs_control;
 
 		/* Get a CCB to use. */
-		ccb = bha_get_ccb(sc, flags);
+		ccb = bha_get_ccb(sc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track the resources
@@ -1922,29 +1922,16 @@ bha_init_ccb(sc, ccb)
  *	wait until one becomes available, if we can.
  */
 struct bha_ccb *
-bha_get_ccb(sc, flags)
+bha_get_ccb(sc)
 	struct bha_softc *sc;
-	int flags;
 {
 	struct bha_ccb *ccb;
 	int s;
 
 	s = splbio();
-
-	for (;;) {
-		ccb = TAILQ_FIRST(&sc->sc_free_ccb);
-		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
-			break;
-		}
-		if ((flags & XS_CTL_NOSLEEP) != 0)
-			goto out;
-		tsleep(&sc->sc_free_ccb, PRIBIO, "bhaccb", 0);
-	}
-
-	ccb->flags |= CCB_ALLOC;
-
-out:
+	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+	if (ccb != NULL)
+		ccb->flags |= CCB_ALLOC;
 	splx(s);
 	return (ccb);
 }
@@ -1962,17 +1949,8 @@ bha_free_ccb(sc, ccb)
 	int s;
 
 	s = splbio();
-
 	bha_reset_ccb(ccb);
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (TAILQ_NEXT(ccb, chain) == NULL)
-		wakeup(&sc->sc_free_ccb);
-
 	splx(s);
 }
 
