@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.11 1997/06/18 19:08:05 christos Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.12 1997/07/25 16:46:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: skeleton.c,v 1.11 1997/06/18 19:08:05 christos Exp $";
+__RCSID("$NetBSD: skeleton.c,v 1.12 1997/07/25 16:46:38 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +66,7 @@ char *banner[] =
     "#if 0",
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.11 1997/06/18 19:08:05 christos Exp $\");",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.12 1997/07/25 16:46:38 perry Exp $\");",
     "#endif",
     "#endif",
     "#include <stdlib.h>",
@@ -365,19 +366,20 @@ char *trailer[] =
 };
 
 
+void
 write_section(section)
 char *section[];
 {
-    register int c;
-    register int i;
-    register char *s;
-    register FILE *f;
+    int c;
+    int i;
+    char *s;
+    FILE *f;
 
     f = code_file;
-    for (i = 0; s = section[i]; ++i)
+    for (i = 0; (s = section[i]); ++i)
     {
 	++outline;
-	while (c = *s)
+	while ((c = *s) != '\0')
 	{
 	    putc(c, f);
 	    ++s;

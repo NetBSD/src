@@ -1,4 +1,4 @@
-/*	$NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $	*/
+/*	$NetBSD: verbose.c,v 1.5 1997/07/25 16:46:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)verbose.c	5.3 (Berkeley) 1/20/91";
 #else
-static char rcsid[] = "$NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $";
+__RCSID("$NetBSD: verbose.c,v 1.5 1997/07/25 16:46:39 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,9 +49,22 @@ static char rcsid[] = "$NetBSD: verbose.c,v 1.4 1996/03/19 03:21:50 jtc Exp $";
 
 static short *null_rules;
 
+void verbose __P((void));
+void log_unused __P((void));
+void log_conflicts __P((void));
+void print_state __P((int));
+void print_conflicts __P((int));
+void print_core __P((int));
+void print_nulls __P((int));
+void print_actions __P((int));
+void print_shifts __P((action *));
+void print_reductions __P((action *, int));
+void print_gotos __P((int));
+
+void
 verbose()
 {
-    register int i;
+    int i;
 
     if (!vflag) return;
 
@@ -72,10 +86,11 @@ verbose()
 }
 
 
+void
 log_unused()
 {
-    register int i;
-    register short *p;
+    int i;
+    short *p;
 
     fprintf(verbose_file, "\n\nRules never reduced:\n");
     for (i = 3; i < nrules; ++i)
@@ -91,9 +106,10 @@ log_unused()
 }
 
 
+void
 log_conflicts()
 {
-    register int i;
+    int i;
 
     fprintf(verbose_file, "\n\n");
     for (i = 0; i < nstates; i++)
@@ -119,6 +135,7 @@ log_conflicts()
 }
 
 
+void
 print_state(state)
 int state;
 {
@@ -133,11 +150,15 @@ int state;
 }
 
 
+void
 print_conflicts(state)
 int state;
 {
-    register int symbol, act, number;
-    register action *p;
+    int symbol, act, number;
+    action *p;
+
+    /* keep gcc -Wall happy. */
+    act = number = 0;
 
     symbol = -1;
     for (p = parser[state]; p; p = p->next)
@@ -181,15 +202,16 @@ int state;
 }
 
 
+void
 print_core(state)
 int state;
 {
-    register int i;
-    register int k;
-    register int rule;
-    register core *statep;
-    register short *sp;
-    register short *sp1;
+    int i;
+    int k;
+    int rule;
+    core *statep;
+    short *sp;
+    short *sp1;
 
     statep = state_table[state];
     k = statep->nitems;
@@ -217,11 +239,12 @@ int state;
 }
 
 
+void
 print_nulls(state)
 int state;
 {
-    register action *p;
-    register int i, j, k, nnulls;
+    action *p;
+    int i, j, k, nnulls;
 
     nnulls = 0;
     for (p = parser[state]; p; p = p->next)
@@ -261,12 +284,13 @@ int state;
 }
 
 
+void
 print_actions(stateno)
 int stateno;
 {
-    register action *p;
-    register shifts *sp;
-    register int as;
+    action *p;
+    shifts *sp;
+    int as;
 
     if (stateno == final_state)
 	fprintf(verbose_file, "\t$end  accept\n");
@@ -288,11 +312,12 @@ int stateno;
 }
 
 
+void
 print_shifts(p)
-register action *p;
+action *p;
 {
-    register int count;
-    register action *q;
+    int count;
+    action *q;
 
     count = 0;
     for (q = p; q; q = q->next)
@@ -313,12 +338,13 @@ register action *p;
 }
 
 
+void
 print_reductions(p, defred)
-register action *p;
-register int defred;
+action *p;
+int defred;
 {
-    register int k, anyreds;
-    register action *q;
+    int k, anyreds;
+    action *q;
 
     anyreds = 0;
     for (q = p; q ; q = q->next)
@@ -351,13 +377,14 @@ register int defred;
 }
 
 
+void
 print_gotos(stateno)
 int stateno;
 {
-    register int i, k;
-    register int as;
-    register short *to_state;
-    register shifts *sp;
+    int i, k;
+    int as;
+    short *to_state;
+    shifts *sp;
 
     putc('\n', verbose_file);
     sp = shift_table[stateno];
