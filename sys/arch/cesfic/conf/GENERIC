@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.19 2003/04/26 14:10:13 ragge Exp $
+# $NetBSD: GENERIC,v 1.20 2003/09/22 14:11:17 cl Exp $
 #
 # GENERIC machine description file
 # 
@@ -45,7 +45,9 @@ options 	COMPAT_10	# compatibility with NetBSD 1.0
 options 	COMPAT_11	# compatibility with NetBSD 1.1
 options 	COMPAT_12	# compatibility with NetBSD 1.2
 options 	COMPAT_13	# compatibility with NetBSD 1.3
-options 	COMPAT_14	# compatibility with NetBSD 1.3
+options 	COMPAT_14	# compatibility with NetBSD 1.4
+options 	COMPAT_15	# compatibility with NetBSD 1.5
+options 	COMPAT_16	# compatibility with NetBSD 1.6
 #options 	SYSVSHM		# System V-style shared memory
 #options 	SYSVSEM		# System V-style semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
