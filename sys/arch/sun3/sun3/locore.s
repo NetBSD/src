@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 1997/05/29 21:26:20 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.57 1998/01/02 20:37:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -784,12 +784,12 @@ Lswnofpsave:
 #endif
 #if 1	/* XXX: PMAP_DEBUG */
 	/*
-	 * Just call pmap_activate() for now.  Later on,
+	 * Just call _pmap_activate() for now.  Later on,
 	 * use the in-line version below (for speed).
 	 */
 	movl	a2@(VM_PMAP),a2 	| pmap = vm->vm_map.pmap
 	pea	a2@			| push pmap
-	jbsr	_C_LABEL(pmap_activate)	| pmap_activate(pmap)
+	jbsr	_C_LABEL(_pmap_activate) | _pmap_activate(pmap)
 	addql	#4,sp
 	movl	_C_LABEL(curpcb),a1	| restore p_addr
 | Note: pmap_activate will clear the cache if needed.

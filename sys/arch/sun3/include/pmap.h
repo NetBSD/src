@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 1997/02/28 19:57:35 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.22 1998/01/02 20:37:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,8 +57,9 @@ typedef struct pmap *pmap_t;
 extern	struct pmap	kernel_pmap_store;
 #define	pmap_kernel()	(&kernel_pmap_store)
 
-/* This is called from locore.s:cpu_switch() */
-void	pmap_activate __P((pmap_t pmap));
+struct proc;
+void	pmap_activate __P((struct proc *));
+void	pmap_deactivate __P((struct proc *));
 
 /*
  * We give the pmap code a chance to resolve faults by

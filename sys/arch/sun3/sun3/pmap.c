@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 1997/12/02 20:42:13 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95 1998/01/02 20:37:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -215,6 +215,9 @@ static vm_offset_t avail_next;
 
 /* This is where we map a PMEG without a context. */
 static vm_offset_t temp_seg_va;
+
+/* Called only from locore.s and pmap.c */
+void	_pmap_activate __P((pmap_t pmap));
 
 /*
  * Location to store virtual addresses
@@ -2735,7 +2738,7 @@ pmap_is_referenced(pa)
  * pmap_enter_user().
  */
 void
-pmap_activate(pmap)
+_pmap_activate(pmap)
 	pmap_t pmap;
 {
 
@@ -2744,6 +2747,34 @@ pmap_activate(pmap)
 	ICIA();
 }
 
+/*
+ * Exported version of pmap_activate().  Activates the address space
+ * for the specified process.  Note that the hardware is not loaded
+ * if we are not the current process; that will be done at switch time.
+ */
+void
+pmap_activate(p)
+	struct proc *p;
+{
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	int s;
+
+	s = splpmap();
+	if (p == curproc)
+		_pmap_activate(pmap);
+	splx(s);
+}
+
+/*
+ * Deactivate the address space of the specified process.
+ * XXX The semantics of this function are not currently well-defined.
+ */
+void
+pmap_deactivate(p)
+	struct proc *p;
+{
+	/* not implemented. */
+}
 
 /*
  *	Routine:	pmap_change_wiring
