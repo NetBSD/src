@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsi.c	7.5 (Berkeley) 5/4/91
- *	$Id: scsi.c,v 1.9 1994/02/21 06:30:41 chopps Exp $
+ *	$Id: scsi.c,v 1.10 1994/02/28 06:06:27 chopps Exp $
  *
  * MULTICONTROLLER support only working for multiple controllers of the 
  * same kind at the moment !! 
@@ -47,11 +47,24 @@
 #include "a3000scsi.h"
 #include "a2091scsi.h"
 #include "gvp11scsi.h"
-#define NSCSI (NA3000SCSI + NA2091SCSI + NGVP11SCSI)
+
+/*
+ * Define NSCSI to be the largest of all the 33C93 controllers configured
+ */
+#define NSCSI NA3000SCSI
+#if NA2091SCSI > NSCSI
+#undef NSCSI
+#define NSCSI NA2091SCSI
+#endif
+#if NGVP11SCSI > NSCSI
+#undef NSCSI
+#define NSCSI NGVP11SCSI
+#endif
+
 #if NSCSI > 0
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.9 1994/02/21 06:30:41 chopps Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/amiga/dev/Attic/scsi.c,v 1.10 1994/02/28 06:06:27 chopps Exp $";
 #endif
 
 /* need to know if any tapes have been configured */
@@ -177,7 +190,7 @@ struct driver a2091scsidriver = {
 #endif
 };
 
-int a2091_dmabounce = 0;
+int a2091_dmabounce = 1;	/* default to use bounce buffer */
 #endif
 
 #if NGVP11SCSI > 0
@@ -197,8 +210,8 @@ struct driver gvp11scsidriver = {
 #endif
 };
 
-int gvp11_dmabounce = 0;
-u_long gvp11_dma_mask = 0x00ffffff;
+int gvp11_dmabounce = 1;	/* default to use bounce buffer */
+u_long gvp11_dma_mask = 0;	/* default to use controller-specific mask */
 #endif
 
 
@@ -468,11 +481,13 @@ a2091scsiinit(ac)
   /* initialize dma */
   a2091dmainit (ac, dev);
   dev->sc_flags |= SCSI_DMA24;	/* can only DMA in ZorroII memory */
-  dev->dmamask = 0xff000000;	/* set DMA mask */
+  dev->dmamask = 0xff000000;	/* set invalid DMA mask */
   if (a2091_dmabounce) {
     /* XXX should do this dynamically when needed? */
     dev->dmabuffer = (char *) alloc_z2mem (MAXPHYS);
+#ifdef DEBUG
     printf ("a2091scsi: dma bounce buffer at %08x\n", dev->dmabuffer);
+#endif
   }
 
   /* advance ac->amiga_addr to point to the real sbic-registers */
@@ -508,6 +523,7 @@ gvp11scsiinit(ac)
 {
   register struct scsi_softc *dev = &scsi_softc[ac->amiga_unit];
   register sbic_padded_regmap_t *regs;
+  u_char *id_reg;
 
   if (! ac->amiga_addr)
     return 0;
@@ -519,12 +535,34 @@ gvp11scsiinit(ac)
   
   /* initialize dma */
   gvp11dmainit (ac, dev);
+  /* XXX add Series I support !!! */
+  id_reg = (u_char *)ac->amiga_addr + 0x8001;
   dev->sc_flags |= SCSI_DMA24;	/* can only DMA in ZorroII memory */
-  dev->dmamask = ~gvp11_dma_mask;	/* XXX should validate mask? */
+  if (gvp11_dma_mask)			/* XXX use specified DMA mask */
+    dev->dmamask = ~gvp11_dma_mask;	/* XXX should validate mask? */
+  else
+    switch (*id_reg & 0xf8) {
+    case PROD_GVP_X_GF40_SCSI:		/* G-Force '040 SCSI */
+      dev->dmamask = ~0x07ffffff;
+      break;
+    case PROD_GVP_X_GF30_SCSI:		/* G-Force '030 SCSI */
+    case PROD_GVP_X_COMBO4:
+      dev->dmamask = ~0x01ffffff;	/* Combo '030 rev 4 SCSI */
+      break;
+    case PROD_GVP_X_COMBO3:		/* Combo '030 rev 3 SCSI */
+    case PROD_GVP_X_SCSI_II:		/* Impact Series-II SCSI */
+      dev->dmamask = ~0x00ffffff;
+      break;
+    default:
+      dev->dmamask = ~0x00000000;	/* shouldn't be any others */
+    }
+  dev->bankmask = (~dev->dmamask >> 18) & 0x01c0;
   if (gvp11_dmabounce) {
     /* XXX should do this dynamically when needed? */
     dev->dmabuffer = (char *) alloc_z2mem (MAXPHYS);
+#ifdef DEBUG
     printf ("gvp11scsi: dma bounce buffer at %08x\n", dev->dmabuffer);
+#endif
   }
 
   /* advance ac->amiga_addr to point to the real sbic-registers */
