@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.10 2003/07/21 06:17:32 igy Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.11 2003/09/21 19:32:37 matt Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.10 2003/07/21 06:17:32 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.11 2003/09/21 19:32:37 matt Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -194,6 +194,7 @@ ixp12x0_disable_irq(int irq)
 			break;
 		default:
 			/* nothing to do */
+			break;
 		}
 	} else {
 		pci_intr_enabled &= ~(1U << (irq - SYS_NIRQ));
