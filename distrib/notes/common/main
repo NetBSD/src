@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.29 2003/10/21 04:06:17 jmc Exp $
+.\"	$NetBSD: main,v 1.179.2.30 2004/01/04 06:32:22 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -381,16 +381,16 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that
 .Nx
 wouldn't exist.
-.Ss Upgrade path to NetBSD 1.6
+.Ss Upgrade path to NetBSD 1.6.2
 If you are not installing your system ``from scratch'' but instead
 are going to upgrade an existing system already running
 .Nx
 you need to know which versions you can upgrade with
-.Nx 1.6 .
+.Nx 1.6.2 .
 .Pp
-.Nx 1.6
+.Nx 1.6.2
 is an upgrade of
-.Nx 1.5.3
+.Nx 1.6.1
 and earlier major and patch releases of
 .Nx .
 .Pp
@@ -428,6 +428,344 @@ For example, there may be features in 1.6.1 which were not in 1.6B,
 and vice versa.
 ..
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Between The NetBSD 1.6.1 and 1.6.2 Releases
+.Pp
+The
+.Nx 1.6.2
+release
+provides numerous significant functional enhancements, including
+support for many new devices, integration of hundreds of bug fixes,
+patches and updates to kernel subsystems, and many user-land enhancements.
+The result of these improvements is a stable operating system fit for
+production use that rivals most commercially available systems.
+.Pp
+It is impossible to completely summarize over nine months of
+development that went into the
+.Nx 1.6.2
+release.
+Some highlights include:
+.
+.Ss2 Kernel
+.
+.(bullet
+With
+.Xr pciide 4 ,
+make Promise controllers do DMA with large disks
+requiring 48-bit LBA drives.
+.It
+Add error detection when running low on swap, to improve     
+stability in low-memory situations.
+.It
+Support for more SiS controllers were added to 
+.Xr pciide 4 .
+.It
+Support for the new PowerBook G4 12-inch added.
+.It
+.Xr mlx 4
+stability improved.  
+.It
+Support for ICH5 added to 
+.Xr pciide 4 .
+.It
+A long-standing stability problem with the original Sun4c sparc
+systems (SS1, SS1+, and IPC) has been found and fixed.  Some
+optimizations done for these systems as well.
+.It
+Sun3, Sun3x, and Sun2 may now boot from tape files, through
+addition of seek support for tape files.
+.It
+The USERCONF option has been added to the i386 kernels; see
+.Xr userconf 4
+for more information. 
+.It
+Hardware random number generator support for Intel 865 and 875P  
+chipsets added.
+.It
+Fix
+.Xr wdc 4
+to work with pre-ATA drives.
+.It
+Shared libraries and other files mapped executable now count as
+TEXT pages for vm-usage purposes.  This should allow for more
+appropriate handling of these pages compared to other normal file
+buffer pages.
+.It
+General support for multi-function pcmcia cards has been fixed.
+.It
+Various fixes to linux emulation have been added.
+.bullet)
+.
+.Ss2 Networking
+.
+.(bullet
+.Xr rtk 4
+multicast problem fixed.
+.It
+.Xr fxp 4
+support yet a few more chip variants.
+.It
+.Xr tulip 4
+driver fixed so that the DEC Alpha PWS no longer panics.
+.It
+Path MTU discovery black-hole detection has been added.
+.It
+.Xr bce 4
+driver added for Broadcom BCM4401 chipset, as seen in recent
+Dell laptops.
+.It
+A workaround has been added for a race condition in the networking
+code which could corrupt the callout data structure.
+.It
+Various networking stack fixes for IPv4, IPv6 and IPSEC.
+.bullet)
+.
+.Ss2 Security
+.
+.(bullet
+.bullet)
+.
+.Ss2 System administration and user tools
+.  
+.(bullet
+Possible crash in 
+.Xr vi 1
+triggered by an error was fixed.
+.It
+XFree86 upgraded to version 4.3.0 for those architectures which use
+XFree86 version 4.
+.It
+.Xr scsictl 8
+now supports a few new commands.
+.It
+BIND has been upgraded to version 8.3.7. 
+.It
+DHCP has been upgraded to version 3.0.1rc11 with various fixes.
+.It
+CVS has been upgraded to version 1.11.10.
+.bullet)
+.
+.Ss2 Miscellaneous
+.
+.(bullet
+At least one problem causing sysinst to crash has been fixed, and
+a progress bar has been added as an option to monitor the progress
+of the extraction of the install sets.
+.It
+Package tools upgraded to version 20030918.
+.bullet)
+.
+.Pp
+And of course there have also been innumerable bug fixes and other
+miscellaneous enhancements.
+You can look for this trend to continue.
+.
+.Ss2 \*M specific
+.Ss Changes Between The NetBSD 1.6 and 1.6.1 Releases
+.Pp
+The
+.Nx 1.6.1
+release
+provides numerous significant functional enhancements, including
+support for many new devices, integration of hundreds of bug fixes,
+patches and updates to kernel subsystems, and many user-land enhancements.
+The result of these improvements is a stable operating system fit for
+production use that rivals most commercially available systems.
+.Pp
+It is impossible to completely summarize over seven months of
+development that went into the
+.Nx 1.6.1
+release.
+Some highlights include:
+.
+.Ss2 Kernel
+.
+.(bullet
+Hardware random number support for some Intel chipsets has been added.
+.It
+Support for additional Adaptec RAID controllers has been added to 
+.Xr aac 4 .
+.It
+A number of bugs in the VM system have been fixed.
+.It
+Bug fixes to 
+.Xr audio 4 , 
+.Xr dpt 4 , 
+.Xr eap 4 , 
+.Xr emuxki 4 , 
+.Xr iop 4 , 
+.Xr siop 4
+and
+.Xr umass 4 .
+.It
+Some Linux compatibility bugs have been fixed.
+.It
+A number of USB bugs have been fixed.
+.It
+acorn32 and acorn26 module recognition overhauled; APDL IDE
+should now work.
+.It
+.Xr pciide 4
+support has been extended to support Promise
+Ultra133TX2, Promise Ultra133TX2v2, HighPoint HPT372, Ultra/133
+on VIA VT8233A, and the VIA VT8235. 
+.It
+Many changes to the arm architecture support, mostly triggered
+by evbarm port infrastructure changes.
+.It
+Amiga boot handling has been modified to better handle certain
+machine configurations.
+.bullet)
+.
+.Ss2 Networking
+.
+.(bullet
+IPv6 fixes to various tools.
+.It
+Bug fixes to the 
+.Xr tlp 4
+and 
+.Xr xi 4 
+drivers.
+.It
+Enhancements to the 
+.Xr pcn 4
+driver.
+.It
+.Xr rtk 4
+now supports Planex FNW-3603 cardbus ethernet card.
+.It
+.Xr ex 4
+multicast handling has been fixed.
+.It
+.Xr wi 4
+now supports Netgear MA401RA card.
+.It
+.Xr wm 4
+now supports more chip variants.
+.It
+.Xr aue 4
+now supports SMC 2206USB/ETH EZ Connect adapter.
+.It
+.Xr sip 4
+now has some Tx interrupt mitigation code, and improved
+support for 64-bit DP83820 cards.
+.It
+The 
+.Xr fxp 4  
+driver has been improved for better support of
+certain i82558 revisions, and has been fixed to recognize
+some more chips.
+.It
+IPFilter has been upgraded to version 3.4.29.  Please note
+that this requires a synchronized upgrade of kernel and the
+ipf user programs to work properly.
+.It
+Support for Broadcom Gigabit Ethernet devices has been added by
+the addition of the 
+.Xr bge 4
+driver.
+.It
+Some IPsec bugs have been fixed (from KAME).
+.It
+Some 
+.Xr ftpd 8 
+interoperability bugs have been fixed.
+.It
+.Xr mopd 8
+fixes to make the program load correctly.
+.It
+A number of 
+.Xr pppoe 4 
+bugs have been fixed.
+.bullet)
+.
+.Ss2 File system
+.
+.(bullet
+A number of FFS and NFS bugs have been fixed.
+.It
+Several fixes to 
+.Xr ffs 4
+soft dependencies handling have been incorporated.
+.It
+Some NFSv3 fixes have been applied to 
+.Xr amd 8 .
+.It
+Some 
+.Xr fsck 8 
+bugs have been fixed.
+.bullet)
+.
+.Ss2 Security
+.
+.(bullet
+BIND has been updated to 8.3.4 and security patches applied to 
+.Xr named 8 
+and the libc resolver.
+.It
+Various security patches have been applied to sendmail.
+.It
+Padding has been added to minimum-sized IP packets in several 
+ethernet drivers to prevent unintented information leakage.
+.It
+OpenSSL has been updated to 0.9.6g and a number of security patches applied.
+.It
+A potential buffer overflow in zlib has been fixed.
+.It
+Buffer overflow bugs in
+.Xr file 1 
+have been fixed.
+.It
+Some Kerberos 4 security bugs have been addressed.
+.It
+A umask security problem in GNU 
+.Xr tar 1  
+has been fixed.
+.bullet)
+.
+.Ss2 System administration and user tools
+.
+.(bullet
+.Xr user 8
+has seen several fixes, some of them related to MD5 and
+blowfish password encryption support.
+.It
+Changes to gcc for the arm architecture introduces a minor flag
+day: new and old object files can not be mixed.  Required for
+proper soft-VFP support.
+.It
+MDC2 build has been made optional, as the algorithm is patended.
+.It
+The package tools have been updated to the 20030202 version.
+.bullet)
+.
+.Ss2 Miscellaneous
+.
+.(bullet
+Bug fixes to sysinst, the NetBSD installer.
+.It
+Various cross-build fixes have been incorporated.
+.It
+Various fixes to the toolchain and build process.
+.It
+Various fixes to the rc.d subsystem.
+.It
+A large number of sparc64 fixes have been applied.
+.It
+Timezone files have been updated to tz2002d.
+.It
+Many new packages have been added to The 
+.Nx 
+.Em packages collection, 
+including the latest open source desktop KDE3, OpenOffice.org, as well as a 
+large number of bugs fixed, many addressing security issues.
+.bullet)
+.
+.Pp
+And of course there have also been innumerable bug fixes and other 
+miscellaneous enhancements. 
+You can look for this trend to continue.
+.
 .Ss Changes Between The NetBSD 1.5 and 1.6 Releases
 .Pp
 The
@@ -830,8 +1168,6 @@ supports blanking of VGA consoles.
 Kernel interfaces have continued to be refined, and more subsystems
 and device drivers are shared among the different ports.
 You can look for this trend to continue.
-.
-.Ss2 \*M specific
 .so whatis -----------------------------------------------
 .\} \" \n[FOR_RELEASE]
 .
