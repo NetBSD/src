@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.321 2001/03/24 09:32:48 jdolecek Exp $
+#	$NetBSD: mi,v 1.322 2001/03/28 08:05:35 toddpw Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -1764,6 +1764,12 @@
 ./usr/share/man/cat3/EVP_SealInit.0		comp-c-catman
 ./usr/share/man/cat3/EVP_SignInit.0		comp-c-catman
 ./usr/share/man/cat3/EVP_VerifyInit.0		comp-c-catman
+./usr/share/man/cat3/MD2Data.0	comp-c-catman
+./usr/share/man/cat3/MD2End.0	comp-c-catman
+./usr/share/man/cat3/MD2File.0	comp-c-catman
+./usr/share/man/cat3/MD2Final.0	comp-c-catman
+./usr/share/man/cat3/MD2Init.0	comp-c-catman
+./usr/share/man/cat3/MD2Update.0	comp-c-catman
 ./usr/share/man/cat3/MD4Data.0	comp-c-catman
 ./usr/share/man/cat3/MD4End.0	comp-c-catman
 ./usr/share/man/cat3/MD4File.0	comp-c-catman
@@ -3613,6 +3619,12 @@
 ./usr/share/man/man3/EVP_SealInit.3		comp-c-man
 ./usr/share/man/man3/EVP_SignInit.3		comp-c-man
 ./usr/share/man/man3/EVP_VerifyInit.3		comp-c-man
+./usr/share/man/man3/MD2Data.3		comp-c-man
+./usr/share/man/man3/MD2End.3		comp-c-man
+./usr/share/man/man3/MD2File.3		comp-c-man
+./usr/share/man/man3/MD2Final.3		comp-c-man
+./usr/share/man/man3/MD2Init.3		comp-c-man
+./usr/share/man/man3/MD2Update.3		comp-c-man
 ./usr/share/man/man3/MD4Data.3		comp-c-man
 ./usr/share/man/man3/MD4End.3		comp-c-man
 ./usr/share/man/man3/MD4File.3		comp-c-man
