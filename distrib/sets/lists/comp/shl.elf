@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.36 2003/03/25 18:26:53 tshiozak Exp $
+# $NetBSD: shl.elf,v 1.37 2003/03/25 23:55:37 pooka Exp $
 ./lib/libc.so			comp-c-lib
 ./lib/libcrypt.so		comp-c-lib
 ./lib/libcrypto.so		comp-c-lib
@@ -46,6 +46,7 @@
 ./usr/lib/libkstream.so		comp-c-lib
 ./usr/lib/libkvm.so		comp-c-lib
 ./usr/lib/libm.so		comp-c-lib
+./usr/lib/libmagic.so		comp-c-lib
 ./usr/lib/libmenu.so		comp-c-lib
 ./usr/lib/libossaudio.so	comp-c-lib
 ./usr/lib/libpcap.so		comp-c-lib

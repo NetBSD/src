@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.548 2003/03/25 22:07:35 thorpej Exp $
+#	$NetBSD: mi,v 1.549 2003/03/25 23:55:35 pooka Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -296,6 +296,7 @@
 ./usr/include/locale.h			comp-c-include
 ./usr/include/login_cap.h		comp-c-include
 ./usr/include/lwp.h			comp-c-include
+./usr/include/magic.h			comp-c-include
 ./usr/include/malloc.h			comp-c-include
 ./usr/include/math.h			comp-c-include
 ./usr/include/md2.h			comp-c-include
@@ -978,6 +979,8 @@
 ./usr/lib/libl_p.a		comp-c-proflib
 ./usr/lib/libm.a		comp-c-lib
 ./usr/lib/libm_p.a		comp-c-proflib
+./usr/lib/libmagic.a		comp-c-lib
+./usr/lib/libmagic_p.a		comp-c-proflib
 ./usr/lib/libmenu.a		comp-c-lib
 ./usr/lib/libmenu_p.a		comp-c-proflib
 ./usr/lib/libobjc.a		comp-objc-lib
