@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.33 1998/07/03 19:11:25 mjacob Exp $	*/
+/*	$NetBSD: ch.c,v 1.34 1998/08/31 22:28:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe <thorpej@and.com>
@@ -94,11 +94,7 @@ struct ch_softc {
 #define CHF_ROTATE	0x01		/* picker can rotate */
 
 /* Autoconfiguration glue */
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	chmatch __P((struct device *, void *, void *));
-#else
 int	chmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	chattach __P((struct device *, struct device *, void *));
 
 struct cfattach ch_ca = {
@@ -144,11 +140,7 @@ struct chquirk chquirks[] = {
 int
 chmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct scsipibus_attach_args *sa = aux;

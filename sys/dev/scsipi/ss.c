@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.21 1998/08/19 08:40:31 explorer Exp $	*/
+/*	$NetBSD: ss.c,v 1.22 1998/08/31 22:28:07 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -64,11 +64,7 @@
 #define MODE_NONREWIND	1
 #define MODE_CONTROL	3
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int ssmatch __P((struct device *, void *, void *));
-#else
 int ssmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void ssattach __P((struct device *, struct device *, void *));
 
 struct cfattach ss_ca = {
@@ -106,11 +102,7 @@ struct scsipi_inquiry_pattern ss_patterns[] = {
 int
 ssmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct scsipibus_attach_args *sa = aux;
