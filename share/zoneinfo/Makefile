@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2002/01/05 07:35:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2002/06/10 18:47:12 mason Exp $
 
 NOOBJ=	# defined
 
@@ -81,10 +81,10 @@ afterinstall: ${DATA} ${REDO}
 .else
 	find ${TZDIR} -type d | xargs -n 1 printf \
 		"%s type=dir mode=0755 uname=${BINOWN} gname=${BINGRP}\n" | \
-		sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+		sed -e 's|^/|./|g' -e 's|//|/|g' | ${CAT} -l >> ${METALOG}
 	find ${TZDIR} -type f | xargs -n 1 printf \
 		"%s type=file mode=0444 uname=${BINOWN} gname=${BINGRP}\n" | \
-		sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+		sed -e 's|^/|./|g' -e 's|//|/|g' | ${CAT} -l >> ${METALOG}
 .endif
 .else
 afterinstall:
