@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_43.c,v 1.13 2000/06/28 15:39:25 mrg Exp $	*/
+/*	$NetBSD: kern_sig_43.c,v 1.14 2000/12/17 15:55:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/signalvar.h>
