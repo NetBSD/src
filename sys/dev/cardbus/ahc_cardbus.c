@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_cardbus.c,v 1.12 2003/04/20 16:52:40 fvdl Exp $	*/
+/*	$NetBSD: ahc_cardbus.c,v 1.13 2004/01/19 23:15:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.12 2003/04/20 16:52:40 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_cardbus.c,v 1.13 2004/01/19 23:15:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +213,11 @@ ahc_cardbus_attach(parent, self, aux)
 		return;
 	}
 	printf("%s: interrupting at %d\n", ahc_name(ahc), ca->ca_intrline);
+
+	ahc->seep_config = malloc(sizeof(*ahc->seep_config),
+				  M_DEVBUF, M_NOWAIT);
+	if (ahc->seep_config == NULL)
+		return;
 
 	ahc_check_extport(ahc, &sxfrctl1);
 	/*
