@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.78 2001/02/02 21:52:12 is Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.78.8.1 2001/11/17 21:59:05 scw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,6 +37,8 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/lwp.h>
+#include <sys/proc.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/device.h>
@@ -393,10 +395,10 @@ findroot(void)
 				    dkp->dk_driver->d_strategy)
 					break;
 			if (bdp->d_open(MAKEDISKDEV(4, unit, RAW_PART),
-			    FREAD | FNONBLOCK, 0, curproc))
+			    FREAD | FNONBLOCK, 0, curproc->l_proc))
 				continue;
 			bdp->d_close(MAKEDISKDEV(4, unit, RAW_PART),
-			    FREAD | FNONBLOCK, 0, curproc);
+			    FREAD | FNONBLOCK, 0, curproc->l_proc);
 			pp = &dkp->dk_label->d_partitions[0];
 			for (i = 0; i < dkp->dk_label->d_npartitions;
 			    i++, pp++) {
