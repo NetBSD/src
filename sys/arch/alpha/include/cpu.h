@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.42 2000/06/04 03:40:04 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.43 2000/06/05 21:47:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@ struct cpu_info {
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
 	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
-	struct device *ci_dev;		/* pointer to our device */
+	struct cpu_softc *ci_softc;	/* pointer to our device */
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_astpending;		/* AST is pending */
 	u_long ci_intrdepth;		/* interrupt trap depth */

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.6 2000/06/04 19:14:23 cgd Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.7 2000/06/05 21:47:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.6 2000/06/04 19:14:23 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.7 2000/06/05 21:47:25 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,10 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.6 2000/06/04 19:14:23 cgd Exp $")
 
 #include <alpha/pci/pci_eb64plus.h>
 
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
-
 #include "sio.h"
 #if NSIO
 #include <alpha/pci/siovar.h>
@@ -110,9 +106,6 @@ void	dec_eb64plus_intr_disestablish __P((void *, void *));
 #define	PCI_STRAY_MAX		5
 
 struct alpha_shared_intr *eb64plus_pci_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt eb64plus_intr_evcnt;
-#endif
 
 bus_space_tag_t eb64plus_intrgate_iot;
 bus_space_handle_t eb64plus_intrgate_ioh;
@@ -127,6 +120,7 @@ pci_eb64plus_pickintr(acp)
 {
 	bus_space_tag_t iot = &acp->ac_iot;
 	pci_chipset_tag_t pc = &acp->ac_pc;
+	char *cp;
 	int i;
 
         pc->pc_intr_v = acp;
@@ -146,10 +140,17 @@ pci_eb64plus_pickintr(acp)
 	for (i = 0; i < EB64PLUS_MAX_IRQ; i++)
 		eb64plus_intr_disable(i);	
 
-	eb64plus_pci_intr = alpha_shared_intr_alloc(EB64PLUS_MAX_IRQ);
-	for (i = 0; i < EB64PLUS_MAX_IRQ; i++)
+	eb64plus_pci_intr = alpha_shared_intr_alloc(EB64PLUS_MAX_IRQ, 8);
+	for (i = 0; i < EB64PLUS_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(eb64plus_pci_intr, i,
 			PCI_STRAY_MAX);
+		
+		cp = alpha_shared_intr_string(eb64plus_pci_intr, i);
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+		    eb64plus_pci_intr, i), EVCNT_TYPE_INTR, NULL,
+		    "eb64+", cp);
+	}
 
 #if NSIO
 	sio_intr_setup(pc, iot);
@@ -217,8 +218,9 @@ dec_eb64plus_intr_evcnt(acv, ih)
 	pci_intr_handle_t ih;
 {
 
-	/* XXX for now, no evcnt parent reported */
-	return (NULL);
+	if (ih > EB64PLUS_MAX_IRQ)
+		panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx\n", ih);
+	return (alpha_shared_intr_evcnt(eb64plus_pci_intr, ih));
 }
 
 void *
@@ -274,14 +276,6 @@ eb64plus_iointr(framep, vec)
 		if (vec >= 0x900 + (EB64PLUS_MAX_IRQ << 4))
 			panic("eb64plus_iointr: vec 0x%lx out of range\n", vec);
 		irq = (vec - 0x900) >> 4;
-
-#ifdef EVCNT_COUNTERS
-		eb64plus_intr_evcnt.ev_count++;
-#else
-		if (EB64PLUS_MAX_IRQ != INTRCNT_EB64PLUS_IRQ_LEN)
-			panic("eb64plus interrupt counter sizes inconsistent");
-		intrcnt[INTRCNT_EB64PLUS_IRQ + irq]++;
-#endif
 
 		if (!alpha_shared_intr_dispatch(eb64plus_pci_intr, irq)) {
 			alpha_shared_intr_stray(eb64plus_pci_intr, irq,

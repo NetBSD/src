@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.20 2000/06/04 19:14:19 cgd Exp $ */
+/* $NetBSD: dwlpx.c,v 1.21 2000/06/05 21:47:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.20 2000/06/04 19:14:19 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.21 2000/06/05 21:47:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,10 +158,6 @@ dwlpxattach(parent, self, aux)
 		 * Set up interrupts
 		 */
 		pci_kn8ae_pickintr(&sc->dwlpx_cc, 1);
-#ifdef	EVCNT_COUNTERS
-		evcnt_attach_dynamic(kn8ae_intr_evcnt, EVCNT_TYPE_INTR, NULL,
-		    self->dv_xname, "intr");
-#endif
 		once++;
 	} else {
 		pci_kn8ae_pickintr(&sc->dwlpx_cc, 0);

@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.47 2000/06/04 03:40:03 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.48 2000/06/05 21:47:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.47 2000/06/04 03:40:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.48 2000/06/05 21:47:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,8 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.47 2000/06/04 03:40:03 thorpej Exp $
 #include <sys/vmmeter.h>
 #include <sys/sched.h>
 #include <sys/malloc.h>
+
+#include <machine/cpuvar.h>
 
 /* XXX Network interrupts should be converted to new softintrs */
 #include <sys/socket.h>
@@ -144,7 +146,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.47 2000/06/04 03:40:03 thorpej Exp $
 #include <machine/rpb.h>
 #include <machine/frame.h>
 #include <machine/cpuconf.h>
-#include <machine/intrcnt.h>
 #include <machine/alpha.h>
 
 #if defined(MULTIPROCESSOR)
@@ -158,6 +159,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
     struct trapframe *framep)
 {
 	struct cpu_info *ci = curcpu();
+	struct cpu_softc *sc = ci->ci_softc;
 	struct proc *p;
 
 	switch (a0) {
@@ -166,19 +168,16 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 	    {
 		u_long pending_ipis, bit;
 
-		atomic_add_ulong(&ci->ci_intrdepth, 1);
-
-#if 0
-		printf("CPU %lu got IPI\n", cpu_id);
-#endif
-
 #ifdef DIAGNOSTIC
-		if (ci->ci_dev == NULL) {
+		if (sc == NULL) {
 			/* XXX panic? */
-			printf("WARNING: no device for ID %lu\n", ci->ci_cpuid);
+			printf("WARNING: no softc for ID %lu\n", ci->ci_cpuid);
 			return;
 		}
 #endif
+
+		atomic_add_ulong(&ci->ci_intrdepth, 1);
+		sc->sc_evcnt_ipi.ev_count++;
 
 		pending_ipis = atomic_loadlatch_ulong(&ci->ci_ipis, 0);
 		for (bit = 0; bit < ALPHA_NIPIS; bit++)
@@ -207,13 +206,13 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		 * the clock interrupt, so if we did, all system
 		 * time would be counted as interrupt time.
 		 */
+		sc->sc_evcnt_clock.ev_count++;
 #if defined(MULTIPROCESSOR)
 		/* XXX XXX XXX */
 		if (CPU_IS_PRIMARY(ci) == 0)
 			return;
 #endif
 		uvmexp.intrs++;
-		intrcnt[INTRCNT_CLOCK]++;
 		if (platform.clockintr) {
 			/*
 			 * Call hardclock().  This will also call
@@ -243,6 +242,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		break;
 
 	case ALPHA_INTR_DEVICE:	/* I/O device interrupt */
+		atomic_add_ulong(&sc->sc_evcnt_device.ev_count, 1);
 #if defined(MULTIPROCESSOR)
 		/* XXX XXX XXX */
 		if (CPU_IS_PRIMARY(ci) == 0)
@@ -464,6 +464,7 @@ struct alpha_soft_intrhand *softnet_intrhand, *softclock_intrhand;
 void
 softintr_init()
 {
+	static const char *softintr_names[] = IPL_SOFTNAMES;
 	struct alpha_soft_intr *asi;
 	int i;
 
@@ -472,6 +473,8 @@ softintr_init()
 		LIST_INIT(&asi->softintr_q);
 		simple_lock_init(&asi->softintr_slock);
 		asi->softintr_ipl = i;
+		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
+		    NULL, "soft", softintr_names[i]);
 	}
 
 	/* XXX Establish legacy software interrupt handlers. */
@@ -504,6 +507,8 @@ softintr_dispatch()
 
 			/* Already at splsoft() */
 			simple_lock(&asi->softintr_slock);
+
+			asi->softintr_evcnt.ev_count++;
 
 			for (sih = LIST_FIRST(&asi->softintr_q);
 			     sih != NULL;

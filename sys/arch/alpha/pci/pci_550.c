@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.15 2000/06/04 19:14:21 cgd Exp $ */
+/* $NetBSD: pci_550.c,v 1.16 2000/06/05 21:47:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.15 2000/06/04 19:14:21 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.16 2000/06/05 21:47:22 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -91,10 +91,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.15 2000/06/04 19:14:21 cgd Exp $");
 #include <alpha/pci/ciavar.h>
 
 #include <alpha/pci/pci_550.h>
-
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #include "sio.h"
 #if NSIO
@@ -132,9 +128,6 @@ void	*dec_550_pciide_compat_intr_establish __P((void *, struct device *,
 #define	DEC_550_LINE_ISA_IRQ(line)	((line) & 0x0f)
 
 struct alpha_shared_intr *dec_550_pci_intr;
-#ifdef EVCNT_COUNTERS
-struct evcnt dec_550_intr_evcnt;
-#endif
 
 void	dec_550_iointr __P((void *framep, unsigned long vec));
 void	dec_550_intr_enable __P((int irq));
@@ -146,6 +139,7 @@ pci_550_pickintr(ccp)
 {
 	bus_space_tag_t iot = &ccp->cc_iot;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
+	char *cp;
 	int i;
 
         pc->pc_intr_v = ccp;
@@ -166,11 +160,17 @@ pci_550_pickintr(ccp)
 	for (i = 0; i < DEC_550_MAX_IRQ; i++)
 		dec_550_intr_disable(i);
 
-	dec_550_pci_intr = alpha_shared_intr_alloc(DEC_550_MAX_IRQ);
+	dec_550_pci_intr = alpha_shared_intr_alloc(DEC_550_MAX_IRQ, 8);
 	for (i = 0; i < DEC_550_MAX_IRQ; i++) {
 		alpha_shared_intr_set_maxstrays(dec_550_pci_intr, i,
 		    PCI_STRAY_MAX);
 		alpha_shared_intr_set_private(dec_550_pci_intr, i, ccp);
+		
+		cp = alpha_shared_intr_string(dec_550_pci_intr, i);
+		sprintf(cp, "irq %d", i);
+		evcnt_attach_dynamic(alpha_shared_intr_evcnt(
+		    dec_550_pci_intr, i), EVCNT_TYPE_INTR, NULL,
+		    "dec_550", cp);
 	}
 
 #if NSIO
@@ -298,8 +298,10 @@ dec_550_intr_evcnt(ccv, ih)
 		    DEC_550_LINE_ISA_IRQ(ih)));
 #endif
 
-	/* XXX for now, no evcnt parent reported */
-	return (NULL);
+	if (ih >= DEC_550_MAX_IRQ)
+		panic("dec_550_intr_evcnt: bogus 550 IRQ 0x%lx\n", ih);
+
+	return (alpha_shared_intr_evcnt(dec_550_pci_intr, ih));
 }
 
 void *
@@ -407,14 +409,6 @@ dec_550_iointr(framep, vec)
 
 		if (irq >= DEC_550_MAX_IRQ)
 			panic("550_iointr: vec 0x%lx out of range\n", vec);
-
-#ifdef EVCNT_COUNTERS
-		dec_550_intr_evcnt.ev_count++;
-#else
-		if (DEC_550_MAX_IRQ != INTRCNT_DEC_550_IRQ_LEN)
-			panic("dec_550 interrupt counter sizes inconsistent");
-		intrcnt[INTRCNT_DEC_550_IRQ + irq]++;
-#endif
 
 		if (!alpha_shared_intr_dispatch(dec_550_pci_intr, irq)) {
 			alpha_shared_intr_stray(dec_550_pci_intr, irq,

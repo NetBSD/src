@@ -1,4 +1,4 @@
-/* $NetBSD: pci_a12.c,v 1.5 2000/06/04 19:14:22 cgd Exp $ */
+/* $NetBSD: pci_a12.c,v 1.6 2000/06/05 21:47:23 thorpej Exp $ */
 
 /* [Notice revision 2.0]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.5 2000/06/04 19:14:22 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.6 2000/06/05 21:47:23 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,10 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_a12.c,v 1.5 2000/06/04 19:14:22 cgd Exp $");
 #include <alpha/pci/a12cvar.h>
 
 #include <alpha/pci/pci_a12.h>
-
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 
 #define	PCI_A12()	/* Generate ctags(1) key */
 
@@ -103,9 +99,7 @@ static struct gintcall {
 	{	0  }
 };
 
-#ifdef EVCNT_COUNTERS
 struct evcnt a12_intr_evcnt;
-#endif
 
 int	avalon_a12_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
@@ -136,6 +130,9 @@ pci_a12_pickintr(ccp)
 	/* Not supported on A12. */
 	pc->pc_pciide_compat_intr_establish = NULL;
 
+	evcnt_attach_dynamic(&a12_intr_evcnt, EVCNT_TYPE_INTR, NULL,
+	    "a12", "pci irq");
+
 	set_iointr(a12_iointr);
 }
 
@@ -165,8 +162,7 @@ avalon_a12_intr_evcnt(ccv, ih)
 	pci_intr_handle_t ih;
 {
 
-	/* XXX for now, no evcnt parent reported */
-	return (NULL);
+	return (&a12_intr_evcnt);
 }
 
 void *
@@ -208,7 +204,7 @@ void a12_intr_register_xb(f)
 void a12_intr_register_icw(f)
 	int (*f) __P((void *));
 {
-long	t;
+	long	t;
 
 	t = REGVAL(A12_OMR) & ~A12_OMR_ICW_ENABLE;
 	if ((a12_intr_dc.on = (f != NULL)) != 0)
@@ -258,11 +254,6 @@ void	*s;
 	for(gic=gintcall; gic->f; ++gic) {
 		gsrsource = gsrvalue & 1L<<gic->flag;
 		if (gsrsource && gic->f->on) {
-#ifndef EVCNT_COUNTERS
-			if (gic->intr_index >= INTRCNT_A12_IRQ_LEN)
-				panic("A12 INTRCNT");
-			intrcnt[INTRCNT_A12_IRQ + gic->intr_index];
-#endif
 			if(gic->needsclear)
 				clear_gsr_interrupt(1L<<gic->flag);
 
@@ -294,20 +285,12 @@ a12_iointr(framep, vec)
 	unsigned long vec;
 {
 	unsigned irq = (vec-0x900) >> 4;  /* this is the f(vector) above */
+
 	/*
 	 * Xbar device is in the A12 CPU core logic, so its interrupts
 	 * might as well be hardwired.
 	 */
-#ifdef EVCNT_COUNTERS
-	++a12_intr_evcnt.ev_count;
-#else   
-	/* XXX implicit knowledge of intrcnt[] */
-	if(irq < 2)
-		++intrcnt[INTRCNT_A12_IRQ + irq];
-#if 2 >= INTRCNT_A12_IRQ_LEN
-#error	INTRCNT_A12_IRQ_LEN inconsistent with respect to intrcnt[] use
-#endif
-#endif
+	a12_intr_evcnt.ev_count++;
 
 	switch(irq) {
 	    case 0:

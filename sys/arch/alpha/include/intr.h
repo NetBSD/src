@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.27 2000/06/04 05:23:18 thorpej Exp $ */
+/* $NetBSD: intr.h,v 1.28 2000/06/05 21:47:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #ifndef _ALPHA_INTR_H_
 #define _ALPHA_INTR_H_
 
+#include <sys/device.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <machine/atomic.h>
@@ -97,6 +98,13 @@
 #define	IPL_SOFTCLOCK	2	/* clock software interrupts */
 #define	IPL_SOFT	3	/* other software interrupts */
 #define	IPL_NSOFT	4
+
+#define	IPL_SOFTNAMES {							\
+	"serial",							\
+	"net",								\
+	"clock",							\
+	"misc",								\
+}
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
@@ -168,6 +176,8 @@ struct alpha_shared_intrhand {
 struct alpha_shared_intr {
 	TAILQ_HEAD(,alpha_shared_intrhand)
 		intr_q;
+	struct evcnt intr_evcnt;
+	char	*intr_string;
 	void	*intr_private;
 	int	intr_sharetype;
 	int	intr_dfltsharetype;
@@ -199,6 +209,7 @@ struct alpha_soft_intrhand {
 struct alpha_soft_intr {
 	LIST_HEAD(, alpha_soft_intrhand)
 		softintr_q;
+	struct evcnt softintr_evcnt;
 	struct simplelock softintr_slock;
 	unsigned long softintr_ipl;
 };
@@ -222,7 +233,7 @@ extern struct alpha_soft_intrhand *softclock_intrhand;
 #define	setsoftnet()	softintr_schedule(softnet_intrhand)
 #define	setsoftclock()	softintr_schedule(softclock_intrhand)
 
-struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int);
+struct alpha_shared_intr *alpha_shared_intr_alloc(unsigned int, unsigned int);
 int	alpha_shared_intr_dispatch(struct alpha_shared_intr *,
 	    unsigned int);
 void	*alpha_shared_intr_establish(struct alpha_shared_intr *,
@@ -243,6 +254,12 @@ void	alpha_shared_intr_set_private(struct alpha_shared_intr *,
 	    unsigned int, void *);
 void	*alpha_shared_intr_get_private(struct alpha_shared_intr *,
 	    unsigned int);
+char	*alpha_shared_intr_string(struct alpha_shared_intr *,
+	    unsigned int);
+struct evcnt *alpha_shared_intr_evcnt(struct alpha_shared_intr *,
+	    unsigned int);
+
+void	set_iointr(void (*)(void *, unsigned long));
 
 #endif /* _KERNEL */
 #endif /* ! _ALPHA_INTR_H_ */

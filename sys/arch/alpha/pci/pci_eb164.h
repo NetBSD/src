@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb164.h,v 1.2 1997/04/07 02:00:01 cgd Exp $ */
+/* $NetBSD: pci_eb164.h,v 1.3 2000/06/05 21:47:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,3 @@
  */
 
 void	pci_eb164_pickintr __P((struct cia_config *));
-
-#ifdef EVCNT_COUNTERS
-extern struct evcnt eb164_intr_evcnt;
-#endif

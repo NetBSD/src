@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.6 2000/06/04 19:14:19 cgd Exp $ */
+/* $NetBSD: a12c.c,v 1.7 2000/06/05 21:47:20 thorpej Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.6 2000/06/04 19:14:19 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.7 2000/06/05 21:47:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,14 +144,10 @@ a12cattach(parent, self, aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.6 $", 
+	printf(": driver %s over logic %x\n", "$Revision: 1.7 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);
-#ifdef EVCNT_COUNTERS
-	evcnt_attach_dynamic(&a12_intr_evcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "intr");
-#endif
 	clockfns = &noclock_fns;	/* XXX? */
 
 	bzero(&pba, sizeof(pba));
