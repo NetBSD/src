@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6.4.1 2000/11/01 16:31:35 tv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6.4.2 2000/11/05 21:44:38 tv Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -90,19 +90,12 @@ cpuattach(parent, self, aux)
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
+	case MPC750:
+	case MPC7400:
 		/* Select DOZE power-saving mode. */
 		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
-		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
-		powersave = 1;
-		break;
-	case MPC750:
-	case MPC7400:
-		/* Select NAP power-saving mode. */
-		__asm __volatile ("mfspr %0,1008" : "=r"(hid0));
-		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM;
 		__asm __volatile ("mtspr 1008,%0" :: "r"(hid0));
 		powersave = 1;
 		break;
