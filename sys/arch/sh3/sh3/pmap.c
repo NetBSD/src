@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2001/09/19 07:54:48 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 2001/11/15 05:16:41 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1738,18 +1738,21 @@ pmap_extract(pmap, va, pap)
 	vaddr_t va;
 	paddr_t *pap;
 {
-	paddr_t retval;
-	pt_entry_t *ptes;
+	pt_entry_t *ptes, pte;
 
-	if (pmap->pm_pdir[pdei(va)]) {
-		ptes = pmap_map_ptes(pmap);
-		retval = (paddr_t)(ptes[sh3_btop(va)] & PG_FRAME);
-		pmap_unmap_ptes(pmap);
-		if (pap != NULL)
-			*pap = retval | (va & ~PG_FRAME);
-		return (TRUE);
+	if (pmap->pm_pdir[pdei(va)] == 0) {
+		return (FALSE);
 	}
-	return (FALSE);
+	ptes = pmap_map_ptes(pmap);
+	pte = ptes[sh3_btop(va)];
+	pmap_unmap_ptes(pmap);
+	if ((pte & PG_V) == 0) {
+		return (FALSE);
+	}
+	if (pap != NULL) {
+		*pap = (pte & PG_FRAME) | (va & ~PG_FRAME);
+	}
+	return (TRUE);
 }
 
 
