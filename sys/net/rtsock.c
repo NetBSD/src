@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.42 2000/09/28 01:14:06 erh Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.43 2000/10/19 01:07:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -699,7 +699,7 @@ rt_ifmsg(ifp)
 	raw_input(m, &route_proto, &route_src, &route_dst);
 #ifdef COMPAT_14
 	bzero(&info, sizeof(info));
-	bzero(&oifm, sizeof(ifm));
+	bzero(&oifm, sizeof(oifm));
 	oifm.ifm_index = ifp->if_index;
 	oifm.ifm_flags = ifp->if_flags;
 	oifm.ifm_data.ifi_type = ifp->if_data.ifi_type;
