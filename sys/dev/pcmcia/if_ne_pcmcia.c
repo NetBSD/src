@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.60 2000/04/12 21:07:55 scw Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.61 2000/05/23 02:55:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -169,6 +169,16 @@ struct ne2000dev {
       PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
       PCMCIA_CIS_IBM_INFOMOVER,
       0, 0x0ff0, { 0x08, 0x00, 0x5a } },
+
+    { PCMCIA_STR_IBM_INFOMOVER,
+      PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
+      PCMCIA_CIS_IBM_INFOMOVER,
+      0, 0x0ff0, { 0x00, 0x04, 0xac } },
+
+    { PCMCIA_STR_IBM_INFOMOVER,
+      PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_INFOMOVER,
+      PCMCIA_CIS_IBM_INFOMOVER,
+      0, 0x0ff0, { 0x00, 0x06, 0x29 } },
 
     { PCMCIA_STR_LINKSYS_ECARD_1, 
       PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
