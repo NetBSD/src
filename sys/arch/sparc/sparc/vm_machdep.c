@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.34 1998/02/10 14:11:48 mrg Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.35 1998/07/17 23:05:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -271,14 +271,17 @@ dvma_mapout(kva, va, len)
 	vm_offset_t	kva, va;
 	int		len;
 {
-	register int s, off;
+	int s, off;
+	int olen;
+
+	olen = len;
 
 	off = (int)kva & PGOFSET;
 	kva -= off;
 	len = round_page(len + off);
 
 #if defined(SUN4M)
-	if (cputyp == CPU_SUN4M)
+	if (CPU_ISSUN4M)
 		iommu_remove(kva, len);
 	else
 #endif
@@ -290,7 +293,7 @@ dvma_mapout(kva, va, len)
 	splx(s);
 
 	if (CACHEINFO.c_vactype != VAC_NONE)
-		cpuinfo.cache_flush((caddr_t)va, len);
+		cpuinfo.cache_flush((caddr_t)va, olen);
 }
 
 /*
@@ -331,7 +334,7 @@ vmapbuf(bp, len)
 	 * have the correct contents.
 	 */
 	if (CACHEINFO.c_vactype != VAC_NONE)
-	  cpuinfo.cache_flush((caddr_t)uva, len);
+		cpuinfo.cache_flush((caddr_t)uva, len);
 
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);
