@@ -22,12 +22,13 @@ if [ -d /var/tmp -a ! -h /var/tmp ]; then
 	    >/dev/null 2>&1; }
 fi
 
-if [ -d /scratch -a ! -h /scratch ]; then
-	cd /scratch && {
-	find . ! -name . -atime +1 -exec rm -f -- {} \;
-	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
-	    >/dev/null 2>&1; }
-fi
+# Additional junk directory cleanup would go like this:
+#if [ -d /scratch -a ! -h /scratch ]; then
+#	cd /scratch && {
+#	find . ! -name . -atime +1 -exec rm -f -- {} \;
+#	find . ! -name . -type d -mtime +1 -exec rmdir -- {} \; \
+#	    >/dev/null 2>&1; }
+#fi
 
 # XXX should go away/be replaced by nvi version
 if [ -d /var/preserve -a ! -h /var/preserve ]; then
