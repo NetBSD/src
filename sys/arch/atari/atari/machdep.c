@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1995/05/05 16:35:25 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1995/05/10 07:07:30 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -381,7 +381,11 @@ identifycpu()
         /* there's alot of XXX in here... */
 	char *mach, *mmu, *fpu;
 
-	mach = "Atari TT";
+	if(machineid & ATARI_TT)
+		mach = "Atari TT";
+	else if(machineid & ATARI_FALCON)
+		mach = "Atari Falcon";
+	else mach = "Atari UNKNOWN";
 
 	fpu = NULL;
 	if (machineid & ATARI_68040) {
@@ -758,33 +762,10 @@ void
 bootsync(void)
 {
 	if (waittime < 0) {
-		register struct buf *bp;
-		int iter, nbusy;
-
 		waittime = 0;
-		(void) spl0();
-		printf("syncing disks... ");
-		/*
-		 * Release vnodes held by texts before sync.
-		 */
-		if (panicstr == 0)
-			vnode_pager_umount(NULL);
-		sync(&proc0, (void *)NULL, (int *)NULL);
 
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-					nbusy++;
-			if (nbusy == 0)
-				break;
-			printf("%d ", nbusy);
-			delay(40000 * iter);
-		}
-		if (nbusy)
-			printf("giving up\n");
-		else
-			printf("done\n");
+		vfs_shutdown();
+
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
@@ -1062,7 +1043,7 @@ void	(*function) __P((void *rock1, void *rock2));
 void	*rock1, *rock2;
 {
 	struct si_callback	*si;
-	int					s;
+	int			s;
 
 	/*
 	 * this function may be called from high-priority interrupt handlers.
@@ -1104,7 +1085,7 @@ void rem_sicallback(function)
 void (*function) __P((void *rock1, void *rock2));
 {
 	struct si_callback	*si, *psi, *nsi;
-	int					s;
+	int			s;
 
 	s = splhigh();
 	for(psi = 0, si = si_callbacks; si; ) {
