@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.52 2001/01/18 20:28:26 jdolecek Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.53 2001/01/28 07:18:40 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -231,6 +231,12 @@ static const struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  PCMCIA_PRODUCT_ELSA_XI300_IEEE,
 	  PCMCIA_CIS_ELSA_XI300_IEEE,
 	  PCMCIA_STR_ELSA_XI300_IEEE,
+	  1 },
+
+	{ PCMCIA_VENDOR_COMPAQ,
+	  PCMCIA_PRODUCT_COMPAQ_NC5004,
+	  PCMCIA_CIS_COMPAQ_NC5004,
+	  PCMCIA_STR_COMPAQ_NC5004,
 	  1 },
 
 	{ 0,
