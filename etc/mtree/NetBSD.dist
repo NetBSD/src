@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.22 1996/05/20 04:59:29 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.23 1996/05/22 01:46:42 mrg Exp $
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -125,6 +125,11 @@ g++		gname=bin uname=bin mode=0755
 # ./usr/include/g++/gen
 gen		gname=bin uname=bin mode=0755
 # ./usr/include/g++/gen
+..
+
+# ./usr/include/g++/std
+std		gname=bin uname=bin mode=0755
+# ./usr/include/g++/std
 ..
 
 # ./usr/include/g++
