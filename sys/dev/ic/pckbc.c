@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.4 2000/06/06 16:21:22 sommerfeld Exp $ */
+/* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -939,9 +939,10 @@ pckbcintr(vsc)
 }
 
 int
-pckbc_cnattach(iot, addr, slot)
+pckbc_cnattach(iot, addr, cmd_offset, slot)
 	bus_space_tag_t iot;
 	bus_addr_t addr;
+	bus_size_t cmd_offset;
 	pckbc_slot_t slot;
 {
 	bus_space_handle_t ioh_d, ioh_c;
@@ -949,7 +950,7 @@ pckbc_cnattach(iot, addr, slot)
 
 	if (bus_space_map(iot, addr + KBDATAP, 1, 0, &ioh_d))
                 return (ENXIO);
-	if (bus_space_map(iot, addr + KBCMDP, 1, 0, &ioh_c)) {
+	if (bus_space_map(iot, addr + cmd_offset, 1, 0, &ioh_c)) {
 		bus_space_unmap(iot, ioh_d, 1);
                 return (ENXIO);
 	}

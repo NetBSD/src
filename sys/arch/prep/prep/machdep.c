@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2000/05/26 21:20:14 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2000/06/09 04:58:35 soda Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -93,6 +93,7 @@
 #include "pckbc.h"
 #if (NPCKBC > 0)
 #include <dev/isa/isareg.h>
+#include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
 #endif
 #include "pckbd.h" /* for pckbc_machdep_cnattach */
@@ -679,7 +680,8 @@ consinit()
 	if (!strcmp(consinfo->devname, "fb")) {
 		pfb_cnattach(consinfo->addr);
 #if (NPCKBC > 0)
-		pckbc_cnattach(PREP_BUS_SPACE_IO, PCKBC_KBD_SLOT);
+		pckbc_cnattach(PREP_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 #endif
 		return;
 	}
@@ -697,7 +699,8 @@ consinit()
 #endif
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(PREP_BUS_SPACE_IO, IO_KBD, PCKBC_KBD_SLOT);
+		pckbc_cnattach(PREP_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		    PCKBC_KBD_SLOT);
 #endif
 		return;
 	}
