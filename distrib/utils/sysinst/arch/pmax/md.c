@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 1997/11/10 08:16:21 jonathan Exp $	*/
+/*	$NetBSD: md.c,v 1.13 1997/11/14 23:47:49 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -171,7 +171,7 @@ void	md_post_disklabel (void)
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c "unused", d /usr */
-	case 2: /* standard X: a root, b swap (big), c "unused", e /usr */
+	case 2: /* standard X: a root, b swap (big), c "unused", d /usr */
 		partstart = ptstart;
 
 		/* Root */
