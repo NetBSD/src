@@ -1,4 +1,4 @@
-/*	$NetBSD: textdomain.c,v 1.3 2000/11/01 03:39:21 itojun Exp $	*/
+/*	$NetBSD: textdomain.c,v 1.4 2000/11/03 14:29:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: textdomain.c,v 1.3 2000/11/01 03:39:21 itojun Exp $");
+__RCSID("$NetBSD: textdomain.c,v 1.4 2000/11/03 14:29:23 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -36,14 +36,12 @@ __RCSID("$NetBSD: textdomain.c,v 1.3 2000/11/01 03:39:21 itojun Exp $");
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <libintl.h>
 #include "libintl_local.h"
 #include "pathnames.h"
 
-static char dpath[PATH_MAX];
-static char dname[PATH_MAX];	/*XXX*/
-const char *__domainpath = _PATH_TEXTDOMAIN;
-const char *__domainname = DEFAULT_DOMAINNAME;
+struct domainbinding __binding = { NULL, DEFAULT_DOMAINNAME, _PATH_TEXTDOMAIN };
 
 /*
  * set the default domainname for dcngettext() and friends.
@@ -54,16 +52,18 @@ textdomain(domainname)
 {
 
 	/* NULL pointer gives the current setting */
-	if (!domainname) {
-		/* LINTED const cast */
-		return (char *)__domainname;
-	}
+	if (!domainname)
+		return __binding.domainname;
 
 	/* empty string sets the value back to the default */
-	if (!*domainname)
-		return bindtextdomain(DEFAULT_DOMAINNAME, _PATH_TEXTDOMAIN);
-
-	return bindtextdomain(domainname, _PATH_TEXTDOMAIN);
+	if (!*domainname) {
+		strlcpy(__binding.domainname, DEFAULT_DOMAINNAME,
+		    sizeof(__binding.domainname));
+	} else {
+		strlcpy(__binding.domainname, domainname,
+		    sizeof(__binding.domainname));
+	}
+	return __binding.domainname;
 }
 
 char *
@@ -71,27 +71,36 @@ bindtextdomain(domainname, dirname)
 	const char *domainname;
 	const char *dirname;
 {
+	struct domainbinding *p;
 
 	/* NULL pointer or empty string returns NULL with no operation */
 	if (!domainname || !*domainname)
 		return NULL;
 
-	if (strlen(dirname) + 1 > sizeof(dpath))
+	if (strlen(dirname) + 1 > sizeof(p->path))
 		return NULL;
 	/* disallow relative path */
 	if (dirname[0] != '/')
 		return NULL;
 
-	if (strlen(domainname) + 1 > sizeof(dname))
+	if (strlen(domainname) + 1 > sizeof(p->domainname))
 		return NULL;
 
-	strlcpy(dpath, dirname, sizeof(dpath));
-	__domainpath = dpath;
-	strlcpy(dname, domainname, sizeof(dname));
-	__domainname = dname;
+	/* lookup binding for the domainname */
+	for (p = __binding.next; p; p = p->next)
+		if (strcmp(p->domainname, domainname) == 0)
+			break;
+	if (!p) {
+		p = (struct domainbinding *)malloc(sizeof(*p));
+		if (!p)
+			return NULL;
+		memset(p, 0, sizeof(*p));
+		p->next = __binding.next;
+		__binding.next = p;
+	}
 
-	/* perform a dummy lookup, to map message file into memory */
-	gettext("");
+	strlcpy(p->path, dirname, sizeof(p->path));
+	strlcpy(p->domainname, domainname, sizeof(p->domainname));
 
 	/* LINTED const cast */
 	return (char *)domainname;
