@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.41 2000/08/01 16:46:27 eeh Exp $	*/
+/*	$NetBSD: savecore.c,v 1.42 2000/10/01 02:27:06 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.41 2000/08/01 16:46:27 eeh Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.42 2000/10/01 02:27:06 darrenr Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,7 +223,7 @@ kmem_setup()
 	 * presumed to be the same (since the disk partitions are probably
 	 * the same!)
 	 */
-	kd_kern = kvm_openfiles(NULL, NULL, NULL, O_RDONLY, errbuf);
+	kd_kern = kvm_openfiles(kernel, NULL, NULL, O_RDONLY, errbuf);
 	if (kd_kern == NULL) {
 		syslog(LOG_ERR, "%s: kvm_openfiles: %s", _PATH_UNIX, errbuf);
 		exit(1);
