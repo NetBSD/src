@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.37 2003/10/15 14:07:03 scw Exp $	*/
+/*	$NetBSD: fault.c,v 1.38 2003/10/25 19:44:42 scw Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.37 2003/10/15 14:07:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.38 2003/10/25 19:44:42 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,14 +240,18 @@ badaddr_read(void *addr, size_t size, void *rptr)
 
 #define TRAP_CODE ((fault_status & 0x0f) | (fault_address & 0xfffffff0))
 
+/* Determine if 'x' is an alignment fault */
+#define	IS_ALIGN_FAULT(x)					\
+	(((1 << (x)) &						\
+	  ((1 << FAULT_ALIGN_0) | (1 << FAULT_ALIGN_1))) != 0)
+
 /* Determine if we can recover from a fault */
 #define	IS_FATAL_FAULT(x)					\
 	(((1 << (x)) &						\
 	  ((1 << FAULT_WRTBUF_0) | (1 << FAULT_WRTBUF_1) |	\
 	   (1 << FAULT_BUSERR_0) | (1 << FAULT_BUSERR_1) |	\
 	   (1 << FAULT_BUSERR_2) | (1 << FAULT_BUSERR_3) |	\
-	   (1 << FAULT_BUSTRNL1) | (1 << FAULT_BUSTRNL2) |	\
-	   (1 << FAULT_ALIGN_0)  | (1 << FAULT_ALIGN_1))) != 0)
+	   (1 << FAULT_BUSTRNL1) | (1 << FAULT_BUSTRNL2))) != 0)
 
 void
 data_abort_handler(frame)
@@ -400,6 +404,26 @@ copyfault:
 	};
 
 	/* Now act on the fault type */
+	if (IS_ALIGN_FAULT(fault_code)) {
+		if (user) {
+			KSI_INIT_TRAP(&ksi);
+			ksi.ksi_signo = SIGBUS;
+			ksi.ksi_code = BUS_ADRALN;
+			ksi.ksi_addr = (u_int32_t *)fault_address;
+			ksi.ksi_trap = TRAP_CODE;
+			ksi.ksi_errno = error;
+			goto trapsignal;
+		}
+#if defined(DDB) || defined(KGDB)
+		printf("Alignment fault in kernel (frame = %p)\n", frame);
+		report_abort(NULL, fault_status, fault_address, fault_pc);
+		kdb_trap(T_FAULT, frame);
+		return;
+#else
+		panic("Alignment fault in kernel - we're dead");
+#endif
+	}
+
 	if (fatal_fault) {
 		/*
 		 * None of these faults should happen on a perfectly
