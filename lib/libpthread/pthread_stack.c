@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.11 2004/02/02 20:36:18 nathanw Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.12 2004/03/14 01:20:01 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_stack.c,v 1.11 2004/02/02 20:36:18 nathanw Exp $");
+__RCSID("$NetBSD: pthread_stack.c,v 1.12 2004/03/14 01:20:01 cl Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -60,9 +60,9 @@ pthread__stackid_setup(void *base, size_t size);
 
 #ifndef PT_FIXEDSTACKSIZE_LG
 /* 
- * We have to initialize the pt_stack* variables here because mutexes
- * are used before pthread_init() and thus pthread__initmain() are
- * called.  Since mutexes only save the stack pointer and not a
+ * We have to initialize the pthread_stack* variables here because
+ * mutexes are used before pthread_init() and thus pthread__initmain()
+ * are called.  Since mutexes only save the stack pointer and not a
  * pointer to the thread data, it is safe to change the mapping from
  * stack pointer to thread data afterwards.
  */
