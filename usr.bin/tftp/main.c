@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.10 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$Id: main.c,v 1.3 1993/08/01 18:07:07 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1994/02/05 00:25:55 cgd Exp $";
 #endif /* not lint */
 
 /* Many bug fixes are from Jim Guyton <guyton@rand-unix> */
@@ -61,6 +61,7 @@ static char rcsid[] = "$Id: main.c,v 1.3 1993/08/01 18:07:07 mycroft Exp $";
 #include <netdb.h>
 
 #define	TIMEOUT		5		/* secs between rexmt's */
+#define	LBUFLEN		200		/* size of input buffer */
 
 struct	sockaddr_in s_in;
 int	f;
@@ -69,7 +70,7 @@ int	trace;
 int	verbose;
 int	connected;
 char	mode[32];
-char	line[200];
+char	line[LBUFLEN];
 int	margc;
 char	*margv[20];
 char	*prompt = "tftp";
@@ -170,12 +171,12 @@ setpeer(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "Connect ");
 		printf("(to) ");
-		gets(&line[strlen(line)]);
+		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
 	}
-	if (argc > 3) {
+	if ((argc < 2) || (argc > 3)) {
 		printf("usage: %s host-name [port]\n", argv[0]);
 		return;
 	}
@@ -285,7 +286,7 @@ put(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "send ");
 		printf("(file) ");
-		gets(&line[strlen(line)]);
+		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -376,7 +377,7 @@ get(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "get ");
 		printf("(files) ");
-		gets(&line[strlen(line)]);
+		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -456,7 +457,7 @@ setrexmt(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "Rexmt-timeout ");
 		printf("(value) ");
-		gets(&line[strlen(line)]);
+		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -482,7 +483,7 @@ settimeout(argc, argv)
 	if (argc < 2) {
 		strcpy(line, "Maximum-timeout ");
 		printf("(value) ");
-		gets(&line[strlen(line)]);
+		fgets(&line[strlen(line)], LBUFLEN-strlen(line), stdin);
 		makeargv();
 		argc = margc;
 		argv = margv;
@@ -548,14 +549,14 @@ command(top)
 		putchar('\n');
 	for (;;) {
 		printf("%s> ", prompt);
-		if (gets(line) == 0) {
+		if (fgets(line, LBUFLEN, stdin) == 0) {
 			if (feof(stdin)) {
 				quit();
 			} else {
 				continue;
 			}
 		}
-		if (line[0] == 0)
+		if ((line[0] == 0) || (line[0] == '\n'))
 			continue;
 		makeargv();
 		c = getcmd(margv[0]);
