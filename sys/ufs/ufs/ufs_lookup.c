@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.3 1994/12/14 13:04:00 mycroft Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.4 1994/12/30 22:45:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -331,7 +331,8 @@ searchloop:
 				 * reclen in ndp->ni_ufs area, and release
 				 * directory buffer.
 				 */
-				if (ep->d_type == DT_WHT) {
+				if (vdp->v_mount->mnt_maxsymlinklen > 0 &&
+				    ep->d_type == DT_WHT) {
 					slotstatus = FOUND;
 					slotoffset = dp->i_offset;
 					slotsize = ep->d_reclen;
