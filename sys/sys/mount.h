@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.62 1997/11/18 21:35:16 enami Exp $	*/
+/*	$NetBSD: mount.h,v 1.63 1998/02/18 07:09:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -187,6 +187,7 @@ struct mount {
 #ifdef __STDC__
 struct nameidata;
 struct mbuf;
+struct vnodeopv_desc;
 #endif
 
 struct vfsops {
@@ -213,7 +214,9 @@ struct vfsops {
 	int	(*vfs_vptofh)	__P((struct vnode *vp, struct fid *fhp));
 	void	(*vfs_init)	__P((void));
 	int	(*vfs_mountroot) __P((void));
+	struct vnodeopv_desc **vfs_opv_descs;
 	int	vfs_refcount;
+	LIST_ENTRY(vfsops) vfs_list;
 };
 
 #define VFS_MOUNT(MP, PATH, DATA, NDP, P) \
@@ -441,17 +444,25 @@ void	vfs_unlock __P((struct mount *));   /* unlock a vfs */
 void	vfs_unmountall __P((void));	    /* unmount file systems */
 int 	vfs_busy __P((struct mount *));
 void	vfs_unbusy __P((struct mount *));
+int	vfs_attach __P((struct vfsops *));
+int	vfs_detach __P((struct vfsops *));
 struct vfsops *vfs_getopsbyname __P((const char *));
-extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
-extern	struct vfsops *vfssw[];		    /* filesystem type table */
-extern	int nvfssw;
-extern	struct nfs_public nfs_pub;
+
 long	makefstype __P((char *));
 int	dounmount __P((struct mount *, int, struct proc *));
 void	vfsinit __P((void));
+void	vfs_opv_init __P((struct vnodeopv_desc **));
+void	vfs_opv_free __P((struct vnodeopv_desc **));
+
 #ifdef DEBUG
 void	vfs_bufstats __P((void));
 #endif
+
+LIST_HEAD(vfs_list_head, vfsops);
+extern struct vfs_list_head vfs_list;
+
+extern	CIRCLEQ_HEAD(mntlist, mount) mountlist;	/* mounted filesystem list */
+extern	struct nfs_public nfs_pub;
 #else /* _KERNEL */
 
 #include <sys/cdefs.h>
