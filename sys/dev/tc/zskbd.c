@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.5 1999/09/16 19:39:05 drochner Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.1 2000/07/05 02:48:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,7 +65,7 @@
 #include <machine/z8530var.h>
 
 #include <dev/tc/tcvar.h>
-#include <dev/dec/zskbdvar.h>
+#include <dev/tc/zs_ioasicvar.h>
 #include <dev/dec/lk201reg.h>
 #include <dev/dec/lk201var.h>
 
