@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.2 2004/03/12 04:01:28 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.3 2004/03/12 04:05:20 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -14,3 +14,8 @@ build.sh					patch
 
 	Set NETBSDSRCDIR explicitly to avoid build lossage
 	[jmmv, ticket #1550]
+
+usr.sbin/route6d/route6d.c			1.49
+
+	Validate packet length.
+	[itojun, ticket #1551]
