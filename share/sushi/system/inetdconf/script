@@ -1,30 +1,36 @@
 #!/bin/sh
-# $NetBSD: script,v 1.2 2001/08/01 08:11:33 garbled Exp $
+# $NetBSD: script,v 1.3 2004/03/09 21:36:37 garbled Exp $
 
-BIGLIST="ftp,tcp telnet,tcp shell,tcp login,tcp exec,tcp uucpd,tcp nntp,tcp \
-finger,tcp ident,tcp tftp,udp comsat,udp ntalk,udp bootps,udp hunt,udp \
-tcpmux,tcp echo,tcp discard,tcp chargen,tcp daytime,tcp time,tcp echo,udp \
-discard,udp chargen,udp daytime,udp time,udp qotd,tcp klogin,tcp eklogin,tcp \
-kshell,tcp kerberos-adm,tcp kpasswd,udp hprop,tcp rstatd/1-3,rpc/udp \
-rusersd/2-3,rpc/udp walld/1,rpc/udp sprayd/1,rpc/udp rquotad/1,rpc/udp \
-ftp,tcp6 telnet,tcp6 shell,tcp6 login,tcp6 finger,tcp6 tftp,udp6 \
-kpasswd,udp6 rstatd/1-3,rpc/udp6 rusersd/2-3,rpc/udp6"
+BIGLIST=`grep script /usr/share/sushi/system/inetdconf/form | \
+cut -f2,3 -d, | awk '{print $1}'`
 
+BACKUPDIR="/var/sushi"
 INETDCONF="/etc/inetd.conf"
+BACKUP="${BACKUPDIR}/inetd.conf"
+
+if [ ! -d $BACKUPDIR ]; then
+	mkdir $BACKUPDIR
+	chown root:wheel $BACKUPDIR
+	chmod 700 $BACKUPDIR
+fi
+
+# backup
+cp -p $INETDCONF $BACKUP
+
+# temporary files
+cp -p $BACKUP $BACKUP.new
+cp -p $BACKUP $BACKUP.old
 
 if [ "$1" = "YES" ]; then
 	restart=YES
 fi
 shift
 
-IFS=" "
-CONF=`cat $INETDCONF`
 echo "Processing $INETDCONF"
 
 j=0
 for i in $BIGLIST
 do
-	TCONF="${CONF}"
 	j=`expr $j + 1`
 	x=$(echo `eval echo \\$${j}`)
 	A=`echo "$i" | sed -e 's@,@	.*	@'`
@@ -43,15 +49,34 @@ do
 	fi
 	if [ $C = "YES" -a $x = "NO" ]; then
 		echo "DISABLING service $B"
-		CONF=`echo $TCONF | sed -e "s@\(^$A	.*\)@#\1@"`
+		sed "s@\(^$A	.*\)@#\1@" < $BACKUP.old > $BACKUP.new
+		if [ $? -ne 0 ]; then
+			echo "sed failed"
+			rm -f $BACKUP.new $BACKUP.old
+			exit 1
+		fi
 	fi
 	if [ $C = "NO" -a $x = "YES" ]; then
 		echo "ENABLING service $B"
-		CONF=`echo $TCONF | sed -e "s@^#\($A	.*\)@\1@"`
+		sed "s@^#\($A	.*\)@\1@" < $BACKUP.old > $BACKUP.new
+		if [ $? -ne 0 ]; then
+			echo "sed failed"
+			rm -f $BACKUP.new $BACKUP.old
+			exit 1
+		fi
 	fi
+	cp -p $BACKUP.new $BACKUP.old
 done
-echo "Writing modified version to $INETDCONF"
-echo $CONF >$INETDCONF
+
+cp -p $BACKUP.new $INETDCONF
+
+if [ $? -eq 0 ]; then
+	echo "Successfully wrote a new $INETDCONF"
+else
+	echo "Failed"
+fi
+
+rm -f $BACKUP.new $BACKUP.old
 
 if [ "$restart" = "YES" ]; then
 	/etc/rc.d/inetd reload

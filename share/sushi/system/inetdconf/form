@@ -1,15 +1,15 @@
-# $NetBSD: form,v 1.2 2001/08/01 08:11:33 garbled Exp $
+# $NetBSD: form,v 1.3 2004/03/09 21:36:37 garbled Exp $
 list:YES,NO			Restart inetd?
-script:script1,ftp,tcp		Ftp service
+blank:blank			BLANK
+script:script1,ftp,tcp		FTP service
 script:script1,telnet,tcp	Telnet service
 script:script1,shell,tcp	Rshd/shell service
 script:script1,login,tcp	Rlogind/login service
 script:script1,exec,tcp		Rexecd/exec service
 script:script1,uucpd,tcp	Uucpd service
-script:script1,nntp,tcp		Nntp service
 script:script1,finger,tcp	Finger service
 script:script1,ident,tcp	Ident service
-script:script1,tftp,udp		Tftp service
+script:script1,tftp,udp		TFTP service
 script:script1,comsat,udp	Comsat/biff service
 script:script1,ntalk,udp	Ntalk service
 script:script1,bootps,udp	Bootpd service
@@ -36,14 +36,29 @@ script:script1,rstatd/1-3,rpc/udp	Rstatd RPC service
 script:script1,rusersd/2-3,rpc/udp	Rusers RPC service
 script:script1,walld/1,rpc/udp		Rwalld RPC service
 script:script1,sprayd/1,rpc/udp		Sprayd RPC service
-script:script1,rquotad/1,rpc/udp	Rquotad RPC service
-script:script1,ftp,tcp6			Ftp IPV6 service
-script:script1,telnet,tcp6		Telnet IPV6 service
-script:script1,shell,tcp6		Rshd/shell IPV6 service
-script:script1,login,tcp6		Rlogin/login IPV6 service
-script:script1,finger,tcp6		Finger IPV6 service
-script:script1,tftp,udp6		TFTP IPV6 service
-script:script1,kpasswd,udp6		Kpaswwdd IPV6 service
-script:script1,rstatd/1-3,rpc/udp6	Rstatd IPV6 RPC service
-script:script1,rusersd/2-3,rpc/udp6	Rusersd IPV6 RPC service
-
+script:script1,rquotad/1-2,rpc/udp	Rquotad RPC service
+script:script1,ftp,tcp6			FTP IPv6 service
+script:script1,telnet,tcp6		Telnet IPv6 service
+script:script1,shell,tcp6		Rshd/shell IPv6 service
+script:script1,login,tcp6		Rlogin/login IPv6 service
+script:script1,exec,tcp6		Rexecd/exec service
+script:script1,uucpd,tcp6		Uucpd service
+script:script1,finger,tcp6		Finger IPv6 service
+script:script1,ident,tcp6		Ident IPv6 service
+script:script1,tftp,udp6		TFTP IPv6 service
+script:script1,comsat,udp6		Comsat/biff service
+script:script1,echo,tcp6		Echo IPv6 TCP service
+script:script1,discard,tcp6		Discard IPv6 TCP service
+script:script1,chargen,tcp6		Chargen IPv6 TCP service
+script:script1,daytime,tcp6		Daytime IPv6 TCP service
+script:script1,time,tcp6		Time IPv6 TCP service
+script:script1,echo,udp6		Echo IPv6 UDP service
+script:script1,discard,udp6		Discard IPv6 UDP service
+script:script1,chargen,udp6		Chargen IPv6 UDP service
+script:script1,daytime,udp6		Daytime IPv6 UDP service
+script:script1,time,udp6		Time IPv6 UDP service
+script:script1,qotd,tcp6		QOTD/Fortune IPv6 service
+script:script1,kerberos-adm,tcp6	Kadmind IPv6 service
+script:script1,kpasswd,udp6		Kpasswdd IPv6 service
+script:script1,rstatd/1-3,rpc/udp6	Rstatd IPv6 RPC service
+script:script1,rusersd/2-3,rpc/udp6	Rusersd IPv6 RPC service
