@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpioreg.h,v 1.1 2000/11/11 04:42:08 sato Exp $	*/
+/*	$NetBSD: vrc4172gpioreg.h,v 1.2 2001/05/06 14:25:16 takemura Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi.  All rights reserved.
@@ -29,6 +29,14 @@
  *	Vrc4172 GPIO (General Purpose I/O) Unit Registers.
  */
 #define VRC2_EXGPREG_MAX	0x4a
+#define VRC2_EXGP_NPORTS	24
+#define VRC2_EXGP_OFFSET	0x40
+
+#define VRC2_EXGPDATA		VRC2_EXGPDATA0
+#define VRC2_EXGPDIR		VRC2_EXGPDIR0
+#define VRC2_EXGPINTEN		VRC2_EXGPINTEN0
+#define VRC2_EXGPINTST		VRC2_EXGPINTST0
+#define VRC2_EXGPINTTYP		VRC2_EXGPINTTYP0
 
 #define VRC2_EXGPDATA0		0x00	/* I/O data (0..15) */
 #define VRC2_EXGPDIR0		0x02	/* direction (0..15) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwctl.c,v 1.3 2001/05/01 00:25:17 takemura Exp $	*/
+/*	$NetBSD: pwctl.c,v 1.4 2001/05/06 14:25:15 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -40,6 +40,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/bus.h>
 #include <machine/config_hook.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.55 2001/04/30 11:42:18 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.56 2001/05/06 14:25:16 takemura Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -153,6 +153,10 @@ file arch/hpcmips/dev/ite8181.c			ite8181video
 device vrc4172pwm
 attach vrc4172pwm at vrip
 file arch/hpcmips/vr/vrc4172pwm.c		vrc4172pwm needs-flag
+
+device vrc4172gpio: hpcioif, vrisabif
+attach vrc4172gpio at hpcioif
+file arch/hpcmips/vr/vrc4172gpio.c		vrc4172gpio
 
 #
 #	TOSHIBA TX3912/3922
