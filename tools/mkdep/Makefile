@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2001/11/14 22:13:41 tv Exp $
+#	$NetBSD: Makefile,v 1.4 2001/12/11 21:18:01 tv Exp $
 
 HOSTPROGNAME=	nbmkdep
 HOST_SRCDIR=	usr.bin/mkdep
+NOCOMPATLIB=	# defined
+
+.PATH:		${.CURDIR}/../compat
+SRCS=		mkdep.c setprogname.c
 
 .include "${.CURDIR}/../Makefile.host"
 
