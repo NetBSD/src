@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.4 1996/09/02 06:43:54 mycroft Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.5 1996/09/16 04:19:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1236,8 +1236,7 @@ zstty_stint(cs)
 	 * Check here for console break, so that we can abort
 	 * even when interrupts are locking up the machine.
 	 */
-	if ((rr0 & ZSRR0_BREAK) &&
-		(zst->zst_hwflags & ZS_HWFLAG_CONABRT))
+	if ((rr0 & ZSRR0_BREAK))
 	{
 		zs_abort(zst);
 		return;
