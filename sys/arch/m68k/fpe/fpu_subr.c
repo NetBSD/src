@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_subr.c,v 1.3 1999/05/30 20:17:49 briggs Exp $ */
+/*	$NetBSD: fpu_subr.c,v 1.4 2002/12/29 14:40:35 kristerw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -166,7 +166,7 @@ fpu_norm(register struct fpn *fp)
 		 * We have a supernormal number.  We need to shift it right.
 		 * We may assume m2==0.
 		 */
-		asm volatile("bfffo %1{#0:#32},%0" : "=d"(rsh) : "g"(m0));
+		__asm __volatile("bfffo %1{#0:#32},%0" : "=d"(rsh) : "g"(m0));
 		rsh = 31 - rsh - FP_LG;
 		exp += rsh;
 		lsh = 32 - rsh;
@@ -178,7 +178,7 @@ fpu_norm(register struct fpn *fp)
 		 * We have a regular denorm (a subnormal number), and need
 		 * to shift it left.
 		 */
-		asm volatile("bfffo %1{#0:#32},%0" : "=d"(lsh) : "g"(m0));
+		__asm __volatile("bfffo %1{#0:#32},%0" : "=d"(lsh) : "g"(m0));
 		lsh = FP_LG - 31 + lsh;
 		exp -= lsh;
 		rsh = 32 - lsh;
