@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.40 1994/04/20 07:23:52 mycroft Exp $
+ *	$Id: fd.c,v 1.41 1994/04/20 07:55:38 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -169,6 +169,7 @@ struct fd_softc {
 	int sc_skip;			/* bytes transferred so far */
 	int sc_track;			/* where we think the head is */
 	int sc_nblks;			/* number of blocks tranferring */
+	int sc_ops;			/* I/O operations completed */
 	daddr_t	sc_blkno;		/* starting block number */
 };
 
@@ -773,6 +774,7 @@ again:
 	bp = fd->sc_q.b_actf;
 	if (!bp) {
 		/* nothing queued on this drive; try next */
+		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
 		fd->sc_q.b_active = 0;
 		goto again;
@@ -1057,24 +1059,20 @@ fdfinish(fd, bp)
 {
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 
-#if 0
-	/*
-	 * This might seem like a good idea, but each drive switch takes .25
-	 * second because we can't keep both motors running at the same time
-	 * and we have to wait for the new one to stabilize for each I/O.
-	 */
 	/*
 	 * Move this drive to the end of the queue to give others a `fair'
-	 * chance.
+	 * chance.  We only force a switch if N operations are completed while
+	 * another drive is waiting to be serviced, since there is a long motor
+	 * startup delay whenever we switch.
 	 */
-	if (fd->sc_drivechain.tqe_next) {
+	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
+		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
 		if (bp->b_actf) {
 			TAILQ_INSERT_TAIL(&fdc->sc_drives, fd, sc_drivechain);
 		} else
 			fd->sc_q.b_active = 0;
 	}
-#endif
 	bp->b_resid = bp->b_bcount - fd->sc_skip;
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
