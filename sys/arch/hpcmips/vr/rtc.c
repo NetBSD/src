@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.3 2000/01/17 04:06:06 sato Exp $	*/
+/*	$NetBSD: rtc.c,v 1.4 2000/03/17 09:54:15 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -51,9 +51,20 @@
 
 /*
  * for debugging definitions
- * 	RTCDEBUG	print rtc debugging infomation
- *	RTC_HEARTBEAT	print HEARTBEAT (too many print...)
+ * 	VRRTCDEBUG	print rtc debugging infomation
+ *	VRRTC_HEARTBEAT	print HEARTBEAT (too many print...)
  */
+#ifdef VRRTCDEBUG
+#ifndef VRRTCDEBUG_CONF
+#define VRRTCDEBUG_CONF 0
+#endif
+int vrrtc_debug = VRRTCDEBUG_CONF;
+#define DPRINTF(arg) if (vrrtc_debug) printf arg;
+#define DDUMP_REGS(arg) if (vrrtc_debug) vrrtc_dump_regs(arg);
+#else /* VRRTCDEBUG */
+#define DPRINTF(arg)
+#define DDUMP_REGS(arg)
+#endif /* VRRTCDEBUG */
 
 struct vrrtc_softc {
 	struct device sc_dev;
@@ -73,6 +84,7 @@ static const struct clockfns clockfns = {
 int	vrrtc_match __P((struct device *, struct cfdata *, void *));
 void	vrrtc_attach __P((struct device *, struct device *, void *));
 int	vrrtc_intr __P((void*, u_int32_t, u_int32_t));
+void	vrrtc_dump_regs __P((struct vrrtc_softc *));
 
 struct cfattach vrrtc_ca = {
 	sizeof(struct vrrtc_softc), vrrtc_match, vrrtc_attach
@@ -179,7 +191,7 @@ vrrtc_intr(arg, pc, statusReg)
 	hardclock(&cf);
 	intrcnt[HARDCLOCK]++;
 
-#ifdef RTC_HEARTBEAT
+#ifdef VRRTC_HEARTBEAT
 	if ((intrcnt[HARDCLOCK] % (CLOCK_RATE * 5)) == 0) {
 		struct clocktime ct;
 		clock_get((struct device *)sc, NULL, &ct);
@@ -193,11 +205,9 @@ vrrtc_intr(arg, pc, statusReg)
 }
 
 void
-clock_init(dev)
-	struct device *dev;
+vrrtc_dump_regs(sc)
+struct vrrtc_softc *sc;
 {
-	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
-#ifdef RTCDEBUG
 	int timeh;
 	int timel;
 
@@ -236,7 +246,15 @@ clock_init(dev)
 	timeh = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_CNT_H_REG_W);
 	timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, TCLK_CNT_L_REG_W);
 	printf("clock_init()  TCLK CNTL %04x%04x\n", timeh, timel);
-#endif /* RTCDEBUG */
+}
+
+void
+clock_init(dev)
+	struct device *dev;
+{
+	struct vrrtc_softc *sc = (struct vrrtc_softc *)dev;
+
+	DDUMP_REGS(sc);
 	/*
 	 * Set tick (CLOCK_RATE)
 	 */
@@ -267,10 +285,8 @@ cvt_timehl_ct(timeh, timel, ct)
 		sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
 	}
 
-#ifdef RTCDEBUG
-	printf("cvt_timehl_ct: timeh %08lx year %ld yrref %ld\n", 
-		timeh, year, sec2);
-#endif /* RTCDEBUG */
+	DPRINTF(("cvt_timehl_ct: timeh %08lx year %ld yrref %ld\n", 
+		timeh, year, sec2));
 
 	month = 0; /* now month is 0..11 */
 	sec2 = SEC2DAY * m2d[month];
@@ -283,19 +299,15 @@ cvt_timehl_ct(timeh, timel, ct)
 	}
 	month +=1; /* now month is 1..12 */
 
-#ifdef RTCDEBUG
-	printf("cvt_timehl_ct: timeh %08lx month %ld mref %ld\n", 
-		timeh, month, sec2);
-#endif /* RTCDEBUG */
+	DPRINTF(("cvt_timehl_ct: timeh %08lx month %ld mref %ld\n", 
+		timeh, month, sec2));
 
 	sec2 = SEC2DAY;
 	date = timeh/sec2+1; /* date is 1..31 */
 	timeh -= (date-1)*sec2;
 
-#ifdef RTCDEBUG
-	printf("cvt_timehl_ct: timeh %08lx date %ld dref %ld\n", 
-		timeh, date, sec2);
-#endif /* RTCDEBUG */
+	DPRINTF(("cvt_timehl_ct: timeh %08lx date %ld dref %ld\n", 
+		timeh, date, sec2));
 
 	sec2 = SEC2HOUR;
 	hour = timeh/sec2;
@@ -307,9 +319,7 @@ cvt_timehl_ct(timeh, timel, ct)
 
 	sec = timeh*2 + timel/ETIME_L_HZ;	
 
-#ifdef RTCDEBUG
-	printf("cvt_timehl_ct: hour %ld min %ld sec %ld\n", hour, min, sec);
-#endif /* RTCDEBUG */
+	DPRINTF(("cvt_timehl_ct: hour %ld min %ld sec %ld\n", hour, min, sec));
 
 	if (ct) {
 		ct->year = year - YBASE; /* base 1900 */
@@ -337,16 +347,12 @@ clock_get(dev, base, ct)
 		| bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_M_REG_W);
 	timel = bus_space_read_2(sc->sc_iot, sc->sc_ioh, ETIME_L_REG_W);
 
-#ifdef RTCDEBUG
-	printf("clock_get: timeh %08lx timel %08lx\n", timeh, timel);
-#endif /* RTCDEBUG */
+	DPRINTF(("clock_get: timeh %08lx timel %08lx\n", timeh, timel));
 
 	cvt_timehl_ct(timeh, timel, ct);
 
-#ifdef RTCDEBUG
-	printf("clock_get: %d/%d/%d/%d/%d/%d\n",
-		 ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec);
-#endif /* RTCDEBUG */
+	DPRINTF(("clock_get: %d/%d/%d/%d/%d/%d\n",
+		 ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec));
 }
 
 
@@ -363,15 +369,14 @@ clock_set(dev, ct)
 	timeh = 0;
 	timel = 0;
 
-#ifdef RTCDEBUG
-	printf("clock_set: %d/%d/%d/%d/%d/%d\n", 
-		ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec);
-#endif /* RTCDEBUG */
+	DPRINTF(("clock_set: %d/%d/%d/%d/%d/%d\n", 
+		ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec));
+
 	ct->year += YBASE;
-#ifdef RTCDEBUG
-	printf("clock_set: %d/%d/%d/%d/%d/%d\n", 
-		ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec);
-#endif /* RTCDEBUG */
+
+	DPRINTF(("clock_set: %d/%d/%d/%d/%d/%d\n", 
+		ct->year, ct->mon, ct->day, ct->hour, ct->min, ct->sec));
+
 	year = EPOCHYEAR;
 	sec2 = LEAPYEAR4(year)?SEC2YR+SEC2DAY:SEC2YR;
 	while (year < ct->year) {
@@ -401,7 +406,7 @@ clock_set(dev, ct)
 	timeh += EPOCHOFF;
 	timeh -= (rtc_offset*SEC2MIN);
 
-#ifdef RTCDEBUG
+#ifdef VRRTCDEBUG
 	cvt_timehl_ct(timeh, timel, NULL);
 #endif /* RTCDEBUG */
 
