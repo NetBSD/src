@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.25 1997/10/03 16:06:26 enami Exp $	*/
+/*	$NetBSD: arch.c,v 1.26 1997/10/03 17:58:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: arch.c,v 1.25 1997/10/03 16:06:26 enami Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.26 1997/10/03 17:58:00 thorpej Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.25 1997/10/03 16:06:26 enami Exp $");
+__RCSID("$NetBSD: arch.c,v 1.26 1997/10/03 17:58:00 thorpej Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -730,8 +730,8 @@ ArchSVR4Entry(ar, name, size, arch)
 		break;
 	    }
 	if (DEBUG(ARCH)) {
-	    printf("Found svr4 archive name table with %ld entries\n",
-		   (u_long)entry);
+	    printf("Found svr4 archive name table with %lu entries\n",
+	            (u_long)entry);
 	}
 	return 0;
     }
@@ -748,7 +748,7 @@ ArchSVR4Entry(ar, name, size, arch)
     }
     if (entry >= ar->fnamesize) {
 	if (DEBUG(ARCH)) {
-	    printf("SVR4 entry offset %s is greater than %ld\n",
+	    printf("SVR4 entry offset %s is greater than %lu\n",
 		   name, (u_long)ar->fnamesize);
 	}
 	return 2;
