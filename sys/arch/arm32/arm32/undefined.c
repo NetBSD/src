@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.9 1998/02/21 22:41:34 mark Exp $	*/
+/*	$NetBSD: undefined.c,v 1.10 1998/04/19 03:41:14 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -131,10 +131,9 @@ undefinedinstruction(frame)
 	if (!(frame->tf_spsr & I32_bit))
 		enable_interrupts(I32_bit);
 #endif
-    
+
 	/* Update vmmeter statistics */
-    
-	cnt.v_trap++;
+    	cnt.v_trap++;
          
 	fault_pc = frame->tf_pc - INSN_SIZE;
 
@@ -178,7 +177,6 @@ undefinedinstruction(frame)
 		fault_code = 0;
 
 	/* OK this is were we do something about the instruction */
-
 	/* Check for coprocessor instruction */
 
 	/* Special cases */
@@ -292,9 +290,8 @@ resethandler(frame)
 	trapframe_t *frame;
 {
 #ifdef DDB
-	printf("Branch through zero\n");
+	/* Extra info incase panic drops us into the debugger */
 	printf("Trap frame at %p\n", frame);
-	Debugger();
 #endif	/* DDB */
 	panic("Branch to never-never land (zero)..... were dead\n");
 }
