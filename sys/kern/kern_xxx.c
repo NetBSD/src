@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_xxx.c	7.17 (Berkeley) 4/20/91
- *	$Id: kern_xxx.c,v 1.6 1993/07/17 15:24:37 mycroft Exp $
+ *	$Id: kern_xxx.c,v 1.6.4.1 1993/09/27 04:02:17 deraadt Exp $
  */
 
 #include "param.h"
@@ -40,6 +40,8 @@
 #include "proc.h"
 #include "reboot.h"
 #include "utsname.h"
+
+long	hostid;
 
 /* ARGSUSED */
 int
@@ -71,6 +73,9 @@ sethostid(p, uap, retval)
 	hostid = uap->hostid;
 	return (0);
 }
+
+char	hostname[MAXHOSTNAMELEN];
+int	hostnamelen;
 
 struct gethostname_args {
 	char	*hostname;
@@ -113,6 +118,9 @@ sethostname(p, uap, retval)
 	hostname[hostnamelen] = 0;
 	return (error);
 }
+
+char	domainname[MAXHOSTNAMELEN];
+int	domainnamelen;
 
 struct getdomainname_args {
 	char	*domainname;
