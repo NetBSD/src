@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: ioasic.4,v 1.9 2000/07/05 16:13:51 msaitoh Exp $
+.\"	$NetBSD: ioasic.4,v 1.10 2001/08/26 14:23:47 wiz Exp $
 .\"
 .Dd August 6, 1996
 .Dt IOASIC 4 pmax
@@ -55,7 +55,7 @@ provides hardware DMA channels and interrupt support for several
 baseboard devices, including one
 .Nm asc
 SCSI device with a scatter/gather DMA channel, an mc146818-compatible
-.Nm mcclock,
+.Nm mcclock ,
 an Am9730 audio device
 .Nm bba ,
 one or two
@@ -79,7 +79,7 @@ Support for scatter-gather DMA eliminates the need for additional copying.
 A baseboard
 .Nm asc
 SCSI adaptor attached to an
-.Nm ioasic 
+.Nm ioasic
 will give slightly better performance than its
 .Nm tc
 counterpart.
