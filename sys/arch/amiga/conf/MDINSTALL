@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.12 2002/04/25 15:06:23 atatat Exp $
+#	$NetBSD: MDINSTALL,v 1.12.4.1 2002/05/30 21:17:29 tv Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -68,7 +68,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
 #options 	SYSCALL_DEBUG	# debug all syscalls.
 #options 	SCSIDEBUG	# Add SCSI debugging statements
-#options 	PANICBUTTON	# Forced crash via keypress (???)
+#options 	PANICBUTTON	# Forced crash via keypress (?)
 
 #
 # Amiga specific options
