@@ -1,6 +1,6 @@
-#	$Id: Makefile.inc,v 1.1 1993/08/23 09:20:31 cgd Exp $
+#	$Id: Makefile.inc,v 1.2 1994/06/09 19:12:24 phil Exp $
 
-CFLAGS+=-DIN_GCC -I${.CURDIR}/../../common -I${.CURDIR}/.. -I${.CURDIR}
+CFLAGS+= -I${.CURDIR}/../../common -I${.CURDIR}/.. -I${.CURDIR} # -DIN_GCC
 .PATH:	${.CURDIR}/../../common ${.CURDIR}/..
 
 
