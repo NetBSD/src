@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/07/26 01:50:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 1997/08/14 15:38:32 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -15,6 +15,8 @@ CLEANFILES+= ${ROMSTART} ${PROG}.bin ${PROG}.rom ${PROG}.sym ${PROG}.list
 #CPPFLAGS+= -DNET_DEBUG
 #CPPFLAGS+= -DSUPPORT_BOOTP -DSUPPORT_TFTP
 CPPFLAGS+= -DSUPPORT_RARP -DSUPPORT_BOOTPARAM -DSUPPORT_NFS
+#uncomment to enable extended memory detection
+#CPPFLAGS+= -DEXTENDED_MEMDETECT
 
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall
@@ -46,6 +48,7 @@ CPPFLAGS+= -DBOOTROM -DRELOC=0x$(RELOC)
 #CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_DID=0x9001 -DPCI_CLASS=0x020000
 #CPPFLAGS+= -DPCIROM -DPCI_VID=0x10b7 -DPCI_DID=0x9050 -DPCI_CLASS=0x020000
 USE_NETIF= pcnet_pci
+#CPPFLAGS+= -DPCIROM -DPCI_VID=0x1022 -DPCI_DID=0x2000 -DPCI_CLASS=0x020000
 #USE_NETIF= pcnet_isapnp
 #USE_NETIF= wd80x3 #supports SMC Ultra together with flag below
 #CPPFLAGS+= -DSUPPORT_SMC_ULTRA
