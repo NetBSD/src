@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.30 2002/10/02 21:24:31 thorpej Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.31 2002/10/21 22:19:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -186,6 +186,7 @@ struct	pthread_st {
 #define PT_UPCALLSTACKS	16
 
 #define PT_ALARMTIMER_MAGIC	0x88880008
+#define PT_RRTIMER_MAGIC	0x99990009
 #define NIDLETHREADS	4
 #define IDLESPINS	1000
 
@@ -276,12 +277,13 @@ void	pthread__destroy_tsd(pthread_t self);
 #define PTHREADD_UP_PREEMPT	5
 #define PTHREADD_UP_UNBLOCK	6
 #define PTHREADD_UP_SIGNAL	7
-#define PTHREADD_SPINLOCKS	8
-#define PTHREADD_SPINUNLOCKS	9
-#define PTHREADD_SPINPREEMPT	10
-#define PTHREADD_RESOLVELOCKS	11
-#define PTHREADD_SWITCHTO	12
-#define PTHREADD_NCOUNTERS	13
+#define PTHREADD_UP_SIGEV	8
+#define PTHREADD_SPINLOCKS	9
+#define PTHREADD_SPINUNLOCKS	10
+#define PTHREADD_SPINPREEMPT	11
+#define PTHREADD_RESOLVELOCKS	12
+#define PTHREADD_SWITCHTO	13
+#define PTHREADD_NCOUNTERS	14
 
 #ifdef PTHREAD__DEBUG
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.27 2002/10/16 19:30:33 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.28 2002/10/21 22:19:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,6 +67,8 @@ int	recycle_count;
 int	recycle_threshold;
 int	recycle_side;
 pthread_spin_t recycle_lock;
+
+timer_t pthread_rrtimer;
 
 int pthread__maxlwps;
 
@@ -577,13 +579,20 @@ pthread__sa_start(void)
 {
 	pthread_t self, t;
 	stack_t upcall_stacks[PT_UPCALLSTACKS];
-	int ret, i, errnosave, flags;
+	struct sigevent ev;
+	struct itimerspec it;
+	int ret, i, errnosave, flags, rr;
 	char *value;
 
 	flags = 0;
 	value = getenv("PTHREAD_PREEMPT");
 	if (value && strcmp(value, "yes") == 0)
 		flags |= SA_FLAG_PREEMPT;
+
+	rr = 0;
+	value = getenv("PTHREAD_RRTIME");
+	if (value)
+		rr = atoi(value);
 
 	ret = sa_register(pthread__upcall, NULL, flags);
 	if (ret)
@@ -625,4 +634,20 @@ pthread__sa_start(void)
 	errnosave = errno;
 	sa_enable();
 	errno = errnosave;
+
+	if (rr) {
+		ev.sigev_notify = SIGEV_SA;
+		ev.sigev_signo = 0;
+		ev.sigev_value.sival_int = (int)PT_RRTIMER_MAGIC;
+		ret = timer_create(CLOCK_VIRTUAL, &ev, &pthread_rrtimer);
+		if (ret)
+			err(1, "timer_create");
+		it.it_interval.tv_sec = 0;
+		it.it_interval.tv_nsec = rr * 1000000;
+		it.it_value = it.it_interval;
+		ret = timer_settime(pthread_rrtimer, 0, &it, NULL);
+		if (ret)
+			err(1, "timer_settime");
+
+	}
 }
