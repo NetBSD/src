@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754_ldexp.c,v 1.1 2002/02/19 13:08:13 simonb Exp $	*/
+/*	$NetBSD: ldexp_ieee754.c,v 1.1 2003/05/12 15:15:16 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ieee754_ldexp.c,v 1.1 2002/02/19 13:08:13 simonb Exp $");
+__RCSID("$NetBSD: ldexp_ieee754.c,v 1.1 2003/05/12 15:15:16 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>

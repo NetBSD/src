@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754_infinity.c,v 1.1 2002/02/19 13:08:13 simonb Exp $	*/
+/*	$NetBSD: infinity_ieee754.c,v 1.1 2003/05/12 15:15:15 kleink Exp $	*/
 
 /*
  * IEEE-compatible infinity.c -- public domain.

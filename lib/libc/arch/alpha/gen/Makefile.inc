@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.10 2003/01/21 20:14:07 kleink Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2003/05/12 15:15:11 kleink Exp $
 
 SRCS+=	fabs.S 
 
 # Common ieee754 constants and functions
-SRCS+=	ieee754_infinity.c ieee754_nanf.c
-SRCS+=	ieee754_frexp.c ieee754_isinf.c ieee754_isnan.c ieee754_ldexp.c
-SRCS+=	ieee754_modf.c
+SRCS+=	infinity_ieee754.c nanf_ieee754.c
+SRCS+=	frexp_ieee754.c isinf_ieee754.c isnan_ieee754.c ldexp_ieee754.c
+SRCS+=	modf_ieee754.c
 
 SRCS+=	flt_rounds.c fpgetmask.c fpgetround.c fpgetsticky.c fpsetmask.c \
 	fpsetround.c fpsetsticky.c

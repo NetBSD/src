@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.15 2003/01/18 11:09:36 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2003/05/12 15:15:13 kleink Exp $
 
 SRCS+=	alloca.S fabs.S
 
 # Common ieee754 constants and functions
-SRCS+=	ieee754_infinity.c ieee754_nanf.c
-SRCS+=	ieee754_frexp.c ieee754_isinf.c ieee754_isnan.c
+SRCS+=	infinity_ieee754.c nanf_ieee754.c
+SRCS+=	frexp_ieee754.c isinf_ieee754.c isnan_ieee754.c
 
 SRCS+=	ashlsi3.S ashrsi3.S \
 	lshlsi3.S lshrsi3.S \
@@ -16,7 +16,7 @@ SRCS+=	_lwp.c
 # much of the (soft)float and integer support that would 
 # otherwise be compiled here.
 .if	${MACHINE_ARCH} == "m68000"
-SRCS+=	ieee754_modf.c			# generic ieee754 version
+SRCS+=	modf_ieee754.c			# generic ieee754 version
 SRCS+=	flt_rounds_softfloat.S
 .else
 SRCS+=	modf.S
@@ -36,11 +36,11 @@ SRCS+=	sigsetjmp.S __sigsetjmp14.S
 SRCS+=	makecontext.c resumecontext.S swapcontext.S
 
 .ifdef M68040
-SRCS+=	ieee754_ldexp.c			# generic ieee754 version
+SRCS+=	ldexp_ieee754.c			# generic ieee754 version
 .elifdef M68060
-SRCS+=	ieee754_ldexp.c			# generic ieee754 version
+SRCS+=	ldexp_ieee754.c			# generic ieee754 version
 .elif	${MACHINE_ARCH} == "m68000"
-SRCS+=	ieee754_ldexp.c			# generic ieee754 version
+SRCS+=	ldexp_ieee754.c			# generic ieee754 version
 .else
 SRCS+=	ldexp_881.c
 .endif

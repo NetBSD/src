@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2003/01/18 11:14:00 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2003/05/12 15:15:14 kleink Exp $
 
 SRCS+=	_setjmp.S setjmp.S sigsetjmp.S __setjmp14.S __sigsetjmp14.S
 
@@ -9,9 +9,9 @@ SRCS+=	_lwp.c
 SRCS+=	fabs.c flt_rounds.c bswap16.c bswap32.c bswap64.c
 
 # Common ieee754 constants and functions
-SRCS+=	ieee754_infinity.c ieee754_nanf.c
-SRCS+=	ieee754_frexp.c ieee754_isinf.c ieee754_isnan.c ieee754_ldexp.c
-SRCS+=	ieee754_modf.c
+SRCS+=	infinity_ieee754.c nanf_ieee754.c
+SRCS+=	frexp_ieee754.c isinf_ieee754.c isnan_ieee754.c ldexp_ieee754.c
+SRCS+=	modf_ieee754.c
 
 SRCS+=	ashiftrt.S ashlsi3.S ashrsi3.S lshrsi3.S movstr.S movstr_i4.S \
 	movstrSI.S mulsi3.S sdivsi3.S udivsi3.S

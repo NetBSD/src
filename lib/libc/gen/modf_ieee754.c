@@ -1,4 +1,4 @@
-/* $NetBSD: ieee754_modf.c,v 1.1 2002/02/19 13:08:13 simonb Exp $ */
+/* $NetBSD: modf_ieee754.c,v 1.1 2003/05/12 15:15:16 kleink Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
