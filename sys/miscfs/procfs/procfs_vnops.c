@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.79 2001/03/29 22:41:53 fvdl Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.80 2001/03/30 20:25:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -652,7 +652,7 @@ procfs_getattr(v)
 		 * Advise a larger blocksize for the map files, so that
 		 * they may be read in one pass.
 		 */
-		vap->va_blocksize = 2 *PAGE_SIZE;
+		vap->va_blocksize = 4 * PAGE_SIZE;
 		break;
 
 	default:
