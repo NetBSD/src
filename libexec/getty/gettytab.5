@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.20 1998/10/12 18:03:48 tsarna Exp $
+.\"	$NetBSD: gettytab.5,v 1.21 1998/12/12 19:04:54 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -231,16 +231,16 @@ These flags correspond to the termios
 .Em c_lflag ,
 and
 .Em c_oflag
-fields, respectively. Each these sets must be completely specified to be
-effective.
+fields, respectively.
+Each these sets must be completely specified to be effective.
 The
 .Em \&f0 ,
 .Em \&f1 ,
 and
 .Em \&f2
 are excepted for backwards compatibility with a previous incarnation of
-the TTY sub-system. In these flags the bottom 16 bits of the (32 bits)
-value contain the sgttyb
+the TTY sub-system.
+In these flags the bottom 16 bits of the (32 bits) value contain the sgttyb
 .Em sg_flags
 field, while the top 16 bits represent the local mode word.
 .Pp
@@ -250,7 +250,8 @@ receive a null character
 (presumed to indicate a line break)
 it will restart using the table indicated by the
 .Em nx
-entry. If there is none, it will re-use its original table.
+entry.
+If there is none, it will re-use its original table.
 .Pp
 Delays are specified in milliseconds, the nearest possible
 delay available in the tty driver will be used.
@@ -362,16 +363,25 @@ mode.
 .Pp
 If
 .Em \&pp
-string is specified and a PPP link bringup sequence is recognized,
-getty will invoke the program referenced by the pp option.  This
-can be used to handle incoming PPP calls.
+string is specified and a Point to Point Protocol
+.Pq Tn PPP
+link bringup sequence is recognized,
+.Xr getty 8
+will invoke the program referenced by the
+.Em \&pp
+string, e.g. 
+.Xr pppd 8 .
+This can be used to handle incoming
+.Tn PPP
+calls.
 .Sh SEE ALSO
-.Xr login 1 ,
 .Xr gethostname 3 ,
-.Xr uname 3 ,
+.Xr getty 8 ,
+.Xr login 1 ,
+.Xr pppd 8 ,
 .Xr termcap 5 ,
 .Xr ttys 5 ,
-.Xr getty 8 .
+.Xr uname 3
 .Sh BUGS
 The special characters (erase, kill, etc.) are reset to system defaults
 by
