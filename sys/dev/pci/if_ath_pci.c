@@ -39,7 +39,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.3 2003/08/13 21:29:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.2 2003/10/13 04:36:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.3 2003/10/15 20:33:30 itojun Exp $");
 #endif
 
 /*
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.2 2003/10/13 04:36:29 dyoung Exp $"
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
 
 #include <sys/device.h>
 
@@ -115,13 +116,32 @@ CFATTACH_DECL(ath_pci,
     ath_pci_detach,
     NULL);
 
+/*
+ * translate some product code.  it is a workaround until HAL gets updated.
+ */
+static u_int16_t
+ath_product(pcireg_t pa_id)
+{
+	u_int16_t prodid;
+
+	prodid = PCI_PRODUCT(pa_id);
+	switch (prodid) {
+	case 0x1014:	/* IBM 31P9702 minipci a/b/g card */
+		prodid = PCI_PRODUCT_ATHEROS_AR5212;
+		break;
+	default:
+		break;
+	}
+	return prodid;
+}
+
 static int
 ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	const char* devname;
 	struct pci_attach_args *pa = aux;
 
-	devname = ath_hal_probe(PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
+	devname = ath_hal_probe(PCI_VENDOR(pa->pa_id), ath_product(pa->pa_id));
 	if (devname) 
 		return 1;
 
@@ -192,7 +212,7 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 		goto bad3;
 	}
 
-	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0)
+	if (ath_attach(ath_product(pa->pa_id), sc) == 0)
 		return;
 
 	shutdownhook_disestablish(hook);
