@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.220 2003/07/11 12:59:54 yamt Exp $
+.\"	$NetBSD: options.4,v 1.221 2003/09/07 16:22:28 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -897,7 +897,7 @@ they can't be cleared if the securelevel is greater than 0.
 See also
 .Xr chflags 1 .
 .It Cd options NFS_BOOT_BOOTP
-Enable use of the BOOTP protocol (RFC 951, 1048) to get configuration
+Enable use of the BOOTP protocol (RFCs 951 and 1048) to get configuration
 information if NFS is used to mount the root file system.
 See
 .Xr diskless 8
@@ -1015,7 +1015,7 @@ Handle with care.
 Turns on in-kernel precision timekeeping support used by software
 implementing
 .Em NTP
-(Network Time Protocol, RFC1305).
+(Network Time Protocol, RFC 1305).
 The
 .Em NTP
 option adds an in-kernel Phase-Locked Loop (PLL) for normal
@@ -1467,7 +1467,7 @@ OUT based on contracted profiles for customers.
 Inside the network, IN packets receive preferential treatment by
 the RIO dropper.
 ALTQ/RIO has 3 drop precedence levels defined for the Assured Forwarding
-PHB of DiffServ (RFC2597).
+PHB of DiffServ (RFC 2597).
 This option assumes
 .Em ALTQ .
 .It Cd options ALTQ_BLUE
