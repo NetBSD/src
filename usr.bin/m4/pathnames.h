@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.5 1995/09/28 05:37:44 tls Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,7 +48,7 @@
 #define	UNIQUE		3			/* unique char location */
 #endif
 
-#if defined(unix) || defined(__NetBSD__)
+#if defined (unix) || defined(BSD)
 #define _PATH_DIVNAME	"/tmp/m4.0XXXXXX"	/* unix diversion files */
 #define UNIQUE		8			/* unique char location */
 #endif

@@ -1,3 +1,5 @@
+/*      $NetBSD: eval.c,v 1.4 1995/09/28 05:37:28 tls Exp $      */
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +37,11 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)eval.c	8.1 (Berkeley) 6/6/93";
+#if 0
+static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
+#else
+static char rcsid[] = "$NetBSD: eval.c,v 1.4 1995/09/28 05:37:28 tls Exp $";
+#endif
 #endif /* not lint */
 
 /*
