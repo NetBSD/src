@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.376 2003/10/24 17:44:36 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.377 2003/10/25 19:02:55 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -67,7 +67,6 @@ USE_TOOLS_TOOLCHAIN?=yes
 #	${MACHINE_ARCH} == "armeb"
 #	${MACHINE_ARCH} == "sh3eb"
 #	${MACHINE_ARCH} == "sh3el"
-#	${MACHINE_ARCH} == "vax"
 # in progress:
 #	${MACHINE_ARCH} == "arm"
 #	${MACHINE_ARCH} == "mipseb"
@@ -79,6 +78,7 @@ USE_TOOLS_TOOLCHAIN?=yes
     ${MACHINE_ARCH} == "powerpc" || \
     ${MACHINE_ARCH} == "sparc" || \
     ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "vax" || \
     ${MACHINE_ARCH} == "x86_64"
 HAVE_GDB53?=	yes
 .else
