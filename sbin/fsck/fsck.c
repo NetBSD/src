@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.25 2001/06/18 02:31:09 lukem Exp $	*/
+/*	$NetBSD: fsck.c,v 1.26 2001/06/18 06:28:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.25 2001/06/18 02:31:09 lukem Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.26 2001/06/18 06:28:59 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -119,10 +119,13 @@ main(int argc, char *argv[])
 			break;
 
 		case 'p':
-			flags |= CHECK_PREEN;
+		case 'f':
+			if (i == 'p')
+				flags |= CHECK_PREEN;
+			else
+				flags |= CHECK_FORCE;
 			/*FALLTHROUGH*/
 		case 'n':
-		case 'f':
 		case 'y':
 			globopt[1] = i;
 			catopt(&options, globopt);
@@ -269,6 +272,27 @@ checkfs(const char *vfstype, const char *spec, const char *mntpt, void *auxarg,
 		return (1);
 
 	case 0:					/* Child. */
+		if ((flags & CHECK_FORCE) == 0) {
+			struct statfs	sfs;
+
+				/*
+				 * if mntpt is a mountpoint of a mounted file
+				 * system and it's mounted read-write, skip it
+				 * unless -f is given.
+				 */
+			if ((statfs(mntpt, &sfs) == 0) &&
+			    (strcmp(mntpt, sfs.f_mntonname) == 0) &&
+			    ((sfs.f_flags & MNT_RDONLY) == 0)) {
+				printf(
+		"%s: file system is mounted read-write on %s; not checking\n",
+				    spec, mntpt);
+				if ((flags & CHECK_PREEN) && auxarg != NULL)
+					_exit(0);	/* fsck -p */
+				else
+					_exit(1);	/* fsck [[-p] ...] */
+			}
+		}
+
 		if (flags & CHECK_DEBUG)
 			_exit(0);
 
@@ -468,7 +492,7 @@ getfslab(const char *str)
 	const char *vfstype;
 	u_char t;
 
-	/* deduce the filesystem type from the disk label */
+	/* deduce the file system type from the disk label */
 	if ((fd = open(str, O_RDONLY)) == -1)
 		err(1, "cannot open `%s'", str);
 

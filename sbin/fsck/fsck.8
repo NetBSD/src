@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck.8,v 1.23 2001/06/18 01:55:12 lukem Exp $
+.\"	$NetBSD: fsck.8,v 1.24 2001/06/18 06:28:59 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
 .\"
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-command invokes filesystem-specific programs to check
+command invokes file system-specific programs to check
 the special devices listed in the
 .Xr fstab 5
 file or in the command line for consistency.
@@ -51,20 +51,21 @@ file or in the command line for consistency.
 It is normally used in the script
 .Pa /etc/rc
 during automatic reboot.
-If no filesystems are specified, and ``preen'' mode is enabled (
+If no file systems are specified, and ``preen'' mode is enabled (
 .Fl p
 option)
 .Nm
 reads the table
 .Pa /etc/fstab
-to determine which filesystems to check, in what order.
+to determine which file systems to check, in what order.
 Only partitions in fstab that are mounted ``rw,'' ``rq'' or ``ro''
 and that have non-zero pass number are checked.
-Filesystems with pass number 1 (normally just the root filesystem)
+File systems with pass number 1 (normally just the root file system)
 are checked one at a time.
-When pass 1 completes, all remaining filesystems are checked,
+When pass 1 completes, all remaining file systems are checked,
 running one process per disk drive.
-The disk drive containing each filesystem is inferred from the longest prefix
+By default, file systems which are already mounted read-write are not checked.
+The disk drive containing each file system is inferred from the longest prefix
 of the device name that ends in a digit; the remaining characters are assumed
 to be the partition designator.
 .Pp
@@ -73,13 +74,13 @@ The options are as follows:
 .It Fl d
 Debugging mode. Just print the commands without executing them.
 .It Fl f
-Force checking of filesystems, even when they are marked clean (for filesystems
-that support this).
+Force checking of file systems, even when they are marked clean (for file
+systems that support this), or when they are mounted read-write.
 .It Fl l Ar maxparallel
 Limit the number of parallel checks to the number specified in
 the following argument. By default, the limit is the number of
 disks, running one process per disk. If a smaller limit is giv-
-en, the disks are checked round-robin, one filesystem at a time.
+en, the disks are checked round-robin, one file system at a time.
 .It Fl n
 Causes
 .Nm
@@ -88,7 +89,7 @@ to assume no as the answer to all operator questions, except "CONTINUE?".
 Enter preen mode.
 In preen mode,
 .Nm
-will check all filesystems listed in
+will check all file systems listed in
 .Pa /etc/fstab
 according to their pass number, and will make minor repairs without
 human intervention.
@@ -101,12 +102,12 @@ intervention is required.
 .It Fl t Ar fstype
 Invoke
 .Nm
-only for the comma separated list of filesystem types. If the
+only for the comma separated list of file system types. If the
 list starts with
 .Dq no
 then invoke
 .Nm
-for the filesystem types that are not specified in the list.
+for the file system types that are not specified in the list.
 .It Fl v
 Print the commands before executing them.
 .It Fl y

@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.21 2001/06/18 02:43:32 lukem Exp $	*/
+/*	$NetBSD: preen.c,v 1.22 2001/06/18 06:28:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.21 2001/06/18 02:43:32 lukem Exp $");
+__RCSID("$NetBSD: preen.c,v 1.22 2001/06/18 06:28:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ struct partentry {
 	TAILQ_ENTRY(partentry)	 p_entries;
 	char		  	*p_devname;	/* device name */
 	char			*p_mntpt;	/* mount point */
-	char		  	*p_type;	/* filesystem type */
+	char		  	*p_type;	/* file system type */
 	void			*p_auxarg;	/* auxiliary argument */
 };
 
