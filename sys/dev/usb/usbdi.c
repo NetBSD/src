@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.92 2001/12/12 15:38:58 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.93 2001/12/24 21:36:15 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.92 2001/12/12 15:38:58 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.93 2001/12/24 21:36:15 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,6 +767,13 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 
 	DPRINTFN(5, ("usb_transfer_complete: pipe=%p xfer=%p status=%d "
 		     "actlen=%d\n", pipe, xfer, xfer->status, xfer->actlen));
+#ifdef DIAGNOSTIC
+	if (xfer->busy_free != XFER_ONQU) {
+		printf("usb_transfer_complete: xfer=%p not busy 0x%08x\n",
+		       xfer, xfer->busy_free);
+		return;
+	}
+#endif
 
 #ifdef DIAGNOSTIC
 	if (pipe == NULL) {
@@ -806,6 +813,7 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		if (xfer != SIMPLEQ_FIRST(&pipe->queue))
 			printf("usb_transfer_complete: bad dequeue %p != %p\n",
 			       xfer, SIMPLEQ_FIRST(&pipe->queue));
+		xfer->busy_free = XFER_BUSY;
 #endif
 		SIMPLEQ_REMOVE_HEAD(&pipe->queue, xfer, next);
 	}
@@ -859,6 +867,14 @@ usb_insert_transfer(usbd_xfer_handle xfer)
 
 	DPRINTFN(5,("usb_insert_transfer: pipe=%p running=%d timeout=%d\n", 
 		    pipe, pipe->running, xfer->timeout));
+#ifdef DIAGNOSTIC
+	if (xfer->busy_free != XFER_BUSY) {
+		printf("usb_insert_transfer: xfer=%p not busy 0x%08x\n",
+		       xfer, xfer->busy_free);
+		return (USBD_INVAL);
+	}
+	xfer->busy_free = XFER_ONQU;
+#endif
 	s = splusb();
 	SIMPLEQ_INSERT_TAIL(&pipe->queue, xfer, next);
 	if (pipe->running)
@@ -1112,7 +1128,9 @@ usb_match_device(const struct usb_devno *tbl, u_int nentries, u_int sz,
 		 u_int16_t vendor, u_int16_t product)
 {
 	while (nentries-- > 0) {
-		if (tbl->ud_vendor == vendor && tbl->ud_product == product)
+		u_int16_t tproduct = tbl->ud_product;
+		if (tbl->ud_vendor == vendor &&
+		    (tproduct == product || tproduct == USB_PRODUCT_ANY))
 			return (tbl);
 		tbl = (struct usb_devno *)((char *)tbl + sz);
 	}
