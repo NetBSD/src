@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.17 2004/06/06 06:06:59 christos Exp $	*/
+/*	$NetBSD: md.h,v 1.18 2004/10/16 13:20:11 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -71,9 +71,6 @@
 #define SET_KERNEL_2_NAME	"kern-GENERIC.MP"
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
-
-/* Bootblock type */
-const char *boottype;
 
 /*
  * Machine-specific command to write a new label to a disk.
