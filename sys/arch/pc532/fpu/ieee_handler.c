@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.6 1996/12/23 08:37:55 matthias Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.7 1997/04/01 16:35:15 matthias Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -82,7 +82,10 @@
 # define copyout(k,u,n) ({vm_offset_t _u = (u), _k = (k); memcpy((char *) _u, (char *) _k,n);0;})
 # define get_dword(addr) (* (unsigned int *) addr)
 
+#ifdef MACH
+/* Mach only defines this if KERNEL, NetBSD defines it always */
 # define ns532_round_page(addr) (((addr) + NBPG - 1) & ~(NBPG - 1))
+#endif
 
 static void get_fstate(state *state) {
   asm("sfsr %0" : "=g" (state->FSR));
@@ -122,7 +125,7 @@ int ieee_sig(int sig, int code, struct sigcontext *scp)
   orig_pc = state.PC;
   DP(1, "sig = 0x%x, code = 0x%x, pc = 0x%x, fsr = 0x%x\n", sig, code, state.PC, state.FSR);
   ret = ieee_handle_exception(&state);
-  DP(1, " pc incremented by %d\n", state.PC - orig_pc);
+  DP(1, " pc incremented by %ld\n", state.PC - orig_pc);
   set_fstate(&state);
   return ret;
 }
@@ -381,14 +384,15 @@ static int fetch_data (char *addr) {
   int n_min = addr - copyin_buffer.max + 1;
   n = MIN(n_max, MAX(n_min, MIN(FETCH_CHUNK, n_page)));
   COPYIN(u_addr, k_addr, n);
-  DP(2, "fetch_data: addr = 0x%x, from 0x%x, to 0x%x, n = %d\n", addr, u_addr, k_addr, n);
+  DP(2, "fetch_data: addr = 0x%p, from 0x%lx, to 0x%lx, n = %d\n", addr,
+     (long)u_addr, (long)k_addr, n);
   copyin_buffer.max += n;
   return 1;
 }
 
 static int get_displacement (char **buffer)
 {
-  int disp;
+  int disp = 0;
   char *buf = *buffer;
   FETCH_DATA(buf);
   switch (*buf & 0xc0)
@@ -421,7 +425,7 @@ static int get_displacement (char **buffer)
 static int get_operand(char **buf, unsigned char gen, unsigned char index, struct operand *op, state *state)
 {
   int ret = FPC_TT_NONE;
-  vm_offset_t addr;
+  vm_offset_t addr = 0;
   int disp1, disp2;
   DP(1,"gen = 0x%x\n", gen);
 
@@ -495,6 +499,8 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
       state->SP -= op->size;
       addr =  state->SP;
       break;
+    default:
+      /* Keep gcc quit */
     }
     break;
   case 0x18:
@@ -585,7 +591,7 @@ static int default_trap_handle(struct operand *op1, struct operand *op2, struct 
 int ieee_handle_exception(state *state)
 {
   int fmt, xopcode, ret;
-  int fsr, user_trap = FPC_TT_NONE;
+  int fsr, user_trap;
   volatile int ofsr;		/* Volatile for setjmp */
   unsigned char int_type, float_type, opcode, gen1, gen2, index1, index2;
   struct operand op1, op2, f0_op, *res;
@@ -598,6 +604,12 @@ int ieee_handle_exception(state *state)
     SET_FSR(ofsr);
     return FPC_TT_ILL;
   }
+  user_trap = FPC_TT_NONE;
+  int_type = 0;
+  float_type = 0;
+  opcode = 0;
+  index1 = 0;
+  index2 = 0;
   copyin_buffer.max = buf;
   /* All fp instructions are 24 bits
    * and extensions start after 3 bytes
