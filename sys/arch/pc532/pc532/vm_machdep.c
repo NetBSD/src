@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.33 1999/05/26 22:07:40 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.34 1999/05/26 22:19:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -415,8 +415,7 @@ vmapbuf(bp, len)
 #endif /* PMAP_NEW */
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)
