@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.3 1997/02/24 00:09:30 jonathan Exp $
+.\"	$NetBSD: pci.4,v 1.4 1997/03/31 08:50:45 jonathan Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 17, 1997
+.Dd March 31, 1997
 .Dt PCI 4
 .Os NetBSD
 .Sh NAME
@@ -75,15 +75,16 @@ adaptors
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent -compact
 .It de
-DEC  de-500 Ethernet interfaces. Also SMC and Znyx OEM cards, including
-multiport cards using a PCI-PCI bridge.
+DEC  de-435, de-450,  de-500, and OEM (Znyx, SMC, Cogent, Asante)
+cards with dc2104x or dc2114x chips.
 .\"
 .\" .It ed
 .\" RealTek 8029 PCI Ethernet interfaces.
 .\"
+.It en
+Efficent Networks' ENI155P ATM interface.
 .It ep
 3Com 3c590, 3c595, 3c900, and 3c905 Ethernet interfaces.
-device interface
 .It fpa
 DEC  DEFPA FDDI cards
 .It le
