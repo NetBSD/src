@@ -1,4 +1,4 @@
-/*	$NetBSD: solaris.c,v 1.1.1.5 2000/05/23 06:11:31 veego Exp $	*/
+/*	$NetBSD: solaris.c,v 1.1.1.6 2000/06/12 10:21:29 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  */
 /* #pragma ident   "@(#)solaris.c	1.12 6/5/96 (C) 1995 Darren Reed"*/
-#pragma ident "@(#)Id: solaris.c,v 2.15.2.3 2000/05/22 10:26:17 darrenr Exp"
+#pragma ident "@(#)Id: solaris.c,v 2.15.2.4 2000/06/10 15:13:58 darrenr Exp"
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -1592,8 +1592,7 @@ ire_t *ire;
 #endif
 
 
-int ipfr_fastroute(qf, ip, mb, mpp, fin, fdp)
-qif_t *qf;
+int ipfr_fastroute(ip, mb, mpp, fin, fdp)
 ip_t *ip;
 mblk_t *mb, **mpp;
 fr_info_t *fin;
@@ -1610,13 +1609,15 @@ frdest_t *fdp;
 	frentry_t *fr;
 	frdest_t fd;
 	ill_t *ifp;
-	qif_t *qif;
 	u_char *s;
+	qif_t *qf;
 	int p;
 
 #ifndef	sparc
 	u_short __iplen, __ipoff;
 #endif
+	qf = fin->fin_qif;
+
 	/*
 	 * If this is a duplicate mblk then we want ip to point at that
 	 * data, not the original, if and only if it is already pointing at

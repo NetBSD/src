@@ -9,10 +9,11 @@ block_default_workaround() {
       ipf -F a
       echo "constructing minimal name resolution rules..."
       NAMESERVERS=`cat /etc/resolv.conf | nawk '/nameserver/ {printf "%s ", $2}'`
-      for NS in $NAMESERVERS
-      do
-	      IF_TO_NS=`/usr/sbin/route -n get $NS | nawk '/interface/ {print $NF}'`
-	      IP_TO_NS=`ifconfig hme0 | head -2 | tail -1 | nawk '{print $2}'`
+      for NS in $NAMESERVERS ; do
+	      IF_TO_NS=`/usr/sbin/route -n get $NS | \
+                           nawk '$1 == "interface:" { print $NF ; exit }'`
+	      IP_TO_NS=`ifconfig $IF_TO_NS | \
+                           nawk 'NR == "2" { print $2 ; exit }'`
 	      echo "pass out quick proto udp from $IP_TO_NS to $NS port = 53 keep state" | \
 		      ipf -f -
       done
@@ -28,8 +29,8 @@ case "$1" in
 		fi
 		modload /usr/kernel/drv/ipf
 		if [ -r ${IPFILCONF} ]; then
-			BLOCK_DEFAULT=`/sbin/ipf -V | grep Default | nawk '{print $2}'`
-			if [ x$BLOCK_DEFAULT = "xblock" ] ; then
+			if `/sbin/ipf -V | \
+                              nawk '$1 == "Default:" && $2 == "pass" { exit 1 }'` ; then
 				block_default_workaround
 			fi
 			ipf -IFa -f ${IPFILCONF}
@@ -45,7 +46,7 @@ case "$1" in
 				echo "$0: load of ${IPNATCONF} failed"
 			fi
 		fi
-#		ipmon -sn &
+		ipmon -sn &
 		;;
 
 	stop)
@@ -74,6 +75,16 @@ case "$1" in
 		fi
 		;;
 
+	reipf)
+		if [ -r ${IPFILCONF} ]; then
+			ipf -I -Fa -f ${IPFILCONF}
+			if [ $? != 0 ]; then
+				echo "$0: reload of ${IPFILCONF} into alternate set failed"
+			else
+				ipf -s
+			fi
+		fi
+		;;
 	*)
 		echo "Usage: $0 (start|stop|reload)" >&2
 		exit 1

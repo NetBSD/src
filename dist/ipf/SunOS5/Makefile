@@ -59,7 +59,7 @@ sunos5 solaris2 build: ipf.exe ipfstat ipftest ipmon ipnat ipf ipfs
 pkg: ipf.pkg
 
 ipfstat: $(FILS)
-	$(CC) $(DEBUG) $(CFLAGS) $(FILS) -o $@ $(LIBS)
+	$(CC) $(DEBUG) $(CFLAGS) $(FILS) -o $@ $(LIBS) $(STATETOP_LIB)
 
 ipf.exe: $(IPF)
 	$(CC) $(DEBUG) $(CFLAGS) $(IPF) -o $@ $(LIBS)
@@ -81,7 +81,8 @@ tests:
 	(cd test; make )
 
 fils.o: $(TOP)/fils.c $(TOP)/ip_fil.h $(TOP)/ipf.h
-	$(CC) $(DEBUG) $(CFLAGS) -c $(TOP)/fils.c -o $@
+	$(CC) $(DEBUG) $(CFLAGS) $(STATETOP_CFLAGS) $(STATETOP_INC) \
+		-c $(TOP)/fils.c -o $@
 
 ipfs.o: $(TOP)/ipfs.c $(TOP)/ip_fil.h $(TOP)/ipf.h $(TOP)/ip_state.h \
 		$(TOP)/ip_nat.h
