@@ -1,4 +1,4 @@
-/*	$NetBSD: chmod.c,v 1.25 2000/10/10 14:41:59 enami Exp $	*/
+/* $NetBSD: chmod.c,v 1.26 2001/09/16 12:16:20 wiz Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.25 2000/10/10 14:41:59 enami Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.26 2001/09/16 12:16:20 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,28 +54,27 @@ __RCSID("$NetBSD: chmod.c,v 1.25 2000/10/10 14:41:59 enami Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
+#include <limits.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 
-int main __P((int, char *[]));
-void usage __P((void));
+int main(int, char *[]);
+void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	FTS *ftsp;
 	FTSENT *p;
 	mode_t *set;
 	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
 	char *mode;
-	int (*change_mode) __P((const char *, mode_t));
+	int (*change_mode)(const char *, mode_t);
 
+	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	Hflag = Lflag = Rflag = fflag = hflag = 0;
@@ -199,10 +198,11 @@ done:	argv += optind;
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: chmod [-R [-H | -L | -P]] [-h] mode file ...\n");
+	    "usage: %s [-R [-H | -L | -P]] [-h] mode file ...\n",
+	    getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
