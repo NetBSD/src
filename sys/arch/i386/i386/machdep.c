@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 1995/04/07 22:29:51 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.143 1995/04/10 13:14:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -145,7 +145,7 @@ cpu_startup()
 	 */
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof(struct msgbuf)); i++)
-		pmap_enter(kernel_pmap,
+		pmap_enter(pmap_kernel(),
 		    (vm_offset_t)((caddr_t)msgbufp + i * NBPG),
 		    avail_end + i * NBPG, VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
@@ -649,13 +649,11 @@ boot(howto)
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
 		sync(&proc0, (void *)0, (int *)0);
-#ifdef notyet
 		/*
 		 * Unmount filesystems
 		 */
 		if (panicstr == 0)
 			vfs_unmountall();
-#endif
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
 			for (bp = &buf[nbuf]; --bp >= buf; )

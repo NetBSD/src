@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 1994/11/06 23:43:28 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40 1995/04/10 13:14:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -123,7 +123,7 @@ cpu_fork(p1, p2)
 	for (i = 0; i < UPAGES; i++)
 		pmap_enter(&p2->p_vmspace->vm_pmap,
 		    (vm_offset_t)kstack + i * NBPG,
-		    pmap_extract(kernel_pmap,
+		    pmap_extract(pmap_kernel(),
 		        (vm_offset_t)p2->p_addr + i * NBPG),
 		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
 
@@ -289,7 +289,7 @@ kvtop(addr)
 {
 	vm_offset_t va;
 
-	va = pmap_extract(kernel_pmap, (vm_offset_t)addr);
+	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
 	if (va == 0)
 		panic("kvtop: zero page frame");
 	return((int)va);
