@@ -1,4 +1,4 @@
-/*	$NetBSD: ebsa285_machdep.c,v 1.4 2001/06/19 13:45:55 wiz Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.1 2001/06/20 22:14:34 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -66,7 +66,7 @@
 #include <machine/pte.h>
 #include <machine/undefined.h>
 
-#include <arm/footbridge/cyclone_boot.h>
+#include <machine/cyclone_boot.h>
 #include <arm/footbridge/dc21285mem.h>
 #include <arm/footbridge/dc21285reg.h>
 
@@ -138,7 +138,9 @@ extern int pmap_debug_level;
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
 #define KERNEL_PT_VMDATA	2	/* Page tables for mapping kernel VM */
+#ifndef KERNEL_PT_VMDATA_NUM
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#endif
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pt_entry_t kernel_pt_table[NUM_KERNEL_PTS];
