@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10 2000/03/24 23:06:03 soren Exp $	*/
+/*	$NetBSD: cpu.h,v 1.11 2000/03/30 21:37:51 soren Exp $	*/
 /*	$OpenBSD: cpu.h,v 1.9 1998/01/28 13:46:10 pefo Exp $ */
 
 #ifndef _ARC_CPU_H_
@@ -11,7 +11,7 @@
 #define MIPS_INT_MASK_CLOCK	MIPS_INT_MASK_5
 
 #include <mips/cpu.h>
-#include <machine/cpuregs.h>
+#include <mips/cpuregs.h>
 
 /*
  * definitions of cpu-dependent requirements
