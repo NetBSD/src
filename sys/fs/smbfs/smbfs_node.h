@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.3 2003/02/16 19:42:21 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.4 2003/02/18 20:09:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -53,7 +53,8 @@ struct smbnode {
 	struct vnode *		n_vnode;
 	struct smbmount *	n_mount;
 	time_t			n_attrage;	/* attributes cache time */
-/*	time_t			n_ctime;*/
+	time_t			n_ctime;	/* Prev create time. */
+	time_t			n_nctime;	/* last neg cache entry (dir) */
 	struct timespec		n_mtime;	/* modify time */
 	struct timespec		n_atime;	/* last access time */
 	u_quad_t		n_size;
@@ -87,8 +88,10 @@ int smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
 	struct smbfattr *fap, struct vnode **vpp);
 u_int32_t smbfs_hash(const u_char *name, int nmlen);
 
+#ifndef __NetBSD__
 int  smbfs_getpages(void *);
 int  smbfs_putpages(void *);
+#endif
 int  smbfs_readvnode(struct vnode *vp, struct uio *uiop, struct ucred *cred);
 int  smbfs_writevnode(struct vnode *vp, struct uio *uiop, struct ucred *cred, int ioflag);
 void smbfs_attr_cacheenter(struct vnode *vp, struct smbfattr *fap);
