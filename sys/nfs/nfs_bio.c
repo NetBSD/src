@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.55 2000/12/04 12:12:20 fvdl Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.56 2000/12/09 22:38:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1137,7 +1137,7 @@ nfs_getpages(v)
 	 * if EOF is in the middle of the last page, zero the part past EOF.
 	 */
 
-	if (tailbytes > 0) {
+	if (tailbytes > 0 && (pgs[bytes >> PAGE_SHIFT]->flags & PG_FAKE)) {
 		memset((char *)kva + bytes, 0, tailbytes);
 	}
 
