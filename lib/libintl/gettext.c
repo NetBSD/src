@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.7 2000/12/15 06:37:21 itojun Exp $	*/
+/*	$NetBSD: gettext.c,v 1.8 2001/02/15 10:48:31 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gettext.c,v 1.7 2000/12/15 06:37:21 itojun Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.8 2001/02/15 10:48:31 minoura Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -527,6 +527,8 @@ dcngettext(domainname, msgid1, msgid2, n, category)
 	struct domainbinding *db;
 
 	msgid = (n == 1) ? msgid1 : msgid2;
+	if (msgid == NULL)
+		return NULL;
 
 	if (!domainname)
 		domainname = __binding.domainname;
