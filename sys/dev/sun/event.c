@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.4 2000/03/30 12:45:42 augustss Exp $	*/
+/*	$NetBSD: event.c,v 1.5 2000/08/20 13:44:14 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,6 +47,7 @@
 /*
  * Internal `Firm_event' interface for the keyboard and mouse drivers.
  */
+#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -59,6 +60,33 @@
 
 #include <machine/vuid_event.h>
 #include <dev/sun/event_var.h>
+
+#ifdef COMPAT_NETBSD32
+int ev_out32 __P((struct firm_event *, int, struct uio *));
+
+/*
+ * Write out a series of 32-bit firm_events.
+ */
+int
+ev_out32(e, n, uio)
+	struct firm_event *e;
+	int n;
+	struct uio *uio;
+{
+	struct firm_event32 e32;
+	int error = 0;
+
+	while (n-- && error == 0) {
+		e32.id = e->id;
+		e32.value = e->value;
+		e32.time.tv_sec = e->time.tv_sec;
+		e32.time.tv_usec = e->time.tv_usec;
+		error = uiomove((caddr_t)&e32, sizeof(e32), uio);
+		e++;
+	}
+	return (error);
+}
+#endif
 
 /*
  * Initialize a firm_event queue.
@@ -127,6 +155,11 @@ ev_read(ev, uio, flags)
 	n = howmany(uio->uio_resid, sizeof(struct firm_event));
 	if (cnt > n)
 		cnt = n;
+#ifdef COMPAT_NETBSD32
+	if (curproc->p_flag & P_32) 
+		error = ev_out32(&ev->ev_q[ev->ev_get], cnt, uio);
+	else
+#endif
 	error = uiomove((caddr_t)&ev->ev_q[ev->ev_get],
 	    cnt * sizeof(struct firm_event), uio);
 	n -= cnt;
@@ -140,6 +173,11 @@ ev_read(ev, uio, flags)
 		return (error);
 	if (cnt > n)
 		cnt = n;
+#ifdef COMPAT_NETBSD32
+	if (curproc->p_flag & P_32) 
+		error = ev_out32(&ev->ev_q[0], cnt, uio);
+	else
+#endif
 	error = uiomove((caddr_t)&ev->ev_q[0],
 	    cnt * sizeof(struct firm_event), uio);
 	ev->ev_get = cnt;
