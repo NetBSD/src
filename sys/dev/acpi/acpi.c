@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.25 2003/01/04 05:32:15 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.26 2003/01/05 06:19:05 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.25 2003/01/04 05:32:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.26 2003/01/05 06:19:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -568,7 +568,8 @@ acpi_print(void *aux, const char *pnp)
 			aprint_normal("%s ",
 			    aa->aa_node->ad_devinfo.HardwareId);
 		else /* XXX print something more meaningful.. */
-			aprint_normal("%d ", aa->aa_node->ad_devinfo.Name);
+			aprint_normal("ACPI Object Type 0x%02x ",
+			   aa->aa_node->ad_devinfo.Type);
 #if 0 /* Not until we fix acpi_eval_string */
 		if (acpi_eval_string(aa->aa_node->ad_handle,
 		    "_STR", &str) == AE_OK) {
