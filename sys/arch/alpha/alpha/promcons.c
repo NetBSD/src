@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.22 2003/06/29 15:14:12 simonb Exp $ */
+/* $NetBSD: promcons.c,v 1.23 2003/06/29 15:17:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.22 2003/06/29 15:14:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.23 2003/06/29 15:17:40 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,10 +157,7 @@ promwrite(dev_t dev, struct uio *uio, int flag)
 }
  
 int
-prompoll(dev, events, l)
-	dev_t dev;
-	int events;
-	struct lwp *l;
+prompoll(dev_t dev, int events, struct lwp *l)
 {
 	struct tty *tp = prom_tty[minor(dev)];
  
