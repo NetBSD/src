@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.26 1995/02/09 10:23:14 pk Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.27 1995/02/22 19:32:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -281,17 +281,17 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "MEDIAVIS", "CDR-H93MV       ", "1.31", SDEV_NOLUNS},
 
 	{T_DIRECT, T_FIXED,
-	 "MAXTOR  ", "XT-3280         ", "PR02", SDEV_NOLUNS},
+	 "MAXTOR  ", "XT-3280         ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "MAXTOR  ", "XT-4380S        ", "B3C",  SDEV_NOLUNS},
+	 "MAXTOR  ", "XT-4380S        ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "MAXTOR  ", "MXT-1240S       ", "I1.2", SDEV_NOLUNS},
+	 "MAXTOR  ", "MXT-1240S       ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "MAXTOR  ", "XT-4170S        ", "B5A",  SDEV_NOLUNS},
+	 "MAXTOR  ", "XT-4170S        ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "MAXTOR  ", "XT-8760S        ", "B7B",  SDEV_NOLUNS},
+	 "MAXTOR  ", "XT-8760S        ", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
-	 "MAXTOR  ", "LXT-213S SUN0207", "4.17",  SDEV_NOLUNS},
+	 "MAXTOR  ", "LXT-213S SUN0207", "",     SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
 	 "RODIME  ", "RO3000S         ", "2.33", SDEV_NOLUNS},
 	{T_DIRECT, T_FIXED,
