@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2003/12/04 13:05:17 keihan Exp $	*/
+/*	$NetBSD: boot.c,v 1.7 2004/06/18 21:04:39 martin Exp $	*/
 #define DEBUG
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -550,7 +550,7 @@ main()
 	/* Initialize kernelname */
 	kernelname = kernels[0];
 
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
+	printf("\r>> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
 	/*
