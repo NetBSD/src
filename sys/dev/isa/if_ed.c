@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.69 1995/02/27 09:10:45 glass Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.70 1995/04/10 18:21:42 mycroft Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -111,8 +111,8 @@ int edprobe __P((struct device *, void *, void *));
 void edattach __P((struct device *, struct device *, void *));
 int edintr __P((struct ed_softc *));
 int ed_ioctl __P((struct ifnet *, u_long, caddr_t));
-int ed_start __P((struct ifnet *));
-int ed_watchdog __P((/* short */));
+void ed_start __P((struct ifnet *));
+void ed_watchdog __P((/* short */));
 void ed_reset __P((struct ed_softc *));
 void ed_init __P((struct ed_softc *));
 void ed_stop __P((struct ed_softc *));
@@ -1133,7 +1133,7 @@ ed_stop(sc)
  * Device timeout/watchdog routine.  Entered if the device neglects to generate
  * an interrupt after a transmit has been started on it.
  */
-int
+void
 ed_watchdog(unit)
 	short unit;
 {
@@ -1343,7 +1343,7 @@ ed_xmit(sc)
  *  2) that the IFF_OACTIVE flag is checked before this code is called
  *     (i.e. that the output part of the interface is idle)
  */
-int
+void
 ed_start(ifp)
 	struct ifnet *ifp;
 {
