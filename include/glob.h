@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.6 1997/10/21 00:55:16 fvdl Exp $	*/
+/*	$NetBSD: glob.h,v 1.7 1997/10/22 00:53:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,29 +62,13 @@ typedef struct {
 	void (*gl_closedir) __P((void *));
 	struct dirent *(*gl_readdir) __P((void *));	
 	void *(*gl_opendir) __P((const char *));
+#ifdef __LIBC12_SOURCE__
 	int (*gl_lstat) __P((const char *, struct stat12 *));
 	int (*gl_stat) __P((const char *, struct stat12 *));
-} glob12_t;
-
-typedef struct {
-	int gl_pathc;		/* Count of total paths so far. */
-	int gl_matchc;		/* Count of paths matching pattern. */
-	int gl_offs;		/* Reserved at beginning of gl_pathv. */
-	int gl_flags;		/* Copy of flags parameter to glob. */
-	char **gl_pathv;	/* List of paths matching pattern. */
-				/* Copy of errfunc parameter to glob. */
-	int (*gl_errfunc) __P((const char *, int));
-
-	/*
-	 * Alternate filesystem access methods for glob; replacement
-	 * versions of closedir(3), readdir(3), opendir(3), stat(2)
-	 * and lstat(2).
-	 */
-	void (*gl_closedir) __P((void *));
-	struct dirent *(*gl_readdir) __P((void *));	
-	void *(*gl_opendir) __P((const char *));
+#else
 	int (*gl_lstat) __P((const char *, struct stat *));
 	int (*gl_stat) __P((const char *, struct stat *));
+#endif
 } glob_t;
 
 #define	GLOB_APPEND	0x0001	/* Append to output from previous call. */
@@ -107,14 +91,14 @@ typedef struct {
 #define	GLOB_ABEND	(-2)	/* Unignored error. */
 
 __BEGIN_DECLS
-int	glob __P((const char *, int, int (*)(const char *, int), glob12_t *));
-void	globfree __P((glob12_t *));
-
-int	__glob13 __P((const char *, int, int (*)(const char *, int), glob_t *));
-void	__globfree13 __P((glob_t *));
+#ifdef __LIBC12_SOURCE__
+int	glob __P((const char *, int, int (*)(const char *, int), glob_t *));
+void	globfree __P((glob_t *));
+#else
+int	glob __P((const char *, int, int (*)(const char *, int), glob_t *))
+	__RENAME("__glob13");
+void	globfree __P((glob_t *)) __RENAME("__globfree13");
+#endif
 __END_DECLS
-
-#define glob(c,i,f,g)	__glob13(c,i,f,g)
-#define globfree(g)	__globfree13(g)
 
 #endif /* !_GLOB_H_ */

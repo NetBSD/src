@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.1 1997/10/21 00:56:49 fvdl Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.2 1997/10/22 00:55:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.1 1997/10/21 00:56:49 fvdl Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.2 1997/10/22 00:55:08 fvdl Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -162,7 +162,7 @@ static void	 qprintf __P((const char *, Char *));
 #endif
 
 int
-__glob13(pattern, flags, errfunc, pglob)
+glob(pattern, flags, errfunc, pglob)
 	const char *pattern;
 	int flags, (*errfunc) __P((const char *, int));
 	glob_t *pglob;
@@ -735,7 +735,7 @@ match(name, pat, patend)
 
 /* Free allocated data belonging to a glob_t structure. */
 void
-__globfree13(pglob)
+globfree(pglob)
 	glob_t *pglob;
 {
 	register int i;
