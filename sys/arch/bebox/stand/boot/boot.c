@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 1999/04/17 21:16:46 ws Exp $	*/
+/*	$NetBSD: boot.c,v 1.8 1999/06/24 01:10:31 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,19 +37,7 @@
 #include <machine/cpu.h>
 #include <machine/param.h>
 #include <bebox/include/bootinfo.h>
-#include <bebox/include/bus.h>
-
-#ifdef CONS_SERIAL
-# include "ns16550.h"
-# ifndef COMPORT
-#  define COMPORT COM1
-# endif
-# ifndef COMSPEED
-#  define COMSPEED 9600
-# endif
-#endif /* CONS_SERIAL */
-
-#define NAMELEN	128
+#include "boot.h"
 
 char *name;
 char *names[] = {
@@ -60,6 +48,7 @@ char *names[] = {
 };
 #define NUMNAMES (sizeof (names) / sizeof (names[0]))
 
+#define NAMELEN	128
 char namebuf[NAMELEN];
 char nametmp[NAMELEN];
 int args;
@@ -73,6 +62,7 @@ void
 main()
 {
 	int fd, n = 0;
+	int addr, speed;
 	char *cnname;
 	void *p;
 	void start_CPU1();
@@ -86,39 +76,37 @@ main()
 	resetCPU1();
 
 	/*
-	 * pci init
-	 */
-	pci_init();
-
-	/*
 	 * console init
 	 */
-	cnname = cninit();
+	cnname = cninit(&addr, &speed);
 
 	/*
 	 * make bootinfo
 	 */
 	bootinfo = (void *)0x3030;
 
+	/*
+	 * memory
+	 */
 	btinfo_memory.common.next = sizeof (btinfo_memory);
 	btinfo_memory.common.type = BTINFO_MEMORY;
 	btinfo_memory.memsize = *(int *)0x3010;
 
+	/*
+	 * console
+	 */
 	btinfo_console.common.next = sizeof (btinfo_console);
 	btinfo_console.common.type = BTINFO_CONSOLE;
-	if (cnname)
-		strcpy(btinfo_console.devname, cnname);
-#if defined(CONS_BE) || defined(CONS_VGA)
-	btinfo_console.addr = BEBOX_BUS_SPACE_MEM;
-#endif
-#ifdef CONS_SERIAL
-	btinfo_console.addr = COMPORT;
-	btinfo_console.speed = COMSPEED;
-#endif /* CONS_SERIAL */
+	strcpy(btinfo_console.devname, cnname);
+	btinfo_console.addr = addr;
+	btinfo_console.speed = speed;
 
+	/*
+	 * clock
+	 */
 	btinfo_clock.common.next = 0;
 	btinfo_clock.common.type = BTINFO_CLOCK;
-	btinfo_clock.ticks_per_sec = findcpuspeed();
+	btinfo_clock.ticks_per_sec = TICKS_PER_SEC;
 
 	p = bootinfo;
 	bcopy((void *)&btinfo_memory, p, sizeof (btinfo_memory));
