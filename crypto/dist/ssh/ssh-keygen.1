@@ -1,6 +1,6 @@
 .\"  -*- nroff -*-
 .\"
-.\" $NetBSD: ssh-keygen.1,v 1.1.1.1 2000/09/28 22:10:29 thorpej Exp $
+.\" $NetBSD: ssh-keygen.1,v 1.1.1.2 2001/01/14 04:50:44 itojun Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -45,8 +45,9 @@
 .Nd generate Secure Shell authentication keys
 .Sh SYNOPSIS
 .Nm ssh-keygen
-.Op Fl dq
+.Op Fl q
 .Op Fl b Ar bits
+.Op Fl t Ar type
 .Op Fl N Ar new_passphrase
 .Op Fl C Ar comment
 .Op Fl f Ar output_keyfile
@@ -81,12 +82,12 @@ generates and manages authentication keys for
 .Nm
 defaults to generating an RSA key for use by protocols 1.3 and 1.5;
 specifying the
-.Fl d
-flag will create a DSA key for use by protocol 2.0.
+.Fl t
+allows you to create a key for use by protocol 2.0.
 .Pp
 Normally each user wishing to use Secure Shell
-with RSA or DSA authentication runs this once to create the
-authentication key in
+with RSA or DSA authentication runs this once to create the authentication
+key in
 .Pa $HOME/.ssh/identity
 or
 .Pa $HOME/.ssh/id_dsa .
@@ -107,13 +108,14 @@ The passphrase may be empty to indicate no passphrase
 arbitrary length.
 Good passphrases are 10-30 characters long and are
 not simple sentences or otherwise easily guessable (English
-prose has only 1-2 bits of entropy per word, and makes very bad
+prose has only 1-2 bits of entropy per word, and provides very bad
 passphrases).
 The passphrase can be changed later by using the
 .Fl p
 option.
 .Pp
-There is no way to recover a lost passphrase.  If the passphrase is
+There is no way to recover a lost passphrase.
+If the passphrase is
 lost or forgotten, you will have to generate a new key and copy the
 corresponding public key to other machines.
 .Pp
@@ -157,6 +159,17 @@ Silence
 Used by
 .Pa /etc/rc.d/sshd
 when creating a new key.
+.It Fl t Ar type
+Specifies the type of the key to create.
+The possible values are
+.Dq rsa1
+for protocol version 1 and
+.Dq rsa
+or
+.Dq dsa
+for protocol version 2.
+The default is
+.Dq rsa .
 .It Fl C Ar comment
 Provides the new comment.
 .It Fl N Ar new_passphrase
@@ -168,36 +181,40 @@ If RSA support is functional, immediately exits with code 0.  If RSA
 support is not functional, exits with code 1.  This flag will be
 removed once the RSA patent expires.
 .It Fl x
-This option will read a private OpenSSH-compatible DSA format file and
-print a SSH2-compatible public key to stdout.
+This option will read a private
+OpenSSH DSA format file and print a SSH2-compatible public key to stdout.
 .It Fl X
-This option will read a SSH2-compatible public key file and print an
-OpenSSH-compatible DSA public key to stdout.
+This option will read a unencrypted
+SSH2-compatible private (or public) key file and
+print an OpenSSH compatible private (or public) key to stdout.
 .It Fl y
-This option will read a private OpenSSH-compatible DSA format file and
-print an OpenSSH-compatible DSA public key to stdout.
+This option will read a private
+OpenSSH format file and print an OpenSSH public key to stdout.
 .El
 .Sh FILES
 .Bl -tag -width Ds
 .It Pa $HOME/.ssh/identity
 Contains the RSA authentication identity of the user.
 This file should not be readable by anyone but the user.
-It is possible to specify a passphrase when generating the key; that
-passphrase will be used to encrypt the private part of this file using
-3DES.  This file is not automatically accessed by
+It is possible to
+specify a passphrase when generating the key; that passphrase will be
+used to encrypt the private part of this file using 3DES.
+This file is not automatically accessed by
 .Nm
 but it is offered as the default file for the private key.
 .Xr sshd 8
 will read this file when a login attempt is made.
 .It Pa $HOME/.ssh/identity.pub
-Contains the public key for authentication.  The contents of this file
-should be added to
+Contains the public key for authentication.
+The contents of this file should be added to
 .Pa $HOME/.ssh/authorized_keys
-on all machines where you wish to log in using RSA authentication.
+on all machines
+where you wish to log in using RSA authentication.
 There is no need to keep the contents of this file secret.
 .It Pa $HOME/.ssh/id_dsa
-Contains the DSA authentication identity of the user.  This file
-should not be readable by anyone but the user.  It is possible to
+Contains the DSA authentication identity of the user.
+This file should not be readable by anyone but the user.
+It is possible to
 specify a passphrase when generating the key; that passphrase will be
 used to encrypt the private part of this file using 3DES.
 This file is not automatically accessed by
@@ -206,13 +223,14 @@ but it is offered as the default file for the private key.
 .Xr sshd 8
 will read this file when a login attempt is made.
 .It Pa $HOME/.ssh/id_dsa.pub
-Contains the public key for authentication.  The contents of this
-file should be added to
+Contains the public key for authentication.
+The contents of this file should be added to
 .Pa $HOME/.ssh/authorized_keys2
-on all machines where you wish to log in using DSA authentication.
+on all machines
+where you wish to log in using public key authentication.
 There is no need to keep the contents of this file secret.
 .El
-.Sh AUTHOR
+.Sh AUTHORS
 Tatu Ylonen <ylo@cs.hut.fi>
 .Sh SEE ALSO
 .Xr ssh 1 ,
