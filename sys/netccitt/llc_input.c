@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_input.c,v 1.5 1996/10/13 02:10:07 christos Exp $	*/
+/*	$NetBSD: llc_input.c,v 1.6 1998/07/07 03:26:55 thorpej Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -60,6 +60,8 @@
 #include <netccitt/llc_var.h>
 
 #include <machine/stdarg.h>
+
+struct ifqueue llcintrq;
 
 /*
  * This module implements LLC as specified by ISO 8802-2.
