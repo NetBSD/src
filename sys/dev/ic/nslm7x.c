@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.3.4.1 2000/07/30 17:54:14 bouyer Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.3.4.2 2000/08/02 17:09:49 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 #endif
 
 const struct envsys_range lm_ranges[] = {	/* sc->sensors sub-intervals */
-						/* for each unit type        */
+					/* for each unit type */
 	{ 7, 7,    ENVSYS_STEMP   },
 	{ 8, 10,   ENVSYS_SFANRPM },
 	{ 1, 0,    ENVSYS_SVOLTS_AC },	/* None */
@@ -78,12 +78,42 @@ const struct envsys_range lm_ranges[] = {	/* sc->sensors sub-intervals */
 	{ 1, 0,    ENVSYS_SAMPS }	/* None */
 };
 
-	
+
 u_int8_t lm_readreg __P((struct lm_softc *, int));
 void lm_writereg __P((struct lm_softc *, int, int));
+
+int lm_match __P((struct lm_softc *));
+int wb_match __P((struct lm_softc *));
+int def_match __P((struct lm_softc *));
+void lm_common_match __P((struct lm_softc *));
+
+void generic_stemp __P((struct lm_softc *, struct envsys_tre_data *));
+void generic_svolt __P((struct lm_softc *, struct envsys_tre_data *,
+    struct envsys_basic_info *));
+void generic_fanrpm __P((struct lm_softc *, struct envsys_tre_data *));
 void lm_refresh_sensor_data __P((struct lm_softc *));
+void wb_temp __P((struct lm_softc *, struct envsys_tre_data *));
+void wb781_refresh_sensor_data __P((struct lm_softc *));
+void wb782_refresh_sensor_data __P((struct lm_softc *));
+
 int lm_gtredata __P((struct sysmon_envsys *, struct envsys_tre_data *));
+
+int generic_streinfo_fan __P((struct lm_softc *, struct envsys_basic_info *,
+           int, struct envsys_basic_info *));
 int lm_streinfo __P((struct sysmon_envsys *, struct envsys_basic_info *));
+int wb781_streinfo __P((struct sysmon_envsys *, struct envsys_basic_info *));
+int wb782_streinfo __P((struct sysmon_envsys *, struct envsys_basic_info *));
+
+struct lm_chip {
+	int (*chip_match) __P((struct lm_softc *));
+};
+
+struct lm_chip lm_chips[] = {
+	{ wb_match},
+	{ lm_match},
+	{ def_match} /* Must be last */
+};
+
 
 u_int8_t
 lm_readreg(sc, reg)
@@ -147,17 +177,9 @@ lm_attach(lmsc)
 {
 	int i;
 
-	/* See if we have an LM78 or LM79 */
-	i = lm_readreg(lmsc, LMD_CHIPID) & LM_ID_MASK;
-	printf(": LM7");
-	if (i == LM_ID_LM78)
-		printf("8\n");
-	else if (i == LM_ID_LM78J)
-		printf("8J\n");
-	else if (i == LM_ID_LM79)
-		printf("9\n");
-	else
-		printf("? - Unknown chip ID (%x)\n", i);
+	for (i = 0; i < sizeof(lm_chips) / sizeof(lm_chips[0]); i++)
+		if (lm_chips[i].chip_match(lmsc))
+			break;
 
 	/* Start the monitoring loop */
 	lm_writereg(lmsc, LMD_CONFIG, 0x01);
@@ -166,45 +188,12 @@ lm_attach(lmsc)
 	timerclear(&lmsc->lastread);
 
 	/* Initialize sensors */
-	for (i = 0; i < LM_NUM_SENSORS; ++i) {
+	for (i = 0; i < lmsc->numsensors; ++i) {
 		lmsc->sensors[i].sensor = lmsc->info[i].sensor = i;
 		lmsc->sensors[i].validflags = (ENVSYS_FVALID|ENVSYS_FCURVALID);
 		lmsc->info[i].validflags = ENVSYS_FVALID;
 		lmsc->sensors[i].warnflags = ENVSYS_WARN_OK;
 	}
-
-	for (i = 0; i < 7; ++i) {
-		lmsc->sensors[i].units = lmsc->info[i].units =
-		    ENVSYS_SVOLTS_DC;
-
-		lmsc->info[i].desc[0] = 'I';
-		lmsc->info[i].desc[1] = 'N';
-		lmsc->info[i].desc[2] = i + '0';
-		lmsc->info[i].desc[3] = 0;
-	}
-
-	/* default correction factors for resistors on higher voltage inputs */
-	lmsc->info[0].rfact = lmsc->info[1].rfact = 
-	    lmsc->info[2].rfact = 10000;
-	lmsc->info[3].rfact = (int)(( 90.9 / 60.4) * 10000);
-	lmsc->info[4].rfact = (int)(( 38.0 / 10.0) * 10000);
-	lmsc->info[5].rfact = (int)((210.0 / 60.4) * 10000);
-	lmsc->info[6].rfact = (int)(( 90.9 / 60.4) * 10000);
-
-	lmsc->sensors[7].units = ENVSYS_STEMP;
-	strcpy(lmsc->info[7].desc, "Temp");
-
-	for (i = 8; i < 11; ++i) {
-		lmsc->sensors[i].units = lmsc->info[i].units = ENVSYS_SFANRPM;
-
-		lmsc->info[i].desc[0] = 'F';
-		lmsc->info[i].desc[1] = 'a';
-		lmsc->info[i].desc[2] = 'n';
-		lmsc->info[i].desc[3] = ' ';
-		lmsc->info[i].desc[4] = i - 7 + '0';
-		lmsc->info[i].desc[5] = 0;
-	}
-
 	/*
 	 * Hook into the System Monitor.
 	 */
@@ -214,9 +203,9 @@ lm_attach(lmsc)
 	lmsc->sc_sysmon.sme_cookie = lmsc;
 
 	lmsc->sc_sysmon.sme_gtredata = lm_gtredata;
-	lmsc->sc_sysmon.sme_streinfo = lm_streinfo;
+	/* sme_streinfo set in chip-specific attach */
 
-	lmsc->sc_sysmon.sme_nsensors = LM_NUM_SENSORS;
+	lmsc->sc_sysmon.sme_nsensors = lmsc->numsensors;
 	lmsc->sc_sysmon.sme_envsys_version = 1000;
 
 	if (sysmon_envsys_register(&lmsc->sc_sysmon))
@@ -224,52 +213,324 @@ lm_attach(lmsc)
 		    lmsc->sc_dev.dv_xname);
 }
 
+int
+lm_match(sc)
+	struct lm_softc *sc;
+{
+	int i;
+
+	/* See if we have an LM78 or LM79 */
+	i = lm_readreg(sc, LMD_CHIPID) & LM_ID_MASK;
+	switch(i) {
+	case LM_ID_LM78:
+		printf(": LM78\n");
+		break;
+	case LM_ID_LM78J:
+		printf(": LM78J\n");
+		break;
+	case LM_ID_LM79:
+		printf(": LM79\n");
+		break;
+	default:
+		return 0;
+	}
+	lm_common_match(sc);
+	return 1;
+}
+
+int
+def_match(sc)
+	struct lm_softc *sc;
+{
+	int i;
+
+	i = lm_readreg(sc, LMD_CHIPID) & LM_ID_MASK;
+	printf(": Unknow chip (ID %d)\n", i);
+	lm_common_match(sc);
+	return 1;
+}
+
+void
+lm_common_match(sc)
+	struct lm_softc *sc;
+{
+	int i;
+	sc->numsensors = LM_NUM_SENSORS;
+	sc->refresh_sensor_data = lm_refresh_sensor_data;
+
+	for (i = 0; i < 7; ++i) {
+		sc->sensors[i].units = sc->info[i].units =
+		    ENVSYS_SVOLTS_DC;
+		sprintf(sc->info[i].desc, "IN %d", i);
+	}
+
+	/* default correction factors for resistors on higher voltage inputs */
+	sc->info[0].rfact = sc->info[1].rfact =
+	    sc->info[2].rfact = 10000;
+	sc->info[3].rfact = (int)(( 90.9 / 60.4) * 10000);
+	sc->info[4].rfact = (int)(( 38.0 / 10.0) * 10000);
+	sc->info[5].rfact = (int)((210.0 / 60.4) * 10000);
+	sc->info[6].rfact = (int)(( 90.9 / 60.4) * 10000);
+
+	sc->sensors[7].units = ENVSYS_STEMP;
+	strcpy(sc->info[7].desc, "Temp");
+
+	for (i = 8; i < 11; ++i) {
+		sc->sensors[i].units = sc->info[i].units = ENVSYS_SFANRPM;
+		sprintf(sc->info[i].desc, "Fan %d", i - 7);
+	}
+	sc->sc_sysmon.sme_streinfo = lm_streinfo;
+}
+
+int
+wb_match(sc)
+	struct lm_softc *sc;
+{
+	int i, j;
+
+	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_HBAC);
+	j = lm_readreg(sc, WB_VENDID) << 8;
+	lm_writereg(sc, WB_BANKSEL, 0);
+	j |= lm_readreg(sc, WB_VENDID);
+	DPRINTF(("winbond vend id %d\n", j));
+	if (j != WB_VENDID_WINBOND)
+		return 0;
+	/* read device ID */
+	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
+	j = lm_readreg(sc, WB_BANK0_CHIPID);
+	DPRINTF(("winbond chip id %d\n", j));
+	switch(j) {
+	case WB_CHIPID_83781:
+		printf(": W83781D\n");
+		sc->numsensors = WB83781_NUM_SENSORS;
+		sc->refresh_sensor_data = wb781_refresh_sensor_data;
+
+		for (i = 0; i < 7; ++i) {
+			sc->sensors[i].units = sc->info[i].units =
+			    ENVSYS_SVOLTS_DC;
+			sprintf(sc->info[i].desc, "IN %d", i);
+		}
+
+		/* default correction factors for higher voltage inputs */
+		sc->info[0].rfact = sc->info[1].rfact =
+		    sc->info[2].rfact = 10000;
+		sc->info[3].rfact = (int)(( 90.9 / 60.4) * 10000);
+		sc->info[4].rfact = (int)(( 38.0 / 10.0) * 10000);
+		sc->info[5].rfact = (int)((210.0 / 60.4) * 10000);
+		sc->info[6].rfact = (int)(( 90.9 / 60.4) * 10000);
+
+		for (i = 7; i < 10; ++i) {
+			sc->sensors[i].units = sc->info[i].units =
+			    ENVSYS_STEMP;
+			sprintf(sc->info[i].desc, "Temp%d", i - 6);
+		}
+
+		for (i = 10; i < 13; ++i) {
+			sc->sensors[i].units = sc->info[i].units =
+			    ENVSYS_SFANRPM;
+			sprintf(sc->info[i].desc, "Fan %d", i - 9);
+		}
+		sc->sc_sysmon.sme_streinfo = wb781_streinfo;
+		return 1;
+	case WB_CHIPID_83782:
+		printf(": W83782D\n");
+		break;
+	case WB_CHIPID_83627:
+		printf(": W83627HF\n");
+		break;
+	default:
+		printf(": unknow winbond chip ID 0x%x\n", j);
+		/* handle as a standart lm7x */
+		lm_common_match(sc);
+		return 1;
+	}
+
+	sc->numsensors = WB_NUM_SENSORS;
+	sc->refresh_sensor_data = wb782_refresh_sensor_data;
+
+	sc->sensors[0].units = sc->info[0].units = ENVSYS_SVOLTS_DC;
+	sprintf(sc->info[0].desc, "VCORE A");
+	sc->info[0].rfact = 10000;
+	sc->sensors[1].units = sc->info[1].units = ENVSYS_SVOLTS_DC;
+	sprintf(sc->info[1].desc, "VCORE B");
+	sc->info[1].rfact = 10000;
+	sc->sensors[2].units = sc->info[2].units = ENVSYS_SVOLTS_DC;
+	sprintf(sc->info[2].desc, "+3.3V");
+	sc->info[2].rfact = 10000;
+	sc->sensors[3].units = sc->info[3].units = ENVSYS_SVOLTS_DC;
+	sprintf(sc->info[3].desc, "+5V");
+	sc->info[3].rfact = 16778;
+	sc->sensors[4].units = sc->info[4].units = ENVSYS_SVOLTS_DC;
+	sprintf(sc->info[4].desc, "+12V");
+	sc->info[4].rfact = 38000;
+	sc->sensors[5].units = sc->info[5].units = ENVSYS_SVOLTS_DC;
+	sprintf(sc->info[5].desc, "-12V");
+	sc->info[5].rfact = 10000;
+	sc->sensors[6].units = sc->info[6].units = ENVSYS_SVOLTS_DC;
+	sprintf(sc->info[6].desc, "-5V");
+	sc->info[6].rfact = 10000;
+	sc->sensors[7].units = sc->info[7].units = ENVSYS_SVOLTS_DC;
+	sprintf(sc->info[7].desc, "+5VSB");
+	sc->info[7].rfact = 15151;
+	sc->sensors[8].units = sc->info[8].units = ENVSYS_SVOLTS_DC;
+	sprintf(sc->info[8].desc, "VBAT");
+	sc->info[8].rfact = 10000;
+
+	sc->sensors[9].units = ENVSYS_STEMP;
+	strcpy(sc->info[9].desc, "Temp 1");
+	sc->sensors[10].units = ENVSYS_STEMP;
+	strcpy(sc->info[10].desc, "Temp 2");
+	sc->sensors[11].units = ENVSYS_STEMP;
+	strcpy(sc->info[11].desc, "Temp 3");
+
+	for (i = 12; i < 15; ++i) {
+		sc->sensors[i].units = sc->info[i].units = ENVSYS_SFANRPM;
+		sprintf(sc->info[i].desc, "Fan %d", i - 11);
+	}
+	sc->sc_sysmon.sme_streinfo = wb782_streinfo;
+	return 1;
+}
 
 int
 lm_gtredata(sme, tred)
-	struct sysmon_envsys *sme;
-	struct envsys_tre_data *tred;
+	 struct sysmon_envsys *sme;
+	 struct envsys_tre_data *tred;
 {
-	static const struct timeval onepointfive = { 1, 500000 };
-	struct timeval t;
-	struct lm_softc *sc = sme->sme_cookie;
-	int i, s;
+	 static const struct timeval onepointfive = { 1, 500000 };
+	 struct timeval t;
+	 struct lm_softc *sc = sme->sme_cookie;
+	 int i, s;
 
-	/* read new values at most once every 1.5 seconds */
-	timeradd(&sc->lastread, &onepointfive, &t);
-	s = splclock();
-	i = timercmp(&mono_time, &t, >);
-	if (i) {
-		sc->lastread.tv_sec  = mono_time.tv_sec;
-		sc->lastread.tv_usec = mono_time.tv_usec; 
-	}
-	splx(s);
-   
-	if (i)
-		lm_refresh_sensor_data(sc);
+	 /* read new values at most once every 1.5 seconds */
+	 timeradd(&sc->lastread, &onepointfive, &t);
+	 s = splclock();
+	 i = timercmp(&mono_time, &t, >);
+	 if (i) {
+		  sc->lastread.tv_sec  = mono_time.tv_sec;
+		  sc->lastread.tv_usec = mono_time.tv_usec;
+	 }
+	 splx(s);
 
-	*tred = sc->sensors[tred->sensor];
+	 if (i)
+		  sc->refresh_sensor_data(sc);
 
-	return (0);
+	 *tred = sc->sensors[tred->sensor];
+
+	 return (0);
 }
 
+int
+generic_streinfo_fan(sc, info, n, binfo)
+	struct lm_softc *sc;
+	struct envsys_basic_info *info;
+	int n;
+	struct envsys_basic_info *binfo;
+{
+	u_int8_t sdata;
+	int divisor;
+
+	/* FAN1 and FAN2 can have divisors set, but not FAN3 */
+	if ((sc->info[binfo->sensor].units == ENVSYS_SFANRPM)
+	    && (binfo->sensor != 2)) {
+		if (binfo->rpms == 0) {
+			binfo->validflags = 0;
+			return (0);
+		}
+
+		/* 153 is the nominal FAN speed value */
+		divisor = 1350000 / (binfo->rpms * 153);
+
+		/* ...but we need lg(divisor) */
+		if (divisor <= 1)
+		    divisor = 0;
+		else if (divisor <= 2)
+		    divisor = 1;
+		else if (divisor <= 4)
+		    divisor = 2;
+		else
+		    divisor = 3;
+
+		/*
+		 * FAN1 div is in bits <5:4>, FAN2 div is
+		 * in <7:6>
+		 */
+		sdata = lm_readreg(sc, LMD_VIDFAN);
+		if ( binfo->sensor == 0 ) {  /* FAN1 */
+		    divisor <<= 4;
+		    sdata = (sdata & 0xCF) | divisor;
+		} else { /* FAN2 */
+		    divisor <<= 6;
+		    sdata = (sdata & 0x3F) | divisor;
+		}
+
+		lm_writereg(sc, LMD_VIDFAN, sdata);
+	}
+	return (0);
+
+}
 
 int
 lm_streinfo(sme, binfo)
-	struct sysmon_envsys *sme;
-	struct envsys_basic_info *binfo;
+	 struct sysmon_envsys *sme;
+	 struct envsys_basic_info *binfo;
 {
-	struct lm_softc *sc = sme->sme_cookie;
-	int divisor;
-	u_int8_t sdata;
+	 struct lm_softc *sc = sme->sme_cookie;
 
-	if (sc->info[binfo->sensor].units == ENVSYS_SVOLTS_DC)
-		sc->info[binfo->sensor].rfact = binfo->rfact;
-	else {
-		/* FAN1 and FAN2 can have divisors set, but not FAN3 */
-		if ((sc->info[binfo->sensor].units == ENVSYS_SFANRPM)
-		    && (binfo->sensor != 10)) {
+	 if (sc->info[binfo->sensor].units == ENVSYS_SVOLTS_DC)
+		  sc->info[binfo->sensor].rfact = binfo->rfact;
+	 else {
+		if (sc->info[binfo->sensor].units == ENVSYS_SFANRPM) {
+			generic_streinfo_fan(sc, &sc->info[binfo->sensor],
+			    binfo->sensor - 8, binfo);
+		}
+		memcpy(sc->info[binfo->sensor].desc, binfo->desc,
+		    sizeof(sc->info[binfo->sensor].desc));
+		sc->info[binfo->sensor].desc[
+		    sizeof(sc->info[binfo->sensor].desc) - 1] = '\0';
 
+		binfo->validflags = ENVSYS_FVALID;
+	 }
+	 return (0);
+}
+
+int
+wb781_streinfo(sme, binfo)
+	 struct sysmon_envsys *sme;
+	 struct envsys_basic_info *binfo;
+{
+	 struct lm_softc *sc = sme->sme_cookie;
+
+	 if (sc->info[binfo->sensor].units == ENVSYS_SVOLTS_DC)
+		  sc->info[binfo->sensor].rfact = binfo->rfact;
+	 else {
+		if (sc->info[binfo->sensor].units == ENVSYS_SFANRPM) {
+			generic_streinfo_fan(sc, &sc->info[binfo->sensor],
+			    binfo->sensor - 10, binfo);
+		}
+		memcpy(sc->info[binfo->sensor].desc, binfo->desc,
+		    sizeof(sc->info[binfo->sensor].desc));
+		sc->info[binfo->sensor].desc[
+		    sizeof(sc->info[binfo->sensor].desc) - 1] = '\0';
+
+		binfo->validflags = ENVSYS_FVALID;
+	 }
+	 return (0);
+}
+
+int
+wb782_streinfo(sme, binfo)
+	 struct sysmon_envsys *sme;
+	 struct envsys_basic_info *binfo;
+{
+	 struct lm_softc *sc = sme->sme_cookie;
+	 int divisor;
+	 u_int8_t sdata;
+	 int i;
+
+	 if (sc->info[binfo->sensor].units == ENVSYS_SVOLTS_DC)
+		  sc->info[binfo->sensor].rfact = binfo->rfact;
+	 else {
+	 	if (sc->info[binfo->sensor].units == ENVSYS_SFANRPM) {
 			if (binfo->rpms == 0) {
 				binfo->validflags = 0;
 				return (0);
@@ -279,29 +540,39 @@ lm_streinfo(sme, binfo)
 			divisor = 1350000 / (binfo->rpms * 153);
 
 			/* ...but we need lg(divisor) */
-			if (divisor <= 1)
-				divisor = 0;
-			else if (divisor <= 2)
-				divisor = 1;
-			else if (divisor <= 4)
-				divisor = 2;
-			else
-				divisor = 3;
-
-			/*
-			 * FAN1 div is in bits <5:4>, FAN2 div is
-			 * in <7:6>
-			 */
-			sdata = lm_readreg(sc, LMD_VIDFAN);
-			if ( binfo->sensor == 8 ) {  /* FAN1 */
-				divisor <<= 4;
-				sdata = (sdata & 0xCF) | divisor;
-			} else { /* FAN2 */
-				divisor <<= 6;
-				sdata = (sdata & 0x3F) | divisor;
+			for (i = 0; i < 7; i++) {
+				if (divisor <= (1 << i))
+				 	break;
 			}
+			divisor = i;
 
-			lm_writereg(sc, LMD_VIDFAN, sdata);
+			if (binfo->sensor == 12 || binfo->sensor == 13) {
+				/*
+				 * FAN1 div is in bits <5:4>, FAN2 div
+				 * is in <7:6>
+				 */
+				sdata = lm_readreg(sc, LMD_VIDFAN);
+				if ( binfo->sensor == 12 ) {  /* FAN1 */
+					 sdata = (sdata & 0xCF) |
+					     ((divisor & 0x3) << 4);
+				} else { /* FAN2 */
+					 sdata = (sdata & 0x3F) |
+					     ((divisor & 0x3) << 6);
+				}
+				lm_writereg(sc, LMD_VIDFAN, sdata);
+			} else {
+				/* FAN3 is in WB_PIN <7:6> */
+				sdata = lm_readreg(sc, WB_PIN);
+				sdata = (sdata & 0x3F) |
+				     ((divisor & 0x3) << 6);
+				lm_writereg(sc, LMD_VIDFAN, sdata);
+			}
+			/* Bit 2 of divisor is in WB_BANK0_FANBAT */
+			lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
+			sdata = lm_readreg(sc, WB_BANK0_FANBAT);
+			sdata &= ~(0x20 << (binfo->sensor - 12));
+			sdata |= (divisor & 0x4) << (binfo->sensor - 9);
+			lm_writereg(sc, WB_BANK0_FANBAT, sdata);
 		}
 
 		memcpy(sc->info[binfo->sensor].desc, binfo->desc,
@@ -314,6 +585,61 @@ lm_streinfo(sme, binfo)
 	return (0);
 }
 
+void
+generic_stemp(sc, sensor)
+	struct lm_softc *sc;
+	struct envsys_tre_data *sensor;
+{
+	int sdata = lm_readreg(sc, LMD_SENSORBASE + 7);
+	/* temp is given in deg. C, we convert to uK */
+	sensor->cur.data_us = sdata * 1000000 + 273150000;
+}
+
+void
+generic_svolt(sc, sensors, infos)
+	struct lm_softc *sc;
+	struct envsys_tre_data *sensors;
+	struct envsys_basic_info *infos;
+{
+	int i, sdata;
+
+	for (i = 0; i < 7; i++) {
+		sdata = lm_readreg(sc, LMD_SENSORBASE + i);
+		/* voltage returned as (mV >> 4), we convert to uVDC */
+		sensors[i].cur.data_s = (sdata << 4);
+		/* rfact is (factor * 10^4) */
+		sensors[i].cur.data_s *= infos[i].rfact;
+		/* division by 10 gets us back to uVDC */
+		sensors[i].cur.data_s /= 10;
+
+		/* these two are negative voltages */
+		if ( (i == 5) || (i == 6) )
+			sensors[i].cur.data_s *= -1;
+	}
+}
+
+void
+generic_fanrpm(sc, sensors)
+	struct lm_softc *sc;
+	struct envsys_tre_data *sensors;
+{
+	int i, sdata, divisor;
+	for (i = 0; i < 3; i++) {
+		sdata = lm_readreg(sc, LMD_SENSORBASE + 8 + i);
+		if (i == 2)
+			divisor = 2;	/* Fixed divisor for FAN3 */
+		else if (i == 1)	/* Bits 7 & 6 of VID/FAN  */
+			divisor = (lm_readreg(sc, LMD_VIDFAN) >> 6) & 0x3;
+		else
+			divisor = (lm_readreg(sc, LMD_VIDFAN) >> 4) & 0x3;
+
+		if (sdata == 0xff || sdata == 0x00) {
+			sensors[i].cur.data_us = 0;
+		} else {
+			sensors[i].cur.data_us = 1350000 / (sdata << divisor);
+		}
+	}
+}
 
 /*
  * pre:  last read occured >= 1.5 seconds ago
@@ -323,54 +649,106 @@ void
 lm_refresh_sensor_data(sc)
 	struct lm_softc *sc;
 {
-	u_int8_t sdata;
+	/* Refresh our stored data for every sensor */
+	generic_stemp(sc, &sc->sensors[7]);
+	generic_svolt(sc, &sc->sensors[0], &sc->info[0]);
+	generic_fanrpm(sc, &sc->sensors[8]);
+}
+
+void
+wb_temp(sc, sensors)
+	struct lm_softc *sc;
+	struct  envsys_tre_data *sensors;
+{
+	int sdata;
+	/* temperatures. Given in dC, we convert to uK */
+	sdata = lm_readreg(sc, LMD_SENSORBASE + 7);
+	DPRINTF(("sdata[%d] 0x%x\n", 9, sdata));
+	sensors[0].cur.data_us = sdata * 1000000 + 273150000;
+	/* from bank1 */
+	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B1);
+	sdata = lm_readreg(sc, WB_BANK1_T2H) << 1;
+	sdata |=  (lm_readreg(sc, WB_BANK1_T2L) & 0x80) >> 7;
+	DPRINTF(("sdata[%d] 0x%x\n", 10, sdata));
+	sensors[1].cur.data_us = (sdata * 1000000) / 2 + 273150000;
+	/* from bank2 */
+	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B2);
+	sdata = lm_readreg(sc, WB_BANK2_T3H) << 1;
+	sdata |=  (lm_readreg(sc, WB_BANK2_T3L) & 0x80) >> 7;
+	DPRINTF(("sdata[%d] 0x%x\n", 11, sdata));
+	sensors[2].cur.data_us = (sdata * 1000000) / 2 + 273150000;
+}
+
+void
+wb781_refresh_sensor_data(sc)
+	struct lm_softc *sc;
+{
+	/* Refresh our stored data for every sensor */
+	generic_svolt(sc, &sc->sensors[0], &sc->info[0]);
+	wb_temp(sc, &sc->sensors[7]);
+	generic_fanrpm(sc, &sc->sensors[10]);
+}
+
+void
+wb782_refresh_sensor_data(sc)
+	struct lm_softc *sc;
+{
+	int sdata;
 	int i, divisor;
 
 	/* Refresh our stored data for every sensor */
-	for (i = 0; i < LM_NUM_SENSORS; ++i) {
-		sdata = lm_readreg(sc, LMD_SENSORBASE + i);
-		
-		switch (sc->sensors[i].units) {
-		case ENVSYS_STEMP:
-			/* temp is given in deg. C, we convert to uK */
-			sc->sensors[i].cur.data_us = sdata * 1000000 +
-			    273150000;
-			break;
-			
-		case ENVSYS_SVOLTS_DC:
-			/* voltage returned as (mV >> 4), we convert to uVDC */
-			sc->sensors[i].cur.data_s = (sdata << 4);
-			/* rfact is (factor * 10^4) */
-			sc->sensors[i].cur.data_s *= sc->info[i].rfact;
-			/* division by 10 gets us back to uVDC */
-			sc->sensors[i].cur.data_s /= 10;
-			
-			/* these two are negative voltages */
-			if ( (i == 5) || (i == 6) )
-				sc->sensors[i].cur.data_s *= -1;
+	/* first voltage sensors */
+	for (i = 0; i < 9; ++i) {
+		if (i < 7) {
+			sdata = lm_readreg(sc, LMD_SENSORBASE + i);
+		} else {
+			/* from bank5 */
+			lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B5);
+			sdata = lm_readreg(sc, (i == 7) ?
+			    WB_BANK5_5VSB : WB_BANK5_VBAT);
+		}
+		DPRINTF(("sdata[%d] 0x%x\n", i, sdata));
+		/* voltage returned as (mV >> 4), we convert to uV */
+		sdata =  sdata << 4;
+		/* special case for negative voltages */
+		if (i == 5) {
+			/*
+			 * -12Vdc, assume Winbond recommended values for
+			 * resistors
+			 */
+			sdata = ((sdata * 1000) - (3600 * 805)) / 195;
+		} else if (i == 6) {
+			/*
+			 * -5Vdc, assume Winbond recommended values for
+			 * resistors
+			 */
+			sdata = ((sdata * 1000) - (3600 * 682)) / 318;
+		}
+		/* rfact is (factor * 10^4) */
+		sc->sensors[i].cur.data_s = sdata * sc->info[i].rfact;
+		/* division by 10 gets us back to uVDC */
+		sc->sensors[i].cur.data_s /= 10;
+	}
+	wb_temp(sc, &sc->sensors[9]);
 
-			break;
-			
-		case ENVSYS_SFANRPM:
-			if (i == 10)
-				divisor = 2;	/* Fixed divisor for FAN3 */
-			else if (i == 9)	/* Bits 7 & 6 of VID/FAN  */
-				divisor = (lm_readreg(sc, LMD_VIDFAN) >> 6) &
-				    0x3;
-			else
-				divisor = (lm_readreg(sc, LMD_VIDFAN) >> 4) &
-				    0x3;
-			
+	/* Fans */
+	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
+	for (i = 12; i < 15; i++) {
+		sdata = lm_readreg(sc, LMD_SENSORBASE + i - 4);
+		if (i == 12)
+			divisor = (lm_readreg(sc, LMD_VIDFAN) >> 4) & 0x3;
+		else if (i == 13)
+			divisor = (lm_readreg(sc, LMD_VIDFAN) >> 6) & 0x3;
+		else
+			divisor = (lm_readreg(sc, WB_PIN) >> 6) & 0x3;
+		divisor |= (lm_readreg(sc, WB_BANK0_FANBAT) >> (i - 9)) & 0x4;
+
+		DPRINTF(("sdata[%d] 0x%x div 0x%x\n", i, sdata, divisor));
+		if (sdata == 0xff || sdata == 0x00) {
+			sc->sensors[i].cur.data_us = 0;
+		} else {
 			sc->sensors[i].cur.data_us = 1350000 /
 			    (sdata << divisor);
-			
-			break;
-			
-		default:
-			/* XXX - debug log something? */
-			sc->sensors[i].validflags = 0;
-			
-			break;
 		}
 	}
 }
