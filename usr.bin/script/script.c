@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
+/*	$NetBSD: script.c,v 1.4 1997/03/03 04:02:21 mikel Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $";
+static char rcsid[] = "$NetBSD: script.c,v 1.4 1997/03/03 04:02:21 mikel Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -74,7 +74,7 @@ struct	termios tt;
 __dead	void done __P((void));
 	void dooutput __P((void));
 	void doshell __P((void));
-	void err __P((const char *, ...));
+__dead	void err __P((const char *, ...));
 	void fail __P((void));
 	void finish __P((int));
 	void scriptflush __P((int));
@@ -213,7 +213,7 @@ doshell()
 	(void)close(master);
 	(void)fclose(fscript);
 	login_tty(slave);
-	execl(shell, "sh", "-i", NULL);
+	execl(shell, shell, "-i", NULL);
 	perror(shell);
 	fail();
 }
