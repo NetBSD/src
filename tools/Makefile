@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50.2.1 2002/06/11 15:56:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.50.2.2 2002/06/13 02:42:04 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -35,6 +35,10 @@ SUBDIR+=	prep-mkbootimage
 
 .if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")
 SUBDIR+=	mips-elf2ecoff
+.endif
+
+.if (${MACHINE} == "sparc" || ${MACHINE} == "sparc64")
+SUBDIR+=	fgen
 .endif
 
 .endif	# ! NOSUBDIR					# }
