@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.11 2003/07/14 15:56:30 itojun Exp $	*/
+/*	$NetBSD: terminal.c,v 1.12 2003/07/14 16:06:49 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.11 2003/07/14 15:56:30 itojun Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.12 2003/07/14 16:06:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,37 +58,6 @@ Ring		ttyoring, ttyiring;
 unsigned char	ttyobuf[2*BUFSIZ], ttyibuf[BUFSIZ];
 
 int termdata;			/* Debugging flag */
-
-# ifndef VDISCARD
-cc_t termFlushChar;
-# endif
-# ifndef VLNEXT
-cc_t termLiteralNextChar;
-# endif
-# ifndef VSUSP
-cc_t termSuspChar;
-# endif
-# ifndef VWERASE
-cc_t termWerasChar;
-# endif
-# ifndef VREPRINT
-cc_t termRprntChar;
-# endif
-# ifndef VSTART
-cc_t termStartChar;
-# endif
-# ifndef VSTOP
-cc_t termStopChar;
-# endif
-# ifndef VEOL
-cc_t termForw1Char;
-# endif
-# ifndef VEOL2
-cc_t termForw2Char;
-# endif
-# ifndef VSTATUS
-cc_t termAytChar;
-# endif
 
 /*
  * initialize the terminal data structures.
