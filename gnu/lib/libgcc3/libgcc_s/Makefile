@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2004/02/27 14:52:01 skrll Exp $
+#	$NetBSD: Makefile,v 1.4 2004/03/08 14:47:27 skrll Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,8 +17,8 @@ NOPICINSTALL=	# defined
 
 .cc: # disable .cc->NULL transform
 
-SHLIB_MAJOR=    1
-SHLIB_MINOR=    0
+SHLIB_MAJOR=	1
+SHLIB_MINOR=	0
 
 LDFLAGS+=	-nostdlib
 #LDFLAGS+=	-Wl,--version-script=${DIST}/libgcc/libgcc.map

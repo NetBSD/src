@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/02/15 19:52:27 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2004/03/08 14:47:27 skrll Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -14,7 +14,7 @@ LIB=		gcc_eh
 
 .cc: # disable .cc->NULL transform
 
-SRCS+=         ${LIB2_EH}
+SRCS+=		${LIB2_EH}
 
 .include <bsd.lib.mk>
 
