@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.33 2004/02/02 18:43:39 he Exp $
+#	$NetBSD: Makefile.inc,v 1.34 2004/02/29 18:46:43 jschauma Exp $
 #
 # Makefile for sysinst
 
@@ -6,7 +6,7 @@ PROG=		sysinst
 NOMAN=		# defined
 
 SYSINSTLANG?=	en
-LANGUAGES?=	en fr pl
+LANGUAGES?=	de en fr pl
 
 MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
