@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.19 1998/12/28 20:14:00 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.20 1998/12/28 21:05:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -699,7 +699,8 @@ usbd_probe_and_attach(parent, dev, port, addr)
 {
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ddesc;
-	int r, found, i, confi;
+	int r, found, i, confi, nifaces;
+	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
 
 #if defined(__FreeBSD__)
 /* XXX isn't it bad to build &uaa into a value that has a lifetime
@@ -714,6 +715,8 @@ usbd_probe_and_attach(parent, dev, port, addr)
 
 	uaa.device = dev;
 	uaa.iface = 0;
+	uaa.ifaces = 0;
+	uaa.nifaces = 0;
 	uaa.usegeneric = 0;
 	uaa.port = port;
 	uaa.configno = UHUB_UNK_CONFIGURATION;
@@ -741,13 +744,22 @@ usbd_probe_and_attach(parent, dev, port, addr)
 #endif
 			return (r);
 		}
+		nifaces = dev->cdesc->bNumInterface;
 		uaa.configno = confi;
-		for (found = i = 0; i < dev->cdesc->bNumInterface; i++) {
-			uaa.iface = &dev->ifaces[i];
-			uaa.ifaceno = dev->ifaces[i].idesc->bInterfaceNumber;
+		for (i = 0; i < nifaces; i++)
+			ifaces[i] = &dev->ifaces[i];
+		uaa.ifaces = ifaces;
+		uaa.nifaces = nifaces;
+		for (found = i = 0; i < nifaces; i++) {
+			if (!ifaces[i])
+				continue; /* interface already claimed */
+			uaa.iface = ifaces[i];
+			uaa.ifaceno = ifaces[i]->idesc->bInterfaceNumber;
 			if (USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, 
-					  usbd_submatch))
+					  usbd_submatch)) {
 				found++;
+				ifaces[i] = 0; /* consumed */
+			}
 		}
 		if (found != 0)
 			return (USBD_NORMAL_COMPLETION);
