@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsi.4,v 1.24 2003/04/16 13:37:50 jmmv Exp $
+.\"	$NetBSD: scsi.4,v 1.25 2003/10/08 11:20:09 bouyer Exp $
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
 .\"
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 27, 1993
+.Dd October 8, 2003
 .Dt SCSI 4
 .Os
 .Sh NAME
@@ -65,9 +65,8 @@
 .Cd "scsibus* at uha?"
 .Cd "scsibus* at umass?"
 .Cd "scsibus* at wds?"
-.Cd "atapibus* at wdc? channel ?"
-.Cd "atapibus* at pciide? channel ?"
-.Cd "atapibus* at umass? channel ?"
+.Cd "atapibus* at atabus?"
+.Cd "atapibus* at umass?"
 .Cd options SCSIDEBUG
 .Cd options SCSIVERBOSE
 .Sh DESCRIPTION
@@ -343,6 +342,7 @@ scatter-gather logs.
 .Xr ss 4 ,
 .Xr st 4 ,
 .Xr uk 4 ,
+.Xr ata 4 ,
 .Xr config 8
 .Sh HISTORY
 This

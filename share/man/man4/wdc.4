@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.4,v 1.16 2003/10/05 17:48:49 bouyer Exp $
+.\"	$NetBSD: wdc.4,v 1.17 2003/10/08 11:20:09 bouyer Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -27,7 +27,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 15, 1998
+.Dd October 8, 2003
 .Dt WDC 4
 .Os
 .Sh NAME
@@ -51,11 +51,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides the basic functions for the
-.Xr wd 4
-and
-.Xr atapi 4
-drivers. This driver supports IDE and EIDE controllers, as well as MFM, RLL
+driver provides the interface with the hardware for the
+.Xr ata 4
+driver. This driver supports IDE and EIDE controllers, as well as MFM, RLL
 and ESDI on the ISA bus. PCI IDE controllers in legacy mode are also supported,
 but the
 .Xr pciide 4
@@ -74,6 +72,7 @@ Set WDC_CAPABILITY_ATA_NOSTREAM flag.
 Set WDC_CAPABILITY_ATAPI_NOSTREAM flag.
 .El
 .Sh SEE ALSO
+.Xr ata 4 ,
 .Xr atapi 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
