@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.16 1994/06/29 06:30:49 cgd Exp $
+#	$NetBSD: newvers.sh,v 1.16.2.1 1994/07/10 04:12:41 cgd Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ v=`cat version` u=${USER-root} d=`pwd` h=`hostname` t=`date`
 id=`basename ${d}`
 
 ost="NetBSD"
-osr="0.9C"
+osr="1.0-ALPHA"
 
 echo "char ostype[] = \"${ost}\";" > vers.c
 echo "char osrelease[] = \"${osr}\";" >> vers.c
