@@ -1,4 +1,4 @@
-.\"	$NetBSD: ttyflags.8,v 1.2 1995/03/18 15:01:22 cgd Exp $
+.\"	$NetBSD: ttyflags.8,v 1.3 1997/09/15 11:24:41 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -35,11 +35,11 @@
 .Nm ttyflags
 .Nd set device-specific flags for terminals
 .Sh SYNOPSIS
-.Nm ttyflags
+.Nm
 .Op Fl v
 .Op Fl a | Ar tty ...
 .Sh DESCRIPTION
-.Nm Ttyflags
+.Nm
 sets the device-specific flags for terminals, based on the flags
 found on the terminal's line in
 .Pa /etc/ttys .
@@ -71,11 +71,11 @@ the ttys, as found in
 .Xr ttys 5
 .Sh HISTORY
 The
-.Nm ttyflags
+.Nm
 utility appeared in
 .Nx 0.9a .
 .Sh BUGS
 The conditions on which to report an error are ill-defined.
-.Nm Ttyflags
+.Nm
 tries to report all significant errors, perhaps going over-board
 at times.
