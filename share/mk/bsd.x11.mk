@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.39 2004/04/15 14:48:41 drochner Exp $
+#	$NetBSD: bsd.x11.mk,v 1.40 2004/04/29 00:48:04 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -165,8 +165,11 @@ cleanx11man: .PHONY
 	rm -f ${.TARGET}
 	${CPP} -undef -traditional \
 	    -D__apploaddir__=${X11ROOTDIR}/lib/X11/app-defaults \
-	    -D__filemansuffix__=5 -D__libmansuffix__=3 \
-	    -D__miscmansuffix__=7 -D__drivermansuffix__=4 \
+	    -D__libmansuffix__=3 \
+	    -D__filemansuffix__=5 \
+	    -D__miscmansuffix__=7 \
+	    -D__drivermansuffix__=4 \
+	    -D__adminmansuffix__=8 \
 	    -D__projectroot__=${X11ROOTDIR} \
 	    -D__xorgversion__='"Release 6.6" "X Version 11"' \
 	    -D__vendorversion__="XFree86 4.4.0" \
