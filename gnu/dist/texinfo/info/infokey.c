@@ -1,4 +1,4 @@
-/*	$NetBSD: infokey.c,v 1.1.1.4 2004/07/12 23:26:52 wiz Exp $	*/
+/*	$NetBSD: infokey.c,v 1.2 2004/07/13 19:02:44 he Exp $	*/
 
 /* infokey.c -- compile ~/.infokey to ~/.info.
    Id: infokey.c,v 1.3 2004/03/14 00:57:29 karl Exp
@@ -641,7 +641,7 @@ compile (FILE *fp, const char *filename, struct sect *sections)
 		{
 		  syntax_error (filename, lnum,
                       (char *) _("NUL character (^%c) not permitted"),
-                      (void *) c, NULL, NULL, NULL);
+                      (void *)((intptr_t)c), NULL, NULL, NULL);
 		  error = 1;
 		}
 	      seqstate = normal;
@@ -665,7 +665,7 @@ compile (FILE *fp, const char *filename, struct sect *sections)
 	      if (alen == 0)
 		{
 		  syntax_error (filename, lnum, (char *) _("missing action name"),
-                      (void *) c, NULL, NULL, NULL);
+                      (void *)((intptr_t)c), NULL, NULL, NULL);
 		  error = 1;
 		}
 	      else
