@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.12 1997/03/15 18:09:37 is Exp $ */
+/* $NetBSD: if_eb.c,v 1.13 1997/03/19 02:43:03 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -347,7 +347,7 @@ ebattach(parent, self, aux)
 		    ether_sprintf(myaddr));
 	else
 		printf(" SEEQ???? rev %02x address %s", id,
-		    ether_sprintf(myaddr);
+		    ether_sprintf(myaddr));
 
 	sc->sc_irqclaimed = 0;
 
