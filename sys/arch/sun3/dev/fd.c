@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.24 2001/09/05 13:27:53 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.25 2001/09/05 14:03:48 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -1723,7 +1723,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		fd_formb->fd_formb_gaplen = fd->sc_type->gap2;
 		fd_formb->fd_formb_fillbyte = fd->sc_type->fillbyte;
 
-		bzero(il, sizeof(il));
+		memset(il, 0, sizeof(il));
 		for (j = 0, i = 1; i <= fd_formb->fd_formb_nsecs; i++) {
 			while (il[(j%fd_formb->fd_formb_nsecs) + 1])
 				j++;
@@ -1811,7 +1811,7 @@ fdformat(dev, finfo, p)
 	if (bp == 0)
 		return (ENOBUFS);
 
-	bzero((void *)bp, sizeof(struct buf));
+	memset((void *)bp, 0, sizeof(struct buf));
 	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
@@ -1865,8 +1865,8 @@ fdgetdisklabel(dev)
 	struct disklabel *lp = fd->sc_dk.dk_label;
 	struct cpu_disklabel *clp = fd->sc_dk.dk_cpulabel;
 
-	bzero(lp, sizeof(struct disklabel));
-	bzero(lp, sizeof(struct cpu_disklabel));
+	memset(lp, 0, sizeof(struct disklabel));
+	memset(lp, 0, sizeof(struct cpu_disklabel));
 
 	lp->d_type = DTYPE_FLOPPY;
 	lp->d_secsize = FDC_BSIZE;

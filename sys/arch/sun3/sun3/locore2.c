@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.78 2001/09/05 13:21:09 tsutsui Exp $	*/
+/*	$NetBSD: locore2.c,v 1.79 2001/09/05 14:12:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@ _vm_init()
 	 */
 	proc0paddr = (struct user *) nextva;
 	nextva += USPACE;
-	bzero((caddr_t)proc0paddr, USPACE);
+	memset((caddr_t)proc0paddr, 0, USPACE);
 	proc0.p_addr = proc0paddr;
 
 	/*
@@ -311,7 +311,7 @@ _bootstrap()
 {
 
 	/* First, Clear BSS. */
-	bzero(edata, end - edata);
+	memset(edata, 0, end - edata);
 
 	/* Set v_handler, get boothowto. */
 	sunmon_init();

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.64 2001/09/05 13:21:10 tsutsui Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.65 2001/09/05 14:12:23 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -114,7 +114,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	p2->p_md.md_flags = p1->p_md.md_flags;
 
 	/* Copy pcb from proc p1 to p2. */
-	bcopy(p1pcb, p2pcb, sizeof(*p2pcb));
+	memcpy(p2pcb, p1pcb, sizeof(*p2pcb));
 
 	/* Child can start with low IPL (XXX - right?) */
 	p2pcb->pcb_ps = PSL_LOWIPL;
@@ -135,7 +135,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 */
 	p2tf = (struct trapframe *)((char*)p2pcb + USPACE-4) - 1;
 	p2->p_md.md_regs = (int *)p2tf;
-	bcopy(p1->p_md.md_regs, p2tf, sizeof(*p2tf));
+	memcpy(p2tf, p1->p_md.md_regs, sizeof(*p2tf));
 
 	/*
 	 * If specified, give the child a different stack.

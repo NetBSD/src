@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.33 2001/07/22 13:34:08 wiz Exp $	*/
+/*	$NetBSD: xd.c,v 1.34 2001/09/05 14:03:49 tsutsui Exp $	*/
 
 /*
  *
@@ -293,7 +293,7 @@ xddummystrat(bp)
 {
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
-	bcopy(xd_labeldata, bp->b_data, XDFM_BPS);
+	memcpy(bp->b_data, xd_labeldata, XDFM_BPS);
 	bp->b_flags |= B_DONE;
 	bp->b_flags &= ~B_BUSY;
 }
@@ -412,14 +412,14 @@ xdcattach(parent, self, aux)
 
 	xdc->iopbase = (struct xd_iopb *)
 	    dvma_malloc(XDC_MAXIOPB * sizeof(struct xd_iopb));	/* KVA */
-	bzero(xdc->iopbase, XDC_MAXIOPB * sizeof(struct xd_iopb));
+	memset(xdc->iopbase, 0, XDC_MAXIOPB * sizeof(struct xd_iopb));
 	xdc->dvmaiopb = (struct xd_iopb *)
 		dvma_kvtopa(xdc->iopbase, xdc->bustype);
 	xdc->reqs = (struct xd_iorq *)
 	    malloc(XDC_MAXIOPB * sizeof(struct xd_iorq), M_DEVBUF, M_NOWAIT);
 	if (xdc->reqs == NULL)
 		panic("xdc malloc");
-	bzero(xdc->reqs, XDC_MAXIOPB * sizeof(struct xd_iorq));
+	memset(xdc->reqs, 0, XDC_MAXIOPB * sizeof(struct xd_iorq));
 
 	/* init free list, iorq to iopb pointers, and non-zero fields in the
 	 * iopb which never change. */
@@ -551,7 +551,7 @@ xdattach(parent, self, aux)
 	 * Always re-initialize the disk structure.  We want statistics
 	 * to start with a clean slate.
 	 */
-	bzero(&xd->sc_dk, sizeof(xd->sc_dk));
+	memset(&xd->sc_dk, 0, sizeof(xd->sc_dk));
 	xd->sc_dk.dk_driver = &xddkdriver;
 	xd->sc_dk.dk_name = xd->sc_dev.dv_xname;
 
@@ -724,7 +724,7 @@ xd_init(xd)
 		printf("%s: warning: invalid bad144 sector!\n",
 			xd->sc_dev.dv_xname);
 	} else {
-		bcopy(dvmabuf, &xd->dkb, XDFM_BPS);
+		memcpy(&xd->dkb, dvmabuf, XDFM_BPS);
 	}
 
 done:
@@ -830,12 +830,12 @@ xdioctl(dev, command, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		s = splbio();
-		bcopy(addr, &xd->dkb, sizeof(xd->dkb));
+		memcpy(&xd->dkb, addr, sizeof(xd->dkb));
 		splx(s);
 		return 0;
 
 	case DIOCGDINFO:	/* get disk label */
-		bcopy(xd->sc_dk.dk_label, addr, sizeof(struct disklabel));
+		memcpy(addr, xd->sc_dk.dk_label, sizeof(struct disklabel));
 		return 0;
 
 	case DIOCGPART:	/* get partition info */
@@ -1639,8 +1639,8 @@ xdc_xdreset(xdcsc, xdsc)
 	struct xd_iopb tmpiopb;
 	u_long  addr;
 	int     del;
-	bcopy(xdcsc->iopbase, &tmpiopb, sizeof(tmpiopb));
-	bzero(xdcsc->iopbase, sizeof(tmpiopb));
+	memcpy(&tmpiopb, xdcsc->iopbase, sizeof(tmpiopb));
+	memset(xdcsc->iopbase, 0, sizeof(tmpiopb));
 	xdcsc->iopbase->comm = XDCMD_RST;
 	xdcsc->iopbase->unit = xdsc->xd_drive;
 	addr = (u_long) xdcsc->dvmaiopb;
@@ -1656,7 +1656,7 @@ xdc_xdreset(xdcsc, xdsc)
 	} else {
 		xdcsc->xdc->xdc_csr = XDC_CLRRIO;	/* clear RIO */
 	}
-	bcopy(&tmpiopb, xdcsc->iopbase, sizeof(tmpiopb));
+	memcpy(xdcsc->iopbase, &tmpiopb, sizeof(tmpiopb));
 }
 
 
@@ -2068,13 +2068,13 @@ xdc_tick(arg)
 	run = xdcsc->nrun;
 	free = xdcsc->nfree;
 	done = xdcsc->ndone;
-	bcopy(xdcsc->waitq, wqc, sizeof(wqc));
-	bcopy(xdcsc->freereq, fqc, sizeof(fqc));
+	memcpy(wqc, xdcsc->waitq, sizeof(wqc));
+	memcpy(fqc, xdcsc->freereq, sizeof(fqc));
 	splx(s);
 	if (wait + run + free + done != XDC_MAXIOPB) {
 		printf("%s: diag: IOPB miscount (got w/f/r/d %d/%d/%d/%d, wanted %d)\n",
 		    xdcsc->sc_dev.dv_xname, wait, free, run, done, XDC_MAXIOPB);
-		bzero(mark, sizeof(mark));
+		memset(mark, 0, sizeof(mark));
 		printf("FREE: ");
 		for (lcv = free; lcv > 0; lcv--) {
 			printf("%d ", fqc[lcv - 1]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.39 2001/09/05 13:21:10 tsutsui Exp $	*/
+/*	$NetBSD: mem.c,v 1.40 2001/09/05 14:12:22 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -217,7 +217,7 @@ mmrw(dev, uio, flags)
 			if (devzeropage == NULL) {
 				devzeropage = (caddr_t)
 				    malloc(NBPG, M_TEMP, M_WAITOK);
-				bzero(devzeropage, NBPG);
+				memset(devzeropage, 0, NBPG);
 			}
 			c = min(iov->iov_len, NBPG);
 			error = uiomove(devzeropage, c, uio);
