@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.43 2003/04/02 02:34:12 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.44 2003/05/03 18:10:54 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ findchannel_defer(self)
 		printf ("%s", sc->sc_dev.dv_xname);
 		esc->sc_dma = nextdma_findchannel ("scsi");
 		if (!esc->sc_dma)
-			panic ("%s: can't find dma channel",
+			panic ("%s: can't find DMA channel",
 			       sc->sc_dev.dv_xname);
 	}
 
@@ -268,7 +268,7 @@ findchannel_defer(self)
 	}
 	
 #if 0
-	/* Turn on target selection using the `dma' method */
+	/* Turn on target selection using the `DMA' method */
 	sc->sc_features |= NCR_F_DMASELECT;
 #endif
 
@@ -285,7 +285,7 @@ findchannel_defer(self)
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 			     sc->sc_dev.dv_xname, "intr");
 
-	printf ("%s: using dma channel %s\n", sc->sc_dev.dv_xname,
+	printf ("%s: using DMA channel %s\n", sc->sc_dev.dv_xname,
 		esc->sc_dma->sc_dev.dv_xname);
 }
 
@@ -700,7 +700,7 @@ esp_dma_reset(sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	DPRINTF(("esp dma reset\n"));
+	DPRINTF(("esp DMA reset\n"));
 
 #ifdef ESP_DEBUG
 	if (esp_debug) {
@@ -814,7 +814,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	}
 #endif
 
-	/* we are sometimes asked to dma zero  bytes, that's easy */
+	/* we are sometimes asked to DMA zero  bytes, that's easy */
 	if (*dmasize <= 0) {
 		return(0);
 	}
@@ -853,7 +853,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 		/* Force a minimum slop end size. This ensures that write
 		 * requests will overrun, as required to get completion interrupts.
 		 * In addition, since the tail buffer is guaranteed to be mapped
-		 * in a single dma segment, the overrun won't accidentally
+		 * in a single DMA segment, the overrun won't accidentally
 		 * end up in its own segment.
 		 */
 		if (!esc->sc_datain) {
@@ -865,7 +865,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 		}
 
 		/* Check to make sure we haven't counted extra slop
-		 * as would happen for a very short dma buffer, also
+		 * as would happen for a very short DMA buffer, also
 		 * for short buffers, just stuff the entire thing in the tail
 		 */
 		if ((slop_bgn_size+slop_end_size >= esc->sc_dmasize)
@@ -922,10 +922,10 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 							sc->sc_dev.dv_xname,esc->sc_main_dmamap->_dm_boundary);
 					esp_dma_print(sc);
 #endif
-					panic("%s: can't load main dma map. error = %d, addr=%p, size=0x%08x",
+					panic("%s: can't load main DMA map. error = %d, addr=%p, size=0x%08x",
 							sc->sc_dev.dv_xname, error,esc->sc_main,esc->sc_main_size);
 				}
-				if (!esc->sc_datain) { /* patch the dma map for write overrun */
+				if (!esc->sc_datain) { /* patch the DMA map for write overrun */
 					esc->sc_main_dmamap->dm_mapsize += ESP_DMA_OVERRUN;
 					esc->sc_main_dmamap->dm_segs[esc->sc_main_dmamap->dm_nsegs - 1].ds_len +=
 						ESP_DMA_OVERRUN;
@@ -951,7 +951,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 			/* So therefore, we change the tail size to be end aligned again. */
 			esc->sc_tail_size = DMA_ENDALIGN(caddr_t,esc->sc_tail+slop_end_size)-esc->sc_tail;
 
-			/* @@@ next dma overrun lossage */
+			/* @@@ next DMA overrun lossage */
 			if (!esc->sc_datain) {
 				esc->sc_tail_size += ESP_DMA_OVERRUN;
 			}
@@ -963,7 +963,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 						esc->sc_tail, esc->sc_tail_size,
 						NULL, BUS_DMA_NOWAIT);
 				if (error) {
-					panic("%s: can't load tail dma map. error = %d, addr=%p, size=0x%08x",
+					panic("%s: can't load tail DMA map. error = %d, addr=%p, size=0x%08x",
 							sc->sc_dev.dv_xname, error,esc->sc_tail,esc->sc_tail_size);
 				}
 #if 0
@@ -999,7 +999,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 						esc->sc_main, esc->sc_main_size,
 						NULL, BUS_DMA_NOWAIT);
 			if (error) {
-				panic("%s: can't load main dma map. error = %d, addr=%p, size=0x%08x",
+				panic("%s: can't load main DMA map. error = %d, addr=%p, size=0x%08x",
 				      sc->sc_dev.dv_xname, error,esc->sc_main,esc->sc_main_size);
 			}
 		} else {
@@ -1018,7 +1018,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 			/* So therefore, we change the tail size to be end aligned again. */
 			esc->sc_tail_size = DMA_ENDALIGN(caddr_t,esc->sc_tail+esc->sc_dmasize)-esc->sc_tail;
 
-			/* @@@ next dma overrun lossage */
+			/* @@@ next DMA overrun lossage */
 			if (!esc->sc_datain) {
 				esc->sc_tail_size += ESP_DMA_OVERRUN;
 			}
@@ -1030,7 +1030,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 						esc->sc_tail, esc->sc_tail_size,
 						NULL, BUS_DMA_NOWAIT);
 				if (error) {
-					panic("%s: can't load tail dma map. error = %d, addr=%p, size=0x%08x",
+					panic("%s: can't load tail DMA map. error = %d, addr=%p, size=0x%08x",
 							sc->sc_dev.dv_xname, error,esc->sc_tail,esc->sc_tail_size);
 				}
 			}
@@ -1146,7 +1146,7 @@ esp_dma_go(sc)
 	}
 #endif
 
-	/* zero length dma transfers are boring */
+	/* zero length DMA transfers are boring */
 	if (esc->sc_dmasize == 0) {
 /* 		splx(s); */
 		return;
@@ -1192,7 +1192,7 @@ esp_dma_go(sc)
 	}
 
 	if (esc->sc_tail_dmamap->dm_mapsize) {
-		/* if we are a dma write cycle, copy the end slop */
+		/* if we are a DMA write cycle, copy the end slop */
 		if (!esc->sc_datain) {
 			memcpy(esc->sc_tail, *esc->sc_dmaaddr+esc->sc_begin_size+esc->sc_main_size,
 			       esc->sc_dmasize-(esc->sc_begin_size+esc->sc_main_size));
@@ -1457,7 +1457,7 @@ int esp_dma_int(arg)
 	return (1);
 }
 
-/* Internal dma callback routines */
+/* Internal DMA callback routines */
 bus_dmamap_t
 esp_dmacb_continue(arg)
 	void *arg;
@@ -1466,11 +1466,11 @@ esp_dmacb_continue(arg)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	NDTRACEIF (*ndtracep++ = 'x');
-	DPRINTF(("%s: dma continue\n",sc->sc_dev.dv_xname));
+	DPRINTF(("%s: DMA continue\n",sc->sc_dev.dv_xname));
 
 #ifdef DIAGNOSTIC
 	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
-		panic("%s: map not loaded in dma continue callback, datain = %d",
+		panic("%s: map not loaded in DMA continue callback, datain = %d",
 				sc->sc_dev.dv_xname,esc->sc_datain);
 	}
 #endif
@@ -1515,11 +1515,11 @@ esp_dmacb_completed(map, arg)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	NDTRACEIF (*ndtracep++ = 'X');
-	DPRINTF(("%s: dma completed\n",sc->sc_dev.dv_xname));
+	DPRINTF(("%s: DMA completed\n",sc->sc_dev.dv_xname));
 
 #ifdef DIAGNOSTIC
 	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
-		panic("%s: invalid dma direction in completed callback, datain = %d",
+		panic("%s: invalid DMA direction in completed callback, datain = %d",
 				sc->sc_dev.dv_xname,esc->sc_datain);
 	}
 #endif
@@ -1538,7 +1538,7 @@ esp_dmacb_completed(map, arg)
 					printf("%s: map->dm_segs[%d].ds_len = %d\n",
 							sc->sc_dev.dv_xname,i,map->dm_segs[i].ds_len);
 				}
-				panic("%s: incomplete dma transfer",sc->sc_dev.dv_xname);
+				panic("%s: incomplete DMA transfer",sc->sc_dev.dv_xname);
 			}
 		}
 	}
@@ -1612,7 +1612,7 @@ esp_dmacb_shutdown(arg)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 	NDTRACEIF (*ndtracep++ = 'S');
-	DPRINTF(("%s: dma shutdown\n",sc->sc_dev.dv_xname));
+	DPRINTF(("%s: DMA shutdown\n",sc->sc_dev.dv_xname));
 
 	if (esc->sc_loaded == 0)
 		return;
@@ -1647,7 +1647,7 @@ esp_dmacb_shutdown(arg)
 #endif
 
 	if (esc->sc_main_dmamap->dm_mapsize) {
-		if (!esc->sc_datain) { /* unpatch the dma map for write overrun */
+		if (!esc->sc_datain) { /* unpatch the DMA map for write overrun */
 			esc->sc_main_dmamap->dm_mapsize -= ESP_DMA_OVERRUN;
 			esc->sc_main_dmamap->dm_segs[esc->sc_main_dmamap->dm_nsegs - 1].ds_len -=
 				ESP_DMA_OVERRUN;
@@ -1667,7 +1667,7 @@ esp_dmacb_shutdown(arg)
 			0, esc->sc_tail_dmamap->dm_mapsize,
 				(esc->sc_datain ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
 		bus_dmamap_unload(esc->sc_dma->sc_dmat, esc->sc_tail_dmamap);
-		/* copy the tail dma buffer data for read transfers */
+		/* copy the tail DMA buffer data for read transfers */
 		if (esc->sc_datain) {
 			memcpy(*esc->sc_dmaaddr+esc->sc_begin_size+esc->sc_main_size,
 			       esc->sc_tail, esc->sc_dmasize-(esc->sc_begin_size+esc->sc_main_size));

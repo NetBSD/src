@@ -1,4 +1,4 @@
-/*	$NetBSD: eshconfig.c,v 1.4 2001/01/05 03:27:26 lukem Exp $	*/
+/*	$NetBSD: eshconfig.c,v 1.5 2003/05/03 18:11:44 wiz Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eshconfig.c,v 1.4 2001/01/05 03:27:26 lukem Exp $");
+__RCSID("$NetBSD: eshconfig.c,v 1.5 2003/05/03 18:11:44 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -749,7 +749,7 @@ esh_tuning_stats()
 	printf("rt_tx_timeout = %x\n", rr_tune.rt_tx_timeout);
 	printf("rt_rx_timeout = %x\n", rr_tune.rt_rx_timeout);
 	printf("rt_pci_state = %x"
-	       "     min dma %x  read max %x write max %x\n", 
+	       "     min DMA %x  read max %x write max %x\n", 
 	       rr_tune.rt_pci_state,
 	       (rr_tune.rt_pci_state & RR_PS_MIN_DMA_MASK) 
 	       >> RR_PS_MIN_DMA_SHIFT,

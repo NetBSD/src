@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.18 2003/02/22 04:57:49 tsutsui Exp $	*/
+/*	$NetBSD: neo.c,v 1.19 2003/05/03 18:11:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.18 2003/02/22 04:57:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.19 2003/05/03 18:11:36 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,10 +130,10 @@ struct neo_softc {
 	u_int32_t 	type;
 	void            *ih;
 
-	void	(*pintr)(void *);	/* dma completion intr handler */
+	void	(*pintr)(void *);	/* DMA completion intr handler */
 	void	*parg;		/* arg for intr() */
 
-	void	(*rintr)(void *);	/* dma completion intr handler */
+	void	(*rintr)(void *);	/* DMA completion intr handler */
 	void	*rarg;		/* arg for intr() */
 
 	vaddr_t	buf_vaddr;

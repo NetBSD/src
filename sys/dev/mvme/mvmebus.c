@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.2 2002/09/27 15:37:24 provos Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.3 2003/05/03 18:11:31 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -842,9 +842,9 @@ mvmebus_dmamem_alloc(vsc, len, am, datasize, swap, segs, nsegs, rsegs, flags)
 	 *
 	 * Note: This fills in the segments with cpu-relative physical
 	 * addresses. A further call to bus_dmamap_load_raw() (with a
-	 * dma map which specifies the same VMEbus address space and
+	 * DMA map which specifies the same VMEbus address space and
 	 * constraints as the call to here) must be made. The segments
-	 * of the dma map will then contain VMEbus-relative physical
+	 * of the DMA map will then contain VMEbus-relative physical
 	 * addresses of the memory allocated here.
 	 */
 	return _bus_dmamem_alloc_common(sc->sc_dmat, low, high,

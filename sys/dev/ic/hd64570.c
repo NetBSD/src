@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.22 2003/02/21 17:14:05 tsutsui Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.23 2003/05/03 18:11:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -60,12 +60,12 @@
  *	   than cheating and always sync'ing the whole region.
  *
  *	o  perhaps allow rx and tx to be in more than one page
- *	   if not using dma.  currently the assumption is that
+ *	   if not using DMA.  currently the assumption is that
  *	   rx uses a page and tx uses a page.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.22 2003/02/21 17:14:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.23 2003/05/03 18:11:17 wiz Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -606,13 +606,13 @@ sca_msci_init(struct sca_softc *sc, sca_port_t *scp)
 	 * the correct values here are important for avoiding underruns
 	 * for any value less than or equal to TRC0 txrdy is activated
 	 * which will start the dmac transfer to the fifo.
-	 * for buffer size >= TRC1 + 1 txrdy is cleared which will stop dma.
+	 * for buffer size >= TRC1 + 1 txrdy is cleared which will stop DMA.
 	 *
 	 * thus if we are using a very fast clock that empties the fifo
 	 * quickly, delays in the dmac starting to fill the fifo can
 	 * lead to underruns so we want a fairly full fifo to still
 	 * cause the dmac to start.  for cards with on board ram this
-	 * has no effect on system performance.  For cards that dma
+	 * has no effect on system performance.  For cards that DMA
 	 * to/from system memory it will cause more, shorter,
 	 * bus accesses rather than fewer longer ones.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.66 2003/04/17 16:38:02 jdolecek Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.66 2003/04/17 16:38:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.67 2003/05/03 18:11:41 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,7 @@ struct as_info {
 };
 
 struct chan {
-	void	(*intr)(void *);	/* dma completion intr handler */
+	void	(*intr)(void *);	/* DMA completion intr handler */
 	void	*arg;		/* arg for intr() */
 	usbd_pipe_handle pipe;
 

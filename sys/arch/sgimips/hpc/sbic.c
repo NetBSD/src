@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.11 2002/11/09 18:52:20 thorpej Exp $	*/
+/*	$NetBSD: sbic.c,v 1.12 2003/05/03 18:10:57 wiz Exp $	*/
 
 /*
  * Changes Copyright (c) 2001 Wayne Knowles
@@ -374,7 +374,7 @@ wd33c93_dmaok(dev, xs)
 }
 
 /*
- * Setup for dma transfer
+ * Setup for DMA transfer
  */
 void
 wd33c93_dma_setup(dev, datain)

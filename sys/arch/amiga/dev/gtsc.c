@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.32 2002/10/02 04:55:50 thorpej Exp $ */
+/*	$NetBSD: gtsc.c,v 1.33 2003/05/03 18:10:43 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.32 2002/10/02 04:55:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.33 2003/05/03 18:10:43 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ gtscattach(struct device *pdp, struct device *dp, void *auxp)
 #if 0
 	/*
 	 * if the user requests a bounce buffer or
-	 * the users kva space is not ztwo and dma needs it
+	 * the users kva space is not ztwo and DMA needs it
 	 * try and allocate a bounce buffer.  If we allocate
 	 * one and it is in ztwo space leave maxdma to user
 	 * setting or default to MAXPHYS else the address must
@@ -277,7 +277,7 @@ gtsc_dmastop(struct sbic_softc *dev)
 #endif
 	if (dev->sc_dmacmd) {
 		/*
-		 * clear possible interrupt and stop dma
+		 * clear possible interrupt and stop DMA
 		 */
 		s = splbio();
 		sdp->CNTR &= ~GVP_CNTR_INT_P;
@@ -323,7 +323,7 @@ gtsc_dmanext(struct sbic_softc *dev)
 		return(0);
 	}
 	/*
-	 * clear possible interrupt and stop dma
+	 * clear possible interrupt and stop DMA
 	 */
 	sdp->CNTR &= ~GVP_CNTR_INT_P;
 	sdp->SP_DMA = 1;

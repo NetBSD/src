@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.11 2003/02/01 13:23:28 martin Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.12 2003/05/03 18:11:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.11 2003/02/01 13:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.12 2003/05/03 18:11:16 wiz Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -260,7 +260,7 @@ cs4231_free(addr, ptr, pool)
 
 /*
  * Set up transfer and return DMA address and byte count in paddr and psize
- * for bus dependent trigger_{in,out}put to load into the dma controller.
+ * for bus dependent trigger_{in,out}put to load into the DMA controller.
  */
 int
 cs4231_transfer_init(sc, t, paddr, psize, start, end, blksize, intr, arg)
@@ -304,12 +304,12 @@ cs4231_transfer_init(sc, t, paddr, psize, start, end, blksize, intr, arg)
 
 	t->t_cnt = n;
 
-	/* for caller to load into dma controller */
+	/* for caller to load into DMA controller */
 	*paddr = t->t_dma->dmamap->dm_segs[0].ds_addr;
 	*psize = n;
 
 	DPRINTF(("%s: init %s: [%p..%p] %lu bytes %lu blocks;"
-		 " dma at 0x%lx count %lu\n",
+		 " DMA at 0x%lx count %lu\n",
 		 sc->sc_ad1848.sc_dev.dv_xname, t->t_name,
 		 start, end, (u_long)t->t_segsz, (u_long)t->t_blksz,
 		 (u_long)*paddr, (u_long)*psize));
@@ -343,7 +343,7 @@ cs4231_transfer_advance(t, paddr, psize)
 		t->t_cnt += togo;
 	}
 
-	/* for caller to load into dma controller */
+	/* for caller to load into DMA controller */
 	*paddr = nextaddr;
 	*psize = togo;
 }

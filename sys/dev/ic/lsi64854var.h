@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854var.h,v 1.4 2001/03/29 02:58:39 petrov Exp $ */
+/*	$NetBSD: lsi64854var.h,v 1.5 2003/05/03 18:11:21 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ struct lsi64854_softc {
 
 	void	(*reset) __P((struct lsi64854_softc *));/* reset routine */
 	int	(*setup) __P((struct lsi64854_softc *, caddr_t *, size_t *,
-			      int, size_t *));	/* dma setup */
+			      int, size_t *));	/* DMA setup */
 	int	(*intr) __P((void *));		/* interrupt handler */
 
 	int	(*sc_intrchain) __P((void *));	/* next handler in intr chain */

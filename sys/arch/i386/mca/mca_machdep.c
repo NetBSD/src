@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.19 2003/02/26 22:23:05 fvdl Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.20 2003/05/03 18:10:50 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.19 2003/02/26 22:23:05 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.20 2003/05/03 18:10:50 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -493,7 +493,7 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
 	 * sequence to setup the controller is taken from Minix.
 	 */
 
-	/* Disable access to dma channel. */
+	/* Disable access to DMA channel. */
 	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_MASK | dmach);
 
 	/* Set the transfer mode. */
@@ -516,12 +516,12 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
 	/* count bits 8..15    */
 	bus_space_write_1(dmaiot, dmaexech, 0, ((cnt - 1) >> 8) & 0xff);        
 
-	/* Enable access to dma channel. */
+	/* Enable access to DMA channel. */
 	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_RESET_MASK | dmach);
 }
 
 /*
- * Allocate a dma map, and set up dma channel.
+ * Allocate a DMA map, and set up DMA channel.
  */
 int
 mca_dmamap_create(t, size, flags, dmamp, dmach)
@@ -587,6 +587,6 @@ mca_dma_set_ioport(dma, port)
 	bus_space_write_1(dmaiot, dmaexech, 0, port & 0xff);
 	bus_space_write_1(dmaiot, dmaexech, 0, (port >> 8) & 0xff);
 
-	/* Enable access to dma channel. */
+	/* Enable access to DMA channel. */
 	bus_space_write_1(dmaiot, dmacmdh, 0, DMACMD_RESET_MASK | dma);
 }

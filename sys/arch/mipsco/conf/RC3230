@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.13 2003/04/10 22:07:00 christos Exp $
+# 	$NetBSD: RC3230,v 1.14 2003/05/03 18:10:52 wiz Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -105,7 +105,7 @@ we0	at isa? port 0x280 iomem 0xd0000 irq 3 # flags 0x0002	# WD/SMC Ethernet
 
 mkclock0 at obio0 addr 0xbd000000	# MK48T02 realtime clock
 
-rambo0	at obio0 addr 0xbc000000	# RAMBO dma & timer asic
+rambo0	at obio0 addr 0xbc000000	# RAMBO DMA & timer asic
 
 le0	at obio0 addr 0xba000000	# onboard LANCE ethernet
 

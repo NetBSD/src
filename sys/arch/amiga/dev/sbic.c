@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.50 2003/04/01 21:26:32 thorpej Exp $ */
+/*	$NetBSD: sbic.c,v 1.51 2003/05/03 18:10:43 wiz Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.50 2003/04/01 21:26:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.51 2003/05/03 18:10:43 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -632,7 +632,7 @@ sbicdmaok(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	else if ((dev->sc_flags & SBICF_BADDMA) == 0)
 		return(1);
 	/*
-	 * this address is ok for dma?
+	 * this address is ok for DMA?
 	 */
 	else if (sbiccheckdmap(xs->data, xs->datalen, dev->sc_dmamask) == 0)
 		return(1);
@@ -1631,7 +1631,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 	if (count && usedma && dev->sc_flags & SBICF_BADDMA &&
 	    sbiccheckdmap(addr, count, dev->sc_dmamask)) {
 		/*
-		 * need to bounce the dma.
+		 * need to bounce the DMA.
 		 */
 		if (dmaflags & DMAGO_READ) {
 			acb->flags |= ACB_BBUF;
@@ -1658,7 +1658,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 				       dev->target,
 				       kvtop(dev->sc_tinfo[dev->target].bounce));
 			}
-		} else {	/* write: copy to dma buffer */
+		} else {	/* write: copy to DMA buffer */
 #ifdef DEBUG
 			if(data_pointer_debug)
 			printf("sbicgo: copying %x bytes to target %d bounce %x\n",
@@ -1667,7 +1667,7 @@ sbicgo(struct sbic_softc *dev, struct scsipi_xfer *xs)
 #endif
 			bcopy (addr, dev->sc_tinfo[dev->target].bounce, count);
 		}
-		addr = dev->sc_tinfo[dev->target].bounce;/* and use dma buffer */
+		addr = dev->sc_tinfo[dev->target].bounce;/* and use DMA buffer */
 		acb->sc_kv.dc_addr = addr;
 #ifdef DEBUG
 		++sbicdma_bounces;		/* count number of bounced */
@@ -2271,13 +2271,13 @@ sbicnextstate(struct sbic_softc *dev, u_char csr, u_char asr)
 				goto abort;
 			}
 			/*
-			 * do scatter-gather dma
+			 * do scatter-gather DMA
 			 * hacking the controller chip, ouch..
 			 */
 			SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI |
 					 SBIC_MACHINE_DMA_MODE);
 			/*
-			 * set next dma addr and dec count
+			 * set next DMA addr and dec count
 			 */
 #if 0
 			SBIC_TC_GET(regs, tcnt);
@@ -2596,7 +2596,7 @@ sbictimeout(struct sbic_softc *dev)
 	s = splbio();
 	if (dev->sc_dmatimo) {
 		if (dev->sc_dmatimo > 1) {
-			printf("%s: dma timeout #%d\n",
+			printf("%s: DMA timeout #%d\n",
 			    dev->sc_dev.dv_xname, dev->sc_dmatimo - 1);
 			GET_SBIC_asr(dev->sc_sbic, asr);
 			if( asr & SBIC_ASR_INT ) {

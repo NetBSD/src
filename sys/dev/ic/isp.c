@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.101 2003/03/03 20:53:14 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.102 2003/05/03 18:11:19 wiz Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.101 2003/03/03 20:53:14 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.102 2003/05/03 18:11:19 wiz Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -3886,7 +3886,7 @@ again:
 		}
 
 		/*
-		 * Free any dma resources. As a side effect, this may
+		 * Free any DMA resources. As a side effect, this may
 		 * also do any cache flushing necessary for data coherence.			 */
 		if (XS_XFRLEN(xs)) {
 			ISP_DMAFREE(isp, xs, sp->req_handle);

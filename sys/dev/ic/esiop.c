@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.18 2003/01/31 00:26:30 thorpej Exp $	*/
+/*	$NetBSD: esiop.c,v 1.19 2003/05/03 18:11:17 wiz Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.18 2003/01/31 00:26:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.19 2003/05/03 18:11:17 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,7 +542,7 @@ none:
 		if (dstat & DSTAT_MDPE)
 			printf(" parity");
 		if (dstat & DSTAT_DFE)
-			printf(" dma fifo empty");
+			printf(" DMA fifo empty");
 		else
 			siop_clearfifo(&sc->sc_c);
 		printf(", DSP=0x%x DSA=0x%x: ",

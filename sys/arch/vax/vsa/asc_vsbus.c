@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.28 2002/10/02 16:02:36 thorpej Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.29 2003/05/03 18:11:06 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.28 2002/10/02 16:02:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.29 2003/05/03 18:11:06 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -80,7 +80,7 @@ struct asc_vsbus_softc {
 	bus_space_handle_t sc_dirh;		/* scsi direction handle */
 	bus_space_handle_t sc_adrh;		/* scsi address handle */
 	bus_space_handle_t sc_ncrh;		/* ncr bus space handle */
-	bus_dma_tag_t sc_dmat;			/* bus dma tag */
+	bus_dma_tag_t sc_dmat;			/* bus DMA tag */
 	bus_dmamap_t sc_dmamap;
 	caddr_t *sc_dmaaddr;
 	size_t *sc_dmalen;
@@ -424,7 +424,7 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 		asc->sc_flags |= ASC_FROMMEMORY;
 	}
 	if ((vaddr_t) *asc->sc_dmaaddr < VM_MIN_KERNEL_ADDRESS)
-		panic("asc_vsbus_dma_setup: dma address (%p) outside of kernel",
+		panic("asc_vsbus_dma_setup: DMA address (%p) outside of kernel",
 		    *asc->sc_dmaaddr);
 
         NCR_DMA(("%s: start %d@%p,%d\n", sc->sc_dev.dv_xname,
@@ -436,7 +436,7 @@ asc_vsbus_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 				*asc->sc_dmaaddr, asc->sc_dmasize,
 				NULL /* kernel address */,   
 				BUS_DMA_NOWAIT|VAX_BUS_DMA_SPILLPAGE))
-			panic("%s: cannot load dma map", sc->sc_dev.dv_xname);
+			panic("%s: cannot load DMA map", sc->sc_dev.dv_xname);
 		bus_dmamap_sync(asc->sc_dmat, asc->sc_dmamap,
 				0, asc->sc_dmasize,
 				asc->sc_flags & ASC_FROMMEMORY

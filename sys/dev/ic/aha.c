@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.39 2002/04/05 18:27:50 bouyer Exp $	*/
+/*	$NetBSD: aha.c,v 1.40 2003/05/03 18:11:12 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.39 2002/04/05 18:27:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.40 2003/05/03 18:11:12 wiz Exp $");
 
 #include "opt_ddb.h"
 
@@ -133,7 +133,7 @@ int aha_create_ccbs __P((struct aha_softc *, struct aha_ccb *, int));
  *    wait:   number of seconds to wait for response
  *
  * Performs an adapter command through the ports.  Not to be confused with a
- * scsi command, which is read in via the dma; one of the adapter commands
+ * scsi command, which is read in via the DMA; one of the adapter commands
  * tells it to read in a scsi command.
  */
 int
@@ -802,7 +802,7 @@ aha_find(iot, ioh, sc)
 	}
 
 	/*
-	 * setup dma channel from jumpers and save int
+	 * setup DMA channel from jumpers and save int
 	 * level
 	 */
 	delay(1000);		/* for Bustek 545 */
@@ -912,7 +912,7 @@ aha_init(sc)
 
 #if 0
 	/*
-	 * Change the bus on/off times to not clash with other dma users.
+	 * Change the bus on/off times to not clash with other DMA users.
 	 */
 	aha_cmd(iot, ioh, 1, 0, 0, 0, AHA_BUS_ON_TIME_SET, 7);
 	aha_cmd(iot, ioh, 1, 0, 0, 0, AHA_BUS_OFF_TIME_SET, 4);
@@ -1234,7 +1234,7 @@ aha_scsipi_request(chan, req, arg)
 				xs->error = XS_DRIVER_STUFFUP;
 				if (error == EFBIG) {
 					printf("%s: aha_scsi_cmd, more than %d"
-					    " dma segments\n",
+					    " DMA segments\n",
 					    sc->sc_dev.dv_xname, AHA_NSEG);
 				} else {
 					printf("%s: error %d loading DMA map\n",

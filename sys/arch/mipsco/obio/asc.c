@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.13 2003/04/02 04:00:46 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.14 2003/05/03 18:10:52 wiz Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -152,7 +152,7 @@ ascattach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(ca->ca_bustag, RAMBO_BASE, sizeof(struct rambo_ch),
 			  BUS_SPACE_MAP_LINEAR,
 			  &esc->dm_bsh) != 0) {
-		printf(": cannot map dma registers\n");
+		printf(": cannot map DMA registers\n");
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bereg.h,v 1.4 2000/07/24 04:28:51 mycroft Exp $	*/
+/*	$NetBSD: bereg.h,v 1.5 2003/05/03 18:11:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ struct be_cregs {
 #define BE_CRI_CCNT	(12*4)
 
 /* be_cregs.ctrl: control. */
-#define	BE_CR_CTRL_TWAKEUP	0x00000001	/* tx dma wakeup */
+#define	BE_CR_CTRL_TWAKEUP	0x00000001	/* tx DMA wakeup */
 
 /* be_cregs.stat: status. */
 #define BE_CR_STAT_BERROR	0x80000000	/* be error */

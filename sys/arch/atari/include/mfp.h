@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.h,v 1.4 2001/04/11 14:45:07 leo Exp $	*/
+/*	$NetBSD: mfp.h,v 1.5 2003/05/03 18:10:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -120,12 +120,12 @@ struct mfp {
 #define	IB_PBSY		0x01	/* IO_PBSY				*/
 
 /* names of interrupts in register B: MFP2*/
-#define	IB_SCDM		0x80	/* SCSI-dma				*/
+#define	IB_SCDM		0x80	/* SCSI-DMA				*/
 #define	IB_DCHG		0x40	/* Diskette change			*/
 /*			0x20	*//* reserved				*/
 /*			0x10	*//* reserved				*/
 #define	IB_RISB		0x80	/* Serial Ring indicator SCC port B	*/
-#define	IB_DMSC		0x40	/* SCC-dma				*/
+#define	IB_DMSC		0x40	/* SCC-DMA				*/
 #define IB_J602_3	0x02	/* Pin 3 J602				*/
 #define IB_J602_1	0x01	/* Pin 1 J602				*/
 

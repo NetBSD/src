@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.10 2003/04/21 12:14:20 martin Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.11 2003/05/03 18:11:02 wiz Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -131,7 +131,7 @@ struct psycho_softc {
 /* get a PCI offset address from bus_space_handle_t */
 bus_addr_t psycho_bus_offset __P((bus_space_tag_t, bus_space_handle_t *));
 
-/* config space is per-psycho.  mem/io/dma are per-pci bus */
+/* config space is per-psycho.  mem/io/DMA are per-pci bus */
 bus_dma_tag_t psycho_alloc_dma_tag __P((struct psycho_pbm *));
 bus_space_tag_t psycho_alloc_bus_tag __P((struct psycho_pbm *, int));
 

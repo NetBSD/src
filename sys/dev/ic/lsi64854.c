@@ -1,4 +1,4 @@
-/*	$NetBSD: lsi64854.c,v 1.22 2002/10/01 07:07:03 petrov Exp $ */
+/*	$NetBSD: lsi64854.c,v 1.23 2003/05/03 18:11:21 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.22 2002/10/01 07:07:03 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lsi64854.c,v 1.23 2003/05/03 18:11:21 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ lsi64854_attach(sc)
 	/* Allocate a dmamap */
 	if (bus_dmamap_create(sc->sc_dmatag, MAX_DMA_SZ, 1, MAX_DMA_SZ,
 			      0, BUS_DMA_WAITOK, &sc->sc_dmamap) != 0) {
-		printf("%s: dma map create failed\n", sc->sc_dev.dv_xname);
+		printf("%s: DMA map create failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -126,7 +126,7 @@ lsi64854_attach(sc)
 	if (sc->sc_rev == DMAREV_HME) {
 		return;
 	}
-	printf(": dma rev ");
+	printf(": DMA rev ");
 	switch (sc->sc_rev) {
 	case DMAREV_0:
 		printf("0");
@@ -288,7 +288,7 @@ lsi64854_reset(sc)
 
 #define DMAMAX(a)	(MAX_DMA_SZ - ((a) & (MAX_DMA_SZ-1)))
 /*
- * setup a dma transfer
+ * setup a DMA transfer
  */
 int
 lsi64854_setup(sc, addr, len, datain, dmasize)
@@ -546,7 +546,7 @@ lsi64854_enet_intr(arg)
 }
 
 /*
- * setup a dma transfer
+ * setup a DMA transfer
  */
 int
 lsi64854_setup_pp(sc, addr, len, datain, dmasize)

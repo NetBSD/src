@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.30 2003/04/28 14:43:32 fvdl Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.31 2003/05/03 18:11:37 wiz Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.30 2003/04/28 14:43:32 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.31 2003/05/03 18:11:37 wiz Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -240,9 +240,9 @@ typedef u_char bool_t;
  */
 #define DMA_PROG_ALLOC		(8 * PAGE_SIZE)
 
-/* When to split a dma transfer , the bt848 has timing as well as
-   dma transfer size limitations so that we have to split dma
-   transfers into two dma requests
+/* When to split a DMA transfer , the bt848 has timing as well as
+   DMA transfer size limitations so that we have to split DMA
+   transfers into two DMA requests
    */
 #define DMA_BT848_SPLIT 319*2
 
@@ -484,7 +484,7 @@ common_bktr_attach(bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev)
 /* *** OS Specific memory routines *** */
 /***************************************/
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-        /* allocate space for dma program */
+        /* allocate space for DMA program */
         bktr->dma_prog = get_bktr_mem(bktr, &bktr->dm_prog,
 				      DMA_PROG_ALLOC);
         bktr->odd_dma_prog = get_bktr_mem(bktr, &bktr->dm_oprog,
@@ -520,7 +520,7 @@ common_bktr_attach(bktr_ptr_t bktr, int unit, u_long pci_id, u_int rev)
 #endif
 
 	if (need_to_allocate_memory == 1) {
-		/* allocate space for dma program */
+		/* allocate space for DMA program */
 		bktr->dma_prog     = get_bktr_mem(unit, DMA_PROG_ALLOC);
 		bktr->odd_dma_prog = get_bktr_mem(unit, DMA_PROG_ALLOC);
 
@@ -892,7 +892,7 @@ common_bktr_intr(void *arg)
 		 */
 		if (bktr->flags & METEOR_SINGLE) {
 
-			/* stop dma */
+			/* stop DMA */
 			OUTL(bktr, BKTR_INT_MASK, ALL_INTS_DISABLED);
 
 			/* disable risc, leave fifo running */
@@ -1620,7 +1620,7 @@ video_ioctl(bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct proc
 					INL(bktr, BKTR_RISC_COUNT));
 #endif
 
-				/* stop dma */
+				/* stop DMA */
 				OUTL(bktr, BKTR_INT_MASK, ALL_INTS_DISABLED);
 
 				/* disable risc, leave fifo running */

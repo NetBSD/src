@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.5 2003/02/02 10:24:40 wiz Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.6 2003/05/03 18:11:26 wiz Exp $ */
 
 /*
  * Copyright 1997
@@ -33,10 +33,10 @@
  *    even if advised of the possibility of such damage.
  */
 
-/* isa dma routines for cs89x0 */
+/* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.5 2003/02/02 10:24:40 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.6 2003/05/03 18:11:26 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 		dma_mem_ptr = isc->sc_dmacur;
 
 		/*
-		 * process all of the dma frames in memory
+		 * process all of the DMA frames in memory
 		 * 
 		 * This loop relies on the dma_mem_ptr variable being set to the
 		 * next frames start address.
@@ -215,7 +215,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 				 */
 				/*
 				 * should increment the error count and reset
-				 * the dma operation.
+				 * the DMA operation.
 				 */
 				printf("%s: cs_process_rx_dma: DMA buffer out of sync about to reset\n",
 				    sc->sc_dev.dv_xname);

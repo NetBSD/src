@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic79xxvar.h,v 1.2 2003/04/21 20:05:26 fvdl Exp $
+ * $Id: aic79xxvar.h,v 1.3 2003/05/03 18:11:14 wiz Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic79xx.h#84 $
  *
@@ -478,7 +478,7 @@ struct hardware_scb {
  * residual sg ptr and the transfer is considered complete.  If the
  * sequencer determines that there is a residual in the tranfer, or
  * there is non-zero status, it will set the SG_STATUS_VALID flag in
- * sgptr and dma the scb back into host memory.  To sumarize:
+ * sgptr and DMA the scb back into host memory.  To summarize:
  *
  * Sequencer:
  *	o A residual has occurred if SG_FULL_RESID is set in sgptr,

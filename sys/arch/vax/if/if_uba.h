@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.h,v 1.6 1996/08/20 14:07:50 ragge Exp $	*/
+/*	$NetBSD: if_uba.h,v 1.7 2003/05/03 18:11:06 wiz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -95,7 +95,7 @@ struct ifxmt {
 	struct	ifrw ifrw;
 	caddr_t	ifw_base;			/* virt addr of buffer */
 	struct	pte ifw_wmap[IF_MAXNUBAMR];	/* base pages for output */
-	struct	mbuf *ifw_xtofree;		/* pages being dma'd out */
+	struct	mbuf *ifw_xtofree;		/* pages being DMA'd out */
 	short	ifw_xswapd;			/* mask of clusters swapped */
 	short	ifw_nmr;			/* number of entries in wmap */
 };

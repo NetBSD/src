@@ -40,7 +40,7 @@
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.seq,v 1.123 2003/01/20 20:44:55 gibbs Exp $
  */
 
-VERSION = "$NetBSD: aic7xxx.seq,v 1.14 2003/04/19 19:26:10 fvdl Exp $"
+VERSION = "$NetBSD: aic7xxx.seq,v 1.15 2003/05/03 18:11:31 wiz Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -597,7 +597,7 @@ command_phase_done:
 target_dphase:
 		/*
 		 * Data phases on the bus are from the
-		 * perspective of the initiator.  The dma
+		 * perspective of the initiator.  The DMA
 		 * code looks at LASTPHASE to determine the
 		 * data direction of the DMA.  Toggle it for
 		 * target transfers.
@@ -1257,7 +1257,7 @@ sg_load_done:
 data_phase_finish:
 	/*
 	 * If the target has left us in data phase, loop through
-	 * the dma code again.  In the case of ULTRA2 adapters,
+	 * the DMA code again.  In the case of ULTRA2 adapters,
 	 * we should only loop if there is a data overrun.  For
 	 * all other adapters, we'll loop after each S/G element
 	 * is loaded as well as if there is an overrun.

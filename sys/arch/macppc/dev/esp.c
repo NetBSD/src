@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.16 2003/04/02 03:04:02 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.17 2003/05/03 18:10:51 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ espattach(parent, self, aux)
 	esc->sc_reg =    mapiodev(ca->ca_baseaddr + reg[0], reg[1]);
 	esc->sc_dmareg = mapiodev(ca->ca_baseaddr + reg[2], reg[3]);
 
-	/* Allocate 16-byte aligned dma command space */
+	/* Allocate 16-byte aligned DMA command space */
 	esc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
 
 	/* Other settings */
@@ -253,7 +253,7 @@ espattach(parent, self, aux)
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	ncr53c9x_attach(sc);
 
-	/* Turn on target selection using the `dma' method */
+	/* Turn on target selection using the `DMA' method */
 	sc->sc_features |= NCR_F_DMASELECT;
 }
 

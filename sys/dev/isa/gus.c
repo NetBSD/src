@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.79 2003/04/06 18:20:13 wiz Exp $	*/
+/*	$NetBSD: gus.c,v 1.80 2003/05/03 18:11:26 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -76,12 +76,12 @@
  *   |         |              |		       +--------+
  *   |         | play (dram)  |      +----+    |	|
  *   |         |--------------(------|-\  |    |   +-+  |
- *   +---------+              |      |  >-|----|---|C|--|------  dma chan 1
+ *   +---------+              |      |  >-|----|---|C|--|------  DMA chan 1
  *                            |  +---|-/  |    |   +-+ 	|
  *                            |  |   +----+    |    |   |
  *                            |	 |   +----+    |    |   |
  *   +---------+        +-+   +--(---|-\  |    |    |   |
- *   |         | play   |8|      |   |  >-|----|----+---|------  dma chan 2
+ *   |         | play   |8|      |   |  >-|----|----+---|------  DMA chan 2
  *   | ---C----|--------|/|------(---|-/  |    |        |
  *   |    ^    |record  |1|      |   +----+    |	|
  *   |    |    |   /----|6|------+   	       +--------+
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.79 2003/04/06 18:20:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.80 2003/05/03 18:11:26 wiz Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1411,7 +1411,7 @@ gusintr(arg)
 	if (HAS_CODEC(sc))
 		retval = ad1848_isa_intr(&sc->sc_codec);
 	if ((intr = bus_space_read_1(iot, ioh1, GUS_IRQ_STATUS)) & GUSMASK_IRQ_DMATC) {
-		DMAPRINTF(("gusintr dma flags=%x\n", sc->sc_flags));
+		DMAPRINTF(("gusintr DMA flags=%x\n", sc->sc_flags));
 #ifdef DIAGNOSTIC
 		gusdmaintrcnt++;
 #endif
@@ -2917,7 +2917,7 @@ gus_init_cs4231(sc)
 
 	ctrl = (port & 0xf0) >> 4;	/* set port address middle nibble */
 	/*
-	 * The codec is a bit weird--swapped dma channels.
+	 * The codec is a bit weird--swapped DMA channels.
 	 */
 	ctrl |= GUS_MAX_CODEC_ENABLE;
 	if (sc->sc_playdrq >= 4)
