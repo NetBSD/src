@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.137 2000/03/02 21:04:40 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.138 2000/03/03 10:09:38 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3764,3 +3764,9 @@ sys/netinet/ip_input.c				1.104
 dist/bind/lib/irs/irs_data.c			1.2
 
   Fix BIND8 merge lossage -- add required header for prototype.
+
+etc/etc.vax/disktab				patch
+
+  Change entries for DEC floppies to set the partition 'a' type to
+  4.2BSD.  For distrib/vax, update/add entries for bootroot,
+  miniroot, and ramdisk.
