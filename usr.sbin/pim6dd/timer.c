@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.6 2000/05/19 10:43:44 itojun Exp $	*/
+/*	$NetBSD: timer.c,v 1.7 2000/10/06 00:13:02 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Oregon.
@@ -238,7 +238,7 @@ age_routes()
 		 */
 		IF_DEBUG(DEBUG_MFC)
 		    log(LOG_DEBUG, 0, 
-			"Refreshing src %s, dst %s after %d bytes forwarded",
+			"Refreshing src %s, dst %s after %ld bytes forwarded",
 			inet6_fmt(&mrtentry_ptr->source->address.sin6_addr),
 			inet6_fmt(&mrtentry_ptr->group->group.sin6_addr),
 			mrtentry_ptr->sg_count.bytecnt); 

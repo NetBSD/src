@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.14 2000/09/14 00:36:10 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.29 2000/09/12 05:20:35 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.15 2000/10/06 00:13:01 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.31 2000/10/05 22:20:37 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -117,7 +117,8 @@ static int map4to6 __P((struct sockaddr_in *, struct sockaddr_in6 *));
 static void sig_child __P((int));
 static void sig_terminate __P((int));
 static void start_daemon __P((void));
-static void exit_stderr __P((const char *, ...));
+static void exit_stderr __P((const char *, ...))
+	__attribute__((__format__(__printf__, 1, 2)));
 #ifndef HAVE_GETIFADDRS
 static unsigned int if_maxindex __P((void));
 #endif

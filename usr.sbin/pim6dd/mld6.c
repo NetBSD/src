@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.7 2000/07/23 22:59:56 mycroft Exp $	*/
+/*	$NetBSD: mld6.c,v 1.8 2000/10/06 00:13:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -343,6 +343,8 @@ int recvlen;
 	{
 		log(LOG_INFO, 0,
 		    "RECV %s with an invalid scope: %s from %s",
+		    packet_kind(IPPROTO_ICMPV6, mldh->mld6_type,
+				mldh->mld6_code),
 		    inet6_fmt(&mldh->mld6_addr),
 		    inet6_fmt(&src->sin6_addr));
 		return;			/* discard */
