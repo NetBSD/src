@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.68 2002/04/05 00:59:38 ichiro Exp $	*/
+/*	$NetBSD: wi.c,v 1.69 2002/04/11 11:21:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.68 2002/04/05 00:59:38 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.69 2002/04/11 11:21:26 augustss Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -2045,7 +2045,7 @@ wi_get_id(sc)
 		}
 	}
 
-	printf("\n%s Firmware: ",
+	printf("\n%s: %s Firmware: ", sc->sc_dev.dv_xname,
 	     sc->sc_firmware_type == WI_LUCENT ? "Lucent" :
 	    (sc->sc_firmware_type == WI_SYMBOL ? "Symbol" : "Intersil"));
 	if (sc->sc_firmware_type != WI_LUCENT)	/* XXX */
