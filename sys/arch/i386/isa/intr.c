@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.1 1993/10/22 19:27:40 mycroft Exp $
+ *	$Id: intr.c,v 1.2 1993/10/22 19:33:13 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ extern	IDTVEC(wild);
  * Register a fast vector.
  */
 void
-intr_fasttrap(intr, ih, class)
+intr_fasttrap(intr, ih)
 	int intr;
 	struct intrhand *ih;
 {
@@ -81,24 +81,6 @@ intr_fasttrap(intr, ih, class)
 	if (intrhand[irqnum])
 		panic("intr_fasttrap: irq is already slow vector");
 	fastvec |= intr;
-
-	switch (class) {
-	    case DV_DULL:
-		break;
-	    case DV_DISK:
-	    case DV_TAPE:
-		biomask |= intr;
-		break;
-	    case DV_IFNET:
-		netmask |= intr;
-		break;
-	    case DV_TTY:
-		ttymask |= intr;
-		break;
-	    case DV_CPU:
-	    default:
-		panic("intr_fasttrap: weird devclass");
-	}
 
 	ih->ih_count = 0;
 	ih->ih_next = NULL;
