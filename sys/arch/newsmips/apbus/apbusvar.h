@@ -1,4 +1,4 @@
-/*	$NetBSD: apbusvar.h,v 1.2 1999/12/23 06:52:30 tsubai Exp $	*/
+/*	$NetBSD: apbusvar.h,v 1.3 2000/10/12 03:12:01 onoe Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -44,7 +44,9 @@ struct apbus_dev *apbus_lookupdev __P((char *));
 void apdevice_dump __P((struct apbus_dev *));
 void apbus_intr_init __P((void));
 int apbus_intr_call __P((int, int));
-void *apbus_intr_establish __P((int, int, int, void (*)(void *), void *,
+void *apbus_intr_establish __P((int, int, int, int (*)(void *), void *,
 				char *, int));
+struct newsmips_bus_dma_tag *apbus_dmatag_init
+			__P((struct apbus_attach_args *));
 
 #define	SLOTTOMASK(slot)	((slot) ? (0x0100 << ((slot) - 1)) : 0)
