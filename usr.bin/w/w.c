@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.51 2002/09/16 01:49:06 mycroft Exp $	*/
+/*	$NetBSD: w.c,v 1.52 2002/09/16 04:02:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.51 2002/09/16 01:49:06 mycroft Exp $");
+__RCSID("$NetBSD: w.c,v 1.52 2002/09/16 04:02:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -214,8 +214,8 @@ main(int argc, char **argv)
 		if (utx->ut_type != USER_PROCESS)
 			continue;
 		++nusers;
-		if (wcmd == 0 || (sel_user &&
-		    strncmp(utx->ut_name, sel_user, sizeof(utx->ut_name) != 0)))
+		if (sel_user &&
+		    strncmp(utx->ut_name, sel_user, sizeof(utx->ut_name) != 0))
 			continue;
 		if ((ep = calloc(1, sizeof(struct entry))) == NULL)
 			err(1, NULL);
@@ -228,7 +228,8 @@ main(int argc, char **argv)
 		ep->tv = utx->ut_tv;
 		*nextp = ep;
 		nextp = &(ep->next);
-		process(ep);
+		if (wcmd != 0)
+			process(ep);
 	}
 #endif
 
@@ -236,8 +237,9 @@ main(int argc, char **argv)
 	while ((ut = getutent()) != NULL) {
 		if (ut->ut_name[0] == '\0')
 			continue;
-		if (wcmd == 0 || (sel_user &&
-		    strncmp(ut->ut_name, sel_user, sizeof(ut->ut_name) != 0)))
+
+		if (sel_user &&
+		    strncmp(ut->ut_name, sel_user, sizeof(ut->ut_name) != 0))
 			continue;
 
 		/* Don't process entries that we have utmpx for */
@@ -262,7 +264,8 @@ main(int argc, char **argv)
 		ep->tv.tv_usec = 0;
 		*nextp = ep;
 		nextp = &(ep->next);
-		process(ep);
+		if (wcmd != 0)
+			process(ep);
 	}
 #endif
 
