@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.7 1996/09/07 21:51:53 mycroft Exp $
+.\"	$NetBSD: select.2,v 1.8 1997/07/11 08:00:55 mikel Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -153,16 +153,16 @@ negative or too large.
 .Sh SEE ALSO
 .Xr accept 2 ,
 .Xr connect 2 ,
-.Xr getdtablesize 2 ,
 .Xr gettimeofday 2 ,
 .Xr poll 2 ,
 .Xr read 2 ,
 .Xr recv 2 ,
 .Xr send 2 ,
-.Xr write 2
+.Xr write 2 ,
+.Xr getdtablesize 3 .
 .Sh BUGS
 Although the provision of
-.Xr getdtablesize 2
+.Xr getdtablesize 3
 was intended to allow user programs to be written independent
 of the kernel limit on the number of open files, the dimension
 of a sufficiently large bit field for select remains a problem.
