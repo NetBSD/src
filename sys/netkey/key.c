@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.83 2003/07/22 08:54:27 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.84 2003/07/22 11:01:09 itojun Exp $	*/
 /*	$KAME: key.c,v 1.249 2002/06/14 14:46:22 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.83 2003/07/22 08:54:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.84 2003/07/22 11:01:09 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2889,10 +2889,12 @@ key_setsaval(sav, m, mhp)
 		sav->replay = NULL;
 	}
 	if (sav->key_auth != NULL) {
+		bzero(_KEYBUF(sav->key_auth), _KEYLEN(sav->key_auth));
 		KFREE(sav->key_auth);
 		sav->key_auth = NULL;
 	}
 	if (sav->key_enc != NULL) {
+		bzero(_KEYBUF(sav->key_enc), _KEYLEN(sav->key_enc));
 		KFREE(sav->key_enc);
 		sav->key_enc = NULL;
 	}
