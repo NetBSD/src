@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: local,v 1.6 2002/03/22 04:33:59 thorpej Exp $
+# $NetBSD: local,v 1.7 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # REQUIRE: DAEMON
@@ -8,7 +8,7 @@
 # BEFORE:  LOGIN
 # KEYWORD: shutdown
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="local"
 start_cmd="local_start"

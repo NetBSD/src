@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.44 2003/10/12 09:50:05 jdc Exp $
+# $NetBSD: network,v 1.45 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: network
 # REQUIRE: ipfilter ipsec mountcritlocal root tty sysctl
 # BEFORE:  NETWORKING
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="network"
 start_cmd="network_start"

@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.15 2003/12/04 18:28:54 drochner Exp $
+# $NetBSD: ntpdate,v 1.16 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: ntpdate
 # REQUIRE: NETWORKING syslogd
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="ntpdate"
 rcvar=$name

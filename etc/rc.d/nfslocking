@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: nfslocking,v 1.6 2002/03/24 15:52:41 lukem Exp $
+# $NetBSD: nfslocking,v 1.7 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: nfslocking
 # REQUIRE: nfsd
 # BEFORE:  DAEMON
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 arg=$1
 

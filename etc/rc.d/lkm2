@@ -1,12 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: lkm2,v 1.5 2002/10/08 16:21:52 atatat Exp $
+# $NetBSD: lkm2,v 1.6 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: beforemountlkm
 # REQUIRE: syslogd
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="lkm2"
 rcvar="lkm"
