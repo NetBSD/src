@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.25 1999/12/16 13:27:24 ad Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.26 2000/01/06 05:27:19 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.25 1999/12/16 13:27:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.26 2000/01/06 05:27:19 shin Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -139,7 +139,7 @@ rasops_init(ri, wantrows, wantcols)
 		}
 		
 		if (wsfont_lock(cookie, &ri->ri_font, 
-		    WSFONT_L2R, WSFONT_L2R) <= 0) {
+		    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
 			printf("rasops_init: couldn't lock font\n");
 			return (-1);
 		}
