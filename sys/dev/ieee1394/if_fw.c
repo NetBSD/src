@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.4 2000/12/14 07:03:50 thorpej Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.5 2001/03/03 02:21:26 onoe Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -166,7 +166,11 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_baudrate = IF_Mbps(100 << sc->sc_ic.ic_hwaddr.iha_speed);
 	ifp->if_addrlen = sizeof(struct ieee1394_hwaddr);
 
-	printf(": Id %s\n", ieee1394_sprintf(sc->sc_ic.ic_hwaddr.iha_uid));
+	printf(":");
+	for (i = 0; i < sizeof(sc->sc_ic.ic_hwaddr); i++)
+		printf("%c%02x", (i == 0 ? ' ' : ':'),
+		    ((u_int8_t *)&sc->sc_ic.ic_hwaddr)[i]);
+	printf("\n");
 	if_attach(ifp);
 	ieee1394_ifattach(ifp, &sc->sc_ic.ic_hwaddr);
 	(*psc->sc1394_ifinreg)
