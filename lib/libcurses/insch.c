@@ -1,4 +1,4 @@
-/*	$NetBSD: insch.c,v 1.9 1998/02/03 19:12:26 perry Exp $	*/
+/*	$NetBSD: insch.c,v 1.10 1998/08/19 00:20:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)insch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: insch.c,v 1.9 1998/02/03 19:12:26 perry Exp $");
+__RCSID("$NetBSD: insch.c,v 1.10 1998/08/19 00:20:59 thorpej Exp $");
 #endif
 #endif	/* not lint */
 
@@ -70,12 +70,13 @@ winsch(win, ch)
 	__touchline(win, win->cury, win->curx, win->maxx - 1, 0);
 	if (win->cury == LINES - 1 && 
 	    (win->lines[LINES - 1]->line[COLS - 1].ch != ' ' ||
-	    win->lines[LINES -1]->line[COLS - 1].attr != 0))
+	    win->lines[LINES -1]->line[COLS - 1].attr != 0)) {
 		if (win->flags & __SCROLLOK) {
 			wrefresh(win);
 			scroll(win);
 			win->cury--;
 		} else
 			return (ERR);
+	}
 	return (OK);
 }
