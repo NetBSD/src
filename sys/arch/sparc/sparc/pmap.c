@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.293 2004/04/22 11:57:33 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.294 2004/04/27 11:26:43 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.293 2004/04/22 11:57:33 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.294 2004/04/27 11:26:43 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -138,6 +138,16 @@ struct pmap_stats {
 	int	ps_npmeg_locked;	/* # of pmegs on locked list */
 	int	ps_npmeg_lru;		/* # of pmegs on lru list */
 } pmap_stats;
+
+#if defined(SUN4) || defined(SUN4C)
+struct evcnt mmu_stolenpmegs_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"mmu","stln pmgs");
+EVCNT_ATTACH_STATIC(mmu_stolenpmegs_evcnt);
+
+struct evcnt mmu_pagein_evcnt =
+	EVCNT_INITIALIZER(EVCNT_TYPE_INTR,0,"mmu","pagein");
+EVCNT_ATTACH_STATIC(mmu_pagein_evcnt);
+#endif /* SUN4 || SUN4C */
 
 #ifdef DEBUG
 #define	PDB_CREATE	0x0001
@@ -1641,6 +1651,9 @@ me_alloc(mh, newpm, newvreg, newvseg)
 		printf("me_alloc: stealing pmeg 0x%x from pmap %p\n",
 		    me->me_cookie, pm);
 #endif
+
+	mmu_stolenpmegs_evcnt.ev_count++;
+
 	/*
 	 * Remove from LRU list, and insert at end of new list
 	 * (probably the LRU list again, but so what?).
@@ -2022,6 +2035,8 @@ mmu_pagein_seg(struct pmap *pm, struct segmap *sp, vaddr_t va,
 		int vr, int vs, struct mmuq *mh)
 {
 	int s, i, pmeg, *pte;
+
+	mmu_pagein_evcnt.ev_count++;
 
 	va = VA_ROUNDDOWNTOSEG(va);
 	s = splvm();		/* paranoid */
