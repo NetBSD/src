@@ -1,6 +1,6 @@
-#	$NetBSD: BULLBOX,v 1.1 1999/01/06 02:30:58 jonb Exp $
+#	$NetBSD: BULLBOX,v 1.2 1999/01/10 03:46:27 jonb Exp $
 #
-# DEFAULT: default install kernel
+# BULLBOX: Kernel for Jon Buller's machine
 #
 
 include	"arch/pc532/conf/std.pc532"
@@ -48,9 +48,9 @@ options		PPP_BSDCOMP,PPP_DEFLATE	# compression for PPP
 
 # pc532 specific options
 options		NS381			# FPU installed
-#options	CPU33MHZ		# necessary for really fast machines
+#options	CPU33MHZ		# for really fast machines 8-)
 #options	CONSOLE_SPEED=B9600	# default console baud rate
-#options	SCNDEF_CFLAG="CREAD+CS8+HUPCL"
+#options	SCNDEF_CFLAG="CREAD+CS8+HUPCL" # default settings
 
 config		netbsd	root on ? type ?
 
