@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.4 1998/12/09 10:21:21 augustss Exp $
+.\" $NetBSD: ugen.4,v 1.5 1998/12/10 23:43:32 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -106,12 +106,12 @@ The control endpoint (endpoint 0) handles the following
 calls:
 .Pp
 .Bl -tag -width indent -compact
-.It Dv USB_SET_CONFIG (int)
+.It Dv USB_GET_CONFIG (int)
 Get the device configuration number.
 .It Dv USB_SET_CONFIG (int)
 Set the device into the given configuration number.
 .br
-This operation can be performed when only when the control endpoint
+This operation can only be performed when the control endpoint
 is the sole open endpoint.
 .It Dv USB_GET_ALTINTERFACE (struct usb_alt_interface)
 Get the alternative setting number for the interface with the given
@@ -133,7 +133,7 @@ The
 .Dv config_index
 is ignored in this call.
 .br
-This operation can be performed only when no endpoints for the interface
+This operation can only be performed when no endpoints for the interface
 are open.
 .It Dv USB_GET_NO_ALT (struct usb_alt_interface)
 Return the number of different alternate settings in the
