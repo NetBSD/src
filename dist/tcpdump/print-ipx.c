@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ipx.c,v 1.5 2002/05/31 09:45:45 itojun Exp $	*/
+/*	$NetBSD: print-ipx.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -27,10 +27,10 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.33 2001/11/25 01:48:48 guy Exp";
+static const char rcsid[] _U_ =
+    "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.34.2.2 2003/11/16 08:51:28 guy Exp";
 #else
-__RCSID("$NetBSD: print-ipx.c,v 1.5 2002/05/31 09:45:45 itojun Exp $");
+__RCSID("$NetBSD: print-ipx.c,v 1.6 2004/09/27 23:04:24 dyoung Exp $");
 #endif
 #endif
 
@@ -38,11 +38,7 @@ __RCSID("$NetBSD: print-ipx.c,v 1.5 2002/05/31 09:45:45 itojun Exp $");
 #include "config.h"
 #endif
 
-#include <sys/param.h>
-#include <sys/time.h>
-#include <sys/socket.h>
-
-#include <netinet/in.h>
+#include <tcpdump-stdinc.h>
 
 #include <stdlib.h>
 #include <stdio.h>

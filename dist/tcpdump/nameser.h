@@ -1,6 +1,6 @@
-/*	$NetBSD: nameser.h,v 1.3 2003/08/07 09:21:12 agc Exp $	*/
+/*	$NetBSD: nameser.h,v 1.4 2004/09/27 23:04:24 dyoung Exp $	*/
 
-/* @(#) Header: /tcpdump/master/tcpdump/nameser.h,v 1.9 2001/06/27 05:40:16 guy Exp (LBL) */
+/* @(#) Header: /tcpdump/master/tcpdump/nameser.h,v 1.14 2003/11/05 06:02:59 guy Exp (LBL) */
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,14 +32,14 @@
  *      @(#)nameser.h	8.2 (Berkeley) 2/16/94
  * -
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
- * 
+ *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies, and that
  * the name of Digital Equipment Corporation not be used in advertising or
  * publicity pertaining to distribution of the document or software without
  * specific, written prior permission.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
  * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
@@ -188,6 +188,7 @@
 #define C_HS		4		/* for Hesiod name server (MIT) (XXX) */
 	/* Query class values which do not appear in resource records */
 #define C_ANY		255		/* wildcard match */
+#define C_CACHE_FLUSH	0x8000		/* mDNS cache flush flag */
 
 /*
  * Status return codes for T_UNSPEC conversion routines
