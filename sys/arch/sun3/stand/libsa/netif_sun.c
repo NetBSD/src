@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.4 1996/01/29 23:41:07 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.5 1997/02/05 17:39:25 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -122,7 +122,7 @@ netif_init(aux)
 	 */
 	si = &dd->dd_si;
 	bzero((caddr_t)si, sizeof(*si));
-	bp = *romp->bootParam;
+	bp = *romVectorPtr->bootParam;
 	si->si_boottab = bp->bootDevice;
 	si->si_ctlr = bp->ctlrNum;
 	si->si_unit = bp->unitNum;

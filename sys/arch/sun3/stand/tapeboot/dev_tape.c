@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.2 1995/10/17 22:58:20 gwr Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.3 1997/02/05 17:39:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -106,7 +106,7 @@ tape_open(f, fname)
 	si = &tape_ioreq;
 	bzero((caddr_t)si, sizeof(*si));
 
-	bp = *romp->bootParam;
+	bp = *romVectorPtr->bootParam;
 	si->si_boottab = bp->bootDevice;
 	si->si_ctlr = bp->ctlrNum;
 	si->si_unit = bp->unitNum;
