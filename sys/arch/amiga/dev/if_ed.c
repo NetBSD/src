@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.43 2003/01/20 15:00:38 bouyer Exp $ */
+/*	$NetBSD: if_ed.c,v 1.44 2003/01/21 20:39:29 bouyer Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.43 2003/01/20 15:00:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.44 2003/01/21 20:39:29 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -1209,9 +1209,10 @@ ed_put(struct ed_softc *sc, struct mbuf *m, caddr_t buf)
 		savebyte[1] = 0;
 		word_copy(savebyte, buf, 2);
 		buf += 2;
+		totlen++;
 	}
 	if (totlen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
-		word_zero(buf, totlen < ETHER_MIN_LEN - ETHER_CRC_LEN);
+		word_zero(buf, ETHER_MIN_LEN - ETHER_CRC_LEN - totlen);
 		totlen = ETHER_MIN_LEN - ETHER_CRC_LEN;
 	}
 
