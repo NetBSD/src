@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.44 2001/04/12 21:08:25 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.45 2001/04/12 21:11:47 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -542,7 +542,7 @@ uvm_km_kmemalloc(map, obj, size, flags)
 	while (loopsize) {
 		simple_lock(&obj->vmobjlock);
 		pg = uvm_pagealloc(obj, offset, NULL, 0);
-		if (pg) {
+		if (__predict_true(pg != NULL)) {
 			pg->flags &= ~PG_BUSY;	/* new page */
 			UVM_PAGE_OWN(pg, NULL);
 		}
