@@ -1466,14 +1466,28 @@ init_gcc_specs (obstack, shared_name, static_name, eh_name)
 {
   char *buf;
 
-  buf = concat ("%{static|static-libgcc:", static_name, " ", eh_name,
+  buf = concat ("%{static",
+#ifdef LIBGCC_PICSUFFIX
+		": ", static_name, " ", eh_name, "}",
+		"%{static-libgcc: ",
+		"%{!shared:", static_name, " ", eh_name, "}",
+		"%{shared:", static_name, LIBGCC_PICSUFFIX, " ",
+		eh_name, LIBGCC_PICSUFFIX, "}",
+#else
+		"|static-libgcc:", static_name, " ", eh_name, 
+#endif
 		"}%{!static:%{!static-libgcc:",
 		"%{!shared:%{!shared-libgcc:", static_name, " ",
 		eh_name, "}%{shared-libgcc:", shared_name, " ",
 		static_name, "}}%{shared:",
-#ifdef LINK_EH_SPEC
+/* XXX NH XXX */
+#if defined(LINK_EH_SPEC) || 1
 		"%{shared-libgcc:", shared_name,
-		"}%{!shared-libgcc:", static_name, "}",
+		"}%{!shared-libgcc:", static_name, 
+#ifdef LIBGCC_PICSUFFIX
+		LIBGCC_PICSUFFIX ,
+#endif
+		"}",
 #else
 		shared_name,
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.248 2004/02/09 06:35:18 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.249 2004/02/15 19:52:27 skrll Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -133,9 +133,6 @@ CPICFLAGS?= -fPIC -DPIC
 CPPPICFLAGS?= -DPIC
 CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
-# XXX libraries often need the millicode functions in libgcc.a,
-# so we have to work around the -nostdlib:
-LDADD+= -L${_GCC_LIBGCCDIR} -lgcc_pic
 
 .elif ${MACHINE_ARCH} == "ns32k"
 

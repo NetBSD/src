@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/02/10 09:37:58 skrll Exp $
+#	$NetBSD: Makefile,v 1.13 2004/02/15 19:52:27 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 		LIBGCC= LIBGCC1= LIBGCC1_TEST= LIBGCC2= INSTALL_LIBGCC= \
-		EXTRA_PARTS=
+		EXTRA_PARTS= CPPFLAGS=-DNETBSD_TOOLS
 
 ALL_TARGET=	all-gcc
 INSTALL_TARGET=	install-gcc
