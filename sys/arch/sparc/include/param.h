@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 1996/05/15 02:13:48 mrg Exp $ */
+/*	$NetBSD: param.h,v 1.25 1996/08/28 03:01:27 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,29 +75,30 @@
  * Three possible cases:
  * 	sun4 only		8192 bytes/page
  *	sun4c/sun4m only	4096 bytes/page
- *	sun4/sun4c/sun4m	either of the above
+ *	any machine		either of the above
  *
  * In the later case NBPG, PGOFSET, and PGSHIFT are encoded in variables
  * initialized early in locore.s.  Since they are variables, rather than
- * simple constants, the kernel will not perform slighly worse.
+ * simple constants, the kernel will perform slighly worse.
  */
 #if defined(SUN4) && !defined(SUN4C) && !defined(SUN4M)
-#define	NBPG		8192		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	PGSHIFT		SUN4_PGSHIFT	/* log2(NBPG) */
+# define	NBPG		8192		/* bytes/page */
+# define	PGOFSET		(NBPG-1)	/* byte offset into page */
+# define	PGSHIFT		SUN4_PGSHIFT	/* log2(NBPG) */
+#else
+# if !defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+#  define	NBPG		4096		/* bytes/page */
+#  define	PGOFSET		(NBPG-1)	/* byte offset into page */
+#  define	PGSHIFT		SUN4CM_PGSHIFT	/* log2(NBPG) */
+# else
+#  define	NBPG		nbpg		/* bytes/page */
+#  define	PGOFSET		pgofset		/* byte offset into page */
+#  define	PGSHIFT		pgshift		/* log2(NBPG) */
+# endif
 #endif
-#if !defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
-#define	NBPG		4096		/* bytes/page */
-#define	PGOFSET		(NBPG-1)	/* byte offset into page */
-#define	PGSHIFT		SUN4CM_PGSHIFT	/* log2(NBPG) */
-#endif
-#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
+
 #if defined(_KERNEL) && !defined(_LOCORE)
 extern int nbpg, pgofset, pgshift;
-#endif
-#define	NBPG		nbpg		/* bytes/page */
-#define	PGOFSET		pgofset		/* byte offset into page */
-#define	PGSHIFT		pgshift		/* log2(NBPG) */
 #endif
 
 #define	KERNBASE	0xf8000000	/* start of kernel virtual space */
