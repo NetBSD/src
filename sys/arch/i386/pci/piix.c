@@ -1,4 +1,4 @@
-/*	$NetBSD: piix.c,v 1.5 2003/02/26 22:23:10 fvdl Exp $	*/
+/*	$NetBSD: piix.c,v 1.5.4.1 2004/04/28 05:19:15 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -63,11 +63,17 @@
  */
 
 /*
- * Support for the Intel PIIX PCI-ISA bridge interrupt controller.
+ * Support for the Intel PIIX PCI-ISA bridge interrupt controller
+ * and ICHn I/O controller hub
+ */
+
+/*
+ * ICH2 and later support 8 interrupt routers while the first
+ * generation (ICH and ICH0) support 4 which is same as PIIX.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.5 2003/02/26 22:23:10 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.5.4.1 2004/04/28 05:19:15 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: piix.c,v 1.5 2003/02/26 22:23:10 fvdl Exp $");
 #endif
 
 int	piix_getclink __P((pciintr_icu_handle_t, int, int *));
+int	ich_getclink __P((pciintr_icu_handle_t, int, int *));
 int	piix_get_intr __P((pciintr_icu_handle_t, int, int *));
 int	piix_set_intr __P((pciintr_icu_handle_t, int, int));
 #ifdef PIIX_DEBUG
@@ -105,6 +112,16 @@ const struct pciintr_icu piix_pci_icu = {
 	piix_get_trigger,
 	piix_set_trigger,
 };
+
+const struct pciintr_icu ich_pci_icu = {
+	ich_getclink,
+	piix_get_intr,
+	piix_set_intr,
+	piix_get_trigger,
+	piix_set_trigger,
+};
+
+static int piix_max_link = 3;
 
 int
 piix_init(pc, iot, tag, ptagp, phandp)
@@ -136,6 +153,26 @@ piix_init(pc, iot, tag, ptagp, phandp)
 	*ptagp = &piix_pci_icu;
 	*phandp = ph;
 	return (0);
+}
+
+int
+ich_init(pc, iot, tag, ptagp, phandp)
+	pci_chipset_tag_t pc;
+	bus_space_tag_t iot;
+	pcitag_t tag;
+	pciintr_icu_tag_t *ptagp;
+	pciintr_icu_handle_t *phandp;
+{
+	int rv;
+
+	rv = piix_init(pc, iot, tag, ptagp, phandp);
+
+	if (rv == 0) {
+		piix_max_link = 7;
+		*ptagp = &ich_pci_icu;
+	}
+
+	return (rv);
 }
 
 int
@@ -174,6 +211,23 @@ piix_getclink(v, link, clinkp)
 }
 
 int
+ich_getclink(v, link, clinkp)
+	pciintr_icu_handle_t v;
+	int link, *clinkp;
+{
+	/*
+	 * configuration registers 0x68..0x6b are for PIRQ[EFGH]
+	 */
+	if (link >= 0x68 && link <= 0x6b) {
+		*clinkp = link - 0x68 + 4;
+		DPRINTF(("PIRQ %d (register offset)\n", *clinkp));
+		return (0);
+	}
+
+	return piix_getclink(v, link, clinkp);
+}
+
+int
 piix_get_intr(v, clink, irqp)
 	pciintr_icu_handle_t v;
 	int clink, *irqp;
@@ -181,11 +235,15 @@ piix_get_intr(v, clink, irqp)
 	struct piix_handle *ph = v;
 	int shift;
 	pcireg_t reg;
+	int cfgreg;
 
 	if (PIIX_LEGAL_LINK(clink) == 0)
 		return (1);
 
-	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);
+	cfgreg = clink <= 3 ? PIIX_CFG_PIRQ : PIIX_CFG_PIRQ2;
+	clink &= 0x03;
+
+	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, cfgreg);
 	shift = clink << 3;
 	if ((reg >> shift) & PIIX_CFG_PIRQ_NONE)
 		*irqp = X86_PCI_INTERRUPT_LINE_NO_CONNECTION;
@@ -203,15 +261,19 @@ piix_set_intr(v, clink, irq)
 	struct piix_handle *ph = v;
 	int shift;
 	pcireg_t reg;
+	int cfgreg;
 
 	if (PIIX_LEGAL_LINK(clink) == 0 || PIIX_LEGAL_IRQ(irq) == 0)
 		return (1);
 
-	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ);
+	cfgreg = clink <= 3 ? PIIX_CFG_PIRQ : PIIX_CFG_PIRQ2;
+	clink &= 0x03;
+
+	reg = pci_conf_read(ph->ph_pc, ph->ph_tag, cfgreg);
 	shift = clink << 3;
 	reg &= ~((PIIX_CFG_PIRQ_NONE | PIIX_CFG_PIRQ_MASK) << shift);
 	reg |= irq << shift;
-	pci_conf_write(ph->ph_pc, ph->ph_tag, PIIX_CFG_PIRQ, reg);
+	pci_conf_write(ph->ph_pc, ph->ph_tag, cfgreg, reg);
 
 	return (0);
 }
