@@ -1,4 +1,4 @@
-/*	$NetBSD: plumiobus.c,v 1.1 1999/11/21 06:50:26 uch Exp $ */
+/*	$NetBSD: plumiobus.c,v 1.2 1999/12/07 17:37:21 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -102,7 +102,8 @@ plumiobus_attach(parent, self, aux)
 		return;
 	}
 	printf("\n");
-
+	plum_power_establish(sc->sc_pc, PLUM_PWR_IO5);
+	
 	/* Address space <-> IRQ mapping */
 	pr = &sc->sc_isa[IO5CS0];
 	pr->pr_irq = PLUM_INT_EXT5IO0;
@@ -149,7 +150,7 @@ plumiobus_attach(parent, self, aux)
 
 
 	plumiobus_dump(sc);
-	
+
 	config_search(plumiobus_search, self, plumiobus_print);
 }
 
