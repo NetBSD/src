@@ -465,10 +465,9 @@ doglob()
 				interactive = 0;
 				freecmdv();
 				return ERR;
-			}
-			if (!strcmp(ibuf, "\n"))
+			} else if (!strcmp(ibuf, "\n"))
 				continue;
-			if (!strcmp(ibuf, "&\n")) {
+			else if (!strcmp(ibuf, "&\n")) {
 				if (cmd == NULL) {
 					sprintf(errmsg, "null command");
 					interactive = 0;
@@ -525,6 +524,7 @@ doglob()
 #define SGF 010		/* newline found */
 
 long ucurln = -1;	/* if >= 0, undo enabled */
+long ulastln = -1;	/* if >= 0, undo enabled */
 int usw = 0;		/* if set, undo last undo */
 int patlock = 0;	/* if set, pattern not released by optpat() */
 
@@ -647,7 +647,7 @@ docmd(glob)
 			return ERR;
 		ureset();
 		modified = FALSE;
-		ucurln = -1;
+		ucurln = ulastln = -1;
 		break;
 	case 'f':
 		if (nlines > 0) {
@@ -728,14 +728,12 @@ docmd(glob)
 		}
 		VRFYCMD();
 		if (!glob) ureset();
-		if (num == prevln(line1, lastln) || num == line2)
+		if (num == line1 - 1 || num == line2)
 			curln = line2;
 		else if (move(num) < 0)
 			return ERR;
-		else {
-			curln = num + ((num > line1) ? 0 : line2 - line1 + 1);
+		else
 			modified = TRUE;
-		}
 		break;
 	case 'n':
 		if (deflt(curln, curln) < 0)
@@ -835,7 +833,7 @@ docmd(glob)
 		spl0();
 		if (!subflags && (sgflag = getrhs(rhs, glob)) < 0)
 			return ERR;
-		if (glob)
+		else if (glob)
 			sgflag |= GLB;
 		else
 			sgflag &= ~GLB;
@@ -1347,6 +1345,7 @@ move(num)
 	requeue(b2, b1->next);
 	requeue(a1->prev, a2);
 	requeue(b1, a1);
+	curln = num + ((num < line1) ? line2 - line1 + 1 : 0);
 	spl0();
 	return 0;
 }
@@ -1408,7 +1407,7 @@ del(from, to)
 		return ERR;
 	}
 	after = getptr(nextln(to, lastln));
-	before = getptr(prevln(from, lastln));	/* this getptr last! */
+	before = getptr(prevln(from, lastln));		/* this getptr last! */
 	requeue(before, after);
 	lastln -= to - from + 1;
 	curln = prevln(from, lastln);
@@ -1701,8 +1700,9 @@ undo()
 	int i = usw ? 1 : -1;
 	long j = u_p;
 	long ocurln = curln;
+	long olastln = lastln;
 
-	if (ucurln == -1) {
+	if (ucurln == -1 || ulastln == -1) {
 		sprintf(errmsg, "nothing to undo");
 		return ERR;
 	} else if (u_p)
@@ -1713,12 +1713,10 @@ undo()
 		switch(ustack[n].type ^ usw) {
 		case UADD:
 			requeue(ustack[n].h->prev, ustack[n].t->next);
-			lastln -= getrange(ustack[n].h, ustack[n].t);
 			break;
 		case UDEL:
 			requeue(ustack[n].h->prev, ustack[n].h);
 			requeue(ustack[n].t, ustack[n].t->next);
-			lastln += getrange(ustack[n].h, ustack[n].t);
 			break;
 		case UMOV:
 		case VMOV:
@@ -1731,9 +1729,9 @@ undo()
 			/*NOTREACHED*/
 			;
 		}
-	curln = ucurln;
-	ucurln = ocurln;
 	usw = 1 - usw;
+	curln = ucurln, ucurln = ocurln;
+	lastln = ulastln, ulastln = olastln;
 	spl0();
 	return 0;
 }
@@ -1762,6 +1760,7 @@ ureset()
 		}
 	u_p = usw = 0;
 	ucurln = curln;
+	ulastln = lastln;
 }
 
 
@@ -1780,11 +1779,11 @@ sgetline(buf, size, fp)
 
 	if (!des)
 		while (cp - buf < size - 1 && (c = getc(fp)) != EOF && c != '\n')
-			if (c)	*cp++ = c; 
+			if (c)	*cp++ = c;
 			else 	nullchar = 1;
 	else
 		while (cp - buf < size - 1 && (c = desgetc(fp)) != EOF && c != '\n')
-			if (c)	*cp++ = c; 
+			if (c)	*cp++ = c;
 			else 	nullchar = 1;
 	if (c == '\n')
 		*cp++ = c;
@@ -1990,20 +1989,6 @@ freecmdv()
 {
 	free(gbuf);
 	gbuf = NULL;
-}
-
-
-/* getrange: return the number of nodes in a list */
-long
-getrange(h, t)
-	line_t *h;
-	line_t *t;
-{
-	long n = 1;
-
-	for (; h != t; h = h->next)
-		n++;
-	return n;
 }
 
 
