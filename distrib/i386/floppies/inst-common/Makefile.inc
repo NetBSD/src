@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 1996/10/09 00:13:36 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1996/10/09 19:16:10 perry Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -43,7 +43,7 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 clean cleandir:
-	/bin/rm -f *.ccore ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
