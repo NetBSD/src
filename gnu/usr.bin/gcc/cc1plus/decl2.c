@@ -2808,8 +2808,6 @@ import_export_inline (decl)
       else
 	TREE_PUBLIC (decl) = 0;
     }
-  else if (DECL_C_STATIC (decl))
-    TREE_PUBLIC (decl) = 0;
   else if (SUPPORTS_WEAK)
     DECL_WEAK (decl) = 1;
   else
@@ -3193,10 +3191,6 @@ finish_file ()
     {
       if (TREE_CODE (vars) == THUNK_DECL)
 	emit_thunk (vars);
-      else if (TREE_CODE (vars) == FUNCTION_DECL
-	       && ! DECL_INTERFACE_KNOWN (vars)
-	       && DECL_C_STATIC (vars))
-	TREE_PUBLIC (vars) = 0;
     }
 
   if (might_have_exceptions_p ())
