@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.3 1994/01/29 02:03:35 jtc Exp $
+ *	$Id: md.c,v 1.4 1994/04/07 19:43:57 pk Exp $
  */
 
 #include <sys/param.h>
@@ -236,6 +236,26 @@ int		magic, flags;
 	/* TEXT_START depends on the value of outheader.a_entry.  */
 	if (!(link_mode & SHAREABLE))
 		hp->a_entry = PAGSIZ;
+}
+
+/*
+ * Check for acceptable foreign machine Ids
+ */
+int
+md_midcompat(hp)
+struct exec *hp;
+{
+	int	mid = N_GETMID(*hp);
+
+	if (mid == MID_M68K ||
+	    mid == MID_M68K4K ||
+	    mid == MID_HP300 ||
+	    mid == MID_HPUX ||
+	    mid == MID_HPUX800)
+		return 1;
+#if 0
+	return (((md_swap_long(hp->a_midmag)&0x00ff0000) >> 16) == MID_SUN020);
+#endif
 }
 #endif /* RTLD */
 

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.h,v 1.7 1994/01/29 02:03:26 jtc Exp $
+ *	$Id: md.h,v 1.8 1994/04/07 19:43:38 pk Exp $
  */
 
 
@@ -55,12 +55,17 @@
 
 #define N_IS_DYNAMIC(ex)	((N_GETFLAG(ex) & EX_DYNAMIC))
 
+#define N_BADMID(ex) \
+	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_MACHINE)
+
 #endif
 
+/*
+ * FreeBSD does it differently
+ */
 #ifdef FreeBSD
-
 #define N_SET_FLAG(ex,f)	(oldmagic ? (0) :			\
-				  (N_GETMAGIC(ex)==QMAGIC ?		\
+				  (netzmagic == 0 ?			\
 					N_SETMAGIC(ex,			\
 						   N_GETMAGIC(ex),	\
 						   MID_MACHINE,		\
@@ -73,10 +78,8 @@
 #define N_IS_DYNAMIC(ex)	((N_GETMAGIC_NET(ex) == ZMAGIC) ?	\
 				((N_GETFLAG_NET(ex) & EX_DYNAMIC)) :	\
 				((N_GETFLAG(ex) & EX_DYNAMIC) ))
+#define N_BADMID(ex) 0
 #endif
-
-#define N_BADMID(ex) \
-	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_MACHINE)
 
 /*
  * Should be handled by a.out.h ?

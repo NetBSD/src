@@ -1,5 +1,5 @@
 /*
- * $Id: md.h,v 1.2 1994/01/28 20:57:34 pk Exp $
+ * $Id: md.h,v 1.3 1994/04/07 19:43:58 pk Exp $
  *	- m68k dependent definitions
  */
 
@@ -17,7 +17,8 @@
 #define N_IS_DYNAMIC(ex)	((N_GETFLAG(ex) & EX_DYNAMIC))
 
 #define N_BADMID(ex) \
-	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_MACHINE)
+	(N_GETMID(ex) != 0 && N_GETMID(ex) != MID_MACHINE && \
+						!md_midcompat(&(ex)))
 
 /*
  * Should be handled by a.out.h ?
