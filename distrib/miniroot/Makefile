@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2001/11/08 07:29:45 tron Exp $
+#	$NetBSD: Makefile,v 1.42 2001/11/27 05:05:38 jmc Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -13,9 +13,9 @@ ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
 .include "${ARCHDIR}/Makefile.inc"
 .endif
 
-VND?=		vnd0c
-VND_DEV=	/dev/${VND}
-VND_RDEV=	/dev/r${VND}
+VND?=		vnd0
+VND_DEV=	/dev/${VND}c
+VND_RDEV=	/dev/r${VND}c
 VND_GEOM?=
 IMAGE?=		miniroot.fs
 IMAGESIZE?=	14336 # 7MB in 512 byte blocks
@@ -45,7 +45,7 @@ all:
 
 all: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
-	vnconfig ${DISKTYPEARG} -v -c ${VND_DEV} ${IMAGE} ${VND_GEOM}
+	vnconfig ${DISKTYPEARG} -v -c ${VND} ${IMAGE} ${VND_GEOM}
 	${PRELABEL}
 	-newfs -m 0 -o space ${NEWFSOPTS} ${VND_RDEV} ${DISKTYPE}
 	${BOOTINSTALL}
