@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.47 2001/06/17 01:14:15 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.48 2001/08/18 19:50:20 ad Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -193,6 +193,13 @@ Enables process accounting with
 Requires
 .Pa /var/account/acct
 to exist.
+.It Sy newsyslog
+.Sq YES
+or
+.Sq NO .
+Run
+.Nm newsyslog
+to trim logfiles before syslogd starts.  Intended for laptop users.
 .El
 .Ss System security setting:
 .Bl -tag -width net_interfaces
