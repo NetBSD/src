@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.2 1998/10/15 21:49:09 thorpej Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.3 1998/10/17 05:08:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,20 +123,22 @@ main(argc, argv)
 			/*
 			 * Device doesn't exist.  Probably trying to open
 			 * a device which doesn't use disk semantics for
-			 * device name.  Try the raw pathname.
+			 * device name.  Try again, specifying "cooked",
+			 * which leaves off the "r" in front of the device's
+			 * name.
 			 */
-			fd = open(dvname, O_RDWR, 0600);
+			fd = opendisk(dvname, O_RDWR, dvname_store,
+			    sizeof(dvname_store), 1);
 			if (fd == -1)
 				err(1, "%s", dvname);
 		}
 		err(1, "%s", dvname);
-	} else {
-		/*
-		 * Point the dvname at the actual device name that
-		 * opendisk() opened.
-		 */
-		dvname = dvname_store;
 	}
+
+	/*
+	 * Point the dvname at the actual device name that opendisk() opened.
+	 */
+	dvname = dvname_store;
 
 	if (ioctl(fd, SCIOCIDENTIFY, &dvaddr) < 0)
 		commands = bus_commands;
