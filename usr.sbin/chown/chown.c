@@ -1,7 +1,7 @@
-/*	$NetBSD: chown.c,v 1.26 2002/07/07 11:44:03 bjh21 Exp $	*/
+/*	$NetBSD: chown.c,v 1.27 2003/01/18 18:37:08 jrf Exp $	*/
 
 /*
- * Copyright (c) 1988, 1993, 1994
+ * Copyright (c) 1988, 1993, 1994, 2003
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994, 2003\n\
 	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.26 2002/07/07 11:44:03 bjh21 Exp $");
+__RCSID("$NetBSD: chown.c,v 1.27 2003/01/18 18:37:08 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ main(argc, argv)
 {
 	FTS *ftsp;
 	FTSENT *p;
-	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
+	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval, vflag;
 	char *cp;
 	int (*change_owner) __P((const char *, uid_t, gid_t));
 
@@ -90,8 +90,8 @@ main(argc, argv)
 	myname = (cp = strrchr(*argv, '/')) ? cp + 1 : *argv;
 	ischown = (myname[2] == 'o');
 
-	Hflag = Lflag = Rflag = fflag = hflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRfh")) != -1)
+	Hflag = Lflag = Rflag = fflag = hflag = vflag = 0;
+	while ((ch = getopt(argc, argv, "HLPRfhv")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -119,6 +119,9 @@ main(argc, argv)
 			 * In NetBSD 1.3, lchown(2) is introduced.
 			 */
 			hflag = 1;
+			break;
+		case 'v':
+			vflag = 1;
 			break;
 		case '?':
 		default:
@@ -213,6 +216,9 @@ main(argc, argv)
 		if ((*change_owner)(p->fts_accpath, uid, gid) && !fflag) {
 			warn("%s", p->fts_path);
 			rval = EXIT_FAILURE;
+		} else {
+			if (vflag)
+				printf("%s\n", p->fts_path);
 		}
 	}
 	if (errno)
@@ -270,7 +276,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-R [-H | -L | -P]] [-fh] %s file ...\n",
+	    "usage: %s [-R [-H | -L | -P]] [-fhv] %s file ...\n",
 	    myname, ischown ? "[owner][:group]" : "group");
 	exit(EXIT_FAILURE);
 }
