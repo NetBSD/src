@@ -73,7 +73,6 @@
 %type	<val>	root_device_spec
 %type	<val>	dump_device_spec
 %type	<file>	swap_device_spec
-%type	<file>	comp_device_spec
 
 %{
 
@@ -110,7 +109,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)config.y	5.14 (Berkeley) 7/1/91
- *	$Id: config.y,v 1.16 1995/04/28 07:01:00 cgd Exp $
+ *	$Id: config.y,v 1.17 1995/08/17 17:09:22 thorpej Exp $
  */
 
 #include <ctype.h>
@@ -469,64 +468,7 @@ Device_spec:
 		cur.d_name = $3;
 		cur.d_type = PSEUDO_DEVICE;
 		cur.d_slave = $4;
-		} |
-	PSEUDO_DEVICE Dev_name Cdev_init Cdev_info
-	      = {
-		if (!eq(cur.d_name, "ccd"))
-			yyerror("improper spec for pseudo-device");
-		seen_cd = 1;
-		cur.d_type = DEVICE;
-		verifycomp(*compp);
 		};
-
-Cdev_init:
-	/* lambda */
-	      = { mkcomp(&cur); };
-
-Cdev_info:
-	  optional_on comp_device_list comp_option_list
-	;
-
-comp_device_list:
-	  comp_device_list AND comp_device
-	| comp_device
-	;
-
-comp_device:
-	  comp_device_spec
-	      = { addcomp(*compp, $1); }
-	;
-
-comp_device_spec:
-	  device_name
-		= {
-			struct file_list *fl = newflist(COMPSPEC);
-
-			fl->f_compdev = nametodev($1, 0, 'c');
-			fl->f_fn = devtoname(fl->f_compdev);
-			$$ = fl;
-		}
-	| major_minor
-		= {
-			struct file_list *fl = newflist(COMPSPEC);
-
-			fl->f_compdev = $1;
-			fl->f_fn = devtoname($1);
-			$$ = fl;
-		}
-	;
-
-comp_option_list:
-	  comp_option_list comp_option
-		|
-	  /* lambda */
-		;
-
-comp_option:
-	INTERLEAVE NUMBER
-	      = { cur.d_pri = $2; } |
-	FLAGS NUMBER
-	      = { cur.d_flags = $2; };
 
 Dev_name:
 	Init_dev Dev NUMBER
