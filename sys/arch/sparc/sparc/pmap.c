@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 1997/05/24 20:09:45 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.83 1997/06/12 19:14:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4688,42 +4688,46 @@ pmap_page_protect4m(pa, prot)
 
 		flags |= MR4M(tpte);
 
-		if (nleft)
+		if (nleft) {
 			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
-		else {
-			if (pm == pmap_kernel()) {
-				tlb_flush_segment(vr, vs); /* Paranoid? */
-				if (va < virtual_avail) {
+			goto nextpv;
+		}
+
+		/* Entire segment is gone */
+		if (pm == pmap_kernel()) {
+			tlb_flush_segment(vr, vs); /* Paranoid? */
+			setpgt4m(&sp->sg_pte[VA_SUN4M_VPG(va)], SRMMU_TEINVALID);
+			if (va < virtual_avail) {
 #ifdef DEBUG
-					printf(
-					 "pmap_page_protect: attempt to free"
-					 " base kernel allocation\n");
+				printf(
+				 "pmap_page_protect: attempt to free"
+				 " base kernel allocation\n");
 #endif
-					goto nextpv;
-				}
+				goto nextpv;
+			}
 #if 0 /* no need for this */
-				/* no need to free the table; it is static */
-				qzero(sp->sg_pte, SRMMU_L3SIZE * sizeof(int));
+			/* no need to free the table; it is static */
+			qzero(sp->sg_pte, SRMMU_L3SIZE * sizeof(int));
 #endif
 
-				/* if we're done with a region, leave it */
+			/* if we're done with a region, leave it */
 
-			} else { 	/* User mode mapping */
-				if (pm->pm_ctx)
-					tlb_flush_segment(vr, vs);
-				setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
-				free(sp->sg_pte, M_VMPMAP);
-				sp->sg_pte = NULL;
+		} else { 	/* User mode mapping */
+			if (pm->pm_ctx)
+				tlb_flush_segment(vr, vs);
+			setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
+			free(sp->sg_pte, M_VMPMAP);
+			sp->sg_pte = NULL;
 
-				if (--rp->rg_nsegmap == 0) {
-					free(rp->rg_segmap, M_VMPMAP);
-					rp->rg_segmap = NULL;
-					free(rp->rg_seg_ptps, M_VMPMAP);
-					setpgt4m(&pm->pm_reg_ptps[vr],
-						SRMMU_TEINVALID);
-				}
+			if (--rp->rg_nsegmap == 0) {
+				free(rp->rg_segmap, M_VMPMAP);
+				rp->rg_segmap = NULL;
+				free(rp->rg_seg_ptps, M_VMPMAP);
+				setpgt4m(&pm->pm_reg_ptps[vr],
+					SRMMU_TEINVALID);
 			}
 		}
+
 	nextpv:
 		npv = pv->pv_next;
 		if (pv != pv0)
