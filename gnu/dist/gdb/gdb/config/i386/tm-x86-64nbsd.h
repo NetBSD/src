@@ -1,7 +1,8 @@
-/* Target-dependent code for GDB, the GNU debugger.
-   Copyright 2001
-   Free Software Foundation, Inc.
-   Contributed by Jiri Smid, SuSE Labs.
+/* Definitions to target GDB to NetBSD on x86-64.
+
+   Copyright 2002 Free Software Foundation, Inc.
+
+   Copy of the version contributed by Michal Ludvig, SuSE Labs.
 
    This file is part of GDB.
 
@@ -20,19 +21,16 @@
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
-#ifndef X86_64_TDEP_H
-#define X86_64_TDEP_H
+#ifndef TM_X86_64NBSD_H
+#define TM_X86_64NBSD_H
 
-#include "i386-tdep.h"
+/* We define SVR4_SHARED_LIBS unconditionally, on the assumption that
+ * link.h is available on all linux platforms.  For I386 and SH3/4, 
+ * we hard-code the information rather than use link.h anyway (for 
+ * the benefit of cross-debugging).  We may move to doing that for
+ * other architectures as well.  */
 
-extern int x86_64_num_regs;
-extern int x86_64_num_gregs;
+#define SVR4_SHARED_LIBS
+#include "solib.h"              /* Support for shared libraries. */
 
-int x86_64_register_number (const char *name);
-const char *x86_64_register_name (int reg_nr);
-	
-
-gdbarch_frame_saved_pc_ftype x86_64_nbsd_frame_saved_pc;
-gdbarch_saved_pc_after_call_ftype x86_64_nbsd_saved_pc_after_call;
-
-#endif
+#endif /* #ifndef TM_X86_64NBSD_H */
