@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/03/26 16:55:15 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.8 2004/03/27 11:34:11 jdolecek Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,7 @@ DPADD+=	${LIBM}
 YHEADER=	yes
 
 # info file originally from GNU awk 3.1.3, adjusted for nawk slightly
+.PATH:	${NETBSDSRCDIR}/gnu/dist/gawk
 TEXINFO=        awk.info
 
 .include <bsd.info.mk>
