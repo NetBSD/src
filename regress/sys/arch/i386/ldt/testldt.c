@@ -1,3 +1,5 @@
+/*	$NetBSD: testldt.c,v 1.4 1995/04/20 22:42:38 cgd Exp $	*/
+
 #include <stdio.h>
 #include <signal.h>
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1994/12/29 00:32:24 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1995/04/20 22:40:13 cgd Exp $
 
 PROG=	setjmptest
 SRCS=	jmptest.c

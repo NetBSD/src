@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1994/01/14 05:24:28 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1995/04/20 22:42:51 cgd Exp $
 
 SUBDIR+= execve
 

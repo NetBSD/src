@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1993/12/21 04:08:48 brezak Exp $
+#	$NetBSD: Makefile,v 1.2 1995/04/20 22:41:43 cgd Exp $
 
 SUBDIR+= ldt
 
