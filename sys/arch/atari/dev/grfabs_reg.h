@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.10 1997/03/13 12:37:08 leo Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.11 1998/12/20 14:32:53 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -89,12 +89,16 @@ struct bitmap {
     u_short	bytes_per_row;	/* number of bytes per display row.	*/
     u_short	rows;		/* number of display rows.		*/
     u_short	depth;		/* depth of bitmap.			*/
-    u_char	*plane;		/* plane data for bitmap.		*/
-    u_char	*hw_address;	/* mappable bitplane pointer.		*/
+    u_char	*plane;		/* plane data for bitmap/vga.		*/
+    u_char	*hw_address;	/* mappable linear bitplane pointer.	*/
+    u_char	*vga_address;	/* mappable vga bitplane pointer	*/
     u_char	*regs;		/* where the registers are		*/
     u_char	*hw_regs;	/* mappable registers			*/
     u_short	reg_size;	/* size of the register area		*/
-    u_int	phys_mappable;	/* the amount of mappable plane mem.	*/
+    u_int	phys_mappable;	/* amount of mappable lin. plane mem.	*/
+    u_int	vga_mappable;	/* amount of mappable vga plane mem.	*/
+    u_int	lin_base;	/* linear framebuffer card base		*/
+    u_int	vga_base;	/* vga memory card base			*/
 };
 
 /*

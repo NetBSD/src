@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.8 1997/06/10 18:45:06 veego Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.9 1998/12/20 14:32:53 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -366,6 +366,10 @@ u_char	depth;
 	bm->hw_regs       = NULL;
 	bm->reg_size      = 0;
 	bm->phys_mappable = (depth * width * height) / NBBY;
+	bm->lin_base      = 0;
+	bm->vga_address   = NULL;
+	bm->vga_mappable  = 0;
+	bm->vga_base      = 0;
 
 	bzero(bm->plane, bm_size);
 	return (bm);

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.10 1998/11/20 12:56:09 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.11 1998/12/20 14:32:53 thomas Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -78,12 +78,18 @@
  */
 #define	REG_MAPPABLE	(16 * 1024)
 #define	FRAME_MAPPABLE	(4 * 1024 * 1024)
+#define VGA_MAPPABLE	(128 * 1024)
+#define VGA_BASE	0xa0000
 
 /*
  * Where we map the PCI registers in the io-space (et6000)
  * XXX: 0x400 would probably work too...
  */
 #define PCI_IOBASE	0x800
+/*
+ * Linear memory base, near the end of the pci area
+ */
+#define PCI_LINMEMBASE  0x0e000000
 
 /*
  * Function decls
@@ -154,6 +160,7 @@ struct grfabs_et_priv {
 	pcitag_t		pci_tag;
 	volatile caddr_t	regkva;
 	volatile caddr_t	memkva;
+	u_int			linbase;
 	int			regsz;
 	int			memsz;
 	int			board_type;
@@ -331,11 +338,15 @@ u_char   depth;
 	 * Initialize the bitmap
 	 */
 	bm->plane         = et_priv.memkva;
-	bm->hw_address    = (caddr_t)kvtop(et_priv.memkva);
+	bm->vga_address   = (caddr_t)kvtop(et_priv.memkva);
+	bm->vga_base      = VGA_BASE;
+	bm->hw_address    = (caddr_t)(PCI_MEM_PHYS | et_priv.linbase);
+	bm->lin_base      = et_priv.linbase;
 	bm->regs          = et_priv.regkva;
 	bm->hw_regs       = (caddr_t)kvtop(et_priv.regkva);
 	bm->reg_size      = REG_MAPPABLE;
 	bm->phys_mappable = FRAME_MAPPABLE;
+	bm->vga_mappable  = VGA_MAPPABLE;
 
 	bm->bytes_per_row = (mode->size.width * depth) / NBBY;
 	bm->rows          = mode->size.height;
@@ -443,8 +454,10 @@ et_probe_card()
 		et_priv.board_type = BT_ET6000;
 	else et_priv.board_type = BT_ET4000;
 
-		/* Turn on the card */
-        pci_conf_write(pc, tag, PCI_MAPREG_START+4,
+	/* Turn on the card */
+	pci_conf_write(pc, tag, PCI_MAPREG_START, PCI_LINMEMBASE);
+	if (et_priv.board_type == BT_ET6000) 
+		pci_conf_write(pc, tag, PCI_MAPREG_START+4,
 					PCI_IOBASE | PCI_MAPREG_TYPE_IO);
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	csr |= (PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_IO_ENABLE);
@@ -458,7 +471,8 @@ et_probe_card()
 	 */
 	et_priv.regkva  = (volatile caddr_t)pci_io_addr;
 	et_priv.memkva  = (volatile caddr_t)pci_mem_addr;
-	et_priv.memsz   = 32*PCI_MEM_SIZE;
+	et_priv.linbase = PCI_LINMEMBASE;
+	et_priv.memsz   = PCI_VGA_SIZE;
 	et_priv.regsz   = PCI_IO_SIZE;
 
 	if (found && !atari_realconfig) {
@@ -673,10 +687,12 @@ et_boardinit()
 	WCrt(ba, CRT_ID_RASCAS_CONFIG,    0x28);
 	WCrt(ba, CTR_ID_EXT_START,        0x00);
 	WCrt(ba, CRT_ID_6845_COMPAT,      0x08);
-	WCrt(ba, CRT_ID_VIDEO_CONFIG1,    0x73);
-	WCrt(ba, CRT_ID_VIDEO_CONFIG2,    0x09);
 	if (et_priv.board_type == BT_ET6000)
 		et6000_init();
+	else {
+		WCrt(ba, CRT_ID_VIDEO_CONFIG1,    0x43);
+		WCrt(ba, CRT_ID_VIDEO_CONFIG2,    0x09);
+	}
 	
 	WCrt(ba, CRT_ID_HOR_OVERFLOW,     0x00);
 
@@ -742,7 +758,7 @@ et6000_init()
 
 	ba = et_priv.regkva + PCI_IOBASE;
 
-	ba[0x40] = 0x03;	/* XXX: or 0 as Thomas would like?	*/
+	ba[0x40] = 0x00;	/* Use standard vga addressing		*/
 	ba[0x41] = 0x2a;	/* Performance control			*/
 	ba[0x43] = 0x02;	/* XCLK/SCLK config			*/
 	ba[0x44] = 0x11;	/* RAS/CAS config			*/

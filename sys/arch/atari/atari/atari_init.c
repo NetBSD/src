@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.41 1998/11/20 12:46:51 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.42 1998/12/20 14:32:34 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -276,7 +276,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * If present, add pci areas
 	 */
 	if (machineid & ATARI_HADES)
-		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_MEM_SIZE);
+		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_VGA_SIZE);
 
 	/*
 	 * The 'pt' (the initial kernel pagetable) has to map the kernel and
@@ -685,9 +685,9 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 		}
 
 		pci_mem_addr  = ioaddr;
-		ioaddr       += PCI_MEM_SIZE;
-		epg           = &pg[btoc(PCI_MEM_SIZE)];
-		pg_proto      = PCI_MEM_PHYS | PG_RW | PG_CI | PG_V;
+		ioaddr       += PCI_VGA_SIZE;
+		epg           = &pg[btoc(PCI_VGA_SIZE)];
+		pg_proto      = PCI_VGA_PHYS | PG_RW | PG_CI | PG_V;
 		while(pg < epg) {
 			*pg++     = pg_proto;
 			pg_proto += NBPG;
