@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.1.1.2 2001/01/14 04:51:03 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.2 2001/01/16 02:20:19 simonb Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sshd.c,v 1.1.1.2 2001/01/14 04:51:03 itojun Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.2 2001/01/16 02:20:19 simonb Exp $");
 #endif
 
 #include "includes.h"
@@ -1341,9 +1341,9 @@ do_ssh1_kex(void)
 	BN_mask_bits(session_key_int, sizeof(session_key) * 8);
 	len = BN_num_bytes(session_key_int);
 	if (len < 0 || len > sizeof(session_key))
-		fatal("do_connection: bad len from %s: session_key_int %d > sizeof(session_key) %d",
+		fatal("do_connection: bad len from %s: session_key_int %d > sizeof(session_key) %lu",
 		    get_remote_ipaddr(),
-		    len, sizeof(session_key));
+		    len, (u_long)sizeof(session_key));
 	memset(session_key, 0, sizeof(session_key));
 	BN_bn2bin(session_key_int, session_key + sizeof(session_key) - len);
 
