@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.20 1996/10/13 04:10:50 christos Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.21 1996/11/17 13:38:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -84,16 +84,6 @@
  * Include more driver definitions
  */
 #include <atari/dev/ncr5380var.h>
-
-
-/*
- * This is crap, but because the interrupts now run at MFP spl-level (6),
- * splbio() is not enough at some places. The code should be checked to
- * find out where splhigh() is needed and where splbio() should be used.
- * Now that I use this interrupt sceme, the spl values are fake!
- */
-#undef splbio()
-#define splbio()	splhigh()
 
 /*
  * The atari specific driver options
@@ -317,6 +307,12 @@ scsi_tt_clr_ipend(void)
 	if (machineid & ATARI_TT)
 		single_inst_bclr_b(MFP2->mf_iprb, IB_SCDM);
 	single_inst_bclr_b(MFP2->mf_ipra, IA_SCSI);
+
+	/*
+	 * Remove interrupts already scheduled.
+	 */
+	rem_sicallback((si_farg)ncr_ctrl_intr);
+	rem_sicallback((si_farg)ncr_dma_intr);
 }
 
 static void
