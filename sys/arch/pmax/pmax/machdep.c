@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.157 2000/01/09 14:34:33 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.158 2000/01/09 22:31:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2000/01/09 14:34:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2000/01/09 22:31:44 simonb Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -66,11 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2000/01/09 14:34:33 ad Exp $");
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
-#include <sys/sysctl.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <uvm/uvm_extern.h>
+#include <sys/sysctl.h>			/* XXX after <vm/vm.h> */
 
 #include <dev/cons.h>
 
@@ -634,7 +634,7 @@ haltsys:
 	doshutdownhooks();
 
 	/* Finally, halt/reboot the system. */
-	printf("%s\n\n", (howto & RB_HALT != 0) ? "halted." : "rebooting...");
+	printf("%s\n\n", ((howto & RB_HALT) != 0) ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT, bootstr);
 	/*NOTREACHED*/
 }
