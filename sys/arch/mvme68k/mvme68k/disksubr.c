@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.4 1996/04/26 19:26:39 chuck Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.5 1996/05/01 21:22:55 chuck Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -52,12 +52,12 @@ static void printlp __P((struct disklabel *lp, char *str));
 static void printclp __P((struct cpu_disklabel *clp, char *str));
 #endif
 
-int
+void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-	return(-1);
+	return;
 }
 
 /*
