@@ -1,5 +1,5 @@
 #
-#	$NetBSD: mini_usr.list,v 1.11 2000/06/10 02:57:25 tsutsui Exp $
+#	$NetBSD: mini_usr.list,v 1.11.2.1 2001/04/20 12:44:14 he Exp $
 #
 # miniroot files from /usr:
 
@@ -10,7 +10,7 @@
 # libutil: rdate
 SPECIAL	cd usr; ln -s lib libexec
 COPY	${DESTDIR}/usr/libexec/ld.so		usr/lib
-COPY	${DESTDIR}/usr/lib/libc.so.12.62	usr/lib
+COPY	${DESTDIR}/usr/lib/libc.so.12.62.1	usr/lib
 COPY	${DESTDIR}/usr/lib/libcurses.so.3.6	usr/lib
 COPY	${DESTDIR}/usr/lib/libedit.so.2.3	usr/lib
 COPY	${DESTDIR}/usr/lib/libtermcap.so.0.4	usr/lib
