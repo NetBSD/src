@@ -1,5 +1,5 @@
 /* config.h.  Generated automatically by configure.  */
-/* config.h.in.  Generated automatically from configure.in by autoheader.  */
+/* config.in.  Generated automatically from configure.in by autoheader.  */
 /* acconfig.h
    This file is in the public domain.
 
