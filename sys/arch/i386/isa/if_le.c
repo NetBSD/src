@@ -10,12 +10,7 @@
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
  *
- *	$Id: if_le.c,v 1.1 1994/07/01 20:25:25 mycroft Exp $
- */
-
-/* TODO
- * 1) Advertise for more packets until all transmit buffers are full
- * 2) Add more of the timers/counters e.g. arpcom.opackets etc.
+ *	$Id: if_le.c,v 1.2 1994/07/01 21:31:14 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -169,7 +164,7 @@ found:
 	 * XXX - hopefully have better way to get dma'able memory later,
 	 * this code assumes that the physical memory address returned
 	 * from malloc will be below 16Mb. The Lance's address registers
-	 * are only 16 bits wide!
+	 * are only 24 bits wide!
 	 */
 #define MAXMEM ((NRBUF + NTBUF) * (BUFSIZE + sizeof(struct mds)) + \
 		sizeof(struct init_block))
@@ -931,7 +926,7 @@ le_read(sc, buf, len)
  */
 
 /*
- * Pull read data off a interface.
+ * Pull data off an interface.
  * Len is length of data, with local net header stripped.
  * We copy the data into mbufs.  When full cluster sized units are present
  * we copy into clusters.
