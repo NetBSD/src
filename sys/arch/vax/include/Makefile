@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/04/29 03:45:43 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 2000/05/25 20:25:22 matt Exp $
 
 KDIR=	/sys/arch/vax/include
 INCSDIR= /usr/include/vax
@@ -11,7 +11,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	float.h frame.h \
 	ibcs2_machdep.h ioa.h \
 	ka410.h ka420.h ka43.h ka630.h ka650.h ka750.h ka820.h \
-	lcgreg.h limits.h lock.h \
+	loadfile_machdep.h lcgreg.h limits.h lock.h \
 	macros.h math.h mtpr.h \
 	nexus.h param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
 	qdioctl.h qdreg.h qduser.h qevent.h \
