@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.54 2000/06/27 17:41:22 mrg Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.55 2000/11/24 00:34:32 chs Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -171,7 +171,11 @@ long addrmask[] = { 0,
  * that modifications after frees can be detected.
  */
 #define WEIRD_ADDR	((unsigned) 0xdeadbeef)
+#ifdef DEBUG
+#define MAX_COPY	PAGE_SIZE
+#else
 #define MAX_COPY	32
+#endif
 
 /*
  * Normally the freelist structure is used only to hold the list pointer
