@@ -1,6 +1,6 @@
 .\"	dhcpd.conf.5
 .\"
-.\" Copyright (c) 1995, 1996, 1997, 1998, 1998
+.\" Copyright (c) 1995, 1996, 1997, 1998, 1998, 1999
 .\" The Internet Software Consortium.    All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -733,10 +733,18 @@ The use of the server-identifier statement is not recommended - the only
 reason to use it is to force a value other than the default value to be
 sent on occasions where the default value would be incorrect.   The default
 value is the first IP address associated with the physical network interface
-on which the request arrived.   The usual case where the
+on which the request arrived.
+.PP
+The usual case where the
 \fIserver-identifier\fR statement needs to be sent is when a physical
 interface has more than one IP address, and the one being sent by default
 isn't appropriate for some or all clients served by that interface.
+Another common case is when an alias is defined for the purpose of
+having a consistent IP address for the DHCP server, and it is desired
+that the clients use this IP address when contacting the server.
+.PP
+Supplying a value for the dhcp-server-identifier option is equivalent
+to using the server-identifier statement.
 .SH REFERENCE: OPTION STATEMENTS
 .PP
 DHCP option statements are documented in the
