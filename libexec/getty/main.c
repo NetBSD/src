@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 1997/10/19 23:46:08 cjs Exp $	*/
+/*	$NetBSD: main.c,v 1.24 1997/11/18 21:29:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 1997/10/19 23:46:08 cjs Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 1997/11/18 21:29:11 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,9 +169,9 @@ static int	getname __P((void));
 static void	oflush __P((void));
 static void	prompt __P((void));
 static void	putchr __P((int));
-static void	putf __P((char *));
-static void	putpad __P((char *));
-static void	puts __P((char *));
+static void	putf __P((const char *));
+static void	putpad __P((const char *));
+static void	xputs __P((const char *));
 
 int
 main(argc, argv)
@@ -341,7 +341,7 @@ main(argc, argv)
 			alarm(0);
 			signal(SIGALRM, SIG_DFL);
 			if (name[0] == '-') {
-				puts("user names may not start with '-'.");
+				xputs("user names may not start with '-'.");
 				continue;
 			}
 			if (!(upper || lower || digit))
@@ -430,7 +430,7 @@ getname()
 			if (np > name) {
 				np--;
 				if (cfgetospeed(&tmode) >= 1200)
-					puts("\b \b");
+					xputs("\b \b");
 				else
 					putchr(cs);
 			}
@@ -442,7 +442,8 @@ getname()
 				putchr('\n');
 			/* this is the way they do it down under ... */
 			else if (np > name)
-				puts("                                     \r");
+				xputs(
+				    "                                     \r");
 			prompt();
 			np = name;
 			continue;
@@ -466,7 +467,7 @@ getname()
 
 static void
 putpad(s)
-	register char *s;
+	register const char *s;
 {
 	register pad = 0;
 	speed_t ospeed = cfgetospeed(&tmode);
@@ -483,7 +484,7 @@ putpad(s)
 		}
 	}
 
-	puts(s);
+	xputs(s);
 	/*
 	 * If no delay needed, or output speed is
 	 * not comprehensible, then don't try to delay.
@@ -503,8 +504,8 @@ putpad(s)
 }
 
 static void
-puts(s)
-	register char *s;
+xputs(s)
+	register const char *s;
 {
 	while (*s)
 		putchr(*s++);
@@ -552,7 +553,7 @@ prompt()
 
 static void
 putf(cp)
-	register char *cp;
+	register const char *cp;
 {
 	extern char editedhost[];
 	time_t t;
@@ -568,13 +569,13 @@ putf(cp)
 		case 't':
 			slash = strrchr(ttyn, '/');
 			if (slash == (char *) 0)
-				puts(ttyn);
+				xputs(ttyn);
 			else
-				puts(&slash[1]);
+				xputs(&slash[1]);
 			break;
 
 		case 'h':
-			puts(editedhost);
+			xputs(editedhost);
 			break;
 
 		case 'd': {
@@ -583,23 +584,23 @@ putf(cp)
 			fmt[4] = 'M';		/* I *hate* SCCS... */
 			(void)time(&t);
 			(void)strftime(db, sizeof(db), fmt, localtime(&t));
-			puts(db);
+			xputs(db);
 			break;
 
 		case 's':
-			puts(kerninfo.sysname);
+			xputs(kerninfo.sysname);
 			break;
 
 		case 'm':
-			puts(kerninfo.machine);
+			xputs(kerninfo.machine);
 			break;
 
 		case 'r':
-			puts(kerninfo.release);
+			xputs(kerninfo.release);
 			break;
 
 		case 'v':
-			puts(kerninfo.version);
+			xputs(kerninfo.version);
 			break;
 		}
 
