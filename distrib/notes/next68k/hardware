@@ -1,44 +1,50 @@
-.\"	$NetBSD: hardware,v 1.4 2000/11/01 15:36:53 deberg Exp $
+.\"	$NetBSD: hardware,v 1.5 2002/05/03 03:59:30 mbw Exp $
 .
 .Nx*M
-\*V will run on 68040-based non-turbo
+\*V will run on the 25 MHz 68040-based
 .Tn NeXT
-workstations.
-This include the NeXTstation and NeXTstation Color slabs, and the
-non-Turbo NeXT Cube.
-machines or Turbo (33 MHz) machines.
+workstations.  The Turbo (33 MHz) models are not supported.  The 68030
+model is not supported.
 .Nx*M
 \*V does not
-have complete SCSI support, so installations must use a remote NFS
-file system.
+have any local disk support, so you must netboot and run diskless.
+.Pp
+The minimum configuration requires 4 MB of RAM and a network server
+capable of netbooting
+.Nx*M .
+Serial consoles are poorly supported by the hardware, see the FAQ for
+help.  Typically it is just easier to use the NeXT monitor and keyboard.
+.Lk http://www.netbsd.org/Ports/next68k/faq.html
 .
 .Ss2 Supported hardware
 .(bullet -offset indent
 CPUs
 .(bullet -compact
-68030-based: none.
+68040-25 2-bit grayscale (NeXTcube)
 .It
-68040-based: NeXTstation, NeXTstation color, NeXT Cube.
+68040-25 2-bit grayscale (NeXTstation)
+.It
+68040-25 16-bit color (NeXTstation Color)
 .bullet)
 .It
 RS232 interfaces
 .(bullet -compact
-built in A and B serial ports
+on-board A and B serial ports
 .Pq Em zsc .
 .bullet)
 .It
 Network interfaces:
 .(bullet -compact
-built in ethernet
+on-board ethernet
 .Pq Em xe .
 .bullet)
 .It
 Displays
 .(bullet -compact
-NeXT monochrome display
+on-board NeXT monochrome display
 .Pq Em nextdisplay .
 .It
-NeXT 12-bit color display
+on-board NeXT 12-bit color display
 .Pq Em nextdisplay .
 .bullet)
 .It
@@ -54,4 +60,39 @@ Battery-backed real-time clock.
 .bullet)
 .bullet)
 .Pp
-If it's not on this list, there is no official support for it in this release.
+.
+.Ss2 Unsupported hardware
+.(bullet -offset indent
+CPUs
+.(bullet -compact
+68030-25 2-bit grayscale (NeXT Computer)
+.It
+68040-33 2-bit grayscale (NeXTcube Turbo)
+.It
+68040-33 2-bit grayscale (NeXTstation Turbo)
+.It
+68040-33 16-bit color (NeXTstation Color Turbo)
+.bullet)
+.It
+Disk interfaces
+.(bullet -compact
+on-board SCSI interface and disks
+.It
+Floppy drive
+.It
+Optical disk
+.It
+non-SCSI CD-ROM
+.bullet)
+.It
+Miscellaneous devices
+.(bullet -compact
+NeXTdimension 32-bit color framebuffer
+.It
+16-bit digital audio
+.It
+DSP
+.It
+NeXT Printer
+.bullet)
+.bullet)
