@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: wtf,v 1.4 1999/07/27 15:41:27 drochner Exp $
+#	$NetBSD: wtf,v 1.5 1999/08/13 03:02:06 sommerfeld Exp $
 #
 # Public domain
 #
@@ -27,7 +27,7 @@ while [ $# -gt 0 ] ; do
 		if [ $? -eq 0 ] ; then
 			echo "$1: $ans"
 		else
-			echo "Gee...  I don't know what $1 means..."
+			echo "Gee...  I don't know what $1 means..." 1>&2
 			rv=1
 		fi
 	fi
