@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.82 2003/08/04 22:27:00 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.83 2003/08/08 06:10:43 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2003/08/04 22:27:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 2003/08/08 06:10:43 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -90,7 +90,7 @@ trap(struct trapframe *frame)
 		type |= EXC_USER;
 
 #ifdef DIAGNOSTIC
-	if (pcb->pcb_pmreal != curpm)
+	if (!doing_shutdown && pcb->pcb_pmreal != curpm)
 		panic("trap: curpm (%p) != pcb->pcb_pmreal (%p)",
 		    curpm, pcb->pcb_pmreal);
 #endif
@@ -113,18 +113,6 @@ trap(struct trapframe *frame)
 		struct faultbuf *fb;
 		vaddr_t va = frame->dar;
 		ci->ci_ev_kdsi.ev_count++;
-
-		/*
-		 * Try to spill an evicted pte into the page table if this
-		 * wasn't a protection fault and the pmap has some evicted
-		 * pte's.  Note that this is done regardless of whether
-		 * interrupts are active or not.
-		 */
-		if ((frame->dsisr & DSISR_NOTFOUND) &&
-		    vm_map_pmap(kernel_map)->pm_evictions > 0 &&
-		    (va >> ADDR_SR_SHFT) != pcb->pcb_kmapsr &&
-		    pmap_pte_spill(vm_map_pmap(kernel_map), trunc_page(va)))
-			return;
 
 		/*
 		 * Only query UVM if no interrupts are active.
@@ -242,15 +230,6 @@ trap(struct trapframe *frame)
 
 	case EXC_ISI:
 		ci->ci_ev_kisi.ev_count++;
-		/*
-		 * Try to spill an evicted pte into the page table
-		 * if the pmap has some evicted pte's.  Now that LKMs
-		 * are supported, this is a real possibility.
-		 */
-		if (pmap_kernel()->pm_evictions > 0 &&
-		    pmap_pte_spill(pmap_kernel(), trunc_page(frame->srr0))) {
-			break;
-		}
 
 		printf("trap: kernel ISI by %#lx (SRR1 %#lx)\n",
 		    frame->srr0, frame->srr1);
