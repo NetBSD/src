@@ -119,10 +119,10 @@ fill_fpregset (fpregset_t *fpregsetp, int regno)
     {
        int regnum;
        for (regnum = ARM_F0_REGNUM; regnum <= ARM_F7_REGNUM; regnum++)
-         regcache_collect(regnum, (char *) &fpregsetp->fpr[regnum]);
+         regcache_collect(regnum, (char *) &fpregsetp->fpr[regnum - ARM_F0_REGNUM]);
     }
   else if (regno >= ARM_F0_REGNUM && regno <= ARM_F7_REGNUM)
-    regcache_collect(regno, (char *) &fpregsetp->fpr[regno]);
+    regcache_collect(regno, (char *) &fpregsetp->fpr[regno - ARM_F0_REGNUM]);
 
   if (ARM_FPS_REGNUM == regno || -1 == regno)
     regcache_collect (ARM_FPS_REGNUM, (char *) &fpregsetp->fpr_fpsr);
