@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 1998/02/23 22:55:09 jonathan Exp $	*/
+/*	$NetBSD: md.h,v 1.11 1998/02/24 05:36:03 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -38,20 +38,16 @@
 
 /* md.h -- Machine specific definitions for the i386 */
 
+
+/* i386 uses the mbr code. */
+#include "mbr.h"
+
 /* constants and defines */
+
 
 /* Megs required for a full X installation. */
 #define XNEEDMB 50
 
-/* fdisk partition information dlxxxx => NetBSD disklabel, bxxxx => bios */
-EXTERN int bcyl, bhead, bsec, bsize, bcylsize;
-EXTERN int bstuffset INIT(0);
-
-enum info {ID,SIZE,START,FLAG,SET};
-EXTERN int part[4][5] INIT({{0}});
-EXTERN int activepart;
-EXTERN int bsdpart;
-EXTERN int usefull;
 
 /*
  *  Default filesets to fetch and install during installation
@@ -135,11 +131,4 @@ EXTERN	char *fdtype INIT("msdos");
  *  prototypes for MD code.
  */
 
-
-/* from fdisk.c */
-void	set_fdisk_geom (void);
-void	disp_cur_geom (void);
-int	check_geom (void);
-int 	partsoverlap (int, int);
-void	get_fdisk_info (void);
 
