@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.32 2003/08/07 11:25:44 agc Exp $
+.\"	$NetBSD: syslogd.8,v 1.33 2003/10/17 01:39:25 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 25, 2002
+.Dd October 17, 2003
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm
-.Op Fl dns
+.Op Fl dnrs
 .Bk -words
 .Op Fl f Ar config_file
 .Ek
@@ -98,6 +98,10 @@ If no
 arguments are created, the default socket of
 .Pa /var/run/log
 is used.
+.It Fl r
+Disable the compression of repeated instances of the same line
+into a single line of the form
+.Dq last message repeated N times .
 .It Fl s
 Select
 .Dq secure

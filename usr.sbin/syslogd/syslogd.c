@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.62 2003/10/16 06:22:09 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.63 2003/10/17 01:39:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.62 2003/10/16 06:22:09 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.63 2003/10/17 01:39:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,6 +197,7 @@ int	SecureMode = 0;		/* listen only on unix domain socks */
 int	UseNameService = 1;	/* make domain name queries */
 int	NumForwards = 0;	/* number of forwarding actions in conf file */
 char	**LogPaths;		/* array of pathnames to read messages from */
+int	NoRepeat = 0;		/* disable "repeated"; log always */
 
 void	cfline(char *, struct filed *);
 char   *cvthname(struct sockaddr_storage *);
@@ -240,7 +241,7 @@ main(int argc, char *argv[])
 
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "dnsf:m:p:P:u:g:t:")) != -1)
+	while ((ch = getopt(argc, argv, "dnsf:m:p:P:ru:g:t:")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -266,6 +267,9 @@ main(int argc, char *argv[])
 		case 'P':		/* file of paths */
 			logpath_fileadd(&LogPaths, &funixsize, 
 			    &funixmaxsize, optarg);
+			break;
+		case 'r':		/* disable "repeated" compression */
+			NoRepeat++;
 			break;
 		case 's':		/* no network listen mode */
 			SecureMode++;
@@ -554,7 +558,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-dns] [-f config_file] [-g group] [-m mark_interval]\n"
+	    "usage: %s [-dnrs] [-f config_file] [-g group] [-m mark_interval]\n"
 	    "\t[-P file_list] [-p log_socket [-p log_socket2 ...]]\n"
 	    "\t[-t chroot_dir] [-u user]\n", getprogname());
 	exit(1);
@@ -767,9 +771,10 @@ logmsg(int pri, char *msg, char *from, int flags)
 			continue;
 
 		/*
-		 * suppress duplicate lines to this file
+		 * suppress duplicate lines to this file unless NoRepeat
 		 */
 		if ((flags & MARK) == 0 && msglen == f->f_prevlen &&
+		    !NoRepeat &&
 		    !strcmp(msg, f->f_prevline) &&
 		    !strcmp(from, f->f_prevhost)) {
 			(void)strncpy(f->f_lasttime, timestamp, 15);
