@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.480 2004/05/18 12:24:11 christos Exp $
+# $NetBSD: mi,v 1.481 2004/05/19 10:29:21 itojun Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -178,6 +178,7 @@
 ./sbin/reboot					base-sysutil-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
+./sbin/rndc-confgen				base-bind-root
 ./sbin/route					base-netutil-root
 ./sbin/routed					base-router-root
 ./sbin/rrestore					base-netutil-root
