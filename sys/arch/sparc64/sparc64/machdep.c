@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1999/11/06 20:23:02 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.53 1999/11/08 05:06:42 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -418,7 +418,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	int chosen;
+	u_int chosen;
 	char bootargs[256];
 	char *cp = NULL;
 
@@ -429,12 +429,26 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	switch (name[0]) {
 	case CPU_BOOTED_KERNEL:
 		if (((chosen = OF_finddevice("/chosen")) != -1) &&
-		    (OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs) < 0)) {
+		    ((OF_getprop(chosen, "bootargs", bootargs, sizeof bootargs))
+		      >= 0)) {
+			/*
+			 * bootargs is of the form: [kernelname] [args...]
+			 * It can be the empty string if we booted from the default
+			 * kernel name.
+			 */
 			for (cp = bootargs; 
 			     *cp && *cp != ' ' && *cp != '\t' && *cp != '\n';
 			     cp++);
 			*cp = 0;
+			/* Now we've separated out the kernel name from the args */
 			cp = bootargs;
+			if (*cp == 0 || *cp == '-') 
+				/*
+				 * We can leave it NULL && let userland handle
+				 * the failure or set it to the default name,
+				 * `netbsd' 
+				 */
+				cp = "netbsd";
 		}
 		if (cp == NULL || cp[0] == '\0')
 			return (ENOENT);
