@@ -1,9 +1,7 @@
-# $NetBSD: md.i386,v 1.31 2005/03/23 15:43:42 tron Exp $
+# $NetBSD: md.i386,v 1.32 2005/03/24 05:27:18 rtr Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XFree86
 ./usr/X11R6/bin/Xvfb
-./usr/X11R6/bin/getconfig
-./usr/X11R6/bin/getconfig.pl
 ./usr/X11R6/bin/gtf
 ./usr/X11R6/bin/inb
 ./usr/X11R6/bin/inl
@@ -75,9 +73,6 @@
 ./usr/X11R6/lib/X11/doc/Versions
 ./usr/X11R6/lib/X11/doc/VideoBoard98
 ./usr/X11R6/lib/X11/etc/xmodmap.std
-./usr/X11R6/lib/X11/getconfig
-./usr/X11R6/lib/X11/getconfig/cfg.sample
-./usr/X11R6/lib/X11/getconfig/xfree86.cfg
 ./usr/X11R6/lib/libxf86config.a
 ./usr/X11R6/lib/modules/codeconv/libARABIC.a		xserver-obsolete	obsolete
 ./usr/X11R6/lib/modules/codeconv/libARMSCII8.a		xserver-obsolete	obsolete
