@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.6 2001/12/01 16:43:19 wiz Exp $
+.\"	$NetBSD: menuc.1,v 1.7 2001/12/01 20:39:13 wiz Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -77,22 +77,22 @@ and are like a space in the input.
 They are like C comments starting with
 .Em /*
 and ending with
-.Em */.
+.Em */ .
 They are unlike C comments in that they may be nested.  A comment
 does not end until a matching end comment is found.
 .Pp
 In many places, C code is included in the definition
-.Ar file.
+.Ar file .
 All C code is passed verbatim to the C output file.
 .Nm menuc
 comments do not start in C code
 and comments in the C code are passed verbatim to
 the output.  The C comments are not recognized by
-.Nm menuc.
+.Nm menuc .
 In all cases, C code starts with a left brace
 .Em ({)
 and ends with the matching right brace
-.Em (}).
+.Em (}) .
 It is important to recognize that in code segments, any brace
 will be counted, even if it is in a C comment inside the code.
 .Pp
@@ -102,21 +102,21 @@ contains an initial (and optional) code block followed by any
 number of menu definition elements in any order.  The initial
 code block usually contains includes of header files used by
 code in the menu code blocks later in the
-.Ar file.
+.Ar file .
 The file is free format, so the actual formatting of the input
 .Ar file
 is to the taste of the programmer.
 .Pp
 All other C code that will appear in an
-.Em action.
+.Em action .
 This will be specified as
 .Em <action>
 in later text.  Such an action will appear as:
 .Dl action <opt_endwin> <code>
 in the
-.Ar file.
+.Ar file .
 The
-.Em <opt_endwin>,
+.Em <opt_endwin> ,
 if present is:
 .Dl ( endwin )
 and specifies that the curses
@@ -137,7 +137,7 @@ To include dynamic menus, one needs only add the declaration:
 .Dl allow dynamic menus ;
 The semicolon is required to terminate this declaration.  This
 declaration may appear anywhere in the
-.Ar file,
+.Ar file ,
 but usually appears before any menus are defined.
 .Pp
 The next element is a code block to execute if the curses
@@ -166,11 +166,11 @@ The options appear in three forms:
 .Dl variable "string"
 .Pp
 The variables for the first form are
-.Va x,
-.Va y,
-.Va h,
+.Va x ,
+.Va y ,
+.Va h ,
 and
-.Va w.
+.Va w .
 These specify the upper left (x,y) and the
 height (h) and width (w) of the menu window.  The upper
 left is in the curses coordinate system.  If not
@@ -200,7 +200,7 @@ sets the text for the exit menu option.
 The default declaration may appear multiple times.  Each time,
 it sets the default values for menu definitions that follow
 in the
-.Ar file.
+.Ar file .
 In each menu definition, any or all of these default definitions
 may be overridden for that menu.
 .Pp
@@ -219,7 +219,7 @@ characters.  They must start with an alpha character.
 In C source, a menu named
 .Nm foo
 is appears as
-.Nm MENU_foo.
+.Nm MENU_foo .
 (Capitalization is important.)  This is important,
 because the menu is displayed and processed by
 calling the function
@@ -269,14 +269,14 @@ after processing both the action and a sub menu,
 the current menu will be exited if the element
 .Dl exit
 is specified.
-.Em Note:
+.Em Note :
 If
 .Em exit
 is specified, next menu will not work because
 the menu system will exit the
 .Em current
 menu, even if current has been set by
-.Em next menu.
+.Em next menu .
 .Pp
 After all menu items, the final two menu definition
 elements may appear.
@@ -293,7 +293,7 @@ help window if the question mark is typed.
 The actual help text starts with a left brace
 .Em ({)
 and ends with the matching right brace
-.Em (}).
+.Em (}) .
 The braces are not included in the
 help string, but all other characters between
 them are included.  Newlines in the code
@@ -305,7 +305,6 @@ supports dynamic menus by allowing the user to create new
 menus.  The related definitions for using dynamic menus
 are:
 .Bd -literal
-
 struct menudesc;
 
 typedef
@@ -352,7 +351,6 @@ int new_menu (char * title, menu_ent * opts, int numopts,
         void (*post_act)(void), void (*exit_act)(void), char * help);
 
 void free_menu (int menu_no);
-
 .Ed
 .Pp
 The
@@ -381,7 +379,7 @@ is the boolean options.  Note, box, exit and shortcuts are
 enabled by default.  You need to add option flags to turn
 them off or turn on scrollable menus.
 The options
-.Ar post_act,
+.Ar post_act ,
 and
 .Ar exit_act
 are function pointers to the the display action and the exit
@@ -390,13 +388,18 @@ finally,
 .Ar help
 is the text to display in a help screen.  A NULL help
 pointer will disable the help feature for the menu.
-.Sh EXAMPLE
+.Sh FILES
+.Bl -item -width /usr/share/misc/menu_sys.def
+.It
+.Pa /usr/share/misc/menu_sys.def
+.El
+.Sh EXAMPLES
 The following is a simple menu definition file.
 It is complete in that the output of
 .Na menuc
 may be compiled into a complete program.  For example,
 if the following was in a file called
-.Na example.mc,
+.Na example.mc ,
 an executable program could be produced by the following
 commands.
 .Bd -literal -offset indent
@@ -406,9 +409,8 @@ cc -o example example.c -lcurses
 A much
 more complete example is available with the source
 distribution in a subdirectory called
-.Em testm.
+.Em testm .
 .Bd -literal
-
 /* This is an example menu definition file for menuc. */
 
 {
@@ -454,14 +456,8 @@ This is a simple help screen for an example menu definition file.
 
 menu othermenu, title "Sub/Next Menu", x=5, y=5, no box;
    option "Do Nothing!", action { };
-
 .Ed
-.Sh FILES
-.Bl -item -width /usr/share/misc/menu_sys.def
-.It
-.Pa /usr/share/misc/menu_sys.def
-.El
-.Sh AUTHOR
+.Sh AUTHORS
 Philip A. Nelson for Piermont Information Systems Inc.  Initial ideas
 for this were developed and implemented in Pascal at the Leiden University,
 Netherlands, in the summer of 1980.
