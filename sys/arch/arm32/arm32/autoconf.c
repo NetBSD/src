@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 1998/06/17 19:40:50 mark Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 1998/06/26 22:40:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -202,9 +202,8 @@ configure()
 	ofrootfound();
 #endif
 
+#ifdef DEBUG
 	/* Debugging information */
-
-#ifndef TERSE
 	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_clock=%08x\n",
 	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
 	    irqmasks[IPL_CLOCK]);
@@ -212,7 +211,6 @@ configure()
 	    irqmasks[IPL_NONE]);
 
 	dump_spl_masks();
-
 #endif
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
