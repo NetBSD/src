@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.108 1997/08/04 05:29:20 perry Exp $	*/
+/*	$NetBSD: pccons.c,v 1.109 1997/08/14 16:02:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -193,7 +193,7 @@ static int kbc_put8042cmd __P((u_char));
 
 void pccnprobe __P((struct consdev *));
 void pccninit __P((struct consdev *));
-void pccnputc __P((dev_t, char));
+void pccnputc __P((dev_t, int));
 int pccngetc __P((dev_t));
 void pccnpollc __P((dev_t, int));
 
@@ -798,15 +798,16 @@ pccninit(cp)
 void
 pccnputc(dev, c)
 	dev_t dev;
-	char c;
+	int c;
 {
 	u_char oldkernel = kernel;
+	char help = c;
 
 	kernel = 1;
-	if (c == '\n')
+	if (help == '\n')
 		sput("\r\n", 2);
 	else
-		sput(&c, 1);
+		sput(&help, 1);
 	kernel = oldkernel;
 }
 
