@@ -1,4 +1,4 @@
-.\"	$NetBSD: compress.1,v 1.5 1995/03/26 09:44:34 glass Exp $
+.\"	$NetBSD: compress.1,v 1.6 1997/09/15 10:58:37 lukem Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 .\".Nm zcat
 .Nd compress and expand data
 .Sh SYNOPSIS
-.Nm compress
+.Nm
 .Op Fl cfv
 .Op Fl b Ar bits
 .Op Ar
@@ -57,7 +57,7 @@
 .\".Nm zcat
 .\".Op Ar
 .Sh DESCRIPTION
-.Nm Compress
+.Nm
 reduces the size of the named files using adaptive Lempel-Ziv coding.
 Each
 .Ar file
@@ -70,7 +70,7 @@ If compression would not reduce the size of a
 .Ar file ,
 the file is ignored.
 .Pp
-.Nm Uncompress
+.Nm uncompress
 restores the compressed files to their original form, renaming the
 files by deleting the
 .Dq .Z
@@ -110,7 +110,7 @@ Additionally, files are overwritten without prompting for confirmation.
 Print the percentage reduction of each file.
 .El
 .Pp
-.Nm Compress
+.Nm
 uses a modified Lempel-Ziv algorithm.
 Common substrings in the file are first replaced by 9-bit codes 257 and up.
 When code 512 is reached, the algorithm switches to 10-bit codes and
@@ -124,13 +124,13 @@ must be between 9 and 16.
 After the
 .Ar bits
 limit is reached,
-.Nm compress
+.Nm
 periodically checks the compression ratio.
 If it is increasing,
-.Nm compress
+.Nm
 continues to use the existing code dictionary.
 However, if the compression ratio decreases,
-.Nm compress
+.Nm
 discards the table of substrings and rebuilds it from scratch.  This allows
 the algorithm to adapt to the next "block" of the file.
 .Pp
@@ -157,7 +157,7 @@ coding (as used in the historical command compact), and takes less
 time to compute.
 .Pp
 The
-.Nm compress
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh SEE ALSO
 .Xr zcat 1
