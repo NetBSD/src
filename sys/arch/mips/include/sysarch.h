@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.5 2002/07/19 03:13:55 simonb Exp $ */
+/*	$NetBSD: sysarch.h,v 1.6 2003/09/11 09:40:13 kleink Exp $ */
 
 #ifndef _MIPS_SYSARCH_H_
 #define _MIPS_SYSARCH_H_
@@ -22,6 +22,10 @@ struct mips_cachectl_args {
 };
 
 #ifndef _KERNEL
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
 int sysarch(int, void *);
+__END_DECLS
 #endif /* !_KERNEL */
 #endif /* !_MIPS_SYSARCH_H_ */

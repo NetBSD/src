@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.12 2002/06/07 04:04:47 gmcgarry Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.13 2003/09/11 09:40:12 kleink Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
 #define _I386_SYSARCH_H_
@@ -89,6 +89,9 @@ struct i386_pmc_read_args {
 struct mtrr;
 
 #ifndef _KERNEL
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
 int i386_get_ldt __P((int, union descriptor *, int));
 int i386_set_ldt __P((int, union descriptor *, int));
 int i386_iopl __P((int));
@@ -100,6 +103,7 @@ int i386_pmc_read __P((struct i386_pmc_read_args *));
 int i386_set_mtrr __P((struct mtrr *, int *));
 int i386_get_mtrr __P((struct mtrr *, int *));
 int sysarch __P((int, void *));
+__END_DECLS
 #endif
 
 #endif /* !_I386_SYSARCH_H_ */
