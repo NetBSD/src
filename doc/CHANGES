@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.440 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.441 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -238,3 +238,5 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 		[lukem 20050308]
 	wm(4): Add TCPv4 hardware transmit segment offload support.
 		[matt 20050309]
+	xen: updated to support the xen 2.0 kernel, including domain0 support
+		(this drops support for xen 1.2) [bouyer 20050309]
