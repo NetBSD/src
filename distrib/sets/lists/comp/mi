@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.625 2003/10/01 01:31:20 christos Exp $
+#	$NetBSD: mi,v 1.626 2003/10/03 18:46:22 wiz Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -3635,6 +3635,7 @@
 ./usr/share/man/cat3/ypclnt.0	comp-c-catman
 ./usr/share/man/cat3/yperr_string.0	comp-c-catman
 ./usr/share/man/cat3/ypprot_err.0	comp-c-catman
+./usr/share/man/cat3/zlib.0	comp-c-catman
 ./usr/share/man/cat5/cvs.0	comp-cvs-catman
 ./usr/share/man/cat5/mk.conf.0		comp-util-catman
 ./usr/share/man/cat5/ranlib.0		comp-util-catman
@@ -7086,6 +7087,7 @@
 ./usr/share/man/man3/ypclnt.3		comp-c-man
 ./usr/share/man/man3/yperr_string.3	comp-c-man
 ./usr/share/man/man3/ypprot_err.3	comp-c-man
+./usr/share/man/man3/zlib.3		comp-c-man
 ./usr/share/man/man5/cvs.5		comp-cvs-man
 ./usr/share/man/man5/mk.conf.5		comp-util-man
 ./usr/share/man/man5/ranlib.5		comp-util-man
