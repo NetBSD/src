@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230.4.4 1997/06/06 00:43:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230.4.5 1997/06/06 19:44:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@
 #endif
 
 #include "isa.h"
+#include "isadma.h"
 #include "npx.h"
 #if NNPX > 0
 extern struct proc *npxproc;
@@ -1416,6 +1417,25 @@ init386(first_avail)
 	/* Round down to whole pages. */
 	biosbasemem &= -(NBPG / 1024);
 	biosextmem &= -(NBPG / 1024);
+
+#if NISADMA > 0
+	/*
+	 * Some motherboards/BIOSes remap the 384K of RAM that would
+	 * normally be covered by the ISA hole to the end of memory
+	 * so that it can be used.  However, on a 16M system, this
+	 * would cause bounce buffers to be allocated and used.
+	 * This is not desirable behaviour, as more than 384K of
+	 * bounce buffers might be allocated.  As a work-around,
+	 * we round memory down to the nearest 1M boundary if
+	 * we're using any isadma devices and the remapped memory
+	 * is what puts us over 16M.
+	 */
+	if (biosextmem > (15*1024) && biosextmem < (16*1024)) {
+		printf("Warning: ignoring %dk of remapped memory\n",
+		    biosextmem - (15*1024));
+		biosextmem = (15*1024);
+	}
+#endif
 
 #if NAPM > 0
 	avail_start = 2*NBPG;	/* save us a page! */
