@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.48 1999/06/06 01:53:45 thorpej Exp $	*/
+/*	$NetBSD: inetd.c,v 1.49 1999/07/02 04:48:19 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.48 1999/06/06 01:53:45 thorpej Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.49 1999/07/02 04:48:19 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,6 +162,13 @@ __RCSID("$NetBSD: inetd.c,v 1.48 1999/06/06 01:53:45 thorpej Exp $");
  * for new requests.
  *
  * Comment lines are indicated by a `#' in column 1.
+ *
+ * #ifdef IPSEC
+ * Comment lines that start with "#@" denote IPsec policy string, as described
+ * in ipsec_set_policy(3).  This will affect all the following items in
+ * inetd.conf(8).  To reset the policy, just use "#@" line.  By default,
+ * there's no IPsec policy.
+ * #endif
  */
 
 /*
@@ -224,6 +231,13 @@ __RCSID("$NetBSD: inetd.c,v 1.48 1999/06/06 01:53:45 thorpej Exp $");
 #include <util.h>
 
 #include "pathnames.h"
+
+#ifdef IPSEC
+#include <netinet6/ipsec.h>
+#ifndef IPSEC_POLICY_IPSEC	/* no ipsec support on old ipsec */
+#undef IPSEC
+#endif
+#endif
 
 #ifdef LIBWRAP
 # include <tcpd.h>
@@ -292,11 +306,15 @@ struct	servtab {
 	char	*se_server;		/* server program */
 #define	MAXARGV 20
 	char	*se_argv[MAXARGV+1];	/* program arguments */
+#ifdef IPSEC
+	char	*se_policy;		/* IPsec poilcy string */
+#endif
 	int	se_fd;			/* open descriptor */
 	int	se_type;		/* type */
 	union {
 		struct	sockaddr se_un_ctrladdr;
 		struct	sockaddr_in se_un_ctrladdr_in;
+		struct	sockaddr_in6 se_un_ctrladdr_in6;
 		struct	sockaddr_un se_un_ctrladdr_un;
 	} se_un;			/* bound address */
 #define se_ctrladdr	se_un.se_un_ctrladdr
@@ -346,6 +364,9 @@ void		retry __P((int));
 void		run_service __P((int, struct servtab *));
 int		setconfig __P((void));
 void		setup __P((struct servtab *));
+#ifdef IPSEC
+void		ipsecsetup __P((struct servtab *));
+#endif
 char	       *sskip __P((char **));
 char	       *skip __P((char **));
 void		tcpmux __P((int, struct servtab *));
@@ -804,6 +825,10 @@ config(signo)
 			SWAP(char *, sep->se_server, cp->se_server);
 			for (i = 0; i < MAXARGV; i++)
 				SWAP(char *, sep->se_argv[i], cp->se_argv[i]);
+#ifdef IPSEC
+			SWAP(char *, sep->se_policy, cp->se_policy);
+			ipsecsetup(sep);
+#endif
 			SWAP(int, cp->se_type, sep->se_type);
 			SWAP(int, cp->se_max, sep->se_max);
 #undef SWAP
@@ -844,43 +869,47 @@ config(signo)
 				setup(sep);
 			break;
 		case AF_INET:
-			sep->se_ctrladdr_in.sin_family = AF_INET;
-			if (!strcmp(sep->se_hostaddr,"*"))
-				sep->se_ctrladdr_in.sin_addr.s_addr =
-				    INADDR_ANY;
-			else if (!inet_aton(sep->se_hostaddr,
-			    &sep->se_ctrladdr_in.sin_addr)) {
-				/* Do we really want to support hostname lookups here? */
-				struct hostent *hp;
-				hp = gethostbyname(sep->se_hostaddr);
-				if (hp == 0) {
-					syslog(LOG_ERR, "%s: unknown host",
-					    sep->se_hostaddr);
-					sep->se_checked = 0;
-					continue;
-				} else if (hp->h_addrtype != AF_INET) {
-					syslog(LOG_ERR,
-				       "%s: address isn't an Internet address",
-					    sep->se_hostaddr);
-					sep->se_checked = 0;
-					continue;
-				} else if (hp->h_length != sizeof(struct in_addr)) {
-					syslog(LOG_ERR,
-		       "%s: address size wrong (under DNS corruption attack?)",
-					    sep->se_hostaddr);
-					sep->se_checked = 0;
-					continue;
-				} else {
-					memcpy(&sep->se_ctrladdr_in.sin_addr,
-					    hp->h_addr_list[0],
-					    sizeof(struct in_addr));
-				}
-			}
-			if (ISMUX(sep)) {
-				sep->se_fd = -1;
+		case AF_INET6:
+		    {
+			struct addrinfo hints, *res;
+			char *host, *port;
+			int error;
+
+			memset(&hints, 0, sizeof(hints));
+			hints.ai_family = sep->se_family;
+			hints.ai_socktype = sep->se_socktype;
+			if (!strcmp(sep->se_hostaddr, "*")) {
+				hints.ai_flags = AI_PASSIVE;
+				host = NULL;
+			} else
+				host = sep->se_hostaddr;
+			if (isrpcservice(sep) || ISMUX(sep))
+				port = "0";
+			else
+				port = sep->se_service;
+			error = getaddrinfo(host, port, &hints, &res);
+			if (error) {
+				syslog(LOG_ERR, "%s: %s",
+				    sep->se_hostaddr, gai_strerror(error));
+				sep->se_checked = 0;
 				continue;
 			}
-			sep->se_ctrladdr_size = sizeof(sep->se_ctrladdr_in);
+			if (res->ai_next) {
+				syslog(LOG_ERR, "%s: resolved to multiple addr",
+				    sep->se_hostaddr);
+				sep->se_checked = 0;
+				freeaddrinfo(res);
+				continue;
+			}
+			memcpy(&sep->se_ctrladdr, res->ai_addr,
+				res->ai_addrlen);
+			if (ISMUX(sep)) {
+				sep->se_fd = -1;
+				freeaddrinfo(res);
+				continue;
+			}
+			sep->se_ctrladdr_size = res->ai_addrlen;
+			freeaddrinfo(res);
 			if (isrpcservice(sep)) {
 				struct rpcent *rp;
 
@@ -902,29 +931,12 @@ config(signo)
 				if (sep->se_fd != -1)
 					register_rpc(sep);
 			} else {
-				u_short port = htons(atoi(sep->se_service));
-
-				if (!port) {
-					sp = getservbyname(sep->se_service,
-					    sep->se_proto);
-					if (sp == 0) {
-						syslog(LOG_ERR,
-						    "%s/%s: unknown service",
-						    sep->se_service,
-						    sep->se_proto);
-						sep->se_checked = 0;
-						continue;
-					}
-					port = sp->s_port;
-				}
-				if (port != sep->se_ctrladdr_in.sin_port) {
-					sep->se_ctrladdr_in.sin_port = port;
-					if (sep->se_fd >= 0)
-						close_sep(sep);
-				}
+				if (sep->se_fd >= 0)
+					close_sep(sep);
 				if (sep->se_fd == -1 && !ISMUX(sep))
 					setup(sep);
 			}
+		    }
 		}
 	}
 	endconfig();
@@ -965,6 +977,7 @@ retry(signo)
 			switch (sep->se_family) {
 			case AF_LOCAL:
 			case AF_INET:
+			case AF_INET6:
 				setup(sep);
 				if (sep->se_fd != -1 && isrpcservice(sep))
 					register_rpc(sep);
@@ -989,6 +1002,7 @@ goaway(signo)
 			(void)unlink(sep->se_service);
 			break;
 		case AF_INET:
+		case AF_INET6:
 			if (sep->se_wait == 1 && isrpcservice(sep))
 				unregister_rpc(sep);
 			break;
@@ -1034,6 +1048,9 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 	    SO_RCVBUF, (char *)&sep->se_rcvbuf, sizeof(sep->se_rcvbuf)) < 0)
 		syslog(LOG_ERR, "setsockopt (SO_RCVBUF %d): %m",
 		    sep->se_rcvbuf);
+#ifdef IPSEC
+	ipsecsetup(sep);
+#endif
 
 	if (bind(sep->se_fd, &sep->se_ctrladdr, sep->se_ctrladdr_size) < 0) {
 		if (debug)
@@ -1064,6 +1081,47 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 		    sep->se_server, sep->se_fd);
 }
 
+#ifdef IPSEC
+void
+ipsecsetup(sep)
+	struct servtab *sep;
+{
+	int len;
+	char *buf;
+	char *policy;
+	int level, opt;
+
+	switch (sep->se_family) {
+	case AF_INET:
+		level = IPPROTO_IP;
+		opt = IP_IPSEC_POLICY;
+		break;
+	case AF_INET6:
+		level = IPPROTO_IPV6;
+		opt = IPV6_IPSEC_POLICY;
+		break;
+	default:	
+		return;
+	}
+
+	if (!sep->se_policy || sep->se_policy[0] == '\0')
+		policy = "entrust";
+	else
+		policy = sep->se_policy;
+
+	len = ipsec_get_policylen(policy);
+	if (len >= 0 && (buf = (char *)malloc(len)) != NULL) {
+		ipsec_set_policy(buf, len, policy);
+		if (setsockopt(sep->se_fd, level, opt, buf, len) < 0) {
+			syslog(LOG_ERR, "setsockopt (IP_IPSEC_POLICY, %s): %m",
+				policy);
+		}
+		free(buf);
+	} else
+		syslog(LOG_ERR, "invalid security policy \"%s\"", policy);
+}
+#endif
+
 /*
  * Finish with a service and its socket.
  */
@@ -1092,7 +1150,8 @@ register_rpc(sep)
 {
 #ifdef RPC
 	int n;
-	struct sockaddr_in sin;
+	struct sockaddr_storage ss;
+	struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
 	struct protoent *pp;
 
 	if ((pp = getprotobyname(sep->se_proto+4)) == NULL) {
@@ -1100,9 +1159,14 @@ register_rpc(sep)
 		    sep->se_proto);
 		return;
 	}
-	n = sizeof sin;
-	if (getsockname(sep->se_fd, (struct sockaddr *)&sin, &n) < 0) {
+	n = sizeof ss;
+	if (getsockname(sep->se_fd, (struct sockaddr *)&ss, &n) < 0) {
 		syslog(LOG_ERR, "%s/%s: getsockname: %m",
+		    sep->se_service, sep->se_proto);
+		return;
+	}
+	if (ss.ss_family != AF_INET) {	/*XXX*/
+		syslog(LOG_ERR, "%s/%s: rpc not supported",
 		    sep->se_service, sep->se_proto);
 		return;
 	}
@@ -1111,12 +1175,12 @@ register_rpc(sep)
 		if (debug)
 			fprintf(stderr, "pmap_set: %u %u %u %u\n",
 			    sep->se_rpcprog, n, pp->p_proto,
-			    ntohs(sin.sin_port));
+			    ntohs(sin->sin_port));
 		(void)pmap_unset(sep->se_rpcprog, n);
-		if (!pmap_set(sep->se_rpcprog, n, pp->p_proto, ntohs(sin.sin_port)))
+		if (!pmap_set(sep->se_rpcprog, n, pp->p_proto, ntohs(sin->sin_port)))
 			syslog(LOG_ERR, "pmap_set: %u %u %u %u: %m",
 			    sep->se_rpcprog, n, pp->p_proto,
-			    ntohs(sin.sin_port));
+			    ntohs(sin->sin_port));
 	}
 #endif /* RPC */
 }
@@ -1202,10 +1266,37 @@ getconfigent()
 	static char TCPMUX_TOKEN[] = "tcpmux/";
 #define MUX_LEN		(sizeof(TCPMUX_TOKEN)-1)
 	char *hostdelim;
+#ifdef IPSEC
+	char *policy = NULL;
+#endif
 
 more:
+	while ((cp = nextline(fconfig))) {
+#ifdef IPSEC
+		/* lines starting with #@ is not a comment, but the policy */
+		if (cp[0] == '#' && cp[1] == '@') {
+			char *p;
+			for (p = cp + 2; p && *p && isspace(*p); p++)
+				;
+			if (*p == '\0') {
+				if (policy)
+					free(policy);
+				policy = NULL;
+			} else if (ipsec_get_policylen(p) >= 0) {
+				if (policy)
+					free(policy);
+				policy = newstr(p);
+			} else {
+				syslog(LOG_ERR,
+					"%s: invalid ipsec policy \"%s\"",
+					CONFIG, p);
+				exit(-1);
+			}
+		}
+#endif
+		if (*cp == '#' || *cp == '\0')
+			continue;
 #ifdef MULOG
-	while ((cp = nextline(fconfig)) && (*cp == '#' || *cp == '\0')) {
 		/* Avoid use of `skip' if there is a danger of it looking
 		 * at continuation lines.
 		 */
@@ -1231,11 +1322,9 @@ more:
 		if (*cp != '\0')
 			*cp++ = '\0';
 		curdom = newstr(arg);
-	}
-#else
-	while ((cp = nextline(fconfig)) && (*cp == '#' || *cp == '\0'))
-		;
 #endif
+		break;
+	}
 	if (cp == NULL)
 		return ((struct servtab *)0);
 	/*
@@ -1394,7 +1483,24 @@ do { \
 	if (strcmp(sep->se_proto, "unix") == 0) {
 		sep->se_family = AF_LOCAL;
 	} else {
-		sep->se_family = AF_INET;
+		val = strlen(sep->se_proto);
+		if (!val) {
+			syslog(LOG_ERR, "%s: invalid protocol specified",
+			    sep->se_service);
+			goto more;
+		}
+		val = sep->se_proto[val - 1];
+		switch (val) {
+		case '4':	/*tcp4 or udp4*/
+			sep->se_family = AF_INET;
+			break;
+		case '6':	/*tcp6 or udp6*/
+			sep->se_family = AF_INET6;
+			break;
+		default:
+			sep->se_family = AF_INET;	/*will become AF_INET6*/
+			break;
+		}
 		if (strncmp(sep->se_proto, "rpc/", 4) == 0) {
 #ifdef RPC
 			char *cp, *ccp;
@@ -1444,7 +1550,7 @@ do { \
 		 */
 		sep->se_wait = 0;
 
-		if (strcmp(sep->se_proto, "tcp")) {
+		if (strncmp(sep->se_proto, "tcp", 3)) {
 			syslog(LOG_ERR, 
 			    "%s: bad protocol for tcpmux service %s",
 			    CONFIG, sep->se_service);
@@ -1514,6 +1620,9 @@ do { \
 	}
 	while (argc <= MAXARGV)
 		sep->se_argv[argc++] = NULL;
+#ifdef IPSEC
+	sep->se_policy = policy ? newstr(policy) : NULL;
+#endif
 	return (sep);
 }
 
@@ -1537,6 +1646,10 @@ freeconfig(cp)
 	for (i = 0; i < MAXARGV; i++)
 		if (cp->se_argv[i])
 			free(cp->se_argv[i]);
+#ifdef IPSEC
+	if (cp->se_policy)
+		free(cp->se_policy);
+#endif
 }
 
 
@@ -1622,15 +1735,17 @@ inetd_setproctitle(a, s)
 {
 	int size;
 	char *cp;
-	struct sockaddr_in sin;
+	struct sockaddr_storage ss;
 	char buf[80];
+	char hbuf[80];
 
 	cp = Argv[0];
-	size = sizeof(sin);
-	if (getpeername(s, (struct sockaddr *)&sin, &size) == 0)
-		(void)snprintf(buf, sizeof buf, "-%s [%s]", a,
-		    inet_ntoa(sin.sin_addr));
-	else
+	size = sizeof(ss);
+	if (getpeername(s, (struct sockaddr *)&ss, &size) == 0) {
+		getnameinfo((struct sockaddr *)&ss, ss.ss_len,
+			hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+		(void)snprintf(buf, sizeof buf, "-%s [%s]", a, hbuf);
+	} else
 		(void)snprintf(buf, sizeof buf, "-%s", a);
 	strncpy(cp, buf, LastArg - cp);
 	cp += strlen(cp);
@@ -1923,17 +2038,33 @@ print_service(action, sep)
 {
 	if (isrpcservice(sep))
 		fprintf(stderr,
-		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s\n",
+		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s"
+#ifdef IPSEC
+		    " policy=\"%s\""
+#endif
+		    "\n",
 		    action, sep->se_service,
 		    sep->se_rpcprog, sep->se_rpcversh, sep->se_rpcversl, sep->se_proto,
 		    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
-		    (long)sep->se_bi, sep->se_server);
+		    (long)sep->se_bi, sep->se_server
+#ifdef IPSEC
+		    , (sep->se_policy ? sep->se_policy : "")
+#endif
+		    );
 	else
 		fprintf(stderr,
-		    "%s: %s proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s\n",
+		    "%s: %s proto=%s, wait.max=%d.%d, user.group=%s.%s builtin=%lx server=%s"
+#ifdef IPSEC
+		    " policy=%s"
+#endif
+		    "\n",
 		    action, sep->se_service, sep->se_proto,
 		    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
-		    (long)sep->se_bi, sep->se_server);
+		    (long)sep->se_bi, sep->se_server
+#ifdef IPSEC
+		    , (sep->se_policy ? sep->se_policy : "")
+#endif
+		    );
 }
 
 void
@@ -2039,36 +2170,44 @@ dolog(sep, ctrl)
 	struct servtab *sep;
 	int		ctrl;
 {
-	struct sockaddr		sa;
-	struct sockaddr_in	*sin = (struct sockaddr_in *)&sa;
-	int			len = sizeof(sa);
+	struct sockaddr_storage	ss;
+	struct sockaddr		*sa = (struct sockaddr *)ss;
+	struct sockaddr_in	*sin = (struct sockaddr_in *)&ss;
+	int			len = sizeof(ss);
 	struct hostent		*hp;
 	char			*host, *dp, buf[BUFSIZ], *rfc931_name();
 	int			connected = 1;
 
-	if (sep->se_family != AF_INET)
+	switch (sep->se_family) {
+	case AF_INET:
+	case AF_INET6:
+		break;
+	default;
 		return;
+	}
 
-	if (getpeername(ctrl, &sa, &len) < 0) {
+	if (getpeername(ctrl, sa, &len) < 0) {
 		if (errno != ENOTCONN) {
 			syslog(LOG_ERR, "getpeername: %m");
 			return;
 		}
-		if (recvfrom(ctrl, buf, sizeof(buf), MSG_PEEK, &sa, &len) < 0) {
+		if (recvfrom(ctrl, buf, sizeof(buf), MSG_PEEK, sa, &len) < 0) {
 			syslog(LOG_ERR, "recvfrom: %m");
 			return;
 		}
 		connected = 0;
 	}
-	if (sa.sa_family != AF_INET) {
-		syslog(LOG_ERR, "unexpected address family %u", sa.sa_family);
+	switch (sa->sa_family) {
+	case AF_INET:
+	case AF_INET6:
+		break;
+	default;
+		syslog(LOG_ERR, "unexpected address family %u", sa->sa_family);
 		return;
 	}
 
-	hp = gethostbyaddr((char *) &sin->sin_addr.s_addr,
-				sizeof (sin->sin_addr.s_addr), AF_INET);
-
-	host = hp?hp->h_name:inet_ntoa(sin->sin_addr);
+	getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0, 0);
+	host = buf;
 
 	switch (sep->se_log & ~MULOG_RFC931) {
 	case 0:
@@ -2094,7 +2233,7 @@ dolog(sep, ctrl)
 
 	if (connected && (sep->se_log & MULOG_RFC931))
 		syslog(LOG_INFO, "%s@%s wants %s",
-		    rfc931_name(sin, ctrl), host, sep->se_service);
+		    rfc931_name(sa, ctrl), host, sep->se_service);
 	else
 		syslog(LOG_INFO, "%s wants %s",
 		    host, sep->se_service);
@@ -2128,11 +2267,11 @@ int     sig;
 
 char *
 rfc931_name(there, ctrl)
-struct sockaddr_in *there;		/* remote link information */
+struct sockaddr *there;		/* remote link information */
 int	ctrl;
 {
-	struct sockaddr_in here;	/* local link information */
-	struct sockaddr_in sin;		/* for talking to RFC931 daemon */
+	struct sockaddr_storage here;	/* local link information */
+	struct sockaddr_storage sin;	/* for talking to RFC931 daemon */
 	int		length;
 	int		s;
 	unsigned	remote;
@@ -2142,6 +2281,7 @@ int	ctrl;
 	char		*cp;
 	char		*result = "USER_UNKNOWN";
 	int		len;
+	u_int16_t	myport, hisport;
 
 	/* Find out local port number of our stdin. */
 
@@ -2150,16 +2290,39 @@ int	ctrl;
 		syslog(LOG_ERR, "getsockname: %m");
 		return (result);
 	}
+	switch (here.ss_family) {
+	case AF_INET:
+		myport = ((struct sockaddr_in *)&here)->sin_port;
+		break;
+	case AF_INET6:
+		myport = ((struct sockaddr_in6 *)&here)->sin6_port;
+		break;
+	}
+	switch (there->sa_family) {
+	case AF_INET:
+		hisport = ((struct sockaddr_in *)sa)->sin_port;
+		break;
+	case AF_INET6:
+		hisport = ((struct sockaddr_in6 *)sa)->sin6_port;
+		break;
+	}
 	/* Set up timer so we won't get stuck. */
 
-	if ((s = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+	if ((s = socket(here.ss_family, SOCK_STREAM, 0)) == -1) {
 		syslog(LOG_ERR, "socket: %m");
 		return (result);
 	}
 
 	sin = here;
-	sin.sin_port = htons(0);
-	if (bind(s, (struct sockaddr *) &sin, sizeof(sin)) == -1) {
+	switch (sin.ss_family) {
+	case AF_INET:
+		((struct sockaddr_in *)&sin)->sin_port = htons(0);
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *)&sin)->sin6_port = htons(0);
+		break;
+	}
+	if (bind(s, (struct sockaddr *) &sin, sin.ss_len) == -1) {
 		syslog(LOG_ERR, "bind: %m");
 		return (result);
 	}
@@ -2173,17 +2336,24 @@ int	ctrl;
 
 	/* Connect to the RFC931 daemon. */
 
-	sin = *there;
-	sin.sin_port = htons(RFC931_PORT);
-	if (connect(s, (struct sockaddr *) &sin, sizeof(sin)) == -1) {
+	memcpy(&sin, there, there->sa_len);
+	switch (sin.ss_family) {
+	case AF_INET:
+		((struct sockaddr_in *)&sin)->sin_port = htons(RFC931_PORT);
+		break;
+	case AF_INET6:
+		((struct sockaddr_in6 *)&sin)->sin6_port = htons(RFC931_PORT);
+		break;
+	}
+	if (connect(s, (struct sockaddr *) &sin, sin.ss_len) == -1) {
 		close(s);
 		alarm(0);
 		return (result);
 	}
 
 	/* Query the RFC 931 server. Would 13-byte writes ever be broken up? */
-	(void)snprintf(buf, sizeof buf, "%u,%u\r\n", ntohs(there->sin_port),
-	    ntohs(here.sin_port));
+	(void)snprintf(buf, sizeof buf, "%u,%u\r\n", ntohs(hisport),
+	    ntohs(myport));
 
 
 	for (len = 0, cp = buf; len < strlen(buf); ) {
@@ -2213,8 +2383,8 @@ int	ctrl;
 	*cp = '\0';
 
 	if (sscanf(buf, "%u , %u : USERID :%*[^:]:%255s", &remote, &local, user) == 3
-		&& ntohs(there->sin_port) == remote
-		&& ntohs(here.sin_port) == local) {
+		&& ntohs(hisport) == remote
+		&& ntohs(myport) == local) {
 
 		/* Strip trailing carriage return. */
 		if (cp = strchr(user, '\r'))
