@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1997/05/26 03:56:57 cjs Exp $
+#	$NetBSD: Makefile,v 1.13 1997/05/29 15:13:07 cjs Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/1/93
 
 CFLAGS+=	-DLIBC_SCCS -fPIC -DPIC -DDYNAMIC -DELFSIZE=32
@@ -6,6 +6,8 @@ CFLAGS+=	-DLIBC_SCCS -fPIC -DPIC -DDYNAMIC -DELFSIZE=32
 
 OBJS=		crt0.o gcrt0.o crtn.o # crtbegin.o crtend.o
 CLEANFILES+=	core a.out
+
+.include	<bsd.own.mk>	# for OBJDIR and BUILDDIR
 
 all: ${OBJS}
 
