@@ -42,13 +42,13 @@
  *	@(#)rcons_subr.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: rcons_subr.c,v 1.38 93/04/20 11:15:39 torek Exp 
- * $Id: rcons_subr.c,v 1.1 1993/10/02 10:23:42 deraadt Exp $
+ * $Id: rcons_subr.c,v 1.2 1993/10/11 02:49:47 deraadt Exp $
  */
 
 #ifdef KERNEL
 #include <sys/param.h>
-#include <sys/fbio.h>
 #include <sys/device.h>
+#include <machine/fbio.h>
 #include <machine/fbvar.h>
 #else
 #include <sys/types.h>

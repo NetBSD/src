@@ -42,17 +42,17 @@
  *	@(#)rcons_kern.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: rcons_kern.c,v 1.28 93/04/20 11:15:38 torek Exp 
- * $Id: rcons_kern.c,v 1.1 1993/10/02 10:23:41 deraadt Exp $
+ * $Id: rcons_kern.c,v 1.2 1993/10/11 02:49:44 deraadt Exp $
  */
 
 #include <sys/param.h>
 #include <sys/device.h>
-#include <sys/fbio.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 
+#include <machine/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/autoconf.h>
 
@@ -110,7 +110,7 @@ rcons_output(tp)
 	/* Come back if there's more to do */
 	if (tp->t_outq.c_cc) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout(ttrstrt, tp, 1);
+		timeout((timeout_t)ttrstrt, (caddr_t)tp, 1);
 	}
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
@@ -147,7 +147,7 @@ rcons_bell(fb)
 		splx(s);
 		(void) kbd_docmd(KBD_CMD_BELL, 0);
 		/* XXX Chris doesn't like the following divide */
-		timeout(rcons_belltmr, fb, hz/10);
+		timeout((timeout_t)rcons_belltmr, (caddr_t)fb, hz/10);
 	}
 }
 
@@ -166,12 +166,12 @@ rcons_belltmr(p)
 		(void) kbd_docmd(KBD_CMD_NOBELL, 0);
 		if (i != 0)
 			/* XXX Chris doesn't like the following divide */
-			timeout(rcons_belltmr, fb, hz/30);
+			timeout((timeout_t)rcons_belltmr, (caddr_t)fb, hz/30);
 	} else {
 		fb->fb_ringing = 1;
 		splx(s);
 		(void) kbd_docmd(KBD_CMD_BELL, 0);
-		timeout(rcons_belltmr, fb, hz/10);
+		timeout((timeout_t)rcons_belltmr, (caddr_t)fb, hz/10);
 	}
 }
 
@@ -200,7 +200,6 @@ rcons_init(fb)
 	register struct winsize *ws;
 	register int i;
 	static int row, col;
-	char buf[100];
 
 	myfbdevicep = fb;
 
@@ -259,12 +258,7 @@ rcons_init(fb)
 	fb->fb_emuheight = fb->fb_maxrow * fb->fb_font->height;
 
 	/* Determine addresses of prom emulator row and column */
-	fb->fb_row = fb->fb_col = NULL;
-	sprintf(buf, "' line# >body >user %x !", &fb->fb_row);
-	rominterpret(buf);
-	sprintf(buf, "' column# >body >user %x !", &fb->fb_col);
-	rominterpret(buf);
-	if (fb->fb_row == NULL || fb->fb_col == NULL) {
+	if (romgetcursoraddr(&fb->fb_row, &fb->fb_col)) {
 		/* Can't find addresses; use private copies */
 		fb->fb_row = &row;
 		fb->fb_col = &col;
@@ -279,5 +273,5 @@ rcons_init(fb)
 	/* Initialization done; hook us up */
 	v_putc = (int (*)())rcons_cnputc;
 	fbconstty->t_oproc = rcons_output;
-	fbconstty->t_stop = (void (*)()) nullop;
+	/*fbconstty->t_stop = (void (*)()) nullop;*/
 }
