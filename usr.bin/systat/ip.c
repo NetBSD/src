@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.5 2000/01/13 12:39:05 ad Exp $	*/
+/*	$NetBSD: ip.c,v 1.6 2000/04/27 21:40:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.5 2000/01/13 12:39:05 ad Exp $");
+__RCSID("$NetBSD: ip.c,v 1.6 2000/04/27 21:40:41 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -142,7 +142,7 @@ showip(void)
 	totalout = curstat.i.ips_forward + curstat.i.ips_localout;
 
 	SHOW(i.ips_total, 0, 0);
-	mvwprintw(wnd, 0, 35, "%9llu", totalout);
+	mvwprintw(wnd, 0, 35, "%9llu", (unsigned long long)totalout);
 	SHOW(i.ips_delivered, 1, 0);
 	SHOW(i.ips_badsum, 2, 0);
 	SHOW(i.ips_tooshort, 3, 0);
