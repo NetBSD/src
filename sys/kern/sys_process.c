@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.37 1994/08/15 16:45:14 mycroft Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.38 1994/08/21 21:24:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -333,11 +333,11 @@ sendsig:
 		CLR(t->p_flag, P_WAITED); /* XXX? */
 
 		/* and deliver any signal requested by tracer. */
-                if (t->p_stat == SSTOP) {
-                        t->p_xstat = uap->data;
-                        setrunnable(t);
-                } else if (uap->data)
-                        psignal(t, uap->data);
+		if (t->p_stat == SSTOP) {
+			t->p_xstat = uap->data;
+				setrunnable(t);
+		} else if (uap->data)
+			psignal(t, uap->data);
 
 		return (0);
 
