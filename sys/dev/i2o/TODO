@@ -1,6 +1,7 @@
-$NetBSD: TODO,v 1.1.2.5 2001/04/01 15:03:42 ad Exp $
+$NetBSD: TODO,v 1.1.2.6 2001/04/23 16:11:27 ad Exp $
 
 o Handle device control issues
 o Resolve portability issues
 o ld_iop: handle removable and non-direct access devices
 o Driver for LAN class device (some code exists already)
+o Handle `sparse' LUNs and an arbitrary number of LUNs in iopsp.
