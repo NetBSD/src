@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.1 1998/06/04 16:53:17 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.2 1998/06/05 10:09:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -651,7 +651,7 @@ default_setup_cap(sc)
 {
 	if (sc->sc_dma_ok)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
-	sc->sc_wdcdev.pio_mode = 2; /* I _think_ all PCI controllers are >= 2 */
+	sc->sc_wdcdev.pio_mode = 0;
 	sc->sc_wdcdev.dma_mode = 0;
 }
 
@@ -661,7 +661,44 @@ default_setup_chip(sc, pc, tag)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 {
-	/* Nothing to do if we don't know what chip we have */
+	int channel, drive, idedma_ctl;
+	struct channel_softc *chp;
+	struct ata_drive_datas *drvp;
+
+	if (sc->sc_dma_ok == 0)
+		return; /* nothing to do */
+
+	/* Allocate DMA maps */
+	for (channel = 0; channel < PCIIDE_NUM_CHANNELS; channel++) {
+		idedma_ctl = 0;
+		chp = &sc->wdc_channels[channel];
+		for (drive = 0; drive < 2; drive++) {
+			drvp = &chp->ch_drive[drive];
+			/* If no drive, skip */
+			if ((drvp->drive_flags & DRIVE) == 0)
+				continue;
+			if (pciide_dma_table_setup(sc, channel, drive) != 0) {
+				/* Abort DMA setup */
+				printf("%s:%d:%d: can't allocate DMA maps, "
+				    "using PIO transferts\n",
+				    sc->sc_wdcdev.sc_dev.dv_xname,
+				    channel, drive);
+				drvp->drive_flags &= ~DRIVE_DMA;
+			}
+			printf("%s:%d:%d: using DMA mode %d\n",
+			    sc->sc_wdcdev.sc_dev.dv_xname,
+			    channel, drive,
+			    drvp->DMA_mode);
+			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
+		}
+		if (idedma_ctl != 0) {
+			/* Add software bits in status register */
+			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
+			    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * channel),
+			    idedma_ctl);
+		}
+	}
+
 }
 
 void
@@ -670,7 +707,8 @@ piix_setup_cap(sc)
 {
 	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371AB_IDE)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_DMA;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32 | WDC_CAPABILITY_PIO |
+	    WDC_CAPABILITY_DMA;
 	sc->sc_wdcdev.pio_mode = 4;
 	sc->sc_wdcdev.dma_mode = 2;
 }
