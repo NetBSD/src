@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.23 2000/04/24 15:13:54 pk Exp $
+.\"	$NetBSD: curses.3,v 1.24 2000/04/26 12:29:47 blymn Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -158,6 +158,10 @@ relative to
 .Em stdstr
 .It insertln()	insert a line
 .It intrflush(win,boolf)	set flush on interrupt terminal mode
+.It is_linetouched(win, line)	check if line has been modified since
+last refresh.
+.It is_wintouched(win)	Check if window has been modified since last
+refresh.
 .It isendwin()	check if endwin() or wrefresh() was called latest
 .It keypad(win,boolf)	set keypad flag for
 .Em win
@@ -260,6 +264,7 @@ as changed
 .It underend()	end underscore mode
 .It underscore()	start underscore mode
 .It ungetch(ch)		Put character back onto input queue.
+.It untouchwin(win)	Make window appear not to have been modified.
 .It vline(ch, count)	Draw a vertical line of character
 .Em ch .
 .It waddch(win,ch)	add char to
@@ -323,6 +328,22 @@ n lines
 .It wstandout(win)	start standout mode on
 .Em win
 .It wtimeout(win,delay)	set blocking or non-blocking read for
+.Em win
+.It wtouchln(win, line, n, changed)	If 
+.Em changed
+is 1 then touch
+.Em n
+lines starting at
+.Em line
+in window
+.Em win .
+If 
+.Em changed
+is 0 then untouch
+.Em n
+lines starting at
+.Em line
+in window
 .Em win
 .It wunderend(win)	end underscore mode on
 .Em win
