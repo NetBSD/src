@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.219 2005/02/27 00:27:03 perry Exp $ */
+/*	$NetBSD: wdc.c,v 1.220 2005/03/02 12:25:27 mycroft Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 /*-
- * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.219 2005/02/27 00:27:03 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.220 2005/03/02 12:25:27 mycroft Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG

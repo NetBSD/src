@@ -1,7 +1,7 @@
-/*	$NetBSD: wdcvar.h,v 1.81 2005/02/27 00:27:03 perry Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.82 2005/03/02 12:25:28 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
