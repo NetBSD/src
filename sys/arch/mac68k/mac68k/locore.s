@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.94 1998/02/13 07:39:02 scottr Exp $	*/
+/*	$NetBSD: locore.s,v 1.95 1998/04/20 05:41:21 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,6 +79,7 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+#include <machine/trap.h>
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
