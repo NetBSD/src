@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.34 2000/04/26 16:28:17 tron Exp $
+#	$NetBSD: services,v 1.35 2000/06/02 22:54:10 fvdl Exp $
 #
 # Network services, Internet style
 #
@@ -66,8 +66,8 @@ pop2		109/tcp		postoffice	# POP version 2
 pop2		109/udp
 pop3		110/tcp		# POP version 3
 pop3		110/udp
-sunrpc		111/tcp		# Remote Procedure Call
-sunrpc		111/udp
+sunrpc		111/tcp		rpcbind		# Remote Procedure Call
+sunrpc		111/udp		rpcbind
 auth		113/tcp		authentication tap ident
 sftp		115/tcp
 uucp-path	117/tcp

@@ -1,8 +1,8 @@
-#	$NetBSD: rpc,v 1.5 1996/05/08 17:19:47 thorpej Exp $
+#	$NetBSD: rpc,v 1.6 2000/06/02 22:54:10 fvdl Exp $
 #
 # rpc 88/08/01 4.0 RPCSRC; from 1.12   88/02/07 SMI
 #
-portmapper	100000	portmap sunrpc
+portmapper	100000	portmap sunrpc rpcbind
 rstatd		100001	rstat rstat_svc rup perfmeter
 rusersd		100002	rusers
 nfs		100003	nfsprog
