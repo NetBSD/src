@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.16 2003/09/06 11:18:03 manu Exp $
+	$NetBSD: syscalls.master,v 1.17 2003/09/06 11:50:02 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -83,7 +83,7 @@
 11	UNIMPL		execv
 12	NODEF		{ int bsd_sys_chdir(const char *path); }
 13	NOARGS		{ int sys_fchdir(int fd); }
-14	NODEF		{ int bsd_sys_mknod(const char *path, \
+14	STD		{ int darwin_sys_mknod(const char *path, \
 			    mode_t mode, dev_t dev); }
 15	NODEF		{ int bsd_sys_chmod(const char *path, mode_t mode); }
 16	NODEF		{ int bsd_sys_chown(const char *path, uid_t uid, \

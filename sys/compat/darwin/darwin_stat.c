@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_stat.c,v 1.1 2003/09/06 11:18:03 manu Exp $ */
+/*	$NetBSD: darwin_stat.c,v 1.2 2003/09/06 11:50:00 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.1 2003/09/06 11:18:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.2 2003/09/06 11:50:00 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,9 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.1 2003/09/06 11:18:03 manu Exp $")
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 
+#include <compat/darwin/darwin_types.h>
 #include <compat/darwin/darwin_syscallargs.h>
-
-#define native_to_darwin_dev(x) ((dev_t)(((major(x)) << 24) | minor((x))))
 
 int
 darwin_sys_stat(l, v, retval)
@@ -170,3 +169,26 @@ darwin_sys_lstat(l, v, retval)
 	return 0;
 }
 
+int
+darwin_sys_mknod(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
+{
+	struct darwin_sys_mknod_args /* {
+		syscallarg(char) path;
+		syscallarg(mode_t) mode;
+		syscallarg(dev_t) dev:
+	} */ *uap = v;
+	struct sys_mknod_args cup;
+	struct proc *p = l->l_proc;
+	caddr_t sg = stackgap_init(p, 0);
+
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+
+	SCARG(&cup, path) = SCARG(uap, path);
+	SCARG(&cup, mode) = SCARG(uap, mode);
+	SCARG(&cup, dev) = darwin_to_native_dev(SCARG(uap, dev));
+
+	return sys_mknod(l, &cup, retval);
+}

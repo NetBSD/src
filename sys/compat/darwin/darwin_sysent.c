@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.32 2003/09/06 11:18:51 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.33 2003/09/06 11:50:01 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.32 2003/09/06 11:18:51 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.33 2003/09/06 11:50:01 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -61,8 +61,8 @@ struct sysent darwin_sysent[] = {
 	    bsd_sys_chdir },			/* 12 = chdir */
 	{ 1, s(struct sys_fchdir_args), 0,
 	    sys_fchdir },			/* 13 = fchdir */
-	{ 3, s(struct bsd_sys_mknod_args), 0,
-	    bsd_sys_mknod },			/* 14 = mknod */
+	{ 3, s(struct darwin_sys_mknod_args), 0,
+	    darwin_sys_mknod },			/* 14 = mknod */
 	{ 2, s(struct bsd_sys_chmod_args), 0,
 	    bsd_sys_chmod },			/* 15 = chmod */
 	{ 3, s(struct bsd_sys_chown_args), 0,
