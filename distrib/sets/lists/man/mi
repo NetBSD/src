@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.282 2000/11/08 02:15:13 wiz Exp $
+# $NetBSD: mi,v 1.283 2000/11/08 11:11:28 wiz Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -108,7 +108,6 @@
 ./usr/share/man/cat1/ex.0
 ./usr/share/man/cat1/expand.0
 ./usr/share/man/cat1/expr.0
-./usr/share/man/cat1/f77.0
 ./usr/share/man/cat1/false.0
 ./usr/share/man/cat1/fdformat.0
 ./usr/share/man/cat1/fg.0
@@ -123,7 +122,6 @@
 ./usr/share/man/cat1/fsplit.0
 ./usr/share/man/cat1/fstat.0
 ./usr/share/man/cat1/ftp.0
-./usr/share/man/cat1/g77.0
 ./usr/share/man/cat1/gcpp.0
 ./usr/share/man/cat1/gencat.0
 ./usr/share/man/cat1/getconf.0
@@ -971,7 +969,6 @@
 ./usr/share/man/cat5/pim6sd.conf.0
 ./usr/share/man/cat5/printcap.0
 ./usr/share/man/cat5/protocols.0
-./usr/share/man/cat5/ranlib.0
 ./usr/share/man/cat5/rc.conf.0
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/relocated.0
@@ -1530,7 +1527,6 @@
 ./usr/share/man/man1/ex.1
 ./usr/share/man/man1/expand.1
 ./usr/share/man/man1/expr.1
-./usr/share/man/man1/f77.1
 ./usr/share/man/man1/false.1
 ./usr/share/man/man1/fdformat.1
 ./usr/share/man/man1/fg.1
@@ -1545,7 +1541,6 @@
 ./usr/share/man/man1/fsplit.1
 ./usr/share/man/man1/fstat.1
 ./usr/share/man/man1/ftp.1
-./usr/share/man/man1/g77.1
 ./usr/share/man/man1/gcpp.1
 ./usr/share/man/man1/gencat.1
 ./usr/share/man/man1/getconf.1
@@ -2393,7 +2388,6 @@
 ./usr/share/man/man5/pim6sd.conf.5
 ./usr/share/man/man5/printcap.5
 ./usr/share/man/man5/protocols.5
-./usr/share/man/man5/ranlib.5
 ./usr/share/man/man5/rc.conf.5
 ./usr/share/man/man5/rcsfile.5
 ./usr/share/man/man5/relocated.5
