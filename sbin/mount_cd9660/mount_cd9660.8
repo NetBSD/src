@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_cd9660.8,v 1.21 2004/11/21 23:06:23 jdolecek Exp $
+.\" $NetBSD: mount_cd9660.8,v 1.22 2004/11/22 12:22:45 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -174,12 +174,13 @@ UTF-8 encoding of Unicode file names for Joliet filesystems was added in
 .Nx 3.0 .
 .Sh NOTES
 For Joliet filesystems, the Unicode file names used to be filtered
-to ISO-8869-1 character set. This changed in
+to ISO-8869-1 character set.
+This changed in
 .Nx 3.0 ,
-file names are encoded into UTF-8 now by default. The behaviour
-is cotrollable by
+file names are encoded into UTF-8 now by default.
+The behaviour is cotrollable by the
 .Em vfs.cd9660.utf8_joliet
-sysctl, former behaviour is available by setting that to 0.
+sysctl; the former behaviour is available by setting it to 0.
 .Sh BUGS
 For some cdroms the information in the Rock Ridge extension is wrong
 and the cdrom needs to be mounted with "norrip".
