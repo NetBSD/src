@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.9 2003/07/31 19:08:10 bsh Exp $ */
+/*	$NetBSD: sscom.c,v 1.10 2003/08/04 12:28:50 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.9 2003/07/31 19:08:10 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.10 2003/08/04 12:28:50 bsh Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -157,6 +157,11 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.9 2003/07/31 19:08:10 bsh Exp $");
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
 #include <arm/s3c2xx0/s3c2xx0var.h>
+#if defined(SSCOM_S3C2410) || defined(SSCOM_S3C2400)
+#include <arm/s3c2xx0/s3c24x0reg.h>
+#elif defined(SSCOM_S3C2800)
+#include <arm/s3c2xx0/s3c2800reg.h>
+#endif
 #include <arm/s3c2xx0/sscom_var.h>
 #include <dev/cons.h>
 

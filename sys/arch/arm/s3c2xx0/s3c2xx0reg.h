@@ -1,8 +1,8 @@
-/* $NetBSD: s3c2xx0reg.h,v 1.2 2003/02/02 08:41:12 bsh Exp $ */
+/* $NetBSD: s3c2xx0reg.h,v 1.3 2003/08/04 12:28:50 bsh Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2003 Fujitsu Component Limited
+ * Copyright (c) 2002, 2003 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,9 +40,20 @@
 #define _ARM_S3C2XX0_S3C2XX0REG_H_
 
 /* UART */
-#define	SSCOM_ULCON	0x00	/* UART line control */
-#define  ULCON_IR	(1<<7)	/* Infra-Red mode */
-#define  ULCON_PARITY_SHIFT 4	/* parity mode */
+/*
+ * S3C2800, 2410 and 2400 have a common built-in UART block. However,
+ * there are small diffs in bit position of some registers.
+ * Following definitions can be foune in s3c{2800,24x0}reg.h for
+ * that reason.
+ *
+ *  ULCON_IR                 (Infra-red mode)
+ *  ULCON_PARITY_SHIFT       (Parity mode bit position)
+ *  UMCON_AFC                (Auto flow control)
+ *  UMSTAT_DCTS              (CTS change)
+ */
+
+#define SSCOM_ULCON 0x00 /* UART line control */
+/*       ULCON_PARITY_SHIFT and ULCON_IR is defined in s3c{2800,24x0}reg.h */
 #define  ULCON_PARITY_NONE  (0<<ULCON_PARITY_SHIFT)
 #define  ULCON_PARITY_ODD   (4<<ULCON_PARITY_SHIFT)
 #define  ULCON_PARITY_EVEN  (5<<ULCON_PARITY_SHIFT)
@@ -85,7 +96,7 @@
 #define  UFCON_RXFIFO_RESET	(1<<1)
 #define  UFCON_FIFO_ENABLE	(1<<0)
 #define SSCOM_UMCON	0x0c	/* MODEM control */
-/* #define UMCON_AFC  (1<<1) */
+/*       UMCON_AFC is defined in s3c{2800,24x0}reg.h */
 #define  UMCON_RTS	(1<<0)	/* Request to send */
 #define SSCOM_UTRSTAT	0x10	/* Status register */
 #define  UTRSTAT_TXSHIFTER_EMPTY   (1<<2)
@@ -105,8 +116,7 @@
 #define  UFSTAT_RXCOUNT_SHIFT 0		/* RX FIFO count */
 #define  UFSTAT_RXCOUNT	  (0x0f<<UFSTAT_RXCOUNT_SHIFT)
 #define SSCOM_UMSTAT	0x1c	/* Modem status register */
-#define  S3C2800_UMSTAT_DCTS	  (1<<1) /* Clear to send chage */
-#define  S3C24X0_UMSTAT_DCTS	  (1<<2) /* Clear to send chage */
+/*       UMSTAT_DCTS is defined in s3c{2800,24x0}reg.h */
 #define  UMSTAT_CTS	  (1<<0) /* Clear to send */
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 #define SSCOM_UTXH	0x20	/* Transmit data register */
