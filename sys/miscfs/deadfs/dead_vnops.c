@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.26 1999/12/08 20:05:19 sommerfeld Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.27 1999/12/12 00:56:29 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@ int	dead_open	__P((void *));
 int	dead_read	__P((void *));
 int	dead_write	__P((void *));
 #define dead_lease_check genfs_nullop
-#define dead_fcntl	genfs_badop
+#define dead_fcntl	genfs_nullop
 int	dead_ioctl	__P((void *));
 int	dead_poll	__P((void *));
 #define dead_mmap	genfs_badop
