@@ -1,4 +1,4 @@
-/*	$Id: _lwp.c,v 1.1.2.1 2001/11/17 03:19:29 nathanw Exp $ */
+/*	$Id: _lwp.c,v 1.1.2.2 2001/12/17 22:10:02 nathanw Exp $ */
 
 /* Copyright */
 
@@ -13,18 +13,20 @@
 void _lwp_makecontext(ucontext_t *u, void (*start)(void *),
     void *arg, void *private, caddr_t stack_base, size_t stack_size)
 {
-	unsigned long *gr = u->uc_mcontext.sc_regs;
+	__greg_t *gr;
 
 	getcontext(u);
+	gr = u->uc_mcontext.__gregs;
+
 	u->uc_link = NULL;
 
 	u->uc_stack.ss_sp = stack_base;
 	u->uc_stack.ss_size = stack_size;
 
-	u->uc_mcontext.sc_pc = (unsigned long)start;
-	gr[R_T12] = (unsigned long) start;
-	gr[R_RA] = (unsigned long) _lwp_exit;
-	gr[R_A0] = (unsigned long) arg;
-	gr[R_SP] = (unsigned long) (stack_base + stack_size);
-	gr[R_S6] = 0;
+	gr[_REG_PC] = (unsigned long)start;
+	gr[_REG_T12] = (unsigned long) start;
+	gr[_REG_RA] = (unsigned long) _lwp_exit;
+	gr[_REG_A0] = (unsigned long) arg;
+	gr[_REG_SP] = (unsigned long) (stack_base + stack_size);
+	gr[_REG_S6] = 0;
 }
