@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.31 1998/03/24 05:13:59 thorpej Exp $ */
+/* $NetBSD: conf.c,v 1.32 1998/04/15 20:48:52 drochner Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.31 1998/03/24 05:13:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.32 1998/04/15 20:48:52 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +90,6 @@ struct bdevsw	bdevsw[] =
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_wscons_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
-
 /* open, close, write, ioctl */
 #define cdev_lpt_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -137,8 +131,6 @@ cdev_decl(cd);
 cdev_decl(ch);
 #include "audio.h"
 cdev_decl(audio);
-#include "wscons.h"
-cdev_decl(wscons);
 #include "com.h"
 cdev_decl(com);
 cdev_decl(kbd);
@@ -163,6 +155,16 @@ cdev_decl(satlink);
 
 #include "se.h"
 #include "rnd.h"
+
+#include "wsdisplay.h"
+cdev_decl(wsdisplay);
+#include "wskbd.h"
+cdev_decl(wskbd);
+#include "wsmouse.h"
+cdev_decl(wsmouse);
+
+#include "spkr.h"
+cdev_decl(spkr);
 
 struct cdevsw	cdevsw[] =
 {
@@ -199,12 +201,14 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 23 */
 #endif
 	cdev_audio_init(NAUDIO,audio),	/* 24: generic audio I/O */
-	cdev_wscons_init(NWSCONS,wscons), /* 25: workstation console */
+	cdev_wsdisplay_init(NWSDISPLAY,
+	    wsdisplay),			/* 25: frame buffers, etc. */
 	cdev_tty_init(NCOM,com),	/* 26: ns16550 UART */
 	cdev_disk_init(NCCD,ccd),	/* 27: concatenated disk driver */
 	cdev_disk_init(NMD,md),		/* 28: memory disk driver */
-	cdev_mouse_init(NWSCONS,kbd),	/* 29: /dev/kbd XXX */
-	cdev_mouse_init(NWSCONS,ms),	/* 30: /dev/mouse XXX */
+	cdev_mouse_init(NWSKBD, wskbd),	/* 29: keyboards */
+	cdev_mouse_init(NWSMOUSE,
+	    wsmouse),			/* 30: mice */
 	cdev_lpt_init(NLPT,lpt),	/* 31: parallel printer */
 	cdev_scanner_init(NSS,ss),	/* 32: SCSI scanner */
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
@@ -215,6 +219,7 @@ struct cdevsw	cdevsw[] =
 	cdev_satlink_init(NSATLINK,satlink), /* 38: planetconnect satlink */
 	cdev_rnd_init(NRND,rnd),	/* 39: random source pseudo-device */
 	cdev_tty_init(NA12DC,a12dc),	/* 40: Avalon A12 detached console */
+	cdev_spkr_init(NSPKR,spkr),	/* 41: PC speaker */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
