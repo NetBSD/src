@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.9 2003/06/29 22:29:50 fvdl Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.9.2.1 2003/07/02 15:25:56 darrenr Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.9 2003/06/29 22:29:50 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.9.2.1 2003/07/02 15:25:56 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -375,9 +375,9 @@ svr4_32_sys_open(l, v, retval)
 
 	SCARG(&cup, path) = (char *)(u_long)SCARG(uap, path);
 	if (SCARG(&cup, flags) & O_CREAT)
-		CHECK_ALT_CREAT(p, &sg, SCARG(&cup, path));
+		CHECK_ALT_CREAT(l, &sg, SCARG(&cup, path));
 	else
-		CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
+		CHECK_ALT_EXIST(l, &sg, SCARG(&cup, path));
 
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	error = sys_open(l, &cup, retval);
@@ -423,7 +423,7 @@ svr4_32_sys_creat(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, path) = (char *)(u_long)SCARG(uap, path);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&cup, path));
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	SCARG(&cup, flags) = O_WRONLY | O_CREAT | O_TRUNC;
 
@@ -477,7 +477,7 @@ svr4_32_sys_access(l, v, retval)
 	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, path) = (char *)(u_long)SCARG(uap, path);
-	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(&cup, path));
 	SCARG(&cup, flags) = SCARG(uap, flags);
 
 	return sys_access(l, &cup, retval);

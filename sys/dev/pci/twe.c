@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.37 2003/06/29 22:30:28 fvdl Exp $	*/
+/*	$NetBSD: twe.c,v 1.37.2.1 2003/07/02 15:26:12 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37 2003/06/29 22:30:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.1 2003/07/02 15:26:12 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1143,7 +1143,7 @@ twe_ccb_submit(struct twe_softc *sc, struct twe_ccb *ccb)
  * Accept an open operation on the control device.
  */
 int
-tweopen(dev_t dev, int flag, int mode, struct proc *p)
+tweopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twe_softc *twe;
 
@@ -1160,7 +1160,7 @@ tweopen(dev_t dev, int flag, int mode, struct proc *p)
  * Accept the last close on the control device.
  */
 int
-tweclose(dev_t dev, int flag, int mode, struct proc *p)
+tweclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct twe_softc *twe;
 
@@ -1173,7 +1173,7 @@ tweclose(dev_t dev, int flag, int mode, struct proc *p)
  * Handle control operations.
  */
 int
-tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+tweioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct twe_softc *twe;
 	struct twe_ccb *ccb;

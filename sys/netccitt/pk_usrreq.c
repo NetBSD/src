@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.25 2003/06/29 22:31:55 fvdl Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.25.2.1 2003/07/02 15:26:58 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.25 2003/06/29 22:31:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_usrreq.c,v 1.25.2.1 2003/07/02 15:26:58 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,16 +106,18 @@ pk_setpeeraddr(lcp, nam)
  *
  */
 int
-pk_usrreq(so, req, m, nam, control, p)
+pk_usrreq(so, req, m, nam, control, l)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p;
 	struct pklcd *lcp;
 	int s;
 	int error = 0;
 
+	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (pk_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));

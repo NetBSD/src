@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.7 2003/06/29 22:30:05 fvdl Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.7.2.1 2003/07/02 15:26:02 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -215,7 +215,7 @@ ld_ataraid_attach(struct device *parent, struct device *self, void *aux)
 		vp = sc->sc_vnodes[i];
 		sc->sc_vnodes[i] = NULL;
 		if (vp != NULL)
-			(void) vn_close(vp, FREAD|FWRITE, NOCRED, curproc);
+			(void) vn_close(vp, FREAD|FWRITE, NOCRED, curlwp);
 	}
 
  finish:

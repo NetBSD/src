@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.124 2003/06/29 22:32:39 fvdl Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.124.2.1 2003/07/02 15:27:24 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.124 2003/06/29 22:32:39 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.124.2.1 2003/07/02 15:27:24 darrenr Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -2416,7 +2416,7 @@ lfs_vref(struct vnode *vp)
 		}
 		return (1);
 	}
-	return (vget(vp, 0));
+	return (vget(vp, 0, curlwp));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.24 2003/06/29 22:29:55 fvdl Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.25.2.2 2003/07/02 15:25:58 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -43,7 +43,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.24 2003/06/29 22:29:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.25.2.2 2003/07/02 15:25:58 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 			if (p->p_stat == 0) {
 				continue;
 			}
-			l = LIST_FIRST(&p->p_lwps);
+			l = proc_representative_lwp(p);
 			db_printf("%c%-10d", " >"[cp == p], p->p_pid);
 
 			switch (*mode) {
@@ -180,6 +180,7 @@ db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 				    p->p_vmspace);
 				break;
 			case 'l':
+				l = LIST_FIRST(&p->p_lwps);
 				 while (l != NULL) {
 					db_printf("%c%4d %d %#7x %18p %18p %s\n",
 					    " >"[cl == l], l->l_lid,
@@ -234,6 +235,7 @@ void
 db_dmesg(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 {
 	struct kern_msgbuf *mbp;
+	db_expr_t print;
 	int ch, newl, skip, i;
 	char *p, *bufdata;
 
@@ -245,10 +247,17 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	mbp = msgbufp;
 	bufdata = &mbp->msg_bufc[0];
 
+	if (haddr && addr < mbp->msg_bufs)
+		print = addr;
+	else
+		print = mbp->msg_bufs;
+
 	for (newl = skip = i = 0, p = bufdata + mbp->msg_bufx;
 	    i < mbp->msg_bufs; i++, p++) {
 		if (p == bufdata + mbp->msg_bufs)
 			p = bufdata;
+		if (i < mbp->msg_bufs - print)
+			continue;
 		ch = *p;
 		/* Skip "\n<.*>" syslog sequences. */
 		if (skip) {

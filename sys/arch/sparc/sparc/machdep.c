@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.228 2003/06/29 22:28:57 fvdl Exp $ */
+/*	$NetBSD: machdep.c,v 1.228.2.1 2003/07/02 15:25:32 darrenr Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1226,8 +1226,8 @@ stackdump()
 }
 
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	return (ENOEXEC);

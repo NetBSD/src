@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.90 2003/06/29 22:31:51 fvdl Exp $	*/
+/*	$NetBSD: if.h,v 1.90.2.1 2003/07/02 15:26:56 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -754,7 +754,7 @@ void	if_slowtimo __P((void *));
 void	if_up __P((struct ifnet *));
 int	ifconf __P((u_long, caddr_t));
 void	ifinit __P((void));
-int	ifioctl __P((struct socket *, u_long, caddr_t, struct proc *));
+int	ifioctl __P((struct socket *, u_long, caddr_t, struct lwp *));
 int	ifpromisc __P((struct ifnet *, int));
 struct	ifnet *ifunit __P((const char *));
 

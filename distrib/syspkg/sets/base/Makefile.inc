@@ -1,2 +1,0 @@
-SETNAME=base
-PREFIX=/

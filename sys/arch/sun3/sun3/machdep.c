@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.165 2003/06/29 22:29:04 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165.2.1 2003/07/02 15:25:34 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -762,8 +762,8 @@ initcpu()
  * understand and, if so, set up the vmcmds for it.
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
+cpu_exec_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	return ENOEXEC;

@@ -1,6 +1,0 @@
-The weekly.conf file specifies which of the standard /etc/weekly services
-are performed.  The /etc/weekly script is run, by default, every Saturday
-morning on a NetBSD system via cron(8).  See the weekly.conf(5) manpage for
-more details on the options. 
-
-$NetBSD: help,v 1.1 2001/03/06 21:28:54 garbled Exp $

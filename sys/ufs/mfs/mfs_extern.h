@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.16 2003/06/29 22:32:43 fvdl Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.16.2.1 2003/07/02 15:27:26 darrenr Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,11 +56,11 @@ __BEGIN_DECLS
 int	mfs_mountroot	__P((void));
 int	mfs_initminiroot	__P((caddr_t));
 int	mfs_mount	__P((struct mount *, const char *, void *,
-			     struct nameidata *, struct proc *));
-int	mfs_start	__P((struct mount *, int, struct proc *));
-int	mfs_statfs	__P((struct mount *, struct statfs *, struct proc *));
+			     struct nameidata *, struct lwp *));
+int	mfs_start	__P((struct mount *, int, struct lwp *));
+int	mfs_statfs	__P((struct mount *, struct statfs *, struct lwp *));
 int	mfs_sysctl	__P((int *, u_int, void *, size_t *, void *, size_t,
-			     struct proc *));
+			     struct lwp *));
 
 void	mfs_init	__P((void));
 void	mfs_reinit	__P((void));

@@ -1,4 +1,0 @@
-# $NetBSD: obsolete.netwinder,v 1.3 2003/05/15 19:12:37 wiz Exp $
-./dev/mouse-qms0
-./dev/pms0
-./dev/qms0

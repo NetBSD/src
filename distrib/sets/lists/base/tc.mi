@@ -1,3 +1,0 @@
-# $NetBSD: tc.mi,v 1.2 2001/12/17 19:42:05 wiz Exp $
-./usr/libexec/cpp0		base-util-bin
-./usr/sbin/dbsym		base-sysutil-bin

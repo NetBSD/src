@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec_aout.c,v 1.7 2003/06/29 22:29:45 fvdl Exp $	*/
+/*	$NetBSD: sunos32_exec_aout.c,v 1.7.2.1 2003/07/02 15:25:54 darrenr Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_exec_aout.c,v 1.7 2003/06/29 22:29:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec_aout.c,v 1.7.2.1 2003/07/02 15:25:54 darrenr Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_exec_aout.c,v 1.7 2003/06/29 22:29:45 fvdl E
 #include <compat/netbsd32/netbsd32_exec.h>
 
 int
-exec_sunos32_aout_makecmds(p, epp)
-	struct proc *p;
+exec_sunos32_aout_makecmds(l, epp)
+	struct lwp *l;
 	struct exec_package *epp;
 {
 	struct sunos_exec *sunmag = epp->ep_hdr;

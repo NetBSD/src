@@ -1,4 +1,4 @@
-/*	$NetBSD: idp_var.h,v 1.11 2003/06/29 22:32:08 fvdl Exp $	*/
+/*	$NetBSD: idp_var.h,v 1.11.2.1 2003/07/02 15:27:05 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -58,7 +58,7 @@ void idp_drop __P((struct nspcb *, int));
 int idp_output __P((struct mbuf *, ...));
 int idp_ctloutput __P((int, struct socket *, int , int, struct mbuf **));
 int idp_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-		    struct mbuf *, struct proc *));
+		    struct mbuf *, struct lwp *));
 int idp_raw_usrreq __P((struct socket *, int, struct mbuf *, struct mbuf *,
-			struct mbuf *, struct proc *));
+			struct mbuf *, struct lwp *));
 #endif
