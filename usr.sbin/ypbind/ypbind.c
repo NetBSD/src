@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.30 1997/07/07 02:27:08 lukem Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.31 1997/07/18 07:57:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.30 1997/07/07 02:27:08 lukem Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.31 1997/07/18 07:57:56 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -124,6 +124,7 @@ static u_long rmtcr_port;
 static SVCXPRT *udptransp, *tcptransp;
 
 int	_yp_invalid_domain __P((const char *));		/* from libc */
+int	main __P((int, char *[]));
 
 static void usage __P((void));
 static struct _dom_binding *makebinding __P((const char *));
