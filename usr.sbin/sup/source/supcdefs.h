@@ -1,4 +1,4 @@
-/*	$NetBSD: supcdefs.h,v 1.9 2000/01/21 17:08:38 mycroft Exp $	*/
+/*	$NetBSD: supcdefs.h,v 1.10 2000/07/19 07:52:45 enami Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -73,9 +73,9 @@
 #include <sys/ioctl.h>
 #include <sys/resource.h>
 #endif	/* MACH */
-#ifndef NEED_READ_LINE
+#ifdef HAS_FPARSELN
 #include <util.h>
-#endif /* NEED_READ_LINE */
+#endif /* HAS_FPARSELN */
 #include <c.h>
 #include "sup.h"
 #include "supmsg.h"
