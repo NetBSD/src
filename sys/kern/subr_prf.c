@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.68 2000/03/29 03:05:18 simonb Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.69 2000/03/30 09:27:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -357,11 +357,11 @@ addlog(fmt, va_alist)
  */
 static void
 putchar(c, flags, tp)
-	register int c;
+	int c;
 	int flags;
 	struct tty *tp;
 {
-	register struct kern_msgbuf *mbp;
+	struct kern_msgbuf *mbp;
 
 	if (panicstr)
 		constty = NULL;
@@ -423,7 +423,7 @@ uprintf(fmt, va_alist)
 	va_dcl
 #endif
 {
-	register struct proc *p = curproc;
+	struct proc *p = curproc;
 	va_list ap;
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
@@ -451,7 +451,7 @@ uprintf(fmt, va_alist)
 
 tpr_t
 tprintf_open(p)
-	register struct proc *p;
+	struct proc *p;
 {
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {
@@ -490,7 +490,7 @@ tprintf(tpr, fmt, va_alist)
 	va_dcl
 #endif
 {
-	register struct session *sess = (struct session *)tpr;
+	struct session *sess = (struct session *)tpr;
 	struct tty *tp = NULL;
 	int s, flags = TOLOG;
 	va_list ap;

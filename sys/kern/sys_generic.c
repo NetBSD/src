@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.46 2000/03/17 00:01:48 darrenr Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.47 2000/03/30 09:27:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -75,14 +75,14 @@ sys_read(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_read_args /* {
+	struct sys_read_args /* {
 		syscallarg(int) fd;
 		syscallarg(void *) buf;
 		syscallarg(size_t) nbyte;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -167,14 +167,14 @@ sys_readv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_readv_args /* {
+	struct sys_readv_args /* {
 		syscallarg(int) fd;
 		syscallarg(const struct iovec *) iovp;
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -201,7 +201,7 @@ dofilereadv(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	register_t *retval;
 {
 	struct uio auio;
-	register struct iovec *iov;
+	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
@@ -291,14 +291,14 @@ sys_write(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_write_args /* {
+	struct sys_write_args /* {
 		syscallarg(int) fd;
 		syscallarg(const void *) buf;
 		syscallarg(size_t) nbyte;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -386,14 +386,14 @@ sys_writev(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_writev_args /* {
+	struct sys_writev_args /* {
 		syscallarg(int) fd;
 		syscallarg(const struct iovec *) iovp;
 		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	int fd = SCARG(uap, fd);
-	register struct file *fp;
-	register struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct filedesc *fdp = p->p_fd;
 
 	if ((u_int)fd >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fd]) == NULL ||
@@ -420,7 +420,7 @@ dofilewritev(p, fd, fp, iovp, iovcnt, offset, flags, retval)
 	register_t *retval;
 {
 	struct uio auio;
-	register struct iovec *iov;
+	struct iovec *iov;
 	struct iovec *needfree;
 	struct iovec aiov[UIO_SMALLIOV];
 	long i, cnt, error = 0;
@@ -512,16 +512,16 @@ sys_ioctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_ioctl_args /* {
+	struct sys_ioctl_args /* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
-	register struct file *fp;
-	register struct filedesc *fdp;
-	register u_long com;
-	register int error = 0;
-	register u_int size;
+	struct file *fp;
+	struct filedesc *fdp;
+	u_long com;
+	int error = 0;
+	u_int size;
 	caddr_t data, memp;
 	int tmp;
 #define STK_PARAMS	128
@@ -657,11 +657,11 @@ int	selwait, nselcoll;
  */
 int
 sys_select(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_select_args /* {
+	struct sys_select_args /* {
 		syscallarg(int) nd;
 		syscallarg(fd_set *) in;
 		syscallarg(fd_set *) ou;
@@ -771,9 +771,9 @@ selscan(p, ibitp, obitp, nfd, retval)
 	int nfd;
 	register_t *retval;
 {
-	register struct filedesc *fdp = p->p_fd;
-	register int msk, i, j, fd;
-	register fd_mask ibits, obits;
+	struct filedesc *fdp = p->p_fd;
+	int msk, i, j, fd;
+	fd_mask ibits, obits;
 	struct file *fp;
 	int n = 0;
 	static int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
@@ -809,11 +809,11 @@ selscan(p, ibitp, obitp, nfd, retval)
  */
 int
 sys_poll(p, v, retval)
-	register struct proc *p;
+	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_poll_args /* {
+	struct sys_poll_args /* {
 		syscallarg(struct pollfd *) fds;
 		syscallarg(u_int) nfds;
 		syscallarg(int) timeout;
@@ -901,7 +901,7 @@ pollscan(p, fds, nfd, retval)
 	int nfd;
 	register_t *retval;
 {
-	register struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
 	int i;
 	struct file *fp;
 	int n = 0;
@@ -967,9 +967,9 @@ selrecord(selector, sip)
  */
 void
 selwakeup(sip)
-	register struct selinfo *sip;
+	struct selinfo *sip;
 {
-	register struct proc *p;
+	struct proc *p;
 	int s;
 
 	if (sip->si_pid == 0)

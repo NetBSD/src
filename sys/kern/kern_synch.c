@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.70 2000/03/28 22:04:46 simonb Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.71 2000/03/30 09:27:12 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -237,10 +237,10 @@ void
 schedcpu(arg)
 	void *arg;
 {
-	register fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
-	register struct proc *p;
-	register int s;
-	register unsigned int newcpu;
+	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
+	struct proc *p;
+	int s;
+	unsigned int newcpu;
 	int clkhz;
 
 	proclist_lock_read();
@@ -304,10 +304,10 @@ schedcpu(arg)
  */
 void
 updatepri(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register unsigned int newcpu = p->p_estcpu;
-	register fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
+	unsigned int newcpu = p->p_estcpu;
+	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 
 	if (p->p_slptime > 5 * loadfac)
 		p->p_estcpu = 0;
@@ -360,9 +360,9 @@ tsleep(ident, priority, wmesg, timo)
 	int priority, timo;
 	const char *wmesg;
 {
-	register struct proc *p = curproc;
-	register struct slpque *qp;
-	register int s;
+	struct proc *p = curproc;
+	struct slpque *qp;
+	int s;
 	int sig, catch = priority & PCATCH;
 
 	if (cold || panicstr) {
@@ -475,7 +475,7 @@ void
 endtsleep(arg)
 	void *arg;
 {
-	register struct proc *p;
+	struct proc *p;
 	int s;
 
 	p = (struct proc *)arg;
@@ -498,9 +498,9 @@ sleep(ident, priority)
 	void *ident;
 	int priority;
 {
-	register struct proc *p = curproc;
-	register struct slpque *qp;
-	register int s;
+	struct proc *p = curproc;
+	struct slpque *qp;
+	int s;
 
 #ifdef DIAGNOSTIC
 	if (priority > PZERO) {
@@ -559,10 +559,10 @@ sleep(ident, priority)
  */
 void
 unsleep(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register struct slpque *qp;
-	register struct proc **hp;
+	struct slpque *qp;
+	struct proc **hp;
 	int s;
 
 	s = splhigh();
@@ -606,10 +606,10 @@ awaken(p)
  */
 void
 wakeup(ident)
-	register void *ident;
+	void *ident;
 {
-	register struct slpque *qp;
-	register struct proc *p, **q;
+	struct slpque *qp;
+	struct proc *p, **q;
 	int s;
 
 	s = splhigh();
@@ -751,9 +751,9 @@ preempt(newp)
 void
 mi_switch()
 {
-	register struct proc *p = curproc;	/* XXX */
-	register struct rlimit *rlim;
-	register long s, u;
+	struct proc *p = curproc;	/* XXX */
+	struct rlimit *rlim;
+	long s, u;
 	struct timeval tv;
 
 #ifdef DEBUG
@@ -823,7 +823,7 @@ mi_switch()
 void
 rqinit()
 {
-	register int i;
+	int i;
 
 	for (i = 0; i < NQS; i++)
 		qs[i].ph_link = qs[i].ph_rlink = (struct proc *)&qs[i];
@@ -836,9 +836,9 @@ rqinit()
  */
 void
 setrunnable(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register int s;
+	int s;
 
 	s = splhigh();
 	switch (p->p_stat) {
@@ -884,9 +884,9 @@ setrunnable(p)
  */
 void
 resetpriority(p)
-	register struct proc *p;
+	struct proc *p;
 {
-	register unsigned int newpriority;
+	unsigned int newpriority;
 
 	newpriority = PUSER + p->p_estcpu + NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);

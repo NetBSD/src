@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.49 2000/02/07 18:43:26 jonathan Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.50 2000/03/30 09:27:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -77,13 +77,13 @@ int
 socreate(dom, aso, type, proto)
 	int dom;
 	struct socket **aso;
-	register int type;
+	int type;
 	int proto;
 {
 	struct proc *p = curproc;		/* XXX */
-	register struct protosw *prp;
-	register struct socket *so;
-	register int error;
+	struct protosw *prp;
+	struct socket *so;
+	int error;
 	int s;
 
 	if (proto)
@@ -142,7 +142,7 @@ sobind(so, nam)
 
 int
 solisten(so, backlog)
-	register struct socket *so;
+	struct socket *so;
 	int backlog;
 {
 	int s = splsoftnet(), error;
@@ -164,7 +164,7 @@ solisten(so, backlog)
 
 void
 sofree(so)
-	register struct socket *so;
+	struct socket *so;
 {
 
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
@@ -190,7 +190,7 @@ sofree(so)
  */
 int
 soclose(so)
-	register struct socket *so;
+	struct socket *so;
 {
 	struct socket *so2;
 	int s = splsoftnet();		/* conservative */
@@ -258,7 +258,7 @@ soabort(so)
 
 int
 soaccept(so, nam)
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf *nam;
 {
 	int s = splsoftnet();
@@ -278,7 +278,7 @@ soaccept(so, nam)
 
 int
 soconnect(so, nam)
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf *nam;
 {
 	struct proc *p = curproc;		/* XXX */
@@ -307,7 +307,7 @@ soconnect(so, nam)
 
 int
 soconnect2(so1, so2)
-	register struct socket *so1;
+	struct socket *so1;
 	struct socket *so2;
 {
 	int s = splsoftnet();
@@ -322,7 +322,7 @@ soconnect2(so1, so2)
 
 int
 sodisconnect(so)
-	register struct socket *so;
+	struct socket *so;
 {
 	int s = splsoftnet();
 	int error;
@@ -363,7 +363,7 @@ bad:
  */
 int
 sosend(so, addr, uio, top, control, flags)
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf *addr;
 	struct uio *uio;
 	struct mbuf *top;
@@ -372,8 +372,8 @@ sosend(so, addr, uio, top, control, flags)
 {
 	struct proc *p = curproc;		/* XXX */
 	struct mbuf **mp;
-	register struct mbuf *m;
-	register long space, len, resid;
+	struct mbuf *m;
+	long space, len, resid;
 	int clen = 0, error, s, dontroute, mlen;
 	int atomic = sosendallatonce(so) || top;
 
@@ -555,15 +555,15 @@ out:
  */
 int
 soreceive(so, paddr, uio, mp0, controlp, flagsp)
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf **paddr;
 	struct uio *uio;
 	struct mbuf **mp0;
 	struct mbuf **controlp;
 	int *flagsp;
 {
-	register struct mbuf *m, **mp;
-	register int flags, len, error, s, offset;
+	struct mbuf *m, **mp;
+	int flags, len, error, s, offset;
 	struct protosw *pr = so->so_proto;
 	struct mbuf *nextrecord;
 	int moff, type = 0;
@@ -875,11 +875,11 @@ soshutdown(so, how)
 
 void
 sorflush(so)
-	register struct socket *so;
+	struct socket *so;
 {
-	register struct sockbuf *sb = &so->so_rcv;
-	register struct protosw *pr = so->so_proto;
-	register int s;
+	struct sockbuf *sb = &so->so_rcv;
+	struct protosw *pr = so->so_proto;
+	int s;
 	struct sockbuf asb;
 
 	sb->sb_flags |= SB_NOINTR;
@@ -897,12 +897,12 @@ sorflush(so)
 
 int
 sosetopt(so, level, optname, m0)
-	register struct socket *so;
+	struct socket *so;
 	int level, optname;
 	struct mbuf *m0;
 {
 	int error = 0;
-	register struct mbuf *m = m0;
+	struct mbuf *m = m0;
 
 	if (level != SOL_SOCKET) {
 		if (so->so_proto && so->so_proto->pr_ctloutput)
@@ -1038,11 +1038,11 @@ bad:
 
 int
 sogetopt(so, level, optname, mp)
-	register struct socket *so;
+	struct socket *so;
 	int level, optname;
 	struct mbuf **mp;
 {
-	register struct mbuf *m;
+	struct mbuf *m;
 
 	if (level != SOL_SOCKET) {
 		if (so->so_proto && so->so_proto->pr_ctloutput) {
@@ -1124,7 +1124,7 @@ sogetopt(so, level, optname, mp)
 
 void
 sohasoutofband(so)
-	register struct socket *so;
+	struct socket *so;
 {
 	struct proc *p;
 

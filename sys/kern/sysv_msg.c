@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.26 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.27 2000/03/30 09:27:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ static void msg_freehdr __P((struct __msg *));
 void
 msginit()
 {
-	register int i;
+	int i;
 
 	/*
 	 * msginfo.msgssz should be a power of two for efficiency reasons.
@@ -678,7 +678,7 @@ sys_msgrcv(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_msgrcv_args /* {
+	struct sys_msgrcv_args /* {
 		syscallarg(int) msqid;
 		syscallarg(void *) msgp;
 		syscallarg(size_t) msgsz;
@@ -692,8 +692,8 @@ sys_msgrcv(p, v, retval)
 	int msgflg = SCARG(uap, msgflg);
 	size_t len;
 	struct ucred *cred = p->p_ucred;
-	register struct msqid_ds *msqptr;
-	register struct __msg *msghdr;
+	struct msqid_ds *msqptr;
+	struct __msg *msghdr;
 	int error;
 	short next;
 

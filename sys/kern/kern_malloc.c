@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.49 2000/02/11 19:22:52 thorpej Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.50 2000/03/30 09:27:11 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -213,9 +213,9 @@ malloc(size, type, flags)
 	int type, flags;
 #endif /* MALLOCLOG */
 {
-	register struct kmembuckets *kbp;
-	register struct kmemusage *kup;
-	register struct freelist *freep;
+	struct kmembuckets *kbp;
+	struct kmemusage *kup;
+	struct freelist *freep;
 	long indx, npg, allocsize;
 	int s;
 	caddr_t va, cp, savedlist;
@@ -225,7 +225,7 @@ malloc(size, type, flags)
 	const char *savedtype;
 #endif
 #ifdef KMEMSTATS
-	register struct kmemstats *ksp = &kmemstats[type];
+	struct kmemstats *ksp = &kmemstats[type];
 
 	if (((unsigned long)type) > M_LAST)
 		panic("malloc - bogus type");
@@ -419,9 +419,9 @@ free(addr, type)
 	int type;
 #endif /* MALLOCLOG */
 {
-	register struct kmembuckets *kbp;
-	register struct kmemusage *kup;
-	register struct freelist *freep;
+	struct kmembuckets *kbp;
+	struct kmemusage *kup;
+	struct freelist *freep;
 	long size;
 	int s;
 #ifdef DIAGNOSTIC
@@ -430,7 +430,7 @@ free(addr, type)
 	long alloc, copysize;
 #endif
 #ifdef KMEMSTATS
-	register struct kmemstats *ksp = &kmemstats[type];
+	struct kmemstats *ksp = &kmemstats[type];
 #endif
 
 #ifdef DIAGNOSTIC
@@ -549,7 +549,7 @@ realloc(curaddr, newsize, type, flags)
 	unsigned long newsize;
 	int type, flags;
 {
-	register struct kmemusage *kup;
+	struct kmemusage *kup;
 	long cursize;
 	void *newaddr;
 #ifdef DIAGNOSTIC
@@ -667,7 +667,7 @@ void
 kmeminit()
 {
 #ifdef KMEMSTATS
-	register long indx;
+	long indx;
 #endif
 
 #if	((MAXALLOCSAVE & (MAXALLOCSAVE - 1)) != 0)

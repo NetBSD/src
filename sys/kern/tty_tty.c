@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tty.c,v 1.15 1998/03/01 02:22:33 fvdl Exp $	*/
+/*	$NetBSD: tty_tty.c,v 1.16 2000/03/30 09:27:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -88,7 +88,7 @@ cttyread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct vnode *ttyvp = cttyvp(uio->uio_procp);
+	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)
@@ -106,7 +106,7 @@ cttywrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct vnode *ttyvp = cttyvp(uio->uio_procp);
+	struct vnode *ttyvp = cttyvp(uio->uio_procp);
 	int error;
 
 	if (ttyvp == NULL)

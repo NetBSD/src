@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.59 2000/03/28 23:57:35 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.60 2000/03/30 09:27:12 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -92,7 +92,7 @@ sys___sysctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys___sysctl_args /* {
+	struct sys___sysctl_args /* {
 		syscallarg(int *) name;
 		syscallarg(u_int) namelen;
 		syscallarg(void *) old;
@@ -954,9 +954,9 @@ sysctl_doeproc(name, namelen, where, sizep)
 	char *where;
 	size_t *sizep;
 {
-	register struct proc *p;
-	register struct kinfo_proc *dp = (struct kinfo_proc *)where;
-	register int needed = 0;
+	struct proc *p;
+	struct kinfo_proc *dp = (struct kinfo_proc *)where;
+	int needed = 0;
 	int buflen = where != NULL ? *sizep : 0;
 	const struct proclist_desc *pd;
 	struct eproc eproc;
@@ -1050,10 +1050,10 @@ again:
  */
 void
 fill_eproc(p, ep)
-	register struct proc *p;
-	register struct eproc *ep;
+	struct proc *p;
+	struct eproc *ep;
 {
-	register struct tty *tp;
+	struct tty *tp;
 
 	ep->e_paddr = p;
 	ep->e_sess = p->p_pgrp->pg_session;
@@ -1066,7 +1066,7 @@ fill_eproc(p, ep)
 		ep->e_vm.vm_ssize = 0;
 		/* ep->e_vm.vm_pmap = XXX; */
 	} else {
-		register struct vmspace *vm = p->p_vmspace;
+		struct vmspace *vm = p->p_vmspace;
 
 		ep->e_vm.vm_rssize = vm_resident_count(vm);
 		ep->e_vm.vm_tsize = vm->vm_tsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.21 1998/08/04 04:03:17 perry Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.22 2000/03/30 09:27:14 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -122,9 +122,9 @@ void	tbattach __P((int));
 int
 tbopen(dev, tp)
 	dev_t dev;
-	register struct tty *tp;
+	struct tty *tp;
 {
-	register struct tb *tbp;
+	struct tb *tbp;
 
 	if (tp->t_line == TABLDISC)
 		return (ENODEV);
@@ -148,7 +148,7 @@ tbopen(dev, tp)
  */
 void
 tbclose(tp)
-	register struct tty *tp;
+	struct tty *tp;
 {
 	int modebits = TBPOINT|TBSTOP;
 
@@ -161,11 +161,11 @@ tbclose(tp)
  */
 int
 tbread(tp, uio)
-	register struct tty *tp;
+	struct tty *tp;
 	struct uio *uio;
 {
-	register struct tb *tbp = (struct tb *)tp->t_sc;
-	register struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
+	struct tb *tbp = (struct tb *)tp->t_sc;
+	struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
 	int ret;
 
 	if ((tp->t_state&TS_CARR_ON) == 0)
@@ -186,11 +186,11 @@ tbread(tp, uio)
  */
 void
 tbinput(c, tp)
-	register int c;
-	register struct tty *tp;
+	int c;
+	struct tty *tp;
 {
-	register struct tb *tbp = (struct tb *)tp->t_sc;
-	register struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
+	struct tb *tbp = (struct tb *)tp->t_sc;
+	struct tbconf *tc = &tbconf[tbp->tbflags & TBTYPE];
 
 	if (tc->tbc_recsize == 0 || tc->tbc_decode == 0)	/* paranoid? */
 		return;
@@ -215,8 +215,8 @@ tbinput(c, tp)
 static void
 gtcodecode(tc, cp, u)
 	struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+	char *cp;
+	union tbpos *u;
 {
 	struct gtcopos *pos = &u->gtcopos;
 	pos->pressure = *cp >> 2;
@@ -238,11 +238,11 @@ gtcodecode(tc, cp, u)
 static void
 tbolddecode(tc, cp, u)
 	struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+	char *cp;
+	union tbpos *u;
 {
 	struct hitpos *pos = &u->hitpos;
-	register char byte;
+	char byte;
 
 	byte = *cp++;
 	pos->status = (byte&0100) ? TBINPROX : 0;
@@ -264,8 +264,8 @@ tbolddecode(tc, cp, u)
 static void
 tblresdecode(tc, cp, u)
 	struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+	char *cp;
+	union tbpos *u;
 {
 	struct hitpos *pos = &u->hitpos;
 
@@ -286,8 +286,8 @@ tblresdecode(tc, cp, u)
 static void
 tbhresdecode(tc, cp, u)
 	struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+	char *cp;
+	union tbpos *u;
 {
 	struct hitpos *pos = &u->hitpos;
 	char byte;
@@ -311,8 +311,8 @@ tbhresdecode(tc, cp, u)
 static void
 poldecode(tc, cp, u)
 	struct tbconf *tc;
-	register char *cp;
-	register union tbpos *u;
+	char *cp;
+	union tbpos *u;
 {
 	struct polpos *pos = &u->polpos;
 
@@ -336,7 +336,7 @@ tbtioctl(tp, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct tb *tbp = (struct tb *)tp->t_sc;
+	struct tb *tbp = (struct tb *)tp->t_sc;
 
 	switch (cmd) {
 
@@ -353,7 +353,7 @@ tbtioctl(tp, cmd, data, flag, p)
 		/* fall thru... to set mode bits */
 
 	case BIOSMODE: {
-		register struct tbconf *tc;
+		struct tbconf *tc;
 		u_char *c;
 
 		tbp->tbflags &= ~TBMODE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.34 2000/01/31 15:12:30 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.35 2000/03/30 09:27:13 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ void semundo_clear __P((int, int));
 void
 seminit()
 {
-	register int i;
+	int i;
 
 	if (sema == NULL)
 		panic("sema is NULL");
@@ -86,7 +86,7 @@ seminit()
 		sema[i].sem_perm.mode = 0;
 	}
 	for (i = 0; i < seminfo.semmnu; i++) {
-		register struct sem_undo *suptr = SEMU(i);
+		struct sem_undo *suptr = SEMU(i);
 		suptr->un_proc = NULL;
 	}
 	semu_list = NULL;
@@ -160,9 +160,9 @@ struct sem_undo *
 semu_alloc(p)
 	struct proc *p;
 {
-	register int i;
-	register struct sem_undo *suptr;
-	register struct sem_undo **supptr;
+	int i;
+	struct sem_undo *suptr;
+	struct sem_undo **supptr;
 	int attempt;
 
 	/*
@@ -228,13 +228,13 @@ semu_alloc(p)
 
 int
 semundo_adjust(p, supptr, semid, semnum, adjval)
-	register struct proc *p;
+	struct proc *p;
 	struct sem_undo **supptr;
 	int semid, semnum;
 	int adjval;
 {
-	register struct sem_undo *suptr;
-	register struct undo *sunptr;
+	struct sem_undo *suptr;
+	struct undo *sunptr;
 	int i;
 
 	/* Look for and remember the sem_undo if the caller doesn't provide
@@ -297,11 +297,11 @@ void
 semundo_clear(semid, semnum)
 	int semid, semnum;
 {
-	register struct sem_undo *suptr;
+	struct sem_undo *suptr;
 
 	for (suptr = semu_list; suptr != NULL; suptr = suptr->un_next) {
-		register struct undo *sunptr;
-		register int i;
+		struct undo *sunptr;
+		int i;
 
 		sunptr = &suptr->un_ent[0];
 		for (i = 0; i < suptr->un_cnt; i++, sunptr++) {
@@ -517,7 +517,7 @@ sys_semget(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_semget_args /* {
+	struct sys_semget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) nsems;
 		syscallarg(int) semflg;
@@ -609,7 +609,7 @@ sys_semop(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_semop_args /* {
+	struct sys_semop_args /* {
 		syscallarg(int) semid;
 		syscallarg(struct sembuf *) sops;
 		syscallarg(size_t) nsops;
@@ -617,9 +617,9 @@ sys_semop(p, v, retval)
 	int semid = SCARG(uap, semid);
 	int nsops = SCARG(uap, nsops);
 	struct sembuf sops[MAX_SOPS];
-	register struct semid_ds *semaptr;
-	register struct sembuf *sopptr = NULL;
-	register struct __sem *semptr = NULL;
+	struct semid_ds *semaptr;
+	struct sembuf *sopptr = NULL;
+	struct __sem *semptr = NULL;
 	struct sem_undo *suptr = NULL;
 	struct ucred *cred = p->p_ucred;
 	int i, j, eval;
@@ -852,8 +852,8 @@ void
 semexit(p)
 	struct proc *p;
 {
-	register struct sem_undo *suptr;
-	register struct sem_undo **supptr;
+	struct sem_undo *suptr;
+	struct sem_undo **supptr;
 
 	/*
 	 * Go through the chain of undo vectors looking for one associated with

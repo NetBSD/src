@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.54 2000/03/24 11:57:15 enami Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.55 2000/03/30 09:27:11 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -299,8 +299,8 @@ long clock_cpu = 0;		/* CPU clock adjust */
  * Bump a timeval by a small number of usec's.
  */
 #define BUMPTIME(t, usec) { \
-	register volatile struct timeval *tp = (t); \
-	register long us; \
+	volatile struct timeval *tp = (t); \
+	long us; \
  \
 	tp->tv_usec = us = tp->tv_usec + (usec); \
 	if (us >= 1000000) { \
@@ -379,7 +379,7 @@ u_int64_t callwheel_softempty;		/* # empty buckets seen */
 void
 initclocks()
 {
-	register int i;
+	int i;
 
 	/*
 	 * Set divisors to 1 (normal case) and let the machine-specific
@@ -435,20 +435,20 @@ initclocks()
  */
 void
 hardclock(frame)
-	register struct clockframe *frame;
+	struct clockframe *frame;
 {
-	register struct proc *p;
-	register int delta;
+	struct proc *p;
+	int delta;
 	extern int tickdelta;
 	extern long timedelta;
 #ifdef NTP
-	register int time_update;
-	register int ltemp;
+	int time_update;
+	int ltemp;
 #endif
 
 	p = curproc;
 	if (p) {
-		register struct pstats *pstats;
+		struct pstats *pstats;
 
 		/*
 		 * Run current process's virtual and profile time, as needed.
@@ -1039,7 +1039,7 @@ int
 hzto(tv)
 	struct timeval *tv;
 {
-	register long ticks, sec;
+	long ticks, sec;
 	int s;
 
 	/*
@@ -1077,7 +1077,7 @@ hzto(tv)
  */
 void
 startprofclock(p)
-	register struct proc *p;
+	struct proc *p;
 {
 	int s;
 
@@ -1097,7 +1097,7 @@ startprofclock(p)
  */
 void
 stopprofclock(p)
-	register struct proc *p;
+	struct proc *p;
 {
 	int s;
 
@@ -1118,14 +1118,14 @@ stopprofclock(p)
  */
 void
 statclock(frame)
-	register struct clockframe *frame;
+	struct clockframe *frame;
 {
 #ifdef GPROF
-	register struct gmonparam *g;
-	register int i;
+	struct gmonparam *g;
+	int i;
 #endif
 	static int schedclk;
-	register struct proc *p;
+	struct proc *p;
 
 	if (CLKF_USERMODE(frame)) {
 		p = curproc;
@@ -1534,7 +1534,7 @@ hardpps(tvp, usec)
  */
 int
 sysctl_clockrate(where, sizep)
-	register char *where;
+	char *where;
 	size_t *sizep;
 {
 	struct clockinfo clkinfo;

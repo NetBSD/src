@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.62 2000/03/23 20:39:58 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.63 2000/03/30 09:27:12 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -116,11 +116,11 @@ static int getstr __P((char *, int));
 
 int
 uiomove(buf, n, uio)
-	register void *buf;
-	register int n;
-	register struct uio *uio;
+	void *buf;
+	int n;
+	struct uio *uio;
 {
-	register struct iovec *iov;
+	struct iovec *iov;
 	u_int cnt;
 	int error = 0;
 	char *cp = buf;
@@ -179,10 +179,10 @@ uiomove(buf, n, uio)
  */
 int
 ureadc(c, uio)
-	register int c;
-	register struct uio *uio;
+	int c;
+	struct uio *uio;
 {
-	register struct iovec *iov;
+	struct iovec *iov;
 
 	if (uio->uio_resid <= 0)
 		panic("ureadc: non-positive resid");

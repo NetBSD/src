@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.38 2000/01/22 16:53:50 thorpej Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.39 2000/03/30 09:27:12 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -263,8 +263,8 @@ chgproccnt(uid, diff)
 	uid_t	uid;
 	int	diff;
 {
-	register struct uidinfo *uip;
-	register struct uihashhead *uipp;
+	struct uidinfo *uip;
+	struct uihashhead *uipp;
 
 	uipp = UIHASH(uid);
 	for (uip = uipp->lh_first; uip != 0; uip = uip->ui_hash.le_next)
@@ -297,7 +297,7 @@ chgproccnt(uid, diff)
  */
 int
 inferior(p)
-	register struct proc *p;
+	struct proc *p;
 {
 
 	for (; p != curproc; p = p->p_pptr)
@@ -311,7 +311,7 @@ inferior(p)
  */
 struct proc *
 pfind(pid)
-	register pid_t pid;
+	pid_t pid;
 {
 	struct proc *p;
 
@@ -329,9 +329,9 @@ pfind(pid)
  */
 struct pgrp *
 pgfind(pgid)
-	register pid_t pgid;
+	pid_t pgid;
 {
-	register struct pgrp *pgrp;
+	struct pgrp *pgrp;
 
 	for (pgrp = PGRPHASH(pgid)->lh_first; pgrp != 0; pgrp = pgrp->pg_hash.le_next)
 		if (pgrp->pg_id == pgid)
@@ -344,11 +344,11 @@ pgfind(pgid)
  */
 int
 enterpgrp(p, pgid, mksess)
-	register struct proc *p;
+	struct proc *p;
 	pid_t pgid;
 	int mksess;
 {
-	register struct pgrp *pgrp = pgfind(pgid);
+	struct pgrp *pgrp = pgfind(pgid);
 
 #ifdef DIAGNOSTIC
 	if (pgrp != NULL && mksess)	/* firewalls */
@@ -370,7 +370,7 @@ enterpgrp(p, pgid, mksess)
 		if ((np = pfind(savepid)) == NULL || np != p)
 			return (ESRCH);
 		if (mksess) {
-			register struct session *sess;
+			struct session *sess;
 
 			/*
 			 * new session
@@ -422,7 +422,7 @@ enterpgrp(p, pgid, mksess)
  */
 int
 leavepgrp(p)
-	register struct proc *p;
+	struct proc *p;
 {
 
 	LIST_REMOVE(p, p_pglist);
@@ -437,7 +437,7 @@ leavepgrp(p)
  */
 void
 pgdelete(pgrp)
-	register struct pgrp *pgrp;
+	struct pgrp *pgrp;
 {
 
 	if (pgrp->pg_session->s_ttyp != NULL && 
@@ -461,12 +461,12 @@ pgdelete(pgrp)
  */
 void
 fixjobc(p, pgrp, entering)
-	register struct proc *p;
-	register struct pgrp *pgrp;
+	struct proc *p;
+	struct pgrp *pgrp;
 	int entering;
 {
-	register struct pgrp *hispgrp;
-	register struct session *mysession = pgrp->pg_session;
+	struct pgrp *hispgrp;
+	struct session *mysession = pgrp->pg_session;
 
 	/*
 	 * Check p's parent to see whether p qualifies its own process
@@ -506,7 +506,7 @@ static void
 orphanpg(pg)
 	struct pgrp *pg;
 {
-	register struct proc *p;
+	struct proc *p;
 
 	for (p = pg->pg_members.lh_first; p != 0; p = p->p_pglist.le_next) {
 		if (p->p_stat == SSTOP) {
@@ -547,9 +547,9 @@ p_sugid(p)
 void
 pgrpdump()
 {
-	register struct pgrp *pgrp;
-	register struct proc *p;
-	register int i;
+	struct pgrp *pgrp;
+	struct proc *p;
+	int i;
 
 	for (i = 0; i <= pgrphash; i++) {
 		if ((pgrp = pgrphashtbl[i].lh_first) != NULL) {

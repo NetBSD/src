@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.21 1999/08/03 20:19:17 wrstuden Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.22 2000/03/30 09:27:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -84,10 +84,10 @@ int
 soo_ioctl(fp, cmd, data, p)
 	struct file *fp;
 	u_long cmd;
-	register caddr_t data;
+	caddr_t data;
 	struct proc *p;
 {
-	register struct socket *so = (struct socket *)fp->f_data;
+	struct socket *so = (struct socket *)fp->f_data;
 
 	switch (cmd) {
 
@@ -143,7 +143,7 @@ int
 soo_fcntl(fp, cmd, data, p)
 	struct file *fp;
 	u_int cmd;
-	register caddr_t data;
+	caddr_t data;
 	struct proc *p;
 {
 	if (cmd == F_SETFL)
@@ -158,9 +158,9 @@ soo_poll(fp, events, p)
 	int events;
 	struct proc *p;
 {
-	register struct socket *so = (struct socket *)fp->f_data;
+	struct socket *so = (struct socket *)fp->f_data;
 	int revents = 0;
-	register int s = splsoftnet();
+	int s = splsoftnet();
 
 	if (events & (POLLIN | POLLRDNORM))
 		if (soreadable(so))
@@ -192,8 +192,8 @@ soo_poll(fp, events, p)
 
 int
 soo_stat(so, ub)
-	register struct socket *so;
-	register struct stat *ub;
+	struct socket *so;
+	struct stat *ub;
 {
 
 	memset((caddr_t)ub, 0, sizeof(*ub));

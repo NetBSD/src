@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.50 2000/03/23 05:16:14 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.51 2000/03/30 09:27:14 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -83,7 +83,7 @@ sys_socket(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_socket_args /* {
+	struct sys_socket_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
@@ -120,7 +120,7 @@ sys_bind(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_bind_args /* {
+	struct sys_bind_args /* {
 		syscallarg(int) s;
 		syscallarg(const struct sockaddr *) name;
 		syscallarg(unsigned int) namelen;
@@ -151,7 +151,7 @@ sys_listen(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_listen_args /* {
+	struct sys_listen_args /* {
 		syscallarg(int) s;
 		syscallarg(int) backlog;
 	} */ *uap = v;
@@ -172,7 +172,7 @@ sys_accept(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_accept_args /* {
+	struct sys_accept_args /* {
 		syscallarg(int) s;
 		syscallarg(struct sockaddr *) name;
 		syscallarg(unsigned int *) anamelen;
@@ -182,7 +182,7 @@ sys_accept(p, v, retval)
 	struct mbuf *nam;
 	unsigned int namelen;
 	int error, s, fd;
-	register struct socket *so;
+	struct socket *so;
 
 	if (SCARG(uap, name) && (error = copyin((caddr_t)SCARG(uap, anamelen),
 	    (caddr_t)&namelen, sizeof(namelen))))
@@ -272,13 +272,13 @@ sys_connect(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_connect_args /* {
+	struct sys_connect_args /* {
 		syscallarg(int) s;
 		syscallarg(const struct sockaddr *) name;
 		syscallarg(unsigned int) namelen;
 	} */ *uap = v;
 	struct file *fp;
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf *nam;
 	int error, s;
 
@@ -326,13 +326,13 @@ sys_socketpair(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_socketpair_args /* {
+	struct sys_socketpair_args /* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 		syscallarg(int *) rsv;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
 	struct file *fp1, *fp2;
 	struct socket *so1, *so2;
 	int fd, error, sv[2];
@@ -395,7 +395,7 @@ sys_sendto(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_sendto_args /* {
+	struct sys_sendto_args /* {
 		syscallarg(int) s;
 		syscallarg(const void *) buf;
 		syscallarg(size_t) len;
@@ -425,7 +425,7 @@ sys_sendmsg(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_sendmsg_args /* {
+	struct sys_sendmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(const struct msghdr *) msg;
 		syscallarg(int) flags;
@@ -463,16 +463,16 @@ done:
 
 int
 sendit(p, s, mp, flags, retsize)
-	register struct proc *p;
+	struct proc *p;
 	int s;
-	register struct msghdr *mp;
+	struct msghdr *mp;
 	int flags;
 	register_t *retsize;
 {
 	struct file *fp;
 	struct uio auio;
-	register struct iovec *iov;
-	register int i;
+	struct iovec *iov;
+	int i;
 	struct mbuf *to, *control;
 	int len, error;
 	struct socket *so;
@@ -532,7 +532,7 @@ sendit(p, s, mp, flags, retsize)
 			goto bad;
 #ifdef COMPAT_OLDSOCK
 		if (mp->msg_flags == MSG_COMPAT) {
-			register struct cmsghdr *cm;
+			struct cmsghdr *cm;
 
 			M_PREPEND(control, sizeof(*cm), M_WAIT);
 			if (control == 0) {
@@ -590,7 +590,7 @@ sys_recvfrom(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_recvfrom_args /* {
+	struct sys_recvfrom_args /* {
 		syscallarg(int) s;
 		syscallarg(void *) buf;
 		syscallarg(size_t) len;
@@ -627,14 +627,14 @@ sys_recvmsg(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_recvmsg_args /* {
+	struct sys_recvmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(struct msghdr *) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov;
-	register int error;
+	int error;
 
 	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&msg,
 		       sizeof(msg));
@@ -673,16 +673,16 @@ done:
 
 int
 recvit(p, s, mp, namelenp, retsize)
-	register struct proc *p;
+	struct proc *p;
 	int s;
-	register struct msghdr *mp;
+	struct msghdr *mp;
 	caddr_t namelenp;
 	register_t *retsize;
 {
 	struct file *fp;
 	struct uio auio;
-	register struct iovec *iov;
-	register int i;
+	struct iovec *iov;
+	int i;
 	int len, error;
 	struct mbuf *from = 0, *control = 0;
 	struct socket *so;
@@ -841,7 +841,7 @@ sys_shutdown(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_shutdown_args /* {
+	struct sys_shutdown_args /* {
 		syscallarg(int) s;
 		syscallarg(int) how;
 	} */ *uap = v;
@@ -863,7 +863,7 @@ sys_setsockopt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_setsockopt_args /* {
+	struct sys_setsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
@@ -905,7 +905,7 @@ sys_getsockopt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_getsockopt_args /* {
+	struct sys_getsockopt_args /* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) name;
@@ -958,7 +958,7 @@ sys_pipe(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct filedesc *fdp = p->p_fd;
+	struct filedesc *fdp = p->p_fd;
 	struct file *rf, *wf;
 	struct socket *rso, *wso;
 	int fd, error;
@@ -1012,13 +1012,13 @@ sys_getsockname(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_getsockname_args /* {
+	struct sys_getsockname_args /* {
 		syscallarg(int) fdes;
 		syscallarg(struct sockaddr *) asa;
 		syscallarg(unsigned int *) alen;
 	} */ *uap = v;
 	struct file *fp;
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf *m;
 	unsigned int len;
 	int error;
@@ -1058,13 +1058,13 @@ sys_getpeername(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_getpeername_args /* {
+	struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
 		syscallarg(struct sockaddr *) asa;
 		syscallarg(unsigned int *) alen;
 	} */ *uap = v;
 	struct file *fp;
-	register struct socket *so;
+	struct socket *so;
 	struct mbuf *m;
 	unsigned int len;
 	int error;
@@ -1108,8 +1108,8 @@ sockargs(mp, buf, buflen, type)
 	const void *buf;
 	int buflen, type;
 {
-	register struct sockaddr *sa;
-	register struct mbuf *m;
+	struct sockaddr *sa;
+	struct mbuf *m;
 	int error;
 
 	/*
@@ -1153,7 +1153,7 @@ getsock(fdp, fdes, fpp)
 	int fdes;
 	struct file **fpp;
 {
-	register struct file *fp;
+	struct file *fp;
 
 	if ((unsigned)fdes >= fdp->fd_nfiles ||
 	    (fp = fdp->fd_ofiles[fdes]) == NULL ||

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.32 1999/08/03 18:17:24 wrstuden Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.33 2000/03/30 09:27:15 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,11 +80,11 @@
  */
 int
 namei(ndp)
-	register struct nameidata *ndp;
+	struct nameidata *ndp;
 {
 	struct cwdinfo *cwdi;		/* pointer to cwd state */
-	register char *cp;		/* pointer into pathname argument */
-	register struct vnode *dp;	/* the directory we are searching */
+	char *cp;			/* pointer into pathname argument */
+	struct vnode *dp;		/* the directory we are searching */
 	struct iovec aiov;		/* uio for reading symbolic links */
 	struct uio auio;
 	int error, linklen;
@@ -270,10 +270,10 @@ namei(ndp)
  */
 int
 lookup(ndp)
-	register struct nameidata *ndp;
+	struct nameidata *ndp;
 {
-	register const char *cp;	/* pointer into pathname argument */
-	register struct vnode *dp = 0;	/* the directory we are searching */
+	const char *cp;			/* pointer into pathname argument */
+	struct vnode *dp = 0;		/* the directory we are searching */
 	struct vnode *tdp;		/* saved dp */
 	struct mount *mp;		/* mount table entry */
 	int docache;			/* == 0 do not cache last component */

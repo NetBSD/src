@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.42 1998/09/11 12:50:12 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.43 2000/03/30 09:27:13 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -122,7 +122,7 @@ ptsopen(dev, flag, devtype, p)
 	struct proc *p;
 {
 	struct pt_softc *pti;
-	register struct tty *tp;
+	struct tty *tp;
 	int error;
 
 	if (minor(dev) >= npty)
@@ -166,8 +166,8 @@ ptsclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
 	int error;
 
 	error = (*linesw[tp->t_line].l_close)(tp, flag);
@@ -183,8 +183,8 @@ ptsread(dev, uio, flag)
 	int flag;
 {
 	struct proc *p = curproc;
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
 	int error = 0;
 
 again:
@@ -237,8 +237,8 @@ ptswrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
 
 	if (tp->t_oproc == 0)
 		return (EIO);
@@ -253,7 +253,7 @@ void
 ptsstart(tp)
 	struct tty *tp;
 {
-	register struct pt_softc *pti = &pt_softc[minor(tp->t_dev)];
+	struct pt_softc *pti = &pt_softc[minor(tp->t_dev)];
 
 	if (ISSET(tp->t_state, TS_TTSTOP))
 		return;
@@ -266,7 +266,7 @@ ptsstart(tp)
 
 void
 ptsstop(tp, flush)
-	register struct tty *tp;
+	struct tty *tp;
 	int flush;
 {
 	struct pt_softc *pti = &pt_softc[minor(tp->t_dev)];
@@ -315,7 +315,7 @@ ptcopen(dev, flag, devtype, p)
 	struct proc *p;
 {
 	struct pt_softc *pti;
-	register struct tty *tp;
+	struct tty *tp;
 
 	if (minor(dev) >= npty)
 		return (ENXIO);
@@ -344,8 +344,8 @@ ptcclose(dev, flag, devtype, p)
 	int flag, devtype;
 	struct proc *p;
 {
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
 
 	(void)(*linesw[tp->t_line].l_modem)(tp, 0);
 	CLR(tp->t_state, TS_CARR_ON);
@@ -359,8 +359,8 @@ ptcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
 	char buf[BUFSIZ];
 	int error = 0, cc;
 
@@ -426,13 +426,13 @@ ptcread(dev, uio, flag)
 int
 ptcwrite(dev, uio, flag)
 	dev_t dev;
-	register struct uio *uio;
+	struct uio *uio;
 	int flag;
 {
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
-	register u_char *cp = NULL;
-	register int cc = 0;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
+	u_char *cp = NULL;
+	int cc = 0;
 	u_char locbuf[BUFSIZ];
 	int cnt = 0;
 	int error = 0;
@@ -518,8 +518,8 @@ ptcpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
 	int revents = 0;
 	int s = splsoftclock();
 
@@ -559,8 +559,8 @@ struct tty *
 ptytty(dev)
 	dev_t dev;
 {
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
 
 	return (tp);
 }
@@ -574,9 +574,9 @@ ptyioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
-	register u_char *cc = tp->t_cc;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
+	u_char *cc = tp->t_cc;
 	int stop, error;
 
 	/*

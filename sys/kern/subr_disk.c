@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.28 2000/02/07 20:16:58 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.29 2000/03/30 09:27:12 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -312,10 +312,10 @@ disksort_tail(bufq, bp)
  */
 u_int
 dkcksum(lp)
-	register struct disklabel *lp;
+	struct disklabel *lp;
 {
-	register u_short *start, *end;
-	register u_short sum = 0;
+	u_short *start, *end;
+	u_short sum = 0;
 
 	start = (u_short *)lp;
 	end = (u_short *)&lp->d_partitions[lp->d_npartitions];
@@ -340,13 +340,13 @@ hp0g: hard error reading fsbn 12345 of 12344-12347 (hp0 bn %d cn %d tn %d sn %d)
  */
 void
 diskerr(bp, dname, what, pri, blkdone, lp)
-	register struct buf *bp;
+	struct buf *bp;
 	char *dname, *what;
 	int pri, blkdone;
-	register struct disklabel *lp;
+	struct disklabel *lp;
 {
 	int unit = DISKUNIT(bp->b_dev), part = DISKPART(bp->b_dev);
-	register void (*pr) __P((const char *, ...));
+	void (*pr) __P((const char *, ...));
 	char partname = 'a' + part;
 	int sn;
 

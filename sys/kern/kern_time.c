@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.44 2000/03/23 06:30:12 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.45 2000/03/30 09:27:12 augustss Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ sys_clock_gettime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_clock_gettime_args /* {
+	struct sys_clock_gettime_args /* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 	} */ *uap = v;
@@ -168,7 +168,7 @@ sys_clock_settime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_clock_settime_args /* {
+	struct sys_clock_settime_args /* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(const struct timespec *) tp;
 	} */ *uap = v;
@@ -200,7 +200,7 @@ sys_clock_getres(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_clock_getres_args /* {
+	struct sys_clock_getres_args /* {
 		syscallarg(clockid_t) clock_id;
 		syscallarg(struct timespec *) tp;
 	} */ *uap = v;
@@ -230,7 +230,7 @@ sys_nanosleep(p, v, retval)
 	register_t *retval;
 {
 	static int nanowait;
-	register struct sys_nanosleep_args/* {
+	struct sys_nanosleep_args/* {
 		syscallarg(struct timespec *) rqtp;
 		syscallarg(struct timespec *) rmtp;
 	} */ *uap = v;
@@ -292,7 +292,7 @@ sys_gettimeofday(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_gettimeofday_args /* {
+	struct sys_gettimeofday_args /* {
 		syscallarg(struct timeval *) tp;
 		syscallarg(struct timezone *) tzp;
 	} */ *uap = v;
@@ -367,12 +367,12 @@ sys_adjtime(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_adjtime_args /* {
+	struct sys_adjtime_args /* {
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
 	struct timeval atv;
-	register long ndelta, ntickdelta, odelta;
+	long ndelta, ntickdelta, odelta;
 	int s, error;
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -451,7 +451,7 @@ sys_getitimer(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_getitimer_args /* {
+	struct sys_getitimer_args /* {
 		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
@@ -486,10 +486,10 @@ sys_getitimer(p, v, retval)
 int
 sys_setitimer(p, v, retval)
 	struct proc *p;
-	register void *v;
+	void *v;
 	register_t *retval;
 {
-	register struct sys_setitimer_args /* {
+	struct sys_setitimer_args /* {
 		syscallarg(int) which;
 		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
@@ -497,7 +497,7 @@ sys_setitimer(p, v, retval)
 	int which = SCARG(uap, which);
 	struct sys_getitimer_args getargs;
 	struct itimerval aitv;
-	register const struct itimerval *itvp;
+	const struct itimerval *itvp;
 	int s, error;
 
 	if ((u_int)which > ITIMER_PROF)
@@ -542,7 +542,7 @@ void
 realitexpire(arg)
 	void *arg;
 {
-	register struct proc *p;
+	struct proc *p;
 	int s;
 
 	p = (struct proc *)arg;
@@ -596,7 +596,7 @@ itimerfix(tv)
  */
 int
 itimerdecr(itp, usec)
-	register struct itimerval *itp;
+	struct itimerval *itp;
 	int usec;
 {
 

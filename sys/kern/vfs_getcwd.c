@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.12 1999/12/30 16:01:34 eeh Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.13 2000/03/30 09:27:14 augustss Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -556,7 +556,7 @@ sys___getcwd(p, v, retval)
 	void   *v;
 	register_t *retval;
 {
-	register struct sys___getcwd_args /* {
+	struct sys___getcwd_args /* {
 		syscallarg(char *) bufp;
 		syscallarg(size_t) length;
 	} */ *uap = v;
