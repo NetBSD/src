@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.1.1.1 1997/07/15 08:17:39 leo Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2 1998/04/22 07:53:23 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -42,7 +42,7 @@ typedef void	*isa_chipset_tag_t;
 typedef struct	{
 	int		slot;	/* 1/2, determines interrupt line	*/
 	int		ipl;	/* ipl requested			*/
-	hw_ifun_t	ifunc;	/* function to call			*/
+	int		(*ifunc) __P((void *));	/* function to call	*/
 	void		*iarg;	/* argument for 'ifunc'			*/
 	struct intrhand	*ihand;	/* save this for disestablishing	*/
 } isa_intr_info_t;
@@ -53,7 +53,7 @@ typedef struct	{
 void	isa_attach_hook __P((struct device *, struct device *,
 	    struct isabus_attach_args *));
 void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
-	    int level, hw_ifun_t ih_fun, void *ih_arg));
+	    int level, int (*)(void *), void *ih_arg));
 void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
 
 #endif /* _ATARI_ISA_MACHDEP_H_ */

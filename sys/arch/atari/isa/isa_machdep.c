@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 1998/04/10 08:20:04 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6 1998/04/22 07:53:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -142,7 +142,6 @@ int	sr;
 		MFP->mf_imrb  &= ~(IB_ISA1);
 	else MFP->mf_imra &= ~(IA_ISA2);
 
-
 	if ((sr & PSL_IPL) >= iinfo_p->ipl) {
 		/*
 		 * We're running at a too high priority now.
@@ -151,7 +150,7 @@ int	sr;
 	}
 	else {
 		s = splx(iinfo_p->ipl);
-		(void) (iinfo_p->ifunc)(iinfo_p->iarg, 0);
+		(void) (iinfo_p->ifunc)(iinfo_p->iarg);
 		splx(s);
 
 		/*
@@ -168,7 +167,7 @@ void *
 isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	isa_chipset_tag_t ic;
 	int		  irq, type, level;
-	hw_ifun_t	  ih_fun;
+	int		  (*ih_fun) __P((void *));
 	void		  *ih_arg;
 {
 	isa_intr_info_t *iinfo_p;
