@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.8 2003/10/27 07:14:25 chs Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.9 2004/09/14 17:19:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.8 2003/10/27 07:14:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.9 2004/09/14 17:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ struct moxa_isa_softc {
 int moxa_isaprobe __P((struct device *, struct cfdata *, void *));
 void moxa_isaattach __P((struct device *, struct device *, void *));
 int moxa_isaintr __P((void *));
-int moxa_isaprint __P((void *, const char *));
 
 CFATTACH_DECL(moxa_isa, sizeof(struct moxa_isa_softc),
     moxa_isaprobe, moxa_isaattach, NULL, NULL);
@@ -144,19 +143,6 @@ out:
 	return (rv);
 }
 
-int
-moxa_isaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct commulti_attach_args *ca = aux;
-
-	if (pnp)
-		aprint_normal("com at %s", pnp);
-	aprint_normal(" slave %d", ca->ca_slave);
-	return (UNCONF);
-}
-
 void
 moxa_isaattach(parent, self, aux)
 	struct device *parent, *self;
@@ -191,7 +177,7 @@ moxa_isaattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 1;
 
-		sc->sc_slaves[i] = config_found(self, &ca, moxa_isaprint);
+		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}

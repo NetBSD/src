@@ -1,4 +1,4 @@
-/*	$NetBSD: ioat66.c,v 1.7 2003/01/06 13:05:14 wiz Exp $	*/
+/*	$NetBSD: ioat66.c,v 1.8 2004/09/14 17:19:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.7 2003/01/06 13:05:14 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioat66.c,v 1.8 2004/09/14 17:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,6 @@ int ioatbases[NSLAVES]={0x220,0x228,0x240,0x248,0x260,0x268};
 int ioat66probe __P((struct device *, struct cfdata *, void *));
 void ioat66attach __P((struct device *, struct device *, void *));
 int ioat66intr __P((void *));
-int ioat66print __P((void *, const char *));
 
 CFATTACH_DECL(ioat, sizeof(struct ioat_softc),
     ioat66probe, ioat66attach, NULL, NULL);
@@ -132,19 +131,6 @@ out:
 	return (rv);
 }
 
-int
-ioat66print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct commulti_attach_args *ca = aux;
-
-	if (pnp)
-		aprint_normal("com at %s", pnp);
-	aprint_normal(" slave %d", ca->ca_slave);
-	return (UNCONF);
-}
-
 void
 ioat66attach(parent, self, aux)
 	struct device *parent, *self;
@@ -186,7 +172,7 @@ ioat66attach(parent, self, aux)
 		ca.ca_iobase = ioatbases[i];
 		ca.ca_noien = 0;
 
-		sc->sc_slaves[i] = config_found(self, &ca, ioat66print);
+		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}

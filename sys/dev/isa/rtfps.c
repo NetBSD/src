@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.46 2003/01/01 00:10:21 thorpej Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.47 2004/09/14 17:19:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.46 2003/01/01 00:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.47 2004/09/14 17:19:34 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ struct rtfps_softc {
 int rtfpsprobe __P((struct device *, struct cfdata *, void *));
 void rtfpsattach __P((struct device *, struct device *, void *));
 int rtfpsintr __P((void *));
-int rtfpsprint __P((void *, const char *));
 
 CFATTACH_DECL(rtfps, sizeof(struct rtfps_softc),
     rtfpsprobe, rtfpsattach, NULL, NULL);
@@ -143,19 +142,6 @@ out:
 	return (rv);
 }
 
-int
-rtfpsprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct commulti_attach_args *ca = aux;
-
-	if (pnp)
-		aprint_normal("com at %s", pnp);
-	aprint_normal(" slave %d", ca->ca_slave);
-	return (UNCONF);
-}
-
 void
 rtfpsattach(parent, self, aux)
 	struct device *parent, *self;
@@ -212,7 +198,7 @@ rtfpsattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
 
-		sc->sc_slaves[i] = config_found(self, &ca, rtfpsprint);
+		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}
