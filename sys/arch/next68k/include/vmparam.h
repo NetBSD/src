@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2000/02/11 19:30:28 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2000/11/14 19:29:00 thorpej Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -55,6 +55,14 @@
 /*
  * Machine dependent constants for NEXT68K
  */
+
+/*
+ * We use 4K pages on the NeXT.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
