@@ -1,4 +1,4 @@
-/*	$NetBSD: eeprom.c,v 1.4 1994/12/12 18:59:04 gwr Exp $	*/
+/*	$NetBSD: eeprom.c,v 1.5 1995/03/10 02:06:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -46,7 +46,9 @@
 #include <machine/obio.h>
 #include <machine/eeprom.h>
 
-#define HZ 100
+#define HZ 100	/* XXX */
+
+int ee_console;		/* for convenience of drivers */
 
 static int ee_update(caddr_t buf, int off, int cnt);
 
@@ -60,10 +62,11 @@ struct cfdriver eepromcd = {
 	NULL, "eeprom", eeprom_match, eeprom_attach,
 	DV_DULL, sizeof(struct device), 0 };
 
-/* Called very earyl by internal_configure. */
+/* Called very early by internal_configure. */
 void eeprom_init()
 {
 	eeprom_va = obio_find_mapping(OBIO_EEPROM, OBIO_EEPROM_SIZE);
+	ee_console = ((struct eeprom *)eeprom_va)->eeConsole;
 }
 
 int eeprom_match(parent, vcf, args)
