@@ -58,6 +58,8 @@ test_expr '2 \>= 3' '0'
 test_expr '2 \> 1' '1'
 test_expr '2 \> 2' '0'
 
+# Known failure once
+test_expr '1 \* -1' '-1'
 
 # Test a known case that should fail
 test_expr '- 1 + 5' 'expr: syntax error'
