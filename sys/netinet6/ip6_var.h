@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.20 2002/06/07 22:03:02 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.21 2002/06/08 21:22:33 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ struct	ip6asfrag {
 	u_int16_t	ip6af_mff;	/* more fragment bit in frag off */
 };
 
-#define IP6_REASS_MBUF(ip6af) (*(struct mbuf **)&((ip6af)->ip6af_m))
+#define IP6_REASS_MBUF(ip6af) ((ip6af)->ip6af_m)
 
 struct	ip6_moptions {
 	struct	ifnet *im6o_multicast_ifp; /* ifp for outgoing multicasts */
@@ -202,7 +202,7 @@ struct	ip6stat {
 
 #ifdef _KERNEL
 /* flags passed to ip6_output as last parameter */
-#define	IPV6_DADOUTPUT		0x01	/* DAD */
+#define	IPV6_UNSPECSRC		0x01	/* allow :: as the source address */
 #define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
 #define	IPV6_MINMTU		0x04	/* use minimum MTU (IPV6_USE_MIN_MTU) */
 
@@ -232,6 +232,7 @@ extern int	ip6_dad_count;		/* DupAddrDetectionTransmits */
 
 extern u_int32_t ip6_flow_seq;
 extern int ip6_auto_flowlabel;
+extern int ip6_auto_linklocal;
 
 extern int   ip6_anonportmin;		/* minimum ephemeral port */
 extern int   ip6_anonportmax;		/* maximum ephemeral port */
@@ -285,6 +286,10 @@ int	rip6_usrreq __P((struct socket *,
 
 int	dest6_input __P((struct mbuf **, int *, int));
 int	none_input __P((struct mbuf **, int *, int));
+
+struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
+	struct ip6_pktopts *, struct ip6_moptions *, struct route_in6 *,
+	struct in6_addr *, int *));
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_VAR_H_ */

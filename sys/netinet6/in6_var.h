@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_var.h,v 1.31 2002/06/08 00:07:00 itojun Exp $	*/
-/*	$KAME: in6_var.h,v 1.53 2001/02/10 02:44:27 itojun Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.32 2002/06/08 21:22:32 itojun Exp $	*/
+/*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -111,8 +111,17 @@ struct	in6_ifaddr {
 					/* list of multicast addresses */
 	int	ia6_flags;
 
-	struct in6_addrlifetime ia6_lifetime;	/* NULL = infty */
-	struct ifprefix *ia6_ifpr; /* back pointer to ifprefix */
+	struct in6_addrlifetime ia6_lifetime;
+	time_t	ia6_createtime; /* the creation time of this address, which is
+				 * currently used for temporary addresses only.
+				 */
+	time_t	ia6_updatetime;
+
+	/* back pointer to the ND prefix (for autoconfigured addresses only) */
+	struct nd_prefix *ia6_ndpr;
+
+	/* multicast addresses joined from the kernel */
+	LIST_HEAD(, in6_multi_mship) ia6_memberships;
 };
 
 /*
@@ -270,7 +279,8 @@ struct in6_prflags {
 	struct prf_ra {
 		u_char onlink : 1;
 		u_char autonomous : 1;
-		u_char reserved : 6;
+		u_char router : 1;
+		u_char reserved : 5;
 	} prf_ra;
 	u_char prf_reserved1;
 	u_short prf_reserved2;
@@ -352,8 +362,6 @@ struct	in6_rrenumreq {
 #define IFA_IN6(x)	(&((struct sockaddr_in6 *)((x)->ifa_addr))->sin6_addr)
 #define IFA_DSTIN6(x)	(&((struct sockaddr_in6 *)((x)->ifa_dstaddr))->sin6_addr)
 
-#define IFPR_IN6(x)	(&((struct sockaddr_in6 *)((x)->ifpr_prefix))->sin6_addr)
-
 #ifdef _KERNEL
 #define IN6_ARE_MASKED_ADDR_EQUAL(d, a, m)	(	\
 	(((d)->s6_addr32[0] ^ (a)->s6_addr32[0]) & (m)->s6_addr32[0]) == 0 && \
@@ -387,7 +395,7 @@ struct	in6_rrenumreq {
 #define SIOCGIFAFLAG_IN6	_IOWR('i', 73, struct in6_ifreq)
 
 #define SIOCGDRLST_IN6		_IOWR('i', 74, struct in6_drlist)
-#define SIOCGPRLST_IN6		_IOWR('i', 75, struct in6_prlist)
+#define SIOCGPRLST_IN6		_IOWR('i', 75, struct in6_oprlist)
 #ifdef _KERNEL
 #define OSIOCGIFINFO_IN6	_IOWR('i', 76, struct in6_ondireq)
 #endif
@@ -426,6 +434,10 @@ struct	in6_rrenumreq {
 #define IN6_IFF_DUPLICATED	0x04	/* DAD detected duplicate */
 #define IN6_IFF_DETACHED	0x08	/* may be detached from the link */
 #define IN6_IFF_DEPRECATED	0x10	/* deprecated address */
+#define IN6_IFF_NODAD		0x20	/* don't perform DAD on this address
+					 * (used only at first SIOC* call)
+					 */
+#define IN6_IFF_AUTOCONF	0x40	/* autoconfigurable address. */
 
 /* do not input/output */
 #define IN6_IFF_NOTREADY (IN6_IFF_TENTATIVE|IN6_IFF_DUPLICATED)
@@ -564,12 +576,13 @@ void	in6_delmulti __P((struct in6_multi *));
 struct in6_multi_mship *in6_joingroup __P((struct ifnet *, struct in6_addr *,
 	int *));
 int	in6_leavegroup __P((struct in6_multi_mship *));
-void	in6_ifscrub __P((struct ifnet *, struct in6_ifaddr *));
 int	in6_ifindex2scopeid __P((int));
-int	in6_mask2len __P((struct in6_addr *));
+int	in6_mask2len __P((struct in6_addr *, u_char *));
 int	in6_control __P((struct socket *, u_long, caddr_t, struct ifnet *,
 	struct proc *));
-void	in6_purgeaddr __P((struct ifaddr *, struct ifnet *));
+int	in6_update_ifa __P((struct ifnet *, struct in6_aliasreq *,
+	struct in6_ifaddr *));
+void	in6_purgeaddr __P((struct ifaddr *));
 int	in6if_do_dad __P((struct ifnet *));
 void	in6_purgeif __P((struct ifnet *));
 void	in6_savemkludge __P((struct in6_ifaddr *));
@@ -586,12 +599,9 @@ int	in6_addr2scopeid __P((struct ifnet *, struct in6_addr *));
 int	in6_matchlen __P((struct in6_addr *, struct in6_addr *));
 int	in6_are_prefix_equal __P((struct in6_addr *, struct in6_addr *, int));
 void	in6_prefixlen2mask __P((struct in6_addr *, int));
-int	in6_prefix_ioctl __P((struct socket *so, u_long cmd, caddr_t data,
-	struct ifnet *ifp));
-int	in6_prefix_add_ifid __P((int, struct in6_ifaddr *));
-void	in6_prefix_remove_ifid __P((int, struct in6_ifaddr *));
 void	in6_purgeprefix __P((struct ifnet *));
 
+int	in6_is_addr_deprecated __P((struct sockaddr_in6 *));
 struct in6pcb;
 int in6_embedscope __P((struct in6_addr *, const struct sockaddr_in6 *,
 	struct in6pcb *, struct ifnet **));
