@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.1 2002/01/03 22:45:24 tv Exp $
+#	$NetBSD: configure.ac,v 1.1 2002/01/10 17:04:21 tv Exp $
 #
 # Autoconf definition file for mkdep.
 #

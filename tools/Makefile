@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2002/01/10 05:17:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.29 2002/01/10 17:04:20 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,9 @@ TOOLCHAIN_BITS= toolchain .WAIT dbsym mdsetimage
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 .if !defined(NOSUBDIR)
-SUBDIR=	mkdep .WAIT compat .WAIT \
+SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT \
-		crunchgen gencat lint lint2 lorder mtree rpcgen \
+		crunchgen gencat lint lint2 lorder mkdep mtree rpcgen \
 		texinfo tsort makewhatis \
 	${TOOLCHAIN_BITS} \
 	yacc .WAIT \
