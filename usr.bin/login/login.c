@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.27 1997/10/12 12:31:40 mycroft Exp $	*/
+/*	$NetBSD: login.c,v 1.28 1997/10/12 12:42:38 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.27 1997/10/12 12:31:40 mycroft Exp $");
+__RCSID("$NetBSD: login.c,v 1.28 1997/10/12 12:42:38 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -201,6 +201,9 @@ main(argc, argv)
 			 * otherwise just insist on S/Key if user has one.
 			 */
 			require_skey++;
+#else
+			syslog(LOG_ERR, "-s option used without s/key support");
+			exit(1);
 #endif
 			break;
 		case '?':
