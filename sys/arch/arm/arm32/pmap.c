@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2002/08/10 00:11:51 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 2002/08/10 00:48:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2002/08/10 00:11:51 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2002/08/10 00:48:35 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -1653,11 +1653,13 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 	int cache_needs_cleaning = 0;
 	vaddr_t page_to_clean = 0;
 
-	if (pv == NULL)
+	if (pv == NULL) {
 		/* nothing mapped in so nothing to flush */
 		return (0);
+	}
 
-	/* Since we flush the cache each time we change curproc, we
+	/*
+	 * Since we flush the cache each time we change curproc, we
 	 * only need to flush the page if it is in the current pmap.
 	 */
 	if (curproc)
@@ -1667,38 +1669,36 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
 
 	for (npv = pv; npv; npv = npv->pv_next) {
 		if (npv->pv_pmap == pmap) {
-			/* The page is mapped non-cacheable in 
+			/*
+			 * The page is mapped non-cacheable in 
 			 * this map.  No need to flush the cache.
 			 */
 			if (npv->pv_flags & PVF_NC) {
 #ifdef DIAGNOSTIC
 				if (cache_needs_cleaning)
 					panic("pmap_clean_page: "
-							"cache inconsistency");
+					    "cache inconsistency");
 #endif
 				break;
-			}
-#if 0
-			/*
-			 * XXX Can't do this because pmap_protect doesn't
-			 * XXX clean the page when it does a write-protect.
-			 */
-			else if (is_src && (npv->pv_flags & PVF_WRITE) == 0)
+			} else if (is_src && (npv->pv_flags & PVF_WRITE) == 0)
 				continue;
-#endif
-			if (cache_needs_cleaning){
+			if (cache_needs_cleaning) {
 				page_to_clean = 0;
 				break;
-			}
-			else
+			} else
 				page_to_clean = npv->pv_va;
 			cache_needs_cleaning = 1;
 		}
 	}
 
-	if (page_to_clean)
+	if (page_to_clean) {
+		/*
+		 * XXX If is_src, we really only need to write-back,
+		 * XXX not invalidate, too.  Investigate further.
+		 * XXX --thorpej@netbsd.org
+		 */
 		cpu_idcache_wbinv_range(page_to_clean, NBPG);
-	else if (cache_needs_cleaning) {
+	} else if (cache_needs_cleaning) {
 		cpu_idcache_wbinv_all();
 		return (1);
 	}
