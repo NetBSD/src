@@ -1,4 +1,4 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.5 2000/12/14 04:11:26 onoe Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.6 2000/12/19 01:59:21 onoe Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -240,7 +240,7 @@ an_pcmcia_find(psc, pa, cfe)
 	sc->an_btag = psc->sc_pcioh.iot;
 	sc->an_bhandle = psc->sc_pcioh.ioh;
 
-	if (an_probe(sc))
+	if (an_probe(sc) == 0)
 		return 0;
 
 	fail++;
