@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.48 1999/02/18 07:16:17 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.49 1999/02/18 07:32:56 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,6 +49,7 @@
 #include "ccd.h"
 #include "cd.h"
 #include "ch.h"
+#include "fd.h"
 #include "md.h"
 #include "raid.h"
 #include "sd.h"
@@ -60,6 +61,7 @@
 bdev_decl(ccd);
 bdev_decl(cd);
 bdev_decl(ch);
+bdev_decl(fd);
 bdev_decl(md);
 bdev_decl(raid);
 bdev_decl(sd);
@@ -90,6 +92,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 18 */
 	bdev_lkm_dummy(),		/* 19 */
 	bdev_disk_init(NRAID,raid),	/* 20: RAIDframe disk driver */
+	bdev_disk_init(NFD, fd),	/* 21: Sony floppy disk */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -209,6 +212,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 41 */
 #endif
 	cdev_disk_init(NRAID,raid),	/* 42: RAIDframe disk driver */
+	cdev_disk_init(NFD,fd),		/* 43: Sony floppy disk */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

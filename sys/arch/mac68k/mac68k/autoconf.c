@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.49 1999/02/18 07:24:52 scottr Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.50 1999/02/18 07:32:56 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,6 +80,7 @@ struct devnametobdevmaj mac68k_nam2blk[] = {
 	{ "sd",		4 },
 	{ "cd",		6 },
 	{ "md",		13 },
+	{ "fd",		21 },
 	{ NULL,		0 },
 };
 
