@@ -87,7 +87,7 @@ static	void	setnatproto __P((int));
 %token	IPNY_ROUNDROBIN IPNY_FRAG IPNY_AGE IPNY_ICMPIDMAP IPNY_PROXY
 %token	IPNY_TCP IPNY_UDP IPNY_TCPUDP IPNY_STICKY IPNY_MSSCLAMP IPNY_TAG
 %token	IPNY_TLATE
-%type	<num> hexnumber numports compare range proto
+%type	<num> hexnumber compare range proto portspec
 %type	<ipa> hostname ipv4
 %type	<ipp> addr nummask rhaddr
 %type	<pc> portstuff
@@ -278,6 +278,8 @@ rhaddr:	addr				{ $$.a = $1.a; $$.m = $1.m; }
 	| IPNY_RANGE ipv4 '-' ipv4
 					{ $$.a = $2; $$.m = $4;
 					  nat->in_flags |= IPN_IPRANGE; }
+	;
+
 dip:
 	ipv4				{ nat->in_inip = $1.s_addr;
 					  nat->in_inmsk = 0xffffffff; }
@@ -286,21 +288,25 @@ dip:
 					  nat->in_inmsk = $3.s_addr; }
 	;
 
-dport:	| IPNY_PORT YY_NUMBER			{ nat->in_pmin = htons($2);
+portspec:	YY_NUMBER		{ $$ = $1; }
+	|	YY_STR			{ $$ = getport(NULL, $1); }
+	;
+
+dport:	| IPNY_PORT portspec			{ nat->in_pmin = htons($2);
 						  nat->in_pmax = htons($2); }
-	| IPNY_PORT YY_NUMBER '-' YY_NUMBER	{ nat->in_pmin = htons($2);
+	| IPNY_PORT portspec '-' portspec	{ nat->in_pmin = htons($2);
 						  nat->in_pmax = htons($4); }
-	| IPNY_PORT YY_NUMBER ':' YY_NUMBER	{ nat->in_pmin = htons($2);
+	| IPNY_PORT portspec ':' portspec	{ nat->in_pmin = htons($2);
 						  nat->in_pmax = htons($4); }
 	;
 
-nport:	IPNY_PORT YY_NUMBER		{ nat->in_pnext = htons($2); }
-	| IPNY_PORT '=' YY_NUMBER	{ nat->in_pnext = htons($3);
+nport:	IPNY_PORT portspec		{ nat->in_pnext = htons($2); }
+	| IPNY_PORT '=' portspec	{ nat->in_pnext = htons($3);
 					  nat->in_flags |= IPN_FIXEDDPORT;
 					}
 	;
 
-ports:	| IPNY_PORTS numports		{ nat->in_pmin = $2; }
+ports:	| IPNY_PORTS portspec		{ nat->in_pmin = $2; }
 	| IPNY_PORTS IPNY_AUTO		{ nat->in_flags |= IPN_AUTOPORTMAP; }
 	;
 
@@ -351,7 +357,7 @@ otherifname:
 	;
 
 mapport:
-	IPNY_PORTMAP tcpudp YY_NUMBER ':' YY_NUMBER
+	IPNY_PORTMAP tcpudp portspec ':' portspec
 			{ nat->in_pmin = htons($3);
 			  nat->in_pmax = htons($5);
 			}
@@ -429,8 +435,8 @@ nummask:
 	;
 
 portstuff:
-	compare YY_NUMBER		{ $$.pc = $1; $$.p1 = $2; }
-	| YY_NUMBER range YY_NUMBER	{ $$.pc = $2; $$.p1 = $1; $$.p1 = $3; }
+	compare portspec		{ $$.pc = $1; $$.p1 = $2; }
+	| portspec range portspec	{ $$.pc = $2; $$.p1 = $1; $$.p1 = $3; }
 	;
 
 mapoptions:
@@ -480,7 +486,7 @@ tcpudp:	| IPNY_TCP			{ setnatproto(IPPROTO_TCP); }
 	;
 
 rdrproxy:
-	| IPNY_PROXY YY_STR
+	IPNY_PROXY YY_STR
 					{ strncpy(nat->in_plabel, $2,
 						  sizeof(nat->in_plabel));
 					  nat->in_dport = nat->in_pnext;
@@ -492,10 +498,6 @@ rdrproxy:
 						  nat->in_pnext = nat->in_pmin;
 					  }
 					}
-	;
-
-numports:
-	YY_NUMBER			{ $$ = $1; }
 	;
 
 proto:	YY_NUMBER			{ $$ = $1; }
