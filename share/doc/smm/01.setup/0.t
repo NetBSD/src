@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)0.t	8.1 (Berkeley) 7/27/93
+.\"	@(#)0.t	8.2 (Berkeley) 5/14/94
 .\"
 .ds Ux \s-1UNIX\s0
 .ds Bs \s-1BSD\s0
@@ -45,7 +45,7 @@
 .ds Bb 10240
 .ds Bz 20
 .\" document date
-.ds Dy July 27, 1993
+.ds Dy May 14, 1994
 .de Sm
 \s-1\\$1\s0\\$2
 ..
@@ -107,11 +107,8 @@ Salt Lake City, Utah  84112
 .PP
 This document contains instructions for the
 installation and operation of the
-\*(4B release of UNIX\**
+\*(4B release of UNIX
 as distributed by The University of California at Berkeley.
-.FS
-UNIX is a registered trademark of USL in the USA and some other countries.
-.FE
 .PP
 It discusses procedures for installing UNIX on a new machine,
 and for upgrading an existing \*(Ps UNIX system to the new release.
@@ -128,4 +125,5 @@ shutdown and startup, filesystem backup procedures,
 resource control, performance monitoring, and procedures for recompiling
 and reinstalling system software.
 .AE
+.LP
 .bp +3

@@ -29,14 +29,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)3.t	8.1 (Berkeley) 6/8/93
+.\"	@(#)3.t	8.2 (Berkeley) 6/1/94
 .\"
 .\".ds RH "Network Library Routines
-.bp
 .nr H1 3
 .nr H2 0
-.bp
 .LG
+.sp 2
 .B
 .ce
 3. NETWORK LIBRARY ROUTINES
