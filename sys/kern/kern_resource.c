@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.48 1998/08/13 02:10:57 eeh Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.49 1998/08/31 23:53:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -48,6 +48,7 @@
 #include <sys/file.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 
 #include <sys/mount.h>
@@ -459,8 +460,7 @@ limcopy(lim)
 {
 	register struct plimit *newlim;
 
-	MALLOC(newlim, struct plimit *, sizeof(struct plimit),
-	    M_SUBPROC, M_WAITOK);
+	newlim = pool_get(&plimit_pool, PR_WAITOK);
 	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
 	newlim->p_lflags = 0;
@@ -475,5 +475,5 @@ limfree(lim)
 
 	if (--lim->p_refcnt > 0)
 		return;
-	FREE(lim, M_SUBPROC);
+	pool_put(&plimit_pool, lim);
 }
