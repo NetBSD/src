@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2002/10/23 01:25:38 itojun Exp $
+#	$NetBSD: Makefile,v 1.33 2003/04/06 16:35:38 lha Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
@@ -13,8 +13,8 @@ SRCS+=	yp_passwd.c
 CPPFLAGS+=-DYP
 DPADD+=	${LIBRPCSVC}
 LDADD+=	-lrpcsvc
-LINKS=	${BINDIR}/passwd ${BINDIR}/yppasswd
-MLINKS=	passwd.1 yppasswd.1
+LINKS+=	${BINDIR}/passwd ${BINDIR}/yppasswd
+MLINKS+=passwd.1 yppasswd.1
 .endif
 
 DPADD+= ${LIBCRYPT} ${LIBUTIL}
@@ -29,6 +29,8 @@ SRCS+=	krb5_passwd.c
 
 DPADD+=	${LIBKRB5} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN} ${LIBCRYPT}
 LDADD+=	-lkrb5 -lcrypto -lasn1 -lcom_err -lroken -lcrypt
+LINKS+=	${BINDIR}/passwd ${BINDIR}/kpasswd
+MLINKS+=	passwd.1 kpasswd.1
 .endif
 
 .include <bsd.prog.mk>
