@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.21 2002/12/19 23:31:54 kleink Exp $
+.\"	$NetBSD: sysconf.3,v 1.22 2003/02/02 20:33:07 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)sysconf.3	8.3 (Berkeley) 4/19/94
 .\"
-.Dd December 19, 2002
+.Dd February 2, 2003
 .Dt SYSCONF 3
 .Os
 .Sh NAME
@@ -71,6 +71,13 @@ The maximum bytes of argument to
 .It Li _SC_ATEXIT_MAX
 The maxmimum number of functions that may be registered with
 .Xr atexit 3 .
+.It Li _SC_BARRIERS
+The version of
+.St -p1003.1 
+and its 
+Barriers
+option to which the system attempts to conform,
+otherwise \-1.
 .It Li _SC_CHILD_MAX
 The maximum number of simultaneous processes per user id.
 .It Li _SC_CLK_TCK
@@ -118,11 +125,46 @@ The maximum number of supplemental groups.
 The maximum number of open files per process.
 .It Li _SC_PAGESIZE
 The size of a system page in bytes.
+.It Li _SC_READER_WRITER_LOCKS
+The version of
+.St -p1003.1 
+and its 
+Read-Write Locks
+option to which the system attempts to conform,
+otherwise \-1.
+.It Li _SC_SEMAPHORES
+The version of
+.St -p1003.1 
+and its 
+Semaphores
+option to which the system attempts to conform,
+otherwise \-1.
+.It Li _SC_SPIN_LOCKS
+The version of
+.St -p1003.1 
+and its 
+Spin Locks
+option to which the system attempts to conform,
+otherwise \-1.
 .It Li _SC_STREAM_MAX
 The minimum maximum number of streams that a process may have open
 at any one time.
 .It Li _SC_SYNCHRONIZED_IO
 Return 1 if the Synchronized I/O Option is available on this system,
+otherwise \-1.
+.It Li _SC_THREADS
+The version of
+.St -p1003.1 
+and its 
+Threads
+option to which the system attempts to conform,
+otherwise \-1.
+.It Li _SC_TIMERS
+The version of
+.St -p1003.1 
+and its 
+Timers
+option to which the system attempts to conform,
 otherwise \-1.
 .It Li _SC_TZNAME_MAX
 The minimum maximum number of types supported for the name of a
