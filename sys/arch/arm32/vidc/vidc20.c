@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20.c,v 1.3 1998/01/18 03:48:37 mark Exp $	*/
+/*	$NetBSD: vidc20.c,v 1.4 2001/02/24 20:08:54 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -50,7 +50,7 @@
 #include <machine/bus.h>
 #include <machine/vidc.h>
 #include <machine/io.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm/mainbus/mainbus.h>
 
 #include "locators.h"
 

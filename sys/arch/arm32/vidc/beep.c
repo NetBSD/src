@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.19 2000/06/29 08:53:03 mrg Exp $	*/
+/*	$NetBSD: beep.c,v 1.20 2001/02/24 20:09:50 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -60,7 +60,7 @@
 #include <machine/vidc.h>
 #include <machine/pmap.h>
 #include <machine/beep.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm/mainbus/mainbus.h>
 #include <arm32/vidc/waveform.h>
 #include <arm32/iomd/iomdreg.h>
 #ifdef RC7500
