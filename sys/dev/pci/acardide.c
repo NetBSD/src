@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.2 2003/10/11 17:40:15 thorpej Exp $	*/
+/*	$NetBSD: acardide.c,v 1.3 2003/10/24 00:24:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -49,17 +49,17 @@ CFATTACH_DECL(acardide, sizeof(struct pciide_softc),
 
 static const struct pciide_product_desc pciide_acard_products[] =  {
 	{ PCI_PRODUCT_ACARD_ATP850U,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  "Acard ATP850U Ultra33 IDE Controller",
 	  acard_chip_map,
 	},
 	{ PCI_PRODUCT_ACARD_ATP860,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  "Acard ATP860 Ultra66 IDE Controller",
 	  acard_chip_map,
 	},
 	{ PCI_PRODUCT_ACARD_ATP860A,
-	  IDE_PCI_CLASS_OVERRIDE,
+	  0,
 	  "Acard ATP860-A Ultra66 IDE Controller",
 	  acard_chip_map,
 	},
