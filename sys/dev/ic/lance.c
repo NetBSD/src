@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.27 2002/09/03 14:48:16 itojun Exp $	*/
+/*	$NetBSD: lance.c,v 1.28 2003/01/31 17:40:05 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.27 2002/09/03 14:48:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.28 2003/01/31 17:40:05 pk Exp $");
 
 #include "opt_ccitt.h"
 #include "opt_llc.h"
@@ -347,8 +347,7 @@ lance_init(ifp)
 
 	if ((*sc->sc_rdcsr)(sc, LE_CSR0) & LE_C0_IDON) {
 		/* Start the LANCE. */
-		(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_INEA | LE_C0_STRT |
-		    LE_C0_IDON);
+		(*sc->sc_wrcsr)(sc, LE_CSR0, LE_C0_INEA | LE_C0_STRT);
 		ifp->if_flags |= IFF_RUNNING;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_timer = 0;
