@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -101,3 +101,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	ipf(8): updated to version 3.4.29. [martti 20020919]
 	mount(2): Add MNT_GETARGS support to retrieve mounted filesystem
 		specific arguments. [christos 20020921]
+	mk.conf(5): MKDYNAMICROOT=yes made as the default, resulting in
+		a fully dynamically linked system.  [lukem 20020923]
