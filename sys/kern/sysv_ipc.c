@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.11 1997/05/08 17:08:31 mycroft Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.12 1997/05/08 17:16:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -36,6 +36,7 @@
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
+#include <sys/stat.h>
 
 /*
  * Check for ipc permission
@@ -47,17 +48,41 @@ ipcperm(cred, perm, mode)
 	struct ipc_perm *perm;
 	int mode;
 {
+	mode_t mask;
+
+	if (cred->cr_uid == 0)
+		return (0);
 
 	if (mode == IPC_M) {
-		if (cred->cr_uid == 0 ||
-		    cred->cr_uid == perm->uid ||
+		if (cred->cr_uid == perm->uid ||
 		    cred->cr_uid == perm->cuid)
 			return (0);
 		return (EPERM);
 	}
 
-	if (vaccess(VNON, perm->mode, perm->uid, perm->gid, mode, cred) == 0 ||
-	    vaccess(VNON, perm->mode, perm->cuid, perm->cgid, mode, cred) == 0)
-		return (0);
-	return (EACCES);
+	mask = 0;
+
+	if (cred->cr_uid == perm->uid ||
+	    cred->cr_uid == perm->cuid) {
+		if (mode & IPC_R)
+			mask |= S_IRUSR;
+		if (mode & IPC_W)
+			mask |= S_IWUSR;
+		return ((perm->mode & mask) == mask ? 0 : EACCES);
+	}
+
+	if (cred->cr_gid == perm->gid || groupmember(perm->gid, cred) ||
+	    cred->cr_gid == perm->cgid || groupmember(perm->cgid, cred)) {
+		if (mode & IPC_R)
+			mask |= S_IRGRP;
+		if (mode & IPC_W)
+			mask |= S_IWGRP;
+		return ((perm->mode & mask) == mask ? 0 : EACCES);
+	}
+
+	if (mode & IPC_R)
+		mask |= S_IROTH;
+	if (mode & IPC_W)
+		mask |= S_IWOTH;
+	return ((perm->mode & mask) == mask ? 0 : EACCES);
 }
