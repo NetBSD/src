@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.9 1999/09/28 15:10:20 enami Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.10 1999/09/29 18:50:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,9 +65,20 @@
  *	  a setup packet, we have 2 32-bit multicast hash table
  *	  registers, and 2 station address registers.
  *
+ *	- ADMtek AL981
+ *
+ *	  These clones have power management, Wake-On-Lan, and don't
+ *	  use a setup frame to program the receive filter.  Instead,
+ *	  we have station address and multicast hash registers.  We
+ *	  talk to the network over a built-in PHY which we communicate
+ *	  with over special PHY access registers.  Note that starting
+ *	  at CSR16, the AL981 registers no longer have the pad word!
+ *	  That is to say, CSR16 is in the normal place, and CSR17 is
+ *	  CSR16 + 4.
+ *
  * Some of the clone chips have different registers, and some have
  * different bits in the same registers.  These will be denoted by
- * PMAC, PNIC, and WINB in the register/bit names.
+ * PMAC, PNIC, WINB, and ADM in the register/bit names.
  */
 
 /*
@@ -875,6 +886,18 @@ struct tulip_desc {
  * Macronix 98713, 98713A, 98715, 98715A, 98725 registers.
  */
 
+	/*
+	 * Note, the MX98713 is very Tulip-like:
+	 *
+	 *	CSR12		General Purpose Port (like 21140)
+	 *	CSR13		reserved
+	 *	CSR14		reserved
+	 *	CSR15		Watchdog Timer (like 21140)
+	 *
+	 * The Macronix CSR12, CSR13, CSR14, and CSR15 exist only
+	 * on the MX98713A and higher.
+	 */
+
 /* CSR12 - 10base-T Status Port (similar to SIASTAT) */
 #define	CSR_PMAC_10TSTAT	   TULIP_CSR12
 #define	PMAC_10TSTAT_LS100	   0x00000002	/* link status 100TX
@@ -979,5 +1002,159 @@ struct tulip_desc {
 
 /* CSR20 - Current Transmit Buffer Register */
 #define	CSR_WINB_CTBAR		TULIP_CSR20
+
+
+/*
+ * ADMtek AL981 registers
+ *
+ * We define these as strict byte offsets into PCI space, since
+ * not all of them have consistent access rules.
+ */
+
+/* CSR13 - Wake-up Control/Status Register */
+#define	CSR_ADM_WCSR		0x68
+#define	ADM_WCSR_LSC		0x00000001	/* link status changed */
+#define	ADM_WCSR_MPR		0x00000002	/* magic packet received */
+#define	ADM_WCSR_WFR		0x00000004	/* wake up frame received */
+#define	ADM_WCSR_LSCE		0x00000100	/* link status changed en. */
+#define	ADM_WCSR_MPRE		0x00000200	/* magic packet receive en. */
+#define	ADM_WCSR_WFRE		0x00000400	/* wake up frame receive en. */
+#define	ADM_WCSR_LINKON		0x00010000	/* link-on detect en. */
+#define	ADM_WCSR_LINKOFF	0x00020000	/* link-off detect en. */
+#define	ADM_WCSR_WP5E		0x02000000	/* wake up pat. 5 en. */
+#define	ADM_WCSR_WP4E		0x04000000	/* wake up pat. 4 en. */
+#define	ADM_WCSR_WP3E		0x08000000	/* wake up pat. 3 en. */
+#define	ADM_WCSR_WP2E		0x10000000	/* wake up pat. 2 en. */
+#define	ADM_WCSR_WP1E		0x20000000	/* wake up pat. 1 en. */
+#define	ADM_WCSR_CRCT		0x40000000	/* CRC-16 type:
+						   0 == 0000 initial
+						   1 == ffff initial */
+
+
+/* CSR14 - Wake-up Pattern Data Register */
+#define	CSR_ADM_WPDR		0x70
+
+	/*
+	 * 25 consecutive longword writes are issued to WPDR to
+	 * program the wake-up pattern filter.  The data written
+	 * is as follows:
+	 *
+	 *	XXX
+	 */
+
+
+/* CSR15 - see 21140 CSR15 (Watchdog Timer) */
+
+
+/* CSR16 - Assistant CSR5 (Status Register 2) */
+#define	CSR_ADM_ASR		0x80
+						/* 0 - 14: same as CSR5 */
+#define	ADM_ASR_AAISS		0x00080000	/* added abnormal int. sum. */
+#define	ADM_ASR_ANISS		0x00010000	/* added normal int. sum. */
+						/* XXX Receive state */
+						/* XXX Transmit state */
+#define	ADM_ASR_BET		0x03800000	/* bus error type */
+#define	ADM_ASR_BET_PERR	0x00000000	/*   parity error */
+#define	ADM_ASR_BET_MABT	0x00800000	/*   master abort */
+#define	ADM_ASR_BET_TABT	0x01000000	/*   target abort */
+#define	ADM_ASR_PFR		0x04000000	/* PAUSE frame received */
+#define	ADM_ASR_TDIS		0x10000000	/* transmit def. int. status */
+#define	ADM_ASR_XIS		0x20000000	/* xcvr int. status */
+#define	ADM_ASR_REIS		0x40000000	/* receive early int. status */
+#define	ADM_ASR_TEIS		0x80000000	/* transmit early int. status */
+
+
+/* CSR17 - Assistant CSR7 (Interrupt Enable Register 2) */
+#define	CSR_ADM_AIE		0x84
+	/* See CSR16 for valid bits */
+
+
+/* CSR18 - Command Register */
+#define	CSR_ADM_CR		0x88
+#define	ADM_CR_ATUR		0x00000001	/* auto. tx underrun recover */
+#define	ADM_CR_SINT		0x00000002	/* software interrupt */
+#define	ADM_CR_DRT		0x0000000c	/* drain recieve threshold */
+#define	ADM_CR_DRT_8LW		0x00000000	/*   8 longwords */
+#define	ADM_CR_DRT_16LW		0x00000004	/*   16 longwords */
+#define	ADM_CR_DRT_SF		0x00000008	/*   store-and-forward */
+#define	ADM_CR_RTE		0x00000010	/* receive threshold enable */
+#define	ADM_CR_PAUSE		0x00000020	/* enable PAUSE function */
+#define	ADM_CR_RWP		0x00000040	/* reset wake-up pattern
+						   data register pointer */
+	/* 16 - 31 are automatically recalled from the EEPROM */
+#define	ADM_CR_WOL		0x00040000	/* wake-on-lan enable */
+#define	ADM_CR_PM		0x00080000	/* power management enable */
+#define	ADM_CR_RFS		0x00600000	/* Receive FIFO size */
+#define	ADM_CR_RFS_1K		0x00600000	/*   1K FIFO */
+#define	ADM_CR_RFS_2K		0x00400000	/*   2K FIFO */
+#define	ADM_CR_LEDMODE		0x00800000	/* LED mode */
+#define	ADM_CR_AUXCL		0x30000000	/* aux current load */
+#define	ADM_CR_D3CS		0x80000000	/* D3 cold wake up enable */
+
+
+/* CSR19 - PCI bus performance counter */
+#define	CSR_ADM_PCIC		0x8c
+#define	ADM_PCIC_DWCNT		0x000000ff	/* double-word count of
+						   last bus-master
+						   transaction */
+#define	ADM_PCIC_CLKCNT		0xffff0000	/* number of PCI clocks
+						   between read request
+						   and access completed */
+
+/* CSR20 - Power Management Control/Status Register */
+#define	CSR_ADM_PMCSR		0x90
+	/*
+	 * This register is also mapped into the PCI configuration
+	 * space as the PMCSR.
+	 */
+
+
+/* CSR23 - Transmit Burst Count/Time Out Register */
+#define	CSR_ADM_TXBR		0x9c
+	/* XXX */
+
+
+/* CSR24 - Flash ROM Port Register */
+#define	CSR_ADM_FROM		0xa0
+	/* XXX */
+
+
+/* CSR25 - Physical Address Register 0 */
+#define	CSR_ADM_PAR0		0xa4
+
+
+/* CSR26 - Physical Address Register 1 */
+#define	CSR_ADM_PAR1		0xa8
+
+
+/* CSR27 - Multicast Address Register 0 */
+#define	CSR_ADM_MAR0		0xac
+
+
+/* CSR28 - Multicast Address Register 1 */
+#define	CSR_ADM_MAR1		0xb0
+
+
+/* Internal PHY registers are mapped here (lower 16 bits valid) */
+
+#define	CSR_ADM_BMCR		0xb4
+#define	CSR_ADM_BMSR		0xb8
+#define	CSR_ADM_PHYIDR1		0xbc
+#define	CSR_ADM_PHYIDR2		0xc0
+#define	CSR_ADM_ANAR		0xc4
+#define	CSR_ADM_ANLPAR		0xc8
+#define	CSR_ADM_ANER		0xcc
+
+/* XCVR Mode Control Register */
+#define	CSR_ADM_XMC		0xd0
+
+/* XCVR Configuration Information and Interrupt Status Register */
+#define	CSR_ADM_XCIIS		0xd4
+
+/* XCVR Interrupt Enable Register */
+#define	CSR_ADM_XIE		0xd8
+
+/* XCVR 100baseTX PHY Control/Status Register */
+#define	CSR_ADM_100CTR		0xdc
 
 #endif /* _DEV_IC_TULIPREG_H_ */
