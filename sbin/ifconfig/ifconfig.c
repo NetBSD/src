@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.50 1999/04/01 08:12:23 chopps Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.51 1999/05/17 16:00:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.50 1999/04/01 08:12:23 chopps Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.51 1999/05/17 16:00:05 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -367,9 +367,9 @@ main(argc, argv)
 		}
 	}
 
+	/* Initialize af, just for use in getinfo(). */
 	if (afp == NULL)
-		afp = afs;
-	af = ifr.ifr_addr.sa_family = afp->af_af;
+		af = afs->af_af;
 
 	/* Get information about the interface. */
 	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
@@ -381,6 +381,11 @@ main(argc, argv)
 		status(NULL, 0);
 		exit(0);
 	}
+
+	/* The following operations assume inet family as the default. */
+	if (afp == NULL)
+		afp = afs;
+	af = ifr.ifr_addr.sa_family = afp->af_af;
 
 	/* Process commands. */
 	while (argc > 0) {
