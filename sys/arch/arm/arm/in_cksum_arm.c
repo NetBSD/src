@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.c,v 1.2 2001/05/23 19:33:48 chris Exp $	*/
+/*	$NetBSD: in_cksum_arm.c,v 1.3 2001/12/08 21:18:50 chris Exp $	*/
 
 /*
  * ARM version:
@@ -67,54 +67,59 @@
  */
 
 #define ADD64	__asm __volatile("	\n\
-	ldmia	%2!, {%3, %4, %5, %6}	\n\
-	adds	%0,%0,%3; adcs %0,%0,%4	\n\
-	adcs	%0,%0,%5; adcs %0,%0,%6	\n\
-	ldmia	%2!, {%3, %4, %5, %6}	\n\
-	adcs	%0,%0,%3; adcs %0,%0,%4	\n\
-	adcs	%0,%0,%5; adcs %0,%0,%6	\n\
-	ldmia	%2!, {%3, %4, %5, %6}	\n\
-	adcs	%0,%0,%3; adcs %0,%0,%4	\n\
-	adcs	%0,%0,%5; adcs %0,%0,%6	\n\
-	ldmia	%2!, {%3, %4, %5, %6}	\n\
-	adcs	%0,%0,%3; adcs %0,%0,%4	\n\
-	adcs	%0,%0,%5; adcs %0,%0,%6	\n\
-	adcs	%0,%0,#0\n"		\
-	: "=r" (sum)			\
-	: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2), "r" (tmp3), "r" (tmp4))
+	ldmia	%0!, {%2, %3, %4, %5}	\n\
+	adds	%1,%7,%2; adcs %1,%1,%3	\n\
+	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
+	ldmia	%0!, {%2, %3, %4, %5}	\n\
+	adcs	%1,%1,%2; adcs %1,%1,%3	\n\
+	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
+	ldmia	%0!, {%2, %3, %4, %5}	\n\
+	adcs	%1,%1,%2; adcs %1,%1,%3	\n\
+	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
+	ldmia	%0!, {%2, %3, %4, %5}	\n\
+	adcs	%1,%1,%2; adcs %1,%1,%3	\n\
+	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
+	adcs	%1,%1,#0\n"		\
+	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3), "=&r" (tmp4) \
+	: "0" (w), "r" (sum)	\
+	: "cc")
 	
 #define ADD32	__asm __volatile("	\n\
-	ldmia	%2!, {%3, %4, %5, %6}	\n\
-	adds	%0,%0,%3; adcs %0,%0,%4	\n\
-	adcs	%0,%0,%5; adcs %0,%0,%6	\n\
-	ldmia	%2!, {%3, %4, %5, %6}	\n\
-	adcs	%0,%0,%3; adcs %0,%0,%4	\n\
-	adcs	%0,%0,%5; adcs %0,%0,%6	\n\
-	adcs	%0,%0,#0\n"		\
-	: "=r" (sum)			\
-	: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2), "r" (tmp3), "r" (tmp4))
-	
+	ldmia	%0!, {%2, %3, %4, %5}	\n\
+	adds	%1,%7,%2; adcs %1,%1,%3	\n\
+	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
+	ldmia	%0!, {%2, %3, %4, %5}	\n\
+	adcs	%1,%1,%2; adcs %1,%1,%3	\n\
+	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
+	adcs	%1,%1,#0\n"		\
+	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3), "=&r" (tmp4) \
+	: "0" (w), "r" (sum)	\
+	: "cc")
+
 #define ADD16	__asm __volatile("	\n\
-	ldmia	%2!, {%3, %4, %5, %6}	\n\
-	adds	%0,%0,%3; adcs %0,%0,%4	\n\
-	adcs	%0,%0,%5; adcs %0,%0,%6	\n\
-	adcs	%0,%0,#0\n"		\
-	: "=r" (sum)			\
-	: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2), "r" (tmp3), "r" (tmp4))
+	ldmia	%0!, {%2, %3, %4, %5}	\n\
+	adds	%1,%7,%2; adcs %1,%1,%3	\n\
+	adcs	%1,%1,%4; adcs %1,%1,%5	\n\
+	adcs	%1,%1,#0\n"		\
+	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3), "=&r" (tmp4) \
+	: "0" (w), "r" (sum)	\
+	: "cc")
 
 #define ADD8	__asm __volatile("	\n\
-	ldmia	%2!, {%3, %4}		\n\
-	adds	%0,%0,%3; adcs %0,%0,%4	\n\
-	adcs	%0,%0,#0\n"		\
-	: "=r" (sum)			\
-	: "0" (sum), "r" (w), "r" (tmp1), "r" (tmp2))
+	ldmia	%0!, {%2, %3}		\n\
+	adds	%1,%5,%2; adcs %1,%1,%3	\n\
+	adcs	%1,%1,#0\n"		\
+	: "=r" (w), "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)	\
+	: "0" (w), "r" (sum)		\
+	: "cc" )
 
 #define ADD4	__asm __volatile("	\n\
-	ldr	%3,[%2],#4		\n\
-	adds	%0,%0,%3		\n\
-	adcs	%0,%0,#0\n"		\
-	: "=r" (sum)			\
-	: "0" (sum), "r" (w), "r" (tmp1))
+	ldr	%2,[%0],#4		\n\
+	adds	%1,%4,%2		\n\
+	adcs	%1,%1,#0\n"		\
+	: "=r" (w), "=r" (sum), "=&r" (tmp1) \
+	: "0" (w), "r" (sum)		\
+	: "cc")
 
 /*#define REDUCE	{sum = (sum & 0xffff) + (sum >> 16);}*/
 #define REDUCE	__asm __volatile("	\n\
@@ -144,7 +149,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 	 * allow the compiler to pick which specific machine registers to
 	 * use, instead of hard-coding this in the asm code above.
 	 */
-	u_int tmp1, tmp2, tmp3, tmp4;
+	register u_int tmp1, tmp2, tmp3, tmp4;
 
 	for (; m && len; m = m->m_next) {
 		if (m->m_len == 0)
@@ -235,10 +240,10 @@ in4_cksum(m, nxt, off, len)
     int off, len;
 {
 	u_int sum = 0;
-
-	/* for ADD macros */
-	u_int tmp1, tmp2, tmp3, tmp4;
+	
 	if (nxt != 0) {
+	    /* for ADD macros */
+	    register u_int tmp1, tmp2, tmp3, tmp4;
     	    u_char *w;
 	    struct ipovly ipov;
 	    /* pseudo header */
@@ -256,7 +261,6 @@ in4_cksum(m, nxt, off, len)
 	    
 	    /* assumes sizeof(ipov) == 20 */
 	    ADD16;
-	    w += 16;
 	    ADD4;
 	}
 	/* skip unnecessary part */
