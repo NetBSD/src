@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.43 1998/11/11 15:26:14 matt Exp $
+#  $NetBSD: Makefile,v 1.44 1999/02/15 09:33:41 he Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -140,7 +140,8 @@ SRCS:=${SRCS} n_sqrt.S n_argred.S n_infnan.S n_atan2.S n_cabs.S n_cbrt.S \
 	n_support.S 
 .endif
 
-NOLINT=		nolint (XXX lint bugs on some archs and needs stubs)
+# XXX lint buts on some archs and needs stubs
+MKLINT=no
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
