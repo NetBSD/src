@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.h,v 1.2 1994/10/26 02:53:03 cgd Exp $	*/
+/*	$NetBSD: ibcs2_stat.h,v 1.2.42.1 2000/09/05 01:43:18 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Scott Bartram
@@ -72,7 +72,7 @@ struct ibcs2_stat {
 #define IBCS2_S_IXUSR		0x0040
 #define IBCS2_S_IRWXG		0x0038
 #define IBCS2_S_IRGRP		0x0020
-#define IBCS2_S_IWGRP		0x000f
+#define IBCS2_S_IWGRP		0x0010
 #define IBCS2_S_IXGRP		0x0008
 #define IBCS2_S_IRWXO		0x0007
 #define IBCS2_S_IROTH		0x0004
