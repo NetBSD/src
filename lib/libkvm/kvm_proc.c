@@ -395,17 +395,9 @@ kvm_proclist(kd, what, arg, p, bp, maxcnt)
 			(void)kvm_read(kd, (u_long)proc.p_wmesg, 
 			    eproc.e_wmesg, WMESGLEN);
 
-#ifdef sparc
-		(void)kvm_read(kd, (u_long)&proc.p_vmspace->vm_rssize,
-		    (char *)&eproc.e_vm.vm_rssize,
-		    sizeof(eproc.e_vm.vm_rssize));
-		(void)kvm_read(kd, (u_long)&proc.p_vmspace->vm_tsize,
-		    (char *)&eproc.e_vm.vm_tsize,
-		    3 * sizeof(eproc.e_vm.vm_rssize));	/* XXX */
-#else
 		(void)kvm_read(kd, (u_long)proc.p_vmspace,
 		    (char *)&eproc.e_vm, sizeof(eproc.e_vm));
-#endif
+
 		eproc.e_xsize = eproc.e_xrssize = 0;
 		eproc.e_xccount = eproc.e_xswrss = 0;
 
