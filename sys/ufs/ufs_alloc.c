@@ -437,9 +437,8 @@ blkpref(ip, lbn, indx, bap)
 	 * requested rotationally delayed by fs_rotdelay milliseconds.
 	 */
 	nextblk = bap[indx - 1] + fs->fs_frag;
-	if (indx > fs->fs_maxcontig &&
-	    bap[indx - fs->fs_maxcontig] + blkstofrags(fs, fs->fs_maxcontig)
-	    != nextblk)
+	if (indx < fs->fs_maxcontig || bap[indx - fs->fs_maxcontig] +
+	    blkstofrags(fs, fs->fs_maxcontig) != nextblk)
 		return (nextblk);
 	if (fs->fs_rotdelay != 0)
 		/*
