@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.14 1999/11/06 20:13:49 eeh Exp $ */
+/*	$NetBSD: cpu.h,v 1.15 1999/12/30 16:26:18 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -83,6 +83,7 @@
  * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
  * Note that CLKF_INTR is valid only if CLKF_USERMODE is false.
  */
+extern int intstack[];
 extern int eintstack[];
 struct clockframe {
 	struct trapframe64 t;
@@ -91,7 +92,9 @@ struct clockframe {
 #define	CLKF_USERMODE(framep)	(((framep)->t.tf_tstate & TSTATE_PRIV) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->t.tf_oldpil) == 0)
 #define	CLKF_PC(framep)		((framep)->t.tf_pc)
-#define	CLKF_INTR(framep)	(((framep)->t.tf_kstack < (u_int)eintstack)&&((framep)->t.tf_kstack > (u_int)KERNBASE))
+#define	CLKF_INTR(framep)	((!CLKF_USERMODE(framep))&&\
+				(((framep)->t.tf_kstack < (u_int)eintstack)&&\
+				((framep)->t.tf_kstack > (u_int)intstack)))
 
 /*
  * Software interrupt request `register'.
