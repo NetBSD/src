@@ -1,7 +1,9 @@
-/*
+/*	$NetBSD: res_debug.c,v 1.7 1995/02/25 06:20:56 cgd Exp $	*/
+
+/*-
  * Copyright (c) 1985, 1990, 1993
- *    The Regents of the University of California.  All rights reserved.
- * 
+ *	The Regents of the University of California.  All rights reserved.
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -29,7 +31,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
+ * -
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
  * 
  * Permission to use, copy, modify, and distribute this software for any
@@ -47,11 +49,16 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static char rcsid[] = "$Id: res_debug.c,v 1.6 1994/10/15 07:58:59 deraadt Exp $";
+#else
+static char rcsid[] = "$NetBSD: res_debug.c,v 1.7 1995/02/25 06:20:56 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -65,7 +72,7 @@ static char rcsid[] = "$Id: res_debug.c,v 1.6 1994/10/15 07:58:59 deraadt Exp $"
 void __fp_query();
 char *__p_class(), *__p_time(), *__p_type();
 char *p_cdname(), *p_fqname(), *p_rr();
-static char *p_option __P((u_long));
+static char *p_option __P((u_int32_t));
 
 char *_res_opcodes[] = {
 	"QUERY",
@@ -281,11 +288,10 @@ __fp_query(msg,file)
 		fprintf(file,"; Ques: %d", ntohs(hp->qdcount));
 		fprintf(file,", Ans: %d", ntohs(hp->ancount));
 		fprintf(file,", Auth: %d", ntohs(hp->nscount));
-		fprintf(file,", Addit: %d", ntohs(hp->arcount));
+		fprintf(file,", Addit: %d\n", ntohs(hp->arcount));
 	}
-#if 1
-	if ((!_res.pfcode) || (_res.pfcode & 
-		(RES_PRF_HEADX | RES_PRF_HEAD2 | RES_PRF_HEAD1))) {
+#if 0
+	if (_res.pfcode & (RES_PRF_HEADX | RES_PRF_HEAD2 | RES_PRF_HEAD1)) {
 		putc('\n',file);
 	}
 #endif
@@ -305,10 +311,9 @@ __fp_query(msg,file)
 					__p_type(_getshort(cp)));
 			cp += sizeof(u_int16_t);
 			if ((!_res.pfcode) || (_res.pfcode & RES_PRF_QUES))
-				fprintf(file, ", class = %s\n",
+				fprintf(file, ", class = %s\n\n",
 					__p_class(_getshort(cp)));
 			cp += sizeof(u_int16_t);
-			putc('\n', file);
 		}
 	}
 	/*
@@ -345,7 +350,7 @@ p_cdname(cp, msg, file)
 	int n;
 
 	if ((n = dn_expand((u_char *)msg, (u_char *)cp + MAXCDNAME,
-			   (u_char *)cp, (u_char *)name, sizeof(name))) < 0)
+	    (u_char *)cp, (u_char *)name, sizeof(name))) < 0)
 		return (NULL);
 	if (name[0] == '\0')
 		putc('.', file);
@@ -363,7 +368,7 @@ p_fqname(cp, msg, file)
 	int n, len;
 
 	if ((n = dn_expand((u_char *)msg, (u_char *)cp + MAXCDNAME,
-			   (u_char *)cp, (u_char *)name, sizeof(name))) < 0)
+	    (u_char *)cp, (u_char *)name, sizeof(name))) < 0)
 		return (NULL);
 	if (name[0] == '\0') {
 		putc('.', file);
@@ -516,7 +521,7 @@ p_rr(cp, msg, file)
 	case T_GID:
 		if (dlen == 4) {
 			fprintf(file,"\t%u", _getlong(cp));
-			cp += sizeof(u_int32_t);
+			cp += sizeof(int32_t);
 		}
 		break;
 
@@ -676,7 +681,7 @@ __p_class(class)
  */
 static char *
 p_option(option)
-	u_long option;
+	u_int32_t option;
 {
 	switch (option) {
 	case RES_INIT:		return "init";

@@ -1,6 +1,8 @@
-/*
- * Copyright (c) 1985, 1988 Regents of the University of California.
- * All rights reserved.
+/*	$NetBSD: gethostnamadr.c,v 1.11 1995/02/25 06:20:29 cgd Exp $	*/
+
+/*-
+ * Copyright (c) 1985, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,11 +31,35 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ * 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)gethostnamadr.c	6.45 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: gethostnamadr.c,v 1.10 1994/11/02 09:17:27 deraadt Exp $";
+#if 0
+static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$Id: gethnamaddr.c,v 4.9.1.1 1993/05/02 22:43:03 vixie Rel ";
+#else
+static char rcsid[] = "$NetBSD: gethostnamadr.c,v 1.11 1995/02/25 06:20:29 cgd Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -81,8 +107,8 @@ typedef union {
 } querybuf;
 
 typedef union {
-	int32_t	al;
-	char ac;
+    int32_t al;
+    char ac;
 } align;
 
 static int qcomp __P((struct in_addr **, struct in_addr **));
@@ -415,7 +441,7 @@ again:
 	/* THIS STUFF IS INTERNET SPECIFIC */
 	h_addr_ptrs[0] = (char *)&host_addr;
 	h_addr_ptrs[1] = NULL;
-	host_addr.s_addr = inet_addr(p);
+	*((u_int32_t *)host_addr.s_addr) = inet_addr(p);
 	host.h_addr_list = h_addr_ptrs;
 	host.h_length = sizeof(u_int32_t);
 	host.h_addrtype = AF_INET;
