@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL-FLOPPY,v 1.14 1998/09/24 05:33:41 ross Exp $
+# $NetBSD: INSTALL-FLOPPY,v 1.15 1998/10/05 05:04:46 ross Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -14,13 +14,14 @@ options 	MINIROOTSIZE=4096	# 2 Megabytes
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
 options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
-#options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
-#options 	DEC_3000_300	# Pelican etc:	3000/300*
+options 	DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+options 	DEC_3000_300	# Pelican etc:	3000/300*
 options 	DEC_AXPPCI_33	# NoName:	AXPpci33, Multia, etc.
 options 	DEC_EB164	# EB164:	AlphaPC 164
 options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 #options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
+options		DEC_KN300	# KN300:	AlphaServer 4100
 options 	DEC_550		# Miata:	Digital Personal Workstation
 options  	DEC_1000        # Mikasa etc:   AlphaServer 1000
 options  	DEC_1000A       # Corelle etc:  AlphaServer 800 and 1000A
@@ -65,22 +66,28 @@ cpu*	at	mainbus0
 # Gbus Devices
 #mcclock* at	gbus? offset ?
 
+# MCBUS bus support
+mcbus*	at	mainbus0
+mcmem*	at	mcbus? mid ?
+mcpcia*	at	mcbus? mid ?
+pci*	at	mcpcia?
+
 # TurboChannel host bus adapter support
-#tcasic*	at	mainbus0
+tcasic*	at	mainbus0
 
 # TurboChannel bus support
-#tc*	at	tcasic?
+tc*	at	tcasic?
 
 # TurboChannel devices
-#ioasic*	at	tc? slot ? offset ?
-#mcclock* at	ioasic? offset ?
-#le*	at	ioasic? offset ?
-#scc0	at	ioasic? offset ?
-#scc1	at	ioasic? offset ?
-#tcds*	at	tc? slot ? offset ?
-#asc*	at	tcds? chip ?
-#le*	at	tc? slot ? offset ?
-#fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
+ioasic*	at	tc? slot ? offset ?
+mcclock* at	ioasic? offset ?
+le*	at	ioasic? offset ?
+scc0	at	ioasic? offset ?
+scc1	at	ioasic? offset ?
+tcds*	at	tc? slot ? offset ?
+asc*	at	tcds? chip ?
+le*	at	tc? slot ? offset ?
+fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
 
 # PCI host bus adapter support
 apecs*	at	mainbus?
@@ -142,8 +149,9 @@ bha*	at	eisa? slot ?			# BusLogic 7xx SCSI
 fea*	at	eisa? slot ?			# DEC DEFEA FDDI
 
 # SCSI bus support
+
 scsibus* at	ahc?
-#scsibus* at	asc?
+scsibus* at	asc?
 scsibus* at	bha?
 scsibus* at	isp?
 scsibus* at	ncr?
