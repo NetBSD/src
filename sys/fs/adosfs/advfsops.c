@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.18 2004/09/13 19:25:48 jdolecek Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.19 2004/09/14 10:58:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.18 2004/09/13 19:25:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.19 2004/09/14 10:58:45 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -261,7 +261,7 @@ adosfs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsidx.__fsid_val[0] = (long)devvp->v_rdev;
 	mp->mnt_stat.f_fsidx.__fsid_val[1] = makefstype(MOUNT_ADOSFS);
 	mp->mnt_stat.f_fsid = mp->mnt_stat.f_fsidx.__fsid_val[0];
-	mp->mnt_stat.f_namemax = ADMAXNAMLEN;
+	mp->mnt_stat.f_namemax = ADMAXNAMELEN;
 	mp->mnt_fs_bshift = ffs(amp->bsize) - 1;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
