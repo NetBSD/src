@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.24 1999/04/10 01:21:38 cgd Exp $ */
+/* $NetBSD: ioasic.c,v 1.25 1999/10/01 09:19:44 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.24 1999/04/10 01:21:38 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.25 1999/10/01 09:19:44 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -134,16 +134,6 @@ tc_addr_t ioasic_base;		/* XXX XXX XXX */
 /* There can be only one. */
 int ioasicfound;
 
-/*
- * DMA area for IOASIC LANCE.
- * XXX Should be done differently, but this is better than it used to be.
- */
-#define	LE_IOASIC_MEMSIZE	(128*1024)
-#define	LE_IOASIC_MEMALIGN	(128*1024)
-caddr_t	le_iomem;
-
-void	ioasic_lance_dma_setup __P((struct ioasic_softc *));
-
 int
 ioasicmatch(parent, cfdata, aux)
 	struct device *parent;
@@ -174,20 +164,26 @@ ioasicattach(parent, self, aux)
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
 	struct ioasicdev_attach_args ioasicdev;
-	u_long i;
+	u_long i, ssr, imsk;
 
 	ioasicfound = 1;
 
-	sc->sc_base = ta->ta_addr;
-	ioasic_base = sc->sc_base;			/* XXX XXX XXX */
-	sc->sc_cookie = ta->ta_cookie;
+	sc->sc_bst = ta->ta_memt; 
+	if (bus_space_map(ta->ta_memt, ta->ta_addr,
+			0x400000, 0, &sc->sc_bsh)) {
+		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
+		return;
+	}
 	sc->sc_dmat = ta->ta_dmat;
+	sc->sc_cookie = ta->ta_cookie;
+
+	ioasic_base = sc->sc_base = ta->ta_addr; /* XXX XXX XXX */
 
 #ifdef DEC_3000_300
 	if (cputype == ST_DEC_3000_300) {
-		*(volatile u_int *)IOASIC_REG_CSR(sc->sc_base) |=
-		    IOASIC_CSR_FASTMODE;
-		tc_mb();
+		ssr = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR);
+		ssr |= IOASIC_CSR_FASTMODE;
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 		printf(": slow mode\n");
 	} else
 #endif
@@ -197,10 +193,10 @@ ioasicattach(parent, self, aux)
 	 * Turn off all device interrupt bits.
 	 * (This does _not_ include 3000/300 TC option slot bits.
 	 */
+	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
 	for (i = 0; i < ioasic_ndevs; i++)
-		*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) &=
-			~ioasic_devs[i].iad_intrbits;
-	tc_mb();
+		imsk &= ~ioasic_devs[i].iad_intrbits;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
 
 	/*
 	 * Set up interrupt handlers.
@@ -210,11 +206,6 @@ ioasicattach(parent, self, aux)
 		ioasicintrs[i].iai_arg = (void *)i;
 	}
 	tc_intr_establish(parent, sc->sc_cookie, TC_IPL_NONE, ioasic_intr, sc);
-
-	/*
-	 * Set up the LANCE DMA area.
-	 */
-	ioasic_lance_dma_setup(sc);
 
         /*
 	 * Try to configure each device.
@@ -239,7 +230,8 @@ ioasic_intr_establish(ioa, cookie, level, func, arg)
 	tc_intrlevel_t level;
 	int (*func) __P((void *));
 {
-	u_long dev, i;
+	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
+	u_long dev, i, imsk;
 
 	dev = (u_long)cookie;
 #ifdef DIAGNOSTIC
@@ -258,9 +250,10 @@ ioasic_intr_establish(ioa, cookie, level, func, arg)
 			break;
 	if (i == ioasic_ndevs)
 		panic("ioasic_intr_establish: invalid cookie.");
-	*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) |=
-		ioasic_devs[i].iad_intrbits;
-	tc_mb();
+
+	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
+        imsk |= ioasic_devs[i].iad_intrbits;
+        bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
 }
 
 void
@@ -268,7 +261,8 @@ ioasic_intr_disestablish(ioa, cookie)
 	struct device *ioa;
 	void *cookie;
 {
-	u_long dev, i;
+	struct ioasic_softc *sc = (void *)ioasic_cd.cd_devs[0];
+	u_long dev, i, imsk;
 
 	dev = (u_long)cookie;
 #ifdef DIAGNOSTIC
@@ -284,9 +278,10 @@ ioasic_intr_disestablish(ioa, cookie)
 			break;
 	if (i == ioasic_ndevs)
 		panic("ioasic_intr_disestablish: invalid cookie.");
-	*(volatile u_int32_t *)IOASIC_REG_IMSK(ioasic_base) &=
-		~ioasic_devs[i].iad_intrbits;
-	tc_mb();
+
+	imsk = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK);
+	imsk &= ~ioasic_devs[i].iad_intrbits;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_IMSK, imsk);
 
 	ioasicintrs[dev].iai_func = ioasic_intrnull;
 	ioasicintrs[dev].iai_arg = (void *)dev;
@@ -313,16 +308,13 @@ ioasic_intr(val)
 	register int ifound;
 	int gifound;
 	u_int32_t sir;
-	volatile u_int32_t *sirp;
-
-	sirp = (volatile u_int32_t *)IOASIC_REG_INTR(sc->sc_base);
 
 	gifound = 0;
 	do {
 		ifound = 0;
 		tc_syncbus();
 
-		sir = *sirp;
+		sir = bus_space_read_4(sc->sc_bst, sc->sc_bsh, IOASIC_INTR);
 
 #ifdef EVCNT_COUNTERS
 	/* No interrupt counting via evcnt counters */ 
@@ -348,75 +340,4 @@ ioasic_intr(val)
 	} while (ifound);
 
 	return (gifound);
-}
-
-/* XXX */
-char *
-ioasic_lance_ether_address()
-{
-
-	return (u_char *)IOASIC_SYS_ETHER_ADDRESS(ioasic_base);
-}
-
-void
-ioasic_lance_dma_setup(sc)
-	struct ioasic_softc *sc;
-{
-	bus_dma_tag_t dmat = sc->sc_dmat;
-	bus_dma_segment_t seg;
-	volatile u_int32_t *ldp;
-	tc_addr_t tca;
-	int rseg;
-
-	/*
-	 * Allocate a DMA area for the chip.
-	 */
-	if (bus_dmamem_alloc(dmat, LE_IOASIC_MEMSIZE, LE_IOASIC_MEMALIGN,
-	    0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
-		printf("%s: can't allocate DMA area for LANCE\n",
-		    sc->sc_dv.dv_xname);
-		return;
-	}
-	if (bus_dmamem_map(dmat, &seg, rseg, LE_IOASIC_MEMSIZE,
-	    &le_iomem, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) {
-		printf("%s: can't map DMA area for LANCE\n",
-		    sc->sc_dv.dv_xname);
-		bus_dmamem_free(dmat, &seg, rseg);
-		return;
-	}
-
-	/*
-	 * Create and load the DMA map for the DMA area.
-	 */
-	if (bus_dmamap_create(dmat, LE_IOASIC_MEMSIZE, 1,
-	    LE_IOASIC_MEMSIZE, 0, BUS_DMA_NOWAIT, &sc->sc_lance_dmam)) {
-		printf("%s: can't create DMA map\n", sc->sc_dv.dv_xname);
-		goto bad;
-	}
-	if (bus_dmamap_load(dmat, sc->sc_lance_dmam,
-	    le_iomem, LE_IOASIC_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
-		printf("%s: can't load DMA map\n", sc->sc_dv.dv_xname);
-		goto bad;
-	}
-
-	tca = (tc_addr_t)sc->sc_lance_dmam->dm_segs[0].ds_addr;
-	if (tca != sc->sc_lance_dmam->dm_segs[0].ds_addr) {
-		printf("%s: bad LANCE DMA address\n", sc->sc_dv.dv_xname);
-		bus_dmamap_unload(dmat, sc->sc_lance_dmam);
-		goto bad;
-	}
-
-	ldp = (volatile u_int *)IOASIC_REG_LANCE_DMAPTR(ioasic_base);
-	*ldp = ((tca << 3) & ~(tc_addr_t)0x1f) | ((tca >> 29) & 0x1f);
-	tc_wmb();
-
-	*(volatile u_int32_t *)IOASIC_REG_CSR(ioasic_base) |=
-	    IOASIC_CSR_DMAEN_LANCE;
-	tc_mb();
-	return;
-
- bad:
-	bus_dmamem_unmap(dmat, le_iomem, LE_IOASIC_MEMSIZE);
-	bus_dmamem_free(dmat, &seg, rseg);
-	le_iomem = 0;
 }
