@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.54 2001/09/04 06:23:16 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55 2001/09/04 09:23:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,6 @@
 #ifndef _CPU_H_
 #define _CPU_H_
 
-#include <sys/sched.h>
 #include <mips/cpuregs.h>
 
 /*
@@ -49,6 +48,8 @@
  */
 
 #ifndef _LOCORE
+#include <sys/sched.h>
+
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #endif
