@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.43 2001/07/26 03:46:57 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.44 2001/07/26 16:53:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.43 2001/07/26 03:46:57 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.44 2001/07/26 16:53:39 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -536,6 +536,8 @@ next:
 	for (sblock.fs_csshift = 0; i > 1; i >>= 1)
 		sblock.fs_csshift++;
 	fscs = (struct csum *)calloc(1, sblock.fs_cssize);
+	if (fscs == NULL)
+		exit(39);
 	sblock.fs_magic = FS_MAGIC;
 	sblock.fs_rotdelay = rotdelay;
 	sblock.fs_minfree = minfree;
@@ -1066,6 +1068,7 @@ iput(struct dinode *ip, ino_t ino)
 void *
 malloc(size_t size)
 {
+	void *p;
 	char *base, *i;
 	static u_long pgsz;
 	struct rlimit rlp;
@@ -1087,8 +1090,11 @@ malloc(size_t size)
 		size = memleft;
 	memleft -= size;
 	if (size == 0)
-		return (0);
-	return ((caddr_t)sbrk(size));
+		return (NULL);
+	p = sbrk(size);
+	if (p == (void *)-1)
+		p = NULL;
+	return (p);
 }
 
 /*
@@ -1116,6 +1122,8 @@ calloc(size_t size, size_t numelm)
 
 	size *= numelm;
 	base = malloc(size);
+	if (base == NULL)
+		return (NULL);
 	memset(base, 0, size);
 	return (base);
 }
