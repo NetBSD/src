@@ -1,4 +1,4 @@
-/*	$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $	*/
+/*	$NetBSD: lpf.c,v 1.9 2000/04/30 15:47:55 thorpej Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $");
+__RCSID("$NetBSD: lpf.c,v 1.9 2000/04/30 15:47:55 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $");
  */
 
 #include <signal.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
