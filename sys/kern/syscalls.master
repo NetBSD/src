@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.90 1999/03/28 17:29:52 kleink Exp $
+	$NetBSD: syscalls.master,v 1.90.2.1 2000/10/06 15:37:27 he Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -550,8 +550,6 @@
 288	UNIMPL
 #endif
 289	STD		{ ssize_t sys_preadv(int fd, \
-			    const struct iovec *iovp, int iovcnt, \
-			    int pad, off_t offset); }
 290	STD		{ ssize_t sys_pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
@@ -566,3 +564,14 @@
 295	STD		{ int sys___sigreturn14(struct sigcontext *sigcntxp); }
 296	STD		{ int sys___getcwd(char *bufp, size_t length); }
 297	STD		{ int sys_fchroot(int fd); }
+
+298	UNIMPL
+299	UNIMPL
+300	UNIMPL
+301	UNIMPL
+302	UNIMPL
+303	UNIMPL
+304	UNIMPL
+305	STD		{ int sys_issetugid(void); }
+			    const struct iovec *iovp, int iovcnt, \
+			    int pad, off_t offset); }
