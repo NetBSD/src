@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.28 2002/04/04 14:26:44 ad Exp $	*/
+/*	$NetBSD: install.c,v 1.29 2002/07/29 03:05:16 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,6 +141,7 @@ do_install()
 	set_crypt_type();
 
 	set_root_password();
+	set_root_shell();
 	
 	sanity_check();
 
