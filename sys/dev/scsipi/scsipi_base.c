@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.13 1998/11/17 14:38:42 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.14 1998/11/19 20:08:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -731,6 +731,46 @@ sc_err1(xs, async)
 	return (error);
 }
 
+/*
+ * Add a reference to the adapter pointed to by the provided
+ * link, enabling the adapter if necessary.
+ */
+int
+scsipi_adapter_addref(link)
+	struct scsipi_link *link;
+{
+	struct scsipi_adapter *adapter = link->adapter;
+	int s, error = 0;
+
+	s = splbio();
+	if (adapter->scsipi_refcnt++ == 0 &&
+	    adapter->scsipi_enable != NULL) {
+		error = (*adapter->scsipi_enable)(link->adapter_softc, 1);
+		if (error)
+			adapter->scsipi_refcnt--;
+	}
+	splx(s);
+	return (error);
+}
+
+/*
+ * Delete a reference to the adapter pointed to by the provided
+ * link, disabling the adapter if possible.
+ */
+void
+scsipi_adapter_delref(link)
+	struct scsipi_link *link;
+{
+	struct scsipi_adapter *adapter = link->adapter;
+	int s;
+
+	s = splbio();
+	if (adapter->scsipi_refcnt-- == 1 &&
+	    adapter->scsipi_enable != NULL)
+		(void) (*adapter->scsipi_enable)(link->adapter_softc, 0);
+	splx(s);
+}
+
 #ifdef	SCSIDEBUG
 /*
  * Given a scsipi_xfer, dump the request, in all it's glory
@@ -794,4 +834,3 @@ show_mem(address, num)
 	printf("\n------------------------------\n");
 }
 #endif /*SCSIDEBUG */
-
