@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.2 1995/02/28 21:47:53 brezak Exp $	*/
+/*	$NetBSD: pas.c,v 1.3 1995/03/14 18:41:36 brezak Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pas.c,v 1.2 1995/02/28 21:47:53 brezak Exp $
+ *	$Id: pas.c,v 1.3 1995/03/14 18:41:36 brezak Exp $
  */
 /*
  * Todo:
@@ -160,7 +160,8 @@ static char *pasnames[] = {
 	"",
 	"Plus",
 	"CDPC",
-	"16"
+	"16",
+	"16Basic"
 };
 
 static struct audio_device pas_device = {
@@ -217,7 +218,7 @@ pasconf(int model, int sbbase, int sbirq, int sbdrq)
 	/* Sets mute off and selects filter rate of 17.897 kHz */
 	paswrite(F_F_MIXER_UNMUTE | 0x01, FILTER_FREQUENCY);
 
-	if (model == PAS_16) 
+	if (model == PAS_16 || model == PAS_16BASIC)
 		paswrite(8, PRESCALE_DIVIDER);
 	else
 		paswrite(0, PRESCALE_DIVIDER);
