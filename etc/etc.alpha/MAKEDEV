@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.71 2001/04/17 01:28:55 ross Exp $
+#	$NetBSD: MAKEDEV,v 1.72 2001/04/17 01:30:30 ross Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -652,18 +652,18 @@ i4brbch*)
 	chmod 600 i4brbch$unit
 	;;
 
-i4btel*)
-	unit=${i#i4btel};
-	rm -f i4btel$unit
-	mknod i4btel$unit c 55 $unit
-	chmod 600 i4btel$unit
-	;;
-
 i4btrc*)
 	unit=${i#i4btrc};
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 54 $unit
 	chmod 600 i4btrc$unit
+	;;
+
+i4btel*)
+	unit=${i#i4btel};
+	rm -f i4btel$unit
+	mknod i4btel$unit c 55 $unit
+	chmod 600 i4btel$unit
 	;;
 
 local)
