@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.37 2001/11/10 14:58:21 lukem Exp $	*/
+/*	$NetBSD: create.c,v 1.38 2002/01/29 00:07:27 tv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,17 +38,19 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.37 2001/11/10 14:58:21 lukem Exp $");
+__RCSID("$NetBSD: create.c,v 1.38 2002/01/29 00:07:27 tv Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#if !HAVE_CONFIG_H
 #include <dirent.h>
+#endif
+
 #include <errno.h>
 #include <fcntl.h>
-#include <fts.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -57,7 +59,6 @@ __RCSID("$NetBSD: create.c,v 1.37 2001/11/10 14:58:21 lukem Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include <vis.h>
 
 #ifndef NO_MD5
 #include <md5.h>
@@ -69,7 +70,6 @@ __RCSID("$NetBSD: create.c,v 1.37 2001/11/10 14:58:21 lukem Exp $");
 #include <sha1.h>
 #endif
 
-#include "mtree.h"
 #include "extern.h"
 
 #define	INDENTNAMELEN	15
@@ -227,9 +227,11 @@ statf(FTSENT *p)
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
 		output(&indent, "link=%s", rlink(p->fts_accpath));
+#if HAVE_STRUCT_STAT_ST_FLAGS
 	if (keys & F_FLAGS && p->fts_statp->st_flags != flags)
 		output(&indent, "flags=%s",
 		    flags_to_string(p->fts_statp->st_flags, "none"));
+#endif
 	putchar('\n');
 }
 
@@ -242,7 +244,11 @@ statf(FTSENT *p)
 #define	MTREE_MAXGID	5000
 #define	MTREE_MAXUID	5000
 #define	MTREE_MAXMODE	(MBITS + 1)
+#if HAVE_STRUCT_STAT_ST_FLAGS
 #define	MTREE_MAXFLAGS  (FLAGS2INDEX(CH_MASK) + 1)   /* 1808 */
+#else
+#define MTREE_MAXFLAGS	1
+#endif
 #define	MTREE_MAXS 16
 
 static int
@@ -253,7 +259,7 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 	gid_t sgid;
 	uid_t suid;
 	mode_t smode;
-	u_long sflags;
+	u_long sflags = 0;
 	const char *name;
 	gid_t savegid;
 	uid_t saveuid;
@@ -297,11 +303,13 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 			maxuid = u[suid];
 		}
 
+#if HAVE_STRUCT_STAT_ST_FLAGS
 		sflags = FLAGS2INDEX(p->fts_statp->st_flags);
 		if (sflags < MTREE_MAXFLAGS && ++f[sflags] > maxflags) {
 			saveflags = p->fts_statp->st_flags;
 			maxflags = f[sflags];
 		}
+#endif
 	}
 	/*
 	 * If the /set record is the same as the last one we do not need to

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.20 2001/11/07 08:01:52 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.21 2002/01/29 00:07:27 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,20 +37,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.20 2001/11/07 08:01:52 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.21 2002/01/29 00:07:27 tv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <err.h>
-#include <fts.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "mtree.h"
 #include "extern.h"
 
 typedef struct _key {

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 2001/11/07 08:01:52 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.20 2002/01/29 00:07:27 tv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,6 +36,33 @@
  */
 
 #include "mtree.h"
+
+#if HAVE_CONFIG_H
+#include "config.h" 
+#else 
+#define HAVE_ERR_H 1
+#define HAVE_FTS_H 1
+#define HAVE_VIS_H 1
+#define HAVE_STRUCT_STAT_ST_FLAGS 1
+#endif
+ 
+#if HAVE_ERR_H
+#include <err.h> 
+#endif 
+#if HAVE_FTS_H
+#include <fts.h>
+#endif 
+#if HAVE_NETDB_H
+/* For MAXHOSTNAMELEN on some platforms. */
+#include <netdb.h>
+#endif
+#if HAVE_VIS_H
+#include <vis.h>
+#endif
+
+#ifndef MAXHOSTNAMELEN
+#define MAXHOSTNAMELEN 256
+#endif
 
 void	 addtag(slist_t *, char *);
 int	 check_excludes(const char *, const char *);

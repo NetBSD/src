@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.26 2002/01/24 03:20:12 lukem Exp $	*/
+/*	$NetBSD: mtree.c,v 1.27 2002/01/29 00:07:27 tv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.26 2002/01/24 03:20:12 lukem Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.27 2002/01/29 00:07:27 tv Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,13 +51,11 @@ __RCSID("$NetBSD: mtree.c,v 1.26 2002/01/24 03:20:12 lukem Exp $");
 #include <sys/stat.h>
 
 #include <errno.h>
-#include <fts.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "mtree.h"
 #include "extern.h"
 
 int	ftsoptions = FTS_PHYSICAL;

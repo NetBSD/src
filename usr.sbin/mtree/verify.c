@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.25 2001/11/09 06:55:56 lukem Exp $	*/
+/*	$NetBSD: verify.c,v 1.26 2002/01/29 00:07:27 tv Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,23 +38,23 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.25 2001/11/09 06:55:56 lukem Exp $");
+__RCSID("$NetBSD: verify.c,v 1.26 2002/01/29 00:07:27 tv Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#if !HAVE_CONFIG_H
 #include <dirent.h>
-#include <err.h>
+#endif
+
 #include <errno.h>
 #include <fnmatch.h>
-#include <fts.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "mtree.h"
 #include "extern.h"
 
 static NODE *root;
@@ -277,6 +277,7 @@ miss(NODE *p, char *tail)
 		if (chmod(path, p->st_mode))
 			printf("%s: permissions not set: %s\n",
 			    path, strerror(errno));
+#if HAVE_STRUCT_STAT_ST_FLAGS
 		if ((p->flags & F_FLAGS) && p->st_flags) {
 			if (iflag)
 				flags = p->st_flags;
@@ -286,5 +287,6 @@ miss(NODE *p, char *tail)
 				printf("%s: file flags not set: %s\n",
 				    path, strerror(errno));
 		}
+#endif
 	}
 }
