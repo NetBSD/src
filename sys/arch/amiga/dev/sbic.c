@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.14 1995/08/18 15:28:03 chopps Exp $	*/
+/*	$NetBSD: sbic.c,v 1.15 1995/08/24 15:46:19 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -984,6 +984,8 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 			if( reselect_debug || 1 )
 				printf("sbicselectbus: reselected asr %02x\n", asr);
 #endif
+			/* We need to handle this now so we don't lock up later */
+			sbicnextstate(dev, csr, asr);
 			return 1;
 		}
 		if( csr == SBIC_CSR_SLT || csr == SBIC_CSR_SLT_ATN) {
@@ -1739,8 +1741,7 @@ sbicgo(dev, xs)
 	} while( i == SBIC_STATE_RUNNING
 		&& asr & (SBIC_ASR_INT|SBIC_ASR_LCI) );
 
-/*	if (i == SBIC_STATE_DONE && dev->sc_stat[0] != 0xff) { */
-	if( i == SBIC_STATE_DONE && dev->sc_stat[0] ) {
+	if (i == SBIC_STATE_DONE && dev->sc_stat[0] != 0xff) { 
 		/* Did we really finish that fast? */
 		return 1;
 	}
@@ -2351,12 +2352,6 @@ sbicnextstate(dev, csr, asr)
 				}
 			}
 		}
-#if 0
-		GET_SBIC_tlun(regs, newlun);
-		/* check SBIC_TLUN_TVALID */
-		newlun &= SBIC_TLUN_MASK;
-#endif
-		WAIT_CIP(regs);		/* ?? */
 #ifdef DEBUG
 		if(reselect_debug>1 || (reselect_debug && csr==SBIC_CSR_RSLT_NI))
 			printf("sbicnext: reselect %s from targ %d lun %d\n",
@@ -2376,6 +2371,12 @@ sbicnextstate(dev, csr, asr)
 			TAILQ_INSERT_HEAD(&dev->ready_list, dev->sc_nexus, chain);
 			dev->sc_tinfo[dev->target].lubusy &= ~(1 << dev->lun);
 		}
+		/* Reload sync values for this target */
+		if (dev->sc_sync[newtarget].state == SYNC_DONE)
+			SET_SBIC_syn(regs, SBIC_SYN (dev->sc_sync[newtarget].offset,
+			    dev->sc_sync[newtarget].period));
+		else
+			SET_SBIC_syn(regs, SBIC_SYN (0, sbic_min_period));
 		for (acb = dev->nexus_list.tqh_first; acb;
 		    acb = acb->chain.tqe_next) {
 			if (acb->xs->sc_link->target != newtarget ||
@@ -2396,11 +2397,6 @@ sbicnextstate(dev, csr, asr)
 			    &dev->nexus_list.tqh_first);
 			panic("bad reselect in sbic");
 		}
-		if (dev->sc_sync[newtarget].state == SYNC_DONE)
-			SET_SBIC_syn(regs, SBIC_SYN (dev->sc_sync[newtarget].offset,
-			    dev->sc_sync[newtarget].period));
-		else
-			SET_SBIC_syn(regs, SBIC_SYN (0, sbic_min_period));
 		if (csr == SBIC_CSR_RSLT_IFY)
 			SET_SBIC_cmd(regs, SBIC_CMD_CLR_ACK);
 		break;
