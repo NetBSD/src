@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.40 1998/06/08 04:27:52 scottr Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.41 1998/06/13 16:26:23 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -146,7 +146,7 @@ ufs_mknod(v)
 		 * inodes, so don't truncate the dev number.
 		 */
 		ip->i_ffs_rdev = ufs_rw32(vap->va_rdev,
-			UFS_MPNEEDSWAP((*vpp)->v_mount));
+		    UFS_MPNEEDSWAP((*vpp)->v_mount));
 	}
 	/*
 	 * Remove inode so that it will be reloaded by VFS_VGET and
@@ -296,7 +296,7 @@ ufs_getattr(v)
 	vap->va_uid = ip->i_ffs_uid;
 	vap->va_gid = ip->i_ffs_gid;
 	vap->va_rdev = ufs_rw32((dev_t)ip->i_ffs_rdev,
-		UFS_MPNEEDSWAP(vp->v_mount));
+	    UFS_MPNEEDSWAP(vp->v_mount));
 	vap->va_size = ip->i_ffs_size;
 	vap->va_atime.tv_sec = ip->i_ffs_atime;
 	vap->va_atime.tv_nsec = ip->i_ffs_atimensec;
@@ -1112,23 +1112,23 @@ abortit:
 			dp->i_ffs_nlink--;
 			dp->i_flag |= IN_CHANGE;
 			error = vn_rdwr(UIO_READ, fvp, (caddr_t)&dirbuf,
-				sizeof (struct dirtemplate), (off_t)0,
-				UIO_SYSSPACE, IO_NODELOCKED, 
-				tcnp->cn_cred, (int *)0, (struct proc *)0);
+			    sizeof (struct dirtemplate), (off_t)0,
+			    UIO_SYSSPACE, IO_NODELOCKED,
+			    tcnp->cn_cred, (int *)0, (struct proc *)0);
 			if (error == 0) {
-#				if (BYTE_ORDER == LITTLE_ENDIAN)
-					if (fvp->v_mount->mnt_maxsymlinklen <= 0 &&
-						UFS_MPNEEDSWAP(fvp->v_mount) == 0)
-						namlen = dirbuf.dotdot_type;
-					else
-						namlen = dirbuf.dotdot_namlen;
-#				else
-					if (fvp->v_mount->mnt_maxsymlinklen <= 0 &&
-						UFS_MPNEEDSWAP(fvp->v_mount) != 0)
-						namlen = dirbuf.dotdot_type;
-					else
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+				if (fvp->v_mount->mnt_maxsymlinklen <= 0 &&
+				    UFS_MPNEEDSWAP(fvp->v_mount) == 0)
+					namlen = dirbuf.dotdot_type;
+				else
 					namlen = dirbuf.dotdot_namlen;
-#				endif
+#else
+				if (fvp->v_mount->mnt_maxsymlinklen <= 0 &&
+				    UFS_MPNEEDSWAP(fvp->v_mount) != 0)
+					namlen = dirbuf.dotdot_type;
+				else
+					namlen = dirbuf.dotdot_namlen;
+#endif
 				if (namlen != 2 ||
 				    dirbuf.dotdot_name[0] != '.' ||
 				    dirbuf.dotdot_name[1] != '.') {
@@ -1136,7 +1136,7 @@ abortit:
 					    "rename: mangled dir");
 				} else {
 					dirbuf.dotdot_ino = ufs_rw32(newparent,
-						UFS_MPNEEDSWAP(fvp->v_mount));
+					    UFS_MPNEEDSWAP(fvp->v_mount));
 					(void) vn_rdwr(UIO_WRITE, fvp,
 					    (caddr_t)&dirbuf,
 					    sizeof (struct dirtemplate),
@@ -1262,20 +1262,19 @@ ufs_mkdir(v)
 	/* Initialize directory with "." and ".." from static template. */
 	dirtemplate = mastertemplate;
 	dirtemplate.dot_ino = ufs_rw32(ip->i_number,
-		UFS_MPNEEDSWAP(dvp->v_mount));
+	    UFS_MPNEEDSWAP(dvp->v_mount));
 	dirtemplate.dotdot_ino = ufs_rw32(dp->i_number,
-		UFS_MPNEEDSWAP(dvp->v_mount));
+	    UFS_MPNEEDSWAP(dvp->v_mount));
 	dirtemplate.dot_reclen = ufs_rw16(dirtemplate.dot_reclen,
-		UFS_MPNEEDSWAP(dvp->v_mount));
+	    UFS_MPNEEDSWAP(dvp->v_mount));
 	dirtemplate.dotdot_reclen = ufs_rw16(dirtemplate.dotdot_reclen,
-		UFS_MPNEEDSWAP(dvp->v_mount));
+	    UFS_MPNEEDSWAP(dvp->v_mount));
 	if (dvp->v_mount->mnt_maxsymlinklen == 0) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		if (UFS_MPNEEDSWAP(dvp->v_mount) == 0)
+		if (UFS_MPNEEDSWAP(dvp->v_mount) == 0) {
 #else
-		if (UFS_MPNEEDSWAP(dvp->v_mount) != 0)
+		if (UFS_MPNEEDSWAP(dvp->v_mount) != 0) {
 #endif
-		{
 			dirtemplate.dot_type = dirtemplate.dot_namlen;
 			dirtemplate.dotdot_type = dirtemplate.dotdot_namlen;
 			dirtemplate.dot_namlen = dirtemplate.dotdot_namlen = 0;
@@ -1476,7 +1475,7 @@ ufs_readdir(v)
 	uio->uio_iov->iov_len = count;
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if (ap->a_vp->v_mount->mnt_maxsymlinklen > 0 &&
-		UFS_MPNEEDSWAP(ap->a_vp->v_mount) == 0) {
+	    UFS_MPNEEDSWAP(ap->a_vp->v_mount) == 0) {
 #else
 	if (UFS_MPNEEDSWAP(ap->a_vp->v_mount) == 0) {
 #endif
@@ -1503,19 +1502,19 @@ ufs_readdir(v)
 			for (dp = (struct dirent *)dirbuf; dp < edp; ) {
 #if BYTE_ORDER == LITTLE_ENDIAN
 				if (ap->a_vp->v_mount->mnt_maxsymlinklen == 0 &&
-					UFS_MPNEEDSWAP(ap->a_vp->v_mount) == 0) {
+				    UFS_MPNEEDSWAP(ap->a_vp->v_mount) == 0) {
 #else
 				if (ap->a_vp->v_mount->mnt_maxsymlinklen == 0 &&
-					UFS_MPNEEDSWAP(ap->a_vp->v_mount) != 0) {
+				    UFS_MPNEEDSWAP(ap->a_vp->v_mount) != 0) {
 #endif
 					tmp = dp->d_namlen;
 					dp->d_namlen = dp->d_type;
 					dp->d_type = tmp;
 				}
 				dp->d_fileno = ufs_rw32(dp->d_fileno,
-					UFS_MPNEEDSWAP(ap->a_vp->v_mount));
+				    UFS_MPNEEDSWAP(ap->a_vp->v_mount));
 				dp->d_reclen = ufs_rw16(dp->d_reclen,
-					UFS_MPNEEDSWAP(ap->a_vp->v_mount));
+				    UFS_MPNEEDSWAP(ap->a_vp->v_mount));
 				if (dp->d_reclen > 0) {
 					dp = (struct dirent *)
 					    ((char *)dp + dp->d_reclen);
@@ -1931,8 +1930,8 @@ ufs_vinit(mntp, specops, fifoops, vpp)
 	case VBLK:
 		vp->v_op = specops;
 		if ((nvp = checkalias(vp,
-			ufs_rw32(ip->i_ffs_rdev, UFS_MPNEEDSWAP(vp->v_mount)),
-			mntp)) != NULL) {
+		    ufs_rw32(ip->i_ffs_rdev, UFS_MPNEEDSWAP(vp->v_mount)),
+		    mntp)) != NULL) {
 			/*
 			 * Discard unneeded vnode, but save its inode.
 			 * Note that the lock is carried over in the inode

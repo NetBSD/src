@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.11 1998/03/18 15:57:28 bouyer Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.12 1998/06/13 16:26:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -120,8 +120,8 @@ ffs_fragacct(fs, fragmap, fraglist, cnt, needswap)
 		for (pos = siz; pos <= fs->fs_frag; pos++) {
 			if ((fragmap & field) == subfield) {
 				fraglist[siz] = ufs_rw32(
-					ufs_rw32(fraglist[siz], needswap) + cnt,
-					needswap);
+				    ufs_rw32(fraglist[siz], needswap) + cnt,
+				    needswap);
 				pos += siz;
 				field <<= siz;
 				subfield <<= siz;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.3 1998/06/10 15:57:39 kleink Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.4 1998/06/13 16:26:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -73,14 +73,14 @@ ffs_sb_swap(o, n, ns)
 	n->fs_magic = bswap32(o->fs_magic);
 	/* byteswap the postbl */
 	o16 = (ufs_rw32(o->fs_postblformat, ns) == FS_42POSTBLFMT)
-		? o->fs_opostbl[0]
-		: (int16_t *)((u_int8_t *)o + ufs_rw32(o->fs_postbloff, ns));
+	    ? o->fs_opostbl[0]
+	    : (int16_t *)((u_int8_t *)o + ufs_rw32(o->fs_postbloff, ns));
 	n16 = (ufs_rw32(o->fs_postblformat, ns) == FS_42POSTBLFMT)
-		? n->fs_opostbl[0]
-		: (int16_t *)((u_int8_t *)n + ufs_rw32(n->fs_postbloff, ns));
+	    ? n->fs_opostbl[0]
+	    : (int16_t *)((u_int8_t *)n + ufs_rw32(n->fs_postbloff, ns));
 	for (i = 0;
-		i < ufs_rw32(o->fs_cpc, ns) * ufs_rw32(o->fs_nrpos, ns);
-		i++)
+	     i < ufs_rw32(o->fs_cpc, ns) * ufs_rw32(o->fs_nrpos, ns);
+	     i++)
 		n16[i] = bswap16(o16[i]);
 }
 

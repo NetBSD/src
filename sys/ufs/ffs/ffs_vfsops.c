@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.37 1998/06/09 07:46:33 scottr Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.38 1998/06/13 16:26:22 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -380,10 +380,11 @@ ffs_reload(mountp, cred, p)
 #ifdef FFS_EI
 		if (UFS_MPNEEDSWAP(mountp))
 			ffs_csum_swap((struct csum*)bp->b_data,
-				(struct csum*)fs->fs_csp[fragstoblks(fs, i)], size);
+			    (struct csum*)fs->fs_csp[fragstoblks(fs, i)], size);
 		else
 #endif
-			bcopy(bp->b_data, fs->fs_csp[fragstoblks(fs, i)], (u_int)size);
+			bcopy(bp->b_data, fs->fs_csp[fragstoblks(fs, i)],
+			    (size_t)size);
 		brelse(bp);
 	}
 	/*
@@ -430,11 +431,11 @@ loop:
 #ifdef FFS_EI
 		if (UFS_MPNEEDSWAP(mountp))
 			ffs_dinode_swap((struct dinode *)bp->b_data +
-				ino_to_fsbo(fs, ip->i_number), &ip->i_din.ffs_din);
+			    ino_to_fsbo(fs, ip->i_number), &ip->i_din.ffs_din);
 		else
 #endif
 			ip->i_din.ffs_din = *((struct dinode *)bp->b_data +
-		    	ino_to_fsbo(fs, ip->i_number));
+			    ino_to_fsbo(fs, ip->i_number));
 		brelse(bp);
 		vput(vp);
 		simple_lock(&mntvnode_slock);
@@ -740,8 +741,8 @@ ffs_statfs(mp, sbp, p)
 	sbp->f_bfree = fs->fs_cstotal.cs_nbfree * fs->fs_frag +
 		fs->fs_cstotal.cs_nffree;
 	sbp->f_bavail = (long) (((u_int64_t) fs->fs_dsize * (u_int64_t)
-		(100 - fs->fs_minfree) / (u_int64_t) 100) -
-		(u_int64_t) (fs->fs_dsize - sbp->f_bfree));
+	    (100 - fs->fs_minfree) / (u_int64_t) 100) -
+	    (u_int64_t) (fs->fs_dsize - sbp->f_bfree));
 	sbp->f_files =  fs->fs_ncg * fs->fs_ipg - ROOTINO;
 	sbp->f_ffree = fs->fs_cstotal.cs_nifree;
 	if (sbp != &mp->mnt_stat) {
@@ -909,12 +910,12 @@ ffs_vget(mp, ino, vpp)
 	}
 #ifdef FFS_EI
 	if (UFS_MPNEEDSWAP(mp))
-		ffs_dinode_swap((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino),
-			&(ip->i_din.ffs_din));
+		ffs_dinode_swap((struct dinode *)bp->b_data +
+		    ino_to_fsbo(fs, ino), &(ip->i_din.ffs_din));
 	else 
 #endif
 		ip->i_din.ffs_din =
-			*((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
+		    *((struct dinode *)bp->b_data + ino_to_fsbo(fs, ino));
 	brelse(bp);
 
 	/*
@@ -936,10 +937,10 @@ ffs_vget(mp, ino, vpp)
 	 * Ensure that uid and gid are correct. This is a temporary
 	 * fix until fsck has been changed to do the update.
 	 */
-	if (fs->fs_inodefmt < FS_44INODEFMT) {		/* XXX */
-		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;		/* XXX */
-		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;		/* XXX */
-	}						/* XXX */
+	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
+		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
+		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
+	}							/* XXX */
 
 	*vpp = vp;
 	return (0);
@@ -1057,7 +1058,7 @@ ffs_sbupdate(mp, waitfor)
 	if (fs->fs_inodefmt < FS_44INODEFMT) {			/* XXX */
 		int32_t *lp, tmp;				/* XXX */
 								/* XXX */
-		lp = (int32_t *)&fs->fs_qbmask;		/* XXX nuke qfmask too */
+		lp = (int32_t *)&fs->fs_qbmask;	/* XXX nuke qfmask too */
 		tmp = lp[4];					/* XXX */
 		for (i = 4; i > 0; i--)				/* XXX */
 			lp[i] = lp[i-1];			/* XXX */
@@ -1108,7 +1109,7 @@ ffs_cgupdate(mp, waitfor)
 #ifdef FFS_EI
 		if (mp->um_flags & UFS_NEEDSWAP)
 			ffs_csum_swap((struct csum*)space,
-				(struct csum*)bp->b_data, size);
+			    (struct csum*)bp->b_data, size);
 		else
 #endif
 			bcopy(space, bp->b_data, (u_int)size);
