@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.1 1999/01/15 13:31:28 bouyer Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.2 2000/07/01 06:43:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -45,7 +45,7 @@
 		insv	%0, $16, $8, %0;		\
 		rotl	$8, %1, r1; 			\
 		movb	r1, %0"				\
-		: "&=r" (__y)				\
+		: "=&r" (__y)				\
 		: "r" (__x)				\
 		: "r1", "cc" );				\
 	__y; })
