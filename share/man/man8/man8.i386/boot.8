@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.32 2003/08/07 10:31:24 agc Exp $
+.\"	$NetBSD: boot.8,v 1.33 2003/08/14 09:55:29 dsl Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd May 25, 2003
+.Dd August 14, 2003
 .Dt BOOT 8 i386
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ master boot record - see
 .Ss Normal Operation
 Once running, a banner similar to the following will appear:
 .Bd -unfilled -offset indent
-\*[Gt]\*[Gt] NetBSD BIOS Boot, revision 2.2
+\*[Gt]\*[Gt] NetBSD BIOS Boot, revision 3.0
 \*[Gt]\*[Gt] (user@buildhost, builddate)
 \*[Gt]\*[Gt] Memory: 637/15360 k
 Press return to boot now, any other key for boot menu
@@ -248,20 +248,19 @@ In an emergency, the bootstrap methods described in the
 installation notes for the i386 architecture
 can be used to boot from floppy.
 .Sh FILES
-.Bl -tag -width /usr/mdec/biosboot.sym -compact
+.Bl -tag -width /usr/mdec/bootxx_fstype -compact
+.It Pa /boot
+boot program code loaded by the primary bootstrap
 .It Pa /netbsd
 system code
 .It Pa /netbsd.gz
 gzip-compressed system code
-.It Pa /usr/mdec/biosboot.sym
-boot block (read by installboot)
-.It Pa /usr/mdec/biosboot_com0.sym
-boot block with output redirected to serial console at com0.
-.It Pa /usr/mdec/biosboot_resetvideo.sym
-boot block for machines that need their video boards reset on bootup (e.g. iOpeners).
-.It Pa /boot
-boot block (written by
-.Xr installboot 8 ) .
+.It Pa /usr/mdec/biosboot
+master copy of the boot program (copy to /boot)
+.It Pa /usr/mdec/bootxx_fstype
+primary bootstrap for filesystem type fstype, copied to the start of
+the netbsd partition by
+.Xr installboot 8 .
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
