@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_twovar.h,v 1.7 2000/08/21 20:50:13 scw Exp $ */
+/*	$NetBSD: vme_twovar.h,v 1.8 2000/11/24 09:27:43 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,7 +52,6 @@
 
 struct vmetwo_softc {
 	struct mvmebus_softc	sc_mvmebus;
-	bus_space_tag_t		sc_bust;
 	bus_space_handle_t	sc_lcrh;
 	bus_space_handle_t	sc_gcrh;
 	struct mvmebus_range	sc_master[VME2_NMASTERS];
