@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.9 2000/12/19 08:00:55 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.10 2000/12/21 15:37:18 onoe Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -607,7 +607,13 @@ int an_intr(void *arg)
 static int
 an_cmd(struct an_softc *sc, int cmd, int val)
 {
-	int i;
+	int i, stat;
+
+	/* make sure that previous command completed */
+	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY) {
+		printf("%s: command busy\n", sc->an_dev.dv_xname);
+		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
+	}
 
 	CSR_WRITE_2(sc, AN_PARAM0, val);
 	CSR_WRITE_2(sc, AN_PARAM1, 0);
@@ -617,27 +623,32 @@ an_cmd(struct an_softc *sc, int cmd, int val)
 	for (i = 0; i < AN_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, AN_EVENT_STAT) & AN_EV_CMD)
 			break;
+		/* make sure the command is accepted */
+		if (CSR_READ_2(sc, AN_COMMAND) == cmd)
+			CSR_WRITE_2(sc, AN_COMMAND, cmd);
+		DELAY(10);
 	}
 
-	for (i = 0; i < AN_TIMEOUT; i++) {
-		CSR_READ_2(sc, AN_RESP0);
-		CSR_READ_2(sc, AN_RESP1);
-		CSR_READ_2(sc, AN_RESP2);
-		if ((CSR_READ_2(sc, AN_STATUS) & AN_STAT_CMD_CODE) ==
-		    (cmd & AN_STAT_CMD_CODE))
-			break;
-	}
+	stat = CSR_READ_2(sc, AN_STATUS);
+#if 0
+	CSR_READ_2(sc, AN_RESP0);
+	CSR_READ_2(sc, AN_RESP1);
+	CSR_READ_2(sc, AN_RESP2);
+#endif
+
+	/* clear stuck command busy if necessary */
+	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY)
+		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
 
 	/* Ack the command */
 	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CMD);
 
-	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY)
-		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
-
 	if (i == AN_TIMEOUT)
-		return(ETIMEDOUT);
+		return ETIMEDOUT;
+	if (stat & AN_STAT_CMD_RESULT)
+		return EIO;
 
-	return(0);
+	return 0;
 }
 
 /*
@@ -788,6 +799,7 @@ static int an_seek(sc, id, off, chan)
 	for (i = 0; i < AN_TIMEOUT; i++) {
 		if (!(CSR_READ_2(sc, offreg) & (AN_OFF_BUSY|AN_OFF_ERR)))
 			break;
+		DELAY(10);
 	}
 
 	if (i == AN_TIMEOUT)
@@ -870,6 +882,7 @@ static int an_alloc_nicmem(sc, len, id)
 	for (i = 0; i < AN_TIMEOUT; i++) {
 		if (CSR_READ_2(sc, AN_EVENT_STAT) & AN_EV_ALLOC)
 			break;
+		DELAY(10);
 	}
 
 	if (i == AN_TIMEOUT)
