@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.8 1996/10/06 19:05:27 thorpej Exp $	*/
+/*	$NetBSD: ct.c,v 1.9 1996/10/14 07:29:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -149,6 +149,25 @@ ctident(ctlr, unit)
 		break;
 	}
 	return(id);
+}
+
+int
+ctpunit(ctlr, slave, punit)
+	int ctlr, slave, *punit;
+{
+	register struct ct_softc *rs;
+
+	if (ctlr >= NHPIB || hpibalive(ctlr) == 0)
+		return(EADAPT);
+	if (slave >= NCT)
+		return(ECTLR);
+	rs = &ct_softc[ctlr][slave];
+
+	if (rs->sc_alive == 0)
+		return(ENXIO);
+
+	*punit = rs->sc_punit;
+	return (0);
 }
 
 ctopen(f, ctlr, unit, part)
