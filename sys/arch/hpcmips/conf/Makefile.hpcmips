@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcmips,v 1.13 2000/03/07 04:17:27 shin Exp $
+#	$NetBSD: Makefile.hpcmips,v 1.14 2000/03/25 15:11:08 uch Exp $
 
 # Makefile for NetBSD
 #
@@ -56,7 +56,7 @@ CWARNFLAGS?=	-Werror -Wall  -Wstrict-prototypes -Wmissing-prototypes \
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif
-GP?=		-G 30
+GP?=		-G 24
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
