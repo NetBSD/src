@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.139 2003/11/01 23:57:05 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.140 2003/11/02 00:22:49 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.139 2003/11/01 23:57:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.140 2003/11/02 00:22:49 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -803,7 +803,8 @@ wi_start(struct ifnet *ifp)
 			m_copydata(m0, 4, ETHER_ADDR_LEN * 2,
 			    (caddr_t)&frmhdr.wi_ehdr);
 			frmhdr.wi_ehdr.ether_type = llc->llc_snap.ether_type;
-			/* TBD set ni = m0->m_pkthdr.rcvif */ 
+			ni = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
+			m0->m_pkthdr.rcvif = NULL;
 		} else {
 			if (ic->ic_state != IEEE80211_S_RUN) {
 				break;
@@ -843,7 +844,7 @@ wi_start(struct ifnet *ifp)
 				}
 				if (ni->ni_pwrsave & IEEE80211_PS_SLEEP) {
 					ieee80211_pwrsave(ic, ni, m0);
-					goto next;
+					continue; /* don't free node. */
 				}
 			}
 		}
