@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.77 2003/04/16 09:44:07 wiz Exp $
+.\"	$NetBSD: make.1,v 1.78 2003/05/23 17:25:10 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -475,10 +475,19 @@ Makefile parsing, lists only those targets encountered thus far.
 A path to the directory where
 .Nm
 was executed.
-.It Va .MAKE
+.It Ev MAKE
 The name that
 .Nm
-was executed with.
+was executed with. For compatibily
+.Nm
+also sets
+.Va .MAKE
+with the same value.
+The preferred variable to use is
+.Ev MAKE
+because it is more compatible with other versions of
+.Nm
+and cannot be confused with the special target with the same name.
 .It Ev MAKEFLAGS
 The environment variable
 .Ql Ev MAKEFLAGS
