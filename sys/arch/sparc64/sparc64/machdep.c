@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2001/01/20 13:44:31 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.100 2001/01/23 20:31:28 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -146,6 +146,14 @@ extern vaddr_t avail_end;
 int	physmem;
 
 extern	caddr_t msgbufaddr;
+
+/*
+ * Maximum number of DMA segments we'll allow in dmamem_load()
+ * routines.  Can be overridden in config files, etc.
+ */
+#ifndef MAX_DMA_SEGS
+#define MAX_DMA_SEGS	20
+#endif
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -1201,12 +1209,14 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	i = 0;
 	map->dm_segs[i].ds_addr = NULL;
 	map->dm_segs[i].ds_len = 0;
-	while (buflen > 0 && i < map->_dm_segcnt) {
+	while (sgsize > 0 && i < map->_dm_segcnt) {
 		paddr_t pa;
 
 		(void) pmap_extract(pmap_kernel(), vaddr, &pa);
-		buflen -= NBPG;
+		sgsize -= NBPG;
 		vaddr += NBPG;
+		if (map->dm_segs[i].ds_len == 0)
+			map->dm_segs[i].ds_addr = pa;
 		if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
 		    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
 			/* Hey, waddyaknow, they're contiguous */
@@ -1232,47 +1242,52 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 	int flags;
 {
 #if 1
+	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i;
 	size_t len;
 
 	i = 0;
-	map->dm_segs[i].ds_addr = NULL;
-	map->dm_segs[i].ds_len = 0;
 	len = 0;
 	while (m) {
 		vaddr_t vaddr = mtod(m, vaddr_t);
-		bus_size_t buflen = m->m_len;
+		long buflen = (long)m->m_len;
 
 		len += buflen;
-		while (buflen > 0 && i < map->_dm_segcnt) {
+		while (buflen > 0 && i < MAX_DMA_SEGS) {
 			paddr_t pa;
+			long incr;
 
+			incr = min(buflen, NBPG);
 			(void) pmap_extract(pmap_kernel(), vaddr, &pa);
-			buflen -= NBPG;
-			vaddr += NBPG;
+			buflen -= incr;
+			vaddr += incr;
 
-			if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
-			    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+			if (i > 0 && pa == (segs[i-1].ds_addr + segs[i-1].ds_len)
+			    && ((segs[i-1].ds_len + incr) < map->_dm_maxsegsz)) {
 				/* Hey, waddyaknow, they're contiguous */
-				map->dm_segs[i].ds_len += NBPG;
+				segs[i-1].ds_len += incr;
 				continue;
 			}
-			map->dm_segs[++i].ds_addr = pa;
-			map->dm_segs[i].ds_len = NBPG;
+			segs[i].ds_addr = pa;
+			segs[i].ds_len = incr;
+			segs[i]._ds_boundary = 0;
+			segs[i]._ds_align = 0;
+			segs[i]._ds_mlist = NULL;
+			i++;
 		}
-		if (i >= map->_dm_segcnt) 
+		m = m->m_next;
+		if (m && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
 			return E2BIG;
 
-		m = m->m_next;
 	}
-	map->dm_nsegs = i;
-	bus_dmamap_load_raw(t, map, map->dm_segs, map->dm_nsegs, 
-			    (bus_size_t)len, flags);
+
+	return (bus_dmamap_load_raw(t, map, segs, i,
+			    (bus_size_t)len, flags));
 #else
 	panic("_bus_dmamap_load_mbuf: not implemented");
-#endif
 	return 0;
+#endif
 }
 
 /*
@@ -1286,6 +1301,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	int flags;
 {
 #if 1
+	bus_dma_segment_t segs[MAX_DMA_SEGS];
 	int i, j;
 	size_t len;
 	struct proc *p = uio->uio_procp;
@@ -1297,8 +1313,6 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		pm = pmap_kernel();
 
 	i = 0;
-	map->dm_segs[i].ds_addr = NULL;
-	map->dm_segs[i].ds_len = 0;
 	len = 0;
 	for (j=0; j<uio->uio_iovcnt; j++) {
 		struct iovec *iov = &uio->uio_iov[j];
@@ -1306,29 +1320,37 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		bus_size_t buflen = iov->iov_len;
 
 		len += buflen;
-		while (buflen > 0 && i < map->_dm_segcnt) {
+		while (buflen > 0 && i < MAX_DMA_SEGS) {
 			paddr_t pa;
+			long incr;
 
+			incr = min(buflen, NBPG);
 			(void) pmap_extract(pm, vaddr, &pa);
-			buflen -= NBPG;
-			vaddr += NBPG;
+			buflen -= incr;
+			vaddr += incr;
+			if (segs[i].ds_len == 0)
+				segs[i].ds_addr = pa;
 
-			if (pa == (map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len)
-			    && ((map->dm_segs[i].ds_len + NBPG) < map->_dm_maxsegsz)) {
+
+			if (i > 0 && pa == (segs[i-1].ds_addr + segs[i-1].ds_len)
+			    && ((segs[i-1].ds_len + incr) < map->_dm_maxsegsz)) {
 				/* Hey, waddyaknow, they're contiguous */
-				map->dm_segs[i].ds_len += NBPG;
+				segs[i-1].ds_len += incr;
 				continue;
 			}
-			map->dm_segs[++i].ds_addr = pa;
-			map->dm_segs[i].ds_len = NBPG;
+			segs[i].ds_addr = pa;
+			segs[i].ds_len = incr;
+			segs[i]._ds_boundary = 0;
+			segs[i]._ds_align = 0;
+			segs[i]._ds_mlist = NULL;
+			i++;
 		}
-		if (i >= map->_dm_segcnt) 
+		if (buflen > 0 && i >= MAX_DMA_SEGS) 
 			/* Exceeded the size of our dmamap */
 			return E2BIG;
 	}
-	map->dm_nsegs = i;
-	bus_dmamap_load_raw(t, map, map->dm_segs, map->dm_nsegs, 
-			    (bus_size_t)len, flags);
+	return (bus_dmamap_load_raw(t, map, segs, i, 
+				    (bus_size_t)len, flags));
 #endif
 	return 0;
 }
@@ -1364,8 +1386,10 @@ _bus_dmamap_unload(t, map)
 	struct pglist *mlist;
 	paddr_t pa;
 
+#if 0	/* no longer valid */
 	if (map->dm_nsegs != 1)
 		panic("_bus_dmamap_unload: nsegs = %d", map->dm_nsegs);
+#endif
 
 	for (i=0; i<map->dm_nsegs; i++) {
 		if ((mlist = map->dm_segs[i]._ds_mlist) == NULL) {

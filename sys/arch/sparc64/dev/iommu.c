@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.25 2000/12/06 01:47:49 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.26 2001/01/23 20:31:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -569,24 +569,33 @@ iommu_dvmamap_unload(t, is, map)
 {
 	vaddr_t addr;
 	size_t len;
-	int error, s;
+	int error, s, i;
 	bus_addr_t dvmaddr;
 	bus_size_t sgsize;
+	paddr_t pa;
 
-	if (map->dm_nsegs != 1)
-		panic("iommu_dvmamap_unload: nsegs = %d", map->dm_nsegs);
-
-	addr = trunc_page(map->dm_segs[0].ds_addr);
-	len = map->dm_segs[0].ds_len;
-
-	DPRINTF(IDB_BUSDMA,
-	    ("iommu_dvmamap_unload: map %p removing va %lx size %lx\n",
-	    map, (long)addr, (long)len));
-	iommu_remove(is, addr, len);
 	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
-	sgsize = round_page(map->dm_segs[0].ds_len + 
-			    ((int)map->dm_segs[0].ds_addr & PGOFSET));
+	pa = (paddr_t)map->dm_segs[0].ds_addr;
+	sgsize = 0;
+	for (i = 0; i<map->dm_nsegs; i++) {
 
+		addr = trunc_page(map->dm_segs[i].ds_addr);
+		len = map->dm_segs[i].ds_len;
+		if (len == 0 || addr == 0)
+			printf("iommu_dvmamap_unload: map = %p, i = %d, len = %d, addr = %lx\n",
+				map, (int)i, (int)len, (unsigned long)addr);
+
+		DPRINTF(IDB_BUSDMA,
+			("iommu_dvmamap_unload: map %p removing va %lx size %lx\n",
+			 map, (long)addr, (long)len));
+		iommu_remove(is, addr, len);
+		
+		sgsize += map->dm_segs[i].ds_len;
+		if (round_page(pa) != round_page(map->dm_segs[i].ds_addr))
+			sgsize = round_page(sgsize);
+		pa = map->dm_segs[i].ds_addr + map->dm_segs[i].ds_len;
+
+	}
 	/* Flush the caches */
 	bus_dmamap_unload(t->_parent, map);
 
@@ -613,7 +622,8 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	bus_size_t size;
 {
 	vm_page_t m;
-	int s;
+	int i, s;
+	int left;
 	int err;
 	bus_size_t sgsize;
 	paddr_t pa;
@@ -633,20 +643,16 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
 	map->dm_nsegs = 0;
-#ifdef DIAGNOSTIC
-	/* XXX - unhelpful since we can't reset these in map_unload() */
-	if (segs[0].ds_addr != 0)
-		panic("iommu_dvmamap_load_raw: segment already loaded: "
-			"addr %#llx, size %#llx",
-			(unsigned long long)segs[0].ds_addr,
-			(unsigned long long)segs[0].ds_len);
-	if (segs[0].ds_len != size)
-		panic("iommu_dvmamap_load_raw: segment size changed: "
-			"ds_len %#llx size %#llx",
-			(unsigned long long)segs[0].ds_len,
-			(unsigned long long)size);
-#endif
-	sgsize = round_page(size);
+	/* Count up the total number of pages we need */
+	pa = segs[0].ds_addr;
+	sgsize = 0;
+	for (i=0; i<nsegs; i++) {
+		sgsize += segs[i].ds_len;
+		if (round_page(pa) != round_page(segs[i].ds_addr))
+			sgsize = round_page(sgsize);
+		pa = segs[i].ds_addr + segs[i].ds_len;
+	}
+	sgsize = round_page(sgsize);
 
 	/*
 	 * A boundary presented to bus_dmamem_alloc() takes precedence
@@ -676,15 +682,70 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	if (dvmaddr == (bus_addr_t)-1)
 		return (ENOMEM);
 
+	if ((mlist = segs[0]._ds_mlist) == NULL) {
+		u_long prev_va = NULL;
+		/*
+		 * This segs is made up of individual physical pages,
+		 * probably by _bus_dmamap_load_uio() or 
+		 * _bus_dmamap_load_mbuf().  Ignore the mlist and
+		 * load each segment individually.
+		 */
+
+		i = 0;
+		dvmaddr += (segs[i].ds_addr & PGOFSET);
+		map->dm_segs[i].ds_addr = dvmaddr;
+		map->dm_segs[i].ds_len = left = segs[i].ds_len;
+		pa = segs[i].ds_addr;
+
+		while (left > 0) {
+			int incr;
+
+			if (sgsize == 0)
+				panic("iommu_dmamap_load_raw: size botch");
+			DPRINTF(IDB_BUSDMA,
+				("iommu_dvmamap_load_raw: map %p loading va %lx at pa %lx\n",
+				 map, (long)dvmaddr, (long)(pa)));
+			/* Enter it if we haven't before. */
+			if (prev_va != trunc_page(dvmaddr))
+				iommu_enter(is, prev_va = trunc_page(dvmaddr), 
+					    trunc_page(pa), flags);
+			incr = min(pagesz, left);
+			dvmaddr += incr;
+			pa += incr;
+			left -= incr;
+
+			/* Next segment */
+			if (left <= 0 && ++i < nsegs) {
+				u_long offset;
+
+				/* 
+				 * If the two segs are on different physical pages
+				 * move to a new virtual page.
+				 */
+				offset = (segs[i].ds_addr & PGOFSET);
+				if (trunc_page(pa) != trunc_page(segs[i].ds_addr)) 
+					dvmaddr += NBPG;
+
+				pa = segs[i].ds_addr;
+				dvmaddr = trunc_page(dvmaddr) + offset;
+
+				map->dm_segs[i].ds_len = left = segs[i].ds_len;
+				map->dm_segs[i].ds_addr = dvmaddr;
+			}
+		}
+		map->dm_nsegs = i;
+
+		return (0);
+	}
 	/*
-	 * We always use just one segment.
+	 * This was allocated with bus_dmamem_alloc.  We only
+	 * have one segment, and the pages are on an `mlist'.
 	 */
 	map->dm_mapsize = size;
-	map->dm_nsegs = 1;
+	i = 0;
 	map->dm_segs[0].ds_addr = dvmaddr;
 	map->dm_segs[0].ds_len = size;
 
-	mlist = segs[0]._ds_mlist;
 	for (m = TAILQ_FIRST(mlist); m != NULL; m = TAILQ_NEXT(m,pageq)) {
 		if (sgsize == 0)
 			panic("iommu_dmamap_load_raw: size botch");
@@ -698,6 +759,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 		dvmaddr += pagesz;
 		sgsize -= pagesz;
 	}
+	map->dm_nsegs = i;
 	return (0);
 }
 
