@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.19 1998/03/01 02:22:08 fvdl Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.20 1998/09/01 03:40:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -50,6 +50,7 @@
 #include <sys/namei.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/stat.h>
 
 #include <isofs/cd9660/iso.h>
@@ -74,6 +75,8 @@ u_long idvhash;
 
 int prtactive;	/* 1 => print out reclaim of active vnodes */
 
+struct pool cd9660_node_pool;
+
 static u_int cd9660_chars2ui __P((u_char *, int));
 
 /*
@@ -89,6 +92,9 @@ cd9660_init()
 	idvhashtbl = hashinit(desiredvnodes / 8, M_ISOFSMNT, M_WAITOK,
 			&idvhash);
 #endif
+	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
+	    "cd9660nopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
+	    M_ISOFSNODE);
 }
 
 #ifdef ISODEVMAP
@@ -275,7 +281,7 @@ cd9660_reclaim(v)
 		vrele(ip->i_devvp);
 		ip->i_devvp = 0;
 	}
-	FREE(vp->v_data, M_ISOFSNODE);
+	pool_put(&cd9660_node_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.4 1998/06/24 20:58:45 sommerfe Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.5 1998/09/01 03:40:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -80,6 +80,8 @@ struct iso_mnt {
 #define lblktosize(imp, blk)	((blk) << (imp)->im_bshift)
 #define lblkno(imp, loc)	((loc) >> (imp)->im_bshift)
 #define blksize(imp, ip, lbn)	((imp)->logical_block_size)
+
+extern struct pool cd9660_node_pool;
 
 int cd9660_mount __P((struct mount *,
 	    const char *, void *, struct nameidata *, struct proc *));

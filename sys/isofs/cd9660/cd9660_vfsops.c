@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.32 1998/08/09 20:42:54 perry Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.33 1998/09/01 03:40:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -59,6 +59,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/stat.h>
 
 #include <isofs/cd9660/iso.h>
@@ -627,8 +628,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		*vpp = NULLVP;
 		return (error);
 	}
-	MALLOC(ip, struct iso_node *, sizeof(struct iso_node), M_ISOFSNODE,
-	    M_WAITOK);
+	ip = pool_get(&cd9660_node_pool, PR_WAITOK);
 	memset((caddr_t)ip, 0, sizeof(struct iso_node));
 	lockinit(&ip->i_lock, PINOD, "isonode", 0, 0);
 	vp->v_data = ip;
