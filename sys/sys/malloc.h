@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.77 2002/01/12 00:00:39 nathanw Exp $	*/
+/*	$NetBSD: malloc.h,v 1.77.4.1 2002/03/22 18:59:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,6 +44,8 @@
 #include "opt_malloc_debug.h"
 #include "opt_lockdebug.h"
 #endif
+
+#include <sys/mutex.h>
 
 /*
  * flags to malloc
@@ -423,25 +425,29 @@ struct kmembuckets {
 #define	FREE(addr, type) free((caddr_t)(addr), (type))
 
 #else /* do not collect statistics */
+extern kmutex_t malloc_mutex;
+
 #define	MALLOC(space, cast, size, type, flags)				\
 do {									\
 	register struct kmembuckets *kbp = &bucket[BUCKETINDX((size))];	\
-	long s = splvm();						\
+	mutex_enter(&malloc_mutex);					\
 	if (kbp->kb_next == NULL) {					\
+		mutex_exit(&malloc_mutex);				\
 		(space) = (cast)malloc((u_long)(size), (type), (flags)); \
 	} else {							\
 		(space) = (cast)kbp->kb_next;				\
 		kbp->kb_next = *(caddr_t *)(space);			\
+		mutex_exit(&malloc_mutex);				\
 	}								\
-	splx(s);							\
 } while (/* CONSTCOND */ 0)
 
 #define	FREE(addr, type)						\
 do {									\
 	register struct kmembuckets *kbp;				\
 	register struct kmemusage *kup = btokup((addr));		\
-	long s = splvm();						\
+	mutex_enter(&malloc_mutex);					\
 	if (1 << kup->ku_indx > MAXALLOCSAVE) {				\
+		mutex_exit(&malloc_mutex);				\
 		free((caddr_t)(addr), (type));				\
 	} else {							\
 		kbp = &bucket[kup->ku_indx];				\
@@ -451,8 +457,8 @@ do {									\
 			*(caddr_t *)(kbp->kb_last) = (caddr_t)(addr);	\
 		*(caddr_t *)(addr) = NULL;				\
 		kbp->kb_last = (caddr_t)(addr);				\
+		mutex_exit(&malloc_mutex);				\
 	}								\
-	splx(s);							\
 } while(/* CONSTCOND */ 0)
 #endif /* do not collect statistics */
 
