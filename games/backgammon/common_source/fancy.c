@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.9 1999/02/10 17:08:06 hubertf Exp $	*/
+/*	$NetBSD: fancy.c,v 1.10 1999/07/26 18:39:06 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: fancy.c,v 1.9 1999/02/10 17:08:06 hubertf Exp $");
+__RCSID("$NetBSD: fancy.c,v 1.10 1999/07/26 18:39:06 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -733,5 +733,9 @@ getcaps(s)
 	if (LI < 24 || CO < 72 || !(CL && UP && ND))
 		return (0);
 	linect = (int *) calloc(LI + 1, sizeof(int));
+	if (linect == NULL) {
+		write(2, "\r\nOut of memory!\r\n", 18);
+		getout(0);
+	}
 	return (1);
 }
