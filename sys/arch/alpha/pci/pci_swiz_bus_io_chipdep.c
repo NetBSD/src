@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.14 1996/12/02 22:19:35 cgd Exp $	*/
+/*	$NetBSD: pci_swiz_bus_io_chipdep.c,v 1.15 1997/03/12 05:24:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,6 +34,15 @@
  * uses:
  *	CHIP		name of the 'chip' it's being compiled for.
  *	CHIP_IO_BASE	Sparse I/O space base to use.
+ *	CHIP_IO_EX_STORE
+ *			If defined, device-provided static storage area
+ *			for the I/O space extent.  If this is defined,
+ *			CHIP_IO_EX_STORE_SIZE must also be defined.  If
+ *			this is not defined, a static area will be
+ *			declared.
+ *	CHIP_IO_EX_STORE_SIZE
+ *			Size of the device-provided static storage area
+ *			for the I/O memory space extent.
  */
 
 #include <sys/extent.h>
@@ -150,8 +159,12 @@ void		__C(CHIP,_io_copy_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_io_copy_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
+#ifndef	CHIP_IO_EX_STORE
 static long
     __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
+#define	CHIP_IO_EX_STORE(v)		(__C(CHIP, _io_ex_storage))
+#define	CHIP_IO_EX_STORE_SIZE(v)	(sizeof __C(CHIP, _io_ex_storage))
+#endif
 
 static struct alpha_bus_space __C(CHIP,_io_space) = {
 	/* cookie */
@@ -235,8 +248,8 @@ __C(CHIP,_bus_io_init)(v)
 
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	ex = extent_create(__S(__C(CHIP,_bus_io)), 0x0UL, 0xffffffffUL,
-	    M_DEVBUF, (caddr_t)__C(CHIP,_io_ex_storage),
-	    sizeof(__C(CHIP,_io_ex_storage)), EX_NOWAIT);
+	    M_DEVBUF, (caddr_t)CHIP_IO_EX_STORE(v), CHIP_IO_EX_STORE_SIZE(v),
+	    EX_NOWAIT);
 	extent_alloc_region(ex, 0, 0xffffffffUL, EX_NOWAIT);
 
 #ifdef CHIP_IO_W1_BUS_START
