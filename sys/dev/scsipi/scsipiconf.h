@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.44 2000/06/09 08:54:26 enami Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.45 2000/07/06 01:56:23 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -335,6 +335,7 @@ struct scsipi_xfer {
  * scsipi_xfer status flags
  */
 #define	XS_STS_DONE		0x00000001	/* scsipi_xfer is done */
+#define	XS_STS_PRIVATE		0xf0000000	/* reserved for HBA's use */
 
 /*
  * Error values an adapter driver may return
