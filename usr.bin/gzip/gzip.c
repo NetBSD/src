@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.1 2004/03/31 09:04:26 grant Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.2 2004/03/31 09:19:16 grant Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.1 2004/03/31 09:04:26 grant Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.2 2004/03/31 09:19:16 grant Exp $");
 #endif /* not lint */
 
 /*
@@ -135,8 +135,8 @@ static	void	maybe_warn(const char *fmt, ...);
 static	void	maybe_warnx(const char *fmt, ...);
 static	void	gz_compress(FILE *, gzFile);
 static	off_t	gz_uncompress(gzFile, FILE *);
-static	ssize_t	file_compress(char *);
-static	ssize_t	file_uncompress(char *);
+static	off_t	file_compress(char *);
+static	off_t	file_uncompress(char *);
 static	void	handle_pathname(char *);
 static	void	handle_file(char *, struct stat *);
 static	void	handle_stdin(void);
@@ -149,7 +149,7 @@ static	void	display_version(void);
 #ifndef SMALL
 static	void	prepend_gzip(char *, int *, char ***);
 static	void	handle_dir(char *, struct stat *);
-static	void	print_verbage(char *, char *, ssize_t, ssize_t);
+static	void	print_verbage(char *, char *, off_t, off_t);
 static	void	print_test(char *, int);
 static	void	copymodes(const char *, struct stat *);
 #endif
@@ -230,7 +230,7 @@ main(int argc, char **argv)
 		dflag = cflag = 1;
 
 #ifdef SMALL
-#define OPT_LIST "cdhHl:tV123456789"
+#define OPT_LIST "cdhHltV123456789"
 #else
 #define OPT_LIST "cdfhHlnNqrS:tvV123456789"
 #endif
@@ -541,14 +541,14 @@ copymodes(const char *file, struct stat *sbp)
  * compress the given file: create a corresponding .gz file and remove the
  * original.
  */
-static ssize_t
+static off_t
 file_compress(char *file)
 {
 	FILE *in;
 	gzFile out;
 	struct stat isb, osb;
 	char outfile[MAXPATHLEN];
-	ssize_t size;
+	off_t size;
 #ifndef SMALL
 	u_int32_t mtime = 0;
 #endif
@@ -636,7 +636,7 @@ lose:
 }
 
 /* uncompress the given file and remove the original */
-static ssize_t
+static off_t
 file_uncompress(char *file)
 {
 	struct stat isb, osb;
@@ -739,23 +739,24 @@ close_it:
 #endif
 	close(fd);
 
+	if (cflag == 0 || lflag) {
 #ifndef SMALL
-	if ((cflag == 0 || lflag) && fflag == 0) {
-		if (lflag == 0 && stat(outfile, &osb) == 0) {
+		if (fflag == 0 && lflag == 0 && stat(outfile, &osb) == 0) {
 			maybe_warnx("%s already exists -- skipping", outfile);
 			goto lose;
 		}
-		/* XXX wanna do this for -l in -DSMALL */
+#endif
 		if (stat(file, &isb) == 0) {
+#ifndef SMALL
 			if (isb.st_nlink > 1 && lflag == 0) {
 				maybe_warnx("%s has %d other links -- skipping",
 				    file, isb.st_nlink - 1);
 				goto lose;
 			}
+#endif
 		} else
 			goto lose;
 	}
-#endif
 
 #ifndef NO_BZIP2_SUPPORT
 	if (method == FT_BZIP2) {
@@ -994,7 +995,7 @@ out:
 static void
 handle_file(char *file, struct stat *sbp)
 {
-	ssize_t usize, gsize;
+	off_t usize, gsize;
 
 	infile = file;
 	if (dflag) {
@@ -1061,7 +1062,7 @@ print_ratio(off_t in, off_t out, FILE *where)
 	if (out == 0)
 		percent = 0;
 	else
-		percent = 1000 - ((1000 * out) / in);
+		percent = 1000 - ((in * 1000ULL) / out);
 	fprintf(where, "%3lu.%1lu%%", (unsigned long)percent / 10UL,
 	    (unsigned long)percent % 10);
 }
@@ -1069,11 +1070,11 @@ print_ratio(off_t in, off_t out, FILE *where)
 #ifndef SMALL
 /* print compression statistics, and the new name (if there is one!) */
 static void
-print_verbage(char *file, char *nfile, ssize_t usize, ssize_t gsize)
+print_verbage(char *file, char *nfile, off_t usize, off_t gsize)
 {
 	fprintf(stderr, "%s:%s  ", file,
 	    strlen(file) < 7 ? "\t\t" : "\t");
-	print_ratio(usize, gsize, stderr);
+	print_ratio((off_t)usize, (off_t)gsize, stderr);
 	if (nfile)
 		fprintf(stderr, " -- replaced with %s", nfile);
 	fprintf(stderr, "\n");
