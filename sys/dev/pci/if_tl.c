@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.52.4.1 2003/06/30 02:47:21 grant Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.52.4.2 2004/06/22 15:16:39 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.52.4.1 2003/06/30 02:47:21 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.52.4.2 2004/06/22 15:16:39 tron Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -191,6 +191,8 @@ struct cfattach tl_ca = {
 const struct tl_product_desc tl_compaq_products[] = {
 	{ PCI_PRODUCT_COMPAQ_N100TX, TLPHY_MEDIA_NO_10_T,
 	  "Compaq Netelligent 10/100 TX" },
+	{ PCI_PRODUCT_COMPAQ_INT100TX, TLPHY_MEDIA_NO_10_T,
+	  "Integrated Compaq Netelligent 10/100 TX" },
 	{ PCI_PRODUCT_COMPAQ_N10T, TLPHY_MEDIA_10_5,
 	  "Compaq Netelligent 10 T" },
 	{ PCI_PRODUCT_COMPAQ_IntNF3P, TLPHY_MEDIA_10_2,
