@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.93 1997/01/31 00:47:12 mouse Exp $	*/
+/*	$NetBSD: init_main.c,v 1.94 1997/01/31 00:50:38 mouse Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -74,6 +74,7 @@
 #endif
 #include <sys/domain.h>
 #include <sys/mbuf.h>
+#include <sys/namei.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
