@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_object.c,v 1.51 1997/09/10 18:26:33 pk Exp $	*/
+/*	$NetBSD: vm_object.c,v 1.52 1998/01/31 04:02:42 ross Exp $	*/
 
 /*-
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
@@ -381,7 +381,7 @@ vm_object_terminate(object)
 	 * Wait until the pageout daemon is through with the object or a
 	 * potential collapse operation is finished.
 	 */
-	vm_object_paging_wait(object);
+	vm_object_paging_wait(object,"vmterm");
 
 	/*
 	 * Detach the object from its shadow if we are the shadow's
@@ -499,7 +499,7 @@ again:
 	/*
 	 * Wait until the pageout daemon is through with the object.
 	 */
-	vm_object_paging_wait(object);
+	vm_object_paging_wait(object,"vclean");
 
 	/*
 	 * Loop through the object page list cleaning as necessary.
@@ -1200,7 +1200,7 @@ vm_object_overlay(object)
 RetryRename:
 #if 0 /* XXXXX FIXME */
 	vm_object_unlock(object);
-	vm_object_paging_wait(backing_object);
+	vm_object_paging_wait(backing_object,"vpagew");
 	vm_object_lock(object);
 	/*
 	 * While we were asleep, the parent object might have been deleted.  If
@@ -1326,7 +1326,7 @@ RetryRename:
 #if 0 /* XXXXX FIXME */
 				vm_object_unlock(backing_object);
 				vm_object_unlock(object);
-				VM_WAIT;
+				vm_wait("fVmcollapse");
 				vm_object_lock(object);
 				vm_object_lock(backing_object);
 				goto RetryRename;

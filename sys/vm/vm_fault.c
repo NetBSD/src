@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_fault.c,v 1.20 1997/02/18 13:39:33 mrg Exp $	*/
+/*	$NetBSD: vm_fault.c,v 1.21 1998/01/31 04:02:39 ross Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -250,7 +250,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 
 				PAGE_ASSERT_WAIT(m, !change_wiring);
 				UNLOCK_THINGS;
-				thread_block();
+				thread_block("mFltbsy");
 				wait_result = current_thread()->wait_result;
 				vm_object_deallocate(first_object);
 				if (wait_result != THREAD_AWAKENED)
@@ -260,7 +260,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 				PAGE_ASSERT_WAIT(m, !change_wiring);
 				UNLOCK_THINGS;
 				cnt.v_intrans++;
-				thread_block();
+				thread_block("mFltbsy2");
 				vm_object_deallocate(first_object);
 				goto RetryFault;
 #endif
@@ -306,7 +306,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 
 			if (m == NULL) {
 				UNLOCK_AND_DEALLOCATE;
-				VM_WAIT;
+				vm_wait("fVfault1");
 				goto RetryFault;
 			}
 		}
@@ -589,7 +589,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 					copy_object->ref_count--;
 					vm_object_unlock(copy_object);
 					UNLOCK_THINGS;
-					thread_block();
+					thread_block("mCpybsy");
 					wait_result = current_thread()->wait_result;
 					vm_object_deallocate(first_object);
 					if (wait_result != THREAD_AWAKENED)
@@ -605,7 +605,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 					copy_object->ref_count--;
 					vm_object_unlock(copy_object);
 					UNLOCK_THINGS;
-					thread_block();
+					thread_block("mCpybsy2");
 					vm_object_deallocate(first_object);
 					goto RetryFault;
 #endif
@@ -640,7 +640,7 @@ vm_fault(map, vaddr, fault_type, change_wiring)
 					copy_object->ref_count--;
 					vm_object_unlock(copy_object);
 					UNLOCK_AND_DEALLOCATE;
-					VM_WAIT;
+					vm_wait("fCopy");
 					goto RetryFault;
 				}
 
@@ -1000,7 +1000,7 @@ vm_fault_copy_entry(dst_map, src_map, dst_entry, src_entry)
 			dst_m = vm_page_alloc(dst_object, dst_offset);
 			if (dst_m == NULL) {
 				vm_object_unlock(dst_object);
-				VM_WAIT;
+				vm_wait("fVm_copy");
 				vm_object_lock(dst_object);
 			}
 		} while (dst_m == NULL);

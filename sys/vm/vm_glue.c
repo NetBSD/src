@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.69 1998/01/03 02:53:02 thorpej Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.70 1998/01/31 04:02:40 ross Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -392,7 +392,7 @@ loop:
 		    p->p_pid, p->p_comm, cnt.v_free_count);
 #endif
 	(void) splhigh();
-	VM_WAIT;
+	vm_wait("fLowmem");
 	(void) spl0();
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
@@ -525,17 +525,18 @@ assert_wait(event, ruptible)
 }
 
 void
-thread_block()
+thread_block(msg)
+char	*msg;
 {
 	int s = splhigh();
 
 	if (curproc->p_thread)
-		tsleep(curproc->p_thread, PVM, "thrd_block", 0);
+		tsleep(curproc->p_thread, PVM, msg, 0);
 	splx(s);
 }
 
 void
-thread_sleep_msg(event, lock, ruptible, msg)
+thread_sleep_msg(event, lock, ruptible, msg, timo)
 	void *event;
 	simple_lock_t lock;
 	boolean_t ruptible;
@@ -549,7 +550,7 @@ thread_sleep_msg(event, lock, ruptible, msg)
 	curproc->p_thread = event;
 	simple_unlock(lock);
 	if (curproc->p_thread)
-		tsleep(event, PVM, msg, 0);
+		tsleep(event, PVM, msg, timo);
 	splx(s);
 }
 
