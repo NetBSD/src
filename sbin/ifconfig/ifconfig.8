@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.32 2000/03/01 03:32:55 enami Exp $
+.\"	$NetBSD: ifconfig.8,v 1.32.4.1 2000/06/30 18:12:46 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -298,6 +298,19 @@ for
 .It Cm nwid Ar id
 (IEEE 802.11 devices only)
 Configure network ID for IEEE 802.11-based wireless network interfaces.
+.It Cm tunnel Ar src_addr Ar dest_addr
+(IP tunnel devices only)
+Configure the physical source and destination address for IP tunnel
+interfaces (gif).  The arguments
+.Ar src_addr
+and
+.Ar dest_addr
+are interpreted as the outer source/destination for the encapsulating
+IPv4/IPv6 header.
+.It Cm deletetunnel
+Unconfigure the physical source and destination address for IP tunnel
+interfaces previously configured with
+.Cm tunnel .
 .It Cm pltime Ar n
 (inet6 only)
 Set preferred lifetime for the address.
