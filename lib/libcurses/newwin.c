@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.35 2003/04/08 05:56:01 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.36 2003/06/09 06:58:11 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.35 2003/04/08 05:56:01 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.36 2003/06/09 06:58:11 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -153,7 +153,10 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad)
 
 	for (i = 0; i < maxy; i++) {
 		lp = win->lines[i];
-		lp->flags = 0;
+		if (ispad)
+			lp->flags = __ISDIRTY;
+		else
+			lp->flags = 0;
 		for (sp = lp->line, j = 0; j < maxx; j++, sp++) {
 			sp->ch = ' ';
 			sp->bch = ' ';
@@ -320,8 +323,13 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 #endif
 			lp->firstchp = &lp->firstch;
 			lp->lastchp = &lp->lastch;
-			lp->firstch = ncols;
-			lp->lastch = 0;
+			if (ispad) {
+				lp->firstch = 0;
+				lp->lastch = ncols;
+			} else {
+				lp->firstch = ncols;
+				lp->lastch = 0;
+			}
 		}
 	}
 #ifdef DEBUG
