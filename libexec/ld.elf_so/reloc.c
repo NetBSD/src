@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.33 2000/10/11 20:46:07 dan Exp $	 */
+/*	$NetBSD: reloc.c,v 1.34 2001/02/04 22:11:12 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -148,6 +148,12 @@ _rtld_do_copy_relocations(dstobj, dodebug)
 
 
 #ifndef __sparc__
+
+#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
+extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
+extern Elf_Dyn   _DYNAMIC;
+#endif
+
 int
 _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Obj_Entry *obj;
@@ -157,10 +163,6 @@ _rtld_relocate_nonplt_object(obj, rela, dodebug)
 	Elf_Addr        *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	const Elf_Sym   *def;
 	const Obj_Entry *defobj;
-#if defined(__alpha__) || defined(__i386__) || defined(__m68k__)
-	extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
-	extern Elf_Dyn   _DYNAMIC;
-#endif
 #if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
     defined(__powerpc__) || defined(__vax__)
 	Elf_Addr         tmp;
