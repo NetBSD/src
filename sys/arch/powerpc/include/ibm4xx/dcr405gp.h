@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr405gp.h,v 1.1 2002/03/13 23:09:11 eeh Exp $	*/
+/*	$NetBSD: dcr405gp.h,v 1.2 2003/07/27 23:45:44 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -161,7 +161,7 @@
 #define	  MAL0_IER_TO		  0x00000004	/* Time Out Error Interrupt */
 #define	  MAL0_IER_OPB		  0x00000002	/* OPB Error Interrupt */
 #define	  MAL0_IER_PLB		  0x00000001	/* PLB Error Interrupt */
-#define DCR_MALDBR			0x183 /* MAL Debug register */
+#define DCR_MALDBR		0x183	/* MAL Debug register */
 #define	DCR_MAL0_TXCASR		0x184	/* Tx Channel Active Register (Set) */
 #define	  MAL0_TXCASR_CHAN0	  0x80000000	/* Channel 0 Set Active */
 #define	  MAL0_TXCASR_CHAN1	  0x40000000	/* Channel 1 Set Active */
@@ -202,14 +202,14 @@
 #define DCR_SDRAM0_TR		0x80
 #define DCR_SDRAM0_ECCCFG	0x94
 #define DCR_SDRAM0_ECCESR	0x98
-#define   SDRAM0_ECCESR_BLCE	0xf0000000
-#define   SDRAM0_ECCESR_CBE	0x00c00000
-#define   SDRAM0_ECCESR_CE	0x00200000
-#define   SDRAM0_ECCESR_UE	0x00100000
-#define   SDRAM0_ECCESR_BKE	0x0000f000
+#define   SDRAM0_ECCESR_BLCE	  0xf0000000
+#define   SDRAM0_ECCESR_CBE	  0x00c00000
+#define   SDRAM0_ECCESR_CE	  0x00200000
+#define   SDRAM0_ECCESR_UE	  0x00100000
+#define   SDRAM0_ECCESR_BKE	  0x0000f000
 
-#define SDRAM0_ECCESR_BLCEN(n)	(0x80000000 >> (n))
-#define SDRAM0_ECCESR_BKEN(n)	(0x00008000 >> (n))
-#define SDRAM0_ECCESR_CBEN(n)	(0x00800000 >> (n))
+#define SDRAM0_ECCESR_BLCEN(n)	  (0x80000000 >> (n))
+#define SDRAM0_ECCESR_BKEN(n)	  (0x00008000 >> (n))
+#define SDRAM0_ECCESR_CBEN(n)	  (0x00800000 >> (n))
 
 #endif /* _DCR405GP_H_ */
