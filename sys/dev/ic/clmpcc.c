@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.4.2.3 1999/11/21 15:15:45 he Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.4.2.4 1999/11/29 21:14:28 he Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -997,10 +997,10 @@ clmpcc_set_params(ch)
 	r1 = clmpcc_rdreg(sc, CLMPCC_REG_COR4);
 	if ( ch->ch_cor4 != (r1 & CLMPCC_COR4_FIFO_MASK) ) {
 		/*
-		 * Note: If the Rx FIFO has changed, we always set it to
+		 * Note: If the FIFO has changed, we always set it to
 		 * zero here and disable the Receive Timeout interrupt.
 		 * It's up to the Rx Interrupt handler to pick the
-		 * appropriate moment to write the Rx FIFO length.
+		 * appropriate moment to write the new FIFO length.
 		 */
 		clmpcc_wrreg(sc, CLMPCC_REG_COR4, r1 & ~CLMPCC_COR4_FIFO_MASK);
 		r1 = clmpcc_rdreg(sc, CLMPCC_REG_IER);
@@ -1035,9 +1035,15 @@ clmpcc_start(tp)
 			selwakeup(&tp->t_wsel);
 		}
 
-		if ( tp->t_outq.c_cc > 0 ) {
-			ch->ch_obuf_addr = tp->t_outq.c_cf;
-			ch->ch_obuf_size = ndqb(&tp->t_outq, 0);
+		if ( ISSET(ch->ch_flags, CLMPCC_FLG_START_BREAK |
+					 CLMPCC_FLG_END_BREAK) ||
+		     tp->t_outq.c_cc > 0 ) {
+
+			if ( ISCLR(ch->ch_flags, CLMPCC_FLG_START_BREAK |
+						 CLMPCC_FLG_END_BREAK) ) {
+				ch->ch_obuf_addr = tp->t_outq.c_cf;
+				ch->ch_obuf_size = ndqb(&tp->t_outq, 0);
+			}
 
 			/* Enable TX empty interrupts */
 			oldch = clmpcc_select_channel(ch->ch_sc, ch->ch_car);
@@ -1239,7 +1245,8 @@ clmpcc_txintr(arg)
 	struct clmpcc_chan *ch;
 	struct tty *tp;
 	u_char ftc, oftc;
-	u_char tir;
+	u_char tir, teoir;
+	int etcmode = 0;
 
 	/* Tx interrupt active? */
 	tir = clmpcc_rdreg(sc, CLMPCC_REG_TIR);
@@ -1258,6 +1265,9 @@ clmpcc_txintr(arg)
 	/* Dummy read of the interrupt status register */
 	(void) clmpcc_rdreg(sc, CLMPCC_REG_TISR);
 
+	/* Make sure embedded transmit commands are disabled */
+	clmpcc_wrreg(sc, CLMPCC_REG_COR2, ch->ch_cor2);
+
 	ftc = oftc = clmpcc_rdreg(sc, CLMPCC_REG_TFTC);
 
 	/* Handle a delayed parameter change */
@@ -1274,27 +1284,56 @@ clmpcc_txintr(arg)
 		ftc -= n;
 		ch->ch_obuf_size -= n;
 		ch->ch_obuf_addr += n;
+
 	} else {
 		/*
-		 * No data to send -- check if we should
-		 * start/stop a break
+		 * Check if we should start/stop a break
 		 */
 		if ( ISSET(ch->ch_flags, CLMPCC_FLG_START_BREAK) ) {
 			CLR(ch->ch_flags, CLMPCC_FLG_START_BREAK);
-			/* TBD */
+			/* Enable embedded transmit commands */
+			clmpcc_wrreg(sc, CLMPCC_REG_COR2,
+					ch->ch_cor2 | CLMPCC_COR2_ETC);
+			clmpcc_wr_txdata(sc, CLMPCC_ETC_MAGIC);
+			clmpcc_wr_txdata(sc, CLMPCC_ETC_SEND_BREAK);
+			ftc -= 2;
+			etcmode = 1;
 		}
 
 		if ( ISSET(ch->ch_flags, CLMPCC_FLG_END_BREAK) ) {
 			CLR(ch->ch_flags, CLMPCC_FLG_END_BREAK);
-			/* TBD */
+			/* Enable embedded transmit commands */
+			clmpcc_wrreg(sc, CLMPCC_REG_COR2,
+					ch->ch_cor2 | CLMPCC_COR2_ETC);
+			clmpcc_wr_txdata(sc, CLMPCC_ETC_MAGIC);
+			clmpcc_wr_txdata(sc, CLMPCC_ETC_STOP_BREAK);
+			ftc -= 2;
+			etcmode = 1;
 		}
+	}
 
+	tir = clmpcc_rdreg(sc, CLMPCC_REG_IER);
+
+	if ( ftc != oftc ) {
 		/*
-		 * Disable transmit interrupt
+		 * Enable/disable the Tx FIFO threshold interrupt
+		 * according to how much data is in the FIFO.
+		 * However, always disable the FIFO threshold if
+		 * we've left the channel in 'Embedded Transmit
+		 * Command' mode.
 		 */
-		clmpcc_wrreg(ch->ch_sc, CLMPCC_REG_IER,
-			clmpcc_rdreg(ch->ch_sc, CLMPCC_REG_IER) &
-						~CLMPCC_IER_TX_EMPTY);
+		if ( etcmode || ftc >= ch->ch_cor4 )
+			tir &= ~CLMPCC_IER_TX_FIFO;
+		else
+			tir |= CLMPCC_IER_TX_FIFO;
+		teoir = 0;
+	} else {
+		/*
+		 * No data was sent.
+		 * Disable transmit interrupt.
+		 */
+		tir &= ~(CLMPCC_IER_TX_EMPTY|CLMPCC_IER_TX_FIFO);
+		teoir = CLMPCC_TEOIR_NO_TRANS;
 
 		/*
 		 * Request Tx processing in the soft interrupt handler
@@ -1306,10 +1345,8 @@ clmpcc_txintr(arg)
 		}
 	}
 
-	if ( ftc != oftc )
-		clmpcc_wrreg(sc, CLMPCC_REG_TEOIR, 0);
-	else
-		clmpcc_wrreg(sc, CLMPCC_REG_TEOIR, CLMPCC_TEOIR_NO_TRANS);
+	clmpcc_wrreg(sc, CLMPCC_REG_IER, tir);
+	clmpcc_wrreg(sc, CLMPCC_REG_TEOIR, teoir);
 
 	return 1;
 }
@@ -1541,14 +1578,6 @@ clmpcc_common_putc(sc, chan, c)
 
 	/* Save the currently active channel */
 	old_chan = clmpcc_select_channel(sc, chan);
-
-	/*
-	 * We wait here until the Tx FIFO is empty, and
-	 * the chip signifies that the Tx output is idle.
-	 */
-	while ((clmpcc_rdreg(sc,CLMPCC_REG_TISR) & CLMPCC_TISR_TX_EMPTY) ==0 &&
-	       (clmpcc_rdreg(sc,CLMPCC_REG_TFTC) & CLMPCC_TFTC_MASK) != 0 )
-		; /* Do nothing */
 
 	/*
 	 * Since we can only access the Tx Data register from within
