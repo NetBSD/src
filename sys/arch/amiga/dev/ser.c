@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.33 1996/04/23 17:03:04 is Exp $	*/
+/*	$NetBSD: ser.c,v 1.34 1996/04/27 20:53:31 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -696,7 +696,7 @@ serparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	int cflag, unit, ospeed;
+	int cflag, unit, ospeed = 0;
 	
 	cflag = t->c_cflag;
 	unit = SERUNIT(tp->t_dev);
