@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.8 1998/07/30 18:54:06 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.9 1998/07/30 22:29:34 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -147,10 +147,10 @@ static void	sparc_vme4m_dmamem_free __P((bus_dma_tag_t,
 		    bus_dma_segment_t *, int));
 #endif
 
-#if 0
-static void	sparc_vme_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
 static int	sparc_vme_dmamem_map __P((bus_dma_tag_t, bus_dma_segment_t *,
 		    int, size_t, caddr_t *, int));
+#if 0
+static void	sparc_vme_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
 static void	sparc_vme_dmamem_unmap __P((bus_dma_tag_t, caddr_t, size_t));
 static int	sparc_vme_dmamem_mmap __P((bus_dma_tag_t,
 		    bus_dma_segment_t *, int, int, int, int));
@@ -212,7 +212,7 @@ struct sparc_bus_dma_tag sparc_vme4_dma_tag = {
 
 	sparc_vme4_dmamem_alloc,
 	sparc_vme4_dmamem_free,
-	_bus_dmamem_map,
+	sparc_vme_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap
 };
@@ -232,7 +232,7 @@ struct sparc_bus_dma_tag sparc_vme4m_dma_tag = {
 
 	sparc_vme4m_dmamem_alloc,
 	sparc_vme4m_dmamem_free,
-	_bus_dmamem_map,
+	sparc_vme_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap
 };
@@ -962,6 +962,20 @@ sparc_vme4m_dmamem_free(t, segs, nsegs)
 	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
 
 	bus_dmamem_free(sc->sc_dmatag, segs, nsegs);
+}
+
+int
+sparc_vme_dmamem_map(t, segs, nsegs, size, kvap, flags)
+	bus_dma_tag_t t;
+	bus_dma_segment_t *segs;
+	int nsegs;
+	size_t size;
+	caddr_t *kvap;
+	int flags;
+{
+	struct vmebus_softc	*sc = (struct vmebus_softc *)t->_cookie;
+
+	return (bus_dmamem_map(sc->sc_dmatag, segs, nsegs, size, kvap, flags));
 }
 
 void
