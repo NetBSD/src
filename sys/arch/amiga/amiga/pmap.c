@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 1998/10/11 23:20:59 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 1999/01/16 20:06:47 chuck Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -1178,13 +1178,6 @@ pmap_remove(pmap, sva, eva)
 			}
 #if 0 /* XXX def DEBUG */
 			if (npv == NULL) {
-#ifdef MACHINE_NONCONTIG	/* XXX this need to be fixed */
-				printf("pmap_remove: PA %lx index %d\n",
-				    pa, pa_index(pa));
-#else
-				printf("pmap_remove: PA %lx index %ld\n",
-				    pa, pa_index(pa));
-#endif
 				panic("pmap_remove: PA not in pv_tab");
 			}
 #endif
