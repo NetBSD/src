@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.21 2003/10/10 22:42:40 jdolecek Exp $
+#	$NetBSD: majors.i386,v 1.22 2003/10/11 07:54:26 jdolecek Exp $
 #
 # Device majors for i386
 #
@@ -87,7 +87,7 @@ device-major	dpti		char 84			dpti
 device-major	irframe		char 85			irframedrv
 device-major	cir		char 86			cir
 device-major	radio		char 87			radio
-device-major	netsmb		char 88			netsmb
+# major 88 free
 device-major	clockctl	char 89			clockctl
 device-major	systrace	char 90			systrace
 device-major	kttcp		char 91			kttcp
