@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.375 2002/12/21 12:52:58 lukem Exp $
+# $NetBSD: mi,v 1.376 2003/01/17 16:04:54 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -967,6 +967,7 @@
 ./usr/share/locale/cs_CZ.ISO8859-2/LC_CTYPE	base-locale-cs
 ./usr/share/locale/da				base-locale-da
 ./usr/share/locale/da/LC_MESSAGES		base-locale-da
+./usr/share/locale/da/LC_MESSAGES/texinfo.mo	base-texinfo_locale-da
 ./usr/share/locale/da_DK.ISO8859-1		base-locale-da
 ./usr/share/locale/da_DK.ISO8859-1/LC_CTYPE	base-locale-da
 ./usr/share/locale/da_DK.ISO8859-15		base-locale-da
@@ -1047,6 +1048,12 @@
 ./usr/share/locale/fr_FR.ISO8859-1/LC_CTYPE	base-locale-fr
 ./usr/share/locale/fr_FR.ISO8859-15		base-locale-fr
 ./usr/share/locale/fr_FR.ISO8859-15/LC_CTYPE	base-locale-fr
+./usr/share/locale/he				base-locale-he
+./usr/share/locale/he/LC_MESSAGES		base-locale-he
+./usr/share/locale/he/LC_MESSAGES/texinfo.mo	base-texinfo_locale-he
+./usr/share/locale/hr				base-locale-hr
+./usr/share/locale/hr/LC_MESSAGES		base-locale-hr
+./usr/share/locale/hr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-hr
 ./usr/share/locale/hr_HR.ISO8859-2		base-locale-hr
 ./usr/share/locale/hr_HR.ISO8859-2/LC_CTYPE	base-locale-hr
 ./usr/share/locale/hu_HU.ISO8859-2		base-locale-hu
@@ -1069,6 +1076,7 @@
 ./usr/share/locale/it_IT.ISO8859-15/LC_CTYPE	base-locale-it
 ./usr/share/locale/ja				base-locale-ja
 ./usr/share/locale/ja/LC_MESSAGES		base-locale-ja
+./usr/share/locale/ja/LC_MESSAGES/texinfo.mo	base-texinfo_locale-ja
 ./usr/share/locale/ja_JP.ISO2022-JP		base-locale-ja
 ./usr/share/locale/ja_JP.ISO2022-JP/LC_CTYPE	base-locale-ja
 ./usr/share/locale/ja_JP.ISO2022-JP2		base-locale-ja
@@ -1142,22 +1150,30 @@
 ./usr/share/locale/sv				base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES		base-locale-sv
 ./usr/share/locale/sv/LC_MESSAGES/grep.mo	base-util_locale-sv
+./usr/share/locale/sv/LC_MESSAGES/texinfo.mo	base-texinfo_locale-sv
 ./usr/share/locale/sv_SE.ISO8859-1		base-locale-sv
 ./usr/share/locale/sv_SE.ISO8859-1/LC_CTYPE	base-locale-sv
 ./usr/share/locale/sv_SE.ISO8859-15		base-locale-sv
 ./usr/share/locale/sv_SE.ISO8859-15/LC_CTYPE	base-locale-sv
 ./usr/share/locale/tr				base-locale-tr
 ./usr/share/locale/tr/LC_MESSAGES		base-locale-tr
+./usr/share/locale/tr/LC_MESSAGES/texinfo.mo	base-texinfo_locale-tr
 ./usr/share/locale/uk_UA.KOI8-U			base-locale-uk
 ./usr/share/locale/uk_UA.KOI8-U/LC_CTYPE	base-locale-uk
+./usr/share/locale/zh_CN			base-locale-zh
 ./usr/share/locale/zh_CN.eucCN			base-locale-zh
 ./usr/share/locale/zh_CN.eucCN/LC_CTYPE		base-locale-zh
+./usr/share/locale/zh_CN/LC_MESSAGES		base-locale-zh
+./usr/share/locale/zh_CN/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh
+./usr/share/locale/zh_TW			base-locale-zh
 ./usr/share/locale/zh_TW.BIG5			base-locale-zh
 ./usr/share/locale/zh_TW.BIG5/LC_CTYPE		base-locale-zh
 ./usr/share/locale/zh_TW.Big5			base-locale-zh
 ./usr/share/locale/zh_TW.Big5/LC_CTYPE		base-locale-zh
 ./usr/share/locale/zh_TW.eucTW			base-locale-zh
 ./usr/share/locale/zh_TW.eucTW/LC_CTYPE		base-locale-zh
+./usr/share/locale/zh_TW/LC_MESSAGES		base-locale-zh
+./usr/share/locale/zh_TW/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh
 ./usr/share/man			base-man-share
 ./usr/share/man/COPYRIGHT			base-man-share
 ./usr/share/man/cat1			base-man-share
