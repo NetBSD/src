@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.23 2000/07/07 13:53:14 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.24 2000/07/07 14:09:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.23 2000/07/07 13:53:14 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.24 2000/07/07 14:09:41 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -103,8 +103,9 @@ struct conf_entry {
 	char	logfile[MAXPATHLEN];	/* Path to log file */
 };
 
-int     verbose = 0;			/* Be verbose */
-char    hostname[MAXHOSTNAMELEN + 1];	/* Hostname, stripped of domain */
+int	verbose = 0;			/* Be verbose */
+int	noaction = 0;			/* Take no real action */
+char	hostname[MAXHOSTNAMELEN + 1];	/* Hostname, stripped of domain */
 
 int	main(int, char **);
 int	parse(struct conf_entry *, FILE *, size_t *);
@@ -129,13 +130,14 @@ main(int argc, char **argv)
 	struct conf_entry ent;
 	FILE *fd;
 	char *p, *cfile;
-	int c, force, needroot;
+	int c, force, needroot, mutex;
 	size_t lineno;
 	uid_t euid;
 	pid_t oldpid;
 
 	force = 0;
 	needroot = 1;
+	mutex = 1;
 	cfile = _PATH_NEWSYSLOGCONF;
 
 	gethostname(hostname, sizeof(hostname));
@@ -146,8 +148,14 @@ main(int argc, char **argv)
 		*p = '\0';
 
 	/* Parse command line options */
-	while ((c = getopt(argc, argv, "Frvf:")) != -1) {
+	while ((c = getopt(argc, argv, "f:Fmnrv")) != -1) {
 		switch (c) {
+		case 'm':
+			mutex = 0;
+			break;
+		case 'n':
+			noaction = 1;
+			break;
 		case 'r':
 			needroot = 0;
 			break;
@@ -171,9 +179,11 @@ main(int argc, char **argv)
 
 	/* Prevent multiple instances if running as root */
 	if (euid == 0) {
-		if ((oldpid = readpidfile("newsyslog.pid")) == (pid_t)-1) {
-			errx(EXIT_FAILURE, "already running (pid %ld)",
-			    (long)oldpid);
+		if (mutex) {
+			oldpid = readpidfile("newsyslog.pid");
+			if (oldpid != (pid_t)-1)
+				errx(EXIT_FAILURE, "already running (pid %ld)",
+				    (long)oldpid);
 		}
 		pidfile("newsyslog");
 	}
