@@ -1,7 +1,10 @@
-/*	$NetBSD: wd.c,v 1.118 1994/11/23 07:54:15 mycroft Exp $	*/
+/*	$NetBSD: wd.c,v 1.119 1994/11/23 22:00:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
+ *
+ * DMA and multi-sector PIO handling are derived from code contributed by
+ * Onno van der Linden.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
