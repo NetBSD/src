@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.151 2000/05/07 20:46:10 wiz Exp $
+#	$NetBSD: Makefile,v 1.152 2000/05/08 16:40:42 joda Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 aria.4 atalk.4 audio.4 auvia.4 awi.4 bba.4 \
@@ -29,7 +29,7 @@ MAN+=	uaudio.4 ucom.4 uftdi.4 ugen.4 uhid.4 ukbd.4 ulpt.4 umass.4 \
 MAN+=	eisa.4 isa.4 isapnp.4 pci.4 pcmcia.4
 
 # machine-independent PCI devices
-MAN+=	epic.4 lmc.4
+MAN+=	epic.4 lmc.4 viaenv.4
 
 # machine-independent ISA devices
 MAN+=	aha.4 ai.4 aic.4 ast.4 ate.4 boca.4 cs.4 cy.4 ec.4 ef.4 eg.4 el.4 \
@@ -70,6 +70,7 @@ MLINKS+=pci.4 ppb.4
 MLINKS+=pcppi.4 spkr.4
 MLINKS+=pcppi.4 sysbeep.4
 MLINKS+=pss.4 sp.4
+MLINKS+=viaenv.4 viapm.4
 
 SUBDIR=	man4.amiga man4.arm32 man4.atari man4.hp300 man4.i386 \
 	man4.mac68k man4.mvme68k man4.pc532 man4.pmax man4.sparc \
