@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.1.1.1 2002/04/12 21:11:47 leo Exp $
+# $NetBSD: dot.profile,v 1.2 2003/07/26 17:06:33 salo Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -15,7 +15,7 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #          This product includes software developed for the
-#          NetBSD Project.  See http://www.netbsd.org/ for
+#          NetBSD Project.  See http://www.NetBSD.org/ for
 #          information about NetBSD.
 # 4. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.

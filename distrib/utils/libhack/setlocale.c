@@ -1,7 +1,7 @@
-/*	$NetBSD: setlocale.c,v 1.3 2000/08/11 19:58:34 tshiozak Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.4 2003/07/26 17:07:36 salo Exp $	*/
 
 /*
- * Written by Gordon W. Ross <gwr@netbsd.org>
+ * Written by Gordon W. Ross <gwr@NetBSD.org>
  * Public domain.
  */
 
