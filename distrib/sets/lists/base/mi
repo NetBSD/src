@@ -626,6 +626,9 @@
 ./usr/share/groff_font/devlatin1
 ./usr/share/groff_font/devps
 ./usr/share/groff_font/devps/generate
+./usr/share/keymaps
+./usr/share/keymaps/amiga
+./usr/share/keymaps/atari
 ./usr/share/lkm
 ./usr/share/lkm/misc
 ./usr/share/lkm/misc/module
