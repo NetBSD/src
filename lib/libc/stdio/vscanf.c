@@ -1,4 +1,4 @@
-/*	$NetBSD: vscanf.c,v 1.9.10.1 2002/06/21 18:18:22 nathanw Exp $	*/
+/*	$NetBSD: vscanf.c,v 1.9.10.2 2002/06/22 01:36:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vscanf.c,v 1.9.10.1 2002/06/21 18:18:22 nathanw Exp $");
+__RCSID("$NetBSD: vscanf.c,v 1.9.10.2 2002/06/22 01:36:54 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: vscanf.c,v 1.9.10.1 2002/06/21 18:18:22 nathanw Exp $");
 #include <errno.h>
 #include <stdio.h>
 
+#include "reentrant.h"
 #include "local.h"
 
 int
