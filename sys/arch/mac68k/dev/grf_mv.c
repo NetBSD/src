@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.8 1996/05/05 06:16:35 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.9 1996/05/06 01:08:30 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -94,9 +94,11 @@ grfmv_intr(vsc, slot)
 	void	*vsc;
 	int	slot;
 {
-	caddr_t		 slotbase;
+	caddr_t			 slotbase;
+	struct grf_softc	*sc;
 
-	slotbase = (caddr_t) NUBUS_SLOT_TO_BASE(slot);
+	sc = (struct grf_softc *) vsc;
+	slotbase = (caddr_t) sc->sc_slot.virtual_base;
 	slotbase[0xa0000] = zero;
 }
 
@@ -211,7 +213,7 @@ grfmv_attach(parent, self, aux)
 
 	load_image_data((caddr_t) &image_store, &image);
 
-	base = NUBUS_SLOT_TO_BASE(sc->sc_slot.slot);
+	base = sc->sc_slot.virtual_base;
 
 	sc->curr_mode.mode_id = mode;
 	sc->curr_mode.fbbase = (caddr_t) (base + image.offset);
