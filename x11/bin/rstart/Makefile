@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/02 16:32:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/01/02 16:38:14 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,8 @@ CPPFLAGS.server.c=	-DSERVERNAME=\"rstartd\" \
 
 MAN=			rstart.1 rstartd.1
 
-BUILDSYMLINKS=		client.cpp rstart.cpp
+BUILDSYMLINKS=		client.cpp rstart.cpp \
+			server.cpp rstartd.cpp
 
 CPPSCRIPTS=		config rstart rstartd
 CPPSCRIPTFLAGS_config=	-DBINDIR=${X11BINDIR} -DLIBDIR=${X11LIBDIR}/rstart \
