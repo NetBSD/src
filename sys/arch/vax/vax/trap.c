@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 2004/01/02 18:52:17 cl Exp $     */
+/*	$NetBSD: trap.c,v 1.92 2004/02/13 18:27:14 drochner Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2004/01/02 18:52:17 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2004/02/13 18:27:14 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -447,12 +447,16 @@ if(startsysc)printf("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n
 	KERNEL_PROC_LOCK(l);
 	if (callp->sy_narg) {
 		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
-		if (err)
+		if (err) {
+			KERNEL_PROC_UNLOCK(l);
 			goto bad;
+		}
 	}
 
-	if ((err = trace_enter(l, frame->code, frame->code, NULL, args)) != 0)
+	if ((err = trace_enter(l, frame->code, frame->code, NULL, args)) != 0) {
+		KERNEL_PROC_UNLOCK(l);
 		goto bad;
+	}
 
 	err = (*callp->sy_call)(curlwp, args, rval);
 	KERNEL_PROC_UNLOCK(l);
