@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.50 2000/04/24 10:24:46 itojun Exp $	*/
+/*	$NetBSD: namespace.h,v 1.51 2000/05/08 13:38:44 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -332,6 +332,7 @@
 #define scandir			_scandir
 #define seed48			_seed48
 #define seekdir			_seekdir
+#define send			_send
 #define setdomainname		_setdomainname
 #define setenv			_setenv
 #define setfsent		_setfsent
