@@ -1,4 +1,4 @@
-/*	$NetBSD: c_jazz_eisa.c,v 1.7 2003/07/15 00:04:41 lukem Exp $	*/
+/*	$NetBSD: c_jazz_eisa.c,v 1.8 2003/10/29 18:17:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.7 2003/07/15 00:04:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.8 2003/10/29 18:17:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,10 +44,12 @@ __KERNEL_RCSID(0, "$NetBSD: c_jazz_eisa.c,v 1.7 2003/07/15 00:04:41 lukem Exp $"
 #include <machine/pio.h>
 #include <machine/platform.h>
 
+#include <dev/clock_subr.h>
+#include <dev/ic/mc146818var.h>
+
 #include <arc/arc/arcbios.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/jazziovar.h>
-#include <arc/dev/mcclockvar.h>
 #include <arc/jazz/mcclock_jazziovar.h>
 
 #include "pc.h"
@@ -92,37 +94,39 @@ char *c_jazz_eisa_mainbusdevs[] = {
 /*
  * chipset-dependent mcclock routines.
  */
-u_int mc_jazz_eisa_read __P((struct mcclock_softc *, u_int));
-void mc_jazz_eisa_write __P((struct mcclock_softc *, u_int, u_int));
+static u_int mc_jazz_eisa_read(struct mc146818_softc *, u_int);
+static void mc_jazz_eisa_write(struct mc146818_softc *, u_int, u_int);
 
 struct mcclock_jazzio_config mcclock_jazz_eisa_conf = {
-	0x80004000, 1,
-	{ mc_jazz_eisa_read, mc_jazz_eisa_write }
+	0x80004000,		/* I/O base */
+	1,			/* I/O size */
+	mc_jazz_eisa_read,	/* read function */
+	mc_jazz_eisa_write	/* write function */
 };
 
-u_int
+static u_int
 mc_jazz_eisa_read(sc, reg)
-	struct mcclock_softc *sc;
+	struct mc146818_softc *sc;
 	u_int reg;
 {
-	int i, as;
+	u_int i, as;
 
 	as = in32(arc_bus_io.bs_vbase + C_JAZZ_EISA_TODCLOCK_AS) & 0x80;
 	out32(arc_bus_io.bs_vbase + C_JAZZ_EISA_TODCLOCK_AS, as | reg);
-	i = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
+	i = bus_space_read_1(sc->sc_bst, sc->sc_bsh, 0);
 	return i;
 }
 
-void
+static void
 mc_jazz_eisa_write(sc, reg, datum)
-	struct mcclock_softc *sc;
+	struct mc146818_softc *sc;
 	u_int reg, datum;
 {
-	int as;
+	u_int as;
 
 	as = in32(arc_bus_io.bs_vbase + C_JAZZ_EISA_TODCLOCK_AS) & 0x80;
 	out32(arc_bus_io.bs_vbase + C_JAZZ_EISA_TODCLOCK_AS, as | reg);
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, datum);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, datum);
 }
 
 /*
