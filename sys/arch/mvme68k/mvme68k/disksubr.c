@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 2000/03/18 22:33:06 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.18.4.1 2002/06/26 17:29:13 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -87,7 +87,8 @@ dk_establish(dk, dev)
 		 * lun = bootdevlun % 10
 		 */
 
-        	if (sbsc->sc_link[target][lun] != NULL &&
+        	if (lun < 8 && target < 8 &&
+		    sbsc->sc_link[target][lun] != NULL &&
             	    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
 			booted_device = dev;
                 	return;
