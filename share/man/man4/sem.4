@@ -1,4 +1,4 @@
-.\" $NetBSD: sem.4,v 1.1 2005/01/22 03:34:08 briggs Exp $
+.\" $NetBSD: sem.4,v 1.2 2005/01/22 05:10:42 snj Exp $
 .\"
 .\" Copyright (c) 2002 Tim J. Robbins
 .\" All rights reserved.
@@ -41,7 +41,7 @@ To link into the kernel:
 The
 .Nm
 facility provides system calls used by the standard C library
-.Pq Pa libc
+.Pq libc
 to implement
 .Tn POSIX
 semaphores.
@@ -52,12 +52,12 @@ semaphores.
 .Xr sem_open 3 ,
 .Xr sem_post 3 ,
 .Xr sem_wait 3 ,
-.Xr config 8 ,
-.Xr options 4
-.Sh BUGS
-The current implementation does not support shared, unnamed semaphores.
+.Xr options 4 ,
+.Xr config 8
 .Sh HISTORY
 The
 .Nm
 facility appeared as a kernel option in
 .Nx 2.0 .
+.Sh BUGS
+The current implementation does not support shared, unnamed semaphores.
