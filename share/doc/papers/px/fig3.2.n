@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)fig3.2.n	5.2 (Berkeley) 4/17/91
 .\"
-.FK
+.KF
 .TS
 center, box;
 cw(15).
