@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.72 2003/03/26 17:50:16 jdolecek Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.73 2003/05/12 15:17:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.72 2003/03/26 17:50:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.73 2003/05/12 15:17:37 dsl Exp $");
 
 #include "opt_ktrace.h"
 
@@ -575,6 +575,15 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 					free(memp, M_IOCTLOPS);
 				goto out;
 			}
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_GENIO)) {
+				struct iovec iov;
+				iov.iov_base = SCARG(uap, data);
+				iov.iov_len = size;
+				ktrgenio(p, SCARG(uap, fd), UIO_READ, &iov,
+					size, 0);
+			}
+#endif
 		} else
 			*(caddr_t *)data = SCARG(uap, data);
 	} else if ((com&IOC_OUT) && size)
@@ -642,8 +651,18 @@ sys_ioctl(struct lwp *l, void *v, register_t *retval)
 		 * Copy any data to user, size was
 		 * already set and checked above.
 		 */
-		if (error == 0 && (com&IOC_OUT) && size)
+		if (error == 0 && (com&IOC_OUT) && size) {
 			error = copyout(data, SCARG(uap, data), size);
+#ifdef KTRACE
+			if (KTRPOINT(p, KTR_GENIO)) {
+				struct iovec iov;
+				iov.iov_base = SCARG(uap, data);
+				iov.iov_len = size;
+				ktrgenio(p, SCARG(uap, fd), UIO_WRITE, &iov,
+					size, error);
+			}
+#endif
+		}
 		break;
 	}
 	if (memp)
@@ -956,23 +975,20 @@ selrecord(struct proc *selector, struct selinfo *sip)
 	struct lwp	*l;
 	struct proc	*p;
 	pid_t		mypid;
-	int		collision;
 
 	mypid = selector->p_pid;
 	if (sip->sel_pid == mypid)
 		return;
-	collision = 0;
 	if (sip->sel_pid && (p = pfind(sip->sel_pid))) {
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l->l_wchan == (caddr_t)&selwait) {
-				collision = 1;
-				sip->sel_flags |= SI_COLL;
+				sip->sel_collision = 1;
+				return;
 			}
 		}
 	}
 
-	if (collision == 0)
-		sip->sel_pid = mypid;
+	sip->sel_pid = mypid;
 }
 
 /*
@@ -988,10 +1004,10 @@ selwakeup(sip)
 
 	if (sip->sel_pid == 0)
 		return;
-	if (sip->sel_flags & SI_COLL) {
+	if (sip->sel_collision) {
 		sip->sel_pid = 0;
 		nselcoll++;
-		sip->sel_flags &= ~SI_COLL;
+		sip->sel_collision = 0;
 		wakeup((caddr_t)&selwait);
 		return;
 	}
