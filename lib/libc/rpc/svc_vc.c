@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.3 2000/06/05 05:58:46 thorpej Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.4 2000/06/06 14:44:45 fvdl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.3 2000/06/05 05:58:46 thorpej Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.4 2000/06/06 14:44:45 fvdl Exp $");
 #endif
 #endif
 
@@ -205,7 +205,7 @@ svc_fd_create(fd, sendsize, recvsize)
 
 	slen = sizeof (struct sockaddr_storage);
 	if (getsockname(fd, (struct sockaddr *)&ss, &slen) < 0) {
-		warnx("svc_dg_create: could not retrieve local addr");
+		warnx("svc_fd_create: could not retrieve local addr");
 		goto freedata;
 	}
 	ret->xp_ltaddr.maxlen = ret->xp_ltaddr.len = ss.ss_len;
@@ -218,7 +218,7 @@ svc_fd_create(fd, sendsize, recvsize)
 
 	slen = sizeof (struct sockaddr_storage);
 	if (getpeername(fd, (struct sockaddr *)&ss, &slen) < 0) {
-		warnx("svc_dg_create: could not retrieve remote addr");
+		warnx("svc_fd_create: could not retrieve remote addr");
 		goto freedata;
 	}
 	ret->xp_rtaddr.maxlen = ret->xp_rtaddr.len = ss.ss_len;
