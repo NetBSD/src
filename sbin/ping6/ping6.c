@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.15.2.5 2001/03/11 20:44:36 he Exp $	*/
-/*	$KAME: ping6.c,v 1.121 2001/02/01 16:43:01 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.15.2.6 2001/05/09 20:24:54 he Exp $	*/
+/*	$KAME: ping6.c,v 1.125 2001/05/09 11:17:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.15.2.5 2001/03/11 20:44:36 he Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.15.2.6 2001/05/09 20:24:54 he Exp $");
 #endif
 #endif
 
@@ -167,7 +167,6 @@ __RCSID("$NetBSD: ping6.c,v 1.15.2.5 2001/03/11 20:44:36 he Exp $");
 
 #define	F_FLOOD		0x0001
 #define	F_INTERVAL	0x0002
-#define	F_NUMERIC	0x0004
 #define	F_PINGFILLED	0x0008
 #define	F_QUIET		0x0010
 #define	F_RROUTE	0x0020
@@ -330,7 +329,7 @@ main(argc, argv)
 #endif /*IPSEC_POLICY_IPSEC*/
 #endif
 	while ((ch = getopt(argc, argv,
-	    "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwW" ADDOPTS)) != EOF) {
+	    "a:b:c:dfHh:I:i:l:nNp:qRS:s:tvwW" ADDOPTS)) != -1) {
 #undef ADDOPTS
 		switch (ch) {
 		case 'a':
@@ -447,7 +446,7 @@ main(argc, argv)
 				errx(1, "illegal preload value -- %s", optarg);
 			break;
 		case 'n':
-			options |= F_NUMERIC;
+			options &= ~F_HOSTNAME;
 			break;
 		case 'N':
 			options |= F_NIGROUP;
@@ -558,8 +557,7 @@ main(argc, argv)
 
 	/* getaddrinfo */
 	bzero(&hints, sizeof(struct addrinfo));
-	if ((options & F_NUMERIC) != 0)
-		hints.ai_flags = AI_CANONNAME;
+	hints.ai_flags = AI_CANONNAME;
 	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_RAW;
 	hints.ai_protocol = IPPROTO_ICMPV6;
@@ -882,11 +880,6 @@ main(argc, argv)
 		src.sin6_port = ntohs(DUMMY_PORT);
 		src.sin6_scope_id = dst.sin6_scope_id;
 
-
-#ifdef USE_SIN6_SCOPE_ID
-		src.sin6_scope_id = dst.sin6_scope_id;
-#endif
-
 #ifdef USE_RFC2292BIS
 		if (pktinfo &&
 		    setsockopt(dummy, IPPROTO_IPV6, IPV6_PKTINFO,
@@ -1032,11 +1025,12 @@ main(argc, argv)
 		cc = select(s + 1, fdmaskp, NULL, NULL, tv);
 		if (cc < 0) {
 			if (errno != EINTR) {
-				warn("recvmsg");
+				warn("select");
 				sleep(1);
 			}
 			continue;
-		}
+		} else if (cc == 0)
+			continue;
 
 		fromlen = sizeof(from);
 		m.msg_name = (caddr_t)&from;
