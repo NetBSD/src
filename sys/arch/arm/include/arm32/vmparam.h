@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12 2003/04/02 07:35:55 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13 2003/04/18 11:08:28 scw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -82,6 +82,7 @@
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
 
+#ifndef ARM32_NEW_VM_LAYOUT
 /*
  * Linear page table space: number of PTEs required to map the 4G address
  * space * size of each PTE.
@@ -102,6 +103,19 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_TEXT_BASE)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
 
+#else /* ARM32_NEW_VM_LAYOUT */
+
+/*
+ * New VM layout
+ */
+#define	VM_MIN_ADDRESS		((vaddr_t) 0x00001000)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) (KERNEL_BASE - PAGE_SIZE))
+#define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
+
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) KERNEL_BASE)
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t) 0xffffffff)
+#endif	/* ARM32_NEW_VM_LAYOUT */
+
 /*
  * pmap-specific data store in the vm_page structure.
  */
@@ -110,20 +124,44 @@ struct vm_page_md {
 	struct pv_entry *pvh_list;		/* pv_entry list */
 	struct simplelock pvh_slock;		/* lock on this head */
 	int pvh_attrs;				/* page attributes */
+#ifndef ARM32_PMAP_NEW
 #ifdef PMAP_ALIAS_DEBUG
 	u_int ro_mappings;
 	u_int rw_mappings;
 	u_int kro_mappings;
 	u_int krw_mappings;
 #endif /* PMAP_ALIAS_DEBUG */
+#else  /* ARM32_PMAP_NEW */
+	u_int uro_mappings;
+	u_int urw_mappings;
+	union {
+		u_short s_mappings[2];	/* Assume kernel count <= 65535 */
+		u_int i_mappings;
+	} k_u;
+#define	kro_mappings	k_u.s_mappings[0]
+#define	krw_mappings	k_u.s_mappings[1]
+#define	k_mappings	k_u.i_mappings
+#endif
 };
 
+#ifndef ARM32_PMAP_NEW
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
 	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
 	(pg)->mdpage.pvh_attrs = 0;					\
 } while (/*CONSTCOND*/0)
+#else
+#define	VM_MDPAGE_INIT(pg)						\
+do {									\
+	(pg)->mdpage.pvh_list = NULL;					\
+	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
+	(pg)->mdpage.pvh_attrs = 0;					\
+	(pg)->mdpage.uro_mappings = 0;					\
+	(pg)->mdpage.urw_mappings = 0;					\
+	(pg)->mdpage.k_mappings = 0;					\
+} while (/*CONSTCOND*/0)
+#endif
 
 #endif /* _KERNEL */
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: pmap.h,v 1.64 2003/04/09 18:22:14 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.65 2003/04/18 11:08:27 scw Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
- * Written by Jason R. Thorpe for Wasabi Systems, Inc.
+ * Written by Jason R. Thorpe & Steve C. Woodford for Wasabi Systems, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,11 +86,13 @@
  * by making the L1 PTEs for those slots above KERNEL_BASE reference
  * kernel L2 tables.
  *
+ *#ifndef ARM32_PMAP_NEW
  * The L2 tables are mapped linearly starting at PTE_BASE.  PTE_BASE
  * is below KERNEL_BASE, which means that the current process's PTEs
  * are always available starting at PTE_BASE.  Another region of KVA
  * above KERNEL_BASE, APTE_BASE, is reserved for mapping in the PTEs
  * of another process, should we need to manipulate them.
+ *#endif
  *
  * The basic layout of the virtual address space thus looks like this:
  *
@@ -100,12 +102,81 @@
  *	.
  *	KERNEL_BASE
  *	--------------------
+ *#ifndef ARM32_PMAP_NEW
  *	PTE_BASE
+ *#endif
  *	.
  *	.
  *	.
  *	0x00000000
  */
+
+#ifdef ARM32_PMAP_NEW
+/*
+ * The number of L2 descriptor tables which can be tracked by an l2_dtable.
+ * A bucket size of 16 provides for 16MB of contiguous virtual address
+ * space per l2_dtable. Most processes will, therefore, require only two or
+ * three of these to map their whole working set.
+ */
+#define	L2_BUCKET_LOG2	4
+#define	L2_BUCKET_SIZE	(1 << L2_BUCKET_LOG2)
+
+/*
+ * Given the above "L2-descriptors-per-l2_dtable" constant, the number
+ * of l2_dtable structures required to track all possible page descriptors
+ * mappable by an L1 translation table is given by the following constants:
+ */
+#define	L2_LOG2		((32 - L1_S_SHIFT) - L2_BUCKET_LOG2)
+#define	L2_SIZE		(1 << L2_LOG2)
+
+struct l1_ttable;
+struct l2_dtable;
+
+/*
+ * Track cache/tlb occupancy using the following structure
+ */
+union pmap_cache_state {
+	struct {
+		union {
+			u_int8_t csu_cache_b[2];
+			u_int16_t csu_cache;
+		} cs_cache_u;
+
+		union {
+			u_int8_t csu_tlb_b[2];
+			u_int16_t csu_tlb;
+		} cs_tlb_u;
+	} cs_s;
+	u_int32_t cs_all;
+};
+#define	cs_cache_id	cs_s.cs_cache_u.csu_cache_b[0]
+#define	cs_cache_d	cs_s.cs_cache_u.csu_cache_b[1]
+#define	cs_cache	cs_s.cs_cache_u.csu_cache
+#define	cs_tlb_id	cs_s.cs_tlb_u.csu_tlb_b[0]
+#define	cs_tlb_d	cs_s.cs_tlb_u.csu_tlb_b[1]
+#define	cs_tlb		cs_s.cs_tlb_u.csu_tlb
+
+/*
+ * Assigned to cs_all to force cacheops to work for a particular pmap
+ */
+#define	PMAP_CACHE_STATE_ALL	0xffffffffu
+
+/*
+ * The pmap structure itself
+ */
+struct pmap {
+	u_int8_t		pm_domain;
+	boolean_t		pm_remove_all;
+	struct l1_ttable	*pm_l1;
+	union pmap_cache_state	pm_cstate;
+	struct uvm_object	pm_obj;
+#define	pm_lock pm_obj.vmobjlock
+	struct l2_dtable	*pm_l2[L2_SIZE];
+	struct pmap_statistics	pm_stats;
+	LIST_ENTRY(pmap)	pm_list;
+};
+
+#else	/* !ARM32_PMAP_NEW */
 
 /*
  * The pmap structure itself.
@@ -121,6 +192,7 @@ struct pmap {
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	struct vm_page		*pm_ptphint;	/* recently used PT */
 };
+#endif	/* ARM32_PMAP_NEW */
 
 typedef struct pmap *pmap_t;
 
@@ -143,6 +215,9 @@ typedef struct pv_addr {
 #define	PTE_USER	1
 #define	PTE_NOCACHE	0
 #define	PTE_CACHE	1
+#ifdef ARM32_PMAP_NEW
+#define	PTE_PAGETABLE	2
+#endif
 
 /*
  * Flags that indicate attributes of pages or mappings of pages.
@@ -160,7 +235,13 @@ typedef struct pv_addr {
 #define	PVF_WIRED	0x04		/* mapping is wired */
 #define	PVF_WRITE	0x08		/* mapping is writable */
 #define	PVF_EXEC	0x10		/* mapping is executable */
+#ifndef ARM32_PMAP_NEW
 #define	PVF_NC		0x20		/* mapping is non-cacheable */
+#else
+#define	PVF_UNC		0x20		/* mapping is 'user' non-cacheable */
+#define	PVF_KNC		0x40		/* mapping is 'kernel' non-cacheable */
+#define	PVF_NC		(PVF_UNC|PVF_KNC)
+#endif
 
 /*
  * Commonly referenced structures
@@ -182,12 +263,14 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 
+#ifndef ARM32_PMAP_NEW
 /* ARGSUSED */
 static __inline void
 pmap_remove_all(struct pmap *pmap)
 {
 	/* Nothing. */
 }
+#endif
 
 #define pmap_phys_address(ppn)		(arm_ptob((ppn)))
 
@@ -195,15 +278,39 @@ pmap_remove_all(struct pmap *pmap)
  * Functions that we need to export
  */
 void	pmap_procwr(struct proc *, vaddr_t, int);
+#ifdef ARM32_PMAP_NEW
+void	pmap_remove_all(pmap_t);
+boolean_t pmap_extract(pmap_t, vaddr_t, paddr_t *);
+#endif
 
 #define	PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
 /* Functions we use internally. */
+#ifndef ARM32_PMAP_NEW
+/*
+ * Old pmap
+ */
 void	pmap_bootstrap(pd_entry_t *, pv_addr_t);
-void	pmap_debug(int);
 int	pmap_handled_emulation(struct pmap *, vaddr_t);
 int	pmap_modified_emulation(struct pmap *, vaddr_t);
+#else
+/*
+ * New pmap
+ */
+#ifdef ARM32_NEW_VM_LAYOUT
+void	pmap_bootstrap(pd_entry_t *, vaddr_t);
+#else
+void	pmap_bootstrap(pd_entry_t *);
+#endif
+
+int	pmap_fault_fixup(pmap_t, vaddr_t, vm_prot_t);
+boolean_t pmap_get_pde_pte(pmap_t, vaddr_t, pd_entry_t **, pt_entry_t **);
+boolean_t pmap_get_pde(pmap_t, vaddr_t, pd_entry_t **);
+void	pmap_set_pcb_pagedir(pmap_t, struct pcb *);
+#endif	/* ARM32_PMAP_NEW */
+
+void	pmap_debug(int);
 void	pmap_postinit(void);
 
 void	vector_page_setprot(int);
@@ -217,7 +324,7 @@ void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
 /*
  * Special page zero routine for use by the idle loop (no cache cleans). 
  */
-boolean_t	pmap_pageidlezero __P((paddr_t));
+boolean_t	pmap_pageidlezero(paddr_t);
 #define PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
 /*
@@ -229,6 +336,7 @@ extern vaddr_t	pmap_curmaxkvaddr;
  * Useful macros and constants 
  */
 
+#ifndef ARM32_PMAP_NEW
 /*
  * While the ARM MMU's L1 descriptors describe a 1M "section", each
  * one pointing to a 1K L2 table, NetBSD's VM system allocates the
@@ -260,17 +368,78 @@ extern vaddr_t	pmap_curmaxkvaddr;
 #define	PTE_FLUSH_RANGE(pte, cnt) \
 	cpu_dcache_wbinv_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
 
+#else	/* ARM32_PMAP_NEW */
+
+/* Virtual address to page table entry */
+static __inline pt_entry_t *
+vtopte(vaddr_t va)
+{
+	pd_entry_t *pdep;
+	pt_entry_t *ptep;
+
+	if (pmap_get_pde_pte(pmap_kernel(), va, &pdep, &ptep) == FALSE)
+		return (NULL);
+	return (ptep);
+}
+
+/*
+ * Virtual address to physical address
+ */
+static __inline paddr_t
+vtophys(vaddr_t va)
+{
+	paddr_t pa;
+
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+		return (0);	/* XXXSCW: Panic? */
+
+	return (pa);
+}
+#endif	/* ARM32_PMAP_NEW */
+
+/*
+ * The new pmap ensures that page-tables are always mapping Write-Thru.
+ * Thus, on some platforms we can run fast and loose and avoid syncing PTEs
+ * on every change.
+ *
+ * Actually, this may not work out quite as well as I'd planned.
+ * According to some documentation, the cache-mode "write-thru, unbuffered",
+ * as used by the pmap for page tables, may not work correctly on all types
+ * of cache.
+ */
+#if !defined(ARM32_PMAP_NEW) || defined(ARM32_PMAP_NEEDS_PTE_SYNC)
+#define	PTE_SYNC(pte) \
+	cpu_dcache_wb_range((vaddr_t)(pte), sizeof(pt_entry_t))
+#define	PTE_FLUSH(pte) \
+	cpu_dcache_wbinv_range((vaddr_t)(pte), sizeof(pt_entry_t))
+
+#define	PTE_SYNC_RANGE(pte, cnt) \
+	cpu_dcache_wb_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
+#define	PTE_FLUSH_RANGE(pte, cnt) \
+	cpu_dcache_wbinv_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
+#else
+#define	PTE_SYNC(x)		/* no-op */
+#define	PTE_FLUSH(x)		/* no-op */
+#define	PTE_SYNC_RANGE(x,y)	/* no-op */
+#define	PTE_FLUSH_RANGE(x,y)	/* no-op */
+#endif
+
 #define	l1pte_valid(pde)	((pde) != 0)
 #define	l1pte_section_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_S)
 #define	l1pte_page_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_C)
 #define	l1pte_fpage_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_F)
 
+#ifdef ARM32_PMAP_NEW
+#define l2pte_index(v)		(((v) & L2_ADDR_BITS) >> L2_S_SHIFT)
+#endif
 #define	l2pte_valid(pte)	((pte) != 0)
 #define	l2pte_pa(pte)		((pte) & L2_S_FRAME)
 
 /* L1 and L2 page table macros */
+#ifndef ARM32_PMAP_NEW
 #define pmap_pdei(v)		((v & L1_S_FRAME) >> L1_S_SHIFT)
 #define pmap_pde(m, v)		(&((m)->pm_pdir[pmap_pdei(v)]))
+#endif
 
 #define pmap_pde_v(pde)		l1pte_valid(*(pde))
 #define pmap_pde_section(pde)	l1pte_section_p(*(pde))
@@ -279,7 +448,6 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 #define	pmap_pte_v(pte)		l2pte_valid(*(pte))
 #define	pmap_pte_pa(pte)	l2pte_pa(*(pte))
-
 
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
@@ -315,6 +483,12 @@ extern pt_entry_t		pte_l2_l_cache_mask;
 extern pt_entry_t		pte_l2_s_cache_mode;
 extern pt_entry_t		pte_l2_s_cache_mask;
 
+#ifdef ARM32_PMAP_NEW
+extern pt_entry_t		pte_l1_s_cache_mode_pt;
+extern pt_entry_t		pte_l2_l_cache_mode_pt;
+extern pt_entry_t		pte_l2_s_cache_mode_pt;
+#endif
+
 extern pt_entry_t		pte_l2_s_prot_u;
 extern pt_entry_t		pte_l2_s_prot_w;
 extern pt_entry_t		pte_l2_s_prot_mask;
@@ -332,6 +506,14 @@ extern void (*pmap_zero_page_func)(paddr_t);
  * tell MI code that the cache is virtually-indexed *and* virtually-tagged.
  */
 #define PMAP_CACHE_VIVT
+
+#ifdef ARM32_PMAP_NEW
+/*
+ * Definitions for MMU domains
+ */
+#define	PMAP_DOMAINS		15	/* 15 'user' domains (0-14) */
+#define	PMAP_DOMAIN_KERNEL	15	/* The kernel uses domain #15 */
+#endif
 
 /*
  * These macros define the various bit masks in the PTE.

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.22 2002/08/22 01:13:55 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.23 2003/04/18 11:08:25 scw Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -164,7 +164,16 @@ db_validate_address(vaddr_t addr)
 	struct proc *p = curproc;
 	struct pmap *pmap;
 
+#ifndef ARM32_PMAP_NEW
 	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap)
+#else
+	if (!p || !p->p_vmspace || !p->p_vmspace->vm_map.pmap ||
+#ifndef ARM32_NEW_VM_LAYOUT
+	    addr >= VM_MAXUSER_ADDRESS)
+#else
+	    addr >= VM_MIN_KERNEL_ADDRESS)
+#endif
+#endif
 		pmap = pmap_kernel();
 	else
 		pmap = p->p_vmspace->vm_map.pmap;
@@ -211,7 +220,12 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 
 	do {
 		/* Get the PDE of the current VA. */
+#ifndef ARM32_PMAP_NEW
 		pde = pmap_pde(pmap, (vaddr_t) dst);
+#else
+		if (pmap_get_pde_pte(pmap, (vaddr_t) dst, &pde, &pte) == FALSE)
+			goto no_mapping;
+#endif
 		switch ((oldpde = *pde) & L1_TYPE_MASK) {
 		case L1_TYPE_S:
 			pgva = (vaddr_t)dst & L1_S_FRAME;
@@ -226,7 +240,12 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			pgva = (vaddr_t)dst & L2_S_FRAME;
 			limit = L2_S_SIZE - ((vaddr_t)dst & L2_S_OFFSET);
 
+#ifndef ARM32_PMAP_NEW
 			pte = vtopte(pgva);
+#else
+			if (pte == NULL)
+				goto no_mapping;
+#endif
 			oldpte = *pte;
 			tmppte = oldpte | L2_S_PROT_W;
 			*pte = tmppte;
@@ -234,6 +253,9 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			break;
 
 		default:
+#ifdef ARM32_PMAP_NEW
+		no_mapping:
+#endif
 			printf(" address 0x%08lx not a valid page\n",
 			    (vaddr_t) dst);
 			return;

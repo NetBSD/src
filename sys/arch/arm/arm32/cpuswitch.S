@@ -1,5 +1,39 @@
-/*	$NetBSD: cpuswitch.S,v 1.29 2003/01/17 22:28:49 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.30 2003/04/18 11:08:25 scw Exp $	*/
 
+/*
+ * Copyright 2003 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Steve C. Woodford for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed for the NetBSD Project by
+ *      Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
@@ -44,6 +78,7 @@
  */
 
 #include "opt_armfpe.h"
+#include "opt_arm32_pmap.h"
 #include "opt_multiprocessor.h"
 
 #include "assym.h"
@@ -69,6 +104,25 @@
 	mrs	r14, cpsr ; \
 	bic	r14, r14, #(I32_bit) ; \
 	msr	cpsr_c, r14 ; \
+
+#ifdef ARM32_PMAP_NEW
+/*
+ * These are used for switching the translation table/DACR.
+ * Since the vector page can be invalid for a short time, we must
+ * disable both regular IRQs *and* FIQs.
+ *
+ * XXX: This is not necessary if the vector table is relocated.
+ */
+#define IRQdisableALL \
+	mrs	r14, cpsr ; \
+	orr	r14, r14, #(I32_bit | F32_bit) ; \
+	msr	cpsr_c, r14
+
+#define IRQenableALL \
+	mrs	r14, cpsr ; \
+	bic	r14, r14, #(I32_bit | F32_bit) ; \
+	msr	cpsr_c, r14
+#endif
 
 	.text
 
@@ -121,6 +175,14 @@ _C_LABEL(curpcb):
 
 .Lcpu_do_powersave:
 	.word	_C_LABEL(cpu_do_powersave)
+
+#ifdef ARM32_PMAP_NEW
+.Lpmap_kernel_cstate:
+	.word	(kernel_pmap_store + PMAP_CSTATE)
+
+.Llast_cache_state_ptr:
+	.word	_C_LABEL(pmap_cache_state)
+#endif
 
 /*
  * Idle loop, exercised while waiting for a process to wake up.
@@ -463,10 +525,10 @@ ENTRY(cpu_switch)
 	ldr	r10, [r8, #(PCB_PAGEDIR)]	/* r10 = old L1 */
 	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
 
+#ifndef ARM32_PMAP_NEW
 	ldr	r3, .Lblock_userspace_access
 	mov	r1, #0x00000001
 	mov	r2, #0x00000000
-
 	teq	r10, r11			/* r10 == r11? */
 	beq	.Lcs_context_switched		/* yes! */
 
@@ -509,6 +571,165 @@ ENTRY(cpu_switch)
 	ldr	pc, [r3, #CF_CONTEXT_SWITCH]
 
 .Lcs_context_switched:
+
+
+#else	/* ARM32_PMAP_NEW */
+
+	ldr	r0, [r8, #(PCB_DACR)]		/* r0 = old DACR */
+	ldr	r1, [r9, #(PCB_DACR)]		/* r1 = new DACR */
+	ldr	r8, [r9, #(PCB_CSTATE)]		/* r8 = &new_pmap->pm_cstate */
+	ldr	r5, .Llast_cache_state_ptr	/* Previous thread's cstate */
+
+	teq	r10, r11			/* Same L1? */
+	ldr	r5, [r5]
+	cmpeq	r0, r1				/* Same DACR? */
+	beq	.Lcs_context_switched		/* yes! */
+
+	ldr	r3, .Lblock_userspace_access
+	mov	r12, #0
+	cmp	r5, #0				/* No last vm? (switch_exit) */
+	beq	.Lcs_cache_purge_skipped	/* No, we can skip cache flsh */
+
+	mov	r2, #DOMAIN_CLIENT
+	cmp	r1, r2, lsl #(PMAP_DOMAIN_KERNEL * 2) /* Sw to kernel thread? */
+	beq	.Lcs_cache_purge_skipped	/* Yup. Don't flush cache */
+
+	cmp	r5, r8				/* Same userland VM space? */
+	ldrneb	r12, [r5, #(CS_CACHE_ID)]	/* Last VM space cache state */
+
+	/*
+	 * We're definately switching to a new userland VM space,
+	 * and the previous userland VM space has yet to be flushed
+	 * from the cache/tlb.
+	 *
+	 * r12 holds the previous VM space's cs_cache_id state
+	 */
+	tst	r12, #0xff			/* Test cs_cache_id */
+	beq	.Lcs_cache_purge_skipped	/* VM space is not in cache */
+
+	/*
+	 * Definately need to flush the cache.
+	 * Mark the old VM space as NOT being resident in the cache.
+	 */
+	mov	r2, #0x00000000
+	strh	r2, [r5, #(CS_CACHE_ID)]
+
+	/*
+	 * Don't allow user space access between the purge and the switch.
+	 */
+	mov	r2, #0x00000001
+	str	r2, [r3]
+
+	stmfd	sp!, {r0-r3}
+	ldr	r1, .Lcpufuncs
+	mov	lr, pc
+	ldr	pc, [r1, #CF_IDCACHE_WBINV_ALL]
+	ldmfd	sp!, {r0-r3}
+
+.Lcs_cache_purge_skipped:
+	/* rem: r1 = new DACR */
+	/* rem: r3 = &block_userspace_access */
+	/* rem: r4 = return value */
+	/* rem: r5 = &old_pmap->pm_cstate (or NULL) */
+	/* rem: r6 = new lwp */
+	/* rem: r8 = &new_pmap->pm_cstate */
+	/* rem: r9 = new PCB */
+	/* rem: r10 = old L1 */
+	/* rem: r11 = new L1 */
+
+	mov	r2, #0x00000000
+	ldr	r7, [r9, #(PCB_PL1VEC)]
+
+	/*
+	 * At this point we need to kill IRQ's again.
+	 *
+	 * XXXSCW: Don't need to block FIQs if vectors have been relocated
+	 */
+	IRQdisableALL
+
+	/*
+	 * Interrupts are disabled so we can allow user space accesses again
+	 * as none will occur until interrupts are re-enabled after the
+	 * switch.
+	 */
+	str	r2, [r3]
+
+	/*
+	 * Ensure the vector table is accessible by fixing up the L1
+	 */
+	cmp	r7, #0			/* No need to fixup vector table? */
+	ldrne	r2, [r7]		/* But if yes, fetch current value */
+	ldrne	r0, [r9, #(PCB_L1VEC)]	/* Fetch new vector_page value */
+	mcr	p15, 0, r1, c3, c0, 0	/* Update DACR for new context */
+	cmpne	r2, r0			/* Stuffing the same value? */
+#ifndef ARM32_PMAP_NEEDS_PTE_SYNC
+	strne	r0, [r7]		/* Nope, update it */
+#else
+	beq	.Lcs_same_vector
+	str	r0, [r7]		/* Otherwise, update it */
+
+	/*
+	 * Need to sync the cache to make sure that last store is
+	 * visible to the MMU.
+	 */
+	ldr	r2, .Lcpufuncs
+	mov	r0, r7
+	mov	r1, #4
+	mov	lr, pc
+	ldr	pc, [r2, #CF_DCACHE_WB_RANGE]
+
+.Lcs_same_vector:
+#endif
+
+	cmp	r10, r11		/* Switching to the same L1? */
+	ldr	r10, .Lcpufuncs
+	beq	.Lcs_same_l1		/* Yup. */
+
+	/*
+	 * Do a full context switch, including full TLB flush.
+	 */
+	mov	r0, r11
+	mov	lr, pc
+	ldr	pc, [r10, #CF_CONTEXT_SWITCH]
+
+	/*
+	 * Mark the old VM space as NOT being resident in the TLB
+	 */
+	mov	r2, #0x00000000
+	cmp	r5, #0
+	strneh	r2, [r5, #(CS_TLB_ID)]
+	b	.Lcs_context_switched
+
+	/*
+	 * We're switching to a different process in the same L1.
+	 * In this situation, we only need to flush the TLB for the
+	 * vector_page mapping, and even then only if r7 is non-NULL.
+	 */
+.Lcs_same_l1:
+	cmp	r7, #0
+	movne	r0, #0			/* We *know* vector_page's VA is 0x0 */
+	movne	lr, pc
+	ldrne	pc, [r10, #CF_TLB_FLUSHID_SE]
+
+.Lcs_context_switched:
+	/* rem: r8 = &new_pmap->pm_cstate */
+
+	/* XXXSCW: Safe to re-enable FIQs here */
+
+	/*
+	 * The new VM space is live in the cache and TLB.
+	 * Update its cache/tlb state, and if it's not the kernel
+	 * pmap, update the 'last cache state' pointer.
+	 */
+	mov	r2, #-1
+	ldr	r5, .Lpmap_kernel_cstate
+	ldr	r0, .Llast_cache_state_ptr
+	str	r2, [r8, #(CS_ALL)]
+	cmp	r5, r8
+	strne	r8, [r0]
+
+#endif	/* ARM32_PMAP_NEW */
+
 	/* rem: r4 = return value */
 	/* rem: r6 = new lwp */
 	/* rem: r9 = new PCB */
@@ -546,7 +767,11 @@ ENTRY(cpu_switch)
 #endif
 
 	/* We can enable interrupts again */
+#ifndef ARM32_PMAP_NEW
 	IRQenable
+#else
+	IRQenableALL
+#endif
 
 	/* rem: r4 = return value */
 	/* rem: r5 = new lwp's proc */
@@ -593,7 +818,14 @@ ENTRY(cpu_switch)
 	 */
 	ldr	r9, [r6, #(L_ADDR)]		/* r9 = new PCB */
 	ldr	r3, .Lblock_userspace_access
+#ifndef ARM32_PMAP_NEW
 	mov	r2, #0x00000000
+#else
+	mrc	p15, 0, r10, c2, c0, 0		/* r10 = old L1 */
+	mov	r5, #0				/* No previous cache state */
+	ldr	r1, [r9, #(PCB_DACR)]		/* r1 = new DACR */
+	ldr	r8, [r9, #(PCB_CSTATE)]		/* r8 = new cache state */
+#endif
 	ldr	r11, [r9, #(PCB_PAGEDIR)]	/* r11 = new L1 */
 	b	.Lcs_cache_purge_skipped
 
@@ -689,12 +921,32 @@ ENTRY(switch_exit)
 	mov	r2, #0x00000000		/* curlwp = NULL */
 	str	r2, [r0]
 
+#ifdef ARM32_PMAP_NEW
+	/*
+	 * We're about to clear both the cache and the TLB.
+	 * Make sure to zap the 'last cache state' pointer since the
+	 * pmap might be about to go away. Also ensure the outgoing
+	 * VM space's cache state is marked as NOT resident in the
+	 * cache, and that lwp0's cache state IS resident.
+	 */
+	ldr	r7, [r4, #(L_ADDR)]		/* r7 = old lwp's PCB */
+	ldr	r0, .Llast_cache_state_ptr	/* Last userland cache state */
+	ldr	r9, [r7, #(PCB_CSTATE)]		/* Fetch cache state pointer */
+	ldr	r3, [r5, #(L_ADDR)]		/* r3 = lwp0's PCB */
+	str	r2, [r0]			/* No previous cache state */
+	str	r2, [r9, #(CS_ALL)]		/* Zap old lwp's cache state */
+	ldr	r3, [r3, #(PCB_CSTATE)]		/* lwp0's cache state */
+	mov	r2, #-1
+	str	r2, [r3, #(CS_ALL)]		/* lwp0 is in da cache! */
+#endif
+
 	/*
 	 * Don't allow user space access between the purge and the switch.
 	 */
 	mov	r2, #0x00000001
 	str	r2, [r1]
 
+#ifndef ARM32_PMAP_NEW
 	/* Switch to lwp0 context */
 
 	ldr	r0, .Lcpufuncs
@@ -725,6 +977,71 @@ ENTRY(switch_exit)
 	str	r2, [r0]	/* curpcb = lwp0's PCB */
 
 	IRQenable
+
+#else	/* ARM32_PMAP_NEW */
+	/* Switch to lwp0 context */
+
+	ldr	r9, .Lcpufuncs
+	mov	lr, pc
+	ldr	pc, [r9, #CF_IDCACHE_WBINV_ALL]
+
+	ldr	r0, [r7, #(PCB_PL1VEC)]
+	ldr	r1, [r7, #(PCB_DACR)]
+
+	/*
+	 * r0 = Pointer to L1 slot for vector_page (or NULL)
+	 * r1 = lwp0's DACR
+	 * r4 = lwp we're switching from
+	 * r5 = lwp0
+	 * r6 = exit func
+	 * r7 = lwp0's PCB
+	 * r9 = cpufuncs
+	 */
+
+	IRQdisableALL
+
+	/*
+	 * Ensure the vector table is accessible by fixing up lwp0's L1
+	 */
+	cmp	r0, #0			/* No need to fixup vector table? */
+	ldrne	r3, [r0]		/* But if yes, fetch current value */
+	ldrne	r2, [r7, #(PCB_L1VEC)]	/* Fetch new vector_page value */
+	mcr	p15, 0, r1, c3, c0, 0	/* Update DACR for lwp0's context */
+	cmpne	r3, r2			/* Stuffing the same value? */
+	strne	r2, [r0]		/* Store if not. */
+
+#ifdef ARM32_PMAP_NEEDS_PTE_SYNC
+	/*
+	 * Need to sync the cache to make sure that last store is
+	 * visible to the MMU.
+	 */
+	movne	r1, #4
+	movne	lr, pc
+	ldrne	pc, [r9, #CF_DCACHE_WB_RANGE]
+#endif
+
+	/*
+	 * Note: We don't do the same optimisation as cpu_switch() with
+	 * respect to avoiding flushing the TLB if we're switching to
+	 * the same L1 since this process' VM space may be about to go
+	 * away, so we don't want *any* turds left in the TLB.
+	 */
+
+	/* Switch the memory to the new process */
+	ldr	r0, [r7, #(PCB_PAGEDIR)]
+	mov	lr, pc
+	ldr	pc, [r9, #CF_CONTEXT_SWITCH]
+
+	ldr	r0, .Lcurpcb
+   
+	/* Restore all the save registers */
+	add	r1, r7, #PCB_R8
+	ldmia	r1, {r8-r13}
+
+	str	r7, [r0]	/* curpcb = lwp0's PCB */
+
+	IRQenableALL
+#endif
 
 	/*
 	 * Schedule the vmspace and stack to be freed.

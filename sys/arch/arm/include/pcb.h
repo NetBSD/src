@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.7 2003/02/23 23:40:02 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.8 2003/04/18 11:08:27 scw Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -45,6 +45,12 @@ struct trapframe;
 
 struct pcb_arm32 {
 	paddr_t	pcb32_pagedir;			/* PT hooks */
+#ifdef ARM32_PMAP_NEW
+	pd_entry_t *pcb32_pl1vec;		/* PTR to vector_base L1 entry*/
+	pd_entry_t pcb32_l1vec;			/* Value to stuff on ctx sw */
+	u_int	pcb32_dacr;			/* Domain Access Control Reg */
+	void	*pcb32_cstate;			/* &pmap->pm_cstate */
+#endif
 	u_int	pcb32_r8;			/* used */
 	u_int	pcb32_r9;			/* used */
 	u_int	pcb32_r10;			/* used */
@@ -56,6 +62,12 @@ struct pcb_arm32 {
 	u_int	pcb32_und_sp;
 };
 #define	pcb_pagedir	pcb_un.un_32.pcb32_pagedir
+#ifdef ARM32_PMAP_NEW
+#define	pcb_pl1vec	pcb_un.un_32.pcb32_pl1vec
+#define	pcb_l1vec	pcb_un.un_32.pcb32_l1vec
+#define	pcb_dacr	pcb_un.un_32.pcb32_dacr
+#define	pcb_cstate	pcb_un.un_32.pcb32_cstate
+#endif
 
 struct pcb_arm26 {
 	struct	switchframe *pcb26_sf;
