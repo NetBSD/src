@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.29 1999/06/17 15:47:22 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.30 1999/06/18 05:13:46 thorpej Exp $	*/
 
 /*
  *
@@ -318,7 +318,7 @@ void			uvm_km_free_poolpage1 __P((vm_map_t, vaddr_t));
 int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, vaddr_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
-				vaddr_t, boolean_t));
+				vaddr_t, boolean_t, boolean_t));
 int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
 boolean_t		uvm_map_checkprot __P((vm_map_t, vaddr_t,
 				vaddr_t, vm_prot_t));
@@ -343,7 +343,7 @@ int			uvm_sysctl __P((int *, u_int, void *, size_t *,
 /* uvm_mmap.c */
 int			uvm_mmap __P((vm_map_t, vaddr_t *, vsize_t,
 				vm_prot_t, vm_prot_t, int, 
-				caddr_t, vaddr_t));
+				caddr_t, vaddr_t, vsize_t));
 
 /* uvm_page.c */
 struct vm_page		*uvm_pagealloc_strat __P((struct uvm_object *,
