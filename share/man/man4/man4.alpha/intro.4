@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.4,v 1.3 2001/10/29 18:59:56 gmcgarry Exp $
+.\"     $NetBSD: intro.4,v 1.4 2001/12/06 15:51:47 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,40 +95,51 @@ A list of the supported devices is given below.
 .Sh HARDWARE
 The following systems are supported:
 .Pp
+.ds x \fIx\fP
 .Bl -tag -width speaker -offset indent -compact
+.It AXPpci Systems
+.\"The AXPpci family is Digital's lowest-end family of PCI-based systems,
+.\"and includes machines like the UDB and the Multia.
+Includes machines like the UDB and the Multia.
+.It EB64+-family Systems
+Includes the Digital EB64+ and third-party AlphaPC 64 systems.
+.It DECpc AXP 150 (Jensen)
+.It API UP1000
+.\"Alpha Processor, Inc.'s UP1000 system.
 .It Personal Workstation 600a, 600au (and others)
-The Personal Workstations are Digital's PCI-based workstations in
-small deskside boxes.
+.\"The Personal Workstations are Digital's PCI-based workstations in
+.\"small deskside boxes.
+.It AlphaStation 200, 250, 255, and 400 Systems
+.\"The AlphaStation 200, 250, 255, and 400 are Digital's lower-end
+.\"PCI-based workstations.
 .It DEC 3000/300-family Systems
 The DEC 3000/300 family is an early low-end series of
 TURBOchannel-based workstations including the DEC 3000/300, DEC 3000/300L,
 DEC 3000/300X and DEC 3000/300LX.
 .It DEC 3000/500-family Systems
-The DEC 3000/500 family is an early, high-end family of
+.\"The DEC 3000/500 family is an early, high-end family of
 TURBOchannel-based workstations including the DEC 3000/400, DEC
 3000/500, DEC 3000/600, DEC 3000/700, DEC 3000/800 and DEC
 3000/900 as well as several minor variations.
-.It AlphaServer 4x00 Systems
-The AlphaServer 4x00 Systems are Digital's very fast medium server
-systems.
-.It AlphaServer 8x00 Systems
-The AlphaServer 8x00 Systems are Digital's very high-end systems,
-including the AlphaServer 8200 and AlphaServer 8400.
-.It AlphaStation 200, 250, 255, and 400 Systems
-The AlphaStation 200, 250, 255, and 400 are Digital's lower-end
-PCI-based workstations.
-.It AlphaStation 500 and 600 Systems
-The AlphaStation 500 and 600 systems are Digital's high-end PCI-based
-workstations.
-.It AXPpci Systems
-The AXPpci family is Digital's lowest-end family of PCI-based systems,
-and includes machines like the UDB and the Multia.
 .It EB164-family Systems
 Includes the Digital EB164 and third-party AlphaPC 164 systems.
-.It EB64+-family Systems
-Includes the Digital EB64+ and third-party AlphaPC 64 systems.
-.It API UP1000
-Alpha Processor, Inc.'s UP1000 system.
+.It Digital Personal Workstation ("au" series)
+.It Digital AlphaServer 800 Systems
+.It Digital AlphaServer 1000 and 1000A Systems
+.It Digital Server 330\*x Systems
+.It AlphaServer 4\*x00 Systems
+.\"The AlphaServer 4\*x00 Systems are Digital's very fast medium server
+.\"systems.
+.It AlphaServer 8\*x00 Systems
+.\"The AlphaServer 8\*x00 Systems are Digital's very high-end systems,
+.\"including the AlphaServer 8200 and AlphaServer 8400.
+.It AlphaStation 500 and 600 Systems
+.\"The AlphaStation 500 and 600 systems are Digital's high-end PCI-based
+.\"workstations.
+.It API UP1000 and UP1100
+AMD 751-based EV6 systems.
+.It 264DP, XP1000, DS10, DS20, API UP2000, UP2000+
+Tsunami-based EV6 (21264) systems.
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the system.
