@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.18 1999/12/06 16:06:25 leo Exp $	*/
+/*	$NetBSD: bus.c,v 1.19 1999/12/09 13:07:41 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,6 +108,8 @@ int	flags;
 
 	if (extent_alloc(bootm_ex, size, NBPG, 0, EX_NOWAIT, &rva)) {
 		printf("bootm_alloc fails! Not enough fixed extents?\n");
+		printf("Requested extent: pa=%lx, size=%lx\n",
+						(u_long)pa, size);
 		return 0;
 	}
 	
@@ -169,7 +171,7 @@ bus_space_handle_t	*mhp;
 
 	error = bus_mem_add_mapping(t, bpa, size, flags, mhp);
 	if (error) {
-		if (extent_free(iomem_ex, bpa, size, EX_NOWAIT |
+		if (extent_free(iomem_ex, bpa + t->base, size, EX_NOWAIT |
 				(iomem_malloc_safe ? EX_MALLOCOK : 0))) {
 		    printf("bus_space_map: pa 0x%lx, size 0x%lx\n", bpa, size);
 		    printf("bus_space_map: can't free region\n");
