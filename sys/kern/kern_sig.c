@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.110 2001/01/14 22:31:58 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.111 2001/02/23 22:01:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1427,38 +1427,16 @@ coredump(p)
 	error = cpu_coredump(p, vp, cred, &core);
 	if (error)
 		goto out;
-	if (core.c_midmag == 0) {
-		/* XXX
-		 * cpu_coredump() didn't bother to set the magic; assume
-		 * this is a request to do a traditional dump. cpu_coredump()
-		 * is still responsible for setting sensible values in
-		 * the core header.
-		 */
-		if (core.c_cpusize == 0)
-			core.c_cpusize = USPACE; /* Just in case */
-		error = vn_rdwr(UIO_WRITE, vp, vm->vm_daddr,
-		    (int)core.c_dsize,
-		    (off_t)core.c_cpusize, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-		if (error)
-			goto out;
-		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t)(u_long)trunc_page(USRSTACK - ctob(vm->vm_ssize)),
-		    core.c_ssize,
-		    (off_t)(core.c_cpusize + core.c_dsize), UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	} else {
-		/*
-		 * uvm_coredump() spits out all appropriate segments.
-		 * All that's left to do is to write the core header.
-		 */
-		error = uvm_coredump(p, vp, cred, &core);
-		if (error)
-			goto out;
-		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
-		    (int)core.c_hdrsize, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	}
+	/*
+	 * uvm_coredump() spits out all appropriate segments.
+	 * All that's left to do is to write the core header.
+	 */
+	error = uvm_coredump(p, vp, cred, &core);
+	if (error)
+		goto out;
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
+	    (int)core.c_hdrsize, (off_t)0,
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 out:
 	VOP_UNLOCK(vp, 0);
 	error1 = vn_close(vp, FWRITE, cred, p);
@@ -1505,38 +1483,16 @@ coredump32(p, vp)
 	error = cpu_coredump32(p, vp, cred, &core);
 	if (error)
 		goto out;
-	if (core.c_midmag == 0) {
-		/* XXX
-		 * cpu_coredump() didn't bother to set the magic; assume
-		 * this is a request to do a traditional dump. cpu_coredump()
-		 * is still responsible for setting sensible values in
-		 * the core header.
-		 */
-		if (core.c_cpusize == 0)
-			core.c_cpusize = USPACE; /* Just in case */
-		error = vn_rdwr(UIO_WRITE, vp, vm->vm_daddr,
-		    (int)core.c_dsize,
-		    (off_t)core.c_cpusize, UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-		if (error)
-			goto out;
-		error = vn_rdwr(UIO_WRITE, vp,
-		    (caddr_t)(u_long)trunc_page(USRSTACK - ctob(vm->vm_ssize)),
-		    core.c_ssize,
-		    (off_t)(core.c_cpusize + core.c_dsize), UIO_USERSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	} else {
-		/*
-		 * uvm_coredump() spits out all appropriate segments.
-		 * All that's left to do is to write the core header.
-		 */
-		error = uvm_coredump32(p, vp, cred, &core);
-		if (error)
-			goto out;
-		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
-		    (int)core.c_hdrsize, (off_t)0,
-		    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
-	}
+	/*
+	 * uvm_coredump() spits out all appropriate segments.
+	 * All that's left to do is to write the core header.
+	 */
+	error = uvm_coredump32(p, vp, cred, &core);
+	if (error)
+		goto out;
+	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&core,
+	    (int)core.c_hdrsize, (off_t)0,
+	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, NULL, p);
 out:
 	VOP_UNLOCK(vp, 0);
 	error1 = vn_close(vp, FWRITE, cred, p);
