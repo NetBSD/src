@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.31.2.1 1999/12/20 21:07:52 he Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.31.2.2 2000/01/08 16:41:53 he Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -314,11 +314,15 @@ typedef	struct	friostat	{
 	struct	frentry		*f_auth;
 	struct	frgroup		*f_groups[3][2];
 	u_long	f_froute[2];
-	int	f_active;	/* 1 or 0 - active rule set */
 	int	f_defpass;	/* default pass - from fr_pass */
-	int	f_running;	/* 1 if running, else 0 */
-	int	f_logging;	/* 1 if enabled, else 0 */
+	char	f_active;	/* 1 or 0 - active rule set */
+	char	f_running;	/* 1 if running, else 0 */
+	char	f_logging;	/* 1 if enabled, else 0 */
+#if !SOLARIS && defined(sun)
+	char	f_version[25];	/* version string */
+#else
 	char	f_version[32];	/* version string */
+#endif
 } friostat_t;
 
 typedef struct	optlist {
