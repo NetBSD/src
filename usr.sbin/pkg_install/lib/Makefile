@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.14 2000/10/09 17:03:20 hubertf Exp $
+# $NetBSD: Makefile,v 1.15 2001/03/05 16:53:14 wiz Exp $
 # Original from FreeBSD, no rcs id.
 
 LIB+=		install
 SRCS+=		exec.c file.c ftpio.c global.c lpkg.c pen.c pkgdb.c \
-		plist.c str.c
+		plist.c str.c version.c
 
 MKLINT=		no
 MKMAN=		no

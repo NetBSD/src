@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.22 2000/07/05 15:45:36 msaitoh Exp $
+.\" $NetBSD: pkg_info.1,v 1.23 2001/03/05 16:53:14 wiz Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl BbcDdFfhIikLmpqRrSsv
+.Op Fl BbcDdFfhIikLmpqRrSsVv
 .Bk -words
 .Op Fl e Ar package
 .Ek
@@ -151,6 +151,8 @@ in bytes.
 .It Fl s
 Show the size of this package in bytes. The size is calculated by
 adding up the size of each file of the package.
+.It Fl V
+Print version number and exit.
 .It Fl v
 Turn on verbose output.
 .El
