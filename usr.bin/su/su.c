@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.23 1998/07/06 11:36:14 mrg Exp $	*/
+/*	$NetBSD: su.c,v 1.24 1998/07/06 11:44:49 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.23 1998/07/06 11:36:14 mrg Exp $");
+__RCSID("$NetBSD: su.c,v 1.24 1998/07/06 11:44:49 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ main(argc, argv)
 	int asme, ch, asthem, fastlogin, prio;
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	char *user, *shell, *avshell, *username, *cleanenv[10], **np;
-	char avshellbuf[MAXPATHLEN];
+	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
 
 	asme = asthem = fastlogin = 0;
 	shell = NULL;
@@ -158,6 +158,16 @@ main(argc, argv)
 	if (username == NULL)
 		err(1, "strdup");
 
+	if (asme)
+		if (pwd->pw_shell && *pwd->pw_shell) {
+			shell = strncpy(shellbuf, pwd->pw_shell,
+			    sizeof(shellbuf) - 1);
+			shellbuf[sizeof(shellbuf) - 1] = '\0';
+		} else {
+			shell = _PATH_BSHELL;
+			iscsh = NO;
+		}
+
 	/* get target login information, default to root */
 	user = *argv ? *argv : "root";
 	np = *argv ? argv : argv-1;
@@ -165,14 +175,16 @@ main(argc, argv)
 	if ((pwd = getpwnam(user)) == NULL)
 		errx(1, "unknown login %s", user);
 
-	if (ruid) {
+	if (ruid
 #ifdef KERBEROS
-	    if (!use_kerberos || kerberos(username, user, pwd->pw_uid))
+	    && (!use_kerberos || kerberos(username, user, pwd->pw_uid))
 #endif
-	    {
-		/* Only allow those in group SUGROUP to su to root,
-		   but only if that group has any members.
-		   If SUGROUP has no members, allow anyone to su root */
+	    ) {
+		/*
+		 * Only allow those in group SUGROUP to su to root,
+		 * but only if that group has any members.
+		 * If SUGROUP has no members, allow anyone to su root
+		 */
 		if (pwd->pw_uid == 0 &&
 		    (gr = getgrnam(SUGROUP)) && *gr->gr_mem) {
 			char **g;
@@ -210,7 +222,6 @@ badlogin:
 				exit(1);
 			}
 		}
-	    }
 	}
 
 	if (asme) {
