@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_var.h,v 1.2 1996/03/14 18:44:42 christos Exp $	*/
+/*	$NetBSD: ns_var.h,v 1.3 1996/03/27 14:44:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christos Zoulas.  All rights reserved.
@@ -92,7 +92,7 @@ void ns_pcbdetach __P((struct nspcb *));
 void ns_setsockaddr __P((struct nspcb *, struct mbuf *));
 void ns_setpeeraddr __P((struct nspcb *, struct mbuf *));
 void ns_pcbnotify __P((struct ns_addr *, int, void (*)(struct nspcb *), long));
-int ns_rtchange __P((struct nspcb *));
+void ns_rtchange __P((struct nspcb *));
 struct nspcb *ns_pcblookup __P((struct ns_addr *, u_short, int));
 
 #endif
