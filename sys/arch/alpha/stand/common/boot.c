@@ -1,4 +1,4 @@
-/* $NetBSD: boot.c,v 1.18 1999/04/05 04:39:42 cgd Exp $ */
+/* $NetBSD: boot.c,v 1.19 1999/04/05 06:42:14 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,7 @@ char boot_flags[128];
 
 struct bootinfo_v1 bootinfo_v1;
 
-extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
+extern char bootprog_rev[], bootprog_date[], bootprog_maker[];
 
 paddr_t ffp_save, ptbr_save;
 
@@ -93,6 +93,15 @@ main(long fd)
 
 	/* Init prom callback vector. */
 	init_prom_calls();
+
+	/* print a banner */
+	printf("\n");
+	printf("NetBSD/alpha " BOOT_TYPE_NAME " Bootstrap, Revision %s\n",
+	    bootprog_rev);
+	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
+	printf("\n");
+
+	/* set up the booted device descriptor */
 #if defined(UNIFIED_BOOTBLOCK)
         if (!booted_dev_open()) {
                 printf("Boot device (%s) open failed.\n",
@@ -102,12 +111,6 @@ main(long fd)
 #else /* defined(SECONDARY_BOOTBLOCK) */
 	booted_dev_setfd(fd);
 #endif
-
-	/* print a banner */
-	printf("\n");
-	printf("%s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
-	printf("\n");
 
 	/* switch to OSF pal code. */
 	OSFpal();
