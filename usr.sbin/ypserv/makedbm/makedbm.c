@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.1.1.1 1996/08/09 10:14:54 thorpej Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.2 1997/03/22 03:32:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -272,7 +272,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 	snprintf(db_mapname, sizeof(db_mapname), "%s%s",
 	    db_tempname, YPDB_SUFFIX);
 
-	new_db = ypdb_open(db_tempname, O_RDWR | O_CREAT, 0644);
+	new_db = ypdb_open(db_tempname, O_RDWR | O_CREAT | O_EXCL, 0644);
 	if (new_db == NULL)
 		errx(1, "can't create temp database `%s'", db_tempname);
 
