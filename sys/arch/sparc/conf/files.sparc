@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.90 2000/03/19 14:19:17 pk Exp $
+#	$NetBSD: files.sparc,v 1.91 2000/05/02 06:35:12 augustss Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -146,10 +146,11 @@ file	arch/sparc/dev/dma_obio.c	dma_obio
 attach esp at obio with esp_obio
 file	arch/sparc/dev/esp_obio.c	esp_obio
 
-attach audioamd at mainbus with audioamd_mainbus
-attach audioamd at sbus with audioamd_sbus
-file	arch/sparc/dev/am7930_sparc.c		audioamd
-file	arch/sparc/sparc/amd7930intr.s		audioamd
+device	audioamd: audio, am7930
+attach	audioamd at mainbus with audioamd_mainbus
+attach	audioamd at sbus with audioamd_sbus
+file	arch/sparc/dev/audioamd.c		audioamd
+file	arch/sparc/sparc/am7930intr.s		audioamd
 
 # Brooktree DAC attribute
 define bt_dac
