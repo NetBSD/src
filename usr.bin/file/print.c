@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.10 1997/01/28 00:49:46 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.11 1997/02/11 08:15:19 cjs Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char *moduleid =
-	"@(#)$NetBSD: print.c,v 1.10 1997/01/28 00:49:46 christos Exp $";
+	"@(#)$NetBSD: print.c,v 1.11 1997/02/11 08:15:19 cjs Exp $";
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -70,7 +70,7 @@ struct magic *m;
 		       (m->type >= 0 && m->type < SZOF(typ)) ? 
 				typ[(unsigned char) m->type] : 
 				"*bad*");
-	if (m->mask != ~0L)
+	if (m->mask != ~((uint32)0))
 		(void) fprintf(stderr, " & %.8x", m->mask);
 
 	(void) fprintf(stderr, ",%c", m->reln);
