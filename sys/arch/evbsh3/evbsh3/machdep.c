@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 2000/03/25 02:51:58 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 2000/03/25 03:07:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -439,7 +439,7 @@ dumpsys()
 
 #if 0	/* XXX this doesn't work.  grr. */
         /* toss any characters present prior to dump */
-	while (sget() != NULL); /*syscons and pccons differ */
+	while (sget() != NULL); /* syscons and pccons differ */
 #endif
 
 	bytes = ctob(dumpmem_high) + IOM_END;
@@ -577,9 +577,9 @@ initSH3(pc)
 	pagetab = (void *)(avail + SYSMAP);
 
 	/*
-	 *	Construct a page table directory
-	 *	In SH3 H/W does not support PTD,
-	 *	these structures are used by S/W.
+	 * Construct a page table directory
+	 * In SH3 H/W does not support PTD,
+	 * these structures are used by S/W.
 	 */
 	pte = (pt_entry_t)pagetab;
 	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
@@ -610,7 +610,11 @@ initSH3(pc)
 	 * Activate MMU
 	 */
 
+#ifdef SH4
+	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV | MMUCR_SQMD;
+#else
 	SHREG_MMUCR = MMUCR_AT | MMUCR_TF | MMUCR_SV;
+#endif
 
 	/*
 	 * Now here is virtual address
@@ -879,7 +883,7 @@ InitializeBsc()
 	 * Area1 = 8bit
 	 * Area2,3: Bus width = 32bit
 	 */
-	 SHREG_BCR2 = BSC_BCR2_VAL;
+	SHREG_BCR2 = BSC_BCR2_VAL;
 
 	/*
 	 * Idle cycle number in transition area and read to write
@@ -899,7 +903,7 @@ InitializeBsc()
 	 */
 	SHREG_WCR2 = BSC_WCR2_VAL;
 
-#ifdef SH4
+#if defined(SH4) && defined(BSC_WCR3_VAL)
 	SHREG_WCR3 = BSC_WCR3_VAL;
 #endif
 
