@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.13.4.7 2003/01/07 21:21:22 thorpej Exp $ */
+/*	$NetBSD: fpu.c,v 1.13.4.8 2003/01/17 15:18:38 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -194,7 +194,7 @@ fpu_cleanup(l, fs)
 		if (error == 0)
 			continue;
 
-		KERNEL_PROC_LOCK(p);
+		KERNEL_PROC_LOCK(l);
 		switch (error) {
 		case FPE:
 			trapsignal(l, SIGFPE,
@@ -215,7 +215,7 @@ fpu_cleanup(l, fs)
 			panic("fpu_cleanup 3");
 			/* NOTREACHED */
 		}
-		KERNEL_PROC_UNLOCK(p);
+		KERNEL_PROC_UNLOCK(l);
 		/* XXX should stop here, but queue remains */
 	}
 out:
