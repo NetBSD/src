@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.37 2000/10/11 14:00:58 hubertf Exp $
+.\"	$NetBSD: packages.7,v 1.38 2000/10/15 12:13:38 rh Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -88,6 +88,9 @@ make sure patches apply with zero fuzz
 run check-shlibs to see that all binaries will find their 
 shared libs.
 .El
+.It USE_GLX 
+Says that if Mesa is requested, a package should preferably use a
+GLX (hardware-accelerated) version of the Mesa library.
 .El
 .Sh PACKAGE SPECIFIC VARIABLES
 This section documents variables that typically apply to an individual
@@ -332,6 +335,10 @@ for building and running.
 .It USE_IMAKE	
 Says that the package uses
 .Pa imake .
+.It USE_MESA 
+Says that the package uses the Mesa library.  This will include all
+Mesa components that are not included in the installed X11
+distribution.
 .It USE_SSL	
 Says that the package uses a SSL library. The location of the SSL
 installation can be found in
