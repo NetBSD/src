@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.50 2000/03/10 01:59:06 onoe Exp $
+.\" $NetBSD: main,v 1.51 2000/03/12 19:18:50 martin Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -866,6 +866,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Christian E. Hopps Ta Mt chopps@NetBSD.ORG
 .It Ta Ken Hornstein Ta Mt kenh@NetBSD.ORG
 .It Ta Marc Horowitz Ta Mt marc@NetBSD.ORG
+.It Ta Martin Husemann Ta Mt martin@netbsd.org
 .It Ta Dean Huxley Ta Mt dean@netbsd.org
 .It Ta ITOH Yasufumi Ta Mt itohy@NetBSD.ORG
 .It Ta Matthew Jacob Ta Mt mjacob@NetBSD.ORG
