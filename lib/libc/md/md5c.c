@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.3 1998/03/26 23:53:36 cgd Exp $	*/
+/*	$NetBSD: md5c.c,v 1.4 1998/07/26 11:44:11 mycroft Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -116,7 +116,7 @@ Decode (output, input, len)
 		    (((UINT4)input[j+2]) << 16) | (((UINT4)input[j+3]) << 24);
 }
 
-static unsigned char PADDING[64] = {
+static const unsigned char PADDING[64] = {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
