@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.71 1997/01/06 23:33:36 veego Exp $
+#	$NetBSD: Makefile,v 1.72 1997/01/08 21:59:52 veego Exp $
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
 
 # not yet done: catman
 
 SUBDIR=	ac accton amd arp bootpd bootpgw bootpef bootptest chown \
 	chroot config cron dev_mkdb dhcpd diskpart edquota gettable \
-	gspa htable inetd iostat kgmon kvm_mkdb lpr map-mbone \
+	gspa htable inetd iostat ipf kgmon kvm_mkdb lpr map-mbone \
 	mdconfig mdsetimage mrinfo mrouted mtrace mtree named \
 	netgroup_mkdb portmap pppd pstat pwd_mkdb quot quotaon \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.pcnfsd \
