@@ -33,18 +33,20 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: accept_sec_context.c,v 1.30 2001/08/29 02:21:09 assar Exp $"
-        "$NetBSD: accept_sec_context.c,v 1.3 2003/05/15 20:44:15 lha Exp $");
+__RCSID("$Heimdal: accept_sec_context.c,v 1.33 2003/03/16 17:41:12 lha Exp $"
+        "$NetBSD: accept_sec_context.c,v 1.4 2003/05/15 21:36:39 lha Exp $");
 
 krb5_keytab gssapi_krb5_keytab;
 
 OM_uint32
-gsskrb5_register_acceptor_identity (char *identity)
+gsskrb5_register_acceptor_identity (const char *identity)
 {
     krb5_error_code ret;
     char *p;
 
-    GSSAPI_KRB5_INIT();
+    ret = gssapi_krb5_init();
+    if(ret)
+	return GSS_S_FAILURE;
     
     if(gssapi_krb5_keytab != NULL) {
 	krb5_kt_close(gssapi_krb5_context, gssapi_krb5_keytab);

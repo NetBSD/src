@@ -33,26 +33,27 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: copy_ccache.c,v 1.2 2001/05/11 09:16:45 assar Exp $"
-        "$NetBSD: copy_ccache.c,v 1.4 2003/05/15 20:44:16 lha Exp $");
+__RCSID("$Heimdal: copy_ccache.c,v 1.3 2003/03/16 17:47:44 lha Exp $"
+        "$NetBSD: copy_ccache.c,v 1.5 2003/05/15 21:36:41 lha Exp $");
 
 OM_uint32
-gss_krb5_copy_ccache(OM_uint32 *minor,
+gss_krb5_copy_ccache(OM_uint32 *minor_status,
 		     gss_cred_id_t cred,
 		     krb5_ccache out)
 {
     krb5_error_code kret;
 
     if (cred->ccache == NULL) {
-	*minor = EINVAL;
+ 	*minor_status = EINVAL;
 	return GSS_S_FAILURE;
     }
 
     kret = krb5_cc_copy_cache(gssapi_krb5_context, cred->ccache, out);
     if (kret) {
-	*minor = kret;
+	*minor_status = kret;
 	gssapi_krb5_set_error_string ();
 	return GSS_S_FAILURE;
     }
+    *minor_status = 0;
     return GSS_S_COMPLETE;
 }

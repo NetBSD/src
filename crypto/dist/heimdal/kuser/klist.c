@@ -34,8 +34,8 @@
 #include "kuser_locl.h"
 #include "rtbl.h"
 
-__RCSID("$Heimdal: klist.c,v 1.67 2002/08/20 09:05:18 joda Exp $"
-        "$NetBSD: klist.c,v 1.6 2003/05/15 20:44:14 lha Exp $");
+__RCSID("$Heimdal: klist.c,v 1.68.2.1 2003/05/08 18:59:56 lha Exp $"
+        "$NetBSD: klist.c,v 1.7 2003/05/15 21:36:38 lha Exp $");
 
 static char*
 printable_time(time_t t)
