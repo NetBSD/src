@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.43 2003/01/01 00:48:33 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44 2003/02/04 21:21:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -105,10 +105,13 @@ atari_config_found(pcfp, pdp, auxp, pfn)
 		return(config_found(pdp, auxp, pfn) != NULL);
 
 	memset(&temp, 0, sizeof(temp));
-	if (pdp == NULL)
+	if (pdp == NULL) {
 		pdp = &temp;
 
 	pdp->dv_cfdata = pcfp;
+	pdp->dv_cfdriver = config_cfdriver_lookup(pcfp->cf_name);
+	pdp->dv_unit = pcfp->cf_unit;
+
 	if ((cf = config_search((cfmatch_t)NULL, pdp, auxp)) != NULL) {
 		ca = config_cfattach_lookup(cf->cf_name, cf->cf_atname);
 		if (ca != NULL) {
