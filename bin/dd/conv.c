@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.8 1998/07/28 05:15:46 mycroft Exp $	*/
+/*	$NetBSD: conv.c,v 1.8.10.1 2000/07/27 16:15:28 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)conv.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: conv.c,v 1.8 1998/07/28 05:15:46 mycroft Exp $");
+__RCSID("$NetBSD: conv.c,v 1.8.10.1 2000/07/27 16:15:28 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,10 +101,10 @@ def_close()
 /* Build a smaller version (i.e. for a miniroot) */
 /* These can not be called, but just in case...  */
 static char no_block[] = "unblock and -DNO_CONV?";
-void block()       { errx(1, no_block + 2); }
-void block_close() { errx(1, no_block + 2); }
-void unblock()       { errx(1, no_block); }
-void unblock_close() { errx(1, no_block); }
+void block()       { errx(1, "%s", no_block + 2); }
+void block_close() { errx(1, "%s", no_block + 2); }
+void unblock()       { errx(1, "%s", no_block); }
+void unblock_close() { errx(1, "%s", no_block); }
 #else	/* NO_CONV */
 
 /*
