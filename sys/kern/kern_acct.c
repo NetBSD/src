@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.59 2004/11/13 20:41:41 christos Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.60 2004/12/13 08:46:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.59 2004/11/13 20:41:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.60 2004/12/13 08:46:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,25 +245,32 @@ sys_acct(l, v, retval)
 		    p);
 		if ((error = vn_open(&nd, FWRITE|O_APPEND, 0)) != 0)
 			return (error);
-		VOP_UNLOCK(nd.ni_vp, 0);
 		if (nd.ni_vp->v_type != VREG) {
+			VOP_UNLOCK(nd.ni_vp, 0);
 			error = EACCES;
 			goto bad;
 		}
-		if ((error = VOP_GETATTR(nd.ni_vp, &va, p->p_ucred, p)) != 0)
+		if ((error = VOP_GETATTR(nd.ni_vp, &va, p->p_ucred, p)) != 0) {
+			VOP_UNLOCK(nd.ni_vp, 0);
 			goto bad;
+		}
 
 		if ((pad = (va.va_size % sizeof(struct acct))) != 0) {
+			u_quad_t size = va.va_size - pad;
 #ifdef DIAGNOSTIC
 			printf("Size of accounting file not a multiple of "
 			    "%lu - incomplete record truncated\n",
 			    (unsigned long)sizeof(struct acct));
 #endif
-			va.va_size -= pad;
-			if ((error = VOP_TRUNCATE(nd.ni_vp, va.va_size, 0,
-			     p->p_ucred, p)) != 0)
+			VATTR_NULL(&va);
+			va.va_size = size;
+			error = VOP_SETATTR(nd.ni_vp, &va, p->p_ucred, p);
+			if (error != 0) {
+				VOP_UNLOCK(nd.ni_vp, 0);
 				goto bad;
+			}
 		}
+		VOP_UNLOCK(nd.ni_vp, 0);
 	}
 
 	ACCT_LOCK();
