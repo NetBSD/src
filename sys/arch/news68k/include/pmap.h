@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2002/09/22 07:53:46 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 2002/10/28 00:55:17 chs Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -43,7 +43,6 @@
 #ifndef	_NEWS68K_PMAP_H_
 #define	_NEWS68K_PMAP_H_
 
-#include <machine/cpu.h>
 #include <machine/pte.h>
 
 /*

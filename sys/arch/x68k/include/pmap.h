@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2002/09/22 07:53:51 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 2002/10/28 00:55:17 chs Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -43,7 +43,6 @@
 #ifndef	_X68K_PMAP_H_
 #define	_X68K_PMAP_H_
 
-#include <machine/cpu.h>
 #include <machine/pte.h>
 
 #if defined(M68040) || defined(M68060)

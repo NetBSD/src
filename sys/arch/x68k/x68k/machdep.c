@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2002/09/25 22:21:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 2002/10/28 00:55:18 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,6 +85,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
+#include <m68k/cacheops.h>
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>

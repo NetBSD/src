@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.18 2000/12/13 18:13:08 jdolecek Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.19 2002/10/28 00:55:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,6 +84,7 @@
 
 #include <sys/syscallargs.h>
 
+#include <m68k/cacheops.h>
 #include <machine/cpu.h>
 
 /* XXX should be in an include file somewhere */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.21 2002/09/27 15:36:17 provos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.22 2002/10/28 00:55:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -46,6 +46,8 @@
 #include <sys/extent.h>
 
 #include <machine/bus.h>
+#include <machine/cpu.h>
+#include <m68k/cacheops.h>
 
 #include <uvm/uvm_extern.h>
 

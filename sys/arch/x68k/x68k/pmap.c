@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2002/10/14 05:18:55 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2002/10/28 00:55:18 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -139,11 +139,11 @@
 #include <sys/user.h>
 #include <sys/pool.h>
 
-#include <machine/pte.h>
-
 #include <uvm/uvm.h>
 
+#include <m68k/cacheops.h>
 #include <machine/cpu.h>
+#include <machine/pte.h>
 
 #ifdef DEBUG
 #define PDB_FOLLOW	0x0001
