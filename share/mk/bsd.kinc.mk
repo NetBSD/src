@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kinc.mk,v 1.27 2003/07/20 15:02:10 lukem Exp $
+#	$NetBSD: bsd.kinc.mk,v 1.28 2003/07/28 00:57:25 lukem Exp $
 
 # Variables:
 #
@@ -79,3 +79,4 @@ incinstall::
 
 ##### Pull in related .mk logic
 .include <bsd.subdir.mk>
+.include <bsd.sys.mk>

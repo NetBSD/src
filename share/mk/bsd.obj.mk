@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.42 2003/07/20 15:02:11 lukem Exp $
+#	$NetBSD: bsd.obj.mk,v 1.43 2003/07/28 00:57:25 lukem Exp $
 
 .if !target(__initialized_obj__)
 __initialized_obj__:
@@ -100,4 +100,6 @@ obj:
 
 print-objdir:
 	@echo ${.OBJDIR}
+
+.include <bsd.sys.mk>
 .endif
