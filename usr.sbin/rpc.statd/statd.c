@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.10 1997/10/25 01:29:30 thorpej Exp $	*/
+/*	$NetBSD: statd.c,v 1.11 1998/06/22 20:40:01 tron Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.10 1997/10/25 01:29:30 thorpej Exp $");
+__RCSID("$NetBSD: statd.c,v 1.11 1998/06/22 20:40:01 tron Exp $");
 #endif
 
 
@@ -519,7 +519,7 @@ init_file(filename)
 {
 	DBT data;
 
-	db = dbopen(filename, O_RDWR|O_CREAT|O_NDELAY|O_EXLOCK, 644, DB_HASH, 
+	db = dbopen(filename, O_RDWR|O_CREAT|O_NDELAY|O_EXLOCK, 0644, DB_HASH, 
 	    NULL);
 	if (db == NULL)
 		err(1, "Cannot open `%s'", filename);
