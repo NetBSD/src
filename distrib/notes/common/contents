@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.52.2.12 2002/07/11 18:41:44 thorpej Exp $
+.\"	$NetBSD: contents,v 1.52.2.13 2002/07/15 17:00:36 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@ conventions for indicating italic and bold display.
 .	(tag kernel/ -compact
 .		It Pa kernel/
 .		(tag netbsd.gz -compact
-.if !\n[atari]:\n[walnut] \{\
+.if !\n[atari]:\n[walnut]:\n[sgimips] \{\
 .			It Pa netbsd-GENERIC.gz
 A gzipped
 .Nx
@@ -61,10 +61,6 @@ kernel containing code for everything supported in this release.
 .\}
 .if r_hpcmips \{\
 This kernel runs on Vr41xx and TX3922 CPU only.
-.\}
-.
-.if r_sgimips \{\
-This kernen will boot on O2 and similar machines.
 .\}
 .
 .if r_acorn26 \{\
@@ -172,9 +168,10 @@ A kernel for MVME177 boards.
 .
 .if r_sgimips \{\
 .			It Pa netbsd-GENERIC_INDY.gz
-A kernel similar to GENERIC, but will boot on an Indy and similar machines.
+A kernel suitable for booting on Indy, Indigo 2 and similar machines.
 .			It Pa netbsd.ecoff-GENERIC_INDY.gz
-GENERIC targeted for being bootable on Indigo 2 and similar machines.
+GENERIC_INDY targeted for being bootable on older Indigo 2 and possibly 
+Indy machines with PROMs that do not understand the ELF binary format.
 .\}
 .
 .if r_walnut \{\
@@ -531,7 +528,7 @@ This set includes the games and their manual pages.
 .el .ie r_vax .setsize 3 7
 .el .setsize ??? ???
 .
-.if !\n[atari]:\n[walnut] \{\
+.if !\n[atari]:\n[walnut]:\n[sgimips] \{\
 .It Sy kern-GENERIC
 This set contains a
 .Nx*M
@@ -568,7 +565,6 @@ that your system may need to boot.
 .el .ie r_pmax .setsize 2 4
 .el .ie r_prep .setsize 2 4
 .el .ie r_sandpoint .setsize 3 8
-.el .ie r_sgimips .setsize 3 7
 .el .ie r_shark .setsize 2 4
 .el .ie r_sparc .setsize 2 4
 .el .ie r_sparc64 .setsize 3 5
@@ -587,6 +583,21 @@ kernel, named
 .Pa /netbsd .
 .No You Em must
 install the kernel that matches your hardware.
+.\}
+.if r_sgimips \{\
+.It Sy kern-GENERIC_INDY
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC_INDY
+kernel (for Indy, Indigo 2 and Challenge S/M machines), named
+.Pa /netbsd .
+This set also contains an ECOFF kernel named
+.Pa /netbsd.ecoff
+that your system may need to boot.
+.No You Em must
+install this distribution set.
+.setsize 3 7
 .\}
 .if r_walnut \{\
 .It Sy kern-WALNUT
@@ -648,7 +659,12 @@ all related programs, and their manual pages.
 maintains its own set of sources for the X Window System in order to
 assure tight integration and compatibility.
 These sources are based on XFree86, and tightly track XFree86 releases.
+.ie r_i386 \{\
+They are currently equivalent to XFree86 4.2.0.
+.\}
+.el \{\
 They are currently equivalent to XFree86 3.3.6.
+.\}
 Binary sets for the X Window System are distributed with
 .Nx .
 The sets are:

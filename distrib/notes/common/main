@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.11 2002/07/11 19:59:33 thorpej Exp $
+.\"	$NetBSD: main,v 1.179.2.12 2002/07/15 17:00:36 thorpej Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -419,12 +419,12 @@ in 1.6.
 The development of 1.6 and the subsequent ``point'' releases
 is done on a separate branch in the CVS repository.
 The branch was created when the release cycle for 1.6 was started,
-and during the release cycle of 1.5 and its patch releases,
-selected fixes and enhancements have been imported from the
-main development trunk.
+and during the release cycle of 1.6 and its patch releases selected
+fixes and enhancements have been imported from the main development
+trunk.
 .ig
-So, there are features in 1.6.1 which were not in, e.g. 1.6B, and vice
-versa.
+For example, there may be features in 1.6.1 which were not in 1.6B,
+and vice versa.
 ..
 .if \n[FOR_RELEASE] \{\
 .Ss Changes Between The NetBSD 1.5 and 1.6 Releases
@@ -1057,7 +1057,7 @@ Historic AT\*&T System V
 checksums for the various files in that directory, in the format produced by
 the command:
 .br
-.Ic cksum Fl o 2 Ar file .
+.Ic cksum -o 2 Ar file .
 .tag)
 .Pp
 The MD5 digest is the safest checksum, followed by the POSIX
@@ -1176,7 +1176,7 @@ and
 .It
 The following
 .Xr rc.conf 5
-are now obsolete:
+entries are now obsolete:
 .Li amd_master ,
 .Li ip6forwarding ,
 .Li defcorename ,
