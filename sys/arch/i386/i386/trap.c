@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.10 1993/11/05 23:57:50 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.11 1993/11/06 00:12:04 mycroft Exp $
  */
 
 /*
@@ -411,8 +411,7 @@ trapwrite(addr)
 	nss = 0;
 	p = curproc;
 	vm = p->p_vmspace;
-	if ((caddr_t)va >= vm->vm_maxsaddr
-	    && map != kernel_map) {
+	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		nss = clrnd(btoc(USRSTACK-(unsigned)va));
 		if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur))
 			return 1;
