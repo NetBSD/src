@@ -1,4 +1,4 @@
-.\"	$NetBSD: fs.5,v 1.6 1998/04/28 06:00:55 fair Exp $
+.\"	$NetBSD: fs.5,v 1.7 1998/04/29 11:33:56 fair Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -164,17 +164,18 @@ A file system consists of a number of cylinder groups.
 Each cylinder group has inodes and data.
 .Pp
 A file system is described by its super-block, which in turn
-describes the cylinder groups.  The super-block is critical
-data and is replicated in each cylinder group to protect against
-catastrophic loss.  This is done at file system creation
-time and the critical
-super-block data does not change, so the copies need not be
-referenced further unless disaster strikes.
+describes the cylinder groups.
+The super-block is critical data and is replicated in each cylinder
+group to protect against catastrophic loss.
+This is done at file system creation time and the critical super-block
+data does not change, so the copies need not be referenced further
+unless disaster strikes.
 .Pp
 Addresses stored in inodes are capable of addressing fragments
-of `blocks'. File system blocks of at most size
+of `blocks'.
+File system blocks of at most size
 .Dv MAXBSIZE
-can 
+can
 be optionally broken into 2, 4, or 8 pieces, each of which is
 addressable; these pieces may be
 .Dv DEV_BSIZE ,
@@ -183,12 +184,13 @@ a
 .Dv DEV_BSIZE
 unit.
 .Pp
-Large files consist of exclusively large data blocks.  To avoid
-undue wasted disk space, the last data block of a small file is
-allocated as only as many fragments of a large block as are
-necessary.  The file system format retains only a single pointer
-to such a fragment, which is a piece of a single large block that
-has been divided.  The size of such a fragment is determinable from
+Large files consist of exclusively large data blocks.
+To avoid undue wasted disk space, the last data block of a small
+file is allocated as only as many fragments of a large block as
+are necessary.
+The file system format retains only a single pointer to such a
+fragment, which is a piece of a single large block that has been divided.
+The size of such a fragment is determinable from
 information in the inode, using the
 .Fn blksize fs ip lbn
 macro.
@@ -206,7 +208,8 @@ assumption, so we are stuck with it).
 The
 .Fa fs_minfree
 element gives the minimum acceptable percentage of file system
-blocks that may be free. If the freelist drops below this level
+blocks that may be free.
+If the freelist drops below this level
 only the super-user may continue to allocate blocks.
 The
 .Fa fs_minfree
@@ -238,7 +241,8 @@ the file system defaults to optimizing for time.
 .Em Cylinder group related limits :
 Each cylinder keeps track of the availability of blocks at different
 rotational positions, so that sequential blocks can be laid out
-with minimum rotational latency. With the default of 8 distinguished
+with minimum rotational latency.
+With the default of 8 distinguished
 rotational positions, the resolution of the
 summary information is 2ms for a typical 3600 rpm drive.
 .Pp
@@ -277,7 +281,7 @@ Note that super-blocks are never more than size
 The path name on which the file system is mounted is maintained in
 .Fa fs_fsmnt .
 .Dv MAXMNTLEN
-defines the amount of space allocated in 
+defines the amount of space allocated in
 the super-block for this name.
 The limit on the amount of summary information per file system
 is defined by
@@ -286,7 +290,7 @@ For a 4096 byte block size, it is currently parameterized for a
 maximum of two million cylinders.
 .Pp
 Per cylinder group information is summarized in blocks allocated
-from the first cylinder group's data blocks. 
+from the first cylinder group's data blocks.
 These blocks are read in from
 .Fa fs_csaddr
 (size
@@ -294,7 +298,7 @@ These blocks are read in from
 in addition to the super-block.
 .Pp
 .Sy N.B.:
-.Xr sizeof Pq Fa struct csum
+.Fn sizeof "struct csum"
 must be a power of two in order for
 the
 .Fn fs_cs
@@ -307,11 +311,10 @@ is limited by the fact that the super-block is of size
 .Dv SBSIZE .
 The size of these tables is
 .Em inversely
-proportional to the block
-size of the file system. The size of the tables is
-increased when sector sizes are not powers of two,
-as this increases the number of cylinders
-included before the rotational pattern repeats
+proportional to the block size of the file system.
+The size of the tables is increased when sector sizes are not powers
+of two, as this increases the number of cylinders included before
+the rotational pattern repeats
 .Pq Fa fs_cpc .
 The size of the rotational layout
 tables is derived from the number of bytes remaining in
