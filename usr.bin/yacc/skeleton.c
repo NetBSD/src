@@ -16,7 +16,7 @@ char *banner[] =
 {
     "#ifndef lint",
     "/*static char yysccsid[] = \"from: @(#)yaccpar	1.9 (Berkeley) 02/21/93\";*/",
-    "static char yyrcsid[] = \"$Id: skeleton.c,v 1.4 1993/12/21 18:45:32 jtc Exp $\";",
+    "static char yyrcsid[] = \"$Id: skeleton.c,v 1.5 1995/08/24 00:45:23 jtc Exp $\";",
     "#endif",
     "#define YYBYACC 1",
     "#define YYMAJOR 1",
@@ -60,7 +60,9 @@ char *header[] =
     "#define YYMAXDEPTH 500",
     "#endif",
     "#endif",
+    "#if YYDEBUG",
     "int yydebug;",
+    "#endif",
     "int yynerrs;",
     "int yyerrflag;",
     "int yychar;",
