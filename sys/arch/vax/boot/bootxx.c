@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.11 1997/06/08 17:49:17 ragge Exp $ */
+/* $NetBSD: bootxx.c,v 1.12 1998/02/28 12:10:13 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -262,6 +262,7 @@ devopen(f, fname, file)
 	const char    *fname;
 	char          **file;
 {
+	extern char	start;
 	char           *msg;
 	int		i, err, off;
 	char		line[64];
@@ -307,7 +308,7 @@ devopen(f, fname, file)
 	 * but it doesn't hurt to always get it.
 	 */
 	if ((bootdev != BDEV_TK) && (bootdev != BDEV_CNSL)) {
-		msg = getdisklabel((void *)LABELOFFSET + RELOC, &lp);
+		msg = getdisklabel(LABELOFFSET + &start, &lp);
 		if (msg)
 			printf("getdisklabel: %s\n", msg);
 	}
