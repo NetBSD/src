@@ -80,5 +80,7 @@
 #ifndef S_ISLNK
 #define lstat stat
 #endif
+#if 0	/* Prototypes come from <sys/stat.h> */
 int lstat ();
 int stat ();
+#endif
