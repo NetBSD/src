@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.39 2000/06/28 16:27:54 mrg Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.40 2000/07/14 10:50:50 is Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -1229,6 +1229,7 @@ iy_mc_setup(sc)
 	bus_space_handle_t ioh;
 	int avail, last /*, end*/ , len;
 	int timeout;
+	volatile u_int16_t dum;
 	u_int8_t temp;
 	
 
@@ -1273,6 +1274,7 @@ iy_mc_setup(sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
+	dum = bus_space_read_2(iot, ioh, MEM_PORT_REG); /* dummy read */
 	bus_space_write_2(iot, ioh, XMT_ADDR_REG, last);
 	bus_space_write_1(iot, ioh, 0, MC_SETUP_CMD);
 	
