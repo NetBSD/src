@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.30 1998/08/21 14:13:54 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.31 1998/09/20 20:00:09 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
 #include <machine/trap.h>
+#include <sparc/sparc/cpuvar.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -187,6 +188,89 @@ soft01intr(fp)
 		}
 	}
 	return (1);
+}
+
+void	nmi_hard __P((void));
+void	nmi_soft __P((void));
+
+int	(*memerr_handler) __P((void));
+int	(*sbuserr_handler) __P((void));
+int	(*vmeerr_handler) __P((void));
+int	(*moduleerr_handler) __P((void));
+
+int	nmisync1; /*XXX*/
+int	nmisync2;
+int	nmifatal;
+
+void
+nmi_hard()
+{
+	/*
+	 * A level 15 hard interrupt.
+	 */
+	int fatal = 0;
+	u_int32_t si;
+	char bits[64];
+	u_int afsr, afva;
+
+	if (cpuinfo.master == 0) {
+		while (nmisync1 == 0) ;
+		printf("CPU%d: held\n", cpuinfo.mid);
+		while (nmisync2 != 0) ;
+		/* XXX - should check module errors here */
+		if (nmifatal == 0)
+			return;
+		{ extern void callrom __P((void)); callrom(); }
+	}
+
+	nmisync2 = 1;
+	nmisync1 = 1;
+	/*
+	 * Examine pending system interrupts.
+	 */
+	si = *((u_int32_t *)ICR_SI_PEND);
+	printf("NMI: system interrupts: %s\n",
+		bitmask_snprintf(si, SINTR_BITS, bits, sizeof(bits)));
+
+	if ((si & SINTR_M) != 0) {
+		/* ECC memory error */
+		if (memerr_handler != NULL)
+			fatal |= (*memerr_handler)();
+	}
+	if ((si & SINTR_I) != 0) {
+		/* MBus/SBus async error */
+		if (sbuserr_handler != NULL)
+			fatal |= (*sbuserr_handler)();
+	}
+	if ((si & SINTR_V) != 0) {
+		/* VME async error */
+		if (vmeerr_handler != NULL)
+			fatal |= (*vmeerr_handler)();
+	}
+	if ((si & SINTR_ME) != 0) {
+		/* Module async error */
+		if (moduleerr_handler != NULL)
+			fatal |= (*moduleerr_handler)();
+	}
+
+	if ((*cpuinfo.get_asyncflt)(&afsr, &afva) == 0) {
+		printf("Async registers: afsr=%s; afva=0x%x%x\n",
+			bitmask_snprintf(afsr, AFSR_BITS, bits, sizeof(bits)),
+			(afsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, afva);
+	}
+
+
+	nmisync1 = 0;
+	nmifatal = fatal;
+	nmisync2 = 0;
+	if (fatal)
+		panic("nmi");
+}
+
+void
+nmi_soft()
+{
+	printf("Message interrupt on CPU %d\n", cpuinfo.mid);
 }
 
 static struct intrhand level01 = { soft01intr };
