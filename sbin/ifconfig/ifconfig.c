@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ifconfig.c	8.2 (Berkeley) 2/16/94";*/
-static char *rcsid = "$Id: ifconfig.c,v 1.14 1994/09/23 14:27:24 mycroft Exp $";
+static char *rcsid = "$Id: ifconfig.c,v 1.15 1994/10/31 04:24:09 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -146,8 +146,8 @@ struct afswtch {
 	short af_af;
 	int (*af_status)();
 	int (*af_getaddr)();
-	int af_difaddr;
-	int af_aifaddr;
+	u_long af_difaddr;
+	u_long af_aifaddr;
 	caddr_t af_ridreq;
 	caddr_t af_addreq;
 } afs[] = {
