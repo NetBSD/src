@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,12 +32,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)exec.c	5.17 (Berkeley) 6/17/91";
+static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -87,7 +89,7 @@ static Char *expath;		/* Path for exerr */
 #define HSHMUL		243
 static char xhash[HSHSIZ / 8];
 
-#define hash(a, b)	((a) * HSHMUL + (b) & HSHMASK)
+#define hash(a, b)	(((a) * HSHMUL + (b)) & HSHMASK)
 #define bit(h, b)	((h)[(b) >> 3] & 1 << ((b) & 7))	/* bit test */
 #define bis(h, b)	((h)[(b) >> 3] |= 1 << ((b) & 7))	/* bit set */
 static int hits, misses;
@@ -98,13 +100,19 @@ static Char *justabs[] = {STRNULL, 0};
 static void	pexerr __P((void));
 static void	texec __P((Char *, Char **));
 static int	hashname __P((Char *));
+static void 	tellmewhat __P((struct wordent *));
+static int	executable __P((Char *, Char *, bool));
+static int	iscommand __P((Char *));
+
 
 void
-doexec(t)
-    register struct command *t;
+/*ARGSUSED*/
+doexec(v, t)
+    Char **v;
+    struct command *t;
 {
     register Char *dp, **pv, **av, *sav;
-    register struct varent *v;
+    register struct varent *pathv;
     register bool slash;
     register int hashval = 0, hashval1, i;
     Char   *blk[2];
@@ -120,7 +128,7 @@ doexec(t)
     if (gflag) {
 	pv = globall(blk);
 	if (pv == 0) {
-	    setname(short2str(blk[0]));
+	    setname(vis_str(blk[0]));
 	    stderror(ERR_NAME | ERR_NOMATCH);
 	}
 	gargv = 0;
@@ -134,8 +142,8 @@ doexec(t)
     expath = Strsave(pv[0]);
     Vexpath = expath;
 
-    v = adrof(STRpath);
-    if (v == 0 && expath[0] != '/') {
+    pathv = adrof(STRpath);
+    if (pathv == 0 && expath[0] != '/') {
 	blkfree(pv);
 	pexerr();
     }
@@ -151,7 +159,7 @@ doexec(t)
 	av = globall(av);
 	if (av == 0) {
 	    blkfree(pv);
-	    setname(short2str(expath));
+	    setname(vis_str(expath));
 	    stderror(ERR_NAME | ERR_NOMATCH);
 	}
 	gargv = 0;
@@ -177,7 +185,7 @@ doexec(t)
      */
     SHIN = 0;
     SHOUT = 1;
-    SHDIAG = 2;
+    SHERR = 2;
     OLDSTD = 0;
     /*
      * We must do this AFTER any possible forking (like `foo` in glob) so that
@@ -188,10 +196,10 @@ doexec(t)
      * If no path, no words in path, or a / in the filename then restrict the
      * command search.
      */
-    if (v == 0 || v->vec[0] == 0 || slash)
+    if (pathv == 0 || pathv->vec[0] == 0 || slash)
 	pv = justabs;
     else
-	pv = v->vec;
+	pv = pathv->vec;
     sav = Strspl(STRslash, *av);/* / command name for postpending */
     Vsav = sav;
     if (havhash)
@@ -235,7 +243,7 @@ pexerr()
 {
     /* Couldn't find the damn thing */
     if (expath) {
-	setname(short2str(expath));
+	setname(vis_str(expath));
 	Vexpath = 0;
 	xfree((ptr_t) expath);
 	expath = 0;
@@ -350,19 +358,72 @@ texec(sf, st)
 /*ARGSUSED*/
 void
 execash(t, kp)
-    char  **t;
+    Char  **t;
     register struct command *kp;
 {
+    int     saveIN, saveOUT, saveDIAG, saveSTD;
+    int     oSHIN;
+    int     oSHOUT;
+    int     oSHERR;
+    int     oOLDSTD;
+    jmp_buf osetexit;
+    int	    my_reenter;
+    int     odidfds;
+    sig_t   osigint, osigquit, osigterm;
+
     if (chkstop == 0 && setintr)
 	panystop(0);
+    /*
+     * Hmm, we don't really want to do that now because we might
+     * fail, but what is the choice
+     */
     rechist();
-    (void) signal(SIGINT, parintr);
-    (void) signal(SIGQUIT, parintr);
-    (void) signal(SIGTERM, parterm);	/* if doexec loses, screw */
+
+    osigint  = signal(SIGINT, parintr);
+    osigquit = signal(SIGQUIT, parintr);
+    osigterm = signal(SIGTERM, parterm);
+
+    odidfds = didfds;
+    oSHIN = SHIN;
+    oSHOUT = SHOUT;
+    oSHERR = SHERR;
+    oOLDSTD = OLDSTD;
+
+    saveIN = dcopy(SHIN, -1);
+    saveOUT = dcopy(SHOUT, -1);
+    saveDIAG = dcopy(SHERR, -1);
+    saveSTD = dcopy(OLDSTD, -1);
+
     lshift(kp->t_dcom, 1);
-    exiterr = 1;
-    doexec(kp);
-    /* NOTREACHED */
+
+    getexit(osetexit);
+
+    if ((my_reenter = setexit()) == 0) {
+	SHIN = dcopy(0, -1);
+	SHOUT = dcopy(1, -1);
+	SHERR = dcopy(2, -1);
+	didfds = 0;
+	doexec(t, kp);
+    }
+
+    (void) signal(SIGINT, osigint);
+    (void) signal(SIGQUIT, osigquit);
+    (void) signal(SIGTERM, osigterm);
+
+    doneinp = 0;
+    didfds = odidfds;
+    (void) close(SHIN);
+    (void) close(SHOUT);
+    (void) close(SHERR);
+    (void) close(OLDSTD);
+    SHIN = dmove(saveIN, oSHIN);
+    SHOUT = dmove(saveOUT, oSHOUT);
+    SHERR = dmove(saveDIAG, oSHERR);
+    OLDSTD = dmove(saveSTD, oOLDSTD);
+
+    resexit(osetexit);
+    if (my_reenter)
+	stderror(ERR_SILENT);
 }
 
 void
@@ -370,31 +431,32 @@ xechoit(t)
     Char  **t;
 {
     if (adrof(STRecho)) {
-	flush();
-	haderr = 1;
-	blkpr(t), xputchar('\n');
-	haderr = 0;
+	(void) fflush(csherr);
+	blkpr(csherr, t);
+	(void) fputc('\n', csherr);
     }
 }
 
-/*VARARGS0*/
 void
-dohash()
+/*ARGSUSED*/
+dohash(v, t)
+    Char **v;
+    struct command *t;
 {
     DIR    *dirp;
     register struct dirent *dp;
     register int cnt;
     int     i = 0;
-    struct varent *v = adrof(STRpath);
+    struct varent *pathv = adrof(STRpath);
     Char  **pv;
     int     hashval;
 
     havhash = 1;
     for (cnt = 0; cnt < sizeof xhash; cnt++)
 	xhash[cnt] = 0;
-    if (v == 0)
+    if (pathv == 0)
 	return;
-    for (pv = v->vec; *pv; pv++, i++) {
+    for (pv = pathv->vec; *pv; pv++, i++) {
 	if (pv[0][0] != '/')
 	    continue;
 	dirp = opendir(short2str(*pv));
@@ -405,7 +467,7 @@ dohash()
 		continue;
 	    if (dp->d_name[0] == '.' &&
 		(dp->d_name[1] == '\0' ||
-		 dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
+		 (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 		continue;
 	    hashval = hash(hashname(str2short(dp->d_name)), i);
 	    bis(xhash, hashval);
@@ -416,17 +478,23 @@ dohash()
 }
 
 void
-dounhash()
+/*ARGSUSED*/
+dounhash(v, t)
+    Char **v;
+    struct command *t;
 {
     havhash = 0;
 }
 
 void
-hashstat()
+/*ARGSUSED*/
+hashstat(v, t)
+    Char **v;
+    struct command *t;
 {
     if (hits + misses)
-	xprintf("%d hits, %d misses, %d%%\n",
-		hits, misses, 100 * hits / (hits + misses));
+	(void) fprintf(cshout, "%d hits, %d misses, %d%%\n",
+		       hits, misses, 100 * hits / (hits + misses));
 }
 
 /*
@@ -441,4 +509,228 @@ hashname(cp)
     while (*cp)
 	h = hash(h, *cp++);
     return ((int) h);
+}
+
+static int
+iscommand(name)
+    Char   *name;
+{
+    register Char **pv;
+    register Char *sav;
+    register struct varent *v;
+    register bool slash = any(short2str(name), '/');
+    register int hashval = 0, hashval1, i;
+
+    v = adrof(STRpath);
+    if (v == 0 || v->vec[0] == 0 || slash)
+	pv = justabs;
+    else
+	pv = v->vec;
+    sav = Strspl(STRslash, name);	/* / command name for postpending */
+    if (havhash)
+	hashval = hashname(name);
+    i = 0;
+    do {
+	if (!slash && pv[0][0] == '/' && havhash) {
+	    hashval1 = hash(hashval, i);
+	    if (!bit(xhash, hashval1))
+		goto cont;
+	}
+	if (pv[0][0] == 0 || eq(pv[0], STRdot)) {	/* don't make ./xxx */
+	    if (executable(NULL, name, 0)) {
+		xfree((ptr_t) sav);
+		return i + 1;
+	    }
+	}
+	else {
+	    if (executable(*pv, sav, 0)) {
+		xfree((ptr_t) sav);
+		return i + 1;
+	    }
+	}
+cont:
+	pv++;
+	i++;
+    } while (*pv);
+    xfree((ptr_t) sav);
+    return 0;
+}
+
+/* Also by:
+ *  Andreas Luik <luik@isaak.isa.de>
+ *  I S A  GmbH - Informationssysteme fuer computerintegrierte Automatisierung
+ *  Azenberstr. 35
+ *  D-7000 Stuttgart 1
+ *  West-Germany
+ * is the executable() routine below and changes to iscommand().
+ * Thanks again!!
+ */
+
+/*
+ * executable() examines the pathname obtained by concatenating dir and name
+ * (dir may be NULL), and returns 1 either if it is executable by us, or
+ * if dir_ok is set and the pathname refers to a directory.
+ * This is a bit kludgy, but in the name of optimization...
+ */
+static int
+executable(dir, name, dir_ok)
+    Char   *dir, *name;
+    bool    dir_ok;
+{
+    struct stat stbuf;
+    Char    path[MAXPATHLEN + 1], *dp, *sp;
+    char   *strname;
+
+    if (dir && *dir) {
+	for (dp = path, sp = dir; *sp; *dp++ = *sp++)
+	    if (dp == &path[MAXPATHLEN + 1]) {
+		*--dp = '\0';
+		break;
+	    }
+	for (sp = name; *sp; *dp++ = *sp++)
+	    if (dp == &path[MAXPATHLEN + 1]) {
+		*--dp = '\0';
+		break;
+	    }
+	*dp = '\0';
+	strname = short2str(path);
+    }
+    else
+	strname = short2str(name);
+    return (stat(strname, &stbuf) != -1 &&
+	    ((S_ISREG(stbuf.st_mode) &&
+    /* save time by not calling access() in the hopeless case */
+	      (stbuf.st_mode & (S_IXOTH | S_IXGRP | S_IXUSR)) &&
+	      access(strname, X_OK) == 0) ||
+	     (dir_ok && S_ISDIR(stbuf.st_mode))));
+}
+
+/* The dowhich() is by:
+ *  Andreas Luik <luik@isaak.isa.de>
+ *  I S A  GmbH - Informationssysteme fuer computerintegrierte Automatisierung
+ *  Azenberstr. 35
+ *  D-7000 Stuttgart 1
+ *  West-Germany
+ * Thanks!!
+ */
+/*ARGSUSED*/
+void
+dowhich(v, c)
+    register Char **v;
+    struct command *c;
+{
+    struct wordent lex[3];
+    struct varent *vp;
+
+    lex[0].next = &lex[1];
+    lex[1].next = &lex[2];
+    lex[2].next = &lex[0];
+
+    lex[0].prev = &lex[2];
+    lex[1].prev = &lex[0];
+    lex[2].prev = &lex[1];
+
+    lex[0].word = STRNULL;
+    lex[2].word = STRret;
+
+    while (*++v) {
+	if ((vp = adrof1(*v, &aliases)) != NULL) {
+	    (void) fprintf(cshout, "%s: \t aliased to ", vis_str(*v));
+	    blkpr(cshout, vp->vec);
+	    (void) fputc('\n', cshout);
+	}
+	else {
+	    lex[1].word = *v;
+	    tellmewhat(lex);
+	}
+    }
+}
+
+static void
+tellmewhat(lex)
+    struct wordent *lex;
+{
+    register int i;
+    register struct biltins *bptr;
+    register struct wordent *sp = lex->next;
+    bool    aliased = 0;
+    Char   *s0, *s1, *s2;
+    Char    qc;
+
+    if (adrof1(sp->word, &aliases)) {
+	alias(lex);
+	sp = lex->next;
+	aliased = 1;
+    }
+
+    s0 = sp->word;		/* to get the memory freeing right... */
+
+    /* handle quoted alias hack */
+    if ((*(sp->word) & (QUOTE | TRIM)) == QUOTE)
+	(sp->word)++;
+
+    /* do quoting, if it hasn't been done */
+    s1 = s2 = sp->word;
+    while (*s2)
+	switch (*s2) {
+	case '\'':
+	case '"':
+	    qc = *s2++;
+	    while (*s2 && *s2 != qc)
+		*s1++ = *s2++ | QUOTE;
+	    if (*s2)
+		s2++;
+	    break;
+	case '\\':
+	    if (*++s2)
+		*s1++ = *s2++ | QUOTE;
+	    break;
+	default:
+	    *s1++ = *s2++;
+	}
+    *s1 = '\0';
+
+    for (bptr = bfunc; bptr < &bfunc[nbfunc]; bptr++) {
+	if (eq(sp->word, str2short(bptr->bname))) {
+	    if (aliased)
+		prlex(cshout, lex);
+	    (void) fprintf(cshout, "%s: shell built-in command.\n", 
+			   vis_str(sp->word));
+	    sp->word = s0;	/* we save and then restore this */
+	    return;
+	}
+    }
+
+    if ((i = iscommand(strip(sp->word))) != 0) {
+	register Char **pv;
+	register struct varent *v;
+	bool    slash = any(short2str(sp->word), '/');
+
+	v = adrof(STRpath);
+	if (v == 0 || v->vec[0] == 0 || slash)
+	    pv = justabs;
+	else
+	    pv = v->vec;
+
+	while (--i)
+	    pv++;
+	if (pv[0][0] == 0 || eq(pv[0], STRdot)) {
+	    sp->word = Strspl(STRdotsl, sp->word);
+	    prlex(cshout, lex);
+	    xfree((ptr_t) sp->word);
+	    sp->word = s0;	/* we save and then restore this */
+	    return;
+	}
+	s1 = Strspl(*pv, STRslash);
+	sp->word = Strspl(s1, sp->word);
+	xfree((ptr_t) s1);
+	prlex(cshout, lex);
+	xfree((ptr_t) sp->word);
+    }
+    else {
+	if (aliased)
+	    prlex(cshout, lex);
+	(void) fprintf(csherr, "%s: Command not found.\n", vis_str(sp->word));
+    }
+    sp->word = s0;		/* we save and then restore this */
 }

@@ -1,5 +1,5 @@
-.\" Copyright (c) 1989, 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1989, 1990, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Institute of Electrical and Electronics Engineers, Inc.
@@ -32,9 +32,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)chmod.1	6.15 (Berkeley) 7/23/91
+.\"	@(#)chmod.1	8.4 (Berkeley) 3/31/94
 .\"
-.Dd July 23, 1991
+.Dd March 31, 1994
 .Dt CHMOD 1
 .Os
 .Sh NAME
@@ -42,7 +42,10 @@
 .Nd change file modes
 .Sh SYNOPSIS
 .Nm chmod
-.Op Fl R
+.Oo
+.Fl R
+.Op Fl H | Fl L | Fl P
+.Oc
 .Ar mode
 .Ar file ...
 .Sh DESCRIPTION
@@ -55,15 +58,41 @@ operand.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl H
+If the
+.Fl R
+option is specified, symbolic links on the command line are followed.
+(Symbolic links encountered in the tree traversal are not followed.)
+.It Fl L
+If the
+.Fl R
+option is specified, all symbolic links are followed.
+.It Fl P
+If the
+.Fl R
+option is specified, no symbolic links are followed.
 .It Fl R
-Traverse a file hierarchy.
-For each file that is of type directory,
-.Nm chmod
-changes the mode of all files in the file hierarchy below it followed
-by the mode of the directory itself.
+Change the modes of the file hierarchies rooted in the files
+instead of just the files themselves.
 .El
 .Pp
-Symbolic links are not indirected through, nor are their modes altered.
+Symbolic links do not have modes, so unless the
+.Fl H
+or
+.Fl L
+option is set,
+.Nm chmod
+on a symbolic link always succeeds and has no effect.
+The
+.Fl H ,
+.Fl L
+and
+.Fl P
+options are ignored unless the
+.Fl R
+option is specified.
+In addition, these options override each other and the
+command's actions are determined by the last one specified.
 .Pp
 Only the owner of a file or the super-user is permitted to change
 the mode of a file.
@@ -74,7 +103,7 @@ utility exits 0 on success, and >0 if an error occurs.
 .Sh MODES
 Modes may be absolute or symbolic.
 An absolute mode is an octal number constructed by
-.Ar or Ap ing
+.Ar or-ing
 the following values:
 .Pp
 .Bl -tag -width 6n -compact -offset indent
@@ -107,7 +136,7 @@ action       ::= op [perm ...]
 last_action  ::= op [perm ...]
 who          ::= a | u | g | o
 op           ::= + | \- | =
-perm         ::= r | s | t | w | X | x | u | g | o
+perm         ::= r | s | t | w | x | X | u | g | o
 .Ed
 .Pp
 The
@@ -118,6 +147,7 @@ The
 .Ar who
 symbol ``a'' is equivalent to ``ugo''.
 .Pp
+.ne 1i
 The
 .Ar perm
 symbols represent the portions of the mode bits as follows:
@@ -140,7 +170,13 @@ Operations with the
 .Ar perm
 symbol ``X'' are only meaningful in conjunction with the
 .Ar op
-symbol ``+'', and it is ignored in all other cases.
+symbol ``+'', and are ignored in all other cases.
+.It u
+The user permission bits in the mode of the original file.
+.It g
+The group permission bits in the mode of the original file.
+.It o
+The other permission bits in the mode of the original file.
 .El
 .Pp
 The
@@ -168,9 +204,10 @@ If no value is supplied for
 the ``\-'' operation has no effect.
 If no value is supplied for
 .Ar who ,
-the mode bits represented by
-.Ar perm
-are cleared for the owner, group and other permissions.
+each permission bit specified in
+.Ar perm ,
+for which the corresponding bit in the file mode creation mask
+is clear, is cleared.
 Otherwise, the mode bits represented by the specified
 .Ar who
 and
@@ -223,7 +260,7 @@ already searchable/executable by anyone.
 .It Li 755
 .It Li u=rwx,go=rx
 .It Li u=rwx,go=u-w
-make a file readable/executable by everyone and writeable by the owner only.
+make a file readable/executable by everyone and writable by the owner only.
 .Pp
 .It Li go=
 clear all mode bits for group and others.
@@ -242,14 +279,13 @@ option for the naughty bits.
 .Xr umask 2 ,
 .Xr fts 3 ,
 .Xr setmode 3 ,
+.Xr symlink 7 ,
 .Xr chown 8
 .Sh STANDARDS
 The
 .Nm chmod
-utility is expected to be
-.St -p1003.2
-compatible with the exception
-of the
+utility is expected to be POSIX 1003.2
+compatible with the exception of the
 .Ar perm
 symbols
 .Dq t

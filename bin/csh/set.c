@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,11 +32,14 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)set.c	5.12 (Berkeley) 6/14/91";
+static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
+#ifndef SHORT_STRINGS
+#include <string.h>
+#endif /* SHORT_STRINGS */
 #if __STDC__
 # include <stdarg.h>
 #else
@@ -48,12 +51,12 @@ static char sccsid[] = "@(#)set.c	5.12 (Berkeley) 6/14/91";
 
 static Char	*getinx __P((Char *, int *));
 static void	 asx __P((Char *, int, Char *));
-static struct varent 
+static struct varent
 		*getvx __P((Char *, int));
 static Char	*xset __P((Char *, Char ***));
 static Char	*operate __P((int, Char *, Char *));
 static void	 putn1 __P((int));
-static struct varent 
+static struct varent
 		*madrof __P((Char *, struct varent *));
 static void	 unsetv1 __P((struct varent *));
 static void	 exportpath __P((Char **));
@@ -65,8 +68,10 @@ static void	 balance __P((struct varent *, int, int));
  */
 
 void
-doset(v)
-    register Char **v;
+/*ARGSUSED*/
+doset(v, t)
+    Char **v;
+    struct command *t;
 {
     register Char *p;
     Char   *vp, op;
@@ -96,7 +101,7 @@ doset(v)
 	    hadsub++;
 	    p = getinx(p, &subscr);
 	}
-	if (op = *p) {
+	if ((op = *p) != '\0') {
 	    *p++ = 0;
 	    if (*p == 0 && *v && **v == '(')
 		p = *v++;
@@ -133,7 +138,7 @@ doset(v)
 	    set(vp, Strsave(p));
 	if (eq(vp, STRpath)) {
 	    exportpath(adrof(STRpath)->vec);
-	    dohash();
+	    dohash(NULL, NULL);
 	}
 	else if (eq(vp, STRhistchars)) {
 	    register Char *pn = value(STRhistchars);
@@ -172,7 +177,7 @@ doset(v)
 	else if (eq(vp, STRfilec))
 	    filec = 1;
 #endif
-    } while (p = *v++);
+    } while ((p = *v++) != NULL);
 }
 
 static Char *
@@ -217,8 +222,10 @@ getvx(vp, subscr)
 }
 
 void
-dolet(v)
-    Char  **v;
+/*ARGSUSED*/
+dolet(v, t)
+    Char **v;
+    struct command *t;
 {
     register Char *p;
     Char   *vp, c, op;
@@ -247,7 +254,7 @@ dolet(v)
 	}
 	if (*p == 0 && *v)
 	    p = *v++;
-	if (op = *p)
+	if ((op = *p) != '\0')
 	    *p++ = 0;
 	else
 	    stderror(ERR_NAME | ERR_ASSIGN);
@@ -293,12 +300,12 @@ dolet(v)
 	    set(vp, operate(op, value(vp), p));
 	if (eq(vp, STRpath)) {
 	    exportpath(adrof(STRpath)->vec);
-	    dohash();
+	    dohash(NULL, NULL);
 	}
 	xfree((ptr_t) vp);
 	if (c != '=')
 	    xfree((ptr_t) p);
-    } while (p = *v++);
+    } while ((p = *v++) != NULL);
 }
 
 static Char *
@@ -313,7 +320,7 @@ xset(cp, vp)
 	xfree((ptr_t) ** vp);
 	**vp = dp;
     }
-    return (putn(exp(vp)));
+    return (putn(expr(vp)));
 }
 
 static Char *
@@ -338,7 +345,7 @@ operate(op, vp, p)
     }
     *v++ = p;
     *v++ = 0;
-    i = exp(&vecp);
+    i = expr(&vecp);
     if (*vecp)
 	stderror(ERR_NAME | ERR_EXPRESSION);
     return (putn(i));
@@ -359,7 +366,7 @@ putn(n)
 	*putp++ = '-';
     }
     num = 2;			/* confuse lint */
-    if (sizeof(int) == num && n == -32768) {
+    if (sizeof(int) == num && ((unsigned int) n) == 0x8000) {
 	*putp++ = '3';
 	n = 2768;
 #ifdef pdp11
@@ -368,7 +375,7 @@ putn(n)
     }
     else {
 	num = 4;		/* confuse lint */
-	if (sizeof(int) == num && n == -2147483648) {
+	if (sizeof(int) == num && ((unsigned int) n) == 0x80000000) {
 	    *putp++ = '2';
 	    n = 147483648;
 	}
@@ -502,7 +509,7 @@ setq(name, vec, p)
     register f;
 
     f = 0;			/* tree hangs off the header's left link */
-    while (c = p->v_link[f]) {
+    while ((c = p->v_link[f]) != NULL) {
 	if ((f = *name - *c->v_name) == 0 &&
 	    (f = Strcmp(name, c->v_name)) == 0) {
 	    blkfree(c->vec);
@@ -522,8 +529,10 @@ found:
 }
 
 void
-unset(v)
-    Char   *v[];
+/*ARGSUSED*/
+unset(v, t)
+    Char **v;
+    struct command *t;
 {
     unset1(v, &shvhed);
 #ifdef FILEC
@@ -548,10 +557,10 @@ unset1(v, head)
 
     while (*++v) {
 	cnt = 0;
-	while (vp = madrof(*v, head->v_left))
+	while ((vp = madrof(*v, head->v_left)) != NULL)
 	    unsetv1(vp), cnt++;
 	if (cnt == 0)
-	    setname(short2str(*v));
+	    setname(vis_str(*v));
     }
 }
 
@@ -588,7 +597,8 @@ unsetv1(p)
     else if (p->v_left == 0)
 	c = p->v_right;
     else {
-	for (c = p->v_left; c->v_right; c = c->v_right);
+	for (c = p->v_left; c->v_right; c = c->v_right)
+	    continue;
 	p->v_name = c->v_name;
 	p->vec = c->vec;
 	p = c;
@@ -599,7 +609,7 @@ unsetv1(p)
      */
     pp = p->v_parent;
     f = pp->v_right == p;
-    if (pp->v_link[f] = c)
+    if ((pp->v_link[f] = c) != NULL)
 	c->v_parent = pp;
     /*
      * Free the deleted node, and rebalance.
@@ -616,8 +626,10 @@ setNS(cp)
 }
 
 void
-shift(v)
-    register Char **v;
+/*ARGSUSED*/
+shift(v, t)
+    Char **v;
+    struct command *t;
 {
     register struct varent *argv;
     register Char *name;
@@ -646,9 +658,13 @@ exportpath(val)
     if (val)
 	while (*val) {
 	    if (Strlen(*val) + Strlen(exppath) + 2 > BUFSIZ) {
-		xprintf("Warning: ridiculously long PATH truncated\n");
+		(void) fprintf(csherr,
+			       "Warning: ridiculously long PATH truncated\n");
 		break;
 	    }
+	    if ((**val != '/' || **val == '\0') && (euid == 0 || uid == 0)) 
+		    (void) fprintf(csherr,
+		    "Warning: exported path contains relative components.\n");
 	    (void) Strcat(exppath, *val++);
 	    if (*val == 0 || eq(*val, STRRparen))
 		break;
@@ -714,7 +730,7 @@ balance(p, f, d)
      * is the branch of p from which we have come; ff is the branch of pp which
      * is p.
      */
-    for (; pp = p->v_parent; p = pp, f = ff) {
+    for (; (pp = p->v_parent) != NULL; p = pp, f = ff) {
 	ff = pp->v_right == p;
 	if (f ^ d) {		/* right heavy */
 	    switch (p->v_bal) {
@@ -808,14 +824,13 @@ x:
 	if (p->v_parent == 0)	/* is it the header? */
 	    return;
 	len = blklen(p->vec);
-	xprintf(short2str(p->v_name));
-	xputchar('\t');
+	(void) fprintf(cshout, "%s\t", short2str(p->v_name));
 	if (len != 1)
-	    xputchar('(');
-	blkpr(p->vec);
+	    (void) fputc('(', cshout);
+	blkpr(cshout, p->vec);
 	if (len != 1)
-	    xputchar(')');
-	xputchar('\n');
+	    (void) fputc(')', cshout);
+	(void) fputc('\n', cshout);
 	if (p->v_right) {
 	    p = p->v_right;
 	    continue;

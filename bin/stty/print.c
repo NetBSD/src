@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,19 +32,21 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)print.c	5.4 (Berkeley) 6/10/91";
+static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #endif /* not lint */
 
 #include <sys/types.h>
+
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "stty.h"
 #include "extern.h"
 
 static void  binit __P((char *));
 static void  bput __P((char *));
-static char *ccval __P((int));
+static char *ccval __P((struct cchar *, int));
 
 void
 print(tp, wp, ldisc, fmt)
@@ -53,11 +55,10 @@ print(tp, wp, ldisc, fmt)
 	int ldisc;
 	enum FMT fmt;
 {
-	register struct cchar *p;
-	register long tmp;
-	register int cnt;
-	register u_char *cc;
-	int ispeed, ospeed;
+	struct cchar *p;
+	long tmp;
+	u_char *cc;
+	int cnt, ispeed, ospeed;
 	char buf1[100], buf2[100];
 
 	cnt = 0;
@@ -111,7 +112,6 @@ print(tp, wp, ldisc, fmt)
 	put("-altwerase", ALTWERASE, 0);
 	put("-noflsh", NOFLSH, 0);
 	put("-tostop", TOSTOP, 0);
-	put("-mdmbuf", MDMBUF, 0);
 	put("-flusho", FLUSHO, 0);
 	put("-pendin", PENDIN, 0);
 	put("-nokerninfo", NOKERNINFO, 0);
@@ -165,6 +165,7 @@ print(tp, wp, ldisc, fmt)
 	put("-clocal", CLOCAL, 0);
 	put("-cstopb", CSTOPB, 0);
 	put("-crtscts", CRTSCTS, 0);
+	put("-mdmbuf", MDMBUF, 0);
 
 	/* special control characters */
 	cc = tp->c_cc;
@@ -172,7 +173,7 @@ print(tp, wp, ldisc, fmt)
 		binit("cchars");
 		for (p = cchars1; p->name; ++p) {
 			(void)snprintf(buf1, sizeof(buf1), "%s = %s;",
-			    p->name, ccval(cc[p->sub]));
+			    p->name, ccval(p, cc[p->sub]));
 			bput(buf1);
 		}
 		binit(NULL);
@@ -183,7 +184,7 @@ print(tp, wp, ldisc, fmt)
 				continue;
 #define	WD	"%-8s"
 			(void)sprintf(buf1 + cnt * 8, WD, p->name);
-			(void)sprintf(buf2 + cnt * 8, WD, ccval(cc[p->sub]));
+			(void)sprintf(buf2 + cnt * 8, WD, ccval(p, cc[p->sub]));
 			if (++cnt == LINELENGTH / 8) {
 				cnt = 0;
 				(void)printf("%s\n", buf1);
@@ -204,6 +205,7 @@ static void
 binit(lb)
 	char *lb;
 {
+
 	if (col) {
 		(void)printf("\n");
 		col = 0;
@@ -215,6 +217,7 @@ static void
 bput(s)
 	char *s;
 {
+
 	if (col == 0) {
 		col = printf("%s: %s", label, s);
 		return;
@@ -228,15 +231,20 @@ bput(s)
 }
 
 static char *
-ccval(c)
+ccval(p, c)
+	struct cchar *p;
 	int c;
 {
 	static char buf[5];
 	char *bp;
 
 	if (c == _POSIX_VDISABLE)
-		return("<undef>");
+		return ("<undef>");
 
+	if (p->sub == VMIN || p->sub == VTIME) {
+		(void)snprintf(buf, sizeof(buf), "%d", c);
+		return (buf);
+	}
 	bp = buf;
 	if (c & 0200) {
 		*bp++ = 'M';
@@ -254,5 +262,5 @@ ccval(c)
 	else
 		*bp++ = c;
 	*bp = '\0';
-	return(buf);
+	return (buf);
 }
