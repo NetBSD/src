@@ -1,4 +1,4 @@
-	$NetBSD: contents,v 1.17 1999/01/25 23:34:22 garbled Exp $	
+	$NetBSD: contents,v 1.18 1999/03/18 18:34:14 perry Exp $	
 
 The i386-specific portion of the NetBSD _VER release is found in the
 "i386" subdirectory of the distribution.  That subdirectory is laid
@@ -151,13 +151,13 @@ not be legal to distribute this set to locations outside of the United
 States and Canada.)
 	[ 798K gzipped, 2.4M uncompressed ]
 
-Since NetBSD 1.3, binary sets for the X Window system are also
-distributed with NetBSD. The binaries are based on X11R6.3,
-and XFree86 3.3.1 in the case of NetBSD/i386. You can not yet
-install them using the new automated install system. However,
-they are gzipped tarfiles, just like the other sets, so you
-can always simply extract them once you have your NetBSD
-system installed and running. The sets are:
+The NetBSD Project maintains its own X11 sources, and binary sets for
+the X Window system are also distributed with NetBSD. The binaries are
+based on X11R6.3, and XFree86 3.3.3.1 in the case of NetBSD/i386. You
+can not yet install them using the new automated install
+system. However, they are gzipped tarfiles, just like the other sets,
+so you can always simply extract them once you have your NetBSD system
+installed and running. The sets are:
 
 	xbase	The basic files needed for a complete X
 		client environment. This does not include
