@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.23.6.4 1999/03/14 16:50:59 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.23.6.5 1999/03/14 17:49:13 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1626,7 +1626,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		}
 		/* FALLTHROUGH */
 	case ODIOCEJECT:
-		fd_do_eject(unit);
+		fd_do_eject(fdc, unit);
 		return 0;
 
 	default:
