@@ -90,7 +90,10 @@
 typedef struct MBLOCK {
     int     signature;			/* set when block is active */
     int     length;			/* user requested length */
-    char    payload[1];			/* actually a bunch of bytes */
+    union {
+	ALIGN_TYPE align;
+	char    payload[1];		/* actually a bunch of bytes */
+    } u;
 } MBLOCK;
 
 #define SIGNATURE	0xdead
@@ -99,7 +102,7 @@ typedef struct MBLOCK {
 #define CHECK_IN_PTR(ptr, real_ptr, len, fname) { \
     if (ptr == 0) \
 	msg_panic("%s: null pointer input", fname); \
-    real_ptr = (MBLOCK *) (ptr - offsetof(MBLOCK, payload[0])); \
+    real_ptr = (MBLOCK *) (ptr - offsetof(MBLOCK, u.payload[0])); \
     if (real_ptr->signature != SIGNATURE) \
 	msg_panic("%s: corrupt or unallocated memory block", fname); \
     real_ptr->signature = 0; \
@@ -110,10 +113,10 @@ typedef struct MBLOCK {
 #define CHECK_OUT_PTR(ptr, real_ptr, len) { \
     real_ptr->signature = SIGNATURE; \
     real_ptr->length = len; \
-    ptr = real_ptr->payload; \
+    ptr = real_ptr->u.payload; \
 }
 
-#define SPACE_FOR(len)	(offsetof(MBLOCK, payload[0]) + len)
+#define SPACE_FOR(len)	(offsetof(MBLOCK, u.payload[0]) + len)
 
 /* mymalloc - allocate memory or bust */
 
@@ -165,6 +168,8 @@ void    myfree(char *ptr)
 
 char   *mystrdup(const char *str)
 {
+    if (str == 0)
+	msg_panic("mystrdup: null pointer argument");
     return (strcpy(mymalloc(strlen(str) + 1), str));
 }
 
@@ -173,10 +178,12 @@ char   *mystrdup(const char *str)
 char   *mystrndup(const char *str, int len)
 {
     char   *result;
-    int     slen;
+    char   *cp;
 
-    if ((slen = strlen(str)) < len)
-	len = slen;
+    if (str == 0)
+	msg_panic("mystrndup: null pointer argument");
+    if ((cp = memchr(str, 0, len)) != 0)
+	len = cp - str;
     result = memcpy(mymalloc(len + 1), str, len);
     result[len] = 0;
     return (result);
@@ -186,5 +193,7 @@ char   *mystrndup(const char *str, int len)
 
 char   *mymemdup(const char *ptr, int len)
 {
+    if (ptr == 0)
+	msg_panic("mymemdup: null pointer argument");
     return (memcpy(mymalloc(len), ptr, len));
 }

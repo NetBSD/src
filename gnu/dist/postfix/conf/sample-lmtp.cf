@@ -68,7 +68,7 @@ lmtp_destination_recipient_limit = $default_destination_recipient_limit
 # Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 # The default time unit is s (seconds).
 #
-# lmtp_connect_timeout = 30s
+#lmtp_connect_timeout = 30s
 lmtp_connect_timeout = 0s
 
 # The lmtp_lhlo_timeout parameter specifies the LMTP client timeout

@@ -86,8 +86,7 @@ Parse tree:
  OP ","
  address
    atom "venema"
- comment
-   text ""wietse "
+ comment "("wietse )"
  OP ","
  address
    quoted string ")"
@@ -135,11 +134,7 @@ Parse tree:
    OP "."
    atom "org"
    OP ")"
- comment
-   text " "
-   comment
-     text ""wietse "
-   text " venema""
+ comment "( ("wietse ) venema")"
 
 Internalized:
 wietse venema@porcupine.org) ( ("wietse ) venema")
@@ -272,9 +267,8 @@ Parse tree:
    atom "wietse"
    OP "@"
    atom "foo"
- comment
-   text "wietse
-	venema"
+ comment "(wietse
+	venema)"
 
 Internalized:
 wietse@foo (wietse

@@ -135,7 +135,8 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
     struct mypasswd *alias_pwd;
     VSTRING *canon_owner;
     DICT   *dict;
-    const char *owner_rhs;			/* owner alias, RHS */
+    const char *owner_rhs;		/* owner alias, RHS */
+    int     alias_count;
 
     /*
      * Make verbose logging easier to understand.
@@ -171,7 +172,7 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
     if (state.level > 100) {
 	msg_warn("possible alias database loop for %s", name);
 	*statusp = bounce_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
-	       "possible alias database loop for %s", name);
+			       "possible alias database loop for %s", name);
 	return (YES);
     }
     state.msg_attr.exp_from = name;
@@ -271,11 +272,19 @@ int     deliver_alias(LOCAL_STATE state, USER_ATTR usr_attr,
 	    /*
 	     * Deliver.
 	     */
+	    alias_count = 0;
 	    *statusp =
 		(dict_errno ?
 		 defer_append(BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
 			      "alias database unavailable") :
-	       deliver_token_string(state, usr_attr, expansion, (int *) 0));
+	    deliver_token_string(state, usr_attr, expansion, &alias_count));
+#if 0
+	    if (var_ownreq_special
+		&& strncmp("owner-", state.msg_attr.sender, 6) != 0 
+		&& alias_count > 10)
+		msg_warn("mailing list \"%s\" needs an \"owner-%s\" alias",
+			 name, name);
+#endif
 	    myfree(expansion);
 	    if (owner)
 		myfree(owner);

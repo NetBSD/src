@@ -4,6 +4,7 @@
 smtpd_delay_reject 0
 mynetworks 127.0.0.0/8,168.100.189.0/28
 relay_domains porcupine.org
+smtpd_null_access_lookup_key <> 
 #
 # Test check_domain_access()
 #
@@ -105,3 +106,7 @@ rcpt ok@ok.domain
 rcpt anyone@ok.domain
 # Expect: OK
 rcpt bad-sender@ok.domain
+#
+# check_sender_access specific
+#
+mail <>

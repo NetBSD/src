@@ -81,6 +81,7 @@ dns_rr.o: dns_rr.c
 dns_rr.o: ../../include/sys_defs.h
 dns_rr.o: ../../include/msg.h
 dns_rr.o: ../../include/mymalloc.h
+dns_rr.o: ../../include/myrand.h
 dns_rr.o: dns.h
 dns_rr.o: ../../include/vstring.h
 dns_rr.o: ../../include/vbuf.h

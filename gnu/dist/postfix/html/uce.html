@@ -109,8 +109,22 @@ is allowed in message headers.
 <dt>Syntax:
 
 <dd>Specify a list of zero or more lookup tables. Whenever a header
-matches a table, a REJECT result means reject the message, and an
-IGNORE result means delete the header from the message.
+matches a table, the action depends on the lookup result:
+
+<p>
+
+<dl>
+
+<dt>REJECT <dd> Reject the message, and log the header.
+
+<dt>REJECT text... <dd> As above, and also send the text to
+the originator.
+
+<dt>IGNORE <dd> Delete the header from the message.
+
+<dt>WARN <dd> Log (but do not reject) the header with a warning.
+
+</dl>
 
 <p>
 
@@ -133,7 +147,7 @@ mail still to be rejected.</i>
 
 <dt>Example (header_checks):
 
-<dd> /^to: *friend@public\.com$/ REJECT
+<dd> <tt>/^to: *friend@public\.com$/ REJECT</tt>
 
 <p>
 
@@ -143,6 +157,14 @@ mail still to be rejected.</i>
 
 The <b>smtpd_client_restrictions</b> parameter restricts what
 clients this system accepts SMTP connections from.
+
+<p>
+
+By default, this restriction is applied when the client sends the
+RCPT TO command. In order to have the restriction take effect
+as soon as possible, specify <b>smtpd_delay_reject = no</b> in
+the Postfix <b>main.cf</b> configuration file. Doing so may cause
+unexpected results with poorly implemented client software.
 
 <p>
 
@@ -229,6 +251,8 @@ rejected requests (default: <b>554</b>).
 
 <dt> <b><a href="#reject">reject</a></b>
 
+<dt> <b><a href="#warn_if_reject">warn_if_reject</a></b>
+
 <dt> <b><a href="#reject_unauth_pipelining">reject_unauth_pipelining</a></b>
 
 <dd> See generic restrictions.
@@ -279,6 +303,14 @@ does not require the use of <b>HELO</b> (<b>EHLO</b>).
 The <b>smtpd_helo_restrictions</b> parameter restricts what hostnames
 clients may send with the <b>HELO</b> (<b>EHLO</b>) command.  Some
 UCE software can be stopped by being strict here.
+
+<p>
+
+By default, this restriction is applied when the client sends the
+RCPT TO command. In order to have the restriction take effect
+as soon as possible, specify <b>smtpd_delay_reject = yes</b> in
+the Postfix <b>main.cf</b> configuration file. Doing so may cause
+unexpected results with poorly implemented client software.
 
 <dl>
 
@@ -390,6 +422,8 @@ the response code for <b>REJECT</b> results (default:  <b>554</b>).
 
 <dt> <b><a href="#reject">reject</a></b>
 
+<dt> <b><a href="#warn_if_reject">warn_if_reject</a></b>
+
 <dt> <b><a href="#reject_unauth_pipelining">reject_unauth_pipelining</a></b>
 
 <dd> See generic restrictions.
@@ -440,6 +474,14 @@ software out there on the Internet.
 
 The <b>smtpd_sender_restrictions</b> parameter restricts what sender
 addresses this system accepts in MAIL FROM commands.
+
+<p>
+
+By default, this restriction is applied when the client sends the
+RCPT TO command. In order to have the restriction take effect
+as soon as possible, specify <b>smtpd_delay_reject = yes</b> in
+the Postfix <b>main.cf</b> configuration file. Doing so may cause
+unexpected results with poorly implemented client software.
 
 <p>
 
@@ -516,6 +558,19 @@ response code to rejected requests (default:  <b>504</b>).
 
 <p>
 
+<a name="reject_sender_login_mismatch">
+
+<dt> <b>reject_sender_login_mismatch</b>
+
+<dd> Reject the request when <a href="#smtpd_sender_login_maps">
+$smtpd_sender_owner_maps</a> specifies an owner for the MAIL FROM
+address, but the client is not (SASL) logged in as that MAIL FROM
+address owner; or when the client is (SASL) logged in, but the
+client login name doesn't own the MAIL FROM address according to
+<a href="#smtpd_sender_login_maps"> $smtpd_sender_login_maps</a>.
+
+<p>
+
 <dt> <b><a href="#permit_naked_ip_address">permit_naked_ip_address</a></b>
 
 <dt> <b><a href="#reject_invalid_hostname">reject_invalid_hostname</a></b>
@@ -545,6 +600,8 @@ response code to rejected requests (default:  <b>504</b>).
 <dt> <b><a href="#permit">permit</a></b>
 
 <dt> <b><a href="#reject">reject</a></b>
+
+<dt> <b><a href="#warn_if_reject">warn_if_reject</a></b>
 
 <dt> <b><a href="#reject_unauth_pipelining">reject_unauth_pipelining</a></b>
 
@@ -722,17 +779,24 @@ code for rejected requests (default:  <b>554</b>).
 <a name="permit_mx_backup">
 
 <dt> <b>permit_mx_backup</b> <dd> Permit the request when the local
-mail system is MX host for the resolved destination. This includes
-the case that the local mail system is the final destination.
-However, the SMTP server will not forward mail with addresses that
-have sender-specified routing information (example:
+mail system is MX host for the resolved destination. 
+This includes the case that the local mail system is the final
+destination.  However, the SMTP server will not forward mail with
+addresses that have sender-specified routing information (example:
 <i>user@elsewhere@domain</i>),
 
 <p>
 
-Relevant configuration parameters:  <a href="basic.html#mydestination">
-$mydestination</a>, <a href="basic.html#inet_interfaces">
-$inet_interfaces</a>.
+Use the optional <a href="#permit_mx_backup_networks">
+permit_mx_backup_networks</a> parameter to also require that the
+primary MX hosts match a list of network blocks.
+
+<p>
+
+Relevant configuration parameters:  <a
+href="#permit_mx_backup_networks">permit_mx_backup_networks</a>,
+<a href="basic.html#mydestination"> $mydestination</a>, <a
+href="basic.html#inet_interfaces"> $inet_interfaces</a>.
 
 <p>
 
@@ -774,6 +838,9 @@ response code to rejected requests (default:  <b>504</b>).
 
 <dt> <b><a href="#check_sender_access">check_sender_access</a></b> <i>maptype</i>:<i>mapname</i>
 
+<dt> <b><a href="#reject_sender_login_mismatch">reject_sender_login_mismatch
+</a></b>
+
 <dd> See sender address restrictions.
 
 <p>
@@ -807,6 +874,8 @@ response code to rejected requests (default:  <b>504</b>).
 <dt> <b><a href="#permit">permit</a></b>
 
 <dt> <b><a href="#reject">reject</a></b>
+
+<dt> <b><a href="#warn_if_reject">warn_if_reject</a></b>
 
 <dt> <b><a href="#reject_unauth_pipelining">reject_unauth_pipelining</a></b>
 
@@ -906,6 +975,8 @@ the result code for rejected requests (default: <b>554</b>).
 
 <dt> <b><a href="#reject">reject</a></b>
 
+<dt> <b><a href="#warn_if_reject">warn_if_reject</a></b>
+
 <dt> <b><a href="#reject_unauth_pipelining">reject_unauth_pipelining</a></b>
 
 <dd> See generic restrictions.
@@ -948,6 +1019,17 @@ specifies the response code to rejected requests (default:
 
 <p>
 
+<a name="warn_if_reject">
+
+<dt> <b>warn_if_reject</b>
+<dd> Change the meaning of the next restriction, so that it logs
+a warning instead of rejecting a request (look for logfile records
+that contain "reject_warning").  This is useful for testing new
+restrictions in a "live" environment without risking unnecessary
+loss of mail.
+
+<p>
+
 <a name="reject_unauth_pipelining">
 
 <dt> <b>reject_unauth_pipelining</b> <dd> Reject the request when
@@ -963,6 +1045,52 @@ to speed up deliveries.
 <a name="additional">
 
 <h2> Additional UCE control parameters</h2>
+
+<dl>
+
+<a name="permit_mx_backup_networks">
+
+<dt> <b>permit_mx_backup_networks</b>
+
+<dd>Restrict the use of the <a href="#permit_mx_backup">
+permit_mx_backup</a> relay control feature to destinations whose
+primary MX hosts match a list of network blocks.
+
+<p>
+
+<dl>
+
+<dt>Default:
+
+<dd><b>permit_mx_backup_networks = </b>
+
+<p>
+
+That is, all networks are authorized by default.
+
+<p>
+
+<dt>Syntax:
+
+<dd> Specify a list of network
+blocks in CIDR (network/mask) notation, for example:
+
+<p>
+
+<dl>
+
+<dd> <b>permit_mx_backup_networks = 168.100.0.0/16</b>
+
+</dl>
+
+<p>
+
+You can also specify the absolute pathname of a pattern file instead
+of listing the patterns in the <b>main.cf</b> file.
+
+</dl>
+
+</dl>
 
 <dl>
 
@@ -1057,6 +1185,68 @@ of string comparison.
 A host or destination address matches <b>$relay_domains</b> when
 its name or parent domain matches any of the names, files or lookup
 tables listed in <b>$relay_domains.</b>
+
+</dl>
+
+<dl>
+
+<a name="smtpd_sender_login_maps">
+
+<dt> <b>smtpd_sender_login_maps</b>
+
+<dd>This parameter specifies ownership of MAIL FROM addresses, as
+used by the <a href="#reject_sender_login_mismatch">
+reject_sender_login_mismatch</a> sender address restriction.
+
+<p>
+
+<dl>
+
+<dt>Default:
+
+<dd><b>smtpd_sender_login_maps = </b>
+
+<p>
+
+<dt>Syntax:
+
+<dd> Specify zero or more type:name lookup tables, separated by
+whitespace and/or commas.  The maps are searched in the
+specified order. Regexp tables are allowed.
+
+<p>
+
+Each map entry specifies a sender address and the login name that
+owns the address. The search order is:
+
+<p>
+
+<dl>
+
+<dt><i>user@domain owner</i>
+
+<dd>This form has the highest precedence.
+
+<p>
+
+<dt><i>user        owner</i>
+
+<dd>This matches <i>user@site</i> when <i>site</i> is equal to <a
+href="basic.html#myorigin"> $myorigin</a>, when <i>site</i> is
+listed in <a href="basic.html#mydestination"> $mydestination</a>,
+or when it is listed in <a href="basic.html#inet_interfaces">
+$inet_interfaces</a>.
+
+<p>
+
+<dt><i>@domain     owner</i>
+
+<dd>This matches every address in the specified domain, and has
+the lowest precedence.
+
+</dl>
+
+</dl>
 
 </dl>
 

@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 FLUSH(8)                                                 FLUSH(8)
-
 
 <b>NAME</b>
        flush - Postfix fast flush server
@@ -47,8 +44,8 @@ FLUSH(8)                                                 FLUSH(8)
               undeliverable it will be added back to the logfile.
 
               If the destination is not eligible for a fast flush
-              logfile,  this  request  triggers  delivery  of all
-              queued mail.
+              logfile,  this  request  is rejected (see below for
+              status codes).
 
        <b>TRIGGER</b><i>_</i><b>REQ</b><i>_</i><b>WAKEUP</b>
               This wakeup request from the master is an  alterna-
@@ -59,17 +56,6 @@ FLUSH(8)                                                 FLUSH(8)
               were not read in <b>fast</b><i>_</i><b>flush</b><i>_</i><b>refresh</b><i>_</i><b>time</b> hours,  by
               simulating send requests (see above) for the corre-
               sponding destinations.
-
-
-
-                                                                1
-
-
-
-
-
-FLUSH(8)                                                 FLUSH(8)
-
 
               Delete empty per-destination logfiles that were not
               updated in <b>fast</b><i>_</i><b>flush</b><i>_</i><b>purge</b><i>_</i><b>time</b> days.
@@ -95,6 +81,11 @@ FLUSH(8)                                                 FLUSH(8)
 
        <b>FLUSH</b><i>_</i><b>STAT</b><i>_</i><b>FAIL</b>
               The request failed.
+
+       <b>FLUSH</b><i>_</i><b>STAT</b><i>_</i><b>DENY</b>
+              The  request  was  denied  because  the destination
+              domain is not eligible for fast flush  service,  or
+              because the fast flush service is disabled.
 
 <b>SECURITY</b>
        The  fast  flush server is not security-sensitive. It does
@@ -125,18 +116,6 @@ FLUSH(8)                                                 FLUSH(8)
 <b>FILES</b>
        /var/spool/postfix/flush, location of "fast flush" logfiles.
 
-
-
-
-                                                                2
-
-
-
-
-
-FLUSH(8)                                                 FLUSH(8)
-
-
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
        See the Postfix <b>main.cf</b> file for syntax  details  and  for
        default  values.  Use  the  <b>postfix</b> <b>reload</b> command after a
@@ -157,6 +136,11 @@ FLUSH(8)                                                 FLUSH(8)
               updated  in this amount of time (default time unit:
               days).
 
+       <b>parent</b><i>_</i><b>domain</b><i>_</i><b>matches</b><i>_</i><b>subdomains</b>
+              List of Postfix features that use <i>domain.name</i>  pat-
+              terns  to  match  <i>sub.domain.name</i>  (as  opposed  to
+              requiring <i>.domain.name</i> patterns).
+
 <b>SEE</b> <b>ALSO</b>
        <a href="smtpd.8.html">smtpd(8)</a> Postfix SMTP server
        <a href="qmgr.8.html">qmgr(8)</a> Postfix queue manager
@@ -172,29 +156,6 @@ FLUSH(8)                                                 FLUSH(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                3
-
+                                                                1
 
 </pre> </body> </html>

@@ -1,0 +1,86 @@
+Purpose of this document
+========================
+
+This document describes how to build Postfix with third-party
+Berkeley DB from www.sleepycat.com, or how to choose a specific
+Berkeley DB version when your system provides multiple implementations.
+
+Building Postfix with Sleepycat Berkeley DB
+===========================================
+
+Many commercial UNIXes ship without Berkeley DB support. Examples
+are Solaris, HP-UX, IRIX, UNIXWARE. In order to build Postfix with
+Berkeley DB support you need to download and install the source
+code from www.sleepycat.com.
+
+To build Postfix after you installed the Berkeley DB from Sleepycat,
+use something like:
+
+    % make tidy
+    % make makefiles CCARGS="-DHAS_DB -I/usr/local/BerkeleyDB.3.1/include" \
+	AUXLIBS="-L/usr/local/BerkeleyDB.3.1/lib -ldb"
+    % make
+
+The exact pathnames depend on the DB version that you installed.
+For example, Berkeley DB version 2 installs in /usr/local/BerkeleyDB.
+
+Warning: the file format produced by Berkeley DB version 1 is not
+compatible with that of versions 2 and 3 (versions 2 and 3 have
+the same format). If you switch between DB versions, then you may
+have to rebuild all your Postfix DB files.
+
+Warning: if you use Berkeley DB version 2 or later, do not enable
+DB 1.85 compatibility mode. Doing so would break fcntl file locking.
+
+Warning: if you use PERL to manipulate Postfix .db files, then you
+need to use the same Berkeley DB version in PERL as in Postfix.
+
+Building Postfix on BSD systems with a specific Berkeley DB version
+===================================================================
+
+Some BSD systems ship with multiple Berkeley DB implementations.
+Normally, Postfix builds with the default DB version that ships
+with the system.
+
+To build Postfix on BSD systems with a specific DB version, use a
+variant of the following commands:
+
+    % make tidy
+    % make makefiles CCARGS=-I/usr/include/db2 AUXLIBS=-ldb2
+    % make
+
+Warning: the file format produced by Berkeley DB version 1 is not
+compatible with that of versions 2 and 3 (versions 2 and 3 have
+the same format). If you switch between DB versions, then you may
+have to rebuild all your Postfix DB files.
+
+Warning: if you use Berkeley DB version 2 or later, do not enable
+DB 1.85 compatibility mode. Doing so would break fcntl file locking.
+
+Warning: if you use PERL to manipulate Postfix .db files, then you
+need to use the same Berkeley DB version in PERL as in Postfix.
+
+Building Postfix on Linux with a specific Berkeley DB version
+=============================================================
+
+Some Linux systems ship with multiple Berkeley DB implementations.
+Normally, Postfix builds with the default DB version that ships
+with the system.
+
+On Linux, you need to edit the makedefs script in order to specify
+a non-default DB library.
+
+The reason is that the location of the default db.h include file
+changes randomly between vendors and between versions, so that
+Postfix has to choose the file for you.
+
+Warning: the file format produced by Berkeley DB version 1 is not
+compatible with that of versions 2 and 3 (versions 2 and 3 have
+the same format). If you switch between DB versions, then you may
+have to rebuild all your Postfix DB files.
+
+Warning: if you use Berkeley DB version 2 or later, do not enable
+DB 1.85 compatibility mode. Doing so would break fcntl file locking.
+
+Warning: if you use PERL to manipulate Postfix .db files, then you
+need to use the same Berkeley DB version in PERL as in Postfix.

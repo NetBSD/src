@@ -84,7 +84,8 @@
 /*	The default per-user mailbox is a file in the UNIX mail spool
 /*	directory (\fB/var/mail/\fIuser\fR or \fB/var/spool/mail/\fIuser\fR);
 /*	the location can be specified with the \fBmail_spool_directory\fR
-/*	configuration parameter.
+/*	configuration parameter. Specify a name ending in \fB/\fR for
+/*	\fBqmail\fR-compatible \fBmaildir\fR delivery.
 /*
 /*	Alternatively, the per-user mailbox can be a file in the user's home
 /*	directory with a name specified via the \fBhome_mailbox\fR
@@ -177,13 +178,16 @@
 /* EXTERNAL FILE DELIVERY
 /* .ad
 /* .fi
+/*	The delivery format depends on the destination filename syntax.
+/*	The default is to use UNIX-style mailbox format.  Specify a name
+/*	ending in \fB/\fR for \fBqmail\fR-compatible \fBmaildir\fR delivery.
+/*
 /*	The \fBallow_mail_to_files\fR configuration parameter restricts
 /*	delivery to external files. The default setting (\fBalias,
 /*	forward\fR) forbids file destinations in \fB:include:\fR files.
-/*	Specify a pathname ending in \fB/\fR for \fBqmail\fR-compatible
-/*	\fBmaildir\fR delivery.
 /*
-/*	The \fBlocal\fR daemon prepends a "\fBFrom \fIsender time_stamp\fR"
+/*	In the case of UNIX-style mailbox delivery,
+/*	the \fBlocal\fR daemon prepends a "\fBFrom \fIsender time_stamp\fR"
 /*	envelope header to each message, prepends an
 /*	optional \fBDelivered-To:\fR
 /*	header with the recipient envelope address, prepends a \fB>\fR
@@ -303,10 +307,14 @@
 /* .IP \fBmail_spool_directory\fR
 /*	Directory with UNIX-style mailboxes. The default pathname is system
 /*	dependent.
+/*	Specify a path ending in \fB/\fR for maildir-style delivery.
 /* .IP \fBmailbox_command\fR
 /*	External command to use for mailbox delivery. The command executes
 /*	with the recipient privileges (exception: root). The string is subject
 /*	to $name expansions.
+/* .IP \fBmailbox_command_maps\fR
+/*	Lookup tables with per-recipient external commands to use for mailbox
+/*	delivery. Behavior is as with \fBmailbox_command\fR.
 /* .IP \fBmailbox_transport\fR
 /*	Message transport to use for mailbox delivery to all local
 /*	recipients, whether or not they are found in the UNIX passwd database.
@@ -446,6 +454,7 @@ int     var_dup_filter_limit;
 int     var_command_maxtime;
 char   *var_home_mailbox;
 char   *var_mailbox_command;
+char   *var_mailbox_cmd_maps;
 char   *var_rcpt_fdelim;
 char   *var_local_cmd_shell;
 char   *var_luser_relay;
@@ -695,6 +704,7 @@ int     main(int argc, char **argv)
     static CONFIG_RAW_TABLE raw_table[] = {
 	VAR_FORWARD_PATH, DEF_FORWARD_PATH, &var_forward_path, 0, 0,
 	VAR_MAILBOX_COMMAND, DEF_MAILBOX_COMMAND, &var_mailbox_command, 0, 0,
+	VAR_MAILBOX_CMD_MAPS, DEF_MAILBOX_CMD_MAPS, &var_mailbox_cmd_maps, 0, 0,
 	VAR_LUSER_RELAY, DEF_LUSER_RELAY, &var_luser_relay, 0, 0,
 	0,
     };

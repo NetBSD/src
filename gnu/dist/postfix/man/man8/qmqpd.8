@@ -1,0 +1,120 @@
+.TH QMQPD 8 
+.ad
+.fi
+.SH NAME
+qmqpd
+\-
+Postfix QMQP server
+.SH SYNOPSIS
+.na
+.nf
+\fBqmqpd\fR [generic Postfix daemon options]
+.SH DESCRIPTION
+.ad
+.fi
+The Postfix QMQP server receives one message per connection.
+Each message is piped through the \fBcleanup\fR(8)
+daemon, and is placed into the \fBincoming\fR queue as one
+single queue file.  The program expects to be run from the
+\fBmaster\fR(8) process manager.
+
+The QMQP server implements one access policy: only explicitly
+authorized client hosts are allowed to use the service.
+.SH SECURITY
+.na
+.nf
+.ad
+.fi
+The QMQP server is moderately security-sensitive. It talks to QMQP
+clients and to DNS servers on the network. The QMQP server can be
+run chrooted at fixed low privilege.
+.SH DIAGNOSTICS
+.ad
+.fi
+Problems and transactions are logged to \fBsyslogd\fR(8).
+.SH BUGS
+.ad
+.fi
+The QMQP protocol provides only one server reply per message
+delivery. It is therefore not possible to reject individual
+recipients.
+
+The QMQP protocol requires the server to receive the entire
+message before replying. If a message is malformed, or if any
+netstring component is longer than acceptable, Postfix replies
+immediately and closes the connection. It is left up to the
+client to handle the situation.
+.SH CONFIGURATION PARAMETERS
+.na
+.nf
+.ad
+.fi
+The following \fBmain.cf\fR parameters are especially relevant to
+this program. See the Postfix \fBmain.cf\fR file for syntax details
+and for default values. Use the \fBpostfix reload\fR command after
+a configuration change.
+.SH Miscellaneous
+.ad
+.fi
+.IP \fBalways_bcc\fR
+Address to send a copy of each message that enters the system.
+.IP \fBdebug_peer_level\fR
+Increment in verbose logging level when a remote host matches a
+pattern in the \fBdebug_peer_list\fR parameter.
+.IP \fBdebug_peer_list\fR
+List of domain or network patterns. When a remote host matches
+a pattern, increase the verbose logging level by the amount
+specified in the \fBdebug_peer_level\fR parameter.
+.IP \fBhopcount_limit\fR
+Limit the number of \fBReceived:\fR message headers.
+.IP \fBqmqpd_authorized_clients\fR
+A list of domain or network patterns that specifies what
+clients are allowed to use the service.
+.IP \fBqmqpd_timeout\fR
+Limit the time to send a server response and to receive a client
+request.
+.IP \fBsoft_bounce\fR
+Change hard (D) reject responses into soft (Z) reject responses.
+This can be useful for testing purposes.
+.SH "Content inspection controls"
+.IP \fBcontent_filter\fR
+The name of a mail delivery transport that filters mail and that
+either bounces mail or re-injects the result back into Postfix.
+This parameter uses the same syntax as the right-hand side of
+a Postfix transport table.
+.SH "Resource controls"
+.ad
+.fi
+.IP \fBline_length_limit\fR
+Limit the amount of memory in bytes used for the handling of
+partial input lines, and the length of sender and recipient
+addresses that are received from client.
+.IP \fBmessage_size_limit\fR
+Limit the total size in bytes of a message, including on-disk
+storage for sender and recipient address information.
+.SH Tarpitting
+.ad
+.fi
+.IP \fBqmqpd_error_sleep_time\fR
+Time to wait in seconds before informing the client of
+a problem. This slows down run-away errors.
+.SH SEE ALSO
+.na
+.nf
+http://cr.yp.to/proto/qmqp.html, QMQP protocol
+cleanup(8) message canonicalization
+master(8) process manager
+syslogd(8) system logging
+.SH LICENSE
+.na
+.nf
+.ad
+.fi
+The Secure Mailer license must be distributed with this software.
+.SH AUTHOR(S)
+.na
+.nf
+Wietse Venema
+IBM T.J. Watson Research
+P.O. Box 704
+Yorktown Heights, NY 10598, USA

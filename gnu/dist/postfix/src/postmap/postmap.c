@@ -5,8 +5,9 @@
 /*	Postfix lookup table management
 /* SYNOPSIS
 /* .fi
-/*	\fBpostmap\fR [\fB-Ninrvw\fR] [\fB-c \fIconfig_dir\fR] [\fB-d \fIkey\fR]
-/*		[\fB-q \fIkey\fR] [\fIfile_type\fR:]\fIfile_name\fR ...
+/*	\fBpostmap\fR [\fB-Nfinrvw\fR] [\fB-c \fIconfig_dir\fR]
+/*		[\fB-d \fIkey\fR] [\fB-q \fIkey\fR]
+/*		[\fIfile_type\fR:]\fIfile_name\fR ...
 /* DESCRIPTION
 /*	The \fBpostmap\fR command creates or queries one or more Postfix
 /*	lookup tables, or updates an existing one. The input and output
@@ -15,6 +16,9 @@
 /* .ti +4
 /*	\fBmakemap \fIfile_type\fR \fIfile_name\fR < \fIfile_name\fR
 /*
+/*	If the result files do not exist they will be created with the
+/*	same group and other read permissions as the source file.
+/*
 /*	While the table update is in progress, signal delivery is
 /*	postponed, and an exclusive, advisory, lock is placed on the
 /*	entire table, in order to avoid surprises in spectator
@@ -22,14 +26,16 @@
 /*
 /*	The format of a lookup table input file is as follows:
 /* .IP \(bu
-/*	Blank lines are ignored. So are lines beginning with `#'.
-/* .IP \(bu
 /*	A table entry has the form
 /* .sp
 /* .ti +5
 /*	\fIkey\fR whitespace \fIvalue\fR
 /* .IP \(bu
-/*	A line that starts with whitespace continues the preceding line.
+/*	Empty lines and whitespace-only lines are ignored, as
+/*	are lines whose first non-whitespace character is a `#'.
+/* .IP \(bu
+/*	A logical line starts with non-whitespace text. A line that
+/*	starts with whitespace continues a logical line.
 /* .PP
 /*	The \fIkey\fR and \fIvalue\fR are processed as is, except that
 /*	surrounding white space is stripped off. Unlike with Postfix alias
@@ -47,7 +53,14 @@
 /*	instead of the default configuration directory.
 /* .IP "\fB-d \fIkey\fR"
 /*	Search the specified maps for \fIkey\fR and remove one entry per map.
-/*	The exit status is non-zero if the requested information was not found.
+/*	The exit status is zero when the requested information was found.
+/*
+/*	If a key value of \fB-\fR is specified, the program reads key
+/*	values from the standard input stream. The exit status is zero
+/*	when at least one of the requested keys was found.
+/* .IP \fB-f\fR
+/*	Do not fold the lookup key to lower case while creating or querying
+/*	a map.
 /* .IP \fB-i\fR
 /*	Incremental mode. Read entries from standard input and do not
 /*	truncate an existing database. By default, \fBpostmap\fR creates
@@ -58,8 +71,13 @@
 /*	the host operating system.
 /* .IP "\fB-q \fIkey\fR"
 /*	Search the specified maps for \fIkey\fR and print the first value
-/*	found on the standard output stream. The exit status is non-zero
-/*	if the requested information was not found.
+/*	found on the standard output stream. The exit status is zero
+/*	when the requested information was found.
+/*
+/*	If a key value of \fB-\fR is specified, the program reads key
+/*	values from the standard input stream and prints one line of
+/*	\fIkey value\fR output for each key that was found. The exit
+/*	status is zero when at least one of the requested keys was found.
 /* .IP \fB-r\fR
 /*	When updating a table, do not warn about duplicate entries; silently
 /*	replace them.
@@ -98,9 +116,6 @@
 /*	\fBpostmap\fR terminates with zero exit status in case of success
 /*	(including successful \fBpostmap -q\fR lookup) and terminates
 /*	with non-zero exit status in case of failure.
-/* BUGS
-/*	The "delete key" support is limited to one delete operation
-/*	per command invocation.
 /* ENVIRONMENT
 /* .ad
 /* .fi
@@ -146,6 +161,7 @@
 #include <readlline.h>
 #include <stringops.h>
 #include <split_at.h>
+#include <vstring_vstream.h>
 
 /* Global library. */
 
@@ -168,6 +184,8 @@ static void postmap(char *map_type, char *path_name,
     int     lineno;
     char   *key;
     char   *value;
+    struct stat st;
+    mode_t  saved_mask;
 
     /*
      * Initialize.
@@ -179,6 +197,14 @@ static void postmap(char *map_type, char *path_name,
     } else if ((source_fp = vstream_fopen(path_name, O_RDONLY, 0)) == 0) {
 	msg_fatal("open %s: %m", path_name);
     }
+    if (fstat(vstream_fileno(source_fp), &st) < 0)
+	msg_fatal("fstat %s: %m", path_name);
+
+    /*
+     * Turn off group/other read permissions as indicated in the source file.
+     */
+    if (S_ISREG(st.st_mode))
+	saved_mask = umask(022 | (~st.st_mode & 077));
 
     /*
      * Open the database, optionally create it when it does not exist,
@@ -188,37 +214,29 @@ static void postmap(char *map_type, char *path_name,
     mkmap = mkmap_open(map_type, path_name, open_flags, dict_flags);
 
     /*
+     * And restore the umask, in case it matters.
+     */
+    if (S_ISREG(st.st_mode))
+	umask(saved_mask);
+
+    /*
      * Add records to the database.
      */
     lineno = 0;
-    while (readlline(line_buffer, source_fp, &lineno, READLL_STRIPNL)) {
-
-	/*
-	 * Skip comments.
-	 */
-	if (*STR(line_buffer) == '#')
-	    continue;
+    while (readlline(line_buffer, source_fp, &lineno)) {
 
 	/*
 	 * Split on the first whitespace character, then trim leading and
 	 * trailing whitespace from key and value.
 	 */
 	key = STR(line_buffer);
-	value = STR(line_buffer) + strcspn(STR(line_buffer), " \t\r\n");
+	value = key + strcspn(key, " \t\r\n");
 	if (*value)
 	    *value++ = 0;
-	while (ISSPACE(*key))
-	    key++;
 	while (ISSPACE(*value))
 	    value++;
 	trimblanks(key, 0)[0] = 0;
 	trimblanks(value, 0)[0] = 0;
-
-	/*
-	 * Skip empty lines, or lines with whitespace characters only.
-	 */
-	if (*key == 0 && *value == 0)
-	    continue;
 
 	/*
 	 * Enforce the "key whitespace value" format. Disallow missing keys
@@ -236,7 +254,8 @@ static void postmap(char *map_type, char *path_name,
 	/*
 	 * Store the value under a case-insensitive key.
 	 */
-	lowercase(key);
+	if (dict_flags & DICT_FLAG_FOLD_KEY)
+	    lowercase(key);
 	mkmap_append(mkmap, key, value);
     }
 
@@ -251,6 +270,65 @@ static void postmap(char *map_type, char *path_name,
     vstring_free(line_buffer);
     if (source_fp != VSTREAM_IN)
 	vstream_fclose(source_fp);
+}
+
+/* postmap_queries - apply multiple requests from stdin */
+
+static int postmap_queries(VSTREAM *in, char **maps, const int map_count,
+			           const int dict_flags)
+{
+    int     found = 0;
+    VSTRING *keybuf = vstring_alloc(100);
+    DICT  **dicts;
+    const char *map_name;
+    const char *value;
+    int     n;
+
+    /*
+     * Sanity check.
+     */
+    if (map_count <= 0)
+	msg_panic("postmap_queries: bad map count");
+
+    /*
+     * Prepare to open maps lazily.
+     */
+    dicts = (DICT **) mymalloc(sizeof(*dicts) * map_count);
+    for (n = 0; n < map_count; n++)
+	dicts[n] = 0;
+
+    /*
+     * Perform all queries. Open maps on the fly, to avoid opening unecessary
+     * maps.
+     */
+    while (vstring_get_nonl(keybuf, in) != VSTREAM_EOF) {
+	if (dict_flags & DICT_FLAG_FOLD_KEY)
+	    lowercase(STR(keybuf));
+	for (n = 0; n < map_count; n++) {
+	    if (dicts[n] == 0)
+		dicts[n] = ((map_name = split_at(maps[n], ':')) != 0 ?
+		   dict_open3(maps[n], map_name, O_RDONLY, DICT_FLAG_LOCK) :
+		dict_open3(var_db_type, maps[n], O_RDONLY, DICT_FLAG_LOCK));
+	    if ((value = dict_get(dicts[n], STR(keybuf))) != 0) {
+		vstream_printf("%s	%s\n", STR(keybuf), value);
+		found = 1;
+		break;
+	    }
+	}
+    }
+    if (found)
+	vstream_fflush(VSTREAM_OUT);
+
+    /*
+     * Cleanup.
+     */
+    for (n = 0; n < map_count; n++)
+	if (dicts[n])
+	    dict_close(dicts[n]);
+    myfree((char *) dicts);
+    vstring_free(keybuf);
+
+    return (found);
 }
 
 /* postmap_query - query a map and print the result to stdout */
@@ -270,6 +348,50 @@ static int postmap_query(const char *map_type, const char *map_name,
     return (value != 0);
 }
 
+/* postmap_deletes - apply multiple requests from stdin */
+
+static int postmap_deletes(VSTREAM *in, char **maps, const int map_count)
+{
+    int     found = 0;
+    VSTRING *keybuf = vstring_alloc(100);
+    DICT  **dicts;
+    const char *map_name;
+    int     n;
+
+    /*
+     * Sanity check.
+     */
+    if (map_count <= 0)
+	msg_panic("postmap_deletes: bad map count");
+
+    /*
+     * Open maps ahead of time.
+     */
+    dicts = (DICT **) mymalloc(sizeof(*dicts) * map_count);
+    for (n = 0; n < map_count; n++)
+	dicts[n] = ((map_name = split_at(maps[n], ':')) != 0 ?
+		    dict_open3(maps[n], map_name, O_RDWR, DICT_FLAG_LOCK) :
+		  dict_open3(var_db_type, maps[n], O_RDWR, DICT_FLAG_LOCK));
+
+    /*
+     * Perform all requests.
+     */
+    while (vstring_get_nonl(keybuf, in) != VSTREAM_EOF)
+	for (n = 0; n < map_count; n++)
+	    found |= (dict_del(dicts[n], STR(keybuf)) == 0);
+
+    /*
+     * Cleanup.
+     */
+    for (n = 0; n < map_count; n++)
+	if (dicts[n])
+	    dict_close(dicts[n]);
+    myfree((char *) dicts);
+    vstring_free(keybuf);
+
+    return (found);
+}
+
 /* postmap_delete - delete a (key, value) pair from a map */
 
 static int postmap_delete(const char *map_type, const char *map_name,
@@ -278,10 +400,6 @@ static int postmap_delete(const char *map_type, const char *map_name,
     DICT   *dict;
     int     status;
 
-    /*
-     * XXX This must be generalized to multi-key (read from stdin) and
-     * multi-map (given on command line) updates.
-     */
     dict = dict_open3(map_type, map_name, O_RDWR, DICT_FLAG_LOCK);
     status = dict_del(dict, key);
     dict_close(dict);
@@ -292,7 +410,7 @@ static int postmap_delete(const char *map_type, const char *map_name,
 
 static NORETURN usage(char *myname)
 {
-    msg_fatal("usage: %s [-Ninrvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
+    msg_fatal("usage: %s [-Nfinrvw] [-c config_dir] [-d key] [-q key] [map_type:]file...",
 	      myname);
 }
 
@@ -304,7 +422,7 @@ int     main(int argc, char **argv)
     char   *slash;
     struct stat st;
     int     open_flags = O_RDWR | O_CREAT | O_TRUNC;
-    int     dict_flags = DICT_FLAG_DUP_WARN;
+    int     dict_flags = DICT_FLAG_DUP_WARN | DICT_FLAG_FOLD_KEY;
     char   *query = 0;
     char   *delkey = 0;
     int     found;
@@ -342,7 +460,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "Nc:d:inq:rvw")) > 0) {
+    while ((ch = GETOPT(argc, argv, "Nc:d:finq:rvw")) > 0) {
 	switch (ch) {
 	default:
 	    usage(argv[0]);
@@ -359,6 +477,9 @@ int     main(int argc, char **argv)
 	    if (query || delkey)
 		msg_fatal("specify only one of -q or -d");
 	    delkey = optarg;
+	    break;
+	case 'f':
+	    dict_flags &= ~DICT_FLAG_FOLD_KEY;
 	    break;
 	case 'i':
 	    open_flags &= ~O_TRUNC;
@@ -394,6 +515,8 @@ int     main(int argc, char **argv)
     if (delkey) {				/* remove entry */
 	if (optind + 1 > argc)
 	    usage(argv[0]);
+	if (strcmp(delkey, "-") == 0)
+	    exit(postmap_deletes(VSTREAM_IN, argv + optind, argc - optind) == 0);
 	found = 0;
 	while (optind < argc) {
 	    if ((path_name = split_at(argv[optind], ':')) != 0) {
@@ -407,6 +530,11 @@ int     main(int argc, char **argv)
     } else if (query) {				/* query map(s) */
 	if (optind + 1 > argc)
 	    usage(argv[0]);
+	if (strcmp(query, "-") == 0)
+	    exit(postmap_queries(VSTREAM_IN, argv + optind, argc - optind,
+				 dict_flags) == 0);
+	if (dict_flags & DICT_FLAG_FOLD_KEY)
+	    lowercase(query);
 	while (optind < argc) {
 	    if ((path_name = split_at(argv[optind], ':')) != 0) {
 		found = postmap_query(argv[optind], path_name, query);

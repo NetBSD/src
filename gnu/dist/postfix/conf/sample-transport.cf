@@ -11,8 +11,8 @@
 # to use.  If you use this feature, run "postmap /etc/postfix/transport"
 # after change, then "postfix reload".
 # 
-# transport_maps = dbm:/etc/postfix/transport
-# transport_maps = hash:/etc/postfix/transport
-# transport_maps = hash:/etc/postfix/transport, nis:transport
-# transport_maps = hash:/etc/postfix/transport, netinfo:/transport
+#transport_maps = dbm:/etc/postfix/transport
+#transport_maps = hash:/etc/postfix/transport
+#transport_maps = hash:/etc/postfix/transport, nis:transport
+#transport_maps = hash:/etc/postfix/transport, netinfo:/transport
 transport_maps = 

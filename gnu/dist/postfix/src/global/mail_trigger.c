@@ -79,7 +79,7 @@ int     mail_trigger(const char *class, const char *service,
      */
     path = mail_pathname(class, service);
     if ((status = stat(path, &st)) < 0) {
-	 /* void */ ;
+	 msg_warn("unable to look up %s: %m", path);
     } else if (S_ISFIFO(st.st_mode)) {
 	status = fifo_trigger(path, req_buf, req_len, var_trigger_timeout);
 	if (status < 0 && S_ISSOCK(st.st_mode))

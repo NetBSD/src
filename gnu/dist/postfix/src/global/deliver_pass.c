@@ -77,7 +77,9 @@ static int deliver_pass_initial_reply(VSTREAM *stream)
 {
     int     stat;
 
-    if (mail_scan(stream, "%d", &stat) != 1) {
+    if (attr_scan(stream, ATTR_FLAG_STRICT,
+		  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &stat,
+		  ATTR_TYPE_END) != 1) {
 	msg_warn("%s: malformed response", VSTREAM_PATH(stream));
 	stat = -1;
     }
@@ -91,14 +93,21 @@ static int deliver_pass_send_request(VSTREAM *stream, DELIVER_REQUEST *request,
 {
     int     stat;
 
-    mail_print(stream, "%d %s %s %ld %ld %s %s %s %s %ld %ld %s %s",
-	       request->flags,
-	       request->queue_name, request->queue_id,
-	       request->data_offset, request->data_size,
-	       nexthop, request->sender,
-	       request->errors_to, request->return_receipt,
-	       request->arrival_time,
-	       offs, addr, "0");
+    attr_print(stream, ATTR_FLAG_NONE,
+	       ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, request->flags,
+	       ATTR_TYPE_STR, MAIL_ATTR_QUEUE, request->queue_name,
+	       ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, request->queue_id,
+	       ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, request->data_offset,
+	       ATTR_TYPE_LONG, MAIL_ATTR_SIZE, request->data_size,
+	       ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, nexthop,
+	       ATTR_TYPE_STR, MAIL_ATTR_SENDER, request->sender,
+	       ATTR_TYPE_STR, MAIL_ATTR_ERRTO, request->errors_to,
+	       ATTR_TYPE_STR, MAIL_ATTR_RRCPT, request->return_receipt,
+	       ATTR_TYPE_LONG, MAIL_ATTR_TIME, request->arrival_time,
+	       ATTR_TYPE_LONG, MAIL_ATTR_OFFSET, offs,
+	       ATTR_TYPE_STR, MAIL_ATTR_RECIP, addr,
+	       ATTR_TYPE_NUM, MAIL_ATTR_OFFSET, 0,
+	       ATTR_TYPE_END);
 
     if (vstream_fflush(stream)) {
 	msg_warn("%s: bad write: %m", VSTREAM_PATH(stream));
@@ -115,7 +124,10 @@ static int deliver_pass_final_reply(VSTREAM *stream, VSTRING *reason)
 {
     int     stat;
 
-    if (mail_scan(stream, "%s %d", reason, &stat) != 2) {
+    if (attr_scan(stream, ATTR_FLAG_STRICT,
+		  ATTR_TYPE_STR, MAIL_ATTR_WHY, reason,
+		  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &stat,
+		  ATTR_TYPE_END) != 2) {
 	msg_warn("%s: malformed response", VSTREAM_PATH(stream));
 	stat = -1;
     }

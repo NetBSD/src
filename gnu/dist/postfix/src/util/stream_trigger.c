@@ -15,6 +15,10 @@
 /*	stream_trigger() wakes up the named stream server by making
 /*	a brief connection to it and writing the named buffer.
 /*
+/*	The connection is closed by a background thread. Some kernels
+/*	cannot handle client-side disconnect before the server has
+/*	received the message.
+/*
 /*	Arguments:
 /* .IP service
 /*	Name of the communication endpoint.
@@ -51,13 +55,41 @@
 #include <msg.h>
 #include <connect.h>
 #include <iostuff.h>
+#include <mymalloc.h>
+#include <events.h>
 #include <trigger.h>
+
+struct stream_trigger {
+    int     fd;
+    char   *service;
+};
+
+/* stream_trigger_event - disconnect from peer */
+
+static void stream_trigger_event(int event, char *context)
+{
+    struct stream_trigger *sp = (struct stream_trigger *) context;
+    static char *myname = "stream_trigger_event";
+
+    /*
+     * Disconnect.
+     */
+    if (event == EVENT_TIME)
+	msg_warn("%s: read timeout for service %s", myname, sp->service);
+    event_disable_readwrite(sp->fd);
+    event_cancel_timer(stream_trigger_event, context);
+    if (close(sp->fd) < 0)
+	msg_warn("%s: close %s: %m", myname, sp->service);
+    myfree(sp->service);
+    myfree((char *) sp);
+}
 
 /* stream_trigger - wakeup stream server */
 
 int     stream_trigger(const char *service, const char *buf, int len, int timeout)
 {
     char   *myname = "stream_trigger";
+    struct stream_trigger *sp;
     int     fd;
 
     if (msg_verbose > 1)
@@ -71,19 +103,28 @@ int     stream_trigger(const char *service, const char *buf, int len, int timeou
 	    msg_warn("%s: connect to %s: %m", myname, service);
 	return (-1);
     }
+    close_on_exec(fd, CLOSE_ON_EXEC);
+
+    /*
+     * Stash away context.
+     */
+    sp = (struct stream_trigger *) mymalloc(sizeof(*sp));
+    sp->fd = fd;
+    sp->service = mystrdup(service);
 
     /*
      * Write the request...
      */
-    if (write_buf(fd, buf, len, timeout) < 0)
+    if (write_buf(fd, buf, len, timeout) < 0
+	|| write_buf(fd, "", 1, timeout) < 0)
 	if (msg_verbose)
 	    msg_warn("%s: write to %s: %m", myname, service);
 
     /*
-     * Disconnect.
+     * Wakeup when the peer disconnects, or when we lose patience.
      */
-    if (close(fd) < 0)
-	if (msg_verbose)
-	    msg_warn("%s: close %s: %m", myname, service);
+    if (timeout > 0)
+	event_request_timer(stream_trigger_event, (char *) sp, timeout + 100);
+    event_enable_read(fd, stream_trigger_event, (char *) sp);
     return (0);
 }

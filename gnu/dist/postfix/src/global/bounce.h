@@ -40,8 +40,8 @@ extern int vbounce_recip(int, const char *, const char *, const char *,
   */
 #define BOUNCE_CMD_APPEND	0	/* append log */
 #define BOUNCE_CMD_FLUSH	1	/* send log */
-#define BOUNCE_CMD_WARN		2	/* send warning bounce, don't delete
-					 * log */
+#define BOUNCE_CMD_WARN		2	/* send warning, don't delete log */
+#define BOUNCE_CMD_VERP		3	/* send log, verp style */
 
  /*
   * Flags.

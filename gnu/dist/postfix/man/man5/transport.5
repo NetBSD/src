@@ -35,13 +35,15 @@ the lookups are done in a slightly different way as described below.
 .ad
 .fi
 The format of the transport table is as follows:
-.IP "blanks and comments"
-Blank lines are ignored, as are lines beginning with `#'.
-.IP "leading whitespace"
-Lines that begin with whitespace continue the previous line.
 .IP "\fIpattern result\fR"
 When \fIpattern\fR matches the domain, use the corresponding
 \fIresult\fR.
+.IP "blank lines and comments"
+Empty lines and whitespace-only lines are ignored, as
+are lines whose first non-whitespace character is a `#'.
+.IP "multi-line text"
+A logical line starts with non-whitespace text. A line that
+starts with whitespace continues a logical line.
 .PP
 With lookups from indexed files such as DB or DBM, or from networked
 tables such as NIS, LDAP or SQL, patterns are tried in the order as
@@ -51,7 +53,10 @@ Mail for \fIdomain\fR is delivered through \fItransport\fR to
 \fInexthop\fR.
 .IP "\fI.domain transport\fR:\fInexthop\fR"
 Mail for any subdomain of \fIdomain\fR is delivered through
-\fItransport\fR to \fInexthop\fR.
+\fItransport\fR to \fInexthop\fR. This applies only when the
+string \fBtransport_maps\fR is not listed in the
+\fBparent_domain_matches_subdomains\fR configuration setting.
+Otherwise, a domain name matches itself and its subdomains.
 .PP
 Note: transport map entries take precedence over domains
 specified in the \fBmydestination\fR parameter. If you use
@@ -138,7 +143,7 @@ broken up into parent domains.
 Patterns are applied in the order as specified in the table, until a
 pattern is found that matches the search string.
 
-Results are the same as with normal indexed file lookups, with
+Results are the same as with indexed file lookups, with
 the additional feature that parenthesized substrings from the
 pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 .SH CONFIGURATION PARAMETERS
@@ -150,6 +155,10 @@ The following \fBmain.cf\fR parameters are especially relevant to
 this topic. See the Postfix \fBmain.cf\fR file for syntax details
 and for default values. Use the \fBpostfix reload\fR command after
 a configuration change.
+.IP \fBparent_domain_matches_subdomains\fR
+List of Postfix features that use \fIdomain.name\fR patterns
+to match \fIsub.domain.name\fR (as opposed to
+requiring \fI.domain.name\fR patterns).
 .IP \fBtransport_maps\fR
 List of transport lookup tables.
 .PP

@@ -68,6 +68,7 @@ showq.o: ../../include/mail_queue.h
 showq.o: ../../include/mail_open_ok.h
 showq.o: ../../include/mail_proto.h
 showq.o: ../../include/iostuff.h
+showq.o: ../../include/attr.h
 showq.o: ../../include/mail_date.h
 showq.o: ../../include/mail_params.h
 showq.o: ../../include/mail_scan_dir.h

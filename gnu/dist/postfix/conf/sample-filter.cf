@@ -9,14 +9,12 @@
 # headers that span multiple physical lines.  Patterns are matched
 # in the specified order, and the search stops upon the first match.
 # When a pattern matches, what happens next depends on the associated
-# action:
+# action that is specified in the right-hand side of the table:
 #
 # REJECT the entire message is rejected.
-#
+# REJECT text.... The text is sent to the originator.
 # IGNORE the header line is silently discarded.
-#
-# OK	Nothing happens. the message will still be rejected when some 
-#	other header line matches a REJECT pattern.
+# WARN   the header is logged (not rejected) with a warning message.
 #
 # These patterns do not apply to MIME headers in the message body.
 #
@@ -25,17 +23,16 @@ header_checks = regexp:/etc/postfix/header_checks
 # The body_checks parameter specifies an optional table with patterns
 # that each physical line in the message body is matched against
 # (including MIME headers inside the message body - Postfix does not
-# recognize multi-line MIME headers).  Lines are matched one at a
-# time.  Long lines are matched in chunks of at most $line_length_limit
-# characters. Patterns are matched in the specified order, and the
-# search stops upon the first match.  When a pattern matches, what
-# happens next depends on the associated action:
+# recognize multi-line MIME headers in the message body).  
+# Lines are matched one at a time.  Long lines are matched in chunks
+# of at most $line_length_limit characters. Patterns are matched in
+# the specified order, and the search stops upon the first match.
+# When a pattern matches, what happens next depends on the associated
+# action that is specified in the right-hand side of the table:
 #
 # REJECT the entire message is rejected.
-#
+# REJECT text.... The text is sent to the originator.
 # IGNORE the body line is silently discarded.
-#
-# OK	Nothing happens. The message will still be rejected when some 
-#	other body line matches a REJECT pattern.
+# WARN   the body line is logged (not rejected) with a warning message.
 #
 body_checks = regexp:/etc/postfix/body_checks

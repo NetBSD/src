@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 ALIASES(5)                                             ALIASES(5)
-
 
 <b>NAME</b>
        aliases - format of the Postfix alias database
@@ -38,11 +35,13 @@ ALIASES(5)                                             ALIASES(5)
 
                    <i>name</i>: <i>value1</i>, <i>value2</i>, <i>...</i>
 
-       <b>o</b>      Lines that begin with whitespace continue the  pre-
-              vious line.
+       <b>o</b>      Empty lines and whitespace-only lines are  ignored,
+              as  are  lines whose first non-whitespace character
+              is a `#'.
 
-       <b>o</b>      Blank  lines  are  ignored,  as are lines beginning
-              with `#'.
+       <b>o</b>      A logical line starts with non-whitespace  text.  A
+              line  that starts with whitespace continues a logi-
+              cal line.
 
        The <i>name</i> is a local address (no domain part).  Use  double
        quotes  when the name contains any special characters such
@@ -58,18 +57,6 @@ ALIASES(5)                                             ALIASES(5)
        the originator of the undelivered mail.
 
        The <i>value</i> contains one or more of the following:
-
-
-
-
-                                                                1
-
-
-
-
-
-ALIASES(5)                                             ALIASES(5)
-
 
        <i>address</i>
               Mail  is  forwarded to <i>address</i>, which is compatible
@@ -124,19 +111,6 @@ ALIASES(5)                                             ALIASES(5)
               Restrict  the  usage  of  mail delivery to external
               command.
 
-
-
-
-
-                                                                2
-
-
-
-
-
-ALIASES(5)                                             ALIASES(5)
-
-
        <b>allow</b><i>_</i><b>mail</b><i>_</i><b>to</b><i>_</i><b>files</b>
               Restrict the usage of  mail  delivery  to  external
               file.
@@ -172,29 +146,6 @@ ALIASES(5)                                             ALIASES(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                3
-
+                                                                1
 
 </pre> </body> </html>

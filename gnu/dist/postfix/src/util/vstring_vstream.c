@@ -27,6 +27,11 @@
 /*	VSTRING	*vp;
 /*	VSTREAM	*fp;
 /*	int	bound;
+/*
+/*	int	vstring_get_null_bound(vp, fp, bound)
+/*	VSTRING	*vp;
+/*	VSTREAM	*fp;
+/*	int	bound;
 /* DESCRIPTION
 /*	The routines in this module each read one newline or null-terminated
 /*	string from an input stream. In all cases the result is either the
@@ -41,7 +46,7 @@
 /*	vstring_get_null() reads a null-terminated string from the named
 /*	stream.
 /*
-/*	vstring_get_bound() and vstring_get_nonl_bound() read no more
+/*	the vstring_get<whatever>_bound() routines read no more
 /*	than \fIbound\fR characters.  Otherwise they behave like the
 /*	unbounded versions documented above.
 /* DIAGNOSTICS
@@ -152,6 +157,22 @@ int     vstring_get_nonl_bound(VSTRING *vp, VSTREAM *fp, int bound)
 	VSTRING_ADDCH(vp, c);
     VSTRING_TERMINATE(vp);
     return (c == '\n' ? c : VSTRING_GET_RESULT(vp));
+}
+
+/* vstring_get_null_bound - read null-terminated string from file */
+
+int     vstring_get_null_bound(VSTRING *vp, VSTREAM *fp, int bound)
+{
+    int     c;
+
+    if (bound <= 0)
+	msg_panic("vstring_get_nonl_bound: invalid bound %d", bound);
+
+    VSTRING_RESET(vp);
+    while (bound-- > 0 && (c = VSTREAM_GETC(fp)) != VSTREAM_EOF && c != 0)
+	VSTRING_ADDCH(vp, c);
+    VSTRING_TERMINATE(vp);
+    return (c == 0 ? c : VSTRING_GET_RESULT(vp));
 }
 
 #ifdef TEST

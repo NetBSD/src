@@ -196,7 +196,7 @@ int     smtpd_token(char *cp, SMTPD_TOKEN **argvp)
 #include <vstream.h>
 #include <vstring_vstream.h>
 
-main(int unused_argc, char **unused_argv)
+int     main(int unused_argc, char **unused_argv)
 {
     VSTRING *vp = vstring_alloc(10);
     int     tok_argc;

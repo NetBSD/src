@@ -76,7 +76,7 @@
 /*	mail_queue_rename() renames a queue file. A non-zero result
 /*	means the operation failed.
 /*
-/*	mail_queue_remove() renames the named queue file. A non-zero result
+/*	mail_queue_remove() removes the named queue file. A non-zero result
 /*	means the operation failed.
 /*
 /*	mail_queue_name_ok() validates a mail queue name and returns
@@ -378,9 +378,23 @@ VSTREAM *mail_queue_enter(const char *queue_name, int mode)
     file_id = get_file_id(fd);
     GETTIMEOFDAY(&tv);
 
+    /*
+     * XXX Some systems seem to have clocks that correlate with process
+     * scheduling or something. Unfortunately, we cannot add random
+     * quantities to the time, because the non-inode part of a queue ID must
+     * not repeat within the same second. The queue ID is the sole thing that
+     * prevents multiple messages from getting the same Message-ID value.
+     */
     for (count = 0;; count++) {
 	vstring_sprintf(id_buf, "%05X%s", (int) tv.tv_usec, file_id);
 	mail_queue_path(path_buf, queue_name, STR(id_buf));
+#if 0
+	if (access(STR(path_buf), X_OK) == 0) {	/* collision. */
+	    if ((int) ++tv.tv_usec < 0)
+		tv.tv_usec = 0;
+	    continue;
+	}
+#endif
 	if (sane_rename(STR(temp_path), STR(path_buf)) == 0)	/* success */
 	    break;
 	if (errno == EPERM || errno == EISDIR) {/* collision. weird. */

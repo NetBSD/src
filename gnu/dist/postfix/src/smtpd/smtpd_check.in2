@@ -6,6 +6,7 @@
 smtpd_delay_reject 0
 mynetworks 127.0.0.0/8,168.100.189.0/28
 relay_domains porcupine.org
+maps_rbl_domains blackholes.mail-abuse.org
 #
 # Test the client restrictions.
 #

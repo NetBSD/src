@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 VIRTUAL(5)                                             VIRTUAL(5)
-
 
 <b>NAME</b>
        virtual - format of Postfix virtual table
@@ -58,20 +55,8 @@ VIRTUAL(5)                                             VIRTUAL(5)
            <i>user1@virtual.domain</i> <i>address1</i>
            <i>user2@virtual.domain</i> <i>address2,</i> <i>address3</i>
 
-       The  <i>virtual.domain</i>  <i>anything</i>  entry  is  required  for  a
-
-
-
-                                                                1
-
-
-
-
-
-VIRTUAL(5)                                             VIRTUAL(5)
-
-
-       Postfix-style virtual domain.
+       The <i>virtual.domain</i> <i>anything</i> entry is required for a  Post-
+       fix-style virtual domain.
 
        Do  not list a Postfix-style virtual domain in the <b>main.cf</b>
        <b>mydestination</b> configuration parameter.  Such an  entry  is
@@ -105,7 +90,7 @@ VIRTUAL(5)                                             VIRTUAL(5)
        The  <b>main.cf</b>  <b>mydestination</b>  entry is required for a Send-
        mail-style virtual domain.
 
-       Do not specify a <i>virtual.domain</i> <i>whatever</i> virtual map entry
+       Do not specify a <i>virtual.domain</i> <i>anything</i> virtual map entry
        for  a  Sendmail-style  virtual  domain.  Such an entry is
        required only with a Postfix-style virtual domain.
 
@@ -119,29 +104,19 @@ VIRTUAL(5)                                             VIRTUAL(5)
        The format of the virtual table is  as  follows,  mappings
        being tried in the order as listed in this manual page:
 
-       blanks and comments
-              Blank  lines  are  ignored,  as are lines beginning
-              with `#'.
-
-       leading whitespace
-              Lines  that  begin  with  whitespace  continue  the
-
-
-
-                                                                2
-
-
-
-
-
-VIRTUAL(5)                                             VIRTUAL(5)
-
-
-              previous line.
-
        <i>pattern</i> <i>result</i>
               When  <i>pattern</i> matches a mail address, replace it by
               the corresponding <i>result</i>.
+
+       blank lines and comments
+              Empty lines and whitespace-only lines are  ignored,
+              as  are  lines whose first non-whitespace character
+              is a `#'.
+
+       multi-line text
+              A logical line starts with non-whitespace  text.  A
+              line  that starts with whitespace continues a logi-
+              cal line.
 
        With lookups from indexed files such as DB or DBM, or from
        networked  tables  such  as NIS, LDAP or SQL, patterns are
@@ -171,12 +146,11 @@ VIRTUAL(5)                                             VIRTUAL(5)
        works for the first address in the expansion only.
 
 <b>ADDRESS</b> <b>EXTENSION</b>
-       When the search fails, and the address localpart  contains
-       the  optional recipient delimiter (e.g., <i>user+foo</i>@<i>domain</i>),
-       the search is repeated for the  unextended  address  (e.g.
-       <i>user</i>@<i>domain</i>), and the unmatched address extension is prop-
-       agated to the result of expansion. The matching order  is:
-       <i>user+foo</i>@<i>domain</i>, <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and @<i>domain</i>.
+       When a mail address localpart contains the optional recip-
+       ient  delimiter  (e.g., <i>user+foo</i>@<i>domain</i>), the lookup order
+       becomes: <i>user+foo</i>@<i>domain</i>, <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and
+       @<i>domain</i>.   An unmatched address extension (<i>+foo</i>) is propa-
+       gated to the result of table lookup.
 
 <b>REGULAR</b> <b>EXPRESSION</b> <b>TABLES</b>
        This section describes how the table lookups  change  when
@@ -191,32 +165,20 @@ VIRTUAL(5)                                             VIRTUAL(5)
        <i>foo</i>.
 
        Patterns  are  applied  in  the  order as specified in the
-
-
-
-                                                                3
-
-
-
-
-
-VIRTUAL(5)                                             VIRTUAL(5)
-
-
        table, until a pattern is found that  matches  the  search
        string.
 
-       Results  are the same as with normal indexed file lookups,
-       with the additional feature that parenthesized  substrings
-       from  the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
+       Results  are  the  same as with indexed file lookups, with
+       the additional feature that parenthesized substrings  from
+       the pattern can be interpolated as <b>$1</b>, <b>$2</b> and so on.
 
 <b>BUGS</b>
-       The table format does not understand quoting  conventions.
+       The  table format does not understand quoting conventions.
 
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this topic. See the Postfix  <b>main.cf</b>  file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
+       The following <b>main.cf</b> parameters are  especially  relevant
+       to  this  topic.  See  the Postfix <b>main.cf</b> file for syntax
+       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
        command after a configuration change.
 
        <b>virtual</b><i>_</i><b>maps</b>
@@ -225,11 +187,11 @@ VIRTUAL(5)                                             VIRTUAL(5)
        Other parameters of interest:
 
        <b>inet</b><i>_</i><b>interfaces</b>
-              The network interface addresses  that  this  system
+              The  network  interface  addresses that this system
               receives mail on.
 
        <b>mydestination</b>
-              List  of  domains  that  this mail system considers
+              List of domains that  this  mail  system  considers
               local.
 
        <b>myorigin</b>
@@ -246,7 +208,7 @@ VIRTUAL(5)                                             VIRTUAL(5)
        <a href="regexp_table.5.html">regexp_table(5)</a> format of POSIX regular expression tables
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -255,12 +217,6 @@ VIRTUAL(5)                                             VIRTUAL(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-                                                                4
-
+                                                                1
 
 </pre> </body> </html>

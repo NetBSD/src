@@ -13,7 +13,8 @@
 /*	int	timeout;
 /* DESCRIPTION
 /*	fifo_trigger() wakes up the named fifo server by writing
-/*	the contents of the specified buffer to the fifo.
+/*	the contents of the specified buffer to the fifo. There is
+/*	no guarantee that the written data will actually be received.
 /*
 /*	Arguments:
 /* .IP service
@@ -26,7 +27,7 @@
 /*	Deadline in seconds. Specify a value <= 0 to disable
 /*	the time limit.
 /* DIAGNOSTICS
-/*	The result is zero in case of success, -1 in case of problems.
+/*	The result is zero when the fifo could be opened, -1 otherwise.
 /* BUGS
 /* LICENSE
 /* .ad
@@ -49,25 +50,37 @@
 
 #include <msg.h>
 #include <iostuff.h>
+#include <safe_open.h>
 #include <trigger.h>
 
 /* fifo_trigger - wakeup fifo server */
 
 int     fifo_trigger(const char *service, const char *buf, int len, int timeout)
 {
+    static VSTRING *why;
     char   *myname = "fifo_trigger";
+    VSTREAM *fp;
     int     fd;
+
+    if (why == 0)
+	why = vstring_alloc(1);
 
     /*
      * Write the request to the service fifo. According to POSIX, the open
      * shall always return immediately, and shall return an error when no
      * process is reading from the FIFO.
+     * 
+     * Use safe_open() so that we don't follow symlinks, and so that we don't
+     * open files with multiple hard links. We're not (yet) going to bother
+     * the caller with safe_open() specific quirks such as the why argument.
      */
-    if ((fd = open(service, O_WRONLY | O_NONBLOCK, 0)) < 0) {
+    if ((fp = safe_open(service, O_WRONLY | O_NONBLOCK, 0,
+			(struct stat *) 0, -1, -1, why)) == 0) {
 	if (msg_verbose)
-	    msg_info("%s: open %s: %m", myname, service);
+	    msg_info("%s: open %s: %s", myname, service, vstring_str(why));
 	return (-1);
     }
+    fd = vstream_fileno(fp);
 
     /*
      * Write the request...
@@ -80,7 +93,7 @@ int     fifo_trigger(const char *service, const char *buf, int len, int timeout)
     /*
      * Disconnect.
      */
-    if (close(fd))
+    if (vstream_fclose(fp))
 	if (msg_verbose)
 	    msg_warn("%s: close %s: %m", myname, service);
     return (0);

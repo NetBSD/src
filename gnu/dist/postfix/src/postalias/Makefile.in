@@ -21,9 +21,35 @@ $(PROG): $(OBJS) $(LIBS)
 Makefile: Makefile.in
 	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
 
-test:	$(TESTPROG)
-
 update: ../../bin/$(PROG)
+
+test:	test1 test2
+
+test1:	$(PROG) map.in map-abc1.ref map-ghi1.ref map-ABC1.ref
+	./$(PROG) map.in
+	for key in abc ghi; \
+	do \
+	    ./$(PROG) -q $${key} map.in | diff map-$${key}1.ref -; \
+	done
+	./$(PROG) -f map.in
+	for key in ABC; \
+	do \
+	    ./$(PROG) -fq $${key} map.in | diff map-$${key}1.ref -; \
+	done
+	rm -f map.in.db
+
+test2:	$(PROG) map.in map-abc2.ref map-ghi2.ref map-ABC2.ref
+	./$(PROG) map.in
+	for key in abc ghi; \
+	do \
+	    echo $${key} | ./$(PROG) -q - map.in | diff map-$${key}2.ref -; \
+	done
+	./$(PROG) -f map.in
+	for key in ABC; \
+	do \
+	    echo $${key} | ./$(PROG) -fq - map.in | diff map-$${key}2.ref -; \
+	done
+	rm -f map.in.db
 
 ../../bin/$(PROG): $(PROG)
 	cp $(PROG) ../../bin
@@ -65,6 +91,7 @@ postalias.o: ../../include/readlline.h
 postalias.o: ../../include/stringops.h
 postalias.o: ../../include/split_at.h
 postalias.o: ../../include/get_hostname.h
+postalias.o: ../../include/vstring_vstream.h
 postalias.o: ../../include/tok822.h
 postalias.o: ../../include/resolve_clnt.h
 postalias.o: ../../include/mail_conf.h

@@ -1,14 +1,365 @@
-Release 20010228 is the first official Postfix release that is not
-called BETA.  May it help the people who cannot get BETA software
-past their management.
-
 In the text below, incompatible changes are labeled with the Postfix
-version that introduced the change. If you upgrade from a later
+snapshot that introduced the change. If you upgrade from a later
 Postfix version, then you do not have to worry about that particular
 incompatibility.
 
-Major incompatible changes with release-20010228 Patch 01
-=========================================================
+Official Postfix releases are called a.b.c where a=major release
+number, b=minor release number, c=patchlevel.  Snapshot releases
+are now called a.b.c-yyyymmdd where yyyymmdd is the release date
+(yyyy=year, mm=month, dd=day).  The mail_release_date configuration
+parameter contains the release date (both for official release and
+snapshot release).  Patches change the patchlevel and the release
+date. Snapshots change only the release date, unless they include
+the same bugfix as a patch release.
+
+Incompatible changes with Postfix version 1.1.2 (released 20020125)
+===================================================================
+
+Postfix now detects if the run-time Berkeley DB library routines
+do not match the major version number of the compile-time include
+file that was used for compiling Postfix. The software issues a
+warning and aborts in case of a discrepancy. If it didn't, the
+software was certain to crash with a segmentation violation.
+
+Incompatible changes with Postfix version 1.1.1 (released 20020122)
+===================================================================
+
+When the postmap command creates a non-existent result file, the
+new file inherits the group/other read permissions of the source
+file.
+
+Incompatible changes with Postfix version 1.1.0 (released 20020117)
+===================================================================
+
+Changes are listed in order of decreasing importance, not release
+date.
+
+[snapshot-20010709] This release introduces a new queue file record
+type that is used only for messages that actually use VERP (variable
+envelope return path) support.  With this sole exception, the queue
+file format is entirely backwards compatible with the previous
+official Postfix release (20010228, a.k.a. Postfix 1.0.0).
+
+[snapshot-20020106] This release modifies the existing master.cf
+file. The local pickup service is now unprivileged, and the cleanup
+and flush service are now "public". Should you have to back out to
+a previous release, then you must 1) edit the master.cf file, make
+the pickup service "privileged", and make the cleanup and flush
+services "private"; 2) "chmod 755 /var/spool/postfix/public".  To
+revert to a world-writable mail submission directory, "chmod 1733
+/var/spool/postfix/maildrop".
+
+[snapshot-20020106, snapshot-20010808, snapshot-20011103,
+snapshot-20011121] You must stop and restart Postfix because of
+incompatible changes in the local Postfix security model and in
+the Postfix internal protocols. Old and new components will not
+work together.
+
+[snapshot-20020106] Simpler local Postfix security model.
+
+- No world-writable maildrop directory. Postfix now always uses
+  the set-gid postdrop command for local mail submissions.  The
+  local mail pickup daemon is now an unprivileged process.
+
+- No world-accessible pickup and queue manager server FIFOs.
+
+- New set-gid postqueue command for the queue list/flush operations
+  that used to implemented by the Postfix sendmail command.
+
+[snapshot-20020106..15] Simpler Postfix installation and upgrading.
+
+- All installation settings are now kept in the main.cf file, and
+  better default settings are now generated for system dependent
+  pathnames such as sendmail_path etc. The install.cf file is no
+  longer used, except when upgrading from an older Postfix version.
+
+- Non-default installation parameter settings can (but do not have
+  to) be specified on the "make install" or "make upgrade" command
+  line as name=value arguments.
+
+- New postfix-files database (in /etc/postfix) with (pathname,
+  owner, permission) information about all Postfix-related files.
+
+- New postfix-install script replaces the awkward INSTALL.sh script.
+  This is driven by the postfix-files database. It has better
+  support for building packages for distribution to other systems.
+  See PACKAGE_README for details.
+
+- New post-install script (in /etc/postfix) for post-installation
+  maintenance of directory/file permissions and ownership (this is
+  used by "postfix check"). Example:
+
+    # postfix stop
+    # post-install set-permissions mail_owner=username setgid_group=groupname
+    # postfix start
+
+[snapshot-20020106] Postfix will not run if it detects that the
+postfix user or group ID are shared with other accounts on the
+system. The checks aren't exhaustive (that would be too resource
+consuming) but should be sufficient to encourage packagers and
+developers to do the right thing. To fix the problem, use the above
+post-install command, after you have created the appropriate new
+mail_owner or setgid_group user or group IDs.
+
+[snapshot-20020106] If you run multiple Postfix instances on the
+same machine you now have to specify their configuration directories
+in the default main.cf file as "alternate_config_directories =
+/dir1 /dir2 ...".  Otherwise, some Postfix commands will no longer
+work: the set-group ID postdrop command for mail submission and
+the set-group ID postqueue command for queue listing/flushing.
+
+[snapshot-20010808] The default setting for the maps_rbl_domains
+parameter is now "empty", because mail-abuse.org has become a
+subscription-based service. The names of the RBL parameters haven't
+changed.
+
+[snapshot-20020106] Postfix SMTP access maps will no longer return
+OK for non-local multi-domain recipient mail addresses (user@dom1@dom2,
+user%dom1@dom2, etcetera); the lookup now returns DUNNO (undetermined).
+Non-local multi-domain recipient addresses were already prohibited
+from matching the permit_mx_backup and the relay_domains-based
+restrictions.
+
+[snapshot-20011210] Stricter checking of Postfix chroot configurations.
+The Postfix startup procedure now warns if "system" directories
+(etc, bin, lib, usr) under the Postfix top-level queue directory
+are not owned by the super-user (usually the result of well-intended,
+but misguided, applications of "chown -R postfix /var/spool/postfix).
+
+[snapshot-20011008] The Postfix SMTP server now rejects requests
+with a generic "try again later" status (451 Server configuration
+error) when it detects an error in smtp_{client, helo, sender,
+recipient, etrn}_restrictions settings.  More details about the
+problem are logged to the syslogd; sending such information to
+random clients would be inappropriate.
+
+[snapshot-20011008] Postfix no longer flushes the entire mail queue
+after receiving an ETRN request for a random domain name. Requests
+for domains that do not match $fast_flush_domains are now rejected
+instead.
+
+[snapshot-20011226] Postfix configuration file comments no longer
+continue on the next line when that next line starts with whitespace.
+This change avoids surprises, but it may cause unexpected behavior
+with existing, improperly formatted, configuration files. Caveat
+user. Comment lines are allowed to begin with whitespace. Multi-line
+input is no longer terminated by a comment line, by an all whitespace
+line, or by an empty line.
+
+[snapshot-20010714] Postfix delivery agents now refuse to create
+a missing maildir or mail spool subdirectory when its parent
+directory is world writable.  This is necessary to prevent security
+problems with maildirs or with hashed mailboxes under a world
+writable mail spool directory.
+
+[snapshot-20010525] As per RFC 2821, the Postfix SMTP client now
+always sends EHLO at the beginning of an SMTP session. Specify
+"smtp_always_send_ehlo = no" for the old behavior, which is to send
+EHLO only when the server greeting banner contains the word ESMTP.
+
+[snapshot-20010525] As per RFC 2821, an EHLO command in the middle
+of an SMTP session resets the Postfix SMTP server state just like
+RSET. This behavior cannot be disabled.
+
+[snapshot-20010709] The SMTP client now by default breaks lines >
+2048 characters, to avoid mail delivery problems with fragile SMTP
+server software.  To get the old behavior back, specify "smtp_break_lines
+= no" in the Postfix main.cf file.
+
+[snapshot-20010709] With recipient_delimiter=+ (or any character
+other than -) Postfix will now recognize address extensions even
+with owner-foo+extension addresses. This change was necessary to
+make VERP useful for mailing list bounce processing.
+
+[snapshot-20010610] The Postfix pipe delivery agent no longer
+automatically case-folds the expansion of $user, $extension or
+$mailbox command-line macros.  Specify the 'u' flag to get the old
+behavior.
+
+[snapshot-20011210] The Postfix sendmail command no longer exits
+with status 1 when mail submission fails, but instead returns a
+sendmail-compatible status code as defined in /usr/include/sysexits.h.
+
+Major changes with Postfix version 1.1.0 (Released 20020117)
+============================================================
+
+Changes are listed in order of decreasing importance, not release
+date.
+
+The nqmgr queue manager is now bundled with Postfix. It implements
+a smarter scheduling strategy that allows ordinary mail to slip
+past mailing list mail, resulting in better response. This queue
+manager is expected to become the default queue manager shortly.
+
+[snapshot-20010709, snapshot-20010808] VERP (variable envelope
+return path) support.  This is enabled by default, including in
+the SMTP server. See the VERP_README file for instructions.  Specify
+"disable_verp_bounces = yes" to have Postfix send one RFC-standard,
+non-VERP, bounce report for multi-recipient mail, even when VERP
+style delivery was requested.  This reduces the explosive behavior
+of bounces when sending mail to a list.
+
+[snapshot-20010709] QMQP server support, so that Postfix can be
+used as a backend mailer for the ezmlm-idx mailing list manager.
+You still need qmail to drive ezmlm and to process mailing list
+bounces. The QMQP service is disabled by default. To enable, follow
+the instructions in the QMQP_README file.
+
+[snapshot-20010709] You can now reject unknown virtual(8) recipients
+at the SMTP port by specifying a "domain.name whatever" entry in
+the tables specified with virtual_mailbox_maps, similar to Postfix
+virtual(5) domains.  [virtual(8) is the Postfix virtual delivery
+agent, virtual(5) is the Postfix virtual map. The two implement
+virtual domains in a very different manner.]
+
+[snapshot-20011121] Configurable host/domain name wildcard matching
+behavior: choice between "pattern `domain.name' matches string
+`host.domain.name'" (this is to be deprecated in the future) and
+"pattern `.domain.name' matches string `host.domain.name'" (this
+is to be preferred in the future).  The configuration parameter
+"parent_domain_matches_subdomains" specifies which Postfix features
+use the behavior that will become deprecated.
+
+[snapshot-20010808] Variable coupling between message receiving
+rates and message delivery rates. When the message receiving rate
+exceeds the message delivery rate, an SMTP server will pause for
+$in_flow_delay seconds before accepting a message.  This delay
+gives Postfix a chance catch up and access the disk, while still
+allowing new mail to arrive.  This feature currently has effect
+only when mail arrives via a small number of SMTP clients.
+
+[snapshot-20010610, snapshot-20011121, snapshot-20011210] Workarounds
+for a bug in old versions of the CISCO PIX firewall software that
+caused mail to be resent repeatedly.  The workaround has no effect
+for other mail deliveries. The workaround is turned off when mail
+is queued for less than $smtp_pix_workaround_threshold_time seconds
+(default:  500 seconds) so that the workaround is normally enabled
+only for deferred mail.  The delay before sending .<CR><LF> is now
+controlled by the $smtp_pix_workaround_delay_time setting (default:
+10 seconds).
+
+[snapshot-20011226] Postfix will now do null address lookups in
+SMTPD access maps.  If your access maps cannot store or look up
+null string key values, specify "smtpd_null_access_lookup_key =
+<>" and the null sender address will be looked up as <> instead.
+
+[snapshot-20011210] More usable virtual delivery agent, thanks to
+a new "static" map type by Jeff Miller that always returns its map
+name as the lookup result. This eliminates the need for per-recipient
+user ID and group ID tables.  See the VIRTUAL_README file for more
+details.
+
+[snapshot-20011125] Anti-sender spoofing. New main.cf parameter
+smtpd_sender_login_maps that specifies the (SASL) login name that
+owns a MAIL FROM sender address.  Specify a regexp table in order
+to require a simple one-to-one mapping.  New SMTPD restriction
+reject_sender_login_mismatch that refuses a MAIL FROM address when
+$smtpd_sender_login_maps specifies an owner but the client is not
+(SASL) logged in as the MAIL FROM address owner, or when a client
+is (SASL) logged in but does not own the address according to
+$smtpd_sender_login_maps.
+
+[snapshot-20011121] The mailbox_command_maps parameter allows you
+to configure the external delivery command per user (local delivery
+agent only).  This feature has precedence over the mailbox_command
+and home_mailbox settings.
+
+[snapshot-20011121] New "warn_if_reject" smtpd UCE restriction that
+only warns if the restriction that follows would reject mail.  Look
+for file records that contain the string "reject_warning".
+
+[snapshot-20011127] New header/body_check result "WARN" to make
+Postfix log a warning about a header/body line without rejecting
+the content.
+
+[snapshot-20011103] In header/body_check files, REJECT can now be
+followed by text that is sent to the originator. That feature was
+stuck waiting for years, pending the internal protocol revision.
+
+[snapshot-20011008] The permit_mx_backup feature allows you to
+specify network address blocks via the permit_mx_backup_networks
+parameter.  This requires that the primary MX hosts for the given
+destination match the specified network blocks. When no value is
+given for permit_mx_backup_networks, Postfix will accept mail
+whenever the local MTA is listed in the DNS as an MX relay host
+for a destination, even when you never gave permission to do so.
+
+[snapshot-20010709] Specify "mail_spool_directory = /var/mail/"
+(note the trailing "/" character) to enable maildir format for
+/var/mail/username.
+
+[snapshot-20010808] Finer control over address masquerading. The
+masquerade_classes parameter now controls header and envelope sender
+and recipient addresses.  With earlier Postfix versions, address
+masquerading rewrote all addresses except for the envelope recipient.
+
+[snapshot-20010610] The pipe mail delivery agent now supports proper
+quoting of white space and other special characters in the expansions
+of the $sender and $recipient command-line macros. This was necessary
+for correct operation of the "simple" content filter, and is also
+recommended for delivery via UUCP or BSMTP.
+
+[snapshot-20010610] The pipe mail delivery agent now supports case
+folding the localpart and/or domain part of expansions of the
+$nexthop, $recipient, $user, $extension or $mailbox command-line
+macros. This is recommended for mail delivery via UUCP. Bug: $nexthop
+is always case folded because of problems in the queue manager
+code.
+
+[snapshot-20010525] This release contains many little revisions of
+little details in the light of the new RFC 2821 and RFC 2822
+standards. Changes that may affect interoperability are listed
+above under "incompatible changes".  Other little details are
+discussed in comments in the source code.
+
+[snapshot-20010502] The Postfix SMTP client now by default randomly
+shuffles destination IP addresses of equal preference (whether
+obtained via MX lookup or otherwise). Reportedly, this is needed
+for sites that use Bernstein's dnscache program. Specify
+"smtp_randomize_addresses = no" to disable this behavior. Based on
+shuffling code by Aleph1.
+
+[snapshot-20011127] New parameter smtpd_noop_commands to specify
+a list of commands that the Postfix SMTP server treats as NOOP
+commands (no syntax check, no state change). This is a workaround
+for misbehaving clients that send unsupported commands such as
+ONEX.
+
+[snapshot-20010502] "postmap -q -" and "postmap -d -" read key
+values from standard input, which makes it easier to drive them
+from another program.  The same feature was added to the postalias
+command.
+
+[snapshot-20010502] The postsuper command now has a command-line
+option to delete queue files.  In principle this command can be
+used while Postfix is running, but there is a possibility of deleting
+the wrong queue file when Postfix deletes a queue file and reuses
+the queue ID for a new message.  In that case, postsuper will delete
+the new message.
+
+[snapshot-20010525] The postsuper queue maintenance tool now renames
+files whose name (queue ID) does not match the message file inode
+number. This is necessary after a Postfix mail queue is restored
+from another machine or from backups.  The feature is selected with
+the -s option, which is the default, and runs whenever Postfix is
+started.
+
+[snapshot-20010525] The postsuper queue maintenance tool has a new
+-r (requeue) option for subjecting some or all queue files to
+another iteration of address rewriting. This is useful after the
+virtual or canonical maps have changed.
+
+[snapshot-20010525] The postsuper queue maintenance tool was extended
+with options to read queue IDs from standard input. This makes the
+tool easier to drive from scripts.
+
+[snapshot-20010329] Better support for running multiple Postfix
+instances on one machine. Each instance can be recognized by its
+logging (defaults:  "syslog_name = postfix", "syslog_facility =
+mail").
+
+Major incompatible changes with release-20010228 Patch 01 (a.k.a. Postfix 1.0.1)
+================================================================================
 
 This release changes the names of the "fast ETRN" logfiles with
 delayed mail per destination. These files are maintained by the
@@ -18,8 +369,8 @@ populate the new "fast ETRN" logfiles, execute the command "sendmail
 -q".  The old "fast ETRN" logfiles go away by themselves (default:
 after 7 days).
 
-Major incompatible changes with release-20010228
-================================================
+Major incompatible changes with release-20010228 (a.k.a. Postfix 1.0.0)
+=======================================================================
 
 [snapshot-20010225] POSTFIX NO LONGER RELAYS MAIL FOR CLIENTS IN
 THE ENTIRE CLASS A/B/C NETWORK. To get the old behavior, specify

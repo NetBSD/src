@@ -49,6 +49,11 @@ extern char *var_mail_owner;
 extern uid_t var_owner_uid;
 extern gid_t var_owner_gid;
 
+#define VAR_SGID_GROUP		"setgid_group"
+#define DEF_SGID_GROUP		"postdrop"
+extern char *var_sgid_group;
+extern gid_t var_sgid_gid;
+
 #define VAR_DEFAULT_PRIVS	"default_privs"
 #define DEF_DEFAULT_PRIVS	"nobody"
 extern char *var_default_privs;
@@ -124,6 +129,17 @@ extern char *var_masq_domains;
 #define DEF_MASQ_EXCEPTIONS	""
 extern char *var_masq_exceptions;
 
+#define MASQ_CLASS_ENV_FROM	"envelope_sender"
+#define MASQ_CLASS_ENV_RCPT	"envelope_recipient"
+#define MASQ_CLASS_HDR_FROM	"header_sender"
+#define MASQ_CLASS_HDR_RCPT	"header_recipient"
+
+#define VAR_MASQ_CLASSES	"masquerade_classes"
+#define DEF_MASQ_CLASSES	MASQ_CLASS_ENV_FROM ", " \
+				MASQ_CLASS_HDR_FROM ", " \
+				MASQ_CLASS_HDR_RCPT
+extern char *var_masq_classes;
+
  /*
   * Intranet versus internet.
   */
@@ -158,13 +174,13 @@ extern char *var_queue_dir;
 
 #define VAR_DAEMON_DIR		"daemon_directory"
 #ifndef DEF_DAEMON_DIR
-#define DEF_DAEMON_DIR		"$program_directory"
+#define DEF_DAEMON_DIR		"/usr/libexec/postfix"
 #endif
 extern char *var_daemon_dir;
 
 #define VAR_COMMAND_DIR		"command_directory"
 #ifndef DEF_COMMAND_DIR
-#define DEF_COMMAND_DIR		"$program_directory"
+#define DEF_COMMAND_DIR		"/usr/sbin"
 #endif
 extern char *var_command_dir;
 
@@ -190,6 +206,10 @@ extern time_t var_starttime;
 #define DEF_CONFIG_DIR		"/etc/postfix"
 #endif
 extern char *var_config_dir;
+
+#define VAR_CONFIG_DIRS		"alternate_config_directories"
+#define DEF_CONFIG_DIRS		""
+extern char *var_config_dirs;
 
  /*
   * Preferred type of indexed files. The DEF_DB_TYPE macro value is system
@@ -224,6 +244,10 @@ extern char *var_always_bcc;
 
  /*
   * What to put in the To: header when no recipients were disclosed.
+  * 
+  * XXX 2822: When no recipient headers remain, a system should insert a Bcc:
+  * header without additional information. That is not so great given that
+  * MTAs routinely strip Bcc: headers from message headers.
   */
 #define VAR_RCPT_WITHELD	"undisclosed_recipients_header"
 #define DEF_RCPT_WITHELD	"To: undisclosed-recipients:;"
@@ -357,6 +381,10 @@ extern char *var_home_mailbox;
 #define VAR_MAILBOX_COMMAND	"mailbox_command"
 #define DEF_MAILBOX_COMMAND	""
 extern char *var_mailbox_command;
+
+#define VAR_MAILBOX_CMD_MAPS	"mailbox_command_maps"
+#define DEF_MAILBOX_CMD_MAPS	""
+extern char *var_mailbox_cmd_maps;
 
 #define VAR_MAILBOX_TRANSP	"mailbox_transport"
 #define DEF_MAILBOX_TRANSP	""
@@ -634,6 +662,9 @@ extern int var_hash_queue_depth;
   * determines how many recipient addresses the SMTP client sends along with
   * each message. Unfortunately, some mailers misbehave and disconnect (smap)
   * when given more recipients than they are willing to handle.
+  * 
+  * XXX 2821: A mail system is supposed to use EHLO instead of HELO, and to fall
+  * back to HELO if EHLO is not supported.
   */
 #define VAR_BESTMX_TRANSP	"best_mx_transport"
 #define DEF_BESTMX_TRANSP	""
@@ -688,7 +719,11 @@ extern bool var_ign_mx_lookup_err;
 extern bool var_skip_quit_resp;
 
 #define VAR_SMTP_ALWAYS_EHLO	"smtp_always_send_ehlo"
+#ifdef RFC821_SYNTAX
 #define DEF_SMTP_ALWAYS_EHLO	0
+#else
+#define DEF_SMTP_ALWAYS_EHLO	1
+#endif
 extern bool var_smtp_always_ehlo;
 
 #define VAR_SMTP_NEVER_EHLO	"smtp_never_send_ehlo"
@@ -698,6 +733,22 @@ extern bool var_smtp_never_ehlo;
 #define VAR_SMTP_BIND_ADDR	"smtp_bind_address"
 #define DEF_SMTP_BIND_ADDR	""
 extern char *var_smtp_bind_addr;
+
+#define VAR_SMTP_RAND_ADDR	"smtp_randomize_addresses"
+#define DEF_SMTP_RAND_ADDR	1
+extern bool var_smtp_rand_addr;
+
+#define VAR_SMTP_BREAK_LINES	"smtp_break_lines"
+#define DEF_SMTP_BREAK_LINES	1
+extern bool var_smtp_break_lines;
+
+#define VAR_SMTP_PIX_THRESH	"smtp_pix_workaround_threshold_time"
+#define DEF_SMTP_PIX_THRESH	"500s"
+extern int var_smtp_pix_thresh;
+
+#define VAR_SMTP_PIX_DELAY	"smtp_pix_workaround_delay_time"
+#define DEF_SMTP_PIX_DELAY	"10s"
+extern int var_smtp_pix_delay;
 
  /*
   * SMTP server. The soft error limit determines how many errors an SMTP
@@ -729,8 +780,16 @@ extern int var_smtpd_hard_erlim;
 extern int var_smtpd_err_sleep;
 
 #define VAR_SMTPD_JUNK_CMD	"smtpd_junk_command_limit"
-#define DEF_SMTPD_JUNK_CMD	1000
+#define DEF_SMTPD_JUNK_CMD	100
 extern int var_smtpd_junk_cmd_limit;
+
+#define VAR_SMTPD_HIST_THRSH	"smtpd_history_flush_threshold"
+#define DEF_SMTPD_HIST_THRSH	100
+extern int var_smtpd_hist_thrsh;
+
+#define VAR_SMTPD_NOOP_CMDS	"smtpd_noop_commands"
+#define DEF_SMTPD_NOOP_CMDS	""
+extern char *var_smtpd_noop_cmds;
 
  /*
   * SASL authentication support, SMTP server side.
@@ -746,6 +805,12 @@ extern char *var_smtpd_sasl_opts;
 #define VAR_SMTPD_SASL_REALM	"smtpd_sasl_local_domain"
 #define DEF_SMTPD_SASL_REALM	"$myhostname"
 extern char *var_smtpd_sasl_realm;
+
+#define VAR_SMTPD_SND_AUTH_MAPS	"smtpd_sender_login_maps"
+#define DEF_SMTPD_SND_AUTH_MAPS	""
+extern char *var_smtpd_snd_auth_maps;
+
+#define REJECT_SENDER_LOGIN_MISMATCH	"reject_sender_login_mismatch"
 
  /*
   * SASL authentication support, SMTP client side.
@@ -1092,6 +1157,10 @@ extern int var_relay_code;
 
 #define PERMIT_MX_BACKUP	"permit_mx_backup"
 
+#define VAR_PERM_MX_NETWORKS	"permit_mx_backup_networks"
+#define DEF_PERM_MX_NETWORKS	""
+extern char *var_perm_mx_networks;
+
 #define VAR_ACCESS_MAP_CODE	"access_map_reject_code"
 #define DEF_ACCESS_MAP_CODE	554
 extern int var_access_map_code;
@@ -1102,13 +1171,15 @@ extern int var_access_map_code;
 #define CHECK_RECIP_ACL		"check_recipient_access"
 #define CHECK_ETRN_ACL		"check_etrn_access"
 
+#define WARN_IF_REJECT		"warn_if_reject"
+
 #define REJECT_MAPS_RBL		"reject_maps_rbl"
 #define VAR_MAPS_RBL_CODE	"maps_rbl_reject_code"
 #define DEF_MAPS_RBL_CODE	554
 extern int var_maps_rbl_code;
 
 #define VAR_MAPS_RBL_DOMAINS	"maps_rbl_domains"
-#define DEF_MAPS_RBL_DOMAINS	"blackholes.mail-abuse.org"
+#define DEF_MAPS_RBL_DOMAINS	""
 extern char *var_maps_rbl_domains;
 
 #define VAR_SMTPD_DELAY_REJECT	"smtpd_delay_reject"
@@ -1116,6 +1187,10 @@ extern char *var_maps_rbl_domains;
 extern int var_smtpd_delay_reject;
 
 #define REJECT_UNAUTH_PIPE	"reject_unauth_pipelining"
+
+#define VAR_SMTPD_NULL_KEY	"smtpd_null_access_lookup_key"
+#define DEF_SMTPD_NULL_KEY	""
+extern char *var_smtpd_null_key;
 
  /*
   * Heuristic to reject most unknown recipients at the SMTP port.
@@ -1192,7 +1267,7 @@ extern int var_fflush_refresh;
   * and what Postfix exports to the external world.
   */
 #define VAR_IMPORT_ENVIRON		"import_environment"
-#define DEF_IMPORT_ENVIRON		"MAIL_CONFIG MAIL_DEBUG TZ XAUTHORITY DISPLAY"
+#define DEF_IMPORT_ENVIRON		"MAIL_CONFIG MAIL_DEBUG MAIL_LOGTAG TZ XAUTHORITY DISPLAY"
 extern char *var_import_environ;
 
 #define VAR_EXPORT_ENVIRON		"export_environment"
@@ -1229,6 +1304,112 @@ extern int var_virt_mailbox_limit;
 #define VAR_VIRT_MAILBOX_LOCK		"virtual_mailbox_lock"
 #define DEF_VIRT_MAILBOX_LOCK		"fcntl"
 extern char *var_virt_mailbox_lock;
+
+ /*
+  * Distinct logging tag for multiple Postfix instances.
+  */
+#define VAR_SYSLOG_NAME			"syslog_name"
+#define DEF_SYSLOG_NAME			"postfix"
+extern char *var_syslog_name;
+
+ /*
+  * QMQPD
+  */
+#define VAR_QMQPD_CLIENTS		"qmqpd_authorized_clients"
+#define DEF_QMQPD_CLIENTS		""
+extern char *var_qmqpd_clients;
+
+#define VAR_QMTPD_TMOUT			"qmqpd_timeout"
+#define DEF_QMTPD_TMOUT			"300s"
+extern int var_qmqpd_timeout;
+
+#define VAR_QMTPD_ERR_SLEEP		"qmqpd_error_delay"
+#define DEF_QMTPD_ERR_SLEEP		"5s"
+extern int var_qmqpd_err_sleep;
+
+ /*
+  * VERP, more DJB intellectual cross-pollination. However, we prefer + as
+  * the default recipient delimiter.
+  */
+#define VAR_VERP_DELIMS			"default_verp_delimiters"
+#define DEF_VERP_DELIMS			"+="
+extern char *var_verp_delims;
+
+#define VAR_VERP_FILTER			"verp_delimiter_filter"
+#define DEF_VERP_FILTER			"-=+"
+extern char *var_verp_filter;
+
+#define VAR_VERP_BOUNCE_OFF		"disable_verp_bounces"
+#define DEF_VERP_BOUNCE_OFF		0
+extern bool var_verp_bounce_off;
+
+ /*
+  * Inbound mail flow control. This allows for a stiffer coupling between
+  * receiving mail and sending mail. A sending process produces one token for
+  * each message that it takes from the incoming queue; a receiving process
+  * consumes one token for each message that it adds to the incoming queue.
+  * When no token is available (Postfix receives more mail than it is able to
+  * deliver) a receiving process pauses for $in_flow_delay seconds so that
+  * the sending processes get a chance to access the disk.
+  */
+#define VAR_IN_FLOW_DELAY			"in_flow_delay"
+#define DEF_IN_FLOW_DELAY			"1s"
+extern int var_in_flow_delay;
+
+ /*
+  * Backwards compatibility: foo.com matches itself and names below foo.com.
+  */
+#define VAR_PAR_DOM_MATCH		"parent_domain_matches_subdomains"
+#define DEF_PAR_DOM_MATCH		VAR_DEBUG_PEER_LIST "," \
+					VAR_FFLUSH_DOMAINS "," \
+					VAR_MYNETWORKS "," \
+					VAR_PERM_MX_NETWORKS "," \
+					VAR_QMQPD_CLIENTS "," \
+					VAR_RELAY_DOMAINS "," \
+					SMTPD_ACCESS_MAPS
+extern char *var_par_dom_match;
+
+#define SMTPD_ACCESS_MAPS		"smtpd_access_maps"
+
+ /*
+  * Run-time fault injection.
+  */
+#define VAR_FAULT_INJ_CODE		"fault_injection_code"
+#define DEF_FAULT_INJ_CODE		0
+extern int var_fault_inj_code;
+
+ /*
+  * Install/upgrade information.
+  */
+#define VAR_SENDMAIL_PATH		"sendmail_path"
+#ifndef DEF_SENDMAIL_PATH
+#define DEF_SENDMAIL_PATH		"/usr/sbin/sendmail"
+#endif
+
+#define VAR_MAILQ_PATH			"mailq_path"
+#ifndef DEF_MAILQ_PATH
+#define DEF_MAILQ_PATH			"/usr/bin/mailq"
+#endif
+
+#define VAR_NEWALIAS_PATH		"newaliases_path"
+#ifndef DEF_NEWALIAS_PATH
+#define DEF_NEWALIAS_PATH		"/usr/bin/newaliases"
+#endif
+
+#define VAR_MANPAGE_DIR			"manpage_directory"
+#ifndef DEF_MANPAGE_DIR
+#define DEF_MANPAGE_DIR			"/usr/local/man"
+#endif
+
+#define VAR_SAMPLE_DIR			"sample_directory"
+#ifndef DEF_SAMPLE_DIR
+#define DEF_SAMPLE_DIR			DEF_CONFIG_DIR
+#endif
+
+#define VAR_README_DIR			"readme_directory"
+#ifndef DEF_README_DIR
+#define DEF_README_DIR			"no"
+#endif
 
 /* LICENSE
 /* .ad

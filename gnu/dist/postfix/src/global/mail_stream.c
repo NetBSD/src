@@ -14,10 +14,11 @@
 /* .in -4
 /*	} MAIL_STREAM;
 /*
-/*	MAIL_STREAM *mail_stream_file(queue, class, service)
+/*	MAIL_STREAM *mail_stream_file(queue, class, service, mode)
 /*	const char *queue;
 /*	const char *class;
 /*	const char *service;
+/*	int	mode;
 /*
 /*	MAIL_STREAM *mail_stream_service(class, service)
 /*	const char *class;
@@ -29,8 +30,9 @@
 /*	void	mail_stream_cleanup(info)
 /*	MAIL_STREAM *info;
 /*
-/*	int	mail_stream_finish(info)
+/*	int	mail_stream_finish(info, why)
 /*	MAIL_STREAM *info;
+/*	VSTRING	*why;
 /* DESCRIPTION
 /*	This module provides a generic interface to Postfix queue file
 /*	format messages to file, to Postfix server, or to external command.
@@ -41,7 +43,8 @@
 /*
 /*	mail_stream_file() opens a mail stream to a newly-created file and
 /*	arranges for trigger delivery at finish time. This call never fails.
-/*	But it may take forever.
+/*	But it may take forever. The mode argument specifies additional
+/*	file permissions that will be OR-ed in.
 /*
 /*	mail_stream_command() opens a mail stream to external command,
 /*	and receives queue ID information from the command. The result
@@ -62,6 +65,7 @@
 /*	any of the mail_stream_xxx() routines, and destroys the argument.
 /*	The result is any of the status codes defined in <cleanup_user.h>.
 /*	It is up to the caller to remove incomplete file objects.
+/*	The why argument can be a null pointer.
 /* LICENSE
 /* .ad
 /* .fi
@@ -78,6 +82,7 @@
 #include <sys_defs.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <errno.h>
 
 /* Utility library. */
 
@@ -116,22 +121,30 @@ void    mail_stream_cleanup(MAIL_STREAM * info)
 
 /* mail_stream_finish_file - finish file mail stream */
 
-static int mail_stream_finish_file(MAIL_STREAM * info)
+static int mail_stream_finish_file(MAIL_STREAM * info, VSTRING *unused_why)
 {
     int     status = 0;
     static char wakeup[] = {TRIGGER_REQ_WAKEUP};
 
     /*
      * Make sure the message makes it to file. Set the execute bit when no
-     * write error was detected.
+     * write error was detected. Some people believe that this code has a
+     * problem if the system crashes before fsync() returns; fchmod() could
+     * take effect before all the data blocks are written. Wietse claims that
+     * this is not a problem. Postfix rejects incomplete queue files, even
+     * when the +x attribute is set. Every Postfix queue file record has a
+     * type code and a length field. Files with truncated records are
+     * rejected, as are files with unknown type codes. Every Postfix queue
+     * file must end with an explicit END record. Postfix queue files without
+     * END record are discarded.
      */
     if (vstream_fflush(info->stream)
-	|| fchmod(vstream_fileno(info->stream), 0700)
+	|| fchmod(vstream_fileno(info->stream), 0700 | info->mode)
 #ifdef HAS_FSYNC
 	|| fsync(vstream_fileno(info->stream))
 #endif
 	)
-	status = CLEANUP_STAT_WRITE;
+	status = (errno == EFBIG ? CLEANUP_STAT_SIZE : CLEANUP_STAT_WRITE);
 
     /*
      * Close the queue file and mark it as closed. Be prepared for
@@ -142,7 +155,7 @@ static int mail_stream_finish_file(MAIL_STREAM * info)
      * reasons.
      */
     if (info->close(info->stream))
-	status = CLEANUP_STAT_WRITE;
+	status = (errno == EFBIG ? CLEANUP_STAT_SIZE : CLEANUP_STAT_WRITE);
     info->stream = 0;
 
     /*
@@ -161,14 +174,20 @@ static int mail_stream_finish_file(MAIL_STREAM * info)
 
 /* mail_stream_finish_ipc - finish IPC mail stream */
 
-static int mail_stream_finish_ipc(MAIL_STREAM * info)
+static int mail_stream_finish_ipc(MAIL_STREAM * info, VSTRING *why)
 {
     int     status = CLEANUP_STAT_WRITE;
 
     /*
      * Receive the peer's completion status.
      */
-    if (mail_scan(info->stream, "%d", &status) != 1)
+    if ((why && attr_scan(info->stream, ATTR_FLAG_STRICT,
+			  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status,
+			  ATTR_TYPE_STR, MAIL_ATTR_WHY, why,
+			  ATTR_TYPE_END) != 2)
+	|| (!why && attr_scan(info->stream, ATTR_FLAG_MISSING,
+			      ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status,
+			      ATTR_TYPE_END) != 1))
 	status = CLEANUP_STAT_WRITE;
 
     /*
@@ -180,20 +199,20 @@ static int mail_stream_finish_ipc(MAIL_STREAM * info)
 
 /* mail_stream_finish - finish action */
 
-int     mail_stream_finish(MAIL_STREAM * info)
+int     mail_stream_finish(MAIL_STREAM * info, VSTRING *why)
 {
-    return (info->finish(info));
+    return (info->finish(info, why));
 }
 
 /* mail_stream_file - destination is file */
 
 MAIL_STREAM *mail_stream_file(const char *queue, const char *class,
-			              const char *service)
+			              const char *service, int mode)
 {
     MAIL_STREAM *info;
     VSTREAM *stream;
 
-    stream = mail_queue_enter(queue, 0600);
+    stream = mail_queue_enter(queue, 0600 | mode);
     if (msg_verbose)
 	msg_info("open %s", VSTREAM_PATH(stream));
 
@@ -204,6 +223,7 @@ MAIL_STREAM *mail_stream_file(const char *queue, const char *class,
     info->id = mystrdup(basename(VSTREAM_PATH(stream)));
     info->class = mystrdup(class);
     info->service = mystrdup(service);
+    info->mode = mode;
     return (info);
 }
 
@@ -218,7 +238,8 @@ MAIL_STREAM *mail_stream_service(const char *class, const char *name)
 	id_buf = vstring_alloc(10);
 
     stream = mail_connect_wait(class, name);
-    if (mail_scan(stream, "%s", id_buf) != 1) {
+    if (attr_scan(stream, ATTR_FLAG_MISSING,
+		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id_buf, 0) != 1) {
 	vstream_fclose(stream);
 	return (0);
     } else {
@@ -263,8 +284,12 @@ MAIL_STREAM *mail_stream_command(const char *command)
 	sleep(10);
     }
     argv_free(export_env);
+    vstream_control(stream,
+		    VSTREAM_CTL_PATH, command,
+		    VSTREAM_CTL_END);
 
-    if (mail_scan(stream, "%s", id_buf) != 1) {
+    if (attr_scan(stream, ATTR_FLAG_MISSING,
+		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id_buf, 0) != 1) {
 	vstream_pclose(stream);
 	return (0);
     } else {

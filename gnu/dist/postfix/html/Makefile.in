@@ -5,13 +5,15 @@ SHELL	= /bin/sh
 DAEMONS	=  bounce.8.html cleanup.8.html defer.8.html error.8.html local.8.html \
 	lmtp.8.html master.8.html pickup.8.html pipe.8.html qmgr.8.html \
 	showq.8.html smtp.8.html smtpd.8.html trivial-rewrite.8.html \
-	spawn.8.html flush.8.html # nqmgr.8.html virtual.8.html
+	nqmgr.8.html spawn.8.html flush.8.html virtual.8.html qmqpd.8.html
 COMMANDS= mailq.1.html newaliases.1.html postalias.1.html postcat.1.html \
 	postconf.1.html postfix.1.html postkick.1.html postlock.1.html \
 	postlog.1.html postdrop.1.html postmap.1.html sendmail.1.html \
-	postsuper.1.html
+	postqueue.1.html postsuper.1.html
 CONFIG	= access.5.html aliases.5.html canonical.5.html relocated.5.html \
 	transport.5.html virtual.5.html pcre_table.5.html regexp_table.5.html
+
+AWK	= awk '{ print; if (NR == 1) print ".pl 9999" }'
 
 update:	$(DAEMONS) $(COMMANDS) $(CONFIG)
 
@@ -27,124 +29,170 @@ clobber:
 	rm -f $(DAEMONS) $(COMMANDS) $(CONFIG)
 
 bounce.8.html: ../src/bounce/bounce.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 defer.8.html: bounce.8.html
 	rm -f $@
 	ln -s $? $@
 
 error.8.html: ../src/error/error.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 flush.8.html: ../src/flush/flush.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 cleanup.8.html: ../src/cleanup/cleanup.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 lmtp.8.html: ../src/lmtp/lmtp.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 local.8.html: ../src/local/local.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 master.8.html: ../src/master/master.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 nqmgr.8.html: ../src/nqmgr/qmgr.c
+	PATH=../mantools:$$PATH; \
 	srctoman $? | sed -e 's/qmgr[^_]/n&/' \
 			  -e 's/qmgr$$/n&/' \
 			  -e 's/QMGR[^_]/N&/' | \
-	    nroff -man | man2html | postlink >$@
+	    $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 pickup.8.html: ../src/pickup/pickup.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 pipe.8.html: ../src/pipe/pipe.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 qmgr.8.html: ../src/qmgr/qmgr.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
+
+qmqpd.8.html: ../src/qmqpd/qmqpd.c
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 showq.8.html: ../src/showq/showq.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 spawn.8.html: ../src/spawn/spawn.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 smtp.8.html: ../src/smtp/smtp.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 smtpd.8.html: ../src/smtpd/smtpd.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 virtual.8.html: ../src/virtual/virtual.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 trivial-rewrite.8.html: ../src/trivial-rewrite/trivial-rewrite.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postalias.1.html: ../src/postalias/postalias.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postcat.1.html: ../src/postcat/postcat.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postconf.1.html: ../src/postconf/postconf.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postdrop.1.html: ../src/postdrop/postdrop.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postfix.1.html: ../src/postfix/postfix.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postkick.1.html: ../src/postkick/postkick.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postlock.1.html: ../src/postlock/postlock.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postlog.1.html: ../src/postlog/postlog.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postmap.1.html: ../src/postmap/postmap.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
+
+postqueue.1.html: ../src/postqueue/postqueue.c
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 postsuper.1.html: ../src/postsuper/postsuper.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 sendmail.1.html: ../src/sendmail/sendmail.c
-	srctoman $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 mailq.1.html: sendmail.1.html
+	PATH=../mantools:$$PATH; \
 	rm -f $@
 	ln -s $? $@
 
 newaliases.1.html: sendmail.1.html
+	PATH=../mantools:$$PATH; \
 	rm -f $@
 	ln -s $? $@
 
 access.5.html: ../proto/access
-	srctoman - $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 aliases.5.html: ../proto/aliases
-	srctoman - $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 canonical.5.html: ../proto/canonical
-	srctoman - $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 pcre_table.5.html: ../proto/pcre_table
-	srctoman - $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 regexp_table.5.html: ../proto/regexp_table
-	srctoman - $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 relocated.5.html: ../proto/relocated
-	srctoman - $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 transport.5.html: ../proto/transport
-	srctoman - $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@
 
 virtual.5.html: ../proto/virtual
-	srctoman - $? | nroff -man | man2html | postlink >$@
+	PATH=../mantools:$$PATH; \
+	srctoman - $? | $(AWK) | nroff -man | uniq | man2html | postlink >$@

@@ -17,10 +17,10 @@
 # will become visible after a minute or so.  Use "postfix reload"
 # to eliminate the delay.
 #
-# canonical_maps = dbm:/etc/postfix/canonical
-# canonical_maps = hash:/etc/postfix/canonical
-# canonical_maps = hash:/etc/postfix/canonical, nis:canonical
-# canonical_maps = hash:/etc/postfix/canonical, netinfo:/canonical
+#canonical_maps = dbm:/etc/postfix/canonical
+#canonical_maps = hash:/etc/postfix/canonical
+#canonical_maps = hash:/etc/postfix/canonical, nis:canonical
+#canonical_maps = hash:/etc/postfix/canonical, netinfo:/canonical
 canonical_maps = 
 
 # The recipient_canonical_maps parameter specifies optional address
@@ -30,7 +30,7 @@ canonical_maps =
 #
 # $recipient_canonical_maps is used before $canonical_maps lookups.
 #
-# recipient_canonical_maps = hash:/etc/postfix/recipient_canonical
+#recipient_canonical_maps = hash:/etc/postfix/recipient_canonical
 recipient_canonical_maps = 
 
 # The sender_canonical_maps parameter specifies optional address
@@ -44,5 +44,5 @@ recipient_canonical_maps =
 # 
 # $sender_canonical_maps is used before $canonical_maps lookups.
 #
-# sender_canonical_maps = hash:/etc/postfix/sender_canonical
+#sender_canonical_maps = hash:/etc/postfix/sender_canonical
 sender_canonical_maps = 

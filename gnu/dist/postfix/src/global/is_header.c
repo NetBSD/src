@@ -41,6 +41,13 @@ int     is_header(const char *str)
     const char *cp;
     int     c;
 
+    /*
+     * XXX RFC 2822 Section 4.5.2, Obsolete header fields: whitespace may
+     * appear between header label and ":" (see: RFC 822, Section 3.4.2.).
+     * 
+     * The code below allows no such whitespace. This has never been a problem,
+     * and therefore we're not inclined to add code for it.
+     */
     for (cp = str; (c = *(unsigned char *) cp) != 0; cp++) {
 	if (c == ':')
 	    return (cp > str);

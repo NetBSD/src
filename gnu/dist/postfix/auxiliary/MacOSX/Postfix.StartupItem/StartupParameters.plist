@@ -1,0 +1,13 @@
+{
+  Description   = "Postfix mail server";
+  Provides      = ("SMTP");
+  Requires      = ("Resolver");
+  Uses          = ("Network Time", "NFS");
+  Preference    = "None";
+  Messages =
+  {
+    start = "Starting Postfix";
+    stop  = "Stopping Postfix";
+    restart  = "Reloading Postfix Configuration";
+  };
+}

@@ -7,8 +7,8 @@
 /*	\fBpickup\fR [generic Postfix daemon options]
 /* DESCRIPTION
 /*	The \fBpickup\fR daemon waits for hints that new mail has been
-/*	dropped into the world-writable \fBmaildrop\fR directory, and
-/*	feeds it into the \fBcleanup\fR(8) daemon.
+/*	dropped into the \fBmaildrop\fR directory, and feeds it into the
+/*	\fBcleanup\fR(8) daemon.
 /*	Ill-formatted files are deleted without notifying the originator.
 /*	This program expects to be run from the \fBmaster\fR(8) process
 /*	manager.
@@ -58,6 +58,7 @@
 /* SEE ALSO
 /*	cleanup(8) message canonicalization
 /*	master(8) process manager
+/*	sendmail(1), postdrop(8) mail posting agent
 /*	syslogd(8) system logging
 /* LICENSE
 /* .ad
@@ -89,8 +90,8 @@
 #include <scan_dir.h>
 #include <vstring.h>
 #include <vstream.h>
-#include <open_as.h>
-#include <set_eugid.h>
+#include <set_ugid.h>
+#include <safe_open.h>
 
 /* Global library. */
 
@@ -295,7 +296,9 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
      * bounce, the cleanup service can report only soft errors here.
      */
     rec_fputs(cleanup, REC_TYPE_END, "");
-    if (mail_scan(cleanup, "%d", &status) != 1)
+    if (attr_scan(cleanup, ATTR_FLAG_MISSING,
+		  ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status,
+		  ATTR_TYPE_END) != 1)
 	return (cleanup_service_error(info, CLEANUP_STAT_WRITE));
 
     /*
@@ -315,8 +318,7 @@ static int pickup_copy(VSTREAM *qfile, VSTREAM *cleanup,
 
 static int pickup_file(PICKUP_INFO *info)
 {
-    struct stat st;
-    VSTRING *buf;
+    VSTRING *buf = vstring_alloc(100);
     int     status;
     VSTREAM *qfile;
     VSTREAM *cleanup;
@@ -329,27 +331,14 @@ static int pickup_file(PICKUP_INFO *info)
      * Perhaps we should save "bad" files elsewhere for further inspection.
      * XXX How can we delete a file when open() fails with ENOENT?
      */
-    fd = open_as(info->path, O_RDONLY | O_NONBLOCK, 0,
-		 info->st.st_uid, info->st.st_gid);
-    if (fd < 0) {
+    qfile = safe_open(info->path, O_RDONLY | O_NONBLOCK, 0, 
+		(struct stat *) 0, -1, -1, buf);
+    if (qfile == 0) {
 	if (errno != ENOENT)
-	    msg_fatal("open input file %s: %m", info->path);
-	msg_warn("open input file %s: %m", info->path);
-	return (REMOVE_MESSAGE_FILE);
+	    msg_warn("open input file %s: %s", info->path, vstring_str(buf));
+	vstring_free(buf);
+	return (errno == EACCES ? KEEP_MESSAGE_FILE : REMOVE_MESSAGE_FILE);
     }
-
-    /*
-     * Like safe_open(pat, O_RDONLY, 0), but without any link count checks.
-     */
-    if (fstat(fd, &st) < 0)
-	msg_fatal("fstat: %m");
-    if (st.st_dev != info->st.st_dev
-	|| st.st_ino != info->st.st_ino
-	|| st.st_mode != info->st.st_mode) {
-	msg_warn("%s: uid %ld: file has changed", info->path, (long) st.st_uid);
-	return (REMOVE_MESSAGE_FILE);
-    }
-    qfile = vstream_fdopen(fd, O_RDONLY);
 
     /*
      * Contact the cleanup service and read the queue ID that it has
@@ -363,10 +352,13 @@ static int pickup_file(PICKUP_INFO *info)
      */
 #define PICKUP_CLEANUP_FLAGS	(CLEANUP_FLAG_BOUNCE | CLEANUP_FLAG_FILTER)
 
-    buf = vstring_alloc(100);
-    cleanup = mail_connect_wait(MAIL_CLASS_PRIVATE, MAIL_SERVICE_CLEANUP);
-    if (mail_scan(cleanup, "%s", buf) != 1
-	|| mail_print(cleanup, "%d", PICKUP_CLEANUP_FLAGS) != 0) {
+    cleanup = mail_connect_wait(MAIL_CLASS_PUBLIC, MAIL_SERVICE_CLEANUP);
+    if (attr_scan(cleanup, ATTR_FLAG_STRICT,
+		  ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, buf,
+		  ATTR_TYPE_END) != 1
+	|| attr_print(cleanup, ATTR_FLAG_NONE,
+		      ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, PICKUP_CLEANUP_FLAGS,
+		      ATTR_TYPE_END) != 0) {
 	status = KEEP_MESSAGE_FILE;
     } else {
 	info->id = mystrdup(vstring_str(buf));
@@ -445,11 +437,16 @@ static void pickup_service(char *unused_buf, int unused_len,
     } while (file_count);
 }
 
-/* drop_privileges - drop privileges most of the time */
+/* drop_privileges - drop privileges */
 
 static void drop_privileges(char *unused_name, char **unused_argv)
 {
-    set_eugid(var_owner_uid, var_owner_gid);
+
+    /*
+     * In case master.cf was not updated for unprivileged service.
+     */
+    if (getuid() != var_owner_uid)
+	set_ugid(var_owner_uid, var_owner_gid);
 }
 
 /* main - pass control to the multi-threaded server skeleton */

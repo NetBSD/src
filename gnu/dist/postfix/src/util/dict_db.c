@@ -437,6 +437,23 @@ static DICT *dict_db_open(const char *class, const char *path, int open_flags,
 
 #endif
 
+    /*
+     * Mismatches between #include file and library are a common cause for
+     * trouble.
+     */
+#if DB_VERSION_MAJOR > 1
+    int     major_version;
+    int     minor_version;
+    int     patch_version;
+
+    (void) db_version(&major_version, &minor_version, &patch_version);
+    if (major_version != DB_VERSION_MAJOR)
+	msg_fatal("incorrect version of Berkeley DB: "
+		  "compiled against %d.%d.%d, linked against %d.%d.%d",
+		  DB_VERSION_MAJOR, DB_VERSION_MINOR, DB_VERSION_PATCH,
+		  major_version, minor_version, patch_version);
+#endif
+
     db_path = concatenate(path, ".db", (char *) 0);
 
     /*

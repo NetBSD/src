@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 SENDMAIL(1)                                           SENDMAIL(1)
-
 
 <b>NAME</b>
        sendmail - Postfix to Sendmail compatibility interface
@@ -25,11 +22,9 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
        By default, <b>sendmail</b> reads a message from  standard  input
        until  EOF  or until it reads a line with only a <b>.</b> charac-
-       ter, and arranges for delivery.  <b>sendmail</b> attempts to cre-
-       ate a queue file in the <b>maildrop</b> directory. If that direc-
-       tory is not world-writable, the message is  piped  through
-       the <a href="postdrop.1.html"><b>postdrop</b>(1)</a> command, which is expected to execute with
-       suitable privileges.
+       ter, and arranges for delivery.  <b>sendmail</b>  relies  on  the
+       <a href="postdrop.1.html"><b>postdrop</b>(1)</a> command to create a queue file in the <b>maildrop</b>
+       directory.
 
        Specific command aliases are  provided  for  other  common
        modes of operation:
@@ -39,18 +34,18 @@ SENDMAIL(1)                                           SENDMAIL(1)
               the recipients that still need to be delivered.  If
               mail could not be delivered upon the last  attempt,
               the reason for failure is shown. This mode of oper-
-              ation is implemented by connecting to the  <a href="showq.8.html"><b>showq</b>(8)</a>
-              daemon.
+              ation is implemented by executing the  <a href="postqueue.1.html"><b>postqueue</b>(1)</a>
+              command.
 
        <b>newaliases</b>
-              Initialize the alias database. If no alias database
-              type is specified, the program uses the type speci-
-              fied  in the <b>database</b><i>_</i><b>type</b> configuration parameter;
-              if no input file is  specified,  the  program  pro-
-              cesses    the    file(s)    specified    with   the
-              <b>alias</b><i>_</i><b>database</b> configuration parameter.  This  mode
-              of  operation is implemented by running the <b>postal-</b>
-              <b>ias</b>(1) command.
+              Initialize the alias database.  If no input file is
+              specified (with the <b>-oA</b>  option,  see  below),  the
+              program  processes  the  file(s) specified with the
+              <b>alias</b><i>_</i><b>database</b>  configuration  parameter.   If   no
+              alias  database type is specified, the program uses
+              the type specified with the <b>database</b><i>_</i><b>type</b>  configu-
+              ration parameter.  This mode of operation is imple-
+              mented by running the <a href="postalias.1.html"><b>postalias</b>(1)</a> command.
 
               Note: it may take a minute or so  before  an  alias
               database  update  becomes  visible. Use the <b>postfix</b>
@@ -58,20 +53,8 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
        These and other features can be selected by specifying the
        appropriate combination of command-line options. Some fea-
-       tures  are  controlled  by  parameters  in   the   <b>main.cf</b>
-
-
-
-                                                                1
-
-
-
-
-
-SENDMAIL(1)                                           SENDMAIL(1)
-
-
-       configuration file.
+       tures are controlled by parameters in the <b>main.cf</b> configu-
+       ration file.
 
        The following options are recognized:
 
@@ -94,60 +77,68 @@ SENDMAIL(1)                                           SENDMAIL(1)
        <b>-I</b>     Initialize  alias database. See the <b>newaliases</b> com-
               mand above.
 
+       <b>-L</b> <i>label</i> (ignored)
+              The logging label. Use the  <b>syslog</b><i>_</i><b>name</b>  configura-
+              tion parameter instead.
+
        <b>-N</b> <i>dsn</i> (ignored)
-              Delivery status  notification  control.  Currently,
+              Delivery  status  notification  control. Currently,
               Postfix does not implement <b>DSN</b>.
 
        <b>-R</b> <i>return_limit</i> (ignored)
-              Limit   the   size   of   bounced   mail.  Use  the
-              <b>bounce</b><i>_</i><b>size</b><i>_</i><b>limit</b> configuration parameter  instead.
+              Limit  the  size   of   bounced   mail.   Use   the
+              <b>bounce</b><i>_</i><b>size</b><i>_</i><b>limit</b>  configuration parameter instead.
 
        <b>-X</b> <i>log_file</i> (ignored)
-              Log  mailer  traffic.  Use  the <b>debug</b><i>_</i><b>peer</b><i>_</i><b>list</b> and
-              <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b> configuration parameters  instead.
+              Log mailer traffic.  Use  the  <b>debug</b><i>_</i><b>peer</b><i>_</i><b>list</b>  and
+              <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b>  configuration parameters instead.
 
        <b>-U</b> (ignored)
               Initial user submission.
 
-       <b>-bd</b>    Go  into  daemon  mode.  This  mode of operation is
+       <b>-V</b>     Variable Envelope Return Path.  Given  an  envelope
+              sender  address  of the form <i>owner-listname</i>@<i>origin</i>,
+              each recipient <i>user</i>@<i>domain</i>  receives  mail  with  a
+              personalized envelope sender address.
+
+              By   default,   the  personalized  envelope  sender
+              address is  <i>owner-listname</i><b>+</b><i>user</i><b>=</b><i>domain</i>@<i>origin</i>.  The
+              default  <b>+</b>  and  <b>=</b> characters are configurable with
+              the <b>default</b><i>_</i><b>verp</b><i>_</i><b>delimiters</b>  configuration  parame-
+              ter.
+
+       <b>-V</b><i>xy</i>   As <b>-V</b>, but uses <i>x</i> and <i>y</i> as the VERP delimiter char-
+              acters, instead of the  characters  specified  with
+              the  <b>default</b><i>_</i><b>verp</b><i>_</i><b>delimiters</b>  configuration parame-
+              ter.
+
+       <b>-bd</b>    Go into daemon mode.  This  mode  of  operation  is
               implemented by executing the <b>postfix</b> <b>start</b> command.
 
-       <b>-bi</b>    Initialize  alias database. See the <b>newaliases</b> com-
+       <b>-bi</b>    Initialize alias database. See the <b>newaliases</b>  com-
               mand above.
 
-       <b>-bm</b>    Read mail  from  standard  input  and  arrange  for
+       <b>-bm</b>    Read  mail  from  standard  input  and  arrange for
               delivery.  This is the default mode of operation.
 
        <b>-bp</b>    List the mail queue. See the <b>mailq</b> command above.
 
-       <b>-bs</b>    Stand-alone  SMTP  server  mode. Read SMTP commands
-              from standard input, and write responses  to  stan-
+       <b>-bs</b>    Stand-alone SMTP server mode.  Read  SMTP  commands
+              from  standard  input, and write responses to stan-
               dard output.  This mode of operation is implemented
               by running the <a href="smtpd.8.html"><b>smtpd</b>(8)</a> daemon.
-
-
-
-
-                                                                2
-
-
-
-
-
-SENDMAIL(1)                                           SENDMAIL(1)
-
 
        <b>-f</b> <i>sender</i>
               Set  the  envelope  sender  address.  This  is  the
               address where delivery problems are sent to, unless
-              the message contains an <b>Errors-To:</b> message  header.
+              the  message contains an <b>Errors-To:</b> message header.
 
        <b>-h</b> <i>hop_count</i> (ignored)
-              Hop  count limit. Use the <b>hopcount</b><i>_</i><b>limit</b> configura-
+              Hop count limit. Use the <b>hopcount</b><i>_</i><b>limit</b>  configura-
               tion parameter instead.
 
-       <b>-i</b>     When reading a message from standard  input,  don't
-              treat  a line with only a <b>.</b> character as the end of
+       <b>-i</b>     When  reading  a message from standard input, don't
+              treat a line with only a <b>.</b> character as the end  of
               input.
 
        <b>-m</b> (ignored)
@@ -157,60 +148,46 @@ SENDMAIL(1)                                           SENDMAIL(1)
               Backwards compatibility.
 
        <b>-oA</b><i>alias_database</i>
-              Non-default alias  database.  Specify  <i>pathname</i>  or
+              Non-default  alias  database.  Specify  <i>pathname</i> or
               <i>type</i>:<i>pathname</i>. See <a href="postalias.1.html"><b>postalias</b>(1)</a> for details.
 
        <b>-o7</b> (ignored)
 
        <b>-o8</b> (ignored)
-              The  message  body  type. Currently, Postfix imple-
+              The message body type.  Currently,  Postfix  imple-
               ments <b>just-send-eight</b>.
 
-       <b>-oi</b>    When reading a message from standard  input,  don't
-              treat  a line with only a <b>.</b> character as the end of
+       <b>-oi</b>    When  reading  a message from standard input, don't
+              treat a line with only a <b>.</b> character as the end  of
               input.
 
        <b>-om</b> (ignored)
-              The sender is  never  eliminated  from  alias  etc.
+              The  sender  is  never  eliminated  from alias etc.
               expansions.
 
        <b>-o</b> <i>x</i> <i>value</i> (ignored)
-              Set  option <i>x</i> to <i>value</i>. Use the equivalent configu-
+              Set option <i>x</i> to <i>value</i>. Use the equivalent  configu-
               ration parameter in <b>main.cf</b> instead.
 
        <b>-r</b> <i>sender</i>
               Set  the  envelope  sender  address.  This  is  the
               address where delivery problems are sent to, unless
-              the message contains an <b>Errors-To:</b> message  header.
+              the  message contains an <b>Errors-To:</b> message header.
 
-       <b>-q</b>     Attempt  to deliver all queued mail. This is imple-
-              mented by kicking the <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon.
+       <b>-q</b>     Attempt to deliver all queued mail. This is  imple-
+              mented by executing the <a href="postqueue.1.html"><b>postqueue</b>(1)</a> command.
 
        <b>-q</b><i>interval</i> (ignored)
-              The  interval   between   queue   runs.   Use   the
+              The   interval   between   queue   runs.   Use  the
               <b>queue</b><i>_</i><b>run</b><i>_</i><b>delay</b> configuration parameter instead.
 
-
-
-
-
-                                                                3
-
-
-
-
-
-SENDMAIL(1)                                           SENDMAIL(1)
-
-
        <b>-qR</b><i>site</i>
-              Schedule  immediate  delivery  of  all mail that is
-              queued for the named <i>site</i>. Depending on the  desti-
-              nation,  this  uses "fast flush" service, or it has
-              the same effect as <b>sendmail</b>  <b>-q</b>.   This  is  imple-
-              mented by connecting to the local SMTP server.  See
-              <a href="smtpd.8.html"><b>smtpd</b>(8)</a>  for  more  information  about  the  "fast
-              flush" service.
+              Schedule immediate delivery of  all  mail  that  is
+              queued for the named <i>site</i>. This option accepts only
+              <i>site</i> names that are eligible for the  "fast  flush"
+              service,   and  is  implemented  by  executing  the
+              <a href="postqueue.1.html"><b>postqueue</b>(1)</a> command.  See <a href="flushd.8.html"><b>flush</b>(8)</a> for more infor-
+              mation about the "fast flush" service.
 
        <b>-qS</b><i>site</i>
               This  command  is  not  implemented. Use the slower
@@ -257,18 +234,6 @@ SENDMAIL(1)                                           SENDMAIL(1)
 
        <b>alias</b><i>_</i><b>database</b>
               Default  alias  database(s)  for  <b>newaliases</b>.   The
-
-
-
-                                                                4
-
-
-
-
-
-SENDMAIL(1)                                           SENDMAIL(1)
-
-
               default  value  for  this  parameter is system-spe-
               cific.
 
@@ -295,14 +260,17 @@ SENDMAIL(1)                                           SENDMAIL(1)
               ging   level   by   the  amount  specified  in  the
               <b>debug</b><i>_</i><b>peer</b><i>_</i><b>level</b> parameter.
 
+       <b>default</b><i>_</i><b>verp</b><i>_</i><b>delimiters</b>
+              The VERP delimiter characters that  are  used  when
+              the  <b>-V</b>  command  line  option is specified without
+              delimiter characters.
+
        <b>fast</b><i>_</i><b>flush</b><i>_</i><b>domains</b>
               List of domains that will receive "fast flush" ser-
               vice  (default:  all  domains  that  this system is
-              willing to relay mail to).  This  greatly  improves
-              the  performance  of  the SMTP <b>ETRN</b> request, and of
-              the <b>sendmail</b> <b>-qR</b> command. For domains  not  in  the
-              list, Postfix simply attempts to deliver all queued
-              mail.
+              willing to relay mail to). This list specifies  the
+              domains  that  Postfix  accepts  in  the  SMTP <b>ETRN</b>
+              request and in the <b>sendmail</b> <b>-qR</b> command.
 
        <b>fork</b><i>_</i><b>attempts</b>
               Number of attempts to <b>fork</b>() a process before  giv-
@@ -323,18 +291,6 @@ SENDMAIL(1)                                           SENDMAIL(1)
               Directory  with  Postfix support commands (default:
               <b>$program</b><i>_</i><b>directory</b>).
 
-
-
-
-                                                                5
-
-
-
-
-
-SENDMAIL(1)                                           SENDMAIL(1)
-
-
        <b>daemon</b><i>_</i><b>directory</b>
               Directory with Postfix  daemon  programs  (default:
               <b>$program</b><i>_</i><b>directory</b>).
@@ -348,20 +304,23 @@ SENDMAIL(1)                                           SENDMAIL(1)
               The  time  between successive scans of the deferred
               queue.
 
+       <b>verp</b><i>_</i><b>delimiter</b><i>_</i><b>filter</b>
+              The characters that Postfix accepts as VERP  delim-
+              iter characters.
+
 <b>SEE</b> <b>ALSO</b>
        <a href="pickup.8.html">pickup(8)</a> mail pickup daemon
        <a href="postalias.1.html">postalias(1)</a> maintain alias database
-       <a href="postdrop.1.html">postdrop(1)</a> privileged posting agent
+       <a href="postdrop.1.html">postdrop(1)</a> mail posting utility
        <a href="postfix.1.html">postfix(1)</a> mail system control
-       <a href="postkick.1.html">postkick(1)</a> kick a Postfix daemon
+       <a href="postqueue.1.html">postqueue(1)</a> mail queue control
        <a href="qmgr.8.html">qmgr(8)</a> queue manager
-       <a href="showq.8.html">showq(8)</a> list mail queue
        <a href="smtpd.8.html">smtpd(8)</a> SMTP server
-       flushd(8) fast flush service
+       <a href="flushd.8.html">flush(8)</a> fast flush service
        syslogd(8) system logging
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -370,29 +329,6 @@ SENDMAIL(1)                                           SENDMAIL(1)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                6
-
+                                                                1
 
 </pre> </body> </html>

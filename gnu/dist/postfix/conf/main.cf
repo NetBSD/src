@@ -44,9 +44,10 @@ daemon_directory = /usr/libexec/postfix
 #
 # The mail_owner parameter specifies the owner of the Postfix queue
 # and of most Postfix daemon processes.  Specify the name of a user
-# account THAT DOES NOT SHARE A GROUP WITH OTHER ACCOUNTS AND THAT
-# OWNS NO OTHER FILES OR PROCESSES ON THE SYSTEM.  In particular,
-# don't specify nobody or daemon. PLEASE USE A DEDICATED USER.
+# account THAT DOES NOT SHARE ITS USER OR GROUP ID WITH OTHER ACCOUNTS
+# AND THAT OWNS NO OTHER FILES OR PROCESSES ON THE SYSTEM.  In
+# particular, don't specify nobody or daemon. PLEASE USE A DEDICATED
+# USER.
 #
 mail_owner = postfix
 
@@ -108,7 +109,7 @@ mail_owner = postfix
 # gateway, you should also include $mydomain. Do not specify the
 # names of domains that this machine is backup MX host for. Specify
 # those names via the relay_domains or permit_mx_backup settings for
-# the SMTP server (see sample-smtpd.cf.
+# the SMTP server (see sample-smtpd.cf).
 #
 # The local machine is always the final destination for mail addressed
 # to user@[the.net.work.address] of an interface that the mail system
@@ -151,9 +152,9 @@ mail_owner = postfix
 # Specify "mynetworks_style = host" when Postfix should "trust"
 # only the local machine.
 # 
-# mynetworks_style = class
-# mynetworks_style = subnet
-# mynetworks_style = host
+#mynetworks_style = class
+#mynetworks_style = subnet
+#mynetworks_style = host
 
 # Alternatively, you can specify the mynetworks list by hand, in
 # which case Postfix ignores the mynetworks_style setting.
@@ -163,10 +164,12 @@ mail_owner = postfix
 # address.
 #
 # You can also specify the absolute pathname of a pattern file instead
-# of listing the patterns here.
+# of listing the patterns here. Specify type:table for table-based lookups
+# (the value on the table right-hand side is not used).
 #
 #mynetworks = 168.100.189.0/28, 127.0.0.0/8
 #mynetworks = $config_directory/mynetworks
+#mynetworks = hash:/etc/postfix/network_table
 
 # The relay_domains parameter restricts what clients this mail system
 # will relay mail from, or what destinations this system will relay
@@ -211,15 +214,13 @@ mail_owner = postfix
 #
 # In the case of SMTP, specify a domain, host, host:port, [host]:port,
 # [address] or [address]:port; the form [host] turns off MX lookups.
-# If you specify multiple SMTP destinations, Postfix will try them
-# in the specified order.
 #
 # If you're connected via UUCP, see also the default_transport parameter.
 #
-# relayhost = $mydomain
-# relayhost = gateway.my.domain
-# relayhost = uucphost
-# relayhost = [an.ip.add.ress]
+#relayhost = $mydomain
+#relayhost = gateway.my.domain
+#relayhost = uucphost
+#relayhost = [an.ip.add.ress]
 
 # REJECTING UNKNOWN LOCAL USERS
 #
@@ -234,8 +235,28 @@ mail_owner = postfix
 # Beware: if the Postfix SMTP server runs chrooted, you may have to
 # copy the passwd (not shadow) database into the jail. This is
 # system dependent.
-#
+# 
 #local_recipient_maps = $alias_maps unix:passwd.byname
+
+# If you use both the Postfix local and virtual delivery agents, specify:
+#
+#local_recipient_maps = $alias_maps unix:passwd.byname $virtual_mailbox_maps
+
+# INPUT RATE CONTROL
+#
+# The in_flow_delay configuration parameter implements mail input
+# flow control. This feature is turned off by default because it
+# needs further development.
+# 
+# A Postfix process will pause for $in_flow_delay seconds before
+# accepting a new message, when the message arrival rate exceeds the
+# message delivery rate. With the default 50 SMTP server process
+# limit, this limits the mail inflow to 50 messages a second more
+# than the number of messages delivered per second.
+# 
+# Specify 0 to disable the feature. Valid delays are 0..10.
+# 
+#in_flow_delay = 1
 
 # ADDRESS REWRITING
 #
@@ -298,7 +319,7 @@ mail_owner = postfix
 # Basically, the software tries user+foo and .forward+foo before
 # trying user and .forward.
 #
-# recipient_delimiter = +
+#recipient_delimiter = +
 
 # DELIVERY TO MAILBOX
 #
@@ -314,8 +335,8 @@ mail_owner = postfix
 # UNIX-style mailboxes are kept. The default setting depends on the
 # system type.
 #
-# mail_spool_directory = /var/mail
-# mail_spool_directory = /var/spool/mail
+#mail_spool_directory = /var/mail
+#mail_spool_directory = /var/spool/mail
 
 # The mailbox_command parameter specifies the optional external
 # command to use instead of mailbox delivery. The command is run as
@@ -378,25 +399,32 @@ mail_owner = postfix
 #
 # luser_relay works only for the default Postfix local delivery agent.
 #
-# luser_relay = $user@other.host
-# luser_relay = $local@other.host
-# luser_relay = admin+$local
+#luser_relay = $user@other.host
+#luser_relay = $local@other.host
+#luser_relay = admin+$local
   
 # JUNK MAIL CONTROLS
 # 
 # The controls listed here are only a very small subset. See the file
 # sample-smtpd.cf for an elaborate list of anti-UCE controls.
 
-# The header_checks parameter restricts what may appear in message
-# headers. This requires that POSIX or PCRE regular expression support
-# is built-in. Specify "/^header-name: stuff you do not want/ REJECT"
-# in the pattern file. Patterns are case-insensitive by default. Note:
-# specify only patterns ending in REJECT (reject entire message) or
-# IGNORE (silently discard this header). Patterns ending in OK are
-# mostly a waste of cycles.
+# The header_checks parameter specifies an optional table with patterns
+# that each logical message header is matched against, including
+# headers that span multiple physical lines.  Patterns are matched
+# in the specified order, and the search stops upon the first match.
+# When a pattern matches, what happens next depends on the associated
+# action that is specified in the right-hand side of the table:
 #
-#header_checks = regexp:/etc/postfix/filename
-#header_checks = pcre:/etc/postfix/filename
+# REJECT the entire message is rejected.
+# REJECT text.... The text is sent to the originator.
+# IGNORE the header line is silently discarded.
+# WARN   the header is logged (not rejected) with a warning message.
+#
+# These patterns do not apply to MIME headers in the message body.
+#
+# See also the body_checks example in the sample-filter.cf file.
+#
+#header_checks = regexp:/etc/postfix/header_checks
 
 # FAST ETRN SERVICE
 #
@@ -460,8 +488,8 @@ debug_peer_level = 2
 # increase the verbose logging level by the amount specified in the
 # debug_peer_level parameter.
 #
-# debug_peer_list = 127.0.0.1
-# debug_peer_list = some.domain
+#debug_peer_list = 127.0.0.1
+#debug_peer_list = some.domain
 
 # The debugger_command specifies the external command that is executed
 # when a Postfix daemon program is run with the -D option.
@@ -474,4 +502,39 @@ debugger_command =
 	 PATH=/usr/bin:/usr/X11R6/bin
 	 xxgdb $daemon_directory/$process_name $process_id & sleep 5
 
-# Other configurable parameters.
+# INSTALL-TIME CONFIGURATION INFORMATION
+#
+# The following parameters are used when installing a new Postfix version.
+# 
+# sendmail_path: The full pathname of the Postfix sendmail command.
+# This is the Sendmail-compatible mail posting interface.
+# 
+sendmail_path =
+
+# newaliases_path: The full pathname of the Postfix newaliases command.
+# This is the Sendmail-compatible command to build alias databases.
+#
+newaliases_path =
+
+# mailq_path: The full pathname of the Postfix mailq command.  This
+# is the Sendmail-compatible mail queue listing command.
+# 
+mailq_path =
+
+# setgid_group: The group for mail submission and queue management
+# commands.  This must be a group name with a numerical group ID that
+# is not shared with other accounts, not even with the Postfix account.
+#
+setgid_group =
+
+# manpage_directory: The location of the Postfix on-line manual pages.
+#
+manpage_directory =
+
+# sample_directory: The location of the Postfix sample configuration files.
+#
+sample_directory =
+
+# readme_directory: The location of the Postfix README files.
+#
+readme_directory =

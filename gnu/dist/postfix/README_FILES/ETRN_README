@@ -1,0 +1,117 @@
+Purpose of this document
+========================
+
+This document describes the purpose of the Postfix fast ETRN service,
+how the service works, and how it can be tested.
+
+Other documents with information on this subject:
+
+- conf/sample-flush.cf, sample configuration file
+- conf/main.cf, sample configuration file
+- flush(8), flush service implementation
+
+The Postfix fast ETRN service
+=============================
+
+The SMTP ETRN command was designed for sites that have intermittent
+Internet connectivity. With ETRN, a site can tell the mail server
+of its provider to "Please deliver all my mail now".
+
+Postfix versions before 20001005 implemented the ETRN command in
+a lame manner: they simply attempted to deliver all queued mail.
+This is slow on mail servers that queue mail for many customers.
+
+As of version 20001005, Postfix has a fast ETRN implementation that
+does not require Postfix to examine every queue file.  The command
+"sendmail -qR" is now implemented by sending an ETRN command to
+the local SMTP server.
+
+Postfix "fast ETRN/sendmail -qR" speeds up deliveries by attempting
+to deliver only mail that is queued for a given destination site.
+The old Postfix "slow ETRN" is still used as a fall-back method.
+
+How Postfix fast ETRN works
+===========================
+
+The "fast ETRN" service uses the new "flush" daemon which maintains
+per-destination logfiles of queued mail.  These logfiles are kept
+below /var/spool/postfix/flush. Each logfile is named after its
+destination domain name. Only destinations with syntactically valid
+domain names can have per-destination logfiles.
+
+The behavior of the new "flush" daemon is controlled by parameters
+in the main.cf configuration file.
+
+By default, Postfix "fast ETRN/sendmail -qR" service is available
+only for destinations that Postfix is willing to relay mail to:
+
+    fast_flush_domains = $relay_domains
+
+The "relay_domains" parameter specifies what destinations Postfix
+will relay to.  
+
+For destinations that are not eligible for the new "fast ETRN/sendmail
+-qR" service, Postfix falls back to the old "slow ETRN" method
+which attempts to deliver all queued mail.
+
+To enable "fast ETRN/sendmail -qR" for some other destination, specify:
+
+    fast_flush_domains = $relay_domains, some.other.domain
+
+To disable "fast ETRN/sendmail -qR", so that Postfix always uses
+the old "slow ETRN" which delivers all queued mail, specify:
+
+    fast_flush_domains =
+
+Testing the fast ETRN service
+=============================
+
+If you run Postfix with "fast ETRN" service for the very first
+time, you need to run "sendmail -q" to populate the per-site deferred
+mail logfiles.  If you omit this step, the logfiles will eventually
+become populated as Postfix routinely attempts to deliver delayed
+mail, but that will take a couple hours.
+
+After the "sendmail -q" has completed all delivery attempts (that
+can take a while), you're ready to test the "fast ETRN" service.
+Telnet to the Postfix SMTP server from a client that is allowed to
+execute ETRN commands (by default, that's every client), and type:
+
+    helo my.client.name
+    etrn some.customer.domain
+
+where "some.customer.domain" is the name of a domain that has a
+non-empty logfile somewhere under /var/spool/postfix/flush.
+
+In the maillog file, you should immediately see a couple of logfile
+records, as evidence that the queue manager has opened queue files:
+
+    Oct  2 10:51:19 localhost postfix/qmgr[51999]: 682E8440A4:
+	from=<whatever>, size=12345, nrcpt=1 (queue active)
+    Oct  2 10:51:19 localhost postfix/qmgr[51999]: 02249440B7:
+	from=<whatever>, size=4711, nrcpt=1 (queue active)
+
+What happens next depends on whether the destination is reachable.
+If it's not reachable, the mail queue IDs will be added back to
+the some.customer.domain logfile under /var/spool/postfix/flush.
+
+Repeat the exercise with another domain that your server is willing
+to relay to (domain listed in "relay_domains"), but that has no mail
+queued.
+
+    helo my.client.name
+    etrn some.other.customer.domain
+
+This time, the "etrn" command should trigger NO mail deliveries at
+all. If this triggers delivery of all mail, then you used the wrong
+domain name, or "fast ETRN" service is turned off.
+
+Finally, repeat the exercise with a destination that your mail
+server is not willing to relay to.  It does not matter if your
+server has mail queued for that destination.
+
+    helo my.client.name
+    etrn not.a.customer.domain
+
+If your "fast ETRN" caching policy is left at its default setting,
+then the "etrn" command should trigger delivery of all queued mail.

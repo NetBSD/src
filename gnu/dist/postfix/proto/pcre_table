@@ -15,14 +15,15 @@
 #	supports use the \fBpostconf -m\fR command.
 #
 #	The general form of a PCRE table is:
-# .IP "blanks and comments"
-#	Blank lines are ignored, as are lines beginning with `#'.
-# .IP "leading whitespace"
-#	Lines that begin with whitespace continue the previous line.
 # .IP "\fIpattern result\fR"
 #	When \fIpattern\fR matches a search string, use the corresponding
-#	\fIresult\fR. A line that starts with white space continues the
-#	preceding line.
+#	\fIresult\fR.
+# .IP "blank lines and comments"
+#	Empty lines and whitespace-only lines are ignored, as
+#	are lines whose first non-whitespace character is a `#'.
+# .IP "multi-line text"
+#	A logical line starts with non-whitespace text. A line that
+#	starts with whitespace continues a logical line.
 # .PP
 #	Each pattern is a perl-like regular expression. The expression
 #	delimiter can be any character, except whitespace or characters
@@ -50,19 +51,22 @@
 #	string is possible using the conventional perl syntax ($1, $2, etc.).
 #	The macros in the result string may need to be written as ${n}
 #	or $(n) if they aren't followed by whitespace.
-# EXAMPLES
+# EXAMPLE SMTPD ACCESS MAP
 #	# Protect your outgoing majordomo exploders
-#	/^(?!owner-)(.*)-outgoing@(my\.domain)$/    550 Use ${1}@${2} instead
+#	/^(?!owner-)(.*)-outgoing@/     550 Use ${1}@${2} instead
 #
 #	# Bounce friend@whatever, except when whatever is our domain (you would
 #	# be better just bouncing all friend@ mail - this is just an example).
-#	/^friend@(?!my\.domain).*$/         550 Stick this in your pipe $0
+#	/^friend@(?!my\\.domain)/	 550 Stick this in your pipe $0
 #
 #	# A multi-line entry. The text is sent as one line.
 #	#
-#	/^noddy@connect\.com\.au$/
+#	/^noddy@my\\.domain$/
 #	\ 550 This user is a funny one. You really don't want to send mail to
 #	\ them as it only makes their head spin.
+# EXAMPLE HEADER FILTER MAP
+#	/^Subject: make money fast/     REJECT
+#	/^To: friend@public\\.com/	 REJECT
 # SEE ALSO
 #	regexp_table(5) format of POSIX regular expression tables
 # AUTHOR(S)

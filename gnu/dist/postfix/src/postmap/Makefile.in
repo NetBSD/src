@@ -21,12 +21,38 @@ $(PROG):	$(OBJS) $(LIBS)
 Makefile: Makefile.in
 	(set -e; echo "# DO NOT EDIT"; $(OPTS) $(SHELL) ../../makedefs && cat $?) >$@
 
-test:	$(TESTPROG)
-
 update: ../../bin/$(PROG)
 
 ../../bin/$(PROG): $(PROG)
 	cp $(PROG) ../../bin
+
+test:	test1 test2
+
+test1:	$(PROG) map.in map-abc1.ref map-ghi1.ref map-ABC1.ref
+	./$(PROG) map.in
+	for key in abc ghi; \
+	do \
+	    ./$(PROG) -q $${key} map.in | diff map-$${key}1.ref -; \
+	done
+	./$(PROG) -f map.in
+	for key in ABC; \
+	do \
+	    ./$(PROG) -fq $${key} map.in | diff map-$${key}1.ref -; \
+	done
+	rm -f map.in.db
+
+test2:	$(PROG) map.in map-abc2.ref map-ghi2.ref map-ABC2.ref
+	./$(PROG) map.in
+	for key in abc ghi; \
+	do \
+	    echo $${key} | ./$(PROG) -q - map.in | diff map-$${key}2.ref -; \
+	done
+	./$(PROG) -f map.in
+	for key in ABC; \
+	do \
+	    echo $${key} | ./$(PROG) -fq - map.in | diff map-$${key}2.ref -; \
+	done
+	rm -f map.in.db
 
 printfck: $(OBJS) $(PROG)
 	rm -rf printfck
@@ -39,7 +65,7 @@ lint:
 	lint $(DEFS) $(SRCS) $(LINTFIX)
 
 clean:
-	rm -f *.o *core $(PROG) $(TESTPROG) junk 
+	rm -f *.o *core $(PROG) $(TESTPROG) junk map.in.db
 	rm -rf printfck
 
 tidy:	clean
@@ -64,6 +90,7 @@ postmap.o: ../../include/msg_vstream.h
 postmap.o: ../../include/readlline.h
 postmap.o: ../../include/stringops.h
 postmap.o: ../../include/split_at.h
+postmap.o: ../../include/vstring_vstream.h
 postmap.o: ../../include/mail_conf.h
 postmap.o: ../../include/mail_params.h
 postmap.o: ../../include/mkmap.h

@@ -14,14 +14,14 @@
 /*	LMTP_STATE *state;
 /* DESCRIPTION
 /*	This module contains random chunks of code that implement
-/*	the SMTP protocol interface for SASL negotiation. The goal
+/*	the LMTP protocol interface for SASL negotiation. The goal
 /*	is to reduce clutter in the main LMTP client source code.
 /*
 /*	lmtp_sasl_helo_auth() processes the AUTH option in the
-/*	SMTP server's EHLO response.
+/*	LMTP server's LHLO response.
 /*
 /*	lmtp_sasl_helo_login() authenticates the LMTP client to the
-/*	SMTP server, using the authentication mechanism information
+/*	LMTP server, using the authentication mechanism information
 /*	given by the server. The result is a Postfix delivery status
 /*	code in case of trouble.
 /*
@@ -52,6 +52,10 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <string.h>
+#ifdef STRCASECMP_IN_STRINGS_H
+#include <strings.h>
+#endif
 
 /* Utility library. */
 
@@ -79,15 +83,17 @@ void    lmtp_sasl_helo_auth(LMTP_STATE *state, const char *words)
      * then pretend that the server doesn't support SASL authentication.
      */
     if (state->sasl_mechanism_list) {
+	if (strcasecmp(state->sasl_mechanism_list, words) == 0)
+	    return;
 	myfree(state->sasl_mechanism_list);
 	msg_warn("%s offered AUTH option multiple times",
 		 state->session->namaddr);
 	state->sasl_mechanism_list = 0;
-	state->features &= ~SMTP_FEATURE_AUTH;
+	state->features &= ~LMTP_FEATURE_AUTH;
     }
     if (strlen(words) > 0) {
 	state->sasl_mechanism_list = mystrdup(words);
-	state->features |= SMTP_FEATURE_AUTH;
+	state->features |= LMTP_FEATURE_AUTH;
     } else {
 	msg_warn("%s offered null AUTH mechanism list",
 		 state->session->namaddr);

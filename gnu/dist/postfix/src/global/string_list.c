@@ -6,7 +6,8 @@
 /* SYNOPSIS
 /*	#include <string_list.h>
 /*
-/*	STRING_LIST *string_list_init(pattern_list)
+/*	STRING_LIST *string_list_init(flags, pattern_list)
+/*	int	flags;
 /*	const char *pattern_list;
 /*
 /*	int	string_list_match(list, name)
@@ -16,6 +17,8 @@
 /*	void string_list_free(list)
 /*	STRING_LIST *list;
 /* DESCRIPTION
+/*	This is a convenience wrapper around the match_list module.
+/*
 /*	This module implements tests for list membership of a string.
 /*
 /*	Patterns are separated by whitespace and/or commas. A pattern
@@ -28,8 +31,8 @@
 /*	In order to reverse the result, precede a non-file name pattern
 /*	with an exclamation point (!).
 /*
-/*	string_list_init() performs initializations. The argument is a
-/*	list of string patterns.
+/*	string_list_init() performs initializations. The flags argument
+/*	is ignored; pattern_list specifies a list of string patterns.
 /*
 /*	string_list_match() matches the specified string against the
 /*	compiled pattern list.
@@ -58,32 +61,10 @@
 /* Utility library. */
 
 #include <match_list.h>
-#include <match_ops.h>
 
 /* Global library. */
 
 #include "string_list.h"
-
-/* string_list_init - initialize string list */
-
-STRING_LIST *string_list_init(const char *patterns)
-{
-    return (match_list_init(patterns, 1, match_string));
-}
-
-/* string_list_match - match string against list */
-
-int     string_list_match(STRING_LIST * list, const char *string)
-{
-    return (match_list_match(list, string));
-}
-
-/* string_list_free - release storage */
-
-void    string_list_free(STRING_LIST * list)
-{
-    match_list_free(list);
-}
 
 #ifdef TEST
 
@@ -117,7 +98,7 @@ main(int argc, char **argv)
     }
     if (argc != optind + 2)
 	usage(argv[0]);
-    list = string_list_init(argv[optind]);
+    list = string_list_init(MATCH_FLAG_NONE, argv[optind]);
     string = argv[optind + 1];
     vstream_printf("%s: %s\n", string, string_list_match(list, string) ?
 		   "YES" : "NO");

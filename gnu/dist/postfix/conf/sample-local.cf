@@ -6,6 +6,10 @@
 # 
 # See the sample-aliases.cf file for parameters that are specific to
 # alias database lookup.
+#
+# Mailbox delivery is controlled by a series of parameters. The
+# precedence, from highest to lowest priority: mailbox_transport,
+# mailbox_command_maps, mailbox_command, home_mailbox.
 
 # The biff parameter specifies whether or not to contact the biff
 # server.  This server sends "new mail" notifications to users who
@@ -15,7 +19,7 @@
 # with lots of interactive users, this "protocol" can be a real
 # performance pig.  Specify "biff = no" to disable.
 # 
-# biff = no
+#biff = no
 biff = yes
 
 # The require_home_directory parameter controls whether a local
@@ -84,14 +88,14 @@ forward_path = $home/.forward$recipient_delimiter$extension,$home/.forward
 # external commands. The default is to disallow delivery to "|command"
 # in :include: files.
 #
-# allow_mail_to_commands = alias,forward,include
+#allow_mail_to_commands = alias,forward,include
 allow_mail_to_commands = alias,forward
 
 # The allow_mail_to_files parameter restricts mail delivery to external
 # file. The default is to disallow delivery to /file/name in :include:
 # files.
 #
-# allow_mail_to_files = alias,forward,include
+#allow_mail_to_files = alias,forward,include
 allow_mail_to_files = alias,forward
 
 # The default_privs parameter specifies the default rights used by
@@ -110,8 +114,8 @@ default_privs = nobody
 # mailbox file is /var/spool/mail/user or /var/mail/user.  Specify
 # "Maildir/" for qmail-style delivery (the / is required).
 #
-# home_mailbox = Mailbox
-# home_mailbox = Maildir/
+#home_mailbox = Mailbox
+#home_mailbox = Maildir/
 home_mailbox = 
 
 # The luser_relay parameter specifies an optional destination address
@@ -127,16 +131,16 @@ home_mailbox =
 #
 # luser_relay works only for the default Postfix local delivery agent.
 #
-# luser_relay = $user@other.host
-# luser_relay = $local@other.host
-# luser_relay = admin+$local
+#luser_relay = $user@other.host
+#luser_relay = $local@other.host
+#luser_relay = admin+$local
 
 # The mail_spool_directory parameter specifies the directory where
 # UNIX-style mailboxes are kept. The default setting depends on the
-# system type.
+# system type. Specify a name ending in / for maildir-style delivery.
 #
-# mail_spool_directory = /var/mail
-# mail_spool_directory = /var/spool/mail
+#mail_spool_directory = /var/mail
+#mail_spool_directory = /var/spool/mail
 
 # The mailbox_command parameter specifies the optional external
 # command to use instead of mailbox delivery. The command is run
@@ -157,9 +161,17 @@ home_mailbox =
 # IF YOU USE THIS TO DELIVER MAIL SYSTEM-WIDE, YOU MUST SET UP AN
 # ALIAS THAT FORWARDS MAIL FOR ROOT TO A REAL USER.
 #
-# mailbox_command = /some/where/procmail
-# mailbox_command = /some/where/procmail -a "$EXTENSION"
+#mailbox_command = /some/where/procmail
+#mailbox_command = /some/where/procmail -a "$EXTENSION"
 mailbox_command = 
+
+# The mailbox_command_maps allows you to specify a per-user mailbox
+# command. The maps are keyed by username (not including the domain).
+# Specify one or more maps. If a user is not found in the maps then
+# lower precedence delivery mechanisms take effect. See the top of
+# this file for the precedences of mailbox delivery mechanisms.
+#
+#mailbox_command_maps = hash:/etc/postfix/mailbox_commands
 
 # The mailbox_transport specifies the optional transport in master.cf
 # to use after processing aliases and .forward files. This parameter
@@ -171,8 +183,8 @@ mailbox_command =
 # :nexthop part is optional. For more details see the sample transport
 # configuration file.
 #
-# mailbox_transport = lmtp:unix:/file/name
-# mailbox_transport = cyrus
+#mailbox_transport = lmtp:unix:/file/name
+#mailbox_transport = cyrus
 mailbox_transport =
 
 # The fallback_transport specifies the optional transport in master.cf
@@ -184,8 +196,8 @@ mailbox_transport =
 # :nexthop part is optional. For more details see the sample transport
 # configuration file.
 #
-# fallback_transport = lmtp:unix:/file/name
-# fallback_transport = cyrus
+#fallback_transport = lmtp:unix:/file/name
+#fallback_transport = cyrus
 fallback_transport =
 
 #
@@ -229,5 +241,5 @@ local_destination_recipient_limit = 1
 # and command. Turning off the Delivered-To: header when forwarding
 # mail is not recommended.
 #
-# prepend_delivered_header = command, file, forward
-# prepend_delivered_header = forward
+#prepend_delivered_header = command, file, forward
+#prepend_delivered_header = forward

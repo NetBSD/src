@@ -43,7 +43,7 @@
 # The entries referenced by these links are (recursively) treated as if
 # they were contained in the referencing entity.
 #
-# ldap_special_result_attribute =
+#ldap_special_result_attribute =
 
 # The ldap_scope parameter specifies the LDAP search scope: sub, base, or one.
 #
@@ -86,3 +86,7 @@
 # (exactly) the specified list of domains.
 #
 #ldap_domain =
+
+# The ldap_debuglevel parameter sets the debug level in the OpenLDAP
+# libraries.
+#ldap_debuglevel = 0

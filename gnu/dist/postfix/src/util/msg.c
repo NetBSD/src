@@ -20,6 +20,10 @@
 /*	NORETURN msg_fatal(format, ...)
 /*	const char *format;
 /*
+/*	NORETURN msg_fatal_status(status, format, ...)
+/*	int	status;
+/*	const char *format;
+/*
 /*	NORETURN msg_panic(format, ...)
 /*	const char *format;
 /*
@@ -48,11 +52,14 @@
 /*	msg_fatal() reports an unrecoverable error and terminates the program
 /*	with a non-zero exit status.
 /*
+/*	msg_fatal_status() reports an unrecoverable error and terminates the 
+/*	program with the specified exit status.
+/*
 /*	msg_panic() reports an internal inconsistency, terminates the
 /*	program immediately (i.e. without calling the optional user-specified
 /*	cleanup routine), and forces a core dump when possible.
 /*
-/*	msg_cleanup() specifies a function that msg_fatal() should
+/*	msg_cleanup() specifies a function that msg_fatal[_status]() should
 /*	invoke before terminating the program, and returns the
 /*	current function pointer. Specify a null argument to disable
 /*	this feature.
@@ -161,6 +168,23 @@ NORETURN msg_fatal(const char *fmt,...)
     }
     sleep(1);
     exit(1);
+}
+
+/* msg_fatal_status - report error and terminate gracefully */
+
+NORETURN msg_fatal_status(int status, const char *fmt,...)
+{
+    va_list ap;
+
+    if (msg_exiting++ == 0) {
+	va_start(ap, fmt);
+	msg_vprintf(MSG_FATAL, fmt, ap);
+	va_end(ap);
+	if (msg_cleanup_fn)
+	    msg_cleanup_fn();
+    }
+    sleep(1);
+    exit(status);
 }
 
 /* msg_panic - report error and dump core */

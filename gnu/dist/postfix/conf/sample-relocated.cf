@@ -14,8 +14,8 @@
 # build the necessary DBM or DB file after change, then "postfix
 # reload" to make the changes visible.
 #
-# relocated_maps = dbm:/etc/postfix/relocated
-# relocated_maps = hash:/etc/postfix/relocated
-# relocated_maps = hash:/etc/postfix/relocated, nis:virtual
-# relocated_maps = hash:/etc/postfix/relocated, netinfo:/relocated
+#relocated_maps = dbm:/etc/postfix/relocated
+#relocated_maps = hash:/etc/postfix/relocated
+#relocated_maps = hash:/etc/postfix/relocated, nis:virtual
+#relocated_maps = hash:/etc/postfix/relocated, netinfo:/relocated
 relocated_maps = 

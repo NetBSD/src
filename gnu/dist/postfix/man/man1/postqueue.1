@@ -1,0 +1,117 @@
+.TH POSTQUEUE 1 
+.ad
+.fi
+.SH NAME
+postqueue
+\-
+Postfix queue control
+.SH SYNOPSIS
+.na
+.nf
+\fBpostqueue\fR [\fB-c \fIconfig_dir\fR] \fB-f\fR
+.br
+\fBpostqueue\fR [\fB-c \fIconfig_dir\fR] \fB-p\fR
+.br
+\fBpostqueue\fR [\fB-c \fIconfig_dir\fR] \fB-s \fIsite\fR
+.SH DESCRIPTION
+.ad
+.fi
+The \fBpostqueue\fR program implements the Postfix user interface
+for queue management. It implements all the operations that are
+traditionally available via the \fBsendmail\fR(1) command.
+
+The following options are recognized:
+.IP "\fB-c \fIconfig_dir\fR"
+The \fBmain.cf\fR configuration file is in the named directory
+instead of the default configuration directory. See also the
+MAIL_CONFIG environment setting below.
+.IP \fB-f\fR
+Flush the queue: attempt to deliver all queued mail.
+
+This option implements the traditional \fBsendmail -q\fR command,
+by contacting the Postfix \fBqmgr\fR(8) daemon.
+.IP \fB-p\fR
+Produce a traditional sendmail-style queue listing.
+
+This option implements the traditional \fBmailq\fR command,
+by contacting the Postfix \fBshowq\fR(8) daemon.
+.IP "\fB-s \fIsite\fR"
+Schedule immediate delivery of all mail that is queued for the named
+\fIsite\fR. The site must be eligible for the "fast flush" service.
+See \fBflush\fR(8) for more information about the "fast flush"
+service.
+
+This option implements the traditional \fBsendmail -qR\fIsite\fR
+command, by contacting the Postfix \fBflush\fR(8) daemon.
+.IP \fB-v\fR
+Enable verbose logging for debugging purposes. Multiple \fB-v\fR
+options make the software increasingly verbose.
+.SH SECURITY
+.na
+.nf
+.ad
+.fi
+This program is designed to run with set-group ID privileges, so
+that it can connect to Postfix daemon processes.
+.SH DIAGNOSTICS
+.ad
+.fi
+Problems are logged to \fBsyslogd\fR(8) and to the standard error
+stream.
+.SH ENVIRONMENT
+.na
+.nf
+.ad
+.fi
+.IP MAIL_CONFIG
+Directory with the \fBmain.cf\fR file.
+
+In order to avoid exploitation of set-group ID privileges, it is not
+possible to specify arbitrary directory names.
+
+A non-standard directory is allowed only if the name is listed in the
+standard \fBmain.cf\fR file, in the \fBalternate_config_directories\fR
+configuration parameter value.
+
+Only the super-user is allowed to specify arbitrary directory names.
+.SH FILES
+.na
+.nf
+/var/spool/postfix, mail queue
+/etc/postfix, configuration files
+.SH CONFIGURATION PARAMETERS
+.na
+.nf
+.ad
+.fi
+.IP \fBimport_environment\fR
+List of names of environment parameters that can be imported
+from non-Postfix processes.
+.IP \fBqueue_directory\fR
+Top-level directory of the Postfix queue. This is also the root
+directory of Postfix daemons that run chrooted.
+.IP \fBfast_flush_domains\fR
+List of domains that will receive "fast flush" service (default: all
+domains that this system is willing to relay mail to). This list
+specifies the domains that Postfix accepts in the SMTP \fBETRN\fR
+request and in the \fBsendmail -qR\fR command.
+.SH SEE ALSO
+.na
+.nf
+sendmail(8) sendmail-compatible user interface
+qmgr(8) queue manager
+showq(8) list mail queue
+flush(8) fast flush service
+.SH LICENSE
+.na
+.nf
+.ad
+.fi
+The Secure Mailer license must be distributed with this software.
+.SH AUTHOR(S)
+.na
+.nf
+Wietse Venema
+IBM T.J. Watson Research
+P.O. Box 704
+Yorktown Heights, NY 10598, USA

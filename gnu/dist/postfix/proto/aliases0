@@ -1,4 +1,8 @@
 #
+# Sample aliases file. Install in the location as specified by the
+# output from the command "postconf alias_maps". Typical path names
+# are /etc/aliases or /etc/mail/aliases.
+#
 #	>>>>>>>>>>      The program "newaliases" must be run after
 #	>> NOTE >>      this file is updated for any changes to
 #	>>>>>>>>>>      show through to Postfix.

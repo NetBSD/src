@@ -66,7 +66,10 @@ postsuper.o: ../../include/vstring.h
 postsuper.o: ../../include/safe.h
 postsuper.o: ../../include/set_ugid.h
 postsuper.o: ../../include/argv.h
+postsuper.o: ../../include/vstring_vstream.h
+postsuper.o: ../../include/sane_fsops.h
 postsuper.o: ../../include/mail_task.h
 postsuper.o: ../../include/mail_conf.h
 postsuper.o: ../../include/mail_params.h
 postsuper.o: ../../include/mail_queue.h
+postsuper.o: ../../include/mail_open_ok.h

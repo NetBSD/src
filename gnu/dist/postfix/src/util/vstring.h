@@ -38,6 +38,8 @@ extern VSTRING *vstring_strcpy(VSTRING *, const char *);
 extern VSTRING *vstring_strncpy(VSTRING *, const char *, int);
 extern VSTRING *vstring_strcat(VSTRING *, const char *);
 extern VSTRING *vstring_strncat(VSTRING *, const char *, int);
+extern VSTRING *vstring_memcpy(VSTRING *, const char *, int);
+extern VSTRING *vstring_memcat(VSTRING *, const char *, int);
 extern VSTRING *PRINTFLIKE(2, 3) vstring_sprintf(VSTRING *, const char *,...);
 extern VSTRING *PRINTFLIKE(2, 3) vstring_sprintf_append(VSTRING *, const char *,...);
 extern char *vstring_export(VSTRING *);

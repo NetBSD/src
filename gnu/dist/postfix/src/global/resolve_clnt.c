@@ -156,13 +156,20 @@ void    resolve_clnt_query(const char *addr, RESOLVE_REPLY *reply)
 
     for (;;) {
 	stream = clnt_stream_access(rewrite_clnt_stream);
-	if (mail_print(stream, "%s %s", RESOLVE_ADDR, addr)
+	if (attr_print(stream, ATTR_FLAG_NONE,
+		       ATTR_TYPE_STR, MAIL_ATTR_REQ, RESOLVE_ADDR,
+		       ATTR_TYPE_STR, MAIL_ATTR_ADDR, addr,
+		       ATTR_TYPE_END)
 	    || vstream_fflush(stream)) {
 	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: bad write: %m", myname);
-	} else if (mail_scan(stream, "%s %s %s %d",
-			     reply->transport, reply->nexthop,
-			     reply->recipient, &reply->flags) != 4) {
+	} else if (attr_scan(stream, ATTR_FLAG_STRICT,
+		       ATTR_TYPE_STR, MAIL_ATTR_TRANSPORT, reply->transport,
+			   ATTR_TYPE_STR, MAIL_ATTR_NEXTHOP, reply->nexthop,
+
+			   ATTR_TYPE_STR, MAIL_ATTR_RECIP, reply->recipient,
+			     ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, &reply->flags,
+			     ATTR_TYPE_END) != 4) {
 	    if (msg_verbose || (errno != EPIPE && errno != ENOENT))
 		msg_warn("%s: bad read: %m", myname);
 	} else {

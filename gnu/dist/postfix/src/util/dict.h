@@ -55,6 +55,7 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_DUP_REPLACE	(1<<7)	/* if file, replace dups */
 #define DICT_FLAG_SYNC_UPDATE	(1<<8)	/* if file, sync updates */
 #define DICT_FLAG_DEBUG		(1<<9)	/* log access */
+#define DICT_FLAG_FOLD_KEY	(1<<10)	/* lowercase the lookup key */
 
 extern int dict_unknown_allowed;
 extern int dict_errno;

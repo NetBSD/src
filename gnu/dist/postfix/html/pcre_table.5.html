@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 PCRE_TABLE(5)                                       PCRE_TABLE(5)
-
 
 <b>NAME</b>
        pcre_table - format of Postfix PCRE tables
@@ -22,74 +19,67 @@ PCRE_TABLE(5)                                       PCRE_TABLE(5)
 
        The general form of a PCRE table is:
 
-       blanks and comments
-              Blank  lines  are  ignored,  as are lines beginning
-              with `#'.
-
-       leading whitespace
-              Lines that begin with whitespace continue the  pre-
-              vious line.
-
        <i>pattern</i> <i>result</i>
               When  <i>pattern</i> matches a search string, use the cor-
-              responding <i>result</i>. A line that  starts  with  white
-              space continues the preceding line.
+              responding <i>result</i>.
+
+       blank lines and comments
+              Empty lines and whitespace-only lines are  ignored,
+              as  are  lines whose first non-whitespace character
+              is a `#'.
+
+       multi-line text
+              A logical line starts with non-whitespace  text.  A
+              line  that starts with whitespace continues a logi-
+              cal line.
 
        Each  pattern  is  a  perl-like  regular  expression.  The
-       expression delimiter can be any character, except  whites-
-       pace  or  characters that have special meaning (tradition-
-       ally the forward slash is used).  The  regular  expression
+       expression  delimiter can be any character, except whites-
+       pace or characters that have special  meaning  (tradition-
+       ally  the  forward slash is used).  The regular expression
        can contain whitespace.
 
        By default, matching is case-insensitive, although follow-
-       ing the second slash with an `i' flag will  reverse  this.
-       Other  flags  are supported, but the only other useful one
+       ing  the  second slash with an `i' flag will reverse this.
+       Other flags are supported, but the only other  useful  one
        is `U', which makes matching ungreedy (see PCRE documenta-
        tion and source for more info).
 
-       Each  pattern  is applied to the entire lookup key string.
-       Depending on the application, that  string  is  an  entire
+       Each pattern is applied to the entire lookup  key  string.
+       Depending  on  the  application,  that string is an entire
        client hostname, an entire client IP address, or an entire
-       mail address.  Thus, no parent domain  or  parent  network
-       search  is  done,  and  <i>user@domain</i> mail addresses are not
-       broken up into their <i>user</i> and  <i>domain</i>  constituent  parts,
+       mail  address.   Thus,  no parent domain or parent network
+       search is done, and <i>user@domain</i>  mail  addresses  are  not
+       broken  up  into  their <i>user</i> and <i>domain</i> constituent parts,
        nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
 
-       Patterns  are  applied  in  the  order as specified in the
-       table, until a pattern is found that  matches  the  search
+       Patterns are applied in the  order  as  specified  in  the
+       table,  until  a  pattern is found that matches the search
        string.
 
-
-
-
-                                                                1
-
-
-
-
-
-PCRE_TABLE(5)                                       PCRE_TABLE(5)
-
-
-       Substitution  of  substrings  from  the matched expression
-       into the result string is possible using the  conventional
-       perl  syntax  ($1,  $2,  etc.).   The macros in the result
-       string may need to be written as  ${n}  or  $(n)  if  they
+       Substitution of substrings  from  the  matched  expression
+       into  the result string is possible using the conventional
+       perl syntax ($1, $2, etc.).   The  macros  in  the  result
+       string  may  need  to  be  written as ${n} or $(n) if they
        aren't followed by whitespace.
 
-<b>EXAMPLES</b>
+<b>EXAMPLE</b> <b>SMTPD</b> <b>ACCESS</b> <b>MAP</b>
        # Protect your outgoing majordomo exploders
-       /^(?!owner-)(.*)-outgoing@(my.domain)$/    550 Use ${1}@${2} instead
+       /^(?!owner-)(.*)-outgoing@/     550 Use ${1}@${2} instead
 
        # Bounce friend@whatever, except when whatever is our domain (you would
        # be better just bouncing all friend@ mail - this is just an example).
-       /^friend@(?!my.domain).*$/         550 Stick this in your pipe $0
+       /^friend@(?!my\.domain)/        550 Stick this in your pipe $0
 
        # A multi-line entry. The text is sent as one line.
        #
-       /^noddy@connect.com.au$/
+       /^noddy@my\.domain$/
         550 This user is a funny one. You really don't want to send mail to
         them as it only makes their head spin.
+
+<b>EXAMPLE</b> <b>HEADER</b> <b>FILTER</b> <b>MAP</b>
+       /^Subject: make money fast/     REJECT
+       /^To: friend@public\.com/       REJECT
 
 <b>SEE</b> <b>ALSO</b>
        <a href="regexp_table.5.html">regexp_table(5)</a> format of POSIX regular expression tables
@@ -108,27 +98,6 @@ PCRE_TABLE(5)                                       PCRE_TABLE(5)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                                                                2
-
+                                                                1
 
 </pre> </body> </html>

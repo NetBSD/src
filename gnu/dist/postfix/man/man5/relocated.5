@@ -37,16 +37,18 @@ Table lookups are case insensitive.
 .fi
 The format of the table is as follows:
 .IP \(bu
-Blank lines are ignored, as are lines beginning with `#'.
-.IP \(bu
-Lines that begin with whitespace continue the previous line.
-.IP \(bu
 An entry has one of the following form:
 .ti +5
 \fIkey  new_location\fR
 .br
 Where \fInew_location\fR specifies contact information such as
 an email address, or perhaps a street address or telephone number.
+.IP \(bu
+Empty lines and whitespace-only lines are ignored, as
+are lines whose first non-whitespace character is a `#'.
+.IP \(bu
+A logical line starts with non-whitespace text. A line that
+starts with whitespace continues a logical line.
 .PP
 With lookups from indexed files such as DB or DBM, or from networked
 tables such as NIS, LDAP or SQL, the \fIkey\fR field is one of the
@@ -66,10 +68,10 @@ precedence.
 .nf
 .fi
 .ad
-When the search fails, and the address localpart contains the
-optional recipient delimiter (e.g., \fIuser+foo\fR@\fIdomain\fR),
-the search is repeated for the unextended address (e.g.
-\fIuser\fR@\fIdomain\fR).
+When a mail address localpart contains the optional recipient delimiter
+(e.g., \fIuser+foo\fR@\fIdomain\fR), the lookup order becomes:
+\fIuser+foo\fR@\fIdomain\fR, \fIuser\fR@\fIdomain\fR, \fIuser+foo\fR,
+\fIuser\fR, and @\fIdomain\fR.
 .SH REGULAR EXPRESSION TABLES
 .na
 .nf
@@ -88,7 +90,7 @@ nor is \fIuser+foo\fR broken up into \fIuser\fR and \fIfoo\fR.
 Patterns are applied in the order as specified in the table, until a
 pattern is found that matches the search string.
 
-Results are the same as with normal indexed file lookups, with
+Results are the same as with indexed file lookups, with
 the additional feature that parenthesized substrings from the
 pattern can be interpolated as \fB$1\fR, \fB$2\fR and so on.
 .SH BUGS

@@ -1,0 +1,131 @@
+[Note: this document still needs more examples]
+
+Postfix VERP support
+====================
+
+Postfix supports variable envelope return path addresses on request.
+When VERP style delivery is requested, each recipient of a message
+receives a customized copy of the message, with his/her own recipient
+address encoded in the envelope sender address.
+
+For example, when VERP style delivery is requested, Postfix delivers
+mail from owner-listname@origin for a recipient user@domain, with
+a sender address that encodes the recipient as follows:
+
+    owner-listname+user=domain@origin
+
+Thus, undeliverable mail can reveal the undeliverable recipient
+address without requiring the list owner to parse bounce messages.
+
+The VERP concept was popularized by the qmail MTA and by the ezmlm
+mailing list manager.
+
+The whole process is controlled by two configuration parameters.
+
+- default_verp_delimiters (default value:  +=) controls what VERP
+delimiter characters Postfix uses when VERP style delivery is
+requested but no explicit delimiters are specified.
+
+- verp_delimiter_filter (default: -+=) controls what characters
+Postfix accepts as VERP delimiter characters on the sendmail command
+line and in SMTP commands. Many characters must not be used as VERP
+delimiter characters, either because they already have a special
+meaning in email addresses (such as the @ or the %), because they
+are used as part of a username or domain name (such as alphanumerics),
+or because they are non-ASCII or control characters.  And who knows,
+some characters may tickle bugs in vulnerable software.
+
+Using VERP with majordomo etc. mailing lists
+============================================
+
+In order to make VERP useful with majordomo etc. mailing lists,
+you would configure the list manager to submit mail according
+to one of the following two forms:
+
+    sendmail -V -f owner-listname other-arguments...
+
+    sendmail -V+= -f owner-listname other-arguments...
+
+The first form uses the default main.cf VERP delimiter characters.
+The second form allows you to explicitly specify the VERP delimiter
+characters. The example shows the recommended values.
+
+This text assumes that you have set up an owner-listname alias that
+routes undeliverable mail to a real person:
+
+    /etc/aliases:
+	owner-listname: yourname+listname
+
+In order to process bounces we are going to make extensive use of
+address extension tricks.
+
+You need to tell Postfix that + is the separator between an address
+and its optional address extension, that address extensions are
+appended to .forward file names, and that address extensions are
+to be discarded when doing alias expansions:
+
+    /etc/postfix/main.cf:
+	recipient_delimiter = +
+	forward_path = $home/.forward${recipient_delimiter}${extension},$home/.forward
+	propagate_unmatched_extensions = canonical, virtual
+
+(the last two parameter settings are default settings).
+
+You need to set up a file named .forward+listname with the commands
+that process all the mail that is sent to the owner-listname address:
+
+   ~/.forward+listname:
+	"|/some/where/command ..."
+
+With this set up, undeliverable mail for user@domain will be returned
+to the following address:
+
+    owner-listname+user=domain@your.domain
+
+which is processed by the command in your .forward+listname file.
+The message should contain, among others, a To: header with the
+encapsulated recipient sender address:
+
+    To: owner-listname+user=domain@your.domain
+
+It is left as an exercise for the reader to parse the To: header
+line and to pull out the user=domain part from the recipient address.
+
+VERP support in the Postfix SMTP server
+=======================================
+
+The Postfix SMTP server has a new command XVERP to enable VERP
+style delivery. The syntax allows two forms:
+
+    MAIL FROM:<sender@domain> XVERP
+
+    MAIL FROM:<sender@domain> XVERP=+=
+
+The first form uses the default main.cf VERP delimiters, the second
+form overrides them explicitly. The values shown are the recommended
+ones.
+
+VERP support in the Postfix sendmail command
+============================================
+
+The Postfix sendmail command has a -V flag to request VERP style
+delivery.  Specify one of the following two forms:
+
+    sendmail -V -f owner-listname ....
+
+    sendmail -V+= -f owner-listname ....
+
+The first form uses the default main.cf VERP delimiters, the second
+form overrides them explicitly. The values shown are the recommended
+ones.
+
+VERP support in the Postfix QMQP server 
+=======================================
+
+When the Postfix QMQP server receives mail with an envelope sender
+address of the form:
+
+    listname-@your.domain-@[]
+
+Postfix generates sender addresses listname-user=domain@your.domain,
+using "-=" as the VERP delimiters because qmail/ezmlm expect this.

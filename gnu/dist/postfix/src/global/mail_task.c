@@ -12,7 +12,8 @@
 /*	mail_task() enforces consistent naming of mailer processes.
 /*	It strips pathname information from the process name, and
 /*	prepends the name of the mail system so that logfile entries
-/*	are easier to recognize.
+/*	are easier to recognize. The mail system name is specified
+/*	with the "syslog_name" configuration parameter.
 /*
 /*	The result is volatile.  Make a copy of the result if it is
 /*	to be used for any appreciable amount of time.
@@ -35,13 +36,13 @@
 /* Utility library. */
 
 #include <vstring.h>
+#include <safe.h>
 
 /* Global library. */
 
 #include "mail_params.h"
+#include "mail_conf.h"
 #include "mail_task.h"
-
-#define MAIL_TASK_FORMAT	"postfix/%s"
 
 /* mail_task - clean up and decorate the process name */
 
@@ -49,11 +50,14 @@ const char *mail_task(const char *argv0)
 {
     static VSTRING *canon_name;
     const char *slash;
+    const char *tag;
 
     if (canon_name == 0)
 	canon_name = vstring_alloc(10);
     if ((slash = strrchr(argv0, '/')) != 0)
 	argv0 = slash + 1;
-    vstring_sprintf(canon_name, MAIL_TASK_FORMAT, argv0);
+    if ((tag = safe_getenv(CONF_ENV_LOGTAG)) == 0)
+	tag = DEF_SYSLOG_NAME;
+    vstring_sprintf(canon_name, "%s/%s", tag, argv0);
     return (vstring_str(canon_name));
 }

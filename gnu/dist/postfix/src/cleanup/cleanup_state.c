@@ -84,6 +84,7 @@ CLEANUP_STATE *cleanup_state_alloc(void)
     state->xtra_offset = -1;
     state->end_seen = 0;
     state->rcpt_count = 0;
+    state->reason = 0;
     return (state);
 }
 
@@ -113,5 +114,7 @@ void    cleanup_state_free(CLEANUP_STATE *state)
     if (state->queue_id)
 	myfree(state->queue_id);
     been_here_free(state->dups);
+    if (state->reason)
+	myfree(state->reason);
     myfree((char *) state);
 }

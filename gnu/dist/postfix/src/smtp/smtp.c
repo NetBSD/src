@@ -41,6 +41,7 @@
 /*	RFC 1870 (Message Size Declaration)
 /*	RFC 2197 (Pipelining)
 /*	RFC 2554 (AUTH command)
+/*	RFC 2821 (SMTP protocol)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8).
 /*	Corrupted message files are marked so that the queue manager can
@@ -94,14 +95,23 @@
 /*	Always send EHLO at the start of a connection.
 /* .IP \fBsmtp_never_send_ehlo\fR
 /*	Never send EHLO at the start of a connection.
+/* .IP \fBsmtp_bind_address\fR
+/*	Numerical source network address to bind to when making a connection.
+/* .IP \fBsmtp_break_lines\fR
+/*	Break lines > \fB$line_length_limit\fR into multiple shorter lines.
+/*	Some SMTP servers misbehave on long lines.
 /* .IP \fBsmtp_skip_4xx_greeting\fR
 /*	Skip servers that greet us with a 4xx status code.
 /* .IP \fBsmtp_skip_5xx_greeting\fR
 /*	Skip servers that greet us with a 5xx status code.
 /* .IP \fBsmtp_skip_quit_response\fR
 /*	Do not wait for the server response after sending QUIT.
-/* .IP \fBsmtp_bind_address\fR
-/*	Numerical network address to bind to when making a connection.
+/* .IP \fBsmtp_pix_workaround_delay_time\fR
+/*	The time to pause before sending .<CR><LF>, while working
+/*	around the CISCO PIX firewall <CR><LF>.<CR><LF> bug.
+/* .IP \fBsmtp_pix_workaround_threshold_time\fR
+/*	The time a message must be queued before the CISCO PIX firewall
+/*	<CR><LF>.<CR><LF> bug workaround is turned on.
 /* .SH "Authentication controls"
 /* .IP \fBsmtp_enable_sasl_auth\fR
 /*	Enable per-session authentication as per RFC 2554 (SASL).
@@ -234,8 +244,6 @@ int     var_smtp_data1_tmout;
 int     var_smtp_data2_tmout;
 int     var_smtp_quit_tmout;
 char   *var_inet_interfaces;
-char   *var_debug_peer_list;
-int     var_debug_peer_level;
 char   *var_notify_classes;
 int     var_smtp_skip_4xx_greeting;
 int     var_smtp_skip_5xx_greeting;
@@ -250,6 +258,10 @@ char   *var_smtp_sasl_opts;
 char   *var_smtp_sasl_passwd;
 bool    var_smtp_sasl_enable;
 char   *var_smtp_bind_addr;
+bool    var_smtp_rand_addr;
+bool    var_smtp_break_lines;
+int     var_smtp_pix_thresh;
+int     var_smtp_pix_delay;
 
  /*
   * Global variables. smtp_errno is set by the address lookup routines and by
@@ -394,7 +406,6 @@ static void pre_exit(void)
 int     main(int argc, char **argv)
 {
     static CONFIG_STR_TABLE str_table[] = {
-	VAR_DEBUG_PEER_LIST, DEF_DEBUG_PEER_LIST, &var_debug_peer_list, 0, 0,
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
 	VAR_FALLBACK_RELAY, DEF_FALLBACK_RELAY, &var_fallback_relay, 0, 0,
 	VAR_BESTMX_TRANSP, DEF_BESTMX_TRANSP, &var_bestmx_transp, 0, 0,
@@ -413,10 +424,11 @@ int     main(int argc, char **argv)
 	VAR_SMTP_DATA1_TMOUT, DEF_SMTP_DATA1_TMOUT, &var_smtp_data1_tmout, 1, 0,
 	VAR_SMTP_DATA2_TMOUT, DEF_SMTP_DATA2_TMOUT, &var_smtp_data2_tmout, 1, 0,
 	VAR_SMTP_QUIT_TMOUT, DEF_SMTP_QUIT_TMOUT, &var_smtp_quit_tmout, 1, 0,
+	VAR_SMTP_PIX_THRESH, DEF_SMTP_PIX_THRESH, &var_smtp_pix_thresh, 0, 0,
+	VAR_SMTP_PIX_DELAY, DEF_SMTP_PIX_DELAY, &var_smtp_pix_delay, 1, 0,
 	0,
     };
     static CONFIG_INT_TABLE int_table[] = {
-	VAR_DEBUG_PEER_LEVEL, DEF_DEBUG_PEER_LEVEL, &var_debug_peer_level, 1, 0,
 	0,
     };
     static CONFIG_BOOL_TABLE bool_table[] = {
@@ -427,6 +439,8 @@ int     main(int argc, char **argv)
 	VAR_SMTP_ALWAYS_EHLO, DEF_SMTP_ALWAYS_EHLO, &var_smtp_always_ehlo,
 	VAR_SMTP_NEVER_EHLO, DEF_SMTP_NEVER_EHLO, &var_smtp_never_ehlo,
 	VAR_SMTP_SASL_ENABLE, DEF_SMTP_SASL_ENABLE, &var_smtp_sasl_enable,
+	VAR_SMTP_RAND_ADDR, DEF_SMTP_RAND_ADDR, &var_smtp_rand_addr,
+	VAR_SMTP_BREAK_LINES, DEF_SMTP_BREAK_LINES, &var_smtp_break_lines,
 	0,
     };
 

@@ -9,7 +9,7 @@ Postfix alias database maintenance
 .na
 .nf
 .fi
-\fBpostalias\fR [\fB-Ninrvw\fR] [\fB-c \fIconfig_dir\fR]
+\fBpostalias\fR [\fB-Nfinrvw\fR] [\fB-c \fIconfig_dir\fR]
 [\fB-d \fIkey\fR] [\fB-q \fIkey\fR]
 [\fIfile_type\fR:]\fIfile_name\fR ...
 .SH DESCRIPTION
@@ -35,7 +35,14 @@ Read the \fBmain.cf\fR configuration file in the named directory
 instead of the default configuration directory.
 .IP "\fB-d \fIkey\fR"
 Search the specified maps for \fIkey\fR and remove one entry per map.
-The exit status is non-zero if the requested information was not found.
+The exit status is zero when the requested information was found.
+
+If a key value of \fB-\fR is specified, the program reads key
+values from the standard input stream. The exit status is zero
+when at least one of the requested keys was found.
+.IP \fB-f\fR
+Do not fold the lookup key to lower case while creating or querying
+a map.
 .IP \fB-i\fR
 Incremental mode. Read entries from standard input and do not
 truncate an existing database. By default, \fBpostalias\fR creates
@@ -46,8 +53,13 @@ keys and values. By default, Postfix does whatever is the default for
 the host operating system.
 .IP "\fB-q \fIkey\fR"
 Search the specified maps for \fIkey\fR and print the first value
-found on the standard output stream. The exit status is non-zero
-if the requested information was not found.
+found on the standard output stream. The exit status is zero
+when the requested information was found.
+
+If a key value of \fB-\fR is specified, the program reads key
+values from the standard input stream and prints one line of
+\fIkey: value\fR output for each key that was found. The exit
+status is zero when at least one of the requested keys was found.
 .IP \fB-r\fR
 When updating a table, do not warn about duplicate entries; silently
 replace them.
@@ -89,11 +101,6 @@ flagged with a warning.
 \fBpostalias\fR terminates with zero exit status in case of success
 (including successful \fBpostmap -q\fR lookup) and terminates
 with non-zero exit status in case of failure.
-.SH BUGS
-.ad
-.fi
-The "delete key" support is limited to one delete operation
-per command invocation.
 .SH ENVIRONMENT
 .na
 .nf

@@ -1,0 +1,27 @@
+# Sample regexp message header filter lookup "table". See regexp_table(5)
+# for a description of the syntax.
+#
+# Message headers are filtered one at a time. This filter understands
+# multi-line mail headers. However, the message header filter has no
+# knowledge of MIME headers that are embedded in the message body.
+#
+# The general format of a table entry is PATTERN RESULT. 
+#
+# The pattern format is /regexp/flags or /regexp/flags!/regexp/flags
+# where regexp is a regular expression as found in regexp(5), and flags are
+#   i: toggle ignore case (REG_ICASE - default is to ignore case)
+#   x: toggle extended expression (REG_EXTENDED - default is extended)
+#   m: toggle multiline mode (REG_NEWLINE - default is non-multiline mode)
+#
+# In order for a line to match, the first regexp must match, and the
+# second (if present) must not match.  The first matching line wins,
+# terminating processing of the ruleset.
+#
+# The result is one of the following:
+#   REJECT          the entire message is rejected.
+#   REJECT text.... The text is sent to the originator.
+#   IGNORE          the header line is silently discarded.
+#   WARN            the header is logged (not rejected) with a warning.
+
+/^Subject: Make Money Fast/	REJECT
+/^To: friend@public.com/	REJECT

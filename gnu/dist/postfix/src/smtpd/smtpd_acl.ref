@@ -7,6 +7,8 @@ OK
 OK
 >>> relay_domains porcupine.org
 OK
+>>> smtpd_null_access_lookup_key <> 
+OK
 >>> #
 >>> # Test check_domain_access()
 >>> #
@@ -162,3 +164,9 @@ OK
 >>> # Expect: OK
 >>> rcpt bad-sender@ok.domain
 OK
+>>> #
+>>> # check_sender_access specific
+>>> #
+>>> mail <>
+./smtpd_check: reject: MAIL from bar.duno.com[44.33.44.33]: 550 <>: Sender address rejected: Go away postmaster; from=<>
+550 <>: Sender address rejected: Go away postmaster

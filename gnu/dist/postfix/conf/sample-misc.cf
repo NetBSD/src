@@ -24,8 +24,8 @@ daemon_timeout = 18000s
 # systems the default type is either `dbm' or `hash'. The default is
 # determined when the Postfix system is built.
 #
-# default_database_type = hash
-# default_database_type = dbm
+#default_database_type = hash
+#default_database_type = dbm
 
 # The default_transport parameter specifies the default message
 # delivery transport to use when no transport is explicitly given in
@@ -36,7 +36,7 @@ daemon_timeout = 18000s
 # transport or nexthop are optional. For more details see the sample
 # transports file.
 #
-# default_transport = uucp:relayhostname
+#default_transport = uucp:relayhostname
 default_transport = smtp
 
 # The double_bounce_sender parameter specifies the sender address
@@ -98,8 +98,8 @@ hopcount_limit = 50
 # 
 # Specify a list of names separated by whitespace or comma.
 #
-# import_environment = MAIL_CONFIG TZ XAUTHORITY DISPLAY HOME PURIFYOPTIONS
-import_environment = MAIL_CONFIG MAIL_DEBUG TZ XAUTHORITY DISPLAY
+#import_environment = MAIL_CONFIG TZ XAUTHORITY DISPLAY HOME PURIFYOPTIONS
+import_environment = MAIL_CONFIG MAIL_DEBUG MAIL_LOGTAG TZ XAUTHORITY DISPLAY
 
 # The inet_interfaces parameter specifies the network interface
 # addresses that this mail system receives mail on.  By default,
@@ -127,7 +127,7 @@ ipc_idle = 100s
 # Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 # The default time unit is s (seconds).
 #
-#ipc_timeout = 3600s
+ipc_timeout = 3600s
 
 # The mail_name parameter specifies the mail system name that is used
 # in Received: headers, in the SMTP greeting banner, and in bounced
@@ -175,7 +175,7 @@ max_use = 100
 # gateway, you should also include $mydomain. Do not specify the
 # names of domains that this machine is backup MX host for. Specify
 # those names via the relay_domains or permit_mx_backup settings for
-# the SMTP server (see sample-smtpd.cf.
+# the SMTP server (see sample-smtpd.cf).
 #
 # The local machine is always the final destination for mail addressed
 # to user@[the.net.work.address] of an interface that the mail system
@@ -187,8 +187,8 @@ max_use = 100
 # a name matches a lookup key.  Continue long lines by starting the
 # next line with whitespace.
 #
-# mydestination = $myhostname, localhost.$mydomain $mydomain
-# mydestination = $myhostname, localhost.$mydomain www.$mydomain, ftp.$mydomain
+#mydestination = $myhostname, localhost.$mydomain $mydomain
+#mydestination = $myhostname, localhost.$mydomain www.$mydomain, ftp.$mydomain
 mydestination = $myhostname, localhost.$mydomain
 
 # The mydomain parameter specifies the local internet domain name.
@@ -212,7 +212,7 @@ mydestination = $myhostname, localhost.$mydomain
 # a domain-wide alias database that aliases each user to
 # user@that.users.mailhost.
 #
-# myorigin = $mydomain
+#myorigin = $mydomain
 myorigin = $myhostname
 
 # The mynetworks parameter specifies the list of "trusted" SMTP
@@ -237,9 +237,9 @@ myorigin = $myhostname
 # Specify "mynetworks_style = host" when Postfix should "trust"
 # only the local machine.
 # 
-# mynetworks_style = class
-# mynetworks_style = subnet
-# mynetworks_style = host
+#mynetworks_style = class
+#mynetworks_style = subnet
+#mynetworks_style = host
 
 # Alternatively, you can specify the mynetworks list by hand, in
 # which case Postfix ignores the mynetworks_style setting.
@@ -259,8 +259,8 @@ myorigin = $myhostname
 # policy (anti-UCE violations) and protocol error (broken mailers)
 # reports.
 #
-# notify_classes = bounce,delay,policy,protocol,resource,software
-# notify_classes = 2bounce,resource,software
+#notify_classes = bounce,delay,policy,protocol,resource,software
+#notify_classes = 2bounce,resource,software
 notify_classes = resource,software
 
 # The following parameters specify who gets postmaster notices if
@@ -272,9 +272,21 @@ bounce_notice_recipient = postmaster
 delay_notice_recipient = postmaster
 error_notice_recipient = postmaster
 
+# The parent_domain_matches_subdomains parameter specifies what
+# Postfix features use "domain.name matches sub.domain.name" style
+# pattern matching instead of requiring ".domain.name". This is
+# planned backwards compatibility: eventually, all Postfix features
+# are expected to require ".domain.name" style patterns.
+#
+parent_domain_matches_subdomains = debug_peer_list,fast_flush_domains,
+	mynetworks,permit_mx_backup_networks,qmqpd_authorized_clients,
+	relay_domains,smtpd_access_maps
+
 # The process_id_directory specifies a lock file directory relative
 # to the Postfix queue directory. This facility is used by the master
 # daemon to lock out other master daemon instances.
+#
+# Note: this is a read-only variable.
 #
 process_id_directory = pid
 
@@ -297,7 +309,7 @@ queue_directory = /var/spool/postfix
 # Basically, the software tries user+foo and .forward+foo before
 # trying user and .forward.
 #
-# recipient_delimiter = +
+#recipient_delimiter = +
 recipient_delimiter =
 
 # The propagate_unmatched_extensions parameter specifies what lookup
@@ -329,15 +341,13 @@ recipient_delimiter =
 #
 # In the case of SMTP, specify a domain, host, host:port, [host]:port,
 # [address] or [address]:port; the form [host] turns off MX lookups.
-# If you specify multiple SMTP destinations, Postfix will try them
-# in the specified order.
 #
 # If you're connected via UUCP, see also the default_transport parameter.
 #
-# relayhost = $mydomain
-# relayhost = gateway.my.domain
-# relayhost = uucphost
-# relayhost = [an.ip.add.ress]
+#relayhost = $mydomain
+#relayhost = gateway.my.domain
+#relayhost = uucphost
+#relayhost = [an.ip.add.ress]
 relayhost =
 
 # The relocated_maps parameter specifies optional tables with contact
@@ -349,7 +359,7 @@ relayhost =
 # Specify the types and names of databases to use.  After change,
 # run "postmap /etc/postfix/relocated", then "postfix reload".
 #
-# relocated_maps = hash:/etc/postfix/relocated
+#relocated_maps = hash:/etc/postfix/relocated
 relocated_maps =
 
 # The syslog_facility parameter controls where Postfix logging is
@@ -363,6 +373,18 @@ relocated_maps =
 # configuration file.
 #
 syslog_facility = mail
+
+# The syslog_name parameter specifies the mail system name that is
+# prepended to the process name in syslog records, so that "smtpd"
+# becomes, for example, "postfix/smtpd".
+#
+# Beware: a non-default syslog_name setting takes effect only
+# after process initialization. Some initialization errors will be
+# logged with the default name, especially errors while parsing
+# the command line and errors while accessing the Postfix main.cf
+# configuration file.
+#
+syslog_name = postfix
 
 # The trigger_timeout parameter limits the time to send a trigger to
 # a Postfix daemon. This prevents programs from getting stuck when the
@@ -380,4 +402,4 @@ trigger_timeout = 10s
 # Time units: s (seconds), m (minutes), h (hours), d (days), w (weeks).
 # The default time unit is h (hours).
 #
-# delay_warning_time = 0h
+#delay_warning_time = 0h

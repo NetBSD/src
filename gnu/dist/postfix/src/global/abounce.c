@@ -14,11 +14,29 @@
 /*	void	(*callback)(int status, char *context);
 /*	char	*context;
 /*
+/*	void	abounce_flush_verp(flags, queue, id, sender, verp, callback, context)
+/*	int	flags;
+/*	const char *queue;
+/*	const char *id;
+/*	const char *sender;
+/*	const char *verp;
+/*	void	(*callback)(int status, char *context);
+/*	char	*context;
+/*
 /*	void	adefer_flush(flags, queue, id, sender, callback, context)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
 /*	const char *sender;
+/*	void	(*callback)(int status, char *context);
+/*	char	*context;
+/*
+/*	void	adefer_flush_verp(flags, queue, id, sender, verp, callback, context)
+/*	int	flags;
+/*	const char *queue;
+/*	const char *id;
+/*	const char *sender;
+/*	const char *verp;
 /*	void	(*callback)(int status, char *context);
 /*	char	*context;
 /*
@@ -38,9 +56,15 @@
 /*	the specified sender, including the bounce log that was
 /*	built with bounce_append().
 /*
+/*	abounce_flush_verp() is like abounce_flush() but sends
+/*	one VERP style notification per undeliverable recipient.
+/*
 /*	adefer_flush() bounces the specified message to
 /*	the specified sender, including the defer log that was
 /*	built with defer_append().
+/*
+/*	adefer_flush_verp() is like adefer_flush() but sends
+/*	one VERP style notification per undeliverable recipient.
 /*
 /*	adefer_warn() sends a "mail is delayed" notification to
 /*	the specified sender, including the defer log that was
@@ -64,6 +88,8 @@
 /*	file has the same name as the original message file.
 /* .IP sender
 /*	The sender envelope address.
+/* .IP verp
+/*	VERP delimiter characters.
 /* .IP callback
 /*	Name of a routine that receives the notification status as
 /*	documented for bounce_flush() or defer_flush().
@@ -145,7 +171,69 @@ static void abounce_event(int unused_event, char *context)
     int     status;
 
     event_disable_readwrite(vstream_fileno(ap->fp));
-    abounce_done(ap, mail_scan(ap->fp, "%d", &status) == 1 ? status : -1);
+    abounce_done(ap, attr_scan(ap->fp, ATTR_FLAG_STRICT,
+			       ATTR_TYPE_NUM, MAIL_ATTR_STATUS, &status,
+			       ATTR_TYPE_END) == 1 ? status : -1);
+}
+
+/* abounce_request_verp - suspend pseudo thread until server reply event */
+
+static void abounce_request_verp(const char *class, const char *service,
+				         int command, int flags,
+				         const char *queue, const char *id,
+			               const char *sender, const char *verp,
+				         ABOUNCE_FN callback,
+				         char *context)
+{
+    ABOUNCE *ap;
+
+    /*
+     * Save pseudo thread state. Connect to the server. Send the request and
+     * suspend the pseudo thread until the server replies (or dies).
+     */
+    ap = (ABOUNCE *) mymalloc(sizeof(*ap));
+    ap->command = command;
+    ap->flags = flags;
+    ap->id = mystrdup(id);
+    ap->callback = callback;
+    ap->context = context;
+    ap->fp = mail_connect_wait(class, service);
+
+    if (attr_print(ap->fp, ATTR_FLAG_NONE,
+		   ATTR_TYPE_NUM, MAIL_ATTR_NREQ, command,
+		   ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
+		   ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
+		   ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
+		   ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
+		   ATTR_TYPE_STR, MAIL_ATTR_VERPDL, verp,
+		   ATTR_TYPE_END) == 0
+	&& vstream_fflush(ap->fp) == 0) {
+	event_enable_read(vstream_fileno(ap->fp), abounce_event, (char *) ap);
+    } else {
+	abounce_done(ap, -1);
+    }
+}
+
+/* abounce_flush_verp - asynchronous bounce flush */
+
+void    abounce_flush_verp(int flags, const char *queue, const char *id,
+			           const char *sender, const char *verp,
+			           ABOUNCE_FN callback, char *context)
+{
+    abounce_request_verp(MAIL_CLASS_PRIVATE, MAIL_SERVICE_BOUNCE,
+			 BOUNCE_CMD_VERP, flags, queue, id, sender, verp,
+			 callback, context);
+}
+
+/* adefer_flush_verp - asynchronous defer flush */
+
+void    adefer_flush_verp(int flags, const char *queue, const char *id,
+			          const char *sender, const char *verp,
+			          ABOUNCE_FN callback, char *context)
+{
+    abounce_request_verp(MAIL_CLASS_PRIVATE, MAIL_SERVICE_DEFER,
+			 BOUNCE_CMD_VERP, flags, queue, id, sender, verp,
+			 callback, context);
 }
 
 /* abounce_request - suspend pseudo thread until server reply event */
@@ -171,8 +259,13 @@ static void abounce_request(const char *class, const char *service,
     ap->context = context;
     ap->fp = mail_connect_wait(class, service);
 
-    if (mail_print(ap->fp, "%d %d %s %s %s %s", command,
-		   flags, queue, id, sender, MAIL_EOF) == 0
+    if (attr_print(ap->fp, ATTR_FLAG_NONE,
+		   ATTR_TYPE_NUM, MAIL_ATTR_NREQ, command,
+		   ATTR_TYPE_NUM, MAIL_ATTR_FLAGS, flags,
+		   ATTR_TYPE_STR, MAIL_ATTR_QUEUE, queue,
+		   ATTR_TYPE_STR, MAIL_ATTR_QUEUEID, id,
+		   ATTR_TYPE_STR, MAIL_ATTR_SENDER, sender,
+		   ATTR_TYPE_END) == 0
 	&& vstream_fflush(ap->fp) == 0) {
 	event_enable_read(vstream_fileno(ap->fp), abounce_event, (char *) ap);
     } else {

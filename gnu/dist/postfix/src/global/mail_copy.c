@@ -62,6 +62,14 @@
 /* DIAGNOSTICS
 /*	A non-zero result means the operation failed. Warnings: corrupt
 /*	message file. A corrupt message is marked as corrupt.
+/*
+/*	The result is the bit-wise OR of zero or more of the following:
+/* .IP MAIL_COPY_STAT_CORRUPT
+/*	The queue file is marked as corrupt.
+/* .IP MAIL_COPY_STAT_READ
+/*	A read error was detected; errno specifies the nature of the problem.
+/* .IP MAIL_COPY_STAT_WRITE
+/*	A write error was detected; errno specifies the nature of the problem.
 /* SEE ALSO
 /*	mark_corrupt(3), mark queue file as corrupted.
 /* LICENSE
@@ -81,6 +89,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <errno.h>
 
 /* Utility library. */
 
@@ -98,8 +107,9 @@
 #include "rec_type.h"
 #include "mail_queue.h"
 #include "mail_addr.h"
-#include "mail_copy.h"
 #include "mark_corrupt.h"
+#include "mail_params.h"
+#include "mail_copy.h"
 
 /* mail_copy - copy message with extreme prejudice */
 
@@ -183,6 +193,8 @@ int     mail_copy(const char *sender, const char *delivered,
 	prev_type = type;
     }
     if (vstream_ferror(dst) == 0) {
+	if (var_fault_inj_code == 1)
+	    type = 0;
 	if (type != REC_TYPE_XTRA)
 	    corrupt_error = mark_corrupt(src);
 	if (prev_type != REC_TYPE_NORM)
@@ -208,9 +220,17 @@ int     mail_copy(const char *sender, const char *delivered,
     if ((flags & MAIL_COPY_TOFILE) != 0)
 	write_error |= fsync(vstream_fileno(dst));
 #endif
+    if (var_fault_inj_code == 2) {
+	read_error = 1;
+	errno = ENOENT;
+    }
+    if (var_fault_inj_code == 3) {
+	write_error = 1;
+	errno = ENOENT;
+    }
 #ifndef NO_TRUNCATE
     if ((flags & MAIL_COPY_TOFILE) != 0)
-	if (read_error || write_error)
+	if (corrupt_error || read_error || write_error)
 	    ftruncate(vstream_fileno(dst), (off_t) orig_length);
 #endif
     write_error |= vstream_fclose(dst);
@@ -218,5 +238,7 @@ int     mail_copy(const char *sender, const char *delivered,
 	vstring_sprintf(why, "error reading message: %m");
     if (why && write_error)
 	vstring_sprintf(why, "error writing message: %m");
-    return (corrupt_error || read_error || write_error);
+    return ((corrupt_error ? MAIL_COPY_STAT_CORRUPT : 0)
+	    | (read_error ? MAIL_COPY_STAT_READ : 0)
+	    | (write_error ? MAIL_COPY_STAT_WRITE : 0));
 }

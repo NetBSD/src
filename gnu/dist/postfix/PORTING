@@ -1,9 +1,10 @@
 In order to port software to a new platform:
 
-- Choose a SYSTEMTYPE name for the new system. Please use a name
-that includes the major version of the operating system (such as
-SUNOS4 or LINUX2), so that different releases of the same system
-can be supported without confusion.
+- Each system type needs to be identified by a unique name. Examples:
+SUNOS5, FREEBSD4, and so on.  Choose a SYSTEMTYPE name for the new
+system. You must use a name that includes at least the major version
+of the operating system (such as SUNOS4 or LINUX2), so that different
+releases of the same system can be supported without confusion.
 
 - Add a case statement to the "makedefs" shell script in the
 top-level directory that recognizes the new system reliably, and

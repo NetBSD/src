@@ -11,6 +11,10 @@
 /*	This program expects to be run from the \fBmaster\fR(8) process
 /*	manager.
 /*
+/*	Message attributes such as sender address, recipient address and
+/*	next-hop host name can be specified as command-line macros that are
+/*	expanded before the external command is executed.
+/*
 /*	The \fBpipe\fR daemon updates queue files and marks recipients
 /*	as finished, or it informs the queue manager that delivery should
 /*	be tried again at a later time. Delivery problem reports are sent
@@ -23,10 +27,10 @@
 /*	fax machines, and so on.
 /*
 /*	To prevent Postfix from sending multiple recipients per delivery
-/*	request, specify 
+/*	request, specify
 /*
 /* .ti +4
-/*	\fItransport\fB_destination_recipient_limit = 1\fR 
+/*	\fItransport\fB_destination_recipient_limit = 1\fR
 /*
 /*	in the Postfix \fBmain.cf\fR file, where \fItransport\fR
 /*	is the name in the first column of the Postfix \fBmaster.cf\fR
@@ -36,7 +40,7 @@
 /* .fi
 /*	The external command attributes are given in the \fBmaster.cf\fR
 /*	file at the end of a service definition.  The syntax is as follows:
-/* .IP "\fBflags=BFR.>\fR (optional)"
+/* .IP "\fBflags=BFRhqu.>\fR (optional)"
 /*	Optional message processing flags. By default, a message is
 /*	copied unchanged.
 /* .RS
@@ -51,6 +55,27 @@
 /* .IP \fBR\fR
 /*	Prepend a \fBReturn-Path:\fR message header with the envelope sender
 /*	address.
+/* .IP \fBh\fR
+/*	Fold the command-line \fB$recipient\fR domain name and \fB$nexthop\fR
+/*	host name to lower case.
+/*	This is recommended for delivery via \fBUUCP\fR.
+/* .IP \fBq\fR
+/*	Quote white space and other special characters in the command-line
+/*	\fB$sender\fR and \fB$recipient\fR address localparts (text to the
+/*	left of the right-most \fB@\fR character), according to an 8-bit
+/*	transparent version of RFC 822.
+/*	This is recommended for delivery via \fBUUCP\fR or \fBBSMTP\fR.
+/* .sp
+/*	The result is compatible with the address parsing of command-line
+/*	recipients by the Postfix \fBsendmail\fR mail submission command.
+/* .sp
+/*	The \fBq\fR flag affects only entire addresses, not the partial
+/*	address information from the \fB$user\fR, \fB$extension\fR or
+/*	\fB$mailbox\fR command-line macros.
+/* .IP \fBu\fR
+/*	Fold the command-line \fB$recipient\fR address localpart (text to
+/*	the left of the right-most \fB@\fR character) to lower case.
+/*	This is recommended for delivery via \fBUUCP\fR.
 /* .IP \fB.\fR
 /*	Prepend \fB.\fR to lines starting with "\fB.\fR". This is needed
 /*	by, for example, \fBBSMTP\fR software.
@@ -91,6 +116,8 @@
 /* .sp
 /*	A command-line argument that contains \fB${\fBextension\fR}\fR expands
 /*	into as many command-line arguments as there are recipients.
+/* .sp
+/*	This information is modified by the \fBu\fR flag for case folding.
 /* .IP \fB${\fBmailbox\fR}\fR
 /*	This macro expands to the complete local part of a recipient address.
 /*	For example, with an address \fIuser+foo@domain\fR the mailbox is
@@ -98,15 +125,24 @@
 /* .sp
 /*	A command-line argument that contains \fB${\fBmailbox\fR}\fR
 /*	expands into as many command-line arguments as there are recipients.
+/* .sp
+/*	This information is modified by the \fBu\fR flag for case folding.
 /* .IP \fB${\fBnexthop\fR}\fR
 /*	This macro expands to the next-hop hostname.
+/* .sp
+/*	This information is modified by the \fBh\fR flag for case folding.
 /* .IP \fB${\fBrecipient\fR}\fR
 /*	This macro expands to the complete recipient address.
 /* .sp
 /*	A command-line argument that contains \fB${\fBrecipient\fR}\fR
 /*	expands into as many command-line arguments as there are recipients.
+/* .sp
+/*	This information is modified by the \fBhqu\fR flags for quoting
+/*	and case folding.
 /* .IP \fB${\fBsender\fR}\fR
 /*	This macro expands to the envelope sender address.
+/* .sp
+/*	This information is modified by the \fBq\fR flag for quoting.
 /* .IP \fB${\fBsize\fR}\fR
 /*	This macro expands to Postfix's idea of the message size, which
 /*	is an approximation of the size of the message as delivered.
@@ -117,6 +153,8 @@
 /* .sp
 /*	A command-line argument that contains \fB${\fBuser\fR}\fR expands
 /*	into as many command-line arguments as there are recipients.
+/* .sp
+/*	This information is modified by the \fBu\fR flag for case folding.
 /* .RE
 /* .PP
 /*	In addition to the form ${\fIname\fR}, the forms $\fIname\fR and
@@ -195,6 +233,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #ifdef STRCASECMP_IN_STRINGS_H
 #include <strings.h>
@@ -231,6 +270,7 @@
 #include <canon_addr.h>
 #include <split_addr.h>
 #include <off_cvt.h>
+#include <quote_822_local.h>
 
 /* Single server skeleton. */
 
@@ -262,6 +302,16 @@
 #define PIPE_FLAG_SIZE		(1<<4)
 
  /*
+  * Additional flags. These are colocated with mail_copy() flags. Allow some
+  * space for extension of the mail_copy() interface.
+  */
+#define PIPE_OPT_FOLD_USER	(1<<16)
+#define PIPE_OPT_FOLD_HOST	(1<<17)
+#define PIPE_OPT_QUOTE_LOCAL	(1<<18)
+
+#define PIPE_OPT_FOLD_FLAGS	(PIPE_OPT_FOLD_USER | PIPE_OPT_FOLD_HOST)
+
+ /*
   * Tunable parameters. Values are taken from the config file, after
   * prepending the service name to _name, and so on.
   */
@@ -291,6 +341,11 @@ typedef struct {
     off_t   size_limit;			/* max size in bytes we will accept */
 } PIPE_ATTR;
 
+ /*
+  * Silly little macros.
+  */
+#define STR	vstring_str
+
 /* parse_callback - callback for mac_parse() */
 
 static int parse_callback(int type, VSTRING *buf, char *context)
@@ -313,9 +368,44 @@ static int parse_callback(int type, VSTRING *buf, char *context)
     return (0);
 }
 
+/* morph_recipient - morph a recipient address */
+
+static void morph_recipient(VSTRING *buf, const char *address, int flags)
+{
+    char   *cp;
+
+    /*
+     * Quote the recipient address as appropriate.
+     */
+    if (flags & PIPE_OPT_QUOTE_LOCAL)
+	quote_822_local(buf, address);
+    else
+	vstring_strcpy(buf, address);
+
+    /*
+     * Fold the recipient address as appropriate.
+     */
+    switch (flags & PIPE_OPT_FOLD_FLAGS) {
+    case PIPE_OPT_FOLD_HOST:
+	if ((cp = strrchr(STR(buf), '@')) != 0)
+	    lowercase(cp + 1);
+	break;
+    case PIPE_OPT_FOLD_USER:
+	if ((cp = strrchr(STR(buf), '@')) != 0) {
+	    *cp = 0;
+	    lowercase(STR(buf));
+	    *cp = '@';
+	    break;
+	}
+    case PIPE_OPT_FOLD_USER | PIPE_OPT_FOLD_HOST:
+	lowercase(STR(buf));
+	break;
+    }
+}
+
 /* expand_argv - expand macros in the argument vector */
 
-static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list)
+static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list, int flags)
 {
     VSTRING *buf = vstring_alloc(100);
     ARGV   *result;
@@ -338,7 +428,6 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list)
      * would screw up mail addresses that contain $ characters.
      */
 #define NO	0
-#define STR	vstring_str
 
     result = argv_alloc(1);
     for (cpp = argv; *cpp; cpp++) {
@@ -353,8 +442,8 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list)
 		 * This argument contains $recipient.
 		 */
 		if (expand_flag & PIPE_FLAG_RCPT) {
-		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_RCPT,
-				rcpt_list->info[i].address);
+		    morph_recipient(buf, rcpt_list->info[i].address, flags);
+		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_RCPT, STR(buf));
 		}
 
 		/*
@@ -370,7 +459,8 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list)
 		 * expansions of this specific command-line argument.
 		 */
 		if (expand_flag & PIPE_FLAG_USER) {
-		    vstring_strcpy(buf, rcpt_list->info[i].address);
+		    morph_recipient(buf, rcpt_list->info[i].address,
+				    flags & PIPE_OPT_FOLD_FLAGS);
 		    if (split_at_right(STR(buf), '@') == 0)
 			msg_warn("no @ in recipient address: %s",
 				 rcpt_list->info[i].address);
@@ -378,7 +468,6 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list)
 			split_addr(STR(buf), *var_rcpt_delim);
 		    if (*STR(buf) == 0)
 			continue;
-		    lowercase(STR(buf));
 		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_USER, STR(buf));
 		}
 
@@ -388,15 +477,14 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list)
 		 * delimiter and the rightmost @. The extension may be blank.
 		 */
 		if (expand_flag & PIPE_FLAG_EXTENSION) {
-		    vstring_strcpy(buf, rcpt_list->info[i].address);
+		    morph_recipient(buf, rcpt_list->info[i].address,
+				    flags & PIPE_OPT_FOLD_FLAGS);
 		    if (split_at_right(STR(buf), '@') == 0)
 			msg_warn("no @ in recipient address: %s",
 				 rcpt_list->info[i].address);
 		    if (*var_rcpt_delim == 0
 		      || (ext = split_addr(STR(buf), *var_rcpt_delim)) == 0)
 			ext = "";		/* insert null arg */
-		    else
-			lowercase(ext);
 		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_EXTENSION, ext);
 		}
 
@@ -405,11 +493,11 @@ static ARGV *expand_argv(char **argv, RECIPIENT_LIST *rcpt_list)
 		 * anything to the left of the rightmost @.
 		 */
 		if (expand_flag & PIPE_FLAG_MAILBOX) {
-		    vstring_strcpy(buf, rcpt_list->info[i].address);
+		    morph_recipient(buf, rcpt_list->info[i].address,
+				    flags & PIPE_OPT_FOLD_FLAGS);
 		    if (split_at_right(STR(buf), '@') == 0)
 			msg_warn("no @ in recipient address: %s",
 				 rcpt_list->info[i].address);
-		    lowercase(STR(buf));
 		    dict_update(PIPE_DICT_TABLE, PIPE_DICT_MAILBOX, STR(buf));
 		}
 
@@ -491,6 +579,15 @@ static void get_service_attr(PIPE_ATTR *attr, char **argv)
 		    break;
 		case 'R':
 		    attr->flags |= MAIL_COPY_RETURN_PATH;
+		    break;
+		case 'h':
+		    attr->flags |= PIPE_OPT_FOLD_HOST;
+		    break;
+		case 'q':
+		    attr->flags |= PIPE_OPT_QUOTE_LOCAL;
+		    break;
+		case 'u':
+		    attr->flags |= PIPE_OPT_FOLD_USER;
 		    break;
 		default:
 		    msg_fatal("unknown flag: %c (ignored)", *cp);
@@ -620,6 +717,9 @@ static int eval_command_status(int command_status, char *service,
 				 service, request->arrival_time, "%s", why);
 	}
 	break;
+    case PIPE_STAT_CORRUPT:
+	result |= DEL_STAT_DEFER;
+	break;
     default:
 	msg_panic("eval_command_status: bad status %d", command_status);
 	/* NOTREACHED */
@@ -704,13 +804,22 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
     if (vstream_fseek(request->fp, request->data_offset, SEEK_SET) < 0)
 	msg_fatal("seek queue file %s: %m", VSTREAM_PATH(request->fp));
 
-    dict_update(PIPE_DICT_TABLE, PIPE_DICT_SENDER, request->sender);
-    dict_update(PIPE_DICT_TABLE, PIPE_DICT_NEXTHOP, request->nexthop);
     buf = vstring_alloc(10);
+    if (attr.flags & PIPE_OPT_QUOTE_LOCAL) {
+	quote_822_local(buf, request->sender);
+	dict_update(PIPE_DICT_TABLE, PIPE_DICT_SENDER, STR(buf));
+    } else
+	dict_update(PIPE_DICT_TABLE, PIPE_DICT_SENDER, request->sender);
+    if (attr.flags & PIPE_OPT_FOLD_HOST) {
+	vstring_strcpy(buf, request->nexthop);
+	lowercase(STR(buf));
+	dict_update(PIPE_DICT_TABLE, PIPE_DICT_NEXTHOP, STR(buf));
+    } else
+	dict_update(PIPE_DICT_TABLE, PIPE_DICT_NEXTHOP, request->nexthop);
     vstring_sprintf(buf, "%ld", (long) request->data_size);
     dict_update(PIPE_DICT_TABLE, PIPE_DICT_SIZE, STR(buf));
     vstring_free(buf);
-    expanded_argv = expand_argv(attr.command, rcpt_list);
+    expanded_argv = expand_argv(attr.command, rcpt_list, attr.flags);
     export_env = argv_split(var_export_environ, ", \t\r\n");
 
     command_status = pipe_command(request->fp, why,

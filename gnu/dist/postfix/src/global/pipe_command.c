@@ -33,11 +33,11 @@
 /*	or when it appears to be a shell built-in command, otherwise
 /*	the command is executed without invoking a shell.
 /*	One of PIPE_CMD_COMMAND or PIPE_CMD_ARGV must be specified.
+/*	See also the PIPE_CMD_SHELL attribute below.
 /* .IP "PIPE_CMD_ARGV (char **)"
 /*	The command is specified as an argument vector. This vector is
 /*	passed without further inspection to the \fIexecvp\fR() routine.
 /*	One of PIPE_CMD_COMMAND or PIPE_CMD_ARGV must be specified.
-/*	See also the PIPE_CMD_SHELL attribute below.
 /* .IP "PIPE_CMD_ENV (char **)"
 /*	Additional environment information, in the form of a null-terminated
 /*	list of name, value, name, value, ... elements. By default only the
@@ -88,8 +88,11 @@
 /*	The command indicated that the message was not acceptable,
 /*	or the command did not finish within the time limit.
 /*	The reason is given via the \fIwhy\fR argument.
+/* .IP PIPE_STAT_CORRUPT
+/*	The queue file is corrupted.
 /* SEE ALSO
 /*	mail_copy(3) deliver to any.
+/*	mark_corrupt(3) mark queue file as corrupt.
 /*	sys_exits(3) sendmail-compatible exit status codes.
 /* LICENSE
 /* .ad
@@ -509,6 +512,8 @@ int     pipe_command(VSTREAM *src, VSTRING *why,...)
 			      log_len ? ". Command output: " : "", log_buf);
 		return (PIPE_STAT_BOUNCE);
 	    }
+	} else if (write_status & MAIL_COPY_STAT_CORRUPT) {
+	    return (PIPE_STAT_CORRUPT);
 	} else if (write_status && errno != EPIPE) {
 	    vstring_sprintf(why, "Command failed: %m: \"%s\"", args.command);
 	    return (PIPE_STAT_DEFER);

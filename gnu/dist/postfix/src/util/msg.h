@@ -22,6 +22,7 @@ extern void PRINTFLIKE(1, 2) msg_info(const char *,...);
 extern void PRINTFLIKE(1, 2) msg_warn(const char *,...);
 extern void PRINTFLIKE(1, 2) msg_error(const char *,...);
 extern NORETURN PRINTFLIKE(1, 2) msg_fatal(const char *,...);
+extern NORETURN PRINTFLIKE(2, 3) msg_fatal_status(int, const char *,...);
 extern NORETURN PRINTFLIKE(1, 2) msg_panic(const char *,...);
 
 extern int msg_error_limit(int);

@@ -72,6 +72,7 @@
 #include <mail_params.h>
 #include <deliver_pass.h>
 #include <mbox_open.h>
+#include <maps.h>
 
 #ifndef EDQUOT
 #define EDQUOT EFBIG
@@ -94,7 +95,8 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     char   *mailbox;
     VSTRING *why;
     MBOX   *mp;
-    int     status;
+    int     mail_copy_status;
+    int     deliver_status;
     int     copy_flags;
     VSTRING *biff;
     long    end;
@@ -118,7 +120,7 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     if (vstream_fseek(state.msg_attr.fp, state.msg_attr.offset, SEEK_SET) < 0)
 	msg_fatal("seek message file %s: %m", VSTREAM_PATH(state.msg_attr.fp));
     state.msg_attr.delivered = state.msg_attr.recipient;
-    status = -1;
+    mail_copy_status = MAIL_COPY_STAT_WRITE;
     why = vstring_alloc(100);
     if (*var_home_mailbox) {
 	spool_dir = 0;
@@ -189,8 +191,8 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
 	    errno = 0;
 	} else {
 	    end = vstream_fseek(mp->fp, (off_t) 0, SEEK_END);
-	    status = mail_copy(COPY_ATTR(state.msg_attr), mp->fp,
-			       copy_flags, "\n", why);
+	    mail_copy_status = mail_copy(COPY_ATTR(state.msg_attr), mp->fp,
+					 copy_flags, "\n", why);
 	}
 	if (spool_uid != usr_attr.uid || spool_gid != usr_attr.gid)
 	    set_eugid(spool_uid, spool_gid);
@@ -201,14 +203,16 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
     /*
      * As the mail system, bounce, defer delivery, or report success.
      */
-    if (status != 0) {
-	status = (errno == EAGAIN || errno == ENOSPC ?
-		  defer_append : bounce_append)
+    if (mail_copy_status & MAIL_COPY_STAT_CORRUPT) {
+	deliver_status = DEL_STAT_DEFER;
+    } else if (mail_copy_status != 0) {
+	deliver_status = (errno == EAGAIN || errno == ENOSPC || errno == ESTALE ?
+			  defer_append : bounce_append)
 	    (BOUNCE_FLAG_KEEP, BOUNCE_ATTR(state.msg_attr),
 	     "cannot access mailbox %s for user %s. %s",
 	     mailbox, state.msg_attr.user, vstring_str(why));
     } else {
-	sent(SENT_ATTR(state.msg_attr), "mailbox");
+	deliver_status = sent(SENT_ATTR(state.msg_attr), "mailbox");
 	if (var_biff) {
 	    biff = vstring_alloc(100);
 	    vstring_sprintf(biff, "%s@%ld", usr_attr.logname, (long) end);
@@ -222,7 +226,7 @@ static int deliver_mailbox_file(LOCAL_STATE state, USER_ATTR usr_attr)
      */
     myfree(mailbox);
     vstring_free(why);
-    return (status);
+    return (deliver_status);
 }
 
 /* deliver_mailbox - deliver to recipient mailbox */
@@ -233,6 +237,8 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     int     status;
     struct mypasswd *mbox_pwd;
     char   *path;
+    static MAPS *cmd_maps;
+    const char *map_command;
 
     /*
      * Make verbose logging easier to understand.
@@ -276,14 +282,27 @@ int     deliver_mailbox(LOCAL_STATE state, USER_ATTR usr_attr, int *statusp)
     SET_USER_ATTR(usr_attr, mbox_pwd, state.level);
 
     /*
-     * Deliver to mailbox or to external command.
+     * Deliver to mailbox, maildir or to external command.
      */
 #define LAST_CHAR(s) (s[strlen(s) - 1])
 
-    if (*var_mailbox_command)
+    if (*var_mailbox_cmd_maps && cmd_maps == 0)
+	cmd_maps = maps_create(VAR_MAILBOX_CMD_MAPS, var_mailbox_cmd_maps,
+			       DICT_FLAG_LOCK);
+
+    if (*var_mailbox_cmd_maps
+	&& (map_command = maps_find(cmd_maps, state.msg_attr.user,
+				    DICT_FLAG_FIXED)) != 0) {
+	status = deliver_command(state, usr_attr, map_command);
+    } else if (*var_mailbox_command) {
 	status = deliver_command(state, usr_attr, var_mailbox_command);
-    else if (*var_home_mailbox && LAST_CHAR(var_home_mailbox) == '/') {
+    } else if (*var_home_mailbox && LAST_CHAR(var_home_mailbox) == '/') {
 	path = concatenate(usr_attr.home, "/", var_home_mailbox, (char *) 0);
+	status = deliver_maildir(state, usr_attr, path);
+	myfree(path);
+    } else if (*var_mail_spool_dir && LAST_CHAR(var_mail_spool_dir) == '/') {
+	path = concatenate(var_mail_spool_dir, state.msg_attr.user,
+			   "/", (char *) 0);
 	status = deliver_maildir(state, usr_attr, path);
 	myfree(path);
     } else

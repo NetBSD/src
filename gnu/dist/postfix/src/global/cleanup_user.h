@@ -34,7 +34,23 @@
 #define CLEANUP_STAT_HOVFL	(1<<7)	/* Header overflow */
 #define CLEANUP_STAT_ROVFL	(1<<8)	/* Recipient overflow */
 
-#define CLEANUP_STAT_LETHAL	~(CLEANUP_STAT_HOVFL|CLEANUP_STAT_ROVFL)
+ /*
+  * These are set when we can't bounce even if we were asked to.
+  */
+#define CLEANUP_STAT_MASK_CANT_BOUNCE \
+	(CLEANUP_STAT_BAD | CLEANUP_STAT_WRITE)
+
+ /*
+  * These are set when we can't examine every record of a message.
+  */
+#define CLEANUP_STAT_MASK_INCOMPLETE \
+	(CLEANUP_STAT_BAD | CLEANUP_STAT_WRITE | CLEANUP_STAT_SIZE)
+
+ /*
+  * These are relevant for extracting recipients from headers.
+  */
+#define CLEANUP_STAT_MASK_EXTRACT_RCPT \
+	(CLEANUP_STAT_HOVFL | CLEANUP_STAT_ROVFL | CLEANUP_STAT_RCPT)
 
 extern const char *cleanup_strerror(unsigned);
 

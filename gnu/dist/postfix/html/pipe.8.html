@@ -1,9 +1,6 @@
 <html> <head> </head> <body> <pre>
 
-
-
 PIPE(8)                                                   PIPE(8)
-
 
 <b>NAME</b>
        pipe - Postfix delivery to external command
@@ -17,23 +14,28 @@ PIPE(8)                                                   PIPE(8)
        program  expects to be run from the <a href="master.8.html"><b>master</b>(8)</a> process man-
        ager.
 
-       The <b>pipe</b> daemon updates queue files and  marks  recipients
+       Message  attributes  such  as  sender  address,  recipient
+       address  and  next-hop  host name can be specified as com-
+       mand-line macros that are  expanded  before  the  external
+       command is executed.
+
+       The  <b>pipe</b>  daemon updates queue files and marks recipients
        as finished, or it informs the queue manager that delivery
-       should be tried again at a later  time.  Delivery  problem
-       reports  are  sent  to the <a href="bounce.8.html"><b>bounce</b>(8)</a> or <a href="defer.8.html"><b>defer</b>(8)</a> daemon as
+       should  be  tried  again at a later time. Delivery problem
+       reports are sent to the <a href="bounce.8.html"><b>bounce</b>(8)</a> or  <a href="defer.8.html"><b>defer</b>(8)</a>  daemon  as
        appropriate.
 
 <b>SINGLE-RECIPIENT</b> <b>DELIVERY</b>
        Some external commands cannot handle more than one recipi-
-       ent  per delivery request. Examples of such transports are
+       ent per delivery request. Examples of such transports  are
        pagers, fax machines, and so on.
 
-       To prevent Postfix from sending  multiple  recipients  per
+       To  prevent  Postfix  from sending multiple recipients per
        delivery request, specify
 
            <i>transport_</i><b>destination</b><i>_</i><b>recipient</b><i>_</i><b>limit</b> <b>=</b> <b>1</b>
 
-       in  the  Postfix <b>main.cf</b> file, where <i>transport</i> is the name
+       in the Postfix <b>main.cf</b> file, where <i>transport</i> is  the  name
        in the first column of the Postfix <b>master.cf</b> entry for the
        pipe-based delivery transport.
 
@@ -42,38 +44,52 @@ PIPE(8)                                                   PIPE(8)
        file at the end of a service definition.  The syntax is as
        follows:
 
-       <b>flags=BFR.</b>&gt; (optional)
-              Optional  message  processing  flags. By default, a
+       <b>flags=BFRhqu.</b>&gt; (optional)
+              Optional message processing flags.  By  default,  a
               message is copied unchanged.
 
-              <b>B</b>      Append a blank line at the end of each  mes-
-                     sage.  This  is  required  by some mail user
-                     agents that recognize  "<b>From</b>  "  lines  only
+              <b>B</b>      Append  a blank line at the end of each mes-
+                     sage. This is required  by  some  mail  user
+                     agents  that  recognize  "<b>From</b>  " lines only
                      when preceded by a blank line.
 
-              <b>F</b>      Prepend  a "<b>From</b> <i>sender</i> <i>time_stamp</i>" envelope
-                     header to  the  message  content.   This  is
+              <b>F</b>      Prepend a "<b>From</b> <i>sender</i> <i>time_stamp</i>"  envelope
+                     header  to  the  message  content.   This is
                      expected by, for example, <b>UUCP</b> software.
 
-              <b>R</b>      Prepend  a  <b>Return-Path:</b> message header with
+              <b>R</b>      Prepend a <b>Return-Path:</b> message  header  with
                      the envelope sender address.
 
-              <b>.</b>      Prepend <b>.</b> to lines starting with  "<b>.</b>".  This
+              <b>h</b>      Fold the command-line <b>$recipient</b> domain name
+                     and <b>$nexthop</b> host name to lower case.   This
+                     is recommended for delivery via <b>UUCP</b>.
 
+              <b>q</b>      Quote  white space and other special charac-
+                     ters in the command-line <b>$sender</b> and <b>$recip-</b>
+                     <b>ient</b> address localparts (text to the left of
+                     the right-most <b>@</b> character), according to an
+                     8-bit  transparent version of <a href="http://www.faqs.org/rfcs/rfc822.html">RFC 822</a>.  This
+                     is recommended  for  delivery  via  <b>UUCP</b>  or
+                     <b>BSMTP</b>.
 
+                     The  result  is  compatible with the address
+                     parsing of command-line  recipients  by  the
+                     Postfix <b>sendmail</b> mail submission command.
 
-                                                                1
+                     The  <b>q</b>  flag  affects only entire addresses,
+                     not the partial address information from the
+                     <b>$user</b>,  <b>$extension</b>  or <b>$mailbox</b> command-line
+                     macros.
 
+              <b>u</b>      Fold  the  command-line  <b>$recipient</b>  address
+                     localpart  (text  to  the left of the right-
+                     most <b>@</b> character) to lower  case.   This  is
+                     recommended for delivery via <b>UUCP</b>.
 
-
-
-
-PIPE(8)                                                   PIPE(8)
-
-
+              <b>.</b>      Prepend  <b>.</b>  to lines starting with "<b>.</b>". This
                      is needed by, for example, <b>BSMTP</b> software.
 
-              &gt;      Prepend  &gt;  to  lines starting with "<b>From</b> ".
+              &gt;      Prepend &gt; to lines starting  with  "<b>From</b>  ".
                      This is expected by, for example, <b>UUCP</b> soft-
                      ware.
 
@@ -81,16 +97,16 @@ PIPE(8)                                                   PIPE(8)
 
        <b>user</b>=<i>username</i>:<i>groupname</i>
               The external command is executed with the rights of
-              the specified <i>username</i>.  The  software  refuses  to
-              execute  commands with root privileges, or with the
-              privileges of the mail system owner.  If  <i>groupname</i>
-              is  specified,  the  corresponding group ID is used
+              the  specified  <i>username</i>.   The software refuses to
+              execute commands with root privileges, or with  the
+              privileges  of  the mail system owner. If <i>groupname</i>
+              is specified, the corresponding group  ID  is  used
               instead of the group ID of <i>username</i>.
 
        <b>eol=string</b> (default: <b>\n</b>)
-              The output record delimiter.  Typically  one  would
-              use  either <b>\r\n</b> or <b>\n</b>. The usual C-style backslash
-              escape sequences are recognized: <b>\a</b> <b>\b</b> <b>\f</b> <b>\n</b> <b>\r</b>  <b>\t</b>
+              The  output  record  delimiter. Typically one would
+              use either <b>\r\n</b> or <b>\n</b>. The usual C-style  backslash
+              escape  sequences are recognized: <b>\a</b> <b>\b</b> <b>\f</b> <b>\n</b> <b>\r</b> <b>\t</b>
               <b>\v</b> <b>\</b><i>octal</i> and <b>\\</b>.
 
        <b>size</b>=<i>size_limit</i> (optional)
@@ -98,26 +114,29 @@ PIPE(8)                                                   PIPE(8)
               will be bounced back to the sender.
 
        <b>argv</b>=<i>command</i>... (required)
-              The command to be executed. This must be  specified
+              The  command to be executed. This must be specified
               as the last command attribute.  The command is exe-
               cuted  directly,  i.e.  without  interpretation  of
-              shell  meta  characters  by  a shell command inter-
+              shell meta characters by  a  shell  command  inter-
               preter.
 
               In  the  command  argument  vector,  the  following
               macros are recognized and replaced with correspond-
-              ing information  from  the  Postfix  queue  manager
+              ing  information  from  the  Postfix  queue manager
               delivery request:
 
               <b>${extension</b>}
-                     This  macro expands to the extension part of
-                     a recipient address.  For example,  with  an
+                     This macro expands to the extension part  of
+                     a  recipient  address.  For example, with an
                      address  <i>user+foo@domain</i>  the  extension  is
                      <i>foo</i>.
 
-                     A  command-line   argument   that   contains
-                     <b>${extension</b>}  expands  into as many command-
+                     A   command-line   argument   that  contains
+                     <b>${extension</b>} expands into as  many  command-
                      line arguments as there are recipients.
+
+                     This  information  is modified by the <b>u</b> flag
+                     for case folding.
 
               <b>${mailbox</b>}
                      This macro expands  to  the  complete  local
@@ -125,24 +144,18 @@ PIPE(8)                                                   PIPE(8)
                      with an address <i>user+foo@domain</i> the  mailbox
                      is <i>user+foo</i>.
 
-
-
-
-                                                                2
-
-
-
-
-
-PIPE(8)                                                   PIPE(8)
-
-
                      A   command-line   argument   that  contains
                      <b>${mailbox</b>} expands into as many command-line
                      arguments as there are recipients.
 
+                     This  information  is modified by the <b>u</b> flag
+                     for case folding.
+
               <b>${nexthop</b>}
                      This macro expands to the next-hop hostname.
+
+                     This  information  is modified by the <b>h</b> flag
+                     for case folding.
 
               <b>${recipient</b>}
                      This macro expands to the complete recipient
@@ -152,9 +165,15 @@ PIPE(8)                                                   PIPE(8)
                      <b>${recipient</b>} expands into as  many  command-
                      line arguments as there are recipients.
 
+                     This  information  is  modified  by  the <b>hqu</b>
+                     flags for quoting and case folding.
+
               <b>${sender</b>}
-                     This  macro  expands  to the envelope sender
+                     This macro expands to  the  envelope  sender
                      address.
+
+                     This  information  is modified by the <b>q</b> flag
+                     for quoting.
 
               <b>${size</b>}
                      This macro expands to Postfix's idea of  the
@@ -171,40 +190,31 @@ PIPE(8)                                                   PIPE(8)
                      <b>${user</b>} expands into  as  many  command-line
                      arguments as there are recipients.
 
-       In  addition  to  the  form  ${<i>name</i>},  the forms $<i>name</i> and
-       $(<i>name</i>) are also recognized.  Specify <b>$$</b> where a single  <b>$</b>
+                     This  information  is modified by the <b>u</b> flag
+                     for case folding.
+
+       In addition to the  form  ${<i>name</i>},  the  forms  $<i>name</i>  and
+       $(<i>name</i>)  are also recognized.  Specify <b>$$</b> where a single <b>$</b>
        is wanted.
 
 <b>DIAGNOSTICS</b>
-       Command  exit status codes are expected to follow the con-
+       Command exit status codes are expected to follow the  con-
        ventions defined in &lt;<b>sysexits.h</b>&gt;.
 
-       Problems and transactions are logged to <b>syslogd</b>(8).   Cor-
-       rupted  message files are marked so that the queue manager
+       Problems  and transactions are logged to <b>syslogd</b>(8).  Cor-
+       rupted message files are marked so that the queue  manager
        can move them to the <b>corrupt</b> queue for further inspection.
 
 <b>SECURITY</b>
-       This  program  needs  a  dual personality 1) to access the
-       private Postfix queue and IPC mechanisms, and 2)  to  exe-
+       This program needs a dual personality  1)  to  access  the
+       private  Postfix  queue and IPC mechanisms, and 2) to exe-
        cute external commands as the specified user. It is there-
        fore security sensitive.
 
 <b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The following <b>main.cf</b> parameters are  especially  relevant
-
-
-
-                                                                3
-
-
-
-
-
-PIPE(8)                                                   PIPE(8)
-
-
-       to  this  program. See the Postfix <b>main.cf</b> file for syntax
-       details and for default values.  Use  the  <b>postfix</b>  <b>reload</b>
+       The  following  <b>main.cf</b> parameters are especially relevant
+       to this program. See the Postfix <b>main.cf</b> file  for  syntax
+       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
        command after a configuration change.
 
 <b>Miscellaneous</b>
@@ -213,32 +223,32 @@ PIPE(8)                                                   PIPE(8)
               exported to non-Postfix processes.
 
        <b>mail</b><i>_</i><b>owner</b>
-              The process privileges used while  not  running  an
+              The  process  privileges  used while not running an
               external command.
 
 <b>Resource</b> <b>controls</b>
-       In  the text below, <i>transport</i> is the first field in a <b>mas-</b>
+       In the text below, <i>transport</i> is the first field in a  <b>mas-</b>
        <b>ter.cf</b> entry.
 
        <i>transport_</i><b>destination</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b>
               Limit the number of parallel deliveries to the same
-              destination,  for delivery via the named <i>transport</i>.
-              The default limit is taken from the  <b>default</b><i>_</i><b>desti-</b>
-              <b>nation</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b>  parameter.   The limit is
+              destination, for delivery via the named  <i>transport</i>.
+              The  default limit is taken from the <b>default</b><i>_</i><b>desti-</b>
+              <b>nation</b><i>_</i><b>concurrency</b><i>_</i><b>limit</b> parameter.  The  limit  is
               enforced by the Postfix queue manager.
 
        <i>transport_</i><b>destination</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>
-              Limit the number of recipients per  message  deliv-
-              ery,  for  delivery  via  the  named <i>transport</i>. The
-              default limit is taken  from  the  <b>default</b><i>_</i><b>destina-</b>
-              <b>tion</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>   parameter.    The  limit  is
+              Limit  the  number of recipients per message deliv-
+              ery, for delivery  via  the  named  <i>transport</i>.  The
+              default  limit  is  taken from the <b>default</b><i>_</i><b>destina-</b>
+              <b>tion</b><i>_</i><b>recipient</b><i>_</i><b>limit</b>  parameter.   The   limit   is
               enforced by the Postfix queue manager.
 
        <i>transport_</i><b>time</b><i>_</i><b>limit</b>
-              Limit the time for delivery  to  external  command,
-              for  delivery  via the named <b>transport</b>. The default
-              limit is taken from the <b>command</b><i>_</i><b>time</b><i>_</i><b>limit</b>  parame-
-              ter.   The  limit  is enforced by the Postfix queue
+              Limit  the  time  for delivery to external command,
+              for delivery via the named <b>transport</b>.  The  default
+              limit  is taken from the <b>command</b><i>_</i><b>time</b><i>_</i><b>limit</b> parame-
+              ter.  The limit is enforced by  the  Postfix  queue
               manager.
 
 <b>SEE</b> <b>ALSO</b>
@@ -248,7 +258,7 @@ PIPE(8)                                                   PIPE(8)
        syslogd(8) system logging
 
 <b>LICENSE</b>
-       The Secure Mailer license must be  distributed  with  this
+       The  Secure  Mailer  license must be distributed with this
        software.
 
 <b>AUTHOR(S)</b>
@@ -257,10 +267,6 @@ PIPE(8)                                                   PIPE(8)
        P.O. Box 704
        Yorktown Heights, NY 10598, USA
 
-
-
-
-                                                                4
-
+                                                                1
 
 </pre> </body> </html>

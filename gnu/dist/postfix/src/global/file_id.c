@@ -65,7 +65,7 @@ const char *get_file_id(int fd)
 	result = vstring_alloc(1);
     if (fstat(fd, &st) < 0)
 	msg_fatal("fstat: %m");
-    vstring_sprintf(result, "%X", (int) st.st_ino);
+    vstring_sprintf(result, "%lX", (long) st.st_ino);
     return (vstring_str(result));
 }
 

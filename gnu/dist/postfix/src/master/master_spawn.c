@@ -175,6 +175,23 @@ void    master_spawn(MASTER_SERV *serv)
     case 0:
 	msg_cleanup((void (*) (void)) 0);	/* disable exit handler */
 	closelog();				/* avoid filedes leak */
+
+	if (master_flow_pipe[0] <= MASTER_FLOW_READ)
+	    msg_fatal("%s: flow pipe read descriptor <= %d",
+		      myname, MASTER_FLOW_READ);
+	if (DUP2(master_flow_pipe[0], MASTER_FLOW_READ) < 0)
+	    msg_fatal("%s: dup2: %m", myname);
+	if (close(master_flow_pipe[0]) < 0)
+	    msg_fatal("close %d: %m", master_flow_pipe[0]);
+
+	if (master_flow_pipe[1] <= MASTER_FLOW_WRITE)
+	    msg_fatal("%s: flow pipe read descriptor <= %d",
+		      myname, MASTER_FLOW_WRITE);
+	if (DUP2(master_flow_pipe[1], MASTER_FLOW_WRITE) < 0)
+	    msg_fatal("%s: dup2: %m", myname);
+	if (close(master_flow_pipe[1]) < 0)
+	    msg_fatal("close %d: %m", master_flow_pipe[1]);
+
 	close(serv->status_fd[0]);		/* status channel */
 	if (serv->status_fd[1] <= MASTER_STATUS_FD)
 	    msg_fatal("%s: status file descriptor collision", myname);

@@ -39,13 +39,12 @@ left-hand corner of this page.
 <ul>
 
 <li>Mail is posted locally. The Postfix <a
-href="sendmail.1.html">sendmail</a> program deposits the message
-into the world-writable <b>maildrop</b> directory, where the message
-is picked up by the <a href="pickup.8.html">pickup</a> daemon.
-This daemon does some sanity checks, in order to protect the rest
-of the Postfix system.  In order to avoid accidents, the directory
-permissions on the <b>maildrop</b> directory must be such that a
-user cannot delete someone elses mail.
+href="sendmail.1.html">sendmail</a> program invokes the privileged
+<a href="postdrop.1.html">postdrop</a> program which deposits the
+message into the <b>maildrop</b> directory, where the message is
+picked up by the <a href="pickup.8.html">pickup</a> daemon.  This
+daemon does some sanity checks, in order to protect the rest of
+the Postfix system.
 
 <p>
 

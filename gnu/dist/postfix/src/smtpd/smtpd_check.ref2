@@ -9,6 +9,8 @@ OK
 OK
 >>> relay_domains porcupine.org
 OK
+>>> maps_rbl_domains blackholes.mail-abuse.org
+OK
 >>> #
 >>> # Test the client restrictions.
 >>> #

@@ -80,6 +80,7 @@
 #include <vstream.h>
 #include <msg_vstream.h>
 #include <safe.h>
+#include <events.h>
 
 /* Global library. */
 
@@ -164,6 +165,7 @@ int     main(int argc, char **argv)
 		 class, service);
 	exit(1);
     } else {
+	event_drain();
 	exit(0);
     }
 }

@@ -1,0 +1,20 @@
+LINUX PORTABILITY
+=================
+
+On RedHat Linux 7.0 you must install the db3-devel RPM before you
+can compile the Postfix source code.
+
+On RedHat Linux 7.1 procmail no longer has permission to write the
+mail spool directory. Workaround: chmod 1777 /var/spool/mail.
+
+LINUX SYSLOGD PERFORMANCE
+=========================
+
+LINUX syslogd uses synchronous writes by default. Because of this,
+syslogd can actually use more system resources than Postfix.  To
+avoid such madness, disable synchronous mail logfile writes by
+editing /etc/syslog.conf and by prepending a - to the logfile name:
+
+    mail.*                          -/var/log/mail.log
+
+Send a "kill -HUP" to the syslogd to make the change effective.

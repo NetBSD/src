@@ -182,6 +182,7 @@
 #include "vstring.h"
 #include "readlline.h"
 #include "mac_parse.h"
+#include "stringops.h"
 #include "dict.h"
 #include "dict_ht.h"
 
@@ -372,43 +373,18 @@ void    dict_load_file(const char *dict_name, const char *path)
 void    dict_load_fp(const char *dict_name, VSTREAM *fp)
 {
     VSTRING *buf;
-    char   *start;
     char   *member;
     char   *val;
-    char   *cp;
-    char   *ep;
     int     lineno;
-
-    /*
-     * Ugly macros to make complex expressions less unreadable.
-     */
-#define SKIP(start, var, cond) \
-	for (var = start; *var && (cond); var++);
-
-#define TRIM(s) { \
-	char *p; \
-	for (p = (s) + strlen(s); p > (s) && ISSPACE(p[-1]); p--); \
-	*p = 0; \
-    }
+    const char *err;
 
     buf = vstring_alloc(100);
     lineno = 0;
 
-    while (readlline(buf, fp, &lineno, READLL_STRIPNL)) {
-	start = STR(buf);
-	SKIP(start, member, ISSPACE(*member));	/* find member begin */
-	if (*member == 0 || *member == '#')
-	    continue;				/* comment or blank line */
-	SKIP(member, ep, !ISSPACE(*ep) && *ep != '=');	/* find member end */
-	SKIP(ep, cp, ISSPACE(*cp));		/* skip blanks before '=' */
-	if (*cp && *cp != '=')			/* need '=' or end of string */
-	    msg_fatal("%s, line %d: whitespace in attribute name: \"%s\"",
-		      VSTREAM_PATH(fp), lineno, member);
-	if (*cp)
-	    cp++;				/* skip over '=' */
-	*ep = 0;				/* terminate member name */
-	SKIP(cp, val, ISSPACE(*val));		/* skip leading blanks */
-	TRIM(val);				/* trim trailing blanks */
+    while (readlline(buf, fp, &lineno)) {
+	if ((err = split_nameval(STR(buf), &member, &val)) != 0)
+	    msg_fatal("%s, line %d: %s: \"%s\"",
+		      VSTREAM_PATH(fp), lineno, err, STR(buf));
 	dict_update(dict_name, member, val);
     }
     vstring_free(buf);

@@ -27,10 +27,6 @@
 /*	Buffer for storage of the result of conversion to string.
 /* .IP offset
 /*	Non-negative off_t value to be converted to string.
-/* BUGS
-/*	The string to number conversion routine has no reliable way to
-/*	detect an overflow error, so the result may be much smaller
-/*	than the number specified in the input.
 /* DIAGNOSTICS
 /*	Panic: negative offset
 /* LICENSE
@@ -70,19 +66,28 @@ off_t   off_cvt_string(const char *str)
 {
     int     ch;
     off_t   result;
+    off_t   res2;
+    off_t   res4;
+    off_t   res8;
+    off_t   res10;
 
     /*
-     * We're not doing this often, so simplicity has precedence over
-     * performance. XXX Need a portable way to correctly detect overflow.
-     * Bear in mind that an off_t is not necessarily a long integer, so using
-     * raw bit patterns is not going to be a portable solution.
+     * Multiplication by numbers > 2 can overflow without producing a smaller
+     * result mod 2^N (where N is the number of bits in the result type).
+     * (Victor Duchovni, Morgan Stanley).
      */
     for (result = 0; (ch = *(unsigned char *) str) != 0; str++) {
 	if (!ISDIGIT(ch))
 	    return (-1);
-	result *= 10;
-	result += ch - '0';
-	if (result < 0)
+	if ((res2 = result + result) < result)
+	    return (-1);
+	if ((res4 = res2 + res2) < res2)
+	    return (-1);
+	if ((res8 = res4 + res4) < res4)
+	    return (-1);
+	if ((res10 = res8 + res2) < res8)
+	    return (-1);
+	if ((result = res10 + ch - '0') < res10)
 	    return (-1);
     }
     return (result);
@@ -101,7 +106,7 @@ VSTRING *off_cvt_number(VSTRING *buf, off_t offset)
      * Sanity checks
      */
     if (offset < 0)
-	msg_panic("off_cvt_number: negative offset %s",
+	msg_panic("off_cvt_number: negative offset -%s",
 		  STR(off_cvt_number(buf, -offset)));
 
     /*

@@ -178,7 +178,8 @@ static void cleanup_rewrite_sender(CLEANUP_STATE *state, HEADER_OPTS *hdr_opts)
 	if (cleanup_comm_canon_maps)
 	    cleanup_map11_tree(state, *tpp, cleanup_comm_canon_maps,
 			       cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
-	if (cleanup_masq_domains)
+	if (cleanup_masq_domains
+	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_HDR_FROM))
 	    cleanup_masquerade_tree(*tpp, cleanup_masq_domains);
 	if (hdr_opts->type == HDR_FROM && state->from == 0)
 	    state->from = cleanup_extract_internal(state->header_buf, *tpp);
@@ -228,6 +229,11 @@ static void cleanup_rewrite_recip(CLEANUP_STATE *state, HEADER_OPTS *hdr_opts)
 	if (cleanup_comm_canon_maps)
 	    cleanup_map11_tree(state, *tpp, cleanup_comm_canon_maps,
 			       cleanup_ext_prop_mask & EXT_PROP_CANONICAL);
+
+	/*
+	 * Extract envelope recipients after recipient address rewriting but
+	 * before address masquerading.
+	 */
 	if (state->recip == 0 && (hdr_opts->flags & HDR_OPT_EXTRACT) != 0) {
 	    rcpt = (hdr_opts->flags & HDR_OPT_RR) ?
 		state->resent_recip : state->recipients;
@@ -236,7 +242,8 @@ static void cleanup_rewrite_recip(CLEANUP_STATE *state, HEADER_OPTS *hdr_opts)
 		argv_add(rcpt, vstring_str(state->temp1), (char *) 0);
 	    }
 	}
-	if (cleanup_masq_domains)
+	if (cleanup_masq_domains
+	    && (cleanup_masq_flags & CLEANUP_MASQ_FLAG_HDR_RCPT))
 	    cleanup_masquerade_tree(*tpp, cleanup_masq_domains);
     }
     vstring_sprintf(state->header_buf, "%s: ", hdr_opts->name);
@@ -245,6 +252,33 @@ static void cleanup_rewrite_recip(CLEANUP_STATE *state, HEADER_OPTS *hdr_opts)
     tok822_free_tree(tree);
     if ((hdr_opts->flags & HDR_OPT_DROP) == 0)
 	cleanup_fold_header(state);
+}
+
+/* cleanup_check_reject - parse and match header/body REJECT line */
+
+static int cleanup_check_reject(CLEANUP_STATE *state, const char *value)
+{
+    const char *reason = value + strcspn(value, " \t");
+
+    /*
+     * See if they spelled REJECT right.
+     * 
+     * XXX The reason should be set only if we have a more severe error than
+     * anything that was found before. This calls for a cleanup_set_error()
+     * routine that takes an error code and an optional text.
+     */
+    if (strncasecmp(value, "REJECT", reason - value) == 0) {
+	if (state->reason == 0) {
+	    while (*reason && ISSPACE(*reason))
+		reason++;
+	    state->reason = mystrdup(*reason ? reason :
+				     cleanup_strerror(CLEANUP_STAT_CONT));
+	}
+	state->errs |= CLEANUP_STAT_CONT;
+	return (1);
+    } else {
+	return (0);
+    }
 }
 
 /* cleanup_header - process one complete header line */
@@ -262,13 +296,17 @@ static void cleanup_header(CLEANUP_STATE *state)
 	const char *value;
 
 	if ((value = maps_find(cleanup_header_checks, header, 0)) != 0) {
-	    if (strcasecmp(value, "REJECT") == 0) {
-		msg_info("%s: reject: header %.200s; from=<%s> to=<%s>",
+	    if (cleanup_check_reject(state, value) != 0) {
+		msg_info("%s: reject: header %.200s; from=<%s> to=<%s>: %s",
 			 state->queue_id, header, state->sender,
-			 state->recip ? state->recip : "unknown");
-		state->errs |= CLEANUP_STAT_CONT;
+			 state->recip ? state->recip : "unknown",
+			 state->reason);
 	    } else if (strcasecmp(value, "IGNORE") == 0) {
 		return;
+	    } else if (strcasecmp(value, "WARN") == 0) {
+		msg_info("%s: warning: header %.200s; from=<%s> to=<%s>",
+			 state->queue_id, header, state->sender,
+			 state->recip ? state->recip : "unknown");
 	    }
 	}
     }
@@ -287,6 +325,29 @@ static void cleanup_header(CLEANUP_STATE *state)
      * we should do with this header: delete, count, rewrite. Note that we
      * should examine headers even when they will be deleted from the output,
      * because the addresses in those headers might be needed elsewhere.
+     * 
+     * XXX 2821: Return-path breakage.
+     * 
+     * RFC 821 specifies: When the receiver-SMTP makes the "final delivery" of a
+     * message it inserts at the beginning of the mail data a return path
+     * line.  The return path line preserves the information in the
+     * <reverse-path> from the MAIL command.  Here, final delivery means the
+     * message leaves the SMTP world.  Normally, this would mean it has been
+     * delivered to the destination user, but in some cases it may be further
+     * processed and transmitted by another mail system.
+     * 
+     * And that is what Postfix implements. Delivery agents prepend
+     * Return-Path:. In order to avoid cluttering up the message with
+     * possibly inconsistent Return-Path: information (the sender can change
+     * as the result of mail forwarding or mailing list delivery), Postfix
+     * removes any existing Return-Path: headers.
+     * 
+     * RFC 2821 Section 4.4 specifies:    A message-originating SMTP system
+     * SHOULD NOT send a message that already contains a Return-path header.
+     * SMTP servers performing a relay function MUST NOT inspect the message
+     * data, and especially not to the extent needed to determine if
+     * Return-path headers are present. SMTP servers making final delivery
+     * MAY remove Return-path headers before adding their own.
      */
     else {
 	state->headers_seen |= (1 << hdr_opts->type);
@@ -324,6 +385,11 @@ static void cleanup_missing_headers(CLEANUP_STATE *state)
     /*
      * Add a missing (Resent-)Message-Id: header. The message ID gives the
      * time in GMT units, plus the local queue ID.
+     * 
+     * XXX Message-Id is not a required message header (RFC 822 and RFC 2822).
+     * 
+     * XXX It is the queue ID non-inode bits that prevent messages from getting
+     * the same Message-Id within the same second.
      */
     if ((state->headers_seen & (1 << (state->resent[0] ?
 			   HDR_RESENT_MESSAGE_ID : HDR_MESSAGE_ID))) == 0) {
@@ -364,6 +430,29 @@ static void cleanup_missing_headers(CLEANUP_STATE *state)
 	}
 	CLEANUP_OUT_BUF(state, REC_TYPE_NORM, state->temp2);
     }
+
+    /*
+     * XXX 2821: Appendix B: The return address in the MAIL command SHOULD,
+     * if possible, be derived from the system's identity for the submitting
+     * (local) user, and the "From:" header field otherwise.  If there is a
+     * system identity available, it SHOULD also be copied to the Sender
+     * header field if it is different from the address in the From header
+     * field.  (Any Sender field that was already there SHOULD be removed.)
+     * Similar wording appears in RFC 2822 section 3.6.2.
+     * 
+     * Postfix presently does not insert a Sender: header if envelope and From:
+     * address differ. Older Postfix versions assumed that the envelope
+     * sender address specifies the system identity and inserted Sender:
+     * whenever envelope and From: differed. This was wrong with relayed
+     * mail, and was often not even desirable with original submissions.
+     * 
+     * XXX 2822 Section 3.6.2, as well as RFC 822 Section 4.1: FROM headers can
+     * contain multiple addresses. If this is the case, then a Sender: header
+     * must be provided with a single address.
+     * 
+     * Postfix does not count the number of addresses in a From: header
+     * (although doing so is trivial, once the address is parsed).
+     */
 
     /*
      * Add a missing destination header.
@@ -491,13 +580,17 @@ static void cleanup_message_body(CLEANUP_STATE *state, int type, char *buf, int 
 	    const char *value;
 
 	    if ((value = maps_find(cleanup_body_checks, buf, 0)) != 0) {
-		if (strcasecmp(value, "REJECT") == 0) {
-		    msg_info("%s: reject: body %.200s; from=<%s> to=<%s>",
+		if (cleanup_check_reject(state, value) != 0) {
+		    msg_info("%s: reject: body %.200s; from=<%s> to=<%s>: %s",
 			     state->queue_id, buf, state->sender,
-			     state->recip ? state->recip : "unknown");
-		    state->errs |= CLEANUP_STAT_CONT;
+			     state->recip ? state->recip : "unknown",
+			     state->reason);
 		} else if (strcasecmp(value, "IGNORE") == 0) {
 		    return;
+		} else if (strcasecmp(value, "WARN") == 0) {
+		    msg_info("%s: warning: body %.200s; from=<%s> to=<%s>",
+			     state->queue_id, buf, state->sender,
+			     state->recip ? state->recip : "unknown");
 		}
 	    }
 	}

@@ -81,6 +81,8 @@
 /* .IP DICT_FLAG_SYNC_UPDATE
 /*	With file-based maps, flush I/O buffers to file after each update.
 /*	Thus feature is not supported with some file-based dictionaries.
+/* .IP DICT_FLAG_FOLD_KEY
+/*	Fold the lookup key to lower case.
 /* .PP
 /*	The dictionary types are as follows:
 /* .IP environ
@@ -166,6 +168,7 @@
 #include <dict_mysql.h>
 #include <dict_pcre.h>
 #include <dict_regexp.h>
+#include <dict_static.h>
 #include <stringops.h>
 #include <split_at.h>
 #include <htable.h>
@@ -212,6 +215,7 @@ static DICT_OPEN_INFO dict_open_info[] = {
 #ifdef HAS_POSIX_REGEXP
     DICT_TYPE_REGEXP, dict_regexp_open,
 #endif
+    DICT_TYPE_STATIC, dict_static_open,
     0,
 };
 
@@ -339,6 +343,7 @@ static NORETURN usage(char *myname)
 int     main(int argc, char **argv)
 {
     VSTRING *keybuf = vstring_alloc(1);
+    VSTRING *inbuf = vstring_alloc(1);
     DICT   *dict;
     char   *dict_name;
     int     open_flags;
@@ -374,13 +379,16 @@ int     main(int argc, char **argv)
     dict_name = argv[optind];
     dict = dict_open(dict_name, open_flags, DICT_FLAG_LOCK);
     dict_register(dict_name, dict);
-    while (vstring_fgets_nonl(keybuf, VSTREAM_IN)) {
-	bufp = vstring_str(keybuf);
-	if ((cmd = mystrtok(&bufp, " ")) == 0)
+    while (vstring_fgets_nonl(inbuf, VSTREAM_IN)) {
+	bufp = vstring_str(inbuf);
+	if ((cmd = mystrtok(&bufp, " ")) == 0 || *bufp == 0) {
+	    vstream_printf("usage: del key|get key|put key=value\n");
+	    vstream_fflush(VSTREAM_OUT);
 	    continue;
+	}
 	if (dict_changed())
 	    msg_warn("dictionary has changed");
-	key = mystrtok(&bufp, " =");
+	key = vstring_str(unescape(keybuf, mystrtok(&bufp, " =")));
 	value = mystrtok(&bufp, " =");
 	if (strcmp(cmd, "del") == 0 && key && !value) {
 	    if (dict_del(dict, key))
@@ -404,6 +412,7 @@ int     main(int argc, char **argv)
 	vstream_fflush(VSTREAM_OUT);
     }
     vstring_free(keybuf);
+    vstring_free(inbuf);
     dict_close(dict);
     return (0);
 }
