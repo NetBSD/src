@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2001/02/04 14:42:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2002/01/28 02:16:56 simonb Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	iostat
@@ -17,7 +17,5 @@ SRCS=	dkstats.c iostat.c
 
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
-BINGRP=	kmem
-BINMODE=2555
 
 .include <bsd.prog.mk>
