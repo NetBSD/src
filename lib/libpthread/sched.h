@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.1.2.4 2001/11/17 19:10:13 thorpej Exp $	*/
+/*	$NetBSD: sched.h,v 1.1.2.5 2001/12/30 02:21:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@ struct sched_param {
 /* Required by POSIX: */
 #define	SCHED_FIFO	1
 #define SCHED_RR	2
-#define SCHED_DEFAULT	3 /* Behavior can be like FIFO or RR */
+#define SCHED_DEFAULT	3 /* Behavior can be like FIFO or RR, or not */
 
 /* Other nonstandard policies: */
 
