@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.41 2000/09/13 21:20:21 tron Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.42 2000/09/18 13:04:53 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.41 2000/09/13 21:20:21 tron Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.42 2000/09/18 13:04:53 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -535,8 +535,9 @@ printline(hname, msg)
 
 	q = line;
 
-	while ((c = *p++ & 0177) != '\0' &&
-	    q < &line[sizeof(line) - 2])
+	while ((c = *p++) != '\0' &&
+	    q < &line[sizeof(line) - 2]) {
+		c &= 0177;
 		if (iscntrl(c))
 			if (c == '\n')
 				*q++ = ' ';
@@ -548,6 +549,7 @@ printline(hname, msg)
 			}
 		else
 			*q++ = c;
+	}
 	*q = '\0';
 
 	logmsg(pri, line, hname, 0);
