@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.8 2001/05/11 06:00:17 jmc Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.9 2001/06/29 14:46:54 onoe Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -253,8 +253,10 @@ fw_start(struct ifnet *ifp)
 		    (sc->sc_sc1394.sc1394_dev.dv_parent, m0, fw_txint);
 		if (error)
 			break;
-		ifp->if_flags |= IFF_OACTIVE;
 	}
+	IFQ_POLL(&ifp->if_snd, m0);
+	if (m0 != NULL)
+		ifp->if_flags |= IFF_OACTIVE;
 }
 
 void
@@ -264,8 +266,10 @@ fw_txint(struct device *self, struct mbuf *m0)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	m_freem(m0);
-	ifp->if_flags &= ~IFF_OACTIVE;
-	fw_start(ifp);
+	if (ifp->if_flags & IFF_OACTIVE) {
+		ifp->if_flags &= ~IFF_OACTIVE;
+		fw_start(ifp);
+	}
 }
 
 int
