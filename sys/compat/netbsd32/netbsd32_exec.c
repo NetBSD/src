@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.4 1998/08/30 15:32:19 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.5 1998/09/06 04:34:49 eeh Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -62,6 +62,7 @@ void sparc32_setregs __P((struct proc *, struct exec_package *, u_long));
 static int sparc32_exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
 static int sparc32_exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
 static int sparc32_exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
+void *sparc32_copyargs __P((struct exec_package *, struct ps_strings *, void *, void *));
 
 struct emul emul_sparc32 = {
 	"sparc32",
@@ -76,7 +77,7 @@ struct emul emul_sparc32 = {
 	NULL,
 #endif
 	0,
-	copyargs,
+	sparc32_copyargs,
 	sparc32_setregs,	/* XXX needs to be written?? */
 	sigcode,
 	esigcode,
@@ -485,3 +486,46 @@ sparc32_sendsig(catcher, sig, mask, code)
 #endif
 }
 
+void *
+sparc32_copyargs(pack, arginfo, stack, argp)
+	struct exec_package *pack;
+	struct ps_strings *arginfo;
+	void *stack;
+	void *argp;
+{
+	char **cpp = stack;
+	char *dp, *sp;
+	size_t len;
+	void *nullp = NULL;
+	int argc = arginfo->ps_nargvstr;
+	int envc = arginfo->ps_nenvstr;
+
+	if (copyout(&argc, cpp++, sizeof(argc)))
+		return NULL;
+
+	dp = (char *) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
+	sp = argp;
+
+	/* XXX don't copy them out, remap them! */
+	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
+
+	for (; --argc >= 0; sp += len, dp += len)
+		if (suword(cpp++, (long)dp) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
+			return NULL;
+
+	if (suword(cpp++, 0))
+		return NULL;
+
+	arginfo->ps_envstr = cpp; /* remember location of envp for later */
+
+	for (; --envc >= 0; sp += len, dp += len)
+		if (suword(cpp++, (long)dp) ||
+		    copyoutstr(sp, dp, ARG_MAX, &len))
+			return NULL;
+
+	if (suword(cpp++, NULL))
+		return NULL;
+
+	return cpp;
+}
