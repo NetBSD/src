@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.65 2004/04/09 18:26:24 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.66 2004/04/09 18:34:37 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -693,3 +693,12 @@ sys/dev/raidframe/rf_psstatus.h			1.10
 	We really should have a wakeup in RF_UNLOCK_PSS_MUTEX in case we have
 	a nap in RF_LOCK_PSS_MUTEX!
 	[oster, ticket #106]
+
+sys/sys/sysctl.h				1.119
+sys/conf/files					1.664
+
+	Invert the meaning of SYSCTL_NO_DESCR by calling it SYSCTL_USE_DESCR
+	instead.  This makes it an option to include the descriptions, as
+	opposed to an option to *exclude* them.
+
+	[atatat, ticket #107]
