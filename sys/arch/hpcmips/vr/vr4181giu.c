@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181giu.c,v 1.1 2003/05/01 07:02:05 igy Exp $ */
+/* $NetBSD: vr4181giu.c,v 1.2 2003/07/15 02:29:35 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999-2001
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vr4181giu.c,v 1.2 2003/07/15 02:29:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

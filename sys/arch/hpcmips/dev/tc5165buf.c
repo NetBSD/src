@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.11 2002/10/02 05:26:47 thorpej Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.12 2003/07/15 02:29:30 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * Device driver for TOSHIBA TC5165BFTS, PHILIPS 74ALVC16241/245 
  * buffer chip
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tc5165buf.c,v 1.12 2003/07/15 02:29:30 lukem Exp $");
 
 #include "opt_use_poll.h"
 

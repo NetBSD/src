@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.3 2002/10/02 05:17:48 thorpej Exp $	*/
+/*	$NetBSD: wax.c,v 1.4 2003/07/15 02:29:24 lukem Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.4 2003/07/15 02:29:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

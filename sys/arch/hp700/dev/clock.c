@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2002/06/06 19:48:03 fredette Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2003/07/15 02:29:24 lukem Exp $	*/
 
 /*	$OpenBSD: clock.c,v 1.10 2001/08/31 03:13:42 mickey Exp $	*/
 
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2003/07/15 02:29:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

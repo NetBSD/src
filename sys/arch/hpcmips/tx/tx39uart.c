@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.9 2003/01/01 01:40:27 thorpej Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.10 2003/07/15 02:29:33 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tx39uart.c,v 1.10 2003/07/15 02:29:33 lukem Exp $");
 
 #include "opt_tx39uart_debug.h"
 

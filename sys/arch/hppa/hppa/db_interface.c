@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.1 2002/06/05 01:04:19 fredette Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.2 2003/07/15 02:29:39 lukem Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.2 2003/07/15 02:29:39 lukem Exp $");
 
 #define DDB_DEBUG
 

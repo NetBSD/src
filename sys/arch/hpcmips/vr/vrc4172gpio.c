@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.5 2002/10/02 05:26:54 thorpej Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.6 2003/07/15 02:29:35 lukem Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -27,6 +27,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.6 2003/07/15 02:29:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

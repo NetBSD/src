@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.18 2002/11/06 10:14:38 wiz Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.19 2003/07/15 02:29:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -26,6 +26,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.19 2003/07/15 02:29:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

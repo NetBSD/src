@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39ir.c,v 1.6 2002/10/02 05:26:50 thorpej Exp $ */
+/*	$NetBSD: tx39ir.c,v 1.7 2003/07/15 02:29:33 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,10 @@
 /*
  * TX39 IR module (connected to UARTB)
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: tx39ir.c,v 1.7 2003/07/15 02:29:33 lukem Exp $");
+
 #undef TX39IRDEBUG
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.8 2002/10/23 09:11:14 jdolecek Exp $	*/
+/*	$NetBSD: pdc.c,v 1.9 2003/07/15 02:29:24 lukem Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.9 2003/07/15 02:29:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.1 2002/06/05 01:04:19 fredette Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.2 2003/07/15 02:29:39 lukem Exp $	*/
 
 /*	$OpenBSD: db_disasm.c,v 1.9 2000/04/18 20:02:45 mickey Exp $	*/
 
@@ -49,6 +49,9 @@
 /*
  * unasm.c -- HP_PA Instruction Printer
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.2 2003/07/15 02:29:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.41 2003/04/02 03:58:13 thorpej Exp $	*/
+/*	$NetBSD: vr.c,v 1.42 2003/07/15 02:29:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -33,6 +33,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.42 2003/07/15 02:29:34 lukem Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2003/06/23 11:01:15 martin Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2003/07/15 02:29:26 lukem Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -46,6 +46,9 @@
  *
  *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2003/07/15 02:29:26 lukem Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_useleds.h"

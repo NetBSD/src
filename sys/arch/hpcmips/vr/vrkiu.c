@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.33 2002/10/02 05:26:56 thorpej Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.34 2003/07/15 02:29:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -34,6 +34,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrkiu.c,v 1.34 2003/07/15 02:29:36 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/tty.h>

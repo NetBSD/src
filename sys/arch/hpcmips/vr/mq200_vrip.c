@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_vrip.c,v 1.10 2002/10/02 05:26:53 thorpej Exp $	*/
+/*	$NetBSD: mq200_vrip.c,v 1.11 2003/07/15 02:29:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -28,6 +28,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mq200_vrip.c,v 1.11 2003/07/15 02:29:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

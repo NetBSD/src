@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.6 2003/06/29 22:28:22 fvdl Exp $	*/
+/*	$NetBSD: kloader.c,v 1.7 2003/07/15 02:29:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.7 2003/07/15 02:29:27 lukem Exp $");
 
 #include "debug_kloader.h"
 

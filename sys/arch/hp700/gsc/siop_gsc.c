@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_gsc.c,v 1.3 2002/10/02 05:17:50 thorpej Exp $	*/
+/*	$NetBSD: siop_gsc.c,v 1.4 2003/07/15 02:29:25 lukem Exp $	*/
 
 /*	$OpenBSD: siop_gsc.c,v 1.1 1998/11/04 17:01:35 mickey Exp $	*/
 
@@ -31,6 +31,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: siop_gsc.c,v 1.4 2003/07/15 02:29:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

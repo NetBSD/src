@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181aiu.c,v 1.1 2003/05/01 07:02:04 igy Exp $ */
+/* $NetBSD: vr4181aiu.c,v 1.2 2003/07/15 02:29:35 lukem Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vr4181aiu.c,v 1.2 2003/07/15 02:29:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

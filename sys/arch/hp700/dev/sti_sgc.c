@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.4 2002/10/02 05:17:48 thorpej Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.5 2003/07/15 02:29:24 lukem Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.6 2001/09/11 20:05:24 miod Exp $	*/
 
@@ -37,6 +37,9 @@
  *	- HPA1991AC19       rev 0.02	(715/33) (byte-wide)
  *	- HPA208LC1280      rev 8.04	(712/80) just works
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.5 2003/07/15 02:29:24 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

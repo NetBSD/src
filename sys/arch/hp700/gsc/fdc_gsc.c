@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_gsc.c,v 1.3 2002/10/02 05:17:49 thorpej Exp $	*/
+/*	$NetBSD: fdc_gsc.c,v 1.4 2003/07/15 02:29:25 lukem Exp $	*/
 
 /*	$OpenBSD: fdc_gsc.c,v 1.1 1998/09/30 04:45:46 mickey Exp $	*/
 
@@ -32,6 +32,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fdc_gsc.c,v 1.4 2003/07/15 02:29:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

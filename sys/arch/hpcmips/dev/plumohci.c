@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.7 2002/10/02 05:26:46 thorpej Exp $ */
+/*	$NetBSD: plumohci.c,v 1.8 2003/07/15 02:29:30 lukem Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -33,6 +33,9 @@
  * OHCI spec: ftp://ftp.compaq.com/pub/supportinformation/papers/hcir1_0a.exe
  * USB spec: http://www.usb.org/developers/data/usb11.pdf
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: plumohci.c,v 1.8 2003/07/15 02:29:30 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

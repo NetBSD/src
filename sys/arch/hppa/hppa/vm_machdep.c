@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 2003/04/01 20:50:12 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 2003/07/15 02:29:41 lukem Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -33,6 +33,8 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2003/07/15 02:29:41 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

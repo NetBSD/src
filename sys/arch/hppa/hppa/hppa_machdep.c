@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.1 2002/06/05 01:04:20 fredette Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.2 2003/07/15 02:29:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.2 2003/07/15 02:29:39 lukem Exp $");
 
 #include <sys/param.h>
 

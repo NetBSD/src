@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.28 2003/01/01 01:40:28 thorpej Exp $	*/
+/*	$NetBSD: vrip.c,v 1.29 2003/07/15 02:29:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -29,6 +29,10 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.29 2003/07/15 02:29:36 lukem Exp $");
+
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
 

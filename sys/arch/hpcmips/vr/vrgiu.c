@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.38 2002/10/02 05:26:55 thorpej Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.39 2003/07/15 02:29:35 lukem Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -32,6 +32,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.39 2003/07/15 02:29:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

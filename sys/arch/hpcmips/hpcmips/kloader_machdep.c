@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.2 2002/02/11 17:13:28 uch Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.3 2003/07/15 02:29:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.3 2003/07/15 02:29:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dfcmp.c,v 1.1 2002/06/05 01:04:24 fredette Exp $	*/
+/*	$NetBSD: dfcmp.c,v 1.2 2003/07/15 02:29:41 lukem Exp $	*/
 
 /*	$OpenBSD: dfcmp.c,v 1.4 2001/03/29 03:58:17 mickey Exp $	*/
 
@@ -40,6 +40,9 @@
  * suitability of this software for any purpose.
  */
 
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dfcmp.c,v 1.2 2003/07/15 02:29:41 lukem Exp $");
 
 #include "../spmath/float.h"
 #include "../spmath/dbl_float.h"
