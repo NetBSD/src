@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.18 1994/10/30 21:48:46 cgd Exp $	*/
+/*	$NetBSD: if.c,v 1.19 1995/03/09 09:47:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -574,7 +574,7 @@ ifioctl(so, cmd, data, p)
 /*ARGSUSED*/
 int
 ifconf(cmd, data)
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 {
 	register struct ifconf *ifc = (struct ifconf *)data;
