@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_cons.c,v 1.11 1998/07/05 04:37:43 jonathan Exp $	*/
+/*	$NetBSD: tp_cons.c,v 1.12 2000/02/26 16:10:31 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -163,6 +163,10 @@ tpcons_ctlinput(cmd, siso, v)
 {
 	struct isopcb  *isop = v;
 	register struct tp_pcb *tpcb = 0;
+
+	/*XXX correct? */
+	if (siso->sa_family != AF_ISO)
+		return NULL;
 
 	if (isop->isop_socket)
 		tpcb = (struct tp_pcb *) isop->isop_socket->so_pcb;
