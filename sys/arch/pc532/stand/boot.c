@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 1994/12/09 21:04:40 phil Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 1995/08/29 21:55:41 phil Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: boot.c,v 1.3 1994/12/09 21:04:40 phil Exp $";
+static char rcsid[] = "$NetBSD: boot.c,v 1.4 1995/08/29 21:55:41 phil Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ main()
 	cninit();
 	scsiinit();
 
-	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.3 $]\n");
+	printf("\n>> NetBSD BOOT pc532 [$Revision: 1.4 $]\n");
 
 	bdev  = B_TYPE(bootdev);
 	bctlr = B_CONTROLLER(bootdev);
@@ -93,7 +93,6 @@ main()
 		    printf(": %s\n", name);
 
 		io = open(name, 0);
-		reset_twiddle();
 
 		if (io >= 0) {
 			copyunix(howto, opendev, io);
@@ -114,6 +113,7 @@ copyunix(howto, devtype, io)
 	int i;
 	register char *load;	/* load addr for unix */
 	register char *addr;
+	char *file;
 	int dev, ctlr, unit, part;
 
 	/* XXX use devtype? */
@@ -121,16 +121,17 @@ copyunix(howto, devtype, io)
 	ctlr = B_CONTROLLER(opendev);
 	unit = B_UNIT(opendev);
 	part = B_PARTITION(opendev);
-	
+	/* get the file name part of name */
+	devparse(name, &i, &i, &i, &i, &i, &file);
+
 	i = read(io, (char *)&x, sizeof(x));
 	if (i != sizeof(x) || N_BADMAG(x)) {
 		printf("Bad format\n");
 		return;
 	}
-	reset_twiddle();
-	load = addr = x.a_entry & 0x00ffff00;	/* XXX make less magical? */
+	load = addr = (char *)(x.a_entry & 0x00ffff00);	/* XXX make less magical? */
 	printf("Booting %s%d%c:%s @ 0x%x\n",
-	    devsw[dev].dv_name, unit + (8*ctlr), 'a'+part, name, addr);
+	    devsw[dev].dv_name, unit + (8*ctlr), 'a' + part, file, addr);
 
 	if (testing) {
 		load = addr = alloc(2*1024*1024); /* XXX stat the file? */
@@ -142,32 +143,21 @@ copyunix(howto, devtype, io)
 
 	/* Text */
 	printf("%d", x.a_text);
-#ifdef pc532
 	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, 0, SEEK_SET) == -1)
 		goto shread;
-#else
-	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, getpagesize(), SEEK_SET) == -1)
-		goto shread;
-#endif
 	if (read(io, (char *)addr, x.a_text) != x.a_text)
 		goto shread;
 	addr += x.a_text;
-	if (N_GETMAGIC(x) == NMAGIC
-#ifndef pc532
-	    || N_GETMAGIC(x) == ZMAGIC
-#endif
-	    )
+	if (N_GETMAGIC(x) == NMAGIC)
 		while ((int)addr & CLOFSET)
 			*addr++ = 0;
 	/* Data */
-	reset_twiddle();
 	printf("+%d", x.a_data);
 	if (read(io, addr, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
 
 	/* Bss */
-	reset_twiddle();
 	printf("+%d", x.a_bss);
 	bzero( addr, x.a_bss );
 	addr += x.a_bss;
@@ -176,7 +166,6 @@ copyunix(howto, devtype, io)
 	ssym = addr;
 	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
-	reset_twiddle();
 	printf(" [%d+", x.a_syms);
 	if (x.a_syms && read(io, addr, x.a_syms) != x.a_syms)
 		goto shread;
@@ -188,7 +177,6 @@ copyunix(howto, devtype, io)
 		goto shread;
 
 	/* read strings */
-	reset_twiddle();
 	printf("%d]", i);
 	bcopy(&i, addr, sizeof(int));
 	if (i) {
@@ -205,12 +193,9 @@ copyunix(howto, devtype, io)
 #undef round_to_size
 
 	/* and note the end address of all this	*/
-	reset_twiddle();
 	printf(" total=0x%x", addr);
 
-#ifdef pc532
 	x.a_entry &= 0xffffff;
-#endif
 	printf(" start 0x%x\n", x.a_entry);
 
 #ifdef DEBUG
@@ -248,7 +233,7 @@ getbootdev(howto)
 {
 	char c, *ptr = line;
 
-	printf("Boot: [[[%s%d%c:]%s][-s][-a][-d]] :- ",
+	printf("Boot: [[[%s%d%c:]%s][-abdrs]] :- ",
 	    devsw[bdev].dv_name, bunit + (8 * bctlr), 'a'+bpart, name);
 
 	if (tgets(line)) {
@@ -263,14 +248,17 @@ getbootdev(howto)
 					case 'a':
 						*howto |= RB_ASKNAME;
 						continue;
-					case 's':
-						*howto |= RB_SINGLE;
+					case 'b':
+						*howto |= RB_HALT;
 						continue;
 					case 'd':
 						*howto |= RB_KDB;
 						continue;
-					case 'b':
-						*howto |= RB_HALT;
+					case 'r':
+						*howto |= RB_DFLTROOT;
+						continue;
+					case 's':
+						*howto |= RB_SINGLE;
 						continue;
 					}
 			else {
@@ -283,26 +271,3 @@ getbootdev(howto)
 	} else
 		printf("\n");
 }
-
-static int tw_on;
-static int tw_pos;
-static char tw_chars[] = "|/-\\";
-
-reset_twiddle()
-{
-	if (tw_on)
-		putchar('\b');
-	tw_on = 0;
-	tw_pos = 0;
-}
-
-twiddle()
-{
-	if (tw_on)
-		putchar('\b');
-	else
-		tw_on = 1;
-	putchar(tw_chars[tw_pos++]);
-	tw_pos %= (sizeof(tw_chars) - 1);
-}
-
