@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 1996/10/04 08:55:04 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 1996/10/05 09:17:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -352,7 +352,7 @@ inittodr(base)
 
 	/* XXX */
 	if (!bbcinited) {
-		if (badbaddr(&BBCADDR->hil_stat))
+		if (badbaddr((caddr_t)&BBCADDR->hil_stat))
 			printf("WARNING: no battery clock\n");
 		else
 			bbcaddr = BBCADDR;
