@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.15 1996/10/13 03:30:32 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.16 1996/11/24 13:35:10 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,8 +66,8 @@ startrtclock()
 	ICUW(HCCV) = divisor;
 
 	/* Establish interrupt vector */
-	intr_establish(IR_CLK, hardclock, NULL, "clock", IPL_CLOCK,
-		       FALLING_EDGE);
+	intr_establish(IR_CLK, (void (*)(void *))hardclock, NULL, "clock",
+		       IPL_CLOCK, FALLING_EDGE);
 }
 
 void
