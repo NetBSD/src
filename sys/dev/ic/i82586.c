@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.48 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: i82586.c,v 1.48.4.1 2005/01/24 21:41:12 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,7 +144,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.48 2003/11/02 11:07:45 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.48.4.1 2005/01/24 21:41:12 he Exp $");
 
 #include "bpfilter.h"
 
@@ -1817,7 +1817,8 @@ i82586_ioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			ie_mc_reset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				ie_mc_reset(sc);
 			error = 0;
 		}
 		break;
