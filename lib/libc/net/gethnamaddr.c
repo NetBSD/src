@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.46 2002/06/26 06:00:07 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.47 2002/06/26 09:39:48 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.46 2002/06/26 06:00:07 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.47 2002/06/26 09:39:48 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -991,7 +991,7 @@ map_v4v6_hostent(hp, bpp, ep)
 
 	_DIAGASSERT(hp != NULL);
 	_DIAGASSERT(bpp != NULL);
-	_DIAGASSERT(lenp != NULL);
+	_DIAGASSERT(ep != NULL);
 
 	if (hp->h_addrtype != AF_INET || hp->h_length != INADDRSZ)
 		return;
