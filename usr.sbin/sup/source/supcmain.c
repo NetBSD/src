@@ -168,8 +168,16 @@
  *
  **********************************************************************
  * HISTORY
+ *
+ * 7-July-93  Nate Williams at Montana State University
+ *	Modified SUP to use gzip based compression when sending files
+ *	across the network to save BandWidth
+ *
  * $Log: supcmain.c,v $
- * Revision 1.2  1993/05/24 17:57:28  brezak
+ * Revision 1.3  1993/08/04 17:46:17  brezak
+ * Changes from nate for gzip'ed sup
+ *
+ * Revision 1.2  1993/05/24  17:57:28  brezak
  * Remove netcrypt.c. Remove unneeded files. Cleanup make.
  *
  * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
@@ -544,6 +552,12 @@ int *oflagsp,*aflagsp;
 			break;
 		case 'v':
 			oflags |= CFVERBOSE;
+			break;
+		case 'z':
+			oflags |= CFCOMPRESS;
+			break;
+		case 'Z':
+			oflags &= ~CFCOMPRESS;
 			break;
 		}
 		argp++;

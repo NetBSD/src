@@ -26,8 +26,16 @@
  * sup collection parsing routines
  **********************************************************************
  * HISTORY
+ *
+ * 7-July-93  Nate Williams at Montana State University
+ *	Modified SUP to use gzip based compression when sending files
+ *	across the network to save BandWidth
+ *
  * $Log: supcparse.c,v $
- * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
+ * Revision 1.2  1993/08/04 17:46:20  brezak
+ * Changes from nate for gzip'ed sup
+ *
+ * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
  * initial import of CMU's SUP to NetBSD
  *
  * Revision 1.6  92/08/11  12:07:38  mrt
@@ -68,7 +76,8 @@ extern char _argbreak;			/* break character from nxtarg */
 typedef enum {				/* supfile options */
 	OHOST, OBASE, OHOSTBASE, OPREFIX, ORELEASE,
 	ONOTIFY, OLOGIN, OPASSWORD, OCRYPT,
-	OBACKUP, ODELETE, OEXECUTE, OOLD, OTIMEOUT, OKEEP, OURELSUF
+	OBACKUP, ODELETE, OEXECUTE, OOLD, OTIMEOUT, OKEEP, OURELSUF,
+	OCOMPRESS
 } OPTION;
 
 struct option {
@@ -90,7 +99,8 @@ struct option {
 	"old",		OOLD,
 	"timeout",	OTIMEOUT,
 	"keep",		OKEEP,
-	"use-rel-suffix", OURELSUF
+	"use-rel-suffix", OURELSUF,
+ 	"compress", 	OCOMPRESS
 };
 
 passdelim (ptr,delim)		/* skip over delimiter */
@@ -206,6 +216,9 @@ char *collname,*args;
 			break;
 		case OURELSUF:
 			c->Cflags |= CFURELSUF;
+			break;
+		case OCOMPRESS:
+			c->Cflags |= CFCOMPRESS;
 			break;
 		case OTIMEOUT:
 			passdelim (&args,'=');

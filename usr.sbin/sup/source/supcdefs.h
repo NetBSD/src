@@ -28,8 +28,15 @@
  *
  **********************************************************************
  * HISTORY
+ * 7-July-93  Nate Williams at Montana State University
+ *	Modified SUP to use gzip based compression when sending files
+ *	across the network to save BandWidth
+ *
  * $Log: supcdefs.h,v $
- * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
+ * Revision 1.2  1993/08/04 17:46:16  brezak
+ * Changes from nate for gzip'ed sup
+ *
+ * Revision 1.1.1.1  1993/05/21  14:52:18  cgd
  * initial import of CMU's SUP to NetBSD
  *
  * Revision 1.6  92/08/11  12:06:52  mrt
@@ -114,6 +121,7 @@ typedef struct collstruct COLLECTION;
 #define CFVERBOSE	00400
 #define CFKEEP		01000
 #define CFURELSUF	02000
+#define CFCOMPRESS	04000
 
 /*************************
  ***	M A C R O S    ***
