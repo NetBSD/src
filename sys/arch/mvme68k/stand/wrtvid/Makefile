@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/17 19:58:53 chuck Exp $
+#	$NetBSD: Makefile,v 1.2 1997/05/07 15:59:11 mycroft Exp $
 
 PROG=	wrtvid
 NOMAN=
 
-install:
+# only needed during build
+proginstall::
 
 .include <bsd.prog.mk>

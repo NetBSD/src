@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/17 19:54:57 chuck Exp $
+#	$NetBSD: Makefile,v 1.2 1997/05/07 15:59:10 mycroft Exp $
 
 PROG=	prtvid
 NOMAN=
 
-install:
+# only needed during build
+proginstall::
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1995/04/20 22:43:03 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/07 16:01:49 mycroft Exp $
 
 PROG=	doexec
 NOMAN=	noman, no way, man
@@ -11,8 +11,6 @@ OD=	${.CURDIR}/good
 
 all:	${PROG} goodaout truncaout
 CLEANFILES+= goodaout truncaout
-
-install:
 
 regress:	test-empty test-nonexist \
 		test-nonexistshell test-devnullscript test-badinterplen \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1995/12/12 01:54:15 cgd Exp $
+#	$NetBSD: Makefile,v 1.12 1997/05/07 16:01:38 mycroft Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 PROG=	dbtest
@@ -8,8 +8,6 @@ PROG=	dbtest
 CFLAGS+= -g -D__DBINTERFACE_PRIVATE -DDEBUG
 NOMAN=  noman
 CLEANFILES+= t1 t2 t3
-
-install:
 
 regress:
 	sh ${.CURDIR}/run.test

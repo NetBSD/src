@@ -1,10 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1995/04/20 22:37:50 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1997/05/07 16:01:29 mycroft Exp $
 
 PROG=	./bitstring_test
 NOMAN=	noman, no way, man
-
-install:
-
 
 regress:	test-8 test-27 test-32 test-49 test-64 test-67
 
@@ -25,6 +22,5 @@ test-64: ${PROG}
 
 test-67: ${PROG}
 	${PROG} 67 | diff - ${.CURDIR}/good/67
-
 
 .include <bsd.prog.mk>
