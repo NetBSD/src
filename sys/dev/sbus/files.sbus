@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.12 1999/06/05 14:29:11 mrg Exp $
+#	$NetBSD: files.sbus,v 1.13 1999/06/27 12:47:52 pk Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -63,9 +63,8 @@ device	qe: arp, ether, ifnet
 attach	qe at qec
 file	dev/sbus/qe.c			qe
 
-#device	hme: arp, ether, ifnet, stp2002
-#attach	hme at qec
-#file	dev/sbus/hme.c			hme
+attach	hme at sbus with hme_sbus
+file	dev/sbus/if_hme_sbus.c		hme_sbus
 
 attach	audiocs at sbus with audiocs_sbus
 file	dev/sbus/cs4231_sbus.c		audiocs_sbus
