@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2004/02/15 19:52:27 skrll Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -15,7 +15,7 @@ SHLIB_MINOR=	0
 # Machine-independent definitions (include file names).
 .include "${.CURDIR}/defs.mk"
 
-LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc3 && ${PRINTOBJDIR}
+LIBGCCOBJ!=    cd ${.CURDIR}/../libgcc3/libgcc && ${PRINTOBJDIR}
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc
 GNUHOSTDIST=	${NETBSDSRCDIR}/gnu/dist/gcc

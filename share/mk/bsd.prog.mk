@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.197 2004/01/29 01:48:45 lukem Exp $
+#	$NetBSD: bsd.prog.mk,v 1.198 2004/02/15 19:52:27 skrll Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -174,7 +174,11 @@ ${PROG}: .gdbinit ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD
 .if !commands(${PROG})
 	${_MKTARGET_LINK}
 .if defined(DESTDIR)
-	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib ${_PROGLDOPTS} ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib ${_SUPCXX} -lgcc -lc -lgcc ${LIBCRTEND}
+	${_CCLINK} -Wl,-nostdlib \
+	    ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} \
+	    -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/  \
+	    ${OBJS} ${LDADD} \
+	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib
 .else
 	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
 .endif	# defined(DESTDIR)
