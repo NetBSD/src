@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.4 1997/02/19 23:07:59 scottr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.5 1997/03/29 00:54:59 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -8,14 +8,18 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * Id: ip_fil.h,v 1.3.4.10 1996/12/02 11:55:00 darrenr Exp
+ * $Id: ip_fil.h,v 1.5 1997/03/29 00:54:59 thorpej Exp $
  */
 
 #ifndef	__IP_FIL_H__
 #define	__IP_FIL_H__
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "ipfilter.h"
+#if defined(__NetBSD__)
+/*
+ * XXX This doesn't compile without this turned on.
+ * XXX --thorpej
+ */
+#define	IPFILTER_LOG	1
 #endif
 
 #ifndef	SOLARIS
@@ -25,20 +29,12 @@
 #if defined(KERNEL) && !defined(_KERNEL)
 #define	_KERNEL
 #endif
-#if SOLARIS
-# include <sys/ioccom.h>
-# include <sys/sysmacros.h>
-# ifdef	_KERNEL
-#  include <inet/common.h>
-/*
- * because Solaris 2 defines these in two places :-/
- */
-#undef	IPOPT_EOL
-#undef	IPOPT_NOP
-#undef	IPOPT_LSRR
-#undef	IPOPT_RR
-#undef	IPOPT_SSRR
-#  include <inet/ip.h>
+
+#ifndef	__P
+# ifdef	__STDC__
+#  define	__P(x)	x
+# else
+#  define	__P(x)	()
 # endif
 #endif
 
@@ -58,9 +54,7 @@
 #define	SIOCFRENB	_IOW('r', 72, u_int)
 #define	SIOCFRSYN	_IOW('r', 73, u_int)
 #define	SIOCFRZST	_IOWR('r', 74, struct friostat)
-#define	SIOCFLNAT	_IOWR('r', 75, int)
-#define	SIOCCNATL	_IOWR('r', 76, int)
-#define	SIOCZRLST	_IOWR('r', 77, struct frentry)
+#define	SIOCZRLST	_IOWR('r', 75, struct frentry)
 #else
 #define	SIOCADAFR	_IOW(r, 60, struct frentry)
 #define	SIOCRMAFR	_IOW(r, 61, struct frentry)
@@ -77,9 +71,7 @@
 #define SIOCFRENB	_IOW(r, 72, u_int)
 #define	SIOCFRSYN	_IOW(r, 73, u_int)
 #define	SIOCFRZST	_IOWR(r, 74, struct friostat)
-#define	SIOCFLNAT	_IOWR(r, 75, int)
-#define	SIOCCNATL	_IOWR(r, 76, int)
-#define	SIOCZRLST	_IOWR(r, 77, struct frentry)
+#define	SIOCZRLST	_IOWR(r, 75, struct frentry)
 #endif
 #define	SIOCADDFR	SIOCADAFR
 #define	SIOCDELFR	SIOCRMAFR
@@ -125,8 +117,6 @@ typedef	struct	frdest	{
 	char	fd_ifname[IFNAMSIZ];
 } frdest_t;
 
-#include <netinet/ip_compat.h>
-
 typedef	struct	frentry {
 	struct	frentry	*fr_next;
 	struct	ifnet	*fr_ifa;
@@ -152,7 +142,7 @@ typedef	struct	frentry {
 	u_short	fr_stop;	/* top port for <> and >< */
 	u_short	fr_dtop;	/* top port for <> and >< */
 	u_long	fr_flags;	/* per-rule flags && options (see below) */
-	int	(*fr_func) __P((int, ip_t *, fr_info_t *));	/* call this function */
+	int	(*fr_func) __P((int, struct ip *, fr_info_t *));	/* call this function */
 	char	fr_icode;	/* return ICMP code */
 	char	fr_ifname[IFNAMSIZ];
 	struct	frdest	fr_tif;	/* "to" interface */
@@ -174,7 +164,7 @@ typedef	struct	frentry {
 
 /*
  * fr_flags
-*/
+ */
 #define	FR_BLOCK	0x00001
 #define	FR_PASS		0x00002
 #define	FR_OUTQUE	0x00004
@@ -288,31 +278,82 @@ typedef	struct ipl_ci	{
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
 #define	IPLLOGSIZE	8192
 
-extern	int	fr_check __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
-			      struct mbuf **mp));
-extern	int	fr_copytolog __P((char *buf, int len));
-extern	fr_info_t	frcache[];
-extern	int	send_reset __P((struct tcpiphdr *ti));
-extern	void	ipfr_fastroute __P((struct mbuf *m0, fr_info_t *fin,
-                                    frdest_t *fdp));
-
-
-extern	int	ipllog __P((u_int flags, ip_t *ip, register fr_info_t *fin,
-			    struct mbuf *m));
-extern	char	*iplh, *iplt;
-extern	char	iplbuf[IPLLOGSIZE];
-
-#ifdef _KERNEL
-
-extern struct frentry *ipfilter[2][2], *ipacct[2][2];
-extern struct filterstats frstats[];
+#ifndef	_KERNEL
+extern	int	fr_check __P((struct ip *, int, struct ifnet *, int, char *));
+extern	int	(*fr_checkp) __P((struct ip *, int, struct ifnet *,
+				  int, char *));
+extern	int	send_reset __P((struct ip *, struct ifnet *));
+extern	int	icmp_error __P((struct ip *, struct ifnet *));
+extern	void    ipllog __P((void));
+extern	void	ipfr_fastroute __P((struct ip *, fr_info_t *, frdest_t *));
+#else
 # if	SOLARIS
-extern	int	ipfsync();
+extern	int	fr_check __P((struct ip *, int, struct ifnet *, int, qif_t *,
+			      queue_t *, mblk_t **));
+extern	int	(*fr_checkp) __P((struct ip *, int, struct ifnet *,
+				  int, qif_t *, queue_t *, mblk_t *));
+extern	int	icmp_error __P((queue_t *, ip_t *, int, int, qif_t *,
+				struct in_addr));
+# else
+extern	int	fr_check __P((struct ip *, int, struct ifnet *, int,
+			      struct mbuf **));
+extern	int	(*fr_checkp) __P((struct ip *, int, struct ifnet *, int,
+				  struct mbuf **));
+extern	int	send_reset __P((struct tcpiphdr *));
+extern	int	ipllog __P((u_int, int, struct ip *, fr_info_t *, struct mbuf *));
+extern	void	ipfr_fastroute __P((struct mbuf *, fr_info_t *, frdest_t *));
 # endif
+#endif
+extern	int	fr_copytolog __P((int, char *, int));
+extern	int	ipl_unreach;
+extern	fr_info_t	frcache[];
+extern	char	*iplh[3], *iplt[3];
+extern	char	iplbuf[3][IPLLOGSIZE];
+extern	struct frentry *ipfilter[2][2], *ipacct[2][2];
+extern	struct filterstats frstats[];
+
+#ifndef	_KERNEL
+extern	int	iplioctl __P((dev_t, int, caddr_t, int));
+extern	int	iplopen __P((dev_t, int));
+extern	int	iplclose __P((dev_t, int));
+#else
+#if defined(__NetBSD__)
+extern	int	ipfilterattach __P((void));
+extern	int	ipfilterdetach __P((void));
+#else
+extern	int	iplattach __P((void));
+extern	int	ipldetach __P((void));
+#endif /* __NetBSD__ */
+# if SOLARIS
+extern	int	iplioctl __P((dev_t, int, int, int, cred_t *, int *));
+extern	int	iplopen __P((dev_t *, int, int, cred_t *));
+extern	int	iplclose __P((dev_t, int, int, cred_t *));
+extern	int	ipfsync __P((void));
+#  ifdef	IPFILTER_LOG
+extern	int	iplread __P((dev_t, struct uio *, cred_t *));
+#  endif
+# else
+#  ifdef	IPFILTER_LKM
+extern	int	iplidentify __P((char *));
+#  endif
+#  if (_BSDI_VERSION >= 199510) || (__FreeBSD_version >= 199612)
+extern	int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
+extern	int	iplopen __P((dev_t, int, int, struct proc *));
+extern	int	iplclose __P((dev_t, int, int, struct proc *));
+#  elif !defined(__NetBSD__) || (NetBSD < 199609)
+extern	int	iplioctl __P((dev_t, int, caddr_t, int));
+extern	int	iplopen __P((dev_t, int));
+extern	int	iplclose __P((dev_t, int));
+#  endif /* (_BSDI_VERSION >= 199510) */
+#  ifdef IPFILTER_LOG
+#   if	BSD >= 199306
+extern	int	iplread __P((dev_t, struct uio *, int));
+#   else
+extern	int	iplread __P((dev_t, struct uio *));
+#   endif /* BSD >= 199306 */
+#  else
+#   define	iplread	noread
+#  endif /* IPFILTER_LOG */
+# endif /* SOLARIS */
 #endif /* _KERNEL */
-
-/* XXX */
-#define	IPFILTER	1
-#define	IPFILTER_LOG	1
-
 #endif	/* __IP_FIL_H__ */
