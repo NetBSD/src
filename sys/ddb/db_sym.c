@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.36 2003/04/24 21:18:34 ragge Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.37 2003/04/25 20:30:58 ragge Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.36 2003/04/24 21:18:34 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.37 2003/04/25 20:30:58 ragge Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -43,13 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.36 2003/04/24 21:18:34 ragge Exp $");
 #include <ddb/db_output.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_command.h>
-
-#ifdef SYMTAB_SPACE
-#define		SYMTAB_FILLER	"|This is the symbol table!"
-
-char		db_symtab[SYMTAB_SPACE] = SYMTAB_FILLER;
-int		db_symtabsize = SYMTAB_SPACE;
-#endif
 
 static void		db_symsplit(char *, char **, char **);
 
@@ -72,17 +65,6 @@ extern db_symformat_t db_symformat_aout;
 void
 ddb_init(int symsize, void *vss, void *vse)
 {
-
-#ifdef SYMTAB_SPACE
-	if (symsize <= 0) {
-		if (strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
-			symsize = db_symtabsize;
-			vss = db_symtab;
-			vse = db_symtab + db_symtabsize;
-		}
-	}
-#endif
-
 #ifdef DB_AOUT_SYMBOLS
 	db_symformat = &db_symformat_aout;
 	if ((*db_symformat->sym_init)(symsize, vss, vse, TBLNAME) == TRUE) {
@@ -90,7 +72,7 @@ ddb_init(int symsize, void *vss, void *vse)
 		return;
 	}
 #endif
-	ksyms_init(vss, vse);	/* Will complain if necessary */
+	ksyms_init(symsize, vss, vse);	/* Will complain if necessary */
 }
 
 boolean_t
