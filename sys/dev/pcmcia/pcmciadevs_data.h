@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.79 2000/02/27 11:14:43 uch Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.80 2000/03/13 20:31:23 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.79 2000/02/09 13:32:23 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.81 2000/03/13 20:30:24 cgd Exp 
  */
 
 /*-
@@ -57,6 +57,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Adaptec Corporation",
 	    "Adaptec APA-1460A SlimSCSI"	},
+	},
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C1,
+	    PCMCIA_CIS_3COM_3C1,
+	    0,
+	    "3Com Corporation",
+	    "3Com Megahertz 3C1 10Mbps LAN CF+ Card"	},
 	},
 	{
 	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3C562,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.79 2000/02/27 11:14:43 uch Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.80 2000/03/13 20:31:23 cgd Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.79 2000/02/09 13:32:23 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.81 2000/03/13 20:30:24 cgd Exp 
  */
 
 /*-
@@ -94,6 +94,9 @@
 #define	PCMCIA_STR_ADAPTEC_APA1460A	"Adaptec APA-1460A SlimSCSI"
 
 /* 3COM Products */
+#define	PCMCIA_CIS_3COM_3C1	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_3COM_3C1	0x0cf1
+#define	PCMCIA_STR_3COM_3C1	"3Com Megahertz 3C1 10Mbps LAN CF+ Card"
 #define	PCMCIA_CIS_3COM_3C562	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_3COM_3C562	0x0562
 #define	PCMCIA_STR_3COM_3C562	"3Com 3c562 33.6 Modem/10Mbps Ethernet"
