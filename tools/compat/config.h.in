@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h.in,v 1.14 2002/04/01 13:59:35 bjh21 Exp $	*/
+/*	$NetBSD: config.h.in,v 1.15 2002/04/04 17:52:04 bjh21 Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_CONFIG_H__
 #define	__NETBSD_COMPAT_CONFIG_H__
@@ -23,6 +23,7 @@
 #undef HAVE_STDDEF_H
 #undef HAVE_STRING_H
 #undef HAVE_SYS_DIR_H
+#undef HAVE_SYS_ENDIAN_H
 #undef HAVE_SYS_NDIR_H
 #undef HAVE_SYS_SYSLIMITS_H
 #undef HAVE_SYS_SYSMACROS_H
