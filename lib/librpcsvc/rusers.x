@@ -32,10 +32,11 @@
  */
 
 #ifndef RPC_HDR
+%#include <sys/cdefs.h>
 %#ifndef lint
 %/*static char sccsid[] = "from: @(#)rnusers.x 1.2 87/09/20 Copyr 1987 Sun Micro";*/
 /* @(#)rusers.x 1.1 91/12/01 Copyright 1991 Sun Microsystems, Inc. */
-%static char rcsid[] = "$NetBSD: rusers.x,v 1.2 1996/09/26 23:45:27 thorpej Exp $";
+%__RCSID("$NetBSD: rusers.x,v 1.3 1997/10/09 14:21:25 lukem Exp $");
 %#endif /* not lint */
 #endif
 
