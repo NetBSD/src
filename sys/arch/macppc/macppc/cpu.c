@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2000/07/06 22:56:23 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 2000/07/07 13:22:06 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -131,7 +131,9 @@ cpuattach(parent, self, aux)
 
 	switch (id) {
 	case 0:
+#ifdef MULTIPROCESSOR
 		asm volatile ("mtspr 1023,%0" :: "r"(id));	/* PIR */
+#endif
 		identifycpu(model);
 		printf(": %s, ID %d (primary)", model, cpu_number());
 		break;
