@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.5 1998/06/07 20:19:12 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.6 1998/08/10 14:47:16 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -69,13 +69,13 @@ struct  cfattach dz_vsbus_ca = {
 static void
 rxon()
 {
-        vsbus_intr_enable(INR_SR);
+        vsbus_intr_enable(inr_sr);
 }
 
 static void
 txon()
 {
-        vsbus_intr_enable(INR_ST);
+        vsbus_intr_enable(inr_st);
 }
 
 int
@@ -95,7 +95,7 @@ dz_vsbus_match(parent, cf, aux)
         void *aux;
 {
         struct vsbus_attach_args *va = aux;
-        if (va->va_type == INR_SR)
+        if (va->va_type == inr_sr)
                 return 1;
         return 0;
 }
@@ -121,8 +121,8 @@ dz_vsbus_attach(parent, self, aux)
         sc->sc_txon = txon;
         sc->sc_rxon = rxon;
 	sc->sc_dsr = 0x0f; /* XXX check if VS has modem ctrl bits */
-        vsbus_intr_attach(INR_SR, dzrint, 0);
-        vsbus_intr_attach(INR_ST, dzxint, 0);
+        vsbus_intr_attach(inr_sr, dzrint, 0);
+        vsbus_intr_attach(inr_st, dzxint, 0);
         printf(": DC367");
 
         dzattach(sc);
@@ -152,7 +152,9 @@ int
 dzcngetc(dev) 
 	dev_t dev;
 {
-	int c;
+	int c = 0;
+	int mino = minor(dev);
+	u_short rbuf;
 	u_char mask;
 
 	mask = vs_cpu->vc_intmsk;	/* save old state */
@@ -161,7 +163,10 @@ dzcngetc(dev)
 	do {
 		while ((dz->csr & 0x80) == 0)
 			; /* Wait for char */
-		c = dz->rbuf & 0x7f;
+		rbuf = dz->rbuf;
+		if (((rbuf >> 8) & 3) != mino)
+			continue;
+		c = rbuf & 0x7f;
 	} while (c == 17 || c == 19);		/* ignore XON/XOFF */
 
 	if (c == 13)
@@ -184,6 +189,7 @@ dzcnprobe(cndev)
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
 	case VAX_BTYP_43:
+	case VAX_BTYP_46:
 		cndev->cn_dev = makedev(DZMAJOR, 3);
 		cndev->cn_pri = CN_NORMAL;
 		break;
@@ -214,6 +220,7 @@ dzcnputc(dev,ch)
 	int	ch;
 {
 	int timeout = 1<<15;            /* don't hang the machine! */
+	int mino = minor(dev);
 	u_short tcr;
 	u_char mask;
 
@@ -223,7 +230,7 @@ dzcnputc(dev,ch)
 	mask = vs_cpu->vc_intmsk;	/* save old state */
 	vs_cpu->vc_intmsk = 0;		/* disable all interrupts */
 	tcr = dz->tcr;	/* remember which lines to scan */
-	dz->tcr = 8; /* XXX */
+	dz->tcr = (1 << mino);
 
 	while ((dz->csr & 0x8000) == 0) /* Wait until ready */
 		if (--timeout < 0)

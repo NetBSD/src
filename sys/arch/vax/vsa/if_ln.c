@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ln.c,v 1.6 1998/07/21 17:36:05 drochner Exp $	*/
+/*	$NetBSD: if_ln.c,v 1.7 1998/08/10 14:47:16 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ lnmatch(parent, cf, aux)
 	if (lance_csr == 0)
 		return 0;
 #endif
-	if (va->va_type == INR_NP)
+	if (va->va_type == inr_ni)
 		return 2;
 	return 0;
 }
@@ -307,8 +307,8 @@ lnattach(parent, self, aux)
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	vsbus_intr_attach(INR_NP, ln_intr, 0);
-	vsbus_intr_enable(INR_NP);
+	vsbus_intr_attach(inr_ni, ln_intr, 0);
+	vsbus_intr_enable(inr_ni);
 
 	/*
 	 * Register this device as boot device if we booted from it.

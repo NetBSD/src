@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.7 1998/08/05 16:50:39 kleink Exp $ */
+/*	$NetBSD: lkc.c,v 1.8 1998/08/10 14:47:16 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -83,7 +83,7 @@ lkc_attach(parent, self, aux)
 	printf("\n");
 	dz->sc_catch = lkc_catch; /* Catch keyb & mouse chars fast */
 	*dz->sc_dr.dr_lpr = 0x1c18; /* XXX */
-	vsbus_intr_enable(INR_SR);
+	vsbus_intr_enable(inr_sr);
 }
 
 int
@@ -92,7 +92,7 @@ lkc_catch(line, ch)
 {
 	int hej;
 
-	if (line > 1)
+	if (line > 0)
 		return 0;
 
 	if ((hej = lkc_decode(ch)) == -1)
@@ -134,7 +134,7 @@ lkc_decode(ch)
 		ch = lastchar;
 		break;
 
-#if DDB
+#if defined(DDB)
 	case 113: /* ESC */
 		if ((shifted & ctrl) == 0)
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.11 1998/06/04 15:51:12 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.12 1998/08/10 14:47:17 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -56,6 +56,7 @@
 
 #include <machine/uvax.h>
 #include <machine/ka410.h>
+#include <machine/ka420.h>
 #include <machine/ka43.h>
 
 #include <machine/vsbus.h>
@@ -136,18 +137,50 @@ vsbus_attach(parent, self, aux)
 	 * now check for all possible devices on this "bus"
 	 */
 	/* Always have network */
-	va.va_type = INR_NP;
+	va.va_type = inr_ni;
 	config_found(self, &va, vsbus_print);
 
 	/* Always have serial line */
-	va.va_type = INR_SR;
+	va.va_type = inr_sr;
 	config_found(self, &va, vsbus_print);
 
 	/* If sm_addr is set, a monochrome graphics adapter is found */
+	/* XXX ckeck for color adapter */
 	if (sm_addr) {
-		va.va_type = INR_VF;
+		va.va_type = inr_vf;
 		config_found(self, &va, vsbus_print);
 	}
+#ifdef notyet
+	/*
+	 * Check for mass storage devices. This is tricky :-/
+	 * VS2K always has both MFM and SCSI.
+	 * VS3100 has either MFM/SCSI, SCSI/SCSI or neither of them.
+	 * The device registers are at different places for them all.
+	 */
+	if (vax_boardtype == VAX_BTYP_410) {
+		va.va_type = inr_dc;
+		config_found(self, &va, vsbus_print);
+		va.va_type = 0x200C0080;
+		config_found(self, &va, vsbus_print);
+		return;
+	}
+
+	if ((vax_confdata & KA420_CFG_STCMSK) == KA420_CFG_NONE)
+		return; /* No ctlrs */
+
+	/* Ok, we have at least one scsi ctlr */
+	va.va_type = 0x200C0080;
+	config_found(self, &va, vsbus_print);
+
+	/* The last one is MFM or SCSI */
+	if ((vax_confdata & KA420_CFG_STCMSK) == KA420_CFG_RB) {
+		va.va_type = inr_dc;
+		config_found(self, &va, vsbus_print);
+	} else {
+		va.va_type = 0x200C0180;
+		config_found(self, &va, vsbus_print);
+	}
+#endif
 }
 
 static	void stray __P((int));
@@ -208,55 +241,14 @@ vsbus_intr_disable(nr)
 	vs_cpu->vc_intmsk = vs_cpu->vc_intmsk & ~(1<<nr);
 }
 
+#ifdef notyet
 /*
- *
- *
+ * Allocate/free DMA pages and other bus resources.
+ * VS2000: All DMA and register access must be exclusive.
+ * VS3100: DMA area may be accessed by anyone anytime.
+ *   MFM/SCSI: Don't touch reg's while DMA is active.
+ *   SCSI/SCSI: Legal to touch any register anytime.
  */
 
-static volatile struct dma_lock {
-	int	dl_locked;
-	int	dl_wanted;
-	void	*dl_owner;
-	int	dl_count;
-} dmalock = { 0, 0, NULL, 0 };
 
-int
-vsbus_lockDMA(ca)
-	struct confargs *ca;
-{
-	while (dmalock.dl_locked) {
-		dmalock.dl_wanted++;
-		sleep((caddr_t)&dmalock, PRIBIO);	/* PLOCK or PRIBIO ? */
-		dmalock.dl_wanted--;
-	}
-	dmalock.dl_locked++;
-	dmalock.dl_owner = ca;
-
-	/*
-	 * no checks yet, no timeouts, nothing...
-	 */
-
-#ifdef DEBUG
-	if ((++dmalock.dl_count % 1000) == 0)
-		printf("%d locks, owner: %s\n", dmalock.dl_count, ca->ca_name);
 #endif
-	return (0);
-}
-
-int 
-vsbus_unlockDMA(ca)
-	struct confargs *ca;
-{
-	if (dmalock.dl_locked != 1 || dmalock.dl_owner != ca) {
-		printf("locking-problem: %d, %s\n", dmalock.dl_locked,
-		       (char *)(dmalock.dl_owner ? dmalock.dl_owner : "null"));
-		dmalock.dl_locked = 0;
-		return (-1);
-	}
-	dmalock.dl_owner = NULL;
-	dmalock.dl_locked = 0;
-	if (dmalock.dl_wanted) {
-		wakeup((caddr_t)&dmalock);
-	}
-	return (0);
-}
