@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.7 1999/02/16 01:08:16 ender Exp $	*/
+/*	$NetBSD: aed.c,v 1.8 1999/11/07 00:12:55 scottr Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -61,11 +61,6 @@ static void	aed_kbdrpt __P((void *kstate));
 static void	aed_dokeyupdown __P((adb_event_t *event));
 static void	aed_handoff __P((adb_event_t *event));
 static void	aed_enqevent __P((adb_event_t *event));
-
-/*
- * Global variables.
- */
-extern int ite_polling;			/* Are we polling?  (Debugger mode) */
 
 /*
  * Local variables.
@@ -365,7 +360,7 @@ static void
 aed_handoff(event)
 	adb_event_t *event;
 {
-	if (aed_sc->sc_open && !ite_polling)
+	if (aed_sc->sc_open && !adb_polling)
 		aed_enqevent(event);
 	else {
 		if (event->def_addr == 2)
