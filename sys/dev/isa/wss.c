@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.40 1997/11/30 15:24:59 drochner Exp $	*/
+/*	$NetBSD: wss.c,v 1.41 1998/01/12 09:43:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -193,10 +193,6 @@ void	wssattach __P((struct device *, struct device *, void *));
 
 struct cfattach wss_ca = {
 	sizeof(struct wss_softc), wssprobe, wssattach
-};
-
-struct cfdriver wss_cd = {
-	NULL, "wss", DV_DULL
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.166 1997/10/13 00:47:33 explorer Exp $ */
+/*	$NetBSD: wd.c,v 1.167 1998/01/12 09:43:49 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -98,9 +98,7 @@ struct cfattach wd_ca = {
 	sizeof(struct wd_softc), wdprobe, wdattach
 };
 
-struct cfdriver wd_cd = {
-	NULL, "wd", DV_DISK
-};
+extern struct cfdriver wd_cd;
 
 void	wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
 void	wdgetdisklabel	__P((struct wd_softc *));
@@ -128,7 +126,7 @@ wdprobe(parent, match, aux)
 	struct cfdata *cf = match;
 	struct wd_link *d_link = aux;
 	int drive;
-	
+
 	if (d_link == NULL)
 		return 0;
 	if (d_link->type != ATA)

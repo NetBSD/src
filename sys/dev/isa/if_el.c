@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.50 1997/11/30 15:31:25 drochner Exp $	*/
+/*	$NetBSD: if_el.c,v 1.51 1998/01/12 09:43:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -115,10 +115,6 @@ void elattach __P((struct device *, struct device *, void *));
 
 struct cfattach el_ca = {
 	sizeof(struct el_softc), elprobe, elattach
-};
-
-struct cfdriver el_cd = {
-	NULL, "el", DV_IFNET
 };
 
 /*

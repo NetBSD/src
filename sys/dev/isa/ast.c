@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.41 1997/10/20 18:43:05 thorpej Exp $	*/
+/*	$NetBSD: ast.c,v 1.42 1998/01/12 09:43:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -72,10 +72,6 @@ int astprint __P((void *, const char *));
 
 struct cfattach ast_ca = {
 	sizeof(struct ast_softc), astprobe, astattach
-};
-
-struct cfdriver ast_cd = {
-	NULL, "ast", DV_TTY
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.57 1997/10/27 02:10:07 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5023,10 +5023,6 @@ static void tulip_pci_attach(TULIP_PCI_ATTACH_ARGS);
 
 struct cfattach de_ca = {
     sizeof(tulip_softc_t), tulip_pci_probe, tulip_pci_attach
-};
-
-struct cfdriver de_cd = {
-    0, "de", DV_IFNET
 };
 
 #endif /* __NetBSD__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we.c,v 1.2 1997/11/08 06:13:53 thorpej Exp $	*/
+/*	$NetBSD: if_we.c,v 1.3 1998/01/12 09:43:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -131,9 +131,7 @@ struct cfattach we_ca = {
 	sizeof(struct we_softc), we_probe, we_attach
 };
 
-struct cfdriver we_cd = {
-	NULL, "we", DV_IFNET
-};
+extern struct cfdriver wd_cd;
 
 const char *we_params __P((bus_space_tag_t, bus_space_handle_t, u_int8_t *,
 	    bus_size_t *, int *, int *));

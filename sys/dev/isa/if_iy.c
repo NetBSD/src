@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.18 1997/12/02 09:34:06 bouyer Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.19 1998/01/12 09:43:39 thorpej Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -177,10 +177,6 @@ static int eepromreadall __P((bus_space_tag_t, bus_space_handle_t, u_int16_t *,
 
 struct cfattach iy_ca = {
 	sizeof(struct iy_softc), iyprobe, iyattach
-};
-
-struct cfdriver iy_cd = {
-	NULL, "iy", DV_IFNET
 };
 
 static u_int8_t eepro_irqmap[] = EEPP_INTMAP;

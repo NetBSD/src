@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.7 1997/11/30 15:18:58 drochner Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.8 1998/01/12 09:40:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -232,10 +232,6 @@ static __inline u_int8_t netsio_read(sc, bits)
 
 struct cfattach tl_ca = {
 	sizeof(tl_softc_t), tl_pci_match, tl_pci_attach
-};
-
-struct cfdriver tl_cd = {
-	0, "tl", DV_IFNET
 };
 
 struct tl_product_desc {

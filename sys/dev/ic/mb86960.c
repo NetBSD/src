@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.19 1998/01/05 07:31:08 perry Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.20 1998/01/12 09:43:37 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -243,10 +243,6 @@ void	fe_dump		__P((int, struct fe_softc *));
 
 struct cfattach fe_ca = {
 	sizeof(struct fe_softc), feprobe, feattach
-};
-
-struct cfdriver fe_cd = {
-	NULL, "fe", DV_IFNET
 };
 
 /* Ethernet constants.  To be defined in if_ehter.h?  FIXME. */

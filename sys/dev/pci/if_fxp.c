@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.6 1997/11/11 06:35:46 thorpej Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.7 1998/01/12 09:40:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -293,10 +293,6 @@ static int	fxp_ether_ioctl __P((struct ifnet *,
 
 struct cfattach fxp_ca = {
 	sizeof(struct fxp_softc), fxp_match, fxp_attach
-};
-
-struct cfdriver fxp_cd = {
-	NULL, "fxp", DV_IFNET
 };
 
 /*

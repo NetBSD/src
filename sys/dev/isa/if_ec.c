@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.2 1997/11/02 05:17:32 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.3 1998/01/12 09:43:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -120,10 +120,6 @@ void	ec_attach __P((struct device *, struct device *, void *));
 
 struct cfattach ec_ca = {
 	sizeof(struct ec_softc), ec_probe, ec_attach
-};
-
-struct cfdriver ec_cd = {
-	NULL, "ec", DV_IFNET
 };
 
 int	ec_set_media __P((struct ec_softc *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.62 1997/11/21 10:27:45 bouyer Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.63 1998/01/12 09:43:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -342,10 +342,6 @@ static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
 
 struct cfattach ie_ca = {
 	sizeof(struct ie_softc), ieprobe, ieattach
-};
-
-struct cfdriver ie_cd = {
-	NULL, "ie", DV_IFNET
 };
 
 #define MK_24(base, ptr) ((caddr_t)((u_long)ptr - (u_long)base))

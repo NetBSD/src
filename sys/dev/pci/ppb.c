@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.15 1997/08/30 06:53:58 mycroft Exp $	*/
+/*	$NetBSD: ppb.c,v 1.16 1998/01/12 09:40:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -58,10 +58,6 @@ void	ppbattach __P((struct device *, struct device *, void *));
 
 struct cfattach ppb_ca = {
 	sizeof(struct device), ppbmatch, ppbattach
-};
-
-struct cfdriver ppb_cd = {
-	NULL, "ppb", DV_DULL
 };
 
 int	ppbprint __P((void *, const char *pnp));
