@@ -1,4 +1,4 @@
-.\" $NetBSD: strip.4,v 1.10 2001/06/11 01:13:28 wiz Exp $
+.\" $NetBSD: strip.4,v 1.11 2001/09/22 16:21:43 wiz Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -140,7 +140,6 @@ A future version of this driver will support
 to obtain the
 .Tn IP
 address of reachable peer packet radios dynamically.
-.Pp
 .Sh ADDRESS CONFIGURATION
 This version of the STRIP driver requires static pre-configuration of
 the mapping from
@@ -172,7 +171,6 @@ route add -host 10.11.12.13 -link strip0:1:2:3:4:5:6:7:8
 Generalising from this example to other
 .Tn IP
 addresses and to other 8-digit MAC addresses should be clear.
-.Pp
 .Sh RADIO CONFIGURATION
 The
 .Tn Metricom
@@ -203,15 +201,30 @@ and resets it back into
 if the baud rate was set correctly by
 .Xr slattach 8 .
 .\" .Sh DIAGNOSTICS
-.Pp
 .Sh SEE ALSO
-.Xr inet 4 ,
 .Xr arp 4 ,
+.Xr inet 4 ,
 .Xr sl 4 ,
 .Xr config 8 ,
 .Xr ifconfig 8 ,
-.Xr slattach 8 ,
-.Xr route 8
+.Xr route 8 ,
+.Xr slattach 8
+.Sh HISTORY
+.Nm
+was originally developed for the
+.Tn Linux
+kernel by Stuart Cheshire of Stanford's Operating Systems and
+Networking group, as part of Mary Baker's MosquitoNet
+.Sy http://mosquitonet.stanford.edu/mosquitonet.html
+project.
+.Pp
+This
+.Nm
+driver was ported to
+.Nx
+by Jonathan Stone at Stanford's Distributed Systems Group and first
+distributed with
+.Nx 1.2 .
 .Sh BUGS
 Currently,
 .Nm
@@ -236,19 +249,3 @@ the
 .Nm
 interface down, and then start a new slattach and rerun ifconfig
 to enable the interface again.
-.Sh HISTORY
-.Nm
-was originally developed for the
-.Tn Linux
-kernel by Stuart Cheshire of Stanford's Operating Systems and
-Networking group, as part of Mary Baker's MosquitoNet
-.Sy http://mosquitonet.stanford.edu/mosquitonet.html
-project.
-.Pp
-This
-.Nm
-driver was ported to
-.Nx
-by Jonathan Stone at Stanford's Distributed Systems Group and first
-distributed with
-.Nx 1.2 .

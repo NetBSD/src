@@ -1,4 +1,4 @@
-.\"	$NetBSD: sb.4,v 1.20 2001/09/11 22:52:53 wiz Exp $
+.\"	$NetBSD: sb.4,v 1.21 2001/09/22 16:21:42 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,12 +89,6 @@ driver.
 SoundBlaster 16 cards have MPU401 emulation and can use the mpu
 attachment, older cards have a different way to generate MIDI and
 has a midi device attached directly to the sb,
-.Sh BUGS
-Non-SCSI CD-ROM interfaces are not supported.
-.Pp
-The MIDI interface on the SB hardware is braindead, and the driver
-needs to busy wait while writing MIDI data.  This will consume
-a lot of system time.
 .Sh SEE ALSO
 .Xr aic 4 ,
 .Xr audio 4 ,
@@ -110,3 +104,9 @@ The
 .Nm
 device driver appeared in
 .Nx 1.0 .
+.Sh BUGS
+Non-SCSI CD-ROM interfaces are not supported.
+.Pp
+The MIDI interface on the SB hardware is braindead, and the driver
+needs to busy wait while writing MIDI data.  This will consume
+a lot of system time.
