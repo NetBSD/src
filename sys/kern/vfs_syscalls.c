@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.52 1995/05/10 16:53:08 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.53 1995/06/01 22:44:13 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1178,9 +1178,9 @@ access(p, uap, retval)
 	struct nameidata nd;
 
 	t_uid = cred->cr_uid;
-	t_gid = cred->cr_groups[0];
+	t_gid = cred->cr_gid;
 	cred->cr_uid = p->p_cred->p_ruid;
-	cred->cr_groups[0] = p->p_cred->p_rgid;
+	cred->cr_gid = p->p_cred->p_rgid;
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
 	    SCARG(uap, path), p);
 	if (error = namei(&nd))
@@ -1202,7 +1202,7 @@ access(p, uap, retval)
 	vput(vp);
 out1:
 	cred->cr_uid = t_uid;
-	cred->cr_groups[0] = t_gid;
+	cred->cr_gid = t_gid;
 	return (error);
 }
 

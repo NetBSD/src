@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.5 1995/04/15 01:57:36 cgd Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.6 1995/06/01 22:44:34 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -408,8 +408,8 @@ umap_mapids(v_mount, credp)
 	else
 		credp->cr_uid = (uid_t) NOBODY;
 
-#ifdef notdef
-	/* cr_gid is the same as cr_groups[0] in 4BSD */
+#if 1
+	/* cr_gid is the same as cr_groups[0] in 4BSD, but not in NetBSD */
 
 	/* Find gid entry in map */
 

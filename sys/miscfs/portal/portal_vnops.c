@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.11 1995/04/15 01:56:47 cgd Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.12 1995/06/01 22:44:23 jtc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -292,6 +292,7 @@ portal_open(ap)
 
 	pcred.pcr_flag = ap->a_mode;
 	pcred.pcr_uid = ap->a_cred->cr_uid;
+	pcred.pcr_gid = ap->a_cred->cr_gid;
 	pcred.pcr_ngroups = ap->a_cred->cr_ngroups;
 	bcopy(ap->a_cred->cr_groups, pcred.pcr_groups, NGROUPS * sizeof(gid_t));
 	aiov[0].iov_base = (caddr_t) &pcred;

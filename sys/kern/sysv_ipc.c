@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.7 1994/06/29 06:33:11 cgd Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.8 1995/06/01 22:44:06 jtc Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -56,7 +56,8 @@ ipcperm(cred, perm, mode)
 			return (EPERM);
 		/* Check for group match. */
 		mode >>= 3;
-		if (!groupmember(perm->gid, cred) &&
+		if (cred->cr_gid != perm->cgid && cred->cr_gid != perm->gid &&
+		    !groupmember(perm->gid, cred) &&
 		    !groupmember(perm->cgid, cred))
 			/* Check for `other' match. */
 			mode >>= 3;

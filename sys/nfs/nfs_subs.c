@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.18 1994/08/18 22:47:53 mycroft Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.19 1995/06/01 22:44:41 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -218,7 +218,7 @@ nfsm_rpchead(cr, nqnfs, procid, auth_type, auth_len, auth_str, mrest,
 		*tl++ = 0;		/* stamp ?? */
 		*tl++ = 0;		/* NULL hostname */
 		*tl++ = txdr_unsigned(cr->cr_uid);
-		*tl++ = txdr_unsigned(cr->cr_groups[0]);
+		*tl++ = txdr_unsigned(cr->cr_gid);
 		grpsiz = (auth_len >> 2) - 5;
 		*tl++ = txdr_unsigned(grpsiz);
 		for (i = 1; i <= grpsiz; i++)
@@ -1072,11 +1072,13 @@ nfsrv_fhtovp(fhp, lockflag, vpp, cred, slp, nam, rdonlyp)
 			return (NQNFS_AUTHERR);
 		}
 		cred->cr_uid = uidp->nu_cr.cr_uid;
+		cred->cr_gid = uidp->nu_cr.cr_gid;
 		for (i = 0; i < uidp->nu_cr.cr_ngroups; i++)
 			cred->cr_groups[i] = uidp->nu_cr.cr_groups[i];
 		cred->cr_ngroups = i;
 	} else if (cred->cr_uid == 0 || (exflags & MNT_EXPORTANON)) {
 		cred->cr_uid = credanon->cr_uid;
+		cred->cr_gid = credanon->cr_gid;
 		for (i = 0; i < credanon->cr_ngroups && i < NGROUPS; i++)
 			cred->cr_groups[i] = credanon->cr_groups[i];
 		cred->cr_ngroups = i;

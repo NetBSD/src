@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.11 1995/05/16 14:19:08 mycroft Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.12 1995/06/01 22:43:30 jtc Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -251,7 +251,7 @@ svr4_copyargs(pack, arginfo, stack, argp)
 	a++;
 
 	a->au_id = AUX_sun_gid;
-	a->au_v = p->p_ucred->cr_groups[0];
+	a->au_v = p->p_ucred->cr_gid;
 	a++;
 
 	a->au_id = AUX_sun_rgid;
