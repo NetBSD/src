@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.15 2004/07/05 09:24:31 pk Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.16 2004/12/29 21:33:42 bjh21 Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.15 2004/07/05 09:24:31 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.16 2004/12/29 21:33:42 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,7 @@ mk48txx_gettime(handle, tv)
 		return EIO;
 
 	tv->tv_sec = clock_ymdhms_to_secs(&dt);
+	if (tv->tv_sec == -1) return ERANGE;
 	tv->tv_usec = 0;
 	return 0;
 }
