@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.16 2003/07/30 08:51:55 itojun Exp $	*/
+/*	$NetBSD: common.h,v 1.17 2005/03/25 23:00:55 skd Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -89,6 +89,9 @@ typedef int LINENUM;			/* must be signed */
 
 EXT int Argc;				/* guess */
 EXT char **Argv;
+
+/* TRUE if -C was specified on command line.  */
+EXT int check_only;
 
 EXT struct stat filestat;		/* file statistics area */
 EXT mode_t filemode INIT(0644);

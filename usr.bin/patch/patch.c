@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.22 2004/12/09 18:06:10 mycroft Exp $	*/
+/*	$NetBSD: patch.c,v 1.23 2005/03/25 23:00:55 skd Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.22 2004/12/09 18:06:10 mycroft Exp $");
+__RCSID("$NetBSD: patch.c,v 1.23 2005/03/25 23:00:55 skd Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -82,6 +82,8 @@ main(int argc, char *argv[])
 	filearg[i] = NULL;
 
     myuid = getuid();
+
+    check_only = FALSE;
 
     /* Cons up the names of the temporary files.  */
     {
@@ -398,10 +400,10 @@ decode_long_option(char *opt)
      */
     static struct option options[] = {
       { "batch",		't' },
-      { "check",		'C' },
       { "context",		'c' },
       { "debug",		'x' },
       { "directory",		'd' },
+      { "dry-run",		'C' },
       { "ed",			'e' },
       { "force",		'f' },
       { "forward",		'N' },
@@ -476,6 +478,9 @@ exclusive\n");
 		    break;
 		case 'c':
 		    diff_type = CONTEXT_DIFF;
+		    break;
+		case 'C':
+		    check_only = TRUE;
 		    break;
 		case 'd':
 		    if (!*++s)
