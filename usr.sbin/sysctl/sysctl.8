@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.5 1996/01/15 21:11:51 thorpej Exp $
+.\"	$NetBSD: sysctl.8,v 1.6 1996/01/16 04:17:54 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -135,7 +135,8 @@ privilege can change the value.
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.redirect	integer	yes
 .It net.inet.ip.ttl	integer	yes
-.It net.inet.ip.forwsrcrt	integet	yes
+.It net.inet.ip.forwsrcrt	integer	yes
+.It net.inet.ip.directed-broadcast	integer		yes
 .It net.inet.icmp.maskrepl	integer	yes
 .It net.inet.tcp.rfc1323	integer	yes
 .It net.inet.udp.checksum	integer	yes
