@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.7 1997/06/06 23:28:42 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8 1997/10/14 20:34:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -106,9 +106,13 @@ struct isabus_attach_args;	/* XXX */
  */
 void	isa_attach_hook __P((struct device *, struct device *,
 	    struct isabus_attach_args *));
+int	isa_intr_alloc __P((isa_chipset_tag_t, int, int, int *));
 void	*isa_intr_establish __P((isa_chipset_tag_t ic, int irq, int type,
 	    int level, int (*ih_fun)(void *), void *ih_arg));
 void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
+int	isa_mem_alloc __P((bus_space_tag_t, bus_size_t, bus_size_t,
+	    bus_addr_t, int, bus_addr_t *, bus_space_handle_t *));
+void	isa_mem_free __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED

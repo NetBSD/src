@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.22 1997/06/12 23:57:32 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.23 1997/10/14 20:34:38 thorpej Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -354,6 +354,79 @@ fakeintr(arg)
 
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN && (x) != 2)
 
+int
+isa_intr_alloc(ic, mask, type, irq)
+	isa_chipset_tag_t ic;
+	int mask;
+	int type;
+	int *irq;
+{
+	int i, tmp, bestirq, count;
+	struct intrhand **p, *q;
+
+	if (type == IST_NONE)
+		panic("intr_alloc: bogus type");
+
+	bestirq = -1;
+	count = -1;
+
+	/* some interrupts should never be dynamically allocated */
+	mask &= 0xdef8;
+
+	/*
+	 * XXX some interrupts will be used later (6 for fdc, 12 for pms).
+	 * the right answer is to do "breadth-first" searching of devices.
+	 */
+	mask &= 0xefbf;
+
+	for (i = 0; i < ICU_LEN; i++) {
+		if (LEGAL_IRQ(i) == 0 || (mask & (1<<i)) == 0)
+			continue;
+
+		switch(intrtype[i]) {
+		case IST_NONE:
+			/*
+			 * if nothing's using the irq, just return it
+			 */
+			*irq = i;
+			return (0);
+
+		case IST_EDGE:
+		case IST_LEVEL:
+			if (type != intrtype[i])
+				continue;
+			/*
+			 * if the irq is shareable, count the number of other
+			 * handlers, and if it's smaller than the last irq like
+			 * this, remember it
+			 *
+			 * XXX We should probably also consider the
+			 * interrupt level and stick IPL_TTY with other
+			 * IPL_TTY, etc.
+			 */
+			for (p = &intrhand[i], tmp = 0; (q = *p) != NULL;
+			     p = &q->ih_next, tmp++)
+				;
+			if ((bestirq == -1) || (count > tmp)) {
+				bestirq = i;
+				count = tmp;
+			}
+			break;
+
+		case IST_PULSE:
+			/* this just isn't shareable */
+			continue;
+		}
+	}
+
+	if (bestirq == -1)
+		return (1);
+
+	*irq = bestirq;
+
+	return (0);
+}
+
 /*
  * Set up an interrupt handler to start being called.
  * XXX PRONE TO RACE CONDITIONS, UGLY, 'INTERESTING' INSERTION ALGORITHM.
@@ -474,6 +547,33 @@ isa_attach_hook(parent, self, iba)
 	if (isa_has_been_seen)
 		panic("isaattach: ISA bus already seen!");
 	isa_has_been_seen = 1;
+}
+
+int
+isa_mem_alloc(t, size, align, boundary, flags, addrp, bshp)
+	bus_space_tag_t t;
+	bus_size_t size, align;
+	bus_addr_t boundary;
+	int flags;
+	bus_addr_t *addrp;
+	bus_space_handle_t *bshp;
+{
+
+	/*
+	 * Allocate physical address space in the ISA hole.
+	 */
+	return (bus_space_alloc(t, IOM_BEGIN, IOM_END - 1, size, align,
+	    boundary, flags, addrp, bshp));
+}
+
+void
+isa_mem_free(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+
+	bus_space_free(t, bsh, size);
 }
 
 /**********************************************************************
