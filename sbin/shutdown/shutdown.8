@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.16 1998/10/29 18:55:27 bad Exp $
+.\"	$NetBSD: shutdown.8,v 1.17 1998/10/29 20:12:56 bad Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -166,7 +166,12 @@ exits.
 .Pp
 At shutdown time a message is written in the system log, containing the
 time of shutdown, who initiated the shutdown and the reason.
-A terminate
+Next a message is printed announcing the start of the system shutdown hooks.
+Then the shutdown hooks in
+.Pa /etc/rc.shutdown
+are run.
+And a message is printed indicating that they have completed.
+After a short delay a terminate
 signal is then sent to
 .Xr init 8
 to bring the system down to single-user state (depending on above options).
@@ -175,13 +180,15 @@ The time of the shutdown and the warning message are placed in
 and should be used to inform the users about when the system will
 be back up and why it is going down (or anything else).
 .Sh FILES
-.Bl -tag -width /etc/nologin -compact
+.Bl -tag -width /etc/rc.shutdown -compact
 .It Pa /etc/nologin
 tells login not to let anyone log in
 .It Pa /fastboot
 tells
 .Xr rc 8
 not to run fsck when rebooting
+.It Pa /etc/rc.shutdown
+System shutdown commands
 .El
 .Sh SEE ALSO
 .Xr login 1 ,
