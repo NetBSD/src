@@ -1,0 +1,25 @@
+#	$NetBSD: Makefile.ext,v 1.1.1.1 2003/09/12 02:54:04 lukem Exp $
+
+.include <bsd.own.mk>
+
+.PATH:		${X11SRCDIR.xc}/programs/Xserver/Xext
+
+XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
+
+CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/Xext \
+		-I${X11SRCDIR.xc}/programs/Xserver/include \
+		-I${XSERVERINCDIR} \
+		-I${DESTDIR}/${X11INCDIR}/X11 \
+		-I${DESTDIR}/${X11INCDIR}/X11/extensions \
+		-I${X11SRCDIR.xc}/include/fonts \
+		-I${X11SRCDIR.xc}/programs/Xserver/mi \
+		-I${X11SRCDIR.xc}/programs/Xserver/render \
+		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common
+
+CPPFLAGS+=	${X11FLAGS.EXTENSION}
+
+CPPFLAGS.security.c=	-DDEFAULTPOLICYFILE=\"${X11LIBDIR}/xserver/SecurityPolicy\"
+CPPFLAGS.xf86bigfont.c=	-DHAS_SHM
+
+.include <bsd.lib.mk>
+.include <bsd.x11.mk>
