@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,18 +32,20 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1986 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1986, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)main.c	5.27 (Berkeley) 8/7/90";
+static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
+#include <sys/time.h>
+#include <sys/mount.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 #include <fstab.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,11 +63,11 @@ main(argc, argv)
 	int ch;
 	int ret, maxrun = 0;
 	extern int docheck(), checkfilesys();
-	extern char *optarg;
+	extern char *optarg, *blockcheck();
 	extern int optind;
 
 	sync();
-	while ((ch = getopt(argc, argv, "cdpnNyYb:l:m:")) != EOF) {
+	while ((ch = getopt(argc, argv, "dpnNyYb:c:l:m:")) != EOF) {
 		switch (ch) {
 		case 'p':
 			preen++;
@@ -77,9 +79,9 @@ main(argc, argv)
 			break;
 
 		case 'c':
-			cvtflag++;
+			cvtlevel = argtoi('c', "conversion level", optarg, 10);
 			break;
-
+		
 		case 'd':
 			debug++;
 			break;
@@ -119,7 +121,7 @@ main(argc, argv)
 		(void)signal(SIGQUIT, catchquit);
 	if (argc) {
 		while (argc-- > 0)
-			(void)checkfilesys(*argv++, (char *)0, 0L, 0);
+			(void)checkfilesys(blockcheck(*argv++), 0, 0L, 0);
 		exit(0);
 	}
 	ret = checkfstab(preen, maxrun, docheck, checkfilesys);
@@ -168,10 +170,11 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	daddr_t n_ffree, n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
+	int cylno;
 
 	if (preen && child)
 		(void)signal(SIGQUIT, voidquit);
-	devname = filesys;
+	cdevname = filesys;
 	if (debug && preen)
 		pwarn("starting\n");
 	if (setup(filesys) == 0) {
@@ -235,8 +238,9 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	n_bfree = sblock.fs_cstotal.cs_nbfree;
 	pwarn("%ld files, %ld used, %ld free ",
 	    n_files, n_blks, n_ffree + sblock.fs_frag * n_bfree);
-	printf("(%ld frags, %ld blocks, %.1f%% fragmentation)\n",
-	    n_ffree, n_bfree, (float)(n_ffree * 100) / sblock.fs_dsize);
+	printf("(%ld frags, %ld blocks, %d.%d%% fragmentation)\n",
+	    n_ffree, n_bfree, (n_ffree * 100) / sblock.fs_dsize,
+	    ((n_ffree * 1000 + sblock.fs_dsize / 2) / sblock.fs_dsize) % 10);
 	if (debug &&
 	    (n_files -= maxino - ROOTINO - sblock.fs_cstotal.cs_nifree))
 		printf("%ld files missing\n", n_files);
@@ -262,10 +266,19 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	}
 	zlnhead = (struct zlncnt *)0;
 	duplist = (struct dups *)0;
+	muldup = (struct dups *)0;
 	inocleanup();
 	if (fsmodified) {
 		(void)time(&sblock.fs_time);
 		sbdirty();
+	}
+	if (cvtlevel && sblk.b_dirty) {
+		/* 
+		 * Write out the duplicate super blocks
+		 */
+		for (cylno = 0; cylno < sblock.fs_ncg; cylno++)
+			bwrite(fswritefd, (char *)&sblock,
+			    fsbtodb(&sblock, cgsblock(&sblock, cylno)), SBSIZE);
 	}
 	ckfini();
 	free(blockmap);
@@ -273,12 +286,31 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	free((char *)lncntp);
 	if (!fsmodified)
 		return (0);
-	if (!preen) {
+	if (!preen)
 		printf("\n***** FILE SYSTEM WAS MODIFIED *****\n");
-		if (hotroot)
-			printf("\n***** REBOOT UNIX *****\n");
-	}
 	if (hotroot) {
+		struct statfs stfs_buf;
+		/*
+		 * We modified the root.  Do a mount update on
+		 * it, unless it is read-write, so we can continue.
+		 */
+		if (statfs("/", &stfs_buf) == 0) {
+			long flags = stfs_buf.f_flags;
+			struct ufs_args args;
+			int ret;
+
+			if (flags & MNT_RDONLY) {
+				args.fspec = 0;
+				args.export.ex_flags = 0;
+				args.export.ex_root = 0;
+				flags |= MNT_UPDATE | MNT_RELOAD;
+				ret = mount(MOUNT_UFS, "/", flags, &args);
+				if (ret == 0)
+					return(0);
+			}
+		}
+		if (!preen)
+			printf("\n***** REBOOT NOW *****\n");
 		sync();
 		return (4);
 	}
