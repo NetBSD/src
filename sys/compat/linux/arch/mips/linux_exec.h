@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.5 2002/08/26 21:06:00 christos Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.6 2002/11/13 15:16:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -61,17 +61,10 @@
 #define LINUX_ATEXIT_SIGNATURE 1
 #define LINUX_GCC_SIGNATURE 1
 
-/* #define LINUX_COPYARGS_FUNCTION linux_elf32_copyargs */
-#if defined(ELFSIZE) && (ELFSIZE == 64)
-#define LINUX_COPYARGS_FUNCTION ELF64NAME(copyargs)
-#else
-#define LINUX_COPYARGS_FUNCTION ELF32NAME(copyargs)
-#endif
-
 #define LINUX_ELF_AUX_ENTRIES 14
 
 #define LINUX_ELF_AUX_ARGSIZ \
-    ((howmany(ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))))
+    ((howmany(LINUX_ELF_AUX_ENTRIES * sizeof(LinuxAuxInfo), sizeof(Elf32_Addr))))
 
 typedef struct {
 	Elf32_Sword a_type;

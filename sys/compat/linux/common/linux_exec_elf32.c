@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.58 2002/10/22 23:31:24 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.59 2002/11/13 15:16:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.58 2002/10/22 23:31:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.59 2002/11/13 15:16:29 jdolecek Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.58 2002/10/22 23:31:24 christ
 #include <sys/mount.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/stat.h>
 
 #include <sys/mman.h>
 #include <sys/syscallargs.h>
@@ -341,3 +342,102 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	return 0;
 }
 
+#ifndef LINUX_MACHDEP_ELF_COPYARGS
+/*
+ * Copy arguments onto the stack in the normal way, but add some
+ * extra information in case of dynamic binding.
+ */
+int
+ELFNAME2(linux,copyargs)(struct proc *p, struct exec_package *pack,
+    struct ps_strings *arginfo, char **stackp, void *argp)
+{
+	size_t len;
+	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
+	struct elf_args *ap;
+	int error;
+	struct vattr *vap;
+
+	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
+		return error;
+
+	a = ai;
+
+	/*
+	 * Push extra arguments used by glibc on the stack.
+	 */
+
+	a->a_type = AT_PAGESZ;
+	a->a_v = PAGE_SIZE;
+	a++;
+
+	if ((ap = (struct elf_args *)pack->ep_emul_arg)) {
+
+		a->a_type = AT_PHDR;
+		a->a_v = ap->arg_phaddr;
+		a++;
+
+		a->a_type = AT_PHENT;
+		a->a_v = ap->arg_phentsize;
+		a++;
+
+		a->a_type = AT_PHNUM;
+		a->a_v = ap->arg_phnum;
+		a++;
+
+		a->a_type = AT_BASE;
+		a->a_v = ap->arg_interp;
+		a++;
+
+		a->a_type = AT_FLAGS;
+		a->a_v = 0;
+		a++;
+
+		a->a_type = AT_ENTRY;
+		a->a_v = ap->arg_entry;
+		a++;
+
+		free(pack->ep_emul_arg, M_TEMP);
+		pack->ep_emul_arg = NULL;
+	}
+
+	/* Linux-specific items */
+	a->a_type = LINUX_AT_CLKTCK;
+	a->a_v = hz;
+	a++;
+
+	vap = pack->ep_vap;
+
+	a->a_type = LINUX_AT_UID;
+	a->a_v = p->p_cred->p_ruid;
+	a++;
+
+	a->a_type = LINUX_AT_EUID;
+	if (vap->va_mode & S_ISUID)
+		a->a_v = vap->va_uid;
+	else
+		a->a_v = p->p_ucred->cr_uid;
+	a++;
+
+	a->a_type = LINUX_AT_GID;
+	a->a_v = p->p_cred->p_rgid;
+	a++;
+
+	a->a_type = LINUX_AT_EGID;
+	if (vap->va_mode & S_ISGID)
+		a->a_v = vap->va_gid;
+	else
+		a->a_v = p->p_ucred->cr_gid;
+	a++;
+
+	a->a_type = AT_NULL;
+	a->a_v = 0;
+	a++;
+
+	len = (a - ai) * sizeof(AuxInfo);
+	if ((error = copyout(ai, *stackp, len)) != 0)
+		return error;
+	*stackp += len;
+
+	return 0;
+}
+#endif /* !LINUX_MACHDEP_ELF_COPYARGS */
