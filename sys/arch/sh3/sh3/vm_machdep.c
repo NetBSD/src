@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 2004/09/17 14:11:22 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.46 2005/01/09 17:41:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 2004/09/17 14:11:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2005/01/09 17:41:34 tsutsui Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -379,6 +379,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
 	paddr_t fpa;
+	pmap_t kpmap, upmap;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
@@ -399,16 +400,17 @@ vmapbuf(struct buf *bp, vsize_t len)
 	 * where we we just allocated (TLB will be flushed when our
 	 * mapping is removed).
 	 */
+	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	kpmap = vm_map_pmap(phys_map);
 	while (len) {
-		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
-			     faddr, &fpa);
-		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
+		pmap_extract(upmap, faddr, &fpa);
+		pmap_enter(kpmap, taddr, fpa,
 		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	}
-	pmap_update(vm_map_pmap(phys_map));
+	pmap_update(kpmap);
 }
 
 /*
@@ -419,14 +421,16 @@ void
 vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
+	pmap_t kpmap;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-	pmap_remove(vm_map_pmap(phys_map), addr, addr + len);
-	pmap_update(vm_map_pmap(phys_map));
+	kpmap = vm_map_pmap(phys_map);
+	pmap_remove(kpmap, addr, addr + len);
+	pmap_update(kpmap);
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
