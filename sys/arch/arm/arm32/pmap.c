@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.130 2003/04/01 23:19:09 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.131 2003/04/22 00:24:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -144,7 +144,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.130 2003/04/01 23:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2003/04/22 00:24:49 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -1789,7 +1789,7 @@ pmap_clean_page(struct pv_entry *pv, boolean_t is_src)
  * StrongARM accesses to non-cached pages are non-burst making writing
  * _any_ bulk data very slow.
  */
-#if ARM_MMU_GENERIC == 1
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
 void
 pmap_zero_page_generic(paddr_t phys)
 {
@@ -1814,7 +1814,7 @@ pmap_zero_page_generic(paddr_t phys)
 	bzero_page(cdstp);
 	cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
 }
-#endif /* ARM_MMU_GENERIC == 1 */
+#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_XSCALE == 1
 void
@@ -1907,7 +1907,7 @@ pmap_pageidlezero(paddr_t phys)
  * hook points. The same comment regarding cachability as in
  * pmap_zero_page also applies here.
  */
-#if ARM_MMU_GENERIC == 1
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
 void
 pmap_copy_page_generic(paddr_t src, paddr_t dst)
 {
@@ -1949,7 +1949,7 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 	simple_unlock(&src_pg->mdpage.pvh_slock); /* cache is safe again */
 	cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
 }
-#endif /* ARM_MMU_GENERIC == 1 */
+#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_XSCALE == 1
 void
@@ -3950,7 +3950,7 @@ pt_entry_t	pte_l2_s_proto;
 void		(*pmap_copy_page_func)(paddr_t, paddr_t);
 void		(*pmap_zero_page_func)(paddr_t);
 
-#if ARM_MMU_GENERIC == 1
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
 void
 pmap_pte_init_generic(void)
 {
@@ -3976,6 +3976,16 @@ pmap_pte_init_generic(void)
 	pmap_zero_page_func = pmap_zero_page_generic;
 }
 
+#if defined(CPU_ARM8)
+void
+pmap_pte_init_arm8(void)
+{
+
+	/* ARM8 is the same as generic in this pmap. */
+	pmap_pte_init_generic();
+}
+#endif /* CPU_ARM8 */
+
 #if defined(CPU_ARM9)
 void
 pmap_pte_init_arm9(void)
@@ -3993,6 +4003,16 @@ pmap_pte_init_arm9(void)
 }
 #endif /* CPU_ARM9 */
 #endif /* ARM_MMU_GENERIC == 1 */
+
+#if ARM_MMU_SA1 == 1
+void
+pmap_pte_init_sa1(void)
+{
+
+	/* SA-1 is the same as generic in this pmap. */
+	pmap_pte_init_generic();
+}
+#endif /* ARM_MMU_SA1 == 1 */
 
 #if ARM_MMU_XSCALE == 1
 void

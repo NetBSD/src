@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.14 2003/04/18 11:11:51 scw Exp $
+#	$NetBSD: GENERIC,v 1.15 2003/04/22 00:24:50 thorpej Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.14 $"
+#ident		"GENERIC-$Revision: 1.15 $"
 
 # estimated number of users
 maxusers	32
@@ -137,7 +137,6 @@ options 	USERCONF	# userconf(4) support
 # Note: These are not defined in std.shark at this time to allow people
 # with Sharks to experiment with the new pmap.
 options 	ARM32_PMAP_NEW
-options 	ARM32_PMAP_NEEDS_PTE_SYNC
 
 # Development and Debugging options
 
