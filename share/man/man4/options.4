@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.161 2001/12/18 03:44:35 atatat Exp $
+.\"	$NetBSD: options.4,v 1.162 2002/02/11 18:16:48 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1030,6 +1030,10 @@ strings netbsd | sed -n 's/^_CFG_//p' | unvis
 .It Cd options INCLUDE_JUST_CONFIG
 Similar to the above option, but includes just the actual config file,
 not any included files.
+.It Cd options PIPE_SOCKETPAIR
+Use slower, but smaller socketpair(2)-based pipe implementation instead
+of default faster, but bigger one. Primarily useful for installation
+kernels.
 .El
 .Ss Networking Options
 .Bl -ohang
