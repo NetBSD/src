@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.23 1999/11/29 19:48:48 hubertf Exp $	*/
+/*	$NetBSD: plist.c,v 1.24 1999/11/29 20:09:56 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.23 1999/11/29 19:48:48 hubertf Exp $");
+__RCSID("$NetBSD: plist.c,v 1.24 1999/11/29 20:09:56 hubertf Exp $");
 #endif
 #endif
 
@@ -44,6 +44,7 @@ typedef struct cmd_t {
 /* Commands to recognise */
 static cmd_t cmdv[] = {
 	{"cwd", PLIST_CWD, 1},
+	{"src", PLIST_SRC, 1},
 	{"cd", PLIST_CWD, 1},
 	{"exec", PLIST_CMD, 1},
 	{"unexec", PLIST_UNEXEC, 1},
