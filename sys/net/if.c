@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.47 1998/06/26 00:08:01 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.48 1998/12/10 15:10:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,6 +37,7 @@
 
 #include "opt_compat_linux.h"
 #include "opt_compat_svr4.h"
+#include "opt_compat_43.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

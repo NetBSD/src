@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.23 1998/07/31 22:50:52 perry Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.24 1998/12/10 15:09:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,6 +41,7 @@
  */
 
 #include "opt_compat_freebsd.h"
+#include "opt_compat_43.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.96 1998/11/18 20:24:59 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.97 1998/12/10 15:09:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_compat_43.h"
 #include "opt_uvm.h"
 
 #include <sys/param.h>
