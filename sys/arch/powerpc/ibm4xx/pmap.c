@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2005/01/16 21:35:58 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30.2.1 2005/01/28 13:52:18 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2005/01/16 21:35:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30.2.1 2005/01/28 13:52:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -211,7 +211,8 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 			return (0);
 		/* Allocate a page XXXX this will sleep! */
 		pm->pm_ptbl[seg] =
-		    (uint *)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+		    (uint *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_WIRED | UVM_KMF_ZERO);
 	}
 	oldpte = pm->pm_ptbl[seg][ptn];
 	pm->pm_ptbl[seg][ptn] = pte;
@@ -443,7 +444,7 @@ pmap_init(void)
 
 	sz = (vsize_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
-	addr = uvm_km_zalloc(kernel_map, sz);
+	addr = uvm_km_alloc(kernel_map, sz, 0, UVM_KMF_WIRED | UVM_KMF_ZERO);
 	s = splvm();
 	pv = pv_table = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
@@ -623,7 +624,7 @@ pmap_destroy(struct pmap *pm)
 	for (i = 0; i < STSZ; i++)
 		if (pm->pm_ptbl[i]) {
 			uvm_km_free(kernel_map, (vaddr_t)pm->pm_ptbl[i],
-			    PAGE_SIZE);
+			    PAGE_SIZE, UVM_KMF_WIRED);
 			pm->pm_ptbl[i] = NULL;
 		}
 	if (pm->pm_ctx)
@@ -1532,14 +1533,15 @@ pmap_testout()
 	int ref, mod;
 
 	/* Allocate a page */
-	va = (vaddr_t)uvm_km_zalloc(kernel_map, PAGE_SIZE);
+	va = (vaddr_t)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED | UVM_KMF_ZERO);
 	loc = (int*)va;
 
 	pmap_extract(pmap_kernel(), va, &pa);
 	pg = PHYS_TO_VM_PAGE(pa);
 	pmap_unwire(pmap_kernel(), va);
 
-	pmap_remove(pmap_kernel(), va, va+1);
+	pmap_kremove(va, PAGE_SIZE);
 	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, 0);
 	pmap_update(pmap_kernel());
 
@@ -1786,8 +1788,8 @@ pmap_testout()
 	printf("Checking cleared page: ref %d, mod %d\n",
 	       ref, mod);
 
-	pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL,
-		VM_PROT_ALL|PMAP_WIRED);
-	uvm_km_free(kernel_map, (vaddr_t)va, PAGE_SIZE);
+	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	pmap_kenter_pa(va, pa, VM_PROT_ALL, VM_PROT_ALL);
+	uvm_km_free(kernel_map, (vaddr_t)va, PAGE_SIZE, UVM_KMF_WIRED);
 }
 #endif
