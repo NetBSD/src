@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_sup.c,v 1.10 1995/06/02 02:48:48 brezak Exp $	*/
+/*	$NetBSD: pcvt_sup.c,v 1.11 1995/08/30 00:29:50 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -1735,6 +1735,9 @@ switch_screen(int n, int dontsave)
 
 	update_led();			/* update led's */
 	update_hp(&vs[n]);		/* update fkey labels, if present */
+#if PCVT_USL_VT_COMPAT
+	kbd_setmode(vsp->kbd_state);
+#endif
 }
 
 /*---------------------------------------------------------------------------*
