@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.4 2000/05/23 01:02:21 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.5 2000/05/23 16:47:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -759,8 +759,8 @@ cz_intr(void *arg)
 
 		case C_CM_MDSR:
 		case C_CM_MRI:
-		case C_CM_CTS:
-		case C_CM_RTS:
+		case C_CM_MCTS:
+		case C_CM_MRTS:
 			break;
 
 		case C_CM_PR_ERROR:
