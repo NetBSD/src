@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.67 2000/07/02 16:13:22 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.68 2000/07/03 17:56:08 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -3921,9 +3921,14 @@ interrupt_vector:
 	brz,pn	%g5, 3f			! NULL means it isn't registered yet.  Skip it.
 	 nop
 setup_sparcintr:
-	add	%g5, IH_PIL, %g6
+	add	%g5, IH_PEND, %g6
 	DLFLUSH(%g6, %g7)
-	lduh	[%g5+IH_PIL], %g6	! Read interrupt mask
+	ldstub	[%g5+IH_PEND], %g6	! Read interrupt mask
+	DLFLUSH2(%g7)
+	brnz,pn	%g6, 5f			! Skip it if it's running
+	 add	%g5, IH_PIL, %g6
+	DLFLUSH(%g6, %g7)
+	ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
 	DLFLUSH2(%g7)
 #ifdef	VECTORED_INTERRUPTS
 	set	intrpending, %g1
@@ -4264,6 +4269,7 @@ sparc_intr_retry:
 	STPTR	%g0, [%l4]		! Clear the slot
 	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		! arg = (arg == 0) ? arg : tf
+	clrb	[%l2 + IH_PEND]		! Clear pending flag
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o3
 	ld	[%o3], %o3
@@ -4308,6 +4314,8 @@ sparc_intr_retry:
 	 add	%sp, CC64FSZ + STKB, %o0
 	ba,a,pt	%icc, 3b		! Try another
 2:
+	ba,a,pt	%icc, intrcmplt		! Only handle vectors -- don't poll XXXX
+	 nop
 	brnz,pt	%l5, intrcmplt		! Finish up
 	 nop
 #endif	/* VECTORED_INTERRUPTS */
@@ -4383,6 +4391,7 @@ sparc_intr_retry:
 	 mov	%i1, %o1		! fun
 	LOCTOGLOB
 	restore
+	ta	1
 7:	
 #endif
 #if 0
@@ -4403,6 +4412,7 @@ sparc_intr_retry:
 2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0		!	arg = (arg == 0) ? arg : tf
 	movrnz	%o0, %o0, %l5		! Store the success somewhere
+	clrb	[%l4 + IH_PEND]		! Clear the pending bit
 	LDPTR	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	brnz,pt	%l4, 1b			! } while (ih)
 	 clr	%l3			! Make sure we don't have a valid pointer
@@ -4416,6 +4426,7 @@ sparc_intr_retry:
 	add	%sp, CC64FSZ + STKB, %o2
 	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
 	 movrz	%o0, %o2, %o0
+	clrb	[%l4 + IH_PEND]		! Clear the pending bit
 #ifdef PHYS_CLEAR
 	ldx	[%l4 + IH_CLR], %l3
 #else
@@ -4445,7 +4456,7 @@ intrcmplt:
 	sll	%l3, %l6, %l3			! Generate IRQ mask
 	btst	%l3, %l7			! leave mask in %l3 for retry code
 	bnz,pn	%icc, sparc_interrupt_retry
-	 nop
+	 mov	1, %l5
 #endif
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o2
@@ -10423,11 +10434,19 @@ ENTRY(ienab_bic)
  *	enable the softint, causing a spurious interrupt.
  */
 ENTRY(send_softint)
+	rdpr	%pil, %g1	! s = splx(level)
+	cmp	%g1, %o1
+	bge,pt	%icc, 1f
+	 nop
+	wrpr	%o1, 0, %pil
+1:	
 #ifdef	VECTORED_INTERRUPTS
 	brz,pn	%o2, 1f
 	 set	intrpending, %o3
+	ldstub	[%o2 + IH_PEND], %o5
 	mov	8, %o4			! Number of slots to search
-	sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
+	brnz	%o5, 1f
+	 sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
 2:
 #if 1
@@ -10454,8 +10473,9 @@ ENTRY(send_softint)
 #endif	/* VECTORED_INTERRUPTS */
 	mov	1, %o3			! Change from level to bitmask
 	sllx	%o3, %o1, %o3
+	wr	%o3, 0, SET_SOFTINT	! SET_SOFTINT
 	retl
-	 wr	%o3, 0, SET_SOFTINT	! CLEAR_SOFTINT
+	 wrpr	%g1, 0, %pil		! restore IPL
 	
 /*
  * Here is a very good random number generator.  This implementation is
