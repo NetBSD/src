@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.38 2001/01/07 05:37:10 christos Exp $	*/
+/*	$NetBSD: df.c,v 1.39 2001/02/01 10:19:51 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -49,7 +49,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.38 2001/01/07 05:37:10 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.39 2001/02/01 10:19:51 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -374,7 +374,7 @@ prtstat(sfsp, maxwidth)
 	    fsbtoblk(sfsp->f_blocks, sfsp->f_bsize, blocksize),
 	    fsbtoblk(used, sfsp->f_bsize, blocksize),
 	    fsbtoblk(sfsp->f_bavail, sfsp->f_bsize, blocksize));
-	(void)printf("%9s",
+	(void)printf("%7s",
 	    availblks == 0 ? full : strpct((u_long)used, (u_long)availblks, 0));
 	if (iflag) {
 		inodes = sfsp->f_files;
