@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.4 2002/06/12 22:18:02 eeh Exp $
+\	$NetBSD: bootblk.fth,v 1.5 2003/04/05 08:58:55 he Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -142,8 +142,8 @@ dev_bsize value bsize
 
 : cgbase ( cg fs -- cgbase ) fs_fpg l@ * ;
 : cgstart ( cg fs -- cgstart ) 
-   2dup fs_cgmask l@ not and		( cg fs stuff -- )
-   over fs_cgoffset l@ * -rot		( stuffcg fs -- )
+   2dup fs_old_cgmask l@ not and		( cg fs stuff -- )
+   over fs_old_cgoffset l@ * -rot		( stuffcg fs -- )
    cgbase +
 ;
 : cgdmin ( cg fs -- 1st-data-block ) dup fs_dblkno l@ -rot cgstart + ;
@@ -212,7 +212,7 @@ struct
    8		field	>f_ihandle	\ device handle
    8 		field 	>f_seekp	\ seek pointer
    8 		field 	>f_fs		\ pointer to super block
-   dinode_SIZEOF 	field 	>f_di	\ copy of on-disk inode
+   ufs1_dinode_SIZEOF 	field 	>f_di	\ copy of on-disk inode
    8		field	>f_buf		\ buffer for data block
    4		field 	>f_buf_size	\ size of data block
    4		field	>f_buf_blkno	\ block number of data block
@@ -221,7 +221,7 @@ constant file_SIZEOF
 file_SIZEOF buffer: the-file
 sb-buf the-file >f_fs x!
 
-dinode_SIZEOF buffer: cur-inode
+ufs1_dinode_SIZEOF buffer: cur-inode
 h# 2000 buffer: indir-block
 -1 value indir-addr
 
@@ -339,8 +339,8 @@ h# 2000 buffer: indir-block
    <>  if ." read-inode - residual" cr abort then
    dup 2over				( inode fs buffer -- inode fs buffer buffer inode fs )
    ino-to-fsbo				( inode fs buffer -- inode fs buffer buffer fsbo )
-   dinode_SIZEOF * +			( inode fs buffer buffer fsbo -- inode fs buffer dinop )
-   cur-inode dinode_SIZEOF move 	( inode fs buffer dinop -- inode fs buffer )
+   ufs1_dinode_SIZEOF * +			( inode fs buffer buffer fsbo -- inode fs buffer dinop )
+   cur-inode ufs1_dinode_SIZEOF move 	( inode fs buffer dinop -- inode fs buffer )
 	\ clear out the old buffers
    drop					( inode fs buffer -- inode fs )
    2drop
@@ -348,8 +348,8 @@ h# 2000 buffer: indir-block
 
 \ Identify inode type
 
-: is-dir? ( dinode -- true:false ) di_mode w@ ifmt and ifdir = ;
-: is-symlink? ( dinode -- true:false ) di_mode w@ ifmt and iflnk = ;
+: is-dir? ( ufs1_dinode -- true:false ) di_mode w@ ifmt and ifdir = ;
+: is-symlink? ( ufs1_dinode -- true:false ) di_mode w@ ifmt and iflnk = ;
 
 
 
@@ -394,12 +394,12 @@ h# 2000 buffer: indir-block
 
 : ffs_oldcompat ( -- )
 \ Make sure old ffs values in sb-buf are sane
-   sb-buf fs_npsect dup l@ sb-buf fs_nsect l@ max swap l!
-   sb-buf fs_interleave dup l@ 1 max swap l!
-   sb-buf fs_postblformat l@ fs_42postblfmt =  if
-      8 sb-buf fs_nrpos l!
+   sb-buf fs_old_npsect dup l@ sb-buf fs_old_nsect l@ max swap l!
+   sb-buf fs_old_interleave dup l@ 1 max swap l!
+   sb-buf fs_old_postblformat l@ fs_42postblfmt =  if
+      8 sb-buf fs_old_nrpos l!
    then
-   sb-buf fs_inodefmt l@ fs_44inodefmt <  if
+   sb-buf fs_old_inodefmt l@ fs_44inodefmt <  if
       sb-buf fs_bsize l@ 
       dup ndaddr * 1- sb-buf fs_maxfilesize x!
       niaddr 0 ?do
@@ -522,7 +522,7 @@ h# 2000 buffer: indir-block
          cur-inode di_size x@		( pino right len linklen )
          dup sb-buf fs_maxsymlinklen l@	( pino right len linklen linklen maxlinklen )
          <  if				\ Now join the link to the path
-            cur-inode di_shortlink l@	( pino right len linklen linkp )
+            cur-inode di_db l@	( pino right len linklen linkp )
             swap boot-path-str strmov	( pino right len new-linkp linklen )
          else				\ Read file for symlink -- Ugh
             \ Read link into boot-path-str
