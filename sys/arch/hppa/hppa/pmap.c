@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2002/08/05 20:58:35 fredette Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2002/08/11 22:29:08 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -244,22 +244,17 @@ static vaddr_t tmp_vpages[2];
 /* Free list of PV entries. */
 static struct pv_entry *pv_free_list;
 
-/*
- * These tables have one entry per physical page.  While
- * memory may be sparse, these tables are always dense;
- * we navigate them with the help of vm_physseg_find.
- */
+/* This is an array of struct pv_head, one per physical page. */
+static struct pv_head *pv_head_tbl;
 
-/* This table is heads of struct pv_entry lists. */
-static struct pv_entry **pv_head_tbl;
-
-/*
- * This table is modified/referenced information.  Here,
- * TLB_REF and TLB_DIRTY are shifted right by PV_SHIFT
- * so they fit in the u_char.
+/* 
+ * This is a bitmap of page-is-aliased bits.
+ * The magic 5 is log2(sizeof(u_int) * 8), and the magic 31 is 2^5 - 1.
  */
-static u_char *pv_flags_tbl;
-#define PV_SHIFT	24
+static u_int *page_aliased_bitmap;
+#define _PAGE_ALIASED_WORD(pa) page_aliased_bitmap[((pa) >> PGSHIFT) >> 5]
+#define _PAGE_ALIASED_BIT(pa) (1 << (((pa) >> PGSHIFT) & 31))
+#define PAGE_IS_ALIASED(pa) (_PAGE_ALIASED_WORD(pa) & _PAGE_ALIASED_BIT(pa))
 
 struct pmap	kernel_pmap_store;
 pmap_t		kernel_pmap;
@@ -288,15 +283,28 @@ vsize_t	hpt_mask;
 	(((va & 0xc0000000) != 0xc0000000)? pmap->pmap_space : HPPA_SID_KERNEL)
 
 /*
- * XXX For now, we assume that two VAs mapped to the same PA, for 
- * any kind of accesses, are always bad (non-equivalent) aliases.  
- * See page 3-6 of the "PA-RISC 1.1 Architecture and Instruction 
- * Set Reference Manual" (HP part number 09740-90039) for more on 
- * aliasing.
+ * Page 3-6 of the "PA-RISC 1.1 Architecture and Instruction Set 
+ * Reference Manual" (HP part number 09740-90039) defines equivalent
+ * and non-equivalent virtual addresses in the cache.
+ *
+ * This macro evaluates to TRUE iff the two space/virtual address
+ * combinations are non-equivalent aliases, and therefore will find
+ * two different locations in the cache.
+ *
+ * NB: currently, the CPU-specific desidhash() functions disable the
+ * use of the space in all cache hashing functions.  This means that
+ * this macro definition is stricter than it has to be (because it
+ * takes space into account), but one day cache space hashing should 
+ * be re-enabled.  Cache space hashing should yield better performance 
+ * through better utilization of the cache, assuming that most aliasing 
+ * is the read-only kind, which we do allow in the cache.
  */
-#define BADALIAS(sp1, va1, pr1, sp2, va2, pr2) (TRUE)
+#define NON_EQUIVALENT_ALIAS(sp1, va1, sp2, va2) \
+  (((((va1) ^ (va2)) & ~HPPA_PGAMASK) != 0) || \
+   ((((sp1) ^ (sp2)) & ~HPPA_SPAMASK) != 0))
 
 /* Prototypes. */
+void __pmap_pv_update __P((paddr_t, struct pv_entry *, u_int, u_int));
 static __inline void pmap_pv_remove __P((struct pv_entry *));
 
 /*
@@ -347,12 +355,11 @@ pmap_pv_alloc(void)
 	if (pv == NULL) {
 		/*
 		 * We need to find a struct pv_entry to forcibly
-		 * free.  It cannot be wired or unmanaged.  We 
-		 * prefer to free mappings that aren't marked as 
-		 * referenced.  We search the HPT for an entry 
-		 * to free, starting at a semirandom HPT index 
-		 * determined by the current value of the interval 
-		 * timer.
+		 * free.  It cannot be wired.  We prefer to free 
+		 * mappings that aren't marked as referenced.  We 
+		 * search the HPT for an entry to free, starting 
+		 * at a semirandom HPT index determined by the 
+		 * current value of the interval timer.
 		 */
 		hpt_size = hpt_mask / sizeof(*hpt);
 		mfctl(CR_ITMR, hpt_index_first);
@@ -363,8 +370,7 @@ pmap_pv_alloc(void)
 			for (pv = hpt->hpt_entry; 
 			     pv != NULL; 
 			     pv = pv->pv_hash) {
-				if (!(pv->pv_tlbprot & TLB_WIRED) &&
-				    !(pv->pv_flags & HPPA_PV_UNMANAGED)) {
+				if (!(pv->pv_tlbprot & TLB_WIRED)) {
 					if (!(pv->pv_tlbprot & TLB_REF))
 						break;
 					pv_fallback = pv;
@@ -443,55 +449,6 @@ pmap_hpt_hash(pa_space_t sp, vaddr_t va)
 }
 
 /*
- * Given an HPT entry and a VA->PA mapping, this flushes the
- * mapping from the cache and TLB, possibly invalidates the HPT 
- * entry, and optionally frobs protection bits in the mapping.  
- * This is used when a mapping is changing.
- *
- * Invalidating the HPT entry prevents the hardware or software HPT 
- * walker from using stale information for the mapping, if the mapping
- * happens to be the one cached in the HPT entry.
- */
-static __inline void _pmap_pv_update __P((struct hpt_entry *, struct pv_entry *, u_int, u_int));
-static __inline void
-_pmap_pv_update(struct hpt_entry *hpt, struct pv_entry *pv,
-		u_int tlbprot_clear, u_int tlbprot_set)
-{
-	int s;
-
-	/* We're paranoid and turn off all interrupts. */
-	s = splhigh();
-
-	/*
-	 * If TLB_REF and/or TLB_DIRTY aren't set on the mapping 
-	 * already, clear them after the mapping is flushed, in 
-	 * case the flushing causes them to be set.
-	 */
-	tlbprot_clear |= (~pv->pv_tlbprot) & (TLB_REF | TLB_DIRTY);
-
-	/* We have to flush the icache first, since fic may use the DTLB. */
-	ficache(pv->pv_space, pv->pv_va, NBPG);
-	pitlb(pv->pv_space, pv->pv_va);
-
-	fdcache(pv->pv_space, pv->pv_va, NBPG);
-	pdtlb(pv->pv_space, pv->pv_va);
-
-	/* Possibly invalidate the HPT entry. */
-	if (hptbtop(pv->pv_va) == hpt->hpt_vpn &&
-	    pv->pv_space == hpt->hpt_space) {
-		hpt->hpt_space = -1;
-		hpt->hpt_valid = 0;
-	}
-
-	/* Frob bits in the protection. */
-	pv->pv_tlbprot = (pv->pv_tlbprot & ~tlbprot_clear) | tlbprot_set;
-
-	splx(s);
-}
-#define pmap_pv_update(pv, bc, bs) \
-  _pmap_pv_update(pmap_hpt_hash((pv)->pv_space, (pv)->pv_va), pv, bc, bs)
-
-/*
  * Given a PA, returns the table offset for it.
  */
 static __inline int pmap_table_find_pa __P((paddr_t));
@@ -515,7 +472,7 @@ pmap_pv_find_pa(paddr_t pa)
 
 	table_off = pmap_table_find_pa(pa);
 	KASSERT(table_off >= 0);
-	return pv_head_tbl[table_off];
+	return pv_head_tbl[table_off].pv_head_pvs;
 }
 
 /*
@@ -536,6 +493,134 @@ pmap_pv_find_va(pa_space_t space, vaddr_t va)
 }
 
 /*
+ * Given a page's PA, checks for non-equivalent aliasing, 
+ * and stores and returns the result.
+ */
+static int pmap_pv_check_alias __P((paddr_t));
+static int
+pmap_pv_check_alias(paddr_t pa)
+{
+	struct pv_entry *pv_outer, *pv;
+	pa_space_t space;
+	vaddr_t va;
+	int aliased;
+	u_int *aliased_word, aliased_bit;
+
+	/* By default we find no aliasing. */
+	aliased = FALSE;
+
+	/*
+	 * There's no need to check for aliasing on I/O pages;
+	 * they should always be mapped UNCACHEABLE.
+	 */
+	if ((pa & HPPA_IOSPACE) == HPPA_IOSPACE)
+		pv_outer = NULL;
+	else
+		pv_outer = pmap_pv_find_pa(pa);
+
+	/*
+	 * Make an outer loop over the mappings, checking
+	 * each following inner mapping for non-equivalent 
+	 * aliasing.  If the non-equivalent alias relation 
+	 * is deemed transitive, this outer loop only needs 
+	 * one iteration.
+	 */
+	for (;
+	     pv_outer != NULL;
+	     pv_outer = pv_outer->pv_next) {
+
+		/* Load this outer mapping's space and address. */
+		space = pv_outer->pv_space;
+		va = pv_outer->pv_va;
+
+		/* Do the inner loop. */
+		for (pv = pv_outer->pv_next;
+		     pv != NULL;
+		     pv = pv->pv_next) {
+			if (NON_EQUIVALENT_ALIAS(space, va,
+				pv->pv_space, pv->pv_va)) {
+				aliased = TRUE;
+				break;
+			}
+		}
+
+#ifndef NON_EQUIVALENT_ALIAS_TRANSITIVE
+		if (aliased)
+#endif /* !NON_EQUIVALENT_ALIAS_TRANSITIVE */
+			break;
+	}
+
+	/* Store and return the result. */
+	aliased_word = &_PAGE_ALIASED_WORD(pa);
+	aliased_bit = _PAGE_ALIASED_BIT(pa);
+	*aliased_word = (*aliased_word & ~aliased_bit) |
+		(aliased ? aliased_bit : 0);
+	return aliased;
+}
+
+/*
+ * Given a VA->PA mapping and tlbprot bits to clear and set,
+ * this flushes the mapping from the TLB and cache, and changes
+ * the protection accordingly.  This is used when a mapping is
+ * changing.
+ */
+static __inline void _pmap_pv_update __P((paddr_t, struct pv_entry *, 
+					  u_int, u_int));
+static __inline void
+_pmap_pv_update(paddr_t pa, struct pv_entry *pv, 
+		u_int tlbprot_clear, u_int tlbprot_set)
+{
+	struct pv_entry *ppv;
+	int no_rw_alias;
+
+	/*
+	 * If the TLB protection of this mapping is changing,
+	 * check for a change in the no read-write alias state 
+	 * of the page.
+	 */
+	KASSERT((tlbprot_clear & TLB_AR_MASK) == 0 ||
+		(tlbprot_clear & TLB_AR_MASK) == TLB_AR_MASK);
+	if (tlbprot_clear & TLB_AR_MASK) {
+
+		/*
+		 * Assume that no read-write aliasing 
+		 * exists.  It does exist if this page is
+		 * aliased and any mapping is writable.
+		 */
+		no_rw_alias = TLB_NO_RW_ALIAS;
+		if (PAGE_IS_ALIASED(pa)) {
+			for (ppv = pmap_pv_find_pa(pa);
+			     ppv != NULL;
+			     ppv = ppv->pv_next) {
+				if (TLB_AR_WRITABLE(ppv == pv ? 
+						    tlbprot_set : 
+						    ppv->pv_tlbprot)) {
+					no_rw_alias = 0;
+					break;
+				}
+			}
+		}
+
+		/* Note if the no read-write alias state has changed. */
+		if ((pv->pv_tlbprot & TLB_NO_RW_ALIAS) ^ no_rw_alias) {
+			tlbprot_clear |= TLB_NO_RW_ALIAS;
+			tlbprot_set |= no_rw_alias;
+		}
+	}
+
+	/*
+	 * Now call our asm helper function.  At the very least, 
+	 * this will flush out the requested mapping and change
+	 * its protection.  If the changes touch any of TLB_REF,
+	 * TLB_DIRTY, and TLB_NO_RW_ALIAS, all mappings of the
+	 * page will be flushed and changed.
+	 */
+	__pmap_pv_update(pa, pv, tlbprot_clear, tlbprot_set);
+}
+#define pmap_pv_update(pv, tc, ts) \
+	_pmap_pv_update(tlbptob((pv)->pv_tlbpage), pv, tc, ts)
+
+/*
  * Given a pmap, a VA, a PA, and a TLB protection, this enters
  * a new mapping and returns the new struct pv_entry.
  */
@@ -546,75 +631,40 @@ pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va,
 {
 	struct hpt_entry *hpt = pmap_hpt_hash(space, va);
 	int table_off;
-	struct pv_entry **hpv, *pv;
-	u_int unmanaged;
+	struct pv_head *hpv;
+	struct pv_entry *pv;
 
-	/*
-	 * If we're called with a NULL pmap, this mapping is
-	 * unmanaged, but it does belong to the kernel.
-	 */
-	if (pmap == NULL) {
-		unmanaged = HPPA_PV_UNMANAGED;
-		pmap = pmap_kernel();
-	} else
-		unmanaged = 0;
+	/* Get the struct pv_head for this PA. */
+	table_off = pmap_table_find_pa(pa);
+	KASSERT(table_off >= 0);
+	hpv = pv_head_tbl + table_off;
 
 #ifdef DIAGNOSTIC
 	/* Make sure this VA isn't already entered. */
 	for (pv = hpt->hpt_entry; pv != NULL; pv = pv->pv_hash)
 		if (pv->pv_va == va && pv->pv_space == space)
 			panic("pmap_pv_enter: VA already entered");
+	for (pv = hpv->pv_head_pvs; pv != NULL; pv = pv->pv_next)
+		if (pmap == pv->pv_pmap && va == pv->pv_va)
+			panic("pmap_pv_enter: VA already in pv_tab");
 #endif /* DIAGNOSTIC */
 
-	/* Get the head of the PA->VA translation list. */
-	table_off = pmap_table_find_pa(pa);
-	KASSERT(table_off >= 0);
-	hpv = pv_head_tbl + table_off;
-	PMAP_PRINTF(PDB_PV_ENTER, (": hpv %p -> pv %p\n", hpv, *hpv));
-
 	/*
-	 * All mappings must be entered in the PA->VA translation
-	 * list, because we always have to watch out for cache
-	 * aliasing.  However, PAs in I/O space must be mapped
-	 * uncacheable, so in that case we can skip the alias check.
+	 * If this mapping is for I/O space, mark the mapping
+	 * uncacheable.  (This is fine even on CPUs that don't 
+	 * support the U-bit; these CPUs don't cache references 
+	 * to I/O space.)
 	 */
 	if ((pa & HPPA_IOSPACE) == HPPA_IOSPACE)
 		tlbprot |= TLB_UNCACHEABLE;
-	else {
-		for (pv = *hpv; pv != NULL; pv = pv->pv_next) {
-#ifdef DIAGNOSTIC
-			if (pmap == pv->pv_pmap && va == pv->pv_va)
-				panic("pmap_pv_enter: VA already in pv_tab");
-#endif /* DIAGNOSTIC */
 
-			/*
-			 * If the older mapping is not a non-equivalent
-			 * alias, just continue.
-			 */
-			if (!BADALIAS(pv->pv_space, pv->pv_va, pv->pv_tlbprot,
-				      space, va, tlbprot))
-				continue;
-
-			/*
-			 * We have found a non-equivalent alias.
-			 * The new mapping must be uncacheable.
-			 */
-			tlbprot |= TLB_UNCACHEABLE;
-
-			/*
-			 * If the older mapping is not uncacheable,
-			 * change it to uncacheable.
-			 */
-			if (!(pv->pv_tlbprot & TLB_UNCACHEABLE)) {
-				PMAP_PRINTF(PDB_CACHE, (": new alias to %p\n",
-						     pv));
-				pmap_pv_update(pv, 0, TLB_UNCACHEABLE);
-			} else {
-				PMAP_PRINTF(PDB_CACHE, (": old alias to %p\n",
-						     pv));
-			}
-		}
-	}
+	/*
+	 * If there is an existing mapping for this page, mark
+	 * the mapping with the same TLB_NO_RW_ALIAS status.
+	 */
+	pv = hpv->pv_head_pvs;
+	if (pv != NULL)
+		tlbprot |= (pv->pv_tlbprot & TLB_NO_RW_ALIAS);
 
 	/* Allocate a new pv_entry, fill it, and link it in. */
 	pv = pmap_pv_alloc();
@@ -623,11 +673,16 @@ pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va,
 	pv->pv_space = space;
 	pv->pv_tlbprot = tlbprot;
 	pv->pv_tlbpage = tlbbtop(pa);
-	pv->pv_flags = unmanaged;
-	pv->pv_next = *hpv;
-	*hpv = pv;
+	pv->pv_hpt = hpt;
+	pv->pv_next = hpv->pv_head_pvs;
+	hpv->pv_head_pvs = pv;
 	pv->pv_hash = hpt->hpt_entry;
 	hpt->hpt_entry = pv;
+
+	/* Check for read-write aliasing. */
+	if (!PAGE_IS_ALIASED(pa))
+		pmap_pv_check_alias(pa);
+	_pmap_pv_update(pa, pv, TLB_AR_MASK, tlbprot & TLB_AR_MASK);
 
 	return pv;
 }
@@ -638,12 +693,10 @@ pmap_pv_enter(pmap_t pmap, pa_space_t space, vaddr_t va,
 static __inline void
 pmap_pv_remove(struct pv_entry *pv)
 {
-	struct hpt_entry *hpt = pmap_hpt_hash(pv->pv_space, pv->pv_va);
-	struct pv_entry **_pv = &hpt->hpt_entry;
 	paddr_t pa = tlbptob(pv->pv_tlbpage);
 	int table_off;
-	struct pv_entry **hpv, *ppv, *pv_aliased;
-	int alias_count;
+	struct pv_head *hpv;
+	struct pv_entry **_pv;
 
 	PMAP_PRINTF(PDB_PV_REMOVE, ("(%p)\n", pv));
 
@@ -651,66 +704,31 @@ pmap_pv_remove(struct pv_entry *pv)
 	table_off = pmap_table_find_pa(pa);
 	KASSERT(table_off >= 0);
 	hpv = pv_head_tbl + table_off;
-	KASSERT(*hpv != NULL);
 
-	/* Invalidate this entry in the HPT and unlink it. */
-	while(*_pv && *_pv != pv)
+	/* Unlink this pv_entry. */
+	_pv = &pv->pv_hpt->hpt_entry;
+	while (*_pv != pv) {
+		KASSERT(*_pv != NULL);
 		_pv = &(*_pv)->pv_hash;
-	_pmap_pv_update(hpt, pv, 0, 0);
-	KASSERT(*_pv == pv);
-	*_pv = pv->pv_hash;
-	pv->pv_hash = NULL;
-
-	/* Do the referenced/modified accounting. */
-	if (!(pv->pv_flags & HPPA_PV_UNMANAGED))
-		pv_flags_tbl[table_off] |=
-			((pv->pv_tlbprot & (TLB_REF | TLB_DIRTY)) >> PV_SHIFT);
-
-	/*
-	 * Walk the list of entries mapping this PA, looking for
-	 * this entry and unlinking it and freeing it when we
-	 * find it.
-	 *
-	 * Also track the number of uncacheable mappings that 
-	 * remain, and the last one seen.
-	 */
-	alias_count = 0;
-	pv_aliased = NULL;
-	_pv = hpv;
-	while ((ppv = *_pv) != NULL) {
-
-		/* If we have found the mapping, unlink it. */
-		if (ppv == pv) {
-			*_pv = pv->pv_next;
-			pmap_pv_free(pv);
-			pv = NULL;
-			continue;
-		}
-
-		/* Check if this is an uncacheable mapping. */
-		if (ppv->pv_tlbprot & TLB_UNCACHEABLE) {
-			alias_count++;
-			pv_aliased = ppv;
-		}
-
-		/* Advance. */
-		_pv = &ppv->pv_next;
 	}
-	KASSERT(pv == NULL);
+	*_pv = pv->pv_hash;
+	_pv = &hpv->pv_head_pvs;
+	while (*_pv != pv) {
+		KASSERT(*_pv != NULL);
+		_pv = &(*_pv)->pv_next;
+	}
+	*_pv = pv->pv_next;
 
 	/*
-	 * If there is only a single remaining uncacheable mapping 
-	 * of this page remaining, we must have removed what was its 
-	 * only non-equivalent alias, so it can now be uncached.
-	 *
-	 * NB: This is the only way we make uncacheable mappings 
-	 * cacheable again.  It gives correct operation, but it 
-	 * might be weak.  If the non-equivalent alias relation # 
-	 * is ever not transitive (A # B and B # C but A ~# C) 
-	 * and B is removed, we will still leave A and C uncacheable.
+	 * Check for read-write aliasing.  This will also flush
+	 * the old mapping.  
 	 */
-	if (alias_count == 1 && (pa & HPPA_IOSPACE) != HPPA_IOSPACE)
-		pmap_pv_update(pv_aliased, TLB_UNCACHEABLE, 0);
+	if (PAGE_IS_ALIASED(pa))
+		pmap_pv_check_alias(pa);
+	_pmap_pv_update(pa, pv, TLB_AR_MASK, TLB_AR_KR);
+
+	/* Free this mapping. */
+	pmap_pv_free(pv);
 }
 
 /*
@@ -822,17 +840,17 @@ pmap_bootstrap(vstart, vend)
 	proc0.p_md.md_regs->tf_vtop = addr;
 	addr += size + 1;
 
-	/* Allocate the struct pv_entry lists heads array. */
+	/* Allocate the struct pv_head array. */
 	addr = ALIGN(addr);
-	pv_head_tbl = (struct pv_entry **) addr;
+	pv_head_tbl = (struct pv_head *) addr;
 	memset(pv_head_tbl, 0, sizeof(*pv_head_tbl) * totalphysmem);
 	addr = (vaddr_t) (pv_head_tbl + totalphysmem);
 
-	/* Allocate the page modified/referenced flags table. */
+	/* Allocate the page aliased bitmap. */
 	addr = ALIGN(addr);
-	pv_flags_tbl = (u_char *) addr;
-	memset(pv_flags_tbl, 0, sizeof(*pv_flags_tbl) * totalphysmem);
-	addr = (vaddr_t) (pv_flags_tbl + totalphysmem);
+	page_aliased_bitmap = (u_int *) addr;
+	addr = (vaddr_t) (&_PAGE_ALIASED_WORD(totalphysmem) + 1);
+	memset(page_aliased_bitmap, 0, addr - (vaddr_t) page_aliased_bitmap);
 
 	/*
 	 * Allocate the largest struct pv_entry region.   The
@@ -1131,8 +1149,9 @@ pmap_init()
 	 *
 	 * no spls since no interrupts
 	 */
-	pmap_pv_enter(NULL, HPPA_SID_KERNEL, SYSCALLGATE,
-		      (paddr_t)&gateway_page, TLB_GATE_PROT);
+	pmap_pv_enter(pmap_kernel(), HPPA_SID_KERNEL, SYSCALLGATE,
+		      (paddr_t)&gateway_page, 
+		      TLB_GATE_PROT | TLB_UNMANAGED | TLB_WIRED);
 
 	pmap_initialized = TRUE;
 }
@@ -1314,8 +1333,6 @@ pmap_enter(pmap, va, pa, prot, flags)
 	tlbprot = pmap_prot(pmap, prot) | pmap->pmap_pid;
 	if (wired)
 		tlbprot |= TLB_WIRED;
-	if (flags & VM_PROT_WRITE)
-		tlbprot |= TLB_DIRTY;
 
 #ifdef PMAPDEBUG
 	if (!pmap_initialized || (pmapdebug & PDB_ENTER))
@@ -1335,7 +1352,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		pmap->pmap_stats.resident_count++;
 		waswired = FALSE;
 	} else {
-		KASSERT((pv->pv_flags & HPPA_PV_UNMANAGED) == 0);
+		KASSERT((pv->pv_tlbprot & TLB_UNMANAGED) == 0);
 		waswired = pv->pv_tlbprot & TLB_WIRED;
 
 		/* see if we are remapping the page to another PA */
@@ -1405,7 +1422,7 @@ pmap_remove(pmap, sva, eva)
 	while (sva < eva) {
 		pv = pmap_pv_find_va(space, sva);
 		if (pv) {
-			KASSERT((pv->pv_flags & HPPA_PV_UNMANAGED) == 0);
+			KASSERT((pv->pv_tlbprot & TLB_UNMANAGED) == 0);
 			KASSERT(pmap->pmap_stats.resident_count > 0);
 			pmap->pmap_stats.resident_count--;
 			if (pv->pv_tlbprot & TLB_WIRED) {
@@ -1448,7 +1465,7 @@ pmap_page_protect(pg, prot)
 		s = splvm();
 		for (pv = pmap_pv_find_pa(pa); pv; pv = pv->pv_next) {
 			/* Ignore unmanaged mappings. */
-			if (pv->pv_flags & HPPA_PV_UNMANAGED)
+			if (pv->pv_tlbprot & TLB_UNMANAGED)
 				continue;
 			/*
 			 * Compare new protection with old to see if
@@ -1466,7 +1483,7 @@ pmap_page_protect(pg, prot)
 		for (pv = pmap_pv_find_pa(pa); pv != NULL; pv = pv_next) {
 			pv_next = pv->pv_next;
 			/* Ignore unmanaged mappings. */
-			if (pv->pv_flags & HPPA_PV_UNMANAGED)
+			if (pv->pv_tlbprot & TLB_UNMANAGED)
 				continue;
 #ifdef PMAPDEBUG
 			if (pmapdebug & PDB_PROTECT) {
@@ -1529,7 +1546,7 @@ pmap_protect(pmap, sva, eva, prot)
 	s = splvm();
 	for(; sva < eva; sva += PAGE_SIZE) {
 		if((pv = pmap_pv_find_va(space, sva))) {
-			KASSERT((pv->pv_flags & HPPA_PV_UNMANAGED) == 0);
+			KASSERT((pv->pv_tlbprot & TLB_UNMANAGED) == 0);
 			/*
 			 * Compare new protection with old to see if
 			 * anything needs to be changed.
@@ -1569,7 +1586,7 @@ pmap_unwire(pmap, va)
 	if ((pv = pmap_pv_find_va(pmap_sid(pmap, va), va)) == NULL)
 		panic("pmap_unwire: can't find mapping entry");
 
-	KASSERT((pv->pv_flags & HPPA_PV_UNMANAGED) == 0);
+	KASSERT((pv->pv_tlbprot & TLB_UNMANAGED) == 0);
 	if (pv->pv_tlbprot & TLB_WIRED) {
 		KASSERT(pmap->pmap_stats.wired_count > 0);
 		pv->pv_tlbprot &= ~TLB_WIRED;
@@ -1631,8 +1648,8 @@ pmap_zero_page(pa)
 	s = splvm(); /* XXX are we already that high? */
 
 	/* Map the physical page. */
-	pv = pmap_pv_enter(NULL, HPPA_SID_KERNEL, tmp_vpages[1], pa, 
-			TLB_AR_KRW | TLB_DIRTY);
+	pv = pmap_pv_enter(pmap_kernel(), HPPA_SID_KERNEL, tmp_vpages[1], pa, 
+			TLB_AR_KRW | TLB_UNMANAGED | TLB_WIRED);
 
 	/* Zero it. */
 	memset((caddr_t)tmp_vpages[1], 0, PAGE_SIZE);
@@ -1664,10 +1681,10 @@ pmap_copy_page(spa, dpa)
 	s = splvm(); /* XXX are we already that high? */
 
 	/* Map the two pages. */
-	spv = pmap_pv_enter(NULL, HPPA_SID_KERNEL, tmp_vpages[0], spa, 
-			TLB_AR_KR);
-	dpv = pmap_pv_enter(NULL, HPPA_SID_KERNEL, tmp_vpages[1], dpa, 
-			TLB_AR_KRW | TLB_DIRTY);
+	spv = pmap_pv_enter(pmap_kernel(), HPPA_SID_KERNEL, tmp_vpages[0], spa, 
+			TLB_AR_KR | TLB_UNMANAGED | TLB_WIRED);
+	dpv = pmap_pv_enter(pmap_kernel(), HPPA_SID_KERNEL, tmp_vpages[1], dpa, 
+			TLB_AR_KRW | TLB_UNMANAGED | TLB_WIRED);
 
 	/* Do the copy. */
 	memcpy((caddr_t)tmp_vpages[1], (const caddr_t)tmp_vpages[0], PAGE_SIZE);
@@ -1685,30 +1702,22 @@ pmap_copy_page(spa, dpa)
  */
 static __inline boolean_t pmap_clear_bit __P((paddr_t, u_int));
 static __inline boolean_t
-pmap_clear_bit(paddr_t pa, u_int bit)
+pmap_clear_bit(paddr_t pa, u_int tlbprot_bit)
 {
 	int table_off;
-	u_char flags;
-	struct pv_entry *pv;
+	struct pv_head *hpv;
+	u_int pv_head_bit;
 	boolean_t ret;
 	int s;
 
 	table_off = pmap_table_find_pa(pa);
 	KASSERT(table_off >= 0);
+	hpv = pv_head_tbl + table_off;
+	pv_head_bit = (tlbprot_bit == TLB_REF ? PV_HEAD_REF : PV_HEAD_DIRTY);
 	s = splvm();
-	flags = pv_flags_tbl[table_off];
-	ret = (flags & (bit >> PV_SHIFT)) != 0;
-	if (ret)
-		pv_flags_tbl[table_off] = flags & ~(bit >> PV_SHIFT);
-	for (pv = pv_head_tbl[table_off];
-	     pv != NULL;
-	     pv = pv->pv_next) {
-		if (!(pv->pv_flags & HPPA_PV_UNMANAGED) &&
-		    (pv->pv_tlbprot & bit)) {
-			pmap_pv_update(pv, bit, 0);
-			ret = TRUE;
-		}
-	}
+	_pmap_pv_update(pa, NULL, tlbprot_bit, 0);
+	ret = hpv->pv_head_writable_dirty_ref & pv_head_bit;
+	hpv->pv_head_writable_dirty_ref &= ~pv_head_bit;
 	splx(s);
 	return ret;
 }
@@ -1719,24 +1728,28 @@ pmap_clear_bit(paddr_t pa, u_int bit)
  */
 static __inline boolean_t pmap_test_bit __P((paddr_t, u_int));
 static __inline boolean_t
-pmap_test_bit(paddr_t pa, u_int bit)
+pmap_test_bit(paddr_t pa, u_int tlbprot_bit)
 {
 	int table_off;
+	struct pv_head *hpv;
+	u_int pv_head_bit;
 	struct pv_entry *pv;
 	boolean_t ret;
 	int s;
 
 	table_off = pmap_table_find_pa(pa);
 	KASSERT(table_off >= 0);
+	hpv = pv_head_tbl + table_off;
+	pv_head_bit = (tlbprot_bit == TLB_REF ? PV_HEAD_REF : PV_HEAD_DIRTY);
 	s = splvm();
-	ret = (pv_flags_tbl[table_off] & (bit >> PV_SHIFT)) != 0;
+	ret = (hpv->pv_head_writable_dirty_ref & pv_head_bit) != 0;
 	if (!ret) {
-		for (pv = pv_head_tbl[table_off]; 
+		for (pv = hpv->pv_head_pvs;
 		     pv != NULL; 
 		     pv = pv->pv_next) {
-			if (!(pv->pv_flags & HPPA_PV_UNMANAGED) &&
-			    (pv->pv_tlbprot & bit)) {
-				pv_flags_tbl[table_off] |= (bit >> PV_SHIFT);
+			if ((pv->pv_tlbprot & (TLB_UNMANAGED | tlbprot_bit)) ==
+			    tlbprot_bit) {
+				hpv->pv_head_writable_dirty_ref |= pv_head_bit;
 				ret = TRUE;
 				break;
 			}
@@ -1836,10 +1849,9 @@ pmap_kenter_pa(va, pa, prot)
 	va = hppa_trunc_page(va);
 	s = splvm();
 	KASSERT(pmap_pv_find_va(HPPA_SID_KERNEL, va) == NULL);
-	pmap_pv_enter(NULL, HPPA_SID_KERNEL, va, pa, 
+	pmap_pv_enter(pmap_kernel(), HPPA_SID_KERNEL, va, pa, 
 		      pmap_prot(pmap_kernel(), prot) |
-		      TLB_WIRED |
-		      ((prot & VM_PROT_WRITE) ? TLB_DIRTY : 0));
+		      TLB_WIRED | TLB_UNMANAGED);
 	splx(s);
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
@@ -1877,7 +1889,7 @@ pmap_kremove(va, size)
 	    size -= PAGE_SIZE, va += PAGE_SIZE) {
 		pv = pmap_pv_find_va(HPPA_SID_KERNEL, va);
 		if (pv) {
-			KASSERT((pv->pv_flags & HPPA_PV_UNMANAGED) != 0);
+			KASSERT((pv->pv_tlbprot & TLB_UNMANAGED) != 0);
 			pmap_pv_remove(pv);
 		} else {
 			PMAP_PRINTF(PDB_REMOVE, (": no pv for %p\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 2002/08/05 20:58:37 fredette Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 2002/08/11 22:29:08 fredette Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -125,6 +125,7 @@ extern const struct hppa_cpu_info *hppa_cpu_info;
 #define	HPPA_PGALIAS	0x00100000
 #define	HPPA_PGAMASK	0xfff00000
 #define	HPPA_PGAOFF	0x000fffff
+#define	HPPA_SPAMASK	0xf0f0f000
 
 #define	HPPA_IOSPACE	0xf0000000
 #define	HPPA_IOBCAST	0xfffc0000
