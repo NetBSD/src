@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.2.4.2 1996/09/16 23:44:14 jtc Exp $	*/
+/*	$NetBSD: namespace.h,v 1.2.4.3 1996/09/17 17:53:30 jtc Exp $	*/
 
 #ifndef NAMESPACE_H
 #define NAMESPACE_H
@@ -16,6 +16,12 @@
 #define catclose	_catclose
 #define catgets		_catgets
 #define catopen		_catopen
+#define cfgetispeed	_cfgetispeed
+#define cfgetospeed	_cfgetospeed
+#define cfmakeraw	_cfmakeraw
+#define cfsetispeed	_cfsetispeed
+#define cfsetospeed	_cfsetospeed
+#define cfsetspeed	_cfsetspeed
 #define clnt_broadcast	_clnt_broadcast
 #define clnt_create	_clnt_create
 #define clnt_pcreateerror	_clnt_pcreateerror
@@ -99,6 +105,14 @@
 #define sys_errlist	_sys_errlist
 #define sys_nerr	_sys_nerr
 #define sys_siglist	_sys_siglist
+#define tcdrain		_tcdrain
+#define tcflow		_tcflow
+#define tcflush		_tcflush
+#define tcgetattr	_tcgetattr
+#define tcgetpgrp	_tcgetpgrp
+#define tcsendbreak	_tcsendbreak
+#define tcsetattr	_tcsetattr
+#define tcsetpgrp	_tcsetpgrp
 #define telldir		_telldir
 #define verr		_verr
 #define verrx		_verrx
@@ -133,7 +147,7 @@
 #define xdr_rejected_reply	_xdr_rejected_reply
 #define xdr_replymsg	_xdr_replymsg
 #define xdr_rmtcall_args	_xdr_rmtcall_args
-#define xdr_rmtcallres		_xdr_rmtcallres
+#define xdr_rmtcallres	_xdr_rmtcallres
 #define xdr_short	_xdr_short
 #define xdr_string	_xdr_string
 #define xdr_u_char	_xdr_u_char

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcflush.c,v 1.2 1995/06/26 23:05:50 jtc Exp $	*/
+/*	$NetBSD: tcflush.c,v 1.2.4.1 1996/09/17 17:53:37 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,14 +37,19 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-static char rcsid[] = "$NetBSD: tcflush.c,v 1.2 1995/06/26 23:05:50 jtc Exp $";
+static char rcsid[] = "$NetBSD: tcflush.c,v 1.2.4.1 1996/09/17 17:53:37 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <termios.h>
 #include <errno.h>
+
+#ifdef __weak_alias
+__weak_alias(tcflush,_tcflush);
+#endif
 
 int
 tcflush(fd, which)
