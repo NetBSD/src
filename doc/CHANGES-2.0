@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.349 2004/07/23 13:40:32 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.350 2004/07/23 15:50:56 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5984,4 +5984,22 @@ doc/CHANGES					1.332
 
 	Note addition of round(3) and roundf(3).
 	[junyoung, ticket #705]
+
+sys/dev/usb/ohci.c				1.151
+sys/dev/usb/ohcivar.h				1.33
+sys/dev/usb/usbdi.c				1.104
+
+	Avoid touching the xfer after calling usb_transfer_complete(), as the
+	driver callback may have recycled it.
+	ugen_isoc_rintr() may recycle the xfer immediately. Therefore, we avoid
+	touching the xfer after calling the callback in
+	usb_transfer_complete().
+	From PR 25960.
+	[mycroft, ticket #688]
+
+sys/kern/sys_pipe.c				1.58
+
+	PRIBIO -> PSOCK. This emulates the pre-sys_pipe behavior, and avoids 
+	including processes blocked on pipe I/O in the load average.
+	[mycroft, ticket #689]
 
