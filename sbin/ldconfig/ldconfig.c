@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.31 2000/09/29 17:47:52 fvdl Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.32 2000/11/10 03:12:45 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -170,7 +170,9 @@ do_conf ()
 #ifdef __ELF__
 	char		*aout_conf;
 
-	aout_conf = xmalloc(sizeof(_PATH_EMUL_AOUT) + strlen(_PATH_LD_SO_CONF));	strcpy(aout_conf, _PATH_EMUL_AOUT);
+	aout_conf = xmalloc(sizeof(_PATH_EMUL_AOUT) +
+	    strlen(_PATH_LD_SO_CONF));
+	strcpy(aout_conf, _PATH_EMUL_AOUT);
 	strcat(aout_conf, _PATH_LD_SO_CONF);
 	if ((conf = fopen(aout_conf, "r")) == NULL) {
 		if (verbose)
