@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.6 1998/10/08 02:31:40 eeh Exp $ */
+/*	$NetBSD: signal.h,v 1.7 1999/01/31 09:21:20 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@ struct sigcontext13 {
 	long	sc_sp;			/* %sp to restore */
 	long	sc_pc;			/* pc to restore */
 	long	sc_npc;			/* npc to restore */
-#ifdef _LP64
+#ifdef __arch64__
 	long	sc_tstate;		/* tstate to restore */
 #else
 	long	sc_psr;			/* pstate to restore */

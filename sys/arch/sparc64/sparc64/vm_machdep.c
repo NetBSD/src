@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12 1998/11/11 06:43:51 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.13 1999/01/31 09:21:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -201,7 +201,7 @@ vunmapbuf(bp, len)
 /*
  * The offset of the topmost frame in the kernel stack.
  */
-#ifdef _LP64
+#ifdef __arch64__
 #define	TOPFRAMEOFF (USPACE-sizeof(struct trapframe)-CC64FSZ)
 #define rwindow		rwindow64
 #define STACK_OFFSET	BIAS

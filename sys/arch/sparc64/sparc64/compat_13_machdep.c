@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3 1998/11/16 06:51:35 eeh Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.4 1999/01/31 09:21:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ compat_13_sys_sigreturn(p, v, retval)
 #endif
 		return (EINVAL);
 	/* take only psr ICC field */
-#ifdef _LP64
+#ifdef __arch64__
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | scp->sc_tstate;
 #else
 	tf->tf_tstate = (int64_t)(tf->tf_tstate & ~TSTATE_CCR) | PSRCC_TO_TSTATE(scp->sc_psr);
