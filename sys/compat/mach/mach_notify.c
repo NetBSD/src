@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.5 2003/11/18 01:40:18 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.6 2003/11/18 11:20:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.5 2003/11/18 01:40:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.6 2003/11/18 11:20:34 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -215,11 +215,13 @@ mach_trapsignal1(l, ksi)
 	const struct ksiginfo *ksi;
 {
 	struct proc *p = l->l_proc;
-	struct mach_emuldata *med = (struct mach_emuldata *)p->p_emuldata;
+	struct mach_emuldata *med;
 	struct mach_port *exc_port;
 	struct mach_right *task;
 	struct mach_right *thread;
 	int exc_no;
+
+	med = (struct mach_emuldata *)p->p_emuldata;
 
 	/* XXX Thread and task should have different ports */
 	task = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
@@ -237,7 +239,7 @@ mach_trapsignal1(l, ksi)
 		exc_no = MACH_EXC_BAD_ACCESS;
 		break;
 	case SIGTRAP:
-		exc_no = MACH_EXC_SOFTWARE;
+		exc_no = MACH_EXC_BREAKPOINT;
 		break;
 	default: /* SIGCHLD, SIGPOLL */
 		return EINVAL;
