@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.130 2003/09/16 13:46:25 cl Exp $
+	$NetBSD: syscalls.master,v 1.131 2003/09/23 14:34:07 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -598,7 +598,7 @@
 290	STD		{ ssize_t sys_pwritev(int fd, \
 			    const struct iovec *iovp, int iovcnt, \
 			    int pad, off_t offset); }
-291	STD		{ int sys___sigaction14(int signum, \
+291	COMPAT_16	{ int sys___sigaction14(int signum, \
 			    const struct sigaction *nsa, \
 			    struct sigaction *osa); }
 292	STD		{ int sys___sigpending14(sigset_t *set); }

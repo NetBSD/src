@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.157 2003/09/19 22:51:31 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.158 2003/09/23 14:34:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.157 2003/09/19 22:51:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.158 2003/09/23 14:34:07 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
+#include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"	
 
 #define	SIGPROP		/* include signal properties table */
@@ -353,9 +354,10 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 	return (0);
 }
 
+#ifdef COMPAT_16
 /* ARGSUSED */
 int
-sys___sigaction14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigaction14(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___sigaction14_args /* {
 		syscallarg(int)				signum;
@@ -384,6 +386,7 @@ sys___sigaction14(struct lwp *l, void *v, register_t *retval)
 	}
 	return (0);
 }
+#endif
 
 /* ARGSUSED */
 int
