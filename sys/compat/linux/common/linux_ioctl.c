@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.30 2002/10/22 11:55:10 simonb Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.31 2003/01/18 08:02:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.30 2002/10/22 11:55:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.31 2003/01/18 08:02:52 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.30 2002/10/22 11:55:10 simonb Exp 
 #include <net/if.h>
 #include <sys/sockio.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
@@ -76,8 +77,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.30 2002/10/22 11:55:10 simonb Exp 
  * work there and converting back the data afterwards.
  */
 int
-linux_sys_ioctl(p, v, retval)
-	struct proc *p;
+linux_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -86,6 +87,7 @@ linux_sys_ioctl(p, v, retval)
 		syscallarg(u_long) com;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 
 	switch (LINUX_IOCGROUP(SCARG(uap, com))) {
 	case 'M':

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_msg.h,v 1.5 1998/10/04 00:02:37 fvdl Exp $	*/
+/*	$NetBSD: linux_msg.h,v 1.6 2003/01/18 08:04:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ struct linux_sys_msgctl_args {
 #ifdef SYSVMSG
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_msgctl __P((struct proc *, void *, register_t *));
+int linux_sys_msgctl __P((struct lwp *, void *, register_t *));
 void linux_to_bsd_msqid_ds __P((struct linux_msqid_ds *,
 				       struct msqid_ds *));
 void bsd_to_linux_msqid_ds __P((struct msqid_ds *,
