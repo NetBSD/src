@@ -1,5 +1,5 @@
-/* ==== file.c ============================================================
- * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
+/* ==== pthread_join.c =======================================================
+ * Copyright (c) 1994 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,89 +29,85 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * Description : The locking functions for stdio.
+ * Description : pthread_join function.
  *
- *  1.00 93/09/04 proven
+ *  1.00 94/01/15 proven
  *      -Started coding this file.
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: file.c,v 1.3 1994/02/07 22:04:18 proven Exp $ $provenid: file.c,v 1.16 1994/02/07 02:18:55 proven Exp $";
+static const char rcsid[] = "$Id: pthread_join.c,v 1.1 1994/02/07 22:04:26 proven Exp $ $provenid: pthread_join.c,v 1.16 1994/02/07 02:19:19 proven Exp $";
 #endif
 
 #include <pthread.h>
-#include <stdio.h>
 
 /* ==========================================================================
- * flockfile()
+ * pthread_join()
  */
-void flockfile(FILE *fp)
+int pthread_join(pthread_t pthread, void **thread_return)
 {
-	semaphore *lock;
-	int fd;
+	semaphore *lock, *plock;
+	int ret;
 
-	fd = fileno(fp);
-	lock = &(fd_table[fd]->lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
+
+	plock = &(pthread->lock);
+	while (SEMAPHORE_TEST_AND_SET(plock)) {
 		pthread_yield();
 	}
 
-	if (fd_table[fd]->r_owner != pthread_run) {
-		/* This might fail but POSIX doesn't give a damn. */
-		fd_basic_lock(fd, FD_RDWR, lock);
-	}
-	fd_table[fd]->lockcount++;
-	SEMAPHORE_RESET(lock);
-}
-
-/* ==========================================================================
- * ftrylockfile()
- */
-int ftrylockfile(FILE *fp)
-{
-	semaphore *lock;
-	int fd;
-
-	fd = fileno(fp);
-	lock = &(fd_table[fd]->lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
-
-	if (fd_table[fd]->r_owner != pthread_run) {
-		if (!(fd_table[fd]->r_owner && fd_table[fd]->w_owner)) {
-			fd_basic_lock(fd, FD_RDWR, lock);
-			fd = OK;
-		} else {
-			fd = NOTOK;
-		}
-	} else {
-		fd_table[fd]->lockcount++;
-		fd = OK;
-	}
-	SEMAPHORE_RESET(lock);
-	return(fd);
-}
-
-/* ==========================================================================
- * funlockfile()
- */
-void funlockfile(FILE *fp)
-{
-	semaphore *lock;
-	int fd;
-
-	fd = fileno(fp);
-	lock = &(fd_table[fd]->lock);
-	while (SEMAPHORE_TEST_AND_SET(lock)) {
-		pthread_yield();
-	}
-
-	if (fd_table[fd]->r_owner == pthread_run) {
-		if (--fd_table[fd]->lockcount == 0) {
-			fd_basic_unlock(fd, FD_RDWR);
-		}
+	/* Check that thread isn't detached already */
+	if (pthread->flags & PF_DETACHED) {
+		SEMAPHORE_RESET(plock);
+		return(ESRCH);
 	} 
-	SEMAPHORE_RESET(lock);
-}
 
+	lock = &(pthread_run->lock);
+	while (SEMAPHORE_TEST_AND_SET(lock)) {
+		pthread_yield();
+	}
+
+	/* If OK then queue current thread. */
+	pthread_queue(&(pthread->join_queue), pthread_run);
+
+	SEMAPHORE_RESET(plock);
+	reschedule(PS_JOIN);
+
+	/*
+	 * At this point the thread is locked from the pthread_exit 
+	 * and so are we, so no extra locking is required, but be sure
+	 * to unlock at least ourself.
+	 */
+	if (!(pthread->flags & PF_DETACHED)) {
+		if (thread_return) {
+			*thread_return = pthread->ret;
+		}
+		pthread->flags |= PF_DETACHED;
+		ret = OK;
+	} else {
+		ret = ESRCH;
+	}
+
+	/* Cant do a cleanup until queue is cleared */
+	{
+		struct pthread * next_thread;
+		semaphore * next_lock;
+
+		if (next_thread = pthread_queue_get(&(pthread->join_queue))) {
+			next_lock = &(next_thread->lock);
+			while (SEMAPHORE_TEST_AND_SET(next_lock)) {
+				pthread_yield();
+			}
+			pthread_queue_deq(&(pthread->join_queue)); 
+			next_thread->state = PS_RUNNING;
+			/*
+			 * Thread will wake up in pthread_join(), see the thread
+			 * it was joined to already detached and unlock itself
+			 */
+		} else {
+			SEMAPHORE_RESET(lock);
+		}
+	}
+
+	SEMAPHORE_RESET(plock);
+	return(ret);
+}

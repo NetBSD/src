@@ -1,5 +1,5 @@
 /* ==== fd_pipe.c ============================================================
- * Copyright (c) 1993 by Chris Provenzano, proven@mit.edu
+ * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,10 @@
  *	1.01 93/11/13 proven
  *		-The functions readv() and writev() added.
  */
+
+#ifndef lint
+static const char rcsid[] = "$Id: fd_pipe.c,v 1.3 1994/02/07 22:04:17 proven Exp $ $provenid: fd_pipe.c,v 1.16 1994/02/07 02:18:52 proven Exp $";
+#endif
 
 #include <pthread.h>
 #include <pthread/fd_pipe.h>

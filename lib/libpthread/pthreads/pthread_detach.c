@@ -1,5 +1,5 @@
-/* ==== globals.c ============================================================
- * Copyright (c) 1993, 1994 by Chris Provenzano, proven@mit.edu
+/* ==== pthread_detach.c =======================================================
+ * Copyright (c) 1994 by Chris Provenzano, proven@mit.edu
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,39 +29,62 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
  * SUCH DAMAGE.
  *
- * Description : Global variables.
+ * Description : pthread_join function.
  *
- *  1.00 93/07/26 proven
+ *  1.00 94/01/15 proven
  *      -Started coding this file.
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: globals.c,v 1.3 1994/02/07 22:04:19 proven Exp $ $provenid: globals.c,v 1.16 1994/02/07 02:18:57 proven Exp $";
+static const char rcsid[] = "$Id: pthread_detach.c,v 1.1 1994/02/07 22:04:24 proven Exp $ $provenid: pthread_detach.c,v 1.16 1994/02/07 02:19:16 proven Exp $";
 #endif
 
 #include <pthread.h>
 
-/*
- * Initial thread, running thread, and top of link list
- * of all threads.
+/* ==========================================================================
+ * pthread_detach()
  */
-struct pthread *pthread_run;
-struct pthread *pthread_initial;
-struct pthread *pthread_link_list;
+int pthread_detach(pthread_t pthread)
+{
+	semaphore *plock;
+	int ret;
 
-/*
- * default thread attributes
- */
-pthread_attr_t pthread_default_attr = { SCHED_RR, NULL, PTHREAD_STACK_DEFAULT };
+	plock = &(pthread->lock);
+	while (SEMAPHORE_TEST_AND_SET(plock)) {
+		pthread_yield();
+	}
 
-/*
- * Queue for all threads elidgeable to run this scheduling round.
- */
-struct pthread_queue pthread_current_queue = PTHREAD_QUEUE_INITIALIZER;
+	/* Check that thread isn't detached already */
+	if (!(pthread->flags & PF_DETACHED)) {
 
-/*
- * File table information
- */
-struct fd_table_entry *fd_table[64];
+		pthread->flags |= PF_DETACHED;
 
+		/* Wakeup first threads waiting on a join */
+		{
+			struct pthread * next_thread;
+			semaphore * next_lock;
 
+			if (next_thread = pthread_queue_get(&(pthread->join_queue))) {
+				next_lock = &(next_thread->lock);
+				while (SEMAPHORE_TEST_AND_SET(next_lock)) {
+					pthread_yield();
+				}
+				pthread_queue_deq(&(pthread->join_queue)); 
+				next_thread->state = PS_RUNNING;
+				/*
+				 * Thread will wake up in pthread_join(), see the thread
+				 * it was joined to already detached and unlock itself
+				 * and pthread
+				 */
+			} else {
+				SEMAPHORE_RESET(plock);
+			}
+		}
+		ret = OK;
+
+	} else {
+		SEMAPHORE_RESET(plock);
+		ret = ESRCH;
+	}
+	return(ret);
+}
