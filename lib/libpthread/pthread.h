@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.6 2001/08/08 16:32:17 nathanw Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.7 2001/12/30 02:14:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,8 @@
 #define _LIB_PTHREAD_H
 
 
-#include <sys/time.h>	/* For timespec */
+#include <time.h>	/* For timespec */
+#include <sched.h>
 #include <signal.h>	/* For sigset_t. XXX perhaps pthread_sigmask should
 			 * be in signal.h instead of here.
 			 */
@@ -94,17 +95,52 @@ int	pthread_key_delete(pthread_key_t key);
 int	pthread_setspecific(pthread_key_t key, const void *value);
 void*	pthread_getspecific(pthread_key_t key);
 
+int	pthread_cancel(pthread_t thread);
+int	pthread_setcancelstate(int state, int *oldstate);
+int	pthread_setcanceltype(int type, int *oldtype);
+void	pthread_testcancel(void);
 
-void	pthread_lockinit(pt_spin_t *lock);
-void	pthread_spinlock(pthread_t thread, pt_spin_t *lock);
-int	pthread_spintrylock(pthread_t thread, pt_spin_t *lock);
-void	pthread_spinunlock(pthread_t thread, pt_spin_t *lock);
+struct pthread_cleanup_store {
+	void	*pad[4];
+};
+
+#define pthread_cleanup_push(routine,arg)			\
+        {							\
+		struct pthread_cleanup_store __store;	\
+		pthread__cleanup_push((routine),(arg), &__store);
+
+#define pthread_cleanup_pop(execute)				\
+		pthread__cleanup_pop((execute), &__store);	\
+	}
+
+void	pthread__cleanup_push(void (*routine)(void *), void *arg, void *store);
+void	pthread__cleanup_pop(int execute, void *store);
+
+void	pthread_lockinit(pthread_spin_t *lock);
+void	pthread_spinlock(pthread_t thread, pthread_spin_t *lock);
+int	pthread_spintrylock(pthread_t thread, pthread_spin_t *lock);
+void	pthread_spinunlock(pthread_t thread, pthread_spin_t *lock);
+
+int 	*pthread__errno(void);
 
 #define	PTHREAD_CREATE_JOINABLE	0
 #define	PTHREAD_CREATE_DETACHED	1
 
 #define PTHREAD_PROCESS_PRIVATE	0
 #define PTHREAD_PROCESS_SHARED	1
+
+#define PTHREAD_CANCEL_DEFERRED		0
+#define PTHREAD_CANCEL_ASYNCHRONOUS	1
+
+#define PTHREAD_CANCEL_ENABLE		0
+#define PTHREAD_CANCEL_DISABLE		1
+
+/* POSIX 1003.1-2001, section 2.5.9.3: "The symbolic constant
+ * PTHREAD_CANCELLED expands to a constant expression of type (void *)
+ * whose value matches no pointer to an object in memory nor the value
+ * NULL."
+ */
+#define PTHREAD_CANCELLED	((void *) 1)
 
 #define	_POSIX_THREADS
 
