@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf2aout.1,v 1.7 2001/12/01 19:05:04 wiz Exp $
+.\"	$NetBSD: elf2aout.1,v 1.8 2002/09/30 11:08:58 grant Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -55,7 +55,8 @@ and was first distributed with the pmax port of
 .Sh BUGS
 .Nm
 assumes there are no multiply-referenced symbols in the input ELF symbol
-section.   It may be necessary to link with
+section.
+It may be necessary to link with
 .Fl x
 to avoid such duplicate symbols.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$NetBSD: vgrindefs.5,v 1.7 2001/12/08 19:23:05 wiz Exp $
+.\"	$NetBSD: vgrindefs.5,v 1.8 2002/09/30 11:09:16 grant Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,8 @@ if ifdef ifndef include undef:
 .Ed
 .Pp
 Note that the first field is just the language name (and any variants
-of it).  Thus the C language could be specified to
+of it).
+Thus the C language could be specified to
 .Xr vgrind 1
 as "c" or "C".
 .Pp
@@ -121,7 +122,8 @@ a delimiter (space, tab, newline, start of line)
 .It \ea
 matches any string of symbols (like .* in lex)
 .It \ep
-matches any alphanumeric name.  In a procedure definition (pb) the string
+matches any alphanumeric name.
+In a procedure definition (pb) the string
 that matches this symbol is used as the procedure name.
 .It ()
 grouping
@@ -137,11 +139,13 @@ string delimiter in a string by escaping it.
 .El
 .Pp
 Unlike other regular expressions in the system,  these match words
-and not characters.  Hence something like "(tramp|steamer)flies?"
+and not characters.
+Hence something like "(tramp|steamer)flies?"
 would match "tramp", "steamer", "trampflies", or "steamerflies".
 .Sh KEYWORD LIST
 The keyword list is just a list of keywords in the language separated
-by spaces.  If the "oc" boolean is specified, indicating that upper
+by spaces.
+If the "oc" boolean is specified, indicating that upper
 and lower case are equivalent, then all the keywords should be
 specified in lower case.
 .Sh FILES

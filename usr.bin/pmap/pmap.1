@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.1,v 1.3 2002/09/17 19:54:28 atatat Exp $
+.\"	$NetBSD: pmap.1,v 1.4 2002/09/30 11:09:08 grant Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,8 @@
 The
 .Nm
 utility lists the virtual memory mappings underlying the given
-process.  The start address of each entry is always given, and,
+process.
+The start address of each entry is always given, and,
 depending on the options given, other information such as the end
 address, the underlying file's device and inode numbers, and various
 protection information will be displayed, along with the path to the
@@ -61,15 +62,18 @@ file, if such data is available.
 By default,
 .Nm
 displays information for its parent process, so that when run from a
-shell prompt, the shell's memory information is displayed.  If other
+shell prompt, the shell's memory information is displayed.
+If other
 pids are given as arguments on the command line, information for those
-processes will be printed also.  If the special pid of 0 is given,
+processes will be printed also.
+If the special pid of 0 is given,
 then information for the kernel's memory map is printed.
 .Pp
 The options are as follows:
 .Bl -tag -width XXXnumberXX
 .It Fl D Ar number
-Enable various debug facilities.  The
+Enable various debug facilities.
+The
 .Ar number
 is a bit mask of the values:
 .Pp
@@ -99,7 +103,8 @@ to print information about itself.
 .It Fl a
 Display
 .Dq all
-information from the process's memory map.  This output
+information from the process's memory map.
+This output
 mode is an amalgam of the contents of the Solaris, Linux, and
 .Nx
 style output modes.
@@ -118,36 +123,44 @@ pseudo-file under the
 file system which was, in turn, modeled after the similarly named entry
 in the Linux
 .Pa /proc
-file system.  When combined with the
+file system.
+When combined with the
 .Fl v
 option, identifiers for all entries are printed.
 .It Fl m
 Dumps information in the same format as the map pseudo-file of the
 .Pa /proc
-file system.  When the
+file system.
+When the
 .Fl v
 option is also given, device number, inode number, and filename
 or other identifying information is printed.
 .It Fl p Ar pid
 Tells
 .Nm
-to print information about the given process.  If
+to print information about the given process.
+If
 .Fl p Ar pid
 occurs last on the command line, the
 .Fl p
 is optional.
 .It Fl R
-Recurse into submaps.  In some cases, a vm_map_entry in the kernel
-will point to a submap.  Using this flag tells
+Recurse into submaps.
+In some cases, a vm_map_entry in the kernel
+will point to a submap.
+Using this flag tells
 .Nm
-to print the entries of the submap as well.  The submap output is
+to print the entries of the submap as well.
+The submap output is
 indented, and does not affect any total printed at the bottom of the
 output.
 .It Fl s
 The Solaris style output format, modeled after the Solaris command of
-the same name.  This is the default output style.
+the same name.
+This is the default output style.
 .It Fl v
-Verbose output.  When used with
+Verbose output.
+When used with
 .Fl d ,
 .Fl l ,
 or
@@ -161,7 +174,8 @@ The
 and
 .Fl p
 options override each other, so the last one to appear on the command
-line takes effect.  If you do wish to see information about
+line takes effect.
+If you do wish to see information about
 .Nm
 and another process as the same time, simply omit the
 .Fl p
@@ -238,7 +252,8 @@ The
 and
 .Dq Tn amap
 fields are pointers to, and offsets into, the underlying uvm_object or
-amap.  The value for resident is always unknown because digging such
+amap.
+The value for resident is always unknown because digging such
 information out of the kernel is beyond the scope of this application.
 .Pp
 The two output styles that mirror the contents of the
@@ -267,16 +282,19 @@ Here the protection and maximum protection values are indicated with
 and
 .Dq Tn x
 characters, indicating read permission, write permission, and execute
-permission, respectively.  The
+permission, respectively.
+The
 .Dq Tn COW ,
 .Dq Tn NC ,
 and
 .Dq Tn NNC
 values that follow indicate, again, that the map is marked for copy on
-write and either needs or does not need a copy.  It is also possible
+write and either needs or does not need a copy.
+It is also possible
 to see the value
 .Dq Tn NCOW
-here, which indicates that an entry will not be copied.  The three
+here, which indicates that an entry will not be copied.
+The three
 following numbers indicate the inheritance type of the map, the wired
 count of the map, and any advice value assigned via
 .Xr madvise 2 .
@@ -311,7 +329,8 @@ copied on write
 or has already been copied
 .Pq Dq \&-
 and is followed by a column that indicates the maximum permissions for
-the map entry.  The column labeled
+the map entry.
+The column labeled
 .Dq Tn I/W/A
 indicates the inheritance, wired, and advice values for the map entry,
 as previously described.
@@ -341,7 +360,8 @@ proper symbol information.
 .Pp
 Since processes can change state while
 .Nm
-is running, some of the information printed may be inaccurate.  This
+is running, some of the information printed may be inaccurate.
+This
 is especially important to consider when examining the kernel's map
 since merely executing
 .Nm
@@ -349,9 +369,11 @@ will cause some of the information to change.
 .Pp
 The pathnames to files backing certain vnodes (such as the text and
 data sections of programs and shared libraries) are extracted from the
-kernel's namei cache which is considerably volatile.  If a path is not
+kernel's namei cache which is considerably volatile.
+If a path is not
 found there in its entirety, as much information as was available
-will be printed.  In most cases, simply running
+will be printed.
+In most cases, simply running
 .Xr ls 1
 or
 .Xr stat 1
@@ -359,7 +381,8 @@ with the expected path to the file will cause the information to be
 reentered into the cache.
 .Pp
 The Solaris command by the same name has some interesting command line
-flags that would be nice to emulate here.  In particular, the
+flags that would be nice to emulate here.
+In particular, the
 .Fl r
 option that lists a process's reserved addresses, and the
 .Fl x
@@ -367,12 +390,14 @@ option that prints resident/shared/private mapping details for each
 entry.
 .Pp
 Some of the output modes can be or are wider than the standard 80
-columns of a terminal.  Some sort of formatting might be nice.
+columns of a terminal.
+Some sort of formatting might be nice.
 .Sh SECURITY CONSIDERATIONS
 The Solaris command controls access to processes the user does not own
 via the permissions of its
 .Pa /proc
-file system.  Since
+file system.
+Since
 .Nm
 uses
 .Xr kvm 3

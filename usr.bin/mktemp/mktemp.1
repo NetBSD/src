@@ -1,4 +1,4 @@
-.\" $NetBSD: mktemp.1,v 1.7 2002/02/08 01:36:29 ross Exp $
+.\" $NetBSD: mktemp.1,v 1.8 2002/09/30 11:09:06 grant Exp $
 .\" From: $FreeBSD: src/usr.bin/mktemp/mktemp.1,v 1.5 1999/08/28 01:04:13 peter Exp $
 .\" From: $OpenBSD: mktemp.1,v 1.8 1998/03/19 06:13:37 millert Exp $
 .\"
@@ -52,8 +52,10 @@
 The
 .Nm
 utility takes each of the given file name templates and overwrites a
-portion of it to create a file name.  This file name is unique
-and suitable for use by the application.  The template may be
+portion of it to create a file name.
+This file name is unique
+and suitable for use by the application.
+The template may be
 any file name with some number of
 .Ql X Ns s
 appended
@@ -90,7 +92,8 @@ will generate an template string based on the
 .Ar prefix
 and the
 .Ev TMPDIR
-environment variable if set. The default location if
+environment variable if set.
+The default location if
 .Ev TMPDIR
 is not set is
 .Pa /tmp .
@@ -106,12 +109,16 @@ flag.
 .Nm
 is provided to allow shell scripts to safely use temporary files.
 Traditionally, many shell scripts take the name of the program with
-the pid as a suffix and use that as a temporary file name.  This
+the pid as a suffix and use that as a temporary file name.
+This
 kind of naming scheme is predictable and the race condition it creates
-is easy for an attacker to win.  A safer, though still inferior, approach
-is to make a temporary directory using the same naming scheme.  While
+is easy for an attacker to win.
+A safer, though still inferior, approach
+is to make a temporary directory using the same naming scheme.
+While
 this does allow one to guarantee that a temporary file will not be
-subverted, it still allows a simple denial of service attack.  For these
+subverted, it still allows a simple denial of service attack.
+For these
 reasons it is suggested that
 .Nm
 be used instead.
@@ -121,7 +128,8 @@ The available options are as follows:
 .It Fl d
 Make a directory instead of a file.
 .It Fl q
-Fail silently if an error occurs.  This is useful if
+Fail silently if an error occurs.
+This is useful if
 a script does not want error output to go to standard error.
 .It Fl t Ar prefix
 Generate a template (using the supplied
@@ -132,11 +140,14 @@ if set) to create a filename template.
 .It Fl u
 Operate in
 .Dq unsafe
-mode.  The temp file will be unlinked before
+mode.
+The temp file will be unlinked before
 .Nm
-exits.  This is slightly better than
+exits.
+This is slightly better than
 .Xr mktemp 3
-but still introduces a race condition.  Use of this
+but still introduces a race condition.
+Use of this
 option is not encouraged.
 .El
 .Sh EXIT STATUS
