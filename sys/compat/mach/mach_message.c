@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.27.2.5 2004/09/21 13:25:42 skrll Exp $ */
+/*	$NetBSD: mach_message.c,v 1.27.2.6 2004/11/12 16:24:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27.2.5 2004/09/21 13:25:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27.2.6 2004/11/12 16:24:02 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -862,8 +862,7 @@ mach_trade_rights_complex(l, mm)
 			break;
 
 		case MACH_MSG_OOL_PORTS_DESCRIPTOR: {	/* XXX untested */
-			struct proc *rp;	/* remote process */
-			struct proc *lp;	/* local process */
+			struct lwp *rl;		/* remote LWP */
 			void *lumnp;		/* local user address */
 			void *rumnp;		/* remote user address */
 			int disp;		/* disposition*/
@@ -874,8 +873,7 @@ mach_trade_rights_complex(l, mm)
 			int error;	
 			int j;
 			
-			rp = mm->mm_l->l_proc;
-			lp = l->l_proc;
+			rl = mm->mm_l;
 			disp = mcm->mcm_desc.ool_ports[i].disposition;
 			rumnp = mcm->mcm_desc.ool_ports[i].address;
 			count = mcm->mcm_desc.ool_ports[i].count;
@@ -884,7 +882,7 @@ mach_trade_rights_complex(l, mm)
 			lumnp = NULL;
 
 			/* This allocates kmnp */
-			error = mach_ool_copyin(rp, rumnp, &kaddr, size, 0);
+			error = mach_ool_copyin(rl, rumnp, &kaddr, size, 0);
 			if (error != 0)
 				return MACH_SEND_INVALID_DATA;
 
@@ -893,7 +891,7 @@ mach_trade_rights_complex(l, mm)
 				mach_trade_rights(l, mm->mm_l, &kmnp[j], disp);
 
 			/* This frees kmnp */
-			if ((error = mach_ool_copyout(lp, kmnp, &lumnp, 
+			if ((error = mach_ool_copyout(l, kmnp, &lumnp, 
 			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
 				return MACH_SEND_INVALID_DATA;
 
@@ -907,16 +905,14 @@ mach_trade_rights_complex(l, mm)
 #endif
 			/* FALLTHROUGH */
 		case MACH_MSG_OOL_DESCRIPTOR: {	/* XXX untested */
-			struct proc *rp;	/* remote process */
-			struct proc *lp;	/* local process */
+			struct lwp *rl;		/* remote LWP */
 			void *ludata;		/* local user address */
 			void *rudata;		/* remote user address */
 			size_t size;		/* data size */
 			void *kdata;
 			int error;	
 			
-			rp = mm->mm_l->l_proc;
-			lp = l->l_proc;
+			rl = mm->mm_l;
 			rudata = mcm->mcm_desc.ool[i].address;
 			size = mcm->mcm_desc.ool[i].size;
 			kdata = NULL;
@@ -928,12 +924,12 @@ mach_trade_rights_complex(l, mm)
 			 */ 
 
 			/* This allocates kdata */
-			error = mach_ool_copyin(rp, rudata, &kdata, size, 0);
+			error = mach_ool_copyin(rl, rudata, &kdata, size, 0);
 			if (error != 0)
 				return MACH_SEND_INVALID_DATA;
 
 			/* This frees kdata */
-			if ((error = mach_ool_copyout(lp, kdata, &ludata, 
+			if ((error = mach_ool_copyout(l, kdata, &ludata, 
 			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
 				return MACH_SEND_INVALID_DATA;
 
@@ -953,8 +949,8 @@ mach_trade_rights_complex(l, mm)
 }
 
 inline int
-mach_ool_copyin(p, uaddr, kaddr, size, flags)
-	struct proc *p;
+mach_ool_copyin(l, uaddr, kaddr, size, flags)
+	struct lwp *l;
 	const void *uaddr;
 	void **kaddr;
 	size_t size;
@@ -962,6 +958,7 @@ mach_ool_copyin(p, uaddr, kaddr, size, flags)
 {
 	int error;
 	void *kbuf;
+	struct proc *p = l->l_proc;
 
 	/* 
 	 * Sanity check OOL size to avoid DoS on malloc: useless once
@@ -988,7 +985,7 @@ mach_ool_copyin(p, uaddr, kaddr, size, flags)
 	if (size > PAGE_SIZE)
 		size = PAGE_SIZE;
 	if ((flags & MACH_OOL_TRACE) && KTRPOINT(p, KTR_MOOL))
-		ktrmool(p, kaddr, size, uaddr);
+		ktrmool(l, kaddr, size, uaddr);
 #endif
 
 	*kaddr = kbuf;
@@ -996,8 +993,8 @@ mach_ool_copyin(p, uaddr, kaddr, size, flags)
 }
 
 inline int
-mach_ool_copyout(p, kaddr, uaddr, size, flags)
-	struct proc *p;
+mach_ool_copyout(l, kaddr, uaddr, size, flags)
+	struct lwp *l;
 	void *kaddr;
 	void **uaddr;
 	size_t size;
@@ -1005,6 +1002,7 @@ mach_ool_copyout(p, kaddr, uaddr, size, flags)
 {
 	vaddr_t ubuf;
 	int error = 0; 
+	struct proc *p = l->l_proc;
 
 	/* 
 	 * Sanity check OOL size to avoid DoS on malloc: useless once
@@ -1040,7 +1038,7 @@ mach_ool_copyout(p, kaddr, uaddr, size, flags)
 	if (size > PAGE_SIZE)
 		size = PAGE_SIZE;
 	if ((flags & MACH_OOL_TRACE) && KTRPOINT(p, KTR_MOOL))
-		ktrmool(p, kaddr, size, (void *)ubuf);
+		ktrmool(l, kaddr, size, (void *)ubuf);
 #endif
 
 out:

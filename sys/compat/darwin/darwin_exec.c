@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.16.2.5 2004/09/21 13:24:59 skrll Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.16.2.6 2004/11/12 16:24:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.5 2004/09/21 13:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.6 2004/11/12 16:24:02 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -319,7 +319,6 @@ static void
 darwin_e_proc_exit(p)
 	struct proc *p;
 {
-	struct lwp *l;
 	struct darwin_emuldata *ded;
 	int error, mode;
 	struct wsdisplay_cmap cmap;
@@ -329,10 +328,11 @@ darwin_e_proc_exit(p)
 	u_char kred[256];
 	u_char kgreen[256];
 	u_char kblue[256];
+	struct lwp *l;
 	caddr_t sg = stackgap_init(p, 0);
 
 	ded = p->p_emuldata;
-
+	l = proc_representative_lwp(p);
 	/*
 	 * mach_init is setting the bootstrap port for other processes.
 	 * If mach_init dies, we want to restore the original bootstrap 
@@ -348,7 +348,7 @@ darwin_e_proc_exit(p)
 	 */
 	if (ded->ded_hidsystem_finished != NULL) {
 		*ded->ded_hidsystem_finished = 1;
-		darwin_iohidsystem_postfake(p);
+		darwin_iohidsystem_postfake(l);
 		wakeup(ded->ded_hidsystem_finished);
 	}
 
@@ -358,7 +358,7 @@ darwin_e_proc_exit(p)
 	if (ded->ded_wsdev != NODEV) {
 		mode = WSDISPLAYIO_MODE_EMUL;
 		error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
-		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, p);
+		    WSDISPLAYIO_SMODE, (caddr_t)&mode, 0, l);
 #ifdef DEBUG_DARWIN
 		if (error != 0)
 			printf("Unable to switch back to text mode\n");

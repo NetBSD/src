@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.81.2.4 2004/09/21 13:35:17 skrll Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.81.2.5 2004/11/12 16:27:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.4 2004/09/21 13:35:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.81.2.5 2004/11/12 16:27:03 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_pipe.h"
@@ -903,9 +903,9 @@ sys_pipe(struct lwp *l, void *v, register_t *retval)
 
 	p = l->l_proc;
 	fdp = p->p_fd;
-	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, p)) != 0)
+	if ((error = socreate(AF_LOCAL, &rso, SOCK_STREAM, 0, l)) != 0)
 		return (error);
-	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, p)) != 0)
+	if ((error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, l)) != 0)
 		goto free1;
 	/* remember this socket pair implements a pipe */
 	wso->so_state |= SS_ISAPIPE;

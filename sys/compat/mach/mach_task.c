@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.25.2.4 2004/09/21 13:25:42 skrll Exp $ */
+/*	$NetBSD: mach_task.c,v 1.25.2.5 2004/11/12 16:24:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.4 2004/09/21 13:25:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.5 2004/11/12 16:24:02 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,7 +131,6 @@ mach_ports_lookup(args)
 	size_t *msglen = args->rsize;
 	struct lwp *l = args->l;
 	struct lwp *tl = args->tl;
-	struct proc *p = l->l_proc;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	mach_port_name_t mnp[7];
