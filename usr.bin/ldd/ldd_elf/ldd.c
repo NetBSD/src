@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.17 2003/02/06 12:40:21 fvdl Exp $	*/
+/*	$NetBSD: ldd.c,v 1.18 2003/04/23 21:39:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -143,7 +143,6 @@ main(int argc, char **argv)
 		close(fd);
 
 		_rtld_objmain->path = xstrdup(*argv);
-		_rtld_objmain->mainprog = true;
 		_rtld_digest_dynamic(_rtld_objmain);
 
 		/* Link the main program into the list of objects. */
