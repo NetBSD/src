@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.413 2003/06/26 09:25:58 wiz Exp $
+# $NetBSD: mi,v 1.414 2003/06/27 05:21:49 tshiozak Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -251,6 +251,7 @@
 ./usr/bin/hexdump	base-util-bin
 ./usr/bin/host		base-netutil-bin
 ./usr/bin/hoststat	base-mailwrapper-bin
+./usr/bin/iconv		base-util-bin
 ./usr/bin/id		base-util-bin
 # This is in `base-util-bin', not `base-rcs-bin' as it is used by pkgsrc
 ./usr/bin/ident		base-util-bin

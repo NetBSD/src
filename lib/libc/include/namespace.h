@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.78 2003/05/28 20:22:55 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.79 2003/06/27 05:21:54 tshiozak Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -282,6 +282,9 @@
 #define hesiod_init		_hesiod_init
 #define hesiod_resolve		_hesiod_resolve
 #define hesiod_to_bind		_hesiod_to_bind
+#define iconv			_iconv
+#define iconv_open		_iconv_open
+#define iconv_close		_iconv_close
 #define if_freenameindex	_if_freenameindex
 #define if_indextoname		_if_indextoname
 #define if_nameindex		_if_nameindex
