@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.18 2004/07/08 07:15:36 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.19 2004/07/19 09:42:23 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.18 2004/07/08 07:15:36 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.19 2004/07/19 09:42:23 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -764,8 +764,7 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 				    tflag == 0 &&
 #endif
 				    write(out, outbuf, wr) != wr) {
-					maybe_warn("error writing "
-						     "to output\n");
+					maybe_warn("error writing to output");
 					out_tot = -1;
 					goto stop;
 				}
