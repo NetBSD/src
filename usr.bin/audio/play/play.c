@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.17.4.2 2001/03/14 23:22:12 he Exp $	*/
+/*	$NetBSD: play.c,v 1.17.4.3 2002/01/29 23:13:26 he Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -36,6 +36,7 @@
 
 #include <err.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,10 +46,12 @@
 
 #include "libaudio.h"
 
-int main __P((int, char *[]));
-void usage __P((void));
-void play_fd __P((int, char *));
-ssize_t audioctl_write_fromhdr __P((void *, size_t, int, size_t *));
+int main (int, char *[]);
+void usage (void);
+void play (char *);
+void play_fd (const char *, int);
+ssize_t audioctl_write_fromhdr (void *, size_t, int, size_t *);
+void cleanup (int) __attribute__((__noreturn__));
 
 audio_info_t	info;
 int	volume;
@@ -65,7 +68,9 @@ int	channels;
 char	const *play_errstring = NULL;
 size_t	bufsize;
 int	audiofd, ctlfd;
-size_t	datasize;
+int	exitstatus = EXIT_SUCCESS;
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -73,13 +78,11 @@ main(argc, argv)
 	char *argv[];
 {
 	size_t	len;
-	off_t	filesize;
 	int	ch;
-	int	exitstatus = EXIT_SUCCESS;
 	int	iflag = 0;
 	int	verbose = 0;
-	char	*device = 0;
-	char	*ctldev = 0;
+	const char *device = 0;
+	const char *ctldev = 0;
 
 	while ((ch = getopt(argc, argv, "b:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
 		switch (ch) {
@@ -113,9 +116,10 @@ main(argc, argv)
 			break;
 		case 'P':
 			decode_int(optarg, &precision);
-			if (precision != 8 && precision != 16 &&
-			    precision != 24 && precision != 32)
-				errx(1, "precision must be between 8, 16, 24 or 32");
+			if (precision != 4 && precision != 8 &&
+			    precision != 16 && precision != 24 &&
+			    precision != 32)
+				errx(1, "precision must be between 4, 8, 16, 24 or 32");
 			break;
 		case 'p':
 			len = strlen(optarg);
@@ -185,151 +189,175 @@ main(argc, argv)
 	if (bufsize < 32 * 1024)
 		bufsize = 32 * 1024;
 
-	if (*argv) {
-		int fd;
-		struct stat sb;
-		void *addr, *oaddr;
+	signal(SIGINT, cleanup);
+	signal(SIGTERM, cleanup);
+	signal(SIGHUP, cleanup);
 
-		do {
-			ssize_t	hdrlen;
+	if (*argv)
+		do
+			play(*argv++);
+		while (*argv);
+	else
+		play_fd("standard input", STDIN_FILENO);
 
-			fd = open(*argv, O_RDONLY);
-			if (fd < 0) {
-				warn("could not open %s", *argv);
-				exitstatus = EXIT_FAILURE;
-				continue;
-			}
+	cleanup(0);
+}
 
-			if (fstat(fd, &sb) < 0)
-				err(1, "could not fstat %s", *argv);
-			filesize = sb.st_size;
+void
+cleanup(signo)
+	int signo;
+{
 
-			oaddr = addr = mmap(0, (size_t)filesize, PROT_READ,
-			    MAP_SHARED, fd, 0);
-
-			/*
-			 * if we failed to mmap the file, try to read it
-			 * instead, so that filesystems, etc, that do not
-			 * support mmap() work
-			 */
-			if (addr == MAP_FAILED) {
-				play_fd(fd, *argv);
-				close(fd);
-				continue;
-			}
-
-			/*
-			 * give the VM system a bit of a hint about the type
-			 * of accesses we will make.
-			 */
-			if (madvise(addr, filesize, MADV_SEQUENTIAL) < 0 &&
-			    !qflag)
-				warn("madvise failed, ignoring");
-
-			/*
-			 * get the header length and set up the audio device
-			 */
-			if ((hdrlen = audioctl_write_fromhdr(addr,
-			    (size_t)filesize, ctlfd, &datasize)) < 0) {
-				if (play_errstring)
-					errx(1, "%s: %s", play_errstring, *argv);
-				else
-					errx(1, "unknown audio file: %s", *argv);
-			}
-
-			filesize -= hdrlen;
-			addr = (char *)addr + hdrlen;
-			if (filesize < datasize || datasize == 0) {
-				warn("bogus datasize: %lu", (long)datasize);
-				datasize = filesize;
-			}
-
-			while (datasize > bufsize) {
-				if (write(audiofd, addr, bufsize) != bufsize)
-					err(1, "write failed");
-				addr = (char *)addr + bufsize;
-				datasize -= bufsize;
-			}
-			if (write(audiofd, addr, (size_t)datasize) != (ssize_t)datasize)
-				err(1, "final write failed");
-
-			if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
-				warn("audio drain ioctl failed");
-			if (munmap(oaddr, (size_t)filesize) < 0 && !qflag)
-				err(1, "munmap failed");
-
-			close(fd);
-			
-		} while (*++argv);
-	} else {
-		play_fd(STDIN_FILENO, "standard input");
-	}
-
+	close(audiofd);
+	(void)ioctl(audiofd, AUDIO_FLUSH, NULL);
+	(void)ioctl(ctlfd, AUDIO_SETINFO, &info);
 	exit(exitstatus);
 }
 
-/*
- * play the file on on the file descriptor fd
- */
 void
-play_fd(fd, file)
-	int     fd;
-	char    *file;
+play(file)
+	char *file;
 {
-	char    *buffer = malloc(bufsize);
-	ssize_t hdrlen;
-	int     n;
-	size_t	datasize;
-	size_t	datainbuf;
+	struct stat sb;
+	void *addr, *oaddr;
+	off_t	filesize;
+	size_t datasize;
+	ssize_t	hdrlen;
+	int fd;
 
-	if (buffer == NULL)
-		err(1, "malloc of read buffer failed");
+	if (file[0] == '-' && file[1] == 0) {
+		play_fd("standard input", STDIN_FILENO);
+		return;
+	}
 
-	n = read(fd, buffer, bufsize);
+	fd = open(file, O_RDONLY);
+	if (fd < 0) {
+		if (!qflag)
+			warn("could not open %s", file);
+		exitstatus = EXIT_FAILURE;
+		return;
+	}
 
-	if (n < 0)
-		err(1, "read of standard input failed");
-	if (n == 0)
-		errx(1, "EOF on standard input");
+	if (fstat(fd, &sb) < 0)
+		err(1, "could not fstat %s", file);
+	filesize = sb.st_size;
 
-	hdrlen = audioctl_write_fromhdr(buffer, n, ctlfd, &datasize);
-	if (hdrlen < 0) {
+	oaddr = addr = mmap(0, (size_t)filesize, PROT_READ,
+	    MAP_SHARED, fd, 0);
+
+	/*
+	 * if we failed to mmap the file, try to read it
+	 * instead, so that filesystems, etc, that do not
+	 * support mmap() work
+	 */
+	if (addr == MAP_FAILED) {
+		play_fd(file, fd);
+		close(fd);
+		return;
+	}
+
+	/*
+	 * give the VM system a bit of a hint about the type
+	 * of accesses we will make.
+	 */
+	if (madvise(addr, filesize, MADV_SEQUENTIAL) < 0 &&
+	    !qflag)
+		warn("madvise failed, ignoring");
+
+	/*
+	 * get the header length and set up the audio device
+	 */
+	if ((hdrlen = audioctl_write_fromhdr(addr,
+	    (size_t)filesize, ctlfd, &datasize)) < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);
 		else
 			errx(1, "unknown audio file: %s", file);
 	}
 
-	/* advance the buffer if we have to */
-	if (hdrlen > 0) {
-		/* shouldn't happen */
-		if (hdrlen > n)
-			err(1, "bogus hdrlen %d > length %d?", (int)hdrlen, n);
-
-		memmove(buffer, buffer + hdrlen, n - hdrlen);
+	filesize -= hdrlen;
+	addr = (char *)addr + hdrlen;
+	if (filesize < datasize || datasize == 0) {
+		warnx("bogus datasize: %lu", (long)datasize);
+		datasize = filesize;
 	}
 
-	datainbuf = n;
-	do {
-		if (datasize < datainbuf) {
-			datainbuf = datasize;
-		}
-		else {
-			n = read(fd, buffer + datainbuf, MIN(bufsize - datainbuf, datasize));
-			if (n == -1)
-				err(1, "read of %s failed", file);
-			datainbuf += n;
-		}
-		if (write(audiofd, buffer, datainbuf) != datainbuf)
+	while (datasize > bufsize) {
+		if (write(audiofd, addr, bufsize) != bufsize)
 			err(1, "write failed");
-
-		datasize -= datainbuf;
-		datainbuf = 0;
+		addr = (char *)addr + bufsize;
+		datasize -= bufsize;
 	}
-	while (datasize);
+	if (write(audiofd, addr, (size_t)datasize) != (ssize_t)datasize)
+		err(1, "final write failed");
 
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
+	if (munmap(oaddr, (size_t)filesize) < 0)
+		err(1, "munmap failed");
+
+	close(fd);
+}
+
+/*
+ * play the file on on the file descriptor fd
+ */
+void
+play_fd(file, fd)
+	const char *file;
+	int     fd;
+{
+	char    *buffer = malloc(bufsize);
+	ssize_t hdrlen;
+	int     nr, nw;
+	size_t	datasize = 0;
+	size_t	dataout = 0;
+
+	if (buffer == NULL)
+		err(1, "malloc of read buffer failed");
+
+	nr = read(fd, buffer, bufsize);
+	if (nr < 0)
+		goto read_error;
+	if (nr == 0) {
+		if (fflag)
+			return;
+		err(1, "unexpected EOF");
+	}
+	hdrlen = audioctl_write_fromhdr(buffer, nr, ctlfd, &datasize);
+	if (hdrlen < 0) {
+		if (play_errstring)
+			errx(1, "%s: %s", play_errstring, file);
+		else
+			errx(1, "unknown audio file: %s", file);
+	}
+	if (hdrlen > 0) {
+		if (hdrlen >= nr)	/* shouldn't happen */
+			errx(1, "header seems really large");
+		memmove(buffer, buffer + hdrlen, nr - hdrlen);
+		nr -= hdrlen;
+	}
+	while (datasize == 0 || dataout < datasize) {
+		if (datasize != 0 && dataout + nr > datasize)
+			nr = datasize - dataout;
+		nw = write(audiofd, buffer, nr);
+		if (nw != nr)
+			goto write_error;
+		dataout += nw;
+		nr = read(fd, buffer, bufsize);
+		if (nr == -1)
+			goto read_error;
+		if (nr == 0)
+			break;
+	}
+	/* something to think about: no message given for dataout < datasize */
+	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
+		warn("audio drain ioctl failed");
+	return;
+read_error:
+	err(1, "read of standard input failed");
+write_error:
+	err(1, "audio device write failed");
 }
 
 /*
@@ -351,10 +379,11 @@ audioctl_write_fromhdr(hdr, fsz, fd, datasize)
 	AUDIO_INITINFO(&info);
 	sunhdr = hdr;
 	if (ntohl(sunhdr->magic) == AUDIO_FILE_MAGIC) {
-		if (audio_get_sun_encoding(ntohl(sunhdr->encoding), 
+		if (audio_sun_to_encoding(ntohl(sunhdr->encoding),
 		    &info.play.encoding, &info.play.precision)) {
-			warnx("unknown unsupported Sun audio encoding format %d",
-			    ntohl(sunhdr->encoding));
+			if (!qflag)
+				warnx("unknown unsupported Sun audio encoding"
+				      " format %d", ntohl(sunhdr->encoding));
 			if (fflag)
 				goto set_audio_mode;
 			return (-1);
@@ -362,14 +391,15 @@ audioctl_write_fromhdr(hdr, fsz, fd, datasize)
 
 		info.play.sample_rate = ntohl(sunhdr->sample_rate);
 		info.play.channels = ntohl(sunhdr->channels);
-		hdr_len = ntohl(sunhdr->hdr_size); 
+		hdr_len = ntohl(sunhdr->hdr_size);
 
 		*datasize = ntohl(sunhdr->data_size);
 		goto set_audio_mode;
 	}
 
-	hdr_len = audio_parse_wav_hdr(hdr, fsz, &info.play.encoding,
-	    &info.play.precision, &info.play.sample_rate, &info.play.channels, datasize);
+	hdr_len = audio_wav_parse_hdr(hdr, fsz, &info.play.encoding,
+	    &info.play.precision, &info.play.sample_rate, &info.play.channels,
+	    datasize);
 
 	switch (hdr_len) {
 	case AUDIO_ESHORTHDR:
@@ -412,15 +442,13 @@ set_audio_mode:
 
 	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");
-	
+
 	return (hdr_len);
 }
 
 void
 usage()
 {
-	extern char *__progname;
-
 	fprintf(stderr, "Usage: %s [-hiqV] [options] files\n", __progname);
 	fprintf(stderr, "Options:\n\t"
 	    "-C audio control device\n\t"
