@@ -1,6 +1,6 @@
 # Copyright 1990 W. Jolitz
 # 	from: @(#)Makefile.i386	7.1 5/10/91
-#	$Id: Makefile.i386,v 1.32 1993/10/09 00:31:21 cgd Exp $
+#	$Id: Makefile.i386,v 1.33 1993/10/13 06:43:17 cgd Exp $
 #
 # Makefile for NetBSD
 #
@@ -36,12 +36,20 @@ ASFLAGS=
 CFLAGS=	-O ${DEBUG} ${COPTS}
 LOAD_ADDRESS ?= FE100000
 
+### find out what to use for libkern
+.include "$S/lib/libkern/Makefile.inc"
+.ifndef PROF
+LIBKERN=	${KERNLIB}
+.else
+LIBKERN=	${KERNLIB_PROF}
+.endif
+
 NORMAL_C= ${CC} -c ${CFLAGS} ${PROF} $<
 NORMAL_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
 NORMAL_S= ${CPP} -I. -DLOCORE ${COPTS} $< | ${AS} ${ASFLAGS} -o $*.o
 DRIVER_C= ${CC} -c ${CFLAGS} ${PROF} $<
 DRIVER_C_C= ${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
-SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o ../libkern.a
+SYSTEM_OBJS=locore.o ${OBJS} param.o ioconf.o conf.o ${LIBKERN}
 SYSTEM_DEP=Makefile symbols.sort ${SYSTEM_OBJS}
 SYSTEM_LD_HEAD= 	@echo loading $@; rm -f $@
 SYSTEM_LD= @${LD} -z -T ${LOAD_ADDRESS} -o $@ -X vers.o ${SYSTEM_OBJS}
