@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.5 1999/01/19 07:58:05 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.6 1999/01/20 11:49:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "namespace.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -48,6 +50,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(nsdispatch,_nsdispatch);
+#endif
 
 
 /*
