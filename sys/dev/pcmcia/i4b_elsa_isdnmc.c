@@ -33,7 +33,7 @@
  *	ELSA MicroLink ISDN/MC card specific routines
  *	---------------------------------------------
  *
- *	$Id: i4b_elsa_isdnmc.c,v 1.1.1.1 2001/01/05 12:50:21 martin Exp $
+ *	$Id: i4b_elsa_isdnmc.c,v 1.2 2001/01/18 22:14:00 martin Exp $
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -253,9 +253,7 @@ elsa_isdnmc_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 /*
  * XXX - one time only! Some of this has to go into an enable
  * function, with apropriate counterpart in disable, so a card
- * could be removed an inserted again. But never mind for now,
- * this won't work anyway for several reasons (both in NetBSD
- * and in I4B).
+ * could be removed an inserted again.
  */
 int
 isic_attach_elsaisdnmc(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)

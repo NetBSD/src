@@ -33,7 +33,7 @@
  *	pcmcia_isic.h - common definitions for pcmcia isic cards
  *	--------------------------------------------------------
  *
- *	$Id: pcmcia_isic.h,v 1.1.1.1 2001/01/05 12:50:21 martin Exp $ 
+ *	$Id: pcmcia_isic.h,v 1.2 2001/01/18 22:14:02 martin Exp $ 
  *
  *      last edit-date: [Sun Feb 14 10:29:33 1999]
  *
@@ -56,5 +56,5 @@ typedef int (*isic_pcmcia_attach_func)(struct pcmcia_l1_softc *sc, struct pcmcia
 extern int isic_attach_fritzpcmcia(struct pcmcia_l1_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
 extern int isic_attach_elsaisdnmc(struct pcmcia_l1_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
 extern int isic_attach_elsamcall(struct pcmcia_l1_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
-
+extern int isic_attach_sbspeedstar2(struct pcmcia_l1_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
 

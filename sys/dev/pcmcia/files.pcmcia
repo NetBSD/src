@@ -1,4 +1,4 @@
-#	$NetBSD: files.pcmcia,v 1.31 2001/01/05 13:09:18 martin Exp $
+#	$NetBSD: files.pcmcia,v 1.32 2001/01/18 22:14:00 martin Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
 # Included by ports that need it.
@@ -112,9 +112,9 @@ attach isic at pcmcia with pcmcia_isic
 file dev/pcmcia/pcmcia_isic.c			pcmcia_isic
 
 defopt	opt_isicpcmcia.h	ISICPCMCIA_AVM_A1 ISICPCMCIA_ELSA_ISDNMC
-				ISICPCMCIA_ELSA_MCALL
+				ISICPCMCIA_ELSA_MCALL ISICPCMCIA_SBSPEEDSTAR2
 
 file dev/pcmcia/i4b_avm_fritz_pcmcia.c		pcmcia_isic
 file dev/pcmcia/i4b_elsa_isdnmc.c		pcmcia_isic
 file dev/pcmcia/i4b_elsa_mcall.c		pcmcia_isic
-
+file dev/pcmcia/i4b_sbspeedstar2.c		pcmcia_isic
