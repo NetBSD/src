@@ -22,7 +22,6 @@ static struct obio_internal {
     int obio_rw;
 } obio_internal_dev[] = {
     {&eeprom_va,                     OBIO_EEPROM,   ALL, OBIO_EEPROM_SIZE  ,1},
-    {(vm_offset_t *) &interrupt_reg, OBIO_INTERREG, ALL, OBIO_INTERREG_SIZE,1},
     {&memerr_va,                     OBIO_MEMERR,   ALL, OBIO_MEMERR_SIZE  ,1},
     {NULL,                           0,               0, 0                 ,0}
 /*  {&ecc_va, OBIO_MEMERR,  ALL, OBIO_MEMERR_SIZE },        */

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/m68k.s,v 1.7 1993/08/28 15:37:53 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/m68k.s,v 1.8 1993/10/12 05:26:36 glass Exp $
  */
 
 ENTRY(getvbr)
@@ -71,8 +71,12 @@ loop:   movsb a0@+, d2
 
 ENTRY(get_control_byte)
 	movl sp@(4), a0
+	movc sfc, d1
+	moveq #FC_CONTROL, d0
+	movec d0, sfc
 	moveq #0, d0
 	movsb a0@, d0
+	movc d1, sfc
 	rts
 	
 /*
@@ -81,7 +85,11 @@ ENTRY(get_control_byte)
 
 ENTRY(get_control_word)
 	movl sp@(4), a0
+	movc sfc, d1
+	moveq #FC_CONTROL, d0
+	movec d0, sfc
 	movsl a0@, d0
+	movc d1, sfc
 	rts
 
 /*	
@@ -91,7 +99,13 @@ ENTRY(get_control_word)
 ENTRY(set_control_byte)
 	movl sp@(4), a0
 	movl sp@(8), d0
+	movc dfc, d1
+	movl d2, sp@-
+	moveq #FC_CONTROL, d2
+	movc d2, dfc	
 	movsb d0, a0@
+	movc d1, dfc
+	movl sp@+, d2
 	rts
 
 /*
@@ -101,7 +115,14 @@ ENTRY(set_control_byte)
 ENTRY(set_control_word)
 	movl sp@(4), a0
 	movl sp@(8), d0
+	movc dfc, d1
+	movl d2, sp@-
+	moveq #FC_CONTROL, d2
+	movc d2, dfc	
 	movsl d0, a0@
+	movc d1, dfc
+	movc dfc, d1
+	movl sp@+, d2
 	rts
 
 /*

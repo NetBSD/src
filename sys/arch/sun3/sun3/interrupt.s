@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.5 1993/08/28 15:37:37 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/interrupt.s,v 1.6 1993/10/12 05:26:04 glass Exp $
  */
 
 .globl _cnt
@@ -38,7 +38,9 @@
 _intrcnt:
     /* spurious  1  2  3  4  5  6  7*/
 	.long 0, 0, 0, 0, 0, 0, 0, 0
-
+.globl _clock_turn
+_clock_turn:
+	.long 0	
 .text
 
 #define INTERRUPT_BEGIN(interrupt_num) \
@@ -108,27 +110,22 @@ _level5intr:
 	INTERRUPT_HANDLE(5)
 
 /* clock */
-.globl _level5intr_clock, _intersil_va, _interrupt_reg, _clock_intr
+.globl _level5intr_clock, _interrupt_reg, _clock_intr
 .align 4
 _level5intr_clock:
-	INTERRUPT_BEGIN(5)	| stack aligned, a0, a1, d0, d1 saved
-	movl _intersil_va, a0	| move intersil_va to  a0
-	clrl d0
-	movb a0@(INTERSIL_INTR_OFFSET), d0
-/*	movb #INTERSIL_INTER_CSECONDS, a0@(INTERSIL_INTR_OFFSET)*/
-	movl _interrupt_reg, a1
-	andb #~IREG_CLOCK_ENAB_5, a1@
-	orb #IREG_CLOCK_ENAB_5, a1@
-	clrl d1
-	movb a0@(INTERSIL_INTR_OFFSET), d1
+	tstb CLOCK_VA+INTERSIL_INTR_OFFSET
+	andb #~IREG_CLOCK_ENAB_5, INTERREG_VA
+	orb #IREG_CLOCK_ENAB_5, INTERREG_VA
+	tstb CLOCK_VA+INTERSIL_INTR_OFFSET
+	notl _clock_turn
+	jeq cont
+	rte
+cont:	INTERRUPT_BEGIN(5)	| stack aligned, a0, a1, d0, d1 saved
 	movl sp, a1
 	movl a1@(16), sp@-	| clockframe.sr (ps)
 	movl a1@(16+4), sp@-	| clockframe.pc
-	movl d1, sp@-
-	movl d0, sp@-
-	movl a0, sp@-
 	jbsr _clock_intr
-	addl #20,sp		| pop clockframe
+	addl #8,sp		| pop clockframe
 	INTERRUPT_END
 
 /* SCCs */

@@ -130,10 +130,13 @@ Lsw0:
 
 	.globl	_curpcb
 	.globl	_masterpaddr	| XXX compatibility (debuggers)
+	.globl _Idle_count
 	.data
 _masterpaddr:			| XXX compatibility (debuggers)
 _curpcb:
 	.long	0
+_Idle_count:
+	.long   0
 pcbflag:
 	.byte	0		| copy of pcb_flags low byte
 	.align	2
@@ -161,6 +164,7 @@ Lidle:
 Idle:
 idle:
 	movw	#PSL_HIGHIPL,sr
+	addql   #1, _Idle_count
 	tstl	_whichqs
 	jeq	Lidle
 	movw	#PSL_LOWIPL,sr
@@ -271,10 +275,10 @@ Lswnofpsave:
 	
 	/* see if pmap_activate needs to be called; should remove this */
 	movl	a0@(P_VMSPACE),a0	| vmspace = p->p_vmspace
-#ifdef DIAGNOSTIC
+/*#ifdef DIAGNOSTIC*/
 	tstl	a0			| map == VM_MAP_NULL?
 	jeq	Lbadsw			| panic
-#endif
+/*#endif*/
 	lea	a0@(VM_PMAP),a0		| pmap = &vmspace.vm_pmap
 	pea	a1@			| push pcb (at p_addr)
 	pea	a0@			| push pmap

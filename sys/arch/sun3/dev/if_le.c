@@ -202,7 +202,7 @@ ledrinit(ler2)
 		ler2->ler2_rmd[i].rmd3 = 0;
 	}
 	for (i = 0; i < LETBUF; i++) {
-	        a = LANCE_ADDR(&ler2->ler2_rbuf[i][0]);
+	        a = LANCE_ADDR(&ler2->ler2_tbuf[i][0]);
 #if 0
 		if (!ISQUADALIGN(a))
 		    panic("rbuf not quad aligned");

@@ -58,6 +58,7 @@
 
 #include "intersil7170.h"
 #include "interreg.h"
+#include "buserr.h"
 
 main()
 {
@@ -66,19 +67,27 @@ main()
     struct proc *p = (struct proc *) 0;
     struct vmspace *vms = (struct vmspace *) 0;
     struct intersil7170 *intersil_addr = (struct intersil7170 *) 0;
-    
+    unsigned int i;
 
-    printf("#define\tINTERSIL_INTR_OFFSET %d\n",
-	   &intersil_addr->interrupt_reg);
-    printf("#define\tINTERSIL_INTER_CSECONDS %d\n", INTERSIL_INTER_CSECONDS);
-				/* 68k isms */
+
+    /* intersil clock internals */
     printf("#define\tIREG_CLOCK_ENAB_5 %d\n", IREG_CLOCK_ENAB_5);
+
+    /* bus error stuff */
+    printf("#define\tBUSERR_REG %d\n", BUSERR_REG);
+    printf("#define\tBUSERR_PROTERR %d\n", BUSERR_PROTERR);
+    printf("#define\tBUSERR_TIMEOUT %d\n", BUSERR_TIMEOUT);
+    printf("#define\tBUSERR_INVALID %d\n", BUSERR_INVALID);
+
+    /* 68k isms */
     printf("#define\tPSL_LOWIPL %d\n", PSL_LOWIPL);
     printf("#define\tPSL_HIGHIPL %d\n", PSL_HIGHIPL);
     printf("#define\tPSL_IPL7 %d\n", PSL_IPL7);
     printf("#define\tPSL_USER %d\n", PSL_USER);
     printf("#define\tSPL1 %d\n", PSL_S | PSL_IPL1);
     printf("#define\tFC_CONTROL %d\n",  FC_CONTROL);
+    printf("#define\tFC_SUPERD %d\n",  FC_SUPERD);
+    printf("#define\tFC_USERD %d\n",  FC_USERD);
 
 				/* sun3 control space isms */
     printf("#define\tCONTEXT_0 %d\n",   CONTEXT_0);
@@ -93,6 +102,11 @@ main()
     printf("#define\tMONSHORTSEG %d\n",       MONSHORTSEG);
     printf("#define\tUSRSTACK %d\n",          USRSTACK);
 				/* kernel-isms */
+    printf("#define\tINTERSIL_INTR_OFFSET %d\n",
+	   &intersil_addr->interrupt_reg);
+    printf("#define\tINTERSIL_INTER_CSECONDS %d\n", INTERSIL_INTER_CSECONDS);
+    printf("#define\tCLOCK_VA %d\n", CLOCK_VA);
+    printf("#define\tINTERREG_VA %d\n", INTERREG_VA);
     printf("#define\tKERNBASE %d\n",        KERNBASE);
     printf("#define\tUPAGES %d\n",          UPAGES);
     printf("#define\tUPAGE_ADDR %d\n",      MONSHORTSEG);
@@ -102,8 +116,21 @@ main()
     printf("#define\tENAMETOOLONG %d\n",  ENAMETOOLONG);
 
                                 /* trap constants */
+    printf("#define\tT_BUSERR %d\n", T_BUSERR);
+    printf("#define\tT_ADDRERR %d\n", T_ADDRERR);
+    printf("#define\tT_ILLINST %d\n", T_ILLINST);
+    printf("#define\tT_ZERODIV %d\n", T_ZERODIV);
+    printf("#define\tT_CHKINST %d\n", T_CHKINST);
+    printf("#define\tT_TRAPVINST %d\n", T_TRAPVINST);
+    printf("#define\tT_PRIVINST %d\n", T_PRIVINST);
+    printf("#define\tT_TRACE %d\n", T_TRACE);
+    printf("#define\tT_MMUFLT %d\n", T_MMUFLT);
     printf("#define\tT_SSIR %d\n", T_SSIR);
+    printf("#define\tT_FMTERR %d\n", T_FMTERR);
+    printf("#define\tT_COPERR %d\n", T_COPERR);
+    printf("#define\tT_FPERR %d\n", T_FPERR);
     printf("#define\tT_ASTFLT %d\n", T_ASTFLT);
+    printf("#define\tT_TRAP15 %d\n", T_TRAP15);
     
     /*
      * unix structure-isms
@@ -126,6 +153,10 @@ main()
     printf("#define\tPCB_REGS %d\n", pcb->pcb_regs);
     printf("#define\tPCB_ONFAULT %d\n", &pcb->pcb_onfault);
     printf("#define\tPCB_FPCTX %d\n", &pcb->pcb_fpregs);
+    for (i = 0; i < 32; i++)
+	if ((1 << i) & PCB_HPUXTRACE)
+	    printf("#define\tPCB_TRCB %d\n", i);
+
     printf("#define\tSIZEOF_PCB %d\n", sizeof(struct pcb));
 				/* vm statistics */
     printf("#define\tV_SWTCH %d\n", &vm->v_swtch);

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/intersil7170.h,v 1.2 1993/08/28 15:37:41 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/intersil7170.h,v 1.3 1993/10/12 05:26:15 glass Exp $
  */
 
 /*
@@ -72,8 +72,8 @@ struct intersil7170 {
 #define INTERSIL_CMD_IDISABLE   0x0
 #define INTERSIL_CMD_IENABLE   0x10
 
-#define INTERSIL_CMD_TEST_MODE       0x0
-#define INTERSIL_CMD_NORMAL_MODE    0x20
+#define INTERSIL_CMD_TEST_MODE      0x20
+#define INTERSIL_CMD_NORMAL_MODE    0x0
 
 /* bit assignments for interrupt register r/w, p 7 of 10*/
 
@@ -94,3 +94,4 @@ struct intersil7170 {
 #define INTERSIL_UNIX_BASE 70
 
 #define INTERSIL_LEAP_YEAR(x) !((x) % 4)
+

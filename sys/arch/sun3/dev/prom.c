@@ -145,7 +145,6 @@ int promstart(tp)
     int s;
     int c;
 
-    mon_printf("promstart called\n");
     s = spltty();
     if (tp->t_state & (TS_TIMEOUT | TS_TTSTOP)) goto out;
     if (RB_LEN(&tp->t_out) <= tp->t_lowat) {
@@ -188,7 +187,6 @@ promcnprobe(cp)
 {
     int prommajor;
 
-    mon_printf("prom console probed (start)\n");
     /* locate the major number */
     for (prommajor = 0; prommajor < nchrdev; prommajor++)
 	if (cdevsw[prommajor].d_open == promopen)
@@ -198,7 +196,6 @@ promcnprobe(cp)
     cp->cn_pri = CN_NORMAL;	/* will always exist but you don't
 				 * want to use it unless you have to
 				 */
-    mon_printf("prom console probed (end)\n");
 }
 
 promcninit(cp)

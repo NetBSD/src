@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.9 1993/08/28 15:37:11 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.10 1993/10/12 05:25:13 glass Exp $
  */
 /*
  * machine-dependent clock routines; intersil7170
@@ -50,7 +50,7 @@
 #include "intersil7170.h"
 #include "interreg.h"
 
-#define intersil_clock ((volatile struct intersil7170 *) intersil_softc->clock_va)
+#define intersil_clock ((volatile struct intersil7170 *) CLOCK_VA)
 #define intersil_command(run, interrupt) \
     (run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
      INTERSIL_CMD_NORMAL_MODE)
@@ -84,7 +84,6 @@ struct clock_softc {
 };
 
 struct clock_softc *intersil_softc = NULL;
-caddr_t intersil_va = NULL;
 
 static int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
@@ -199,10 +198,9 @@ void clockattach(parent, self, args)
     void level5intr_clock();
     vm_offset_t pte;
 
-    clock_addr = 
-	OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_CLOCK);
+    clock_addr = OBIO_CLOCK;
     clock->clock_level = OBIO_DEFAULT_PARAM(int, obio_loc->obio_level, 5);
-    clock->clock_va = obio_alloc(clock_addr, OBIO_CLOCK_SIZE, OBIO_WRITE);
+    clock->clock_va = (caddr_t) CLOCK_VA;
     if (!clock->clock_va) {
 	printf(": not enough obio space\n");
 	return;
@@ -210,47 +208,29 @@ void clockattach(parent, self, args)
     obio_print(clock_addr, clock->clock_level);
     if (clock->clock_level != 5) {
 	printf(": level != 5\n");
-	panic("clock");
+	return;
     }
     intersil_softc = clock;
-    intersil_va = clock->clock_va;
-    pte = get_pte(intersil_va);
-    pte_print(pte);
-    printf("intersil_clock_addr = %x\n", intersil_clock);
-    printf("intersil_clock_counters = %x\n", &intersil_clock->counters);
-    printf("intersil_clock_ram = %x\n", &intersil_clock->ram);
-    printf("intersil_clock_interrupt = %x\n", &intersil_clock->interrupt_reg);
-    printf("intersil_clock_command = %x\n", &intersil_clock->command_reg);
     intersil_disable();
-    printf("before clear level 7\n");
     set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
-    printf("after clear level 7\n");
     isr_add_custom(clock->clock_level, level5intr_clock);
-    printf("before enable level 5\n");
     set_clk_mode(IREG_CLOCK_ENAB_5, 0, 0);
-    printf("after enable level 5\n");
     printf("\n");
 }
 
 int clock_count = 0;
 
-void clock_intr(vaddr, status_before, status_after, frame)
-     unsigned int vaddr;
-     unsigned int status_before;
-     unsigned int status_after;
+void clock_intr(frame)
      clockframe frame;
 {
-    printf("clock_intr: total of %d interrupts received\n",
-	   clock_count);
-    printf("clock_intr: frame pc %x sr %x\n", frame.pc, frame.ps);
-    printf("clock_intr: clk_interrupt_reg before %b\n",
-	   status_before, INTERSIL_INTER_BITS);
-    printf("clock_intr: clk_interrupt_reg after %b\n",
-	   status_after, INTERSIL_INTER_BITS);
-    printf("clock_intr: vaddr %x\n", vaddr);
+    if ((clock_count % 1000) == 0) {
+#if 0
+	printf("clock_intr: total of %d interrupts received\n",
+	       clock_count);
+	printf("clock_intr: frame pc %x sr %x\n", frame.pc, frame.ps);
+#endif
+    }
     clock_count++;
-    if (clock_count == 30)
-	sun3_stop();
     hardclock(frame);
 }
 
@@ -276,7 +256,6 @@ void startrtclock()
 {
     char dummy;
 
-    printf("startrtclock(): begin\n");
     if (!intersil_softc)
 	panic("clock: not initialized");
 
@@ -284,7 +263,6 @@ void startrtclock()
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
 						   INTERSIL_CMD_IDISABLE);
     dummy = intersil_clear();
-    printf("startrtclock(): end\n");
 }
 
 void enablertclock()
@@ -366,9 +344,9 @@ void inittodr(base)
     long diff_time;
     void resettodr();
 
-    printf("inittodr: called\n");
     clock_time = intersil_to_timeval();
 
+    if (!base) goto set_time;
     if (!clock_time.tv_sec && (base <= 0)) goto set_time;
 	
     if (clock_time.tv_sec < base) {
@@ -423,7 +401,6 @@ void resettodr()
 {
     struct intersil_map hdw_format;
 
-    printf("inittodr: called\n");
     timeval_to_intersil(time, &hdw_format);
     intersil_clock->command_reg = intersil_command(INTERSIL_CMD_STOP,
 						   INTERSIL_CMD_IDISABLE);
@@ -449,7 +426,6 @@ void microtime(tvp)
 
     /* as yet...... this makes little sense*/
     
-    printf("microtime: called\n");
     *tvp = time;
     if (tvp->tv_sec == lasttime.tv_sec &&
 	tvp->tv_usec <= lasttime.tv_usec &&

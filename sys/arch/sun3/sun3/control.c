@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/control.c,v 1.3 1993/08/28 15:37:22 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/control.c,v 1.4 1993/10/12 05:25:28 glass Exp $
  */
 #include "sys/systm.h"
 #include "sys/types.h"
@@ -106,12 +106,10 @@ void set_pte_pmeg(pmeg_num, page_num,pte)
 {
     vm_offset_t va;
 
-    printf("starting set_pte_pmeg\n");
     va = temp_seg_va;
     set_segmap(temp_seg_va, pmeg_num);
     va += NBPG*page_num;
     set_pte(va, pte);
     set_segmap(temp_seg_va, SEGINV);
-    printf("ending set_pte_pmeg\n");
 }
 
