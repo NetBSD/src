@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.4,v 1.1.2.1 2000/12/14 00:23:05 he Exp $
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.2 2000/12/14 22:39:02 he Exp $
 
 A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
 
@@ -57,3 +57,7 @@ sys/arch/mac68k/nubus/nubus.h			1.52
 sys/arch/mac68k/nubus/grf_nubus.c		1.60
 
   Clear interrupts on the Apple "Boogie" card.
+
+libexec/ftpd/ftpd.c				patch
+
+  Fix a one-byte buffer overrun.
