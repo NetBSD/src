@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.28 1995/02/12 19:18:35 chopps Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29 1995/10/05 12:40:54 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -201,6 +201,8 @@ mbattach(pdp, dp, auxp)
 	config_found(dp, "fdc", simple_devprint);
 	if (is_a4000() || is_a1200())
 		config_found(dp, "idesc", simple_devprint);
+	if (is_a4000())			/* Try to configure A4000T SCSI */
+		config_found(dp, "afsc", simple_devprint);
 	config_found(dp, "zbus", simple_devprint);
 	if (is_a3000())
 		config_found(dp, "ahsc", simple_devprint);
