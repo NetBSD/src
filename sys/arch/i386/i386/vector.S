@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.10 2003/08/20 21:48:44 fvdl Exp $	*/
+/*	$NetBSD: vector.S,v 1.11 2003/12/12 20:17:53 nathanw Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -741,7 +741,7 @@ IDTVEC(trap07)
 	ZTRAP(T_DNA)
 #endif
 IDTVEC(trap08)
-	ZTRAP(T_DOUBLEFLT)
+	TRAP(T_DOUBLEFLT)
 IDTVEC(trap09)
 	ZTRAP(T_FPOPFLT)
 IDTVEC(trap0a)
@@ -800,7 +800,7 @@ IDTVEC(trap10)
 	ZTRAP(T_ARITHTRAP)
 #endif
 IDTVEC(trap11)
-	ZTRAP(T_ALIGNFLT)
+	TRAP(T_ALIGNFLT)
 IDTVEC(trap12)
 IDTVEC(trap13)
 IDTVEC(trap14)
