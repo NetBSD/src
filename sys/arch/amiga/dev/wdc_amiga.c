@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_amiga.c,v 1.18 2004/01/03 01:50:52 thorpej Exp $ */
+/*	$NetBSD: wdc_amiga.c,v 1.19 2004/01/03 22:56:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.18 2004/01/03 01:50:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_amiga.c,v 1.19 2004/01/03 22:56:53 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,8 +140,8 @@ wdc_amiga_attach(struct device *parent, struct device *self, void *aux)
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.channel = 0;
-	sc->wdc_channel.wdc = &sc->sc_wdcdev;
+	sc->wdc_channel.ch_channel = 0;
+	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
 	sc->sc_isr.isr_intr = wdc_amiga_intr;
 	sc->sc_isr.isr_arg = sc;
