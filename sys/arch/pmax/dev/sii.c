@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.44 2001/08/26 11:47:23 simonb Exp $	*/
+/*	$NetBSD: sii.c,v 1.45 2001/08/26 12:05:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -188,7 +188,7 @@ siiattach(sc)
 	sc->sc_channel.chan_channel = 0;
 	sc->sc_channel.chan_ntargets = 8;
 	sc->sc_channel.chan_nluns = 8;
-	sc->sc_channel.chan_id = sc->sc_regs->id * SII_IDMSK;
+	sc->sc_channel.chan_id = sc->sc_regs->id & SII_IDMSK;
 
 
 	/*
