@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2002/09/19 03:09:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2003/03/14 03:44:11 thorpej Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -22,11 +22,11 @@ CLEANFILES+=	gengenrtl genrtl.c genrtl.h \
 
 genrtl.c: genrtl.h
 genrtl.h: gengenrtl.c
-	${HOST_LINK.c} -o gengenrtl $>
+	${HOST_LINK.c} -o gengenrtl $> ${NBCOMPATLIB}
 	./gengenrtl genrtl.h genrtl.c
 
 tree-check.h: gencheck.c
-	${HOST_LINK.c} -o gencheck $>
+	${HOST_LINK.c} -o gencheck $> ${NBCOMPATLIB}
 	./gencheck >$@
 
 .for f in attr.h attrtab.c codes.h config.h emit.c extract.c \
@@ -35,7 +35,7 @@ CLEANFILES+=	gen${f:R} insn-${f}
 
 insn-${f}: genrtl.h gen${f:R}.c obstack.c ${G_md_file} \
 		${G_HOST_RTL:S/^l-//:.o=.c} ${G_HOST_PRINT:S/^l-//:.o=.c}
-	${HOST_LINK.c} -o gen${f:R} ${>:M*.c}
+	${HOST_LINK.c} -o gen${f:R} ${>:M*.c} ${NBCOMPATLIB}
 	./gen${f:R} ${G_md_file} >$@
 .endfor
 
