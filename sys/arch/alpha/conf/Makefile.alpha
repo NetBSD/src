@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.17 1996/07/09 00:46:01 cgd Exp $
+#	$NetBSD: Makefile.alpha,v 1.18 1996/07/14 20:20:10 cgd Exp $
 
 # Makefile for NetBSD
 #
@@ -172,3 +172,6 @@ locore.o: ${ALPHA}/alpha/locore.s assym.h
 	${NORMAL_S}
 
 %RULES
+
+### add microcode dependencies
+.include "$S/dev/microcode/Makefile.inc"
