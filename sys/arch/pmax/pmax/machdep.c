@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 1997/06/22 07:42:40 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 1997/06/23 22:08:02 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -987,11 +987,24 @@ setregs(p, pack, stack, retval)
 	bzero((caddr_t)&p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
 	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
-        p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
+	p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
 	p->p_md.md_regs[PS] = PSL_USERSET;
 	p->p_md.md_flags &= ~MDP_FPUSED;
 	if (fpcurproc == p)
 		fpcurproc = (struct proc *)0;
+
+	/*
+	 * Set up arguments for the dld-capable crt0:
+	 *
+	 *	a0	stack pointer
+	 *	a1	rtld cleanup (filled in by dynamic loader)
+	 *	a2	rtld object (filled in by dynamic loader)
+	 *	a3	ps_strings
+	 */
+	p->p_md.md_regs[A0] = stack;
+	p->p_md.md_regs[A1] = 0;
+	p->p_md.md_regs[A2] = 0;
+	p->p_md.md_regs[A3] = (u_long)PS_STRINGS;
 }
 
 /*
