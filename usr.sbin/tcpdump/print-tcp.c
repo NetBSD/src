@@ -1,4 +1,4 @@
-/*	$NetBSD: print-tcp.c,v 1.18 2000/08/01 17:34:00 itojun Exp $	*/
+/*	$NetBSD: print-tcp.c,v 1.19 2000/08/01 17:39:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-tcp.c,v 1.55 97/06/15 13:20:28 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-tcp.c,v 1.18 2000/08/01 17:34:00 itojun Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.19 2000/08/01 17:39:46 itojun Exp $");
 #endif
 #endif
 
@@ -266,10 +266,9 @@ tcp_print(register const u_char *bp, register u_int length,
 			return;
 		}
 	}
-
 #ifdef INET6
 	if (ip6) {
-		if (bp == (u_char *)(ip6 + 1)) {
+		if (ip6->ip6_nxt == IPPROTO_TCP) {
 			(void)printf("%s.%s > %s.%s: ",
 				ip6addr_string(&ip6->ip6_src),
 				tcpport_string(sport),
@@ -282,7 +281,7 @@ tcp_print(register const u_char *bp, register u_int length,
 	} else
 #endif /*INET6*/
 	{
-		if (bp == (u_char *)(ip + 1)) {
+		if (ip->ip_p == IPPROTO_TCP) {
 			(void)printf("%s.%s > %s.%s: ",
 				ipaddr_string(&ip->ip_src),
 				tcpport_string(sport),

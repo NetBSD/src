@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.14 2000/08/01 17:35:18 itojun Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.15 2000/08/01 17:39:46 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.14 2000/08/01 17:35:18 itojun Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.15 2000/08/01 17:39:46 itojun Exp $");
 #endif
 #endif
 
@@ -541,7 +541,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 #else
 #ifdef INET6
 	if (ip6) {
-		if (bp == (u_char *)(ip6 + 1)) {
+		if (ip6->ip6_nxt == IPPROTO_UDP) {
 			(void)printf("%s.%s > %s.%s: ",
 				ip6addr_string(&ip6->ip6_src),
 				udpport_string(sport),
@@ -554,7 +554,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	} else
 #endif /*INET6*/
 	{
-		if (bp == (u_char *)(ip + 1)) {
+		if (ip->ip_p == IPPROTO_UDP) {
 			(void)printf("%s.%s > %s.%s: ",
 				ipaddr_string(&ip->ip_src),
 				udpport_string(sport),
