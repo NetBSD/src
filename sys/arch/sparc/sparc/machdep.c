@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.252 2005/01/30 16:56:26 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.253 2005/03/09 19:04:45 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.252 2005/01/30 16:56:26 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253 2005/03/09 19:04:45 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1544,10 +1544,11 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	map = (struct sparc_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_align = PAGE_SIZE;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -2018,6 +2019,8 @@ sun4_dmamap_unload(t, map)
 	vaddr_t dva;
 	bus_size_t len;
 	int i, s, error;
+
+	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 
 	if ((flags & _BUS_DMA_DIRECTMAP) != 0) {
 		/* Nothing to release */

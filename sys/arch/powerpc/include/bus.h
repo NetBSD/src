@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13 2003/09/03 13:30:05 simonb Exp $	*/
+/*	$NetBSD: bus.h,v 1.14 2005/03/09 19:04:45 matt Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -773,7 +773,7 @@ struct powerpc_bus_dmamap {
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
+	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	bus_addr_t	_dm_bounce_thresh; /* bounce threshold; see tag */
 	int		_dm_flags;	/* misc. flags */
@@ -783,6 +783,7 @@ struct powerpc_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */

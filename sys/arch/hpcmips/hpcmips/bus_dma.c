@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.22 2004/11/28 17:34:45 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.23 2005/03/09 19:04:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2004/11/28 17:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23 2005/03/09 19:04:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,9 +113,10 @@ _hpcmips_bd_map_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map = (struct bus_dmamap_hpcmips *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->bdm.dm_maxsegsz = maxsegsz;
 	map->bdm.dm_mapsize = 0;	/* no valid mappings */
 	map->bdm.dm_nsegs = 0;
 	map->bdm.dm_segs = (bus_dma_segment_t *)((char *)mapstore +
@@ -194,7 +195,7 @@ _hpcmips_bd_map_load_buffer(bus_dmamap_t mapx, void *buf, bus_size_t buflen,
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->bdm.dm_segs[seg].ds_len + sgsize) <=
-			    map->_dm_maxsegsz &&
+			    map->bdm.dm_maxsegsz &&
 			    (map->_dm_boundary == 0 ||
 				(map->bdm.dm_segs[seg].ds_addr & bmask) ==
 				(curaddr & bmask)))
@@ -242,6 +243,7 @@ _hpcmips_bd_map_load(bus_dma_tag_t t, bus_dmamap_t mapx, void *buf,
 	 */
 	map->bdm.dm_mapsize = 0;
 	map->bdm.dm_nsegs = 0;
+	KASSERT(map->bdm.dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -283,6 +285,7 @@ _hpcmips_bd_map_load_mbuf(bus_dma_tag_t t, bus_dmamap_t mapx, struct mbuf *m0,
 	 */
 	map->bdm.dm_mapsize = 0;
 	map->bdm.dm_nsegs = 0;
+	KASSERT(map->bdm.dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -329,6 +332,7 @@ _hpcmips_bd_map_load_uio(bus_dma_tag_t t, bus_dmamap_t mapx, struct uio *uio,
 	 */
 	map->bdm.dm_mapsize = 0;
 	map->bdm.dm_nsegs = 0;
+	KASSERT(map->bdm.dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -389,6 +393,7 @@ _hpcmips_bd_map_unload(bus_dma_tag_t t, bus_dmamap_t mapx)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->bdm.dm_maxsegsz = map->_dm_maxmaxsegsz;
 	map->bdm.dm_mapsize = 0;
 	map->bdm.dm_nsegs = 0;
 	map->_dm_flags &= ~HPCMIPS_DMAMAP_COHERENT;

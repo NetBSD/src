@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.18 2005/02/19 21:40:21 jdolecek Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.19 2005/03/09 19:04:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2005/02/19 21:40:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2005/03/09 19:04:46 matt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -176,10 +176,11 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map = (struct x86_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
-	map->_dm_maxsegsz = maxsegsz;
+	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
 	map->_dm_bounce_thresh = t->_bounce_thresh;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -262,6 +263,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
 		return EINVAL;
@@ -342,7 +344,7 @@ again:
 	 * previous segment if possible.
 	 */
 	if (nseg > 0 && paddr == lastaddr &&
-	    segs[nseg-1].ds_len + sgsize <= map->_dm_maxsegsz &&
+	    segs[nseg-1].ds_len + sgsize <= map->dm_maxsegsz &&
 	    (map->_dm_boundary == 0 ||
 	     (segs[nseg-1].ds_addr & bmask) == (paddr & bmask))) {
 		/* coalesce */
@@ -385,6 +387,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -523,6 +526,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -617,6 +621,7 @@ _bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 		cookie->id_flags &= ~X86_DMA_IS_BOUNCING;
 		cookie->id_buftype = X86_DMA_BUFTYPE_INVALID;
 	}
+	map->dm_maxsegsz = map->_dm_maxmaxsegsz;
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
