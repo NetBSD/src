@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.39.2.5 1998/10/24 01:39:47 cgd Exp $	*/
+/*	$NetBSD: param.h,v 1.39.2.6 1998/11/07 01:32:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,9 +43,34 @@
 #ifndef _SYS_PARAM_H_
 #define _SYS_PARAM_H_
 
+/*
+ * Historic BSD #defines -- probably will remain untouched for all time.
+ */
 #define	BSD	199306		/* System version (year & month). */
 #define BSD4_3	1
 #define BSD4_4	1
+
+/*
+ *	#define __NetBSD_Version__ MMmmrrpp00
+ *
+ *	M = major version
+ *	m = minor version
+ *	r = release ["",A-Z but numeric]
+ *	p = patchlevel
+ *
+ *	So:
+ *	     NetBSD-1.2D  = 102040000
+ *	And:
+ *	     NetBSD-1.2.1 = 102000100
+ *
+ */
+
+#define __NetBSD_Version__  103000200	/* NetBSD 1.3.2 */
+
+/*
+ * Historical NetBSD #defines -- new code should use
+ * __NetBSD_Version__ instead.
+ */
 
 #define NetBSD	199713		/* NetBSD version (year & month). */
 #define NetBSD1_3 1		/* NetBSD 1.3 */
