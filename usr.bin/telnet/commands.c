@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.18 1998/03/04 13:51:57 christos Exp $	*/
+/*	$NetBSD: commands.c,v 1.19 1998/03/05 08:10:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.18 1998/03/04 13:51:57 christos Exp $");
+__RCSID("$NetBSD: commands.c,v 1.19 1998/03/05 08:10:06 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1418,6 +1418,10 @@ shell(argc, argv)
     char *argv[];
 {
     long oldrows, oldcols, newrows, newcols, err;
+
+#ifdef __GNUC__
+    (void) &err;	/* XXX avoid GCC warning */
+#endif
 
     setcommandmode();
 
