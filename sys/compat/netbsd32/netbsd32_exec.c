@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec.c,v 1.24 2000/11/27 17:25:25 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_exec.c,v 1.25 2000/12/01 08:59:02 mrg Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -116,7 +116,7 @@ ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
 		free((void *)bp, M_TEMP);
 	}
 	epp->ep_flags |= EXEC_32;
-	*pos = ELFDEFNNAME(NO_ADDR);
+	*(Elf_Addr *)pos = ELFDEFNNAME(NO_ADDR);
 	return 0;
 }
 #endif
