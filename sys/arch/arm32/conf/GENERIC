@@ -18,7 +18,8 @@ options		DEVPAGER	# mmap() of devices
 
 # CPU options
 
-# For standard RiscPC's with ARM6/7 CPUs
+# For standard RiscPC's
+options		CPU_SA110	# Support the SA110 core
 options		CPU_ARM6	# Support the ARM6 core
 options		CPU_ARM7	# Support the ARM7 core
 options		CPU_LATE_ABORT	# ARM7XX compatibility
@@ -27,9 +28,6 @@ options		CPU_LATE_ABORT	# ARM7XX compatibility
 #options	CPU_ARM7	# Support the ARM7 core
 #options	CPU_ARM7500	# We are actually an ARM7500
 #options	CPU_LATE_ABORT	# ARM7XX compatibility
-
-# For standard RiscPC's with StrongARM CPUs
-#options	CPU_SA110	# Support the SA110 core
 
 # FPA options
 
@@ -78,7 +76,7 @@ options		COMPAT_12	# NetBSD 1.2 compatibility.
 #options	COMPAT_11	# NetBSD 1.1 compatibility.
 #options	COMPAT_10	# NetBSD 1.0 compatibility.
 #options	COMPAT_09	# NetBSD 0.9 compatibility.
-options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 
 # Shared memory options
 
@@ -89,16 +87,16 @@ options		SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
-options		MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 options		MEMORY_DISK_SIZE=0	# Size in KBytes
-options		PLIP		# Build plip device into lpt driver
 
 # Miscellaneous kernel options
 options		KTRACE		# system call tracing, a la ktrace(1)
 options		IRQSTATS	# manage IRQ statistics
 options		LKM		# loadable kernel modules
+options		KMEMSTATS	# kernel memory statistics
 
-# Development options
+# Development and Debugging options
 
 options		MOUSE_IOC_ACK	# acknowledge state change ioctls
 #options	ARM700BUGTRACK	# track the ARM700 swi bug
@@ -109,8 +107,6 @@ options		PROFILE_ASM	# when profiling, profile asm functions
 options		DIAGNOSTIC	# internally consistency checks
 options		POSTMORTEM	# perform postmortem on panic
 #options	ROTTEN_INNARDS	# show the gory bit of the postmortem
-#options	BLOCK_IRQS	# Block IRQ's during faults, syscalls and
-				# undefined instructions
 options		KSHELL		# kernel developemnt shell (debug)
 #options	DEBUGTERM	# create a debug console
 #options	IPKDB		# remote kernel debugging
@@ -210,15 +206,15 @@ eh0	at podulebus?			# EtherH network slot cards
 ie*	at podulebus?			# Ether1 podules
 
 pseudo-device	loop	1               # network loopback
-pseudo-device   bpfilter 8              # packet filter
+pseudo-device	bpfilter 8              # packet filter
 pseudo-device	sl	2               # CSLIP
 pseudo-device	ppp	2		# PPP
 pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	ipfilter 1		# ip filter
 
-pseudo-device   pty     32              # pseudo-terminals
+pseudo-device	pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
-pseudo-device   vnd     4               # paging to files
+pseudo-device	vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
 
 pseudo-device	md	1		# Ramdisk driver
