@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.13 2003/01/10 10:17:24 agc Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.14 2003/03/15 20:49:27 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.13 2003/01/10 10:17:24 agc Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.14 2003/03/15 20:49:27 agc Exp $");
 #endif
 
 /*
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: pkgdb.c,v 1.13 2003/01/10 10:17:24 agc Exp $");
 #define PKGDB_FILE	"pkgdb.byfile.db"	/* indexed by filename */
 
 static DB *pkgdbp;
-static int pkgdb_iter_flag;
 
 /*
  *  Open the pkg-database
@@ -60,8 +59,6 @@ pkgdb_open(int mode)
 {
 	BTREEINFO info;
 	char	cachename[FILENAME_MAX];
-
-	pkgdb_iter_flag = 0;	/* used in pkgdb_iter() */
 
 	/* try our btree format first */
 	info.flags = 0;
@@ -146,6 +143,25 @@ pkgdb_retrieve(const char *key)
 	return vald.data;
 }
 
+/* dump contents of the database to stdout */
+void
+pkgdb_dump(void)
+{
+	DBT     key;
+	DBT	val;
+	int	type;
+
+	if (pkgdb_open(ReadOnly)) {
+		for (type = R_FIRST ; (*pkgdbp->seq)(pkgdbp, &key, &val, type) == 0 ; type = R_NEXT) {
+			printf("file: %.*s pkg: %.*s\n",
+				(int) key.size, (char *) key.data,
+				(int) val.size, (char *) val.data);
+		}
+		pkgdb_close();
+	}
+
+}
+
 /*
  *  Remove data set from pkgdb
  *  Return value as ypdb_delete:
@@ -202,31 +218,6 @@ pkgdb_remove_pkg(const char *pkg)
 		}
 	}
 	return ret;
-}
-
-/*
- *  Iterate all pkgdb keys (which can then be handled to pkgdb_retrieve())
- *  Return value:
- *    NULL if no more data is available
- *   !NULL else
- */
-char   *
-pkgdb_iter(void)
-{
-	DBT     key, val;
-	int	type;
-
-	if (pkgdb_iter_flag == 0) {
-		pkgdb_iter_flag = 1;
-		type = R_FIRST;
-	} else
-		type = R_NEXT;
-
-	if ((*pkgdbp->seq)(pkgdbp, &key, &val, type) != 0) {
-		key.data = NULL;
-	}
-
-	return (char *) key.data;
 }
 
 /*
