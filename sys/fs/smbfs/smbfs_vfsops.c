@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.34 2004/03/24 15:34:52 atatat Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.34.2.1 2004/05/29 09:05:38 tron Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.34 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.34.2.1 2004/05/29 09:05:38 tron Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -77,14 +77,16 @@ SYSCTL_SETUP(sysctl_vfs_samba_setup, "sysctl vfs.samba subtree setup")
 		       CTL_VFS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &smb,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "samba", NULL,
+		       CTLTYPE_NODE, "samba",
+		       SYSCTL_DESCR("SMB/CIFS remote file system"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_CREATE, CTL_EOL);
 
 	if (smb != NULL)
 		sysctl_createv(clog, 0, &smb, NULL,
 			       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-			       CTLTYPE_INT, "version", NULL,
+			       CTLTYPE_INT, "version",
+			       SYSCTL_DESCR("smbfs version"),
 			       NULL, SMBFS_VERSION, NULL, 0,
 			       CTL_CREATE, CTL_EOL);
 }
