@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.65 2003/07/18 08:26:07 lukem Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.66 2003/07/31 13:47:32 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -145,8 +145,8 @@ unload:
 ##### Pull in related .mk logic
 .include <bsd.man.mk>
 .include <bsd.links.mk>
-.include <bsd.dep.mk>
 .include <bsd.sys.mk>
+.include <bsd.dep.mk>
 
 .-include "$S/arch/${MACHINE_CPU}/include/Makefile.inc"
 .-include "$S/arch/${MACHINE}/include/Makefile.inc"

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.52 2003/07/29 07:56:23 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.53 2003/07/31 13:47:32 lukem Exp $
 
 ##### Basic targets
 .PHONY:		cleandepend
@@ -14,7 +14,7 @@ MKDEP?=		mkdep
 ##### Build rules
 # some of the rules involve .h sources, so remove them from mkdep line
 
-.if defined(SRCS)
+.if defined(SRCS)							# {
 __acpp_flags=	-traditional-cpp
 
 DEPENDSRCS.src=	${SRCS:M*.c}	${DPSRCS:M*.c}		\
@@ -24,12 +24,14 @@ DEPENDSRCS.src=	${SRCS:M*.c}	${DPSRCS:M*.c}		\
 		${SRCS:M*.cc}	${DPSRCS:M*.cc}		\
 		${SRCS:M*.cpp}	${DPSRCS:M*.cpp}	\
 		${SRCS:M*.cxx}	${DPSRCS:M*.cxx}
-DEPENDSRCS.dep=	${DEPENDSRCS.src:R:S/$/.d/g}
-DEPENDSRCS=	.depend ${DEPENDSRCS.dep}
+DEPENDSRCS.d=	${DEPENDSRCS.src:R:S/$/.d/g}
+DEPENDSRCS=	.depend ${DEPENDSRCS.d}
 
-.depend: ${SRCS} ${DPSRCS} ${DEPENDSRCS.dep}
+${DEPENDSRCS.d}: ${SRCS} ${DPSRCS}
+
+.depend: ${DEPENDSRCS.d}
 	@rm -f .depend
-	cat ${DEPENDSRCS.dep} > .depend
+	cat ${DEPENDSRCS.d} > .depend
 
 .NOPATH: ${DEPENDSRCS}
 
@@ -53,7 +55,7 @@ DEPENDSRCS=	.depend ${DEPENDSRCS.dep}
 	    ${DESTDIR}/usr/include/g++} \
 	    ${CPPFLAGS} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
-.endif # defined(SRCS)
+.endif # defined(SRCS)							# }
 
 ##### Clean rules
 cleandepend:
