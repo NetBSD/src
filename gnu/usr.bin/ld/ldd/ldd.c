@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldd.c,v 1.1 1993/10/22 21:09:59 pk Exp $
+ *	$Id: ldd.c,v 1.2 1993/10/31 14:41:46 pk Exp $
  */
 
 #include <sys/param.h>
@@ -85,12 +85,26 @@ char	*argv[];
 	setenv("LD_TRACE_LOADED_OBJECTS", "", 1);
 
 	while (argc--) {
+		int	fd;
+		struct exec hdr;
 		int	status;
-		char	*args[2];
 
-		args[0] = *argv; args[1] = NULL;
+		if ((fd = open(*argv, O_RDONLY, 0)) < 0) {
+			perror(*argv);
+			rval |= 1;
+			argv++;
+			continue;
+		}
+		if (read(fd, &hdr, sizeof hdr) != sizeof hdr ||
+					!(N_GETFLAG(hdr) & EX_DYNAMIC)) {
+			fprintf(stderr, "%s: not a dynamic executable\n",
+						*argv);
+			rval |= 1;
+			argv++;
+			continue;
+		}
 
-		printf("%s:\n", args[0]);
+		printf("%s:\n", *argv);
 
 		switch (fork()) {
 		case -1:
@@ -103,16 +117,16 @@ char	*argv[];
 
 			if (WIFSIGNALED(status)) {
 				fprintf(stderr, "%s: signal %d\n",
-						args[0], WTERMSIG(status));
+						*argv, WTERMSIG(status));
 				rval |= 1;
 			} else if (WIFEXITED(status) && WEXITSTATUS(status)) {
 				fprintf(stderr, "%s: exit status %d\n",
-						args[0], WEXITSTATUS(status));
+						*argv, WEXITSTATUS(status));
 				rval |= 1;
 			}
 			break;
 		case 0:
-			rval != execvp(*argv, args) != 0;
+			rval != execl(*argv, *argv, NULL) != 0;
 			perror(*argv);
 			_exit(1);
 		}
