@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)math.3	6.10 (Berkeley) 5/6/91
-.\"	$Id: math.3,v 1.3 1993/08/14 13:43:00 mycroft Exp $
+.\"	$Id: math.3,v 1.4 1994/02/25 19:43:56 jtc Exp $
 .\"
 .TH MATH 3M "May 6, 1991"
 .UC 4
@@ -71,7 +71,6 @@ ceil	floor.3m	integer no less than	0
 copysign	ieee.3m	copy sign bit	0
 cos	sin.3m	trigonometric function	1
 cosh	sinh.3m	hyperbolic function	3
-drem	ieee.3m	remainder	0
 erf	erf.3m	error function	???
 erfc	erf.3m	complementary error function	???
 exp	exp.3m	exponential	1
@@ -79,18 +78,19 @@ expm1	exp.3m	exp(x)\-1	1
 fabs	floor.3m	absolute value	0
 floor	floor.3m	integer no greater than	0
 hypot	hypot.3m	Euclidean distance	1
+ilogb	ieee.3m	exponent extraction	0
 infnan	infnan.3m	signals exceptions
 j0	j0.3m	bessel function	???
 j1	j0.3m	bessel function	???
 jn	j0.3m	bessel function	???
 lgamma	lgamma.3m	log gamma function; (formerly gamma.3m)
 log	exp.3m	natural logarithm	1
-logb	ieee.3m	exponent extraction	0
 log10	exp.3m	logarithm to base 10	3
 log1p	exp.3m	log(1+x)	1
 pow	exp.3m	exponential x**y	60\-500
+remainder	ieee.3m	remainder	0
 rint	floor.3m	round to nearest integer	0
-scalb	ieee.3m	exponent adjustment	0
+scalbn	ieee.3m	exponent adjustment	0
 sin	sin.3m	trigonometric function	1
 sinh	sinh.3m	hyperbolic function	3
 sqrt	sqrt.3m	square root	1
