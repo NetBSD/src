@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.3 1995/04/16 19:11:46 mycroft Exp $
+#	$Id: Makefile.inc,v 1.4 1995/05/06 07:03:18 jtc Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -34,7 +34,7 @@ all: ${CBIN}
 
 unconfig:
 	-umount -f ${MOUNT_POINT}
-	-vnconfig -u ${VND_DEV} ${IMAGE}
+	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
