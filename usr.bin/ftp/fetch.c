@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.11 1997/06/29 06:34:50 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.12 1997/07/20 09:45:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,8 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: fetch.c,v 1.11 1997/06/29 06:34:50 lukem Exp $";
+__RCSID("$NetBSD: fetch.c,v 1.12 1997/07/20 09:45:50 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -65,6 +66,10 @@ static char rcsid[] = "$NetBSD: fetch.c,v 1.11 1997/06/29 06:34:50 lukem Exp $";
 
 #include "ftp_var.h"
 
+static int	url_get __P((const char *, const char *));
+void    	aborthttp __P((int));
+
+
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
 #define	HTTP_URL	"http://"	/* http URL prefix */
 #define FTP_PROXY	"ftp_proxy"	/* env var with ftp proxy location */
@@ -80,22 +85,30 @@ jmp_buf	httpabort;
  * Modifies the string argument given.
  * Returns -1 on failure, 0 on success
  */
-int
+static int
 url_get(origline, proxyenv)
 	const char *origline;
 	const char *proxyenv;
 {
 	struct sockaddr_in sin;
-	int i, out, port, s, isftpurl;
+	int i, out, isftpurl;
+	u_int16_t port;
+	volatile int s;
 	size_t buflen, len;
-	char c, *cp, *cp2, *savefile, *portnum, *path, buf[4096];
+	char c, *cp, *ep, *portnum, *path, buf[4096];
+	const char *savefile;
 	char *line, *proxy, *host;
-	sig_t oldintr;
+	volatile sig_t oldintr;
 	off_t hashbytes;
 
 	s = -1;
 	proxy = NULL;
 	isftpurl = 0;
+
+#ifdef __GNUC__			/* XXX: to shut up gcc warnings */
+	(void)&savefile;
+	(void)&proxy;
+#endif
 
 	line = strdup(origline);
 	if (line == NULL)
@@ -190,12 +203,15 @@ url_get(origline, proxyenv)
 	}
 
 	if (! EMPTYSTRING(portnum)) {
-		port = atoi(portnum);
-		if (port < 1 || (port & 0xffff) != port) {
+		char *ep;
+		long nport;
+
+		nport = strtol(portnum, &ep, 10);
+		if (nport < 1 || nport > 0xffff || *ep != '\0') {
 			warnx("Invalid port: %s", portnum);
 			goto cleanup_url_get;
 		}
-		port = htons(port);
+		port = htons(nport);
 	} else
 		port = httpport;
 	sin.sin_port = port;
@@ -274,13 +290,13 @@ url_get(origline, proxyenv)
 	if (*cp == '\0')
 		goto improper;
 	cp += sizeof(CONTENTLEN) - 1;
-	cp2 = strchr(cp, '\n');
-	if (cp2 == NULL)
+	ep = strchr(cp, '\n');
+	if (ep == NULL)
 		goto improper;
 	else
-		*cp2 = '\0';
-	filesize = atoi(cp);
-	if (filesize < 1)
+		*ep = '\0';
+	filesize = strtol(cp, &ep, 10);
+	if (filesize < 1 || *ep != '\0')
 		goto improper;
 
 	/* Open the output file. */
@@ -400,7 +416,8 @@ auto_fetch(argc, argv)
 	char *cp, *line, *host, *dir, *file, *portnum;
 	char *user, *pass;
 	char *ftpproxy, *httpproxy;
-	int rval, xargc, argpos;
+	int rval, xargc;
+	volatile int argpos;
 	int dirhasglob, filehasglob;
 	char rempath[MAXPATHLEN];
 
