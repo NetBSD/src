@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.3 1998/07/17 18:40:31 tsubai Exp $	*/
+/*	$NetBSD: bandit.c,v 1.4 1998/07/24 20:53:57 tsubai Exp $	*/
 
 /*
  * Copyright 1991-1998 by Open Software Foundation, Inc. 
@@ -145,6 +145,12 @@ scan_pci_devs()
 			pci_bridges[n].addr = mapiodev(0xfec00000, 4); /* XXX */
 			pci_bridges[n].data = mapiodev(0xfee00000, 4); /* XXX */
 			pci_bridges[n].pc = PCI_CHIPSET_MPC106; /* for now */
+
+			child = OF_child(node);
+			while (child) {
+				config_slot(child, pci_bridges[n].pc);
+				child = OF_peer(child);
+			}
 		}
 
 		node = OF_peer(node);
