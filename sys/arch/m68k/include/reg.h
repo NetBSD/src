@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.9 1995/01/26 18:26:01 mycroft Exp $	*/
+/*	$NetBSD: reg.h,v 1.10 1995/01/26 19:48:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,13 @@ struct reg {
 	int	r_regs[16];	/* D0-D7/A0-A7 */
 	int	r_sr;
 	int	r_pc;
+};
+
+struct fpreg {
+	int	r_regs[8*3];	/* FP0-FP7 */
+	int	r_fpcr;
+	int	r_fpsr;
+	int	r_fpiar;
 };
 
 /* XXXX this is historical (but it can't be deprecated quite yet) */
