@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.5 2005/03/16 10:34:25 he Exp $ */
+/* $NetBSD: radlib.c,v 1.6 2005/03/31 14:29:32 christos Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.5 2005/03/16 10:34:25 he Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.6 2005/03/31 14:29:32 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -45,9 +45,11 @@ __RCSID("$NetBSD: radlib.c,v 1.5 2005/03/16 10:34:25 he Exp $");
 #define MD5Update MD5_Update
 #define MD5Final MD5_Final
 #define MD5Len unsigned long
+#define MD5Buf const void *
 #else
 #define MD5_DIGEST_LENGTH 16
 #define MD5Len unsigned int
+#define MD5Buf const unsigned char *
 #include <md5.h>
 #endif
 
@@ -129,7 +131,7 @@ insert_scrambled_password(struct rad_handle *h, int srv)
 
 		/* Calculate the new scrambler */
 		MD5Init(&ctx);
-		MD5Update(&ctx, srvp->secret,
+		MD5Update(&ctx, (MD5Buf)srvp->secret,
 		    (MD5Len)strlen(srvp->secret));
 		MD5Update(&ctx, md5, (MD5Len)16);
 		MD5Final(md5, &ctx);
@@ -162,12 +164,13 @@ insert_request_authenticator(struct rad_handle *h, int srv)
 	    (MD5Len)LEN_AUTH);
 	MD5Update(&ctx, &h->request[POS_ATTRS],
 	    (MD5Len)(h->req_len - POS_ATTRS));
-	MD5Update(&ctx, srvp->secret,
+	MD5Update(&ctx, (MD5Buf)srvp->secret,
 	    (MD5Len)strlen(srvp->secret));
 	MD5Final(&h->request[POS_AUTH], &ctx);
 }
 
 static void
+/*ARGSUSED*/
 insert_message_authenticator(struct rad_handle *h, int srv)
 {
 #ifdef WITH_SSL
@@ -236,7 +239,7 @@ is_valid_response(struct rad_handle *h, int srv,
 	    (MD5Len)LEN_AUTH);
 	MD5Update(&ctx, &h->response[POS_ATTRS],
 	    (MD5Len)(len - POS_ATTRS));
-	MD5Update(&ctx, srvp->secret,
+	MD5Update(&ctx, (MD5Buf)srvp->secret,
 	    (MD5Len)strlen(srvp->secret));
 	MD5Final(md5, &ctx);
 	if (memcmp(&h->response[POS_AUTH], md5, sizeof md5) != 0)
@@ -1163,8 +1166,8 @@ rad_demangle(struct rad_handle *h, const void *mangled, size_t mlen)
 		return NULL;
 
 	MD5Init(&Context);
-	MD5Update(&Context, S, (MD5Len)strlen(S));
-	MD5Update(&Context, R, (MD5Len)LEN_AUTH);
+	MD5Update(&Context, (MD5Buf)S, (MD5Len)strlen(S));
+	MD5Update(&Context, (MD5Buf)R, (MD5Len)LEN_AUTH);
 	MD5Final(b, &Context);
 	Ppos = 0;
 	while (mlen) {
@@ -1175,8 +1178,8 @@ rad_demangle(struct rad_handle *h, const void *mangled, size_t mlen)
 
 		if (mlen) {
 			MD5Init(&Context);
-			MD5Update(&Context, S, (MD5Len)strlen(S));
-			MD5Update(&Context, C, (MD5Len)16);
+			MD5Update(&Context, (MD5Buf)S, (MD5Len)strlen(S));
+			MD5Update(&Context, (MD5Buf)C, (MD5Len)16);
 			MD5Final(b, &Context);
 		}
 
@@ -1218,9 +1221,9 @@ rad_demangle_mppe_key(struct rad_handle *h, const void *mangled,
 	P = alloca(Clen);        /* We derive our plaintext */
 
 	MD5Init(&Context);
-	MD5Update(&Context, S, (MD5Len)Slen);
-	MD5Update(&Context, R, (MD5Len)LEN_AUTH);
-	MD5Update(&Context, A, (MD5Len)SALT_LEN);
+	MD5Update(&Context, (MD5Buf)S, (MD5Len)Slen);
+	MD5Update(&Context, (MD5Buf)R, (MD5Len)LEN_AUTH);
+	MD5Update(&Context, (MD5Buf)A, (MD5Len)SALT_LEN);
 	MD5Final(b, &Context);
 	Ppos = 0;
 
@@ -1232,8 +1235,8 @@ rad_demangle_mppe_key(struct rad_handle *h, const void *mangled,
 
 		if (Clen) {
 			MD5Init(&Context);
-			MD5Update(&Context, S, (MD5Len)Slen);
-			MD5Update(&Context, C, (MD5Len)16);
+			MD5Update(&Context, (MD5Buf)S, (MD5Len)Slen);
+			MD5Update(&Context, (MD5Buf)C, (MD5Len)16);
 			MD5Final(b, &Context);
 		}
 
