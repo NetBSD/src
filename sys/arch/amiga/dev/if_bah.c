@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.19 1996/09/02 17:28:22 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.20 1996/09/08 07:15:56 is Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -1193,8 +1193,8 @@ bah_ioctl(ifp, command, data)
 		} 
 		break;
 
-	case SIOCSIFMULTI:
-	case SIOCDIFMULTI:
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
 		if (ifr->ifr_addr.sa_family == AF_INET)
 			error = 0;
 		else
