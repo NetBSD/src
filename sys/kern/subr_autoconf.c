@@ -15,11 +15,13 @@
  *
  *	%W% (Berkeley) %G%
  *
- * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.3.2.2 1993/11/14 21:07:04 mycroft Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/kern/subr_autoconf.c,v 1.3.2.3 1993/11/29 06:07:53 mycroft Exp $ (LBL)
  */
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <sys/malloc.h>
 
 /*
@@ -326,4 +328,21 @@ evcnt_attach(dev, name, ev)
 	strcpy(ev->ev_name, name);
 	*nextp = ev;
 	nextp = &ev->ev_next;
+}
+
+/*
+ * Add a device to the list of attached disks.
+ */
+void
+dk_establish(dk, dv)
+	struct dkdevice *dk;
+	struct device *dv;
+{
+	dk->dk_device = dv;
+	dk->dk_next = NULL;
+	if (!dkhead)
+		dkhead = dk;
+	else
+		dktail->dk_next = dk;
+	dktail = dk;
 }
