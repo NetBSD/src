@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.150 2000/10/04 03:35:54 itojun Exp $
+#	$NetBSD: GENERIC,v 1.151 2000/10/04 20:38:11 is Exp $
 
 #
 #if 0
@@ -16,7 +16,11 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.150 $"
+#ident 		"GENERIC-$Revision: 1.151 $"
+
+#ifdef INSTALL_CONFIGURATION
+makeoptions	COPTS="-Os"
+#endif
 
 maxusers	8
 options 	RTC_OFFSET=0
