@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $	*/
+/*	$NetBSD: state.c,v 1.10 1996/09/07 21:45:52 explorer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)state.c	8.5 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: state.c,v 1.9 1996/02/28 20:38:19 thorpej Exp $";
+static char rcsid[] = "$NetBSD: state.c,v 1.10 1996/09/07 21:45:52 explorer Exp $";
 #endif
 #endif /* not lint */
 
@@ -1063,6 +1063,8 @@ envvarok(varp)
 	return (strncmp(varp, "LD_", strlen("LD_")) &&
 		strncmp(varp, "_RLD_", strlen("_RLD_")) &&
 		strcmp(varp, "LIBPATH") &&
+		strcmp(varp, "ENV") &&
+		strcmp(varp, "BASH_ENV") &&
 		strcmp(varp, "IFS"));
 }
 
