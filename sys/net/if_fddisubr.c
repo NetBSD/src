@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.6 1996/07/10 18:54:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -387,7 +387,9 @@ fddi_input(ifp, fh, m)
 {
 	register struct ifqueue *inq;
 	register struct llc *l;
+#ifdef	ISO
 	struct arpcom *ac = (struct arpcom *)ifp;
+#endif
 	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
