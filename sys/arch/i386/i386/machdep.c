@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.5 1993/10/10 08:45:35 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.6 1993/10/10 09:35:44 mycroft Exp $
  */
 
 #include "npx.h"
@@ -1200,7 +1200,7 @@ extern caddr_t		CADDR1, CADDR2;
 clearseg(n) {
 
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
-	lcr3(rcr3());
+	tlbflush();
 	bzero(CADDR2,NBPG);
 }
 
@@ -1212,7 +1212,7 @@ void
 copyseg(frm, n) {
 
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
-	lcr3(rcr3());
+	tlbflush();
 	bcopy((void *)frm, (void *)CADDR2, NBPG);
 }
 
@@ -1225,7 +1225,7 @@ physcopyseg(frm, to) {
 
 	*(int *)CMAP1 = PG_V | PG_KW | ctob(frm);
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(to);
-	lcr3(rcr3());
+	tlbflush();
 	bcopy(CADDR1, CADDR2, NBPG);
 }
 
