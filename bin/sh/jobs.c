@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.19 1996/10/16 14:42:20 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.20 1996/11/02 18:26:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: jobs.c,v 1.19 1996/10/16 14:42:20 christos Exp $";
+static char rcsid[] = "$NetBSD: jobs.c,v 1.20 1996/11/02 18:26:04 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1100,7 +1100,7 @@ cmdputs(s)
 			subtype = 0;
 		} else if (c == CTLENDVAR) {
 			*q++ = '}';
-		} else if (c == CTLBACKQ | c == CTLBACKQ+CTLQUOTE)
+		} else if (c == CTLBACKQ || c == CTLBACKQ+CTLQUOTE)
 			cmdnleft++;		/* ignore it */
 		else
 			*q++ = c;
