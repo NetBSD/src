@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	5.9 (Berkeley) 2/28/91
-#	$Id: Makefile,v 1.12 1994/12/22 10:44:49 cgd Exp $
+#	$NetBSD: Makefile,v 1.13 1995/03/11 01:27:43 jtc Exp $
 
 # Change the line below for your time zone (after finding the zone you want in
 # the time zone files, or adding it to a time zone file).
@@ -38,95 +37,33 @@ TZDIR=	${DESTDIR}/usr/share/zoneinfo
 
 REDO=		posix_only
 
-# If you're running on a System V-style system and don't want lint grief,
-# add
-#	-DUSG
-# to the end of the "CFLAGS=" line.
-#
-# If you're running on a system where "strchr" is known as "index",
-# (for example, a 4.[012]BSD system), add
-#	-Dstrchr=index
-# to the end of the "CFLAGS=" line.
-#
-# If you're running on a system with a "mkdir" function, feel free to add
-#	-Demkdir=mkdir
-# to the end of the "CFLAGS=" line
-#
-# If you want to use System V compatibility code, add
-#	-DUSG_COMPAT
-# to the end of the "CFLAGS=" line.
-#
-# If your system has a "GMT offset" field in its "struct tm"s
-# (or if you decide to add such a field in your system's "time.h" file),
-# add the name to a define such as
-#	-DTM_GMTOFF=tm_gmtoff
-# or
-#	-DTM_GMTOFF=_tm_gmtoff
-# to the end of the "CFLAGS=" line.
-#
-# If your system has a "GMT offset" field in its "struct tm"s
-# (or if you decide to add such a field in your system's "time.h" file),
-# add the name to a define such as
-#	-DTM_ZONE=tm_zone
-# or
-#	-DTM_ZONE=_tm_zone
-# to the end of the "CFLAGS=" line.
-#
-# If you want code inspired by certain emerging standards, add
-#	-DSTD_INSPIRED
-# to the end of the "CFLAGS=" line.
-#
-# If you want Source Code Control System ID's left out of object modules, add
-#	-DNOID
-# to the end of the "CFLAGS=" line.
-#
-# If you'll never want to handle solar-time-based time zones, add
-#	-DNOSOLAR
-# to the end of the "CFLAGS=" line
-# (and comment out the "SDATA=" line below).
-#
-# If you want to allocate state structures in localtime, add
-#	-DALL_STATE
-# to the end of the "CFLAGS=" line.
-#
-# If you want an "altzone" variable (a la System V Release 3.1), add
-#	-DALTZONE
-# to the end of the "CFLAGS=" line.
-#
-# If you want a "gtime" function (a la MACH), add
-#	-DCMUCS
-# to the end of the "CFLAGS=" line
+# Since "." may not be in PATH...
+YEARISTYPE=	${.CURDIR}/datfiles/yearistype.sh
 
-.PATH:	${.CURDIR}/datfiles
-CFLAGS+=	-DTM_GMTOFF=tm_gmtoff -DTM_ZONE=tm_zone
-PROG=	zic
-MAN=	tzfile.5 zic.8
+YDATA=		africa antarctica asia australasia \
+		europe northamerica southamerica pacificnew etcetera factory \
+		backward
+NDATA=		systemv
+SDATA=		solar87 solar88 solar89
+TDATA=		$(YDATA) $(NDATA) $(SDATA)
+DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
+USNO=		usno1988 usno1989
 
-SRCS=	zic.c scheck.c ialloc.c
-
-YDATA=	africa antarctica asia australasia europe northamerica \
-	russia southamerica pacificnew etcetera factory
-NDATA=	systemv
-#SDATA=	solar87 solar88 solar89
-TDATA=	${YDATA} ${NDATA} ${SDATA}
-DATA=	${YDATA} ${NDATA} ${SDATA} leapseconds
-USNO=	usno1988 usno1989
-
-ZIC=${.OBJDIR}/zic
+ZIC=zic
 
 posix_only: ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
-	    ${ZIC} -d ${TZDIR} -L /dev/null ${TDATA})
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L /dev/null ${TDATA})
 
 right_only: leapseconds ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
-	    ${ZIC} -d ${TZDIR} -L leapseconds ${TDATA})
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -L leapseconds ${TDATA})
 
 other_two: leapseconds ${TDATA}
 	(cd ${.CURDIR}/datfiles; \
-	    ${ZIC} -d ${TZDIR}/posix -L /dev/null ${TDATA})
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/posix -L /dev/null ${TDATA})
 	(cd ${.CURDIR}/datfiles; \
-	    ${ZIC} -d ${TZDIR}/right -L leapseconds ${TDATA})
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR}/right -L leapseconds ${TDATA})
 
 posix_right: posix_only other_two
 
@@ -134,8 +71,9 @@ right_posix: right_only other_two
 
 realinstall: ${DATA} ${REDO}
 	(cd ${.CURDIR}/datfiles; \
-	    ${ZIC} -d ${TZDIR} -p ${POSIXRULES})
+	    ${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES})
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
 	find ${TZDIR} -type f | xargs chmod a-w
 
+.PATH:	${.CURDIR}/datfiles
 .include <bsd.prog.mk>
