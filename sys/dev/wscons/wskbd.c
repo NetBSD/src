@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.45 2001/10/13 15:56:16 augustss Exp $ */
+/* $NetBSD: wskbd.c,v 1.46 2001/10/13 15:59:01 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.45 2001/10/13 15:56:16 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.46 2001/10/13 15:59:01 augustss Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -369,7 +369,7 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		sc->id = malloc(sizeof(struct wskbd_internal),
 				M_DEVBUF, M_WAITOK);
-		bzero(sc->id, sizeof(struct wskbd_internal));
+		memset(sc->id, 0, sizeof(struct wskbd_internal));
 		sc->id->t_keymap = ap->keymap;
 		wskbd_update_layout(sc->id, ap->keymap->layout);
 	}
