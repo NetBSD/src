@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.4 1997/07/06 18:25:38 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.5 1997/10/09 19:16:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.4 1997/07/06 18:25:38 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.5 1997/10/09 19:16:04 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -509,8 +509,7 @@ tty_setup(el)
                     el->el_tty.t_c[ED_IO][rst] != el->el_tty.t_vdisable)
                     el->el_tty.t_c[ED_IO][rst]  = el->el_tty.t_c[TS_IO][rst];
             for (rst = 0; rst < C_NCC; rst++)
-                if (el->el_tty.t_c[TS_IO][rst] != el->el_tty.t_vdisable &&
-                    el->el_tty.t_c[EX_IO][rst] != el->el_tty.t_vdisable)
+                if (el->el_tty.t_c[TS_IO][rst] != el->el_tty.t_vdisable)
                     el->el_tty.t_c[EX_IO][rst]  = el->el_tty.t_c[TS_IO][rst];
         }
         tty__setchar(&el->el_tty.t_ex, el->el_tty.t_c[EX_IO]);
@@ -911,7 +910,6 @@ tty_rawmode(el)
 		}
 		tty__setchar(&el->el_tty.t_ex, el->el_tty.t_c[EX_IO]);
 	    }
-
 	}
     }
 
