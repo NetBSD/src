@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.130 2003/11/29 19:31:13 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.131 2004/03/12 16:52:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.130 2003/11/29 19:31:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.131 2004/03/12 16:52:37 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1622,8 +1622,9 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		if (vp->v_type == VFIFO) {
 			extern int (**fifo_nfsv2nodeop_p) __P((void *));
 			vp->v_op = fifo_nfsv2nodeop_p;
-		}
-		if (vp->v_type == VCHR || vp->v_type == VBLK) {
+		} else if (vp->v_type == VREG) {
+			lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
+		} else if (vp->v_type == VCHR || vp->v_type == VBLK) {
 			vp->v_op = spec_nfsv2nodeop_p;
 			nvp = checkalias(vp, (dev_t)rdev, vp->v_mount);
 			if (nvp) {

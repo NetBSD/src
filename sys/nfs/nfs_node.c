@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.72 2004/01/23 22:20:20 wrstuden Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.73 2004/03/12 16:52:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.72 2004/01/23 22:20:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.73 2004/03/12 16:52:37 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -159,7 +159,6 @@ nfs_nget(mntp, fhp, fhsize, npp)
 	struct nfsnode *np;
 	struct nfsnodehashhead *nhpp;
 	struct vnode *vp;
-	struct vnode *nvp;
 	int error;
 
 	nhpp = &nfsnodehashtbl[NFSNOHASH(nfs_hash(fhp, fhsize))];
@@ -176,16 +175,14 @@ loop:
 	}
 	if (lockmgr(&nfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0))
 		goto loop;
-	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &nvp);
+	error = getnewvnode(VT_NFS, mntp, nfsv2_vnodeop_p, &vp);
 	if (error) {
 		*npp = 0;
 		lockmgr(&nfs_hashlock, LK_RELEASE, 0);
 		return (error);
 	}
-	vp = nvp;
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	memset(np, 0, sizeof *np);
-	lockinit(&np->n_commitlock, PINOD, "nfsclock", 0, 0);
 	vp->v_data = np;
 	np->n_vnode = vp;
 	genfs_node_init(vp, &nfs_genfsops);
