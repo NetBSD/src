@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.30 2004/09/25 04:28:08 thorpej Exp $	*/
+/*	$NetBSD: ld.c,v 1.31 2004/10/17 17:02:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.30 2004/09/25 04:28:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.31 2004/10/17 17:02:48 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -431,7 +431,7 @@ ldioctl(dev_t dev, u_long cmd, caddr_t addr, int32_t flag, struct proc *p)
 			return (EBADF);
 
 		if ((error = lockmgr(&sc->sc_dk.dk_openlock, LK_EXCLUSIVE,
-				     NULL)) == 0)
+				     NULL)) != 0)
 			return (error);
 		sc->sc_flags |= LDF_LABELLING;
 
