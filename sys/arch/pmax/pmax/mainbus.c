@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26.2.3 1999/03/15 08:40:30 nisimura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26.2.4 1999/03/15 12:51:49 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -74,7 +74,6 @@ mbattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct device *mb = self;
 	struct confargs nca;
 
 	printf("\n");
@@ -88,7 +87,7 @@ mbattach(parent, self, aux)
 	 */
  	nca.ca_name = "cpu";
 	nca.ca_slot = 0;
-	config_found(mb, &nca, mbprint);
+	config_found(self, &nca, mbprint);
 
 #if NTC > 0
 	if (systype == DS_3MAXPLUS || systype == DS_3MAX ||
@@ -98,14 +97,14 @@ mbattach(parent, self, aux)
 		 * Call the TC subr code to look for one
 		 * and if found, to configure it.
 		 */
-		config_tcbus(mb, systype /* XXX */, mbprint);
+		config_tcbus(self, systype /* XXX */, mbprint);
 	}
 #endif /* NTC */
 
 	if (systype == DS_PMAX || systype == DS_MIPSMATE) {
 		nca.ca_name = "baseboard";
 		nca.ca_slot = 0;
-		config_found(mb, &nca, mbprint);
+		config_found(self, &nca, mbprint);
 	}
 }
 
