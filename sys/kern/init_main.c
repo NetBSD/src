@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.151 1999/05/13 21:58:37 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.152 1999/06/07 20:16:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -367,7 +367,7 @@ main()
 			printf("cannot mount root, error = %d\n", error);
 			boothowto |= RB_ASKNAME;
 			setroot(root_device,
-			    (rootdev != NODEV) ? DISKPART(rootdev) : 0, NULL);
+			    (rootdev != NODEV) ? DISKPART(rootdev) : 0);
 		}
 	} while (error != 0);
 	mountroothook_destroy();

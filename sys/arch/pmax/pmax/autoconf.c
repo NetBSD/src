@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.35 1999/05/31 07:42:56 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36 1999/06/07 20:16:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.35 1999/05/31 07:42:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.36 1999/06/07 20:16:13 thorpej Exp $");
 
 /*
  * Setup the system to run on the current machine.
@@ -140,7 +140,7 @@ cpu_rootconf()
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
-	setroot(booted_device, booted_partition, dev_name2blk);
+	setroot(booted_device, booted_partition);
 }
 
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
