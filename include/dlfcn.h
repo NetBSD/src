@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.4 1998/03/15 23:13:42 pk Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.5 1998/03/25 12:21:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -42,7 +42,9 @@ __BEGIN_DECLS
 extern void	*dlopen __P((const char *, int));
 extern int	dlclose __P((void *));
 extern void	*dlsym __P((void *, const char *));
+#if !defined(_XOPEN_SOURCE)
 extern int	dlctl __P((void *, int, void *));
+#endif
 extern char	*dlerror __P((void));
 __END_DECLS
 
@@ -50,17 +52,21 @@ __END_DECLS
 #define RTLD_LAZY	1
 #define RTLD_NOW	2
 #define RTLD_GLOBAL	0x100		/* Allow global searches in object */
+#if !defined(_XOPEN_SOURCE)
 #define DL_LAZY		RTLD_LAZY	/* Compat */
+#endif
 
 /*
  * dlctl() commands
  */
+#if !defined(_XOPEN_SOURCE)
 #define DL_GETERRNO	1
 #if 0
 #define DL_SETSRCHPATH	x
 #define DL_GETLIST	x
 #define DL_GETREFCNT	x
 #define DL_GETLOADADDR	x
-#endif
+#endif /* 0 */
+#endif /* !defined(_XOPEN_SOURCE) */
 
-#endif /* _DLFCN_H_ */
+#endif /* !defined(_DLFCN_H_) */
