@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: crt0.c,v 1.3 1994/01/29 01:58:56 jtc Exp $
+ *	$Id: crt0.c,v 1.4 1994/01/29 02:20:16 mycroft Exp $
  */
 
 
@@ -58,7 +58,7 @@ int _callmain();
 #endif
 #include <link.h>
 
-extern struct link_dynamic _DYNAMIC;
+extern struct _dynamic _DYNAMIC;
 static struct ld_entry	*ld_entry;
 static void	__do_dynamic_link ();
 static char	*_getenv();
@@ -222,7 +222,7 @@ __do_dynamic_link ()
 #endif
 
 	/* Map in ld.so */
-	crt.crt_ba = mmap(0, hdr.a_text+hdr.a_data+hdr.a_bss,
+	crt.crt_ba = mmap(0, hdr.a_text,
 			PROT_READ|PROT_EXEC,
 			MAP_FILE|MAP_COPY,
 			crt.crt_ldfd, N_TXTOFF(hdr));
@@ -251,7 +251,7 @@ __do_dynamic_link ()
 
 	/* Map bss segment of ld.so zero */
 	if (hdr.a_bss && mmap(crt.crt_ba+N_BSSADDR(hdr), hdr.a_bss,
-			PROT_READ|PROT_EXEC|PROT_WRITE,
+			PROT_READ|PROT_WRITE,
 			MAP_FIXED|MAP_ANON|MAP_COPY,
 			crt.crt_dzfd, 0) == -1) {
 		_FATAL("Cannot map ld.so\n");
