@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2001/06/13 06:01:57 simonb Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2001/11/06 01:26:47 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ void do_pending_int(void);
 void ext_intr(void);
 void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
+void intr_init(void);
 
 static __inline int splraise(int);
 static __inline int spllower(int);
