@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.iq80321,v 1.3 2002/04/11 21:47:36 thorpej Exp $	*/
+/*	$NetBSD: ldscript.iq80321,v 1.4 2002/11/15 19:29:22 thorpej Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
@@ -24,6 +24,7 @@ SECTIONS
     *(.stub)
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
+    *(link_set*)
   } =0
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
