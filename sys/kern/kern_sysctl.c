@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.67 2000/06/01 13:36:51 simonb Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.68 2000/06/01 18:30:03 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1335,6 +1335,7 @@ sysctl_procargs(name, namelen, where, sizep, up)
 	pid_t pid;
 	int nargv, type, error, i;
 	char *arg;
+	char *tmp;
 
 	if (namelen != 2)
 		return (EINVAL);
@@ -1425,16 +1426,17 @@ sysctl_procargs(name, namelen, where, sizep, up)
 	 * Now read the address of the argument vector.
 	 */
 	switch (type) {
-	  case KERN_PROC_ARGV:
+	case KERN_PROC_ARGV:
 		/* XXX compat32 stuff here */
-		memcpy(&auio.uio_offset, (char *)&pss + p->p_psargv,
-		    sizeof(auio.uio_offset));
+		memcpy(&tmp, (char *)&pss + p->p_psargv, sizeof(tmp));
 		break;
-	  case KERN_PROC_ENV:
-		memcpy(&auio.uio_offset, (char *)&pss + p->p_psenv,
-		    sizeof(auio.uio_offset));
+	case KERN_PROC_ENV:
+		memcpy(&tmp, (char *)&pss + p->p_psenv, sizeof(tmp));
 		break;
+	default:
+		return (EINVAL);
 	}
+	auio.uio_offset = (off_t)(long)tmp;
 	aiov.iov_base = &argv;
 	aiov.iov_len = sizeof(argv);
 	auio.uio_iov = &aiov;
