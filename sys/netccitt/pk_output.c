@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_output.c,v 1.8 1996/10/10 23:02:28 christos Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.9 1996/10/13 02:10:12 christos Exp $	*/
 
 /*
  * Copyright(c) University of British Columbia, 1984
@@ -69,7 +69,7 @@ pk_output(lcp)
 	register struct pkcb *pkp = lcp->lcd_pkp;
 
 	if (lcp == 0 || pkp == 0) {
-		kprintf("pk_output: zero arg\n");
+		printf("pk_output: zero arg\n");
 		return;
 	}
 	while ((m = nextpk(lcp)) != NULL) {

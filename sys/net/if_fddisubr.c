@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.7 1996/10/10 22:59:47 christos Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.8 1996/10/13 02:11:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -220,10 +220,10 @@ fddi_output(ifp, m0, dst, rt0)
 #if defined(__FreeBSD__)
 		IFDEBUG(D_ETHER)
 			int i;
-			kprintf("unoutput: sending pkt to: ");
+			printf("unoutput: sending pkt to: ");
 			for (i=0; i<6; i++)
-				kprintf("%x ", edst[i] & 0xff);
-			kprintf("\n");
+				printf("%x ", edst[i] & 0xff);
+			printf("\n");
 		ENDDEBUG
 #endif
 		} break;
@@ -257,10 +257,10 @@ fddi_output(ifp, m0, dst, rt0)
 			int i;
 			register struct llc *l = mtod(m, struct llc *);
 
-			kprintf("fddi_output: sending LLC2 pkt to: ");
+			printf("fddi_output: sending LLC2 pkt to: ");
 			for (i=0; i<6; i++)
-				kprintf("%x ", edst[i] & 0xff);
-			kprintf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
+				printf("%x ", edst[i] & 0xff);
+			printf(" len 0x%x dsap 0x%x ssap 0x%x control 0x%x\n", 
 			    m->m_pkthdr.len, l->llc_dsap & 0xff, l->llc_ssap &0xff,
 			    l->llc_control & 0xff);
 
@@ -316,7 +316,7 @@ fddi_output(ifp, m0, dst, rt0)
 	}
 #endif
 	default:
-		kprintf("%s: can't handle af%d\n", ifp->if_xname,
+		printf("%s: can't handle af%d\n", ifp->if_xname,
 		    dst->sa_family);
 		senderr(EAFNOSUPPORT);
 	}
@@ -444,7 +444,7 @@ fddi_input(ifp, fh, m)
 #endif
 		default:
 #if 0
-			kprintf("fddi_input: unknown protocol 0x%x\n", etype);
+			printf("fddi_input: unknown protocol 0x%x\n", etype);
 #endif
 			ifp->if_noproto++;
 			goto dropanyway;
@@ -469,7 +469,7 @@ fddi_input(ifp, fh, m)
 				*mtod(m, struct fddi_header *) = *fh;
 #if defined(__FreeBSD__)
 				IFDEBUG(D_ETHER)
-					kprintf("clnp packet");
+					printf("clnp packet");
 				ENDDEBUG
 #endif
 				schednetisr(NETISR_ISO);
@@ -531,7 +531,7 @@ fddi_input(ifp, fh, m)
 			panic("ETHER cons addr failure");
 		mtod(m, struct sdl_hdr *)->sdlhdr_len = m->m_pkthdr.len - sizeof(struct sdl_hdr);
 #ifdef LLC_DEBUG
-		kprintf("llc packet\n");
+		printf("llc packet\n");
 #endif /* LLC_DEBUG */
 		schednetisr(NETISR_CCITT);
 		inq = &llcintrq;
@@ -541,7 +541,7 @@ fddi_input(ifp, fh, m)
 		
 	default:
 #if 0
-		kprintf("fddi_input: unknown dsap 0x%x\n", l->llc_dsap);
+		printf("fddi_input: unknown dsap 0x%x\n", l->llc_dsap);
 #endif
 		ifp->if_noproto++;
 	dropanyway:

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.15 1996/10/10 23:02:23 christos Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.16 1996/10/13 02:10:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -237,7 +237,7 @@ x25_connect_callback(m, v)
 	if (m == 0)
 		goto refused;
 	if (m->m_type != MT_CONTROL) {
-		kprintf("x25_connect_callback: should panic\n");
+		printf("x25_connect_callback: should panic\n");
 		goto refused;
 	}
 	switch (pk_decode(mtod(m, struct x25_packet *))) {
@@ -518,7 +518,7 @@ x25_rtinvert(cmd, sa, rt)
 	if ((rt = rtalloc1(sa, 0)) == 0 ||
 	    (rt->rt_flags & RTF_PROTO2) == 0 ||
 	    rt->rt_llinfo != (caddr_t) rt2) {
-		kprintf("x25_rtchange: inverse route screwup\n");
+		printf("x25_rtchange: inverse route screwup\n");
 		return;
 	} else
 		rt2->rt_refcnt--;

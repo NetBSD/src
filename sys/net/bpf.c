@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.31 1996/10/10 22:59:41 christos Exp $	*/
+/*	$NetBSD: bpf.c,v 1.32 1996/10/13 02:10:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -1257,7 +1257,7 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 			D_MARKFREE(&bpf_dtab[i]);
 
 #if 0
-	kprintf("bpf: %s attached\n", ifp->if_xname);
+	printf("bpf: %s attached\n", ifp->if_xname);
 #endif
 }
 

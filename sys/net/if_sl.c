@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.43 1996/10/10 22:59:50 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.44 1996/10/13 02:11:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -202,7 +202,7 @@ slattach()
 
 	for (sc = sl_softc; i < NSL; sc++) {
 		sc->sc_unit = i;		/* XXX */
-		ksprintf(sc->sc_if.if_xname, "sl%d", i++);
+		sprintf(sc->sc_if.if_xname, "sl%d", i++);
 		sc->sc_if.if_softc = sc;
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags =
@@ -230,7 +230,7 @@ slinit(sc)
 		if (p)
 			sc->sc_ep = (u_char *)p + SLBUFSIZE;
 		else {
-			kprintf("sl%d: can't allocate buffer\n", sc->sc_unit);
+			printf("sl%d: can't allocate buffer\n", sc->sc_unit);
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
 		}
@@ -384,7 +384,7 @@ sloutput(ifp, m, dst, rtp)
 	 * the line protocol to support other address families.
 	 */
 	if (dst->sa_family != AF_INET) {
-		kprintf("%s: af%d not supported\n", sc->sc_if.if_xname,
+		printf("%s: af%d not supported\n", sc->sc_if.if_xname,
 		    dst->sa_family);
 		m_freem(m);
 		sc->sc_if.if_noproto++;

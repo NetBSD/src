@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.2 1996/10/10 22:59:53 christos Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.3 1996/10/13 02:11:08 christos Exp $	*/
 
 /*
  * ppp_deflate.c - interface the zlib procedures for Deflate compression
@@ -271,7 +271,7 @@ z_compress(arg, mret, mp, orig_len, maxolen)
     for (;;) {
 	r = deflate(&state->strm, flush);
 	if (r != Z_OK) {
-	    kprintf("z_compress: deflate returned %d (%s)\n",
+	    printf("z_compress: deflate returned %d (%s)\n",
 		r, (state->strm.msg? state->strm.msg: ""));
 	    break;
 	}
@@ -481,7 +481,7 @@ z_decompress(arg, mi, mop)
     seq = (hdr[PPP_HDRLEN] << 8) + hdr[PPP_HDRLEN+1];
     if (seq != state->seqno) {
 	if (state->debug)
-	    kprintf("z_decompress%d: bad seq # %d, expected %d\n",
+	    printf("z_decompress%d: bad seq # %d, expected %d\n",
 		state->unit, seq, state->seqno);
 	return DECOMP_ERROR;
     }
@@ -532,7 +532,7 @@ z_decompress(arg, mi, mop)
 	r = inflate(&state->strm, flush);
 	if (r != Z_OK) {
 	    if (state->debug)
-		kprintf("z_decompress%d: inflate returned %d (%s)\n",
+		printf("z_decompress%d: inflate returned %d (%s)\n",
 		    state->unit, r, (state->strm.msg? state->strm.msg: ""));
 	    m_freem(mo_head);
 	    return DECOMP_FATALERROR;
@@ -628,7 +628,7 @@ z_incomp(arg, mi)
 	if (r != Z_OK) {
 	    /* gak! */
 	    if (state->debug) {
-		kprintf("z_incomp%d: inflateIncomp returned %d (%s)\n",
+		printf("z_incomp%d: inflateIncomp returned %d (%s)\n",
 		    state->unit, r, (state->strm.msg? state->strm.msg: ""));
 	    }
 	    return;

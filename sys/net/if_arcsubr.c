@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.10 1996/10/10 22:59:43 christos Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.11 1996/10/13 02:10:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -169,7 +169,7 @@ arc_output(ifp, m0, dst, rt0)
 		break;
 
 	default:
-		kprintf("%s: can't handle af%d\n", ifp->if_xname,
+		printf("%s: can't handle af%d\n", ifp->if_xname,
 		    dst->sa_family);
 		senderr(EAFNOSUPPORT);
 	}
