@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tail.c,v 1.7 1998/08/25 20:59:41 ross Exp $");
+__RCSID("$NetBSD: tail.c,v 1.8 2002/04/29 20:12:31 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -305,6 +305,6 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: tail [-f | -r] [-b # | -c # | -n #] [file ...]\n");
+	    "usage: tail [-f | -F | -r] [-b # | -c # | -n #] [file ...]\n");
 	exit(1);
 }
