@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.56 2003/02/18 17:24:53 drochner Exp $
+#	$NetBSD: 3RDPARTY,v 1.57 2003/02/20 15:19:14 fredb Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -528,7 +528,7 @@ version date "20020626" identifies the fix.
 
 Package:	OpenSSL
 Version:	0.9.6g
-Current Vers:	0.9.7
+Current Vers:	0.9.7a
 Maintainer:	The OpenSSL Project
 Archive Site:	ftp://ftp.openssl.org/source/
 Mailing List:	openssl-announce@openssl.org
