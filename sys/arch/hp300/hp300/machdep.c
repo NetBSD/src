@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134 1999/12/04 21:20:22 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.135 1999/12/14 17:51:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,6 +78,7 @@
 #include <ddb/db_extern.h>
 
 #include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 #include <machine/cpu.h>
 #include <machine/hp300spu.h>
 #include <machine/reg.h>
@@ -113,6 +114,15 @@ vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
 extern paddr_t avail_end;
+
+/*
+ * bootinfo base (physical and virtual).  The bootinfo is placed, by
+ * the boot loader, into the first page of kernel text, which is zero
+ * filled (see locore.s) and not mapped at 0.  It is remapped to a
+ * different address in pmap_bootstrap().
+ */
+paddr_t	bootinfo_pa;
+vaddr_t	bootinfo_va;
 
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
@@ -177,6 +187,7 @@ int	delay_divisor;		/* delay constant */
 void
 hp300_init()
 {
+	struct btinfo_magic *bt_mag;
 	int i;
 
 	extern paddr_t avail_start, avail_end;
@@ -203,6 +214,22 @@ hp300_init()
 		    avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
 		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+
+	/*
+	 * Map in the bootinfo page, and make sure the bootinfo
+	 * exists by searching for the MAGIC record.  If it's not
+	 * there, disable bootinfo.
+	 */
+	pmap_enter(pmap_kernel(), bootinfo_va, bootinfo_pa,
+	    VM_PROT_READ|VM_PROT_WRITE,
+	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	bt_mag = lookup_bootinfo(BTINFO_MAGIC);
+	if (bt_mag == NULL ||
+	    bt_mag->magic1 != BOOTINFO_MAGIC1 ||
+	    bt_mag->magic2 != BOOTINFO_MAGIC2) {
+		pmap_remove(pmap_kernel(), bootinfo_va, bootinfo_va + NBPG);
+		bootinfo_va = 0;
+	}
 }
 
 /*
@@ -234,6 +261,12 @@ consinit()
 	hp300_cninit();
 
 	consinit_active = 0;
+
+	/*
+	 * Issue a warning if the boot loader didn't provide bootinfo.
+	 */
+	if (bootinfo_va == 0)
+		printf("WARNING: boot loader did not provide bootinfo\n");
 
 #ifdef DDB
 	{
@@ -1037,6 +1070,33 @@ badbaddr(addr)
 	i = *(volatile char *)addr;
 	nofault = (int *) 0;
 	return(0);
+}
+
+/*
+ * lookup_bootinfo:
+ *
+ *	Look up information in bootinfo from boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	char *help = (char *)bootinfo_va;
+
+	/* Check for a bootinfo record first. */
+	if (help == NULL)
+		return (NULL);
+
+	do {
+		bt = (struct btinfo_common *)help;
+		if (bt->type == type)
+			return (help);
+		help += bt->next;
+	} while (bt->next != 0 &&
+		 (size_t)help < (size_t)bootinfo_va + BOOTINFO_SIZE);
+
+	return (NULL);
 }
 
 #ifdef PANICBUTTON
