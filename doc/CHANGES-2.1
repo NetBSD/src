@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.1,v 1.1.2.28 2005/03/16 12:55:28 tron Exp $
+#	$NetBSD: CHANGES-2.1,v 1.1.2.29 2005/03/16 13:13:17 tron Exp $
 
 A complete list of changes from the NetBSD 2.0 release to the NetBSD 2.1 
 release
@@ -751,4 +751,27 @@ sys/arch/sun3/include/param3.h                  1.50
 	than MAXBSIZE to limit page cache I/O sizes, and sun3 has been
 	broken since then.
 	[chs, ticket #1229]
+
+sys/kern/vfs_lookup.c				1.57
+
+	Adjust error case handling. If the VOP_LOOKUP() call unlocked the
+	parent directory node, remember that.
+	[wrstuden, ticket #1298]
+
+sys/dev/pci/pciide_common.c			1.22
+sys/dev/pci/pciidevar.h				1.26
+
+	Move bus_dma setup out of pciide_dma_init() in a new function,
+	pciide_dma_dmamap_setup(), for the benefit of drivers that needs
+	special registers setup in dmainit().
+	[bouyer, ticket #1016]
+
+share/mk/bsd.x11.mk				1.42
+xfree/xc/config/cf/Imake.rules			1.6
+
+	Modify CppRawFileTarget() to transform trailing backslashes in the
+	input manpages so the backslash is followed by a blank, defeating the C
+	preprocessor's tendency to remove the following newline (Thomas Dickey,
+	Debian #259996). This is a partial fix for our PR misc/28444.
+	[fredb, ticket #1017]
 
