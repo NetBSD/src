@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.18 1997/01/09 16:39:53 tls Exp $	*/
+/*	$NetBSD: mt.c,v 1.19 1997/04/15 06:53:51 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.18 1997/01/09 16:39:53 tls Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.19 1997/04/15 06:53:51 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.18 1997/01/09 16:39:53 tls Exp $";
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -111,7 +112,7 @@ main(argc, argv)
 	int count;
 
 	if ((tape = getenv("TAPE")) == NULL)
-		tape = DEFTAPE;
+		tape = _PATH_DEFTAPE;
 
 	while ((ch = getopt(argc, argv, "f:t:")) != -1)
 		switch (ch) {
