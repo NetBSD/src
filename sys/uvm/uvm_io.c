@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.18.2.1 2005/01/17 19:33:11 skrll Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.18.2.2 2005/04/01 14:32:12 skrll Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.18.2.1 2005/01/17 19:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_io.c,v 1.18.2.2 2005/04/01 14:32:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ uvm_io(map, uio)
 
 		vm_map_lock(kernel_map);
 		uvm_unmap_remove(kernel_map, kva, kva + chunksz, &dead_entries,
-		    NULL);
+		    NULL, 0);
 		vm_map_unlock(kernel_map);
 		if (dead_entries != NULL)
 			uvm_unmap_detach(dead_entries, AMAP_REFALL);

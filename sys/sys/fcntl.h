@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.26.2.5 2005/02/17 07:10:37 skrll Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.26.2.6 2005/04/01 14:32:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -124,7 +124,8 @@
 #define	FMARK		0x00001000	/* mark during gc() */
 #define	FDEFER		0x00002000	/* defer for next gc pass */
 #define	FHASLOCK	0x00004000	/* descriptor holds advisory lock */
-#define	FKIOCTL		0x80000000	/* bits to save after open(2) */
+#define	FKIOCTL		0x80000000	/* kernel originated ioctl */
+/* bits to save after open(2) */
 #define	FMASK		(FREAD|FWRITE|FAPPEND|FASYNC|FFSYNC|FNONBLOCK|FDSYNC|\
 			 FRSYNC|FALTIO)
 /* bits settable by fcntl(F_SETFL, ...) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.22.2.7 2005/02/19 13:18:15 skrll Exp $	*/
+/*	$NetBSD: bus.c,v 1.22.2.8 2005/04/01 14:28:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.22.2.7 2005/02/19 13:18:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.22.2.8 2005/04/01 14:28:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,10 +114,11 @@ x68k_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map = (struct x68k_bus_dmamap *)mapstore;
 	map->x68k_dm_size = size;
 	map->x68k_dm_segcnt = nsegments;
-	map->x68k_dm_maxsegsz = maxsegsz;
+	map->x68k_dm_maxmaxsegsz = maxsegsz;
 	map->x68k_dm_boundary = boundary;
 	map->x68k_dm_bounce_thresh = t->_bounce_thresh;
 	map->x68k_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
 	map->dm_nsegs = 0;
 
@@ -152,6 +153,7 @@ x68k_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->x68k_dm_maxmaxsegsz);
 
 	if (buflen > map->x68k_dm_size)
 		return (EINVAL);
@@ -182,6 +184,7 @@ x68k_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->x68k_dm_maxmaxsegsz);
 
 #ifdef DIAGNOSTIC
 	if ((m0->m_flags & M_PKTHDR) == 0)
@@ -228,6 +231,7 @@ x68k_bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	 */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->x68k_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -291,6 +295,7 @@ x68k_bus_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	 * No resources to free; just mark the mappings as
 	 * invalid.
 	 */
+	map->dm_maxsegsz = map->x68k_dm_maxmaxsegsz;
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 }
@@ -453,7 +458,7 @@ x68k_bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	size = round_page(size);
 
-	va = uvm_km_valloc(kernel_map, size);
+	va = uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
 
 	if (va == 0)
 		return (ENOMEM);
@@ -490,7 +495,9 @@ x68k_bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 
 	size = round_page(size);
 
-	uvm_km_free(kernel_map, (vaddr_t)kva, size);
+	pmap_remove(pmap_kernel(), (vaddr_t)kva, (vaddr_t)kva + size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, (vaddr_t)kva, size, UVM_KMF_VAONLY);
 }
 
 /*
@@ -595,7 +602,7 @@ x68k_bus_dmamap_load_buffer(bus_dmamap_t map, void *buf, bus_size_t buflen,
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=
-			     map->x68k_dm_maxsegsz &&
+			     map->dm_maxsegsz &&
 			    (map->x68k_dm_boundary == 0 ||
 			     (map->dm_segs[seg].ds_addr & bmask) ==
 			     (curaddr & bmask)))

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7.2.4 2004/11/02 07:50:46 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.2.5 2005/04/01 14:27:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.4 2004/11/02 07:50:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.2.5 2005/04/01 14:27:55 skrll Exp $");
+
+#include "scsibus.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +158,7 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 void
 findroot(void)
 {
+#if NSCSIBUS > 0
 	int ctlr, unit, part, type;
 	struct device *dv;
 
@@ -188,4 +191,5 @@ findroot(void)
 			return;
 		}
 	}
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.27.2.3 2004/09/21 13:18:50 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.27.2.4 2005/04/01 14:27:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,8 +76,11 @@
  * Memory special file
  */
 
+#include "opt_cputype.h"
+#include "opt_mips_cache.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.27.2.3 2004/09/21 13:18:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.27.2.4 2005/04/01 14:27:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -88,6 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.27.2.3 2004/09/21 13:18:50 skrll Exp $");
 #include <sys/msgbuf.h>
 
 #include <machine/cpu.h>
+
+#include <mips/cache.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -142,6 +147,10 @@ mmrw(dev, uio, flags)
 				return (EFAULT);
 			v += MIPS_KSEG0_START;
 			error = uiomove((void *)v, c, uio);
+#if defined(MIPS3_PLUS)
+			if (mips_cache_virtual_alias)
+				mips_dcache_wbinv_range(v, c);
+#endif
 			continue;
 
 		case DEV_KMEM:
@@ -156,6 +165,10 @@ mmrw(dev, uio, flags)
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
 				return (EFAULT);
 			error = uiomove((void *)v, c, uio);
+#if defined(MIPS3_PLUS)
+			if (mips_cache_virtual_alias)
+				mips_dcache_wbinv_range(v, c);
+#endif
 			continue;
 
 		case DEV_NULL:

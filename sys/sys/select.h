@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.17.2.6 2005/03/08 13:53:12 skrll Exp $	*/
+/*	$NetBSD: select.h,v 1.17.2.7 2005/04/01 14:32:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,21 +38,8 @@
 #include <sys/featuretest.h>
 #include <sys/types.h>
 
-#ifdef _NETBSD_SOURCE
-#include <sys/event.h>		/* for struct klist */
-
-/*
- * Used to maintain information about processes that wish to be
- * notified when I/O becomes possible.
- */
-struct selinfo {
-	struct klist	sel_klist;	/* knotes attached to this selinfo */
-	pid_t		sel_pid;	/* process to be notified */
-	uint8_t		sel_collision;	/* non-zero if a collision occurred */
-};
-#endif /* !_NETBSD_SOURCE_ */
-
 #ifdef _KERNEL
+#include <sys/selinfo.h>		/* for struct selinfo */
 #include <sys/signal.h>			/* for sigset_t */
 
 struct lwp;
@@ -75,14 +62,16 @@ selnotify(struct selinfo *sip, long knhint)
 
 #else /* _KERNEL */
 
-#include <signal.h>
+#include <sys/sigtypes.h>
 #include <time.h>
 
+__BEGIN_DECLS
 int	pselect(int, fd_set * __restrict, fd_set * __restrict,
 	    fd_set * __restrict, const struct timespec * __restrict,
 	    const sigset_t * __restrict);
 int	select(int, fd_set * __restrict, fd_set * __restrict,
 	    fd_set * __restrict, struct timeval * __restrict);
+__END_DECLS
 #endif /* _KERNEL */
 
 #endif /* !_SYS_SELECT_H_ */

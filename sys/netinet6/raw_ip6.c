@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.54.2.4 2004/09/21 13:37:36 skrll Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.54.2.5 2005/04/01 14:32:11 skrll Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,11 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.54.2.4 2004/09/21 13:37:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.54.2.5 2005/04/01 14:32:11 skrll Exp $");
 
 #include "opt_ipsec.h"
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -863,4 +864,33 @@ rip6_usrreq(so, req, m, nam, control, l)
 	if (m != NULL)
 		m_freem(m);
 	return (error);
+}
+
+SYSCTL_SETUP(sysctl_net_inet6_raw6_setup, "sysctl net.inet6.raw6 subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "raw6",
+		       SYSCTL_DESCR("Raw IPv6 settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_RAW, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "pcblist",
+		       SYSCTL_DESCR("Raw IPv6 control block list"),
+		       sysctl_inpcblist, 0, &raw6cbtable, 0,
+		       CTL_NET, PF_INET6, IPPROTO_RAW,
+		       CTL_CREATE, CTL_EOL);
 }

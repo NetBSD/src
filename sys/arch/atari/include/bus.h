@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.30.2.3 2004/09/21 13:14:10 skrll Exp $	*/
+/*	$NetBSD: bus.h,v 1.30.2.4 2005/04/01 14:27:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -661,7 +661,7 @@ struct atari_bus_dmamap {
 	 */
 	bus_size_t	_dm_size;	   /* largest DMA transfer mappable */
 	int		_dm_segcnt;	   /* number of segs this map can map */
-	bus_size_t	_dm_maxsegsz;	   /* largest possible segment */
+	bus_size_t	_dm_maxmaxsegsz;   /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	   /* don't cross this */
 	bus_addr_t	_dm_bounce_thresh; /* bounce threshold; see tag */
 	int		_dm_flags;	   /* misc. flags */
@@ -671,6 +671,7 @@ struct atari_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+	bus_size_t	dm_maxsegsz;	   /* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */

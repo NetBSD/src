@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.70.2.5 2005/02/04 11:47:48 skrll Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.70.2.6 2005/04/01 14:31:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,13 +61,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.5 2005/02/04 11:47:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.70.2.6 2005/04/01 14:31:50 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -666,4 +667,33 @@ rip_usrreq(struct socket *so, int req,
 release:
 	splx(s);
 	return (error);
+}
+
+SYSCTL_SETUP(sysctl_net_inet_raw_setup, "sysctl net.inet.raw subtree setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "net", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "raw",
+		       SYSCTL_DESCR("Raw IPv4 settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET, IPPROTO_RAW, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRUCT, "pcblist",
+		       SYSCTL_DESCR("Raw IPv4 control block list"),
+		       sysctl_inpcblist, 0, &rawcbtable, 0,
+		       CTL_NET, PF_INET, IPPROTO_RAW,
+		       CTL_CREATE, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.171.2.8 2005/03/04 16:53:29 skrll Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.171.2.9 2005/04/01 14:31:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -150,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171.2.8 2005/03/04 16:53:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171.2.9 2005/04/01 14:31:50 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -350,6 +350,29 @@ static void tcp6_log_refused(const struct ip6_hdr *, const struct tcphdr *);
 
 POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl", NULL);
 
+struct ipqent *
+tcpipqent_alloc()
+{
+	struct ipqent *ipqe;
+	int s;
+
+	s = splvm();
+	ipqe = pool_get(&tcpipqent_pool, PR_NOWAIT);
+	splx(s);
+
+	return ipqe;
+}
+
+void
+tcpipqent_free(struct ipqent *ipqe)
+{
+	int s;
+
+	s = splvm();
+	pool_put(&tcpipqent_pool, ipqe);
+	splx(s);
+}
+
 int
 tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 {
@@ -497,8 +520,9 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 			tcpstat.tcps_rcvdupbyte += pkt_len;
 			tcp_new_dsack(tp, pkt_seq, pkt_len);
 			m_freem(m);
-			if (tiqe != NULL)
-				pool_put(&tcpipqent_pool, tiqe);
+			if (tiqe != NULL) {
+				tcpipqent_free(tiqe);
+			}
 			TCP_REASS_COUNTER_INCR(&tcp_reass_segdup);
 			return (0);
 		}
@@ -575,10 +599,16 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 			m_cat(m, q->ipqe_m);
 			TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 			TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
-			if (tiqe == NULL)
+			tp->t_segqlen--;
+			KASSERT(tp->t_segqlen >= 0);
+			KASSERT(tp->t_segqlen != 0 ||
+			    (TAILQ_EMPTY(&tp->segq) &&
+			    TAILQ_EMPTY(&tp->timeq)));
+			if (tiqe == NULL) {
 				tiqe = q;
-			else
-				pool_put(&tcpipqent_pool, q);
+			} else {
+				tcpipqent_free(q);
+			}
 			TCP_REASS_COUNTER_INCR(&tcp_reass_prepend);
 			break;
 		}
@@ -600,10 +630,15 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 	  free_ipqe:
 		TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 		TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
-		if (tiqe == NULL)
+		tp->t_segqlen--;
+		KASSERT(tp->t_segqlen >= 0);
+		KASSERT(tp->t_segqlen != 0 ||
+		    (TAILQ_EMPTY(&tp->segq) && TAILQ_EMPTY(&tp->timeq)));
+		if (tiqe == NULL) {
 			tiqe = q;
-		else
-			pool_put(&tcpipqent_pool, q);
+		} else {
+			tcpipqent_free(q);
+		}
 	}
 
 #ifdef TCP_REASS_COUNTERS
@@ -623,7 +658,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 	 * XXX If we can't, just drop the packet.  XXX
 	 */
 	if (tiqe == NULL) {
-		tiqe = pool_get(&tcpipqent_pool, PR_NOWAIT);
+		tiqe = tcpipqent_alloc();
 		if (tiqe == NULL) {
 			tcpstat.tcps_rcvmemdrop++;
 			m_freem(m);
@@ -664,6 +699,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 		       p->ipqe_seq, p->ipqe_seq + p->ipqe_len, p->ipqe_len);
 #endif
 	}
+	tp->t_segqlen++;
 
 skip_replacement:
 
@@ -688,11 +724,15 @@ present:
 
 	TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 	TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
+	tp->t_segqlen--;
+	KASSERT(tp->t_segqlen >= 0);
+	KASSERT(tp->t_segqlen != 0 ||
+	    (TAILQ_EMPTY(&tp->segq) && TAILQ_EMPTY(&tp->timeq)));
 	if (so->so_state & SS_CANTRCVMORE)
 		m_freem(q->ipqe_m);
 	else
 		sbappendstream(&so->so_rcv, q->ipqe_m);
-	pool_put(&tcpipqent_pool, q);
+	tcpipqent_free(q);
 	sorwakeup(so);
 	return (pkt_flags);
 }
@@ -1600,7 +1640,6 @@ after_listen:
 			 * we have enough buffer space to take it.
 			 */
 			++tcpstat.tcps_preddat;
-			tp->rcv_sack_num = 0;
 			tp->rcv_nxt += tlen;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
@@ -2435,7 +2474,6 @@ dodata:							/* XXX */
 		} else {
 			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
-			tcp_update_sack_list(tp);
 			tp->t_flags |= TF_ACKNOW;
 		}
 		TCP_REASS_UNLOCK(tp);
@@ -2509,7 +2547,6 @@ dodata:							/* XXX */
 	 * Return any desired output.
 	 */
 	if (needoutput || (tp->t_flags & TF_ACKNOW)) {
-		tcp_update_sack_list(tp);
 		(void) tcp_output(tp);
 	}
 	if (tcp_saveti)
@@ -2547,7 +2584,6 @@ dropafterack_ratelim:
 dropafterack2:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
-	tcp_update_sack_list(tp);
 	(void) tcp_output(tp);
 	if (tcp_saveti)
 		m_freem(tcp_saveti);

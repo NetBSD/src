@@ -1,7 +1,7 @@
-/*	$NetBSD: lubbock_reg.h,v 1.1.2.2 2004/09/21 13:14:53 skrll Exp $ */
+/*	$NetBSD: lubbock_reg.h,v 1.1.2.3 2005/04/01 14:27:09 skrll Exp $ */
 
 /*
- * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
+ * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,8 @@
 #define LUBBOCK_GPIO_VBASE	0xfd100000
 #define LUBBOCK_CLKMAN_VBASE 	0xfd200000
 #define LUBBOCK_INTCTL_VBASE 	0xfd300000
-#define LUBBOCK_VBASE_FREE	0xfd400000
+#define LUBBOCK_FFUART_VBASE	0xfd400000
+#define LUBBOCK_BTUART_VBASE	0xfd500000
 /* FFUART and/or BTUART are mapped to this area when
    used for console or kgdb port */
 

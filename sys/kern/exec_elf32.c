@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.92.2.8 2005/03/04 16:51:58 skrll Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.92.2.9 2005/04/01 14:30:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.92.2.8 2005/03/04 16:51:58 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.92.2.9 2005/04/01 14:30:56 skrll Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -428,7 +428,8 @@ ELFNAME(load_file)(struct lwp *l, struct exec_package *epp, char *path,
 		/*
 		 * Now compute the size and load address.
 		 */
-		addr = VM_DEFAULT_ADDRESS(epp->ep_daddr,
+		addr = (*epp->ep_esch->es_emul->e_vm_default_addr)(p,	
+		    epp->ep_daddr,
 		    round_page(limit) - trunc_page(base_ph->p_vaddr));
 	} else
 		addr = *last; /* may be ELF_LINK_ADDR */

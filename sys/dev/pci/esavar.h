@@ -1,7 +1,7 @@
-/* $NetBSD: esavar.h,v 1.4.12.1 2005/01/17 19:31:24 skrll Exp $ */
+/* $NetBSD: esavar.h,v 1.4.12.2 2005/04/01 14:30:10 skrll Exp $ */
 
 /*
- * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
+ * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

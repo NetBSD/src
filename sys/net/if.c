@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.123.2.10 2005/03/04 16:52:56 skrll Exp $	*/
+/*	$NetBSD: if.c,v 1.123.2.11 2005/04/01 14:31:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.10 2005/03/04 16:52:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.123.2.11 2005/04/01 14:31:34 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -1727,6 +1727,66 @@ ifconf(cmd, data)
 		ifc->ifc_len = space;
 	return (error);
 }
+
+/*
+ * Queue message on interface, and start output if interface
+ * not yet active.
+ */
+int
+ifq_enqueue(struct ifnet *ifp, struct mbuf *m
+    ALTQ_COMMA ALTQ_DECL(struct altq_pktattr *pktattr))
+{
+	int len = m->m_pkthdr.len;
+	int mflags = m->m_flags;
+	int s = splnet();
+	int error;
+
+	IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+	if (error) {
+		splx(s);
+		return error;
+	}
+	ifp->if_obytes += len;
+	if (mflags & M_MCAST)
+		ifp->if_omcasts++;
+	if ((ifp->if_flags & IFF_OACTIVE) == 0)
+		(*ifp->if_start)(ifp);
+	splx(s);
+	return error;
+}
+
+/*
+ * Queue message on interface, possibly using a second fast queue
+ */
+int
+ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m
+    ALTQ_COMMA ALTQ_DECL(struct altq_pktattr *pktattr))
+{
+	int error = 0;
+
+	if (ifq != NULL
+#ifdef ALTQ
+	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
+#endif
+	    ) {
+		if (IF_QFULL(ifq)) {
+			IF_DROP(&ifp->if_snd);
+			m_freem(m);
+			if (error == 0)
+				error = ENOBUFS;
+		}
+		else
+			IF_ENQUEUE(ifq, m);
+	} else
+		IFQ_ENQUEUE(&ifp->if_snd, m, pktattr, error);
+	if (error != 0) {
+		++ifp->if_oerrors;
+		return error;
+	}
+
+	return 0;
+}
+
 
 #if defined(INET) || defined(INET6)
 static void

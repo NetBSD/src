@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.21.2.3 2004/09/21 13:16:05 skrll Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.21.2.4 2005/04/01 14:27:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.3 2004/09/21 13:16:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.21.2.4 2005/04/01 14:27:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,8 @@ hpcmips_init_bus_space(struct bus_space_tag_hpcmips *t,
 		pa = mips_trunc_page(t->base);
 		endpa = mips_round_page(t->base + t->size);
 
-		if (!(va = uvm_km_valloc(kernel_map, endpa - pa))) {
+		if (!(va = uvm_km_alloc(kernel_map, endpa - pa, 0,
+		    UVM_KMF_VAONLY))) {
 			panic("hpcmips_init_bus_space_extent:"
 			    "can't allocate kernel virtual");
 		}

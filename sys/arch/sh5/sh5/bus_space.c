@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4.6.3 2004/09/21 13:21:38 skrll Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4.6.4 2005/04/01 14:28:21 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4.6.3 2004/09/21 13:21:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.4.6.4 2005/04/01 14:28:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,9 @@ _bus_space_unmap(void *cookie, bus_space_handle_t bush, bus_size_t size)
 		return;
 	}
 
-	uvm_km_free(kernel_map, va, size);
+	pmap_remove(pmap_kernel(), (vaddr_t)va, (vaddr_t)va + size);
+	pmap_update(pmap_kernel());
+	uvm_km_free(kernel_map, va, size, UVM_KMF_VAONLY);
 }
 
 /*ARGSUSED*/

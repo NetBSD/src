@@ -1,8 +1,8 @@
-/* $NetBSD: s3c2800var.h,v 1.4.2.3 2004/09/21 13:13:32 skrll Exp $ */
+/* $NetBSD: s3c2800var.h,v 1.4.2.4 2005/04/01 14:26:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2005 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -53,6 +53,7 @@ int	s3c2800_sscom_cnattach(bus_space_tag_t, int, int, int, tcflag_t);
 int	s3c2800_sscom_kgdb_attach(bus_space_tag_t, int, int, int, tcflag_t);
 void	s3c2800_pci_init(pci_chipset_tag_t, void *);
 void	s3c2800_clock_freq(struct s3c2xx0_softc *);
+void	s3c2800_clock_freq2(vaddr_t, int *, int *, int *);
 
 /* Platform provides this */
 bus_dma_tag_t s3c2800_pci_dma_init(void);

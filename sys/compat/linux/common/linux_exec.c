@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.64.2.5 2004/09/21 13:25:38 skrll Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.64.2.6 2005/04/01 14:29:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.64.2.5 2004/09/21 13:25:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.64.2.6 2005/04/01 14:29:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.64.2.5 2004/09/21 13:25:38 skrll Ex
 #include <sys/mman.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
@@ -144,6 +146,8 @@ const struct emul emul_linux = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };
 
 static void

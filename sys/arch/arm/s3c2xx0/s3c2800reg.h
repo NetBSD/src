@@ -1,8 +1,8 @@
-/* $NetBSD: s3c2800reg.h,v 1.2.2.3 2004/09/21 13:13:32 skrll Exp $ */
+/* $NetBSD: s3c2800reg.h,v 1.2.2.4 2005/04/01 14:26:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
- * Copyright (c) 2002, 2003 Genetec Corporation
+ * Copyright (c) 2002, 2003, 2005 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,7 @@
  * Physical address of integrated peripherals
  */
 #define	S3C2800_PERIPHERALS	0x10000000
+#define	S3C2800_PERIPHERALS_SIZE  0x200000 /* 2MBytes */
 #define	S3C2800_CLKMAN_BASE	0x10000000 /* clock & power management */
 #define	S3C2800_CLKMAN_SIZE	0x18
 #define	S3C2800_MEMCTL_BASE	0x10010000 /* memory controller */

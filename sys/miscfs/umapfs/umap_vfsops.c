@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.39.2.7 2005/03/04 16:52:56 skrll Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.39.2.8 2005/04/01 14:31:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.39.2.7 2005/03/04 16:52:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.39.2.8 2005/04/01 14:31:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -343,3 +343,4 @@ struct vfsops umapfs_vfsops = {
 	vfs_stdextattrctl,
 	umapfs_vnodeopv_descs,
 };
+VFS_ATTACH(umapfs_vfsops);

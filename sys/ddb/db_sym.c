@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.41.2.6 2005/03/04 16:40:52 skrll Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.41.2.7 2005/04/01 14:29:36 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.6 2005/03/04 16:40:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.41.2.7 2005/04/01 14:29:36 skrll Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -204,7 +204,6 @@ db_sifting(char *symstr, int mode)
 db_sym_t
 db_search_symbol(db_addr_t val, db_strategy_t strategy, db_expr_t *offp)
 {
-/*###207 [cc] warning: `diff' might be used uninitialized in this function%%%*/
 	unsigned int diff;
 	unsigned long naddr;
 	db_sym_t ret = DB_SYM_NULL;

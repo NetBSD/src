@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.37.2.7 2005/03/04 16:45:26 skrll Exp $	*/
+/*	$NetBSD: twe.c,v 1.37.2.8 2005/04/01 14:30:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.7 2005/03/04 16:45:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.37.2.8 2005/04/01 14:30:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ static int	twe_submatch(struct device *, struct cfdata *,
 static int	twe_status_check(struct twe_softc *, u_int);
 static int	twe_status_wait(struct twe_softc *, u_int, int);
 static void	twe_describe_controller(struct twe_softc *);
+static void twe_clear_pci_abort(struct twe_softc *sc);
+static void twe_clear_pci_parity_error(struct twe_softc *sc);
 
 static int	twe_add_unit(struct twe_softc *, int);
 static int	twe_del_unit(struct twe_softc *, int);
@@ -1365,6 +1367,29 @@ twe_status_wait(struct twe_softc *sc, u_int32_t status, int timo)
 }
 
 /*
+ * Clear a PCI parity error.
+ */
+static void
+twe_clear_pci_parity_error(struct twe_softc *sc)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x0, TWE_CTL_CLEAR_PARITY_ERROR);
+
+	//FreeBSD: pci_write_config(sc->twe_dev, PCIR_STATUS, TWE_PCI_CLEAR_PARITY_ERROR, 2);
+}
+
+
+/*
+ * Clear a PCI abort.
+ */
+static void
+twe_clear_pci_abort(struct twe_softc *sc)
+{
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x0, TWE_CTL_CLEAR_PCI_ABORT);
+
+	//FreeBSD: pci_write_config(sc->twe_dev, PCIR_STATUS, TWE_PCI_CLEAR_PCI_ABORT, 2);
+}
+
+/*
  * Complain if the status bits aren't what we expect.
  */
 static int
@@ -1384,6 +1409,17 @@ twe_status_check(struct twe_softc *sc, u_int status)
 		printf("%s: unexpected status bits: 0x%08x\n",
 		    sc->sc_dv.dv_xname, status & TWE_STS_UNEXPECTED_BITS);
 		rv = -1;
+		if (status & TWE_STS_PCI_PARITY_ERROR) {
+			printf("%s: PCI parity error: Reseat card, move card "
+			       "or buggy device present.\n",
+			       sc->sc_dv.dv_xname);
+			twe_clear_pci_parity_error(sc);
+		}
+		if (status & TWE_STS_PCI_ABORT) {
+			printf("%s: PCI abort, clearing.\n",
+			       sc->sc_dv.dv_xname);
+			twe_clear_pci_abort(sc);
+		}
 	}
 
 	return (rv);
@@ -1502,8 +1538,8 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 	if (((u_long)ccb->ccb_data & (TWE_ALIGNMENT - 1)) != 0) {
 		s = splvm();
 		/* XXX */
-		ccb->ccb_abuf = uvm_km_kmemalloc(kmem_map, NULL,
-		    ccb->ccb_datasize, UVM_KMF_NOWAIT);
+		ccb->ccb_abuf = uvm_km_alloc(kmem_map,
+		    ccb->ccb_datasize, 0, UVM_KMF_NOWAIT|UVM_KMF_WIRED);
 		splx(s);
 		data = (void *)ccb->ccb_abuf;
 		if ((ccb->ccb_flags & TWE_CCB_DATA_OUT) != 0)
@@ -1525,7 +1561,7 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 			s = splvm();
 			/* XXX */
 			uvm_km_free(kmem_map, ccb->ccb_abuf,
-			    ccb->ccb_datasize);
+			    ccb->ccb_datasize, UVM_KMF_WIRED);
 			splx(s);
 		}
 		return (rv);
@@ -1610,7 +1646,8 @@ twe_ccb_unmap(struct twe_softc *sc, struct twe_ccb *ccb)
 			    ccb->ccb_datasize);
 		s = splvm();
 		/* XXX */
-		uvm_km_free(kmem_map, ccb->ccb_abuf, ccb->ccb_datasize);
+		uvm_km_free(kmem_map, ccb->ccb_abuf, ccb->ccb_datasize,
+		    UVM_KMF_WIRED);
 		splx(s);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.6.4.4 2005/03/04 16:41:32 skrll Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.6.4.5 2005/04/01 14:29:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -129,6 +129,10 @@
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_vlanvar.h>
+
+#include <netinet/in_systm.h>	/* XXX for IP_MAXPACKET */
+#include <netinet/in.h>		/* XXX for IP_MAXPACKET */
+#include <netinet/ip.h>		/* XXX for IP_MAXPACKET */
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -595,6 +599,8 @@ re_attach(struct rtk_softc *sc)
 
 		for (i = 0; i < ETHER_ADDR_LEN; i++)
 			eaddr[i] = CSR_READ_1(sc, RTK_IDR0 + i);
+
+		sc->rtk_ldata.rtk_tx_desc_cnt = RTK_TX_DESC_CNT_8169;
 	} else {
 
 		/* Set RX length mask */
@@ -614,14 +620,24 @@ re_attach(struct rtk_softc *sc)
 			eaddr[(i * 2) + 0] = val & 0xff;
 			eaddr[(i * 2) + 1] = val >> 8;
 		}
+
+		sc->rtk_ldata.rtk_tx_desc_cnt = RTK_TX_DESC_CNT_8139;
 	}
 
 	aprint_normal("%s: Ethernet address %s\n",
 	    sc->sc_dev.dv_xname, ether_sprintf(eaddr));
 
+	if (sc->rtk_ldata.rtk_tx_desc_cnt >
+	    PAGE_SIZE / sizeof(struct rtk_desc)) {
+		sc->rtk_ldata.rtk_tx_desc_cnt =
+		    PAGE_SIZE / sizeof(struct rtk_desc);
+	}
+
+	aprint_verbose("%s: using %d tx descriptors\n",
+	    sc->sc_dev.dv_xname, sc->rtk_ldata.rtk_tx_desc_cnt);
 
 	/* Allocate DMA'able memory for the TX ring */
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, RTK_TX_LIST_SZ,
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, RTK_TX_LIST_SZ(sc),
 		    RTK_ETHER_ALIGN, 0, &sc->rtk_ldata.rtk_tx_listseg,
 		    1, &sc->rtk_ldata.rtk_tx_listnseg, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't allocate tx listseg, error = %d\n",
@@ -631,17 +647,17 @@ re_attach(struct rtk_softc *sc)
 
 	/* Load the map for the TX ring. */
 	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->rtk_ldata.rtk_tx_listseg,
-		    sc->rtk_ldata.rtk_tx_listnseg, RTK_TX_LIST_SZ,
+		    sc->rtk_ldata.rtk_tx_listnseg, RTK_TX_LIST_SZ(sc),
 		    (caddr_t *)&sc->rtk_ldata.rtk_tx_list,
 		    BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't map tx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 	  	goto fail_1;
 	}
-	memset(sc->rtk_ldata.rtk_tx_list, 0, RTK_TX_LIST_SZ);
+	memset(sc->rtk_ldata.rtk_tx_list, 0, RTK_TX_LIST_SZ(sc));
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, RTK_TX_LIST_SZ, 1,
-		    RTK_TX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
+	if ((error = bus_dmamap_create(sc->sc_dmat, RTK_TX_LIST_SZ(sc), 1,
+		    RTK_TX_LIST_SZ(sc), 0, BUS_DMA_ALLOCNOW,
 		    &sc->rtk_ldata.rtk_tx_list_map)) != 0) {
 		aprint_error("%s: can't create tx list map, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -651,17 +667,19 @@ re_attach(struct rtk_softc *sc)
 
 	if ((error = bus_dmamap_load(sc->sc_dmat,
 		    sc->rtk_ldata.rtk_tx_list_map, sc->rtk_ldata.rtk_tx_list,
-		    RTK_TX_LIST_SZ, NULL, BUS_DMA_NOWAIT)) != 0) {
+		    RTK_TX_LIST_SZ(sc), NULL, BUS_DMA_NOWAIT)) != 0) {
 		aprint_error("%s: can't load tx list, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_3;
 	}
 
 	/* Create DMA maps for TX buffers */
-	for (i = 0; i < RTK_TX_DESC_CNT; i++) {
-		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES * RTK_NTXSEGS,
-		    RTK_NTXSEGS, MCLBYTES, 0, BUS_DMA_ALLOCNOW,
-		    &sc->rtk_ldata.rtk_tx_dmamap[i]);
+	for (i = 0; i < RTK_TX_QLEN; i++) {
+		error = bus_dmamap_create(sc->sc_dmat,
+		    round_page(IP_MAXPACKET),
+		    RTK_TX_DESC_CNT(sc) - 4, RTK_TDESC_CMD_FRAGLEN,
+		    0, BUS_DMA_ALLOCNOW,
+		    &sc->rtk_ldata.rtk_txq[i].txq_dmamap);
 		if (error) {
 			aprint_error("%s: can't create DMA map for TX\n",
 			    sc->sc_dev.dv_xname);
@@ -687,7 +705,7 @@ re_attach(struct rtk_softc *sc)
 		    sc->sc_dev.dv_xname, error);
 		goto fail_5;
 	}
-	memset(sc->rtk_ldata.rtk_rx_list, 0, RTK_TX_LIST_SZ);
+	memset(sc->rtk_ldata.rtk_rx_list, 0, RTK_RX_LIST_SZ);
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, RTK_RX_LIST_SZ, 1,
 		    RTK_RX_LIST_SZ, 0, BUS_DMA_ALLOCNOW,
@@ -732,7 +750,8 @@ re_attach(struct rtk_softc *sc)
 	ifp->if_start = re_start;
 	ifp->if_stop = re_stop;
 	ifp->if_capabilities |=
-	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	    IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+	    IFCAP_TSOv4;
 	ifp->if_watchdog = re_watchdog;
 	ifp->if_init = re_init;
 	if (sc->rtk_type == RTK_8169)
@@ -802,10 +821,10 @@ fail_5:
 
 fail_4:
 	/* Destroy DMA maps for TX buffers. */
-	for (i = 0; i < RTK_TX_DESC_CNT; i++)
-		if (sc->rtk_ldata.rtk_tx_dmamap[i] != NULL)
+	for (i = 0; i < RTK_TX_QLEN; i++)
+		if (sc->rtk_ldata.rtk_txq[i].txq_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->rtk_ldata.rtk_tx_dmamap[i]);
+			    sc->rtk_ldata.rtk_txq[i].txq_dmamap);
 
 	/* Free DMA'able memory for the TX ring. */
 	bus_dmamap_unload(sc->sc_dmat, sc->rtk_ldata.rtk_tx_list_map);
@@ -813,7 +832,7 @@ fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->rtk_ldata.rtk_tx_list_map);
 fail_2:
 	bus_dmamem_unmap(sc->sc_dmat,
-	    (caddr_t)sc->rtk_ldata.rtk_tx_list, RTK_TX_LIST_SZ);
+	    (caddr_t)sc->rtk_ldata.rtk_tx_list, RTK_TX_LIST_SZ(sc));
 fail_1:
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->rtk_ldata.rtk_tx_listseg, sc->rtk_ldata.rtk_tx_listnseg);
@@ -892,16 +911,16 @@ re_detach(struct rtk_softc *sc)
 	    &sc->rtk_ldata.rtk_rx_listseg, sc->rtk_ldata.rtk_rx_listnseg);
 
 	/* Destroy DMA maps for TX buffers. */
-	for (i = 0; i < RTK_TX_DESC_CNT; i++)
-		if (sc->rtk_ldata.rtk_tx_dmamap[i] != NULL)
+	for (i = 0; i < RTK_TX_QLEN; i++)
+		if (sc->rtk_ldata.rtk_txq[i].txq_dmamap != NULL)
 			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->rtk_ldata.rtk_tx_dmamap[i]);
+			    sc->rtk_ldata.rtk_txq[i].txq_dmamap);
 
 	/* Free DMA'able memory for the TX ring. */
 	bus_dmamap_unload(sc->sc_dmat, sc->rtk_ldata.rtk_tx_list_map);
 	bus_dmamap_destroy(sc->sc_dmat, sc->rtk_ldata.rtk_tx_list_map);
 	bus_dmamem_unmap(sc->sc_dmat,
-	    (caddr_t)sc->rtk_ldata.rtk_tx_list, RTK_TX_LIST_SZ);
+	    (caddr_t)sc->rtk_ldata.rtk_tx_list, RTK_TX_LIST_SZ(sc));
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->rtk_ldata.rtk_tx_listseg, sc->rtk_ldata.rtk_tx_listnseg);
 
@@ -1023,13 +1042,9 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 	cmdstat = map->dm_segs[0].ds_len;
 	d->rtk_bufaddr_lo = htole32(RTK_ADDR_LO(map->dm_segs[0].ds_addr));
 	d->rtk_bufaddr_hi = htole32(RTK_ADDR_HI(map->dm_segs[0].ds_addr));
-	cmdstat |= RTK_TDESC_CMD_SOF;
 	if (idx == (RTK_RX_DESC_CNT - 1))
-		cmdstat |= RTK_TDESC_CMD_EOR;
+		cmdstat |= RTK_RDESC_CMD_EOR;
 	d->rtk_cmdstat = htole32(cmdstat);
-
-	d->rtk_cmdstat |= htole32(RTK_TDESC_CMD_EOF);
-
 
 	sc->rtk_ldata.rtk_rx_list[idx].rtk_cmdstat |=
 	    htole32(RTK_RDESC_CMD_OWN);
@@ -1049,16 +1064,20 @@ out:
 static int
 re_tx_list_init(struct rtk_softc *sc)
 {
-	memset((char *)sc->rtk_ldata.rtk_tx_list, 0, RTK_TX_LIST_SZ);
-	memset((char *)&sc->rtk_ldata.rtk_tx_mbuf, 0,
-	    (RTK_TX_DESC_CNT * sizeof(struct mbuf *)));
+	int i;
+
+	memset(sc->rtk_ldata.rtk_tx_list, 0, RTK_TX_LIST_SZ(sc));
+	for (i = 0; i < RTK_TX_QLEN; i++) {
+		sc->rtk_ldata.rtk_txq[i].txq_mbuf = NULL;
+	}
 
 	bus_dmamap_sync(sc->sc_dmat,
 	    sc->rtk_ldata.rtk_tx_list_map, 0,
 	    sc->rtk_ldata.rtk_tx_list_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-	sc->rtk_ldata.rtk_tx_prodidx = 0;
-	sc->rtk_ldata.rtk_tx_considx = 0;
-	sc->rtk_ldata.rtk_tx_free = RTK_TX_DESC_CNT;
+	sc->rtk_ldata.rtk_txq_prodidx = 0;
+	sc->rtk_ldata.rtk_txq_considx = 0;
+	sc->rtk_ldata.rtk_tx_free = RTK_TX_DESC_CNT(sc);
+	sc->rtk_ldata.rtk_tx_nextfree = 0;
 
 	return 0;
 }
@@ -1141,7 +1160,7 @@ re_rxeof(struct rtk_softc *sc)
 				sc->rtk_tail = m;
 			}
 			re_newbuf(sc, i, NULL);
-			RTK_DESC_INC(i);
+			RTK_RX_DESC_INC(sc, i);
 			continue;
 		}
 
@@ -1175,7 +1194,7 @@ re_rxeof(struct rtk_softc *sc)
 				sc->rtk_head = sc->rtk_tail = NULL;
 			}
 			re_newbuf(sc, i, m);
-			RTK_DESC_INC(i);
+			RTK_RX_DESC_INC(sc, i);
 			continue;
 		}
 
@@ -1191,11 +1210,11 @@ re_rxeof(struct rtk_softc *sc)
 				sc->rtk_head = sc->rtk_tail = NULL;
 			}
 			re_newbuf(sc, i, m);
-			RTK_DESC_INC(i);
+			RTK_RX_DESC_INC(sc, i);
 			continue;
 		}
 
-		RTK_DESC_INC(i);
+		RTK_RX_DESC_INC(sc, i);
 
 		if (sc->rtk_head != NULL) {
 			m->m_len = total_len % (MCLBYTES - RTK_ETHER_ALIGN);
@@ -1277,11 +1296,10 @@ static void
 re_txeof(struct rtk_softc *sc)
 {
 	struct ifnet		*ifp;
-	u_int32_t		txstat;
 	int			idx;
 
 	ifp = &sc->ethercom.ec_if;
-	idx = sc->rtk_ldata.rtk_tx_considx;
+	idx = sc->rtk_ldata.rtk_txq_considx;
 
 	/* Invalidate the TX descriptor list */
 
@@ -1290,40 +1308,43 @@ re_txeof(struct rtk_softc *sc)
 	    0, sc->rtk_ldata.rtk_tx_list_map->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD);
 
-	while (idx != sc->rtk_ldata.rtk_tx_prodidx) {
+	while (/* CONSTCOND */ 1) {
+		struct rtk_txq *txq = &sc->rtk_ldata.rtk_txq[idx];
+		int descidx;
+		u_int32_t txstat;
 
-		txstat = le32toh(sc->rtk_ldata.rtk_tx_list[idx].rtk_cmdstat);
+		if (txq->txq_mbuf == NULL) {
+			KASSERT(idx == sc->rtk_ldata.rtk_txq_prodidx);
+			break;
+		}
+
+		descidx = txq->txq_descidx;
+		txstat =
+		    le32toh(sc->rtk_ldata.rtk_tx_list[descidx].rtk_cmdstat);
+		KASSERT((txstat & RTK_TDESC_CMD_EOF) != 0);
 		if (txstat & RTK_TDESC_CMD_OWN)
 			break;
 
-		/*
-		 * We only stash mbufs in the last descriptor
-		 * in a fragment chain, which also happens to
-		 * be the only place where the TX status bits
-		 * are valid.
-		 */
+		sc->rtk_ldata.rtk_tx_free += txq->txq_dmamap->dm_nsegs;
+		KASSERT(sc->rtk_ldata.rtk_tx_free <= RTK_TX_DESC_CNT(sc));
+		bus_dmamap_unload(sc->sc_dmat, txq->txq_dmamap);
+		m_freem(txq->txq_mbuf);
+		txq->txq_mbuf = NULL;
 
-		if (txstat & RTK_TDESC_CMD_EOF) {
-			m_freem(sc->rtk_ldata.rtk_tx_mbuf[idx]);
-			sc->rtk_ldata.rtk_tx_mbuf[idx] = NULL;
-			bus_dmamap_unload(sc->sc_dmat,
-			    sc->rtk_ldata.rtk_tx_dmamap[idx]);
-			if (txstat & (RTK_TDESC_STAT_EXCESSCOL |
-			    RTK_TDESC_STAT_COLCNT))
-				ifp->if_collisions++;
-			if (txstat & RTK_TDESC_STAT_TXERRSUM)
-				ifp->if_oerrors++;
-			else
-				ifp->if_opackets++;
-		}
-		sc->rtk_ldata.rtk_tx_free++;
-		RTK_DESC_INC(idx);
+		if (txstat & (RTK_TDESC_STAT_EXCESSCOL | RTK_TDESC_STAT_COLCNT))
+			ifp->if_collisions++;
+		if (txstat & RTK_TDESC_STAT_TXERRSUM)
+			ifp->if_oerrors++;
+		else
+			ifp->if_opackets++;
+
+		idx = (idx + 1) % RTK_TX_QLEN;
 	}
 
 	/* No changes made to the TX ring, so no flush needed */
 
-	if (idx != sc->rtk_ldata.rtk_tx_considx) {
-		sc->rtk_ldata.rtk_tx_considx = idx;
+	if (idx != sc->rtk_ldata.rtk_txq_considx) {
+		sc->rtk_ldata.rtk_txq_considx = idx;
 		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_timer = 0;
 	}
@@ -1334,7 +1355,7 @@ re_txeof(struct rtk_softc *sc)
 	 * interrupt that will cause us to re-enter this routine.
 	 * This is done in case the transmitter has gone idle.
 	 */
-	if (sc->rtk_ldata.rtk_tx_free != RTK_TX_DESC_CNT)
+	if (sc->rtk_ldata.rtk_tx_free != RTK_TX_DESC_CNT(sc))
 		CSR_WRITE_4(sc, RTK_TIMERCNT, 1);
 
 	return;
@@ -1485,16 +1506,18 @@ done:
 }
 
 static int
-re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
+re_encap(struct rtk_softc *sc, struct mbuf *m, int *idx)
 {
 	bus_dmamap_t		map;
-	int			error, i, curidx;
+	int			error, i, startidx, curidx;
 	struct m_tag		*mtag;
 	struct rtk_desc		*d;
 	u_int32_t		cmdstat, rtk_flags;
+	struct rtk_txq		*txq;
 
-	if (sc->rtk_ldata.rtk_tx_free <= 4)
+	if (sc->rtk_ldata.rtk_tx_free <= 4) {
 		return EFBIG;
+	}
 
 	/*
 	 * Set up checksum offload. Note: checksum offload bits must
@@ -1503,27 +1526,48 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 	 * chip. I'm not sure if this is a requirement or a bug.)
 	 */
 
-	rtk_flags = 0;
+	if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0) {
+		u_int32_t segsz = m->m_pkthdr.segsz;
 
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_IPv4)
-		rtk_flags |= RTK_TDESC_CMD_IPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_TCPv4)
-		rtk_flags |= RTK_TDESC_CMD_TCPCSUM;
-	if (m_head->m_pkthdr.csum_flags & M_CSUM_UDPv4)
-		rtk_flags |= RTK_TDESC_CMD_UDPCSUM;
+		rtk_flags = RTK_TDESC_CMD_LGSEND |
+		    (segsz << RTK_TDESC_CMD_MSSVAL_SHIFT);
+	} else {
 
-	map = sc->rtk_ldata.rtk_tx_dmamap[*idx];
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, map,
-	    m_head, BUS_DMA_NOWAIT);
+		/*
+		 * set RTK_TDESC_CMD_IPCSUM if any checksum offloading
+		 * is requested.  otherwise, RTK_TDESC_CMD_TCPCSUM/
+		 * RTK_TDESC_CMD_UDPCSUM doesn't make effects.
+		 */
 
-	if (error) {
-		aprint_error("%s: can't map mbuf (error %d)\n",
-		    sc->sc_dev.dv_xname, error);
-		return ENOBUFS;
+		rtk_flags = 0;
+		if ((m->m_pkthdr.csum_flags &
+		    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
+			rtk_flags |= RTK_TDESC_CMD_IPCSUM;
+			if (m->m_pkthdr.csum_flags & M_CSUM_TCPv4) {
+				rtk_flags |= RTK_TDESC_CMD_TCPCSUM;
+			} else if (m->m_pkthdr.csum_flags & M_CSUM_UDPv4) {
+				rtk_flags |= RTK_TDESC_CMD_UDPCSUM;
+			}
+		}
 	}
 
-	if (map->dm_nsegs > sc->rtk_ldata.rtk_tx_free - 4)
-		return ENOBUFS;
+	txq = &sc->rtk_ldata.rtk_txq[*idx];
+	map = txq->txq_dmamap;
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT);
+
+	if (error) {
+		/* XXX try to defrag if EFBIG? */
+
+		aprint_error("%s: can't map mbuf (error %d)\n",
+		    sc->sc_dev.dv_xname, error);
+
+		return error;
+	}
+
+	if (map->dm_nsegs > sc->rtk_ldata.rtk_tx_free - 4) {
+		error = EFBIG;
+		goto fail_unload;
+	}
 	/*
 	 * Map the segment array into descriptors. Note that we set the
 	 * start-of-frame and end-of-frame markers for either TX or RX, but
@@ -1536,11 +1580,19 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 	 * reception.)
 	 */
 	i = 0;
-	curidx = *idx;
+	curidx = startidx = sc->rtk_ldata.rtk_tx_nextfree;
 	while (1) {
 		d = &sc->rtk_ldata.rtk_tx_list[curidx];
-		if (le32toh(d->rtk_cmdstat) & RTK_RDESC_STAT_OWN)
-			return ENOBUFS;
+		if (le32toh(d->rtk_cmdstat) & RTK_TDESC_STAT_OWN) {
+			while (i > 0) {
+				sc->rtk_ldata.rtk_tx_list[
+				    (curidx + RTK_TX_DESC_CNT(sc) - i) %
+				    RTK_TX_DESC_CNT(sc)].rtk_cmdstat = 0;
+				i--;
+			}
+			error = ENOBUFS;
+			goto fail_unload;
+		}
 
 		cmdstat = map->dm_segs[i].ds_len;
 		d->rtk_bufaddr_lo =
@@ -1551,26 +1603,18 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 			cmdstat |= RTK_TDESC_CMD_SOF;
 		else
 			cmdstat |= RTK_TDESC_CMD_OWN;
-		if (curidx == (RTK_RX_DESC_CNT - 1))
+		if (curidx == (RTK_TX_DESC_CNT(sc) - 1))
 			cmdstat |= RTK_TDESC_CMD_EOR;
 		d->rtk_cmdstat = htole32(cmdstat | rtk_flags);
 		i++;
 		if (i == map->dm_nsegs)
 			break;
-		RTK_DESC_INC(curidx);
+		RTK_TX_DESC_INC(sc, curidx);
 	}
 
 	d->rtk_cmdstat |= htole32(RTK_TDESC_CMD_EOF);
 
-	/*
-	 * Insure that the map for this transmission
-	 * is placed at the array index of the last descriptor
-	 * in this chain.
-	 */
-	sc->rtk_ldata.rtk_tx_dmamap[*idx] =
-	    sc->rtk_ldata.rtk_tx_dmamap[curidx];
-	sc->rtk_ldata.rtk_tx_dmamap[curidx] = map;
-	sc->rtk_ldata.rtk_tx_mbuf[curidx] = m_head;
+	txq->txq_mbuf = m;
 	sc->rtk_ldata.rtk_tx_free -= map->dm_nsegs;
 
 	/*
@@ -1579,8 +1623,8 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 	 * transmission attempt.
 	 */
 
-	if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m_head)) != NULL) {
-		sc->rtk_ldata.rtk_tx_list[*idx].rtk_vlanctl =
+	if ((mtag = VLAN_OUTPUT_TAG(&sc->ethercom, m)) != NULL) {
+		sc->rtk_ldata.rtk_tx_list[startidx].rtk_vlanctl =
 		    htole32(htons(VLAN_TAG_VALUE(mtag)) |
 		    RTK_TDESC_VLANCTL_TAG);
 	}
@@ -1589,14 +1633,21 @@ re_encap(struct rtk_softc *sc, struct mbuf *m_head, int *idx)
 
 	sc->rtk_ldata.rtk_tx_list[curidx].rtk_cmdstat |=
 	    htole32(RTK_TDESC_CMD_OWN);
-	if (*idx != curidx)
-		sc->rtk_ldata.rtk_tx_list[*idx].rtk_cmdstat |=
+	if (startidx != curidx)
+		sc->rtk_ldata.rtk_tx_list[startidx].rtk_cmdstat |=
 		    htole32(RTK_TDESC_CMD_OWN);
 
-	RTK_DESC_INC(curidx);
-	*idx = curidx;
+	txq->txq_descidx = curidx;
+	RTK_TX_DESC_INC(sc, curidx);
+	sc->rtk_ldata.rtk_tx_nextfree = curidx;
+	*idx = (*idx + 1) % RTK_TX_QLEN;
 
 	return 0;
+
+fail_unload:
+	bus_dmamap_unload(sc->sc_dmat, map);
+
+	return error;
 }
 
 /*
@@ -1607,31 +1658,54 @@ static void
 re_start(struct ifnet *ifp)
 {
 	struct rtk_softc	*sc;
-	struct mbuf		*m_head = NULL;
 	int			idx;
 
 	sc = ifp->if_softc;
 
-	idx = sc->rtk_ldata.rtk_tx_prodidx;
-	while (sc->rtk_ldata.rtk_tx_mbuf[idx] == NULL) {
-		IF_DEQUEUE(&ifp->if_snd, m_head);
-		if (m_head == NULL)
+	idx = sc->rtk_ldata.rtk_txq_prodidx;
+	while (/* CONSTCOND */ 1) {
+		struct mbuf *m;
+		int error;
+
+		IFQ_POLL(&ifp->if_snd, m);
+		if (m == NULL)
 			break;
 
-		if (re_encap(sc, m_head, &idx)) {
-			IF_PREPEND(&ifp->if_snd, m_head);
+		if (sc->rtk_ldata.rtk_txq[idx].txq_mbuf != NULL) {
+			KASSERT(idx == sc->rtk_ldata.rtk_txq_considx);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
+
+		error = re_encap(sc, m, &idx);
+		if (error == EFBIG &&
+		    sc->rtk_ldata.rtk_tx_free == RTK_TX_DESC_CNT(sc)) {
+			IFQ_DEQUEUE(&ifp->if_snd, m);
+			m_freem(m);
+			ifp->if_oerrors++;
+			continue;
+		}
+		if (error) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+
 #if NBPFILTER > 0
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
 		 */
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head);
+			bpf_mtap(ifp->if_bpf, m);
 #endif
 	}
+
+	if (sc->rtk_ldata.rtk_txq_prodidx == idx) {
+		return;
+	}
+	sc->rtk_ldata.rtk_txq_prodidx = idx;
 
 	/* Flush the TX descriptors */
 
@@ -1639,8 +1713,6 @@ re_start(struct ifnet *ifp)
 	    sc->rtk_ldata.rtk_tx_list_map,
 	    0, sc->rtk_ldata.rtk_tx_list_map->dm_mapsize,
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-	sc->rtk_ldata.rtk_tx_prodidx = idx;
 
 	/*
 	 * RealTek put the TX poll request register in a different
@@ -1977,12 +2049,12 @@ re_stop(struct ifnet *ifp, int disable)
 	}
 
 	/* Free the TX list buffers. */
-	for (i = 0; i < RTK_TX_DESC_CNT; i++) {
-		if (sc->rtk_ldata.rtk_tx_mbuf[i] != NULL) {
+	for (i = 0; i < RTK_TX_QLEN; i++) {
+		if (sc->rtk_ldata.rtk_txq[i].txq_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmat,
-			    sc->rtk_ldata.rtk_tx_dmamap[i]);
-			m_freem(sc->rtk_ldata.rtk_tx_mbuf[i]);
-			sc->rtk_ldata.rtk_tx_mbuf[i] = NULL;
+			    sc->rtk_ldata.rtk_txq[i].txq_dmamap);
+			m_freem(sc->rtk_ldata.rtk_txq[i].txq_mbuf);
+			sc->rtk_ldata.rtk_txq[i].txq_mbuf = NULL;
 		}
 	}
 

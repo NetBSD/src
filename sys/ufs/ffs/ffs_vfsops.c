@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.118.2.12 2005/03/08 13:53:12 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.118.2.13 2005/04/01 14:32:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.12 2005/03/08 13:53:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.13 2005/04/01 14:32:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -111,6 +111,7 @@ struct vfsops ffs_vfsops = {
 	vfs_stdextattrctl,
 	ffs_vnodeopv_descs,
 };
+VFS_ATTACH(ffs_vfsops);
 
 struct genfs_ops ffs_genfsops = {
 	ffs_gop_size,

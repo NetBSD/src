@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec.h,v 1.7.2.4 2004/09/21 13:26:13 skrll Exp $	 */
+/*	$NetBSD: svr4_32_exec.h,v 1.7.2.5 2005/04/01 14:29:36 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@ int svr4_32_copyargs __P((struct lwp *, struct exec_package *, struct ps_strings
 extern const struct emul emul_svr4_32;
 
 void svr4_32_setregs __P((struct lwp *, struct exec_package *, u_long));
+vaddr_t svr4_32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
 int svr4_32_elf32_probe __P((struct lwp *, struct exec_package *, void *,
     char *, vaddr_t *));
 

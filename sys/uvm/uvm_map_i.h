@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.24.6.5 2005/02/15 21:34:02 skrll Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.24.6.6 2005/04/01 14:32:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -150,7 +150,7 @@ uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	 */
 	uvm_mapent_reserve(map, &umr, 2, flags);
 	vm_map_lock(map);
-	uvm_unmap_remove(map, start, end, &dead_entries, &umr);
+	uvm_unmap_remove(map, start, end, &dead_entries, &umr, flags);
 	vm_map_unlock(map);
 	uvm_mapent_unreserve(map, &umr);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.5.6.3 2004/09/21 13:36:29 skrll Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.5.6.4 2005/04/01 14:31:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5.6.3 2004/09/21 13:36:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5.6.4 2005/04/01 14:31:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -53,7 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5.6.3 2004/09/21 13:36:29 skrll Ex
 #include <coda/coda.h>
 #include <coda/coda_vfsops.h>
 
+#ifdef CODA_COMPAT_5  
+int coda5_lkmentry(struct lkm_table *, int, int);
+#else
 int coda_lkmentry(struct lkm_table *, int, int);
+#endif
 
 static int coda_dispatch_vfs(struct lkm_table *, int, int);
 static int coda_dispatch_dev(struct lkm_table *, int, int);
@@ -96,7 +100,11 @@ coda_dispatch_dev(struct lkm_table *lkmtp, int cmd, int ver)
  * entry point
  */
 int
+#ifdef CODA_COMPAT_5
+coda5_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
+#else
 coda_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
+#endif
 {
 	int error = 0;
 	static struct sysctllog *_coda_log;
