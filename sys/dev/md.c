@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 1996/12/28 23:09:26 pk Exp $	*/
+/*	$NetBSD: md.c,v 1.12 1997/01/11 06:26:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -148,7 +148,7 @@ mdattach(n)
 	/* Attach as if by autoconfig. */
 	for (i = 0; i < n; i++) {
 
-		sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK);
+		sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
 		if (!sc) {
 			printf("ramdisk: malloc for attach failed!\n");
 			return;
