@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.44 1994/12/24 16:44:33 ws Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.45 1994/12/27 19:00:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2382,9 +2382,9 @@ nfsspec_access(ap)
 	int error;
 
 	vap = &vattr;
-	if (error = VOP_GETATTR(ap->a_vp, vap, cred, ap->a_p))
+	if (error = VOP_GETATTR(ap->a_vp, vap, ap->a_cred, ap->a_p))
 		return (error);
-	return (vaccess(vap->va_mode, vap->va_uid, vap->va_guid,
+	return (vaccess(vap->va_mode, vap->va_uid, vap->va_gid,
 			ap->a_mode, ap->a_cred));
 }
 
