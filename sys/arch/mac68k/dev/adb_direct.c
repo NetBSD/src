@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.21.2.2 1999/06/07 19:32:29 perry Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.21.2.3 1999/11/21 15:03:16 he Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -262,7 +262,6 @@ int	tickle_serial = 0;		/* the last packet tickled */
 int	adb_cuda_serial = 0;		/* the current packet */
 
 extern struct mac68k_machine_S mac68k_machine;
-extern int ite_polling;			/* Are we polling?  (Debugger mode) */
 
 void	pm_setup_adb __P((void));
 void	pm_check_adb_devices __P((int));
@@ -436,8 +435,7 @@ switch_start:
 			 * [4], even for RTC/PRAM commands.
 			 */
 			/* set up data for adb_pass_up */
-			for (i = 0; i <= adbInputBuffer[0]; i++)
-				packet.data[i] = adbInputBuffer[i];
+			memcpy(packet.data, adbInputBuffer, adbInputBuffer[0] + 1);
 				
 			if ((adbWaiting == 1) &&
 			    (adbInputBuffer[4] == adbWaitingCmd) &&
@@ -541,8 +539,7 @@ switch_start:
 				adbWaitingCmd = adbOutputBuffer[2];	/* save waiting command */
 			} else {	/* no talk, so done */
 				/* set up stuff for adb_pass_up */
-				for (i = 0; i <= adbInputBuffer[0]; i++)
-					packet.data[i] = adbInputBuffer[i];
+				memcpy(packet.data, adbInputBuffer, adbInputBuffer[0] + 1);
 				packet.saveBuf = adbBuffer;
 				packet.compRout = adbCompRout;
 				packet.compData = adbCompData;
@@ -603,7 +600,7 @@ int
 send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 	command)
 {
-	int i, s, len;
+	int s, len;
 
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -648,12 +645,11 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 		adbOutputBuffer[1] = 0x00;	/* mark as an ADB command */
 		adbOutputBuffer[2] = (u_char)command;	/* load command */
 
-		for (i = 1; i <= len; i++)	/* copy additional output
-						 * data, if any */
-			adbOutputBuffer[2 + i] = buffer[i];
+		/* copy additional output data, if any */
+		memcpy(adbOutputBuffer + 3, buffer + 1, len);
 	} else
-		for (i = 0; i <= (in[0] + 1); i++)
-			adbOutputBuffer[i] = in[i];
+		/* if data ready, just copy over */
+		memcpy(adbOutputBuffer, in, in[0] + 2);
 
 	adbSentChars = 0;	/* nothing sent yet */
 	adbBuffer = buffer;	/* save buffer to know where to save result */
@@ -677,14 +673,15 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 
 	splx(s);
 
-	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked ? */
+	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked? */
 		/* poll until byte done */
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
-			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
-				adb_intr_cuda();	/* process it */
-				adb_soft_intr();
-				}
+			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
+				adb_intr_cuda(); /* go process it */
+				if (adb_polling)
+					adb_soft_intr();
+			}
 
 	return 0;
 }				/* send_adb_cuda */
@@ -720,11 +717,13 @@ switch_start:
 				if (adb_debug & 0x80)
 					printf_intr("POLL-doing-out-queue. ");
 #endif
-			/* copy over data */
 				ADB_SET_STATE_IDLE_II();
 				delay(ADB_DELAY);
-				for (i = 0; i <= (adbOutQueue.outBuf[0] + 1); i++)
-					adbOutputBuffer[i] = adbOutQueue.outBuf[i];
+
+				/* copy over data */
+				memcpy(adbOutputBuffer, adbOutQueue.outBuf,
+				    adbOutQueue.outBuf[0] + 2);
+
 				adbBuffer = adbOutQueue.saveBuf;	/* user data area */
 				adbCompRout = adbOutQueue.compRout;	/* completion routine */
 				adbCompData = adbOutQueue.data;	/* comp. rout. data */
@@ -735,8 +734,7 @@ switch_start:
 				ADB_SET_SR_OUTPUT();	/* set shift register for OUT */
 				ADB_SR() = adbOutputBuffer[1];	/* load byte for output */
 				adbBusState = ADB_BUS_CMD;	/* set bus to cmd state */
-				ADB_SET_STATE_CMD();	/* tell ADB that we want to
-						 * send */
+				ADB_SET_STATE_CMD();	/* tell ADB that we want to send */
 				break;
 			} else {
 #ifdef ADB_DEBUG
@@ -830,8 +828,7 @@ switch_start:
 			}
 				
 			/* set up data for adb_pass_up */
-			for (i = 0; i <= adbInputBuffer[0]; i++)
-				packet.data[i] = adbInputBuffer[i];
+			memcpy(packet.data, adbInputBuffer, adbInputBuffer[0] + 1);
 
 			if (!adbWaiting && (adbInputBuffer[0] != 0)) {
 				packet.unsol = 1;
@@ -861,8 +858,8 @@ switch_start:
 					printf_intr("XXX: DOING OUT QUEUE\n");
 #endif
 				/* copy over data */
-				for (i = 0; i <= (adbOutQueue.outBuf[0] + 1); i++)
-					adbOutputBuffer[i] = adbOutQueue.outBuf[i];
+				memcpy(adbOutputBuffer, adbOutQueue.outBuf,
+				    adbOutQueue.outBuf[0] + 2);
 				adbBuffer = adbOutQueue.saveBuf;	/* user data area */
 				adbCompRout = adbOutQueue.compRout;	/* completion routine */
 				adbCompData = adbOutQueue.data;	/* comp. rout. data */
@@ -958,8 +955,7 @@ switch_start:
 				printf_intr("done \n");
 #endif
 			/* set up stuff for adb_pass_up */
-			for (i = 0; i <= adbOutputBuffer[0]; i++)
-				packet.data[i] = adbOutputBuffer[i];
+			memcpy(packet.data, adbOutputBuffer, adbOutputBuffer[0] + 1);
 			packet.saveBuf = adbBuffer;
 			packet.compRout = adbCompRout;
 			packet.compData = adbCompData;
@@ -974,8 +970,8 @@ switch_start:
 			adbCompData = (long)0;
 			if (adbOutQueueHasData == 1) {
 				/* copy over data */
-				for (i = 0; i <= (adbOutQueue.outBuf[0] + 1); i++)
-					adbOutputBuffer[i] = adbOutQueue.outBuf[i];
+				memcpy(adbOutputBuffer, adbOutQueue.outBuf,
+				    adbOutQueue.outBuf[0] + 2);
 				adbBuffer = adbOutQueue.saveBuf;	/* user data area */
 				adbCompRout = adbOutQueue.compRout;	/* completion routine */
 				adbCompData = adbOutQueue.data;	/* comp. rout. data */
@@ -1049,7 +1045,7 @@ switch_start:
 int
 send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int command)
 {
-	int i, s, len;
+	int s, len;
 
 	if (adbActionState == ADB_ACTION_NOTREADY)	/* return if ADB not
 							 * available */
@@ -1077,13 +1073,11 @@ send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int comman
 		adbOutQueue.outBuf[0] = 1 + len;	/* command + addl. data */
 		adbOutQueue.outBuf[1] = (u_char)command;	/* load command */
 
-		for (i = 1; i <= len; i++)	/* copy additional output
-						 * data, if any */
-			adbOutQueue.outBuf[1 + i] = buffer[i];
+		/* copy additional output data, if any */
+		memcpy(adbOutQueue.outBuf + 2, buffer + 1, len);
 	} else
 		/* if data ready, just copy over */
-		for (i = 0; i <= (in[0] + 1); i++)
-			adbOutQueue.outBuf[i] = in[i];
+		memcpy(adbOutQueue.outBuf, in, in[0] + 2);
 
 	adbOutQueue.saveBuf = buffer;	/* save buffer to know where to save
 					 * result */
@@ -1094,8 +1088,8 @@ send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int comman
 	if ((adbActionState == ADB_ACTION_IDLE) &&	/* is ADB available? */
 	    (ADB_INTR_IS_OFF)) {	/* and no incoming interrupts? */
 		/* then start command now */
-		for (i = 0; i <= (adbOutQueue.outBuf[0] + 1); i++)	/* copy over data */
-			adbOutputBuffer[i] = adbOutQueue.outBuf[i];
+		memcpy(adbOutputBuffer, adbOutQueue.outBuf,
+		    adbOutQueue.outBuf[0] + 2);		/* copy over data */
 
 		adbBuffer = adbOutQueue.saveBuf;	/* pointer to user data
 							 * area */
@@ -1123,8 +1117,9 @@ send_adb_II(u_char * in, u_char * buffer, void *compRout, void *data, int comman
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
-				adb_intr_II();	/* go process "interrupt" */
-				adb_soft_intr();
+				adb_intr_II(); /* go process it */
+				if (adb_polling)
+					adb_soft_intr();
 			}
 
 	return 0;
@@ -1271,8 +1266,7 @@ switch_start:
 			 * commands
 			 */
 			/* set up data for adb_pass_up */
-			for (i = 0; i <= adbInputBuffer[0]; i++)
-				packet.data[i] = adbInputBuffer[i];
+			memcpy(packet.data, adbInputBuffer, adbInputBuffer[0] + 1);
 				
 			if ((adbWaiting == 1) &&	/* are we waiting AND */
 			    (adbInputBuffer[4] == adbWaitingCmd) &&	/* the cmd we sent AND */
@@ -1364,8 +1358,8 @@ switch_start:
 				adbWaitingCmd = adbOutputBuffer[2];	/* save waiting command */
 			} else {/* no talk, so done */
 				/* set up stuff for adb_pass_up */
-				for (i = 0; i <= adbInputBuffer[0]; i++)
-					packet.data[i] = adbInputBuffer[i];
+				memcpy(packet.data, adbInputBuffer,
+				    adbInputBuffer[0] + 1);
 				packet.saveBuf = adbBuffer;
 				packet.compRout = adbCompRout;
 				packet.compData = adbCompData;
@@ -1431,7 +1425,7 @@ int
 send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
 	command)
 {
-	int i, s, len;
+	int s, len;
 
 	if (adbActionState == ADB_ACTION_NOTREADY)
 		return 1;
@@ -1468,12 +1462,11 @@ send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
 		adbOutputBuffer[1] = 0x00;	/* mark as an ADB command */
 		adbOutputBuffer[2] = (u_char)command;	/* load command */
 
-		for (i = 1; i <= len; i++)	/* copy additional output
-						 * data, if any */
-			adbOutputBuffer[2 + i] = buffer[i];
+		/* copy additional output data, if any */
+		memcpy(adbOutputBuffer + 3, buffer + 1, len);
 	} else
-		for (i = 0; i <= (in[0] + 1); i++)
-			adbOutputBuffer[i] = in[i];
+		/* if data ready, just copy over */
+		memcpy(adbOutputBuffer, in, in[0] + 2);
 
 	adbSentChars = 0;	/* nothing sent yet */
 	adbBuffer = buffer;	/* save buffer to know where to save result */
@@ -1497,18 +1490,18 @@ send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
 
 	splx(s);
 
-	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked ? */
+	if (0x0100 <= (s & 0x0700))	/* were VIA1 interrupts blocked? */
 		/* poll until byte done */
 		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
 		    || (adbWaiting == 1))
-			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
-				adb_intr_IIsi();	/* process it */
-				adb_soft_intr();
+			if (ADB_SR_INTR_IS_ON) { /* wait for "interrupt" */
+				adb_intr_IIsi(); /* go process it */
+				if (adb_polling)
+					adb_soft_intr();
 			}
 
 	 return 0;
 }				/* send_adb_IIsi */
-
 
 /* 
  * adb_pass_up is called by the interrupt-time routines.
@@ -1537,7 +1530,7 @@ send_adb_IIsi(u_char * in, u_char * buffer, void *compRout, void *data, int
 void
 adb_pass_up(struct adbCommand *in)
 {
-	int i, start = 0, len = 0, cmd = 0;
+	int start = 0, len = 0, cmd = 0;
 	ADBDataBlock block;
 
 	/* temp for testing */
@@ -1633,9 +1626,7 @@ adb_pass_up(struct adbCommand *in)
 	 * directly into an adbCommand struct, which is passed to 
 	 * this routine, then we could eliminate this copy.
 	 */
-	for (i = 1; i <= len; i++)
-		adbInbound[adbInTail].data[i] = in->data[start+i];
-
+	memcpy(adbInbound[adbInTail].data + 1, in->data + start + 1, len);
 	adbInbound[adbInTail].data[0] = len;
 	adbInbound[adbInTail].cmd = cmd;
 
@@ -1647,7 +1638,7 @@ adb_pass_up(struct adbCommand *in)
 	 * If the debugger is running, call upper half manually.
 	 * Otherwise, trigger a soft interrupt to handle the rest later.
 	 */
-	if (ite_polling)
+	if (adb_polling)
 		adb_soft_intr();
 	else
 		setsoftadb();
@@ -1664,7 +1655,7 @@ adb_pass_up(struct adbCommand *in)
 void
 adb_soft_intr(void)
 {
-	int s, i;
+	int s;
 	int cmd = 0;
 	u_char *buffer = 0;
 	u_char *comprout = 0;
@@ -1697,8 +1688,8 @@ adb_soft_intr(void)
 	 	 * For ack_only buffer was set to 0, so don't copy.
 		 */
 		if (buffer)
-			for (i = 0; i <= adbInbound[adbInHead].data[0]; i++) 
-				*(buffer+i) = adbInbound[adbInHead].data[i];
+			memcpy(buffer, adbInbound[adbInHead].data,
+			    adbInbound[adbInHead].data[0] + 1);
 
 #ifdef ADB_DEBUG
 			if (adb_debug & 0x80) {
@@ -2001,20 +1992,20 @@ void
 adb_reinit(void)
 {
 	u_char send_string[ADB_MAX_MSG_LENGTH];
-	int s = 0;
+	ADBDataBlock data;	/* temp. holder for getting device info */
 	volatile int i, x;
+	int s;
 	int command;
 	int result;
 	int saveptr;		/* point to next free relocation address */
 	int device;
 	int nonewtimes;		/* times thru loop w/o any new devices */
-	ADBDataBlock data;	/* temp. holder for getting device info */
-
-	(void)(&s);		/* work around lame GCC bug */
 
 	/* Make sure we are not interrupted while building the table. */
 	if (adbHardware != ADB_HW_PB)	/* ints must be on for PB? */
 		s = splhigh();
+	else
+		s = 0;		/* XXX shut the compiler up*/
 
 	ADBNumDevices = 0;	/* no devices yet */
 
@@ -2031,6 +2022,8 @@ adb_reinit(void)
 	adb_setup_hw_type();	/* setup hardware type */
 
 	adb_hw_setup();		/* init the VIA bits and hard reset ADB */
+
+	delay(1000);
 
 	/* send an ADB reset first */
 	adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
@@ -2108,6 +2101,7 @@ adb_reinit(void)
 			send_string[2] = 0xfe;
 			adb_op_sync((Ptr)send_string, (Ptr)0,
 			    (Ptr)0, (short)command);
+			delay(500);
 
 			/* send TALK R3 - anything at old address? */
 			command = (int)(0x0f | ((int)(device & 0x000f) << 4));
@@ -2162,6 +2156,7 @@ adb_reinit(void)
 				send_string[2] = 0xfe;
 				adb_op_sync((Ptr)send_string, (Ptr)0,
 				    (Ptr)0, (short)command);
+				delay(1000);
 			}
 		}
 	}
@@ -2706,6 +2701,8 @@ adb_poweroff(void)
 
 	if (!adbSoftPower)
 		return -1;
+
+	adb_polling = 1;
 
 	switch (adbHardware) {
 	case ADB_HW_IISI:
