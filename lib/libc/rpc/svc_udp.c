@@ -30,7 +30,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc_udp.c,v 1.1 1993/10/07 07:30:20 cgd Exp $";
+static char *rcsid = "$Id: svc_udp.c,v 1.2 1994/08/30 23:59:43 deraadt Exp $";
 #endif
 
 /*
@@ -185,7 +185,7 @@ svcudp_recv(xprt, msg)
 	    0, (struct sockaddr *)&(xprt->xp_raddr), &(xprt->xp_addrlen));
 	if (rlen == -1 && errno == EINTR)
 		goto again;
-	if (rlen < 4*sizeof(u_long))
+	if (rlen == -1 || rlen < 4*sizeof(u_long))
 		return (FALSE);
 	xdrs->x_op = XDR_DECODE;
 	XDR_SETPOS(xdrs, 0);
