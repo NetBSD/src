@@ -1,7 +1,7 @@
 #!/bin/sh -
 #
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
-#	$Id: security,v 1.9 1994/06/15 04:28:20 cgd Exp $
+#	$Id: security,v 1.10 1994/10/18 16:52:57 mycroft Exp $
 #
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -346,7 +346,8 @@ fi
 
 # Display any changes in setuid files and devices.
 printf "\nChecking setuid files and devices:\n"
-(find / ! -fstype local -a -prune -o \
+(find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
+		-o -fstype procfs \) -a -prune -o \
     \( -perm -u+s -o -perm -g+s -o ! -type d -a ! -type f -a ! -type l -a \
        ! -type s \) | \
 sort | sed -e 's/^/ls -ldgT /' | sh > $LIST) 2> $OUTPUT
