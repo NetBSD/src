@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.1 1999/05/30 20:26:21 ad Exp $ */
+/*	$NetBSD: ip.c,v 1.2 1999/07/30 16:08:59 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.1 1999/05/30 20:26:21 ad Exp $");
+__RCSID("$NetBSD: ip.c,v 1.2 1999/07/30 16:08:59 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -91,6 +91,7 @@ closeip(w)
 void
 labelip(void)
 {
+
 	wmove(wnd, 0, 0); wclrtoeol(wnd);
 
 	LHD(0,  "total packets received");	
@@ -180,6 +181,7 @@ showip(void)
 int
 initip(void)
 {
+
 	if (namelist[0].n_type == 0) {
 		if (kvm_nlist(kd, namelist)) {
 			nlisterr(namelist);
@@ -196,6 +198,7 @@ initip(void)
 void
 fetchip(void)
 {
+
 	KREAD((void *)namelist[0].n_value, &curstat.i, sizeof(curstat.i));
 	KREAD((void *)namelist[1].n_value, &curstat.u, sizeof(curstat.u));
 }
