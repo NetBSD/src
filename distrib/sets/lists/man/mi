@@ -101,6 +101,8 @@
 ./usr/share/man/cat1/intro.0
 ./usr/share/man/cat1/ipcrm.0
 ./usr/share/man/cat1/ipcs.0
+./usr/share/man/cat1/ipsend.0
+./usr/share/man/cat1/iptest.0
 ./usr/share/man/cat1/jobs.0
 ./usr/share/man/cat1/join.0
 ./usr/share/man/cat1/jot.0
@@ -407,7 +409,10 @@
 ./usr/share/man/cat5/inetd.conf.0
 ./usr/share/man/cat5/inode.0
 ./usr/share/man/cat5/ipf.0
+./usr/share/man/cat5/ipf.conf.0
 ./usr/share/man/cat5/ipnat.0
+./usr/share/man/cat5/ipnat.conf.0
+./usr/share/man/cat5/ipsend.0
 ./usr/share/man/cat5/lastlog.0
 ./usr/share/man/cat5/ld.so.conf.0
 ./usr/share/man/cat5/link.0
@@ -415,6 +420,7 @@
 ./usr/share/man/cat5/magic.0
 ./usr/share/man/cat5/man.conf.0
 ./usr/share/man/cat5/map3270.0
+./usr/share/man/cat5/master.passwd.0
 ./usr/share/man/cat5/monthly.conf.0
 ./usr/share/man/cat5/motd.0
 ./usr/share/man/cat5/netgroup.0
