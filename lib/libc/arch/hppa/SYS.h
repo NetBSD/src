@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.3 2002/07/04 16:48:44 thorpej Exp $	*/
+/*	$NetBSD: SYS.h,v 1.4 2003/10/06 05:30:21 matt Exp $	*/
 
 /*	$OpenBSD: SYS.h,v 1.9 2001/09/20 20:52:09 millert Exp $	*/
 
@@ -43,58 +43,58 @@
 #define	__EXIT(p,x)	EXIT(__CONCAT(p,x))
 
 #define	__SYSCALL_NOERROR(p,x)			!\
-	stw	rp, HPPA_FRAME_ERP(sr0,sp)	!\
-	ldil	L%SYSCALLGATE, r1		!\
-	ble	4(sr7, r1)			!\
-	ldi	__CONCAT(SYS_,x), t1		!\
-	ldw	HPPA_FRAME_ERP(sr0,sp), rp
+	stw	%rp, HPPA_FRAME_ERP(%sr0,%sp)	!\
+	ldil	L%SYSCALLGATE, %r1		!\
+	ble	4(%sr7, %r1)			!\
+	ldi	__CONCAT(SYS_,x), %t1		!\
+	ldw	HPPA_FRAME_ERP(%sr0,%sp), %rp
 
 #ifdef PIC
 #define	__SYSCALL_ERRNO				!\
 	addil	LT%errno, %r19			!\
 	ldw	RT%errno(%r1), %r1		!\
-	stw	t1, 0(%r1)
+	stw	%t1, 0(%r1)
 #else
 #define	__SYSCALL_ERRNO				!\
 	ldil	L%errno, %r1			!\
-	stw	t1, R%errno(%r1)
+	stw	%t1, R%errno(%r1)
 #endif
 
 #define	__SYSCALL(p,x)				!\
 	.import	errno, data			!\
 	__SYSCALL_NOERROR(p,x)			!\
-	comb,=,n r0, t1, __CONCAT(x,$noerr)	!\
+	comb,=,n %r0, %t1, __CONCAT(x,$noerr)	!\
 	__SYSCALL_ERRNO				!\
-	ldi	-1, ret0			!\
-	bv	r0(rp)				!\
-	ldi	-1, ret1			!\
+	ldi	-1, %ret0			!\
+	bv	%r0(%rp)				!\
+	ldi	-1, %ret1			!\
 	.label	__CONCAT(x,$noerr)
 
 #define	__RSYSCALL(p,x)			!\
 __ENTRY(p,x)				!\
 	__SYSCALL(p,x)			!\
-	bv	r0(rp)			!\
+	bv	%r0(%rp)			!\
 	nop				!\
 __EXIT(p,x)
 
 #define	__RSYSCALL_NOERROR(p,x)		!\
 __ENTRY(p,x)				!\
 	__SYSCALL_NOERROR(p,x)		!\
-	bv	r0(rp)			!\
+	bv	%r0(%rp)		!\
 	nop				!\
 __EXIT(p,x)
 
 #define	__PSEUDO(p,x,y)			!\
 __ENTRY(p,x)				!\
 	__SYSCALL(p,y)			!\
-	bv	r0(rp)			!\
+	bv	%r0(%rp)		!\
 	nop				!\
 __EXIT(p,x)
 
 #define	__PSEUDO_NOERROR(p,x,y)		!\
 __ENTRY(p,x)				!\
 	__SYSCALL_NOERROR(p,y)		!\
-	bv	r0(rp)			!\
+	bv	%r0(%rp)		!\
 	nop				!\
 __EXIT(p,x)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: __setjmp14.S,v 1.2 2002/07/01 16:00:51 fredette Exp $	*/
+/*	$NetBSD: __setjmp14.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <machine/psl.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __setjmp14.S,v 1.2 2002/07/01 16:00:51 fredette Exp $")
+	RCSID("$NetBSD: __setjmp14.S,v 1.3 2003/10/06 05:30:21 matt Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -167,7 +167,7 @@ ENTRY(__longjmp14,0)
 	/* let sigreturn finish for us */
 	bl	__sigreturn14, %rp
 	nop
-botch
+botch:
 	bl	longjmperror, %rp
 	nop
 EXIT(__longjmp14)

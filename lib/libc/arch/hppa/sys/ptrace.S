@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.2 2002/07/01 16:00:52 fredette Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,9 +43,9 @@
 
 /* XXX - this is unimplemented at this time. */
 ENTRY(ptrace, 0)
-	ldi	EINVAL, t1
+	ldi	EINVAL, %t1
 	__SYSCALL_ERRNO
-        ldi     -1, ret0
-        bv      r0(rp)
-        ldi     -1, ret1
+        ldi     -1, %ret0
+        bv      %r0(%rp)
+        ldi     -1, %ret1
 EXIT(ptrace)

@@ -1,7 +1,7 @@
-/*	$NetBSD: sigprocmask.S,v 1.3 2003/10/06 05:30:21 matt Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.1 2003/10/06 05:30:21 matt Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,16 +41,11 @@
 
 	.import errno, data
 
-WARN_REFERENCES(sigprocmask, \
-    "warning: reference to compatibility sigprocmask(); include <signal.h> for correct reference")
-
-ENTRY(sigprocmask, 0)
-	/*
-	 * AFAICT, since the hppa port came after __sigprocmask14, 
-	 * we shouldn't have to supply the compatability sigprocmask.
-	 */
+/* XXX - this is unimplemented at this time. */
+ENTRY(getcontext, 0)
 	ldi	EINVAL, %t1
 	__SYSCALL_ERRNO
-	bv	%r0(%rp)
-	ldi	-1, %ret0
-EXIT(sigprocmask)
+        ldi     -1, %ret0
+        bv      %r0(%rp)
+        ldi     -1, %ret1
+EXIT(getcontext)
