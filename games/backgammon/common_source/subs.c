@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.6 1997/10/10 08:59:48 lukem Exp $	*/
+/*	$NetBSD: subs.c,v 1.7 1998/09/11 13:06:30 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: subs.c,v 1.6 1997/10/10 08:59:48 lukem Exp $");
+__RCSID("$NetBSD: subs.c,v 1.7 1998/09/11 13:06:30 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,7 +342,7 @@ getarg(arg)
 			args[acnt++] = 'n';
 			break;
 
-			/* player is both read and white */
+			/* player is both red and white */
 		case 'b':
 			if (rflag)
 				break;
