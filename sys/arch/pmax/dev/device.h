@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.7 1995/09/13 19:35:55 jonathan Exp $	*/
+/*	$NetBSD: device.h,v 1.8 1995/09/25 21:10:03 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,12 +44,19 @@
  * can support multiple attached devices or a device can be attached to
  * different types of controllers.
  */
+struct ScsiCmd;
+
 struct pmax_driver {
 	char	*d_name;	/* device driver name (e.g., "rz") */
-	int	(*d_init)();	/* routine to probe & initialize device */
-	void	(*d_start)();	/* routine to start operation */
-	void	(*d_done)();	/* routine to call when operation complete */
-	int	(*d_intr)();	/* routine to call when interrupt is seen */
+
+				/* routine to probe & initialize device */
+	int	(*d_init) __P((void *));
+				/* routine to start operation */
+	void	(*d_start) __P((struct ScsiCmd *cmd));
+				/* routine to call when operation complete */
+	void	(*d_done) __P(());
+				/* routine to call when interrupt is seen */
+	int	(*d_intr) __P((void* sc));
 };
 
 /*
@@ -99,6 +106,7 @@ typedef struct ScsiCmd {
 	char	*buf;		/* pointer to data buffer for this command */
 	int	cmdlen;		/* length of data in cmdbuf */
 	u_char	*cmd;		/* buffer for the SCSI command */
+	int	error;		/* compatibility hack for new scsi */
 } ScsiCmd;
 
 /*
