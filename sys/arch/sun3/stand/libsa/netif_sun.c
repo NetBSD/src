@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.2 1995/09/23 03:42:42 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.3 1995/10/13 21:45:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -67,6 +67,7 @@ static void sun3_getether __P((u_char *));
 int netif_debug;
 #endif
 
+struct saioreq net_ioreq;
 struct iodesc sockets[SOPEN_MAX];
 
 struct iodesc *
@@ -83,6 +84,7 @@ int
 netif_open(machdep_hint)
 	void *machdep_hint;
 {
+	struct bootparam *bp;
 	struct saioreq *si;
 	struct iodesc *io;
 	int error;
@@ -98,10 +100,23 @@ netif_open(machdep_hint)
 	bzero(io, sizeof(*io));
 
 	/*
+	 * Setup our part of the saioreq.
+	 * (determines what gets opened)
+	 */
+	si = &net_ioreq;
+	bzero((caddr_t)si, sizeof(*si));
+	bp = *romp->bootParam;
+
+	si->si_boottab = bp->bootDevice;
+	si->si_ctlr = bp->ctlrNum;
+	si->si_unit = bp->unitNum;
+	si->si_boff = bp->partNum;
+
+	/*
 	 * Note: Sun PROMs will do RARP on open, but does not tell
 	 * you the IP address it gets, so it is just noise to us...
 	 */
-	if ((error = prom_iopen(&si)) != 0) {
+	if ((error = prom_iopen(si)) != 0) {
 #ifdef	DEBUG
 		printf("netif_open: prom_iopen, error=%d\n", error);
 #endif
@@ -128,6 +143,7 @@ int
 netif_close(fd)
 	int fd;
 {
+	struct saioreq *si;
 	struct iodesc *io;
 	struct netif *ni;
 
@@ -139,7 +155,8 @@ netif_close(fd)
 	io = sockets;
 	ni = io->io_netif;
 	if (ni != NULL) {
-		prom_iclose(ni->devdata);
+		si = ni->devdata;
+		prom_iclose(si);
 		ni->devdata = NULL;
 		io->io_netif = NULL;
 	}
