@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.15 1998/09/11 21:23:39 pk Exp $	*/
+/*	$NetBSD: lfs.c,v 1.16 1999/02/04 22:25:22 bad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.15 1998/09/11 21:23:39 pk Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.16 1999/02/04 22:25:22 bad Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,9 +212,9 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	int fsize;		/* Fragment size */
 	int db_per_fb;		/* Disk blocks per file block */
 	int i, j;
-	int off;		/* Offset at which to write */
+	off_t off;		/* Offset at which to write */
 	int sb_interval;	/* number of segs between super blocks */
-	int seg_seek;		/* Seek offset for a segment */
+	off_t seg_seek;		/* Seek offset for a segment */
 	int ssize;		/* Segment size */
 	int sum_size;		/* Size of the summary block */
 
@@ -492,7 +492,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	/* Write Supberblock */
 	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
 	lfsp->lfs_offset = (off + lfsp->lfs_bsize) / lp->d_secsize;
-	put(fd, LFS_LABELPAD, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
+	put(fd, (off_t)LFS_LABELPAD, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 
 	/* 
 	 * Finally, calculate all the fields for the summary structure
@@ -564,7 +564,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	    lfsp->lfs_idaddr;
 	((SEGSUM *)ipagep)->ss_sumsum = cksum(ipagep+sizeof(summary.ss_sumsum), 
 	    LFS_SUMMARY_SIZE - sizeof(summary.ss_sumsum));
-	put(fd, LFS_LABELPAD + LFS_SBPAD, ipagep, LFS_SUMMARY_SIZE);
+	put(fd, (off_t)LFS_LABELPAD + LFS_SBPAD, ipagep, LFS_SUMMARY_SIZE);
 
 	sp = (SEGSUM *)ipagep;
 	sp->ss_create = 0;
@@ -588,7 +588,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 		seg_addr += lfsp->lfs_ssize << lfsp->lfs_fsbtodb;
 		sp->ss_next = last_addr;
 		last_addr = seg_addr;
-		seg_seek = seg_addr * lp->d_secsize;
+		seg_seek = (off_t)seg_addr * lp->d_secsize;
 
 		if (seg_addr == lfsp->lfs_sboffs[j]) {
 			if (j < (LFS_MAXNUMSB - 2))
