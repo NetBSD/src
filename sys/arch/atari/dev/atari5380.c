@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.3 1995/09/16 14:15:10 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.4 1995/10/05 08:52:53 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -83,6 +83,7 @@
 #define	REAL_DMA_POLL	0	/* 1: Poll for end of DMA-transfer	*/
 #endif
 #undef	USE_PDMA		/* Use special pdma-transfer function	*/
+#define MIN_PHYS	65536	/*BARF!!!!*/
 
 /*
  * The atari specific driver options
