@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.6 2003/09/19 21:36:08 mycroft Exp $	*/
+/*	$NetBSD: hcide.c,v 1.7 2003/09/25 19:29:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.6 2003/09/19 21:36:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.7 2003/09/25 19:29:49 mycroft Exp $");
 
 #include <sys/param.h>
 
@@ -103,5 +103,5 @@ hcide_attach(struct device *parent, struct device *self, void *aux)
 		    &sc->sc_chan[i].ctl_ioh);
 	}
 
-	config_interrupts(self, wdcattach);
+	wdcattach(&sc->sc_wdc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.39 2003/09/23 09:19:23 mycroft Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.40 2003/09/25 19:29:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ struct wdc_xfer {
  */
 
 int   wdcprobe __P((struct channel_softc *));
-void  wdcattach __P((struct device *));
+void  wdcattach __P((struct wdc_softc *));
 int   wdcdetach __P((struct device *, int));
 int   wdcactivate __P((struct device *, enum devact));
 int   wdcintr __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.13 2003/09/19 21:35:58 mycroft Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.14 2003/09/25 19:29:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.13 2003/09/19 21:35:58 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.14 2003/09/25 19:29:48 mycroft Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -193,7 +193,7 @@ wdc_mb_attach(parent, self, aux)
 	MFP->mf_iprb  = (u_int8_t)~IB_DINT;
 	MFP->mf_imrb |= IB_DINT;
 
-	config_interrupts(self, wdcattach);
+	wdcattach(&sc->sc_wdcdev);
 }
 
 /*

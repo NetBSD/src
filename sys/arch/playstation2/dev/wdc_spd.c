@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_spd.c,v 1.5 2003/09/19 21:36:00 mycroft Exp $	*/
+/*	$NetBSD: wdc_spd.c,v 1.6 2003/09/25 19:29:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.5 2003/09/19 21:36:00 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_spd.c,v 1.6 2003/09/25 19:29:49 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ wdc_spd_attach(struct device *parent, struct device *self, void *aux)
 
 	__wdc_spd_enable();
 
-	config_interrupts(self, wdcattach);
+	wdcattach(wdc);
 }
 
 void
