@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.37 2005/03/09 16:43:37 wiz Exp $	*/
+/*	$NetBSD: rshd.c,v 1.38 2005/03/11 16:04:09 ginsbach Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.37 2005/03/09 16:43:37 wiz Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.38 2005/03/11 16:04:09 ginsbach Exp $");
 #endif
 #endif /* not lint */
 
@@ -374,7 +374,7 @@ doit(struct sockaddr *fromp)
 			exit(1);
 		}
 		*portp = htons(port);
-		if (connect(s, (struct sockaddr *)fromp, fromp->sa_len) < 0) {
+		if (connect(s, fromp, fromp->sa_len) < 0) {
 			syslog(LOG_ERR, "connect second port %d: %m", port);
 			exit(1);
 		}
