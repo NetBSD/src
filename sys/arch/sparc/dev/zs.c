@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.100 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.101 2004/04/03 17:43:50 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.100 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.101 2004/04/03 17:43:50 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -77,15 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.100 2004/03/17 17:04:59 pk Exp $");
 #include <sparc/sparc/auxreg.h>
 #include <sparc/sparc/auxiotwo.h>
 #include <sparc/dev/cons.h>
-
-#include "kbd.h"	/* NKBD */
-#include "zs.h" 	/* NZS */
-
-/* Make life easier for the initialized arrays here. */
-#if NZS < 3
-#undef  NZS
-#define NZS 3
-#endif
 
 /*
  * Some warts needed by z8530tty.c -
