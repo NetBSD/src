@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.17 2003/08/02 14:34:35 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.18 2003/08/02 14:45:08 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.17 2003/08/02 14:34:35 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.18 2003/08/02 14:45:08 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,6 +75,8 @@ static void sigusr1_handler(int);
 
 static SPLAY_HEAD(pidtree, intercept_pid) pids;
 static SPLAY_HEAD(sctree, intercept_syscall) scroot;
+
+static volatile int got_sigusr1 = 0;
 
 /* Generic callback functions */
 
@@ -243,6 +245,7 @@ static void
 sigusr1_handler(int signum)
 {                                                                              
 	/* all we need to do is pretend to handle it */
+	got_sigusr1 = 1;
 }
 
 void
@@ -306,6 +309,9 @@ intercept_run(int bg, int fd, uid_t uid, gid_t gid,
 
 		/* Sleep */
 		sigsuspend(&none);
+
+		if (!got_sigusr1)
+			errx(1, "wrong signal");
 
 		/*
 		 * Woken up, restore signal handling state.
