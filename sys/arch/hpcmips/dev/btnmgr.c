@@ -1,4 +1,4 @@
-/*	$NetBSD: btnmgr.c,v 1.7 2000/05/04 08:19:00 takemura Exp $	*/
+/*	$NetBSD: btnmgr.c,v 1.8 2000/05/18 03:27:22 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -119,7 +119,7 @@ static const struct {
 	/* id					kevent keycode name	*/
 	[CONFIG_HOOK_BUTTONEVENT_POWER] =	{ 0,   0, "Power"	},
 	[CONFIG_HOOK_BUTTONEVENT_OK] =		{ 1,  28, "OK"		},
-	[CONFIG_HOOK_BUTTONEVENT_CANCEL] =	{ 1,   0, "Cancel"	},
+	[CONFIG_HOOK_BUTTONEVENT_CANCEL] =	{ 1,   1, "Cancel"	},
 	[CONFIG_HOOK_BUTTONEVENT_UP] =		{ 1,  72, "Up"		},
 	[CONFIG_HOOK_BUTTONEVENT_DOWN] =	{ 1,  80, "Down"	},
 	[CONFIG_HOOK_BUTTONEVENT_REC] =		{ 0,   0, "Rec"		},
