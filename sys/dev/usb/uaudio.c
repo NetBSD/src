@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.36 2001/01/04 05:25:24 mycroft Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.37 2001/01/04 06:20:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 
 #include <dev/usb/uaudioreg.h>
 
+#define UAUDIO_DEBUG
 #ifdef UAUDIO_DEBUG
 #define DPRINTF(x)	if (uaudiodebug) logprintf x
 #define DPRINTFN(n,x)	if (uaudiodebug>(n)) logprintf x
@@ -106,6 +107,7 @@ struct mixerctl {
 struct as_info {
 	u_int8_t	alt;
 	u_int8_t	encoding;
+	usbd_interface_handle	ifaceh;
 	usb_interface_descriptor_t *idesc;
 	usb_endpoint_descriptor_audio_t *edesc;
 	struct usb_audio_streaming_type1_descriptor *asf1desc;
@@ -151,9 +153,7 @@ struct uaudio_softc {
 	usbd_device_handle sc_udev;	/* USB device */
 
 	int	sc_ac_iface;	/* Audio Control interface */
-	int	sc_as_iface;	/* Audio Streaming interface */
 	usbd_interface_handle	sc_ac_ifaceh;
-	usbd_interface_handle	sc_as_ifaceh;
 
 	struct chan sc_chan;
 
@@ -341,7 +341,7 @@ USB_ATTACH(uaudio)
 	usb_config_descriptor_t *cdesc;
 	char devinfo[1024];
 	usbd_status err;
-	int i;
+	int i, j, found;
 
 	usbd_devinfo(uaa->device, 0, devinfo);
 	printf(": %s\n", devinfo);
@@ -365,24 +365,32 @@ USB_ATTACH(uaudio)
 	sc->sc_ac_ifaceh = uaa->iface;
 	/* Pick up the AS interface. */
 	for (i = 0; i < uaa->nifaces; i++) {
-		if (uaa->ifaces[i] != NULL) {
-			id = usbd_get_interface_descriptor(uaa->ifaces[i]);
-			if (id != NULL &&
-			    id->bInterfaceNumber == sc->sc_as_iface) {
-				sc->sc_as_ifaceh = uaa->ifaces[i];
-				uaa->ifaces[i] = NULL;
-				break;
+		if (uaa->ifaces[i] == NULL)
+			continue;
+		id = usbd_get_interface_descriptor(uaa->ifaces[i]);
+		if (id == NULL)
+			continue;
+		found = 0;
+		for (j = 0; j < sc->sc_nalts; j++) {
+			if (id->bInterfaceNumber ==
+			    sc->sc_alts[j].idesc->bInterfaceNumber) {
+				sc->sc_alts[j].ifaceh = uaa->ifaces[i];
+				found = 1;
 			}
+		}
+		if (found)
+			uaa->ifaces[i] = NULL;
+	}
+
+	for (j = 0; j < sc->sc_nalts; j++) {
+		if (sc->sc_alts[j].ifaceh == NULL) {
+			printf("%s: alt %d missing AS interface(s)\n", USBDEVNAME(sc->sc_dev), j);
+			USB_ATTACH_ERROR_RETURN;
 		}
 	}
 
-	if (sc->sc_as_ifaceh == NULL) {
-		printf("%s: missing AS interface(s)\n",USBDEVNAME(sc->sc_dev));
-		USB_ATTACH_ERROR_RETURN;
-	}
-
-	printf("%s: streaming interface %d, audio rev %d.%02x\n",
-	       USBDEVNAME(sc->sc_dev), sc->sc_as_iface,
+	printf("%s: audio rev %d.%02x\n",
+	       USBDEVNAME(sc->sc_dev),
 	       sc->sc_audio_rev >> 8, sc->sc_audio_rev & 0xff);
 
 	sc->sc_chan.sc = sc;
@@ -1159,14 +1167,14 @@ uaudio_identify_as(struct uaudio_softc *sc, usb_config_descriptor_t *cdesc)
 	id = uaudio_find_iface(buf, size, &offs, UISUBCLASS_AUDIOSTREAM);
 	if (id == NULL)
 		return (USBD_INVAL);
-	sc->sc_as_iface = id->bInterfaceNumber;
-	DPRINTF(("uaudio_identify_as: AS interface is %d\n", sc->sc_as_iface));
 
 	sc->sc_chan.terminal = -1;
 	sc->sc_chan.dir = 0;
 
 	/* Loop through all the alternate settings. */
 	while (offs <= size) {
+		DPRINTFN(2, ("uaudio_identify: interface %d\n",
+		    id->bInterfaceNumber));
 		switch (id->bNumEndpoints) {
 		case 0:
 			DPRINTFN(2, ("uaudio_identify: AS null alt=%d\n",
@@ -1806,7 +1814,7 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 		 endpt, ch->sample_rate, as->alt));
 
 	/* Set alternate interface corresponding to the mode. */
-	err = usbd_set_interface(sc->sc_as_ifaceh, as->alt);
+	err = usbd_set_interface(as->ifaceh, as->alt);
 	if (err)
 		return (err);
 
@@ -1821,17 +1829,19 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 #endif
 
 	DPRINTF(("uaudio_open_chan: create pipe to 0x%02x\n", endpt));
-	err = usbd_open_pipe(sc->sc_as_ifaceh, endpt, 0, &ch->pipe);
+	err = usbd_open_pipe(as->ifaceh, endpt, 0, &ch->pipe);
 	return (err);
 }
 
 void
 uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 {
+	struct as_info *as = &sc->sc_alts[sc->sc_curaltidx];
+
 	if (sc->sc_nullalt >= 0) {
 		DPRINTF(("uaudio_close_chan: set null alt=%d\n",
 			 sc->sc_nullalt));
-		usbd_set_interface(sc->sc_as_ifaceh, sc->sc_nullalt);
+		usbd_set_interface(as->ifaceh, sc->sc_nullalt);
 	}
 	usbd_abort_pipe(ch->pipe);
 	usbd_close_pipe(ch->pipe);
@@ -2135,7 +2145,7 @@ uaudio_set_params(void *addr, int setmode, int usemode,
         pswcode = rswcode = 0;
 	pfactor = rfactor = 1;
 	enc = p->encoding;
-        switch (p->encoding) {
+        switch (enc) {
         case AUDIO_ENCODING_SLINEAR_BE:
         	if (p->precision == 16) {
                 	rswcode = pswcode = swap_bytes;
@@ -2172,7 +2182,12 @@ uaudio_set_params(void *addr, int setmode, int usemode,
         	break;
         case AUDIO_ENCODING_ULAW:
 		if (!(flags & HAS_MULAW)) {
-			if (flags & HAS_8U) {
+			if ((flags & HAS_16) &&
+			    !(setmode & AUMODE_RECORD)) {
+				pswcode = mulaw_to_slinear16_le;
+				pfactor = 2;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			} else if (flags & HAS_8U) {
 				pswcode = mulaw_to_ulinear8;
 				rswcode = ulinear8_to_mulaw;
 				enc = AUDIO_ENCODING_ULINEAR_LE;
@@ -2180,20 +2195,18 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 				pswcode = mulaw_to_slinear8;
 				rswcode = slinear8_to_mulaw;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else if (flags & HAS_16) {
-				pswcode = mulaw_to_slinear16_le;
-				pfactor = 2;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-				/* XXX recording not handled */
-				if (setmode & AUMODE_RECORD)
-					return (EINVAL);
 			} else
 				return (EINVAL);
 		}
                 break;
         case AUDIO_ENCODING_ALAW:
 		if (!(flags & HAS_ALAW)) {
-			if (flags & HAS_8U) {
+			if ((flags & HAS_16) &&
+			    !(setmode & AUMODE_RECORD)) {
+				pswcode = alaw_to_slinear16_le;
+				pfactor = 2;
+				enc = AUDIO_ENCODING_SLINEAR_LE;
+			} else if (flags & HAS_8U) {
 				pswcode = alaw_to_ulinear8;
 				rswcode = ulinear8_to_alaw;
 				enc = AUDIO_ENCODING_ULINEAR_LE;
@@ -2201,13 +2214,6 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 				pswcode = alaw_to_slinear8;
 				rswcode = slinear8_to_alaw;
 				enc = AUDIO_ENCODING_SLINEAR_LE;
-			} else if (flags & HAS_16) {
-				pswcode = alaw_to_slinear16_le;
-				pfactor = 2;
-				enc = AUDIO_ENCODING_SLINEAR_LE;
-				/* XXX recording not handled */
-				if (setmode & AUMODE_RECORD)
-					return (EINVAL);
 			} else
 				return (EINVAL);
 		}
@@ -2224,8 +2230,10 @@ uaudio_set_params(void *addr, int setmode, int usemode,
 		struct usb_audio_streaming_type1_descriptor *a1d =
 			sc->sc_alts[i].asf1desc;
 		if (p->channels == a1d->bNrChannels &&
-		    p->precision ==a1d->bBitResolution &&
-		    enc == sc->sc_alts[i].encoding) {
+		    p->precision == a1d->bBitResolution &&
+		    enc == sc->sc_alts[i].encoding &&
+		    (setmode == AUMODE_PLAY ? UE_DIR_OUT : UE_DIR_IN) ==
+		    UE_GET_DIR(sc->sc_alts[i].edesc->bEndpointAddress)) {
 			if (a1d->bSamFreqType == UA_SAMP_CONTNUOUS) {
 				DPRINTFN(2,("uaudio_set_params: cont %d-%d\n",
 				    UA_SAMP_LO(a1d), UA_SAMP_HI(a1d)));
