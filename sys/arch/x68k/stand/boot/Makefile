@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/09/27 14:08:27 minoura Exp $
+#	$NetBSD: Makefile,v 1.3 2001/09/28 15:10:39 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -49,8 +49,8 @@ CLEANFILES+=	machine ${MACHINE_ARCH}
 
 realall: machine-links ${PROG}
 ${BOOT}:	${OBJS}
-	${LD} ${LDFLAGS} -o ${BOOT} ${OBJS} ${LDLIBS}
-	${STRIP} -F ${BFDNAME} -o ${BOOT}.nosymbol ${BOOT}
+	${LD} ${LDFLAGS} -o ${BOOT}.sym ${OBJS} ${LDLIBS}
+	${STRIP} -F ${BFDNAME} -o ${BOOT} ${BOOT}.sym
 
 CLEANFILES+=	${BOOT}.nosymbol
 
