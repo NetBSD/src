@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_cond_wait.3,v 1.5 2003/07/04 10:19:42 wiz Exp $
+.\" $NetBSD: pthread_cond_wait.3,v 1.5.6.1 2005/03/22 15:22:58 tron Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,9 +66,9 @@
 .Sh SYNOPSIS
 .In pthread.h
 .Ft int
-.Fn pthread_cond_wait "pthread_cond_t *cond" "pthread_mutex_t *mutex"
+.Fn pthread_cond_wait "pthread_cond_t * restrict cond" "pthread_mutex_t * restrict mutex"
 .Ft int
-.Fn pthread_cond_timedwait "pthread_cond_t *cond" "pthread_mutex_t *mutex" "const struct timespec *abstime"
+.Fn pthread_cond_timedwait "pthread_cond_t * restrict cond" "pthread_mutex_t * restrict mutex" "const struct timespec * restrict abstime"
 .Sh DESCRIPTION
 The
 .Fn pthread_cond_wait
