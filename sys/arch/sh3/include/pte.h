@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.1 1999/09/13 10:31:21 itojun Exp $	*/
+/*	$NetBSD: pte.h,v 1.2 2000/01/14 16:06:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,6 +82,10 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 
 #define	PG_4K		0x00000010
 #define	PG_G		0x00000002	/* share status */
+
+#ifdef SH4
+#define	PG_WT		0x00000001	/* write through */
+#endif
 
 #ifndef _LOCORE
 #ifdef _KERNEL
