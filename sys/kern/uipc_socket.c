@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)uipc_socket.c	7.28 (Berkeley) 5/4/91
- *	$Id: uipc_socket.c,v 1.10 1994/01/23 06:06:27 deraadt Exp $
+ *	$Id: uipc_socket.c,v 1.11 1994/04/25 08:22:07 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -42,7 +42,6 @@
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
-#include <sys/select.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -58,6 +57,7 @@
 /*ARGSUSED*/
 int
 socreate(dom, aso, type, proto)
+	int dom;
 	struct socket **aso;
 	register int type;
 	int proto;
@@ -325,7 +325,6 @@ sosend(so, addr, uio, top, control, flags)
 	struct mbuf *control;
 	int flags;
 {
-	struct proc *p = curproc;		/* XXX */
 	struct mbuf **mp;
 	register struct mbuf *m;
 	register long space, len, resid;
@@ -348,7 +347,8 @@ sosend(so, addr, uio, top, control, flags)
 	dontroute =
 	    (flags & MSG_DONTROUTE) && (so->so_options & SO_DONTROUTE) == 0 &&
 	    (so->so_proto->pr_flags & PR_ATOMIC);
-	p->p_stats->p_ru.ru_msgsnd++;
+	if (uio->uio_procp)
+		uio->uio_procp->p_stats->p_ru.ru_msgsnd++;
 	if (control)
 		clen = control->m_len;
 #define	snderr(errno)	{ error = errno; splx(s); goto release; }
@@ -373,11 +373,11 @@ restart:
 		space = sbspace(&so->so_snd);
 		if (flags & MSG_OOB)
 			space += 1024;
-		if (space < resid + clen &&
+		if (atomic && resid > so->so_snd.sb_hiwat ||
+		    clen > so->so_snd.sb_hiwat)
+			snderr(EMSGSIZE);
+		if (space < resid + clen && uio &&
 		    (atomic || space < so->so_snd.sb_lowat || space < clen)) {
-			if (atomic && resid > so->so_snd.sb_hiwat ||
-			    clen > so->so_snd.sb_hiwat)
-				snderr(EMSGSIZE);
 			if (so->so_state & SS_NBIO)
 				snderr(EWOULDBLOCK);
 			sbunlock(&so->so_snd);
@@ -492,7 +492,6 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	struct mbuf **controlp;
 	int *flagsp;
 {
-	struct proc *p = curproc;		/* XXX */
 	register struct mbuf *m, **mp;
 	register int flags, len, error, s, offset;
 	struct protosw *pr = so->so_proto;
@@ -593,7 +592,8 @@ restart:
 		goto restart;
 	}
 dontblock:
-	p->p_stats->p_ru.ru_msgrcv++;
+	if (uio->uio_procp)
+		uio->uio_procp->p_stats->p_ru.ru_msgrcv++;
 	nextrecord = m->m_nextpkt;
 	if (pr->pr_flags & PR_ADDR) {
 #ifdef DIAGNOSTIC
