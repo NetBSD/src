@@ -1,4 +1,4 @@
-/*	$NetBSD: header.h,v 1.5 1995/03/23 08:33:29 cgd Exp $	*/
+/*	$NetBSD: header.h,v 1.6 1995/04/22 07:34:05 cgd Exp $	*/
 
 /*	header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -329,7 +329,7 @@ struct sphere
 #ifndef NODEFS
 extern char VERSION,SUBVERSION;
 extern char aborted[],alpha[],beenhere[],boldon,cheat,ckpfile[],ckpflag;
-extern char *class[],course[],diagfile[],fortfile[],helpfile[];
+extern char *class[],course[],diagfile[],helpfile[];
 extern char *inbuffer,is_alpha[],is_digit[];
 extern char item[MAXX][MAXY],iven[],know[MAXX][MAXY],larnlevels[],lastmonst[];
 extern char level,*levelname[],logfile[],loginname[],logname[],*lpbuf,*lpend;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 1995/03/23 08:34:09 cgd Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 1995/04/22 07:34:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,5 +39,4 @@
 #define	_PATH_SCORE		"/var/games/larn/lscore12.0"
 #define	_PATH_HELP		"/usr/share/games/larn/larn.help"
 #define	_PATH_LEVELS		"/usr/share/games/larn/larnmaze"
-#define	_PATH_FORTS		"/usr/share/games/larn/lfortune"
 #define	_PATH_PLAYERIDS		"/var/games/larn/playerids"

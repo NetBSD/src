@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: config.c,v 1.3 1995/03/23 08:33:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: config.c,v 1.4 1995/04/22 07:34:04 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -31,9 +31,6 @@ char scorefile[] = _PATH_SCORE;
 
 /* the maze data file */
 char larnlevels[] = _PATH_LEVELS;
-
-/* the fortune data file */
-char fortfile[] = _PATH_FORTS;
 
 /* the .larnopts filename */
 char optsfile[1024] ="/.larnopts";
