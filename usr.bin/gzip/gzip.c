@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.60 2004/07/12 09:58:10 yamt Exp $	*/
+/*	$NetBSD: gzip.c,v 1.61 2004/07/12 10:21:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.60 2004/07/12 09:58:10 yamt Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.61 2004/07/12 10:21:11 yamt Exp $");
 #endif /* not lint */
 
 /*
@@ -1366,7 +1366,7 @@ close_header_read:
 				goto lose;
 			}
 			print_list(zfd, isb.st_size, outfile, isb.st_mtime);
-			return 0;	/* XXX */
+			return -1;	/* XXX */
 		}
 
 		in = open(file, O_RDONLY);
