@@ -1,9 +1,9 @@
-/*	$NetBSD: ccdvar.h,v 1.2 1994/06/29 06:31:31 cgd Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.3 1994/07/02 06:03:49 hpeyerl Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -39,7 +39,7 @@
  *
  * from: Utah $Hdr: cdvar.h 1.1 90/07/09$
  *
- *	@(#)cdvar.h	7.2 (Berkeley) 11/4/90
+ *	@(#)cdvar.h	8.1 (Berkeley) 6/10/93
  */
 
 #define	NCCDISKS	8		/* max # of component disks */
@@ -56,8 +56,8 @@ struct ccddevice {
 };
 
 /* ccd_flags */
-#define	CDF_SWAP	0x01	/* interleave should be dmmax */
-#define CDF_UNIFORM	0x02	/* use LCD of sizes for uniform interleave */
+#define	CCDF_SWAP	0x01	/* interleave should be dmmax */
+#define CCDF_UNIFORM	0x02	/* use LCCD of sizes for uniform interleave */
 
 /*
  * Component info table.
