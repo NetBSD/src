@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.3 1994/10/26 08:03:03 cgd Exp $	*/
+/*	$NetBSD: gencons.c,v 1.4 1995/05/03 19:20:11 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -113,7 +113,6 @@ gencnread(dev, uio, flag)
 {
         int unit = minor(dev);
         struct tty *tp = gencntty[0];
-if(consinied)printf("gencnread: dev %x, uio %x, flag %x\n", dev,uio,flag);
 
         return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
@@ -182,6 +181,14 @@ gencnrint(){
 
 	(*linesw[tp->t_line].l_rint)(mfpr(PR_RXDB),tp);
 	return;
+}
+
+int
+gencnstop(tp, flag)
+        struct tty *tp;
+        int flag;
+{
+
 }
 
 gencntint(){

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.9 1995/04/12 15:34:52 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.10 1995/05/03 19:20:09 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -35,8 +35,6 @@
  *	@(#)conf.c	7.18 (Berkeley) 5/9/91
  */
 
-/* XXXX: Make sure tmscpreset() and udareset() are called! */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -49,20 +47,6 @@ int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
 void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
-
-#define CHARDEV(open,close,read,write,ioctl,stop,reset,ttys,select,mmap,strat)\
-        {(int(*)(dev_t, int, int, struct proc *))open, \
-         (int(*)(dev_t, int, int, struct proc *))close, \
-         (int(*)(dev_t, struct uio *, int))read, \
-         (int(*)(dev_t, struct uio *, int))write, \
-         (int(*)(dev_t, u_long, caddr_t, int, struct proc *))ioctl, \
-         (int(*)(struct tty *, int))stop, \
-         (int(*)(int))reset, \
-         (struct  tty **)ttys, \
-         (int(*)(dev_t, int, struct proc *))select, \
-         (int(*)())mmap, \
-         (void(*)(struct buf *))strat }
-
 
 #ifndef LKM
 #define lkmenodev       enodev
@@ -132,12 +116,12 @@ struct bdevsw	bdevsw[] =
 	bdev_tape_init(NTE,tm),		/* 5: TM11/TE10 */
 	bdev_tape_init(NTS,ts),		/* 6: TS11 */
 	bdev_tape_init(NMU,mt),		/* 7: TU78 */
-	bdev_tape_init(NCTU,tu),		/* 8: TU58 */
+	bdev_tape_init(NCTU,tu),	/* 8: Console TU58 on 730/750 */
 	bdev_disk_init(NUDA,uda),	/* 9: UDA50/RA?? */
 	bdev_tape_init(NTJ,ut),		/* 10: TU45 */
 	bdev_disk_init(NRB,idc),	/* 11: IDC (RB730) */
 	bdev_disk_init(NRX,rx),		/* 12: RX01/02 on unibus */
-	bdev_disk_init(NUU,uu),		/* 13: ?? */
+	bdev_disk_init(NUU,uu),		/* 13: TU58 on DL11 */
 	bdev_disk_init(NRL,rl),		/* 14: RL01/02 */
 	bdev_tape_init(NTMSCP,tmscp),	/* 15: TMSCP tape */
 	bdev_disk_init(NKDB,kdb),	/* 16: KDB50/RA?? */
@@ -146,28 +130,60 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 /*
  * Console routines for VAX console. There are always an generic console,
- * but maybe we should care about RD etc?
+ * but maybe we should care about RD, QDSS etc?
  */
 #include <dev/cons.h>
 
-void	gencnprobe(), gencninit(), gencnputc();
-int	gencnopen(), gencnclose(), gencnwrite(), gencnread(), gencnioctl();
-int	gencngetc(); 
-
-extern 	struct tty *gencntty[];
+#define gencnpollc      nullcnpollc
+cons_decl(gen);
 
 struct	consdev	constab[]={
-
 /* Generic console, should always be present */
-	{ gencnprobe, gencninit, gencngetc, gencnputc },
+	cons_init(gen),
 
 #ifdef notyet
 /* We may not always use builtin console, sometimes RD */
 	{ rdcnprobe, rdcninit, rdcngetc, rdcnputc },
 #endif
-
 	{ 0 }
 };
+
+/* Special for console storage */
+#define dev_type_rw(n)	int n __P((dev_t, int, int, struct proc *))
+
+/* plotters - open, close, write, ioctl, select */
+#define cdev_plotter_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, 0 }
+
+/* console mass storage - open, close, read/write */
+#define	cdev_cnstore_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
+	(dev_type_mmap((*))) enodev, 0 }
+
+#define	cdev_lp_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev, \
+	0 }
+
+/* graphic display adapters */
+#define	cdev_graph_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, 0 }
+
+/* Ingres */
+#define cdev_ingres_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
+	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) nullop, \
+	(dev_type_mmap((*))) enodev, 0 }
+
+
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -175,10 +191,10 @@ cdev_decl(ctty);
 #define	mmwrite	mmrw
 cdev_decl(mm);
 #include "pty.h"
-#define	pts_tty		pt_tty
+#define	ptstty		ptytty
 #define	ptsioctl	ptyioctl
 cdev_decl(pts);
-#define	ptc_tty		pt_tty
+#define	ptctty		ptytty
 #define	ptcioctl	ptyioctl
 cdev_decl(ptc);
 cdev_decl(log);
@@ -200,257 +216,90 @@ cdev_decl(up);
 cdev_decl(ut);
 cdev_decl(idc);
 cdev_decl(fd);
-
-#include "acc.h"
-#if NACC > 0
-int     accreset();
-#else
-#define accreset nullop
-#endif
+cdev_decl(gencn);
 
 #include "ct.h"
-#if NCT > 0
-int	ctopen(),ctclose(),ctwrite();
-#else
-#define	ctopen	nullop
-#define	ctclose	nullop
-#define	ctwrite	nullop
-#endif
-
+cdev_decl(ct);
 #include "dh.h"
 cdev_decl(dh);
 #include "dmf.h"
 cdev_decl(dmf);
 
 #include "np.h"
-#if NNP > 0
-int     npopen(),npclose(),npread(),npwrite();
-int     npreset(),npioctl();
-#else
-#define npopen          enxio
-#define npclose         enxio
-#define npread          enxio
-#define npwrite         enxio
-#define npreset         nullop
-#define npioctl         enxio
-#endif
+cdev_decl(np);
 
 #if VAX8600
-int	crlopen(),crlclose(),crlrw();
+#define	NCRL 1
 #else
-#define	crlopen		enxio
-#define	crlclose	enxio
-#define	crlrw		enxio
+#define NCRL 0
 #endif
+#define	crlread	crlrw
+#define crlwrite crlrw
+cdev_decl(crl);
 
 #if VAX8200
-int	rx50open(),rx50close(),rx50rw();
+#define NCRX 1
 #else
-#define	rx50open	enxio
-#define	rx50close	enxio
-#define	rx50rw		enxio
+#define NCRX 0
 #endif
+#define	crxread	crxrw
+#define	crxwrite crxrw
+cdev_decl(crx);
 
 #if VAX780
-int	flopen(),flclose(),flrw();
+#define	NFL 1
 #else
-#define	flopen	enxio
-#define	flclose	enxio
-#define	flrw	enxio
+#define NFL 0
 #endif
+#define flread flrw
+#define flwrite flrw
+cdev_decl(fl);
 
 #include "dz.h"
 cdev_decl(dz);
 
-#include "lp.h"
-#if NLP > 0
-int	lpopen(),lpclose(),lpwrite(),lpreset();
-#else
-#define	lpopen		enxio
-#define	lpclose		enxio
-#define	lpwrite		enxio
-#define	lpreset		nullop
-#endif
+#include "vp.h"
+cdev_decl(vp);
 
-int	cttyopen(),cttyread(),cttywrite(),cttyioctl(),cttyselect();
+#include "lp.h"
+cdev_decl(lp);
 
 #include "va.h"
-#if NVA > 0
-int	vaopen(),vaclose(),vawrite(),vaioctl(),vareset(),vaselect();
-#else
-#define	vaopen		enxio
-#define	vaclose		enxio
-#define	vawrite		enxio
-#define	vaopen		enxio
-#define	vaioctl		enxio
-#define	vareset		nullop
-#define	vaselect	enxio
-#endif
-
-#include "vp.h"
-#if NVP > 0
-int	vpopen(),vpclose(),vpwrite(),vpioctl(),vpreset(),vpselect();
-#else
-#define	vpopen		enxio
-#define	vpclose		enxio
-#define	vpwrite		enxio
-#define	vpioctl		enxio
-#define	vpreset		nullop
-#define	vpselect	enxio
-#endif
+cdev_decl(va);
 
 #include "lpa.h"
-#if NLPA > 0
-int	lpaopen(),lpaclose(),lparead(),lpawrite(),lpaioctl();
-#else
-#define	lpaopen		enxio
-#define	lpaclose	enxio
-#define	lparead		enxio
-#define	lpawrite	enxio
-#define	lpaioctl	enxio
-#endif
+cdev_decl(lpa);
 
 #include "dn.h"
-#if NDN > 0
-int	dnopen(),dnclose(),dnwrite();
-#else
-#define	dnopen		enxio
-#define	dnclose		enxio
-#define	dnwrite		enxio
-#endif
+cdev_decl(dn);
 
 #include "ik.h"
-#if NIK > 0
-int	ikopen(),ikclose(),ikread(),ikwrite(),ikioctl(),ikreset();
-#else
-#define ikopen enxio
-#define ikclose enxio
-#define ikread enxio
-#define ikwrite enxio
-#define ikioctl enxio
-#define ikreset nullop
-#endif
+cdev_decl(ik);
 
 #include "ps.h"
-#if NPS > 0
-int	psopen(),psclose(),psread(),pswrite(),psioctl(),psreset();
-#else
-#define psopen enxio
-#define psclose enxio
-#define psread enxio
-#define pswrite enxio
-#define psopen enxio
-#define psioctl enxio
-#define psreset nullop
-#endif
+cdev_decl(ps);
 
 #include "ad.h"
-#if NAD > 0
-int	adopen(),adclose(),adioctl(),adreset();
-#else
-#define adopen enxio
-#define adclose enxio
-#define adioctl enxio
-#define adreset nullop
-#endif
+cdev_decl(ad);
 
 #include "dhu.h"
 cdev_decl(dhu);
-
-#include "vs.h"
-#if NVS > 0
-int	vsopen(),vsclose(),vsioctl(),vsreset(),vsselect();
-#else
-#define vsopen enxio
-#define vsclose enxio
-#define vsioctl enxio
-#define vsreset enxio
-#define vsselect enxio
-#endif
 
 #include "dmz.h"
 cdev_decl(dmz);
 
 #include "qv.h"
-#if NQV > 0
-int	qvopen(), qvclose(), qvread(), qvwrite(), qvioctl(), qvstop(),
-	qvreset(), qvselect(), qvcons_init();
-#else
-#define qvopen	enxio
-#define qvclose	enxio
-#define qvread	enxio
-#define qvwrite	enxio
-#define qvioctl	enxio
-#define qvstop	enxio
-#define qvreset	nullop
-#define qvselect	enxio
-#define qvcons_init	enxio
-#endif
+cdev_decl(qv);
 
 #include "qd.h"
-#if NQD > 0
-int	qdopen(), qdclose(), qdread(), qdwrite(), qdioctl(), qdstop(),
-	qdreset(), qdselect(), qdcons_init();
-#else
-#define qdopen	enxio
-#define qdclose	enxio
-#define qdread	enxio
-#define qdwrite	enxio
-#define qdioctl	enxio
-#define qdstop	enxio
-#define qdreset	nullop
-#define qdselect	enxio
-#define qdcons_init	enxio
-#endif
+cdev_decl(qd);
 
 #if defined(INGRES)
-int	iiioctl(), iiclose(), iiopen();
+#define	NII 1
 #else
-#define iiopen enxio
-#define iiclose enxio
-#define iiioctl enxio
+#define	NII 0
 #endif
-
-#ifdef	DATAKIT
-#include "datakit.h"
-#include "dktty.h"
-#include "kmc.h"
-#endif
-
-#if !defined(NDATAKIT) || NDATAKIT == 0
-#define	dkopen	enxio
-#define	dkclose	enxio
-#define	dkread	enxio
-#define	dkwrite	enxio
-#define	dkioctl	enxio
-#else
-int	dkopen(),dkclose(),dkread(),dkwrite(),dkioctl();
-#endif
-
-#if !defined(NDKTTY) || NDKTTY == 0
-#define	dktopen		enxio
-#define	dktclose	enxio
-#define	dktread		enxio
-#define	dktwrite	enxio
-#define	dktioctl	enxio
-#define	dktstop		nullop
-#define	dkt		0
-#else
-int	dktopen(),dktclose(),dktread(),dktwrite(),dktioctl(), dktstop();
-struct tty dkt[];
-#endif
-
-#if NKMC > 0
-int kmcopen(), kmcclose(), kmcwrite(), kmcioctl(), kmcread();
-int kmcrint(), kmcload(), kmcset(), kmcdclr();
-#else
-#define kmcopen enxio
-#define kmcclose enxio
-#define kmcwrite enxio
-#define kmcioctl enxio
-#define kmcread enxio
-#define kmcdclr enxio
-#endif
+cdev_decl(ii);
 
 struct cdevsw	cdevsw[] =
 {
@@ -458,87 +307,54 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NDZ,dz),		/* 1: DZ11 */
 	cdev_ctty_init(1,ctty),		/* 2: controlling terminal */
 	cdev_mm_init(1,mm),		/* 3: /dev/{null,mem,kmem,...} */
-	cdev_disk_init(NHP,hp),		/* 4: ??? */
+	cdev_disk_init(NHP,hp),		/* 4: Massbuss disk */
 	cdev_notdef(),			/* 5 */
-	CHARDEV(vpopen,vpclose,enodev,vpwrite,vpioctl,nullop,
-		vpreset,NULL,vpselect,enodev,NULL),			/* 6 */
+	cdev_plotter_init(NVP,vp),	/* 6: Versatec plotter */
 	cdev_swap_init(1,sw),		/* 7 */
-	CHARDEV(flopen,flclose,flrw,flrw,enodev,enodev,nullop,
-		NULL,seltrue,enodev,NULL),				/* 8 */
-	cdev_disk_init(NUDA,uda),	/* 9: ??? */
-	CHARDEV(vaopen,vaclose,enodev,vawrite,vaioctl,nullop,
-		vareset,NULL,vaselect,enodev,NULL),			/* 10 */
+	cdev_cnstore_init(NFL,fl),	/* 8: 11/780 console floppy */
+	cdev_disk_init(NUDA,uda),	/* 9: MSCP disk interface */
+	cdev_plotter_init(NVA,va),	/* 10: Benson-Varian plotter */
 	cdev_disk_init(NRK,rk),		/* 11: RK06/07 */
 	cdev_tty_init(NDH,dh),		/* 12: DH-11/DM-11 */
 	cdev_disk_init(NUP,up),		/* 13: SC-21/SC-31 */
 	cdev_tape_init(NTE,tm),		/* 14: TM11/TE10 */
-	CHARDEV(lpopen,lpclose,enodev,lpwrite,enodev,enodev,lpreset,
-		NULL,seltrue,enodev,NULL),				/* 15 */
+	cdev_lp_init(NLP,lp),		/* 15: LP-11 line printer */
 	cdev_tape_init(NTS,ts),		/* 16: TS11 */
 	cdev_tape_init(NTJ,ut),		/* 17: TU45 */
- 	CHARDEV(ctopen,ctclose,enodev,ctwrite, enodev, enodev, nullop, NULL,
-		seltrue,enodev, NULL),				/* ct 	18 */
+	cdev_lp_init(NCT,ct),		/* 18: phototypesetter interface */
 	cdev_tape_init(NMU,mt),		/* 19: TU78 */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_tty_init(NDMF,dmf),	/* 22: DMF32 */
 	cdev_disk_init(NRB,idc),	/* 23: IDC (RB730) */
-	CHARDEV(dnopen,dnclose,enodev,dnwrite,enodev,enodev,
-		 nullop, NULL,seltrue,enodev,NULL),		/* 24 */
-	CHARDEV(gencnopen,gencnclose,gencnread,gencnwrite,gencnioctl,
-	     nullop,nullop,gencntty,ttselect,enodev,NULL),	/* cons 25 */
-	CHARDEV(lpaopen,lpaclose,lparead,lpawrite,lpaioctl,
-	       enodev,nullop,NULL,seltrue,enodev,NULL),		/* 26 */
-	CHARDEV(psopen,psclose,	psread,	pswrite, psioctl,
-		enodev,psreset,NULL,seltrue,enodev,NULL),	/* 27 */
+	cdev_lp_init(NDN,dn),		/* 24: DN-11 autocall unit */
+	cdev_tty_init(1,gencn),		/* 25: Generic console (mtpr...) */
+	cdev_audio_init(NLPA,lpa),	/* 26 ??? */
+	cdev_graph_init(NPS,ps),	/* 27: E/S graphics device */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
-	CHARDEV(adopen,	adclose,enodev,	enodev,	/*29*/ adioctl,	enodev,
-		adreset,NULL, seltrue,	enodev,	NULL),
+	cdev_ch_init(NAD,ad),		/* 29: DT A/D converter */
 	cdev_disk_init(NRX,rx),		/* 30: RX01/02 on unibus */
-	CHARDEV(ikopen,	ikclose,ikread,	ikwrite,/*31*/ ikioctl,	enodev,
-		ikreset,NULL, seltrue,	enodev,	NULL),
+	cdev_graph_init(NIK,ik),	/* 31: Ikonas frame buffer */
 	cdev_disk_init(NRL,rl),		/* 32: RL01/02 on unibus */
 	cdev_log_init(1,log),		/* 33: /dev/klog */
 	cdev_tty_init(NDHU,dhu),	/* 34: DHU-11 */
- 	CHARDEV(crlopen,crlclose,	crlrw,		crlrw,		/*35*/
- 	enodev,		enodev,		nullop,	NULL,
- 	seltrue,	enodev,		NULL),
-	CHARDEV(vsopen,	vsclose,	enodev,		enodev,		/*36*/
-	vsioctl,	enodev,		vsreset,	NULL,
-	vsselect,	enodev,		NULL),
+	cdev_cnstore_init(NCRL,crl),	/* 35: Console RL02 on 8600 */
+	cdev_notdef(),			/* 36: was vs100 interface. ??? */
 	cdev_tty_init(NDMZ,dmz),	/* 37: DMZ32 */
 	cdev_tape_init(NTMSCP,tmscp),	/* 38: TMSCP tape */
-
-        CHARDEV(npopen, npclose,        npread,         npwrite,        /*39*/
-        npioctl,        enodev,         npreset,        NULL,
-        seltrue,        enodev,         NULL),
-
-	CHARDEV(qvopen,	qvclose,	qvread,		qvwrite,	/*40*/
-	qvioctl,	qvstop,		qvreset,	NULL,
-	qvselect,	enodev,		NULL),
-	CHARDEV(qdopen,	qdclose,	qdread,		qdwrite,	/*41*/
-	qdioctl,	qdstop,		qdreset,	NULL,
-	qdselect,	enodev,		NULL),
-	cdev_notdef(),
-	CHARDEV(iiopen,	iiclose,	nullop,	nullop,	/*43*/
-	iiioctl,	nullop,	nullop,	NULL,
-	seltrue,	enodev,		NULL),
-	CHARDEV(dkopen, dkclose,	dkread, 	dkwrite,	/*44*/
-	dkioctl,	nullop,	nullop,	NULL,
-	seltrue,	enodev,		NULL),
-	CHARDEV(dktopen,dktclose,	dktread, 	dktwrite,	/*45*/
-	dktioctl,	dktstop,	nullop,	dkt,
-	ttselect,	enodev,		NULL),
-	CHARDEV(kmcopen,kmcclose,	kmcread,	kmcwrite,	/*46*/
-	kmcioctl,	nullop,	kmcdclr,	NULL,
-	seltrue,	enodev,		NULL),
-	cdev_notdef(),
-	cdev_notdef(),
-	cdev_notdef(),
-	cdev_notdef(),
-	CHARDEV(rx50open,rx50close,	rx50rw,		rx50rw,		/*51*/
-	enodev,		enodev,		nullop,	0,
-	seltrue,	enodev,		NULL),
+	cdev_audio_init(NNP,np),	/* 39: NP Intelligent Board */
+	cdev_graph_init(NQV,qv),	/* 40: QVSS graphic display */
+	cdev_graph_init(NQD,qd),	/* 41: QDSS graphic display */
+	cdev_notdef(),			/* 42 */
+	cdev_ingres_init(NII,ii),	/* 43: Ingres device */
+	cdev_notdef(),			/* 44  was Datakit */
+	cdev_notdef(),			/* 45  was Datakit */
+	cdev_notdef(),			/* 46  was Datakit */
+	cdev_notdef(),			/* 47 */
+	cdev_notdef(),			/* 48 */
+	cdev_notdef(),			/* 49 */
+	cdev_notdef(),			/* 50 */
+	cdev_cnstore_init(NCRX,crx),	/* 51: Console RX50 at 8200 */
 	cdev_disk_init(NKDB,kdb),	/* 52: KDB50/RA?? */
 	cdev_fd_init(1,fd),		/* 53: file descriptor pseudo-device */
 };
