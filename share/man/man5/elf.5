@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf.5,v 1.3 2001/04/14 16:52:02 kleink Exp $
+.\"	$NetBSD: elf.5,v 1.4 2001/04/22 15:00:17 pooka Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@ versions, refer to
 .Aq Pa elf.h
 for the corresponding 64bit versions.
 .Pp
-An ELF object file can come in three different types:
+The three main types of an ELF object file are:
 .Bl -tag -width "relocatable"
 .It executable
 A file suitable for execution. It contains the information required for
@@ -63,28 +63,30 @@ The shared object contains necessary information which can be used by
 either the link editor
 .Xr ld 1
 at link time or by the dynamic loader
-.Xr ld.so 1
+.Xr ld.elf_so 1
 at run time.
 .El
 .Pp
-ELF files have a dual nature. The assembler
+ELF files have a dual nature. The toolchain, including tools such as the
 .Xr as 1
 and linker
-.Xr ld 1
-treat them as a set of sections described by then section headers. The system
+.Xr ld 1 ,
+treats them as a set of sections described by their section headers. The system
 loader treats them as a set of segments described by the program headers.
 .Pp
 The general format of an ELF file is the following: The file starts with an
 ELF header. This is followed by a table of program headers (optional for
-relocatable and shared files). After this come the sections or segments.
+relocatable and shared files). After this come the sections/segments.
 The file ends with a table of section headers (optional for executable
 files).
 .Pp
-A segment can consist of several sections with related attributes. A file
-usually has only a few loadable segments, maybe one read-only/executable for
-code, one for read-only data and one for read/write data. Using segments the
-system can quickly map all the loadable sections into memory with just a few
-operations, instead of having to map each section separately.
+A segment can be considered to consist of several sections. For example,
+all executable sections are typically packed into one loadable segment
+which is read-only and executable (see
+.Fa p_flags
+in the program header). This enables the system to map the entire file with
+just a few operations, one for each loadable segment, instead of doing
+numerous map operations for each section separately.
 .Pp
 Each file is described by the ELF header:
 .Bd -literal -offset indent
@@ -123,7 +125,16 @@ byte order
 .It Dv EI_VERSION
 Contains the ELF header version. This is currently always set to 1.
 .It Dv EI_OSABI
-Contains the operating system ABI identification.
+Contains the operating system ABI identification. Note that even though the
+definition
+.Dv ELFOSABI_NETBSD
+exists,
+.Nx
+uses
+.Dv ELFOSABI_SYSV
+here, since the
+.Nx
+ABI does not deviate from the standard.
 .It Dv EI_ABIVERSION
 ABI version.
 .El
@@ -144,15 +155,18 @@ The position of the program header table in the file or 0 if it doesn't exist.
 .It Fa e_shoff
 The position of the section header table in the file or 0 if it doesn't exist.
 .It Fa e_flags
-Contains processor-specific flags.
+Contains processor-specific flags. For example, the SPARC port uses this
+space to specify what kind of memory store ordering is required.
 .It Fa e_ehsize
 The size of the ELF header.
 .It Fa e_phentsize
-The size of an entry in the program header table.
+The size of an entry in the program header table. All entries are the same
+size.
 .It Fa e_phnum
 The number of entries in the program header table, or 0 if none exists.
 .It Fa e_shentsize
-The size of an entry in the section header table.
+The size of an entry in the section header table. All entries are the same
+size.
 .It Fa e_shnum
 The number of entries in the section header table, or 0 if none exists.
 .It Fa e_shstrndx
@@ -195,8 +209,7 @@ symbols and is intended for the regular link editor
 .It Dv SHT_STRTAB
 Section contains a string table.
 .It Dv SHT_RELA
-Section contains relocation information. The relocation information located
-here is absolute.
+Section contains relocation information with an explicit addend. 
 .It Dv SHT_HASH
 Section contains a symbol hash table.
 .It Dv SHT_DYNAMIC
@@ -209,7 +222,7 @@ Sections contains information similar to
 .Dv SHT_PROGBITS ,
 but takes up no space in the file. This can be used for e.g. bss.
 .It Dv SHT_REL
-Section contains relative relocation information.
+Section contains relocation information without an explicit addend.
 .It Dv SHT_SHLIB
 This section type is reserved but has unspecified semantics.
 .It Dv SHT_DYNSYM
@@ -332,16 +345,24 @@ Segment contains dynamic linking information.
 .It Dv PT_INTERP
 Segment contains a null-terminated path name to the interpreter. This segment
 may be present only once in a file, and it must appear before any loadable
-segments.
+segments. This field will most likely contain the ELF dynamic loader:
+.Pa /usr/libexec/ld.so_elf
 .It Dv PT_NOTE
 Segment contains some special information. Format can be e.g. vendor-specific.
 .It Dv PT_SHLIB
 This segment type is reserved but has unspecified semantics. Programs
-that contain a segment of this type do not conform to the ABI.
+which contain a segment of this type do not conform to the ABI, and must
+indicate this by setting the appropriate ABI in the ELF header
+.Dv EI_OSABI
+field.
 .It Dv PT_PHDR
-Values of the other fields, such as size and offset, specify values for the
-program header table. Only one segment of this kind may exist, and
-it must come before any loadable segments.
+The values in a program header of this type specify the characteristics
+of the program header table itself. For example, the
+.Fa p_vaddr
+field specifies the program header table location in memory once the
+program is loaded. This field may not occur more than once, may occur only
+if the program header table is part of the file memory image, and must
+come before any loadable segments.
 .El
 .It Fa p_offset
 Contains the byte offset from the beginning of the file to the beginning
@@ -349,9 +370,9 @@ of this segment.
 .It Fa p_vaddr
 Contains the virtual memory address to which this segment is loaded.
 .It Fa p_paddr
-Contains the physical address to which this segment is loaded. Since
-.Nx
-doesn't use physical addressing, this value is ignored.
+Contains the physical address to which this segment is loaded. This value
+is usually ignored, but may be used while bootstrapping or in embedded
+systems.
 .It Fa p_filesz
 Contains the number of bytes this segment occupies in the file image.
 .It Fa p_memsz
@@ -381,7 +402,7 @@ modulo
 .Xr as 1 ,
 .Xr gdb 1 ,
 .Xr ld 1 ,
-.Xr ld.so 1 ,
+.Xr ld.elf_so 1 ,
 .Xr execve 2 ,
 .Xr nlist 3 ,
 .Xr a.out 5 ,
