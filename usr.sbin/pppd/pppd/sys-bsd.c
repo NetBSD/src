@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.47 2003/09/13 18:55:17 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.48 2003/10/21 02:49:07 fvdl Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.47 2003/09/13 18:55:17 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.48 2003/10/21 02:49:07 fvdl Exp $");
 #endif
 #endif
 
@@ -1896,7 +1896,7 @@ GetMask(addr)
      */
     if (getifaddrs(&ifap) != 0) {
 	warn("getifaddrs: %m");
-	return NULL;
+	return 0;
     }
 
     for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
