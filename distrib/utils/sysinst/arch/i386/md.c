@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21.2.1 1999/04/19 15:19:29 perry Exp $ */
+/*	$NetBSD: md.c,v 1.21.2.2 1999/05/02 21:47:57 perry Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,14 +49,25 @@
 #include "menu_defs.h"
 
 
-char mbr[16 * 512];	/* Entire first track, for possible boot selector */
+char mbr[512];
 int mbr_present, mbr_len;
 int c1024_resp;
 struct disklist *disklist = NULL;
 struct nativedisk_info *nativedisk;
 struct biosdisk_info *biosdisk = NULL;
+int netbsd_mbr_installed = 0;
+int netbsd_bootsel_installed = 0;
 
 static int md_read_bootcode __P((char *, char *, size_t));
+static int count_mbr_parts __P((struct mbr_partition *));
+static int mbr_part_above_chs __P((struct mbr_partition *));
+static int mbr_partstart_above_chs __P((struct mbr_partition *));
+static void configure_bootsel __P((void));
+static void md_upgrade_mbrtype __P((void));
+
+struct mbr_bootsel *mbs;
+int defbootselpart, defbootseldisk;
+
 
 /* prototypes */
 
@@ -70,16 +81,43 @@ md_get_info()
 		    NMBRPART * sizeof (struct mbr_partition));
 		/* XXX check result and give up if < 0 */
 		mbr_len = md_read_bootcode(_PATH_MBR, mbr, sizeof mbr);
+		netbsd_mbr_installed = 1;
 	} else
 		mbr_len = MBR_SECSIZE;
 	md_bios_info(diskdev);
 
-	return edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
+edit:
+	edit_mbr((struct mbr_partition *)&mbr[MBR_PARTOFF]);
 
-	/*
-	 * XXX Check for > 8G, and ask if NetBSD MBR is to be used
- 	 * if ext13 supported.
-	 */
+	if (mbr_part_above_chs(part) &&
+	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
+		msg_display(MSG_partabovechs);
+		process_menu(MENU_noyes);
+		if (!yesno)
+			goto edit;
+	}
+
+	if (count_mbr_parts(part) > 1) {
+		msg_display(MSG_installbootsel);
+		process_menu(MENU_yesno);
+		if (yesno) {
+			mbr_len =
+			    md_read_bootcode(_PATH_BOOTSEL, mbr, sizeof mbr);
+			configure_bootsel();
+			netbsd_mbr_installed = netbsd_bootsel_installed = 1;
+		}
+	}
+
+	if (mbr_partstart_above_chs(part) && !netbsd_mbr_installed) {
+		msg_display(MSG_installmbr);
+		process_menu(MENU_yesno);
+		if (yesno) {
+			mbr_len = md_read_bootcode(_PATH_MBR, mbr, sizeof mbr);
+			netbsd_mbr_installed = 1;
+		}
+	}
+
+	return 1;
 }
 
 /*
@@ -130,6 +168,7 @@ md_pre_disklabel()
 		process_menu(MENU_ok);
 		return 1;
 	}
+	md_upgrade_mbrtype();
 	return 0;
 }
 
@@ -347,7 +386,8 @@ custom:		ask_sizemult();
 	/*
 	 * XXX check for int13 extensions.
 	 */
-	if ((bsdlabel[A].pi_offset + bsdlabel[A].pi_size) / bcylsize > 1024) {
+	if ((bsdlabel[A].pi_offset + bsdlabel[A].pi_size) / bcylsize > 1024 &&
+	    (biosdisk == NULL || !(biosdisk->bi_flags & BIFLAG_EXTINT13))) {
 		process_menu(MENU_cyl1024);
 		/* XXX UGH! need arguments to process_menu */
 		switch (c1024_resp) {
@@ -409,10 +449,38 @@ md_update(void)
 	endwin();
 	md_copy_filesystem();
 	md_post_newfs();
+	md_upgrade_mbrtype();
 	puts(CL);
 	wrefresh(stdscr);
 	return 1;
 }
+
+void
+md_upgrade_mbrtype()
+{
+	struct mbr_partition *mbrp;
+	int i, netbsdpart = -1, oldbsdpart = -1, oldbsdcount = 0;
+
+	if (read_mbr(diskdev, mbr, sizeof mbr) < 0)
+		return;
+
+	mbrp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
+
+	for (i = 0; i < NMBRPART; i++) {
+		if (mbrp[i].mbrp_typ == MBR_PTYPE_386BSD) {
+			oldbsdpart = i;
+			oldbsdcount++;
+		} else if (mbrp[i].mbrp_typ == MBR_PTYPE_NETBSD)
+			netbsdpart = i;
+	}
+
+	if (netbsdpart == -1 && oldbsdcount == 1) {
+		mbrp[oldbsdpart].mbrp_typ = MBR_PTYPE_NETBSD;
+		write_mbr(diskdev, mbr, sizeof mbr);
+	}
+}
+
+
 
 void
 md_cleanup_install(void)
@@ -496,4 +564,68 @@ nogeom:
 		bsize = bcyl * bhead * bsec;
 	bcylsize = bhead * bsec;
 	return 0;
+}
+
+static int
+count_mbr_parts(pt)
+	struct mbr_partition *pt;
+{
+	int i, count = 0;;
+
+	for (i = 0; i < NMBRPART; i++)
+		if (pt[i].mbrp_typ != 0)
+			count++;
+
+	return count;
+}
+
+static int
+mbr_part_above_chs(pt)
+	struct mbr_partition *pt;
+{
+	return ((pt[bsdpart].mbrp_start + pt[bsdpart].mbrp_size) >=
+		bcyl * bhead * bsec);
+}
+
+static int
+mbr_partstart_above_chs(pt)
+	struct mbr_partition *pt;
+{
+	return (pt[bsdpart].mbrp_start >= bcyl * bhead * bsec);
+}
+
+static void
+configure_bootsel()
+{
+	struct mbr_partition *parts =
+	    (struct mbr_partition *)&mbr[MBR_PARTOFF];
+	int i;
+
+
+	mbs = (struct mbr_bootsel *)&mbr[MBR_BOOTSELOFF];
+	mbs->flags = BFL_SELACTIVE;
+
+	process_menu(MENU_configbootsel);
+
+	for (i = 0; i < NMBRPART; i++) {
+		if (parts[i].mbrp_typ != 0 &&
+		   parts[i].mbrp_start >= (bcyl * bhead * bsec)) {
+			mbs->flags |= BFL_EXTINT13;
+			break;
+		}
+	}
+}
+
+void
+disp_bootsel(part, mbsp)
+	struct mbr_partition *part;
+	struct mbr_bootsel *mbsp;
+{
+	int i;
+
+	msg_display_add(MSG_bootselheader);
+	for (i = 0; i < 4; i++) {
+		msg_printf_add("%6d      %-32s     %s\n",
+		    i, get_partname(i), mbs->nametab[i]);
+	}
 }
