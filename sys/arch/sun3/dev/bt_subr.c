@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.1 1995/03/10 01:50:28 gwr Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.2 1995/04/10 22:12:48 gwr Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -50,8 +50,8 @@
 
 #include <machine/fbio.h>
 
-#include <sparc/dev/btreg.h>
-#include <sparc/dev/btvar.h>
+#include "btreg.h"
+#include "btvar.h"
 
 /*
  * Common code for dealing with Brooktree video DACs.
