@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.6 2002/02/13 08:18:56 ross Exp $
+.\"     $NetBSD: vnsubr.9,v 1.7 2002/10/14 04:21:14 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -98,7 +98,7 @@
 .Ft int
 .Fn vn_poll "struct file *fp" "int events" "struct proc *p"
 .Ft int
-.Fn vn_stat "void *fdata" "struct stat *sb" "struct proc *p"
+.Fn vn_stat "struct vnode *vp" "struct stat *sb" "struct proc *p"
 .Ft int
 .Fn vn_write "struct file *fp" "off_t *offset" "struct uio *uio" "struct ucred *cred" "int flags"
 .Ft int
@@ -308,10 +308,10 @@ and the calling process
 .Fa p .
 If the operation is success zero is returned, otherwise an appropriate
 error code is returned.
-.It Fn vn_stat "fdata" "sb" "p"
+.It Fn vn_stat "vp" "sb" "p"
 Common code for a vnode stat operation.  The vnode is specified by the
 argument
-.Fa fdata
+.Fa vp
 and
 .Fa sb
 is the buffer to return the stat information.  The argument
