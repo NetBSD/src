@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.10 1995/09/11 07:45:39 jonathan Exp $	*/
+/*	$NetBSD: cfb.c,v 1.11 1995/09/12 22:36:09 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: cfb.c,v 1.10 1995/09/11 07:45:39 jonathan Exp $
+ *      $Id: cfb.c,v 1.11 1995/09/12 22:36:09 jonathan Exp $
  */
 
 /*
@@ -359,8 +359,9 @@ int
 cfb_intr(sc)
 	void *sc;
 {
-	struct fbinfo *fi = (struct fbinfo *)sc;
-	char *slot_addr = (((char *)fi) - CFB_OFFSET_VRAM);
+	struct fbinfo *fi = /* XXX (struct fbinfo *)sc */ &cfbfi;
+	
+	char *slot_addr = (((char *)fi->fi_base) - CFB_OFFSET_VRAM);
 	
 	/* reset vertical-retrace interrupt by writing a dont-care */
 	*(int*) (slot_addr+CFB_OFFSET_IREQ) = 0;
