@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.95 1997/10/03 13:37:33 enami Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.96 1997/10/03 13:46:02 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1601,6 +1601,10 @@ sys_utimes(p, v, retval)
 	int error;
 	struct nameidata nd;
 
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	vp = nd.ni_vp;
 	VATTR_NULL(&vattr);
 	if (SCARG(uap, tptr) == NULL) {
 		microtime(&tv[0]);
@@ -1611,10 +1615,6 @@ sys_utimes(p, v, retval)
 		if (error)
 			return (error);
 	}
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	vp = nd.ni_vp;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -1651,6 +1651,9 @@ sys_futimes(p, v, retval)
 	int error;
 	struct file *fp;
 
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	vp = (struct vnode *)fp->f_data;
 	VATTR_NULL(&vattr);
 	if (SCARG(uap, tptr) == NULL) {
 		microtime(&tv[0]);
@@ -1661,9 +1664,6 @@ sys_futimes(p, v, retval)
 		if (error)
 			return (error);
 	}
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
-		return (error);
-	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
