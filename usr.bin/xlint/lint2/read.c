@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.6 1998/07/27 12:10:24 mycroft Exp $	*/
+/*	$NetBSD: read.c,v 1.7 1998/12/20 19:08:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: read.c,v 1.6 1998/07/27 12:10:24 mycroft Exp $");
+__RCSID("$NetBSD: read.c,v 1.7 1998/12/20 19:08:12 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -1100,7 +1100,7 @@ inpname(cp, epp)
 		buf = xrealloc(buf, blen = len + 1);
 	for (i = 0; i < len; i++) {
 		c = *cp++;
-		if (!isalnum(c) && c != '_')
+		if (!isalnum((unsigned char)c) && c != '_')
 			inperr();
 		buf[i] = c;
 	}
