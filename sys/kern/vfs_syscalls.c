@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.126 1998/12/01 23:17:25 kenh Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.127 1998/12/10 15:09:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,6 +42,7 @@
 
 #include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
+#include "opt_compat_43.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
