@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.3 2002/05/12 13:12:46 bjh21 Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.4 2002/05/29 15:58:03 eeh Exp $	*/
 
 /* This is a derivative work. */
 
@@ -170,7 +170,9 @@ flag float32_lt( float32, float32 );
 flag float32_eq_signaling( float32, float32 );
 flag float32_le_quiet( float32, float32 );
 flag float32_lt_quiet( float32, float32 );
+#ifndef SOFTFLOAT_FOR_GCC
 flag float32_is_signaling_nan( float32 );
+#endif
 
 /*
 -------------------------------------------------------------------------------
@@ -208,7 +210,9 @@ flag float64_lt( float64, float64 );
 flag float64_eq_signaling( float64, float64 );
 flag float64_le_quiet( float64, float64 );
 flag float64_lt_quiet( float64, float64 );
+#ifndef SOFTFLOAT_FOR_GCC
 flag float64_is_signaling_nan( float64 );
+#endif
 
 #ifdef FLOATX80
 
