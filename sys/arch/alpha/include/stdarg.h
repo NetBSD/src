@@ -1,4 +1,4 @@
-/* $NetBSD: stdarg.h,v 1.7 1997/04/06 08:47:44 cgd Exp $ */
+/* $NetBSD: stdarg.h,v 1.7.8.1 1999/02/01 06:56:02 cgd Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,6 +62,6 @@ typedef _BSD_VA_LIST_	va_list;
 	(*(type *)((ap).__offset += __va_size(type),			\
 		   (ap).__base + (ap).__offset + __va_arg_offset(ap, type)))
 
-#define	va_end(ap)	((void)0)
+#define	va_end(ap)	
 
 #endif /* !_ALPHA_STDARG_H_ */
