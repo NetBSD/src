@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.56 2002/10/03 15:58:56 fvdl Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.57 2002/10/05 21:28:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.56 2002/10/03 15:58:56 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.57 2002/10/05 21:28:34 fvdl Exp $");
 
 #define ISA_DMA_STATS
 
@@ -226,7 +226,7 @@ isa_defaultirq()
 	/* icu vectors */
 	for (i = 0; i < ICU_LEN; i++)
 		setgate(&idt[ICU_OFFSET + i].gd, IDTVEC(intr)[i], 0,
-		    SDT_SYS386IGT, SEL_KPL);
+		    SDT_SYS386IGT, SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
 	init_i8259();
 }
 

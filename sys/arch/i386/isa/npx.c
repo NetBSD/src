@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.86 2002/10/01 12:57:12 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.87 2002/10/05 21:28:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.86 2002/10/01 12:57:12 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.87 2002/10/05 21:28:34 fvdl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -177,8 +177,10 @@ npxprobe1(bus_space_tag_t iot, bus_space_handle_t ioh, int irq)
 	disable_intr();
 	save_idt_npxintr = idt[NRSVIDT + irq].gd;
 	save_idt_npxtrap = idt[16].gd;
-	setgate(&idt[NRSVIDT + irq].gd, probeintr, 0, SDT_SYS386IGT, SEL_KPL);
-	setgate(&idt[16].gd, probetrap, 0, SDT_SYS386TGT, SEL_KPL);
+	setgate(&idt[NRSVIDT + irq].gd, probeintr, 0, SDT_SYS386IGT, SEL_KPL,
+	    GSEL(GCODE_SEL, SEL_KPL));
+	setgate(&idt[16].gd, probetrap, 0, SDT_SYS386TGT, SEL_KPL,
+	    GSEL(GCODE_SEL, SEL_KPL));
 	save_imen = imen;
 	imen = ~((1 << IRQ_SLAVE) | (1 << irq));
 	SET_ICUS();
