@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.30 2003/05/03 18:11:17 wiz Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.31 2003/07/08 10:06:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -123,4 +123,4 @@ int	epenable __P((struct ep_softc *));
 void	epdisable __P((struct ep_softc *));
 
 int	ep_activate __P((struct device *, enum devact));
-int	ep_detach __P((struct device *, int flags));
+int	ep_detach __P((struct device *, int));

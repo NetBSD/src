@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic79xxvar.h,v 1.4 2003/05/14 12:57:45 wiz Exp $
+ * $Id: aic79xxvar.h,v 1.5 2003/07/08 10:06:30 itojun Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic79xx.h#84 $
  *
@@ -942,15 +942,13 @@ struct seeprom_config {
 #define		FLX_CSTAT_UNDER		0x2
 #define		FLX_CSTAT_INVALID	0x3
 
-int		ahd_read_seeprom(struct ahd_softc *ahd, uint16_t *buf,
-				 u_int start_addr, u_int count);
+int		ahd_read_seeprom(struct ahd_softc *, uint16_t *, u_int, u_int);
 
-int		ahd_write_seeprom(struct ahd_softc *ahd, uint16_t *buf,
-				  u_int start_addr, u_int count);
-int		ahd_wait_seeprom(struct ahd_softc *ahd);
-int		ahd_verify_cksum(struct seeprom_config *sc);
-int		ahd_acquire_seeprom(struct ahd_softc *ahd);
-void		ahd_release_seeprom(struct ahd_softc *ahd);
+int		ahd_write_seeprom(struct ahd_softc *, uint16_t *, u_int, u_int);
+int		ahd_wait_seeprom(struct ahd_softc *);
+int		ahd_verify_cksum(struct seeprom_config *);
+int		ahd_acquire_seeprom(struct ahd_softc *);
+void		ahd_release_seeprom(struct ahd_softc *);
 
 /****************************  Message Buffer *********************************/
 typedef enum {
@@ -1314,11 +1312,10 @@ extern const int ahd_num_aic7770_devs;
 
 /*************************** Function Declarations ****************************/
 /******************************************************************************/
-void			ahd_reset_cmds_pending(struct ahd_softc *ahd);
-u_int			ahd_find_busy_tcl(struct ahd_softc *ahd, u_int tcl);
-void			ahd_busy_tcl(struct ahd_softc *ahd,
-				     u_int tcl, u_int busyid);
-static __inline void	ahd_unbusy_tcl(struct ahd_softc *ahd, u_int tcl);
+void			ahd_reset_cmds_pending(struct ahd_softc *);
+u_int			ahd_find_busy_tcl(struct ahd_softc *, u_int);
+void			ahd_busy_tcl(struct ahd_softc *, u_int, u_int);
+static __inline void	ahd_unbusy_tcl(struct ahd_softc *, u_int);
 static __inline void
 ahd_unbusy_tcl(struct ahd_softc *ahd, u_int tcl)
 {
@@ -1326,66 +1323,58 @@ ahd_unbusy_tcl(struct ahd_softc *ahd, u_int tcl)
 }
 
 /***************************** PCI Front End *********************************/
-const struct ahd_pci_identity *ahd_find_pci_device(pcireg_t id, 
-							  pcireg_t subid); /*ahd_dev_softc_t);*/
+const struct ahd_pci_identity *ahd_find_pci_device(pcireg_t, pcireg_t); /*ahd_dev_softc_t);*/
 int			ahd_pci_config(struct ahd_softc *,
 				       struct ahd_pci_identity *);
 int			ahd_pci_test_register_access(struct ahd_softc *);
 
 /************************** SCB and SCB queue management **********************/
 int			ahd_probe_scbs(struct ahd_softc *);
-void			ahd_qinfifo_requeue_tail(struct ahd_softc *ahd,
-						 struct scb *scb);
-int			ahd_match_scb(struct ahd_softc *ahd, struct scb *scb,
-				      int target, char channel, int lun,
-				      u_int tag, role_t role);
+void			ahd_qinfifo_requeue_tail(struct ahd_softc *,
+			    struct scb *);
+int			ahd_match_scb(struct ahd_softc *, struct scb *,
+			    int, char, int, u_int, role_t);
 
 /****************************** Initialization ********************************/
-/*struct ahd_softc	*ahd_alloc(void *platform_arg, char *name);*/
+/*struct ahd_softc	*ahd_alloc(void *, char *);*/
 int			 ahd_softc_init(struct ahd_softc *);
-void			 ahd_controller_info(struct ahd_softc *ahd, char *buf);
-int			 ahd_init(struct ahd_softc *ahd);
-int			 ahd_default_config(struct ahd_softc *ahd);
-int			 ahd_parse_cfgdata(struct ahd_softc *ahd,
-					   struct seeprom_config *sc);
-void			 ahd_intr_enable(struct ahd_softc *ahd, int enable);
-void			 ahd_update_coalescing_values(struct ahd_softc *ahd,
-						      u_int timer,
-						      u_int maxcmds,
-						      u_int mincmds);
-void			 ahd_enable_coalescing(struct ahd_softc *ahd,
-					       int enable);
-void			 ahd_pause_and_flushwork(struct ahd_softc *ahd);
-int			 ahd_suspend(struct ahd_softc *ahd); 
-int			 ahd_resume(struct ahd_softc *ahd);
+void			 ahd_controller_info(struct ahd_softc *, char *);
+int			 ahd_init(struct ahd_softc *);
+int			 ahd_default_config(struct ahd_softc *);
+int			 ahd_parse_cfgdata(struct ahd_softc *,
+			    struct seeprom_config *);
+void			 ahd_intr_enable(struct ahd_softc *, int);
+void			 ahd_update_coalescing_values(struct ahd_softc *,
+			    u_int, u_int, u_int);
+void			 ahd_enable_coalescing(struct ahd_softc *, int);
+void			 ahd_pause_and_flushwork(struct ahd_softc *);
+int			 ahd_suspend(struct ahd_softc *); 
+int			 ahd_resume(struct ahd_softc *);
 void			 ahd_set_unit(struct ahd_softc *, int);
 void			 ahd_set_name(struct ahd_softc *, char *);
-struct scb		*ahd_get_scb(struct ahd_softc *ahd, u_int col_idx);
-void			 ahd_free_scb(struct ahd_softc *ahd, struct scb *scb);
-void			 ahd_alloc_scbs(struct ahd_softc *ahd);
-void			 ahd_free(struct ahd_softc *ahd);
-int			 ahd_reset(struct ahd_softc *ahd);
-void			 ahd_shutdown(void *arg);
-int			ahd_write_flexport(struct ahd_softc *ahd,
-					   u_int addr, u_int value);
-int			ahd_read_flexport(struct ahd_softc *ahd, u_int addr,
-					  uint8_t *value);
-int			ahd_wait_flexport(struct ahd_softc *ahd);
+struct scb		*ahd_get_scb(struct ahd_softc *, u_int);
+void			 ahd_free_scb(struct ahd_softc *, struct scb *);
+void			 ahd_alloc_scbs(struct ahd_softc *);
+void			 ahd_free(struct ahd_softc *);
+int			 ahd_reset(struct ahd_softc *);
+void			 ahd_shutdown(void *);
+int			ahd_write_flexport(struct ahd_softc *, u_int, u_int);
+int			ahd_read_flexport(struct ahd_softc *, u_int, uint8_t *);
+int			ahd_wait_flexport(struct ahd_softc *);
 
 /*************************** Interrupt Services *******************************/
-int			ahd_pci_intr(struct ahd_softc *ahd);
-void			ahd_clear_intstat(struct ahd_softc *ahd);
-void			ahd_flush_qoutfifo(struct ahd_softc *ahd);
-void			ahd_run_qoutfifo(struct ahd_softc *ahd);
-void			ahd_run_post_qoutfifo(struct ahd_softc *ahd);
+int			ahd_pci_intr(struct ahd_softc *);
+void			ahd_clear_intstat(struct ahd_softc *);
+void			ahd_flush_qoutfifo(struct ahd_softc *);
+void			ahd_run_qoutfifo(struct ahd_softc *);
+void			ahd_run_post_qoutfifo(struct ahd_softc *);
 #ifdef AHD_TARGET_MODE
-void			ahd_run_tqinfifo(struct ahd_softc *ahd, int paused);
+void			ahd_run_tqinfifo(struct ahd_softc *, int);
 #endif
-void			ahd_handle_hwerrint(struct ahd_softc *ahd);
-void			ahd_handle_seqint(struct ahd_softc *ahd, u_int intstat);
-void			ahd_handle_scsiint(struct ahd_softc *ahd,
-					   u_int intstat);
-void			ahd_clear_critical_section(struct ahd_softc *ahd);
+void			ahd_handle_hwerrint(struct ahd_softc *);
+void			ahd_handle_seqint(struct ahd_softc *, u_int);
+void			ahd_handle_scsiint(struct ahd_softc *, u_int);
+void			ahd_clear_critical_section(struct ahd_softc *);
 
 /***************************** Error Recovery *********************************/
 typedef enum {
@@ -1394,46 +1383,33 @@ typedef enum {
 	SEARCH_REMOVE,
 	SEARCH_PRINT
 } ahd_search_action;
-int			ahd_search_qinfifo(struct ahd_softc *ahd, int target,
-					   char channel, int lun, u_int tag,
-					   role_t role, uint32_t status,
-					   ahd_search_action action);
-int			ahd_search_disc_list(struct ahd_softc *ahd, int target,
-					     char channel, int lun, u_int tag,
-					     int stop_on_first, int remove,
-					     int save_state);
-void			ahd_freeze_devq(struct ahd_softc *ahd, struct scb *scb);
-int			ahd_reset_channel(struct ahd_softc *ahd, char channel,
-					  int initiate_reset);
-int			ahd_abort_scbs(struct ahd_softc *ahd, int target,
-				       char channel, int lun, u_int tag,
-				       role_t role, uint32_t status);
-void			ahd_restart(struct ahd_softc *ahd);
-void			ahd_clear_fifo(struct ahd_softc *ahd, u_int fifo);
-void			ahd_handle_scb_status(struct ahd_softc *ahd,
-					      struct scb *scb);
-void			ahd_handle_scsi_status(struct ahd_softc *ahd,
-					       struct scb *scb);
-void			ahd_calc_residual(struct ahd_softc *ahd,
-					  struct scb *scb);
+int			ahd_search_qinfifo(struct ahd_softc *, int, char, int,
+			    u_int, role_t, uint32_t, ahd_search_action);
+int			ahd_search_disc_list(struct ahd_softc *, int, char,
+			    int, u_int, int, int, int);
+void			ahd_freeze_devq(struct ahd_softc *, struct scb *);
+int			ahd_reset_channel(struct ahd_softc *, char, int);
+int			ahd_abort_scbs(struct ahd_softc *, int, char, int,
+			    u_int, role_t, uint32_t);
+void			ahd_restart(struct ahd_softc *);
+void			ahd_clear_fifo(struct ahd_softc *, u_int);
+void			ahd_handle_scb_status(struct ahd_softc *, struct scb *);
+void			ahd_handle_scsi_status(struct ahd_softc *,
+			    struct scb *);
+void			ahd_calc_residual(struct ahd_softc *, struct scb *);
 /*************************** Utility Functions ********************************/
 struct ahd_phase_table_entry*
-			ahd_lookup_phase_entry(int phase);
-void			ahd_compile_devinfo(struct ahd_devinfo *devinfo,
-					    u_int our_id, u_int target,
-					    u_int lun, char channel,
-					    role_t role);
+			ahd_lookup_phase_entry(int);
+void			ahd_compile_devinfo(struct ahd_devinfo *, u_int, u_int,
+			    u_int, char, role_t);
 /************************** Transfer Negotiation ******************************/
-void			ahd_find_syncrate(struct ahd_softc *ahd, u_int *period,
-					  u_int *ppr_options, u_int maxsync);
-void			ahd_validate_offset(struct ahd_softc *ahd,
-					    struct ahd_initiator_tinfo *tinfo,
-					    u_int period, u_int *offset,
-					    int wide, role_t role);
-void			ahd_validate_width(struct ahd_softc *ahd,
-					   struct ahd_initiator_tinfo *tinfo,
-					   u_int *bus_width,
-					   role_t role);
+void			ahd_find_syncrate(struct ahd_softc *, u_int *,
+			    u_int *, u_int);
+void			ahd_validate_offset(struct ahd_softc *,
+			    struct ahd_initiator_tinfo *, u_int, u_int *,
+			    int, role_t);
+void			ahd_validate_width(struct ahd_softc *,
+			    struct ahd_initiator_tinfo *, u_int *, role_t);
 /*
  * Negotiation types.  These are used to qualify if we should renegotiate
  * even if our goal and current transport parameters are identical.
@@ -1443,40 +1419,32 @@ typedef enum {
 	AHD_NEG_IF_NON_ASYNC,	/* Renegotiate so long as goal is non-async. */
 	AHD_NEG_ALWAYS		/* Renegotiat even if goal is async. */
 } ahd_neg_type;
-int			ahd_update_neg_request(struct ahd_softc*,
-					       struct ahd_devinfo*,
-					       struct ahd_tmode_tstate*,
-					       struct ahd_initiator_tinfo*,
-					       ahd_neg_type);
-void			ahd_set_width(struct ahd_softc *ahd,
-				      struct ahd_devinfo *devinfo,
-				      u_int width, u_int type, int paused);
-void			ahd_set_syncrate(struct ahd_softc *ahd,
-					 struct ahd_devinfo *devinfo,
-					 u_int period, u_int offset,
-					 u_int ppr_options,
-					 u_int type, int paused);
+int			ahd_update_neg_request(struct ahd_softc *,
+			    struct ahd_devinfo *, struct ahd_tmode_tstate *,
+			    struct ahd_initiator_tinfo *, ahd_neg_type);
+void			ahd_set_width(struct ahd_softc *,
+			    struct ahd_devinfo *, u_int, u_int, int);
+void			ahd_set_syncrate(struct ahd_softc *,
+			    struct ahd_devinfo *, u_int, u_int, u_int,
+			    u_int, int);
 typedef enum {
 	AHD_QUEUE_NONE,
 	AHD_QUEUE_BASIC,
 	AHD_QUEUE_TAGGED
 } ahd_queue_alg;
 
-void			ahd_set_tags(struct ahd_softc *ahd,
-				     struct ahd_devinfo *devinfo,
-				     ahd_queue_alg alg);
+void			ahd_set_tags(struct ahd_softc *, struct ahd_devinfo *,
+			    ahd_queue_alg);
 
 /**************************** Target Mode *************************************/
 #ifdef AHD_TARGET_MODE
 void		ahd_send_lstate_events(struct ahd_softc *,
-				       struct ahd_tmode_lstate *);
-void		ahd_handle_en_lun(struct ahd_softc *ahd,
-				  struct cam_sim *sim, union ccb *ccb);
-cam_status	ahd_find_tmode_devs(struct ahd_softc *ahd,
-				    struct cam_sim *sim, union ccb *ccb,
-				    struct ahd_tmode_tstate **tstate,
-				    struct ahd_tmode_lstate **lstate,
-				    int notfound_failure);
+		    struct ahd_tmode_lstate *);
+void		ahd_handle_en_lun(struct ahd_softc *,
+		    struct cam_sim *, union ccb *);
+cam_status	ahd_find_tmode_devs(struct ahd_softc *, struct cam_sim *,
+		    union ccb *, struct ahd_tmode_tstate **,
+		    struct ahd_tmode_lstate **, int);
 #ifndef AHD_TMODE_ENABLE
 #define AHD_TMODE_ENABLE 0
 #endif
@@ -1503,18 +1471,13 @@ extern uint32_t ahd_debug;
 #define AHD_SHOW_INT_COALESCING	0x10000
 #define AHD_DEBUG_SEQUENCER	0x20000
 #endif
-void			ahd_print_scb(struct scb *scb);
-void			ahd_print_devinfo(struct ahd_softc *ahd,
-					  struct ahd_devinfo *devinfo);
-void			ahd_dump_sglist(struct scb *scb);
+void			ahd_print_scb(struct scb *);
+void			ahd_print_devinfo(struct ahd_softc *,
+			    struct ahd_devinfo *);
+void			ahd_dump_sglist(struct scb *);
 void			ahd_dump_all_cards_state(void);
-void			ahd_dump_card_state(struct ahd_softc *ahd);
-int			ahd_print_register(ahd_reg_parse_entry_t *table,
-					   u_int num_entries,
-					   const char *name,
-					   u_int address,
-					   u_int value,
-					   u_int *cur_column,
-					   u_int wrap_point);
-void			ahd_dump_scbs(struct ahd_softc *ahd);
+void			ahd_dump_card_state(struct ahd_softc *);
+int			ahd_print_register(ahd_reg_parse_entry_t *, u_int,
+			    const char *, u_int, u_int, u_int *, u_int);
+void			ahd_dump_scbs(struct ahd_softc *);
 #endif /* _AIC79XXVAR_H_ */
