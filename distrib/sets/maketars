@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.12 1998/12/03 18:17:45 frueauf Exp $
+# $NetBSD: maketars,v 1.13 1999/02/13 07:59:45 itohy Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-a arch] [-m machine] [-s setsdir] [-d destdir] \
@@ -8,8 +8,9 @@
 #
 
 # set defaults
-machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | make -s -f-`}
-arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | make -s -f-`}
+: ${MAKE=make}
+machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
+arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | $MAKE -s -f-`}
 setd=`pwd`
 nlists="base comp etc games man misc text"
 xlists="xbase xcomp xcontrib xfont xserver"
