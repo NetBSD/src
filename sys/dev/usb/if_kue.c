@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.29 2000/06/01 14:28:58 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.29.2.1 2001/03/13 20:46:18 he Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -413,7 +413,9 @@ kue_setmulti(struct kue_softc *sc)
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->kue_dev), __FUNCTION__));
 
-	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
+	if (ifp->if_flags & IFF_PROMISC) {
+allmulti:
+		ifp->if_flags |= IFF_ALLMULTI;
 		sc->kue_rxfilt |= KUE_RXFILT_ALLMULTI;
 		sc->kue_rxfilt &= ~KUE_RXFILT_MULTICAST;
 		kue_setword(sc, KUE_CMD_SET_PKT_FILTER, sc->kue_rxfilt);
@@ -445,29 +447,22 @@ kue_setmulti(struct kue_softc *sc)
 	ETHER_FIRST_MULTI(step, &sc->arpcom, enm);
 #endif
 	while (enm != NULL) {
-		if (i == KUE_MCFILTCNT(sc))
-			break;
-#if 0
-		if (memcmp(enm->enm_addrlo,
-			   enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
-			ifp->if_flags |= IFF_ALLMULTI;
-			/* XXX what now? */
-			return;
-		}
-#endif
+		if (i == KUE_MCFILTCNT(sc) ||
+		    memcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    ETHER_ADDR_LEN) != 0)
+			goto allmulti;
+
 		memcpy(KUE_MCFILT(sc, i), enm->enm_addrlo, ETHER_ADDR_LEN);
 		ETHER_NEXT_MULTI(step, enm);
 		i++;
 	}
+
+	ifp->if_flags &= ~IFF_ALLMULTI;
 #endif
 
-	if (i == KUE_MCFILTCNT(sc))
-		sc->kue_rxfilt |= KUE_RXFILT_ALLMULTI;
-	else {
-		sc->kue_rxfilt |= KUE_RXFILT_MULTICAST;
-		kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SET_MCAST_FILTERS,
-		    i, sc->kue_mcfilters, i * ETHER_ADDR_LEN);
-	}
+	sc->kue_rxfilt |= KUE_RXFILT_MULTICAST;
+	kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SET_MCAST_FILTERS,
+	    i, sc->kue_mcfilters, i * ETHER_ADDR_LEN);
 
 	kue_setword(sc, KUE_CMD_SET_PKT_FILTER, sc->kue_rxfilt);
 }
