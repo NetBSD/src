@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.16 2003/08/19 09:33:16 jdolecek Exp $
+.\"     $NetBSD: config.9,v 1.17 2003/08/23 22:25:03 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -149,7 +149,8 @@ Valid statements are:
 .It cinclude filename
 Conditionally include contents of file
 .Ar filename
-to currently processed configuration. If the specified
+to currently processed configuration.
+If the specified
 .Ar filename
 doesn't exist, a warning is printed, but the error
 ignored.
@@ -286,7 +287,8 @@ the kernel in compilation, otherwise they are omitted.
 .It include filename
 Include contents of file
 .Ar filename
-to currently processed configuration. If the specified
+to currently processed configuration.
+If the specified
 .Ar filename
 doesn't exist, 
 .Xr config 8
@@ -296,7 +298,8 @@ Changes prefix to directory of
 .Ar filename ,
 processes contents of
 .Ar filename,
-and switches back to previous prefix. This is syntactic sugar for:
+and switches back to previous prefix.
+This is syntactic sugar for:
 .Bl -tag -compact -offset indent
 .It prefix Ar dirname(filename)
 .It include Ar basename(filename)
@@ -305,8 +308,8 @@ and switches back to previous prefix. This is syntactic sugar for:
 .It prefix Op Ar dirname
 If
 .Ar dirname
-is specified, it is pushed on top of prefix stack. Any further
-files specified via option
+is specified, it is pushed on top of prefix stack.
+Any further files specified via option
 .Ar file
 would have the prefix implicitly prepended before its
 .Ar filename .
