@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.14 1997/10/30 16:09:05 mrg Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.15 1997/11/14 12:47:11 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44 1997/10/29 12:14:13 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44.2.3 1997/11/12 10:53:29 darrenr Exp ";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -36,13 +36,17 @@ static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44 1997/10/29 12:14:13 dar
 #endif
 #include <sys/fcntl.h>
 #include <sys/uio.h>
-#include <sys/protosw.h>
+#ifndef linux
+# include <sys/protosw.h>
+#endif
 #include <sys/socket.h>
-#ifdef _KERNEL
+#if defined(_KERNEL) && !defined(linux)
 # include <sys/systm.h>
 #endif
 #if !defined(__SVR4) && !defined(__svr4__)
-# include <sys/mbuf.h>
+# ifndef linux
+#  include <sys/mbuf.h>
+# endif
 #else
 # include <sys/filio.h>
 # include <sys/byteorder.h>
@@ -78,12 +82,14 @@ static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.0.2.44 1997/10/29 12:14:13 dar
 extern struct ifnet vpnif;
 #endif
 
-#include <netinet/ip_var.h>
+#ifndef linux
+# include <netinet/ip_var.h>
+#endif
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
-#include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 #include "netinet/ip_compat.h"
+#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_proxy.h"
 #include "netinet/ip_nat.h"
@@ -252,7 +258,7 @@ int mode;
 			n->in_space -= 2;
 		else
 			n->in_space = 1;	/* single IP# mapping */
-		if (n->in_outmsk != 0xffffffff)
+		if ((n->in_outmsk != 0xffffffff) && n->in_outmsk)
 			n->in_nip = ntohl(n->in_outip) + 1;
 		else
 			n->in_nip = ntohl(n->in_outip);
@@ -301,9 +307,9 @@ int mode;
 
 		IRCOPY((char *)data, (char *)&nl, sizeof(nl));
 
-		if (nat_lookupredir(&nl))
+		if (nat_lookupredir(&nl)) {
 			IWCOPY((char *)&nl, (char *)data, sizeof(nl));
-		else
+		} else
 			error = ESRCH;
 		break;
 	    }
@@ -452,39 +458,43 @@ struct in_addr *inp;
 
 #if SOLARIS
 	in.s_addr = ill->ill_ipif->ipif_local_addr;
-#else
+#else /* SOLARIS */
+# if linux
+	;
+# else /* linux */
 	struct ifaddr *ifa;
 	struct sockaddr_in *sin;
 
-# if	(__FreeBSD_version >= 300000)
+#  if	(__FreeBSD_version >= 300000)
 	ifa = TAILQ_FIRST(&ifp->if_addrhead);
-# else
-#  if defined(__NetBSD__) || defined(__OpenBSD__)
-	ifa = ifp->if_addrlist.tqh_first;
 #  else
-#   if defined(__sgi) && defined(IFF_DRVRLOCK) /* IRIX 6 */
-	ifa = &((struct in_ifaddr *)ifp->in_ifaddr)->ia_ifa;
+#   if defined(__NetBSD__) || defined(__OpenBSD__)
+	ifa = ifp->if_addrlist.tqh_first;
 #   else
+#    if defined(__sgi) && defined(IFF_DRVRLOCK) /* IRIX 6 */
+	ifa = &((struct in_ifaddr *)ifp->in_ifaddr)->ia_ifa;
+#    else
 	ifa = ifp->if_addrlist;
-#   endif
-#  endif
-# endif
-# if	(BSD < 199306) && !(/*IRIX6*/defined(__sgi) && defined(IFF_DRVRLOCK))
+#    endif
+#   endif /* __NetBSD__ || __OpenBSD__ */
+#  endif /* __FreeBSD_version >= 300000 */
+#  if (BSD < 199306) && !(/*IRIX6*/defined(__sgi) && defined(IFF_DRVRLOCK))
 	sin = (SOCKADDR_IN *)&ifa->ifa_addr;
-# else
+#  else
 	sin = (SOCKADDR_IN *)ifa->ifa_addr;
 	while (sin && ifa &&
 	       sin->sin_family != AF_INET) {
-#  if	(__FreeBSD_version >= 300000)
+#   if	(__FreeBSD_version >= 300000)
 		ifa = TAILQ_NEXT(ifa, ifa_link);
-#  else
-#   if defined(__NetBSD__) || defined(__OpenBSD__)
-		ifa = ifa->ifa_list.tqe_next;
 #   else
+#    if defined(__NetBSD__) || defined(__OpenBSD__)
+		ifa = ifa->ifa_list.tqe_next;
+#    else
 		ifa = ifa->ifa_next;
-#   endif
-#  endif
-		sin = (SOCKADDR_IN *)ifa->ifa_addr;
+#    endif
+#   endif /* __FreeBSD_version >= 300000 */
+		if (ifa)
+			sin = (SOCKADDR_IN *)ifa->ifa_addr;
 	}
 	if (!ifa)
 		sin = NULL;
@@ -492,10 +502,11 @@ struct in_addr *inp;
 		KFREE(nat);
 		return -1;
 	}
-# endif
+#  endif /* (BSD < 199306) && (!__sgi && IFF_DRVLOCK) */
 	in = sin->sin_addr;
 	in.s_addr = ntohl(in.s_addr);
-#endif
+# endif /* linux */
+#endif /* SOLARIS */
 	*inp = in;
 	return 0;
 }
@@ -552,7 +563,7 @@ int direction;
 				if (nat_ifpaddr(nat, fin->fin_ifp, &in) == -1)
 					return NULL;
 			} else if (!in.s_addr && !np->in_outmsk) {
-				in.s_addr = ip->ip_src.s_addr;
+				in.s_addr = ntohl(ip->ip_src.s_addr);
 				if (nflags & IPN_TCPUDP)
 					port = sport;
 			} else if (nflags & IPN_TCPUDP) {
@@ -600,7 +611,7 @@ int direction;
 		 * internal port.
 		 */
 		in.s_addr = ntohl(np->in_inip);
-		if (!(nport = np->in_pnext))
+		if (!(nport = htons(np->in_pnext)))
 			nport = dport;
 
 		nat->nat_inip.s_addr = htonl(in.s_addr);
@@ -677,10 +688,10 @@ int direction;
 	nat->nat_dir = direction;
 	if (direction == NAT_OUTBOUND) {
 		if (flags & IPN_TCPUDP)
-			tcp->th_sport = htons(port);
+			tcp->th_sport = port;
 	} else {
 		if (flags & IPN_TCPUDP)
-			tcp->th_dport = htons(nport);
+			tcp->th_dport = nport;
 	}
 	nat_stats.ns_added++;
 	nat_stats.ns_inuse++;
