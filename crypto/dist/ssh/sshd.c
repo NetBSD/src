@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.33 2003/07/23 21:25:08 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.34 2003/07/24 15:31:56 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,8 +43,8 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.274 2003/07/22 13:35:22 markus Exp $");
-__RCSID("$NetBSD: sshd.c,v 1.33 2003/07/23 21:25:08 itojun Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.263 2003/02/16 17:09:57 markus Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.34 2003/07/24 15:31:56 itojun Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -1424,6 +1424,20 @@ main(int ac, char **av)
 		    "originating port %d not trusted.", remote_port);
 		options.rhosts_authentication = 0;
 	}
+#if defined(KRB4) && !defined(KRB5)
+	if (!packet_connection_is_ipv4() &&
+	    options.kerberos_authentication) {
+		debug("Kerberos Authentication disabled, only available for IPv4.");
+		options.kerberos_authentication = 0;
+	}
+#endif /* KRB4 && !KRB5 */
+#ifdef AFS
+	/* If machine has AFS, set process authentication group. */
+	if (k_hasafs()) {
+		k_setpag();
+		k_unlog();
+	}
+#endif /* AFS */
 
 	packet_set_nonblocking();
 
@@ -1581,11 +1595,17 @@ do_ssh1_kex(void)
 		auth_mask |= 1 << SSH_AUTH_RHOSTS_RSA;
 	if (options.rsa_authentication)
 		auth_mask |= 1 << SSH_AUTH_RSA;
-#ifdef KRB5
+#if defined(KRB4) || defined(KRB5)
 	if (options.kerberos_authentication)
 		auth_mask |= 1 << SSH_AUTH_KERBEROS;
+#endif
+#if defined(AFS) || defined(KRB5)
 	if (options.kerberos_tgt_passing)
 		auth_mask |= 1 << SSH_PASS_KERBEROS_TGT;
+#endif
+#ifdef AFS
+	if (options.afs_token_passing)
+		auth_mask |= 1 << SSH_PASS_AFS_TOKEN;
 #endif
 	if (options.challenge_response_authentication == 1)
 		auth_mask |= 1 << SSH_AUTH_TIS;

@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.h,v 1.4 2003/07/23 03:52:18 itojun Exp $	*/
-/*	$OpenBSD: monitor_wrap.h,v 1.9 2003/07/22 13:35:22 markus Exp $	*/
+/*	$NetBSD: monitor_wrap.h,v 1.5 2003/07/24 15:31:53 itojun Exp $	*/
+/*	$OpenBSD: monitor_wrap.h,v 1.8 2002/09/26 11:38:43 markus Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -81,6 +81,9 @@ int mm_skey_query(void *, char **, char **, u_int *, char ***, u_int **);
 int mm_skey_respond(void *, u_int, char **);
 
 /* auth_krb */
+#ifdef KRB4
+int mm_auth_krb4(struct Authctxt *, void *, char **, void *);
+#endif
 #ifdef KRB5
 /* auth and reply are really krb5_data objects, but we don't want to
  * include all of the krb5 headers here */

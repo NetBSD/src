@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/07/23 08:00:52 itojun Exp $
+#	$NetBSD: Makefile,v 1.16 2003/07/24 15:31:57 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -12,9 +12,13 @@ SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 	sshconnect.c sshconnect1.c sshconnect2.c
 
 .if (${USE_KERBEROS} != "no")
-CPPFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/krb5
-LDADD+=	-lkrb5 -lasn1 -lcom_err -lroken
-DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
+CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5
+LDADD+=	-lkrb5 -lkafs -lasn1
+DPADD+=	${LIBKRB5} ${LIBKAFS} ${LIBASN1}
+
+CPPFLAGS+=-DKRB4 -I${DESTDIR}/usr/include/kerberosIV
+LDADD+=	-lkrb -lcom_err -lroken
+DPADD+=	${LIBKRB} ${LIBCOM_ERR} ${LIBROKEN}
 .endif
 
 .include <bsd.prog.mk>
