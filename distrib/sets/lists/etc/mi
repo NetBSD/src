@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.100 2002/06/27 15:18:21 christos Exp $
+# $NetBSD: mi,v 1.101 2002/07/06 04:24:10 tv Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -20,7 +20,6 @@
 ./etc/floppytab				etc-sysutil-etc
 ./etc/ftpchroot				etc-netutil-etc
 ./etc/ftpusers				etc-netutil-etc
-./etc/ftpwelcome			etc-netutil-etc
 ./etc/gettytab				etc-sysutil-etc
 ./etc/group				etc-sys-etc
 ./etc/hosts				etc-net-etc
