@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipfs.8,v 1.4 2004/03/28 09:00:56 martti Exp $
+.\"	$NetBSD: ipfs.8,v 1.5 2004/03/28 12:56:41 wiz Exp $
 .\"
 .TH IPFS 8
 .SH NAME
@@ -61,6 +61,11 @@ the kernel or on disk.
 .B \-v
 Provides a verbose description of what's being done.
 .TP
+.B \-i <ifname1>,<ifname2>
+Change all instances of interface name ifname1 in the state save file to
+ifname2.  Useful if you're restoring state information after a hardware
+reconfiguration or change.
+.TP
 .B \-N
 Operate on NAT information.
 .TP
@@ -71,7 +76,7 @@ Operate on filtering state information.
 Unlock state tables in the kernel.
 .TP
 .B \-l
-Unlock state tables in the kernel.
+Lock state tables in the kernel.
 .TP
 .B \-r
 Read information in from the specified file and load it into the
@@ -87,6 +92,7 @@ and does not change the lock once complete.
 Restores all saved state information, if any, from two files,
 \fIipstate.ipf\fP and \fIipnat.ipf\fP, stored in the \fI/var/db/ipf\fP
 directory unless otherwise specified the
+.TP
 .B \-d
 option is used.  The state tables are locked at the beginning of this
 operation and unlocked once complete.
@@ -95,6 +101,7 @@ operation and unlocked once complete.
 Saves in-kernel state information, if any, out to two files,
 \fIipstate.ipf\fP and \fIipnat.ipf\fP, stored in the \fI/var/db/ipf\fP
 directory unless otherwise specified the
+.TP
 .B \-d
 option is used.  The state tables are locked at the beginning of this
 operation and unlocked once complete.
