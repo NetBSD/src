@@ -24,7 +24,7 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.11 1994/10/09 13:09:11 mycroft Exp $
+ *	$Id: db_interface.c,v 1.12 1994/10/09 13:27:07 mycroft Exp $
  */
 
 /*
@@ -49,7 +49,7 @@ int	db_active = 0;
  * Received keyboard interrupt sequence.
  */
 kdb_kbd_trap(regs)
-	struct i386_saved_state *regs;
+	db_regs_t *regs;
 {
 	if (db_active == 0 && (boothowto & RB_KDB)) {
 		printf("\n\nkernel: keyboard interrupt\n");
@@ -61,8 +61,8 @@ kdb_kbd_trap(regs)
  *  kdb_trap - field a TRACE or BPT trap
  */
 kdb_trap(type, code, regs)
-	int	type, code;
-	register struct i386_saved_state *regs;
+	int type, code;
+	register db_regs_t *regs;
 {
 	int s;
 
@@ -138,7 +138,7 @@ extern int trap_types;
  * Print trap reason.
  */
 kdbprinttrap(type, code)
-	int	type, code;
+	int type, code;
 {
 	printf("kernel: ");
 	if (type >= trap_types || type < 0)

@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.8 1994/10/09 12:57:13 mycroft Exp $
+ *	$Id: db_trace.c,v 1.9 1994/10/09 13:27:09 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -134,7 +134,7 @@ db_nextframe(fp, ip, argp, is_trap)
 	int *argp;			/* in */
 	int is_trap;			/* in */
 {
-	struct i386_saved_state *saved_regs;
+	db_regs_t *saved_regs;
 
 	switch (is_trap) {
 	    case 0:
@@ -150,10 +150,10 @@ db_nextframe(fp, ip, argp, is_trap)
 		 * it is an (int *).
 		 */
 #if 0
-		saved_regs = (struct i386_saved_state *)
+		saved_regs = (db_regs_t *)
 			     db_get_value((int)argp, 4, FALSE);
 #endif
-		saved_regs = (struct i386_saved_state *)argp;
+		saved_regs = (db_regs_t *)argp;
 		db_printf("--- trap (number %d) ---\n",
 			  saved_regs->tf_trapno & 0xffff);
 		db_printsym(saved_regs->tf_eip, DB_STGY_XTRN);
