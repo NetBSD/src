@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.2 2004/03/15 01:23:49 minoura Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.3 2004/03/15 05:31:46 minoura Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.2 2004/03/15 01:23:49 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.3 2004/03/15 05:31:46 minoura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -177,7 +177,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
 	if (ioreg & LPCIB_SMI_EN_GBL_SMI_EN)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN,
-				  ioreg & LPCIB_SMI_EN_TCO_EN);
+				  ioreg | LPCIB_SMI_EN_TCO_EN);
 
 	/*
 	 * And enable TCO timeout reset.
