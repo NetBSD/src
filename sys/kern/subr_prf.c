@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.67 2000/03/22 20:58:30 ws Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.68 2000/03/29 03:05:18 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -47,7 +47,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
@@ -108,7 +107,6 @@ do {									\
 #endif
 #ifdef DDB
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
-extern	int db_radix;		/* XXX: for non-standard '%r' format */
 #endif
 
 
