@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.1 2002/07/22 16:47:35 agc Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.2 2003/07/14 11:52:25 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -47,7 +47,7 @@ sedprog=/usr/bin/sed
 touchprog=/usr/bin/touch
 
 usage() {
-	echo 'Usage: pkgview [-i ignore] [-v viewname] [-p prefix] add|check|delete pkgname...'
+	echo 'Usage: pkg_view [-i ignore] [-v viewname] [-p prefix] add|check|delete pkgname...'
 	exit 1
 }
 
