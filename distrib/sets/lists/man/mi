@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.266 2000/09/10 19:58:32 joda Exp $
+# $NetBSD: mi,v 1.267 2000/09/13 03:39:12 hubertf Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -713,6 +713,7 @@
 ./usr/share/man/cat5/vgrindefs.0
 ./usr/share/man/cat5/virtual.0
 ./usr/share/man/cat5/weekly.conf.0
+./usr/share/man/cat5/wscons.conf.0
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat7/ascii.0
 ./usr/share/man/cat7/environ.0
@@ -1754,6 +1755,7 @@
 ./usr/share/man/man5/vgrindefs.5
 ./usr/share/man/man5/virtual.5
 ./usr/share/man/man5/weekly.conf.5
+./usr/share/man/man5/wscons.conf.5
 ./usr/share/man/man5/wtmp.5
 ./usr/share/man/man7/ascii.7
 ./usr/share/man/man7/environ.7
