@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.6 2000/04/17 19:35:12 oster Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.7 2001/01/26 04:40:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -107,6 +107,7 @@ static int distSpareNo = 0;
 #endif				/* RF_UTILITY > 0 */
 
 static RF_LayoutSW_t mapsw[] = {
+#if RF_INCLUDE_PARITY_DECLUSTERING > 0
 	/* parity declustering */
 	{'T', "Parity declustering",
 		RF_NK2(rf_MakeLayoutSpecificDeclustered, &distSpareNo)
@@ -125,7 +126,9 @@ static RF_LayoutSW_t mapsw[] = {
 		    DefaultStates,
 		    0)
 	},
+#endif
 
+#if RF_INCLUDE_PARITY_DECLUSTERING_DS > 0
 	/* parity declustering with distributed sparing */
 	{'D', "Distributed sparing parity declustering",
 		RF_NK2(rf_MakeLayoutSpecificDeclustered, &distSpareYes)
@@ -144,6 +147,7 @@ static RF_LayoutSW_t mapsw[] = {
 		    DefaultStates,
 		    RF_DISTRIBUTE_SPARE | RF_BD_DECLUSTERED)
 	},
+#endif
 
 #if RF_INCLUDE_DECL_PQ > 0
 	/* declustered P+Q */
