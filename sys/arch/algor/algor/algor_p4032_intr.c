@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.2 2001/06/10 05:26:58 thorpej Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.3 2001/06/10 09:13:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -186,13 +186,6 @@ const struct p4032_irqmap p4032_irqmap[NIRQMAPS] = {
 	  1,			6 },
 };
 
-struct p4032_intrhand {
-	LIST_ENTRY(p4032_intrhand) ih_q;
-	int (*ih_func)(void *);
-	void *ih_arg;
-	const struct p4032_irqmap *ih_irqmap;
-};
-
 struct p4032_intrhead {
 	struct evcnt intr_count;
 	int intr_refcnt;
@@ -202,7 +195,7 @@ struct p4032_intrhead p4032_intrtab[NIRQMAPS];
 #define	NINTRS			2	/* MIPS INT0 - INT1 */
 
 struct p4032_cpuintr {
-	LIST_HEAD(, p4032_intrhand) cintr_list;
+	LIST_HEAD(, algor_intrhand) cintr_list;
 	struct evcnt cintr_count;
 };
 
@@ -338,7 +331,7 @@ void *
 algor_p4032_intr_establish(const struct p4032_irqmap *irqmap,
     int (*func)(void *), void *arg)
 {
-	struct p4032_intrhand *ih;
+	struct algor_intrhand *ih;
 	int s;
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
@@ -347,6 +340,7 @@ algor_p4032_intr_establish(const struct p4032_irqmap *irqmap,
 
 	ih->ih_func = func;
 	ih->ih_arg = arg;
+	ih->ih_irq = 0;
 	ih->ih_irqmap = irqmap;
  
 	s = splhigh();
@@ -375,7 +369,7 @@ void
 algor_p4032_intr_disestablish(void *v, void *cookie)
 {
 	const struct p4032_irqmap *irqmap;
-	struct p4032_intrhand *ih = v;
+	struct algor_intrhand *ih = v;
 	int s;
 
 	s = splhigh();
@@ -404,7 +398,8 @@ void
 algor_p4032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
     u_int32_t ipending)
 {
-	struct p4032_intrhand *ih;
+	const struct p4032_irqmap *irqmap;
+	struct algor_intrhand *ih;
 	int level, i;
 	u_int32_t irr[NIRQREG];
 
@@ -460,10 +455,10 @@ algor_p4032_iointr(u_int32_t status, u_int32_t cause, u_int32_t pc,
 		p4032_cpuintrs[level].cintr_count.ev_count++;
 		for (ih = LIST_FIRST(&p4032_cpuintrs[level].cintr_list);
 		     ih != NULL; ih = LIST_NEXT(ih, ih_q)) {
-			if (irr[ih->ih_irqmap->irqreg] &
-			    ih->ih_irqmap->irqbit) {
+			irqmap = ih->ih_irqmap;
+			if (irr[irqmap->irqreg] & irqmap->irqbit) {
 				p4032_intrtab[
-				  ih->ih_irqmap->irqidx].intr_count.ev_count++;
+				    irqmap->irqidx].intr_count.ev_count++;
 				(*ih->ih_func)(ih->ih_arg);
 			}
 		}
