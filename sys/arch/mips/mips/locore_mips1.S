@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.14 1999/05/31 06:10:32 nisimura Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.15 1999/06/18 08:17:50 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1079,11 +1079,13 @@ LEAF(mips1_TLBUpdate)
 	mfc0	v1, MIPS_COP_0_STATUS		# save the status register
 	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
 
-	li	v0, -1				# check to use current
-	bne	v0, a0, 1f			# entryhi and tlbindex
+	li	v0, -1				# check to use current entryhi
+	bne	v0, a0, 1f
+	nop
+	tlbp
 	mtc0	a1, MIPS_COP_0_TLB_LOW		# set new entrylo
 	nop
-	tlbwi
+	tlbwi					# update the entry
 	j	ra
 	mtc0	v1, MIPS_COP_0_STATUS
 
@@ -1094,7 +1096,7 @@ LEAF(mips1_TLBUpdate)
 	nop
 	tlbp					# probe the existence
 	mfc0	v0, MIPS_COP_0_TLB_INDEX	# see what we got
-	nop
+	mtc0	a1, MIPS_COP_0_TLB_LOW		# set new entrylo
 	bgez	v0, 2f				# index < 0 => !found
 	nop
 	b	3f
@@ -1709,78 +1711,6 @@ ALEAF(mips1_TLBFlush)
 	j	ra				# new TLBPID will be set soon
 	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
 END(mips1_purge_perprocess_tlb)
-
-#if notyet_for_PMAP_NEW
-/*
- * mips1_purge_single_tlb(vaddr_t)
- *
- * Purge a single TLB entry contains specified VPN if exists.
- */
-LEAF(mips1_purge_single_tlb)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
-
-	mfc0	v0, MIPS_COP_0_TLB_HI		# pick current TLBPID
-	srl	a0, 12
-	sll	a0, 12				# obtain VPN
-	andi	t0, v0, 0xfc0
-	or	a0, a0, t0			# VPN with current TLBPID
-	mtc0	a0, MIPS_COP_0_TLB_HI		# set it to entryhi
-	nop
-	tlbp					# probe looking for the entry
-	mfc0	t0, MIPS_COP_0_TLB_INDEX	# see what we got
-	nop
-	bltz	t0, 1f				# index < 0 => !found
-	li	t0, MIPS_KSEG0_START
-	mtc0	t0, MIPS_COP_0_TLB_HI		# mark entryhi as invalid
-	mtc0	zero, MIPS_COP_0_TLB_LOW	# zero out entrylo
-	nop
-	tlbwi					# invalidate the entry
-	nop
-	mfc0	v0, MIPS_COP_0_TLB_INDEX	# restore current TLBPID
-1:
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-END(mips1_purge_single_tlb)
-
-/*
- * void mips1_update_tlb(vaddr, unsigned)
- *
- * Used dual purposes; update current TLB entry just made TLB exception
- * with the given entrylo value.  Or, replace an entry which has the
- * given VPN with the given TLBPID or with global bit, if any.  If no
- * such entry exists, add the new entry into TLB victimizing a ramdomly
- * choosen one.
- */
-LEAF(mips1_update_tlb)
-	mfc0	v1, MIPS_COP_0_STATUS		# save status register
-	mtc0	zero, MIPS_COP_0_STATUS		# disable interrupts
-
-	li	v0, -1				# check to use current entryhi
-	beq	v0, a0, 1f
-	mtc0	a1, MIPS_COP_0_TLB_LOW		# set new entrylo
-
-	mfc0	v0, MIPS_COP_0_TLB_HI		# pick current TLBPID
-	srl	a0, 12
-	sll	a0, 12				# obtain VPN
-	andi	t0, v0, 0xfc0
-	or	a0, a0, t0			# VPN with current TLBPID
-	mtc0	a0, MIPS_COP_0_TLB_HI		# set it to entryhi
-	nop
-	tlbp					# probe looking for the entry
-	mfc0	t0, MIPS_COP_0_TLB_INDEX	# see what we got
-	nop
-	bgez	t0, 1f				# index < 0 => !found
-	mtc0	a1, MIPS_COP_0_TLB_LOW
-	b	2f
-	tlbwr					# add vicitimizing another
-1:
-	tlbwi					# update the entry
-2:
-	j	ra
-	mtc0	v1, MIPS_COP_0_STATUS		# restore status register
-END(mips1_update_tlb)
-#endif
 
 /*
  * void mips1_clean_tlb(void)
