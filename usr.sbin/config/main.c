@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.85 2003/09/14 12:35:46 jmmv Exp $	*/
+/*	$NetBSD: main.c,v 1.86 2003/09/14 12:43:04 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1459,7 +1459,7 @@ extract_config(const char *kname, const char *cname, int cfd)
 				fprintf(stderr, "config: line too long\n");
 				exit(2);
 			}
-                        i += ptr - oldptr + 5;
+			i += ptr - oldptr + 5;
 			memcpy(line, oldptr, (ptr - oldptr));
 			line[ptr - oldptr] = '\0';
 			j = strunvis(uline, line);
