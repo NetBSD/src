@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.224 2004/05/25 01:32:46 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.225 2004/05/25 04:14:23 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3065,3 +3065,21 @@ sys/dev/pci/if_sk.c				1.10
 	Fix a glitch in the initial import: The XMAC hash function is actually
 	based on CRC32-_LE_.
 	[kleink, ticket #384]
+
+crypto/dist/heimdal/ChangeLog			1.1.1.9
+crypto/dist/heimdal/NEWS			1.1.1.9
+crypto/dist/heimdal/kadmin/ChangeLog		1.1.1.8
+crypto/dist/heimdal/configure.in		1.5
+crypto/dist/heimdal/kadmin/kadmind.c		patch
+crypto/dist/heimdal/kadmin/version4.c		patch
+doc/3RDPARTY					1.215
+include/heimdal/version.h			1.16
+
+	Update heimdal to 0.6.2
+	[lha, ticket #291]
+
+sys/netipsec/key.c				1.16
+
+	The FAST_IPSEC code actually supports KEYCTL_PREFERED_OLDSA, so export
+	it via sysctl.
+	[atatat, ticket #386]
