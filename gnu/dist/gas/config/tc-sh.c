@@ -1924,7 +1924,7 @@ md_apply_fix (fixP, val)
 
     case BFD_RELOC_SH_PCDISP12BY2:
       val /= 2;
-      if (val < -0x800 || val >= 0x7ff)
+      if (val < -0x800 || val > 0x7ff)
 	as_bad_where (fixP->fx_file, fixP->fx_line, "pcrel too far");
       buf[lowbyte] = val & 0xff;
       buf[highbyte] |= (val >> 8) & 0xf;
