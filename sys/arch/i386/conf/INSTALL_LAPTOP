@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.20 2002/02/08 01:49:34 jmcneill Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.21 2002/02/10 17:36:58 wiz Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -404,7 +404,7 @@ tlp* 	at cardbus? dev ? function ?	# DECchip 21143
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
-icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs

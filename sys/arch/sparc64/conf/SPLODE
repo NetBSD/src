@@ -1,10 +1,10 @@
-# 	$NetBSD: SPLODE,v 1.9 2002/02/10 15:49:39 mrg Exp $
+# 	$NetBSD: SPLODE,v 1.10 2002/02/10 17:37:03 wiz Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	256
 
@@ -356,7 +356,7 @@ hme*		at sbus? slot ? offset ?
 # MII/PHY support
 # XXX: only nsphy "tested"
 #exphy*		at mii? phy ?		# 3Com internal PHYs
-#icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS1890
+#icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
 #inphy*		at mii? phy ?		# Intel 82555 PHYs
 #lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs

@@ -1,11 +1,11 @@
-#	$NetBSD: P4032,v 1.6 2002/01/27 13:23:09 jdolecek Exp $
+#	$NetBSD: P4032,v 1.7 2002/02/10 17:36:52 wiz Exp $
 #
 # Algorithmics P-4032 kernel.
 #
 
 include	"arch/algor/conf/std.algor"
 
-#ident 		"P4032-$Revision: 1.6 $"
+#ident 		"P4032-$Revision: 1.7 $"
 
 maxusers 32
 
@@ -181,7 +181,7 @@ options 	TLP_MATCH_21142
 
 # MII/PHY support
 #exphy*	at mii? phy ?			# 3Com internal PHYs
-#icsphy*	at mii? phy ?		# Integrated Circuit Systems ICS1890
+#icsphy*	at mii? phy ?		# Integrated Circuit Systems ICS189x
 #inphy*	at mii? phy ?			# Intel 82555 PHYs
 #lxtphy*	at mii? phy ?		# Level One LXT-970 PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs
