@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12.2.1 1999/04/19 15:19:27 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.12.2.2 1999/06/24 22:58:34 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -16,7 +16,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software develooped for the NetBSD Project by
+ *      This product includes software developed for the NetBSD Project by
  *      Piermont Information Systems Inc.
  * 4. The name of Piermont Information Systems Inc. may not be used to endorse
  *    or promote products derived from this software without specific prior
@@ -56,7 +56,8 @@
 
 int main __P((int argc, char **argv));
 static void usage __P((void));
-static void inthandler __P((int));
+static void miscsighandler __P((int));
+static void ttysighandler __P((int));
 static void cleanup __P((void));
 static void process_f_flag __P((char *));
 
@@ -109,12 +110,31 @@ main(argc, argv)
 	
 
 	/* initialize message window */
-	win = newwin(22, 78, 1, 1);	/* XXX BOGUS XXX */
-       	msg_window(win);
+	if (menu_init()) {
+		__menu_initerror();
+		exit(1);
+	}
+	/*
+	 * XXX the following is bogus.  if screen is too small, message
+	 * XXX window will be overwritten by menus.
+	 */
+	win = newwin(getmaxy(stdscr) - 2, getmaxx(stdscr) - 2, 1, 1);
+	if (win == NULL) {
+		(void)fprintf(stderr,
+			 "sysinst: screen too small\n");
+		exit(1);
+	}
+	if (msg_window(win) != 0) {
+		(void)fprintf(stderr,
+			 "sysinst: couldn't initialize message window\n");
+		exit(1);
+	}
 
-	/* Watch for SIGINT and clean up */
-	(void)signal(SIGINT, inthandler);
+	/* Watch for signals and clean up */
 	(void)atexit(cleanup);
+	(void)signal(SIGINT, ttysighandler);
+	(void)signal(SIGQUIT, ttysighandler);
+	(void)signal(SIGHUP, miscsighandler);
 
 	/* Menu processing */
 	process_menu(MENU_netbsd);
@@ -154,12 +174,44 @@ usage()
 
 /* ARGSUSED */
 static void
-inthandler(notused)
-	int notused;
+miscsighandler(signo)
+	int signo;
 {
 
-	/* atexit() wants a void function, so inthandler() just calls cleanup */
-	cleanup();
+	/*
+	 * we need to cleanup(), but it was already scheduled with atexit(),
+	 * so it'll be invoked on exit().
+	 */
+	exit(1);
+}
+
+static void
+ttysighandler(signo)
+	int signo;
+{
+
+	/*
+	 * if we want to ignore a TTY signal (SIGINT or SIGQUIT), then we
+	 * just return.  If we want to forward a TTY signal, we forward it
+	 * to the specified process group.
+	 *
+	 * This functionality is used when setting up and displaying child
+	 * output so that the child gets the signal and presumably dies,
+	 * but sysinst continues.  We use this rather than actually ignoring
+	 * the signals, because that will be be passed on to a child
+	 * through fork/exec, whereas special handlers get reset on exec..
+	 */
+	if (ttysig_ignore)
+		return;
+	if (ttysig_forward) {
+		killpg(ttysig_forward, signo);
+		return;
+	}
+
+	/*
+	 * we need to cleanup(), but it was already scheduled with atexit(),
+	 * so it'll be invoked on exit().
+	 */
 	exit(1);
 }
 
@@ -184,7 +236,7 @@ cleanup()
 	}
 
 	if (!exit_cleanly)
-		fprintf(stderr, "\n\n sysinst terminated.\n");
+		fprintf(stderr, "\n\nsysinst terminated.\n");
 }
 
 
