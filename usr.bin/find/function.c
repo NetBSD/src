@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.23 1998/02/03 01:04:27 mrg Exp $	*/
+/*	$NetBSD: function.c,v 1.24 1998/02/21 22:47:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.23 1998/02/03 01:04:27 mrg Exp $");
+__RCSID("$NetBSD: function.c,v 1.24 1998/02/21 22:47:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,11 +176,14 @@ f_atime(plan, entry)
 }
  
 PLAN *
-c_atime(arg)
-	char *arg;
+c_atime(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *arg = **argvp;
 	PLAN *new;
 
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_ATIME, f_atime);
@@ -206,11 +209,14 @@ f_ctime(plan, entry)
 }
  
 PLAN *
-c_ctime(arg)
-	char *arg;
+c_ctime(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *arg = **argvp;
 	PLAN *new;
 
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_CTIME, f_ctime);
@@ -235,7 +241,9 @@ f_always_true(plan, entry)
 }
  
 PLAN *
-c_depth()
+c_depth(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	isdepth = 1;
 
@@ -354,7 +362,9 @@ c_exec(argvp, isok)
  *	basis.
  */
 PLAN *
-c_follow()
+c_follow(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	ftsoptions &= ~FTS_PHYSICAL;
 	ftsoptions |= FTS_LOGICAL;
@@ -429,11 +439,14 @@ f_fstype(plan, entry)
 }
  
 PLAN *
-c_fstype(arg)
-	char *arg;
+c_fstype(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *arg = **argvp;
 	PLAN *new;
     
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
     
 	new = palloc(N_FSTYPE, f_fstype);
@@ -476,13 +489,16 @@ f_group(plan, entry)
 }
  
 PLAN *
-c_group(gname)
-	char *gname;
+c_group(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *gname = **argvp;
 	PLAN *new;
 	struct group *g;
 	gid_t gid;
     
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
 	g = getgrnam(gname);
@@ -512,11 +528,14 @@ f_inum(plan, entry)
 }
  
 PLAN *
-c_inum(arg)
-	char *arg;
+c_inum(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *arg = **argvp;
 	PLAN *new;
     
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
     
 	new = palloc(N_INUM, f_inum);
@@ -538,11 +557,14 @@ f_links(plan, entry)
 }
  
 PLAN *
-c_links(arg)
-	char *arg;
+c_links(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *arg = **argvp;
 	PLAN *new;
     
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
     
 	new = palloc(N_LINKS, f_links);
@@ -565,7 +587,9 @@ f_ls(plan, entry)
 }
  
 PLAN *
-c_ls()
+c_ls(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	ftsoptions &= ~FTS_NOSTAT;
 	isoutput = 1;
@@ -591,11 +615,14 @@ f_mtime(plan, entry)
 }
  
 PLAN *
-c_mtime(arg)
-	char *arg;
+c_mtime(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *arg = **argvp;
 	PLAN *new;
 
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_MTIME, f_mtime);
@@ -619,11 +646,14 @@ f_name(plan, entry)
 }
  
 PLAN *
-c_name(pattern)
-	char *pattern;
+c_name(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *pattern = **argvp;
 	PLAN *new;
 
+	(*argvp)++;
 	new = palloc(N_NAME, f_name);
 	new->c_data = pattern;
 	return (new);
@@ -645,12 +675,15 @@ f_newer(plan, entry)
 }
  
 PLAN *
-c_newer(filename)
-	char *filename;
+c_newer(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *filename = **argvp;
 	PLAN *new;
 	struct stat sb;
     
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
 	if (stat(filename, &sb))
@@ -676,7 +709,9 @@ f_nogroup(plan, entry)
 }
  
 PLAN *
-c_nogroup()
+c_nogroup(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	ftsoptions &= ~FTS_NOSTAT;
 
@@ -699,7 +734,9 @@ f_nouser(plan, entry)
 }
  
 PLAN *
-c_nouser()
+c_nouser(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	ftsoptions &= ~FTS_NOSTAT;
 
@@ -721,11 +758,14 @@ f_path(plan, entry)
 }
  
 PLAN *
-c_path(pattern)
-	char *pattern;
+c_path(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *pattern = **argvp;
 	PLAN *new;
 
+	(*argvp)++;
 	new = palloc(N_NAME, f_path);
 	new->c_data = pattern;
 	return (new);
@@ -755,12 +795,15 @@ f_perm(plan, entry)
 }
  
 PLAN *
-c_perm(perm)
-	char *perm;
+c_perm(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *perm = **argvp;
 	PLAN *new;
 	mode_t *set;
 
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_PERM, f_perm);
@@ -803,7 +846,9 @@ f_print0(plan, entry)
 }
  
 PLAN *
-c_print()
+c_print(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	isoutput = 1;
 
@@ -811,7 +856,9 @@ c_print()
 }
 
 PLAN *
-c_print0()
+c_print0(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	isoutput = 1;
 
@@ -836,7 +883,9 @@ f_prune(plan, entry)
 }
  
 PLAN *
-c_prune()
+c_prune(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	return (palloc(N_PRUNE, f_prune));
 }
@@ -864,12 +913,15 @@ f_size(plan, entry)
 }
  
 PLAN *
-c_size(arg)
-	char *arg;
+c_size(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *arg = **argvp;
 	PLAN *new;
 	char endch;
     
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_SIZE, f_size);
@@ -896,12 +948,15 @@ f_type(plan, entry)
 }
  
 PLAN *
-c_type(typestring)
-	char *typestring;
+c_type(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *typestring = **argvp;
 	PLAN *new;
 	mode_t  mask;
     
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
 	switch (typestring[0]) {
@@ -965,13 +1020,16 @@ f_user(plan, entry)
 }
  
 PLAN *
-c_user(username)
-	char *username;
+c_user(argvp, isok)
+	char ***argvp;
+	int isok;
 {
+	char *username = **argvp;
 	PLAN *new;
 	struct passwd *p;
 	uid_t uid;
     
+	(*argvp)++;
 	ftsoptions &= ~FTS_NOSTAT;
 
 	p = getpwnam(username);
@@ -994,7 +1052,9 @@ c_user(username)
  *	different device ID (st_dev, see stat() S5.6.2 [POSIX.1])
  */
 PLAN *
-c_xdev()
+c_xdev(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	ftsoptions |= FTS_XDEV;
 
@@ -1026,13 +1086,17 @@ f_expr(plan, entry)
  * to a N_EXPR node containing the expression and the ')' node is discarded.
  */
 PLAN *
-c_openparen()
+c_openparen(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	return (palloc(N_OPENPAREN, (int (*) __P((PLAN *, FTSENT *)))-1));
 }
  
 PLAN *
-c_closeparen()
+c_closeparen(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	return (palloc(N_CLOSEPAREN, (int (*) __P((PLAN *, FTSENT *)))-1));
 }
@@ -1057,7 +1121,9 @@ f_not(plan, entry)
 }
  
 PLAN *
-c_not()
+c_not(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	return (palloc(N_NOT, f_not));
 }
@@ -1089,9 +1155,19 @@ f_or(plan, entry)
 }
 
 PLAN *
-c_or()
+c_or(argvp, isok)
+	char ***argvp;
+	int isok;
 {
 	return (palloc(N_OR, f_or));
+}
+
+PLAN *
+c_null(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	return NULL;
 }
 
 static PLAN *
@@ -1102,7 +1178,7 @@ palloc(t, f)
 	PLAN *new;
 
 	if ((new = malloc(sizeof(PLAN))) == NULL)
-		err(1, NULL);
+		err(1, "%s", "");
 	new->type = t;
 	new->eval = f;
 	new->flags = 0;
