@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.17 2003/12/09 19:51:23 ad Exp $	*/
+/*	$NetBSD: dpti.c,v 1.18 2004/04/22 00:17:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.17 2003/12/09 19:51:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.18 2004/04/22 00:17:10 itojun Exp $");
 
 #include "opt_i2o.h"
 
@@ -193,7 +193,8 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 	 * must be no more than 46 bytes long (see dptivar.h).
 	 */
 	printf(": DPT/Adaptec RAID management interface\n");
-	sprintf(dpti_sig.dsDescription, "NetBSD %s I2O OSM", osrelease);
+	snprintf(dpti_sig.dsDescription, sizeof(dpti_sig.dsDescription),
+	    "NetBSD %s I2O OSM", osrelease);
 
 	rv = iop_field_get_all(iop, I2O_TID_IOP,
 	    I2O_DPT_PARAM_EXEC_IOP_BUFFERS, &param,

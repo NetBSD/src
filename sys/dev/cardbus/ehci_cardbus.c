@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_cardbus.c,v 1.6 2002/10/02 16:33:41 thorpej Exp $	*/
+/*	$NetBSD: ehci_cardbus.c,v 1.7 2004/04/22 00:17:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.6 2002/10/02 16:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_cardbus.c,v 1.7 2004/04/22 00:17:10 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,11 +171,10 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	vendor = cardbus_findvendor(ca->ca_id);
 	sc->sc.sc_id_vendor = CARDBUS_VENDOR(ca->ca_id);
 	if (vendor)
-		strncpy(sc->sc.sc_vendor, vendor,
-			sizeof(sc->sc.sc_vendor) - 1);
+		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
 	else
-		sprintf(sc->sc.sc_vendor, "vendor 0x%04x", 
-			CARDBUS_VENDOR(ca->ca_id));
+		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
+		    "vendor 0x%04x", CARDBUS_VENDOR(ca->ca_id));
 	
 	/*
 	 * Find companion controllers.  According to the spec they always

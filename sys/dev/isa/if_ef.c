@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.15 2002/10/02 03:10:47 thorpej Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.16 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.15 2002/10/02 03:10:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.16 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -658,7 +658,7 @@ ef_attach(parent, self, aux)
 		ethaddr[i] = bus_space_read_1(esc->sc_regt, esc->sc_regh,
 					      EF_ADDR + i);
 
-	sprintf(version, "%s, rev. %d",
+	snprintf(version, sizeof(version), "%s, rev. %d",
 		(esc->card_type == EF_CARD_TP) ? "3C507-TP" : "3C507",
 		esc->card_rev);
 

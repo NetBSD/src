@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.15 2003/03/11 11:59:31 drochner Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.16 2004/04/22 00:17:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.15 2003/03/11 11:59:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.16 2004/04/22 00:17:10 itojun Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -170,11 +170,10 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	vendor = cardbus_findvendor(ca->ca_id);
 	sc->sc.sc_id_vendor = CARDBUS_VENDOR(ca->ca_id);
 	if (vendor)
-		strncpy(sc->sc.sc_vendor, vendor,
-			sizeof(sc->sc.sc_vendor) - 1);
+		strlcpy(sc->sc.sc_vendor, vendor, sizeof(sc->sc.sc_vendor));
 	else
-		sprintf(sc->sc.sc_vendor, "vendor 0x%04x", 
-			CARDBUS_VENDOR(ca->ca_id));
+		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
+		    "vendor 0x%04x", CARDBUS_VENDOR(ca->ca_id));
 	
 	r = ohci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {

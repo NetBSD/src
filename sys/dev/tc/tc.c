@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.36 2003/09/26 17:17:47 tsutsui Exp $	*/
+/*	$NetBSD: tc.c,v 1.37 2004/04/22 00:17:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.36 2003/09/26 17:17:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.37 2004/04/22 00:17:13 itojun Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -53,7 +53,7 @@ extern struct cfdriver tc_cd;
 int	tcprint __P((void *, const char *));
 int	tcsubmatch __P((struct device *, struct cfdata *, void *));
 int	tc_checkslot __P((tc_addr_t, char *));
-void	tc_devinfo __P((const char *, char *));
+void	tc_devinfo __P((const char *, char *, size_t));
 
 int
 tcmatch(parent, cf, aux)
@@ -190,7 +190,7 @@ tcprint(aux, pnp)
 	char devinfo[256];
 
 	if (pnp) {
-		tc_devinfo(ta->ta_modname, devinfo);
+		tc_devinfo(ta->ta_modname, devinfo, sizeof(devinfo));
 		aprint_normal("%s at %s", devinfo, pnp);
 	}
 	aprint_normal(" slot %d offset 0x%x", ta->ta_slot, ta->ta_offset);
@@ -304,9 +304,10 @@ struct tc_knowndev {
 #endif /* TCVERBOSE */
 
 void
-tc_devinfo(id, cp)
+tc_devinfo(id, cp, l)
 	const char *id;
 	char *cp;
+	size_t l;
 {
 	const char *driver, *description;
 #ifdef TCVERBOSE
@@ -336,7 +337,7 @@ tc_devinfo(id, cp)
 #endif
 
 	if (driver == NULL)
-		cp += sprintf(cp, "%sdevice %s", unmatched, id);
+		snprintf(cp, l, "%sdevice %s", unmatched, id);
 	else
-		cp += sprintf(cp, "%s (%s)", driver, description);
+		snprintf(cp, l, "%s (%s)", driver, description);
 }

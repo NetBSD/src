@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_subr.c,v 1.5 2001/11/13 07:46:26 lukem Exp $	*/
+/*	$NetBSD: mca_subr.c,v 1.6 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.5 2001/11/13 07:46:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.6 2004/04/22 00:17:12 itojun Exp $");
 
 #include "opt_mcaverbose.h"
 
@@ -67,9 +67,10 @@ struct mca_knowndev {
 #endif /* MCAVERBOSE */
 
 void
-mca_devinfo(id, cp)
+mca_devinfo(id, cp, l)
 	int id;
 	char *cp;
+	size_t l;
 {
 #ifdef MCAVERBOSE
 	const struct mca_knowndev *kdp;
@@ -78,10 +79,10 @@ mca_devinfo(id, cp)
         for (; kdp->name != NULL && kdp->id != id; kdp++);
 
 	if (kdp->name != NULL)
-		sprintf(cp, "%s (0x%04x)", kdp->name, id);
+		snprintf(cp, l, "%s (0x%04x)", kdp->name, id);
 	else
 #endif /* MCAVERBOSE */
-		sprintf(cp, "product 0x%04x", id);
+		snprintf(cp, l, "product 0x%04x", id);
 }
 
 /*

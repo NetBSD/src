@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.13 2003/09/10 11:53:53 uwe Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.14 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.13 2003/09/10 11:53:53 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.14 2004/04/22 00:17:11 itojun Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -171,7 +171,8 @@ cs4231_common_attach(sc, ioh)
 		break;
 	default:
 		if ((buf = malloc(32, M_TEMP, M_NOWAIT)) != NULL) {
-			sprintf(buf, "unknown rev: %x/%x", reg&0xe0, reg&7);
+			snprintf(buf, 32, "unknown rev: %x/%x",
+			    reg&0xe0, reg&7);
 			sc->sc_ad1848.chip_name = buf;
 		}
 	}

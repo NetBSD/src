@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.58 2003/05/09 23:51:28 fvdl Exp $	*/
+/*	$NetBSD: ess.c,v 1.59 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.58 2003/05/09 23:51:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.59 2004/04/22 00:17:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1018,8 +1018,10 @@ essattach(sc)
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
 
-	sprintf(ess_device.name, "ES%s", essmodel[sc->sc_model]);
-	sprintf(ess_device.version, "0x%04x", sc->sc_version);
+	snprintf(ess_device.name, sizeof(ess_device.name), "ES%s",
+	    essmodel[sc->sc_model]);
+	snprintf(ess_device.version, sizeof(ess_device.version), "0x%04x",
+	    sc->sc_version);
 
 	if (ESS_USE_AUDIO1(sc->sc_model))
 		audio_attach_mi(&ess_1788_hw_if, sc, &sc->sc_dev);

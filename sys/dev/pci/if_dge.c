@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.3 2004/04/14 17:31:02 ragge Exp $ */
+/*	$NetBSD: if_dge.c,v 1.4 2004/04/22 00:17:12 itojun Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.3 2004/04/14 17:31:02 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.4 2004/04/22 00:17:12 itojun Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -917,7 +917,8 @@ dge_attach(struct device *parent, struct device *self, void *aux)
 		dge_txseg_evcnt_names =
 		    malloc(sizeof(*dge_txseg_evcnt_names), M_DEVBUF, M_WAITOK);
 		for (i = 0; i < DGE_NTXSEGS; i++)
-			sprintf((*dge_txseg_evcnt_names)[i], "txseg%d", i);
+			snprintf((*dge_txseg_evcnt_names)[i],
+			    sizeof((*dge_txseg_evcnt_names)[i]), "txseg%d", i);
 	}
 
 	/* Attach event counters. */

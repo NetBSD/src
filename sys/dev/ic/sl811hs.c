@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.3 2003/03/13 06:50:23 bsh Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.4 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.3 2003/03/13 06:50:23 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.4 2004/04/22 00:17:11 itojun Exp $");
 
 #include "opt_slhci.h"
 
@@ -807,7 +807,8 @@ slhci_root_ctrl_start(usbd_xfer_handle xfer)
 				totlen = slhci_str(buf, len, "ScanLogic");
 				break;
 			case 2:	/* Product */
-				sprintf(slbuf, "%s root hub", sltypestr[sc->sc_sltype]);
+				snprintf(slbuf, sizeof(slbuf), "%s root hub",
+				    sltypestr[sc->sc_sltype]);
 				totlen = slhci_str(buf, len, slbuf);
 				break;
 			default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.57 2003/05/03 18:11:27 wiz Exp $	*/
+/*	$NetBSD: pas.c,v 1.58 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.57 2003/05/03 18:11:27 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.58 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,8 +486,10 @@ pasattach(parent, self, aux)
 	
 	sbdsp_attach(&sc->sc_sbdsp);
 
-	sprintf(pas_device.name, "pas,%s", pasnames[sc->model]);
-	sprintf(pas_device.version, "%d", sc->rev);
+	snprintf(pas_device.name, sizeof(pas_device.name), "pas,%s",
+	    pasnames[sc->model]);
+	snprintf(pas_device.version, sizeof(pas_device.version), "%d",
+	    sc->rev);
 
 	audio_attach_mi(&pas_hw_if, &sc->sc_sbdsp, &sc->sc_sbdsp.sc_dev);
 }

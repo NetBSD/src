@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.38 2004/04/12 15:44:53 jmmv Exp $	*/
+/*	$NetBSD: auvia.c,v 1.39 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.38 2004/04/12 15:44:53 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.39 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 
 	r = PCI_REVISION(pa->pa_class);
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233) {
-		sprintf(sc->sc_revision, "0x%02X", r);
+		snprintf(sc->sc_revision, sizeof(sc->sc_revision), "0x%02X", r);
 		switch(r) {
 		case VIA_REV_8233C:
 			/* 2 rec, 4 pb, 1 multi-pb */
@@ -313,7 +313,8 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		} else if ((r >= 0x10) && (r <= 0x14)) {
 			sc->sc_revision[0] = 'A' + (r - 0x10);
 		} else {
-			sprintf(sc->sc_revision, "0x%02X", r);
+			snprintf(sc->sc_revision, sizeof(sc->sc_revision),
+			    "0x%02X", r);
 		}
 
 		aprint_normal(": VIA Technologies VT82C686A AC'97 Audio "

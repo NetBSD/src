@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.28 2003/06/29 22:30:13 fvdl Exp $	*/
+/*	$NetBSD: mlx.c,v 1.29 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.28 2003/06/29 22:30:13 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.29 2004/04/22 00:17:11 itojun Exp $");
 
 #include "ld.h"
 
@@ -546,7 +546,7 @@ mlx_describe(struct mlx_softc *mlx)
 		}
 
 	if (model == NULL) {
-		sprintf(buf, " model 0x%x", ci->ci_hardware_id);
+		snprintf(buf, sizeof(buf), " model 0x%x", ci->ci_hardware_id);
 		model = buf;
 	}
 
@@ -2129,12 +2129,12 @@ mlx_ccb_diagnose(struct mlx_ccb *mc)
 		if ((mc->mc_mbox[0] == mlx_msgs[i].command ||
 		    mlx_msgs[i].command == 0) &&
 		    mc->mc_status == mlx_msgs[i].status) {
-			sprintf(buf, "%s (0x%x)",
+			snprintf(buf, sizeof(buf), "%s (0x%x)",
 			    mlx_status_msgs[mlx_msgs[i].msg], mc->mc_status);
 			return (buf);
 		}
 
-	sprintf(buf, "unknown response 0x%x for command 0x%x",
+	snprintf(buf, sizeof(buf), "unknown response 0x%x for command 0x%x",
 	    (int)mc->mc_status, (int)mc->mc_mbox[0]);
 
 	return (buf);

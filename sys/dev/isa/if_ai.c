@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.17 2002/10/02 03:10:47 thorpej Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.18 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.17 2002/10/02 03:10:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.18 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -427,8 +427,8 @@ ai_attach(parent, self, aux)
 	val = bus_space_read_1(asc->sc_regt, asc->sc_regh, AI_REVISION);
 	asc->card_rev = SL_REV(val);
 	asc->card_type = SL_BOARD(val) - 1;
-	sprintf(name, "%s, rev. %d",
-		ai_names[asc->card_type], asc->card_rev);
+	snprintf(name, sizeof(name), "%s, rev. %d",
+	    ai_names[asc->card_type], asc->card_rev);
 
 	i82586_attach(sc, name, ethaddr, NULL, 0, 0);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.76 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: sb.c,v 1.77 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.76 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.77 2004/04/22 00:17:12 itojun Exp $");
 
 #include "midi.h"
 
@@ -268,17 +268,16 @@ sb_getdev(addr, retp)
 	const char *config;
 
 	if (sc->sc_model == SB_JAZZ)
-		strncpy(retp->name, "MV Jazz16", sizeof(retp->name));
+		strlcpy(retp->name, "MV Jazz16", sizeof(retp->name));
 	else
-		strncpy(retp->name, "SoundBlaster", sizeof(retp->name));
-	sprintf(retp->version, "%d.%02d", 
-		SBVER_MAJOR(sc->sc_version),
-		SBVER_MINOR(sc->sc_version));
+		strlcpy(retp->name, "SoundBlaster", sizeof(retp->name));
+	snprintf(retp->version, sizeof(retp->version), "%d.%02d",
+	    SBVER_MAJOR(sc->sc_version), SBVER_MINOR(sc->sc_version));
 	if (0 <= sc->sc_model && sc->sc_model < sizeof names / sizeof names[0])
 		config = names[sc->sc_model];
 	else
 		config = "??";
-	strncpy(retp->config, config, sizeof(retp->config));
+	strlcpy(retp->config, config, sizeof(retp->config));
 		
 	return 0;
 }

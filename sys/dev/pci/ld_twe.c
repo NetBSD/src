@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.18 2003/09/26 03:11:41 thorpej Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.19 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.18 2003/09/26 03:11:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.19 2004/04/22 00:17:12 itojun Exp $");
 
 #include "rnd.h"
 
@@ -128,7 +128,7 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 
 	typestr = twe_describe_code(twe_table_unittype, td->td_type);
 	if (typestr == NULL) {
-		sprintf(unktype, "<0x%02x>", td->td_type);
+		snprintf(unktype, sizeof(unktype), "<0x%02x>", td->td_type);
 		typestr = unktype;
 	}
 	switch (td->td_type) {
@@ -138,10 +138,11 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 		stripestr = twe_describe_code(twe_table_stripedepth,
 		    td->td_stripe);
 		if (stripestr == NULL)
-			sprintf(stripebuf, "<stripe code 0x%02x> ",
-			    td->td_stripe);
+			snprintf(stripebuf, sizeof(stripebuf),
+			    "<stripe code 0x%02x> ", td->td_stripe);
 		else
-			sprintf(stripebuf, "%s stripe ", stripestr);
+			snprintf(stripebuf, sizeof(stripebuf), "%s stripe ",
+			    stripestr);
 		break;
 	default:
 		stripebuf[0] = '\0';
@@ -151,11 +152,12 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	    TWE_PARAM_UNITINFO_Status, &status);
 	status &= TWE_PARAM_UNITSTATUS_MASK;
 	if (error) {
-		sprintf(unkstat, "<unknown>");
+		snprintf(unkstat, sizeof(unkstat), "<unknown>");
 		statstr = unkstat;
 	} else if ((statstr =
 		    twe_describe_code(twe_table_unitstate, status)) == NULL) {
-		sprintf(unkstat, "<status code 0x%02x>", status);
+		snprintf(unkstat, sizeof(unkstat), "<status code 0x%02x>",
+		    status);
 		statstr = unkstat;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.7 2004/02/13 11:36:22 wiz Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.8 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.7 2004/02/13 11:36:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.8 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -919,29 +919,29 @@ mvmebus_mod_string(addr, len, am, ds)
 	    "A16:%04x-%04x ", "A24:%06x-%06x " };
 	static char mstring[40];
 
-	sprintf(mstring,
+	snprintf(mstring, sizeof(mstring),
 	    adrfmt[(am & VME_AM_ADRSIZEMASK) >> VME_AM_ADRSIZESHIFT],
 	    addr, addr + len - 1);
-	strcat(mstring, dsiz[ds & 0x7]);
+	strlcat(mstring, dsiz[ds & 0x7], sizeof(mstring, sizeof(mstring)));
 
 	if (MVMEBUS_AM_HAS_CAP(am)) {
 		if (am & MVMEBUS_AM_CAP_DATA)
-			strcat(mstring, "D");
+			strlcat(mstring, "D", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_PROG)
-			strcat(mstring, "P");
+			strlcat(mstring, "P", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_USER)
-			strcat(mstring, "U");
+			strlcat(mstring, "U", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_SUPER)
-			strcat(mstring, "S");
+			strlcat(mstring, "S", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_BLK)
-			strcat(mstring, "B");
+			strlcat(mstring, "B", sizeof(mstring));
 		if (am & MVMEBUS_AM_CAP_BLKD64)
-			strcat(mstring, "6");
-		strcat(mstring, ")");
+			strlcat(mstring, "6", sizeof(mstring));
+		strlcat(mstring, ")", sizeof(mstring));
 	} else {
-		strcat(mstring, ((am & VME_AM_PRIVMASK) == VME_AM_USER) ?
-		    "USER," : "SUPER,");
-		strcat(mstring, mode[am & VME_AM_MODEMASK]);
+		strlcat(mstring, ((am & VME_AM_PRIVMASK) == VME_AM_USER) ?
+		    "USER," : "SUPER,", sizeof(mstring));
+		strlcat(mstring, mode[am & VME_AM_MODEMASK], sizeof(mstring));
 	}
 
 	return (mstring);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.26 2004/02/24 15:05:54 wiz Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.27 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.26 2004/02/24 15:05:54 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.27 2004/04/22 00:17:11 itojun Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -444,7 +444,7 @@ sca_port_attach(struct sca_softc *sc, u_int port)
 	 * attach to the network layer
 	 */
 	ifp = &scp->sp_if;
-	sprintf(ifp->if_xname, "ntwo%d", ntwo_unit);
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "ntwo%d", ntwo_unit);
 	ifp->if_softc = scp;
 	ifp->if_mtu = SCA_MTU;
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;

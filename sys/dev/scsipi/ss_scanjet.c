@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.28 2002/09/14 21:41:24 chs Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.29 2004/04/22 00:17:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28 2002/09/14 21:41:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.29 2004/04/22 00:17:13 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ scanjet_trigger_scanner(ss)
 	}
 
 	/* send "trigger" operation */
-	strcpy(escape_codes, "\033*f0S");
+	strlcpy(escape_codes, "\033*f0S", sizeof(escape_codes));
 	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes));
 	if (error) {
 		uprintf("%s: trigger_scanner failed\n", ss->sc_dev.dv_xname);
@@ -376,62 +376,63 @@ int
 scanjet_set_window(ss)
 	struct ss_softc *ss;
 {
-	char escape_codes[128], *p;
+	char escape_codes[128], *p, *ep;
 
 	p = escape_codes;
+	ep = &escape_codes[128];
 
-	p += sprintf(p, "\033*f%ldP", ss->sio.scan_width / 4);
-	p += sprintf(p, "\033*f%ldQ", ss->sio.scan_height / 4);
-	p += sprintf(p, "\033*f%ldX", ss->sio.scan_x_origin / 4);
-	p += sprintf(p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
-	p += sprintf(p, "\033*a%dR", ss->sio.scan_x_resolution);
-	p += sprintf(p, "\033*a%dS", ss->sio.scan_y_resolution);
+	p += snprintf(p, ep - p, "\033*f%ldP", ss->sio.scan_width / 4);
+	p += snprintf(p, ep - p, "\033*f%ldQ", ss->sio.scan_height / 4);
+	p += snprintf(p, ep - p, "\033*f%ldX", ss->sio.scan_x_origin / 4);
+	p += snprintf(p, ep - p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
+	p += snprintf(p, ep - p, "\033*a%dR", ss->sio.scan_x_resolution);
+	p += snprintf(p, ep - p, "\033*a%dS", ss->sio.scan_y_resolution);
      
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
 		ss->sio.scan_bits_per_pixel = 1;
 		/* use "line art" mode */
-		strcpy(p, "\033*a0T");
+		strlcpy(p, "\033*a0T", ep - p);
 		p += strlen(p);
 		/* make image data be "min-is-white ala PBM */
-		strcpy(p, "\033*a0I");
+		strlcpy(p, "\033*a0I", ep - p);
 		p += strlen(p);
 		break;
 	case SIM_DITHERED_MONOCHROME:
 		ss->sio.scan_bits_per_pixel = 1;
 		/* use dithered mode */
-		strcpy(p, "\033*a3T");
+		strlcpy(p, "\033*a3T", ep - p);
 		p += strlen(p);
 		/* make image data be "min-is-white ala PBM */
-		strcpy(p, "\033*a0I");
+		strlcpy(p, "\033*a0I", ep - p);
 		p += strlen(p);
 		break;
 	case SIM_GRAYSCALE:
 		ss->sio.scan_bits_per_pixel = 8;
 		/* use grayscale mode */
-		strcpy(p, "\033*a4T");
+		strlcpy(p, "\033*a4T", ep - p);
 		p += strlen(p);
 		/* make image data be "min-is-black ala PGM */
-		strcpy(p, "\033*a1I");
+		strlcpy(p, "\033*a1I", ep - p);
 		p += strlen(p);
 		break;
 	case SIM_COLOR:
 		ss->sio.scan_bits_per_pixel = 24;
 		/* use RGB color mode */
-		strcpy(p, "\033*a5T");
+		strlcpy(p, "\033*a5T", ep - p);
 		p += strlen(p);
 		/* make image data be "min-is-black ala PPM */
-		strcpy(p, "\033*a1I");
+		strlcpy(p, "\033*a1I", ep - p);
 		p += strlen(p);
 		/* use pass-through matrix (disable NTSC) */
-		strcpy(p, "\033*u2T");
+		strlcpy(p, "\033*u2T", ep - p);
 		p += strlen(p);
 		break;
 	}
 
-	p += sprintf(p, "\033*a%dG", ss->sio.scan_bits_per_pixel);
-	p += sprintf(p, "\033*a%dL", (int)(ss->sio.scan_brightness) - 128);
-	p += sprintf(p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
+	p += snprintf(p, ep - p, "\033*a%dG", ss->sio.scan_bits_per_pixel);
+	p += snprintf(p, ep - p, "\033*a%dL", (int)(ss->sio.scan_brightness) - 128);
+	p += snprintf(p, ep - p, "\033*a%dK", (int)(ss->sio.scan_contrast) - 128);
 
 	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes));
 }
@@ -459,11 +460,13 @@ scanjet_compute_sizes(ss)
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
 	case SIM_DITHERED_MONOCHROME:
-		strcpy(escape_codes, "\033*s1025E"); /* bytes wide */
+		/* bytes wide */
+		strlcpy(escape_codes, "\033*s1025E", sizeof(escape_codes));
 		break;
 	case SIM_GRAYSCALE:
 	case SIM_COLOR:
-		strcpy(escape_codes, "\033*s1024E"); /* pixels wide */
+		/* pixels wide */
+		strlcpy(escape_codes, "\033*s1024E", sizeof(escape_codes));
 		break;
 	}
 	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes));
@@ -485,7 +488,8 @@ scanjet_compute_sizes(ss)
 	if (ss->sio.scan_image_mode < SIM_GRAYSCALE)
 		ss->sio.scan_pixels_per_line *= 8;
 
-	strcpy(escape_codes, "\033*s1026E"); /* pixels high */
+	/* pixels high */
+	strlcpy(escape_codes, "\033*s1026E", sizeof(escape_codes));
 	error = scanjet_ctl_write(ss, escape_codes, strlen(escape_codes));
 	if (error) {
 		uprintf(wfail, ss->sc_dev.dv_xname);

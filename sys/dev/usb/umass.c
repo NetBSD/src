@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.109 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: umass.c,v 1.110 2004/04/22 00:17:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.109 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.110 2004/04/22 00:17:13 itojun Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1822,7 +1822,7 @@ umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer, int buflen,
 	s1[0] = '\0';
 	s3[0] = '\0';
 
-	sprintf(s2, " buffer=%p, buflen=%d", buffer, buflen);
+	snprintf(s2, sizeof(s2), " buffer=%p, buflen=%d", buffer, buflen);
 	for (i = 0; i < buflen && i < printlen; i++) {
 		j = i % 16;
 		if (j == 0 && i != 0) {
@@ -1830,10 +1830,11 @@ umass_dump_buffer(struct umass_softc *sc, u_int8_t *buffer, int buflen,
 				USBDEVNAME(sc->sc_dev), s1, s2));
 			s2[0] = '\0';
 		}
-		sprintf(&s1[j*2], "%02x", buffer[i] & 0xff);
+		snprintf(&s1[j * 2], sizeof(s1) - j * 2, "%02x",
+		    buffer[i] & 0xff);
 	}
 	if (buflen > printlen)
-		sprintf(s3, " ...");
+		snprintf(s3, sizeof(s3), " ...");
 	DPRINTF(UDMASS_GEN, ("%s: 0x %s%s%s\n",
 		USBDEVNAME(sc->sc_dev), s1, s2, s3));
 }

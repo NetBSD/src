@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.18 2004/04/22 00:17:11 itojun Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.17 2002/11/15 14:55:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.18 2004/04/22 00:17:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,8 @@ lm_common_match(sc)
 	for (i = 0; i < 7; ++i) {
 		sc->sensors[i].units = sc->info[i].units =
 		    ENVSYS_SVOLTS_DC;
-		sprintf(sc->info[i].desc, "IN %d", i);
+		snprintf(sc->info[i].desc, sizeof(sc->info[i].desc),
+		    "IN %d", i);
 	}
 
 	/* default correction factors for resistors on higher voltage inputs */
@@ -314,7 +315,8 @@ wb_match(sc)
 		for (i = 0; i < 7; ++i) {
 			sc->sensors[i].units = sc->info[i].units =
 			    ENVSYS_SVOLTS_DC;
-			sprintf(sc->info[i].desc, "IN %d", i);
+			snprintf(sc->info[i].desc, sizeof(sc->info[i].desc),
+			    "IN %d", i);
 		}
 
 		/* default correction factors for higher voltage inputs */
@@ -368,31 +370,31 @@ wb_setup_volt(sc)
 	struct lm_softc *sc;
 {
 	sc->sensors[0].units = sc->info[0].units = ENVSYS_SVOLTS_DC;
-	sprintf(sc->info[0].desc, "VCORE A");
+	snprintf(sc->info[0].desc, sizeof(sc->info[0].desc), "VCORE A");
 	sc->info[0].rfact = 10000;
 	sc->sensors[1].units = sc->info[1].units = ENVSYS_SVOLTS_DC;
-	sprintf(sc->info[1].desc, "VCORE B");
+	snprintf(sc->info[1].desc, sizeof(sc->info[1].desc), "VCORE B");
 	sc->info[1].rfact = 10000;
 	sc->sensors[2].units = sc->info[2].units = ENVSYS_SVOLTS_DC;
-	sprintf(sc->info[2].desc, "+3.3V");
+	snprintf(sc->info[2].desc, sizeof(sc->info[2].desc), "+3.3V");
 	sc->info[2].rfact = 10000;
 	sc->sensors[3].units = sc->info[3].units = ENVSYS_SVOLTS_DC;
-	sprintf(sc->info[3].desc, "+5V");
+	snprintf(sc->info[3].desc, sizeof(sc->info[3].desc), "+5V");
 	sc->info[3].rfact = 16778;
 	sc->sensors[4].units = sc->info[4].units = ENVSYS_SVOLTS_DC;
-	sprintf(sc->info[4].desc, "+12V");
+	snprintf(sc->info[4].desc, sizeof(sc->info[4].desc), "+12V");
 	sc->info[4].rfact = 38000;
 	sc->sensors[5].units = sc->info[5].units = ENVSYS_SVOLTS_DC;
-	sprintf(sc->info[5].desc, "-12V");
+	snprintf(sc->info[5].desc, sizeof(sc->info[5].desc), "-12V");
 	sc->info[5].rfact = 10000;
 	sc->sensors[6].units = sc->info[6].units = ENVSYS_SVOLTS_DC;
-	sprintf(sc->info[6].desc, "-5V");
+	snprintf(sc->info[6].desc, sizeof(sc->info[6].desc), "-5V");
 	sc->info[6].rfact = 10000;
 	sc->sensors[7].units = sc->info[7].units = ENVSYS_SVOLTS_DC;
-	sprintf(sc->info[7].desc, "+5VSB");
+	snprintf(sc->info[7].desc, sizeof(sc->info[7].desc), "+5VSB");
 	sc->info[7].rfact = 15151;
 	sc->sensors[8].units = sc->info[8].units = ENVSYS_SVOLTS_DC;
-	sprintf(sc->info[8].desc, "VBAT");
+	snprintf(sc->info[8].desc, sizeof(sc->info[8].desc), "VBAT");
 	sc->info[8].rfact = 10000;
 }
 
@@ -405,7 +407,8 @@ setup_temp(sc, start, n)
 
 	for (i = 0; i < n; i++) {
 		sc->sensors[start + i].units = ENVSYS_STEMP;
-		sprintf(sc->info[start + i].desc, "Temp %d", i + 1);
+		snprintf(sc->info[start + i].desc,
+		    sizeof(sc->info[start + i].desc), "Temp %d", i + 1);
 	}
 }
 
@@ -419,7 +422,8 @@ setup_fan(sc, start, n)
 	for (i = 0; i < n; ++i) {
 		sc->sensors[start + i].units = ENVSYS_SFANRPM;
 		sc->info[start + i].units = ENVSYS_SFANRPM;
-		sprintf(sc->info[start + i].desc, "Fan %d", i + 1);
+		snprintf(sc->info[start + i].desc,
+		    sizeof(sc->info[start + i].desc), "Fan %d", i + 1);
 	}
 }
 

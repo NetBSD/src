@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.82 2003/11/21 03:08:37 gson Exp $	*/
+/*	$NetBSD: gus.c,v 1.83 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.82 2003/11/21 03:08:37 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus.c,v 1.83 2004/04/22 00:17:12 itojun Exp $");
 
 #include "gus.h"
 #if NGUS > 0
@@ -1030,7 +1030,8 @@ gusattach(parent, self, aux)
 	 * of the board version. Simply use the revision register as
 	 * identification.
 	 */
-	sprintf(gus_device.version, "%d", sc->sc_revision);
+	snprintf(gus_device.version, sizeof(gus_device.version), "%d",
+	    sc->sc_revision);
 
 	printf("\n%s: Gravis UltraSound", sc->sc_dev.dv_xname);
 	if (sc->sc_revision >= 10)
