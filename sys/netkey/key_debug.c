@@ -1,5 +1,5 @@
-/*	$NetBSD: key_debug.c,v 1.12 2000/07/01 01:01:36 itojun Exp $	*/
-/*	$KAME: key_debug.c,v 1.22 2000/06/22 08:38:34 sakane Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.13 2000/07/04 04:41:54 itojun Exp $	*/
+/*	$KAME: key_debug.c,v 1.23 2000/07/04 04:08:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -706,8 +706,6 @@ kdebug_sockaddr(addr)
 	return;
 }
 
-#endif /* !defined(_KERNEL) || (defined(_KERNEL) && defined(IPSEC_DEBUG)) */
-
 void
 ipsec_bindump(buf, len)
 	caddr_t buf;
@@ -741,3 +739,4 @@ ipsec_hexdump(buf, len)
 	return;
 }
 
+#endif /* !defined(_KERNEL) || (defined(_KERNEL) && defined(IPSEC_DEBUG)) */
