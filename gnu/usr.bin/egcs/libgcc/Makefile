@@ -1,11 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/04/01 03:14:55 tv Exp $
-
-INCS=	exception new new.h typeinfo
-#INCSDIR=/usr/include/g++
-
-# XXX hack
-exception:
-	@/bin/true
+#	$NetBSD: Makefile,v 1.3 1998/04/01 21:13:25 tv Exp $
 
 .PATH: ${.CURDIR}/../../../dist/gcc/cp ${.CURDIR}/../../../dist/gcc/cp/inc
 LIB=	gcc
@@ -36,6 +29,8 @@ LIB2OBJS+=__gcc_bcmp.o _varargs.o _eprintf.o _op_new.o _new_handler.o \
 SRCS+=		tinfo.cc tinfo2.cc new.cc new1.cc new2.cc exception.cc
 CXXFLAGS+=	-I$(DIST)/cp/inc
 LIB2OBJS+=	_eh.o
+INCS=		exception new new.h typeinfo
+INCSDIR=	/usr/include/g++
 .endif
 
 .if (${MACHINE_ARCH} == "m68k") || (${MACHINE_ARCH} == "i386")
