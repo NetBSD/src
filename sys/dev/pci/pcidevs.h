@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.112 1999/02/19 06:56:53 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.113 1999/02/19 19:12:09 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.106 1999/02/19 06:55:15 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.107 1999/02/19 19:11:33 thorpej Exp 
  */
 
 /*
@@ -750,17 +750,17 @@
 
 /* DEC products */
 #define	PCI_PRODUCT_DEC_21050	0x0001		/* DECchip 21050 PCI-PCI Bridge */
-#define	PCI_PRODUCT_DEC_21040	0x0002		/* DECchip 21040 (\"Tulip\") */
+#define	PCI_PRODUCT_DEC_21040	0x0002		/* DECchip 21040 (\"Tulip\") Ethernet */
 #define	PCI_PRODUCT_DEC_21030	0x0004		/* DECchip 21030 (\"TGA\") */
 #define	PCI_PRODUCT_DEC_NVRAM	0x0007		/* Zephyr NV-RAM */
 #define	PCI_PRODUCT_DEC_KZPSA	0x0008		/* KZPSA */
-#define	PCI_PRODUCT_DEC_21140	0x0009		/* DECchip 21140 (\"FasterNet\") */
+#define	PCI_PRODUCT_DEC_21140	0x0009		/* DECchip 21140 (\"FasterNet\") 10/100 Ethernet */
 #define	PCI_PRODUCT_DEC_PBXGB	0x000d		/* TGA2 */
 #define	PCI_PRODUCT_DEC_DEFPA	0x000f		/* DEFPA */
 /* product DEC ???	0x0010	??? VME Interface */
-#define	PCI_PRODUCT_DEC_21041	0x0014		/* DECchip 21041 (\"Tulip Pass 3\") */
+#define	PCI_PRODUCT_DEC_21041	0x0014		/* DECchip 21041 (\"Tulip Plus\") Ethernet */
 #define	PCI_PRODUCT_DEC_DGLPB	0x0016		/* DGLPB (\"OPPO\") */
-#define	PCI_PRODUCT_DEC_21142	0x0019		/* DECchip 21142/3 */
+#define	PCI_PRODUCT_DEC_21142	0x0019		/* DECchip 21142/21143 10/100 Ethernet */
 #define	PCI_PRODUCT_DEC_21052	0x0021		/* DECchip 21052 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21150	0x0022		/* DECchip 21150 PCI-PCI Bridge */
 #define	PCI_PRODUCT_DEC_21152	0x0024		/* DECchip 21152 PCI-PCI Bridge */
