@@ -1,5 +1,5 @@
-/*	$NetBSD: machdep.c,v 1.2 2004/03/24 15:34:52 atatat Exp $	*/
-/*	NetBSD: machdep.c,v 1.550 2004/03/05 11:34:17 junyoung Exp 	*/
+/*	$NetBSD: machdep.c,v 1.2.2.1 2004/05/22 15:58:02 he Exp $	*/
+/*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2004/03/24 15:34:52 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2.2.1 2004/05/22 15:58:02 he Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -247,7 +247,7 @@ struct mtrr_funcs *mtrr_funcs;
 #endif
 
 #ifdef COMPAT_NOMID
-static int exec_nomid  (struct proc *, struct exec_package *);
+static int exec_nomid(struct proc *, struct exec_package *);
 #endif
 
 int	physmem;
@@ -280,6 +280,7 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
+extern	paddr_t pmap_pa_start, pmap_pa_end;
 
 #ifdef ISA_CLOCK
 void (*delay_func)(int) = i8254_delay;
@@ -392,7 +393,8 @@ i386_proc0_tss_ldt_init()
 	cpu_info_primary.ci_curpcb = pcb = &lwp0.l_addr->u_pcb;
 
 	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16
+		| SEL_KPL;		/* i/o pl */
 
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
@@ -408,6 +410,7 @@ i386_proc0_tss_ldt_init()
 	ltr(lwp0.l_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
 #else
+	HYPERVISOR_fpu_taskswitch();
 	XENPRINTF(("lwp tss sp %p ss %04x/%04x\n",
 		      (void *)pcb->pcb_tss.tss_esp0,
 		      pcb->pcb_tss.tss_ss0, IDXSEL(pcb->pcb_tss.tss_ss0)));
@@ -420,14 +423,14 @@ i386_proc0_tss_ldt_init()
  */
 
 void
-i386_init_pcb_tss_ldt(ci)
-	struct cpu_info *ci;
+i386_init_pcb_tss_ldt(struct cpu_info *ci)
 {
 	int x;
 	struct pcb *pcb = ci->ci_idle_pcb;
 
 	pcb->pcb_tss.tss_ioopt =
-	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16
+		| SEL_KPL;		/* i/o pl */
 	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
 		pcb->pcb_iomap[x] = 0xffffffff;
 
@@ -435,6 +438,33 @@ i386_init_pcb_tss_ldt(ci)
 	pcb->pcb_cr0 = rcr0();
 
 	ci->ci_idle_tss_sel = tss_alloc(pcb);
+}
+
+/*
+ * Switch context:
+ * - honor CR0_TS in saved CR0 and request DNA exception on FPU use
+ * - switch stack pointer for user->kernel transition
+ */
+void
+i386_switch_context(struct pcb *new)
+{
+	dom0_op_t op;
+	struct cpu_info *ci;
+
+	ci = curcpu();
+	if (ci->ci_fpused) {
+		HYPERVISOR_fpu_taskswitch();
+		ci->ci_fpused = 0;
+	}
+
+	HYPERVISOR_stack_switch(new->pcb_tss.tss_ss0, new->pcb_tss.tss_esp0);
+
+	if (xen_start_info.flags & SIF_PRIVILEGED) {
+		op.cmd = DOM0_IOPL;
+		op.u.iopl.domain = xen_start_info.dom_id;
+		op.u.iopl.iopl = new->pcb_tss.tss_ioopt & SEL_RPL; /* i/o pl */
+		HYPERVISOR_dom0_op(&op);
+	}
 }
 
 /*
@@ -760,9 +790,7 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(howto, bootstr)
-	int howto;
-	char *bootstr;
+cpu_reboot(int howto, char *bootstr)
 {
 
 	if (cold) {
@@ -994,8 +1022,7 @@ cpu_dumpconf()
 static vaddr_t dumpspace;
 
 vaddr_t
-reserve_dumppages(p)
-	vaddr_t p;
+reserve_dumppages(vaddr_t p)
 {
 
 	dumpspace = p;
@@ -1129,10 +1156,7 @@ dumpsys()
  * Clear registers on exec
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	struct pcb *pcb = &l->l_addr->u_pcb;
@@ -1189,10 +1213,8 @@ union	descriptor *pentium_idt;
 extern  struct user *proc0paddr;
 
 void
-setgate(gd, func, args, type, dpl, sel)
-	struct gate_descriptor *gd;
-	void *func;
-	int args, type, dpl, sel;
+setgate(struct gate_descriptor *gd, void *func, int args, int type, int dpl,
+    int sel)
 {
 
 	gd->gd_looffset = (int)func;
@@ -1206,8 +1228,7 @@ setgate(gd, func, args, type, dpl, sel)
 }
 
 void
-unsetgate(gd)
-	struct gate_descriptor *gd;
+unsetgate(struct gate_descriptor *gd)
 {
 	gd->gd_p = 0;
 	gd->gd_hioffset = 0;
@@ -1221,10 +1242,7 @@ unsetgate(gd)
 
 
 void
-setregion(rd, base, limit)
-	struct region_descriptor *rd;
-	void *base;
-	size_t limit;
+setregion(struct region_descriptor *rd, void *base, size_t limit)
 {
 
 	rd->rd_limit = (int)limit;
@@ -1232,11 +1250,8 @@ setregion(rd, base, limit)
 }
 
 void
-setsegment(sd, base, limit, type, dpl, def32, gran)
-	struct segment_descriptor *sd;
-	void *base;
-	size_t limit;
-	int type, dpl, def32, gran;
+setsegment(struct segment_descriptor *sd, void *base, size_t limit, int type,
+    int dpl, int def32, int gran)
 {
 
 	sd->sd_lolimit = (int)limit;
@@ -1283,9 +1298,7 @@ void cpu_init_idt()
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
-add_mem_cluster(seg_start, seg_end, type)
-	u_int64_t seg_start, seg_end;
-	u_int32_t type;
+add_mem_cluster(u_int64_t seg_start, u_int64_t seg_end, u_int32_t type)
 {
 	extern struct extent *iomem_ex;
 	int i;
@@ -1405,9 +1418,9 @@ initgdt()
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
 #else
-	frames[0] = xpmap_ptom((uint32_t)gdt - KERNTEXTOFF) >> PAGE_SHIFT;
+	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
 	/* pmap_kremove((vaddr_t)gdt, PAGE_SIZE); */
-	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNTEXTOFF,
+	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE,
 	    VM_PROT_READ);
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    LAST_RESERVED_GDT_ENTRY + 1));
@@ -1418,8 +1431,7 @@ initgdt()
 }
 
 void
-init386(first_avail)
-	paddr_t first_avail;
+init386(paddr_t first_avail)
 {
 #if !defined(XEN)
 	union descriptor *tgdt;
@@ -1499,8 +1511,11 @@ init386(first_avail)
 #else
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
-	avail_start = first_avail - KERNTEXTOFF;
-	avail_end = ptoa(xen_start_info.nr_pages);
+	avail_start = first_avail - KERNBASE;
+	avail_end = ptoa(xen_start_info.nr_pages) +
+		(KERNTEXTOFF - KERNBASE_LOCORE);
+	pmap_pa_start = (KERNTEXTOFF - KERNBASE_LOCORE);
+	pmap_pa_end = avail_end;
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;
 	mem_cluster_cnt++;
@@ -1689,9 +1704,9 @@ init386(first_avail)
 
 	XENPRINTK(("load the memory cluster %p(%d) - %p(%ld)\n",
 	    (void *)avail_start, (int)atop(avail_start),
-	    (void *)ptoa(xen_start_info.nr_pages), xen_start_info.nr_pages));
-	uvm_page_physload(atop(avail_start), xen_start_info.nr_pages,
-	    atop(avail_start), xen_start_info.nr_pages,
+	    (void *)avail_end, (int)atop(avail_end)));
+	uvm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end),
 	    VM_FREELIST_DEFAULT);
 
 #if !defined(XEN)
@@ -2114,9 +2129,7 @@ init386(first_avail)
 
 #ifdef COMPAT_NOMID
 static int
-exec_nomid(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_nomid(struct proc *p, struct exec_package *epp)
 {
 	int error;
 	u_long midmag, magic;
@@ -2189,9 +2202,7 @@ exec_nomid(p, epp)
  * if COMPAT_NOMID is given as a kernel option.
  */
 int
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+cpu_exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error = ENOEXEC;
 
@@ -2204,8 +2215,7 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 void *
-lookup_bootinfo(type)
-int type;
+lookup_bootinfo(int type)
 {
 	struct btinfo_common *help;
 	int n = *(int*)bootinfo;
@@ -2227,6 +2237,7 @@ cpu_reset()
 
 	disable_intr();
 
+#if 0
 	/*
 	 * Ensure the NVRAM reset byte contains something vaguely sane.
 	 */
@@ -2243,31 +2254,15 @@ cpu_reset()
 	delay(100000);
 	outb(IO_KBD + KBCMDP, KBC_PULSE0);
 	delay(100000);
-
-	/*
-	 * Try to cause a triple fault and watchdog reset by making the IDT
-	 * invalid and causing a fault.
-	 */
-	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
-	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
-
-#if 0
-	/*
-	 * Try to cause a triple fault and watchdog reset by unmapping the
-	 * entire address space and doing a TLB flush.
-	 */
-	memset((caddr_t)PTD, 0, PAGE_SIZE);
-	tlbflush();
 #endif
+
+	HYPERVISOR_exit();
 
 	for (;;);
 }
 
 void
-cpu_getmcontext(l, mcp, flags)
-	struct lwp *l;
-	mcontext_t *mcp;
-	unsigned int *flags;
+cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 {
 	const struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -2343,10 +2338,7 @@ cpu_getmcontext(l, mcp, flags)
 }
 
 int
-cpu_setmcontext(l, mcp, flags)
-	struct lwp *l;
-	const mcontext_t *mcp;
-	unsigned int flags;
+cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 	__greg_t *gr = mcp->__gregs;
@@ -2476,9 +2468,7 @@ need_resched(struct cpu_info *ci)
  */
 
 int
-idt_vec_alloc(low, high)
-	int low;
-	int high;
+idt_vec_alloc(int low, int high)
 {
 	int vec;
 
@@ -2495,9 +2485,7 @@ idt_vec_alloc(low, high)
 }
 
 void
-idt_vec_set(vec, function)
-	int vec;
-	void (*function)(void);
+idt_vec_set(int vec, void (*function)(void))
 {
 	/*
 	 * Vector should be allocated, so no locking needed.
@@ -2508,8 +2496,7 @@ idt_vec_set(vec, function)
 }
 
 void
-idt_vec_free(vec)
-	int vec;
+idt_vec_free(int vec)
 {
 	simple_lock(&idt_lock);
 	unsetgate(&idt[vec]);
