@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.17 1994/12/17 08:45:32 deraadt Exp $ */
+/*	$NetBSD: clock.c,v 1.18 1995/01/05 16:56:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -931,14 +931,17 @@ out:
  * fun, we guarantee that the time will be greater than the value
  * obtained by a previous call.
  */
+void
 microtime(tvp)
 	register struct timeval *tvp;
 {
 	int s;
 	static struct timeval lasttime;
 
-	if (!oldclk)
-		return (lo_microtime(tvp));
+	if (!oldclk) {
+		lo_microtime(tvp);
+		return;
+	}
 	s = splhigh();
 	*tvp = time;
 	tvp->tv_usec;
