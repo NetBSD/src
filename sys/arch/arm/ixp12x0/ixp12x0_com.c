@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.10 2003/02/17 20:51:52 ichiro Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.11 2003/02/21 00:31:08 igy Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -151,12 +151,13 @@ dev_type_open(ixpcomopen);
 dev_type_close(ixpcomclose);
 dev_type_read(ixpcomread);
 dev_type_write(ixpcomwrite);
+dev_type_ioctl(ixpcomioctl);
 dev_type_stop(ixpcomstop);
 dev_type_tty(ixpcomtty);
 dev_type_poll(ixpcompoll);
 
 const struct cdevsw ixpcom_cdevsw = {
-	ixpcomopen, ixpcomclose, ixpcomread, ixpcomwrite, nullioctl,
+	ixpcomopen, ixpcomclose, ixpcomread, ixpcomwrite, ixpcomioctl,
 	ixpcomstop, ixpcomtty, ixpcompoll, nommap, ttykqfilter, D_TTY
 };
 
@@ -712,6 +713,61 @@ ixpcomtty(dev)
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
+}
+
+int
+ixpcomioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct ixpcom_softc *sc = device_lookup(&ixpcom_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
+	int error;
+	int s;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
+
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	if (error != EPASSTHROUGH)
+		return (error);
+
+	error = ttioctl(tp, cmd, data, flag, p);
+	if (error != EPASSTHROUGH)
+		return (error);
+
+	error = 0;
+
+	s = splserial();
+	COM_LOCK(sc);	
+
+	switch (cmd) {
+	case TIOCSBRK:
+		ixpcom_break(sc, 1);
+		break;
+
+	case TIOCCBRK:
+		ixpcom_break(sc, 0);
+		break;
+
+	case TIOCGFLAGS:
+		*(int *)data = sc->sc_swflags;
+		break;
+
+	case TIOCSFLAGS:
+		error = suser(p->p_ucred, &p->p_acflag); 
+		if (error)
+			break;
+		sc->sc_swflags = *(int *)data;
+		break;
+
+	default:
+		error = EPASSTHROUGH;
+		break;
+	}
+
+	COM_UNLOCK(sc);
+	splx(s);
+
+	return (error);
 }
 
 /*
