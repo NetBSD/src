@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.10 1997/06/06 23:54:26 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.10.6.1 1997/09/01 20:00:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

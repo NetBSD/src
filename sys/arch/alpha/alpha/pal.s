@@ -1,4 +1,4 @@
-/* $NetBSD: pal.s,v 1.7 1997/04/08 00:19:02 cgd Exp $ */
+/* $NetBSD: pal.s,v 1.7.2.1 1997/09/01 20:00:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
  * Richard L. Sites.
  */
 
-__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.7 1997/04/08 00:19:02 cgd Exp $");
+__KERNEL_RCSID(1, "$NetBSD: pal.s,v 1.7.2.1 1997/09/01 20:00:14 thorpej Exp $");
 
 /*
  * alpha_rpcc: read process cycle counter (XXX INSTRUCTION, NOT PALcode OP)

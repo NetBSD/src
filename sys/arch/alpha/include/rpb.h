@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.12 1997/04/06 08:47:40 cgd Exp $ */
+/* $NetBSD: rpb.h,v 1.12.6.1 1997/09/01 20:00:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
