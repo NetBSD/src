@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.21 1995/04/19 22:16:30 mycroft Exp $	*/
+/*	$NetBSD: if_le.c,v 1.22 1995/08/04 08:08:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -350,10 +350,6 @@ leinit(sc)
 	int s;
 	register int timo;
 	u_long a;
-
-	/* Address not known. */
-	if (!ifp->if_addrlist)
-		return;
 
 	s = splimp();
 
