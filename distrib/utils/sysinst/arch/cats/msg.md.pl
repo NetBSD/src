@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.5 2003/06/11 21:35:40 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.6 2003/06/12 11:20:05 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2002/02/11 13:50:18 skrll Exp */
 
@@ -54,13 +54,6 @@ message dobootblks
 
 message catsfspart	/* XXX translate */
 {We now have your NetBSD partitions on %s as follows (Size and Offset in %s):
-}
-
-message emulbackup 
-{Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
-wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
-Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
-zajac sie polaczeniem nowo utworzonego /emul/aout ze starym. 
 }
 
 message set_kernel_1
