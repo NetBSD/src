@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.40 2005/02/02 21:41:55 perry Exp $	*/
+/*	$NetBSD: igmp.c,v 1.41 2005/02/03 03:49:01 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.40 2005/02/02 21:41:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.41 2005/02/03 03:49:01 perry Exp $");
 
 #include "opt_mrouting.h"
 
@@ -76,8 +76,7 @@ static struct router_info *rti_find(struct ifnet *);
 static void rti_delete(struct ifnet *);
 
 static int
-rti_fill(inm)
-	struct in_multi *inm;
+rti_fill(struct in_multi *inm)
 {
 	struct router_info *rti;
 
@@ -102,8 +101,7 @@ rti_fill(inm)
 }
 
 static struct router_info *
-rti_find(ifp)
-	struct ifnet *ifp;
+rti_find(struct ifnet *ifp)
 {
 	struct router_info *rti;
 
@@ -122,8 +120,7 @@ rti_find(ifp)
 }
 
 static void
-rti_delete(ifp)
-	struct ifnet *ifp;
+rti_delete(struct ifnet *ifp)
 {
 	struct router_info *rti;
 
@@ -414,8 +411,7 @@ igmp_input(struct mbuf *m, ...)
 }
 
 int
-igmp_joingroup(inm)
-	struct in_multi *inm;
+igmp_joingroup(struct in_multi *inm)
 {
 	int report_type;
 	int s = splsoftnet();
@@ -441,8 +437,7 @@ igmp_joingroup(inm)
 }
 
 void
-igmp_leavegroup(inm)
-	struct in_multi *inm;
+igmp_leavegroup(struct in_multi *inm)
 {
 
 	switch (inm->inm_state) {
@@ -461,7 +456,7 @@ igmp_leavegroup(inm)
 }
 
 void
-igmp_fasttimo()
+igmp_fasttimo(void)
 {
 	struct in_multi *inm;
 	struct in_multistep step;
@@ -499,7 +494,7 @@ igmp_fasttimo()
 }
 
 void
-igmp_slowtimo()
+igmp_slowtimo(void)
 {
 	struct router_info *rti;
 	int s;
@@ -515,9 +510,7 @@ igmp_slowtimo()
 }
 
 void
-igmp_sendpkt(inm, type)
-	struct in_multi *inm;
-	int type;
+igmp_sendpkt(struct in_multi *inm, int type)
 {
 	struct mbuf *m;
 	struct igmp *igmp;
@@ -579,8 +572,7 @@ igmp_sendpkt(inm, type)
 }
 
 void
-igmp_purgeif(ifp)
-	struct ifnet *ifp;
+igmp_purgeif(struct ifnet *ifp)
 {
 
 	rti_delete(ifp);
