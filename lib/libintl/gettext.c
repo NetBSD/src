@@ -1,4 +1,4 @@
-/*	$NetBSD: gettext.c,v 1.15 2004/01/02 12:10:48 itojun Exp $	*/
+/*	$NetBSD: gettext.c,v 1.16 2004/01/02 22:19:51 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Citrus Project,
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gettext.c,v 1.15 2004/01/02 12:10:48 itojun Exp $");
+__RCSID("$NetBSD: gettext.c,v 1.16 2004/01/02 22:19:51 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -523,7 +523,8 @@ lookup(msgid, db)
 	return lookup_bsearch(msgid, db);
 }
 
-static const char *get_lang_env(const char *category_name)
+static const char *
+get_lang_env(const char *category_name)
 {
 	const char *lang;
 
