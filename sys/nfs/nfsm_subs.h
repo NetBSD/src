@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.5 1994/06/29 06:42:33 cgd Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.6 1995/05/23 06:25:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -232,39 +232,39 @@ extern struct mbuf *nfsm_reqh();
 		tl = (u_long *)bp
 
 #define	nfsm_srvfillattr \
-	fp->fa_type = vtonfs_type(vap->va_type); \
-	fp->fa_mode = vtonfs_mode(vap->va_type, vap->va_mode); \
-	fp->fa_nlink = txdr_unsigned(vap->va_nlink); \
-	fp->fa_uid = txdr_unsigned(vap->va_uid); \
-	fp->fa_gid = txdr_unsigned(vap->va_gid); \
+	fp->fa_type = vtonfs_type(va.va_type); \
+	fp->fa_mode = vtonfs_mode(va.va_type, va.va_mode); \
+	fp->fa_nlink = txdr_unsigned(va.va_nlink); \
+	fp->fa_uid = txdr_unsigned(va.va_uid); \
+	fp->fa_gid = txdr_unsigned(va.va_gid); \
 	if (nfsd->nd_nqlflag == NQL_NOVAL) { \
-		fp->fa_nfsblocksize = txdr_unsigned(vap->va_blocksize); \
-		if (vap->va_type == VFIFO) \
+		fp->fa_nfsblocksize = txdr_unsigned(va.va_blocksize); \
+		if (va.va_type == VFIFO) \
 			fp->fa_nfsrdev = 0xffffffff; \
 		else \
-			fp->fa_nfsrdev = txdr_unsigned(vap->va_rdev); \
-		fp->fa_nfsfsid = txdr_unsigned(vap->va_fsid); \
-		fp->fa_nfsfileid = txdr_unsigned(vap->va_fileid); \
-		fp->fa_nfssize = txdr_unsigned(vap->va_size); \
-		fp->fa_nfsblocks = txdr_unsigned(vap->va_bytes / NFS_FABLKSIZE); \
-		txdr_nfstime(&vap->va_atime, &fp->fa_nfsatime); \
-		txdr_nfstime(&vap->va_mtime, &fp->fa_nfsmtime); \
-		txdr_nfstime(&vap->va_ctime, &fp->fa_nfsctime); \
+			fp->fa_nfsrdev = txdr_unsigned(va.va_rdev); \
+		fp->fa_nfsfsid = txdr_unsigned(va.va_fsid); \
+		fp->fa_nfsfileid = txdr_unsigned(va.va_fileid); \
+		fp->fa_nfssize = txdr_unsigned(va.va_size); \
+		fp->fa_nfsblocks = txdr_unsigned(va.va_bytes / NFS_FABLKSIZE); \
+		txdr_nfstime(&va.va_atime, &fp->fa_nfsatime); \
+		txdr_nfstime(&va.va_mtime, &fp->fa_nfsmtime); \
+		txdr_nfstime(&va.va_ctime, &fp->fa_nfsctime); \
 	} else { \
-		fp->fa_nqblocksize = txdr_unsigned(vap->va_blocksize); \
-		if (vap->va_type == VFIFO) \
+		fp->fa_nqblocksize = txdr_unsigned(va.va_blocksize); \
+		if (va.va_type == VFIFO) \
 			fp->fa_nqrdev = 0xffffffff; \
 		else \
-			fp->fa_nqrdev = txdr_unsigned(vap->va_rdev); \
-		fp->fa_nqfsid = txdr_unsigned(vap->va_fsid); \
-		fp->fa_nqfileid = txdr_unsigned(vap->va_fileid); \
-		txdr_hyper(&vap->va_size, &fp->fa_nqsize); \
-		txdr_hyper(&vap->va_bytes, &fp->fa_nqbytes); \
-		txdr_nqtime(&vap->va_atime, &fp->fa_nqatime); \
-		txdr_nqtime(&vap->va_mtime, &fp->fa_nqmtime); \
-		txdr_nqtime(&vap->va_ctime, &fp->fa_nqctime); \
-		fp->fa_nqflags = txdr_unsigned(vap->va_flags); \
-		fp->fa_nqgen = txdr_unsigned(vap->va_gen); \
-		txdr_hyper(&vap->va_filerev, &fp->fa_nqfilerev); \
+			fp->fa_nqrdev = txdr_unsigned(va.va_rdev); \
+		fp->fa_nqfsid = txdr_unsigned(va.va_fsid); \
+		fp->fa_nqfileid = txdr_unsigned(va.va_fileid); \
+		txdr_hyper(&va.va_size, &fp->fa_nqsize); \
+		txdr_hyper(&va.va_bytes, &fp->fa_nqbytes); \
+		txdr_nqtime(&va.va_atime, &fp->fa_nqatime); \
+		txdr_nqtime(&va.va_mtime, &fp->fa_nqmtime); \
+		txdr_nqtime(&va.va_ctime, &fp->fa_nqctime); \
+		fp->fa_nqflags = txdr_unsigned(va.va_flags); \
+		fp->fa_nqgen = txdr_unsigned(va.va_gen); \
+		txdr_hyper(&va.va_filerev, &fp->fa_nqfilerev); \
 	}
 
