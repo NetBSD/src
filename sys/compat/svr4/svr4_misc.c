@@ -42,7 +42,7 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  *
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
- *	$Id: svr4_misc.c,v 1.2 1994/05/22 10:46:33 cgd Exp $
+ *	$Id: svr4_misc.c,v 1.3 1994/05/24 03:27:13 deraadt Exp $
  */
 
 /*
@@ -840,7 +840,7 @@ svr4_sysconfig(p, uap, retval)
 	struct svr4_sysconfig_args *uap;
 	int *retval;
 {
-	extern int maxfdescs;
+	extern int maxfiles;
 
 	switch(uap->name) {
 	case SVR4_CONFIG_UNUSED:
@@ -853,7 +853,7 @@ svr4_sysconfig(p, uap, retval)
 		*retval = maxproc;
 		break;
 	case SVR4_CONFIG_OPEN_FILES:
-		*retval = maxfdescs;
+		*retval = maxfiles;
 		break;
 	case SVR4_CONFIG_POSIX_VER:
 		*retval = 198808;
