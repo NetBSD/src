@@ -1,15 +1,17 @@
 #
 # NetBSD/pmax kernel config file for installation of a diskful machine
 # via NFS booting: root and swap on NFS, but disk drivers included too.
-# Prune out other optiosn to stay small and avoid PROM tftp bugs.
+# Prune out other options to stay small and avoid PROM tftp bugs.
 #
-# 	$NetBSD: NFSROOT,v 1.6 1997/04/26 01:35:42 jonathan Exp $
+# 	$NetBSD: NFSROOT,v 1.7 1997/07/22 08:49:11 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
 maxusers	8
 
 options		MIPS1			# R2000/R3000 support
+#options	MIPS3			# R4000/R4400 support (not finished)
+
 
 # Support for specific models of DECstation
 options 	DS3100			# PMAX (kn01) DECstation 2100, 3100
@@ -23,36 +25,33 @@ options 	DS5000_240		# 3MAXPLUS (kn03) support
 #options	DIAGNOSTIC		# extra kernel debugging checks
 #options	DEBUG			# extra kernel debugging support
 #options	"COMPAT_43"		# compatibility with 4.3BSD binaries
-options		KTRACE			# system call tracing support
-#options	LKM			# loadable kernel modules
+#options 	KTRACE			# system call tracing support
+#options 	LKM			# loadable kernel modules
 
 
 options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
-
 
 #Old 4.4bsd/pmax kgdb options
 #options	KGDB			# support for kernel gdb
 #options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
 #options	"KGDBDEV=15*256+0"	# device for kernel gdb
 
-options		NTP			# network time protocol
-#options	UCONSOLE		# users can redirect console (unsafe)
+#options 	NTP			# network time protocol
+#options 	UCONSOLE		# users can redirect console (unsafe)
 
 
 # Filesystem options
-file-system 	FFS             # fast filesystem with user and group quotas
-file-system 	NFS		# Sun NFS-compatible filesystem (client)
-file-system 	KERNFS		# kernel data-structure filesystem
-#file-system	KERNFS		# kernel data-structure filesystem
-#file-system	FDESC		# user file descriptor filesystem
-#file-system	UMAPFS		# uid/gid remapping filesystem
+file-system 	FFS			# BSD fast filesystem
+file-system 	NFS			# Sun NFS-compatible filesystem (client)
+file-system 	KERNFS			# kernel data-structure filesystem
 
-options		FIFO		# POSIX fifo support (in all filesystems)
+options		FIFO			# POSIX fifo support (in all filesystems)
 
 
 # Networking options
 options		INET		# Internet protocols
 options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+
 
 # pmax specific
 options		"HZ=256"	# RTC rate required
@@ -66,21 +65,21 @@ config		nfsnetbsd	root on ? type nfs
 ########################################################################
 
 # TC bus and supported options. (All but PMAXes have a turbochannel.)
-include	"arch/pmax/conf/tc.std"
+include 	"arch/pmax/conf/tc.std"
 
 # ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0)
-include "arch/pmax/conf/builtin.ioasic"
+include 	"arch/pmax/conf/builtin.ioasic"
 
 # MAXINE-only ioasic baseboard devices and on-baseboard "options"
-include	"arch/pmax/conf/builtin.maxine"
+include 	"arch/pmax/conf/builtin.maxine"
 
 # 5000/200-only (aka 3MAX aka KN02) baseboard devices.
 # (KN02 has turbochannel but no	IOASIC).
-include	"arch/pmax/conf/builtin.3max"
+include 	"arch/pmax/conf/builtin.3max"
 
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
 # (may also be present on a 5100).
-include "arch/pmax/conf/builtin.3100"
+include 	"arch/pmax/conf/builtin.3100"
 
 ########################################################################
 # SCSI configuration                                                   #
@@ -91,8 +90,8 @@ oldscsibus*	at asc?
 #
 # SCSI configuration for old 4.4bsd/pmax DECstation SCSI driver
 #
-include "arch/pmax/conf/scsi.pmax"
-#include "arch/pmax/conf/mi.scsi"	# not yet supported on DECstations
+include 	"arch/pmax/conf/scsi.pmax"
+#include 	"arch/pmax/conf/mi.scsi"		# not yet supported
 
 
 ########################################################################
@@ -102,6 +101,7 @@ include "arch/pmax/conf/scsi.pmax"
 pseudo-device	pty		64	# pseudo ptys
 pseudo-device	bpfilter	16	# packet filter ports
 pseudo-device	loop
+pseudo-device   ccd             4       # concatenated disks
 
 pseudo-device	rasterconsole	1 	# NB: raster console requires "fb"
 pseudo-device	fb		1	# up to 3 framebuffers
