@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.27 1995/03/22 23:48:49 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.28 1995/04/29 22:42:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.27 1995/03/22 23:48:49 cgd Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.28 1995/04/29 22:42:07 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -892,7 +892,7 @@ int
 editit()
 {
 	int pid, xpid;
-	int stat, omask;
+	int stat;
 	extern char *getenv();
 	sigset_t sigset, osigset;
 
@@ -903,6 +903,7 @@ editit()
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 	while ((pid = fork()) < 0) {
 		if (errno != EAGAIN) {
+			sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 			warn("fork");
 			return (0);
 		}
@@ -911,7 +912,7 @@ editit()
 	if (pid == 0) {
 		char *ed;
 
-		sigprocmask(SIG_SETMASK, &osigset, NULL);
+		sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 		setgid(getgid());
 		setuid(getuid());
 		if ((ed = getenv("EDITOR")) == (char *)0)
@@ -923,7 +924,7 @@ editit()
 	while ((xpid = wait(&stat)) >= 0)
 		if (xpid == pid)
 			break;
-	sigprocmask(SIG_SETMASK, &osigset, NULL);
+	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 	return(!stat);
 }
 
