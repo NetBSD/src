@@ -52,6 +52,7 @@
  * queues.
  */
 
+	.text
 	.globl	_whichqs,_qs,_cnt,_panic
 	.globl	_curproc
 	.comm	_want_resched,4
