@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)message.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: message.c,v 1.2 1993/08/01 18:52:24 mycroft Exp $";
+static char rcsid[] = "$Id: message.c,v 1.3 1993/08/10 16:33:14 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -52,6 +52,8 @@ static char rcsid[] = "$Id: message.c,v 1.2 1993/08/01 18:52:24 mycroft Exp $";
  */
 
 #include <stdio.h>
+#include <termios.h>
+#include <signal.h>
 #include "rogue.h"
 
 char msgs[NMESSAGES][DCOLS] = {"", "", "", "", ""};
@@ -194,23 +196,22 @@ rgetchar()
 	for(;;) {
 		ch = getchar();
 
-		switch(ch) {
-		case '\022':
+#ifdef VREPRINT
+		if (ch == origtermio.c_cc[VREPRINT])
 			wrefresh(curscr);
-			break;
-#ifdef UNIX_BSD4_2
-		case '\032':
+		else
+#endif
+#ifdef VSUSP
+		if (ch == origtermio.c_cc[VSUSP]) {
 			printf(CL);
 			fflush(stdout);
-			tstp();
-			break;
+			kill(0, SIGTSTP);
+		} else
 #endif
-		case '&':
+		if (ch == '&')
 			save_screen();
-			break;
-		default:
+		else
 			return(ch);
-		}
 	}
 }
 /*
