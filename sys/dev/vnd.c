@@ -153,6 +153,19 @@ vnopen(dev, flags, mode, p)
 	return(0);
 }
 
+int
+vnclose(dev, flags, mode, p)
+	dev_t dev;
+	int flags, mode;
+	struct proc *p;
+{
+#ifdef DEBUG
+	if (vndebug & VDB_FOLLOW)
+		printf("vnclose(%x, %x, %x, %x)\n", dev, flags, mode, p);
+#endif
+	return 0;
+}
+
 /*
  * Break the request into bsize pieces and submit using VOP_BMAP/VOP_STRATEGY.
  * Note that this driver can only be used for swapping over NFS on the hp
