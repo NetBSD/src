@@ -1,4 +1,4 @@
-/*	$NetBSD: remote.c,v 1.9 2003/08/07 11:16:18 agc Exp $	*/
+/*	$NetBSD: remote.c,v 1.10 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: remote.c,v 1.9 2003/08/07 11:16:18 agc Exp $");
+__RCSID("$NetBSD: remote.c,v 1.10 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 #include "pathnames.h"
@@ -55,12 +55,12 @@ static char **caps[] = {
 	&ES, &EX, &FO, &RC, &RE, &PA
 };
 
-static char *capstrings[] = {
+static const char *capstrings[] = {
 	"at", "dv", "cm", "cu", "el", "ie", "oe", "pn", "pr",
 	"di", "es", "ex", "fo", "rc", "re", "pa", 0
 };
 
-static char	*db_array[3] = { _PATH_REMOTE, 0, 0 };
+static const char	*db_array[3] = { _PATH_REMOTE, 0, 0 };
 
 #define cgetflag(f)	(cgetcap(bp, f, ':') != NULL)
 
@@ -70,10 +70,11 @@ static void
 getremcap(host)
 	char *host;
 {
-	char **p, ***q;
+	const char **p;
+	char ***q;
 	char *bp;
 	char *rempath;
-	int   stat;
+	int   status;
 
 	rempath = getenv("REMOTE");
 	if (rempath != NULL) {
@@ -85,7 +86,7 @@ getremcap(host)
 			db_array[2] = _PATH_REMOTE;
 		}
 	}
-	if ((stat = cgetent(&bp, db_array, host)) < 0) {
+	if ((status = cgetent(&bp, db_array, host)) < 0) {
 		if (DV ||
 		    (host[0] == '/' && access(DV = host, R_OK | W_OK) == 0)) {
 			CU = DV;
@@ -97,7 +98,7 @@ getremcap(host)
 			FS = DEFFS;
 			return;
 		}
-		switch(stat) {
+		switch(status) {
 		case -1:
 			fprintf(stderr, "tip: unknown host %s\n", host);
 			break;
@@ -174,9 +175,9 @@ getremcap(host)
 	if (cgetflag("dc"))
 		DC = 1;
 	if (RE == NULL)
-		RE = (char *)"tip.record";
+		RE = strdup("tip.record");
 	if (EX == NULL)
-		EX = (char *)"\t\n\b\f";
+		EX = strdup("\t\n\b\f");
 	if (ES != NULL)
 		vstring("es", ES);
 	if (FO != NULL)

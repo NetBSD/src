@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.10 2003/08/07 11:16:23 agc Exp $	*/
+/*	$NetBSD: ventel.c,v 1.11 2004/04/23 22:11:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: ventel.c,v 1.10 2003/08/07 11:16:23 agc Exp $");
+__RCSID("$NetBSD: ventel.c,v 1.11 2004/04/23 22:11:44 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: ventel.c,v 1.10 2003/08/07 11:16:23 agc Exp $");
 static	int timeout = 0;
 static	jmp_buf timeoutbuf;
 
-static	void	echo __P((char *));
+static	void	echo __P((const char *));
 static	int	gobble __P((char, char *));
 static	void	sigALRM __P((int));
 static	int	vensync __P((int));
@@ -146,7 +146,7 @@ ven_abort()
 
 static void
 echo(s)
-	char *s;
+	const char *s;
 {
 	char c;
 
