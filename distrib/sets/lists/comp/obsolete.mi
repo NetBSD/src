@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.38 2001/03/04 02:45:40 assar Exp $
+# $NetBSD: obsolete.mi,v 1.39 2001/03/12 12:47:50 wiz Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -39,8 +39,6 @@
 /usr/include/dev/rcons/rcons_subr.h
 /usr/include/dev/scsipi/cd_link.h
 /usr/include/dev/tc/clockvar.h
-/usr/include/dev/tc/sticreg.h
-/usr/include/dev/tc/sticvar.h
 /usr/include/dev/vndioctl.h
 /usr/include/dev/vnioctl.h
 /usr/include/dev/wscons/ascii.h
