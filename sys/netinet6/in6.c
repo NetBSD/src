@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.73 2003/02/24 03:01:03 matt Exp $	*/
+/*	$NetBSD: in6.c,v 1.74 2003/02/27 22:06:38 thorpej Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.73 2003/02/24 03:01:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.74 2003/02/27 22:06:38 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -2084,6 +2084,26 @@ ip6_sprintf(addr)
 	}
 	*--cp = 0;
 	return (ip6buf[ip6round]);
+}
+
+/*
+ * Determine if an address is on a local network.
+ */
+int
+in6_localaddr(in6)
+	struct in6_addr *in6;
+{
+	struct in6_ifaddr *ia;
+
+	if (IN6_IS_ADDR_LOOPBACK(in6) || IN6_IS_ADDR_LINKLOCAL(in6))
+		return (1);
+
+	for (ia = in6_ifaddr; ia; ia = ia->ia_next)
+		if (IN6_ARE_MASKED_ADDR_EQUAL(in6, &ia->ia_addr.sin6_addr,
+					      &ia->ia_prefixmask.sin6_addr))
+			return (1);
+
+	return (0);
 }
 
 /*
