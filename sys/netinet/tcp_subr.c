@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.77 1999/08/25 12:38:14 itojun Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.78 1999/08/25 15:23:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -703,6 +703,7 @@ tcp_newtcpcb(family, aux)
 	tp->t_peermss = tcp_mssdflt;
 	tp->t_ourmss = tcp_mssdflt;
 	tp->t_segsz = tcp_mssdflt;
+	LIST_INIT(&tp->t_sc);
 
 	tp->t_flags = 0;
 	if (tcp_do_rfc1323 && tcp_do_win_scale)
@@ -895,6 +896,7 @@ tcp_close(tp)
 	TCP_REASS_UNLOCK(tp);
 
 	TCP_CLEAR_DELACK(tp);
+	syn_cache_cleanup(tp);
 
 	if (tp->t_template) {
 		m_free(tp->t_template);
