@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.1 1999/06/06 17:28:58 dante Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.2 1999/06/12 12:10:30 dante Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -194,6 +194,12 @@ adv_isa_attach(parent, self, aux)
 	sc->sc_ioh = ioh;
 	sc->sc_dmat = ia->ia_dmat;
 	sc->bus_type = ASC_IS_ISA;
+	sc->chip_version = ASC_GET_CHIP_VER_NO(iot, ioh);
+	/*
+	 * Memo:
+	 * for EISA cards:
+	 * sc->chip_version = (ASC_CHIP_MIN_VER_EISA - 1) + ea->ea_pid[1];
+	 */
 
 	/*
 	 * Initialize the board
