@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.2 2000/03/07 18:39:14 groo Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.3 2000/03/09 04:20:58 groo Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,9 +115,7 @@ lm_writereg(sc, reg, val)
 
 /*
  * bus independent probe
- * pre:  lmsc contains valid busspace tag and handle
  */
-
 int
 lm_probe(iot, ioh)
 	bus_space_tag_t iot;
@@ -192,6 +190,14 @@ lm_attach(lmsc)
 		lmsc->info[i].desc[2] = i + '0';
 		lmsc->info[i].desc[3] = 0;
 	}
+
+	/* default correction factors for resistors on higher voltage inputs */
+	lmsc->info[0].rfact = lmsc->info[1].rfact = 
+	    lmsc->info[2].rfact = 10000;
+	lmsc->info[3].rfact = (int)(( 90.9 / 60.4) * 10000);
+	lmsc->info[4].rfact = (int)(( 38.0 / 10.0) * 10000);
+	lmsc->info[5].rfact = (int)((210.0 / 60.4) * 10000);
+	lmsc->info[6].rfact = (int)(( 90.9 / 60.4) * 10000);
 
 	lmsc->sensors[7].units = ENVSYS_STEMP;
 	strcpy(lmsc->info[7].desc, "Temp");
@@ -332,6 +338,8 @@ lmioctl(dev, cmd, data, flag, p)
 
 		if (binfo->sensor >= LM_NUM_SENSORS)
 			binfo->validflags = 0;
+		else if (sc->info[binfo->sensor].units == ENVSYS_SVOLTS_DC)
+			sc->info[binfo->sensor].rfact = binfo->rfact;
 		else {
 			/* FAN1 and FAN2 can have divisors set, but not FAN3 */
 			if ((sc->info[binfo->sensor].units == ENVSYS_SFANRPM)
@@ -409,18 +417,16 @@ lm_refresh_sensor_data(sc)
 			
 		case ENVSYS_SVOLTS_DC:
 			/* voltage returned as (mV >> 4), we convert to uVDC */
-			sc->sensors[i].cur.data_s = (sdata << 4) * 1000;
+			sc->sensors[i].cur.data_s = (sdata << 4);
+			/* rfact is (factor * 10^4) */
+			sc->sensors[i].cur.data_s *= sc->info[i].rfact;
+			/* division by 10 gets us back to uVDC */
+			sc->sensors[i].cur.data_s /= 10;
 			
 			/* these two are negative voltages */
 			if ( (i == 5) || (i == 6) )
 				sc->sensors[i].cur.data_s *= -1;
-			
-			/*
-			 * XXX - Motherboard manufacturers can wire up whatever
-			 * resistors they want!  These values may have been
-			 * attenuated
-			 */
-			
+
 			break;
 			
 		case ENVSYS_SFANRPM:
