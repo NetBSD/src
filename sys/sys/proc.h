@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.59 1998/03/01 02:24:14 fvdl Exp $	*/
+/*	$NetBSD: proc.h,v 1.60 1998/05/02 18:41:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -160,7 +160,7 @@ struct	proc {
 	u_quad_t p_iticks;		/* Statclock hits processing intr. */
 
 	int	p_traceflag;		/* Kernel trace points. */
-	struct	vnode *p_tracep;	/* Trace to vnode. */
+	void	*p_tracep;		/* Trace to vnode or file */
 
 	int	p_siglist;		/* Signals arrived but not delivered. */
 
