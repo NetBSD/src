@@ -29,7 +29,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: getdtablesize.c,v 1.1 1994/06/14 03:54:54 jtc Exp $";
+static char *rcsid = "$Id: getdtablesize.c,v 1.2 1994/06/14 05:25:36 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <unistd.h>
