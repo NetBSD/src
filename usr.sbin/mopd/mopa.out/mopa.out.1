@@ -1,4 +1,4 @@
-.\"	$NetBSD: mopa.out.1,v 1.2 1997/03/25 03:07:39 thorpej Exp $
+.\"	$NetBSD: mopa.out.1,v 1.3 1997/10/16 23:25:08 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Mats O Jansson.  All rights reserved.
 .\"
@@ -33,11 +33,11 @@
 .Nm mopa.out
 .Nd Create MOP image from a a.out file
 .Sh SYNOPSIS
-.Nm mopa.out
+.Nm
 .Ar infile
 .Ar outfile
 .Sh DESCRIPTION
-.Nm mopa.out
+.Nm
 is used to convert an a.out file to a MOP-image.
 .Pp
 This program will check if
@@ -46,7 +46,7 @@ machine-id is recognized. If not it will try to swap the
 .Xr a.out 5
 header, and try again. 
 .Sh BUGS
-This program just supports the VAX machine-id for now. 
+This program only supports the VAX machine-id for now. 
 .Sh SEE ALSO
 .Xr a.out 5 ,
 .Xr mopchk 1 ,

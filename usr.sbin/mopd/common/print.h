@@ -1,4 +1,4 @@
-/*	$NetBSD: print.h,v 1.2 1997/03/25 03:07:31 thorpej Exp $	*/
+/*	$NetBSD: print.h,v 1.3 1997/10/16 23:25:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -28,25 +28,13 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: print.h,v 1.2 1997/03/25 03:07:31 thorpej Exp $
+ *	$NetBSD: print.h,v 1.3 1997/10/16 23:25:00 lukem Exp $
  *
  */
 
 #ifndef _PRINT_H_
 #define _PRINT_H_
 
-#ifdef NO__P
-void	mopPrintHWA	  (/* FILE *, u_char * */);
-void	mopPrintBPTY	  (/* FILE *, u_char */);
-void	mopPrintPGTY      (/* FILE *, u_char */);
-void	mopPrintOneline   (/* FILE *, u_char *, int */);
-void	mopPrintHeader    (/* FILE *, u_char *, int */);
-void	mopPrintMopHeader (/* FILE *, u_char *, int */);
-void	mopPrintDevice    (/* FILE *, u_char */);
-void	mopPrintTime      (/* FILE *, u_char * */);
-void	mopPrintInfo      (/* FILE *, u_char *, int *, u_short,
-			      u_char, int */);
-#else
 __BEGIN_DECLS
 void	mopPrintHWA	  __P((FILE *, u_char *));
 void	mopPrintBPTY	  __P((FILE *, u_char));
@@ -59,6 +47,5 @@ void	mopPrintTime      __P((FILE *, u_char *));
 void	mopPrintInfo      __P((FILE *, u_char *, int *, u_short,
 			       u_char, int));
 __END_DECLS
-#endif
 
 #endif _PRINT_H_

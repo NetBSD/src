@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.2 1997/03/25 03:07:26 thorpej Exp $	*/
+/*	$NetBSD: os.h,v 1.3 1997/10/16 23:24:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-95 Mats O Jansson.  All rights reserved.
@@ -28,30 +28,32 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$NetBSD: os.h,v 1.2 1997/03/25 03:07:26 thorpej Exp $
+ *	$NetBSD: os.h,v 1.3 1997/10/16 23:24:53 lukem Exp $
  *
  */
 
 #ifndef _OS_H_
 #define _OS_H_
 
-#include <stdio.h>
-
-#include <syslog.h>
-#include <signal.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <errno.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
-#include <sys/ioctl.h>
-#include <stdlib.h>
-#include <sys/time.h>
-#include <time.h>
+
+#include <err.h>
+#include <errno.h>
 #include <fcntl.h>
-#include <strings.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
 #define  DEV_NEW_CONF

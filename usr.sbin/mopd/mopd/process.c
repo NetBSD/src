@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.4 1997/04/17 21:09:21 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.5 1997/10/16 23:25:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -29,22 +29,23 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: process.c,v 1.4 1997/04/17 21:09:21 christos Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: process.c,v 1.5 1997/10/16 23:25:19 lukem Exp $");
 #endif
 
 #include "os.h"
-#include "common/common.h"
-#include "common/mopdef.h"
-#include "common/nmadef.h"
-#include "common/get.h"
-#include "common/put.h"
-#include "common/print.h"
-#include "common/pf.h"
-#include "common/cmp.h"
-#include "common/dl.h"
-#include "common/rc.h"
-#include "common/file.h"
+#include "cmp.h"
+#include "common.h"
+#include "dl.h"
+#include "file.h"
+#include "get.h"
+#include "mopdef.h"
+#include "nmadef.h"
+#include "pf.h"
+#include "print.h"
+#include "put.h"
+#include "rc.h"
 
 extern u_char	buf[];
 extern int	DebugFlag;
@@ -53,12 +54,22 @@ struct dllist dllist[MAXDL];		/* dump/load list		*/
 extern char	dl_mcst[];		/* Dump/Load Multicast		*/
 extern char	rc_mcst[];		/* Remote Console Multicast	*/
 
+void	mopNextLoad __P((u_char *, u_char *, u_char, int));
+void	mopProcessDL __P((FILE *, struct if_info *, u_char *, int *,
+	    u_char *, u_char *, int, u_short));
+void	mopProcessRC __P((FILE *, struct if_info *, u_char *, int *,
+	    u_char *, u_char *, int, u_short));
+void	mopProcessInfo __P((u_char *, int *, u_short, struct dllist *, int));
+void	mopSendASV __P((u_char *, u_char *, struct if_info *, int));
+void	mopStartLoad __P((u_char *, u_char *, struct dllist *, int));
+
 void
-mopProcessInfo(pkt,index,moplen,dl_rpr,trans)
+mopProcessInfo(pkt, index, moplen, dl_rpr, trans)
 	u_char  *pkt;
-	int     *index, trans;
+	int     *index;
 	u_short moplen;
 	struct  dllist  *dl_rpr;
+	int	trans;
 {
         u_short itype,tmps;
 	u_char  ilen ,tmpc,device;
@@ -235,8 +246,8 @@ mopStartLoad(dst, src, dl_rpr, trans)
 			if (dllist[i].status == DL_STATUS_FREE) {
 				if (slot == -1) {
 					slot = i;
-					bcopy((char *)dst,
-					      (char *)dllist[i].eaddr, 6);
+					memmove((char *)dst,
+					    (char *)dllist[i].eaddr, 6);
 				}
 			}
 		}
@@ -432,8 +443,10 @@ void
 mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 	FILE	*fd;
 	struct if_info *ii;
-	u_char	*pkt, *dst, *src;
-	int	*index, trans;
+	u_char	*pkt;
+	int	*index;
+	u_char	*dst, *src;
+	int	 trans;
 	u_short	 len;
 {
 	u_char  tmpc;
@@ -508,9 +521,9 @@ mopProcessDL(fd, ii, pkt, index, dst, src, trans, len)
 	
 		iindex = *index;
 		dl_rpr = &dl;
-		bzero(dl_rpr,sizeof(*dl_rpr));
+		memset(dl_rpr, 0, sizeof(*dl_rpr));
 		dl_rpr->ii = ii;
-		bcopy((char *)src, (char *)(dl_rpr->eaddr), 6);
+		memmove((char *)(dl_rpr->eaddr), (char *)src, 6);
 		mopProcessInfo(pkt,index,moplen,dl_rpr,trans);
 
 		sprintf(filename,"%s/%s.SYS", MOP_FILE_PATH, pfile);
@@ -570,8 +583,10 @@ void
 mopProcessRC(fd, ii, pkt, index, dst, src, trans, len)
 	FILE	*fd;
 	struct if_info *ii;
-	u_char	*pkt, *dst, *src;
-	int	*index, trans;
+	u_char	*pkt;
+	int	*index;
+	u_char	*dst, *src;
+	int	 trans;
 	u_short	 len;
 {
 	u_char	 tmpc;
@@ -614,9 +629,9 @@ mopProcessRC(fd, ii, pkt, index, dst, src, trans, len)
 		}
 		
 		dl_rpr = &dl;
-		bzero(dl_rpr,sizeof(*dl_rpr));
+		memset(dl_rpr, 0, sizeof(*dl_rpr));
 		dl_rpr->ii = ii;
-		bcopy((char *)src, (char *)(dl_rpr->eaddr), 6);
+		memmove((char *)(dl_rpr->eaddr), (char *)src, 6);
 		mopProcessInfo(pkt,index,moplen,dl_rpr,trans);
 		
 		break;

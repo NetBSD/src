@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.2 1997/03/25 03:07:33 thorpej Exp $	*/
+/*	$NetBSD: put.c,v 1.3 1997/10/16 23:25:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -29,19 +29,19 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: put.c,v 1.2 1997/03/25 03:07:33 thorpej Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: put.c,v 1.3 1997/10/16 23:25:01 lukem Exp $");
 #endif
 
-#include <stddef.h>
-#include <sys/types.h>
-#include <time.h>
-#include "common/mopdef.h"
+#include "os.h"
+#include "mopdef.h"
+#include "put.h"
 
 void
 mopPutChar(pkt, index, value)
-	register u_char *pkt;
-	register int    *index;
+	u_char  *pkt;
+	int     *index;
 	u_char   value;
 {
 	pkt[*index] = value;
@@ -50,8 +50,8 @@ mopPutChar(pkt, index, value)
 
 void
 mopPutShort(pkt, index, value)
-	register u_char *pkt;
-	register int    *index;
+	u_char  *pkt;
+	int     *index;
 	u_short  value;
 {
         int i;
@@ -64,9 +64,9 @@ mopPutShort(pkt, index, value)
 
 void
 mopPutLong(pkt, index, value)
-	register u_char *pkt;
-	register int    *index;
-	u_long   value;
+	u_char	       *pkt;
+	int	       *index;
+	u_int32_t	value;
 {
         int i;
 	for (i = 0; i < 4; i++) {
@@ -78,8 +78,8 @@ mopPutLong(pkt, index, value)
 
 void
 mopPutMulti(pkt, index, value, size)
-	register u_char *pkt,*value;
-	register int    *index,size;
+	u_char *pkt,*value;
+	int    *index,size;
 {
 	int i;
 
@@ -91,9 +91,9 @@ mopPutMulti(pkt, index, value, size)
 
 void
 mopPutTime(pkt, index, value)
-	register u_char *pkt;
-	register int    *index;
-	time_t value;
+	u_char *pkt;
+	int    *index;
+	time_t	value;
 {
 	time_t tnow;
 	struct tm *timenow;
@@ -121,9 +121,9 @@ mopPutTime(pkt, index, value)
 
 void
 mopPutHeader(pkt, index, dst, src, proto, trans)
-	register u_char *pkt;
-	register int    *index;
-	char	 dst[], src[];
+	u_char  *pkt;
+	int     *index;
+	u_char	 dst[], src[];
 	u_short	 proto;
 	int	 trans;
 {
@@ -158,7 +158,7 @@ mopPutHeader(pkt, index, dst, src, proto, trans)
 
 void
 mopPutLength(pkt, trans, len)
-	register u_char *pkt;
+	u_char  *pkt;
 	int	 trans;
 	u_short	 len;
 {
@@ -183,6 +183,3 @@ mopPutLength(pkt, trans, len)
 	}
 
 }
-
-
-
