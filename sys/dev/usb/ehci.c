@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.57 2004/06/22 07:40:19 mycroft Exp $	*/
+/*	$NetBSD: ehci.c,v 1.58 2004/06/22 08:55:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.57 2004/06/22 07:40:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.58 2004/06/22 08:55:25 mycroft Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -675,7 +675,7 @@ ehci_check_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 			if (status & EHCI_QTD_HALTED)
 				goto done;
 			/* We want short packets, and it is short: it's done */
-			if (EHCI_QTD_SET_BYTES(status) != 0)
+			if (EHCI_QTD_GET_BYTES(status) != 0)
 				goto done;
 		}
 		DPRINTFN(12, ("ehci_check_intr: ex=%p std=%p still active\n",
@@ -748,9 +748,12 @@ ehci_idone(struct ehci_xfer *ex)
 
 	/* If there are left over TDs we need to update the toggle. */
 	if (sqtd != NULL) {
-		if (!(xfer->rqflags & URQ_REQUEST))
-			printf("ehci_idone: need toggle update\n");
-		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(status);
+		printf("ehci_idone: need toggle update status=%08x nstatus=%08x\n", status, nstatus);
+#if 0
+		ehci_dump_sqh(epipe->sqh);
+		ehci_dump_sqtds(ex->sqtdstart);
+#endif
+		epipe->nexttoggle = EHCI_QTD_GET_TOGGLE(nstatus);
 	}
 
 	status &= EHCI_QTD_STATERRS;
