@@ -1,4 +1,4 @@
-.\"	$NetBSD: ep.4,v 1.21 1999/04/06 20:24:51 pk Exp $
+.\"	$NetBSD: ep.4,v 1.22 1999/12/02 19:13:32 dan Exp $
 .\"
 .\" Copyright (c) 1997 Jonathan Stone
 .\" All rights reserved.
@@ -126,7 +126,11 @@ the kernel.
 The third class is the
 .Dq Boomerang
 class.  This includes the 3c905 and the 3c574.  These devices support
-media selection via MII.  See
+media selection via MII.  The 3c905 has an internal
+.Xr nsphy 4 ,
+and the 3c574 an internal
+.Xr tqphy 4 ,
+for this purpose. See
 .Xr ifmedia 4
 and
 .Xr mii 4
@@ -160,10 +164,12 @@ card.  Erase the pencil mark and reboot.  (This is not a joke).
 .Sh SEE ALSO
 .Xr ifconfig 8 ,
 .Xr ifmedia 4 ,
+.Xr mii 4 ,
+.Xr nsphy 4 ,
+.Xr tqphy 4 ,
 .Xr intro 4 ,
 .Xr isa 4 ,
 .Xr isapnp 4 ,
 .Xr eisa 4 ,
-.Xr mii 4 ,
 .Xr pci 4 ,
 .Xr pcmcia 4
