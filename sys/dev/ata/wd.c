@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.183 1998/10/20 17:00:25 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.184 1998/11/11 19:38:27 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -129,7 +129,7 @@ struct wd_softc {
 	struct disk sc_dk;
 	struct buf sc_q;
 	/* IDE disk soft states */
-	struct ata_bio sc_wdc_bio; /* current transfert */
+	struct ata_bio sc_wdc_bio; /* current transfer */
 	struct buf *sc_bp; /* buf being transfered */
 	void *wdc_softc;   /* pointer to our parent */
 	struct ata_drive_datas *drvp; /* Our controller's infos */
@@ -264,8 +264,8 @@ wdattach(parent, self, aux)
 		wd->sc_multi = 1;
 	}
 
-	printf("%s: using %d-sector pio transfers,", wd->sc_dev.dv_xname,
-	    wd->sc_multi);
+	printf("%s: drive supports %d-sector pio transfers,",
+	    wd->sc_dev.dv_xname, wd->sc_multi);
 
 	/* Prior to ATA-4, LBA was optional. */
 	if ((wd->sc_params.atap_capabilities1 & WDC_CAP_LBA) != 0)
@@ -278,7 +278,7 @@ wdattach(parent, self, aux)
 #endif
 
 	if ((wd->sc_flags & WDF_LBA) != 0) {
-		printf(" lba mode\n");
+		printf(" lba addressing\n");
 		wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
@@ -292,7 +292,7 @@ wdattach(parent, self, aux)
 		    DEV_BSIZE,
 		    wd->sc_capacity);
 	} else {
-		printf(" chs mode\n");
+		printf(" chs addressing\n");
 		wd->sc_capacity =
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
@@ -423,7 +423,7 @@ __wdstart(wd, bp)
 	/*
 	 * If we're retrying, retry in single-sector mode. This will give us
 	 * the sector number of the problem, and will eventually allow the
-	 * transfert to succeed.
+	 * transfer to succeed.
 	 */
 	if (wd->sc_multi == 1 || wd->retries > 0)
 		wd->sc_wdc_bio.flags = ATA_SINGLE;
