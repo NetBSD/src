@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.6 1998/07/26 17:42:49 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.7 1998/07/29 20:50:12 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@ static void usbd_transfer_cb __P((usbd_request_handle reqh));
 static void usbd_sync_transfer_cb __P((usbd_request_handle reqh));
 static usbd_status usbd_do_transfer __P((usbd_request_handle reqh));
 static usbd_status usbd_start __P((usbd_pipe_handle pipe));
+void usbd_do_request_async_cb 
+	__P((usbd_request_handle, usbd_private_handle, usbd_status));
 
 static SIMPLEQ_HEAD(, usbd_request) usbd_free_requests;
 
@@ -479,7 +481,7 @@ usbd_clear_endpoint_stall(pipe)
 	req.bmRequestType = UT_WRITE_ENDPOINT;
 	req.bRequest = UR_CLEAR_FEATURE;
 	USETW(req.wValue, UF_ENDPOINT_STALL);
-	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress); /* XXX mask/ */
+	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress);
 	USETW(req.wLength, 0);
 	r = usbd_do_request(dev, &req, 0);
 #if 0
@@ -489,6 +491,23 @@ XXX should we do this?
 		/* XXX activate pipe */
 	}
 #endif
+	return (r);
+}
+
+usbd_status 
+usbd_clear_endpoint_stall_async(pipe)
+	usbd_pipe_handle pipe;
+{
+	usbd_device_handle dev = pipe->device;
+	usb_device_request_t req;
+	usbd_status r;
+
+	req.bmRequestType = UT_WRITE_ENDPOINT;
+	req.bRequest = UR_CLEAR_FEATURE;
+	USETW(req.wValue, UF_ENDPOINT_STALL);
+	USETW(req.wIndex, pipe->endpoint->edesc->bEndpointAddress);
+	USETW(req.wLength, 0);
+	r = usbd_do_request_async(dev, &req, 0);
 	return (r);
 }
 
@@ -914,6 +933,13 @@ usbd_do_request(dev, req, data)
 	usbd_request_handle reqh;
 	usbd_status r;
 
+#ifdef DIAGNOSTIC
+	if (!curproc) {
+		printf("usbd_do_request: not in process context\n");
+		return (USBD_XXX);
+	}
+#endif
+
 	reqh = usbd_alloc_request();
 	if (reqh == 0)
 		return (USBD_NOMEM);
@@ -936,6 +962,54 @@ usbd_do_request(dev, req, data)
 #endif
 	usbd_free_request(reqh);
 	return (r);
+}
+
+void
+usbd_do_request_async_cb(reqh, priv, status)
+	usbd_request_handle reqh;
+	usbd_private_handle priv;
+	usbd_status status;
+{
+#if defined(USB_DEBUG) || defined(DIAGNOSTIC)
+	if (reqh->actlen > reqh->length)
+		printf("usbd_do_request: overrun addr=%d type=0x%02x req=0x%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
+		       reqh->pipe->device->address, 
+		       reqh->request.bmRequestType,
+		       reqh->request.bRequest, UGETW(reqh->request.wValue),
+		       UGETW(reqh->request.wIndex), 
+		       UGETW(reqh->request.wLength), 
+		       reqh->length, reqh->actlen);
+#endif
+	usbd_free_request(reqh);
+}
+
+/*
+ * Execute a request without waiting for completion.
+ * Can be used from interrupt context.
+ */
+usbd_status
+usbd_do_request_async(dev, req, data)
+	usbd_device_handle dev;
+	usb_device_request_t *req;
+	void *data;
+{
+	usbd_request_handle reqh;
+	usbd_status r;
+
+	reqh = usbd_alloc_request();
+	if (reqh == 0)
+		return (USBD_NOMEM);
+	r = usbd_setup_default_request(
+		reqh, dev, 0, USBD_DEFAULT_TIMEOUT, req, data, 
+		UGETW(req->wLength), 0, usbd_do_request_async_cb);
+	if (r != USBD_NORMAL_COMPLETION) {
+		usbd_free_request(reqh);
+		return (r);
+	}
+	r = usbd_transfer(reqh);
+	if (r != USBD_IN_PROGRESS)
+		return (r);
+	return (USBD_NORMAL_COMPLETION);
 }
 
 struct usbd_quirks *
