@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2000/01/17 21:59:43 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2000/02/24 19:42:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_memsize.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -490,7 +491,7 @@ dumpsys()
 /*
  * Initialize segments and descriptor tables
  */
-#define VBRINIT		((char *)0x8c000000)
+#define VBRINIT		((char *)IOM_RAM_BEGIN)
 #define Trap100Vec	(VBRINIT + 0x100)
 #define Trap600Vec	(VBRINIT + 0x600)
 #define TLBVECTOR	(VBRINIT + 0x400)
@@ -985,6 +986,9 @@ sh3_cache_on(void)
 #endif
 }
 
+ /* XXX This value depends on physical available memory */
+#define OSIMAGE_BUF_ADDR	(IOM_RAM_BEGIN + 0x00400000)
+
 void
 LoadAndReset(osimage)
 	char *osimage;
@@ -996,8 +1000,6 @@ LoadAndReset(osimage)
 	u_long csum = 0;
 	u_long csum2 = 0;
 	u_long size2;
-#define OSIMAGE_BUF_ADDR 0x8c400000 /* !!!!!! This value depends on physical
-				       available memory */
 
 	MMTA_IMASK = 0; /* mask all externel interrupt */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2000/02/11 19:30:27 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2000/02/24 19:42:36 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,17 +69,25 @@
  */
 #define ALIGNBYTES		(sizeof(int) - 1)
 #define ALIGN(p)		(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
-/* #define ALIGNED_POINTER(p,t)	1 */
+#define ALIGNED_POINTER(p, t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+/* #define ALIGNED_POINTER(p, t)	1 */
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
-#define	KERNBASE	0x8c000000	/* start of kernel virtual space */
+#ifdef _KERNEL
+#ifndef _LOCORE
+extern vaddr_t ram_start;
+#define	KERNBASE	ram_start	/* start of kernel virtual space */
+#define	KERNTEXTOFF	ram_start	/* start of kernel text */
+#else
+#define	KERNBASE	IOM_RAM_BEGIN	/* start of kernel virtual space */
+#define	KERNTEXTOFF	IOM_RAM_BEGIN	/* start of kernel text */
+#endif
+#endif
 #define	KERNSIZE	0x01800000	/* size of kernel virtual space */
-#define	KERNTEXTOFF	0x8c000000	/* start of kernel text */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define NPGDIR (1*NBPG)
