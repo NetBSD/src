@@ -119,7 +119,6 @@ void    smtpd_peer_init(SMTPD_STATE *state)
      * If peer went away, give up.
      */
     if (errno == ECONNRESET || errno == ECONNABORTED) {
-	msg_info("errno %d %m", errno);
 	state->name = mystrdup("unknown");
 	state->addr = mystrdup("unknown");
 	state->peer_code = 5;

@@ -162,6 +162,12 @@ extern void master_spawn(MASTER_SERV *);
 extern void master_reap_child(void);
 extern void master_delete_children(MASTER_SERV *);
 
+ /*
+  * master_flow.c
+  */
+void    master_flow_init(void);
+int     master_flow_pipe[2];
+
 /* DIAGNOSTICS
 /* BUGS
 /* SEE ALSO

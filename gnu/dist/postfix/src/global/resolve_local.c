@@ -2,14 +2,14 @@
 /* NAME
 /*	resolve_local 3
 /* SUMMARY
-/*	determine if address resolves to local mail system
+/*	determine if domain resolves to local mail system
 /* SYNOPSIS
 /*	#include <resolve_local.h>
 /*
 /*	void	resolve_local_init()
 /*
-/*	int	resolve_local(host)
-/*	const char *host;
+/*	int	resolve_local(domain)
+/*	const char *domain;
 /* DESCRIPTION
 /*	resolve_local() determines if the named domain resolves to the
 /*	local mail system, either by case-insensitive exact match
@@ -58,6 +58,7 @@
 #include <mail_params.h>
 #include <own_inet_addr.h>
 #include <resolve_local.h>
+#include <match_parent_style.h>
 
 /* Application-specific */
 
@@ -69,10 +70,10 @@ void    resolve_local_init(void)
 {
     if (resolve_local_list)
 	msg_panic("resolve_local_init: duplicate initialization");
-    resolve_local_list = string_list_init(var_mydest);
+    resolve_local_list = string_list_init(MATCH_FLAG_NONE, var_mydest);
 }
 
-/* resolve_local - match address against list of local destinations */
+/* resolve_local - match domain against list of local destinations */
 
 int     resolve_local(const char *addr)
 {
@@ -90,6 +91,8 @@ int     resolve_local(const char *addr)
      * Strip one trailing dot.
      */
     len = strlen(saved_addr);
+    if (len == 0)
+	msg_panic("resolve_local: null domain");
     if (saved_addr[len - 1] == '.')
 	saved_addr[--len] = 0;
 

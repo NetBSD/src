@@ -6,10 +6,11 @@
 /* SYNOPSIS
 /*	#include <match_list.h>
 /*
-/*	MATCH_LIST *match_list_init(pattern_list, count, func,...)
+/*	MATCH_LIST *match_list_init(flags, pattern_list, count, func,...)
+/*	int	flags;
 /*	const char *pattern_list;
 /*	int	count;
-/*	int	(*func)(const char *string, const char *pattern);
+/*	int	(*func)(int flags, const char *string, const char *pattern);
 /*
 /*	int	match_list_match(list, string,...)
 /*	MATCH_LIST *list;
@@ -28,9 +29,17 @@
 /*	a pattern match, precede a non-file name pattern with an
 /*	exclamation point (!).
 /*
-/*	match_list_init() performs initializations. The first argument is
-/*	a list of patterns.  The second argument specifies how many match
-/*	functions follow.
+/*	match_list_init() performs initializations. The flags argument
+/*	specifies the bit-wise OR of zero or more of the following:
+/* .RS
+/* .IP MATCH_FLAG_PARENT
+/*	The hostname pattern foo.com matches any name within the domain
+/*	foo.com. If this flag is cleared, foo.com matches itself
+/*	only, and .foo.com matches any name below the domain foo.com.
+/* .RE
+/*	Specify MATCH_FLAG_NONE to request none of the above.
+/*	The pattern_list argument specifies a list of patterns.  The third
+/*	argument specifies how many match functions follow.
 /*
 /*	match_list_match() matches strings against the specified pattern
 /*	list, passing the first string to the first function given to
@@ -73,11 +82,13 @@
 #include <stringops.h>
 #include <argv.h>
 #include <dict.h>
+#include <match_ops.h>
 #include <match_list.h>
 
 /* Application-specific */
 
 struct MATCH_LIST {
+    int     flags;			/* processing options */
     ARGV   *patterns;			/* one pattern each */
     int     match_count;		/* match function/argument count */
     MATCH_LIST_FN *match_func;		/* match functions */
@@ -125,14 +136,18 @@ static ARGV *match_list_parse(ARGV *list, char *string)
 
 /* match_list_init - initialize pattern list */
 
-MATCH_LIST *match_list_init(const char *patterns, int match_count,...)
+MATCH_LIST *match_list_init(int flags, const char *patterns, int match_count,...)
 {
     MATCH_LIST *list;
     char   *saved_patterns;
     va_list ap;
     int     i;
 
+    if (flags & ~MATCH_FLAG_ALL)
+	msg_panic("match_list_init: bad flags 0x%x", flags);
+
     list = (MATCH_LIST *) mymalloc(sizeof(*list));
+    list->flags = flags;
     list->match_count = match_count;
     list->match_func =
 	(MATCH_LIST_FN *) mymalloc(match_count * sizeof(MATCH_LIST_FN));
@@ -173,7 +188,7 @@ int     match_list_match(MATCH_LIST * list,...)
 	for (match = 1; *pat == '!'; pat++)
 	    match = !match;
 	for (i = 0; i < list->match_count; i++)
-	    if (list->match_func[i] (list->match_args[i], pat) != 0)
+	    if (list->match_func[i] (list->flags, list->match_args[i], pat))
 		return (match);
     }
     if (msg_verbose)
