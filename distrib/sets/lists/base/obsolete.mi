@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.28 2001/05/26 01:03:07 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.29 2001/06/02 00:34:01 itojun Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -130,3 +130,6 @@
 /usr/share/zoneinfo/GMT9
 /usr/share/zoneinfo/Moscow
 /var/games/save
+/usr/sbin/pim6dd
+/usr/sbin/pim6sd
+/usr/sbin/pim6stat

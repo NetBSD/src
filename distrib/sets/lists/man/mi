@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.358 2001/06/01 16:59:12 thorpej Exp $
+# $NetBSD: mi,v 1.359 2001/06/02 00:34:01 itojun Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -266,7 +266,6 @@
 ./usr/share/man/cat1/patch.0			man-util-catman
 ./usr/share/man/cat1/pawd.0			man-amd-catman
 ./usr/share/man/cat1/pax.0			man-util-catman
-./usr/share/man/cat1/pim6stat.0			man-router-catman
 ./usr/share/man/cat1/pkg_add.0			man-pkgutil-catman
 ./usr/share/man/cat1/pkg_admin.0		man-pkgutil-catman
 ./usr/share/man/cat1/pkg_create.0		man-pkgutil-catman
@@ -1033,8 +1032,6 @@
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman
 ./usr/share/man/cat5/pcre_table.0		man-postfix-catman
 ./usr/share/man/cat5/phones.0			man-uucp-catman
-./usr/share/man/cat5/pim6dd.conf.0		man-router-catman
-./usr/share/man/cat5/pim6sd.conf.0		man-router-catman
 ./usr/share/man/cat5/printcap.0			man-lpr-catman
 ./usr/share/man/cat5/protocols.0		man-net-catman
 ./usr/share/man/cat5/racoon.conf.0		man-netutil-catman
@@ -1357,8 +1354,6 @@
 ./usr/share/man/cat8/pcnfsd.0			man-nfsserver-catman
 ./usr/share/man/cat8/peace.0			man-sys-catman
 ./usr/share/man/cat8/pickup.0			man-postfix-catman
-./usr/share/man/cat8/pim6dd.0			man-router-catman
-./usr/share/man/cat8/pim6sd.0			man-router-catman
 ./usr/share/man/cat8/ping.0			man-netutil-catman
 ./usr/share/man/cat8/ping6.0			man-netutil-catman
 ./usr/share/man/cat8/pipe.0			man-postfix-catman
@@ -1781,7 +1776,6 @@
 ./usr/share/man/man1/patch.1			man-util-man
 ./usr/share/man/man1/pawd.1			man-amd-man
 ./usr/share/man/man1/pax.1			man-util-man
-./usr/share/man/man1/pim6stat.1			man-router-man
 ./usr/share/man/man1/pkg_add.1			man-pkgutil-man
 ./usr/share/man/man1/pkg_admin.1		man-pkgutil-man
 ./usr/share/man/man1/pkg_create.1		man-pkgutil-man
@@ -2548,8 +2542,6 @@
 ./usr/share/man/man5/passwd.conf.5		man-sys-man
 ./usr/share/man/man5/pcre_table.5		man-postfix-man
 ./usr/share/man/man5/phones.5			man-uucp-man
-./usr/share/man/man5/pim6dd.conf.5		man-router-man
-./usr/share/man/man5/pim6sd.conf.5		man-router-man
 ./usr/share/man/man5/printcap.5			man-lpr-man
 ./usr/share/man/man5/protocols.5		man-net-man
 ./usr/share/man/man5/racoon.conf.5		man-netutil-man
@@ -2872,8 +2864,6 @@
 ./usr/share/man/man8/pcnfsd.8			man-nfsserver-man
 ./usr/share/man/man8/peace.8			man-sys-man
 ./usr/share/man/man8/pickup.8			man-postfix-man
-./usr/share/man/man8/pim6dd.8			man-router-man
-./usr/share/man/man8/pim6sd.8			man-router-man
 ./usr/share/man/man8/ping.8			man-netutil-man
 ./usr/share/man/man8/ping6.8			man-netutil-man
 ./usr/share/man/man8/pipe.8			man-postfix-man
