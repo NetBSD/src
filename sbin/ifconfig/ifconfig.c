@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.116 2001/09/26 07:20:16 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.117 2001/10/04 23:12:22 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.116 2001/09/26 07:20:16 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.117 2001/10/04 23:12:22 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -315,7 +315,7 @@ void	printall __P((const char *));
 void	list_cloners __P((void));
 void 	printb __P((const char *, unsigned short, const char *));
 int	prefix __P((void *, int));
-void 	status __P((const u_int8_t *, int));
+void 	status __P((const struct sockaddr_dl *));
 void 	usage __P((void));
 const char *get_string __P((const char *, const char *, u_int8_t *, int *));
 void	print_string __P((const u_int8_t *, int));
@@ -783,12 +783,8 @@ printall(ifname)
 			continue;
 		}
 
-		if (sdl == NULL) {
-			status(NULL, 0);
-		} else {
-			status(LLADDR(sdl), sdl->sdl_alen);
-			sdl = NULL;
-		}
+		status(sdl);
+		sdl = NULL;
 	}
 	if (lflag)
 		putchar('\n');
@@ -1855,13 +1851,13 @@ const struct ifmedia_status_description ifm_status_descriptions[] =
  * specified, show it and it only; otherwise, show them all.
  */
 void
-status(ap, alen)
-	const u_int8_t *ap;
-	int alen;
+status(sdl)
+	const struct sockaddr_dl *sdl;
 {
 	struct afswtch *p = afp;
 	struct ifmediareq ifmr;
 	int *media_list, i;
+	char hbuf[NI_MAXHOST];
 
 	printf("%s: ", name);
 	printb("flags", flags, IFFBITS);
@@ -1885,12 +1881,11 @@ status(ap, alen)
 	vlan_status();
 	tunnel_status();
 
-	if (ap && alen > 0) {
-		printf("\taddress:");
-		for (i = 0; i < alen; i++, ap++)
-			printf("%c%02x", i > 0 ? ':' : ' ', *ap);
-		putchar('\n');
-	}
+	if (sdl != NULL &&
+	    getnameinfo((struct sockaddr *)sdl, sdl->sdl_len,
+		hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) == 0 &&
+	    hbuf[0] != '\0')
+		printf("\taddress: %s\n", hbuf);
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
 	(void) strncpy(ifmr.ifm_name, name, sizeof(ifmr.ifm_name));
