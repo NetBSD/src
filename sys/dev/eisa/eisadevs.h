@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.12 1997/02/16 20:10:31 jonathan Exp 
+ *	NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp 
  */
 
 /*
@@ -84,6 +84,9 @@
 #define	EISA_PRODUCT_TCM5971	"3Com 3C597 Fast Etherlink T4"
 #define	EISA_PRODUCT_TCM5972	"3Com 3C597 Fast Etherlink MII"
 
+/* Standard Microsystems (SMC) */
+#define	EISA_PRODUCT_SMC8010	"Standard Microsystems Corp. Ethercard Elite32C Ultra"
+#define	EISA_PRODUCT_SMC0110	"Standard Microsystems Corp. Elite32 Ethernet"
 
 /* UltraStor products */
 #define	EISA_PRODUCT_USC0240	"UltraStor 24f SCSI"
