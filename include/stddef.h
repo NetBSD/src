@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stddef.h	5.5 (Berkeley) 4/3/91
- *	$Id: stddef.h,v 1.2 1993/08/01 18:45:18 mycroft Exp $
+ *	$Id: stddef.h,v 1.3 1994/05/21 09:42:10 cgd Exp $
  */
 
 #ifndef _STDDEF_H_
@@ -39,16 +39,16 @@
 
 #include <machine/ansi.h>
 
-typedef	_PTRDIFF_T_	ptrdiff_t;
+typedef	_BSD_PTRDIFF_T_	ptrdiff_t;
 
-#ifdef	_SIZE_T_
-typedef	_SIZE_T_	size_t;
-#undef	_SIZE_T_
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
 #endif
 
-#ifdef	_WCHAR_T_
-typedef	_WCHAR_T_	wchar_t;
-#undef	_WCHAR_T_
+#ifdef	_BSD_WCHAR_T_
+typedef	_BSD_WCHAR_T_	wchar_t;
+#undef	_BSD_WCHAR_T_
 #endif
 
 #ifndef	NULL
