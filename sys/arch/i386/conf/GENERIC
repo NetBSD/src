@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.27 1995/12/24 00:22:20 neil Exp $
+#	$NetBSD: GENERIC,v 1.28 1996/01/13 02:05:24 thorpej Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -114,6 +114,8 @@ ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
 ahc*	at pci? bus ? dev ?		# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
+ahe0	at isa? port 0x1c00 irq ?	# Adaptec 284x SCSI controllers
+scsibus* at ahe?
 aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
