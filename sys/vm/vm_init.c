@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_init.c,v 1.9 1994/06/29 06:48:00 cgd Exp $	*/
+/*	$NetBSD: vm_init.c,v 1.10 1998/01/08 11:36:20 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -69,6 +69,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -83,7 +84,7 @@
 
 void vm_mem_init()
 {
-#ifndef MACHINE_NONCONTIG
+#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
 	extern vm_offset_t	avail_start, avail_end;
 	extern vm_offset_t	virtual_avail, virtual_end;
 #else
@@ -95,8 +96,11 @@ void vm_mem_init()
 	 *	From here on, all physical memory is accounted for,
 	 *	and we use only virtual addresses.
 	 */
-	vm_set_page_size();
-#ifndef MACHINE_NONCONTIG
+	if (cnt.v_page_size == 0) {
+		printf("vm_mem_init: WARN: MD code did not set page size\n");
+		vm_set_page_size();
+	}
+#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
 	vm_page_startup(&avail_start, &avail_end);
 #else
 	vm_page_bootstrap(&start, &end);
@@ -105,13 +109,13 @@ void vm_mem_init()
 	/*
 	 * Initialize other VM packages
 	 */
-#ifndef MACHINE_NONCONTIG
+#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
 	vm_object_init(virtual_end - VM_MIN_KERNEL_ADDRESS);
 #else
 	vm_object_init(end - VM_MIN_KERNEL_ADDRESS);
 #endif
 	vm_map_startup();
-#ifndef MACHINE_NONCONTIG
+#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
 	kmem_init(virtual_avail, virtual_end);
 	pmap_init(avail_start, avail_end);
 #else
