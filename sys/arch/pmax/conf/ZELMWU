@@ -1,7 +1,7 @@
 #
 # Matthias Drochner's development machine
 #
-#	$NetBSD: ZELMWU,v 1.1.2.2 1999/03/29 18:09:48 drochner Exp $
+#	$NetBSD: ZELMWU,v 1.1.2.3 1999/06/11 00:53:34 nisimura Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -102,8 +102,8 @@ mcclock0 at	ioasic? offset ?	# DS1287 RTC
 asc0	at	ioasic?	offset ?	# NCR53C94 SCSI with IOASIC
 le0	at	ioasic?	offset ?	# LANCE
 zsc*	at	ioasic? offset ?	# Z85C30
-zstty*	at	zsc?
-lkkbd0	at	zsc?
+zstty*	at	zsc? channel 1
+lkkbd0	at	zsc? channel ?
 #dtop0	at	ioasic?	offset ?	# MAXINE kbd and mouse
 #isdn	at	ioasic?	offset ?	# MAXINE ISDN/audio (not supported)
 #fdc	at	ioasic?	offset ?	# MAXINE floppy disk (not supported)

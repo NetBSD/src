@@ -1,4 +1,4 @@
-/*	$NetBSD: kmin.h,v 1.6.4.1 1999/05/07 02:33:30 nisimura Exp $	*/
+/*	$NetBSD: kmin.h,v 1.6.4.2 1999/06/11 00:53:35 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -297,5 +297,9 @@
 #define KMIN_INTR_PBNO		0x00000001	/* ro */
 #define KMIN_INTR_ASIC		0xff0f0004
 #define KMIN_IM0		0xff0f13f0	/* all good ones enabled */
+
+#define KMIN_INTR_TC_0		0x00000800
+#define KMIN_INTR_TC_1		0x00000080
+#define KMIN_INTR_TC_2		0x00002000
 
 #endif	/* MIPS_KMIN_H */
