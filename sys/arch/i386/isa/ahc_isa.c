@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.1 1996/08/05 21:14:29 soda Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.2 1996/08/28 23:47:27 thorpej Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -362,12 +362,14 @@ ahc_isa_attach(parent, self, aux)
 
 	ahc_construct(ahc, bc, ioh, type, AHC_FNONE);
 
+#ifdef DEBUG
 	/*
 	 * Tell the user what type of interrupts we're using.
 	 * usefull for debugging irq problems
 	 */
 	printf( "%s: Using %s Interrupts\n", ahc_name(ahc),
 	    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");
+#endif
 
 	/*
 	 * Now that we know we own the resources we need, do the 

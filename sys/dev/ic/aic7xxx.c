@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.12 1996/08/28 19:00:58 cgd Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.13 1996/08/28 23:39:40 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -2057,9 +2057,11 @@ ahc_init(ahc)
 
 		if(scsi_conf & RESET_SCSI) {
 			/* Reset the bus */
+#if !defined(__NetBSD__) || (defined(__NetBSD__) && defined(DEBUG))
 			if(bootverbose)
 				printf("%s: Reseting Channel B\n",
 				       ahc_name(ahc));
+#endif
 			AHC_OUTB(ahc, SCSISEQ, SCSIRSTO);
 			DELAY(1000);
 			AHC_OUTB(ahc, SCSISEQ, 0);
@@ -2084,8 +2086,10 @@ ahc_init(ahc)
 
 	if(scsi_conf & RESET_SCSI) {
 		/* Reset the bus */
+#if !defined(__NetBSD__) || (defined(__NetBSD__) && defined(DEBUG))
 		if(bootverbose)
 			printf("%s: Reseting Channel A\n", ahc_name(ahc));
+#endif
 
 		AHC_OUTB(ahc, SCSISEQ, SCSIRSTO);
 		DELAY(1000);
@@ -2226,14 +2230,18 @@ ahc_init(ahc)
 	 * Load the Sequencer program and Enable the adapter
 	 * in "fast" mode.
          */
+#if !defined(__NetBSD__) || (defined(__NetBSD__) && defined(DEBUG))
 	if(bootverbose)
 		printf("%s: Downloading Sequencer Program...",
 		       ahc_name(ahc));
+#endif
 
 	ahc_loadseq(ahc);
 
+#if !defined(__NetBSD__) || (defined(__NetBSD__) && defined(DEBUG))
 	if(bootverbose)
 		printf("Done\n");
+#endif
 
 	AHC_OUTB(ahc, SEQCTL, FASTMODE);
 
