@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.10 2000/01/26 09:04:59 haya Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.11 2000/02/05 18:11:55 augustss Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -110,11 +110,14 @@ struct ex_cardbus_softc {
 	/* CardBus function status space.  575B requests it. */
 	bus_space_tag_t sc_funct;
 	bus_space_handle_t sc_funch;
+	bus_size_t sc_funcsize;
+
+	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
 };
 
 struct cfattach ex_cardbus_ca = {
 	sizeof(struct ex_cardbus_softc), ex_cardbus_match,
-	    ex_cardbus_attach, ex_cardbus_detach
+	    ex_cardbus_attach, ex_cardbus_detach, ex_activate
 };
 
 const struct ex_cardbus_product {
@@ -193,7 +196,7 @@ ex_cardbus_attach(parent, self, aux)
 	bus_addr_t adr;
 
 	if (Cardbus_mapreg_map(ct, CARDBUS_BASE0_REG, CARDBUS_MAPREG_TYPE_IO, 0,
-	    &(sc->sc_iot), &ioh, &adr, NULL)) {
+	    &sc->sc_iot, &ioh, &adr, &psc->sc_mapsize)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -238,7 +241,7 @@ ex_cardbus_attach(parent, self, aux)
 		/* Map CardBus function status window. */
 		if (Cardbus_mapreg_map(ct, CARDBUS_3C575BTX_FUNCSTAT_PCIREG,
 		    CARDBUS_MAPREG_TYPE_MEM, 0, &psc->sc_funct,
-		    &psc->sc_funch, 0, NULL)) {
+		    &psc->sc_funch, 0, &psc->sc_funcsize)) {
 			printf("%s: unable to map function status window\n",
 			    self->dv_xname);
 			return;
@@ -337,22 +340,31 @@ ex_cardbus_detach(self, arg)
 {
 	struct ex_cardbus_softc *psc = (void *)self;
 	struct ex_softc *sc = &psc->sc_softc;
-	cardbus_function_tag_t cf = psc->sc_ct->ct_cf;
-	cardbus_chipset_tag_t cc = psc->sc_ct->ct_cc;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct cardbus_devfunc *ct = psc->sc_ct;
+	int rv;
 
-	/*
-	 * XXX Currently, no detach.
-	 */
-	printf("- ex_cardbus_detach\n");
+#if defined(DIAGNOSTIC)
+	if (ct == NULL) {
+		panic("%s: data structure lacks\n", sc->sc_dev.dv_xname);
+	}
+#endif
 
-	if_down(ifp);
+	rv = ex_detach(sc);
+	if (rv == 0) {
+		/*
+		 * Unhook the interrupt handler.
+		 */
+		cardbus_intr_disestablish(ct->ct_cc, ct->ct_cf, sc->sc_ih);
 
-	cardbus_intr_disestablish(cc, cf, sc->sc_ih);
+		if (psc->sc_cardtype == EX_3C575B) {
+			Cardbus_mapreg_unmap(ct, CARDBUS_MAPREG_TYPE_MEM,
+			    psc->sc_funct, psc->sc_funch, psc->sc_funcsize);
+		}
 
-	sc->enabled = 0;
-
-	return (EBUSY);
+		Cardbus_mapreg_unmap(ct, CARDBUS_MAPREG_TYPE_IO, sc->sc_iot,
+		    sc->sc_ioh, psc->sc_mapsize);
+	}
+	return (rv);
 }
 
 #if !defined EX_POWER_STATIC
