@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2002/04/03 03:17:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.23 2002/05/09 18:16:16 uch Exp $
 
 SUBDIR=	mbr
 .if ${MACHINE} == "i386"
@@ -10,6 +10,7 @@ SUBDIR+= mbr_bootsel
      ${MACHINE} == "cobalt" || \
      ${MACHINE} == "ofppc" || \
      ${MACHINE} == "hpcmips" || \
+     ${MACHINE} == "hpcsh" || \
      ${MACHINE} == "arc" || \
      ${MACHINE} == "prep" || \
      ${MACHINE} == "playstation2" || \
