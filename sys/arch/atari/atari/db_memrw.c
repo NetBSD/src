@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.11 1997/10/09 07:37:50 jtc Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.12 1998/09/02 14:58:01 leo Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <ddb/db_access.h>
 
-static void	db_write_text __P((vm_offset_t, size_t, char *));
+static void	db_write_text __P((vaddr_t, size_t, char *));
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -79,7 +79,7 @@ static void	db_write_text __P((vm_offset_t, size_t, char *));
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {
@@ -108,13 +108,13 @@ db_read_bytes(addr, size, data)
  */
 static void
 db_write_text(addr, size, data)
-	vm_offset_t addr;
+	vaddr_t		addr;
 	register size_t size;
-	register char *data;
+	register char	*data;
 {
 	register char *dst, *odst;
 	pt_entry_t *pte, oldpte, tmppte;
-	vm_offset_t pgva;
+	vaddr_t pgva;
 	int limit;
 
 	if (size == 0)
@@ -169,7 +169,7 @@ db_write_text(addr, size, data)
 
 		tmppte = (oldpte & ~PG_RO) | PG_RW | PG_CI;
 		*pte = tmppte;
-		TBIS((vm_offset_t)odst);
+		TBIS((vaddr_t)odst);
 
 		/*
 		 * Page is now writable.  Do as much access as we
@@ -182,7 +182,7 @@ db_write_text(addr, size, data)
 		 * Restore the old PTE.
 		 */
 		*pte = oldpte;
-		TBIS((vm_offset_t)odst);
+		TBIS((vaddr_t)odst);
 	} while (size != 0);
 
 	/*
@@ -198,7 +198,7 @@ db_write_text(addr, size, data)
 extern char	kernel_text[], etext[];
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	vaddr_t		addr;
 	register size_t	size;
 	register char	*data;
 {

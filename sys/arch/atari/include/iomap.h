@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.3 1996/08/23 11:17:00 leo Exp $	*/
+/*	$NetBSD: iomap.h,v 1.4 1998/09/02 15:01:55 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -37,18 +37,18 @@
  * I/O Address maps
  */
 #ifdef _KERNEL
-vm_offset_t	stio_addr;	/* Where the st io-area is mapped	*/
+vaddr_t	stio_addr;		/* Where the st io-area is mapped	*/
 #define	AD_STIO	(stio_addr)	/* .. see atari_init.c			*/
 
 /*
- * PCI KVA addresses. These are determined in atari_init.c. Exept for
+ * PCI KVA addresses. These are determined in atari_init.c. Except for
  * the config-space, they should be used for a PCI-console only. Other
  * cards should use the bus-functions to map io & mem spaces.
  * Each card gets an config area of NBPG  bytes.
  */
-vm_offset_t	pci_conf_addr;	/* KVA base of PCI config space		*/
-vm_offset_t	pci_io_addr;	/* KVA base of PCI io-space		*/
-vm_offset_t	pci_mem_addr;	/* KVA base of PCI mem-space		*/
+vaddr_t	pci_conf_addr;		/* KVA base of PCI config space		*/
+vaddr_t	pci_io_addr;		/* KVA base of PCI io-space		*/
+vaddr_t	pci_mem_addr;		/* KVA base of PCI mem-space		*/
 #endif /* _KERNEL */
 
 #define	PCI_CONFB_PHYS	(0xA0000000L)
