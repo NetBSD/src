@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.8 1998/01/26 20:30:09 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.9 1998/01/29 00:59:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -449,7 +449,7 @@ ne2000_write_mbuf(sc, m, buf)
 		}
 	} else {
 		/* NE2000s are a bit trickier. */
-		u_int8_t *data, savebyte[2];
+		u_int8_t *data, *aligndata, savebyte[2];
 		int l, wantbyte;
 
 		wantbyte = 0;
@@ -458,6 +458,8 @@ ne2000_write_mbuf(sc, m, buf)
 			if (l == 0)
 				continue;
 			data = mtod(m, u_int8_t *);
+			aligndata = NULL;
+
 			/* Finish the last word. */
 			if (wantbyte) {
 				savebyte[1] = *data;
@@ -467,6 +469,22 @@ ne2000_write_mbuf(sc, m, buf)
 				l--;
 				wantbyte = 0;
 			}
+
+			/*
+			 * If the previous mbuf was odd length, the
+			 * above check will have misaligned the rest
+			 * of the current mbuf.  If this is the case,
+			 * we need to use a temporary buffer.
+			 */
+			if (ALIGNED_POINTER(data, u_int16_t) == 0) {
+				aligndata = malloc(l, M_DEVBUF, M_NOWAIT);
+				if (aligndata == NULL)
+					panic("ne2000_write_mbuf: can't get "
+					    "temporary buffer"); /* XXX */
+				bcopy(data, aligndata, l);
+				data = aligndata;
+			}
+
 			/* Output contiguous words. */
 			if (l > 1) {
 				bus_space_write_multi_2(asict, asich,
@@ -479,6 +497,9 @@ ne2000_write_mbuf(sc, m, buf)
 				savebyte[0] = *data;
 				wantbyte = 1;
 			}
+
+			if (aligndata != NULL)
+				free(aligndata, M_DEVBUF);
 		}
 
 		if (wantbyte) {
