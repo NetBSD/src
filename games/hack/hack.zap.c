@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.zap.c,v 1.6 2003/04/02 18:36:42 jsm Exp $	*/
+/*	$NetBSD: hack.zap.c,v 1.7 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.zap.c,v 1.6 2003/04/02 18:36:42 jsm Exp $");
+__RCSID("$NetBSD: hack.zap.c,v 1.7 2004/01/27 20:30:29 jsm Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -386,8 +386,8 @@ bhit(ddx, ddy, range, sym, fhitm, fhito, obj)
 	int             ddx, ddy, range;	/* direction and range */
 	char            sym;	/* symbol displayed on path */
 	/* fns called when mon/obj hit */
-	void          (*fhitm) __P((struct monst *, struct obj *));
-	int	      (*fhito) __P((struct obj *, struct obj *));
+	void          (*fhitm)(struct monst *, struct obj *);
+	int	      (*fhito)(struct obj *, struct obj *);
 	struct obj     *obj;	/* 2nd arg to fhitm/fhito */
 {
 	struct monst   *mtmp;

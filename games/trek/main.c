@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2003/08/07 09:37:52 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2004/01/27 20:30:31 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 2003/08/07 09:37:52 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2004/01/27 20:30:31 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ uid_t	Mother	= 51 + (51 << 8);
 
 jmp_buf env;
 
-int main __P((int, char **));
+int main(int, char **);
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fly.c,v 1.11 2003/08/07 09:37:02 agc Exp $	*/
+/*	$NetBSD: fly.c,v 1.12 2004/01/27 20:30:29 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: fly.c,v 1.11 2003/08/07 09:37:02 agc Exp $");
+__RCSID("$NetBSD: fly.c,v 1.12 2004/01/27 20:30:29 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -52,13 +52,13 @@ int     ourclock = 120;		/* time for all the flights in the game */
 static char    cross = 0;
 static sig_t   oldsig;
 
-static void blast __P((void));
-static void endfly __P((void));
-static void moveenemy __P((int));
-static void notarget __P((void));
-static void screen __P((void));
-static void succumb __P((int));
-static void target __P((void));
+static void blast(void);
+static void endfly(void);
+static void moveenemy(int);
+static void notarget(void);
+static void screen(void);
+static void succumb(int);
+static void target(void);
 
 static void
 succumb(dummy)

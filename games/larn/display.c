@@ -1,16 +1,16 @@
-/*	$NetBSD: display.c,v 1.4 1997/10/18 20:03:15 christos Exp $	*/
+/*	$NetBSD: display.c,v 1.5 2004/01/27 20:30:30 jsm Exp $	*/
 
 /* display.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.4 1997/10/18 20:03:15 christos Exp $");
+__RCSID("$NetBSD: display.c,v 1.5 2004/01/27 20:30:30 jsm Exp $");
 #endif /* not lint */
 
 #include "header.h"
 #include "extern.h"
 #define makecode(_a,_b,_c) (((_a)<<16) + ((_b)<<8) + (_c))
 
-static void botsub __P((int, char *));
+static void botsub(int, char *);
 
 static int      minx, maxx, miny, maxy, k, m;
 static char     bot1f = 0, bot2f = 0, bot3f = 0;

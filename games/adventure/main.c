@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2003/08/07 09:36:51 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2004/01/27 20:30:28 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2003/08/07 09:36:51 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2004/01/27 20:30:28 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: main.c,v 1.17 2003/08/07 09:36:51 agc Exp $");
 #include "hdr.h"
 #include "extern.h"
 
-int main __P((int, char **));
+int main(int, char **);
 
 int
 main(argc, argv)

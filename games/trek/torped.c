@@ -1,4 +1,4 @@
-/*	$NetBSD: torped.c,v 1.7 2003/08/07 09:37:54 agc Exp $	*/
+/*	$NetBSD: torped.c,v 1.8 2004/01/27 20:30:31 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)torped.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: torped.c,v 1.7 2003/08/07 09:37:54 agc Exp $");
+__RCSID("$NetBSD: torped.c,v 1.8 2004/01/27 20:30:31 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: torped.c,v 1.7 2003/08/07 09:37:54 agc Exp $");
 **	the misfire damages your torpedo tubes.
 */
 
-static int randcourse __P((int));
+static int randcourse(int);
 
 /*ARGSUSED*/
 void

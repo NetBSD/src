@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.11 2003/08/07 09:37:29 agc Exp $	*/
+/*	$NetBSD: monop.h,v 1.12 2004/01/27 20:30:30 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -134,74 +134,74 @@ typedef struct prp_st	UTIL_S;
 
 
 /* cards.c */
-void init_decks __P((void));
-void get_card __P((DECK *));
+void init_decks(void);
+void get_card(DECK *);
 
 /* execute.c */
-void execute __P((int));
-void do_move __P((void));
-void move __P((int));
-void save __P((void));
-void restore __P((void));
-int rest_f __P((const char *));
+void execute(int);
+void do_move(void);
+void move(int);
+void save(void);
+void restore(void);
+int rest_f(const char *);
 
 /* getinp.c */
-int getinp __P((const char *, const char *const []));
+int getinp(const char *, const char *const []);
 
 /* houses.c */
-void buy_houses __P((void));
-void sell_houses __P((void));
+void buy_houses(void);
+void sell_houses(void);
 
 /* jail.c */
-void card __P((void));
-void ret_card __P((PLAY *));
-void pay __P((void));
-int move_jail __P((int, int ));
-void printturn __P((void));
+void card(void);
+void ret_card(PLAY *);
+void pay(void);
+int move_jail(int, int );
+void printturn(void);
 
 /* misc.c */
-int getyn __P((const char *));
-void notify __P((void));
-void next_play __P((void));
-int get_int __P((const char *));
-void set_ownlist __P((int));
-void is_monop __P((MON *, int));
-void is_not_monop __P((MON *));
-void list __P((void));
-void list_all __P((void));
-void quit __P((void));
+int getyn(const char *);
+void notify(void);
+void next_play(void);
+int get_int(const char *);
+void set_ownlist(int);
+void is_monop(MON *, int);
+void is_not_monop(MON *);
+void list(void);
+void list_all(void);
+void quit(void);
 
 /* morg.c */
-void mortgage __P((void));
-void unmortgage __P((void));
-void force_morg __P((void));
+void mortgage(void);
+void unmortgage(void);
+void force_morg(void);
 
 /* print.c */
-void printboard __P((void));
-void where __P((void));
-void printsq __P((int, bool));
-void printhold __P((int));
+void printboard(void);
+void where(void);
+void printsq(int, bool);
+void printhold(int);
 
 /* prop.c */
-void buy __P((int, SQUARE *));
-void add_list __P((int, OWN **, int));
-void del_list __P((int, OWN **, short));
-void bid __P((void));
-int prop_worth __P((PLAY *));
+void buy(int, SQUARE *);
+void add_list(int, OWN **, int);
+void del_list(int, OWN **, short);
+void bid(void);
+int prop_worth(PLAY *);
 
 /* rent.c */
-void rent __P((SQUARE *));
+void rent(SQUARE *);
 
 /* roll.c */
-int roll __P((int, int));
+int roll(int, int);
 
 /* spec.c */
-void inc_tax __P((void));
-void goto_jail __P((void));
-void lux_tax __P((void));
-void cc __P((void));
-void chance __P((void));
+void inc_tax(void);
+void goto_jail(void);
+void lux_tax(void);
+void cc(void);
+void chance(void);
 
 /* trade.c */
-void trade __P((void));
-void resign __P((void));
+void trade(void);
+void resign(void);
