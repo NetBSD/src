@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.18 2002/04/23 12:41:04 kleink Exp $ */
+/* $NetBSD: machdep.c,v 1.18.2.1 2002/07/09 06:04:26 gehenna Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -597,7 +597,7 @@ identifycpu()
 {
 	register int pvr, hid1;
 	char *mach, *pup, *cpu;
-	const char pll[] = {10, 10, 70, 0, 20, 65, 25, 45,
+	static const char pll[] = {10, 10, 70, 0, 20, 65, 25, 45,
 			30, 55, 40, 50, 15, 60, 35, 0};
 	const char *p5type_p = (const char *)0xf00010;
 	int cpuclock, busclock;
