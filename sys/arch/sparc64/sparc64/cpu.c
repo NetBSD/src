@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.37 2004/03/17 17:04:59 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.38 2004/07/02 02:50:25 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.37 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.38 2004/07/02 02:50:25 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,8 +350,6 @@ extern vaddr_t ekdata;
 
 extern void cpu_mp_startup_end(void *);
 
-__volatile int	cpu_go_smp = 0;
-
 void
 cpu_boot_secondary_processors()
 {
@@ -401,7 +399,7 @@ cpu_boot_secondary_processors()
 		membar_sync();
 
 #ifdef DEBUG
-		printf("node %x. cpuinfo %lx, initstack %p\n",
+		printf("node %x, cpuinfo %lx, initstack %p\n",
 		       cpu_args->cb_node, cpu_args->cb_cpuinfo,
 		       cpu_args->cb_initstack);
 #endif
@@ -423,7 +421,8 @@ cpu_boot_secondary_processors()
 		if (!CPUSET_HAS(cpus_active, ci->ci_number))
 			printf("cpu%d: startup failed\n", ci->ci_upaid);
 		else
-			printf(" cpu%d now spinning idle (waited %d iterations)\n", ci->ci_upaid, i);
+			printf("cpu%d now spinning idle (waited %d iterations)\n",
+			       ci->ci_upaid, i);
 	}
 
 	printf("\n");
