@@ -1,7 +1,0 @@
-#	$NetBSD: files.ossaudio,v 1.1 1997/04/04 15:36:00 augustss Exp $
-#
-# Config.new file description for OSS (Voxware) audio driver
-# compatibility.  Used by e.g. compat_linux and compat_freebsd.
-# Included by ports that need it.
-
-file	compat/ossaudio/ossaudio.c		compat_linux | compat_freebsd
