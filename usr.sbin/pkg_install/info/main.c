@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.27.2.1 2002/06/28 12:44:14 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.27.2.2 2002/07/21 04:41:47 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.27.2.1 2002/06/28 12:44:14 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.27.2.2 2002/07/21 04:41:47 lukem Exp $");
 #endif
 #endif
 
@@ -190,6 +190,8 @@ main(int argc, char **argv)
 		warnx("disabling PKG_PATH when operating on all packages.");
 		unsetenv("PKG_PATH");
 	}
+
+	path_create(getenv("PKG_PATH"));
 
 	/* Set some reasonable defaults */
 	if (!Flags)
