@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.16 2002/08/14 18:41:50 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.2.17 2002/10/07 01:23:07 thorpej Exp $
 #
 
 WARNS=	2
@@ -11,9 +11,10 @@ ARCHSUBDIR=	${MACHINE_ARCH}
 ARCHSUBDIR=	${MACHINE_CPU}
 .else
 .BEGIN:
-	@echo no ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
-	@false
+	@echo "no ARCHSUBDIR for ${MACHINE_ARCH}/${MACHINE_CPU}; skipping..."
 .endif
+
+.if defined(ARCHSUBDIR)
 
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
@@ -55,6 +56,8 @@ INCSDIR=/usr/include
 
 debuglog: debuglog.o
 	$(CC) -o debuglog debuglog.o -lpthread
+
+.endif
 
 .include <bsd.lib.mk>
 

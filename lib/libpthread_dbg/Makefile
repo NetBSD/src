@@ -1,21 +1,23 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2002/07/31 23:05:18 nathanw Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2002/10/07 01:23:08 thorpej Exp $
 #
 
 WARNS=	2
 
 .include <bsd.own.mk>
 
-LIB=	pthread_dbg
-LIBPDIR=	${.CURDIR}/../libpthread
 .if exists(${LIBPDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
 .elif exists(${LIBPDIR}/arch/${MACHINE_CPU}) 
 ARCHSUBDIR=	${MACHINE_CPU}
 .else
 .BEGIN:
-	@echo no ARCHSUBDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
-	@false
+	@echo "no ARCHSUBDIR for ${MACHINE_ARCH}/${MACHINE_CPU}; skipping..."
 .endif
+
+.if defined(ARCHSUBDIR)
+
+LIB=	pthread_dbg
+LIBPDIR=	${.CURDIR}/../libpthread
 
 ARCHDIR=	${LIBPDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
@@ -31,6 +33,8 @@ SRCS=	pthread_dbg.c
 
 INCS=	pthread_dbg.h
 INCSDIR=/usr/include
+
+.endif
 
 .include <bsd.lib.mk>
 
