@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.5 1996/05/13 06:11:28 mycroft Exp $	*/
+/*	$NetBSD: intr.h,v 1.5.8.1 1997/03/12 14:34:46 is Exp $	*/
 
 /*
- * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1996, 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,19 @@
 #ifndef _I386_INTR_H_
 #define _I386_INTR_H_
 
-/* Interrupt priority `levels'; not mutually exclusive. */
-#define	IPL_BIO		0	/* block I/O */
-#define	IPL_NET		1	/* network */
+/* Interrupt priority `levels'. */
+#define	IPL_NONE	8	/* nothing */
+#define	IPL_SOFTCLOCK	7	/* timeouts */
+#define	IPL_SOFTNET	6	/* protocol stacks */
+#define	IPL_BIO		5	/* block I/O */
+#define	IPL_NET		4	/* network */
+#define	IPL_SOFTSERIAL	3	/* serial */
 #define	IPL_TTY		2	/* terminal */
-#define	IPL_CLOCK	3	/* clock */
-#define	IPL_IMP		4	/* memory allocation */
-#define	IPL_NONE	5	/* nothing */
-#define	IPL_HIGH	6	/* everything */
+#define	IPL_IMP		2	/* memory allocation */
+#define	IPL_CLOCK	1	/* clock */
+#define	IPL_HIGH	1	/* everything */
+#define	IPL_SERIAL	0	/* serial */
+#define	NIPL		9
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -49,17 +54,13 @@
 
 /* Soft interrupt masks. */
 #define	SIR_CLOCK	31
-#define	SIR_CLOCKMASK	((1 << SIR_CLOCK))
 #define	SIR_NET		30
-#define	SIR_NETMASK	((1 << SIR_NET) | SIR_CLOCKMASK)
-#define	SIR_TTY		29
-#define	SIR_TTYMASK	((1 << SIR_TTY) | SIR_CLOCKMASK)
-#define	SIR_ALLMASK	(SIR_CLOCKMASK | SIR_NETMASK | SIR_TTYMASK)
+#define	SIR_SERIAL	29
 
 #ifndef _LOCORE
 
 volatile int cpl, ipending, astpending;
-int imask[7];
+int imask[NIPL];
 
 extern void Xspllower __P((void));
 
@@ -119,6 +120,7 @@ spllower(ncpl)
 #define	spltty()	splraise(imask[IPL_TTY])
 #define	splclock()	splraise(imask[IPL_CLOCK])
 #define	splimp()	splraise(imask[IPL_IMP])
+#define	splserial()	splraise(imask[IPL_SERIAL])
 #define	splstatclock()	splclock()
 
 /*
@@ -127,14 +129,14 @@ spllower(ncpl)
  * NOTE: splsoftclock() is used by hardclock() to lower the priority from
  * clock to softclock before it calls softclock().
  */
-#define	splsoftclock()	spllower(SIR_CLOCKMASK)
-#define	splsoftnet()	splraise(SIR_NETMASK)
-#define	splsofttty()	splraise(SIR_TTYMASK)
+#define	splsoftclock()	spllower(imask[IPL_SOFTCLOCK])
+#define	splsoftnet()	splraise(imask[IPL_SOFTNET])
+#define	splsoftserial()	splraise(imask[IPL_SOFTSERIAL])
 
 /*
  * Miscellaneous
  */
-#define	splhigh()	splraise(-1)
+#define	splhigh()	splraise(imask[IPL_HIGH])
 #define	spl0()		spllower(0)
 
 /*
@@ -147,13 +149,13 @@ softintr(mask)
 	register int mask;
 {
 
-	__asm __volatile("orl %0,_ipending" : : "ir" (mask));
+	__asm __volatile("orl %0,_ipending" : : "ir" (1 << mask));
 }
 
 #define	setsoftast()	(astpending = 1)
-#define	setsoftclock()	softintr(1 << SIR_CLOCK)
-#define	setsoftnet()	softintr(1 << SIR_NET)
-#define	setsofttty()	softintr(1 << SIR_TTY)
+#define	setsoftclock()	softintr(SIR_CLOCK)
+#define	setsoftnet()	softintr(SIR_NET)
+#define	setsoftserial()	softintr(SIR_SERIAL)
 
 #endif /* !_LOCORE */
 

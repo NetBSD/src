@@ -1,4 +1,4 @@
-/*	$NetBSD: microtime.s,v 1.16 1995/04/17 12:06:47 cgd Exp $	*/
+/*	$NetBSD: microtime.s,v 1.16.10.1 1997/03/12 14:34:44 is Exp $	*/
 
 /*-
  * Copyright (c) 1993 The Regents of the University of California.
@@ -40,90 +40,73 @@
 #define	IRQ_BIT(irq_num)	(1 << ((irq_num) % 8))
 #define	IRQ_BYTE(irq_num)	((irq_num) / 8)
 
-/*
- * Use a higher resolution version of microtime if HZ is not
- * overridden (i.e. it is 100Hz).
- */
-#ifndef HZ
 ENTRY(microtime)
+	# clear registers and do whatever we can up front
+	pushl	%edi
+	pushl	%ebx
+	xorl	%edx,%edx
+	movl	$(TIMER_SEL0|TIMER_LATCH),%eax
+
 	cli				# disable interrupts
 
-	movb	$(TIMER_SEL0|TIMER_LATCH),%al
-	outb	%al,$TIMER_MODE		# latch timer 0's counter
+	# select timer 0 and latch its counter
+	outb	%al,$TIMER_MODE
+	inb	$IO_ICU1,%al		# as close to timer latch as possible
+	movb	%al,%ch			# %ch is current ICU mask
 
-	# Read counter value into ecx, LSB first
-	xorl	%ecx,%ecx
+	# Read counter value into [%al %dl], LSB first
 	inb	$TIMER_CNTR0,%al
-	movb	%al,%cl
-	inb	$TIMER_CNTR0,%al
-	movb	%al,%ch
+	movb	%al,%dl			# %dl has LSB
+	inb	$TIMER_CNTR0,%al	# %al has MSB
 
-	# Now check for counter overflow.  This is tricky because the
-	# timer chip doesn't let us atomically read the current counter
-	# value and the output state (i.e., overflow state).  We have
-	# to read the ICU interrupt request register (IRR) to see if the
-	# overflow has occured.  Because we lack atomicity, we use
-	# the (very accurate) heuristic that we do not check for
-	# overflow if the value read is close to 0.
-	# E.g., if we just checked the IRR, we might read a non-overflowing
-	# value close to 0, experience overflow, then read this overflow
-	# from the IRR, and mistakenly add a correction to the "close
-	# to zero" value.
-	#
-	# We compare the counter value to the heuristic constant 12.
-	# If the counter value is less than this, we assume the counter
-	# didn't overflow between disabling clock interrupts and latching
-	# the counter value above.  For example, we assume that the first 3
-	# instructions take less than 12 microseconds to execute.
-	#
-	# (We used to check for overflow only if the value read was close to
-	# the timer limit, but this doesn't work very well if we're at the
-	# clock's ipl or higher.)
-	#
-	# Otherwise, the counter might have overflowed.  We check for this
-	# condition by reading the interrupt request register out of the ICU.
-	# If it overflowed, we add in one clock period.
-
-	movl	$11932,%edx	# counter limit
-
-	testb	$IRQ_BIT(0),_ipending + IRQ_BYTE(0)
-	jnz	1f
-
-	cmpl	$12,%ecx	# check for potential overflow
-	jbe	2f
+	# save state of IIR in ICU, and of ipending, for later perusal
+	movb	_ipending + IRQ_BYTE(0),%cl	# %cl is interrupt pending
 	
-	inb	$IO_ICU1,%al	# read IRR in ICU
-	testb	$IRQ_BIT(0),%al	# is a timer interrupt pending?
-	jz	2f
+	# save the current value of _time
+	movl	_time,%edi		# get time.tv_sec
+	movl	_time+4,%ebx		#  and time.tv_usec
 
-1:	subl	%edx,%ecx	# add another tick
-	
-2:	subl	%ecx,%edx	# subtract counter value from counter limit
+	sti				# enable interrupts, we're done
 
-	# Divide by 1193280/1000000.  We use a fast approximation of 4096/3433.
-	# For values of hz more than 100, this has a maximum error of 2us.
+	# At this point we've collected all the state we need to
+	# compute the time.  First figure out if we've got a pending
+	# interrupt.  If the IRQ0 bit is set in ipending we've taken
+	# a clock interrupt without incrementing time, so we bump
+	# time.tv_usec by a tick.  Otherwise if the ICU shows a pending
+	# interrupt for IRQ0 we (or the caller) may have blocked an interrupt
+	# with the cli.  If the counter is not a very small value (3 as
+	# a heuristic), i.e. in pre-interrupt state, we add a tick to
+	# time.tv_usec
 
-	leal	(%edx,%edx,2),%eax	# a = 3d
-	leal	(%edx,%eax,4),%eax	# a = 4a + d = 13d
-	movl	%eax,%ecx
-	shll	$5,%ecx
-	addl	%ecx,%eax		# a = 33a    = 429d
-	leal	(%edx,%eax,8),%eax	# a = 8a + d = 3433d
-	shrl	$12,%eax		# a = a/4096 = 3433d/4096
+	testb	$IRQ_BIT(0),%cl		# pending interrupt?
+	jnz	1f			# yes, increment count
 
-	movl	_time,%edx	# get time.tv_sec
-	addl	_time+4,%eax	# add time.tv_usec
+	testb	$IRQ_BIT(0),%ch		# hardware interrupt pending?
+	jz	2f			# no, continue
+	testb	%al,%al			# MSB zero?
+	jnz	1f			# no, add a tick
+	cmpb	$3,%dl			# is this small number?
+	jbe	2f			# yes, continue
+1:	addl	_isa_timer_tick,%ebx	# add a tick
 
-	sti			# enable interrupts
-	
-	cmpl	$1000000,%eax	# carry in timeval?
+	# We've corrected for pending interrupts.  Now do a table lookup
+	# based on each of the high and low order counter bytes to increment
+	# time.tv_usec
+2:	movw	_isa_timer_msb_table(,%eax,2),%ax
+	subw	_isa_timer_lsb_table(,%edx,2),%ax
+	addl	%eax,%ebx		# add msb increment
+
+	# Normalize the struct timeval.  We know the previous increments
+	# will be less than a second, so we'll only need to adjust accordingly
+	cmpl	$1000000,%ebx	# carry in timeval?
 	jb	3f
-	subl	$1000000,%eax	# adjust usec
-	incl	%edx		# bump sec
+	subl	$1000000,%ebx	# adjust usec
+	incl	%edi		# bump sec
 	
-3:	movl	4(%esp),%ecx	# load timeval pointer arg
-	movl	%edx,(%ecx)	# tvp->tv_sec = sec
-	movl	%eax,4(%ecx)	# tvp->tv_usec = usec
+3:	movl	12(%esp),%ecx	# load timeval pointer arg
+	movl	%edi,(%ecx)	# tvp->tv_sec = sec
+	movl	%ebx,4(%ecx)	# tvp->tv_usec = usec
 
+	popl	%ebx
+	popl	%edi
 	ret
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.1 1997/01/16 23:12:22 christos Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.1.6.1 1997/03/12 14:34:51 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -94,12 +94,12 @@ int
 isapnp_map_readport(sc)
 	struct isapnp_softc *sc;
 {
-
 	if (sc->sc_iot != I386_BUS_SPACE_IO)
 		panic("isapnp_map_readport: bogus bus space tag");
 
-	sc->sc_read_ioh = sc->sc_read_port;
-	return (0);
+	/* Check if some other device has already claimed this port. */
+	return bus_space_map(sc->sc_iot, sc->sc_read_port, 1, 0,
+	    &sc->sc_read_ioh);
 }
 
 /* isapnp_unmap_readport():
@@ -109,6 +109,5 @@ void
 isapnp_unmap_readport(sc)
 	struct isapnp_softc *sc;
 {
-
-	/* Do nothing. */
+	bus_space_unmap(sc->sc_iot, sc->sc_read_ioh, 1);
 }

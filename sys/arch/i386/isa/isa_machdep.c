@@ -1,7 +1,7 @@
-/*	$NetBSD: isa_machdep.c,v 1.17 1996/11/28 02:43:53 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.17.6.1 1997/03/12 14:34:51 is Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1996 Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
  *
@@ -161,45 +161,67 @@ intr_calculatemasks()
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < 5; level++) {
+	for (level = 0; level < NIPL; level++) {
 		register int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs | SIR_ALLMASK;
+		imask[level] = irqs;
 	}
 
 	/*
-	 * Since run queues may be manipulated by both the statclock and tty,
-	 * network, and disk drivers, statclock > (tty | net | bio).
+	 * Initialize soft interrupt masks to block themselves.
 	 */
-	imask[IPL_CLOCK] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_SOFTCLOCK] = 1 << SIR_CLOCK;
+	imask[IPL_SOFTNET] = 1 << SIR_NET;
+	imask[IPL_SOFTSERIAL] = 1 << SIR_SERIAL;
 
 	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
+	 * IPL_NONE is used for hardware interrupts that are never blocked,
+	 * and do not block anything else.
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY] | imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_NONE] = 0;
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_TTY] |= imask[IPL_NET] | imask[IPL_BIO];
+	imask[IPL_SOFTCLOCK] |= imask[IPL_NONE];
+	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
+	imask[IPL_BIO] |= imask[IPL_SOFTNET];
 	imask[IPL_NET] |= imask[IPL_BIO];
+	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
+	imask[IPL_TTY] |= imask[IPL_SOFTSERIAL];
 
 	/*
-	 * These are pseudo-levels.
+	 * There are tty, network and disk drivers that use free() at interrupt
+	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_NONE] = 0x00000000;
-	imask[IPL_HIGH] = 0xffffffff;
+	imask[IPL_IMP] |= imask[IPL_TTY];
+
+	/*
+	 * Since run queues may be manipulated by both the statclock and tty,
+	 * network, and disk drivers, clock > imp.
+	 */
+	imask[IPL_CLOCK] |= imask[IPL_IMP];
+
+	/*
+	 * IPL_HIGH must block everything that can manipulate a run queue.
+	 */
+	imask[IPL_HIGH] |= imask[IPL_CLOCK];
+
+	/*
+	 * We need serial drivers to run at the absolute highest priority to
+	 * avoid overruns, so serial > high.
+	 */
+	imask[IPL_SERIAL] |= imask[IPL_HIGH];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		register int irqs = 1 << irq;
 		for (q = intrhand[irq]; q; q = q->ih_next)
 			irqs |= imask[q->ih_level];
-		intrmask[irq] = irqs | SIR_ALLMASK;
+		intrmask[irq] = irqs;
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */

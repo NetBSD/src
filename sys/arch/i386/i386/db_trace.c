@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.20 1997/02/04 19:52:55 fvdl Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.20.4.1 1997/03/12 14:34:40 is Exp $	*/
 
 /* 
  * Mach Operating System
@@ -29,6 +29,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/user.h> 
 
 #include <machine/db_machdep.h>
 
@@ -211,10 +212,25 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	if (!have_addr) {
 		frame = (struct i386_frame *)ddb_regs.tf_ebp;
 		callpc = (db_addr_t)ddb_regs.tf_eip;
-	} else if (trace_thread) {
-		db_printf ("db_trace.c: can't trace thread\n");
 	} else {
-		frame = (struct i386_frame *)addr;
+		if (trace_thread) {
+			struct proc *p;
+			struct user *u;
+			db_printf ("trace: pid %d ", (int)addr);
+			p = pfind(addr);
+			if (p == NULL) {
+				db_printf("not found\n");
+				return;
+			}	
+			if (!(p->p_flag&P_INMEM)) {
+				db_printf("swapped out\n");
+				return;
+			}
+			u = p->p_addr;
+			frame = (struct i386_frame *) u->u_pcb.pcb_ebp;
+			db_printf("at %p\n", frame);
+		} else
+			frame = (struct i386_frame *)addr;
 		callpc = (db_addr_t)
 			 db_get_value((int)&frame->f_retaddr, 4, FALSE);
 	}

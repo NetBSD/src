@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.71 1997/01/31 01:50:48 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.71.4.1 1997/03/12 14:34:37 is Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -79,8 +79,7 @@ options		NS		# XNS
 options		ISO,TPIP	# OSI
 options		EON		# OSI tunneling over IP
 options		CCITT,LLC,HDLC	# X.25
-#options	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
-				# if you enable the pseudo-device ipfilter)
+#options	PFIL_HOOKS	# pfil(9) packet filter hooks
 
 config		netbsd	root on ? type ?
 #options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
