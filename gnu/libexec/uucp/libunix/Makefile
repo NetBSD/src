@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1997/10/25 09:31:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 1998/02/19 02:17:06 cgd Exp $
 #
 # This subdirectory contains Unix specific support functions.
 
@@ -19,6 +19,7 @@ CPPFLAGS+=	-I$(.CURDIR)/../common_sources \
 NOMAN=		noman
 NOPROFILE=	noprofile
 NOPIC=		nopic
+NOLINT=		nolint (XXX lint bugs)
 
 # only needed during build
 libinstall::
