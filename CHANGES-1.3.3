@@ -270,3 +270,7 @@ sys/arch/pmax/pmax/conf.c			patch
 
   Add two missing NODEV entries (93 and 94) in the pmax
   chrtoblktbl.  (jonathan)
+
+sys/arch/i386/i386/machdep.c			patch
+
+  Correct panic message in _bus_dmamap_load_mbuf (PR#6226).  (frueauf)
