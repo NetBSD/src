@@ -1,7 +1,7 @@
 #ifndef CDKTEMPLATE_H
 #define CDKTEMPLATE_H	1
 
-#include <cdk.h>
+#include <cdk/cdk.h>
 
 /*
  * Description of the widget:

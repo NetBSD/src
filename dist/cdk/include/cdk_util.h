@@ -1,7 +1,7 @@
 #ifndef CDKUTIL_H
 #define CDKUTIL_H	1
 
-#include <cdk.h>
+#include <cdk/cdk.h>
 
 /*
  * Copyright 1999, Mike Glover
