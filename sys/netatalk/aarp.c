@@ -1,4 +1,4 @@
-/*	$NetBSD: aarp.c,v 1.12 2003/02/26 07:53:04 matt Exp $	*/
+/*	$NetBSD: aarp.c,v 1.13 2003/05/27 22:27:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.12 2003/02/26 07:53:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarp.c,v 1.13 2003/05/27 22:27:21 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -202,7 +202,10 @@ aarpwhohas(ifp, sat)
 		bcopy(atmulticastaddr, eh->ether_dhost,
 		    sizeof(eh->ether_dhost));
 		eh->ether_type = 0;	/* if_output will treat as 802 */
-		M_PREPEND(m, sizeof(struct llc), M_WAIT);
+		M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
+		if (!m)
+			return;
+
 		llc = mtod(m, struct llc *);
 		llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 		llc->llc_control = LLC_UI;
@@ -597,7 +600,10 @@ aarpprobe(arp)
 		bcopy(atmulticastaddr, eh->ether_dhost,
 		    sizeof(eh->ether_dhost));
 		eh->ether_type = 0;	/* if_output will treat as 802 */
-		M_PREPEND(m, sizeof(struct llc), M_WAIT);
+		M_PREPEND(m, sizeof(struct llc), M_DONTWAIT);
+		if (!m)
+			return;
+
 		llc = mtod(m, struct llc *);
 		llc->llc_dsap = llc->llc_ssap = LLC_SNAP_LSAP;
 		llc->llc_control = LLC_UI;
