@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.2 2001/07/08 23:59:31 thorpej Exp $	*/
+/*	$NetBSD: mace.c,v 1.3 2001/10/11 15:17:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -96,8 +96,10 @@ mace_attach(parent, self, aux)
 	printf("mace0: isa msk %llx\n", *(volatile u_int64_t *)0xbf310018);
 	*(volatile u_int64_t *)0xbf310018 = 0xffffffff;
 #endif
-	printf("mace0: isa sts %llx\n", *(volatile u_int64_t *)0xbf310010);
-	printf("mace0: isa msk %llx\n", *(volatile u_int64_t *)0xbf310018);
+	printf("%s: isa sts %llx\n", self->dv_xname,
+	    *(volatile u_int64_t *)0xbf310010);
+	printf("%s: isa msk %llx\n", self->dv_xname,
+	    *(volatile u_int64_t *)0xbf310018);
 
 	config_search(mace_search, self, NULL);
 }
@@ -115,7 +117,7 @@ mace_print(aux, pnp)
 
 	if (maa->maa_offset != MACECF_OFFSET_DEFAULT)
 		printf(" offset 0x%lx", maa->maa_offset);
-	if (maa->maa_offset != MACECF_INTR_DEFAULT)
+	if (maa->maa_intr != MACECF_INTR_DEFAULT)
 		printf(" intr %d", maa->maa_intr);
 #if 0
 	if (maa->maa_offset != MACECF_STRIDE_DEFAULT)
