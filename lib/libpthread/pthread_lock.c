@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.9 2004/02/13 11:36:08 wiz Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.10 2004/03/03 21:06:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.9 2004/02/13 11:36:08 wiz Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.10 2004/03/03 21:06:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ras.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: pthread_lock.c,v 1.9 2004/02/13 11:36:08 wiz Exp $");
 
 static int nspins = NSPINS;
 
-extern void pthread__lock_ras_start(void), pthread__lock_ras_end(void);
+RAS_DECL(pthread__lock);
 
 static void
 pthread__ras_simple_lock_init(__cpu_simple_lock_t *alp)
@@ -74,13 +74,10 @@ pthread__ras_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	__cpu_simple_lock_t old;
 
-	/* This is the atomic sequence. */
-	__asm __volatile(".globl pthread__lock_ras_start	\n"
-			 "pthread__lock_ras_start:");
+	RAS_START(pthread__lock);
 	old = *alp;
 	*alp = __SIMPLELOCK_LOCKED;
-	__asm __volatile(".globl pthread__lock_ras_end		\n"
-			 "pthread__lock_ras_end:");
+	RAS_END(pthread__lock);
 
 	return (old == __SIMPLELOCK_UNLOCKED);
 }
@@ -151,10 +148,8 @@ pthread__lockprim_init(void)
 	len = sizeof(ncpu);
 	sysctl(mib, 2, &ncpu, &len, NULL, 0);
 
-	if (ncpu == 1 && rasctl((void *)pthread__lock_ras_start,
-	    (size_t)((uintptr_t)pthread__lock_ras_end -
-	             (uintptr_t)pthread__lock_ras_start),
-	    RAS_INSTALL) == 0) {
+	if (ncpu == 1 && rasctl(RAS_ADDR(pthread__lock),
+				RAS_SIZE(pthread__lock), RAS_INSTALL) == 0) {
 		pthread__lock_ops = &pthread__lock_ops_ras;
 		return;
 	}
