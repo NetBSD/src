@@ -1,4 +1,4 @@
-/*	$NetBSD: pfvar.h,v 1.2 2004/06/22 14:17:08 itojun Exp $	*/
+/*	$NetBSD: pfvar.h,v 1.3 2004/06/29 04:42:55 itojun Exp $	*/
 /*	$OpenBSD: pfvar.h,v 1.187 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -1383,6 +1383,9 @@ int	pf_match_uid(u_int8_t, uid_t, uid_t, uid_t);
 int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 
 void	pf_normalize_init(void);
+#ifdef _LKM
+void	pf_normalize_destroy(void);
+#endif
 int	pf_normalize_ip(struct mbuf **, int, struct pfi_kif *, u_short *);
 int	pf_normalize_ip6(struct mbuf **, int, struct pfi_kif *, u_short *);
 int	pf_normalize_tcp(int, struct pfi_kif *, struct mbuf *, int, int, void *,
@@ -1398,6 +1401,9 @@ u_int32_t
 void	pf_purge_expired_fragments(void);
 int	pf_routable(struct pf_addr *addr, sa_family_t af);
 void	pfr_initialize(void);
+#ifdef _LKM
+void	pfr_destroy(void);
+#endif
 int	pfr_match_addr(struct pfr_ktable *, struct pf_addr *, sa_family_t);
 void	pfr_update_stats(struct pfr_ktable *, struct pf_addr *, sa_family_t,
 	    u_int64_t, int, int, int);
@@ -1434,6 +1440,9 @@ int	pfr_ina_define(struct pfr_table *, struct pfr_addr *, int, int *,
 	    int *, u_int32_t, int);
 
 void		 pfi_initialize(void);
+#ifdef _LKM
+void		 pfi_destroy(void);
+#endif
 void		 pfi_attach_clone(struct if_clone *);
 void		 pfi_attach_ifnet(struct ifnet *);
 void		 pfi_detach_ifnet(struct ifnet *);
@@ -1491,6 +1500,9 @@ struct pf_osfp_enlist *
 void	pf_osfp_flush(void);
 int	pf_osfp_get(struct pf_osfp_ioctl *);
 void	pf_osfp_initialize(void);
+#ifdef _LKM
+void	pf_osfp_destroy(void);
+#endif
 int	pf_osfp_match(struct pf_osfp_enlist *, pf_osfp_t);
 struct pf_os_fingerprint *
 	pf_osfp_validate(void);
