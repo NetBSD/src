@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.45 1999/02/13 16:34:39 christos Exp $
+#	$NetBSD: bsd.man.mk,v 1.46 1999/04/16 18:56:19 mycroft Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -25,7 +25,7 @@ CATDEPS?=	${TMACDIR}/tmac.andoc \
 		${TMACDIR}/tmac.doc-nroff \
 		${TMACDIR}/tmac.doc-syms
 MANTARGET?=	cat
-NROFF?=		nroff
+NROFF?=		nroff -Tascii
 TBL?=		tbl
 
 .SUFFIXES: .1 .2 .3 .4 .5 .6 .7 .8 .9 \
