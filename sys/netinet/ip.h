@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
+/*	$NetBSD: ip.h,v 1.9.6.1 1996/11/10 21:57:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -43,10 +43,6 @@
 
 /*
  * Structure of an internet header, naked of options.
- *
- * We declare ip_len and ip_off to be short, rather than u_short
- * pragmatically since otherwise unsigned comparisons can result
- * against negative integers quite easily, and fail in subtle ways.
  */
 struct ip {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -58,9 +54,9 @@ struct ip {
 		  ip_hl:4;		/* header length */
 #endif
 	u_int8_t  ip_tos;		/* type of service */
-	int16_t	  ip_len;		/* total length */
+	u_int16_t ip_len;		/* total length */
 	u_int16_t ip_id;		/* identification */
-	int16_t	  ip_off;		/* fragment offset field */
+	u_int16_t ip_off;		/* fragment offset field */
 #define	IP_DF 0x4000			/* dont fragment flag */
 #define	IP_MF 0x2000			/* more fragments flag */
 #define	IP_OFFMASK 0x1fff		/* mask for fragmenting bits */

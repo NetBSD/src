@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.16.4.1 1996/11/10 21:57:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -41,11 +41,11 @@
  * Overlay for ip header used by other protocols (tcp, udp).
  */
 struct ipovly {
-	u_int8_t ih_x1[9];		/* (unused) */
-	u_int8_t ih_pr;			/* protocol */
-	int16_t	 ih_len;		/* protocol length */
-	struct	 in_addr ih_src;	/* source internet address */
-	struct	 in_addr ih_dst;	/* destination internet address */
+	u_int8_t  ih_x1[9];		/* (unused) */
+	u_int8_t  ih_pr;		/* protocol */
+	u_int16_t ih_len;		/* protocol length */
+	struct	  in_addr ih_src;	/* source internet address */
+	struct	  in_addr ih_dst;	/* destination internet address */
 };
 
 /*
@@ -143,6 +143,7 @@ struct	ipstat {
 	u_long	ips_rawout;		/* total raw ip packets generated */
 	u_long	ips_badfrags;		/* malformed fragments (bad length) */
 	u_long	ips_rcvmemdrop;		/* frags dropped for lack of memory */
+	u_long	ips_toolong;		/* ip length > max ip packet size */
 };
 
 #ifdef _KERNEL
