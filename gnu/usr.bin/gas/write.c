@@ -21,7 +21,7 @@
 /* This thing should be set up to do byteordering correctly.  But... */
 
 #ifndef lint
-static char rcsid[] = "$Id: write.c,v 1.9 1993/12/05 12:44:13 pk Exp $";
+static char rcsid[] = "$Id: write.c,v 1.10 1994/02/04 14:15:57 pk Exp $";
 #endif
 
 #include "as.h"
@@ -1002,6 +1002,12 @@ segT this_segment_type; /* N_TYPE bits for segment. */
 					as_bad("callj to difference of 2 symbols");
 				}
 #endif	/* TC_I960 */
+#ifdef PIC
+				if (flagseen['k'] &&
+						S_IS_EXTERNAL(add_symbolP)) {
+					as_bad("Can't reduce difference of external symbols in PIC code");
+				}
+#endif
 				add_number += S_GET_VALUE(add_symbolP) - 
 				    S_GET_VALUE(sub_symbolP);
 				
