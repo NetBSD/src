@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.10 2002/06/29 01:43:05 gmcgarry Exp $
+.\"     $NetBSD: vnodeops.9,v 1.11 2002/07/19 17:28:29 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -776,14 +776,14 @@ and
 system calls.
 .It Fn VOP_SEEK "vp" "oldoff" "newoff" "cred"
 Test if the file is seekable for the specified offset
-.Fa oldoff .
+.Fa newoff .
 The argument
 .Fa vp
 is the locked vnode of the file to test.  For most filesystems this
 function simply tests if
-.Fa oldoff
+.Fa newoff
 is valid.  If the specified
-.Fa oldoff
+.Fa newoff
 is less than zero, the function returns error code EINVAL.
 .It Fn VOP_REMOVE "dvp" "vp" "cnp"
 Remove a file.  The argument
