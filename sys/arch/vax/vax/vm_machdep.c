@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.52 1999/07/08 18:11:02 thorpej Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.53 1999/07/10 21:55:17 ragge Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -277,7 +277,7 @@ cpu_swapin(p)
 		}
 	}
 
-	pt = kvtopte(uarea + VAX_NBPG);
+	pt = kvtopte(uarea + REDZONEADDR);
 	pt->pg_v = 0; /* Set kernel stack red zone */
 }
 
