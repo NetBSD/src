@@ -1,4 +1,4 @@
-/* $NetBSD: mv.c,v 1.28 2002/12/26 21:37:17 jrf Exp $ */
+/* $NetBSD: mv.c,v 1.29 2003/07/13 08:25:47 itojun Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mv.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: mv.c,v 1.28 2002/12/26 21:37:17 jrf Exp $");
+__RCSID("$NetBSD: mv.c,v 1.29 2003/07/13 08:25:47 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ main(int argc, char *argv[])
 	}
 
 	/* It's a directory, move each file into it. */
-	(void)strcpy(path, argv[argc - 1]);
+	(void)strlcpy(path, argv[argc - 1], sizeof(path));
 	baselen = strlen(path);
 	endp = &path[baselen];
 	*endp++ = '/';

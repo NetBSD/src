@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.22 2003/04/02 10:39:22 fvdl Exp $	*/
+/*	$NetBSD: badsect.c,v 1.23 2003/07/13 08:23:39 itojun Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.22 2003/04/02 10:39:22 fvdl Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.23 2003/07/13 08:23:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ main(argc, argv)
 	if (stat(".", &stbuf) == -1)
 		err(1, "Cannot stat `%s'", argv[1]);
 
-	(void) strcpy(name, _PATH_DEV);
+	(void) strlcpy(name, _PATH_DEV, sizeof(name));
 	if ((dirp = opendir(name)) == NULL)
 		err(1, "Cannot opendir `%s'", argv[1]);
 
