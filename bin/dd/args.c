@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.10 1998/02/28 04:20:02 enami Exp $	*/
+/*	$NetBSD: args.c,v 1.11 1998/02/28 04:22:34 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.10 1998/02/28 04:20:02 enami Exp $");
+__RCSID("$NetBSD: args.c,v 1.11 1998/02/28 04:22:34 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -394,17 +394,17 @@ get_bsz(val)
 	}
 
 	switch (*expr) {
-		case '\0':
-			break;
-		case '*':			/* Backward compatible. */
-		case 'x':
-			t = num;
-			num *= get_bsz(expr + 1);
-			if (t > num)
-erange:				errx(1, "%s: %s", oper, strerror(ERANGE));
-			break;
-		default:
-			errx(1, "%s: illegal numeric value", oper);
+	case '\0':
+		break;
+	case '*':				/* Backward compatible. */
+	case 'x':
+		t = num;
+		num *= get_bsz(expr + 1);
+		if (t > num)
+erange:			errx(1, "%s: %s", oper, strerror(ERANGE));
+		break;
+	default:
+		errx(1, "%s: illegal numeric value", oper);
 	}
 	return (num);
 }
