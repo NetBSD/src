@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.7.2.3 1997/11/02 20:38:20 mellon Exp $	*/
+/*	$NetBSD: defs.h,v 1.7.2.4 1997/11/06 00:55:23 mellon Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,8 +77,9 @@ typedef struct distinfo {
 
 /* variables */
 
-EXTERN char rel[10] INIT(REL);
-EXTERN char rels[10] INIT(REL);
+EXTERN char rel[SSTRSIZE] INIT(REL);
+EXTERN char rels[SSTRSIZE] INIT(REL);
+EXTERN char machine[SSTRSIZE] INIT(MACH);
 
 EXTERN int yesno;
 EXTERN int layoutkind;
@@ -151,7 +152,7 @@ EXTERN int  got_dist;
 EXTERN char dist_dir[STRSIZE] INIT("/usr/INSTALL");
 EXTERN int  clean_dist_dir INIT(0);
 EXTERN char ftp_host[STRSIZE] INIT("ftp.netbsd.org");
-EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-" REL "/" MACH);
+EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-");
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
 EXTERN char ftp_pass[STRSIZE] INIT("");
 
@@ -159,7 +160,7 @@ EXTERN char nfs_host[STRSIZE] INIT("");
 EXTERN char nfs_dir[STRSIZE] INIT("");
 
 EXTERN char cdrom_dev[SSTRSIZE] INIT("cd0");
-EXTERN char cdrom_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-" REL "/" MACH);
+EXTERN char cdrom_dir[STRSIZE] INIT("/Release/NetBSD/NetBSD-");
 
 EXTERN int  mnt2_mounted INIT(0);
 
@@ -220,7 +221,7 @@ int	config_network __P((void));
 void	mnt_net_config __P((void));
 
 /* From run.c */
-int	collect __P((int kind, char **buffer, char *name, ...));
+int	collect __P((int kind, char **buffer, const char *name, ...));
 int	run_prog __P((char *, ...));
 void	run_prog_or_die __P((char *, ...));
 int	run_prog_or_continue __P((char *, ...));
@@ -233,7 +234,6 @@ void	get_ramsize __P((void));
 void	ask_sizemult __P((void));
 void	reask_sizemult __P((void));
 int	ask_ynquestion __P((char *quest, char def, ...));
-void	extract_dist __P((void));
 void	run_makedev __P((void));
 int	get_via_floppy __P((void));
 int	get_via_cdrom __P((void));
@@ -241,10 +241,14 @@ void	cd_dist_dir __P((char *));
 void	toggle_getit __P((int));
 void	show_cur_distsets __P((void));
 void	make_ramdisk_dir __P((const char *path));
-
-void get_and_unpack_sets(int success_msg, int failure_msg);
+void	ask_verbose_dist __P((void));
+void	extract_file __P((char *path));
+void	extract_dist __P((void));
+void 	get_and_unpack_sets(int success_msg, int failure_msg);
+int	sanity_check __P((void));
 
 /* from target.c */
+const	char * target_expand __P((const char *pathname));
 void	make_target_dir __P((const char *path));
 void	append_to_target_file __P((const char *path, const char *string));
 void	echo_to_target_file __P(( const char *path, const char *string));
@@ -253,3 +257,13 @@ void	trunc_target_file __P((const char *path));
 int	target_chdir __P(( const char *path));
 void	target_chdir_or_die __P((const char *dir));
 int	target_already_root __P((void));
+FILE*	target_fopen __P((const char *filename, const char *type));
+int	target_collect_file __P((int kind, char **buffer, char *name));
+int	is_active_rootpart __P((const char *partname));
+void	dup_file_into_target __P((const char *filename));
+void	mv_within_target_or_die __P((const char *from, const char *to));
+int	cp_within_target __P((const char *frompath, const char *topath));
+int	target_mount __P((const char *fstype, const char *from, const char* on));
+int	target_test __P((const char*, const char*));
+int	target_verify_dir __P((const char *path));
+int	target_verify_file __P((const char *path));
