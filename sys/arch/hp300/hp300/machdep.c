@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161 2002/09/19 10:38:01 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.162 2002/09/25 19:30:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2002/09/19 10:38:01 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2002/09/25 19:30:22 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2002/09/19 10:38:01 ragge Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
@@ -241,12 +240,11 @@ hp300_init()
 void
 consinit()
 {
-	extern struct map extiomap[];
 
 	/*
-	 * Initialize the DIO resource map.
+	 * Initialize the external I/O extent map.
 	 */
-	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
+	iomap_init();
 
 	/*
 	 * Initialize the console before we print anything out.
