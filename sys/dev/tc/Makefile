@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1996/03/02 01:16:47 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1998/06/12 23:22:58 cgd Exp $
 
-AWK=	awk
+INCSDIR= /usr/include/dev/tc
 
-tcdevs.h tcdevs_data.h: tcdevs devlist2h.awk
-	/bin/rm -f tcdevs.h tcdevs_data.h
-	${AWK} -f devlist2h.awk tcdevs
+INCS=	ascvar.h if_levar.h ioasicreg.h ioasicvar.h sticreg.h sticvar.h \
+	tcdevs.h tcdevs_data.h tcreg.h tcvar.h
+
+.include <bsd.kinc.mk>
