@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 1999/03/26 21:18:50 is Exp $
+#	$NetBSD: genassym.cf,v 1.10 1999/03/27 16:56:09 mhitch Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -45,9 +45,7 @@ include <sys/user.h>
 
 include <vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/cpu.h>
 include <machine/psl.h>
@@ -107,11 +105,7 @@ define	MD_REGS		offsetof(struct mdproc, md_regs)
 define	SRUN		SRUN
 
 # interrupt/fault metering
-ifdef UVM
 define	UVMEXP_INTRS	offsetof(struct uvmexp, intrs)
-else
-define	V_INTR		offsetof(struct vmmeter, v_intr)
-endif
 
 # general constants
 define	UPAGES		UPAGES
