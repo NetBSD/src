@@ -70,6 +70,7 @@ extern int h_errno;
 #endif
 #define _PATH_DHCPD_PID	"/etc/dhcpd.pid"
 #define _PATH_DHCLIENT_PID "/etc/dhclient.pid"
+#define _PATH_DHCLIENT_PID "/etc/dhcrelay.pid"
 /* Stdarg definitions for ANSI-compliant C compilers. */
 #import <stdarg.h>
 #define VA_DOTDOTDOT ...

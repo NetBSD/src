@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.1.1.3 1997/10/20 23:28:15 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.1.1.3.2.1 1997/11/22 09:28:13 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1829,6 +1829,46 @@ void script_write_params (ip, prefix, lease)
 	fprintf (scriptFile, "%sip_address=\"%s\"\n",
 		 prefix, piaddr (lease -> address));
 	fprintf (scriptFile, "export %sip_address\n", prefix);
+
+	/* For the benefit of Linux (and operating systems which may
+	   have similar needs), compute the network address based on
+	   the supplied ip address and netmask, if provided.  Also
+	   compute the broadcast address (the host address all ones
+	   broadcast address, not the host address all zeroes
+	   broadcast address). */
+
+	if (lease -> options [DHO_SUBNET_MASK].len &&
+	    (lease -> options [DHO_SUBNET_MASK].len <
+	     sizeof lease -> address.iabuf)) {
+		struct iaddr netmask, subnet, broadcast;
+
+		memcpy (netmask.iabuf,
+			lease -> options [DHO_SUBNET_MASK].data,
+			lease -> options [DHO_SUBNET_MASK].len);
+		netmask.len = lease -> options [DHO_SUBNET_MASK].len;
+
+		subnet = subnet_number (lease -> address, netmask);
+		if (subnet.len) {
+			fprintf (scriptFile, "%snetwork_number=\"%s\";\n",
+				 prefix, piaddr (subnet));
+			fprintf (scriptFile, "export %snetwork_number\n",
+				 prefix);
+
+			if (!lease -> options [DHO_BROADCAST_ADDRESS].len) {
+				broadcast = broadcast_addr (subnet, netmask);
+				if (broadcast.len) {
+					fprintf (scriptFile,
+						 "%s%s=\"%s\";\n", prefix,
+						 "broadcast_address",
+						 piaddr (broadcast));
+					fprintf (scriptFile,
+						 "export %s%s\n", prefix,
+						 "broadcast_address");
+				}
+			}
+		}
+	}
+
 	if (lease -> filename) {
 		fprintf (scriptFile, "%sfilename=\"%s\";\n",
 			 prefix, lease -> filename);

@@ -435,6 +435,10 @@ typedef unsigned char option_mask [16];
 #define _PATH_RESOLV_CONF	"/etc/resolv.conf"
 #endif
 
+#ifndef _PATH_DHCRELAY_PID
+#define _PATH_DHCRELAY_PID	"/var/run/dhcrelay.pid"
+#endif
+
 #ifndef DHCPD_LOG_FACILITY
 #define DHCPD_LOG_FACILITY	LOG_DAEMON
 #endif
@@ -775,6 +779,7 @@ void putShort PROTO ((unsigned char *, int16_t));
 /* inet.c */
 struct iaddr subnet_number PROTO ((struct iaddr, struct iaddr));
 struct iaddr ip_addr PROTO ((struct iaddr, struct iaddr, u_int32_t));
+struct iaddr broadcast_addr PROTO ((struct iaddr, struct iaddr));
 u_int32_t host_addr PROTO ((struct iaddr, struct iaddr));
 int addr_eq PROTO ((struct iaddr, struct iaddr));
 char *piaddr PROTO ((struct iaddr));

@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.1.1.4 1997/10/20 23:28:30 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.1.1.4.2.1 1997/11/22 09:28:33 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -111,7 +111,7 @@ void discover_interfaces (state)
 		ir = INTERFACE_REQUESTED;
 
 	/* Cycle through the list of interfaces looking for IP addresses.
-	   Go through twice; once to count the number if addresses, and a
+	   Go through twice; once to count the number of addresses, and a
 	   second time to copy them into an array of addresses. */
 	for (i = 0; i < ic.ifc_len;) {
 		struct ifreq *ifp = (struct ifreq *)((caddr_t)ic.ifc_req + i);

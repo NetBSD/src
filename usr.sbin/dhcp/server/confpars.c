@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.1.1.3 1997/10/20 23:29:30 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.1.1.3.2.1 1997/11/22 09:29:01 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1222,7 +1222,12 @@ struct lease *parse_lease_declaration (cfile)
 
 			      case HOSTNAME:
 				seenbit = 512;
-				lease.hostname = parse_host_name (cfile);
+				token = peek_token (&val, cfile);
+				if (token == STRING)
+					lease.hostname = parse_string (cfile);
+				else
+					lease.hostname =
+						parse_host_name (cfile);
 				if (!lease.hostname) {
 					seenbit = 0;
 					return (struct lease *)0;
