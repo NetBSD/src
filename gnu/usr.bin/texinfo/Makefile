@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/07/24 09:09:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2000/06/11 13:07:49 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -25,4 +25,5 @@ DIST=		${.CURDIR}/../../dist
 all-info all-install-info all-makeinfo all-texi2dvi all-texindex: all-common
 
 .include <bsd.info.mk>
+.include <bsd.files.mk>
 .include <bsd.subdir.mk>
