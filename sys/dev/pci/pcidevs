@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.380 2002/01/03 05:25:48 rafal Exp $
+$NetBSD: pcidevs,v 1.381 2002/01/04 18:26:20 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -541,12 +541,15 @@ vendor DELTA		0x1500	Delta Electronics
 vendor TERRATEC		0x153b	TerraTec Electronic
 vendor SOLIDUM		0x1588	Solidum Systems Corp.
 vendor GEOCAST		0x15a1	Geocast Network Systems
+vendor EUMITCOM		0x1638	Eumitcom
 vendor NETSEC		0x1660	NetSec
 vendor SIBYTE		0x166d	SiByte, Inc.
 vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
+vendor COREGA		0x15e8	Corega
+vendor GLOBALSUN	0x16ab	Global Sun Tech
 vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
@@ -1010,6 +1013,9 @@ product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
 product CONTAQ 82C693		0xc693	82C693 PCI-ISA Bridge
 
+/* Corega products */
+product COREGA CGWLPCIA11	0x0130	CGWLPCIA11
+
 /* Corollary Products */
 product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
 
@@ -1115,6 +1121,9 @@ product ESSTECH MAESTRO3_2	0x199a	Maestro 3 PCI Audio Accelerator
 /* ESS Technology Inc products */
 product ESSTECH2 MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 
+/* Eumitcom products */
+product EUMITCOM WL11000	0x1100	WL11000
+
 /* O2 Micro Inc */
 product O2MICRO  OZ6729 0x6729	OZ6729 PCI-PCMCIA Bridge
 product O2MICRO  OZ6730 0x673A	OZ6730 PCI-PCMCIA Bridge
@@ -1155,6 +1164,10 @@ product GALILEO	GT64011		0x4146	GT-64011 System Controller
 product GALILEO	GT64120		0x4620	GT-64120 System Controller
 product GALILEO	GT64130		0x6320	GT-64130 System Controller
 product GALILEO	GT64260		0x6430	GT-64260 System Controller
+
+/* Global Sun Tech products */
+product GLOBALSUN GL24110P	0x1101	GL24110P
+product GLOBALSUN GL24110P_2	0x1102	GL24110P
 
 /* Guillemot products */
 product GUILLEMOT MAXIRADIO	0x1001	MAXIRADIO
@@ -1507,8 +1520,9 @@ product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 
 /* Netgear products */
-product NETGEAR GA620	0x620a	GA620 1000baseSX Gigabit Ethernet
-product NETGEAR GA620T	0x630a	GA620 1000baseT Gigabit Ethernet
+product NETGEAR GA620		0x620a	GA620 1000baseSX Gigabit Ethernet
+product NETGEAR GA620T		0x630a	GA620 1000baseT Gigabit Ethernet
+product NETGEAR MA301		0x4100	MA301
 
 /* Netmos products */
 product NETMOS NM9835	0x9835	Dual UART and 1284 Printer port
