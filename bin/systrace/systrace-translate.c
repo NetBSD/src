@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.6 2002/08/28 03:52:46 itojun Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.7 2002/09/28 17:56:54 provos Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.10 2002/08/01 20:50:17 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -215,7 +215,7 @@ get_argv(struct intercept_translate *trans, int fd, pid_t pid, void *addr)
 		if (intercept.io(fd, pid, INTERCEPT_READ, (char *)addr + off,
 			(void *)&arg, sizeof(char *)) == -1) {
 			warn("%s: ioctl", __func__);
-			return (NULL);
+			return (-1);
 		}
 		if (arg == NULL)
 			break;
