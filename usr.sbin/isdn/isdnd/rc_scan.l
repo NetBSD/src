@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration lexical analyzer
  *	---------------------------------------------------
  *
- *	$Id: rc_scan.l,v 1.2 2001/01/07 21:01:03 martin Exp $ 
+ *	$Id: rc_scan.l,v 1.3 2001/10/19 22:57:54 tv Exp $ 
  *
  * $FreeBSD$
  *
@@ -47,7 +47,7 @@
 #include <ctype.h>
 #include <sysexits.h>
 
-#include "y.tab.h"
+#include "rc_parse.h"
 
 int lineno;
 void reset_scanner(FILE *infile);
