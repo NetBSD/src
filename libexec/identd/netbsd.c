@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd.c,v 1.17 2003/04/22 16:42:00 tron Exp $	*/
+/*	$NetBSD: netbsd.c,v 1.18 2003/06/26 16:23:53 christos Exp $	*/
 
 /*
 ** netbsd.c		Low level kernel access functions for NetBSD
@@ -32,11 +32,8 @@
 
 #include <sys/socketvar.h>
 
-#define _KERNEL
-
 #include <sys/file.h>
 
-#undef _KERNEL
 #include <sys/sysctl.h>
 
 #include <fcntl.h>
