@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.7 2004/02/24 15:12:52 wiz Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.8 2004/03/02 00:50:57 thorpej Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.7 2004/02/24 15:12:52 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.8 2004/03/02 00:50:57 thorpej Exp $");
 
 /*
  * IPsec controller part.
@@ -667,7 +667,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		("ipsec4_get_ulp: packet too short"));
 
 	/* NB: ip_input() flips it into host endian XXX need more checking */
-	if (m->m_len < sizeof (struct ip)) {
+	if (m->m_len >= sizeof(struct ip)) {
 		struct ip *ip = mtod(m, struct ip *);
 		if (ip->ip_off & (IP_MF | IP_OFFMASK))
 			goto done;
