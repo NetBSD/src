@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,17 +32,21 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)subr.c	5.10 (Berkeley) 2/26/91";
+static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/4/93";
 #endif /* not lint */
 
 /*
  * Melbourne getty.
  */
 #define USE_OLD_TTY
+#include <stdlib.h>
 #include <sgtty.h>
-#include <unistd.h>
 #include <string.h>
+#include <unistd.h>
+
 #include "gettytab.h"
+#include "extern.h"
+#include "pathnames.h"
 
 extern	struct sgttyb tmode;
 extern	struct tchars tc;
@@ -51,23 +55,25 @@ extern	struct ltchars ltc;
 /*
  * Get a table entry.
  */
-gettable(name, buf, area)
-	char *name, *buf, *area;
+void
+gettable(name, buf)
+	char *name, *buf;
 {
 	register struct gettystrs *sp;
 	register struct gettynums *np;
 	register struct gettyflags *fp;
-	register n;
+	long n;
+	char *dba[2];
+	dba[0] = _PATH_GETTYTAB;
+	dba[1] = 0;
 
-	hopcount = 0;		/* new lookup, start fresh */
-	if (getent(buf, name) != 1)
+	if (cgetent(&buf, dba, name) != 0)
 		return;
 
-	for (sp = gettystrs; sp->field; sp++)
-		sp->value = getstr(sp->field, &area);
+	for (sp = gettystrs; sp->field; sp++) 
+		cgetstr(buf, sp->field, &sp->value);
 	for (np = gettynums; np->field; np++) {
-		n = getnum(np->field);
-		if (n == -1)
+		if (cgetnum(buf, np->field, &n) == -1)
 			np->set = 0;
 		else {
 			np->set = 1;
@@ -75,16 +81,27 @@ gettable(name, buf, area)
 		}
 	}
 	for (fp = gettyflags; fp->field; fp++) {
-		n = getflag(fp->field);
-		if (n == -1)
+		if (cgetcap(buf, fp->field, ':') == NULL)
 			fp->set = 0;
 		else {
 			fp->set = 1;
-			fp->value = n ^ fp->invrt;
+			fp->value = 1 ^ fp->invrt;
 		}
 	}
+#ifdef DEBUG
+	printf("name=\"%s\", buf=\"%s\"\n", name, buf);
+	for (sp = gettystrs; sp->field; sp++)
+		printf("cgetstr: %s=%s\n", sp->field, sp->value);
+	for (np = gettynums; np->field; np++)
+		printf("cgetnum: %s=%d\n", np->field, np->value);
+	for (fp = gettyflags; fp->field; fp++)
+		printf("cgetflags: %s='%c' set='%c'\n", fp->field, 
+		       fp->value + '0', fp->set + '0');
+	exit(1);
+#endif /* DEBUG */
 }
 
+void
 gendefaults()
 {
 	register struct gettystrs *sp;
@@ -104,6 +121,7 @@ gendefaults()
 			fp->defalt = fp->invrt;
 }
 
+void
 setdefaults()
 {
 	register struct gettystrs *sp;
@@ -136,6 +154,7 @@ charvars[] = {
 	&ltc.t_werasc, &ltc.t_lnextc, 0
 };
 
+void
 setchars()
 {
 	register int i;
@@ -152,6 +171,7 @@ setchars()
 
 long
 setflags(n)
+	int n;
 {
 	register long f;
 
@@ -235,44 +255,45 @@ struct delayval {
  */
 
 struct delayval	crdelay[] = {
-	1,		CR1,
-	2,		CR2,
-	3,		CR3,
-	83,		CR1,
-	166,		CR2,
-	0,		CR3,
+	{ 1,		CR1 },
+	{ 2,		CR2 },
+	{ 3,		CR3 },
+	{ 83,		CR1 },
+	{ 166,		CR2 },
+	{ 0,		CR3 },
 };
 
 struct delayval nldelay[] = {
-	1,		NL1,		/* special, calculated */
-	2,		NL2,
-	3,		NL3,
-	100,		NL2,
-	0,		NL3,
+	{ 1,		NL1 },		/* special, calculated */
+	{ 2,		NL2 },
+	{ 3,		NL3 },
+	{ 100,		NL2 },
+	{ 0,		NL3 },
 };
 
 struct delayval	bsdelay[] = {
-	1,		BS1,
-	0,		0,
+	{ 1,		BS1 },
+	{ 0,		0 },
 };
 
 struct delayval	ffdelay[] = {
-	1,		FF1,
-	1750,		FF1,
-	0,		FF1,
+	{ 1,		FF1 },
+	{ 1750,		FF1 },
+	{ 0,		FF1 },
 };
 
 struct delayval	tbdelay[] = {
-	1,		TAB1,
-	2,		TAB2,
-	3,		XTABS,		/* this is expand tabs */
-	100,		TAB1,
-	0,		TAB2,
+	{ 1,		 TAB1 },
+	{ 2,		 TAB2 },
+	{ 3,		XTABS },	/* this is expand tabs */
+	{ 100,		 TAB1 },
+	{ 0,		 TAB2 },
 };
 
+int
 delaybits()
 {
-	register f;
+	register int f;
 
 	f  = adelay(CD, crdelay);
 	f |= adelay(ND, nldelay);
@@ -282,6 +303,7 @@ delaybits()
 	return (f);
 }
 
+int
 adelay(ms, dp)
 	register ms;
 	register struct delayval *dp;
@@ -295,6 +317,7 @@ adelay(ms, dp)
 
 char	editedhost[32];
 
+void
 edithost(pat)
 	register char *pat;
 {
@@ -338,28 +361,30 @@ struct speedtab {
 	int	speed;
 	int	uxname;
 } speedtab[] = {
-	50,	B50,
-	75,	B75,
-	110,	B110,
-	134,	B134,
-	150,	B150,
-	200,	B200,
-	300,	B300,
-	600,	B600,
-	1200,	B1200,
-	1800,	B1800,
-	2400,	B2400,
-	4800,	B4800,
-	9600,	B9600,
-	19200,	EXTA,
-	19,	EXTA,		/* for people who say 19.2K */
-	38400,	EXTB,
-	38,	EXTB,
-	7200,	EXTB,		/* alternative */
-	0
+	{ 50,	  B50 },
+	{ 75,	  B75 },
+	{ 110,	 B110 },
+	{ 134,	 B134 },
+	{ 150,	 B150 },
+	{ 200,	 B200 },
+	{ 300,	 B300 },
+	{ 600,	 B600 },
+	{ 1200,	B1200 },
+	{ 1800,	B1800 },
+	{ 2400,	B2400 },
+	{ 4800,	B4800 },
+	{ 9600,	B9600 },
+	{ 19200, EXTA },
+	{ 19,	 EXTA },	/* for people who say 19.2K */
+	{ 38400, EXTB },
+	{ 38,	 EXTB },
+	{ 7200,	 EXTB },	/* alternative */
+	{ 0 }
 };
 
+int
 speed(val)
+	int val;
 {
 	register struct speedtab *sp;
 
@@ -373,13 +398,13 @@ speed(val)
 	return (B300);		/* default in impossible cases */
 }
 
+void
 makeenv(env)
 	char *env[];
 {
 	static char termbuf[128] = "TERM=";
 	register char *p, *q;
 	register char **ep;
-	char *index();
 
 	ep = env;
 	if (TT && *TT) {
@@ -388,7 +413,7 @@ makeenv(env)
 	}
 	if (p = EV) {
 		q = p;
-		while (q = index(q, ',')) {
+		while (q = strchr(q, ',')) {
 			*q++ = '\0';
 			*ep++ = p;
 			p = q;

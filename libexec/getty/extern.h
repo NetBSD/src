@@ -1,5 +1,5 @@
-/*-
- * Copyright (c) 1990, 1993
+/*
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,26 +29,28 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)extern.h	8.1 (Berkeley) 6/4/93
  */
 
-#ifndef lint
-static char sccsid[] = "@(#)ttydefaults.c	8.1 (Berkeley) 6/4/93";
-#endif /* not lint */
+struct delayval;
 
-#include <sys/termios.h>
+int	 adelay __P((int, struct delayval *));
+char	*autobaud __P((void));
+int	 delaybits __P((void));
+void	 edithost __P((char *));
+void	 gendefaults __P((void));
+int	 getent __P((char *, char *));
+int	 getflag __P((char *));
+long	 getnum __P((char *));
+char	*getstr __P((char *, char **));
+void	 gettable __P((char *, char *));
+void	 makeenv __P((char *[]));
+char	*portselector __P((void));
+void	 set_ttydefaults __P((int));
+void	 setchars __P((void));
+void	 setdefaults __P((void));
+long	 setflags __P((int));
+int	 speed __P((int));
 
-#include "extern.h"
-
-void
-set_ttydefaults(fd)
-	int fd;
-{
-	struct termios term;
-
-	tcgetattr(fd, &term);
-	term.c_iflag = TTYDEF_IFLAG;
-	term.c_oflag = TTYDEF_OFLAG;
-	term.c_lflag = TTYDEF_LFLAG;
-	term.c_cflag = TTYDEF_CFLAG;
-	tcsetattr(fd, TCSAFLUSH, &term);
-}
+int	 login_tty __P((int));			/* From libutil. */

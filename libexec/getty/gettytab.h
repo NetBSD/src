@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)gettytab.h	5.5 (Berkeley) 3/27/91
+ *	@(#)gettytab.h	8.2 (Berkeley) 3/30/94
  */
 
 /*
@@ -113,9 +113,9 @@ struct gettyflags {
 #define	EP	gettyflags[2].value
 #define	EPset	gettyflags[2].set
 #define	OP	gettyflags[3].value
-#define	OPset	gettyflags[2].set
+#define	OPset	gettyflags[3].set
 #define	AP	gettyflags[4].value
-#define	APset	gettyflags[2].set
+#define	APset	gettyflags[4].set
 #define	EC	gettyflags[5].value
 #define	CO	gettyflags[6].value
 #define	CB	gettyflags[7].value
@@ -134,10 +134,10 @@ struct gettyflags {
 #define DX	gettyflags[20].value
 #define	NP	gettyflags[21].value
 
-int	getent();
-long	getnum();
-int	getflag();
-char	*getstr();
+int	getent __P((char *, char *));
+long	getnum __P((char *));
+int	getflag __P((char *));
+char	*getstr __P((char *, char **));
 
 extern	struct gettyflags gettyflags[];
 extern	struct gettynums gettynums[];
