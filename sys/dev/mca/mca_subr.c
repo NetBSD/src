@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_subr.c,v 1.2 2001/02/14 19:31:19 jdolecek Exp $	*/
+/*	$NetBSD: mca_subr.c,v 1.3 2001/04/27 17:11:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,4 +79,16 @@ mca_devinfo(id, cp)
 	else
 #endif /* MCAVERBOSE */
 		sprintf(cp, "product 0x%04x", id);
+}
+
+/*
+ * Returns true if the device should be attempted to be matched
+ * even through it's disabled. Apparently, some devices were
+ * designed this way.
+ */
+int
+mca_match_disabled(id)
+	int id;
+{
+	return (0);
 }
