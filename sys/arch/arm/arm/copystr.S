@@ -1,4 +1,4 @@
-/*	$NetBSD: copystr.S,v 1.5 2002/08/09 06:18:24 thorpej Exp $	*/
+/*	$NetBSD: copystr.S,v 1.1 2002/08/11 23:17:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -79,6 +79,14 @@ ENTRY(copystr)
 	ldmfd	sp!, {r4-r5}			/* stack is 8 byte aligned */
 	mov	pc, lr
 
+#ifdef __PROG32
+#define SAVE_REGS	stmfd	sp!, {r4-r6}
+#define RESTORE_REGS	ldmfd	sp!, {r4-r6}
+#else
+/* Need to save R14_svc because it'll get trampled if we take a page fault. */
+#define SAVE_REGS	stmfd	sp!, {r4-r6, r14}
+#define RESTORE_REGS	ldmfd	sp!, {r4-r6, r14}
+#endif
 
 /*
  * r0 - user space address
@@ -89,7 +97,7 @@ ENTRY(copystr)
  * Copy string from user space to kernel space
  */
 ENTRY(copyinstr)
-	stmfd	sp!, {r4-r6}
+	SAVE_REGS
 
 	teq	r2, #0x00000000
 	mov	r6, #0x00000000
@@ -124,7 +132,7 @@ ENTRY(copyinstr)
 2:	teq	r3, #0x00000000
 	strne	r6, [r3]
 
-	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
+	RESTORE_REGS
 	mov	pc, lr
 
 /*
@@ -136,7 +144,7 @@ ENTRY(copyinstr)
  * Copy string from kernel space to user space
  */
 ENTRY(copyoutstr)
-	stmfd	sp!, {r4-r6}		/* stack isn't 8 byte aligned */
+	SAVE_REGS
 
 	teq	r2, #0x00000000
 	mov	r6, #0x00000000
@@ -171,14 +179,14 @@ ENTRY(copyoutstr)
 2:	teq	r3, #0x00000000
 	strne	r6, [r3]
 
-	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
+	RESTORE_REGS
 	mov	pc, lr
 
 /* A fault occurred during the copy */
 Lcopystrfault:
 	mov	r0, #0x00000000
 	str	r0, [r4, #PCB_ONFAULT]
-	ldmfd	sp!, {r4-r6}			/* stack is 8 byte aligned */
+	RESTORE_REGS
 	mov	r0, #EFAULT
 	mov	pc, lr
 
