@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.59 2002/01/27 13:18:24 is Exp $
+# $NetBSD: DRACO,v 1.60 2002/01/27 13:36:59 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.171 2002/01/27 13:01:46 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.173 2002/01/27 13:27:51 is Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.59 $"
+#ident  		"GENERIC-$Revision: 1.60 $"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -130,6 +130,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 options 	SCSIVERBOSE	# human readable SCSI error messages
 
 options 	NTP		# NTP phase/frequency locked loop
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #Misc. debugging options
 
