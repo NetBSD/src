@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.20 2000/05/26 20:51:25 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.21 2000/06/02 21:49:06 matt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -205,8 +205,8 @@ db_write_bytes(addr, size, data)
 void
 Debugger()
 {
-	splsave = splx(0xe);
-	mtpr(0xf, PR_SIRR); /* beg for debugger */
+	splsave = splx(0xe);	/* XXX WRONG (this can lower IPL) */
+	schedsoftddb();		/* beg for debugger */
 	splx(splsave);
 }
 
@@ -514,7 +514,7 @@ kdbrint(tkn)
 {
 
 	if (ddbescape && ((tkn & 0x7f) == 'D')) {
-		mtpr(0xf, PR_SIRR);
+		schedsoftddb();
 		ddbescape = 0;
 		return 1;
 	}
