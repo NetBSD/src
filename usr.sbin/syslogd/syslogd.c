@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.20 2004/11/17 03:23:09 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.21 2004/11/17 06:24:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.20 2004/11/17 03:23:09 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.21 2004/11/17 06:24:03 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,6 +130,7 @@ char	ctty[] = _PATH_CONSOLE;
 #define SYNC_FILE	0x002	/* do fsync on file after printing */
 #define ADDDATE		0x004	/* add a date to the message */
 #define MARK		0x008	/* this message is a mark */
+#define	ISKERNEL	0x010	/* kernel generated message */
 
 /*
  * This structure represents the files that will have log
@@ -752,13 +753,10 @@ void
 printsys(char *msg)
 {
 	int c, n, pri, flags, is_printf;
-	char *lp, *p, *q, line[MAXLINE + 1];
+	char *p, *q, line[MAXLINE + 1];
 
-	(void)strlcpy(line, _PATH_UNIX, sizeof(line));
-	(void)strlcat(line, ": ", sizeof(line));
-	lp = line + strlen(line);
 	for (p = msg; *p != '\0'; ) {
-		flags = ADDDATE;
+		flags = ISKERNEL | ADDDATE;
 		if (SyncKernel)
 			flags |= SYNC_FILE;
 		pri = DEFSPRI;
@@ -778,7 +776,7 @@ printsys(char *msg)
 		}
 		if (pri &~ (LOG_FACMASK|LOG_PRIMASK))
 			pri = DEFSPRI;
-		q = lp;
+		q = line;
 		while (*p != '\0' && (c = *p++) != '\n' &&
 		    q < &line[MAXLINE])
 			*q++ = c;
@@ -819,10 +817,10 @@ void
 logmsg(int pri, char *msg, char *from, int flags)
 {
 	struct filed *f;
-	int fac, msglen, omask, prilev;
+	int fac, msglen, omask, prilev, i;
 	char *timestamp;
 	char prog[NAME_MAX + 1];
-	int i;
+	char buf[MAXLINE + 1];
 
 	dprintf("logmsg: pri 0%o, flags 0x%x, from %s, msg %s\n",
 	    pri, flags, from, msg);
@@ -867,6 +865,14 @@ logmsg(int pri, char *msg, char *from, int flags)
 		prog[i] = msg[i];
 	}
 	prog[i] = '\0';
+
+	/* add kernel prefix for kernel messages */
+	if (flags & ISKERNEL) {
+		snprintf(buf, sizeof(buf), "%s: %s",
+		    _PATH_UNIX, msg);
+		msg = buf;
+		msglen = strlen(buf);
+	}
 
 	/* log the message to the particular outputs */
 	if (!Initialized) {
