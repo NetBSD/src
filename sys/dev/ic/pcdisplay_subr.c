@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.25 2002/08/25 19:11:16 thorpej Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.25.8.1 2004/06/07 09:37:44 tron Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.25 2002/08/25 19:11:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.25.8.1 2004/06/07 09:37:44 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,8 @@ pcdisplay_putchar(id, row, col, c, attr)
 				  c | (attr << 8));
 	else
 		scr->mem[off] = c | (attr << 8);
+
+	scr->visibleoffset = scr->dispoffset;
 }
 
 void
