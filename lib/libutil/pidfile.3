@@ -1,4 +1,4 @@
-.\"	$NetBSD: pidfile.3,v 1.6 2002/05/22 07:37:26 itojun Exp $
+.\"	$NetBSD: pidfile.3,v 1.7 2002/05/22 10:22:41 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@ is supplied.
 If called with a new
 .Ar basename ,
 .Fn pidfile
-will remove the old pid file and writes the new one.
+will remove the old pid file and write the new one.
 .Sh RETURN VALUES
 .Fn pidfile
 returns 0 on success and -1 on failure.
@@ -84,7 +84,6 @@ The
 function call appeared in
 .Nx 1.5 .
 .Sh BUGS
-.Pp
 .Fn pidfile
 uses
 .Xr atexit 3
