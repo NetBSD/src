@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.40 1998/01/12 09:23:14 thorpej Exp $	*/
+/*	$NetBSD: am7990.c,v 1.41 1998/03/29 22:08:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -1175,7 +1175,7 @@ am7990_setladrf(ac, af)
 {
 	struct ifnet *ifp = &ac->ec_if;
 	struct ether_multi *enm;
-	register u_char *cp, c;
+	register u_char *cp;
 	register u_int32_t crc;
 	register int i, len;
 	struct ether_multistep step;
@@ -1209,14 +1209,13 @@ am7990_setladrf(ac, af)
 		cp = enm->enm_addrlo;
 		crc = 0xffffffff;
 		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
-			c = *cp++;
+			crc ^= (*cp++) << 0;
 			for (i = 8; --i >= 0;) {
-				if ((crc & 0x01) ^ (c & 0x01)) {
+				if (crc & 0x01) {
 					crc >>= 1;
 					crc ^= 0xedb88320;
 				} else
 					crc >>= 1;
-				c >>= 1;
 			}
 		}
 		/* Just want the 6 most significant bits. */
