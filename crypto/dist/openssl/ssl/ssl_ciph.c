@@ -872,7 +872,7 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	char *ver,*exp;
 	char *kx,*au,*enc,*mac;
 	unsigned long alg,alg2,alg_s;
-	static char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
+	static const char format[]="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
 	
 	alg=cipher->algorithms;
 	alg_s=cipher->algo_strength;
