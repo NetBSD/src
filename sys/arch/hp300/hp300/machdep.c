@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.13 1993/12/06 13:14:16 mycroft Exp $
+ *	$Id: machdep.c,v 1.14 1993/12/08 23:11:40 mycroft Exp $
  */
 
 #include "param.h"
@@ -1625,29 +1625,52 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 }
 #endif /* COMPAT_NOMID */
 
-/*
- * XXX -- these functions need to be implemented
- */
 int
 ptrace_set_pc (struct proc *p, unsigned int addr)
 {
-	return EINVAL;
+	struct frame *frame = (struct frame *)
+	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
+
+	frame->f_pc = addr & ~1;
+	return 0;
 }
 
 int
 ptrace_single_step (struct proc *p)
 {
-	return EINVAL;
+	struct frame *frame = (struct frame *)
+	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
+
+	frame->f_sr |= PSL_T;
+	return 0;
 }
 
 int
 ptrace_getregs (struct proc *p, unsigned int *addr)
 {
-	return EINVAL;
+	u_long ipcreg[NIPCREG];
+	struct frame *frame = (struct frame *)
+	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
+
+	bcopy(frame->f_regs, ipcreg, sizeof(frame->f_regs));
+	ipcreg[PS] = frame->f_sr;
+	ipcreg[PC] = frame->f_pc;
+	return copyout(ipcreg, addr, sizeof(ipcreg));
 }
 
 int
 ptrace_setregs (struct proc *p, unsigned int *addr)
 {
-	return EINVAL;
+	int error;
+	u_long ipcreg[NIPCREG];
+	struct frame *frame = (struct frame *)
+	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
+
+	if (error = copyin(addr, ipcreg, sizeof(ipcreg)))
+		return error;
+
+	bcopy(ipcreg, frame->f_regs, sizeof(frame->f_regs));
+	frame->f_sr = (ipcreg[PS] | PSL_USERSET) & ~PSL_USERCLR;
+	frame->f_pc = ipcreg[PC];
+	return 0;
 }
