@@ -1,4 +1,4 @@
-/*	$NetBSD: scaffold.c,v 1.9 2002/12/26 14:11:28 itojun Exp $	*/
+/*	$NetBSD: scaffold.c,v 1.10 2003/07/14 09:07:22 itojun Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -11,7 +11,7 @@
 #if 0
 static char sccs_id[] = "@(#) scaffold.c 1.6 97/03/21 19:27:24";
 #else
-__RCSID("$NetBSD: scaffold.c,v 1.9 2002/12/26 14:11:28 itojun Exp $");
+__RCSID("$NetBSD: scaffold.c,v 1.10 2003/07/14 09:07:22 itojun Exp $");
 #endif
 #endif
 
@@ -137,7 +137,7 @@ struct request_info *request;
 void    rfc931(request)
 struct request_info *request;
 {
-    strcpy(request->user, unknown);
+    strlcpy(request->user, unknown, sizeof(request->user));
 }
 #endif
 
@@ -161,7 +161,8 @@ struct stat *st;
     if (st->st_mode & 002)
 	tcpd_warn("%s: world writable", path);
     if (path[0] == '/' && path[1] != 0) {
-	strrchr(strcpy(buf, path), '/')[0] = 0;
+	strlcpy(buf, path, sizeof(buf));
+	strrchr(buf, '/')[0] = 0;
 	(void) check_path(buf[0] ? buf : "/", &stbuf);
     }
     return (0);
