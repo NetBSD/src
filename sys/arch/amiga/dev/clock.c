@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.27 1997/07/06 22:27:19 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.28 1997/07/06 23:17:55 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -684,7 +684,7 @@ inittodr(base)
 	if (gettod == NULL && rtcinit() == 0)
 		printf("WARNING: no battery clock\n");
 	else
-		timbuf = gettod();
+		timbuf = gettod() + rtc_offset * 60;
 
 	if (timbuf < base) {
 		printf("WARNING: bad date in battery clock\n");
@@ -698,7 +698,7 @@ inittodr(base)
 void
 resettodr()
 {
-	if (settod && settod(time.tv_sec) == 0)
+	if (settod && settod(time.tv_sec - rtc_offset * 60) == 0)
 		printf("Cannot set battery backed clock\n");
 }
 
