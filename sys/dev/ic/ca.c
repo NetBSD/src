@@ -1,4 +1,4 @@
-/*	$NetBSD: ca.c,v 1.5 2000/05/16 05:45:51 thorpej Exp $	*/
+/*	$NetBSD: ca.c,v 1.6 2000/06/12 11:07:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.5 2000/05/16 05:45:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.6 2000/06/12 11:07:45 ad Exp $");
 
 #include "rnd.h"
 
@@ -485,7 +485,6 @@ cadone(ccb, error)
 	
 	sc = (struct ca_softc *)ccb->ccb_context.cc_dv;
 	bp = (struct buf *)ccb->ccb_context.cc_context;
-	cac_ccb_free(sc->sc_cac, ccb);
 
 	if (error) {
 		bp->b_flags |= B_ERROR;
@@ -494,6 +493,7 @@ cadone(ccb, error)
 	} else
 		bp->b_resid = bp->b_bcount - ccb->ccb_datasize;
 
+	cac_ccb_free(sc->sc_cac, ccb);
 	disk_unbusy(&sc->sc_dk, ccb->ccb_datasize);
 #if NRND > 0
 	rnd_add_uint32(&sc->sc_rnd_source, bp->b_rawblkno);
@@ -608,7 +608,7 @@ calock(sc)
 
 	while ((sc->sc_flags & CAF_LOCKED) != 0) {
 		sc->sc_flags |= CAF_WANTED;
-		if ((error = tsleep(sc, PRIBIO | PCATCH, "idlck", 0)) != 0)
+		if ((error = tsleep(sc, PRIBIO | PCATCH, "calck", 0)) != 0)
 			return (error);
 	}
 	sc->sc_flags |= CAF_LOCKED;
