@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.85 2000/08/24 02:37:27 sommerfeld Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.86 2000/08/24 06:14:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -796,7 +796,8 @@ preempt(struct proc *newp)
 
 /*
  * The machine independent parts of context switch.
- * Must be called at splstatclock() or higher.
+ * Must be called at splsched() (no higher!) and with
+ * the sched_lock held.
  */
 void
 mi_switch(struct proc *p)
