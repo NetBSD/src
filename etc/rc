@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.36 1994/03/14 04:14:19 cgd Exp $
+#	$Id: rc,v 1.37 1994/03/17 23:22:40 cgd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -100,7 +100,7 @@ mount -a -t nfs
 
 # clean up left-over files
 rm -f /etc/nologin
-rm -f /var/spool/uucp/LCK.*
+rm -f /var/spool/lock/LCK.*
 rm -f /var/spool/uucp/STST/*
 (cd /var/run && { rm -rf -- *; cp /dev/null utmp; chmod 644 utmp; })
 
