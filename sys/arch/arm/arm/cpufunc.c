@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.35 2002/03/24 15:37:46 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.36 2002/03/26 19:29:44 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -58,9 +58,22 @@
 
 #include <arm/cpufunc.h>
 
-#ifdef CPU_XSCALE
+#ifdef CPU_XSCALE_80200
 #include <arm/xscale/i80200reg.h>
 #include <arm/xscale/i80200var.h>
+#endif
+
+#ifdef CPU_XSCALE_80321
+#include <arm/xscale/i80321reg.h>
+#include <arm/xscale/i80321var.h>
+#endif
+
+#if (defined(CPU_XSCALE_80200) + defined(CPU_XSCALE_80321)) > 1
+#error "Too many XScale core CPUs defined"
+#endif
+
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+#include <arm/xscale/xscalereg.h>
 #endif
 
 /* PRIMARY CACHE VARIABLES */
@@ -487,7 +500,7 @@ struct cpu_functions sa110_cpufuncs = {
 };          
 #endif	/* CPU_SA110 */
 
-#ifdef CPU_XSCALE
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
 	
@@ -542,7 +555,7 @@ struct cpu_functions xscale_cpufuncs = {
 
 	xscale_setup			/* cpu setup		*/
 };
-#endif /* CPU_XSCALE */
+#endif /* CPU_XSCALE_80200 || CPU_XSCALE_80321 */
 
 /*
  * Global constants also used by locore.s
@@ -553,7 +566,7 @@ u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
-    defined(CPU_XSCALE)
+    defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 static void get_cachetype_cp15 __P((void));
 
 static void
@@ -764,11 +777,17 @@ set_cpufuncs()
 		return 0;
 	}
 #endif	/* CPU_SA110 */
-#ifdef CPU_XSCALE
-	if (cputype == CPU_ID_I80200) {
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+	if (cputype == CPU_ID_XSCALE) {
+#if defined(CPU_XSCALE_80200)
 		int rev = cpufunc_id() & CPU_ID_REVISION_MASK;
+#endif
 
-		i80200_intr_init();
+#if defined(CPU_XSCALE_80200)
+		i80200_icu_init();
+#elif defined(CPU_XSCALE_80321)
+		i80321_icu_init();
+#endif
 
 		/*
 		 * Reset the Performance Monitoring Unit to a
@@ -782,7 +801,8 @@ set_cpufuncs()
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
 
-#ifdef XSCALE_CCLKCFG
+#if defined(CPU_XSCALE_80200)
+#if defined(XSCALE_CCLKCFG)
 		/*
 		 * Crank CCLKCFG to maximum legal value.
 		 */
@@ -799,10 +819,12 @@ set_cpufuncs()
 		__asm __volatile("mcr p13, 0, %0, c0, c1, 0"
 			:
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
+#endif /* CPU_XSCALE_80200 */
 
 		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = xscale_cpufuncs;
 
+#if defined(CPU_XSCALE_80200)
 		/*
 		 * i80200 errata: Step-A0 and A1 have a bug where
 		 * D$ dirty bits are not cleared on "invalidate by
@@ -812,12 +834,13 @@ set_cpufuncs()
 		 */
 		if (rev == 0 || rev == 1)
 			cpufuncs.cf_dcache_inv_range = xscale_cache_purgeD_rng;
+#endif /* CPU_XSCALE_80200 */
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		return 0;
 	}
-#endif /* CPU_XSCALE */
+#endif /* CPU_XSCALE_80200 || CPU_XSCALE_80321 */
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
@@ -1187,7 +1210,7 @@ late_abort_fixup(arg)
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
 	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110) || \
-	defined(CPU_XSCALE)
+	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 
 #define IGN	0
 #define OR	1
@@ -1539,7 +1562,7 @@ sa110_setup(args)
 }
 #endif	/* CPU_SA110 */
 
-#ifdef CPU_XSCALE
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
 	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
@@ -1601,4 +1624,4 @@ xscale_setup(args)
 	__asm ("mcr p15, 0, %0, c1, c0, 1" :: "r" (0));
 #endif
 }
-#endif	/* CPU_XSCALE */
+#endif	/* CPU_XSCALE_80200 */

@@ -1,7 +1,7 @@
-/*	$NetBSD: i80200_icu.c,v 1.4 2002/03/26 19:29:46 thorpej Exp $	*/
+/*	$NetBSD: xscalereg.h,v 1.1 2002/03/26 19:29:46 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2001 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -35,90 +35,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _ARM_XSCALE_XSCALEREG_H_ 
+#define _ARM_XSCALE_XSCALEREG_H_ 
+
 /*
- * Intel i80200 Interrupt Controller Unit support.
+ * Register definitions for the Intel XScale processor core.
  */
 
-#include <sys/param.h>
-#include <sys/systm.h>
-
-#include <arm/cpufunc.h>
-
-#include <arm/xscale/i80200reg.h>
-#include <arm/xscale/i80200var.h>
-
-/* Software shadow copy of INTCTL. */
-static __volatile uint32_t intctl;
-
-/* Pointer to board-specific external IRQ dispatcher. */
-void	(*i80200_extirq_dispatch)(struct clockframe *);
-
-static void
-i80200_default_extirq_dispatch(struct clockframe *framep)
-{
-
-	panic("external IRQ with no dispatch routine");
-}
-
 /*
- * i80200_icu_init:
+ * Performance Monitoring Unit		(CP14)
  *
- *	Initialize the i80200 ICU.
+ *	CP14.0		Performance Monitor Control Register
+ *	CP14.1		Clock Counter
+ *	CP14.2		Performance Counter Register 0
+ *	CP14.3		Performance Counter Register 1
  */
-void
-i80200_icu_init(void)
-{
 
-	/* Disable all interrupt sources. */
-	intctl = 0;
-	__asm __volatile("mcr p13, 0, %0, c0, c0"
-		:
-		: "r" (intctl));
+#define	PMNC_E		0x00000001	/* enable counters */
+#define	PMNC_P		0x00000002	/* reset both PMNs to 0 */
+#define	PMNC_C		0x00000004	/* clock counter reset */
+#define	PMNC_D		0x00000008	/* clock counter / 64 */
+#define	PMNC_PMN0_IE	0x00000010	/* enable PMN0 interrupt */
+#define	PMNC_PMN1_IE	0x00000020	/* enable PMN1 interrupt */
+#define	PMNC_CC_IE	0x00000040	/* enable clock counter interrupt */
+#define	PMNC_PMN0_IF	0x00000100	/* PMN0 overflow/interrupt */
+#define	PMNC_PMN1_IF	0x00000200	/* PMN1 overflow/interrupt */
+#define	PMNC_CC_IF	0x00000400	/* clock counter overflow/interrupt */
+#define	PMNC_EVCNT0_MASK 0x000ff000	/* event to count for PMN0 */
+#define	PMNC_EVCNT0_SHIFT 12
+#define	PMNC_EVCNT1_MASK 0x0ff00000	/* event to count for PMN1 */
+#define	PMNC_EVCNT1_SHIFT 20
 
-	/* Steer PMU and BMU to IRQ. */
-	__asm __volatile("mcr p13, 0, %0, c2, c0"
-		:
-		: "r" (0));
-
-	i80200_extirq_dispatch = i80200_default_extirq_dispatch;
-}
-
-/*
- * i80200_intr_enable:
- *
- *	Enable an interrupt source in the i80200 ICU.
- */
-void
-i80200_intr_enable(uint32_t intr)
-{
-	u_int oldirqstate;
-
-	oldirqstate = disable_interrupts(I32_bit|F32_bit);
-
-	intctl |= intr;
-	__asm __volatile("mcr p13, 0, %0, c0, c0"
-		:
-		: "r" (intctl));
-
-	restore_interrupts(oldirqstate);
-}
-
-/*
- * i80200_intr_disable:
- *
- *	Disable an interrupt source in the i80200 ICU.
- */
-void
-i80200_intr_disable(uint32_t intr)
-{
-	u_int oldirqstate;
-
-	oldirqstate = disable_interrupts(I32_bit|F32_bit);
-
-	intctl &= ~intr;
-	__asm __volatile("mcr p13, 0, %0, c0, c0"
-		:
-		: "r" (intctl));
-
-	restore_interrupts(oldirqstate);
-}
+#endif /* _ARM_XSCALE_XSCALEREG_H_ */

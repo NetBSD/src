@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.18 2002/01/30 00:36:32 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.19 2002/03/26 19:29:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -292,7 +292,8 @@ void	arm9_context_switch	__P((void));
 void	arm9_setup		__P((char *string));
 #endif
 
-#if defined(CPU_ARM9) || defined(CPU_SA110) || defined(CPU_XSCALE)
+#if defined(CPU_ARM9) || defined(CPU_SA110) || defined(CPU_XSCALE_80200) || \
+    defined(CPU_XSCALE_80321)
 void	armv4_tlb_flushID	__P((void));
 void	armv4_tlb_flushI	__P((void));
 void	armv4_tlb_flushD	__P((void));
@@ -334,7 +335,7 @@ void	sa110_context_switch	__P((void));
 void	sa110_setup		__P((char *string));
 #endif	/* CPU_SA110 */
 
-#ifdef CPU_XSCALE
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 void	xscale_cpwait		__P((void));
 
 void	xscale_cpu_sleep	__P((int mode));
@@ -374,7 +375,7 @@ void	xscale_cache_flushI_rng	__P((vaddr_t start, vsize_t end));
 void	xscale_context_switch	__P((void));
 
 void	xscale_setup		__P((char *string));
-#endif	/* CPU_XSCALE */
+#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 */
 
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb
