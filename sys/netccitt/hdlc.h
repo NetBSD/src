@@ -1,12 +1,12 @@
-/*	$NetBSD: hdlc.h,v 1.6 1996/02/13 22:04:37 christos Exp $	*/
+/*	$NetBSD: hdlc.h,v 1.7 1998/09/13 16:21:18 christos Exp $	*/
 
 /*-
- * Copyright (c) University of British Columbia, 1984
+ * Copyright (c) 1984 University of British Columbia.
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by the
- * Laboratory for Computation Vision and the Computer Science Department
+ * This code is derived from software contributed to Berkeley by
+ * the Laboratory for Computation Vision and the Computer Science Department
  * of the University of British Columbia.
  *
  * Redistribution and use in source and binary forms, with or without

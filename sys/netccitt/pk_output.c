@@ -1,16 +1,16 @@
-/*	$NetBSD: pk_output.c,v 1.10 1998/03/01 02:24:57 fvdl Exp $	*/
+/*	$NetBSD: pk_output.c,v 1.11 1998/09/13 16:21:19 christos Exp $	*/
 
 /*
- * Copyright(c) University of British Columbia, 1984
- * Copyright(C) Computer Science Department IV,
- * 		 University of Erlangen-Nuremberg, Germany, 1992
- * Copyright(c) 1991, 1992, 1993
+ * Copyright (c) 1984 University of British Columbia.
+ * Copyright (c) 1992 Computer Science Department IV,
+ * 		University of Erlangen-Nuremberg, Germany.
+ * Copyright (c) 1991, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by the
  * Laboratory for Computation Vision and the Computer Science Department
  * of the the University of British Columbia and the Computer Science
- * Department(IV) of the University of Erlangen-Nuremberg, Germany.
+ * Department (IV) of the University of Erlangen-Nuremberg, Germany.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,10 +33,10 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
