@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.56 1999/10/28 20:00:29 sommerfeld Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.57 1999/11/06 00:59:56 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.55 1999/10/28 19:59:31 sommerfeld Exp 
+ *	NetBSD: pcmciadevs,v 1.56 1999/11/06 00:58:32 enami Exp 
  */
 
 /*-
@@ -166,9 +166,9 @@
 #define	PCMCIA_STR_IBM_ETHERJET_PCCARD	"IBM EtherJet Ethernet PC Card"
 
 /* I-O DATA */
-#define	PCMCIA_CIS_IODATA_PCLAT	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_IODATA_PCLAT	0x2216
-#define	PCMCIA_STR_IODATA_PCLAT	"I-O DATA PCLA/T"
+#define	PCMCIA_CIS_IODATA_PCLATE	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_IODATA_PCLATE	0x2216
+#define	PCMCIA_STR_IODATA_PCLATE	"I-O DATA PCLA/TE"
 
 /* Linksys corporation */
 #define	PCMCIA_CIS_LINKSYS_ECARD_1	{ NULL, NULL, NULL, NULL }
@@ -354,3 +354,6 @@
 #define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	-1
 #define	PCMCIA_STR_AMBICOM_AMB8002T	"AmbiCom AMB8002T"
+#define	PCMCIA_CIS_IODATA_PCLAT	{ "I-O DATA", "PCLA", "ETHERNET", NULL }
+#define	PCMCIA_PRODUCT_IODATA_PCLAT	-1
+#define	PCMCIA_STR_IODATA_PCLAT	"IO-DATA PCLA/T"
