@@ -38,15 +38,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)ptrace.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: ptrace.S,v 1.2 1994/11/14 23:49:40 dean Exp $")
+	ASMSTR("$Id: ptrace.S,v 1.3 1994/12/15 17:25:13 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(_ptrace)
-	sw	zero, _errno
+LEAF(ptrace)
+	sw	zero, _C_LABEL(errno)
 	li	v0, SYS_ptrace
 	syscall
 	bne	a3, zero, 1f
 	j	ra
 1:
-	j	_cerror
-END(_ptrace)
+	j	_C_LABEL(cerror)
+END(ptrace)

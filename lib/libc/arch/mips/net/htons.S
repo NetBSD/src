@@ -38,15 +38,15 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)htons.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: htons.S,v 1.2 1994/11/14 23:50:10 dean Exp $")
+	ASMSTR("$Id: htons.S,v 1.3 1994/12/15 17:24:55 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * netorder = htons(hostorder)
  * hostorder = ntohs(netorder)
  */
-NLEAF(_htons)
-ALEAF(_ntohs)
+NLEAF(htons)
+ALEAF(ntohs)
 #ifdef MIPSEL
 	srl	v0, a0, 8
 	and	v0, v0, 0xff
@@ -61,4 +61,4 @@ ALEAF(_ntohs)
 #endif
 #endif
 	j	ra
-END(_htons)
+END(htons)

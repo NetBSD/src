@@ -34,20 +34,20 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	8.1 (Berkeley) 6/4/93
- *      $Id: SYS.h,v 1.2 1994/12/12 19:31:22 dean Exp $ 
+ *      $Id: SYS.h,v 1.3 1994/12/15 17:24:44 mycroft Exp $ 
  */
 
 #include <sys/syscall.h>
 #include <machine/machAsmDefs.h>
 
 #ifdef __STDC__
-#define RSYSCALL(x)     LEAF(_ ## x); li v0,SYS_ ## x; syscall;\
-			bne a3,zero,err; j ra; err: j _cerror; END(_ ## x);
-#define PSEUDO(x,y)     LEAF(_ ## x); li v0,SYS_ ## y; syscall; \
-			bne a3,zero,err; j ra; err: j _cerror; END(_ ## x);
+#define RSYSCALL(x)     LEAF(x); li v0,SYS_ ## x; syscall; \
+			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
+#define PSEUDO(x,y)     LEAF(x); li v0,SYS_ ## y; syscall; \
+			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
 #else
-#define RSYSCALL(x)     LEAF(_ ## x); li v0,SYS_/**/x; syscall; \
-			bne a3,zero,err; j ra; err: j _cerror; END(_ ## x);
-#define PSEUDO(x,y)     LEAF(_ ## x); li v0,SYS_/**/y; syscall; \
-			bne a3,zero,err; j ra; err: j _cerror; END(_ ## x);
+#define RSYSCALL(x)     LEAF(x); li v0,SYS_/**/x; syscall; \
+			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
+#define PSEUDO(x,y)     LEAF(x); li v0,SYS_/**/y; syscall; \
+			bne a3,zero,err; j ra; err: j _C_LABEL(cerror); END(x);
 #endif

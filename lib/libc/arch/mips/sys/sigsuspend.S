@@ -38,10 +38,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigsuspend.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sigsuspend.S,v 1.2 1994/11/14 23:49:45 dean Exp $")
+	ASMSTR("$Id: sigsuspend.S,v 1.3 1994/12/15 17:25:20 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(_sigsuspend)
+LEAF(sigsuspend)
 	lw	a0, 0(a0)		# indirect to mask arg
 	li	v0, SYS_sigsuspend
 	syscall
@@ -49,5 +49,5 @@ LEAF(_sigsuspend)
 	move	v0, zero		# should not happen
 	j	ra
 1:
-	j	_cerror
-END(_sigsuspend)
+	j	_C_LABEL(cerror)
+END(sigsuspend)

@@ -38,7 +38,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)bcopy.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: bcopy.s,v 1.2 1994/11/14 23:49:16 dean Exp $")
+	ASMSTR("$Id: bcopy.s,v 1.3 1994/12/15 17:24:57 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /* bcopy(s1, s2, n) */
@@ -56,7 +56,7 @@
 #	define	SWLO	swr
 #endif
 
-LEAF(_bcopy)
+LEAF(bcopy)
 	.set	noreorder
 	addu	t0, a0, a2		# t0 = end of s1 region
 	sltu	t1, a1, t0
@@ -136,4 +136,4 @@ smallcpy:
 	j	ra
 	nop
 	.set	reorder
-END(_bcopy)
+END(bcopy)

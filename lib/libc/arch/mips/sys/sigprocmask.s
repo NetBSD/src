@@ -38,10 +38,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)sigprocmask.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: sigprocmask.s,v 1.2 1994/11/14 23:49:44 dean Exp $")
+	ASMSTR("$Id: sigprocmask.s,v 1.3 1994/12/15 17:25:19 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(_sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
+LEAF(sigprocmask)	# sigprocmask(how, new, old) sigset_t *new, *old;
 	bne	a1, zero, gotptr	# if new sigset pointer not null
 	li	a0, 1			# how = SIG_BLOCK
 	b	doit			# mask = zero
@@ -57,5 +57,5 @@ out:
 	move	v0, zero
 	j	ra
 err:
-	j	_cerror
-END(_sigprocmask)
+	j	_C_LABEL(cerror)
+END(sigprocmask)

@@ -38,10 +38,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)pipe.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$Id: pipe.S,v 1.2 1994/11/14 23:49:39 dean Exp $")
+	ASMSTR("$Id: pipe.S,v 1.3 1994/12/15 17:25:12 mycroft Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-LEAF(_pipe)
+LEAF(pipe)
 	li	v0, SYS_pipe	# pipe(fildes) int fildes[2];
 	syscall
 	bne	a3, zero, 1f
@@ -50,5 +50,5 @@ LEAF(_pipe)
 	move	v0, zero
 	j	ra
 1:
-	j	_cerror
-END(_pipe)
+	j	_C_LABEL(cerror)
+END(pipe)
