@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.12 1994/10/20 04:47:43 cgd Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.13 1994/10/25 23:03:26 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -23,11 +23,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * loosely from: Header: sun_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
+ * loosely from: Header: sunos_ioctl.c,v 1.7 93/05/28 04:40:43 torek Exp 
  */
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
@@ -37,47 +38,17 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 
+#include <sys/mount.h>
+
+#include <sys/syscallargs.h>
+#include <compat/sunos/sunos.h>
+#include <compat/sunos/sunos_syscallargs.h>
+
 /*
  * SunOS ioctl calls.
  * This file is something of a hodge-podge.
  * Support gets added as things turn up....
  */
-
-struct sun_ttysize {
-	int	ts_row;
-	int	ts_col;
-};
-
-struct sun_termio {
-	u_short	c_iflag;
-	u_short	c_oflag;
-	u_short	c_cflag;
-	u_short	c_lflag;
-	char	c_line;
-	unsigned char c_cc[8];
-};
-#define SUN_TCGETA	_IOR('T', 1, struct sun_termio)
-#define SUN_TCSETA	_IOW('T', 2, struct sun_termio)
-#define SUN_TCSETAW	_IOW('T', 3, struct sun_termio)
-#define SUN_TCSETAF	_IOW('T', 4, struct sun_termio)
-#define SUN_TCSBRK	_IO('T', 5)
-
-struct sun_termios {
-	u_long	c_iflag;
-	u_long	c_oflag;
-	u_long	c_cflag;
-	u_long	c_lflag;
-	char	c_line;
-	u_char	c_cc[17];
-};
-#define SUN_TCXONC	_IO('T', 6)
-#define SUN_TCFLSH	_IO('T', 7)
-#define SUN_TCGETS	_IOR('T', 8, struct sun_termios)
-#define SUN_TCSETS	_IOW('T', 9, struct sun_termios)
-#define SUN_TCSETSW	_IOW('T', 10, struct sun_termios)
-#define SUN_TCSETSF	_IOW('T', 11, struct sun_termios)
-#define SUN_TCSNDBRK	_IO('T', 12)
-#define SUN_TCDRAIN	_IO('T', 13)
 
 static struct speedtab sptab[] = {
 	{ 0, 0 },
@@ -136,7 +107,7 @@ static u_long s2btab[] = {
 
 static void
 stios2btios(st, bt)
-	struct sun_termios *st;
+	struct sunos_termios *st;
 	struct termios *bt;
 {
 	register u_long l, r;
@@ -244,7 +215,7 @@ stios2btios(st, bt)
 static void
 btios2stios(bt, st)
 	struct termios *bt;
-	struct sun_termios *st;
+	struct sunos_termios *st;
 {
 	register u_long l, r;
 
@@ -354,8 +325,8 @@ btios2stios(bt, st)
 
 static void
 stios2stio(ts, t)
-	struct sun_termios *ts;
-	struct sun_termio *t;
+	struct sunos_termios *ts;
+	struct sunos_termio *t;
 {
 	t->c_iflag = ts->c_iflag;
 	t->c_oflag = ts->c_oflag;
@@ -367,8 +338,8 @@ stios2stio(ts, t)
 
 static void
 stio2stios(t, ts)
-	struct sun_termio *t;
-	struct sun_termios *ts;
+	struct sunos_termio *t;
+	struct sunos_termios *ts;
 {
 	ts->c_iflag = t->c_iflag;
 	ts->c_oflag = t->c_oflag;
@@ -378,16 +349,10 @@ stio2stios(t, ts)
 	bcopy(t->c_cc, ts->c_cc, 8); /* don't touch the upper fields! */
 }
 
-struct sun_ioctl_args {
-	int	fd;
-	int	cmd;
-	caddr_t	data;
-};
-
 int
-sun_ioctl(p, uap, retval)
+sunos_ioctl(p, uap, retval)
 	register struct proc *p;
-	register struct sun_ioctl_args *uap;
+	struct sunos_ioctl_args *uap;
 	register_t *retval;
 {
 	register struct filedesc *fdp = p->p_fd;
@@ -395,8 +360,8 @@ sun_ioctl(p, uap, retval)
 	register int (*ctl)();
 	int error;
 
-	if ( (unsigned)uap->fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[uap->fd]) == NULL)
+	if ( (unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
@@ -404,15 +369,15 @@ sun_ioctl(p, uap, retval)
 
 	ctl = fp->f_ops->fo_ioctl;
 
-	switch (uap->cmd) {
+	switch (SCARG(uap, com)) {
 	case _IOR('t', 0, int):
-		uap->cmd = TIOCGETD;
+		SCARG(uap, com) = TIOCGETD;
 		break;
 	case _IOW('t', 1, int):
 	    {
 		int disc;
 
-		if ((error = copyin(uap->data, (caddr_t)&disc,
+		if ((error = copyin(SCARG(uap, data), (caddr_t)&disc,
 		    sizeof disc)) != 0)
 			return error;
 
@@ -425,32 +390,32 @@ sun_ioctl(p, uap, retval)
 
 		return (*ctl)(fp, TIOCSETD, (caddr_t)&disc, p);
 	    }
-	case _IOW('t', 101, int):	/* sun SUN_TIOCSSOFTCAR */
+	case _IOW('t', 101, int):	/* sun SUNOS_TIOCSSOFTCAR */
 	    {
 		int x;	/* unused */
 
-		return copyin((caddr_t)&x, uap->data, sizeof x);
+		return copyin((caddr_t)&x, SCARG(uap, data), sizeof x);
 	    }
-	case _IOR('t', 100, int):	/* sun SUN_TIOCSSOFTCAR */
+	case _IOR('t', 100, int):	/* sun SUNOS_TIOCSSOFTCAR */
 	    {
 		int x = 0;
 
-		return copyout((caddr_t)&x, uap->data, sizeof x);
+		return copyout((caddr_t)&x, SCARG(uap, data), sizeof x);
 	    }
 	case _IO('t', 36): 		/* sun TIOCCONS, no parameters */
 	    {
 		int on = 1;
 		return (*ctl)(fp, TIOCCONS, (caddr_t)&on, p);
 	    }
-	case _IOW('t', 37, struct sun_ttysize): 
+	case _IOW('t', 37, struct sunos_ttysize): 
 	    {
 		struct winsize ws;
-		struct sun_ttysize ss;
+		struct sunos_ttysize ss;
 
 		if ((error = (*ctl)(fp, TIOCGWINSZ, (caddr_t)&ws, p)) != 0)
 			return (error);
 
-		if ((error = copyin (uap->data, &ss, sizeof (ss))) != 0)
+		if ((error = copyin (SCARG(uap, data), &ss, sizeof (ss))) != 0)
 			return error;
 
 		ws.ws_row = ss.ts_row;
@@ -458,10 +423,10 @@ sun_ioctl(p, uap, retval)
 
 		return ((*ctl)(fp, TIOCSWINSZ, (caddr_t)&ws, p));
 	    }
-	case _IOW('t', 38, struct sun_ttysize): 
+	case _IOW('t', 38, struct sunos_ttysize): 
 	    {
 		struct winsize ws;
-		struct sun_ttysize ss;
+		struct sunos_ttysize ss;
 
 		if ((error = (*ctl)(fp, TIOCGWINSZ, (caddr_t)&ws, p)) != 0)
 			return (error);
@@ -469,44 +434,46 @@ sun_ioctl(p, uap, retval)
 		ss.ts_row = ws.ws_row;
 		ss.ts_col = ws.ws_col;
 
-		return copyout ((caddr_t)&ss, uap->data, sizeof (ss));
+		return copyout ((caddr_t)&ss, SCARG(uap, data), sizeof (ss));
 	    }
 	case _IOW('t', 130, int):
-		uap->cmd = TIOCSPGRP;
+		SCARG(uap, com) = TIOCSPGRP;
 		break;
 	case _IOR('t', 131, int):
-		uap->cmd = TIOCGPGRP;
+		SCARG(uap, com) = TIOCGPGRP;
 		break;
 	case _IO('t', 132):
-		uap->cmd = TIOCSCTTY;
+		SCARG(uap, com) = TIOCSCTTY;
 		break;
-	case SUN_TCGETA:
-	case SUN_TCGETS: 
+	case SUNOS_TCGETA:
+	case SUNOS_TCGETS: 
 	    {
 		struct termios bts;
-		struct sun_termios sts;
-		struct sun_termio st;
+		struct sunos_termios sts;
+		struct sunos_termio st;
 	
 		if ((error = (*ctl)(fp, TIOCGETA, (caddr_t)&bts, p)) != 0)
 			return error;
 	
 		btios2stios (&bts, &sts);
-		if (uap->cmd == SUN_TCGETA) {
+		if (SCARG(uap, com) == SUNOS_TCGETA) {
 			stios2stio (&sts, &st);
-			return copyout((caddr_t)&st, uap->data, sizeof (st));
+			return copyout((caddr_t)&st, SCARG(uap, data),
+			    sizeof (st));
 		} else
-			return copyout((caddr_t)&sts, uap->data, sizeof (sts));
+			return copyout((caddr_t)&sts, SCARG(uap, data),
+			    sizeof (sts));
 		/*NOTREACHED*/
 	    }
-	case SUN_TCSETA:
-	case SUN_TCSETAW:
-	case SUN_TCSETAF:
+	case SUNOS_TCSETA:
+	case SUNOS_TCSETAW:
+	case SUNOS_TCSETAF:
 	    {
 		struct termios bts;
-		struct sun_termios sts;
-		struct sun_termio st;
+		struct sunos_termios sts;
+		struct sunos_termio st;
 
-		if ((error = copyin(uap->data, (caddr_t)&st,
+		if ((error = copyin(SCARG(uap, data), (caddr_t)&st,
 		    sizeof (st))) != 0)
 			return error;
 
@@ -522,21 +489,21 @@ sun_ioctl(p, uap, retval)
 		stio2stios(&st, &sts);
 		stios2btios(&sts, &bts);
 
-		return (*ctl)(fp, uap->cmd - SUN_TCSETA + TIOCSETA,
+		return (*ctl)(fp, SCARG(uap, com) - SUNOS_TCSETA + TIOCSETA,
 		    (caddr_t)&bts, p);
 	    }
-	case SUN_TCSETS:
-	case SUN_TCSETSW:
-	case SUN_TCSETSF:
+	case SUNOS_TCSETS:
+	case SUNOS_TCSETSW:
+	case SUNOS_TCSETSF:
 	    {
 		struct termios bts;
-		struct sun_termios sts;
+		struct sunos_termios sts;
 
-		if ((error = copyin (uap->data, (caddr_t)&sts,
+		if ((error = copyin (SCARG(uap, data), (caddr_t)&sts,
 		    sizeof (sts))) != 0)
 			return error;
 		stios2btios (&sts, &bts);
-		return (*ctl)(fp, uap->cmd - SUN_TCSETS + TIOCSETA,
+		return (*ctl)(fp, SCARG(uap, com) - SUNOS_TCSETS + TIOCSETA,
 		    (caddr_t)&bts, p);
 	    }
 /*
@@ -545,14 +512,14 @@ sun_ioctl(p, uap, retval)
 	case _IOW('t', 32, int): {	/* TIOCTCNTL */
 		int error, on;
 
-		if (error = copyin (uap->data, (caddr_t)&on, sizeof (on)))
+		if (error = copyin (SCARG(uap, data), (caddr_t)&on, sizeof (on)))
 			return error;
 		return (*ctl)(fp, TIOCUCNTL, (caddr_t)&on, p);
 	}
 	case _IOW('t', 33, int): {	/* TIOCSIGNAL */
 		int error, sig;
 
-		if (error = copyin (uap->data, (caddr_t)&sig, sizeof (sig)))
+		if (error = copyin (SCARG(uap, data), (caddr_t)&sig, sizeof (sig)))
 			return error;
 		return (*ctl)(fp, TIOCSIG, (caddr_t)&sig, p);
 	}
@@ -562,17 +529,17 @@ sun_ioctl(p, uap, retval)
  */
 #define IFREQ_IN(a) { \
 	struct ifreq ifreq; \
-	if (error = copyin (uap->data, (caddr_t)&ifreq, sizeof (ifreq))) \
+	if (error = copyin (SCARG(uap, data), (caddr_t)&ifreq, sizeof (ifreq))) \
 		return error; \
 	return (*ctl)(fp, a, (caddr_t)&ifreq, p); \
 }
 #define IFREQ_INOUT(a) { \
 	struct ifreq ifreq; \
-	if (error = copyin (uap->data, (caddr_t)&ifreq, sizeof (ifreq))) \
+	if (error = copyin (SCARG(uap, data), (caddr_t)&ifreq, sizeof (ifreq))) \
 		return error; \
 	if (error = (*ctl)(fp, a, (caddr_t)&ifreq, p)) \
 		return error; \
-	return copyout ((caddr_t)&ifreq, uap->data, sizeof (ifreq)); \
+	return copyout ((caddr_t)&ifreq, SCARG(uap, data), sizeof (ifreq)); \
 }
 
 	case _IOW('i', 12, struct ifreq):
@@ -655,11 +622,13 @@ sun_ioctl(p, uap, retval)
 		 * 1. our sockaddr's are variable length, not always sizeof(sockaddr)
 		 * 2. this returns a name per protocol, ie. it returns two "lo0"'s
 		 */
-		if (error = copyin (uap->data, (caddr_t)&ifconf, sizeof (ifconf)))
+		if (error = copyin (SCARG(uap, data), (caddr_t)&ifconf,
+		    sizeof (ifconf)))
 			return error;
 		if (error = (*ctl)(fp, OSIOCGIFCONF, (caddr_t)&ifconf, p))
 			return error;
-		return copyout ((caddr_t)&ifconf, uap->data, sizeof (ifconf));
+		return copyout ((caddr_t)&ifconf, SCARG(uap, data),
+		    sizeof (ifconf));
 	    }
 	}
 	return (ioctl(p, uap, retval));
