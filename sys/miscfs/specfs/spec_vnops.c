@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.35 1997/04/02 17:09:47 kleink Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.36 1997/04/02 17:14:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -262,8 +262,6 @@ spec_read(v)
 		return (error);
 
 	case VBLK:
-		if (uio->uio_resid == 0)
-			return (0);
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
