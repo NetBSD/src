@@ -1,4 +1,4 @@
-/*	$NetBSD: scaffold.c,v 1.4 1999/05/09 16:05:35 christos Exp $	*/
+/*	$NetBSD: scaffold.c,v 1.5 1999/05/09 21:22:53 thorpej Exp $	*/
 
  /*
   * Routines for testing only. Not really industrial strength.
@@ -11,7 +11,7 @@
 #if 0
 static char sccs_id[] = "@(#) scaffold.c 1.5 95/01/03 09:13:48";
 #else
-__RCSID("$NetBSD: scaffold.c,v 1.4 1999/05/09 16:05:35 christos Exp $");
+__RCSID("$NetBSD: scaffold.c,v 1.5 1999/05/09 21:22:53 thorpej Exp $");
 #endif
 #endif
 
@@ -88,6 +88,7 @@ struct hostent *find_inet_addr(host)
 char   *host;
 {
     struct in_addr addr;
+    unsigned long addr_num;
     struct hostent *hp;
     static struct hostent h;
     static char *addr_list[2];
@@ -95,7 +96,8 @@ char   *host;
     /*
      * Host address: translate it to internal form.
      */
-    if (dot_quad_addr(host, &addr) == 0) {
+    if (dot_quad_addr(host, &addr_num) == 0) {
+	addr.s_addr = (addr_num & 0xffffffff);
 	h.h_addr_list = addr_list;
 	h.h_addr_list[0] = (char *) &addr;
 	h.h_length = sizeof(addr);
