@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.5 2003/05/09 13:36:40 tsutsui Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.6 2003/05/10 03:57:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -94,7 +94,7 @@ ms_hb_attach(parent, self, aux)
 	struct wsmousedev_attach_args aa;
 	int intr;
 
-	reg = ha->ha_addr;
+	reg = (struct msreg *)ha->ha_addr;
 	intr = ha->ha_level;
 
 	if (intr == -1)
