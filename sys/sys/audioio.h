@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.25 2000/12/29 10:00:08 augustss Exp $	*/
+/*	$NetBSD: audioio.h,v 1.26 2002/10/12 07:39:00 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -295,10 +295,14 @@ typedef struct mixer_ctrl {
 #define AudioNagc	"agc"
 #define AudioNdelay	"delay"
 #define AudioNselect	"select" /* select destination */
+#define AudioNvideo     "video"
+#define AudioNcenter    "center"
+#define AudioNdepth     "depth"
+#define AudioNlfe       "lfe"
 
 #define AudioEmulaw		"mulaw"
 #define AudioEalaw		"alaw"
-#define AudioEadpcm 		"adpcm"
+#define AudioEadpcm		"adpcm"
 #define AudioEslinear		"slinear"
 #define AudioEslinear_le	"slinear_le"
 #define AudioEslinear_be	"slinear_be"
