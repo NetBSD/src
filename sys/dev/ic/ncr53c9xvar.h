@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.35 2001/12/03 23:27:32 jdolecek Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.35.10.1 2002/11/22 17:50:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,10 +67,9 @@
  */
 
 /* Set this to 1 for normal debug, or 2 for per-target tracing. */
-#define NCR53C9X_DEBUG		1
+/* #define NCR53C9X_DEBUG		1 */
 
 /* Wide or differential can have 16 targets */
-#define NCR_NTARG		8
 #define NCR_NLUN		8
 
 #define	NCR_ABORT_TIMEOUT	2000	/* time to wait for abort */
@@ -171,14 +170,13 @@ struct ncr53c9x_tinfo {
 	int	perrs;		/* # of parity errors */
 	int	senses;		/* # of request sense commands sent */
 	u_char  flags;
-#define T_NEED_TO_RESET	0x01	/* Should send a BUS_DEV_RESET */
 #define T_NEGOTIATE	0x02	/* (Re)Negotiate synchronous options */
-#define T_BUSY		0x04	/* Target is busy, i.e. cmd in progress */
 #define T_SYNCMODE	0x08	/* SYNC mode has been negotiated */
 #define T_SYNCHOFF	0x10	/* SYNC mode for is permanently off */
 #define T_RSELECTOFF	0x20	/* RE-SELECT mode is off */
 #define T_TAG		0x40	/* Turn on TAG QUEUEs */
 #define T_WIDE		0x80	/* Negotiate wide options */
+#define T_WDTRSENT	0x04	/* WDTR message has been sent to */
 	u_char  period;		/* Period suggestion */
 	u_char  offset;		/* Offset suggestion */
 	u_char  cfg3;		/* per target config 3  */
@@ -281,10 +279,10 @@ struct ncr53c9x_softc {
 	/* register defaults */
 	u_char	sc_cfg1;			/* Config 1 */
 	u_char	sc_cfg2;			/* Config 2, not ESP100 */
-	u_char	sc_cfg3;			/* Config 3, only ESP200 */
+	u_char	sc_cfg3;			/* Config 3, ESP200,FAS */
 	u_char	sc_cfg3_fscsi;			/* Chip-specific FSCSI bit */
-	u_char	sc_cfg4;			/* Config 3, only ESP200 */
-	u_char	sc_cfg5;			/* Config 3, only ESP200 */
+	u_char	sc_cfg4;			/* Config 4, only ESP200 */
+	u_char	sc_cfg5;			/* Config 5, only ESP200 */
 	u_char	sc_ccf;				/* Clock Conversion */
 	u_char	sc_timeout;
 
@@ -300,7 +298,8 @@ struct ncr53c9x_softc {
 		ready_list;
 
 	struct ncr53c9x_ecb *sc_nexus;		/* Current command */
-	struct ncr53c9x_tinfo sc_tinfo[NCR_NTARG];
+	int	sc_ntarg;
+	struct ncr53c9x_tinfo *sc_tinfo;
 
 	/* Data about the current nexus (updated for every cmd switch) */
 	caddr_t	sc_dp;		/* Current data pointer */
