@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_ffs.c,v 1.5 1997/09/15 04:44:20 lukem Exp $	*/
+/*	$NetBSD: mount_ffs.c,v 1.6 1997/09/16 12:26:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -41,9 +41,9 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
+static char sccsid[] = "@(#)mount_ufs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_ffs.c,v 1.5 1997/09/15 04:44:20 lukem Exp $");
+__RCSID("$NetBSD: mount_ffs.c,v 1.6 1997/09/16 12:26:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: mount_ffs.c,v 1.5 1997/09/15 04:44:20 lukem Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <string.h>
 #include <unistd.h>
 
@@ -69,6 +70,7 @@ static const struct mntopt mopts[] = {
 	MOPT_UPDATE,
 	MOPT_RELOAD,
 	MOPT_NOATIME,
+	MOPT_FORCE,
 	{ NULL }
 };
 
@@ -87,7 +89,7 @@ main(argc, argv)
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags);
+			getmntopts(optarg, mopts, &mntflags, 0);
 			break;
 		case '?':
 		default:
