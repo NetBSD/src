@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.149 2004/12/20 23:04:55 dyoung Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.150 2005/01/20 16:16:10 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.149 2004/12/20 23:04:55 dyoung Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.150 2005/01/20 16:16:10 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -1943,7 +1943,7 @@ status(const struct sockaddr_dl *sdl)
 	tunnel_status();
 
 	if (sdl != NULL &&
-	    getnameinfo((struct sockaddr *)sdl, sdl->sdl_len,
+	    getnameinfo((const struct sockaddr *)sdl, sdl->sdl_len,
 		hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) == 0 &&
 	    hbuf[0] != '\0')
 		printf("\taddress: %s\n", hbuf);
