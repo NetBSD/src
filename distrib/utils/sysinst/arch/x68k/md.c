@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 2000/12/22 10:12:16 mrg Exp $ */
+/*	$NetBSD: md.c,v 1.14 2000/12/31 13:08:08 jdc Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -224,6 +224,9 @@ md_pre_disklabel(void)
 int
 md_post_disklabel(void)
 {
+	if (rammb < 6)
+		set_swap(diskdev, bsdlabel, 1);
+
 	return 0;
 }
 
@@ -305,6 +308,7 @@ md_update(void)
 	endwin();
 	md_copy_filesystem();
 	md_post_newfs();
+	clearok(stdscr, TRUE);
 	wmove(stdscr, 0, 0);
 	wclear(stdscr);
 	wrefresh(stdscr);
@@ -314,7 +318,7 @@ md_update(void)
 void
 md_cleanup_install(void)
 {
-#if notyet			/* sed is too large for ramdisk */
+#ifdef notyet			/* sed is too large for ramdisk */
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
 	char sedcmd[STRSIZE];
@@ -340,6 +344,8 @@ md_cleanup_install(void)
 int
 md_pre_update()
 {
+	if (rammb < 6)
+		set_swap(diskdev, NULL, 1);
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.61 2000/12/22 10:12:14 mrg Exp $	*/
+/*	$NetBSD: util.c,v 1.62 2000/12/31 13:08:06 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -107,6 +107,9 @@ distribution_sets_exist_p(path)
 	result = result && file_exists_p(buf);
 
 	snprintf(buf, STRSIZE, "%s/%s", path, "etc.tgz");
+	result = result && file_exists_p(buf);
+
+	snprintf(buf, STRSIZE, "%s/%s", path, "base.tgz");
 	result = result && file_exists_p(buf);
 
 	return(result);
@@ -530,6 +533,7 @@ extract_dist()
 		}
 	}
 
+	clearok(stdscr, TRUE);
 	wmove(stdscr, 0, 0);
 	wclear(stdscr);
 	wrefresh(stdscr);
@@ -554,7 +558,7 @@ extract_dist()
  * files to kill from the target. For each file, test if it is present on
  * the target. Then display the list of files which will be removed,
  * ask user for confirmation, and process.
- * Non-empty directories will be renaned to <directory.old>.
+ * Non-empty directories will be renamed to <directory.old>.
  */
 
 /* definition for a list of files. */
@@ -633,6 +637,7 @@ cleanup_dist(name)
 			fprintf(log, "Adding file %s, type %d to list of "
 			    "obsolete file\n", current->name, current->type);
 	}
+	fclose(list_file);
 	if (head == NULL)
 		return 1;
 #if 0
