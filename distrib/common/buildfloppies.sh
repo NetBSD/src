@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.2 2002/04/17 20:42:34 tv Exp $
+# $NetBSD: buildfloppies.sh,v 1.3 2002/05/04 01:34:37 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,10 +46,11 @@ prog=${0##*/}
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${prog} [-i instboot] [-m max] [-p] base size file [...]
+Usage: ${prog} [-i instboot] [-m max] [-p] [-s suffix] base size file [...]
 	-i instboot	run instboot to install a bootstrap on @IMAGE@
 	-m max		maximum number of floppies to build
 	-p		pad last floppy to floppy size
+	-s suffix	suffix for floppies
 	base		basename of generated floppies
 	size		size of a floppy in 512 byte blocks
 	file [...]	file(s) to build
@@ -66,7 +67,7 @@ plural()
 #	parse and check arguments
 #
 
-while getopts i:m:p opt; do
+while getopts i:m:ps: opt; do
 	case ${opt} in
 	i)
 		instboot=${OPTARG} ;;
@@ -74,6 +75,8 @@ while getopts i:m:p opt; do
 		maxdisks=${OPTARG} ;;
 	p)
 		pad=1 ;;
+	s)
+		suffix=${OPTARG} ;;
 	\?|*)
 		usage
 		;;
@@ -91,7 +94,7 @@ files=$*
 #
 floppy=floppy.$$.tar
 trap "rm -f ${floppy}" 0 1 2 3			# EXIT HUP INT QUIT
-rm -f ${floppybase}?.fs
+rm -f ${floppybase}?${suffix}
 
 
 #	create tar file
@@ -142,7 +145,7 @@ curdisk=1
 image=
 floppysize8k=$(( ${floppysize} / 16 ))
 while [ ${curdisk} -le ${numdisks} ]; do
-	image="${floppybase}${curdisk}.fs"
+	image="${floppybase}${curdisk}${suffix}"
 	echo "Creating disk ${curdisk} to ${image}"
 	if [ ${curdisk} -eq 1 ]; then
 		seek=0
@@ -181,6 +184,6 @@ fi
 #	final status
 #
 echo "Final result:"
-ls -l ${floppybase}?.fs
+ls -l ${floppybase}?${suffix}
 
 exit 0
