@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.286 2004/04/12 10:00:28 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.287 2004/04/12 12:52:42 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.286 2004/04/12 10:00:28 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.287 2004/04/12 12:52:42 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -2451,7 +2451,8 @@ pv_syncflags4_4c(pg)
 	pv = VM_MDPAGE_PVHEAD(pg);
 
 	s = splvm();			/* paranoid? */
-	if (pv->pv_pmap == NULL) {	/* paranoid */
+	if (pv->pv_pmap == NULL) {
+		/* Page not mapped; pv_flags is already up to date */
 		splx(s);
 		return (0);
 	}
@@ -2722,16 +2723,16 @@ pv_syncflags4m(pg)
 {
 	struct pvlist *pv;
 	struct pmap *pm;
-	int tpte, va, vr, vs, flags;
+	int va, flags;
 	int s;
 	struct regmap *rp;
 	struct segmap *sp;
-	boolean_t doflush;
 
 	s = splvm();
 	PMAP_HEAD_TO_MAP_LOCK();
 	pv = VM_MDPAGE_PVHEAD(pg);
-	if (pv->pv_pmap == NULL) {	/* paranoid */
+	if (pv->pv_pmap == NULL) {
+		/* Page not mapped; pv_flags is already up to date */
 		flags = 0;
 		goto out;
 	}
@@ -2742,48 +2743,12 @@ pv_syncflags4m(pg)
 		pm = pv->pv_pmap;
 		simple_lock(&pm->pm_lock);
 		va = pv->pv_va;
-		vr = VA_VREG(va);
-		vs = VA_VSEG(va);
-		rp = &pm->pm_regmap[vr];
-		sp = &rp->rg_segmap[vs];
-		if (sp->sg_pte == NULL) {
-			simple_unlock(&pm->pm_lock);
-			continue;
-		}
+		rp = &pm->pm_regmap[VA_VREG(va)];
+		sp = &rp->rg_segmap[VA_VSEG(va)];
 
-		/*
-		 * We need the PTE from memory as the TLB version will
-		 * always have the SRMMU_PG_R bit on.
-		 */
-		tpte = sp->sg_pte[VA_SUN4M_VPG(va)];
-		if ((tpte & SRMMU_TETYPE) == SRMMU_TEPTE && /* if valid pte */
-		    (tpte & (SRMMU_PG_M|SRMMU_PG_R))) {	  /* and mod/refd */
-			flags |= MR4M(tpte);
-
-			/*
-			 * Clear mod/ref bits from PTE and write it back.
-			 * We must do this before flushing the cache to
-			 * avoid races with another CPU setting the M bit
-			 * and creating dirty cache lines again.
-			 */
-
-			doflush = pm->pm_ctx && (tpte & SRMMU_PG_M);
-			updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
+		flags |= MR4M(updatepte4m(va, &sp->sg_pte[VA_SUN4M_VPG(va)],
 					SRMMU_PG_M | SRMMU_PG_R,
-					0, pm->pm_ctxnum, PMAP_CPUSET(pm));
-			if (doflush) {
-
-				/* Only do this for write-back caches? */
-				cache_flush_page(va, pm->pm_ctxnum);
-
-				/*
-				 * VIPT caches might use the TLB when
-				 * flushing, so we flush the TLB again.
-				 */
-				tlb_flush_page(va, pm->pm_ctxnum,
-				    PMAP_CPUSET(pm));
-			}
-		}
+					0, pm->pm_ctxnum, PMAP_CPUSET(pm)));
 		simple_unlock(&pm->pm_lock);
 	}
 
@@ -6998,7 +6963,7 @@ pmap_is_referenced4_4c(pg)
  * Clear the modify bit for the given physical page.
  */
 boolean_t
-pmap_clear_modify4m(pg)	   /* XXX %%%: Should service from swpagetbl for 4m */
+pmap_clear_modify4m(pg)
 	struct vm_page *pg;
 {
 	boolean_t rv;
@@ -7013,7 +6978,7 @@ pmap_clear_modify4m(pg)	   /* XXX %%%: Should service from swpagetbl for 4m */
  * Tell whether the given physical page has been modified.
  */
 boolean_t
-pmap_is_modified4m(pg) /* Test performance with SUN4M && SUN4/4C. XXX */
+pmap_is_modified4m(pg)
 	struct vm_page *pg;
 {
 
