@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.128 1999/09/30 22:57:53 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.129 1999/10/10 18:49:15 hwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -520,6 +520,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
 
+	{{T_DIRECT, T_FIXED,
+	"TOSHIBA ", "CD-ROM XM-3401TA", "0283"}, ADEV_CDROM|SDEV_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, SDEV_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
