@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stream.c,v 1.34 1999/01/23 23:44:08 christos Exp $	 */
+/*	$NetBSD: svr4_stream.c,v 1.34.2.1 2000/09/09 15:55:36 he Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -155,18 +155,23 @@ show_ioc(str, ioc)
 	const char		*str;
 	struct svr4_strioctl	*ioc;
 {
-	u_char *ptr = (u_char *) malloc(ioc->len, M_TEMP, M_WAITOK);
+	u_char *ptr;
 	int error;
 
+	len = ioc->len;
+	if (len > 1024)
+		len = 1024;
+
+	ptr = (u_char *) malloc(len, M_TEMP, M_WAITOK);	
 	uprintf("%s cmd = %ld, timeout = %d, len = %d, buf = %p { ",
 	    str, ioc->cmd, ioc->timeout, ioc->len, ioc->buf);
 
-	if ((error = copyin(ioc->buf, ptr, ioc->len)) != 0) {
+	if ((error = copyin(ioc->buf, ptr, len)) != 0) {
 		free((char *) ptr, M_TEMP);
 		return error;
 	}
 
-	bufprint(ptr, ioc->len);
+	bufprint(ptr, len);
 
 	uprintf("}\n");
 
@@ -184,6 +189,9 @@ show_strbuf(str)
 	int maxlen = str->maxlen;
 	int len = str->len;
 
+	if (maxlen > 8192)
+		maxlen = 8192;
+	
 	if (maxlen < 0)
 		maxlen = 0;
 
@@ -509,6 +517,9 @@ si_listen(fp, fd, ioc, p)
 	if (st == NULL)
 		return EINVAL;
 
+	if (ioc->len > sizeof(lst))
+		return EINVAL;
+
 	if ((error = copyin(ioc->buf, &lst, ioc->len)) != 0)
 		return error;
 
@@ -709,6 +720,9 @@ ti_getinfo(fp, fd, ioc, p)
 
 	memset(&info, 0, sizeof(info));
 
+	if (ioc->len > sizeof(info))
+		return EINVAL;
+	
 	if ((error = copyin(ioc->buf, &info, ioc->len)) != 0)
 		return error;
 
@@ -758,6 +772,9 @@ ti_bind(fp, fd, ioc, p)
 		return EINVAL;
 	}
 
+	if (ioc->len > sizeof(bnd))
+		return EINVAL;
+	
 	if ((error = copyin(ioc->buf, &bnd, ioc->len)) != 0)
 		return error;
 
@@ -1854,6 +1871,8 @@ svr4_sys_getmsg(p, v, retval)
 		DPRINTF(("getmsg: TI_SENDTO_REQUEST\n"));
 		if (ctl.maxlen > 36 && ctl.len < 36)
 		    ctl.len = 36;
+		if (ctl.len > sizeof(sc))
+			ctl.len = sizeof(sc);
 
 		if ((error = copyin(ctl.buf, &sc, ctl.len)) != 0)
 			return error;
