@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_control.c,v 1.2 1998/01/09 06:06:35 perry Exp $	*/
+
 /*
  * ntp_control.c - respond to control messages and send async traps
  */

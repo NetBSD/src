@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_fp.h,v 1.2 1998/01/09 06:06:08 perry Exp $	*/
+
 /*
  * ntp_fp.h - definitions for NTP fixed point arithmetic
  */

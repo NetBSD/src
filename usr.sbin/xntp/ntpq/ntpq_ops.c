@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpq_ops.c,v 1.2 1998/01/09 06:06:24 perry Exp $	*/
+
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by xntpdc
  */

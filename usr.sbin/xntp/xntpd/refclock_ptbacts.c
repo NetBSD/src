@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_ptbacts.c,v 1.2 1998/01/09 06:07:10 perry Exp $	*/
+
 /*
  * crude hack to avoid hard links in distribution
  * and keep only one ACTS type source for different

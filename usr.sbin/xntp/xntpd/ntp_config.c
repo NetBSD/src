@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_config.c,v 1.5 1998/01/09 06:06:34 perry Exp $	*/
+
 /*
  * ntp_config.c - read and apply configuration information
  */

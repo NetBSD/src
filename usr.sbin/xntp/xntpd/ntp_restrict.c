@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_restrict.c,v 1.2 1998/01/09 06:06:44 perry Exp $	*/
+
 /*
  * ntp_restrict.c - find out what restrictions this host is running under
  */

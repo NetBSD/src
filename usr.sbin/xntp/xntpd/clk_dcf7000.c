@@ -1,3 +1,5 @@
+/*	$NetBSD: clk_dcf7000.c,v 1.2 1998/01/09 06:06:28 perry Exp $	*/
+
 /*
  * /src/NTP/REPOSITORY/v4/libparse/clk_dcf7000.c,v 3.18 1997/01/19 12:44:36 kardel Exp
  *  

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpq.c,v 1.3 1998/01/09 06:06:22 perry Exp $	*/
+
 /*
  * ntpq - query an NTP server using mode 6 commands
  */

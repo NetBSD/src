@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_true.c,v 1.2 1998/01/09 06:07:12 perry Exp $	*/
+
 /*
  * refclock_true - clock driver for the Kinemetrics Truetime receivers
  *	Receiver Version 3.0C - tested plain, with CLKLDISC

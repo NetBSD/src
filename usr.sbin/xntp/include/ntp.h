@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp.h,v 1.2 1998/01/09 06:06:05 perry Exp $	*/
+
 /*
  * ntp.h - NTP definitions for the masses
  */
