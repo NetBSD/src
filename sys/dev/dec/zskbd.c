@@ -1,4 +1,4 @@
-/*	$NetBSD: zskbd.c,v 1.4 1999/02/03 20:22:28 mycroft Exp $	*/
+/*	$NetBSD: zskbd.c,v 1.5 1999/09/16 19:39:05 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -207,7 +207,6 @@ zskbd_attach(parent, self, aux)
 				       M_DEVBUF, M_NOWAIT);
 		zsi->zsi_ks.attmt.sendchar = zskbd_sendchar;
 		zsi->zsi_ks.attmt.cookie = cs;
-		lk201_init(&zsi->zsi_ks);
 		zsi->zsi_cs = cs;
 	}
 	zskbd->sc_itl = zsi;
@@ -224,6 +223,9 @@ zskbd_attach(parent, self, aux)
 	(void) zs_set_speed(cs, ZSKBD_BPS);
 	zs_loadchannelregs(cs);
 	splx(s);
+
+	if (!isconsole)
+		lk201_init(&zsi->zsi_ks);
 
 	/* XXX should identify keyboard ID here XXX */
 	/* XXX layout and the number of LED is varying XXX */
