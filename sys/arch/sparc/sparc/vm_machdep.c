@@ -1,8 +1,8 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 1996/04/22 02:50:26 christos Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.27 1996/05/16 15:57:31 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- *	The President and Fellows of Harvard University. All rights reserved.
+ *	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

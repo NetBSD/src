@@ -1,8 +1,8 @@
-/*	$NetBSD: pte.h,v 1.16 1996/05/15 02:13:50 mrg Exp $ */
+/*	$NetBSD: pte.h,v 1.17 1996/05/16 15:57:03 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- * 	The President and Fellows of Harvard University. All rights reserved.
+ * 	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

@@ -1,8 +1,8 @@
-/*	$NetBSD: iommureg.h,v 1.1 1996/03/31 23:09:38 pk Exp $ */
+/*	$NetBSD: iommureg.h,v 1.2 1996/05/16 15:57:18 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- * 	The President and Fellows of Harvard University. All rights reserved.
+ * 	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1995 	Paul Kranenburg
  *
  * Redistribution and use in source and binary forms, with or without

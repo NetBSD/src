@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.43 1996/05/13 21:39:53 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.44 1996/05/16 15:57:12 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -7,7 +7,7 @@
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1996 Paul Kranenburg
  * Copyright (c) 1996
- * 	The President and Fellows of Harvard University. All rights reserved.
+ * 	The President and Fellows of Harvard College. All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and

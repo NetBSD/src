@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.8 1996/05/15 02:13:52 mrg Exp $ */
+/*	$NetBSD: trap.h,v 1.9 1996/05/16 15:57:04 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,7 +44,7 @@
  *	@(#)trap.h	8.1 (Berkeley) 6/11/93
  */
 /*
- * Sun4M support by Aaron Brown, Harvard University.
+ * Sun4m support by Aaron Brown, Harvard University.
  * Changes Copyright (c) 1995 The President and Fellows of Harvard College.
  * All rights reserved.
  */
