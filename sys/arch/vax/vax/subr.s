@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.13 1996/01/28 12:22:52 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.14 1996/02/02 18:09:05 mycroft Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,13 +33,13 @@
  /* All bugs are subject to removal without further notice */
 		
 
-#include "sys/syscall.h"
-#include "sys/errno.h"
+#include <sys/syscall.h>
+#include <sys/errno.h>
 
-#include "machine/mtpr.h"
-#include "machine/vmparam.h"
-#include "machine/pte.h"
-#include "machine/nexus.h"
+#include <machine/mtpr.h>
+#include <machine/vmparam.h>
+#include <machine/pte.h>
+#include <machine/nexus.h>
 
 
 		.text

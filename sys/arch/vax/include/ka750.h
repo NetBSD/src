@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.h,v 1.3 1995/11/12 14:37:20 ragge Exp $	*/
+/*	$NetBSD: ka750.h,v 1.4 1996/02/02 18:08:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "machine/nexus.h"
+#include <machine/nexus.h>
 
 #define V750UCODE(x)    ((x>>8)&255)
 #define V750HARDW(x)    (x&255)

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 1996/01/28 12:14:48 ragge Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 1996/02/02 18:08:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -35,13 +35,13 @@
  *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "dkbad.h"
-#include "disklabel.h"
-#include "syslog.h"
-#include "machine/macros.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
+#include <sys/syslog.h>
+#include <machine/macros.h>
 
 /* XXX encoding of disk minor numbers, should be elsewhere... */
 #define dkunit(dev)		(minor(dev) >> 3)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.11 1996/01/29 22:52:21 jonathan Exp $	*/
+/*	$NetBSD: pm.c,v 1.12 1996/02/02 18:07:29 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,9 +56,9 @@
  */
 
 
-#include <fb.h>
-#include <pm.h>
-#include <dc.h>
+#include "fb.h"
+#include "pm.h"
+#include "dc.h"
 #if NPM > 0
 #if NDC == 0
 pm needs dc device

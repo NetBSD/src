@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.4 1995/12/13 18:45:53 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.5 1996/02/02 18:09:04 mycroft Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -29,15 +29,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/device.h"
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "machine/ka750.h"
-#include "machine/pmap.h"
-#include "machine/sid.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/device.h>
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <machine/ka750.h>
+#include <machine/pmap.h>
+#include <machine/sid.h>
 
 struct nexus *nexus;
 

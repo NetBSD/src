@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.22 1996/01/13 01:41:05 briggs Exp $	*/
+/*	$NetBSD: param.h,v 1.23 1996/02/02 18:06:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,7 +80,7 @@
 #define _MACHINE_PARAM_H_	1
 
 #ifndef PSL_IPL
-#include "machine/psl.h"
+#include <machine/psl.h>
 #endif /* PSL_IPL */
 
 /*
