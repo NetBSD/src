@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.13 1998/09/14 02:48:33 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.14 1998/09/14 02:50:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -102,7 +102,7 @@ struct sigcontext {
 	int	sc_ss;
 
 	int	sc_onstack;		/* sigstack state to restore */
-	sigset13_t __sc_mask13;		/* signal mask to restore (old style) */
+	int	__sc_mask13;		/* signal mask to restore (old style) */
 
 	int	sc_trapno;		/* XXX should be above */
 	int	sc_err;
