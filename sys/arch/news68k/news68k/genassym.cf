@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 2003/11/04 10:33:17 dsl Exp $
+#	$NetBSD: genassym.cf,v 1.15 2004/12/12 10:26:36 tsutsui Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -126,24 +126,6 @@ define	LSONPROC		LSONPROC
 # interrupt/fault metering
 define	UVMEXP_INTRS		offsetof(struct uvmexp, intrs)
 
-define	T_BUSERR		T_BUSERR
-define	T_ADDRERR		T_ADDRERR
-define	T_ILLINST		T_ILLINST
-define	T_ZERODIV		T_ZERODIV
-define	T_CHKINST		T_CHKINST
-define	T_TRAPVINST		T_TRAPVINST
-define	T_PRIVINST		T_PRIVINST
-define	T_TRACE			T_TRACE
-define	T_MMUFLT		T_MMUFLT
-define	T_SSIR			T_SSIR
-define	T_FMTERR		T_FMTERR
-define	T_COPERR		T_COPERR
-define	T_FPERR			T_FPERR
-define	T_ASTFLT		T_ASTFLT
-define	T_TRAP15		T_TRAP15
-define	T_FPEMULI		T_FPEMULI
-define	T_FPEMULD		T_FPEMULD
-
 # PSL values (should just include psl.h?)
 define	PSL_S			PSL_S
 define	PSL_IPL7		PSL_IPL7
@@ -224,10 +206,6 @@ define	SYS_exit		SYS_exit
 define	SYS_execve		SYS_execve
 define	SYS_compat_16___sigreturn14	SYS_compat_16___sigreturn14
 define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
-
-# errno
-define	EFAULT			EFAULT
-define	ENAMETOOLONG		ENAMETOOLONG
 
 # UVM
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
