@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.4 1997/02/28 07:52:45 scottr Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.5 1997/02/28 08:56:06 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -303,7 +303,10 @@ ae_nubus_attach(parent, self, aux)
 	}
 
 	ifp->if_watchdog = ae_nb_watchdog;	/* Override watchdog */
-	aesetup(sc);
+	if (aesetup(sc)) {
+		bus_space_unmap(bst, bsh, NBMEMSIZE);
+		return;
+	}
 
 	/* make sure interrupts are vectored to us */
 	add_nubus_intr(na->slot, aeintr, sc);

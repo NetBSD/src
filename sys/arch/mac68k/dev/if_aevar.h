@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aevar.h,v 1.4 1997/02/28 07:52:46 scottr Exp $	*/
+/*	$NetBSD: if_aevar.h,v 1.5 1997/02/28 08:56:07 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -58,7 +58,7 @@ struct ae_softc {
 int	ae_size_card_memory __P((
 	    bus_space_tag_t, bus_space_handle_t, int));
 
-void	aesetup __P((struct ae_softc *));
+int	aesetup __P((struct ae_softc *));
 void	aeintr __P((void *, int));
 int	aeioctl __P((struct ifnet *, u_long, caddr_t));
 void	aestart __P((struct ifnet *));
