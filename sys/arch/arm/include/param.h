@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2001/07/13 19:43:15 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2001/07/14 07:31:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,7 +39,24 @@
  * Machine dependent constants for all ARM processors
  */
 
-/* MACHINE and MACHINE_ARCH are defined by individual ports. */
+/*
+ * For KERNEL code:
+ *	MACHINE must be defined by the individual port.
+ *	MACHINE_ARCH may be defined by an individual port.
+ *
+ * For non-KERNEL code:
+ *	MACHINE && MACHINE_ARCH default to "arm"
+ */
+
+#ifndef _KERNEL
+#ifndef MACHINE
+#define	MACHINE		"arm"
+#endif
+#endif /* !_KERNEL */
+
+#ifndef MACHINE_ARCH
+#define	MACHINE_ARCH	"arm"
+#endif
 
 #define	MID_MACHINE	MID_ARM6
 
