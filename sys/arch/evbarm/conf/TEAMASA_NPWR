@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.14 2002/04/25 15:06:26 atatat Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.15 2002/05/03 19:35:53 thorpej Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -172,7 +172,7 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 #
 
 # PCI SCSI controllers
-siop0		at pci? dev ? function ?	# on-board LSI 53c1010
+esiop0		at pci? dev ? function ?	# on-board LSI 53c1010
 options 	SIOP_SYMLED
 scsibus*	at scsi?
 
