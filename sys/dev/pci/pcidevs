@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.575 2003/09/15 19:50:45 bouyer Exp $
+$NetBSD: pcidevs,v 1.576 2003/09/21 07:45:13 nisimura Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -119,7 +119,7 @@ vendor IPCCORP		0x1046	IPC Corporation
 vendor GENOA		0x1047	Genoa Systems
 vendor ELSA		0x1048	Elsa
 vendor FOUNTAINTECH	0x1049	Fountain Technology
-vendor SGSTHOMSON	0x104a	SGS Thomson Microelectric
+vendor SGSTHOMSON	0x104a	SGS-Thomson Microelectrics
 vendor BUSLOGIC		0x104b	BusLogic
 vendor TI		0x104c	Texas Instruments
 vendor SONY		0x104d	Sony
@@ -521,7 +521,7 @@ vendor RISCOM		0x12aa	RISCom
 vendor USR		0x12b9	US Robotics (3Com)
 vendor USR2		0x16ec	US Robotics
 vendor PICTUREEL	0x12c5	Picture Elements
-vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
+vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS-Thomson Microelectrics
 vendor RAINBOW		0x12de	Rainbow Technologies
 vendor AUREAL		0x12eb	Aureal Semiconductor
 vendor ADMTEK		0x1317	ADMtek
