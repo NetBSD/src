@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.15 2003/03/07 16:29:33 drochner Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.16 2003/03/07 20:18:57 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.15 2003/03/07 16:29:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.16 2003/03/07 20:18:57 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -660,11 +660,22 @@ sbp2_free(struct sbp2 *sbp2)
 	struct sbp2_orb *orb;
 	struct sbp2_lun *lun;
 
-	while (!CIRCLEQ_EMPTY(&sbp2->orbs)) {
+	/*
+	 * Try to send an abort for each active orb.
+	 * sbp2_abort won't remove the last one so stop and do the last
+	 * by hand
+	 */
+
+	while (CIRCLEQ_FIRST(&sbp2->orbs) != (void *)&sbp2->orbs) {
 		orb = CIRCLEQ_FIRST(&sbp2->orbs);
-		CIRCLEQ_REMOVE(&sbp2->orbs, orb, orb_list);
+		(void)sbp2_abort(orb);
 		sbp2_free_orb(orb);
 	}
+	orb = CIRCLEQ_FIRST(&sbp2->orbs);
+	(void)sbp2_abort(orb);
+	CIRCLEQ_REMOVE(&sbp2->orbs, orb, orb_list);
+	sbp2_free_orb(orb);
+
 	while (TAILQ_FIRST(&sbp2->luns) != NULL) {
 		lun = TAILQ_FIRST(&sbp2->luns);
 		TAILQ_REMOVE(&sbp2->luns, lun, lun_list);
