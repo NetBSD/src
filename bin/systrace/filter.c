@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.11 2002/10/11 21:54:57 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.12 2002/11/02 16:27:46 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.11 2002/10/11 21:54:57 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.12 2002/11/02 16:27:46 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -369,7 +369,7 @@ filter_parse_simple(char *rule, short *paction, short *pfuture)
 	if (isfuture)
 		*pfuture = *paction;
 
-	return (NULL);
+	return (0);
 }
 
 void
