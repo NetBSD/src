@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_mroute.c	8.2 (Berkeley) 11/15/93
- *	$Id: ip_mroute.c,v 1.10 1994/05/13 06:06:23 mycroft Exp $
+ *	$Id: ip_mroute.c,v 1.11 1994/06/04 08:29:51 mycroft Exp $
  */
 
 /*
@@ -399,8 +399,6 @@ add_lgrp(gcp)
 		if (vifp->v_lcl_grps)
 			free(vifp->v_lcl_grps, M_MRTABLE);
 		vifp->v_lcl_grps = ip;
-
-		splx(s);
 	}
 
 	vifp->v_lcl_grps[vifp->v_lcl_grps_n++] = gcp->lgc_gaddr;
