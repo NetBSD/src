@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.19 2002/07/22 09:49:05 wiz Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.20 2002/09/17 16:35:39 fredb Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -676,7 +676,13 @@ system libraries or programs can be built.
 .It Sy install
 Install programs, libraries, and documentation into
 .Sy DESTDIR .
-.
+Few files will be installed to
+.Pa /dev ,
+.Pa /etc ,
+.Pa /root
+or
+.Pa /var
+in order to prevent user supplied configuration data from being overwritten.
 .It Sy lint
 Run
 .Xr lint 1
@@ -796,10 +802,19 @@ and create a
 script (see below).
 .
 .It Sy -d
-Build a full distribution.  This differs from a normal build in that
-etc files will also be installed.  Note this does not build a
+Build a full distribution.
+This differs from a default build in that files will also be installed to
+.Pa /dev ,
+.Pa /etc ,
+.Pa /root
+and
+.Pa /var .
+Note this does not build a
 .Dq release ;
 no release sets are placed in ${RELEASEDIR}.
+.Sy -d
+is implied by
+.Sy -R .
 .
 .It Sy -j Em njob
 Passed through to 

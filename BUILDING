@@ -382,6 +382,9 @@ BUILDING
                 fore any system libraries or programs can be built.
 
      install    Install programs, libraries, and documentation into DESTDIR.
+                Few files will be installed to /dev, /etc, /root or /var in
+                order to prevent user supplied configuration data from being
+                overwritten.
 
      lint       Run lint(1) against the C source code, where appropriate, and
                 generate system-installed lint libraries.
@@ -440,10 +443,10 @@ BUILDING
      -b        Bootstrap ``make'' and create a nbmake-MACHINE script (see be-
                low).
 
-     -d        Build a full distribution.  This differs from a normal build in
-               that etc files will also be installed.  Note this does not
-               build a ``release''; no release sets are placed in ${RE-
-               LEASEDIR}.
+     -d        Build a full distribution.  This differs from a default build
+               in that files will also be installed to /dev, /etc, /root and
+               /var.  Note this does not build a ``release''; no release sets
+               are placed in ${RELEASEDIR}.  -d is implied by -R.
 
      -j njob   Passed through to make(1).  Makefiles should use .WAIT or have
                explicit dependancies as necessary to enforce build ordering.
