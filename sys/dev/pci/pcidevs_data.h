@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.239 2000/06/13 22:44:52 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.240 2000/06/16 08:13:51 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.235 2000/06/13 22:44:19 tron Exp 
+ *	NetBSD: pcidevs,v 1.236 2000/06/16 08:13:25 soren Exp 
  */
 
 /*
@@ -3124,6 +3124,24 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Trio3D/2X",
 	},
 	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D,
+	    0,
+	    "S3",
+	    "Savage3D",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D_MV,
+	    0,
+	    "S3",
+	    "Savage3D+MV",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE4,
+	    0,
+	    "S3",
+	    "Savage4",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MX,
 	    0,
 	    "S3",
@@ -3134,6 +3152,36 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "S3",
 	    "ViRGE/MXP",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_MX_MV,
+	    0,
+	    "S3",
+	    "Savage/MX+MV",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_MX,
+	    0,
+	    "S3",
+	    "Savage/MX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IX_MV,
+	    0,
+	    "S3",
+	    "Savage/IX+MV",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IX,
+	    0,
+	    "S3",
+	    "Savage/IX",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE2000,
+	    0,
+	    "S3",
+	    "Savage2000",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES,
