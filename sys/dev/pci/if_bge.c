@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.74 2004/09/21 21:57:30 yamt Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.75 2004/09/29 11:22:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.74 2004/09/21 21:57:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.75 2004/09/29 11:22:03 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -934,7 +934,7 @@ bge_newbuf_jumbo(sc, i, m)
 	struct bge_rx_bd *r;
 
 	if (m == NULL) {
-		caddr_t			*buf = NULL;
+		caddr_t			buf = NULL;
 
 		/* Allocate the mbuf. */
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
