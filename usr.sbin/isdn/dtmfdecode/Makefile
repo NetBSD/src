@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.1 2001/01/06 13:00:36 martin Exp $
+# $NetBSD: Makefile,v 1.2 2002/02/04 16:44:06 drochner Exp $
 
 PROG            =       dtmfdecode
 SRC             =       dtmfdecode.c
@@ -7,6 +7,6 @@ SRC             =       dtmfdecode.c
 #LDADD		+=	-lm
 
 test:	${PROG}
-	uudecode -p < dtmfsounds.al.uu | ./${PROG} 
+	uudecode -p < ${.CURDIR}/dtmfsounds.al.uu | ./${PROG} 
 
 .include <bsd.prog.mk>
