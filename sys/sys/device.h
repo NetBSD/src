@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.58 2002/10/01 18:11:58 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.59 2002/10/02 16:49:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -231,7 +231,7 @@ struct cfattach {
 #define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 const struct cfattach __CONCAT(name,_ca) = {				\
 	ddsize, matfn, attfn, detfn, actfn				\
-};
+}
 
 /* Flags given to config_detach(), and the ca_detach function. */
 #define	DETACH_FORCE	0x01		/* force detachment; hardware gone */
@@ -250,7 +250,7 @@ LIST_HEAD(cfdriverlist, cfdriver);
 #define	CFDRIVER_DECL(name, class, attrs)				\
 struct cfdriver __CONCAT(name,_cd) = {					\
 	{ }, NULL, ___STRING(name), class, 0, attrs			\
-};
+}
 
 /*
  * Configuration printing functions, and their return codes.  The second
