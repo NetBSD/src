@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.2 2001/07/08 22:57:10 thorpej Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.3 2001/07/08 23:57:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,8 +46,16 @@
 const struct arcbios_spb *ARCBIOS_SPB;
 const struct arcbios_fv *ARCBIOS;
 
+char arcbios_sysid_vendor[ARCBIOS_SYSID_FIELDLEN + 1];
+char arcbios_sysid_product[ARCBIOS_SYSID_FIELDLEN + 1];
+
+char arcbios_system_identifier[64 + 1];
+
 int	arcbios_cngetc(dev_t);
 void	arcbios_cnputc(dev_t, int);
+
+void	arcbios_fetch_system_identifier(struct arcbios_component *,
+	    struct arcbios_treewalk_context *);
 
 struct consdev arcbios_cn = {
 	NULL, NULL, arcbios_cngetc, arcbios_cnputc, nullcnpollc, NULL,
@@ -62,6 +70,7 @@ struct consdev arcbios_cn = {
 int
 arcbios_init(vaddr_t pblkva)
 {
+	struct arcbios_sysid *sid;
 
 	ARCBIOS_SPB = (struct arcbios_spb *) pblkva;
 	
@@ -82,7 +91,45 @@ arcbios_init(vaddr_t pblkva)
 	/* Initialize the bootstrap console. */
 	cn_tab = &arcbios_cn;
 
+	/*
+	 * Fetch the system ID.
+	 */
+	sid = (*ARCBIOS->GetSystemId)();
+	if (sid != NULL) {
+		memcpy(arcbios_sysid_vendor, sid->VendorId,
+		    sizeof(sid->VendorId));
+		arcbios_sysid_vendor[sizeof(sid->VendorId)] = '\0';
+
+		memcpy(arcbios_sysid_product, sid->ProductId,
+		    sizeof(sid->ProductId));
+		arcbios_sysid_product[sizeof(sid->ProductId)] = '\0';
+	}
+
+	/*
+	 * Fetch the identifier string from the `system' component.
+	 * Machdep code will use this to initialize the system type.
+	 */
+	arcbios_tree_walk(arcbios_fetch_system_identifier, NULL);
+
 	return (0);
+}
+
+void
+arcbios_fetch_system_identifier(struct arcbios_component *node,
+    struct arcbios_treewalk_context *atc)
+{
+
+	switch (node->Class) {
+	case COMPONENT_CLASS_SystemClass:
+		arcbios_component_id_copy(node,
+		    arcbios_system_identifier,
+		    sizeof(arcbios_system_identifier));
+		atc->atc_terminate = 1;
+		break;
+
+	default:
+		break;
+	}
 }
 
 /****************************************************************************
@@ -115,6 +162,18 @@ arcbios_tree_walk(void (*func)(struct arcbios_component *,
 	atc.atc_terminate = 0;
 
 	arcbios_subtree_walk(NULL, func, &atc);
+}
+
+void
+arcbios_component_id_copy(struct arcbios_component *node,
+    char *dst, size_t dstsize)
+{
+
+	dstsize--;
+	if (dstsize > node->IdentifierLength)
+		dstsize = node->IdentifierLength;
+	memcpy(dst, node->Identifier, dstsize);
+	dst[dstsize] = '\0';
 }
 
 /****************************************************************************
