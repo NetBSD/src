@@ -1,4 +1,4 @@
-.\"	$NetBSD: random.3,v 1.9 1999/03/22 19:44:58 garbled Exp $
+.\"	$NetBSD: random.3,v 1.10 2000/10/05 06:21:53 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,9 +49,9 @@
 .Ft long
 .Fn random void
 .Ft void
-.Fn srandom "unsigned seed"
+.Fn srandom "unsigned long seed"
 .Ft char *
-.Fn initstate "unsigned seed" "char *state" "size_t n"
+.Fn initstate "unsigned long seed" "char *state" "size_t n"
 .Ft char *
 .Fn setstate "char *state"
 .Sh DESCRIPTION
