@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.host,v 1.7 2001/11/08 20:30:54 jmc Exp $
+m	$NetBSD: Makefile.host,v 1.8 2001/11/11 01:36:15 jmc Exp $
 
 # Preload <bsd.obj.mk> to set up obj rules (with proper ${.CURDIR}).
 .include <bsd.obj.mk>
@@ -27,7 +27,7 @@ HOST_CPPFLAGS:=	-include ${_CURDIR}/../compat/compat_netbsd.h -Wall \
 		${HOST_CPPFLAGS} ${CPPFLAGS}
 MKMAN=		no
 SRCS?=		${PROG}.c
-SRCS+=		${HOST_SRCS} nb_progname.c nb_rmd.c
+SRCS+=		${HOST_SRCS} nb_progname.c
 TIMESTAMP?=	${HOST_BINDIR}/${HOSTPROGNAME}
 .undef LINKS
 
