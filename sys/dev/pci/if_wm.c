@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.91 2005/02/18 01:21:02 heas Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.92 2005/02/18 04:32:35 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.91 2005/02/18 01:21:02 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.92 2005/02/18 04:32:35 briggs Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -326,6 +326,7 @@ struct wm_softc {
 	uint32_t sc_ctrl_ext;		/* prototype CTRL_EXT register */
 #endif
 	uint32_t sc_icr;		/* prototype interrupt bits */
+	uint32_t sc_itr;		/* prototype intr throttling reg */
 	uint32_t sc_tctl;		/* prototype TCTL register */
 	uint32_t sc_rctl;		/* prototype RCTL register */
 	uint32_t sc_txcw;		/* prototype TXCW register */
@@ -795,7 +796,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			 */
 			preg = pci_conf_read(pc, pa->pa_tag, i);
 			if (PCI_MAPREG_MEM_ADDR(preg) == 0) {
-				aprint_error("%s: WARNING: I/O BAR at zero.\n",
+				aprint_error("%s: WARNING: I/O BAR at zero.",
 				    sc->sc_dev.dv_xname);
 			} else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
 					0, &sc->sc_iot, &sc->sc_ioh,
@@ -1350,6 +1351,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	struct mbuf *m0 = txs->txs_mbuf;
 	struct livengood_tcpip_ctxdesc *t;
 	uint32_t ipcs, tucs;
+	struct ip *ip;
 	struct ether_header *eh;
 	int offset, iphl;
 	uint8_t fields = 0;
@@ -1362,10 +1364,12 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	eh = mtod(m0, struct ether_header *);
 	switch (htons(eh->ether_type)) {
 	case ETHERTYPE_IP:
+		iphl = sizeof(struct ip);
 		offset = ETHER_HDR_LEN;
 		break;
 
 	case ETHERTYPE_VLAN:
+		iphl = sizeof(struct ip);
 		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
 		break;
 
@@ -1378,7 +1382,38 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		return (0);
 	}
 
-	iphl = m0->m_pkthdr.csum_data >> 16;
+	if (m0->m_len < (offset + iphl)) {
+		/*
+		 * Packet headers aren't in the first mbuf.  Let's hope
+		 * there is space at the end if it for them.
+		 */
+		WM_EVCNT_INCR(&sc->sc_ev_txpullup_needed);
+		if ((txs->txs_mbuf = m_pullup(m0, offset + iphl)) == NULL) {
+			WM_EVCNT_INCR(&sc->sc_ev_txpullup_nomem);
+			log(LOG_ERR,
+			    "%s: wm_tx_offload: mbuf allocation failed, "
+			    "packet dropped\n", sc->sc_dev.dv_xname);
+			return (ENOMEM);
+		} else if (m0 != txs->txs_mbuf) {
+			/*
+			 * The DMA map has already been loaded, so we
+			 * would have to unload and reload it.  But then
+			 * if that were to fail, we are already committed
+			 * to transmitting the packet (can't put it back
+			 * on the queue), so we have to drop the packet.
+			 */
+			WM_EVCNT_INCR(&sc->sc_ev_txpullup_fail);
+			log(LOG_ERR, "%s: wm_tx_offload: packet headers did "
+			    "not fit in first mbuf, packet dropped\n",
+			    sc->sc_dev.dv_xname);
+			m_freem(txs->txs_mbuf);
+			txs->txs_mbuf = NULL;
+			return (EINVAL);
+		}
+	}
+
+	ip = (struct ip *) (mtod(m0, caddr_t) + offset);
+	iphl = ip->ip_hl << 2;
 
 	/*
 	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
@@ -1400,8 +1435,8 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= WTX_TXSM;
 		tucs = WTX_TCPIP_TUCSS(offset) |
-		   WTX_TCPIP_TUCSO(offset + (m0->m_pkthdr.csum_data & 0xffff)) |
-		   WTX_TCPIP_TUCSE(0) /* rest of packet */;
+		    WTX_TCPIP_TUCSO(offset + m0->m_pkthdr.csum_data) |
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	} else {
 		/* Just initialize it to a valid TCP context. */
 		tucs = WTX_TCPIP_TUCSS(offset) |
@@ -2152,15 +2187,11 @@ wm_rxintr(struct wm_softc *sc)
 		}
 
 		/*
-		 * Okay, we have the entire packet now.  The chip is
-		 * configured to include the FCS (not all chips can
-		 * be configured to strip it), so we need to trim it.
+		 * Okay, we have the entire packet now...
 		 */
-		m->m_len -= ETHER_CRC_LEN;
-
 		*sc->sc_rxtailp = NULL;
 		m = sc->sc_rxhead;
-		len = m->m_len + sc->sc_rxlen;
+		len += sc->sc_rxlen;
 
 		WM_RXCHAIN_RESET(sc);
 
@@ -2189,7 +2220,11 @@ wm_rxintr(struct wm_softc *sc)
 
 		/*
 		 * No errors.  Receive the packet.
+		 *
+		 * Note, we have configured the chip to include the
+		 * CRC with every packet.
 		 */
+		m->m_flags |= M_HASFCS;
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = len;
 
@@ -2499,7 +2534,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
 		CSR_WRITE(sc, WMREG_TDT, 0);
-		CSR_WRITE(sc, WMREG_TIDV, 128);
+		CSR_WRITE(sc, WMREG_TIDV, 64);
+		CSR_WRITE(sc, WMREG_TADV, 128);
 
 		CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 		    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
@@ -2540,7 +2576,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_RDLEN, sizeof(sc->sc_rxdescs));
 		CSR_WRITE(sc, WMREG_RDH, 0);
 		CSR_WRITE(sc, WMREG_RDT, 0);
-		CSR_WRITE(sc, WMREG_RDTR, 28 | RDTR_FPD);
+		CSR_WRITE(sc, WMREG_RDTR, 0 | RDTR_FPD);
+		CSR_WRITE(sc, WMREG_RADV, 128);
 	}
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -2632,6 +2669,12 @@ wm_init(struct ifnet *ifp)
 
 	/* Set up the inter-packet gap. */
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
+
+	if (sc->sc_type >= WM_T_82543) {
+		/* Set up the interrupt throttling register (units of 256ns) */
+		sc->sc_itr = 1000000000 / (7000 * 256);
+		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
+	}
 
 #if 0 /* XXXJRT */
 	/* Set the VLAN ethernetype. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.13 2004/10/05 21:29:56 thorpej Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.14 2005/02/18 04:32:35 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -363,6 +363,10 @@ struct livengood_tcpip_ctxdesc {
 #define	ICR_RXCFG	(1U << 10)	/* Receiving /C/ */
 #define	ICR_GPI(x)	(1U << (x))	/* general purpose interrupts */
 
+#define WMREG_ITR	0x00c4	/* Interrupt Throttling Register */
+#define ITR_IVAL_MASK	0xffff		/* Interval mask */
+#define ITR_IVAL_SHIFT	0		/* Interval shift */
+
 #define	WMREG_ICS	0x00c8	/* Interrupt Cause Set Register */
 	/* See ICR bits. */
 
@@ -403,6 +407,8 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_OLD_RDTR0	0x0108	/* Receive Delay Timer (ring 0) */
 #define	WMREG_RDTR	0x2820
 #define	RDTR_FPD	(1U << 31)	/* flush partial descriptor */
+
+#define	WMREG_RADV	0x282c	/* Receive Interrupt Absolute Delay Timer */
 
 #define	WMREG_OLD_RDBAL0 0x0110	/* Receive Descriptor Base Low (ring 0) */
 #define	WMREG_RDBAL	0x2800
@@ -534,6 +540,8 @@ struct livengood_tcpip_ctxdesc {
 #define	TXDCTL_PTHRESH(x) ((x) << 0)	/* prefetch threshold */
 #define	TXDCTL_HTHRESH(x) ((x) << 8)	/* host threshold */
 #define	TXDCTL_WTHRESH(x) ((x) << 16)	/* write back threshold */
+
+#define	WMREG_TADV	0x382c	/* Transmit Absolute Interrupt Delay Timer */
 
 #define	WMREG_AIT	0x0458	/* Adaptive IFS Throttle */
 
