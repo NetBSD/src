@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prop.c,v 1.6 2002/03/16 22:44:41 mjacob Exp $	*/
+/*	$NetBSD: subr_prop.c,v 1.7 2002/08/25 23:08:18 thorpej Exp $	*/
 
 /*  
  * Copyright (c) 2001 Eduardo Horvath.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.6 2002/03/16 22:44:41 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prop.c,v 1.7 2002/08/25 23:08:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,19 +152,20 @@ kdb_rehash(struct propdb *db)
 	struct kdbobj *obj;
 	kobj_bucket_t *new, *old = db->kd_obj;
 	long hash;
-	size_t newsize = (db->kd_size << KDB_STEP);
-	int i, s;
+	size_t i, newsize = (db->kd_size << KDB_STEP);
+	int s;
 
 	new = (kobj_bucket_t *)malloc(sizeof(kobj_bucket_t) * newsize,
 		M_PROP,	M_NOWAIT);
-	if (!new) return;
+	if (new == NULL)
+		return;
 	s = splvm();
-	for (i=0; i<newsize; i++)
+	for (i = 0; i < newsize; i++)
 		LIST_INIT(&new[i]);
 
 	/* Now pop an object from the old table and insert it in the new one. */
-	for (i=0; i<db->kd_size; i++) {
-		while ((obj = LIST_FIRST(&old[i]))) {
+	for (i = 0; i < db->kd_size; i++) {
+		while ((obj = LIST_FIRST(&old[i])) != NULL) {
 			LIST_REMOVE(obj, ko_link);
 			hash = (long)obj->ko_object;
 			hash = KDB_HASH(hash, db->kd_size);
@@ -186,7 +187,7 @@ propdb_t
 propdb_create(const char *name)
 {
 	struct propdb *db;
-	int i;
+	size_t i;
 
 	db = (struct propdb *)malloc(sizeof(struct propdb),
 		M_PROP,	M_WAITOK);
@@ -209,7 +210,7 @@ propdb_destroy(propdb_t db)
 {
 	struct kdbobj *obj;
 	struct kdbprop *prop;
-	int i;
+	size_t i;
 
 #ifdef DIAGNOSTIC
 	struct propdb *p;
@@ -456,15 +457,16 @@ size_t
 prop_objs(propdb_t db, opaque_t *objects, size_t len) 
 {
 	struct kdbobj *obj;
-	int i, j, s, nelem = (len / sizeof(opaque_t));
+	size_t i, j, nelem = (len / sizeof(opaque_t));
+	int s;
 
 	DPRINTF(x, ("prop_objs: %p, %p, %lx\n", db, objects,
 	    (unsigned long)len));
 
 	s = splvm();
-	for (i=0, j=0; i < db->kd_size; i++) {
+	for (i = 0, j = 0; i < db->kd_size; i++) {
 		LIST_FOREACH(obj, &db->kd_obj[i], ko_link) {
-			if (objects && j<nelem)
+			if (objects && j < nelem)
 				objects[j] = obj->ko_object;
 			j++;
 		}
