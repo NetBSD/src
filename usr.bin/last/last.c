@@ -1,4 +1,4 @@
-/*	$NetBSD: last.c,v 1.19 2003/07/07 11:42:13 wiz Exp $	*/
+/*	$NetBSD: last.c,v 1.20 2003/07/14 12:02:00 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: last.c,v 1.19 2003/07/07 11:42:13 wiz Exp $");
+__RCSID("$NetBSD: last.c,v 1.20 2003/07/14 12:02:00 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -325,15 +325,12 @@ ttyconv(char *arg)
 	 * a two character suffix.
 	 */
 	if (strlen(arg) == 2) {
-		/* either 6 for "ttyxx" or 8 for "console" */
-		if (!(mval = malloc((u_int)8)))
-			err(1, "malloc failure");
 		if (!strcmp(arg, "co"))
-			(void)strcpy(mval, "console");
-		else {
-			(void)strcpy(mval, "tty");
-			(void)strcpy(mval + 3, arg);
-		}
+			mval = strdup("console");
+		else
+			asprintf(&mval, "tty%s", arg);
+		if (!mval)
+			err(1, "malloc failure");
 		return (mval);
 	}
 	if (!strncmp(arg, _PATH_DEV, sizeof(_PATH_DEV) - 1))
