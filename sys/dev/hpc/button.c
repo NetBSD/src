@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.3 2001/05/01 00:25:16 takemura Exp $	*/
+/*	$NetBSD: button.c,v 1.4 2001/06/04 18:59:31 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -59,40 +59,31 @@ struct button_softc {
 	config_hook_tag sc_ghook_tag;
 };
 
-static int	button_match __P((struct device *, struct cfdata *,
-				       void *));
-static void	button_attach __P((struct device *, struct device *,
-					void *));
-static int	button_intr __P((void*));
-static int	button_state __P((void *ctx, int type, long id,
-				      void *msg));
+static int	button_match(struct device *, struct cfdata *, void *);
+static void	button_attach(struct device *, struct device *, void *);
+static int	button_intr(void *);
+static int	button_state(void *, int, long, void *);
 
 struct cfattach button_ca = {
 	sizeof(struct button_softc), button_match, button_attach
 };
 
 int
-button_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+button_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	platid_mask_t mask;
 
 	if (strcmp(haa->haa_busname, HPCIO_BUSNAME))
-		return 0;
+		return (0);
 	if (match->cf_loc[HPCIOIFCF_PLATFORM] == 0)
-		return 0;
+		return (0);
 	mask = PLATID_DEREF(match->cf_loc[HPCIOIFCF_PLATFORM]);
-	return platid_match(&platid, &mask);
+	return (platid_match(&platid, &mask));
 }
 
 void
-button_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+button_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct hpcio_attach_args *haa = aux;
 	int *loc;
@@ -105,7 +96,7 @@ button_attach(parent, self, aux)
 	sc->sc_id = loc[HPCIOIFCF_ID];
 	sc->sc_active = loc[HPCIOIFCF_ACTIVE];
 	printf(" port=%d id=%ld active=%s",
-	       sc->sc_port, sc->sc_id, sc->sc_active ? "high" : "low");
+	    sc->sc_port, sc->sc_id, sc->sc_active ? "high" : "low");
 
 #if 0
 #if 1 /* Windows CE default */
@@ -151,37 +142,29 @@ button_attach(parent, self, aux)
 	else
 		sc->sc_intr_handle =
 		    hpcio_intr_establish(sc->sc_hc, sc->sc_port,
-					 mode, button_intr, sc);
-	sc->sc_ghook_tag = config_hook(CONFIG_HOOK_GET,
-				       sc->sc_id,
-				       CONFIG_HOOK_SHARE,
-				       button_state,
-				       sc);	
+			mode, button_intr, sc);
+	sc->sc_ghook_tag = config_hook(CONFIG_HOOK_GET, sc->sc_id,
+	    CONFIG_HOOK_SHARE, button_state, sc);	
 	printf("\n");
 }
 
 int
-button_state(ctx, type, id, msg)
-	void *ctx;
-	int type;
-	long id;
-	void *msg;
+button_state(void *ctx, int type, long id, void *msg)
 {
 	struct button_softc *sc = ctx;
 
 	if (type != CONFIG_HOOK_GET || id != sc->sc_id)
-		return 1;
+		return (1);
 
 	if (CONFIG_HOOK_VALUEP(msg))
-		return 1;
+		return (1);
 
 	*(int*)msg = (hpcio_portread(sc->sc_hc, sc->sc_port) == sc->sc_active);
-	return 0;
+	return (0);
 }
 
 int
-button_intr(ctx)
-	void *ctx;
+button_intr(void *ctx)
 {
 	struct button_softc *sc = ctx;
 	int on;
@@ -193,5 +176,5 @@ button_intr(ctx)
 
 	config_hook_call(CONFIG_HOOK_BUTTONEVENT, sc->sc_id, (void*)on);
 
-	return 0;
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcin.c,v 1.1 2001/04/30 11:42:17 takemura Exp $	*/
+/*	$NetBSD: hpcin.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct cfattach hpcin_ca = {
 int
 hpcin_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 1;
+	return (1);
 }
 
 void
@@ -93,8 +93,7 @@ hpcin_attach(struct device *parent, struct device *self, void *aux)
 
 	/* install interrupt handler */
 	sc->sc_ih = hpcio_intr_establish(sc->sc_hc, sc->sc_port,
-					 sc->sc_intr_mode,
-					 hpcin_intr, sc);
+	    sc->sc_intr_mode, hpcin_intr, sc);
 	if (sc->sc_ih == NULL)
 		printf("hpcin: can't install interrupt handler\n");
 }
@@ -110,5 +109,5 @@ hpcin_intr(void *arg)
 	config_hook_call(sc->sc_type, sc->sc_id, (void *)on);
 	printf("done.\n");
 
-	return 0;
+	return (0);
 }
