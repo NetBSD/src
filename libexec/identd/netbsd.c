@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd.c,v 1.10 1997/10/08 07:07:51 mrg Exp $	*/
+/*	$NetBSD: netbsd.c,v 1.11 1997/10/08 07:24:51 mrg Exp $	*/
 
 /*
 ** netbsd.c		Low level kernel access functions for NetBSD
@@ -200,7 +200,7 @@ int k_getuid(faddr, fport, laddr, lport, uid)
     }
     xfile = malloc(siz);
     if (!xfile)
-      ERROR1("k_getuid: malloc(%d)", siz);
+      ERROR1("k_getuid: malloc(%ld)", (u_long)siz);
     if ((rv = sysctl(mib, 2, xfile, &siz, NULL, 0)) == -1)
     {
       ERROR1("k_getuid: sysctl 2 (%d)", rv);
