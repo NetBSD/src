@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.8 2002/10/09 20:17:00 thorpej Exp $	*/
+/*	$NetBSD: defs.h,v 1.9 2002/11/17 23:36:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -476,6 +476,7 @@ void	pack(void);
 /* scan.l */
 int	currentline(void);
 int	firstfile(const char *);
+void	package(const char *);
 int	include(const char *, int, int, int);
 
 /* sem.c, other than for yacc actions */
