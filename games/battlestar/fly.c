@@ -1,4 +1,4 @@
-/*	$NetBSD: fly.c,v 1.6 1997/10/11 02:07:20 lukem Exp $	*/
+/*	$NetBSD: fly.c,v 1.7 1999/04/18 03:30:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: fly.c,v 1.6 1997/10/11 02:07:20 lukem Exp $");
+__RCSID("$NetBSD: fly.c,v 1.7 1999/04/18 03:30:12 simonb Exp $");
 #endif
 #endif				/* not lint */
 
@@ -75,7 +75,7 @@ int
 visual()
 {
 	destroyed = 0;
-	if (initscr() == ERR) {
+	if (initscr() == NULL) {
 		puts("Whoops!  No more memory...");
 		return (0);
 	}
