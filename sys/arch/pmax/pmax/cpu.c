@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.12 1999/11/12 09:55:40 nisimura Exp $ */
+/* $NetBSD: cpu.c,v 1.13 1999/11/15 09:50:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -15,7 +15,7 @@
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- *
+ * 
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -44,17 +44,16 @@ extern struct cfdriver cpu_cd;
 
 extern void cpu_identify __P((void));
 
-
 static int
 cpumatch(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct mainbus_attach_args *ma = aux;
 
 	/* make sure that we're looking for a CPU. */
-	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0) {
+	if (strcmp(ma->ma_name, cpu_cd.cd_name) != 0) {
 		return (0);
 	}
 	return (1);
@@ -65,7 +64,6 @@ cpuattach(parent, dev, aux)
 	struct device *parent, *dev;
 	void *aux;
 {
-
 	printf("\n");
 
 	cpu_identify();

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.1 1998/04/19 02:52:45 jonathan Exp $	*/
+/* $NetBSD: ibus.c,v 1.2 1999/11/15 09:50:29 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,75 +32,32 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.1 1998/04/19 02:52:45 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.2 1999/11/15 09:50:29 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <pmax/ibus/ibusvar.h>
-#include <pmax/pmax/pmaxtype.h>
-
-static int  ibusmatch __P((struct device *, struct cfdata *, void *));
-static void ibusattach __P((struct device *, struct device *, void *));
-int  ibusprint __P((void *, const char *));
-
-struct ibus_softc {
-	struct device	ibd_dev;
-	int		ibd_ndevs;
-	struct ibus_attach_args *ibd_devs;
-	ibus_intr_establish_t (*ibd_establish);
-
-	ibus_intr_disestablish_t (*ibd_disestablish);
-};
-
-struct cfattach ibus_ca = {
-        sizeof(struct ibus_softc), ibusmatch, ibusattach
-};
 
 extern struct cfdriver ibus_cd;
 
-
-static int
-ibusmatch(parent, cfdata, aux)
-        struct device *parent;
-        struct cfdata *cfdata;
-        void *aux;
-{
-	struct ibus_dev_attach_args *ibd =  (struct ibus_dev_attach_args *)aux;
-
-	if (strcmp(ibd->ibd_busname, "ibus") != 0)  {
-		return 0;
-	}
-
-	if (systype != DS_PMAX && systype != DS_MIPSMATE && systype != DS_3MAX)
-		return (0);
-	return(1);
-}
-
-
-static void
+void
 ibusattach(parent, self, aux)
-        struct device *parent;
-        struct device *self;
+        struct device *parent, *self;
         void *aux;
 {
         struct ibus_softc *sc = (struct ibus_softc *)self;
-	struct ibus_dev_attach_args* ibd_args = aux;
-        struct ibus_attach_args *child;
+	struct ibus_dev_attach_args *ida = aux;
         int i;
 
         printf("\n");
 
-	sc->ibd_ndevs = ibd_args->ibd_ndevs;
-	sc->ibd_devs = ibd_args->ibd_devs;
-        sc->ibd_establish = ibd_args->ibd_establish;
-        sc->ibd_disestablish = ibd_args->ibd_disestablish;
+        sc->sc_intr_establish = ida->ida_establish;
+        sc->sc_intr_disestablish = ida->ida_disestablish;
 
-	for (i = 0; i <  sc->ibd_ndevs; i++) {
-		child = &sc->ibd_devs[i];
-		config_found(self, child, ibusprint);
+	for (i = 0; i < ida->ida_ndevs; i++) {
+		config_found(self, &ida->ida_devs[i], ibusprint);
 	}
 }
 
@@ -114,22 +71,26 @@ ibusprint(aux, pnp)
 	return (UNCONF);
 }
 
-
 void
-ibus_intr_establish(cookie, level, handler, arg)
-	void * cookie;
+ibus_intr_establish(dev, cookie, level, handler, arg)
+	struct device *dev;
+	void *cookie;
 	int level;
-	int (*handler) __P((intr_arg_t));
-	intr_arg_t arg;
+	int (*handler) __P((void *));
+	void *arg;
 {
-	((struct ibus_softc*)ibus_cd.cd_devs[0])->
-	      ibd_establish(cookie, level, handler, arg);
+	struct ibus_softc *sc = ibus_cd.cd_devs[0];
+
+	(*sc->sc_intr_establish)(dev, cookie, level, handler, arg);
 }
 
 
 void
-ibus_intr_disestablish(ia)
-	struct ibus_attach_args *ia;
+ibus_intr_disestablish(dev, arg)
+	struct device *dev;
+	void *arg;
 {
-	((struct ibus_softc*)ibus_cd.cd_devs[0])->ibd_disestablish(ia);
+	struct ibus_softc *sc = ibus_cd.cd_devs[0];
+
+	(*sc->sc_intr_disestablish)(dev, arg);
 }
