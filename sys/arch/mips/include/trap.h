@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.7 1998/03/26 12:46:33 jonathan Exp $	*/
+/*	$NetBSD: trap.h,v 1.8 1998/05/19 04:11:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,7 @@ extern u_int MachEmulateBranch  __P((u_int* regs, u_int instPC,
 
 #ifdef DEBUG
 extern int cpu_singlestep __P((register struct proc *p)); 
-extern int kdbpeek __P((int addr));
+extern int kdbpeek __P((vm_offset_t addr));
 #endif
 
 
