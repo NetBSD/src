@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.22 1995/02/15 14:27:36 pk Exp $ */
+/*	$NetBSD: conf.c,v 1.23 1995/02/18 09:42:19 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,12 +108,18 @@ bdev_decl(no);	/* dummy declarations */
 #include "sd.h"
 #include "st.h"
 #include "cd.h"
+#include "fd.h"
 #include "vnd.h"
 
 bdev_decl(sd);
 bdev_decl(st);
 bdev_decl(cd);
 bdev_decl(vnd);
+#define fdopen  Fdopen	/* conflicts with fdopen() in kern_descrip.c */
+#define fdclose Fdclose	/* conflicts with fdclose() in kern_descrip.c */
+bdev_decl(fd);
+#undef  fdopen
+#undef  fdclose
 
 #ifdef LKM
 int	lkmenodev();				/* lkm "nodev" routine */
@@ -144,7 +150,11 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 13: */
 	bdev_notdef(),			/* 14: */
 	bdev_notdef(),			/* 15: */
-	bdev_notdef(),			/* 16: */
+#define fdopen  Fdopen	/* conflicts with fdopen() in kern_descrip.c */
+#define fdclose Fdclose	/* conflicts with fdclose() in kern_descrip.c */
+	bdev_disk_init(NFD,fd),		/* 16: floppy disk */
+#undef  fdopen
+#undef  fdclose
 	bdev_notdef(),			/* 17: */
 	bdev_disk_init(NCD,cd),		/* 18: scsi cdrom */
 	bdev_lkm_stub(),		/* 19: LKM STUB */
@@ -378,7 +388,11 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 51 */
 	cdev_notdef(),			/* 52 */
 	cdev_notdef(),			/* 53 */
-	cdev_notdef(),			/* 54 */
+#define fdopen  Fdopen	/* conflicts with fdopen() in kern_descrip.c */
+#define fdclose Fdclose	/* conflicts with fdclose() in kern_descrip.c */
+	cdev_disk_init(NFD,fd),		/* 54: floppy disk */
+#undef  fdopen
+#undef  fdclose
 	cdev_fb_init(NCGTHREE,cgthree),	/* 55: /dev/cgthree */
 	cdev_notdef(),			/* 56 */
 	cdev_notdef(),			/* 57 */
@@ -496,10 +510,12 @@ isdisk(dev, type)
 #else
 	switch (major(dev)) {
 	case 7:
+	case 16:
 		if (type == VBLK)
 			return (1);
 		return (0);
 	case 17:
+	case 54:
 		if (type == VCHR)
 			return (1);
 		/* fall through */
