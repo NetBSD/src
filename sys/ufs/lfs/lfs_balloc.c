@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.26 2000/11/17 19:14:41 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.27 2000/11/21 00:00:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -413,7 +413,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 
 	/* Adjust locked-list accounting */
 	if (((*bpp)->b_flags & (B_LOCKED | B_CALL)) == B_LOCKED)
-		locked_queue_bytes += btodb((*bpp)->b_bufsize - obufsize);
+		locked_queue_bytes += (*bpp)->b_bufsize - obufsize;
 
 	bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
 
