@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.468 2002/08/23 15:57:05 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.469 2002/09/06 23:58:12 uwe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.466 2002/08/23 15:56:30 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.467 2002/09/06 23:41:56 uwe Exp 
  */
 
 /*
@@ -3242,6 +3242,18 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Integraphics Systems",
 	    "IGA 1682",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000,
+	    0,
+	    "Integraphics Systems",
+	    "CyberPro 2000",
+	},
+	{
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010,
+	    0,
+	    "Integraphics Systems",
+	    "CyberPro 2010",
 	},
 	{
 	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
