@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.47 2003/08/08 07:14:28 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.48 2003/08/12 05:06:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,7 +61,8 @@
  */
 #define RESTORE_USER_SRS(t0,t1)						\
 	GET_CPUINFO(t0);						\
-	ldptr	t0,CI_CURPM(t0);					\
+	ldptr	t0,CI_CURPCB(t0);					\
+	ldptr	t0,PCB_PM(t0);						\
 	ldreg	t0,PM_STEG(t0);						\
 	mtasr	t0
 
@@ -101,7 +102,8 @@
  */
 #define RESTORE_USER_SRS(pmap,sr) \
 	GET_CPUINFO(pmap); \
-	ldptr	pmap,CI_CURPM(pmap); \
+	ldptr	pmap,CI_CURPCB(pmap); \
+	ldptr	pmap,PCB_PM(pmap); \
 	ldregu	sr,PM_SR(pmap); \
 	RESTORE_SRS(pmap,sr)
 

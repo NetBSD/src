@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2003/08/11 05:13:22 chs Exp $
+#	$NetBSD: genassym.cf,v 1.6 2003/08/12 05:06:58 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -138,7 +138,7 @@ define	SFRAME_R29	offsetof(struct switchframe, fixreg[16])
 define	SFRAME_R30	offsetof(struct switchframe, fixreg[17])
 define	SFRAME_R31	offsetof(struct switchframe, fixreg[18])
 
-define	PCB_PMR		offsetof(struct pcb, pcb_pmreal)
+define	PCB_PM		offsetof(struct pcb, pcb_pm)
 define	PCB_SP		offsetof(struct pcb, pcb_sp)
 define	PCB_SPL		offsetof(struct pcb, pcb_spl)
 define	PCB_FAULT	offsetof(struct pcb, pcb_onfault)
@@ -160,7 +160,6 @@ define	LSONPROC	LSONPROC
 define	CI_SIZE		sizeof(struct cpu_info)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
-define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
 define	CI_IDLE_PCB	offsetof(struct cpu_info, ci_idle_pcb)
 define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
 define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2003/08/08 07:14:26 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2003/08/12 05:06:53 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -63,7 +63,6 @@ struct cpu_info {
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 
 	struct pcb *ci_curpcb;
-	struct pmap *ci_curpm;
 	struct lwp *ci_fpulwp;
 	struct lwp *ci_veclwp;
 	struct pcb *ci_idle_pcb;	/* PA of our idle pcb */
@@ -162,7 +161,6 @@ curcpu(void)
 
 #define curlwp			(curcpu()->ci_curlwp)
 #define curpcb			(curcpu()->ci_curpcb)
-#define curpm			(curcpu()->ci_curpm)
 
 static __inline register_t
 mfmsr(void)

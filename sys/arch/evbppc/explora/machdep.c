@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2003/07/15 01:37:36 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2003/08/12 05:06:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2003/07/15 01:37:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2003/08/12 05:06:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -222,7 +222,7 @@ bootstrap(u_int startkernel, u_int endkernel)
 	memset(lwp0.l_addr, 0, sizeof *lwp0.l_addr);
 
 	curpcb = &proc0paddr->u_pcb;
-	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+	curpcb->pcb_pm = pmap_kernel();
 
 	/*
 	 * Install trap vectors.
