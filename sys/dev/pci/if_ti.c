@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.40 2001/07/19 16:36:15 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.41 2001/08/14 11:55:38 mrg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1690,7 +1690,7 @@ static void ti_attach(parent, self, aux)
 		}
 	}
 	if (nolinear == 0)
-		sc->ti_vhandle = (void *)(sc->ti_bhandle); /* XXX XXX XXX */
+		sc->ti_vhandle = (void *)(u_long)(sc->ti_bhandle); /* XXX XXX XXX */
 	else 
 		sc->ti_vhandle = NULL;
 
