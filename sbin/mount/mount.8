@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.15 1997/09/15 04:09:06 lukem Exp $
+.\"	$NetBSD: mount.8,v 1.16 1997/09/16 12:22:44 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)mount.8	8.7 (Berkeley) 3/27/94
+.\"     @(#)mount.8	8.8 (Berkeley) 6/16/94
 .\"
-.Dd March 27, 1994
+.Dd June 16, 1994
 .Dt MOUNT 8
 .Os BSD 4
 .Sh NAME
@@ -132,6 +132,10 @@ a filesystem mount status from read-write to read-only.
 Never update the access time field for files.
 This option is useful for optimizing read performance on filesystems
 that are used as news spools.
+.It noauto
+This filesystem should be skipped when mount is run with the
+.Fl a
+flag.
 .It nodev
 Do not interpret character or block special devices on the file system.
 This option is useful for a server that has file systems containing
@@ -285,6 +289,7 @@ file system table
 .Xr fstab 5 ,
 .Xr mount_ados 8 ,
 .Xr mount_cd9660 8 ,
+.Xr mount_ext2fs 8 ,
 .Xr mount_fdesc 8 ,
 .Xr mount_ffs 8 ,
 .Xr mount_kernfs 8 ,
