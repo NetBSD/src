@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.5 1999/12/11 22:22:54 explorer Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.6 2000/04/10 07:46:51 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.7 1999/12/11 22:22:34 explorer Exp 
+ *	NetBSD: cardbusdevs,v 1.8 2000/04/10 07:42:57 haya Exp 
  */
 
 /*
@@ -64,6 +64,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "APA-1480",
 	},
 	{
+	    CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
+	    0,
+	    "Accton Technology",
+	    "MPX 5030/5038 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
 	    0,
 	    "Digital Equipment",
@@ -100,6 +106,12 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "X3201-3 Fast Ethernet Controller (21143)",
 	},
 	{
+	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
+	    0,
+	    "Realtek Semiconductor",
+	    "8138 Ethernet",
+	},
+	{
 	    CARDBUS_VENDOR_DEC, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Digital Equipment",
@@ -133,6 +145,18 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_XIRCOM, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Xircom",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ACCTON, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Accton Technology",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_REALTEK, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Realtek Semiconductor",
 	    NULL,
 	},
 	{
