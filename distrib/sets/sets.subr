@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.19 2004/01/04 13:20:49 lukem Exp $
+#	$NetBSD: sets.subr,v 1.20 2004/01/08 01:39:26 lukem Exp $
 #
 
 #
@@ -10,7 +10,10 @@
 #	lkm			if != "no", enable LKM sets
 #	shlib			shared library format (a.out, elf, or "")
 #	stlib			static library format (a.out, elf)
-#	x11_version		version of XF86 (3 or 4)
+#	x11_version		version of XFree86. one of:
+#				   ""	cross built from src/x11
+#				   3	XFree86 3.x from xsrc/xc
+#				   4	XFree86 4.x from xsrc/xfree/xc
 #
 # The following <bsd.own.mk> variables are exported to the environment:
 #	MACHINE	
@@ -48,7 +51,9 @@ all:
 		${MKVARS}
 	@echo "export \$i=\${\$i}"
 .endfor
-.if defined(USE_XF86_4) && (\${USE_XF86_4} != "no")
+.if (\${MKX11:Uno} != "no")
+	@echo x11_version=""
+.elif (\${USE_XF86_4:Uno} != "no")
 	@echo x11_version=4
 .else
 	@echo x11_version=3
@@ -64,9 +69,10 @@ IFS=$oIFS
 setsdir=$(dirname $0)
 nlists="base comp etc games man misc text"
 case $x11_version in
-3) xlists="xbase3 xcomp3 xcontrib3 xfont3 xmisc3 xserver3" ;;
-4) xlists="xbase4 xcomp4 xcontrib4 xfont4 xmisc4 xserver4" ;;
-*) xlists="xbase xcomp xcontrib xfont xmisc xserver" ;;
+3)	xlists="xbase3 xcomp3 xcontrib3 xfont3 xmisc3 xserver3" ;;
+4)	xlists="xbase4 xcomp4 xcontrib4 xfont4 xmisc4 xserver4" ;;
+"")	xlists="xbase xcomp xcontrib xfont xmisc xserver" ;;
+*)	xlists="" ;;	# unknown!
 esac
 obsolete=0
 lkm=yes
@@ -92,7 +98,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.19 2004/01/04 13:20:49 lukem Exp $
+# 	# $NetBSD: sets.subr,v 1.20 2004/01/08 01:39:26 lukem Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
