@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.34 2002/11/25 02:13:59 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.35 2003/02/11 17:29:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -89,7 +89,7 @@ void
 canonicalize_bootpath()
 {
 	int node;
-	char *p;
+	char *p, *lastp;
 	char last[32];
 
 	/*
@@ -103,7 +103,7 @@ canonicalize_bootpath()
 		char aliasbuf[256];
 		if (aliases != 0) {
 			char *cp1, *cp2, *cp;
-			char saved_ch = 0;
+			char saved_ch = '\0';
 			int len;
 			cp1 = strchr(bootpath, ':');
 			cp2 = strchr(bootpath, ',');
@@ -140,7 +140,7 @@ canonicalize_bootpath()
 	while ((node = OF_finddevice(cbootpath)) == -1) {
 		if ((p = strrchr(cbootpath, '/')) == NULL)
 			break;
-		*p = 0;
+		*p = '\0';
 	}
 
 	if (node == -1) {
@@ -159,7 +159,7 @@ canonicalize_bootpath()
 	if ((p = strrchr(cbootpath, '/')) != NULL)
 		strcpy(last, p + 1);
 	else
-		last[0] = 0;
+		last[0] = '\0';
 
 	memset(cbootpath, 0, sizeof(cbootpath));
 	OF_package_to_path(node, cbootpath, sizeof(cbootpath) - 1);
@@ -168,10 +168,14 @@ canonicalize_bootpath()
 	 * OF_1.x (at least) always returns addr == 0 for
 	 * SCSI disks (i.e. "/bandit@.../.../sd@0,0").
 	 */
-	if ((p = strrchr(cbootpath, '/')) != NULL) {
-		p++;
-		if (strncmp(p, "sd@", 3) == 0 && strncmp(last, "sd@", 3) == 0)
-			strcpy(p, last);
+	lastp = strrchr(cbootpath, '/');
+	if ((lastp != NULL) {
+		lastp++;
+		if (strncmp(lastp, "sd@", 3) == 0 
+		    && strncmp(last, "sd@", 3) == 0)
+			strcpy(lastp, last);
+	} else {
+		lastp = cbootpath;
 	}
 
 	/*
@@ -180,21 +184,20 @@ canonicalize_bootpath()
 	 *
 	 * The last component may have no address... so append it.
 	 */
-	p = strrchr(cbootpath, '/');
-	if (p != NULL && strchr(p, '@') == NULL) {
+	if (strchr(lastp, '@') == NULL) {
 		/* Append it. */
 		if ((p = strrchr(last, '@')) != NULL)
 			strcat(cbootpath, p);
 	}
 
-	if ((p = strrchr(cbootpath, ':')) != NULL) {
-		*p++ = 0;
+	if ((p = strrchr(lastp, ':')) != NULL) {
+		*p++ = '\0';
 		/* booted_partition = *p - '0';		XXX correct? */
 	}
 
 	/* XXX Does this belong here, or device_register()? */
-	if ((p = strrchr(cbootpath, ',')) != NULL)
-		*p = 0;
+	if ((p = strrchr(lastp, ',')) != NULL)
+		*p = '\0';
 }
 
 #define DEVICE_IS(dev, name) \
