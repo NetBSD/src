@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.105 2000/03/03 13:07:42 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.106 2000/03/07 05:39:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1116,8 +1116,7 @@ ip_dooptions(m)
 				goto bad;
 			}
 			ntime = iptime();
-			cp0 = (u_char *) &ntime;	/* XXX GCC BUG */
-			bcopy(cp0, (caddr_t)cp + ipt->ipt_ptr - 1,
+			bcopy(&ntime, (caddr_t)cp + ipt->ipt_ptr - 1,
 			    sizeof(n_time));
 			ipt->ipt_ptr += sizeof(n_time);
 		}
