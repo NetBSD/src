@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.4 1995/03/29 22:09:57 briggs Exp $	*/
+/*	$NetBSD: umap.h,v 1.5 1995/04/15 01:57:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,8 +48,8 @@ struct umap_args {
 	char		*target;	/* Target of loopback  */
 	int 		nentries;       /* # of entries in user map array */
 	int 		gnentries;	/* # of entries in group map array */
-	uid_t 		(*mapdata)[2];	/* pointer to array of user mappings */
-	gid_t 		(*gmapdata)[2];	/* pointer to array of group mappings */
+	u_long 		(*mapdata)[2];	/* pointer to array of user mappings */
+	u_long 		(*gmapdata)[2];	/* pointer to array of group mappings */
 };
 
 struct umap_mount {
@@ -57,9 +57,9 @@ struct umap_mount {
 	struct vnode	*umapm_rootvp;	/* Reference to root umap_node */
 	int             info_nentries;  /* number of uid mappings */
 	int		info_gnentries;	/* number of gid mappings */
-	uid_t		info_mapdata[MAPFILEENTRIES][2]; /* mapping data for 
+	u_long		info_mapdata[MAPFILEENTRIES][2]; /* mapping data for 
 	    user mapping in ficus */
-	gid_t		info_gmapdata[GMAPFILEENTRIES][2]; /*mapping data for 
+	u_long		info_gmapdata[GMAPFILEENTRIES][2]; /*mapping data for 
 	    group mapping in ficus */
 };
 
