@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.10 2000/12/27 12:04:02 sato Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.11 2000/12/29 08:12:09 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -231,10 +231,12 @@ int	config_hook_call __P((int type, long id, void *msg));
  * CONFIG_HOOK_BATTERY event value
  */
 #define CONFIG_HOOK_BATT_CRITICAL	0
-#define CONFIG_HOOK_BATT_LOW		1
-#define CONFIG_HOOK_BATT_1BY4		2
-#define CONFIG_HOOK_BATT_HALF		3
-#define CONFIG_HOOK_BATT_3BY4		4
-#define CONFIG_HOOK_BATT_FULL		5
-#define CONFIG_HOOK_BATT_UNKNOWN	6
+#define CONFIG_HOOK_BATT_20P		1
+#define CONFIG_HOOK_BATT_LOW		2
+#define CONFIG_HOOK_BATT_50P		3
+#define CONFIG_HOOK_BATT_HIGH		4
+#define CONFIG_HOOK_BATT_80P		5
+#define CONFIG_HOOK_BATT_100P		6
+#define CONFIG_HOOK_BATT_UNKNOWN	7
+#define CONFIG_HOOK_BATT_NO_SYSTEM_BATTERY	8
 #endif /* _CONFIG_HOOK_H_ */
