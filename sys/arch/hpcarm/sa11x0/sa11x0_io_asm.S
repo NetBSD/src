@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io_asm.S,v 1.4 2001/06/23 10:19:04 toshii Exp $	*/
+/*	$NetBSD: sa11x0_io_asm.S,v 1.5 2001/06/23 12:32:20 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -97,7 +97,7 @@ ENTRY(sa11x0_bs_rm_2)
 	movle	pc, lr
 
 	tst	r2, #0x00000007
-	tsteq	r1, #0x00000003
+	tsteq	r3, #0x00000003
 	beq	sa11x0_bs_rm_2_fast
 
 sa11x0_bs_rm_2_loop:
