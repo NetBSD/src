@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.18 1998/01/12 09:23:17 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.19 1998/01/28 02:31:10 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -158,9 +158,6 @@ struct scsipi_device bha_dev = {
 
 #define BHA_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	BHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
-
-/* XXX Should put this in a better place. */
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 /*
  * Insert a scsipi_xfer into the software queue.  We overload xs->free_list

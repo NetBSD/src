@@ -1,4 +1,4 @@
-/* $NetBSD: prom.c,v 1.18 1997/10/17 18:47:50 mjacob Exp $ */
+/* $NetBSD: prom.c,v 1.19 1998/01/28 02:23:04 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.18 1997/10/17 18:47:50 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prom.c,v 1.19 1998/01/28 02:23:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,8 +261,6 @@ hwrpb_checksum()
 {
 	u_int64_t *p, sum;
 	int i;
-
-#define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
 
 	for (i = 0, p = (u_int64_t *)hwrpb, sum = 0;
 	    i < (offsetof(struct rpb, rpb_checksum) / sizeof (u_int64_t));

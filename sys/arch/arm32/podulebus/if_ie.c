@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.15 1998/01/13 02:10:34 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.16 1998/01/28 02:24:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -119,7 +119,7 @@
 
 #define PWriteShort(a,b)	WriteWord(a,(b)<<16|(b))
 
-#define offsetof(type, member)  (((size_t)&((type *)0)->member)<<1)
+#define	xoffsetof(type, member)	(offsetof(type, member) << 1)
 
 /* Some data structres local to this file */
 
@@ -243,17 +243,17 @@ ie_ack(sc, mask)
 	setpage(sc, IE_IBASE + IE_SCB_OFF );
 
 	stat = ReadShort ( sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
-		(offsetof(struct ie_sys_ctl_block, ie_status)) );
+		(xoffsetof(struct ie_sys_ctl_block, ie_status)) );
 
 	PWriteShort ( sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
-		(offsetof(struct ie_sys_ctl_block, ie_command)),
+		(xoffsetof(struct ie_sys_ctl_block, ie_command)),
 		stat & mask );
 
 	ieattn(sc);
 
 	for ( i=4000; --i>=0; ) {
 		if ( !ReadShort(sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
-		    (offsetof(struct ie_sys_ctl_block, ie_command))) )
+		    (xoffsetof(struct ie_sys_ctl_block, ie_command))) )
 			break;
 		delay(100);
 	}
@@ -390,7 +390,7 @@ void ieattach ( struct device *parent, struct device *self, void *aux )
 	setpage ( sc, IE_ISCP_ADDR );
 	for ( i=10000; --i>=0; ) {
 		if ( !ReadShort( sc->sc_ram + IE_COFF2POFF(IE_ISCP_ADDR) +
-		    ( offsetof(struct ie_int_sys_conf_ptr, ie_busy)) ) )
+		    ( xoffsetof(struct ie_int_sys_conf_ptr, ie_busy)) ) )
 			break;
 		delay (10);
 	}
@@ -1026,7 +1026,7 @@ command_and_wait(sc, cmd, pscb, pcmd, ocmd, scmd, mask)
     {
 	setpage ( sc, IE_IBASE + IE_SCB_OFF );
 	PWriteShort ( sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
-		(offsetof(struct ie_sys_ctl_block, ie_command)), cmd );
+		(xoffsetof(struct ie_sys_ctl_block, ie_command)), cmd );
     }
 
     /* Prod the card to act on the newly loaded command */
@@ -1038,7 +1038,7 @@ command_and_wait(sc, cmd, pscb, pcmd, ocmd, scmd, mask)
 	setpage(sc,ocmd);
 	for ( i=4000; --i>=0; ) {
 	    if ( ReadShort(sc->sc_ram + IE_COFF2POFF(ocmd) +
-		(offsetof(struct ie_config_cmd, ie_config_status))) & mask)
+		(xoffsetof(struct ie_config_cmd, ie_config_status))) & mask)
 		break;
 	    delay(100);
 	}
@@ -1047,7 +1047,7 @@ command_and_wait(sc, cmd, pscb, pcmd, ocmd, scmd, mask)
     {
 	for ( i=4000; --i>=0; ) {
 	    if ( !ReadShort(sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
-		(offsetof(struct ie_sys_ctl_block, ie_command))) )
+		(xoffsetof(struct ie_sys_ctl_block, ie_command))) )
 		break;
 	    delay(100);
 	}
@@ -1065,12 +1065,12 @@ command_and_wait(sc, cmd, pscb, pcmd, ocmd, scmd, mask)
 #define READ_MEMBER(sc,type,member,ptr,dest)			\
 	setpage(sc, ptr);					\
 	dest = ReadShort(sc->sc_ram + IE_COFF2POFF(ptr) +	\
-	       (offsetof(type, member)) );
+	       (xoffsetof(type, member)) );
 
 #define WRITE_MEMBER(sc,type,member,ptr,dest)			\
 	setpage(sc, ptr);					\
 	PWriteShort(sc->sc_ram + IE_COFF2POFF(ptr) +	\
-	       (offsetof(type, member)), dest );
+	       (xoffsetof(type, member)), dest );
 
 static __inline int
 ie_buflen(sc, head)
@@ -1395,7 +1395,7 @@ ieintr(arg)
 
     setpage(sc, IE_IBASE + IE_SCB_OFF );
     status = ReadShort ( sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
-		(offsetof(struct ie_sys_ctl_block, ie_status)) );
+		(xoffsetof(struct ie_sys_ctl_block, ie_status)) );
 
     status = status & IE_ST_WHENCE;
 
@@ -1422,7 +1422,7 @@ loop:
 
     setpage(sc, IE_IBASE + IE_SCB_OFF );
     status = ReadShort ( sc->sc_ram + IE_COFF2POFF(IE_IBASE+IE_SCB_OFF) +
-		(offsetof(struct ie_sys_ctl_block, ie_status)) );
+		(xoffsetof(struct ie_sys_ctl_block, ie_status)) );
     status = status & IE_ST_WHENCE;
 
     ie_cli(sc);
