@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.6 2003/08/14 15:08:32 uwe Exp $
+# $NetBSD: HACKS,v 1.7 2003/09/09 13:40:59 he Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -328,4 +328,17 @@ descr
 	with a symbol which is declared extern, but has local scope due
 	to being defined within an asm() statement (without being declared
 	.globl in that statement). Work around it by adding the .globl.
+kcah
+
+hack	Compensation for differing types of LINUX_USRSTACK and USRSTACK
+cdate	21 Aug 2003
+who	he
+file	sys/miscfs/procfs/procfs_linux.c : 1.14
+descr
+	Not all ports have LINUX_USRSTACK and/or USRSTACK defined as
+	literals/constants, but refer to variables of a type which is
+	not "unsigned long", causing compilation of procfs_linux.c to
+	fail with "makes integer from pointer without a cast".  This
+	is observed on e.g. the sun3 port.  Ideally the "types" for
+	symbols should be consistent across all ports.
 kcah
