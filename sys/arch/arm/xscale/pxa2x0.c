@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0.c,v 1.2 2003/01/01 00:46:15 thorpej Exp $ */
+/*	$NetBSD: pxa2x0.c,v 1.3 2003/06/05 13:48:26 scw Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -93,6 +93,14 @@
  *
  */
 
+#include "pxaintc.h"
+#include "pxagpio.h"
+#if 0
+#include "pxadmac.h"	/* Not yet */
+#endif
+
+#include "locators.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -107,133 +115,137 @@
 #include <arm/xscale/pxa2x0reg.h>
 #include <arm/xscale/pxa2x0var.h>
 
-#include "locators.h"
+struct pxaip_softc {
+	struct device sc_dev;
+	bus_space_tag_t sc_bust;
+	bus_dma_tag_t sc_dmat;
+	bus_space_handle_t sc_bush_clk;
+};
 
 /* prototypes */
-static int	pxa2x0_match(struct device *, struct cfdata *, void *);
-static void	pxa2x0_attach(struct device *, struct device *, void *);
-static int 	pxa2x0_search(struct device *, struct cfdata *, void *);
+static int	pxaip_match(struct device *, struct cfdata *, void *);
+static void	pxaip_attach(struct device *, struct device *, void *);
+static int 	pxaip_search(struct device *, struct cfdata *, void *);
+static void	pxaip_attach_critical(struct pxaip_softc *);
+static int	pxaip_print(void *, const char *);
+
+static int	pxaip_measure_cpuclock(struct pxaip_softc *);
 
 /* attach structures */
-CFATTACH_DECL(pxaip, sizeof(struct pxa2x0_softc), pxa2x0_match, pxa2x0_attach,
-    NULL, NULL);
+CFATTACH_DECL(pxaip, sizeof(struct pxaip_softc),
+    pxaip_match, pxaip_attach, NULL, NULL);
 
-extern struct bus_space pxa2x0_bs_tag;
-
-struct pxa2x0_softc *pxa2x0_softc;
+static struct pxaip_softc *pxaip_sc;
 
 static int
-pxa2x0_print(void *aux, const char *name)
+pxaip_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct pxa2x0_attach_args *sa = (struct pxa2x0_attach_args*)aux;
 
-	if (sa->pxa_size)
-                aprint_normal(" addr 0x%lx", sa->pxa_addr);
-        if (sa->pxa_size > 1)
-                aprint_normal("-0x%lx", sa->pxa_addr + sa->pxa_size - 1);
-        if (sa->pxa_intr > 1)
-                aprint_normal(" intr %d", sa->pxa_intr);
-	if (sa->pxa_gpio != -1)
-		aprint_normal(" gpio %d", sa->pxa_gpio);
-
-        return (UNCONF);
-}
-
-int
-pxa2x0_match(struct device *parent, struct cfdata *match, void *aux)
-{
 	return 1;
 }
 
-void
-pxa2x0_attach(struct device *parent, struct device *self, void *aux)
+static void
+pxaip_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct pxa2x0_softc *sc = (struct pxa2x0_softc*)self;
-	bus_space_tag_t iot;
-	const char *which_registers; /* for panic message */
+	struct pxaip_softc *sc = (struct pxaip_softc *)self;
+	int cpuclock;
 
-#define FAIL(which)  do { \
-	which_registers=(which); goto abort; }while(/*CONSTCOND*/0)
+	pxaip_sc = sc;
+	sc->sc_bust = &pxa2x0_bs_tag;
+	sc->sc_dmat = &pxa2x0_bus_dma_tag;
 
-	pxa2x0_softc = sc;
-	sc->saip.sc_iot = iot = &pxa2x0_bs_tag;
+	aprint_normal(": PXA2x0 Onchip Peripheral Bus\n");
 
-	if (bus_space_map(iot, 
-			  PXA2X0_INTCTL_BASE, PXA2X0_INTCTL_SIZE,
-			0, &sc->saip.sc_ioh))
-		FAIL("intc");
-
-	/* Map the GPIO registers */
-	if (bus_space_map(iot, PXA2X0_GPIO_BASE, PXA2X0_GPIO_SIZE,
-			  0, &sc->saip.sc_gpioh))
-		FAIL("GPIO");
-
-	/* Map the DMA controller registers */
-	if (bus_space_map(iot, PXA2X0_DMAC_BASE, PXA2X0_DMAC_SIZE,
-			  0, &sc->saip.sc_dmach))
-		FAIL("DMAC");
-
-	/* Memory controller */
-	if( bus_space_map(iot, PXA2X0_MEMCTL_BASE,
-			  PXA2X0_MEMCTL_SIZE, 0, &sc->sc_memctl_ioh) )
-		FAIL("MEMC");
-	/* Clock manager */
-	if( bus_space_map(iot, PXA2X0_CLKMAN_BASE,
-			  PXA2X0_CLKMAN_SIZE, 0, &sc->sc_clkman_ioh) )
-		FAIL("CLK");
-
-	/* Real time clock */
-	if( bus_space_map(iot, PXA2X0_RTC_BASE,
-			  PXA2X0_RTC_SIZE, 0, &sc->sc_rtc_ioh) )
-		FAIL("RTC");
-
-#if 1
-	/* This takes 2 secs at most. */
-	{
-		int cpuclock;
-
-		cpuclock = pxa2x0_measure_cpuclock( sc ) / 1000;
-		printf( " CPU clock = %d.%03d MHz", cpuclock/1000, cpuclock%1000 );
-	}
-#endif
-	printf("\n");
-
-	pxa2x0_set_intcbase(sc->saip.sc_ioh);
-	pxa2x0_intr_init();
+	if (bus_space_map(sc->sc_bust, PXA2X0_CLKMAN_BASE, PXA2X0_CLKMAN_SIZE,
+	    0, &sc->sc_bush_clk))
+		panic("pxaip_attach: failed to map CLKMAN");
 
 	/*
-	 *  Attach devices.
+	 * Calculate clock speed
+	 * This takes 2 secs at most.
 	 */
-	config_search(pxa2x0_search, self, NULL);
-	return;
+	cpuclock = pxaip_measure_cpuclock(sc) / 1000;
+	printf("%s: CPU clock = %d.%03d MHz\n", self->dv_xname,
+	    cpuclock/1000, cpuclock%1000 );
 
- abort:
-	panic("%s: unable to map %s registers\n", 
-	      self->dv_xname, which_registers);
+	/*
+	 * Attach critical devices
+	 */
+	pxaip_attach_critical(sc);
 
-#undef FAIL
+	/*
+	 * Attach all other devices
+	 */
+	config_search(pxaip_search, self, sc);
 }
 
-int
-pxa2x0_search(struct device *parent, struct cfdata *cf, void *aux)
+static int
+pxaip_search(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct pxa2x0_softc *sc = (struct pxa2x0_softc *)parent;
-	struct pxa2x0_attach_args aa;
+	struct pxaip_softc *sc = aux;
+	struct pxaip_attach_args aa;
 
-	aa.pxa_sc = sc;
-        aa.pxa_iot = sc->saip.sc_iot;
+        aa.pxa_iot = sc->sc_bust;
+        aa.pxa_dmat = sc->sc_dmat;
         aa.pxa_addr = cf->cf_loc[PXAIPCF_ADDR];
         aa.pxa_size = cf->cf_loc[PXAIPCF_SIZE];
 	aa.pxa_index = cf->cf_loc[PXAIPCF_INDEX];
-	aa.pxa_sa.sa_membase = 0;
-        aa.pxa_sa.sa_memsize = 0;
         aa.pxa_intr = cf->cf_loc[PXAIPCF_INTR];
-	aa.pxa_gpio = cf->cf_loc[PXAIPCF_GPIO];
 
         if (config_match(parent, cf, &aa))
-                config_attach(parent, cf, &aa, pxa2x0_print);
+                config_attach(parent, cf, &aa, pxaip_print);
 
         return 0;
+}
+
+static void
+pxaip_attach_critical(struct pxaip_softc *sc)
+{
+	struct pxaip_attach_args aa;
+
+        aa.pxa_iot = sc->sc_bust;
+        aa.pxa_dmat = sc->sc_dmat;
+        aa.pxa_addr = PXA2X0_INTCTL_BASE;
+        aa.pxa_size = PXA2X0_INTCTL_SIZE;
+        aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
+	if (config_found(&sc->sc_dev, &aa, pxaip_print) == NULL)
+		panic("pxaip_attach_critical: failed to attach INTC!");
+
+#if NPXAGPIO > 0
+        aa.pxa_iot = sc->sc_bust;
+        aa.pxa_dmat = sc->sc_dmat;
+        aa.pxa_addr = PXA2X0_GPIO_BASE;
+        aa.pxa_size = PXA2X0_GPIO_SIZE;
+        aa.pxa_intr = PXAIPCF_INTR_DEFAULT;
+	if (config_found(&sc->sc_dev, &aa, pxaip_print) == NULL)
+		panic("pxaip_attach_critical: failed to attach GPIO!");
+#endif
+
+#if NPXADMAC > 0
+        aa.pxa_iot = sc->sc_bust;
+        aa.pxa_dmat = sc->sc_dmat;
+        aa.pxa_addr = PXA2X0_DMAC_BASE;
+        aa.pxa_size = PXA2X0_DMAC_SIZE;
+        aa.pxa_intr = PXA2X0_INT_DMA;
+	if (config_found(&sc->sc_dev, &aa, pxaip_print) == NULL)
+		panic("pxaip_attach_critical: failed to attach DMAC!");
+#endif
+}
+
+static int
+pxaip_print(void *aux, const char *name)
+{
+	struct pxaip_attach_args *sa = (struct pxaip_attach_args*)aux;
+
+	if (sa->pxa_addr != PXAIPCF_ADDR_DEFAULT) {
+                aprint_normal(" addr 0x%lx", sa->pxa_addr);
+	        if (sa->pxa_size > PXAIPCF_SIZE_DEFAULT)
+	                aprint_normal("-0x%lx", sa->pxa_addr + sa->pxa_size-1);
+	}
+        if (sa->pxa_intr != PXAIPCF_INTR_DEFAULT)
+                aprint_normal(" intr %d", sa->pxa_intr);
+
+        return (UNCONF);
 }
 
 static inline uint32_t
@@ -245,30 +257,37 @@ read_clock_counter(void)
   return x;
 }
 
-int
-pxa2x0_measure_cpuclock( struct pxa2x0_softc *sc )
+static int
+pxaip_measure_cpuclock(struct pxaip_softc *sc)
 {
 	uint32_t rtc0, rtc1, start, end;
 	uint32_t pmcr_save;
-	bus_space_tag_t iot = sc->saip.sc_iot;
-	bus_space_handle_t rtc_ioh = sc->sc_rtc_ioh;
-	int irq = disable_interrupts(I32_bit|F32_bit);
+	bus_space_handle_t ioh;
+	int irq;
+
+	if (bus_space_map(sc->sc_bust, PXA2X0_RTC_BASE, PXA2X0_RTC_SIZE, 0,
+	    &ioh))
+		panic("pxaip_measure_cpuclock: can't map RTC");
+
+	irq = disable_interrupts(I32_bit|F32_bit);
 
 	__asm __volatile( "mrc p14, 0, %0, c0, c0, 0" : "=r" (pmcr_save) );
 	/* Enable clock counter */
 	__asm __volatile( "mcr p14, 0, %0, c0, c0, 0" : : "r" (0x0001) );
 
-	rtc0 = bus_space_read_4( iot, rtc_ioh, RTC_RCNR );
+	rtc0 = bus_space_read_4(sc->sc_bust, ioh, RTC_RCNR);
 	/* Wait for next second starts */
-	while( (rtc1 = bus_space_read_4( iot, rtc_ioh, RTC_RCNR )) == rtc0 )
+	while ((rtc1 = bus_space_read_4(sc->sc_bust, ioh, RTC_RCNR)) == rtc0)
 		;
 	start = read_clock_counter();
-	while( rtc1 == bus_space_read_4( iot, rtc_ioh, RTC_RCNR ) )
+	while(rtc1 == bus_space_read_4(sc->sc_bust, ioh, RTC_RCNR))
 		;		/* Wait for 1sec */
 	end = read_clock_counter();
 
 	__asm __volatile( "mcr p14, 0, %0, c0, c0, 0" : : "r" (pmcr_save) );
 	restore_interrupts(irq);
+
+	bus_space_unmap(sc->sc_bust, ioh, PXA2X0_RTC_SIZE);
 
 	return end - start;
 }
@@ -277,4 +296,71 @@ void
 pxa2x0_turbo_mode( int f )
 {
   __asm __volatile("mcr p14, 0, %0, c6, c0, 0" : : "r" (f));
+}
+
+void
+pxa2x0_probe_sdram(vaddr_t memctl_va, paddr_t *start, paddr_t *size)
+{
+	u_int32_t mdcnfg, dwid, dcac, drac, dnb;
+	int i;
+
+	mdcnfg = *((volatile u_int32_t *)(memctl_va + MEMCTL_MDCNFG));
+
+	/*
+	 * Scan all 4 SDRAM banks
+	 */
+	for (i = 0; i < PXA2X0_SDRAM_BANKS; i++) {
+		start[i] = 0;
+		size[i] = 0;
+
+		switch (i) {
+		case 0:
+		case 1:
+			if ((i == 0 && (mdcnfg & MDCNFG_DE0) == 0) ||
+			    (i == 1 && (mdcnfg & MDCNFG_DE1) == 0))
+				continue;
+			dwid = mdcnfg >> MDCNFD_DWID01_SHIFT;
+			dcac = mdcnfg >> MDCNFD_DCAC01_SHIFT;
+			drac = mdcnfg >> MDCNFD_DRAC01_SHIFT;
+			dnb = mdcnfg >> MDCNFD_DNB01_SHIFT;
+			break;
+
+		case 2:
+		case 3:
+			if ((i == 2 && (mdcnfg & MDCNFG_DE2) == 0) ||
+			    (i == 3 && (mdcnfg & MDCNFG_DE3) == 0))
+				continue;
+			dwid = mdcnfg >> MDCNFD_DWID23_SHIFT;
+			dcac = mdcnfg >> MDCNFD_DCAC23_SHIFT;
+			drac = mdcnfg >> MDCNFD_DRAC23_SHIFT;
+			dnb = mdcnfg >> MDCNFD_DNB23_SHIFT;
+			break;
+		}
+
+		dwid = 2 << (1 - (dwid & MDCNFD_DWID_MASK));  /* 16/32 width */
+		dcac = 1 << ((dcac & MDCNFD_DCAC_MASK) + 8);  /* 8-11 columns */
+		drac = 1 << ((drac & MDCNFD_DRAC_MASK) + 11); /* 11-13 rows */
+		dnb = 2 << (dnb & MDCNFD_DNB_MASK);	      /* # of banks */
+
+		size[i] = (paddr_t)(dwid * dcac * drac * dnb);
+		start[i] = PXA2X0_SDRAM0_START + (i * PXA2X0_SDRAM_BANK_SIZE);
+	}
+}
+
+void
+pxa2x0_clkman_config(u_int clk, boolean_t enable)
+{
+	struct pxaip_softc *sc;
+	u_int32_t rv;
+
+	KDASSERT(pxaip_sc != NULL);
+	sc = pxaip_sc;
+
+	rv = bus_space_read_4(sc->sc_bust, sc->sc_bush_clk, CLKMAN_CKEN);
+	rv &= ~clk;
+
+	if (enable)
+		rv |= clk;
+
+	bus_space_write_4(sc->sc_bust, sc->sc_bush_clk, CLKMAN_CKEN, rv);
 }
