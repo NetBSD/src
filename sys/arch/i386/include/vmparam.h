@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vmparam.h	5.9 (Berkeley) 5/12/91
- *	$Id: vmparam.h,v 1.12 1994/01/04 00:44:03 mycroft Exp $
+ *	$Id: vmparam.h,v 1.13 1994/01/05 16:02:40 mycroft Exp $
  */
 
 
@@ -130,11 +130,11 @@
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vm_offset_t)0)
 /* PTDPTDI<<PDSHIFT - UPAGES*NBPG */
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xfdbfe000)
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)0xf7bfe000)
 /* PTDPTDI<<PDSHIFT + PTDPTDI<<PGSHIFT */
-#define VM_MAX_ADDRESS		((vm_offset_t)0xfdff7000)
+#define VM_MAX_ADDRESS		((vm_offset_t)0xf7fdf000)
 /* KPTDI<<PDSHIFT */
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xfe000000)
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xf8000000)
 /* APTDPTDI<<PDSHIFT */
 #define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffc00000)
 
