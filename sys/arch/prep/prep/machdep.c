@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2002/02/06 12:26:02 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2002/02/10 00:54:40 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -132,7 +132,7 @@ extern struct user *proc0paddr;
 
 struct bat battable[16];
 
-paddr_t prep_intr_reg;			/* PReP interrupt vector register */
+vaddr_t prep_intr_reg;			/* PReP interrupt vector register */
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
