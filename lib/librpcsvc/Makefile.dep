@@ -1,0 +1,13 @@
+#	$Id: Makefile.dep,v 1.1 1993/10/08 05:26:27 cgd Exp $
+
+RPCCOM=         rpcgen
+
+.SUFFIXES: .x .c .h
+
+.x.c:
+	@echo generating $@...
+	@PWD=`pwd` ; cd ${RPCDIR} ; ${RPCCOM} -c $*.x -o $$PWD/$@
+
+.x.h:
+	@echo generating $@...
+	@PWD=`pwd` ; cd ${RPCDIR} ; ${RPCCOM} -h $*.x -o $$PWD/$@
