@@ -1,4 +1,4 @@
-/*	$NetBSD: libx68k.h,v 1.2 2001/09/29 03:50:13 minoura Exp $	*/
+/*	$NetBSD: libx68k.h,v 1.3 2001/10/15 16:13:40 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -52,7 +52,7 @@ struct sd_softc;
 int sdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
 int sdopen(struct open_file *, ...);
 int sdclose(struct open_file*);
-int sdgetbsdpartition(int, int);
+int sd_getbsdpartition(int, int);
 int cdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
 int cdopen(struct open_file *, ...);
 int cdclose(struct open_file*);
