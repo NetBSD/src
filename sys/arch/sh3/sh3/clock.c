@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.10 2001/01/16 00:34:44 marcus Exp $	*/
+/*	$NetBSD: clock.c,v 1.11 2001/01/21 23:53:09 marcus Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -326,8 +326,6 @@ cpu_initclocks()
 	SHREG_TSTR |= TSTR_STR1;
 
 	(void)shb_intr_establish(TMU1_IRQ, IST_EDGE, IPL_CLOCK, clockintr, 0);
-
-	printf("cpu_initclocks completed\n");
 }
 
 void
