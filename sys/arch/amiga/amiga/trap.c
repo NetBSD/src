@@ -540,7 +540,12 @@ syscall(code, frame)
 	       XXX stored pc on the stack to skip, the argument follows
 	       XXX the syscall number without a gap. */
 	    if (code != SYS_sun_sigreturn)
-	      frame.f_regs[SP] += sizeof (int);
+	      {
+		frame.f_regs[SP] += sizeof (int);
+		/* remember that we adjusted the SP, might have to undo
+		   this if the system call returns ERESTART. */
+		p->p_md.md_flags |= MDP_STACKADJ;
+	      }
 	    break;
 #endif
 
@@ -617,6 +622,14 @@ done:
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
+#ifdef COMPAT_SUNOS
+	/* need new p-value for this */
+	if (error == ERESTART && (p->p_md.md_flags & MDP_STACKADJ))
+	  {
+	    frame.f_regs[SP] -= sizeof (int);
+	    p->p_md.md_flags &= ~MDP_STACKADJ;
+	  }
+#endif
 	while (i = CURSIG(p))
 		psig(i);
 	p->p_pri = p->p_usrpri;
