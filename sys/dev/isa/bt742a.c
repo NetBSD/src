@@ -1,4 +1,4 @@
-/*	$NetBSD: bt742a.c,v 1.43 1995/07/28 22:49:59 mycroft Exp $	*/
+/*	$NetBSD: bt742a.c,v 1.44 1995/07/29 23:04:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -723,7 +723,7 @@ AGAIN:
 			bt_nextmbx(wmbi, wmbx, mbi);
 		}
 		if (!found) {
-#ifdef DIAGNOSTIC
+#if 0
 			printf("%s: mbi interrupt with no full mailboxes\n",
 			    bt->sc_dev.dv_xname);
 #endif
