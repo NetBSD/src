@@ -1,12 +1,4 @@
-# $NetBSD: md.i386,v 1.79 2001/09/20 21:50:10 wiz Exp $
-./dev/agpgart				base-sys-devlinks
-./dev/audio				base-sys-devlinks
-./dev/audioctl				base-sys-devlinks
-./dev/bktr				base-sys-devlinks
-./dev/mixer				base-sys-devlinks
-./dev/sound				base-sys-devlinks
-./dev/tuner				base-sys-devlinks
-./dev/vbi				base-sys-devlinks
+# $NetBSD: md.i386,v 1.80 2001/10/21 23:03:15 jmc Exp $
 ./sbin/fdisk				base-sysutil-root
 ./sbin/ldconfig				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
