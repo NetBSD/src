@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.45 2003/01/17 06:21:13 gendalia Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.46 2003/01/26 06:21:03 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.45 2003/01/17 06:20:07 gendalia Exp 
+ *	NetBSD: miidevs,v 1.46 2003/01/26 06:20:30 matt Exp 
  */
 
 /*-
@@ -112,6 +112,11 @@
 #define	MII_STR_ALTIMA_AC101	"AC101 10/100 media interface"
 #define	MII_MODEL_ALTIMA_AC101L	0x0012
 #define	MII_STR_ALTIMA_AC101L	"AC101L 10/100 media interface"
+/* AMD Am79C87[45] have ALTIMA OUI */
+#define	MII_MODEL_ALTIMA_Am79C875	0x0014
+#define	MII_STR_ALTIMA_Am79C875	"Am79C875 10/100 media interface"
+#define	MII_MODEL_ALTIMA_Am79C874	0x0021
+#define	MII_STR_ALTIMA_Am79C874	"Am79C874 10/100 media interface"
 
 /* Advanced Micro Devices PHYs */
 /* see Davicom DM9101 for Am79C873 */
