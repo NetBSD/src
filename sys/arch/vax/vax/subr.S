@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.2.2.3 2002/03/29 23:22:44 ragge Exp $	   */
+/*	$NetBSD: subr.S,v 1.2.2.4 2002/04/17 00:04:43 nathanw Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -109,12 +109,12 @@ ASENTRY(start, 0)
 	pushl	$to				# Address to jump to
 	rei					# change to kernel stack
 to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
-	cmpb	(%ap),$4				# symbols info present?
+	cmpb	(%ap),$3			# symbols info present?
 	blssu	3f				# nope, skip
 	bisl3	$0x80000000,8(%ap),_C_LABEL(symtab_start)
 						#   save start of symtab
 	movl	12(%ap),_C_LABEL(symtab_nsyms)	#   save number of symtab
-	bisl3	$0x80000000,16(%ap),_C_LABEL(symtab_end)
+	bisl3	$0x80000000,%r9,_C_LABEL(symtab_end)
 						#   save end of symtab
 3:	addl3	_C_LABEL(esym),$0x3ff,%r0	# Round symbol table end
 	bicl3	$0x3ff,%r0,_C_LABEL(proc0paddr)	# save proc0 uarea pointer
@@ -443,6 +443,10 @@ ENTRY(cpu_preempt, 0)
 
 ENTRY(cpu_exit,0)
 	movl	4(%ap),%r6	# Process pointer in %r6
+
+	pushl	%r6
+	calls	$1,_C_LABEL(pmap_deactivate)
+
 	mtpr	$IPL_CLOCK,$PR_IPL # Block almost everything
 	mfpr	$PR_SSP,%r7	# get cpu_info ptr
 	movl	CI_EXIT(%r7),%r8	# scratch page address

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.16.8.4 2002/04/01 07:43:27 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.16.8.5 2002/04/17 00:04:39 nathanw Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -31,7 +31,7 @@ maxusers	8
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=2276	# size of memory disk, in blocks
+options 	MEMORY_DISK_ROOT_SIZE=3072	# size of memory disk, in blocks
 
 
 # Kernel compiled-in symbolic debugger & system call tracer
@@ -95,6 +95,7 @@ options 	COMPAT_15
 
 #options 	LKM
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Kernel(s) to compile

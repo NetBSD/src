@@ -1,6 +1,6 @@
-#	$NetBSD: std.hades,v 1.2.4.2 2002/01/08 00:23:36 nathanw Exp $
+#	$NetBSD: std.hades,v 1.2.4.3 2002/04/17 00:02:40 nathanw Exp $
 #
-# standard atari information
+# standard Hades information
 #
 machine		atari m68k
 

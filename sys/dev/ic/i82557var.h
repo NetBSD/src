@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.16.4.1 2001/06/21 20:02:33 nathanw Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.16.4.2 2002/04/17 00:05:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -127,6 +127,11 @@ struct fxp_control_data {
 	struct fxp_cb_mcs fcd_mcscb;
 
 	/*
+	 * The microcode setup CB.
+	 */
+	struct fxp_cb_ucode fcd_ucode;
+
+	/*
 	 * The NIC statistics.
 	 */
 	struct fxp_stats fcd_stats;
@@ -138,6 +143,7 @@ struct fxp_control_data {
 #define	FXP_CDCONFIGOFF	FXP_CDOFF(fcd_configcb)
 #define	FXP_CDIASOFF	FXP_CDOFF(fcd_iascb)
 #define	FXP_CDMCSOFF	FXP_CDOFF(fcd_mcscb)
+#define	FXP_CDUCODEOFF	FXP_CDOFF(fcd_ucode)
 #define	FXP_CDSTATSOFF	FXP_CDOFF(fcd_stats)
 
 /*
@@ -210,6 +216,10 @@ struct fxp_softc {
 #define	FXPF_READ_ALIGN		0x0040	/* align read access w/ cacheline */
 #define	FXPF_WRITE_ALIGN	0x0080	/* end write on cacheline */
 #define	FXPF_EXT_TXCB		0x0100	/* enable extended TxCB */
+#define	FXPF_UCODE_LOADED	0x0200	/* microcode is loaded */
+
+	int	sc_int_delay;		/* interrupt delay */
+	int	sc_bundle_max;		/* max packet bundle */
 
 	int	sc_txpending;		/* number of TX requests pending */
 	int	sc_txdirty;		/* first dirty TX descriptor */
@@ -259,6 +269,10 @@ struct fxp_softc {
 #define	FXP_CDMCSSYNC(sc, ops)						\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
 	    FXP_CDMCSOFF, sizeof(struct fxp_cb_mcs), (ops))
+
+#define	FXP_CDUCODESYNC(sc, ops)					\
+	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\
+	    FXP_CDUCODEOFF, sizeof(struct fxp_cb_ucode), (ops))
 
 #define	FXP_CDSTATSSYNC(sc, ops)					\
 	bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_dmamap,			\

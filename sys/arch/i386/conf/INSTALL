@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.163.2.8 2002/04/01 07:40:37 nathanw Exp $
+#	$NetBSD: INSTALL,v 1.163.2.9 2002/04/17 00:03:17 nathanw Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -17,8 +17,8 @@ makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_SIZE=4096	# size of memory disk, in blocks
-#options 	MEMORY_DISK_SIZE=2880	# 1.44M, same as a floppy
+options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
 
 maxusers	32		# estimated number of users
 
@@ -70,6 +70,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -229,9 +230,8 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 # wscons
 #pckbc0	at isa?			# pc keyboard controller
 #pckbd*	at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
+# "opms" should not be enabled together with "pms"
 #pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 #vga0		at isa?
 #vga*		at pci?
@@ -240,7 +240,6 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #wsdisplay*	at pcdisplay? console ?
 #wskbd*	at pckbd? console ?
 #wsmouse*	at pms?
-#wsmouse*	at pmsi?
 
 #pcppi0	at isa?
 #sysbeep0	at pcppi?
@@ -479,6 +478,7 @@ tlp*	at pci? dev ? function ?	# DECchip 21x4x (and clones) Ethernet
 #options 	TLP_MATCH_21142
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 wi*	at pci? dev ? function ?	# Intersil Prism Mini-PCI (802.11b)
+wm*	at pci? dev ? function ?	# Intel 82543/82544 gigabit
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -555,6 +555,7 @@ qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
+urlphy*	at mii? phy ?			# Realtek RTL8150L internal PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Controller and Devices
@@ -603,6 +604,7 @@ scsibus* at umass? channel ?
 aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue* 	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue* 	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Audio Devices
 

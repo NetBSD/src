@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.1.4.5 2002/02/28 04:10:17 nathanw Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.1.4.6 2002/04/17 00:03:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.1.4.5 2002/02/28 04:10:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.1.4.6 2002/04/17 00:03:21 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.1.4.5 2002/02/28 04:10:17 nathanw E
 #define LINUX_T_DOUBLE_FAULT		8
 #define LINUX_T_COPROC_SEG_OVERRUN	9
 #define LINUX_T_INVALID_TSS		10
-#define LINUX_T_SEG_NOT_PRESENT	11
+#define LINUX_T_SEG_NOT_PRESENT		11
 #define LINUX_T_STACK_SEG_FAULT		12
 #define LINUX_T_GENERAL_PROT_FAULT	13
 #define LINUX_T_PAGE_FAULT		14
@@ -131,6 +131,8 @@ static int linux_x86_vec_to_sig[] = {
 	SIGSEGV				/* 18 LINUX_T_MACHINE_CHECK */
 };
 
+#define ASIZE(a) (sizeof(a[0]) / sizeof(a))
+
 void
 linux_trapsignal(struct lwp *l, int signo, u_long type)
 {
@@ -141,8 +143,16 @@ linux_trapsignal(struct lwp *l, int signo, u_long type)
 	case SIGBUS:
 	case SIGFPE:
 	case SIGSEGV:
-		type = trapno_to_x86_vec[type];
-		signo = linux_x86_vec_to_sig[type];
+		if (type >= ASIZE(trapno_to_x86_vec)) {
+			type = trapno_to_x86_vec[type];
+			if (type >= ASIZE(linux_x86_vec_to_sig)) {
+				signo = linux_x86_vec_to_sig[type];
+			} else {
+				printf("Unhandled sig type %ld\n", type);
+			}
+		} else {
+			printf("Unhandled trap type %ld\n", type);
+		}
 		/*FALLTHROUGH*/
 	default:
 		trapsignal(l, signo, type);

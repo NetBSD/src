@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.9.4.3 2002/02/28 04:08:24 nathanw Exp $
+#	$NetBSD: GENERIC.in,v 1.9.4.4 2002/04/17 00:02:39 nathanw Exp $
 #
 # Generic atari
 #
@@ -157,6 +157,7 @@ options 	SYSVSEM			# System V semaphores
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #else /* INSTALL_KERNEL */
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -168,6 +169,7 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SCSIVERBOSE		# human readable SCSI error messages
 #endif
 #if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
+options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 #endif
@@ -191,7 +193,8 @@ options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #ifndef INSTALL_KERNEL
 options 	SERCONSOLE		# modem1 console support
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
-options 	STATCLOCK		# Separate {stat,prof}clock
+#options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
+#options 	STATCLOCK	        # Separate {stat,prof}clock
 #endif
 
 #ifndef INSTALL_KERNEL
@@ -235,6 +238,29 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #endif
+
+#if defined(HADES_KERNEL) || defined(MILAN_KERNEL)
+
+# MII/PHY support
+exphy*	at mii? phy ?			# 3Com internal PHYs
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+# PCI network interfaces
+# If unsure, check the port-atari page for tested cards.
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+
+
+#
+# This is the only tested audio card at the moment.
+#
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+audio*	at eso?
+
+#endif /* defined(HADES_KERNEL) || defined(MILAN_KERNEL) */
 
 #
 # Hardware options for GENERIC are in the various machine type specific files

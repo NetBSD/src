@@ -1,11 +1,11 @@
-#	$NetBSD: LAMB,v 1.2.2.7 2002/04/01 07:40:38 nathanw Exp $
+#	$NetBSD: LAMB,v 1.2.2.8 2002/04/17 00:03:19 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.2.2.7 $"
+#ident 		"GENERIC-$Revision: 1.2.2.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -63,6 +63,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	TIMER_FREQ=1189200	# LAMB uses nonstandard timer freq
@@ -263,9 +264,8 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
-# "opms" should not be enabled together with "pms" or "pmsi"
+# "opms" should not be enabled together with "pms"
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
@@ -273,7 +273,6 @@ wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
 wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
-wsmouse*	at pmsi? mux 0
 
 # no buzzer installed
 #pcppi0		at isa?

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4.2.2 2002/02/28 04:12:34 nathanw Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4.2.3 2002/04/17 00:04:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -171,14 +171,21 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 		goto bad;
 	}
 
-	switch(dev){
-	case 1:	  *ihp = 4; break; /* Slot 3 Ext IRQ 3 */
-	case 2:	  *ihp = 3; break; /* Slot 2 Ext IRQ 4 */
-	case 3:	  *ihp = 2; break; /* Slot 1 Ext IRQ 5 */
-	case 4:	  *ihp = 1; break; /* Slot 0 Ext IRQ 6 */
+	/*
+	 * We need to map the interrupt pin to the interrupt bit in the UIC
+	 * associated with it.  This is highly machine-dependent.
+	 */
+	switch(dev) {
+	case 1:
+	case 2:
+	case 3:
+	case 4:
+		*ihp = 27 + dev;
+		break;
 	default:
-	  printf("Hmm.. PCI device %d should not exist on this board\n", dev);
-	  goto bad;
+		printf("Hmm.. PCI device %d should not exist on this board\n",
+			dev);
+		goto bad;
 	}
 	return 0;
 

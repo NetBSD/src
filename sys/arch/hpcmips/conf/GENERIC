@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.96.2.5 2002/04/01 07:40:22 nathanw Exp $
+# $NetBSD: GENERIC,v 1.96.2.6 2002/04/17 00:03:05 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 include		"arch/hpcmips/conf/std.hpcmips.vr41"
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
-#ident 		"GENERIC-$Revision: 1.96.2.5 $"
+#ident 		"GENERIC-$Revision: 1.96.2.6 $"
 
 maxusers	16
 
@@ -63,7 +63,8 @@ options 	NTP			# network time protocol
 
 #options 	SYSCALL_DEBUG		# for debug
 #options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	USERCONF		# userconf(4) support
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Filesystem options
 file-system 	FFS		# fast filesystem with user and group quotas
@@ -282,8 +283,8 @@ options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
 #
 # Fujitsu INTERTOP CX300
 #
-pwctl0	at vrgiu? platform FUJITSU_INTERTOP id PWCTL_COM0 port 15
-vrisab2	at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
+pwctl0	at vrgiu? platform FUJITSU_INTERTOP_IT300 id PWCTL_COM0 port 15
+vrisab2	at vrgiu? platform FUJITSU_INTERTOP_IT300 isaportoffset 0x1000000
 isa2	at vrisab2
 pcic0	at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
 
@@ -349,6 +350,18 @@ hpcin*	at hpcioman7 evtype PCIINTR id PCIINTR_00_19_00 port 1 level 0 hold 1 con
 # Sharp Telios HC-AJ1, HC-VJ1C
 #
 txcsbus1	at tx39biu? platform SHARP_TELIOS
+
+#
+# Fujitsu INTERTOP CX310
+#
+vrc4172gpio0 at vrgiu? platform FUJITSU_INTERTOP_IT310 addr 0x15001080 size 0x4a port 10
+vrisab8	at vrc4172gpio0 isaportoffset 0x1000000
+isa8	at vrisab8
+pcic0	at isa8 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00010003
+vrc4172pci0 at vr4102ip? addr 0x0aff0cf8 size 0x8 platform FUJITSU_INTERTOP_IT310
+pci*	at vrc4172pci?
+hpcioman8 at vrc4172gpio0 platform FUJITSU_INTERTOP_IT310
+hpcin*	at hpcioman8 evtype PCIINTR id PCIINTR_00_00_01 port 7 level 0 connect 1
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?

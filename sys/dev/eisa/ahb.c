@@ -1,4 +1,4 @@
-/*	$NetBSD: ahb.c,v 1.31.2.3 2002/01/08 00:29:26 nathanw Exp $	*/
+/*	$NetBSD: ahb.c,v 1.31.2.4 2002/04/17 00:05:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.31.2.3 2002/01/08 00:29:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahb.c,v 1.31.2.4 2002/04/17 00:05:26 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -325,7 +325,7 @@ ahb_send_mbox(sc, opcode, ecb)
 
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
 		callout_reset(&ecb->xs->xs_callout,
-		    (ecb->timeout * hz) / 1000, ahb_timeout, ecb);
+		    mstohz(ecb->timeout), ahb_timeout, ecb);
 }
 
 /*
@@ -359,7 +359,7 @@ ahb_send_immed(sc, cmd, ecb)
 
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0)
 		callout_reset(&ecb->xs->xs_callout,
-		    (ecb->timeout * hz) / 1000, ahb_timeout, ecb);
+		    mstohz(ecb->timeout), ahb_timeout, ecb);
 }
 
 /*

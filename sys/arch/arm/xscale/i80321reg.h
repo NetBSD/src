@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.1.2.2 2002/04/01 07:39:17 nathanw Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.1.2.3 2002/04/17 00:02:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -75,6 +75,9 @@
  */
 #define	VERDE_ATU_BASE			0x0100
 #define	VERDE_ATU_SIZE			0x0100
+
+#define	VERDE_DMA_BASE			0x0400
+#define	VERDE_DMA_SIZE			0x0100
 
 #define	VERDE_MCU_BASE			0x0500
 #define	VERDE_MCU_SIZE			0x0100
@@ -336,5 +339,54 @@
 
 #define	ICU_INT_HWMASK		(0xffffffff & ~(ICU_INT_bit26|ICU_INT_bit22| \
 						ICU_INT_bit5|ICU_INT_bit4))
+
+/*
+ * DMA Controller
+ */
+
+struct dma_chain_desc {
+	uint32_t	dcd_nda;	/* next descriptor address */
+	uint32_t	dcd_pad;	/* PCI address (lower) */
+	uint32_t	dcd_puad;	/* PCI address (upper) */
+	uint32_t	dcd_lad;	/* local address */
+	uint32_t	dcd_bc;		/* byte count */
+	uint32_t	dcd_dc;		/* descriptor control */
+} __attribute__((__packed__));
+
+#define	DMA_CHAN1_OFF	0x40		/* offset to channel 1 regs */
+
+#define	DMA_CCR		0x00		/* channel control register */
+#define	DMA_CSR		0x04		/* channel status register */
+#define	DMA_DAR		0x0c		/* descriptor address */
+#define	DMA_DNAR	0x10		/* next descriptor address */
+#define	DMA_PADR	0x14		/* PCI address (low) */
+#define	DMA_PUADR	0x18		/* PCI address (high) */
+#define	DMA_LADR	0x1c		/* local address */
+#define	DMA_BCR		0x20		/* byte count */
+#define	DMA_DCR		0x24		/* descriptor control */
+
+#define	DMA_CCR_CE	(1U << 0)	/* channel enable */
+#define	DMA_CCR_CR	(1U << 1)	/* chain resume */
+
+#define	DMA_SSR_STE	(1U << 1)	/* PCI-X split transaction error */
+#define	DMA_SSR_TAF	(1U << 2)	/* PCI target abort flag */
+#define	DMA_SSR_MAF	(1U << 3)	/* PCI master abort flag */
+#define	DMA_SSR_IBMAF	(1U << 5)	/* Internal bus master abort flag */
+#define	DMA_SSR_ECIF	(1U << 8)	/* end-of-chain interrupt */
+#define	DMA_SSR_ETIF	(1U << 9)	/* end-of-transfer interrupt */
+#define	DMA_SSR_CAF	(1U << 10)	/* channel active flag */
+
+#define	DMA_BCR_MASK	0x00ffffff	/* 24-bit count */
+
+#define	DMA_DCR_TTYPE	0x0000000f	/* PCI transaction type */
+#define	DMA_DCR_IE	(1U << 4)	/* interrupt enable */
+#define	DMA_DCR_DACE	(1U << 5)	/* dual address cycle enable */
+#define	DMA_DCR_MMTE	(1U << 6)	/* memory->memory transfer enable */
+
+#define	DMA_DCR_TTYPE_MR	0x06	/* Memory Read */
+#define	DMA_DCR_TTYPE_MW	0x07	/* Memory Write */
+#define	DMA_DCR_TTYPE_MRM	0x0c	/* Memory Read Multiple */
+#define	DMA_DCR_TTYPE_MRL	0x0e	/* Memory Read Line */
+#define	DMA_DCR_TTYPE_MW2	0x0f	/* Memory Write */
 
 #endif /* _ARM_XSCALE_I80321REG_H_ */

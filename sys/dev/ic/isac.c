@@ -27,14 +27,14 @@
  *	i4b_isac.c - i4b siemens isdn chipset driver ISAC handler
  *	---------------------------------------------------------
  *
- *	$Id: isac.c,v 1.1.2.3 2002/04/01 07:45:26 nathanw Exp $ 
+ *	$Id: isac.c,v 1.1.2.4 2002/04/17 00:05:40 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.1.2.3 2002/04/01 07:45:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isac.c,v 1.1.2.4 2002/04/17 00:05:40 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "opt_i4b.h"
@@ -92,7 +92,7 @@ static void isic_isac_ind_hdlr(register struct isic_softc *sc, int ind);
 /*---------------------------------------------------------------------------*
  *	ISAC interrupt service routine
  *---------------------------------------------------------------------------*/
-int
+void
 isic_isac_irq(struct isic_softc *sc, int ista)
 {
 	register u_char c = 0;
@@ -101,10 +101,6 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 	if(ista & ISAC_ISTA_EXI)	/* extended interrupt */
 	{
 		u_int8_t exirstat = ISAC_READ(I_EXIR);
-		if ((ista & ~ISAC_IMASK) && exirstat == 0xff) {
-			/* bogus - might be a detaching pcmcia card */
-			return (1);
-		}
 		c |= isic_isac_exir_hdlr(sc, exirstat);
 	}
 	
@@ -155,7 +151,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 			ISAC_WRITE(I_CMDR, ISAC_CMDR_RMC|ISAC_CMDR_RRES);
 			ISACCMDRWRDELAY();
 
-			return (0);
+			return;
 		}
 
 		rest = (ISAC_READ(I_RBCL) & (ISAC_FIFO_LEN-1));
@@ -192,7 +188,7 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 
 			c |= ISAC_CMDR_RMC;
 
-			if(sc->sc_enabled &&
+			if(sc->sc_intr_valid == ISIC_INTR_VALID &&
 			   (((struct isdn_l3_driver*)sc->sc_l3token)->protocol != PROTOCOL_D64S))
 			{
 				isdn_layer2_data_ind(&sc->sc_l2, sc->sc_ibuf);
@@ -325,8 +321,6 @@ isic_isac_irq(struct isic_softc *sc, int ista)
 		ISAC_WRITE(I_CMDR, c);
 		ISACCMDRWRDELAY();
 	}
-
-	return (0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -557,7 +551,7 @@ isic_isac_l1_cmd(struct isic_softc *sc, int command)
 int
 isic_isac_init(struct isic_softc *sc)
 {
-	sc->sc_dying = 0;
+	u_int8_t v;
 
 	ISAC_IMASK = 0xff;		/* disable all irqs */
 
@@ -658,23 +652,6 @@ isic_isac_init(struct isic_softc *sc)
 		 */
 		ISAC_WRITE(I_MODE, ISAC_MODE_MDS2|ISAC_MODE_MDS1|ISAC_MODE_RAC|ISAC_MODE_DIM0);
 	}
-
-#ifdef NOTDEF
-	/*
-	 * XXX a transmitter reset causes an ISAC tx IRQ which will not
-	 * be serviced at attach time under some circumstances leaving
-	 * the associated IRQ line on the ISA bus active. This prevents
-	 * any further interrupts to be serviced because no low -> high
-	 * transition can take place anymore. (-hm)
-	 */
-	 
-	/* command register:
-	 *	RRES - HDLC receiver reset
-	 *	XRES - transmitter reset
-	 */
-	ISAC_WRITE(I_CMDR, ISAC_CMDR_RRES|ISAC_CMDR_XRES);
-	ISACCMDRWRDELAY();
-#endif
 	
 	/* enabled interrupts:
 	 * ===================
@@ -690,6 +667,24 @@ isic_isac_init(struct isic_softc *sc)
 		     ISAC_MASK_SIN;	/* sync xfer irq	*/
 
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
+
+	/*
+	 * Even if interrupts are masked, the EXI bit may get set
+	 * (but does not cause an interrupt).
+	 * Clear the extended interrupts, and reset receiver and
+	 * transmitter.
+	 */
+	v = ISAC_READ(I_ISTA);
+	if (v & ISAC_ISTA_EXI)
+		v = ISAC_READ(I_EXIR);
+
+	/* if we've just removed an interrupt status, make sure to cover
+	 * all traces of it */
+	if (sc->clearirq)
+		sc->clearirq(sc);
+
+	ISAC_WRITE(I_CMDR, ISAC_CMDR_RRES|ISAC_CMDR_XRES);
+	ISACCMDRWRDELAY();
 
 	return(0);
 }
@@ -752,4 +747,3 @@ isic_recover(struct isic_softc *sc)
 	DELAY(100);
 	ISAC_WRITE(I_MASK, ISAC_IMASK);
 }
-

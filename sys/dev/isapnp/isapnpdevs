@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.40.2.4 2002/02/28 04:13:50 nathanw Exp $
+$NetBSD: isapnpdevs,v 1.40.2.5 2002/04/17 00:05:57 nathanw Exp $
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ devlogic	an	AOL0001		0	Aironet 4500/4800
 /*
  * com
  */
+devlogic	com	AZT4001		0	Aztech Modem
 devlogic	com	BDP3336		0	Best Data Prods. 336F
 devlogic	com	OZO8039		0	Zoom 56k flex
 devlogic	com	BRI1400		0	Boca 33.6 PnP
@@ -175,6 +176,7 @@ devlogic	pcic	AEI0218		0	Actiontec PnP PCMCIA Adapter
  */
 devlogic	sb	ADS7150		0	AD1815
 devlogic	sb	ADS7180		0	AD1816
+devlogic	sb	AZT1003		0	Aztech 1003 Audio
 devlogic	sb	AZT1008		0	Aztech 1008
 devlogic	sb	CTL0001		0	SB
 devlogic	sb	CTL0031		0	SB AWE32

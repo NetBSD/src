@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.2.2.3 2002/02/28 04:09:09 nathanw Exp $ */
+/*	$NetBSD: ifpga.c,v 1.2.2.4 2002/04/17 00:02:55 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -52,7 +52,6 @@
 
 #include <arm/cpufunc.h>
 
-#include "opt_cputypes.h"
 #include "opt_pci.h"
 #include "pci.h"
 

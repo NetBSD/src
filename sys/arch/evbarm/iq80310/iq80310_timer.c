@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.3.4.4 2002/04/01 07:39:47 nathanw Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.3.4.5 2002/04/17 00:02:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -63,9 +63,9 @@
  * Deal with them here.
  */
 #if defined(IOP310_TEAMASA_NPWR)
-#define	COUNTER_MASK		((1U << 20) - 1)
+#define	COUNTER_MASK		0x0007ffff
 #else /* Default to stock IQ80310 */
-#define COUNTER_MASK		((1U << 23) - 1)
+#define	COUNTER_MASK		0x003fffff
 #endif /* list of IQ80310-based designs */
 
 #define	COUNTS_PER_SEC		33000000	/* 33MHz */
@@ -97,7 +97,7 @@ static __inline uint32_t
 timer_read(void)
 {
 	uint32_t rv;
-	uint8_t la[4];
+	uint8_t la0, la1, la2, la3;
 
 	/*
 	 * First read latches count.
@@ -106,16 +106,16 @@ timer_read(void)
 	 * latched.  The loop appears to work around the problem.
 	 */
 	do {
-		la[0] = CPLD_READ(IQ80310_TIMER_LA0) & 0x5f;
-	} while (la[0] == 0);
-	la[1] = CPLD_READ(IQ80310_TIMER_LA1) & 0x5f;
-	la[2] = CPLD_READ(IQ80310_TIMER_LA2) & 0x5f;
-	la[3] = CPLD_READ(IQ80310_TIMER_LA3) & 0x0f;
+		la0 = CPLD_READ(IQ80310_TIMER_LA0);
+	} while (la0 == 0);
+	la1 = CPLD_READ(IQ80310_TIMER_LA1);
+	la2 = CPLD_READ(IQ80310_TIMER_LA2);
+	la3 = CPLD_READ(IQ80310_TIMER_LA3);
 
-	rv  =  ((la[0] & 0x40) >> 1) | (la[0] & 0x1f);
-	rv |= (((la[1] & 0x40) >> 1) | (la[1] & 0x1f)) << 6;
-	rv |= (((la[2] & 0x40) >> 1) | (la[2] & 0x1f)) << 12;
-	rv |= la[3] << 18;
+	rv  =  ((la0 & 0x40) >> 1) | (la0 & 0x1f);
+	rv |= (((la1 & 0x40) >> 1) | (la1 & 0x1f)) << 6;
+	rv |= (((la2 & 0x40) >> 1) | (la2 & 0x1f)) << 12;
+	rv |= (la3 & 0x0f) << 18;
 
 	return (rv);
 }
@@ -346,15 +346,24 @@ int
 clockhandler(void *arg)
 {
 	struct clockframe *frame = arg;
-	static int snakefreq;
 
 	timer_disable(TIMER_ENABLE_INTEN);
 	timer_enable(TIMER_ENABLE_INTEN);
 
 	hardclock(frame);
 
-	if ((snakefreq++ & 15) == 0)
-		iq80310_7seg_snake();
+	/*
+	 * Don't run the snake on IOP310-based systems that
+	 * don't have the 7-segment display.
+	 */
+#if !defined(IOP310_TEAMASA_NPWR)
+	{
+		static int snakefreq;
+
+		if ((snakefreq++ & 15) == 0)
+			iq80310_7seg_snake();
+	}
+#endif
 
 	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.78.2.6 2002/04/01 07:49:10 nathanw Exp $	*/
+/*	$NetBSD: exec.h,v 1.78.2.7 2002/04/17 00:06:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -109,10 +109,6 @@ struct execsw {
 					/* Dump core */
 	int	(*es_coredump) __P((struct lwp *, struct vnode *,
 				    struct ucred *));
-					/* Emulation specific sysctl */
-	int	(*es_sysctl) __P((int *, u_int , void *, size_t *, void *,
-				  size_t, struct proc *p));
-
 };
 
 #define EXECSW_PRIO_ANY		0x000	/* default, no preference */
@@ -201,6 +197,7 @@ int	exec_read_from		__P((struct proc *, struct vnode *, u_long off,
 #ifdef LKM
 int	emul_register		__P((const struct emul *, int));
 int	emul_unregister		__P((const char *));
+const struct emul *emul_search	__P((const char *));
 
 int	exec_add		__P((struct execsw *, const char *));
 int	exec_remove		__P((const struct execsw *));

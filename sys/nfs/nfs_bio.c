@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63.2.11 2002/04/01 07:49:05 nathanw Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.12 2002/04/17 00:06:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.11 2002/04/01 07:49:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.63.2.12 2002/04/17 00:06:28 nathanw Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -622,7 +622,8 @@ nfs_write(v)
 			np->n_size = uio->uio_offset + bytelen;
 		}
 		if ((uio->uio_offset & PAGE_MASK) == 0 &&
-		    ((uio->uio_offset + bytelen) & PAGE_MASK) == 0) {
+		    (bytelen & PAGE_MASK) == 0 &&
+		    uio->uio_offset >= vp->v_size) {
 			win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &bytelen,
 			    UBC_WRITE | UBC_FAULTBUSY);
 		} else {

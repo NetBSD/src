@@ -1,4 +1,4 @@
-/*	$NetBSD: wireg.h,v 1.7.2.11 2002/04/01 07:45:47 nathanw Exp $	*/
+/*	$NetBSD: wireg.h,v 1.7.2.12 2002/04/17 00:05:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -235,6 +235,7 @@
 #define WI_CMD_INQUIRE		0x0011
 #define WI_CMD_ACCESS		0x0021
 #define WI_CMD_PROGRAM		0x0022
+#define WI_CMD_READEE		0x0030
 
 #define WI_CMD_CODE_MASK	0x003F
 
@@ -330,6 +331,21 @@
 #define WI_AUX_OFFSET		0x3C
 #define WI_AUX_DATA		0x3E
 
+#define WI_AUX_PGSZ		128
+#define WI_AUX_KEY0		0xfe01
+#define WI_AUX_KEY1		0xdc23
+#define WI_AUX_KEY2		0xba45
+
+#define WI_COR			0x40	/* only for Symbol */
+#define WI_COR_RESET		0x0080
+#define WI_COR_IOMODE		0x0041
+
+#define WI_HCR			0x42	/* only for Symbol */
+#define WI_HCR_4WIRE		0x0010
+#define WI_HCR_RUN		0x0007
+#define WI_HCR_HOLD		0x000f
+#define WI_HCR_EEHOLD		0x00ce
+
 /*
  * PCI Host Interface Registers (HFA3842 Specific)
  * The value of all Register's Offset, such as WI_INFO_FID and WI_PARAM0,
@@ -422,17 +438,69 @@ struct wi_ltv_ver {
 	u_int16_t		wi_len;
 	u_int16_t		wi_type;
 	u_int16_t		wi_ver[4];
-#define WI_NIC_LUCENT	0x0005
-#define WI_NIC_EVB2	0x8000
-#define WI_NIC_HWB3763	0x8001
-#define WI_NIC_HWB3163	0x8002
-#define WI_NIC_HWB3163B	0x8003
-#define WI_NIC_EVB3	0x8004
-#define WI_NIC_HWB1153	0x8007
-#define WI_NIC_P2_SST	0x8008	/* Prism2 with SST flush */
-#define WI_NIC_PRISM2_5	0x800C
-#define WI_NIC_3874A	0x8013	/* Prism2.5 Mini-PCI */
 };
+
+/* define card ident */
+/* Lucent */
+#define	WI_NIC_LUCENT_ID	0x0001
+#define	WI_NIC_LUCENT_STR	"Lucent Technologies, WaveLAN/IEEE"
+
+#define	WI_NIC_SONY_ID		0x0002
+#define	WI_NIC_SONY_STR		"Sony WaveLAN/IEEE"
+
+#define	WI_NIC_LUCENT_EMB_ID	0x0005
+#define	WI_NIC_LUCENT_EMB_STR	"Lucent Embedded WaveLAN/IEEE"
+
+/* Intersil */
+#define	WI_NIC_EVB2_ID		0x8000
+#define	WI_NIC_EVB2_STR		"RF:PRISM2 MAC:HFA3841"
+
+#define	WI_NIC_HWB3763_ID	0x8001
+#define	WI_NIC_HWB3763_STR	"RF:PRISM2 MAC:HFA3841 CARD:HWB3763 rev.B"
+
+#define	WI_NIC_HWB3163_ID	0x8002
+#define	WI_NIC_HWB3163_STR	"RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.A"
+
+#define	WI_NIC_HWB3163B_ID	0x8003
+#define	WI_NIC_HWB3163B_STR	"RF:PRISM2 MAC:HFA3841 CARD:HWB3163 rev.B"
+
+#define	WI_NIC_EVB3_ID		0x8004
+#define	WI_NIC_EVB3_STR		"RF:PRISM2 MAC:HFA3842 CARD:HFA3842 EVAL"
+
+#define	WI_NIC_HWB1153_ID	0x8007
+#define	WI_NIC_HWB1153_STR	"RF:PRISM1 MAC:HFA3841 CARD:HWB1153"
+
+#define	WI_NIC_P2_SST_ID	0x8008	/* Prism2 with SST flush */
+#define	WI_NIC_P2_SST_STR	"RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash"
+
+#define	WI_NIC_EVB2_SST_ID	0x8009
+#define	WI_NIC_EVB2_SST_STR	"RF:PRISM2 MAC:HFA3841 CARD:HWB3163-SST-flash"
+
+#define	WI_NIC_3842_EVA_ID	0x800A	/* Prism2 3842 Evaluation Board */
+#define	WI_NIC_3842_EVA_STR	"RF:PRISM2 MAC:HFA3842 CARD:HFA3842 EVAL"
+
+#define	WI_NIC_3842_PCMCIA_AMD_ID	0x800B	/* Prism2.5 PCMCIA */
+#define	WI_NIC_3842_PCMCIA_SST_ID	0x800C
+#define	WI_NIC_3842_PCMCIA_ATM_ID	0x800D
+#define	WI_NIC_3842_PCMCIA_STR		"RF:PRISM2.5 MAC:ISL3873B(PCMCIA)"
+
+#define	WI_NIC_3842_MINI_AMD_ID		0x8012	/* Prism2.5 Mini-PCI */
+#define	WI_NIC_3842_MINI_SST_ID		0x8013
+#define	WI_NIC_3842_MINI_ATM_ID		0x8014
+#define	WI_NIC_3842_MINI_STR		"RF:PRISM2.5 MAC:ISL3874A(Mini-PCI)"
+
+#define	WI_NIC_3842_PCI_AMD_ID		0x8016	/* Prism2.5 PCI-bridge */
+#define	WI_NIC_3842_PCI_SST_ID		0x8017
+#define	WI_NIC_3842_PCI_ATM_ID		0x8018
+#define	WI_NIC_3842_PCI_STR		"RF:PRISM2.5 MAC:ISL3874A(PCI-bridge)"
+
+#define	WI_NIC_P3_PCMCIA_AMD_ID		0x801A	/* Prism3 PCMCIA */
+#define	WI_NIC_P3_PCMCIA_SST_ID		0x801B
+#define	WI_NIC_P3_PCMCIA_STR		"RF:PRISM3 MAC:ISL3871(PCMCIA)"
+
+#define	WI_NIC_P3_MINI_AMD_ID		0x8021	/* Prism3 Mini-PCI */
+#define	WI_NIC_P3_MINI_SST_ID		0x8022
+#define	WI_NIC_P3_MINI_STR		"RF:PRISM3 MAC:ISL3871(Mini-PCI)"
 
 /*
  * List of intended regulatory domains (0xFD11).
@@ -490,9 +558,12 @@ struct wi_ltv_pcf {
 
 /*
  * Connection control characteristics. (0xFC00)
+ * 0 == IBSS (802.11 compliant mode) (Only PRISM2)
  * 1 == Basic Service Set (BSS)
  * 2 == Wireless Distribudion System (WDS)
- * 3 == Pseudo IBSS
+ * 3 == Pseudo IBSS 
+ *	(Only PRISM2; not 802.11 compliant mode, testing use only)
+ * 6 == HOST AP (Only PRISM2)
  */
 #define WI_PORTTYPE_BSS		0x1
 #define WI_PORTTYPE_WDS		0x2
@@ -541,6 +612,7 @@ struct wi_ltv_mcast {
 #define WI_INFO_NOTIFY		0xF000	/* Handover address */
 #define WI_INFO_COUNTERS	0xF100	/* Statistics counters */
 #define WI_INFO_SCAN_RESULTS	0xF101	/* Scan results */
+#define WI_INFO_HOST_SCAN_RESULTS	0xF104	/* Scan results */
 #define WI_INFO_LINK_STAT	0xF200	/* Link status */
 #define WI_INFO_ASSOC_STAT	0xF201	/* Association status */
 struct wi_assoc {
@@ -607,15 +679,15 @@ struct wi_scan_data {
 };
 
 /*
- * Hermes transmit/receive frame structure
+ * transmit/receive frame structure
  */
 struct wi_frame {
 	u_int16_t		wi_status;	/* 0x00 */
-	u_int16_t		wi_rsvd0;	/* 0x02 */
-	u_int16_t		wi_rsvd1;	/* 0x04 */
+	u_int16_t		wi_rsvd0;	/* 0x02 */ /* 0 */
+	u_int16_t		wi_rsvd1;	/* 0x04 */ /* 0 */
 	u_int16_t		wi_q_info;	/* 0x06 */
-	u_int16_t		wi_rsvd2;	/* 0x08 */
-	u_int16_t		wi_rsvd3;	/* 0x0A */
+	u_int16_t		wi_txrate;	/* 0x08 */ /* (Prism2 Only) */
+	u_int16_t		wi_retcount;	/* 0x0A */ /* (Prism2 Only) */
 	u_int16_t		wi_tx_ctl;	/* 0x0C */
 	u_int16_t		wi_frame_ctl;	/* 0x0E */
 	u_int16_t		wi_id;		/* 0x10 */
@@ -635,25 +707,40 @@ struct wi_frame {
 #define WI_802_3_OFFSET		0x2E
 #define WI_802_11_OFFSET	0x44
 #define WI_802_11_OFFSET_RAW	0x3C
+#define	WI_802_11_OFFSET_HDR	0x0E
 
+/* Tx Status Field */
+#define	WI_TXSTAT_RET_ERR	0x0001
+#define	WI_TXSTAT_AGED_ERR	0x0002
+#define	WI_TXSTAT_DISCONNECT	0x0004
+#define	WI_TXSTAT_FORM_ERR	0x0008
+
+/* Rx Status Field */
 #define WI_STAT_BADCRC		0x0001
 #define WI_STAT_UNDECRYPTABLE	0x0002
 #define WI_STAT_ERRSTAT		0x0003
 #define WI_STAT_MAC_PORT	0x0700
-#define WI_STAT_1042		0x2000	/* RFC1042 encoded */
-#define WI_STAT_TUNNEL		0x4000	/* Bridge-tunnel encoded */
-#define WI_STAT_WMP_MSG		0x6000	/* WaveLAN-II management protocol */
+#define	WI_STAT_PCF		0x1000
 #define WI_RXSTAT_MSG_TYPE	0xE000
+#define  WI_STAT_1042		0x2000	/* RFC1042 encoded */
+#define  WI_STAT_TUNNEL		0x4000	/* Bridge-tunnel encoded */
+#define  WI_STAT_WMP_MSG	0x6000	/* WaveLAN-II management protocol */
+#define	 WI_STAT_MGMT		0x8000	/* 802.11b management frames */
 
-#define WI_ENC_TX_802_3		0x00
-#define WI_ENC_TX_802_11	0x11
+#define	WI_ENC_TX_MGMT		0x08
 #define WI_ENC_TX_E_II		0x0E
 
 #define WI_ENC_TX_1042		0x00
 #define WI_ENC_TX_TUNNEL	0xF8
 
-#define WI_TXCNTL_MACPORT	0x00FF
-#define WI_TXCNTL_STRUCTTYPE	0xFF00
+/* TxControl Field (enhanced) */
+#define	WI_TXCNTL_TX_OK		0x0002
+#define	WI_TXCNTL_TX_EX		0x0004
+#define	WI_TXCNTL_STRUCT_TYPE	0x0018
+#define	 WI_ENC_TX_802_3	0x00
+#define	 WI_ENC_TX_802_11	0x11
+#define	WI_TXCNTL_ALTRTRY	0x0020
+#define	WI_TXCNTL_NOCRYPT	0x0080
 
 /*
  * SNAP (sub-network access protocol) constants for transmission

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.15.6.4 2002/02/28 04:15:27 nathanw Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.15.6.5 2002/04/17 00:06:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__KERNEL_RCSID)
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.15.6.4 2002/02/28 04:15:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.15.6.5 2002/04/17 00:06:30 nathanw Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -127,7 +127,7 @@ ffs_fragacct(fs, fragmap, fraglist, cnt, needswap)
 	inblk = (int)(fragtbl[fs->fs_frag][fragmap]) << 1;
 	fragmap <<= 1;
 	for (siz = 1; siz < fs->fs_frag; siz++) {
-		if ((inblk & (1 << (siz + (fs->fs_frag % NBBY)))) == 0)
+		if ((inblk & (1 << (siz + (fs->fs_frag & (NBBY - 1))))) == 0)
 			continue;
 		field = around[siz];
 		subfield = inside[siz];
@@ -193,20 +193,21 @@ ffs_isblock(fs, cp, h)
 {
 	u_char mask;
 
-	switch ((int)fs->fs_frag) {
-	case 8:
+	switch ((int)fs->fs_fragshift) {
+	case 3:
 		return (cp[h] == 0xff);
-	case 4:
+	case 2:
 		mask = 0x0f << ((h & 0x1) << 2);
 		return ((cp[h >> 1] & mask) == mask);
-	case 2:
+	case 1:
 		mask = 0x03 << ((h & 0x3) << 1);
 		return ((cp[h >> 2] & mask) == mask);
-	case 1:
+	case 0:
 		mask = 0x01 << (h & 0x7);
 		return ((cp[h >> 3] & mask) == mask);
 	default:
-		panic("ffs_isblock: unknown fs_frag %d", (int)fs->fs_frag);
+		panic("ffs_isblock: unknown fs_fragshift %d",
+		    (int)fs->fs_fragshift);
 	}
 }
 
@@ -220,17 +221,18 @@ ffs_isfreeblock(fs, cp, h)
 	ufs_daddr_t h;
 {
 
-	switch ((int)fs->fs_frag) {
-	case 8:
+	switch ((int)fs->fs_fragshift) {
+	case 3:
 		return (cp[h] == 0);
-	case 4:
-		return ((cp[h >> 1] & (0x0f << ((h & 0x1) << 2))) == 0);
 	case 2:
-		return ((cp[h >> 2] & (0x03 << ((h & 0x3) << 1))) == 0);
+		return ((cp[h >> 1] & (0x0f << ((h & 0x1) << 2))) == 0);
 	case 1:
+		return ((cp[h >> 2] & (0x03 << ((h & 0x3) << 1))) == 0);
+	case 0:
 		return ((cp[h >> 3] & (0x01 << (h & 0x7))) == 0);
 	default:
-		panic("ffs_isfreeblock: unknown fs_frag %d", (int)fs->fs_frag);
+		panic("ffs_isfreeblock: unknown fs_fragshift %d",
+		    (int)fs->fs_fragshift);
 	}
 }
 
@@ -244,21 +246,22 @@ ffs_clrblock(fs, cp, h)
 	ufs_daddr_t h;
 {
 
-	switch ((int)fs->fs_frag) {
-	case 8:
+	switch ((int)fs->fs_fragshift) {
+	case 3:
 		cp[h] = 0;
 		return;
-	case 4:
+	case 2:
 		cp[h >> 1] &= ~(0x0f << ((h & 0x1) << 2));
 		return;
-	case 2:
+	case 1:
 		cp[h >> 2] &= ~(0x03 << ((h & 0x3) << 1));
 		return;
-	case 1:
+	case 0:
 		cp[h >> 3] &= ~(0x01 << (h & 0x7));
 		return;
 	default:
-		panic("ffs_clrblock: unknown fs_frag %d", (int)fs->fs_frag);
+		panic("ffs_clrblock: unknown fs_fragshift %d",
+		    (int)fs->fs_fragshift);
 	}
 }
 
@@ -272,21 +275,21 @@ ffs_setblock(fs, cp, h)
 	ufs_daddr_t h;
 {
 
-	switch ((int)fs->fs_frag) {
-
-	case 8:
+	switch ((int)fs->fs_fragshift) {
+	case 3:
 		cp[h] = 0xff;
 		return;
-	case 4:
+	case 2:
 		cp[h >> 1] |= (0x0f << ((h & 0x1) << 2));
 		return;
-	case 2:
+	case 1:
 		cp[h >> 2] |= (0x03 << ((h & 0x3) << 1));
 		return;
-	case 1:
+	case 0:
 		cp[h >> 3] |= (0x01 << (h & 0x7));
 		return;
 	default:
-		panic("ffs_setblock: unknown fs_frag %d", (int)fs->fs_frag);
+		panic("ffs_setblock: unknown fs_fragshift %d",
+		    (int)fs->fs_fragshift);
 	}
 }

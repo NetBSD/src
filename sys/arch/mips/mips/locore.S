@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.126.2.8 2002/04/01 07:41:04 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.126.2.9 2002/04/17 00:03:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -219,17 +219,7 @@ LEAF_NOPROFILE(linux_sigcode)
 	break	0			# just in case sigreturn fails
 END(linux_sigcode)
 XLEAF(linux_esigcode)
-#endif
-
-#ifdef COMPAT_IRIX
-#define SYSCALL_SHIFT 1000		# 1000 shift as in irix_syscall.c
-LEAF_NOPROFILE(irix_sigcode)
-	move	a0, sp
-	li	v0, IRIX_SYS_sigreturn	+ SYSCALL_SHIFT # sigreturn(sf)
-	syscall
-	break	0			# just in case sigreturn fails
-END(irix_sigcode)
-XLEAF(irix_esigcode)
+#undef SYSCALL_SHIFT
 #endif
 
 /*

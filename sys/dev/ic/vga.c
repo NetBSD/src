@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.35.2.6 2002/04/01 07:45:43 nathanw Exp $ */
+/* $NetBSD: vga.c,v 1.35.2.7 2002/04/17 00:05:52 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.35.2.6 2002/04/01 07:45:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.35.2.7 2002/04/17 00:05:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -973,9 +973,12 @@ vga_load_font(void *v, void *cookie, struct wsdisplay_font *data)
 	int res;
 
 	if (scr) {
-		name2 = strchr(data->name, ',');
-		if (name2)
-			*name2++ = '\0';
+		name2 = NULL;
+		if (data->name) {
+			name2 = strchr(data->name, ',');
+			if (name2)
+				*name2++ = '\0';
+		}
 		res = vga_selectfont(vc, scr, data->name, name2);
 		if (!res)
 			vga_setfont(vc, scr);

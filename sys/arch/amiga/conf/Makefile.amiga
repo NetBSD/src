@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.96.2.2 2002/01/08 00:22:58 nathanw Exp $
+#	$NetBSD: Makefile.amiga,v 1.96.2.3 2002/04/17 00:02:15 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -17,20 +17,6 @@
 #
 #	makeoptions DEBUGLIST="uvm* trap if_*"
 
-MACHINE_ARCH=m68k
-USETOOLS?=	no
-
-.include <bsd.own.mk>
-
-# DEBUG is set to -g if debugging.
-# PROF is set to -pg if profiling.
-
-AR?=	ar
-AS?=	as
-CC?=	cc
-CPP?=	cpp
-LD?=	ld
-LORDER?=lorder
 MACHINE_ARCH=m68k
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no

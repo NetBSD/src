@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.70.2.7 2002/04/01 07:45:35 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.70.2.8 2002/04/17 00:05:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.70.2.7 2002/04/01 07:45:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.70.2.8 2002/04/17 00:05:49 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -646,14 +646,7 @@ ncr53c9x_select(sc, ecb)
 	 * always possible that the interrupt may never happen.
 	 */
 	if ((ecb->xs->xs_control & XS_CTL_POLL) == 0) {
-		int timeout = ecb->timeout;
-
-		if (timeout > 1000000)
-			timeout = (timeout / 1000) * hz;
-		else
-			timeout = (timeout * hz) / 1000;
-
-		callout_reset(&ecb->xs->xs_callout, timeout,
+		callout_reset(&ecb->xs->xs_callout, mstohz(ecb->timeout),
 		    ncr53c9x_timeout, ecb);
 	}
 
@@ -2175,6 +2168,7 @@ again:
 			printf("%s: DMA error; resetting\n",
 			    sc->sc_dev.dv_xname);
 			ncr53c9x_init(sc, 1);
+			return 1;
 		}
 		/* If DMA active here, then go back to work... */
 		if (NCRDMA_ISACTIVE(sc))
@@ -2842,8 +2836,6 @@ ncr53c9x_abort(sc, ecb)
 	ecb->flags |= ECB_ABORT;
 
 	if (ecb == sc->sc_nexus) {
-		int timeout;
-
 		/*
 		 * If we're still selecting, the message will be scheduled
 		 * after selection is complete.
@@ -2854,12 +2846,7 @@ ncr53c9x_abort(sc, ecb)
 		/*
 		 * Reschedule timeout.
 		 */
-		timeout = ecb->timeout;
-		if (timeout > 1000000)
-			timeout = (timeout / 1000) * hz;
-		else
-			timeout = (timeout * hz) / 1000;
-		callout_reset(&ecb->xs->xs_callout, timeout,
+		callout_reset(&ecb->xs->xs_callout, mstohz(ecb->timeout),
 		    ncr53c9x_timeout, ecb);
 	} else {
 		/*

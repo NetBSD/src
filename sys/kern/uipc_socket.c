@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.54.2.9 2002/04/01 07:48:01 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.54.2.10 2002/04/17 00:06:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.54.2.9 2002/04/01 07:48:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.54.2.10 2002/04/17 00:06:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ solisten(struct socket *so, int backlog)
 		splx(s);
 		return (error);
 	}
-	if (so->so_q.tqh_first == NULL)
+	if (TAILQ_EMPTY(&so->so_q))
 		so->so_options |= SO_ACCEPTCONN;
 	if (backlog < 0)
 		backlog = 0;
@@ -183,11 +183,11 @@ soclose(struct socket *so)
 	error = 0;
 	s = splsoftnet();		/* conservative */
 	if (so->so_options & SO_ACCEPTCONN) {
-		while ((so2 = so->so_q0.tqh_first) != 0) {
+		while ((so2 = TAILQ_FIRST(&so->so_q0)) != 0) {
 			(void) soqremque(so2, 0);
 			(void) soabort(so2);
 		}
-		while ((so2 = so->so_q.tqh_first) != 0) {
+		while ((so2 = TAILQ_FIRST(&so->so_q)) != 0) {
 			(void) soqremque(so2, 1);
 			(void) soabort(so2);
 		}

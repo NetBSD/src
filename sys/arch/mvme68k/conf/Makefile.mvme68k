@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.53.2.2 2002/01/08 00:26:31 nathanw Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.53.2.3 2002/04/17 00:03:51 nathanw Exp $
 
 # Makefile for NetBSD
 #
@@ -44,14 +44,6 @@ CMACHFLAGS=	-m68060 -Wa,-m68030 -Wa,-m68851
 .else
 CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-m68851
 .endif
-.endif
-CWARNFLAGS?=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
-		-Wpointer-arith
-# XXX Delete -Wuninitialized for now, since the compiler doesn't
-# XXX always get it right.  --thorpej 
-CWARNFLAGS+=	-Wno-uninitialized
-.if (${HAVE_EGCS} != "")
-CWARNFLAGS+=	-Wno-main
 .endif
 CFLAGS+=	${CMACHFLAGS} -msoft-float
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp

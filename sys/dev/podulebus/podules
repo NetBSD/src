@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.6.8.2 2002/04/01 07:47:00 nathanw Exp $
+$NetBSD: podules,v 1.6.8.3 2002/04/17 00:06:10 nathanw Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -74,7 +74,7 @@ manufacturer	EESOX		0x0064	EESOX
 podule	ACORN		ETHER3XXX	0x0000	Ether3 (NOROM)
 podule	ACORN		SCSI		0x0002	SCSI 1 interface
 podule	ACORN		ETHER1		0x0003	ether 1 interface
-podule	ACORN		RAMROM		0x0005	RAM/ROM podule
+podule	ACORN		ROMRAM		0x0005	ROM/RAM podule
 podule	ACORN		BBCIO		0x0006	BBC IO interface
 podule	ACORN		ST506		0x000b	ST506 HD interface
 podule	ACORN		MIDI		0x0013	MIDI interface
@@ -82,6 +82,7 @@ podule	ACORN		USERMIDI	0x003F	User Port/MIDI interface
 podule	ACORN		ETHER2		0x0061	ether 2 interface
 podule	ACORN		ETHERI		0x0139	EtherI interface
 
+podule	CCONCEPTS	ROMRAM		0x0005	ROM/RAM podule
 podule	CCONCEPTS	LASERDIRECT	0x0014	laser direct (Canon LBP-4)
 
 podule	ARMADILLO	A448		0x0016	A448 sound sampler

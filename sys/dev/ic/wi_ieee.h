@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.3.2.10 2002/04/01 07:45:47 nathanw Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.3.2.11 2002/04/17 00:05:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -218,6 +218,14 @@ struct wi_counters {
 #define WI_RID_P2_CRYPT_KEY2	0xFC26
 #define WI_RID_P2_CRYPT_KEY3	0xFC27
 #define WI_RID_P2_ENCRYPTION	0xFC28
+#define	 PRIVACY_INVOKED	0x01
+#define	 EXCLUDE_UNENCRYPTED	0x02
+#define	 HOST_ENCRYPT		0x10
+#define	 IV_EVERY_FRAME		0x00	/* IV = Initialization Vector */
+#define	 IV_EVERY10_FRAME	0x20	/* every 10 frame IV reuse */
+#define	 IV_EVERY50_FRAME	0x40	/* every 50 frame IV reuse */
+#define	 IV_EVERY100_FRAME	0x60	/* every 100 frame IV reuse */
+#define	 HOST_DECRYPT		0x80
 #define WI_RID_WEP_MAPTABLE	0xFC29
 #define WI_RID_AUTH_CNTL	0xFC2A
 #define WI_RID_ROAMING_MODE	0xFC2D
@@ -277,7 +285,8 @@ struct wi_ltv_keys {
  * NIC information
  */
 #define WI_RID_DNLD_BUF		0xFD01
-#define WI_RID_MEMSZ		0xFD02 /* memory size info */
+#define WI_RID_MEMSZ		0xFD02 /* memory size info (XXX Lucent) */
+#define	WI_RID_PRI_IDENTITY	0xFD02 /* primary funcs firmware ident (PRISM2) */
 #define WI_RID_PRI_SUP_RANGE	0xFD03 /* primary supplier compatibility */
 #define WI_RID_CIF_ACT_RANGE	0xFD04 /* controller sup. compatibility */
 #define WI_RID_SERIALNO		0xFD0A /* card serial number */
@@ -328,6 +337,11 @@ struct wi_ltv_keys {
 /*
  * Scan Information
  */
+#define	WI_RID_BCAST_SCAN_REQ	0xFCAB /* Broadcast Scan request (Symbol) */
+#define	 BSCAN_5SEC		0x01
+#define	 BSCAN_ONETIME		0x02
+#define	 BSCAN_PASSIVE		0x40
+#define	 BSCAN_BCAST		0x80
 #define WI_RID_SCAN_REQ		0xFCE1 /* Scan request (STA only) */
 #define WI_RID_JOIN_REQ		0xFCE2 /* Join request (STA only) */
 #define	WI_RID_AUTH_STATION	0xFCE3 /* Authenticates Station (AP) */

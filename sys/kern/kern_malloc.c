@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.57.2.5 2002/01/08 00:32:33 nathanw Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.57.2.6 2002/04/17 00:06:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.57.2.5 2002/01/08 00:32:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.57.2.6 2002/04/17 00:06:18 nathanw Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -83,6 +83,7 @@ int	nkmempages = NKMEMPAGES;
 
 #include "opt_kmemstats.h"
 #include "opt_malloclog.h"
+#include "opt_malloc_debug.h"
 
 struct kmembuckets bucket[MINBUCKET + 16];
 struct kmemstats kmemstats[M_LAST];

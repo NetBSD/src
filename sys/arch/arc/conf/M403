@@ -1,4 +1,4 @@
-#	$NetBSD: M403,v 1.15.2.4 2002/04/01 07:39:03 nathanw Exp $
+#	$NetBSD: M403,v 1.15.2.5 2002/04/17 00:02:20 nathanw Exp $
 #
 #	configuration file for MIPS Magnum 4000 system
 #
@@ -175,8 +175,6 @@ pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)
 wsmouse*	at pms?
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
-#wsmouse*	at pmsi?
 
 #### Pseudo devices
 

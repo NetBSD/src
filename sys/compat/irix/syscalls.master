@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17.2.3 2002/04/01 07:44:03 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.17.2.4 2002/04/17 00:04:52 nathanw Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -144,7 +144,7 @@
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
-62	NOARGS		{ int svr4_sys_fcntl(int fd, int cmd, char *arg); }
+62	STD		{ int irix_sys_fcntl(int fd, int cmd, char *arg); }
 63	NOARGS		{ long svr4_sys_ulimit(int cmd, long newlimit); }
 64	UNIMPL		reserved for unix/pc
 65	UNIMPL		reserved for unix/pc
@@ -176,7 +176,8 @@
 			    struct svr4_strbuf *dat, int flags); }
 87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
-88	STD		{ int irix_sys_sigreturn(struct irix_sigreturna isr); }
+88	STD		{ int irix_sys_sigreturn(struct irix_sigcontext *scp, \
+			    struct irix_ucontext *ucp, int signo); }
 89	NOARGS		{ int compat_43_sys_accept(int s, \
 			    struct sockaddr *name, int *anamelen); }
 90	NOARGS		{ int sys_bind(int s, const struct sockaddr *name, \
@@ -262,7 +263,7 @@
 143	UNIMPL		getpgrp
 144	UNIMPL		setpgrp
 145	UNIMPL		vhangup
-146	UNIMPL		fsync
+146	NOARGS		{ int sys_fsync(int fd); }
 147	UNIMPL		fchdir
 148	UNIMPL		getrlimit
 149	UNIMPL		setrlimit
@@ -282,9 +283,9 @@
 160	STD		{ int irix_sys_fxstat(const int version, \
 			    const int fd, struct stat *buf); }
 161	UNIMPL		xmknod
-162	NOARGS		{ int svr4_sys_sigaction(int signum, \
+162	STD		{ int irix_sys_sigaction(int signum, \
 			    const struct svr4_sigaction *nsa, \
-			    struct svr4_sigaction *osa); }
+			    struct svr4_sigaction *osa, void *sigtramp); }
 163	NOARGS		{ int svr4_sys_sigpending(int what, \
 			    svr4_sigset_t *set); }
 164	STD		{ int irix_sys_sigprocmask(int how, \

@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.1.4.4 2002/04/01 07:38:46 nathanw Exp $ */
+/* $NetBSD: podulebus.c,v 1.1.4.5 2002/04/17 00:02:06 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.1.4.4 2002/04/01 07:38:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.1.4.5 2002/04/17 00:02:06 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -453,7 +453,7 @@ podulebusattach(parent, self, aux)
 		int loop1;
         
 		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE);
-		    loop1 += L1_SEC_SIZE)
+		    loop1 += L1_S_SIZE)
 		pmap_map_section((vm_offset_t)pmap_kernel()->pm_pdir,
 		    EASI_BASE + loop1, EASI_HW_BASE + loop1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);

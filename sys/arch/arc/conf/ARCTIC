@@ -1,4 +1,4 @@
-#	$NetBSD: ARCTIC,v 1.13.2.4 2002/04/01 07:39:03 nathanw Exp $
+#	$NetBSD: ARCTIC,v 1.13.2.5 2002/04/17 00:02:19 nathanw Exp $
 #	$OpenBSD: ARCTIC,v 1.12 1999/08/29 12:14:03 niklas Exp $
 #
 #	configuration file for DeskStation
@@ -30,6 +30,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -225,8 +226,6 @@ uk*		at atapibus? drive ? flags 0x0000	# ATAPI unknown
 #wskbd*		at pckbd?
 #pms*		at pckbc?	# PS/2-style mouse (aux port)
 #wsmouse*	at pms?
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
-#wsmouse*	at pmsi?
 
 #### Pseudo devices
 

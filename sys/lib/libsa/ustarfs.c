@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.15.2.2 2002/02/28 04:14:52 nathanw Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.15.2.3 2002/04/17 00:06:21 nathanw Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -105,8 +105,9 @@ typedef struct ustar_struct {
 		ust_gid[8],
 		ust_size[12],
 		ust_misc[12 + 8 + 1 + 100],
-		ust_magic[6];
+		ust_magic[6],
 	/* there is more, but we don't care */
+		ust_pad[1];	/* make it aligned */
 } ustar_t;
 
 /*

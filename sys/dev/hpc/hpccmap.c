@@ -1,4 +1,4 @@
-/*	$NetBSD: hpccmap.c,v 1.1.2.2 2001/11/14 19:14:06 nathanw Exp $	*/
+/*	$NetBSD: hpccmap.c,v 1.1.2.3 2002/04/17 00:05:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -35,7 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpccmap.c,v 1.1.2.2 2001/11/14 19:14:06 nathanw Exp $");
+#if defined(_KERNEL)
+__KERNEL_RCSID(0, "$NetBSD: hpccmap.c,v 1.1.2.3 2002/04/17 00:05:27 nathanw Exp $");
+#endif
 
 /*
  *  Do not edit.

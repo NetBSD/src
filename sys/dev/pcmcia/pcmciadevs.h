@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.120.2.10 2002/04/01 07:46:56 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.120.2.11 2002/04/17 00:06:09 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.163 2002/03/04 16:41:50 martin Exp 
+ *	NetBSD: pcmciadevs,v 1.164 2002/04/10 02:07:45 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -373,6 +373,9 @@
 #define	PCMCIA_CIS_LINKSYS2_IWN	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS2_IWN	0x1612
 #define	PCMCIA_STR_LINKSYS2_IWN	"Instant Wireless Network PC Card"
+#define	PCMCIA_CIS_LINKSYS2_IWN3	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_LINKSYS2_IWN3	0x1613
+#define	PCMCIA_STR_LINKSYS2_IWN3	"Instant Wireless Network PC Card, Versin 3"
 
 /* Lucent WaveLAN/IEEE */
 #define	PCMCIA_CIS_LUCENT_WAVELAN_IEEE	{ NULL, NULL, NULL, NULL }

@@ -1,0 +1,13 @@
+#	$NetBSD: TEAMASA_NPWR_INSTALL,v 1.1.2.2 2002/04/17 00:02:54 nathanw Exp $
+#
+#	TEAMASA_NPWR-INSTALL -- Npwr kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/TEAMASA_NPWR"
+
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT	# Force root on ramdisk
+options 	MEMORY_DISK_ROOT_SIZE=6150
+
+pseudo-device	md	1

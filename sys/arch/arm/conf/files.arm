@@ -1,9 +1,9 @@
-#	$NetBSD: files.arm,v 1.40.2.5 2002/04/01 07:39:09 nathanw Exp $
+#	$NetBSD: files.arm,v 1.40.2.6 2002/04/17 00:02:28 nathanw Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
 
-# CPU types
+# CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
 defflag	opt_cputypes.h		CPU_ARM2 CPU_ARM250 CPU_ARM3
 defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_ARM9 CPU_SA110 CPU_SA1100 CPU_SA1110
@@ -52,11 +52,15 @@ file	arch/arm/mainbus/cpu_mainbus.c		cpu_mainbus & arm32
 # files related to debugging
 file	arch/arm/arm/disassem.c
 
+# bus_space(9)
+define	bus_space_generic
+file	arch/arm/arm/bus_space_asm_generic.S	bus_space_generic
+file	arch/arm/arm/bus_space_notimpl.S	arm32
+
 file	arch/arm/arm/arm_machdep.c
 file	arch/arm/arm/ast.c
 file	arch/arm/arm/blockio.S
 file	arch/arm/arm/bootconfig.c
-file	arch/arm/arm/bus_space_notimpl.S	arm32
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S

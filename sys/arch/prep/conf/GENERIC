@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30.4.4 2002/04/01 07:42:10 nathanw Exp $
+# $NetBSD: GENERIC,v 1.30.4.5 2002/04/17 00:04:15 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.30.4.4 $"
+#ident		"GENERIC-$Revision: 1.30.4.5 $"
 
 maxusers	32
 
@@ -42,6 +42,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -180,12 +181,10 @@ isapnp0	at isa?
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 vga*		at pci?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
-wsmouse*	at pmsi? mux 0
 
 pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep

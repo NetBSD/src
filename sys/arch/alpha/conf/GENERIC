@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.191.2.6 2002/02/28 04:06:12 nathanw Exp $
+# $NetBSD: GENERIC,v 1.191.2.7 2002/04/17 00:02:09 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@
 
 include		"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.191.2.6 $"
+#ident 		"GENERIC-$Revision: 1.191.2.7 $"
 
 maxusers 32
 
@@ -132,6 +132,7 @@ options 	SCSIVERBOSE		# Verbose SCSI errors
 options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 #options 	PCMCIAVERBOSE
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # The Alpha console firmware network boots using the BOOTP

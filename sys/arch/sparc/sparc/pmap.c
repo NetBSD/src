@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.199.4.5 2002/04/01 07:42:54 nathanw Exp $ */
+/*	$NetBSD: pmap.c,v 1.199.4.6 2002/04/17 00:04:26 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -5763,7 +5763,7 @@ pmap_kremove4_4c(va, len)
 		KASSERT(pmeg != seginval);
 		setcontext4(0);
 		/* decide how to flush cache */
-		npg = (endva - va) >> PGSHIFT;
+		npg = (nva - va) >> PGSHIFT;
 		if (npg > PMAP_RMK_MAGIC) {
 			/* flush the whole segment */
 			perpage = 0;

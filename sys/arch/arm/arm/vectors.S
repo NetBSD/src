@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.1.2.3 2002/02/28 04:07:19 nathanw Exp $	*/
+/*	$NetBSD: vectors.S,v 1.1.2.4 2002/04/17 00:02:24 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -44,7 +44,7 @@
 
 	.text
 	.align	0
-	.global	_C_LABEL(page0), _C_LABEL(page0_end)
+	.global	_C_LABEL(page0), _C_LABEL(page0_data), _C_LABEL(page0_end)
 	.global _C_LABEL(fiqvector)
 
 _C_LABEL(page0):
@@ -64,6 +64,7 @@ Lfiqvector:
 	.org	Lfiqvector + 0x100
 #endif
 
+_C_LABEL(page0_data):
 Lreset_target:
 	.word	reset_entry
 
@@ -88,6 +89,8 @@ Lirq_target:
 #ifdef __ARM_FIQ_INDIRECT
 Lfiq_target:
 	.word	_C_LABEL(fiqvector)
+#else
+	.word	0	/* pad it out */
 #endif
 _C_LABEL(page0_end):
 

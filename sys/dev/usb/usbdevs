@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.148.2.10 2002/04/01 07:47:39 nathanw Exp $
+$NetBSD: usbdevs,v 1.148.2.11 2002/04/17 00:06:14 nathanw Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -525,6 +525,7 @@ product CONNECTIX QUICKCAM	0x0001	QuickCam
 /* Corega products */
 product COREGA ETHER_USB_T	0x0001	Ether USB-T
 product COREGA FETHER_USB_TX	0x0004	FEther USB-TX
+product COREGA WLAN_USB_USB_11	0x000c	WirelessLAN USB-11
 product COREGA FETHER_USB_TXS	0x000d	FEther USB-TXS
 
 /* Creative products */
@@ -676,6 +677,7 @@ product HP 810C			0x0304	DeskJet 810C/812C
 product HP 4300C		0x0305	Scanjet 4300C
 product HP CD4E			0x0307	CD-Writer+ CD-4e
 product HP G85XI		0x0311	OfficeJet G85xi
+product HP 1200			0x0317	LaserJet 1200
 product HP 5200C		0x0401	Scanjet 5200C
 product HP 830C			0x0404	DeskJet 830C
 product HP 3400CSE		0x0405	ScanJet 3400cse
@@ -970,8 +972,14 @@ product PERACOM ENET2		0x0005	Ethernet adapter
 product PHILIPS DSS350		0x0101	DSS 350 Digital Speaker System
 product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
+product PHILIPS PCA645VC	0x0302	PCA645VC PC Camera
 product PHILIPS PCA646VC	0x0303	PCA646VC PC Camera
+product PHILIPS PCVC675K	0x0307	PCVC675K Vesta PC Camera
 product PHILIPS PCVC680K	0x0308	PCVC680K Vesta Pro PC Camera
+product PHILIPS PCVC690K	0x030c	PCVC690K Vesta Pro Scan PC Camera
+product PHILIPS PCVC730K	0x0310	PCVC730K ToUCam Fun PC Camera
+product PHILIPS PCVC740K	0x0311	PCVC740K ToUCam Pro PC Camera
+product PHILIPS PCVC750K	0x0312	PCVC750K ToUCam Pro Scan PC Camera
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
 product PHILIPS DIVAUSB		0x1801	DIVA USB mp3 player
 

@@ -1,4 +1,4 @@
-#	$NetBSD: PICA,v 1.28.2.4 2002/04/01 07:39:03 nathanw Exp $
+#	$NetBSD: PICA,v 1.28.2.5 2002/04/17 00:02:21 nathanw Exp $
 #
 #	configuration file for ACER PICA system
 #
@@ -24,6 +24,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -177,8 +178,6 @@ pckbd*		at pckbc?	# PC keyboard (kbd port)
 wskbd*		at pckbd?
 pms*		at pckbc?	# PS/2-style mouse (aux port)
 wsmouse*	at pms?
-#pmsi*		at pckbc?	# PS/2 "Intelli"mouse (aux port)
-#wsmouse*	at pmsi?
 
 #### Pseudo devices
 

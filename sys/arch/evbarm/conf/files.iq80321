@@ -1,4 +1,4 @@
-#	$NetBSD: files.iq80321,v 1.1.2.2 2002/04/01 07:39:45 nathanw Exp $
+#	$NetBSD: files.iq80321,v 1.1.2.3 2002/04/17 00:02:55 nathanw Exp $
 #
 # Intel IQ80321 evaluation board configuration info
 #
@@ -11,11 +11,10 @@ file	arch/evbarm/iq80321/iq80321_machdep.c
 file	arch/evbarm/iq80321/iq80321_pci.c
 
 # IQ80321 on-board devices
-device	obio {[addr = -1]}
+device	obio {[addr = -1]}: bus_space_generic
 attach	obio at mainbus
 file	arch/evbarm/iq80321/obio.c			obio
 file	arch/evbarm/iq80321/obio_space.c		obio
-file	arch/evbarm/iq80321/obio_space_asm.S		obio
 
 # on-board TI 165C50 UART
 attach	com at obio with com_obio

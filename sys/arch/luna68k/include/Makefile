@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.8.2 2001/11/10 21:22:50 scw Exp $
+#	$NetBSD: Makefile,v 1.8.8.3 2002/04/17 00:03:28 nathanw Exp $
 
 KDIR=	/sys/arch/luna68k/include
 INCSDIR= /usr/include/luna68k
@@ -7,7 +7,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	bswap.h bus.h \
 	cdefs.h cpu.h \
 	db_machdep.h disklabel.h \
-	endian.h endian_machdep.h \
+	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.34.2.7 2002/04/01 07:44:04 nathanw Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.34.2.8 2002/04/17 00:04:53 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -581,6 +581,12 @@ struct linux_sys_wait4_args {
 	syscallarg(struct rusage *) rusage;
 };
 
+struct linux_sys_getdents64_args {
+	syscallarg(int) fd;
+	syscallarg(struct linux_dirent64 *) dent;
+	syscallarg(unsigned int) count;
+};
+
 /*
  * System call prototypes.
  */
@@ -772,4 +778,5 @@ int	sys_utimes(struct lwp *, void *, register_t *);
 int	sys_getrusage(struct lwp *, void *, register_t *);
 int	linux_sys_wait4(struct lwp *, void *, register_t *);
 int	sys___getcwd(struct lwp *, void *, register_t *);
+int	linux_sys_getdents64(struct lwp *, void *, register_t *);
 #endif /* _LINUX_SYS__SYSCALLARGS_H_ */

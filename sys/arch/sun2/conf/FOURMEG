@@ -1,11 +1,11 @@
-# $NetBSD: FOURMEG,v 1.5.8.3 2002/02/28 04:12:19 nathanw Exp $
+# $NetBSD: FOURMEG,v 1.5.8.4 2002/04/17 00:04:31 nathanw Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
 
 include "arch/sun2/conf/std.sun2"
 
-#ident 		"FOURMEG-$Revision: 1.5.8.3 $"
+#ident 		"FOURMEG-$Revision: 1.5.8.4 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -22,6 +22,7 @@ options 	KTRACE		# system call tracing
 #options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 #options 	UCONSOLE	# Allow non-root TIOCCONS
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Which kernel debugger?  Uncomment either this:

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.10.2.2 2002/02/28 04:12:42 nathanw Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.10.2.3 2002/04/17 00:04:49 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.2 2002/02/28 04:12:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.3 2002/04/17 00:04:49 nathanw Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -61,10 +61,13 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.2.2 2002/02/28 04:12:42 nathanw E
 #include <compat/irix/irix_errno.h>
 
 static void setregs_n32 __P((struct proc *, struct exec_package *, u_long));
+static void irix_e_proc_exec __P((struct proc *, struct exec_package *));
+static void irix_e_proc_fork __P((struct proc *, struct proc *));
+static void irix_e_proc_exit __P((struct proc *));
+static void irix_e_proc_init __P((struct proc *, struct vmspace *));
 
 extern struct sysent irix_sysent[];
 extern const char * const irix_syscallnames[];
-extern char irix_sigcode[], irix_esigcode[];
 
 #ifndef __HAVE_SYSCALL_INTERN
 void irix_syscall __P((void));
@@ -89,12 +92,12 @@ const struct emul emul_irix_o32 = {
 #endif
 	irix_sendsig,
 	trapsignal,
-	irix_sigcode,
-	irix_esigcode,
+	NULL,
+	NULL,
 	setregs,
-	NULL,
-	NULL,
-	NULL,
+	irix_e_proc_exec,
+	irix_e_proc_fork,
+	irix_e_proc_exit,
 #ifdef __HAVE_SYSCALL_INTERN
 	irix_syscall_intern,
 #else
@@ -119,12 +122,12 @@ const struct emul emul_irix_n32 = {
 #endif
 	irix_sendsig,
 	trapsignal,
-	irix_sigcode,
-	irix_esigcode,
+	NULL,
+	NULL,
 	setregs_n32,
-	NULL,
-	NULL,
-	NULL,
+	irix_e_proc_exec,
+	irix_e_proc_fork,
+	irix_e_proc_exit,
 #ifdef __HAVE_SYSCALL_INTERN
 	irix_syscall_intern,
 #else
@@ -236,4 +239,52 @@ setregs_n32(p, pack, stack)
 	f->f_regs[SR] |= MIPS3_SR_UX; 
 
 	return;
+}
+
+/*
+ * per-process emuldata allocation
+ */
+static void
+irix_e_proc_init(p, vmspace)
+	struct proc *p;
+	struct vmspace *vmspace;
+{
+	if (!p->p_emuldata)
+		MALLOC(p->p_emuldata, void *, sizeof(struct irix_emuldata),
+			M_EMULDATA, M_WAITOK | M_ZERO);
+}  
+
+/* 
+ * exec() hook used to allocate per process structures
+ */
+static void
+irix_e_proc_exec(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	irix_e_proc_init(p, p->p_vmspace);
+}
+
+/*
+ * exit() hook used to free per process data structures
+ */
+static void
+irix_e_proc_exit(p)
+	struct proc *p;
+{
+	FREE(p->p_emuldata, M_EMULDATA);
+	p->p_emuldata = NULL;
+}
+
+/*
+ * fork() hook used to allocate per process structures
+ */
+static void
+irix_e_proc_fork(p, parent)
+        struct proc *p, *parent;
+{
+        p->p_emuldata = NULL;
+
+	/* Use parent's vmspace beacause our vmspace may not be setup yet) */
+        irix_e_proc_init(p, parent->p_vmspace);
 }

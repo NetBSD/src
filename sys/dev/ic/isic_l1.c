@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.c,v 1.1.2.3 2002/04/01 07:45:28 nathanw Exp $ */
+/* $NetBSD: isic_l1.c,v 1.1.2.4 2002/04/17 00:05:41 nathanw Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.1.2.3 2002/04/01 07:45:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.1.2.4 2002/04/17 00:05:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,17 +54,17 @@ __KERNEL_RCSID(0, "$NetBSD: isic_l1.c,v 1.1.2.3 2002/04/01 07:45:28 nathanw Exp 
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
+#include <dev/ic/ipac.h>
 #include <dev/ic/hscx.h>
 
 unsigned int i4b_l1_debug = L1_DEBUG_DEFAULT;
 
-static int isic_std_enable(isdn_layer1token, int);
 static int isic_std_ph_data_req(isdn_layer1token, struct mbuf *, int);
 static int isic_std_ph_activate_req(isdn_layer1token);
 static int isic_std_mph_command_req(isdn_layer1token, int, void*);
+static void isic_enable_intr(struct isic_softc *sc, int enabled);
 
 const struct isdn_layer1_bri_driver isic_std_driver = {
-	isic_std_enable,
 	isic_std_ph_data_req,
 	isic_std_ph_activate_req,
 	isic_std_mph_command_req
@@ -219,17 +219,26 @@ static int
 isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 {
 	struct isic_softc *sc = (struct isic_softc*)token;
-	
+	int s, pass_down = 0;
+
+	s = splnet();
 	switch(command)
 	{
 		case CMR_DOPEN:		/* daemon running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DOPEN", sc->sc_dev.dv_xname);
-			sc->sc_enabled = 1;			
+			sc->sc_intr_valid = ISIC_INTR_VALID;
+			pass_down = 1;
 			break;
 			
 		case CMR_DCLOSE:	/* daemon not running */
 			NDBGL1(L1_PRIM, "%s, command = CMR_DCLOSE", sc->sc_dev.dv_xname);
-			sc->sc_enabled = 0;
+			sc->sc_intr_valid = ISIC_INTR_DISABLED;
+			isic_enable_intr(sc, 0);
+			pass_down = 1;
+			break;
+
+		case CMR_SETLEDS:
+			pass_down = 1;
 			break;
 
 		case CMR_SETTRACE:
@@ -242,14 +251,31 @@ isic_std_mph_command_req(isdn_layer1token token, int command, void *parm)
 			break;
 	}
 
+	if (pass_down && sc->drv_command != NULL)
+		sc->drv_command(sc, command, parm);
+
+	if (command == CMR_DOPEN)
+		isic_enable_intr(sc, 1);
+
+	splx(s);
+
 	return(0);
 }
 
-static int
-isic_std_enable(isdn_layer1token token, int enable)
+static void
+isic_enable_intr(struct isic_softc *sc, int enabled)
 {
-	struct isic_softc * sc = (struct isic_softc*)token;
-	printf("%s: enable = %d\n", sc->sc_dev.dv_xname, enable);
-	return 0;
+	if (sc->sc_ipac) {
+		if (enabled) {
+			isic_isac_init(sc);
+		} else {
+			IPAC_WRITE(IPAC_MASK, 0xff);
+		}
+	} else {
+		if (enabled) {
+			isic_isac_init(sc);
+		} else {
+			ISAC_WRITE(I_MASK, 0xff);
+		}
+	}
 }
-

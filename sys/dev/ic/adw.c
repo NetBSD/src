@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.27.2.6 2002/01/08 00:29:30 nathanw Exp $	 */
+/* $NetBSD: adw.c,v 1.27.2.7 2002/04/17 00:05:29 nathanw Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.27.2.6 2002/01/08 00:29:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.27.2.7 2002/04/17 00:05:29 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,7 @@ adw_queue_ccb(ADW_SOFTC *sc, ADW_CCB *ccb)
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
 			callout_reset(&ccb->xs->xs_callout,
-			    (ccb->timeout * hz) / 1000, adw_timeout, ccb);
+			    mstohz(ccb->timeout), adw_timeout, ccb);
 	}
 
 	return(errcode);
@@ -884,7 +884,7 @@ adw_timeout(void *arg)
 		 * we will reset the bus.
 		 */
 		callout_reset(&xs->xs_callout,
-			    (ccb->timeout * hz) / 1000, adw_timeout, ccb);
+			    mstohz(ccb->timeout), adw_timeout, ccb);
 	} else {
 	/*
 	 * Abort the operation that has timed out.
@@ -917,7 +917,7 @@ adw_timeout(void *arg)
 		 * which timed-out.
 		 */
 		callout_reset(&xs->xs_callout,
-			    (ccb->timeout * hz) / 1000, adw_timeout, ccb);
+			    mstohz(ccb->timeout), adw_timeout, ccb);
 	}
 
 	splx(s);

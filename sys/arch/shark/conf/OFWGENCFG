@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.1.2.2 2002/02/28 04:11:40 nathanw Exp $
+#	$NetBSD: OFWGENCFG,v 1.1.2.3 2002/04/17 00:04:20 nathanw Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -89,13 +89,14 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 #options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in KBytes
+#options 	MEMORY_DISK_ROOT_SIZE=0	# Size in KBytes
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

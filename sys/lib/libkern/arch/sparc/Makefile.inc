@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26.2.1 2001/08/24 00:11:51 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.26.2.2 2002/04/17 00:06:21 nathanw Exp $
 
 SRCS+=  __main.c __assert.c \
 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
@@ -6,7 +6,7 @@ SRCS+=  __main.c __assert.c \
 	bcmp.c bzero.S ffs.S \
 	memchr.c memcmp.c memset.S \
 	strcat.c strcmp.c strcpy.c strlen.S strcasecmp.c \
-	strncasecmp.c strncmp.c strncpy.c \
+	strncasecmp.c strncmp.c strncpy.c strtoul.c \
 	scanc.c skpc.c \
 	htonl.S htons.S ntohl.S ntohs.S \
 	random.S

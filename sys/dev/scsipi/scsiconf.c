@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.9 2002/04/01 07:47:17 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.10 2002/04/17 00:06:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.9 2002/04/01 07:47:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.10 2002/04/17 00:06:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ scsibusattach(parent, self, aux)
 	struct scsipi_channel *chan = aux;
 
 	sc->sc_channel = chan;
+	chan->chan_name = sc->sc_dev.dv_xname;
 
 	/* Initialize the channel structure first */
 	if (scsipi_channel_init(chan)) {
@@ -577,6 +578,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 				PQUIRK_NOSTARTUNIT|PQUIRK_NODOORLOCK},
 	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
 	 "Maxtor 4", "D080H4",           "DAH0"}, PQUIRK_NOMODESENSE},
+	{{T_DIRECT, T_FIXED,	/* XXX move to umass */
+	 "Maxtor 4", "D040H2",           "DAH0"}, PQUIRK_NOMODESENSE},
 
 	{{T_DIRECT, T_REMOV,
 	 "iomega", "jaz 1GB", 		 ""},	  PQUIRK_NOMODESENSE},

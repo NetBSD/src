@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.11.2.4 2002/04/01 07:39:10 nathanw Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.11.2.5 2002/04/17 00:02:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -42,12 +42,10 @@
 #ifndef _ARM32_CPUFUNC_H_
 #define _ARM32_CPUFUNC_H_
 
-#include <sys/types.h>
-
 #ifdef _KERNEL
-#ifndef _LKM
-#include "opt_cputypes.h"
-#endif
+
+#include <sys/types.h>
+#include <arm/cpuconf.h>
 
 struct cpu_functions {
 
@@ -354,6 +352,8 @@ void	xscale_cache_flushD_SE	__P((u_int entry));
 void	xscale_cache_cleanID	__P((void));
 void	xscale_cache_cleanD	__P((void));
 void	xscale_cache_cleanD_E	__P((u_int entry));
+
+void	xscale_cache_clean_minidata __P((void));
 
 void	xscale_cache_purgeID	__P((void));
 void	xscale_cache_purgeID_E	__P((u_int entry));

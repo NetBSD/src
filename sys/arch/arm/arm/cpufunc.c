@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.15.2.5 2002/04/01 07:39:06 nathanw Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.15.2.6 2002/04/17 00:02:23 nathanw Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,6 @@
  */
 
 #include "opt_compat_netbsd.h"
-#include "opt_cputypes.h"
 #include "opt_cpuoptions.h"
 
 #include <sys/types.h>
@@ -56,6 +55,9 @@
 #include <machine/bootconfig.h>
 #include <arch/arm/arm/disassem.h>
 
+#include <uvm/uvm.h>
+
+#include <arm/cpuconf.h>
 #include <arm/cpufunc.h>
 
 #ifdef CPU_XSCALE_80200
@@ -717,6 +719,7 @@ set_cpufuncs()
 		cpufuncs = arm6_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
+		pmap_pte_init_generic();
 		return 0;
 	}
 #endif	/* CPU_ARM6 */
@@ -727,6 +730,7 @@ set_cpufuncs()
 		cpufuncs = arm7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_table();
+		pmap_pte_init_generic();
 		return 0;
 	}
 #endif	/* CPU_ARM7 */
@@ -737,6 +741,7 @@ set_cpufuncs()
 		cpufuncs = arm7tdmi_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
 		get_cachetype_cp15();
+		pmap_pte_init_generic();
 		return 0;
 	}
 #endif	
@@ -746,15 +751,16 @@ set_cpufuncs()
 		cpufuncs = arm8_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
 		get_cachetype_cp15();
+		pmap_pte_init_generic();
 		return 0;
 	}
 #endif	/* CPU_ARM8 */
 #ifdef CPU_ARM9
 	if (cputype == CPU_ID_ARM920T) {
-		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = arm9_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
 		get_cachetype_cp15();
+		pmap_pte_init_arm9();
 		return 0;
 	}
 #endif /* CPU_ARM9 */
@@ -764,6 +770,7 @@ set_cpufuncs()
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		get_cachetype_table();
+		pmap_pte_init_generic();
 		/*
 		 * Enable the right variant of sleeping.
 		 */
@@ -809,7 +816,6 @@ set_cpufuncs()
 			:
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
 
-		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = xscale_cpufuncs;
 
 		/*
@@ -824,6 +830,7 @@ set_cpufuncs()
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
+		pmap_pte_init_xscale();
 		return 0;
 	}
 #endif /* CPU_XSCALE_80200 */
@@ -847,6 +854,7 @@ set_cpufuncs()
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
+		pmap_pte_init_xscale();
 		return 0;
 	}
 #endif /* CPU_XSCALE_80321 */

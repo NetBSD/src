@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.c,v 1.9.2.2 2001/11/14 19:17:46 nathanw Exp $	*/
+/*	$NetBSD: ip_ecn.c,v 1.9.2.3 2002/04/17 00:06:25 nathanw Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.11 2001/05/03 16:09:29 itojun Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.9.2.2 2001/11/14 19:17:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.9.2.3 2002/04/17 00:06:25 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -115,6 +115,7 @@ ip6_ecn_ingress(mode, outer, inner)
 	if (!outer || !inner)
 		panic("NULL pointer passed to ip6_ecn_ingress");
 
+	outer8 = (ntohl(*outer) >> 20) & 0xff;
 	inner8 = (ntohl(*inner) >> 20) & 0xff;
 	ip_ecn_ingress(mode, &outer8, &inner8);
 	*outer &= ~htonl(0xff << 20);
@@ -133,6 +134,7 @@ ip6_ecn_egress(mode, outer, inner)
 		panic("NULL pointer passed to ip6_ecn_egress");
 
 	outer8 = (ntohl(*outer) >> 20) & 0xff;
+	inner8 = (ntohl(*inner) >> 20) & 0xff;
 	ip_ecn_egress(mode, &outer8, &inner8);
 	*inner &= ~htonl(0xff << 20);
 	*inner |= htonl((u_int32_t)inner8 << 20);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57.2.5 2002/04/01 07:40:57 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57.2.6 2002/04/17 00:03:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -133,6 +133,7 @@ extern int mips3_pg_cached;
 #define	CPU_MIPS_HAVE_SPECIAL_CCA	0x0008	/* Defaults to '3' if not set. */
 #define	CPU_MIPS_CACHED_CCA_MASK	0x0070
 #define	CPU_MIPS_CACHED_CCA_SHIFT	 4
+#define	CPU_MIPS_DOUBLE_COUNT		0x0080	/* 1 cp0 count == 2 clock cycles */
 #define	MIPS_NOT_SUPP			0x8000
 
 #ifdef _LKM
@@ -343,8 +344,9 @@ void	mips_init_msgbuf(void);
 void	savefpregs(struct lwp *);
 void	loadfpregs(struct lwp *);
 
-/* locore.S */
+/* locore*.S */
 int	badaddr(void *, size_t);
+int	badaddr64(uint64_t, size_t);
 
 /* mips_machdep.c */
 void	cpu_identify(void);

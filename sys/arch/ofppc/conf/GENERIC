@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44.4.3 2002/02/28 04:11:19 nathanw Exp $
+# $NetBSD: GENERIC,v 1.44.4.4 2002/04/17 00:04:07 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.44.4.3 $"
+#ident 		"GENERIC-$Revision: 1.44.4.4 $"
 
 maxusers	32
 
@@ -44,6 +44,7 @@ options 	SYSVSHM		# System V shared memory
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

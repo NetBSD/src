@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.14.2.6 2002/04/01 07:44:23 nathanw Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.14.2.7 2002/04/17 00:05:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@
 __BEGIN_DECLS
 extern const struct emul emul_linux;
 
-int sysctl_linux __P((int *, u_int, void *, size_t *, void *, size_t,
+int linux_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
     struct proc *));
 void linux_setregs __P((struct lwp *, struct exec_package *, u_long));
 int exec_linux_aout_makecmds __P((struct proc *, struct exec_package *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.6.4.4 2002/01/08 00:25:18 nathanw Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.6.4.5 2002/04/17 00:03:20 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.6.4.4 2002/01/08 00:25:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.6.4.5 2002/04/17 00:03:20 nathanw Exp $");
 
 #include "opt_largepages.h"
 
@@ -365,7 +365,7 @@ _i386_memio_unmap(t, bsh, size, adrp)
 #if __NetBSD_Version__ > 104050000
 			if (pmap_extract(pmap_kernel(), va, &bpa) == FALSE) {
 				panic("_i386_memio_unmap:"
-				    "i386/rbus_machdep.c wrong virtual address");
+				    " wrong virtual address");
 			}
 			bpa += (bsh & PGOFSET);
 #else

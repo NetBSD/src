@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43.2.3 2002/02/28 04:12:10 nathanw Exp $
+# $NetBSD: GENERIC,v 1.43.2.4 2002/04/17 00:04:28 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sparc64/conf/GENERIC32"
 
-#ident 	"GENERIC-$Revision: 1.43.2.3 $"
+#ident 	"GENERIC-$Revision: 1.43.2.4 $"
 
 include 	"arch/sparc64/conf/std.sparc64-64"
 
@@ -35,4 +35,5 @@ makeoptions	DEBUG="-g"
 #options 	DEBUG
 #options 	SYSCALL_DEBUG
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

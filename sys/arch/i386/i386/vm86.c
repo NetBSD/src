@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.23.4.3 2002/01/08 00:25:30 nathanw Exp $	*/
+/*	$NetBSD: vm86.c,v 1.23.4.4 2002/04/17 00:03:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.23.4.3 2002/01/08 00:25:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.23.4.4 2002/04/17 00:03:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,8 +212,8 @@ vm86_return(l, retval)
 #endif
 		sigexit(l, SIGILL);
 	}
-
-	trapsignal(l, SIGURG, retval);
+	
+	(*p->p_emul->e_trapsignal)(l, SIGURG, retval);
 }
 
 #define	CLI	0xFA
@@ -329,7 +329,7 @@ vm86_gpfault(l, type)
 	}
 
 	if (trace && tf->tf_eflags & PSL_VM)
-		trapsignal(l, SIGTRAP, T_TRCTRAP);
+		(*p->p_emul->e_trapsignal)(l, SIGTRAP, T_TRCTRAP);
 	return;
 
 bad:

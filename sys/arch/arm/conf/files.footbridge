@@ -1,25 +1,21 @@
-#	$NetBSD: files.footbridge,v 1.5.10.2 2002/01/08 00:23:10 nathanw Exp $
+#	$NetBSD: files.footbridge,v 1.5.10.3 2002/04/17 00:02:28 nathanw Exp $
 #
 # Shared footbridge files information
 
-defflag	FOOTBRIDGE
-
 # DC21285 "Footbridge" specific files
 define	footbridge {}
-device	footbridge: pcibus, todservice
+device	footbridge: pcibus, bus_space_generic, todservice
 attach	footbridge at mainbus
 file	arch/arm/footbridge/footbridge.c		footbridge
 file	arch/arm/footbridge/footbridge_machdep.c	footbridge
 file	arch/arm/footbridge/footbridge_io.c		footbridge
-file	arch/arm/footbridge/footbridge_io_asm.S		footbridge
 file	arch/arm/footbridge/footbridge_pci.c		footbridge
 file	arch/arm/footbridge/footbridge_irq.S		footbridge
 file	arch/arm/footbridge/footbridge_irqhandler.c	footbridge
 file	arch/arm/footbridge/footbridge_clock.c		footbridge
 
 # DC21285 "Footbridge" serial port
-device	fcom: tty
+device	fcom: tty, bus_space_generic
 attach	fcom at footbridge
 file	arch/arm/footbridge/footbridge_com.c		fcom needs-flag
 file	arch/arm/footbridge/footbridge_com_io.c	fcom
-file	arch/arm/footbridge/footbridge_com_io_asm.S	fcom

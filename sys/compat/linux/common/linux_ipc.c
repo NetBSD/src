@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.22.2.5 2002/04/01 07:44:26 nathanw Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.22.2.6 2002/04/17 00:05:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.22.2.5 2002/04/01 07:44:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.22.2.6 2002/04/17 00:05:08 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -370,12 +370,18 @@ linux_sys_shmat(l, v, retval)
 		syscallarg(int) shmflg;
 		syscallarg(u_long *) raddr;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int error;
+	vaddr_t attach_va;
+	u_long raddr;
 
-	if ((error = sys_shmat(l, uap, retval)))
+	if ((error = shmat1(p, SCARG(uap, shmid), SCARG(uap, shmaddr),
+	     SCARG(uap, shmflg), &attach_va, 1)))
 		return error;
 
-	if ((error = copyout(&retval[0], (caddr_t) SCARG(uap, raddr),
+	raddr = (u_long)attach_va;
+
+	if ((error = copyout(&raddr, (caddr_t) SCARG(uap, raddr),
 	     sizeof retval[0])))
 		return error;
 	

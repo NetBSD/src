@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.93.2.10 2002/04/01 07:49:22 nathanw Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.93.2.11 2002/04/17 00:06:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.10 2002/04/01 07:49:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.93.2.11 2002/04/17 00:06:32 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -589,6 +589,7 @@ uvm_map(map, startp, size, uobj, uoffset, align, flags)
 			uvm_maxkaddr = pmap_growkernel(*startp + size);
 	}
 #endif
+
 	UVMCNT_INCR(uvm_map_call);
 
 	/*

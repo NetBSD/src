@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7.2.4 2002/04/01 07:40:21 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7.2.5 2002/04/17 00:03:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,27 +39,6 @@
 #ifdef _KERNEL
 
 #include <arm/arm32/vmparam.h>
-
-#define	USRTEXT		VM_MIN_ADDRESS
-#define	USRSTACK	VM_MAXUSER_ADDRESS
-
-/*
- * Note that MAXTSIZ mustn't be greater than 32M. Otherwise you'd have
- * to change the compiler to not generate bl instructions
- */
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
-#ifndef	DFLDSIZ
-#define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
-#endif
-#ifndef	MAXDSIZ
-#define	MAXDSIZ		(512*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(8*1024*1024)		/* max stack size */
-#endif
 
 /*
  * Address space constants

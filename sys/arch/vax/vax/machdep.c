@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.120.4.4 2002/04/01 07:43:31 nathanw Exp $	 */
+/* $NetBSD: machdep.c,v 1.120.4.5 2002/04/17 00:04:42 nathanw Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -301,18 +301,14 @@ consinit()
 	iospace_inited = 1;
 #endif
 	cninit();
-#if defined(DDB) && !defined(__ELF__)
-	{
+#if defined(DDB)
+	if (symtab_start != NULL && symtab_nsyms != 0 && symtab_end != NULL) {
+		ddb_init(symtab_nsyms, symtab_start, symtab_end);
 #ifndef __ELF__
+	} else {
 		extern int end; /* Contains pointer to symsize also */
-#endif
-		if (symtab_start != NULL)
-			ddb_init(symtab_nsyms, symtab_start, symtab_end);
-#ifndef __ELF__
-		else {
-			extern paddr_t esym;
-			ddb_init(*(int *)&end, ((int *)&end) + 1, (void *)esym);
-		}
+		extern paddr_t esym;
+		ddb_init(*(int *)&end, ((int *)&end) + 1, (void *)esym);
 #endif
 	}
 #ifdef DEBUG

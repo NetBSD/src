@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.5.8.2 2002/04/01 07:42:06 nathanw Exp $	*/
+/*	$NetBSD: pte.h,v 1.5.8.3 2002/04/17 00:04:13 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -67,6 +67,8 @@ struct pte {
 #define	PTE_BR		0x00000003	/* Both Read Only    (U: RO, S: RO) */
 #define	PTE_RW		PTE_BW
 #define	PTE_RO		PTE_BR
+
+#define	PTE_EXEC	0x00000200	/* pseudo bit in attrs; page is exec */
 
 #ifndef	_LOCORE
 typedef	struct pte pte_t;

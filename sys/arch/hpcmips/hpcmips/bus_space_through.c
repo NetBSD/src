@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_through.c,v 1.1.2.2 2002/01/08 00:25:02 nathanw Exp $	*/
+/*	$NetBSD: bus_space_through.c,v 1.1.2.3 2002/04/17 00:03:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
@@ -105,6 +105,24 @@ bs_through_bs_barrier(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t len, int flags)
 {
 	bus_space_barrier(t->bs_base, bsh, offset, len, flags);
+}
+
+
+/*
+ * Bus probe operations.
+ */
+int
+bs_through_bs_peek(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, size_t size, void *ptr)
+{
+	return bus_space_peek(t->bs_base, bsh, offset, size, ptr);
+}
+
+int
+bs_through_bs_poke(bus_space_tag_t t, bus_space_handle_t bsh,
+    bus_size_t offset, size_t size, u_int32_t val)
+{
+	return bus_space_poke(t->bs_base, bsh, offset, size, val);
 }
 
 

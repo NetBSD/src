@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.1.2.2 2002/02/28 04:07:42 nathanw Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.1.2.3 2002/04/17 00:02:34 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -183,27 +183,8 @@ initarm(ofw_handle)
 	 * We take:  undefined, swi, pre-fetch abort, data abort, addrexc
 	 * OFW retains:  reset, irq, fiq
 	 */
-	{
-		int our_vecnums[] = {1, 2, 3, 4, 5};
-		unsigned int *vectors = (unsigned int *)0;
-		extern unsigned int page0[];
-		int i;
-
-		for (i = 0; i < (sizeof(our_vecnums) / sizeof(int)); i++) {
-			int vecnum = our_vecnums[i];
-
-			/* Copy both the instruction and the data word
-			 * for the vector.
-			 * The latter is needed to support branching
-			 * arbitrarily far.
-			 */
-			vectors[vecnum] = page0[vecnum];
-			vectors[vecnum + 8] = page0[vecnum + 8];
-		}
-
-		/* Sync the first 16 words of memory */
-		cpu_icache_sync_range(0, 64);
-	}
+	arm32_vector_init(ARM_VECTORS_LOW,
+	    ARM_VEC_ALL & ~(ARM_VEC_RESET|ARM_VEC_IRQ|ARM_VEC_FIQ));
 
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;

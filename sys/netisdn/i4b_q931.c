@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.2.2.5 2002/04/01 07:48:59 nathanw Exp $ 
+ *	$Id: i4b_q931.c,v 1.2.2.6 2002/04/17 00:06:27 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.5 2002/04/01 07:48:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.6 2002/04/17 00:06:27 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -115,7 +115,7 @@ setup_cr(call_desc_t *cd, unsigned char cr)
 void
 i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 {
-	call_desc_t *cd;
+	call_desc_t *cd = NULL;
 	int codeset = CODESET_0;
 	int old_codeset = CODESET_0;
 	int shift_flag = UNSHIFTED;
@@ -151,7 +151,7 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 	msg_ptr++;
 	msg_len--;
 	
-	if(crlen != 0)
+	if (crlen != 0)
 	{
 		crval += *msg_ptr & 0x7f;
 		crflag = (*msg_ptr >> 7) & 0x01;
@@ -180,10 +180,13 @@ i4b_decode_q931(int bri, int msg_len, u_char *msg_ptr)
 	{
 		if(*msg_ptr == SETUP)
 		{
+			struct isdn_l3_driver *drv = isdn_find_l3_by_bri(bri);
+
 			/* get and init new calldescriptor */
 
 			cd = reserve_cd();	/* cdid filled in */
 			cd->bri = bri;
+			cd->l3drv = drv;
 			cd->cr = crval;		
 			cd->crflag = CRF_DEST;	/* we are the dest side */
 			cd->l4_driver = NULL;		/* reset link tab ptrs */
@@ -434,6 +437,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 			break;
 
 		case IEI_CALLINGPN:	/* calling party no */
+			cd->type_plan = msg_ptr[2] & 0x7f;
 			if(msg_ptr[2] & 0x80) /* no presentation/screening indicator ? */
 			{
 				memcpy(cd->src_telno, &msg_ptr[3], min(TELNO_MAX, msg_ptr[1]-1));
@@ -453,6 +457,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 	
 		case IEI_CALLINGPS:	/* calling party subaddress */
 			NDBGL3(L3_P_MSG, "IEI_CALLINGPS");
+			memcpy(cd->src_subaddr, &msg_ptr[1], min(SUBADDR_MAX, msg_ptr[1]-1));
 			break;
 			
 		case IEI_CALLEDPN:	/* called party number */
@@ -463,6 +468,7 @@ i4b_decode_q931_cs0_ie(int unit, call_desc_t *cd, int msg_len, u_char *msg_ptr)
 	
 		case IEI_CALLEDPS:	/* called party subaddress */
 			NDBGL3(L3_P_MSG, "IEI_CALLEDPS");
+			memcpy(cd->dest_subaddr, &msg_ptr[1], min(SUBADDR_MAX, msg_ptr[1]-1));
 			break;
 
 		case IEI_REDIRNO:	/* redirecting number */

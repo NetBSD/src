@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.6.8.4 2002/04/01 07:42:10 nathanw Exp $
+#	$NetBSD: NATSUMI,v 1.6.8.5 2002/04/17 00:04:16 nathanw Exp $
 #
 #	for development
 #
@@ -23,6 +23,7 @@ options 	SHMMAXPGS=8192
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -160,12 +161,10 @@ options 	PCIC_ISA_ALLOC_IOSIZE=0x0100
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-#pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 vga*		at pci?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
-#wsmouse*	at pmsi? mux 0
 
 pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
@@ -394,4 +393,4 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #pseudo-device	vcoda		4	# coda minicache <-> venus comm.
 
 # mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
+pseudo-device	wsmux

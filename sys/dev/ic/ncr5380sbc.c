@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.38.4.4 2002/01/08 00:30:00 nathanw Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.38.4.5 2002/04/17 00:05:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.38.4.4 2002/01/08 00:30:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380sbc.c,v 1.38.4.5 2002/04/17 00:05:49 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -1026,7 +1026,7 @@ next_job:
 	 * Schedule a timeout for the job we are starting.
 	 */
 	if ((sr->sr_flags & SR_IMMED) == 0) {
-		i = (xs->timeout * hz) / 1000;
+		i = mstohz(xs->timeout);
 		NCR_TRACE("sched: set timeout=%d\n", i);
 		callout_reset(&sr->sr_xs->xs_callout, i,
 		    ncr5380_cmd_timeout, sr);

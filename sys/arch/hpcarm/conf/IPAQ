@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.11.6.4 2002/04/01 07:40:17 nathanw Exp $
+#	$NetBSD: IPAQ,v 1.11.6.5 2002/04/17 00:03:01 nathanw Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -18,8 +18,6 @@ options 	CPU_SA110	# Support the SA110 core
 options 	CPU_SA1110	# Support the SA110 core
 
 # Architecture options
-options 	HPCARM		# Windows-CE based
-options 	SAIP		# We use SA1110 builtin peripherals
 options 	SAEGPIO_BASE="0x49000000"
 				# we have Extended GPIO
 
@@ -94,7 +92,7 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options
@@ -103,6 +101,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.9.2.4 2002/01/08 00:30:41 nathanw Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.9.2.5 2002/04/17 00:05:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.9.2.4 2002/01/08 00:30:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.9.2.5 2002/04/17 00:05:58 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -106,8 +106,14 @@ struct edc_mca_softc {
 					 * controller */
 
 	/* I/O results variables */
-	volatile int sc_error;
+	volatile int sc_stat;
+#define	STAT_START	0
+#define	STAT_ERROR	1
+#define	STAT_DONE	2
 	volatile int sc_resblk;		/* residual block count */
+
+	/* CMD status block - only set & used in edc_intr() */
+	u_int16_t status_block[EDC_MAX_CMD_RES_LEN];
 };
 
 int	edc_mca_probe	__P((struct device *, struct cfdata *, void *));
@@ -121,7 +127,7 @@ static int	edc_intr __P((void *));
 static void	edc_dump_status_block __P((struct edc_mca_softc *,
 		    u_int16_t *, int));
 static int	edc_do_attn __P((struct edc_mca_softc *, int, int, int));
-static int	edc_cmd_wait __P((struct edc_mca_softc *, int, int));
+static void	edc_cmd_wait __P((struct edc_mca_softc *, int, int));
 static void	edcworker __P((void *));
 static void	edc_spawn_worker __P((void *));
 
@@ -283,7 +289,7 @@ edc_mca_attach(parent, self, aux)
 	}
 		
 	/*
-	 * Since interrupts are disabled ATM, it's necessary
+	 * Since interrupts are disabled, it's necessary
 	 * to detect the interrupt request and call edc_intr()
 	 * explicitly. See also edc_run_cmd().
 	 */
@@ -350,8 +356,7 @@ edc_intr(arg)
 	struct edc_mca_softc *sc = arg;
 	u_int8_t isr, intr_id;
 	u_int16_t sifr;
-	int cmd=-1, devno, error=0;
-	u_int16_t status_block[EDC_MAX_CMD_RES_LEN]; /* CMD status block */
+	int cmd=-1, devno;
 
 	/*
 	 * Check if the interrupt was for us.
@@ -367,7 +372,7 @@ edc_intr(arg)
 	isr = bus_space_read_1(sc->sc_iot, sc->sc_ioh, ISR);
 	intr_id = isr & ISR_INTR_ID_MASK;
 
-#ifdef DEBUG
+#ifdef EDC_DEBUG
 	if (intr_id == 0 || intr_id == 2 || intr_id == 4) {
 		printf("%s: bogus interrupt id %d\n", sc->sc_dev.dv_xname,
 			(int) intr_id);
@@ -401,15 +406,19 @@ edc_intr(arg)
 		cmd = sifr & SIFR_CMD_MASK;
 
 		/* Read whole status block */
-		memset(status_block, 0, sizeof(status_block)); /* zero first */
-		status_block[0] = sifr;
+		sc->status_block[0] = sifr;
 		for(i=1; i < len; i++) {
 			while((bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
 				& BSR_SIFR_FULL) == 0)
-				delay(1);
+				;
 
-			status_block[i] = le16toh(
+			sc->status_block[i] = le16toh(
 				bus_space_read_2(sc->sc_iot, sc->sc_ioh, SIFR));
+		}
+		/* zero out rest */
+		if (i < EDC_MAX_CMD_RES_LEN) {
+			memset(&sc->status_block[i], 0,
+				(EDC_MAX_CMD_RES_LEN-i)*sizeof(u_int16_t));
 		}
 	}
 
@@ -422,31 +431,45 @@ edc_intr(arg)
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, BCR,
 			BCR_INT_ENABLE|BCR_DMA_ENABLE);
 		break;
+
 	case ISR_COMPLETED:
 	case ISR_COMPLETED_WITH_ECC:
 	case ISR_COMPLETED_RETRIES:
 	case ISR_COMPLETED_WARNING:
-		error = 0;
-
 		/*
 		 * Copy device config data if appropriate. sc->sc_ed[]
 		 * entry might be NULL during probe.
 		 */
 		if (cmd == CMD_GET_DEV_CONF && sc->sc_ed[devno]) {
-			memcpy(sc->sc_ed[devno]->sense_data, status_block,
+			memcpy(sc->sc_ed[devno]->sense_data, sc->status_block,
 				sizeof(sc->sc_ed[devno]->sense_data));
 		}
 
+		sc->sc_stat = STAT_DONE;
 		break;
+
 	case ISR_RESET_COMPLETED:
 	case ISR_ABORT_COMPLETED:
 		/* nothing to do */
 		break;
+
+	case ISR_ATTN_ERROR:
+		/*
+		 * Basically, this means driver bug or something seriously
+		 * hosed. panic rather than extending the lossage. 
+		 * No status block available, so no further info.
+		 */
+		panic("%s: dev %d: attention error",
+			sc->sc_dev.dv_xname,
+			devno);
+		/* NOTREACHED */
+		break;
+
 	default:
 		if ((sc->sc_flags & DASD_QUIET) == 0)
-			edc_dump_status_block(sc, status_block, intr_id);
+			edc_dump_status_block(sc, sc->status_block, intr_id);
 
-		error = EIO;
+		sc->sc_stat = STAT_ERROR;
 		break;
 	}
 			
@@ -460,10 +483,9 @@ edc_intr(arg)
 		edc_do_attn(sc, ATN_END_INT, devno, intr_id);
 
 	/* If Read or Write Data, wakeup worker thread to finish it */
-	if (intr_id != ISR_DATA_TRANSFER_RDY
-	    && (cmd == CMD_READ_DATA || cmd == CMD_WRITE_DATA)) {
-		if ((sc->sc_error = error) == 0)
-			sc->sc_resblk = status_block[SB_RESBLKCNT_IDX];
+	if (intr_id != ISR_DATA_TRANSFER_RDY) {
+	    	if (cmd == CMD_READ_DATA || cmd == CMD_WRITE_DATA)
+			sc->sc_resblk = sc->status_block[SB_RESBLKCNT_IDX];
 		wakeup_one(sc);
 	}
 
@@ -489,30 +511,30 @@ edc_do_attn(sc, attn_type, devno, intr_id)
 	 *    a RESET COMPLETED interrupt.
 	 */
 	if (intr_id != ISR_RESET_COMPLETED) {
+#ifdef EDC_DEBUG
+		if (attn_type == ATN_CMD_REQ
+		    && (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
+			    & BSR_INT_PENDING))
+			panic("%s: edc int pending", sc->sc_dev.dv_xname);
+#endif
+
 		for(tries=1; tries < EDC_ATTN_MAXTRIES; tries++) {
 			if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
-			     & BSR_BUSY) == 0) {
-#ifdef DEBUG
-				if ((bus_space_read_1(sc->sc_iot, sc->sc_ioh,
-					BSR) & BSR_INT_PENDING) && intr_id)
-					panic("foobar");
-#endif
+			     & BSR_BUSY) == 0)
 				break;
-			}
 		}
 
 		if (tries == EDC_ATTN_MAXTRIES) {
 			printf("%s: edc_do_attn: timeout waiting for attachment to become available\n",
 					sc->sc_ed[devno]->sc_dev.dv_xname);
-			return (EAGAIN);
+			return (EIO);
 		}
 	}
 
 	/*
 	 * 3. Write proper DEVICE NUMBER and Attention number to ATN.
 	 */ 
-	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ATN,
-		attn_type | (devno << 5));
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, ATN, attn_type | (devno<<5));
 
 	/*
 	 * 4. Enable interrupts via BCR.
@@ -527,59 +549,36 @@ edc_do_attn(sc, attn_type, devno, intr_id)
  * We use mono_time, since we don't need actual RTC, just time
  * interval.
  */
-static int
+static void
 edc_cmd_wait(sc, secs, poll)
 	struct edc_mca_softc *sc;
 	int secs, poll;
 {
-	int val, delayed;
+	int val;
 
 	if (!poll) {
-		int error;
+		int s;
 
 		/* Not polling, can sleep. Sleep until we are awakened,
 		 * but maximum secs seconds.
 		 */
-		error = tsleep(sc, PRIBIO, "edcwcmd", secs * hz);
-		if (error)
-			goto err;
-		return (0);
+		s = splbio();
+		if (sc->sc_stat != STAT_DONE)
+			(void) tsleep(sc, PRIBIO, "edcwcmd", secs * hz);
+		splx(s);
 	}
 
-	/* Poll the controller until command finishes */
-	delayed = 0;
-	do {
-		val = bus_space_read_1(sc->sc_iot,sc->sc_ioh, BSR);
-		if ((val & BSR_CMD_INPROGRESS) == 0)
-			break;
-
-		if (val & BSR_INTR)
-			break;
-
-		delay(1);
-
-		/*
-		 * This is not as accurate as checking mono_time, but
-		 * it works with hardclock interrupts disabled too.
-		 */
-		delayed++;
-		if (delayed == 1000000) {
-			delayed = 0;
-			secs--;
-		}
-	} while(secs > 0);
-
-	if (secs == 0 &&
-	    bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_CMD_INPROGRESS){
-    err:
-		printf("%s: timed out waiting for cmd to finish\n",
-			sc->sc_dev.dv_xname);
-		return (EAGAIN);
+	/* Wait until the command is completely finished */
+	while((val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR))
+	    & BSR_CMD_INPROGRESS) {
+		if (poll && (val & BSR_INTR))
+			edc_intr(sc);
 	}
-
-	return (0);
 }
-	  
+ 
+/*
+ * Command controller to execute specified command on a device.
+ */
 int
 edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, poll)
 	struct edc_mca_softc *sc;
@@ -591,10 +590,7 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, poll)
 	int i, error, tries;
 	u_int16_t cmd0;
 
-	if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR) & BSR_BUSY) {
-		printf("%s: device busy?\n", sc->sc_dev.dv_xname);
-		return (EAGAIN);
-	}
+	sc->sc_stat = STAT_START;
 
 	/* Do Attention Request for Command Request. */
 	if ((error = edc_do_attn(sc, ATN_CMD_REQ, devno, 0)))
@@ -622,53 +618,32 @@ edc_run_cmd(sc, cmd, devno, cmd_args, cmd_len, poll)
 	 * Write word of CMD to the CIFR. This sets "Command
 	 * Interface Register Full (CMD IN)" in BSR. Once the attachment
 	 * detects it, it reads the word and clears CMD IN. This all should
-	 * be quite fast, so don't bother with sleeps for !poll case.
+	 * be quite fast, so don't sleep in !poll case neither.
 	 */
 	for(i=0; i < cmd_len; i++) {
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, CIFR,
 			htole16(cmd_args[i]));
 			
-		/*
-		 * Wait until CMD IN is cleared. The 1ms delay for polling
-		 * case is necessary, otherwise e.g. system dump gets stuck
-		 * soon. Quirky hw ?
-		 */
+		/* Wait until CMD IN is cleared. */
 		tries = 0;
 		for(; (bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
-		    & BSR_CIFR_FULL) && tries < 1000 ; tries++)
+		    & BSR_CIFR_FULL) && tries < 10000 ; tries++)
 			delay(poll ? 1000 : 1);
+			;
 
-		if (tries == 10000) {
+		if (tries == 10000
+		    && bus_space_read_1(sc->sc_iot, sc->sc_ioh, BSR)
+		       & BSR_CIFR_FULL) {
 			printf("%s: device too slow to accept command %d\n",
 				sc->sc_dev.dv_xname, cmd);
-			return (EAGAIN);
+			return (EIO);
 		}
 	}
 
 	/* Wait for command to complete, but maximum 15 seconds. */
-	if ((error = edc_cmd_wait(sc, 15, poll)))
-		return (error);
+	edc_cmd_wait(sc, 15, poll);
 
-	/* If polling, call edc_intr() explicitly */
-	if (poll) {
-		edc_intr(sc);
-
-		/*
-		 * If got attention id DATA TRANSFER READY, wait for
-		 * the transfer to finish.
-		 */
-		if ((cmd == CMD_READ_DATA || cmd == CMD_WRITE_DATA)
-		    && sc->sc_error == 0) {
-			if ((error = edc_cmd_wait(sc, 15, poll)))
-				return (error);
-			edc_intr(sc);
-		}
-
-		if ((error = edc_cmd_wait(sc, 15, poll)))
-			return (error);
-	}
-
-	return (sc->sc_error);
+	return ((sc->sc_stat != STAT_DONE) ? EIO : 0);
 }
 
 #ifdef EDC_DEBUG
@@ -777,16 +752,19 @@ edc_dump_status_block(sc, status_block, intr_id)
 	int intr_id;
 {
 #ifdef EDC_DEBUG
-	printf("%s: Command: %s, Status: %s\n",
+	printf("%s: Command: %s, Status: %s (intr %d)\n",
 		sc->sc_dev.dv_xname,
 		edc_commands[status_block[0] & 0x1f],
-		edc_cmd_status[SB_GET_CMD_STATUS(status_block)]
+		edc_cmd_status[SB_GET_CMD_STATUS(status_block)],
+		intr_id
 		);
 #else
-	printf("%s: Command: %d, Status: %d\n",
+	printf("%s: Command: %d, Status: %d (intr %d)\n",
 		sc->sc_dev.dv_xname,
 		status_block[0] & 0x1f,
-		SB_GET_CMD_STATUS(status_block));
+		SB_GET_CMD_STATUS(status_block),
+		intr_id
+		);
 #endif
 	printf("%s: # left blocks: %u, last processed RBA: %u\n",
 		sc->sc_dev.dv_xname,
@@ -861,11 +839,9 @@ edcworker(arg)
 	struct edc_mca_softc *sc = (struct edc_mca_softc *) arg;
 	struct ed_softc *ed;
 	struct buf *bp;
-	int s, i, error;
+	int i, error;
 
 	config_pending_decr();
-
-	s = splbio();
 
 	for(;;) {
 		/* Wait until awakened */
@@ -908,8 +884,6 @@ edcworker(arg)
 			biodone(bp);
 		}
 	}
-
-	splx(s);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258var.h,v 1.1.2.3 2002/04/01 07:45:34 nathanw Exp $	*/
+/*	$NetBSD: msm6258var.h,v 1.1.2.4 2002/04/17 00:05:49 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -35,7 +35,18 @@
  */
 
 void *msm6258_codec_init (void);
-void msm6258_ulinear8_to_adpcm (void *, u_char *, int);
-void msm6258_mulaw_to_adpcm (void *, u_char *, int);
-void msm6258_adpcm_to_ulinear8 (void *, u_char *, int);
-void msm6258_adpcm_to_mulaw (void *, u_char *, int);
+int  msm6258_codec_open (void *);
+
+void msm6258_slinear16_host_to_adpcm(void *, u_char *, int);
+void msm6258_slinear16_le_to_adpcm(void *, u_char *, int);
+void msm6258_slinear16_be_to_adpcm(void *, u_char *, int);
+void msm6258_slinear8_to_adpcm(void *, u_char *, int);
+void msm6258_ulinear8_to_adpcm(void *, u_char *, int);
+void msm6258_mulaw_to_adpcm(void *, u_char *, int);
+
+void msm6258_adpcm_to_slinear16_host(void *, u_char *, int);
+void msm6258_adpcm_to_slinear16_le(void *, u_char *, int);
+void msm6258_adpcm_to_slinear16_be(void *, u_char *, int);
+void msm6258_adpcm_to_slinear8(void *, u_char *, int);
+void msm6258_adpcm_to_ulinear8(void *, u_char *, int);
+void msm6258_adpcm_to_mulaw(void *, u_char *, int);

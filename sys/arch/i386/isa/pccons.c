@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.144.4.6 2002/04/01 07:40:42 nathanw Exp $	*/
+/*	$NetBSD: pccons.c,v 1.144.4.7 2002/04/17 00:03:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.144.4.6 2002/04/01 07:40:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.144.4.7 2002/04/17 00:03:24 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -1243,6 +1243,20 @@ pcparam(tp, t)
 	return (0);
 }
 
+#ifndef	PCCONS_DEFAULT_FG
+#define	PCCONS_DEFAULT_FG	FG_LIGHTGREY
+#endif
+#ifndef	PCCONS_DEFAULT_SO_FG
+#define	PCCONS_DEFAULT_SO_FG	FG_YELLOW
+#endif
+
+#ifndef	PCCONS_DEFAULT_BG
+#define	PCCONS_DEFAULT_BG	BG_BLACK
+#endif
+#ifndef	PCCONS_DEFAULT_SO_BG
+#define	PCCONS_DEFAULT_SO_BG	BG_BLACK
+#endif
+
 void
 pcinit()
 {
@@ -1282,12 +1296,12 @@ pcinit()
 	vs.ncol = COL;
 	vs.nrow = ROW;
 	vs.nchr = COL * ROW;
-	vs.at = FG_LIGHTGREY | BG_BLACK;
 
+	vs.at = PCCONS_DEFAULT_FG | PCCONS_DEFAULT_BG;
 	if (vs.color == 0)
 		vs.so_at = FG_BLACK | BG_LIGHTGREY;
 	else
-		vs.so_at = FG_YELLOW | BG_BLACK;
+		vs.so_at = PCCONS_DEFAULT_SO_FG | PCCONS_DEFAULT_SO_BG;
 
 	fillw((vs.at << 8) | ' ', crtat, vs.nchr - cursorat);
 }
@@ -1668,7 +1682,8 @@ sput(cp, n)
 				case 'x': /* set attributes */
 					switch (vs.cx) {
 					case 0:
-						vs.at = FG_LIGHTGREY | BG_BLACK;
+						vs.at = PCCONS_DEFAULT_FG |
+						    PCCONS_DEFAULT_BG;
 						break;
 					case 1:
 						/* ansi background */

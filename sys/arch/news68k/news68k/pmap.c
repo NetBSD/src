@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22.4.5 2002/04/01 07:41:38 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22.4.6 2002/04/17 00:04:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1026,16 +1026,6 @@ pmap_page_protect(pg, prot)
 		if (!pmap_ste_v(pv->pv_pmap, pv->pv_va) ||
 		    pmap_pte_pa(pte) != pa)
 			panic("pmap_page_protect: bad mapping");
-#endif
-		if (!pmap_pte_w(pte))
-			pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
-					    pte, PRM_TFLUSH|PRM_CFLUSH);
-		else {
-			pv = pv->pv_next;
-#ifdef DEBUG
-			if (pmapdebug & PDB_PARANOIA)
-				printf("%s wired mapping for %lx not removed\n",
-				       "pmap_page_protect:", pa);
 #endif
 		pmap_remove_mapping(pv->pv_pmap, pv->pv_va,
 		    pte, PRM_TFLUSH|PRM_CFLUSH);

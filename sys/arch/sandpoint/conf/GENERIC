@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.14.4.6 2002/04/01 07:42:15 nathanw Exp $
+# $NetBSD: GENERIC,v 1.14.4.7 2002/04/17 00:04:16 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/sandpoint/conf/std.sandpoint"
 
-#ident 		"GENERIC-$Revision: 1.14.4.6 $"
+#ident 		"GENERIC-$Revision: 1.14.4.7 $"
 
 maxusers	32
 
@@ -41,16 +41,8 @@ options 	KTRACE
 #options 	PMAPDEBUG
 options 	OPENPIC_SERIAL_MODE
 options 	SYMTAB_SPACE=200000
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
-
-options 	SYSVMSG		# System V message queues
-options 	SYSVSEM		# System V semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
-options 	SYSVSHM		# System V shared memory
-#options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	COMPAT_43
 options 	COMPAT_09
@@ -123,9 +115,9 @@ pcib*	at pci? dev ? function ?	# Winbond 83c553 PCI-ISA bridges
 
 isa*	at pcib?			# ISA on PCI-ISA bridge
 
-#pciide* at pci? dev ? function ?	# Winbond/Symphony IDE interface
+pciide* at pci? dev ? function ?	# Winbond/Symphony IDE interface
 
-#vga*	at pci? dev ? function ?
+vga*	at pci? dev ? function ?
 
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
@@ -141,6 +133,12 @@ exphy*	at mii? phy ?			# 3Com internal PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
+pckbc0		at isa?			# PS/2 keyboard controller
+pckbd*		at pckbc?		# PC keyboard
+pms*		at pckbc?		# PS/2 mouse for wsmouse
+wsdisplay*	at vga? console ?
+wskbd* 		at pckbd? console ?
+wsmouse* 	at pms? mux 0
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
@@ -164,3 +162,10 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+wd*	at pciide? channel ? drive ? flags 0x0000
+atapibus* at pciide? channel ?
+cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
+sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
+st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
+uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown

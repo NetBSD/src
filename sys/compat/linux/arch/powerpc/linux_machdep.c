@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.5.4.4 2002/02/28 04:12:53 nathanw Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.5.4.5 2002/04/17 00:05:04 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5.4.4 2002/02/28 04:12:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.5.4.5 2002/04/17 00:05:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	 * Prepare a sigcontext for later.
 	 */
 	memset(&sc, 0, sizeof sc);
-	sc.lsignal = (int)native_to_linux_sig[sig];
+	sc.lsignal = (int)native_to_linux_signo[sig];
 	sc.lhandler = (unsigned long)catcher;
 	native_to_linux_old_extra_sigset(&sc.lmask, &sc._unused[3], mask);
 	sc.lregs = (struct linux_pt_regs*)fp;
@@ -242,7 +242,7 @@ linux_sendsig(catcher, sig, mask, code)  /* XXX Check me */
 	 */
 	tf->fixreg[1] = fp - LINUX__SIGNAL_FRAMESIZE;
 	tf->lr = (int)catcher;
-	tf->fixreg[3] = (int)native_to_linux_sig[sig];
+	tf->fixreg[3] = (int)native_to_linux_signo[sig];
 	tf->fixreg[4] = fp;
 	tf->srr0 = (int)p->p_sigctx.ps_sigcode;
 

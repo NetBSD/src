@@ -1,0 +1,77 @@
+/*	$NetBSD: kern.ldscript,v 1.2.2.2 2002/04/17 00:03:56 nathanw Exp $	*/
+
+OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
+	      "elf32-littlearm")
+OUTPUT_ARCH(arm)
+ENTRY(KERNEL_BASE_phys)
+SECTIONS
+{
+  KERNEL_BASE_phys = 0x0000c000;
+  KERNEL_BASE_virt = 0xf000c000;
+
+  /* Kernel start: */
+  .start (KERNEL_BASE_phys) :
+  {
+    *(.start)
+  } =0
+
+  /* Read-only sections, merged into text segment: */
+  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
+  AT (LOADADDR(.start) + SIZEOF(.start))
+  {
+    *(.text)
+    *(.text.*)
+    *(.stub)
+    *(.glue_7t) *(.glue_7)
+    *(.rodata) *(.rodata.*)
+  } =0
+  PROVIDE (__etext = .);
+  PROVIDE (_etext = .);
+  PROVIDE (etext = .);
+  /* Adjust the address for the data segment to start on the next page
+     boundary.  */
+  . = ALIGN(0x8000);
+  .data    :
+  AT ((LOADADDR(.text) + SIZEOF(.text) + (0x8000 - 1)) & ~(0x8000 - 1))
+  {
+    __data_start = . ;
+    *(.data)
+    *(.data.*)
+  }
+  .sdata     : 
+  AT (LOADADDR(.data) + SIZEOF(.data))
+  {
+    *(.sdata) 
+    *(.sdata.*)
+  }
+  _edata = .;
+  PROVIDE (edata = .);
+  __bss_start = .;
+  __bss_start__ = .;
+  .sbss      :
+  {
+    PROVIDE (__sbss_start = .);
+    PROVIDE (___sbss_start = .);
+    *(.dynsbss)
+    *(.sbss)
+    *(.sbss.*)
+    *(.scommon)
+    PROVIDE (__sbss_end = .);
+    PROVIDE (___sbss_end = .);
+  }
+  .bss       :
+  {
+   *(.dynbss)
+   *(.bss)
+   *(.bss.*)
+   *(COMMON)
+   /* Align here to ensure that the .bss section occupies space up to
+      _end.  Align after .bss to ensure correct alignment even if the
+      .bss section disappears because there are no input sections.  */
+   . = ALIGN(32 / 8);
+  }
+  . = ALIGN(32 / 8);
+  _end = .;
+  _bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
+  PROVIDE (end = .);
+}

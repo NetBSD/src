@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.2.2.3 2002/04/01 07:41:01 nathanw Exp $	*/
+/*	$NetBSD: cache.c,v 1.2.2.4 2002/04/17 00:03:46 nathanw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -933,6 +933,10 @@ mips_config_cache_modern(void)
 		mips_cache_ops.mco_icache_sync_range =
 		    mipsNN_icache_sync_range_16;
 		switch (mips_picache_ways) {
+		case 2:
+			mips_cache_ops.mco_icache_sync_range_index =
+			    mipsNN_icache_sync_range_index_16_2way;
+			break;
 		case 4:
 			mips_cache_ops.mco_icache_sync_range_index =
 			    mipsNN_icache_sync_range_index_16_4way;
@@ -946,6 +950,10 @@ mips_config_cache_modern(void)
 		mips_cache_ops.mco_icache_sync_range =
 		    mipsNN_icache_sync_range_32;
 		switch (mips_picache_ways) {
+		case 2:
+			mips_cache_ops.mco_icache_sync_range_index =
+			    mipsNN_icache_sync_range_index_32_2way;
+			break;
 		case 4:
 			mips_cache_ops.mco_icache_sync_range_index =
 			    mipsNN_icache_sync_range_index_32_4way;
@@ -973,6 +981,10 @@ mips_config_cache_modern(void)
 		mips_cache_ops.mco_pdcache_wbinv_range =
 		    mipsNN_pdcache_wbinv_range_16;
 		switch (mips_pdcache_ways) {
+		case 2:
+			mips_cache_ops.mco_pdcache_wbinv_range_index =
+			    mipsNN_pdcache_wbinv_range_index_16_2way;
+			break;
 		case 4:
 			mips_cache_ops.mco_pdcache_wbinv_range_index =
 			    mipsNN_pdcache_wbinv_range_index_16_4way;
@@ -991,6 +1003,10 @@ mips_config_cache_modern(void)
 		mips_cache_ops.mco_pdcache_wbinv_range =
 		    mipsNN_pdcache_wbinv_range_32;
 		switch (mips_pdcache_ways) {
+		case 2:
+			mips_cache_ops.mco_pdcache_wbinv_range_index =
+			    mipsNN_pdcache_wbinv_range_index_32_2way;
+			break;
 		case 4:
 			mips_cache_ops.mco_pdcache_wbinv_range_index =
 			    mipsNN_pdcache_wbinv_range_index_32_4way;

@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.15 2001/02/19 22:48:57 cgd Exp $ */
+/* $NetBSD: installboot.c,v 1.15.2.1 2002/04/17 00:02:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#include <dev/dec/dec_boot.h>
 
 #include "stand/common/bbinfo.h"
 
@@ -209,7 +211,7 @@ main(argc, argv)
 		err(1, "write bootstrap");
 
 	{
-	struct boot_block bb;
+	struct alpha_boot_block bb;
 	long *lp, *ep;
 
 	if (lseek(devfd, 0, SEEK_SET) != 0)

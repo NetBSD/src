@@ -1,36 +1,46 @@
-/*
- * Copyright (c) 1997-2002 Martin Husemann <martin@duskware.de>
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Martin Husemann <martin@netbsd.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  *
- */
-
-/*
- * Last Edit-Date: [Fri Jan  5 12:31:50 2001]
- *
- * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.1.1.1.4.5 2002/04/01 07:45:22 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.1.1.1.4.6 2002/04/17 00:05:35 nathanw Exp $");
+
+/*
+ * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +79,9 @@ struct cfdriver daic_cd = {
 static char * cardtypename __P((int cardtype));
 static int daic_download __P((void *, int portcount, struct isdn_dr_prot *data));
 static int daic_diagnostic __P((void *, struct isdn_diagnostic_request *req));
-static void daic_connect_request(unsigned int);
-static void daic_connect_response(unsigned int, int, int);
-static void daic_disconnect_request(unsigned int, int);
+static void daic_connect_request(struct call_desc *cd);
+static void daic_connect_response(struct call_desc *cd, int, int);
+static void daic_disconnect_request(struct call_desc *cd, int);
 static int daic_reset __P((bus_space_tag_t bus, bus_space_handle_t io, int port, int *memsize));
 static int daic_handle_intr __P((struct daic_softc *sc, int port));
 static void daic_register_port(struct daic_softc *sc, int port);
@@ -82,8 +92,8 @@ static void daic_bch_config(void *, int channel, int bprot, int updown);
 static void daic_bch_tx_start(void *, int channel);
 static void daic_set_link(void *softc, int channel,
 	const struct isdn_l4_driver_functions *l4_driver, void *l4_inst );
-static void daic_mgmt_command(int bri, int cmd, void *parm);
-static void daic_alert_request(unsigned int);
+static void daic_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm);
+static void daic_alert_request(struct call_desc *cd);
 
 static isdn_link_t *daic_ret_linktab(void *softc, int channel);
 
@@ -679,6 +689,7 @@ daic_register_port(struct daic_softc *sc, int port)
 {
 	int chan;
 	char cardname[80], devname[80];
+	struct isdn_l3_driver * l3drv;
 
 	sc->sc_port[port].du_port = port;
 	sc->sc_port[port].du_sc = sc;
@@ -689,8 +700,9 @@ daic_register_port(struct daic_softc *sc, int port)
 	else
 		strcpy(devname, sc->sc_dev.dv_xname);
 	sprintf(cardname, "EICON.Diehl %s", cardtypename(sc->sc_cardtype));
-	sc->sc_port[port].du_l3 = isdn_attach_bri(
+	l3drv = isdn_attach_bri(
 	    devname, cardname, &sc->sc_port[port], &daic_l3_functions);
+	sc->sc_port[port].du_l3 = l3drv;
 
 	/* initialize linktabs for this port */
 	for (chan = 0; chan < 2; chan++) {
@@ -701,6 +713,8 @@ daic_register_port(struct daic_softc *sc, int port)
 		lt->rx_queue = &sc->sc_con[port*2+chan].rx_queue;
 	}
 	TAILQ_INIT(&sc->sc_outcalls[port]);
+
+	isdn_bri_ready(l3drv->bri);
 }
 
 /*---------------------------------------------------------------------------*
@@ -952,10 +966,9 @@ daic_indicate_ind(struct daic_softc *sc, int port)
  *	Layer 4 request a call setup
  *---------------------------------------------------------------------------*/
 static void
-daic_connect_request(unsigned int cdid)
+daic_connect_request(struct call_desc *cd)
 {
 	u_int8_t id, cpn[TELNO_MAX+4], parms[TELNO_MAX+16], *p;
-	call_desc_t *cd = cd_by_cdid(cdid);
 	struct daic_unit *du = cd->ilt->l1token;
 	struct daic_softc *sc = du->du_sc;
 	int port = du->du_port;
@@ -1006,7 +1019,7 @@ daic_connect_request(unsigned int cdid)
 
 	/* map it to the call descriptor id */
 	assoc = malloc(sizeof(struct outcallentry), 0, M_DEVBUF);
-	assoc->cdid = cdid;
+	assoc->cdid = cd->cdid;
 	assoc->dchan_id = id;
 	x = splnet();
 	TAILQ_INSERT_TAIL(&sc->sc_outcalls[port], assoc, queue);
@@ -1033,14 +1046,14 @@ daic_connect_request(unsigned int cdid)
 /*---------------------------------------------------------------------------*
  *	TODO:
  *---------------------------------------------------------------------------*/
-static void daic_connect_response(unsigned int cdid, int response, int cause)
+static void daic_connect_response(struct call_desc *cd, int response, int cause)
 {
 }
 
 /*---------------------------------------------------------------------------*
  *	TODO:
  *---------------------------------------------------------------------------*/
-static void daic_disconnect_request(unsigned int cdid, int cause)
+static void daic_disconnect_request(struct call_desc *cd, int cause)
 {
 }
 
@@ -1064,7 +1077,7 @@ static void daic_bch_tx_start(void *token, int channel)
  *	TODO:
  *---------------------------------------------------------------------------*/
 static void
-daic_mgmt_command(int whatever, int cmd, void *parm)
+daic_mgmt_command(struct isdn_l3_driver *drv, int cmd, void *parm)
 {
 }
 
@@ -1072,7 +1085,7 @@ daic_mgmt_command(int whatever, int cmd, void *parm)
  *	TODO:
  *---------------------------------------------------------------------------*/
 static void
-daic_alert_request(unsigned int whatever)
+daic_alert_request(struct call_desc *cd)
 {
 }
 

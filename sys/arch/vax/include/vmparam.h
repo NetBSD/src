@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.36.2.2 2002/02/28 04:12:30 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.36.2.3 2002/04/17 00:04:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -97,7 +97,7 @@
  */
 
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	64		/* XXXX should be 1024 */
+#define SHMMAXPGS	1024
 #endif
 
 #define VM_PHYSSEG_MAX		1

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.13.4.2 2002/01/08 00:25:03 nathanw Exp $	*/
+/*	$NetBSD: bus.h,v 1.13.4.3 2002/04/17 00:03:09 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -116,6 +116,12 @@ struct bus_space_ops {
 	/* barrier */
 	void	  (*bs_barrier)(bus_space_tag_t, bus_space_handle_t,
 		      bus_size_t, bus_size_t, int);
+
+	/* probe */
+	int	  (*bs_peek)(bus_space_tag_t, bus_space_handle_t,
+		      bus_size_t, size_t, void *);
+	int	  (*bs_poke)(bus_space_tag_t, bus_space_handle_t,
+		      bus_size_t, size_t, u_int32_t);
 
 	/* read (single) */
 	u_int8_t  (*bs_r_1)(bus_space_tag_t, bus_space_handle_t, bus_size_t);
@@ -328,6 +334,15 @@ struct bus_space_ops {
  */
 #define	bus_space_barrier(t, h, o, l, f)				\
 	(*__bs_ops(t).bs_barrier)(t, (h), (o), (l), (f))
+
+
+/*
+ * Bus probe operations.
+ */
+#define	bus_space_peek(t, h, o, s, p)					\
+	(*__bs_ops(t).bs_peek)(t, (h), (o), (s), (p))
+#define	bus_space_poke(t, h, o, s, v)					\
+	(*__bs_ops(t).bs_poke)(t, (h), (o), (s), (v))
 
 
 /*
@@ -576,6 +591,13 @@ paddr_t	__bs_c(f,_bs_mmap)(bus_space_tag_t t, bus_addr_t addr,		\
 void	__bs_c(f,_bs_barrier)(bus_space_tag_t t, bus_space_handle_t bsh,\
 	    bus_size_t offset, bus_size_t len, int flags)
 
+#define bs_peek_proto(f)						\
+int	__bs_c(f,_bs_peek)(bus_space_tag_t t, bus_space_handle_t bsh,	\
+	    bus_size_t offset, size_t len, void *ptr)
+#define bs_poke_proto(f)						\
+int	__bs_c(f,_bs_poke)(bus_space_tag_t t, bus_space_handle_t bsh,	\
+	    bus_size_t offset, size_t len, u_int32_t val)
+
 #define	bs_r_1_proto(f)							\
 u_int8_t	__bs_c(f,_bs_r_1)(bus_space_tag_t t,			\
 		    bus_space_handle_t bsh, bus_size_t offset)
@@ -812,6 +834,8 @@ bs_free_proto(f);		\
 bs_vaddr_proto(f);		\
 bs_mmap_proto(f);		\
 bs_barrier_proto(f);		\
+bs_peek_proto(f);		\
+bs_poke_proto(f);		\
 bs_r_1_proto(f);		\
 bs_r_2_proto(f);		\
 bs_r_4_proto(f);		\

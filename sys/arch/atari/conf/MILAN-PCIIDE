@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.5.6.3 2002/02/28 04:08:25 nathanw Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.5.6.4 2002/04/17 00:02:40 nathanw Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.8 2001/11/20 11:29:41 lukem Exp $
-#		NetBSD: GENERIC.in,v 1.14 2002/01/27 13:23:13 jdolecek Exp $
+#		NetBSD: GENERIC.in,v 1.17 2002/04/12 22:34:13 leo Exp $
 
 #This configuration file is for a generic Milan
 
@@ -87,7 +87,7 @@ options 	QUOTA		# Disk quotas for local disks
 options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
-				#immutable) behave as system flags.
+				# immutable) behave as system flags.
 
 #Misc. debugging options
 
@@ -128,6 +128,7 @@ options 	SYSVSEM			# System V semaphores
 
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #These options enable verbose messages for several subsystems.
@@ -135,6 +136,7 @@ options 	DIAGNOSTIC		# Add additional error checking code
 
 options 	SCSIVERBOSE		# human readable SCSI error messages
 
+options 	MIIVERBOSE		# verbose PHY autoconfig messages
 options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP		# verbosely dump PCI config space
 
@@ -149,7 +151,8 @@ options 	DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 
 options 	SERCONSOLE		# modem1 console support
 options 	RELOC_KERNEL		# TT/Falcon: relocate kernel to TT-RAM
-options 	STATCLOCK		# Separate {stat,prof}clock
+#options 	MSGBUFSIZE=32768        # size of kernel msg. buffer
+#options 	STATCLOCK	        # Separate {stat,prof}clock
 
 #Try linked commands on all targets
 options 	TRY_SCSI_LINKED_COMMANDS=0x7f
@@ -187,6 +190,23 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 #options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	ipfilter		# IP filtering device
 pseudo-device	rnd			# /dev/random and in-kernel generator
+
+#MII/PHY support
+exphy*	at mii? phy ?			# 3Com internal PHYs
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+iophy*	at mii? phy ?			# Intel 82553 PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
+
+#PCI network interfaces
+#If unsure, check the port-atari page for tested cards.
+ep*	at pci? dev ? function ?	# 3Com 3c59x
+ex*	at pci? dev ? function ?	# 3Com 90x[BC]
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+
+#This is the only tested audio card at the moment.
+
+eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
+audio*	at eso?
 
 #Hardware options for GENERIC are in the various machine type specific files
 
@@ -236,13 +256,13 @@ fdisa0 		at fdcisa0 drive 0
 #a little endian (ISA) bus, in PIO mode this is essentially the same as
 #swapping the bytelanes. The fun starts when you use the PCIIDE DMA mode
 #provided by the PCI_ISA bridge on the Milan. CDROM's are OK, but the data
-# on the disk is swapped :-( Now luckily, both the Milan and HDDRIVER
+#on the disk is swapped :-( Now luckily, both the Milan and HDDRIVER
 #developers have thought up a solution, you can make a byteswapped disk
 #during the partioning with HDDRIVER and TOS supports booting from it!
 #Ok, now you have to choose:
 #- If _none_ of your disks are marked byteswapped by HDDRIVER, choose
 #the MILAN_ISAIDE version.
-#- If _all_ of your disks are byteswapped, use the  1  version
+#- If _all_ of your disks are byteswapped, use the  1 version
 #The is no way to mix things!
 
 pciide* 	at pci? dev ? function ? flags 0x0000	# 2 PCIIDE channels
@@ -251,7 +271,7 @@ atapibus* 	at pciide? channel ?			# ATAPI bus support
 
 #The Milan uses wscons
 #XXX without the __HAVE_NWSCONS option, the keyboard won't work...
-#
+
 options 	__HAVE_NWSCONS
 vga0 		at pci? dev ? function ?	# a PCI VGA card
 wsdisplay* 	at vga? console ?		# as a wscons console

@@ -1,4 +1,4 @@
-#	$NetBSD: PUMA,v 1.32.8.2 2002/02/28 04:10:35 nathanw Exp $
+#	$NetBSD: PUMA,v 1.32.8.3 2002/04/17 00:03:32 nathanw Exp $
 #
 # PUMA
 
@@ -27,6 +27,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

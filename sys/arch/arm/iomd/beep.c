@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.2.4.4 2002/04/01 07:39:11 nathanw Exp $	*/
+/*	$NetBSD: beep.c,v 1.2.4.5 2002/04/17 00:02:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.2.4.4 2002/04/01 07:39:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.2.4.5 2002/04/17 00:02:31 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -79,8 +79,8 @@ struct beep_softc {
 	u_int sc_sound_end0; 
 	u_int sc_sound_cur1; 
 	u_int sc_sound_end1; 
-	vm_offset_t sc_buffer0;
-	vm_offset_t sc_buffer1;
+	vaddr_t sc_buffer0;
+	vaddr_t sc_buffer1;
 };
 
 int	beepprobe	__P((struct device *parent, struct cfdata *cf, void *aux));
@@ -147,10 +147,10 @@ beepattach(parent, self, aux)
 		panic("beep: Cannot allocate page aligned buffer\n");
 	sc->sc_buffer1 = sc->sc_buffer0;
 
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer0 & PG_FRAME,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer0,
 	    (paddr_t *)&sc->sc_sound_cur0);
 	sc->sc_sound_end0 = (sc->sc_sound_cur0 + NBPG - 16) | 0x00000000;
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer1 & PG_FRAME,
+	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer1,
 	    (paddr_t *)&sc->sc_sound_cur1);
 	sc->sc_sound_end1 = (sc->sc_sound_cur1 + NBPG - 16) | 0x00000000;
 

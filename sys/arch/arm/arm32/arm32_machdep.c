@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.6.2.6 2002/04/01 07:39:07 nathanw Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.6.2.7 2002/04/17 00:02:24 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -76,11 +76,10 @@ extern int physmem;
 #ifndef PMAP_STATIC_L1S
 extern int max_processes;
 #endif	/* !PMAP_STATIC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 extern u_int memory_disc_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
-pv_addr_t systempage;
 pv_addr_t kernelstack;
 
 /* the following is used externally (sysctl_hw) */
@@ -106,9 +105,43 @@ char *booted_kernel;
 u_long strtoul			__P((const char *s, char **ptr, int base));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
-void zero_page_readonly		__P((void));
-void zero_page_readwrite	__P((void));
 extern void configure		__P((void));
+
+/*
+ * arm32_vector_init:
+ *
+ *	Initialize the vector page, and select whether or not to
+ *	relocate the vectors.
+ *
+ *	NOTE: We expect the vector page to be mapped at its expected
+ *	destination.
+ */
+void
+arm32_vector_init(vaddr_t va, int which)
+{
+	extern unsigned int page0[], page0_data[];
+	unsigned int *vectors = (int *) va;
+	unsigned int *vectors_data = vectors + (page0_data - page0);
+	int vec;
+
+	/*
+	 * Loop through the vectors we're taking over, and copy the
+	 * vector's insn and data word.
+	 */
+	for (vec = 0; vec < ARM_NVEC; vec++) {
+		if ((which & (1 << vec)) == 0) {
+			/* Don't want to take over this vector. */
+			continue;
+		}
+		vectors[vec] = page0[vec];
+		vectors_data[vec] = page0_data[vec];
+	}
+
+	/* Now sync the vectors. */
+	cpu_icache_sync_range(va, (ARM_NVEC * 2) * sizeof(u_int));
+
+	vector_page = va;
+}
 
 /*
  * Debug function just to park the CPU
@@ -154,7 +187,6 @@ bootsync(void)
  * Machine dependant startup code. 
  *
  */
-
 void
 cpu_startup()
 {
@@ -177,7 +209,7 @@ cpu_startup()
 	cpu_domains(DOMAIN_CLIENT);
 
 	/* Lock down zero page */
-	zero_page_readonly();
+	vector_page_setprot(VM_PROT_READ);
 
 	/*
 	 * Give pmap a chance to set up a few more things now the vm
@@ -305,36 +337,6 @@ cpu_startup()
 }
 
 /*
- * Modify the current mapping for zero page to make it read only
- *
- * This routine is only used until things start forking. Then new
- * system pages are mapped read only in pmap_enter().
- */
-
-void
-zero_page_readonly()
-{
-	WriteWord(PTE_BASE + 0, L2_PTE((systempage.pv_pa & PG_FRAME), AP_KR));
-	cpu_tlb_flushID_SE(0x00000000);
-}
-
-
-/*
- * Modify the current mapping for zero page to make it read/write
- *
- * This routine is only used until things start forking. Then system
- * pages belonging to user processes are never made writable.
- */
-
-void
-zero_page_readwrite()
-{
-	WriteWord(PTE_BASE + 0, L2_PTE((systempage.pv_pa & PG_FRAME), AP_KRW));
-	cpu_tlb_flushID_SE(0x00000000);
-}
-
-
-/*
  * machine dependent system variables.
  */
 
@@ -423,7 +425,7 @@ parse_mi_bootargs(args)
 			max_processes = 255;
 	}
 #endif	/* !PMAP_STATUC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_ROOT_SIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
 		memory_disc_size = integer;
@@ -433,7 +435,7 @@ parse_mi_bootargs(args)
 		if (memory_disc_size > 2048*1024)
 			memory_disc_size = 2048*1024;
 	}
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_ROOT_SIZE */
 
 	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
 	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))
@@ -444,5 +446,3 @@ parse_mi_bootargs(args)
 		if (integer)
 			boothowto |= AB_VERBOSE;
 }
-
-/* End of machdep.c */

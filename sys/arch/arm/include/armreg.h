@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.8.6.4 2002/04/01 07:39:10 nathanw Exp $	*/
+/*	$NetBSD: armreg.h,v 1.8.6.5 2002/04/17 00:02:29 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -206,7 +206,38 @@
 
 /*
  * Post-ARM3 CP15 registers:
+ *
+ *	1	Control register
+ *
+ *	2	Translation Table Base
+ *
+ *	3	Domain Access Control
+ *
+ *	4	Reserved
+ *
+ *	5	Fault Status
+ *
+ *	6	Fault Address
+ *
+ *	7	Cache/write-buffer Control
+ *
+ *	8	TLB Control
+ *
+ *	9	Cache Lockdown
+ *
+ *	10	TLB Lockdown
+ *
+ *	11	Reserved
+ *
+ *	12	Reserved
+ *
+ *	13	Process ID (for FCSE)
+ *
+ *	14	Reserved
+ *
+ *	15	Implementation Dependent
  */
+
 /* Some of the definitions below need cleaning up for V3/V4 architectures */
 
 /* CPU control register (CP15 register 1) */
@@ -228,6 +259,14 @@
 #define CPU_CONTROL_V4COMPAT	0x00008000 /* L4: ARMv4 compat LDR R15 etc */
 
 #define CPU_CONTROL_IDC_ENABLE	CPU_CONTROL_DC_ENABLE
+
+/* XScale Auxillary Control Register (CP15 register 1, opcode2 1) */
+#define	XSCALE_AUXCTL_K		0x00000001 /* dis. write buffer coalescing */
+#define	XSCALE_AUXCTL_P		0x00000002 /* ECC protect page table access */
+#define	XSCALE_AUXCTL_MD_WB_RA	0x00000000 /* mini-D$ wb, read-allocate */
+#define	XSCALE_AUXCTL_MD_WB_RWA	0x00000010 /* mini-D$ wb, read/write-allocate */
+#define	XSCALE_AUXCTL_MD_WT	0x00000020 /* mini-D$ wt, read-allocate */
+#define	XSCALE_AUXCTL_MD_MASK	0x00000030
 
 /* Cache type register definitions */
 #define	CPU_CT_ISIZE(x)		((x) & 0xfff)		/* I$ info */
@@ -267,6 +306,12 @@
 #define FAULT_DOMAIN_P  0x0b /* Domain -- Page */
 #define FAULT_PERM_S    0x0d /* Permission -- Section */
 #define FAULT_PERM_P    0x0f /* Permission -- Page */
+
+/*
+ * Address of the vector page, low and high versions.
+ */
+#define	ARM_VECTORS_LOW		0x00000000
+#define	ARM_VECTORS_HIGH	0xffff0000
 
 /*
  * ARM Instructions

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.53.2.2 2002/01/08 00:28:36 nathanw Exp $
+#	$NetBSD: Makefile.x68k,v 1.53.2.3 2002/04/17 00:04:46 nathanw Exp $
 #
 # Makefile for NetBSD
 #
@@ -21,9 +21,6 @@ MACHINE_ARCH=m68k
 USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
-
-# DEBUG is set to -g if debugging.
-# PROF is set to -pg if profiling.
 
 ##
 ## (1) port identification

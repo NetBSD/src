@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108.4.3 2002/04/01 07:43:32 nathanw Exp $	   */
+/*	$NetBSD: pmap.c,v 1.108.4.4 2002/04/17 00:04:42 nathanw Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -587,10 +587,12 @@ rmspace(struct pmap *pm)
 		}
 	}
 
-	extent_free(ptemap, (u_long)pm->pm_p0br,
-	    pm->pm_p0lr * PPTESZ, EX_WAITOK);
-	extent_free(ptemap, (u_long)pm->pm_p1ap,
-	    (NPTEPERREG - pm->pm_p1lr) * PPTESZ, EX_WAITOK);
+	if (pm->pm_p0lr != 0)
+		extent_free(ptemap, (u_long)pm->pm_p0br,
+		    pm->pm_p0lr * PPTESZ, EX_WAITOK);
+	if (pm->pm_p1lr != NPTEPERREG)
+		extent_free(ptemap, (u_long)pm->pm_p1ap,
+		    (NPTEPERREG - pm->pm_p1lr) * PPTESZ, EX_WAITOK);
 	pm->pm_p0br = pm->pm_p1br = (struct pte *)KERNBASE;
 	pm->pm_p0lr = 0;
 	pm->pm_p1lr = NPTEPERREG;
@@ -886,7 +888,7 @@ pmap_destroy(pmap_t pmap)
   
 	if (count == 0) {
 #ifdef DEBUG
-		if (pmap->pm_share && pmap->pm_share->ps_next)
+		if (pmap->pm_share)
 			panic("pmap_destroy used pmap");
 #endif
 		pmap_release(pmap);
@@ -1105,10 +1107,8 @@ pmap_enter(pmap, v, p, prot, flags)
 			RECURSEEND;
 			if ((oldpte & PG_SREF) == 0)
 				rmpage(pmap, &patch[i]);
-#ifdef DEBUG
 			else
 				panic("pmap_enter on PG_SREF page");
-#endif
 			RECURSESTART;
 		} else if (pmap != pmap_kernel())
 				pmap->pm_pref[idx]++; /* New mapping */
@@ -1617,6 +1617,7 @@ pmap_activate(struct lwp *l)
 		mtpr(pmap->pm_p0lr|AST_PCB, PR_P0LR);
 		mtpr(pmap->pm_p1br, PR_P1BR);
 		mtpr(pmap->pm_p1lr, PR_P1LR);
+		mtpr(0, PR_TBIA);
 	}
 }
 

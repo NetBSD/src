@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_misc.c,v 1.2.2.3 2002/04/12 23:27:58 nathanw Exp $	*/
+/*	$NetBSD: pecoff_misc.c,v 1.2.2.4 2002/04/17 00:05:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.2.2.3 2002/04/12 23:27:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.2.2.4 2002/04/17 00:05:18 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -57,11 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: pecoff_misc.c,v 1.2.2.3 2002/04/12 23:27:58 nathanw 
 #include <sys/lwp.h>
 #include <sys/proc.h>
 
-#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
 #include <compat/common/compat_util.h>
-#include <compat/pecoff/pecoff_syscall.h>
 #include <compat/pecoff/pecoff_syscallargs.h>
 
 int
@@ -216,6 +214,7 @@ pecoff_sys_chflags(l, v, retval)
 }
 
 
+#ifdef PECOFF_INCLUDE_COMPAT
 int
 pecoff_compat_43_sys_stat(l, v, retval)
 	struct lwp *l;
@@ -246,6 +245,8 @@ pecoff_compat_43_sys_lstat(l, v, retval)
 
 	return compat_43_sys_lstat(l, v, retval);
 }
+#endif /* PECOFF_INCLUDE_COMPAT */
+
 
 int
 pecoff_sys_revoke(l, v, retval)
@@ -349,6 +350,7 @@ pecoff_sys_rename(l, v, retval)
 }
 
 
+#ifdef PECOFF_INCLUDE_COMPAT
 int
 pecoff_compat_43_sys_truncate(l, v, retval)
 	struct lwp *l;
@@ -363,6 +365,7 @@ pecoff_compat_43_sys_truncate(l, v, retval)
 
 	return compat_43_sys_truncate(l, v, retval);
 }
+#endif /* PECOFF_INCLUDE_COMPAT */
 
 
 int
@@ -413,7 +416,6 @@ pecoff_sys_statfs(l, v, retval)
 }
 
 
-#if defined(NFS) || defined(NFSSERVER)
 int
 pecoff_sys_getfh(l, v, retval)
 	struct lwp *l;
@@ -428,9 +430,9 @@ pecoff_sys_getfh(l, v, retval)
 
 	return sys_getfh(l, v, retval);
 }
-#endif
 
 
+#ifdef PECOFF_INCLUDE_COMPAT
 int
 pecoff_compat_12_sys_stat(l, v, retval)
 	struct lwp *l;
@@ -461,7 +463,7 @@ pecoff_compat_12_sys_lstat(l, v, retval)
 
 	return compat_12_sys_lstat(l, v, retval);
 }
-
+#endif /* PECOFF_INCLUDE_COMPAT */
 
 int
 pecoff_sys_pathconf(l, v, retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.1.4.4 2002/04/01 07:38:46 nathanw Exp $	*/
+/*	$NetBSD: esc.c,v 1.1.4.5 2002/04/17 00:02:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: esc.c,v 1.1.4.4 2002/04/01 07:38:46 nathanw Exp $");
+__RCSID("$NetBSD: esc.c,v 1.1.4.5 2002/04/17 00:02:06 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -220,7 +220,7 @@ escinitialize(dev)
  * every time we need "bumped" transfer.
  */
 	pte = vtopte((vaddr_t) dev->sc_bump_va);
-	*pte &= ~PT_C;
+	*pte &= ~L2_C;
 	cpu_tlb_flushD();
 	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
 

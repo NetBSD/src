@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16.12.1 2002/02/28 04:11:23 nathanw Exp $
+#	$NetBSD: Makefile,v 1.16.12.2 2002/04/17 00:04:10 nathanw Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 # first stage bootblocks
@@ -10,8 +10,5 @@ SUBDIR+=bootxx_cd9660 bootxx_ffs bootxx_lfs netboot
 
 # second stage bootblocks
 SUBDIR+=boot
-
-# program for installing first stage bootblocks
-SUBDIR+=installboot
 
 .include <bsd.subdir.mk>

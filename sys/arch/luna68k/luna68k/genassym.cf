@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4.8.1 2001/11/18 18:10:20 scw Exp $
+#	$NetBSD: genassym.cf,v 1.4.8.2 2002/04/17 00:03:29 nathanw Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -35,7 +35,9 @@
 #	@(#)genassym.c	8.3 (Berkeley) 1/4/94
 #
 
+ifdef _KERNEL_OPT
 include "opt_compat_svr4.h"
+endif
 
 include <sys/param.h>
 include <sys/buf.h>

@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.2.2.6 2002/04/01 07:48:58 nathanw Exp $ 
+ *	$Id: i4b_l4.c,v 1.2.2.7 2002/04/17 00:06:27 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.2.2.6 2002/04/01 07:48:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.2.2.7 2002/04/17 00:06:27 nathanw Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -73,8 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.2.2.6 2002/04/01 07:48:58 nathanw Exp $
 #include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l4.h>
-
-static void i4b_l4_contr_ev_ind(int controller, int attach);
 
 unsigned int i4b_l4_debug = L4_DEBUG_DEFAULT;
 
@@ -113,9 +111,6 @@ isdn_attach_bri(const char *devname, const char *cardname,
 	new_ctrl->dl_est = DL_DOWN;
 	new_ctrl->bch_state[0] = BCH_ST_FREE;
 	new_ctrl->bch_state[1] = BCH_ST_FREE;
-
-	printf("BRI %d at %s\n", bri, devname);
-	i4b_l4_contr_ev_ind(bri, 1);
 
 	splx(s);
 
@@ -207,7 +202,7 @@ i4b_l4_daemon_attached(void)
 	int x = splnet();
 	SLIST_FOREACH(d, &bri_list, l3drvq)
 	{
-		d->l3driver->N_MGMT_COMMAND(d->bri, CMR_DOPEN, 0);
+		d->l3driver->N_MGMT_COMMAND(d, CMR_DOPEN, 0);
 	}
 	splx(x);
 }
@@ -223,7 +218,7 @@ i4b_l4_daemon_detached(void)
 	int x = splnet();
 	SLIST_FOREACH(d, &bri_list, l3drvq)
 	{
-		d->l3driver->N_MGMT_COMMAND(d->bri, CMR_DCLOSE, 0);
+		d->l3driver->N_MGMT_COMMAND(d, CMR_DCLOSE, 0);
 	}
 	splx(x);
 }
@@ -566,6 +561,9 @@ i4b_l4_connect_ind(call_desc_t *cd)
 			strcpy(mp->src_telno, cd->src_telno);
 		else
 			strcpy(mp->src_telno, TELNO_EMPTY);
+		mp->type_plan = cd->type_plan;
+		memcpy(mp->src_subaddr, cd->src_subaddr, sizeof(mp->src_subaddr));
+		memcpy(mp->dest_subaddr, cd->dest_subaddr, sizeof(mp->dest_subaddr));
 			
 		strcpy(mp->display, cd->display);
 
@@ -635,7 +633,7 @@ i4b_l4_disconnect_ind(call_desc_t *cd)
 		i4b_unlink_bchandrvr(cd);
 	}
 
-	d = isdn_find_l3_by_bri(cd->bri);
+	d = cd->l3drv;
 
 	if((cd->channelid == CHAN_B1) || (cd->channelid == CHAN_B2))
 	{
@@ -787,7 +785,7 @@ i4b_l4_packet_ind(int driver, int driver_unit, int dir, struct mbuf *pkt)
 /*---------------------------------------------------------------------------*
  *    send MSG_CONTR_EV_IND message to userland
  *---------------------------------------------------------------------------*/
-static void
+void
 i4b_l4_contr_ev_ind(int controller, int attach)
 {
 	struct mbuf *m;
@@ -810,7 +808,7 @@ i4b_l4_contr_ev_ind(int controller, int attach)
 static int
 i4b_link_bchandrvr(call_desc_t *cd)
 {
-	struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+	struct isdn_l3_driver *d = cd->l3drv;
 	
 	if (d == NULL || d->l3driver == NULL || d->l3driver->get_linktab == NULL)
 	{
@@ -851,7 +849,7 @@ i4b_link_bchandrvr(call_desc_t *cd)
 static void
 i4b_unlink_bchandrvr(call_desc_t *cd)
 {
-	struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+	struct isdn_l3_driver *d = cd->l3drv;
 
 	/*
 	 * XXX - what's this *cd manipulation for? Shouldn't we
@@ -1059,9 +1057,9 @@ i4b_idle_check(call_desc_t *cd)
 	{
 		if((i4b_get_idletime(cd) + cd->max_idle_time) <= SECOND)
 		{
-			struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+			struct isdn_l3_driver *d = cd->l3drv;
 			NDBGL4(L4_TIMO, "%ld: incoming-call, line idle timeout, disconnecting!", (long)SECOND);
-			d->l3driver->N_DISCONNECT_REQUEST(cd->cdid,
+			d->l3driver->N_DISCONNECT_REQUEST(cd,
 					(CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 		}
@@ -1102,7 +1100,7 @@ i4b_idle_check(call_desc_t *cd)
 static void
 i4b_idle_check_fix_unit(call_desc_t *cd)
 {
-	struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+	struct isdn_l3_driver *d = cd->l3drv;
 
 	/* simple idletime calculation */
 
@@ -1111,7 +1109,7 @@ i4b_idle_check_fix_unit(call_desc_t *cd)
 		if((i4b_get_idletime(cd) + cd->shorthold_data.idle_time) <= SECOND)
 		{
 			NDBGL4(L4_TIMO, "%ld: outgoing-call-st, idle timeout, disconnecting!", (long)SECOND);
-			d->l3driver->N_DISCONNECT_REQUEST(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+			d->l3driver->N_DISCONNECT_REQUEST(cd, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 		}
 		else
@@ -1152,7 +1150,7 @@ i4b_idle_check_fix_unit(call_desc_t *cd)
 			else
 			{	/* no activity, hangup */
 				NDBGL4(L4_TIMO, "%ld: outgoing-call, idle timeout, last activity at %ld", (long)SECOND, (long)i4b_get_idletime(cd));
-				d->l3driver->N_DISCONNECT_REQUEST(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+				d->l3driver->N_DISCONNECT_REQUEST(cd, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 				i4b_l4_idle_timeout_ind(cd);
 				cd->idletime_state = IST_IDLE;
 			}
@@ -1206,9 +1204,9 @@ i4b_idle_check_var_unit(call_desc_t *cd)
 		}
 		else
 		{	/* no activity, hangup */
-			struct isdn_l3_driver *d = isdn_find_l3_by_bri(cd->bri);
+			struct isdn_l3_driver *d = cd->l3drv;
 			NDBGL4(L4_TIMO, "%ld: outgoing-call, var idle timeout - last activity at %ld", (long)SECOND, (long)i4b_get_idletime(cd));
-			d->l3driver->N_DISCONNECT_REQUEST(cd->cdid, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
+			d->l3driver->N_DISCONNECT_REQUEST(cd, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
 			i4b_l4_idle_timeout_ind(cd);
 			cd->idletime_state = IST_IDLE;
 		}

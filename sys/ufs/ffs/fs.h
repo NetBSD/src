@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.13.2.5 2002/02/28 04:15:28 nathanw Exp $	*/
+/*	$NetBSD: fs.h,v 1.13.2.6 2002/04/17 00:06:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -475,10 +475,11 @@ struct ocg {
 #define	blkmap(fs, map, loc) \
     (((map)[(loc) / NBBY] >> ((loc) % NBBY)) & (0xff >> (NBBY - (fs)->fs_frag)))
 #define	cbtocylno(fs, bno) \
-    ((bno) * NSPF(fs) / (fs)->fs_spc)
+    (fsbtodb(fs, bno) / (fs)->fs_spc)
 #define	cbtorpos(fs, bno) \
-    (((bno) * NSPF(fs) % (fs)->fs_spc / (fs)->fs_nsect * (fs)->fs_trackskew + \
-     (bno) * NSPF(fs) % (fs)->fs_spc % (fs)->fs_nsect * (fs)->fs_interleave) % \
+    ((fs)->fs_nrpos <= 1 ? 0 : \
+     (fsbtodb(fs, bno) % (fs)->fs_spc / (fs)->fs_nsect * (fs)->fs_trackskew + \
+      fsbtodb(fs, bno) % (fs)->fs_spc % (fs)->fs_nsect * (fs)->fs_interleave) % \
      (fs)->fs_nsect * (fs)->fs_nrpos / (fs)->fs_npsect)
 
 /*

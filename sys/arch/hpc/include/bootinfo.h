@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1.4.2 2002/02/28 04:09:35 nathanw Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.1.4.3 2002/04/17 00:03:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -95,5 +95,11 @@ extern struct bootinfo *bootinfo;
 
 #define BIFB_D4_M2L_0x2		11
 #define BIFBN_D4_M2L_0x2	"D4_M2L_0x2"
+
+#define BIFB_D1_M2L_0		12
+#define BIFBN_D1_M2L_0		"D1_M2L_0"
+
+#define BIFB_D1_M2L_1		13
+#define BIFBN_D1_M2L_1		"D1_M2L_1"
 
 #endif /* _HPC_BOOTINFO_H_ */

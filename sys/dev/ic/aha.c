@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.29.2.5 2002/01/08 00:29:32 nathanw Exp $	*/
+/*	$NetBSD: aha.c,v 1.29.2.6 2002/04/17 00:05:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.29.2.5 2002/01/08 00:29:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.29.2.6 2002/04/17 00:05:30 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -675,7 +675,7 @@ aha_start_ccbs(sc)
 
 		if ((ccb->xs->xs_control & XS_CTL_POLL) == 0)
 			callout_reset(&ccb->xs->xs_callout,
-			    (ccb->timeout * hz) / 1000, aha_timeout, ccb);
+			    mstohz(ccb->timeout), aha_timeout, ccb);
 
 		++sc->sc_mbofull;
 		aha_nextmbx(wmbo, wmbx, mbo);

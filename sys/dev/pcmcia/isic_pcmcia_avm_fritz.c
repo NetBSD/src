@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: isic_pcmcia_avm_fritz.c,v 1.2.2.2 2002/04/01 07:46:53 nathanw Exp $ 
+ *	$Id: isic_pcmcia_avm_fritz.c,v 1.2.2.3 2002/04/17 00:06:08 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -43,7 +43,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.2.2.2 2002/04/01 07:46:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia_avm_fritz.c,v 1.2.2.3 2002/04/17 00:06:08 nathanw Exp $");
 
 #include "opt_isicpcmcia.h"
 #ifdef ISICPCMCIA_AVM_A1
@@ -412,13 +412,6 @@ isic_attach_fritzpcmcia(struct isa_device *dev)
 
 #else
 
-/*
- * XXX - one time only! Some of this has to go into an enable
- * function, with apropriate counterpart in disable, so a card
- * could be removed an inserted again. But never mind for now,
- * this won't work anyway for several reasons (both in NetBSD
- * and in I4B).
- */
 int
 isic_attach_fritzpcmcia(struct pcmcia_isic_softc *psc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa)
 {

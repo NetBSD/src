@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.16.2.9 2002/02/28 04:13:34 nathanw Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.16.2.10 2002/04/17 00:05:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.9 2002/02/28 04:13:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.16.2.10 2002/04/17 00:05:55 nathanw Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -3103,21 +3103,21 @@ fwohci_if_output(struct device *self, struct mbuf *m0,
  * This routine will attempt to read a region from the requested node.
  * A callback must be provided which will be called when either the completed
  * read is done or an unrecoverable error occurs. This is mainly a convenience
- * routine since it will encapsulate retrying a region as quadlet vs. block reads
- * and recombining all the returned data. This could also be done with a series
- * of write/inreg's for each packet sent.
+ * routine since it will encapsulate retrying a region as quadlet vs. block 
+ * reads and recombining all the returned data. This could also be done with a 
+ * series of write/inreg's for each packet sent.
  *
  * int fwohci_write(struct ieee1394_abuf *)
  *
  * The work horse main entry point for putting packets on the bus. This is the
  * generalized interface for fwnode/etc code to put packets out onto the bus.
- * It accepts all standard ieee1394 tcodes (XXX: only a few today) and optionally
- * will callback via a func pointer to the calling code with the resulting ACK
- * code from the packet. If the ACK code is to be ignored (i.e. no cb) then the
- * write routine will take care of free'ing the abuf since the fwnode/etc code
- * won't have any knowledge of when to do this. This allows for simple one-off
- * packets to be sent from the upper-level code without worrying about a callback
- * for cleanup.
+ * It accepts all standard ieee1394 tcodes (XXX: only a few today) and 
+ * optionally will callback via a func pointer to the calling code with the 
+ * resulting ACK code from the packet. If the ACK code is to be ignored (i.e. 
+ * no cb) then the write routine will take care of free'ing the abuf since the 
+ * fwnode/etc code won't have any knowledge of when to do this. This allows for
+ * simple one-off packets to be sent from the upper-level code without worrying
+ * about a callback for cleanup.
  *
  * int fwohci_inreg(struct ieee1394_abuf *, int)
  *

@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.5.6.4 2002/04/01 07:43:34 nathanw Exp $
+#	$NetBSD: WALNUT,v 1.5.6.5 2002/04/17 00:04:43 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -16,8 +16,7 @@ maxusers	32
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MEMORY_DISK_SIZE=16384	# size of memory disk, in blocks
-#options 	MEMORY_DISK_SIZE=1		# size of memory disk, in blocks
+#options 	MEMORY_DISK_ROOT_SIZE=16384	# size of memory disk, in blocks
 
 
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
@@ -32,6 +31,7 @@ options 	SYSVSHM		# System V shared memory
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -40,7 +40,7 @@ options 	DEBUG		# expensive debugging checks/support
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
-options 	SYMTAB_SPACE=180000	# size for embedded symbol table
+options 	SYMTAB_SPACE=230000	# size for embedded symbol table
 
 makeoptions	DEBUG="-g"	# compile full symbol table
 
@@ -129,11 +129,11 @@ mainbus0 at root
 cpu0	at mainbus0
 
 # UARTs
-com0	at mainbus? addr 0xef600300 irq 5 # UIC IRQ 0
-com1	at mainbus? addr 0xef600400 irq 6 # UIC IRQ 1
+com0	at mainbus? addr 0xef600300 irq 0 # UIC IRQ 0
+com1	at mainbus? addr 0xef600400 irq 1 # UIC IRQ 1
 
 # Ethernet Media Access Controller
-emac0	at mainbus? addr 0xef600800 irq 9 # UIC IRQ 15
+emac0	at mainbus? addr 0xef600800 irq 15 # UIC IRQ 15
 
 # RTC
 dsrtc0	at mainbus? addr 0xf0000000
@@ -230,8 +230,6 @@ pckbd*		at pckbc?
 wskbd*		at pckbd? console ?
 pms*		at pckbc?
 wsmouse*	at pms? mux 0
-pmsi*		at pckbc?
-wsmouse*	at pmsi? mux 0
 
 vga*		at pci? dev ? function ?
 wsdisplay*	at vga? console ?
@@ -254,3 +252,4 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	wsmux			# ick

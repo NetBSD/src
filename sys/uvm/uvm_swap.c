@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.46.2.7 2002/04/01 07:49:24 nathanw Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.46.2.8 2002/04/17 00:06:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.7 2002/04/01 07:49:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.8 2002/04/17 00:06:33 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -105,7 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.46.2.7 2002/04/01 07:49:24 nathanw Ex
  *  [1] SWAP_NSWAP: returns the number of swap devices currently configured
  *  [2] SWAP_STATS: given a pointer to an array of swapent structures
  *	(passed in via "arg") of a size passed in via "misc" ... we load
- *	the current swap config into the array.
+ *	the current swap config into the array. The actual work is done 
+ *	in the uvm_swap_stats(9) function.
  *  [3] SWAP_ON: given a pathname in arg (could be device or file) and a
  *	priority in "misc", start swapping on it.
  *  [4] SWAP_OFF: as SWAP_ON, but stops swapping to a device

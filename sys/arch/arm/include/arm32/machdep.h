@@ -1,15 +1,14 @@
-/* $NetBSD: machdep.h,v 1.2.4.2 2002/01/11 23:38:04 nathanw Exp $ */
+/* $NetBSD: machdep.h,v 1.2.4.3 2002/04/17 00:02:31 nathanw Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
 
 /* misc prototypes used by the many arm machdeps */
 void halt __P((void));
-vsize_t map_chunk __P((vaddr_t,	vaddr_t, vaddr_t, paddr_t, vsize_t, u_int,
-	u_int));
 void parse_mi_bootargs __P((char *));
 void data_abort_handler __P((trapframe_t *));
 void prefetch_abort_handler __P((trapframe_t *));
+void undefinedinstruction_bounce __P((trapframe_t *));
 void dumpsys	__P((void));
 
 /* 

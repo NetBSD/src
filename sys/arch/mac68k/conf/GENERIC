@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113.6.4 2002/04/01 07:40:47 nathanw Exp $
+# $NetBSD: GENERIC,v 1.113.6.5 2002/04/17 00:03:30 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.113.6.4 $"
+#ident 		"GENERIC-$Revision: 1.113.6.5 $"
 
 maxusers	16		# estimated number of users
 
@@ -54,6 +54,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.6.14.1 2001/04/09 01:55:45 nathanw Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.6.14.2 2002/04/17 00:05:15 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -52,6 +52,7 @@ void	osf1_cvt_flock_from_native(const struct flock *nf,
 				   struct osf1_flock *of);
 int	osf1_cvt_flock_to_native(const struct osf1_flock *of,
 				 struct flock *nf);
+struct msghdr;
 int	osf1_cvt_msghdr_xopen_to_native(const struct osf1_msghdr_xopen *omh,
 					struct msghdr *nmh);
 int	osf1_cvt_pathconf_name_to_native(int oname, int *bnamep);
@@ -74,9 +75,9 @@ void	osf1_cvt_stat2_from_native(const struct stat *nst,
 void	osf1_cvt_statfs_from_native(const struct statfs *nsfs,
 				    struct osf1_statfs *osfs);
 
-extern const int osf1_errno_rxlist[];
-extern const int osf1_signal_xlist[];
-extern const int osf1_signal_rxlist[];
+extern const int native_to_osf1_errno[];
+extern const int osf1_to_native_signo[];
+extern const int native_to_osf1_signo[];
 
 extern const struct emul_flags_xtab osf1_access_flags_xtab[];
 extern const struct emul_flags_xtab osf1_fcntl_getsetfd_flags_rxtab[];

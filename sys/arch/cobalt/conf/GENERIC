@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.20.6.4 2002/04/01 07:39:42 nathanw Exp $
+# $NetBSD: GENERIC,v 1.20.6.5 2002/04/17 00:02:53 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.20.6.4 $"
+#ident 		"GENERIC-$Revision: 1.20.6.5 $"
 
 maxusers	32
 
@@ -37,6 +37,7 @@ options 	SYSVSHM		# System V shared memory
 #options 	LKM		# loadable kernel modules
 #options 	NTP		# network time protocol
 #options 	UCONSOLE	# users can redirect console (unsafe)
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Debugging options

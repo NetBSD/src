@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.1.10.4 2002/02/28 04:10:07 nathanw Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.1.10.5 2002/04/17 00:03:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -348,10 +348,12 @@ int
 vrpciu_intr(void *arg)
 {
 	struct vrpciu_softc *sc = (struct vrpciu_softc *)arg;
-	u_int32_t isr;
+	u_int32_t isr, baddr;
 
 	isr = vrpciu_read(sc, VRPCIU_INTCNTSTAREG);
-	printf("%s: vrpciu_intr 0x%08x\n", sc->sc_dev.dv_xname, isr);
+	baddr = vrpciu_read(sc, VRPCIU_BUSERRADREG);
+	printf("%s: status=0x%08x  bad addr=0x%08x\n",
+	    sc->sc_dev.dv_xname, isr, baddr);
 	return ((isr & 0x0f) ? 1 : 0);
 }
 
