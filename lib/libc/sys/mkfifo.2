@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mkfifo.2	6.4 (Berkeley) 7/23/91
-.\"	$Id: mkfifo.2,v 1.4 1993/12/15 17:40:23 jtc Exp $
+.\"	$Id: mkfifo.2,v 1.5 1994/01/31 18:33:21 jtc Exp $
 .\"
 .Dd July 23, 1991
 .Dt MKFIFO 2
@@ -65,7 +65,7 @@ indicates an error, and an error code is stored in
 .Fn Mkfifo
 will fail and no fifo will be created if:
 .Bl -tag -width Er
-.It Bq Er ENOTSUPP
+.It Bq Er EOPNOTSUPP
 The kernel has not been configured to support fifo's.
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
