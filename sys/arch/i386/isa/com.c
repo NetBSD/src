@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.21 1994/03/08 08:12:56 mycroft Exp $
+ *	$Id: com.c,v 1.22 1994/03/12 07:25:16 cgd Exp $
  */
 
 /*
@@ -67,9 +67,15 @@ struct com_softc {
 	struct device sc_dev;
 
 	u_short sc_iobase;
-	u_char sc_flags;
-#define	COM_SOFTCAR	0x01
-#define	COM_FIFO	0x02
+	u_char sc_hwflags;
+#define	COM_HW_MULTI	0x01
+#define	COM_HW_CONFIGBITS	COM_HW_MULTI
+#define	COM_HW_FIFO	0x02
+#define	COM_HW_CONSOLE	0x40
+	u_char sc_swflags;
+#define	COM_SW_SOFTCAR	0x01
+#define	COM_SW_CLOCAL	0x02
+#define	COM_SW_CRTSCTS	0x04
 	u_char sc_msr, sc_mcr;
 } com_softc[NCOM];
 /* XXXX should be in com_softc, but not ready for that yet */
@@ -179,7 +185,8 @@ comattach(isa_dev)
 		delay(1000);
 
 	sc->sc_iobase = iobase;
-	sc->sc_flags = 0;
+	sc->sc_hwflags = 0;
+	sc->sc_swflags = 0;
 
 	printf("%s: ", sc->sc_dev.dv_xname);
 
@@ -189,7 +196,7 @@ comattach(isa_dev)
 	delay(100);
 	if ((inb(iobase + com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK)
 		if ((inb(iobase + com_fifo) & FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
-			sc->sc_flags |= COM_FIFO;
+			sc->sc_hwflags |= COM_HW_FIFO;
 			printf("ns16550a, working fifo\n");
 		} else
 			printf("ns82550 or ns16550, broken fifo\n");
@@ -227,7 +234,8 @@ comattach(isa_dev)
 	 */
 	if (unit == comconsole) {
 		comconsinit = 0;
-		sc->sc_flags |= COM_SOFTCAR;
+		sc->sc_hwflags |= COM_HW_CONSOLE;
+		sc->sc_swflags |= COM_SW_SOFTCAR;
 	}
 }
 
@@ -266,6 +274,10 @@ comopen(dev, flag, mode, p)
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
 		tp->t_cflag = TTYDEF_CFLAG;
+		if (sc->sc_swflags & COM_SW_CLOCAL)
+			tp->t_cflag |= CLOCAL;
+		if (sc->sc_swflags & COM_SW_CRTSCTS)
+			tp->t_cflag |= CRTSCTS;
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = comdefaultrate;
 		comparam(tp, &tp->t_termios);
@@ -273,7 +285,7 @@ comopen(dev, flag, mode, p)
 
 		iobase = sc->sc_iobase;
 		/* flush any pending I/O */
-		if (sc->sc_flags & COM_FIFO)
+		if (sc->sc_hwflags & COM_HW_FIFO)
 			outb(iobase + com_fifo,
 			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 			    FIFO_TRIGGER_8);
@@ -286,7 +298,7 @@ comopen(dev, flag, mode, p)
 		    IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC);
 
 		sc->sc_msr = inb(iobase + com_msr);
-		if (sc->sc_flags & COM_SOFTCAR || sc->sc_msr & MSR_DCD)
+		if (sc->sc_swflags & COM_SW_SOFTCAR || sc->sc_msr & MSR_DCD)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
@@ -333,7 +345,8 @@ comclose(dev, flag, mode, p)
 	{
 		bic(iobase + com_cfcr, CFCR_SBREAK);
 		outb(iobase + com_ier, 0);
-		if (tp->t_cflag & HUPCL && (sc->sc_flags & COM_SOFTCAR) == 0)
+		if (tp->t_cflag & HUPCL &&
+		    (sc->sc_swflags & COM_SW_SOFTCAR) == 0)
 			/* XXX perhaps only clear DTR */
 			outb(iobase + com_mcr, 0);
 	}
@@ -449,6 +462,37 @@ comioctl(dev, cmd, data, flag, p)
 		*(int *)data = bits;
 		break;
 	}
+	case TIOCGFLAGS: {
+		int bits = 0;
+
+		if (sc->sc_swflags & COM_SW_SOFTCAR)
+			bits |= TIOCFLAG_SOFTCAR;
+		if (sc->sc_swflags & COM_SW_CLOCAL)
+			bits |= TIOCFLAG_CLOCAL;
+		if (sc->sc_swflags & COM_SW_CRTSCTS)
+			bits |= TIOCFLAG_CRTSCTS;
+
+		*(int *)data = bits;
+		break;
+	}
+	case TIOCSFLAGS: {
+		int userbits, driverbits = 0;
+
+                error = suser(p->p_ucred, &p->p_acflag); 
+                if (error != 0)
+                        return(EPERM); 
+
+		userbits = *(int *)data;
+		if ((userbits & TIOCFLAG_CLOCAL) ||
+		    (sc->sc_hwflags & COM_HW_CONSOLE))
+			driverbits |= COM_SW_CLOCAL;
+		if (userbits & TIOCFLAG_CLOCAL)
+			driverbits |= COM_SW_CLOCAL;
+		if (userbits & TIOCFLAG_CRTSCTS)
+			driverbits |= COM_SW_CRTSCTS;
+
+		break;
+	}
 	default:
 		return ENOTTY;
 	}
@@ -510,8 +554,8 @@ comparam(tp, t)
 	outb(iobase + com_dlbh, ospeed>>8);
 	outb(iobase + com_cfcr, cfcr);
 
-	/* When not using CRTS_IFLOW, RTS follows DTR. */
-	if ((t->c_cflag & CRTS_IFLOW) == 0) {
+	/* When not using CRTSCTS, RTS follows DTR. */
+	if ((t->c_cflag & CRTSCTS) == 0) {
 		if (sc->sc_mcr & MCR_DTR) {
 			if ((sc->sc_mcr & MCR_RTS) == 0)
 				outb(iobase + com_mcr, sc->sc_mcr |= MCR_RTS);
@@ -521,10 +565,10 @@ comparam(tp, t)
 		}
 	}
 
-	/* If CTS is off and CCTS_OFLOW is changed, we must toggle TS_TTSTOP. */
+	/* If CTS is off and CRTSCTS is changed, we must toggle TS_TTSTOP. */
 	if ((sc->sc_msr & MSR_CTS) == 0 &&
-	    (tp->t_cflag & CCTS_OFLOW) != (t->c_cflag & CCTS_OFLOW)) {
-		if ((t->c_cflag & CCTS_OFLOW) == 0) {
+	    (tp->t_cflag & CRTSCTS) != (t->c_cflag & CRTSCTS)) {
+		if ((t->c_cflag & CRTSCTS) == 0) {
 			tp->t_state &= ~TS_TTSTOP;
 			ttstart(tp);
 		} else
@@ -547,7 +591,7 @@ comstart(tp)
 	if (tp->t_state & (TS_TTSTOP | TS_BUSY))
 		goto out;
 #if 0 /* XXXX I think this is handled adequately by commint() and comparam(). */
-	if (tp->t_cflag & CCTS_OFLOW && (sc->sc_mcr & MSR_CTS) == 0)
+	if (tp->t_cflag & CRTSCTS && (sc->sc_mcr & MSR_CTS) == 0)
 		goto out;
 #endif
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
@@ -562,7 +606,7 @@ comstart(tp)
 	tp->t_state |= TS_BUSY;
 	if ((inb(iobase + com_lsr) & LSR_TXRDY) == 0)
 		goto out;
-	if (sc->sc_flags & COM_FIFO) {
+	if (sc->sc_hwflags & COM_HW_FIFO) {
 		u_char buffer[16], *cp = buffer;
 		int n = q_to_b(&tp->t_outq, cp, sizeof buffer);
 		do {
@@ -632,14 +676,14 @@ commint(sc)
 	delta = msr ^ sc->sc_msr;
 	sc->sc_msr = msr;
 
-	if (delta & MSR_DCD && (sc->sc_flags & COM_SOFTCAR) == 0) {
+	if (delta & MSR_DCD && (sc->sc_swflags & COM_SW_SOFTCAR) == 0) {
 		if (msr & MSR_DCD)
 			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 		else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
 			outb(iobase + com_mcr,
 			    sc->sc_mcr &= ~(MCR_DTR | MCR_RTS));
 	}
-	if (delta & MSR_CTS && tp->t_cflag & CCTS_OFLOW) {
+	if (delta & MSR_CTS && tp->t_cflag & CRTSCTS) {
 		/* the line is up and we want to do rts/cts flow control */
 		if (msr & MSR_CTS) {
 			tp->t_state &= ~TS_TTSTOP;
