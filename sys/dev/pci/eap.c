@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.57 2002/11/14 04:43:23 gson Exp $	*/
+/*	$NetBSD: eap.c,v 1.58 2002/11/24 12:06:12 scw Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.57 2002/11/14 04:43:23 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.58 2002/11/24 12:06:12 scw Exp $");
 
 #include "midi.h"
 
@@ -464,7 +464,8 @@ eap1371_src_read(struct eap_softc *sc, int a)
 	src |= E1371_SRC_ADDR(a);
 	EWRITE4(sc, E1371_SRC, src | E1371_SRC_STATE_OK);
 
-	if ((eap1371_src_wait(sc) & E1371_SRC_STATE_MASK) != E1371_SRC_STATE_OK) {
+	t = eap1371_src_wait(sc);
+	if ((t & E1371_SRC_STATE_MASK) != E1371_SRC_STATE_OK) {
 		for (to = 0; to < EAP_READ_TIMEOUT; to++) {
 			t = EREAD4(sc, E1371_SRC);
 			if ((t & E1371_SRC_STATE_MASK) == E1371_SRC_STATE_OK)
@@ -585,8 +586,8 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	revision = PCI_REVISION(pa->pa_class);
+	ct5880 = 0;
 	if (sc->sc_1371) {
-		ct5880 = 0;
 		if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ENSONIQ &&
 		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_CT5880)
 			ct5880 = 1;
