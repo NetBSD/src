@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.5 1998/08/24 17:59:25 augustss Exp $	*/
+/*	$NetBSD: midi.c,v 1.6 1998/09/13 06:30:25 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,9 +149,6 @@ midi_attach(sc, parent)
 	struct midi_info mi;
 
 	sc->isopen = 0;
-
-	midi_initbuf(&sc->outbuf);
-	midi_initbuf(&sc->inbuf);
 
 	midi_wait = MIDI_WAIT * hz / 1000000;
 	if (midi_wait == 0)
@@ -360,6 +357,8 @@ midiopen(dev, flags, ifmt, p)
 	if (error)
 		return error;
 	sc->isopen++;
+	midi_initbuf(&sc->outbuf);
+	midi_initbuf(&sc->inbuf);
 	sc->flags = flags;
 	sc->rchan = 0;
 	sc->wchan = 0;
@@ -396,8 +395,8 @@ midiclose(dev, flags, ifmt, p)
 		DPRINTFN(2,("midiclose sleep used=%d\n", sc->outbuf.used));
 		error = midi_sleep_timo(&sc->wchan, "mid_dr", 30*hz);
 	}
-	sc->isopen = 0;
 	splx(s);
+	sc->isopen = 0;
 	hw->close(sc->hw_hdl);
 #if NSEQUENCER > 0
 	sc->seqopen = 0;
