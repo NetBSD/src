@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.13 2003/07/15 03:36:04 lukem Exp $	*/
+/*	$NetBSD: consinit.c,v 1.14 2003/10/21 08:20:15 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.13 2003/07/15 03:36:04 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.14 2003/10/21 08:20:15 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -66,7 +66,7 @@ static void prom_cnputc __P((dev_t, int));
 static void prom_cnpollc __P((dev_t, int));
 static void prom_cnputc __P((dev_t, int));
 
-int stdin = NULL, stdout = NULL;
+int stdin = 0, stdout = 0;
 
 /*
  * The console is set to this one initially,
