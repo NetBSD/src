@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.7 2004/04/21 01:05:37 christos Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.8 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -110,7 +110,7 @@ int filecore_mount __P((struct mount *,
 int filecore_start __P((struct mount *, int, struct proc *));
 int filecore_unmount __P((struct mount *, int, struct proc *));
 int filecore_root __P((struct mount *, struct vnode **));
-int filecore_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int filecore_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
 int filecore_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int filecore_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int filecore_vget __P((struct mount *, ino_t, struct vnode **));

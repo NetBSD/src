@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.38 2004/04/26 20:38:22 christos Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.39 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.38 2004/04/26 20:38:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.39 2004/04/27 17:37:30 jrf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -95,7 +95,7 @@ static MALLOC_DEFINE(M_SMBFSHASH, "SMBFS hash", "SMBFS hash table");
 
 int smbfs_mount(struct mount *, const char *, void *,
 		struct nameidata *, struct proc *);
-int smbfs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
+int smbfs_quotactl(struct mount *, int, uid_t, void *, struct proc *);
 int smbfs_root(struct mount *, struct vnode **);
 static int smbfs_setroot(struct mount *);
 int smbfs_start(struct mount *, int, struct proc *);
@@ -350,7 +350,7 @@ smbfs_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 	SMBVDEBUG("return EOPNOTSUPP\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.14 2004/04/21 01:05:41 christos Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.15 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.14 2004/04/21 01:05:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.15 2004/04/27 17:37:31 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -135,7 +135,7 @@ layerfs_quotactl(mp, cmd, uid, arg, p)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 

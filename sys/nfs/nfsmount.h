@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.30 2004/04/21 01:05:43 christos Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.31 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -184,7 +184,7 @@ void	nfs_decode_args __P((struct nfsmount *, struct nfs_args *));
 int	nfs_start __P((struct mount *mp, int flags, struct proc *p));
 int	nfs_unmount __P((struct mount *mp, int mntflags, struct proc *p));
 int	nfs_root __P((struct mount *mp, struct vnode **vpp));
-int	nfs_quotactl __P((struct mount *mp, int cmds, uid_t uid, caddr_t arg,
+int	nfs_quotactl __P((struct mount *mp, int cmds, uid_t uid, void *arg,
 		struct proc *p));
 int	nfs_statvfs __P((struct mount *mp, struct statvfs *sbp, struct proc *p));
 int	nfs_sync __P((struct mount *mp, int waitfor, struct ucred *cred,

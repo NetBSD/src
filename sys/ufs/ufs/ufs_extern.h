@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.38 2003/08/07 16:34:45 agc Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.39 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -155,7 +155,7 @@ void ufs_reinit __P((void));
 void ufs_done __P((void));
 int ufs_start __P((struct mount *, int, struct proc *));
 int ufs_root __P((struct mount *, struct vnode **));
-int ufs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int ufs_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
 int ufs_fhtovp __P((struct mount *, struct ufid *, struct vnode **));
 int ufs_check_export __P((struct mount *, struct mbuf *, int *,
 		struct ucred **));

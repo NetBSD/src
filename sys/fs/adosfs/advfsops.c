@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.13 2004/04/25 16:42:40 simonb Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.14 2004/04/27 17:37:30 jrf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.13 2004/04/25 16:42:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.14 2004/04/27 17:37:30 jrf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,7 +65,7 @@ int adosfs_mount __P((struct mount *, const char *, void *, struct nameidata *,
 int adosfs_start __P((struct mount *, int, struct proc *));
 int adosfs_unmount __P((struct mount *, int, struct proc *));
 int adosfs_root __P((struct mount *, struct vnode **));
-int adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
+int adosfs_quotactl __P((struct mount *, int, uid_t, void *, struct proc *));
 int adosfs_statvfs __P((struct mount *, struct statvfs *, struct proc *));
 int adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
@@ -791,7 +791,7 @@ adosfs_quotactl(mp, cmds, uid, arg, p)
 	struct mount *mp;
 	int cmds;
 	uid_t uid;
-	caddr_t arg;
+	void *arg;
 	struct proc *p;
 {
 	return(EOPNOTSUPP);

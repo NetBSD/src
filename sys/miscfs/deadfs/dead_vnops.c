@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.34 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.35 2004/04/27 17:37:31 jrf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.34 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.35 2004/04/27 17:37:31 jrf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,7 +234,7 @@ dead_ioctl(v)
 	struct vop_ioctl_args /* {
 		struct vnode *a_vp;
 		u_long a_command;
-		caddr_t  a_data;
+		void *a_data;
 		int  a_fflag;
 		struct ucred *a_cred;
 		struct proc *a_p;
