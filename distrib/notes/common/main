@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.59 2002/04/03 21:27:38 he Exp $
+.\"	$NetBSD: main,v 1.61.2.60 2002/04/11 21:57:24 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1635,7 +1635,6 @@ them, and would like to mentioned, tell us!)
 .br_ne 1i
 .It-span Em "The NetBSD core group:"
 .It Ta Ta
-.It Ta Alistair Crooks Ta Mt agc@netbsd.org
 .It Ta Jun-ichiro itojun Hagino Ta Mt itojun@netbsd.org
 .It Ta Frank van der Linden Ta Mt fvdl@netbsd.org
 .It Ta Luke Mewburn Ta Mt lukem@netbsd.org
@@ -1722,6 +1721,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Bill Coldwell Ta Mt billc@netbsd.org
 .It Ta Julian Coleman Ta Mt jdc@netbsd.org
 .It Ta Chuck Cranor Ta Mt chuck@netbsd.org
+.It Ta Alistair Crooks Ta Mt agc@netbsd.org
 .It Ta Aidan Cully Ta Mt aidan@netbsd.org
 .It Ta Johan Danielsson Ta Mt joda@netbsd.org
 .It Ta Matt DeBergalis Ta Mt deberg@netbsd.org
