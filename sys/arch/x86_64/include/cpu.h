@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2002/06/03 18:23:16 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2002/12/03 22:03:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,19 +61,24 @@
 #include <sys/sched.h>
 struct cpu_info {
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	u_int ci_cpuid;
+	u_int ci_flags;
+	struct cpu_info *ci_next;
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
 	u_int64_t ci_scratch;
 };
 
-#ifdef _KERNEL
-extern struct cpu_info cpu_info_store;
+#define CPUF_RUNNING	0x2000		/* XXX temporary */
 
-#define	curcpu()			(&cpu_info_store)
+extern struct cpu_info cpu_info_primary;
+extern struct cpu_info *cpu_info_list;
 
-#endif
+#define CPU_INFO_ITERATOR		int
+#define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
+					ci != NULL; ci = ci->ci_next
+#define	curcpu()			(&cpu_info_primary)
+#define X86_64_MAXPROCS		1	/* Until MP support is done */
 
 /*
  * definitions of cpu-dependent requirements
