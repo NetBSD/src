@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.2.2.4 2001/03/27 13:16:24 bouyer Exp $	*/
+/*	$NetBSD: mesh.c,v 1.2.2.5 2001/03/29 10:17:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -155,7 +155,7 @@ void mesh_free_scb __P((struct mesh_softc *, struct mesh_scb *));
 void mesh_scsi_request __P((struct scsipi_channel *,
 				scsipi_adapter_req_t, void *));
 void mesh_sched __P((struct mesh_softc *));
-void mesh_poll __P((struct mesh_softc *, struct scsipi_xfer *));
+int mesh_poll __P((struct mesh_softc *, struct scsipi_xfer *));
 void mesh_done __P((struct mesh_softc *, struct mesh_scb *));
 void mesh_timeout __P((void *));
 void mesh_minphys __P((struct buf *));
