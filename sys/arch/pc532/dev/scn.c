@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.25 1996/02/02 18:06:57 mycroft Exp $ */
+/*	$NetBSD: scn.c,v 1.26 1996/03/17 01:39:04 thorpej Exp $ */
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -89,9 +89,13 @@ void	scnstart __P((struct tty *));
 int	scnopen __P((dev_t, int, int, struct proc *));
 int	scnclose __P((dev_t, int, int, struct proc *));
 
-struct cfdriver scncd =
-      {	NULL, "scn", scnprobe, scnattach,
-	DV_TTY, sizeof(struct scn_softc), NULL, 0 };
+struct cfattach scn_ca = {
+	sizeof(struct scn_softc), scnprobe, scnattach
+};
+
+struct cfdriver scn_cd = {
+	NULL, "scn", DV_TTY, NULL, 0
+};
 
 /* int	scnsoftCAR;
 int	scn_active;  To Be Deleted ... */
@@ -199,9 +203,9 @@ int data_bits;			/* 5, 6, 7, or 8 */
     return (EINVAL);
 
   /* Set up rs pointer. */
-  if (unit >= scncd.cd_ndevs)
+  if (unit >= scn_cd.cd_ndevs)
   	return  ENXIO;
-  rs = &((struct scn_softc *)scncd.cd_devs[unit])->scn_line;
+  rs = &((struct scn_softc *)scn_cd.cd_devs[unit])->scn_line;
   a_or_b = rs->a_or_b;
 
   /* Check out the Speeds. There are two groups of speeds.  If the new
@@ -447,9 +451,9 @@ scnopen(dev_t dev, int flag, int mode, struct proc *p)
 	int x;
 
 	/* Set up rs pointer. */
-	if (unit >= scncd.cd_ndevs)
+	if (unit >= scn_cd.cd_ndevs)
 		return ENXIO;
-	sc = scncd.cd_devs[unit];
+	sc = scn_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 	rs = &sc->scn_line;
@@ -517,7 +521,7 @@ scnclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	register int unit = UNIT(dev);
-	struct   scn_softc *sc = scncd.cd_devs[unit];
+	struct   scn_softc *sc = scn_cd.cd_devs[unit];
 	register struct tty *tp = sc->scn_tty;
 	register struct rs232_s *rs = &sc->scn_line;
 
@@ -548,7 +552,7 @@ scnread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct scn_softc *sc = scncd.cd_devs[UNIT(dev)];
+	register struct scn_softc *sc = scn_cd.cd_devs[UNIT(dev)];
 	register struct tty *tp = sc->scn_tty;
 
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
@@ -558,7 +562,7 @@ scnwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	register struct scn_softc *sc = scncd.cd_devs[UNIT(dev)];
+	register struct scn_softc *sc = scn_cd.cd_devs[UNIT(dev)];
 	register struct tty *tp = sc->scn_tty;
 
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
@@ -568,7 +572,7 @@ struct tty *
 scntty(dev)
 	dev_t dev;
 {
-	register struct scn_softc *sc = scncd.cd_devs[UNIT(dev)];
+	register struct scn_softc *sc = scn_cd.cd_devs[UNIT(dev)];
 	register struct tty *tp = sc->scn_tty;
 
 	return (tp);
@@ -584,8 +588,8 @@ scnintr(int uart_no)
   int line0 = uart_no << 1;
   int line1 = (uart_no << 1)+1;
 
-  register struct scn_softc *sc0 = scncd.cd_devs[line0];
-  register struct scn_softc *sc1 = scncd.cd_devs[line1];
+  register struct scn_softc *sc0 = scn_cd.cd_devs[line0];
+  register struct scn_softc *sc1 = scn_cd.cd_devs[line1];
 
   register struct tty *tp0 = sc0->scn_tty;
   register struct tty *tp1 = sc1->scn_tty;
@@ -632,8 +636,8 @@ _scnintr(int uart_no)
 scnintr(int line1)
 #endif
 {
-  register struct scn_softc *sc0 = scncd.cd_devs[line1 - 1];
-  register struct scn_softc *sc1 = scncd.cd_devs[line1];
+  register struct scn_softc *sc0 = scn_cd.cd_devs[line1 - 1];
+  register struct scn_softc *sc1 = scn_cd.cd_devs[line1];
 
   register struct tty *tp0 = sc0->scn_tty;
   register struct tty *tp1 = sc1->scn_tty;
@@ -762,7 +766,7 @@ scnioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	register int unit = UNIT(dev);
-	register struct scn_softc *sc = scncd.cd_devs[unit];
+	register struct scn_softc *sc = scn_cd.cd_devs[unit];
 	register struct tty *tp = sc->scn_tty;
 	register struct rs232_s *rs = &sc->scn_line;
 	register scn;
@@ -864,7 +868,7 @@ scnparam(tp, t)
 {
   int cflag = t->c_cflag;
   int unit = UNIT(tp->t_dev);
-  register struct scn_softc *sc = scncd.cd_devs[unit];
+  register struct scn_softc *sc = scn_cd.cd_devs[unit];
   int parity = LC_NONE,
       stop_bits = LC_STOP1,
       data_bits = LC_BITS8;
@@ -922,7 +926,7 @@ scnstart(tp)
 {
 	int s, c;
 	int unit = UNIT(tp->t_dev);
-	register struct scn_softc *sc = scncd.cd_devs[unit];
+	register struct scn_softc *sc = scn_cd.cd_devs[unit];
 	struct rs232_s *rs = &sc->scn_line;
  
 	s = spltty();

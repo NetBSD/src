@@ -73,9 +73,12 @@ struct scsi_device ncr_dev = {
 	NULL			/* Use default done routine		*/
 };
 
-struct cfdriver ncrcd = {
-	NULL, "ncr", ncr_match, ncr_attach,
-	DV_DULL, sizeof(struct ncr5380_softc), NULL, 0,
+struct cfattach ncr_ca = {
+	sizeof(struct ncr5380_softc), ncr_match, ncr_attach
+};
+
+struct cfdriver ncr_cd = {
+	NULL, "ncr", DV_DULL, NULL, 0,
 };
 
 static int

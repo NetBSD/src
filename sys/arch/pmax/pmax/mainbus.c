@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 1996/02/02 18:07:56 mycroft Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 1996/03/17 01:47:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -48,9 +48,15 @@ struct mainbus_softc {
 static int	mbmatch __P((struct device *, void *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, char *));
-struct cfdriver mainbuscd =
-    { NULL, "mainbus", mbmatch, mbattach, DV_DULL,
-	sizeof (struct mainbus_softc) };
+
+struct cfattach mainbus_ca = {
+	sizeof (struct mainbus_softc), mbmatch, mbattach
+};
+
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL
+};
+
 void	mb_intr_establish __P((struct confargs *ca,
 			       int (*handler)(intr_arg_t),
 			       intr_arg_t val ));
@@ -293,7 +299,7 @@ generic_intr_establish(ca, handler, arg)
 	if (dev->dv_parent->dv_cfdata->cf_driver == &tccd) {
 		tc_intr_establish(dev->dv_parent, ca->ca_slotpri, 0, handler, arg);
 	} else
-	if (dev->dv_parent->dv_cfdata->cf_driver == &mainbuscd) {
+	if (dev->dv_parent->dv_cfdata->cf_driver == &mainbus_cd) {
 		kn01_intr_establish(ca, handler, arg);
 	}
 	else {
