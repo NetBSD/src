@@ -248,7 +248,7 @@ CLEANFILES+= ${LOCALESRCS:S/$/.out/g}
 .SUFFIXES: .src .out
 
 .src.out:
-	awk ${.CURDIR}/compile_time ${.IMPSRC} > ${.TARGET}
+	awk -f ${.CURDIR}/compile_time ${.IMPSRC} > ${.TARGET}
 
 all: ${LOCALESRCS:S/$/.out/g}
 realall: ${LOCALESRCS:S/$/.out/g}
