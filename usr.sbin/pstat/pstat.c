@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.44 1999/01/31 10:12:33 mrg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.45 1999/07/04 22:09:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.44 1999/01/31 10:12:33 mrg Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.45 1999/07/04 22:09:30 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ struct {
 	{ MNT_DELEXPORT, "delexport" },
 	{ MNT_RELOAD, "reload" },
 	{ MNT_FORCE, "force" },
-	{ MNT_MWAIT, "wait" },
+	{ MNT_GONE, "gone" },
 	{ MNT_UNMOUNT, "unmount" },
 	{ MNT_WANTRDWR, "wantrdwr" },
 	{ 0 }
