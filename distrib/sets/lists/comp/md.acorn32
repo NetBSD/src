@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn32,v 1.16 2004/02/09 23:24:29 reinoud Exp $
+# $NetBSD: md.acorn32,v 1.17 2004/03/13 19:46:46 bjh21 Exp $
 #./usr/include/acorn32/devmap.h		comp-c-include
 ./usr/include/acorn32				comp-c-include
 ./usr/include/acorn32/ansi.h			comp-c-include
@@ -33,7 +33,7 @@
 ./usr/include/acorn32/lock.h			comp-c-include
 ./usr/include/acorn32/math.h			comp-c-include
 ./usr/include/acorn32/mcontext.h		comp-c-include
-./usr/include/acorn32/mouse.h			comp-c-include
+./usr/include/acorn32/mouse.h			comp-obsolete		obsolete
 ./usr/include/acorn32/param.h			comp-c-include
 ./usr/include/acorn32/pcb.h			comp-c-include
 ./usr/include/acorn32/pmap.h			comp-c-include
