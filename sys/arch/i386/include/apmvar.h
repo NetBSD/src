@@ -1,4 +1,4 @@
-/*	$NetBSD: apmvar.h,v 1.5 1996/11/22 00:19:09 jtk Exp $	*/
+/*	$NetBSD: apmvar.h,v 1.5.10.1 1997/10/15 21:02:09 thorpej Exp $	*/
 /*
  *  Copyright (c) 1995 John T. Kohl
  *  All rights reserved.
@@ -184,15 +184,6 @@
 #ifndef _LOCORE
 
 /* filled in by apmcall */ 
-struct apmregs {
-    u_short ax;
-    u_short bx;
-    u_short cx;
-    u_short dx;
-    u_short si;
-    u_short di;
-    u_short flags;
-};
 
 struct apm_connect_info {
 	u_int apm_code32_seg_base;	/* real-mode style segment selector */
@@ -240,8 +231,8 @@ struct apm_attach_args {
 #ifdef _KERNEL
 extern struct apm_connect_info apminfo;	/* in locore */
 extern int apmpresent;
-extern int apmcall __P((int function, struct apmregs *regs));
-extern void bioscall __P((int function, struct apmregs *regs));
+extern int apmcall __P((int function, struct bioscallregs *regs));
+extern void bioscall __P((int function, struct bioscallregs *regs));
 extern void apm_cpu_busy __P((void));
 extern void apm_cpu_idle __P((void));
 extern void apminit __P((void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.241.2.7 1997/10/15 05:27:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.241.2.8 1997/10/15 20:59:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -154,12 +154,12 @@
 #include "apm.h"
 #include "bioscall.h"
 
-#if NAPM > 0
-#include <machine/apmvar.h>
-#endif
-
 #if NBIOSCALL > 0
 #include <machine/bioscall.h>
+#endif
+
+#if NAPM > 0
+#include <machine/apmvar.h>
 #endif
 
 #include "isa.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18.2.2 1997/09/01 20:10:03 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.18.2.3 1997/10/15 20:59:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,6 +49,7 @@
 #include "apm.h"
 
 #if NAPM > 0
+#include <machine/bioscall.h>
 #include <machine/apmvar.h>
 #endif
 
