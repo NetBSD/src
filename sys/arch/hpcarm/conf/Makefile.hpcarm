@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.7 2001/10/26 06:45:36 jmc Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.8 2001/11/15 19:35:31 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -12,7 +12,7 @@
 #	/sys/arch/hpcarm/conf/Makefile.hpcarm
 # after which config should be rerun for all machines of that type.
 
-MACHINE_ARCH=arm32
+MACHINE_ARCH=arm
 USETOOLS?=	no
 
 .include <bsd.own.mk>
