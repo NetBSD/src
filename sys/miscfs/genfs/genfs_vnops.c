@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.58 2002/05/09 07:14:37 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.59 2002/05/09 07:22:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.58 2002/05/09 07:14:37 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.59 2002/05/09 07:22:09 enami Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1197,6 +1197,8 @@ genfs_putpages(void *v)
 		for (i = 0; i < npages; i++) {
 			tpg = pgs[i];
 			KASSERT(tpg->uobject == uobj);
+			if (by_list && tpg == TAILQ_NEXT(pg, listq))
+				pg = tpg;
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
 			if (flags & PGO_DEACTIVATE &&
@@ -1213,6 +1215,13 @@ genfs_putpages(void *v)
 						uvm_pagedequeue(tpg);
 					}
 				} else {
+
+					/*
+					 * ``page is not busy''
+					 * implies that npages is 1
+					 * and needs_clean is false.
+					 */
+
 					nextpg = TAILQ_NEXT(tpg, listq);
 					uvm_pagefree(tpg);
 				}
