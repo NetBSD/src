@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.8 1993/09/10 01:07:39 jtc Exp $
+ *	$Id: unistd.h,v 1.9 1993/09/21 21:53:31 jtc Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -58,6 +58,7 @@ u_int	 alarm __P((u_int));
 int	 chdir __P((const char *));
 int	 chown __P((const char *, uid_t, gid_t));
 int	 close __P((int));
+size_t	 confstr __P((int, char *, size_t));
 char	*cuserid __P((char *));
 int	 dup __P((int));
 int	 dup2 __P((int, int));
