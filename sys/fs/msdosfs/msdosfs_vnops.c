@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.8 2004/01/25 18:06:48 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.9 2004/01/26 10:39:30 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.8 2004/01/25 18:06:48 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.9 2004/01/26 10:39:30 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1736,14 +1736,15 @@ msdosfs_strategy(v)
 	void *v;
 {
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	struct denode *dep = VTODE(bp->b_vp);
-	struct vnode *vp;
 	int error = 0;
 
-	if (bp->b_vp->v_type == VBLK || bp->b_vp->v_type == VCHR)
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
 		panic("msdosfs_strategy: spec");
 	/*
 	 * If we don't already know the filesystem relative block number

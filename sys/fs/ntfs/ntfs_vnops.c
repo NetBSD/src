@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.15 2003/10/06 16:47:10 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.16 2004/01/26 10:39:30 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.15 2003/10/06 16:47:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.16 2004/01/26 10:39:30 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,11 +321,12 @@ ntfs_print(ap)
 int
 ntfs_strategy(ap)
 	struct vop_strategy_args /* {
+		struct vnode *a_vp;
 		struct buf *a_bp;
 	} */ *ap;
 {
 	struct buf *bp = ap->a_bp;
-	struct vnode *vp = bp->b_vp;
+	struct vnode *vp = ap->a_vp;
 	struct fnode *fp = VTOF(vp);
 	struct ntnode *ip = FTONT(fp);
 	struct ntfsmount *ntmp = ip->i_mp;
