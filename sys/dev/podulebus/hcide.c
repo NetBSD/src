@@ -1,4 +1,4 @@
-/*	$NetBSD: hcide.c,v 1.5 2002/10/02 16:52:23 thorpej Exp $	*/
+/*	$NetBSD: hcide.c,v 1.6 2003/09/19 21:36:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.5 2002/10/02 16:52:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcide.c,v 1.6 2003/09/19 21:36:08 mycroft Exp $");
 
 #include <sys/param.h>
 
@@ -54,8 +54,8 @@ struct hcide_softc {
 	struct channel_queue sc_chq[HCIDE_NCHANNELS];
 };
 
-static void hcide_attach (struct device *, struct device *, void *);
 static int  hcide_match  (struct device *, struct cfdata *, void *);
+static void hcide_attach (struct device *, struct device *, void *);
 
 CFATTACH_DECL(hcide, sizeof(struct hcide_softc),
     hcide_match, hcide_attach, NULL, NULL);
@@ -101,6 +101,7 @@ hcide_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_map(pa->pa_fast_t,
 		    pa->pa_fast_base + hcide_ctloffsets[i], 0, 8,
 		    &sc->sc_chan[i].ctl_ioh);
-		wdcattach(&sc->sc_chan[i]);
 	}
+
+	config_interrupts(self, wdcattach);
 }
