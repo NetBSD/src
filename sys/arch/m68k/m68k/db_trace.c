@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.19 1997/02/04 18:15:18 gwr Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.20 1997/02/05 05:10:25 scottr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -473,7 +473,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char		*modif;
 {
-	int i, val, nargs;
+	int i, nargs;
+	long val;
 	db_addr_t	regp;
 	char *		name;
 	struct stackpos pos;
@@ -539,7 +540,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		db_printf("%s", name);
 		if (pos.k_entry != MAXINT && name) {
 			char *	entry_name;
-			int	e_val;
+			long	e_val;
 
 			db_find_sym_and_offset(pos.k_entry, &entry_name,
 			    &e_val);
@@ -552,7 +553,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		regp = pos.k_fp + FR_SAVFP + 4;
 		if ((nargs = pos.k_nargs)) {
 			while (nargs--) {
-				db_printf("%x", get(regp += 4, DSP));
+				db_printf("%lx", get(regp += 4, DSP));
 				if (nargs)
 					db_printf(",");
 			}
@@ -560,7 +561,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		if (val == MAXINT)
 			db_printf(") at %x\n", pos.k_pc);
 		else
-			db_printf(") + %x\n", val);
+			db_printf(") + %lx\n", val);
 
 		/*
 		 * Stop tracing if frame ptr no longer points into kernel
