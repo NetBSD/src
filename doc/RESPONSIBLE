@@ -1,4 +1,4 @@
-#	$NetBSD: RESPONSIBLE,v 1.8 2003/03/31 00:00:46 perry Exp $
+#	$NetBSD: RESPONSIBLE,v 1.9 2003/03/31 14:48:06 bouyer Exp $
 
 List of sections of the system, and who is responsible for them (or at
 least considered an expert on them).
@@ -80,6 +80,7 @@ irda		augustss, kenh
 isdn		martin
 firewire	jmc
 mca		jdolecek
+scsi		bouyer
 raid(hard)	ad
 raidframe	oster
 usb		augustss
