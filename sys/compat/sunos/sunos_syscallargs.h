@@ -97,6 +97,12 @@ struct sunos_sys_setpgrp_args {
 	syscallarg(int) pgid;
 };
 
+struct sunos_sys_fcntl_args {
+	syscallarg(int) fd;
+	syscallarg(int) cmd;
+	syscallarg(void *) arg;
+};
+
 struct sunos_sys_setsockopt_args {
 	syscallarg(int) s;
 	syscallarg(int) level;
@@ -268,7 +274,7 @@ int	compat_43_sys_gethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_sethostname	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_getdtablesize	__P((struct proc *, void *, register_t *));
 int	sys_dup2	__P((struct proc *, void *, register_t *));
-int	sys_fcntl	__P((struct proc *, void *, register_t *));
+int	sunos_sys_fcntl	__P((struct proc *, void *, register_t *));
 int	sys_select	__P((struct proc *, void *, register_t *));
 int	sys_fsync	__P((struct proc *, void *, register_t *));
 int	sys_setpriority	__P((struct proc *, void *, register_t *));
