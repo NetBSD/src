@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.23 1996/05/06 03:25:40 briggs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.24 1996/05/14 03:57:32 briggs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -111,6 +111,9 @@ struct msgbuf	*msgbufp;
  * This is called with the MMU either on or off.  If it's on, we assume
  * that it's mapped with the same PA <=> LA mapping that we eventually
  * want.  The page sizes and the protections will be wrong, anyway.
+ *
+ * nextpa is the first address following the loaded kernel.  On a IIsi
+ * on 12 May 1996, that was 0xf9000 beyond firstpa.
  */
 void
 pmap_bootstrap(nextpa, firstpa)
