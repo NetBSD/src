@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.2 1998/05/01 21:18:40 cgd Exp $	*/
+/*	$NetBSD: profile.c,v 1.3 1999/01/01 12:40:39 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -223,7 +223,7 @@ profread(dev, uio, flags)
 	    }
 	    /* now initialise the backup copy before switching over.
 	     */   
-	    bzero(phashTables[backup]->entries, 
+	    memset(phashTables[backup]->entries, 0,
 		  profTable->hdr.tableSize * sizeof(struct profHashEntry));
 
 	    
@@ -360,9 +360,9 @@ profStart(struct profStartInfo *info)
     phashTables[1]->entries = (struct profHashEntry *) 
 	( buffer + sizeof(struct profHashTable));
 
-    bzero(phashTables[0]->entries, 
+    memset(phashTables[0]->entries, 0,
 	  info->tableSize * sizeof(struct profHashEntry));
-    bzero(phashTables[1]->entries, 
+    memset(phashTables[1]->entries, 0,
 	  info->tableSize * sizeof(struct profHashEntry));
 
     /* now initialise the header */
@@ -645,7 +645,7 @@ profEnter(struct profHashTable *table, unsigned int lr)
 		    /* copy the first sample into the new
 		     * field.
 		     */
-		    bcopy(first, sample, sizeof(struct profHashEntry));
+		    memcpy(sample, first, sizeof(struct profHashEntry));
 		    /* now update the new entry in the first position.
 		     */
 		    first->pc = lr;
@@ -668,13 +668,13 @@ profEnter(struct profHashTable *table, unsigned int lr)
     if (sample != first)
     {
 	/* copy the sample out of the table. */
-	bcopy(sample, &tmpEntry, sizeof(struct profHashEntry));
+	memcpy(&tmpEntry, sample, sizeof(struct profHashEntry));
 	/* remove the sample from the chain. */
 	tmpIndex = prev->next;
 	prev->next = sample->next;
 	/* now insert it at the beginning. */
-	bcopy(first, sample, sizeof(struct profHashEntry));
-	bcopy(&tmpEntry, first, sizeof(struct profHashEntry));
+	memcpy(sample, first, sizeof(struct profHashEntry));
+	memcpy(first, &tmpEntry, sizeof(struct profHashEntry));
 	/* now make the new first entry point to the old
 	 * first entry.
 	 */
