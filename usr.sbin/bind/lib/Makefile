@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/09/19 16:39:52 martin Exp $
+#	$NetBSD: Makefile,v 1.24 2003/10/22 05:56:36 itojun Exp $
 
 NOPIC=		# defined
 NOPROFILE=	# defined
@@ -10,10 +10,6 @@ LIB=bind
 
 CPPFLAGS+=	${INCLUDE} -I${BIND_DIST_DIR}/lib/dst \
 		-DHMAC_MD5 -DUSE_MD5
-.if 0 # ${MKCRYPTO} == "yes"
-CPPFLAGS+=	-I${BIND_CRYPTO_DIST_DIR}/lib/dnssafe -DDNSSAFE \
-		-I${BIND_CRYPTO_DIST_DIR}/lib/cylink -DCYLINK_DSS
-.endif
 
 .include "${.CURDIR}/../Makefile.inc"
 .PATH:	${BIND_DIST_DIR}/lib/resolv \
@@ -22,9 +18,7 @@ CPPFLAGS+=	-I${BIND_CRYPTO_DIST_DIR}/lib/dnssafe -DDNSSAFE \
 	${BIND_DIST_DIR}/lib/nameser \
 	${BIND_DIST_DIR}/lib/dst \
 	${BIND_DIST_DIR}/lib/irs \
-	${BIND_DIST_DIR}/lib/bsd \
-	${BIND_CRYPTO_DIST_DIR}/lib/cylink \
-	${BIND_CRYPTO_DIST_DIR}/lib/dnssafe
+	${BIND_DIST_DIR}/lib/bsd
 
 # ${BIND_DIST_DIR}/lib/resolv
 SRCS+=	herror.c res_debug.c res_data.c res_comp.c res_init.c \
@@ -63,31 +57,6 @@ SRCS+=	dns.c dns_gr.c dns_ho.c dns_nw.c dns_pr.c dns_pw.c \
 	nis_sv.c nul_ng.c util.c
 # ${BIND_DIST_DIR}/lib/bsd
 SRCS+=	gettimeofday.c
-.if 0 # ${MKCRYPTO} == "yes"
-# ${BIND_DIST_DIR}/lib/cylink
-SRCS+=	bn.c bn00.c lbn00.c lbnmem.c legal.c \
-	bits.c dss.c math.c ctk_prime.c rand.c sha.c swap.c 
-# ${BIND_DIST_DIR}/lib/dnssafe
-SRCS+=	bgclrbit.c bgmdmpyx.c bgmdsqx.c bgmodexp.c\
-	bgpegcd.c big2exp.c bigabs.c bigacc.c bigarith.c\
-	bigcmp.c bigconst.c biginv.c biglen.c bigmodx.c\
-	bigmpy.c bigpdiv.c bigpmpy.c bigpmpyh.c bigpmpyl.c\
-	bigpsq.c bigqrx.c bigsmod.c bigtocan.c bigu.c\
-	bigunexp.c cantobig.c crt2.c \
-	digrand.c intbits.c md5.c md5rand.c prime.c\
-	rsa.c rsakeygn.c seccbcd.c seccbce.c surrendr.c\
-	ahchdig.c ahchencr.c ahchgen.c ahchrand.c ahdigest.c\
-	ahencryp.c ahgen.c ahrandom.c ahrsaenc.c ahrsaepr.c\
-	ahrsaepu.c aichdig.c aichenc8.c aichencn.c aichencr.c\
-	aichgen.c aichrand.c aimd5.c\
-	aimd5ran.c ainfotyp.c ainull.c airsaepr.c airsaepu.c\
-	airsakgn.c airsaprv.c airsapub.c algchoic.c algobj.c\
-	amcrte.c ammd5.c ammd5r.c\
-	amrkg.c amrsae.c balg.c binfocsh.c bkey.c bmempool.c\
-	digest.c encrypt.c generate.c intitem.c\
-	keyobj.c ki8byte.c kiitem.c kinfotyp.c\
-	kifulprv.c kipkcrpr.c kirsacrt.c kirsapub.c random.c
-.endif
 
 # only needed during build
 libinstall::
