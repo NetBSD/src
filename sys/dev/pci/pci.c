@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.11 1996/03/02 02:03:55 cgd Exp $	*/
+/*	$NetBSD: pci.c,v 1.12 1996/03/04 03:29:20 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -69,9 +69,6 @@ pcimatch(parent, match, aux)
 		return (0);
 
 	/* Check the locators */
-#ifdef i386 /* XXX should not be attached at root, but is on i386 */
-	if (parent != NULL)
-#endif /* i386 XXX */
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != pba->pba_bus)
 		return (0);
 
@@ -97,10 +94,9 @@ pciattach(parent, self, aux)
 	struct pcibus_attach_args *pba = aux;
 	int maxndevs, device, function, nfunctions;
 
-#ifdef i386 /* XXX should not be attached at root, but is on i386 */
-	if (parent == NULL)
-		printf(": bus %d, configuration mode %d", pba->pba_bus,
-		    pci_mode);
+#ifdef i386 /* XXX */
+	if (pba->pba_bus == 0)
+		printf(": configuration mode %d", pci_mode);
 #endif /* XXX */
 	printf("\n");
 
