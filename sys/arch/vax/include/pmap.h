@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.22 1998/01/03 00:28:43 thorpej Exp $     */
+/*      $NetBSD: pmap.h,v 1.23 1998/01/03 01:13:12 thorpej Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -121,9 +121,5 @@ extern	struct pmap kernel_pmap_store;
 void	pmap_bootstrap __P((void));
 
 void	pmap_pinit __P((pmap_t));
-
-struct proc;
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 
 #endif PMAP_H

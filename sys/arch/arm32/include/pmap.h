@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 1998/01/02 22:36:35 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 1998/01/03 01:13:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -132,9 +132,6 @@ extern struct pmap	kernel_pmap_store;
 
 boolean_t pmap_testbit __P((vm_offset_t, int));
 void pmap_changebit __P((vm_offset_t, int, int));
-
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 
 static __inline vm_offset_t
 pmap_phys_address(int ppn)

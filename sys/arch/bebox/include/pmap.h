@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4 1998/01/02 22:17:19 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.5 1998/01/03 01:13:03 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -71,10 +71,6 @@ extern struct pmap kernel_pmap_;
 #define	pmap_phys_address(x)		(x)
 
 void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
-
-struct proc;
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 
 #define	vtophys(va)	((int)(pmap_extract(pmap_kernel(), (vm_offset_t)va)))
 

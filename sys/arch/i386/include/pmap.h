@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29 1997/12/07 21:30:11 fvdl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30 1998/01/03 01:13:05 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -202,10 +202,6 @@ pmap_phys_address(int ppn)
 {
 	return i386_ptob(ppn);
 }
-
-struct proc;
-void pmap_activate __P((struct proc *));
-void pmap_deactivate __P((struct proc *));
 
 #endif	/* _KERNEL */
 

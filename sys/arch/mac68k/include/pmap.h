@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 1998/01/01 20:05:26 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 1998/01/03 01:13:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -199,10 +199,6 @@ void	pmap_enter_ptpage    __P((pmap_t, vm_offset_t));
 void	pmap_pvdump          __P((vm_offset_t));
 void	pmap_check_wiring    __P((char *, vm_offset_t));
 void	pmap_collect_pv __P((void));
-
-struct proc;
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 
 /* pmap_bootstrap.c */
 void	pmap_bootstrap __P((vm_offset_t, register vm_offset_t));

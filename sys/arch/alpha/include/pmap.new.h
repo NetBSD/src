@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.new.h,v 1.7 1997/10/14 15:29:50 mjacob Exp $ */
+/* $NetBSD: pmap.new.h,v 1.8 1998/01/03 01:12:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Carnegie Mellon University
@@ -153,9 +153,6 @@ boolean_t	cpu_update_needed[NCPUS];
  *	External declarations for PMAP_ACTIVATE.
  */
 
-struct proc;
-void		pmap_activate __P((struct proc *));
-void		pmap_deactivate __P((struct proc *));
 void		process_pmap_updates();
 void		pmap_update_interrupt();
 int		pmap_tlbpid_assign __P((pmap_t));

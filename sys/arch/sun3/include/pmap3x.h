@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.5 1998/01/02 20:10:32 thorpej Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.6 1998/01/03 01:13:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,10 +55,6 @@ typedef struct pmap 	*pmap_t;
 #ifdef _KERNEL
 extern	struct pmap 	kernel_pmap;
 #define	pmap_kernel()	(&kernel_pmap)
-
-struct proc;
-void	pmap_activate __P((struct proc *));
-void	pmap_deactivate __P((struct proc *));
 
 #define _pmap_fault(map, va, ftype) \
 	vm_fault(map, va, ftype, 0)
