@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.40 2004/03/14 21:09:30 heas Exp $	*/
+/*	$NetBSD: sort.c,v 1.41 2004/07/23 13:26:11 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.40 2004/03/14 21:09:30 heas Exp $");
+__RCSID("$NetBSD: sort.c,v 1.41 2004/07/23 13:26:11 wiz Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -359,7 +359,10 @@ usage(msg)
 {
 	if (msg != NULL)
 		(void)fprintf(stderr, "sort: %s\n", msg);
-	(void)fprintf(stderr, "usage: [-o output] [-cmubdfinrsS] [-t char] ");
-	(void)fprintf(stderr, "[-R char] [-k keydef] ... [files]\n");
+	(void)fprintf(stderr,
+	    "usage: %s [-bcdfHimnrSsu] [-k field1[,field2]] [-o output]"
+	    " [-R char] [-T dir]", getprogname());
+	(void)fprintf(stderr,
+	    "             [-t char] [file ...]\n");
 	exit(2);
 }
