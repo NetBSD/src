@@ -1,4 +1,4 @@
-/*	$NetBSD: print-vjc.c,v 1.1.1.1 2001/06/25 19:26:40 itojun Exp $	*/
+/*	$NetBSD: print-vjc.c,v 1.2 2001/06/25 20:00:01 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,14 @@
 #include "config.h"
 #endif
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-vjc.c,v 1.9 2000/10/09 01:53:21 guy Exp (LBL)";
+#else
+__RCSID("$NetBSD: print-vjc.c,v 1.2 2001/06/25 20:00:01 itojun Exp $");
+#endif
 #endif
 
 #include <sys/param.h>

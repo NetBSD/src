@@ -1,4 +1,4 @@
-/*	$NetBSD: parsenfsfh.c,v 1.1.1.1 2001/06/25 19:26:33 itojun Exp $	*/
+/*	$NetBSD: parsenfsfh.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -42,9 +42,14 @@
  * Western Research Laboratory
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/parsenfsfh.c,v 1.22 2001/06/24 21:41:29 itojun Exp (LBL)";
+#else
+__RCSID("$NetBSD: parsenfsfh.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+#endif
 #endif
 
 #ifdef HAVE_CONFIG_H
