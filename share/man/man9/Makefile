@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.154 2004/01/28 17:44:25 jdolecek Exp $
+#       $NetBSD: Makefile,v 1.155 2004/02/14 00:00:56 hannken Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -633,7 +633,9 @@ MLINKS+=vnsubr.9 vn_bwrite.9 \
 	vnsubr.9 vn_open.9 \
 	vnsubr.9 vn_writechk.9 \
 	vnsubr.9 vn_start_write.9 \
-	vnsubr.9 vn_finished_write.9
+	vnsubr.9 vn_finished_write.9 \
+	vnsubr.9 vn_cow_establish.9 \
+	vnsubr.9 vn_cow_disestablish.9
 MLINKS+=wsdisplay.9 wsdisplay_switchtoconsole.9 \
 	wsdisplay.9 wsdisplay_cnattach.9 \
 	wsdisplay.9 wsdisplaydevprint.9 \
