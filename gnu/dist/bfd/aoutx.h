@@ -247,6 +247,11 @@ HOWTO(10,	       0,  2,   32, false, 0, complain_overflow_bitfield,0,"BASE32",	f
 { -1 },
 { -1 },
   HOWTO(40,	       0,  2,	 0, false, 0, complain_overflow_bitfield,0,"BASEREL",   false,         0,0x00000000, false),
+
+  /* XXX These should probably live somewhere in the middle of the table,
+     but keep them last for now. */
+  HOWTO(16,              0,  2,  32, true, 0, complain_overflow_bitfield, 0,"PLT32", false, 0xffffffff, 0xffffffff, false),
+  HOWTO(0,	       0,  2,	 0, true, 0, complain_overflow_bitfield,0,"GOTPC",  false,         0,0x00000000, false),
 };
 
 #define TABLE_SIZE(TABLE)	(sizeof(TABLE)/sizeof(TABLE[0]))
@@ -298,6 +303,10 @@ NAME(aout,reloc_type_lookup) (abfd,code)
 	STD (BFD_RELOC_32_PCREL, 6);
 	STD (BFD_RELOC_16_BASEREL, 9);
 	STD (BFD_RELOC_32_BASEREL, 10);
+	STD (BFD_RELOC_386_GOT32, 10);
+	STD (BFD_RELOC_386_PLT32, 41);
+	STD (BFD_RELOC_386_GOTPC, 42);
+	STD (BFD_RELOC_386_GOTOFF, 10);
       default: return (reloc_howto_type *) NULL;
       }
 }
@@ -1329,6 +1338,13 @@ translate_from_native_sym_flags (abfd, cache_ptr)
 {
   flagword visible;
 
+  /* Does the target want to override? */
+  if (aout_backend_info (abfd)->translate_from_native_sym_flags != NULL)
+    {
+      return (*aout_backend_info (abfd)->translate_from_native_sym_flags)
+             (abfd, cache_ptr);
+    }
+
   if ((cache_ptr->type & N_STAB) != 0
       || cache_ptr->type == N_FN)
     {
@@ -1585,6 +1601,13 @@ translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
   asection *sec;
   bfd_vma off;
 
+  /* Does the target want to override? */
+  if (aout_backend_info (abfd)->translate_to_native_sym_flags != NULL)
+    {
+      return (*aout_backend_info (abfd)->translate_to_native_sym_flags)
+             (abfd, cache_ptr, sym_pointer);
+    }
+  
   /* Mask out any existing type bits in case copying from one section
      to another.  */
   sym_pointer->e_type[0] &= ~N_TYPE;
@@ -2019,8 +2042,24 @@ NAME(aout,swap_std_reloc_out) (abfd, g, natptr)
   else
     {
       /* Just an ordinary section */
-      r_extern = 0;
-      r_index  = output_section->target_index;
+      if (((abfd->flags & BFD_PIC) != 0)
+	  && r_baserel)
+	{
+	  r_extern = (sym->flags & BSF_GLOBAL) != 0;
+	  r_index = (*(g->sym_ptr_ptr))->KEEPIT;
+	}
+      else if (((abfd->flags & BFD_PIC) != 0)
+	       && (g->howto->type == 2)
+	       && ((sym->flags & BSF_GLOBAL) != 0))
+	{
+	  r_extern = 1;
+	  r_index = (*(g->sym_ptr_ptr))->KEEPIT;
+	}
+      else
+	{
+	  r_extern = 0;
+	  r_index  = output_section->target_index;
+	}
     }
 
   /* now the fun stuff */
