@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.6 1998/05/22 09:26:33 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.7 1998/06/04 19:42:14 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -296,18 +296,8 @@ ka43_conf(parent, self, aux)
 	struct	device *parent, *self;
 	void	*aux;
 {
-	extern char cpu_model[];
-	extern int vax_siedata;
 
-	if (vax_siedata & 0x02)		/* "single-user" flag */
-		strcpy(cpu_model,"VAXstation 3100 model 76");
-	else if (vax_siedata & 0x01)	/* "multiuser" flag */
-		strcpy(cpu_model,"MicroVAX 3100 model 76(?)");
-	else
-		strcpy(cpu_model, "unknown KA43 board");
-
-	printf(": %s\n", cpu_model);
-
+	printf(": KA43\n");
 	/*
 	 * ka43_conf() gets called with MMU enabled, now it's save to
 	 * init/reset the caches.
@@ -393,8 +383,8 @@ ka43_steal_pages()
 	 * by the RIGEL chip itself!?!
 	 */
 	val = ka43_cpu->parctl & 0x03;	/* read the old value */
-	if (((int)le_iomem & ~KERNBASE))/* if RAM above 16 MB */
-		val |= KA43_PCTL_DMA;	/* set LANCE DMA flag */
+	if (((int)le_iomem & ~KERNBASE) > 0xffffff)
+		val |= KA43_PCTL_DMA;
 	ka43_cpu->parctl = val;		/* and write new value */
 
 	/*
