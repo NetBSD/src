@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.13 1997/09/10 02:18:19 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.14 1997/09/13 05:18:30 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -128,8 +128,10 @@ isp_reset(isp)
 		switch (i) {
 		default:
 			printf("%s: unknown ISP type %x\n", isp->isp_name, i);
+			isp->isp_type = ISP_HA_SCSI_1020;
 			break;
 		case 1:
+		case 2:
 			revname = "1020";
 			isp->isp_type = ISP_HA_SCSI_1020;
 			break;
