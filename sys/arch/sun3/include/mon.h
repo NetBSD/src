@@ -10,8 +10,8 @@
  * efforts not to heavily edit their file, just ifdef parts out. -- glass
  */
 
-#ifndef _SUN3_MON_H
-#define _SUN3_MON_H
+#ifndef _MACHINE_MON_H
+#define _MACHINE_MON_H
 /*
  * machMon.h --
  *
@@ -329,8 +329,29 @@ extern  void    Mach_MonTrap _ARGS_((Address address_to_trap_to));
 #define mon_reboot (romVectorPtr->exitToMon)
 #define romp (romVectorPtr)
 
-#define MONSTART  0x0FE00000
-#define MONEND    0x0FF00000
+/*
+ * MONSTART and MONEND denote the range of the damn monitor.
+ * 
+ * supposedly you can steal pmegs within this range that do not contain
+ * valid pages. 
+ */
+#define MONSTART     0x0FE00000
+#define MONEND       0x0FF00000
+
+/*
+ * These describe the monitor's short segment which it basically uses to map
+ * one stupid page that it uses for storage.  MONSHORTPAGE is the page,
+ * and MONSHORTSEG is the segment that it is in.  If this sounds dumb to
+ * you, it is.  I can change the pmeg, but not the virtual address.
+ * Sun defines these with the high nibble set to 0xF.  I believe this was
+ * for the monitor source which accesses this piece of memory with addressing
+ * limitations or some such crud.  I haven't replicated this here, because
+ * it is confusing, and serves no obvious purpose if you aren't the monitor.
+ *
+ */
+
+#define MONSHORTPAGE 0x0FFFE000	
+#define MONSHORTSEG  0x0FFE0000     
 
 #endif /* _MACHMON */
-#endif /* SUN3_MON_H */     
+#endif /* MACHINE_MON_H */     

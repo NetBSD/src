@@ -58,4 +58,7 @@ typedef struct pmeg_state *pmeg_t;
 #define PMAP_NC        0x4
 #define PMAP_SPECMASK  0x7
 
+extern vm_offset_t virtual_avail, virtual_end;
+extern vm_offset_t avail_start, avail_end;
+
 #endif	_PMAP_MACHINE_
