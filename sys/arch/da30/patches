@@ -112,3 +112,34 @@
   			on = uio->uio_offset % bsize;
   			n = min((unsigned)(bsize - on), uio->uio_resid);
   			if (n == bsize)
+*** nfs_boot.c	Wed Jun 29 20:31:52 1994
+--- /usr/src/sys/keep/nfs_boot.c	Fri Jul  8 21:57:14 1994
+***************
+*** 49,54 ****
+--- 49,57 ----
+  #include <nfs/nfs.h>
+  #include <nfs/nfsdiskless.h>
+  
++ #include "ether.h"
++ #if NETHER > 0
++ 
+  /*
+   * Support for NFS diskless booting, specifically getting information
+   * about where to boot from, what pathnames, etc.
+***************
+*** 602,604 ****
+--- 605,618 ----
+  	m_freem(m);
+  	return error;
+  }
++ 
++ #else /* NETHER */
++ 
++ int nfs_boot_init(nd, procp)
++ 	struct nfs_diskless *nd;
++ 	struct proc *procp;
++ {
++ 	panic("nfs_boot_init: no ether");
++ }
++ 
++ #endif /* NETHER */
