@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.35.2.1 2004/06/30 21:19:43 jdc Exp $
+# $NetBSD: GENERIC,v 1.35.2.2 2004/07/02 17:40:45 he Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/pc532/conf/std.pc532"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.35.2.1 $"
+#ident 		"GENERIC-$Revision: 1.35.2.2 $"
 
 maxusers	8			# estimated number of users
 
@@ -41,6 +41,7 @@ options 	SYSTRACE		# system call vetting via systrace(1)
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024
+options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM			# loadable kernel modules
 options 	PFIL_HOOKS		# pfil(9) packet filter hooks
 options 	USERCONF		# userconf(4) support
