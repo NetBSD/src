@@ -87,7 +87,7 @@ fetch_core_registers (core_reg_sect, core_reg_size, which, reg_addr)
      char *core_reg_sect;
      unsigned core_reg_size;
      int which;
-     unsigned reg_addr;
+     CORE_ADDR reg_addr;
 {
   struct md_coredump *core_reg;
   struct trapframe *tf;
@@ -226,21 +226,15 @@ fetch_kcore_registers (pcbp)
 
 static struct core_fns alphanbsd_core_fns =
 {
-  bfd_target_ecoff_flavour,
-  fetch_core_registers,
-  NULL
-};
-
-static struct core_fns alphanbsd_elf_core_fns =
-{
-  bfd_target_elf_flavour,
-  fetch_core_registers,
-  NULL
+  bfd_target_unknown_flavour,		/* core_flavour */
+  default_check_format,			/* check_format */
+  default_core_sniffer,			/* core_sniffer */
+  fetch_core_registers,			/* core_read_registers */
+  NULL					/* next */
 };
 
 void
 _initialize_core_alphanbsd ()
 {
   add_core_fns (&alphanbsd_core_fns);
-  add_core_fns (&alphanbsd_elf_core_fns);
 }
