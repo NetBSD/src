@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.20 2000/10/29 14:08:04 lukem Exp $
+.\"	$NetBSD: install,v 1.21 2001/07/24 16:31:39 nra Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -572,7 +572,7 @@ to the tar files
 that contain the operating system in order to extract them to your
 disk. This is done via an NFS or FTP transfer over a network,
 via a CD-ROM archive, a tape archive, or by preloading an accessible hard
-drive with the necesary tar files.
+drive with the necessary tar files.
 .
 .
 .(bullet
