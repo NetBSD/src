@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.33 2001/11/07 04:15:41 enami Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.34 2001/11/07 04:21:26 enami Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -185,6 +185,7 @@ nullfs_mount(mp, path, data, ndp, p)
 	 */
 	if (error) {
 		vput(lowerrootvp);
+		hashdone(nmp->nullm_node_hashtbl, M_CACHE);
 		free(nmp, M_UFSMNT);	/* XXX */
 		return (error);
 	}
@@ -221,7 +222,8 @@ nullfs_unmount(mp, mntflags, p)
 	int mntflags;
 	struct proc *p;
 {
-	struct vnode *null_rootvp = MOUNTTONULLMOUNT(mp)->nullm_rootvp;
+	struct null_mount *nmp = MOUNTTONULLMOUNT(mp);
+	struct vnode *null_rootvp = nmp->nullm_rootvp;
 	int error;
 	int flags = 0;
 
@@ -263,6 +265,7 @@ nullfs_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the null_mount structure
 	 */
+	hashdone(nmp->nullm_node_hashtbl, M_CACHE);
 	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = NULL;
 	return (0);
