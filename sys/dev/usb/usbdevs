@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.182 2001/09/28 23:41:09 augustss Exp $
+$NetBSD: usbdevs,v 1.183 2001/10/05 00:24:25 thorpej Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -972,6 +972,7 @@ product UMAX ASTRA1220U		0x0010	Astra 1220U Scanner
 product UMAX ASTRA2000U		0x0030	Astra 2000U Scanner
 product UMAX ASTRA2100U		0x0130	Astra 2100U Scanner
 product UMAX ASTRA2200U		0x0230	Astra 2200U Scanner
+product UMAX ASTRA3400		0x0060	Astra 3400 Scanner
 
 /* Universal Access products */
 product UNIACCESS PANACHE	0x0101	Panache Surf USB ISDN Adapter
