@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpgareg.h,v 1.1 2002/07/05 13:31:39 scw Exp $	*/
+/*	$NetBSD: sysfpgareg.h,v 1.2 2002/10/05 10:59:10 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,5 +103,7 @@
 #define	SYSFPGA_DATE_DATE(r)		(((r) >> 8) & 0xff)
 #define	SYSFPGA_DATE_MONTH(r)		(((r) >> 16) & 0xff)
 #define	SYSFPGA_DATE_YEAR(r)		(((r) >> 24) & 0xff)
+
+#define	SYSFPGA_SOFT_RESET_ASSERT	0xDEAD
 
 #endif /* _SH5_SYSFPGAREG_H */
