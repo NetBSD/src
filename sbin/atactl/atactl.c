@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.31 2004/09/10 03:43:52 atatat Exp $	*/
+/*	$NetBSD: atactl.c,v 1.32 2004/09/10 04:11:09 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.31 2004/09/10 03:43:52 atatat Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.32 2004/09/10 04:11:09 atatat Exp $");
 #endif
 
 
@@ -197,17 +197,17 @@ static const struct {
 	const char	*name;
 	void (*special)(struct ata_smart_attr *, uint64_t);
 } smart_attrs[] = {
-	{ 1,		"Raw read error rate" },
-	{ 2,		"Throughput performance" },
-	{ 3,		"Spin-up time" },
-	{ 4,		"Start/stop count" },
-	{ 5,		"Reallocated sector count" },
-	{ 7,		"Seek error rate" },
-	{ 8,		"Seek time performance" },
-	{ 9,		"Power-on hours count" },
-	{ 10,		"Spin retry count" },
-	{ 11,		"Calibration retry count" },
-	{ 12,		"Device power cycle count" },
+	{   1,		"Raw read error rate" },
+	{   2,		"Throughput performance" },
+	{   3,		"Spin-up time" },
+	{   4,		"Start/stop count" },
+	{   5,		"Reallocated sector count" },
+	{   7,		"Seek error rate" },
+	{   8,		"Seek time performance" },
+	{   9,		"Power-on hours count" },
+	{  10,		"Spin retry count" },
+	{  11,		"Calibration retry count" },
+	{  12,		"Device power cycle count" },
 	{ 191,		"Gsense error rate" },
 	{ 192,		"Power-off retract count" },
 	{ 193,		"Load cycle count" },
@@ -217,7 +217,30 @@ static const struct {
 	{ 197,		"Current pending sector" },
 	{ 198,		"Offline uncorrectable" },
 	{ 199,		"Ultra DMA CRC error count" },
-	{ 0,		"Unknown" },
+	{ 200,		"Write error rate" },
+	{ 201,		"Soft read error rate" },
+	{ 202,		"Data address mark errors" },
+	{ 203,		"Run out cancel" },
+	{ 204,		"Soft ECC correction" },
+	{ 205,		"Thermal asperity check" },
+	{ 206,		"Flying height" },
+	{ 207,		"Spin high current" },
+	{ 208,		"Spin buzz" },
+	{ 209,		"Offline seek performance" },
+	{ 220,		"Disk shift" },
+	{ 221,		"G-Sense error rate" },
+	{ 222,		"Loaded hours" },
+	{ 223,		"Load/unload retry count" },
+	{ 224,		"Load friction" },
+	{ 225,		"Load/unload cycle count" },
+	{ 226,		"Load-in time" },
+	{ 227,		"Torque amplification count" },
+	{ 228,		"Power-off retract count" },
+	{ 230,		"GMR head amplitude" },
+	{ 231,		"Temperature",			device_smart_temp },
+	{ 240,		"Head flying hours" },
+	{ 250,		"Read error retry rate" },
+	{   0,		"Unknown" },
 };
 
 int
