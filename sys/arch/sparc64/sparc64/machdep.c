@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2000/12/04 20:12:10 fvdl Exp $ */
+/*	$NetBSD: machdep.c,v 1.94 2000/12/06 01:47:50 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -595,7 +595,8 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK))
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
-		   fp, &(((struct rwindow *)newsp)->rw_in[6]), (vaddr_t)tf->tf_out[6]);
+		   fp, &(((struct rwindow *)newsp)->rw_in[6]),
+		   (void *)(unsigned long)tf->tf_out[6]);
 #endif
 	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 #ifdef NOT_DEBUG
@@ -642,7 +643,7 @@ sendsig(catcher, sig, mask, code)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid) {
 		printf("sendsig: about to return to catcher %p thru %p\n", 
-		       catcher, addr);
+		       catcher, (void *)(unsigned long)addr);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
@@ -720,7 +721,9 @@ printf("sigreturn14: pid %d nsaved %d\n",
 	if (((sc.sc_pc | sc.sc_npc) & 3) != 0 || (sc.sc_pc == 0) || (sc.sc_npc == 0))
 #ifdef DEBUG
 	{
-		printf("sigreturn14: pc %p or npc %p invalid\n", sc.sc_pc, sc.sc_npc);
+		printf("sigreturn14: pc %p or npc %p invalid\n",
+		   (void *)(unsigned long)sc.sc_pc,
+		   (void *)(unsigned long)sc.sc_npc);
 #ifdef DDB
 		Debugger();
 #endif
@@ -739,7 +742,9 @@ printf("sigreturn14: pid %d nsaved %d\n",
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
 		printf("sigreturn14: return trapframe pc=%p sp=%p tstate=%llx\n",
-		       (vaddr_t)tf->tf_pc, (vaddr_t)tf->tf_out[6], tf->tf_tstate);
+		       (void *)(unsigned long)tf->tf_pc,
+		       (void *)(unsigned long)tf->tf_out[6],
+		       (unsigned long long)tf->tf_tstate);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
@@ -1173,7 +1178,8 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	if (buflen > map->_dm_size)
 	{ 
 #ifdef DEBUG
-		printf("_bus_dmamap_load(): error %d > %d -- map size exceeded!\n", buflen, map->_dm_size);
+		printf("_bus_dmamap_load(): error %lu > %lu -- map size exceeded!\n",
+		    (unsigned long)buflen, (unsigned long)map->_dm_size);
 #ifdef DDB
 		Debugger();
 #endif
@@ -1658,12 +1664,14 @@ sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 
 	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
 		"addr %016llx size %016llx virt %llx paddr %016llx\n",
-		(int)iospace, (int) flags, (u_int64_t)addr, (u_int64_t)size,
-		(u_int64_t)*hp, (u_int64_t)pa));
+		(int)iospace, (int) flags, (unsigned long long)addr,
+		(unsigned long long)size, (unsigned long long)*hp,
+		(unsigned long long)pa));
 
 	do {
 		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n", 
-			(u_int64_t)pa, (char *)v, (u_int64_t)*hp));
+			(unsigned long long)pa, (char *)v,
+			(unsigned long long)*hp));
 		pmap_enter(pmap_kernel(), v, pa | pm_flags, pm_prot,
 			pm_prot|PMAP_WIRED);
 		v += PAGE_SIZE;
