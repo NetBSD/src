@@ -27,23 +27,24 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ntohs.c,v 1.2 1994/01/28 20:36:41 jtc Exp $
+ *	$Id: ntohs.c,v 1.3 1994/10/19 03:27:57 cgd Exp $
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: ntohs.c,v 1.2 1994/01/28 20:36:41 jtc Exp $";
+static char *rcsid = "$Id: ntohs.c,v 1.3 1994/10/19 03:27:57 cgd Exp $";
 #endif
 
+#include <sys/types.h>
 #include <machine/endian.h>
 
 #undef ntohs
 
 unsigned short
-ntohs (x)
+ntohs(x)
 	unsigned short x;
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	char *s = (char *) &x;
+	u_char *s = (u_char *) &x;
 	return s[0] << 8 | s[1];
 #else
 	return x;
