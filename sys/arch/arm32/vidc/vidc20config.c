@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.1 2001/03/20 18:20:55 reinoud Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.2 2001/04/01 16:58:05 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -446,11 +446,32 @@ vidcvideo_coldinit(void)
 
 	dispstart = dispbase;
 	dispend = dispstart+dispsize;
-    
+
 	IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart-ptov);
 	IOMD_WRITE_WORD(IOMD_VIDSTART, dispstart-ptov);
 	IOMD_WRITE_WORD(IOMD_VIDEND, (dispend-transfersize)-ptov);
 	return 0;
+}
+
+
+/* simple function to abstract vidc variables ; returns virt start address of screen */
+/* XXX asumption that video memory is mapped in twice */
+void *vidcvideo_hwscroll(int bytes) {
+	dispstart += bytes;
+	if (dispstart >= dispbase + dispsize) dispstart -= dispsize;
+	if (dispstart <  dispbase)            dispstart += dispsize;
+	dispend = dispstart+dispsize;
+
+	/* return the start of the bit map of the screen (left top) */
+	return (void *) dispstart;
+}
+
+
+/* this function is to be called at vsync */
+void vidcvideo_progr_scroll(void) {
+	IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart-ptov);
+	IOMD_WRITE_WORD(IOMD_VIDSTART, dispstart-ptov);
+	IOMD_WRITE_WORD(IOMD_VIDEND, (dispend-transfersize)-ptov);
 }
 
 

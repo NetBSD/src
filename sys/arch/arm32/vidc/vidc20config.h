@@ -1,4 +1,4 @@
-/* $NetBSD: vidc20config.h,v 1.1 2001/03/20 18:20:56 reinoud Exp $ */
+/* $NetBSD: vidc20config.h,v 1.2 2001/04/01 16:58:05 reinoud Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,19 +45,21 @@
 #ifndef _VIDC20CONFIG_H_
 #define _VIDC20CONFIG_H_
 
-extern int  vidcvideo_write        __P((u_int reg, int value));
-extern int  vidcvideo_cursor_init  __P((int width, int heigth));
-extern void vidcvideo_setpalette   __P((struct vidc_state *vidc));
-extern int  vidcvideo_textpalette  __P((void));
-extern void vidcvideo_stdpalette   __P((void));
-extern void vidcvideo_setstate     __P((struct vidc_state *vidc));
-extern void vidcvideo_getstate     __P((struct vidc_state *vidc));
-extern void vidcvideo_getmode      __P((struct vidc_mode *mode));
-extern void vidcvideo_setmode      __P((struct vidc_mode *mode));
-extern int  vidcvideo_init         __P((void));
-extern void vidcvideo_reinit       __P((void));
-extern void vidcvideo_printdetails __P((void));
-extern int  vidcvideo_blank	   __P((int));
+extern int   vidcvideo_write        __P((u_int reg, int value));
+extern int   vidcvideo_cursor_init  __P((int width, int heigth));
+extern void  vidcvideo_setpalette   __P((struct vidc_state *vidc));
+extern int   vidcvideo_textpalette  __P((void));
+extern void  vidcvideo_stdpalette   __P((void));
+extern void  vidcvideo_setstate     __P((struct vidc_state *vidc));
+extern void  vidcvideo_getstate     __P((struct vidc_state *vidc));
+extern void  vidcvideo_getmode      __P((struct vidc_mode *mode));
+extern void  vidcvideo_setmode      __P((struct vidc_mode *mode));
+extern int   vidcvideo_init         __P((void));
+extern void  vidcvideo_reinit       __P((void));
+extern void  vidcvideo_printdetails __P((void));
+extern int   vidcvideo_blank        __P((int));
+extern void *vidcvideo_hwscroll     __P((int));
+extern void  vidcvideo_progr_scroll __P((void));
 
 #endif
 
