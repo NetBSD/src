@@ -1,6 +1,6 @@
 #
 #	@(#)ttys	5.1 (Berkeley) 4/17/89
-#	$NetBSD: ttys,v 1.2 2000/08/12 13:43:54 mason Exp $
+#	$NetBSD: ttys,v 1.3 2002/02/13 09:46:11 martti Exp $
 #
 # name	getty				type	status		comments
 #
@@ -24,6 +24,52 @@ ttypc	none				network
 ttypd	none				network
 ttype	none				network
 ttypf	none				network
+ttypg	none				network
+ttyph	none				network
+ttypi	none				network
+ttypj	none				network
+ttypk	none				network
+ttypl	none				network
+ttypm	none				network
+ttypn	none				network
+ttypo	none				network
+ttypp	none				network
+ttypq	none				network
+ttypr	none				network
+ttyps	none				network
+ttypt	none				network
+ttypu	none				network
+ttypv	none				network
+ttypw	none				network
+ttypx	none				network
+ttypy	none				network
+ttypz	none				network
+ttypA	none				network
+ttypB	none				network
+ttypC	none				network
+ttypD	none				network
+ttypE	none				network
+ttypF	none				network
+ttypG	none				network
+ttypH	none				network
+ttypI	none				network
+ttypJ	none				network
+ttypK	none				network
+ttypL	none				network
+ttypM	none				network
+ttypN	none				network
+ttypO	none				network
+ttypP	none				network
+ttypQ	none				network
+ttypR	none				network
+ttypS	none				network
+ttypT	none				network
+ttypU	none				network
+ttypV	none				network
+ttypW	none				network
+ttypX	none				network
+ttypY	none				network
+ttypZ	none				network
 ttyq0	none				network
 ttyq1	none				network
 ttyq2	none				network
