@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.3 1998/12/02 22:47:20 augustss Exp $
+#	$NetBSD: files.usb,v 1.4 1998/12/03 19:58:09 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -28,10 +28,10 @@ device	uaudio: audio, auconv, mulaw
 attach	uaudio at uhub
 file	dev/usb/uaudio.c		uaudio
 
-# Generic devices
-device	ucom
-attach	ucom at uhub
-file	dev/usb/ucom.c			ucom		needs-flag
+# Com ports
+#device	ucom
+#attach	ucom at uhub
+#file	dev/usb/ucom.c			ucom		needs-flag
 
 # Generic devices
 device	ugen
@@ -52,6 +52,11 @@ file	dev/usb/ukbd.c			ukbd
 device	ulpt
 attach	ulpt at uhub
 file	dev/usb/ulpt.c			ulpt		needs-flag
+
+# Modems
+device	umodem
+attach	umodem at uhub
+file	dev/usb/umodem.c		umodem		needs-flag
 
 # Mice
 device	ums: wsmousedev
