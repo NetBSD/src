@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1995/04/24 12:21:52 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1995/04/29 00:44:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/04/24 12:21:52 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.4 1995/04/29 00:44:03 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/04/24 12:21:52 cgd Exp $";
 
 char	*instr[];				/* text of instructions */
 char	*message[];				/* update message */
-char	ospeed;					/* tty output speed */
+speed_t	ospeed;					/* tty output speed */
 
 char	*helpm[] = {				/* help message */
 	"Enter a space or newline to roll, or",
@@ -111,16 +111,14 @@ char	**argv;
 
 	/* initialization */
 	bflag = 2;					/* default no board */
-	signal (2,getout);				/* trap interrupts */
-	if (gtty (0,&tty) == -1)			/* get old tty mode */
+	signal (2, getout);				/* trap interrupts */
+	if (tcgetattr (0, &old) == -1)			/* get old tty mode */
 		errexit ("backgammon(gtty)");
-	old = tty.sg_flags;
-#ifdef V7
-	raw = ((noech = old & ~ECHO) | CBREAK);		/* set up modes */
-#else
-	raw = ((noech = old & ~ECHO) | RAW);		/* set up modes */
-#endif
-	ospeed = tty.sg_ospeed;				/* for termlib */
+	noech = old;
+	noech.c_lflag &= ~ECHO;
+	raw = noech;
+	raw.c_lflag &= ~ICANON;				/* set up modes */
+	ospeed = cfgetospeed (&old);			/* for termlib */
 
 							/* check user count */
 # ifdef CORY
@@ -152,11 +150,11 @@ char	**argv;
 		getarg (&argv);
 	args[acnt] = '\0';
 	if (tflag)  {					/* clear screen */
-		noech &= ~(CRMOD|XTABS);
-		raw &= ~(CRMOD|XTABS);
+		noech.c_oflag &= ~(ONLCR|OXTABS);
+		raw.c_oflag &= ~(ONLCR|OXTABS);
 		clear();
 	}
-	fixtty (raw);					/* go into raw mode */
+	fixtty (&raw);					/* go into raw mode */
 
 							/* check if restored
 							 * game and save flag
@@ -179,7 +177,7 @@ char	**argv;
 			writel (rules);
 			if (yorn(0))  {
 
-				fixtty (old);		/* restore tty */
+				fixtty (&old);		/* restore tty */
 				execl (TEACH,"teachgammon",args,0);
 
 				tflag = 0;		/* error! */

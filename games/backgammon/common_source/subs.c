@@ -1,4 +1,4 @@
-/*	$NetBSD: subs.c,v 1.4 1995/04/24 12:22:12 cgd Exp $	*/
+/*	$NetBSD: subs.c,v 1.5 1995/04/29 00:44:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: subs.c,v 1.4 1995/04/24 12:22:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: subs.c,v 1.5 1995/04/29 00:44:15 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -413,14 +413,13 @@ wrscore ()  {
 	wrint (wscore);
 }
 
-fixtty (mode)
-int	mode;
+fixtty (t)
+struct termios	*t;
 {
 	if (tflag)
 		newpos();
 	buflush();
-	tty.sg_flags = mode;
-	if (stty (0,&tty) < 0)
+	if (tcsetattr (0, TCSADRAIN, t) < 0)
 		errexit("fixtty");
 }
 
@@ -433,7 +432,7 @@ getout ()  {
 		writec ('\n');
 
 	/* fix terminal status */
-	fixtty (old);
+	fixtty (&old);
 	exit(0);
 }
 roll ()  {

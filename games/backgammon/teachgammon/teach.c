@@ -1,4 +1,4 @@
-/*	$NetBSD: teach.c,v 1.3 1995/03/21 15:06:13 cgd Exp $	*/
+/*	$NetBSD: teach.c,v 1.4 1995/04/29 00:44:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)teach.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: teach.c,v 1.3 1995/03/21 15:06:13 cgd Exp $";
+static char rcsid[] = "$NetBSD: teach.c,v 1.4 1995/04/29 00:44:18 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ char	*stragy[];
 char	*prog[];
 char	*lastch[];
 
-extern char	ospeed;			/* tty output speed for termlib */
+extern speed_t	ospeed;			/* tty output speed for termlib */
 
 char *helpm[] = {
 	"\nEnter a space or newline to roll, or",
@@ -85,15 +85,13 @@ char	**argv;
 	register int	i;
 
 	signal (2,getout);
-	if (gtty (0,&tty) == -1)			/* get old tty mode */
+	if (tcgetattr (0, &old) == -1)			/* get old tty mode */
 		errexit ("teachgammon(gtty)");
-	old = tty.sg_flags;
-#ifdef V7
-	raw = ((noech = old & ~ECHO) | CBREAK);		/* set up modes */
-#else
-	raw = ((noech = old & ~ECHO) | RAW);		/* set up modes */
-#endif
-	ospeed = tty.sg_ospeed;				/* for termlib */
+	noech = old;
+	noech.c_lflag &= ~ECHO;
+	raw = noech;
+	raw.c_lflag &= ~ICANON;				/* set up modes */
+	ospeed = cfgetospeed (&old);			/* for termlib */
 	tflag = getcaps (getenv ("TERM"));
 #ifdef V7
 	while (*++argv != 0)
@@ -102,8 +100,8 @@ char	**argv;
 #endif
 		getarg (&argv);
 	if (tflag)  {
-		noech &= ~(CRMOD|XTABS);
-		raw &= ~(CRMOD|XTABS);
+		noech.c_oflag &= ~(ONLCR|OXTABS);
+		raw.c_oflag &= ~(ONLCR|OXTABS);
 		clear();
 	}
 	text (hello);
@@ -165,7 +163,7 @@ leave()  {
 		clear();
 	else
 		writec ('\n');
-	fixtty(old);
+	fixtty(&old);
 	execl (EXEC,"backgammon",args,"n",0);
 	writel ("Help! Backgammon program is missing\007!!\n");
 	exit (-1);
