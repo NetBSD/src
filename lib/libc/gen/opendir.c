@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)opendir.c	8.7 (Berkeley) 12/10/94";*/
-static char rcsid[] = "$Id: opendir.c,v 1.6 1994/12/28 03:22:37 mycroft Exp $";
+static char rcsid[] = "$Id: opendir.c,v 1.7 1994/12/28 03:34:37 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -182,13 +182,11 @@ __opendir2(name, flags)
 		 * Then sort the pointers and remove duplicate names.
 		 */
 		for (dpv = 0;;) {
-			n = 0;
-			ddptr = buf;
-			while (ddptr < ddeptr) {
+			for (n = 0, ddptr = buf; ddptr < ddeptr;) {
 				struct dirent *dp;
 
 				dp = (struct dirent *) ddptr;
-				if ((int)dp & 03)
+				if ((long)dp & 03)
 					break;
 				if ((dp->d_reclen <= 0) ||
 				    (dp->d_reclen > (ddeptr + 1 - ddptr)))
@@ -221,11 +219,10 @@ __opendir2(name, flags)
 					struct dirent *dp = dpv[n];
 
 					if ((xp == NULL) ||
-					    strcmp(dp->d_name, xp->d_name)) {
+					    strcmp(dp->d_name, xp->d_name))
 						xp = dp;
-					} else {
+					else
 						dp->d_fileno = 0;
-					}
 					if (dp->d_type == DT_WHT &&
 					    (flags & DTF_HIDEW))
 						dp->d_fileno = 0;
