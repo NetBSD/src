@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.18 1995/07/24 07:39:44 cgd Exp $	*/
+/*	$NetBSD: si.c,v 1.19 1995/08/08 20:53:16 gwr Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -537,6 +537,7 @@ si_select_target(register volatile sci_regmap_t *regs,
 
 retry_arbitration:
 	regs->sci_mode = 0;	/* get into a harmless state */
+wait_for_bus_free:
 	if (--arb_retries <= 0) {
 #ifdef	DEBUG
 		if (si_debug) {
@@ -549,19 +550,17 @@ retry_arbitration:
 
 	icmd = regs->sci_icmd & ~(SCI_ICMD_DIFF|SCI_ICMD_TEST);
 
-	if ((regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)) &&
-	    (regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)) &&
-	    (regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)))
-	{
+	if (regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)) {
 		/* Something is sitting on the SCSI bus... */
 #ifdef	DEBUG
-		if (si_debug) {
-			printf("si_select_target: still BSY+SEL; resetting...\n");
+		/* Only complain once (the last time through). */
+		if (si_debug && (arb_retries <= 1)) {
+			printf("si_select_target: still BSY+SEL\n");
 		}
 #endif
-		/* Send bus device reset. */
-		ret = SCSI_RET_NEED_RESET;
-		goto nosel;
+		/* Give it a little time, then try again. */
+		delay(10);
+		goto wait_for_bus_free;
 	}
 
 	regs->sci_odata = myid;
