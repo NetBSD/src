@@ -1,4 +1,4 @@
-.\"	$NetBSD: calendar.1,v 1.15 2004/11/29 17:58:07 jwise Exp $
+.\"	$NetBSD: calendar.1,v 1.16 2004/11/29 18:33:45 jwise Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -65,9 +65,9 @@ Display matching calendar files from the given filename.
 By default, the following filenames are checked for:
 .Bl -item -compact
 .It
-.Pa ./calendar
+.Pa ~/calendar
 .It
-.Pa ./.calendar
+.Pa ~/.calendar
 .It
 .Pa /etc/calendar
 .El
@@ -177,6 +177,19 @@ program previously selected lines which had the correct date anywhere
 in the line.
 This is no longer true, the date is only recognized when it occurs
 first on the line.
+.Pp
+In
+.Nx 3.0 ,
+the
+.Nm
+command was modified to search the user's home directory instead of the current
+directory by default.  Users desiring the historical behavior should set the
+.Ev CALENDAR_DIR
+environment variable to
+.Pa \&. ,
+or use the
+.Fl f
+flag.
 .Sh HISTORY
 A
 .Nm
