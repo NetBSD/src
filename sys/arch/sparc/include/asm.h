@@ -38,7 +38,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: asm.h,v 1.1 1994/02/10 19:05:03 pk Exp $
+ *	$Id: asm.h,v 1.2 1994/06/03 11:48:13 pk Exp $
  */
 
 #ifndef _ASM_H_
@@ -84,16 +84,16 @@
 	.align 4; .globl name; .proc 1; FTYPE(name); name:
 
 #ifdef PROF
-#define ENTRY(name) \
-	_ENTRY(_C_LABEL(name)); \
+#define _PROF_PROLOGUE \
 	.data; .align 4; 1: .long 0; \
 	.text; save %sp,-96,%sp; sethi %hi(1b),%o0; call mcount; \
 	or %o0,%lo(1b),%o0; restore
 #else
-#define ENTRY(name)		_ENTRY(_C_LABEL(name))
+#define _PROF_PROLOGUE
 #endif
 
-#define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name))
+#define ENTRY(name)		_ENTRY(_C_LABEL(name)); _PROF_PROLOGUE
+#define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)); _PROF_PROLOGUE
 #define	FUNC(name)		ASENTRY(name)
 
 
