@@ -4,7 +4,7 @@ BINDIR=	/usr/libexec
 PROG=	smrsh
 MAN=	smrsh.8
 CFLAGS+=-I${.CURDIR}/../src -DNDBM -DNEWDB
-CFLAGS+=-DCMDDIR=/usr/libexec/sm.bin
+CFLAGS+=-DCMDDIR=\"/usr/libexec/sm.bin\"
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
