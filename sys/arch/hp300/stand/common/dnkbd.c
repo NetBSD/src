@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.2 1997/04/27 21:12:43 thorpej Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.3 1997/05/12 07:47:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 
 #include <sys/param.h>
 
+#include <hp300/dev/frodoreg.h>		/* for apci offsets */
 #include <hp300/dev/dcareg.h>		/* for the register bit defintions */
 #include <hp300/dev/apcireg.h>		/* for the apci registers */
 
@@ -99,7 +100,8 @@ int	dnkbd_ignore;		/* for ignoring mouse packets */
 int
 dnkbd_getc()
 {
-	struct apciregs *apci = (struct apciregs *)0x41c000;	/* XXX */
+	struct apciregs *apci =
+	    (struct apciregs *)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(0));
 	int c;
 
 	/* default to `no key' */
@@ -171,10 +173,8 @@ dnkbd_init()
 	/*
 	 * Look for a Frodo utility chip.  If we find one, assume there
 	 * is a Domain keyboard attached.
-	 *
-	 * XXX This could be improved.
 	 */
-	if (badaddr(0x41c000))
+	if (badaddr((caddr_t)IIOV(FRODO_BASE + FRODO_APCI_OFFSET(0))))
 		return (0);
 
 	/*
