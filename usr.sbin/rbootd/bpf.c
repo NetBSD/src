@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.7 1997/01/27 22:51:50 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.8 1997/07/28 05:39:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -46,9 +46,13 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: bpf.c,v 1.7 1997/01/27 22:51:50 thorpej Exp $";
+#if 0
+static char sccsid[] = "@(#)bpf.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: bpf.c,v 1.8 1997/07/28 05:39:17 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmpproto.c,v 1.7 1996/02/01 21:27:46 mycroft Exp $	*/
+/*	$NetBSD: rmpproto.c,v 1.8 1997/07/28 05:39:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -46,9 +46,13 @@
  * Author: Jeff Forys, University of Utah CSS
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-/*static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$NetBSD: rmpproto.c,v 1.7 1996/02/01 21:27:46 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)rmpproto.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: rmpproto.c,v 1.8 1997/07/28 05:39:21 thorpej Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
