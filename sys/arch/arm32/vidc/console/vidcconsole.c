@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.16 1998/01/18 03:48:40 mark Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.17 1998/02/21 23:40:03 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -336,9 +336,9 @@ vidcconsole_mode(vc, mode)
 	int bpp_mask;
         int log_bpp;
         int tmp_bpp;
+#ifndef RC7500
         int ereg;
 
-#ifndef RC7500
 	int best_r, best_v, best_match;
 #endif
 
@@ -1222,7 +1222,9 @@ int
 vidcconsole_cursorintr(arg)
 	void *arg;
 {
+#ifndef RC7500
 	struct vconsole *vc = arg;
+#endif
 	if ( cursor_flash==0 )
 		return 0;
 
