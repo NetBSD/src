@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci.c,v 1.4 2000/05/02 19:03:04 bouyer Exp $	*/
+/*	$NetBSD: siop_pci.c,v 1.5 2000/05/06 00:46:19 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -253,7 +253,7 @@ siop_pci_attach(parent, self, aux)
 	}
 	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &intrhandle) != 0) {
-		printf("%s: couldn't map native-PCI interrupt\n",
+		printf("%s: couldn't map interrupt\n",
 		    sc->siop.sc_dev.dv_xname);
 		return;
 	}
@@ -261,7 +261,7 @@ siop_pci_attach(parent, self, aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_BIO,
 	    siop_intr, &sc->siop);
 	if (sc->sc_ih != NULL) {
-		printf("%s: using %s for native-PCI interrupt\n",
+		printf("%s: interrupting at %s\n",
 		    sc->siop.sc_dev.dv_xname,
 		    intrstr ? intrstr : "unknown interrupt");
 	} else {
