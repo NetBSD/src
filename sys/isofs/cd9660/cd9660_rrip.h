@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.h,v 1.4 1994/07/03 09:52:17 mycroft Exp $	*/
+/*	$NetBSD: cd9660_rrip.h,v 1.4.2.1 1994/10/06 05:15:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -48,22 +48,16 @@ typedef struct {
 
 typedef struct {
 	ISO_SUSP_HEADER			h;
-	char mode_l			[ISODCL (  4,    7)]; /* 731 */
-	char mode_m			[ISODCL (  8,   11)]; /* 732 */
-	char links_l			[ISODCL ( 12,   15)]; /* 731 */
-	char links_m			[ISODCL ( 16,   19)]; /* 732 */
-	char uid_l			[ISODCL ( 20,   23)]; /* 731 */
-	char uid_m			[ISODCL ( 24,   27)]; /* 732 */
-	char gid_l			[ISODCL ( 28,   31)]; /* 731 */
-	char gid_m			[ISODCL ( 32,   35)]; /* 732 */
+	char mode			[ISODCL (  4,   11)]; /* 733 */
+	char links			[ISODCL ( 12,   19)]; /* 733 */
+	char uid			[ISODCL ( 20,   27)]; /* 733 */
+	char gid			[ISODCL ( 28,   35)]; /* 733 */
 } ISO_RRIP_ATTR;
 
 typedef struct {
 	ISO_SUSP_HEADER			h;
-	char dev_t_high_l		[ISODCL (  4,    7)]; /* 731 */
-	char dev_t_high_m		[ISODCL (  8,   11)]; /* 732 */
-	char dev_t_low_l		[ISODCL ( 12,   15)]; /* 731 */
-	char dev_t_low_m		[ISODCL ( 16,   19)]; /* 732 */
+	char dev_t_high			[ISODCL (  4,   11)]; /* 733 */
+	char dev_t_low			[ISODCL ( 12,   19)]; /* 733 */
 } ISO_RRIP_DEVICE;
 
 #define	ISO_SUSP_CFLAG_CONTINUE	0x01
@@ -76,7 +70,7 @@ typedef struct {
 typedef struct {
 	u_char cflag			[ISODCL (  1,    1)];
 	u_char clen			[ISODCL (  2,    2)];
-	u_char name			[0];
+	u_char name			[1];			/* XXX */
 } ISO_RRIP_SLINK_COMPONENT;
 #define	ISO_RRIP_SLSIZ	2
 

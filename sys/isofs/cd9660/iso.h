@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.h,v 1.4.2.2 1994/07/20 03:17:58 cgd Exp $	*/
+/*	$NetBSD: iso.h,v 1.4.2.3 1994/10/06 05:15:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -104,7 +104,7 @@ struct iso_directory_record {
 	char interleave			[ISODCL (28, 28)]; /* 711 */
 	char volume_sequence_number	[ISODCL (29, 32)]; /* 723 */
 	char name_len			[ISODCL (33, 33)]; /* 711 */
-	char name			[0];
+	char name			[1];			/* XXX */
 };
 /* can't take sizeof(iso_directory_record), because of possible alignment
    of the last entry (34 instead of 33) */
@@ -189,61 +189,75 @@ extern int (**cd9660_specop_p)();
 extern int (**cd9660_fifoop_p)();
 #endif
 
-extern inline int
+static __inline int
 isonum_711(p)
 	u_char *p;
 {
 	return *p;
 }
 
-extern inline int
+static __inline int
 isonum_712(p)
 	char *p;
 {
 	return *p;
 }
 
-extern inline int
-isonum_721(p)
-	u_char *p;
-{
-	return *p|((char)p[1] << 8);
-}
+#ifndef UNALIGNED_ACCESS
 
-extern inline int
-isonum_722(p)
-	u_char *p;
-{
-	return ((char)*p << 8)|p[1];
-}
-
-extern inline int
+static __inline int
 isonum_723(p)
 	u_char *p;
 {
-	return isonum_721(p);
+	return *p|(p[1] << 8);
 }
 
-extern inline int
-isonum_731(p)
+static __inline int
+isonum_733(p)
 	u_char *p;
 {
 	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24);
 }
 
-extern inline int
-isonum_732(p)
-	u_char *p;
+#else /* UNALIGNED_ACCESS */
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+
+static __inline int
+isonum_723(p)
+	u_char *p
 {
-	return (*p << 24)|(p[1] << 16)|(p[2] << 8)|p[3];
+	return *(u_int16t *)p;
 }
 
-extern inline int
+static __inline int
 isonum_733(p)
 	u_char *p;
 {
-	return isonum_731(p);
+	return *(u_int32t *)p;
 }
+
+#endif
+
+#if BYTE_ORDER == BIG_ENDIAN
+
+static __inline int
+isonum_723(p)
+	u_char *p
+{
+	return *(u_int16t *)(p + 2);
+}
+
+static __inline int
+isonum_733(p)
+	u_char *p;
+{
+	return *(u_int32t *)(p + 4);
+}
+
+#endif
+
+#endif /* UNALIGNED_ACCESS */
 
 int isofncmp __P((u_char *, int, u_char *, int));
 void isofntrans __P((u_char *, int, u_char *, u_short *, int, int));
