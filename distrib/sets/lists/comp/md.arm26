@@ -1,9 +1,8 @@
-# $NetBSD: md.arm26,v 1.16 2001/04/15 17:14:26 kleink Exp $
+# $NetBSD: md.arm26,v 1.17 2001/06/18 21:47:38 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
 ./usr/include/arm/arm32			comp-c-include
-./usr/include/arm/arm32/bus.h		comp-c-include
 ./usr/include/arm/arm32/frame.h		comp-c-include
 ./usr/include/arm/arm32/katelib.h	comp-c-include
 ./usr/include/arm/arm32/pcb.h		comp-c-include
@@ -14,6 +13,7 @@
 ./usr/include/arm/armreg.h		comp-c-include
 ./usr/include/arm/asm.h			comp-c-include
 ./usr/include/arm/bswap.h		comp-c-include
+./usr/include/arm/bus.h			comp-c-include
 ./usr/include/arm/cdefs.h		comp-c-include
 ./usr/include/arm/disklabel.h		comp-c-include
 ./usr/include/arm/disklabel_acorn.h	comp-c-include
