@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)pmap.c	7.12 (Berkeley) 10/24/92
- * $Id: pmap.c,v 1.2 1993/10/15 02:57:27 deraadt Exp $
+ * $Id: pmap.c,v 1.3 1994/01/16 00:58:07 deraadt Exp $
  */
 
 /*
@@ -1277,6 +1277,17 @@ pmap_collect(pmap)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_collect(%x)\n", pmap);
 #endif
+}
+
+/*
+ *      Routine:        pmap_kernel
+ *      Function:
+ *              Returns the physical map handle for the kernel.
+ */
+pmap_t
+pmap_kernel()
+{
+        return (kernel_pmap);
 }
 
 /*
