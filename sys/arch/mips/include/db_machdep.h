@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.10 2000/07/17 07:04:19 jeffs Exp $ */
+/* $NetBSD: db_machdep.h,v 1.11 2000/07/17 19:57:49 jeffs Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -112,10 +112,5 @@ db_addr_t next_instr_address __P((db_addr_t pc, boolean_t bd));
  * We have machine-dependent commands.
  */
 #define DB_MACHINE_COMMANDS
-
-/*
- * Hook to MIPS platform code to allow management of kernel breakpoints.
- */
-extern void (*db_mach_break_hook)(int);
 
 #endif	/* _MIPS_DB_MACHDEP_H_ */
