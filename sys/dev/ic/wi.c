@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.167 2004/07/22 19:50:43 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.168 2004/07/22 19:51:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.167 2004/07/22 19:50:43 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.168 2004/07/22 19:51:37 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -675,8 +675,9 @@ wi_init(struct ifnet *ifp)
 	wi_write_ssid(sc, WI_RID_OWN_SSID, ic->ic_des_essid, ic->ic_des_esslen);
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, LLADDR(ifp->if_sadl));
 	wi_write_rid(sc, WI_RID_MAC_NODE, ic->ic_myaddr, IEEE80211_ADDR_LEN);
-	wi_write_val(sc, WI_RID_PM_ENABLED,
-	    (ic->ic_flags & IEEE80211_F_PMGTON) ? 1 : 0);
+	if (ic->ic_caps & IEEE80211_C_PMGT)
+		wi_write_val(sc, WI_RID_PM_ENABLED,
+		    (ic->ic_flags & IEEE80211_F_PMGTON) ? 1 : 0);
 
 	/* not yet common 802.11 configuration */
 	wi_write_val(sc, WI_RID_MAX_DATALEN, sc->sc_max_datalen);
