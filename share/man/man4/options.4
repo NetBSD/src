@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.5 1997/01/15 06:20:02 perry Exp $
+.\"	$NetBSD: options.4,v 1.6 1997/01/30 09:16:54 tls Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -217,7 +217,10 @@ conditionals instead.
 .It Cd options DIAGNOSTIC
 Adds code to the kernel that does internal consistency checks.  This
 code will cause the kernel to panic if corruption of internal data
-structures is detected.
+structures is detected.  This option also enables certain other options,
+notably the
+.Em KMEMSTATS
+option, which may decrease system performance.
 .It Cd options KTRACE
 Add hooks for the system call tracing facility, which allows users to
 watch the system call invokation behavior of processes. See
@@ -543,6 +546,37 @@ clock very early in the boot process, it is not possible to meaningfully change
 in system initialization scripts.  Changing this value currently may
 only be done at kernel compile time or by patching the kernel and
 rebooting.)
+.It Cd options CCDNBUF=integer
+The
+.Xr ccd 4
+device driver uses "component buffers" to distribute I/O requests to the
+components of a concatenated disk.  It keeps a freelist of buffer headers
+in order to reduce use of the kernel memory allocator.
+.Em CCDNBUF
+is the number of buffer headers allocated on the freelist for
+each component buffer.  It defaults to 8.
+.It Cd options KMEMSTATS
+The kernel memory allocator,
+.Xr malloc 9 ,
+will keep statistics on its performance if this option is enabled.
+Unfortunately, this option therefore essentially disables 
+.Fn MALLOC
+and
+.Fn FREE
+forms of the memory allocator, which are used to enhance the performance
+of certain critical sections of code in the kernel.
+This option therefore can
+lead to a significant decrease in the performance of certain code in the kernel
+if enabled.  Examples of such code include the
+.Fn namei
+routine, the
+.Xr ccd 4
+driver,
+the
+.Xr ncr 4
+driver,
+and much of the networking code.
+.Em N.B. This option is enabled by the DIAGNOSTIC option.
 .El
 .Ss Networking Options
 .Bl -ohang
@@ -737,21 +771,6 @@ panics.
 These option set the number of pages available for the buffer cache.
 Their default value is a machine depedant value, often calculated as
 between 5% and 10% of total available RAM.
-.It Cd options NKPDE=value
-.Em [ NOTE :
-This option is i386 specific.]
-The i386 architecture uses a two-level page table; page directories
-contain entries for page tables, which contain entries for pages.
-The value of NKPDE indicates how many page tables (page directory entries)
-to reserve for use by the kernel.  This option should
-not be necessary, but the kernel cannot currently initialize this value at
-boot time and the default of 12 page directory entries is not large enough
-for the kernel if a very large buffer cache is used, either by default on
-machines with large memories or by modifying the value of BUFPAGES.  This
-limitation could be removed by changing NKPDE from a preprocessor symbol
-to a kernel global variable (nkpde) and modifying locore.s to compute nkpde
-from the values of the kernel global variables physmem and bufpages
-(as defined or computed) at boot time.
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
