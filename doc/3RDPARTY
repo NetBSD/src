@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.50 2003/02/03 05:32:09 enami Exp $
+#	$NetBSD: 3RDPARTY,v 1.51 2003/02/07 18:40:30 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -270,7 +270,7 @@ See also nawk entry below.
 
 Package:	gcc
 Version:	2.95.3
-Current Vers:	3.2.1
+Current Vers:	3.2.2
 Maintainer:	cygnus
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Mailing List:	gcc-bugs@gnu.org
@@ -703,7 +703,7 @@ Notes:
 
 Package:	texinfo
 Version:	4.3
-Current Vers:	4.4
+Current Vers:	4.5
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Mailing List:	bug-texinfo@gnu.org
