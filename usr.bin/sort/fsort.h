@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.h,v 1.8 2001/02/19 20:50:17 jdolecek Exp $	*/
+/*	$NetBSD: fsort.h,v 1.9 2001/05/14 21:45:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,10 +39,18 @@
  */
 
 #define BUFSIZE		(1<<20)
-#define MAXNUM		(BUFSIZE/10)	/* low guess at average record size */
+#define MAXNUM		131072		/* low guess at average record count */
 #define BUFFEND		(EOF-2)
 #define MAXFCT		1000
 #define DEFLLEN		65536
+
+/*
+ * Default (initial) and maximum size of record buffer for fsort().
+ * Note that no more than MAXNUM records are stored in the buffer,
+ * even if the buffer is not full yet.
+ */
+#define DEFBUFSIZE	(1 << 20)	/* 1MB */
+#define MAXBUFSIZE	(8 << 20)	/* 10 MB */
 
 /*
  * Number of files merge() can merge in one pass.
