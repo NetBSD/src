@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.22 2002/11/26 19:49:00 christos Exp $ 
+ *	$Id: i4b_i4bdrv.c,v 1.23 2003/05/16 05:12:32 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.22 2002/11/26 19:49:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.23 2003/05/16 05:12:32 itojun Exp $");
 
 #include "isdn.h"
 
@@ -419,8 +419,10 @@ isdnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 					(long)cd->shorthold_data.shorthold_algorithm, (long)cd->shorthold_data.unitlen_time,
 					(long)cd->shorthold_data.idle_time, (long)cd->shorthold_data.earlyhup_time);
 
-			strcpy(cd->dst_telno, mcr->dst_telno);
-			strcpy(cd->src_telno, mcr->src_telno);
+			strlcpy(cd->dst_telno, mcr->dst_telno,
+			    sizeof(cd->dst_telno));
+			strlcpy(cd->src_telno, mcr->src_telno,
+			    sizeof(cd->src_telno));
 			cd->display[0] = '\0';
 
 			SET_CAUSE_TYPE(cd->cause_in, CAUSET_I4B);
