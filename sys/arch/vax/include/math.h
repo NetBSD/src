@@ -1,6 +1,9 @@
-/*	$NetBSD: math.h,v 1.3 2004/01/20 19:52:40 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.4 2004/03/04 23:42:38 kleink Exp $	*/
 
 #define	__INFINITY	1.0E+39F
+
+#define	__isinf(__x)	(0)
+#define	__isnan(__x)	(0)
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
     !defined(_XOPEN_SOURCE) || \

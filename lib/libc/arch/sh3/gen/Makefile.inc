@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2004/02/22 01:05:49 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2004/03/04 23:42:38 kleink Exp $
 
 SRCS+=	_setjmp.S setjmp.S sigsetjmp.S __setjmp14.S __sigsetjmp14.S
 
@@ -12,9 +12,11 @@ SRCS+=	fabs.c flt_rounds.c bswap16.c bswap32.c bswap64.c
 SRCS+=	infinityf_ieee754.c infinity_ieee754.c infinityl_dbl_ieee754.c
 SRCS+=	nanf_ieee754.c
 SRCS+=	fpclassifyf_ieee754.c fpclassifyd_ieee754.c
-SRCS+=	frexp_ieee754.c isinf_ieee754.c isinfl_dbl_ieee754.c isnan_ieee754.c
+SRCS+=	frexp_ieee754.c
+SRCS+=	isinff_ieee754.c isinfd_ieee754.c
+SRCS+=	isnanf_ieee754.c isnand_ieee754.c
 SRCS+=	isfinitef_ieee754.c isfinited_ieee754.c
-SRCS+=	isnanl_dbl_ieee754.c ldexp_ieee754.c modf_ieee754.c
+SRCS+=	ldexp_ieee754.c modf_ieee754.c
 SRCS+=	signbitf_ieee754.c signbitd_ieee754.c
 
 # In gcc3 dynamic world these functions must be ".hidden" in libgcc*.a,
