@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.10 1995/06/18 10:58:32 cgd Exp $	*/
+/*	$NetBSD: opendir.c,v 1.11 1996/12/20 20:44:55 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-static char rcsid[] = "$NetBSD: opendir.c,v 1.10 1995/06/18 10:58:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: opendir.c,v 1.11 1996/12/20 20:44:55 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ static char rcsid[] = "$NetBSD: opendir.c,v 1.10 1995/06/18 10:58:32 cgd Exp $";
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /*
