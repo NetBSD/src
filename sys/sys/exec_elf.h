@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.50 2001/06/20 03:15:42 simonb Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.51 2001/06/20 05:33:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ typedef struct {
 #define	EM_PDSP		63	/* Sony DSP Processor */
 			/* 64-65 - Reserved */
 #define	EM_FX66		66	/* Siemens FX66 microcontroller */
-#define	EM_ST9PLUS	67	/* STMicroelectronics ST9+ 8/16 bit microcontrol
+#define	EM_ST9PLUS	67	/* STMicroelectronics ST9+ 8/16 bit microcontroller */
 #define	EM_ST7		68	/* STMicroelectronics ST7 8-bit microcontroller */
 #define	EM_68HC16	69	/* Motorola MC68HC16 Microcontroller */
 #define	EM_68HC11	70	/* Motorola MC68HC11 Microcontroller */
@@ -256,7 +256,6 @@ typedef struct {
 #define	EM_68HC05	72	/* Motorola MC68HC05 Microcontroller */
 #define	EM_SVX		73	/* Silicon Graphics SVx */
 #define	EM_ST19		74	/* STMicroelectronics ST19 8-bit cpu */
-ler */
 #define	EM_VAX		75	/* Digital VAX */
 #define	EM_CRIS		76	/* Axis Communications 32-bit embedded processor */
 #define	EM_JAVELIN	77	/* Infineon Technologies 32-bit embedded cpu */
