@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.56 1996/09/20 22:11:38 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.57 1996/09/30 16:03:15 ws Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -94,6 +94,7 @@ extern int physmem;		/* physical memory */
 
 extern dev_t dumpdev;		/* dump device */
 extern long dumplo;		/* offset into dumpdev */
+extern int dumpsize;		/* size of dump in pages */
 
 extern dev_t rootdev;		/* root device */
 extern struct vnode *rootvp;	/* vnode equivalent to above */
