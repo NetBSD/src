@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.23 2003/09/19 06:11:35 itojun Exp $	*/
+/*	$NetBSD: ffs.c,v 1.24 2003/10/26 10:31:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.23 2003/09/19 06:11:35 itojun Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.24 2003/10/26 10:31:44 mycroft Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -337,10 +337,10 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	fsopts->size += (SBLOCK_UFS1 + SBLOCKSIZE) * ncg;
 		/* add space needed to store inodes, x3 for blockmaps, etc */
 	if (fsopts->version == 1)
-		fsopts->size += ncg * DINODE1_SIZE * 3 * 
+		fsopts->size += ncg * DINODE1_SIZE *
 		    roundup(fsopts->inodes / ncg, fsopts->bsize / DINODE1_SIZE);
 	else
-		fsopts->size += ncg * DINODE2_SIZE * 3 * 
+		fsopts->size += ncg * DINODE2_SIZE *
 		    roundup(fsopts->inodes / ncg, fsopts->bsize / DINODE2_SIZE);
 
 		/* add minfree */
