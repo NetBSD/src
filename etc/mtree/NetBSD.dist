@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.210 2002/12/17 15:16:40 jdolecek Exp $
+#	$NetBSD: NetBSD.dist,v 1.211 2002/12/20 06:39:53 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -131,31 +131,6 @@
 ./usr/libexec/sm.bin
 ./usr/libexec/uucp
 ./usr/lkm
-./usr/local
-./usr/local/bin
-./usr/local/lib
-./usr/local/libdata
-./usr/local/libexec
-./usr/local/man
-./usr/local/man/cat1
-./usr/local/man/cat2
-./usr/local/man/cat3
-./usr/local/man/cat4
-./usr/local/man/cat5
-./usr/local/man/cat6
-./usr/local/man/cat7
-./usr/local/man/cat8
-./usr/local/man/cat9
-./usr/local/man/man1
-./usr/local/man/man2
-./usr/local/man/man3
-./usr/local/man/man4
-./usr/local/man/man5
-./usr/local/man/man6
-./usr/local/man/man7
-./usr/local/man/man8
-./usr/local/man/man9
-./usr/local/sbin
 ./usr/mdec
 ./usr/pkg			ignore optional
 ./usr/sbin
