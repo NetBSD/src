@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.6 2002/08/17 03:14:47 thorpej Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.7 2002/10/14 22:32:53 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -100,10 +100,9 @@ ASENTRY_NP(irq_entry)
 	tst	r4, #(INTSRC_PI)
 	beq	.Lpmc_intr_return
 	mov	r1, r4
-	add	lr, pc, #.Lpmc_intr_return - . - 8
 	mov	r0, sp
+	mov	lr, pc
 	ldr	pc, .Lpmc_dispatch
-.Lpmc_intr_return:
 #endif
 
 	/*
@@ -120,10 +119,9 @@ ASENTRY_NP(irq_entry)
 	tst	r4, #(INTSRC_II)
 	beq	.Lextirq_return		/* no external IRQ pending */
 	ldr	r1, .Lintr_dispatch
-	add	lr, pc, #.Lextirq_return - . - 8
 	mov	r0, sp
+	mov	lr, pc
 	ldr	pc, [r1]
-.Lextirq_return:
 
 	/* Decremement the nest count. */
 	ldr	r0, .Lcurrent_intr_depth 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.3 2002/07/19 18:36:26 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.4 2002/10/14 22:32:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -84,12 +84,12 @@ ASENTRY_NP(irq_entry)
 
 	/* Load r8 with the SAIPIC interrupt requests */
 
-	ldr	r10, [pc, #_C_LABEL(saipic_base) - . - 8]
+	ldr	r10, _C_LABEL(saipic_base)
 	ldr	r8, [r10, #(SAIPIC_IP)]	/* Load IRQ pending register */
 
 #ifdef INTR_DEBUG
 	ldr	r2, [r10, #(SAIPIC_MR)]
-	add	r0, pc, #Ldbg_str - . - 8
+	adr	r0, Ldbg_str
 	mov	r1, r8
 	bl	_C_LABEL(printf)
 #endif
@@ -142,7 +142,7 @@ Lfind_highest_ipl:
 
 #ifdef INTR_DEBUG
 	stmfd	sp!, {r0,r1,r2}
-	add	r0, pc, #Ldbg_str - . - 8
+	adr	r0, Ldbg_str
 	mov	r1, #1
 	mov	r2, r9
 	bl	_C_LABEL(printf)
@@ -152,7 +152,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, [pc, #Lirqhandlers - . - 8]
+	ldr	r7, Lirqhandlers
         mov	r9, #0x00000001
 
 irqloop:
@@ -189,18 +189,17 @@ irqloop:
 irqchainloop:
 #ifdef INTR_DEBUG
 	stmfd	sp!, {r0,r1,r2}
-	add	r0, pc, #Ldbg_str - . - 8
+	adr	r0, Ldbg_str
 	mov	r1, #2
 	bl	_C_LABEL(printf)
 	ldmia	sp!, {r0,r1,r2}
 #endif
-	add	lr, pc, #nextinchain - . - 8	/* return address */
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #4		/* ... stack frame [XXX needs care] */
+	mov	lr, pc			/* return address */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
-nextinchain:
 	teq	r0, #0x00000001		/* Was the irq serviced ? */
 	beq	irqdone
 
@@ -241,7 +240,7 @@ nextirq:
         msr     cpsr_all, r0
 
 #ifdef INTR_DEBUG
-	add	r0, pc, #Ldbg_str - . - 8
+	adr	r0, dbg_str
 	mov	r1, #3
 	ldr	r2, [r10, #(SAIPIC_MR)]
 	bl	_C_LABEL(printf)
@@ -310,7 +309,7 @@ ENTRY(irq_setmasks)
 	ldr	r2, [r2]
 	ldr	r2, [r0, r2, lsl #2]
 
-	ldr	r0, [pc, #_C_LABEL(saipic_base) - . - 8]
+	ldr	r0, _C_LABEL(saipic_base)
 	str	r2, [r0, #(SAIPIC_MR)]	/* Set mask register */
 
 	/* Restore old cpsr and exit */

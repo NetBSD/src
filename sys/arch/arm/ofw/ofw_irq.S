@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.1 2002/02/06 21:30:26 thorpej Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.2 2002/10/14 22:32:52 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -147,8 +147,8 @@ ASENTRY_NP(irq_entry)
 
 	/* Now we're in IRQ mode. */
 	/* Restore contents of ofw_ticktmp. */
-	add	r0, pc, #(Lofwirqstk - . - 8)	/* Bummer!  Mitch hasn't left me a stack. */
-	ldr	sp, [r0]			/* I'll use my own for now... */
+	adr	r0, Lofwirqstk    /* Bummer!  Mitch hasn't left me a stack. */
+	ldr	sp, [r0]		/* I'll use my own for now... */
 	ldr	r0, Lofw_ticktmp	/* r0 now points to ofw_ticktmp[0] */
 	ldr	r1, [r0], #(4*3)	/* skip over saved {r0, r1} */
 	msr	spsr_all, r1		/* restore spsr */
@@ -250,7 +250,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, [pc, #Lirqhandlers - . - 8]
+	ldr	r7, Lirqhandlers
         mov	r9, #0x00000001
 
 irqloop:
@@ -285,13 +285,12 @@ irqloop:
 #endif	/* IRQSTATS */
 
 irqchainloop:
-	add	lr, pc, #nextinchain - . - 8	/* return address */
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame */
+	mov	lr, pc			/* return address */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
-nextinchain:
 	teq	r0, #0x00000001		/* Was the irq serviced ? */
 	beq	irqdone
 
@@ -524,7 +523,7 @@ _C_LABEL(dotickgrovelling):
 	str	r5, [r0, #(4*14)]		/* plug sp */
 	str	r4, [r0, #(4*15)]		/* plug lr */
 
-	ldr	r1, [pc, #(Lirq_entry - . - 8)]
+	ldr	r1, Lirq_entry
 	str	r1, [r0, #(4*16)]		/* plug pc */
 
 	ldmfd	sp!, {r1-r5}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.23 2002/10/13 14:54:48 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.24 2002/10/14 22:32:50 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -754,12 +754,11 @@ ENTRY(proc_trampoline)
 #ifdef MULTIPROCESSOR
 	bl	_C_LABEL(proc_trampoline_mp)
 #endif
-	add	lr, pc, #(.Ltrampoline_return - . - 8)
 	mov	r0, r5
 	mov	r1, sp
+	mov	lr, pc
 	mov	pc, r4
 
-.Ltrampoline_return:
 	/* Kill irq's */
         mrs     r0, cpsr
         orr     r0, r0, #(I32_bit)

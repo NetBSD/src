@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_start.S,v 1.3 2002/04/26 18:01:21 thorpej Exp $	*/
+/*	$NetBSD: iq80310_start.S,v 1.4 2002/10/14 22:32:53 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -75,7 +75,7 @@ _C_LABEL(iq80310_start):
 	/*
 	 * Step 1: Map the entire address space VA==PA.
 	 */
-	add	r0, pc, #(Ltable - . - 8)
+	adr	r0, Ltable
 	ldr	r0, [r0]			/* r0 = &l1table */
 
 	mov	r3, #(L1_S_AP(AP_KRW))
@@ -91,7 +91,7 @@ _C_LABEL(iq80310_start):
 	/*
 	 * Step 2: Map VA 0xc0000000->0xc3ffffff to PA 0xa0000000->0xa3ffffff.
 	 */
-	add	r0, pc, #(Ltable - . - 8)	/* r0 = &l1table */
+	adr	r0, Ltable			/* r0 = &l1table */
 	ldr	r0, [r0]
 
 	mov	r3, #(L1_S_AP(AP_KRW))
@@ -106,7 +106,7 @@ _C_LABEL(iq80310_start):
 	bgt	1b
 
 	/* OK!  Page table is set up.  Give it to the CPU. */
-	add	r0, pc, #(Ltable - . - 8)
+	adr	r0, Ltable
 	ldr	r0, [r0]
 	mcr	p15, 0, r0, c2, c0, 0
 
@@ -118,8 +118,7 @@ _C_LABEL(iq80310_start):
 	mcr	p15, 0, r0, c3, c0, 0
 
 	/* Get ready to jump to the "real" kernel entry point... */
-	add	r0, pc, #(Lstart - . - 8)
-	ldr	r0, [r0]
+	ldr	r0, Lstart
 
 	/* OK, let's enable the MMU. */
 	mrc	p15, 0, r2, c1, c0, 0

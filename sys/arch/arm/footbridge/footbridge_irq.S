@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irq.S,v 1.2 2001/08/19 07:29:26 matt Exp $	*/
+/*	$NetBSD: footbridge_irq.S,v 1.3 2002/10/14 22:32:51 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -182,7 +182,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, [pc, #Lirqhandlers - . - 8]
+	ldr	r7, Lirqhandlers
 
 	/* take a copy of the irq mask so we can alter it */
 	mov	r11, r8
@@ -235,7 +235,7 @@ irqloop:
 	
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
-	addeq	lr, pc, #nextirq - . - 8   /* return address */
+	adreq	lr, nextirq		/* return address */
 	bic	r11, r11, r10		/* clear the IRQ bit */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 	
@@ -259,12 +259,11 @@ irqloop:
 
 irqchainloop:
 	ldr	r0, [r6, #(IH_ARG)]	/* Get argument pointer */
-	add	lr, pc, #nextinchain - . - 8	/* return address */
 	teq	r0, #0x00000000		/* If arg is zero pass stack frame */
 	addeq	r0, sp, #8		/* ... stack frame [XXX needs care] */
+	mov	lr, pc			/* return address */
 	ldr	pc, [r6, #(IH_FUNC)]	/* Call handler */
 
-nextinchain:
 	ldr	r6, [r6, #(IH_NEXT)]	/* fetch next handler */
 #if 0	
 	teq	r0, #0x00000001		/* Was the irq serviced ? */
