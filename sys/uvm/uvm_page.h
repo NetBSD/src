@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.34 2003/05/10 21:10:24 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.35 2003/11/03 03:58:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -422,6 +422,10 @@ PHYS_TO_VM_PAGE(pa)
 }
 
 #define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
+
+#ifdef DEBUG
+void uvm_pagezerocheck(struct vm_page *);
+#endif /* DEBUG */
 
 #endif /* _KERNEL */
 

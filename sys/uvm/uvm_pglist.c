@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.29 2003/11/01 15:18:42 yamt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.30 2003/11/03 03:58:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.29 2003/11/01 15:18:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.30 2003/11/03 03:58:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,11 @@ uvm_pglistfree(list)
 		pg->uobject = (void *)0xdeadbeef;
 		pg->offset = 0xdeadbeef;
 		pg->uanon = (void *)0xdeadbeef;
-#endif
+#endif /* DEBUG */
+#ifdef DEBUG
+		if (iszero)
+			uvm_pagezerocheck(pg);
+#endif /* DEBUG */
 		TAILQ_INSERT_TAIL(&uvm.page_free[uvm_page_lookup_freelist(pg)].
 		    pgfl_buckets[VM_PGCOLOR_BUCKET(pg)].
 		    pgfl_queues[iszero ? PGFL_ZEROS : PGFL_UNKNOWN], pg, pageq);
