@@ -1,4 +1,4 @@
-/*	$NetBSD: gpstolfp.c,v 1.1.1.1 2000/03/29 12:38:51 simonb Exp $	*/
+/*	$NetBSD: gpstolfp.c,v 1.2 2000/04/17 05:48:36 simonb Exp $	*/
 
 /*
  * /src/NTP/ntp-4/libntp/gpstolfp.c,v 4.3 1999/02/28 11:42:44 kardel RELEASE_19990228_A
@@ -9,7 +9,7 @@
  */
 #include "ntp_fp.h"
 
-#define GPSORIGIN	(unsigned)(2524953600L)  /* NTP origin - GPS origin in seconds */
+#define GPSORIGIN	(unsigned long)(2524953600UL)  /* NTP origin - GPS origin in seconds */
 #define SECSPERWEEK	(unsigned)(604800)	/* seconds per week - GPS tells us about weeks */
 #define GPSWRAP		990	/* assume week count less than this in the previous epoch */
 
