@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.57 2005/02/20 16:35:56 jdolecek Exp $
+$NetBSD: miidevs,v 1.58 2005/03/16 17:20:28 briggs Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -76,6 +76,9 @@ oui XAQTI			0x00e0ae	XaQti Corp.
 /* Some Intel 82553's use an alternative OUI. */
 oui xxINTEL			0x001f00	Intel
 
+/* Some VIA 6122's use an alternative OUI. */
+oui xxCICADA			0x00c08f	Cicada Semiconductor
+
 /* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
 oui yyAMD			0x000058	Advanced Micro Devices
 oui xxBROADCOM			0x000818	Broadcom Corporation
@@ -139,6 +142,7 @@ model BROADCOM BCM5750		0x0018 BCM5750 1000BASE-T media interface
 model CICADA CS8201		0x0001 Cicada CS8201 10/100/1000TX PHY
 model CICADA CS8201A		0x0020 Cicada CS8201 10/100/1000TX PHY
 model CICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
+model xxCICADA CS8201B		0x0021 Cicada CS8201 10/100/1000TX PHY
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
