@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.5 1999/09/08 21:45:29 jsm Exp $	*/
+/*	$NetBSD: io.c,v 1.6 2004/02/08 00:32:07 jsm Exp $	*/
 
 /*
  * io.c - input/output routines for Phantasia
@@ -157,15 +157,12 @@ getanswer(choices, def)
 	bool    def;
 {
 	int     ch;		/* input */
-	int     loop;		/* counter */
-	int     oldx, oldy;	/* original coordinates on screen */
+	volatile int	loop;	/* counter */
+	volatile int	oldx, oldy;	/* original coordinates on screen */
 
 	getyx(stdscr, oldy, oldx);
 	alarm(0);		/* make sure alarm is off */
 
-#if __GNUC__
-	(void)&loop;		/* XXX quiet gcc */
-#endif
 	for (loop = 3; loop; --loop)
 		/* try for 3 times */
 	{
