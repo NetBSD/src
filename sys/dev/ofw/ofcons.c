@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.12 2000/11/02 00:01:44 eeh Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.13 2001/05/02 10:32:10 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -97,7 +97,7 @@ ofcons_attach(parent, self, aux)
 
 static void ofcons_start __P((struct tty *));
 static int ofcons_param __P((struct tty *, struct termios *));
-static void ofcons_poll __P((void *));
+static void ofcons_pollin __P((void *));
 
 int
 ofcons_open(dev, flag, mode, p)
@@ -134,7 +134,7 @@ ofcons_open(dev, flag, mode, p)
 	
 	if (!(sc->of_flags & OFPOLL)) {
 		sc->of_flags |= OFPOLL;
-		callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
+		callout_reset(&sc->sc_poll_ch, 1, ofcons_pollin, sc);
 	}
 
 	return (*tp->t_linesw->l_open)(dev, tp);
@@ -180,6 +180,17 @@ ofcons_write(dev, uio, flag)
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
+int
+ofcons_poll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->of_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
+}
 int
 ofcons_ioctl(dev, cmd, data, flag, p)
 	dev_t dev;
@@ -261,7 +272,7 @@ ofcons_param(tp, t)
 }
 
 static void
-ofcons_poll(aux)
+ofcons_pollin(aux)
 	void *aux;
 {
 	struct ofcons_softc *sc = aux;
@@ -272,7 +283,7 @@ ofcons_poll(aux)
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*tp->t_linesw->l_rint)(ch, tp);
 	}
-	callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
+	callout_reset(&sc->sc_poll_ch, 1, ofcons_pollin, sc);
 }
 
 static int
@@ -359,7 +370,7 @@ ofcons_cnpollc(dev, on)
 	} else {
 		if (!(sc->of_flags & OFPOLL)) {
 			sc->of_flags |= OFPOLL;
-			callout_reset(&sc->sc_poll_ch, 1, ofcons_poll, sc);
+			callout_reset(&sc->sc_poll_ch, 1, ofcons_pollin, sc);
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.1 2001/02/09 19:43:23 uch Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.2 2001/05/02 10:32:10 scw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -209,6 +209,15 @@ biconsdevwrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = &biconsdev_tty[0];
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+
+int
+biconsdevpoll(dev_t dev, int events, struct proc *p)
+{
+	struct tty *tp = &biconsdev_tty[0];
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 

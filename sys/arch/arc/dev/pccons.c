@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.24 2001/02/17 04:27:54 tsutsui Exp $	*/
+/*	$NetBSD: pccons.c,v 1.25 2001/05/02 10:32:21 scw Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
@@ -755,6 +755,18 @@ pcwrite(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+pcpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

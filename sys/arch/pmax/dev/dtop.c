@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.54 2000/11/02 00:42:38 eeh Exp $	*/
+/*	$NetBSD: dtop.c,v 1.55 2001/05/02 10:32:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.54 2000/11/02 00:42:38 eeh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.55 2001/05/02 10:32:18 scw Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -388,6 +388,18 @@ dtopwrite(dev, uio, flag)
 
 	tp = DTOP_TTY(minor(dev));
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+dtoppoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct tty *tp;
+
+	tp = DTOP_TTY(minor(dev));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

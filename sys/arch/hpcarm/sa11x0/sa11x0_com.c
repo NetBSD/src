@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.7 2001/05/01 12:36:54 toshii Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.8 2001/05/02 10:32:23 scw Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -670,6 +670,21 @@ sacomwrite(dev, uio, flag)
 		return (EIO);
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+sacompoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct sacom_softc *sc = device_lookup(&sacom_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

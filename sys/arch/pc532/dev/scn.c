@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.46 2000/12/19 16:23:57 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.47 2001/05/02 10:32:17 scw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1239,6 +1239,18 @@ scnwrite(dev, uio, flag)
 	register struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write) (tp, uio, flag));
+}
+
+int
+scnpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	register struct scn_softc *sc = SOFTC(DEV_UNIT(dev));
+	register struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

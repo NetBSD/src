@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.53 2001/03/31 00:35:21 enami Exp $ */
+/* $NetBSD: scc.c,v 1.54 2001/05/02 10:32:12 scw Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.53 2001/03/31 00:35:21 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54 2001/05/02 10:32:12 scw Exp $");
 
 #include "opt_ddb.h"
 #ifdef alpha
@@ -736,6 +736,20 @@ sccwrite(dev, uio, flag)
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
 	tp = sc->scc_tty[SCCLINE(dev)];
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+sccpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	register struct scc_softc *sc;
+	register struct tty *tp;
+
+	sc = scc_cd.cd_devs[SCCUNIT(dev)];	/* XXX*/
+	tp = sc->scc_tty[SCCLINE(dev)];
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.13 2000/11/02 00:31:16 eeh Exp $       */
+/*      $NetBSD: pccons.c,v 1.14 2001/05/02 10:32:14 scw Exp $       */
 
 /*
  * Copyright 1997
@@ -1317,6 +1317,52 @@ pcwrite(dev_t      dev,
     
     return ((*tp->t_linesw->l_write)(tp, uio, flag));
 } /* End pcwrite() */
+
+
+
+/*
+**++
+**  FUNCTIONAL DESCRIPTION:
+**
+**      Handles a poll operation on the device.  We just
+**      locate the tty device associated with the unit specified
+**      and pass everything on to the line driver.
+**
+**  FORMAL PARAMETERS:
+**      
+**      dev    - Device identifier consisting of major and minor numbers.
+**      events - Events to poll for
+**      p      - The process performing the poll
+**
+**  IMPLICIT INPUTS:
+**
+**      pc_cd - The console driver global anchor structure containing
+**               pointers to all of the softc structures for each unit
+**               (amoung other things).
+**
+**  IMPLICIT OUTPUTS:
+**
+**      none
+**
+**  FUNCTION VALUE:
+**
+**      Returns zero on success and an errno on failure.
+**
+**  SIDE EFFECTS:
+**
+**      none
+**--
+*/
+int
+pcpoll(dev_t       dev, 
+       int         events,
+       struct poll *p)
+{
+    struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
+    struct tty      *tp = sc->sc_tty;
+    
+    return ((*tp->t_linesw->l_poll)(tp, events, p));
+} /* End pcpoll() */
 
 
 

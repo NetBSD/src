@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.15 2001/01/14 23:50:28 thorpej Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.16 2001/05/02 10:32:09 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -659,6 +659,18 @@ clmpccwrite(dev, uio, flag)
 	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+clmpccpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct clmpcc_softc *sc = device_lookup(&clmpcc_cd, CLMPCCUNIT(dev));
+	struct tty *tp = sc->sc_chans[CLMPCCCHAN(dev)].ch_tty;
+
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

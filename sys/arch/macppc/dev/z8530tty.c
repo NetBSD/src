@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.7 2000/11/02 00:37:57 eeh Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.8 2001/05/02 10:32:17 scw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -615,6 +615,18 @@ zswrite(dev, uio, flags)
 	struct tty *tp = zst->zst_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flags));
+}
+
+int
+zspoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct zstty_softc *zst = zstty_cd.cd_devs[ZSUNIT(dev)];
+	struct tty *tp = zst->zst_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.24 2000/11/13 15:20:28 minoura Exp $	*/
+/*	$NetBSD: ite.c,v 1.25 2001/05/02 10:32:21 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -453,6 +453,17 @@ itewrite(dev, uio, flag)
 	register struct tty *tp = ite_tty[UNIT(dev)];
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+itepoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	register struct tty *tp = ite_tty[UNIT(dev)];
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

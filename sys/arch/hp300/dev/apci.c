@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.10 2000/11/27 18:39:04 jdolecek Exp $	*/
+/*	$NetBSD: apci.c,v 1.11 2001/05/02 10:32:15 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -428,6 +428,18 @@ apciwrite(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+apcipoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct apci_softc *sc = apci_cd.cd_devs[APCIUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

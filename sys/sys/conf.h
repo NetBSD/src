@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.87 2001/03/26 13:05:20 lukem Exp $	*/
+/*	$NetBSD: conf.h,v 1.88 2001/05/02 10:32:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -260,17 +260,17 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_noimpl(stop,enodev), \
 	0, seltrue, dev_noimpl(mmap,enodev), 0 }
 
-/*  open, close, read, write, ioctl, stop, tty, ttpoll */
+/*  open, close, read, write, ioctl, stop, tty, poll */
 #define	cdev__tty_init(c,n,t) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_noimpl(mmap,enodev), t }
+	dev_init(c,n,tty), dev_init(c,n,poll), dev_noimpl(mmap,enodev), t }
 
-/*  open, close, read, write, ioctl, stop, tty, ttpoll, mmap */
+/*  open, close, read, write, ioctl, stop, tty, poll, mmap */
 #define	cdev__ttym_init(c,n,t) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), t }
+	dev_init(c,n,tty), dev_init(c,n,poll), dev_init(c,n,mmap), t }
 
 /* open, close, read, write, ioctl */
 #define	cdev_disk_init(c,n)	cdev__ocrwi_t_init(c,n,D_DISK)
@@ -383,7 +383,7 @@ extern struct cdevsw cdevsw[];
 	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \
 	0, seltrue, dev_noimpl(mmap,enodev) }
 
-/* open, close, read, write, ioctl, stop, tty, ttpoll, mmap */
+/* open, close, read, write, ioctl, stop, tty, poll, mmap */
 #define cdev_wsdisplay_init(c,n)	cdev__ttym_init(c,n,D_TTY)
 
 /* open, close, (read), (write), ioctl, poll, mmap -- XXX should be a map device */
@@ -405,7 +405,7 @@ extern struct cdevsw cdevsw[];
 	dev_noimpl(write,enodev), dev_init(c,n,ioctl), \
 	dev_noimpl(stop,enodev), 0, seltrue, (dev_init(c,n,mmap)) }
 
-/* open, close, read, write, ioctl, stop, tty, mmap */
+/* open, close, read, write, ioctl, stop, tty, poll, mmap */
 #define	cdev_pc_init(c,n)	cdev__ttym_init(c,n,D_TTY)
 
 /* open, close, write, ioctl */
@@ -462,6 +462,8 @@ struct linesw {
 	int	(*l_rint)	__P((int c, struct tty *tp));
 	int	(*l_start)	__P((struct tty *tp));
 	int	(*l_modem)	__P((struct tty *tp, int flag));
+	int	(*l_poll)	__P((struct tty *tp, int events,
+				     struct proc *p));
 };
 
 #ifdef _KERNEL
@@ -478,6 +480,7 @@ struct linesw *ttyldisc_lookup __P((char *name));
 #define	ttyerrio ((int (*) __P((struct tty *, struct uio *, int)))enodev)
 #define	ttyerrinput ((int (*) __P((int c, struct tty *)))enodev)
 #define	ttyerrstart ((int (*) __P((struct tty *)))enodev)
+#define	ttyerrpoll ((int (*) __P((struct tty *, int, struct proc *)))enodev)
 
 int	nullioctl __P((struct tty *, u_long, caddr_t, int, struct proc *));
 #endif

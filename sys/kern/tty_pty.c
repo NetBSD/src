@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.55 2000/11/24 03:59:08 chs Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.56 2001/05/02 10:32:08 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -384,6 +384,24 @@ ptswrite(dev, uio, flag)
 	if (tp->t_oproc == 0)
 		return (EIO);
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+/*
+ * Poll pseudo-tty.
+ */
+int
+ptspoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct pt_softc *pti = pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
+
+	if (tp->t_oproc == 0)
+		return (EIO);
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*

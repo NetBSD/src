@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.33 2001/02/01 08:59:45 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.34 2001/05/02 10:32:15 scw Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -202,6 +202,7 @@ dev_type_open(zsopen);
 dev_type_close(zsclose);
 dev_type_read(zsread);
 dev_type_write(zswrite);
+dev_type_poll(zspoll);
 dev_type_ioctl(zsioctl);
 dev_type_tty(zstty);
 
@@ -496,6 +497,25 @@ int		flags;
 	tp   = cs->cs_ttyp;
 
 	return(tp->t_linesw->l_write(tp, uio, flags));
+}
+
+int
+zspoll(dev, events, p)
+dev_t		dev;
+int		events;
+struct proc	*p;
+{
+	register struct zs_chanstate	*cs;
+	register struct zs_softc	*zi;
+	register struct tty		*tp;
+		 int			unit;
+
+	unit = ZS_UNIT(dev);
+	zi   = zs_cd.cd_devs[unit >> 1];
+	cs   = &zi->zi_cs[unit & 1];
+	tp   = cs->cs_ttyp;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.48 2001/01/22 17:18:32 ad Exp $	*/
+/*	$NetBSD: rcons.c,v 1.49 2001/05/02 10:32:18 scw Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -363,6 +363,18 @@ rconswrite(dev, uio, flag)
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
+int
+rconspoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct tty *tp;
+
+	tp = &rcons_tty [0];
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
+}
+
 struct tty *
 rconstty(dev)
         dev_t dev;
@@ -398,15 +410,6 @@ rconsstop(tp, rw)
 	int rw;
 {
 
-}
-
-int
-rconspoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	return (ttpoll(dev, events, p));
 }
 
 /*ARGSUSED*/

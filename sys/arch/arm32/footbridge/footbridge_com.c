@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com.c,v 1.6 2000/11/02 00:31:16 eeh Exp $	*/
+/*	$NetBSD: footbridge_com.c,v 1.7 2001/05/02 10:32:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Mark Brinicombe
@@ -313,6 +313,18 @@ fcomwrite(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
 	
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
+}
+
+int
+fcompoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct fcom_softc *sc = fcom_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.16 2000/11/02 00:42:40 eeh Exp $	*/
+/*	$NetBSD: kd.c,v 1.17 2001/05/02 10:32:19 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -291,6 +291,21 @@ kdwrite(dev, uio, flag)
 	tp = kd->kd_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+kdpoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct kd_softc *kd;
+	struct tty *tp;
+
+	kd = &kd_softc; 	/* XXX */
+	tp = kd->kd_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

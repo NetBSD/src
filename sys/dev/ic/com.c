@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.183 2001/01/14 23:50:28 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.184 2001/05/02 10:32:09 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -984,6 +984,21 @@ comwrite(dev, uio, flag)
 		return (EIO);
  
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+compoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
+	struct tty *tp = sc->sc_tty;
+
+	if (COM_ISALIVE(sc) == 0)
+		return (EIO);
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.55 2001/01/13 02:09:27 aymeric Exp $	*/
+/*	$NetBSD: ite.c,v 1.56 2001/05/02 10:32:12 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -530,6 +530,20 @@ itewrite(dev, uio, flag)
 
 	KDASSERT(tp);
 	return tp->t_linesw->l_write(tp, uio, flag);
+}
+
+int
+itepoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct tty *tp;
+
+	tp = getitesp(dev)->tp;
+
+	KDASSERT(tp);
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

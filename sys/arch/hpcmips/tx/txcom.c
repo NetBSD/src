@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.11 2001/01/04 05:01:59 sato Exp $ */
+/*	$NetBSD: txcom.c,v 1.12 2001/05/02 10:32:16 scw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -907,6 +907,15 @@ txcomwrite(dev_t dev, struct uio *uio, int flag)
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+txcompoll(dev_t dev, int events, struct proc *p)
+{
+	struct txcom_softc *sc = txcom_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

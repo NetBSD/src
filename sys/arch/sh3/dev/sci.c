@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.12 2001/01/14 23:50:30 thorpej Exp $ */
+/* $NetBSD: sci.c,v 1.13 2001/05/02 10:32:19 scw Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -843,6 +843,18 @@ sciwrite(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+scipoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct sci_softc *sc = sci_cd.cd_devs[SCIUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.7 2001/03/31 00:35:22 enami Exp $ */
+/* $NetBSD: siotty.c,v 1.8 2001/05/02 10:32:22 scw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.7 2001/03/31 00:35:22 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.8 2001/05/02 10:32:22 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -453,6 +453,18 @@ siowrite(dev, uio, flag)
 	struct tty *tp = sc->sc_tty;
  
 	return (*tp->t_linesw->l_write)(tp, uio, flag);
+}
+
+int
+siopoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct siotty_softc *sc = siotty_cd.cd_devs[minor(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

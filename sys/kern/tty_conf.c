@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.31 2001/02/11 01:28:47 eeh Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.32 2001/05/02 10:32:08 scw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -99,34 +99,34 @@ int	stripstart __P((struct tty *tp));
 
 struct  linesw termios_disc =
 	{ "termios", 0, ttylopen, ttylclose, ttread, ttwrite, nullioctl,
-	  ttyinput, ttstart, ttymodem };		/* 0- termios */
+	  ttyinput, ttstart, ttymodem, ttpoll };	/* 0- termios */
 struct  linesw defunct_disc =
 	{ "defunct", 1, ttynodisc, ttyerrclose, ttyerrio, ttyerrio, nullioctl,
-	  ttyerrinput, ttyerrstart, nullmodem };	/* 1- defunct */
+	  ttyerrinput, ttyerrstart, nullmodem, ttyerrpoll }; /* 1- defunct */
 #if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
 struct  linesw ntty_disc =
 	{ "ntty", 2, ttylopen, ttylclose, ttread, ttwrite, nullioctl,
-	  ttyinput, ttstart, ttymodem };		/* 2- old NTTYDISC */
+	  ttyinput, ttstart, ttymodem, ttpoll };	/* 2- old NTTYDISC */
 #endif
 #if NTB > 0
 struct  linesw table_disc =
 	{ "tablet", 3, tbopen, tbclose, tbread, ttyerrio, tbtioctl,
-	  tbinput, ttstart, nullmodem };		/* 3- TABLDISC */
+	  tbinput, ttstart, nullmodem, ttyerrpoll };	/* 3- TABLDISC */
 #endif
 #if NSL > 0
 struct  linesw slip_disc =
 	{ "slip", 4, slopen, slclose, ttyerrio, ttyerrio, sltioctl,
-	  slinput, slstart, nullmodem };		/* 4- SLIPDISC */
+	  slinput, slstart, nullmodem, ttyerrpoll };	/* 4- SLIPDISC */
 #endif
 #if NPPP > 0
 struct  linesw ppp_disc =
 	{ "ppp", 5, pppopen, pppclose, pppread, pppwrite, ppptioctl,
-	  pppinput, pppstart, ttymodem };		/* 5- PPPDISC */
+	  pppinput, pppstart, ttymodem, ttpoll };	/* 5- PPPDISC */
 #endif
 #if NSTRIP > 0
 struct  linesw strip_disc =
 	{ "strip", 6, stripopen, stripclose, ttyerrio, ttyerrio, striptioctl,
-	  stripinput, stripstart, nullmodem };		/* 6- STRIPDISC */
+	  stripinput, stripstart, nullmodem, ttyerrpoll }; /* 6- STRIPDISC */
 #endif
 
 /*
@@ -183,6 +183,14 @@ ttyldisc_add(disc, no)
 
 	if (linesw == NULL)
 		panic("adding uninitialized linesw");
+
+#ifdef DEBUG
+	/*
+	 * XXX: For the benefit of LKMs
+	 */
+	if (disc->l_poll == NULL)
+		panic("line discipline must now provide l_poll() entry point");
+#endif
 
 	if (no == -1) {
 		/* Hunt for any slot */

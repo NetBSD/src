@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.46 2000/11/27 15:28:41 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.47 2001/05/02 10:32:16 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -414,6 +414,18 @@ itewrite(dev, uio, flag)
 	struct tty *tp = sc->sc_data->tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+int
+itepoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct ite_softc *sc = ite_cd.cd_devs[ITEUNIT(dev)];
+	struct tty *tp = sc->sc_data->tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *

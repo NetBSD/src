@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.21 2000/11/02 00:01:45 eeh Exp $	*/
+/*	$NetBSD: qd.c,v 1.22 2001/05/02 10:32:11 scw Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -1553,35 +1553,7 @@ qdpoll(dev, events, p)
 		* this is a tty device
 		*/
 		tp = qd_tty[minor_dev];
-	   
-		if (events & (POLLIN | POLLRDNORM))  {
-		     /* This is ttnread.  It's static and I don't feel
-		      * like altering platform independant parts of NetBSD
-		      */
-		     int nread;
-		     /* if (tp->t_lflag & PENDIN)
-				     ttypend(tp); */
-		     nread = tp->t_canq.c_cc;
-		     if (!(tp->t_lflag & ICANON))  {
-			     nread += tp->t_rawq.c_cc;
-			     if (nread < tp->t_cc[VMIN] && !tp->t_cc[VTIME])
-				     nread = 0;
-		     }
-		     if (nread > 0) 
-			     revents |= events & (POLLIN | POLLRDNORM);
-		}
-	   
-		if (events & (POLLOUT | POLLWRNORM))
-			if (tp->t_outq.c_cc <= tp->t_lowat)
-				revents |= events & (POLLOUT | POLLWRNORM);
-	   
-		if (revents == 0)  {
-			if (events & (POLLIN | POLLRDNORM))
-				selrecord(p, &tp->t_rsel);
-	  
-			if (events & (POLLOUT | POLLWRNORM))
-				selrecord(p, &tp->t_wsel);
-		}
+		revents = (*tp->t_linesw->l_poll)(tp, events, p);
 	}
 	   
 	splx(s);

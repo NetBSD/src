@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.21 2001/01/21 16:55:11 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.22 2001/05/02 10:32:09 scw Exp $	*/
 
 /*
  * cy.c
@@ -449,6 +449,24 @@ cywrite(dev_t dev, struct uio *uio, int flag)
 	tp = cy->cy_tty;
 
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+}
+
+/*
+ * Poll routine
+ */
+int
+cypoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct cy_port *cy;
+	struct tty *tp;
+
+	cy = CY_PORT(dev);
+	tp = cy->cy_tty;
+ 
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 /*

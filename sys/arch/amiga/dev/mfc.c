@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.22 2001/01/13 02:09:27 aymeric Exp $ */
+/*	$NetBSD: mfc.c,v 1.23 2001/05/02 10:32:13 scw Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -625,6 +625,20 @@ mfcswrite(dev, uio, flag)
 	if (tp == NULL)
 		return(ENXIO);
 	return tp->t_linesw->l_write(tp, uio, flag);
+}
+
+int
+mfcspoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	struct mfcs_softc *sc = mfcs_cd.cd_devs[dev & 31];
+	struct tty *tp = sc->sc_tty;
+
+	if (tp == NULL)
+		return(ENXIO);
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 struct tty *
