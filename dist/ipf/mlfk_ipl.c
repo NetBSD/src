@@ -1,4 +1,4 @@
-/*	$NetBSD: mlfk_ipl.c,v 1.1.1.1 2000/05/03 10:55:53 veego Exp $	*/
+/*	$NetBSD: mlfk_ipl.c,v 1.1.1.1.4.1 2002/02/09 16:56:10 he Exp $	*/
 
 /*
  * Copyright 1999 Guido van Rooij.  All rights reserved.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: mlfk_ipl.c,v 2.1.2.1 2000/04/26 12:17:24 darrenr Exp
+ * Id: mlfk_ipl.c,v 2.1.2.7 2001/08/27 21:14:04 darrenr Exp
  */
 
 
@@ -39,6 +39,13 @@
 #include <net/if.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#if (__FreeBSD_version >= 199511)
+# include <net/route.h>
+# include <netinet/ip_var.h>
+# include <netinet/tcp.h>
+# include <netinet/tcpip.h>
+#endif
 
 
 #include <netinet/ipl.h>
@@ -48,6 +55,7 @@
 #include <netinet/ip_nat.h>
 #include <netinet/ip_auth.h>
 #include <netinet/ip_frag.h>
+#include <netinet/ip_proxy.h>
 
 static dev_t ipf_devs[IPL_LOGMAX + 1];
 
@@ -66,10 +74,16 @@ SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcptimeout, CTLFLAG_RW,
 	   &fr_tcptimeout, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcpclosed, CTLFLAG_RW,
 	   &fr_tcpclosed, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_tcphalfclosed, CTLFLAG_RW,
+	   &fr_tcphalfclosed, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_udptimeout, CTLFLAG_RW,
 	   &fr_udptimeout, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_udpacktimeout, CTLFLAG_RW,
+	   &fr_udpacktimeout, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_icmptimeout, CTLFLAG_RW,
 	   &fr_icmptimeout, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_icmpacktimeout, CTLFLAG_RW,
+	   &fr_icmpacktimeout, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_defnatage, CTLFLAG_RW,
 	   &fr_defnatage, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_ipfrttl, CTLFLAG_RW,
@@ -84,6 +98,12 @@ SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_authused, CTLFLAG_RD,
 	   &fr_authused, 0, "");
 SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_defaultauthage, CTLFLAG_RW,
 	   &fr_defaultauthage, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_chksrc, CTLFLAG_RW, &fr_chksrc, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, ippr_ftp_pasvonly, CTLFLAG_RW,
+	   &ippr_ftp_pasvonly, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_minttl, CTLFLAG_RW, &fr_minttl, 0, "");
+SYSCTL_INT(_net_inet_ipf, OID_AUTO, fr_minttllog, CTLFLAG_RW,
+	   &fr_minttllog, 0, "");
 
 #define CDEV_MAJOR 79
 static struct cdevsw ipl_cdevsw = {
