@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.4 2002/11/23 17:35:06 wiz Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.5 2002/11/26 23:54:10 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.4 2002/11/23 17:35:06 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.5 2002/11/26 23:54:10 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.4 2002/11/23 17:35:06 wiz Exp $");
 #include <compat/mach/mach_exec.h>
 
 #include <compat/darwin/darwin_exec.h>
+#include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscall.h>
 
 extern char sigcode[], esigcode[];
@@ -82,7 +83,7 @@ const struct emul emul_darwin = {
 #else
 	NULL,
 #endif
-	sendsig,
+	darwin_sendsig,
 	trapsignal,
 	sigcode,
 	esigcode,
