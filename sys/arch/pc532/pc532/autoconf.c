@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  *
- *	$Id: autoconf.c,v 1.3 1994/02/23 07:59:17 phil Exp $
+ *	$Id: autoconf.c,v 1.4 1994/03/01 22:23:15 phil Exp $
  */
 
 /*
@@ -122,7 +122,7 @@ swapconf()
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 
 static	char devname[][2] = {
-	's','d',	/* 0 = as */
+	's','d',	/* 0 = sd */
 	's','w',	/* 1 = sw */
 	's','t',	/* 2 = st */
 	'r','d',	/* 3 = rd */
@@ -139,12 +139,7 @@ static	char devname[][2] = {
 setroot()
 {
 #if 1
-#ifdef RAMD_SIZE
-	rootdev = makedev(3, 0x0);  /* Ram disk is root! */
 	boothowto |= RB_SINGLE;
-#else
-	rootdev = makedev(0, 0x4b); /* adr 2, lun 1, dev 3 */
-#endif
 #else
 	int  majdev, mindev, unit, part, adaptor;
 	dev_t temp, orootdev;
