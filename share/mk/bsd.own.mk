@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.413.2.1 2004/06/14 18:05:53 tron Exp $
+#	$NetBSD: bsd.own.mk,v 1.413.2.2 2004/06/17 08:09:44 tron Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -234,6 +234,7 @@ TOOL_ROFF_RAW=		${TOOL_GROFF} -Z
 TOOL_RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
 TOOL_SOELIM=		${TOOLDIR}/bin/${_TOOL_PREFIX}soelim
 TOOL_STAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}stat
+TOOL_SPARKCRC=		${TOOLDIR}/bin/${_TOOL_PREFIX}sparkcrc
 TOOL_SUNLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}sunlabel
 TOOL_TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
 TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
