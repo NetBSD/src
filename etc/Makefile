@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 1997/01/09 06:38:16 thorpej Exp $
+#	$NetBSD: Makefile,v 1.62 1997/01/16 23:10:43 perry Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
 
 TZDIR=		/usr/share/zoneinfo
@@ -98,6 +98,7 @@ distribution: distrib-dirs
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    fstab.* ${DESTDIR}/etc)
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
+	(cd ../usr.bin/mail; ${MAKE} distribution)
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 
 
