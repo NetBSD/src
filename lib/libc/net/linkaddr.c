@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)linkaddr.c	5.2 (Berkeley) 2/24/91";
+static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -82,20 +82,32 @@ link_addr(addr, sdl)
 		switch (state /* | INPUT */) {
 		case NAMING | DIGIT:
 		case NAMING | LETTER:
-			*cp++ = addr[-1]; continue;
+			*cp++ = addr[-1];
+			continue;
 		case NAMING | DELIM:
-			state = RESET; sdl->sdl_nlen = cp - sdl->sdl_data; continue;
+			state = RESET;
+			sdl->sdl_nlen = cp - sdl->sdl_data;
+			continue;
 		case GOTTWO | DIGIT:
-			*cp++ = byte; /*FALLTHROUGH*/
+			*cp++ = byte;
+			/* FALLTHROUGH */
 		case RESET | DIGIT:
-			state = GOTONE; byte = new; continue;
+			state = GOTONE;
+			byte = new;
+			continue;
 		case GOTONE | DIGIT:
-			state = GOTTWO; byte = new + (byte << 4); continue;
+			state = GOTTWO;
+			byte = new + (byte << 4);
+			continue;
 		default: /* | DELIM */
-			state = RESET; *cp++ = byte; byte = 0; continue;
+			state = RESET;
+			*cp++ = byte;
+			byte = 0;
+			continue;
 		case GOTONE | END:
 		case GOTTWO | END:
-			*cp++ = byte; /* FALLTHROUGH */
+			*cp++ = byte;
+			/* FALLTHROUGH */
 		case RESET | END:
 			break;
 		}
@@ -118,16 +130,20 @@ link_ntoa(sdl)
 	register char *out = obuf; 
 	register int i;
 	register u_char *in = (u_char *)LLADDR(sdl);
-	u_char *inlim = in + sdl->sdl_nlen;
+	u_char *inlim = in + sdl->sdl_alen;
 	int firsttime = 1;
 
 	if (sdl->sdl_nlen) {
 		bcopy(sdl->sdl_data, obuf, sdl->sdl_nlen);
 		out += sdl->sdl_nlen;
-		*out++ = ':';
+		if (sdl->sdl_alen)
+			*out++ = ':';
 	}
 	while (in < inlim) {
-		if (firsttime) firsttime = 0; else *out++ = '.';
+		if (firsttime)
+			firsttime = 0;
+		else
+			*out++ = '.';
 		i = *in++;
 		if (i > 0xf) {
 			out[1] = hexlist[i & 0xf];
@@ -138,5 +154,5 @@ link_ntoa(sdl)
 			*out++ = hexlist[i];
 	}
 	*out = 0;
-	return(obuf);
+	return (obuf);
 }
