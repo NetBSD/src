@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusreg.h,v 1.3 2002/03/01 11:49:06 martin Exp $	*/
+/*	$NetBSD: ebusreg.h,v 1.4 2002/03/21 04:15:29 uwe Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -119,12 +119,8 @@ struct ebus_interrupt_map_mask {
 #define EBUS_DMAC_DBCR	8	/* byte count register */
 #define EBUS_DMAC_DNBR	8	/* next byte register */
 
-/* same registers as struct */
-struct ebus_dmac_reg {
-	u_int32_t dcsr;		/* control/status register */
-	u_int32_t dacr;		/* address count register */
-	u_int32_t dbcr;		/* byte count register */
-};
+#define EBUS_DMAC_SIZE	12
+
 
 /*
  * DCSR bits (PCIO manual, Table 7-23, pp 134-135)
