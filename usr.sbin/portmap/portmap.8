@@ -1,4 +1,4 @@
-.\"	$NetBSD: portmap.8,v 1.8 1999/08/02 16:05:40 bouyer Exp $
+.\"	$NetBSD: portmap.8,v 1.9 1999/09/13 19:04:35 mason Exp $
 .\"
 .\" Copyright (c) 1987 Sun Microsystems
 .\" Copyright (c) 1990, 1991, 1993
@@ -111,7 +111,7 @@ and causes errors and debugging information
 to be printed to the standard error output.
 .It Fl i
 .Dq insecure
-mode. Allows to call PMAPPROC_SET and PMAPPROC_UNSET from any host. Normally
+mode. Allows calls to PMAPPROC_SET and PMAPPROC_UNSET from any host. Normally
 .Nm
 accepts these requests only from the loopback interface for security reasons.
 This change is necessary for programs that were compiled with earlier
