@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.h,v 1.1 2002/06/26 23:13:11 christos Exp $ */
+/* $NetBSD: wsmoused.h,v 1.2 2002/12/25 19:13:53 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,6 +52,10 @@ struct mouse {
 	int cursor;
 	int selecting;
 	int disabled;
+
+	/* Button configuration */
+	int but_select;
+	int but_paste;
 };
 
 /* Prototypes for wsmoused.c */
