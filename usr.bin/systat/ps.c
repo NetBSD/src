@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.7 1999/12/05 18:54:34 fredb Exp $  */
+/*      $NetBSD: ps.c,v 1.8 1999/12/16 04:40:03 jwise Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -12,10 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -46,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.7 1999/12/05 18:54:34 fredb Exp $");
+__RCSID("$NetBSD: ps.c,v 1.8 1999/12/16 04:40:03 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
