@@ -1,6 +1,4 @@
-/*	$NetBSD: usbdevs_data.h,v 1.17 1999/01/07 02:18:10 augustss Exp $	*/
-
-/*	FreeBSD $Id: usbdevs_data.h,v 1.17 1999/01/07 02:18:10 augustss Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.18 1999/01/07 22:30:36 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
