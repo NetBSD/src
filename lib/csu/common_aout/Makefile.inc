@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.3 1999/03/19 22:50:20 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/01/22 19:37:57 mycroft Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CPPFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/../common_aout
 OBJS+=		crt0.o gcrt0.o scrt0.o
 SRCS=		crt0.c
 
-all: ${OBJS}
+realall: ${OBJS}
 
 crt0.o: ${SRCS}
 	@echo "${COMPILE.c} -DCRT0 -DDYNAMIC ${.CURDIR}/${SRCS} -o ${.TARGET}"
