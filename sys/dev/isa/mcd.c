@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.37 1995/04/17 12:09:20 cgd Exp $	*/
+/*	$NetBSD: mcd.c,v 1.38 1995/04/27 01:46:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -841,7 +841,7 @@ mcd_getresult(sc, res)
 	if (sc->debug)
 		printf(" succeeded\n");
 
-#if 1
+#ifdef MCDDEBUG
 	delay(10);
 	while ((inb(sc->iobase + MCD_XFER) & MCD_XF_STATUSUNAVAIL) == 0) {
 		x = inb(sc->iobase + MCD_STATUS);
