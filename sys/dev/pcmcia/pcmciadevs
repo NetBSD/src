@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.76 2000/02/03 08:25:55 enami Exp $
+$NetBSD: pcmciadevs,v 1.77 2000/02/09 13:07:45 enami Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -169,6 +169,9 @@ product TDK XIR_CE_10		0x0108 Xircom CreditCard Ethernet
 product TDK XIR_CEM_10		0x110a Xircom CreditCard Ethernet + Modem
 product TDK XIR_PS_CE2_10	0x010b Xircom CreditCard CE2 Ethernet
 product TDK XIR_CE3_10_100	0x010a Xircom CreditCard CE3 10/100 Ethernet
+/* conflicts with above
+ * product TDK XIR_CFE_10	0x010a Xircom CompactCard CFE-10
+ */
 product TDK XIR_CNW_801		0x0801 Xircom CreditCard Netwave (Canada)
 product TDK XIR_CNW_802		0x0802 Xircom CreditCard Netwave (US)
 
@@ -249,3 +252,4 @@ product EPSON EEN10B		{ "Seiko&spEpson&spCorp.", "Ethernet", "P/N:&spEEN10B&spRe
 product EXP EXPMULTIMEDIA	{ "EXP&sp&sp&sp", "PnPIDE", "F1", NULL } EXP IDE/ATAPI DVD Card
 product MELCO WLI_PCM		{ "AMD", "Am79C930", NULL, NULL } Melco WLI-PCM
 product ICOM SL200		{ "Icom", "SL-200", NULL, NULL } Icom SL-200
+product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", "1.00" } Xircom CompactCard CFE-10
