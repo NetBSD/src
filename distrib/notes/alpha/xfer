@@ -1,13 +1,13 @@
 Installation is supported from several media types, including:
 
-	FTP
-	Remote NFS partition
-	CD-ROM
+        FTP
+        Remote NFS partition
+        CD-ROM
 
 No matter which installation medium you choose, you'll need to have
 either a 1.44 MB floppy disk (if your Alpha has a floppy drive to
-boot from) or you'll have to set up an NFS server to boot from as
-described later in this document.
+boot from) or you'll have to set up a server with BOOTP, TFTP and
+NFS to boot from as described later in this document.
 
 If you are using a UN*X-like system to write the floppy images to
 disks, you should use the "dd" command to copy the file system image
@@ -32,46 +32,53 @@ Obviously, the steps necessary to prepare the distribution sets
 for installation depend on which installation medium you choose.
 The steps for the various media are outlined below.
 
-To install NetBSD using NFS, you must do the following:
+To install NetBSD using NFS to get the installation sets, you must
+do the following:
 
-	Place the NetBSD distribution sets you wish to install into a
-	directory on an NFS server, and make that directory mountable
-	by the machine on which you are installing or upgrading NetBSD.
-	This will probably require modifying the /etc/exports file on
-	of the NFS server and resetting its mount daemon (mountd).
-	(Both of these actions will probably require superuser
-	privileges on the server.)
+        Place the NetBSD distribution sets you wish to install into a
+        directory on an NFS server, and make that directory mountable
+        by the machine on which you are installing or upgrading NetBSD.
+        This will probably require modifying the /etc/exports file on
+        of the NFS server and resetting its mount daemon (mountd).
+        (Both of these actions will probably require superuser
+        privileges on the server.)
 
-	You need to know the the numeric IP address of the NFS server,
-	and, if the server is not on a network directly connected to
-	the machine on which you're installing or upgrading NetBSD,
-	you need to know the numeric IP address of the router closest
-	to the NetBSD machine.  Finally, you need to know the numeric
-	IP address of the NetBSD machine itself. The install
-	program will ask you to provide this information to be able
-	to access the sets.
+        You need to know the the numeric IP address of the NFS server,
+        and, if the server is not on a network directly connected to
+        the machine on which you're installing or upgrading NetBSD,
+        you need to know the numeric IP address of the router closest
+        to the NetBSD machine.  Finally, you need to know the numeric
+        IP address of the NetBSD machine itself. The install
+        program will ask you to provide this information to be able
+        to access the sets.
 
-	Once the NFS server is set up properly and you have the
-	information mentioned above, you can start the actual
-	installation process.
+        Once the NFS server is set up properly and you have the
+        information mentioned above, you can start the actual
+        installation process.
 
-To install NetBSD by using FTP to get the installation
-sets, you must do the following:
+To install NetBSD by using FTP to get the installation sets, you
+must do the following:
 
-	The preparations for this installation method are easy;
-	all you make sure that there's some FTP site from which
-	you can retrieve the NetBSD distribution when you're about
-	to install. You need to know the numeric IP address of that
-	site, and, if it's not on a network directly connected to
-	the machine on which you're installing or upgrading NetBSD,
-	you need to know the numeric IP address of the router
-	closest to the NetBSD machine.  Finally, you need to know
-	the numeric IP address of the NetBSD machine itself. The
-	install program will ask you to provide this information
-	to be able to access the sets via ftp.
+        The preparations for this installation method are easy;
+        all you make sure that there's some FTP site from which
+        you can retrieve the NetBSD distribution when you're about
+        to install. You need to know the numeric IP address of that
+        site, and, if it's not on a network directly connected to
+        the machine on which you're installing or upgrading NetBSD,
+        you need to know the numeric IP address of the router
+        closest to the NetBSD machine.  Finally, you need to know
+        the numeric IP address of the NetBSD machine itself. The
+        install program will ask you to provide this information
+        to be able to access the sets via ftp.
 
-	Once you have this information, you can proceed to the actual
-	installation.
+        Once you have this information, you can proceed to the actual
+        installation.
+
+To install NetBSD by using a CD-ROM to get the installation sets,
+you must do the following:
+
+        Have a CD-ROM with the installation sets on it, and a CD-ROM
+        drive on your machine.
 
 If you are upgrading NetBSD, you also have the option of installing
 NetBSD by putting the new distribution sets somewhere in your existing
@@ -92,5 +99,5 @@ following:
         the "etc" distribution; the "etc" distribution contains system
         configuration files that you should review and update by hand.
 
-	Once you have done this, you can proceed to the next step in
-	the upgrade process, actually upgrading your system.
+        Once you have done this, you can proceed to the next step in
+        the upgrade process, actually upgrading your system.
