@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.164 2001/09/10 21:19:10 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.165 2001/11/07 23:25:03 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -121,6 +121,8 @@ void ser_outintr __P((void));
 #if NFD > 0
 void fdintr __P((int));
 #endif
+
+volatile unsigned int interrupt_depth = 0;
 
 /*
  * patched by some devices at attach time (currently, only the coms)

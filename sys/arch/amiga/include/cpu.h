@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 2001/05/30 12:28:39 mrg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.53 2001/11/07 23:25:04 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,6 +81,7 @@ extern struct cpu_info cpu_info_store;
 #define	cpu_swapout(p)			/* nothing */
 #define	cpu_number()			0
 
+extern volatile unsigned int interrupt_depth;
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.  One the hp300, we use
@@ -96,13 +97,7 @@ struct clockframe {
 /*#define	CLKF_BASEPRI(framep)	(((framep)->sr & PSL_IPL) == 0)*/
 #define	CLKF_BASEPRI(framep)	(0)
 #define	CLKF_PC(framep)		((framep)->pc)
-#if 0
-/* We would like to do it this way... */
-#define	CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
-#else
-/* but until we start using PSL_M, we have to do this instead */
-#define	CLKF_INTR(framep)	(0)	/* XXX */
-#endif
+#define	CLKF_INTR(framep)	(interrupt_depth > 1)
 
 
 /*
