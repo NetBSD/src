@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_input.c,v 1.20 2003/08/07 16:33:04 agc Exp $	*/
+/*	$NetBSD: pk_input.c,v 1.21 2004/04/18 19:11:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.20 2003/08/07 16:33:04 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_input.c,v 1.21 2004/04/18 19:11:39 matt Exp $");
 
 #include "opt_hdlc.h"
 #include "opt_llc.h"
@@ -158,10 +158,9 @@ pk_newlink(ia, llnext)
 	 * Allocate a network control block structure
 	 */
 	size = sizeof(struct pkcb);
-	pkp = (struct pkcb *) malloc(size, M_PCB, M_WAITOK);
+	pkp = (struct pkcb *) malloc(size, M_PCB, M_WAITOK|M_ZERO);
 	if (pkp == 0)
 		return ((struct pkcb *) 0);
-	bzero((caddr_t) pkp, size);
 	pkp->pk_lloutput = pp->pr_output;
 	pkp->pk_llctlinput = pp->pr_ctlinput;
 	pkp->pk_xcp = xcp;
@@ -269,9 +268,8 @@ pk_resize(pkp)
 		unsigned        size;
 		pkp->pk_maxlcn = xcp->xc_maxlcn;
 		size = (pkp->pk_maxlcn + 1) * sizeof(struct pklcd *);
-		pkp->pk_chan = malloc(size, M_IFADDR, M_WAITOK);
+		pkp->pk_chan = malloc(size, M_IFADDR, M_WAITOK|M_ZERO);
 		if (pkp->pk_chan) {
-			bzero((caddr_t) pkp->pk_chan, size);
 			/*
 			 * Allocate a logical channel descriptor for lcn 0
 			 */

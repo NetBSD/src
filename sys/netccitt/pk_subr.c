@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.25 2004/04/17 15:18:53 christos Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.26 2004/04/18 19:11:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.25 2004/04/17 15:18:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_subr.c,v 1.26 2004/04/18 19:11:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,9 +138,8 @@ pk_attach(so)
 	struct pklcd *lcp;
 	int    error = ENOBUFS;
 
-	MALLOC(lcp, struct pklcd *, sizeof(*lcp), M_PCB, M_NOWAIT);
+	MALLOC(lcp, struct pklcd *, sizeof(*lcp), M_PCB, M_NOWAIT|M_ZERO);
 	if (lcp) {
-		bzero((caddr_t) lcp, sizeof(*lcp));
 		insque(&lcp->lcd_q, &pklcd_q);
 		lcp->lcd_state = READY;
 		lcp->lcd_send = pk_output;
