@@ -3106,7 +3106,19 @@ s_common (ignore)
 
 	  old_sec = now_seg;
 	  old_subsec = now_subseg;
-	  align = temp;
+	  if (temp)
+	    {
+	      /* convert to a power of 2 alignment */
+	      for (align = 0; (temp & 1) == 0; temp >>= 1, ++align);
+	      if (temp != 1)
+		{
+		  as_bad ("Alignment not a power of 2");
+		  ignore_rest_of_line ();
+		  return;
+		}			/* not a power of two */
+	    }
+	  else
+	    align = 0;
 	  record_alignment (bss_section, align);
 	  subseg_set (bss_section, 0);
 	  if (align)
