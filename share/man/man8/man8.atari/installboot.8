@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.9 2001/11/24 16:38:07 perry Exp $
+.\"	$NetBSD: installboot.8,v 1.10 2001/12/26 01:29:10 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,6 +120,14 @@ boot programs in the bootblock area on
 .Bd -literal -offset indent
 installboot sd0
 .Ed
+.Sh SEE ALSO
+.Xr bootpref 8 ,
+.Xr disklabel 8
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 1.1
 .Sh BUGS
 .Nm
 knows too much about kernel internal details, forcing it to
@@ -135,11 +143,3 @@ Except for installation of the bootcode on floppy,
 .Nm
 automatically sets the boot preference in NVRAM to
 .Nx .
-.Sh SEE ALSO
-.Xr bootpref 8
-.Xr disklabel 8
-.Sh HISTORY
-The
-.Nm
-command first appeared in
-.Nx 1.1
