@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ntoa.c,v 1.6 1997/07/17 18:48:01 thorpej Exp $	*/
+/*	$NetBSD: ns_ntoa.c,v 1.7 1997/07/18 04:55:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ns_ntoa.c,v 1.6 1997/07/17 18:48:01 thorpej Exp $");
+__RCSID("$NetBSD: ns_ntoa.c,v 1.7 1997/07/18 04:55:59 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,12 +53,12 @@ ns_ntoa(addr)
 	struct ns_addr addr;
 {
 	static char obuf[40];
-	union { union ns_net net_e; u_long long_e; } net;
-	u_short port = htons(addr.x_port);
+	union { union ns_net net_e; u_int32_t long_e; } net;
+	u_int16_t port = htons(addr.x_port);
 	register char *cp;
 	char *cp2;
-	register u_char *up = addr.x_host.c_host;
-	u_char *uplim = up + 6;
+	register u_int8_t *up = addr.x_host.c_host;
+	u_int8_t *uplim = up + 6;
 
 	net.net_e = addr.x_net;
 	sprintf(obuf, "%x", ntohl(net.long_e));
