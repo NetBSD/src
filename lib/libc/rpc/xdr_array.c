@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_array.c,v 1.12.8.1 2002/07/31 00:30:38 lukem Exp $	*/
+/*	$NetBSD: xdr_array.c,v 1.12.8.2 2002/08/02 00:49:52 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_array.c 1.10 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_array.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_array.c,v 1.12.8.1 2002/07/31 00:30:38 lukem Exp $");
+__RCSID("$NetBSD: xdr_array.c,v 1.12.8.2 2002/08/02 00:49:52 lukem Exp $");
 #endif
 #endif
 
@@ -87,14 +87,13 @@ xdr_array(xdrs, addrp, sizep, maxsize, elsize, elproc)
 	u_int nodesize;
 
 	/* like strings, arrays are really counted arrays */
-	if (!xdr_u_int(xdrs, sizep)) {
+	if (!xdr_u_int(xdrs, sizep))
 		return (FALSE);
-	}
+
 	c = *sizep;
-	if ((c > maxsize && UINT_MAX/elsize < c) &&
-	    (xdrs->x_op != XDR_FREE)) {
+	if ((c > maxsize || UINT_MAX/elsize < c) &&
+	    (xdrs->x_op != XDR_FREE))
 		return (FALSE);
-	}
 	nodesize = c * elsize;
 
 	/*
