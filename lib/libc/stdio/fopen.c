@@ -1,4 +1,4 @@
-/*	$NetBSD: fopen.c,v 1.8 1999/09/20 04:39:27 lukem Exp $	*/
+/*	$NetBSD: fopen.c,v 1.9 2000/01/15 01:11:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fopen.c,v 1.8 1999/09/20 04:39:27 lukem Exp $");
+__RCSID("$NetBSD: fopen.c,v 1.9 2000/01/15 01:11:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: fopen.c,v 1.8 1999/09/20 04:39:27 lukem Exp $");
 #include <sys/stat.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
 #include "local.h"
@@ -67,9 +68,19 @@ fopen(file, mode)
 		return (NULL);
 	if ((fp = __sfp()) == NULL)
 		return (NULL);
-	if ((f = open(file, oflags, DEFFILEMODE)) < 0) {
-		fp->_flags = 0;			/* release */
-		return (NULL);
+	if ((f = open(file, oflags, DEFFILEMODE)) < 0)
+		goto release;
+	if (oflags & O_NONBLOCK) {
+		struct stat st;
+		if (fstat(f, &st) == -1) {
+			close(f);
+			goto release;
+		}
+		if (!S_ISREG(st.st_mode)) {
+			errno = EFTYPE;
+			close(f);
+			goto release;
+		}
 	}
 	fp->_file = f;
 	fp->_flags = flags;
@@ -90,4 +101,7 @@ fopen(file, mode)
 	if (oflags & O_APPEND)
 		(void) __sseek((void *)fp, (fpos_t)0, SEEK_END);
 	return (fp);
+release:
+	fp->_flags = 0;			/* release */
+	return (NULL);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: fopen.3,v 1.9 1999/01/12 15:27:28 kleink Exp $
+.\"	$NetBSD: fopen.3,v 1.10 2000/01/15 01:11:45 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,12 +87,18 @@ The file is created if it does not exist.
 .Pp
 The
 .Fa mode
-string can also include the letter ``b'' either as a third character or
+string can also include the letter ``b'' either as a last character or
 as a character between the characters in any of the two-character strings
 described above.
 This is strictly for compatibility with
 .St -ansiC
 and has no effect; the ``b'' is ignored.
+In addition the letter ``f'' in the mode string restricts fopen to plain
+files; if the file opened is not a plain file,
+.Fn fopen
+will fail. This is a non
+.St -ansiC
+extension.
 .Pp
 Any created files will have mode
 .Pf \\*q Dv S_IRUSR
@@ -189,6 +195,9 @@ provided to
 or
 .Fn freopen
 was invalid.
+.It Bq Er EFTYPE
+The file is not a plain file and the character ``f'' is specified
+in the mode.
 .El
 .Pp
 The
