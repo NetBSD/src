@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.19 2003/07/15 02:15:03 lukem Exp $ */
+/*	$NetBSD: ctu.c,v 1.20 2003/11/06 00:30:13 he Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.19 2003/07/15 02:15:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctu.c,v 1.20 2003/11/06 00:30:13 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ cturintr(void *arg)
 	int status = mfpr(PR_CSRD);
 	struct	buf *bp;
 	int i, c, tck;
-	unsigned short ck;
+	unsigned short ck = 0;
 
 	bp = BUFQ_PEEK(&tu_sc.sc_bufq);
 	switch (tu_sc.sc_state) {
