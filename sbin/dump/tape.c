@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.24 2001/05/07 21:17:48 tron Exp $	*/
+/*	$NetBSD: tape.c,v 1.25 2001/05/12 08:03:01 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.24 2001/05/07 21:17:48 tron Exp $");
+__RCSID("$NetBSD: tape.c,v 1.25 2001/05/12 08:03:01 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ flushtape()
 }
 
 void
-trewind()
+trewind(int eject)
 {
 	int f;
 	int got;
@@ -426,7 +426,7 @@ trewind()
 	(void) close(tapefd);
 	while ((f = open(tape, 0)) < 0)
 		sleep (10);
-	if (eflag) {
+	if (eflag && eject) {
 		struct mtop offl;
 
 		msg("Ejecting %s\n", tape);
@@ -440,7 +440,7 @@ trewind()
 void
 close_rewind()
 {
-	trewind();
+	trewind(1);
 	(void)do_stats();
 	if (nexttape)
 		return;

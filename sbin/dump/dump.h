@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.24 2001/05/07 21:17:48 tron Exp $	*/
+/*	$NetBSD: dump.h,v 1.25 2001/05/12 08:03:01 tron Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -197,7 +197,7 @@ int	alloctape __P((void));
 void	close_rewind __P((void));
 void	dumpblock __P((daddr_t blkno, int size));
 void	startnewtape __P((int top));
-void	trewind __P((void));
+void	trewind __P((int));
 void	writerec __P((char *dp, int isspcl));
 
 void	Exit __P((int status));
