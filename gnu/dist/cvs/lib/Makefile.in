@@ -166,6 +166,8 @@ noinst_LIBRARIES = libcvs.a
 # Also should look into unifying regular expression matching in CVS
 # with the diff library (perhaps to have the caller, CVS, do the
 # matching?)
+
+# For the xsize module from GNULIB.
 libcvs_a_SOURCES = \
 	argmatch.c \
 	getdate.y \
@@ -189,8 +191,8 @@ libcvs_a_SOURCES = \
 	system.h \
 	wait.h \
 	xselect.h \
-	xtime.h
-
+	xtime.h\
+xsize.h
 libcvs_a_LIBADD = @LIBOBJS@
 
 EXTRA_DIST = \
