@@ -1,4 +1,4 @@
-.\"     $NetBSD: host.1,v 1.5 2001/06/05 10:08:04 wiz Exp $
+.\"     $NetBSD: host.1,v 1.6 2002/02/07 03:15:06 ross Exp $
 .\"
 .\" ++Copyright++ 1993
 .\" -
@@ -277,14 +277,14 @@ host name.  The name file must be contained in the
 .Ev HOSTALIASES 
 environment variable.
 .Sh ENVIRONMENT
-.Bl -tag -width "/etc/resolv.conf  " -compress
+.Bl -tag -width "/etc/resolv.conf  " -compact
 .It Ev HOSTALIASES
 Name of file containing
 .Pq Ar host alias , full hostname
 pairs.
 .El
 .Sh FILES
-.Bl -tag -width "/etc/resolv.conf  " -compress
+.Bl -tag -width "/etc/resolv.conf  " -compact
 .It Pa /etc/resolv.conf 
 See
 .Xr resolver 5 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.85 2002/01/31 00:32:47 kleink Exp $
+.\"	$NetBSD: sysctl.3,v 1.86 2002/02/07 03:15:06 ross Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,8 +42,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <sys/sysctl.h>
+.Fd #include \*(ltsys/param.h\*(gt
+.Fd #include \*(ltsys/sysctl.h\*(gt
 .Ft int
 .Fn sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
 .Sh DESCRIPTION
@@ -114,7 +114,7 @@ should be set to NULL and
 set to 0.
 .Pp
 The top level names are defined with a CTL_ prefix in
-.Pa <sys/sysctl.h> ,
+.Pa Aq sys/sysctl.h ,
 and are as follows.
 The next and subsequent levels down are found in the include files
 listed here, and described in separate sections below.
@@ -1431,7 +1431,7 @@ for more details.
 .Sh CTL_VENDOR
 The "vendor" toplevel name is reserved to be used by vendors who wish to
 have their own private MIB tree. Intended use is to store values under
-.Dq vendor.<yourname>.* .
+.Dq vendor.\*(ltyourname\*(gt.* .
 .Sh RETURN VALUES
 If the call to
 .Nm
@@ -1441,29 +1441,29 @@ Otherwise \-1 is returned and
 is set appropriately.
 .Sh FILES
 .Bl -tag -width <netinet6/udp6Xvar.h> -compact
-.It Pa <sys/sysctl.h>
+.It Pa Aq sys/sysctl.h
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
-.It Pa <sys/socket.h>
+.It Pa Aq sys/socket.h
 definitions for second level network identifiers
-.It Pa <sys/gmon.h>
+.It Pa Aq sys/gmon.h
 definitions for third level profiling identifiers
-.It Pa <uvm/uvm_param.h>
+.It Pa Aq uvm/uvm_param.h
 definitions for second level virtual memory identifiers
-.It Pa <netinet/in.h>
+.It Pa Aq netinet/in.h
 definitions for third level IPv4/v6 identifiers and
 fourth level IPv4/v6 identifiers
-.It Pa <netinet/icmp_var.h>
+.It Pa Aq netinet/icmp_var.h
 definitions for fourth level ICMP identifiers
-.It Pa <netinet/icmp6.h>
+.It Pa Aq netinet/icmp6.h
 definitions for fourth level ICMPv6 identifiers
-.It Pa <netinet/tcp_var.h>
+.It Pa Aq netinet/tcp_var.h
 definitions for fourth level TCP identifiers
-.It Pa <netinet/udp_var.h>
+.It Pa Aq netinet/udp_var.h
 definitions for fourth level UDP identifiers
-.It Pa <netinet6/udp6_var.h>
+.It Pa Aq netinet6/udp6_var.h
 definitions for fourth level IPv6 UDP identifiers
-.It Pa <netinet6/ipsec.h>
+.It Pa Aq netinet6/ipsec.h
 definitions for fourth level IPsec identifiers
 .El
 .Sh ERRORS
