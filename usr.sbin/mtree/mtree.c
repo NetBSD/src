@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.31 2004/06/20 22:20:18 jmc Exp $	*/
+/*	$NetBSD: mtree.c,v 1.32 2004/07/22 16:51:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.31 2004/06/20 22:20:18 jmc Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.32 2004/07/22 16:51:45 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ main(int argc, char **argv)
 	dir = NULL;
 	init_excludes();
 
-	while ((ch = getopt(argc, argv, "cCdDeE:f:I:ik:K:lLmN:p:PrR:s:tuUWxX:"))
+	while ((ch = getopt(argc, argv, "cCdDeE:f:I:ik:K:lLmMN:p:PrR:s:tuUWxX:"))
 	    != -1) {
 		switch((char)ch) {
 		case 'c':
@@ -129,6 +129,9 @@ main(int argc, char **argv)
 		case 'm':
 			mflag = 1;
 			break;
+		case 'M':
+			mtree_Mflag = 1;
+			break;
 		case 'N':
 			if (! setup_getid(optarg))
 				mtree_err(
@@ -166,7 +169,7 @@ main(int argc, char **argv)
 			Uflag = uflag = 1;
 			break;
 		case 'W':
-			Wflag = 1;
+			mtree_Wflag = 1;
 			break;
 		case 'x':
 			ftsoptions |= FTS_XDEV;
@@ -219,7 +222,7 @@ usage(void)
 {
 
 	fprintf(stderr,
-	    "usage: %s [-cCdDelLPruUWx] [-i|-m] [-f spec] [-k key]\n"
+	    "usage: %s [-cCdDelLMPruUWx] [-i|-m] [-f spec] [-k key]\n"
 	    "\t\t[-K addkey] [-R removekey] [-I inctags] [-E exctags]\n"
 	    "\t\t[-N userdbdir] [-X exclude-file] [-p path] [-s seed]\n",
 	    getprogname());
