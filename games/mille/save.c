@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $	*/
+/*	$NetBSD: save.c,v 1.5 1997/05/23 23:09:43 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $";
+static char rcsid[] = "$NetBSD: save.c,v 1.5 1997/05/23 23:09:43 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,6 @@ static char rcsid[] = "$NetBSD: save.c,v 1.4 1995/03/24 05:02:13 cgd Exp $";
 
 # ifdef	attron
 #	include	<term.h>
-#	define	_tty	cur_term->Nttyb
 # endif	attron
 
 /*
@@ -73,9 +72,9 @@ int	read(), write();
 save() {
 
 	extern int	errno;
-	reg char	*sp;
-	reg int		outf;
-	reg time_t	*tp;
+	register char	*sp;
+	register int	outf;
+	register time_t	*tp;
 	char		buf[80];
 	time_t		tme;
 	STAT		junk;
@@ -149,10 +148,11 @@ over:
  * be cleaned up before the game starts.
  */
 rest_f(file)
-reg char	*file; {
+register char	*file;
+{
 
-	reg char	*sp;
-	reg int		inf;
+	register char	*sp;
+	register int	inf;
 	char		buf[80];
 	STAT		sbuf;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.5 1995/03/24 05:01:40 cgd Exp $	*/
+/*	$NetBSD: init.c,v 1.6 1997/05/23 23:09:37 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.5 1995/03/24 05:01:40 cgd Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.6 1997/05/23 23:09:37 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,9 +49,9 @@ static char rcsid[] = "$NetBSD: init.c,v 1.5 1995/03/24 05:01:40 cgd Exp $";
 
 init() {
 
-	reg PLAY	*pp;
-	reg int		i, j;
-	reg CARD	card;
+	register PLAY	*pp;
+	register int		i, j;
+	register CARD	card;
 
 	bzero(Numseen, sizeof Numseen);
 	Numgos = 0;
@@ -92,8 +92,8 @@ init() {
 
 shuffle() {
 
-	reg int		i, r;
-	reg CARD	temp;
+	register int		i, r;
+	register CARD	temp;
 
 	for (i = 0; i < DECK_SZ; i++) {
 		r = roll(1, DECK_SZ) - 1;
@@ -168,7 +168,7 @@ newboard() {
 
 newscore() {
 
-	reg int		i, new;
+	register int	i, new;
 	register PLAY	*pp;
 	static int	was_full = -1;
 	static int	last_win = -1;

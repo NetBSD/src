@@ -1,4 +1,4 @@
-/*	$NetBSD: varpush.c,v 1.4 1995/03/24 05:02:35 cgd Exp $	*/
+/*	$NetBSD: varpush.c,v 1.5 1997/05/23 23:09:45 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)varpush.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: varpush.c,v 1.4 1995/03/24 05:02:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: varpush.c,v 1.5 1997/05/23 23:09:45 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,9 @@ int	read(), write();
  * channel file.  func() is either read or write.
  */
 varpush(file, func)
-reg int	file;
-reg int	(*func)(); {
+register int	file;
+register int	(*func)(); 
+{
 
 	int	temp;
 

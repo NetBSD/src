@@ -1,4 +1,4 @@
-/*	$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $	*/
+/*	$NetBSD: end.c,v 1.5 1997/05/23 23:09:36 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)end.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $";
+static char rcsid[] = "$NetBSD: end.c,v 1.5 1997/05/23 23:09:36 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,9 +52,9 @@ static char rcsid[] = "$NetBSD: end.c,v 1.4 1995/03/24 05:01:30 cgd Exp $";
  * the end-of-games points to the user who deserves it (if any).
  */
 finalscore(pp)
-reg PLAY	*pp; {
-
-	reg int		temp, tot, num;
+register PLAY	*pp;
+{
+	register int	temp, tot, num;
 
 	if (pp->was_finished == Finished)
 		return;
