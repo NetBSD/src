@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.82 2003/01/19 23:44:03 simonb Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.83 2003/03/27 17:50:28 christos Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.82 2003/01/19 23:44:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.83 2003/03/27 17:50:28 christos Exp $");
 
 #include "ppp.h"
 
@@ -213,7 +213,7 @@ struct	ppp_softc ppp_softc[NPPP];
 extern struct compressor ppp_bsd_compress;
 extern struct compressor ppp_deflate, ppp_deflate_draft;
 
-struct compressor *ppp_compressors[8] = {
+struct compressor *ppp_compressors[PPP_COMPRESSORS_MAX] = {
 #if DO_BSD_COMPRESS && defined(PPP_BSDCOMP)
     &ppp_bsd_compress,
 #endif
