@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.68 2000/12/20 03:19:34 eeh Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.69 2000/12/20 15:49:03 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -665,6 +665,10 @@ ncr53c9x_select(sc, ecb)
 
 	if (tiflags & T_NEGOTIATE) selandstop = 1;
 	cmd = (u_char *)&ecb->cmd.cmd;
+
+	if (ecb->tag[0] && !selatn3)
+		selandstop = 1;
+
 	if (ecb->tag[0] && selatn3 && !selandstop) {
 		/* We'll use tags */
 		clen = ecb->clen + 3;
@@ -672,10 +676,8 @@ ncr53c9x_select(sc, ecb)
 		cmd[0] = MSG_IDENTIFY(lun, 1);	/* msg[0] */
 		cmd[1] = ecb->tag[0];		/* msg[1] */
 		cmd[2] = ecb->tag[1];		/* msg[2] */
-
-		if (!selatn3)
-			selandstop = 1;
 	} else {
+		selatn3 = 0;	/* Do not use selatn3 even if we have it */
 		clen = ecb->clen + 1;
 		cmd -= 1;
 		cmd[0] = MSG_IDENTIFY(lun, (tiflags & T_RSELECTOFF)?0:1);
@@ -700,7 +702,7 @@ ncr53c9x_select(sc, ecb)
 		NCRCMD(sc, NCRCMD_NOP|NCRCMD_DMA);
 
 		/* And get the targets attention */
-		if (ecb->tag[0]) {
+		if (selatn3) {
 			sc->sc_msgout = SEND_TAG;
 			sc->sc_flags |= NCR_ATN;
 			NCRCMD(sc, NCRCMD_SELATN3 | NCRCMD_DMA);
@@ -736,7 +738,7 @@ ncr53c9x_select(sc, ecb)
 		NCR_WRITE_REG(sc, NCR_FIFO, *cmd++);
 
 	/* And get the targets attention */
-	if (ecb->tag[0]) {
+	if (selatn3) {
 		sc->sc_msgout = SEND_TAG;
 		sc->sc_flags |= NCR_ATN;
 		NCRCMD(sc, NCRCMD_SELATN3);
