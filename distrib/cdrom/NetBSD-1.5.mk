@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-1.5.mk,v 1.3 2000/11/30 00:04:08 tv Exp $
+# $NetBSD: NetBSD-1.5.mk,v 1.4 2000/11/30 21:23:50 tv Exp $
 #
 # Configuration file for the NetBSD 1.5 binary release.
 
@@ -13,7 +13,7 @@ INTFILES.alpha=		netbsd.alpha:alpha/installation/instkernel/netbsd.gz,link \
 
 # BOOTFILE.i386 is relative to CD staging root
 BOOTFILE.i386=		boot.i386
-INTFILES.i386=		boot.i386:i386/installation/floppy/boot-big.fs.gz
+INTFILES.i386=		boot.i386:i386/installation/floppy/boot-big.fs,link
 
 # macppc has external bootblock generation tool
 EXTFILES.macppc=	macppc.ofwboot:macppc/binary/sets/base.tgz,./usr/mdec/ofwboot
