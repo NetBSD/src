@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.25 1999/03/29 21:54:26 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.25.2.1 1999/04/13 21:33:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -313,16 +313,11 @@ static int lfs_set_dirop(fs)
 	return 0;
 }
 
-#define	SET_ENDOP(fs,str) {						\
+#define	SET_ENDOP(fs,vp,str) {						\
 	--(fs)->lfs_dirops;						\
 	if (!(fs)->lfs_dirops) {					\
 		wakeup(&(fs)->lfs_writer);				\
-		if ((fs)->lfs_dirvcount > LFS_MAXDIROP)	{		\
-			++(fs)->lfs_writer;				\
-			lfs_flush((fs),0);                              \
-			if(--(fs)->lfs_writer==0)                       \
-				wakeup(&(fs)->lfs_dirops);		\
-		}                                                       \
+		lfs_check((vp),LFS_UNUSED_LBN,0);			\
 	}								\
 }
 
@@ -362,7 +357,7 @@ lfs_symlink(v)
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_symlink(ap);
 	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"symilnk");
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"symilnk");
 	return (ret);
 }
 
@@ -383,7 +378,7 @@ lfs_mknod(v)
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_mknod(ap);
 	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"mknod");
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mknod");
 	return (ret);
 }
 
@@ -404,7 +399,7 @@ lfs_create(v)
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_create(ap);
 	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"create");
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"create");
 	return (ret);
 }
 
@@ -423,7 +418,7 @@ lfs_whiteout(v)
 		return ret;
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_whiteout(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"whiteout");
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"whiteout");
 	return (ret);
 }
 
@@ -444,7 +439,7 @@ lfs_mkdir(v)
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_mkdir(ap);
 	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,*(ap->a_vpp)); /* XXX KS */
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"mkdir");
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"mkdir");
 	return (ret);
 }
 
@@ -464,7 +459,7 @@ lfs_remove(v)
 	MARK_VNODE(ap->a_vp);
 	ret = ufs_remove(ap);
 	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_vp);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"remove");
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"remove");
 	return (ret);
 }
 
@@ -486,7 +481,7 @@ lfs_rmdir(v)
 	MARK_VNODE(ap->a_vp);
 	ret = ufs_rmdir(ap);
 	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_vp);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"rmdir");
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"rmdir");
 	return (ret);
 }
 
@@ -505,7 +500,7 @@ lfs_link(v)
 		return ret;
 	MARK_VNODE(ap->a_dvp);
 	ret = ufs_link(ap);
-	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,"link");
+	SET_ENDOP(VTOI(ap->a_dvp)->i_lfs,ap->a_dvp,"link");
 	return (ret);
 }
 
@@ -530,7 +525,7 @@ lfs_rename(v)
 	ret = ufs_rename(ap);
 	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_fvp);
 	MAYBE_INACTIVE(VTOI(ap->a_dvp)->i_lfs,ap->a_tvp);
-	SET_ENDOP(VTOI(ap->a_fdvp)->i_lfs,"rename");
+	SET_ENDOP(VTOI(ap->a_fdvp)->i_lfs,ap->a_fdvp,"rename");
 	return (ret);
 }
 
