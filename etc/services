@@ -69,6 +69,8 @@ netwall		533/udp				# -for emergency broadcasts
 uucp		540/tcp		uucpd		# uucp daemon
 remotefs	556/tcp		rfs_server rfs	# Brunhoff remote filesystem
 
+socks		1080/tcp			# Socks gateway service
+
 ingreslock	1524/tcp
 #
 # Kerberos (Project Athena/MIT) services
