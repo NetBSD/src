@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.296 2004/11/15 16:33:41 he Exp $
+#	$NetBSD: Makefile,v 1.297 2004/11/16 02:33:21 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -251,7 +251,7 @@ CONFIGSYMLINKS+=	${TZDIR}/${LOCALTIME}	/etc/localtime \
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
 #
-install-etc-files: .PHONY check_DESTDIR MAKEDEV ttys
+install-etc-files: .PHONY check_DESTDIR MAKEDEV
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/master.passwd
 	${ETC_INSTALL_FILE} -o root -g wheel -m 600 \
 	    master.passwd ${DESTDIR}/etc
@@ -266,7 +266,7 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV ttys
 .endif	# MKUNPRIVED != no
 	${_MKMSG_INSTALL} ${DESTDIR}/etc/ttys
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 \
-	    ttys ${DESTDIR}/etc
+	    etc.${MACHINE}/ttys ${DESTDIR}/etc
 	${_MKMSG_INSTALL} ${DESTDIR}/dev/MAKEDEV
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 555 \
 	    MAKEDEV ${DESTDIR}/dev
