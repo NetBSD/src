@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.24 2001/11/13 07:41:36 lukem Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.25 2002/02/10 17:09:41 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.24 2001/11/13 07:41:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icsphy.c,v 1.25 2002/02/10 17:09:41 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,9 @@ const struct mii_phy_funcs icsphy_funcs = {
 const struct mii_phydesc icsphys[] = {
 	{ MII_OUI_ICS,		MII_MODEL_ICS_1890,
 	  MII_STR_ICS_1890 },
+
+	{ MII_OUI_ICS,		MII_MODEL_ICS_1893,
+	  MII_STR_ICS_1893 },
 
 	{ 0,			0,
 	  NULL },
