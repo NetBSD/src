@@ -1,5 +1,7 @@
+/*	$NetBSD: system.h,v 1.1.1.3 2003/01/26 23:15:30 wiz Exp $	*/
+
 /* Portability cruft.  Include after config.h and sys/types.h.
-   Copyright (C) 1996, 1998, 1999 Free Software Foundation, Inc.
+   Copyright 1996, 1998, 1999, 2000 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,17 +55,15 @@ extern char *sys_errlist[];
 #endif
 
 /* Some operating systems treat text and binary files differently.  */
-#if O_BINARY
+#ifdef __BEOS__
+# undef O_BINARY /* BeOS 5 has O_BINARY and O_TEXT, but they have no effect. */
+#endif
+#ifdef HAVE_DOS_FILE_CONTENTS
 # include <io.h>
 # ifdef HAVE_SETMODE
 #  define SET_BINARY(fd)  setmode (fd, O_BINARY)
 # else
 #  define SET_BINARY(fd)  _setmode (fd, O_BINARY)
-# endif
-#else
-# ifndef O_BINARY
-#  define O_BINARY 0
-#  define SET_BINARY(fd)   (void)0
 # endif
 #endif
 
@@ -80,14 +80,15 @@ extern char *sys_errlist[];
 # define FILESYSTEM_PREFIX_LEN(f) 0
 #endif
 
-/* This assumes _WIN32, like DJGPP, has D_OK.  Does it?  In what header?  */
-#ifdef D_OK
+int isdir PARAMS ((char const *));
+
+#ifdef HAVE_DIR_EACCES_BUG
 # ifdef EISDIR
 #  define is_EISDIR(e, f) \
      ((e) == EISDIR \
-      || ((e) == EACCES && access (f, D_OK) == 0 && ((e) = EISDIR, 1)))
+      || ((e) == EACCES && isdir (f) && ((e) = EISDIR, 1)))
 # else
-#  define is_EISDIR(e, f) ((e) == EACCES && access (f, D_OK) == 0)
+#  define is_EISDIR(e, f) ((e) == EACCES && isdir (f))
 # endif
 #endif
 
@@ -127,11 +128,20 @@ void free();
 #ifndef CHAR_BIT
 # define CHAR_BIT 8
 #endif
+/* The extra casts work around common compiler bugs.  */
+#define TYPE_SIGNED(t) (! ((t) 0 < (t) -1))
+#define TYPE_MINIMUM(t) ((t) (TYPE_SIGNED (t) \
+			      ? ~ (t) 0 << (sizeof (t) * CHAR_BIT - 1) \
+			      : (t) 0))
+#define TYPE_MAXIMUM(t) ((t) (~ (t) 0 - TYPE_MINIMUM (t)))
+#ifndef CHAR_MAX
+# define CHAR_MAX TYPE_MAXIMUM (char)
+#endif
 #ifndef INT_MAX
-# define INT_MAX 2147483647
+# define INT_MAX TYPE_MAXIMUM (int)
 #endif
 #ifndef UCHAR_MAX
-# define UCHAR_MAX 255
+# define UCHAR_MAX TYPE_MAXIMUM (unsigned char)
 #endif
 
 #if !defined(STDC_HEADERS) && defined(HAVE_STRING_H) && defined(HAVE_MEMORY_H)
