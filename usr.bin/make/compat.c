@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.27 1999/03/24 13:19:26 sommerfe Exp $	*/
+/*	$NetBSD: compat.c,v 1.28 1999/09/16 00:49:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.27 1999/03/24 13:19:26 sommerfe Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.28 1999/09/16 00:49:48 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.27 1999/03/24 13:19:26 sommerfe Exp $");
+__RCSID("$NetBSD: compat.c,v 1.28 1999/09/16 00:49:48 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -394,7 +394,7 @@ CompatMake (gnp, pgnp)
 	if ((gn->flags & REMAKE) == 0) {
 	    gn->made = ABORTED;
 	    pgn->flags &= ~REMAKE;
-	    return (0);
+	    goto cohorts;
 	}
 
 	if (Lst_Member (gn->iParents, pgn) != NILLNODE) {
@@ -418,7 +418,7 @@ CompatMake (gnp, pgnp)
 	    if (DEBUG(MAKE)) {
 		printf("up-to-date.\n");
 	    }
-	    return (0);
+	    goto cohorts;
 	} else if (DEBUG(MAKE)) {
 	    printf("out-of-date.\n");
 	}
@@ -519,6 +519,8 @@ CompatMake (gnp, pgnp)
 	}
     }
 
+cohorts:
+    Lst_ForEach (gn->cohorts, CompatMake, pgnp);
     return (0);
 }
 
