@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.4,v 1.4 2001/12/06 15:51:47 ross Exp $
+.\"     $NetBSD: intro.4,v 1.5 2002/02/09 11:14:21 fair Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,11 +79,13 @@ communication facilities provided by the system; see
 .Pp
 A hardware device is identified to the system at configuration time
 and the appropriate device or network interface driver is then
-compiled into the system.  When the resultant system is booted, the
-autoconfiguration facilities in the system probe for the device and,
-if found, enable the software support for it.  If a device does not
-respond at autoconfiguration time it is not accessible at any time
-afterwards.  To enable a device which did not autoconfigure, the
+compiled into the system.
+When the resultant system is booted, the autoconfiguration facilities
+in the system probe for the device and, if found, enable the software
+support for it.
+If a device does not respond at autoconfiguration time it is not
+accessible at any time afterwards.
+To enable a device which did not autoconfigure, the
 system must be rebooted.
 .Pp
 The autoconfiguration system is described in
@@ -93,53 +95,382 @@ A list of the supported devices is given below.
 .Xr autoconf 4 ,
 .Xr config 8
 .Sh HARDWARE
-The following systems are supported:
+.\" http://www.support.compaq.com/alpha-tools/info/system-codes.html
+.\" http://members.tripod.com/kmi9000/kmi_proc.htm
 .Pp
-.ds x \fIx\fP
-.Bl -tag -width speaker -offset indent -compact
-.It AXPpci Systems
-.\"The AXPpci family is Digital's lowest-end family of PCI-based systems,
-.\"and includes machines like the UDB and the Multia.
-Includes machines like the UDB and the Multia.
-.It EB64+-family Systems
-Includes the Digital EB64+ and third-party AlphaPC 64 systems.
-.It DECpc AXP 150 (Jensen)
-.It API UP1000
-.\"Alpha Processor, Inc.'s UP1000 system.
-.It Personal Workstation 600a, 600au (and others)
-.\"The Personal Workstations are Digital's PCI-based workstations in
-.\"small deskside boxes.
-.It AlphaStation 200, 250, 255, and 400 Systems
-.\"The AlphaStation 200, 250, 255, and 400 are Digital's lower-end
-.\"PCI-based workstations.
+.Tn DEC
+and
+.Tn Compaq
+have produced a series of the
+.Tn Alpha
+.Tn CPU ,
+some of which are listed below, along with some systems which contain them.
+.Pp
+The
+.Nx
+Project distributes binary programs for its
+.Tn Alpha
+port compiled for the lowest common denominator
+.Tn CPU
+instruction set, to guarantee binary compatability across all supported
+.Tn Alpha
+systems.
+However, it is possible to sacrifice binary compatability for
+additional performance on later model CPUs with performance enhancing
+instructions (e.g. the 21164-A and later with the BWX extensions).
+This requires recompiling from source code, with appropriate options given to
+.Xr cc 1
+to indicate the target
+.Tn CPU .
+.Pp
+.Qq EV
+stands for
+.Qq Extended VAX
+.Po
+or
+.Qq Electro Vlassic
+.Pc
+and the number following is a reference to the
+.Tn CMOS
+process used to make the chips.
+.Qq LCA
+stands for Low Cost Alpha, and
+.Qq PCA
+stands for PC-architecture Alpha.
+.Pp
+.Bl -hang -width 9n
+.It 21064
+.Sy EV4
+.Po
+100-200
+.Tn MHz ,
+0.75 micron
+.Pc
+.Pp
+AlphaPC 64
+.Pq EB64
+.br
+.Bl -hang -width 4n
+.It Jensen family
+.br
+DECpc AXP 150
+.Pq Jensen
+.br
+DEC 2000/300
+.Pq Jensen
+.br
+DEC 2000/500
+.Pq Culzen
+.It Avanti family
+.br
+Digital's lower-end PCI-based workstations.
+.Pp
+AlphaStation 200 4/100-166
+.Pq Mustang
+.br
+AlphaStation 400 4/166
+.Pq Chinet
+.It Sable family
+.br
+AlphaServer 2000 4/200
+.Pq Demi-Sable
+.br
+AlphaServer 2100 4/200
+.Pq Sable
 .It DEC 3000/300-family Systems
-The DEC 3000/300 family is an early low-end series of
-TURBOchannel-based workstations including the DEC 3000/300, DEC 3000/300L,
-DEC 3000/300X and DEC 3000/300LX.
-.It DEC 3000/500-family Systems
-.\"The DEC 3000/500 family is an early, high-end family of
-TURBOchannel-based workstations including the DEC 3000/400, DEC
-3000/500, DEC 3000/600, DEC 3000/700, DEC 3000/800 and DEC
-3000/900 as well as several minor variations.
-.It EB164-family Systems
-Includes the Digital EB164 and third-party AlphaPC 164 systems.
-.It Digital Personal Workstation ("au" series)
-.It Digital AlphaServer 800 Systems
-.It Digital AlphaServer 1000 and 1000A Systems
-.It Digital Server 330\*x Systems
-.It AlphaServer 4\*x00 Systems
-.\"The AlphaServer 4\*x00 Systems are Digital's very fast medium server
-.\"systems.
-.It AlphaServer 8\*x00 Systems
-.\"The AlphaServer 8\*x00 Systems are Digital's very high-end systems,
-.\"including the AlphaServer 8200 and AlphaServer 8400.
-.It AlphaStation 500 and 600 Systems
-.\"The AlphaStation 500 and 600 systems are Digital's high-end PCI-based
-.\"workstations.
-.It API UP1000 and UP1100
+.Pq Pelican ;
+.Pp
+Low-end series of
+.Tn TURBOchannel
+based workstations including the 300, 300L, 300X and 300LX.
+.It DEC 3000/x00-family Systems
+.Pq Flamingo ;
+.Pp
+High-end family of
+.Tn TURBOchannel
+based workstations including the 400,
+500, 600, 700, 800 and 900 as well as several minor variations.
+.El
+.br
+.It 21064-A
+.Sy EV45
+.Po
+225-333
+.Tn MHz ,
+0.50 micron
+.Pc
+.Pp
+Alpha XL 233-266
+.Pq XL
+.br
+AlphaPC 64
+.Pq EB64+
+.br
+.Bl -hang -width 4n
+.It Avanti family
+.br
+Digital's lower-end PCI-based workstations.
+.Pp
+AlphaStation 200 4/233
+.Pq Mustang+
+.br
+AlphaStation 205 4/133-333
+.Pq LX3
+.br
+AlphaStation 250 4/300
+.Pq M3+
+.br
+AlphaStation 255 4/133-333
+.Pq LX3+
+.br
+AlphaStation 300 4/266
+.Pq Melmac
+.br
+AlphaStation 400 4/233-300
+.Pq Avanti
+.It Sable family
+.br
+AlphaServer 2000 4/233-275
+.Pq Demi-Sable
+.br
+AlphaServer 2100 4/233-275
+.Pq Sable
+.El
+.Pp
+AlphaServer 2100A
+.Pq Lynx
+.It 21066
+.Sy LCA4
+.Po
+166-233
+.Tn MHz ,
+0.75 micron
+.Pc
+.Bl -hang -width 4n
+.It NoName family
+.br
+Digital's lowest-end family of PCI-based systems.
+.Pp
+DEC AXPpci33
+.Pq NoName
+.br
+Universal Desktop Box AXPpci166MT
+.Pq UDB/Multia
+.El
+.Pp
+21066 evaluation motherboard
+.Pq EB66
+.It 21066-A
+.Sy LCA45
+.Po
+233
+.Tn MHz ,
+0.50 micron
+.Pc
+.Pp
+21066-A evaluation motherboard
+.Pq EB66+
+.It 21068
+.Sy LCA4s
+.Po
+66-233
+.Tn MHz ,
+0.75 micron
+.Pc
+.Pp
+Alpha Book
+.Pq Burns
+.br
+Universal Desktop Box AXPpci233MT
+.Pq UDB/Multia
+.It 21164
+.Sy EV5
+.Po
+250-366
+.Tn MHz ,
+0.50 micron
+.Pc
+.Pp
+.Bl -hang -width 4n
+.It Alcor family
+.br
+AlphaStation 500/266-333
+.Pq Maverick
+.br
+AlphaStation 600/266-300
+.Pq Alcor
+.br
+Alpha XL 300-433
+.Pq XLT
+.It Sable family
+.br
+AlphaServer 2000 5/250-300
+.Pq Demi-Gamma
+.br
+AlphaServer 2100 5/250-300
+.Pq Gamma Sable
+.It Mikasa family
+.br
+AlphaServer 1000 5/300
+.Pq Pinnacle
+.It Noritake family
+.br
+AlphaServer 1000A 5/300
+.Pq Pinnacle
+.It Rawhide family
+.Pq KN300
+.br
+AlphaServer 4000 5/266-300
+.Pq Wrangler
+.br
+AlphaServer 4000 5/266-300
+.Pq Durango
+.br
+AlphaServer 4100 5/266-300
+.Pq Dodge
+.El
+.Pp
+AlphaServer 8200 and 8400
+.Pp
+21164 evaluation motherboard
+.Pq EB164
+.Pq Tn KN8AE
+.It 21164-A
+.Sy EV56
+.Po
+400-766
+.Tn MHz ,
+0.35 micron, BWX
+.Pc
+.Pp
+.Bl -hang -width 4n
+.It Alcor family
+.br
+AlphaStation 500/333-500
+.Pq Bret
+.It Personal WorkStation Pq PWS
+.br
+PWS 433a/433au
+.Pq Miata
+.br
+PWS 500a/500au
+.Pq Miata
+.br
+PWS 600a/600au
+.Pq Miata
+.It Sable family
+.br
+AlphaServer 2100 5/375-400
+.Pq Gamma Sable
+.br
+AlphaServer 2000 5/375-400
+.Pq Demi-Gamma
+.It Mikasa family
+.br
+AlphaServer 1000 5/333-500
+.Pq Primo
+.It Noritake family
+.br
+AlphaServer 1000A 5/333-500
+.Pq Primo
+.br
+AlphaServer 600A 5/500
+.Pq Alcor-Primo
+.br
+AlphaServer 800 5/333-500
+.Pq Corelle
+.It Rawhide family
+.Pq KN300
+.br
+AlphaServer 4000 5/400-666
+.Pq Wrangler
+.br
+AlphaServer 4000 5/400-666
+.Pq Durango
+.br
+AlphaServer 4100 5/400-666
+.Pq Dodge
+.Pp
+AlphaServer 1200 5/400-666
+.Pq Tincup
+.br
+AlphaServer 1200 5/400-666
+.Pq DaVinci
+.It EB164 family
+.br
+AlphaPC 164 motherboard
+.Pq EB164
+.br
+AlphaPC 164LX motherboard
+.Pq EB164
+.br
+.El
+.Pp
+DigitalServer 3300
+.Po
+rebadged AlphaServer 800 for NT
+.Pc
+.br
+DigitalServer 5300
+.Po
+rebadged AlphaServer 1200 for NT
+.Pc
+.br
+DigitalServer 7300
+.Po
+rebadged AlphaServer 4100 for NT
+.Pc
+.Pp
+AlphaServer 8200 and 8400
+.Pq Tn KN8AE
+.Pp
+APi AlphaPC 164UX motherboard
+.Pq Ruffian
+.It 21164-PC
+.Sy PCA56
+.Po
+400-600
+.Tn MHz ,
+0.35 micron, MVI, no L2 cache
+.Pc
+.Pp
+AlphaPC 164SX motherboard
+.Pq EB164
+.br
+.It 21264
+.Sy EV6
+.Po
+450-600
+.Tn MHz ,
+0.35 micron
+.Pc
+.Pp
+AlphaServer 8400
+.Pq Tn KN8AE
+.Pp
+APi UP1000 and UP1100;
 AMD 751-based EV6 systems.
-.It 264DP, XP1000, DS10, DS20, API UP2000, UP2000+
-Tsunami-based EV6 (21264) systems.
+.Pp
+264DP, XP1000, DS10, DS20, APi UP2000, UP2000+
+Tsunami-based systems.
+.It 21264-A
+.Sy EV67
+.Po
+600-833
+.Tn MHz ,
+0.28 micron
+.Pc
+.Pp
+AlphaServer GS60E
+.br
+AlphaServer GS140
+.It 21264-B
+.Sy EV68AL
+.Po
+833-1250
+.Tn MHz ,
+0.18 micron
+.Pc
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the system.
@@ -158,7 +489,7 @@ DEC DWLPA and DWLPB PCI adapter
 .It gbus
 internal bus on AlphaServer CPU modules
 .It irongate
-API UP1000 AMD751 Core Logic + AGP chipset
+APi UP1000 AMD751 Core Logic + AGP chipset
 .It jensenio
 DEC 2000/300 (Jensen) I/O module
 .It kft
