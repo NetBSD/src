@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.24 1999/04/19 03:11:33 simonb Exp $
+# $NetBSD: md.arm32,v 1.25 1999/05/07 20:54:01 tron Exp $
 ./usr/include/arm32
 ./usr/include/arm32/_G_config.h
 ./usr/include/arm32/ansi.h
@@ -14,6 +14,7 @@
 ./usr/include/arm32/cpufunc.h
 ./usr/include/arm32/cpus.h
 ./usr/include/arm32/db_machdep.h
+./usr/include/arm32/devmap.h
 ./usr/include/arm32/disklabel.h
 ./usr/include/arm32/disklabel_acorn.h
 ./usr/include/arm32/endian.h
