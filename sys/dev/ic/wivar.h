@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.15 2002/08/11 00:00:42 thorpej Exp $	*/
+/*	$NetBSD: wivar.h,v 1.16 2002/08/11 01:30:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,6 +66,7 @@ struct wi_softc	{
 	u_int8_t		sc_macaddr[ETHER_ADDR_LEN];
 	
 	struct ifmedia		sc_media;
+	int			wi_flags;
 	int			wi_tx_data_id;
 	int			wi_tx_mgmt_id;
 	int			wi_if_flags;
@@ -89,16 +90,27 @@ struct wi_softc	{
 	struct ieee80211_nwid	wi_ibssid;
 
 	u_int16_t		wi_txbuf[1596 / 2];
-	int                     wi_has_wep;
 	int                     wi_use_wep;
 	int                     wi_tx_key;
 	struct wi_ltv_keys      wi_keys;
 	struct wi_counters	wi_stats;
+	u_int16_t		wi_ibss_port;
 
 	struct wi_apinfo	wi_aps[MAXAPINFO];
 	int 			wi_naps;
 	int			wi_scanning;	/* scan mode */
 };
+
+/* Values for wi_flags. */
+#define	WI_FLAGS_ATTACHED		0x0001
+#define	WI_FLAGS_INITIALIZED		0x0002
+#define	WI_FLAGS_HAS_WEP		0x0004
+#define	WI_FLAGS_HAS_IBSS		0x0008
+#define	WI_FLAGS_HAS_CREATE_IBSS	0x0010
+#define	WI_FLAGS_HAS_MOR		0x0020
+#define	WI_FLAGS_HAS_ROAMING		0x0040
+#define	WI_FLAGS_HAS_DIVERSITY		0x0080
+#define	WI_FLAGS_HAS_HOSTAP		0x0100
 
 struct wi_card_ident {
 	u_int16_t	card_id;
