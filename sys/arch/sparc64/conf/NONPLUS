@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.24 2000/11/09 00:06:47 eeh Exp $
+# 	$NetBSD: NONPLUS,v 1.25 2001/02/11 01:04:59 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -11,7 +11,6 @@ maxusers	64
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
 options		SUN4U		# sun4u - Ultra 140 and 170
-options		TRAPWIN		# use a new window for traps
 options		__ELF__		# we use elf 
 #options	_LP64		# we're using a 64-bit compiler
 #options	__SWAP_BROKEN
@@ -88,19 +87,19 @@ makeoptions 	DEBUG="-g"
 ## Adds code to the kernel that does internal consistency checks, and will
 ## cause the kernel to panic if corruption of internal data structures
 ## is detected.
-#options 	DIAGNOSTIC	# extra kernel sanity checking
+options 	DIAGNOSTIC	# extra kernel sanity checking
 
 ## Enable (possibly expensive) debugging code that may also display messages
 ## on the system console
 #options 	DEBUG
-#options         LOCKDEBUG
+#options	LOCKDEBUG
 
 ## Enable printing of spl() transisions -- really slow
 ##
 #options		SPLDEBUG
 
 ## Make SCSI error messages more verbose when explaining their meanings.
-#options 	SCSIVERBOSE
+options 	SCSIVERBOSE
 #options	SCSIDEBUG
 
 ## `INSECURE' turns off the kernel security level (securelevel = 0 always).
@@ -127,6 +126,7 @@ makeoptions 	DEBUG="-g"
 ## compat_sunos(8) and compat_svr4(8).
 
 options 	COMPAT_43	# 4.3BSD system interfaces
+options		COMPAT_09	# NetBSD 0.9 binary compatibility
 options 	COMPAT_10	# NetBSD 1.0 binary compatibility
 options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 options 	COMPAT_12	# NetBSD 1.2 binary compatibility
@@ -145,6 +145,7 @@ file-system	FFS		# Berkeley Fast Filesystem
 file-system	NFS		# Sun NFS-compatible filesystem client
 file-system	KERNFS		# kernel data-structure filesystem
 file-system	NULLFS		# NULL layered filesystem
+file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
 file-system	FDESC		# user file descriptor filesystem
 file-system	UMAPFS		# uid/gid remapping filesystem
@@ -163,6 +164,11 @@ options		SOFTDEP		# FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
+options 	INET6		# IPV6
+#options 	IPSEC		# IP security
+#options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
+#options 	IPSEC_DEBUG	# debug for IP security
+#options	TCP_SIGNATURE	# TCP MD5 Signatures, for BGP routing sessions
 options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
@@ -173,7 +179,7 @@ options 	ISO,TPIP	# OSI networking
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
-#options 	NTP		# Network Time Protocol in-kernel support
+options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 #options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
