@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.4.6.1 1997/03/04 18:50:08 is Exp $	*/
+/*	$NetBSD: if_se.c,v 1.4.6.2 1997/03/10 15:43:53 is Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390 based ethernet adapters.
@@ -45,7 +45,7 @@
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
 #include <netinet/ip.h>
-#include <netinet/if_ether.h>
+#include <netinet/if_inarp.h>
 #endif
 
 #ifdef NS
