@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.1.2.7 1998/11/16 07:10:28 cgd Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.1.2.8 1998/11/26 02:57:09 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -134,7 +134,7 @@ menu scsi_fake, title "  Choisissez une géométrie";
 	option "Géométrie 4", action { fake_sel = 3; }, exit;
 	option "Géométrie 5", action { fake_sel = 4; }, exit;
 
-menu layout, title  "  Choisissez votre type d'installation  ";
+menu layout, y=13, title  "  Choisissez votre type d'installation  ";
 	option "Standard", 	  exit, action { layoutkind = 1; };
 	option "Standard avec X", exit, action { layoutkind = 2; };
 	option "Personnalisée", 	  exit, action { layoutkind = 3; };
