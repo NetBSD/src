@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.10 1996/05/22 13:55:45 mycroft Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.11 1996/09/08 14:28:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -311,8 +311,10 @@ clnp_usrreq(so, req, m, nam, control, p)
 	switch (req) {
 
 	case PRU_ATTACH:
-		if (rp)
-			panic("rip_attach");
+		if (rp != 0) {
+			error = EISCONN;
+			break;
+		}
 		MALLOC(rp, struct rawisopcb *, sizeof *rp, M_PCB, M_WAITOK);
 		if (rp == 0)
 			return (ENOBUFS);
@@ -321,8 +323,6 @@ clnp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_DETACH:
-		if (rp == 0)
-			panic("rip_detach");
 		if (rp->risop_isop.isop_options)
 			m_freem(rp->risop_isop.isop_options);
 		if (rp->risop_isop.isop_route.ro_rt)
