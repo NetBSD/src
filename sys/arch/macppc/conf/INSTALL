@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.8 1999/01/27 12:43:17 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.9 1999/02/04 15:04:58 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -45,10 +45,11 @@ config		netbsd	root on ? type ?
 mainbus0 at root
 
 cpu*	at mainbus0
+pci*	at mainbus0 bus ?
 
-pci0	at mainbus0 bus ?
-pci1	at mainbus0 bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
 
 #de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 ep*	at pci? dev ? function ?
