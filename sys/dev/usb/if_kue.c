@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.17 2000/03/20 00:27:11 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.18 2000/03/20 00:41:55 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -194,15 +194,8 @@ static void kue_watchdog		__P((struct ifnet *));
 static void kue_setmulti	__P((struct kue_softc *));
 static void kue_reset		__P((struct kue_softc *));
 
-static usbd_status kue_do_request
-				__P((struct kue_softc *,
-				   usb_device_request_t *, void *, u_int16_t,
-				   u_int32_t *));
-static usbd_status kue_ctl_l	__P((struct kue_softc *, int, u_int8_t,
-				    u_int16_t, char *, u_int32_t, 
-				    u_int32_t, u_int32_t *));
-#define kue_ctl(sc, rw, breq, val, data, len) \
-	kue_ctl_l(sc, rw, breq, val, data, len, 0, 0)
+static usbd_status kue_ctl	__P((struct kue_softc *, int, u_int8_t,
+				    u_int16_t, void *, u_int32_t));
 static usbd_status kue_setword	__P((struct kue_softc *, u_int8_t, u_int16_t));
 static int kue_load_fw		__P((struct kue_softc *));
 
@@ -239,45 +232,8 @@ DRIVER_MODULE(if_kue, uhub, kue_driver, kue_devclass, usbd_driver_load, 0);
 
 #endif /* __FreeBSD__ */
 
-/*
- * We have a custom do_request function which is almost like the
- * regular do_request function, except it has a much longer timeout.
- * Why? Because we need to make requests over the control endpoint
- * to download the firmware to the device, which can take longer
- * than the default timeout.
- */
-static usbd_status
-kue_do_request(sc, req, data, flags, lenp)
-	struct kue_softc	*sc;
-	usb_device_request_t	*req;
-	void			*data;
-	u_int16_t		flags;
-	u_int32_t		*lenp;
-{
-	usbd_xfer_handle	xfer;
-	usbd_status		err;
-
-	DPRINTFN(15,("kue_do_request: enter\n"));
-
-	if (sc->kue_dying)
-		return (0);
-
-	xfer = usbd_alloc_xfer(sc->kue_udev);
-	/* XXX 20000 */
-	usbd_setup_default_xfer(xfer, sc->kue_udev, 0, 20000, req,
-	    data, UGETW(req->wLength), flags, 0);
-	err = usbd_sync_transfer(xfer);
-	if (lenp != NULL)
-		usbd_get_xfer_status(xfer, NULL, NULL, lenp, NULL);
-	usbd_free_xfer(xfer);
-	
-	if (err) {
-		DPRINTF(("%s: kue_do_request: err=%s\n",
-			 USBDEVNAME(sc->kue_dev), usbd_errstr(err)));
-	}
-
-	return (err);
-}
+#define KUE_DO_REQUEST(dev, req, data)			\
+	usbd_do_request_flags(dev, req, data, USBD_NO_TSLEEP, NULL)
 
 static usbd_status
 kue_setword(sc, breq, word)
@@ -298,22 +254,20 @@ kue_setword(sc, breq, word)
 	USETW(req.wLength, 0);
 
 	s = splusb();
-	err = kue_do_request(sc, &req, NULL, sc->kue_xfer_flags, 0);
+	err = KUE_DO_REQUEST(sc->kue_udev, &req, NULL);
 	splx(s);
 
 	return (err);
 }
 
 static usbd_status
-kue_ctl_l(sc, rw, breq, val, data, len, flags, lenp)
+kue_ctl(sc, rw, breq, val, data, len)
 	struct kue_softc	*sc;
 	int			rw;
 	u_int8_t		breq;
 	u_int16_t		val;
-	char			*data;
+	void			*data;
 	u_int32_t		len;
-	u_int32_t		flags;
-	u_int32_t		*lenp;
 {
 	usb_device_request_t	req;
 	usbd_status		err;
@@ -333,7 +287,7 @@ kue_ctl_l(sc, rw, breq, val, data, len, flags, lenp)
 	USETW(req.wLength, len);
 
 	s = splusb();
-	err = kue_do_request(sc, &req, data, sc->kue_xfer_flags | flags, lenp);
+	err = KUE_DO_REQUEST(sc->kue_udev, &req, data);
 	splx(s);
 
 	return (err);
@@ -360,7 +314,7 @@ kue_load_fw(sc)
 	 * is only valid after firmware download.
 	 */
 	err = kue_ctl(sc, KUE_CTL_READ, KUE_CMD_GET_ETHER_DESCRIPTOR,
-	    0, (char *)&sc->kue_desc, sizeof(sc->kue_desc));
+	    0, &sc->kue_desc, sizeof(sc->kue_desc));
 	if (!err) {
 		printf("%s: warm boot, no firmware download\n",
 		       USBDEVNAME(sc->kue_dev));
@@ -616,7 +570,7 @@ USB_ATTACH(kue)
 
 	/* Read ethernet descriptor */
 	err = kue_ctl(sc, KUE_CTL_READ, KUE_CMD_GET_ETHER_DESCRIPTOR,
-	    0, (char *)&sc->kue_desc, sizeof(sc->kue_desc));
+	    0, &sc->kue_desc, sizeof(sc->kue_desc));
 	if (err) {
 		printf("%s: could not read Ethernet descriptor\n",
 		    USBDEVNAME(sc->kue_dev));
@@ -630,8 +584,6 @@ USB_ATTACH(kue)
 		    USBDEVNAME(sc->kue_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
-
-	sc->kue_xfer_flags = USBD_NO_TSLEEP;
 
 	s = splimp();
 
@@ -952,10 +904,10 @@ kue_rxeof(xfer, priv, status)
 		     __FUNCTION__, total_len, 
 		     UGETW(mtod(c->kue_mbuf, u_int8_t *))));
 
-	m = c->kue_mbuf;
 	if (total_len <= 1)
 		goto done;
 
+	m = c->kue_mbuf;
 	/* copy data to mbuf */
 	memcpy(mtod(m, char*), c->kue_buf, total_len);
 
@@ -1279,9 +1231,9 @@ kue_open_pipes(sc)
 		    c, c->kue_buf, KUE_BUFSZ,
 		    USBD_SHORT_XFER_OK | USBD_NO_COPY, USBD_NO_TIMEOUT,
 		    kue_rxeof);
-		usbd_transfer(c->kue_xfer);
 		DPRINTFN(5,("%s: %s: start read\n", USBDEVNAME(sc->kue_dev),
 			    __FUNCTION__));
+		usbd_transfer(c->kue_xfer);
 	}
 
 	return (0);
