@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.62 1999/04/19 03:11:35 simonb Exp $
+# $NetBSD: md_share,v 1.63 1999/04/27 18:38:45 drochner Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -111,8 +111,10 @@
 ./usr/share/man/cat4/i386/mem.0
 ./usr/share/man/cat4/i386/mms.0
 ./usr/share/man/cat4/i386/npx.0
+./usr/share/man/cat4/i386/olms.0
+./usr/share/man/cat4/i386/omms.0
+./usr/share/man/cat4/i386/opms.0
 ./usr/share/man/cat4/i386/pcvt.0
-./usr/share/man/cat4/i386/pms.0
 ./usr/share/man/cat4/i386/speaker.0
 ./usr/share/man/cat4/mac68k/adb.0
 ./usr/share/man/cat4/mac68k/ae.0
@@ -418,8 +420,10 @@
 ./usr/share/man/man4/i386/mem.4
 ./usr/share/man/man4/i386/mms.4
 ./usr/share/man/man4/i386/npx.4
+./usr/share/man/man4/i386/olms.4
+./usr/share/man/man4/i386/omms.4
+./usr/share/man/man4/i386/opms.4
 ./usr/share/man/man4/i386/pcvt.4
-./usr/share/man/man4/i386/pms.4
 ./usr/share/man/man4/i386/speaker.4
 ./usr/share/man/man4/mac68k/adb.4
 ./usr/share/man/man4/mac68k/ae.4
