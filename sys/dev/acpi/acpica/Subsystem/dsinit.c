@@ -1,7 +1,7 @@
 /******************************************************************************
  *
- * Name: aclinux.h - OS specific defines, etc.
- *       $Revision: 1.1.1.2 $
+ * Module Name: dsinit - Object initialization namespace walk
+ *              $Revision: 1.1.1.1 $
  *
  *****************************************************************************/
 
@@ -114,51 +114,206 @@
  *
  *****************************************************************************/
 
-#ifndef __ACLINUX_H__
-#define __ACLINUX_H__
+#define __DSINIT_C__
 
-#define ACPI_OS_NAME                "Linux"
+#include "acpi.h"
+#include "acparser.h"
+#include "amlcode.h"
+#include "acdispat.h"
+#include "acnamesp.h"
+#include "acinterp.h"
 
-#define ACPI_USE_SYSTEM_CLIBRARY
+#define _COMPONENT          ACPI_DISPATCHER
+        ACPI_MODULE_NAME    ("dsinit")
 
-#ifdef __KERNEL__
 
-#include <linux/config.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/ctype.h>
-#include <asm/system.h>
-#include <asm/atomic.h>
-#include <asm/div64.h>
-#include <asm/acpi.h>
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDsInitOneObject
+ *
+ * PARAMETERS:  ObjHandle       - Node
+ *              Level           - Current nesting level
+ *              Context         - Points to a init info struct
+ *              ReturnValue     - Not used
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Callback from AcpiWalkNamespace.  Invoked for every object
+ *              within the namespace.
+ *
+ *              Currently, the only objects that require initialization are:
+ *              1) Methods
+ *              2) Operation Regions
+ *
+ ******************************************************************************/
 
-#define strtoul simple_strtoul
+ACPI_STATUS
+AcpiDsInitOneObject (
+    ACPI_HANDLE             ObjHandle,
+    UINT32                  Level,
+    void                    *Context,
+    void                    **ReturnValue)
+{
+    ACPI_OBJECT_TYPE        Type;
+    ACPI_STATUS             Status;
+    ACPI_INIT_WALK_INFO     *Info = (ACPI_INIT_WALK_INFO *) Context;
 
-#define ACPI_MACHINE_WIDTH	BITS_PER_LONG
 
-#else /* !__KERNEL__ */
+    ACPI_FUNCTION_NAME ("DsInitOneObject");
 
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <unistd.h>
 
-#if defined(__ia64__) || defined(__x86_64__)
-#define ACPI_MACHINE_WIDTH		64
-#define COMPILER_DEPENDENT_INT64	long
-#define COMPILER_DEPENDENT_UINT64	unsigned long
-#else
-#define ACPI_MACHINE_WIDTH		32
-#define COMPILER_DEPENDENT_INT64	long long
-#define COMPILER_DEPENDENT_UINT64	unsigned long long
-#define ACPI_USE_NATIVE_DIVIDE
-#endif
+    /*
+     * We are only interested in objects owned by the table that
+     * was just loaded
+     */
+    if (((ACPI_NAMESPACE_NODE *) ObjHandle)->OwnerId !=
+            Info->TableDesc->TableId)
+    {
+        return (AE_OK);
+    }
 
-#endif /* __KERNEL__ */
+    Info->ObjectCount++;
 
-/* Linux uses GCC */
+    /* And even then, we are only interested in a few object types */
 
-#include "acgcc.h"
+    Type = AcpiNsGetType (ObjHandle);
 
-#endif /* __ACLINUX_H__ */
+    switch (Type)
+    {
+    case ACPI_TYPE_REGION:
+
+        Status = AcpiDsInitializeRegion (ObjHandle);
+        if (ACPI_FAILURE (Status))
+        {
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Region %p [%4.4s] - Init failure, %s\n",
+                ObjHandle, ((ACPI_NAMESPACE_NODE *) ObjHandle)->Name.Ascii,
+                AcpiFormatException (Status)));
+        }
+
+        Info->OpRegionCount++;
+        break;
+
+
+    case ACPI_TYPE_METHOD:
+
+        Info->MethodCount++;
+
+        /* Print a dot for each method unless we are going to print the entire pathname */
+
+        if (!(AcpiDbgLevel & ACPI_LV_INIT_NAMES))
+        {
+            AcpiOsPrintf (".");
+        }
+
+        /*
+         * Set the execution data width (32 or 64) based upon the
+         * revision number of the parent ACPI table.
+         * TBD: This is really for possible future support of integer width
+         * on a per-table basis. Currently, we just use a global for the width.
+         */
+        if (Info->TableDesc->Pointer->Revision == 1)
+        {
+            ((ACPI_NAMESPACE_NODE *) ObjHandle)->Flags |= ANOBJ_DATA_WIDTH_32;
+        }
+
+        /*
+         * Always parse methods to detect errors, we may delete
+         * the parse tree below
+         */
+        Status = AcpiDsParseMethod (ObjHandle);
+        if (ACPI_FAILURE (Status))
+        {
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Method %p [%4.4s] - parse failure, %s\n",
+                ObjHandle, ((ACPI_NAMESPACE_NODE *) ObjHandle)->Name.Ascii,
+                AcpiFormatException (Status)));
+
+            /* This parse failed, but we will continue parsing more methods */
+
+            break;
+        }
+
+        /*
+         * Delete the parse tree.  We simple re-parse the method
+         * for every execution since there isn't much overhead
+         */
+        AcpiNsDeleteNamespaceSubtree (ObjHandle);
+        AcpiNsDeleteNamespaceByOwner (((ACPI_NAMESPACE_NODE *) ObjHandle)->Object->Method.OwningId);
+        break;
+
+
+    case ACPI_TYPE_DEVICE:
+
+        Info->DeviceCount++;
+        break;
+
+
+    default:
+        break;
+    }
+
+    /*
+     * We ignore errors from above, and always return OK, since
+     * we don't want to abort the walk on a single error.
+     */
+    return (AE_OK);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDsInitializeObjects
+ *
+ * PARAMETERS:  TableDesc       - Descriptor for parent ACPI table
+ *              StartNode       - Root of subtree to be initialized.
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Walk the namespace starting at "StartNode" and perform any
+ *              necessary initialization on the objects found therein
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiDsInitializeObjects (
+    ACPI_TABLE_DESC         *TableDesc,
+    ACPI_NAMESPACE_NODE     *StartNode)
+{
+    ACPI_STATUS             Status;
+    ACPI_INIT_WALK_INFO     Info;
+
+
+    ACPI_FUNCTION_TRACE ("DsInitializeObjects");
+
+
+    ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
+        "**** Starting initialization of namespace objects ****\n"));
+    ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT, "Parsing all Control Methods:"));
+
+    Info.MethodCount    = 0;
+    Info.OpRegionCount  = 0;
+    Info.ObjectCount    = 0;
+    Info.DeviceCount    = 0;
+    Info.TableDesc      = TableDesc;
+
+    /* Walk entire namespace from the supplied root */
+
+    Status = AcpiWalkNamespace (ACPI_TYPE_ANY, StartNode, ACPI_UINT32_MAX,
+                    AcpiDsInitOneObject, &Info, NULL);
+    if (ACPI_FAILURE (Status))
+    {
+        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "WalkNamespace failed, %s\n",
+            AcpiFormatException (Status)));
+    }
+
+    ACPI_DEBUG_PRINT_RAW ((ACPI_DB_INIT,
+        "\nTable [%4.4s] - %hd Objects with %hd Devices %hd Methods %hd Regions\n",
+        TableDesc->Pointer->Signature, Info.ObjectCount,
+        Info.DeviceCount, Info.MethodCount, Info.OpRegionCount));
+
+    ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
+        "%hd Methods, %hd Regions\n", Info.MethodCount, Info.OpRegionCount));
+
+    return_ACPI_STATUS (AE_OK);
+}
+
+

@@ -1,7 +1,8 @@
+
 /******************************************************************************
  *
- * Name: aclinux.h - OS specific defines, etc.
- *       $Revision: 1.1.1.2 $
+ * Module Name: getopt
+ *              $Revision: 4 $
  *
  *****************************************************************************/
 
@@ -114,51 +115,132 @@
  *
  *****************************************************************************/
 
-#ifndef __ACLINUX_H__
-#define __ACLINUX_H__
 
-#define ACPI_OS_NAME                "Linux"
-
-#define ACPI_USE_SYSTEM_CLIBRARY
-
-#ifdef __KERNEL__
-
-#include <linux/config.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/ctype.h>
-#include <asm/system.h>
-#include <asm/atomic.h>
-#include <asm/div64.h>
-#include <asm/acpi.h>
-
-#define strtoul simple_strtoul
-
-#define ACPI_MACHINE_WIDTH	BITS_PER_LONG
-
-#else /* !__KERNEL__ */
-
-#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <unistd.h>
 
-#if defined(__ia64__) || defined(__x86_64__)
-#define ACPI_MACHINE_WIDTH		64
-#define COMPILER_DEPENDENT_INT64	long
-#define COMPILER_DEPENDENT_UINT64	unsigned long
-#else
-#define ACPI_MACHINE_WIDTH		32
-#define COMPILER_DEPENDENT_INT64	long long
-#define COMPILER_DEPENDENT_UINT64	unsigned long long
-#define ACPI_USE_NATIVE_DIVIDE
-#endif
+#define ERR(szz,czz) if(AcpiGbl_Opterr){fprintf(stderr,"%s%s%c\n",argv[0],szz,czz);}
 
-#endif /* __KERNEL__ */
 
-/* Linux uses GCC */
+int   AcpiGbl_Opterr = 1;
+int   AcpiGbl_Optind = 1;
+int   AcpiGbl_Optopt;
+char  *AcpiGbl_Optarg;
 
-#include "acgcc.h"
 
-#endif /* __ACLINUX_H__ */
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiGetopt
+ *
+ * PARAMETERS:  argc, argv          - from main
+ *              opts                - options info list
+ *
+ * RETURN:      Option character or EOF
+ *
+ * DESCRIPTION: Get the next option
+ *
+ ******************************************************************************/
+
+int
+AcpiGetopt(
+    int                     argc, 
+    char                    **argv, 
+    char                    *opts)
+{
+    static int              CurrentCharPtr = 1;
+	int				        CurrentChar;
+	char                    *OptsPtr;
+
+
+    if (CurrentCharPtr == 1)
+    {
+        if (AcpiGbl_Optind >= argc ||
+            argv[AcpiGbl_Optind][0] != '-' || 
+            argv[AcpiGbl_Optind][1] == '\0')
+        {
+            return(EOF);
+        }
+        else if (strcmp (argv[AcpiGbl_Optind], "--") == 0) 
+        {
+            AcpiGbl_Optind++;
+            return(EOF);
+        }
+    }
+
+    /* Get the option */
+
+    CurrentChar = 
+    AcpiGbl_Optopt = 
+    argv[AcpiGbl_Optind][CurrentCharPtr];
+
+    /* Make sure that the option is legal */
+
+    if (CurrentChar == ':' || 
+       (OptsPtr = strchr (opts, CurrentChar)) == NULL) 
+    {
+        ERR (": illegal option -- ", CurrentChar);
+
+        if (argv[AcpiGbl_Optind][++CurrentCharPtr] == '\0') 
+        {
+            AcpiGbl_Optind++;
+            CurrentCharPtr = 1;
+        }
+
+        return ('?');
+    }
+
+    /* Option requires an argument? */
+
+    if (*++OptsPtr == ':') 
+    {
+        if (argv[AcpiGbl_Optind][CurrentCharPtr+1] != '\0')
+        {
+            AcpiGbl_Optarg = &argv[AcpiGbl_Optind++][CurrentCharPtr+1];
+        }
+        else if (++AcpiGbl_Optind >= argc) 
+        {
+            ERR (": option requires an argument -- ", CurrentChar);
+
+            CurrentCharPtr = 1;
+            return ('?');
+        } 
+        else
+        {
+            AcpiGbl_Optarg = argv[AcpiGbl_Optind++];
+        }
+
+        CurrentCharPtr = 1;
+    } 
+
+    /* Option has optional single-char arguments? */
+
+    else if (*OptsPtr == '^') 
+    {
+        if (argv[AcpiGbl_Optind][CurrentCharPtr+1] != '\0')
+        {
+            AcpiGbl_Optarg = &argv[AcpiGbl_Optind][CurrentCharPtr+1];
+        }
+        else
+        {
+            AcpiGbl_Optarg = "^";
+        }
+
+        AcpiGbl_Optind++;
+        CurrentCharPtr = 1;
+    }
+
+    /* Option with no arguments */
+
+    else 
+    {
+        if (argv[AcpiGbl_Optind][++CurrentCharPtr] == '\0') 
+        {
+            CurrentCharPtr = 1;
+            AcpiGbl_Optind++;
+        }
+
+        AcpiGbl_Optarg = NULL;
+    }
+
+    return (CurrentChar);
+}

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
- * Name: aclinux.h - OS specific defines, etc.
- *       $Revision: 1.1.1.2 $
+ * Module Name: nsdump - table dumping routines for debug
+ *              $Revision: 1.1.1.1 $
  *
  *****************************************************************************/
 
@@ -23,6 +23,7 @@
  * copy of the source code appearing in this file ("Covered Code") an
  * irrevocable, perpetual, worldwide license under Intel's copyrights in the
  * base code distributed originally by Intel ("Original Intel Code") to copy,
+
  * make derivatives, distribute, use and display any portion of the Covered
  * Code in any form, with the right to sublicense such rights; and
  *
@@ -114,51 +115,106 @@
  *
  *****************************************************************************/
 
-#ifndef __ACLINUX_H__
-#define __ACLINUX_H__
+#define __NSDUMPDV_C__
 
-#define ACPI_OS_NAME                "Linux"
+#include "acpi.h"
+#include "acnamesp.h"
 
-#define ACPI_USE_SYSTEM_CLIBRARY
 
-#ifdef __KERNEL__
+#define _COMPONENT          ACPI_NAMESPACE
+        ACPI_MODULE_NAME    ("nsdumpdv")
 
-#include <linux/config.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/ctype.h>
-#include <asm/system.h>
-#include <asm/atomic.h>
-#include <asm/div64.h>
-#include <asm/acpi.h>
 
-#define strtoul simple_strtoul
+#if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
 
-#define ACPI_MACHINE_WIDTH	BITS_PER_LONG
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiNsDumpOneDevice
+ *
+ * PARAMETERS:  Handle              - Node to be dumped
+ *              Level               - Nesting level of the handle
+ *              Context             - Passed into WalkNamespace
+ *
+ * DESCRIPTION: Dump a single Node that represents a device
+ *              This procedure is a UserFunction called by AcpiNsWalkNamespace.
+ *
+ ******************************************************************************/
 
-#else /* !__KERNEL__ */
+ACPI_STATUS
+AcpiNsDumpOneDevice (
+    ACPI_HANDLE             ObjHandle,
+    UINT32                  Level,
+    void                    *Context,
+    void                    **ReturnValue)
+{
+    ACPI_DEVICE_INFO        Info;
+    ACPI_STATUS             Status;
+    UINT32                  i;
 
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <unistd.h>
 
-#if defined(__ia64__) || defined(__x86_64__)
-#define ACPI_MACHINE_WIDTH		64
-#define COMPILER_DEPENDENT_INT64	long
-#define COMPILER_DEPENDENT_UINT64	unsigned long
-#else
-#define ACPI_MACHINE_WIDTH		32
-#define COMPILER_DEPENDENT_INT64	long long
-#define COMPILER_DEPENDENT_UINT64	unsigned long long
-#define ACPI_USE_NATIVE_DIVIDE
+    ACPI_FUNCTION_NAME ("NsDumpOneDevice");
+
+
+    Status = AcpiNsDumpOneObject (ObjHandle, Level, Context, ReturnValue);
+
+    Status = AcpiGetObjectInfo (ObjHandle, &Info);
+    if (ACPI_SUCCESS (Status))
+    {
+        for (i = 0; i < Level; i++)
+        {
+            ACPI_DEBUG_PRINT_RAW ((ACPI_DB_TABLES, " "));
+        }
+
+        ACPI_DEBUG_PRINT_RAW ((ACPI_DB_TABLES, "    HID: %s, ADR: %8.8X%8.8X, Status: %X\n",
+                        Info.HardwareId,
+                        ACPI_HIDWORD (Info.Address), ACPI_LODWORD (Info.Address),
+                        Info.CurrentStatus));
+    }
+
+    return (Status);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiNsDumpRootDevices
+ *
+ * PARAMETERS:  None
+ *
+ * DESCRIPTION: Dump all objects of type "device"
+ *
+ ******************************************************************************/
+
+void
+AcpiNsDumpRootDevices (void)
+{
+    ACPI_HANDLE             SysBusHandle;
+    ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_NAME ("NsDumpRootDevices");
+
+
+    /* Only dump the table if tracing is enabled */
+
+    if (!(ACPI_LV_TABLES & AcpiDbgLevel))
+    {
+        return;
+    }
+
+    Status = AcpiGetHandle (0, ACPI_NS_SYSTEM_BUS, &SysBusHandle);
+    if (ACPI_FAILURE (Status))
+    {
+        return;
+    }
+
+    ACPI_DEBUG_PRINT ((ACPI_DB_TABLES, "Display of all devices in the namespace:\n"));
+
+    Status = AcpiNsWalkNamespace (ACPI_TYPE_DEVICE, SysBusHandle,
+                ACPI_UINT32_MAX, ACPI_NS_WALK_NO_UNLOCK,
+                AcpiNsDumpOneDevice, NULL, NULL);
+}
+
 #endif
 
-#endif /* __KERNEL__ */
 
-/* Linux uses GCC */
-
-#include "acgcc.h"
-
-#endif /* __ACLINUX_H__ */

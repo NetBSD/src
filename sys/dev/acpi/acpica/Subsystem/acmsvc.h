@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acmsvc.h - VC specific defines, etc.
- *       $Revision: 1.1.1.1 $
+ *       $Revision: 1.1.1.2 $
  *
  *****************************************************************************/
 
@@ -124,7 +124,7 @@
  * Calling conventions:
  *
  * ACPI_SYSTEM_XFACE        - Interfaces to host OS (handlers, threads)
- * ACPI_EXTERNAL_XFACE      - External ACPI interfaces 
+ * ACPI_EXTERNAL_XFACE      - External ACPI interfaces
  * ACPI_INTERNAL_XFACE      - Internal ACPI interfaces
  * ACPI_INTERNAL_VAR_XFACE  - Internal variable-parameter list interfaces
  */
@@ -182,5 +182,13 @@
  * doesn't, so this is proprocessed away.
  */
 #define ACPI_PRINTF_LIKE_FUNC
+
+/* Some compilers complain about unused variables. Sometimes we don't want to
+ * use all the variables (most specifically for _THIS_MODULE). This allow us
+ * to to tell the compiler warning in a per-variable manner that a variable
+ * is unused. However, MSVC doesn't do this.
+ */
+#define ACPI_UNUSED_VAR
+
 
 #endif /* __ACMSVC_H__ */

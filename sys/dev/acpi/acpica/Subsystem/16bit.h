@@ -1,7 +1,6 @@
 /******************************************************************************
  *
- * Name: aclinux.h - OS specific defines, etc.
- *       $Revision: 1.1.1.2 $
+ * Module Name: 16bit.h - 16-bit support
  *
  *****************************************************************************/
 
@@ -114,51 +113,48 @@
  *
  *****************************************************************************/
 
-#ifndef __ACLINUX_H__
-#define __ACLINUX_H__
 
-#define ACPI_OS_NAME                "Linux"
+#define GET_SEGMENT(ptr)            ((UINT16)(_segment)(ptr))
+#define GET_OFFSET(ptr)             ((UINT16)(UINT32) (ptr))
+#define GET_PHYSICAL_ADDRESS(ptr)   (((((UINT32)GET_SEGMENT(ptr)) << 4)) + GET_OFFSET(ptr))
+#define PTR_OVL_BUILD_PTR(p,b,o)    {p.ovl.base=b;p.ovl.offset=o;}
 
-#define ACPI_USE_SYSTEM_CLIBRARY
+typedef union ptr_ovl
+{
+    void                *ptr;
+    UINT32              dword;
+    struct
+    {
+        UINT16              offset;
+        UINT16              base;
+    } ovl;
 
-#ifdef __KERNEL__
+} PTR_OVL;
 
-#include <linux/config.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/ctype.h>
-#include <asm/system.h>
-#include <asm/atomic.h>
-#include <asm/div64.h>
-#include <asm/acpi.h>
 
-#define strtoul simple_strtoul
+int ACPI_INTERNAL_VAR_XFACE
+FlatMove (
+    UINT32              Dest,
+    UINT32              Src,
+    UINT16              Size);
 
-#define ACPI_MACHINE_WIDTH	BITS_PER_LONG
 
-#else /* !__KERNEL__ */
+NATIVE_INT
+AfWriteBuffer (
+    char                *Filename,
+    char                *Buffer,
+    UINT32              Length);
 
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <unistd.h>
+char *
+AfGenerateFilename (char *TableId);
 
-#if defined(__ia64__) || defined(__x86_64__)
-#define ACPI_MACHINE_WIDTH		64
-#define COMPILER_DEPENDENT_INT64	long
-#define COMPILER_DEPENDENT_UINT64	unsigned long
-#else
-#define ACPI_MACHINE_WIDTH		32
-#define COMPILER_DEPENDENT_INT64	long long
-#define COMPILER_DEPENDENT_UINT64	unsigned long long
-#define ACPI_USE_NATIVE_DIVIDE
-#endif
 
-#endif /* __KERNEL__ */
+ACPI_STATUS
+AfFindTable(
+    char                    *TableName,
+    UINT8                   **TablePtr,
+    UINT32                  *TableLength);
 
-/* Linux uses GCC */
+void
+AfDumpTables (void);
 
-#include "acgcc.h"
-
-#endif /* __ACLINUX_H__ */

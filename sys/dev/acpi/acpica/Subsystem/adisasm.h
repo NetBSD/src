@@ -119,6 +119,12 @@
 
 #ifdef _MSC_VER                 /* disable some level-4 warnings */
 #pragma warning(disable:4100)   /* warning C4100: unreferenced formal parameter */
+
+int
+getopt (
+    int                     argc,
+    char                    **argv,
+    char                    *opts);
 #endif
 
 
@@ -130,16 +136,20 @@ extern UINT8                    *AmlStart;
 extern UINT32                   AmlLength;
 
 
-int
-getopt (
-    int                     argc,
-    char                    **argv,
-    char                    *opts);
+ACPI_STATUS
+AdInitialize (
+    void);
 
+char *
+FlGenerateFilename (
+    char                    *InputFilename,
+    char                    *Suffix);
 
 ACPI_STATUS
 AdAmlDisassemble (
-    char                *Filename);
+    BOOLEAN                 OutToFile,
+    char                    *Filename,
+    char                    **OutFilename);
 
 void
 AdPrintStatistics (void);
@@ -162,7 +172,8 @@ ACPI_STATUS
 AdParseTables (void);
 
 ACPI_STATUS
-AdDisplayTables (void);
+AdDisplayTables (
+    char                    *Filename);
 
 ACPI_STATUS
 AdDisplayStatistics (void);
