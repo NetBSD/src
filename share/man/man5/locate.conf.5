@@ -1,4 +1,4 @@
-.\"	$NetBSD: locate.conf.5,v 1.3 2004/04/19 00:30:42 lukem Exp $
+.\"	$NetBSD: locate.conf.5,v 1.4 2004/04/19 01:10:48 lukem Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,7 +65,7 @@ The configuration options are as follows:
 .Bl -tag -width XXXXXX
 .It Sy ignore Ar pattern ...
 Ignore files or directories.
-On building database,
+When building the database,
 do not descend into files or directories
 which match one of the specified patterns.
 The matched files or directories are not stored to the database.
@@ -73,16 +73,19 @@ The matched files or directories are not stored to the database.
 Default: Not specified.
 .It Sy ignorecontents Ar pattern ...
 Ignore contents of directories.
-On building database,
+When building the database,
 do not descend into files or directories
 which match one of the specified patterns.
 The matched files or directories themselves are stored to the database.
 .Pp
 Default: Not specified.
 .It Sy ignorefs Ar type ...
-Ignore filesystem by type.
-On building database,
-do not descend into filesystems which have one of the specified
+Ignore filesystem by type,
+adding
+.Ar type
+to the default list.
+When building the database,
+do not descend into filesystems which are of the specified
 .Ar type .
 The mount points are not stored to the database.
 If a
@@ -95,7 +98,9 @@ As a special case, if
 .Dq none
 is specified for
 .Ar type ,
-the default rule is disabled and all filesystems are traversed.
+the
+.Sy ignorefs
+list is cleared and all filesystems are traversed.
 .Pp
 .Ar type
 is used as an argument to
