@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.157 2002/03/16 16:13:41 tsutsui Exp $	*/
+/*	$NetBSD: uhci.c,v 1.158 2002/03/17 18:02:53 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.157 2002/03/16 16:13:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.158 2002/03/17 18:02:53 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ Static void		uhci_softintr(void *);
 Static usbd_status	uhci_device_request(usbd_xfer_handle xfer);
 
 Static void		uhci_add_intr(uhci_softc_t *, uhci_soft_qh_t *);
-Static void		uhci_remove_intr(uhci_softc_t*, uhci_soft_qh_t*);
+Static void		uhci_remove_intr(uhci_softc_t *, uhci_soft_qh_t *);
 Static usbd_status	uhci_device_setintr(uhci_softc_t *sc,
 			    struct uhci_pipe *pipe, int ival);
 
