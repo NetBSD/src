@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.11 2003/05/10 16:12:04 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.12 2004/11/07 04:24:34 mbw Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -220,6 +220,7 @@ struct blockzeroblock {
 #define BZB_TYPEFS	1
 #define BZB_TYPESWAP	3
 #define BZB_ROOTFS	0x8000
+#define BZB_ROOTFS_NEW	0xc000
 #define BZB_USRFS	0x4000
 #define BZB_USRFS_NEW	0x0004
 
