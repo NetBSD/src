@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.133 2002/09/21 07:05:06 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.134 2002/09/22 03:44:42 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.133 2002/09/21 07:05:06 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.134 2002/09/22 03:44:42 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1765,26 +1765,15 @@ rf_DispatchKernelIO(queue, req)
 	int     op = (req->type == RF_IO_TYPE_READ) ? B_READ : B_WRITE;
 	struct buf *bp;
 	struct raidbuf *raidbp = NULL;
-	struct raid_softc *rs;
-	int     unit;
-	int s;
-
-	s=0;
-	/* s = splbio();*/ /* want to test this */
-	/* XXX along with the vnode, we also need the softc associated with
-	 * this device.. */
 
 	req->queue = queue;
 
-	unit = queue->raidPtr->raidid;
-
-	db1_printf(("DispatchKernelIO unit: %d\n", unit));
-
-	if (unit >= numraid) {
+#if DIAGNOSTIC
+	if (queue->raidPtr->raidid >= numraid) {
 		printf("Invalid unit number: %d %d\n", unit, numraid);
 		panic("Invalid Unit number in rf_DispatchKernelIO\n");
 	}
-	rs = &raid_softc[unit];
+#endif
 
 	bp = req->bp;
 #if 1
@@ -1848,7 +1837,8 @@ rf_DispatchKernelIO(queue, req)
 		queue->curPriority = req->priority;
 
 		db1_printf(("Going for %c to unit %d row %d col %d\n",
-			req->type, unit, queue->row, queue->col));
+			    req->type, queue->raidPtr->raidid, 
+			    queue->row, queue->col));
 		db1_printf(("sector %d count %d (%d bytes) %d\n",
 			(int) req->sectorOffset, (int) req->numSector,
 			(int) (req->numSector <<
@@ -1865,7 +1855,7 @@ rf_DispatchKernelIO(queue, req)
 		panic("bad req->type in rf_DispatchKernelIO");
 	}
 	db1_printf(("Exiting from DispatchKernelIO\n"));
-	/* splx(s); */ /* want to test this */
+
 	return (0);
 }
 /* this is the callback function associated with a I/O invoked from
