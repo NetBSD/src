@@ -1,7 +1,7 @@
-/*	$NetBSD: zs.c,v 1.6 1998/08/26 11:44:06 tsubai Exp $	*/
+/*	$NetBSD: zs.c,v 1.7 1998/09/09 20:58:06 wrstuden Exp $	*/
 
 /*
- * Copyright (c) 1996 Bill Studenmund
+ * Copyright (c) 1996, 1998 Bill Studenmund
  * Copyright (c) 1995 Gordon W. Ross
  * All rights reserved.
  *
@@ -327,7 +327,7 @@ zsc_attach(parent, self, aux)
 
 		/* Define BAUD rate stuff. */
 		xcs->cs_clocks[0].clk = ZS_STD_BRG * 16;
-		xcs->cs_clocks[0].flags = ZSC_RTXBRG;
+		xcs->cs_clocks[0].flags = ZSC_RTXBRG | ZSC_RTXDIV;
 		xcs->cs_clocks[1].flags =
 			ZSC_RTXBRG | ZSC_RTXDIV | ZSC_VARIABLE | ZSC_EXTERN;
 		xcs->cs_clocks[2].flags = ZSC_TRXDIV | ZSC_VARIABLE;
