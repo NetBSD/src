@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.18 1999/02/26 22:37:57 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.18.2.1 1999/11/27 15:44:46 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -136,6 +136,13 @@ cachectl1(req, addr, len, p)
 			 vaddr_t	end = 0;
 
 		if (addr == 0 ||
+#if defined(M68040)
+#if defined(M68060)
+		    (cputype == CPU_68040 && req & CC_IPURGE) ||
+#else
+		    (req && CC_IPURGE) ||
+#endif
+#endif
 		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
 			doall = 1;
 		if (!doall) {
