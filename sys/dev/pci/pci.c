@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.80 2003/06/15 23:09:09 fvdl Exp $	*/
+/*	$NetBSD: pci.c,v 1.81 2003/08/15 07:17:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.80 2003/06/15 23:09:09 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.81 2003/08/15 07:17:21 itojun Exp $");
 
 #include "opt_pci.h"
 
@@ -262,11 +262,13 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
+	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+	if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
+		return (0);
+
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 	class = pci_conf_read(pc, tag, PCI_CLASS_REG);
-	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
-	bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 
 	/* Invalid vendor ID value? */
 	if (PCI_VENDOR(id) == PCI_VENDOR_INVALID)
@@ -312,6 +314,9 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		pa.pa_intrswiz = sc->sc_intrswiz + device;
 		pa.pa_intrtag = sc->sc_intrtag;
 	}
+
+	intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
+
 	pin = PCI_INTERRUPT_PIN(intr);
 	pa.pa_rawintrpin = pin;
 	if (pin == PCI_INTERRUPT_PIN_NONE) {
@@ -431,6 +436,11 @@ pci_enumerate_bus_generic(struct pci_softc *sc,
 #endif
 	{
 		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
+			continue;
+
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 		/* Invalid vendor ID value? */
@@ -442,15 +452,19 @@ pci_enumerate_bus_generic(struct pci_softc *sc,
 
 		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
 
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
-		    (qd != NULL &&
-		      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+		if (qd != NULL &&
+		      (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0)
 			nfunctions = 8;
-		else
+		else if (qd != NULL &&
+		      (qd->quirks & PCI_QUIRK_MONOFUNCTION) != 0)
 			nfunctions = 1;
+		else
+			nfunctions = PCI_HDRTYPE_MULTIFN(bhlcr) ? 8 : 1;
 
 		for (function = 0; function < nfunctions; function++) {
+			if (qd != NULL &&
+			    (qd->quirks & PCI_QUIRK_SKIP_FUNC(function)) != 0)
+				continue;
 			tag = pci_make_tag(pc, sc->sc_bus, device, function);
 			ret = pci_probe_device(sc, tag, match, pap);
 			if (match != NULL && ret != 0)
