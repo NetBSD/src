@@ -1,6 +1,8 @@
-/*	$NetBSD: vm_machdep.c,v 1.24 1996/03/31 23:45:46 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.25 1996/04/04 23:05:25 abrown Exp $ */
 
 /*
+ * Copyright (c) 1996
+ *	The President and Fellows of Harvard University. All rights reserved.
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -12,6 +14,7 @@
  * must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Lawrence Berkeley Laboratory.
+ *	This product includes software developed by Harvard University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,6 +26,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
+ *	This product includes software developed by Harvard University.
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -152,13 +156,19 @@ dvma_mapin(map, va, len, canwait)
 	register int npf, s;
 	register vm_offset_t pa;
 	long off, pn;
+#if defined(SUN4M)
+	extern int has_iocache;
+#endif
 
 	off = (int)va & PGOFSET;
 	va -= off;
 	len = round_page(len + off);
 	npf = btoc(len);
 
-	kvm_uncache((caddr_t)va, len >> PGSHIFT);
+#if defined(SUN4M)
+	if (!has_iocache)
+	    kvm_uncache((caddr_t)va, len >> PGSHIFT);
+#endif
 
 	s = splimp();
 	for (;;) {

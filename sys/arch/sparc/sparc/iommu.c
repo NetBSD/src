@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.1 1996/03/31 23:09:32 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.2 1996/04/04 23:05:22 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -269,7 +269,7 @@ iommu_enter(va, pa)
 
 	pte = atop(pa) << IOPTE_PPNSHFT;
 	pte &= IOPTE_PPN;
-	pte |= IOPTE_V | IOPTE_W;
+	pte |= IOPTE_V | IOPTE_W | (has_iocache ? IOPTE_C : 0);
 	sc->sc_ptes[atop(va - sc->sc_dvmabase)] = pte;
 	IOMMU_FLUSHPAGE(sc, va);
 }
