@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.13 2000/03/03 12:50:20 soda Exp $	*/
+/*	$NetBSD: dma.c,v 1.14 2000/03/30 21:37:51 soren Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 
 #include <mips/locore.h>
 #include <machine/cpu.h>
-#include <machine/cpuregs.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/pio.h>
