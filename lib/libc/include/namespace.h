@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.84.2.1 2004/04/08 19:39:32 jdc Exp $	*/
+/*	$NetBSD: namespace.h,v 1.84.2.2 2004/05/11 15:48:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
 #define daylight	_daylight
 #define err		_err
 #define errx		_errx
+#ifdef _REENTRANT
+#define fileno		_fileno
+#endif
 #define fork		_fork
 #define fseeko		_fseeko
 #define ftello		_ftello
