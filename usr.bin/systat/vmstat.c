@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.19 1999/03/24 05:51:32 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.19.2.1 2000/01/23 12:02:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.19 1999/03/24 05:51:32 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.19.2.1 2000/01/23 12:02:34 he Exp $");
 #endif /* not lint */
 
 /*
@@ -596,7 +596,6 @@ getinfo(s, st)
 {
 	int mib[2];
 	size_t size;
-	extern int errno;
 
 	dkreadstats();
 	NREAD(X_CPTIME, s->time, sizeof s->time);
