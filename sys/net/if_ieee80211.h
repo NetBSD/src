@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.20 2002/09/27 05:36:04 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.21 2002/09/30 05:35:28 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -334,6 +334,8 @@ struct ieee80211_channel {
 	u_int16_t	i_channel;
 };
 
+#define	IEEE80211_CHAN_ANY	0xffff
+
 #define	SIOCS80211CHANNEL	 _IOW('i', 238, struct ieee80211_channel)
 #define	SIOCG80211CHANNEL	_IOWR('i', 239, struct ieee80211_channel)
 
@@ -360,6 +362,10 @@ struct ieee80211_bssid {
 #define	IEEE80211_CHAN_MAX	255
 #define	IEEE80211_RATE_SIZE	12
 #define	IEEE80211_KEYBUF_SIZE	16
+#define	IEEE80211_NODE_HASHSIZE	32
+/* simple hash is enough for variation of macaddr */
+#define	IEEE80211_NODE_HASH(addr)	\
+	(((u_int8_t *)(addr))[IEEE80211_ADDR_LEN - 1] % IEEE80211_NODE_HASHSIZE)
 
 enum ieee80211_phytype {
 	IEEE80211_T_DS,
@@ -386,6 +392,7 @@ enum ieee80211_state {
  */
 struct ieee80211_node {
 	TAILQ_ENTRY(ieee80211_node)	ni_list;
+	LIST_ENTRY(ieee80211_node)	ni_hash;
 
 	/* hardware */
 	u_int8_t		ni_rssi;
@@ -451,6 +458,7 @@ struct ieee80211com {
 	u_int8_t		ic_ibss_chan;
 	int			ic_fixed_rate;	/* index to ic_sup_rates[] */
 	TAILQ_HEAD(, ieee80211_node) ic_node;	/* information of all nodes */
+	LIST_HEAD(, ieee80211_node) ic_hash[IEEE80211_NODE_HASHSIZE];
 	u_int16_t		ic_lintval;	/* listen interval */
 	int			ic_mgt_timer;	/* mgmt timeout */
 	int			ic_scan_timer;	/* scant wait */
@@ -461,7 +469,8 @@ struct ieee80211com {
 	u_int8_t		ic_des_bssid[IEEE80211_ADDR_LEN];
 	struct ieee80211_wepkey	ic_nw_keys[IEEE80211_WEP_NKID];
 	int			ic_wep_txkey;	/* default tx key index */
-	void			*ic_wep_ctx;
+	void			*ic_wep_ctx;	/* wep crypt context */
+	u_int32_t		ic_iv;		/* initial vector for wep */
 };
 #define	ic_if		ic_ec.ec_if
 #define	ic_softc	ic_ec.ec_if.if_softc
@@ -509,9 +518,11 @@ void	ieee80211_dump_pkt(u_int8_t *, int, int, int);
 void	ieee80211_watchdog(struct ifnet *);
 void	ieee80211_next_scan(struct ifnet *);
 void	ieee80211_end_scan(struct ifnet *);
-struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *, int);
+struct ieee80211_node *ieee80211_alloc_node(struct ieee80211com *, u_int8_t *,
+    int);
 struct ieee80211_node *ieee80211_find_node(struct ieee80211com *, u_int8_t *);
 void	ieee80211_free_node(struct ieee80211com *, struct ieee80211_node *);
+void	ieee80211_free_allnodes(struct ieee80211com *);
 int	ieee80211_fix_rate(struct ieee80211com *, struct ieee80211_node *, int);
 int	ieee80211_new_state(struct ifnet *, enum ieee80211_state, int);
 struct mbuf *ieee80211_wep_crypt(struct ifnet *, struct mbuf *, int);
