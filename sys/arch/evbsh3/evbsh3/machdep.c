@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2001/09/10 21:19:12 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2002/02/11 18:06:34 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -934,19 +934,25 @@ shpcmcia_mem_add_mapping(bpa, size, type, bshp)
 
 	*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
-	if( io_type == SH3_BUS_SPACE_PCMCIA_IO ){
-		m = PG_PCMCIA_IO;
+#define MODE(t, s)							\
+	(t) & SH3_BUS_SPACE_PCMCIA_8BIT ?				\
+		_PG_PCMCIA_ ## s ## 8 :					\
+		_PG_PCMCIA_ ## s ## 16
+	switch (io_type) {
+	default:
+		panic("unknown pcmcia space.");
+		/* NOTREACHED */
+	case SH3_BUS_SPACE_PCMCIA_IO:
+		m = MODE(type, IO);
+		break;
+	case SH3_BUS_SPACE_PCMCIA_MEM:
+		m = MODE(type, MEM);
+		break;
+	case SH3_BUS_SPACE_PCMCIA_ATT:
+		m = MODE(type, ATTR);
+		break;
 	}
-	else if( io_type == SH3_BUS_SPACE_PCMCIA_MEM ){
-		m = PG_PCMCIA_MEM;
-	}
-	else if( io_type == SH3_BUS_SPACE_PCMCIA_ATT ){
-		m = PG_PCMCIA_ATT;
-	}
-
-	if( type & SH3_BUS_SPACE_PCMCIA_8BIT ){
-		m |= PG_PCMCIA_8;
-	}
+#undef MODE
 
 	for (; pa < endpa; pa += NBPG, va += NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
