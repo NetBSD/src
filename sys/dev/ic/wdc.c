@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.100 2001/11/13 13:14:46 lukem Exp $ */
+/*	$NetBSD: wdc.c,v 1.101 2001/11/14 20:18:11 bouyer Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.100 2001/11/13 13:14:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.101 2001/11/14 20:18:11 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1168,6 +1168,10 @@ wdc_probe_caps(drvp)
 			    ATA_CONFIG_DMA_OFF;
 			drvp->drive_flags |= DRIVE_DMA | DRIVE_MODE;
 		}
+	}
+	if ((wdc->cap & WDC_CAPABILITY_UDMA) == 0) {
+		/* don't care about UDMA modes */
+		return;
 	}
 	if (cf_flags & ATA_CONFIG_UDMA_SET) {
 		if ((cf_flags & ATA_CONFIG_UDMA_MODES) ==
