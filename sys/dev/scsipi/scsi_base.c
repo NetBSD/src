@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.22 1994/12/28 19:42:55 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.23 1994/12/29 13:49:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -698,10 +698,8 @@ scsi_interpret_sense(xs)
 		key = sense->extended_flags & SSD_KEY;
 
 		switch (key) {
-		case 0x1:	/* RECOVERED ERROR */
-			sc_print_addr(sc_link);
-			printf("soft error (corrected), info = %d (decimal)\n", info);
 		case 0x0:	/* NO SENSE */
+		case 0x1:	/* RECOVERED ERROR */
 			if (xs->resid == xs->datalen)
 				xs->resid = 0;	/* not short read */
 		case 0xc:	/* EQUAL */
@@ -751,6 +749,9 @@ scsi_interpret_sense(xs)
 			printf("%s", error_mes[key - 1]);
 			if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
 				switch (key) {
+				case 0x2:	/* NOT READY */
+				case 0x5:	/* ILLEGAL REQUEST */
+				case 0x6:	/* UNIT ATTENTION */
 				case 0x7:	/* DATA PROTECT */
 					break;
 				case 0x8:	/* BLANK CHECK */
