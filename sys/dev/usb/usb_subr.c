@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.54 1999/11/16 12:04:29 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.55 1999/11/16 22:15:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1235,7 +1235,7 @@ usb_disconnect_port(up, parent)
 		return;
 	}
 
-	if (dev->subdevs == NULL) {
+	if (dev->subdevs != NULL) {
 		for (i = 0; dev->subdevs[i]; i++) {
 			if (!dev->subdevs[i])	/* skip empty elements */
 				continue;
