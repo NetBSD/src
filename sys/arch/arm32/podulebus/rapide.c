@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.13 2001/02/27 20:27:17 reinoud Exp $	*/
+/*	$NetBSD: rapide.c,v 1.14 2001/03/17 18:46:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -229,7 +229,7 @@ rapide_attach(parent, self, aux)
 	sc->sc_version = bus_space_read_1(iot, ctlioh, VERSION_REGISTER_OFFSET) & VERSION_REGISTER_MASK;
 /*	bus_space_unmap(iot, ctl_ioh, CONTROL_REGISTER_SPACE);*/
 
-	printf(" Issue %d\n", sc->sc_version + 1);
+	printf(": Issue %d\n", sc->sc_version + 1);
 	if (sc->sc_version != VERSION_2_ID)
 		return;
 

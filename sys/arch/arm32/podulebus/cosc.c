@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.11 1999/09/30 22:59:53 thorpej Exp $	*/
+/*	$NetBSD: cosc.c,v 1.12 2001/03/17 18:46:25 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -132,6 +132,8 @@ coscattach(pdp, dp, auxp)
 	sc->sc_podule_number = pa->pa_podule_number;
 	sc->sc_podule = pa->pa_podule;
 	podules[sc->sc_podule_number].attached = 1;
+
+	printf(":");
 
 	if (pa->pa_podule->manufacturer == MANUFACTURER_ACORN
 	    && pa->pa_podule->product == PODULE_ACORN_SCSI)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.4 2001/02/13 19:17:13 bjh21 Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.5 2001/03/17 18:46:26 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -251,7 +251,7 @@ ne_pbus_attach(parent, self, aux)
 	}
 
 	/* Report the interface name */
-	printf(" %s ethernet\n", ne->name);
+	printf(": %s ethernet\n", ne->name);
 
 	/*
 	 * Ok we need our own bus tag as the register spacing

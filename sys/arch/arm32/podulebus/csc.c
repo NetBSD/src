@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.8 2000/06/29 08:53:02 mrg Exp $	*/
+/*	$NetBSD: csc.c,v 1.9 2001/03/17 18:46:25 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ cscattach(pdp, dp, auxp)
 	(void)get_bootconf_option(boot_args, "csc.hostid",
 	    BOOTOPT_TYPE_INT, &sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
-	printf(" host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
+	printf(": host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
 	sc->sc_softc.sc_ih.ih_func = csc_intr;
 	sc->sc_softc.sc_ih.ih_arg  = &sc->sc_softc;
