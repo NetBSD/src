@@ -1,11 +1,11 @@
-/* $NetBSD: crc32.c,v 1.3 1998/11/01 21:28:51 tron Exp $ */
+/* $NetBSD: crc32.c,v 1.4 2002/03/12 00:42:23 fvdl Exp $ */
 
 /* crc32.c -- compute the CRC-32 of a data stream
- * Copyright (C) 1995-1998 Mark Adler
+ * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) Id */
+/* @(#) $Id: crc32.c,v 1.4 2002/03/12 00:42:23 fvdl Exp $ */
 
 #include "zlib.h"
 
@@ -15,7 +15,7 @@
 
 local int crc_table_empty = 1;
 local uLongf crc_table[256];
-local void make_crc_table OF((void));
+local void make_crc_table __P((void));
 
 /*
   Generate a table for a byte-wise 32-bit CRC calculation on the polynomial:

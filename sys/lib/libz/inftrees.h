@@ -1,7 +1,7 @@
-/* $NetBSD: inftrees.h,v 1.3 1998/11/01 21:28:51 tron Exp $ */
+/* $NetBSD: inftrees.h,v 1.4 2002/03/12 00:42:24 fvdl Exp $ */
 
 /* inftrees.h -- header to use inftrees.c
- * Copyright (C) 1995-1998 Mark Adler
+ * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
@@ -34,14 +34,14 @@ struct inflate_huft_s {
    value below is more than safe. */
 #define MANY 1440
 
-extern int inflate_trees_bits OF((
+extern int inflate_trees_bits __P((
     uIntf *,                    /* 19 code lengths */
     uIntf *,                    /* bits tree desired/actual depth */
     inflate_huft * FAR *,       /* bits tree result */
     inflate_huft *,             /* space for trees */
     z_streamp));                /* for messages */
 
-extern int inflate_trees_dynamic OF((
+extern int inflate_trees_dynamic __P((
     uInt,                       /* number of literal/length codes */
     uInt,                       /* number of distance codes */
     uIntf *,                    /* that many (total) code lengths */
@@ -52,7 +52,7 @@ extern int inflate_trees_dynamic OF((
     inflate_huft *,             /* space for trees */
     z_streamp));                /* for messages */
 
-extern int inflate_trees_fixed OF((
+extern int inflate_trees_fixed __P((
     uIntf *,                    /* literal desired/actual bit depth */
     uIntf *,                    /* distance desired/actual bit depth */
     inflate_huft * FAR *,       /* literal/length tree result */
