@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.1 2002/08/24 06:30:34 itohy Exp $	*/
+/*	$NetBSD: ffs.S,v 1.2 2002/08/24 06:37:24 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
 
 #include <machine/asm.h>
 
-#if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ffs.S,v 1.1 2002/08/24 06:30:34 itohy Exp $")
+#if defined(LIBC_SCCS) && !defined(lint)
+	RCSID("$NetBSD: ffs.S,v 1.2 2002/08/24 06:37:24 itohy Exp $")
 #endif
 
 /*
