@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.38 1999/08/31 12:30:36 bouyer Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.39 2000/02/14 22:00:21 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -595,4 +595,32 @@ vn_closefile(fp, p)
 
 	return (vn_close(((struct vnode *)fp->f_data), fp->f_flag,
 		fp->f_cred, p));
+}
+
+/*
+ * Enable LK_CANRECURSE on lock. Return prior status.
+ */
+u_int
+vn_setrecurse(vp)
+	struct vnode *vp;
+{
+	struct lock *lkp = &vp->v_lock;
+	u_int retval = lkp->lk_flags & LK_CANRECURSE;
+
+	lkp->lk_flags |= LK_CANRECURSE;
+	return retval;
+}
+
+/*
+ * Called when done with locksetrecurse.
+ */
+void
+vn_restorerecurse(vp, flags)
+	struct vnode *vp;
+	u_int flags;
+{
+	struct lock *lkp = &vp->v_lock;
+
+	lkp->lk_flags &= ~LK_CANRECURSE;
+	lkp->lk_flags |= flags;
 }
