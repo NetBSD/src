@@ -43,7 +43,7 @@
  *
  * 28 Nov 1991	Poul-Henning Kamp	Speedup processing.
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/pmap.c,v 1.2 1993/03/21 18:04:42 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/i386/Attic/pmap.c,v 1.3 1993/04/10 00:52:34 mycroft Exp $";
 
 /*
  * Derived from hp300 version by Mike Hibler, this version by William
@@ -999,6 +999,8 @@ pmap_enter(pmap, va, pa, prot, wired)
 #endif
 			npv = (pv_entry_t)
 				malloc(sizeof *npv, M_VMPVENT, M_NOWAIT);
+			if (npv == NULL)
+				panic("pmap_enter: malloc returned NULL");
 			npv->pv_va = va;
 			npv->pv_pmap = pmap;
 			npv->pv_next = pv->pv_next;
