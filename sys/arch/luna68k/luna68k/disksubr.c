@@ -1,5 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $ */
-/*	$NetBSD: disksubr.c,v 1.1 2000/01/05 08:49:03 nisimura Exp $	*/
+/* $NetBSD: disksubr.c,v 1.2 2000/01/11 08:22:38 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -63,9 +62,8 @@
 #error	"Default value of LABELSECTOR no longer zero?"
 #endif
 
-static char * disklabel_om_to_bsd(char *, struct disklabel *);
-static int disklabel_bsd_to_om(struct disklabel *, char *);
-#define	OM_DKMAGIC 0xdabe
+static char *disklabel_om_to_bsd __P((char *, struct disklabel *));
+static int disklabel_bsd_to_om __P((struct disklabel *, char *));
 
 /*
  * Attempt to read a disk label from a device
@@ -123,7 +121,7 @@ readdisklabel(dev, strat, lp, clp)
 
 	/* Check for a UniOS-B disk label (for PROM compatibility). */
 	slp = (struct sun_disklabel *)clp->cd_block;
-	if (slp->sl_magic == OM_DKMAGIC) {
+	if (slp->sl_magic == SUN_DKMAGIC) {
 		return (disklabel_om_to_bsd(clp->cd_block, lp));
 	}
 
@@ -343,9 +341,16 @@ disklabel_om_to_bsd(cp, lp)
 	while (sp1 < sp2)
 		cksum ^= *sp1++;
 	if (cksum != 0)
-		return ("UNIOS-B disk label, bad checksum");
+		return ("UniOS-B disk label, bad checksum");
 
 	memset((caddr_t)lp, 0, sizeof(struct disklabel));
+
+#if 1
+	if (sl->sl_rpm == 0) {
+		/* it's a UniOS disk */
+		strcpy(lp->d_typename, "UniOS label !!!");
+	}
+#endif
 
 	/* Format conversion. */
 	lp->d_magic = DISKMAGIC;
@@ -362,14 +367,21 @@ disklabel_om_to_bsd(cp, lp)
 	lp->d_secpercyl  = secpercyl;
 	lp->d_secperunit = secpercyl * sl->sl_ncylinders;
 
-	lp->d_rpm          = 3600;			/* XXX */
-	lp->d_interleave   = 1;				/* XXX */
+	lp->d_sparespercyl = 0;				/* XXX */
+	lp->d_acylinders   = sl->sl_acylinders;
+	lp->d_rpm = (sl->sl_rpm == 0) ? 3600 : sl->sl_rpm;/* XXX */
+	lp->d_interleave   = sl->sl_interleave;		/* XXX */
 
+#if 1
+	if (sl->sl_rpm == 0) {
+		/* UniOS label has blkoffset, not cyloffset */
+		secpercyl = 1;
+	}
+#endif
 	lp->d_npartitions = 8;
 	/* These are as defined in <ufs/ffs/fs.h> */
 	lp->d_bbsize = 8192;				/* XXX */
 	lp->d_sbsize = 8192;				/* XXX */
-
 	for (i = 0; i < 8; i++) {
 		spp = &sl->sl_part[i];
 		npp = &lp->d_partitions[i];
@@ -380,6 +392,7 @@ disklabel_om_to_bsd(cp, lp)
 		else {
 			/* Partition has non-zero size.  Set type, etc. */
 			npp->p_fstype = sun_fstypes[i];
+
 			/*
 			 * The sun label does not store the FFS fields,
 			 * so just set them with default values here.
@@ -394,6 +407,13 @@ disklabel_om_to_bsd(cp, lp)
 			}
 		}
 	}
+#if 1
+	if (sl->sl_rpm == 0) {
+		/* Make UniOS rootfs usable as part b */
+		lp->d_partitions[1] = lp->d_partitions[2];
+		lp->d_partitions[1].p_fstype = FS_BSDFFS;
+	}
+#endif
 
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
@@ -419,22 +439,23 @@ disklabel_bsd_to_om(lp, cp)
 	u_short cksum, *sp1, *sp2;
 
 	if (lp->d_secsize != 512)
-	    return (EINVAL);
+		return (EINVAL);
 
 	sl = (struct sun_disklabel *)cp;
-
+#if 1
+	if (sl->sl_rpm == 0) {
+		/* Never change UniOS label */
+		return (EPERM);
+	}
+#endif
 	/* Format conversion. */
 	memcpy(sl->sl_text, lp->d_packname, sizeof(lp->d_packname));
-#if 0
 	sl->sl_rpm = lp->d_rpm;
 	sl->sl_pcyl = lp->d_ncylinders + lp->d_acylinders;	/* XXX */
 	sl->sl_sparespercyl = lp->d_sparespercyl;
 	sl->sl_interleave   = lp->d_interleave;
-#endif
 	sl->sl_ncylinders   = lp->d_ncylinders;
-#if 0
 	sl->sl_acylinders   = lp->d_acylinders;
-#endif
 	sl->sl_ntracks      = lp->d_ntracks;
 	sl->sl_nsectors     = lp->d_nsectors;
 
@@ -448,7 +469,7 @@ disklabel_bsd_to_om(lp, cp)
 		spp->sdkp_cyloffset = npp->p_offset / secpercyl;
 		spp->sdkp_nsectors = npp->p_size;
 	}
-	sl->sl_magic = OM_DKMAGIC;
+	sl->sl_magic = SUN_DKMAGIC;
 
 	/* Correct the XOR check. */
 	sp1 = (u_short *)sl;
