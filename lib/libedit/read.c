@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.28 2003/09/26 17:44:51 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.29 2003/10/09 00:42:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.28 2003/09/26 17:44:51 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.29 2003/10/09 00:42:28 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -552,7 +552,13 @@ el_gets(EditLine *el, int *nread)
 			continue;	/* keep going... */
 
 		case CC_EOF:	/* end of file typed */
-			num = 0;
+			if ((el->el_flags & UNBUFFERED) == 0)
+				num = 0;
+			else if (num == -1) {
+				*el->el_line.lastchar++ = CTRL('d');
+				el->el_line.cursor = el->el_line.lastchar;
+				num = 1;
+			}
 			break;
 
 		case CC_NEWLINE:	/* normal end of line */
