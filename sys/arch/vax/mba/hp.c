@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.13 1997/01/31 02:12:31 thorpej Exp $ */
+/*	$NetBSD: hp.c,v 1.14 1997/03/15 16:32:18 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,11 +51,13 @@
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/syslog.h>
+#include <sys/reboot.h>
 
 #include <machine/trap.h>
 #include <machine/pte.h>
 #include <machine/mtpr.h>
 #include <machine/cpu.h>
+#include <machine/rpb.h>
 
 #include <vax/mba/mbavar.h>
 #include <vax/mba/mbareg.h>
@@ -163,6 +165,12 @@ hpattach(parent, self, aux)
 	    dl, NULL)) != NULL)
 		printf(": %s", msg);
 	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
+	/*
+	 * check if this was what we booted from.
+	 */
+	if ((B_TYPE(bootdev) == BDEV_HP) && (ma->unit == B_UNIT(bootdev)) &&
+	    (ms->sc_physnr == B_ADAPTOR(bootdev)))
+		booted_from = self;
 }
 
 
@@ -465,30 +473,4 @@ hpwrite(dev, uio)
 	struct uio *uio;
 {
 	return (physio(hpstrategy, NULL, dev, B_WRITE, minphys, uio));
-}
-
-/*
- * Convert physical adapternr and unit to the unit number used by kernel.
- */
-int
-hp_getdev(mbanr, unit, devpp)
-	int	mbanr, unit;
-	struct device **devpp;
-{
-	struct	mba_softc *ms;
-	struct	hp_softc *sc;
-	int i;
-
-	for (i = 0; i < hp_cd.cd_ndevs; i++) {
-		if (hp_cd.cd_devs[i] == 0)
-			continue;
-
-		sc = hp_cd.cd_devs[i];
-		ms = (void *)sc->sc_dev.dv_parent;
-		if (ms->sc_physnr == mbanr && sc->sc_physnr == unit) {
-			*devpp = &sc->sc_dev;
-			return i;
-		}
-	}
-	return -1;
 }

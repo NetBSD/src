@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.9 1997/02/12 18:02:47 ragge Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.10 1997/03/15 16:32:19 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -57,6 +57,10 @@
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
+
+#include <machine/cpu.h>
+#include <machine/rpb.h>
 
 #include <ufs/ffs/fs.h> /* For some disklabel stuff */
 
@@ -186,6 +190,13 @@ raattach(parent, self, aux)
 	dl->d_ntracks = mp->mscp_guse.guse_ngpc;
 	dl->d_secpercyl = dl->d_nsectors * dl->d_ntracks;
 	disk_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
+	/*
+	 * Find out if we booted from this disk.
+	 */
+	if ((B_TYPE(bootdev) == BDEV_UDA) && (ra->ra_hwunit == B_UNIT(bootdev))
+	    && (mi->mi_ctlrnr == B_CONTROLLER(bootdev))
+	    && (mi->mi_adapnr == B_ADAPTOR(bootdev)))
+		booted_from = self;
 }
 
 /* 
@@ -940,27 +951,4 @@ rasize(dev)
                         return -1;
 
 	return ra->ra_disk.dk_label->d_partitions[rapart(dev)].p_size;
-}
-
-int
-ra_getdev(adaptor, controller, unit, devpp)
-	int adaptor, controller, unit;
-	struct device **devpp;
-{
-	struct mscp_softc *mi;
-	struct ra_softc *ra;
-	int i;
-
-	for (i = 0; i < ra_cd.cd_ndevs; i++) {
-		if ((ra = ra_cd.cd_devs[i]) == 0)
-			continue;
-
-		mi = (void *)ra->ra_dev.dv_parent;
-		if (mi->mi_ctlrnr == controller && mi->mi_adapnr == adaptor &&
-		    ra->ra_hwunit == unit) {
-			*devpp = &ra->ra_dev;
-			return i;
-		}
-	}
-	return -1;
 }

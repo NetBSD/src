@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.23 1997/02/26 18:38:23 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1997/03/15 16:32:20 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -57,6 +57,7 @@ void	gencnslask __P((void));
 struct cpu_dep *dep_call;
 struct nexus *nexus;
 int	mastercpu;	/* chief of the system */
+struct device *booted_from;
 
 #define BACKPLANE	0
 
@@ -73,25 +74,26 @@ struct devnametobdevmaj vax_nam2blk[] = {
 void
 configure()
 {
-	struct device *booted_device;
-	int booted_partition;
-	extern int boothowto;
+	struct device *booted_device = NULL;
+	int booted_partition = 0;
 
 	if (config_rootfound("backplane", NULL) == NULL)
 		panic("backplane not configured");
 
 	/*
-	 * Configure swap area and related system
-	 * parameter based on device(s) used.
+	 * The device we booted from are looked for during autoconfig.
+	 * There can only be one match.
 	 */
-	findroot(&booted_device, &booted_partition);
+	if ((bootdev & B_MAGICMASK) == (u_long)B_DEVMAGIC) {
+		booted_device = booted_from;
+		booted_partition = B_PARTITION(bootdev);
+	}
 
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition, vax_nam2blk);
 
-	gencnslask(); /* XXX inte g|ras h{r */
 #if VAX410 || VAX43
 	dzcnslask(); /* XXX inte g|ras h{r */
 #endif
@@ -104,6 +106,7 @@ configure()
 int	printut __P((void *, const char *));
 int	backplane_match __P((struct device *, void *, void *));
 void	backplane_attach __P((struct device *, struct device *, void *));
+
 int
 printut(aux, hej)
 	void *aux;
