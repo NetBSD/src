@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.34 1995/08/17 16:26:54 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.35 1995/10/09 12:00:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -327,6 +327,7 @@ struct partinfo {
 #define DIOCWLABEL	_IOW('d', 109, int)	/* write en/disable label */
 
 #define DIOCSBAD	_IOW('d', 110, struct dkbad)	/* set kernel dkbad */
+#define DIOCEJECT	_IO('d', 112)		/* Eject removable disk */
 
 #ifdef _KERNEL
 void	 diskerr
