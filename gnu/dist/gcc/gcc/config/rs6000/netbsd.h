@@ -99,6 +99,15 @@ Boston, MA 02111-1307, USA.  */
   { "netbsd_entry_point",	NETBSD_ENTRY_POINT },		\
   { "netbsd_endfile_spec",	NETBSD_ENDFILE_SPEC },
 
+/*
+ * Add NetBSD specific defaults: -mpowerpc -mnew_mnemonics -mstrict-align
+ */
+#undef TARGET_DEFAULT
+#define TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS | MASK_STRICT_ALIGN)
+
+/* Override STACK_BOUNDARY to use Altivec compliant one.  */
+#undef STACK_BOUNDARY
+#define STACK_BOUNDARY	128
 
 #undef TARGET_VERSION
 #define TARGET_VERSION fprintf (stderr, " (NetBSD/powerpc ELF)");
