@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.44 2000/05/26 17:08:21 ad Exp $
+#	$NetBSD: security,v 1.45 2000/07/02 22:27:47 sommerfeld Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -187,15 +187,26 @@ if checkyesno check_rootdotfiles; then
 	list="/etc/csh.cshrc /etc/csh.login ${rhome}/.cshrc ${rhome}/.login"
 	for i in $list ; do
 		if [ -f $i ] ; then
-			if egrep umask $i > /dev/null ; then
+			if egrep '^[ \t]*umask[ \t]+[0-7]+' $i > /dev/null ; then
 				umaskset=yes
 			fi
-			egrep umask $i |
-			awk '$2 % 100 < 20 \
-				{ print "\tRoot umask is group writeable" }
-			     $2 % 10 < 2 \
-				{ print "\tRoot umask is other writeable" }' \
-			    >> $OUTPUT
+			# double check the umask value itself; ensure that both the
+			# 020 and 002 bits are set.
+			# we handle this in decimal initially to extract the digits,
+			# and then extract the `2' bit of each digit.
+			# this is made especially painful because 
+			# bitwise operations were left out of awk.
+			egrep '^[ \t]*umask[ \t]+[0-7]+' $i |
+			awk '{ g= ($2 % 100) - ($2 % 10);
+			       g /= 10;
+			       g = g % 4;
+			       g -= g % 2;
+			       if (g != 2) { print "\tRoot umask is group writeable" }
+			       o = ($2 % 10);
+			       o = o % 4;
+			       o -= o % 2;
+			       if (o != 2) { print "\tRoot umask is other writeable" } }' |
+			    sort -u >> $OUTPUT
 			SAVE_PATH=$PATH
 			unset PATH
 			/bin/csh -f -s << end-of-csh > /dev/null 2>&1
