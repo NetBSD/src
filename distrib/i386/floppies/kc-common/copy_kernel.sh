@@ -1,4 +1,6 @@
-#	$NetBSD: copy_kernel.sh,v 1.2 1996/08/30 17:34:44 thorpej Exp $
+#! /bin/sh
+#
+#	$NetBSD: copy_kernel.sh,v 1.3 1996/10/09 00:13:36 jtc Exp $
 #
 #	Kernel copy script
 

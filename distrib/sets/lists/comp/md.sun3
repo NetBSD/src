@@ -7,6 +7,7 @@
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
 ./usr/include/m68k/ieeefp.h
+./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
 ./usr/include/m68k/profile.h
 ./usr/include/m68k/psl.h
@@ -40,6 +41,7 @@
 ./usr/include/machine/isr.h
 ./usr/include/machine/kbd.h
 ./usr/include/machine/kbio.h
+./usr/include/machine/kcore.h
 ./usr/include/machine/limits.h
 ./usr/include/machine/mon.h
 ./usr/include/machine/obctl.h
@@ -54,6 +56,7 @@
 ./usr/include/machine/pte.h
 ./usr/include/machine/ptrace.h
 ./usr/include/machine/reg.h
+./usr/include/machine/remote-sl.h
 ./usr/include/machine/saio.h
 ./usr/include/machine/setjmp.h
 ./usr/include/machine/signal.h
@@ -64,6 +67,7 @@
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
 ./usr/include/machine/vuid_event.h
+./usr/include/machine/z8530var.h
 ./usr/lib/libc_pic.a
 ./usr/lib/libcrypt_pic.a
 ./usr/lib/libcurses_pic.a
@@ -81,3 +85,7 @@
 ./usr/lib/libutil_pic.a
 ./usr/lib/scrt0.o
 ./usr/sbin/dbsym
+./usr/share/man/cat3/kvm_dump.0
+./usr/share/man/cat3/kvm_dump_inval.0
+./usr/share/man/cat3/kvm_dump_mkheader.0
+./usr/share/man/cat3/kvm_dump_wrtheader.0

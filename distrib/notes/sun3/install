@@ -1,4 +1,3 @@
-
 Installing NetBSD is a relatively complex process, but if you have
 this document in hand it should not be too difficult.
 
@@ -13,7 +12,7 @@ initialize the disk on that machine and then move the disk.
 
 * Installing from tape:
 
-Create the NetBSD/sun3 1.1 boot tape as described in the section
+Create the NetBSD/sun3 1.2 boot tape as described in the section
 entitled "Preparing a boot tape" and boot the tape.  At the PROM
 monitor prompt, use one of the commands:
 	>b st()
@@ -78,24 +77,39 @@ can use any network resources.  For example the command:
 will bring up the network interface with that address.  The next
 step is to copy the miniroot from your server.  This can be done
 using either NFS or remote shell.  (In the examples that follow,
-the server has IP address 192.233.20.195)
+the server has IP address 192.233.20.195)  You may then need to
+add a default route if the server is on a different subnet:
 
-To load the miniroot from an NFS file:
+	ssh> route add default 192.233.20.255  1
+
+You can look at the route table using:
+
+	ssh> route show
+
+Now mount the NFS filesystem containing the miniroot image:
 
 	ssh> mount -r 192.233.20.195:/server/path /mnt
+
+The procedure is simpler if you have space for an expanded
+(not compressed) copy of the miniroot image.  In that case:
+
 	ssh> dd if=/mnt/miniroot of=/dev/rsd0b bs=8k
 
-To load the miniroot using rsh to the server:
+Otherwise, you will need to use "zcat" to expand the miniroot
+image while copying.  This is tricky because the "ssh" program
+(small shell) does not handle sh(1) pipeline syntax.  Instead,
+you first run the reader in the background with its input set
+to /dev/pipe and then run the other program in the foreground
+with its output to /dev/pipe.  The result looks like this:
 
-	ssh> run -b dd if=/dev/pipe of=/dev/rsd0b bs=8k
+	ssh> run -bg dd if=/dev/pipe of=/dev/rsd0b obs=8k
+	ssh> run -o /dev/pipe zcat /mnt/install/miniroot.gz
+
+To load the miniroot using rsh to the server, you would use a
+pair of commands similar to the above.  Here is another example:
+
+	ssh> run -b dd if=/dev/pipe of=/dev/rsd0b obs=8k
 	ssh> run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.gz
-
-Note that "ssh" does not use "sh" syntax.  It is a very small
-shell designed for the ramdisk kernel.  The first command of the
-above pair runs a "dd" in the background reading /dev/pipe.  The
-second of the pair runs an "rsh" command with its standard output
-redirected to /dev/pipe.  In ssh, the "help" command will show you
-a list of commands and options (there are only a few).
 
 
 * Booting the miniroot:

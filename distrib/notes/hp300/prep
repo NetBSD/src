@@ -40,17 +40,20 @@ code 16, unit numers might be something like the following:
 
                    Miniroot installation via network
 	           ---------------------------------
-NOTE:  BOOTING SYS_INST VIA THE NETWORK IS ONLY POSSIBLE IF YOUR BOOTROM
-IS `REV. C' OR LATER.
+NOTE:  BOOTING SYS_INST VIA THE NETWORK ON EARLY HP300 MODELS IS ONLY
+POSSIBLE IF YOUR BOOTROM IS `REV. C' OR LATER.  When checking the
+revision of your BOOTROM, use what it printed on the console during
+the self-test, not what may be printed on a sticker on the chip itself.
 
 In order to complete this process, you will need the following from the
 `.../install' directory of the distribution:
 
-	SYS_INST	The standalone disklabel and miniroot
-			installation tool
+	SYS_INST		The standalone disklabel and miniroot
+				installation tool
 
-	inst-11.fs.gz	A gzipped miniroot filesystem image.  This image
-			must be un-gzipped before copying to disk.
+	miniroot-12.fs.gz	A gzipped miniroot filesystem image.  This
+				image must be un-gzipped before copying
+				to disk.
 
 To boot SYS_INST via the network, you will need a system capable of handling
 boot requests for an HP workstation.  If you will use this method, see the
