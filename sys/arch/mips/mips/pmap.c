@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 1999/11/13 23:16:39 mhitch Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 1999/11/29 11:14:49 uch Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 1999/11/13 23:16:39 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 1999/11/29 11:14:49 uch Exp $");
 
 /*
  *	Manages physical address maps.
@@ -266,6 +266,9 @@ pmap_bootstrap()
 
 #ifdef SYSVSHM
 	Sysmapsize += shminfo.shmall;
+#endif
+#ifdef KSEG2IOBUFSIZE
+	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
 #endif
 	Sysmap = (pt_entry_t *)
 	    pmap_steal_memory(sizeof(pt_entry_t) * Sysmapsize, NULL, NULL);
