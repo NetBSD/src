@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 2000/06/19 15:15:03 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.32 2000/07/09 02:24:30 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.31 2000/06/19 15:15:03 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.32 2000/07/09 02:24:30 sommerfeld Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -510,7 +510,7 @@ show_chdir_messages(int code)
 			continue;
 		then = st.st_mtime;
 		if (code != 0) {
-			reply(-code, "");
+			reply(-code, "%s", "");
 			code = 0;
 		}
 		reply(-code, "Please read the file %s", *rlist);
@@ -539,7 +539,7 @@ format_file(const char *file, int code)
 		return(0);
 	if ((f = fopen(file, "r")) == NULL)
 		return (0);
-	reply(-code, "");
+	reply(-code, "%s", "");
 
 	for (;
 	    (buf = fparseln(f, &len, NULL, "\0\0\0", 0)) != NULL; free(buf)) {
