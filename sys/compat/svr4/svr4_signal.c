@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.28 1998/09/11 12:50:09 mycroft Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.29 1998/10/02 11:54:16 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1998 The NetBSD Foundation, Inc.
@@ -205,15 +205,15 @@ svr4_to_native_sigaction(ssa, bsa)
 	if ((ssa->sa_flags & SVR4_SA_RESTART) != 0)
 		bsa->sa_flags |= SA_RESTART;
 	if ((ssa->sa_flags & SVR4_SA_SIGINFO) != 0)
-/*XXX*/		printf("svr4_to_native_sigaction: SA_SIGINFO ignored\n");
+		DPRINTF(("svr4_to_native_sigaction: SA_SIGINFO ignored\n"));
 	if ((ssa->sa_flags & SVR4_SA_NODEFER) != 0)
 		bsa->sa_flags |= SA_NODEFER;
 	if ((ssa->sa_flags & SVR4_SA_NOCLDWAIT) != 0)
-/*XXX*/		printf("svr4_to_native_sigaction: SA_NOCLDWAIT ignored\n");
+		bsa->sa_flags |= SA_NOCLDWAIT;
 	if ((ssa->sa_flags & SVR4_SA_NOCLDSTOP) != 0)
 		bsa->sa_flags |= SA_NOCLDSTOP;
 	if ((ssa->sa_flags & ~SVR4_SA_ALLBITS) != 0)
-/*XXX*/		printf("svr4_to_native_sigaction: extra bits ignored\n");
+		DPRINTF(("svr4_to_native_sigaction: extra bits ignored\n"));
 }
 
 void
