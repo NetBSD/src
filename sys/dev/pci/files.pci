@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.213 2004/07/08 19:39:00 drochner Exp $
+#	$NetBSD: files.pci,v 1.214 2004/07/09 18:38:37 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -224,6 +224,11 @@ file	dev/pci/cmdide.c		cmdide
 device	cypide {[channel = -1]}: ata, pciide_common, cy82c693
 attach	cypide at pci
 file	dev/pci/cypide.c		cypide
+
+# AMD Geode IDE controllers
+device	geodeide {[channel = -1]}: ata, pciide_common
+attach	geodeide at pci
+file	dev/pci/geodeide.c		geodeide
 
 # Triones/HighPoint IDE controllers
 device	hptide {[channel = -1]}: ata, pciide_common
