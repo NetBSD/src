@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.25 2002/02/02 01:59:04 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.26 2002/05/25 14:07:09 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,16 +82,16 @@ the default is
 .It Fl u Ar user
 Set UID to
 .Ar user
-after the sockets and log files have been open.
+after the sockets and log files have been opened.
 .It Fl g Ar group
 Set GID to
 .Ar group
-after the sockets and log files have been open.
+after the sockets and log files have been opened.
 .It Fl t Ar chroot_dir
 .Xr chroot 2
 to
 .Ar chroot_dir
-after the sockets and log files 	have been open.
+after the sockets and log files have been opened.
 .It Fl m
 Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
@@ -164,7 +164,7 @@ portion of the configuration files.
 Refer to
 .Xr hosts_access 5
 for details.
-.Sh SYSLOG PROTOCOL NOTES
+.Ss SYSLOG PROTOCOL NOTES
 The message sent to
 .Nm
 should consist of a single line.
