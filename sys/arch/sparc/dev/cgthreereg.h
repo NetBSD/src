@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthreereg.h,v 1.4 1994/11/20 20:52:03 deraadt Exp $ */
+/*	$NetBSD: cgthreereg.h,v 1.5 1996/02/27 00:14:17 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
 struct cgthree_all {
 	long	ba_id;			/* ID = 0xfe010104 on my IPC */
 	char	ba_xxx0[0x400000-4];
-	struct	bt_regs ba_btreg;	/* Brooktree registers */
-	char	ba_xxx1[0x400000-sizeof(struct bt_regs)];
+	struct	fbcontrol ba_fbc;	/* Brooktree regs (+ misc control) */
+	char	ba_xxx1[0x400000-sizeof(struct fbcontrol)];
 	char	ba_ram[4096];		/* actually larger */
 };
