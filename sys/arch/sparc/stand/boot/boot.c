@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10.8.3 2002/11/11 22:04:37 nathanw Exp $ */
+/*	$NetBSD: boot.c,v 1.10.8.4 2002/12/11 15:53:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -116,6 +116,7 @@ main()
 	u_long	marks[MARK_MAX], bootinfo;
 	struct btinfo_symtab bi_sym;
 	void	*arg;
+	u_long	maxkernsize;
 
 #ifdef HEAP_VARIABLE
 	{
@@ -123,6 +124,16 @@ main()
 		setheap((void *)ALIGN(end), (void *)0xffffffff);
 	}
 #endif
+	{
+		/*
+		 * Find maximum the kernel size that we can handle.
+		 * Our stack grows down from label `start'; assume
+		 * we need no more that 16K of stack space.
+		 */
+		extern char start[];	/* top of stack (see srt0.S) */
+		maxkernsize = (u_long)start - (16*1024) - PROM_LOADADDR;
+		
+	}
 	prom_init();
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
@@ -170,9 +181,23 @@ main()
 
 		marks[MARK_START] = 0;
 		printf("Booting %s\n", kernel);
-		if ((io = loadfile(kernel, marks, LOAD_KERNEL)) != -1)
-			break;
-			
+		if ((io = loadfile(kernel, marks, COUNT_KERNEL)) != -1) {
+			close(io);
+			if (marks[MARK_END] - marks[MARK_START] > maxkernsize) {
+				printf("kernel too large: %lu"
+					" (maximum kernel size is %lu)\n",
+					marks[MARK_END] - marks[MARK_START],
+					maxkernsize);
+				how |= RB_ASKNAME;
+				continue;
+			}
+			marks[MARK_START] = 0;
+			if ((io = loadfile(kernel, marks, LOAD_KERNEL)) != -1) {
+				close(io);
+				break;
+			}
+		}
+
 		/*
 		 * if we have are not in askname mode, and we aren't using the
 		 * prom bootfile, try the next one (if it exits).  otherwise,
