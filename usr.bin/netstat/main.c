@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 1999/02/27 17:37:24 sommerfe Exp $	*/
+/*	$NetBSD: main.c,v 1.22 1999/03/14 18:30:04 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 1999/02/27 17:37:24 sommerfe Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 1999/03/14 18:30:04 kristerw Exp $");
 #endif
 #endif /* not lint */
 
@@ -572,7 +572,7 @@ usage()
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", __progname);
 	(void)fprintf(stderr,
-"       %s [-ghimnrsv] [-f address_family] [-M core] [-N system]\n", 
+"       %s [-gimnrsv] [-f address_family] [-M core] [-N system]\n", 
 	__progname);
 	(void)fprintf(stderr,
 "       %s [-n] [-I interface] [-M core] [-N system] [-w wait]\n", __progname);
