@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_ls.c,v 1.4 2003/02/23 12:31:29 simonb Exp $	 */
+/*	$NetBSD: ufs_ls.c,v 1.5 2003/03/18 19:20:09 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1993
@@ -54,7 +54,7 @@ struct entry_t {
 	char	e_name[1];
 };
 
-static const char    *typestr[] = {
+static const char    *const typestr[] = {
 	"unknown",
 	"FIFO",
 	"CHR",

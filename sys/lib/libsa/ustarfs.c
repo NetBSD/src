@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.20 2003/03/11 19:43:04 jmmv Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.21 2003/03/18 19:20:09 mycroft Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -134,7 +134,7 @@ typedef struct ust_active_struct {
 static const char formatid[] = "USTARFS",
 		  metaname[] = "USTAR.volsize.";
 
-static int ustarfs_mode_offset = BBSIZE;
+static const int ustarfs_mode_offset = BBSIZE;
 
 static int checksig __P((ust_active_t *));
 static int convert __P((const char *, int, int));

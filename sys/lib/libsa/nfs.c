@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.30 2003/03/12 14:51:31 drochner Exp $	*/
+/*	$NetBSD: nfs.c,v 1.31 2003/03/18 19:20:09 mycroft Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -662,7 +662,7 @@ nfs_seek(f, offset, where)
 }
 
 /* NFNON=0, NFREG=1, NFDIR=2, NFBLK=3, NFCHR=4, NFLNK=5 */
-int nfs_stat_types[8] = {
+const int nfs_stat_types[8] = {
 	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK, 0 };
 
 int
