@@ -1,4 +1,4 @@
-/*	$NetBSD: swap_pager.c,v 1.33 1997/06/12 14:51:24 mrg Exp $	*/
+/*	$NetBSD: swap_pager.c,v 1.34 1998/02/06 00:14:45 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 University of Utah.
@@ -128,6 +128,8 @@ int		swap_pager_npendingio;	/* number of pager clean structs */
 struct swpclean	swap_pager_inuse;	/* list of pending page cleans */
 struct swpclean	swap_pager_free;	/* list of free pager clean structs */
 struct pagerlst	swap_pager_list;	/* list of "named" anon regions */
+
+extern struct buf bswlist;		/* import from vm_swap.c */
 
 static void 		swap_pager_init __P((void));
 static vm_pager_t	swap_pager_alloc

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_pageout.h,v 1.12 1998/01/31 04:02:46 ross Exp $	*/
+/*	$NetBSD: vm_pageout.h,v 1.13 1998/02/06 00:14:59 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -87,10 +87,12 @@ u_int32_t	vm_pages_reserved;	/* i.e., reserved for pageout_daemon */
  *	Signal pageout-daemon and wait for it.
  */
 
+#if !defined(UVM)
 #ifdef _KERNEL
 void		 vm_wait __P((char *));
 void		 vm_pageout __P((void));
 void		 vm_pageout_scan __P((void));
 void		 vm_pageout_page __P((vm_page_t, vm_object_t));
 void		 vm_pageout_cluster __P((vm_page_t, vm_object_t));
+#endif
 #endif
