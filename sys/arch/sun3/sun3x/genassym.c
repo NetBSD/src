@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.6 1997/02/11 19:02:30 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.7 1997/02/12 23:03:14 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -149,10 +149,10 @@ struct nv assyms[] = {
 
 	/* XXX: HP-UX trace bit? */
 
-	/* VM structure fields */
+	/* VM/pmap structure fields */
 	def("VM_PMAP", offsetof(struct vmspace, vm_pmap)),
-	def("VM_PMAP_MMUCRP", offsetof(struct vmspace, vm_pmap.pm_mmucrp)),
-	def("VM_PMAP_A_TMGR", offsetof(struct vmspace, vm_pmap.pm_a_tmgr)),
+	def("PM_A_PHYS", offsetof(struct pmap, pm_a_phys)),
+	def("PM_A_TMGR", offsetof(struct pmap, pm_a_tmgr)),
 
 	/* pcb offsets */
 	def("PCB_FLAGS", offsetof(struct pcb, pcb_flags)),
