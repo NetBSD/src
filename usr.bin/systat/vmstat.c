@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.47 2003/02/13 08:09:33 dsl Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.48 2003/02/17 19:30:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.47 2003/02/13 08:09:33 dsl Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.48 2003/02/17 19:30:33 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -136,19 +136,20 @@ static struct nlist namelist[] = {
  */
 #define STATROW		 0	/* uses 1 row and 68 cols */
 #define STATCOL		 2
-#define MEMROW		 2	/* uses 4 rows and 31 cols */
+#define MEMROW		 9	/* uses 4 rows and 31 cols */
 #define MEMCOL		 0
 #define PAGEROW		 2	/* uses 4 rows and 26 cols */
-#define PAGECOL		36
-#define INTSROW		 2	/* uses all rows to bottom and 17 cols */
-#define INTSCOL		63
-#define PROCSROW	 7	/* uses 2 rows and 20 cols */
+#define PAGECOL		54
+#define INTSROW		 9	/* uses all rows to bottom and 17 cols */
+#define INTSCOL		40
+#define INTSCOLEND	(VMSTATCOL - 0)
+#define PROCSROW	 2	/* uses 2 rows and 20 cols */
 #define PROCSCOL	 0
-#define GENSTATROW	 7	/* uses 2 rows and 30 cols */
+#define GENSTATROW	 2	/* uses 2 rows and 30 cols */
 #define GENSTATCOL	18
-#define VMSTATROW	 7	/* uses 17 rows and 12 cols */
-#define VMSTATCOL	48
-#define GRAPHROW	10	/* uses 3 rows and 51 cols */
+#define VMSTATROW	 7	/* uses 17 rows and 15 cols */
+#define VMSTATCOL	64
+#define GRAPHROW	 5	/* uses 3 rows and 51 cols */
 #define GRAPHCOL	 0
 #define NAMEIROW	14	/* uses 3 rows and 38 cols */
 #define NAMEICOL	 0
@@ -255,7 +256,7 @@ initvmstat(void)
 	/* event counter interrupt counts */
 	get_interrupt_events();
 
-	nextintsrow = INTSROW + 2;
+	nextintsrow = INTSROW + 1;
 	allocinfo(&s);
 	allocinfo(&s1);
 	allocinfo(&s2);
@@ -282,7 +283,7 @@ print_ie_title(int i)
 {
 	int width, name_width, group_width;
 
-	width = COLS - (INTSCOL + 9);
+	width = INTSCOLEND - (INTSCOL + 9);
 	if (width <= 0)
 		return;
 
@@ -341,8 +342,7 @@ labelvmstat(void)
 	mvprintw(PAGEROW + 2, PAGECOL, "ops");
 	mvprintw(PAGEROW + 3, PAGECOL, "pages");
 
-	mvprintw(INTSROW, INTSCOL + 3, " Interrupts");
-	mvprintw(INTSROW + 1, INTSCOL + 9, "total");
+	mvprintw(INTSROW, INTSCOL + 9, "Interrupts");
 
 	mvprintw(VMSTATROW + 0, VMSTATCOL + 10, "forks");
 	mvprintw(VMSTATROW + 1, VMSTATCOL + 10, "fkppw");
@@ -390,7 +390,7 @@ labelvmstat(void)
 		if (intrloc[i] == 0)
 			continue;
 		mvprintw(intrloc[i], INTSCOL + 9, "%-.*s",
-			COLS - (INTSCOL + 9), intrname[i]);
+			INTSCOLEND - (INTSCOL + 9), intrname[i]);
 	}
 	for (i = 0; i < nevcnt; i++) {
 		if (ie_head[i].ie_loc == 0)
@@ -447,7 +447,7 @@ showvmstat(void)
 				continue;
 			intrloc[i] = nextintsrow++;
 			mvprintw(intrloc[i], INTSCOL + 9, "%-.*s",
-				COLS - (INTSCOL + 9), intrname[i]);
+				INTSCOLEND - (INTSCOL + 9), intrname[i]);
 		}
 		X(intrcnt);
 		l = (int)((float)s.intrcnt[i]/etime + 0.5);
@@ -468,7 +468,7 @@ showvmstat(void)
 		inttotal += l;
 		putint(l, ie_head[i].ie_loc, INTSCOL, 8);
 	}
-	putint(inttotal, INTSROW + 1, INTSCOL, 8);
+	putint(inttotal, INTSROW, INTSCOL, 8);
 	Z(ncs_goodhits); Z(ncs_badhits); Z(ncs_miss);
 	Z(ncs_long); Z(ncs_pass2); Z(ncs_2passes);
 	s.nchcount = nchtotal.ncs_goodhits + nchtotal.ncs_badhits +
@@ -636,7 +636,8 @@ puthumanint(u_int64_t n, int l, int c, int w)
 {
 	char b[128];
 
-	move(l, c);
+	if (move(l, c) != OK)
+		return;
 	if (n == 0) {
 		hline(' ', w);
 		return;
@@ -646,8 +647,7 @@ puthumanint(u_int64_t n, int l, int c, int w)
 		return;
 	}
 	hline(' ', w - strlen(b));
-	move(l, c + w - strlen(b));
-	addstr(b);
+	mvaddstr(l, c + w - strlen(b), b);
 }
 
 static void
@@ -655,7 +655,8 @@ putint(int n, int l, int c, int w)
 {
 	char b[128];
 
-	move(l, c);
+	if (move(l, c) != OK)
+		return;
 	if (n == 0) {
 		hline(' ', w);
 		return;
@@ -673,7 +674,8 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 {
 	char b[128];
 
-	move(l, c);
+	if (move(l, c) != OK)
+		return;
 	if (nz && f == 0.0) {
 		hline(' ', w);
 		return;
