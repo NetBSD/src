@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.22 2004/12/25 07:24:17 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.23 2004/12/25 07:45:53 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.22 2004/12/25 07:24:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.23 2004/12/25 07:45:53 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1292,8 +1292,9 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			hrx = &sc->sc_rxdesc[0];
 			if ((hrx->hrx_stat & htole32(RTW_RXSTAT_OWN)) != 0)
 				break;
-			printf("%s: NIC skipped to rxdesc[0]\n",
-			    sc->sc_dev.dv_xname);
+			RTW_DPRINTF(RTW_DEBUG_BUGS,
+			    ("%s: NIC skipped to rxdesc[0]\n",
+			     sc->sc_dev.dv_xname));
 			next = 0;
 			continue;
 		}
@@ -1705,7 +1706,8 @@ rtw_intr_ioerror(struct rtw_softc *sc, uint16_t isr)
 	if ((isr & (RTW_INTR_RDU|RTW_INTR_RXFOVW)) == 0)
 		return;
 
-	printf("%s: restarting xmit/recv\n", sc->sc_dev.dv_xname);
+	RTW_DPRINTF(RTW_DEBUG_BUGS, ("%s: restarting xmit/recv\n",
+	    sc->sc_dev.dv_xname));
 
 	rtw_dump_rings(sc);
 
