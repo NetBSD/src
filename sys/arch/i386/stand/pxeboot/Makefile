@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/04/01 21:25:35 mycroft Exp $
+#	$NetBSD: Makefile,v 1.7 2004/08/05 18:04:35 dbj Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -49,7 +49,9 @@ CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x30000
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 
-I386MISCMAKEFLAGS= I386_INCLUDE_DISK=no
+CPPFLAGS+= -DPASS_BIOSGEOM
+# if you don't use -DPASS_BIOSGEOM, then set I386_INCLUDE_DISK=no
+#I386MISCMAKEFLAGS= I386_INCLUDE_DISK=no
 
 .if (${BASE} == "pxeboot_ia32")
 VERSIONFILE= ${.CURDIR}/version
