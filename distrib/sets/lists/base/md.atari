@@ -1,5 +1,6 @@
-# $NetBSD: md.atari,v 1.40 2001/01/25 08:29:19 jwise Exp $
+# $NetBSD: md.atari,v 1.41 2001/02/27 09:07:29 leo Exp $
 ./dev/mouse				base-sys-devlinks
+./sbin/ahdilabel			base-sysutil-root
 ./sbin/binpatch				base-sysutil-root
 ./sbin/edahdi				base-sysutil-root
 ./sbin/edlabel				base-sysutil-root
