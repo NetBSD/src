@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.7 2002/03/17 05:41:10 gmcgarry Exp $
+#	$NetBSD: install.md,v 1.8 2003/02/23 22:29:38 he Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,18 +76,18 @@ __mfs_failed_1
 
 md_get_diskdevs() {
 	# return available disk devices
-	dmesg | grep "^rd[0-9]*:." | cut -d":" -f1 | sort -u
-	dmesg | grep "^sd[0-9]*:.*cylinders" | cut -d":" -f1 | sort -u
+	dmesg | awk -F : '/^rd[0-9]*:./ { print $1; }' | sort -u
+	dmesg | awk -F : '/^sd[0-9]*:.*cylinders/ { print $1; }' | sort -u
 }
 
 md_get_cddevs() {
 	# return available CD-ROM devices
-	dmesg | grep "sd[0-9]*:.*CD-ROM" | cut -d":" -f1 | sort -u
+	dmesg | awk -F : '/^sd[0-9]*:.*CD-ROM/ { print $1; }' | sort -u
 }
 
 md_get_ifdevs() {
 	# return available network interfaces
-	dmesg | grep "^le[0-9]*:" | cut -d":" -f1 | sort -u
+	dmesg | awk -F : '/^le[0-9]*:/ { print $1; }' | sort -u
 }
 
 md_installboot() {
@@ -99,13 +99,23 @@ md_installboot() {
 	echo "done."
 }
 
+grep_check_q () {
+	pattern=$1; shift
+	awk 'BEGIN{ es=1; } /'"$pattern"'/{ es=0; } END{ exit es; }' "$@"
+}
+
+plain_grep () {
+	pattern=$1; shift
+	awk "/$pattern/"'{ print; }' "$@"
+}
+
 md_checkfordisklabel() {
 	# $1 is the disk to check
 
 	disklabel -r $1 > /dev/null 2> /tmp/checkfordisklabel
-	if grep "no disk label" /tmp/checkfordisklabel; then
+	if grep_check_q "no disk label" /tmp/checkfordisklabel; then
 		rval="1"
-	elif grep "disk label corrupted" /tmp/checkfordisklabel; then
+	elif grep_check_q "disk label corrupted" /tmp/checkfordisklabel; then
 		rval="2"
 	else
 		rval="0"
@@ -270,8 +280,8 @@ hp300_init_label_hpib_disk() {
 	# We look though the boot messages attempting to find
 	# the model number for the provided disk.
 	_hpib_disktype=""
-	if dmesg | grep "${1}: " > /dev/null 2>&1; then
-		_hpib_disktype=HP`dmesg | grep "${1}: " | sort -u | \
+	if dmesg | grep_check_q "${1}: "; then
+		_hpib_disktype=HP`dmesg | plain_grep "${1}: " | sort -u | \
 		    awk '{print $2}'`
 	fi
 	if [ "X${_hpib_disktype}" = "X" ]; then
@@ -285,8 +295,7 @@ hp300_init_label_hpib_disk() {
 	# layout.  If it doesn't, we have to treat it like a SCSI disk;
 	# i.e. prompt for geometry, and create a default to place
 	# on the disk.
-	if ! grep "${_hpib_disktype}[:|]" /etc/disktab > /dev/null \
-	    2>&1; then
+	if ! grep_check_q "${_hpib_disktype}[:|]" /etc/disktab; then
 		echo ""
 		echo "WARNING: can't find defaults for $1 ($_hpib_disktype)"
 		echo ""
