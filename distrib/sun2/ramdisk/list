@@ -1,5 +1,5 @@
 #
-#	$NetBSD: list,v 1.4 2002/04/26 15:50:48 lukem Exp $
+#	$NetBSD: list,v 1.5 2002/05/19 13:13:39 lukem Exp $
 #
 # ramdisk/list - packing list for the ramdisk.
 #
@@ -24,7 +24,7 @@
 #
 # Include mknod incase I forgot some device nodes...
 # Support copying miniroot from NFS, TFTP, or CDROM.
-# Need mount_ffs, mount_ufs to remount the ramdisk.
+# Need mount_ffs to remount the ramdisk.
 #
 # Might use cat to look at files (it's small anyway).
 # Need for copying miniroot from tape: dd, mt
@@ -45,23 +45,23 @@
 SRCDIRS	bin sbin usr.bin distrib/utils
 
 # From /usr/src/distrib/utils:
-PROG		sbin/init
-PROG		sbin/ifconfig
-PROG		sbin/edlabel
-PROG		sbin/route
 PROG		bin/dd
 PROG		bin/ls
 PROG		bin/rsh
 PROG		bin/ssh		bin/sh bin/-sh
 # PROG		bin/tftp
+PROG		sbin/edlabel
+PROG		sbin/ifconfig
+PROG		sbin/init
+PROG		sbin/route
 
 # From /usr/src/sbin:
-PROG		sbin/reboot	sbin/halt
 PROG		sbin/mknod
 PROG		sbin/mount
 PROG		sbin/mount_cd9660
 PROG		sbin/mount_ffs
 PROG		sbin/mount_nfs
+PROG		sbin/reboot	sbin/halt
 PROG		sbin/umount
 
 # From /usr/src/bin:
@@ -74,20 +74,20 @@ PROG		bin/mkdir
 PROG		bin/mt
 PROG		bin/mv
 PROG		bin/pwd
+PROG		bin/rcmd
 # PROG		bin/rm
 PROG		bin/sync
 PROG		bin/zcat
-PROG		bin/rcmd
 
 LIBS libhack.o -lrmt -lutil -lz
 
 # These are built with special flags to save a little space.
-SPECIAL ls		srcdir	distrib/utils/tls
-SPECIAL ssh		srcdir	distrib/utils/ssh
-SPECIAL ifconfig	srcdir	distrib/utils/x_ifconfig
-SPECIAL mount		srcdir	distrib/utils/x_mount
-SPECIAL route		srcdir	distrib/utils/x_route
-SPECIAL umount		srcdir	distrib/utils/x_umount
+SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
+SPECIAL	ls		srcdir	distrib/utils/tls
+SPECIAL	mount		srcdir	distrib/utils/x_mount
+SPECIAL	route		srcdir	distrib/utils/x_route
+SPECIAL	ssh		srcdir	distrib/utils/ssh
+SPECIAL	umount		srcdir	distrib/utils/x_umount
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/disktab	etc/disktab
@@ -101,7 +101,7 @@ COPY	${CURDIR}/welcome	.welcome
 COPY	${NETBSDSRCDIR}/etc/netconfig	etc/netconfig
 
 # Fake /usr
-SYMLINK . usr
+SYMLINK	.	usr
 
 # Shell lacks pipe support, so use this.
 CMD	mkfifo dev/pipe
