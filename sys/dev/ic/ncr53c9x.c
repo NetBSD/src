@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.102 2002/09/27 15:37:18 provos Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.103 2002/10/06 21:35:33 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.102 2002/09/27 15:37:18 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.103 2002/10/06 21:35:33 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1014,7 +1014,7 @@ ncr53c9x_ioctl(chan, cmd, arg, flag, p)
 	switch (cmd) {
 	case SCBUSIORESET:
 		s = splbio();
-		ncr53c9x_scsi_reset(sc);
+		ncr53c9x_init(sc, 1);
 		splx(s);
 		break;
 	default:
@@ -2023,7 +2023,7 @@ ncr53c9x_msgout(sc)
 	}
 
 #ifdef DEBUG
-	{
+	if (ncr53c9x_debug & NCR_SHOWMSGS) {
 		int i;
 		
 		NCR_MSGS(("<msgout:"));
@@ -2720,7 +2720,6 @@ msgin:
 /*			DELAY(1);*/
 		}
 		if (sc->sc_features & NCR_F_DMASELECT) {
-			size_t size;
 			/* setup DMA transfer for command */
 			size = ecb->clen;
 			sc->sc_cmdlen = size;
