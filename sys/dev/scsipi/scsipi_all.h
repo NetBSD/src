@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.8 1998/06/24 00:29:39 mjacob Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.9 1998/07/01 17:04:31 mjacob Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -114,6 +114,24 @@ struct scsipi_sense_data {
 /*18*/	u_int8_t sense_key_spec_3;
 /*32*/	u_int8_t extra_bytes[14];
 };
+
+#define	SKEY_NO_SENSE		0x00
+#define	SKEY_RECOVERABLE_ERROR	0x01
+#define	SKEY_NOT_READY		0x02
+#define	SKEY_MEDIUM_ERROR	0x03
+#define	SKEY_HARDWARE_ERROR	0x04
+#define	SKEY_ILLEGAL_REQUEST	0x05
+#define	SKEY_UNIT_ATTENTION	0x06
+#define	SKEY_WRITE_PROTECT	0x07
+#define	SKEY_BLANK_CHECK	0x08
+#define	SKEY_VENDOR_UNIQUE	0x09
+#define	SKEY_COPY_ABORTED	0x0A
+#define	SKEY_ABORTED_COMMAND	0x0B
+#define	SKEY_EQUAL		0x0C
+#define	SKEY_VOLUME_OVERFLOW	0x0D
+#define	SKEY_MISCOMPARE		0x0E
+#define	SKEY_RESERVED		0x0F
+
 /*
  * Sense bytes described by the extra_len tag start at cmd_spec_info,
  * and can only continue up to the end of the structure we've defined
