@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.13 2000/01/25 08:32:00 augustss Exp $	*/
+/*	$NetBSD: conf.h,v 1.14 2000/09/23 04:30:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -159,6 +159,8 @@ cdev_decl(uhid);
 cdev_decl(ugen);
 cdev_decl(ulpt);
 cdev_decl(ucom);
+cdev_decl(urio);
+cdev_decl(uscanner);
 cdev_decl(vc_nb_);
 cdev_decl(wsdisplay);
 cdev_decl(wskbd);

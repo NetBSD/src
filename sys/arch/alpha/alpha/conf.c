@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.48 2000/06/29 09:02:53 mrg Exp $ */
+/* $NetBSD: conf.c,v 1.49 2000/09/23 04:30:08 augustss Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.48 2000/06/29 09:02:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.49 2000/09/23 04:30:08 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,6 +202,10 @@ cdev_decl(ugen);
 cdev_decl(ulpt);
 #include "ucom.h"
 cdev_decl(ucom);
+#include "urio.h"
+cdev_decl(urio);
+#include "uscanner.h"
+cdev_decl(uscanner);
 
 #ifdef __I4B_IS_INTEGRATED
 /* open, close, ioctl */
@@ -333,6 +337,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NCA,ca),		/* 59: Compaq array */
 	cdev_tty_init(NCY,cy),		/* 60: Cyclades Cyclom-Y serial */
 	cdev_tty_init(NCZ,cztty),	/* 61: Cyclades-Z serial */
+	cdev_usbdev_init(NURIO,urio),	/* 62: Diamond Rio 500 */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 63: USB scanner */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -436,6 +442,8 @@ static int chrtoblktbl[] = {
 	/* 59 */	17,
 	/* 60 */	NODEV,
 	/* 61 */	NODEV,
+	/* 62 */	NODEV,
+	/* 63 */	NODEV,
 };
 
 /*

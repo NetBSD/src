@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.128 2000/06/24 00:38:21 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.129 2000/09/23 04:30:09 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -217,6 +217,8 @@ cdev_decl(ulpt);
 cdev_decl(ucom);
 #include "urio.h"
 cdev_decl(urio);
+#include "uscanner.h"
+cdev_decl(uscanner);
 #include "vcoda.h"
 cdev_decl(vc_nb_);
 
@@ -390,6 +392,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 72 */
 	cdev_tty_init(NCZ,cztty),	/* 73: Cyclades-Z serial port */
 	cdev_ses_init(NSES,ses),	/* 74: SCSI SES/SAF-TE */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 75: USB scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -506,6 +509,7 @@ static int chrtoblktbl[] = {
 	/* 72 */	NODEV,
 	/* 73 */	NODEV,
 	/* 74 */	NODEV,
+	/* 75 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 2000/04/09 08:26:15 takemura Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 2000/09/23 04:30:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -173,6 +173,10 @@ cdev_decl(ugen);
 cdev_decl(ulpt);
 #include "ucom.h"
 cdev_decl(ucom);
+#include "urio.h"
+cdev_decl(urio);
+#include "uscanner.h"
+cdev_decl(uscanner);
 
 #include "rnd.h"
 
@@ -223,6 +227,8 @@ struct cdevsw	cdevsw[] =
 	cdev_audio_init(NUCBSND,ucbsnd),/* 36: UCB1200 Codec (TX39 companion chip) */
 	cdev_tty_init(NUCOM, ucom),	/* 37: USB tty */
 	cdev_mouse_init(NWSMUX,	wsmux), /* 38: ws multiplexor */
+	cdev_usbdev_init(NURIO,urio),	/* 39: Diamond Rio 500 */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 40: USB scanner */
 };
 
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -290,6 +296,9 @@ static int chrtoblktbl[] =  {
 	/* 35 */	NODEV,
 	/* 36 */	NODEV,
 	/* 37 */	NODEV,
+	/* 38 */	NODEV,
+	/* 39 */	NODEV,
+	/* 40 */	NODEV,
 };
 
 /*

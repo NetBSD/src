@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.25 2000/07/30 07:17:27 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.26 2000/09/23 04:30:09 augustss Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -151,6 +151,10 @@ cdev_decl(ugen);
 cdev_decl(ulpt);
 #include "ucom.h"
 cdev_decl(ucom);
+#include "urio.h"
+cdev_decl(urio);
+#include "uscanner.h"
+cdev_decl(uscanner);
 
 #include "com.h"
 cdev_decl(com);
@@ -209,6 +213,8 @@ struct cdevsw cdevsw[] = {
 	cdev_audio_init(NAUDIO,audio),	/* 48: generic audio I/O */
 	cdev_midi_init(NMIDI,midi),	/* 49: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
+	cdev_usbdev_init(NURIO,urio),	/* 51: Diamond Rio 500 */
+	cdev_ugen_init(NUSCANNER,uscanner),/* 52: USB scanner */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
@@ -293,6 +299,8 @@ static int chrtoblktbl[] = {
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
 };
 
 /*
