@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.16 1994/08/17 11:41:42 mycroft Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.17 1994/08/17 14:43:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -159,7 +159,6 @@ void	nfs_rcvunlock(), nqnfs_serverd(), nqnfs_clientlease();
 struct mbuf *nfsm_rpchead();
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
-struct nfsd nfsd_head;
 
 /*
  * Initialize sockets and congestion for a new NFS connection.
@@ -1966,11 +1965,11 @@ void
 nfsrv_wakenfsd(slp)
 	struct nfssvc_sock *slp;
 {
-	register struct nfsd *nd = nfsd_head.nd_next;
+	register struct nfsd *nd;
 
 	if ((slp->ns_flag & SLP_VALID) == 0)
 		return;
-	while (nd != (struct nfsd *)&nfsd_head) {
+	for (nd = nfsd_head.tqh_first; nd != 0; nd = nd->nd_chain.tqe_next) {
 		if (nd->nd_flag & NFSD_WAITING) {
 			nd->nd_flag &= ~NFSD_WAITING;
 			if (nd->nd_slp)
@@ -1980,9 +1979,8 @@ nfsrv_wakenfsd(slp)
 			wakeup((caddr_t)nd);
 			return;
 		}
-		nd = nd->nd_next;
 	}
 	slp->ns_flag |= SLP_DOREC;
-	nfsd_head.nd_flag |= NFSD_CHECKSLP;
+	nfsd_head_flag |= NFSD_CHECKSLP;
 }
 #endif /* NFSSERVER */
