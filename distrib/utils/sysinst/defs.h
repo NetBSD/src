@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.4 1997/10/07 04:01:29 phil Exp $	*/
+/*	$NetBSD: defs.h,v 1.5 1997/10/15 04:35:25 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,10 @@
  */
 
 /* defs.h -- definitions for use in the sysinst program. */
+
+/* System includes needed for this. */
+#include <sys/types.h>
+#include <sys/disklabel.h>
 
 /* Define for external varible use */ 
 #ifdef MAIN
@@ -138,6 +142,9 @@ EXTERN char ftp_dir[STRSIZE]  INIT("/pub/NetBSD/NetBSD-" REL "/" MACH);
 EXTERN char ftp_user[STRSIZE] INIT("ftp");
 EXTERN char ftp_pass[STRSIZE] INIT("");
 
+EXTERN char nfs_host[STRSIZE] INIT("");
+EXTERN char nfs_dir[STRSIZE] INIT("");
+
 /* Vars for runing commands ... */
 EXTERN char command[STRSIZE];
 
@@ -160,45 +167,48 @@ EXTERN int  fs_num;
 /* needed prototypes */
 
 /* Machine dependent functions .... */
-void	md_get_info (void);
-void	md_pre_disklabel (void);
-void	md_post_disklabel (void);
-void	md_post_newfs (void);
-void	md_copy_filesystem (void);
-void	md_make_bsd_partitions (void);
-int	md_update (void);
-
-/* from install.c */
-void	do_install (void);
-
-/* from upgrade.c */
-void	do_upgrade (void);
-
-/* From run.c */
-int	collect (int kind, char **buffer, char *name, ...);
-int	run_prog (char *, ...);
-
-/* from factor.c */
-void	factor (long, long *, int, int *);
-
-/* from net.c */
-int  get_via_ftp (void);
-void get_via_nfs (void);
+void	md_get_info __P((void));
+void	md_pre_disklabel __P((void));
+void	md_post_disklabel __P((void));
+void	md_post_newfs __P((void));
+void	md_copy_filesystem __P((void));
+void	md_make_bsd_partitions __P((void));
+int	md_update __P((void));
 
 /* from disks.c */
-int	find_disks (void);
-void	disp_cur_part (int,int);
-void	disp_cur_fspart (int, int);
-void	scsi_fake (void);
-void	make_bsd_partitions (void);
-void	write_disklabel (void);
-void	make_filesystems (void);
-void	make_fstab (void);
-int	fsck_disks(void);
+int	find_disks __P((void));
+void	disp_cur_part __P((int,int));
+void	disp_cur_fspart __P((int, int));
+void	scsi_fake __P((void));
+void	make_bsd_partitions __P((void));
+void	write_disklabel __P((void));
+void	make_filesystems __P((void));
+void	make_fstab __P((void));
+int	fsck_disks __P((void));
+
+/* from install.c */
+void	do_install __P((void));
+
+/* from factor.c */
+void	factor __P((long, long *, int, int *));
+
+/* from geom.c */
+int get_geom __P((char *, struct disklabel *));
+
+/* from net.c */
+int  get_via_ftp __P((void));
+int  get_via_nfs __P((void));
+
+/* From run.c */
+int	collect __P((int kind, char **buffer, char *name, ...));
+int	run_prog __P((char *, ...));
+
+/* from upgrade.c */
+void	do_upgrade __P((void));
 
 /* from util.c */
-void	get_ramsize (void);
-void	ask_sizemult (void);
-int	ask_ynquestion (char *quest, char def, ...);
-void	extract_dist (void);
-void	run_makedev (void);
+void	get_ramsize __P((void));
+void	ask_sizemult __P((void));
+int	ask_ynquestion __P((char *quest, char def, ...));
+void	extract_dist __P((void));
+void	run_makedev __P((void));
