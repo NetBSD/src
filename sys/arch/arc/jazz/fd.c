@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.13 2003/01/26 06:16:31 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.14 2003/04/27 17:05:58 tsutsui Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -249,7 +249,7 @@ fdprint(aux, fdc)
 	void *aux;
 	const char *fdc;
 {
-	register struct fdc_attach_args *fa = aux;
+	struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
 		aprint_normal(" drive %d", fa->fa_drive);
@@ -429,7 +429,7 @@ fd_dev_to_type(fd, dev)
 
 void
 fdstrategy(bp)
-	register struct buf *bp;	/* IO operation to perform */
+	struct buf *bp;		/* IO operation to perform */
 {
 	struct fd_softc *fd = device_lookup(&fd_cd, FDUNIT(bp->b_dev));
 	int sz;
