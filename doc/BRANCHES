@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.43 2005/03/20 15:28:32 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.44 2005/03/20 16:53:15 chs Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -199,8 +199,8 @@ Scope:		kernel
 Notes:		Superseded by thorpej_scsipi
 
 Branch:		chs-ubc
-Description:	? Unified Buffer Cache
-Status:		?
+Description:	Unified Buffer Cache
+Status:		Terminated
 Start Date:
 End Date:
 Base Tag:	chs-ubc-base
@@ -209,8 +209,8 @@ Scope:		kernel
 Notes:
 
 Branch:		chs-ubc2
-Description:	? Unified Buffer Cache
-Status:		?
+Description:	 Unified Buffer Cache
+Status:		Terminated; merged to -current
 Start Date:
 End Date:
 Base Tag:	chs-ubc2-base, chs-ubc2-newbase
@@ -229,18 +229,18 @@ Scope:		Entire tree.
 Notes:
 
 Branch:		eeh-paddr_t
-Description:	?
-Status:		?
+Description:	use separate types for virtual vs. physical addresses
+Status:		Terminated; merged to -current
 Start Date:
 End Date:
 Base Tag:	eeh-paddr_t-base
 Maintainer:	Eduardo Horvath <eeh@NetBSD.org>
 Scope:		kernel
-Notes:
+Notes:		This is needed to support 32-bit kernels on sparc64.
 
 Branch:		fvdl-softdep
 Description:	FFS soft dependencies
-Status:		?Terminated
+Status:		Terminated; merged to -current
 Start Date:
 End Date:
 Base Tag:	fvdl-softdep-base
@@ -412,7 +412,7 @@ Notes:
 
 Branch:		nathanw_sa
 Description:	Scheduler activations
-Status:		Active
+Status:		Terminated; merged to -current
 Start Date:	5 March 2001
 End Date:	18 January 2003
 Base Tag:	nathanw_sa_base
@@ -420,7 +420,6 @@ Maintainer:	Nathan Williams <nathanw@NetBSD.org>
 Scope:		kernel, libc, libkvm, libpthread, libpthread_dbg, include, 
 		bin/ps usr.bin/systat usr.bin/top usr.bin/w
 		gnu/dist/toolchain/gdb gnu/usr.bin/gdb
-
 Notes:		The idea of scheduler activations is described in the
 		classic paper by Anderson et al., in ACM Transactions
 		a on Computer Systems volume 10 issue 1 (1992),which
@@ -454,7 +453,6 @@ End Date:
 Base Tag:	newlock-base
 Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
 Scope:		Kernel
-
 Notes:		The goal is to replace the existing lockmgr() and
 		simple_lock() based locking mechanisms with the
 		primitives found in Solaris: mutexes and rwlocks.
@@ -711,9 +709,6 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			vax (chs@, stuck while running kvm_mkdb)
 
 		known to have a problem:
-			hp300 (chs@, hang immediately after loading kernel)
-			-> fixed ?
-
 			luna68k (and, if any, other m68k ports which use TTR)
 			needs to be revisited.
 			-> for luna68k, although not tested,
@@ -782,9 +777,6 @@ Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 			src/sys/arch/x68k/conf/GENERIC
 
 			src/sys/arch/playstation2/conf/GENERIC
-
-		not tested at all:
-			pdp10
 
 
 Branch:		bouyer-xen2
