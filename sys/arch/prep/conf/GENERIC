@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.41 2002/02/10 17:37:01 wiz Exp $
+# $NetBSD: GENERIC,v 1.42 2002/02/25 19:09:43 kleink Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.41 $"
+#ident		"GENERIC-$Revision: 1.42 $"
 
 maxusers	32
 
@@ -191,6 +191,7 @@ pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
 
 mcclock0 at isa? port 0x70		# mc146818 and compatible
+mkclock0 at isa? port 0x74		# mk48t18 and compatible
 
 
 # Serial Devices
