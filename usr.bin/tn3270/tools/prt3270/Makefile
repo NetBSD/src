@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 1998/03/04 13:16:14 christos Exp $
+#	$NetBSD: Makefile,v 1.2 1998/03/10 08:28:21 christos Exp $
 
 PROG=	prt3270
 SRCS=	prt3270.c asc_ebc.c ebc_disp.c astosc.c
 DPSRCS=	kbd.out astosc.out
 CPPFLAGS+=-I.
 
-MKHITS!=cd $(.CURDIR)/../mkhits; \
+MKHITS!=cd $(.CURDIR)/../mkhits; (make 2>&1 > /dev/null); \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/mkhits\n" | ${MAKE} -s -f-
 ${HITS}:
 	cd ${.CURDIR}/../mkhits; ${MAKE}
