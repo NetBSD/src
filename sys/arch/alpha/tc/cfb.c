@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.16 1998/04/16 12:53:47 drochner Exp $ */
+/* $NetBSD: cfb.c,v 1.17 1998/05/14 20:49:55 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.16 1998/04/16 12:53:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.17 1998/05/14 20:49:55 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,12 @@ struct wsdisplay_emulops cfb_emulfuncs = {
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
+	rcons_alloc_attr
 };
 
 struct wsscreen_descr cfb_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
+	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	&cfb_emulfuncs,
 	0, 0
 };
@@ -99,7 +100,7 @@ int	cfbmmap __P((void *, off_t, int));
 
 int	cfbintr __P((void *));
 static int	cfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *));
+				      void **, int *, int *, long *));
 static void	cfb_free_screen __P((void *, void *));
 static void	cfb_show_screen __P((void *, void *));
 static int	cfb_load_font __P((void *, void *, int, int, int, void *));
@@ -322,13 +323,15 @@ cfbintr(v)
 }
 
 int
-cfb_alloc_screen(v, type, cookiep, curxp, curyp)
+cfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	void *v;
 	const struct wsscreen_descr *type;
 	void **cookiep;
 	int *curxp, *curyp;
+	long *attrp;
 {
 	struct cfb_softc *sc = v;
+	long defattr;
 
 	if (sc->nscreens > 0)
 		return (ENOMEM);
@@ -336,6 +339,8 @@ cfb_alloc_screen(v, type, cookiep, curxp, curyp)
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
+	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
 }
@@ -376,11 +381,14 @@ cfb_cnattach(addr)
 	tc_addr_t addr;
 {
 	struct cfb_devconfig *dcp = &cfb_console_dc;
+	long defattr;
 
 	cfb_getdevconfig(addr, dcp);
 
+	rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
+
 	wsdisplay_cnattach(&cfb_stdscreen, &dcp->dc_rcons,
-			   0, 0);
+			   0, 0, defattr);
 	cfb_consaddr = addr;
 	return(0);
 }

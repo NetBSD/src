@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.16 1998/04/16 12:53:47 drochner Exp $ */
+/* $NetBSD: sfb.c,v 1.17 1998/05/14 20:49:55 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.16 1998/04/16 12:53:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.17 1998/05/14 20:49:55 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,12 @@ struct wsdisplay_emulops sfb_emulfuncs = {
 	rcons_erasecols,
 	rcons_copyrows,
 	rcons_eraserows,
+	rcons_alloc_attr
 };
 
 struct wsscreen_descr sfb_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in */
+	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
 	&sfb_emulfuncs,
 	0, 0
 };
@@ -98,7 +99,7 @@ int	sfbioctl __P((void *, u_long, caddr_t, int, struct proc *));
 int	sfbmmap __P((void *, off_t, int));
 
 static int	sfb_alloc_screen __P((void *, const struct wsscreen_descr *,
-				      void **, int *, int *));
+				      void **, int *, int *, long *));
 static void	sfb_free_screen __P((void *, void *));
 static void	sfb_show_screen __P((void *, void *));
 static int	sfb_load_font __P((void *, void *, int, int, int, void *));
@@ -357,13 +358,15 @@ sfbmmap(v, offset, prot)
 }
 
 int
-sfb_alloc_screen(v, type, cookiep, curxp, curyp)
+sfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	void *v;
 	const struct wsscreen_descr *type;
 	void **cookiep;
 	int *curxp, *curyp;
+	long *attrp;
 {
 	struct sfb_softc *sc = v;
+	long defattr;
 
 	if (sc->nscreens > 0)
 		return (ENOMEM);
@@ -371,6 +374,8 @@ sfb_alloc_screen(v, type, cookiep, curxp, curyp)
 	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
+	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
 }
@@ -411,11 +416,14 @@ sfb_cnattach(addr)
 	tc_addr_t addr;
 {
 	struct sfb_devconfig *dcp = &sfb_console_dc;
+	long defattr;
 
 	sfb_getdevconfig(addr, dcp);
 
+	rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
+
 	wsdisplay_cnattach(&sfb_stdscreen, &dcp->dc_rcons,
-			   0, 0);
+			   0, 0, defattr);
 	sfb_consaddr = addr;
 	return(0);
 }

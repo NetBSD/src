@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.2 1998/03/27 18:22:36 drochner Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.3 1998/05/14 20:49:57 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsemul_sun.c,v 1.2 1998/03/27 18:22:36 drochner Exp $";
+    "$NetBSD: wsemul_sun.c,v 1.3 1998/05/14 20:49:57 drochner Exp $";
 
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
@@ -48,11 +48,14 @@ static const char _rcsid[] __attribute__ ((unused)) =
 #include <dev/wscons/wsemulvar.h>
 #include <dev/wscons/ascii.h>
 
+#include "opt_wskernattr.h"
+
 void	*wsemul_sun_cnattach __P((const struct wsscreen_descr *, void *,
-				  int, int));
+				  int, int, long));
 void	*wsemul_sun_attach __P((int console, const struct wsscreen_descr *,
-				void *, int, int, void *));
-void	wsemul_sun_output __P((void *cookie, const u_char *data, u_int count));
+				void *, int, int, void *, long));
+void	wsemul_sun_output __P((void *cookie, const u_char *data, u_int count,
+			       int));
 void	wsemul_sun_detach __P((void *cookie, u_int *crowp, u_int *ccolp));
 
 const struct wsemul_ops wsemul_sun_ops = {
@@ -73,15 +76,26 @@ struct wsemul_sun_emuldata {
 	const struct wsdisplay_emulops *emulops;
 	void *emulcookie;
 	void *cbcookie;
+	int scrcapabilities;
 	u_int nrows, ncols, crow, ccol;
 
-	u_int state;				/* processing state */
-	u_int args[SUN_EMUL_NARGS];		/* command args, if CONTROL */
-	u_int scrolldist;			/* distance to scroll */
+	u_int state;			/* processing state */
+	u_int args[SUN_EMUL_NARGS];	/* command args, if CONTROL */
+	u_int scrolldist;		/* distance to scroll */
+	long defattr;			/* default attribute (rendition) */
+	long bowattr;			/* attribute for reversed mode */
+	int rendflags;
+#define REND_BOW 1
+#define REND_SO 2
+	long curattr;			/* currently used attribute */
+	long kernattr;			/* attribute for kernel output */
+#ifdef DIAGNOSTIC
+	int console;
+#endif
 };
 
 static u_int	wsemul_sun_output_normal __P((struct wsemul_sun_emuldata *,
-		    u_char));
+		    u_char, int));
 static u_int	wsemul_sun_output_haveesc __P((struct wsemul_sun_emuldata *,
 		    u_char));
 static u_int	wsemul_sun_output_control __P((struct wsemul_sun_emuldata *,
@@ -97,64 +111,124 @@ struct wsemul_sun_emuldata wsemul_sun_console_emuldata;
 #define	ROWS_LEFT		(edp->nrows - edp->crow - 1)
 
 void *
-wsemul_sun_cnattach(type, cookie, ccol, crow)
+wsemul_sun_cnattach(type, cookie, ccol, crow, defattr)
 	const struct wsscreen_descr *type;
 	void *cookie;
 	int ccol, crow;
+	long defattr;
 {
 	struct wsemul_sun_emuldata *edp;
+	int res;
 
 	edp = &wsemul_sun_console_emuldata;
 
 	edp->emulops = type->textops;
 	edp->emulcookie = cookie;
+	edp->scrcapabilities = type->capabilities;
 	edp->nrows = type->nrows;
 	edp->ncols = type->ncols;
 	edp->crow = crow;
 	edp->ccol = ccol;
+	edp->defattr = defattr;
+#if defined(WS_KERNEL_FG) || defined(WS_KERNEL_BG) || \
+  defined(WS_KERNEL_COLATTR) || defined(WS_KERNEL_MONOATTR)
+#ifndef WS_KERNEL_FG
+#define WS_KERNEL_FG WSCOL_WHITE
+#endif
+#ifndef WS_KERNEL_BG
+#define WS_KERNEL_BG WSCOL_BLACK
+#endif
+#ifndef WS_KERNEL_COLATTR
+#define WS_KERNEL_COLATTR 0
+#endif
+#ifndef WS_KERNEL_MONOATTR
+#define WS_KERNEL_MONOATTR 0
+#endif
+	if (type->capabilities & WSSCREEN_WSCOLORS)
+		res = (*edp->emulops->alloc_attr)(cookie,
+					    WS_KERNEL_FG, WS_KERNEL_BG,
+					    WS_KERNEL_COLATTR | WSATTR_WSCOLORS,
+					    &edp->kernattr);
+	else
+		res = (*edp->emulops->alloc_attr)(cookie, 0, 0,
+					    WS_KERNEL_MONOATTR,
+					    &edp->kernattr);
+	if (res)
+#else
+	res = 0; /* XXX gcc */
+#endif
+	edp->kernattr = defattr;
+
 	edp->cbcookie = NULL;
 
 	edp->state = SUN_EMUL_STATE_NORMAL;
 	edp->scrolldist = 1;
-
+#ifdef DIAGNOSTIC
+	edp->console = 1;
+#endif
 	return (edp);
 }
 
 void *
-wsemul_sun_attach(console, type, cookie, ccol, crow, cbcookie)
+wsemul_sun_attach(console, type, cookie, ccol, crow, cbcookie, defattr)
 	int console;
 	const struct wsscreen_descr *type;
 	void *cookie;
 	int ccol, crow;
 	void *cbcookie;
+	long defattr;
 {
 	struct wsemul_sun_emuldata *edp;
 
-	if (console)
+	if (console) {
 		edp = &wsemul_sun_console_emuldata;
-	else {
+#ifdef DIAGNOSTIC
+		KASSERT(edp->console == 1);
+#endif
+	} else {
 		edp = malloc(sizeof *edp, M_DEVBUF, M_WAITOK);
 
 		edp->emulops = type->textops;
 		edp->emulcookie = cookie;
+		edp->scrcapabilities = type->capabilities;
 		edp->nrows = type->nrows;
 		edp->ncols = type->ncols;
 		edp->crow = crow;
 		edp->ccol = ccol;
+		edp->defattr = defattr;
 
 		edp->state = SUN_EMUL_STATE_NORMAL;
 		edp->scrolldist = 1;
+#ifdef DIAGNOSTIC
+		edp->console = 0;
+#endif
 	}
 
 	edp->cbcookie = cbcookie;
+
+	/* XXX This assumes that the default attribute is wob. */
+	if ((!(edp->scrcapabilities & WSSCREEN_WSCOLORS) ||
+		(*edp->emulops->alloc_attr)(edp->emulcookie,
+					    WSCOL_BLACK, WSCOL_WHITE,
+					    WSATTR_WSCOLORS,
+					    &edp->bowattr)) &&
+	    (!(edp->scrcapabilities & WSSCREEN_REVERSE) ||
+		(*edp->emulops->alloc_attr)(edp->emulcookie, 0, 0,
+					    WSATTR_REVERSE,
+					    &edp->bowattr)))
+		edp->bowattr = edp->defattr;
+
+	edp->curattr = edp->defattr;
+	edp->rendflags = 0;
 
 	return (edp);
 }
 
 static inline u_int
-wsemul_sun_output_normal(edp, c)
+wsemul_sun_output_normal(edp, c, kernel)
 	struct wsemul_sun_emuldata *edp;
 	u_char c;
+	int kernel;
 {
 	u_int newstate = SUN_EMUL_STATE_NORMAL;
 	u_int n;
@@ -176,12 +250,15 @@ wsemul_sun_output_normal(edp, c)
 	case ASCII_HT:		/* "Tab (TAB)" */
 		n = min(8 - (edp->ccol & 7), COLS_LEFT);
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-		    edp->ccol, n);
+				edp->ccol, n,
+				kernel ? edp->kernattr : edp->curattr);
 		edp->ccol += n;
 		break;
 
 	case ASCII_NP:		/* "Form Feed (FF)" */
-		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows);
+		(*edp->emulops->eraserows)(edp->emulcookie, 0, edp->nrows,
+				kernel ? edp->kernattr : edp->curattr);
+				/* XXX possible in kernel output? */
 		edp->ccol = 0;
 		edp->crow = 0;
 		break;
@@ -192,6 +269,10 @@ wsemul_sun_output_normal(edp, c)
 		break;
 
 	case ASCII_ESC:		/* "Escape (ESC)" */
+#ifdef DIAGNOSTIC
+		if (kernel)
+			panic("ESC in kernel output");
+#endif
 		if (edp->state == SUN_EMUL_STATE_NORMAL) {
 			newstate = SUN_EMUL_STATE_HAVEESC;
 			break;
@@ -201,7 +282,7 @@ wsemul_sun_output_normal(edp, c)
 
 	default:		/* normal character */
 		(*edp->emulops->putstr)(edp->emulcookie, edp->crow, edp->ccol,
-		    &c, 1);
+		    &c, 1, kernel ? edp->kernattr : edp->curattr);
 		edp->ccol++;
 
 		/* if cur col is still on cur line, done. */
@@ -226,7 +307,8 @@ wsemul_sun_output_normal(edp, c)
 		 */
 		if (edp->scrolldist == 0) {
 			edp->crow = 0;
-			(*edp->emulops->eraserows)(edp->emulcookie, 0, 1);
+			(*edp->emulops->eraserows)(edp->emulcookie, 0, 1,
+						   edp->curattr);
 			break;
 		}
 
@@ -234,7 +316,8 @@ wsemul_sun_output_normal(edp, c)
 		(*edp->emulops->copyrows)(edp->emulcookie, edp->scrolldist, 0,
 		    edp->nrows - edp->scrolldist);
 		(*edp->emulops->eraserows)(edp->emulcookie,
-		    edp->nrows - edp->scrolldist, edp->scrolldist);
+		    edp->nrows - edp->scrolldist, edp->scrolldist,
+					   edp->curattr);
 		edp->crow -= edp->scrolldist - 1;
 		break;
 	}
@@ -257,8 +340,8 @@ wsemul_sun_output_haveesc(edp, c)
 
 	default:
 		/* spit out the escape char (???), then the new character */
-		wsemul_sun_output_normal(edp, ASCII_ESC);	/* ??? */
-		newstate = wsemul_sun_output_normal(edp, c);
+		wsemul_sun_output_normal(edp, ASCII_ESC, 0);	/* ??? */
+		newstate = wsemul_sun_output_normal(edp, c, 0);
 		break;
 	}
 
@@ -282,7 +365,7 @@ wsemul_sun_control(edp, c)
 			    src, dst, edp->ncols - dst);
 		}
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-		    src, dst - src);
+		    src, dst - src, edp->curattr);
 		break;
 
 	case 'E':		/* "Cursor Next Line (CNL)" */
@@ -313,12 +396,12 @@ wsemul_sun_control(edp, c)
 	case 'J':		/* "Erase in Display (ED)" */
 		if (ROWS_LEFT > 0) {
 			(*edp->emulops->eraserows)(edp->emulcookie,
-			     edp->crow + 1, ROWS_LEFT);
+			     edp->crow + 1, ROWS_LEFT, edp->curattr);
 		}
 		/* FALLTHRU */
 	case 'K':		/* "Erase in Line (EL)" */
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-		    edp->ccol, COLS_LEFT + 1);
+		    edp->ccol, COLS_LEFT + 1, edp->curattr);
 		break;
 
 	case 'L':		/* "Insert Line (IL)" */
@@ -330,7 +413,7 @@ wsemul_sun_control(edp, c)
 			    src, dst, edp->nrows - dst);
 		}
 		(*edp->emulops->eraserows)(edp->emulcookie,
-		    src, dst - src);
+		    src, dst - src, edp->curattr);
 		break;
 
 	case 'M':		/* "Delete Line (DL)" */
@@ -342,7 +425,7 @@ wsemul_sun_control(edp, c)
 			    src, dst, edp->nrows - src);
 		}
 		(*edp->emulops->eraserows)(edp->emulcookie,
-		    dst + edp->nrows - src, src - dst);
+		    dst + edp->nrows - src, src - dst, edp->curattr);
 		break;
 
 	case 'P':		/* "Delete Character (DCH)" */
@@ -354,20 +437,23 @@ wsemul_sun_control(edp, c)
 			    src, dst, edp->ncols - src);
 		}
 		(*edp->emulops->erasecols)(edp->emulcookie, edp->crow,
-		    dst + edp->ncols - src, src - dst);
+		    dst + edp->ncols - src, src - dst, edp->curattr);
 		break;
 
 	case 'm':		/* "Select Graphic Rendition (SGR)" */
-		/* XXX rendition currently ignored */
-		break;
+		if (ARG(0))
+			edp->rendflags |= REND_SO;
+		else
+			edp->rendflags &= ~REND_SO;
+		goto setattr;
 
 	case 'p':		/* "Black On White (SUNBOW)" */
-		/* XXX rendition currently ignored */
-		break;
+		edp->rendflags |= REND_BOW;
+		goto setattr;
 
 	case 'q':		/* "White On Black (SUNWOB)" */
-		/* XXX rendition currently ignored */
-		break;
+		edp->rendflags &= ~REND_BOW;
+		goto setattr;
 
 	case 'r':		/* "Set Scrolling (SUNSCRL)" */
 		edp->scrolldist = min(ARG(0), edp->nrows);
@@ -375,7 +461,13 @@ wsemul_sun_control(edp, c)
 
 	case 's':		/* "Reset Terminal Emulator (SUNRESET)" */
 		edp->scrolldist = 1;
-		/* XXX rendition aspects of this currently ignored */
+		edp->rendflags = 0;
+setattr:
+		if (((edp->rendflags & REND_BOW) != 0) ^
+		    ((edp->rendflags & REND_SO) != 0))
+			edp->curattr = edp->bowattr;
+		else
+			edp->curattr = edp->defattr;
 		break;
 	}
 }
@@ -409,21 +501,31 @@ wsemul_sun_output_control(edp, c)
 }
 
 void
-wsemul_sun_output(cookie, data, count)
+wsemul_sun_output(cookie, data, count, kernel)
 	void *cookie;
 	const u_char *data;
 	u_int count;
+	int kernel;
 {
 	struct wsemul_sun_emuldata *edp = cookie;
 	u_int newstate;
 
+#ifdef DIAGNOSTIC
+	if (kernel && !edp->console)
+		panic("wsemul_sun_output: kernel output, not console");
+#endif
+
 	/* XXX */
 	(*edp->emulops->cursor)(edp->emulcookie, 0, edp->crow, edp->ccol);
 	for (; count > 0; data++, count--) {
+		if (kernel) {
+			wsemul_sun_output_normal(edp, *data, 1);
+			continue;
+		}
 		switch (edp->state) {
 		case SUN_EMUL_STATE_NORMAL:
 			/* XXX SCAN INPUT FOR NEWLINES, DO PRESCROLLING */
-			newstate = wsemul_sun_output_normal(edp, *data);
+			newstate = wsemul_sun_output_normal(edp, *data, 0);
 			break;
 		case SUN_EMUL_STATE_HAVEESC:
 			newstate = wsemul_sun_output_haveesc(edp, *data);
@@ -436,7 +538,7 @@ wsemul_sun_output(cookie, data, count)
 			panic("wsemul_sun: invalid state %d\n", edp->state);
 #endif
                         /* try to recover, if things get screwed up... */
-			newstate = wsemul_sun_output_normal(edp, *data);
+			newstate = wsemul_sun_output_normal(edp, *data, 0);
                         break;
 		}
 		edp->state = newstate;
