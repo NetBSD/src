@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/01/29 10:20:28 tv Exp $
+#	$NetBSD: Makefile,v 1.17 2002/02/02 12:34:39 lukem Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 # To install on versions prior to BSD 4.4 the following may have to be
@@ -28,20 +28,24 @@
 PROG=   pax
 SRCS=	ar_io.c ar_subs.c buf_subs.c cpio.c file_subs.c ftree.c\
 	gen_subs.c getoldopt.c options.c pat_rep.c pax.c sel_subs.c tables.c\
-	tar.c tty_subs.c \
-	getid.c spec.c misc.c stat_flags.c pack_dev.c
+	tar.c tty_subs.c
 
-# XXX not yet!
-# MAN=	pax.1 tar.1 cpio.1
-# LINKS+=	${BINDIR}/pax ${BINDIR}/tar
-# LINKS+=	${BINDIR}/pax ${BINDIR}/cpio
-
+.ifdef CRUNCHEDPROG
+CPPFLAGS+=	-DSMALL
+.else
+SRCS+=		getid.c spec.c misc.c stat_flags.c pack_dev.c
 CPPFLAGS+=	-I${.CURDIR}/../../usr.sbin/mtree \
 		-I${.CURDIR}/../../sbin/mknod \
 		-I${.CURDIR}/../../bin/ls
 .PATH:		${.CURDIR}/../../usr.sbin/mtree \
 		${.CURDIR}/../../sbin/mknod \
 		${.CURDIR}/../../bin/ls
+.endif
+
+# XXX not yet!
+# MAN=	pax.1 tar.1 cpio.1
+# LINKS+=	${BINDIR}/pax ${BINDIR}/tar
+# LINKS+=	${BINDIR}/pax ${BINDIR}/cpio
 
 NOHTML=doc2html-error
 
