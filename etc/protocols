@@ -1,4 +1,4 @@
-#	$NetBSD: protocols,v 1.4 1997/02/15 10:02:23 mikel Exp $
+#	$NetBSD: protocols,v 1.5 1997/03/18 03:49:39 sommerfe Exp $
 #
 # Internet (IP) protocols
 #
@@ -20,6 +20,10 @@ rdp	27	RDP		# reliable data protocol
 iso-tp4	29	ISO-TP4		# ISO Transport Protocol Class 4
 xtp	36	XTP		# Xpress Tranfer Protocol
 idpr-cmtp	39	IDPR-CMTP	# IDPR Control Message Transport
+ipv6	41	IPv6		# Internet Protocol, version 6
+esp	50	ESP		# Encapsulating Security Payload
+ah	51	AH		# Authentication Header
+icmpv6	58	ICMPV6		# Internet Control Message Protocol version 6
 iso-ip	80	ISO-IP		# ISO Internet Protocol
 vmtp	81	VMTP		# Versatile Message Transport
 ospf	89	OSPFIGP		# Open Shortest Path First IGP
