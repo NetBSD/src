@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.33 2001/03/14 23:44:23 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.34 2001/03/16 19:53:57 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -273,7 +273,7 @@ distrib/x68k/floppies/bootfloppy-common/Makefile.inc 1.16
 distrib/x68k/floppies/ramdisk.sysinst/Makefile	1.12 via patch
 distrib/x68k/floppies/ramdisk.sysinst/dot.profile 1.7
 distrib/x68k/floppies/bootfloppy.generic/Makefile 1.1 (new)
-distrib/x68k/floppies/inst/Makefile		1.1 (new)
+distrib/x68k/floppies/inst/Makefile		1.1-1.5 (new)
 distrib/x68k/floppies/bootfloppy/Makefile	delete
 distrib/x68k/floppies/ramdisk/Makefile		delete
 distrib/x68k/floppies/ramdisk/dot.hdprofile	delete
@@ -1896,3 +1896,44 @@ sys/dev/pcmcia/pcmcia_cis.c			1.21
 usr.bin/audio/play/play.c			1.24 via patch
 
   Fix LP64 format/type inconsistency.
+
+sys/dev/pci/isp_pci.c				1.62-1.63,1.66,1.68
+sys/dev/sbus/isp_sbus.c				1.35-1.40 via patch
+sys/dev/microcode/isp/asm1040.h			1.2
+sys/dev/microcode/isp/asm_1080.h		1.2
+sys/dev/microcode/isp/asm_2100.h		1.2
+sys/dev/microcode/isp/asm_12160.h		1.2
+sys/dev/ic/isp.c				1.66-1.73
+sys/dev/ic/isp_inline.h				1.10-1.13
+sys/dev/ic/isp_netbsd.c				1.36-1.40
+sys/dev/ic/ispmbox.h				1.28-1.31
+sys/dev/ic/ispreg.h				1.24-1.25
+sys/dev/ic/ispvar.h				1.39-1.43
+sys/arch/sparc64/conf/GENERIC32			1.11
+
+  Update firmware to latest levels.  Provide Sparc64 support.
+  Provide some minor improvements in Fibre Channel code.  Fix major
+  bug where the driver wasn't setting XS_SENSE when a check condition
+  with sense data was gathered.
+
+sys/dev/pcmcia/if_ne_pcmcia.c			1.69-1.70
+sys/dev/pcmcia/pcmciadevs			1.121 via patch
+sys/dev/pcmcia/pcmciadevs.h			regenerate
+sys/dev/pcmcia/pcmciadevs_data.h		regenerate
+
+  Add an entry and support for the Synergy 21 S21810+.
+
+share/man/man5/shells.5				1.7
+
+  Cross-reference chsh(1).
+
+sys/dev/isa/if_iy.c				1.46-1.48
+
+  Fix bug which causes freezes in the Intel Etherexpress PRO (ISA)
+  driver.  Fixes PR#8263.
+
+sys/dev/ic/z8530tty.c				1.74
+
+  Add some delay in zstty_attach() to wait for previous console
+  output to complete before hardware initialization.  Should fix
+  missing ``\r'' after zstty attach on serial console.
