@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394arp.c,v 1.4 2001/06/12 15:17:28 wiz Exp $	*/
+/*	$NetBSD: if_ieee1394arp.c,v 1.5 2001/07/04 02:29:59 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -160,6 +160,8 @@ ieee1394arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	      sizeof(struct ieee1394_hwaddr), AF_LINK };
 	struct mbuf *mold;
 	int s;
+	struct in_ifaddr *ia;
+	struct ifaddr *ifa;
 
 	if (!arpinit_done) {
 		/*
@@ -233,8 +235,11 @@ ieee1394arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
 		LIST_INSERT_HEAD(&llinfo_arp, la, la_list);
-		if (in_hosteq(SIN(rt_key(rt))->sin_addr,
-		    (IA_SIN(rt->rt_ifa))->sin_addr)) {
+
+		INADDR_TO_IA(SIN(rt_key(rt))->sin_addr, ia);
+		while (ia && ia->ia_ifp != rt->rt_ifp)
+			NEXT_IA_WITH_SAME_ADDR(ia);
+		if (ia) {
 			/*
 			 * This test used to be
 			 *	if (loif.if_flags & IFF_UP)
@@ -245,6 +250,12 @@ ieee1394arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 * packets they send.  It is now necessary to clear
 			 * "useloopback" and remove the route to force
 			 * traffic out to the hardware.
+			 *
+			 * In 4.4BSD, the above "if" statement checked
+			 * rt->rt_ifa against rt_key(rt).  It was changed
+			 * to the current form so that we can provide a 
+			 * better support for multiple IPv4 address on a
+			 * interface.
 			 */
 			rt->rt_expire = 0;
 			memcpy(LLADDR(SDL(gate)),
@@ -254,6 +265,17 @@ ieee1394arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			if (useloopback)
 				rt->rt_ifp = &loif[0];
 #endif
+			/*
+			 * make sure to set rt->rt_ifa to the interface
+			 * address we are using, otherwise we will have trouble
+			 * with source address selection.
+			 */
+			ifa = &ia->ia_ifa;
+			if (ifa != rt->rt_ifa) {
+				IFAFREE(rt->rt_ifa);
+				IFAREF(ifa);
+				rt->rt_ifa = ifa;
+			}
 		}
 		break;
 
