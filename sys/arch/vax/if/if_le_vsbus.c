@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.4 2000/03/04 16:59:18 matt Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.5 2000/03/18 16:20:06 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ le_vsbus_match(parent, cf, aux)
 		return 0;
 
 	error = bus_dmamap_create(va->va_dmat, sizeof(initblock), 1,
-	    sizeof(initblock), 2, BUS_DMA_NOWAIT, &map);
+	    sizeof(initblock), 0, BUS_DMA_NOWAIT, &map);
 	if (error) {
 		return 0;
 	}
