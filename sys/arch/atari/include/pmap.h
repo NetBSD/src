@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.7 1996/04/18 08:52:19 leo Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8 1996/07/12 13:16:39 leo Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -80,8 +80,8 @@ typedef struct pmap *pmap_t;
  * This gives a better separation between machine dependent stuff and
  * the pmap-module.
  */
-#define	NPHYS_SEGS	8
-struct physeg {
+#define	NMEM_SEGS	8
+struct memseg {
 	vm_offset_t	start;		/* PA of first page in segment	*/
 	vm_offset_t	end;		/* PA of last  page in segment	*/
 	int		first_page;	/* relative page# of 'start'	*/
@@ -104,7 +104,17 @@ typedef struct pv_entry {
 #define PV_PTPAGE	0x02	/* entry maps a page table page */
 
 #ifdef	_KERNEL
-struct physeg	phys_segs[NPHYS_SEGS];
+/*
+ * Memory segment descriptors.
+ *  - boot_segs
+ *	describes the segments obtainted from the bootcode. 
+ *  - usable_segs
+ *	describes the segments available after system requirements are
+ *	substracted (reserved pages, etc...).
+ */
+struct memseg	boot_segs[NMEM_SEGS];
+struct memseg	usable_segs[NMEM_SEGS];
+
 pv_entry_t	pv_table;	/* array of entries, one per page */
 u_int		*Sysmap;
 char		*vmmap;		/* map for mem, dumps, etc. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 1996/06/29 20:24:25 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 1996/07/12 13:16:31 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -157,7 +157,6 @@ consinit()
 void
 cpu_startup()
 {
-	extern	 u_long		boot_ttphysize, boot_stphysize;
 	register unsigned	i;
 	register caddr_t	v, firstaddr;
 		 int		base, residual;
@@ -168,6 +167,7 @@ cpu_startup()
 #endif
 		 vm_offset_t	minaddr, maxaddr;
 		 vm_size_t	size = 0;
+		 u_long		memsize;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -187,8 +187,12 @@ cpu_startup()
 	printf(version);
 	identifycpu();
 
-	i = boot_ttphysize + boot_stphysize;
-	printf("real  mem = %d (%d pages)\n", i, i/NBPG);
+	for (i = memsize = 0; i < NMEM_SEGS; i++) {
+		if (boot_segs[i].start == boot_segs[i].end)
+			break;
+		memsize += boot_segs[i].end - boot_segs[i].start;
+	}
+	printf("real  mem = %ld (%ld pages)\n", memsize, memsize/NBPG);
 
 	/*
 	 * Allocate space for system data structures.
@@ -831,11 +835,13 @@ long		dumplo   = 0;
 void
 dumpconf()
 {
-	extern	 u_long	boot_ttphysize, boot_stphysize;
-		 int	nblks;
+	int	nblks, i;
 
-	/* LWP: XXX better determine dumpsize through header */
-	dumpsize = (boot_ttphysize + boot_stphysize) / NBPG;
+	for (i = dumpsize = 0; i < NMEM_SEGS; i++) {
+		if (boot_segs[i].start == boot_segs[i].end)
+			break;
+		dumpsize += boot_segs[i].end - boot_segs[i].start;
+	}
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
@@ -861,17 +867,16 @@ dumpconf()
 void
 dumpsys()
 {
-	extern	 u_long	boot_ttphysize, boot_ttphystart, boot_stphysize;
-
 	daddr_t	blkno;		/* Current block to write	*/
 	int	(*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 				/* Dumping function		*/
 	u_long	maddr;		/* PA being dumped		*/
 	int	segbytes;	/* Number of bytes in this seg.	*/
+	int	segnum;		/* Segment we are dumping	*/
 	int	nbytes;		/* Bytes left to dump		*/
 	int	i, n, error;
 
-	error = msgbufmapped = 0;
+	error = msgbufmapped = segnum = 0;
 	if (dumpdev == NODEV)
 		return;
 	/*
@@ -899,7 +904,7 @@ dumpsys()
 #endif /* defined(DDB) || defined(PANICWAIT) */
 
 	maddr    = 0;
-	segbytes = boot_stphysize;
+	segbytes = boot_segs[0].end;
 	blkno    = dumplo;
 	dump     = bdevsw[major(dumpdev)].d_dump;
 	nbytes   = dumpsize * NBPG;
@@ -913,8 +918,9 @@ dumpsys()
 		 * Skip the hole
 		 */
 		if (segbytes == 0) {
-			maddr    = boot_ttphystart;
-			segbytes = boot_ttphysize;
+		    segnum++;
+		    maddr    = boot_segs[segnum].start;
+		    segbytes = boot_segs[segnum].end - boot_segs[segnum].start;
 		}
 		/*
 		 * Print Mb's to go
@@ -1172,7 +1178,6 @@ void	*rock1, *rock2;
 		if(si)
 			++ncbd;		/* count # dynamically allocated */
 #endif
-
 		if(!si)
 			return;
 	}
