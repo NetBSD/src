@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.253.2.18 2001/02/27 16:16:25 he Exp $
+# $NetBSD: mi,v 1.253.2.19 2001/03/11 20:28:26 he Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -1027,6 +1027,7 @@
 ./usr/share/man/cat8/arp.0
 ./usr/share/man/cat8/atactl.0
 ./usr/share/man/cat8/atari/MAKEDEV.0
+./usr/share/man/cat8/atari/ahdilabel.0
 ./usr/share/man/cat8/atari/binpatch.0
 ./usr/share/man/cat8/atari/boot.0
 ./usr/share/man/cat8/atari/bootpref.0
@@ -2439,6 +2440,7 @@
 ./usr/share/man/man8/arp.8
 ./usr/share/man/man8/atactl.8
 ./usr/share/man/man8/atari/MAKEDEV.8
+./usr/share/man/man8/atari/ahdilabel.8
 ./usr/share/man/man8/atari/binpatch.8
 ./usr/share/man/man8/atari/boot.8
 ./usr/share/man/man8/atari/bootpref.8
