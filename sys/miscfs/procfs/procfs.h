@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.33 2001/01/25 12:44:56 jdolecek Exp $	*/
+/*	$NetBSD: procfs.h,v 1.33.2.1 2001/03/05 22:49:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -128,15 +128,15 @@ int procfs_freevp __P((struct vnode *));
 int procfs_allocvp __P((struct mount *, struct vnode **, long, pfstype));
 int procfs_donote __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
-int procfs_doregs __P((struct proc *, struct proc *, struct pfsnode *,
+int procfs_doregs __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
-int procfs_dofpregs __P((struct proc *, struct proc *, struct pfsnode *,
+int procfs_dofpregs __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
-int procfs_domem __P((struct proc *, struct proc *, struct pfsnode *,
+int procfs_domem __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
-int procfs_doctl __P((struct proc *, struct proc *, struct pfsnode *,
+int procfs_doctl __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
-int procfs_dostatus __P((struct proc *, struct proc *, struct pfsnode *,
+int procfs_dostatus __P((struct proc *, struct lwp *, struct pfsnode *,
     struct uio *));
 int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *,
     struct uio *));
@@ -153,10 +153,10 @@ void procfs_hashinit __P((void));
 void procfs_hashdone __P((void));
 
 /* functions to check whether or not files should be displayed */
-int procfs_validfile __P((struct proc *, struct mount *));
-int procfs_validfpregs __P((struct proc *, struct mount *));
-int procfs_validregs __P((struct proc *, struct mount *));
-int procfs_validmap __P((struct proc *, struct mount *));
+int procfs_validfile __P((struct lwp *, struct mount *));
+int procfs_validfpregs __P((struct lwp *, struct mount *));
+int procfs_validregs __P((struct lwp *, struct mount *));
+int procfs_validmap __P((struct lwp *, struct mount *));
 
 int procfs_rw __P((void *));
 

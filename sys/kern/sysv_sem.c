@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.40 2000/07/22 16:11:02 simonb Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.40.2.1 2001/03/05 22:49:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,8 +101,8 @@ seminit()
  */
 
 int
-sys_semconfig(p, v, retval)
-	struct proc *p;
+sys_semconfig(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -281,8 +281,8 @@ semundo_clear(semid, semnum)
 }
 
 int
-sys_____semctl13(p, v, retval)
-	struct proc *p;
+sys_____semctl13(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -292,6 +292,7 @@ sys_____semctl13(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(union __semun *) arg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct semid_ds sembuf;
 	int cmd, error;
 	void *pass_arg;
@@ -469,8 +470,8 @@ semctl1(p, semid, semnum, cmd, v, retval)
 }
 
 int
-sys_semget(p, v, retval)
-	struct proc *p;
+sys_semget(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -483,7 +484,7 @@ sys_semget(p, v, retval)
 	int key = SCARG(uap, key);
 	int nsems = SCARG(uap, nsems);
 	int semflg = SCARG(uap, semflg);
-	struct ucred *cred = p->p_ucred;
+	struct ucred *cred = l->l_proc->p_ucred;
 
 	SEM_PRINTF(("semget(0x%x, %d, 0%o)\n", key, nsems, semflg));
 
@@ -559,8 +560,8 @@ found:
 }
 
 int
-sys_semop(p, v, retval)
-	struct proc *p;
+sys_semop(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -569,6 +570,7 @@ sys_semop(p, v, retval)
 		syscallarg(struct sembuf *) sops;
 		syscallarg(size_t) nsops;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int semid = SCARG(uap, semid);
 	int nsops = SCARG(uap, nsops);
 	struct sembuf sops[MAX_SOPS];

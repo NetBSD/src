@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.25 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.25.2.1 2001/03/05 22:49:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -48,6 +48,7 @@
 #include <sys/ioctl.h>
 #include <sys/ioctl_compat.h>
 #include <sys/tty.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 union tbpos {
@@ -153,7 +154,7 @@ tbclose(tp)
 {
 	int modebits = TBPOINT|TBSTOP;
 
-	tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curproc);
+	tbtioctl(tp, BIOSMODE, (caddr_t) &modebits, 0, curproc->l_proc);
 }
 
 /*

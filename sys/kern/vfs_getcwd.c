@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.14 2000/12/15 11:52:14 fvdl Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.14.2.1 2001/03/05 22:49:48 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
@@ -552,8 +553,8 @@ proc_isunder (p1, p2)
  */
 
 int
-sys___getcwd(p, v, retval) 
-	struct proc *p;
+sys___getcwd(l, v, retval) 
+	struct lwp *l;
 	void   *v;
 	register_t *retval;
 {
@@ -586,8 +587,8 @@ sys___getcwd(p, v, retval)
 	 * Since each entry takes up at least 2 bytes in the output buffer,
 	 * limit it to N/2 vnodes for an N byte buffer.
 	 */
-	error = getcwd_common (p->p_cwdi->cwdi_cdir, NULL, &bp, path, len/2,
-			       GETCWD_CHECK_ACCESS, p);
+	error = getcwd_common (l->l_proc->p_cwdi->cwdi_cdir, NULL, &bp, path, 
+	    len/2, GETCWD_CHECK_ACCESS, l->l_proc);
 
 	if (error)
 		goto out;

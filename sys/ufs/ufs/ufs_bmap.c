@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.10 2000/11/27 08:39:57 chs Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.10.2.1 2001/03/05 22:50:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -201,7 +202,7 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);
-			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
+			curproc->l_proc->p_stats->p_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
 				brelse(bp);
 				return (error);

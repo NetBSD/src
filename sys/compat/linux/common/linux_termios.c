@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.11 2001/02/21 21:39:57 jdolecek Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.11.2.1 2001/03/05 22:49:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -691,5 +691,6 @@ linux_ioctl_termios(p, uap, retval)
 
 	SCARG(&ia, fd) = SCARG(uap, fd);
 	SCARG(&ia, data) = SCARG(uap, data);
-	return sys_ioctl(p, &ia, retval);
+	/* XXX NJWLWP */
+	return sys_ioctl(curproc, &ia, retval);
 }

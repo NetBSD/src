@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.42 1998/12/21 10:35:00 drochner Exp $	*/
+/*	$NetBSD: signal.h,v 1.42.20.1 2001/03/05 22:50:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -159,6 +159,27 @@ typedef struct {
 				 (s)->__bits[1] = 0xffffffff, \
 				 (s)->__bits[2] = 0xffffffff, \
 				 (s)->__bits[3] = 0xffffffff)
+#define	__sigplusset(s, t) \
+	do {						\
+		(t)->__bits[0] |= (s)->__bits[0];	\
+		(t)->__bits[1] |= (s)->__bits[1];	\
+		(t)->__bits[2] |= (s)->__bits[2];	\
+		(t)->__bits[3] |= (s)->__bits[3];	\
+	} while (0)
+#define	__sigminusset(s, t) \
+	do {						\
+		(t)->__bits[0] &= ~(s)->__bits[0];	\
+		(t)->__bits[1] &= ~(s)->__bits[1];	\
+		(t)->__bits[2] &= ~(s)->__bits[2];	\
+		(t)->__bits[3] &= ~(s)->__bits[3];	\
+	} while (0)
+#define	__sigandset(s, t) \
+	do {						\
+		(t)->__bits[0] &= (s)->__bits[0];	\
+		(t)->__bits[1] &= (s)->__bits[1];	\
+		(t)->__bits[2] &= (s)->__bits[2];	\
+		(t)->__bits[3] &= (s)->__bits[3];	\
+	} while (0)
 
 #ifdef _KERNEL
 #define	sigaddset(s, n)		__sigaddset(s, n)
@@ -166,20 +187,8 @@ typedef struct {
 #define	sigismember(s, n)	__sigismember(s, n)
 #define	sigemptyset(s)		__sigemptyset(s)
 #define	sigfillset(s)		__sigfillset(s)
-#define	sigplusset(s, t) \
-	do {						\
-		(t)->__bits[0] |= (s)->__bits[0];	\
-		(t)->__bits[1] |= (s)->__bits[1];	\
-		(t)->__bits[2] |= (s)->__bits[2];	\
-		(t)->__bits[3] |= (s)->__bits[3];	\
-	} while (0)
-#define	sigminusset(s, t) \
-	do {						\
-		(t)->__bits[0] &= ~(s)->__bits[0];	\
-		(t)->__bits[1] &= ~(s)->__bits[1];	\
-		(t)->__bits[2] &= ~(s)->__bits[2];	\
-		(t)->__bits[3] &= ~(s)->__bits[3];	\
-	} while (0)
+#define sigplusset(s, t)	__sigplusset(s, t)
+#define sigminusset(s, t)	__sigminusset(s, t)
 #endif /* _KERNEL */
 
 /*

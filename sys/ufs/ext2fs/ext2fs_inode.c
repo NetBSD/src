@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.23 2001/02/18 20:17:04 chs Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.23.2.1 2001/03/05 22:50:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/buf.h>
@@ -415,7 +416,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		trace(TR_BREADHIT, pack(vp, fs->e2fs_bsize), lbn);
 	} else {
 		trace(TR_BREADMISS, pack(vp, fs->e2fs_bsize), lbn);
-		curproc->p_stats->p_ru.ru_inblock++;	/* pay for read */
+		curproc->l_proc->p_stats->p_ru.ru_inblock++;	/* pay for read */
 		bp->b_flags |= B_READ;
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ext2fs_indirtrunc: bad buffer size");

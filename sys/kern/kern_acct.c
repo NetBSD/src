@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.49 2000/05/08 19:06:36 thorpej Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.49.6.1 2001/03/05 22:49:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
@@ -182,8 +183,8 @@ acct_chkfree()
  * previous implementation done by Mark Tinguely.
  */
 int
-sys_acct(p, v, retval)
-	struct proc *p;
+sys_acct(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -192,6 +193,7 @@ sys_acct(p, v, retval)
 	} */ *uap = v;
 	struct nameidata nd;
 	int error;
+	struct proc *p = l->l_proc;
 
 	/* Make sure that the caller is root. */
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)

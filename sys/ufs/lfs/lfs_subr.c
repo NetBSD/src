@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.17 2000/09/09 04:49:55 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.17.2.1 2001/03/05 22:50:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ lfs_seglock(fs, flags)
 	int s;
 	
 	if (fs->lfs_seglock) {
-		if (fs->lfs_lockpid == curproc->p_pid) {
+		if (fs->lfs_lockpid == curproc->l_proc->p_pid) {
 			++fs->lfs_seglock;
 			fs->lfs_sp->seg_flags |= flags;
 			return;			
@@ -145,7 +145,7 @@ lfs_seglock(fs, flags)
 	}
 	
 	fs->lfs_seglock = 1;
-	fs->lfs_lockpid = curproc->p_pid;
+	fs->lfs_lockpid = curproc->l_proc->p_pid;
 	
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
 	sp->bpp = malloc(((LFS_SUMMARY_SIZE - sizeof(SEGSUM)) /
@@ -216,7 +216,7 @@ lfs_segunlock(fs)
 			if (lfs_vref(vp))
 				continue;
 			if (VOP_ISLOCKED(vp) &&
-                            vp->v_lock.lk_lockholder != curproc->p_pid) {
+                            vp->v_lock.lk_lockholder != curproc->l_proc->p_pid) {
 				lfs_vunref(vp);
 				continue;
 			}

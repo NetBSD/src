@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156 2001/02/26 22:31:27 fvdl Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.1 2001/03/05 22:49:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -360,7 +361,7 @@ scsi_probe_bus(bus, target, lun)
 	 */
 	if (sc_link->adapter->scsipi_ioctl != NULL)
 		(*sc_link->adapter->scsipi_ioctl)(sc_link, SCBUSIOLLSCAN, NULL,
-		    0, curproc);
+		    0, curproc->l_proc);
 
 	if ((error = scsipi_adapter_addref(sc_link)) != 0)
 		return (error);
@@ -888,7 +889,8 @@ scsi_probedev(scsi, target, lun)
 			if ((sc_link->quirks & SDEV_NOWIDE) == 0)
 				s.sa_flags |= SC_ACCEL_WIDE;
 			(void) (*sc_link->adapter->scsipi_ioctl)
-			    (sc_link, SCBUSACCEL, (caddr_t)&s, FWRITE, curproc);
+			    (sc_link, SCBUSACCEL, (caddr_t)&s, FWRITE, 
+				curproc->l_proc);
 		}
 	}
 

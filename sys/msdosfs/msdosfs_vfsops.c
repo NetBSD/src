@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.73 2001/01/22 12:17:36 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.73.2.1 2001/03/05 22:49:53 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -173,7 +173,7 @@ int
 msdosfs_mountroot()
 {
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	int error;
 	struct msdosfs_args args;
 

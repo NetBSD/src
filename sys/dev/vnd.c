@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.71 2001/01/08 02:03:46 fvdl Exp $	*/
+/*	$NetBSD: vnd.c,v 1.71.2.1 2001/03/05 22:49:33 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/buf.h>
@@ -1027,7 +1028,7 @@ vndsetcred(vnd, cred)
 		 * buffers back to stable storage.
 		 */
 		error = vinvalbuf(vnd->sc_vp, V_SAVE, vnd->sc_cred,
-			    curproc, 0, 0);
+			    curproc->l_proc, 0, 0);
 	}
 	VOP_UNLOCK(vnd->sc_vp, 0);
 
@@ -1071,7 +1072,7 @@ vndclear(vnd)
 	struct vnd_softc *vnd;
 {
 	struct vnode *vp = vnd->sc_vp;
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc->l_proc;		/* XXX */
 
 #ifdef DEBUG
 	if (vnddebug & VDB_FOLLOW)
@@ -1108,7 +1109,7 @@ vndsize(dev)
 	omask = sc->sc_dkdev.dk_openmask & (1 << part);
 	lp = sc->sc_dkdev.dk_label;
 
-	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curproc))
+	if (omask == 0 && vndopen(dev, 0, S_IFBLK, curproc->l_proc))
 		return (-1);
 
 	if (lp->d_partitions[part].p_fstype != FS_SWAP)
@@ -1117,7 +1118,7 @@ vndsize(dev)
 		size = lp->d_partitions[part].p_size *
 		    (lp->d_secsize / DEV_BSIZE);
 
-	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curproc))
+	if (omask == 0 && vndclose(dev, 0, S_IFBLK, curproc->l_proc))
 		return (-1);
 
 	return (size);

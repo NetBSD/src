@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.53 2001/01/04 00:17:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.53.2.1 2001/03/05 22:49:16 nathanw Exp $	*/
 
 /*
  *
@@ -356,10 +356,10 @@ extern int pmap_pg_g;			/* do we support PG_G? */
  * prototypes
  */
 
-void		pmap_activate __P((struct proc *));
+void		pmap_activate __P((struct lwp *));
 void		pmap_bootstrap __P((vaddr_t));
 boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
-void		pmap_deactivate __P((struct proc *));
+void		pmap_deactivate __P((struct lwp *));
 static void	pmap_page_protect __P((struct vm_page *, vm_prot_t));
 void		pmap_page_remove  __P((struct vm_page *));
 static void	pmap_protect __P((struct pmap *, vaddr_t,
@@ -510,7 +510,7 @@ paddr_t vtophys __P((vaddr_t));
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));
 
 #if defined(USER_LDT)
-void	pmap_ldt_cleanup __P((struct proc *));
+void	pmap_ldt_cleanup __P((struct lwp *));
 #define	PMAP_FORK
 #endif /* USER_LDT */
 

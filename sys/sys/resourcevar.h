@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.15 2000/12/10 19:29:31 mycroft Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.15.2.1 2001/03/05 22:50:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -96,6 +96,8 @@ void	 calcru __P((struct proc *p, struct timeval *up, struct timeval *sp,
 	    struct timeval *ip));
 struct plimit *limcopy __P((struct plimit *lim));
 void limfree __P((struct plimit *));
-void	 ruadd __P((struct rusage *ru, struct rusage *ru2));
+void	ruadd __P((struct rusage *ru, struct rusage *ru2));
+struct	pstats *pstatscopy __P((struct pstats *ps));
+void 	pstatsfree __P((struct pstats *ps));
 #endif
 #endif	/* !_SYS_RESOURCEVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.32 2000/07/22 16:11:02 simonb Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.32.2.1 2001/03/05 22:49:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -165,8 +165,8 @@ msg_freehdr(msghdr)
 }
 
 int
-sys___msgctl13(p, v, retval)
-	struct proc *p;
+sys___msgctl13(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -175,6 +175,7 @@ sys___msgctl13(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct msqid_ds msqbuf;
 	int cmd, error;
 
@@ -297,8 +298,8 @@ msgctl1(p, msqid, cmd, msqbuf)
 }
 
 int
-sys_msgget(p, v, retval)
-	struct proc *p;
+sys_msgget(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -306,6 +307,7 @@ sys_msgget(p, v, retval)
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int msqid, error;
 	int key = SCARG(uap, key);
 	int msgflg = SCARG(uap, msgflg);
@@ -386,8 +388,8 @@ sys_msgget(p, v, retval)
 }
 
 int
-sys_msgsnd(p, v, retval)
-	struct proc *p;
+sys_msgsnd(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -397,6 +399,7 @@ sys_msgsnd(p, v, retval)
 		syscallarg(size_t) msgsz;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int msqid = SCARG(uap, msqid);
 	const char *user_msgp = SCARG(uap, msgp);
 	size_t msgsz = SCARG(uap, msgsz);
@@ -661,8 +664,8 @@ sys_msgsnd(p, v, retval)
 }
 
 int
-sys_msgrcv(p, v, retval)
-	struct proc *p;
+sys_msgrcv(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -673,6 +676,7 @@ sys_msgrcv(p, v, retval)
 		syscallarg(long) msgtyp;
 		syscallarg(int) msgflg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int msqid = SCARG(uap, msqid);
 	char *user_msgp = SCARG(uap, msgp);
 	size_t msgsz = SCARG(uap, msgsz);

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.5 2000/12/27 23:20:29 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.5.6.1 2001/03/05 22:49:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
@@ -87,13 +88,15 @@ freebsd_syscall_plain(frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
+	struct lwp *l;
 	register struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curproc;
+	p = l->l_proc;
 
 	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
@@ -129,12 +132,12 @@ freebsd_syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -160,9 +163,9 @@ freebsd_syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 }
 
 void
@@ -171,13 +174,15 @@ freebsd_syscall_fancy(frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
+	struct lwp *l;
 	register struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curproc;
+	p = l->l_proc;
 
 	code = frame.tf_eax;
 	callp = p->p_emul->e_sysent;
@@ -213,7 +218,7 @@ freebsd_syscall_fancy(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
@@ -222,7 +227,7 @@ freebsd_syscall_fancy(frame)
 
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -248,9 +253,9 @@ freebsd_syscall_fancy(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);

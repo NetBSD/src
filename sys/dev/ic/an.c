@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.10 2000/12/21 15:37:18 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.10.2.1 2001/03/05 22:49:34 nathanw Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1079,7 +1079,8 @@ static int an_ioctl(ifp, command, data)
 		error = copyout(&areq, ifr->ifr_data, sizeof(areq));
 		break;
 	case SIOCSAIRONET:
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)))
+		if ((error = suser(curproc->l_proc->p_ucred, 
+		    &curproc->l_proc->p_acflag)))
 			goto out;
 		error = copyin(ifr->ifr_data, &areq, sizeof(areq));
 		if (error)
@@ -1149,7 +1150,8 @@ static int an_ioctl(ifp, command, data)
 		if (nwkey->i_key[0].i_keydat == NULL)
 			break;
 		/* do not show any keys to non-root user */
-		if ((error = suser(curproc->p_ucred, &curproc->p_acflag)) != 0)
+		if ((error = suser(curproc->l_proc->p_ucred, 
+		    &curproc->l_proc->p_acflag)) != 0)
 			break;
 		akey = &sc->an_temp_keys;
 		nwkey->i_key[0].i_keylen = akey->an_key_len;

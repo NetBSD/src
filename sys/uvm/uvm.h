@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.24 2000/11/27 08:40:02 chs Exp $	*/
+/*	$NetBSD: uvm.h,v 1.24.2.1 2001/03/05 22:50:09 nathanw Exp $	*/
 
 /*
  *
@@ -90,7 +90,7 @@ struct uvm {
 
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
-	struct proc *pagedaemon_proc;	/* daemon's pid */
+	struct lwp *pagedaemon_proc;	/* daemon's pid */
 	simple_lock_data_t pagedaemon_lock;
 
 		/* aiodone daemon trigger */

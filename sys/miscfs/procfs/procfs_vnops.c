@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.78 2001/02/21 21:39:58 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.78.2.1 2001/03/05 22:49:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -48,6 +48,7 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/file.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
@@ -70,7 +71,7 @@
  *
  */
 
-static int procfs_validfile_linux __P((struct proc *, struct mount *));
+static int procfs_validfile_linux __P((struct lwp *, struct mount *));
 
 /*
  * This is a list of the valid names in the
@@ -82,7 +83,7 @@ const struct proc_target {
 	u_char	pt_namlen;
 	char	*pt_name;
 	pfstype	pt_pfstype;
-	int	(*pt_valid) __P((struct proc *, struct mount *));
+	int	(*pt_valid) __P((struct lwp *, struct mount *));
 } proc_targets[] = {
 #define N(s) sizeof(s)-1, s
 	/*	  name		type		validp */
@@ -594,7 +595,7 @@ procfs_getattr(v)
 		vap->va_uid = 0;
 		vap->va_gid = 0;
 		vap->va_bytes = vap->va_size =
-		    sprintf(buf, "%ld", (long)curproc->p_pid);
+		    sprintf(buf, "%ld", (long)curproc->l_proc->p_pid);
 		break;
 	}
 
@@ -779,7 +780,8 @@ procfs_lookup(v)
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
 			    (pt->pt_valid == NULL ||
-			     (*pt->pt_valid)(p, dvp->v_mount)))
+			     (*pt->pt_valid)(LIST_FIRST(&p->p_lwps), 
+				 dvp->v_mount)))
 				break;
 		}
 
@@ -833,7 +835,8 @@ procfs_lookup(v)
 			if (cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
 			    (pt->pt_valid == NULL ||
-			     (*pt->pt_valid)(p, dvp->v_mount)))
+			     (*pt->pt_valid)(LIST_FIRST(&p->p_lwps), 
+				 dvp->v_mount)))
 				goto found;
 		}
 		break;
@@ -868,23 +871,23 @@ procfs_lookup(v)
 }
 
 int
-procfs_validfile(p, mp)
-	struct proc *p;
+procfs_validfile(l, mp)
+	struct lwp *l;
 	struct mount *mp;
 {
-	return (p->p_textvp != NULL);
+	return (l->l_proc->p_textvp != NULL);
 }
 
 static int
-procfs_validfile_linux(p, mp)
-	struct proc *p;
+procfs_validfile_linux(l, mp)
+	struct lwp *l;
 	struct mount *mp;
 {
 	int flags;
 
 	flags = VFSTOPROC(mp)->pmnt_flags;
 	return ((flags & PROCFSMNT_LINUXCOMPAT) &&
-	    (p == NULL || procfs_validfile(p, mp)));
+	    (l == NULL || procfs_validfile(l, mp)));
 }
 
 /*
@@ -961,7 +964,8 @@ procfs_readdir(v)
 		for (pt = &proc_targets[i];
 		     uio->uio_resid >= UIO_MX && i < nproc_targets; pt++, i++) {
 			if (pt->pt_valid &&
-			    (*pt->pt_valid)(p, vp->v_mount) == 0)
+			    (*pt->pt_valid)(LIST_FIRST(&p->p_lwps), 
+				vp->v_mount) == 0)
 				continue;
 			
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, pt->pt_pfstype);
@@ -1125,7 +1129,7 @@ procfs_readlink(v)
 	int len;
 
 	if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pcurproc))
-		len = sprintf(buf, "%ld", (long)curproc->p_pid);
+		len = sprintf(buf, "%ld", (long)curproc->l_proc->p_pid);
 	else if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pself))
 		len = sprintf(buf, "%s", "curproc");
 	else

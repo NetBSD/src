@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.59 2001/02/26 16:35:41 lukem Exp $	*/
+/*	$NetBSD: malloc.h,v 1.59.2.1 2001/03/05 22:50:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -171,7 +171,9 @@
 #define	M_EMULDATA	115	/* Per-process emulation data */
 #define	M_1394CTL	116	/* IEEE 1394 control structures */
 #define	M_1394DATA	117	/* IEEE 1394 data buffers */
-#define	M_LAST		118	/* Must be last type + 1 */
+#define	M_SA	118	/* Scheduler activation structures */
+#define	M_LAST	119	/* Must be last type + 1 */
+
 
 #define	INITKMEMNAMES { \
 	"free",		/* 0 M_FREE */ \
@@ -292,7 +294,8 @@
 	"emuldata",	/* 115 M_EMULDATA */ \
 	"1394ctl",	/* 116 M_1394CTL */ \
 	"1394data",	/* 117 M_1394DATA */ \
-	NULL,		/* 118 */ \
+	"sa",		/* 118 M_SA */ \
+	NULL,		/* 119 */ \
 }
 
 struct kmemstats {

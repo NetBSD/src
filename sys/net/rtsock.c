@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.45 2001/01/17 04:05:42 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.45.2.1 2001/03/05 22:49:55 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -68,6 +68,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -244,7 +245,7 @@ route_output(m, va_alist)
 		dst = 0;
 		senderr(EPROTONOSUPPORT);
 	}
-	rtm->rtm_pid = curproc->p_pid;
+	rtm->rtm_pid = curproc->l_proc->p_pid;
 	bzero(&info, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
 	if (rt_xaddrs((caddr_t)(rtm + 1), len + (caddr_t)rtm, &info))
@@ -268,7 +269,7 @@ route_output(m, va_alist)
 	 * is the only operation the non-superuser is allowed.
 	 */
 	if (rtm->rtm_type != RTM_GET &&
-	    suser(curproc->p_ucred, &curproc->p_acflag) != 0)
+	    suser(curproc->l_proc->p_ucred, &curproc->l_proc->p_acflag) != 0)
 		senderr(EACCES);
 
 	switch (rtm->rtm_type) {

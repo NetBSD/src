@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.11 2000/11/28 21:44:34 thorpej Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.11.2.1 2001/03/05 22:49:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <sys/callout.h>
@@ -107,18 +108,21 @@ db_show_all_procs(addr, haddr, count, modif)
 	char *modif;
 {
 	int i;
+
 	char *mode;
-	struct proc *p, *pp;
+	struct proc *p, *pp, *cp;
+	struct lwp *l, *cl;
 	struct timeval tv[3];
 	const struct proclist_desc *pd;
     
 	if (modif[0] == 0)
 		modif[0] = 'n';			/* default == normal mode */
 
-	mode = strchr("mawn", modif[0]);
+	mode = strchr("mawln", modif[0]);
 	if (mode == NULL || *mode == 'm') {
 		db_printf("usage: show all procs [/a] [/n] [/w]\n");
 		db_printf("\t/a == show process address info\n");
+		db_printf("\t/l == show LWP info\n");
 		db_printf("\t/n == show normal process info [default]\n");
 		db_printf("\t/w == show process wait/emul info\n");
 		return;
@@ -130,9 +134,13 @@ db_show_all_procs(addr, haddr, count, modif)
 		db_printf(" PID       %10s %18s %18s %18s\n",
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
+	case 'l':
+		db_printf(" PID        %4s S %7s %18s %18s %-12s\n",
+		    "LID", "FLAGS", "STRUCT LWP *", "UAREA *", "WAIT");
+		break;
 	case 'n':
-		db_printf(" PID       %10s %10s %10s S %7s %16s %7s\n",
-		    "PPID", "PGRP", "UID", "FLAGS", "COMMAND", "WAIT");
+		db_printf(" PID       %8s %8s %10s S %7s %4s %16s %7s\n",
+		    "PPID", "PGRP", "UID", "FLAGS", "LWPS", "COMMAND", "WAIT");
 		break;
 	case 'w':
 		db_printf(" PID       %10s %8s %4s %5s %5s %-12s%s\n",
@@ -143,42 +151,62 @@ db_show_all_procs(addr, haddr, count, modif)
 
 	/* XXX LOCKING XXX */
 	pd = proclists;
+	cp = curproc ? curproc->l_proc : 0;
+	cl = curproc;
  loop:
 	for (p = LIST_FIRST(pd->pd_list); p != NULL;
 	     p = LIST_NEXT(p, p_list)) {
 		pp = p->p_pptr;
 		if (p->p_stat) {
-
-			db_printf("%c%-10d", " >"[curproc == p], p->p_pid);
+			l = LIST_FIRST(&p->p_lwps);
+			db_printf("%c%-10d", " >"[cp == p], p->p_pid);
 
 			switch (*mode) {
 
 			case 'a':
 				db_printf("%10.10s %18p %18p %18p\n",
-				    p->p_comm, p, p->p_addr, p->p_vmspace);
+				    p->p_comm, p, l->l_addr, p->p_vmspace);
 				break;
+			case 'l':
+				do {
+					db_printf("%c%4d %d %#7x %18p %18p %s\n",
+					    " >"[cl == l], l->l_lid,
+					    l->l_stat, l->l_flag, l, 
+					    l->l_addr, 
+					    (l->l_wchan && l->l_wmesg) ?
+					    l->l_wmesg : "");
 
+					l = LIST_NEXT(l, l_sibling);
+					if (l)
+						db_printf("%11s","");
+				} while (l != NULL);
+				break;
 			case 'n':
-				db_printf("%10d %10d %10d %d %#7x %16s %7.7s\n",
+				db_printf("%8d %8d %10d %d %#7x %4d %16s %7.7s\n",
 				    pp ? pp->p_pid : -1, p->p_pgrp->pg_id,
 				    p->p_cred->p_ruid, p->p_stat, p->p_flag,
-				    p->p_comm, (p->p_wchan && p->p_wmesg) ?
-					p->p_wmesg : "");
+				    p->p_nlwps, p->p_comm,
+				    (p->p_nlwps > 1) ? "*" : (
+				    (l->l_wchan && l->l_wmesg) ? 
+				    l->l_wmesg : ""));
 				break;
 
 			case 'w':
 				db_printf("%10s %8s %4d", p->p_comm,
-				    p->p_emul->e_name,p->p_priority);
+				    p->p_emul->e_name,l->l_priority);
 				calcru(p, tv+0, tv+1, tv+2);
 				for(i = 0; i < 2; ++i) {
 					db_printf("%4ld.%1ld",
 					    (long)tv[i].tv_sec,
 					    (long)tv[i].tv_usec/100000);
 				}
-				if(p->p_wchan && p->p_wmesg) {
-					db_printf(" %-12s", p->p_wmesg);
-					db_printsym((db_expr_t)p->p_wchan,
+				if(p->p_nlwps <= 1) {
+				if(l->l_wchan && l->l_wmesg) {
+					db_printf(" %-12s", l->l_wmesg);
+					db_printsym((db_expr_t)l->l_wchan,
 					    DB_STGY_XTRN, db_printf);
+				} } else {
+					db_printf(" * ");
 				}
 				db_printf("\n");
 				break;

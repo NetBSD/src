@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.56 2001/02/14 01:29:46 nathanw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.56.2.1 2001/03/05 22:49:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/ioctl.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/uio.h>
@@ -74,18 +75,19 @@
 
 extern vm_map_t kernel_map;
 
-int i386_iopl __P((struct proc *, void *, register_t *));
-int i386_get_ioperm __P((struct proc *, void *, register_t *));
-int i386_set_ioperm __P((struct proc *, void *, register_t *));
+int i386_iopl __P((struct lwp *, void *, register_t *));
+int i386_get_ioperm __P((struct lwp *, void *, register_t *));
+int i386_set_ioperm __P((struct lwp *, void *, register_t *));
 
 #ifdef USER_LDT
 int
-i386_get_ldt(p, args, retval)
-	struct proc *p;
+i386_get_ldt(l, args, retval)
+	struct lwp *l;
 	void *args;
 	register_t *retval;
 {
 	int error;
+	struct proc *p = l->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int nldt, num;
 	union descriptor *lp;
@@ -129,13 +131,14 @@ i386_get_ldt(p, args, retval)
 }
 
 int
-i386_set_ldt(p, args, retval)
-	struct proc *p;
+i386_set_ldt(l, args, retval)
+	struct lwp *l;
 	void *args;
 	register_t *retval;
 {
 	int error, i, n;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct proc *p = l->l_proc;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	int fsslot, gsslot;
 	struct i386_set_ldt_args ua;
@@ -288,13 +291,14 @@ out:
 #endif	/* USER_LDT */
 
 int
-i386_iopl(p, args, retval)
-	struct proc *p;
+i386_iopl(l, args, retval)
+	struct lwp *l;
 	void *args;
 	register_t *retval;
 {
 	int error;
-	struct trapframe *tf = p->p_md.md_regs;
+	struct proc *p = l->l_proc;
+	struct trapframe *tf = l->l_md.md_regs;
 	struct i386_iopl_args ua;
 
 	if (securelevel > 1)
@@ -315,13 +319,13 @@ i386_iopl(p, args, retval)
 }
 
 int
-i386_get_ioperm(p, args, retval)
-	struct proc *p;
+i386_get_ioperm(l, args, retval)
+	struct lwp *l;
 	void *args;
 	register_t *retval;
 {
 	int error;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct i386_get_ioperm_args ua;
 
 	if ((error = copyin(args, &ua, sizeof(ua))) != 0)
@@ -331,13 +335,14 @@ i386_get_ioperm(p, args, retval)
 }
 
 int
-i386_set_ioperm(p, args, retval)
-	struct proc *p;
+i386_set_ioperm(l, args, retval)
+	struct lwp *l;
 	void *args;
 	register_t *retval;
 {
 	int error;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct proc *p = l->l_proc;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct i386_set_ioperm_args ua;
 
 	if (securelevel > 1)
@@ -353,10 +358,7 @@ i386_set_ioperm(p, args, retval)
 }
 
 int
-sys_sysarch(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
@@ -367,43 +369,44 @@ sys_sysarch(p, v, retval)
 	switch(SCARG(uap, op)) {
 #ifdef	USER_LDT
 	case I386_GET_LDT: 
-		error = i386_get_ldt(p, SCARG(uap, parms), retval);
+		error = i386_get_ldt(l, SCARG(uap, parms), retval);
 		break;
 
 	case I386_SET_LDT: 
-		error = i386_set_ldt(p, SCARG(uap, parms), retval);
+		error = i386_set_ldt(l, SCARG(uap, parms), retval);
 		break;
 #endif
 
 	case I386_IOPL: 
-		error = i386_iopl(p, SCARG(uap, parms), retval);
+		error = i386_iopl(l, SCARG(uap, parms), retval);
 		break;
 
 	case I386_GET_IOPERM: 
-		error = i386_get_ioperm(p, SCARG(uap, parms), retval);
+		error = i386_get_ioperm(l, SCARG(uap, parms), retval);
 		break;
 
 	case I386_SET_IOPERM: 
-		error = i386_set_ioperm(p, SCARG(uap, parms), retval);
+		error = i386_set_ioperm(l, SCARG(uap, parms), retval);
 		break;
 
 #ifdef VM86
 	case I386_VM86:
-		error = i386_vm86(p, SCARG(uap, parms), retval);
+		error = i386_vm86(l, SCARG(uap, parms), retval);
 		break;
 #endif
 
+
 #ifdef PERFCTRS
 	case I386_PMC_INFO:
-		error = pmc_info(p, SCARG(uap, parms), retval);
+		error = pmc_info(l, SCARG(uap, parms), retval);
 		break;
 
 	case I386_PMC_STARTSTOP:
-		error = pmc_startstop(p, SCARG(uap, parms), retval);
+		error = pmc_startstop(l, SCARG(uap, parms), retval);
 		break;
 
 	case I386_PMC_READ:
-		error = pmc_read(p, SCARG(uap, parms), retval);
+		error = pmc_read(l, SCARG(uap, parms), retval);
 		break;
 #endif
 

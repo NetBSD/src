@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.19 2000/03/30 13:53:37 augustss Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.19.6.1 2001/03/05 22:49:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -52,6 +52,7 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -436,7 +437,7 @@ pk_ctloutput(cmd, so, level, optname, mp)
 	struct mbuf   **mp;
 	int             cmd, level, optname;
 {
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc->l_proc;		/* XXX */
 	struct mbuf *m = *mp;
 	struct pklcd *lcp = (struct pklcd *) so->so_pcb;
 	int             error = EOPNOTSUPP;

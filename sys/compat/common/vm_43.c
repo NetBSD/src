@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_43.c,v 1.6 2000/06/28 15:39:25 mrg Exp $	*/
+/*	$NetBSD: vm_43.c,v 1.6.2.1 2001/03/05 22:49:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/resourcevar.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -62,10 +63,7 @@
 
 /* ARGSUSED */
 int
-compat_43_sys_getpagesize(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_getpagesize(struct lwp *l, void *v, register_t *retval)
 {
 
 	*retval = PAGE_SIZE;
@@ -73,10 +71,7 @@ compat_43_sys_getpagesize(p, v, retval)
 }
 
 int
-compat_43_sys_mmap(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_mmap(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_mmap_args /* {
 		syscallarg(caddr_t) addr;
@@ -129,5 +124,5 @@ compat_43_sys_mmap(p, v, retval)
 		SCARG(&nargs, flags) |= MAP_INHERIT;
 	SCARG(&nargs, fd) = SCARG(uap, fd);
 	SCARG(&nargs, pos) = SCARG(uap, pos);
-	return (sys_mmap(p, &nargs, retval));
+	return (sys_mmap(l, &nargs, retval));
 }

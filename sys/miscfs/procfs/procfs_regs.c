@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.12 2001/01/17 00:09:08 fvdl Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.12.2.1 2001/03/05 22:49:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
@@ -50,9 +51,9 @@
 #include <miscfs/procfs/procfs.h>
 
 int
-procfs_doregs(curp, p, pfs, uio)
+procfs_doregs(curp, l, pfs, uio)
 	struct proc *curp;		/* tracer */
-	struct proc *p;			/* traced */
+	struct lwp *l;			/* traced */
 	struct pfsnode *pfs;
 	struct uio *uio;
 {
@@ -62,7 +63,7 @@ procfs_doregs(curp, p, pfs, uio)
 	char *kv;
 	int kl;
 
-	if ((error = procfs_checkioperm(curp, p)) != 0)
+	if ((error = procfs_checkioperm(curp, l->l_proc)) != 0)
 		return (EPERM);
 
 	kl = sizeof(r);
@@ -73,22 +74,22 @@ procfs_doregs(curp, p, pfs, uio)
 	if (kl > uio->uio_resid)
 		kl = uio->uio_resid;
 
-	PHOLD(p);
+	PHOLD(l);
 
 	if (kl < 0)
 		error = EINVAL;
 	else
-		error = process_read_regs(p, &r);
+		error = process_read_regs(l, &r);
 	if (error == 0)
 		error = uiomove(kv, kl, uio);
 	if (error == 0 && uio->uio_rw == UIO_WRITE) {
-		if (p->p_stat != SSTOP)
+		if (l->l_stat != LSSTOP)
 			error = EBUSY;
 		else
-			error = process_write_regs(p, &r);
+			error = process_write_regs(l, &r);
 	}
 
-	PRELE(p);
+	PRELE(l);
 
 	uio->uio_offset = 0;
 	return (error);
@@ -98,13 +99,13 @@ procfs_doregs(curp, p, pfs, uio)
 }
 
 int
-procfs_validregs(p, mp)
-	struct proc *p;
+procfs_validregs(l, mp)
+	struct lwp *l;
 	struct mount *mp;
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-	return ((p->p_flag & P_SYSTEM) == 0);
+	return ((l->l_proc->p_flag & P_SYSTEM) == 0);
 #else
 	return (0);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.23 2000/12/22 22:58:54 jdolecek Exp $	*/
+/*	$NetBSD: vm86.c,v 1.23.4.1 2001/03/05 22:49:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
 
-static void fast_intxx __P((struct proc *, int));
+static void fast_intxx __P((struct lwp *, int));
 static __inline int is_bitset __P((int, caddr_t));
 
 #define	CS(tf)		(*(u_short *)&tf->tf_cs)
@@ -154,11 +154,11 @@ is_bitset(nr, bitmap)
 #define V86_AL(regs)	(((u_char *)&((regs)->tf_eax))[0])
 
 static void
-fast_intxx(p, intrno)
-	struct proc *p;
+fast_intxx(l, intrno)
+	struct lwp *l;
 	int intrno;
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 	/*
 	 * handle certain interrupts directly by pushing the interrupt
 	 * frame and resetting registers, but only if user said that's ok
@@ -174,7 +174,7 @@ fast_intxx(p, intrno)
 	 * and don't deref it. is_revectored() above does fubyte() to
 	 * get stuff from it
 	 */
-	u_vm86p = (struct vm86_struct *)p->p_addr->u_pcb.vm86_userp;
+	u_vm86p = (struct vm86_struct *)l->l_addr->u_pcb.vm86_userp;
 
 	/* 
 	 * If user requested special handling, return to user space with
@@ -205,7 +205,7 @@ fast_intxx(p, intrno)
 	ss = SS(tf) << 4;
 	sp = SP(tf);
 
-	putword(ss, sp, get_vflags_short(p));
+	putword(ss, sp, get_vflags_short(l));
 	putword(ss, sp, CS(tf));
 	putword(ss, sp, IP(tf));
 	SP(tf) = sp;
@@ -216,17 +216,17 @@ fast_intxx(p, intrno)
 	return;
 
 vector:
-	vm86_return(p, VM86_MAKEVAL(VM86_INTx, intrno));
+	vm86_return(l, VM86_MAKEVAL(VM86_INTx, intrno));
 	return;
 
 bad:
-	vm86_return(p, VM86_UNKNOWN);
+	vm86_return(l, VM86_UNKNOWN);
 	return;
 }
 
 void
-vm86_return(p, retval)
-	struct proc *p;
+vm86_return(l, retval)
+	struct lwp *l;
 	int retval;
 {
 
@@ -235,15 +235,15 @@ vm86_return(p, retval)
 	 * since it's used to jump to the signal handler.  Instead we
 	 * let sendsig() pull in the vm86_eflags bits.
 	 */
-	if (sigismember(&p->p_sigctx.ps_sigmask, SIGURG)) {
+	if (sigismember(&l->l_proc->p_sigctx.ps_sigmask, SIGURG)) {
 #ifdef DIAGNOSTIC
 		printf("pid %d killed on VM86 protocol screwup (SIGURG blocked)\n",
-		    p->p_pid);
+		    l->l_proc->p_pid);
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
-	trapsignal(p, SIGURG, retval);
+	trapsignal(l, SIGURG, retval);
 }
 
 #define	CLI	0xFA
@@ -263,11 +263,11 @@ vm86_return(p, retval)
  * handler code and then having it restart VM86 mode).
  */
 void
-vm86_gpfault(p, type)
-	struct proc *p;
+vm86_gpfault(l, type)
+	struct lwp *l;
 	int type;
 {
-	struct trapframe *tf = p->p_md.md_regs;
+	struct trapframe *tf = l->l_md.md_regs;
 	/*
 	 * we want to fetch some stuff from the current user virtual
 	 * address space for checking.  remember that the frame's
@@ -293,7 +293,7 @@ vm86_gpfault(p, type)
 	switch (tmpbyte) {
 	case CLI:
 		/* simulate handling of IF */
-		clr_vif(p);
+		clr_vif(l);
 		break;
 
 	case STI:
@@ -301,23 +301,23 @@ vm86_gpfault(p, type)
 		 * XXX the i386 enables interrupts one instruction later.
 		 * code here is wrong, but much simpler than doing it Right.
 		 */
-		set_vif(p);
+		set_vif(l);
 		break;
 
 	case INTxx:
 		/* try fast intxx, or return to 32bit mode to handle it. */
 		tmpbyte = getbyte(cs, ip);
 		IP(tf) = ip;
-		fast_intxx(p, tmpbyte);
+		fast_intxx(l, tmpbyte);
 		break;
 
 	case INTO:
 		if (tf->tf_eflags & PSL_V)
-			fast_intxx(p, 4);
+			fast_intxx(l, 4);
 		break;
 
 	case PUSHF:
-		putword(ss, sp, get_vflags_short(p));
+		putword(ss, sp, get_vflags_short(l));
 		SP(tf) = sp;
 		break;
 
@@ -325,7 +325,7 @@ vm86_gpfault(p, type)
 		IP(tf) = getword(ss, sp);
 		CS(tf) = getword(ss, sp);
 	case POPF:
-		set_vflags_short(p, getword(ss, sp));
+		set_vflags_short(l, getword(ss, sp));
 		SP(tf) = sp;
 		break;
 
@@ -334,7 +334,7 @@ vm86_gpfault(p, type)
 		IP(tf) = ip;
 		switch (tmpbyte) {
 		case PUSHF:
-			putdword(ss, sp, get_vflags(p) & ~PSL_VM);
+			putdword(ss, sp, get_vflags(l) & ~PSL_VM);
 			SP(tf) = sp;
 			break;
 
@@ -342,7 +342,7 @@ vm86_gpfault(p, type)
 			IP(tf) = getdword(ss, sp);
 			CS(tf) = getdword(ss, sp);
 		case POPF:
-			set_vflags(p, getdword(ss, sp) | PSL_VM);
+			set_vflags(l, getdword(ss, sp) | PSL_VM);
 			SP(tf) = sp;
 			break;
 
@@ -359,22 +359,22 @@ vm86_gpfault(p, type)
 	}
 
 	if (trace && tf->tf_eflags & PSL_VM)
-		trapsignal(p, SIGTRAP, T_TRCTRAP);
+		trapsignal(l, SIGTRAP, T_TRCTRAP);
 	return;
 
 bad:
-	vm86_return(p, VM86_UNKNOWN);
+	vm86_return(l, VM86_UNKNOWN);
 	return;
 }
 
 int
-i386_vm86(p, args, retval)
-	struct proc *p;
+i386_vm86(l, args, retval)
+	struct lwp *l;
 	char *args;
 	register_t *retval;
 {
-	struct trapframe *tf = p->p_md.md_regs;
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct trapframe *tf = l->l_md.md_regs;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct vm86_kern vm86s;
 	int error;
 
@@ -430,9 +430,9 @@ i386_vm86(p, args, retval)
 #undef	DOREG
 
 	/* Going into vm86 mode jumps off the signal stack. */
-	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
-	set_vflags(p, vm86s.regs.vmsc.sc_eflags | PSL_VM);
+	set_vflags(l, vm86s.regs.vmsc.sc_eflags | PSL_VM);
 
 	return (EJUSTRETURN);
 }

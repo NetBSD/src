@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.11 2000/03/30 11:27:15 augustss Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.11.6.1 2001/03/05 22:49:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/socket.h>
@@ -57,10 +58,7 @@
 #include <sys/syscallargs.h>
 
 int
-compat_43_sys_accept(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_accept(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_accept_args /* {
 		syscallarg(int) s;
@@ -69,7 +67,7 @@ compat_43_sys_accept(p, v, retval)
 	} */ *uap = v;
 	int error;
 
-	if ((error = sys_accept(p, uap, retval)) != 0)
+	if ((error = sys_accept(l, uap, retval)) != 0)
 		return error;
 
 	if (SCARG(uap, name)) {
@@ -87,10 +85,7 @@ compat_43_sys_accept(p, v, retval)
 }
 
 int
-compat_43_sys_getpeername(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_getpeername(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getpeername_args /* {
 		syscallarg(int) fdes;
@@ -101,7 +96,7 @@ compat_43_sys_getpeername(p, v, retval)
 
 	int error;
 
-	if ((error = sys_getpeername(p, uap, retval)) != 0)
+	if ((error = sys_getpeername(l, uap, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(uap, asa), &sa, sizeof(sa))) != 0)
@@ -116,10 +111,7 @@ compat_43_sys_getpeername(p, v, retval)
 }
 
 int
-compat_43_sys_getsockname(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_getsockname(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_getsockname_args /* {
 		syscallarg(int) fdes;
@@ -129,7 +121,7 @@ compat_43_sys_getsockname(p, v, retval)
 	struct sockaddr sa;
 	int error;
 
-	if ((error = sys_getsockname(p, uap, retval)) != 0)
+	if ((error = sys_getsockname(l, uap, retval)) != 0)
 		return error;
 
 	if ((error = copyin(SCARG(uap, asa), &sa, sizeof(sa))) != 0)
@@ -144,10 +136,7 @@ compat_43_sys_getsockname(p, v, retval)
 }
 
 int
-compat_43_sys_recv(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_recv(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_recv_args /* {
 		syscallarg(int) s;
@@ -155,6 +144,7 @@ compat_43_sys_recv(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct msghdr msg;
 	struct iovec aiov;
 
@@ -170,10 +160,7 @@ compat_43_sys_recv(p, v, retval)
 }
 
 int
-compat_43_sys_recvfrom(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_recvfrom(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_recvfrom_args /* {
 		syscallarg(int) s;
@@ -185,7 +172,7 @@ compat_43_sys_recvfrom(p, v, retval)
 	} */ *uap = v;
 
 	SCARG(uap, flags) |= MSG_COMPAT;
-	return (sys_recvfrom(p, uap, retval));
+	return (sys_recvfrom(l, uap, retval));
 }
 
 /*
@@ -194,16 +181,14 @@ compat_43_sys_recvfrom(p, v, retval)
  * rights where the control fields are now.
  */
 int
-compat_43_sys_recvmsg(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_recvmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_recvmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(struct omsghdr *) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
@@ -239,10 +224,7 @@ done:
 }
 
 int
-compat_43_sys_send(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_send(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_send_args /* {
 		syscallarg(int) s;
@@ -250,6 +232,7 @@ compat_43_sys_send(p, v, retval)
 		syscallarg(int) len;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct msghdr msg;
 	struct iovec aiov;
 
@@ -265,16 +248,14 @@ compat_43_sys_send(p, v, retval)
 }
 
 int
-compat_43_sys_sendmsg(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_sendmsg(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_sendmsg_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;

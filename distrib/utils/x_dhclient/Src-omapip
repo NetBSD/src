@@ -1,5 +1,0 @@
-#	$NetBSD: Src-omapip,v 1.3 2000/10/18 18:26:01 tv Exp $
-
-OMSRCS=	auth.c protocol.c buffer.c alloc.OM.c result.c connection.c errwarn.c \
-	listener.c dispatch.OM.c generic.c support.OM.c handle.c message.c \
-	hash.OM.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.46 2001/02/22 01:02:09 enami Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.46.2.1 2001/03/05 22:50:12 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -55,6 +55,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
@@ -189,14 +190,15 @@ uvn_attach(arg, accessprot)
 		 *	(2) All we want is the size, anyhow.
 		 */
 		result = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
-		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
+		    DIOCGPART, (caddr_t)&pi, FREAD, curproc->l_proc);
 		if (result == 0) {
 			/* XXX should remember blocksize */
 			used_vnode_size = (voff_t)pi.disklab->d_secsize *
 			    (voff_t)pi.part->p_size;
 		}
 	} else {
-		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, curproc);
+		result = VOP_GETATTR(vp, &vattr, curproc->l_proc->p_ucred, 
+		    curproc->l_proc);
 		if (result == 0)
 			used_vnode_size = vattr.va_size;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.5 2001/02/08 14:56:16 itojun Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.5.2.1 2001/03/05 22:49:57 nathanw Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -339,7 +340,7 @@ in6_pcbsetport(laddr, in6p)
 	int wild = 0;
 	void *t;
 	u_int16_t min, max;
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc->l_proc;		/* XXX */
 
 	/* XXX: this is redundant when called from in6_pcbbind */
 	if ((so->so_options & (SO_REUSEADDR|SO_REUSEPORT)) == 0 &&

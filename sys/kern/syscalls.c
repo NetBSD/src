@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.119 2001/01/27 07:48:28 thorpej Exp $ */
+/* $NetBSD: syscalls.c,v 1.119.2.1 2001/03/05 22:49:44 nathanw Exp $ */
 
 /*
  * System call names.
@@ -424,14 +424,14 @@ const char *const syscallnames[] = {
 	"lchflags",			/* 304 = lchflags */
 	"issetugid",			/* 305 = issetugid */
 	"utrace",			/* 306 = utrace */
-	"#307 (unimplemented)",		/* 307 = unimplemented */
-	"#308 (unimplemented)",		/* 308 = unimplemented */
-	"#309 (unimplemented)",		/* 309 = unimplemented */
-	"#310 (unimplemented)",		/* 310 = unimplemented */
-	"#311 (unimplemented)",		/* 311 = unimplemented */
-	"#312 (unimplemented)",		/* 312 = unimplemented */
-	"#313 (unimplemented)",		/* 313 = unimplemented */
-	"#314 (unimplemented)",		/* 314 = unimplemented */
+	"getcontext",			/* 307 = getcontext */
+	"setcontext",			/* 308 = setcontext */
+	"_lwp_create",			/* 309 = _lwp_create */
+	"_lwp_exit",			/* 310 = _lwp_exit */
+	"_lwp_self",			/* 311 = _lwp_self */
+	"_lwp_wait",			/* 312 = _lwp_wait */
+	"_lwp_suspend",			/* 313 = _lwp_suspend */
+	"_lwp_continue",			/* 314 = _lwp_continue */
 	"#315 (unimplemented)",		/* 315 = unimplemented */
 	"#316 (unimplemented)",		/* 316 = unimplemented */
 	"#317 (unimplemented)",		/* 317 = unimplemented */
@@ -447,12 +447,12 @@ const char *const syscallnames[] = {
 	"#327 (unimplemented)",		/* 327 = unimplemented */
 	"#328 (unimplemented)",		/* 328 = unimplemented */
 	"#329 (unimplemented)",		/* 329 = unimplemented */
-	"#330 (unimplemented)",		/* 330 = unimplemented */
-	"#331 (unimplemented)",		/* 331 = unimplemented */
-	"#332 (unimplemented)",		/* 332 = unimplemented */
-	"#333 (unimplemented)",		/* 333 = unimplemented */
-	"#334 (unimplemented)",		/* 334 = unimplemented */
-	"#335 (unimplemented)",		/* 335 = unimplemented */
+	"sa_register",			/* 330 = sa_register */
+	"sa_stacks",			/* 331 = sa_stacks */
+	"sa_enable",			/* 332 = sa_enable */
+	"sa_setconcurrency",			/* 333 = sa_setconcurrency */
+	"sa_yield",			/* 334 = sa_yield */
+	"sa_preempt",			/* 335 = sa_preempt */
 	"#336 (unimplemented)",		/* 336 = unimplemented */
 	"#337 (unimplemented)",		/* 337 = unimplemented */
 	"#338 (unimplemented)",		/* 338 = unimplemented */

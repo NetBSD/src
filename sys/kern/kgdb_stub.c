@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7 2000/07/18 21:49:08 jeffs Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7.2.1 2001/03/05 22:49:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -52,7 +52,13 @@
 #include <sys/systm.h>
 #include <sys/kgdb.h>
 
-/* #define	DEBUG_KGDB XXX */
+#undef	DEBUG_KGDB
+
+#ifdef DEBUG_KGDB
+#define DPRINTF(x)	printf x
+#else
+#define DPRINTF(x)
+#endif
 
 /* XXX: Maybe these should be in the MD files? */
 #ifndef KGDBDEV
@@ -233,9 +239,7 @@ kgdb_send(bp)
 	u_char *p;
 	u_char csum, c;
 
-#ifdef	DEBUG_KGDB
-	printf("kgdb_send: %s\n", bp);
-#endif
+	DPRINTF(("kgdb_send: %s\n", bp));
 	do {
 		p = bp;
 		PUTC(KGDB_START);
@@ -258,16 +262,19 @@ kgdb_recv(bp, maxlen)
 	int maxlen;
 {
 	u_char *p;
-	int c, csum;
+	int c, csum, tmpcsum;
 	int len;
 
+	DPRINTF(("kgdb_recv:  "));
 	do {
 		p = bp;
 		csum = len = 0;
 		while ((c = GETC()) != KGDB_START)
-			;
+			DPRINTF(("%c",c));
+		DPRINTF(("%c Start ",c));
 
 		while ((c = GETC()) != KGDB_END && len < maxlen) {
+			DPRINTF(("%c",c));
 			c &= 0x7f;
 			csum += c;
 			*p++ = c;
@@ -275,19 +282,28 @@ kgdb_recv(bp, maxlen)
 		}
 		csum &= 0xff;
 		*p = '\0';
+		DPRINTF(("%c End ", c));
 
 		if (len >= maxlen) {
+			DPRINTF(("Long- "));
 			PUTC(KGDB_BADP);
 			continue;
 		}
+		tmpcsum = csum;
 
-		csum -= digit2i(GETC()) * 16;
-		csum -= digit2i(GETC());
+		c = GETC();
+		DPRINTF(("%c",c));
+		csum -= digit2i(c) * 16;
+		c = GETC();
+		DPRINTF(("%c",c));
+		csum -= digit2i(c);
 
 		if (csum == 0) {
+			DPRINTF(("Good+ "));
 			PUTC(KGDB_GOODP);
 			/* Sequence present? */
 			if (bp[2] == ':') {
+				DPRINTF(("Seq %c%c ", bp[0], bp[1]));
 				PUTC(bp[0]);
 				PUTC(bp[1]);
 				len -= 3;
@@ -295,11 +311,10 @@ kgdb_recv(bp, maxlen)
 			}
 			break;
 		}
+		DPRINTF((" Bad(wanted %x, off by %d)- ", tmpcsum, csum));
 		PUTC(KGDB_BADP);
 	} while (1);
-#ifdef	DEBUG_KGDB
-	printf("kgdb_recv: %s\n", bp);
-#endif
+	DPRINTF(("kgdb_recv: %s\n", bp));
 	return (len);
 }
 
@@ -333,6 +348,8 @@ kgdb_trap(type, regs)
 	vaddr_t addr;
 	size_t len;
 	u_char *p;
+
+	printf("kgdb_trap 1\n");
 
 	if (kgdb_dev < 0 || kgdb_getc == NULL) {
 		/* not debugging */
@@ -505,7 +522,14 @@ kgdb_trap(type, regs)
 					continue;
 				}
 				PC_REGS(regs) = addr;
+				DPRINTF(("kgdb: continuing at %08lx\n", addr))
+
+			} else {
+				DPRINTF((
+				  "kgdb: continuing at old address %08lx\n",
+				  PC_REGS(regs)));
 			}
+
 			db_clear_single_step(regs);
 			goto out;
 

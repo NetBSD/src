@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.1 2000/06/27 09:00:14 mrg Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.1.4.1 2001/03/05 22:50:11 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -72,7 +72,7 @@
 #ifndef	_PMAP_VM_
 #define	_PMAP_VM_
 
-struct proc;		/* for pmap_activate()/pmap_deactivate() proto */
+struct lwp;		/* for pmap_activate()/pmap_deactivate() proto */
 
 /*
  * Each machine dependent implementation is expected to
@@ -100,8 +100,8 @@ typedef struct pmap_statistics	*pmap_statistics_t;
 #ifdef _KERNEL
 __BEGIN_DECLS
 void		*pmap_bootstrap_alloc __P((int));
-void		 pmap_activate __P((struct proc *));
-void		 pmap_deactivate __P((struct proc *));
+void		 pmap_activate __P((struct lwp *));
+void		 pmap_deactivate __P((struct lwp *));
 void		 pmap_unwire __P((pmap_t, vaddr_t));
 
 #if !defined(pmap_clear_modify)

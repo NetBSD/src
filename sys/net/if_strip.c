@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.35 2001/01/17 00:30:52 thorpej Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.35.2.1 2001/03/05 22:49:54 nathanw Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -97,6 +97,7 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mbuf.h>
 #include <sys/buf.h>
@@ -434,7 +435,7 @@ stripopen(dev, tp)
 	dev_t dev;
 	struct tty *tp;
 {
-	struct proc *p = curproc;		/* XXX */
+	struct proc *p = curproc->l_proc;		/* XXX */
 	struct strip_softc *sc;
 	int nstrip;
 	int error;

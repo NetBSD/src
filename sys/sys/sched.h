@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.10 2000/08/26 04:17:44 sommerfeld Exp $ */
+/* $NetBSD: sched.h,v 1.10.2.1 2001/03/05 22:50:03 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -103,8 +103,8 @@
 #define	SLPQUE_TABLESIZE	128
 #define	SLPQUE_LOOKUP(x)	(((u_long)(x) >> 8) & (SLPQUE_TABLESIZE - 1))
 struct slpque {
-	struct proc *sq_head;
-	struct proc **sq_tailp;
+	struct lwp *sq_head;
+	struct lwp **sq_tailp;
 };
 
 /*
@@ -118,8 +118,8 @@ struct slpque {
  */
 #define	RUNQUE_NQS		32
 struct prochd {
-	struct proc *ph_link;
-	struct proc *ph_rlink;
+	struct lwp *ph_link;
+	struct lwp *ph_rlink;
 };
 
 /*
@@ -182,7 +182,7 @@ extern __volatile u_int32_t sched_whichqs;
 struct proc;
 struct cpu_info;
 
-void schedclock(struct proc *p);
+void schedclock(struct lwp *p);
 void sched_wakeup(void *);
 void roundrobin(struct cpu_info *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.19 1999/03/25 04:26:45 sommerfe Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.19.20.1 2001/03/05 22:49:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -105,8 +105,8 @@ int linux_socketcall_argsize[] = {
  * make and take appropriate action.
  */
 int
-linux_sys_socketcall(p, v, retval)
-	struct proc *p;
+linux_sys_socketcall(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -126,39 +126,39 @@ linux_sys_socketcall(p, v, retval)
 
 	switch (SCARG(uap, what)) {
 	case LINUX_SYS_socket:
-		return linux_sys_socket(p, (void *)&lda, retval);
+		return linux_sys_socket(l, (void *)&lda, retval);
 	case LINUX_SYS_bind:
-		return sys_bind(p, (void *)&lda, retval);
+		return sys_bind(l, (void *)&lda, retval);
 	case LINUX_SYS_connect:
-		return linux_sys_connect(p, (void *)&lda, retval);
+		return linux_sys_connect(l, (void *)&lda, retval);
 	case LINUX_SYS_listen:
-		return sys_listen(p, (void *)&lda, retval);
+		return sys_listen(l, (void *)&lda, retval);
 	case LINUX_SYS_accept:
-		return compat_43_sys_accept(p, (void *)&lda, retval);
+		return compat_43_sys_accept(l, (void *)&lda, retval);
 	case LINUX_SYS_getsockname:
-		return compat_43_sys_getsockname(p, (void *)&lda, retval);
+		return compat_43_sys_getsockname(l, (void *)&lda, retval);
 	case LINUX_SYS_getpeername:
-		return compat_43_sys_getpeername(p, (void *)&lda, retval);
+		return compat_43_sys_getpeername(l, (void *)&lda, retval);
 	case LINUX_SYS_socketpair:
-		return linux_sys_socketpair(p, (void *)&lda, retval);
+		return linux_sys_socketpair(l, (void *)&lda, retval);
 	case LINUX_SYS_send:
-		return compat_43_sys_send(p, (void *)&lda, retval);
+		return compat_43_sys_send(l, (void *)&lda, retval);
 	case LINUX_SYS_recv:
-		return compat_43_sys_recv(p, (void *)&lda, retval);
+		return compat_43_sys_recv(l, (void *)&lda, retval);
 	case LINUX_SYS_sendto:
-		return linux_sys_sendto(p, (void *)&lda, retval);
+		return linux_sys_sendto(l, (void *)&lda, retval);
 	case LINUX_SYS_recvfrom:
-		return linux_sys_recvfrom(p, (void *)&lda, retval);
+		return linux_sys_recvfrom(l, (void *)&lda, retval);
 	case LINUX_SYS_shutdown:
-		return sys_shutdown(p, (void *)&lda, retval);
+		return sys_shutdown(l, (void *)&lda, retval);
 	case LINUX_SYS_setsockopt:
-		return linux_sys_setsockopt(p, (void *)&lda, retval);
+		return linux_sys_setsockopt(l, (void *)&lda, retval);
 	case LINUX_SYS_getsockopt:
-		return linux_sys_getsockopt(p, (void *)&lda, retval);
+		return linux_sys_getsockopt(l, (void *)&lda, retval);
 	case LINUX_SYS_sendmsg:
-		return sys_sendmsg(p, (void *)&lda, retval);
+		return sys_sendmsg(l, (void *)&lda, retval);
 	case LINUX_SYS_recvmsg:
-		return sys_recvmsg(p, (void *)&lda, retval);
+		return sys_recvmsg(l, (void *)&lda, retval);
 	default:
 		return ENOSYS;
 	}

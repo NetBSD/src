@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.5 2000/03/30 12:41:11 augustss Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.5.6.1 2001/03/05 22:50:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
@@ -206,7 +207,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);
-			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
+			curproc->l_proc->p_stats->p_ru.ru_inblock++;	/* XXX */
 			if ((error = biowait(bp)) != 0) {
 				brelse(bp);
 				return (error);

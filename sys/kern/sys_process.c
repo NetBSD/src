@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.66 2001/01/17 01:13:23 fvdl Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.66.2.1 2001/03/05 22:49:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -54,6 +54,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/ptrace.h>
@@ -78,8 +79,8 @@
  * Process debugging system call.
  */
 int
-sys_ptrace(p, v, retval)
-	struct proc *p;
+sys_ptrace(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -89,6 +90,8 @@ sys_ptrace(p, v, retval)
 		syscallarg(caddr_t) addr;
 		syscallarg(int) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct lwp *lt;
 	struct proc *t;				/* target process */
 	struct uio uio;
 	struct iovec iov;
@@ -212,6 +215,17 @@ sys_ptrace(p, v, retval)
 	/* Do single-step fixup if needed. */
 	FIX_SSTEP(t);
 
+	/* XXX NJWLWP
+	 * The entire ptrace interface needs work to be useful to
+	 * a process with multiple LWPs. For the moment, we'll 
+	 * just kluge this and fail on others.
+	 */
+
+	if (p->p_nlwps > 1)
+		return (ENOSYS);
+
+	lt = LIST_FIRST(&t->p_lwps);
+
 	/* Now do the operation. */
 	write = 0;
 	*retval = 0;
@@ -240,7 +254,7 @@ sys_ptrace(p, v, retval)
 		uio.uio_segflg = UIO_SYSSPACE;
 		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 		uio.uio_procp = p;
-		error = procfs_domem(p, t, NULL, &uio);
+		error = procfs_domem(p, lt, NULL, &uio);
 		if (!write)
 			*retval = tmp;
 		return (error);
@@ -272,23 +286,23 @@ sys_ptrace(p, v, retval)
 		if (SCARG(uap, data) < 0 || SCARG(uap, data) >= NSIG)
 			return (EINVAL);
 
-		PHOLD(t);
+		PHOLD(lt);
 
 #ifdef PT_STEP
 		/*
 		 * Arrange for a single-step, if that's requested and possible.
 		 */
-		error = process_sstep(t, SCARG(uap, req) == PT_STEP);
+		error = process_sstep(lt, SCARG(uap, req) == PT_STEP);
 		if (error)
 			goto relebad;
 #endif
 
 		/* If the address paramter is not (int *)1, set the pc. */
 		if ((int *)SCARG(uap, addr) != (int *)1)
-			if ((error = process_set_pc(t, SCARG(uap, addr))) != 0)
+			if ((error = process_set_pc(lt, SCARG(uap, addr))) != 0)
 				goto relebad;
 
-		PRELE(t);
+		PRELE(lt);
 
 		if (SCARG(uap, req) == PT_DETACH) {
 			/* give process back to original parent or init */
@@ -309,7 +323,7 @@ sys_ptrace(p, v, retval)
 		if (t->p_stat == SSTOP) {
 			t->p_xstat = SCARG(uap, data);
 			SCHED_LOCK(s);
-			setrunnable(t);
+			setrunnable(proc_unstop(t));
 			SCHED_UNLOCK(s);
 		} else {
 			if (SCARG(uap, data) != 0)
@@ -318,7 +332,7 @@ sys_ptrace(p, v, retval)
 		return (0);
 
 	relebad:
-		PRELE(t);
+		PRELE(lt);
 		return (error);
 
 	case  PT_KILL:
@@ -351,7 +365,7 @@ sys_ptrace(p, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
-		if (!procfs_validregs(t, NULL))
+		if (!procfs_validregs(lt, NULL))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -363,7 +377,7 @@ sys_ptrace(p, v, retval)
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_procp = p;
-			return (procfs_doregs(p, t, NULL, &uio));
+			return (procfs_doregs(p, lt, NULL, &uio));
 		}
 #endif
 
@@ -376,7 +390,7 @@ sys_ptrace(p, v, retval)
 		/* write = 0 done above. */
 #endif
 #if defined(PT_SETFPREGS) || defined(PT_GETFPREGS)
-		if (!procfs_validfpregs(t, NULL))
+		if (!procfs_validfpregs(lt, NULL))
 			return (EINVAL);
 		else {
 			iov.iov_base = SCARG(uap, addr);
@@ -388,7 +402,7 @@ sys_ptrace(p, v, retval)
 			uio.uio_segflg = UIO_USERSPACE;
 			uio.uio_rw = write ? UIO_WRITE : UIO_READ;
 			uio.uio_procp = p;
-			return (procfs_dofpregs(p, t, NULL, &uio));
+			return (procfs_dofpregs(p, lt, NULL, &uio));
 		}
 #endif
 	}

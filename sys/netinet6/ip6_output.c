@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.31 2001/02/10 04:14:28 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.31.2.1 2001/03/05 22:49:57 nathanw Exp $	*/
 /*	$KAME: ip6_output.c,v 1.152 2001/02/02 15:36:33 jinmei Exp $	*/
 
 /*
@@ -77,6 +77,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -1238,7 +1239,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 	struct mbuf *m = *mp;
 	int optval = 0;
 	int error = 0;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 
 	if (level == IPPROTO_IPV6) {
 		switch (op) {
@@ -1572,7 +1573,7 @@ ip6_pcbopts(pktopt, m, so)
 {
 	struct ip6_pktopts *opt = *pktopt;
 	int error = 0;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	int priv = 0;
 
 	/* turn off any old options. */
@@ -1622,7 +1623,7 @@ ip6_setmoptions(optname, im6op, m)
 	struct route_in6 ro;
 	struct sockaddr_in6 *dst;
 	struct in6_multi_mship *imm;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 
 	if (im6o == NULL) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62 2001/01/26 19:41:52 manu Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.1 2001/03/05 22:49:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
 #include <sys/map.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/buf.h>
@@ -103,9 +104,9 @@
 
 #ifdef USER_LDT
 #include <machine/cpu.h>
-int linux_read_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
+int linux_read_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
     register_t *));
-int linux_write_ldt __P((struct proc *, struct linux_sys_modify_ldt_args *,
+int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
     register_t *));
 #endif
 
@@ -118,14 +119,14 @@ extern const char *findblkname __P((int));
  */
 
 void
-linux_setregs(p, epp, stack)
-	struct proc *p;
+linux_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct pcb *pcb = &l->l_addr->u_pcb;
 
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 	pcb->pcb_savefpu.sv_env.en_cw = __Linux_NPXCW__;
 }
 
@@ -147,11 +148,12 @@ linux_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Allocate space for the signal handler context. */
 	/* XXX Linux doesn't support the signal stack. */
@@ -169,7 +171,7 @@ linux_sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_fs = tf->tf_vm86_fs;
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(p);
+		frame.sf_sc.sc_eflags = get_vflags(l);
 	} else
 #endif
 	{
@@ -204,7 +206,7 @@ linux_sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -234,8 +236,8 @@ linux_sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-linux_sys_rt_sigreturn(p, v, retval)
-	struct proc *p;
+linux_sys_rt_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -244,14 +246,15 @@ linux_sys_rt_sigreturn(p, v, retval)
 }
 
 int
-linux_sys_sigreturn(p, v, retval)
-	struct proc *p;
+linux_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_sigreturn_args /* {
 		syscallarg(struct linux_sigcontext *) scp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct linux_sigcontext *scp, context;
 	struct trapframe *tf;
 	sigset_t mask;
@@ -266,14 +269,14 @@ linux_sys_sigreturn(p, v, retval)
 		return (EFAULT);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
 		tf->tf_vm86_gs = context.sc_gs;
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(p, context.sc_eflags);
+		set_vflags(l, context.sc_eflags);
 	} else
 #endif
 	{
@@ -317,8 +320,8 @@ linux_sys_sigreturn(p, v, retval)
 #ifdef USER_LDT
 
 int
-linux_read_ldt(p, uap, retval)
-	struct proc *p;
+linux_read_ldt(l, uap, retval)
+	struct lwp *l;
 	struct linux_sys_modify_ldt_args /* {
 		syscallarg(int) func;
 		syscallarg(void *) ptr;
@@ -326,6 +329,7 @@ linux_read_ldt(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct i386_get_ldt_args gl;
 	int error;
 	caddr_t sg;
@@ -342,7 +346,7 @@ linux_read_ldt(p, uap, retval)
 	if ((error = copyout(&gl, parms, sizeof(gl))) != 0)
 		return (error);
 
-	if ((error = i386_get_ldt(p, parms, retval)) != 0)
+	if ((error = i386_get_ldt(l, parms, retval)) != 0)
 		return (error);
 
 	*retval *= sizeof(union descriptor);
@@ -361,8 +365,8 @@ struct linux_ldt_info {
 };
 
 int
-linux_write_ldt(p, uap, retval)
-	struct proc *p;
+linux_write_ldt(l, uap, retval)
+	struct lwp *l;
 	struct linux_sys_modify_ldt_args /* {
 		syscallarg(int) func;
 		syscallarg(void *) ptr;
@@ -370,6 +374,7 @@ linux_write_ldt(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct linux_ldt_info ldt_info;
 	struct segment_descriptor sd;
 	struct i386_set_ldt_args sl;
@@ -413,7 +418,7 @@ linux_write_ldt(p, uap, retval)
 	if ((error = copyout(&sl, parms, sizeof(sl))) != 0)
 		return (error);
 
-	if ((error = i386_set_ldt(p, parms, retval)) != 0)
+	if ((error = i386_set_ldt(l, parms, retval)) != 0)
 		return (error);
 
 	*retval = 0;
@@ -423,8 +428,8 @@ linux_write_ldt(p, uap, retval)
 #endif /* USER_LDT */
 
 int
-linux_sys_modify_ldt(p, v, retval)
-	struct proc *p;
+linux_sys_modify_ldt(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -437,10 +442,10 @@ linux_sys_modify_ldt(p, v, retval)
 	switch (SCARG(uap, func)) {
 #ifdef USER_LDT
 	case 0:
-		return (linux_read_ldt(p, uap, retval));
+		return (linux_read_ldt(l, uap, retval));
 
 	case 1:
-		return (linux_write_ldt(p, uap, retval));
+		return (linux_write_ldt(l, uap, retval));
 #endif /* USER_LDT */
 
 	default:
@@ -669,7 +674,8 @@ linux_machdepioctl(p, v, retval)
 		break;
 	case LINUX_VT_GETMODE:
 		SCARG(&bia, com) = VT_GETMODE;
-		if ((error = sys_ioctl(p, &bia, retval)))
+		/* XXX NJWLWP */
+		if ((error = sys_ioctl(curproc, &bia, retval)))
 			return error;
 		if ((error = copyin(SCARG(uap, data), (caddr_t)&lvt,
 		    sizeof (struct vt_mode))))
@@ -803,7 +809,8 @@ linux_machdepioctl(p, v, retval)
 		return error;
 	}
 	SCARG(&bia, com) = com;
-	return sys_ioctl(p, &bia, retval);
+	/* XXX NJWLWP */
+	return sys_ioctl(curproc, &bia, retval);
 }
 
 /*
@@ -812,8 +819,8 @@ linux_machdepioctl(p, v, retval)
  * to rely on I/O permission maps, which are not implemented.
  */
 int
-linux_sys_iopl(p, v, retval)
-	struct proc *p;
+linux_sys_iopl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -822,7 +829,8 @@ linux_sys_iopl(p, v, retval)
 		syscallarg(int) level;
 	} */ *uap = v;
 #endif
-	struct trapframe *fp = p->p_md.md_regs;
+	struct proc *p = l->l_proc;
+	struct trapframe *fp = l->l_md.md_regs;
 
 	if (suser(p->p_ucred, &p->p_acflag) != 0)
 		return EPERM;
@@ -836,8 +844,8 @@ linux_sys_iopl(p, v, retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(p, v, retval)
-	struct proc *p;
+linux_sys_ioperm(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -846,7 +854,8 @@ linux_sys_ioperm(p, v, retval)
 		syscallarg(unsigned int) hi;
 		syscallarg(int) val;
 	} */ *uap = v;
-	struct trapframe *fp = p->p_md.md_regs;
+	struct proc *p = l->l_proc;
+	struct trapframe *fp = l->l_md.md_regs;
 
 	if (suser(p->p_ucred, &p->p_acflag) != 0)
 		return EPERM;

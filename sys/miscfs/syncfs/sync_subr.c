@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.8 2000/11/27 08:39:46 chs Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.8.2.1 2001/03/05 22:49:52 nathanw Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -34,6 +34,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/time.h>
@@ -62,7 +63,7 @@ static int stat_rush_requests;		/* number of times I/O speeded up */
 static int syncer_delayno = 0;
 static long syncer_last;
 static struct synclist *syncer_workitem_pending;
-struct proc *updateproc = NULL;
+struct lwp *updateproc = NULL;
 
 void
 vn_initialize_syncerd()
@@ -182,8 +183,8 @@ sched_sync(v)
 		while ((vp = LIST_FIRST(slp)) != NULL) {
 			if (VOP_ISLOCKED(vp) == 0) {
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				(void) VOP_FSYNC(vp, curproc->p_ucred,
-				    FSYNC_LAZY, 0, 0, curproc);
+				(void) VOP_FSYNC(vp, curproc->l_proc->p_ucred,
+				    FSYNC_LAZY, 0, 0, curproc->l_proc);
 				VOP_UNLOCK(vp, 0);
 			}
 			s = splbio();

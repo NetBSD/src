@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.32 2001/02/24 00:05:22 cgd Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.32.2.1 2001/03/05 22:50:08 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -43,6 +43,7 @@
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/mount.h>
@@ -131,7 +132,7 @@ mfs_mountroot()
 {
 	struct fs *fs;
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	struct ufsmount *ump;
 	struct mfsnode *mfsp;
 	int error = 0;
@@ -301,7 +302,13 @@ mfs_start(mp, flags, p)
 	struct buf *bp;
 	caddr_t base;
 	int sleepreturn = 0;
+	struct lwp *l; /* XXX NJWLWP */
 
+	/* XXX NJWLWP the vnode interface again gives us a proc in a
+	 * place where we want a execution context. Cheat.
+	 */
+	KASSERT(curproc->l_proc == p);
+	l = curproc; 
 	base = mfsp->mfs_baseoff;
 	while (BUFQ_FIRST(&mfsp->mfs_buflist) != (struct buf *) -1) {
 		while ((bp = BUFQ_FIRST(&mfsp->mfs_buflist)) != NULL) {
@@ -314,12 +321,11 @@ mfs_start(mp, flags, p)
 		 * If that fails, or the filesystem is already in the
 		 * process of being unmounted, clear the signal (it has been
 		 * "processed"), otherwise we will loop here, as tsleep
-		 * will always return EINTR/ERESTART.
-		 */
+		 * will always return EINTR/ERESTART.  */
 		if (sleepreturn != 0) {
 			if (vfs_busy(mp, LK_NOWAIT, 0) ||
 			    dounmount(mp, 0, p) != 0)
-				CLRSIG(p, CURSIG(p));
+				CLRSIG(p, CURSIG(l));
 			sleepreturn = 0;
 			continue;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86 2001/03/03 03:29:20 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.1 2001/03/05 22:49:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
@@ -517,7 +518,8 @@ if_detach(ifp)
 				if (pr->pr_usrreq != NULL) {
 					(void) (*pr->pr_usrreq)(&so,
 					    PRU_PURGEIF, NULL, NULL,
-					    (struct mbuf *) ifp, curproc);
+					    (struct mbuf *) ifp, 
+					    curproc->l_proc);
 					purged = 1;
 				}
 			}

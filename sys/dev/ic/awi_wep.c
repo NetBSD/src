@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wep.c,v 1.5 2001/01/18 20:28:18 jdolecek Exp $	*/
+/*	$NetBSD: awi_wep.c,v 1.5.2.1 2001/03/05 22:49:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
@@ -191,7 +192,7 @@ awi_wep_getnwkey(sc, nwkey)
 #ifdef __FreeBSD__
 	suerr = suser(curproc);
 #else
-	suerr = suser(curproc->p_ucred, &curproc->p_acflag);
+	suerr = suser(curproc->l_proc->p_ucred, &curproc->l_proc->p_acflag);
 #endif
 	error = 0;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {

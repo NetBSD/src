@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2001/01/14 03:30:28 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118.2.1 2001/03/05 22:49:13 nathanw Exp $	*/
 
 /*
  *
@@ -65,6 +65,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -767,8 +768,8 @@ pmap_bootstrap(kva_start)
 	kpm->pm_obj.uo_npages = 0;
 	kpm->pm_obj.uo_refs = 1;
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
-	kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
-	kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_cr3;
+	kpm->pm_pdir = (pd_entry_t *)(lwp0.l_addr->u_pcb.pcb_cr3 + KERNBASE);
+	kpm->pm_pdirpa = (u_int32_t) lwp0.l_addr->u_pcb.pcb_cr3;
 	kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
 		i386_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
 
@@ -1695,11 +1696,11 @@ pmap_fork(pmap1, pmap2)
  */
 
 void
-pmap_ldt_cleanup(p)
-	struct proc *p;
+pmap_ldt_cleanup(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
 	union descriptor *old_ldt = NULL;
 	size_t len = 0;
 
@@ -1733,16 +1734,16 @@ pmap_ldt_cleanup(p)
  */
 
 void
-pmap_activate(p)
-	struct proc *p;
+pmap_activate(l)
+	struct lwp *l;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct pmap *pmap = p->p_vmspace->vm_map.pmap;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct pmap *pmap = l->l_proc->p_vmspace->vm_map.pmap;
 
 	pcb->pcb_pmap = pmap;
 	pcb->pcb_ldt_sel = pmap->pm_ldt_sel;
 	pcb->pcb_cr3 = pmap->pm_pdirpa;
-	if (p == curproc)
+	if (l == curproc)
 		lcr3(pcb->pcb_cr3);
 	if (pcb == curpcb)
 		lldt(pcb->pcb_ldt_sel);
@@ -1755,8 +1756,8 @@ pmap_activate(p)
  */
 
 void
-pmap_deactivate(p)
-	struct proc *p;
+pmap_deactivate(l)
+	struct lwp *l;
 {
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.50 2001/01/22 12:17:40 jdolecek Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.50.2.1 2001/03/05 22:49:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -1759,8 +1759,8 @@ start:
 	/* XXX ignores LK_NOWAIT */
 	if (un->un_flags & UN_LOCKED) {
 #ifdef DIAGNOSTIC
-		if (curproc && un->un_pid == curproc->p_pid &&
-			    un->un_pid > -1 && curproc->p_pid > -1)
+		if (curproc && un->un_pid == curproc->l_proc->p_pid &&
+			    un->un_pid > -1 && curproc->l_proc->p_pid > -1)
 			panic("union: locking against myself");
 #endif
 		un->un_flags |= UN_WANTED;
@@ -1770,7 +1770,7 @@ start:
 
 #ifdef DIAGNOSTIC
 	if (curproc)
-		un->un_pid = curproc->p_pid;
+		un->un_pid = curproc->l_proc->p_pid;
 	else
 		un->un_pid = -1;
 	if (drain)
@@ -1805,8 +1805,8 @@ union_unlock(v)
 #ifdef DIAGNOSTIC
 	if ((un->un_flags & UN_LOCKED) == 0)
 		panic("union: unlock unlocked node");
-	if (curproc && un->un_pid != curproc->p_pid &&
-			curproc->p_pid > -1 && un->un_pid > -1)
+	if (curproc && un->un_pid != curproc->l_proc->p_pid &&
+			curproc->l_proc->p_pid > -1 && un->un_pid > -1)
 		panic("union: unlocking other process's union node");
 	if (un->un_flags & UN_DRAINED)
 		panic("union: %p: warning: unlocking decommissioned lock\n", ap->a_vp);			

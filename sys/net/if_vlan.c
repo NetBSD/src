@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.30 2001/01/29 01:51:05 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.30.2.1 2001/03/05 22:49:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #if NBPFILTER > 0
@@ -441,7 +442,7 @@ vlan_set_promisc(struct ifnet *ifp)
 static int
 vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	struct ifvlan *ifv = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.57 2001/03/04 11:18:51 onoe Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.57.2.1 2001/03/05 22:49:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -84,6 +84,7 @@
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>		/* for hz */
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #if NRND > 0
@@ -1380,7 +1381,7 @@ static int wi_ioctl(ifp, command, data)
 	struct wi_softc		*sc = ifp->if_softc;
 	struct wi_req		wreq;
 	struct ifreq		*ifr;
-	struct proc *p = curproc;
+	struct proc *p = curproc->l_proc;
 	struct ieee80211_nwid nwid;
 
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -2070,7 +2071,7 @@ wi_get_nwkey(sc, nwkey)
 	nwkey->i_defkid = sc->wi_tx_key + 1;
 
 	/* do not show any keys to non-root user */
-	error = suser(curproc->p_ucred, &curproc->p_acflag);
+	error = suser(curproc->l_proc->p_ucred, &curproc->l_proc->p_acflag);
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		if (nwkey->i_key[i].i_keydat == NULL)
 			continue;

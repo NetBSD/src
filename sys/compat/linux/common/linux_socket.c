@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.28 2001/02/05 10:42:41 chs Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.28.2.1 2001/03/05 22:49:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/mount.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
@@ -129,8 +130,8 @@ linux_to_bsd_domain(ldom)
 }
 
 int
-linux_sys_socket(p, v, retval)
-	struct proc *p;
+linux_sys_socket(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -146,12 +147,12 @@ linux_sys_socket(p, v, retval)
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
-	return sys_socket(p, &bsa, retval);
+	return sys_socket(l, &bsa, retval);
 }
 
 int
-linux_sys_socketpair(p, v, retval)
-	struct proc *p;
+linux_sys_socketpair(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -170,12 +171,12 @@ linux_sys_socketpair(p, v, retval)
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
 	SCARG(&bsa, rsv) = SCARG(uap, rsv);
 
-	return sys_socketpair(p, &bsa, retval);
+	return sys_socketpair(l, &bsa, retval);
 }
 
 int
-linux_sys_sendto(p, v, retval)
-	struct proc *p;
+linux_sys_sendto(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -196,12 +197,12 @@ linux_sys_sendto(p, v, retval)
 	SCARG(&bsa, to) = (void *) SCARG(uap, to);
 	SCARG(&bsa, tolen) = SCARG(uap, tolen);
 
-	return sys_sendto(p, &bsa, retval);
+	return sys_sendto(l, &bsa, retval);
 }
 
 int
-linux_sys_recvfrom(p, v, retval)
-	struct proc *p;
+linux_sys_recvfrom(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -222,7 +223,7 @@ linux_sys_recvfrom(p, v, retval)
 	SCARG(&bra, from) = (caddr_t) SCARG(uap, from);
 	SCARG(&bra, fromlenaddr) = SCARG(uap, fromlen);
 
-	return compat_43_sys_recvfrom(p, &bra, retval);
+	return compat_43_sys_recvfrom(l, &bra, retval);
 }
 
 /*
@@ -353,8 +354,8 @@ linux_to_bsd_udp_sockopt(lopt)
  * need conversion, as they are the same on both systems.
  */
 int
-linux_sys_setsockopt(p, v, retval)
-	struct proc *p;
+linux_sys_setsockopt(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -394,15 +395,15 @@ linux_sys_setsockopt(p, v, retval)
 		return EINVAL;
 	SCARG(&bsa, name) = name;
 
-	return sys_setsockopt(p, &bsa, retval);
+	return sys_setsockopt(l, &bsa, retval);
 }
 
 /*
  * getsockopt(2) is very much the same as setsockopt(2) (see above)
  */
 int
-linux_sys_getsockopt(p, v, retval)
-	struct proc *p;
+linux_sys_getsockopt(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -442,7 +443,7 @@ linux_sys_getsockopt(p, v, retval)
 		return EINVAL;
 	SCARG(&bga, name) = name;
 
-	return sys_getsockopt(p, &bga, retval);
+	return sys_getsockopt(l, &bga, retval);
 }
 
 #define IF_NAME_LEN 16
@@ -683,15 +684,16 @@ out:
 	if (error ==0 && dosys) {
 		SCARG(&ia, fd) = SCARG(uap, fd);
 		SCARG(&ia, data) = SCARG(uap, data);
-		error = sys_ioctl(p, &ia, retval);
+		/* XXX NJWLWP */
+		error = sys_ioctl(curproc, &ia, retval);
 	}
 
 	return error;
 }
 
 int
-linux_sys_connect(p, v, retval)
-	struct proc *p;
+linux_sys_connect(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -702,8 +704,9 @@ linux_sys_connect(p, v, retval)
 		syscallarg(const struct sockaddr *) name;
 		syscallarg(unsigned int) namelen;
 	} */ *uap = v;
-	
-	error = sys_connect (p, v, retval);
+	struct proc *p = l->l_proc;
+
+	error = sys_connect (l, v, retval);
 
 	if (error == EISCONN) {
 		struct file *fp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.64 2001/01/26 07:59:23 itohy Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.64.2.1 2001/03/05 22:50:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -173,7 +173,7 @@ lfs_mountroot()
 {
 	extern struct vnode *rootvp;
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	int error;
 	
 	if (root_device->dv_class != DV_DISK)
@@ -1199,7 +1199,8 @@ lfs_vget(mp, ino, vpp)
 	 * If the filesystem is not completely mounted yet, suspend
 	 * any access requests (wait for roll-forward to complete).
 	 */
-	while((fs->lfs_flags & LFS_NOTYET) && curproc->p_pid != fs->lfs_rfpid)
+	while((fs->lfs_flags & LFS_NOTYET) && 
+	    curproc->l_proc->p_pid != fs->lfs_rfpid)
 		tsleep(&fs->lfs_flags, PRIBIO+1, "lfs_notyet", 0);
 
 	if ((*vpp = ufs_ihashget(dev, ino, LK_EXCLUSIVE)) != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.13 2000/03/30 13:53:35 augustss Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.13.6.1 2001/03/05 22:49:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -70,7 +70,7 @@ pk_accton(path)
 	struct vnode *vp = NULL;
 	struct nameidata nd;
 	struct vnode *oacctp = pkacctp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	int error;
 
 	if (path == 0)
@@ -121,7 +121,7 @@ pk_acct(lcp)
 		acbuf.x25acct_revcharge = 1;
 	acbuf.x25acct_stime = lcp -> lcd_stime;
 	acbuf.x25acct_etime = time.tv_sec - acbuf.x25acct_stime;
-	acbuf.x25acct_uid = curproc -> p_cred -> p_ruid;
+	acbuf.x25acct_uid = curproc -> l_proc -> p_cred -> p_ruid;
 	acbuf.x25acct_psize = sa -> x25_opts.op_psize;
 	acbuf.x25acct_net = sa -> x25_net;
 	/*
@@ -143,6 +143,6 @@ pk_acct(lcp)
 
 	(void) vn_rdwr(UIO_WRITE, vp, (caddr_t)&acbuf, sizeof (acbuf),
 		(off_t)0, UIO_SYSSPACE, IO_UNIT|IO_APPEND,
-		curproc -> p_ucred, (size_t *)0,
+		curproc -> l_proc -> p_ucred, (size_t *)0,
 		(struct proc *)0);
 }

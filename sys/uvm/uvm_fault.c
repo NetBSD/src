@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.56 2001/02/18 21:19:08 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.56.2.1 2001/03/05 22:50:09 nathanw Exp $	*/
 
 /*
  *
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mman.h>
@@ -306,9 +307,9 @@ uvmfault_anonget(ufi, amap, anon)
 	uvmexp.fltanget++;
         /* bump rusage counters */
 	if (anon->u.an_page)
-		curproc->p_addr->u_stats.p_ru.ru_minflt++;
+		curproc->l_proc->p_stats->p_ru.ru_minflt++;
 	else
-		curproc->p_addr->u_stats.p_ru.ru_majflt++;
+		curproc->l_proc->p_stats->p_ru.ru_majflt++;
 
 	/* 
 	 * loop until we get it, or fail.
@@ -1345,10 +1346,10 @@ Case2:
 
 	if (uobjpage) {
 		/* update rusage counters */
-		curproc->p_addr->u_stats.p_ru.ru_minflt++;
+		curproc->l_proc->p_stats->p_ru.ru_minflt++;
 	} else {
 		/* update rusage counters */
-		curproc->p_addr->u_stats.p_ru.ru_majflt++;
+		curproc->l_proc->p_stats->p_ru.ru_majflt++;
 		
 		/* locked: maps(read), amap(if there), uobj */
 		uvmfault_unlockall(&ufi, amap, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154 2001/02/05 11:12:05 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.154.2.1 2001/03/05 22:49:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -85,13 +85,18 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 
+#include <sys/ucontext.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
@@ -164,7 +169,8 @@ void
 trap(frame)
 	struct trapframe frame;
 {
-	register struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l ? l->l_proc : 0;
 	int type = frame.tf_trapno;
 	struct pcb *pcb = NULL;
 	extern char fusubail[],
@@ -181,13 +187,15 @@ trap(frame)
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
 		    frame.tf_eflags, rcr2(), cpl);
-		printf("curproc %p\n", curproc);
+		printf("curproc %p%s", curproc, curproc ? " " : "\n");
+		if (curproc)
+			printf("pid %d lid %d\n", l->l_proc->p_pid, l->l_lid);
 	}
 #endif
 
 	if (!KERNELMODE(frame.tf_cs, frame.tf_eflags)) {
 		type |= T_USER;
-		p->p_md.md_regs = &frame;
+		l->l_md.md_regs = &frame;
 	}
 
 	switch (type) {
@@ -228,7 +236,7 @@ trap(frame)
 	case T_ALIGNFLT:
 	case T_TSSFLT:
 		/* Check for copyin/copyout fault. */
-		pcb = &p->p_addr->u_pcb;
+		pcb = &l->l_addr->u_pcb;
 		if (pcb->pcb_onfault != 0) {
 		copyfault:
 			frame.tf_eip = (int)pcb->pcb_onfault;
@@ -275,7 +283,7 @@ trap(frame)
 	case T_PROTFLT|T_USER:		/* protection fault */
 #ifdef VM86
 		if (frame.tf_eflags & PSL_VM) {
-			vm86_gpfault(p, type & ~T_USER);
+			vm86_gpfault(l, type & ~T_USER);
 			goto out;
 		}
 #endif
@@ -284,12 +292,12 @@ trap(frame)
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
-		trapsignal(p, SIGBUS, type &~ T_USER);
+		trapsignal(l, SIGBUS, type &~ T_USER);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
-		trapsignal(p, SIGILL, type &~ T_USER);
+		trapsignal(l, SIGILL, type &~ T_USER);
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
@@ -311,12 +319,12 @@ trap(frame)
 				goto trace;
 			return;
 		}
-		trapsignal(p, rv, type &~ T_USER);
+		trapsignal(l, rv, type &~ T_USER);
 		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
-		trapsignal(p, SIGKILL, type &~ T_USER);
+		trapsignal(l, SIGKILL, type &~ T_USER);
 		goto out;
 #endif
 	}
@@ -324,17 +332,17 @@ trap(frame)
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
-		trapsignal(p, SIGFPE, type &~ T_USER);
+		trapsignal(l, SIGFPE, type &~ T_USER);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
-		trapsignal(p, SIGFPE, frame.tf_err);
+		trapsignal(l, SIGFPE, frame.tf_err);
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
-		if (p == 0)
+		if (l == 0)
 			goto we_re_toast;
-		pcb = &p->p_addr->u_pcb;
+		pcb = &l->l_addr->u_pcb;
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
@@ -404,10 +412,10 @@ trap(frame)
 		}
 
 		/* Fault the original page in. */
-		onfault = p->p_addr->u_pcb.pcb_onfault;
-		p->p_addr->u_pcb.pcb_onfault = NULL;
+		onfault = l->l_addr->u_pcb.pcb_onfault;
+		l->l_addr->u_pcb.pcb_onfault = NULL;
 		rv = uvm_fault(map, va, 0, ftype);
-		p->p_addr->u_pcb.pcb_onfault = onfault;
+		l->l_addr->u_pcb.pcb_onfault = onfault;
 		if (rv == KERN_SUCCESS) {
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
@@ -429,9 +437,9 @@ trap(frame)
 			       p->p_pid, p->p_comm,
 			       p->p_cred && p->p_ucred ?
 			       p->p_ucred->cr_uid : -1);
-			trapsignal(p, SIGKILL, T_PAGEFLT);
+			trapsignal(l, SIGKILL, T_PAGEFLT);
 		} else {
-			trapsignal(p, SIGSEGV, T_PAGEFLT);
+			trapsignal(l, SIGSEGV, T_PAGEFLT);
 		}
 		break;
 	}
@@ -451,7 +459,7 @@ trap(frame)
 #ifdef MATH_EMULATE
 	trace:
 #endif
-		trapsignal(p, SIGTRAP, type &~ T_USER);
+		trapsignal(l, SIGTRAP, type &~ T_USER);
 		break;
 
 #if	NISA > 0 || NMCA > 0
@@ -489,7 +497,7 @@ trap(frame)
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p);
+	userret(l);
 }
 
 #if defined(I386_CPU)
@@ -510,7 +518,7 @@ trapwrite(addr)
 		return 1;
 
 	nss = 0;
-	p = curproc;
+	p = curproc->l_proc;
 	vm = p->p_vmspace;
 	if ((caddr_t)va >= vm->vm_maxsaddr) {
 		nss = btoc(USRSTACK-(unsigned)va);
@@ -528,3 +536,41 @@ trapwrite(addr)
 	return 0;
 }
 #endif /* I386_CPU */
+
+/* 
+ * Start a new LWP
+ */
+void
+startlwp(arg)
+	void *arg;
+{
+	int err;
+	ucontext_t *uc = arg;
+	struct lwp *l = curproc;
+	struct trapframe *tf;
+
+	tf = l->l_md.md_regs;
+
+
+	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
+#if DIAGNOSTIC
+	if (err) {
+		printf("Error %d from cpu_setmcontext.", err);
+	}
+#endif
+	pool_put(&lwp_uc_pool, uc);
+
+	userret(l);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(arg)
+	void *arg;
+{
+	struct lwp *l = curproc;
+
+	userret(l);
+}

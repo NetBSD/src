@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.54 2001/02/27 05:19:13 lukem Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.54.2.1 2001/03/05 22:49:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -39,6 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
@@ -81,7 +82,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	struct socket	*so;
 	int		error, s;
 
-	p = curproc;		/* XXX */
+	p = curproc->l_proc;	/* XXX */
 	if (proto)
 		prp = pffindproto(dom, proto, type);
 	else
@@ -272,7 +273,7 @@ soconnect(struct socket *so, struct mbuf *nam)
 	struct proc	*p;
 	int		s, error;
 
-	p = curproc;		/* XXX */
+	p = curproc->l_proc;		/* XXX */
 	if (so->so_options & SO_ACCEPTCONN)
 		return (EOPNOTSUPP);
 	s = splsoftnet();
@@ -355,7 +356,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	long		space, len, resid;
 	int		clen, error, s, dontroute, mlen, atomic;
 
-	p = curproc;		/* XXX */
+	p = curproc->l_proc;		/* XXX */
 	clen = 0;
 	atomic = sosendallatonce(so) || top;
 	if (uio)

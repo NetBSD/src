@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.76 2000/08/09 10:22:31 tv Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.76.2.1 2001/03/05 22:49:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -49,6 +49,7 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/msgbuf.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
@@ -445,7 +446,7 @@ uprintf(fmt, va_alist)
 	va_dcl
 #endif
 {
-	struct proc *p = curproc;
+	struct proc *p = curproc->l_proc;
 	va_list ap;
 
 	if (p->p_flag & P_CONTROLT && p->p_session->s_ttyvp) {

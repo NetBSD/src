@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68 2001/02/14 01:29:45 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.1 2001/03/05 22:49:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -93,7 +93,7 @@ extern struct cpu_info cpu_info_store;
  * This is used during profiling to integrate system time.  It can safely
  * assume that the process is resident.
  */
-#define	PROC_PC(p)		((p)->p_md.md_regs->tf_eip)
+#define	LWP_PC(l)		((l)->l_md.md_regs->tf_eip)
 
 /*
  * Preempt the current process if in interrupt from user mode,
@@ -171,7 +171,8 @@ void	fillw __P((short, void *, size_t));
 
 struct pcb;
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *));
+void	switch_lwp_exit __P((struct lwp *));
 void	proc_trampoline __P((void));
 
 /* clock.c */
@@ -198,8 +199,8 @@ int	math_emulate __P((struct trapframe *));
 #endif
 #ifdef USER_LDT
 /* sys_machdep.h */
-int	i386_get_ldt __P((struct proc *, void *, register_t *));
-int	i386_set_ldt __P((struct proc *, void *, register_t *));
+int	i386_get_ldt __P((struct lwp *, void *, register_t *));
+int	i386_set_ldt __P((struct lwp *, void *, register_t *));
 #endif
 
 /* isa_machdep.c */
@@ -211,7 +212,7 @@ int	isa_nmi __P((void));
 #endif
 #ifdef VM86
 /* vm86.c */
-void	vm86_gpfault __P((struct proc *, int));
+void	vm86_gpfault __P((struct lwp *, int));
 #endif /* VM86 */
 
 /* trap.c */

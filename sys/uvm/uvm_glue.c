@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44.2.1 2001/03/05 22:50:10 nathanw Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -75,6 +75,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/buf.h>
@@ -91,7 +92,7 @@
  * local prototypes
  */
 
-static void uvm_swapout __P((struct proc *));
+static void uvm_swapout __P((struct lwp *));
 
 /*
  * XXXCDC: do these really belong here?
@@ -155,7 +156,7 @@ uvm_useracc(addr, len, rw)
 	vm_prot_t prot = rw == B_READ ? VM_PROT_READ : VM_PROT_WRITE;
 
 	/* XXX curproc */
-	map = &curproc->p_vmspace->vm_map;
+	map = &curproc->l_proc->p_vmspace->vm_map;
 
 	vm_map_lock_read(map);
 	rv = uvm_map_checkprot(map, trunc_page((vaddr_t)addr),
@@ -249,9 +250,28 @@ uvm_vsunlock(p, addr, len)
 }
 
 /*
- * uvm_fork: fork a virtual address space
+ * uvm_proc_fork: fork a virtual address space
  *
  * - the address space is copied as per parent map's inherit values
+ */
+void
+uvm_proc_fork(p1, p2, shared)
+	struct proc *p1, *p2;
+	boolean_t shared;
+{
+
+	if (shared == TRUE) {
+		p2->p_vmspace = NULL;
+		uvmspace_share(p1, p2);			/* share vmspace */
+	} else {
+		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
+	}
+}
+
+
+/*
+ * uvm_lwp_fork: fork a thread
+ *
  * - a new "user" structure is allocated for the child process
  *	[filled in by MD layer...]
  * - if specified, the child gets a new user stack described by
@@ -264,22 +284,15 @@ uvm_vsunlock(p, addr, len)
  *   than just hang
  */
 void
-uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
-	struct proc *p1, *p2;
-	boolean_t shared;
+uvm_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	struct user *up = p2->p_addr;
+	struct user *up = l2->l_addr;
 	int rv;
-
-	if (shared == TRUE) {
-		p2->p_vmspace = NULL;
-		uvmspace_share(p1, p2);			/* share vmspace */
-	} else
-		p2->p_vmspace = uvmspace_fork(p1->p_vmspace); /* fork vmspace */
 
 	/*
 	 * Wire down the U-area for the process, which contains the PCB
@@ -296,25 +309,13 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
 		panic("uvm_fork: uvm_fault_wire failed: %d", rv);
 
 	/*
-	 * p_stats currently points at a field in the user struct.  Copy
-	 * parts of p_stats, and zero out the rest.
-	 */
-	p2->p_stats = &up->u_stats;
-	memset(&up->u_stats.pstat_startzero, 0,
-	       ((caddr_t)&up->u_stats.pstat_endzero -
-		(caddr_t)&up->u_stats.pstat_startzero));
-	memcpy(&up->u_stats.pstat_startcopy, &p1->p_stats->pstat_startcopy,
-	       ((caddr_t)&up->u_stats.pstat_endcopy -
-		(caddr_t)&up->u_stats.pstat_startcopy));
-	
-	/*
 	 * cpu_fork() copy and update the pcb, and make the child ready
-	 * to run.  If this is a normal user fork, the child will exit
+ 	 * to run.  If this is a normal user fork, the child will exit
 	 * directly to user mode via child_return() on its first time
 	 * slice and will not return here.  If this is a kernel thread,
 	 * the specified entry point will be executed.
 	 */
-	cpu_fork(p1, p2, stack, stacksize, func, arg);
+	cpu_fork(l1, l2, stack, stacksize, func, arg);
 }
 
 /*
@@ -326,16 +327,23 @@ uvm_fork(p1, p2, shared, stack, stacksize, func, arg)
  *   of the dead process may block.
  */
 void
-uvm_exit(p)
+uvm_proc_exit(p)
 	struct proc *p;
 {
-	vaddr_t va = (vaddr_t)p->p_addr;
-
 	uvmspace_free(p->p_vmspace);
-	p->p_flag &= ~P_INMEM;
+}
+
+void
+uvm_lwp_exit(l)
+	struct lwp *l;
+{
+	vaddr_t va = (vaddr_t)l->l_addr;
+
 	uvm_fault_unwire(kernel_map, va, va + USPACE);
 	uvm_km_free(kernel_map, va, USPACE);
-	p->p_addr = NULL;
+
+	l->l_flag &= ~L_INMEM;
+	l->l_addr = NULL;
 }
 
 /*
@@ -375,14 +383,14 @@ int	swapdebug = 0;
  */
 
 void
-uvm_swapin(p)
-	struct proc *p;
+uvm_swapin(l)
+	struct lwp *l;
 {
 	vaddr_t addr;
 	int s;
 
-	addr = (vaddr_t)p->p_addr;
-	/* make P_INMEM true */
+	addr = (vaddr_t)l->l_addr;
+	/* make L_INMEM true */
 	uvm_fault_wire(kernel_map, addr, addr + USPACE,
 	    VM_PROT_READ | VM_PROT_WRITE);
 
@@ -390,13 +398,13 @@ uvm_swapin(p)
 	 * Some architectures need to be notified when the user area has
 	 * moved to new physical page(s) (e.g.  see mips/mips/vm_machdep.c).
 	 */
-	cpu_swapin(p);
+	cpu_swapin(l);
 	SCHED_LOCK(s);
-	if (p->p_stat == SRUN)
-		setrunqueue(p);
-	p->p_flag |= P_INMEM;
+	if (l->l_stat == LSRUN)
+		setrunqueue(l);
+	l->l_flag |= L_INMEM;
 	SCHED_UNLOCK(s);
-	p->p_swtime = 0;
+	l->l_swtime = 0;
 	++uvmexp.swapins;
 }
 
@@ -411,9 +419,8 @@ uvm_swapin(p)
 void
 uvm_scheduler()
 {
-	struct proc *p;
+	struct lwp *l, *ll;
 	int pri;
-	struct proc *pp;
 	int ppri;
 
 loop:
@@ -421,17 +428,17 @@ loop:
 	while (!enableswap)
 		tsleep(&proc0, PVM, "noswap", 0);
 #endif
-	pp = NULL;		/* process to choose */
+	ll = NULL;		/* process to choose */
 	ppri = INT_MIN;	/* its priority */
 	proclist_lock_read();
-	LIST_FOREACH(p, &allproc, p_list) {
 
+	LIST_FOREACH(l, &alllwp, l_list) {
 		/* is it a runnable swapped out process? */
-		if (p->p_stat == SRUN && (p->p_flag & P_INMEM) == 0) {
-			pri = p->p_swtime + p->p_slptime -
-			    (p->p_nice - NZERO) * 8;
+		if (l->l_stat == LSRUN && (l->l_flag & L_INMEM) == 0) {
+			pri = l->l_swtime + l->l_slptime -
+			    (l->l_proc->p_nice - NZERO) * 8;
 			if (pri > ppri) {   /* higher priority?  remember it. */
-				pp = p;
+				ll = l;
 				ppri = pri;
 			}
 		}
@@ -444,12 +451,12 @@ loop:
 
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		printf("scheduler: running, procp %p pri %d\n", pp, ppri);
+		printf("scheduler: running, procp %p pri %d\n", ll, ppri);
 #endif
 	/*
 	 * Nothing to do, back to sleep
 	 */
-	if ((p = pp) == NULL) {
+	if ((l = ll) == NULL) {
 		tsleep(&proc0, PVM, "scheduler", 0);
 		goto loop;
 	}
@@ -465,9 +472,9 @@ loop:
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPIN)
 			printf("swapin: pid %d(%s)@%p, pri %d free %d\n",
-	     p->p_pid, p->p_comm, p->p_addr, ppri, uvmexp.free);
+	     l->l_proc->p_pid, l->l_proc->p_comm, l->l_addr, ppri, uvmexp.free);
 #endif
-		uvm_swapin(p);
+		uvm_swapin(l);
 		goto loop;
 	}
 	/*
@@ -477,7 +484,7 @@ loop:
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
 		printf("scheduler: no room for pid %d(%s), free %d\n",
-	   p->p_pid, p->p_comm, uvmexp.free);
+	   l->l_proc->p_pid, l->l_proc->p_comm, uvmexp.free);
 #endif
 	uvm_wait("schedpwait");
 #ifdef DEBUG
@@ -488,12 +495,13 @@ loop:
 }
 
 /*
- * swappable: is process "p" swappable?
+ * swappable: is LWP "l" swappable?
  */
 
-#define	swappable(p)							\
-	(((p)->p_flag & (P_SYSTEM | P_INMEM | P_WEXIT)) == P_INMEM &&	\
-	 (p)->p_holdcnt == 0)
+#define	swappable(l)							\
+	(((l)->l_flag & (L_INMEM)) &&					\
+	 ((((l)->l_proc->p_flag) & (P_SYSTEM | P_WEXIT)) == 0) &&	\
+	 (l)->l_holdcnt == 0)
 
 /*
  * swapout_threads: find threads that can be swapped and unwire their
@@ -508,8 +516,8 @@ loop:
 void
 uvm_swapout_threads()
 {
-	struct proc *p;
-	struct proc *outp, *outp2;
+	struct lwp *l;
+	struct lwp *outl, *outl2;
 	int outpri, outpri2;
 	int didswap = 0;
 	extern int maxslp; 
@@ -521,32 +529,32 @@ uvm_swapout_threads()
 #endif
 
 	/*
-	 * outp/outpri  : stop/sleep process with largest sleeptime < maxslp
-	 * outp2/outpri2: the longest resident process (its swap time)
+	 * outl/outpri  : stop/sleep thread with largest sleeptime < maxslp
+	 * outl2/outpri2: the longest resident thread (its swap time)
 	 */
-	outp = outp2 = NULL;
+	outl = outl2 = NULL;
 	outpri = outpri2 = 0;
 	proclist_lock_read();
-	LIST_FOREACH(p, &allproc, p_list) {
-		if (!swappable(p))
+	LIST_FOREACH(l, &alllwp, l_list) {
+		if (!swappable(l))
 			continue;
-		switch (p->p_stat) {
-		case SRUN:
-		case SONPROC:
-			if (p->p_swtime > outpri2) {
-				outp2 = p;
-				outpri2 = p->p_swtime;
+		switch (l->l_stat) {
+		case LSRUN:
+		case LSONPROC:
+			if (l->l_swtime > outpri2) {
+				outl2 = l;
+				outpri2 = l->l_swtime;
 			}
 			continue;
 			
-		case SSLEEP:
-		case SSTOP:
-			if (p->p_slptime >= maxslp) {
-				uvm_swapout(p);
+		case LSSLEEP:
+		case LSSTOP:
+			if (l->l_slptime >= maxslp) {
+				uvm_swapout(l);
 				didswap++;
-			} else if (p->p_slptime > outpri) {
-				outp = p;
-				outpri = p->p_slptime;
+			} else if (l->l_slptime > outpri) {
+				outl = l;
+				outpri = l->l_slptime;
 			}
 			continue;
 		}
@@ -560,20 +568,20 @@ uvm_swapout_threads()
 	 * it (USPACE bytes).
 	 */
 	if (didswap == 0 && uvmexp.free <= atop(round_page(USPACE))) {
-		if ((p = outp) == NULL)
-			p = outp2;
+		if ((l = outl) == NULL)
+			l = outl2;
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
-			printf("swapout_threads: no duds, try procp %p\n", p);
+			printf("swapout_threads: no duds, try procp %p\n", l);
 #endif
-		if (p)
-			uvm_swapout(p);
+		if (l)
+			uvm_swapout(l);
 	}
 	pmap_update();
 }
 
 /*
- * uvm_swapout: swap out process "p"
+ * uvm_swapout: swap out lwp "l"
  *
  * - currently "swapout" means "unwire U-area" and "pmap_collect()" 
  *   the pmap.
@@ -581,40 +589,49 @@ uvm_swapout_threads()
  */
 
 static void
-uvm_swapout(p)
-	struct proc *p;
+uvm_swapout(l)
+	struct lwp *l;
 {
 	vaddr_t addr;
 	int s;
+	struct proc *p = l->l_proc;
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
 		printf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
-	   p->p_pid, p->p_comm, p->p_addr, p->p_stat,
-	   p->p_slptime, uvmexp.free);
+	   p->p_pid, p->p_comm, l->l_addr, l->l_stat,
+	   l->l_slptime, uvmexp.free);
 #endif
 
 	/*
 	 * Do any machine-specific actions necessary before swapout.
 	 * This can include saving floating point state, etc.
 	 */
-	cpu_swapout(p);
+	cpu_swapout(l);
+
+	/*
+	 * Unwire the to-be-swapped process's user struct and kernel stack.
+	 */
+	addr = (vaddr_t)l->l_addr;
+	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !P_INMEM */
+	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 
 	/*
 	 * Mark it as (potentially) swapped out.
 	 */
 	SCHED_LOCK(s);
-	p->p_flag &= ~P_INMEM;
-	if (p->p_stat == SRUN)
-		remrunqueue(p);
+	s = splstatclock();
+	l->l_flag &= ~L_INMEM;
+	if (l->l_stat == LSRUN)
+		remrunqueue(l);
 	SCHED_UNLOCK(s);
-	p->p_swtime = 0;
+	l->l_swtime = 0;
 	++uvmexp.swapouts;
 
 	/*
 	 * Unwire the to-be-swapped process's user struct and kernel stack.
 	 */
-	addr = (vaddr_t)p->p_addr;
+	addr = (vaddr_t)l->l_addr;
 	uvm_fault_unwire(kernel_map, addr, addr + USPACE); /* !P_INMEM */
 	pmap_collect(vm_map_pmap(&p->p_vmspace->vm_map));
 }

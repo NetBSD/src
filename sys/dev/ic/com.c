@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.183 2001/01/14 23:50:28 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.183.2.1 2001/03/05 22:49:34 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -2412,6 +2412,8 @@ com_kgdb_attach(iot, iobase, rate, frequency, cflag)
 	tcflag_t cflag;
 {
 	int res;
+
+	printf("com_kgdb_attach\n");
 
 	if (iot == comconstag && iobase == comconsaddr)
 		return (EBUSY); /* cannot share with console */

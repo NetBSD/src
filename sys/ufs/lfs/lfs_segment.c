@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.67 2001/01/09 05:05:35 joff Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.67.2.1 2001/03/05 22:50:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -412,7 +412,7 @@ lfs_writevnodes(fs, mp, sp, op)
 		needs_unlock = 0;
 		if (VOP_ISLOCKED(vp)) {
 			if (vp != fs->lfs_ivnode &&
-			    vp->v_lock.lk_lockholder != curproc->p_pid) {
+			    vp->v_lock.lk_lockholder != curproc->l_proc->p_pid) {
 #ifdef DEBUG_LFS
 				printf("lfs_writevnodes: not writing ino %d,"
 				       " locked by pid %d\n",

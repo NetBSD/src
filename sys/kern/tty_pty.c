@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.55 2000/11/24 03:59:08 chs Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.55.2.1 2001/03/05 22:49:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/file.h>
@@ -324,7 +325,7 @@ ptsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct proc *p = curproc;
+	struct proc *p = curproc->l_proc;
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
 	int error = 0;

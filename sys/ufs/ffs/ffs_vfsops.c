@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.80 2001/02/07 22:40:06 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.80.2.1 2001/03/05 22:50:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
@@ -121,7 +122,7 @@ ffs_mountroot()
 {
 	struct fs *fs;
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	struct ufsmount *ump;
 	int error;
 

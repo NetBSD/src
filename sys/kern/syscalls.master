@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.108 2001/01/27 07:47:26 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.108.2.1 2001/03/05 22:49:45 nathanw Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -610,20 +610,17 @@
 305	STD		{ int sys_issetugid(void); }
 306	STD		{ int sys_utrace(const char *label, void *addr, \
 				size_t len); }
-;
-; Syscalls 307 and 308 are reserved for getcontext and setcontext
-;
-307	UNIMPL
-308	UNIMPL
-;
-; Syscalls 309-339 are reserved for LWP and scheduler activation syscalls.
-;
-309	UNIMPL
-310	UNIMPL
-311	UNIMPL
-312	UNIMPL
-313	UNIMPL
-314	UNIMPL
+307	STD		{ int sys_getcontext(struct __ucontext *ucp); }
+308	STD		{ int sys_setcontext(const struct __ucontext *ucp); }
+309	STD		{ int sys__lwp_create(const struct __ucontext *ucp, \
+				u_long flags, lwpid_t *new_lwp); }
+310	STD		{ int sys__lwp_exit(void); }
+311	STD		{ lwpid_t sys__lwp_self(void); }
+312	STD		{ int sys__lwp_wait(lwpid_t wait_for, \
+				lwpid_t *departed); }
+313	STD		{ int sys__lwp_suspend(lwpid_t target); }
+314	STD		{ int sys__lwp_continue(lwpid_t target); }
+; Syscalls 315-329 reserved for remaining Solaris-compatible LWP calls.
 315	UNIMPL
 316	UNIMPL
 317	UNIMPL
@@ -639,12 +636,17 @@
 327	UNIMPL
 328	UNIMPL
 329	UNIMPL
-330	UNIMPL
-331	UNIMPL
-332	UNIMPL
-333	UNIMPL
-334	UNIMPL
-335	UNIMPL
+; Scheduler activation syscalls
+330	STD		{ int sys_sa_register(sa_upcall_t new, \
+				sa_upcall_t *old); }
+331	STD		{ int sys_sa_stacks(int num, stack_t *stacks); }
+332	STD		{ int sys_sa_enable(void); }
+333	STD		{ int sys_sa_setconcurrency(int concurrency); }
+334	STD		{ int sys_sa_yield(void); }
+335	STD		{ int sys_sa_preempt(int sa_id); }
+;
+; Syscalls 336-339 are reserved for other scheduler activation syscalls.
+;
 336	UNIMPL
 337	UNIMPL
 338	UNIMPL

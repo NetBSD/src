@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.41 2001/02/07 12:40:44 tsutsui Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41.2.1 2001/03/05 22:49:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
@@ -184,7 +185,8 @@ loop:
 	 * XXXUBC doing this while holding the nfs_hashlock is bad,
 	 * but there's no alternative at the moment.
 	 */
-	error = VOP_GETATTR(vp, np->n_vattr, curproc->p_ucred, curproc);
+	error = VOP_GETATTR(vp, np->n_vattr, curproc->l_proc->p_ucred, 
+	    curproc->l_proc);
 	if (error) {
 		return error;
 	}

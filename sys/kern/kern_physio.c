@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.46 2000/12/08 02:25:50 augustss Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.46.2.1 2001/03/05 22:49:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -45,6 +45,7 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
@@ -79,7 +80,8 @@ physio(strategy, bp, dev, flags, minphys, uio)
 	struct uio *uio;
 {
 	struct iovec *iovp;
-	struct proc *p = curproc;
+	struct lwp *l = curproc;
+	struct proc *p = l->l_proc;
 	int error, done, i, nobuf, s;
 	long todo;
 
@@ -181,7 +183,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * saves it in b_saveaddr.  However, vunmapbuf()
 			 * restores it.
 			 */
-			PHOLD(p);
+			PHOLD(l);
 			if (__predict_false(uvm_vslock(p, bp->b_data, todo,
 			    (flags & B_READ) ?
 			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ)
@@ -222,7 +224,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			vunmapbuf(bp, todo);
 			uvm_vsunlock(p, bp->b_data, todo);
  after_vsunlock:
-			PRELE(p);
+			PRELE(l);
 
 			/* remember error value (save a splbio/splx pair) */
 			if (bp->b_flags & B_ERROR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125 2001/01/27 07:21:43 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.1 2001/03/05 22:50:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -127,7 +127,7 @@ extern const char *rootspec;	/* how root device was specified */
 extern dev_t swapdev;		/* swapping device */
 extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
-typedef int	sy_call_t(struct proc *, void *, register_t *);
+typedef int	sy_call_t(struct lwp *, void *, register_t *);
 
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
@@ -181,7 +181,7 @@ enum hashtype {
 void	*hashinit __P((int, enum hashtype, int, int, u_long *));
 void	hashdone __P((void *, int));
 int	seltrue __P((dev_t dev, int events, struct proc *p));
-int	sys_nosys __P((struct proc *, void *, register_t *));
+int	sys_nosys __P((struct lwp *, void *, register_t *));
 
 
 void	printf __P((const char *, ...))

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75 2001/01/12 22:55:10 cgd Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.1 2001/03/05 22:49:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
@@ -128,7 +129,7 @@ uiomove(buf, n, uio)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
 		panic("uiomove: mode");
-	if (uio->uio_segflg == UIO_USERSPACE && p != curproc)
+	if (uio->uio_segflg == UIO_USERSPACE && p != curproc->l_proc)
 		panic("uiomove proc");
 #endif
 	while (n > 0 && uio->uio_resid) {
@@ -144,9 +145,11 @@ uiomove(buf, n, uio)
 		switch (uio->uio_segflg) {
 
 		case UIO_USERSPACE:
+#if 0 			/* XXX NJWLWP */
 			KDASSERT(p->p_cpu != NULL);
 			KDASSERT(p->p_cpu == curcpu());
-			if (p->p_cpu->ci_schedstate.spc_flags &
+#endif
+			if (curcpu()->ci_schedstate.spc_flags &
 			    SPCF_SHOULDYIELD)
 				preempt(NULL);
 			if (uio->uio_rw == UIO_READ)

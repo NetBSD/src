@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_balloc.c,v 1.23 2000/11/27 08:39:54 chs Exp $	*/
+/*	$NetBSD: ffs_balloc.c,v 1.23.2.1 2001/03/05 22:50:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,6 +42,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/mount.h>
@@ -414,7 +415,7 @@ fail:
 	 * occurence. The error return from fsync is ignored as we already
 	 * have an error to return to the user.
 	 */
-	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0, curproc);
+	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0, curproc->l_proc);
 	for (deallocated = 0, blkp = allociblk; blkp < allocblk; blkp++) {
 		ffs_blkfree(ip, *blkp, fs->fs_bsize);
 		deallocated += fs->fs_bsize;
@@ -456,7 +457,7 @@ fail:
 		ip->i_ffs_blocks -= btodb(deallocated);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
-	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0, curproc);
+	(void) VOP_FSYNC(vp, cred, FSYNC_WAIT, 0, 0, curproc->l_proc);
 	return (error);
 }
 

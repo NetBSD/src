@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.17 2000/12/14 06:29:37 thorpej Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.17.2.1 2001/03/05 22:49:36 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -121,6 +121,7 @@
 #include <sys/socket.h>
 #include <sys/mbuf.h>
 #include <sys/ioctl.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -1044,7 +1045,7 @@ cnw_ioctl(ifp, cmd, data)
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
-	struct proc *p = curproc;	/*XXX*/
+	struct proc *p = curproc->l_proc;	/*XXX*/
 
 	s = splnet();
 

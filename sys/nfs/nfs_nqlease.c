@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nqlease.c,v 1.37 2001/02/21 21:39:57 jdolecek Exp $	*/
+/*	$NetBSD: nfs_nqlease.c,v 1.37.2.1 2001/03/05 22:49:59 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,7 @@
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -995,14 +996,15 @@ nqnfs_callback(nmp, mrep, md, dpos)
  * the list asynchronously.
  */
 int
-nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
+nqnfs_clientd(nmp, cred, ncd, flag, argp, l)
 	struct nfsmount *nmp;
 	struct ucred *cred;
 	struct nfsd_cargs *ncd;
 	int flag;
 	caddr_t argp;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 #ifndef NFS_V2_ONLY
 	struct nfsnode *np;
 	struct vnode *vp;
@@ -1051,7 +1053,7 @@ nqnfs_clientd(nmp, cred, ncd, flag, argp, p)
 	    if (sleepreturn == EINTR || sleepreturn == ERESTART) {
 		if (vfs_busy(nmp->nm_mountp, LK_NOWAIT, 0) == 0 &&
 		    dounmount(nmp->nm_mountp, 0, p) != 0)
-			CLRSIG(p, CURSIG(p));
+			CLRSIG(p, CURSIG(l));
 		sleepreturn = 0;
 		continue;
 	    }

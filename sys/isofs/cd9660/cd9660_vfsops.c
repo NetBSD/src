@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.52 2001/01/22 13:18:29 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.1 2001/03/05 22:49:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -47,6 +47,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
@@ -115,7 +116,7 @@ int
 cd9660_mountroot()
 {
 	struct mount *mp;
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	int error;
 	struct iso_args args;
 

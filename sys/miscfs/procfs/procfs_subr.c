@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.36 2001/01/18 20:28:21 jdolecek Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.36.2.1 2001/03/05 22:49:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -197,12 +197,37 @@ procfs_rw(v)
 	struct uio *uio = ap->a_uio;
 	struct proc *curp = uio->uio_procp;
 	struct pfsnode *pfs = VTOPFS(vp);
+	struct lwp *l;
 	struct proc *p;
 
 	p = PFIND(pfs->pfs_pid);
 	if (p == 0)
 		return (EINVAL);
 
+	/* XXX NJWLWP
+	 * The entire procfs interface needs work to be useful to
+	 * a process with multiple LWPs. For the moment, we'll 
+	 * just kluge this and fail on others.
+	 */
+
+	if (p->p_nlwps > 1)
+		switch (pfs->pfs_type) {
+		case Pnote: 
+		case Pnotepg:
+		case Pstatus:
+		case Pmap:
+		case Pmem:
+		case Pcmdline:
+			break;
+		case Pregs:
+		case Pfpregs:
+		case Pctl:
+		default:
+			return (EOPNOTSUPP);
+		}
+
+	l = LIST_FIRST(&p->p_lwps);
+	
 	switch (pfs->pfs_type) {
 	case Pregs:
 	case Pfpregs:
@@ -226,22 +251,22 @@ procfs_rw(v)
 		return (procfs_donote(curp, p, pfs, uio));
 
 	case Pregs:
-		return (procfs_doregs(curp, p, pfs, uio));
+		return (procfs_doregs(curp, l, pfs, uio));
 
 	case Pfpregs:
-		return (procfs_dofpregs(curp, p, pfs, uio));
+		return (procfs_dofpregs(curp, l, pfs, uio));
 
 	case Pctl:
-		return (procfs_doctl(curp, p, pfs, uio));
+		return (procfs_doctl(curp, l, pfs, uio));
 
 	case Pstatus:
-		return (procfs_dostatus(curp, p, pfs, uio));
+		return (procfs_dostatus(curp, l, pfs, uio));
 
 	case Pmap:
 		return (procfs_domap(curp, p, pfs, uio));
 
 	case Pmem:
-		return (procfs_domem(curp, p, pfs, uio));
+		return (procfs_domem(curp, l, pfs, uio));
 
 	case Pcmdline:
 		return (procfs_docmdline(curp, p, pfs, uio));

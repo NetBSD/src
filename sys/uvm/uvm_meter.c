@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.16 2000/11/30 11:04:44 simonb Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.16.2.1 2001/03/05 22:50:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -41,6 +41,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -81,7 +82,7 @@ uvm_meter()
 {
 	if ((time.tv_sec % 5) == 0)
 		uvm_loadav(&averunnable);
-	if (proc0.p_slptime > (maxslp / 2))
+	if (lwp0.l_slptime > (maxslp / 2))
 		wakeup(&proc0);
 }
 
@@ -94,19 +95,19 @@ uvm_loadav(avg)
 	struct loadavg *avg;
 {
 	int i, nrun;
-	struct proc *p;
+	struct lwp *l;
 
 	proclist_lock_read();
 	nrun = 0;
-	LIST_FOREACH(p, &allproc, p_list) {
-		switch (p->p_stat) {
-		case SSLEEP:
-			if (p->p_priority > PZERO || p->p_slptime > 1)
+	LIST_FOREACH(l, &alllwp, l_list) {
+		switch (l->l_stat) {
+		case LSSLEEP:
+			if (l->l_priority > PZERO || l->l_slptime > 1)
 				continue;
 		/* fall through */
-		case SRUN:
-		case SONPROC:
-		case SIDL:
+		case LSRUN:
+		case LSONPROC:
+		case LSIDL:
 			nrun++;
 		}
 	}
@@ -257,7 +258,7 @@ static void
 uvm_total(totalp)
 	struct vmtotal *totalp;
 {
-	struct proc *p;
+	struct lwp *l;
 #if 0
 	vm_map_entry_t	entry;
 	vm_map_t map;
@@ -271,34 +272,34 @@ uvm_total(totalp)
 	 */
 
 	proclist_lock_read();
-	LIST_FOREACH(p, &allproc, p_list) {
-		if (p->p_flag & P_SYSTEM)
+	    LIST_FOREACH(l, &alllwp, l_list) {    
+		if (l->l_proc->p_flag & P_SYSTEM)
 			continue;
-		switch (p->p_stat) {
+		switch (l->l_stat) {
 		case 0:
 			continue;
 
-		case SSLEEP:
-		case SSTOP:
-			if (p->p_flag & P_INMEM) {
-				if (p->p_priority <= PZERO)
+		case LSSLEEP:
+		case LSSTOP:
+			if (l->l_flag & L_INMEM) {
+				if (l->l_priority <= PZERO)
 					totalp->t_dw++;
-				else if (p->p_slptime < maxslp)
+				else if (l->l_slptime < maxslp)
 					totalp->t_sl++;
-			} else if (p->p_slptime < maxslp)
+			} else if (l->l_slptime < maxslp)
 				totalp->t_sw++;
-			if (p->p_slptime >= maxslp)
+			if (l->l_slptime >= maxslp)
 				continue;
 			break;
 
-		case SRUN:
-		case SONPROC:
-		case SIDL:
-			if (p->p_flag & P_INMEM)
+		case LSRUN:
+		case LSONPROC:
+		case LSIDL:
+			if (l->l_flag & L_INMEM)
 				totalp->t_rq++;
 			else
 				totalp->t_sw++;
-			if (p->p_stat == SIDL)
+			if (l->l_stat == LSIDL)
 				continue;
 			break;
 		}

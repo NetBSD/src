@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.22 2000/03/30 11:27:17 augustss Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.22.6.1 2001/03/05 22:49:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -67,8 +67,8 @@
  * sigaction() apply.
  */
 int
-linux_sys_signal(p, v, retval)
-	struct proc *p;
+linux_sys_signal(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -76,6 +76,7 @@ linux_sys_signal(p, v, retval)
 		syscallarg(int) signum;
 		syscallarg(linux_handler_t) handler;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigaction nbsa, obsa;
 	int error, sig;
 
@@ -97,11 +98,12 @@ linux_sys_signal(p, v, retval)
 
 /* ARGSUSED */
 int
-linux_sys_siggetmask(p, v, retval)
-	struct proc *p;
+linux_sys_siggetmask(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	sigset_t bss;
 	linux_old_sigset_t lss;
 	int error;
@@ -120,14 +122,15 @@ linux_sys_siggetmask(p, v, retval)
  * they are here, and have not been mapped directly.
  */
 int
-linux_sys_sigsetmask(p, v, retval)
-	struct proc *p;
+linux_sys_sigsetmask(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_sigsetmask_args /* {
 		syscallarg(linux_old_sigset_t) mask;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	sigset_t nbss, obss;
 	linux_old_sigset_t nlss, olss;
 	int error;
@@ -143,8 +146,8 @@ linux_sys_sigsetmask(p, v, retval)
 }
 
 int
-linux_sys_sigprocmask(p, v, retval)
-	struct proc *p;
+linux_sys_sigprocmask(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -153,6 +156,7 @@ linux_sys_sigprocmask(p, v, retval)
 		syscallarg(const linux_old_sigset_t *) set;
 		syscallarg(linux_old_sigset_t *) oset;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 
 	return(linux_sigprocmask1(p, SCARG(uap, how), 
 				SCARG(uap, set), SCARG(uap, oset)));
@@ -163,11 +167,12 @@ linux_sys_sigprocmask(p, v, retval)
  * of sigsuspend(2).
  */
 int
-linux_sys_pause(p, v, retval)
-	struct proc *p;
+linux_sys_pause(l, v, retval)
+	struct lwp *l;
 	void *v;	
 	register_t *retval;
 {	
+	struct proc *p = l->l_proc;
 
 	return (sigsuspend1(p, 0));
 }

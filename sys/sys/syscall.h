@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.118 2001/01/27 07:48:29 thorpej Exp $ */
+/* $NetBSD: syscall.h,v 1.118.2.1 2001/03/05 22:50:03 nathanw Exp $ */
 
 /*
  * System call numbers.
@@ -713,6 +713,48 @@
 
 /* syscall: "utrace" ret: "int" args: "const char *" "void *" "size_t" */
 #define	SYS_utrace	306
+
+/* syscall: "getcontext" ret: "int" args: "struct __ucontext *" */
+#define	SYS_getcontext	307
+
+/* syscall: "setcontext" ret: "int" args: "const struct __ucontext *" */
+#define	SYS_setcontext	308
+
+/* syscall: "_lwp_create" ret: "int" args: "const struct __ucontext *" "u_long" "lwpid_t *" */
+#define	SYS__lwp_create	309
+
+/* syscall: "_lwp_exit" ret: "int" args: */
+#define	SYS__lwp_exit	310
+
+/* syscall: "_lwp_self" ret: "lwpid_t" args: */
+#define	SYS__lwp_self	311
+
+/* syscall: "_lwp_wait" ret: "int" args: "lwpid_t" "lwpid_t *" */
+#define	SYS__lwp_wait	312
+
+/* syscall: "_lwp_suspend" ret: "int" args: "lwpid_t" */
+#define	SYS__lwp_suspend	313
+
+/* syscall: "_lwp_continue" ret: "int" args: "lwpid_t" */
+#define	SYS__lwp_continue	314
+
+/* syscall: "sa_register" ret: "int" args: "sa_upcall_t" "sa_upcall_t *" */
+#define	SYS_sa_register	330
+
+/* syscall: "sa_stacks" ret: "int" args: "int" "stack_t *" */
+#define	SYS_sa_stacks	331
+
+/* syscall: "sa_enable" ret: "int" args: */
+#define	SYS_sa_enable	332
+
+/* syscall: "sa_setconcurrency" ret: "int" args: "int" */
+#define	SYS_sa_setconcurrency	333
+
+/* syscall: "sa_yield" ret: "int" args: */
+#define	SYS_sa_yield	334
+
+/* syscall: "sa_preempt" ret: "int" args: "int" */
+#define	SYS_sa_preempt	335
 
 #define	SYS_MAXSYSCALL	340
 #define	SYS_NSYSENT	512

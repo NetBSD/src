@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_14.c,v 1.3 2000/12/17 15:55:47 jdolecek Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.3.2.1 2001/03/05 22:49:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/sem.h>
@@ -84,10 +85,7 @@ native_to_semid_ds14(sembuf, osembuf)
 }
 
 int
-compat_14_sys___semctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_14_sys___semctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_14_sys___semctl_args /* {
 		syscallarg(int) semid;
@@ -95,6 +93,7 @@ compat_14_sys___semctl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(union __semun *) arg;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	union __semun arg;
 	struct semid_ds sembuf;
 	struct semid_ds14 osembuf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.26 2000/12/22 22:58:53 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.26.4.1 2001/03/05 22:49:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/exec.h>
 #include <sys/user.h>
@@ -60,14 +61,14 @@
 #include <compat/freebsd/freebsd_ptrace.h>
 
 void
-freebsd_setregs(p, epp, stack)
-	struct proc *p;
+freebsd_setregs(l, epp, stack)
+	struct lwp *l;
 	struct exec_package *epp;
 	u_long stack;
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
+	register struct pcb *pcb = &l->l_addr->u_pcb;
 
-	setregs(p, epp, stack);
+	setregs(l, epp, stack);
 	pcb->pcb_savefpu.sv_env.en_cw = __FreeBSD_NPXCW__;
 }
 
@@ -92,12 +93,13 @@ freebsd_sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	register struct proc *p = curproc;
+	struct lwp *l = curproc;
+	register struct proc *p = l->l_proc;
 	register struct trapframe *tf;
 	struct freebsd_sigframe *fp, frame;
 	int onstack;
 
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -124,7 +126,7 @@ freebsd_sendsig(catcher, sig, mask, code)
 	if (tf->tf_eflags & PSL_VM) {
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
-		frame.sf_sc.sc_eflags = get_vflags(p);
+		frame.sf_sc.sc_eflags = get_vflags(l);
 		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
@@ -157,7 +159,7 @@ freebsd_sendsig(catcher, sig, mask, code)
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
 		 */
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -188,14 +190,15 @@ freebsd_sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-freebsd_sys_sigreturn(p, v, retval)
-	struct proc *p;
+freebsd_sys_sigreturn(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct freebsd_sys_sigreturn_args /* {
 		syscallarg(struct freebsd_sigcontext *) scp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct freebsd_sigcontext *scp, context;
 	register struct trapframe *tf;
 	sigset_t mask;
@@ -210,14 +213,14 @@ freebsd_sys_sigreturn(p, v, retval)
 		return (EFAULT);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = l->l_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
 		void syscall_vm86 __P((struct trapframe));
 
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
-		set_vflags(p, context.sc_eflags);
+		set_vflags(l, context.sc_eflags);
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif

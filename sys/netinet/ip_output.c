@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.83 2001/02/27 10:32:03 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.83.2.1 2001/03/05 22:49:56 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -113,6 +113,7 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <net/if.h>
@@ -857,7 +858,7 @@ ip_ctloutput(op, so, level, optname, mp)
 	int error = 0;
 #ifdef IPSEC
 #ifdef __NetBSD__
-	struct proc *p = curproc;	/*XXX*/
+	struct proc *p = curproc->l_proc;	/*XXX*/
 #endif
 #endif
 

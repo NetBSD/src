@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.13 2000/12/13 01:24:46 mycroft Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.13.6.1 2001/03/05 22:49:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -90,13 +90,13 @@ svr4_syscall_plain(frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
-	register struct proc *p;
+	struct lwp *l;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curproc;
 
 	code = frame.tf_eax;
 	callp = svr4_sysent;
@@ -124,12 +124,12 @@ svr4_syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -156,9 +156,9 @@ svr4_syscall_plain(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 }
 
 /*
@@ -172,13 +172,15 @@ svr4_syscall_fancy(frame)
 {
 	register caddr_t params;
 	register const struct sysent *callp;
-	register struct proc *p;
+	register struct lwp *l;
+	struct proc *p;
 	int error;
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
-	p = curproc;
+	l = curproc;
+	p = l->l_proc;
 
 	code = frame.tf_eax;
 	callp = svr4_sysent;
@@ -206,7 +208,7 @@ svr4_syscall_fancy(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, args);
+	scdebug_call(l, code, args);
 #endif /* SYSCALL_DEBUG */
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
@@ -215,7 +217,7 @@ svr4_syscall_fancy(frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(p, args, rval);
+	error = (*callp->sy_call)(l, args, rval);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -242,9 +244,9 @@ svr4_syscall_fancy(frame)
 	}
 
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(p, code, error, rval);
+	scdebug_ret(l, code, error, rval);
 #endif /* SYSCALL_DEBUG */
-	userret(p);
+	userret(l);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);

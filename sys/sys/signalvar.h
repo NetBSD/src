@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.28 2001/01/14 22:32:01 thorpej Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.28.2.1 2001/03/05 22:50:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -100,7 +100,7 @@ do {									\
  * process, 0 if none.  If there is a pending stop signal with default
  * action, the process stops in issignal().
  */
-#define	CURSIG(p)	(p->p_sigctx.ps_sigcheck ? issignal(p) : 0)
+#define	CURSIG(l)	(l->l_proc->p_sigctx.ps_sigcheck ? issignal(l) : 0)
 
 /*
  * Clear a pending signal from a process.
@@ -166,20 +166,21 @@ extern sigset_t contsigmask, stopsigmask, sigcantmask;
 /*
  * Machine-independent functions:
  */
-int	coredump __P((struct proc *p));
+int	coredump __P((struct lwp *p));
 void	execsigs __P((struct proc *p));
 void	gsignal __P((int pgid, int sig));
-int	issignal __P((struct proc *p));
+int	issignal __P((struct lwp *l));
 void	pgsignal __P((struct pgrp *pgrp, int sig, int checkctty));
 void	postsig __P((int sig));
 void	psignal1 __P((struct proc *p, int sig, int dolock));
 #define	psignal(p, sig)		psignal1((p), (sig), 1)
 #define	sched_psignal(p, sig)	psignal1((p), (sig), 0)
 void	siginit __P((struct proc *p));
-void	trapsignal __P((struct proc *p, int sig, u_long code));
-void	sigexit __P((struct proc *, int));
+void	trapsignal __P((struct lwp *l, int sig, u_long code));
+void	sigexit __P((struct lwp *, int));
 void	setsigvec __P((struct proc *, int, struct sigaction *));
 int	killpg1 __P((struct proc *, int, int, int));
+struct lwp *proc_unstop __P((struct proc *p));
 
 int	sigaction1 __P((struct proc *p, int signum, \
 	    const struct sigaction *nsa, struct sigaction *osa));
@@ -205,9 +206,9 @@ struct core;
 struct core32;
 struct vnode;
 struct ucred;
-int	cpu_coredump __P((struct proc *, struct vnode *, struct ucred *,
+int	cpu_coredump __P((struct lwp *, struct vnode *, struct ucred *,
 			  struct core *));
-int	cpu_coredump32 __P((struct proc *, struct vnode *, struct ucred *, 
+int	cpu_coredump32 __P((struct lwp *, struct vnode *, struct ucred *, 
 			       struct core32 *));
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.15 2000/12/27 22:06:07 jdolecek Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.15.2.1 2001/03/05 22:49:17 nathanw Exp $	*/
 
 /*
  * 
@@ -491,7 +491,7 @@ coda_call(mntinfo, inSize, outSize, buffer)
 	struct vmsg *vmp;
 	int error;
 #ifdef	CTL_C
-	struct proc *p = curproc;
+	struct proc *p = curproc->l_proc;
 	sigset_t psig_omask;
 	int i;
 	psig_omask = p->p_sigctx.ps_siglist;	/* array assignment */

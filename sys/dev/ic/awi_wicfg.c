@@ -1,4 +1,4 @@
-/*	$NetBSD: awi_wicfg.c,v 1.3 2000/07/06 17:22:25 onoe Exp $	*/
+/*	$NetBSD: awi_wicfg.c,v 1.3.4.1 2001/03/05 22:49:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
@@ -110,7 +111,8 @@ awi_wicfg(ifp, cmd, data)
 #ifdef __FreeBSD__
 		error = suser(curproc);
 #else
-		error = suser(curproc->p_ucred, &curproc->p_acflag);
+		error = suser(curproc->l_proc->p_ucred, 
+		    &curproc->l_proc->p_acflag);
 #endif
 		if (error)
 			break;
@@ -274,7 +276,8 @@ awi_cfgget(ifp, cmd, data)
 #ifdef __FreeBSD__
 		error = suser(curproc);
 #else
-		error = suser(curproc->p_ucred, &curproc->p_acflag);
+		error = suser(curproc->l_proc->p_ucred,
+		    &curproc->l_proc->p_acflag);
 #endif
 		if (error) {
 			memset(keys, 0, sizeof(*keys));

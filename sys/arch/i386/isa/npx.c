@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.74 2001/01/17 00:03:02 fvdl Exp $	*/
+/*	$NetBSD: npx.c,v 1.74.2.1 2001/03/05 22:49:17 nathanw Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -47,6 +47,7 @@
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/file.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
@@ -106,11 +107,11 @@
 #define	clts()			__asm("clts")
 #define	stts()			lcr0(rcr0() | CR0_TS)
 
-int npxdna(struct proc *);
+int npxdna(struct lwp *);
 void npxexit(void);
 static void npxsave1(void);
 
-struct proc	*npxproc;
+struct lwp	*npxproc;
 
 static	enum npx_type		npx_type;
 static	int			npx_nointr;
@@ -260,8 +261,8 @@ npxattach(struct npx_softc *sc)
 int
 npxintr(void *arg)
 {
-	register struct proc *p = npxproc;
-	register struct save87 *addr;
+	struct lwp *l = npxproc;
+	struct save87 *addr;
 	struct intrframe *frame = arg;
 	struct npx_softc *sc;
 	int code;
@@ -271,9 +272,9 @@ npxintr(void *arg)
 	uvmexp.traps++;
 	IPRINTF(("Intr"));
 
-	if (p == 0 || npx_type == NPX_NONE) {
+	if (l == 0 || npx_type == NPX_NONE) {
 		printf("npxintr: p = %p, curproc = %p, npx_type = %d\n",
-		    p, curproc, npx_type);
+		    l, curproc, npx_type);
 		panic("npxintr: came from nowhere");
 	}
 
@@ -294,7 +295,7 @@ npxintr(void *arg)
 	 * At this point, npxproc should be curproc.  If it wasn't, the TS bit
 	 * should be set, and we should have gotten a DNA exception.
 	 */
-	if (p != curproc)
+	if (l != curproc)
 		panic("npxintr: wrong process");
 #endif
 
@@ -302,7 +303,7 @@ npxintr(void *arg)
 	 * Find the address of npxproc's saved FPU state.  (Given the invariant
 	 * above, this is always the one in curpcb.)
 	 */
-	addr = &p->p_addr->u_pcb.pcb_savefpu;
+	addr = &l->l_addr->u_pcb.pcb_savefpu;
 	/*
 	 * Save state.  This does an implied fninit.  It had better not halt
 	 * the cpu or we'll hang.
@@ -340,7 +341,7 @@ npxintr(void *arg)
 		 * in doreti, and the frame for that could easily be set up
 		 * just before it is used).
 		 */
-		p->p_md.md_regs = (struct trapframe *)&frame->if_es;
+		l->l_md.md_regs = (struct trapframe *)&frame->if_es;
 #ifdef notyet
 		/*
 		 * Encode the appropriate code for detailed information on
@@ -350,7 +351,7 @@ npxintr(void *arg)
 #else
 		code = 0;	/* XXX */
 #endif
-		trapsignal(p, SIGFPE, code);
+		trapsignal(l, SIGFPE, code);
 	} else {
 		/*
 		 * This is a nested interrupt.  This should only happen when
@@ -361,7 +362,7 @@ npxintr(void *arg)
 		 * Currently, we treat this like an asynchronous interrupt, but
 		 * this has disadvantages.
 		 */
-		psignal(p, SIGFPE);
+		psignal(l->l_proc, SIGFPE);
 	}
 
 	return (1);
@@ -381,10 +382,10 @@ npxintr(void *arg)
 static inline void
 npxsave1(void)
 {
-	struct proc *p = npxproc;
+	struct lwp *l = npxproc;
 
-	fnsave(&p->p_addr->u_pcb.pcb_savefpu);
-	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
+	fnsave(&l->l_addr->u_pcb.pcb_savefpu);
+	l->l_addr->u_pcb.pcb_cr0 |= CR0_TS;
 	fwait();
 }
 
@@ -396,7 +397,7 @@ npxsave1(void)
  * saved state.
  */
 int
-npxdna(struct proc *p)
+npxdna(struct lwp *l)
 {
 
 	if (npx_type == NPX_NONE) {
@@ -409,7 +410,7 @@ npxdna(struct proc *p)
 		panic("npxdna: masked");
 #endif
 
-	p->p_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
+	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 
 	/*
@@ -418,7 +419,7 @@ npxdna(struct proc *p)
 	 * initialization).
 	 */
 	npx_nointr = 1;
-	if (npxproc != 0 && npxproc != p) {
+	if (npxproc != 0 && npxproc != l) {
 		IPRINTF(("Save"));
 		npxsave1();
 	} else {
@@ -427,11 +428,11 @@ npxdna(struct proc *p)
 		fwait();
 	}
 	npx_nointr = 0;
-	npxproc = p;
+	npxproc = l;
 
-	if ((p->p_md.md_flags & MDP_USEDFPU) == 0) {
-		fldcw(&p->p_addr->u_pcb.pcb_savefpu.sv_env.en_cw);
-		p->p_md.md_flags |= MDP_USEDFPU;
+	if ((l->l_md.md_flags & MDP_USEDFPU) == 0) {
+		fldcw(&l->l_addr->u_pcb.pcb_savefpu.sv_env.en_cw);
+		l->l_md.md_flags |= MDP_USEDFPU;
 	} else {
 		/*
 		 * The following frstor may cause an IRQ13 when the state being
@@ -446,7 +447,7 @@ npxdna(struct proc *p)
 		 * fnclex if it is the first FPU instruction after a context
 		 * switch.
 		 */
-		frstor(&p->p_addr->u_pcb.pcb_savefpu);
+		frstor(&l->l_addr->u_pcb.pcb_savefpu);
 	}
 
 	return (1);
@@ -458,11 +459,11 @@ npxdna(struct proc *p)
 void
 npxdrop(void)
 {
-	struct proc *p = npxproc;
+	struct lwp *l = npxproc;
 
 	npxproc = 0;
 	stts();
-	p->p_addr->u_pcb.pcb_cr0 |= CR0_TS;
+	l->l_addr->u_pcb.pcb_cr0 |= CR0_TS;
 }
 
 /*

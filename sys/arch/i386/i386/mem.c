@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.47 2000/11/14 22:55:06 thorpej Exp $	*/
+/*	$NetBSD: mem.c,v 1.47.4.1 2001/03/05 22:49:13 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,7 @@
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 
@@ -76,7 +77,7 @@ mmopen(dev, flag, mode, p)
 	case 14:
 		if (flag & FWRITE) {
 			struct trapframe *fp;
-			fp = curproc->p_md.md_regs;
+			fp = curproc->l_md.md_regs;
 			fp->tf_eflags |= PSL_IOPL;
 		}
 		break;
@@ -198,7 +199,7 @@ mmmmap(dev, off, prot)
 	off_t off;
 	int prot;
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 
 	/*
 	 * /dev/mem is the only one that makes sense through this

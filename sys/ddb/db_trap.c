@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trap.c,v 1.17 2000/12/20 15:42:37 jhawk Exp $	*/
+/*	$NetBSD: db_trap.c,v 1.17.2.1 2001/03/05 22:49:32 nathanw Exp $	*/
 
 /* 
  * Mach Operating System
@@ -33,6 +33,7 @@
  * Trap entry point to kernel debugger.
  */
 #include <sys/param.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <machine/db_machdep.h>
@@ -73,9 +74,10 @@ db_trap(type, code)
 		else if (watchpt)
 			db_printf("Watchpoint");
 		else
-			db_printf("Stopped");
-		db_printf(" in pid %d (%s) at\t", curproc->p_pid,
-		    curproc->p_comm);
+			if (curproc->l_proc == NULL)
+				db_printf("Stopped; curproc = %p, curproc->l_proc is NULL at\t", curproc);
+			else
+				db_printf("Stopped in %s at\t", curproc->l_proc->p_comm);
 	    } else if (bkpt)
 		db_printf("Breakpoint at\t");
 	    else if (watchpt)

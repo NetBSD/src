@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.22 2000/12/10 19:29:31 mycroft Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.22.2.1 2001/03/05 22:49:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>
@@ -156,8 +157,8 @@ sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen)
  */
 /* ARGSUSED */
 int
-sys_profil(p, v, retval)
-	struct proc *p;
+sys_profil(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -167,6 +168,7 @@ sys_profil(p, v, retval)
 		syscallarg(u_int) offset;
 		syscallarg(u_int) scale;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct uprof *upp;
 	int s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54 2000/09/19 23:26:25 bjh21 Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.1 2001/03/05 22:49:43 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 #include <sys/resourcevar.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
@@ -147,8 +148,8 @@ settime(tv)
 
 /* ARGSUSED */
 int
-sys_clock_gettime(p, v, retval)
-	struct proc *p;
+sys_clock_gettime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -172,8 +173,8 @@ sys_clock_gettime(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_clock_settime(p, v, retval)
-	struct proc *p;
+sys_clock_settime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -181,6 +182,7 @@ sys_clock_settime(p, v, retval)
 		syscallarg(clockid_t) clock_id;
 		syscallarg(const struct timespec *) tp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	clockid_t clock_id;
 	struct timeval atv;
 	struct timespec ats;
@@ -204,8 +206,8 @@ sys_clock_settime(p, v, retval)
 }
 
 int
-sys_clock_getres(p, v, retval)
-	struct proc *p;
+sys_clock_getres(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -233,8 +235,8 @@ sys_clock_getres(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_nanosleep(p, v, retval)
-	struct proc *p;
+sys_nanosleep(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -296,8 +298,8 @@ sys_nanosleep(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_gettimeofday(p, v, retval)
-	struct proc *p;
+sys_gettimeofday(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -329,8 +331,8 @@ sys_gettimeofday(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_settimeofday(p, v, retval)
-	struct proc *p;
+sys_settimeofday(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -338,6 +340,7 @@ sys_settimeofday(p, v, retval)
 		syscallarg(const struct timeval *) tv;
 		syscallarg(const struct timezone *) tzp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct timeval atv;
 	struct timezone atz;
 	int error;
@@ -371,8 +374,8 @@ long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
 
 /* ARGSUSED */
 int
-sys_adjtime(p, v, retval)
-	struct proc *p;
+sys_adjtime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -380,6 +383,7 @@ sys_adjtime(p, v, retval)
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct timeval atv;
 	long ndelta, ntickdelta, odelta;
 	int s, error;
@@ -455,8 +459,8 @@ sys_adjtime(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_getitimer(p, v, retval)
-	struct proc *p;
+sys_getitimer(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -464,6 +468,7 @@ sys_getitimer(p, v, retval)
 		syscallarg(int) which;
 		syscallarg(struct itimerval *) itv;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct itimerval aitv;
 	int s;
@@ -493,8 +498,8 @@ sys_getitimer(p, v, retval)
 
 /* ARGSUSED */
 int
-sys_setitimer(p, v, retval)
-	struct proc *p;
+sys_setitimer(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -503,6 +508,7 @@ sys_setitimer(p, v, retval)
 		syscallarg(const struct itimerval *) itv;
 		syscallarg(struct itimerval *) oitv;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct sys_getitimer_args getargs;
 	struct itimerval aitv;
@@ -517,7 +523,7 @@ sys_setitimer(p, v, retval)
 	if (SCARG(uap, oitv) != NULL) {
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
-		if ((error = sys_getitimer(p, &getargs, retval)) != 0)
+		if ((error = sys_getitimer(l, &getargs, retval)) != 0)
 			return (error);
 	}
 	if (itvp == 0)

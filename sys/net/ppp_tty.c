@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.23 2001/01/18 20:28:20 jdolecek Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.23.2.1 2001/03/05 22:49:55 nathanw Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -175,7 +175,7 @@ pppopen(dev, tp)
     dev_t dev;
     struct tty *tp;
 {
-    struct proc *p = curproc;		/* XXX */
+    struct proc *p = curproc->l_proc;		/* XXX */
     struct ppp_softc *sc;
     int error, s;
 

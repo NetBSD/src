@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.63 2001/02/27 04:37:46 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.63.2.1 2001/03/05 22:49:58 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,6 +45,7 @@
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
@@ -518,7 +519,8 @@ nfs_write(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("nfs_write mode");
-	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
+	if (uio->uio_segflg == UIO_USERSPACE && 
+	    uio->uio_procp != curproc->l_proc)
 		panic("nfs_write proc");
 #endif
 	if (vp->v_type != VREG)
@@ -907,24 +909,26 @@ nfs_doio(bp, p)
 			uprintf("Process killed due to "
 				"text file modification\n");
 			psignal(p, SIGKILL);
+#if 0 /* XXX NJWLWP */
 			p->p_holdcnt++;
+#endif
 		}
 		break;
 	    case VLNK:
 		uiop->uio_offset = (off_t)0;
 		nfsstats.readlink_bios++;
-		error = nfs_readlinkrpc(vp, uiop, curproc->p_ucred);
+		error = nfs_readlinkrpc(vp, uiop, curproc->l_proc->p_ucred);
 		break;
 	    case VDIR:
 		nfsstats.readdir_bios++;
 		uiop->uio_offset = bp->b_dcookie;
 		if (nmp->nm_flag & NFSMNT_RDIRPLUS) {
-			error = nfs_readdirplusrpc(vp, uiop, curproc->p_ucred);
+			error = nfs_readdirplusrpc(vp, uiop, curproc->l_proc->p_ucred);
 			if (error == NFSERR_NOTSUPP)
 				nmp->nm_flag &= ~NFSMNT_RDIRPLUS;
 		}
 		if ((nmp->nm_flag & NFSMNT_RDIRPLUS) == 0)
-			error = nfs_readdirrpc(vp, uiop, curproc->p_ucred);
+			error = nfs_readdirrpc(vp, uiop, curproc->l_proc->p_ucred);
 		if (!error) {
 			bp->b_dcookie = uiop->uio_offset;
 		}
@@ -1126,7 +1130,7 @@ nfs_getpages(v)
 	if (np->n_rcred) {
 		crfree(np->n_rcred);
 	}
-	np->n_rcred = curproc->p_ucred;
+	np->n_rcred = curproc->l_proc->p_ucred;
 	crhold(np->n_rcred);
 
 	/*
@@ -1531,7 +1535,7 @@ nfs_putpages(v)
 		commitoff = origoffset;
 		commitbytes = npages << PAGE_SHIFT;
 commit:
-		error = nfs_commit(vp, commitoff, commitbytes, curproc);
+		error = nfs_commit(vp, commitoff, commitbytes, curproc->l_proc);
 		nfs_del_tobecommitted_range(vp, commitoff, commitbytes);
 committed:
 		for (i = 0; i < npages; i++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.12 2000/12/31 17:54:29 ad Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.12.2.1 2001/03/05 22:49:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.11 2000/07/14 07:15:05 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.11.2.1 2001/03/05 22:49:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/wait.h>
 #include <sys/malloc.h>
@@ -68,7 +69,7 @@ kthread_create1(void (*func)(void *), void *arg,
 	va_list ap;
 
 	/* First, create the new process. */
-	error = fork1(&proc0, FORK_SHAREVM | FORK_SHARECWD | FORK_SHAREFILES |
+	error = fork1(&lwp0, FORK_SHAREVM | FORK_SHARECWD | FORK_SHAREFILES |
 	    FORK_SHARESIGS, SIGCHLD, NULL, 0, func, arg, NULL, &p2);
 	if (__predict_false(error != 0))
 		return (error);
@@ -79,7 +80,8 @@ kthread_create1(void (*func)(void *), void *arg,
 	 * to init(8) when they exit.  init(8) can easily wait them
 	 * out for us.
 	 */
-	p2->p_flag |= P_INMEM | P_SYSTEM | P_NOCLDWAIT;	/* XXX */
+	p2->p_flag |=  P_SYSTEM | P_NOCLDWAIT;	/* XXX */
+	LIST_FIRST(&p2->p_lwps)->l_flag |= L_INMEM;
 
 	/* Name it as specified. */
 	va_start(ap, fmt);
@@ -107,7 +109,7 @@ kthread_exit(int ecode)
 	 */
 	if (ecode != 0)
 		printf("WARNING: thread `%s' (%d) exits with status %d\n",
-		    curproc->p_comm, curproc->p_pid, ecode);
+		    curproc->l_proc->p_comm, curproc->l_proc->p_pid, ecode);
 
 	exit1(curproc, W_EXITCODE(ecode, 0));
 

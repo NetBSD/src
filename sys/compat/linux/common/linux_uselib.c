@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.2 2000/12/12 17:52:56 jdolecek Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.2.2.1 2001/03/05 22:49:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -85,14 +85,15 @@
  */
 
 int
-linux_sys_uselib(p, v, retval)
-	struct proc *p;
+linux_sys_uselib(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
 	struct linux_sys_uselib_args /* {
 		syscallarg(const char *) path;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	caddr_t sg;
 	long bsize, dsize, tsize, taddr, baddr, daddr;
 	struct nameidata ni;

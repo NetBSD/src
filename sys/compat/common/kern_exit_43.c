@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit_43.c,v 1.6 2000/06/28 15:39:25 mrg Exp $	*/
+/*	$NetBSD: kern_exit_43.c,v 1.6.2.1 2001/03/05 22:49:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -44,6 +44,7 @@
 #include <sys/systm.h>
 #include <sys/map.h>
 #include <sys/ioctl.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/time.h>
@@ -76,12 +77,9 @@
 #endif
 
 int
-compat_43_sys_wait(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_wait(struct lwp *l, void *v, register_t *retval)
 {
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(l->l_proc->p_emul);
 	int error;
 
 	struct sys_wait4_args /* {
@@ -92,12 +90,12 @@ compat_43_sys_wait(p, v, retval)
 	} */ a;
 
 #ifdef PSL_ALLCC
-	if ((GETPS(p->p_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
+	if ((GETPS(l->l_md.md_regs) & PSL_ALLCC) != PSL_ALLCC) {
 		SCARG(&a, options) = 0;
 		SCARG(&a, rusage) = NULL;
 	} else {
-		SCARG(&a, options) = p->p_md.md_regs[R0];
-		SCARG(&a, rusage) = (struct rusage *)p->p_md.md_regs[R1];
+		SCARG(&a, options) = l->l_md.md_regs[R0];
+		SCARG(&a, rusage) = (struct rusage *)l->l_md.md_regs[R1];
 	}
 #else
 	SCARG(&a, options) = 0;
@@ -105,7 +103,7 @@ compat_43_sys_wait(p, v, retval)
 #endif
 	SCARG(&a, pid) = WAIT_ANY;
 	SCARG(&a, status) = stackgap_alloc(&sg, sizeof(SCARG(&a, status)));
-	if ((error = sys_wait4(p, &a, retval)) != 0)
+	if ((error = sys_wait4(l, &a, retval)) != 0)
 		return error;
 	return copyin(SCARG(&a, status), &retval[1], sizeof(retval[1]));
 }

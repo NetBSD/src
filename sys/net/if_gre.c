@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.17 2001/02/20 07:58:17 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.17.2.1 2001/03/05 22:49:54 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -347,7 +348,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 int
 gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct proc *p = curproc;	/* XXX */
+	struct proc *p = curproc->l_proc;	/* XXX */
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct in_ifaddr *ia = (struct in_ifaddr *)data;

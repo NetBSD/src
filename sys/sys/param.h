@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.122 2001/02/14 18:21:42 eeh Exp $	*/
+/*	$NetBSD: param.h,v 1.122.2.1 2001/03/05 22:50:02 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -140,6 +140,9 @@
 /* Signals. */
 #include <sys/signal.h>
 
+/* Scheduler activations. */
+#include <sys/sa.h>
+
 /* Machine type dependent parameters. */
 #include <machine/param.h>
 #include <machine/limits.h>
@@ -165,7 +168,8 @@
 #define	PCATCH		0x100	/* OR'd with pri for tsleep to check signals */
 #define	PNORELOCK	0x200	/* OR'd with pri for cond_wait() to not relock
 				   the interlock */
-
+#define PNOEXITERR     	0x400   /* OR'd with pri for tsleep to not exit 
+				   with an error code when LWPs are exiting */
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
 #define	CMASK	022		/* default file mask: S_IWGRP|S_IWOTH */

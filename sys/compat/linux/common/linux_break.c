@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_break.c,v 1.49 1998/10/04 00:02:30 fvdl Exp $	*/
+/*	$NetBSD: linux_break.c,v 1.49.24.1 2001/03/05 22:49:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@
  * world uses this anymore
  */
 int
-linux_sys_break(p, v, retval)
-	struct proc *p;
+linux_sys_break(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {

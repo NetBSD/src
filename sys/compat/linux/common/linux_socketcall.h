@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.5 1999/03/25 04:26:45 sommerfe Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.5.20.1 2001/03/05 22:49:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -229,13 +229,13 @@ struct linux_sys_recvmsg_args {
 
 # ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_socket __P((struct proc *, void *, register_t *));
-int linux_sys_socketpair __P((struct proc *, void *, register_t *));
-int linux_sys_sendto __P((struct proc *, void *, register_t *));
-int linux_sys_recvfrom __P((struct proc *, void *, register_t *));
-int linux_sys_setsockopt __P((struct proc *, void *, register_t *));
-int linux_sys_getsockopt __P((struct proc *, void *, register_t *));
-int linux_sys_connect __P((struct proc *, void *, register_t *));
+int linux_sys_socket __P((struct lwp *, void *, register_t *));
+int linux_sys_socketpair __P((struct lwp *, void *, register_t *));
+int linux_sys_sendto __P((struct lwp *, void *, register_t *));
+int linux_sys_recvfrom __P((struct lwp *, void *, register_t *));
+int linux_sys_setsockopt __P((struct lwp *, void *, register_t *));
+int linux_sys_getsockopt __P((struct lwp *, void *, register_t *));
+int linux_sys_connect __P((struct lwp *, void *, register_t *));
 __END_DECLS
 # endif /* !_KERNEL */
 
