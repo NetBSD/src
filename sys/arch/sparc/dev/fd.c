@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.41 1996/11/27 21:14:33 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.42 1996/12/08 23:40:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -49,7 +49,10 @@
 #include <sys/disklabel.h>
 #include <sys/dkstat.h>
 #include <sys/disk.h>
+#include <sys/fdio.h>
 #include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
@@ -69,6 +72,8 @@
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
 
+/* XXX misuse a flag to identify format operation */
+#define B_FORMAT B_XXX
 #define b_cylin b_resid
 
 #define FD_DEBUG
@@ -159,18 +164,20 @@ struct fd_type {
 	int	size;		/* size of disk in sectors */
 	int	step;		/* steps per cylinder */
 	int	rate;		/* transfer speed code */
+	int	fillbyte;	/* format fill byte */
+	int	interleave;	/* interleave factor (formatting) */
 	char	*name;
 };
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
-	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,"1.44MB"    }, /* 1.44MB diskette */
-	{ 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS,"1.2MB"    }, /* 1.2 MB AT-diskettes */
-	{  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS,"360KB/AT" }, /* 360kB in 1.2MB drive */
-	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS,"360KB/PC" }, /* 360kB PC diskettes */
-	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,"720KB"    }, /* 3.5" 720kB diskette */
-	{  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS,"720KB/x"  }, /* 720kB in 1.2MB drive */
-	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,"360KB/x"  }, /* 360kB in 720kB drive */
+	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
+	{ 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS,0xf6,1, "1.2MB"    }, /* 1.2 MB AT-diskettes */
+	{  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS,0xf6,1, "360KB/AT" }, /* 360kB in 1.2MB drive */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,1,FDC_250KBPS,0xf6,1, "360KB/PC" }, /* 360kB PC diskettes */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5" 720kB diskette */
+	{  9,2,18,2,0xff,0xdf,0x23,0x50,80,1440,1,FDC_300KBPS,0xf6,1, "720KB/x"  }, /* 720kB in 1.2MB drive */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_250KBPS,0xf6,1, "360KB/x"  }, /* 360kB in 720kB drive */
 };
 
 /* software state, per disk (with up to 4 disks per ctlr) */
@@ -193,6 +200,7 @@ struct fd_softc {
 #define	FD_MOTOR	0x02		/* motor should be on */
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int sc_cylin;		/* where we think the head is */
+	int sc_opts;		/* user-set options */
 
 	void	*sc_sdhook;	/* shutdownhook cookie */
 
@@ -238,8 +246,10 @@ int	fdchwintr __P((struct fdc_softc *));
 void	fdchwintr __P((void));
 #endif
 int	fdcswintr __P((struct fdc_softc *));
+int	fdcstate __P((struct fdc_softc *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
+int	fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
 void	fd_do_eject __P((void));
 void	fd_mountroot_hook __P((struct device *));
 static void fdconf __P((struct fdc_softc *));
@@ -249,6 +259,19 @@ static void fdconf __P((struct fdc_softc *));
 #else
 #error 4
 #endif
+
+#ifdef FDC_C_HANDLER
+#if defined(SUN4M)
+#define FD_SET_SWINTR do {		\
+	if (CPU_ISSUN4M)		\
+		raise(0, PIL_FDSOFT);	\
+	else				\
+		ienab_bis(IE_L4);	\
+} while(0)
+#else
+#define AUDIO_SET_SWINTR ienab_bis(IE_FDSOFT)
+#endif /* defined(SUN4M) */
+#endif /* FDC_C_HANDLER */
 
 #define OBP_FDNAME	(CPU_ISSUN4M ? "SUNW,fdtwo" : "fd")
 
@@ -315,7 +338,7 @@ fdprint(aux, fdc)
 
 	if (!fdc)
 		printf(" drive %d", fa->fa_drive);
-	return QUIET;
+	return (QUIET);
 }
 
 static void
@@ -495,7 +518,7 @@ fdmatch(parent, match, aux)
 
 	if (drive > 0)
 		/* XXX - for now, punt > 1 drives */
-		return 0;
+		return (0);
 
 	if (fdc->sc_flags & FDC_82077) {
 		/* select drive and turn on motor */
@@ -546,7 +569,7 @@ fdmatch(parent, match, aux)
 		auxregbisc(0, AUXIO_FDS);
 	}
 
-	return ok;
+	return (ok);
 }
 
 /*
@@ -610,8 +633,8 @@ fd_dev_to_type(fd, dev)
 	int type = FDTYPE(dev);
 
 	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
-		return NULL;
-	return type ? &fd_types[type - 1] : fd->sc_deftype;
+		return (NULL);
+	return (type ? &fd_types[type - 1] : fd->sc_deftype);
 }
 
 void
@@ -806,7 +829,7 @@ fd_motor_on(arg)
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
 	if ((fdc->sc_drives.tqh_first == fd) && (fdc->sc_state == MOTORWAIT))
-		(void) fdcswintr(fdc);
+		(void) fdcstate(fdc);
 	splx(s);
 }
 
@@ -825,7 +848,7 @@ fdcresult(fdc)
 		if (i == (NE7_DIO | NE7_RQM | NE7_CB)) {
 			if (n >= sizeof(fdc->sc_status)) {
 				log(LOG_ERR, "fdcresult: overrun\n");
-				return -1;
+				return (-1);
 			}
 			fdc->sc_status[n++] = *fdc->sc_reg_fifo;
 		} else
@@ -845,10 +868,10 @@ out_fdc(fdc, x)
 	while (((*fdc->sc_reg_msr & (NE7_DIO|NE7_RQM)) != NE7_RQM) && i-- > 0)
 		delay(1);
 	if (i <= 0)
-		return -1;
+		return (-1);
 
 	*fdc->sc_reg_fifo = x;
-	return 0;
+	return (0);
 }
 
 int
@@ -863,17 +886,17 @@ fdopen(dev, flags, fmt, p)
 
 	unit = FDUNIT(dev);
 	if (unit >= fd_cd.cd_ndevs)
-		return ENXIO;
+		return (ENXIO);
 	fd = fd_cd.cd_devs[unit];
 	if (fd == 0)
-		return ENXIO;
+		return (ENXIO);
 	type = fd_dev_to_type(fd, dev);
 	if (type == NULL)
-		return ENXIO;
+		return (ENXIO);
 
 	if ((fd->sc_flags & FD_OPEN) != 0 &&
 	    fd->sc_type != type)
-		return EBUSY;
+		return (EBUSY);
 
 	fd->sc_type = type;
 	fd->sc_cylin = -1;
@@ -899,7 +922,7 @@ fdopen(dev, flags, fmt, p)
 	fd->sc_dk.dk_openmask =
 	    fd->sc_dk.dk_copenmask | fd->sc_dk.dk_bopenmask;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -912,6 +935,7 @@ fdclose(dev, flags, fmt, p)
 	int pmask = (1 << DISKPART(dev));
 
 	fd->sc_flags &= ~FD_OPEN;
+	fd->sc_opts &= ~(FDOPT_NORETRY|FDOPT_SILENT);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -925,7 +949,7 @@ fdclose(dev, flags, fmt, p)
 	fd->sc_dk.dk_openmask =
 	    fd->sc_dk.dk_copenmask | fd->sc_dk.dk_bopenmask;
 
-	return 0;
+	return (0);
 }
 
 int
@@ -961,7 +985,7 @@ fdcstart(fdc)
 		return;
 	}
 #endif
-	(void) fdcswintr(fdc);
+	(void) fdcstate(fdc);
 }
 
 void
@@ -1032,7 +1056,7 @@ fdctimeout(arg)
 	else
 		fdc->sc_state = DEVIDLE;
 
-	(void) fdcswintr(fdc);
+	(void) fdcstate(fdc);
 	splx(s);
 }
 
@@ -1045,7 +1069,7 @@ fdcpseudointr(arg)
 
 	/* Just ensure it has the right spl. */
 	s = splbio();
-	(void) fdcswintr(fdc);
+	(void) fdcstate(fdc);
 	splx(s);
 }
 
@@ -1063,25 +1087,26 @@ fdchwintr(fdc)
 	int read;
 
 	switch (fdc->sc_istate) {
+	case ISTATE_IDLE:
+		return (0);
 	case ISTATE_SENSEI:
 		out_fdc(fdc, NE7CMD_SENSEI);
 		fdcresult(fdc);
 		fdc->sc_istate = ISTATE_IDLE;
-		ienab_bis(IE_FDSOFT);
-		return 1;
-	case ISTATE_IDLE:
+		FD_SET_SWINTR;
+		return (1);
 	case ISTATE_SPURIOUS:
 		auxregbisc(0, AUXIO_FDS);	/* Does this help? */
 		fdcresult(fdc);
 		fdc->sc_istate = ISTATE_SPURIOUS;
 		printf("fdc: stray hard interrupt... ");
-		ienab_bis(IE_FDSOFT);
-		return 1;
+		FD_SET_SWINTR;
+		return (1);
 	case ISTATE_DMA:
 		break;
 	default:
 		printf("fdc: goofed ...\n");
-		return 1;
+		return (1);
 	}
 
 	read = bp->b_flags & B_READ;
@@ -1120,16 +1145,32 @@ fdchwintr(fdc)
 			delay(10);
 			auxregbisc(0, AUXIO_FTC);
 			fdcresult(fdc);
-			ienab_bis(IE_FDSOFT);
+			FD_SET_SWINTR;
 			break;
 		}
 	}
-	return 1;
+	return (1);
 }
 #endif
 
 int
 fdcswintr(fdc)
+	struct fdc_softc *fdc;
+{
+	int s;
+
+	if (fdc->sc_istate != ISTATE_DONE)
+		return (0);
+
+	fdc->sc_istate = ISTATE_IDLE;
+	s = splbio();
+	fdcstate(fdc);
+	splx(s);
+	return (1);
+}
+
+int
+fdcstate(fdc)
 	struct fdc_softc *fdc;
 {
 #define	st0	fdc->sc_status[0]
@@ -1161,7 +1202,7 @@ loop:
 	fd = fdc->sc_drives.tqh_first;
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
- 		return 0;
+ 		return (0);
 	}
 
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
@@ -1182,7 +1223,7 @@ loop:
 		untimeout(fd_motor_off, fd);
 		if ((fd->sc_flags & FD_MOTOR_WAIT) != 0) {
 			fdc->sc_state = MOTORWAIT;
-			return 1;
+			return (1);
 		}
 		if ((fd->sc_flags & FD_MOTOR) == 0) {
 			/* Turn on the motor, being careful about pairing. */
@@ -1201,7 +1242,7 @@ loop:
 				fd->sc_flags &= ~FD_MOTOR_WAIT;
 				goto loop;
 			}
-			return 1;
+			return (1);
 		}
 		/* Make sure the right drive is selected. */
 		fd_set_motor(fdc);
@@ -1237,7 +1278,7 @@ loop:
 		disk_busy(&fd->sc_dk);
 
 		timeout(fdctimeout, fdc, 4 * hz);
-		return 1;
+		return (1);
 
 	case DOIO:
 	doio:
@@ -1293,7 +1334,7 @@ loop:
 
 		/* allow 2 seconds for operation */
 		timeout(fdctimeout, fdc, 2 * hz);
-		return 1;				/* will return later */
+		return (1);				/* will return later */
 
 	case SEEKWAIT:
 		untimeout(fdctimeout, fdc);
@@ -1301,7 +1342,7 @@ loop:
 		if (fdc->sc_flags & FDC_NEEDHEADSETTLE) {
 			/* allow 1/50 second for heads to settle */
 			timeout(fdcpseudointr, fdc, hz / 50);
-			return 1;		/* will return later */
+			return (1);		/* will return later */
 		}
 
 	case SEEKCOMPLETE:
@@ -1414,7 +1455,7 @@ loop:
 		fdc->sc_istate = ISTATE_SENSEI;
 		fdc->sc_state = RESETCOMPLETE;
 		timeout(fdctimeout, fdc, hz / 2);
-		return 1;			/* will return later */
+		return (1);			/* will return later */
 
 	case RESETCOMPLETE:
 		untimeout(fdctimeout, fdc);
@@ -1429,7 +1470,7 @@ loop:
 		OUT_FDC(fdc, NE7CMD_RECAL, RECALTIMEDOUT);
 		OUT_FDC(fdc, fd->sc_drive, RECALTIMEDOUT);
 		timeout(fdctimeout, fdc, 5 * hz);
-		return 1;			/* will return later */
+		return (1);			/* will return later */
 
 	case RECALWAIT:
 		untimeout(fdctimeout, fdc);
@@ -1437,7 +1478,7 @@ loop:
 		if (fdc->sc_flags & FDC_NEEDHEADSETTLE) {
 			/* allow 1/30 second for heads to settle */
 			timeout(fdcpseudointr, fdc, hz / 30);
-			return 1;		/* will return later */
+			return (1);		/* will return later */
 		}
 
 	case RECALCOMPLETE:
@@ -1454,12 +1495,12 @@ loop:
 
 	case MOTORWAIT:
 		if (fd->sc_flags & FD_MOTOR_WAIT)
-			return 1;		/* time's not up yet */
+			return (1);		/* time's not up yet */
 		goto doseek;
 
 	default:
 		fdcstatus(&fd->sc_dv, 0, "stray interrupt");
-		return 1;
+		return (1);
 	}
 #ifdef DIAGNOSTIC
 	panic("fdcintr: impossible");
@@ -1481,6 +1522,8 @@ fdcretry(fdc)
 	bp = fd->sc_q.b_actf;
 
 	fdc->sc_overruns = 0;
+	if (fd->sc_opts & FDOPT_NORETRY)
+		goto fail;
 
 	switch (fdc->sc_errors) {
 	case 0:
@@ -1500,17 +1543,22 @@ fdcretry(fdc)
 		break;
 
 	default:
-		diskerr(bp, "fd", "hard error", LOG_PRINTF,
-		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
+	fail:
+		if ((fd->sc_opts & FDOPT_SILENT) == 0) {
+			diskerr(bp, "fd", "hard error", LOG_PRINTF,
+				fd->sc_skip / FDC_BSIZE,
+				(struct disklabel *)NULL);
 
-		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
-		    NE7_ST0BITS, bits, sizeof(bits)));
-		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
-		    NE7_ST1BITS, bits, sizeof(bits)));
-		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
-		    NE7_ST2BITS, bits, sizeof(bits)));
-		printf(" cyl %d head %d sec %d)\n",
-		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
+			printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
+				NE7_ST0BITS, bits, sizeof(bits)));
+			printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
+				NE7_ST1BITS, bits, sizeof(bits)));
+			printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
+				NE7_ST2BITS, bits, sizeof(bits)));
+			printf(" cyl %d head %d sec %d)\n",
+				fdc->sc_status[3], fdc->sc_status[4],
+				fdc->sc_status[5]);
+		}
 
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
@@ -1525,7 +1573,7 @@ fdsize(dev)
 {
 
 	/* Swapping to floppies would not make sense. */
-	return -1;
+	return (-1);
 }
 
 int
@@ -1537,7 +1585,7 @@ fddump(dev, blkno, va, size)
 {
 
 	/* Not implemented. */
-	return EINVAL;
+	return (EINVAL);
 }
 
 int
@@ -1549,6 +1597,11 @@ fdioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fdformat_parms *form_parms;
+	struct fdformat_cmd *form_cmd;
+	struct ne7_fd_formb fd_formb;
+	int il[FD_MAX_NSEC + 1];
+	int i, j;
 	int error;
 
 	switch (cmd) {
@@ -1560,32 +1613,151 @@ fdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 		/* XXX do something */
-		return 0;
+		return (0);
 
 	case DIOCWDINFO:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return (EBADF);
 
 		error = setdisklabel(fd->sc_dk.dk_label,
 				    (struct disklabel *)addr, 0,
 				    fd->sc_dk.dk_cpulabel);
 		if (error)
-			return error;
+			return (error);
 
 		error = writedisklabel(dev, fdstrategy,
 				       fd->sc_dk.dk_label,
 				       fd->sc_dk.dk_cpulabel);
-		return error;
+		return (error);
 
 	case DIOCLOCK:
 		/*
 		 * Nothing to do here, really.
 		 */
-		return 0;
+		return (0);
 
 	case DIOCEJECT:
 		fd_do_eject();
+		return (0);
+
+	case FDIOCGETFORMAT:
+		form_parms = (struct fdformat_parms *)addr;
+		form_parms->fdformat_version = FDFORMAT_VERSION;
+		form_parms->nbps = 128 * (1 << fd->sc_type->secsize);
+		form_parms->ncyl = fd->sc_type->tracks;
+		form_parms->nspt = fd->sc_type->sectrac;
+		form_parms->ntrk = fd->sc_type->heads;
+		form_parms->stepspercyl = fd->sc_type->step;
+		form_parms->gaplen = fd->sc_type->gap2;
+		form_parms->fillbyte = fd->sc_type->fillbyte;
+		form_parms->interleave = fd->sc_type->interleave;
+		switch (fd->sc_type->rate) {
+		case FDC_500KBPS:
+			form_parms->xfer_rate = 500 * 1024;
+			break;
+		case FDC_300KBPS:
+			form_parms->xfer_rate = 300 * 1024;
+			break;
+		case FDC_250KBPS:
+			form_parms->xfer_rate = 250 * 1024;
+			break;
+		default:
+			return (EINVAL);
+		}
 		return 0;
+
+	case FDIOCSETFORMAT:
+		if ((flag & FWRITE) == 0)
+			return (EBADF);	/* must be opened for writing */
+
+		form_parms = (struct fdformat_parms *)addr;
+		if (form_parms->fdformat_version != FDFORMAT_VERSION)
+			return (EINVAL);/* wrong version of formatting prog */
+
+		i = form_parms->nbps >> 7;
+		if ((form_parms->nbps & 0x7f) || ffs(i) == 0 ||
+		    i & ~(1 << (ffs(i)-1)))
+			/* not a power-of-two multiple of 128 */
+			return (EINVAL);
+
+		switch (form_parms->xfer_rate) {
+		case 500 * 1024:
+			fd->sc_type->rate = FDC_500KBPS;
+			break;
+		case 300 * 1024:
+			fd->sc_type->rate = FDC_300KBPS;
+			break;
+		case 250 * 1024:
+			fd->sc_type->rate = FDC_250KBPS;
+			break;
+		default:
+			return (EINVAL);
+		}
+
+		if (form_parms->nspt > FD_MAX_NSEC ||
+		    form_parms->fillbyte > 0xff ||
+		    form_parms->interleave > 0xff)
+			return EINVAL;
+		fd->sc_type->sectrac = form_parms->nspt;
+		if (form_parms->ntrk != 2 && form_parms->ntrk != 1)
+			return EINVAL;
+		fd->sc_type->heads = form_parms->ntrk;
+		fd->sc_type->seccyl = form_parms->nspt * form_parms->ntrk;
+		fd->sc_type->secsize = ffs(i)-1;
+		fd->sc_type->gap2 = form_parms->gaplen;
+		fd->sc_type->tracks = form_parms->ncyl;
+		fd->sc_type->size = fd->sc_type->seccyl * form_parms->ncyl *
+			form_parms->nbps / DEV_BSIZE;
+		fd->sc_type->step = form_parms->stepspercyl;
+		fd->sc_type->fillbyte = form_parms->fillbyte;
+		fd->sc_type->interleave = form_parms->interleave;
+		return 0;
+
+	case FDIOCFORMAT_TRACK:
+		if((flag & FWRITE) == 0)
+			/* must be opened for writing */
+			return (EBADF);
+		form_cmd = (struct fdformat_cmd *)addr;
+		if (form_cmd->formatcmd_version != FDFORMAT_VERSION)
+			/* wrong version of formatting prog */
+			return (EINVAL);
+
+		if (form_cmd->head >= fd->sc_type->heads ||
+		    form_cmd->cylinder >= fd->sc_type->tracks) {
+			return (EINVAL);
+		}
+
+		fd_formb.head = form_cmd->head;
+		fd_formb.cyl = form_cmd->cylinder;
+		fd_formb.transfer_rate = fd->sc_type->rate;
+		fd_formb.fd_formb_secshift = fd->sc_type->secsize;
+		fd_formb.fd_formb_nsecs = fd->sc_type->sectrac;
+		fd_formb.fd_formb_gaplen = fd->sc_type->gap2;
+		fd_formb.fd_formb_fillbyte = fd->sc_type->fillbyte;
+
+		bzero(il,sizeof il);
+		for (j = 0, i = 1; i <= fd_formb.fd_formb_nsecs; i++) {
+			while (il[(j%fd_formb.fd_formb_nsecs)+1])
+				j++;
+			il[(j%fd_formb.fd_formb_nsecs)+1] = i;
+			j += fd->sc_type->interleave;
+		}
+		for (i = 0; i < fd_formb.fd_formb_nsecs; i++) {
+			fd_formb.fd_formb_cylno(i) = form_cmd->cylinder;
+			fd_formb.fd_formb_headno(i) = form_cmd->head;
+			fd_formb.fd_formb_secno(i) = il[i+1];
+			fd_formb.fd_formb_secsize(i) = fd->sc_type->secsize;
+		}
+
+		return fdformat(dev, &fd_formb, p);
+
+	case FDIOCGETOPTS:		/* get drive options */
+		*(int *)addr = fd->sc_opts;
+		return (0);
+
+	case FDIOCSETOPTS:		/* set drive options */
+		fd->sc_opts = *(int *)addr;
+		return (0);
 
 #ifdef DEBUG
 	case _IO('f', 100):
@@ -1602,14 +1774,14 @@ fdioctl(dev, cmd, addr, flag, p)
 		printf(">\n");
 		}
 
-		return 0;
+		return (0);
 	case _IOW('f', 101, int):
 		((struct fdc_softc *)fd->sc_dv.dv_parent)->sc_cfg &=
 			~CFG_THRHLD_MASK;
 		((struct fdc_softc *)fd->sc_dv.dv_parent)->sc_cfg |=
 			(*(int *)addr & CFG_THRHLD_MASK);
 		fdconf((struct fdc_softc *) fd->sc_dv.dv_parent);
-		return 0;
+		return (0);
 	case _IO('f', 102):
 		{
 		int i;
@@ -1622,15 +1794,78 @@ fdioctl(dev, cmd, addr, flag, p)
 			printf(" 0x%x", fdc->sc_status[i]);
 		}
 		printf(">\n");
-		return 0;
+		return (0);
 #endif
 	default:
-		return ENOTTY;
+		return (ENOTTY);
 	}
 
 #ifdef DIAGNOSTIC
 	panic("fdioctl: impossible");
 #endif
+}
+
+int
+fdformat(dev, finfo, p)
+	dev_t dev;
+	struct ne7_fd_formb *finfo;
+	struct proc *p;
+{
+	int rv = 0, s;
+	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
+	struct fd_type *type = fd->sc_type;
+	struct buf *bp;
+
+	/* set up a buffer header for fdstrategy() */
+	bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
+	if (bp == 0)
+		return (ENOBUFS);
+
+	PHOLD(p);
+	bzero((void *)bp, sizeof(struct buf));
+	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
+	bp->b_proc = p;
+	bp->b_dev = dev;
+
+	/*
+	 * calculate a fake blkno, so fdstrategy() would initiate a
+	 * seek to the requested cylinder
+	 */
+	bp->b_blkno = (finfo->cyl * (type->sectrac * type->heads)
+		       + finfo->head * type->sectrac) * FDC_BSIZE / DEV_BSIZE;
+
+	bp->b_bcount = sizeof(struct fd_idfield_data) * finfo->fd_formb_nsecs;
+	bp->b_data = (caddr_t)finfo;
+
+#ifdef FD_DEBUG
+	if (fdc_debug)
+		printf("fdformat: blkno %x count %lx\n",
+			bp->b_blkno, bp->b_bcount);
+#endif
+
+	/* now do the format */
+	fdstrategy(bp);
+
+	/* ...and wait for it to complete */
+	s = splbio();
+	while (!(bp->b_flags & B_DONE)) {
+		rv = tsleep((caddr_t)bp, PRIBIO, "fdform", 20 * hz);
+		if (rv == EWOULDBLOCK)
+			break;
+	}
+	splx(s);
+
+	if (rv == EWOULDBLOCK) {
+		/* timed out */
+		rv = EIO;
+		biodone(bp);
+	}
+	if (bp->b_flags & B_ERROR) {
+		rv = bp->b_error;
+	}
+	PRELE(p);
+	free(bp, M_TEMP);
+	return (rv);
 }
 
 void
@@ -1733,8 +1968,6 @@ fd_mountroot_hook(dev)
 }
 
 #ifdef RAMDISK_HOOKS
-#include <sys/malloc.h>
-#include <sys/proc.h>
 
 #define FDMICROROOTSIZE ((2*18*80) << DEV_BSHIFT)
 
@@ -1785,6 +2018,6 @@ fd_read_rd_image(sizep, addrp)
 	(void)fdclose(dev, 0, S_IFCHR, NULL);
 	*sizep = offset;
 	fd_do_eject();
-	return 0;
+	return (0);
 }
 #endif
