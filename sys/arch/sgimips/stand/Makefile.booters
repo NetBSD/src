@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.6 2001/12/20 20:30:59 thorpej Exp $
+# $NetBSD: Makefile.booters,v 1.7 2002/11/10 17:12:58 thorpej Exp $
 
 # $S must correspond to the top of the 'sys' tree
 S=	${.CURDIR}/../../../..
@@ -18,14 +18,13 @@ CLEANFILES+= machine mips
 realall: machine-links ${PROG}
 
 .PATH:		${.CURDIR}/../common
-AFLAGS+=	-D_LOCORE -D_KERNEL
+AFLAGS+=	-D_LOCORE -D_KERNEL -mno-abicalls
 # -I${.CURDIR}/../.. done by Makefile.inc
 #CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -DHEAP_VARIABLE -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -I${.OBJDIR} -I${S}
 # compiler flags for smallest code size
-CFLAGS=		-Os -g -mmemcpy -mno-abicalls -G 128
+CFLAGS=		-ffreestanding -Os -g -mmemcpy -mno-abicalls -msoft-float -G 128
 LDBUG=		-T $S/arch/mips/conf/stand.ldscript
-
 NETBSD_VERS!=	sh ${.CURDIR}/../../../../conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
 
