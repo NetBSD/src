@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetbyaddr.c,v 1.9 1997/07/21 14:07:55 jtc Exp $	*/
+/*	$NetBSD: getnetbyaddr.c,v 1.10 1997/07/31 23:40:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,22 +40,19 @@ static char sccsid_[] = "from getnetbyaddr.c	1.1 (Coimbra) 93/06/02";
 static char rcsid[] = "$Id: getnetbyaddr.c,v 8.2 1996/05/09 05:59:13 vixie Exp ";
 static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getnetbyaddr.c,v 1.9 1997/07/21 14:07:55 jtc Exp $");
+__RCSID("$NetBSD: getnetbyaddr.c,v 1.10 1997/07/31 23:40:49 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
 #include <netdb.h>
-
-#ifdef __weak_alias
-__weak_alias(getnetbyaddr,_getnetbyaddr);
-#endif
 
 extern int _net_stayopen;
 
-struct netent *_getnetbyaddr __P((unsigned long, int type));
+/* XXX private header! */
+struct netent *__getnetbyaddr __P((unsigned long, int type));
+
 struct netent *
-_getnetbyaddr(net, type)
+__getnetbyaddr(net, type)
 	unsigned long net;
 	int type;
 {
