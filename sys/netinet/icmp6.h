@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.26 2003/06/06 08:13:43 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.27 2003/06/06 09:37:29 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -99,12 +99,14 @@ struct icmp6_hdr {
 
 #define ICMP6_ECHO_REQUEST		128	/* echo service */
 #define ICMP6_ECHO_REPLY		129	/* echo reply */
-#define ICMP6_MEMBERSHIP_QUERY		130	/* group membership query */
 #define MLD_LISTENER_QUERY		130 	/* multicast listener query */
-#define ICMP6_MEMBERSHIP_REPORT		131	/* group membership report */
 #define MLD_LISTENER_REPORT		131	/* multicast listener report */
-#define ICMP6_MEMBERSHIP_REDUCTION	132	/* group membership termination */
 #define MLD_LISTENER_DONE		132	/* multicast listener done */
+
+/* RFC2292 decls */
+#define ICMP6_MEMBERSHIP_QUERY		130	/* group membership query */
+#define ICMP6_MEMBERSHIP_REPORT		131	/* group membership report */
+#define ICMP6_MEMBERSHIP_REDUCTION	132	/* group membership termination */
 
 #ifndef _KERNEL
 /* the followings are for backward compatibility to old KAME apps. */
