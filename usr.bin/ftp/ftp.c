@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.111 2000/11/15 04:09:19 itojun Exp $	*/
+/*	$NetBSD: ftp.c,v 1.112 2000/11/24 13:01:24 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.111 2000/11/15 04:09:19 itojun Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.112 2000/11/24 13:01:24 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,8 +223,9 @@ hookup(char *host, char *port)
 		if (res0->ai_next)	/* if we have multiple possibilities */
 #endif
 		{
-			getnameinfo(res->ai_addr, res->ai_addrlen,
-			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
+			if (getnameinfo(res->ai_addr, res->ai_addrlen,
+			    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST))
+				strlcpy(hbuf, "?", sizeof(hbuf));
 			fprintf(ttyout, "Trying %s...\n", hbuf);
 		}
 		((struct sockaddr_in *)res->ai_addr)->sin_port = htons(portnum);
@@ -240,9 +241,10 @@ hookup(char *host, char *port)
 		if (error) {
 			/* this "if" clause is to prevent print warning twice */
 			if (res->ai_next) {
-				getnameinfo(res->ai_addr, res->ai_addrlen,
+				if (getnameinfo(res->ai_addr, res->ai_addrlen,
 				    hbuf, sizeof(hbuf), NULL, 0,
-				    NI_NUMERICHOST);
+				    NI_NUMERICHOST))
+					strlcpy(hbuf, "?", sizeof(hbuf));
 				warn("connect to address %s", hbuf);
 			}
 			cause = "connect";
@@ -1609,8 +1611,9 @@ initconn(void)
 		warn("listen");
 
 	if (sendport) {
-		char hname[NI_MAXHOST];
+		char hname[NI_MAXHOST], sname[NI_MAXSERV];
 		int af;
+		struct sockinet tmp;
 
 		switch (data_addr.su_family) {
 		case AF_INET:
@@ -1623,13 +1626,16 @@ initconn(void)
 		case AF_INET6:
 #endif
 			af = (data_addr.su_family == AF_INET) ? 1 : 2;
-			if (getnameinfo((struct sockaddr *)&data_addr.si_su,
-			    data_addr.su_len, hname, sizeof(hname), NULL, 0,
-			    NI_NUMERICHOST)) {
+			tmp = data_addr;
+			if (tmp.su_family == AF_INET6)
+				tmp.si_su.su_sin6.sin6_scope_id = 0;
+			if (getnameinfo((struct sockaddr *)&tmp.si_su,
+			    tmp.su_len, hname, sizeof(hname), sname,
+			    sizeof(sname), NI_NUMERICHOST | NI_NUMERICSERV)) {
 				result = ERROR;
 			} else {
-				result = command("EPRT |%d|%s|%d|", af, hname,
-						ntohs(data_addr.su_port));
+				result = command("EPRT |%d|%s|%s|", af, hname,
+				    sname);
 				if (!connected)
 					return (1);
 				if (result != COMPLETE) {
