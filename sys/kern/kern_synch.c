@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.32 1995/04/22 19:42:58 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.33 1995/06/08 23:51:03 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -638,6 +638,12 @@ setrunnable(p)
 	default:
 		panic("setrunnable");
 	case SSTOP:
+		/*
+		 * If we're being traced (possibly because someone attached us
+		 * while we were stopped), check for a signal from the debugger.
+		 */
+		if ((p->p_flag & P_TRACED) != 0 && p->p_xstat != 0)
+			p->p_siglist |= sigmask(p->p_xstat);
 	case SSLEEP:
 		unsleep(p);		/* e.g. when sending signals */
 		break;

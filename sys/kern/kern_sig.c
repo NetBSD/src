@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.41 1995/04/22 19:42:57 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.42 1995/06/08 23:51:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -897,21 +897,22 @@ issignal(p)
 			return (0);
 		signum = ffs((long)mask);
 		mask = sigmask(signum);
-		prop = sigprop[signum];
+		p->p_siglist &= ~mask;		/* take the signal! */
+
 		/*
 		 * We should see pending but ignored signals
 		 * only if P_TRACED was on when they were posted.
 		 */
-		if (mask & p->p_sigignore && (p->p_flag & P_TRACED) == 0) {
-			p->p_siglist &= ~mask;
+		if (mask & p->p_sigignore && (p->p_flag & P_TRACED) == 0)
 			continue;
-		}
+
 		if (p->p_flag & P_TRACED && (p->p_flag & P_PPWAIT) == 0) {
 			/*
 			 * If traced, always stop, and stay
 			 * stopped until released by the debugger.
 			 */
 			p->p_xstat = signum;
+
 			if (p->p_flag & P_FSTRACE) {
 #ifdef	PROCFS
 				/* procfs debugging */
@@ -931,25 +932,24 @@ issignal(p)
 			}
 
 			/*
-			 * If parent wants us to take the signal,
-			 * then it will leave it in p->p_xstat;
-			 * otherwise we just look for signals again.
+			 * If we are no longer being traced, or the parent
+			 * didn't give us a signal, look for more signals.
 			 */
-			p->p_siglist &= ~mask;	/* clear the old signal */
-			signum = p->p_xstat;
-			if (signum == 0)
+			if ((p->p_flag & P_TRACED) == 0 || p->p_xstat == 0)
 				continue;
 
 			/*
-			 * Put the new signal into p_siglist.  If the
-			 * signal is being masked, look for other signals.
+			 * If the new signal is being masked, look for other
+			 * signals.
 			 */
+			signum = p->p_xstat;
 			mask = sigmask(signum);
-			p->p_siglist |= mask;
-			if ((p->p_flag & P_TRACED) == 0 ||
-			    (p->p_sigmask & mask) != 0)
+			if ((p->p_sigmask & mask) != 0)
 				continue;
+			p->p_siglist &= ~mask;		/* take the signal! */
 		}
+
+		prop = sigprop[signum];
 
 		/*
 		 * Decide whether the signal should be returned.
@@ -998,7 +998,7 @@ issignal(p)
 				 */
 				break;		/* == ignore */
 			} else
-				return (signum);
+				goto keep;
 			/*NOTREACHED*/
 
 		case (long)SIG_IGN:
@@ -1017,11 +1017,14 @@ issignal(p)
 			 * This signal has an action, let
 			 * postsig() process it.
 			 */
-			return (signum);
+			goto keep;
 		}
-		p->p_siglist &= ~mask;		/* take the signal! */
 	}
 	/* NOTREACHED */
+
+keep:
+	p->p_siglist |= mask;		/* leave the signal for later */
+	return (signum);
 }
 
 /*
