@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.h,v 1.19.10.1 2002/08/27 09:33:18 lukem Exp $	*/
+/*	$NetBSD: in6_pcb.h,v 1.19.10.2 2004/06/14 02:47:52 jmc Exp $	*/
 /*	$KAME: in6_pcb.h,v 1.45 2001/02/09 05:59:46 itojun Exp $	*/
 
 /*
@@ -137,9 +137,11 @@ struct	in6pcb {
 #if 0 /* obsoleted */
 #define IN6P_BINDV6ONLY		0x10000000 /* do not grab IPv4 traffic */
 #endif
+#define IN6P_MINMTU		0x20000000 /* use minimum MTU */
 
 #define IN6P_CONTROLOPTS	(IN6P_PKTINFO|IN6P_HOPLIMIT|IN6P_HOPOPTS|\
-				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS)
+				 IN6P_DSTOPTS|IN6P_RTHDR|IN6P_RTHDRDSTOPTS|\
+				 IN6P_MINMTU)
 
 
 #define IN6PLOOKUP_WILDCARD	1
