@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.16 2002/05/10 02:31:45 lukem Exp $
+#	$NetBSD: Makefile.mdset,v 1.17 2002/10/14 16:16:09 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
@@ -50,18 +50,18 @@
 .for _K _I _F in ${MDSETTARGETS}			# {
 _FILENAME:=${_F}		# work around obscure issue in make(1)
 .if ${_FILENAME} == "-"
-_KERNEL.${_K}:=	netbsd.${_K}
+_KERNEL.${_K}.${_F}:=	netbsd.${_K}
 .else
-_KERNEL.${_K}:=	${_F}
+_KERNEL.${_K}.${_F}:=	${_F}
 .endif
 
-KERNELS+=	${_KERNEL.${_K}}.gz
+KERNELS+=	${_KERNEL.${_K}.${_F}}.gz
 
 .for _S _C in ${MDSET_SUFFIXES.${_FILENAME}}		# {
-KERNELS+=	${_KERNEL.${_K}}.${_S}.gz
-CLEANFILES+=	${_KERNEL.${_K}}.${_S}
+KERNELS+=	${_KERNEL.${_K}.${_F}}.${_S}.gz
+CLEANFILES+=	${_KERNEL.${_K}.${_F}}.${_S}
 
-${_KERNEL.${_K}}.${_S}: ${_KERNEL.${_K}}
+${_KERNEL.${_K}.${_F}}.${_S}: ${_KERNEL.${_K}.${_F}}
 .if defined(${_C})
 	${${_C}}
 .else
@@ -69,21 +69,21 @@ ${_KERNEL.${_K}}.${_S}: ${_KERNEL.${_K}}
 	false
 .endif
 
-${_KERNEL.${_K}}.${_S}.gz: ${_KERNEL.${_K}}.${_S}
+${_KERNEL.${_K}.${_F}}.${_S}.gz: ${_KERNEL.${_K}.${_F}}.${_S}
 	-rm -f ${.TARGET}
 	gzip -9c ${.ALLSRC} > ${.TARGET}
 
 .endfor							# }
 
 .if !defined(MDSET_NOSYMBOLS.${_FILENAME})
-KERNELSYMS+=	${_KERNEL.${_K}}.symbols.gz
+KERNELSYMS+=	${_KERNEL.${_K}.${_F}}.symbols.gz
 .endif
 
 .if defined(MDSET_POST.${_FILENAME})
-_POST.${_KERNEL.${_K}}:= ${MDSET_POST.${_FILENAME}}
+_POST.${_KERNEL.${_K}.${_F}}:= ${MDSET_POST.${_FILENAME}}
 .endif
 
-${_KERNEL.${_K}}: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
+${_KERNEL.${_K}.${_F}}: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
 	@echo "mdsetimage: ${KERNOBJDIR}/${_K}/netbsd"
 	@echo "      with: ${_I}"
 	@echo "      into: ${.TARGET}"
@@ -100,11 +100,11 @@ ${_KERNEL.${_K}}: .NOTMAIN ${KERNOBJDIR}/${_K}/netbsd ${_I}
 	${_POST.${.TARGET}}
 .endif
 
-${_KERNEL.${_K}}.gz: ${_KERNEL.${_K}}
+${_KERNEL.${_K}.${_F}}.gz: ${_KERNEL.${_K}.${_F}}
 	-rm -f ${.TARGET}
 	gzip -9c ${.ALLSRC} > ${.TARGET}
 
-CLEANFILES+=	${_KERNEL.${_K}} 
+CLEANFILES+=	${_KERNEL.${_K}.${_F}} 
 
 .endfor							# }
 
