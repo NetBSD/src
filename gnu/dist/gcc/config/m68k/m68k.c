@@ -36,6 +36,9 @@ Boston, MA 02111-1307, USA.  */
 /* Needed for use_return_insn.  */
 #include "flags.h"
 
+/* Prototype for dwarf2out_cfi_label() */
+#include "tree.h"
+
 #ifdef SUPPORT_SUN_FPA
 
 /* Index into this array by (register number >> 3) to find the
