@@ -31,11 +31,11 @@
 #include "scsi/scsi_all.h"
 #include "scsi/scsiconf.h"
 
-#ifdef	NDDB
+#ifdef	DDB
 int	Debugger();
-#else	NDDB
+#else	DDB
 #define	Debugger() panic("should call debugger here (adaptec.c)")
-#endif	NDDB
+#endif	DDB
 
 typedef unsigned long int physaddr;
 
