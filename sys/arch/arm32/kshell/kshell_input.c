@@ -1,4 +1,4 @@
-/* $NetBSD: kshell_input.c,v 1.1 1996/01/31 23:24:01 mark Exp $ */
+/* $NetBSD: kshell_input.c,v 1.2 1996/03/06 23:44:07 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -41,38 +41,20 @@
  * string input functions
  *
  * Created      : 09/10/94
- * Last updated : 18/10/94
- *
- *    $Id: kshell_input.c,v 1.1 1996/01/31 23:24:01 mark Exp $
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 
-/* Special compilation symbols
- *
- * HISTORY_BUFFER - enables the use of a input history buffer. This
- *                  requires malloc and free.
- */
-
 /*#define SOFT_CURSOR*/
-#define MAX_LINES 32
 
 /* Declare global variables */
-
-/*#ifdef HISTORY_BUFFER*/
-static int line = -1;
-static char *lines[MAX_LINES];
-/*#endif*/
 
 /* Prototype declarations */
 
 char    *strchr __P((const char *, int));
-char	*strcpy __P((char *, const char *));
-size_t	strlen __P((const char *));
 
-int WaitForKey __P((caddr_t));
 void deleteline __P((int, int));
 
 /*
@@ -81,37 +63,16 @@ void deleteline __P((int, int));
  */
 
 int
-readstring(string, length, valid_string, insert, ident)
+readstring(string, length, valid_string, insert)
 	char *string;
 	int length;
 	char *valid_string;
 	char *insert;
-	caddr_t ident;
 {
 	int key;
 	int loop;
 	int entered;
 	int insert_mode = 1;
-
-/*
- * If we are compiling with the history buffer we need to initialise
- * it on the first call (line == -1)
- */
-
-/*#ifdef HISTORY_BUFFER*/
-	int cur_line = 0;
-
-	if (ident != 0) {
-		if (line == -1) {
-			for (loop = 0; loop < MAX_LINES; ++loop)
-				lines[loop] = NULL;
-
-			line = 0;
-		}
-
-		cur_line = line;
-	}
-/*#endif*/
 
 /*
  * If we have text to preinsert into the buffer enter it and echo it
@@ -147,7 +108,7 @@ readstring(string, length, valid_string, insert, ident)
  * Read the keyboard
  */
 
-		key = WaitForKey(ident);
+		key = cngetc();
 
 #ifdef SOFT_CURSOR
 /*
@@ -180,7 +141,10 @@ readstring(string, length, valid_string, insert, ident)
 			}
 			--entered;
 			string[entered] = 0;
-			printf("\x1b[s%s \x1b[u", &string[loop]);
+/*			printf("\x1b[s%s \x1b[u", &string[loop]);*/
+			printf("\r%s \r", string);
+			for (loop1 = 0; loop1 <= loop; ++loop1)
+				printf("\x09");
 		}
 		break;
 
@@ -202,7 +166,10 @@ readstring(string, length, valid_string, insert, ident)
 			--loop;
 			--entered;
 			string[entered] = 0;
-			printf("\x1b[D\x1b[s%s \x1b[u", &string[loop]);
+/*			printf("\x1b[D\x1b[s%s \x1b[u", &string[loop]);*/
+			printf("\r%s \r", string);
+			for (loop1 = 0; loop1 < loop; ++loop1)
+				printf("\x09");
 		}
 		break;
 
@@ -228,67 +195,6 @@ readstring(string, length, valid_string, insert, ident)
 		case 0x04 :
 			return(-1);
 			break;
-
-/*#ifdef HISTORY_BUFFER*/
-/*
- * CURSOR UP
- */
-
-		case 0x100 :
-			if (ident == 0) break;
-			--cur_line;
-			if (cur_line < 0)
-				cur_line = MAX_LINES - 1;
-
-			if (lines[cur_line]) {
-				deleteline(loop, entered);
-				loop = 0;
-				entered = 0;
-
-				for (entered = 0; lines[cur_line][entered]
-				    && entered < length; ++entered) {
-					string[entered] = lines[cur_line][entered];
-				}
-
-				string[entered] = 0;
-				loop = entered;
-				printf("%s", string);
-			} else {
-				deleteline(loop, entered);
-				loop = 0;
-				entered = 0;
-			}
-			break;
-
-/*
- * CURSOR DOWN
- */
-
-		case 0x101 :
-			if (ident == 0) break;
-			++cur_line;
-			if (cur_line >= MAX_LINES)
-				cur_line = 0;
-
-			if (lines[cur_line]) {
-				deleteline(loop, entered);
-				loop = 0;
-				entered = 0;
-				for (entered = 0; lines[cur_line][entered]
-				    && entered < length; ++entered) {
-					string[entered] = lines[cur_line][entered];
-				}
-
-				loop = entered;
-				string[entered] = 0;
-				printf("%s", string);
-			} else {
-				deleteline(loop, entered);
-				loop = 0;
-				entered = 0;
-			}
-			break;
-/*#endif*/
 
 /*
  * CURSOR LEFT
@@ -319,6 +225,7 @@ readstring(string, length, valid_string, insert, ident)
  */
 
 		case 0x0d :
+		case 0x0a :
 			break;
 
 /*
@@ -358,28 +265,11 @@ readstring(string, length, valid_string, insert, ident)
 			}
 			break;
 		}
-	} while (key != 0x0d);
+	} while (key != 0x0d && key != 0x0a);
 
 	printf("\n\r");
 
 	string[entered] = 0;
-
-/*#ifdef HISTORY_BUFFER*/
-/*
- * Update the history buffer
- */
-
-	if (ident != 0 && entered > 0) {
-		if (lines[line]) free(lines[line], M_TEMP);
-			lines[line] = (char *)malloc(strlen(string) + 1, M_TEMP, M_NOWAIT);
-		if (lines[line] != NULL) {
-			strcpy(lines[line], string);
-			++line;
-			if (line >= MAX_LINES)
-			line = 0;
-		}
-	}
-/*#endif*/
 
 	return(entered);
 }
@@ -404,31 +294,4 @@ deleteline(loop, entered)
 	}
 }
 
-
-/* Prints the contents of the history buffer */
-
-void
-shell_printhistory(argc, argv)
-	int argc;
-	char *argv[];
-{
-/*#ifdef HISTORY_BUFFER*/
-	int ptr;
-	int count;
-
-	ptr = line - 1;
-	count = 0;
-
-	while (count < MAX_LINES) {
-		if (ptr < 0) ptr = MAX_LINES - 1;
-		if (lines[ptr])
-			printf("%2d: %s\n\r", count, lines[ptr]);
-		--ptr;
-		++count;
-	}
-/*#else
-	printf("History buffer not built in\n\r");
-#endif*/
-}
-
-/* End of input.c */
+/* End of shell_input.c */
