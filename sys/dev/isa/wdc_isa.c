@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.32 2003/09/19 21:36:04 mycroft Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.33 2003/09/21 11:14:02 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.32 2003/09/19 21:36:04 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.33 2003/09/21 11:14:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.32 2003/09/19 21:36:04 mycroft Exp $")
 
 /* options passed via the 'flags' config keyword */
 #define WDC_OPTIONS_32			0x01 /* try to use 32bit data I/O */
+#define WDC_OPTIONS_SINGLE_DRIVE	0x02 /* Don't probe second drive */
 #define WDC_OPTIONS_ATA_NOSTREAM	0x04
 #define WDC_OPTIONS_ATAPI_NOSTREAM	0x08
 
@@ -181,6 +182,8 @@ wdc_isa_attach(parent, self, aux)
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_PREATA;
 	if (wdc_cf_flags & WDC_OPTIONS_32)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
+	if (wdc_cf_flags & WDC_OPTIONS_SINGLE_DRIVE)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_SINGLE_DRIVE;
 	if (wdc_cf_flags & WDC_OPTIONS_ATA_NOSTREAM)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_ATA_NOSTREAM;
 	if (wdc_cf_flags & WDC_OPTIONS_ATAPI_NOSTREAM)
