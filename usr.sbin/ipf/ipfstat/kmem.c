@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.c,v 1.1.1.3 1997/05/25 11:45:55 darrenr Exp $	*/
+/*	$NetBSD: kmem.c,v 1.1.1.4 1997/05/27 22:16:55 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -22,7 +22,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static  char    sccsid[] = "@(#)kmem.c	1.4 1/12/96 (C) 1992 Darren Reed";
-static	char	rcsid[] = "$Id: kmem.c,v 1.1.1.3 1997/05/25 11:45:55 darrenr Exp $";
+static	char	rcsid[] = "Id: kmem.c,v 2.0.2.3 1997/03/10 08:10:37 darrenr Exp ";
 #endif
 
 static	int	kmemfd = -1;
