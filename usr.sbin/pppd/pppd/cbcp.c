@@ -1,4 +1,4 @@
-/*	$NetBSD: cbcp.c,v 1.7 2002/05/29 19:06:31 christos Exp $	*/
+/*	$NetBSD: cbcp.c,v 1.8 2004/10/28 07:45:21 itojun Exp $	*/
 
 /*
  * cbcp - Call Back Configuration Protocol.
@@ -25,7 +25,7 @@
 #if 0
 #define RCSID	"Id: cbcp.c,v 1.11 2001/03/08 05:11:10 paulus Exp "
 #else
-__RCSID("$NetBSD: cbcp.c,v 1.7 2002/05/29 19:06:31 christos Exp $");
+__RCSID("$NetBSD: cbcp.c,v 1.8 2004/10/28 07:45:21 itojun Exp $");
 #endif
 #endif
 
@@ -313,6 +313,10 @@ cbcp_recvreq(us, pckt, pcktlen)
 
 	GETCHAR(type, pckt);
 	GETCHAR(opt_len, pckt);
+
+	/* seriously malformed, stop processing */
+	if (opt_len > len)
+	    break;
 
 	if (opt_len > 2)
 	    GETCHAR(delay, pckt);
