@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)var.c	5.7 (Berkeley) 6/1/90"; */
-static char *rcsid = "$Id: var.c,v 1.8 1995/01/09 18:31:41 christos Exp $";
+static char *rcsid = "$Id: var.c,v 1.9 1995/01/20 04:35:10 christos Exp $";
 #endif /* not lint */
 
 /*-
@@ -1110,6 +1110,10 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
     Boolean 	    haveModifier;/* TRUE if have modifiers for the variable */
     register char   endc;    	/* Ending character when variable in parens
 				 * or braces */
+    register char   startc;	/* Starting character when variable in parens
+				 * or braces */
+    int             cnt;	/* Used to count brace pairs when variable in
+				 * in parens or braces */
     char    	    *start;
     Boolean 	    dynamic;	/* TRUE if the variable is local and we're
 				 * expanding it in a non-local context. This
@@ -1166,7 +1170,8 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 	    endc = str[1];
 	}
     } else {
-	endc = str[1] == '(' ? ')' : '}';
+	startc = str[1];
+	endc = startc == '(' ? ')' : '}';
 
 	/*
 	 * Skip to the end character or a colon, whichever comes first.
@@ -1637,11 +1642,19 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		     * to verify it is a SYSV-make-style translation:
 		     * it must be: <string1>=<string2>)
 		     */
-		    for (cp = tstr; *cp != '\0' && *cp != endc; cp++) {
+		    cp = tstr;
+		    cnt = 1;
+		    while (*cp != '\0' && cnt) {
 			if (*cp == '=') {
 			    eqFound = TRUE;
 			    /* continue looking for endc */
 			}
+			else if (*cp == endc)
+			    cnt--;
+			else if (*cp == startc)
+			    cnt++;
+			if (cnt)
+			    cp++;
 		    }
 		    if (*cp == endc && eqFound) {
 			
@@ -1656,8 +1669,14 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			*cp++ = '\0';
 			
 			pattern.rhs = cp;
-			while (*cp != endc) {
-			    cp++;
+			cnt = 1;
+			while (cnt) {
+			    if (*cp == endc)
+				cnt--;
+			    else if (*cp == startc)
+				cnt++;
+			    if (cnt)
+				cp++;
 			}
 			pattern.rightLen = cp - pattern.rhs;
 			*cp = '\0';
