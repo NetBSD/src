@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.164 2004/07/02 23:41:34 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.165 2004/07/22 19:47:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,10 +70,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.164 2004/07/02 23:41:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.165 2004/07/22 19:47:24 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
+#define STATIC static
 
 #include "bpfilter.h"
 
@@ -111,60 +112,64 @@ __KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.164 2004/07/02 23:41:34 dyoung Exp $");
 #include <dev/ic/wireg.h>
 #include <dev/ic/wivar.h>
 
-static int  wi_init(struct ifnet *);
-static void wi_stop(struct ifnet *, int);
-static void wi_start(struct ifnet *);
-static int  wi_reset(struct wi_softc *);
-static void wi_watchdog(struct ifnet *);
-static int  wi_ioctl(struct ifnet *, u_long, caddr_t);
-static int  wi_media_change(struct ifnet *);
-static void wi_media_status(struct ifnet *, struct ifmediareq *);
+STATIC int  wi_init(struct ifnet *);
+STATIC void wi_stop(struct ifnet *, int);
+STATIC void wi_start(struct ifnet *);
+STATIC int  wi_reset(struct wi_softc *);
+STATIC void wi_watchdog(struct ifnet *);
+STATIC int  wi_ioctl(struct ifnet *, u_long, caddr_t);
+STATIC int  wi_media_change(struct ifnet *);
+STATIC void wi_media_status(struct ifnet *, struct ifmediareq *);
 
-static struct ieee80211_node *wi_node_alloc(struct ieee80211com *);
-static void wi_node_copy(struct ieee80211com *, struct ieee80211_node *,
+STATIC struct ieee80211_node *wi_node_alloc(struct ieee80211com *);
+STATIC void wi_node_copy(struct ieee80211com *, struct ieee80211_node *,
     const struct ieee80211_node *);
-static void wi_node_free(struct ieee80211com *, struct ieee80211_node *);
+STATIC void wi_node_free(struct ieee80211com *, struct ieee80211_node *);
 
-static void wi_raise_rate(struct ieee80211com *, struct ieee80211_rssdesc *);
-static void wi_lower_rate(struct ieee80211com *, struct ieee80211_rssdesc *);
-static void wi_choose_rate(struct ieee80211com *, struct ieee80211_node *,
+STATIC void wi_raise_rate(struct ieee80211com *, struct ieee80211_rssdesc *);
+STATIC void wi_lower_rate(struct ieee80211com *, struct ieee80211_rssdesc *);
+STATIC void wi_choose_rate(struct ieee80211com *, struct ieee80211_node *,
     struct ieee80211_frame *, u_int);
-static void wi_rssadapt_updatestats_cb(void *, struct ieee80211_node *);
-static void wi_rssadapt_updatestats(void *);
+STATIC void wi_rssadapt_updatestats_cb(void *, struct ieee80211_node *);
+STATIC void wi_rssadapt_updatestats(void *);
+STATIC void wi_rssdescs_init(struct wi_rssdesc (*)[], wi_rssdescq_t *);
+STATIC void wi_rssdescs_reset(struct ieee80211com *, struct wi_rssdesc (*)[],
+    wi_rssdescq_t *, u_int8_t (*)[]);
+STATIC void wi_sync_bssid(struct wi_softc *, u_int8_t new_bssid[]);
 
-static void wi_rx_intr(struct wi_softc *);
-static void wi_txalloc_intr(struct wi_softc *);
-static void wi_tx_intr(struct wi_softc *);
-static void wi_tx_ex_intr(struct wi_softc *);
-static void wi_info_intr(struct wi_softc *);
+STATIC void wi_rx_intr(struct wi_softc *);
+STATIC void wi_txalloc_intr(struct wi_softc *);
+STATIC void wi_tx_intr(struct wi_softc *);
+STATIC void wi_tx_ex_intr(struct wi_softc *);
+STATIC void wi_info_intr(struct wi_softc *);
 
-static int  wi_get_cfg(struct ifnet *, u_long, caddr_t);
-static int  wi_set_cfg(struct ifnet *, u_long, caddr_t);
-static int  wi_cfg_txrate(struct wi_softc *);
-static int  wi_write_txrate(struct wi_softc *, int);
-static int  wi_write_wep(struct wi_softc *);
-static int  wi_write_multi(struct wi_softc *);
-static int  wi_alloc_fid(struct wi_softc *, int, int *);
-static void wi_read_nicid(struct wi_softc *);
-static int  wi_write_ssid(struct wi_softc *, int, u_int8_t *, int);
+STATIC int  wi_get_cfg(struct ifnet *, u_long, caddr_t);
+STATIC int  wi_set_cfg(struct ifnet *, u_long, caddr_t);
+STATIC int  wi_cfg_txrate(struct wi_softc *);
+STATIC int  wi_write_txrate(struct wi_softc *, int);
+STATIC int  wi_write_wep(struct wi_softc *);
+STATIC int  wi_write_multi(struct wi_softc *);
+STATIC int  wi_alloc_fid(struct wi_softc *, int, int *);
+STATIC void wi_read_nicid(struct wi_softc *);
+STATIC int  wi_write_ssid(struct wi_softc *, int, u_int8_t *, int);
 
-static int  wi_cmd(struct wi_softc *, int, int, int, int);
-static int  wi_seek_bap(struct wi_softc *, int, int);
-static int  wi_read_bap(struct wi_softc *, int, int, void *, int);
-static int  wi_write_bap(struct wi_softc *, int, int, void *, int);
-static int  wi_mwrite_bap(struct wi_softc *, int, int, struct mbuf *, int);
-static int  wi_read_rid(struct wi_softc *, int, void *, int *);
-static int  wi_write_rid(struct wi_softc *, int, void *, int);
+STATIC int  wi_cmd(struct wi_softc *, int, int, int, int);
+STATIC int  wi_seek_bap(struct wi_softc *, int, int);
+STATIC int  wi_read_bap(struct wi_softc *, int, int, void *, int);
+STATIC int  wi_write_bap(struct wi_softc *, int, int, void *, int);
+STATIC int  wi_mwrite_bap(struct wi_softc *, int, int, struct mbuf *, int);
+STATIC int  wi_read_rid(struct wi_softc *, int, void *, int *);
+STATIC int  wi_write_rid(struct wi_softc *, int, void *, int);
 
-static int  wi_newstate(struct ieee80211com *, enum ieee80211_state, int);
-static int  wi_set_tim(struct ieee80211com *, int, int);
+STATIC int  wi_newstate(struct ieee80211com *, enum ieee80211_state, int);
+STATIC int  wi_set_tim(struct ieee80211com *, int, int);
 
-static int  wi_scan_ap(struct wi_softc *, u_int16_t, u_int16_t);
-static void wi_scan_result(struct wi_softc *, int, int);
+STATIC int  wi_scan_ap(struct wi_softc *, u_int16_t, u_int16_t);
+STATIC void wi_scan_result(struct wi_softc *, int, int);
 
-static void wi_dump_pkt(struct wi_frame *, struct ieee80211_node *, int rssi);
+STATIC void wi_dump_pkt(struct wi_frame *, struct ieee80211_node *, int rssi);
 
-static inline int
+STATIC inline int
 wi_write_val(struct wi_softc *sc, int rid, u_int16_t val)
 {
 
@@ -575,7 +580,7 @@ wi_intr(void *arg)
 
 #define arraylen(a) (sizeof(a) / sizeof((a)[0]))
 
-static void
+STATIC void
 wi_rssdescs_init(struct wi_rssdesc (*rssd)[WI_NTXRSS], wi_rssdescq_t *rssdfree)
 {
 	int i;
@@ -585,7 +590,7 @@ wi_rssdescs_init(struct wi_rssdesc (*rssd)[WI_NTXRSS], wi_rssdescq_t *rssdfree)
 	}
 }
 
-static void
+STATIC void
 wi_rssdescs_reset(struct ieee80211com *ic, struct wi_rssdesc (*rssd)[WI_NTXRSS],
     wi_rssdescq_t *rssdfree, u_int8_t (*txpending)[IEEE80211_RATE_MAXSIZE])
 {
@@ -605,7 +610,7 @@ wi_rssdescs_reset(struct ieee80211com *ic, struct wi_rssdesc (*rssd)[WI_NTXRSS],
 	wi_rssdescs_init(rssd, rssdfree);
 }
 
-static int
+STATIC int
 wi_init(struct ifnet *ifp)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -786,7 +791,7 @@ wi_init(struct ifnet *ifp)
 	return error;
 }
 
-static void
+STATIC void
 wi_stop(struct ifnet *ifp, int disable)
 {
 	struct wi_softc	*sc = ifp->if_softc;
@@ -831,7 +836,7 @@ wi_stop(struct ifnet *ifp, int disable)
  *
  * TBD Adapt fragmentation threshold.
  */
-static void
+STATIC void
 wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
     struct ieee80211_frame *wh, u_int len)
 {
@@ -864,7 +869,7 @@ wi_choose_rate(struct ieee80211com *ic, struct ieee80211_node *ni,
 	return;
 }
 
-static void
+STATIC void
 wi_raise_rate(struct ieee80211com *ic, struct ieee80211_rssdesc *id)
 {
 	struct wi_node *wn;
@@ -875,7 +880,7 @@ wi_raise_rate(struct ieee80211com *ic, struct ieee80211_rssdesc *id)
 	ieee80211_rssadapt_raise_rate(ic, &wn->wn_rssadapt, id);
 }
 
-static void
+STATIC void
 wi_lower_rate(struct ieee80211com *ic, struct ieee80211_rssdesc *id)
 {
 	struct ieee80211_node *ni;
@@ -897,7 +902,7 @@ out:
 	return;
 }
 
-static void
+STATIC void
 wi_start(struct ifnet *ifp)
 {
 	struct wi_softc	*sc = ifp->if_softc;
@@ -1083,7 +1088,7 @@ next:
 }
 
 
-static int
+STATIC int
 wi_reset(struct wi_softc *sc)
 {
 	int i, error;
@@ -1111,7 +1116,7 @@ wi_reset(struct wi_softc *sc)
 	return 0;
 }
 
-static void
+STATIC void
 wi_watchdog(struct ifnet *ifp)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -1156,7 +1161,7 @@ wi_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
-static int
+STATIC int
 wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -1240,7 +1245,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-static int
+STATIC int
 wi_media_change(struct ifnet *ifp)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -1259,7 +1264,7 @@ wi_media_change(struct ifnet *ifp)
 	return error;
 }
 
-static void
+STATIC void
 wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -1314,7 +1319,7 @@ wi_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 	}
 }
 
-static struct ieee80211_node *
+STATIC struct ieee80211_node *
 wi_node_alloc(struct ieee80211com *ic)
 {
 	struct wi_node *wn =
@@ -1322,7 +1327,7 @@ wi_node_alloc(struct ieee80211com *ic)
 	return wn ? &wn->wn_node : NULL;
 }
 
-static void
+STATIC void
 wi_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
 	struct wi_softc *sc = ic->ic_if.if_softc;
@@ -1335,14 +1340,14 @@ wi_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 	free(ni, M_DEVBUF);
 }
 
-static void
+STATIC void
 wi_node_copy(struct ieee80211com *ic, struct ieee80211_node *dst,
     const struct ieee80211_node *src)
 {
 	*(struct wi_node *)dst = *(const struct wi_node *)src;
 }
 
-static void
+STATIC void
 wi_sync_bssid(struct wi_softc *sc, u_int8_t new_bssid[IEEE80211_ADDR_LEN])
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1381,7 +1386,7 @@ wi_rssadapt_input(struct ieee80211com *ic, struct ieee80211_node *ni,
 	ieee80211_rssadapt_input(ic, ni, &wn->wn_rssadapt, rssi);
 }
 
-static void
+STATIC void
 wi_rx_intr(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1519,7 +1524,7 @@ wi_rx_intr(struct wi_softc *sc)
 		ieee80211_free_node(ic, ni);
 }
 
-static void
+STATIC void
 wi_tx_ex_intr(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1600,7 +1605,7 @@ out:
 	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_TX_EXC);
 }
 
-static void
+STATIC void
 wi_txalloc_intr(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1635,7 +1640,7 @@ wi_txalloc_intr(struct wi_softc *sc)
 	}
 }
 
-static void
+STATIC void
 wi_tx_intr(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1690,7 +1695,7 @@ out:
 	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_TX);
 }
 
-static void
+STATIC void
 wi_info_intr(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1772,7 +1777,7 @@ wi_info_intr(struct wi_softc *sc)
 	CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_INFO);
 }
 
-static int
+STATIC int
 wi_write_multi(struct wi_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1807,7 +1812,7 @@ allmulti:
 }
 
 
-static void
+STATIC void
 wi_read_nicid(struct wi_softc *sc)
 {
 	struct wi_card_ident *id;
@@ -1886,7 +1891,7 @@ DPRINTF2(("wi_read_nicid: CARD_ID: %x %x %x %x\n", le16toh(ver[0]), le16toh(ver[
 	    sc->sc_sta_firmware_ver % 100);
 }
 
-static int
+STATIC int
 wi_write_ssid(struct wi_softc *sc, int rid, u_int8_t *buf, int buflen)
 {
 	struct wi_ssid ssid;
@@ -1899,7 +1904,7 @@ wi_write_ssid(struct wi_softc *sc, int rid, u_int8_t *buf, int buflen)
 	return wi_write_rid(sc, rid, &ssid, sizeof(ssid));
 }
 
-static int
+STATIC int
 wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -2047,7 +2052,7 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return copyout(&wreq, ifr->ifr_data, (wreq.wi_len + 1) * 2);
 }
 
-static int
+STATIC int
 wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct wi_softc *sc = ifp->if_softc;
@@ -2191,7 +2196,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 /* Rate is 0 for hardware auto-select, otherwise rate is
  * 2, 4, 11, or 22 (units of 500Kbps).
  */
-static int
+STATIC int
 wi_write_txrate(struct wi_softc *sc, int rate)
 {
 	u_int16_t hwrate;
@@ -2250,7 +2255,7 @@ wi_write_txrate(struct wi_softc *sc, int rate)
 	return wi_write_val(sc, WI_RID_TX_RATE, sc->sc_tx_rate);
 }
 
-static int
+STATIC int
 wi_cfg_txrate(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2269,7 +2274,7 @@ wi_cfg_txrate(struct wi_softc *sc)
 	return wi_write_txrate(sc, rate);
 }
 
-static int
+STATIC int
 wi_write_wep(struct wi_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -2359,7 +2364,7 @@ wi_write_wep(struct wi_softc *sc)
 }
 
 /* Must be called at proper protection level! */
-static int
+STATIC int
 wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 {
 	int i, status;
@@ -2410,7 +2415,7 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 	return 0;
 }
 
-static int
+STATIC int
 wi_seek_bap(struct wi_softc *sc, int id, int off)
 {
 	int i, status;
@@ -2441,7 +2446,7 @@ wi_seek_bap(struct wi_softc *sc, int id, int off)
 	return 0;
 }
 
-static int
+STATIC int
 wi_read_bap(struct wi_softc *sc, int id, int off, void *buf, int buflen)
 {
 	int error, cnt;
@@ -2458,7 +2463,7 @@ wi_read_bap(struct wi_softc *sc, int id, int off, void *buf, int buflen)
 	return 0;
 }
 
-static int
+STATIC int
 wi_write_bap(struct wi_softc *sc, int id, int off, void *buf, int buflen)
 {
 	int error, cnt;
@@ -2507,7 +2512,7 @@ wi_write_bap(struct wi_softc *sc, int id, int off, void *buf, int buflen)
 	return 0;
 }
 
-static int
+STATIC int
 wi_mwrite_bap(struct wi_softc *sc, int id, int off, struct mbuf *m0, int totlen)
 {
 	int error, len;
@@ -2534,7 +2539,7 @@ wi_mwrite_bap(struct wi_softc *sc, int id, int off, struct mbuf *m0, int totlen)
 	return 0;
 }
 
-static int
+STATIC int
 wi_alloc_fid(struct wi_softc *sc, int len, int *idp)
 {
 	int i;
@@ -2559,7 +2564,7 @@ wi_alloc_fid(struct wi_softc *sc, int len, int *idp)
 	return 0;
 }
 
-static int
+STATIC int
 wi_read_rid(struct wi_softc *sc, int rid, void *buf, int *buflenp)
 {
 	int error, len;
@@ -2590,7 +2595,7 @@ wi_read_rid(struct wi_softc *sc, int rid, void *buf, int *buflenp)
 	return wi_read_bap(sc, rid, sizeof(ltbuf), buf, len);
 }
 
-static int
+STATIC int
 wi_write_rid(struct wi_softc *sc, int rid, void *buf, int buflen)
 {
 	int error;
@@ -2609,14 +2614,14 @@ wi_write_rid(struct wi_softc *sc, int rid, void *buf, int buflen)
 	return wi_cmd(sc, WI_CMD_ACCESS | WI_ACCESS_WRITE, rid, 0, 0);
 }
 
-static void
+STATIC void
 wi_rssadapt_updatestats_cb(void *arg, struct ieee80211_node *ni)
 {
 	struct wi_node *wn = (void*)ni;
 	ieee80211_rssadapt_updatestats(&wn->wn_rssadapt);
 }
 
-static void
+STATIC void
 wi_rssadapt_updatestats(void *arg)
 {
 	struct wi_softc *sc = arg;
@@ -2628,7 +2633,7 @@ wi_rssadapt_updatestats(void *arg)
 		    wi_rssadapt_updatestats, arg);
 }
 
-static int
+STATIC int
 wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ifnet *ifp = &ic->ic_if;
@@ -2716,7 +2721,7 @@ wi_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	return 0;
 }
 
-static int
+STATIC int
 wi_set_tim(struct ieee80211com *ic, int aid, int which)
 {
 	struct wi_softc *sc = ic->ic_softc;
@@ -2728,7 +2733,7 @@ wi_set_tim(struct ieee80211com *ic, int aid, int which)
 	return wi_write_val(sc, WI_RID_SET_TIM, aid);
 }
 
-static int
+STATIC int
 wi_scan_ap(struct wi_softc *sc, u_int16_t chanmask, u_int16_t txrate)
 {
 	int error = 0;
@@ -2763,7 +2768,7 @@ wi_scan_ap(struct wi_softc *sc, u_int16_t chanmask, u_int16_t txrate)
 	return error;
 }
 
-static void
+STATIC void
 wi_scan_result(struct wi_softc *sc, int fid, int cnt)
 {
 #define	N(a)	(sizeof (a) / sizeof (a[0]))
@@ -2826,7 +2831,7 @@ done:
 #undef N
 }
 
-static void
+STATIC void
 wi_dump_pkt(struct wi_frame *wh, struct ieee80211_node *ni, int rssi)
 {
 	ieee80211_dump_pkt((u_int8_t *) &wh->wi_whdr, sizeof(wh->wi_whdr),
