@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.8 1997/10/17 14:19:26 lukem Exp $	*/
+/*	$NetBSD: master.c,v 1.9 2001/09/02 00:13:06 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,25 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)master.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: master.c,v 1.8 1997/10/17 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: master.c,v 1.9 2001/09/02 00:13:06 reinoud Exp $");
 #endif
 #endif /* not lint */
-
-#ifdef sgi
-#ident "$Revision: 1.8 $"
-#endif
 
 #include "globals.h"
 #include <sys/file.h>
 #include <sys/types.h>
 #include <sys/times.h>
 #include <setjmp.h>
-#ifdef sgi
-#include <sys/schedctl.h>
-#include <utmpx.h>	/* includes utmp.h */
-#else
 #include <utmp.h>
-#endif /* sgi */
 
 #include "pathnames.h"
 
@@ -70,12 +61,7 @@ static int slvcount;			/* slaves listening to our clock */
 
 static void mchgdate(struct tsp*);
 
-#ifdef sgi
-extern	void	getutmpx(const struct utmp *, struct utmpx *);
-extern	void	logwtmp(struct timeval*, struct timeval*);
-#else
 extern	void	logwtmp __P((char *, char *, char *));
-#endif /* sgi */
 
 
 
@@ -190,12 +176,8 @@ loop:
 			/*
 			 * XXX check to see it is from ourself
 			 */
-#ifdef sgi
-			(void)cftime(newdate, "%D %T", &msg->tsp_time.tv_sec);
-#else
 			tmpt = msg->tsp_time.tv_sec;
 			(void)strcpy(newdate, ctime(&tmpt));
-#endif /* sgi */
 			if (!good_host_name(msg->tsp_name)) {
 				syslog(LOG_NOTICE,
 				       "attempted date change by %s to %s",
@@ -212,12 +194,9 @@ loop:
 		case TSP_SETDATEREQ:
 			if (!fromnet || fromnet->status != MASTER)
 				break;
-#ifdef sgi
-			(void)cftime(newdate, "%D %T", &msg->tsp_time.tv_sec);
-#else
 			tmpt = msg->tsp_time.tv_sec;
 			(void)strcpy(newdate, ctime(&tmpt));
-#endif /* sgi */
+
 			htp = findhost(msg->tsp_name);
 			if (htp == 0) {
 				syslog(LOG_ERR,
@@ -397,18 +376,11 @@ mchgdate(struct tsp *msg)
 		dictate = 3;
 		synch(tvtomsround(ntime));
 	} else {
-#ifdef sgi
-		if (0 > settimeofday(&msg->tsp_time, 0)) {
-			syslog(LOG_ERR, "settimeofday(): %m");
-		}
-		logwtmp(&otime, &msg->tsp_time);
-#else
 		logwtmp("|", "date", "");
 		tmptv.tv_sec = msg->tsp_time.tv_sec;
 		tmptv.tv_usec = msg->tsp_time.tv_usec;
 		(void)settimeofday(&tmptv, 0);
 		logwtmp("}", "date", "");
-#endif /* sgi */
 		spreadtime();
 	}
 
@@ -426,20 +398,11 @@ synch(long mydelta)
 	struct hosttbl *htp;
 	int measure_status;
 	struct timeval check, stop, wait;
-#ifdef sgi
-	int pri;
-#endif /* sgi */
 
 	if (slvcount > 0) {
 		if (trace)
 			fprintf(fd, "measurements starting at %s\n", date());
 		(void)gettimeofday(&check, 0);
-#ifdef sgi
-		/* run fast to get good time */
-		pri = schedctl(NDPRI,0,NDPHIMIN);
-		if (pri < 0)
-			syslog(LOG_ERR, "schedctl(): %m");
-#endif /* sgi */
 		for (htp = self.l_fwd; htp != &self; htp = htp->l_fwd) {
 			if (htp->noanswer != 0) {
 				measure_status = measure(500, 100,
@@ -483,10 +446,6 @@ synch(long mydelta)
 				(void)gettimeofday(&check, 0);
 			}
 		}
-#ifdef sgi
-		if (pri >= 0)
-			(void)schedctl(NDPRI,0,pri);
-#endif /* sgi */
 		if (trace)
 			fprintf(fd, "measurements finished at %s\n", date());
 	}
@@ -889,42 +848,3 @@ traceoff(char *msg)
 	trace = OFF;
 }
 
-
-#ifdef sgi
-void
-logwtmp(struct timeval *otime, struct timeval *ntime)
-{
-	static struct utmp wtmp[2] = {
-		{"","",OTIME_MSG,0,OLD_TIME,0,0,0},
-		{"","",NTIME_MSG,0,NEW_TIME,0,0,0}
-	};
-	static char *wtmpfile = WTMP_FILE;
-	static struct utmpx wtmpx[2];
-	int f;
-
-	wtmp[0].ut_time = otime->tv_sec + (otime->tv_usec + 500000) / 1000000;
-	wtmp[1].ut_time = ntime->tv_sec + (ntime->tv_usec + 500000) / 1000000;
-	if (wtmp[0].ut_time == wtmp[1].ut_time)
-		return;
-
-	setutent();
-	(void)pututline(&wtmp[0]);
-	(void)pututline(&wtmp[1]);
-	endutent();
-	if ((f = open(wtmpfile, O_WRONLY|O_APPEND)) >= 0) {
-		(void)write(f, (char *)wtmp, sizeof(wtmp));
-		(void)close(f);
-	}
-
-        /*
-         * convert the wtmp entries into utmpx format in wtmpx[0..1]
-         * and append to /var/adm/wtmpx to keep wtmp and wtmpx in sync.
-         */
-	getutmpx(&wtmp[0], &wtmpx[0]);
-	getutmpx(&wtmp[1], &wtmpx[1]);
-	if ((f = open(WTMPX_FILE, O_WRONLY|O_APPEND)) >= 0) {
-		(void)write(f, (char *)wtmpx, sizeof(wtmpx));
-		(void)close(f);
-	} 
-}
-#endif /* sgi */

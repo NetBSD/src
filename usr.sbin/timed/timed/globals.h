@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.6 2001/03/07 21:46:04 garbled Exp $	*/
+/*	$NetBSD: globals.h,v 1.7 2001/09/02 00:13:06 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985 The Regents of the University of California.
@@ -35,10 +35,6 @@
  *	@(#)globals.h	8.1 (Berkeley) 6/6/93
  */
 
-#ifdef sgi
-#ident "$Revision: 1.6 $"
-#endif
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/socket.h>
@@ -57,16 +53,8 @@
 #include <unistd.h>
 
 #include <protocols/timed.h>
-#ifdef sgi
-#include <bstring.h>
-#include <sys/clock.h>
-/* use the constant HZ instead of the function CLK_TCK */
-#undef CLK_TCK
-#define CLK_TCK HZ
-#else
 #define	SECHR	(60*60)
 #define	SECDAY	(24*SECHR)
-#endif /* sgi */
 
 extern int sock;
 

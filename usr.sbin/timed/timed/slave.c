@@ -1,4 +1,4 @@
-/*	$NetBSD: slave.c,v 1.8 1997/10/17 14:19:40 lukem Exp $	*/
+/*	$NetBSD: slave.c,v 1.9 2001/09/02 00:13:07 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,13 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)slave.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: slave.c,v 1.8 1997/10/17 14:19:40 lukem Exp $");
+__RCSID("$NetBSD: slave.c,v 1.9 2001/09/02 00:13:07 reinoud Exp $");
 #endif
 #endif /* not lint */
-
-#ifdef sgi
-#ident "$Revision: 1.8 $"
-#endif
 
 #include "globals.h"
 #include <setjmp.h>
@@ -64,11 +60,8 @@ static void schgdate(struct tsp *, char *);
 static void setmaster(struct tsp *);
 static void answerdelay(void);
 
-#ifdef sgi
-extern void logwtmp(struct timeval *, struct timeval *);
-#else
 extern void logwtmp(char *, char *, char *);
-#endif /* sgi */
+
 
 int
 slave()
@@ -264,10 +257,7 @@ loop:
 			/* adjust time for residence on the queue */
 			(void)gettimeofday(&otime, 0);
 			adj_msg_time(msg,&otime);
-#ifdef sgi
-			(void)cftime(newdate, "%D %T", &msg->tsp_time.tv_sec);
-			(void)cftime(olddate, "%D %T", &otime.tv_sec);
-#else
+
 			/*
 			 * the following line is necessary due to syslog
 			 * calling ctime() which clobbers the static buffer
@@ -275,7 +265,6 @@ loop:
 			(void)strcpy(olddate, date());
 			tmpt = msg->tsp_time.tv_sec;
 			(void)strcpy(newdate, ctime(&tmpt));
-#endif /* sgi */
 
 			if (!good_host_name(msg->tsp_name)) {
 				syslog(LOG_NOTICE,
@@ -293,19 +282,12 @@ loop:
 				 */
 				synch(tvtomsround(ntime));
 			} else {
-#ifdef sgi
-				if (0 > settimeofday(&msg->tsp_time, 0)) {
-					syslog(LOG_ERR,"settimeofdate(): %m");
-					break;
-				}
-				logwtmp(&otime, &msg->tsp_time);
-#else
 				logwtmp("|", "date", "");
 				tmptv.tv_sec = msg->tsp_time.tv_sec;
 				tmptv.tv_usec = msg->tsp_time.tv_usec;
 				(void)settimeofday(&tmptv, 0);
 				logwtmp("}", "date", "");
-#endif /* sgi */
+
 				syslog(LOG_NOTICE,
 				       "date changed by %s from %s",
 					msg->tsp_name, olddate);
@@ -364,24 +346,16 @@ loop:
 			break;
 
 		case TSP_SETDATE:
-#ifdef sgi
-			(void)cftime(newdate, "%D %T", &msg->tsp_time.tv_sec);
-#else
 			tmpt = msg->tsp_time.tv_sec;
 			(void)strcpy(newdate, ctime(&tmpt));
-#endif /* sgi */
 			schgdate(msg, newdate);
 			break;
 
 		case TSP_SETDATEREQ:
 			if (fromnet->status != MASTER)
 				break;
-#ifdef sgi
-			(void)cftime(newdate, "%D %T", &msg->tsp_time.tv_sec);
-#else
 			tmpt = msg->tsp_time.tv_sec;
 			(void)strcpy(newdate, ctime(&tmpt));
-#endif /* sgi */
 			htp = findhost(msg->tsp_name);
 			if (0 == htp) {
 				syslog(LOG_WARNING,
@@ -709,9 +683,6 @@ schgdate(struct tsp *msg, char *newdate)
 static void
 answerdelay(void)
 {
-#ifdef sgi
-	sginap(delay1);
-#else
 	struct timeval timeout;
 
 	timeout.tv_sec = 0;
@@ -720,5 +691,4 @@ answerdelay(void)
 	(void)select(0, (fd_set *)NULL, (fd_set *)NULL, (fd_set *)NULL,
 	    &timeout);
 	return;
-#endif /* sgi */
 }

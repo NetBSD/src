@@ -1,4 +1,4 @@
-/*	$NetBSD: networkdelta.c,v 1.8 1997/10/20 18:42:17 drochner Exp $	*/
+/*	$NetBSD: networkdelta.c,v 1.9 2001/09/02 00:13:06 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,13 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)networkdelta.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: networkdelta.c,v 1.8 1997/10/20 18:42:17 drochner Exp $");
+__RCSID("$NetBSD: networkdelta.c,v 1.9 2001/09/02 00:13:06 reinoud Exp $");
 #endif
 #endif /* not lint */
-
-#ifdef sgi
-#ident "$Revision: 1.8 $"
-#endif
 
 #include "globals.h"
 

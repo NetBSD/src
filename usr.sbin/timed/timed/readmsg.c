@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.10 2001/03/13 00:14:39 itojun Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.11 2001/09/02 00:13:07 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,13 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.10 2001/03/13 00:14:39 itojun Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.11 2001/09/02 00:13:07 reinoud Exp $");
 #endif
 #endif /* not lint */
-
-#ifdef sgi
-#ident "$Revision: 1.10 $"
-#endif
 
 #include "globals.h"
 
@@ -478,13 +474,9 @@ struct sockaddr_in *addr;
 	case TSP_SETTIME:
 	case TSP_SETDATE:
 	case TSP_SETDATEREQ:
-#ifdef sgi
-		(void)cftime(tm, "%D %T", &msg->tsp_time.tv_sec);
-#else
 		msgtime = msg->tsp_time.tv_sec;
 		strncpy(tm, ctime(&msgtime)+3+1, sizeof(tm));
 		tm[15] = '\0';		/* ugh */
-#endif /* sgi */
 		fprintf(fd, "%s %d %-6u %s %-15s %s\n",
 			tsptype[msg->tsp_type],
 			msg->tsp_vers,

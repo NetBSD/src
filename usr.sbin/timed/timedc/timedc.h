@@ -1,4 +1,4 @@
-/*	$NetBSD: timedc.h,v 1.6 2000/01/21 17:08:39 mycroft Exp $	*/
+/*	$NetBSD: timedc.h,v 1.7 2001/09/02 00:13:08 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -37,9 +37,6 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
-#ifdef sgi
-#include <sys/uio.h>
-#endif
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
