@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.53 1998/02/05 04:56:47 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.54 1998/06/08 20:34:43 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -364,7 +364,6 @@ zs_attach(parent, self, aux)
 	 * This is done after both zs devices are attached.
 	 */
 	if (zs_unit == 1) {
-		printf("zsc1: enabling zs interrupts\n");
 		(void)spl5(); /* splzs - 1 */
 	}
 }
