@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.21 2002/08/06 06:17:50 chs Exp $	*/
+/*	$NetBSD: spr.h,v 1.22 2002/08/08 22:49:09 matt Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -7,7 +7,7 @@
 #define	mtspr(reg, val)							\
 	__asm __volatile("mtspr %0,%1" : : "K"(reg), "r"(val))
 #define	mfspr(reg)							\
-	( { uint32_t val;						\
+	( { register_t val;						\
 	  __asm __volatile("mfspr %0,%1" : "=r"(val) : "K"(reg));	\
 	  val; } )
 #endif /* _LOCORE */
@@ -52,6 +52,7 @@
 #define	SPR_SPRG5		0x115	/* 4.. SPR General 5 */
 #define	SPR_SPRG6		0x116	/* 4.. SPR General 6 */
 #define	SPR_SPRG7		0x117	/* 4.. SPR General 7 */
+#define	SPR_ASR			0x118	/* ... Address Space Register (PPC64) */
 #define	SPR_EAR			0x11a	/* .68 External Access Register */
 #define	SPR_TBL			0x11c	/* 468 Time Base Lower */
 #define	SPR_TBU			0x11d	/* 468 Time Base Upper */
