@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.11 2000/06/10 05:27:27 itojun Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.12 2000/07/16 12:34:06 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-nfs.c,v 1.65 97/08/17 13:24:22 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.11 2000/06/10 05:27:27 itojun Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.12 2000/07/16 12:34:06 enami Exp $");
 #endif
 #endif
 
@@ -828,7 +828,7 @@ xid_map_find(const struct rpc_msg *rp, const u_char *bp, u_int32_t *proc,
 	int i;
 	struct xid_map_entry *xmep;
 	u_int32_t xid = rp->rm_xid;
-	struct ip *ip = (struct ip *)ip;
+	struct ip *ip = (struct ip *)bp;
 #ifdef INET6
 	struct ip6_hdr *ip6 = (struct ip6_hdr *)bp;
 #endif
