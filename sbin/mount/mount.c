@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.20 1995/07/04 23:41:33 ghudson Exp $	*/
+/*	$NetBSD: mount.c,v 1.21 1995/07/12 03:45:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount.c	8.19 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$NetBSD: mount.c,v 1.20 1995/07/04 23:41:33 ghudson Exp $";
+static char rcsid[] = "$NetBSD: mount.c,v 1.21 1995/07/12 03:45:14 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,9 +76,6 @@ int	mountfs __P((const char *, const char *, const char *,
 			int, const char *, const char *));
 void	prmount __P((struct statfs *));
 void	usage __P((void));
-
-/* From mount_ufs.c. */
-int	mount_ufs __P((int, char * const *));
 
 /* Map from mount otions to printable formats. */
 static struct opt {
@@ -308,6 +305,22 @@ mountfs(vfstype, spec, name, flags, options, mntopts)
 
 	if (strcmp(name, "/") == 0)
 		flags |= MNT_UPDATE;
+	else {
+		if (statfs(name, &sf) < 0) {
+			warn("statfs %s", name);
+			return (1);
+		}
+		/* XXX can't check f_mntfromname, thanks to mfs, union, etc. */
+		if (strncmp(name, sf.f_mntonname, MNAMELEN) == 0 &&
+		    strncmp(vfstype, sf.f_fstypename, MFSNAMELEN) == 0) {
+			if (verbose)
+				(void)printf("%s on %s type %.*s: %s\n",
+				    sf.f_mntfromname, sf.f_mntonname,
+			            MFSNAMELEN, sf.f_fstypename,
+				    "already mounted");
+			return (0);
+		}
+	}
 	if (flags & MNT_FORCE)
 		optbuf = catopt(optbuf, "force");
 	if (flags & MNT_RDONLY)
@@ -342,9 +355,6 @@ mountfs(vfstype, spec, name, flags, options, mntopts)
 		free(optbuf);
 		return (1);
 	case 0:					/* Child. */
-		if (strcmp(vfstype, "ufs") == 0)
-			exit(mount_ufs(argc, (char * const *) argv));
-
 		/* Go find an executable. */
 		edir = edirs;
 		do {

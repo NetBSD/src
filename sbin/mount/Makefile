@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 1995/03/18 14:56:53 cgd Exp $
+#	$NetBSD: Makefile,v 1.10 1995/07/12 03:45:09 cgd Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/27/94
 
 PROG=	mount
-SRCS=	mount.c mount_ufs.c getmntopts.c
+SRCS=	mount.c getmntopts.c
 MAN=	mount.8
 # We do NOT install the getmntopts.3 man page.
 
