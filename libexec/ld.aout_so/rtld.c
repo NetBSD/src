@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.34 1995/06/05 00:08:38 pk Exp $
+ *	$Id: rtld.c,v 1.35 1995/06/20 23:07:03 pk Exp $
  */
 
 #include <sys/param.h>
@@ -433,6 +433,8 @@ alloc_link_map(path, sodp, parent, addr, dp)
 	*link_map_tail = smp;
 	link_map_tail = &smp->som_next;
 
+	/*smp->som_sodbase = 0; NOT USED */
+	smp->som_write = 0;
 	smp->som_addr = addr;
 	smp->som_path = path?strdup(path):NULL;
 	smp->som_sod = sodp;
@@ -1069,10 +1071,10 @@ hinthash(cp, vmajor, vminor)
 #undef minor
 
 	static char *
-findhint(name, major, minor, preferred_path)
+findhint(name, major, minor, prefered_path)
 	char	*name;
 	int	major, minor;
-	char	*preferred_path;
+	char	*prefered_path;
 {
 	struct hints_bucket	*bp;
 
@@ -1093,9 +1095,10 @@ findhint(name, major, minor, preferred_path)
 			/* It's `name', check version numbers */
 			if (bp->hi_major == major &&
 				(bp->hi_ndewey < 2 || bp->hi_minor == minor)) {
-					if (preferred_path == NULL ||
-					    strcmp(preferred_path,
-						hstrtab + bp->hi_pathx) == 0) {
+					if (prefered_path == NULL ||
+					    strncmp(prefered_path,
+						hstrtab + bp->hi_pathx,
+						strlen(prefered_path)) == 0) {
 						return hstrtab + bp->hi_pathx;
 					}
 			}
@@ -1134,20 +1137,24 @@ rtfindlib(name, major, minor, usehints, ipath)
 		/* Prefer paths from some explicit LD_LIBRARY_PATH */
 		register char	*lpath;
 		char		*dp;
-		dp = lpath = concat(ld_library_path?ld_library_path:"",
-				    ":",
-				    ipath?ipath:"");
+
+		dp = lpath = concat(ld_library_path ? ld_library_path : "",
+				    (ld_library_path && ipath) ? ":" : "",
+				    ipath ? ipath : "");
+
 		while ((cp = strsep(&dp, ":")) != NULL) {
 			cp = findhint(name, major, minor, cp);
-			if (cp)
+			if (cp) {
+				free(lpath);
 				return cp;
+			}
 		}
 		free(lpath);
 
 		/*
 		 * Not found in hints; try directory search now, before
 		 * we get a spurious hint match below (i.e. a match not
-		 * one of the paths we're supposed to search first.
+		 * on one of the paths we're supposed to search first.
 		 */
 		realminor = -1;
 		cp = (char *)findshlib(name, &major, &realminor, 0);
