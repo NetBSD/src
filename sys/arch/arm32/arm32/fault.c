@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.22 1998/04/30 21:22:00 mark Exp $	*/
+/*	$NetBSD: fault.c,v 1.23 1998/05/01 15:44:51 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -100,6 +100,22 @@ static const char *aborts[16] = {
 	"Permission error (page)"
 };
 
+void
+report_abort(prefix, fault_status, fault_address, fault_pc)
+	const char *prefix;
+	u_int fault_status;
+	u_int fault_address;
+	u_int fault_pc;
+{
+	if (verbose_faults || prefix == NULL) {
+		if (prefix)
+			printf("%s ", prefix);
+		printf("Data abort: '%s' status=%03x address=%08x PC=%08x\n",
+		    aborts[fault_status & FAULT_TYPE_MASK],
+		    fault_status & 0xfff, fault_address, fault_pc);
+	}
+}
+
 /*
  * void data_abort_handler(trapframe_t *frame)
  *
@@ -121,6 +137,7 @@ data_abort_handler(frame)
 	u_int fault_pc;
 	u_int fault_instruction;
 	int fault_code;
+	int user;
 	u_quad_t sticks = 0;
 	int error;
 
@@ -145,10 +162,7 @@ data_abort_handler(frame)
 	if (current_intr_depth > 0) {
 #ifdef DDB
 		printf("Fault with intr_depth > 0\n");
-		printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
-		    aborts[fault_status & 0xf], fault_status & 0xfff,
-		    fault_address, fault_pc);
-
+		report_abort(NULL, fault_status, fault_address, fault_pc);
 		printf("Instruction @V%08x = %08x\n",
 		    fault_pc, fault_instruction);
 		Debugger();
@@ -162,10 +176,7 @@ data_abort_handler(frame)
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0) {
-		printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
-		    aborts[fault_status & 0xf], fault_status & 0xfff,
-		    fault_address, fault_pc);
-
+		report_abort(NULL, fault_status, fault_address, fault_pc);
 		printf("Instruction @V%08x = %08x\n",
 		    fault_pc, fault_instruction);
 	}
@@ -182,12 +193,12 @@ data_abort_handler(frame)
 	fault_code = fault_status & FAULT_TYPE_MASK;
 
 	/* Get the current proc structure or proc0 if there is none */
-	if ((p = curproc) == 0)
+	if ((p = curproc) == NULL)
 		p = &proc0;
 
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
-		printf("fault in process %08x\n", (u_int)p);
+		printf("fault in process %p\n", p);
 #endif
 
 	/*
@@ -195,7 +206,7 @@ data_abort_handler(frame)
 	 * a register anyway
 	 */
 	pcb = &p->p_addr->u_pcb;
-	if (pcb == 0) {
+	if (pcb == NULL) {
 		vm_offset_t va;
         
 		va = trunc_page((vm_offset_t)fault_address);
@@ -203,12 +214,12 @@ data_abort_handler(frame)
 			return;
 		if (pmap_modified_emulation(kernel_pmap, va))
 			return;
-		printf("data_abort_handler: pc=%08x fault addr=%08x faultcode=%08x\n",
-		    fault_pc, fault_address, fault_status);
+		report_abort(NULL, fault_status, fault_address, fault_pc);
 		panic("data_abort_handler: no pcb ... we're toast !\n");
 	}
 
 #ifdef DIAGNOSTIC
+	/* Is this needed ? */
 	if (pcb != curpcb) {
 		printf("data_abort: Alert ! pcb(%p) != curpcb(%p)\n",
 		    pcb, curpcb);
@@ -222,12 +233,12 @@ data_abort_handler(frame)
 	    && (fault_code != FAULT_TRANS_S && fault_code != FAULT_TRANS_P))
 	    || pcb->pcb_onfault == fusubailout) {
 copyfault:
-		printf("Using pcb_onfault=%08x addr=%08x st=%08x curproc=%x\n",
-		    (u_int)pcb->pcb_onfault, fault_address, fault_status, (u_int)curproc);
+		printf("Using pcb_onfault=%p addr=%08x st=%08x p=%p\n",
+		    pcb->pcb_onfault, fault_address, fault_status, p);
 		frame->tf_pc = (u_int)pcb->pcb_onfault;
 		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
-			panic("Yikes pcb_onfault=%08x during USR mode fault\n",
-			    (u_int)pcb->pcb_onfault);
+			panic("Yikes pcb_onfault=%p during USR mode fault\n",
+			    pcb->pcb_onfault);
 		return;
 	}
 
@@ -236,25 +247,21 @@ copyfault:
 		sticks = p->p_sticks;
         
 		/*
-		 * Modify the fault_code to reflect the USR/SVC state
-		 * at time of fault
+		 * Note that the fault was from USR mode.
 		 */
-		fault_code |= FAULT_USER;
+		user = 1;
 		p->p_md.md_regs = frame;
-	}
+	} else
+		user = 0;
 
-	/* Now act of the fault type */
+	/* Now act on the fault type */
 	switch (fault_code) {
-	case FAULT_WRTBUF_0 | FAULT_USER: /* Write Buffer Fault */
-	case FAULT_WRTBUF_1 | FAULT_USER: /* Write Buffer Fault */
 	case FAULT_WRTBUF_0:              /* Write Buffer Fault */
 	case FAULT_WRTBUF_1:              /* Write Buffer Fault */
 		/* If this happens forget it no point in continuing */
 
 		/* FALLTHROUGH */
 
-	case FAULT_ALIGN_0 | FAULT_USER: /* Alignment Fault */
-	case FAULT_ALIGN_1 | FAULT_USER: /* Alignment Fault */
 	case FAULT_ALIGN_0:              /* Alignment Fault */
 	case FAULT_ALIGN_1:              /* Alignment Fault */
 		/*
@@ -268,10 +275,6 @@ copyfault:
 
 		/* FALLTHROUGH */
           
-	case FAULT_BUSERR_0 | FAULT_USER: /* Bus Error LF Section */
-	case FAULT_BUSERR_1 | FAULT_USER: /* Bus Error Page */
-	case FAULT_BUSERR_2 | FAULT_USER: /* Bus Error Section */
-	case FAULT_BUSERR_3 | FAULT_USER: /* Bus Error Page */
 	case FAULT_BUSERR_0:              /* Bus Error LF Section */
 	case FAULT_BUSERR_1:              /* Bus Error Page */
 	case FAULT_BUSERR_2:              /* Bus Error Section */
@@ -281,8 +284,6 @@ copyfault:
 
 		/* FALLTHROUGH */
           
-	case FAULT_DOMAIN_S | FAULT_USER: /* Section Domain Error Fault */
-	case FAULT_DOMAIN_P | FAULT_USER: /* Page Domain Error Fault*/
 	case FAULT_DOMAIN_S:              /* Section Domain Error Fault */
 	case FAULT_DOMAIN_P:              /* Page Domain Error Fault*/
 		/*
@@ -297,20 +298,42 @@ copyfault:
 
 		/* FALLTHROUGH */
 
-	case FAULT_BUSTRNL1 | FAULT_USER: /* Bus Error Trans L1 Fault */
-	case FAULT_BUSTRNL2 | FAULT_USER: /* Bus Error Trans L2 Fault */
 	case FAULT_BUSTRNL1:              /* Bus Error Trans L1 Fault */
 	case FAULT_BUSTRNL2:              /* Bus Error Trans L2 Fault */
 		/*
 		 * These faults imply that the PTE is corrupt.
 		 * Likely to be a kernel fault so we had better stop.
 		 */
-		panic("%s [%d] - Halting\n", aborts[fault_code
-		    & FAULT_TYPE_MASK], fault_code);
+
+		/* FALLTHROUGH */
+
+	default :
+		/* Are there any combinations I have missed ? */
+		report_abort(NULL, fault_status, fault_address, fault_pc);
+
+	we_re_toast:
+		/*
+		 * Were are dead, try and provide some debug
+		 * infomation before dying
+		 */
+		panic("Halting (frame = %p)\n", frame);
 		break;
           
-	case FAULT_PERM_P:		 /* Page Permission Fault*/
-	case FAULT_PERM_P | FAULT_USER:	/* Page Permission Fault*/
+	case FAULT_PERM_S:		 /* Section Permission Fault */
+		/*
+		 * Section permission faults should not happen often.
+		 * Only from user processes mis-behaving.
+		 * If this happens from SVC mode then we are in trouble.
+		 */
+		if (user == 0) {
+			report_abort(NULL, fault_status, fault_address, fault_pc);
+			panic("Halting (frame = %p)\n", frame);
+		}
+		report_abort("", fault_status, fault_address, fault_pc);
+		trapsignal(p, SIGSEGV, TRAP_CODE);
+		break;
+
+	case FAULT_PERM_P:		 /* Page Permission Fault */
 	/* Ok we have a permission fault in user or kernel mode */
 	{
 		register vm_offset_t va;
@@ -320,62 +343,53 @@ copyfault:
 		vm_prot_t ftype;
 
 		/*
-		 * Ok we have a permission fault in user mode. The only cause
-		 * must be that a read only page has been written to. This may
-		 * be genuine or it may be a bad access. In the future it may
-		 * also be cause by the software emulation of the modified
-		 * flag.
+		 * Ok we have a permission fault in user mode. This will be
+		 * caused by writing read-only pages or by reading/writing
+		 * pages with no USR access from USR mode. This may be
+		 * a genuine fault or it may be a bad access.
+		 * It can also be caused software PTE modified bit emulation
 		 */
 		va = trunc_page((vm_offset_t)fault_address);
 
 #ifdef PMAP_DEBUG
 		if (pmap_debug_level >= 0)
-			printf("ok we have a page permission fault - addr=V%08x ",
-			    (u_int)va);
+			printf("page permission fault: addr=V%08lx ", va);
 #endif
 
-		if (va >= VM_MAXUSER_ADDRESS && (fault_code & FAULT_USER)) {
-			if (verbose_faults)
-				printf("Data abort: '%s' status=%03x address=%08x PC=%08x\n",
-				    aborts[fault_status & 0xf],
-				    fault_status & 0xfff, fault_address,
-				    fault_pc);
+		if (va >= VM_MAXUSER_ADDRESS && user) {
+			report_abort("", fault_status, fault_address, fault_pc);
 			trapsignal(p, SIGSEGV, TRAP_CODE);
 			break;
 		}
 
 		/*
 		 * It is only a kernel address space fault iff:
-		 *	1. (fault_code & FAULT_USER) == 0  and
+		 *	1. user == 0  and
 		 *	2. pcb_onfault not set or
 		 *	3. pcb_onfault set but supervisor space fault
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if ((fault_code & FAULT_USER) == 0
-		    && (va >= KERNEL_BASE || va <= VM_MIN_ADDRESS)) {
+		if (user == 0 && (va >= KERNEL_BASE || va <= VM_MIN_ADDRESS)) {
 			/* Was the fault due to the FPE/IPKDB ? */
  
 			if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
-				printf("UND32 Data abort: '%s' status = %03x address = %08x PC = %08x\n",
-				    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
-				    fault_pc);
-				postmortem(frame);
+				report_abort("UND32", fault_status,
+				    fault_address, fault_pc);
 				trapsignal(p, SIGSEGV, TRAP_CODE);
 
 				/*
 				 * Force exit via userret()
 				 * This is necessary as the FPE is an extension
 				 * to userland that actually runs in a
-				 * priveldged mode but uses USR mode
+				 * priveledged mode but uses USR mode
 				 * permissions for its accesses.
 				 */
 				userret(p, frame->tf_pc, p->p_sticks);
 				return;
 			}
 
-			printf("Data abort: '%s' status = %03x address = %08x PC = %08x\n",
-			    aborts[fault_status & 0xf], fault_status & 0xfff, fault_address,
+			report_abort(NULL, fault_status, fault_address,
 			    fault_pc);
 			panic("permission fault in kernel by kernel\n");
 		} else
@@ -424,31 +438,15 @@ copyfault:
 #endif
 			if (rv == KERN_SUCCESS)
 				goto out;
-			if (verbose_faults)
-				printf("Data abort: '%s' status=%03x address=%08x PC=%08x\n",
-				    aborts[fault_status & 0xf],
-				    fault_status & 0xfff, fault_address,
-				    fault_pc);
+			
+			report_abort("", fault_status, fault_address, fault_pc);
 			trapsignal(p, SIGSEGV, TRAP_CODE);
 			break;
 		}
 		break;
 	}            
 
-	case FAULT_PERM_S | FAULT_USER: /* Section Permission Fault */
-		/*
-		 * Section permission faults should not happen often.
-		 * Only from user processes mis-behaving
-		 */
-		if (verbose_faults)
-			printf("Data abort: '%s' status=%03x address=%08x PC=%08x\n",
-			    aborts[fault_status & 0xf], fault_status & 0xfff,
-			    fault_address, fault_pc);
-		trapsignal(p, SIGSEGV, TRAP_CODE);
-		break;
-
 	case FAULT_TRANS_P:              /* Page Translation Fault */
-	case FAULT_TRANS_P | FAULT_USER: /* Page Translation Fault */
 	/* Ok page translation fault - The page does not exist */
 	{
 		register vm_offset_t va;
@@ -463,29 +461,24 @@ copyfault:
 
 #ifdef PMAP_DEBUG
 		if (pmap_debug_level >= 0)
-			printf("ok we have a page fault - addr=V%08x ", (u_int)va);
+			printf("page fault: addr=V%08lx ", va);
 #endif
           
-		if (va >= VM_MAXUSER_ADDRESS && (fault_code & FAULT_USER)) {
-			if (verbose_faults)
-				printf("Data abort: '%s' status=%03x address=%08x PC=%08x\n",
-				    aborts[fault_status & 0xf],
-				    fault_status & 0xfff, fault_address,
-				    fault_pc);
+		if (va >= VM_MAXUSER_ADDRESS && user) {
+			report_abort("", fault_status, fault_address, fault_pc);
 			trapsignal(p, SIGSEGV, TRAP_CODE);
 			break;
 		}
 
 		/*
 		 * It is only a kernel address space fault iff:
-		 *	1. (fault_code & FAULT_USER) == 0  and
+		 *	1. user == 0  and
 		 *	2. pcb_onfault not set or
 		 *	3. pcb_onfault set but supervisor space fault
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (fault_code == FAULT_TRANS_P
-		    && (va >= KERNEL_BASE || va < VM_MIN_ADDRESS))
+		if (user == 0 && (va >= KERNEL_BASE || va < VM_MIN_ADDRESS))
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
@@ -552,24 +545,20 @@ copyfault:
 			goto out;
 		}
 nogo:
-		if (fault_code == FAULT_TRANS_P) {
+		if (user == 0) {
 			printf("Failed page fault in kernel\n");
 			if (pcb->pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
-			    (u_int)map, (u_int)va, ftype, rv);
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		if (verbose_faults)
-			printf("Data abort: '%s' status=%03x address=%08x PC=%08x\n",
-			    aborts[fault_status & 0xf], fault_status & 0xfff,
-			    fault_address, fault_pc);
+		report_abort("", fault_status, fault_address, fault_pc);
 		trapsignal(p, SIGSEGV, TRAP_CODE);
 		break;
 	}            
           
 	case FAULT_TRANS_S:              /* Section Translation Fault */
-	case FAULT_TRANS_S | FAULT_USER: /* Section Translation Fault */
 	/* Section translation fault - the L1 page table does not exist */
 	{
 		register vm_offset_t va;
@@ -583,19 +572,18 @@ nogo:
 
 #ifdef PMAP_DEBUG
 		if (pmap_debug_level >= 0)
-			printf("ok we have a section fault page addr=V%08x\n",
-			    (u_int)va);
+			printf("section fault page addr=V%08lx\n", va);
 #endif
           
 		/*
 		 * It is only a kernel address space fault iff:
-		 *	1. (fault_code & FAULT_USER) == 0  and
+		 *	1. user == 0  and
 		 *	2. pcb_onfault not set or
 		 *	3. pcb_onfault set but supervisor space fault
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (fault_code == FAULT_TRANS_S && va >= KERNEL_BASE)
+		if (user == 0 && va >= KERNEL_BASE)
 			map = kernel_map;
 		else
 			map = &vm->vm_map;
@@ -603,7 +591,7 @@ nogo:
 		/* We are mapping a page table so this must be kernel r/w */
 		ftype = VM_PROT_READ | VM_PROT_WRITE;
 #ifdef DIAGNOSTIC
-		if (map == kernel_map && va == 0) {
+		if (va == 0 && map == kernel_map) {
 			printf("trap: bad kernel access at %lx\n", va);
 			goto we_re_toast;
 		}
@@ -638,42 +626,24 @@ nogo:
 			goto out;
 		}
 nogo1:
-		if (verbose_faults)
-			printf("Data abort: '%s' status=%03x address=%08x PC=%08x\n",
-			    aborts[fault_status & 0xf], fault_status & 0xfff,
-			    fault_address, fault_pc);
-		if (fault_code == FAULT_TRANS_S) {
+		report_abort("", fault_status, fault_address, fault_pc);
+		if (user == 0) {
 			printf("Section fault in SVC mode\n");
 			if (pcb->pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
-			    (u_int)map, (u_int)va, ftype, rv);
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
 		trapsignal(p, SIGSEGV, TRAP_CODE);
 		break;
 	}            
-          
-	default :
-		/* Are there any combinations I have missed ? */
-		printf("Data abort: '%s' status=%03x address=%08x PC=%08x\n",
-		    aborts[fault_status & 0xf], fault_status & 0xfff,
-		    fault_address, fault_pc);
-
-we_re_toast:
-		/*
-		 * Were are dead, try and provide some debug
-		 * infomation before dying
-		 */
-		panic("Fault cannot be handled (frame = %p)\n", frame);
-		break;
 	}
 
 out:
-	if ((fault_code & FAULT_USER) == 0)
-		return;
-    
-	userret(p, frame->tf_pc, sticks);
+	/* Call userret() if it was a USR mode fault */
+	if (user)
+		userret(p, frame->tf_pc, sticks);
 }
 
 
@@ -699,7 +669,6 @@ prefetch_abort_handler(frame)
 	register struct proc *p;
 	register struct pcb *pcb;
 	u_int fault_instruction;
-	int fault_code;
 	u_quad_t sticks;
 	pt_entry_t *pte;
 	int error;
@@ -707,10 +676,6 @@ prefetch_abort_handler(frame)
 #ifdef DIAGNOSTIC
 	/* Paranoia: We should always be in SVC32 mode at this point */
 	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
-		printf("fault being handled in non SVC32 mode\n");
-#ifdef PMAP_DEBUG
-		pmap_debug_level = 0;
-#endif
 		panic("Fault handler not in SVC mode\n");
 	}
 #endif	/* DIAGNOSTIC */
@@ -764,12 +729,6 @@ prefetch_abort_handler(frame)
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
 		sticks = p->p_sticks;
-        
-		/*
-		 * Modify the fault_code to reflect the USR/SVC state
-		 * at time of fault
-		 */
-		fault_code |= FAULT_USER;
 		p->p_md.md_regs = frame;
 	} else {
 		/*
