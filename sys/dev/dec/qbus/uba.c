@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.33 1998/03/02 17:00:02 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.34 1998/03/21 10:24:29 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -73,7 +73,7 @@ static	int ubaprint __P((void *, const char *));
 static	void ubastray __P((int));
 static	void ubainitmaps __P((struct uba_softc *));
 static	void uba_attach __P((struct uba_softc *, unsigned long));
-static	int ubasetup __P((struct uba_softc *, struct buf *, int));
+int ubasetup __P((struct uba_softc *, struct buf *, int));
 
 extern struct cfdriver uba_cd;
 
