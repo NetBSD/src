@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 1996/07/09 00:30:22 cgd Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 1996/09/15 22:42:29 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -202,18 +202,9 @@
 #define MCOUNT	/* nothing */
 #else
 #define MCOUNT							\
-	lda	sp, -16(sp);					\
-	stq	pv, 0(sp);					\
-								\
-	br	pv, 1f;						\
-1:	ldgp	gp, 0(pv);					\
-	lda	pv, _mcount;					\
-	jsr	at_reg, (pv);					\
-	br	pv, 2f;						\
-2:	ldgp	gp, 0(pv);					\
-								\
-	ldq	pv, 0(sp);					\
-	lda	sp, 16(sp)
+	.set noat;						\
+	jsr	at_reg,_mcount;					\
+	.set at
 #endif
 
 /*
@@ -433,26 +424,26 @@ _name_:;							\
  *	Allocate space for a message (a read-only ascii string)
  */
 #define	ASCIZ	.asciz
-#define	MSG(msg,reg)						\
-	lda reg, 9f;						\
+#define	MSG(msg,reg,label)					\
+	lda reg, label;						\
 	.data;							\
-9:	ASCIZ msg;						\
+label:	ASCIZ msg;						\
 	.text;
 
 /*
  * PRINTF
  *	Print a message
  */
-#define	PRINTF(msg)						\
-	MSG(msg,a0);						\
+#define	PRINTF(msg,label)					\
+	MSG(msg,a0,label);					\
 	CALL(printf)
 
 /*
  * PANIC
  *	Fatal error (KERNEL)
  */
-#define	PANIC(msg)						\
-	MSG(msg,a0);						\
+#define	PANIC(msg,label)					\
+	MSG(msg,a0,label);					\
 	CALL(panic)
 
 /*
