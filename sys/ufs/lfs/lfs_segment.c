@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.48 2000/05/31 03:37:35 fredb Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.49 2000/06/06 20:19:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -813,8 +813,10 @@ lfs_writeinode(fs, sp, ip)
 	 * No need to update segment usage if there was no former inode address 
 	 * or if the last inode address is in the current partial segment.
 	 */
-	if (daddr != LFS_UNUSED_DADDR &&
-	    !(daddr >= fs->lfs_lastpseg && daddr <= bp->b_blkno)) {
+	if (daddr >= fs->lfs_lastpseg && daddr <= bp->b_blkno)
+		printf("lfs_writeinode: last inode addr in current pseg "
+		       "(ino %d daddr 0x%x)\n" /* XXX ANSI */, ino, daddr);
+	if (daddr != LFS_UNUSED_DADDR) {
 		LFS_SEGENTRY(sup, fs, datosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes < DINODE_SIZE) {
@@ -1087,7 +1089,12 @@ lfs_updatemeta(sp)
 			}
 		}
 		/* Update segment usage information. */
-		if (daddr > 0 && !(daddr >= fs->lfs_lastpseg && daddr <= off)) {
+		if (daddr >= fs->lfs_lastpseg && daddr <= off) {
+			printf("lfs_updatemeta: ino %d, lbn %d, addr = %x "
+			       "in same pseg\n", VTOI(sp->vp)->i_number,
+			       (*sp->start_bpp)->b_lblkno, daddr);
+		}
+		if (daddr > 0) {
 			LFS_SEGENTRY(sup, fs, datosn(fs, daddr), bp);
 #ifdef DIAGNOSTIC
 			if (sup->su_nbytes < (*sp->start_bpp)->b_bcount) {

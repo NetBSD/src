@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.17 2000/05/30 04:08:41 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.18 2000/06/06 20:19:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -345,15 +345,22 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	
 	bb = (long)fragstodb(fs, numfrags(fs, nsize - osize));
- top:
+	error = 0;
+
+	/*
+	 * Get the seglock so we don't enlarge blocks or change the segment
+	 * accounting information while a segment is being written.
+	 */
+	lfs_seglock(fs, SEGM_PROT);
+
 	if (!ISSPACE(fs, bb, curproc->p_ucred)) {
-		return(ENOSPC);
+		error = ENOSPC;
+		goto out;
 	}
 	if ((error = bread(vp, lbn, osize, NOCRED, bpp))) {
 		brelse(*bpp);
-		return(error);
+		goto out;
 	}
 
 	/*
@@ -371,19 +378,9 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 #ifdef QUOTA
 	if ((error = chkdq(ip, bb, curproc->p_ucred, 0))) {
 		brelse(*bpp);
-		return (error);
+		goto out;
 	}
 #endif
-	/*
-	 * XXX - KS - Don't change size while we're gathered, as we could
-	 * then overlap another buffer in lfs_writeseg.
-	 */
-	if((*bpp)->b_flags & B_GATHERED) {
-		(*bpp)->b_flags |= B_NEEDCOMMIT; /* XXX KS - what flag to use? */
-		brelse(*bpp);
-		tsleep(*bpp, (PRIBIO+1), "lfs_fragextend", 0);
-		goto top;
-	}
 	ip->i_ffs_blocks += bb;
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 	fs->lfs_bfree -= fragstodb(fs, numfrags(fs, (nsize - osize)));
@@ -391,6 +388,8 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 		locked_queue_bytes += (nsize - osize);
 	allocbuf(*bpp, nsize);
 	bzero((char *)((*bpp)->b_data) + osize, (u_int)(nsize - osize));
-	
-	return(0);
+
+    out:
+	lfs_segunlock(fs);
+	return (error);
 }
