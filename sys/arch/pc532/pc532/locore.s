@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.38 1996/07/31 16:47:30 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.39 1996/10/09 07:45:13 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -89,11 +89,12 @@ __have_fpu:	.long	0	/* Have we an FPU installed? */
 _proc0paddr:	.long	0
 _PTDpaddr:	.long	0	# paddr of PTD, for libkvm
 
+	.globl	_kernel_text
+	.set	_kernel_text,(KERNBASE + 0x2000)
+
 	.text
-	.globl start
-	.globl _kernel_text
+	.globl	start
 start:
-_kernel_text:
 	ints_off			# make sure interrupts are off.
 	bicpsrw	PSL_US			# make sure we are using sp0.
 	lprd    sb,0			# gcc expects this.
@@ -123,7 +124,7 @@ _kernel_text:
 	 */
 	br	_init532
 
-ENTRY(proc_trampoline)
+_ENTRY(proc_trampoline)
 	movd	r4,tos
 	jsr	0(r3)
 	cmpqd	0,tos
@@ -147,7 +148,7 @@ ENTRY(delay)			/* bsr  2 cycles;  80 ns */
 				/*		 1000 ns */
 				/*		  840 ns */
 1:	nop; nop; nop; nop; nop	/*     10 cycles; 400 ns */
-	nop; nop: nop: nop; nop	/*     10 cycles; 400 ns */
+	nop; nop; nop; nop; nop	/*     10 cycles; 400 ns */
 	acbd	-1,r0,1b	/* 	5 cycles; 200 ns */
 2:	ret	0		/* 	4 cycles; 160 ns */
 
@@ -157,7 +158,7 @@ ENTRY(delay)			/* bsr  2 cycles;  80 ns */
  * Signal trampoline; copied to top of user stack.
  */
 
-ENTRY(sigcode)
+_ENTRY(sigcode)
 	jsr	0(SIGF_HANDLER(sp))
 	addr	SIGF_SC(sp),tos		/* scp (the call may have clobbered */
 					/* the copy at SIGF_SCP(sp)). */
@@ -167,6 +168,10 @@ ENTRY(sigcode)
 	movd	0,0			/* Illegal instruction. */
 	.globl	_esigcode
 _esigcode:
+#if defined(PROF) || defined(GPROF) || defined(KGDB) || defined(DDB)
+	/* Just a gap between _esigcode and the next label */
+	.long	0
+#endif
 
 /****************************************************************************/
 
@@ -719,21 +724,22 @@ ENTRY(remrq)
 /*
  * When no processes are on the runq, cpu_switch() branches to here to wait for
  * something to come ready.
+ * Note1: this is really a part of cpu_switch() but defined here for kernel
+ *        profiling.
+ * Note2: cpu_switch jumps into the idle loop with "bfs 0b". This makes it
+ *        possible to insert a fake "enter" after the _idle label for the
+ *        benefit of kgdb and ddb.
  */
-ENTRY(idle)
-	ints_off
-	cmpqd	0,_whichqs(pc)
-	bne	sw1
+_ENTRY(idle)
+#if defined(DDB) || defined(KGDB)
+	enter	[r3,r4,r5,r6,r7],0
+#endif
+0:	ints_off
+	ffsd	_whichqs(pc),r0
+	bfc	sw1
 	ints_on				/* We may lose a tick here ... */
 	wait				/* Wait for interrupt. */
-	br	_idle
-
-#ifdef	DIAGNOSTIC
-ENTRY(switch_error)
-	addr	1f(pc),tos
-	bsr	_panic
-1:	.asciz	"cpu_switch"
-#endif /* DIAGNOSTIC */
+	br	0b
 
 /*
  * cpu_switch(void);
@@ -755,7 +761,7 @@ ENTRY(cpu_switch)
 
 	movd	_imask(pc),tos
 	bsr	_splx			/* spl0 - process pending interrupts */
-#ifdef DDB
+#if defined(DDB) || defined(KGDB)
 	cmpqd	0,tos
 	movd	r0,tos
 #else
@@ -774,11 +780,11 @@ ENTRY(cpu_switch)
 	 */
 	ints_off
 
-sw1:	movqd	0,r0
+	movqd	0,r0
 	ffsd	_whichqs(pc),r0		/* find a full q */
-	bfs	_idle			/* if none, idle */
+	bfs	0b			/* if none, idle */
 
-	/* Get the process and unlink it from the queue. */
+sw1:	/* Get the process and unlink it from the queue. */
 	addr	_qs(pc)[r0:q],r1	/* address of qs entry! */
 
 	movd	P_FORW(r1),r2		/* unlink from front of process q */
@@ -803,6 +809,7 @@ sw1:	movqd	0,r0
 	cmpb	SRUN,P_STAT(r2)		/* In run state? */
 	bne	_switch_error		/* No; shouldn't be queued. */
 #endif /* DIAGNOSTIC */
+
 	/* Isolate process. XXX Is this necessary? */
 	movqd	0,P_BACK(r2)
 
@@ -875,9 +882,15 @@ switch_return:
 	bsr	_splx
 	cmpqd	0,tos
 
-	movd	r2,r0			/* return(p); */
 	exit	[r3,r4,r5,r6,r7]
 	ret	0
+
+#ifdef	DIAGNOSTIC
+ENTRY(switch_error)
+	addr	1f(pc),tos
+	bsr	_panic
+1:	.asciz	"cpu_switch"
+#endif /* DIAGNOSTIC */
 
 /****************************************************************************/
 
@@ -972,11 +985,13 @@ ENTRY(restore_fpu_context)
 	rett	0
 
 /*
- * Check for AST. CPU interrupts have to be disabled.
+ * Check for AST.
  */
 #define	CHECKAST \
 	tbitw	8,REGS_PSR(sp); \
 	bfc	9f; \
+	7: \
+	ints_off; \
 	cmpqd	0,_astpending(pc); \
 	beq	9f; \
 	movqd	0,_astpending(pc); \
@@ -985,12 +1000,14 @@ ENTRY(restore_fpu_context)
 	movqd	0,tos; \
 	movqd	0,tos; \
 	bsr	_trap; \
-	adjspd	-12; 9:
+	adjspd	-12; \
+	br	7b; \
+	9:
 
 #define	TRAP(label, code) \
 	.align 2; CAT(label,:); KENTER; \
 	movd	code,tos; \
-	br	handle_trap
+	br	_handle_trap
 
 TRAP(trap_nmi,	    T_NMI)	/*  1 non-maskable interrupt */
 TRAP(trap_abt,	    T_ABT)	/*  2 abort */
@@ -1009,8 +1026,7 @@ TRAP(trap_reserved, T_RESERVED)	/* 15 reserved */
 /*
  * The following handles all synchronous traps and non maskable interupts.
  */
-	.align	2
-handle_trap:
+_ENTRY(handle_trap)
 	lprd    sb,0			/* Kernel code expects sb to be 0 */
 	/*
 	 * Store the mmu status.
@@ -1020,7 +1036,6 @@ handle_trap:
 	smr	msr,tos
 	bsr	_trap
 	adjspd	-12			/* Pop off software part of frame. */
-	ints_off
 	CHECKAST
 	KEXIT
 
@@ -1031,14 +1046,13 @@ handle_trap:
  * cache line aligned.
  */
 	.align	4
+_ENTRY(flush_icache)
 #ifndef CINVSMALL
-trap_flg:
 	cinv	ia,r0
 	addqd	1,tos
 	rett	0
 #else
 	.globl	_cinvstart, _cinvend
-trap_flg:
 	addqd	1,tos			/* Increment return address */
 	addd	r0,r1
 	movd	r1,tos			/* Save address of second line. */
@@ -1065,19 +1079,17 @@ _cinvend:
 /*
  * The system call trap handler.
  */
-	.align	2
-trap_svc:
+_ENTRY(svc)
 	KENTER
 	lprd	sb,0			/* Kernel code expects sb to be 0 */
 	bsr	_syscall
-rei:	ints_off
-	CHECKAST
+rei:	CHECKAST
 	KEXIT
 
 /*
  * The handler for all asynchronous interrupts.
  */
-ENTRY(interrupt)
+_ENTRY(interrupt)
 	KENTER
 	lprd    sb,0			/* Kernel code expects sb to be 0 */
 	movd	_Cur_pl(pc),tos
@@ -1088,8 +1100,6 @@ ENTRY(interrupt)
 	lshd	r0,r1
 	orw	r1,_Cur_pl(pc)		/* or bit to Cur_pl */
 	orw	r1,@ICU_ADR+IMSK	/* and to IMSK */
-					/* bits set by idisabled in IMSK */
-					/* have to be preserved */
 	ints_off			/* flush pending writes */
 	ints_on				/* and now turn ints on */
 	addqd	1,_intrcnt(pc)[r0:d]
@@ -1120,9 +1130,9 @@ _inttab:
 	.long trap_abt
 	.long trap_slave
 	.long trap_ill
-	.long trap_svc
+	.long _svc
 	.long trap_dvz
-	.long trap_flg
+	.long _flush_icache
 	.long trap_bpt
 	.long trap_trc
 	.long trap_und
@@ -1177,7 +1187,7 @@ pattern1	= 0x5a5a5a5a
 parity_clr	= 0x28000050
 
 ENTRY(ram_size)
-	enter	[r1,r2,r3,r4,r5,r6,r7],0
+	enter	[r3,r4,r5,r6,r7],0
 	sprd	sb,tos
 	sprd	intbase,r0
 	lprd	sb,r0			/* load intbase into sb */
@@ -1194,7 +1204,7 @@ ENTRY(ram_size)
 	lprw	cfg,r2
 	movd	4(sb),r5		/* save old NMI vector */
 	addr	tmp_nmi(pc),4(sb)	/* tmp NMI vector */
-	cinv	ia,r0			/* Vector reads go through the icache */
+	cinv	ia,r0			/* Vector reads go through the icache? */
 	movd	8(fp),r0		/* r0 = start */
 	addr	PGOFSET(r0),r0 		/* round up to page */
 	andd	~PGOFSET,r0
@@ -1219,11 +1229,11 @@ rz_exit:
 	movd	r7,@4
 	lprw	cfg,r1			/* turn data cache back on */
 	movd	r5,4(sb)		/* restore NMI vector */
-	cinv	ia,r0			/* Vector reads go through the icache */
+	cinv	ia,r0			/* Vector reads go through the icache? */
 	movd	parity_clr,r2
 	movb	0(r2),r2		/* clear parity status */
 	lprd	sb,tos
-	exit	[r1,r2,r3,r4,r5,r6,r7]
+	exit	[r3,r4,r5,r6,r7]
 	ret	0
 
 tmp_nmi:				/* come here if parity error */
