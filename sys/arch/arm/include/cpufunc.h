@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.23 2002/05/03 16:45:22 rjs Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.23.4.1 2002/11/18 02:14:55 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -378,11 +378,7 @@ void	xscale_cache_cleanD_rng	__P((vaddr_t start, vsize_t end));
 void	xscale_cache_purgeID_rng __P((vaddr_t start, vsize_t end));
 void	xscale_cache_purgeD_rng	__P((vaddr_t start, vsize_t end));
 void	xscale_cache_syncI_rng	__P((vaddr_t start, vsize_t end));
-
-/* Used in write-through mode. */
-void	xscale_cache_flushID_rng __P((vaddr_t start, vsize_t end));
 void	xscale_cache_flushD_rng	__P((vaddr_t start, vsize_t end));
-void	xscale_cache_flushI_rng	__P((vaddr_t start, vsize_t end));
 
 void	xscale_context_switch	__P((void));
 
