@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.71 2000/01/17 12:57:27 augustss Exp $
+$NetBSD: usbdevs,v 1.72 2000/01/17 14:56:01 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,13 +107,16 @@ vendor MACALLY		0x0618	Macally
 vendor LINKSYS		0x066b	Linksys Inc.
 vendor MULTITECH	0x06e0	MultiTech
 vendor ADS		0x06e1	ADS Technologies
+vendor SIRIUS		0x06ea	Sirius Technologies
 vendor SMC		0x0707	Standard Microsystems Corp
 vendor MIDIMAN		0x0763	Midiman
 vendor SANDISK		0x0781	SanDisk Corp
 vendor ADMTEK		0x07a6	ADMtek Inc.
 vendor COREGA		0x07aa	Corega
 vendor SIIG		0x07cc	SIIG
+vendor ZOOM		0x0803	Zoom Telephonics Inc.
 vendor HANDSPRING	0x082d	Handspring Inc.
+vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR Inc.
 vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
 vendor BILLIONTON	0x08dd	Billionton Systems Inc.
@@ -220,6 +223,9 @@ product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 /* Dallas Semiconductor products */
 product DALLAS J6502		0x4201	J-6502 speakers
 
+/* Diamond products */
+product DIAMOND RIO500USB	0x0001	Rio 500 USB
+
 /* EIZO products */
 product EIZO HUB		0x0000	hub
 product EIZO MONITOR		0x0001	monitor
@@ -254,7 +260,11 @@ product HANDSPRING VISOR	0x0100	Handspring Visor
 
 /* HP products */
 product HP 4100C		0x0101	Scanjet 4100C
+product HP S20			0x0102	Photosmart S20
+product HP 5200			0x0401	Scanjet 5200
 product HP 6300C		0x0601	Scanjet 6300C
+product HP 970CSE		0x1004	Deskjet 970Cse
+product HP P1100		0x3102	Photosmart P1100
 
 /* Inside Out Networks products */
 product INSIDEOUT EDGEPORT4	0x0001	EdgePort/4 serial ports
@@ -274,6 +284,8 @@ product KAWATSU MH4000P		0x0003	MiniHub 4000P
 
 /* Kodak products */
 product KODAK DC260		0x0110	Digital Science DC260
+product KODAK DC265		0x0111	Digital Science DC265
+product KODAK DC290		0x0111	Digital Science DC290
 product KODAK DC240		0x0120	Digital Science DC240
 product KODAK DC280		0x0130	Digital Science DC280
 
@@ -311,6 +323,7 @@ product MELCO LUATX		0x0001	LU-ATX Ethernet
 product MICROSOFT INTELLIMOUSE	0x0009	IntelliMouse
 product MICROSOFT NATURALKBD	0x000b	Natural Keyboard Elite
 product MICROSOFT DDS80		0x0014	Digital Sound System 80
+product MICROSOFT SIDEWINDER	0x001a	Sidewinder Precision Racing Wheel
 
 /* Midiman products */
 product MIDIMAN MIDISPORT2X2	0x1001	Midisport 2x2
@@ -373,6 +386,9 @@ product SHUTTLE EUSB		0x0001	E-USB Bridge
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
 
+/* Sirius Technologies products */
+product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB
+
 /* SMC products */
 product SMC 2102USB		0x0100	10Mbps ethernet adapter
 product SMC 2202USB		0x0200	10/100 ethernet adapter
@@ -405,3 +421,5 @@ product VISION VC6452V002	0x0002	VC6452V002 Camera
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
 
+/* Zoom Telephonics Inc. products */
+product ZOOM 2986L		0x9700	2986L Fax modem
