@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.433 2001/04/11 03:43:23 thorpej Exp $
+#	$NetBSD: files,v 1.434 2001/04/20 16:39:22 fredette Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -350,6 +350,11 @@ define	ncr5380sbc
 file	dev/ic/ncr5380sbc.c		ncr5380sbc
 device	nca: scsi, ncr5380sbc
 
+# Sun sc PAL SCSI Bus Controller
+define	sunscpal
+file	dev/ic/sunscpal.c		sunscpal
+device	ssc: scsi, sunscpal
+
 # DEC FDDI Chipset
 define	pdq
 file	dev/ic/pdq.c			pdq
@@ -522,6 +527,10 @@ file	dev/ic/mk48txx.c		mk48txx
 # Intersil 7170 time-of-day clock
 define	intersil7170
 file	dev/ic/intersil7170.c		intersil7170
+
+# National Semiconductor MM58167 time-of-day clock
+define	mm58167
+file	dev/ic/mm58167.c		mm58167
 
 # D-Link DL10019/10022 NE2000-compatible network interface subroutines
 define	dl10019
