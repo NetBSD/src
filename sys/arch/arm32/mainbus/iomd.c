@@ -1,4 +1,4 @@
-/* $NetBSD: iomd.c,v 1.3 1996/10/13 03:06:21 christos Exp $ */
+/* $NetBSD: iomd.c,v 1.4 1996/10/29 23:22:57 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -151,6 +151,18 @@ iomdattach(parent, self, aux)
 	combo_time = ReadByte(IOMD_IOTCR);
 	printf(", combo cycle type=%c", 'A' + ((combo_time >> 2) & 3));
 	printf("\n");
+
+	switch (id) {
+#ifdef CPU_ARM7500
+		case ARM7500_IOC_ID:
+			break;
+#else
+		case RPC600_IOMD_ID:
+			/* DMA channels 2 & 3 are external */
+			WriteByte(IOMD_DMAEXT, 0x0c);	
+			break;
+#endif	/* CPU_ARM7500 */
+	}
 }
 
 struct cfattach iomd_ca = {
