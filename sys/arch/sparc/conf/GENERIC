@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.17 1995/09/25 22:33:37 pk Exp $
+# 	$NetBSD: GENERIC,v 1.18 1995/10/04 23:45:52 pk Exp $
 
 machine		sparc
 options		"SUN4", "SUN4C"
@@ -14,7 +14,7 @@ options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options		KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb
 #options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
-options		RCONSOLE		# fast rasterop console
+options		RASTERCONSOLE		# fast rasterop console
 options		SYSVMSG,SYSVSEM,SYSVSHM
 options		"COMPAT_09", "COMPAT_10"
 

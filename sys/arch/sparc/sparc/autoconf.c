@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 1995/09/25 20:27:30 chuck Exp $ */
+/*	$NetBSD: autoconf.c,v 1.37 1995/10/04 23:44:33 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1262,7 +1262,7 @@ nextsibling(node)
 	return (promvec->pv_nodeops->no_nextnode(node));
 }
 
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 /* Pass a string to the FORTH PROM to be interpreted */
 void
 rominterpret(s)
