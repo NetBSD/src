@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.63 1997/04/28 20:31:16 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -974,6 +974,7 @@ aeget(sc, src, total_len)
 		if (total_len >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
+				m_free(m);
 				m_freem(top);
 				return 0;
 			}
