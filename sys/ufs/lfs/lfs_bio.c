@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.75 2003/10/03 15:35:54 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.76 2003/12/04 14:57:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.75 2003/10/03 15:35:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.76 2003/12/04 14:57:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,7 +684,6 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bgetvp(vp, bp);
 	splx(s);
 
-	bp->b_saveaddr = (caddr_t)fs;
 	bp->b_bufsize = size;
 	bp->b_bcount = size;
 	bp->b_lblkno = daddr;
@@ -693,6 +692,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_resid = 0;
 	bp->b_iodone = lfs_callback;
 	bp->b_flags |= B_BUSY | B_CALL | B_NOCACHE;
+	bp->b_private = fs;
 	
 	return (bp);
 }

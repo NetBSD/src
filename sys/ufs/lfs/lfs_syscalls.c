@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.99 2003/11/07 14:52:27 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.100 2003/12/04 14:57:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.99 2003/11/07 14:52:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.100 2003/12/04 14:57:47 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -1188,7 +1188,6 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 	KDASSERT(bp->b_iodone == lfs_callback);
 
 #if 0
-	bp->b_saveaddr = (caddr_t)fs;
 	++fs->lfs_iocount;
 #endif
 	bp->b_bufsize = size;
