@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.119 2001/11/13 16:03:53 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.120 2001/11/13 18:46:17 tv Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -78,20 +78,14 @@ PSEUDONOERR=	_exit.S
 SRCS+=		${ASM} ${NOERR} ${PSEUDONOERR}
 CLEANFILES+=	${ASM} ${NOERR} ${PSEUDONOERR}
 
-.for F in ${ASM}
-${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+${ASM}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' >${.TARGET}
-.endfor
 
-.for F in ${NOERR}
-${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+${NOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' >${.TARGET}
-.endfor
 
-.for F in ${PSEUDONOERR}
-${F}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
+${PSEUDONOERR}: ${ARCHDIR}/SYS.h ${DESTDIR}/usr/include/sys/syscall.h
 	@printf '#include "SYS.h"\nPSEUDO_NOERROR(${.PREFIX},${.PREFIX:S/_//})\n' >${.TARGET}
-.endfor
 
 # Lint stubs for all automatically-generated assembly stubs (GENERATED)
 LSRCS+=		LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
