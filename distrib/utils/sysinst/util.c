@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.10 1997/11/02 08:20:45 jonathan Exp $	*/
+/*	$NetBSD: util.c,v 1.11 1997/11/02 09:42:01 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -268,3 +268,43 @@ void show_cur_distsets (void)
 	}
 }
 
+
+/*
+ * Get  and unpack the distribution.
+ * show success_msg if installation  completes. Otherwise,,
+ * sHow failure_msg and wait for the user to ack it before continuing.
+ * success_msg and failure_msg must both be 0-adic messages.
+ */
+void get_and_unpack_sets(int success_msg, int failure_msg)
+{
+	/* Get the distribution files */
+	process_menu (MENU_distmedium);
+	if (nodist)
+		return;
+
+	if (got_dist) {
+		/* Extract the distribution */
+		extract_dist ();
+
+		/* Configure the system */
+		run_makedev ();
+
+		/* Other configuration. */
+		mnt_net_config();
+		
+		/* Clean up ... */
+		if (clean_dist_dir)
+			run_prog ("/bin/rm -rf %s", dist_dir);
+
+		/* Mounted dist dir? */
+		if (mnt2_mounted)
+			run_prog ("/sbin/umount /mnt2");
+		
+		/* Install/Upgrade  complete ... reboot or exit to script */
+		msg_display (success_msg);
+		process_menu (MENU_ok);
+	} else {
+		msg_display (failure_msg);
+		process_menu (MENU_ok);
+	}
+}
