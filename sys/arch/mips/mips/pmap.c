@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 1999/03/26 23:41:31 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 1999/04/12 17:59:29 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 1999/03/26 23:41:31 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 1999/04/12 17:59:29 drochner Exp $");
 
 /*
  *	Manages physical address maps.
@@ -517,7 +517,7 @@ pmap_pinit(pmap)
 		vm_page_t mem;
 
 		do {
-			mem = uvm_pagealloc(NULL, 0, NULL);
+			mem = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 			if (mem == NULL) {
 				/*
 				 * XXX What else can we do?  Could we
@@ -1246,7 +1246,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 
 	if (!(pte = pmap_segmap(pmap, va))) {
 		do {
-			mem = uvm_pagealloc(NULL, 0, NULL);
+			mem = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 			if (mem == NULL) {
 				/*
 				 * XXX What else can we do?  Could we
