@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.58 1996/10/10 17:16:20 christos Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.59 1996/10/12 21:50:08 christos Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -389,7 +389,7 @@ loop:
 	}
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		kprintf("scheduler: running, procp %p pri %d\n", pp, ppri);
+		printf("scheduler: running, procp %p pri %d\n", pp, ppri);
 #endif
 	/*
 	 * Nothing to do, back to sleep
@@ -407,7 +407,7 @@ loop:
 	if (cnt.v_free_count > atop(USPACE)) {
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPIN)
-			kprintf("swapin: pid %d(%s)@%p, pri %d free %d\n",
+			printf("swapin: pid %d(%s)@%p, pri %d free %d\n",
 			    p->p_pid, p->p_comm, p->p_addr,
 			    ppri, cnt.v_free_count);
 #endif
@@ -420,7 +420,7 @@ loop:
 	 */
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		kprintf("scheduler: no room for pid %d(%s), free %d\n",
+		printf("scheduler: no room for pid %d(%s), free %d\n",
 		    p->p_pid, p->p_comm, cnt.v_free_count);
 #endif
 	(void) splhigh();
@@ -428,7 +428,7 @@ loop:
 	(void) spl0();
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
-		kprintf("scheduler: room again, free %d\n", cnt.v_free_count);
+		printf("scheduler: room again, free %d\n", cnt.v_free_count);
 #endif
 	goto loop;
 }
@@ -495,7 +495,7 @@ swapout_threads()
 			p = outp2;
 #ifdef DEBUG
 		if (swapdebug & SDB_SWAPOUT)
-			kprintf("swapout_threads: no duds, try procp %p\n", p);
+			printf("swapout_threads: no duds, try procp %p\n", p);
 #endif
 		if (p)
 			swapout(p);
@@ -511,7 +511,7 @@ swapout(p)
 
 #ifdef DEBUG
 	if (swapdebug & SDB_SWAPOUT)
-		kprintf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
+		printf("swapout: pid %d(%s)@%p, stat %x pri %d free %d\n",
 		    p->p_pid, p->p_comm, p->p_addr, p->p_stat,
 		    p->p_slptime, cnt.v_free_count);
 #endif
