@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.39 1994/06/27 21:39:34 gwr Exp $
+#	$Id: Makefile,v 1.40 1994/06/28 04:38:44 gwr Exp $
 
 # not yet done: catman
 
@@ -22,6 +22,8 @@ SUBDIR+=bad144
 SUBDIR+=hilinfo grfinfo
 .elif ${MACHINE} == "amiga"
 SUBDIR+=iteconfig
+.elif ${MACHINE} == "sun3"
+SUBDIR+=dbsym
 .endif
 
 .include <bsd.subdir.mk>
