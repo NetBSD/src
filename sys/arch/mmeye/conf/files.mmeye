@@ -1,8 +1,8 @@
-#	$NetBSD: files.mmeye,v 1.9 2002/02/22 19:44:03 uch Exp $
+#	$NetBSD: files.mmeye,v 1.10 2002/03/24 18:14:28 uch Exp $
 #
 # config file for mmeye
 
-# maxpartitions must be first item in files.${ARCH}.newconf
+# maxpartitions must be first item
 maxpartitions 8
 
 maxusers 2 16 64
@@ -45,7 +45,24 @@ device	mainbus: mainbus
 attach	mainbus at root
 file	arch/mmeye/mmeye/mainbus.c	mainbus
 
-include "arch/mmeye/conf/files.shbus"
+device cpu
+attach cpu at mainbus
+file	arch/sh3/sh3/cpu.c			cpu
+
+include	"arch/sh3/conf/files.shb"
+
+attach	com at mainbus with com_mainbus
+file	arch/mmeye/dev/com_mainbus.c	com_mainbus
+
+device	mmeyepcmcia: pcmciabus
+attach	mmeyepcmcia at mainbus
+file	arch/mmeye/dev/mmeyepcmcia.c	mmeyepcmcia
 
 # network devices MII bus
 include "dev/mii/files.mii"
+
+#
+# Machine-independent PCMCIA drivers
+#
+device	fdc {drive = -1}	# files.pcmcia requires.
+include "dev/pcmcia/files.pcmcia"

@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.5 2002/03/03 14:36:48 uch Exp $
+#	$NetBSD: HPW650PA,v 1.6 2002/03/24 18:14:28 uch Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -60,7 +60,7 @@ wsdisplay*	at hpcfb?
 
 shb0		at mainbus?
 
-hd64465if*	at shb0 irq 11
+hd64465if*	at shb0
 com*		at hd64465if?
 hd64465pcmcia*	at hd64465if?
 
