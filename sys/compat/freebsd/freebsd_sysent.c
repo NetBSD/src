@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sysent.c,v 1.17 1998/01/09 06:10:58 thorpej Exp $	*/
+/*	$NetBSD: freebsd_sysent.c,v 1.18 1998/01/09 06:14:57 thorpej Exp $	*/
 
 /*
  * System call switch table.
@@ -14,8 +14,6 @@
 #include <sys/syscallargs.h>
 #include <compat/freebsd/freebsd_syscallargs.h>
 #include <machine/freebsd_machdep.h>
-/*	$NetBSD: freebsd_sysent.c,v 1.17 1998/01/09 06:10:58 thorpej Exp $	*/
-
 
 #define	s(type)	sizeof(type)
 
