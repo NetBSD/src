@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.1 2002/01/22 20:42:59 thorpej Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.2 2002/01/24 04:05:27 lukem Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -8,8 +8,10 @@
 #include <sys/types.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <limits.h>
 #include <paths.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -86,6 +88,17 @@ size_t strlcpy(char *, const char *, size_t);
 
 #if !HAVE_PREAD
 ssize_t pread(int, void *, size_t, off_t);
+#endif
+
+#if !HAVE_PWCACHE_USERDB
+const char *user_from_uid(uid_t, int);
+int uid_from_user(const char *, uid_t *);
+int pwcache_userdb(int (*)(int), void (*)(void),
+		struct passwd * (*)(const char *), struct passwd * (*)(uid_t));
+const char *group_from_gid(gid_t, int);
+int gid_from_group(const char *, gid_t *);
+int pwcache_groupdb(int (*)(int), void (*)(void),
+		struct group * (*)(const char *), struct group * (*)(gid_t));
 #endif
 
 #if !HAVE_PWRITE
