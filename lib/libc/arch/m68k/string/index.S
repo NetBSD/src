@@ -1,4 +1,4 @@
-/*	$NetBSD: index.S,v 1.5 1995/11/28 23:40:53 thorpej Exp $	*/
+/*	$NetBSD: index.S,v 1.6 1997/01/04 03:21:14 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)index.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: index.S,v 1.5 1995/11/28 23:40:53 thorpej Exp $")
+	RCSID("$NetBSD: index.S,v 1.6 1997/01/04 03:21:14 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,9 +56,9 @@ ENTRY(index)
 	movb	sp@(11),d0		| char to look for
 ixloop:
 	cmpb	a0@,d0			| found our char?
-	beq	ixfound			| yes, break out
+	jeq	ixfound			| yes, break out
 	tstb	a0@+			| null?
-	bne	ixloop			| no, keep going
+	jne	ixloop			| no, keep going
 	moveq	#0,d0			| not found, return null
 	rts
 ixfound:

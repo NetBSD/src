@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.S,v 1.5 1996/11/30 02:01:27 jtc Exp $	*/
+/*	$NetBSD: bcmp.S,v 1.6 1997/01/04 03:21:11 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcmp.S,v 1.5 1996/11/30 02:01:27 jtc Exp $")
+	RCSID("$NetBSD: bcmp.S,v 1.6 1997/01/04 03:21:11 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,33 +61,33 @@ ENTRY(bcmp)
 	movl	sp@(4),a0		| string 1
 	movl	sp@(8),a1		| string 2
 	movl	sp@(12),d0		| length
-	beq	Lbcdone			| if zero, nothing to do
+	jeq	Lbcdone			| if zero, nothing to do
 	movl	a0,d1
 	btst	#0,d1			| string 1 address odd?
-	beq	Lbceven			| no, skip alignment
+	jeq	Lbceven			| no, skip alignment
 	cmpmb	a0@+,a1@+		| yes, compare a byte
-	bne	Lbcnoteq		| not equal, return non-zero
+	jne	Lbcnoteq		| not equal, return non-zero
 	subql	#1,d0			| adjust count
-	beq	Lbcdone			| count 0, reutrn zero
+	jeq	Lbcdone			| count 0, reutrn zero
 Lbceven:
 	movl	a1,d1
 	btst	#0,d1			| string 2 address odd?
-	bne	Lbcbloop		| yes, no hope for alignment, compare bytes
+	jne	Lbcbloop		| yes, no hope for alignment, compare bytes
 	movl	d0,d1			| no, both even
 	lsrl	#2,d1			| convert count to longword count
-	beq	Lbcbloop		| count 0, skip longword loop
+	jeq	Lbcbloop		| count 0, skip longword loop
 Lbclloop:
 	cmpml	a0@+,a1@+		| compare a longword
-	bne	Lbcnoteq		| not equal, return non-zero
+	jne	Lbcnoteq		| not equal, return non-zero
 	subql	#1,d1			| adjust count
-	bne	Lbclloop		| still more, keep comparing
+	jne	Lbclloop		| still more, keep comparing
 	andl	#3,d0			| what remains
-	beq	Lbcdone			| nothing, all done
+	jeq	Lbcdone			| nothing, all done
 Lbcbloop:
 	cmpmb	a0@+,a1@+		| compare a byte
-	bne	Lbcnoteq		| not equal, return non-zero
+	jne	Lbcnoteq		| not equal, return non-zero
 	subql	#1,d0			| adjust count
-	bne	Lbcbloop		| still more, keep going
+	jne	Lbcbloop		| still more, keep going
 	rts
 Lbcnoteq:
 	moveq	#1,d0

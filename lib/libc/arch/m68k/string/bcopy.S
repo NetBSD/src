@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.8 1995/11/28 23:40:49 thorpej Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.9 1997/01/04 03:21:12 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)bcopy.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: bcopy.S,v 1.8 1995/11/28 23:40:49 thorpej Exp $")
+	RCSID("$NetBSD: bcopy.S,v 1.9 1997/01/04 03:21:12 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,7 +66,7 @@ ENTRY(bcopy)
 #endif
 #endif
 	movl	sp@(12),d1		| check count
-	beq	bcdone			| == 0, do not do anything
+	jeq	bcdone			| == 0, do not do anything
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	sp@(4),a1		| dest address
 	movl	sp@(8),a0		| src address
@@ -75,30 +75,30 @@ ENTRY(bcopy)
 	movl	sp@(8),a1		| dest address
 #endif
 	cmpl	a1,a0			| src after dest?
-	blt	bcback			| yes, must copy backwards
+	jlt	bcback			| yes, must copy backwards
 	movl	a0,d0
 	btst	#0,d0			| src address odd?
-	beq	bcfeven			| no, skip alignment
+	jeq	bcfeven			| no, skip alignment
 	movb	a0@+,a1@+		| yes, copy a byte
 	subql	#1,d1			| adjust count
-	beq	bcdone			| count 0, all done 
+	jeq	bcdone			| count 0, all done 
 bcfeven:
 	movl	a1,d0
 	btst	#0,d0			| dest address odd?
-	bne	bcfbloop		| yes, no hope for alignment, copy bytes
+	jne	bcfbloop		| yes, no hope for alignment, copy bytes
 	movl	d1,d0			| no, both even
 	lsrl	#2,d0			| convert count to longword count
-	beq	bcfbloop		| count 0, skip longword loop
+	jeq	bcfbloop		| count 0, skip longword loop
 bcflloop:
 	movl	a0@+,a1@+		| copy a longword
 	subql	#1,d0			| adjust count
-	bne	bcflloop		| still more, keep copying
+	jne	bcflloop		| still more, keep copying
 	andl	#3,d1			| what remains
-	beq	bcdone			| nothing, all done
+	jeq	bcdone			| nothing, all done
 bcfbloop:
 	movb	a0@+,a1@+		| copy a byte
 	subql	#1,d1			| adjust count
-	bne	bcfbloop		| still more, keep going
+	jne	bcfbloop		| still more, keep going
 bcdone:
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	sp@(4),d0		| dest address
@@ -109,27 +109,27 @@ bcback:
 	addl	d1,a1			| dest pointer to end
 	movl	a0,d0
 	btst	#0,d0			| src address odd?
-	beq	bcbeven			| no, skip alignment
+	jeq	bcbeven			| no, skip alignment
 	movb	a0@-,a1@-		| yes, copy a byte
 	subql	#1,d1			| adjust count
-	beq	bcdone			| count 0, all done 
+	jeq	bcdone			| count 0, all done 
 bcbeven:
 	movl	a1,d0
 	btst	#0,d0			| dest address odd?
-	bne	bcbbloop		| yes, no hope for alignment, copy bytes
+	jne	bcbbloop		| yes, no hope for alignment, copy bytes
 	movl	d1,d0			| no, both even
 	lsrl	#2,d0			| convert count to longword count
-	beq	bcbbloop		| count 0, skip longword loop
+	jeq	bcbbloop		| count 0, skip longword loop
 bcblloop:
 	movl	a0@-,a1@-		| copy a longword
 	subql	#1,d0			| adjust count
-	bne	bcblloop		| still more, keep copying
+	jne	bcblloop		| still more, keep copying
 	andl	#3,d1			| what remains
-	beq	bcdone			| nothing, all done
+	jeq	bcdone			| nothing, all done
 bcbbloop:
 	movb	a0@-,a1@-		| copy a byte
 	subql	#1,d1			| adjust count
-	bne	bcbbloop		| still more, keep going
+	jne	bcbbloop		| still more, keep going
 #if defined(MEMCOPY) || defined(MEMMOVE)
 	movl	sp@(4),d0		| dest address
 #endif
