@@ -1,4 +1,4 @@
-/*	$NetBSD: bsdstart.s,v 1.2 1996/01/23 20:34:07 leo Exp $	*/
+/*	$NetBSD: bsdstart.s,v 1.3 1996/12/26 15:07:33 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -81,6 +81,7 @@ _bsd_startup:
 	.word 0x4e7b,0xd005		| movec a5,itt1
 	.word 0x4e7b,0xd006		| movec a5,dtt0
 	.word 0x4e7b,0xd007		| movec a5,dtt1
+	.word	0xf4f8			|  cpusha bc - push and inval caches
 	bras	1f
 
 0:	lea	pc@(zero),a3
@@ -95,6 +96,7 @@ _bsd_startup:
 	.word	0xf013,0x0c00		| pmove	a3@,tt1
 
 1:	movq	#0,d6			|  would have known contents
+	movc	d6,cacr			|  turn off the caches
 	movl	d6,d7
 	movl	d6,a2
 	movl	d6,a3
