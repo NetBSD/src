@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.4 1997/04/16 23:39:28 thorpej Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.5 1997/06/24 00:27:18 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -403,18 +403,29 @@ ofdsize(dev)
 	dev_t dev;
 {
 	struct ofd_softc *of;
-	int part;
-	int size;
-	
-	if (ofdopen(dev, 0, S_IFBLK) != 0)
+	struct disklabel *lp;
+	int size, part, omask, unit;
+
+	unit = DISKUNIT(dev);
+	if (unit >= ofdisk_cd.cd_ndevs ||
+	    (of = ofdisk_cd.cd_devs[unit]) == NULL)
 		return -1;
-	of = ofdisk_cd.cd_devs[DISKUNIT(dev)];
+
 	part = DISKPART(dev);
-	if (of->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
+	omask = of->sc_dk.dk_openmask & (1 << part);
+	lp = sc->sc_dk.dk_label;
+
+	if (omask == 0 && ofdopen(dev, 0, S_IFBLK, curproc) != 0)
+		return -1;
+
+	if (lp->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
-		size = of->sc_dk.dk_label->d_partitions[part].p_size;
-	if (ofdclose(dev, 0, S_IFBLK) != 0)
+		size = lp->d_partitions[part].p_size *
+		    (lp->d_secsize / DEV_BSIZE);
+
+	if (omask == 0 && ofdclose(dev, 0, S_IFBLK, curproc) != 0)
 		return -1;
+
 	return size;
 }
