@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_aout.c,v 1.13 2002/11/11 19:26:49 thorpej Exp $ */
+/* $NetBSD: nlist_aout.c,v 1.14 2003/04/20 21:08:11 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.13 2002/11/11 19:26:49 thorpej Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.14 2003/04/20 21:08:11 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: nlist_aout.c,v 1.13 2002/11/11 19:26:49 thorpej Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <a.out.h>			/* for 'struct nlist' declaration */
 
 #include "nlist_private.h"
@@ -72,6 +73,7 @@ __fdnlist_aout(fd, list)
 	struct nlist nbuf[1024];
 	struct exec exec;
 	struct stat st;
+	char *scoreboard, *scored;
 
 	_DIAGASSERT(fd != -1);
 	_DIAGASSERT(list != NULL);
@@ -120,6 +122,9 @@ __fdnlist_aout(fd, list)
 	}
 	if (lseek(fd, symoff, SEEK_SET) == -1)
 		return (-1);
+	if ((scoreboard = alloca((size_t)nent)) == NULL)
+		return (-1);
+	(void)memset(scoreboard, 0, (size_t)nent);
 
 	while (symsize > 0) {
 		cc = MIN(symsize, sizeof(nbuf));
@@ -131,13 +136,16 @@ __fdnlist_aout(fd, list)
 
 			if (soff == 0 || (s->n_type & N_STAB) != 0)
 				continue;
-			for (p = list; !ISLAST(p); p++)
-				if (!strcmp(&strtab[(size_t)soff],
+			for (p = list, scored = scoreboard; !ISLAST(p);
+			    p++, scored++)
+				if (*scored == 0 &&
+				    !strcmp(&strtab[(size_t)soff],
 				    p->n_un.n_name)) {
 					p->n_value = s->n_value;
 					p->n_type = s->n_type;
 					p->n_desc = s->n_desc;
 					p->n_other = s->n_other;
+					*scored = 1;
 					if (--nent <= 0)
 						break;
 				}
