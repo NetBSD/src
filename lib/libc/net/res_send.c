@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.31 2000/07/27 00:35:02 itojun Exp $	*/
+/*	$NetBSD: res_send.c,v 1.32 2001/01/04 15:04:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.31 2000/07/27 00:35:02 itojun Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.32 2001/01/04 15:04:19 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -344,13 +344,16 @@ res_queriesmatch(buf1, eom1, buf2, eom2)
 	const u_char *buf1, *eom1;
 	const u_char *buf2, *eom2;
 {
-	const u_char *cp = buf1 + HFIXEDSZ;
-	int qdcount = ntohs(((const HEADER *)(const void *)buf1)->qdcount);
+	const u_char *cp;
+	int qdcount;
 
 	_DIAGASSERT(buf1 != NULL);
 	_DIAGASSERT(eom1 != NULL);
 	_DIAGASSERT(buf2 != NULL);
 	_DIAGASSERT(eom2 != NULL);
+
+	cp = buf1 + HFIXEDSZ;
+	qdcount = ntohs(((const HEADER *)(const void *)buf1)->qdcount);
 
 	if (buf1 + HFIXEDSZ > eom1 || buf2 + HFIXEDSZ > eom2)
 		return (-1);
