@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.29 2003/07/27 07:56:37 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.30 2003/08/27 18:33:26 uwe Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -405,6 +405,10 @@ void *setmode(const char *);
 #endif
 
 /* <stdint.h> */
+
+#if !defined(SIZE_MAX) && defined(SIZE_T_MAX)
+#define SIZE_MAX SIZE_T_MAX
+#endif
 
 #ifndef UINT32_MAX
 #define UINT32_MAX 0xffffffffU
