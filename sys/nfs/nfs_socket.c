@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.70 2002/01/21 13:21:51 minoura Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.71 2002/01/22 09:37:59 minoura Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.70 2002/01/21 13:21:51 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.71 2002/01/22 09:37:59 minoura Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -363,7 +363,7 @@ nfs_disconnect(nmp)
 			/*
 			 * soshutdown() above should wake up the current
 			 * listener.
-			 * Now wake up those waiting for the recive lock, and
+			 * Now wake up those waiting for the receive lock, and
 			 * wait for them to go away unhappy, to prevent *nmp
 			 * from evaporating while they're sleeping.
 			 */
@@ -2060,7 +2060,6 @@ nfsrv_getstream(slp, waitflag)
 				m->m_data++;
 				m->m_len--;
 			}
-			slp->ns_raw = m;
 		}
 		slp->ns_cc -= NFSX_UNSIGNED;
 		recmark = ntohl(recmark);
