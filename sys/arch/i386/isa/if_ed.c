@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.27 1994/02/15 19:37:12 mycroft Exp $
+ *	$Id: if_ed.c,v 1.28 1994/02/16 03:03:46 mycroft Exp $
  */
 
 #include "ed.h"
@@ -2292,32 +2292,6 @@ ed_ring_to_mbuf(sc, src, dst, total_len)
 
 	}
 	return m;
-}
-
-/*
- * Compute crc for ethernet address.
- */
-u_long
-ds_crc(ep)
-	u_char *ep;
-{
-#define POLYNOMIAL 0x04c11db6
-	register u_long crc = 0xffffffffL;
-	register int carry, i, j;
-	register u_char b;
-
-	for (i = 6; --i >= 0; ) {
-		b = *ep++;
-		for (j = 8; --j >= 0; ) {
-			carry = ((crc & 0x80000000L) ? 1 : 0) ^ (b & 0x01);
-			crc <<= 1;
-			b >>= 1;
-			if (carry)
-				crc = ((crc ^ POLYNOMIAL) | carry);
-		}
-	}
-	return crc;
-#undef POLYNOMIAL
 }
 
 /*
