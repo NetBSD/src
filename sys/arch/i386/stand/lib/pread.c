@@ -1,4 +1,4 @@
-/*	$NetBSD: pread.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: pread.c,v 1.2 1997/03/22 01:48:38 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -44,30 +44,33 @@
 #define BUFSIZE (4*1024)
 #endif
 
-static char buf[BUFSIZE];
+static char     buf[BUFSIZE];
 
-int pread(fd, dest, size)
-int fd;
-physaddr_t dest;
-int size;
+int 
+pread(fd, dest, size)
+	int             fd;
+	physaddr_t      dest;
+	int             size;
 {
-  int rsize;
+	int             rsize;
 
-  rsize = size;
-  while(rsize > 0) {
-    int count, got;
+	rsize = size;
+	while (rsize > 0) {
+		int             count, got;
 
-    count = (rsize < BUFSIZE ? rsize : BUFSIZE);
+		count = (rsize < BUFSIZE ? rsize : BUFSIZE);
 
-    got = read(fd, buf, count);
-    if(got < 0) return(-1);
+		got = read(fd, buf, count);
+		if (got < 0)
+			return (-1);
 
-    /* put to physical space */
-    vpbcopy(buf, dest, got);
+		/* put to physical space */
+		vpbcopy(buf, dest, got);
 
-    dest += got;
-    rsize -= got;
-    if(got < count) break;	/* EOF */
-  }
-  return(size - rsize);
+		dest += got;
+		rsize -= got;
+		if (got < count)
+			break;	/* EOF */
+	}
+	return (size - rsize);
 }

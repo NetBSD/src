@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.2 1997/03/15 22:15:49 perry Exp $	*/
+/*	$NetBSD: pcio.c,v 1.3 1997/03/22 01:48:37 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -32,9 +32,9 @@
  *
  */
 
-/* console I/O
- needs lowlevel routines from conio.S and comio.S
-*/
+/*
+ * console I/O needs lowlevel routines from conio.S and comio.S
+ */
 
 #include <lib/libsa/stand.h>
 
@@ -49,95 +49,117 @@ extern int computc __P((int, int));
 extern int comgetc __P((int));
 extern int comstatus __P((int));
 
-static int iodev;
+static int      iodev;
 #endif
 
-static char *iodevname[] = {
-    "pc",
+static char    *iodevname[] = {
+	"pc",
 #ifdef SUPPORT_SERIAL
-    "com0",
-    "com1"
+	"com0",
+	"com1"
 #endif
 };
 
-char *initio(dev)
-int dev;
+char           *
+initio(dev)
+	int             dev;
 {
 #ifdef SUPPORT_SERIAL
-  switch(dev){
-    case CONSDEV_AUTO:
-      /* serial console must have hardware handshake!
-       check: 1. character output without error
-              2. status bits for modem ready set
-       (status seems only useful after character output)
-       */
-      cominit(0);
-      if(!(computc(' ', 0) & 0x80) && (comstatus(0) & 0x00b0))
-	dev = CONSDEV_COM0;
-      else {
-	cominit(1);
-	if(!(computc(' ', 1) & 0x80) && (comstatus(1) & 0x00b0))
-	  dev = CONSDEV_COM1;
-	else
-	  dev = CONSDEV_PC;
-      }
-      break;
-    case CONSDEV_COM0: cominit(0); break;
-    case CONSDEV_COM1: cominit(1); break;
-    default: dev = CONSDEV_PC; break;
-  }
-  return(iodevname[iodev = dev]);
+	switch (dev) {
+	case CONSDEV_AUTO:
+		/*
+		 * serial console must have hardware handshake! check: 1.
+		 * character output without error 2. status bits for modem
+		 * ready set (status seems only useful after character
+		 * output)
+		 */
+		cominit(0);
+		if (!(computc(' ', 0) & 0x80) && (comstatus(0) & 0x00b0))
+			dev = CONSDEV_COM0;
+		else {
+			cominit(1);
+			if (!(computc(' ', 1) & 0x80) && (comstatus(1) & 0x00b0))
+				dev = CONSDEV_COM1;
+			else
+				dev = CONSDEV_PC;
+		}
+		break;
+	case CONSDEV_COM0:
+		cominit(0);
+		break;
+	case CONSDEV_COM1:
+		cominit(1);
+		break;
+	default:
+		dev = CONSDEV_PC;
+		break;
+	}
+	return (iodevname[iodev = dev]);
 #else
-  return(iodevname[0]);
+	return (iodevname[0]);
 #endif
 }
 
-static inline void internal_putchar(c)
-int c;
+static inline void
+internal_putchar(c)
+	int             c;
 {
 #ifdef SUPPORT_SERIAL
-  switch(iodev){
-    case CONSDEV_PC:
+	switch (iodev) {
+	case CONSDEV_PC:
 #endif
-      conputc(c);
+		conputc(c);
 #ifdef SUPPORT_SERIAL
-      break;
-    case CONSDEV_COM0: computc(c, 0); break;
-    case CONSDEV_COM1: computc(c, 1); break;
-  }
+		break;
+	case CONSDEV_COM0:
+		computc(c, 0);
+		break;
+	case CONSDEV_COM1:
+		computc(c, 1);
+		break;
+	}
 #endif
 }
 
-void putchar(c)
-int c;
+void
+putchar(c)
+	int             c;
 {
-  if(c=='\n')
-    internal_putchar('\r');
-  internal_putchar(c);
+	if (c == '\n')
+		internal_putchar('\r');
+	internal_putchar(c);
 }
 
-int getchar(){
+int
+getchar()
+{
 #ifdef SUPPORT_SERIAL
-  switch(iodev){
-    case CONSDEV_PC:
+	switch (iodev) {
+		case CONSDEV_PC:
 #endif
-      return(congetc());
+		return (congetc());
 #ifdef SUPPORT_SERIAL
-    case CONSDEV_COM0: return(comgetc(0));
-    case CONSDEV_COM1: return(comgetc(1));
-  }
+	case CONSDEV_COM0:
+		return (comgetc(0));
+	case CONSDEV_COM1:
+		return (comgetc(1));
+	}
 #endif
 }
 
-int iskey(){
+int
+iskey()
+{
 #ifdef SUPPORT_SERIAL
-  switch(iodev){
-    case CONSDEV_PC:
+	switch (iodev) {
+		case CONSDEV_PC:
 #endif
-      return(coniskey());
+		return (coniskey());
 #ifdef SUPPORT_SERIAL
-    case CONSDEV_COM0: return(!!(comstatus(0) & 0x0100));
-    case CONSDEV_COM1: return(!!(comstatus(1) & 0x0100));
-  }
+	case CONSDEV_COM0:
+		return (!!(comstatus(0) & 0x0100));
+	case CONSDEV_COM1:
+		return (!!(comstatus(1) & 0x0100));
+	}
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: panic.c,v 1.1.1.1 1997/03/14 02:40:33 perry Exp $	*/
+/*	$NetBSD: panic.c,v 1.2 1997/03/22 01:48:36 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -40,15 +40,15 @@
 #include <lib/libsa/stand.h>
 
 __dead void
-panic(const char *fmt, ...)
+panic(const char *fmt,...)
 {
-    va_list ap;
+	va_list         ap;
 
-    va_start(ap, fmt);
+	va_start(ap, fmt);
 
-    printf(fmt, ap);
-    printf("\n");
-    va_end(ap);
+	printf(fmt, ap);
+	printf("\n");
+	va_end(ap);
 
-    exit(1);
+	exit(1);
 }
