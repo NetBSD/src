@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.17 1998/09/22 00:36:45 ross Exp $	*/
+/*	$NetBSD: open.c,v 1.18 1999/03/26 03:16:15 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -130,7 +130,7 @@ fnd:
 	}
 	error = besterror;
 
-	if ((f->f_flags & F_NODEV) == 0)
+	if ((f->f_flags & F_NODEV) == 0 && f->f_dev->dv_close != NULL)
 		f->f_dev->dv_close(f);
 err:
 	f->f_flags = 0;
