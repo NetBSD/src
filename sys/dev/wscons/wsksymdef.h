@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.16 1999/01/10 13:14:42 augustss Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.17 1999/01/10 13:20:41 augustss Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -394,6 +394,8 @@
 #define KS_Select		0xf38d
 
 #define KS_Menu			0xf3c0
+#define KS_Pause		0xf3c1
+#define KS_Print_Screen		0xf3c2
 
 /*
  * Group 4 (command)
