@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.19 1999/07/29 10:37:21 augustss Exp $
+#	$NetBSD: GENERIC,v 1.20 1999/11/15 19:10:54 fvdl Exp $
 #
 # First try for PPC config file
 #
@@ -49,6 +49,7 @@ file-system 	UNION
 
 options 	NFSSERVER
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP         # FFS soft updates support.
 
 options 	INET
 options 	NMBCLUSTERS=1024
