@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.22 2003/02/02 10:21:13 wiz Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.23 2003/02/09 18:27:10 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.22 2003/02/02 10:21:13 wiz Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.23 2003/02/09 18:27:10 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -341,6 +341,7 @@ extract(void)
 		 * over the data and purge the name from hard link table
 		 */
 		if ((fd = file_creat(arcn)) < 0) {
+			(void)fflush(listf);
 			(void)rd_skip(arcn->skip + arcn->pad);
 			purg_lnk(arcn);
 			continue;
@@ -462,7 +463,7 @@ wr_archive(ARCHD *arcn, int is_app)
 			 * the link table).
 			 */
 			if ((fd = open(arcn->org_name, O_RDONLY, 0)) < 0) {
-				syswarn(1,errno, "Unable to open %s to read",
+				syswarn(1, errno, "Unable to open %s to read",
 					arcn->org_name);
 				purg_lnk(arcn);
 				continue;
