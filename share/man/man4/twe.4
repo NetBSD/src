@@ -1,4 +1,4 @@
-.\"	$NetBSD: twe.4,v 1.4 2000/11/26 17:44:12 ad Exp $
+.\"	$NetBSD: twe.4,v 1.5 2001/01/22 17:32:12 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,6 @@
 .Tn 3ware Escalade RAID controller driver
 .Sh SYNOPSIS
 .Cd "twe* at pci? dev ? function ?"
-.Cd options TWE_MAX_QUEUECNT=n
-.Cd options TWE_MAX_PU_QUEUECNT=n
 .Sh DESCRIPTION
 The
 .Nm
@@ -54,32 +52,18 @@ family of RAID controllers.
 Attached disk arrays are supported by the
 .Nm ld
 driver.
-.Pp
-The following kernel configuration options are available:
-.Bl -ohang
-.It Cd options TWE_MAX_QUEUECNT=n
-Set the maximum queued command count to
-.Ar n
-commands.
-The default value is 128.
-The maximum value that the underlying hardware can support is 255.
-.It Cd options TWE_MAX_PI_QUEUECNT=n
-Set the maximum per-unit queued command count to
-.Ar n
-commands.
-The default value is 32.
-.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr ld 4
 .Sh AUTHOR
 The
 .Nm
-driver was written by
+driver was written by Micheal Smith
+.Aq msmith@freebsd.org ,
+and was modified for inclusion in
+.Nx
 by Andrew Doran
 .Aq ad@netbsd.org .
-Some parts of the driver are derived from code written by Micheal Smith
-.Aq msmith@freebsd.org .
 .Sh HISTORY
 The
 .Nm twe
