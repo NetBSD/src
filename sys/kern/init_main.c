@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.180 2000/08/26 03:34:37 sommerfeld Exp $	*/
+/*	$NetBSD: init_main.c,v 1.181 2000/09/13 15:00:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -591,7 +591,7 @@ start_init(void *arg)
 	 */
 	addr = USRSTACK - PAGE_SIZE;
 	if (uvm_map(&p->p_vmspace->vm_map, &addr, PAGE_SIZE, 
-                    NULL, UVM_UNKNOWN_OFFSET, 
+                    NULL, UVM_UNKNOWN_OFFSET, 0,
                     UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 		    UVM_ADV_NORMAL,
                     UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW))

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2000/06/29 07:48:18 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2000/09/13 15:00:22 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -401,7 +401,7 @@ pmap_bootstrap(kernelstart, kernelend)
 	ptab_cnt = HTABENTS;
 #else /* HTABENTS */
 	ptab_cnt = 1024;
-	while ((HTABSIZE << 7) < ctob(physmem))
+	while (btoc(HTABSIZE << 7) < physmem)
 		ptab_cnt <<= 1;
 #endif /* HTABENTS */
 

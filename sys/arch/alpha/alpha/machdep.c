@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.219 2000/08/15 22:16:17 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.220 2000/09/13 15:00:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2000/08/15 22:16:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220 2000/09/13 15:00:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -853,7 +853,7 @@ cpu_startup()
 	 */
 	size = MAXBSIZE * nbuf;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET,
+		    NULL, UVM_UNKNOWN_OFFSET, 0,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
 		panic("startup: cannot allocate VM for buffers");

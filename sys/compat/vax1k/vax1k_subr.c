@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_subr.c,v 1.4 2000/06/28 15:39:37 mrg Exp $	*/
+/*	$NetBSD: vax1k_subr.c,v 1.5 2000/09/13 15:00:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -64,7 +64,7 @@ vax1k_map_readvn(p, cmd)
 	cmd->ev_addr = trunc_page(cmd->ev_addr); /* required by uvm_map */
 	error = uvm_map(&p->p_vmspace->vm_map, &cmd->ev_addr, 
 			round_page(cmd->ev_len + (oaddr - cmd->ev_addr)),
-			NULL, UVM_UNKNOWN_OFFSET, 
+			NULL, UVM_UNKNOWN_OFFSET, 0,
 			UVM_MAPFLAG(UVM_PROT_ALL, UVM_PROT_ALL, UVM_INH_COPY,
 			UVM_ADV_NORMAL,
 			UVM_FLAG_FIXED|UVM_FLAG_OVERLAY|UVM_FLAG_COPYONW));
