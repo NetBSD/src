@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs.8,v 1.35 2001/11/16 10:19:07 wiz Exp $
+.\"	$NetBSD: newfs.8,v 1.36 2001/11/21 15:23:40 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd November 16, 2001
+.Dd November 22, 2001
 .Dt NEWFS 8
 .Os
 .Sh NAME
@@ -69,7 +69,6 @@
 .Ar special
 .Nm mount_mfs
 .Op Fl N
-.Op Fl T Ar disk-type
 .Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
 .Op Fl c Ar cpg
@@ -114,19 +113,8 @@ The parameters to
 .Nm mount_mfs
 are the same as those to
 .Nm "" .
-If the
-.Fl T
-flag is specified (see below), the special file is unused.
-Otherwise, it is only used to read the disk label which provides
-a set of configuration parameters for the memory based file system.
-The special file is typically that of the first swap area, since
-that is where the file system will be backed up when free memory
-gets low and the memory supporting the file system has to be paged.
-If the keyword ``swap'' is used instead of a special file name,
-default configuration parameters will be used.
-(This option is useful when trying to use
-.Nm mount_mfs
-on a machine without any disks).
+The special file is ignored, and
+default configuration parameters are used instead.
 .Pp
 Options with numeric arguments may contain an optional (case-insensitive)
 suffix:

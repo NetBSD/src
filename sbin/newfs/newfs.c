@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.48 2001/11/16 09:58:17 lukem Exp $	*/
+/*	$NetBSD: newfs.c,v 1.49 2001/11/21 15:23:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.48 2001/11/16 09:58:17 lukem Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.49 2001/11/21 15:23:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -398,10 +398,10 @@ main(int argc, char *argv[])
 		usage();
 
 	special = argv[0];
-	if (Fflag || (mfs && strcmp(special, "swap") == 0)) {
+	if (Fflag || mfs) {
 		/*
-		 * it's a file system image, or an MFS mounted on "swap";
-		 * fake up a label.		XXX
+		 * it's a file system image or an MFS, so fake up a label.
+		 * XXX
 		 */
 		if (!sectorsize)
 			sectorsize = DFL_SECSIZE;
@@ -458,7 +458,7 @@ main(int argc, char *argv[])
 		    mfsfakelabel.d_nsectors * mfsfakelabel.d_ntracks;
 		mfsfakelabel.d_secperunit = 
 		    mfsfakelabel.d_ncylinders * mfsfakelabel.d_secpercyl;
-		mfsfakelabel.d_rpm = 3600;
+		mfsfakelabel.d_rpm = 10000;
 		mfsfakelabel.d_interleave = 1;
 		mfsfakelabel.d_npartitions = 1;
 		mfsfakelabel.d_partitions[0].p_size = mfsfakelabel.d_secperunit;
@@ -469,55 +469,48 @@ main(int argc, char *argv[])
 		lp = &mfsfakelabel;
 		pp = &mfsfakelabel.d_partitions[0];
 
-		goto havelabel;
-	}
+	} else {	/* !Fflag && !mfs */
+		fsi = opendisk(special, O_RDONLY, device, sizeof(device), 0);
+		special = device;
+		if (fsi < 0)
+			err(1, "%s: open for read", special);
 
-	fsi = opendisk(special, O_RDONLY, device, sizeof(device), 0);
-	special = device;
-	if (fsi < 0)
-		err(1, "%s: open for read", special);
+		if (Nflag) {
+			fso = -1;
+		} else {
+			fso = open(special, O_WRONLY);
+			if (fso < 0)
+				err(1, "%s: open for write", special);
 
-	if (Nflag) {
-		fso = -1;
-	} else {
-		fso = open(special, O_WRONLY);
-		if (fso < 0)
-			err(1, "%s: open for write", special);
+			/* Bail if target special is mounted */
+			n = getmntinfo(&mp, MNT_NOWAIT);
+			if (n == 0)
+				err(1, "%s: getmntinfo", special);
 
-		/* Bail if target special is mounted */
-		n = getmntinfo(&mp, MNT_NOWAIT);
-		if (n == 0)
-			err(1, "%s: getmntinfo", special);
+			len = sizeof(_PATH_DEV) - 1;
+			s1 = special;
+			if (strncmp(_PATH_DEV, s1, len) == 0)
+				s1 += len;
 
-		len = sizeof(_PATH_DEV) - 1;
-		s1 = special;
-		if (strncmp(_PATH_DEV, s1, len) == 0)
-			s1 += len;
-
-		while (--n >= 0) {
-			s2 = mp->f_mntfromname;
-			if (strncmp(_PATH_DEV, s2, len) == 0) {
-				s2 += len - 1;
-				*s2 = 'r';
+			while (--n >= 0) {
+				s2 = mp->f_mntfromname;
+				if (strncmp(_PATH_DEV, s2, len) == 0) {
+					s2 += len - 1;
+					*s2 = 'r';
+				}
+				if (strcmp(s1, s2) == 0 ||
+				    strcmp(s1, &s2[1]) == 0)
+					errx(1, "%s is mounted on %s",
+					    special, mp->f_mntonname);
+				++mp;
 			}
-			if (strcmp(s1, s2) == 0 || strcmp(s1, &s2[1]) == 0)
-				errx(1, "%s is mounted on %s",
-				    special, mp->f_mntonname);
-			++mp;
 		}
-	}
-	if (mfs && disktype != NULL) {
-		lp = (struct disklabel *)getdiskbyname(disktype);
-		if (lp == NULL)
-			errx(1, "%s: unknown disk type", disktype);
-		pp = &lp->d_partitions[1];
-	} else {
 		cp = strchr(argv[0], '\0') - 1;
 		if (cp == 0 || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
 		    && !isdigit(*cp)))
 			errx(1, "can't figure out file system partition");
 #ifdef COMPAT
-		if (!mfs && disktype == NULL)
+		if (disktype == NULL)
 			disktype = argv[1];
 #endif
 		lp = getdisklabel(special, fsi);
@@ -529,9 +522,8 @@ main(int argc, char *argv[])
 			errx(1, "`%c' partition is unavailable", *cp);
 		if (pp->p_fstype == FS_BOOT)
 			errx(1, "`%c' partition overlaps boot program", *cp);
-	}
+	}	/* !Fflag && !mfs */
 
- havelabel:
 	if (fssize == 0)
 		fssize = pp->p_size;
 	if (fssize > pp->p_size && !mfs && !Fflag)
@@ -846,7 +838,9 @@ usage(void)
 			"\t-S secsize\tsector size\n");
 	}
 #ifdef COMPAT
-	fprintf(stderr, "\t-T disktype\tdisk type\n");
+	if (!mfs)
+		fprintf(stderr,
+			"\t-T disktype\tdisk type\n");
 #endif
 	if (!mfs)
 		fprintf(stderr,
@@ -859,8 +853,8 @@ usage(void)
 	fprintf(stderr, "\t-e maxbpg\tmaximum blocks per file "
 			"in a cylinder group\n");
 	fprintf(stderr, "\t-f fsize\tfragment size\n");
-	fprintf(stderr, "\t-g average file size\n");
-	fprintf(stderr, "\t-h average files per directory\n");
+	fprintf(stderr, "\t-g avgfilesize\taverage file size\n");
+	fprintf(stderr, "\t-h avgfpdir\taverage files per directory\n");
 	fprintf(stderr, "\t-i density\tnumber of bytes per inode\n");
 	if (!mfs) {
 		fprintf(stderr,
