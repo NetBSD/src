@@ -1,4 +1,4 @@
-/* $NetBSD: wscons.c,v 1.16 1998/01/12 10:21:26 thorpej Exp $ */
+/* $NetBSD: wscons.c,v 1.17 1998/03/21 22:52:59 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: wscons.c,v 1.16 1998/01/12 10:21:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wscons.c,v 1.17 1998/03/21 22:52:59 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -255,7 +255,6 @@ wsconsopen(dev, flag, mode, p)
 	tp->t_dev = dev;
 	newopen = (tp->t_state & TS_ISOPEN) == 0;
 	if (newopen) {
-		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;

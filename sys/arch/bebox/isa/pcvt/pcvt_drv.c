@@ -467,10 +467,9 @@ pcopen(Dev_t dev, int flag, int mode, struct proc *p)
 
 	if ((tp->t_state & TS_ISOPEN) == 0)
 	{
-
-#if !(PCVT_FREEBSD > 114)
+#ifdef TS_WOPEN
 		tp->t_state |= TS_WOPEN;
-#endif /* !(PCVT_FREEBSD > 114) */
+#endif
 
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
