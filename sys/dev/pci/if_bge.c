@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.40 2003/06/01 20:26:14 fvdl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.41 2003/06/15 23:09:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2016,7 +2016,10 @@ bge_attach(parent, self, aux)
 	aprint_normal(", Ethernet address %s\n", ether_sprintf(eaddr));
 
 	/* Allocate the general information block and ring buffers. */
-	sc->bge_dmatag = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->bge_dmatag = pa->pa_dmat64;
+	else
+		sc->bge_dmatag = pa->pa_dmat;
 	DPRINTFN(5, ("bus_dmamem_alloc\n"));
 	if (bus_dmamem_alloc(sc->bge_dmatag, sizeof(struct bge_ring_data),
 			     PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {

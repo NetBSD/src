@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.13 2003/01/01 00:39:20 thorpej Exp $ */
+/* $NetBSD: a12c.c,v 1.14 2003/06/15 23:08:54 fvdl Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.13 2003/01/01 00:39:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.14 2003/06/15 23:08:54 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ a12cattach(parent, self, aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.13 $", 
+	printf(": driver %s over logic %x\n", "$Revision: 1.14 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);
@@ -154,6 +154,7 @@ a12cattach(parent, self, aux)
 	pba.pba_iot = 0;
 	pba.pba_memt = ccp->ac_memt;
 	pba.pba_dmat = &ccp->ac_dmat_direct;
+	pba.pba_dmat64 = NULL;
 	pba.pba_pc = &ccp->ac_pc;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;

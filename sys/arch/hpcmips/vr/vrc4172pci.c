@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.8 2003/01/01 01:40:28 thorpej Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.9 2003/06/15 23:09:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -196,6 +196,7 @@ vrc4172pci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_iot = sc->sc_iot;
 	pba.pba_memt = sc->sc_iot;
 	pba.pba_dmat = &hpcmips_default_bus_dma_tag.bdt;
+	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
