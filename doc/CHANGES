@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.244 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.245 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -557,3 +557,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		[agc 20031221]
 	dreamcast: Add an Xserver for dreamcast, based on work by
 		Yasushi Oshima.  [tsutsui 20031223]
+	dab(6): Import Dots+Boxes game [christos 20031226]
