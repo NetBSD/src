@@ -1,4 +1,4 @@
-/*	$NetBSD: pnpbiosreg.h,v 1.1 2000/02/22 15:49:18 chopps Exp $ */
+/*	$NetBSD: pnpbiosreg.h,v 1.2 2000/05/11 05:54:49 jhawk Exp $ */
 /*
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -80,6 +80,9 @@
 #define	PNP_CM_PNP_OS_INACTIVE		0x0043
 #define	PNP_CM_OEM_DEFINED_BIT		0x8000
 
+/* control flags -- used with [GS]ET_DEVICE_NODE */
+#define PNP_CF_DEVCONF_DYNAMIC	0x01
+#define PNP_CF_DEVCONF_STATIC	0x02
 
 /* main pnpbios structure -- note not naturally aligned */
 struct pnpinstcheck {
