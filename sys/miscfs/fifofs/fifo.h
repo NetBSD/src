@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.20 2003/08/07 16:32:34 agc Exp $	*/
+/*	$NetBSD: fifo.h,v 1.21 2004/06/16 19:22:26 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -62,13 +62,13 @@ int	fifo_kqfilter	__P((void *));
 #define fifo_readlink	genfs_badop
 #define fifo_abortop	genfs_badop
 #define fifo_reclaim	genfs_nullop
-#define	fifo_lock	genfs_nolock
-#define	fifo_unlock	genfs_nounlock
+#define	fifo_lock	genfs_lock
+#define	fifo_unlock	genfs_unlock
 int	fifo_inactive	__P((void *));
 int	fifo_bmap	__P((void *));
 #define fifo_strategy	genfs_badop
 int	fifo_print	__P((void *));
-#define fifo_islocked	genfs_noislocked
+#define fifo_islocked	genfs_islocked
 int	fifo_pathconf	__P((void *));
 #define	fifo_advlock	genfs_einval
 #define fifo_blkatoff	genfs_badop
