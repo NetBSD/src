@@ -1,4 +1,4 @@
-/* $NetBSD: mcbusreg.h,v 1.2 1998/04/15 20:40:34 mjacob Exp $ */
+/* $NetBSD: mcbusreg.h,v 1.2.8.1 1999/12/16 23:16:28 he Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -71,7 +71,14 @@
 #define	MCBUS_MID_MASK		0x0000000E00000000L
 #define	MCBUS_MID_SHIFT		33
 
-
-#define	MCPCIA_PER_MCBUS	4
-
 #define	MAX_MC_BUS		8
+
+/*
+ * This is something of a layering violation, but it makes probing cleaner.
+ */
+#define	MCPCIA_PER_MCBUS		4
+/* the MCPCIA bridge CSR addresses, offset zero, is a good thing to probe for */
+#define	MCPCIA_BRIDGE_ADDR(gid, mid)	\
+	(MCBUS_IOSPACE | 0x1E0000000LL	|		\
+	(((unsigned long) gid) << MCBUS_GID_SHIFT) |	\
+	(((unsigned long) mid) << MCBUS_MID_SHIFT))
