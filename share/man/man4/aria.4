@@ -1,4 +1,4 @@
-.\" $NetBSD: aria.4,v 1.1 1998/06/06 10:16:59 augustss Exp $
+.\" $NetBSD: aria.4,v 1.2 1998/06/08 20:45:44 augustss Exp $
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -38,8 +38,8 @@
 .Nm aria
 .Nd Sierra's Aria chipset sound driver
 .Sh SYNOPSIS
-.Cd "aria* at isa? port 0xPPP irq I"
-.Cd "aria* at isa? port 0xPPP irq I flags 1"
+.Cd "aria0 at isa? port 0xPPP irq I"
+.Cd "aria0 at isa? port 0xPPP irq I flags 1"
 .Cd "audio* at aria?"
 .Sh DESCRIPTION
 The
@@ -63,7 +63,7 @@ joystick port.
 .Sh BUGS
 DMA is not yet supported.
 .Pp
-The flags option should be unnecessary.
+The flags option should not be unnecessary.
 .Pp
 It is necessary to configure the port and irq.
 .Sh SEE ALSO
