@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.22 2001/03/24 20:44:26 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.23 2001/03/28 14:13:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -314,4 +314,27 @@ mii_down(mii)
 	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
 	     child = LIST_NEXT(child, mii_list))
 		(void) PHY_SERVICE(child, mii, MII_DOWN);
+}
+
+static unsigned char
+bitreverse(unsigned char x)
+{
+	static unsigned char nibbletab[16] = {
+		0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15
+	};
+
+	return ((nibbletab[x & 15] << 4) | nibbletab[x >> 4]);
+}
+
+int
+mii_oui(id1, id2)
+	int id1, id2;
+{
+	int h;
+
+	h = (id1 << 6) | (id2 >> 10);
+
+	return ((bitreverse(h >> 16) << 16) |
+		(bitreverse((h >> 8) & 255) << 8) |
+		bitreverse(h & 255));
 }
