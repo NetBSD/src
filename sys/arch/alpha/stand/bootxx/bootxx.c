@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.13 1999/04/02 03:35:55 cgd Exp $ */
+/* $NetBSD: bootxx.c,v 1.14 1999/04/02 03:50:47 cgd Exp $ */
 
 /*
  * Copyright (C) 1998 by Ross Harvey
@@ -149,7 +149,6 @@ static void printdec(int n)
 void
 main()
 {
-	int fd;
 	char *loadaddr;
 	struct bbinfo *bbinfop;
 	void (*entry) __P((int));
@@ -166,14 +165,14 @@ main()
 		putstr("Can't open boot device\n");
 		return;
 	}
-	if (!load_file(fd, bbinfop, loadaddr)) {
+	if (!load_file(booted_dev_fd, bbinfop, loadaddr)) {
 		putstr("\nLOAD FAILED!\n\n");
 		return;
 	}
 
 	putstr("Jumping to entry point...\n");
 	entry = (void (*)(int))loadaddr;
-	(*entry)(fd);
-	prom_close(fd);
+	(*entry)(booted_dev_fd);
+	booted_dev_close();
 	putstr("SECONDARY BOOT RETURNED!\n");
 }
