@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rtc.h	7.1 (Berkeley) 5/12/91
- *	$Id: rtc.h,v 1.5 1993/08/04 00:42:53 mycroft Exp $
+ *	$Id: rtc.h,v 1.6 1994/04/09 02:57:17 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -142,6 +142,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	 RTCFDT_12M	 0x20		/* 1.2M */
 #define	 RTCFDT_720K	 0x30		/* 720K */
 #define	 RTCFDT_144M	 0x40		/* 1.44M */
+#define	 RTCFDT_TYPE5	 0x50		/* 2.88M, presumably */
+#define	 RTCFDT_TYPE6	 0x60		/* 2.88M */
 
 #define RTC_BASELO	0x15	/* low byte of basemem size */
 #define RTC_BASEHI	0x16	/* high byte of basemem size */
