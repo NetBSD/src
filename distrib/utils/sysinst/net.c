@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.71 2001/03/06 09:22:40 dogcow Exp $	*/
+/*	$NetBSD: net.c,v 1.72 2001/04/15 11:08:51 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -502,6 +502,7 @@ again:
 	else if (v6config) {  /* dhcp config will disable this */
 		process_menu(MENU_ip6autoconf);
 		v6config = yesno ? 1 : 0;
+		net_ip6conf |= yesno ? IP6CONF_AUTOHOST : 0;
 	}
 
 	if (v6config) {
@@ -839,7 +840,6 @@ mnt_net_config(void)
 {
 	char ans [5] = "y";
 	char ifconfig_fn [STRSIZE];
-
 	FILE *f;
 
 	if (!network_up)
@@ -854,11 +854,49 @@ mnt_net_config(void)
 
 	/* If not running in target, copy resolv.conf there. */
 	if ((net_dhcpconf & DHCPCONF_NAMESVR) == 0) {
+#ifndef INET6
 		if (strcmp(net_namesvr, "") != 0)
 			dup_file_into_target("/etc/resolv.conf");
+#else
+		/*
+		 * not sure if it is a good idea, to allow dhcp config to
+		 * override IPv6 configuration
+		 */
+		if (strcmp(net_namesvr, "") != 0 ||
+		    strcmp(net_namesvr6, "") != 0)
+			dup_file_into_target("/etc/resolv.conf");
+#endif
+	}
+
+	/*
+	 * bring the interface up, it will be necessary for IPv6, and
+	 * it won't make trouble with IPv4 case either
+	 */
+	snprintf(ifconfig_fn, STRSIZE, "/etc/ifconfig.%s", net_dev);
+	f = target_fopen(ifconfig_fn, "w");
+	if (f != NULL) {
+		scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
+		    target_prefix(), ifconfig_fn);
+		scripting_fprintf(f, "up\n");
+		scripting_fprintf(NULL, "EOF\n");
 	}
 
 	if ((net_dhcpconf & DHCPCONF_IPADDR) == 0) {
+		/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
+		if (f != NULL) {
+			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
+			    target_prefix(), ifconfig_fn);
+			if (*net_media != '\0')
+				scripting_fprintf(f, "%s netmask %s media %s\n",
+				    net_ip, net_mask, net_media);
+			else
+				scripting_fprintf(f, "%s netmask %s\n", net_ip,
+				    net_mask);
+			
+			fclose(f);
+			scripting_fprintf(NULL, "EOF\n");
+		}
+
 		/* 
 		 * Add IPaddr/hostname to  /etc/hosts.
 		 * Be careful not to clobber any existing contents.
@@ -873,28 +911,21 @@ mnt_net_config(void)
 			scripting_fprintf(NULL, "EOF\n");
 		}
 
-		/* Write IPaddr and netmask to /etc/ifconfig.if[0-9] */
-		snprintf(ifconfig_fn, STRSIZE, "/etc/ifconfig.%s",
-		    net_dev);
-		f = target_fopen(ifconfig_fn, "w");
-		if (f != 0) {
-			scripting_fprintf(NULL, "cat <<EOF >>%s%s\n",
-			    target_prefix(), ifconfig_fn);
-			if (*net_media != '\0')
-				scripting_fprintf(f, "%s netmask %s media %s\n",
-				    net_ip, net_mask, net_media);
-			else
-				scripting_fprintf(f, "%s netmask %s\n", net_ip,
-				    net_mask);
-			
-			fclose(f);
-			scripting_fprintf(NULL, "EOF\n");
-		}
 		add_rc_conf("defaultroute=\"%s\"\n", net_defroute);
 	} else {
+		fclose(f);
 		add_rc_conf("dhclient=YES\n");
 		add_rc_conf("dhclient_flags=\"%s\"\n", net_dev);
         }
+
+#ifdef INET6
+	if ((net_ip6conf & IP6CONF_AUTOHOST) != 0) {
+		add_rc_conf("ip6mode=autohost\n");
+		add_rc_conf("rtsol=YES\n");
+		add_rc_conf("rtsol_flags=\"%s\"\n", net_dev);
+	}
+#endif
+
 	fflush(NULL);
 }
 
