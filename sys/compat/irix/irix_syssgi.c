@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.39 2004/03/09 03:18:03 atatat Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.40 2004/03/11 10:14:10 he Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.39 2004/03/09 03:18:03 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.40 2004/03/11 10:14:10 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -462,7 +462,6 @@ irix_syssgi_sysconf(name, l, retval)
 	int error = 0;
 	int mib[2], value;
 	size_t len = sizeof(value);
-	caddr_t sg = stackgap_init(p, 0);
 
 	switch (name) {
 	case IRIX_SC_ARG_MAX:
