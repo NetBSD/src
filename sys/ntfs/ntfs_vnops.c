@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.29 2000/08/03 03:41:54 thorpej Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.30 2000/09/19 22:02:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -820,6 +820,8 @@ ntfs_fsync(ap)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_waitfor;
+		off_t offlo;
+		off_t offhi;
 		struct proc *a_p;
 	} */ *ap;
 {
