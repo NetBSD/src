@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: db2netbsd,v 1.1 1996/05/03 22:43:02 cgd Exp $
+#	$NetBSD: db2netbsd,v 1.2 1999/02/16 18:01:37 kleink Exp $
 
 # This version transforms a Berkeley DB distribution into something
 # which can be 'cvs import'ed into the NetBSD source repository.
@@ -10,7 +10,7 @@
 version=`basename $PWD | sed -e 's/db\.//'`
 releasetag=`basename $PWD | sed -e 's/\./-/g'`
 
-CLEANFILES="PORT docs test/btree.tests test/hash.tests"
+CLEANFILES="PORT docs hash/search.h test/btree.tests test/hash.tests"
 
 # clean up pieces that we never import
 /bin/rm -rf $CLEANFILES
