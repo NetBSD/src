@@ -1,26 +1,17 @@
-This directory contains the egcs version 1.1.2 release of the GNU C
-compiler.  It includes all of the support for compiling C++ and
-Objective C, including a run-time library for Objective C.
+This directory contains the GNU Compiler Collection (GCC).
 
-The GNU C compiler is free software.  See the file COPYING for copying
-permission.
+The GNU Compiler Collection is free software.  See the file COPYING
+for copying permission.  The manuals, and some of the runtime
+libraries, are under different terms; see the individual source files
+for details.
 
-See the file gcc.texi (together with other files that it includes) for
-installation and porting information.  The file INSTALL contains a
-copy of the installation information, as plain ASCII.
+The directory INSTALL contains copies of the installation information
+as HTML and plain text.  The source of this information is
+gcc/doc/install.texi.  The installation information includes details
+of what is included in the GCC sources and what files GCC installs.
 
-Installing this package will create various files in subdirectories of
-/usr/local/lib, which are passes used by the compiler and a library
-named libgcc.a.  It will also create /usr/local/bin/gcc, which is
-the user-level command to do a compilation.
+See the file gcc/doc/gcc.texi (together with other files that it
+includes) for usage and porting information.  An online readable
+version of the manual is in the files gcc/doc/gcc.info*.
 
-See the Bugs chapter of the GCC Manual for how to report bugs
-usefully.  An online readable version of the manual is in the files
-gcc.info*.
-
-The files pself.c and pself1.c are not part of GCC.
-They are programs that print themselves on standard output.
-They were written by Dario Dariol and Giovanni Cozzi, and are
-included for your hacking pleasure.  Likewise pself2.c
-(Who is the author of that?) and pself3.c (by Vlad Taeerov and Rashit
-Fakhreyev).
+See http://gcc.gnu.org/bugs.html for how to report bugs usefully.
