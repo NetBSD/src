@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.178 2003/08/01 12:29:30 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.179 2003/08/27 15:59:52 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.178 2003/08/01 12:29:30 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.179 2003/08/27 15:59:52 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -323,12 +323,12 @@ cpu_mainbus_attach(parent, self, aux)
 	 */
 	if (node != 0 && (error = PROM_getprop(node, "mailbox-virtual",
 					sizeof(*mbprop),
-					&n, (void **)&mbprop)) == 0) {
+					&n, &mbprop)) == 0) {
 		cpi->mailbox = mbprop->va;
 		free(mbprop, M_DEVBUF);
 	} else if (node != 0 && (error = PROM_getprop(node, "mailbox",
 					sizeof(struct openprom_addr),
-					&n, (void **)&rrp)) == 0) {
+					&n, &rrp)) == 0) {
 		/* XXX - map cached/uncached? If cached, deal with
 		 *	 cache congruency!
 		 */
@@ -354,7 +354,7 @@ cpu_mainbus_attach(parent, self, aux)
 	rrp = NULL;
 	if (node == 0 || (error = PROM_getprop(node, "reg",
 					sizeof(struct openprom_addr),
-					&n, (void **)&rrp)) != 0)
+					&n, &rrp)) != 0)
 		return;
 
 	/* register set #0 is the MBus port register */

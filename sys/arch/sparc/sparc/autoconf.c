@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.200 2003/08/25 17:50:26 uwe Exp $ */
+/*	$NetBSD: autoconf.c,v 1.201 2003/08/27 15:59:52 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200 2003/08/25 17:50:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.201 2003/08/27 15:59:52 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -371,7 +371,7 @@ bootstrap4m()
 	vaddrs = vstore;
 	nvaddrs = sizeof(vstore)/sizeof(vstore[0]);
 	if (PROM_getprop(node, "address", sizeof(int),
-		    &nvaddrs, (void **)&vaddrs) != 0) {
+		    &nvaddrs, &vaddrs) != 0) {
 		printf("bootstrap: could not get interrupt properties");
 		prom_halt();
 	}
@@ -1406,7 +1406,7 @@ PROM_getprop_reg1(node, rrp)
 	char buf[32];
 
 	error = PROM_getprop(node, "reg", sizeof(struct openprom_addr),
-			&n, (void **)&rrp0);
+			&n, &rrp0);
 	if (error != 0) {
 		if (error == ENOENT &&
 		    strcmp(PROM_getpropstringA(node, "device_type", buf, sizeof buf),
@@ -1431,7 +1431,7 @@ PROM_getprop_intr1(node, ip)
 	struct rom_intr *rip = NULL;
 
 	error = PROM_getprop(node, "intr", sizeof(struct rom_intr),
-			&n, (void **)&rip);
+			&n, &rip);
 	if (error != 0) {
 		if (error == ENOENT) {
 			*ip = 0;
@@ -1453,7 +1453,7 @@ PROM_getprop_address1(node, vpp)
 	int error, n;
 	void **vp = NULL;
 
-	error = PROM_getprop(node, "address", sizeof(u_int32_t), &n, (void **)&vp);
+	error = PROM_getprop(node, "address", sizeof(u_int32_t), &n, &vp);
 	if (error != 0) {
 		if (error == ENOENT) {
 			*vpp = 0;
