@@ -1,4 +1,4 @@
-.\"	$NetBSD: ident.1,v 1.4 1996/10/15 07:00:01 veego Exp $
+.\"	$NetBSD: ident.1,v 1.5 2002/02/08 01:26:50 ross Exp $
 .\"
 .de Id
 .ds Rv \\$3
@@ -48,7 +48,7 @@ For example, if the C program in
 contains
 .IP
 .ft 3
-#include <stdio.h>
+#include \*[Lt]stdio.h\*[Gt]
 .br
 static char const rcsid[] =
 .br
@@ -179,6 +179,6 @@ rcsfile(5)
 .br
 Walter F. Tichy,
 \*r\*-A System for Version Control,
-.I "Software\*-Practice & Experience"
+.I "Software\*-Practice \*[Am] Experience"
 .BR 15 ,
 7 (July 1985), 637-654.

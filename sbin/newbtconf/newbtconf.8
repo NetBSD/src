@@ -1,4 +1,4 @@
-.\"     $NetBSD: newbtconf.8,v 1.7 2001/11/16 12:03:54 wiz Exp $
+.\"     $NetBSD: newbtconf.8,v 1.8 2002/02/08 01:30:45 ross Exp $
 .\"
 .\" Copyright (c) 1999 Darren Reed.  All rights reserved.
 .\"
@@ -94,7 +94,7 @@ to the directory
 .Pa /etc/etc.network .
 The following files are all moved into
 that directory and symbolic links put in their place, in /etc, pointing to
-.Pa /etc/etc.current/<filename> :
+.Pa /etc/etc.current/\*[Lt]filename\*[Gt] :
 .Bd -literal -offset indent
 /etc/defaultdomain
 /etc/fstab
@@ -136,7 +136,7 @@ will use the current configuration files as the basis for this setup unless
 a second parameter is given - that of the configuration to use as the basis
 for the new one.
 Upon completion, a new directory,
-.Pa /etc/etc.<newname> ,
+.Pa /etc/etc.\*[Lt]newname\*[Gt] ,
 will have been created,
 priming the directory with the appropriate files for editing.
 For example, if we do
@@ -221,8 +221,8 @@ The
 program first appeared in
 .Nx 1.5 .
 .Sh AUTHORS
-This shell script was written by Darren Reed <darrenr@netbsd.org> with
-initial input from Matthew Green <mrg@netbsd.org> on how to approach this
+This shell script was written by Darren Reed \*[Lt]darrenr@netbsd.org\*[Gt] with
+initial input from Matthew Green \*[Lt]mrg@netbsd.org\*[Gt] on how to approach this
 problem.
 .Sh BUGS
 It presently does not display a count down timer whilst waiting for input

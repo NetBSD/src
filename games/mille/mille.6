@@ -1,4 +1,4 @@
-.\"	$NetBSD: mille.6,v 1.6 1997/10/12 00:54:03 lukem Exp $
+.\"	$NetBSD: mille.6,v 1.7 2002/02/08 01:25:14 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,12 +57,12 @@ This card is placed in the `P' slot in your hand.
 .IP D
 Discard a card from your hand.
 To indicate which card, type the number of the card in the hand
-(or \*(lqP\*(rq for the just-picked card) followed by a <RETURN> or <SPACE>.
-The <RETURN or <SPACE> is required to allow recovery from typos
+(or \*(lqP\*(rq for the just-picked card) followed by a \*[Lt]RETURN\*[Gt] or \*[Lt]SPACE\*[Gt].
+The \*[Lt]RETURN or \*[Lt]SPACE\*[Gt] is required to allow recovery from typos
 which can be very expensive, like discarding safeties.
 .IP U
 Use a card.
-The card is again indicated by its number, followed by a <RETURN> or <SPACE>.
+The card is again indicated by its number, followed by a \*[Lt]RETURN\*[Gt] or \*[Lt]SPACE\*[Gt].
 .IP O
 Toggle ordering the hand.
 By default off, if turned on it will sort the cards in your hand appropriately.
@@ -70,14 +70,14 @@ This is not recommended for the impatient on slow terminals.
 .IP Q
 Quit the game.
 This will ask for confirmation, just to be sure.
-Hitting <DELETE> (or <RUBOUT>) is equivalent.
+Hitting \*[Lt]DELETE\*[Gt] (or \*[Lt]RUBOUT\*[Gt]) is equivalent.
 .IP S
 Save the game in a file.
 If the game was started from a file,
 you will be given an opportunity to save it on the same file.
 If you don't wish to, or you did not start from a file,
 you will be asked for the file name.
-If you type a <RETURN> without a name,
+If you type a \*[Lt]RETURN\*[Gt] without a name,
 the save will be terminated and the game resumed.
 .IP R
 Redraw the screen from scratch.

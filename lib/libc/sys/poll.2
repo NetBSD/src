@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.13 2002/01/04 01:31:10 wiz Exp $
+.\"	$NetBSD: poll.2,v 1.14 2002/02/08 01:28:20 ross Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <poll.h>
+.Fd #include \*[Lt]sys/types.h\*[Gt]
+.Fd #include \*[Lt]poll.h\*[Gt]
 .Ft int
 .Fn poll "struct pollfd *fds" "nfds_t nfds" "int timeout"
 .Sh DESCRIPTION
