@@ -1,4 +1,4 @@
-/*	$NetBSD: ac.c,v 1.8 1998/04/02 11:54:03 kleink Exp $	*/
+/*	$NetBSD: ac.c,v 1.9 1999/10/11 11:44:59 mrg Exp $	*/
 
 /*
  *      Copyright (c) 1994 Christopher G. Demetriou.
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.8 1998/04/02 11:54:03 kleink Exp $");
+__RCSID("$NetBSD: ac.c,v 1.9 1999/10/11 11:44:59 mrg Exp $");
 #endif
 
 #include <sys/types.h>
@@ -513,7 +513,8 @@ ac(fp)
 			 * or this tty is a login tty [eg. a console]
 			 */
 			if (*usr.ut_name) {
-				if (strncmp(usr.ut_line, "tty", 3) != 0 ||
+				if ((strncmp(usr.ut_line, "tty", 3) != 0 &&
+				    strncmp(usr.ut_line, "dty", 3) != 0) ||
 				    strchr("pqrstuvwxyzPQRST", usr.ut_line[3]) == 0 ||
 				    *usr.ut_host != '\0' ||
 				    is_login_tty(usr.ut_line))
