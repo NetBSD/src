@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.1 1998/07/21 01:04:01 thorpej Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.2 1998/07/21 22:58:31 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -68,6 +68,7 @@
 struct cs_softc {
 	struct device sc_dev;		/* base device glue */
 	struct ethercom sc_ethercom;	/* Ethernet common */
+	struct ifmedia sc_media;	/* media control structures */
 
 	void	*sc_ih;			/* interupt handler */
 	void 	*sc_sh;			/* shutdown hook */
@@ -89,7 +90,6 @@ struct cs_softc {
 	caddr_t	sc_dmacur;		/* current DMA address (KVA) */
 
 	int	sc_cfgflags;		/* software configuration flags */
-	int	sc_mediatype;		/* media type (XXX if_media) */
 
 	int	sc_memorymode;		/* are we in memory mode? */
 	int	sc_txbusy;		/* transmit in progress */
