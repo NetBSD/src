@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 1996/10/13 03:21:41 christos Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 1996/10/21 01:59:32 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -217,7 +217,7 @@ char *
 bus_mapin(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
-	int off, pa, pmt;
+	int off, pa, pmt=0;
 	vm_offset_t va, retval;
 
 	if (bustype != BUS_NUBUS)
