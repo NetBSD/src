@@ -1,4 +1,4 @@
-/*	$NetBSD: vipw.c,v 1.5 1997/10/17 14:31:13 lukem Exp $	*/
+/*	$NetBSD: vipw.c,v 1.6 1998/12/09 12:40:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: vipw.c,v 1.5 1997/10/17 14:31:13 lukem Exp $");
+__RCSID("$NetBSD: vipw.c,v 1.6 1998/12/09 12:40:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,11 +57,12 @@ __RCSID("$NetBSD: vipw.c,v 1.5 1997/10/17 14:31:13 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <util.h>
 
-void	copyfile __P((int, int));
 int	main __P((int, char **));
-void	usage __P((void));
+static void	copyfile __P((int, int));
+static void	usage __P((void));
 
 int
 main(argc, argv)
@@ -87,8 +88,13 @@ main(argc, argv)
 
 	pw_init();
 	tfd = pw_lock(0);
-	if (tfd < 0)
-		errx(1, "the passwd file is busy.");
+	if (tfd < 0) {
+		if (errno == EEXIST)
+			errx(1, "the passwd file is busy.");
+		else
+			err(1, "%s", _PATH_MASTERPASSWD_LOCK);
+	}
+
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
 	if (pfd < 0)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
@@ -109,10 +115,10 @@ main(argc, argv)
 			break;
 		pw_prompt();
 	}
-	exit(0);
+	return 0;
 }
 
-void
+static void
 copyfile(from, to)
 	int from, to;
 {
@@ -127,10 +133,11 @@ copyfile(from, to)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 }
 
-void
+static void
 usage()
 {
+	extern char *__progname;
 
-	(void)fprintf(stderr, "usage: vipw\n");
+	(void)fprintf(stderr, "Usage: %s\n", __progname);
 	exit(1);
 }
