@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.3 2002/06/20 10:07:42 agc Exp $
+.\"	$NetBSD: systrace.1,v 1.4 2002/06/26 06:50:14 gmcgarry Exp $
 .\"	$OpenBSD: systrace.1,v 1.16 2002/06/13 00:15:00 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -47,24 +47,30 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility enforces system call policies for applications by
-constraining the application's access to the system.
-The policy is generated interactively.
-Operations not covered by the policy raise an
-alarm and allow a user to refine the currently configured policy.
+utility monitors and controls an application's access to the system by
+enforcing access policies for system calls.  The
+.Nm
+utility might be used to trace an untrusted application's access to
+the system.  Alternatively, it might be used to protect the system
+from software bugs (such as buffer overflows) by constraining a
+daemon's access to the system.
 .Pp
-The options are as follows:
+The access policy can be generated interactively or obtained from a
+policy file.  Operations not covered by the policy raise an alarm and
+allow an user to refine the currently configured policy.
+.Pp
+The following options are available:
 .Bl -tag -width Dfxfile
 .It Fl a
-Enables automatic enforcement of configured policies.
-An operation not covered by policy is denied and logged via
+Enables automatic enforcement of configured policies.  An operation
+not covered by a policy is denied and logged via
 .Xr syslog 3 .
 .It Fl A
 Automatically generate a policy that allows every operation the
 application executes.
 The created policy functions as a base that can be refined.
 .It Fl i
-Inherits the policy - child processes inherit the policy of the parent binary.
+All child processes inherit the policy of the parent binary.
 .It Fl t
 Uses text mode to ask for interactive policy generation.
 .It Fl U
@@ -182,4 +188,11 @@ Policy: /bin/ls, Emulation: native
 .Sh AUTHORS
 The
 .Nm
-utility was developed by Niels Provos.
+utility has been developed by Niels Provos.
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Ox 3.2 .
+It appeared in
+.Nx 1.7 .
