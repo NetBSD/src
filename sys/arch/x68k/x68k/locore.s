@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41 1999/03/24 05:51:18 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.42 1999/04/18 14:37:09 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -265,21 +265,30 @@ Lisberr:
 /*
  * FP exceptions.
  */
+#include "opt_fpuemulate.h"
 _fpfline:
 #if defined(M68040)
+	cmpl	#FPU_68040,_C_LABEL(fputype) | 64040 FPU?
+	jne	Lfp_unimp		| no, skip FPSP
 	cmpw	#0x202c,sp@(6)		| format type 2?
-	jne	_illinst		| no, not an FP emulation
+	jne	_C_LABEL(illinst)	| no, not an FP emulation
 #ifdef FPSP
-	.globl fpsp_unimp
-	jmp	fpsp_unimp		| yes, go handle it
+	jmp	_ASM_LABEL(fpsp_unimp)	| yes, go handle it
 #else
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save registers
 	moveq	#T_FPEMULI,d0		| denote as FP emulation trap
 	jra	fault			| do it
 #endif
+Lfp_unimp:
+#endif
+#ifdef FPU_EMULATE
+	clrl	sp@-			| stack adjust count
+	moveml	#0xFFFF,sp@-		| save registers
+	moveq	#T_FPEMULI,d0		| denote as FP emulation trap
+	jra	_ASM_LABEL(fault)	| do it
 #else
-	jra	_illinst
+	jra	_C_LABEL(illinst)
 #endif
 
 _fpunsupp:
