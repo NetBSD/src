@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.10 2003/11/01 02:24:49 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.11 2003/11/04 03:13:48 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2003/11/01 02:24:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2003/11/04 03:13:48 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.10 2003/11/01 02:24:49 uwe Exp $");
 #include <sh3/tmureg.h>
 #include <machine/intr.h>
 
-int intc_intr_priority(int, int);
+void intc_intr_priority(int, int);
 struct intc_intrhand *intc_alloc_ih(void);
 void intc_free_ih(struct intc_intrhand *);
 int intc_unknown_intr(void *);
@@ -147,36 +147,28 @@ intc_intr_disestablish(void *arg)
 	intc_free_ih(ih);
 }
 
-int
+void
 intc_intr_disable(int evtcode)
 {
-	int oldlevel;
 	int s;
 
 	s = _cpu_intr_suspend();
 	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
-	oldlevel = intc_intr_priority(evtcode, 0);
+	intc_intr_priority(evtcode, 0);
 	_cpu_intr_resume(s);
-
-	return (oldlevel);
 }
 
 void
-intc_intr_enable(int evtcode, int level)
+intc_intr_enable(int evtcode)
 {
-#ifdef DIAGNOSTIC
-	int oldlevel;
-#endif
+	struct intc_intrhand *ih;
 	int s;
 
 	s = _cpu_intr_suspend();
-#ifdef DIAGNOSTIC
 	KASSERT(EVTCODE_TO_IH_INDEX(evtcode) != 0); /* there is a handler */
-	oldlevel = intc_intr_priority(evtcode, level);
-	KASSERT(oldlevel == 0);	/* that has been disabled previously */
-#else
-	(void)intc_intr_priority(evtcode, level);
-#endif
+	ih = EVTCODE_IH(evtcode);
+	/* ih_level is in the SR.IMASK format */
+	intc_intr_priority(evtcode, (ih->ih_level >> 4));
 	_cpu_intr_resume(s);
 }
 
@@ -187,12 +179,11 @@ intc_intr_enable(int evtcode, int level)
  *	SH7708, SH7708S, SH7708R, SH7750, SH7750S ... evtcode is INTEVT
  *	SH7709, SH7709A				  ... evtcode is INTEVT2
  */
-int
+void
 intc_intr_priority(int evtcode, int level)
 {
 	volatile uint16_t *iprreg;
 	int pos;
-	int oldlevel;
 	uint16_t r;
 
 #define	__SH_IPR(_sh, _ipr, _pos)					   \
@@ -286,11 +277,8 @@ intc_intr_priority(int evtcode, int level)
 #endif
 
 	r = _reg_read_2(iprreg);
-	oldlevel = (r >> (pos)) & 0xf;
 	r = (r & ~(0xf << (pos))) | (level << (pos));
 	_reg_write_2(iprreg, r);
-
-	return (oldlevel);
 }
 
 /*
