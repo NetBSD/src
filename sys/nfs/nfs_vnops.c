@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.125 2000/11/30 07:24:12 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.126 2000/12/12 17:13:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -440,10 +440,17 @@ nfs_open(v)
 	}
 
 	/*
-	 * if we're opening with write access, initialize the write creds
-	 * in case we only write via memory mappings.
+	 * Initialize read and write creds here, for swapfiles
+	 * and other paths that don't set the creds themselves.
 	 */
 
+	if (ap->a_mode & FREAD) {
+		if (np->n_rcred) {
+			crfree(np->n_rcred);
+		}
+		np->n_rcred = ap->a_cred;
+		crhold(np->n_rcred);
+	}
 	if (ap->a_mode & FWRITE) {
 		if (np->n_wcred) {
 			crfree(np->n_wcred);
