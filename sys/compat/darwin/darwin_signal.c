@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.10 2003/12/03 18:40:07 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.11 2003/12/04 22:00:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.10 2003/12/03 18:40:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.11 2003/12/04 22:00:03 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,11 +179,8 @@ darwin_sigfilter(l, ksi)
 		if ((error == 0) &&
 		    p->p_sigctx.ps_sigwaited &&
 		    sigismember(p->p_sigctx.ps_sigwait, signo) &&
-		    p->p_stat != SSTOP) {
-			p->p_sigctx.ps_sigwaited->ksi_info = ksi->ksi_info;
-			p->p_sigctx.ps_sigwaited = NULL;
+		    (p->p_stat != SSTOP))
 			wakeup_one(&p->p_sigctx.ps_sigwait);
-		}
 
 		return error;
 	}
