@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.57 2003/11/13 03:09:29 chs Exp $ */
+/* $NetBSD: tga.c,v 1.58 2004/06/29 21:32:42 kleink Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.57 2003/11/13 03:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.58 2004/06/29 21:32:42 kleink Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,6 @@ int	tgaprint __P((void *, const char *));
 CFATTACH_DECL(tga, sizeof(struct tga_softc),
     tgamatch, tgaattach, NULL, NULL);
 
-int	tga_identify __P((struct tga_devconfig *));
-const struct tga_conf *tga_getconf __P((int));
 static void	tga_init __P((bus_space_tag_t memt, pci_chipset_tag_t pc,
 	    pcitag_t tag, struct tga_devconfig *dc));
 
