@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.74 1996/10/16 17:53:44 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.74.2.1 1996/11/06 00:48:33 lukem Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 4/16/94
 
 # gen sources
@@ -19,7 +19,8 @@ SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
 	sigsetops.c sleep.c sysconf.c sysctl.c syslog.c telldir.c \
 	time.c times.c timezone.c tolower_.c ttyname.c ttyslot.c toupper_.c \
 	ualarm.c uname.c unvis.c usleep.c utime.c valloc.c vis.c wait.c \
-	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c
+	wait3.c waitpid.c warn.c warnx.c vwarn.c vwarnx.c verr.c verrx.c \
+	stringlist.c
 
 # indirect reference stubs, to be removed soon.
 SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
