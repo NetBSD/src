@@ -354,7 +354,7 @@ msdosfs_read(vp, uio, ioflag, cred)
 	do {
 		lbn = uio->uio_offset >> pmp->pm_cnshift;
 		on = uio->uio_offset & pmp->pm_crbomask;
-		n = MIN((u_long) (pmp->pm_bpcluster - on), uio->uio_resid);
+		n = min((u_long) (pmp->pm_bpcluster - on), uio->uio_resid);
 		diff = dep->de_FileSize - uio->uio_offset;
 		if (diff <= 0)
 			return 0;
@@ -386,7 +386,7 @@ msdosfs_read(vp, uio, ioflag, cred)
 			}
 			vp->v_lastr = lbn;
 		}
-		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
+		n = min(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
 			brelse(bp);
 			return error;
@@ -530,7 +530,7 @@ msdosfs_write(vp, uio, ioflag, cred)
 				return error;
 		}
 		croffset = uio->uio_offset & pmp->pm_crbomask;
-		n = MIN(uio->uio_resid, pmp->pm_bpcluster - croffset);
+		n = min(uio->uio_resid, pmp->pm_bpcluster - croffset);
 		if (uio->uio_offset + n > dep->de_FileSize) {
 			dep->de_FileSize = uio->uio_offset + n;
 			vnode_pager_setsize(vp, dep->de_FileSize);	/* why? */
@@ -1366,7 +1366,7 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 	while (!error && uio->uio_resid > 0 && ncookies > 0) {
 		lbn = (uio->uio_offset - bias) >> pmp->pm_cnshift;
 		on = (uio->uio_offset - bias) & pmp->pm_crbomask;
-		n = MIN((u_long) (pmp->pm_bpcluster - on), uio->uio_resid);
+		n = min((u_long) (pmp->pm_bpcluster - on), uio->uio_resid);
 		diff = dep->de_FileSize - (uio->uio_offset - bias);
 		if (diff <= 0)
 			return 0;
@@ -1376,7 +1376,7 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 		if (error)
 			break;
 		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, NOCRED, &bp);
-		n = MIN(n, pmp->pm_bpcluster - bp->b_resid);
+		n = min(n, pmp->pm_bpcluster - bp->b_resid);
 		if (error) {
 			brelse(bp);
 			return error;
