@@ -1,4 +1,4 @@
-# $NetBSD: do_subst.sh,v 1.3 2000/08/29 15:10:15 takemura Exp $
+# $NetBSD: do_subst.sh,v 1.4 2001/01/05 15:00:57 takemura Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -27,18 +27,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-if [ "X$1" = "X--show-libdeps" ]; then
-	if ! expr "X$TYPE" : 'Xconsole_program.*' > /dev/null 2>&1; then
-		if ! expr "X$TYPE" : 'Xapplication.*' > /dev/null 2>&1; then
-			exit
-		fi
-	fi
-	( for lib in $LIBDEP_LIST; do
-		echo $lib
-	done ) | sort
-	exit
-fi
 
 AWK=awk
 if [ `uname` = SunOS ]; then
@@ -186,4 +174,4 @@ BEGIN {
 	gsub("%%% RELEASE_LIBPATH %%%", RELEASE_LIBPATH)
 	print $0
 }
-' ../dspgen/${TYPE}.tmpl | awk ' { printf "%s\r\n", $0 }' > ${NAME}.dsp
+'
