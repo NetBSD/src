@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.35 1999/02/19 02:53:06 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.36 1999/02/19 21:49:43 abs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.31 1999/02/19 00:43:00 nathanw Exp 
+ *	NetBSD: pcmciadevs,v 1.32 1999/02/19 02:52:17 nathanw Exp 
  */
 
 /*-
@@ -157,6 +157,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Wireless LAN Entry"	},
 	},
 	{
+	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE,
+	    PCMCIA_CIS_IBM_PORTABLE_CDROM_DRIVE,
+	    0,
+	    "IBM Corporation",
+	    "PCMCIA Portable CD-ROM Drive"	},
+	},
+	{
 	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
 	    PCMCIA_CIS_IODATA_PCLAT,
 	    0,
@@ -204,6 +211,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Megahertz Corporation",
 	    "Megahertz X-JACK Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_MEGAHERTZ, PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336,
+	    PCMCIA_CIS_MEGAHERTZ_XJEM3336,
+	    0,
+	    "Megahertz Corporation",
+	    "Megahertz X-JACK Ethernet Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_USROBOTICS, PCMCIA_PRODUCT_USROBOTICS_WORLDPORT144,
