@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.19 1994/11/29 21:35:13 mycroft Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.20 1994/11/30 02:08:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -112,7 +112,7 @@
  * kernel debugger.  If you set AIC_DEBUG to 0 they are not included (the
  * kernel uses less memory) but you lose the debugging facilities.
  */
-#define AIC_DEBUG		1
+#define AIC_DEBUG		0
 
 /* End of customizable parameters */
 
@@ -1243,11 +1243,12 @@ aic_done(acb)
 			acb->dleft = sizeof(struct scsi_sense_data);
 			acb->flags = ACB_ACTIVE|ACB_CHKSENSE;
 			ti->senses++;
-			if (acb != aic->nexus) {
-				ti->lubusy &= ~(1<<sc->lun);
-				TAILQ_INSERT_HEAD(&aic->ready_list, acb, chain);
-			} else
+			ti->lubusy &= ~(1<<sc->lun);
+			if (acb == aic->nexus) {
 				aic_select(aic, sc->target);
+			} else {
+				TAILQ_INSERT_HEAD(&aic->ready_list, acb, chain);
+			}
 			return;
 		}
 	}
@@ -1290,16 +1291,14 @@ aic_done(acb)
 	} else {
 		register struct acb *acb2;
 		for (acb2 = aic->nexus_list.tqh_first; acb2 != NULL;
-		    acb2 = acb2->chain.tqe_next)
-			if (acb2 == acb) {
-				TAILQ_REMOVE(&aic->nexus_list, acb, chain);
-				ti->lubusy &= ~(1<<sc->lun);
-				/* XXXX Should we call aic_sched() here? */
+		    acb2 = acb2->chain.tqe_next) {
+			if (acb2 == acb)
 				break;
-			}
-		if (acb2 != NULL)
-			;
-		else if (acb->chain.tqe_next) {
+		}
+		if (acb2 != NULL) {
+			TAILQ_REMOVE(&aic->nexus_list, acb, chain);
+			ti->lubusy &= ~(1<<sc->lun);
+		} else if (acb->chain.tqe_next) {
 			TAILQ_REMOVE(&aic->ready_list, acb, chain);
 		} else {
 			printf("%s: can't find matching acb\n",
