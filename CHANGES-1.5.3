@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.18 2001/12/24 14:48:31 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.19 2001/12/27 12:37:48 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1132,7 +1132,55 @@ sys/dev/pci/pccbb.c				1.70 partial, via patch
   Fixes PR#14149.
 
 lib/libc/time/strftime.c			1.12 via patch
-lib/libc/time/strftime.3			1.8,1.10-1.12
+lib/libc/time/strftime.3			1.10-1.12
 
   Switch to widely circulated tzcode (2000g) implementation; it
   implements C99 features.
+
+sys/dev/pci/cs4281.c				1.9
+
+  Remove spurious warning which is no longer valid.
+
+dist/dhcp/client/dhclient.c			1.3
+
+  Check for ``-'' as first character only after we checked all
+  recognized options.  Fixes PR#14935.
+
+sys/arch/sparc/sparc/pmap.c			1.201
+
+  When counting PTEs, look at all the segments in a region, not
+  just the first.
+
+share/man/man4/dpti.4				1.2
+
+  First appeared in 1.5.3.
+
+etc/rc.d/ipfilter				1.9-1.10
+
+  Use && and || for logical concatenations instead of -a/-o operators,
+  and support ``resync'' (ipf -y).
+
+sys/arch/arm32/conf/A7000			patch
+sys/arch/arm32/conf/A7INST			patch
+sys/arch/arm32/conf/GENERIC			patch
+sys/arch/arm32/conf/RISCPC			patch
+sys/arch/arm32/conf/RPCINST			patch
+sys/arch/arm32/conf/VOYAGER			patch
+
+  Comment out non-working Cumana SCSI II driver for now.
+
+gnu/dist/libio/cleanup.c			1.2
+
+  Fix a core dump when libstdc++ is unloaded (via dlclose()) before
+  exit().
+
+sys/dev/ic/wdcvar.h				1.28
+sys/dev/scsipi/atapi_wdc.c			1.39
+
+  Make DVD commands work on drives configured for DMA.
+
+lib/libossaudio/ossaudio.c			1.16
+sys/compat/ossaudio/ossaudio.c			1.39
+
+  Change our emulation of SNDCTL_DSP_POST so that OSS applications
+  (e.g. xmms) don't randomly pause.
