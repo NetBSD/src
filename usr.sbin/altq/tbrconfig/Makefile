@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.3 2001/12/14 00:52:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2002/08/27 14:46:19 lukem Exp $
 
-BINDIR=	/sbin
-LDSTATIC?=-static
+.include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 PROG=	tbrconfig
 MAN=	tbrconfig.8
+
+BINDIR=	/sbin
+.if (${MKDYNAMICROOT} == "no")
+LDSTATIC?=-static
+.endif
 
 CPPFLAGS+= -DALTQ -I${.CURDIR}/../libaltq
 

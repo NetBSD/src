@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.7 2002/05/13 02:10:35 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2002/08/27 14:46:22 lukem Exp $
+
+.include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
 # point top of your KAME tree by ${KAMEROOT}
 LIBPFKEYSRCDIR=	${.CURDIR}/../../../crypto/dist/kame/libipsec
@@ -10,7 +12,9 @@ FILESDIR?=	/usr/share/examples/racoon
 
 .if defined(SBIN_RACOON) && ${SBIN_RACOON} == "yes"
 BINDIR?=        /sbin
+.if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=      -static
+.endif
 .endif
 
 DBG=	-g
