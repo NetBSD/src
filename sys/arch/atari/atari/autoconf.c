@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 1997/05/25 12:41:27 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 1997/07/05 20:57:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -206,6 +206,9 @@ findroot(devpp, partp)
 
 	/* Always partition `a'. */
 	*partp = 0;
+
+	if (boothowto & RB_ASKNAME)
+		return;		/* Don't bother looking */
 
 	for (i = 0; genericconf[i] != NULL; i++) {
 		for (unit = 0; unit < genericconf[i]->cd_ndevs; unit++) {
