@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.19.4.13 1993/10/26 12:03:59 mycroft Exp $
+ *	$Id: icu.s,v 1.19.4.14 1993/10/31 23:52:32 mycroft Exp $
  */
 
 /*
@@ -47,12 +47,10 @@
 #include <net/netisr.h>
 
 /*
- * All spl levels include ASTMASK; this forces ipl to be non-zero when
+ * All spl levels include astmask; this forces cpl to be non-zero when
  * splx()ing from nested spl levels, and thus soft interrupts do not
  * get executed.  Logically, all spl levels are `above' soft interupts.
  */
-#define	ASTMASK	0x10000
-
 	.data
 	.globl	_cpl
 _cpl:
@@ -60,24 +58,24 @@ _cpl:
 	.globl  _ipending
 _ipending:
 	.long   0
-	.globl	_imen
-_imen:
-	.long	-1			# interrupt mask enable (all off)
+	.globl	_imask
+_imask:
+	.long	0
 	.globl	_ttymask
 _ttymask:
-	.long	ASTMASK
+	.long	0
 	.globl	_biomask
 _biomask:
-	.long	ASTMASK
+	.long	0
 	.globl	_netmask
 _netmask:
-	.long	ASTMASK
+	.long	0
 	.globl	_impmask
 _impmask:
-	.long	ASTMASK
+	.long	0
 	.globl	_astmask
 _astmask:
-	.long	ASTMASK
+	.long	0x80000000
 
 vec:
 	.long	INTRLOCAL(vec0), INTRLOCAL(vec1), INTRLOCAL(vec2)
@@ -133,9 +131,9 @@ doreti:
 	andl	_ipending,%eax
 	jnz	INTRLOCAL(unpend_v)
 INTRLOCAL(none_to_unpend):
-	testl   %edx,%edx		# returning to zero priority?
-	jz	2f			# nope, going to non-zero priority
-	popal
+	testl	%edx,%edx		# returning to zero priority?
+	jz	2f
+	popal				# nope, going to non-zero priority
 	popl	%es
 	popl	%ds
 	addl	$8,%esp
@@ -181,7 +179,7 @@ test_clock:
 	btrl	$SIR_CLOCK,_sir
 	jnc	test_ast
 	COUNT_EVENT(_intrcnt_spl, 9)
-	FASTSPL($ASTMASK)
+	FASTSPL_VARMASK(_astmask)
 	call	_softclock
 	FASTSPL($0)
 test_ast:
@@ -243,8 +241,8 @@ INTRLOCAL(over_net_stuff_for_splnone):
 _splx:
 	COUNT_EVENT(_intrcnt_spl, 22)
 	movl	4(%esp),%eax	# new priority
-	testl   %eax,%eax
-	je	in_splnone	# going to "zero level" is special
+	testl	%eax,%eax
+	jz	in_splnone	# going to "zero level" is special
 	COUNT_EVENT(_intrcnt_spl, 23)
 	pushl	_cpl
 	movl	%eax,_cpl	# set new priority
