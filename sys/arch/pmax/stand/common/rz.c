@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.14 1999/11/27 03:09:42 simonb Exp $	*/
+/*	$NetBSD: rz.c,v 1.15 1999/11/27 06:48:08 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,13 +38,15 @@
  *	@(#)rz.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <stand.h>
-#include <sys/param.h>
-#include <sys/disklabel.h>
+#include <lib/libsa/stand.h>
 #include <machine/dec_prom.h>
 #include <machine/stdarg.h>
-#include <common.h>
-#include <rz.h>
+
+#include <sys/param.h>
+#include <sys/disklabel.h>
+
+#include "common.h"
+#include "rz.h"
 
 struct	rz_softc {
 	int	sc_fd;			/* PROM file id */
@@ -149,23 +151,21 @@ rzopen(struct open_file *f, ...)
 	lp->d_npartitions = MAXPARTITIONS;
 	lp->d_partitions[part].p_offset = 0;
 	lp->d_partitions[part].p_size = 0x7fffffff;
+
 	i = rzstrategy(sc, F_READ, (daddr_t)LABELSECTOR, DEV_BSIZE, buf, &cnt);
 	if (i || cnt != DEV_BSIZE) {
-		printf("rz%d: error reading disk label\n", unit);
+		/* printf("rz%d: error reading disk label\n", unit); */
 		goto bad;
-	} else {
-		msg = getdisklabel(buf, lp);
-		if (msg) {
-			printf("rz%d: %s\n", unit, msg);
-			goto bad;
-		}
+	}
+	msg = getdisklabel(buf, lp);
+	if (msg) {
+		/* If no label, just assume 0 and return */
+		return (0);
 	}
 
 	if (part >= lp->d_npartitions || lp->d_partitions[part].p_size == 0) {
 	bad:
-#ifndef BOOTRZ	/* Smaller code for first stage disk bootloader */
 		free(sc, sizeof(struct rz_softc));
-#endif
 		return (ENXIO);
 	}
 	return (0);
