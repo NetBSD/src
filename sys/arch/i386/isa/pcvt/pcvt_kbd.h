@@ -108,7 +108,7 @@ typedef struct
 
 static Ovl_tbl *ovltbl;			/* the table itself */
 
-static ovlinitflag = 0;			/* the init flag for the table */
+static int ovlinitflag = 0;		/* the init flag for the table */
 
 /*
  * key codes >= 128 denote "virtual" shift/control

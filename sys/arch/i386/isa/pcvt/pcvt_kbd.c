@@ -593,7 +593,7 @@ kbd_code_init1(void)
 static
 void ovlinit(int force)
 {
-	register i;
+	register int i;
 
 	if(force || ovlinitflag==0)
 	{
@@ -1591,7 +1591,7 @@ rmkeydef(int key)
 static int
 setkeydef(Ovl_tbl *data)
 {
-	register i;
+	register int i;
 
 	if( data->keynum > MAXKEYNUM		 ||
 	    (data->type & KBD_MASK) == KBD_BREAK ||
