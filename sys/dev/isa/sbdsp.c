@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.50 1997/05/19 23:14:29 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.51 1997/05/20 12:51:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -289,25 +289,20 @@ void
 sbdsp_attach(sc)
 	struct sbdsp_softc *sc;
 {
+	struct audio_params xparams;
+        int i;
+        u_int v;
 
-	/* Set defaults */
-	if (ISSB16CLASS(sc))
-		sc->sc_irate = sc->sc_orate = 8000;
-  	else
-		sc->sc_itc = sc->sc_otc = SB_8K;
-	sc->sc_precision = 8;
-	sc->sc_channels = 1;
+        sbdsp_set_params(sc, AUMODE_RECORD, &audio_default, &xparams);
+        sbdsp_set_params(sc, AUMODE_PLAY,   &audio_default, &xparams);
 
-	(void) sbdsp_set_in_port(sc, SB_MIC_VOL);
-	(void) sbdsp_set_out_port(sc, SB_MASTER_VOL);
+	sbdsp_set_in_port(sc, SB_MIC_VOL);
+	sbdsp_set_out_port(sc, SB_MASTER_VOL);
 
-	if (ISSBPROCLASS(sc)) {
-		int i;
-		u_int v;
-	    
-		/* set mixer to default levels, by sending a mixer
-                   reset command. */
+	if (sc->sc_mixer_model != SBM_NONE) {
+        	/* Reset the mixer.*/
 		sbdsp_mix_write(sc, SBP_MIX_RESET, SBP_MIX_RESET);
+                /* And set our own default values */
 		for (i = 0; i < SB_NDEVS; i++) {
 			switch(i) {
 			case SB_MIC_VOL:
@@ -400,39 +395,39 @@ sbdsp_query_encoding(addr, fp)
 		fp->precision = 8;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
+        }
+        if (!(ISSB16CLASS(sc) || ISJAZZ16(sc)))
+		return EINVAL;
+
+        switch(fp->index) {
+        case 3:
+		strcpy(fp->name, AudioElinear_le);
+		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
+		fp->precision = 16;
+		fp->flags = 0;
+		break;
+	case 4:
+		strcpy(fp->name, AudioEulinear_le);
+		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		fp->precision = 16;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 5:
+		strcpy(fp->name, AudioElinear_be);
+		fp->encoding = AUDIO_ENCODING_LINEAR_BE;
+		fp->precision = 16;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
+	case 6:
+		strcpy(fp->name, AudioEulinear_be);
+		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
+		fp->precision = 16;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		break;
 	default:
-		if (!(ISSB16CLASS(sc) || ISJAZZ16(sc)))
-			return (EINVAL);
-		switch(fp->index) {
-		case 3:
-			strcpy(fp->name, AudioElinear_le);
-			fp->encoding = AUDIO_ENCODING_LINEAR_LE;
-			fp->precision = 16;
-			fp->flags = 0;
-			break;
-		case 4:
-			strcpy(fp->name, AudioEulinear_le);
-			fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
-			fp->precision = 16;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 5:
-			strcpy(fp->name, AudioElinear_be);
-			fp->encoding = AUDIO_ENCODING_LINEAR_BE;
-			fp->precision = 16;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		case 6:
-			strcpy(fp->name, AudioEulinear_be);
-			fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
-			fp->precision = 16;
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-			break;
-		default:
-			return (EINVAL);
-		}
+		return EINVAL;
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -1867,7 +1862,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 	case SB_BASS:
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNbass);
-		if (ISSB16CLASS(sc)) {
+		if (sc->sc_mixer_model == SBM_CT1745) {
 			dip->type = AUDIO_MIXER_VALUE;
 			dip->mixer_class = SB_EQUALIZATION_CLASS;
 			dip->un.v.num_channels = 2;
@@ -1886,7 +1881,7 @@ sbdsp_mixer_query_devinfo(addr, dip)
 	case SB_TREBLE:
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioNtreble);
-		if (ISSB16CLASS(sc)) {
+		if (sc->sc_mixer_model == SBM_CT1745) {
 			dip->type = AUDIO_MIXER_VALUE;
 			dip->mixer_class = SB_EQUALIZATION_CLASS;
 			dip->un.v.num_channels = 2;

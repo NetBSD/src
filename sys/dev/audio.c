@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.48 1997/05/17 23:26:33 augustss Exp $	*/
+/*	$NetBSD: audio.c,v 1.49 1997/05/20 12:51:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -160,7 +160,7 @@ int	audio_drain __P((struct audio_softc *));
 void	audio_clear __P((struct audio_softc *));
 
 /* The default audio mode: 8 kHz mono ulaw */
-static struct audio_params audio_default = 
+struct audio_params audio_default = 
 	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0 };
 
 #ifdef AUDIO_DEBUG
