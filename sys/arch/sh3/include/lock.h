@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.4 2002/09/16 09:12:50 gmcgarry Exp $	*/
+/*	$NetBSD: lock.h,v 1.5 2003/02/14 03:02:41 itohy Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #ifndef _SH3_LOCK_H_
 #define	_SH3_LOCK_H_
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef	__volatile unsigned char __cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	0x80
 #define	__SIMPLELOCK_UNLOCKED	0
@@ -80,14 +80,10 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	int __rv;
 
 	__asm __volatile(
-		"	mov	#1, r1	\n"
-		"	mov.l	r1, %1	\n"
 		"	tas.b	%0	\n"
-		"	bt	1f	\n"
-		"	mov	#0, r1	\n"
-		"	mov.l	r1, %1	\n"
-		"1:			\n"
-		: "=m" (*alp), "=m" (__rv) :: "r1");
+		"	mov	#0, %1	\n"
+		"	rotcl	%1	\n"
+		: "=m" (*alp), "=r" (__rv));
 
 	return (__rv);
 }
