@@ -1,4 +1,4 @@
-/*	$NetBSD: rune_local.h,v 1.2 2000/12/22 22:51:22 itojun Exp $	*/
+/*	$NetBSD: rune_local.h,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 Citrus Project,
@@ -45,3 +45,5 @@ size_t _mbsrtowcs_rl __P((wchar_t *, const char **, size_t, mbstate_t *,
 	_RuneLocale *));
 size_t _wcsrtombs_rl __P((char *, const wchar_t **, size_t, mbstate_t *,
 	_RuneLocale *));
+size_t _mbrtowc_rl __P((wchar_t *, const char *, size_t, mbstate_t *, _RuneLocale*));
+size_t _wcrtomb_rl __P((char *, wchar_t, mbstate_t *, _RuneLocale *));

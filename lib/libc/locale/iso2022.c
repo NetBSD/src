@@ -1,4 +1,4 @@
-/*	$NetBSD: iso2022.c,v 1.5 2000/12/26 06:12:09 itojun Exp $	*/
+/*	$NetBSD: iso2022.c,v 1.6 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iso2022.c,v 1.5 2000/12/26 06:12:09 itojun Exp $");
+__RCSID("$NetBSD: iso2022.c,v 1.6 2000/12/28 05:22:27 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -66,18 +66,24 @@ int _ISO2022_init __P((_RuneLocale *));
 int _ISO2022_init_stream __P((_RuneLocale *));
 struct seqtable;
 static int seqmatch __P((const char *, size_t, const struct seqtable *));
-rune_t _ISO2022_sgetrune __P((_RuneLocale *, const char *, size_t, char const **, void *));
+static rune_t _ISO2022_sgetrune __P((_RuneLocale *, const char *, size_t,
+	char const **, void *));
 static int recommendation __P((_RuneLocale *, _Iso2022Charset *));
-int _ISO2022_sputrune __P((_RuneLocale *, rune_t, char *, size_t, char **, void *));
+static int _ISO2022_sputrune __P((_RuneLocale *, rune_t, char *, size_t,
+	char **, void *));
+size_t	_ISO2022_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *,
+	size_t, void *));
+size_t	_ISO2022_wcrtomb __P((struct _RuneLocale *, char *, size_t,
+	const rune_t, void *));
 void _ISO2022_initstate __P((_RuneLocale *, void *));
 void _ISO2022_packstate __P((_RuneLocale *, mbstate_t *, void *));
 void _ISO2022_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
 
 typedef struct {
-	int	maxcharset;
 	_Iso2022Charset	*recommend[4];
 	size_t	recommendsize[4];
 	_Iso2022Charset	initg[4];
+	int	maxcharset;
 	int	flags;
 #define	F_8BIT	0x0001
 #define	F_NOOLD	0x0002
@@ -97,13 +103,16 @@ typedef struct {
 } _Iso2022Info;
 
 typedef struct {
+	void *locale;		/* reserved for future thread-safeness */
 	_Iso2022Charset	g[4];
-	size_t	gl;
-	size_t	gr;
-	u_char vers;
-	char singlegl;
-	char singlegr;
-} _Iso2022State;
+	/* need 3 bits to hold -1, 0, ..., 3 */
+	int	gl:3,
+		gr:3,
+		singlegl:3,
+		singlegr:3;
+	char ch[7];	/* longest escape sequence (ESC & V ESC $ ( F) */
+	int chlen;
+} _Iso2022State __attribute__((__packed__));
 
 static _RuneState _ISO2022_RuneState = {
 	sizeof(_Iso2022State),		/* sizestate */
@@ -112,7 +121,9 @@ static _RuneState _ISO2022_RuneState = {
 	_ISO2022_unpackstate		/* unpackstate */
 };
 
-#define iscntl(x)	(((__uint8_t)(x) & ~0x1f) == 0x00)
+#define isc0(x)		(((x) & 0x1f) == ((x) & 0xff))
+#define isc1(x)		(0x80 <= (__uint8_t)(x) && (__uint8_t)(x) <= 0x9f)
+#define	iscntl(x)	(isc0((x)) || isc1((x)) || (x) == 0x7f)
 #define is94(x)		(0x21 <= (__uint8_t)(x) && (__uint8_t)(x) <= 0x7e)
 #define is96(x)		(0x20 <= (__uint8_t)(x) && (__uint8_t)(x) <= 0x7f)
 #define isecma(x)	(0x30 <= (__uint8_t)(x) && (__uint8_t)(x) <= 0x7f)
@@ -178,8 +189,8 @@ F_LS1R,	F_LS2R,	F_LS3R,	F_SS2,	F_SS3,	F_SS2R,	F_SS3R,	0 };
 	if (sizeof(_Iso2022State) > sizeof(mbstate_t))
 		return (EINVAL);
 
-	rl->__rune_sgetrune = _ISO2022_sgetrune;
-	rl->__rune_sputrune = _ISO2022_sputrune;
+	rl->__rune_mbrtowc = _ISO2022_mbrtowc;
+	rl->__rune_wcrtomb = _ISO2022_wcrtomb;
 
 	/*
 	 * parse VARIABLE section.
@@ -329,6 +340,7 @@ int
 _ISO2022_init_stream(rl)
 	_RuneLocale *rl;
 {
+#if 0
 	int i;
 	size_t s;
 	_Iso2022State *pst;
@@ -344,6 +356,7 @@ _ISO2022_init_stream(rl)
 		((void **)_StreamStateTable)[i] = &pst[i];
 		(*___rune_initstate(rl))(rl, &pst[i]);
 	}
+#endif
 
 	return (0);
 }
@@ -444,7 +457,7 @@ terminate:
 	return p - sp->chars;
 }
 
-rune_t
+static rune_t
 _ISO2022_sgetrune(rl, string, n, result, state)
 	_RuneLocale *rl;
 	const char *string;
@@ -595,7 +608,7 @@ eat:
 	}
 
 	/* normal chars.  always eat C0/C1 as is. */
-	if (iscntl(*string & 0x7f))
+	if (iscntl(*string & 0xff))
 		cur = -1;
 	else if (*string & 0x80) {
 		cur = (CES(rl)->singlegr == -1)
@@ -771,7 +784,7 @@ recommendation(rl, cs)
 	return 0;
 }
 
-int
+static int
 _ISO2022_sputrune(rl, c, string, n, result, state)
 	_RuneLocale *rl;
 	rune_t c;
@@ -787,7 +800,12 @@ _ISO2022_sputrune(rl, c, string, n, result, state)
 	u_char mask;
 	int bit8;
 
-	if (!(c & ~0xff)) {
+	if (iscntl(c & 0xff)) {
+		/* go back to ASCII on control chars */
+		cs.type = CS94;
+		cs.final = 'B';
+		cs.interm = '\0';
+	} else if (!(c & ~0xff)) {
 		if (c & 0x80) {
 			/* special treatment for ISO-8859-1 */
 			cs.type = CS96;
@@ -930,6 +948,124 @@ sideok:
 		memcpy(string, tmp, len);
 	}
 	return len;
+}
+
+/* s is non-null */
+size_t
+_ISO2022_mbrtowc(rl, pwcs, s, n, state)
+	_RuneLocale *rl;
+	rune_t *pwcs;
+	const char *s;
+	size_t n;
+	void *state;
+{
+	_Iso2022State *ps;
+	rune_t rune;
+	const char *p, *result;
+	int c;
+
+	ps = state;
+
+	/*
+	 * if we have something in buffer, use that.
+	 * otherwise, skip here
+	 */
+	if (ps->chlen < 0 || ps->chlen > sizeof(ps->ch)) {
+		/* illgeal state */
+		goto encoding_error;
+	}
+	if (ps->chlen == 0)
+		goto nobuf;
+	p = ps->ch;
+	while (ps->chlen && ps->chlen < sizeof(ps->ch) && n >= 0) {
+		if (n > 0) {
+			ps->ch[ps->chlen++] = *s++;
+			n--;
+		}
+
+		rune = _ISO2022_sgetrune(rl, p, ps->chlen - (p - ps->ch),
+		    &result, state);
+		if (rune != _INVALID_RUNE) {
+			c = result - p;
+			if (ps->chlen > c)
+				memmove(ps->ch, result, ps->chlen - c);
+			if (ps->chlen < c)
+				ps->chlen = 0;
+			else
+				ps->chlen -= c;
+			goto output;
+		}
+
+		p = result;
+
+		if (n == 0)
+			return (size_t)-2;
+	}
+
+	/* escape sequence too long? */
+	goto encoding_error;
+
+nobuf:
+	rune = _ISO2022_sgetrune(rl, s, n, &result, state);
+	if (rune != _INVALID_RUNE) {
+		c = result - s;
+		ps->chlen = 0;
+		goto output;
+	}
+	if (result > s && n > result - s) {
+		n -= (result - s);
+		s = result;
+		goto nobuf;
+	}
+	if (result == s && n < sizeof(ps->ch)) {
+		memcpy(ps->ch, s, n);
+		ps->chlen = n;
+		return (size_t)-2;
+	}
+
+	/* escape sequence too long? */
+
+encoding_error:
+	ps->chlen = 0;
+	return (size_t)-1;
+
+output:
+	if (pwcs)
+		*pwcs = rune;
+	if (!rune)
+		return 0;
+	else
+		return c;
+
+}
+
+/* s is non-null */
+size_t
+_ISO2022_wcrtomb(rl, s, n, wc, state)
+        _RuneLocale *rl;
+        char *s;
+	size_t n;
+        const rune_t wc;
+        void *state;
+{
+	char buf[MB_LEN_MAX];
+	char *result;
+	int len;
+
+	/* XXX state will be modified after this operation... */
+	len = _ISO2022_sputrune(rl, wc, buf, sizeof(buf), &result, state);
+	if (sizeof(buf) < len || n < len) {
+		/* XXX should recover state? */
+		goto notenough;
+	}
+
+	memcpy(s, buf, len);
+	return len;
+
+notenough:
+	/* bound check failure */
+	errno = EILSEQ;	/*XXX*/
+	return (size_t)-1;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: euc.c,v 1.3 2000/12/23 11:53:46 itojun Exp $	*/
+/*	$NetBSD: euc.c,v 1.4 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)euc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: euc.c,v 1.3 2000/12/23 11:53:46 itojun Exp $");
+__RCSID("$NetBSD: euc.c,v 1.4 2000/12/28 05:22:27 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,14 +60,24 @@ __RCSID("$NetBSD: euc.c,v 1.3 2000/12/23 11:53:46 itojun Exp $");
 
 int _EUC_init __P((_RuneLocale *));
 static inline int _euc_set __P((u_int));
-rune_t	_EUC_sgetrune __P((_RuneLocale *, const char *, size_t, char const **, void *));
-int	_EUC_sputrune __P((_RuneLocale *, rune_t, char *, size_t, char **, void *));
+size_t _EUC_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
+	void *));
+size_t _EUC_wcrtomb __P((struct _RuneLocale *, char *, size_t, const rune_t,
+	void *));
+void _EUC_initstate __P((_RuneLocale *, void *));
+void _EUC_packstate __P((_RuneLocale *, mbstate_t *, void *));
+void _EUC_unpackstate __P((_RuneLocale *, void *, const mbstate_t *));
+
+typedef struct {
+	char ch[3];
+	int chlen;
+} _EUCState;
 
 static _RuneState _EUC_RuneState = {
-	0,		/* sizestate */
-	NULL,		/* initstate */
-	NULL,		/* packstate */
-	NULL		/* unpackstate */
+	sizeof(_EUCState),		/* sizestate */
+	_EUC_initstate,			/* initstate */
+	_EUC_packstate,			/* packstate */
+	_EUC_unpackstate		/* unpackstate */
 };
 
 typedef struct {
@@ -84,8 +94,12 @@ _EUC_init(rl)
 	int x;
 	char *v, *e;
 
-	rl->__rune_sgetrune = _EUC_sgetrune;
-	rl->__rune_sputrune = _EUC_sputrune;
+	/* sanity check to avoid overruns */
+	if (sizeof(_EUCState) > sizeof(mbstate_t))
+		return (EINVAL);
+
+	rl->__rune_mbrtowc = _EUC_mbrtowc;
+	rl->__rune_wcrtomb = _EUC_wcrtomb;
 
 	if (!rl->__rune_variable)
 		return (EFTYPE);
@@ -144,97 +158,163 @@ _euc_set(c)
 
 	return ((c & 0x80) ? c == _SS3 ? 3 : c == _SS2 ? 2 : 1 : 0);
 }
-rune_t
-_EUC_sgetrune(rl, string, n, result, state)
+
+/* s is non-null */
+size_t
+_EUC_mbrtowc(rl, pwcs, s, n, state)
 	_RuneLocale *rl;
-	const char *string;
+	rune_t *pwcs;
+	const char *s;
 	size_t n;
-	char const **result;
 	void *state;
 {
-	rune_t rune = 0;
-	int len, set;
+	_EUCState *ps;
+	rune_t rune;
+	int c, set, len;
 
-	if (n < 1 || (len = CEI(rl)->count[set = _euc_set(*string)]) > n) {
-		if (result)
-			*result = string;
-		return (___INVALID_RUNE(rl));
+	ps = state;
+
+	/* make sure we have the first byte in the buffer */
+	switch (ps->chlen) {
+	case 0:
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[0] = *s++;
+		ps->chlen = 1;
+		n--;
+		break;
+	case 1:
+	case 2:
+		break;
+	default:
+		/* illgeal state */
+		goto encoding_error;
 	}
+
+	c = CEI(rl)->count[set = _euc_set(ps->ch[0] & 0xff)];
+	if (c == 0)
+		goto encoding_error;
+	while (ps->chlen < c) {
+		if (n < 1)
+			return (size_t)-2;
+		ps->ch[ps->chlen] = *s++;
+		ps->chlen++;
+		n--;
+	}
+
 	switch (set) {
 	case 3:
 	case 2:
-		--len;
-		++string;
-		/* FALLTHROUGH */
+		/* skip SS2/SS3 */
+		len = c - 1;
+		s = &ps->ch[1];
+		break;
 	case 1:
 	case 0:
-		while (len-- > 0)
-			rune = (rune << 8) | ((u_int)(*string++) & 0xff);
+		len = c;
+		s = &ps->ch[0];
 		break;
 	}
-	if (result)
-		*result = string;
-	return ((rune & ~CEI(rl)->mask) | CEI(rl)->bits[set]);
+	rune = 0;
+	while (len-- > 0)
+		rune = (rune << 8) | ((u_int)(*s++) & 0xff);
+	rune = (rune & ~CEI(rl)->mask) | CEI(rl)->bits[set];
+
+	ps->chlen = 0;
+	if (pwcs)
+		*pwcs = rune;
+	if (!rune)
+		return 0;
+	else
+		return c;
+
+encoding_error:
+	ps->chlen = 0;
+	return (size_t)-1;
 }
 
-int
-_EUC_sputrune(rl, c, string, n, result, state)
-	_RuneLocale *rl;
-	rune_t c;
-	char *string, **result;
+/* s is non-null */
+size_t
+_EUC_wcrtomb(rl, s, n, wc, state)
+        _RuneLocale *rl;
+        char *s;
 	size_t n;
-	void *state;
+        const rune_t wc;
+        void *state;
 {
-	rune_t m = c & CEI(rl)->mask;
-	rune_t nm = c & ~m;
-	int i, len;
+	rune_t m = wc & CEI(rl)->mask;
+	rune_t nm = wc & ~m;
+	int set, i, len;
 
-	if (m == CEI(rl)->bits[1]) {
-CodeSet1:
-		/* Codeset 1: The first byte must have 0x80 in it. */
-		i = len = CEI(rl)->count[1];
-		if (n >= len) {
-			if (result)
-				*result = string + len;
-			while (i-- > 0)
-				*string++ = (nm >> (i << 3)) | 0x80;
-		} else
-			if (result)
-				*result = (char *) 0;
-	} else {
-		if (m == CEI(rl)->bits[0]) {
-			i = len = CEI(rl)->count[0];
-			if (n < len) {
-				if (result)
-					*result = NULL;
-				return (len);
-			}
-		} else
-			if (m == CEI(rl)->bits[2]) {
-				i = len = CEI(rl)->count[2];
-				if (n < len) {
-					if (result)
-						*result = NULL;
-					return (len);
-				}
-				*string++ = _SS2;
-				--i;
-			} else
-				if (m == CEI(rl)->bits[3]) {
-					i = len = CEI(rl)->count[3];
-					if (n < len) {
-						if (result)
-							*result = NULL;
-						return (len);
-					}
-					*string++ = _SS3;
-					--i;
-				} else
-					goto CodeSet1;	/* Bletch */
-		while (i-- > 0)
-			*string++ = (nm >> (i << 3)) & 0xff;
-		if (result)
-			*result = string;
+	for (set = 0;
+	     set < sizeof(CEI(rl)->count)/sizeof(CEI(rl)->count[0]);
+	     set++) {
+		if (m == CEI(rl)->bits[set])
+			break;
 	}
-	return (len);
+	/* fallback case - not sure if it is necessary */
+	if (set == sizeof(CEI(rl)->count)/sizeof(CEI(rl)->count[0]))
+		set = 1;
+
+	i = CEI(rl)->count[set];
+	if (n < i)
+		goto notenough;
+	m = (set % 2) ? 0x80 : 0x00;
+	switch (set) {
+	case 2:
+		*s++ = _SS2;
+		i--;
+		break;
+	case 3:
+		*s++ = _SS3;
+		i--;
+		break;
+	}
+
+	while (i-- > 0)
+		*s++ = ((nm >> (i << 3)) & 0xff) | m;
+
+	return CEI(rl)->count[set];
+
+	return len;
+
+notenough:
+	/* bound check failure */
+	errno = EILSEQ;	/*XXX*/
+	return (size_t)-1;
+}
+
+void
+_EUC_initstate(rl, s)
+	_RuneLocale *rl;
+	void *s;
+{
+	_EUCState *state;
+
+	if (!s)
+		return;
+	state = s;
+	memset(state, 0, sizeof(_EUCState));
+}
+
+void
+_EUC_packstate(rl, dst, src)
+	_RuneLocale *rl;
+	mbstate_t *dst;
+	void* src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_EUCState));
+	return;
+}
+
+void
+_EUC_unpackstate(rl, dst, src)
+	_RuneLocale *rl;
+	void* dst;
+	const mbstate_t *src;
+{
+
+	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_EUCState));
+	return;
 }
