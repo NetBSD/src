@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.3 2001/11/21 09:10:38 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.3 2001/11/21 09:10:38 wdk Exp $");
 #endif
 
 #include <inttypes.h>
@@ -61,8 +61,8 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	    ((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
 	/* LINTED uintptr_t is safe */
 	sp -= (argc >= 4 ? argc : 4);	/* Make room for >=4 arguments. */
-	sp  = (uintptr_t)
-	      ((u_int)sp & ~0x7);	/* Align on double-word boundary. */
+	sp  = (uintptr_t *)
+	      ((uintptr_t)sp & ~0x7);	/* Align on double-word boundary. */
 
 	gr[_REG_SP]  = (__greg_t)sp;
 	gr[_REG_RA]  = (__greg_t)_resumecontext;
@@ -72,9 +72,11 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	va_start(ap, argc);
 	/* Up to the first four arguments are passed in $a0-3. */
 	for (i = 0; i < argc && i < 4; i++)
-		gr[_REG_A0 + i] = va_varg(ap, uintptr_t);
+		/* LINTED uintptr_t is safe */
+		gr[_REG_A0 + i] = va_arg(ap, uintptr_t);
 	/* Pass remaining arguments on the stack above the $a0-3 gap. */
 	for (sp += 4; i < argc; i++)
+		/* LINTED uintptr_t is safe */
 		*sp++ = va_arg(ap, uintptr_t);
 	va_end(ap);
 }
