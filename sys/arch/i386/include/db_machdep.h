@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.15.2.2 2000/08/18 13:28:27 sommerfeld Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15.2.3 2000/08/21 00:38:21 sommerfeld Exp $	*/
 
 /* 
  * Mach Operating System
@@ -133,5 +133,7 @@ int kdb_trap __P((int, int, db_regs_t *));
 #define	DB_ELFSIZE	32
 
 extern void db_machine_init __P((void));
+
+extern void cpu_debug_dump __P((void));
 
 #endif	/* _I386_DB_MACHDEP_H_ */
