@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.13 2001/02/21 00:07:29 cgd Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.14 2001/03/21 23:27:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -42,7 +42,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.13 2001/02/21 00:07:29 cgd Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.14 2001/03/21 23:27:33 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -131,7 +131,7 @@ main(argc, argv)
 
 	if (fstat(kfd, &ksb) == -1)
 		err(1, "fstat %s", kfile);
-	if (ksb.st_size > SIZE_T_MAX)
+	if (ksb.st_size != (size_t)ksb.st_size)
 		errx(1, "%s too big to map", kfile);
 
 	if ((mappedkfile = mmap(NULL, ksb.st_size, PROT_READ | PROT_WRITE,
@@ -148,7 +148,7 @@ main(argc, argv)
 		err(1, "open %s", fsfile);
 	if (fstat(fsfd, &fssb) == -1)
 		err(1, "fstat %s", fsfile);
-	if (fssb.st_size > SIZE_T_MAX)
+	if (fssb.st_size != (size_t)fssb.st_size)
 		errx(1, "fs image is too big");
 	if (fssb.st_size > md_root_size)
 		errx(1, "fs image (%lld bytes) too big for buffer (%lu bytes)",
