@@ -1,6 +1,7 @@
-# Makefile
+# Makefile.inc
 #
-# Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.
+# Copyright (c) 1996, 1997 The Internet Software Consortium.
+# All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,8 +30,12 @@
 # OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 
-SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c
-PROG   = dhcpd
-MAN    = dhcpd.8 dhcpd.conf.5
+.if exists(${.CURDIR}/../common/obj)
+COBJDIR= ${.CURDIR}/../common/obj
+.else
+COBJDIR= ${.CURDIR}/../common    
+.endif
 
-.include <bsd.prog.mk>
+CFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
+LDADD=  ${COBJDIR}/libdhcp.a          
+DPADD=  ${COBJDIR}/libdhcp.a          

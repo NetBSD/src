@@ -1,4 +1,4 @@
-# Makefile.dist
+# Makefile
 #
 # Copyright (c) 1996, 1997 The Internet Software Consortium.
 # All rights reserved.
@@ -33,9 +33,5 @@
 SRCS   = dhcrelay.c
 PROG   = dhcrelay
 MAN    = dhcrelay.8
-
-CFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
-LDADD=  ${.CURDIR}/../common/libdhcp.a
-DPADD=  ${.CURDIR}/../common/libdhcp.a
 
 .include <bsd.prog.mk>

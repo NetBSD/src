@@ -1,4 +1,4 @@
-# Makefile.dist
+# Makefile
 #
 # Copyright (c) 1996, 1997 The Internet Software Consortium.
 # All rights reserved.
@@ -34,10 +34,6 @@ SUBDIR=	scripts
 SRCS   = dhclient.c clparse.c
 PROG   = dhclient
 MAN    = dhclient.8 dhclient.conf.5
-
-CFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
-LDADD=  ${.CURDIR}/../common/libdhcp.a
-DPADD=  ${.CURDIR}/../common/libdhcp.a
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
