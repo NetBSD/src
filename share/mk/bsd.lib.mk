@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.252 2004/05/23 01:45:21 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.253 2004/06/09 22:45:24 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -391,7 +391,9 @@ LOBJS=
 SOBJS=
 .endif	# !defined(LIB)							# }
 
-.NOPATH: ${ALLOBJS} ${_LIBS} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+_YLSRCS=${YHEADER:D${SRCS:M*.y:.y=.h}} ${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
+
+.NOPATH: ${ALLOBJS} ${_LIBS} ${_YLSRCS}
 
 realall: ${SRCS} ${ALLOBJS:O} ${_LIBS}
 
@@ -414,9 +416,8 @@ __archivesymlinkpic: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_SYMLINK} ${SYSPKGTAG} ${.ALLSRC} ${.TARGET}
 
-DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
+DPSRCS+=	${_YLSRCS}
+CLEANFILES+=	${_YLSRCS}
 
 ${OBJS} ${POBJS} ${SOBJS} ${LOBJS}: ${DPSRCS}
 
