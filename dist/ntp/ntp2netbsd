@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ntp2netbsd,v 1.1 2000/03/29 12:25:55 simonb Exp $
+#	$NetBSD: ntp2netbsd,v 1.2 2000/04/22 15:07:06 simonb Exp $
 #
 # Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,7 +71,7 @@ echo removing unneeded directories and files
 
 ### Remove unneeded directories
 cd $d
-rm -r ports
+rm -r ports html/pic
 
 ### Remove .cvsignore
 find $d -name '.cvsignore*' -exec rm {} \;
