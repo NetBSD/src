@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.26 2000/01/21 23:20:51 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.27 2000/01/28 09:27:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -139,7 +139,8 @@ disksort_cylinder(bufq, bp)
 	 * If we lie after the first (currently active) request, then we
 	 * must locate the second request list and add ourselves to it.
 	 */
-	if (bp->b_cylinder < bq->b_cylinder) {
+	if (bp->b_cylinder < bq->b_cylinder ||
+	    (bp->b_cylinder == bq->b_cylinder && bp->b_blkno < bq->b_blkno)) {
 		while ((nbq = BUFQ_NEXT(bq)) != NULL) {
 			/*
 			 * Check for an ``inversion'' in the normally ascending
