@@ -1,4 +1,4 @@
-/*	$NetBSD: vocab.c,v 1.9 1998/09/14 09:29:09 hubertf Exp $	*/
+/*	$NetBSD: vocab.c,v 1.10 2000/01/09 17:17:19 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)vocab.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: vocab.c,v 1.9 1998/09/14 09:29:09 hubertf Exp $");
+__RCSID("$NetBSD: vocab.c,v 1.10 2000/01/09 17:17:19 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -165,7 +165,7 @@ vocab(word, type, value)	/* look up or store a word      */
 			h->val = value;
 			h->atab = malloc(length(word));
 			if (h->atab == NULL)
-				errx(1, "Out of memory!");
+				err(1, NULL);
 			for (s = word, t = h->atab; *s;)
 				*t++ = *s++ ^ '=';
 			*t = 0 ^ '=';
