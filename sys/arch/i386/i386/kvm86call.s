@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86call.s,v 1.1 2002/07/07 12:56:34 drochner Exp $ */
+/* $NetBSD: kvm86call.s,v 1.2 2002/10/02 15:23:31 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 Jonathan Lemon
@@ -35,7 +35,7 @@
 
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: kvm86call.s,v 1.1 2002/07/07 12:56:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86call.s,v 1.2 2002/10/02 15:23:31 drochner Exp $");
 
 	.data
 	.align 4
@@ -82,7 +82,7 @@ ENTRY(kvm86_call)
 	rep
 	movsl				/* copy frame to new stack */
 
-	movl	_C_LABEL(curproc),%ecx
+	movl	_C_LABEL(cpu_info_primary)+CPU_INFO_CURPROC,%ecx
 	movl	P_ADDR(%ecx),%eax
 	pushl	%eax			/* save curpcb */
 	movl	vm86pcb,%eax
@@ -161,7 +161,7 @@ ENTRY(kvm86_ret)
 	movl	$0,kvm86_incall		/* reset trapflag */
 
 	movl	_C_LABEL(gdt),%eax
-	movl	_C_LABEL(curproc),%ecx
+	movl	_C_LABEL(cpu_info_primary)+CPU_INFO_CURPROC,%ecx
 	movl	P_MD_TSS_SEL(%ecx),%edi
 	movl	SCRTSS0, %edx
 	movl	%edx, 0(%eax,%edi,1)	/* restore first word */
