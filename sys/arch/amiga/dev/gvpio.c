@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.2 1998/01/12 10:39:44 thorpej Exp $ */
+/*	$NetBSD: gvpio.c,v 1.3 1999/04/01 20:31:02 is Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -146,10 +146,10 @@ gvpioattach(parent, self, auxp)
 	if (giosc->sc_comhdls.lh_first) {
 		/* XXX this should be really in the interupt stuff */
 		needpsl = PSL_S|PSL_IPL6;
-		if (amiga_ttyspl < needpsl) {
-			printf("%s: raising amiga_ttyspl from 0x%x to 0x%x\n",
-			    giosc->sc_dev.dv_xname, amiga_ttyspl, needpsl);
-			amiga_ttyspl = needpsl;
+		if (amiga_serialspl < needpsl) {
+			printf("%s: raising amiga_serialspl from 0x%x to 0x%x\n",
+			    giosc->sc_dev.dv_xname, amiga_serialspl, needpsl);
+			amiga_serialspl = needpsl;
 		}
 		giosc->sc_comisr.isr_intr = gvp_com_intr;
 		giosc->sc_comisr.isr_arg = giosc;
