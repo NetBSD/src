@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.31 1994/01/13 18:43:50 jtc Exp $
+#	$Id: rc,v 1.32 1994/01/30 17:15:52 mycroft Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -144,10 +144,14 @@ then
 	'password file may be incorrect -- /etc/ptmp exists'
 fi
 
-echo preserving editor files
-(cd /var/tmp && /usr/libexec/elvispreserve "-the system rebooted" elvis* &&
-     rm -f elvis[0-9a-f][0-9a-f][0-9a-f][0-9a-f]* \
-	 elvis_[0-9a-f][0-9a-f][0-9a-f][0-9a-f]*)
+virecovery=/var/tmp/vi.recover/recover.*
+if [ "$virecovery" != "/var/tmp/vi.recover/recover.*" ]; then
+	echo preserving editor files
+	for i in $virecovery; do
+		sendmail -t < $i
+		rm -f $i
+	done
+fi
 
 echo clearing /tmp
 
