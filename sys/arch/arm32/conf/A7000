@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.17 1998/01/15 02:26:26 cgd Exp $
+#	$NetBSD: A7000,v 1.18 1998/02/21 02:46:11 mark Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -140,7 +140,7 @@ clock*	at iomd?
 kbd*	at iomd?
 
 # quadrature mouse via IOMD
-qms*	at iomd?
+#qms*	at iomd?
 
 # PS2 mouse via IOMD
 pms*	at iomd?
