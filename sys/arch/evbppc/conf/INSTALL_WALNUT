@@ -1,15 +1,15 @@
-# 	$NetBSD: INSTALL_WALNUT,v 1.1 2002/12/09 12:15:51 scw Exp $
+# 	$NetBSD: INSTALL_WALNUT,v 1.2 2003/02/07 04:47:04 thorpej Exp $
 
 include "arch/evbppc/conf/WALNUT"
 
-#ident 		"INSTALL_WALNUT-$Revision: 1.1 $"
+#ident 		"INSTALL_WALNUT-$Revision: 1.2 $"
 
 # DEBUG options turned on:
 
 #options 	LOCKDEBUG
 options 	DIAGNOSTIC
 #makeoptions	DEBUG="-g"
-options 	DEBUG
+#options 	DEBUG
 #options 	SYSCALL_DEBUG
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
