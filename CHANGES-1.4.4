@@ -1,0 +1,59 @@
+#	$NetBSD: CHANGES-1.4.4,v 1.1.2.1 2000/12/14 00:23:05 he Exp $
+
+A complete list of changes from NetBSD 1.4.3 to NetBSD 1.4.4:
+
+File						Revision(s)
+----						--------
+
+sys/conf/osrelease.sh				patch
+sys/sys/param.h					patch
+share/tmac/doc-common				patch
+
+  Bump visible version number to 1.4.3A, to indicate that we're
+  no longer exactly at 1.4.3.
+
+dist/bind/README				patch
+dist/bind/bind2netbsd				patch
+dist/bind/bin/named/ns_config.c			patch
+dist/bind/bin/named/ns_ctl.c			patch
+dist/bind/bin/named/ns_defs.h			patch
+dist/bind/bin/named/ns_forw.c			patch
+dist/bind/bin/named/ns_func.h			patch
+dist/bind/bin/named/ns_main.c			patch
+dist/bind/bin/named/ns_notify.c			patch
+dist/bind/bin/named/ns_req.c			patch
+dist/bind/bin/named/ns_resp.c			patch
+dist/bind/include/arpa/nameser.h		patch
+dist/bind/lib/irs/irs_data.c			patch
+dist/bind/lib/nameser/ns_name.c			patch
+dist/bind/lib/resolv/res_debug.c		patch
+dist/bind/man/dnskeygen.1			patch
+dist/bind/man/named.8				patch
+usr.sbin/bind/Makefile				patch
+usr.sbin/bind/named/Makefile			patch
+usr.sbin/bind/nslookup/Makefile			patch
+dist/bind/LICENSE_RSA				patch (new)
+dist/bind/bin/named/ns_parser.h			delete
+
+  Upgrade to BIND version 8.2.2-P7.
+
+sys/netinet/ip_fil.c				patch
+
+  Fix problem causing only first ipnat rule to be loaded.
+  Fixes PR#11569.
+
+distrib/sets/lists/etc/mi			1.71
+
+  Add /etc/skel files.
+
+sys/dev/scsipi/atapiconf.c			1.31
+
+  Add a quirk entry for Hitachi CDR-7730.  Fixes PR#11654.
+
+sys/arch/mac68k/nubus/nubus.h			1.52
+
+  Add the DrHw Apple 24AC "Boogie" video card.
+
+sys/arch/mac68k/nubus/grf_nubus.c		1.60
+
+  Clear interrupts on the Apple "Boogie" card.
