@@ -1404,6 +1404,24 @@ The \fIddns-updates\fR parameter controls whether or not the server will
 attempt to do a ddns update when a lease is confirmed.   Set this to \fIoff\fR
 if the server should not attempt to do updates within a certain scope.
 The \fIddns-updates\fR parameter is on by default.
+.SH SETTING PARAMETER VALUES USING EXPRESSIONS
+Sometimes it's helpful to be able to set the value of a DHCP server
+parameter based on some value that the client has sent.   To do this,
+you can use expression evaluation.   The 
+.B dhcp-eval(5)
+manual page describes how to write expressions.   To assign the result
+of an evaluation to an option, define the option as follows:
+.nf
+.sp 1
+  \fImy-parameter \fB= \fIexpression \fB;\fR
+.fi
+.PP
+For example:
+.nf
+.sp 1
+  ddns-hostname = binary-to-ascii (16, 8, "-",
+                                   substring (hardware, 1, 6));
+.fi
 .SH REFERENCE: OPTION STATEMENTS
 .PP
 DHCP option statements are documented in the
