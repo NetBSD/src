@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.38 2001/09/21 07:52:25 chs Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.39 2001/10/03 14:13:08 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1306,7 +1306,7 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	struct buf *mbp, *bp;
 	struct vnode *devvp;
 	boolean_t async = (flags & PGO_SYNCIO) == 0;
-	UVMHIST_FUNC("genfs_do_putpages"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC("genfs_gop_write"); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %p pgs %p npages %d flags 0x%x",
 	    vp, pgs, npages, flags);
