@@ -1,4 +1,4 @@
-.\"	$NetBSD: rm.1,v 1.21 2004/03/24 06:55:58 fair Exp $
+.\"	$NetBSD: rm.1,v 1.22 2004/03/24 11:37:07 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994, 2003
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)rm.1	8.5 (Berkeley) 12/5/94
 .\"
-.Dd January 11, 2004
+.Dd March 24, 2004
 .Dt RM 1
 .Os
 .Sh NAME
@@ -116,22 +116,6 @@ The
 utility removes symbolic links, not the files referenced by the links.
 .Pp
 It is an error to attempt to remove the files ``.'' and ``..''.
-.Sh EXAMPLES
-.Nm
-uses
-.Xr getopt 3
-standard argument processing.
-Removing filenames that begin with a dash
-.Pq e.g. Ar -file
-in the current directory which might otherwise be taken as option flags to
-.Nm
-can be accomplished as follows:
-.Pp
-.Ic "rm -- -file"
-.Pp
-or
-.Pp
-.Ic "rm ./-file"
 .Sh EXIT STATUS
 The
 .Nm
@@ -143,6 +127,22 @@ removed.
 If an error occurs,
 .Nm
 exits with a value \*[Gt]0.
+.Sh EXAMPLES
+.Nm
+uses
+.Xr getopt 3
+standard argument processing.
+Removing filenames that begin with a dash
+.Pq e.g., Ar -file
+in the current directory which might otherwise be taken as option flags to
+.Nm
+can be accomplished as follows:
+.Pp
+.Ic "rm -- -file"
+.Pp
+or
+.Pp
+.Ic "rm ./-file"
 .Sh SEE ALSO
 .Xr rmdir 1 ,
 .Xr undelete 2 ,
