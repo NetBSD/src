@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 1996/08/30 20:17:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.10 1997/02/22 01:41:34 thorpej Exp $
 
 PROG =	rpc.rstatd
-SRCS =	rstatd.c rstat_proc.c
+.PATH: ${.CURDIR}/../../usr.bin/vmstat
+
+CFLAGS+=-I${.CURDIR}/../../usr.bin/vmstat
+SRCS =	dkstats.c rstatd.c rstat_proc.c
 MAN =	rpc.rstatd.8
 MLINKS=	rpc.rstatd.8 rstatd.8
 
