@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.29 2000/03/16 18:08:23 jdolecek Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.30 2000/03/30 02:16:22 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -65,7 +65,6 @@ int	fdesc_mount __P((struct mount *, const char *, void *,
 			 struct nameidata *, struct proc *));
 int	fdesc_start __P((struct mount *, int, struct proc *));
 int	fdesc_unmount __P((struct mount *, int, struct proc *));
-int	fdesc_root __P((struct mount *, struct vnode **));
 int	fdesc_quotactl __P((struct mount *, int, uid_t, caddr_t,
 			    struct proc *));
 int	fdesc_statfs __P((struct mount *, struct statfs *, struct proc *));
