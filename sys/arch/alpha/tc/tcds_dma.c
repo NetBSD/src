@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.4 1995/08/03 00:52:44 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.5 1995/09/05 15:07:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -255,7 +255,7 @@ dmaintr(sc)
 	{ u_int32_t tcl, tcm, tch;
 	tcl = RR(esp->esp_tcl);					wbflush();
 	tcm = RR(esp->esp_tcm);					wbflush();
-	tcl = sc->sc_esp->sc_rev == ESP200 ? RR(esp->esp_tch) : 0;
+	tch = sc->sc_esp->sc_rev == ESP200 ? RR(esp->esp_tch) : 0;
 								wbflush();
 	printf("dmaintr: tcl=%d, tcm=%d, tch=%d, resid=%d, trans=%d\n",
 	    tcl, tcm, tch, resid, trans);
