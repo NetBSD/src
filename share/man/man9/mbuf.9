@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.1 1997/10/04 14:04:18 kleink Exp $
+.\"	$NetBSD: mbuf.9,v 1.1.2.1 1997/11/12 01:04:01 mrg Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,39 @@
 .Dt MBUF 9
 .Os NetBSD
 .Sh NAME
-.Nm MBUF
+.Nm MBUF ,
+.Nm m_get ,
+.Nm m_getclr ,
+.Nm m_gethdr ,
+.Nm m_devget ,
+.Nm m_copym ,
+.Nm m_copypacket ,
+.Nm m_copydata ,
+.Nm m_copyback ,
+.Nm m_cat ,
+.Nm m_prepend ,
+.Nm m_pullup ,
+.Nm m_split ,
+.Nm m_adj ,
+.Nm m_free ,
+.Nm m_freem ,
+.Nm mtod ,
+.Nm mtocl ,
+.Nm cltom ,
+.Nm MGET ,
+.Nm MGETHDR ,
+.Nm MEXTMALLOC ,
+.Nm MEXTADD ,
+.Nm MCLGET ,
+.Nm M_COPY_PKTHDR ,
+.Nm M_ALIGN ,
+.Nm MH_ALIGN ,
+.Nm M_LEADINGSPACE ,
+.Nm M_TRAILINGSPACE ,
+.Nm M_PREPEND ,
+.Nm MCHTYPE ,
+.Nm MEXTREMOVE ,
+.Nm MFREE ,
 .Nd functions and macros for managing memory used by networking code
 .Sh SYNOPSIS
 .Fd #include <sys/mbuf.h>
