@@ -25,7 +25,10 @@
 #
 # HISTORY
 # $Log: Makefile,v $
-# Revision 1.3  1993/06/08 03:36:39  deraadt
+# Revision 1.4  1993/06/18 08:03:14  cgd
+# install floppy boot block, too.
+#
+# Revision 1.3  1993/06/08  03:36:39  deraadt
 # makes more sense if src is mounted readonly
 #
 # Revision 1.2  1993/04/28  08:45:51  deraadt
@@ -118,21 +121,16 @@ fd:	/usr/mdec/bootfd /usr/mdec/fdboot
 #	disklabel -r -w wd0 julian julian5 /usr/mdec/wdboot /usr/mdec/bootwd
 #
 
-sd0:	/usr/mdec/bootsd /usr/mdec/sdboot
-	disklabel -r -w sd0 XT-8760 scsitest /usr/mdec/sdboot /usr/mdec/bootsd
-
+#sd0:	/usr/mdec/bootsd /usr/mdec/sdboot
+#	disklabel -r -w sd0 XT-8760 scsitest /usr/mdec/sdboot /usr/mdec/bootsd
+#
 
 #fd0:	/usr/mdec/bootfd /usr/mdec/fdboot
 #	disklabel -r -w fd0 floppy5 bootflpy /usr/mdec/fdboot /usr/mdec/bootfd
 #
 
-install: wd sd 
-# you should use the old floppy booter, it's MUCH faster
-# This one works but it's too slow.
-# besides how many kernels can you fit on a floppy?
-# only use this one if you want to boot a kernel
-# from a hard disk 2 when you've trashed hard disk 1
-#install: wd sd fd
+# Beware: the floppy boot block is *slow*...
+install: wd sd fd
 
 clean:
 	/bin/rm -f *.o *.d boot bootbios biosboot boot.sym
