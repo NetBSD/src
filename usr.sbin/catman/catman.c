@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.21 2003/05/09 00:47:46 itojun Exp $       */
+/*      $NetBSD: catman.c,v 1.22 2003/07/13 12:27:14 itojun Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ static void	setdefentries __P((char *, char *, const char *));
 static void	uniquepath __P((void));
 static void	catman __P((void));
 static void	scanmandir __P((const char *, const char *));
-static int	splitentry __P((char *, char *, char *));
+static int	splitentry __P((char *, char *, size_t, char *, size_t));
 static void	setcatsuffix __P((char *, const char *, const char *));
 static void	makecat __P((const char *, const char *, const char *,
 							const char *));
@@ -283,7 +283,8 @@ uniquepath(void)
 			if (i != j) {
 				lstat(manpaths.gl_pathv[j], &st2);
 				if (st1.st_ino == st2.st_ino) {
-					strcpy(path, manpaths.gl_pathv[i]);
+					strlcpy(path, manpaths.gl_pathv[i],
+					    sizeof(path));
 					for (p = path; *(p+1) != '\0';) {
 						p = dirname(p);
 						lstat(p, &st3);
@@ -324,7 +325,7 @@ catman(void)
 
 	TAILQ_FOREACH(e_path, &defp->list, q) {
 		mandir = e_path->s;
-		strcpy(catdir, mandir);
+		strlcpy(catdir, mandir, sizeof(catdir));
 		if (!(cp = strstr(catdir, "man/man")))
 			continue;
 		cp += 4; *cp++ = 'c'; *cp++ = 'a'; *cp = 't';
@@ -385,7 +386,8 @@ scanmandir(catdir, mandir)
 		e_build = NULL;
 		buildp = getlist("_build", 1);
 		TAILQ_FOREACH(e_build, &buildp->list, q) {
-			splitentry(e_build->s, buildsuff, buildcmd);
+			splitentry(e_build->s, buildsuff, sizeof(buildsuff),
+			    buildcmd, sizeof(buildcmd));
 			snprintf(match, sizeof(match), "*%s",
 						buildsuff);
 			if (!fnmatch(match, manpage, 0))
@@ -398,7 +400,8 @@ scanmandir(catdir, mandir)
 		e_crunch = NULL;
 		crunchp = getlist("_crunch", 1);
 		TAILQ_FOREACH(e_crunch, &crunchp->list, q) {
-			splitentry(e_crunch->s, crunchsuff, crunchcmd);
+			splitentry(e_crunch->s, crunchsuff, sizeof(crunchsuff),
+			    crunchcmd, sizeof(crunchcmd));
 			snprintf(match, sizeof(match), "*%s", crunchsuff);
 			if (!fnmatch(match, manpage, 0))
 				break;
@@ -409,24 +412,25 @@ scanmandir(catdir, mandir)
 			continue;
 		} else {
 			if (S_ISLNK(manstat.st_mode)) {
-				strcpy(buffer, catpage);
-				strcpy(linkname, basename(buffer));
+				strlcpy(buffer, catpage, sizeof(buffer));
+				strlcpy(linkname, basename(buffer),
+				    sizeof(linkname));
 				len = readlink(manpage, buffer,
 				    sizeof(buffer) - 1);
 				buffer[PATH_MAX - 1] = '\0';
 				if (len == -1) {
 					warn("can't stat read symbolic link %s",
-							manpage);
+					    manpage);
 					continue;
 				}
 				buffer[len] = '\0';
 				bp = basename(buffer);
-				strcpy(tmp, manpage);
+				strlcpy(tmp, manpage, sizeof(tmp));
 				snprintf(manpage, sizeof(manpage), "%s/%s",
-						dirname(tmp), bp);
-				strcpy(tmp, catpage);
+				    dirname(tmp), bp);
+				strlcpy(tmp, catpage, sizeof(tmp));
 				snprintf(catpage, sizeof(catpage), "%s/%s",
-						dirname(tmp), buffer);
+				    dirname(tmp), buffer);
 			}
 			else
 				*linkname = '\0';
@@ -469,7 +473,7 @@ scanmandir(catdir, mandir)
 		}
 
 		if (*linkname != '\0') {
-			strcpy(tmp, catpage);
+			strlcpy(tmp, catpage, sizeof(tmp));
 			snprintf(tmp, sizeof(tmp), "%s/%s", dirname(tmp),
 					linkname);
 			if ((error = lstat(tmp, &lnkstat)) &&
@@ -489,7 +493,8 @@ scanmandir(catdir, mandir)
 						printf("ln -s %s %s\n", catpage,
 						    linkname);
 					if (f_noaction == 0) {
-						strcpy(tmp, catpage);
+						strlcpy(tmp, catpage,
+						    sizeof(tmp));
 						if (chdir(dirname(tmp)) == -1) {
 							warn("can't chdir");
 							continue;
@@ -513,10 +518,12 @@ scanmandir(catdir, mandir)
 }
 
 static int
-splitentry(s, first, second)
+splitentry(s, first, firstlen, second, secondlen)
 	char *s;
 	char *first;
+	size_t firstlen;
 	char *second;
+	size_t secondlen;
 {
 	char *c;
 
@@ -524,12 +531,15 @@ splitentry(s, first, second)
 		;
 	if (*c == '\0')
 		return(0);
+	if (c - s + 1 > firstlen)
+		return(0);
 	strncpy(first, s, c-s);
 	first[c-s] = '\0';
 	for (; *c != '\0' && isspace(*c); ++c)
 		;
-	strcpy(second, c);
-		return(1);
+	if (strlcpy(second, c, secondlen) >= secondlen)
+		return(0);
+	return(1);
 }
 
 static void
