@@ -1,4 +1,4 @@
-.\"	$NetBSD: ndbootd.8,v 1.2 2001/05/22 14:41:59 fredette Exp $
+.\"	$NetBSD: ndbootd.8,v 1.3 2002/01/19 11:45:07 wiz Exp $
 .\"	<<Id: ndbootd.8,v 1.2 2001/05/15 14:42:25 fredette Exp >>
 .\"
 .\" Copyright (c) 2001 Matthew Fredette.  All rights reserved.
@@ -16,8 +16,8 @@
 .\"        This product includes software developed by Matthew Fredette.
 .\"   4. The name of Matthew Fredette may not be used to endorse or promote
 .\"      products derived from this software without specific prior written
-.\"      permission. 
-.\" 
+.\"      permission.
+.\"
 .\" THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
 .\" WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
 .\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
@@ -41,18 +41,18 @@ Network Disk (ND) Protocol server
 .Nm
 is a server which supports the
 Sun Network Disk (ND) Protocol.
-This protocol was designed by Sun before they designed 
+This protocol was designed by Sun before they designed
 .Tn NFS .
 ND simply
 makes the raw blocks of a disk available to network clients.  Contrast
-this with the true namespace and file abstractions that 
-.Tn NFS 
+this with the true namespace and file abstractions that
+.Tn NFS
 provides.
 .Pp
 The only reason you're likely to encounter ND nowadays is if you have
 an old Sun 2 machine, like the 2/120 or 2/50.  The Sun 2 PROMs can
 only use ND to boot over the network.  (Later, the Sun 3 PROMs would
-use 
+use
 .Tn RARP
 and
 .Tn TFTP
@@ -64,15 +64,15 @@ booting.  It exports a disk that the clients consider to be
 .Pa /dev/ndp0
 (ND public unit zero).  The disk is available only to clients that are
 listed in
-.Pa /etc/ethers 
+.Pa /etc/ethers
 and have valid hostnames.
 (Sun 2 PROMs don't do RARP, but they do learn their IP
 address from the first ND response they receive from the server.)
 .Pp
 .Ar boot1
 is a file containing the mandatory first-stage network boot
-program, typically 
-.Pa /usr/mdec/bootyy .  
+program, typically
+.Pa /usr/mdec/bootyy .
 The layout of the exported disk is:
 .Bl -bullet -offset indent
 .It
@@ -81,31 +81,31 @@ block 0: normally a Sun disklabel (but ignored by the PROM)
 blocks 1-15: the first-stage network boot program
 .El
 .Pp
-With the 
+With the
 .Fl s Ar boot2
-option, 
+option,
 .Nm
 will also make a second-stage network
-boot program available to clients, typically 
-.Pa /usr/mdec/netboot .  
-When 
+boot program available to clients, typically
+.Pa /usr/mdec/netboot .
+When
 .Ar boot2
 is a filename, that file is the single second-stage network boot program
 to be served to all clients.
 .Pp
-When 
+When
 .Ar boot2
-is a directory name, typically 
+is a directory name, typically
 .Pa /tftpboot ,
 .Nm
 finds a
 client's second-stage network boot program by turning its IP address
 into a filename in that directory, in the same manner later Sun 3
 PROMs do when TFTPing (i.e., if a client has IP address 192.168.1.10,
-.Nm 
-expects to find 
-.Pa /tftpboot/C0A8010A.SUN2 
-).  
+.Nm
+expects to find
+.Pa /tftpboot/C0A8010A.SUN2
+).
 .Pp
 When used in this last manner with an ND-aware first-stage boot program,
 .Nm
