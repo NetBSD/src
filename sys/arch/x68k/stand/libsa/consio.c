@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.1 2001/09/27 10:03:27 minoura Exp $	*/
+/*	$NetBSD: consio.c,v 1.2 2001/09/28 15:11:20 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -152,7 +152,7 @@ print_title(const char *fmt, ...)
 	/* Print the logo image here */
 
 	va_start(ap, fmt);
-	printf(fmt, ap);
-	printf("\n");
+	vprintf(fmt, ap);
 	va_end(ap);
+	printf("\n");
 }
