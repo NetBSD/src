@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.13 2003/09/11 09:40:12 kleink Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.14 2003/09/11 19:17:07 christos Exp $	*/
 
 #ifndef _I386_SYSARCH_H_
 #define _I386_SYSARCH_H_
@@ -11,12 +11,13 @@
 #define	I386_IOPL	2
 #define	I386_GET_IOPERM	3
 #define	I386_SET_IOPERM	4
-#define	I386_VM86	5
+#define	I386_OLD_VM86	5
 #define	I386_PMC_INFO	8
 #define	I386_PMC_STARTSTOP 9
 #define	I386_PMC_READ	10
 #define I386_GET_MTRR	11
 #define I386_SET_MTRR	12
+#define	I386_VM86	13
 
 struct i386_get_ldt_args {
 	int start;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.h,v 1.10 2003/01/17 23:10:29 thorpej Exp $	*/
+/*	$NetBSD: vm86.h,v 1.11 2003/09/11 19:17:07 christos Exp $	*/
 
 #undef	VM86_USE_VIF
 
@@ -51,12 +51,8 @@
 #define	VM86_REALFLAGS	(~PSL_USERSTATIC)
 #define	VM86_VIRTFLAGS	(PSL_USERSTATIC & ~(PSL_MBO | PSL_MBZ))
 
-struct vm86_regs {
-	struct sigcontext vmsc;
-};
-
 struct vm86_kern {			/* kernel uses this stuff */
-	struct vm86_regs regs;
+	__gregset_t regs;
 	unsigned long ss_cpu_type;
 };
 #define cpu_type substr.ss_cpu_type
@@ -81,6 +77,9 @@ struct vm86_struct {
 
 #ifdef _KERNEL
 int i386_vm86 __P((struct lwp *, char *, register_t *));
+#ifdef COMPAT_16
+int compat_16_i386_vm86 __P((struct lwp *, char *, register_t *));
+#endif
 void vm86_gpfault __P((struct lwp *, int));
 void vm86_return __P((struct lwp *, int));
 static __inline void clr_vif __P((struct lwp *));
