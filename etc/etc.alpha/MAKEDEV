@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.68 2001/02/04 17:05:14 ad Exp $
+#	$NetBSD: MAKEDEV,v 1.69 2001/02/06 19:38:31 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -136,7 +136,7 @@ all)
 	sh $0 ttyB0 ttyB1 ttyC0 ttyC1 lkm
 	sh $0 wskbd0 wsmouse0 lpa0 lpt0 audio ipl wd0 wd1 fd0 fd1
 	sh $0 audio0 audio1 audio2 audio3
-	sh $0 random satlink0 speaker local
+	sh $0 random satlink0 speaker mlx0 local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 usbs wscons isdn
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
