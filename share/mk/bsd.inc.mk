@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.inc.mk,v 1.21 2001/11/28 20:19:08 tv Exp $
+#	$NetBSD: bsd.inc.mk,v 1.22 2002/02/11 21:14:58 mycroft Exp $
 
 ##### Basic targets
 .PHONY:		incinstall
@@ -20,10 +20,14 @@ _FDIR:=		${INCSDIR_${F:C,/,_,g}:U${INCSDIR}}	# dir override
 _FNAME:=	${INCSNAME_${F:C,/,_,g}:U${INCSNAME:U${F}}} # name override
 _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
 
+.if !defined(UPDATE)
+${_F}!		${F} __incinstall			# install rule
+.else
 ${_F}:		${F} __incinstall			# install rule
+.endif
+
 incinstall::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
-.PHONY:		${UPDATE:D:U${_F}}			# clobber unless UPDATE
 .endfor
 
 .undef _FDIR
