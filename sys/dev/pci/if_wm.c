@@ -1,7 +1,7 @@
-/*	$NetBSD: if_wm.c,v 1.42 2003/10/17 20:41:21 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.43 2003/10/17 20:57:32 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
@@ -41,11 +41,10 @@
  * TODO (in order of importance):
  *
  *	- Fix hw VLAN assist.
- *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.42 2003/10/17 20:41:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.43 2003/10/17 20:57:32 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -178,6 +177,23 @@ struct wm_rxsoft {
 	bus_dmamap_t rxs_dmamap;	/* our DMA map */
 };
 
+typedef enum {
+	WM_T_unknown		= 0,
+	WM_T_82542_2_0,			/* i82542 2.0 (really old) */
+	WM_T_82542_2_1,			/* i82542 2.1+ (old) */
+	WM_T_82543,			/* i82543 */
+	WM_T_82544,			/* i82544 */
+	WM_T_82540,			/* i82540 */
+	WM_T_82545,			/* i82545 */
+	WM_T_82545_3,			/* i82545 3.0+ */
+	WM_T_82546,			/* i82546 */
+	WM_T_82546_3,			/* i82546 3.0+ */
+	WM_T_82541,			/* i82541 */
+	WM_T_82541_2,			/* i82541 2.0+ */
+	WM_T_82547,			/* i82547 */
+	WM_T_82547_2,			/* i82547 2.0+ */
+} wm_chip_type;
+
 /*
  * Software state per device.
  */
@@ -189,7 +205,7 @@ struct wm_softc {
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
 
-	int sc_type;			/* chip type; see below */
+	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
 
 	void *sc_ih;			/* interrupt cookie */
@@ -294,15 +310,6 @@ do {									\
 	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
 	(sc)->sc_rxtailp = &(m)->m_next;				\
 } while (/*CONSTCOND*/0)
-
-/* sc_type */
-#define	WM_T_82542_2_0		0	/* i82542 2.0 (really old) */
-#define	WM_T_82542_2_1		1	/* i82542 2.1+ (old) */
-#define	WM_T_82543		2	/* i82543 */
-#define	WM_T_82544		3	/* i82544 */
-#define	WM_T_82540		4	/* i82540 */
-#define	WM_T_82545		5	/* i82545 */
-#define	WM_T_82546		6	/* i82546 */
 
 /* sc_flags */
 #define	WM_F_HAS_MII		0x01	/* has MII */
@@ -440,7 +447,7 @@ const struct wm_product {
 	pci_vendor_id_t		wmp_vendor;
 	pci_product_id_t	wmp_product;
 	const char		*wmp_name;
-	int			wmp_type;
+	wm_chip_type		wmp_type;
 	int			wmp_flags;
 #define	WMP_F_1000X		0x01
 #define	WMP_F_1000T		0x02
