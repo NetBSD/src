@@ -1,15 +1,13 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/11 08:44:47 mycroft Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/11 09:12:21 mycroft Exp $
 
-# Makefile for pc532 tags file
-
-SUBDIR= stand
+# Makefile for pc532 tags file and boot blocks
 
 TPC532=	../pc532/tags
 SPC532=	../pc532/pc532/*.[ch] ../pc532/include/*.h \
 	../pc532/dev/*.[ch] ../pc532/scsi/*.[ch]
 APC532=	../pc532/pc532/*.s
 
-# Directories in which to place pc532 tags links
+# Directories in which to place tags links
 DPC532=	dev include
 
 .include "../../kern/Make.tags.inc"
@@ -24,5 +22,8 @@ tags:
 links:
 	-for i in ${DPC532}; do \
 	    cd ../$$i && rm -f tags; ln -s ../tags tags; done
+
+
+SUBDIR= stand
 
 .include <bsd.subdir.mk>

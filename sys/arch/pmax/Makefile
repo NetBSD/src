@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/11 08:44:48 mycroft Exp $
+#	$NetBSD: Makefile,v 1.9 1997/10/11 09:12:22 mycroft Exp $
 
 # Makefile for pmax tags file and boot blocks
 
-SUBDIR=	stand
-
-# Find where mips source fils are for inclusion in tags
+# Find where mips source files are for inclusion in tags
 .include <../mips/Makefile.inc>
 
 TPMAX=	../pmax/tags
@@ -12,7 +10,7 @@ SPMAX=	../pmax/pmax/*.[ch] ../pmax/include/*.h \
 	../pmax/dev/*.[ch] ../pmax/tc/*.[ch]
 APMAX=	../pmax/pmax/*.S
 
-# Directories in which to place pmax (mips) tags links
+# Directories in which to place tags links
 DPMAX=	dev tc include
 
 .include "../../kern/Make.tags.inc"
@@ -27,5 +25,8 @@ tags:
 links:
 	-for i in ${DPMAX}; do \
 	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
+
+SUBDIR=	stand
 
 .include <bsd.subdir.mk>
