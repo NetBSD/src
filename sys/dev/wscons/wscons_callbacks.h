@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_callbacks.h,v 1.1 1998/03/22 14:24:02 drochner Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.2 1998/06/11 22:03:15 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -47,7 +47,7 @@ void	wsdisplay_set_kbd __P((struct device *, struct device *));
  * Calls to the display interface from the keyboard interface.
  */
 void	wsdisplay_kbdinput __P((struct device *v, const u_char *, u_int));
-int	wsdisplay_switch __P((struct device *, int));
+int	wsdisplay_switch __P((struct device *, int, int));
 void	wsdisplay_kbdholdscreen __P((struct device *v, int));
 
 void	wsdisplay_set_cons_kbd __P((int (*get)(dev_t),
