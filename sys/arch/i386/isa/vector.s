@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.8 1993/10/22 20:05:11 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.9 1993/10/27 05:46:58 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -167,9 +167,6 @@ FAST(15, IO_ICU2, ENABLE_ICU1_AND_2)
  */
 #define	INTR(irq_num, icu, enable_icus) \
 IDTVEC(intr/**/irq_num) ; \
-	ss ; \
-	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num) ; \
-	jnz	2f ; \
 	pushl	$0 ;		/* dummy error code */ \
 	pushl	$T_ASTFLT ; \
 	pushl	%ds ; 		/* save our data and extra segments ... */ \
@@ -183,6 +180,8 @@ IDTVEC(intr/**/irq_num) ; \
 	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
 	outb	%al,$icu+1 ; \
 	enable_icus ; 		/* reenable hw interrupts */ \
+	testb	$IRQ_BIT(irq_num),_cpl + IRQ_BYTE(irq_num) ; \
+	jnz	2f ; \
 _Xresume/**/irq_num: ; \
 	incl	_cnt+V_INTR ; 	/* increment statistical counters */ \
 	incl	_intrcnt_actv + 4*irq_num ; \
@@ -226,19 +225,12 @@ _Xresume/**/irq_num: ; \
 	jmp	5b ; \
 	ALIGN_TEXT ; \
 2: ; \
-	pushl	%eax ; \
-	ss ; \
 	incl	_intrcnt_pend + 4*irq_num ; \
-	ss ; \
-	movb	_imen + IRQ_BYTE(irq_num),%al ; /* mask interrupt in hw */ \
-	orb	$IRQ_BIT(irq_num),%al ; \
-	ss ; \
-	movb	%al,_imen + IRQ_BYTE(irq_num) ; \
-	outb	%al,$icu+1 ; \
-	enable_icus ; 		/* reenable hw interrupts */ \
-	ss ; \
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num) ; \
-	popl	%eax ; \
+	popal ; \
+	popl	%es ; \
+	popl	%ds ; \
+	addl	$8,%esp ; \
 	iret
 
 INTR(0, IO_ICU1, ENABLE_ICU1)
@@ -343,3 +335,17 @@ _intrnames:
 	.asciz	"irq15 stray"
 	.asciz	"wild"
 _eintrnames:
+
+	ALIGN_TEXT
+	.globl	_ether_output
+_ether_output:	
+	.globl	_isa_memalloc
+_isa_memalloc:	
+	.globl	_isa_memcheck
+_isa_memcheck:	
+	.globl	_isa_portalloc
+_isa_portalloc:	
+	.globl	_isa_portcheck
+_isa_portcheck:
+	movl	$1,%eax
+	ret
