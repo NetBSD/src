@@ -1,4 +1,4 @@
-/*	$NetBSD: xscale_pmc.c,v 1.2 2002/08/07 21:11:35 thorpej Exp $	*/
+/*	$NetBSD: xscale_pmc.c,v 1.3 2002/08/08 18:23:46 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.2 2002/08/07 21:11:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xscale_pmc.c,v 1.3 2002/08/08 18:23:46 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -499,15 +499,18 @@ xscale_configure_counter(struct proc *p, int ctr, struct pmc_counter_cfg *cfg)
 
 	switch (ctr) {
 	case __PMC_CCNT_I:
+		pmcs->pmnc &= ~PMNC_D;
 		pmcs->pmnc |= (PMNC_CC_IF | PMNC_CC_IE);
 		if (cfg->event_id == 0x101)
 			pmcs->pmnc |= PMNC_D;
 		break;
 	case __PMC0_I:
+		pmcs->pmnc &= ~PMNC_EVCNT0_MASK;
 		pmcs->pmnc |=   (cfg->event_id << PMNC_EVCNT0_SHIFT)
 				| (PMNC_PMN0_IF | PMNC_PMN0_IE);
 		break;
 	case __PMC1_I:
+		pmcs->pmnc &= ~PMNC_EVCNT1_MASK;
 		pmcs->pmnc |=   (cfg->event_id << PMNC_EVCNT1_SHIFT)
 				| (PMNC_PMN1_IF | PMNC_PMN1_IE);
 		break;
