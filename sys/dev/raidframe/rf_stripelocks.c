@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.16 2003/04/10 04:10:17 simonb Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.17 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.16 2003/04/10 04:10:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.17 2003/12/29 03:33:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.16 2003/04/10 04:10:17 simonb E
 #include "rf_alloclist.h"
 #include "rf_debugprint.h"
 #include "rf_general.h"
-#include "rf_freelist.h"
 #include "rf_driver.h"
 #include "rf_shutdown.h"
 
@@ -132,7 +131,7 @@ static void PrintLockedStripes(RF_LockTableEntry_t * lockTable);
     )                                                                            \
   )
 
-static RF_FreeList_t *rf_stripelock_freelist;
+static struct pool rf_stripelock_pool;
 #define RF_MAX_FREE_STRIPELOCK 128
 #define RF_STRIPELOCK_INC        8
 #define RF_STRIPELOCK_INITIAL   32
@@ -145,7 +144,7 @@ static void
 rf_ShutdownStripeLockFreeList(ignored)
 	void   *ignored;
 {
-	RF_FREELIST_DESTROY(rf_stripelock_freelist, next, (RF_StripeLockDesc_t *));
+	pool_destroy(&rf_stripelock_pool);
 }
 
 int 
@@ -155,16 +154,18 @@ rf_ConfigureStripeLockFreeList(listp)
 	unsigned mask;
 	int     rc;
 
-	RF_FREELIST_CREATE(rf_stripelock_freelist, RF_MAX_FREE_STRIPELOCK,
-	    RF_STRIPELOCK_INITIAL, sizeof(RF_StripeLockDesc_t));
+	pool_init(&rf_stripelock_pool, sizeof(RF_StripeLockDesc_t),
+		  0, 0, 0, "rf_stripelock_pl", NULL);
+	pool_sethiwat(&rf_stripelock_pool, RF_MAX_FREE_STRIPELOCK);
+	pool_prime(&rf_stripelock_pool, RF_STRIPELOCK_INITIAL);
+
 	rc = rf_ShutdownCreate(listp, rf_ShutdownStripeLockFreeList, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownStripeLockFreeList(NULL);
 		return (rc);
 	}
-	RF_FREELIST_PRIME(rf_stripelock_freelist, RF_STRIPELOCK_INITIAL, next,
-	    (RF_StripeLockDesc_t *));
+
 	for (mask = 0x1; mask; mask <<= 1)
 		if (rf_lockTableSize == mask)
 			break;
@@ -181,7 +182,9 @@ rf_MakeLockTable()
 	RF_LockTableEntry_t *lockTable;
 	int     i, rc;
 
-	RF_Calloc(lockTable, ((int) rf_lockTableSize), sizeof(RF_LockTableEntry_t), (RF_LockTableEntry_t *));
+	RF_Malloc(lockTable, 
+		  ((int) rf_lockTableSize) * sizeof(RF_LockTableEntry_t), 
+		  (RF_LockTableEntry_t *));
 	if (lockTable == NULL)
 		return (NULL);
 	for (i = 0; i < rf_lockTableSize; i++) {
@@ -627,9 +630,14 @@ AllocStripeLockDesc(RF_StripeNum_t stripeID)
 {
 	RF_StripeLockDesc_t *p;
 
-	RF_FREELIST_GET(rf_stripelock_freelist, p, next, (RF_StripeLockDesc_t *));
+	p = pool_get(&rf_stripelock_pool, PR_WAITOK);
 	if (p) {
 		p->stripeID = stripeID;
+		p->granted = NULL;
+		p->waitersH = NULL;
+		p->waitersT = NULL;
+		p->nWriters = 0;
+		p->next = NULL;
 	}
 	return (p);
 }
@@ -637,7 +645,7 @@ AllocStripeLockDesc(RF_StripeNum_t stripeID)
 static void 
 FreeStripeLockDesc(RF_StripeLockDesc_t * p)
 {
-	RF_FREELIST_FREE(rf_stripelock_freelist, p, next);
+	pool_put(&rf_stripelock_pool, p);
 }
 
 #if RF_DEBUG_STRIPELOCK

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.19 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.20 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.19 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.20 2003/12/29 03:33:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -211,8 +211,7 @@ rf_VerifyParityBasic(raidPtr, raidAddr, parityPDA, correct_it, flags)
 	mcpair = rf_AllocMCPair();
 	rf_MakeAllocList(alloclist);
 	RF_MallocAndAdd(buf, numbytes * (layoutPtr->numDataCol + layoutPtr->numParityCol), (char *), alloclist);
-	RF_CallocAndAdd(pbuf, 1, numbytes, (char *), alloclist);	/* use calloc to make
-									 * sure buffer is zeroed */
+	RF_MallocAndAdd(pbuf, numbytes, (char *), alloclist);
 	end_p = buf + bytesPerStripe;
 
 	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, numbytes, buf, rf_DiskReadFunc, rf_DiskReadUndoFunc,
@@ -407,7 +406,8 @@ rf_MakeSimpleDAG(raidPtr, nNodes, bytesPerSU, databuf, doFunc, undoFunc, name, a
 
 	/* create the nodes, the block & unblock nodes, and the terminator
 	 * node */
-	RF_CallocAndAdd(nodes, nNodes + 3, sizeof(RF_DagNode_t), (RF_DagNode_t *), alloclist);
+	RF_MallocAndAdd(nodes, (nNodes + 3) * sizeof(RF_DagNode_t), 
+			(RF_DagNode_t *), alloclist);
 	blockNode = &nodes[nNodes];
 	unblockNode = blockNode + 1;
 	termNode = unblockNode + 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.21 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.22 2003/12/29 03:33:47 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.21 2003/12/29 02:38:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.22 2003/12/29 03:33:47 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.21 2003/12/29 02:38:17 oster Exp $
 #include "rf_dagutils.h"
 #include "rf_dagfuncs.h"
 #include "rf_general.h"
-#include "rf_freelist.h"
 #include "rf_map.h"
 #include "rf_shutdown.h"
 
@@ -128,7 +127,8 @@ rf_InitNode(
 	         */
 		ptrs = (void **) node->dag_ptrs;
 	} else {
-		RF_CallocAndAdd(ptrs, nptrs, sizeof(void *), (void **), alist);
+		RF_MallocAndAdd(ptrs, nptrs * sizeof(void *), 
+				(void **), alist);
 	}
 	node->succedents = (nSucc) ? (RF_DagNode_t **) ptrs : NULL;
 	node->antecedents = (nAnte) ? (RF_DagNode_t **) (ptrs + nSucc) : NULL;
@@ -139,7 +139,9 @@ rf_InitNode(
 		if (nParam <= RF_DAG_PARAMCACHESIZE) {
 			node->params = (RF_DagParam_t *) node->dag_params;
 		} else {
-			RF_CallocAndAdd(node->params, nParam, sizeof(RF_DagParam_t), (RF_DagParam_t *), alist);
+			RF_MallocAndAdd(node->params, 
+					nParam * sizeof(RF_DagParam_t), 
+					(RF_DagParam_t *), alist);
 		}
 	} else {
 		node->params = NULL;
@@ -174,9 +176,7 @@ rf_FreeDAG(dag_h)
 	}
 }
 
-
-static RF_FreeList_t *rf_dagh_freelist;
-
+static struct pool rf_dagh_pool;
 #define RF_MAX_FREE_DAGH 128
 #define RF_DAGH_INC       16
 #define RF_DAGH_INITIAL   32
@@ -186,7 +186,7 @@ static void
 rf_ShutdownDAGs(ignored)
 	void   *ignored;
 {
-	RF_FREELIST_DESTROY(rf_dagh_freelist, next, (RF_DagHeader_t *));
+	pool_destroy(&rf_dagh_pool);
 }
 
 int 
@@ -195,18 +195,16 @@ rf_ConfigureDAGs(listp)
 {
 	int     rc;
 
-	RF_FREELIST_CREATE(rf_dagh_freelist, RF_MAX_FREE_DAGH,
-	    RF_DAGH_INC, sizeof(RF_DagHeader_t));
-	if (rf_dagh_freelist == NULL)
-		return (ENOMEM);
+	pool_init(&rf_dagh_pool, sizeof(RF_DagHeader_t), 0, 0, 0,
+		  "rf_dagh_pl", NULL);
+	pool_sethiwat(&rf_dagh_pool, RF_MAX_FREE_DAGH);
+	pool_prime(&rf_dagh_pool, RF_DAGH_INITIAL);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownDAGs, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownDAGs(NULL);
 		return (rc);
 	}
-	RF_FREELIST_PRIME(rf_dagh_freelist, RF_DAGH_INITIAL, next,
-	    (RF_DagHeader_t *));
 	return (0);
 }
 
@@ -215,7 +213,7 @@ rf_AllocDAGHeader()
 {
 	RF_DagHeader_t *dh;
 
-	RF_FREELIST_GET(rf_dagh_freelist, dh, next, (RF_DagHeader_t *));
+	dh = pool_get(&rf_dagh_pool, PR_WAITOK);
 	if (dh) {
 		memset((char *) dh, 0, sizeof(RF_DagHeader_t));
 	}
@@ -225,7 +223,7 @@ rf_AllocDAGHeader()
 void 
 rf_FreeDAGHeader(RF_DagHeader_t * dh)
 {
-	RF_FREELIST_FREE(rf_dagh_freelist, dh, next);
+	pool_put(&rf_dagh_pool, dh);
 }
 /* allocates a buffer big enough to hold the data described by pda */
 void   *
@@ -641,9 +639,10 @@ rf_ValidateDAG(dag_h)
 
 	unvisited = dag_h->succedents[0]->visited;
 
-	RF_Calloc(scount, nodecount, sizeof(int), (int *));
-	RF_Calloc(acount, nodecount, sizeof(int), (int *));
-	RF_Calloc(nodes, nodecount, sizeof(RF_DagNode_t *), (RF_DagNode_t **));
+	RF_Malloc(scount, nodecount * sizeof(int), (int *));
+	RF_Malloc(acount, nodecount * sizeof(int), (int *));
+	RF_Malloc(nodes, nodecount * sizeof(RF_DagNode_t *), 
+		  (RF_DagNode_t **));
 	for (i = 0; i < dag_h->numSuccedents; i++) {
 		if ((dag_h->succedents[i]->visited == unvisited)
 		    && rf_ValidateBranch(dag_h->succedents[i], scount,

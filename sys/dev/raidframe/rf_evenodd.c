@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd.c,v 1.10 2003/11/16 20:32:05 oster Exp $	*/
+/*	$NetBSD: rf_evenodd.c,v 1.11 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ****************************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.10 2003/11/16 20:32:05 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd.c,v 1.11 2003/12/29 03:33:48 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -384,11 +384,9 @@ rf_VerifyParityEvenOdd(raidPtr, raidAddr, parityPDA, correct_it, flags)
 	mcpair = rf_AllocMCPair();
 	rf_MakeAllocList(alloclist);
 	RF_MallocAndAdd(buf, numbytes * (layoutPtr->numDataCol + layoutPtr->numParityCol), (char *), alloclist);
-	RF_CallocAndAdd(pbuf, 1, numbytes, (char *), alloclist);	/* use calloc to make
-									 * sure buffer is zeroed */
+	RF_MallocAndAdd(pbuf, numbytes, (char *), alloclist);
 	end_p = buf + bytesPerStripe;
-	RF_CallocAndAdd(redundantbuf2, 1, numbytes, (char *), alloclist);	/* use calloc to make
-										 * sure buffer is zeroed */
+	RF_MallocAndAdd(redundantbuf2, numbytes, (char *), alloclist);
 
 	rd_dag_h = rf_MakeSimpleDAG(raidPtr, stripeWidth, numbytes, buf, rf_DiskReadFunc, rf_DiskReadUndoFunc,
 	    "Rod", alloclist, flags, RF_IO_NORMAL_PRIORITY);

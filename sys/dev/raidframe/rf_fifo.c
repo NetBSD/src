@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_fifo.c,v 1.8 2002/09/17 03:43:34 oster Exp $	*/
+/*	$NetBSD: rf_fifo.c,v 1.9 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -36,7 +36,7 @@
  ***************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.8 2002/09/17 03:43:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_fifo.c,v 1.9 2003/12/29 03:33:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -60,7 +60,8 @@ rf_FifoCreate(sectPerDisk, clList, listp)
 {
 	RF_FifoHeader_t *q;
 
-	RF_CallocAndAdd(q, 1, sizeof(RF_FifoHeader_t), (RF_FifoHeader_t *), clList);
+	RF_MallocAndAdd(q, sizeof(RF_FifoHeader_t), 
+				(RF_FifoHeader_t *), clList);
 	q->hq_count = q->lq_count = 0;
 	return ((void *) q);
 }

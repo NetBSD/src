@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.72 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.73 2003/12/29 03:33:48 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.72 2003/12/29 02:38:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.73 2003/12/29 03:33:48 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -102,7 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.72 2003/12/29 02:38:17 oster Exp $")
 #include "rf_general.h"
 #include "rf_desc.h"
 #include "rf_states.h"
-#include "rf_freelist.h"
 #include "rf_decluster.h"
 #include "rf_map.h"
 #include "rf_revent.h"
@@ -123,7 +122,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.72 2003/12/29 02:38:17 oster Exp $")
 #endif
 
 /* rad == RF_RaidAccessDesc_t */
-static RF_FreeList_t *rf_rad_freelist;
+RF_DECLARE_MUTEX(rf_rad_pool_lock)
+static struct pool rf_rad_pool;
 #define RF_MAX_FREE_RAD 128
 #define RF_RAD_INC       16
 #define RF_RAD_INITIAL   32
@@ -238,16 +238,16 @@ rf_Shutdown(raidPtr)
          * cuts down on the amount of serialization we've got going
          * on.
          */
-	RF_FREELIST_DO_LOCK(rf_rad_freelist);
+	RF_LOCK_MUTEX(rf_rad_pool_lock);
 	if (raidPtr->waitShutdown) {
-		RF_FREELIST_DO_UNLOCK(rf_rad_freelist);
+		RF_UNLOCK_MUTEX(rf_rad_pool_lock);
 		return (EBUSY);
 	}
 	raidPtr->waitShutdown = 1;
 	while (raidPtr->nAccOutstanding) {
-		RF_WAIT_COND(raidPtr->outstandingCond, RF_FREELIST_MUTEX_OF(rf_rad_freelist));
+		RF_WAIT_COND(raidPtr->outstandingCond, rf_rad_pool_lock);
 	}
-	RF_FREELIST_DO_UNLOCK(rf_rad_freelist);
+	RF_UNLOCK_MUTEX(rf_rad_pool_lock);
 
 	/* Wait for any parity re-writes to stop... */
 	while (raidPtr->parity_rewrite_in_progress) {
@@ -497,7 +497,7 @@ static void
 rf_ShutdownRDFreeList(ignored)
 	void   *ignored;
 {
-	RF_FREELIST_DESTROY_CLEAN(rf_rad_freelist, next, (RF_RaidAccessDesc_t *), clean_rad);
+	pool_destroy(&rf_rad_pool);
 }
 
 static int 
@@ -506,19 +506,16 @@ rf_ConfigureRDFreeList(listp)
 {
 	int     rc;
 
-	RF_FREELIST_CREATE(rf_rad_freelist, RF_MAX_FREE_RAD,
-	    RF_RAD_INC, sizeof(RF_RaidAccessDesc_t));
-	if (rf_rad_freelist == NULL) {
-		return (ENOMEM);
-	}
+	pool_init(&rf_rad_pool, sizeof(RF_RaidAccessDesc_t), 0, 0, 0,
+		  "rf_rad_pl", NULL);
+	pool_sethiwat(&rf_rad_pool, RF_MAX_FREE_RAD);
+	pool_prime(&rf_rad_pool, RF_RAD_INITIAL);
 	rc = rf_ShutdownCreate(listp, rf_ShutdownRDFreeList, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownRDFreeList(NULL);
 		return (rc);
 	}
-	RF_FREELIST_PRIME_INIT(rf_rad_freelist, RF_RAD_INITIAL, next,
-	    (RF_RaidAccessDesc_t *), init_rad);
 	return (0);
 }
 
@@ -535,18 +532,23 @@ rf_AllocRaidAccDesc(
 {
 	RF_RaidAccessDesc_t *desc;
 
-	RF_FREELIST_GET_INIT_NOUNLOCK(rf_rad_freelist, desc, next, (RF_RaidAccessDesc_t *), init_rad);
+	desc = pool_get(&rf_rad_pool, PR_WAITOK);
+	init_rad(desc);
+
 	if (raidPtr->waitShutdown) {
 		/*
 	         * Actually, we're shutting the array down. Free the desc
 	         * and return NULL.
 	         */
-		RF_FREELIST_DO_UNLOCK(rf_rad_freelist);
-		RF_FREELIST_FREE_CLEAN(rf_rad_freelist, desc, next, clean_rad);
+
+		RF_UNLOCK_MUTEX(rf_rad_pool_lock);
+		clean_rad(desc);
+		pool_put(&rf_rad_pool, desc);
 		return (NULL);
 	}
 	raidPtr->nAccOutstanding++;
-	RF_FREELIST_DO_UNLOCK(rf_rad_freelist);
+
+	RF_UNLOCK_MUTEX(rf_rad_pool_lock);
 
 	desc->raidPtr = (void *) raidPtr;
 	desc->type = type;
@@ -579,12 +581,13 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t * desc)
 	RF_ASSERT(desc);
 
 	rf_FreeAllocList(desc->cleanupList);
-	RF_FREELIST_FREE_CLEAN_NOUNLOCK(rf_rad_freelist, desc, next, clean_rad);
+	clean_rad(desc);
+	pool_put(&rf_rad_pool, desc);
 	raidPtr->nAccOutstanding--;
 	if (raidPtr->waitShutdown) {
 		RF_SIGNAL_COND(raidPtr->outstandingCond);
 	}
-	RF_FREELIST_DO_UNLOCK(rf_rad_freelist);
+	RF_UNLOCK_MUTEX(rf_rad_pool_lock);
 }
 /*********************************************************************
  * Main routine for performing an access.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.46 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.47 2003/12/29 03:33:48 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.46 2003/12/29 02:38:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.47 2003/12/29 03:33:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -324,7 +324,7 @@ rf_AllocDiskStructures(raidPtr, cfgPtr)
 
 	/* We allocate RF_MAXSPARE on the first row so that we
 	   have room to do hot-swapping of spares */
-	RF_CallocAndAdd(raidPtr->Disks, raidPtr->numCol + RF_MAXSPARE,
+	RF_MallocAndAdd(raidPtr->Disks, (raidPtr->numCol + RF_MAXSPARE) *
 			sizeof(RF_RaidDisk_t), (RF_RaidDisk_t *), 
 			raidPtr->cleanupList);
 	if (raidPtr->Disks == NULL) {
@@ -333,10 +333,11 @@ rf_AllocDiskStructures(raidPtr, cfgPtr)
 	}
 
 	/* get space for device specific stuff.. */
-	RF_CallocAndAdd(raidPtr->raid_cinfo,
-			raidPtr->numCol + raidPtr->numSpare,
+	RF_MallocAndAdd(raidPtr->raid_cinfo,
+			(raidPtr->numCol + raidPtr->numSpare) * 
 			sizeof(struct raidcinfo), (struct raidcinfo *),
 			raidPtr->cleanupList);
+
 	if (raidPtr->raid_cinfo == NULL) {
 		ret = ENOMEM;
 		goto fail;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegwr.c,v 1.12 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_dagdegwr.c,v 1.13 2003/12/29 03:33:47 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.12 2003/12/29 02:38:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegwr.c,v 1.13 2003/12/29 03:33:47 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -200,7 +200,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
          * we need in order to recover the lost data.
          */
 	/* overlappingPDAs array must be zero'd */
-	RF_Calloc(overlappingPDAs, asmap->numStripeUnitsAccessed, sizeof(char), (char *));
+	RF_Malloc(overlappingPDAs, asmap->numStripeUnitsAccessed * sizeof(char), (char *));
 	rf_GenerateFailedAccessASMs(raidPtr, asmap, failedPDA, dag_h, new_asm_h,
 	    &nXorBufs, NULL, overlappingPDAs, allocList);
 
@@ -230,7 +230,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
 	}
 	/* lock, unlock, xor, Wnd, Rrd, W(nfaults) */
 	nNodes = 5 + nfaults + nWndNodes + nRrdNodes;
-	RF_CallocAndAdd(nodes, nNodes, sizeof(RF_DagNode_t),
+	RF_MallocAndAdd(nodes, nNodes * sizeof(RF_DagNode_t),
 	    (RF_DagNode_t *), allocList);
 	i = 0;
 	blockNode = &nodes[i];
@@ -337,7 +337,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
 	parityPDA->numSector = failedPDA->numSector;
 
 	if (!xorTargetBuf) {
-		RF_CallocAndAdd(xorTargetBuf, 1,
+		RF_MallocAndAdd(xorTargetBuf,
 		    rf_RaidAddressToByte(raidPtr, failedPDA->numSector), (char *), allocList);
 	}
 	/* init the Wnp node */
@@ -361,7 +361,7 @@ rf_CommonCreateSimpleDegradedWriteDAG(raidPtr, asmap, dag_h, bp, flags,
 			rf_InitNode(wnqNode, rf_wait, RF_FALSE, rf_DiskWriteFunc, rf_DiskWriteUndoFunc,
 			    rf_GenericWakeupFunc, 1, 1, 4, 0, dag_h, "Wnq", allocList);
 			wnqNode->params[0].p = parityPDA;
-			RF_CallocAndAdd(xorNode->results[1], 1,
+			RF_MallocAndAdd(xorNode->results[1],
 			    rf_RaidAddressToByte(raidPtr, failedPDA->numSector), (char *), allocList);
 			wnqNode->params[1].p = xorNode->results[1];
 			wnqNode->params[2].v = parityStripeID;
@@ -598,7 +598,8 @@ rf_WriteGenerateFailedAccessASMs(
 
 	/* allocate up our list of pda's */
 
-	RF_CallocAndAdd(pda_p, napdas, sizeof(RF_PhysDiskAddr_t), (RF_PhysDiskAddr_t *), allocList);
+	RF_MallocAndAdd(pda_p, napdas * sizeof(RF_PhysDiskAddr_t), 
+			(RF_PhysDiskAddr_t *), allocList);
 	*pdap = pda_p;
 
 	/* linkem together */
@@ -704,7 +705,7 @@ rf_DoubleDegSmallWrite(
 	nWriteNodes = nWudNodes + 2 * nPQNodes;
 	nNodes = 4 + nReadNodes + nWriteNodes;
 
-	RF_CallocAndAdd(nodes, nNodes, sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
+	RF_MallocAndAdd(nodes, nNodes * sizeof(RF_DagNode_t), (RF_DagNode_t *), allocList);
 	blockNode = nodes;
 	unblockNode = blockNode + 1;
 	termNode = unblockNode + 1;

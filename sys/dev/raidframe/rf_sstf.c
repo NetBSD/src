@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_sstf.c,v 1.9 2002/09/17 03:43:34 oster Exp $	*/
+/*	$NetBSD: rf_sstf.c,v 1.10 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.9 2002/09/17 03:43:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_sstf.c,v 1.10 2003/12/29 03:33:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -253,7 +253,7 @@ rf_SstfCreate(sect_per_disk, cl_list, listp)
 {
 	RF_Sstf_t *sstfq;
 
-	RF_CallocAndAdd(sstfq, 1, sizeof(RF_Sstf_t), (RF_Sstf_t *), cl_list);
+	RF_MallocAndAdd(sstfq, sizeof(RF_Sstf_t), (RF_Sstf_t *), cl_list);
 	sstfq->dir = DIR_EITHER;
 	sstfq->allow_reverse = 1;
 	return ((void *) sstfq);
@@ -267,7 +267,7 @@ rf_ScanCreate(sect_per_disk, cl_list, listp)
 {
 	RF_Sstf_t *scanq;
 
-	RF_CallocAndAdd(scanq, 1, sizeof(RF_Sstf_t), (RF_Sstf_t *), cl_list);
+	RF_MallocAndAdd(scanq, sizeof(RF_Sstf_t), (RF_Sstf_t *), cl_list);
 	scanq->dir = DIR_RIGHT;
 	scanq->allow_reverse = 1;
 	return ((void *) scanq);
@@ -281,7 +281,7 @@ rf_CscanCreate(sect_per_disk, cl_list, listp)
 {
 	RF_Sstf_t *cscanq;
 
-	RF_CallocAndAdd(cscanq, 1, sizeof(RF_Sstf_t), (RF_Sstf_t *), cl_list);
+	RF_MallocAndAdd(cscanq, sizeof(RF_Sstf_t), (RF_Sstf_t *), cl_list);
 	cscanq->dir = DIR_RIGHT;
 	return ((void *) cscanq);
 }

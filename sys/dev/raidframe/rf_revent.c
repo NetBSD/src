@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_revent.c,v 1.12 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_revent.c,v 1.13 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.12 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.13 2003/12/29 03:33:48 oster Exp $");
 
 #include <sys/errno.h>
 
@@ -38,11 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_revent.c,v 1.12 2003/12/29 02:38:18 oster Exp $")
 #include "rf_revent.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_freelist.h"
 #include "rf_desc.h"
 #include "rf_shutdown.h"
 
-static RF_FreeList_t *rf_revent_freelist;
+static struct pool rf_revent_pool;
 #define RF_MAX_FREE_REVENT 128
 #define RF_REVENT_INC        8
 #define RF_REVENT_INITIAL    8
@@ -67,7 +66,7 @@ GetReconEventDesc(RF_RowCol_t col, void *arg, RF_Revent_t type);
 static void rf_ShutdownReconEvent(ignored)
 	void   *ignored;
 {
-	RF_FREELIST_DESTROY(rf_revent_freelist, next, (RF_ReconEvent_t *));
+	pool_destroy(&rf_revent_pool);
 }
 
 int 
@@ -76,18 +75,18 @@ rf_ConfigureReconEvent(listp)
 {
 	int     rc;
 
-	RF_FREELIST_CREATE(rf_revent_freelist, RF_MAX_FREE_REVENT,
-	    RF_REVENT_INC, sizeof(RF_ReconEvent_t));
-	if (rf_revent_freelist == NULL)
-		return (ENOMEM);
+	pool_init(&rf_revent_pool, sizeof(RF_ReconEvent_t),
+		  0, 0, 0, "rf_revent_pl", NULL);
+	pool_sethiwat(&rf_revent_pool, RF_MAX_FREE_REVENT);
+	pool_prime(&rf_revent_pool, RF_REVENT_INITIAL);
+
 	rc = rf_ShutdownCreate(listp, rf_ShutdownReconEvent, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownReconEvent(NULL);
 		return (rc);
 	}
-	RF_FREELIST_PRIME(rf_revent_freelist, RF_REVENT_INITIAL, next,
-	    (RF_ReconEvent_t *));
+
 	return (0);
 }
 
@@ -206,12 +205,13 @@ GetReconEventDesc(col, arg, type)
 {
 	RF_ReconEvent_t *t;
 
-	RF_FREELIST_GET(rf_revent_freelist, t, next, (RF_ReconEvent_t *));
+	t = pool_get(&rf_revent_pool, PR_WAITOK);
 	if (t == NULL)
 		return (NULL);
 	t->col = col;
 	t->arg = arg;
 	t->type = type;
+	t->next = NULL;
 	return (t);
 }
 
@@ -219,5 +219,5 @@ void
 rf_FreeReconEventDesc(event)
 	RF_ReconEvent_t *event;
 {
-	RF_FREELIST_FREE(rf_revent_freelist, event, next);
+	pool_put(&rf_revent_pool, event);
 }

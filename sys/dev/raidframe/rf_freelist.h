@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_freelist.h,v 1.7 2002/10/11 02:15:57 oster Exp $	*/
+/*	$NetBSD: rf_freelist.h,v 1.8 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * rf_freelist.h
  */
@@ -406,70 +406,6 @@ struct RF_FreeList_s {
 }
 
 /*
- * fl    = freelist
- * obj   = object to allocate
- * nextp = name of "next" pointer in obj
- * cast  = cast of obj assignment
- * num   = num objs to return
- */
-#define RF_FREELIST_GET_N(_fl_,_obj_,_nextp_,_cast_,_num_) { \
-	void *_p, *_l, *_f; \
-	int _i, _n; \
-	_l = _f = NULL; \
-	_n = 0; \
-	RF_ASSERT(sizeof(*(_obj_))==((_fl_)->obj_size)); \
-	for(_n=0;_n<_num_;_n++) { \
-		RF_LOCK_MUTEX((_fl_)->lock); \
-		if (_fl_->objlist) { \
-			_obj_ = _cast_((_fl_)->objlist); \
-			(_fl_)->objlist = (void *)((_obj_)->_nextp_); \
-			(_fl_)->free_cnt--; \
-			RF_UNLOCK_MUTEX((_fl_)->lock); \
-		} \
-		else { \
-			RF_UNLOCK_MUTEX((_fl_)->lock); \
-			/* \
-			 * Allocate one at a time so we can free \
-			 * one at a time without cleverness when arena \
-			 * is full. \
-			 */ \
-			RF_Calloc(_obj_,1,(_fl_)->obj_size,_cast_); \
-			if (_obj_) { \
-				for(_i=1;_i<(_fl_)->obj_inc;_i++) { \
-					RF_Calloc(_p,1,(_fl_)->obj_size,(void *)); \
-					if (_p) { \
-						RF_LOCK_MUTEX((_fl_)->lock); \
-						(_cast_(_p))->_nextp_ = (_fl_)->objlist; \
-						(_fl_)->objlist = _p; \
-						RF_UNLOCK_MUTEX((_fl_)->lock); \
-					} \
-					else { \
-						break; \
-					} \
-				} \
-			} \
-			RF_LOCK_MUTEX((_fl_)->lock); \
-			RF_FREELIST_STAT_GROW(_fl_); \
-			RF_UNLOCK_MUTEX((_fl_)->lock); \
-		} \
-		RF_LOCK_MUTEX((_fl_)->lock); \
-		if (_f == NULL) \
-			_f = _obj_; \
-		if (_obj_) { \
-			(_cast_(_obj_))->_nextp_ = _l; \
-			_l = _obj_; \
-			RF_FREELIST_STAT_ALLOC(_fl_); \
-		} \
-		else { \
-			(_cast_(_f))->_nextp_ = (_fl_)->objlist; \
-			(_fl_)->objlist = _l; \
-			_n = _num_; \
-		} \
-		RF_UNLOCK_MUTEX((_fl_)->lock); \
-	} \
-}
-
-/*
  * fl = freelist
  * obj   = object to free
  * nextp = name of "next" pointer in obj
@@ -486,36 +422,6 @@ struct RF_FreeList_s {
 		(_fl_)->free_cnt++; \
 	} \
 	RF_FREELIST_STAT_FREE(_fl_); \
-	RF_UNLOCK_MUTEX((_fl_)->lock); \
-}
-
-/*
- * fl    = freelist
- * obj   = object to free
- * nextp = name of "next" pointer in obj
- * num   = num to free (debugging)
- */
-#define RF_FREELIST_FREE_N(_fl_,_obj_,_nextp_,_cast_,_num_) { \
-	void *_no; \
-	int _n; \
-	_n = 0; \
-	RF_LOCK_MUTEX((_fl_)->lock); \
-	while(_obj_) { \
-		_no = (_cast_(_obj_))->_nextp_; \
-		if ((_fl_)->free_cnt == (_fl_)->max_free_cnt) { \
-			RF_Free(_obj_,(_fl_)->obj_size); \
-		} \
-		else { \
-			RF_ASSERT((_fl_)->free_cnt < (_fl_)->max_free_cnt); \
-			(_obj_)->_nextp_ = (_fl_)->objlist; \
-			(_fl_)->objlist = (void *)(_obj_); \
-			(_fl_)->free_cnt++; \
-		} \
-		_n++; \
-		_obj_ = _no; \
-		RF_FREELIST_STAT_FREE(_fl_); \
-	} \
-	RF_ASSERT(_n==(_num_)); \
 	RF_UNLOCK_MUTEX((_fl_)->lock); \
 }
 
@@ -591,25 +497,6 @@ struct RF_FreeList_s {
 	for(_cur=(_fl_)->objlist;_cur;_cur=_next) { \
 		_next = (_cast_ _cur)->_nextp_; \
 		_clean_ (_cur); \
-		RF_Free(_cur,(_fl_)->obj_size); \
-	} \
-	RF_Free(_fl_,sizeof(RF_FreeList_t)); \
-}
-
-/*
- * fl    = freelist
- * nextp = name of "next" pointer in obj
- * cast  = cast to object type
- * clean = func to undo obj init
- * arg   = arg for undo func
- */
-#define RF_FREELIST_DESTROY_CLEAN_ARG(_fl_,_nextp_,_cast_,_clean_,_arg_) { \
-	void *_cur, *_next; \
-	RF_FREELIST_STAT_REPORT(_fl_); \
-	rf_mutex_destroy(&((_fl_)->lock)); \
-	for(_cur=(_fl_)->objlist;_cur;_cur=_next) { \
-		_next = (_cast_ _cur)->_nextp_; \
-		_clean_ (_cur,_arg_); \
 		RF_Free(_cur,(_fl_)->obj_size); \
 	} \
 	RF_Free(_fl_,sizeof(RF_FreeList_t)); \

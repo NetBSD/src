@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.8 2002/09/14 17:53:58 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.9 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.8 2002/09/14 17:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.9 2003/12/29 03:33:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -40,13 +40,13 @@ __KERNEL_RCSID(0, "$NetBSD: rf_mcpair.c,v 1.8 2002/09/14 17:53:58 oster Exp $");
 #include "rf_threadstuff.h"
 #include "rf_mcpair.h"
 #include "rf_debugMem.h"
-#include "rf_freelist.h"
+#include "rf_general.h"
 #include "rf_shutdown.h"
 
+#include <sys/pool.h>
 #include <sys/proc.h>
 
-static RF_FreeList_t *rf_mcpair_freelist;
-
+static struct pool rf_mcpair_pool;
 #define RF_MAX_FREE_MCPAIR 128
 #define RF_MCPAIR_INC       16
 #define RF_MCPAIR_INITIAL   24
@@ -89,7 +89,8 @@ static void
 rf_ShutdownMCPair(ignored)
 	void   *ignored;
 {
-	RF_FREELIST_DESTROY_CLEAN(rf_mcpair_freelist, next, (RF_MCPair_t *), clean_mcpair);
+	/* XXX what about the "cleaning" stuff???  Is it even necessary */
+	pool_destroy(&rf_mcpair_pool);
 }
 
 int 
@@ -98,16 +99,18 @@ rf_ConfigureMCPair(listp)
 {
 	int     rc;
 
-	RF_FREELIST_CREATE(rf_mcpair_freelist, RF_MAX_FREE_MCPAIR,
-	    RF_MCPAIR_INC, sizeof(RF_MCPair_t));
+	pool_init(&rf_mcpair_pool, sizeof(RF_MCPair_t), 0, 0, 0,
+		  "rf_mcpair_pl", NULL);
+	pool_sethiwat(&rf_mcpair_pool, RF_MAX_FREE_MCPAIR);
+	pool_prime(&rf_mcpair_pool, RF_MCPAIR_INITIAL);
+
 	rc = rf_ShutdownCreate(listp, rf_ShutdownMCPair, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown(__FILE__, __LINE__, rc);
 		rf_ShutdownMCPair(NULL);
 		return (rc);
 	}
-	RF_FREELIST_PRIME_INIT(rf_mcpair_freelist, RF_MCPAIR_INITIAL, next,
-	    (RF_MCPair_t *), init_mcpair);
+
 	return (0);
 }
 
@@ -116,7 +119,12 @@ rf_AllocMCPair()
 {
 	RF_MCPair_t *t;
 
-	RF_FREELIST_GET_INIT(rf_mcpair_freelist, t, next, (RF_MCPair_t *), init_mcpair);
+	t = pool_get(&rf_mcpair_pool, PR_WAITOK);
+	if (init_mcpair(t)) {
+		/* some sort of error... */
+		pool_put(&rf_mcpair_pool, t);
+		t = NULL;
+	}
 	if (t) {
 		t->flag = 0;
 		t->next = NULL;
@@ -128,7 +136,8 @@ void
 rf_FreeMCPair(t)
 	RF_MCPair_t *t;
 {
-	RF_FREELIST_FREE_CLEAN(rf_mcpair_freelist, t, next, clean_mcpair);
+	clean_mcpair(t);
+	pool_put(&rf_mcpair_pool, t);
 }
 /* the callback function used to wake you up when you use an mcpair to wait for something */
 void 

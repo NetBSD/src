@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.23 2003/12/29 02:38:17 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.24 2003/12/29 03:33:47 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.23 2003/12/29 02:38:17 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.24 2003/12/29 03:33:47 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -77,7 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.23 2003/12/29 02:38:17 oster Exp 
 #include "rf_acctrace.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_freelist.h"
 #include "rf_debugprint.h"
 #include "rf_shutdown.h"
 #include "rf_cvscan.h"
@@ -150,8 +149,7 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 
-static RF_FreeList_t *rf_dqd_freelist;
-
+static struct pool rf_dqd_pool;
 #define RF_MAX_FREE_DQD 256
 #define RF_DQD_INC       16
 #define RF_DQD_INITIAL   64
@@ -225,7 +223,7 @@ static void
 rf_ShutdownDiskQueueSystem(ignored)
 	void   *ignored;
 {
-	RF_FREELIST_DESTROY_CLEAN(rf_dqd_freelist, next, (RF_DiskQueueData_t *), clean_dqd);
+	pool_destroy(&rf_dqd_pool);
 }
 
 int 
@@ -234,18 +232,18 @@ rf_ConfigureDiskQueueSystem(listp)
 {
 	int     rc;
 
-	RF_FREELIST_CREATE(rf_dqd_freelist, RF_MAX_FREE_DQD,
-	    RF_DQD_INC, sizeof(RF_DiskQueueData_t));
-	if (rf_dqd_freelist == NULL)
-		return (ENOMEM);
+	pool_init(&rf_dqd_pool, sizeof(RF_DiskQueueData_t), 0, 0, 0,
+		  "rf_dqd_pl", NULL);
+	pool_sethiwat(&rf_dqd_pool, RF_MAX_FREE_DQD);
+	pool_prime(&rf_dqd_pool, RF_DQD_INITIAL);
+
 	rc = rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
 	if (rc) {
 		rf_print_unable_to_add_shutdown( __FILE__, __LINE__, rc);
 		rf_ShutdownDiskQueueSystem(NULL);
 		return (rc);
 	}
-	RF_FREELIST_PRIME_INIT(rf_dqd_freelist, RF_DQD_INITIAL, next,
-	    (RF_DiskQueueData_t *), init_dqd);
+
 	return (0);
 }
 
@@ -274,7 +272,8 @@ rf_ConfigureDiskQueues(
 	}
 	raidPtr->qType = p;
 
-	RF_CallocAndAdd(diskQueues, raidPtr->numCol + RF_MAXSPARE, 
+	RF_MallocAndAdd(diskQueues, 
+			(raidPtr->numCol + RF_MAXSPARE) *
 			sizeof(RF_DiskQueue_t), (RF_DiskQueue_t *), 
 			raidPtr->cleanupList);
 	if (diskQueues == NULL)
@@ -519,7 +518,12 @@ rf_CreateDiskQueueData(
 {
 	RF_DiskQueueData_t *p;
 
-	RF_FREELIST_GET_INIT(rf_dqd_freelist, p, next, (RF_DiskQueueData_t *), init_dqd);
+	p = pool_get(&rf_dqd_pool, PR_WAITOK);
+	if (init_dqd(p)) {
+		/* no memory for the buffer!?!? */
+		pool_put(&rf_dqd_pool, p);
+		return(NULL);
+	}
 
 	p->sectorOffset = ssect + rf_protectedSectors;
 	p->numSector = nsect;
@@ -542,5 +546,6 @@ void
 rf_FreeDiskQueueData(p)
 	RF_DiskQueueData_t *p;
 {
-	RF_FREELIST_FREE_CLEAN(rf_dqd_freelist, p, next, clean_dqd);
+	clean_dqd(p);
+	pool_put(&rf_dqd_pool, p);
 }

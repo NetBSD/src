@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.166 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.167 2003/12/29 03:33:48 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.166 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.167 2003/12/29 03:33:48 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -358,7 +358,7 @@ raidattach(num)
 
 	/* Make some space for requested number of units... */
 
-	RF_Calloc(raidPtrs, num, sizeof(RF_Raid_t *), (RF_Raid_t **));
+	RF_Malloc(raidPtrs, num * sizeof(RF_Raid_t *), (RF_Raid_t **));
 	if (raidPtrs == NULL) {
 		panic("raidPtrs is NULL!!");
 	}
@@ -411,7 +411,7 @@ raidattach(num)
 		raidrootdev[raidID].dv_flags  = 0;
 		sprintf(raidrootdev[raidID].dv_xname,"raid%d",raidID);
 
-		RF_Calloc(raidPtrs[raidID], 1, sizeof(RF_Raid_t),
+		RF_Malloc(raidPtrs[raidID], sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
 		if (raidPtrs[raidID] == NULL) {
 			printf("WARNING: raidPtrs[%d] is NULL\n", raidID);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_psstatus.c,v 1.15 2003/12/29 02:38:18 oster Exp $	*/
+/*	$NetBSD: rf_psstatus.c,v 1.16 2003/12/29 03:33:48 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -37,14 +37,13 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.15 2003/12/29 02:38:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_psstatus.c,v 1.16 2003/12/29 03:33:48 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
 #include "rf_raid.h"
 #include "rf_general.h"
 #include "rf_debugprint.h"
-#include "rf_freelist.h"
 #include "rf_psstatus.h"
 #include "rf_shutdown.h"
 
@@ -116,7 +115,9 @@ rf_MakeParityStripeStatusTable(raidPtr)
 	RF_PSStatusHeader_t *pssTable;
 	int     i, j, rc;
 
-	RF_Calloc(pssTable, raidPtr->pssTableSize, sizeof(RF_PSStatusHeader_t), (RF_PSStatusHeader_t *));
+	RF_Malloc(pssTable, 
+			  raidPtr->pssTableSize * sizeof(RF_PSStatusHeader_t),
+			  (RF_PSStatusHeader_t *));
 	for (i = 0; i < raidPtr->pssTableSize; i++) {
 		rc = rf_mutex_init(&pssTable[i].mutex);
 		if (rc) {
@@ -294,8 +295,8 @@ rf_AllocPSStatus(raidPtr)
 {
 	RF_ReconParityStripeStatus_t *p;
 
-	p = pool_get(&raidPtr->pss_pool, PR_NOWAIT);
-	p->issued = pool_get(&raidPtr->pss_issued_pool, PR_NOWAIT);
+	p = pool_get(&raidPtr->pss_pool, PR_WAITOK);
+	p->issued = pool_get(&raidPtr->pss_issued_pool, PR_WAITOK);
 	memset(p->issued, 0, raidPtr->numCol);
 	p->next = NULL;
 	/* no need to initialize here b/c the only place we're called from is
