@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.36 1998/04/29 20:43:30 matt Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.37 1998/05/06 01:21:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -237,7 +237,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
-		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
+		TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
 		tp->iss = tcp_new_iss(tp, sizeof(struct tcpcb), 0);
 		tcp_sendseqinit(tp);
 		error = tcp_output(tp);
@@ -588,7 +588,7 @@ tcp_usrclosed(tp)
 		 * not left in FIN_WAIT_2 forever.
 		 */
 		if (tp->t_state == TCPS_FIN_WAIT_2)
-			tp->t_timer[TCPT_2MSL] = tcp_maxidle;
+			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
 	}
 	return (tp);
 }

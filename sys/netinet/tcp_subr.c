@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.50 1998/05/03 19:54:56 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.51 1998/05/06 01:21:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -738,7 +738,7 @@ tcp_established(tp)
 	u_long bufsize;
 
 	tp->t_state = TCPS_ESTABLISHED;
-	tp->t_timer[TCPT_KEEP] = tcp_keepidle;
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
 #ifdef RTV_RPIPE
 	if (rt != NULL && rt->rt_rmx.rmx_recvpipe != 0)
