@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.30 2000/07/07 08:03:40 itohy Exp $	*/
+/*	$NetBSD: res_query.c,v 1.31 2000/08/09 14:41:05 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.30 2000/07/07 08:03:40 itohy Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.31 2000/08/09 14:41:05 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -132,6 +132,10 @@ res_query(name, class, type, answer, anslen)
 
 	n = res_mkquery(QUERY, name, class, type, NULL, 0, NULL,
 	    buf, sizeof(buf));
+#ifdef RES_USE_EDNS0
+	if (n > 0 && (_res.options & RES_USE_EDNS0) != 0)
+		n = res_opt(n, buf, sizeof(buf), anslen);
+#endif
 	if (n <= 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)

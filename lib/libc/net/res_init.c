@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.35 2000/07/07 08:03:40 itohy Exp $	*/
+/*	$NetBSD: res_init.c,v 1.36 2000/08/09 14:41:03 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.35 2000/07/07 08:03:40 itohy Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.36 2000/08/09 14:41:03 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -553,7 +553,13 @@ res_setoptions(options, source)
 #endif
 		} else if (!strncmp(cp, "inet6", sizeof("inet6") - 1)) {
 			_res.options |= RES_USE_INET6;
-		} else {
+		}
+#ifdef RES_USE_EDNS0
+		else if (!strncmp(cp, "edns0", sizeof("edns0") - 1)) {
+		       _res.options |= RES_USE_EDNS0;
+		}
+#endif
+		else {
 			/* XXX - print a warning here? */
 		}
 		/* skip to next run of spaces */

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.28 2000/07/08 03:28:01 itojun Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.29 2000/08/09 14:41:02 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1990, 1993
@@ -81,7 +81,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_debug.c,v 8.20 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.28 2000/07/08 03:28:01 itojun Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.29 2000/08/09 14:41:02 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1108,6 +1108,9 @@ __p_option(option)
 	case RES_DNSRCH:	return "dnsrch";
 	case RES_INSECURE1:	return "insecure1";
 	case RES_INSECURE2:	return "insecure2";
+#ifdef RES_USE_EDNS0
+	case RES_USE_EDNS0:	return "edns0";
+#endif
 	default:	
 		(void)snprintf(nbuf, sizeof nbuf, "?0x%lx?", (u_long)option);
 		return (nbuf);
