@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.67 1995/01/15 03:29:05 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.68 1995/02/28 23:18:03 cgd Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -69,6 +69,10 @@
 
 #ifdef COMPAT_IBCS2
 #include <compat/ibcs2/ibcs2_exec.h>
+#endif
+#ifdef COMPAT_LINUX
+#include <sys/exec.h>
+#include <compat/linux/linux_syscall.h>
 #endif
 
 #include "npx.h"
@@ -499,6 +503,13 @@ syscall(frame)
 	extern int nibcs2_sysent;
 	extern struct sysent ibcs2_sysent[];
 #endif
+#ifdef COMPAT_LINUX
+	extern int nlinux_sysent;
+	extern struct sysent linux_sysent[];
+	extern char sigcode[], esigcode[];
+	extern int linux_error[];
+	int fromtramp;
+#endif
 
 	cnt.v_syscall++;
 	if (ISPL(frame.tf_cs) != SEL_UPL)
@@ -533,6 +544,23 @@ syscall(frame)
 			code = IBCS2_CVT_HIGH_SYSCALL(code);
 		break;
 #endif
+#ifdef COMPAT_LINUX
+	case EMUL_LINUX:
+		/* XXXX This is really horrible */
+		if ((char *) opc > ((char *)PS_STRINGS) - (esigcode - sigcode)
+		    && (char *) opc < (char *) PS_STRINGS) {
+			nsys = nsysent;
+			callp = sysent;
+			fromtramp = 1;
+		}
+		else {
+			nsys = nlinux_sysent;
+			callp = linux_sysent;
+			fromtramp = 0;
+		}
+			
+		break;
+#endif
 #ifdef DIAGNOSTIC
 	default:
 		panic("invalid p_emul %d", p->p_emul);
@@ -541,6 +569,11 @@ syscall(frame)
 
 	switch (code) {
 	case SYS_syscall:
+#ifdef COMPAT_LINUX
+		/* Linux has a special system setup call as number 0 */
+		if (p->p_emul == EMUL_LINUX && !fromtramp)
+			break;
+#endif
 		code = fuword(params);
 		params += sizeof(int);
 		break;
@@ -562,6 +595,36 @@ syscall(frame)
 	else
 		callp = &callp[code];
 	argsize = callp->sy_argsize;
+#ifdef COMPAT_LINUX
+	/* XXX extra if() for every emul type.. */
+	if (p->p_emul == EMUL_LINUX && !fromtramp) {
+		/*
+		 * Linux passes the args in ebx, ecx, edx, esi, edi,
+		 * in increasing order.
+		 */
+		switch(argsize / sizeof (register_t)) {
+		default:
+			/* No Linux syscalls with > 5 arguments */
+			break;
+		case 5:
+			args[4] = frame.tf_edi;
+			/*FALLTHROUGH*/
+		case 4:
+			args[3] = frame.tf_esi;
+			/*FALLTHROUGH*/
+		case 3:
+			args[2] = frame.tf_edx;
+			/*FALLTHROUGH*/
+		case 2:
+			args[1] = frame.tf_ecx;
+			/*FALLTHROUGH*/
+		case 1:
+			args[0] = frame.tf_ebx;
+			break;
+		}
+	}
+	else
+#endif
 	if (argsize && (error = copyin(params, (caddr_t)args, argsize))) {
 #ifdef SYSCALL_DEBUG
 		scdebug_call(p, code, argsize, args);
@@ -613,6 +676,11 @@ syscall(frame)
 #ifdef COMPAT_SVR4
 		if (p->p_emul == EMUL_IBCS2_ELF)
 			error = svr4_error[error];
+#endif
+#ifdef COMPAT_LINUX
+		if (p->p_emul == EMUL_LINUX && !fromtramp) {
+			error = -linux_error[error];
+		}
 #endif
 		frame.tf_eax = error;
 		frame.tf_eflags |= PSL_C;	/* carry bit */
