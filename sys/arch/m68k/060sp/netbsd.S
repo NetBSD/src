@@ -1,5 +1,5 @@
 #
-# $NetBSD: netbsd.S,v 1.2 1997/06/26 22:28:42 is Exp $
+# $NetBSD: netbsd.S,v 1.3 1997/06/27 23:32:09 is Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -353,9 +353,9 @@ dmwls:
 #
 # The sample code below simply executes an "rte".
 #
-	.global	_060_real_trace
+	.global	_060_real_trace,_trace
 _060_real_trace:
-	rte
+	jra	_trace
 
 #
 # _060_real_access():
