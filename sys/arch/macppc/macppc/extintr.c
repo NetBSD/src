@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.44 2004/06/20 20:50:13 manu Exp $	*/
+/*	$NetBSD: extintr.c,v 1.45 2004/12/09 01:43:37 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 Tsubai Masanari.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.44 2004/06/20 20:50:13 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: extintr.c,v 1.45 2004/12/09 01:43:37 briggs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -103,7 +103,7 @@ void intr_calculatemasks __P((void));
 int fakeintr __P((void *));
 
 static inline int cntlzw __P((int));
-static inline int gc_read_irq __P((void));
+static inline uint32_t gc_read_irq __P((void));
 static inline int mapirq __P((int));
 static void gc_enable_irq __P((int));
 static void gc_disable_irq __P((int));
@@ -148,6 +148,11 @@ extern u_int *heathrow_FCR;
 
 #define have_openpic	(openpic_base != NULL)
 
+static uint32_t		intr_level_mask;
+
+#define INT_LEVEL_MASK_GC	0x3ff00000
+#define INT_LEVEL_MASK_OHARE	0x1ff00000
+
 /*
  * Map 64 irqs into 32 (bits).
  */
@@ -159,6 +164,7 @@ mapirq(irq)
 
 	if (irq < 0 || irq >= ICU_LEN)
 		panic("invalid irq %d", irq);
+
 	if (virq[irq])
 		return virq[irq];
 
@@ -187,33 +193,41 @@ cntlzw(x)
 	return a;
 }
 
-int
+uint32_t
 gc_read_irq()
 {
-	int rv = 0;
-	int lo, hi, p;
+	uint32_t rv = 0;
+	uint32_t events, e;
+	uint32_t levels;
 
-	lo = in32rb(INT_STATE_REG_L);
-	if (lo)
-		out32rb(INT_CLEAR_REG_L, lo);
-	while (lo) {
-		p = 31 - cntlzw(lo);
-		rv |= 1 << virq[p];
-		lo &= ~(1 << p);
+	/* Get the non-level interrupts */
+	events = in32rb(INT_STATE_REG_L) & ~intr_level_mask;
+
+	/* Get the enabled level interrupts */
+	levels = in32rb(INT_LEVEL_REG_L) & in32rb(INT_ENABLE_REG_L);
+	events = events | (levels & intr_level_mask);
+
+	/* Clear any interrupts that we've read */
+	out32rb(INT_CLEAR_REG_L, events | intr_level_mask);
+	while (events) {
+		e = 31 - cntlzw(events);
+		rv |= 1 << virq[e];
+		events &= ~(1 << e);
 	}
 
-	if (heathrow_FCR)			/* has heathrow? */
-		hi = in32rb(INT_STATE_REG_H);
-	else
-		hi = 0;
+	/* If we're on Heathrow, repeat for the secondary */
+	if (heathrow_FCR) {
+		events = in32rb(INT_STATE_REG_H);
 
-	if (hi)
-		out32rb(INT_CLEAR_REG_H, hi);
-	while (hi) {
-		p = 31 - cntlzw(hi);
-		rv |= 1 << virq[p + 32];
-		hi &= ~(1 << p);
-	}
+		if (events)
+			out32rb(INT_CLEAR_REG_H, events);
+
+			while (events) {
+				e = 31 - cntlzw(events);
+				rv |= 1 << virq[e + 32];
+				events &= ~(1 << e);
+			}
+		}
 
 	/* 1 << 0 is invalid. */
 	return rv & ~1;
@@ -223,16 +237,58 @@ void
 gc_enable_irq(irq)
 	int irq;
 {
-	u_int x;
+	struct cpu_info *ci = curcpu();
+	u_int levels, vi;
+	u_int mask, irqbit;
 
 	if (irq < 32) {
-		x = in32rb(INT_ENABLE_REG_L);
-		x |= 1 << irq;
-		out32rb(INT_ENABLE_REG_L, x);
+		mask = in32rb(INT_ENABLE_REG_L);
+		irqbit = 1 << irq;
+
+		/* Already enabled? */
+		if (mask & irqbit)
+			return;
+
+		mask |= irqbit;
+		out32rb(INT_ENABLE_REG_L, mask);	/* unmask */
+
+		/* look for lost level interrupts */
+		levels = in32rb(INT_LEVEL_REG_L);
+		if (levels & irqbit) {
+			vi = virq[irq];		/* map to virtual irq */
+			if (!(ci->ci_ipending & (1<<vi))) {
+				/*
+				 * It's active and not pending, go ahead
+				 * and mark it pending.
+				 */
+				ci->ci_ipending |= (1<<vi);	
+			}
+			out32rb(INT_CLEAR_REG_L, irqbit);
+		}
 	} else {
-		x = in32rb(INT_ENABLE_REG_H);
-		x |= 1 << (irq - 32);
-		out32rb(INT_ENABLE_REG_H, x);
+		mask = in32rb(INT_ENABLE_REG_H);
+		irqbit = 1 << (irq - 32);
+
+		/* Already enabled? */
+		if (mask & irqbit)
+			return;
+
+		mask |= irqbit;
+		out32rb(INT_ENABLE_REG_H, mask);	/* unmask */
+
+		/* look for lost level interrupts */
+		levels = in32rb(INT_LEVEL_REG_H);
+		if (levels & irqbit) {
+			vi = virq[irq];		/* map to virtual irq */
+			if (!(ci->ci_ipending & (1<<vi))) {
+				/*
+				 * It's active and not pending, go ahead
+				 * and mark it pending.
+				 */
+				ci->ci_ipending |= (1<<vi);	
+			}
+			out32rb(INT_CLEAR_REG_H, irqbit);
+		}
 	}
 }
 
@@ -525,7 +581,11 @@ ext_intr()
 	struct cpu_info *ci = curcpu();
 	struct intrsource *is;
 	struct intrhand *ih;
-	u_long int_state;
+	uint32_t int_state;
+#if DIAGNOSTIC
+	uint32_t oint_state;
+	int spincount=0;
+#endif
 
 #ifdef MULTIPROCESSOR
 	/* Only cpu0 can handle external interrupts. */
@@ -539,46 +599,71 @@ ext_intr()
 	pcpl = ci->ci_cpl;
 	msr = mfmsr();
 
-	int_state = gc_read_irq();
-#ifdef MULTIPROCESSOR
-	r_imen = 1 << virq[GC_IPI_IRQ];
-	if (int_state & r_imen) {
-		int_state &= ~r_imen;
-		cpuintr(NULL);
-	}
+#if DIAGNOSTIC
+	oint_state = 0;
 #endif
-	if (int_state == 0)
-		return;
+	while ((int_state = gc_read_irq()) != 0) {
 
-start:
-	irq = 31 - cntlzw(int_state);
-	r_imen = 1 << irq;
-
-	is = &intrsources[irq];
-
-	if ((pcpl & r_imen) != 0) {
-		ci->ci_ipending |= r_imen;	/* Masked! Mark this as pending */
-		gc_disable_irq(is->is_hwirq);
-	} else {
-		splraise(is->is_mask);
-		mtmsr(msr | PSL_EE);
-		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
-		ih = is->is_hand;
-		while (ih) {
-			(*ih->ih_fun)(ih->ih_arg);
-			ih = ih->ih_next;
+#if DIAGNOSTIC
+		/*
+		 * Paranoia....
+		 */
+		if (int_state == oint_state) {
+			if (spincount++ > 0x10) {
+				panic("stuck interrupt: curr %08x / last %08x",
+					int_state, oint_state);
+			}
 		}
-		KERNEL_UNLOCK();
-		mtmsr(msr);
-		ci->ci_cpl = pcpl;
+		oint_state = int_state;
+#endif
 
-		uvmexp.intrs++;
-		is->is_ev.ev_count++;
+#ifdef MULTIPROCESSOR
+		r_imen = 1 << virq[GC_IPI_IRQ];
+		if (int_state & r_imen) {
+			int_state &= ~r_imen;
+			cpuintr(NULL);
+		}
+#endif
+
+		while (int_state) {
+			irq = 31 - cntlzw(int_state);
+			r_imen = 1 << irq;
+
+			is = &intrsources[irq];
+
+			int_state &= ~r_imen;
+
+			if ((pcpl & r_imen) != 0) {
+				ci->ci_ipending |= r_imen;
+				gc_disable_irq(is->is_hwirq);
+				continue;
+			}
+
+			/* This one is no longer pending */
+			ci->ci_ipending &= ~r_imen;
+
+			splraise(is->is_mask);
+			mtmsr(msr | PSL_EE);
+			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+			ih = is->is_hand;
+			while (ih) {
+				(*ih->ih_fun)(ih->ih_arg);
+				ih = ih->ih_next;
+			}
+			KERNEL_UNLOCK();
+			mtmsr(msr);
+			ci->ci_cpl = pcpl;
+
+			/* Perhaps some interrupts arrived above */
+			int_state |= (ci->ci_ipending & ~pcpl & HWIRQ_MASK);
+
+			/* Ensure that this interrupt is enabled */
+			gc_enable_irq(is->is_hwirq);
+
+			uvmexp.intrs++;
+			is->is_ev.ev_count++;
+		}
 	}
-
-	int_state &= ~r_imen;
-	if (int_state)
-		goto start;
 
 	mtmsr(msr | PSL_EE);
 	splx(pcpl);	/* Process pendings. */
@@ -697,8 +782,6 @@ again:
 	while ((hwpend = (ci->ci_ipending & ~pcpl & HWIRQ_MASK)) != 0) {
 		irq = 31 - cntlzw(hwpend);
 		is = &intrsources[irq];
-		if (!have_openpic)
-			gc_enable_irq(is->is_hwirq);
 
 		ci->ci_ipending &= ~(1 << irq);
 		splraise(is->is_mask);
@@ -716,6 +799,8 @@ again:
 		is->is_ev.ev_count++;
 		if (have_openpic)
 			openpic_enable_irq(is->is_hwirq, is->is_type);
+		else
+			gc_enable_irq(is->is_hwirq);
 	}
 #ifdef MULTIPROCESSOR
 	}
@@ -777,12 +862,6 @@ again:
 		goto again;
 	}
 
-#if 0
-	if (ci->ci_ipending & ~pcpl) {
-		printf("do_pending_int (again) 0x%x\n", ci->ci_ipending & ~pcpl);
-		goto again;
-	}
-#endif
 	ci->ci_cpl = pcpl;	/* Don't use splx... we are here already! */
 	ci->ci_iactive = 0;
 	mtmsr(emsr);
@@ -903,9 +982,11 @@ legacy_int_init()
 {
 	out32rb(INT_ENABLE_REG_L, 0);		/* disable all intr. */
 	out32rb(INT_CLEAR_REG_L, 0xffffffff);	/* clear pending intr. */
+	intr_level_mask = INT_LEVEL_MASK_GC;
 	if (heathrow_FCR) {
 		out32rb(INT_ENABLE_REG_H, 0);
 		out32rb(INT_CLEAR_REG_H, 0xffffffff);
+		intr_level_mask = INT_LEVEL_MASK_OHARE;
 	}
 
 	oea_install_extint(ext_intr);
