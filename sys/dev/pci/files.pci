@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.53 1999/02/09 02:04:36 sakamoto Exp $
+#	$NetBSD: files.pci,v 1.54 1999/03/25 00:51:53 explorer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -109,12 +109,20 @@ file	dev/pci/if_ne_pci.c		ne_pci
 # Texas Instruments ThunderLAN Chip.
 device  tl: ether, ifnet, arp, i2c, i2c_eeprom, mii
 attach  tl at pci
-file    dev/pci/if_tl.c     tl
+file    dev/pci/if_tl.c     		tl
 
 # SDL Communications N2 PCI Network Interface
 device	ntwoc: ifnet, hd64570
 attach	ntwoc at pci with ntwoc_pci
 file	dev/pci/if_ntwoc_pci.c		ntwoc_pci
+
+# Lan Media Corporation T1/HSSI/DS3 driver
+device	lmc: ifnet, sppp
+attach	lmc at pci
+file	dev/pci/if_lmc.c		lmc
+file	dev/pci/if_lmc_common.c		lmc
+file	dev/pci/if_lmc_media.c		lmc
+file	dev/pci/if_lmc_nbsd.c		lmc
 
 # Essential Communications HIPPI interface
 # device declaration in sys/conf/files
@@ -123,15 +131,15 @@ file    dev/pci/if_esh_pci.c            esh_pci
 
 # generic PCI VGA
 attach	vga at pci with vga_pci
-file	dev/pci/vga_pci.c	vga_pci	needs-flag
+file	dev/pci/vga_pci.c		vga_pci	needs-flag
 
 # DEC TGA
 device	tga: wsemuldisplaydev, wsrasteremulops
 attach	tga at pci
-file	dev/pci/tga.c		tga		needs-flag
-file	dev/pci/tga_conf.c	tga
-file	dev/pci/tga_bt463.c	tga
-file	dev/pci/tga_bt485.c	tga
+file	dev/pci/tga.c			tga needs-flag
+file	dev/pci/tga_conf.c		tga
+file	dev/pci/tga_bt463.c		tga
+file	dev/pci/tga_bt485.c		tga
 
 # Ensoniq AudioPCI S5016
 device	eap: audio, auconv, mulaw
@@ -154,11 +162,11 @@ file	dev/pci/if_epic_pci.c		epic_pci
 # (see documentation in the driver for what, exactly, should be supported)
 device	puc { port = -1 }
 attach	puc at pci
-file	dev/pci/puc.c		puc
-file	dev/pci/pucdata.c	puc
+file	dev/pci/puc.c			puc
+file	dev/pci/pucdata.c		puc
 
 attach	com at puc with com_puc
-file	dev/pci/com_puc.c	com_puc
+file	dev/pci/com_puc.c		com_puc
 
 # XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
 # XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
@@ -166,7 +174,7 @@ file	dev/pci/com_puc.c	com_puc
 # XXX be fixed as well.)
 
 # attach	lpt at puc with lpt_puc
-# file	dev/pci/lpt_puc.c	lpt_puc
+# file	dev/pci/lpt_puc.c		lpt_puc
 
 # UHCI USB controller
 attach	uhci at pci with uhci_pci
