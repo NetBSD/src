@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.6 2003/09/06 22:08:48 christos Exp $
+.\"	$NetBSD: signal.9,v 1.7 2003/09/06 23:20:57 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -173,7 +173,8 @@ receives a new
 .Fa struct sigacts
 which is copied from
 .Fa pp
-if non-NULL.
+if
+.No non- Ns Dv NULL .
 .It void Fn sigactsunshare "struct proc *p"
 .Pp
 This function causes the process
@@ -210,7 +211,9 @@ arguments provide support for userspace signal trampolines.
 Trampoline version 0 is reserved for the legacy kernel-provided
 signal trampoline;
 .Fa tramp
-must be NULL in this case.
+must be
+.Dv NULL
+in this case.
 Otherwise,
 .Fa vers
 specifies the ABI of the trampoline specified by
@@ -249,7 +252,7 @@ which is described below.
 .It void Fn kgsignal "int pgid" "ksiginfo_t *ks" "void *data"
 .Pp
 Schedule the signal
-.Fa ks->ksi_signo
+.Fa ks-\*[Gt]ksi_signo
 to be delivered to all members of the process group specified by
 .Fa pgid .
 The
@@ -261,12 +264,12 @@ below for a complete description of the signal scheduling semantics.
 .It void Fn pgsignal "struct pgrp *pgrp" "int signum" "int checkctty"
 .Pp
 This is a wrapper function for
-.Fn kpgsignal 
+.Fn kpgsignal
 which is described below.
 .It void Fn kpgsignal "struct pgrp *pgrp" "ksiginfo_t *ks" "void *data" "int checkctty"
 .Pp
 Schedule the signal
-.Fa ks->ksi_signo
+.Fa ks-\*[Gt]ksi_signo
 to be delivered to all members of the process group
 .Fa pgrp .
 If
@@ -281,7 +284,7 @@ function below.
 .It void Fn trapsignal "struct proc *p" "ksiginfo_t *ks"
 .Pp
 Sends the signal
-.Fa ks->ksi_signo
+.Fa ks-\*[Gt]ksi_signo
 caused by a hardware trap to the process
 .Fa p .
 This function is meant to be called by machine-dependent trap handling
@@ -289,17 +292,19 @@ code.
 .It void Fn psignal "struct proc *p" "int signum"
 .Pp
 This is a wrapper function for
-.Fn kpgsignal 
+.Fn kpgsignal
 which is described below.
 .It void Fn kpsignal "struct proc *p" "ksiginfo_t *ks" "void *data"
 .Pp
 Schedule the signal
-.Fa ks->ksi_signo
+.Fa ks-\*[Gt]ksi_signo
 to be delivered to the process
 .Fa p .
 The
 .Fa data
-argument, if not NULL, points to the file descriptor data that caused the
+argument, if not
+.Dv NULL ,
+points to the file descriptor data that caused the
 signal to be generated in the
 .Li SIGIO
 case.
@@ -502,7 +507,7 @@ __sigtramp_\*[Lt]flavor\*[Gt]_\*[Lt]version\*[Gt]
 .Pp
 where:
 .Bl -tag -width versionXX
-.It \*[Lt]flavor\*[Gt]
+.It Aq flavor
 The flavor of the signal handler.
 The following flavors are valid:
 .Bl -tag -width sigcontextXX
@@ -525,7 +530,7 @@ void (*handler)(int signum,
 Note: sigcontext style signal handlers are deprecated, and retained only
 for compatibility with older binaries.
 .El
-.It \*[Lt]version\*[Gt]
+.It Aq version
 Specifies the ABI version of the signal trampoline.
 The trampoline ABI is coordinated with the machine-dependent kernel
 .Fn sendsig
@@ -545,7 +550,6 @@ __sigtramp_sigcontext_1
 The current signal trampoline is:
 .Bd -literal -offset indent
 __sigtramp_siginfo_2
-.Pp
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr signal 7 ,
