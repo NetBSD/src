@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.28 1999/11/12 00:34:57 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.29 1999/11/17 23:00:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -458,7 +458,7 @@ ugen_do_read(sc, endpt, uio, flag)
 		}
 		break;
 	case UE_BULK:
-		xfer = usbd_alloc_request(sc->sc_udev);
+		xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (xfer == 0)
 			return (ENOMEM);
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
@@ -483,7 +483,7 @@ ugen_do_read(sc, endpt, uio, flag)
 			if (error || tn < n)
 				break;
 		}
-		usbd_free_request(xfer);
+		usbd_free_xfer(xfer);
 		break;
 	default:
 		return (ENXIO);
@@ -546,7 +546,7 @@ ugen_do_write(sc, endpt, uio, flag)
 
 	switch (sce->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_BULK:
-		xfer = usbd_alloc_request(sc->sc_udev);
+		xfer = usbd_alloc_xfer(sc->sc_udev);
 		if (xfer == 0)
 			return (EIO);
 		while ((n = min(UGEN_BBSIZE, uio->uio_resid)) != 0) {
@@ -564,7 +564,7 @@ ugen_do_write(sc, endpt, uio, flag)
 				break;
 			}
 		}
-		usbd_free_request(xfer);
+		usbd_free_xfer(xfer);
 		break;
 	default:
 		return (ENXIO);
@@ -681,7 +681,7 @@ ugenintr(xfer, addr, status)
 		return;
 	}
 
-	usbd_get_request_status(xfer, 0, 0, &count, 0);
+	usbd_get_xfer_status(xfer, 0, 0, &count, 0);
 	ibuf = sce->ibuf;
 
 	DPRINTFN(5, ("ugenintr: xfer=%p status=%d count=%d\n", 
