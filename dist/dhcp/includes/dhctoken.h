@@ -321,4 +321,4 @@ enum dhcp_token {
 #define is_identifier(x)	((x) >= FIRST_TOKEN &&	\
 				 (x) != STRING &&	\
 				 (x) != NUMBER &&	\
-				 (x) != EOF)
+				 (x) != END_OF_FILE)
