@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4 1996/10/13 03:31:53 christos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.5 1996/10/13 11:39:52 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1993
@@ -79,7 +79,8 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 
-#include <machine/machConst.h>
+#include <mips/cpuregs.h>
+#include <mips/locore.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>
 
@@ -214,7 +215,7 @@ pmap_bootstrap(firstaddr)
 	/*
 	 * Clear allocated memory.
 	 */
-	firstaddr = pica_round_page(firstaddr);
+	firstaddr = mips_round_page(firstaddr);
 	bzero((caddr_t)start, firstaddr - start);
 
 	avail_start = MACH_CACHED_TO_PHYS(firstaddr);
@@ -543,7 +544,7 @@ pmap_remove(pmap, sva, eva)
 		panic("pmap_remove: uva not in range");
 #endif
 	while (sva < eva) {
-		nssva = pica_trunc_seg(sva) + NBSEG;
+		nssva = mips_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -713,7 +714,7 @@ pmap_protect(pmap, sva, eva, prot)
 		panic("pmap_protect: uva not in range");
 #endif
 	while (sva < eva) {
-		nssva = pica_trunc_seg(sva) + NBSEG;
+		nssva = mips_trunc_seg(sva) + NBSEG;
 		if (nssva == 0 || nssva > eva)
 			nssva = eva;
 		/*
@@ -837,7 +838,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 {
 	register pt_entry_t *pte;
 	register u_int npte;
-	register int i, j;
+	register int i;
 	vm_page_t mem;
 
 #ifdef DEBUG
@@ -1040,7 +1041,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 			/*
 			 * Update the same virtual address entry.
 			 */
-			j = MachTLBUpdate(va, npte);
+			MachTLBUpdate(va, npte);
 			pte->pt_entry = npte;
 			va += NBPG;
 			npte += vad_to_pfn(NBPG);
@@ -1085,7 +1086,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	do {
 		pte->pt_entry = npte;
 		if (pmap->pm_tlbgen == tlbpid_gen)
-			j = MachTLBUpdate(va | (pmap->pm_tlbpid <<
+			MachTLBUpdate(va | (pmap->pm_tlbpid <<
 				VMMACH_TLB_PID_SHIFT), npte);
 		va += NBPG;
 		npte += vad_to_pfn(NBPG);
