@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.69 2005/02/03 23:51:56 perry Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.70 2005/02/28 16:20:59 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.69 2005/02/03 23:51:56 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.70 2005/02/28 16:20:59 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -303,6 +303,12 @@ tcp_timer_rexmt(void *arg)
 #endif
 	ostate = tp->t_state;
 #endif /* TCP_DEBUG */
+
+	/*
+	 * Clear the SACK scoreboard, reset FACK estimate.
+	 */
+	tcp_free_sackholes(tp);
+	tp->snd_fack = tp->snd_una;
 
 	/*
 	 * Retransmission timer went off.  Message has not
@@ -599,6 +605,13 @@ tcp_timer_2msl(void *arg)
 		splx(s);
 		return;
 	}
+
+	/*
+	 * 2 MSL timeout went off, clear the SACK scoreboard, reset
+	 * the FACK estimate.
+	 */
+	tcp_free_sackholes(tp);
+	tp->snd_fack = tp->snd_una;
 
 #ifdef TCP_DEBUG
 #ifdef INET
