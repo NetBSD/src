@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.2 1997/04/16 22:55:10 thorpej Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.3 1998/03/02 16:18:17 drochner Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,7 +61,8 @@ struct mbr_partition {
 
 /* Known partition types: */
 #define	MBR_EXTENDED	0x05		/* Extended partition */
-#define	MBR_NETBSD	0xa5		/* NetBSD partition */
+#define	MBR_NETBSD	0xa9		/* NetBSD partition */
+#define	MBR_386BSD	0xa5		/* 386BSD partition */
 
 /* For compatibility reasons (mainly for fdisk): */
 #define	dos_partition	mbr_partition
@@ -79,7 +80,7 @@ struct mbr_partition {
 #define	DOSPARTOFF	MBRPARTOFF
 #define	NDOSPART	NMBRPART
 
-#define	DOSPTYP_386BSD	MBR_NETBSD
+#define	DOSPTYP_NETBSD	MBR_NETBSD
 
 struct cpu_disklabel {
 	int cd_start;		/* Offset to NetBSD partition in blocks */

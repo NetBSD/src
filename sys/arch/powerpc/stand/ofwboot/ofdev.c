@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.2 1998/02/22 07:42:31 mycroft Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.3 1998/03/02 16:18:17 drochner Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -204,7 +204,13 @@ search_label(devp, off, buf, lp, off0)
 		off0 += off;
 	for (p = (struct mbr_partition *)(buf + MBRPARTOFF), i = 4;
 	     --i >= 0; p++) {
-		if (p->mbr_type == MBR_NETBSD) {
+		if (p->mbr_type == MBR_NETBSD
+#ifdef COMPAT_386BSD_MBRPART
+		    || (p->mbr_type == MBR_386BSD &&
+			(printf("WARNING: old BSD partition ID!\n"), 1)
+			/* XXX XXX - libsa printf() is void */ )
+#endif
+		    ) {
 			poff = get_long(&p->mbr_start) + off0;
 			if (strategy(devp, F_READ, poff + LABELSECTOR,
 				     DEV_BSIZE, buf, &read) == 0
