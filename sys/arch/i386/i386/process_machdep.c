@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.42 2002/05/09 15:44:46 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.43 2002/05/09 16:28:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.42 2002/05/09 15:44:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.43 2002/05/09 16:28:11 thorpej Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -411,10 +411,8 @@ process_set_pc(p, addr)
 }
 
 #ifdef __HAVE_PTRACE_MACHDEP
-int
-process_machdep_read_xmmregs(p, regs)
-	struct proc *p;
-	struct xmmregs *regs;
+static int
+process_machdep_read_xmmregs(struct proc *p, struct xmmregs *regs)
 {
 	union savefpu *frame = process_fpframe(p);
 
@@ -451,10 +449,8 @@ process_machdep_read_xmmregs(p, regs)
 	return (0);
 }
 
-int
-process_machdep_write_xmmregs(p, regs)
-	struct proc *p;
-	struct xmmregs *regs;
+static int
+process_machdep_write_xmmregs(struct proc *p, struct xmmregs *regs)
 {
 	union savefpu *frame = process_fpframe(p);
 
@@ -517,15 +513,13 @@ ptrace_machdep_dorequest(p, t, req, addr, data)
 }
 
 /*
- * The following functions have procfs-centric names, but are in
- * fact used by both ptrace(2) and procfs.
+ * The following functions are used by both ptrace(2) and procfs.
  */
 
 int
-procfs_machdep_doxmmregs(curp, p, pfs, uio)
+process_machdep_doxmmregs(curp, p, uio)
 	struct proc *curp;		/* tracer */
 	struct proc *p;			/* traced */
-	struct pfsnode *pfs;
 	struct uio *uio;
 {
 	int error;
@@ -566,9 +560,8 @@ procfs_machdep_doxmmregs(curp, p, pfs, uio)
 }
 
 int
-procfs_machdep_validxmmregs(p, mp)
+process_machdep_validxmmregs(p)
 	struct proc *p;
-	struct mount *mp;
 {
 
 	if (p->p_flag & P_SYSTEM)
