@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.13 1999/11/15 09:54:43 nisimura Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.14 2000/01/10 13:32:02 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -104,7 +104,7 @@ le_pmax_attach(parent, self, aux)
 	 * It's on the baseboard, with a dedicated interrupt line.
 	 */
 	lesc->sc_r1 = (struct lereg1 *)(ia->ia_addr);
-/*XXX*/	sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(0x19000000);
+/*XXX*/	sc->sc_mem = (void *)TC_PHYS_TO_UNCACHED(KN01_SYS_LANCE_B_START);
 /*XXX*/	cp = (u_char *)(TC_PHYS_TO_UNCACHED(KN01_SYS_CLOCK) + 1);
 
 	sc->sc_copytodesc = le_dec_copytobuf_gap2;
