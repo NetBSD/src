@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.5 1996/08/10 06:10:27 mycroft Exp $
+#	$NetBSD: Makefile.x68k,v 1.6 1996/08/12 00:52:20 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -32,7 +32,8 @@ S!=	cd ../../../..; pwd
 X68K=	$S/arch/x68k
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dx68k -DFPCOPROC
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
+		-Dmc68020 -Dx68k -DFPCOPROC
 CWARNFLAGS=	-Werror
 CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
@@ -60,21 +61,13 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 ### for the Motorola 68060 Software Support Package
 .include "$S/arch/m68k/060sp/Makefile.inc"
 
-# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
-# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
-# is marked as config-dependent.
+# compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
+# HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
-DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
-HOSTED_C_C=	${NORMAL_C_C:S/^-pg$//:S/^-p$//:S/^-nostdinc$//}
+HOSTED_C=	${NORMAL_C:S/^-pg$//:S/^-p$//:S/^-nostdinc$//}
 
 %OBJS
 
@@ -114,14 +107,14 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${X68K}/x68k/genassym.c
-	${HOSTED_C_C}
+	${HOSTED_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C_C}
+	${NORMAL_C}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
@@ -136,7 +129,7 @@ clean::
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${X68K}/x68k/Locore.c ${CFILES} ${X68K}/x68k/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
@@ -161,7 +154,7 @@ depend:: .depend
 	-if test -n "${SFILES}"; then \
 		${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}; \
 	fi
-	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${X68K}/x68k/genassym.c
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${X68K}/x68k/genassym.c
 
 
 # depend on root or device configuration
