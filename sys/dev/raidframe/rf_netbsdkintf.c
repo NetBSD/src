@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.151 2002/11/21 15:37:55 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.152 2003/01/19 16:52:55 thorpej Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,11 +114,12 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.151 2002/11/21 15:37:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.152 2003/01/19 16:52:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
+#include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/disk.h>
 #include <sys/device.h>
