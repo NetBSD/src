@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.103 2001/05/30 11:42:14 mrg Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.104 2001/07/01 02:13:36 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -629,7 +629,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 	 */
 
 	if (nfs_niothreads < 0) {
-		nfs_niothreads = 4;
+		nfs_niothreads = NFS_DEFAULT_NIOTHREADS;
 		nfs_getset_niothreads(TRUE);
 	}
 	
