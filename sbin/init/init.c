@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.51 2002/08/02 14:03:22 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.52 2002/08/24 01:02:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.51 2002/08/02 14:03:22 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.52 2002/08/24 01:02:51 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,12 @@ __RCSID("$NetBSD: init.c,v 1.51 2002/08/02 14:03:22 christos Exp $");
 #define	WINDOW_WAIT		 3	/* wait N secs after starting window */
 #define	STALL_TIMEOUT		30	/* wait N secs after warning */
 #define	DEATH_WATCH		10	/* wait N secs for procs to die */
+
+#ifdef ALTSHELL
+#ifndef	_PATH_ALTSHELL
+#define	_PATH_ALTSHELL	_PATH_BSHELL
+#endif
+#endif
 
 int main(int, char *[]);
 
@@ -516,7 +522,7 @@ single_user(void)
 	int from_securitylevel;
 	sigset_t mask;
 #ifdef ALTSHELL
-	const char *shell = _PATH_BSHELL;
+	const char *shell = _PATH_ALTSHELL;
 #endif
 	char *argv[2];
 #ifdef SECURE
@@ -570,7 +576,7 @@ single_user(void)
 
 #ifdef ALTSHELL
 		(void)fprintf(stderr,
-		    "Enter pathname of shell or RETURN for sh: ");
+		    "Enter pathname of shell or RETURN for %s: ", shell);
 		if (fgets(altshell, sizeof(altshell), stdin) == NULL) {
 			altshell[0] = '\0';
 		} else {
