@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.55 2004/12/05 06:53:33 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.56 2004/12/05 15:00:47 peter Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.55 2004/12/05 06:53:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.56 2004/12/05 15:00:47 peter Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -337,11 +337,11 @@ void	strip_timeout __P((void *x));
 void
 stripattach(void)
 {
-    LIST_INIT(&strip_softc_list);
-    if_clone_attach(&strip_cloner);
+	LIST_INIT(&strip_softc_list);
+	if_clone_attach(&strip_cloner);
 }
 
-int
+static int
 strip_clone_create(struct if_clone *ifc, int unit)
 {
 	struct strip_softc *sc;
@@ -378,17 +378,20 @@ strip_clone_create(struct if_clone *ifc, int unit)
 static int
 strip_clone_destroy(struct ifnet *ifp)
 {
-    struct strip_softc *sc = (struct strip_softc *)ifp->if_softc;
+	struct strip_softc *sc = (struct strip_softc *)ifp->if_softc;
 
-    if (sc->sc_ttyp != NULL)
-	return EBUSY; /* Not removing it */
+	if (sc->sc_ttyp != NULL)
+		return EBUSY;	/* Not removing it */
 
-    LIST_REMOVE(sc, sc_iflist);
+	LIST_REMOVE(sc, sc_iflist);
 
-    if_detach(ifp);
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	if_detach(ifp);
 
-    FREE(sc, M_DEVBUF);
-    return 0;
+	FREE(sc, M_DEVBUF);
+	return 0;
 }
 
 static int
