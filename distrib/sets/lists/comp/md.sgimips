@@ -1,4 +1,4 @@
-# $NetBSD#
+# $NetBSD: md.sgimips,v 1.2 2001/10/04 00:11:22 hubertf Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/sgimips			comp-c-include
 ./usr/include/sgimips/_G_config.h	comp-c-include
