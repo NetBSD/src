@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 1994/12/10 11:44:28 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.10 1995/01/09 11:22:43 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -148,9 +148,7 @@ typedef struct pmap *pmap_t;
 extern struct pmap	kernel_pmap_store;
 extern struct ksegmap	kernel_segmap_store;
 extern pmap_t		kernel_pmap;
-
-#define PMAP_ACTIVATE(pmap, pcb, iscurproc)
-#define PMAP_DEACTIVATE(pmap, pcb)
+extern vm_offset_t	vm_first_phys, vm_num_phys;
 
 /*
  * Since PTEs also contain type bits, we have to have some way
@@ -173,8 +171,11 @@ int	pmap_count_ptes __P((struct pmap *));
 vm_offset_t	pmap_prefer __P((vm_offset_t, vm_offset_t));
 
 #define	pmap_resident_count(pmap)	pmap_count_ptes(pmap)
+#define	managed(pa)	((unsigned)((pa) - vm_first_phys) < vm_num_phys)
 
-#define PMAP_PREFER(pa,va)		pmap_prefer((pa),(va))
+#define PMAP_ACTIVATE(pmap, pcb, iscurproc)
+#define PMAP_DEACTIVATE(pmap, pcb)
+#define PMAP_PREFER(pa, va)		pmap_prefer((pa), (va))
 
 #endif /* KERNEL */
 

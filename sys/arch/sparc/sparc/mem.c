@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.5 1995/01/09 08:58:32 mycroft Exp $ */
+/*	$NetBSD: mem.c,v 1.6 1995/01/09 11:22:06 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,6 +98,10 @@ mmrw(dev, uio, flags)
 /* minor device 0 is physical memory */
 		case 0:
 			v = uio->uio_offset;
+			if (!managed(v)) {
+				error = EFAULT;
+				goto unlock;
+			}
 			pmap_enter(kernel_pmap, (vm_offset_t)vmempage,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
@@ -156,6 +160,7 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
+unlock:
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;

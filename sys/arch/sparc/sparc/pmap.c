@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 1995/01/09 08:58:34 mycroft Exp $ */
+/*	$NetBSD: pmap.c,v 1.27 1995/01/09 11:22:09 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -139,13 +139,7 @@ int	pmapdebug = 0x0;
 /*
  * First and last managed physical addresses.
  */
-#if 0
-vm_offset_t	vm_first_phys, vm_last_phys;
-#define	managed(pa)	((pa) >= vm_first_phys && (pa) < vm_last_phys)
-#else
 vm_offset_t	vm_first_phys, vm_num_phys;
-#define	managed(pa)	((unsigned)((pa) - vm_first_phys) < vm_num_phys)
-#endif
 
 /*
  * For each managed physical page, there is a list of all currently
