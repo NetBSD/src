@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82 2003/02/27 19:22:39 perseant Exp $
+# $NetBSD: GENERIC,v 1.83 2003/04/06 10:00:00 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.82 $"
+#ident		"GENERIC-$Revision: 1.83 $"
 
 maxusers	32		# estimated number of users
 
@@ -193,13 +193,11 @@ fd*		at fdc? drive ?
 asc0		at jazzio?			# NCR53C9x SCSI
 scsibus* 	at asc?
 
-osiop0		at jazzio? flags 0x00000	# NCR53C710 SCSI
-osiop1		at jazzio? flags 0x00000
+osiop*		at jazzio? flags 0x00000	# NCR53C710 SCSI
 scsibus* 	at osiop?
 
-#oosiop0 	at jazzio?			# NCR53C700 SCSI
-#oosiop1 	at jazzio?
-#scsibus* 	at oosiop?
+oosiop* 	at jazzio?			# NCR53C700 SCSI
+scsibus* 	at oosiop?
 
 #### ISA bus devices
 

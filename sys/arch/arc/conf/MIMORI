@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.19 2002/09/18 02:43:55 lukem Exp $
+#	$NetBSD: MIMORI,v 1.20 2003/04/06 10:00:00 tsutsui Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -151,9 +151,8 @@ sn0		at jazzio?
 fdc0		at jazzio?
 fd*		at fdc? drive ?
 
-#oosiop0 	at jazzio?			# NCR53C700 SCSI
-#oosiop1 	at jazzio?
-#scsibus* 	at oosiop?
+oosiop* 	at jazzio?			# NCR53C700 SCSI
+scsibus* 	at oosiop?
 
 #### PCI bus devices
 
