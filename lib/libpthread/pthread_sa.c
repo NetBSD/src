@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.16 2003/09/16 13:51:35 cl Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.17 2003/09/29 09:50:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.16 2003/09/16 13:51:35 cl Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.17 2003/09/29 09:50:22 wiz Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -705,7 +705,7 @@ pthread__sa_start(void)
 	if (ret) {
 		if (errno == ENOSYS)
 			errx(1,
-			    "libpthread: SA system calls are not avaliable.\n"
+			    "libpthread: SA system calls are not available.\n"
 				);
 		err(1, "libpthread: sa_register failed\n");
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.6 2003/09/16 13:46:26 cl Exp $	*/
+/*	$NetBSD: savar.h,v 1.7 2003/09/29 09:50:22 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct sadata {
 	vaddr_t	sa_vp_faultaddr;	/* page fault address */
 	vaddr_t	sa_vp_ofaultaddr;	/* old page fault address */
 	int	sa_concurrency;		/* desired concurrency */
-	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of avaliable lwps */
+	LIST_HEAD(, lwp)	sa_lwpcache;	/* list of available lwps */
 	int	sa_ncached;		/* list length */
 	stack_t	*sa_stacks;		/* pointer to array of upcall stacks */
 	int	sa_nstacks;		/* number of valid stacks */

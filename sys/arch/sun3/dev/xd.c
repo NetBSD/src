@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.45 2003/07/15 03:36:15 lukem Exp $	*/
+/*	$NetBSD: xd.c,v 1.46 2003/09/29 09:50:22 wiz Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.45 2003/07/15 03:36:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.46 2003/09/29 09:50:22 wiz Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -1481,7 +1481,7 @@ xdc_startbuf(xdcsc, xdsc, bp)
  * picked up later by the interrupt routine.  for case [2] the
  * programmed i/o driver is called with a special flag that says
  * return when one iopb is free.  for case [3] the process can sleep
- * on the iorq free list until some iopbs are avaliable.
+ * on the iorq free list until some iopbs are available.
  */
 
 
