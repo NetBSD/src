@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.6 2001/11/13 02:09:05 lukem Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.7 2001/11/23 22:02:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.6 2001/11/13 02:09:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.7 2001/11/23 22:02:40 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -60,7 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.6 2001/11/13 02:09:05 lukem Ex
 
 /* this is provided by kern/kern_exec.c */
 extern int exec_maxhdrsz;
+#if defined(LKM) || defined(_LKM)
 extern struct lock exec_lock;
+#endif
 
 /* 
  * Need to completly reimplement this syscall due to argument copying.
@@ -137,7 +139,9 @@ netbsd32_execve2(p, uap, retval)
 	pack.ep_vap = &attr;
 	pack.ep_flags = 0;
 
+#if defined(LKM) || defined(_LKM)
 	lockmgr(&exec_lock, LK_SHARED, NULL);
+#endif
 
 	/* see if we can run it. */
 	if ((error = check_exec(p, &pack)) != 0)
@@ -457,7 +461,9 @@ netbsd32_execve2(p, uap, retval)
 		ktremul(p);
 #endif
 
+#if defined(LKM) || defined(_LKM)
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
+#endif
 
 	return (EJUSTRETURN);
 
@@ -477,13 +483,17 @@ bad:
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
 freehdr:
+#if defined(LKM) || defined(_LKM)
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
+#endif
 
 	free(pack.ep_hdr, M_EXEC);
 	return error;
 
 exec_abort:
+#if defined(LKM) || defined(_LKM)
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
+#endif
 
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.

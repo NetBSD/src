@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.146 2001/11/12 15:25:08 lukem Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.147 2001/11/23 22:02:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.146 2001/11/12 15:25:08 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.147 2001/11/23 22:02:39 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -154,13 +154,13 @@ const struct emul emul_netbsd = {
 #endif
 };
 
+#ifdef LKM
 /*
  * Exec lock. Used to control access to execsw[] structures.
  * This must not be static so that netbsd32 can access it, too.
  */
 struct lock exec_lock;
  
-#ifdef LKM
 static const struct emul * emul_search(const char *);
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
@@ -365,7 +365,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pack.ep_vap = &attr;
 	pack.ep_flags = 0;
 
+#ifdef LKM
 	lockmgr(&exec_lock, LK_SHARED, NULL);
+#endif
 
 	/* see if we can run it. */
 	if ((error = check_exec(p, &pack)) != 0)
@@ -683,7 +685,9 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		ktremul(p);
 #endif
 
+#ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
+#endif
 
 	return (EJUSTRETURN);
 
@@ -703,13 +707,17 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	uvm_km_free_wakeup(exec_map, (vaddr_t) argp, NCARGS);
 
  freehdr:
+#ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
+#endif
 
 	free(pack.ep_hdr, M_EXEC);
 	return error;
 
  exec_abort:
+#ifdef LKM
 	lockmgr(&exec_lock, LK_RELEASE, NULL);
+#endif
 
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
@@ -1014,7 +1022,7 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 /*
  * Initialize exec structures. If init_boot is true, also does necessary
  * one-time initialization (it's called from main() that way).
- * Once system is multiuser, this should be called with exec_lock hold,
+ * Once system is multiuser, this should be called with exec_lock held,
  * i.e. via exec_{add|remove}().
  */
 int
@@ -1106,8 +1114,6 @@ exec_init(int init_boot)
 #endif
 
 	/* do one-time initializations */
-	lockinit(&exec_lock, PWAIT, "execlck", 0, 0);
-
 	nexecs = nexecs_builtin;
 	execsw = malloc(nexecs*sizeof(struct execsw *), M_EXEC, M_WAITOK);
 
