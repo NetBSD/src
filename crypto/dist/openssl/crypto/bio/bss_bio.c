@@ -23,7 +23,12 @@
 #include <openssl/crypto.h>
 
 #include "openssl/e_os.h"
-#ifndef SSIZE_MAX
+
+/* VxWorks defines SSiZE_MAX with an empty value causing compile errors */
+#if defined(VXWORKS)
+# undef SSIZE_MAX
+# define SSIZE_MAX INT_MAX
+#elif !defined(SSIZE_MAX)
 # define SSIZE_MAX INT_MAX
 #endif
 
@@ -474,7 +479,8 @@ static long bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		break;
 
 	case BIO_C_GET_WRITE_BUF_SIZE:
-		num = (long) b->size;
+		ret = (long) b->size;
+		break;
 
 	case BIO_C_MAKE_BIO_PAIR:
 		{
