@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.35 1997/03/20 11:03:13 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.36 1997/03/20 11:04:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -1327,7 +1327,9 @@ sbdsp_intr(arg)
 		Dprintf("sbdsp_intr: intr=0x%x\n", sc->sc_intr);
 #endif
 	if (!isa_dmafinished(sc->sc_drq)) {
+#ifdef AUDIO_DEBUG
 		printf("sbdsp_intr: not finished\n");
+#endif
 		return 0;
 	}
 	sc->sc_interrupts++;
