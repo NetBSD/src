@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.8 1999/10/30 16:07:58 sommerfeld Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.9 1999/12/12 17:46:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -269,13 +269,16 @@ do {									\
 	    RFA_ALIGNMENT_FUDGE;					\
 									\
 	__rfa = FXP_MTORFA((m));					\
-	__rfa->size = FXP_RXBUFSIZE((m));				\
+	__rfa->size = htole16(FXP_RXBUFSIZE((m)));			\
+	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->rfa_status = 0;						\
-	__rfa->rfa_control = FXP_RFA_CONTROL_EL;			\
+	__rfa->rfa_control = htole16(FXP_RFA_CONTROL_EL);		\
+	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->actual_size = 0;						\
 									\
 	/* NOTE: the RFA is misaligned, so we must copy. */		\
-	__v = -1;							\
+	/* BIG_ENDIAN: no need to swap to store 0xffffffff */		\
+	__v = 0xffffffff;						\
 	memcpy((void *)&__rfa->link_addr, &__v, sizeof(__v));		\
 	memcpy((void *)&__rfa->rbd_addr, &__v, sizeof(__v));		\
 									\
@@ -286,12 +289,13 @@ do {									\
 									\
 	if ((__p_m = (sc)->sc_rxq.ifq_tail) != NULL) {			\
 		__p_rfa = FXP_MTORFA(__p_m);				\
-		__v = __rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE;\
+		__v = htole32(__rxmap->dm_segs[0].ds_addr +		\
+		    RFA_ALIGNMENT_FUDGE);				\
 		FXP_RFASYNC((sc), __p_m,				\
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);	\
 		memcpy((void *)&__p_rfa->link_addr, &__v,		\
 		    sizeof(__v));					\
-		__p_rfa->rfa_control &= ~FXP_RFA_CONTROL_EL;		\
+		__p_rfa->rfa_control &= htole16(~FXP_RFA_CONTROL_EL);	\
 		FXP_RFASYNC((sc), __p_m,				\
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
 	}								\
