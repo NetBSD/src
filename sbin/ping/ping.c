@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.36 1998/04/16 09:02:56 kleink Exp $	*/
+/*	$NetBSD: ping.c,v 1.37 1998/07/28 19:22:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -61,7 +61,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.36 1998/04/16 09:02:56 kleink Exp $");
+__RCSID("$NetBSD: ping.c,v 1.37 1998/07/28 19:22:56 mycroft Exp $");
 #endif
 
 #include <stdio.h>
@@ -1479,9 +1479,10 @@ pr_addr(struct in_addr *addr)		/* in network order */
 
 	if ((pingflags & F_NUMERIC)
 	    || !(hp = gethostbyaddr((char *)addr, sizeof(*addr), AF_INET))) {
-		(void)sprintf(buf, "%s", inet_ntoa(*addr));
+		(void)snprintf(buf, sizeof(buf), "%s", inet_ntoa(*addr));
 	} else {
-		(void)sprintf(buf, "%s (%s)", hp->h_name, inet_ntoa(*addr));
+		(void)snprintf(buf, sizeof(buf), "%s (%s)", hp->h_name,
+		    inet_ntoa(*addr));
 	}
 
 	return buf;
