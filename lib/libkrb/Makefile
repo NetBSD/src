@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2004/08/04 08:04:25 lukem Exp $
+# $NetBSD: Makefile,v 1.30 2004/08/05 01:24:02 lukem Exp $
 
 NOLINT=		# defined
 
@@ -25,7 +25,7 @@ WARNS?=		1
 
 LIB=		krb
 
-LIBDPLIBS=	des ../libdes
+LIBDPLIBS=	des ${.CURDIR}/../libdes
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=		cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
