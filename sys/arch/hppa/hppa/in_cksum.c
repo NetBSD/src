@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.3 2003/08/31 01:26:35 chs Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.4 2003/11/28 19:02:25 chs Exp $	*/
 
 /*	$OpenBSD: in_cksum.c,v 1.1 2001/01/13 00:00:20 mickey Exp $	*/
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.3 2003/08/31 01:26:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.4 2003/11/28 19:02:25 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,9 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.3 2003/08/31 01:26:35 chs Exp $");
 				: "+r" (sum), "+r" (w), "+r" (mlen) :: "r19")
 
 int
-in_cksum(m, len)
-	struct mbuf *m;
-	int len;
+in_cksum(struct mbuf *m, int len)
 {
 	u_int sum = 0;
 	u_int bins = 0;
@@ -111,10 +109,10 @@ in_cksum(m, len)
 				if ((4 & (u_long)w) != 0)
 					ADDWORD;
 			}
-	
+
 			while ((mlen -= 32) >= 0)
 				ADD32;
-	
+
 			mlen += 32;
 			if (mlen >= 16) {
 				ADD16;
