@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.8 1997/02/19 15:54:26 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.9 1997/02/19 15:55:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -99,8 +99,8 @@ struct nv assyms[] = {
 	/* def1(BUSERR_MMU), XXX */
 
 	/* XXX: for copy.s */
-	def(M68020, 1),
-	def(M68030, 1),
+	def("M68020", 1),
+	def("M68030", 1),
 
 	/* 68k isms */
 	def1(PSL_LOWIPL),
