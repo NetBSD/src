@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.6 1999/08/24 20:07:39 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.7 1999/08/25 11:28:10 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -87,7 +87,7 @@ sys/dev/eisa/if_ep_eisa.c			1.21
 usr.sbin/pkg_install/Makefile.inc		1.6-1.8
 usr.sbin/pkg_install/add/extract.c		1.17-1.19
 usr.sbin/pkg_install/add/main.c			1.10
-usr.sbin/pkg_install/add/perform.c		1.32-1.36
+usr.sbin/pkg_install/add/perform.c		1.30,1.32-1.36
 usr.sbin/pkg_install/add/pkg_add.1		1.16
 usr.sbin/pkg_install/admin/main.c		1.4-1.6
 usr.sbin/pkg_install/create/perform.c		1.18
@@ -125,6 +125,7 @@ usr.sbin/pkg_install/lib/str.c			1.16
   o Call deinstall-script again after files are removed, with
     POST-DEINSTALL argument.
   o Disable annoying "key not present" warning.
+  o Fix error checking when creating directory for pkgdb.
 
   (hubertf)
 
@@ -149,3 +150,11 @@ gnu/usr.bin/tar/list.c				1.6
 doc/tmac/doc-common				1.32
 
   Mark Ap as callable, fixes formatting of a few man pages.  (ross)
+
+sys/dev/ata/ata_wdc.c                           1.20
+sys/dev/ic/wdc.c                                1.70
+sys/dev/scsipi/atapi_wdc.c                      patch
+
+  Add some debug printfs, change timeout handling to be more efficient
+  and less error-prone, and fix the "lockup after lost interrupt"
+  problem some users have been reporting.  (bouyer)
