@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.170 2000/11/09 20:01:54 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.171 2000/11/30 11:31:05 simonb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -121,8 +121,9 @@ PCS=	pcs750.bin
 # find out endianness of target and set proper flag for pwd_mkdb so that
 # it creates database in same endianness
 .if exists(${DESTDIR}/usr/include/machine/endian_machdep.h)
-TARGET_ENDIANNESS!= awk '/_BYTE_ORDER/{print $$3}' \
-       ${DESTDIR}/usr/include/machine/endian_machdep.h
+TARGET_ENDIANNESS!= \
+	( echo "\#include <machine/endian_machdep.h>" ; echo _BYTE_ORDER ) | \
+	${CC} -I${DESTDIR}/usr/include -E - | tail -1 | awk '{print $$1}'
 .else
 TARGET_ENDIANNESS=
 .endif
@@ -166,7 +167,8 @@ distribution: distrib-dirs
 	    ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 master.passwd \
 	    ${DESTDIR}/etc
-	pwd_mkdb -p ${TARGET_ENDIANNESS} -d ${DESTDIR}/ ${DESTDIR}/etc/master.passwd
+	pwd_mkdb -p ${TARGET_ENDIANNESS} -d ${DESTDIR}/ \
+		${DESTDIR}/etc/master.passwd
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 minfree \
