@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.h,v 1.6 2001/12/09 23:21:07 thorpej Exp $	*/
+/*	$NetBSD: readelf.h,v 1.7 2002/03/30 17:54:51 bjh21 Exp $	*/
 
 /*
  * readelf.h 
@@ -189,5 +189,17 @@ typedef struct {
 #define	NT_PRXREG	4
 #define	NT_PLATFORM	5
 #define	NT_AUXV		6
+
+/* Note types used in executables */
+/* NetBSD executables (name = "NetBSD") */
+#define NT_NETBSD_VERSION	1
+#define NT_NETBSD_EMULATION	2
+/* GNU executables (name = "GNU") */
+#define NT_GNU_VERSION		1
+
+/* GNU OS tags */
+#define GNU_OS_LINUX	0
+#define GNU_OS_HURD	1
+#define GNU_OS_SOLARIS	2
 
 #endif
