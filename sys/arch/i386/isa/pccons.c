@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.23 1993/07/07 11:01:03 deraadt Exp $
+ *	$Id: pccons.c,v 1.24 1993/07/08 07:27:29 mycroft Exp $
  */
 
 /*
@@ -952,7 +952,11 @@ static sputc(c, ka)
 		}
 	}
 	if (sc && crtat >= Crtat+vs.ncol*vs.nrow) { /* scroll check */
-		if (openf) do (void)sgetc(1); while (scroll);
+		if (openf) {
+			(void)sgetc(1);
+			if (scroll)
+				sleep(&scroll, PUSER);
+		}
 		bcopy(Crtat+vs.ncol, Crtat, vs.ncol*(vs.nrow-1)*CHR);
 		fillw ((at << 8) + ' ', Crtat + vs.ncol*(vs.nrow-1),
 			vs.ncol);
@@ -1466,6 +1470,7 @@ loop:
 						goto loop;
 					lock_down |= SCROLL;
 					scroll ^= 1;
+					if (!scroll) wakeup(&scroll);
 					update_led();
 					break;
 			}
@@ -1568,6 +1573,7 @@ loop:
 					break;
 				lock_down |= SCROLL;
 				scroll ^= 1;
+				if (!scroll) wakeup(&scroll);
 				update_led();
 				break;
 
