@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.26 1997/03/17 19:46:36 gwr Exp $	*/
+/*	$NetBSD: copy.s,v 1.27 1997/04/25 02:22:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -62,25 +62,15 @@
  * The diagnostics:  CHECK_SFC,  CHECK_DFC
  * will verify that the sfc/dfc register values are correct.
  */
-Lbadfc_msg:
-	.asciz	"copy.s: bad sfc or dfc"
-	.even
-badfc:
-	pea	Lbadfc_msg
-	jsr	_panic
-	bra	badfc
-#define	CHECK_SFC	movec sfc,d0; subql #FC_USERD,d0; bne badfc
-#define	CHECK_DFC	movec dfc,d0; subql #FC_USERD,d0; bne badfc
+Lbadfc:
+	PANIC("copy.s: bad sfc or dfc")
+	bra	Lbadfc
+#define	CHECK_SFC	movec sfc,d0; subql #FC_USERD,d0; bne Lbadfc
+#define	CHECK_DFC	movec dfc,d0; subql #FC_USERD,d0; bne Lbadfc
 #else	/* DIAGNOSTIC */
 #define	CHECK_SFC
 #define	CHECK_DFC
 #endif	/* DIAGNOSTIC */
-
-#ifdef	MAPPEDCOPY
-	.globl	_mappedcopyin
-	.globl	_mappedcopyout
-	.globl	_mappedcopysize
-#endif
 
 /*
  * copyin(caddr_t from, caddr_t to, size_t len);
@@ -98,11 +88,11 @@ ENTRY(copyin)
 	movl	sp@(12),d0		| check count
 	beq	Lciret			| == 0, don't do anything
 #ifdef MAPPEDCOPY
-	cmpl	_mappedcopysize,d0	| size >= mappedcopysize
-	bcc	_mappedcopyin		| yes, go do it the new way
+	cmpl	_C_LABEL(mappedcopysize),d0 | size >= mappedcopysize
+	bcc	_C_LABEL(mappedcopyin)	| yes, go do it the new way
 #endif
 	movl	d2,sp@-			| save scratch register
-	movl	_curpcb,a0		| set fault handler
+	movl	_C_LABEL(curpcb),a0	| set fault handler
 	movl	#Lcifault,a0@(PCB_ONFAULT)
 	movl	sp@(8),a0		| src address
 	movl	sp@(12),a1		| dest address
@@ -139,7 +129,7 @@ Lcibloop:
 	bcc	Lcibloop
 	clrl	d0			| no error
 Lcidone:
-	movl	_curpcb,a0		| clear fault handler
+	movl	_C_LABEL(curpcb),a0	| clear fault handler
 	clrl	a0@(PCB_ONFAULT)
 	movl	sp@+,d2			| restore scratch register
 Lciret:
@@ -164,11 +154,11 @@ ENTRY(copyout)
 	movl	sp@(12),d0		| check count
 	beq	Lcoret			| == 0, don't do anything
 #ifdef MAPPEDCOPY
-	cmpl	_mappedcopysize,d0	| size >= mappedcopysize
-	bcc	_mappedcopyout		| yes, go do it the new way
+	cmpl	_C_LABEL(mappedcopysize),d0 | size >= mappedcopysize
+	bcc	_C_LABEL(mappedcopyout)	| yes, go do it the new way
 #endif
 	movl	d2,sp@-			| save scratch register
-	movl	_curpcb,a0		| set fault handler
+	movl	_C_LABEL(curpcb),a0	| set fault handler
 	movl	#Lcofault,a0@(PCB_ONFAULT)
 	movl	sp@(8),a0		| src address
 	movl	sp@(12),a1		| dest address
@@ -205,7 +195,7 @@ Lcobloop:
 	bcc	Lcobloop
 	clrl	d0			| no error
 Lcodone:
-	movl	_curpcb,a0		| clear fault handler
+	movl	_C_LABEL(curpcb),a0	| clear fault handler
 	clrl	a0@(PCB_ONFAULT)
 	movl	sp@+,d2			| restore scratch register
 Lcoret:
@@ -252,7 +242,7 @@ Lcsret:
  */
 ENTRY(copyinstr)
 	CHECK_SFC
-	movl	_curpcb,a0		| set fault handler
+	movl	_C_LABEL(curpcb),a0	| set fault handler
 	movl	#Lcisfault,a0@(PCB_ONFAULT)
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
@@ -275,7 +265,7 @@ Lcisdone:
 	movl	sp@(16),a1		| store at return location
 	movl	a0,a1@
 Lcisexit:
-	movl	_curpcb,a0		| clear fault handler
+	movl	_C_LABEL(curpcb),a0	| clear fault handler
 	clrl	a0@(PCB_ONFAULT)
 	rts
 Lcisfault:
@@ -291,7 +281,7 @@ Lcisfault:
  */
 ENTRY(copyoutstr)
 	CHECK_DFC
-	movl	_curpcb,a0		| set fault handler
+	movl	_C_LABEL(curpcb),a0	| set fault handler
 	movl	#Lcosfault,a0@(PCB_ONFAULT)
 	movl	sp@(4),a0		| a0 = fromaddr
 	movl	sp@(8),a1		| a1 = toaddr
@@ -314,7 +304,7 @@ Lcosdone:
 	movl	sp@(16),a1		| store at return location
 	movl	a0,a1@
 Lcosexit:
-	movl	_curpcb,a0		| clear fault handler
+	movl	_C_LABEL(curpcb),a0	| clear fault handler
 	clrl	a0@(PCB_ONFAULT)
 	rts
 Lcosfault:
@@ -328,7 +318,7 @@ Lcosfault:
 ENTRY(fuword)
 	CHECK_SFC
 	movl	sp@(4),a0		| address to read
-	movl	_curpcb,a1		| set fault handler
+	movl	_C_LABEL(curpcb),a1	| set fault handler
 	movl	#Lferr,a1@(PCB_ONFAULT)
 	movsl	a0@,d0			| do read from user space
 	bra	Lfdone
@@ -340,7 +330,7 @@ ENTRY(fuword)
 ENTRY(fusword)
 	CHECK_SFC
 	movl	sp@(4),a0		| address to read
-	movl	_curpcb,a1		| set fault handler
+	movl	_C_LABEL(curpcb),a1	| set fault handler
 	movl	#Lferr,a1@(PCB_ONFAULT)
 	moveq	#0,d0
 	movsw	a0@,d0			| do read from user space
@@ -354,7 +344,7 @@ ENTRY(fusword)
 ENTRY(fuswintr)
 	CHECK_SFC
 	movl	sp@(4),a0		| address to read
-	movl	_curpcb,a1		| set fault handler
+	movl	_C_LABEL(curpcb),a1	| set fault handler
 	movl	#_fubail,a1@(PCB_ONFAULT)
 	moveq	#0,d0
 	movsw	a0@,d0			| do read from user space
@@ -367,7 +357,7 @@ ENTRY(fuswintr)
 ENTRY(fubyte)
 	CHECK_SFC
 	movl	sp@(4),a0		| address to read
-	movl	_curpcb,a1		| set fault handler
+	movl	_C_LABEL(curpcb),a1	| set fault handler
 	movl	#Lferr,a1@(PCB_ONFAULT)
 	moveq	#0,d0
 	movsb	a0@,d0			| do read from user space
@@ -396,7 +386,7 @@ ENTRY(suword)
 	CHECK_DFC
 	movl	sp@(4),a0		| address to write
 	movl	sp@(8),d0		| value to put there
-	movl	_curpcb,a1		| set fault handler
+	movl	_C_LABEL(curpcb),a1	| set fault handler
 	movl	#Lserr,a1@(PCB_ONFAULT)
 	movsl	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
@@ -410,7 +400,7 @@ ENTRY(susword)
 	CHECK_DFC
 	movl	sp@(4),a0		| address to write
 	movw	sp@(10),d0		| value to put there
-	movl	_curpcb,a1		| set fault handler
+	movl	_C_LABEL(curpcb),a1	| set fault handler
 	movl	#Lserr,a1@(PCB_ONFAULT)
 	movsw	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
@@ -425,7 +415,7 @@ ENTRY(suswintr)
 	CHECK_DFC
 	movl	sp@(4),a0		| address to write
 	movw	sp@(10),d0		| value to put there
-	movl	_curpcb,a1		| set fault handler
+	movl	_C_LABEL(curpcb),a1	| set fault handler
 	movl	#_subail,a1@(PCB_ONFAULT)
 	movsw	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
@@ -439,7 +429,7 @@ ENTRY(subyte)
 	CHECK_DFC
 	movl	sp@(4),a0		| address to write
 	movb	sp@(11),d0		| value to put there
-	movl	_curpcb,a1		| set fault handler
+	movl	_C_LABEL(curpcb),a1	| set fault handler
 	movl	#Lserr,a1@(PCB_ONFAULT)
 	movsb	d0,a0@			| do write to user space
 	moveq	#0,d0			| indicate no fault
