@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.5 2002/09/27 15:36:26 provos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.6 2003/03/13 12:44:48 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -297,7 +297,8 @@ le_poll(desc, pkt, len)
 	if (ler1->ler1_rdp & LE_C0_ERR)
 		le_error(desc->io_netif, "le_poll", ler1);
 	if (rmd->rmd1_bits & LE_R1_ERR) {
-		printf("le%d_poll: rmd status 0x%x\n", desc->io_netif->nif_unit,
+		printf("le%d_poll: rmd status 0x%x\n",
+		    ((struct netif *)desc->io_netif)->nif_unit,
 		    rmd->rmd1_bits);
 		length = 0;
 		goto cleanup;
@@ -348,13 +349,14 @@ le_put(desc, pkt, len)
 	volatile struct letmd *tmd;
 	int     timo = 100000, stat = 0;
 	unsigned int a;
+	int nifunit = ((struct netif *)desc->io_netif)->nif_unit;
 
 	ler1->ler1_rap = LE_CSR0;
 	if (ler1->ler1_rdp & LE_C0_ERR)
 		le_error(desc->io_netif, "le_put(way before xmit)", ler1);
 	tmd = &ler2->ler2_tmd[le_softc.next_tmd];
 	while (tmd->tmd1_bits & LE_T1_OWN) {
-		printf("le%d: output buffer busy\n", desc->io_netif->nif_unit);
+		printf("le%d: output buffer busy\n", nifunit);
 	}
 	memcpy((void *)ler2->ler2_tbuf[le_softc.next_tmd], pkt, len);
 	if (len < 64)
@@ -374,7 +376,7 @@ le_put(desc, pkt, len)
 	do {
 		if (--timo == 0) {
 			printf("le%d: transmit timeout, stat = 0x%x\n",
-			    desc->io_netif->nif_unit, stat);
+			    nifunit, stat);
 			if (ler1->ler1_rdp & LE_C0_ERR)
 				le_error(desc->io_netif, "le_put(timeout)", ler1);
 			break;
@@ -398,15 +400,15 @@ le_put(desc, pkt, len)
 	if (tmd->tmd1_bits & LE_T1_MORE)
 		le_stats.collisions += 2;
 	if (tmd->tmd1_bits & LE_T1_ERR) {
-		printf("le%d: transmit error, error = 0x%x\n", desc->io_netif->nif_unit,
+		printf("le%d: transmit error, error = 0x%x\n", nifunit,
 		    tmd->tmd3);
 		return -1;
 	}
 	if (le_debug) {
 		printf("le%d: le_put() successful: sent %d\n",
-		    desc->io_netif->nif_unit, len);
+		    nifunit, len);
 		printf("le%d: le_put(): tmd1_bits: %x tmd3: %x\n",
-		    desc->io_netif->nif_unit,
+		    nifunit,
 		    (unsigned int) tmd->tmd1_bits,
 		    (unsigned int) tmd->tmd3);
 	}
@@ -442,11 +444,11 @@ le_init(desc, machdep_hint)
 	struct netif *nif = desc->io_netif;
 
 	if (le_debug)
-		printf("le%d: le_init called\n", desc->io_netif->nif_unit);
+		printf("le%d: le_init called\n", nif->nif_unit);
 	machdep_common_ether(desc->myea);
 	memset(&le_softc, 0, sizeof(le_softc));
 	le_softc.sc_r1 =
-	    (struct lereg1 *) le_config[desc->io_netif->nif_unit].phys_addr;
+	    (struct lereg1 *) le_config[nif->nif_unit].phys_addr;
 	le_softc.sc_r2 = (struct lereg2 *) (eram - (1024 * 1024));
 	le_reset(desc->io_netif, desc->myea);
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
