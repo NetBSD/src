@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.13.10.1 2003/06/16 12:42:44 grant Exp $ */
+/*	$NetBSD: ses.c,v 1.13.10.2 2003/06/16 12:43:46 grant Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.13.10.1 2003/06/16 12:42:44 grant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.13.10.2 2003/06/16 12:43:46 grant Exp $");
 
 #include "opt_scsi.h"
 
@@ -485,7 +485,7 @@ sesioctl(dev, cmd, arg_addr, flag, p)
 
 	default:
 		error = scsipi_do_ioctl(ssc->sc_periph,
-			    dev, cmd, addr, flag, p);
+			    dev, cmd, arg_addr, flag, p);
 		break;
 	}
 	return (error);
