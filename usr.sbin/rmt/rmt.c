@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.c,v 1.10 2000/02/08 18:00:05 mjacob Exp $	*/
+/*	$NetBSD: rmt.c,v 1.11 2001/12/24 00:54:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmt.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rmt.c,v 1.10 2000/02/08 18:00:05 mjacob Exp $");
+__RCSID("$NetBSD: rmt.c,v 1.11 2001/12/24 00:54:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ top:
 		getstring(count);
 		getstring(pos);
 		DEBUG2("rmtd: L %s %s\n", count, pos);
-		rval = lseek(tape, (off_t)strtoq(count, NULL, 10), atoi(pos));
+		rval = lseek(tape, (off_t)strtoll(count, NULL, 10), atoi(pos));
 		if (rval < 0)
 			goto ioerror;
 		goto respond;
@@ -256,6 +256,6 @@ error(num)
 {
 
 	DEBUG2("rmtd: E %d (%s)\n", num, strerror(num));
-	(void)sprintf(resp, "E%d\n%s\n", num, strerror(num));
+	(void)snprintf(resp, sizeof(resp), "E%d\n%s\n", num, strerror(num));
 	(void)write(STDOUT_FILENO, resp, strlen(resp));
 }
