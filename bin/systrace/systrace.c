@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.2 2002/06/18 21:22:45 thorpej Exp $	*/
+/*	$NetBSD: systrace.c,v 1.3 2002/07/03 22:54:38 atatat Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.16 2002/06/12 22:14:51 provos Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: systrace.c,v 1.2 2002/06/18 21:22:45 thorpej Exp $");
+__RCSID("$NetBSD: systrace.c,v 1.3 2002/07/03 22:54:38 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,7 +67,6 @@ static short trans_cb(int, pid_t, int, const char *, int, const char *, void *,
 static short gen_cb(int, pid_t, int, const char *, int, const char *, void *,
     int, void *);
 static void execres_cb(int, pid_t, int, const char *, const char *, void *);
-static void child_handler(int);
 static void systrace_initcb(void);
 static void usage(void);
 static int requestor_start(char *);
@@ -240,21 +239,6 @@ execres_cb(int fd, pid_t pid, int policynr, const char *emulation,
  error:
 	kill(pid, SIGKILL);
 	fprintf(stderr, "Terminating %d: %s\n", pid, name);
-}
-
-static void
-child_handler(int sig)
-{
-	int s = errno, status;
-
-	if (signal(SIGCHLD, child_handler) == SIG_ERR) {
-		close(trfd);
-	}
-
-	while (wait4(-1, &status, WNOHANG, NULL) > 0)
-		;
-
-	errno = s;
 }
 
 #define X(x)	if ((x) == -1) \
@@ -530,9 +514,6 @@ main(int argc, char **argv)
 	if (getcwd(cwd, sizeof(cwd)) == NULL)
 		err(1, "getcwd");
 
-	if (signal(SIGCHLD, child_handler) == SIG_ERR)
-		err(1, "signal");
-
 	/* Local initalization */
 	systrace_initpolicy(filename);
 	systrace_initcb();
@@ -549,14 +530,20 @@ main(int argc, char **argv)
 			args[i] = argv[i];
 		args[i] = NULL;
 
-		trpid = intercept_run(trfd, args[0], args);
+		/*
+		 * We will run in the background if using X11, or
+		 * doing fixed policy enforcement, or doing automatic
+		 * policy generation.
+		 */
+		trpid = intercept_run(usex11 || automatic || allow,
+		    args[0], args);
 		if (trpid == -1)
 			err(1, "fork");
 
 		if (intercept_attach(trfd, trpid) == -1)
 			err(1, "attach");
 
-		if (kill(trpid, SIGCONT) == -1)
+		if (kill(trpid, SIGUSR1) == -1)
 			err(1, "kill");
 	} else {
 		/* Attach to a running command */
