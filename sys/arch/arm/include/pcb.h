@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.3 2001/11/23 17:39:04 thorpej Exp $	*/
+/*	$NetBSD: pcb.h,v 1.4 2002/10/12 12:20:11 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -83,7 +83,14 @@ struct md_coredump {
 };
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+#ifdef MULTIPROCESSOR
+#define curpcb	(curcpu()->ci_curpcb)
+#else
 extern struct pcb *curpcb;
+#endif
 #endif	/* _KERNEL */
 
 #endif	/* _ARM_PCB_H_ */

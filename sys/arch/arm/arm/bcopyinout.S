@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.6 2002/08/22 05:01:02 briggs Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.7 2002/10/12 12:20:09 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -35,17 +35,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include "assym.h"
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: bcopyinout.S,v 1.6 2002/08/22 05:01:02 briggs Exp $")	
+RCSID("$NetBSD: bcopyinout.S,v 1.7 2002/10/12 12:20:09 bjh21 Exp $")	
 
 	.text
 	.align	0
 
+#ifdef MULTIPROCESSOR
+	/* FIXME: This is bogus in the general case. */
+.Lcurpcb:
+	.word	_C_LABEL(cpu_info_store) + CI_CURPCB
+#else
 .Lcurpcb:
 	.word _C_LABEL(curpcb)
+#endif
 
 #ifdef __PROG32
 #define SAVE_REGS	stmfd	sp!, {r4-r11}
