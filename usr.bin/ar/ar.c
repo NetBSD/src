@@ -1,4 +1,4 @@
-/*	$NetBSD: ar.c,v 1.6 1997/10/18 11:52:50 lukem Exp $	*/
+/*	$NetBSD: ar.c,v 1.7 1997/10/18 12:23:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ar.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ar.c,v 1.6 1997/10/18 11:52:50 lukem Exp $");
+__RCSID("$NetBSD: ar.c,v 1.7 1997/10/18 12:23:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ main(argc, argv)
 		argv[1] = p;
 	}
 
-	while ((c = getopt(argc, argv, "abcdilmopqrTtuvx")) != EOF) {
+	while ((c = getopt(argc, argv, "abcdilmopqrTtuvx")) != -1) {
 		switch(c) {
 		case 'a':
 			options |= AR_A;
