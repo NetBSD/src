@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 1994/12/23 06:53:03 jtc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.5 1997/08/16 13:50:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,3 +39,4 @@
 
 #define	_PATH_HUSHLOGIN	".hushlogin"
 #define	_PATH_MOTDFILE	"/etc/motd"
+#define	_PATH_BINPASSWD	"/usr/bin/passwd"
