@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.12 1997/10/15 02:41:23 enami Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.13 1997/10/15 21:53:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -86,6 +86,7 @@ struct com_pcmcia_softc {
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
 	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
+	void *sc_ih;				/* interrupt handler */
 };
 
 struct cfattach com_pcmcia_ca = {
@@ -224,8 +225,8 @@ com_pcmcia_attach(parent, self, aux)
 		printf(": %s\n", model);
 
 	/* establish the interrupt. */
-	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_SERIAL, comintr, sc);
-	if (sc->sc_ih == NULL) {
+	psc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_SERIAL, comintr, sc);
+	if (psc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		       sc->sc_dev.dv_xname);
 		return;

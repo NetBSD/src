@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isapnp.c,v 1.2.4.1 1997/08/23 07:13:37 thorpej Exp $	*/
+/*	$NetBSD: com_isapnp.c,v 1.2.4.2 1997/10/15 21:53:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -55,11 +55,18 @@
 
 #include <dev/isa/comvar.h>
 
+struct com_isapnp_softc {
+	struct	com_softc sc_com;	/* real "com" softc */
+
+	/* ISAPnP-specific goo. */
+	void	*sc_ih;			/* interrupt handler */
+};
+
 int	com_isapnp_match __P((struct device *, void *, void *));
 void	com_isapnp_attach __P((struct device *, struct device *, void *));
 
 struct cfattach com_isapnp_ca = {
-	sizeof(struct com_softc), com_isapnp_match, com_isapnp_attach
+	sizeof(struct com_isapnp_softc), com_isapnp_match, com_isapnp_attach
 };
 
 int
@@ -82,7 +89,8 @@ com_isapnp_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_isapnp_softc *isc = (void *)self;
+	struct com_softc *sc = &isc->sc_com;
 	struct isapnp_attach_args *ipa = aux;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
@@ -103,6 +111,6 @@ com_isapnp_attach(parent, self, aux)
 
 	com_attach_subr(sc);
 
-	sc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
-				       IST_EDGE, IPL_SERIAL, comintr, sc);
+	isc->sc_ih = isa_intr_establish(ipa->ipa_ic, ipa->ipa_irq[0].num,
+	    IST_EDGE, IPL_SERIAL, comintr, sc);
 }
