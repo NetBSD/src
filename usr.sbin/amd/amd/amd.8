@@ -37,7 +37,7 @@
 .\"
 .\"     %W% (Berkeley) %G%
 .\"
-.\" $Id: amd.8,v 1.1 1993/11/27 21:17:03 mycroft Exp $
+.\" $Id: amd.8,v 1.2 1994/01/14 16:22:25 jtc Exp $
 .\"
 .Dd March 17, 1991
 .Dt AMD 8
@@ -118,7 +118,7 @@ the log messages will be sent to the system log daemon by
 .Xr syslog 3 .
 .It Fl n
 Normalize hostnames.
-The name refered to by ${rhost} is normalized relative to the
+The name referred to by ${rhost} is normalized relative to the
 host database before being used.  The effect is to translate
 aliases into ``official'' names.
 .It Fl p
@@ -143,7 +143,7 @@ in tenths of a second, between
 .Tn NFS/RPC/UDP
 retries.
 The default is 0.8 seconds.
-The second values alters the restransmit counter.
+The second values alters the retransmit counter.
 Useful defaults are supplied if either or both
 values are missing.
 .It Fl v

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lpc.8	6.4 (Berkeley) 3/16/91
-.\"	$Id: lpc.8,v 1.2 1993/08/01 07:24:44 mycroft Exp $
+.\"	$Id: lpc.8,v 1.3 1994/01/14 16:22:48 jtc Exp $
 .\"
 .Dd March 16, 1991
 .Dt LPC 8
@@ -61,7 +61,7 @@ disable or enable a printer's spooling queue,
 rearrange the order of jobs in a spooling queue,
 .It
 find the status of printers, and their associated
-spooling queues and printer dameons.
+spooling queues and printer daemons.
 .El
 .Pp
 Without any arguments,
@@ -74,7 +74,7 @@ arguments as parameters to the command.  The standard input
 may be redirected causing
 .Nm lpc
 to read commands from file.
-Commands may be abreviated;
+Commands may be abbreviated;
 the following is the list of recognized commands.
 .Pp
 .Bl -tag -width Ds -compact
@@ -162,7 +162,7 @@ lock file for queue control
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy "?Ambiguous command"
-abreviation matches more than one command
+abbreviation matches more than one command
 .It Sy "?Invalid command"
 no match was found
 .It Sy "?Privileged command"
