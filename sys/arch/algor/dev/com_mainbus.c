@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.6 2002/10/02 02:26:42 thorpej Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.7 2002/10/02 03:36:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.6 2002/10/02 02:26:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.7 2002/10/02 03:36:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,8 +76,7 @@ void	com_mainbus_attach(struct device *, struct device *, void *);
 void	com_mainbus_cleanup(void *);
 
 CFATTACH_DECL(com_mainbus, sizeof(struct com_mainbus_softc),
-	com_mainbus_match, com_mainbus_attach, NULL, NULL);
-};
+    com_mainbus_match, com_mainbus_attach, NULL, NULL);
 
 int
 com_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
