@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.22 2001/09/09 22:18:14 wiz Exp $
+.\"	$NetBSD: compat_linux.8,v 1.23 2001/10/07 10:12:05 jdolecek Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -56,7 +56,7 @@ for kernels compiled with the
 option enabled.
 If support for Linux a.out executables is desired, the
 .Dv EXEC_AOUT
-option should be enabled in addition to
+option should be enabled in addition to option
 .Dv COMPAT_LINUX .
 Similarly, if support for Linux 32-bit and/or 64-bit ELF executables
 is desired, the
@@ -341,6 +341,26 @@ revision number) should match; the minor number(s) <mm> are
 less important, though it is advised to take the most
 recent version.
 .El
+.Ss Setting up procfs
+Some Linux binaries expect procfs to be mounted and that it would
+contain some Linux specific stuff. If it's not the case, they behave
+unexpectedly or even crash.
+.Pp
+Mount procfs on NetBSD using following command:
+.Bl -tag -width 123 -offset indent
+.It (me@netbsd) mount_procfs -o linux procfs /proc
+.El
+.Pp
+You can also setup system so that procfs is mounted automatically
+on system boot, by putting entry like below to
+.Pa /etc/fstab .
+.Bl -tag -width 123 -offset indent
+.It procfs /proc procfs ro,linux
+.El
+.Pp
+See also
+.Xr mount_procfs 8
+for further information.
 .Ss Setting up other files
 Newer version of Linux use
 .Pa /etc/nsswitch.conf
