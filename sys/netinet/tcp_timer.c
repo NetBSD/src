@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.55 2001/09/11 21:03:21 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.56 2001/11/04 13:42:28 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -162,7 +162,7 @@ void	tcp_timer_persist(void *);
 void	tcp_timer_keep(void *);
 void	tcp_timer_2msl(void *);
 
-tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
+const tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 	tcp_timer_rexmt,
 	tcp_timer_persist,
 	tcp_timer_keep,
@@ -243,10 +243,10 @@ tcp_canceltimers(tp)
 		TCP_TIMER_DISARM(tp, i);
 }
 
-int	tcp_backoff[TCP_MAXRXTSHIFT + 1] =
+const int	tcp_backoff[TCP_MAXRXTSHIFT + 1] =
     { 1, 2, 4, 8, 16, 32, 64, 64, 64, 64, 64, 64, 64 };
 
-int	tcp_totbackoff = 511;	/* sum of tcp_backoff[] */
+const int	tcp_totbackoff = 511;	/* sum of tcp_backoff[] */
 
 /*
  * TCP timer processing.
