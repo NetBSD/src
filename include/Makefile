@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.29 1993/11/12 18:27:21 jtc Exp $
+#	$Id: Makefile,v 1.30 1993/12/22 06:44:10 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -20,7 +20,7 @@ MFILES=	float.h frame.h
 LFILES=	errno.h fcntl.h signal.h syslog.h termios.h
 
 DIRS=	arpa protocols rpc rpcsvc
-LDIRS=	net netinet netccitt netiso netns nfs sys ufs vm 
+LDIRS=	dev net netinet netccitt netiso netns nfs sys ufs vm 
 
 NOOBJ=	noobj
 
