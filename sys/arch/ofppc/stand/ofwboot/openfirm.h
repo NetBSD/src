@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.h,v 1.1 1996/09/30 16:35:04 ws Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.1 1997/04/16 20:29:23 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,23 +30,26 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef	_STAND_DEV_H_
-#define	_STAND_DEV_H_
+/*
+ * Prototypes for Openfirmware Interface Routines
+ */
 
-struct of_dev {
-	int handle;
-	int type;
-	u_long partoff;
-	int bsize;
-};
+#include <sys/cdefs.h>
+#include <sys/types.h>
 
-/* Known types: */
-#define	OFDEV_NET	1
-#define	OFDEV_DISK	2
-
-#define	DEFAULT_KERNEL	"/netbsd"
-
-extern char opened_name[];
-extern int floppyboot;
-
+int OF_finddevice __P((char *name));
+int OF_instance_to_package __P((int ihandle));
+int OF_getprop __P((int handle, char *prop, void *buf, int buflen));
+#ifdef	__notyet__
+int OF_setprop __P((int handle, char *prop, void *buf, int len));
 #endif
+int OF_open __P((char *dname));
+void OF_close __P((int handle));
+int OF_write __P((int handle, void *addr, int len));
+int OF_read __P((int handle, void *addr, int len));
+int OF_seek __P((int handle, u_quad_t pos));
+void *OF_claim __P((void *virt, u_int size, u_int align));
+void OF_release __P((void *virt, u_int size));
+int OF_milliseconds __P((void));
+void OF_chain __P((void *addr, u_int size, void (*entry)(), void *parm, u_int parmlen));
+
