@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.24 1993/11/14 14:45:42 cgd Exp $
+ *	$Id: machdep.c,v 1.47.2.25 1994/01/11 13:42:26 mycroft Exp $
  */
 
 #include <stddef.h>
@@ -488,6 +488,7 @@ sigreturn(p, uap, retval)
 	register struct sigcontext *scp;
 	register struct sigframe *fp;
 	register struct trapframe *tf;
+	int eflags;
 
 	tf = (struct trapframe *)p->p_regs;
 
@@ -501,19 +502,18 @@ sigreturn(p, uap, retval)
 	     ((caddr_t)scp - offsetof(struct sigframe, sf_sc));
 
 	if (useracc((caddr_t)fp, sizeof(*fp), 0) == 0)
-		return(EINVAL);
+		return(EFAULT);
 
 	if (useracc((caddr_t)scp, sizeof(*scp), 0) == 0)
+		return(EFAULT);
+
+	eflags = scp->sc_efl;
+	if ((eflags & PSL_USERCLR) != 0 ||
+	    (eflags & PSL_USERSET) != PSL_USERSET ||
+	    (eflags & PSL_IOPL) > (tf->tf_eflags & PSL_IOPL))
 		return(EINVAL);
 
-	/* make sure they aren't trying to do anything funny */
-	if ((scp->sc_ps & PSL_MBZ) != 0 || (scp->sc_ps & PSL_MBO) != PSL_MBO)
-		return(EINVAL);
-
-	/* compare IOPL; we can't insist that it's always 3 or the X server
-	   will fail */
-	if ((tf->tf_eflags & PSL_IOPL) < (scp->sc_efl & PSL_IOPL))
-		return(EINVAL);
+	/* XXXXXX NEED TO VALIDATE SEGMENT REGISTERS */
 
 	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~
@@ -537,6 +537,7 @@ sigreturn(p, uap, retval)
 	tf->tf_ds = scp->sc_ds;
 	tf->tf_es = scp->sc_es;
 	tf->tf_ss = scp->sc_ss;
+
 	return(EJUSTRETURN);
 }
 
