@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.22 2001/05/12 22:27:05 chs Exp $	*/
+/*	$NetBSD: asm.h,v 1.23 2001/05/27 01:01:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -105,8 +105,14 @@
 #define	_ENTRY(name) \
 	.text; .even; .globl name; .type name,@function; name:
 
+#ifdef __ELF__
+#define	MCOUNT_ENTRY	__mcount
+#else
+#define	MCOUNT_ENTRY	mcount
+#endif
+
 #ifdef GPROF
-#define _PROF_PROLOG	link %a6,#0; jbsr mcount; unlk %a6
+#define _PROF_PROLOG	link %a6,#0; jbsr MCOUNT_ENTRY; unlk %a6
 #else
 #define _PROF_PROLOG
 #endif
