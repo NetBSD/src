@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.12 2004/04/04 17:35:15 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.13 2004/04/04 19:21:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12 2004/04/04 17:35:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.13 2004/04/04 19:21:36 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12 2004/04/04 17:35:15 matt Exp $");
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/siginfo.h>
 
 #include <machine/fpu.h>
 #include <machine/psl.h>
@@ -57,6 +58,13 @@ enable_fpu(void)
 	if (!(pcb->pcb_flags & PCB_FPU)) {
 		memset(&pcb->pcb_fpu, 0, sizeof pcb->pcb_fpu);
 		pcb->pcb_flags |= PCB_FPU;
+	}
+	/*
+	 * If we own the CPU but FP is disabled, simple enable it and return.
+	 */
+	if (ci->ci_fpulwp == l) {
+		tf->srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
+		return;
 	}
 	msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);
@@ -104,7 +112,7 @@ enable_fpu(void)
 		"lfd	31,248(%0)\n"
 	    :: "b"(&pcb->pcb_fpu.fpr[0]));
 	__asm __volatile ("isync");
-	tf->srr1 |= PSL_FP;
+	tf->srr1 |= PSL_FP | (pcb->pcb_flags & (PCB_FE0|PCB_FE1));
 	ci->ci_fpulwp = l;
 	pcb->pcb_fpcpu = ci;
 	__asm __volatile ("sync");
@@ -215,4 +223,66 @@ save_fpu_lwp(struct lwp *l)
 
 	mp_save_fpu_lwp(l);
 #endif
+}
+
+#define	STICKYBITS	(FPSCR_VX|FPSCR_OX|FPSCR_UX|FPSCR_ZX|FPSCR_XX)
+#if STICKYBITS & (PCB_FE0|PCB_FE1|PCB_VEC|PCB_FPU)
+#error PCB flags overlap FPSCR STICKYBITS
+#endif
+
+int
+get_fpu_fault_code(void)
+{
+#ifdef DIAGNOSTIC
+	struct cpu_info *ci = curcpu();
+#endif
+	struct lwp *l = curlwp;
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	register_t msr;
+	uint64_t tmp;
+	uint32_t fpscr;
+	int code;
+
+	KASSERT(pcb->pcb_fpcpu == ci);
+	KASSERT(pcb->pcb_flags & PCB_FPU);
+	KASSERT(ci->ci_fpulwp == l);
+	msr = mfmsr();
+        mtmsr((msr & ~PSL_EE) | PSL_FP);
+	__asm __volatile ("isync");
+	__asm __volatile (
+		"stfd	0,0(%0)\n"	/* save f0 */
+		"mtfsb0	0\n"		/* clear FPSCR_FX */
+		"mtfsb0	24\n"		/* clear FPSCR_VE */
+		"mtfsb0	25\n"		/* clear FPSCR_OE */
+		"mtfsb0	26\n"		/* clear FPSCR_UE */
+		"mtfsb0	27\n"		/* clear FPSCR_ZE */
+		"mtfsb0	28\n"		/* clear FPSCR_XE */
+		"mffs	0\n"		/* get FPSCR */
+		"stfd	0,0(%1)\n"	/* store it */
+		"lfd	0,0(%0)\n"	/* restore f0 */
+	    :: "b"(&tmp), "b"(&pcb->pcb_fpu.fpscr));
+        mtmsr(msr);
+	__asm __volatile ("isync");
+	/*
+	 * Now determine the fault type.  First we see if any of the sticky
+	 * bits have changed since the FP exception.  If so, we only want
+	 * to return the code for the new exception.  If not, we look at all
+	 * the bits.
+	 */
+	fpscr = (uint32_t)(*(uint64_t *)&pcb->pcb_fpu.fpscr);
+	if ((fpscr & ~pcb->pcb_flags) & STICKYBITS)
+		fpscr &= ~pcb->pcb_flags;
+	if (fpscr & FPSCR_VX)		code = FPE_FLTINV;
+	else if (fpscr & FPSCR_OX)	code = FPE_FLTOVF;
+	else if (fpscr & FPSCR_UX)	code = FPE_FLTUND;
+	else if (fpscr & FPSCR_ZX)	code = FPE_FLTDIV;
+	else if (fpscr & FPSCR_XX)	code = FPE_FLTRES;
+	else				code = 0;
+	/*
+	 * Now we save the latest set of sticky bits.  This is so we can see
+	 * what's changed on the next SIGFPE.
+	 */
+	pcb->pcb_flags &= ~STICKYBITS;
+	pcb->pcb_flags |= fpscr & STICKYBITS;
+	return code;
 }
