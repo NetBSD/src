@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.75.8.2 2002/06/05 03:52:52 lukem Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.75.8.3 2002/07/11 18:26:02 thorpej Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75.8.2 2002/06/05 03:52:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.75.8.3 2002/07/11 18:26:02 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1624,9 +1624,10 @@ ni6_nametodns(name, namelen, old)
 			while (i > 0) {
 				if (!isalnum(*p) && *p != '-')
 					goto fail;
-				if (isupper(*p))
-					*cp++ = tolower(*p++);
-				else
+				if (isupper(*p)) {
+					*cp++ = tolower(*p);
+					p++;
+				} else
 					*cp++ = *p++;
 				i--;
 			}
