@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44.2.2 2001/02/11 19:13:01 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.44.2.3 2001/03/29 09:00:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -334,10 +334,11 @@ booted_sd(struct device *dev, void *aux)
 	if (jmfr("sd", dev, BDEV_SD) && jmfr("cd", dev, BDEV_SD))
 		return 0;
 
-	if (sa->sa_sc_link->type != BUS_SCSI)
+	if (sa->sa_periph->periph_channel->chan_bustype->bustype_type !=
+	    SCSIPI_BUSTYPE_SCSI)
 		return 0; /* ``Cannot happen'' */
 
-	if (sa->sa_sc_link->scsipi_scsi.target != rpb.unit)
+	if (sa->sa_periph->periph_target != rpb.unit)
 		return 0; /* Wrong unit */
 
 	ppdev = dev->dv_parent->dv_parent;
