@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/04/24 13:01:23 itojun Exp $	
+#	$NetBSD: Makefile,v 1.20 2001/01/19 09:10:13 kleink Exp $	
 
 PROG=	tcpdump
 MAN=	tcpdump.8 
@@ -28,6 +28,7 @@ SRCS+=	print-ah.c print-esp.c print-frag6.c print-icmp6.c print-ip6.c \
 	print-ripng.c print-rt6.c print-dhcp6.c print-bgp.c
 SRCS+= version.c
 SRCS+= print-ascii.c print-telnet.c
+SRCS+= print-vrrp.c
 
 AWKS= atime.awk packetdat.awk stime.awk send-ack.awk   
 
