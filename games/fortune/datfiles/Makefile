@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.6 1993/08/01 05:45:27 mycroft Exp $
+#	$Id: Makefile,v 1.7 1993/09/30 23:57:08 jtc Exp $
 
 #
 # set `OBSCENE' to "real" to have obscene fortunes installed,
@@ -17,14 +17,7 @@ CLEANFILES+=${DATFILES}
 all: ${DATFILES}
 
 install:
-	@if [ ! -d ${DESTDIR}/usr/share/games/fortune ]; then \
-                /bin/rm -f ${DESTDIR}/usr/share/games/fortune ; \
-                mkdir -p ${DESTDIR}/usr/share/games/fortune ; \
-                chown root.wheel ${DESTDIR}/usr/share/games/fortune ; \
-                chmod 755 ${DESTDIR}/usr/share/games/fortune ; \
-        else \
-                true ; \
-        fi
+	@install -d -o root -g wheel -m 755 ${DESTDIR}/usr/share/games/fortune
 	install ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${DATFILES} \
 	    ${DESTDIR}/usr/share/games/fortune
 	(cd ${.CURDIR} && install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
