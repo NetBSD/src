@@ -1,6 +1,8 @@
+/*	$NetBSD: vfontedpr.c,v 1.3 1994/11/17 08:28:03 jtc Exp $	*/
+
 /*
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,25 +34,30 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)vfontedpr.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: vfontedpr.c,v 1.2 1993/08/01 18:03:28 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: vfontedpr.c,v 1.3 1994/11/17 08:28:03 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include "pathnames.h"
+#include "extern.h"
 
-#define boolean int
-#define TRUE 1
 #define FALSE 0
+#define TRUE !(FALSE)
 #define NIL 0
 #define STANDARD 0
 #define ALTERNATE 1
@@ -66,82 +73,72 @@ static char rcsid[] = "$Id: vfontedpr.c,v 1.2 1993/08/01 18:03:28 mycroft Exp $"
 #define PNAMELEN 40		/* length of a function/procedure name */
 #define PSMAX 20		/* size of procedure name stacking */
 
-/* regular expression routines */
-
-char	*expmatch();		/* match a string to an expression */
-char	*STRNCMP();		/* a different kindof strncmp */
-char	*convexp();		/* convert expression to internal form */
-char	*tgetstr();
-
-boolean	isproc();
-
-
-char	*ctime();
+static int       iskw __P((char *));
+static boolean   isproc __P((char *));
+static void      putKcp __P((char *, char *, boolean));
+static void      putScp __P((char *));
+static void      putcp __P((int));
+static int       tabs __P((char *, char *));
+static int       width __P((char *, char *));
 
 /*
  *	The state variables
  */
 
-boolean	incomm;			/* in a comment of the primary type */
-boolean	instr;			/* in a string constant */
-boolean	inchr;			/* in a string constant */
-boolean	nokeyw = FALSE;		/* no keywords being flagged */
-boolean	index = FALSE;		/* form an index */
-boolean filter = FALSE;		/* act as a filter (like eqn) */
-boolean pass = FALSE;		/* when acting as a filter, pass indicates
+static boolean  filter = FALSE;	/* act as a filter (like eqn) */
+static boolean	inchr;		/* in a string constant */
+static boolean	incomm;		/* in a comment of the primary type */
+static boolean	idx = FALSE;	/* form an index */
+static boolean	instr;		/* in a string constant */
+static boolean	nokeyw = FALSE;	/* no keywords being flagged */
+static boolean  pass = FALSE;	/*
+				 * when acting as a filter, pass indicates
 				 * whether we are currently processing
 				 * input.
 				 */
-boolean prccont;		/* continue last procedure */
-int	comtype;		/* type of comment */
-int	margin;
-int	psptr;			/* the stack index of the current procedure */
-char	pstack[PSMAX][PNAMELEN+1];	/* the procedure name stack */
-int	plstack[PSMAX];		/* the procedure nesting level stack */
-int	blklevel;		/* current nesting level */
-char	*defsfile = _PATH_VGRINDEFS;	/* name of language definitions file */
-char	pname[BUFSIZ+1];
+
+static int	blklevel;	/* current nesting level */
+static int	comtype;	/* type of comment */
+static char    *defsfile[2] = { _PATH_VGRINDEFS, 0 };
+				/* name of language definitions file */
+static int	margin;
+static int	plstack[PSMAX];	/* the procedure nesting level stack */
+static char	pname[BUFSIZ+1]; 
+static boolean  prccont;	/* continue last procedure */
+static int	psptr;		/* the stack index of the current procedure */
+static char	pstack[PSMAX][PNAMELEN+1];	/* the procedure name stack */
 
 /*
  *	The language specific globals
  */
 
-char	*language = "c";	/* the language indicator */
-char	*l_keywds[BUFSIZ/2];	/* keyword table address */
-char	*l_prcbeg;		/* regular expr for procedure begin */
-char	*l_combeg;		/* string introducing a comment */
-char	*l_comend;		/* string ending a comment */
 char	*l_acmbeg;		/* string introducing a comment */
 char	*l_acmend;		/* string ending a comment */
 char	*l_blkbeg;		/* string begining of a block */
 char	*l_blkend;		/* string ending a block */
-char    *l_strbeg;		/* delimiter for string constant */
-char    *l_strend;		/* delimiter for string constant */
 char    *l_chrbeg;		/* delimiter for character constant */
 char    *l_chrend;		/* delimiter for character constant */
-char	l_escape;		/* character used to  escape characters */
-boolean	l_toplex;		/* procedures only defined at top lex level */
-
-/*
- *  global variables also used by expmatch
- */
-boolean _escaped;		/* if last character was an escape */
-char *_start;			/* start of the current string */
-boolean	l_onecase;		/* upper and lower case are equivalent */
+char	*l_combeg;		/* string introducing a comment */
+char	*l_comend;		/* string ending a comment */
+char	 l_escape;		/* character used to  escape characters */
+char	*l_keywds[BUFSIZ/2];	/* keyword table address */
+char	*l_prcbeg;		/* regular expr for procedure begin */
+char    *l_strbeg;		/* delimiter for string constant */
+char    *l_strend;		/* delimiter for string constant */
+boolean	 l_toplex;		/* procedures only defined at top lex level */
+char	*language = "c";	/* the language indicator */
 
 #define	ps(x)	printf("%s", x)
 
+void
 main(argc, argv)
     int argc;
     char *argv[];
 {
-    int lineno;
     char *fname = "";
-    char *ptr;
     struct stat stbuf;
     char buf[BUFSIZ];
-    char strings[2 * BUFSIZ];
-    char defs[2 * BUFSIZ];
+    char *defs;
     int needbp = 0;
 
     argc--, argv++;
@@ -180,7 +177,7 @@ main(argc, argv)
 
 	    /* build an index */
 	    if (!strcmp(argv[0], "-x")) {
-		index++;
+		idx++;
 		argv[0] = "-n";
 	    }
 
@@ -211,7 +208,7 @@ main(argc, argv)
 
 	    /* specify the language description file */
 	    if (!strncmp(argv[0], "-d", 2)) {
-		defsfile = argv[1];
+		defsfile[0] = argv[1];
 		argc--, argv++;
 		argc--, argv++;
 		continue;
@@ -222,7 +219,7 @@ main(argc, argv)
 		perror(argv[0]);
 		exit(1);
 	    }
-	    if (index)
+	    if (idx)
 		printf("'ta 4i 4.25i 5.5iR\n'in .5i\n");
 	    fname = argv[0];
 	    argc--, argv++;
@@ -232,22 +229,24 @@ main(argc, argv)
 	/*
 	 *  get the  language definition from the defs file
 	 */
-	i = tgetent (defs, language, defsfile);
-	if (i == 0) {
+	i = cgetent(&defs, defsfile, language);
+	if (i == -1) {
 	    fprintf (stderr, "no entry for language %s\n", language);
 	    exit (0);
-	} else  if (i < 0) {
-	    fprintf (stderr,  "cannot find vgrindefs file %s\n", defsfile);
+	} else  if (i == -2) { fprintf(stderr, 
+	    "cannot find vgrindefs file %s\n", defsfile[0]);
 	    exit (0);
+	} else if (i == -3) { fprintf(stderr, 
+	    "potential reference loop detected in vgrindefs file %s\n", 
+            defsfile[0]);				      
+	    exit(0);
 	}
-	cp = strings;
-	if (tgetstr ("kw", &cp) == NIL)
+	if (cgetustr(defs, "kw", &cp) == -1)
 	    nokeyw = TRUE;
 	else  {
 	    char **cpp;
 
 	    cpp = l_keywds;
-	    cp = strings;
 	    while (*cp) {
 		while (*cp == ' ' || *cp =='\t')
 		    *cp++ = NULL;
@@ -258,31 +257,31 @@ main(argc, argv)
 	    }
 	    *cpp = NIL;
 	}
-	cp = buf;
-	l_prcbeg = convexp (tgetstr ("pb", &cp));
-	cp = buf;
-	l_combeg = convexp (tgetstr ("cb", &cp));
-	cp = buf;
-	l_comend = convexp (tgetstr ("ce", &cp));
-	cp = buf;
-	l_acmbeg = convexp (tgetstr ("ab", &cp));
-	cp = buf;
-	l_acmend = convexp (tgetstr ("ae", &cp));
-	cp = buf;
-	l_strbeg = convexp (tgetstr ("sb", &cp));
-	cp = buf;
-	l_strend = convexp (tgetstr ("se", &cp));
-	cp = buf;
-	l_blkbeg = convexp (tgetstr ("bb", &cp));
-	cp = buf;
-	l_blkend = convexp (tgetstr ("be", &cp));
-	cp = buf;
-	l_chrbeg = convexp (tgetstr ("lb", &cp));
-	cp = buf;
-	l_chrend = convexp (tgetstr ("le", &cp));
+	cgetustr(defs, "pb", &cp);
+	l_prcbeg = convexp(cp);
+	cgetustr(defs, "cb", &cp);
+	l_combeg = convexp(cp);
+	cgetustr(defs, "ce", &cp);
+	l_comend = convexp(cp);
+	cgetustr(defs, "ab", &cp);
+	l_acmbeg = convexp(cp);
+	cgetustr(defs, "ae", &cp);
+	l_acmend = convexp(cp);
+	cgetustr(defs, "sb", &cp);
+	l_strbeg = convexp(cp);
+	cgetustr(defs, "se", &cp);
+	l_strend = convexp(cp);
+	cgetustr(defs, "bb", &cp);
+	l_blkbeg = convexp(cp);
+	cgetustr(defs, "be", &cp);
+	l_blkend = convexp(cp);
+	cgetustr(defs, "lb", &cp);
+	l_chrbeg = convexp(cp);
+	cgetustr(defs, "le", &cp);
+	l_chrend = convexp(cp);
 	l_escape = '\\';
-	l_onecase = tgetflag ("oc");
-	l_toplex = tgetflag ("tl");
+	l_onecase = (cgetcap(defs, "oc", ':') != NULL);
+	l_toplex = (cgetcap(defs, "tl", ':') != NULL);
 
 	/* initialize the program */
 
@@ -352,6 +351,7 @@ main(argc, argv)
 
 #define isidchr(c) (isalnum(c) || (c) == '_')
 
+static void
 putScp(os)
     char *os;
 {
@@ -532,6 +532,7 @@ skip:
     } while (*s);
 }
 
+static void
 putKcp (start, end, force)
     char	*start;		/* start of string to write */
     char	*end;		/* end of string to write */
@@ -541,7 +542,7 @@ putKcp (start, end, force)
     int xfld = 0;
 
     while (start <= end) {
-	if (index) {
+	if (idx) {
 	    if (*start == ' ' || *start == '\t') {
 		if (xfld == 0)	
 		    printf("");
@@ -581,6 +582,7 @@ putKcp (start, end, force)
 }
 
 
+static int
 tabs(s, os)
     char *s, *os;
 {
@@ -588,6 +590,7 @@ tabs(s, os)
     return (width(s, os) / 8);
 }
 
+static int
 width(s, os)
 	register char *s, *os;
 {
@@ -608,6 +611,7 @@ width(s, os)
 	return (i);
 }
 
+static void
 putcp(c)
 	register int c;
 {
@@ -672,7 +676,7 @@ putcp(c)
 /*
  *	look for a process beginning on this line
  */
-boolean
+static boolean
 isproc(s)
     char *s;
 {
@@ -688,6 +692,7 @@ isproc(s)
 /*  iskw -	check to see if the next word is a keyword
  */
 
+static int
 iskw(s)
 	register char *s;
 {
@@ -702,3 +707,4 @@ iskw(s)
 			return (i);
 	return (0);
 }
+
