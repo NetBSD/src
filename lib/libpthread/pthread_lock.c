@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.1.2.5 2001/07/26 19:57:14 nathanw Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.1.2.6 2001/12/30 02:17:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,8 +36,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <assert.h>
+
 #include "pthread.h"
 #include "pthread_int.h"
+
+#undef PTHREAD_SA_DEBUG
+
+#ifdef PTHREAD_SA_DEBUG
+#define SDPRINTF(x) DPRINTF(x)
+#else
+#define SDPRINTF(x)
+#endif
 
 /* How many times to try before checking whether we've been continued. */
 #define NSPINS 20	/* XXX arbitrary */
@@ -45,18 +55,20 @@
 static int nspins = NSPINS;
 
 void
-pthread_lockinit(pt_spin_t *lock)
+pthread_lockinit(pthread_spin_t *lock)
 {
 
 	__cpu_simple_lock_init(lock);
 }
 
 void
-pthread_spinlock(pthread_t thread, pt_spin_t *lock)
+pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 {
 	int count, ret;
 
 	count = nspins;
+	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock from %d\n",
+		thread, thread->pt_spinlocks));
 	++thread->pt_spinlocks;
 
 	do {
@@ -65,7 +77,14 @@ pthread_spinlock(pthread_t thread, pt_spin_t *lock)
 
 		if (ret == 1)
 			break;
-		
+
+		/* As long as this is uniprocessor, encountering a
+		 * locked spinlock is a bug. 
+		 */
+		assert (ret == 1);
+
+	SDPRINTF(("(pthread_spinlock %p) decrementing spinlock from %d\n",
+		thread, thread->pt_spinlocks));
 		--thread->pt_spinlocks;
 			
 		/* We may be preempted while spinning. If so, we will
@@ -84,6 +103,8 @@ pthread_spinlock(pthread_t thread, pt_spin_t *lock)
 		}
 		/* try again */
 		count = nspins;
+	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock from %d\n",
+		thread, thread->pt_spinlocks));
 		++thread->pt_spinlocks;
 	} while (/*CONSTCOND*/1);
 
@@ -93,15 +114,19 @@ pthread_spinlock(pthread_t thread, pt_spin_t *lock)
 
 
 int
-pthread_spintrylock(pthread_t thread, pt_spin_t *lock)
+pthread_spintrylock(pthread_t thread, pthread_spin_t *lock)
 {
 	int ret;
 
+	SDPRINTF(("(pthread_spinlock %p) incrementing spinlock from %d\n",
+		thread, thread->pt_spinlocks));
 	++thread->pt_spinlocks;
 
 	ret = __cpu_simple_lock_try(lock);
 	
 	if (ret == 0) {
+	SDPRINTF(("(pthread_spintrylock %p) decrementing spinlock from %d\n",
+		thread, thread->pt_spinlocks));
 		--thread->pt_spinlocks;
 		/* See above. */
 		if (thread->pt_next != NULL) {
@@ -115,9 +140,11 @@ pthread_spintrylock(pthread_t thread, pt_spin_t *lock)
 
 
 void
-pthread_spinunlock(pthread_t thread, pt_spin_t *lock)
+pthread_spinunlock(pthread_t thread, pthread_spin_t *lock)
 {
 	__cpu_simple_unlock(lock);
+	SDPRINTF(("(pthread_spinunlock %p) decrementing spinlock from %d\n",
+		thread, thread->pt_spinlocks));
 	--thread->pt_spinlocks;
 
 	PTHREADD_ADD(PTHREADD_SPINUNLOCKS);
