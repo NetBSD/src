@@ -33,13 +33,14 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$Id: local_passwd.c,v 1.6 1994/01/05 11:20:34 deraadt Exp $";
+static char rcsid[] = "$Id: local_passwd.c,v 1.7 1994/12/24 17:27:42 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <pwd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 uid_t uid;
 
