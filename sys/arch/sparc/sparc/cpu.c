@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.162 2003/01/16 14:49:08 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.163 2003/01/16 16:10:44 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -792,25 +792,28 @@ mp_resume_cpus()
 	}
 }
 
+/*
+ * Tell all CPUs except the current one to hurry back into the prom
+ */
 void
 mp_halt_cpus()
 {
 	int n;
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
+		int r;
 
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
-
-		/* tell it to hurry back into the prom */
-		printf("cpu%d halted\n", cpi->ci_cpuid);
 
 		/*
 		 * This PROM utility will put the OPENPROM_MBX_STOP
 		 * message (0xfb) in the CPU's mailbox and then send
 		 * it a level 15 soft interrupt.
 		 */
-		prom_cpustop(cpi->node);
+		r = prom_cpustop(cpi->node);
+		printf("cpu%d %shalted\n", cpi->ci_cpuid,
+			r == 0 ? "" : "(boot CPU?) can not be ");
 	}
 }
 #endif /* MULTIPROCESSOR */
