@@ -1,4 +1,4 @@
-/*	$NetBSD: isnanl_ieee754.c,v 1.4 2003/10/23 00:04:57 kleink Exp $	*/
+/*	$NetBSD: isinfl.c,v 1.1 2003/10/24 00:58:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isnanl_ieee754.c,v 1.4 2003/10/23 00:04:57 kleink Exp $");
+__RCSID("$NetBSD: isinfl.c,v 1.1 2003/10/24 00:58:01 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,31 +49,22 @@ __RCSID("$NetBSD: isnanl_ieee754.c,v 1.4 2003/10/23 00:04:57 kleink Exp $");
 #include <machine/ieee.h>
 #include <math.h>
 
-#if !defined(EXT_EXP_INFNAN)
-#include <assert.h>
-#endif
-
 #if 0	/* XXX Currently limited to internal use. */
 #ifdef __weak_alias
-__weak_alias(isnanl,_isnanl)
+__weak_alias(isinfl,_isinfl)
 #endif
 #endif
 
 int
-isnanl(long double ld)
+isinfl(long double ld)
 {
-#if defined(EXT_EXP_INFNAN)
 	union {
 		long double ld;
 		struct ieee_ext ldbl;
 	} u;
 
 	u.ld = ld;
+	/* Note: the explicit integer bit is "don't care". */
 	return (u.ldbl.ext_exp == EXT_EXP_INFNAN &&
-	    (u.ldbl.ext_frach != 0 || u.ldbl.ext_frachm != 0 ||
-	     u.ldbl.ext_fraclm != 0 || u.ldbl.ext_fracl != 0));
-#else
-	_DIAGASSERT(sizeof(double) == sizeof(long double));
-	return (isnan((double) ld));
-#endif /* EXT_EXP_INFNAN */
+	    (u.ldbl.ext_frach == 0 && u.ldbl.ext_fracl == 0));
 }

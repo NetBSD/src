@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.18 2003/08/01 17:03:48 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2003/10/24 00:58:01 kleink Exp $
 
 SRCS+=	alloca.S fabs.S
 
 # Common ieee754 constants and functions
 SRCS+=	infinity_ieee754.c nanf_ieee754.c
-SRCS+=	frexp_ieee754.c isinf_ieee754.c isinfl_ieee754.c isnan_ieee754.c
-SRCS+=	isnanl_ieee754.c
+SRCS+=	frexp_ieee754.c isinf_ieee754.c isnan_ieee754.c
+
+SRCS+=	isinfl.c isnanl.c
 
 SRCS+=	ashlsi3.S ashrsi3.S \
 	lshlsi3.S lshrsi3.S \
