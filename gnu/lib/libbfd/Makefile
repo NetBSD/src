@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2002/02/11 21:36:33 tv Exp $
+#	$NetBSD: Makefile,v 1.26 2002/06/18 08:19:04 itojun Exp $
 
 LIB=		bfd
 
@@ -272,3 +272,15 @@ elf32-target.h: elfxx-target.h
 
 elf64-target.h: elfxx-target.h
 	sed -e s/NN/64/g < $> > $@
+
+elf32-ia64.c: elfxx-ia64.c
+	sed -e s/NN/32/g < $> > $@
+
+elf64-ia64.c: elfxx-ia64.c
+	sed -e s/NN/64/g < $> > $@
+
+peigen.c: peXXigen.c
+	sed -e s/NN/pe/g < $> > $@
+
+pepigen.c: peXXigen.c
+	sed -e s/NN/pep/g < $> > $@
