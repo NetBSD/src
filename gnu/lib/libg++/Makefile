@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1996/12/17 19:14:15 phil Exp $
+#	$NetBSD: Makefile,v 1.22 1997/02/07 07:14:02 mikel Exp $
 
 SUBDIR= libg++ libstdc++ # libio libiostream
 
@@ -29,13 +29,13 @@ includes:
 			${DESTDIR}/usr/include/g++/$$j; \
 	done)
 	@echo installing includes from libstdc++/std
-	@(cd libstdc++/std ; for j in *.h; do \
+	@(cd libstdc++/std ; for j in *.h *.cc; do \
 		cmp -s $$j ${DESTDIR}/usr/include/g++/std/$$j || \
 		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
 			${DESTDIR}/usr/include/g++/std/$$j; \
 	done)
 	@echo installing includes from libstdc++/stl
-	@(cd libstdc++/stl ; for j in *.h; do \
+	@(cd libstdc++/stl ; for j in *.h *.cc; do \
 		cmp -s $$j ${DESTDIR}/usr/include/g++/$$j || \
 		${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 $$j \
 			${DESTDIR}/usr/include/g++/$$j; \
