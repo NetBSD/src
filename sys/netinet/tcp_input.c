@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.194 2004/04/20 16:52:12 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.195 2004/04/20 19:49:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.194 2004/04/20 16:52:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.195 2004/04/20 19:49:15 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1922,8 +1922,17 @@ after_listen:
 	 * empty acknowledgment segment ... and the connection remains in
 	 * the same state.
 	 */
-	if (tiflags & TH_SYN)
+	if (tiflags & TH_SYN) {
+		if (tp->rcv_nxt == th->th_seq) {
+			tcp_respond(tp, m, m, th, (tcp_seq)0, th->th_ack - 1,
+			    TH_ACK);
+			if (tcp_saveti)
+				m_freem(tcp_saveti);
+			return;
+		}
+			
 		goto dropafterack_ratelim;
+	}
 
 	/*
 	 * If the ACK bit is off we drop the segment and return.
