@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.113 2001/05/04 15:25:05 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.114 2001/05/04 18:38:36 bouyer Exp $	*/
 
 
 /*
@@ -439,7 +439,7 @@ const struct pciide_product_desc pciide_opti_products[] =  {
 const struct pciide_product_desc pciide_triones_products[] =  {
 	{ PCI_PRODUCT_TRIONES_HPT366,
 	  IDE_PCI_CLASS_OVERRIDE,
-	  "Triones/Highpoint HPT366/370 IDE Controller",
+	  NULL,
 	  hpt_chip_map,
 	},
 	{ 0,
@@ -3018,6 +3018,11 @@ hpt_chip_map(sc, pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 	revision = PCI_REVISION(pa->pa_class);
+	printf(": Triones/Highpoint ");
+	if (revision == HPT370_REV)
+		printf("HPT370 IDE Controller\n");
+	else
+		printf("HPT366 IDE Controller\n");
 
 	/* 
 	 * when the chip is in native mode it identifies itself as a
