@@ -1,4 +1,4 @@
-/* $NetBSD: cia_dma.c,v 1.6 1998/02/04 07:37:28 thorpej Exp $ */
+/* $NetBSD: cia_dma.c,v 1.7 1998/05/07 20:09:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.6 1998/02/04 07:37:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_dma.c,v 1.7 1998/05/07 20:09:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,23 +63,15 @@ int	cia_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
 
 void	cia_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
-int	cia_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
 int	cia_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
 
-int	cia_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
 int	cia_bus_dmamap_load_mbuf_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 	    struct mbuf *, int));
 
-int	cia_bus_dmamap_load_uio_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
 int	cia_bus_dmamap_load_uio_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 	    struct uio *, int));
 
-int	cia_bus_dmamap_load_raw_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
 int	cia_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int));
 
@@ -117,13 +109,14 @@ cia_dma_init(ccp)
 	 */
 	t = &ccp->cc_dmat_direct;
 	t->_cookie = ccp;
+	t->_wbase = CIA_DIRECT_MAPPED_BASE;
 	t->_get_tag = cia_dma_get_tag;
 	t->_dmamap_create = _bus_dmamap_create;
 	t->_dmamap_destroy = _bus_dmamap_destroy;
-	t->_dmamap_load = cia_bus_dmamap_load_direct;
-	t->_dmamap_load_mbuf = cia_bus_dmamap_load_mbuf_direct;
-	t->_dmamap_load_uio = cia_bus_dmamap_load_uio_direct;
-	t->_dmamap_load_raw = cia_bus_dmamap_load_raw_direct;
+	t->_dmamap_load = _bus_dmamap_load_direct;
+	t->_dmamap_load_mbuf = _bus_dmamap_load_mbuf_direct;
+	t->_dmamap_load_uio = _bus_dmamap_load_uio_direct;
+	t->_dmamap_load_raw = _bus_dmamap_load_raw_direct;
 	t->_dmamap_unload = _bus_dmamap_unload;
 	t->_dmamap_sync = _bus_dmamap_sync;
 
@@ -138,6 +131,7 @@ cia_dma_init(ccp)
 	 */
 	t = &ccp->cc_dmat_sgmap;
 	t->_cookie = ccp;
+	t->_wbase = CIA_SGMAP_MAPPED_BASE;
 	t->_get_tag = cia_dma_get_tag;
 	t->_dmamap_create = cia_bus_dmamap_create_sgmap;
 	t->_dmamap_destroy = cia_bus_dmamap_destroy_sgmap;
@@ -284,23 +278,6 @@ cia_bus_dmamap_destroy_sgmap(t, map)
 }
 
 /*
- * Load a CIA direct-mapped DMA map with a linear buffer.
- */
-int
-cia_bus_dmamap_load_direct(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
-{
-
-	return (_bus_dmamap_load_direct_common(t, map, buf, buflen, p,
-	    flags, CIA_DIRECT_MAPPED_BASE));
-}
-
-/*
  * Load a CIA SGMAP-mapped DMA map with a linear buffer.
  */
 int
@@ -324,21 +301,6 @@ cia_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
 }
 
 /*
- * Load a CIA direct-mapped DMA map with an mbuf chain.
- */
-int
-cia_bus_dmamap_load_mbuf_direct(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
-{
-
-	return (_bus_dmamap_load_mbuf_direct_common(t, map, m,
-	    flags, CIA_DIRECT_MAPPED_BASE));
-}
-
-/*
  * Load a CIA SGMAP-mapped DMA map with an mbuf chain.
  */
 int
@@ -359,21 +321,6 @@ cia_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
 }
 
 /*
- * Load a CIA direct-mapped DMA map with a uio.
- */
-int
-cia_bus_dmamap_load_uio_direct(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
-{
-
-	return (_bus_dmamap_load_uio_direct_common(t, map, uio,
-	    flags, CIA_DIRECT_MAPPED_BASE));
-}
-
-/*
  * Load a CIA SGMAP-mapped DMA map with a uio.
  */
 int
@@ -391,23 +338,6 @@ cia_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
 		CIA_TLB_INVALIDATE();
 
 	return (error);
-}
-
-/*
- * Load a CIA direct-mapped DMA map with raw memory.
- */
-int
-cia_bus_dmamap_load_raw_direct(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
-{
-
-	return (_bus_dmamap_load_raw_direct_common(t, map, segs, nsegs,
-	    size, flags, CIA_DIRECT_MAPPED_BASE));
 }
 
 /*
