@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.h,v 1.1 1998/06/24 01:41:16 ross Exp $ */
+/* $NetBSD: pci_1000a.h,v 1.2 1998/06/26 21:59:46 ross Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,3 @@
 
 void	pci_1000a_pickintr __P((void *, bus_space_tag_t, bus_space_tag_t,
 				pci_chipset_tag_t));
-
-#ifdef EVCNT_COUNTERS
-extern struct evcnt dec_1000a_intr_evcnt;
-#endif
