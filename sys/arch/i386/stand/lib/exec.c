@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.2 1997/03/22 01:48:33 thorpej Exp $	 */
+/*	$NetBSD: exec.c,v 1.3 1997/03/22 04:15:51 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -208,7 +208,7 @@ exec_netbsd(file, loadaddr, boothowto, bootdev, consdev)
 	else {
 		int             major;
 
-		if (!strcmp(devname, "hd")) {
+		if (strcmp(devname, "hd") == 0) {
 			/* generic BIOS disk, have to guess type */
 			struct open_file *f = &files[io];	/* XXX */
 
@@ -216,7 +216,20 @@ exec_netbsd(file, loadaddr, boothowto, bootdev, consdev)
 				devname = "sd";
 			else
 				devname = "wd";
+
+			/*
+			 * The old boot block performed the following
+			 * conversion:
+			 *
+			 *	hdN -> Xd0
+			 *
+			 * where X is the type specified by the label.
+			 * We mimmick that here, for lack of any better
+			 * way of doing things.
+			 */
+			unit = 0;
 		}
+
 		if (dev2major(devname, &major))
 			bootdevnr = 0;	/* XXX error out??? */
 		else
