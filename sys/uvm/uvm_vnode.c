@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.7 1999/08/09 00:05:56 chs Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.1.2.8 1999/08/11 05:40:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -500,7 +500,7 @@ uvn_flush(uobj, start, stop, flags)
 	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
 	int s;
 	int npages, result, lcv;
-	boolean_t retval, need_iosync, by_list, needs_clean;
+	boolean_t retval, need_iosync, by_list, needs_clean, all;
 	voff_t curoff;
 	u_short pp_version;
 	UVMHIST_FUNC("uvn_flush"); UVMHIST_CALLED(maphist);
@@ -528,8 +528,7 @@ uvn_flush(uobj, start, stop, flags)
 	need_iosync = FALSE;
 	retval = TRUE;		/* return value */
 	if (flags & PGO_ALLPAGES) {
-		start = 0;
-		stop = -1;
+		all = TRUE;
 		by_list = TRUE;		/* always go by the list */
 	} else {
 		start = trunc_page(start);
@@ -540,6 +539,7 @@ uvn_flush(uobj, start, stop, flags)
 			       (int)round_page(uvn->u_size));
 		}
 
+		all = FALSE;
 		by_list = (uobj->uo_npages <= 
 		    ((stop - start) >> PAGE_SHIFT) * UVN_HASH_PENALTY);
 	}
@@ -565,8 +565,8 @@ uvn_flush(uobj, start, stop, flags)
 			for (pp = TAILQ_FIRST(&uobj->memq);
 			     pp != NULL ;
 			     pp = TAILQ_NEXT(pp, listq)) {
-				if (pp->offset < start ||
-				    (pp->offset >= stop && stop != -1))
+				if (!all &&
+				    (pp->offset < start || pp->offset >= stop))
 					continue;
 				pp->flags &= ~PG_CLEANCHK;
 			}
@@ -608,7 +608,8 @@ uvn_flush(uobj, start, stop, flags)
 			 * range check
 			 */
 
-			if (pp->offset < start || pp->offset >= stop) {
+			if (!all &&
+			    (pp->offset < start || pp->offset >= stop)) {
 				ppnext = TAILQ_NEXT(pp, listq);
 				continue;
 			}
