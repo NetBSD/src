@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbinput - user front-end to the AML debugger
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.4 2002/06/15 01:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbinput.c,v 1.5 2002/06/15 17:59:50 thorpej Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -253,7 +253,7 @@ static const COMMAND_INFO       AcpiGbl_DbCommands[] =
  *
  ******************************************************************************/
 
-static void
+void
 AcpiDbDisplayHelp (
     NATIVE_CHAR             *HelpType)
 {
@@ -362,7 +362,7 @@ AcpiDbDisplayHelp (
  *
  ******************************************************************************/
 
-static NATIVE_CHAR *
+NATIVE_CHAR *
 AcpiDbGetNextToken (
     NATIVE_CHAR             *String,
     NATIVE_CHAR             **Next)
@@ -428,7 +428,7 @@ AcpiDbGetNextToken (
  *
  ******************************************************************************/
 
-static UINT32
+UINT32
 AcpiDbGetLine (
     NATIVE_CHAR             *InputBuffer)
 {
@@ -482,7 +482,7 @@ AcpiDbGetLine (
  *
  ******************************************************************************/
 
-static UINT32
+UINT32
 AcpiDbMatchCommand (
     NATIVE_CHAR             *UserCommand)
 {
@@ -888,7 +888,7 @@ AcpiDbExecuteThread (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiDbSingleThread (
     void)
 {

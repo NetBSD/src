@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconvrt - Object conversion routines
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.4 2002/06/15 01:47:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.5 2002/06/15 17:59:51 thorpej Exp $");
 
 #define __EXCONVRT_C__
 
@@ -369,7 +369,7 @@ AcpiExConvertToBuffer (
  *
  ******************************************************************************/
 
-static UINT32
+UINT32
 AcpiExConvertToAscii (
     ACPI_INTEGER            Integer,
     UINT32                  Base,

@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsdump - Functions to display the resource structures.
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.4 2002/06/15 01:47:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.5 2002/06/15 17:59:51 thorpej Exp $");
 
 #define __RSDUMP_C__
 
@@ -140,7 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: rsdump.c,v 1.4 2002/06/15 01:47:26 thorpej Exp $");
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpIrq (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -186,7 +186,7 @@ AcpiRsDumpIrq (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpDma (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -269,7 +269,7 @@ AcpiRsDumpDma (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpStartDependFns (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -336,7 +336,7 @@ AcpiRsDumpStartDependFns (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpIo (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -379,7 +379,7 @@ AcpiRsDumpIo (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpFixedIo (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -412,7 +412,7 @@ AcpiRsDumpFixedIo (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpVendorSpecific (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -449,7 +449,7 @@ AcpiRsDumpVendorSpecific (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpMemory24 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -494,7 +494,7 @@ AcpiRsDumpMemory24 (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpMemory32 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -539,7 +539,7 @@ AcpiRsDumpMemory32 (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpFixedMemory32 (
     ACPI_RESOURCE_DATA          *Data)
 {
@@ -578,7 +578,7 @@ AcpiRsDumpFixedMemory32 (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpAddress16 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -725,7 +725,7 @@ AcpiRsDumpAddress16 (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpAddress32 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -871,7 +871,7 @@ AcpiRsDumpAddress32 (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpAddress64 (
     ACPI_RESOURCE_DATA      *Data)
 {
@@ -1017,7 +1017,7 @@ AcpiRsDumpAddress64 (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiRsDumpExtendedIrq (
     ACPI_RESOURCE_DATA      *Data)
 {

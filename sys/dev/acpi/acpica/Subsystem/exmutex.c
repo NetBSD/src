@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exmutex - ASL Mutex Acquire/Release functions
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  *****************************************************************************/
 
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.4 2002/06/15 01:47:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exmutex.c,v 1.5 2002/06/15 17:59:51 thorpej Exp $");
 
 #define __EXMUTEX_C__
 
@@ -180,7 +180,7 @@ AcpiExUnlinkMutex (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiExLinkMutex (
     ACPI_OPERAND_OBJECT     *ObjDesc,
     ACPI_THREAD_STATE       *Thread)

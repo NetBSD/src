@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbexec - debugger control method execution
- *              $Revision: 1.4 $
+ *              $Revision: 1.5 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.4 2002/06/15 01:47:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbexec.c,v 1.5 2002/06/15 17:59:50 thorpej Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -142,7 +142,7 @@ static ACPI_DB_METHOD_INFO  AcpiGbl_DbMethodInfo;
  *
  ******************************************************************************/
 
-static ACPI_STATUS
+ACPI_STATUS
 AcpiDbExecuteMethod (
     ACPI_DB_METHOD_INFO     *Info,
     ACPI_BUFFER             *ReturnObj)
@@ -214,7 +214,7 @@ AcpiDbExecuteMethod (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiDbExecuteSetup (
     ACPI_DB_METHOD_INFO     *Info)
 {
@@ -263,7 +263,7 @@ AcpiDbExecuteSetup (
  *
  ******************************************************************************/
 
-static UINT32
+UINT32
 AcpiDbGetOutstandingAllocations (
     void)
 {
