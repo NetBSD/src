@@ -1,4 +1,4 @@
-/* $NetBSD: intrcnt.h,v 1.10 1998/03/02 07:47:52 ross Exp $ */
+/* $NetBSD: intrcnt.h,v 1.11 1998/04/15 00:47:33 mjacob Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -130,7 +130,28 @@
 		ASCIZ "a12  IEI";					\
 		ASCIZ "xbar FORUN";					\
 		ASCIZ "xbar FURUN";					\
-		ASCIZ "a12  ICW";
+		ASCIZ "a12  ICW";					\
+		ASCIZ "kn8ae ioerr";					\
+		ASCIZ "kn8ae pci";					\
+		ASCIZ "kn300 irq 0";					\
+		ASCIZ "kn300 irq 1";					\
+		ASCIZ "kn300 irq 2";					\
+		ASCIZ "kn300 irq 3";					\
+		ASCIZ "kn300 irq 4";					\
+		ASCIZ "kn300 irq 5";					\
+		ASCIZ "kn300 irq 6";					\
+		ASCIZ "kn300 irq 7";					\
+/* 0x70 */	ASCIZ "kn300 irq 8";					\
+		ASCIZ "kn300 irq 9";					\
+		ASCIZ "kn300 irq 10";					\
+		ASCIZ "kn300 irq 11";					\
+		ASCIZ "kn300 irq 12";					\
+		ASCIZ "kn300 irq 13";					\
+		ASCIZ "kn300 irq 14";					\
+		ASCIZ "kn300 irq 15";					\
+		ASCIZ "kn300 ncr810";					\
+		ASCIZ "kn300 i2c ctrl";					\
+		ASCIZ "kn300 i2c bus";
 
 #define INTRCNT_DEFINITION						\
 /* 0x00 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
@@ -139,7 +160,8 @@
 /* 0x30 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x40 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
 /* 0x50 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
-/* 0x60 */	.quad 0, 0, 0, 0, 0, 0, 0;
+/* 0x60 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;	\
+/* 0x70 */	.quad 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
 
 #define	INTRCNT_CLOCK		0
 #define	INTRCNT_ISA_IRQ		(INTRCNT_CLOCK + 1)
@@ -158,6 +180,13 @@
 #define	INTRCNT_EB164_IRQ_LEN	24
 #define	INTRCNT_A12_IRQ		(INTRCNT_EB164_IRQ + INTRCNT_EB164_IRQ_LEN)
 #define	INTRCNT_A12_IRQ_LEN	10
+#define	INTRCNT_KN8AE_IRQ	(INTRCNT_A12_IRQ + INTRCNT_A12_IRQ_LEN)
+#define	INTRCNT_KN8AE_IRQ_LEN	2
+#define	INTRCNT_KN300_IRQ	(INTRCNT_KN8AE_IRQ + INTRCNT_KN8AE_IRQ_LEN)
+#	define	INTRCNT_KN300_NCR810	INTRCNT_KN300_IRQ + 16
+#	define	INTRCNT_KN300_I2C_CTRL	INTRCNT_KN300_IRQ + 17
+#	define	INTRCNT_KN300_I2C_BUS	INTRCNT_KN300_IRQ + 18
+#define	INTRCNT_KN300_LEN	19
 
 #ifndef _LOCORE
 extern volatile long intrcnt[];
