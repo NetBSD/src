@@ -1,4 +1,4 @@
-/*	$NetBSD: swab.c,v 1.8 1999/09/16 11:45:43 lukem Exp $	*/
+/*	$NetBSD: swab.c,v 1.9 1999/09/20 04:39:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)swab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: swab.c,v 1.8 1999/09/16 11:45:43 lukem Exp $");
+__RCSID("$NetBSD: swab.c,v 1.9 1999/09/20 04:39:49 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,10 +60,6 @@ swab(from, to, len)
 
 	_DIAGASSERT(from != NULL);
 	_DIAGASSERT(to != NULL);
-#ifdef _DIAGNOSTIC
-	if (from == NULL || to == NULL)
-		return;
-#endif
 
 	n = (len >> 1) + 1;
 	fp = (char *)from;

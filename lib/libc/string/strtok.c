@@ -1,4 +1,4 @@
-/*	$NetBSD: strtok.c,v 1.9 1999/09/16 11:45:43 lukem Exp $	*/
+/*	$NetBSD: strtok.c,v 1.10 1999/09/20 04:39:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strtok.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtok.c,v 1.9 1999/09/16 11:45:43 lukem Exp $");
+__RCSID("$NetBSD: strtok.c,v 1.10 1999/09/20 04:39:49 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,10 +57,6 @@ strtok(s, delim)
 
 	/* s may be NULL */
 	_DIAGASSERT(delim != NULL);
-#ifdef _DIAGNOSTIC
-	if (delim == NULL)
-		return (NULL);
-#endif
 
 	if (s == NULL && (s = last) == NULL)
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: strdup.c,v 1.10 1999/09/16 11:45:41 lukem Exp $	*/
+/*	$NetBSD: strdup.c,v 1.11 1999/09/20 04:39:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strdup.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strdup.c,v 1.10 1999/09/16 11:45:41 lukem Exp $");
+__RCSID("$NetBSD: strdup.c,v 1.11 1999/09/20 04:39:46 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,12 +61,6 @@ strdup(str)
 	char *copy;
 
 	_DIAGASSERT(str != NULL);
-#ifdef _DIAGNOSTIC
-	if (str == NULL) {
-		errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 	len = strlen(str) + 1;
 	if (!(copy = malloc(len)))

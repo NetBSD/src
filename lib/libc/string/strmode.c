@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.10 1999/09/16 11:45:42 lukem Exp $	*/
+/*	$NetBSD: strmode.c,v 1.11 1999/09/20 04:39:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.10 1999/09/16 11:45:42 lukem Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.11 1999/09/20 04:39:47 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,10 +55,6 @@ strmode(mode, p)
 {
 
 	_DIAGASSERT(p != NULL);
-#ifdef _DIAGNOSTIC
-	if (p == NULL)
-		return;
-#endif
 
 	 /* print type */
 	switch (mode & S_IFMT) {

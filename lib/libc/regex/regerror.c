@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.14 1999/09/17 09:33:34 kleink Exp $	*/
+/*	$NetBSD: regerror.c,v 1.15 1999/09/20 04:39:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regerror.c	8.4 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regerror.c,v 1.14 1999/09/17 09:33:34 kleink Exp $");
+__RCSID("$NetBSD: regerror.c,v 1.15 1999/09/20 04:39:19 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -141,10 +141,6 @@ size_t errbuf_size;
 
 	_DIAGASSERT(errcode != REG_ATOI || preg != NULL);
 	_DIAGASSERT(errbuf != NULL);
-#ifdef _DIAGNOSTIC
-	if ((errcode == REG_ATOI && preg == NULL) || errbuf == NULL)
-		return(0);
-#endif
 
 	if (errcode == REG_ATOI)
 		s = regatoi(preg, convbuf, sizeof convbuf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.34 1999/09/16 11:45:46 lukem Exp $	 */
+/*	$NetBSD: yplib.c,v 1.35 1999/09/20 04:39:55 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.34 1999/09/16 11:45:46 lukem Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.35 1999/09/20 04:39:55 lukem Exp $");
 #endif
 
 #include "namespace.h"
@@ -262,10 +262,6 @@ __yp_unbind(ypb)
 {
 
 	_DIAGASSERT(ypb != NULL);
-#ifdef _DIAGNOSTIC
-	if (ypb == NULL)
-		return;
-#endif
 
 	clnt_destroy(ypb->dom_client);
 	ypb->dom_client = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: logwtmp.c,v 1.9 1999/09/16 11:45:51 lukem Exp $	*/
+/*	$NetBSD: logwtmp.c,v 1.10 1999/09/20 04:48:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)logwtmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: logwtmp.c,v 1.9 1999/09/16 11:45:51 lukem Exp $");
+__RCSID("$NetBSD: logwtmp.c,v 1.10 1999/09/20 04:48:07 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,10 +65,6 @@ logwtmp(line, name, host)
 	_DIAGASSERT(line != NULL);
 	_DIAGASSERT(name != NULL);
 	_DIAGASSERT(host != NULL);
-#ifdef _DIAGNOSTIC
-	if (line == NULL || name == NULL || host == NULL)
-		return;
-#endif
 
 	if ((fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) < 0)
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getbsize.c,v 1.11 1999/09/16 11:44:57 lukem Exp $	*/
+/*	$NetBSD: getbsize.c,v 1.12 1999/09/20 04:38:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getbsize.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getbsize.c,v 1.11 1999/09/16 11:44:57 lukem Exp $");
+__RCSID("$NetBSD: getbsize.c,v 1.12 1999/09/20 04:38:59 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,10 +65,6 @@ getbsize(headerlenp, blocksizep)
 
 	_DIAGASSERT(headerlenp != NULL);
 	_DIAGASSERT(blocksizep != NULL);
-#ifdef _DIAGNOSTIC
-	if (headerlenp == NULL || blocksizep == NULL)
-		return (NULL);
-#endif
 
 #define	KB	(1024L)
 #define	MB	(1024L * 1024L)

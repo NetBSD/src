@@ -1,4 +1,4 @@
-/*	$NetBSD: memccpy.c,v 1.10 1999/09/16 11:45:40 lukem Exp $	*/
+/*	$NetBSD: memccpy.c,v 1.11 1999/09/20 04:39:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)memccpy.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memccpy.c,v 1.10 1999/09/16 11:45:40 lukem Exp $");
+__RCSID("$NetBSD: memccpy.c,v 1.11 1999/09/20 04:39:45 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,10 +55,6 @@ memccpy(t, f, c, n)
 
 	_DIAGASSERT(t != 0);
 	_DIAGASSERT(f != 0);
-#ifdef _DIAGNOSTIC
-	if (t == 0 || f == 0)
-		return (0);
-#endif
 
 	if (n) {
 		unsigned char *tp = t;

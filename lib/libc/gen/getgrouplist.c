@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.13 1999/09/16 11:44:58 lukem Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.14 1999/09/20 04:39:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.2 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: getgrouplist.c,v 1.13 1999/09/16 11:44:58 lukem Exp $");
+__RCSID("$NetBSD: getgrouplist.c,v 1.14 1999/09/20 04:39:00 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,10 +71,6 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	_DIAGASSERT(uname != NULL);
 	_DIAGASSERT(groups != NULL);
 	_DIAGASSERT(grpcnt != NULL);
-#ifdef _DIAGNOSTIC
-	if (uname == NULL || groups == NULL || grpcnt == NULL)
-		return (-1);
-#endif
 
 	ret = 0;
 	ngroups = 0;

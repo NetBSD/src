@@ -1,4 +1,4 @@
-/*	$NetBSD: setvbuf.c,v 1.13 1999/09/16 11:45:30 lukem Exp $	*/
+/*	$NetBSD: setvbuf.c,v 1.14 1999/09/20 04:39:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setvbuf.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: setvbuf.c,v 1.13 1999/09/16 11:45:30 lukem Exp $");
+__RCSID("$NetBSD: setvbuf.c,v 1.14 1999/09/20 04:39:32 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,12 +69,6 @@ setvbuf(fp, buf, mode, size)
 
 	_DIAGASSERT(fp != NULL);
 	/* buf may be NULL */
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return (EOF);
-	}
-#endif
 
 	/*
 	 * Verify arguments.  The `int' limit on `size' is due to this

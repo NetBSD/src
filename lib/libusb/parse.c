@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.5 1999/09/16 11:45:50 lukem Exp $	*/
+/*	$NetBSD: parse.c,v 1.6 1999/09/20 04:48:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -76,10 +76,6 @@ hid_start_parse(report_desc_t d, int kindset)
 	struct hid_data *s;
 
 	_DIAGASSERT(d != NULL);
-#ifdef _DIAGNOSTIC
-	if (d == NULL)
-		return (0);
-#endif
 
 	s = malloc(sizeof *s);
 	memset(s, 0, sizeof *s);
@@ -94,10 +90,6 @@ hid_end_parse(hid_data_t s)
 {
 
 	_DIAGASSERT(s != NULL);
-#ifdef _DIAGNOSTIC
-	if (s == NULL)
-		return;
-#endif
 
 	while (s->cur.next) {
 		hid_item_t *hi = s->cur.next->next;
@@ -120,10 +112,6 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(h != NULL);
-#ifdef _DIAGNOSTIC
-	if (s == NULL || h == NULL)
-		return (-1);
-#endif
 
 	c = &s->cur;
 
@@ -369,10 +357,6 @@ hid_report_size(report_desc_t r, enum hid_kind k, int *idp)
 
 	_DIAGASSERT(r != NULL);
 	/* idp may be NULL */
-#ifdef _DIAGNOSTIC
-	if (r == NULL)
-		return (0);
-#endif
 
 	id = 0;
 	if (idp)
@@ -401,10 +385,6 @@ hid_locate(desc, u, k, h)
 
 	_DIAGASSERT(desc != NULL);
 	_DIAGASSERT(h != NULL);
-#ifdef _DIAGNOSTIC
-	if (desc == NULL || h == NULL)
-		return (0);
-#endif
 
 	for (d = hid_start_parse(desc, 1<<k); hid_get_item(d, h); ) {
 		if (h->kind == k && !(h->flags & HIO_CONST) && h->usage == u) {

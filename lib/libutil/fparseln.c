@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.8 1999/09/16 11:45:50 lukem Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.9 1999/09/20 04:48:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.8 1999/09/16 11:45:50 lukem Exp $");
+__RCSID("$NetBSD: fparseln.c,v 1.9 1999/09/20 04:48:06 lukem Exp $");
 #endif
 
 #include <assert.h>
@@ -57,10 +57,6 @@ isescaped(sp, p, esc)
 
 	_DIAGASSERT(sp != NULL);
 	_DIAGASSERT(p != NULL);
-#ifdef _DIAGNOSTIC
-	if (sp == NULL || p == NULL)
-		return 0;
-#endif
 
 	/* No escape character */
 	if (esc == '\0')
@@ -97,12 +93,6 @@ fparseln(fp, size, lineno, str, flags)
 	char	esc, con, nl, com;
 
 	_DIAGASSERT(fp != NULL);
-#ifdef _DIAGNOSTIC
-	if (fp == NULL) {
-		errno = EBADF;
-		return NULL;
-	}
-#endif
 
 	len = 0;
 	buf = NULL;

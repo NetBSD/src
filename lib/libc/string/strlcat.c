@@ -1,4 +1,4 @@
-/*	$NetBSD: strlcat.c,v 1.4 1999/09/16 11:45:41 lukem Exp $	*/
+/*	$NetBSD: strlcat.c,v 1.5 1999/09/20 04:39:47 lukem Exp $	*/
 /*	from OpenBSD: strlcat.c,v 1.2 1999/06/17 16:28:58 millert Exp 	*/
 
 /*
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strlcat.c,v 1.4 1999/09/16 11:45:41 lukem Exp $");
+__RCSID("$NetBSD: strlcat.c,v 1.5 1999/09/20 04:39:47 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -56,10 +56,6 @@ strlcat(dst, src, siz)
 
 	_DIAGASSERT(dst != NULL);
 	_DIAGASSERT(src != NULL);
-#ifdef _DIAGNOSTIC
-	if (dst == NULL || src == NULL)
-		return (0);
-#endif
 
 	/* Find the end of dst and adjust bytes left but don't go past end */
 	while (*d != '\0' && n-- != 0)

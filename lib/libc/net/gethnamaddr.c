@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.25 1999/09/16 11:45:11 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.26 1999/09/20 04:39:11 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.25 1999/09/16 11:45:11 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.26 1999/09/20 04:39:11 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -494,13 +494,6 @@ gethostbyname(name)
 	struct hostent *hp;
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL) {
-		errno = EFAULT;
-		h_errno = NETDB_INTERNAL;
-		return (NULL);
-	}
-#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -531,13 +524,6 @@ gethostbyname2(name, af)
 	};
 
 	_DIAGASSERT(name != NULL);
-#ifdef _DIAGNOSTIC
-	if (name == NULL) {
-		errno = EFAULT;
-		h_errno = NETDB_INTERNAL;
-		return (NULL);
-	}
-#endif
 
 	switch (af) {
 	case AF_INET:
@@ -658,13 +644,6 @@ gethostbyaddr(addr, len, af)
 	};
 	
 	_DIAGASSERT(addr != NULL);
-#ifdef _DIAGNOSTIC
-	if (addr == NULL) {
-		errno = EFAULT;
-		h_errno = NETDB_INTERNAL;
-		return (NULL);
-	}
-#endif
 
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (IN6_IS_ADDR_V4MAPPED((struct in6_addr *)uaddr) ||

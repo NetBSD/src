@@ -1,4 +1,4 @@
-/*	$NetBSD: bm.c,v 1.8 1999/09/16 11:45:38 lukem Exp $	*/
+/*	$NetBSD: bm.c,v 1.9 1999/09/20 04:39:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bm.c	8.7 (Berkeley) 6/21/94";
 #else
-__RCSID("$NetBSD: bm.c,v 1.8 1999/09/16 11:45:38 lukem Exp $");
+__RCSID("$NetBSD: bm.c,v 1.9 1999/09/20 04:39:44 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS && not lint */
 
@@ -117,12 +117,6 @@ bm_comp(pb, len, freq)
 
 	_DIAGASSERT(pb != NULL);
 	/* freq may be NULL */
-#ifdef _DIAGNOSTIC
-	if (pb == NULL) {
-		errno = EFAULT;
-		return (NULL);
-	}
-#endif
 
 	if (len == 0) {
 		errno = EINVAL;
@@ -175,10 +169,6 @@ bm_free(pat)
 {
 
 	_DIAGASSERT(pat != NULL);
-#ifdef _DIAGNOSTIC
-	if (pat == NULL)
-		return;
-#endif
 
 	if (pat->pat != NULL)
 		free(pat->pat);
@@ -199,10 +189,6 @@ bm_exec(pat, base, n)
 
 	_DIAGASSERT(pat != NULL);
 	_DIAGASSERT(base != NULL);
-#ifdef _DIAGNOSTIC
-	if (pat == NULL || base == NULL)
-		return (NULL);
-#endif
 
 	if (n == 0)
 		return (NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.22 1999/09/16 11:45:24 lukem Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.23 1999/09/20 04:39:23 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.22 1999/09/16 11:45:24 lukem Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.23 1999/09/20 04:39:23 lukem Exp $");
 #endif
 #endif
 
@@ -108,12 +108,6 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout,
 
 	_DIAGASSERT(addr != NULL);
 	_DIAGASSERT(port_ptr != NULL);
-#ifdef _DIAGNOSTIC
-	if (addr == NULL || port_ptr == NULL) {
-		errno = EFAULT;
-		return (RPC_SYSTEMERROR);
-	}
-#endif
 
 	addr->sin_port = htons(PMAPPORT);
 	client = clntudp_create(addr, PMAPPROG, PMAPVERS, timeout, &sock);
@@ -151,10 +145,6 @@ xdr_rmtcall_args(xdrs, cap)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(cap != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || cap == NULL)
-		return (FALSE);
-#endif
 
 	if (xdr_u_long(xdrs, &(cap->prog)) &&
 	    xdr_u_long(xdrs, &(cap->vers)) &&
@@ -189,10 +179,6 @@ xdr_rmtcallres(xdrs, crp)
 
 	_DIAGASSERT(xdrs != NULL);
 	_DIAGASSERT(crp != NULL);
-#ifdef _DIAGNOSTIC
-	if (xdrs == NULL || crp == NULL)
-		return (FALSE);
-#endif
 
 	port_ptr = (caddr_t)(void *)crp->port_ptr;
 	if (xdr_reference(xdrs, &port_ptr, sizeof (u_long),

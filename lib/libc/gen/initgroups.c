@@ -1,4 +1,4 @@
-/*	$NetBSD: initgroups.c,v 1.17 1999/09/16 11:45:00 lukem Exp $	*/
+/*	$NetBSD: initgroups.c,v 1.18 1999/09/20 04:39:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)initgroups.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: initgroups.c,v 1.17 1999/09/16 11:45:00 lukem Exp $");
+__RCSID("$NetBSD: initgroups.c,v 1.18 1999/09/20 04:39:02 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,10 +62,6 @@ initgroups(uname, agroup)
 	int ngroups;
 
 	_DIAGASSERT(uname != NULL);
-#ifdef _DIAGNOSTIC
-	if (uname == NULL)
-		return (-1);
-#endif
 
 	ngroups = NGROUPS;
 	getgrouplist(uname, agroup, groups, &ngroups);

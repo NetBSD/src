@@ -1,4 +1,4 @@
-/*	$NetBSD: rand_r.c,v 1.3 1999/09/16 11:45:35 lukem Exp $	*/
+/*	$NetBSD: rand_r.c,v 1.4 1999/09/20 04:39:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "from: @(#)rand.c	5.6 (Berkeley) 6/24/91";
 #else
-__RCSID("$NetBSD: rand_r.c,v 1.3 1999/09/16 11:45:35 lukem Exp $");
+__RCSID("$NetBSD: rand_r.c,v 1.4 1999/09/20 04:39:41 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,10 +51,6 @@ rand_r(seed)
 	unsigned int *seed;
 {
 	_DIAGASSERT(seed != NULL);
-#ifdef _DIAGNOSTIC
-	if (seed == NULL)
-		return (0);
-#endif
 
 	return ((*seed = *seed * 1103515245 + 12345) & RAND_MAX);
 }

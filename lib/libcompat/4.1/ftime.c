@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftime.c,v 1.7 1999/09/16 11:45:46 lukem Exp $");
+__RCSID("$NetBSD: ftime.c,v 1.8 1999/09/20 04:48:01 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -48,12 +48,6 @@ ftime(tbp)
         struct timeval t;
 
 	_DIAGASSERT(tbp != 0);
-#ifdef _DIAGNOSTIC
-	if (tbp == 0) {
-		errno = EFAULT;
-		return (-1);
-	}
-#endif
 
         if (gettimeofday(&t, &tz) < 0)
                 return (-1);
