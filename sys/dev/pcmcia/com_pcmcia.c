@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.1.2.5 1997/08/02 04:30:38 matt Exp $	*/
+/*	$NetBSD: com_pcmcia.c,v 1.1.2.6 1997/08/05 00:36:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -192,11 +192,12 @@ com_pcmcia_attach(parent, self, aux)
 		model = "Motorola Power 14.4 Modem";
 		break;
 	default:
-		model = "Unknown serial device";
+		model = NULL;
 		break;
 	}
 
-	printf(": %s\n", model);
+	if (model != NULL)
+		printf(": %s\n", model);
 
 	/* establish the interrupt. */
 	sc->sc_ih = pcmcia_intr_establish(pa->pf, IPL_SERIAL, comintr, sc);
