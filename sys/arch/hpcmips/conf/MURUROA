@@ -2,12 +2,12 @@
 # Mycroft's WorkPad z50
 
 #
-# 	$NetBSD: MURUROA,v 1.7 2000/03/23 04:43:41 mycroft Exp $
+# 	$NetBSD: MURUROA,v 1.8 2000/03/26 21:35:48 mycroft Exp $
 # 	From: GENERIC,v 1.29 2000/02/12 03:21:06 shin Exp
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"MURUROA-$Revision: 1.7 $"
+#ident 		"MURUROA-$Revision: 1.8 $"
 
 maxusers	8
 
@@ -71,20 +71,20 @@ file-system 	MSDOSFS		# MS-DOS file system
 # Pull in config fragments for kernel crypto.  Use only one of these,
 # and adjust the prefixes as necessary.
 
-#prefix ../crypto-us/sys
-#cinclude "conf/files.crypto-us"
-#prefix
+prefix ../crypto-us/sys
+cinclude "conf/files.crypto-us"
+prefix
 
-#prefix ../crypto-intl/sys
-#cinclude "conf/files.crypto-intl"
-#prefix
+prefix ../crypto-intl/sys
+cinclude "conf/files.crypto-intl"
+prefix
 
 # Networking options
 #options 	GATEWAY		# IP packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
-#options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
+options 	IPSEC		# IP security
+options 	IPSEC_ESP	# IP security (encryption part; define w/ IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	TCP_COMPAT_42	# compatibility with 4.2BSD TCP/IP
 #options 	MROUTING	# Multicast routing support
