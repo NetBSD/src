@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 1998/11/16 06:51:36 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.23 1998/11/22 23:38:53 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -192,7 +192,9 @@ void	stackdump __P((void));
 void
 cpu_startup()
 {
-	register unsigned i;
+	unsigned i;
+	caddr_t v;
+	int sz;
 	int base, residual;
 #ifdef DEBUG
 	extern int pmapdebug;
@@ -217,6 +219,22 @@ cpu_startup()
 	physmem = btoc(avail_end);
 #endif
 	printf("real mem = %ld\n", (long)ctob(physmem));
+
+	/*
+	 * Find out how much space we need, allocate it,
+	 * and then give everything true virtual addresses.
+	 */
+	sz = (int)allocsys((caddr_t)0);
+
+#if defined(UVM)
+	if ((v = (caddr_t)uvm_km_alloc(kernel_map, round_page(sz))) == 0)
+		panic("startup: no room for tables");
+#else
+	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
+		panic("startup: no room for tables");
+#endif
+	if (allocsys(v) - v != sz)
+		panic("startup: table size inconsistency");
 
 #if defined(UVM)
         /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.17 1998/11/22 17:22:50 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.18 1998/11/22 23:38:53 eeh Exp $	*/
 /* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
@@ -657,34 +657,6 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	numctx = maxctx;
 	valloc(ctxbusy, paddr_t, CTXSIZE);
 	bzero((caddr_t)ctxbusy, CTXSIZE);
-
-	{
-		caddr_t v;
-		extern caddr_t allocsys __P((caddr_t));
-		
-		/*
-		 * from cpu_startup():
-		 *
-		 * Find out how much space we need, allocate it,
-		 * and then give everything true virtual addresses.
-		 */
-		sz = (size_t)allocsys((caddr_t)0);
-		
-#ifdef BOOT1_DEBUG
-		prom_printf("allocsys needs %08lx bytes RAM...", (u_long)sz);
-#endif
-		valloc(v, void, sz);
-		
-		if (allocsys(v) - v != sz) {
-			prom_printf("startup: table size inconsistency");
-			OF_exit();
-		}
-		/* Need to zero this out or we have problems w/swbufs and physio hangs */
-		bzero(v, sz);
-#ifdef BOOT1_DEBUG
-		prom_printf("got it\r\n");
-#endif
-	}
 
 	/*
 	 * Allocate our TSB.
