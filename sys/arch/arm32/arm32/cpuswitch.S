@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.18 1997/10/06 00:49:34 mark Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.19 1997/10/14 10:09:46 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include <machine/param.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/iomd.h>
+#include <machine/asm.h>
 
 sp	.req	r13
 lr	.req	r14
@@ -94,8 +94,7 @@ Lqs:
  *	r0 = process
  */
 
-	.global	_setrunqueue
-_setrunqueue:
+ENTRY(setrunqueue)
 /*
  * Local register usage
  * 	r0 = process
@@ -104,12 +103,6 @@ _setrunqueue:
  * 	r3 = temp
  *	r4 = whichqs
  */
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
 	stmfd	sp!, {r4}
 
 #ifdef DIAGNOSTIC
@@ -181,8 +174,7 @@ Ltext2:
  *	r0 = process
  */
 
-	.global	_remrunqueue
-_remrunqueue:
+ENTRY(remrunqueue)
 
 /*
  * Local register usage
@@ -192,12 +184,6 @@ _remrunqueue:
  *	r3 = scratch
  *	r4 = whichqs
  */
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
 	stmfd	sp!, {r4}
 
 /* Get the priority of the queue */
@@ -266,23 +252,20 @@ Lcpufuncs:
  * Idle loop, exercised while waiting for a process to wake up.
  */
 
-	.global	_idle
-_idle:
 idle:
 /* Enable interrupts */
 
 	IRQenable
 
-	/* Try to sleep */
+	/* XXX - r1 needs to be preserved for cpu_switch */
 
-	/* XXX - r1 needs to be preserved for cpu_switch - messy */
 	mov	r7, r1
 	ldr	r3, Lcpufuncs
 	mov	r0, #0
-	add	lr, pc, #Lidl_slept - . - 8
+	add	lr, pc, #Lidle_slept - . - 8
 	ldr	pc, [r3, #CF_SLEEP]
 
-Lidl_slept:
+Lidle_slept:
 	mov	r1, r7
 
 /* Disable interrupts while we check for an active queue */
@@ -293,7 +276,7 @@ Lidl_slept:
 	teq	r3, #0x00000000
 	bne	sw1
 
-/* All processes are still a sleep so idle a while longer */
+/* All processes are still asleep so idle a while longer */
 
 	b	idle
 
@@ -303,8 +286,7 @@ Lidl_slept:
  * load the new context
  */
 
-	.global	_cpu_switch
-_cpu_switch:
+ENTRY(cpu_switch)
 /*
  * Local register usage. Some of these registers are out of date.
  * r1 = oldproc
@@ -315,12 +297,6 @@ _cpu_switch:
  * r6 = newproc
  * r7 = scratch
  */
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
 	stmfd	sp!, {r4-r7, lr}
 
 /*
@@ -558,7 +534,7 @@ findqueue:
 
         mrs	r3, cpsr_all
 	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE | I32_bit | F32_bit)
+	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
         msr	cpsr_all, r2
 
 	str	sp, [r1, #(PCB_UND_SP)]
@@ -676,15 +652,7 @@ Lkernel_map:
 	.word	_kernel_map
 
 
-	.global	_switch_exit
-
-_switch_exit:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(switch_exit)
 
 /*
  * r0 = proc
@@ -781,16 +749,8 @@ Lse_context_switched:
 
 Lcurrent_spl_level:
 	.word	_current_spl_level
- 
-	.global	_savectx
-_savectx:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
 
+ENTRY(savectx)
 /*
  * r0 = pcb
  */
@@ -809,8 +769,7 @@ _savectx:
 	ldmfd	sp!, {r4-r7, pc}
 
 
-	.global	_proc_trampoline
-_proc_trampoline:
+ENTRY(proc_trampoline)
 	add	lr, pc, #(trampoline_return - . - 8)
 	mov	r0, r5
 	mov	r1, sp
