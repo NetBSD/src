@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.61 1998/09/06 11:59:28 drochner Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.62 1998/09/06 23:09:39 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -499,9 +499,8 @@ out:
 #endif
 		sdp->swd_pathlen = len;
 		sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK);
-		if ((error = copystr(userpath, sdp->swd_path,
-		    sdp->swd_pathlen, 0)))
-			break;
+		if (copystr(userpath, sdp->swd_path, sdp->swd_pathlen, 0) != 0)
+			panic("swapctl: copystr");
 		insert_swapdev(sdp, priority);
 
 		/* Keep reference to vnode */
