@@ -288,12 +288,8 @@ CONFIGURATION
 
                     Default: ``yes''
 
-     NBUILDJOBS     If set, specifies the number of parallel make(1) processes
-                    that should be run simultaneously.  This can speed up
-                    builds on SMP machines, or machines with much more CPU
-                    power than I/O availability.  This should be used instead
-                    of the make(1) option -j, in order to ensure proper order-
-                    ing of build components.
+     NBUILDJOBS     Now obsolete.  Use the make(1) option -j, instead (see be-
+                    low)
 
                     Default: Unset.
 
@@ -335,6 +331,12 @@ BUILDING
      This is only a summary of options available to make(1); only the options
      used most frequently with NetBSD builds are listed here.
 
+     -j njob    Run up to njob make(1) subjobs in parallel.  Makefiles should
+                use .WAIT or have explicit dependancies as necessary to en-
+                force build ordering.  If you see build failures with -j,
+                please save complete build logs so the failures can be ana-
+                lyzed.
+
      -m dir     Specify the default directory for searching for system Make-
                 file segments, mainly the <bsd.*.mk> files.  When building any
                 full NetBSD source tree, this should be set to the
@@ -374,8 +376,8 @@ BUILDING
                 dependency changes.
 
      dependall  Does a ``make depend'' immediately followed by a ``make all''.
-                This combined target recurses as an atomic unit, so that the
-                ``make depend'' phase can participate in make -j parallelism.
+                This improves cache locality of the build since both passes
+                read the source files in their entirety.
 
      includes   Build and install system header files.  Typically needed be-
                 fore any system libraries or programs can be built.
@@ -444,9 +446,10 @@ BUILDING
                build a ``release''; no release sets are placed in ${RE-
                LEASEDIR}.
 
-     -j njob   Set the value of NBUILDJOBS to njob.  This provides similar
-               functionality to the familiar ``make -j'', but preserves the
-               ordering of the top level ``make build''.
+     -j njob   Passed through to make(1).  Makefiles should use .WAIT or have
+               explicit dependancies as necessary to enforce build ordering.
+               If you see build failures with -j, please save complete build
+               logs so the failures can be analyzed.
 
      -m mach   Set the value of MACHINE to mach.  This will also override any
                value of MACHINE_ARCH in the process environment with a value
@@ -503,6 +506,9 @@ BUILDING
      This script can be symlinked into a directory listed in PATH, or called
      with an absolute path.
 
+OBSOLETE VARIABLES
+     NBUILDJOBS  Now obsolete.  Use the make(1) option -j, instead.
+
 SEE ALSO
      make(1), hier(7), release(7)
 
@@ -511,6 +517,6 @@ HISTORY
      current'' development sources between NetBSD 1.5 and NetBSD 1.6.
 
 BUGS
-     Many platforms are not yet using the USE_NEW_TOOLCHAIN system.
+     A few platforms are not yet using the USE_NEW_TOOLCHAIN system.
 
 NetBSD                           March 5, 2002                               8
