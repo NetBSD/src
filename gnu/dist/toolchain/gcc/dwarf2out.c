@@ -1801,6 +1801,7 @@ output_call_frame_info (for_eh)
 	}
       fputc ('\n', asm_out_file);
 
+      ASM_OUTPUT_ALIGN (asm_out_file, floor_log2 (PTR_SIZE));
       ASM_OUTPUT_DWARF_ADDR (asm_out_file, "__EXCEPTION_TABLE__");
       if (flag_debug_asm)
 	fprintf (asm_out_file, "\t%s pointer to exception region info",
