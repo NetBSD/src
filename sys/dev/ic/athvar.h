@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.10 2003/11/29 01:23:59 sam Exp $
+ * $FreeBSD: src/sys/dev/ath/if_athvar.h,v 1.14 2004/04/03 03:33:02 sam Exp $
  */
 
 /*
@@ -93,6 +93,11 @@ struct ath_softc {
 	struct ieee80211com	sc_ic;		/* IEEE 802.11 common */
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
+	void 			(*sc_node_free)(struct ieee80211com *,
+					struct ieee80211_node *);
+	void			(*sc_node_copy)(struct ieee80211com *,
+					struct ieee80211_node *,
+					const struct ieee80211_node *);
 	device_t		sc_dev;
 	bus_space_tag_t		sc_st;		/* bus space tag */
 	bus_space_handle_t	sc_sh;		/* bus space handle */
@@ -115,10 +120,12 @@ struct ath_softc {
 		struct ath_tx_radiotap_header th;
 		u_int8_t	pad[64];
 	} u_tx_rt;
+	int			sc_tx_th_len;
 	union {
 		struct ath_rx_radiotap_header th;
 		u_int8_t	pad[64];
 	} u_rx_rt;
+	int			sc_rx_th_len;
 
 	struct ath_desc		*sc_desc;	/* TX/RX descriptors */
 	bus_dma_segment_t	sc_dseg;
@@ -145,7 +152,6 @@ struct ath_softc {
 	u_int			sc_bhalq;	/* HAL q for outgoing beacons */
 	struct ath_buf		*sc_bcbuf;	/* beacon buffer */
 	struct ath_buf		*sc_bufptr;	/* allocated buffer ptr */
-	struct task		sc_swbatask;	/* swba int processing */
 	struct task		sc_bmisstask;	/* bmiss int processing */
 
 	struct callout		sc_cal_ch;	/* callout handle for cals */

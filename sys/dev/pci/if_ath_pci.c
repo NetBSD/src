@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.6 2003/11/28 05:28:27 imp Exp $");
+__FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.8 2004/04/02 23:57:10 sam Exp $");
 
 /*
  * PCI/Cardbus front-end for the Atheros Wireless LAN controller driver.
@@ -144,8 +144,8 @@ ath_pci_attach(device_t dev)
 	 * Setup memory-mapping of PCI registers.
 	 */
 	rid = BS_BAR;
-	psc->sc_sr = bus_alloc_resource(dev, SYS_RES_MEMORY, &rid,
-				        0, ~0, 1, RF_ACTIVE);
+	psc->sc_sr = bus_alloc_resource_any(dev, SYS_RES_MEMORY, &rid,
+					    RF_ACTIVE);
 	if (psc->sc_sr == NULL) {
 		device_printf(dev, "cannot map register space\n");
 		goto bad;
@@ -162,8 +162,8 @@ ath_pci_attach(device_t dev)
 	 * Arrange interrupt line.
 	 */
 	rid = 0;
-	psc->sc_irq = bus_alloc_resource(dev, SYS_RES_IRQ, &rid,
-					 0, ~0, 1, RF_SHAREABLE|RF_ACTIVE);
+	psc->sc_irq = bus_alloc_resource_any(dev, SYS_RES_IRQ, &rid,
+					     RF_SHAREABLE|RF_ACTIVE);
 	if (psc->sc_irq == NULL) {
 		device_printf(dev, "could not map interrupt\n");
 		goto bad1;

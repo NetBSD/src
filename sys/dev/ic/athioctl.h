@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/ath/if_athioctl.h,v 1.4 2003/11/29 01:23:59 sam Exp $
+ * $FreeBSD: src/sys/dev/ath/if_athioctl.h,v 1.7 2004/04/02 23:57:10 sam Exp $
  */
 
 /*
@@ -70,6 +70,8 @@ struct ath_stats {
 	u_int32_t	ast_tx_rts;	/* tx frames with rts enabled */
 	u_int32_t	ast_tx_cts;	/* tx frames with cts enabled */
 	u_int32_t	ast_tx_shortpre;/* tx frames with short preamble */
+	u_int32_t	ast_tx_altrate;	/* tx frames with alternate rate */
+	u_int32_t	ast_tx_protect;	/* tx frames with protection */
 	u_int32_t	ast_rx_nombuf;	/* rx setup failed 'cuz no mbuf */
 	u_int32_t	ast_rx_busdma;	/* rx setup failed for dma resrcs */
 	u_int32_t	ast_rx_orn;	/* rx failed 'cuz of desc overrun */
@@ -79,6 +81,7 @@ struct ath_stats {
 	u_int32_t	ast_rx_phyerr;	/* rx failed 'cuz of PHY err */
 	u_int32_t	ast_rx_phy[32];	/* rx PHY error per-code counts */
 	u_int32_t	ast_rx_tooshort;/* rx discarded 'cuz frame too short */
+	u_int32_t	ast_rx_toobig;	/* rx discarded 'cuz frame too large */
 	u_int32_t	ast_rx_ctl;	/* rx discarded 'cuz ctl frame */
 	u_int32_t	ast_be_nombuf;	/* beacon setup failed 'cuz no mbuf */
 	u_int32_t	ast_per_cal;	/* periodic calibration calls */
@@ -107,8 +110,8 @@ struct ath_diag {
 	(1 << IEEE80211_RADIOTAP_FLAGS)		| \
 	(1 << IEEE80211_RADIOTAP_RATE)		| \
 	(1 << IEEE80211_RADIOTAP_CHANNEL)	| \
-	(1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)	| \
 	(1 << IEEE80211_RADIOTAP_ANTENNA)	| \
+	(1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL)	| \
 	0)
 
 struct ath_rx_radiotap_header {
@@ -117,14 +120,16 @@ struct ath_rx_radiotap_header {
 	u_int8_t	wr_rate;
 	u_int16_t	wr_chan_freq;
 	u_int16_t	wr_chan_flags;
-	u_int8_t	wr_antsignal;
 	u_int8_t	wr_antenna;
+	u_int8_t	wr_antsignal;
 };
 
 #define ATH_TX_RADIOTAP_PRESENT (		\
 	(1 << IEEE80211_RADIOTAP_FLAGS)		| \
 	(1 << IEEE80211_RADIOTAP_RATE)		| \
 	(1 << IEEE80211_RADIOTAP_CHANNEL)	| \
+	(1 << IEEE80211_RADIOTAP_DBM_TX_POWER)	| \
+	(1 << IEEE80211_RADIOTAP_ANTENNA)	| \
 	0)
 
 struct ath_tx_radiotap_header {
@@ -133,6 +138,8 @@ struct ath_tx_radiotap_header {
 	u_int8_t	wt_rate;
 	u_int16_t	wt_chan_freq;
 	u_int16_t	wt_chan_flags;
+	u_int8_t	wt_txpower;
+	u_int8_t	wt_antenna;
 };
 
 #endif /* _DEV_ATH_ATHIOCTL_H */
