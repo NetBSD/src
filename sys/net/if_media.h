@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.38 2004/03/10 14:42:10 keihan Exp $	*/
+/*	$NetBSD: if_media.h,v 1.39 2004/04/09 20:30:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -181,6 +181,8 @@ u_quad_t	ifmedia_baudrate(int);
 #define	IFM_10G_LR	18		/* 10GbaseLR - single-mode fiber */
 
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
+#define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
+#define	IFM_ETH_TXPAUSE	0x00000400	/* transmit PAUSE frames */
 
 /*
  * Token ring
@@ -264,6 +266,9 @@ u_quad_t	ifmedia_baudrate(int);
 #define	IFM_MMASK	0x00070000	/* Mode */
 #define	IFM_MSHIFT	16		/* Mode shift */
 #define	IFM_GMASK	0x0ff00000	/* Global options */
+
+	/* Ethernet flow control mask */
+#define	IFM_ETH_FMASK	(IFM_FLOW|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE)
 
 #define	IFM_NMIN	IFM_ETHER	/* lowest Network type */
 #define	IFM_NMAX	IFM_NMASK	/* highest Network type */
@@ -458,6 +463,8 @@ struct ifmedia_description {
 	{ IFM_FDX,			"fdx" },			\
 	{ IFM_HDX,			"half-duplex" },		\
 	{ IFM_HDX,			"hdx" },			\
+	{ IFM_FLOW,			"flowcontrol" },		\
+	{ IFM_FLOW,			"flow" },			\
 	{ IFM_FLAG0,			"flag0" },			\
 	{ IFM_FLAG1,			"flag1" },			\
 	{ IFM_FLAG2,			"flag2" },			\
@@ -466,6 +473,8 @@ struct ifmedia_description {
 	{ IFM_LOOP,			"loop" },			\
 									\
 	{ IFM_ETHER|IFM_ETH_MASTER,	"master" },			\
+	{ IFM_ETHER|IFM_ETH_RXPAUSE,	"rxpause" },			\
+	{ IFM_ETHER|IFM_ETH_TXPAUSE,	"txpause" },			\
 									\
 	{ IFM_TOKEN|IFM_TOK_ETR,	"EarlyTokenRelease" },		\
 	{ IFM_TOKEN|IFM_TOK_ETR,	"ETR" },			\
@@ -510,7 +519,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER|IFM_1000_CX,	IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_1000_T,		IF_Mbps(1000) },		\
 	{ IFM_ETHER|IFM_HPNA_1,		IF_Mbps(1) },			\
-	{ IFM_ETHER|IFM_10G_LR,		IF_Gbps(10ULL) },			\
+	{ IFM_ETHER|IFM_10G_LR,		IF_Gbps(10ULL) },		\
 									\
 	{ IFM_TOKEN|IFM_TOK_STP4,	IF_Mbps(4) },			\
 	{ IFM_TOKEN|IFM_TOK_STP16,	IF_Mbps(16) },			\
