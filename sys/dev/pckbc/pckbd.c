@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.19 1999/06/04 15:03:43 drochner Exp $ */
+/* $NetBSD: pckbd.c,v 1.20 1999/08/25 00:59:50 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ pckbdprobe(parent, cf, aux)
 	/*
 	 * XXX There are rumours that a keyboard can be connected
 	 * to the aux port as well. For me, this didn't work.
-	 * For further experiments, allow it if explicitely
+	 * For further experiments, allow it if explicitly
 	 * wired in the config file.
 	 */
 	if ((pa->pa_slot != PCKBC_KBD_SLOT) &&
