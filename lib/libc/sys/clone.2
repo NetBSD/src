@@ -1,4 +1,4 @@
-.\"	$NetBSD: clone.2,v 1.1 2001/07/17 03:05:31 thorpej Exp $
+.\"	$NetBSD: clone.2,v 1.2 2001/07/17 21:16:52 thorpej Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,6 +102,10 @@ Share the signal handler set with the parent.  Note that the signal mask
 is never shared between the parent and the child, even if
 .Dv CLONE_SIGHAND
 is set.
+.It Dv CLONE_VFORK
+Preserve the synchronization semanics of
+.Xr vfork 2 ;
+the parent blocks until the child exits.
 .El
 .Pp
 The 
@@ -149,10 +153,18 @@ Same as for
 .Sh BUGS
 The
 .Nx
-implentation of
+implementation of
 .Nm
 does not implement the
 .Dv CLONE_PID
+option that is present in the Linux implementation.
+.Pp
+The
+.Nx
+implementation of
+.Nm
+does not implement the
+.Dv CLONE_PTRACE
 option that is present in the Linux implementation.
 .Sh HISTORY
 The
