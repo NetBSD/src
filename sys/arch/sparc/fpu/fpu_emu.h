@@ -1,3 +1,5 @@
+/*	$NetBSD: fpu_emu.h,v 1.2 1994/11/20 20:52:39 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)fpu_emu.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: fpu_emu.h,v 1.3 92/11/26 01:30:54 torek Exp 
- * $Id: fpu_emu.h,v 1.1 1993/10/02 10:22:56 deraadt Exp $
  */
 
 /*

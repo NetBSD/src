@@ -1,3 +1,5 @@
+/*	$NetBSD: clockreg.h,v 1.5 1994/11/20 20:54:07 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)clockreg.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: clockreg.h,v 1.6 92/11/26 03:04:48 torek Exp  (LBL)
- * $Id: clockreg.h,v 1.4 1994/08/20 01:31:06 deraadt Exp $
  */
 
 #include <machine/idprom.h>

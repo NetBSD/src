@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu.c,v 1.12 1994/11/20 20:54:10 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cpu.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: cpu.c,v 1.12 93/05/03 09:47:57 torek Exp  (LBL)
- * $Id: cpu.c,v 1.11 1994/11/13 22:12:44 deraadt Exp $
+ *	@(#)cpu.c	8.5 (Berkeley) 11/23/93
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: sun_disklabel.h,v 1.3 1994/11/20 20:53:34 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)sun_disklabel.h	8.1 (Berkeley) 6/11/93
- *
- * from: Header: sun_disklabel.h,v 1.4 92/06/17 07:04:13 torek Exp
- * $Id: sun_disklabel.h,v 1.2 1994/11/02 04:59:23 deraadt Exp $
  */
 
 /*

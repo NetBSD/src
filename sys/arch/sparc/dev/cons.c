@@ -1,3 +1,5 @@
+/*	$NetBSD: cons.c,v 1.10 1994/11/20 20:52:04 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cons.c	8.1 (Berkeley) 7/19/93
- *
- * from: Header: cons.c,v 1.12 93/07/20 00:49:45 torek Exp 
- * $Id: cons.c,v 1.9 1994/11/02 04:55:54 deraadt Exp $
+ *	@(#)cons.c	8.3 (Berkeley) 12/14/93
  */
 
 /*

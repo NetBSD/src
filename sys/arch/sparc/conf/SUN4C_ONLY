@@ -1,5 +1,5 @@
-# $Id: SUN4C_ONLY,v 1.1 1994/10/26 07:12:39 deraadt Exp $
-#
+#	$NetBSD: SUN4C_ONLY,v 1.2 1994/11/20 20:51:41 deraadt Exp $
+
 # Kernel for Theo's wimpy sparcstation IPC
 
 include	"std.sparc"

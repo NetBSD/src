@@ -1,3 +1,5 @@
+/*	$NetBSD: cpu.h,v 1.10 1994/11/20 20:52:57 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
- *
- * from: Header: cpu.h,v 1.12 93/05/25 10:36:34 torek Exp  (LBL)
- * $Id: cpu.h,v 1.9 1994/10/26 07:16:34 deraadt Exp $
  */
 
 #ifndef _CPU_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: i82586.h,v 1.2 1994/11/20 20:52:17 deraadt Exp $ */
+
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.
  * Copyright (c) 1992, Garrett A. Wollman.
@@ -30,8 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: i82586.h,v 1.1 1994/10/26 07:11:16 deraadt Exp $
  */
 
 /*

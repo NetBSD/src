@@ -1,6 +1,8 @@
+/*	$NetBSD: btreg.h,v 1.2 1994/11/20 20:51:55 deraadt Exp $ */
+
 /*
- * Copyright (c) 1993 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -39,10 +41,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	%W% (Berkeley) %G%
- *
- * from: Header: btreg.h,v 1.1 93/10/12 15:28:52 torek Exp 
- * $Id: btreg.h,v 1.1 1993/11/11 03:36:50 deraadt Exp $
+ *	@(#)btreg.h	8.2 (Berkeley) 1/21/94
  */
 
 /*

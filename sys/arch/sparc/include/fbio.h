@@ -1,3 +1,5 @@
+/*	$NetBSD: fbio.h,v 1.3 1994/11/20 20:53:03 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992 Regents of the University of California.
  * All rights reserved.
@@ -34,9 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: $Header: /cvsroot/src/sys/arch/sparc/include/Attic/fbio.h,v 1.2 1994/02/27 10:33:25 deraadt Exp $ (LBL)
- * from: @(#)fbio.h	7.2 (Berkeley) 4/1/92
- * $Id: fbio.h,v 1.2 1994/02/27 10:33:25 deraadt Exp $
+ * 	@(#)fbio.h	7.2 (Berkeley) 4/1/92
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: promdev.c,v 1.6 1994/11/20 20:54:59 deraadt Exp $ */
+
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: promdev.c,v 1.5 1994/08/13 08:33:51 pk Exp $
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: varargs.h,v 1.6 1994/11/20 20:53:37 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,9 +47,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)varargs.h	8.3 (Berkeley) 3/22/94
- *		from: Header: varargs.h,v 1.8 93/09/27 00:53:20 torek Exp
- *
- *	$Id: varargs.h,v 1.5 1994/10/15 04:58:08 cgd Exp $
  */
 
 #ifndef _SPARC_VARARGS_H_

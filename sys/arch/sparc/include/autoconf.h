@@ -1,3 +1,5 @@
+/*	$NetBSD: autoconf.h,v 1.6 1994/11/20 20:52:52 deraadt Exp $ */
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -40,9 +42,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)autoconf.h	8.2 (Berkeley) 9/30/93
- *
- * from: Header: autoconf.h,v 1.11 93/09/28 05:26:41 leres Exp (LBL)
- * $Id: autoconf.h,v 1.5 1994/10/15 05:49:44 deraadt Exp $
  */
 
 /*
