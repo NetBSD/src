@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.114 2002/07/26 01:36:30 enami Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.115 2002/07/30 07:40:13 soren Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.114 2002/07/26 01:36:30 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.115 2002/07/30 07:40:13 soren Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -661,7 +661,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, p)
 		MALLOC(nmp, struct nfsmount *, sizeof (struct nfsmount),
 		    M_NFSMNT, M_WAITOK);
 		memset((caddr_t)nmp, 0, sizeof (struct nfsmount));
-		mp->mnt_data = (qaddr_t)nmp;
+		mp->mnt_data = nmp;
 		TAILQ_INIT(&nmp->nm_uidlruhead);
 		TAILQ_INIT(&nmp->nm_bufq);
 	}

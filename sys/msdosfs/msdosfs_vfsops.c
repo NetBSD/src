@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.81 2002/03/25 20:42:40 jdolecek Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.82 2002/07/30 07:40:11 soren Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.81 2002/03/25 20:42:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.82 2002/07/30 07:40:11 soren Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -705,7 +705,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 		pmp->pm_flags |= MSDOSFSMNT_RONLY;
 	else
 		pmp->pm_fmod = 1;
-	mp->mnt_data = (qaddr_t)pmp;
+	mp->mnt_data = pmp;
         mp->mnt_stat.f_fsid.val[0] = (long)dev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_MSDOS);
 	mp->mnt_flag |= MNT_LOCAL;
@@ -735,7 +735,7 @@ error_exit:;
 		if (pmp->pm_inusemap)
 			free(pmp->pm_inusemap, M_MSDOSFSFAT);
 		free(pmp, M_MSDOSFSMNT);
-		mp->mnt_data = (qaddr_t)0;
+		mp->mnt_data = NULL;
 	}
 	return (error);
 }
@@ -800,7 +800,7 @@ msdosfs_unmount(mp, mntflags, p)
 	vput(pmp->pm_devvp);
 	free(pmp->pm_inusemap, M_MSDOSFSFAT);
 	free(pmp, M_MSDOSFSMNT);
-	mp->mnt_data = (qaddr_t)0;
+	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.30 2001/11/15 09:48:23 lukem Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.31 2002/07/30 07:40:11 soren Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.30 2001/11/15 09:48:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.31 2002/07/30 07:40:11 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ union_mount(mp, path, data, ndp, p)
 	 */
 	mp->mnt_flag |= (um->um_uppervp->v_mount->mnt_flag & MNT_RDONLY);
 
-	mp->mnt_data = (qaddr_t)um;
+	mp->mnt_data = um;
 	vfs_getnewfsid(mp);
 
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
