@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.48 2001/09/15 14:55:38 simonb Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.49 2001/09/15 16:45:23 simonb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.48 2001/09/15 14:55:38 simonb Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.49 2001/09/15 16:45:23 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -195,8 +195,9 @@ main(int argc, char *argv[])
 			dorename = 1;
 			break;
 		case 'S':
-			stripArgs = (char*)malloc(sizeof(char)*(strlen(optarg)+1));
-			strcpy(stripArgs,optarg);
+			stripArgs = strdup(optarg);
+			if (stripArgs == NULL)
+				errx(1, "%s", strerror(ENOMEM));
 			/* fall through; -S implies -s */
 		case 's':
 			dostrip = 1;
@@ -585,6 +586,9 @@ strip(char *to_name)
 						  (3+strlen(stripprog)+
 						     strlen(stripArgs)+
 						     strlen(to_name)));
+
+			if (cmd == NULL)
+				errx(1, "%s", strerror(ENOMEM));
 
 			sprintf(cmd, "%s %s %s", stripprog, stripArgs, to_name);
 
