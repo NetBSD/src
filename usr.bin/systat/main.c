@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2004/07/03 18:54:47 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2004/11/04 07:18:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.37 2004/07/03 18:54:47 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2004/11/04 07:18:47 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -136,7 +136,7 @@ main(int argc, char **argv)
 		struct mode *p;
 		int modefound = 0;
 
-		if (isdigit(argv[0][0])) {
+		if (isdigit((unsigned char)argv[0][0])) {
 			naptime = atoi(argv[0]);
 			if (naptime <= 0)
 				naptime = 5;

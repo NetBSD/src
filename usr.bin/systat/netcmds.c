@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.19 2003/08/07 11:15:59 agc Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.20 2004/11/04 07:18:47 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.19 2003/08/07 11:15:59 agc Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.20 2004/11/04 07:18:47 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -147,10 +147,10 @@ changeitems(char *args, int onoff)
 	if (cp)
 		*cp = '\0';
 	for (;;args = cp) {
-		for (cp = args; *cp && isspace(*cp); cp++)
+		for (cp = args; *cp && isspace((unsigned char)*cp); cp++)
 			;
 		args = cp;
-		for (; *cp && !isspace(*cp); cp++)
+		for (; *cp && !isspace((unsigned char)*cp); cp++)
 			;
 		if (*cp)
 			*cp++ = '\0';
