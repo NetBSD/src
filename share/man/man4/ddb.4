@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.70 2003/07/04 13:10:45 wiz Exp $
+.\"	$NetBSD: ddb.4,v 1.71 2003/09/20 15:15:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 - 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -663,6 +663,13 @@ Warning: support for
 .Cm /u
 is machine dependent.
 If not supported, incorrect information will be displayed.
+.It Ic "show sched_qs"
+Print the state of the scheduler's run queues.
+For each run queue that has an LWP, the run queue index and the list
+of LWPs will be shown.
+If the run queue has LWPs, but the sched_whichqs bit is not set for that
+queue, the queue index will be prefixed with a
+.Sq ! .
 .It Ic "show uvmexp"
 Print a selection of UVM counters and statistics.
 .It Xo
