@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.18 1999/05/18 18:07:25 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.19 1999/06/18 23:14:01 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -465,25 +465,25 @@ suivantes :
 }
 
 message net_domain
-{Votre domaine (DNS) }
+{Votre domaine (DNS)}
 
 message net_host
-{Votre nom de machine }
+{Votre nom de machine}
 
 message net_ip
-{Votre numéro IP }
+{Votre numéro IP}
 
 message net_mask
-{Votre masque de réseau (netmask) }
+{Votre masque de réseau (netmask)}
 
 message net_namesrv
-{L'adresse IP de votre serveur de nom }
+{L'adresse IP de votre serveur de nom}
 
 message net_defroute
 {L'adresee IP de votre passerelle ("gateway")}
 
 message net_media
-{Type de réseau (media) }
+{Type de réseau (media)}
 
 message netok
 {Vous avez spécifié les valeurs suivantes. Sont elles exactes?
