@@ -1,9 +1,9 @@
-# $NetBSD: mi,v 1.648 2004/01/07 16:53:38 wiz Exp $
+# $NetBSD: mi,v 1.649 2004/01/11 08:55:56 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
-./usr/share/info/as.info			man-computil-info
+./usr/share/info/as.info			man-computil-info	bfd
 ./usr/share/info/awk.info			man-util-info
-./usr/share/info/bfd.info			man-computil-info
-./usr/share/info/binutils.info			man-computil-info
+./usr/share/info/bfd.info			man-computil-info	bfd
+./usr/share/info/binutils.info			man-computil-info	bfd
 ./usr/share/info/bzip2.info			man-util-info
 ./usr/share/info/cpp.info			man-util-info
 ./usr/share/info/cvs.info			man-cvs-info	cvs
@@ -17,7 +17,7 @@
 ./usr/share/info/gdb.info			man-debug-info
 ./usr/share/info/gdbint.info			man-debug-info
 ./usr/share/info/gettext.info			man-sys-info
-./usr/share/info/gprof.info			man-debug-info
+./usr/share/info/gprof.info			man-debug-info	bfd
 ./usr/share/info/grep.info			man-util-info
 ./usr/share/info/gzip.info			man-util-info
 ./usr/share/info/heimdal.info			man-krb5-info	kerberos
@@ -25,7 +25,7 @@
 ./usr/share/info/info.info			man-texinfo-info
 ./usr/share/info/iostream.info			man-obsolete	obsolete
 ./usr/share/info/kth-krb.info			man-krb4-info	kerberos4
-./usr/share/info/ld.info			man-computil-info
+./usr/share/info/ld.info			man-computil-info	bfd
 ./usr/share/info/send-pr.info			man-gnats-info
 ./usr/share/info/stabs.info			man-debug-info
 ./usr/share/info/tar.info			man-obsolete	obsolete
@@ -1739,7 +1739,7 @@
 ./usr/share/man/cat8/mbr.0			man-obsolete	obsolete
 ./usr/share/man/cat8/mbrlabel.0			man-sysutil-catman
 ./usr/share/man/cat8/mdconfig.0			man-sysutil-catman
-./usr/share/man/cat8/mdsetimage.0		man-sysutil-catman
+./usr/share/man/cat8/mdsetimage.0		man-sysutil-catman	bfd
 ./usr/share/man/cat8/mfs.0			man-sys-catman
 ./usr/share/man/cat8/mipsco/MAKEDEV.0		man-obsolete	obsolete
 ./usr/share/man/cat8/mipsco/makedev.0		man-obsolete	obsolete
@@ -3789,7 +3789,7 @@
 ./usr/share/man/man8/mbr.8			man-obsolete	obsolete
 ./usr/share/man/man8/mbrlabel.8			man-sysutil-man
 ./usr/share/man/man8/mdconfig.8			man-sysutil-man
-./usr/share/man/man8/mdsetimage.8		man-sysutil-man
+./usr/share/man/man8/mdsetimage.8		man-sysutil-man	bfd
 ./usr/share/man/man8/mfs.8			man-sys-man
 ./usr/share/man/man8/mipsco/MAKEDEV.8		man-obsolete	obsolete
 ./usr/share/man/man8/mipsco/makedev.8		man-obsolete	obsolete
