@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.6 1995/04/22 12:35:17 cgd Exp $	*/
+/*	$NetBSD: scc.c,v 1.7 1995/06/28 01:06:35 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -454,11 +454,14 @@ sccopen(dev, flag, mode, p)
 	int s, error = 0;
 
 	unit = SCCUNIT(dev);
-	if (unit >= NSCC)
+	if (unit >= scccd.cd_ndevs)
 		return (ENXIO);
-	line = SCCLINE(dev);
 	sc = scccd.cd_devs[unit];
-	if (sc->scc_pdma[line].p_addr == (void *)0)
+	if (!sc)
+		return (ENXIO);
+
+	line = SCCLINE(dev);
+	if (sc->scc_pdma[line].p_addr == NULL)
 		return (ENXIO);
 	tp = scc_tty[minor(dev)];
 	if (tp == NULL)
@@ -547,6 +550,15 @@ sccwrite(dev, uio, flag)
 
 	tp = scc_tty[minor(dev)];
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+scctty(dev)
+	dev_t dev;
+{
+        struct tty *tp = scc_tty[minor(dev)];		/* XXX */
+
+        return (tp);
 }
 
 /*ARGSUSED*/
