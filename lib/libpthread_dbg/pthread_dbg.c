@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.1.2.5 2002/10/04 00:44:55 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.1.2.6 2002/10/08 19:53:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -84,7 +84,8 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 	}
 
 	dbg = getpid();
-	/* If this fails it probably means we're debugging a core file and
+	/*
+	 * If this fails it probably means we're debugging a core file and
 	 * can't write to it.
 	 * If it's something else we'll lose the next time we hit WRITE,
 	 * but not before, and that's OK.
@@ -287,7 +288,8 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 
 	switch (tmp) {
 	case PT_STATE_RUNNING:
-		/* The register state of the thread is live in the
+		/*
+		 * The register state of the thread is live in the
 		 * inferior process's register state.
 		 */
 		val = GETREGS(thread->proc, regset, thread->lwp, buf);
@@ -297,7 +299,8 @@ td_thr_getregs(td_thread_t *thread, int regset, void *buf)
 	case PT_STATE_RUNNABLE:
 	case PT_STATE_BLOCKED_SYS:
 	case PT_STATE_BLOCKED_QUEUE:
-		/* The register state of the thread is in the ucontext_t 
+		/*
+		 * The register state of the thread is in the ucontext_t 
 		 * of the thread structure.
 		 */
 		val = READ(thread->proc, 
@@ -345,7 +348,8 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 
 	switch (tmp) {
 	case PT_STATE_RUNNING:
-		/* The register state of the thread is live in the
+		/*
+		 * The register state of the thread is live in the
 		 * inferior process's register state.  
 		 */
 		val = SETREGS(thread->proc, regset, thread->lwp, buf);
@@ -355,10 +359,11 @@ td_thr_setregs(td_thread_t *thread, int regset, void *buf)
 	case PT_STATE_RUNNABLE:
 	case PT_STATE_BLOCKED_SYS:
 	case PT_STATE_BLOCKED_QUEUE:
-		/* The register state of the thread is in the ucontext_t 
+		/*
+		 * The register state of the thread is in the ucontext_t 
 		 * of the thread structure.
-		 */
-		/* Fetch the uc first, since there is state in it
+		 *
+		 * Fetch the uc first, since there is state in it
 		 * besides the registers that should be preserved.
 		 */
 		val = READ(thread->proc, 
@@ -455,7 +460,8 @@ td_sync_info(td_sync_t *s, td_sync_info_t *info)
 
 		if (!PTQ_EMPTY(&queue))
 			info->sync_haswaiters = 1;
-		/* The cast to (void *) is to explicitly throw away the
+		/*
+		 * The cast to (void *) is to explicitly throw away the
 		 * volatile qualifier on pthread_spin_t, 
 		 * from __cpu_simple_lock_t.
 		 */
@@ -762,9 +768,9 @@ static int
 td__getthread(td_proc_t *proc, caddr_t addr, td_thread_t **threadp)
 {
 	td_thread_t *thread;
-
 	
-	/* Check if we've allocated a descriptor for this thread. 
+	/*
+	 * Check if we've allocated a descriptor for this thread. 
 	 * Sadly, this makes iterating over a set of threads O(N^2)
 	 * in the number of threads. More sophisticated data structures
 	 * can wait.
