@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.15 2002/10/23 09:13:30 jdolecek Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.15.6.1 2005/01/31 08:19:33 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.15 2002/10/23 09:13:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.15.6.1 2005/01/31 08:19:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ ofrtc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ofrtc_open(dev_t dev, int flags, int fmt, struct proc *p)
+ofrtc_open(dev_t dev, int flags, int fmt, struct lwp *lwp)
 {
 	struct ofrtc_softc *of;
 	int unit = minor(dev);
