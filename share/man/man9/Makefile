@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.147 2003/09/28 09:09:55 dsl Exp $
+#       $NetBSD: Makefile,v 1.148 2003/10/13 19:52:58 bouyer Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -23,8 +23,8 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	malloc.9 mbuf.9 mca.9 memcmp.9 memcpy.9 memmove.9 memset.9 \
 	microtime.9 mstohz.9 namecache.9 namei.9 need_resched.9 \
 	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
-	pcmcia.9 pfil.9 physio.9 \
-	pmap.9 pmc.9 pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
+	pcmcia.9 pfil.9 physio.9 pmap.9 pmatch.9 pmc.9 \
+	pool.9 pool_cache.9 powerhook_establish.9 ppsratecheck.9 \
 	properties.9 preempt.9 \
 	radio.9 ras.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
 	SCHED_LOCK.9 scheduler.9 \
