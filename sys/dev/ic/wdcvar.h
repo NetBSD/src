@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2.2.7 1998/08/21 16:34:47 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.2.2.8 1998/09/11 16:23:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ struct wdc_softc { /* Per controller state */
 #define	WDC_CAPABILITY_HWLOCK 0x10	/* Needs to lock HW */
 #define	WDC_CAPABILITY_ATA_NOSTREAM 0x20 /* Don't use stream funcs on ATA */
 #define	WDC_CAPABILITY_ATAPI_NOSTREAM 0x40 /* Don't use stream funcs on ATAPI */
+#define WDC_CAPABILITY_NO_EXTRA_RESETS 0x80 /* only reset once */
 	u_int8_t      pio_mode; /* highest PIO mode supported */
 	u_int8_t      dma_mode; /* highest DMA mode supported */
 	int nchannels;	/* Number of channels on this controller */
