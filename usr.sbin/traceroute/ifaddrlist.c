@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.c,v 1.2 1998/07/04 20:47:24 mrg Exp $	*/
+/*	$NetBSD: ifaddrlist.c,v 1.3 1999/02/24 21:21:24 explorer Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -39,7 +39,7 @@
 static const char rcsid[] =
     "@(#) Header: ifaddrlist.c,v 1.2 97/04/22 13:31:05 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: ifaddrlist.c,v 1.2 1998/07/04 20:47:24 mrg Exp $");
+__RCSID("$NetBSD: ifaddrlist.c,v 1.3 1999/02/24 21:21:24 explorer Exp $");
 #endif
 #endif
 
@@ -59,6 +59,7 @@ struct rtentry;
 
 #include <net/if.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -84,7 +85,7 @@ struct rtentry;
 #define ISLOOPBACK(p) (strcmp((p)->ifr_name, "lo0") == 0)
 #endif
 
-#define MAX_IPADDR 32
+#define MAX_IPADDR 256
 
 /*
  * Return the interface list
@@ -153,20 +154,21 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, int buflen)
 			return (-1);
 		}
 
-		/* Must be up and not the loopback */
-		if ((ifr.ifr_flags & IFF_UP) == 0 || ISLOOPBACK(&ifr))
+		/* Must be up */
+		if ((ifr.ifr_flags & IFF_UP) == 0)
 			continue;
 
-		(void)strncpy(device, ifr.ifr_name, sizeof(ifr.ifr_name));
-		device[sizeof(device) - 1] = '\0';
-		if (ioctl(fd, SIOCGIFADDR, (char *)&ifr) < 0) {
-			(void)snprintf(errbuf, buflen, "SIOCGIFADDR: %s: %s",
-			    device, strerror(errno));
-			(void)close(fd);
-			return (-1);
-		}
+		/*
+		 * Must not be a loopback address (127/8)
+		 */
+		sin = (struct sockaddr_in *)&ifrp->ifr_addr;
+		if (ISLOOPBACK(&ifr))
+			if (ntohl(sin->sin_addr.s_addr) == INADDR_LOOPBACK)
+				continue;
 
-		sin = (struct sockaddr_in *)&ifr.ifr_addr;
+		(void)strncpy(device, ifrp->ifr_name, sizeof(ifrp->ifr_name));
+		device[sizeof(device) - 1] = '\0';
+
 		al->addr = sin->sin_addr.s_addr;
 		al->device = savestr(device);
 		++al;
