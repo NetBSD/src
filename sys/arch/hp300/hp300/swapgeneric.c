@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.11 1995/09/03 00:07:21 thorpej Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.12 1995/09/24 02:18:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -38,6 +38,7 @@
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/buf.h>
+#include <sys/disklabel.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
@@ -187,8 +188,11 @@ doswap:
 	if (rootdev == NODEV)
 		swdevt[0].sw_dev = argdev = dumpdev = NODEV;
 	else {
+		/*
+		 * Primary swap is always in the `b' partition.
+		 */
 		swdevt[0].sw_dev = argdev = dumpdev =
-		    makedev(major(rootdev), minor(rootdev)+1);
+		    MAKEDISKDEV(major(rootdev), DISKUNIT(rootdev), 1);
 		/* swap size and dumplo set during autoconfigure */
 		if (swaponroot)
 			rootdev = dumpdev;
