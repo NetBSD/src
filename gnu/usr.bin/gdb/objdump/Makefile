@@ -1,14 +1,12 @@
-# $Id: Makefile,v 1.2 1995/10/22 22:48:51 christos Exp $
+# $Id: Makefile,v 1.3 1997/05/07 07:15:41 mycroft Exp $
 
 # Paths to libraries
 #
 LIBBFD!=cd $(.CURDIR)/../bfd; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libbfd.a\n" | \
-	${MAKE} -r -s -f - xxx | grep libbfd
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libbfd.a\n" | ${MAKE} -s -f-
 
 LIBIBERTY!=cd $(.CURDIR)/../libiberty; \
-	printf "xxx:\n\techo \$${.OBJDIR}/libiberty.a\n" | \
-	${MAKE} -r -s -f - xxx | grep libiberty
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/libiberty.a\n" | ${MAKE} -s -f-
 
 
 PROG=		objdump

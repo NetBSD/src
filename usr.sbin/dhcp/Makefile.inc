@@ -33,8 +33,7 @@
 .include <bsd.obj.mk>
 
 COBJDIR!=cd $(.CURDIR)/../common; \
-	printf "xxx:\n\techo \$${.OBJDIR}\n" | \
-	${MAKE} -r -s -f - xxx
+	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
 
 CFLAGS+= -I${.CURDIR}/.. -I${.CURDIR}/../includes
 LDADD=  ${COBJDIR}/libdhcp.a          
