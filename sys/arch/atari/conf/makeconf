@@ -1,10 +1,10 @@
 #!/bin/sh
-#	$NetBSD: makeconf,v 1.4 2001/06/07 07:56:58 leo Exp $
+#	$NetBSD: makeconf,v 1.5 2001/06/07 08:00:24 leo Exp $
 
 emit_file() {
 	echo "Generating $1"
 	echo '#
-# $NetBSD: makeconf,v 1.4 2001/06/07 07:56:58 leo Exp $
+# $NetBSD: makeconf,v 1.5 2001/06/07 08:00:24 leo Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -22,6 +22,5 @@ emit_file BOOTX FALCON.in \
 emit_file ATARITT ATARITT.in "-DTT030_KERNEL"
 emit_file FALCON FALCON.in "-DFALCON_KERNEL"
 emit_file HADES HADES.in "-DHADES_KERNEL"
-emit_file MILAN MILAN.in "-DMILAN_KERNEL"
 emit_file MILAN-ISAIDE MILAN.in "-DMILAN_KERNEL -DMILAN_ISAIDE"
 emit_file MILAN-PCIIDE MILAN.in "-DMILAN_KERNEL -DMILAN_PCIIDE"
