@@ -1,4 +1,4 @@
-/*	$NetBSD: systime.c,v 1.3 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: systime.c,v 1.4 2003/12/04 17:22:31 drochner Exp $	*/
 
 /*
  * systime -- routines to fiddle a UNIX clock.
@@ -426,7 +426,12 @@ step_systime(
         double now		/* step adjustment (s) */
         )
 {
-	ntp_node.adj = now;
+#ifdef DEBUG
+	if (debug)
+		printf("step_systime: time %.6f adj %.6f\n",
+		   ntp_node.ntp_time, now);
+#endif
+	ntp_node.ntp_time += now;
 	return (1);
 }
 
