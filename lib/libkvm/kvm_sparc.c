@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.18 1998/06/30 20:29:40 thorpej Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.19 1999/01/30 16:57:25 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.18 1998/06/30 20:29:40 thorpej Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.19 1999/01/30 16:57:25 eeh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -108,6 +108,7 @@ _kvm_initvtop(kd)
 
 	switch (cputyp = cpup->cputype) {
 	case CPU_SUN4:
+	case CPU_SUN4U:
 		kd->nbpg = 8196;
 		pgshift = 13;
 		break;
@@ -140,9 +141,18 @@ _kvm_kvatop(kd, va, pa)
 		if (_kvm_initvtop(kd) != 0)
 			return (-1);
 
-	return ((cputyp == CPU_SUN4M)
-		? _kvm_kvatop4m(kd, va, pa)
-		: _kvm_kvatop44c(kd, va, pa));
+	switch (cputyp) {
+	case CPU_SUN4:
+	case CPU_SUN4C:
+		return _kvm_kvatop44c(kd, va, pa);
+		break;
+	case CPU_SUN4M:
+		return _kvm_kvatop4m(kd, va, pa);
+		break;
+	case CPU_SUN4U:
+	default:
+		return _kvm_kvatop4u(kd, va, pa);
+	}
 }
 
 /*
@@ -254,6 +264,56 @@ err:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
 	return (0);
 }
+
+/*
+ * pmap's 32-bit page table format
+ */
+int
+_kvm_kvatop4u(kd, va, pa)
+	kvm_t *kd;
+	u_long va;
+	u_long *pa;
+{
+	int vr, vs;
+	cpu_kcore_hdr_t *cpup = kd->cpu_data;
+	int64_t **segmaps;
+	int64_t *ptes;
+	int64_t pte;
+	int nkreg, nureg;
+	u_long kernbase = cpup->kernbase;
+	int64_t kphys = cpup->kphys;
+
+	if (va < kernbase)
+		goto err;
+
+	/* 
+	 * Kernel layout:
+	 *
+	 * kernbase:
+	 *	4MB locked TLB (text+data+BSS)
+	 *	Random other stuff.	
+	 */
+	if (va >= kernbase && va < kernbase + 4*MEG)
+		return (va - kernbase) + kphys;
+
+	/*
+	 * Layout of CPU segment:
+	 *	cpu_kcore_hdr_t;
+	 *	[alignment]
+	 *	phys_ram_seg_t[cpup->nmemseg];
+	 *	segmap[cpup->nsegmap];
+	 */
+	segmaps = ((long)kd->cpu_data + cpup->segmapoffset);
+	ptes = (int64_t *)_kvm_pa2off(kd, segmaps[va_to_seg(va)]);
+	pte = ptes[va_to_pte(va)];
+	if ((pte & TLB_V) != 0) {
+		return ((pte & TLB_PA_MASK) | (va & PGOFSET);
+	}
+err:
+	_kvm_err(kd, 0, "invalid address (%x)", va);
+	return (0);
+}
+
 
 /*       
  * Translate a physical address to a file-offset in the crash-dump.
