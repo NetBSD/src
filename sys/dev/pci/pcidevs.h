@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.378 2001/12/13 20:41:05 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.379 2001/12/15 13:18:10 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.373 2001/12/13 20:40:28 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.374 2001/12/15 13:17:49 soren Exp 
  */
 
 /*
@@ -530,6 +530,7 @@
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_LEVELONE	0x1394		/* Level One */
+#define	PCI_VENDOR_COLOGNECHIP	0x1397		/* Cologne Chip Designs */
 #define	PCI_VENDOR_HIFN	0x13a3		/* Hi/Fn */
 #define	PCI_VENDOR_3WARE	0x13c1		/* 3ware */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
@@ -968,6 +969,9 @@
 
 /* Cogent Data Technologies products */
 #define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX PCI Fast Ethernet Adapter */
+
+/* Cologne Chip Designs */
+#define	PCI_PRODUCT_COLOGNECHIP_HFC	0x2bd0		/* HFC-S */
 
 /* COMPAL products */
 #define	PCI_PRODUCT_COMPAL_38W2	0x0011		/* COMPAL 38W2 OEM Notebook */
