@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.5 2001/04/10 08:07:54 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.6 2001/06/23 08:08:04 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -138,6 +138,23 @@ allowed_user(struct passwd * pw)
 
 	login_close(lc);
 #endif
+
+	/*
+	 * password/account expiration.
+	 */
+	if (pw->pw_change || pw->pw_expire) {
+		struct timeval tv;
+
+		(void)gettimeofday(&tv, (struct timezone *)NULL);
+		if (pw->pw_expire) {
+			if (tv.tv_sec >= pw->pw_expire)
+				return 0;	/* expired */
+		}
+		if (pw->pw_change) {
+			if (tv.tv_sec >= pw->pw_change)
+				return 0;	/* expired */
+		}
+	}
 
 	/*
 	 * Get the shell from the password data.  An empty shell field is
