@@ -1,4 +1,4 @@
-/* $NetBSD: loadbootstrap.c,v 1.3 2000/06/11 23:28:39 matt Exp $ */
+/* $NetBSD: loadbootstrap.c,v 1.4 2000/06/16 23:24:30 matt Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <include/dec_boot.h>
+#include <dev/dec/dec_boot.h>
 
 #include "installboot.h"
 

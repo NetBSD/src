@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.2 2000/06/11 23:28:39 matt Exp $ */
+/* $NetBSD: installboot.c,v 1.3 2000/06/16 23:24:30 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Ross Harvey.  All rights reserved.
@@ -63,6 +63,7 @@
 #include <sys/param.h>		/* XXX for roundup, howmany */
 #include <sys/stat.h>
 #include <sys/disklabel.h>
+#include <sys/endian.h>
 #include <isofs/cd9660/iso.h>
 #include <assert.h>
 #include <err.h>
@@ -72,7 +73,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <include/dec_boot.h>
+#include <dev/dec/dec_boot.h>
 
 #include "installboot.h"
 
@@ -182,7 +183,7 @@ clr_bootstrap(const char *disk)
 	else if (rv != sizeof bb)
 		errx(EXIT_FAILURE, "read %s: short read", disk);
 
-	if (bb.magic != DEC_BOOT_MAGIC) {
+	if (bb.magic != PMAX_BOOT_MAGIC) {
 		fprintf(stderr, "old boot block magic number invalid (%#x)\n",
 		    bb.magic);
 		fprintf(stderr, "boot block invalid\n");
@@ -190,12 +191,12 @@ clr_bootstrap(const char *disk)
 	}
 
 	bb.map[0].num_blocks = bb.map[0].start_block = bb.mode = 0;
-	bb.magic = DEC_BOOT_MAGIC;
+	bb.magic = htole32(PMAX_BOOT_MAGIC);
 
 	fprintf(stderr, "new boot block start sector: %#x\n",
-	    bb.map[0].start_block);
+	    le32toh(bb.map[0].start_block));
 	fprintf(stderr, "new boot block size: %#x\n",
-	    bb.map[0].num_blocks);
+	    le32toh(bb.map[0].num_blocks));
 
 	if (nowrite) {
 	    if (verbose)
@@ -253,22 +254,22 @@ set_bootstrap(const char *disk, const char *bootstrap)
 		startblock = PMAX_BOOT_BLOCK_OFFSET / PMAX_BOOT_BLOCK_BLOCKSIZE + 1;
 	}
 
-	bb.map[0].start_block = startblock;
-	bb.map[0].num_blocks = howmany(bootstrapsize, PMAX_BOOT_BLOCK_BLOCKSIZE);
-	bb.magic = DEC_BOOT_MAGIC;
-	bb.load_addr = bootstrapload;
-	bb.exec_addr = bootstrapexec;
-	bb.mode = DEC_BOOTMODE_CONTIGUOUS;
+	bb.map[0].start_block = htole32(startblock);
+	bb.map[0].num_blocks = htole32(howmany(bootstrapsize, PMAX_BOOT_BLOCK_BLOCKSIZE));
+	bb.magic = htole32(PMAX_BOOT_MAGIC);
+	bb.load_addr = htole32(bootstrapload);
+	bb.exec_addr = htole32(bootstrapexec);
+	bb.mode = htole32(PMAX_BOOTMODE_CONTIGUOUS);
 
 	if (verbose) {
 		fprintf(stderr, "bootstrap starting sector: %i\n",
-		    bb.map[0].start_block);
+		    le32toh(bb.map[0].start_block));
 		fprintf(stderr, "bootstrap sector count: %i\n",
-		    bb.map[0].num_blocks);
+		    le32toh(bb.map[0].num_blocks));
 		fprintf(stderr, "bootstrap load address: %#x\n",
-		    bb.load_addr);
+		    le32toh(bb.load_addr));
 		fprintf(stderr, "bootstrap execute address: %#x\n",
-		    bb.exec_addr);
+		    le32toh(bb.exec_addr));
 	}
 
 	if (nowrite) {
