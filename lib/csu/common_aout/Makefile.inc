@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/11/12 14:33:49 itohy Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2003/11/11 11:35:03 dsl Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 5/21/91
 
 CPPFLAGS+=	-DLIBC_SCCS -I${.CURDIR}/../common_aout
@@ -20,20 +20,21 @@ crt0.o: ${SRCS}
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-gcrt0.o: ${SRCS}
+# dependant on crt0.o to pick up header dependencies
+gcrt0.o: ${SRCS} crt0.o
 	@echo "${COMPILE.c} -DMCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}"
 	@${COMPILE.c} -DMCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
-scrt0.o: ${SRCS}
+scrt0.o: ${SRCS} crt0.o
 	@echo "${COMPILE.c} -DSCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}"
 	@${COMPILE.c} -DSCRT0 ${.CURDIR}/${SRCS} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
 	@rm -f ${.TARGET}.o
 
 # same as crt0.o modulo the dynamic linker is in /libexec
-lcrt0.o: ${SRCS}
+lcrt0.o: ${SRCS} crt0.o
 	@echo "${COMPILE.c} -DCRT0 -DDYNAMIC -DLDSO=\"${SHLINKINSTALLDIR}/ld.so\" ${.CURDIR}/${SRCS} -o ${.TARGET}"
 	@${COMPILE.c} -DCRT0 -DDYNAMIC -DLDSO=\"${SHLINKINSTALLDIR}/ld.so\" ${.CURDIR}/${SRCS} -o ${.TARGET}.o
 	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
@@ -42,12 +43,6 @@ lcrt0.o: ${SRCS}
 .if make(depend)
 CPPFLAGS+= -DDYNAMIC
 .endif
-
-afterdepend: .depend
-	@(TMP=/tmp/_depend$$$$; \
-		sed -e 's/^\([^\.]*\).o[ ]*:/\1.o g\1.o s\1.o:/' \
-		< .depend > $$TMP; \
-	mv $$TMP .depend)
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
