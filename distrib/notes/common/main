@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.47 2000/02/23 14:00:51 nonaka Exp $
+.\" $NetBSD: main,v 1.48 2000/02/26 03:02:14 mbw Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -935,6 +935,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Rob Windsor Ta Mt windsor@NetBSD.ORG
 .It Ta Dan Winship Ta Mt danw@NetBSD.ORG
 .It Ta Jim Wise Ta Mt jwise@NetBSD.ORG
+.It Ta Michael Wolfson Ta Mt mbw@NetBSD.ORG
 .It Ta Colin Wood Ta Mt ender@NetBSD.ORG
 .
 .El
