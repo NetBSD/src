@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 1999/07/11 01:22:45 kim Exp $
+#	$NetBSD: Makefile,v 1.24 1999/09/10 16:38:46 drochner Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -28,7 +28,10 @@ CPPFLAGS+= -DCOMPAT_OLDBOOT -DCOMPAT_386BSD_MBRPART
 CPPFLAGS+= -DSUPPORT_SERIAL=CONSDEV_COM0 -DDIRECT_SERIAL
 .endif
 
+CPPFLAGS+= -DSUPPORT_USTARFS
 CPPFLAGS+= -DPASS_BIOSGEOM
+#CPPFLAGS+= -DBOOTPASSWD
+
 #uncomment if there are problems with memory detection
 #CPPFLAGS+= -DCONSERVATIVE_MEMDETECT
 #increase MAXFLENTRIES if "installboot" complains about

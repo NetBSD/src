@@ -1,7 +1,7 @@
-/*	$NetBSD: main.c,v 1.16 1999/04/14 11:45:39 drochner Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1999/09/10 16:38:47 drochner Exp $	*/
 
 /*
- * Copyright (c) 1996, 1997
+ * Copyright (c) 1996, 1997, 1999
  * 	Matthias Drochner.  All rights reserved.
  * Copyright (c) 1996, 1997
  * 	Perry E. Metzger.  All rights reserved.
@@ -68,6 +68,7 @@ char *names[] = {
 #define MAXDEVNAME 16
 
 #define TIMEOUT 5
+int boottimeout = TIMEOUT; /* patchable */
 
 static char *default_devname;
 static int default_unit, default_partition;
@@ -249,8 +250,12 @@ main()
 		printf("booting %s - starting in ",
 		       sprint_bootsel(names[currname]));
 
-		c = awaitkey(TIMEOUT, 1);
-		if ((c != '\r') && (c != '\n') && (c != '\0')) {
+		c = awaitkey(boottimeout, 1);
+		if ((c != '\r') && (c != '\n') && (c != '\0')
+#ifdef BOOTPASSWD
+		    && checkpasswd()
+#endif
+		    ) {
 			printf("type \"?\" or \"help\" for help.\n");
 			bootmenu(); /* does not return */
 		}
