@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.c,v 1.16 1999/12/23 15:34:18 ad Exp $	*/
+/*	$NetBSD: lk201.c,v 1.17 1999/12/23 15:42:06 ad Exp $	*/
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -159,7 +159,7 @@ static u_char shiftedAscii[] = {
 /*
  * Keyboard initialization string.
  */
-static u_char kbdInitString[] = {
+static u_char lk_initstr[] = {
 	LK_LED_ENABLE, LED_ALL,		/* show we are resetting keyboard */
 	LK_DEFAULTS,
 	LK_CMD_MODE(LK_AUTODOWN, 1),
@@ -193,7 +193,7 @@ struct {
 	int	ts_keycode;
 	int	ts_len;
 	char	*ts_string;
-} static toString[] = {				/* termcap name */
+} static lk_keytostr[] = {			/* termcap name */
 	{ KBD_UP,	3, "\033[A" },		/* ku */
 	{ KBD_DOWN,	3, "\033[B" },		/* kd */
 	{ KBD_RIGHT,	3, "\033[C" },		/* kr */
@@ -203,7 +203,7 @@ struct {
 	{ KBD_PREVIOUS,	6, "\033[216z" },	/* kP */
 };
 
-#define NUM_TOSTRING (sizeof(toString) / sizeof(toString[0]))
+#define NUM_KEYTOSTR (sizeof(lk_keytostr) / sizeof(lk_keytostr[0]))
 
 static void	(*raw_kbd_putc) __P((dev_t dev, int c)) = NULL;
 static int	(*raw_kbd_getc) __P((dev_t dev)) = NULL;
@@ -225,8 +225,8 @@ lk_reset(kbddev, putc)
 		return;
 	inlk_reset = 1;
 
-	for (i = 0; i < sizeof(kbdInitString); i++) {
-		(*putc)(kbddev, (int)kbdInitString[i]);
+	for (i = 0; i < sizeof(lk_initstr); i++) {
+		(*putc)(kbddev, (int)lk_initstr[i]);
 		DELAY(20000);
 	}
 
@@ -318,10 +318,10 @@ lk_mapchar(cc, len)
 		cc = KBD_RET;
 	else if (cc >= KBD_NOKEY) {
 		/* Check for keys that have multi-character codes */
-		for (i = 0; i < NUM_TOSTRING; i++)
-			if (toString[i].ts_keycode == cc) {
-				cp = toString[i].ts_string;
-				*len = toString[i].ts_len;
+		for (i = 0; i < NUM_KEYTOSTR; i++)
+			if (lk_keytostr[i].ts_keycode == cc) {
+				cp = lk_keytostr[i].ts_string;
+				*len = lk_keytostr[i].ts_len;
 				break;
 			}
 
