@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.2 2000/02/02 04:09:37 thorpej Exp $	*/
+/*	$NetBSD: bios32.c,v 1.3 2001/09/26 09:58:39 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ bios32_service(service, e, ei)
 	if (bios32_entry.offset == 0)
 		return (0);	/* BIOS32 not present */
 
-	__asm __volatile("lcall (%%edi)"
+	__asm __volatile("lcall *(%%edi)"
 		: "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)
 		: "0" (service), "1" (0), "D" (&bios32_entry));
 
