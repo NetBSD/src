@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.11.2.3 2001/01/22 18:25:14 bouyer Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.11.2.4 2001/03/29 10:34:33 bouyer Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -105,7 +105,7 @@ cxd1185_attach(parent, self, aux)
 	sc->sc_channel.chan_adapter = &sc->sc_adapter;
 	sc->sc_channel.chan_bustype = &scsi_bustype;
 	sc->sc_channel.chan_channel = 0;
-	sc->sc_channel.chan_ntargets = (sc->features & SF_BUS_WIDE) ? 16 : 8;  
+	sc->sc_channel.chan_ntargets = 8;
 	sc->sc_channel.chan_nluns = 8;
 	sc->sc_channel.chan_id = 7;
 
@@ -191,7 +191,7 @@ sc_scsipi_request(chan, req, arg)
 	struct sc_softc *sc = (void *)chan->chan_adapter->adapt_dev;
 	struct sc_scb *scb;
 	int flags, s;
-	int chan;
+	int target;
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -218,10 +218,10 @@ sc_scsipi_request(chan, req, arg)
 		splx(s);
 
 		if (flags & XS_CTL_POLL) {
-			chan = periph->periph_target;
-			if (sc_poll(sc, chan, xs->timeout)) {
+			target = periph->periph_target;
+			if (sc_poll(sc, target, xs->timeout)) {
 				printf("sc: timeout (retry)\n");
-				if (sc_poll(sc, chan, xs->timeout)) {
+				if (sc_poll(sc, target, xs->timeout)) {
 					printf("sc: timeout\n");
 				}
 			}

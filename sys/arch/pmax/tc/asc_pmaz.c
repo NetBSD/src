@@ -1,4 +1,4 @@
-/* $NetBSD: asc_pmaz.c,v 1.1.4.2 2001/03/29 09:03:04 bouyer Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.1.4.3 2001/03/29 10:42:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.4.2 2001/03/29 09:03:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.4.3 2001/03/29 10:42:24 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -198,7 +198,9 @@ asc_pmaz_attach(parent, self, aux)
 	sc->sc_maxxfer = 64 * 1024;
 
 	/* Do the common parts of attachment. */
-	ncr53c9x_attach(sc, NULL, NULL);
+	sc->sc_adapter.adapt_minphys = minphys;
+	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	ncr53c9x_attach(sc);
 }
 
 static void

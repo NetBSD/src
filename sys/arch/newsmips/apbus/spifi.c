@@ -1,4 +1,4 @@
-/*	$NetBSD: spifi.c,v 1.1.2.3 2001/01/22 18:25:14 bouyer Exp $	*/
+/*	$NetBSD: spifi.c,v 1.1.2.4 2001/03/29 10:34:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -268,6 +268,7 @@ spifi_scsipi_request(chan, req, arg)
 				if (spifi_poll(sc))
 					printf("spifi: timeout again\n");
 			}
+		}
 		return;
 	case ADAPTER_REQ_GROW_RESOURCES:
 		/* XXX Not supported. */
