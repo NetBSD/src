@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171 2004/07/02 07:39:07 petrov Exp $ */
+/*	$NetBSD: machdep.c,v 1.172 2004/10/31 21:59:51 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.171 2004/07/02 07:39:07 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.172 2004/10/31 21:59:51 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -757,6 +757,7 @@ dumpsys()
 	daddr_t blkno;
 	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
+	unsigned long todo;
 	register struct mem_region *mp;
 	extern struct mem_region *mem;
 
@@ -799,7 +800,11 @@ dumpsys()
 
 	error = pmap_dumpmmu(dump, blkno);
 	blkno += pmap_dumpsize();
-printf("starting dump, blkno %lld\n", (long long)blkno);
+
+	/* calculate total size of dump */
+	for (todo = 0, mp = mem; mp->size; mp++)
+		todo += mp->size;
+
 	for (mp = mem; mp->size; mp++) {
 		unsigned i = 0, n;
 		paddr_t maddr = mp->start;
@@ -818,9 +823,9 @@ printf("starting dump, blkno %lld\n", (long long)blkno);
 			if (n > BYTES_PER_DUMP)
 				 n = BYTES_PER_DUMP;
 
-			/* print out how many MBs we have dumped */
-			if (i && (i % (1024*1024)) == 0)
-				printf("%d ", i / (1024*1024));
+			/* print out how many MBs we still have to dump */
+			if ((todo % (1024*1024)) == 0)
+				printf("%ld ", todo / (1024*1024));
 			pmap_kenter_pa(dumpspace, maddr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 			error = (*dump)(dumpdev, blkno,
@@ -830,6 +835,7 @@ printf("starting dump, blkno %lld\n", (long long)blkno);
 			if (error)
 				break;
 			maddr += n;
+			todo -= n;
 			blkno += btodb(n);
 		}
 	}
