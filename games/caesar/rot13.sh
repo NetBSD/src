@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: rot13.sh,v 1.2 1995/03/21 15:08:23 cgd Exp $
+#	$NetBSD: rot13.sh,v 1.3 2000/04/24 13:21:26 hubertf Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -34,5 +34,7 @@
 #
 #	@(#)rot13.sh	8.1 (Berkeley) 5/31/93
 #
+
+PATH="/usr/games:$PATH"; export PATH
 
 caesar 13 $*
