@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.3 2003/10/13 08:22:19 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.4 2003/10/16 10:04:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.3 2003/10/13 08:22:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.4 2003/10/16 10:04:14 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2972,12 +2972,8 @@ atw_rxintr(sc)
 		rssi = le32toh(sc->sc_rxdescs[i].ar_rssi);
 		rate0 = MASK_AND_RSHIFT(rxstat, ATW_RXSTAT_RXDR_MASK);
 
-		if (rxstat & ATW_RXSTAT_OWN) {
-			/*
-			 * We have processed all of the receive buffers.
-			 */
-			break;
-		}
+		if (rxstat & ATW_RXSTAT_OWN)
+			break; /* We have processed all receive buffers. */
 
 		ATW_DPRINTF3(("%s: rssi %d\n", sc->sc_dev.dv_xname, rssi));
 
