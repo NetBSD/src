@@ -24,9 +24,7 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	mci.c parseaddr.c queue.c readcf.c recipient.c savemail.c srvrsmtp.c \
 	stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
 	util.c version.c
-MAN1=	mailq.0 newaliases.0
-MAN5=	aliases.0
-MAN8=	sendmail.0 
+MAN=	aliases.5 mailq.1 newaliases.1 sendmail.8
 LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
 	/usr/sbin/sendmail /usr/bin/mailq
 BINDIR=	/usr/sbin

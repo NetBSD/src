@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	5.8 (Berkeley) 7/28/90
-#	$Id: Makefile,v 1.5 1994/01/28 00:56:10 cgd Exp $
+#	$Id: Makefile,v 1.6 1994/12/22 11:36:58 cgd Exp $
 
 ### -DALLOW_T_UNSPEC -Dmalloc=rt_malloc -Dfree=rt_free
 ### ALLOC=storage.o
 PROG=	named
-MAN8=	named.0
+MAN=	named.8
 CFLAGS+=-DDEBUG -DSTATS
 SRCS=	db_dump.c db_glue.c db_load.c db_lookup.c db_reload.c db_save.c \
 	db_update.c ns_forw.c ns_init.c ns_main.c ns_maint.c ns_req.c \

@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.3 1994/08/25 20:40:28 gwr Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 11:34:02 cgd Exp $
 
 PROG=dbsym
-MAN8=dbsym.0
+MAN=dbsym.8
 
 .include <bsd.prog.mk>

@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
-#	$Id: Makefile,v 1.10 1994/12/11 22:29:40 mycroft Exp $
+#	$Id: Makefile,v 1.11 1994/12/22 11:33:48 cgd Exp $
 
 PROG=	config.new
 BINDIR=	/usr/sbin
@@ -9,7 +9,7 @@ CFLAGS+=-I${.CURDIR} -I.
 LDADD+=	-ll
 DPADD+=	${LIBL}
 CLEANFILES=gram.c scan.c y.tab.h
-MAN8=	config.new.0
+MAN=	config.new.8
 
 .include <bsd.prog.mk>
 

@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	5.23 (Berkeley) 6/24/90
-#	$Id: Makefile,v 1.3 1993/12/02 18:18:59 jtc Exp $
+#	$Id: Makefile,v 1.4 1994/12/22 11:37:21 cgd Exp $
 
 PROG=	nslookup
 SRCS=	main.c getinfo.c debug.c send.c skip.c list.c subr.c
 OBJS+=	commands.o
-MAN8=	nslookup.0
+MAN=	nslookup.8
 LFLAGS=	-I
 CFLAGS+=-I${.CURDIR}
 LDADD=	-ll
