@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.25 2002/09/18 16:45:01 abs Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.26 2002/09/27 14:54:08 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.25 2002/09/18 16:45:01 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.26 2002/09/27 14:54:08 itojun Exp $");
 
 #include "rnd.h"
 
@@ -498,6 +498,13 @@ void
 fxp_pci_disable(struct fxp_softc *sc)
 {
 	struct fxp_pci_softc *psc = (void *) sc;
+
+	/*
+	 * for some 82558_A4 and 82558_B0, entering D3 state makes
+	 * media detection disordered.
+	 */
+	if (sc->sc_rev <= FXP_REV_82558_B0)
+		return;
 
 #if 0
 	printf("%s: going to power state D3\n", sc->sc_dev.dv_xname);
