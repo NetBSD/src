@@ -35,12 +35,13 @@
  *
  *	@(#)frame.h	5.2 (Berkeley) 1/18/91
  *
- * 	$Id: frame.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ * 	frame.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
 #ifndef _MACHINE_FRAME_H_
 #define _MACHINE_FRAME_H_
 
+#include <sys/signal.h>
 #include <machine/reg.h>
 
 /*
@@ -79,7 +80,7 @@ struct intrframe {
 };
 
 /*
- * Call Gate/System Call Stack Frame
+ * System Call Stack Frame
  */
 
 struct syscframe {
@@ -92,20 +93,15 @@ struct syscframe {
 	u_short	sf_psr;
 };
 
-/* Bits in the process status word. */
-
-#define PSR_CARRY	0x001
-#define PSR_TRACE	0x002
-#define PSR_LOWER	0x004
-#define PSR_FLAG	0x020
-#define PSR_ZERO	0x040
-#define PSR_NEG		0x080
-#define PSR_USR 	0x100
-#define PSR_STK 	0x200
-#define PSR_TRAP	0x400 
-#define PSR_INTR	0x800
-
-/* "Default" user psr! */
-#define USER_PSR	(PSR_INTR|PSR_STK|PSR_USR)
+/*
+ * Signal frame
+ */
+struct sigframe {
+	int	sf_signum;
+	int	sf_code;
+	struct	sigcontext *sf_scp;
+	sig_t	sf_handler;
+	struct	sigcontext sf_sc;
+} ;
 
 #endif

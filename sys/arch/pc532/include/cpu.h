@@ -35,7 +35,7 @@
  *
  *	@(#)cpu.h	5.4 (Berkeley) 5/9/91
  *
- *	$Id: cpu.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	cpu.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp
  */
 
 /*
@@ -44,6 +44,7 @@
  *   modified from 386 code for the pc532 by Phil Nelson (12/92)
  */
 
+#include "machine/psl.h"
 #include "machine/frame.h"
 
 /*
