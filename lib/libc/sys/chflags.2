@@ -1,5 +1,7 @@
-.\" Copyright (c) 1989 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: chflags.2,v 1.6 1995/02/27 12:32:03 cgd Exp $
+.\"
+.\" Copyright (c) 1989, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,10 +31,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)chflags.2	6.6 (Berkeley) 7/25/91
-.\"	$Id: chflags.2,v 1.5 1994/04/22 00:13:27 jtc Exp $
+.\"	@(#)chflags.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd July 25, 1991
+.Dd June 9, 1993
 .Dt CHFLAGS 2
 .Os
 .Sh NAME
@@ -40,11 +41,12 @@
 .Nm fchflags
 .Nd set file flags
 .Sh SYNOPSIS
+.Fd #include <sys/stat.h>
 .Fd #include <unistd.h>
 .Ft int
-.Fn chflags "const char *path"  "long flags"
+.Fn chflags "const char *path"  "u_long flags"
 .Ft int
-.Fn fchflags "int fd" "long flags"
+.Fn fchflags "int fd" "u_long flags"
 .Sh DESCRIPTION
 The file whose name
 is given by
@@ -54,9 +56,41 @@ or referenced by the descriptor
 has its flags changed to
 .Fa flags .
 .Pp
-Only the owner of a file (or the super-user) may change the flags.
-The owner may only change the lower 16 bits of the flags;
-the super-user may change all 32 bits of the flags.
+The flags specified are formed by
+.Em or Ns 'ing
+the following values
+.Pp
+.Bl -tag -width "SF_IMMUTABLE" -compact -offset indent
+.It UF_NODUMP
+Do not dump the file.
+.It UF_IMMUTABLE
+The file may not be changed.
+.It UF_APPEND
+The file may only be appended to.
+.\".It ARCHIVED
+.\"File is archived.
+.It SF_IMMUTABLE
+The file may not be changed.
+.It SF_APPEND
+The file may only be appended to.
+.El
+.Pp
+The
+.Dq UF_IMMUTABLE
+and
+.Dq UF_APPEND
+flags may be set or unset by either the owner of a file or the super-user.
+.Pp
+The
+.Dq SF_IMMUTABLE
+and
+.Dq SF_APPEND
+flags may only be set or unset by the super-user.
+They may be set at any time, but normally may only be unset when
+the system is in single-user mode.
+(See
+.Xr init 8
+for details.)
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, -1 is returned and the global variable
@@ -64,7 +98,7 @@ Otherwise, -1 is returned and the global variable
 is set to indicate the error.
 .Sh ERRORS
 .Fn Chflags
-fails if:
+will fail it:
 .Bl -tag -width Er
 .It Bq Er ENOTDIR
 A component of the path prefix is not a directory.
@@ -113,14 +147,11 @@ An
 error occurred while reading from or writing to the file system.
 .El
 .Sh SEE ALSO
-.Xr chmod 2 ,
-.Xr open 2 ,
-.Xr chown 2 ,
-.Xr stat 2
+.Xr chflags 1,
+.Xr init 8
 .Sh HISTORY
 The
 .Fn chflags
 and
-.Fn fchflags
-function calls are
-.Ud .
+.Nm fchflags
+functions first appeared in 4.4BSD.
