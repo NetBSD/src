@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.33 2000/03/06 03:18:11 perry Exp $	*/
+/*	$NetBSD: eap.c,v 1.34 2000/03/11 06:42:37 soren Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -920,7 +920,7 @@ eap1371_reset_codec(sc_)
 	u_int32_t icsc = EREAD4(sc, EAP_ICSC);
 	
 	EWRITE4(sc, EAP_ICSC, icsc | E1371_SYNC_RES);
-	delay(2);
+	delay(10);
 	EWRITE4(sc, EAP_ICSC, icsc & ~E1371_SYNC_RES);
 	delay(1);
 
