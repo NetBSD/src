@@ -22,51 +22,21 @@
  * 
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
- */
-/*
- * $Id: db_watch.h,v 1.3 1994/01/08 01:01:52 mycroft Exp $
  *
- * HISTORY
- * $Log: db_watch.h,v $
- * Revision 1.3  1994/01/08 01:01:52  mycroft
- * Rearrange some #includes.
- *
- * Revision 1.2  1993/05/20  03:39:39  cgd
- * add explicit rcs id
- *
- * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
- * initial import of 386bsd-0.1 sources
- *
- * Revision 1.1  1992/03/25  21:45:40  pace
- * Initial revision
- *
- * Revision 2.3  91/02/05  17:07:31  mrt
- * 	Changed to new Mach copyright
- * 	[91/01/31  16:20:09  mrt]
- * 
- * Revision 2.2  90/10/25  14:44:21  rwd
- * 	Generalized the watchpoint support.
- * 	[90/10/16            rwd]
- * 	Created.
- * 	[90/10/16            rpd]
- * 
- */
-/*
  * 	Author: David B. Golub, Carnegie Mellon University
  *	Date:	10/90
+ *	$Id: db_watch.h,v 1.4 1994/02/15 14:50:47 mycroft Exp $
  */
 
 #ifndef	_DDB_DB_WATCH_
 #define	_DDB_DB_WATCH_
 
 #include <vm/vm.h>
-
 #include <machine/db_machdep.h>
 
 /*
  * Watchpoint.
  */
-
 typedef struct db_watchpoint {
 	vm_map_t map;			/* in this map */
 	db_addr_t loaddr;		/* from this address */
