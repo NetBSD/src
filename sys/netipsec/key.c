@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.5 2003/12/12 21:04:03 scw Exp $	*/
+/*	$NetBSD: key.c,v 1.6 2003/12/12 21:17:59 scw Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.5 2003/12/12 21:04:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.6 2003/12/12 21:17:59 scw Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -43,6 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.5 2003/12/12 21:04:03 scw Exp $");
 #include "opt_inet6.h"
 #endif
 #include "opt_ipsec.h"
+#ifdef __NetBSD__
+#include "opt_gateway.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,6 +72,9 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.5 2003/12/12 21:04:03 scw Exp $");
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 #include <netinet/in_var.h>
+#ifdef INET
+#include <netinet/ip_var.h>
+#endif
 
 #ifdef INET6
 #include <netinet/ip6.h>
@@ -1793,6 +1799,13 @@ key_spdadd(so, m, mhp)
 			return key_senderror(so, m, EEXIST);
 		}
 	}
+
+#if defined(__NetBSD__) && defined(GATEWAY)
+	/*
+	 * Nail the ipflow cache, since we're adding/changing an SPD
+	 */
+	ipflow_invalidate_all();
+#endif
 
 	/* allocation new SP entry */
 	if ((newsp = key_msg2sp(xpl0, PFKEY_EXTLEN(xpl0), &error)) == NULL) {

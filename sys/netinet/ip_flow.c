@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.26 2002/11/02 07:28:12 perry Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.27 2003/12/12 21:17:59 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.26 2002/11/02 07:28:12 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.27 2003/12/12 21:17:59 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,5 +431,21 @@ ipflow_create(
 	hash = ipflow_hash(ip->ip_dst, ip->ip_src, ip->ip_tos);
 	s = splnet();
 	IPFLOW_INSERT(&ipflowtable[hash], ipf);
+	splx(s);
+}
+
+void
+ipflow_invalidate_all(
+	void)
+{
+	struct ipflow *ipf, *next_ipf;
+	int s;
+
+	s = splnet();
+	ipf = LIST_FIRST(&ipflowlist);
+	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
+		next_ipf = LIST_NEXT(ipf, ipf_list);
+		ipflow_free(ipf);
+	}
 	splx(s);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.192 2003/12/08 02:23:27 jonathan Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.193 2003/12/12 21:17:59 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.192 2003/12/08 02:23:27 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.193 2003/12/12 21:17:59 scw Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -572,7 +572,7 @@ ip_input(struct mbuf *m)
 			m_adj(m, len - m->m_pkthdr.len);
 	}
 
-#if defined(IPSEC) || defined(FAST_IPSEC)
+#if defined(IPSEC)
 	/* ipflow (IP fast forwarding) is not compatible with IPsec. */
 	m->m_flags &= ~M_CANFASTFWD;
 #else
@@ -805,6 +805,26 @@ ip_input(struct mbuf *m)
 		if (error) {
 			ipstat.ips_cantforward++;
 			goto bad;
+		}
+
+		/*
+		 * Peek at the outbound SP for this packet to determine if
+		 * it's a Fast Forward candidate.
+		 */
+		mtag = m_tag_find(m, PACKET_TAG_IPSEC_PENDING_TDB, NULL);
+		if (mtag != NULL)
+			m->m_flags &= ~M_CANFASTFWD;
+		else {
+			s = splsoftnet();
+			sp = ipsec4_checkpolicy(m, IPSEC_DIR_OUTBOUND,
+			    (IP_FORWARDING |
+			     (ip_directedbcast ? IP_ALLOWBROADCAST : 0)),
+			    &error, NULL);
+			if (sp != NULL) {
+				m->m_flags &= ~M_CANFASTFWD;
+				KEY_FREESP(&sp);
+			}
+			splx(s);
 		}
 #endif	/* FAST_IPSEC */
 
