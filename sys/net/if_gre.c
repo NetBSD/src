@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.4 1998/10/07 23:35:19 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.5 1999/01/11 21:32:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,19 +202,7 @@ gre_output(ifp, m, dst, rt)
 
 	ttl=255; 
 
-	if (sc->g_proto == IPPROTO_IPIP ) {
-		if (dst->sa_family == AF_INET) {
-			inp=mtod(m,struct ip *);
-			ttl=inp->ip_ttl;
-			etype=ETHERTYPE_IP;
-			M_PREPEND(m,sizeof(struct ip),M_DONTWAIT);
-		} else {
-			IF_DROP(&ifp->if_snd);
-			m_freem(m);
-			return(EINVAL);
-		}
-#if 1
-	} else if (sc->g_proto == IPPROTO_MOBILE) {
+	if (sc->g_proto == IPPROTO_MOBILE) {
 		if (dst->sa_family == AF_INET) {
 			struct mbuf *m0;
 			int msiz;
@@ -274,7 +262,6 @@ gre_output(ifp, m, dst, rt)
 			m_freem(m);
 			return(EINVAL);
 		}
-#endif
 	} else if (sc->g_proto == IPPROTO_GRE) {
 		switch(dst->sa_family) {
 		case AF_INET:
@@ -318,8 +305,6 @@ gre_output(ifp, m, dst, rt)
 		memset((void*)&gh->gi_g,0, sizeof(struct gre_h));
 		gh->gi_ptype=htons(etype);
 	}
-
-	/* rest is same for GRE and IPIP and all inner protos */
 
 	gh->gi_pr = sc->g_proto;
 	if (sc->g_proto != IPPROTO_MOBILE) {
@@ -393,11 +378,6 @@ gre_ioctl(ifp, cmd, data)
 				ifp->if_flags |= IFF_LINK0;
 				ifp->if_flags &= ~(IFF_LINK1|IFF_LINK2);
 				break;
-			case IFF_LINK1:
-				sc->g_proto = IPPROTO_IPIP;
-				ifp->if_flags |= IFF_LINK1;
-				ifp->if_flags &= ~(IFF_LINK0|IFF_LINK2);
-				break;
 			case IFF_LINK2:
 				sc->g_proto = IPPROTO_MOBILE;
 				ifp->if_flags |= IFF_LINK2;
@@ -437,10 +417,6 @@ gre_ioctl(ifp, cmd, data)
 		case IPPROTO_GRE :
 			ifp->if_flags |= IFF_LINK0;
 			ifp->if_flags &= ~(IFF_LINK1|IFF_LINK2);
-			break;
-		case IPPROTO_IPIP :
-			ifp->if_flags |= IFF_LINK1;
-			ifp->if_flags &= ~(IFF_LINK0|IFF_LINK2);
 			break;
 		case IPPROTO_MOBILE :
 			ifp->if_flags |= IFF_LINK2;
