@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.66 2000/09/08 02:50:43 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.67 2000/09/20 19:42:04 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -325,7 +325,7 @@ should boot from hard disk.  Follow the instructions in the INSTALL
 document about final configuration of your system.
 
 At a minimum, you should set a root password and edit /etc/rc.conf to
-match your needs.
+match your needs. See /etc/default/rc.conf for the default values.
 }
 
 message unpackcomplete
