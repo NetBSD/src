@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_10.c,v 1.6 2000/06/28 15:39:31 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_10.c,v 1.7 2000/11/18 02:00:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -45,7 +45,7 @@
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
-#ifdef SYSVSEM
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
 int
 netbsd32_compat_10_sys_semsys(p, v, retval)
 	struct proc *p;
@@ -113,7 +113,7 @@ netbsd32_compat_10_sys_semsys(p, v, retval)
 }
 #endif
 
-#ifdef SYSVSHM
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
 int
 netbsd32_compat_10_sys_shmsys(p, v, retval)
 	struct proc *p;
@@ -155,7 +155,8 @@ netbsd32_compat_10_sys_shmsys(p, v, retval)
 	case 1:						/* shmctl() */
 		SCARG(&shmctl_args, shmid) = SCARG(uap, a2);
 		SCARG(&shmctl_args, cmd) = SCARG(uap, a3);
-		SCARG(&shmctl_args, buf) = (struct shmid_ds14 *)SCARG(uap, a4);
+		SCARG(&shmctl_args, buf) =
+		    (struct netbsd32_shmid_ds14 *)SCARG(uap, a4);
 		return (compat_14_sys_shmctl(p, &shmctl_args, retval));
 
 	case 2:						/* shmdt() */
@@ -174,7 +175,7 @@ netbsd32_compat_10_sys_shmsys(p, v, retval)
 }
 #endif
 
-#ifdef SYSVMSG
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(alpha) && defined(COMPAT_10)
 int
 netbsd32_compat_10_sys_msgsys(p, v, retval)
 	struct proc *p;
