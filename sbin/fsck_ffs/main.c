@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.23 1996/10/22 16:35:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.23 1996/10/22 16:35:04 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,10 +64,14 @@ static char rcsid[] = "$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $"
 #include "fsutil.h"
 
 int	returntosingle;
-int	argtoi __P((int, char *, char *, int));
-int	checkfilesys __P((char *, char *, long, int));
-int	docheck __P((struct fstab *));
+
 int	main __P((int, char *[]));
+
+static int	argtoi __P((int, char *, char *, int));
+static int	checkfilesys __P((char *, char *, long, int));
+static int	docheck __P((struct fstab *));
+static  void usage __P((void));
+
 
 int
 main(argc, argv)
@@ -81,12 +85,8 @@ main(argc, argv)
 
 	sync();
 	skipclean = 1;
-	while ((ch = getopt(argc, argv, "dfpnNyYb:c:l:m:")) != EOF) {
+	while ((ch = getopt(argc, argv, "b:c:dfm:npy")) != EOF) {
 		switch (ch) {
-		case 'p':
-			preen++;
-			break;
-
 		case 'b':
 			skipclean = 0;
 			bflag = argtoi('b', "number", optarg, 10);
@@ -114,31 +114,37 @@ main(argc, argv)
 			break;
 
 		case 'n':
-		case 'N':
 			nflag++;
 			yflag = 0;
 			break;
 
+		case 'p':
+			preen++;
+			break;
+
 		case 'y':
-		case 'Y':
 			yflag++;
 			nflag = 0;
 			break;
 
 		default:
-			errexit("%c option?\n", ch);
+			usage();
 		}
 	}
+
 	argc -= optind;
 	argv += optind;
+
+	if (!argc)
+		usage();
+
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		(void)signal(SIGINT, catch);
 	if (preen)
 		(void)signal(SIGQUIT, catchquit);
 
-	if (argc)
-		while (argc-- > 0)
-			(void)checkfilesys(blockcheck(*argv++), 0, 0L, 0);
+	while (argc-- > 0)
+		(void)checkfilesys(blockcheck(*argv++), 0, 0L, 0);
 
 	if (returntosingle)
 		ret = 2;
@@ -146,7 +152,7 @@ main(argc, argv)
 	exit(ret);
 }
 
-int
+static int
 argtoi(flag, req, str, base)
 	int flag;
 	char *req, *str;
@@ -164,7 +170,7 @@ argtoi(flag, req, str, base)
 /*
  * Determine whether a filesystem should be checked.
  */
-int
+static int
 docheck(fsp)
 	register struct fstab *fsp;
 {
@@ -182,7 +188,7 @@ docheck(fsp)
  * Check the specified filesystem.
  */
 /* ARGSUSED */
-int
+static int
 checkfilesys(filesys, mntpt, auxdata, child)
 	char *filesys, *mntpt;
 	long auxdata;
@@ -341,3 +347,15 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	}
 	return (0);
 }
+
+static void
+usage()
+{
+	extern char *__progname;
+
+	(void) fprintf(stderr,
+	    "Usage: %s [-dfnpy] [-b block] [-c level] [-m mode] filesystem ...\n",
+	    __progname);
+	exit(1);
+}
+
