@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.570 2002/10/11 01:52:04 thorpej Exp $
+#	$NetBSD: files,v 1.571 2002/10/15 17:30:43 junyoung Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -771,6 +771,7 @@ defparam opt_vga.h		VGA_CONSOLE_SCREENTYPE
 defflag opt_vga.h 		VGA_CONSOLE_ATI_BROKEN_FONTSEL
 device	vga: wsemuldisplaydev, pcdisplayops
 file	dev/ic/vga.c			vga			needs-flag
+file	dev/ic/vga_common.c		vga
 file	dev/ic/vga_subr.c		vga
 # Integraphics Systems IGA168x and CyberPro framebuffers (linear non-VGA mode)
 #
