@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.67 2003/07/27 08:57:27 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.68 2003/08/04 09:23:50 skrll Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -423,8 +423,8 @@ make_fstab(void)
 			scripting_fprintf(f, "/dev/%s%c /tmp mfs rw,-s=%d\n",
 				diskdev, 'a' + swap_dev, tmp_mfs_size);
 		else
-			scripting_fprintf(f, "swap /tmp mfs rw,-s=%d\n,
-				tmp_mfs_size");
+			scripting_fprintf(f, "swap /tmp mfs rw,-s=%d\n",
+				tmp_mfs_size);
 	}
 
 	/* Add /kern to fstab and make mountpoint. */
