@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.9 1997/10/19 16:49:15 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.10 1998/12/19 16:35:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.9 1997/10/19 16:49:15 mycroft Exp $");
+__RCSID("$NetBSD: tty.c,v 1.10 1998/12/19 16:35:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,22 +70,25 @@ grabh(hp, gflags)
 {
 	struct termios ttybuf;
 	sig_t saveint;
-#ifndef TIOCSTI
-	sig_t savequit;
-#else
-	int extproc, flag;
-#endif
 	sig_t savetstp;
 	sig_t savettou;
 	sig_t savettin;
 	int errs;
+#ifndef TIOCSTI
+	sig_t savequit;
+#else
+# ifdef TIOCEXT
+	int extproc, flag;
+# endif /* TIOCEXT */
+#endif /* TIOCSTI */
+
 #ifdef __GNUC__
 	/* Avoid longjmp clobbering */
-#ifdef TIOCSTI
+# if !defined(TIOCSTI) && defined(TIOCEXT)
 	(void) &extproc;
-#endif
+# endif
 	(void) &saveint;
-#endif
+#endif /* __GNUC__ */
 
 	savetstp = signal(SIGTSTP, SIG_DFL);
 	savettou = signal(SIGTTOU, SIG_DFL);
