@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.6 1997/10/03 19:56:01 christos Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.7 1997/10/17 13:50:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: tcpdump.c,v 1.6 1997/10/03 19:56:01 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.7 1997/10/17 13:50:26 lukem Exp $");
 #endif
 #endif
 
@@ -155,7 +155,7 @@ main(int argc, char **argv)
 
 	opterr = 0;
 	while (
-	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:s:StT:vw:xY")) != EOF)
+	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:s:StT:vw:xY")) != -1)
 		switch (op) {
 
 		case 'a':
