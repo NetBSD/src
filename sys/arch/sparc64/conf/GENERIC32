@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.68 2003/06/19 14:39:52 martin Exp $
+# 	$NetBSD: GENERIC32,v 1.69 2003/06/20 03:15:06 nakayama Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.69 $"
 
 maxusers	64
 
@@ -58,7 +58,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
@@ -84,10 +84,10 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 # ttyb on an Ultra5 is aliased to: "/pci@1f,0/pci@1,1/ebus@1/se:b", which is
 # "/pci@1f,0/pci@1,1/ebus@1/se@14,400000", port b.
 # options 	KGDB			# support for kernel gdb
-# options	KGDB_DEVNAME="\"sab\""	# driver name for the kgdb serial chip
-# options	KGDB_DEVADDR=0x400000	# physical address of the chip
-# options	KGDB_DEVPORT=1		# port b
-# options	KGDB_DEVRATE=38400	# baud rate
+# options 	KGDB_DEVNAME="\"sab\""	# driver name for the kgdb serial chip
+# options 	KGDB_DEVADDR=0x400000	# physical address of the chip
+# options 	KGDB_DEVPORT=1		# port b
+# options 	KGDB_DEVRATE=38400	# baud rate
 
 
 ## Compile the kernel with debugging symbols (`netbsd.gdb' is the debug file),
@@ -374,13 +374,13 @@ pseudo-device	ccd	4
 pseudo-device	raid	8
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
+# options 	RF_INCLUDE_EVENODD=1
+# options 	RF_INCLUDE_RAID5_RS=1
+# options 	RF_INCLUDE_PARITYLOGGING=1
+# options 	RF_INCLUDE_CHAINDECLUSTER=1
+# options 	RF_INCLUDE_INTERDECLUSTER=1
 # options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+# options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 
 
 ## Memory disk device, used on boot floppies with compressed
@@ -533,7 +533,7 @@ pseudo-device	vlan
 
 ## Simple inter-network traffic bridging
 pseudo-device	bridge
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
