@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.9 1999/05/18 23:52:55 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.10 1999/11/17 03:42:24 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -239,14 +239,6 @@ lance_config(sc)
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 	}
 
-	/* Attach the interface. */
-	if_attach(ifp);
-	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
-
 	switch (sc->sc_memsize) {
 	case 8192:
 		sc->sc_nrbuf = 4;
@@ -279,6 +271,14 @@ lance_config(sc)
 	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 	printf("%s: %d receive buffers, %d transmit buffers\n",
 	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
+
+	/* Attach the interface. */
+	if_attach(ifp);
+	ether_ifattach(ifp, sc->sc_enaddr);
+
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 
 	sc->sc_sh = shutdownhook_establish(lance_shutdown, sc);
 	if (sc->sc_sh == NULL)
