@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.45 1998/05/23 22:08:41 briggs Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.46 1998/06/02 02:14:21 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -68,7 +68,6 @@ static void	grfmv_intr_formac __P((void *vsc));
 static void	grfmv_intr_vimage __P((void *vsc));
 
 static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-static caddr_t	grfmv_phys __P((struct grf_softc *gp));
 static int	grfmv_match __P((struct device *, struct cfdata *, void *));
 static void	grfmv_attach __P((struct device *, struct device *, void *));
 
@@ -142,13 +141,14 @@ grfmv_attach(parent, self, aux)
 	nubus_dir dir, mode_dir;
 	int mode;
 
-	sc->sc_tag = na->na_tag;
-	sc->card_id = na->drhw;
-
 	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
 
-	if (bus_space_map(sc->sc_tag,
-	    NUBUS_SLOT2PA(na->slot), NBMEMSIZE, 0, &sc->sc_handle)) {
+	sc->sc_tag = na->na_tag;
+	sc->card_id = na->drhw;
+	sc->sc_bufpa = (caddr_t)NUBUS_SLOT2PA(na->slot);
+
+	if (bus_space_map(sc->sc_tag, (bus_addr_t)sc->sc_bufpa, NBMEMSIZE,
+	    0, &sc->sc_handle)) {
 		printf(": grfmv_attach: failed to map slot %d\n", na->slot);
 		return;
 	}
@@ -319,7 +319,7 @@ bad:
 	}
 
 	/* Perform common video attachment. */
-	grf_establish(sc, &sc->sc_slot, grfmv_mode, grfmv_phys);
+	grf_establish(sc, &sc->sc_slot, grfmv_mode);
 }
 
 static int
@@ -340,13 +340,6 @@ grfmv_mode(gp, cmd, arg)
 		break;
 	}
 	return EINVAL;
-}
-
-static caddr_t
-grfmv_phys(gp)
-	struct grf_softc *gp;
-{
-	return (caddr_t)NUBUS_SLOT2PA(gp->sc_slot->slot);
 }
 
 /* Interrupt handlers... */
