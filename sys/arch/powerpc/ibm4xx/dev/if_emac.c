@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.20 2005/01/21 15:15:20 simonb Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.21 2005/01/21 15:19:09 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.20 2005/01/21 15:15:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.21 2005/01/21 15:19:09 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -658,6 +658,14 @@ emac_start(struct ifnet *ifp)
 
 		/* Set the LAST bit on the last segment. */
 		sc->sc_txdescs[lasttx].md_stat_ctrl |= MAL_TX_LAST;
+
+		/*
+		 * Set up last segment descriptor to send an interrupt after
+		 * that descriptor is transmitted, and bypass existing Tx
+		 * descriptor reaping method (for now...).
+		 */
+		sc->sc_txdescs[lasttx].md_stat_ctrl |= MAL_TX_INTERRUPT;
+
 
 		txs->txs_lastdesc = lasttx;
 
