@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.41 1998/07/30 00:44:16 mycroft Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.42 1999/02/06 15:04:05 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -237,6 +237,8 @@ quad_t	 qabs __P((quad_t));
 qdiv_t	 qdiv __P((quad_t, quad_t));
 quad_t	 strtoq __P((const char *, char **, int));
 u_quad_t strtouq __P((const char *, char **, int));
+
+int	 l64a_r __P((long, char *, int));
 #endif /* !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
 #endif /* !_ANSI_SOURCE */
 __END_DECLS

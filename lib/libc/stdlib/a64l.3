@@ -1,6 +1,6 @@
-.\" $NetBSD: a64l.3,v 1.2 1998/06/14 17:54:59 kleink Exp $
+.\" $NetBSD: a64l.3,v 1.3 1999/02/06 15:04:05 kleink Exp $
 .\"
-.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -34,12 +34,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 14, 1998
+.Dd February 6, 1999
 .Dt A64L 3
 .Os NetBSD 1.0
 .Sh NAME
 .Nm a64l ,
-.Nm l64a
+.Nm l64a ,
+.Nm l64a_r
 .Nd convert between a long integer and a base-64 ASCII string
 .Sh LIBRARY
 .Lb libc
@@ -48,7 +49,9 @@
 .Ft long
 .Fn a64l "const char *s"
 .Ft char *
-.Fn l64a "long l"
+.Fn l64a "long int l"
+.Ft int
+.Fn l64a_r "long int l" "char *buffer" "int buflen"
 .Sh DESCRIPTION
 The
 .Fn a64l
@@ -75,6 +78,15 @@ takes a long integer value,
 .Fa l ,
 and returns a pointer to the corresponding NUL-terminated base-64
 ASCII string representation.
+.Pp
+.Fn l64a_r
+performs a conversion identical to that of
+.Fn l64a
+and stores the resulting representation in the memory area pointed to by
+.Fa buffer ,
+consuming at most
+.Fa buflen
+characters including the terminating NUL character.
 .Sh RETURN VALUES
 On successful completion,
 .Fn a64l
@@ -93,8 +105,26 @@ If
 is 0L,
 .Fn l64a
 returns a pointer to an empty string.
+.Pp
+On successful completion,
+.Fn l64a_r
+returns 0; if
+.Fa buffer
+is of insufficient length, -1 is returned.
 .Sh SEE ALSO
 .Xr strtol 3
+.Sh STANDARDS
+The
+.Fn a64l
+and
+.Fn l64a
+functions conform to
+.St -xpg4.2 .
+The
+.Fn l64a_r
+function conforms to
+.St -svid4 ,
+Multithreading Extension.
 .Sh BUGS
 The
 .Fn l64a
@@ -102,3 +132,6 @@ function is not reentrant.  The value returned by it points into a
 static buffer area; subsequent calls to
 .Fn la64a
 may overwrite this buffer.
+In multi-threaded applications,
+.Fn l64a_r
+should be used instead.
