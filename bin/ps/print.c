@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.34 1997/08/03 01:57:04 mikel Exp $	*/
+/*	$NetBSD: print.c,v 1.35 1998/02/05 03:51:16 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.34 1997/08/03 01:57:04 mikel Exp $");
+__RCSID("$NetBSD: print.c,v 1.35 1998/02/05 03:51:16 gwr Exp $");
 #endif
 #endif /* not lint */
 
@@ -466,7 +466,7 @@ wchan(k, ve)
 				(void)printf("%*s", v->width - n, "");
 		} else
 			(void)printf("%-*lx", v->width,
-			    (long)KI_PROC(k)->p_wchan - KERNBASE);
+			    (long)KI_PROC(k)->p_wchan);
 	} else
 		(void)printf("%-*s", v->width, "-");
 }
@@ -777,7 +777,7 @@ printval(bp, v)
 		(void)printf(ofmt, v->width, CHK_INF127(GET(u_long)));
 		break;
 	case KPTR:
-		(void)printf(ofmt, v->width, GET(u_long) &~ KERNBASE);
+		(void)printf(ofmt, v->width, GET(u_long));
 		break;
 	default:
 		errx(1, "unknown type %d", v->type);
