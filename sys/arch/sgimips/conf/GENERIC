@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.19 2003/04/26 14:10:07 ragge Exp $
+#	$NetBSD: GENERIC,v 1.20 2003/05/04 01:36:53 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include		"arch/sgimips/conf/std.sgimips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.19 $"
+#ident		"GENERIC-$Revision: 1.20 $"
 
 maxusers	32
 
@@ -270,6 +270,7 @@ pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
+#pseudo-device	wsfont
 
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
