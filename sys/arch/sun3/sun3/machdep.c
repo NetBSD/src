@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 1997/10/05 20:53:51 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.104 1997/10/17 01:43:33 fair Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -65,7 +65,6 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
-#include <sys/sysctl.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
@@ -84,6 +83,8 @@
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#include <sys/sysctl.h>
 
 #include <dev/cons.h>
 
