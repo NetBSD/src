@@ -1,16 +1,16 @@
 #
 # PAIN
 #
-#	$Id: PAIN,v 1.37 1994/08/24 19:28:03 mycroft Exp $
+#	$Id: PAIN,v 1.38 1994/09/11 08:39:36 mycroft Exp $
 #
 
 machine		"i386"
-cpu		"I386_CPU"
+#cpu		"I386_CPU"
 cpu		"I486_CPU"
 options		"DUMMY_NOPS"
 options		"MACHINE_NONCONTIG"
 options		XSERVER,UCONSOLE
-options		"USER_LDT"
+#options	"USER_LDT"
 
 ident		PAIN
 maxusers	16
@@ -30,8 +30,8 @@ options		"COMPAT_09"
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 
-options		"COMPAT_SVR4"
-options		"COMPAT_IBCS2"
+#options	"COMPAT_SVR4"
+#options	"COMPAT_IBCS2"
 
 options		FFS,QUOTA
 options		LFS
@@ -56,9 +56,9 @@ options		INET
 
 options		SCSI
 
-config		netbsd	root on sd0 swap on sd0 and sd1 and sd2 and sd3 and wd0 and wd1 and vnd0c and vnd1c and vnd2c and vnd3c
-#config		netbsd	swap generic
-#options	GENERIC
+#config		netbsd	root on wd0 swap on wd0 and sd0 and sd1 and sd2 and sd3
+config		netbsd	swap generic
+options		GENERIC
 
 controller	isa0
 
@@ -139,4 +139,4 @@ pseudo-device	bpfilter 8
 pseudo-device	log
 pseudo-device	pty	32
 pseudo-device	vn	4
-pseudo-device	ppp	2
+#pseudo-device	ppp	2
