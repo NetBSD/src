@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.125 1998/06/09 09:31:58 ross Exp $ */
+/* $NetBSD: machdep.c,v 1.126 1998/06/24 01:09:45 ross Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 1998/06/09 09:31:58 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 1998/06/24 01:09:45 ross Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -885,8 +885,7 @@ nobootinfo:
 	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
 		struct pcs *pcsp;
 
-		pcsp = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off +
-		    (i * hwrpb->rpb_pcs_size));
+		pcsp = LOCATE_PCS(hwrpb, i);
 		if ((pcsp->pcs_flags & PCS_PP) != 0)
 			ncpus++;
 	}
