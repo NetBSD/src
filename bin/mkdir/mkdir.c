@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.34 2003/09/14 19:20:21 jschauma Exp $ */
+/* $NetBSD: mkdir.c,v 1.35 2004/01/04 16:04:18 jschauma Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.34 2003/09/14 19:20:21 jschauma Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.35 2004/01/04 16:04:18 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,9 +54,6 @@ __RCSID("$NetBSD: mkdir.c,v 1.34 2003/09/14 19:20:21 jschauma Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
-
-int	stdout_ok;			/* stdout connected to a terminal */
 
 int	mkpath(char *, mode_t, mode_t);
 void	usage(void);
@@ -108,8 +105,6 @@ main(int argc, char *argv[])
 		usage();
 		/* NOTREACHED */
 	}
-
-	stdout_ok = isatty(STDOUT_FILENO);
 
 	for (exitval = EXIT_SUCCESS; *argv != NULL; ++argv) {
 #ifdef notdef
