@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io_asm.S,v 1.2 1997/01/26 01:50:18 mark Exp $	*/
+/*	$NetBSD: mainbus_io_asm.S,v 1.3 1997/10/14 21:25:04 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -63,15 +63,6 @@ _mainbus_r_4:
 	ldr	r0, [r1, r2, lsl #2]
 	mov	pc, lr
 
-	.global	_mainbus_r_8
-_mainbus_r_8:
-	adr	r0, mainbus_r_8_text
-	b	_panic
-
-mainbus_r_8_text:
-	.asciz	"mainbus_r_8(%x,%x): Not implemented\n"
-	.align	0
-
 /*
  * write single
  */
@@ -93,27 +84,9 @@ _mainbus_w_4:
 	str	r3, [r1, r2, lsl #2]
 	mov	pc, lr
 
-	.global	_mainbus_w_8
-_mainbus_w_8:
-	adr	r0, mainbus_w_8_text
-	b	_panic
-
-mainbus_w_8_text:
-	.asciz	"mainbus_w_8(%x,%x,%x): Not implemented\n"
-	.align	0
-
 /*
  * read multiple
  */
-
-	.global	_mainbus_rm_1
-_mainbus_rm_1:
-	adr	r0, mainbus_rm_1_text
-	b	_panic
-
-mainbus_rm_1_text:
-	.asciz	"mainbus_rm_1(%x,%x,%x,%x): Not implemented\n"
-	.align	0
 
 	.global	_mainbus_rm_2
 _mainbus_rm_2:
@@ -122,36 +95,26 @@ _mainbus_rm_2:
 	ldr	r2, [sp, #0]
 	b	_insw16
 
-	.global	_mainbus_rm_4
-_mainbus_rm_4:
-	adr	r0, mainbus_rm_4_text
-	b	_panic
-
-mainbus_rm_4_text:
-	.asciz	"mainbus_rm_4(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_rm_8
-_mainbus_rm_8:
-	adr	r0, mainbus_rm_8_text
-	b	_panic
-
-mainbus_rm_8_text:
-	.asciz	"mainbus_rm_8(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
 /*
  * write multiple
  */
 
 	.global	_mainbus_wm_1
 _mainbus_wm_1:
-	adr	r0, mainbus_wm_1_text
-	b	_panic
+	add	r0, r1, r2, lsl #2
+	ldr	r2, [sp, #0]
 
-mainbus_wm_1_text:
-	.asciz	"mainbus_wm_1(%x,%x,%x,%x): Not implemented\n"
-	.align	0
+	/* Make sure that we have a positive length */
+	cmp	r2, #0x00000000
+	movle	pc, lr
+
+mainbus_wm_1_loop:
+	ldrb	r1, [r3], #0x0001
+	str	r1, [r0]
+	subs	r2, r2, #0x00000001
+	bgt	mainbus_wm_1_loop
+
+	mov	pc, lr
 
 	.global	_mainbus_wm_2
 _mainbus_wm_2:
@@ -159,221 +122,3 @@ _mainbus_wm_2:
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	b	_outsw16
-
-	.global	_mainbus_wm_4
-_mainbus_wm_4:
-	adr	r0, mainbus_wm_4_text
-	b	_panic
-
-mainbus_wm_4_text:
-	.asciz	"mainbus_wm_4(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_wm_8
-_mainbus_wm_8:
-	adr	r0, mainbus_wm_8_text
-	b	_panic
-
-mainbus_wm_8_text:
-	.asciz	"mainbus_wm_8(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-/*
- * read region
- */
-
-	.global	_mainbus_rr_1
-_mainbus_rr_1:
-	adr	r0, mainbus_rr_1_text
-	b	_panic
-
-mainbus_rr_1_text:
-	.asciz	"mainbus_rr_1(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_rr_2
-_mainbus_rr_2:
-	adr	r0, mainbus_rr_2_text
-	b	_panic
-
-mainbus_rr_2_text:
-	.asciz	"mainbus_rr_2(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_rr_4
-_mainbus_rr_4:
-	adr	r0, mainbus_rr_4_text
-	b	_panic
-
-mainbus_rr_4_text:
-	.asciz	"mainbus_rr_4(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_rr_8
-_mainbus_rr_8:
-	adr	r0, mainbus_rr_8_text
-	b	_panic
-
-mainbus_rr_8_text:
-	.asciz	"mainbus_rr_8(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-/*
- * write region
- */
-
-	.global	_mainbus_wr_1
-_mainbus_wr_1:
-	adr	r0, mainbus_wr_1_text
-	b	_panic
-
-mainbus_wr_1_text:
-	.asciz	"mainbus_wr_1(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_wr_2
-_mainbus_wr_2:
-	adr	r0, mainbus_wr_2_text
-	b	_panic
-
-mainbus_wr_2_text:
-	.asciz	"mainbus_wr_2(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_wr_4
-_mainbus_wr_4:
-	adr	r0, mainbus_wr_4_text
-	b	_panic
-
-mainbus_wr_4_text:
-	.asciz	"mainbus_wr_4(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_wr_8
-_mainbus_wr_8:
-	adr	r0, mainbus_wr_8_text
-	b	_panic
-
-mainbus_wr_8_text:
-	.asciz	"mainbus_wr_8(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-/*
- * set multiple
- */
-
-	.global	_mainbus_sm_1
-_mainbus_sm_1:
-	adr	r0, mainbus_sm_1_text
-	b	_panic
-
-mainbus_sm_1_text:
-	.asciz	"mainbus_sm_1(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_sm_2
-_mainbus_sm_2:
-	adr	r0, mainbus_sm_2_text
-	b	_panic
-
-mainbus_sm_2_text:
-	.asciz	"mainbus_sm_2(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_sm_4
-_mainbus_sm_4:
-	adr	r0, mainbus_sm_4_text
-	b	_panic
-
-mainbus_sm_4_text:
-	.asciz	"mainbus_sm_4(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_sm_8
-_mainbus_sm_8:
-	adr	r0, mainbus_sm_8_text
-	b	_panic
-
-mainbus_sm_8_text:
-	.asciz	"mainbus_sm_8(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-/*
- * set region
- */
-
-	.global	_mainbus_sr_1
-_mainbus_sr_1:
-	adr	r0, mainbus_sr_1_text
-	b	_panic
-
-mainbus_sr_1_text:
-	.asciz	"mainbus_sr_1(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_sr_2
-_mainbus_sr_2:
-	adr	r0, mainbus_sr_2_text
-	b	_panic
-
-mainbus_sr_2_text:
-	.asciz	"mainbus_sr_2(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_sr_4
-_mainbus_sr_4:
-	adr	r0, mainbus_sr_4_text
-	b	_panic
-
-mainbus_sr_4_text:
-	.asciz	"mainbus_sr_4(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_sr_8
-_mainbus_sr_8:
-	adr	r0, mainbus_sr_8_text
-	b	_panic
-
-mainbus_sr_8_text:
-	.asciz	"mainbus_sr_8(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-/*
- * copy
- */
-
-	.global	_mainbus_c_1
-_mainbus_c_1:
-	adr	r0, mainbus_c_1_text
-	b	_panic
-
-mainbus_c_1_text:
-	.asciz	"mainbus_c_1(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_c_2
-_mainbus_c_2:
-	adr	r0, mainbus_c_2_text
-	b	_panic
-
-mainbus_c_2_text:
-	.asciz	"mainbus_c_2(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_c_4
-_mainbus_c_4:
-	adr	r0, mainbus_c_4_text
-	b	_panic
-
-mainbus_c_4_text:
-	.asciz	"mainbus_c_4(%x,%x,%x,%x): Not implemented\n"
-	.align	0
-
-	.global	_mainbus_c_8
-_mainbus_c_8:
-	adr	r0, mainbus_c_8_text
-	b	_panic
-
-mainbus_c_8_text:
-	.asciz	"mainbus_c_8(%x,%x,%x,%x): Not implemented\n"
-	.align	0
