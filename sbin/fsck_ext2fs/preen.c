@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.2 1997/09/14 14:27:30 lukem Exp $	*/
+/*	$NetBSD: preen.c,v 1.3 2003/07/13 08:22:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-__RCSID("$NetBSD: preen.c,v 1.2 1997/09/14 14:27:30 lukem Exp $");
+__RCSID("$NetBSD: preen.c,v 1.3 2003/07/13 08:22:55 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -255,16 +255,14 @@ addpart(name, fsname, auxdata)
 		exit (8);
 	}
 	pt = *ppt;
-	if ((pt->name = malloc(strlen(name) + 1)) == NULL) {
+	if ((pt->name = strdup(name)) == NULL) {
 		fprintf(stderr, "out of memory");
 		exit (8);
 	}
-	(void)strcpy(pt->name, name);
-	if ((pt->fsname = malloc(strlen(fsname) + 1)) == NULL) {
+	if ((pt->fsname = strdup(fsname)) == NULL) {
 		fprintf(stderr, "out of memory");
 		exit (8);
 	}
-	(void)strcpy(pt->fsname, fsname);
 	pt->next = NULL;
 	pt->auxdata = auxdata;
 }
@@ -369,9 +367,9 @@ rawname(name)
 	if ((dp = strrchr(name, '/')) == 0)
 		return (0);
 	*dp = 0;
-	(void)strcpy(rawbuf, name);
+	(void)strlcpy(rawbuf, name, sizeof(rawbuf));
 	*dp = '/';
-	(void)strcat(rawbuf, "/r");
-	(void)strcat(rawbuf, &dp[1]);
+	(void)strlcat(rawbuf, "/r", sizeof(rawbuf));
+	(void)strlcat(rawbuf, &dp[1], sizeof(rawbuf));
 	return (rawbuf);
 }
