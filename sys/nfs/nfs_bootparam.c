@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.3 1997/12/10 20:22:37 gwr Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.4 1997/12/12 21:09:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -88,10 +88,6 @@ static int bp_whoami __P((struct sockaddr_in *bpsin,
 static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
 	struct nfs_dlmount *ndm));
 
-/* helpers... */
-static char * number __P((char *s, int *n));
-static u_int32_t ip_convertaddr __P((char *));
-
 
 /*
  * Get client name, gateway address, then
@@ -115,8 +111,10 @@ nfs_bootparam(ifp, nd, procp)
 	struct sockaddr_in *sin;
 	struct socket *so;
 	struct nfs_dlmount *gw_ndm;
+#if 0	/* XXX - not yet */
 	char *p;
 	u_int32_t mask;
+#endif	/* XXX */
 	int error;
 
 	gw_ndm = 0;
@@ -228,13 +226,14 @@ nfs_bootparam(ifp, nd, procp)
 	 * parameter "gateway" is requested, and if its returned,
 	 * we use the "server" part of the reply as the gateway,
 	 * and use the "pathname" part of the reply as the mask.
-	 * (The mask comes to us as a string: "%d.%d.%d.%d")
+	 * (The mask comes to us as a string.)
 	 */
 	if (gw_ip.s_addr) {
 		/* Our caller will add the route. */
 		nd->nd_gwip = gw_ip;
 	}
 #endif
+#if 0	/* XXX - not yet */
 	gw_ndm = malloc(sizeof(*gw_ndm), M_NFSMNT, M_WAITOK);
 	bzero((caddr_t)gw_ndm, sizeof(*gw_ndm));
 	error = bp_getfile(sin, "gateway", gw_ndm);
@@ -252,9 +251,11 @@ nfs_bootparam(ifp, nd, procp)
 		goto out;
 	/* have pathname */
 	p++;	/* skip ':' */
-	mask = ip_convertaddr(p);
-	if (mask == 0)
+	mask = inet_addr(p);	/* libkern */
+	if (mask == 0) {
+		printf("nfs_boot: gateway netmask missing\n");
 		goto out;
+	}
 
 	/* Save our netmask and update the network interface. */
 	nd->nd_mask.s_addr = mask;
@@ -267,6 +268,7 @@ nfs_bootparam(ifp, nd, procp)
 		printf("nfs_boot: set ifmask, error=%d\n", error);
 		error = 0;	/* ignore it */
 	}
+#endif	/* XXX */
 
  out:
 	if (gw_ndm)
@@ -484,43 +486,3 @@ out:
 }
 
 
-/* helpers... */
-
-static char *
-number(s, n)
-	char *s;
-	int *n;
-{
-
-	for (*n = 0; ((*s) >= '0' && (*s) <= '9'); s++)
-		*n = (*n * 10) + *s - '0';
-	return s;
-}
-
-static u_int32_t
-ip_convertaddr(p)
-	char *p;
-{
-	u_int32_t addr = 0, n;
-
-	if (p == (char *)0 || *p == '\0')
-		return 0;
-	p = number(p, &n);
-	addr |= (n << 24) & 0xff000000;
-	if (*p == '\0' || *p++ != '.')
-		return 0;
-	p = number(p, &n);
-	addr |= (n << 16) & 0xff0000;
-	if (*p == '\0' || *p++ != '.')
-		return 0;
-	p = number(p, &n);
-	addr |= (n << 8) & 0xff00;
-	if (*p == '\0' || *p++ != '.')
-		return 0;
-	p = number(p, &n);
-	addr |= n & 0xff;
-	if (*p != '\0')
-		return 0;
-
-	return htonl(addr);
-}
