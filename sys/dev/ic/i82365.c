@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.79 2004/08/07 20:11:39 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.80 2004/08/11 00:18:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.79 2004/08/07 20:11:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.80 2004/08/11 00:18:18 mycroft Exp $");
 
 #define	PCICDEBUG
 
@@ -1423,7 +1423,7 @@ pcic_chip_socket_enable(pch)
 	pcmcia_chipset_handle_t pch;
 {
 	struct pcic_handle *h = (struct pcic_handle *) pch;
-	int cardtype, win, intr, pwr;
+	int win, intr, pwr;
 #if defined(DIAGNOSTIC) || defined(PCICDEBUG)
 	int reg;
 #endif
@@ -1526,16 +1526,6 @@ pcic_chip_socket_enable(pch)
 	/* zero out the address windows */
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
 
-	/* set the card type and enable the interrupt */
-	cardtype = pcmcia_card_gettype(h->pcmcia);
-	intr |= ((cardtype == PCMCIA_IFTYPE_IO) ?
-	    PCIC_INTR_CARDTYPE_IO : PCIC_INTR_CARDTYPE_MEM);
-	pcic_write(h, PCIC_INTR, intr);
-
-	DPRINTF(("%s: pcic_chip_socket_enable %02x cardtype %s %02x\n",
-	    h->ph_parent->dv_xname, h->sock,
-	    ((cardtype == PCMCIA_IFTYPE_IO) ? "io" : "mem"), reg));
-
 	/* reinstall all the memory and io mappings */
 	for (win = 0; win < PCIC_MEM_WINS; win++)
 		if (h->memalloc & (1 << win))
@@ -1545,10 +1535,6 @@ pcic_chip_socket_enable(pch)
 			pcic_chip_do_io_map(h, win);
 
 	h->flags |= PCIC_FLAG_ENABLED;
-
-	/* finally enable the interrupt */
-	intr |= h->ih_irq << PCIC_INTR_IRQ_SHIFT;
-	pcic_write(h, PCIC_INTR, intr);
 }
 
 void
@@ -1572,6 +1558,28 @@ pcic_chip_socket_disable(pch)
 	pcic_write(h, PCIC_ADDRWIN_ENABLE, 0);
 
 	h->flags &= ~PCIC_FLAG_ENABLED;
+}
+
+void
+pcic_chip_socket_settype(pch, type)
+	pcmcia_chipset_handle_t pch;
+	int type;
+{
+	struct pcic_handle *h = (struct pcic_handle *) pch;
+	int intr;
+
+	intr = pcic_read(h, PCIC_INTR);
+	intr &= ~PCIC_INTR_CARDTYPE_MASK;
+	if (type == PCMCIA_IFTYPE_IO) {
+		intr |= PCIC_INTR_CARDTYPE_IO;
+		intr |= h->ih_irq << PCIC_INTR_IRQ_SHIFT;
+	} else
+		intr |= PCIC_INTR_CARDTYPE_MEM;
+	pcic_write(h, PCIC_INTR, intr);
+
+	DPRINTF(("%s: pcic_chip_socket_settype %02x type %s %02x\n",
+	    h->ph_parent->dv_xname, h->sock,
+	    ((type == PCMCIA_IFTYPE_IO) ? "io" : "mem"), intr));
 }
 
 static u_int8_t
