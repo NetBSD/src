@@ -18,7 +18,8 @@ done >errs.o 2>&1
 
 # Run the remainding scripts; they exit with zero status
 for i in *.ed; do
-	base=`echo $i | sed 's/\..*//'`
+	base=`expr $i : '\([^.]*\)'`
+#	base=`echo $i | sed 's/\..*//'`
 #	base=`$ED - \!"echo \\\\$i" <<-EOF
 #		s/\..*
 #	EOF`
