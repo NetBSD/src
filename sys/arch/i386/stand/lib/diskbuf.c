@@ -1,4 +1,4 @@
-/*	$NetBSD: diskbuf.c,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: diskbuf.c,v 1.2 2003/02/01 14:48:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -35,7 +35,27 @@
 /* data buffer for BIOS disk / DOS I/O  */
 
 #include "diskbuf.h"
+#include "stand.h"
 
-char diskbuf[DISKBUFSIZE];
+char *diskbufp;		/* allocated from heap */
 
-void *diskbuf_user;
+const void *diskbuf_user;
+
+/*
+ * Global shared "diskbuf" is used as read ahead buffer.
+ * This MAY have to not cross a 64k boundary.
+ * In practise it is allocated out of the heap early on...
+ * NB a statically allocated diskbuf is not guaranteed to not
+ * cross a 64k boundary.
+ */
+char *
+alloc_diskbuf(const void *user)
+{
+	diskbuf_user = user;
+	if (!diskbufp) {
+		diskbufp = alloc(DISKBUFSIZE);
+		if (((int)diskbufp & 0xffff) + DISKBUFSIZE > 0x10000)
+			panic("diskbuf crosses 64k boundary");
+	}
+	return diskbufp;
+}

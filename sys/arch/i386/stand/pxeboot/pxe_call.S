@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe_call.S,v 1.2 2002/03/27 17:24:22 kanaoka Exp $	*/
+/*	$NetBSD: pxe_call.S,v 1.3 2003/02/01 14:48:19 dsl Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,10 +41,6 @@
 
 #include <machine/asm.h>
 
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
-#define	farcall	.byte 0x9a
-
 ENTRY(pxecall_bangpxe)
 	pushl	%ebp
 	movl	%esp, %ebp
@@ -60,18 +56,17 @@ ENTRY(pxecall_bangpxe)
 	pushw	%bx
 
 	call	_C_LABEL(prot_to_real)		# enter real mode
+	.code16
 
 	/* The encoding is: 0x9a offlo offhi seglo seghi */
-	farcall
+	lcall	$0, $0xffff
 	.globl	_C_LABEL(bangpxe_off)
-_C_LABEL(bangpxe_off):
-	.word	0
+_C_LABEL(bangpxe_off) = . - 4
 	.globl	_C_LABEL(bangpxe_seg)
-_C_LABEL(bangpxe_seg):
-	.word	0
+_C_LABEL(bangpxe_seg) = . - 2
 
-	data32
-	call	_C_LABEL(real_to_prot)		# leave real mode
+	calll	_C_LABEL(real_to_prot)		# leave real mode
+	.code32
 
 	add	$6, %esp
 
@@ -93,22 +88,20 @@ ENTRY(pxecall_pxenv)
 	movl	8(%ebp), %ebx
 
 	call	_C_LABEL(prot_to_real)		# enter real mode
+	.code16
 
 	/* prot_to_real() has already set %es to BOOTSEG */
-	addr32
-	leal	_C_LABEL(pxe_command_buf), %edi
+	lea	_C_LABEL(pxe_command_buf), %di
 
 	/* The encoding is: 0x9a offlo offhi seglo seghi */
-	farcall
+	lcall	$0, $0xffff
 	.globl	_C_LABEL(pxenv_off)
-_C_LABEL(pxenv_off):
-	.word	0
+_C_LABEL(pxenv_off) = . - 4
 	.globl	_C_LABEL(pxenv_seg)
-_C_LABEL(pxenv_seg):
-	.word	0
+_C_LABEL(pxenv_seg) = . - 2
 
-	data32
-	call	_C_LABEL(real_to_prot)		# leave real mode
+	calll	_C_LABEL(real_to_prot)		# leave real mode
+	.code32
 
 	popl	%edi
 	popl	%edx

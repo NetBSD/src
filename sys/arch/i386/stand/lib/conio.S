@@ -1,4 +1,4 @@
-/*	$NetBSD: conio.S,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: conio.S,v 1.2 2003/02/01 14:48:18 dsl Exp $	*/
 
 /* PC console handling
   originally from: FreeBSD:sys/i386/boot/netboot/start2.S
@@ -24,15 +24,15 @@ ENTRY(conputc)
 	movb	8(%ebp),%cl
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	%cl,%al
-	data32
-	mov	$1,%ebx
+	movw	$1,%bx
 	movb	$0x0e,%ah
 	int	$0x10
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	pop	%edi
 	pop	%esi
@@ -52,13 +52,14 @@ ENTRY(congetc)
 	push	%edi
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$0x0,%ah
 	int	$0x16
 	movb	%al,%bl
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xor	%eax,%eax
 	movb	%bl,%al
@@ -80,17 +81,18 @@ ENTRY(coniskey)
 	push	%edi
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
-	xor	%ebx,%ebx
+	xor	%bx,%bx
 	movb	$0x1,%ah
 	int	$0x16
-	data32
+	movb	$0,%bl
 	jz	1f
-	movb	%al,%bl
+	incb	%bl
 1:
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xor	%eax,%eax
 	movb	%bl,%al

@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog.S,v 1.2 1999/03/01 12:46:16 simonb Exp $	*/
+/*	$NetBSD: startprog.S,v 1.3 2003/02/01 14:48:18 dsl Exp $	*/
 	
 /* starts program in protected mode / flat space
  with given stackframe
@@ -103,8 +103,8 @@ ENTRY(startprog)
 
 	# convert over the other data segs
 	movl	$flatdataseg, %ebx
-	movl	%bx, %ds
-	movl	%bx, %es
+	mov	%bx, %ds
+	mov	%bx, %es
 
 	# convert the PC (and code seg)
 	lret

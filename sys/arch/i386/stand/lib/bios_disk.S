@@ -1,4 +1,4 @@
-/*	$NetBSD: bios_disk.S,v 1.9 2002/10/10 18:52:42 dyoung Exp $	*/
+/*	$NetBSD: bios_disk.S,v 1.10 2003/02/01 14:48:17 dsl Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -75,14 +75,15 @@ ENTRY(biosdiskreset)
 	movb	8(%ebp), %dl	# device
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$0x0, %ah	# subfunction
 	int	$0x13
 	setc	%bl
 	movb	%ah, %bh	# save error code
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xorl	%eax, %eax
 	movw	%bx, %ax	# return value in %ax
@@ -105,6 +106,8 @@ ENTRY(biosdiskreset)
 #	Return:		
 #			%al = 0x0 on success; err code on failure
 #
+# biosread( dev, cyl, head, sect, count, buff_addr );
+#
 #  Note: On failure, you must reset the disk with biosdiskreset() before
 #        sending another command.
 */
@@ -125,20 +128,26 @@ ENTRY(biosread)
 	orb	%al, %cl
 	incb	%cl		# sector; sec starts from 1, not 0
 	movb	8(%ebp), %dl	# device
-	movl	28(%ebp), %ebx	# offset
-				# prot_to_real will set %es to BOOTSEG
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
+
+	movl	28(%bp), %ebx	# buffer address (may be >64k)
+	movl	%ebx, %eax
+	shrl	$4, %eax	# max segment
+	andl	$0xf, %ebx	# and min offset - to avoid overrun
+	mov	%ds, %si
+	add	%si, %ax
+	mov	%ax, %es	# %es:%bx now valid buffer address
 
 	movb	$0x2, %ah	# subfunction
-	addr32
-	movb	24(%ebp), %al	# number of sectors
+	movb	24(%bp), %al	# number of sectors
 	int	$0x13
 	setc	%bl
 	movb	%ah, %bh	# save error code
 	
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xorl	%eax, %eax
 	movw	%bx, %ax	# return value in %ax
@@ -171,6 +180,7 @@ ENTRY(get_diskinfo)
 	movb	8(%ebp), %dl		# diskinfo(drive #)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$0x08, %ah		# ask for disk info
 	int	$0x13
@@ -192,8 +202,8 @@ ENTRY(get_diskinfo)
 	# carry = 0
 
 ok:
-	data32
-	call	_C_LABEL(real_to_prot)	# back to protected mode
+	calll	_C_LABEL(real_to_prot)	# back to protected mode
+	.code32
 
 	/* form a longword representing all this gunk */
 	shll	$8, %ecx
@@ -227,13 +237,14 @@ ENTRY(int13_extension)
 	movw	$0x55aa, %bx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$0x41, %ah		# ask for disk info
 	int	$0x13
 	setnc	%dl
 
-	data32
-	CALL	_C_LABEL(real_to_prot)	# switch back
+	calll	_C_LABEL(real_to_prot)	# switch back
+	.code32
 
 	xorl	%eax, %eax
 	movb	%dl, %al	# return value in %ax
@@ -255,7 +266,8 @@ ENTRY(int13_extension)
 /*
 # BIOS call "INT 0x13 Function 0x42" to read sectors from disk into memory
 #	Call with	%ah = 0x42
-#			%ds:%si = parameter block
+#			%ds:%si = parameter block (data buffer address
+#				must be a real mode physical address).
 #			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
 #	Return:		
 #			%al = 0x0 on success; err code on failure
@@ -273,14 +285,22 @@ ENTRY(biosextread)
 	movl	12(%ebp), %esi	# parameter block
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
+
+	movl	%esi, %eax
+	shrl	$4, %eax
+	movw	%ds, %bx
+	addw	%bx, %ax
+	movw	%ax, %ds
+	andw	$0xf, %si
 
 	movb	$0x42, %ah	# subfunction
 	int	$0x13
 	setc	%bl
 	movb	%ah, %bh	# save error code
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xorl	%eax, %eax
 	movw	%bx, %ax	# return value in %ax
@@ -307,13 +327,21 @@ ENTRY(int13_getextinfo)
 	movl	$0x01a, (%esi)	# length (v 1.x)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
+
+	movl	%esi, %eax
+	shrl	$4, %eax
+	andw	$0xf, %si
+	movw	%ds, %bx
+	addw	%bx, %ax
+	movw	%ax, %ds
 
 	movb	$0x48, %ah	# subfunction
 	int	$0x13
 	setc	%bl
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xorl	%eax, %eax
 	movb	%bl, %al	# return value in %ax

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootsectmain.c,v 1.3 1999/04/14 10:57:59 drochner Exp $	*/
+/*	$NetBSD: bootsectmain.c,v 1.4 2003/02/01 14:48:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -45,16 +45,18 @@
 #include "bbinfo.h"
 
 int boot_biosdev; /* exported */
-void bootsectmain __P((int));
+int boot_biossector; /* exported */
+void bootsectmain(int, int);
 
 extern struct fraglist fraglist;
 extern char edata[], end[];
 
-extern void main __P((void));
+extern void main(void);
+
+/* bios_sector is a hint..... */
 
 void
-bootsectmain(biosdev)
-	int biosdev;
+bootsectmain(int biosdev, int bios_sector)
 {
 	struct biosdisk_ll d;
 	int i;
@@ -65,7 +67,6 @@ bootsectmain(biosdev)
 	 */
 	d.dev = biosdev;
 	set_geometry(&d, NULL);
-
 
 	buf = (char*)(PRIM_LOADSZ * BIOSDISK_SECSIZE);
 
@@ -88,5 +89,6 @@ bootsectmain(biosdev)
 
 	/* call main() */
 	boot_biosdev = biosdev;
+	boot_biossector = bios_sector;
 	main();
 }

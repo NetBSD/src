@@ -1,4 +1,4 @@
-/*	$NetBSD: comio.S,v 1.2 1997/10/27 19:51:18 drochner Exp $	*/
+/*	$NetBSD: comio.S,v 1.3 2003/02/01 14:48:18 dsl Exp $	*/
 
 /* serial console handling
   modelled after code in FreeBSD:sys/i386/boot/netboot/start2.S
@@ -25,6 +25,7 @@ ENTRY(cominit)
 	movl	8(%ebp), %edx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	# Initialize the serial port (dl) to 9600 baud, 8N1.
 	movb	$0xe3, %al
@@ -32,8 +33,8 @@ ENTRY(cominit)
 	int	$0x14
 	mov	%ax,%bx
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xor	%eax,%eax
 	mov	%bx,%ax
@@ -61,6 +62,7 @@ ENTRY(computc)
 	movl	12(%ebp),%edx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	%cl,%al
 	movb	$0x01, %ah
@@ -68,8 +70,8 @@ ENTRY(computc)
 
 	movb	%ah,%bl
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xor	%eax,%eax
 	movb	%bl,%al
@@ -96,13 +98,14 @@ ENTRY(comgetc)
 	movl	8(%ebp),%edx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$0x02, %ah
 	int	$0x14
-	movl	%eax,%ebx	# at run time, it is mov %ax,%bx
+	mov	%ax, %bx
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xor	%eax,%eax
 	mov	%bx,%ax
@@ -128,13 +131,14 @@ ENTRY(comstatus)
 	movl	8(%ebp),%edx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$0x03, %ah
 	int	$0x14
 	mov	%ax,%bx
 
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	xor	%eax,%eax
 	mov	%bx,%ax

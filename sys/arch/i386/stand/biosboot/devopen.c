@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.11 2001/06/01 23:26:30 jdolecek Exp $	 */
+/*	$NetBSD: devopen.c,v 1.12 2003/02/01 14:48:17 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -66,10 +66,7 @@ dev2bios(devname, unit, biosdev)
 }
 
 int
-bios2dev(biosdev, devname, unit)
-	int             biosdev;
-	char          **devname;
-	unsigned int   *unit;
+bios2dev(int biosdev, char **devname, u_int *unit, u_int sector, u_int *ptnp)
 {
 	if (biosdev & 0x80)
 		*devname = "hd";
@@ -77,8 +74,9 @@ bios2dev(biosdev, devname, unit)
 		*devname = "fd";
 
 	*unit = biosdev & 0x7f;
+	*ptnp = biosdiskfindptn(biosdev, sector);
 
-	return (0);
+	return 0;
 }
 
 #ifdef _STANDALONE

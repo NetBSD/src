@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2002/06/01 11:40:32 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2003/02/01 14:48:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -53,6 +53,7 @@
 
 int errno;
 extern int boot_biosdev;
+extern int boot_biossector;	/* may be wrong... */
 
 extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
 	bootprog_maker[];
@@ -61,7 +62,7 @@ static const char * const names[] = {
     "netbsd", "netbsd.gz",
     "netbsd.old", "netbsd.old.gz",
     "onetbsd", "onetbsd.gz",
-#ifdef notyet    
+#ifdef notyet
     "netbsd.el", "netbsd.el.gz",
 #endif /*notyet*/
 };
@@ -83,12 +84,12 @@ void bootit __P((const char *, int, int));
 void print_banner __P((void));
 void main __P((void));
 
-void	command_help __P((char *));
-void	command_ls __P((char *));
-void	command_quit __P((char *));
-void	command_boot __P((char *));
-void	command_dev __P((char *));
-void	command_consdev __P((char *));
+void	command_help(char *);
+void	command_ls(char *);
+void	command_quit(char *);
+void	command_boot(char *);
+void	command_dev(char *);
+void	command_consdev(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -104,14 +105,10 @@ const struct bootblk_command commands[] = {
 };
 
 int
-parsebootfile(fname, fsname, devname, unit, partition, file)
-	const char *fname;
-	char **fsname; /* out */
-	char **devname; /* out */
-	unsigned int *unit, *partition; /* out */
-	const char **file; /* out */
+parsebootfile(const char *fname, char **fsname, char **devname,
+	u_int *unit, u_int *partition, const char **file)
 {
-	const char *col, *help;
+	const char *col;
 
 	*fsname = "ufs";
 	*devname = default_devname;
@@ -164,25 +161,23 @@ parsebootfile(fname, fsname, devname, unit, partition, file)
 		*devname = savedevname;
 		*unit = u;
 		*partition = p;
-		help = col + 1;
-	} else
-		help = fname;
+		fname = col + 1;
+	}
 
-	if (*help)
-		*file = help;
+	if (*fname)
+		*file = fname;
 
 	return(0);
 }
 
 char *
-sprint_bootsel(filename)
-	const char *filename;
+sprint_bootsel(const char *filename)
 {
 	char *fsname, *devname;
 	int unit, partition;
 	const char *file;
 	static char buf[80];
-	
+
 	if (parsebootfile(filename, &fsname, &devname, &unit,
 			  &partition, &file) == 0) {
 		sprintf(buf, "%s%d%c:%s", devname, unit, 'a' + partition, file);
@@ -192,9 +187,7 @@ sprint_bootsel(filename)
 }
 
 void
-bootit(filename, howto, tell)
-	const char *filename;
-	int howto, tell;
+bootit(const char *filename, int howto, int tell)
 {
 
 	if (tell) {
@@ -212,7 +205,7 @@ bootit(filename, howto, tell)
 }
 
 void
-print_banner()
+print_banner(void)
 {
 
 	printf("\n");
@@ -222,12 +215,12 @@ print_banner()
 }
 
 
-/* 
+/*
  * note: normally, void main() wouldn't be legal, but this isn't a
  * hosted environment...
  */
 void
-main()
+main(void)
 {
 	int currname;
 	char c;
@@ -250,8 +243,8 @@ main()
 	print_banner();
 
 	/* try to set default device to what BIOS tells us */
-	bios2dev(boot_biosdev, &default_devname, &default_unit);
-	default_partition = 0;
+	bios2dev(boot_biosdev, &default_devname, &default_unit,
+		boot_biossector, &default_partition);
 
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
@@ -291,8 +284,7 @@ main()
 
 /* ARGSUSED */
 void
-command_help(arg)
-	char *arg;
+command_help(char *arg)
 {
 
 	printf("commands are:\n"
@@ -308,8 +300,7 @@ command_help(arg)
 }
 
 void
-command_ls(arg)
-	char *arg;
+command_ls(char *arg)
 {
 	const char *save = default_filename;
 
@@ -320,8 +311,7 @@ command_ls(arg)
 
 /* ARGSUSED */
 void
-command_quit(arg)
-	char *arg;
+command_quit(char *arg)
 {
 
 	printf("Exiting...\n");
@@ -333,8 +323,7 @@ command_quit(arg)
 }
 
 void
-command_boot(arg)
-	char *arg;
+command_boot(char *arg)
 {
 	char *filename;
 	int howto;
@@ -344,8 +333,7 @@ command_boot(arg)
 }
 
 void
-command_dev(arg)
-	char *arg;
+command_dev(char *arg)
 {
 	static char savedevname[MAXDEVNAME + 1];
 	char *fsname, *devname;
@@ -363,40 +351,41 @@ command_dev(arg)
 		command_help(NULL);
 		return;
 	}
-	    
+
 	/* put to own static storage */
 	strncpy(savedevname, devname, MAXDEVNAME + 1);
 	default_devname = savedevname;
 }
 
-void
-command_consdev(arg)
-	char *arg;
-{
-	if (!strcmp("pc", arg))
-		initio(CONSDEV_PC);
-	else if (!strcmp("com0", arg))
-		initio(CONSDEV_COM0);
-	else if (!strcmp("com1", arg))
-		initio(CONSDEV_COM1);
-	else if (!strcmp("com2", arg))
-		initio(CONSDEV_COM2);
-	else if (!strcmp("com3", arg))
-		initio(CONSDEV_COM3);
-	else if (!strcmp("com0kbd", arg))
-		initio(CONSDEV_COM0KBD);
-	else if (!strcmp("com1kbd", arg))
-		initio(CONSDEV_COM1KBD);
-	else if (!strcmp("com2kbd", arg))
-		initio(CONSDEV_COM2KBD);
-	else if (!strcmp("com3kbd", arg))
-		initio(CONSDEV_COM3KBD);
-	else if (!strcmp("auto", arg))
-		initio(CONSDEV_AUTO);
-	else {
-		printf("invalid console device.\n");
-		return;
-	}
+#ifdef SUPPORT_SERIAL
+static const struct cons_devs {
+    const char	*name;
+    u_int	tag;
+} cons_devs[] = {
+	{ "pc",		CONSDEV_PC },
+	{ "com0",	CONSDEV_COM0 },
+	{ "com1",	CONSDEV_COM1 },
+	{ "com2",	CONSDEV_COM2 },
+	{ "com3",	CONSDEV_COM3 },
+	{ "com0kbd",	CONSDEV_COM0KBD },
+	{ "com1kbd",	CONSDEV_COM1KBD },
+	{ "com2kbd",	CONSDEV_COM2KBD },
+	{ "com3kbd",	CONSDEV_COM3KBD },
+	{ "auto",	CONSDEV_AUTO },
+	{ 0, 0 } };
 
-	print_banner();
+void
+command_consdev(char *arg)
+{
+	const struct cons_devs *cdp;
+
+	for (cdp = cons_devs; cdp->name; cdp++) {
+		if (!strcmp(arg, cdp->name)) {
+			initio(cdp->tag);
+			print_banner();
+			return;
+		}
+	}
+	printf("invalid console device.\n");
 }
+#endif

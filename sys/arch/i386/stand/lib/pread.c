@@ -1,4 +1,4 @@
-/*	$NetBSD: pread.c,v 1.3 1999/01/28 20:22:32 christos Exp $	 */
+/*	$NetBSD: pread.c,v 1.4 2003/02/01 14:48:18 dsl Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -44,7 +44,7 @@
 #define BUFSIZE (4*1024)
 #endif
 
-static char     buf[BUFSIZE];
+static char     *buf;
 
 ssize_t 
 pread(fd, dest, size)
@@ -53,6 +53,9 @@ pread(fd, dest, size)
 	size_t	size;
 {
 	int             rsize;
+
+	if (!buf)
+		buf = alloc(BUFSIZE);
 
 	rsize = size;
 	while (rsize > 0) {

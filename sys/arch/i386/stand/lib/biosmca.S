@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmca.S,v 1.3 2003/01/23 21:01:18 jdolecek Exp $	*/
+/*	$NetBSD: biosmca.S,v 1.4 2003/02/01 14:48:18 dsl Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -55,9 +55,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <machine/asm.h>
 
-#define	addr32	.byte 0x67
-#define	data32	.byte 0x66
-
 	.data
 	.globl _C_LABEL(biosmca_ps2model)
 _C_LABEL(biosmca_ps2model):	.long 0
@@ -72,6 +69,7 @@ _C_LABEL(biosmca_ps2model):	.long 0
 # instead of ISA).
 */
 ENTRY(biosmca)
+	.code32
 	pushl	%ebp
 	movl    %esp, %ebp
 	pushl	%ebx
@@ -82,33 +80,29 @@ ENTRY(biosmca)
 	push	%eax
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	# zero %ecx
-	data32
 	xorl	%ecx, %ecx
 
-	data32
-	xorl	%eax, %eax
-	movb	$0xc0, %ah	# subfunction
+	xor	%ax, %ax
+	movb	$0xc0, %ah		# subfunction
 	int	$0x15
 	jc	back
 
 	# check feature byte 1 if MCA bus present and replaces ISA
-	addr32
-	movb	%es:5(%ebx), %al
+	movb	%es:5(%bx), %al
 	andb	$0x02, %al	# bit 1 set means MCA instead of ISA
 				# see also arch/i386/mca/mca_machdep.c
 	jnz	back
 	
 	# save model and submodel bytes to %cx
-	addr32
-	movb	%es:2(%ebx), %ch	# model (1 byte)
-	addr32
-	movb	%es:3(%ebx), %cl	# submodel (1 byte)
+	movb	%es:2(%bx), %ch		# model (1 byte)
+	movb	%es:3(%bx), %cl		# submodel (1 byte)
 
 back:
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot)	# back to protected mode
+	.code32
 
 	# save model
 	movl	%ecx, _C_LABEL(biosmca_ps2model)

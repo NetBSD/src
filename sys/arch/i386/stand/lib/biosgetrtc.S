@@ -1,4 +1,4 @@
-/*	$NetBSD: biosgetrtc.S,v 1.2 1997/06/13 13:42:27 drochner Exp $	*/
+/*	$NetBSD: biosgetrtc.S,v 1.3 2003/02/01 14:48:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -49,16 +49,16 @@ ENTRY(biosgetrtc)
 	xorl	%ebx, %ebx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
+	.code16
 
 	movb	$2, %ah
 	int	$0x1a
 	jnc	ok
-	data32
 	movl	$-1, %ebx
 
 ok:
-	data32
-	call	_C_LABEL(real_to_prot) # back to protected mode
+	calll	_C_LABEL(real_to_prot) # back to protected mode
+	.code32
 
 	movl	8(%ebp), %eax
 	movl	$0, (%eax)
