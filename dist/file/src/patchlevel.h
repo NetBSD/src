@@ -1,5 +1,4 @@
-/*	$NetBSD: patchlevel.h,v 1.1.1.9 2005/02/21 14:33:39 pooka Exp $	*/
-
+/*	$NetBSD: patchlevel.h,v 1.2 2005/02/21 15:00:05 pooka Exp $	*/
 
 #define	FILE_VERSION_MAJOR	4
 #define	patchlevel		13
