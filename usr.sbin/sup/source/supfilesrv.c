@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.24 2002/07/10 21:28:13 wiz Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.25 2002/10/19 20:33:20 provos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1185,7 +1185,7 @@ denyone(TREE * t, void *v)
 	}
 	switch (t->Tmode & S_IFMT) {
 	case S_IFLNK:
-		if ((x = readlink(name, slinkname, STRINGLENGTH)) <= 0) {
+		if ((x = readlink(name, slinkname, STRINGLENGTH - 1)) <= 0) {
 			(void) Tinsert(&denyT, name, FALSE);
 			return (SCMOK);
 		}

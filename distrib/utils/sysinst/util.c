@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.74 2002/10/05 02:41:54 grant Exp $	*/
+/*	$NetBSD: util.c,v 1.75 2002/10/19 20:33:19 provos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -970,7 +970,7 @@ set_timezone()
 	 * something useful */
 
 	rc = readlink(localtime_link, localtime_target,
-		      sizeof(localtime_target));
+		      sizeof(localtime_target) - 1);
 	if (rc < 0) {
 		/* error, default to UTC */
 		tz_default = "UTC";

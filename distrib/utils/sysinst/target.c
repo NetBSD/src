@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.31 2001/01/14 02:38:15 mrg Exp $	*/
+/*	$NetBSD: target.c,v 1.32 2002/10/19 20:33:18 provos Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.31 2001/01/14 02:38:15 mrg Exp $");
+__RCSID("$NetBSD: target.c,v 1.32 2002/10/19 20:33:18 provos Exp $");
 #endif
 
 /*
@@ -866,7 +866,7 @@ loop:
 				errno = ELOOP;
 				goto err1;
 			}
-			n = readlink(p, wbuf, MAXPATHLEN);
+			n = readlink(p, wbuf, MAXPATHLEN - 1);
 			if (n < 0)
 				goto err1;
 			wbuf[n] = '\0';
