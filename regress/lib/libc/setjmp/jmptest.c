@@ -1,4 +1,4 @@
-/* $NetBSD: jmptest.c,v 1.5 2000/06/14 17:25:21 cgd Exp $ */
+/* $NetBSD: jmptest.c,v 1.6 2000/07/03 04:02:35 matt Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,6 +39,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #if (TEST_SETJMP + TEST_U_SETJMP + TEST_SIGSETJMP) != 1
