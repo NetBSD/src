@@ -36,11 +36,10 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)amd.start.ex	8.1 (Berkeley) 6/6/93
+#	from: @(#)amd.start.ex	8.1 (Berkeley) 6/6/93
+#	$Id: amd.start.ex,v 1.3 1994/06/13 20:51:01 mycroft Exp $
 #
 # Start amd
-#
-# $Id: amd.start.ex,v 1.2 1994/06/13 19:50:24 mycroft Exp $
 #
 PATH=/usr/sbin:/bin:/usr/bin:$PATH export PATH
 

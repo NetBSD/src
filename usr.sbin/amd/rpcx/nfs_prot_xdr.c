@@ -35,9 +35,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)nfs_prot_xdr.c	8.1 (Berkeley) 6/6/93
- *
- * $Id: nfs_prot_xdr.c,v 1.1.1.1 1994/06/13 19:53:41 mycroft Exp $
+ *	from: @(#)nfs_prot_xdr.c	8.1 (Berkeley) 6/6/93
+ *	$Id: nfs_prot_xdr.c,v 1.2 1994/06/13 20:50:59 mycroft Exp $
  *
  */
 
