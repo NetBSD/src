@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.19 2002/01/14 18:56:35 jandberg Exp $
+# $NetBSD: INSTALL,v 1.20 2002/01/26 13:22:12 aymeric Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.19 $"
+#ident  		"GENERIC-$Revision: 1.20 $"
 
 makeoptions	COPTS="-Os"
 
@@ -164,7 +164,7 @@ options 	GRF_SUPER72	# AGA Super-72
 #options 	RH_HARDWARECURSOR
 
 #wscons aware interface to amiga custom chips.
-#If you enable it enable also wskbd. 
+#If you enable it enable also wskbd.
 
 #amidisplaycc0	at mainbus0		# wscons interface to custom chips
 #wsdisplay0	at amidisplaycc0 console ?
