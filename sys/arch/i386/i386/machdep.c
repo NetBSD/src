@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.457 2001/09/19 01:26:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.458 2001/10/28 16:17:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -707,8 +707,8 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Celeron (Mendocino)",
 				"Pentium III (Katmai)",
 				"Pentium III (Coppermine)",
-				0, "Pentium III (Cascades)", 0, 0,
-				0, 0,
+				0, "Pentium III (Cascades)",
+				"Pentium III (Tualatin)", 0, 0, 0, 0,
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL,
