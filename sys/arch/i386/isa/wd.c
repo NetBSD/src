@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.56 1994/03/04 04:15:24 mycroft Exp $
+ *	$Id: wd.c,v 1.57 1994/03/04 17:45:22 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -1055,15 +1055,18 @@ wdsetctlr(du)
 	wdc = du->dk_port;
 
 	s = splbio();
-	if (wait_for_unbusy(du) < 0)
+	if (wait_for_unbusy(du) < 0) {
+	lose:
+		splx(s);
 		return -1;
+	}
 	outb(wdc+wd_cyl_lo, du->dk_dd.d_ncylinders);	/* TIH: was ...ders+1 */
 	outb(wdc+wd_cyl_hi, du->dk_dd.d_ncylinders>>8);	/* TIH: was ...ders+1 */
 	outb(wdc+wd_sdh,
 	    WDSD_IBM | (du->dk_unit << 4) + du->dk_dd.d_ntracks - 1);
 	outb(wdc+wd_seccnt, du->dk_dd.d_nsectors);
 	if (wait_for_ready(du) < 0)
-		return -1;
+		goto lose;
 	stat = wdcommand(du, WDCC_IDC);
 	if (stat < 0 || stat & WDCS_ERR)
 		printf("wdsetctlr: stat %b error %b\n", stat, WDCS_BITS,
@@ -1132,10 +1135,8 @@ wdgetctlr(du)
 		 * drive is there but it's OLD AND KRUSTY.
 		 */
 		stat = wdcommand(du, WDCC_RESTORE | WD_STEP);
-		if (stat < 0 || stat & WDCS_ERR) {
-			splx(s);
-			return inb(wdc+wd_error);
-		}
+		if (stat < 0 || stat & WDCS_ERR)
+			goto lose;
 
 		strncpy(du->dk_dd.d_typename, "ST506",
 		    sizeof du->dk_dd.d_typename);
