@@ -1,4 +1,4 @@
-/*	$NetBSD: help.c,v 1.3 1997/10/10 12:04:26 lukem Exp $	*/
+/*	$NetBSD: help.c,v 1.4 2001/02/05 00:27:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)help.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: help.c,v 1.3 1997/10/10 12:04:26 lukem Exp $");
+__RCSID("$NetBSD: help.c,v 1.4 2001/02/05 00:27:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,10 +51,10 @@ __RCSID("$NetBSD: help.c,v 1.3 1997/10/10 12:04:26 lukem Exp $");
 #include "bog.h"
 #include "extern.h"
 
+extern int nlines;
 int
 help()
 {
-	extern int nlines;
 	int eof, i;
 	FILE *fp;
 	WINDOW *win;
