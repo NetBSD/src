@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.84 2000/11/26 17:44:03 ad Exp $	*/
+/*	$NetBSD: conf.h,v 1.85 2001/03/21 22:25:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -370,6 +370,76 @@ extern struct cdevsw cdevsw[];
 	(dev_type_stop((*))) enodev, 0, seltrue, \
 	(dev_init(c,n,mmap)) }
 
+/* open, close, read, write, ioctl, tty, mmap */
+#define	cdev_pc_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
+	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
+
+/* open, close, write, ioctl */
+#define cdev_lpt_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
+	0, seltrue, (dev_type_mmap((*))) enodev }
+
+/* open, close, read, ioctl */
+#define	cdev_joy_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, ioctl, poll -- XXX should be a generic device */
+#define cdev_ocis_init(c,n) { \
+        dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,poll), \
+        (dev_type_mmap((*))) enodev, 0 }
+#define cdev_apm_init cdev_ocis_init
+
+/* open, close, read, ioctl, poll */
+#define cdev_satlink_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, ioctl */
+#define cdev_i4bctl_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, poll */
+#define	cdev_i4brbch_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
+
+/* open, close, read, write, poll */
+#define	cdev_i4btel_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, D_TTY }
+
+/* open, close, read, ioctl */
+#define cdev_i4btrc_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, ioctl, poll */
+#define cdev_i4b_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }	
+
+
 /* symbolic sleep message strings */
 extern	const char devopn[], devio[], devwait[], devin[], devout[];
 extern	const char devioc[], devcls[];
@@ -475,7 +545,7 @@ cdev_decl(ch);
 bdev_decl(sd);
 cdev_decl(sd);
 
-/* XXX Namespace collissions with SYSVSEM; just declare what we need. */
+/* XXX Namespace collisions with SYSVSEM; just declare what we need. */
 dev_decl(se,open); dev_decl(se,close); dev_decl(se,ioctl);
 
 bdev_decl(st);

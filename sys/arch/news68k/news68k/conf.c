@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2001/01/25 14:33:32 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2001/03/21 22:25:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -180,12 +180,6 @@ cdev_decl(tun);
 #if 0
 #include "lpt.h"
 cdev_decl(lpt);
-/* open, close, write, ioctl */
-#define	cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*)))enodev,  \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*)))enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0}
-#endif
 
 #include "scsibus.h"
 cdev_decl(scsibus);
