@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.409 2000/12/11 23:16:51 onoe Exp $
+#	$NetBSD: files,v 1.410 2000/12/14 17:41:38 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -78,6 +78,10 @@ defopt	TCP_COMPAT_42
 
 defopt	TCP_RECVSPACE
 defopt	TCP_SENDSPACE
+
+defopt	opt_altq.h	ALTQ_CBQ ALTQ_WFQ ALTQ_FIFOQ ALTQ_RED ALTQ_FLOWVALVE
+			ALTQ_RIO ALTQ_LOCALQ ALTQ_HFSC ALTQ_CDNR ALTQ_BLUE
+			ALTQ_PRIQ ALTQ_NOPCC ALTQ_DEBUG
 
 defopt	SB_MAX
 
@@ -580,6 +584,7 @@ defpseudo gre: ifnet
 defpseudo gif: ifnet
 defpseudo faith: ifnet
 defpseudo stf: ifnet
+defpseudo altq: ifnet
 
 defpseudo sequencer
 
@@ -588,6 +593,20 @@ file adosfs/adlookup.c			adosfs
 file adosfs/adutil.c			adosfs
 file adosfs/advfsops.c			adosfs
 file adosfs/advnops.c			adosfs
+file altq/altq_conf.c			altq
+file altq/altq_afmap.c			altq 
+file altq/altq_blue.c			altq
+file altq/altq_cbq.c			altq
+file altq/altq_cdnr.c			altq
+file altq/altq_fifoq.c			altq
+file altq/altq_hfsc.c			altq
+file altq/altq_localq.c			altq
+file altq/altq_priq.c			altq
+file altq/altq_red.c			altq
+file altq/altq_rio.c			altq
+file altq/altq_rmclass.c		altq
+file altq/altq_subr.c			altq
+file altq/altq_wfq.c			altq
 file coda/coda_namecache.c		coda
 file coda/coda_psdev.c			vcoda			needs-count
 file coda/coda_subr.c			coda
