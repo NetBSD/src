@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.6 1994/06/29 06:45:50 cgd Exp $	*/
+/*	$NetBSD: trace.h,v 1.7 1995/03/26 20:24:56 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -101,7 +101,7 @@
 					/* in specified number of hz */
 #define	VTR_STAMP	4		/* user specified stamp */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifdef TRACE
 struct	proc *traceproc;
 int	tracewhich, tracebuf[TRCSIZ];

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.31 1995/01/08 22:53:35 cgd Exp $	*/
+/*	$NetBSD: vnode.h,v 1.32 1995/03/26 20:25:05 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -172,7 +172,7 @@ struct vattr {
  */
 #define	VNOVAL	(-1)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Convert between vnode types and inode formats (since POSIX.1
  * defines mode word of stat structure in terms of inode formats).
@@ -225,7 +225,7 @@ extern	struct vattr va_null;		/* predefined null vattr structure */
 #define	LEASE_READ	0x1		/* Check lease for readers */
 #define	LEASE_WRITE	0x2		/* Check lease for modifiers */
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 
 /*
@@ -277,7 +277,7 @@ struct vnodeop_desc {
 	caddr_t	*vdesc_transports;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * A list of all the operation descs.
  */
@@ -393,4 +393,4 @@ void 	vref __P((struct vnode *vp));
 void 	vrele __P((struct vnode *vp));
 int	vaccess __P((mode_t file_mode, uid_t uid, gid_t gid,
 	    mode_t acc_mode, struct ucred *cred));
-#endif /* KERNEL */
+#endif /* _KERNEL */

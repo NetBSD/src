@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.6 1995/01/25 06:08:12 cgd Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.7 1995/03/26 20:24:49 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@
 /*
  * These are for the eproc structure defined below.
  */
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/proc.h>
@@ -331,11 +331,11 @@ int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
 void fill_eproc __P((struct proc *, struct eproc *));
 
-#else	/* !KERNEL */
+#else	/* !_KERNEL */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
 int	sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 __END_DECLS
-#endif	/* KERNEL */
+#endif	/* _KERNEL */
 #endif	/* !_SYS_SYSCTL_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.8 1994/06/29 06:38:13 cgd Exp $	*/
+/*	$NetBSD: in_var.h,v 1.9 1995/03/26 20:32:27 jtc Exp $	*/
 
 /*
  * Copyright (c) 1985, 1986, 1993
@@ -129,7 +129,7 @@ struct in_multi {
 	struct	in_multi *inm_next;	/* ptr to next multicast address */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * Structure used by macros below to remember position when stepping through
  * all of the in_multi records.

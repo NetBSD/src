@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.10 1994/12/13 15:21:04 mycroft Exp $	*/
+/*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,7 +38,7 @@
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #include <sys/queue.h>
 
 struct proc;
@@ -77,4 +77,4 @@ extern struct filelist filehead;	/* head of list of open files */
 extern int maxfiles;			/* kernel limit on number of open files */
 extern int nfiles;			/* actual number of open files */
 
-#endif /* KERNEL */
+#endif /* _KERNEL */

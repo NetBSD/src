@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.10 1994/12/24 13:26:06 cgd Exp $	*/
+/*	$NetBSD: lkm.h,v 1.11 1995/03/26 20:24:19 jtc Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -58,7 +58,7 @@ typedef enum loadmod {
 
 /****************************************************************************/
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 /*
  * Loadable system call
@@ -274,7 +274,7 @@ extern int	lkm_nofunc __P((struct lkm_table *lkmtp, int cmd));
 	}								\
 	return lkmdispatch(lkmtp, cmd);
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 /****************************************************************************/
 

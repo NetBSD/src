@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.5 1994/06/29 06:36:36 cgd Exp $	*/
+/*	$NetBSD: radix.h,v 1.6 1995/03/26 20:30:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -123,7 +123,7 @@ struct radix_node_head {
 };
 
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #define Bcmp(a, b, n) bcmp(((char *)(a)), ((char *)(b)), (n))
 #define Bzero(p, n) bzero((char *)(p), (int)(n));
 #define R_Malloc(p, t, n) (p = (t) malloc((unsigned int)(n)))
@@ -150,6 +150,6 @@ struct radix_node
 	 *rn_newpair __P((void *, int, struct radix_node[2])),
 	 *rn_search __P((void *, struct radix_node *)),
 	 *rn_search_m __P((void *, struct radix_node *, void *));
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #endif /* !_NET_RADIX_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: map.h,v 1.7 1994/06/29 06:44:36 cgd Exp $	*/
+/*	$NetBSD: map.h,v 1.8 1995/03/26 20:24:22 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -73,7 +73,7 @@ struct mapent {
 	long	m_addr;			/* start of segment */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	map *swapmap;
 int	nswapmap;
 

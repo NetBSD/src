@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.18 1995/01/08 23:57:45 cgd Exp $	*/
+/*	$NetBSD: conf.h,v 1.19 1995/03/26 20:23:58 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -66,7 +66,7 @@ struct bdevsw {
 	int	d_flags;
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct bdevsw bdevsw[];
 #endif
 
@@ -90,7 +90,7 @@ struct cdevsw {
 	void	(*d_strategy)	__P((struct buf *bp));
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct cdevsw cdevsw[];
 
 /* symbolic sleep message strings */
@@ -115,7 +115,7 @@ struct linesw {
 	int	(*l_modem)	__P((struct tty *tp, int flag));
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct linesw linesw[];
 #endif
 
@@ -132,6 +132,6 @@ struct swdevt {
 #define	SW_SEQUENTIAL	0x02
 #define	sw_freed	sw_flags	/* XXX compat */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern struct swdevt swdevt[];
 #endif

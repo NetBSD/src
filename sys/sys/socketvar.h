@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.13 1995/01/09 00:16:18 cgd Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.14 1995/03/26 20:24:47 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -189,7 +189,7 @@ struct socket {
 
 #define	sowwakeup(so)	sowakeup((so), &(so)->so_snd)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 u_long	sb_max;
 /* to catch callers missing new second argument to sonewconn: */
 #define	sonewconn(head, connstatus)	sonewconn1((head), (connstatus))
@@ -260,4 +260,4 @@ int	sosetopt __P((struct socket *so, int level, int optname,
 	    struct mbuf *m0));
 int	soshutdown __P((struct socket *so, int how));
 void	sowakeup __P((struct socket *so, struct sockbuf *sb));
-#endif /* KERNEL */
+#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.27 1994/10/30 22:11:10 mycroft Exp $	*/
+/*	$NetBSD: tty.h,v 1.28 1995/03/26 20:24:57 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -128,7 +128,7 @@ struct tty {
 #define	OBUFSIZ	100
 #define	TTYHOG	1024
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	TTMAXHIWAT	roundup(2048, CBSIZE)
 #define	TTMINHIWAT	roundup(100, CBSIZE)
 #define	TTMAXLOWAT	256
@@ -191,7 +191,7 @@ struct speedtab {
 #define	isbackground(p, tp)						\
 	(isctty((p), (tp)) && (p)->p_pgrp != (tp)->t_pgrp)
 
-#ifdef KERNEL
+#ifdef _KERNEL
 extern	struct ttychars ttydefaults;
 
 /* Symbolic sleep message strings. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.6 1994/12/05 06:11:41 mycroft Exp $	*/
+/*	$NetBSD: msg.h,v 1.7 1995/03/26 20:24:26 jtc Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -93,7 +93,7 @@ struct msginfo {
 };
 struct msginfo	msginfo;
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #ifndef MSGSSZ
 #define MSGSSZ	8		/* Each segment must be 2^N long */
 #endif
@@ -125,7 +125,7 @@ struct msginfo	msginfo;
  * The rest of this file is specific to this particular implementation.
  */
 
-#ifdef KERNEL
+#ifdef _KERNEL
 
 /*
  * Stuff allocated in machdep.h
@@ -145,7 +145,7 @@ struct msqid_ds *msqids;	/* MSGMNI msqid_ds struct's */
 
 #endif
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
@@ -154,6 +154,6 @@ int msgget __P((key_t, int));
 int msgsnd __P((int, void *, size_t, int));
 int msgrcv __P((int, void *, size_t, long, int));
 __END_DECLS
-#endif /* !KERNEL */
+#endif /* !_KERNEL */
 
 #endif /* !_SYS_MSG_H_ */

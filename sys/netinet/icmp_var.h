@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp_var.h,v 1.7 1994/06/29 06:37:52 cgd Exp $	*/
+/*	$NetBSD: icmp_var.h,v 1.8 1995/03/26 20:32:19 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -65,6 +65,6 @@ struct	icmpstat {
 	{ "maskrepl", CTLTYPE_INT }, \
 }
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct	icmpstat icmpstat;
 #endif

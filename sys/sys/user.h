@@ -1,4 +1,4 @@
-/*	$NetBSD: user.h,v 1.8 1994/06/29 06:46:10 cgd Exp $	*/
+/*	$NetBSD: user.h,v 1.9 1995/03/26 20:25:03 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <machine/pcb.h>
-#ifndef KERNEL
+#ifndef _KERNEL
 /* stuff that *used* to be included by user.h, or is now needed */
 #include <errno.h>
 #include <sys/time.h>
@@ -83,11 +83,11 @@ struct	user {
 #define	U_sig	u_sigacts.ps_sig
 #define	U_code	u_sigacts.ps_code
 
-#ifndef KERNEL
+#ifndef _KERNEL
 #define	u_ar0	U_ar0
 #define	u_tsize	U_tsize
 #define	u_dsize	U_dsize
 #define	u_ssize	U_ssize
 #define	u_sig	U_sig
 #define	u_code	U_code
-#endif /* KERNEL */
+#endif /* _KERNEL */

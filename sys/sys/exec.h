@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.52 1995/03/08 00:51:42 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.53 1995/03/26 20:24:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -158,7 +158,7 @@ struct exec_vmcmd {
 	u_int	ev_prot;	/* protections for segment */
 };
 
-#ifdef KERNEL
+#ifdef _KERNEL
 /*
  * funtions used either by execve() or the various cpu-dependent execve()
  * hooks.
@@ -209,7 +209,7 @@ extern struct	execsw execsw[];
 extern int	nexecs;
 extern int	exec_maxhdrsz;
 
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #include <sys/exec_aout.h>
 #include <machine/exec.h>

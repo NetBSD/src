@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstat.h,v 1.6 1994/06/29 06:43:58 cgd Exp $	*/
+/*	$NetBSD: dkstat.h,v 1.7 1995/03/26 20:24:01 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,7 +48,7 @@
 #define	CPUSTATES	5
 
 #define	DK_NDRIVE	8
-#ifdef KERNEL
+#ifdef _KERNEL
 long cp_time[CPUSTATES];
 long dk_seek[DK_NDRIVE];
 long dk_time[DK_NDRIVE];

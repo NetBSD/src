@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.6 1994/06/29 06:36:39 cgd Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.7 1995/03/26 20:30:18 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -56,7 +56,7 @@ struct rawcb {
 #define	RAWSNDQ		8192
 #define	RAWRCVQ		8192
 
-#ifdef KERNEL
+#ifdef _KERNEL
 struct rawcb rawcb;			/* head of list */
 
 int	 raw_attach __P((struct socket *, int));
@@ -68,4 +68,4 @@ void	 raw_input __P((struct mbuf *,
 	    struct sockproto *, struct sockaddr *, struct sockaddr *));
 int	 raw_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *));
-#endif /* KERNEL */
+#endif /* _KERNEL */

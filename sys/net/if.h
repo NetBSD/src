@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.14 1995/03/08 02:56:49 cgd Exp $	*/
+/*	$NetBSD: if.h,v 1.15 1995/03/26 20:30:12 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -307,7 +307,7 @@ struct	ifconf {
 
 #include <net/if_arp.h>
 
-#ifdef KERNEL
+#ifdef _KERNEL
 #define	IFAFREE(ifa) \
 	if ((ifa)->ifa_refcnt <= 0) \
 		ifafree(ifa); \
@@ -348,4 +348,4 @@ void	loopattach __P((int));
 int	looutput __P((struct ifnet *,
 	   struct mbuf *, struct sockaddr *, struct rtentry *));
 void	lortrequest __P((int, struct rtentry *, struct sockaddr *));
-#endif /* KERNEL */
+#endif /* _KERNEL */

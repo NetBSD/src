@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.8 1995/03/26 07:47:39 cgd Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.9 1995/03/26 20:24:18 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -155,4 +155,4 @@ __BEGIN_DECLS
 int	ktrace __P((const char *, int, int, pid_t));
 __END_DECLS
 
-#endif	/* !KERNEL */
+#endif	/* !_KERNEL */
