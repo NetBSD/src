@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.1 1999/06/01 18:19:13 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.2 2000/01/31 18:36:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -33,8 +33,8 @@
 #define	_DEV_PCI_IF_SIPREG_H_
 
 /*
- * Register description for the Silicon Integrated Systems SiS900
- * 10/100 PCI Ethernet controller.
+ * Register description for the Silicon Integrated Systems SiS 900
+ * and SiS 7016 10/100 PCI Ethernet controller.
  *
  * Written by Jason R. Thorpe for Network Computer, Inc.
  */
@@ -185,6 +185,8 @@ struct sip_desc {
 #define	SIP_ENPHY	0x1c	/* enhanced PHY access register */
 #define	ENPHY_PHYDATA	0xffff0000	/* PHY data */
 #define	ENPHY_DATA_SHIFT 16
+#define	ENPHY_PHYADDR	0x0000f800	/* PHY number (7016 only) */
+#define	ENPHY_PHYADDR_SHIFT 11
 #define	ENPHY_REGADDR	0x000007c0	/* PHY register */
 #define	ENPHY_REGADDR_SHIFT 6
 #define	ENPHY_RWCMD	0x00000020	/* 1 == read, 0 == write */
