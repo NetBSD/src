@@ -1,4 +1,4 @@
-#	$NetBSD: PATEK,v 1.19 1994/11/03 20:12:12 mycroft Exp $
+#	$NetBSD: PATEK,v 1.20 1994/11/03 22:18:45 mycroft Exp $
 #
 #	PATEK -- Mycroft's 486 test box
 #
@@ -112,7 +112,7 @@ scsibus* at aic?
 #bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
 #bt*	at eisa? slot ? irq ?
 #scsibus* at bt?
-#ncr*	at pci? bus ? dev ? function ?	# NCR 538XX SCSI controllers
+#ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
 #scsibus* at ncr?
 #sea0	at isa? iomem 0xc8000 irq 5
 #scsibus* at sea?
