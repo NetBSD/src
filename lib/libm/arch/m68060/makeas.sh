@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.1.1.1 1999/08/19 21:41:35 is Exp $
+# $NetBSD: makeas.sh,v 1.2 1999/08/21 21:04:19 is Exp $
 
 # Copyright (c) 1999 Ignatios Souvatzis
 # All rights reserved.
@@ -51,6 +51,11 @@ EOM
 echo -n " " $1.S >> $FILELIST
 shift
 done
+}
+
+linebreak () {
+	echo " \\" >> ${FILELIST}
+	echo -n "	" >> ${FILELIST}
 }
 
 mk () {
@@ -127,34 +132,42 @@ mks	__ieee754_acosf		0000	e_acosf
 mk	__ieee754_acos		0008	e_acos
 mks	__ieee754_asinf		0018	e_asinf
 mk	__ieee754_asin		0020	e_asin
+linebreak
 mks	atanf			0030	s_atanf
 mk	atan			0038	s_atan
 mks	__ieee754_atanhf	0048	e_atanhf
 mk	__ieee754_atanh		0050	e_atanh
+linebreak
 mks	cosf			0060	s_cosf k_cosf
 mk	cos			0068	s_cos k_cos
 mks	__ieee754_coshf		0078	e_coshf
 mk	__ieee754_cosh		0080	e_cosh
+linebreak
 mks	__ieee754_expf		0090	e_expf
 mk	__ieee754_exp		0098	e_exp
 mks	expm1f			00a8	s_expm1f
 mk	expm1			00b0	s_expm1
+linebreak
 mks	__ieee754_log10f	00f0	e_log10f
 mk	__ieee754_log10		00f8	e_log10
 mks	logbf			0108	s_logbf
 mk	logb			0110	s_logb
+linebreak
 mks	__ieee754_logf		0120	e_logf
 mk	__ieee754_log		0128	e_log
 mks	log1pf			0138	s_log1pf
 mk	log1p			0140	s_log1p
+linebreak
 mks	sinf			0198	s_sinf k_sinf
 mk	sin			01a0	s_sin k_sin
 mks	__ieee754_sinhf		01c8	e_sinhf
 mk	__ieee754_sinh		01d0	e_sinh
+linebreak
 mks	tanf			01e0	s_tanf k_tanf
 mk	tan			01e8	s_tan k_tan
 mks	tanhf			01f8	s_tanhf
 mk	tanh			0200	s_tanh
+linebreak
 mks	__ieee754_sqrtf		02e8	e_sqrtf
 mk	__ieee754_sqrt		02f0	e_sqrt
 
