@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/12/91
- *	$Id: pmap.h,v 1.7 1994/01/05 16:02:38 mycroft Exp $
+ *	$Id: pmap.h,v 1.8 1994/05/23 02:59:44 cgd Exp $
  */
 
 /*
@@ -128,7 +128,7 @@ extern pmap_t		kernel_pmap;
 #define PMAP_ACTIVATE(pmapp, pcbp) \
 	if ((pmapp) != NULL /*&& (pmapp)->pm_pdchanged */) {  \
 		(pcbp)->pcb_cr3 = \
-		    pmap_extract(kernel_pmap, (pmapp)->pm_pdir); \
+		    pmap_extract(kernel_pmap, (vm_offset_t)(pmapp)->pm_pdir); \
 		if ((pmapp) == &curproc->p_vmspace->vm_pmap) \
 			lcr3((pcbp)->pcb_cr3); \
 		(pmapp)->pm_pdchanged = FALSE; \
