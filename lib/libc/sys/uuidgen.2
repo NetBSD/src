@@ -1,4 +1,4 @@
-.\" $NetBSD: uuidgen.2,v 1.2 2004/01/30 16:03:50 wiz Exp $
+.\" $NetBSD: uuidgen.2,v 1.3 2005/01/30 03:20:17 jwise Exp $
 .\" $FreeBSD: src/lib/libc/sys/uuidgen.2,v 1.7 2003/06/27 13:41:29 yar Exp $
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -35,6 +35,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
+.In sys/types.h
 .In sys/uuid.h
 .Ft int
 .Fn uuidgen "struct uuid *store" "int count"
@@ -128,9 +129,9 @@ The
 .Fa count
 argument is less than 1 or larger than the hard upper limit of 2048.
 .El
-.Sh SEE ALSO
-.Xr uuidgen 1 ,
-.Xr uuid 3
+.\" .Sh SEE ALSO
+.\" .Xr uuidgen 1 ,
+.\" .Xr uuid 3
 .Sh STANDARDS
 The identifiers are represented and generated in conformance with the DCE 1.1
 RPC specification.
