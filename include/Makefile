@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.110 2003/06/27 05:21:56 tshiozak Exp $
+#	$NetBSD: Makefile,v 1.111 2003/07/26 15:27:13 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -31,6 +31,12 @@ INCS+=	rpcsvc/yp_prot.h rpcsvc/ypclnt.h
 
 .if (${MACHINE_ARCH} != "vax")
 INCS+=	ieeefp.h
+.endif
+
+.include <bsd.own.mk>
+
+.if ${USE_TOOLS_TOOLCHAIN} == "no"
+INCS+=	stdbool.h
 .endif
 
 INCSDIR=	/usr/include
