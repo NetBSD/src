@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2000/12/12 05:21:03 mycroft Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2000/12/12 06:06:06 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -255,9 +255,19 @@ extern struct cpu_info cpu_info_store;
 #if defined(_KERNEL) && !defined(_LOCORE)
 extern int current_intr_depth;
 
-/* stubs.c */
-void need_resched	__P((struct cpu_info *));
-void need_proftick	__P((struct proc *p));
+/*
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+int	want_resched;		/* resched() was called */
+#define	need_resched(ci)	(want_resched = 1, setsoftast())
+
+/*
+ * Give a profiling tick to the current process when the user profiling
+ * buffer pages are invalid.  On the i386, request an ast to send us
+ * through trap(), marking the proc as needing a profiling tick.
+ */
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, setsoftast())
 
 /* locore.S */
 void atomic_set_bit	__P((u_int *address, u_int setmask));

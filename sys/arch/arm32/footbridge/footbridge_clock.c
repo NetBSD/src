@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.4 2000/02/13 04:59:57 mark Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.5 2000/12/12 06:06:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -279,13 +279,6 @@ microtime(tvp)
 
 	oldtv = *tvp;
 	(void)splx(s);		
-}
-
-
-void
-need_proftick(p)
-	struct proc *p;
-{
 }
 
 /*
