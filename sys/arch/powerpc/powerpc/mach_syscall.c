@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.6 2002/11/26 23:48:44 manu Exp $ */
+/*	$NetBSD: mach_syscall.c,v 1.7 2003/09/27 04:44:42 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include "opt_compat_mach.h"
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.6 2002/11/26 23:48:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.7 2003/09/27 04:44:42 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ extern const struct sysent mach_fasttraps_sysent[];
 #define MACH_PPCCALLS		0x00006000
 #define MACH_ODD_SYSCALL_MASK	0x0000fff0
 
-static inline const struct sysent *mach_syscall_dispatch __P((register_t *));
+static inline const struct sysent *mach_syscall_dispatch(register_t *);
 
 #include "syscall.c"
 

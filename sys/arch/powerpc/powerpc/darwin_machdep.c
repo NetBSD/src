@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_machdep.c,v 1.7 2003/02/10 21:46:49 manu Exp $ */
+/*	$NetBSD: darwin_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.7 2003/02/10 21:46:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_machdep.c,v 1.7 2003/02/10 21:46:49 manu Exp 
  * Send a signal to a Darwin process.
  */
 void
-darwin_sendsig(sig, mask, code)
-	int sig;
-	sigset_t *mask;
-	u_long code;
+darwin_sendsig(int sig, const sigset_t *mask, u_long code)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -178,10 +175,7 @@ darwin_sendsig(sig, mask, code)
  * before the signal delivery.
  */
 int
-darwin_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 {
 	struct darwin_sys_sigreturn_args /* {
 		syscallarg(struct darwin_ucontext *) uctx;
@@ -256,8 +250,7 @@ darwin_sys_sigreturn(l, v, retval)
  * works that way).
  */
 void
-darwin_fork_child_return(arg)
-	void *arg;
+darwin_fork_child_return(void *arg)
 {
 	struct lwp * const l = arg;
 	struct proc * const p = l->l_proc;

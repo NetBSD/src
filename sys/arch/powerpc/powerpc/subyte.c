@@ -1,4 +1,4 @@
-/*	$NetBSD: subyte.c,v 1.3 2003/07/15 02:54:48 lukem Exp $	*/
+/*	$NetBSD: subyte.c,v 1.4 2003/09/27 04:44:42 matt Exp $	*/
 
 /*-
  * Copyright (C) 1993 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subyte.c,v 1.3 2003/07/15 02:54:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subyte.c,v 1.4 2003/09/27 04:44:42 matt Exp $");
 
 #include <sys/systm.h>
 
@@ -41,10 +41,9 @@ __KERNEL_RCSID(0, "$NetBSD: subyte.c,v 1.3 2003/07/15 02:54:48 lukem Exp $");
  */
 
 int
-subyte(addr,c)
-	void *addr;
-	unsigned char c;
+subyte(void *addr, int v)
 {
+	unsigned char c = v;
 	if (copyout(&c,addr,sizeof(c)))
 		return -1;
 	return 0;
