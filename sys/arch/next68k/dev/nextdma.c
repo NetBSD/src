@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.5 1998/11/10 22:45:44 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.6 1998/12/08 09:35:07 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -280,8 +280,8 @@ next_dma_setup_cont_regs(nd)
 
 	} else {
 
-		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START,0);
-		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP, 0);
+		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_START, 0xdeadbeef);
+		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_STOP, 0xdeadbeef);
 	}
 
 	bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_START, 
@@ -309,8 +309,8 @@ next_dma_setup_curr_regs(nd)
 							nd->_nd_map->dm_segs[nd->_nd_idx].ds_len)
 							+ 0x0) | 0x80000000);
 		} else {
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,0);
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 0);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT_INITBUF,0xdeadbeef);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 0xdeadbeef);
 
 		}
 			
@@ -329,8 +329,8 @@ next_dma_setup_curr_regs(nd)
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_addr +
 					nd->_nd_map->dm_segs[nd->_nd_idx].ds_len);
 		} else {
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT,0);
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 0);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_NEXT, 0xdeadbeef);
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT, 0xdeadbeef);
 
 		}
 
