@@ -1,7 +1,8 @@
+
 /******************************************************************************
  *
- * Name: aclinux.h - OS specific defines, etc.
- *       $Revision: 1.1.1.2 $
+ * Module Name: aslstubs - Stubs used to link to Aml interpreter
+ *              $Revision: 8 $
  *
  *****************************************************************************/
 
@@ -114,51 +115,145 @@
  *
  *****************************************************************************/
 
-#ifndef __ACLINUX_H__
-#define __ACLINUX_H__
+#include <stdio.h>
+#include "aslcompiler.h"
+#include "acdispat.h"
+#include "actables.h"
 
-#define ACPI_OS_NAME                "Linux"
+#define _COMPONENT          ACPI_COMPILER
+        ACPI_MODULE_NAME    ("aslstubs")
 
-#define ACPI_USE_SYSTEM_CLIBRARY
 
-#ifdef __KERNEL__
+/*
+ * Stubs to simplify linkage to the ACPI CA core subsystem.
+ * Things like Events, Global Lock, etc. are not used
+ * by the compiler, so they are stubbed out here.
+ */
+ACPI_STATUS
+AeLocalGetRootPointer (
+    UINT32                  Flags,
+    ACPI_PHYSICAL_ADDRESS   *RsdpPhysicalAddress)
+{
+    return AE_ERROR;
+}
 
-#include <linux/config.h>
-#include <linux/string.h>
-#include <linux/kernel.h>
-#include <linux/ctype.h>
-#include <asm/system.h>
-#include <asm/atomic.h>
-#include <asm/div64.h>
-#include <asm/acpi.h>
+ACPI_STATUS
+AcpiDsMethodDataGetValue (
+    UINT16                  Opcode,
+    UINT32                  Index,
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_OPERAND_OBJECT     **DestDesc)
+{
+    return (AE_OK);
+}
 
-#define strtoul simple_strtoul
+ACPI_STATUS
+AcpiDsMethodDataGetNode (
+    UINT16                  Opcode,
+    UINT32                  Index,
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_NAMESPACE_NODE     **Node)
+{
+    return (AE_OK);
+}
 
-#define ACPI_MACHINE_WIDTH	BITS_PER_LONG
+ACPI_STATUS
+AcpiDsStoreObjectToLocal (
+    UINT16                  Opcode,
+    UINT32                  Index,
+    ACPI_OPERAND_OBJECT     *SrcDesc,
+    ACPI_WALK_STATE         *WalkState)
+{
+    return (AE_OK);
+}
 
-#else /* !__KERNEL__ */
+ACPI_STATUS
+AcpiEvQueueNotifyRequest (
+    ACPI_NAMESPACE_NODE     *Node,
+    UINT32                  NotifyValue)
+{
+    return (AE_OK);
+}
 
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <unistd.h>
+BOOLEAN
+AcpiEvIsNotifyObject (
+    ACPI_NAMESPACE_NODE     *Node)
+{
+    return (FALSE);
+}
 
-#if defined(__ia64__) || defined(__x86_64__)
-#define ACPI_MACHINE_WIDTH		64
-#define COMPILER_DEPENDENT_INT64	long
-#define COMPILER_DEPENDENT_UINT64	unsigned long
-#else
-#define ACPI_MACHINE_WIDTH		32
-#define COMPILER_DEPENDENT_INT64	long long
-#define COMPILER_DEPENDENT_UINT64	unsigned long long
-#define ACPI_USE_NATIVE_DIVIDE
-#endif
+ACPI_STATUS
+AcpiEvAcquireGlobalLock(
+    UINT32                  Timeout)
+{
+    return (AE_OK);
+}
 
-#endif /* __KERNEL__ */
+ACPI_STATUS
+AcpiEvReleaseGlobalLock(
+    void)
+{
+    return (AE_OK);
+}
 
-/* Linux uses GCC */
+ACPI_STATUS
+AcpiEvInitializeRegion (
+    ACPI_OPERAND_OBJECT     *RegionObj,
+    BOOLEAN                 AcpiNsLocked)
+{
+    return (AE_OK);
+}
 
-#include "acgcc.h"
+ACPI_STATUS
+AcpiExReadDataFromField (
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_OPERAND_OBJECT     *ObjDesc,
+    ACPI_OPERAND_OBJECT     **RetBufferDesc)
+{
+    return (AE_SUPPORT);
+}
 
-#endif /* __ACLINUX_H__ */
+ACPI_STATUS
+AcpiExWriteDataToField (
+    ACPI_OPERAND_OBJECT     *SourceDesc,
+    ACPI_OPERAND_OBJECT     *ObjDesc,
+    ACPI_OPERAND_OBJECT     **ResultDesc)
+{
+    return (AE_SUPPORT);
+}
+
+ACPI_STATUS
+AcpiExLoadTableOp (
+    ACPI_WALK_STATE         *WalkState,
+    ACPI_OPERAND_OBJECT     **ReturnDesc)
+{
+    return (AE_SUPPORT);
+}
+
+
+ACPI_STATUS
+AcpiExUnloadTable (
+    ACPI_OPERAND_OBJECT     *DdbHandle)
+{
+    return (AE_SUPPORT);
+}
+
+ACPI_STATUS
+AcpiExLoadOp (
+    ACPI_OPERAND_OBJECT     *ObjDesc,
+    ACPI_OPERAND_OBJECT     *Target,
+    ACPI_WALK_STATE         *WalkState)
+{
+    return (AE_SUPPORT);
+}
+
+ACPI_STATUS
+AcpiTbFindTable (
+    NATIVE_CHAR             *Signature,
+    NATIVE_CHAR             *OemId,
+    NATIVE_CHAR             *OemTableId,
+    ACPI_TABLE_HEADER       **TablePtr)
+{
+    return (AE_SUPPORT);
+}
+
