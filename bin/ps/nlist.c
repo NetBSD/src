@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.17 2000/06/08 13:30:39 simonb Exp $	*/
+/*	$NetBSD: nlist.c,v 1.18 2001/07/14 06:53:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.17 2000/06/08 13:30:39 simonb Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.18 2001/07/14 06:53:44 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,6 +102,8 @@ struct	nlist psnl[] = {
 #define	X_CCPU		1
 	{ "_physmem" },
 #define	X_PHYSMEM	2
+	{ "_maxslp" },
+#define	X_MAXSLP	3
 	{ NULL }
 };
 
@@ -109,6 +111,8 @@ double	ccpu;				/* kernel _ccpu variable */
 int	nlistread;			/* if nlist already read. */
 int	mempages;			/* number of pages of phys. memory */
 int	fscale;				/* kernel _fscale variable */
+int	maxslp;				/* kernel _maxslp variable */
+int	uspace;				/* kernel USPACE value */
 
 #define kread(x, v) \
 	kvm_read(kd, psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)
@@ -136,6 +140,10 @@ donlist()
 	}
 	if (kread(X_CCPU, xccpu)) {
 		warnx("ccpu: %s", kvm_geterr(kd));
+		eval = rval = 1;
+	}
+	if (kread(X_MAXSLP, maxslp)) {
+		warnx("maxslp: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
 	ccpu = (double)xccpu / fscale;
@@ -171,6 +179,26 @@ donlist_sysctl()
 		ccpu = exp(-1.0 / 20.0); /* XXX Hopefully reasonable default */
 	else
 		ccpu = (double)xccpu / fscale;
+
+	mib[0] = CTL_VM;
+	mib[1] = VM_MAXSLP;
+	size = sizeof(maxslp);
+	if (sysctl(mib, 2, &maxslp, &size, NULL, 0) == -1)
+#ifdef MAXSLP
+		maxslp = MAXSLP;
+#else
+		maxslp = 20;		/* XXX Hopefully reasonable default */
+#endif
+
+	mib[0] = CTL_VM;
+	mib[1] = VM_USPACE;
+	size = sizeof(maxslp);
+	if (sysctl(mib, 2, &maxslp, &size, NULL, 0) == -1)
+#ifdef USPACE
+		uspace = USPACE;
+#else
+		uspace = getpagesize();	/* XXX Hopefully reasonable default */
+#endif
 
 	return 0;
 }
