@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.34 1996/08/10 18:54:48 explorer Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.35 1996/10/02 13:49:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.34 1996/08/10 18:54:48 explorer Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.35 1996/10/02 13:49:45 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,61 +93,67 @@ static char rcsid[] = "$NetBSD: disklabel.c,v 1.34 1996/08/10 18:54:48 explorer 
 #define NUMBOOT 0
 #endif
 
+extern char *__progname;
+
 #define	DEFEDITOR	_PATH_VI
 
-char	*dkname;
-char	*specname;
-char	tmpfil[] = _PATH_TMP;
+static char	*dkname;
+static char	*specname;
+static char	tmpfil[] = _PATH_TMP;
 
-char	namebuf[BBSIZE], *np = namebuf;
-struct	disklabel lab;
-struct	disklabel *readlabel(), *makebootarea();
-char	bootarea[BBSIZE];
+static char	namebuf[BBSIZE], *np = namebuf;
+static struct	disklabel lab;
+static char	bootarea[BBSIZE];
+
 
 #if NUMBOOT > 0
-int	installboot;	/* non-zero if we should install a boot program */
-char	*bootbuf;	/* pointer to buffer with remainder of boot prog */
-int	bootsize;	/* size of remaining boot program */
-char	*xxboot;	/* primary boot */
-char	*bootxx;	/* secondary boot */
-char	boot0[MAXPATHLEN];
-char	boot1[MAXPATHLEN];
+static int	installboot; /* non-zero if we should install a boot program */
+static char	*bootbuf;    /* pointer to buffer with remainder of boot prog */
+static int	bootsize;    /* size of remaining boot program */
+static char	*xxboot;     /* primary boot */
+static char	*bootxx;     /* secondary boot */
+static char	boot0[MAXPATHLEN];
+static char	boot1[MAXPATHLEN];
 #endif
 
-enum	{
+static enum	{
 	UNSPEC, EDIT, READ, RESTORE, SETWRITEABLE, WRITE, WRITEBOOT
 } op = UNSPEC;
 
-int	rflag;
-int	Cflag;
+static int	rflag;
+static int	tflag;
+static int	Cflag;
 
 #ifdef DEBUG
-int	debug;
-#define OPTIONS	"BCNRWb:ders:w"
+static int	debug;
+#define OPTIONS	"BCNRWb:ders:tw"
 #else
-#define OPTIONS	"BCNRWb:ers:w"
+#define OPTIONS	"BCNRWb:ers:tw"
 #endif
 
-#ifdef i386
-struct dos_partition *dosdp;	/* i386 DOS partition, if found */
-struct dos_partition *readmbr __P((int));
+#ifdef __i386__
+static struct dos_partition *dosdp;	/* i386 DOS partition, if found */
+static struct dos_partition *readmbr __P((int));
 #endif
 
-void makelabel __P((char *, char *, struct disklabel *));
-int writelabel __P((int, char *, struct disklabel *));
-void l_perror __P((char *));
-struct disklabel *readlabel __P((int));
-struct disklabel *makebootarea __P((char *, struct disklabel *, int));
-void display __P((FILE *, struct disklabel *));
-int edit __P((struct disklabel *, int));
-int editit __P((void));
-char *skip __P((char *));
-char *word __P((char *));
-int getasciilabel __P((FILE *, struct disklabel *));
-int checklabel __P((struct disklabel *));
-void setbootflag __P((struct disklabel *));
-void usage __P((void));
-u_short dkcksum __P((struct disklabel *));
+int main __P((int, char *[]));
+extern u_short dkcksum __P((struct disklabel *));
+
+static void makedisktab __P((FILE *, struct disklabel *));
+static void makelabel __P((char *, char *, struct disklabel *));
+static int writelabel __P((int, char *, struct disklabel *));
+static void l_perror __P((char *));
+static struct disklabel *readlabel __P((int));
+static struct disklabel *makebootarea __P((char *, struct disklabel *, int));
+static void display __P((FILE *, struct disklabel *));
+static int edit __P((struct disklabel *, int));
+static int editit __P((void));
+static char *skip __P((char *));
+static char *word __P((char *));
+static int getasciilabel __P((FILE *, struct disklabel *));
+static int checklabel __P((struct disklabel *));
+static void setbootflag __P((struct disklabel *));
+static void usage __P((void));
 
 
 int
@@ -198,6 +204,9 @@ main(argc, argv)
 			if (op != UNSPEC)
 				usage();
 			op = EDIT;
+			break;
+		case 't':
+			++tflag;
 			break;
 		case 'r':
 			++rflag;
@@ -252,7 +261,7 @@ main(argc, argv)
 	if (f < 0)
 		err(4, "%s", specname);
 
-#ifdef i386
+#ifdef __i386__
 	/*
 	 * Check for presence of DOS partition table in
 	 * master boot record. Return pointer to NetBSD/i386
@@ -277,7 +286,10 @@ main(argc, argv)
 		if (argc != 1)
 			usage();
 		lp = readlabel(f);
-		display(stdout, lp);
+		if (tflag)
+			makedisktab(stdout, lp);
+		else
+			display(stdout, lp);
 		error = checklabel(lp);
 		break;
 
@@ -326,8 +338,10 @@ main(argc, argv)
 		break;
 	}
 #endif
+	case UNSPEC:
+		usage();
 	}
-	exit(error);
+	return error;
 }
 
 /*
@@ -335,7 +349,7 @@ main(argc, argv)
  * effect, set the names of the primary and secondary boot files
  * if specified.
  */
-void
+static void
 makelabel(type, name, lp)
 	char *type, *name;
 	struct disklabel *lp;
@@ -374,12 +388,12 @@ makelabel(type, name, lp)
 #endif
 #endif
 	/* d_packname is union d_boot[01], so zero */
-	memset(lp->d_packname, 0, sizeof(lp->d_packname));
+	(void) memset(lp->d_packname, 0, sizeof(lp->d_packname));
 	if (name)
 		(void)strncpy(lp->d_packname, name, sizeof(lp->d_packname));
 }
 
-int
+static int
 writelabel(f, boot, lp)
 	int f;
 	char *boot;
@@ -396,7 +410,7 @@ writelabel(f, boot, lp)
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 	if (rflag) {
-#ifdef i386
+#ifdef __i386__
 		struct partition *pp = &lp->d_partitions[2];
 
 		/*
@@ -414,8 +428,8 @@ writelabel(f, boot, lp)
 			if (dosdp) {
 				int first, ch;
 
-				printf("Erase the previous contents of the disk? [n]: ");
-				fflush(stdout);
+				(void) printf("Erase the previous contents of the disk? [n]: ");
+				(void) fflush(stdout);
 				first = ch = getchar();
 				while (ch != '\n' && ch != EOF)
 					ch = getchar();
@@ -499,7 +513,7 @@ writelabel(f, boot, lp)
 			return (1);
 		}
 	}
-#ifdef vax
+#ifdef __vax__
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
 		daddr_t alt;
 		int i;
@@ -516,7 +530,7 @@ writelabel(f, boot, lp)
 	return (0);
 }
 
-void
+static void
 l_perror(s)
 	char *s;
 {
@@ -547,11 +561,11 @@ l_perror(s)
 	}
 }
 
-#ifdef i386
+#ifdef __i386__
 /*
  * Fetch DOS partition table from disk.
  */
-struct dos_partition *
+static struct dos_partition *
 readmbr(f)
 	int f;
 {
@@ -594,7 +608,7 @@ readmbr(f)
  * Fetch disklabel for disk.
  * Use ioctl to get label unless -r flag is given.
  */
-struct disklabel *
+static struct disklabel *
 readlabel(f)
 	int f;
 {
@@ -604,7 +618,7 @@ readlabel(f)
 		char *msg;
 		off_t sectoffset = 0;
 
-#ifdef i386
+#ifdef __i386__
 		if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD)
 			sectoffset = dosdp->dp_start * DEV_BSIZE;
 #endif
@@ -637,7 +651,7 @@ readlabel(f)
  * Construct a bootarea (d_bbsize bytes) in the specified buffer ``boot''
  * Returns a pointer to the disklabel portion of the bootarea.
  */
-struct disklabel *
+static struct disklabel *
 makebootarea(boot, dp, f)
 	char *boot;
 	struct disklabel *dp;
@@ -648,7 +662,9 @@ makebootarea(boot, dp, f)
 	int b;
 #if NUMBOOT > 0
 	char *dkbasename;
+# if NUMBOOT <= 1
 	struct stat sb;
+# endif
 #endif
 
 	/* XXX */
@@ -658,7 +674,7 @@ makebootarea(boot, dp, f)
 	}
 	lp = (struct disklabel *)
 		(boot + (LABELSECTOR * dp->d_secsize) + LABELOFFSET);
-	memset(lp, 0, sizeof *lp);
+	(void) memset(lp, 0, sizeof *lp);
 #if NUMBOOT > 0
 	/*
 	 * If we are not installing a boot program but we are installing a
@@ -669,7 +685,7 @@ makebootarea(boot, dp, f)
 		if (rflag) {
 			if (read(f, boot, BBSIZE) < BBSIZE)
 				err(4, "%s", specname);
-			memset(lp, 0, sizeof *lp);
+			(void) memset(lp, 0, sizeof *lp);
 		}
 		return (lp);
 	}
@@ -767,7 +783,98 @@ makebootarea(boot, dp, f)
 	return (lp);
 }
 
-void
+static void
+makedisktab(f, lp)
+	FILE *f;
+	struct disklabel *lp;
+{
+	int i;
+	char *did = "\\\n\t:";
+	struct partition *pp;
+
+	(void) fprintf(f, "%.*s|Automatically generated label:\\\n\t:dt=",
+	    sizeof(lp->d_typename), lp->d_typename);
+	if ((unsigned) lp->d_type < DKMAXTYPES)
+		(void) fprintf(f, "%s:", dktypenames[lp->d_type]);
+	else
+		(void) fprintf(f, "unknown%d:", lp->d_type);
+
+	(void) fprintf(f, "se#%d:", lp->d_secsize);
+	(void) fprintf(f, "ns#%d:", lp->d_nsectors);
+	(void) fprintf(f, "nt#%d:", lp->d_ntracks);
+	(void) fprintf(f, "sc#%d:", lp->d_secpercyl);
+	(void) fprintf(f, "nc#%d:", lp->d_ncylinders);
+
+	if (lp->d_rpm != 3600) {
+		(void) fprintf(f, "%srm#%d:", did, lp->d_rpm);
+		did = "";
+	}
+	if (lp->d_interleave != 1) {
+		(void) fprintf(f, "%sil#%d:", did, lp->d_interleave);
+		did = "";
+	}
+	if (lp->d_trackskew != 0) {
+		(void) fprintf(f, "%ssk#%d:", did, lp->d_trackskew);
+		did = "";
+	}
+	if (lp->d_cylskew != 0) {
+		(void) fprintf(f, "%scs#%d:", did, lp->d_cylskew);
+		did = "";
+	}
+	if (lp->d_headswitch != 0) {
+		(void) fprintf(f, "%shs#%d:", did, lp->d_headswitch);
+		did = "";
+	}
+	if (lp->d_trkseek != 0) {
+		(void) fprintf(f, "%sts#%d:", did, lp->d_trkseek);
+		did = "";
+	}
+#ifdef notyet
+	(void) fprintf(f, "drivedata: ");
+	for (i = NDDATA - 1; i >= 0; i--)
+		if (lp->d_drivedata[i])
+			break;
+	if (i < 0)
+		i = 0;
+	for (j = 0; j <= i; j++)
+		(void) fprintf(f, "%d ", lp->d_drivedata[j]);
+#endif
+	pp = lp->d_partitions;
+	for (i = 0; i < lp->d_npartitions; i++, pp++) {
+		if (pp->p_size) {
+			char c = 'a' + i;
+			(void) fprintf(f, "\\\n\t:");
+			(void) fprintf(f, "p%c#%d:", c, pp->p_size);
+			(void) fprintf(f, "o%c#%d:", c, pp->p_offset);
+			if (pp->p_fstype != FS_UNUSED) {
+				if ((unsigned) pp->p_fstype < FSMAXTYPES)
+					(void) fprintf(f, "t%c=%s:", c, 
+					    fstypenames[pp->p_fstype]);
+				else
+					(void) fprintf(f, "t%c=unknown%d:",
+					    c, pp->p_fstype);
+			}
+			switch (pp->p_fstype) {
+
+			case FS_UNUSED:
+				break;
+
+			case FS_BSDFFS:
+				(void) fprintf(f, "b%c#%d:", c,
+				    pp->p_fsize * pp->p_frag);
+				(void) fprintf(f, "f%c#%d:", c, pp->p_fsize);
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
+	(void) fprintf(f, "\n");
+	(void) fflush(f);
+}
+
+static void
 display(f, lp)
 	FILE *f;
 	struct disklabel *lp;
@@ -775,45 +882,47 @@ display(f, lp)
 	int i, j;
 	struct partition *pp;
 
-	fprintf(f, "# %s:\n", specname);
+	(void) fprintf(f, "# %s:\n", specname);
 	if ((unsigned) lp->d_type < DKMAXTYPES)
-		fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
+		(void) fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
 	else
-		fprintf(f, "type: %d\n", lp->d_type);
-	fprintf(f, "disk: %.*s\n", sizeof(lp->d_typename), lp->d_typename);
-	fprintf(f, "label: %.*s\n", sizeof(lp->d_packname), lp->d_packname);
-	fprintf(f, "flags:");
+		(void) fprintf(f, "type: %d\n", lp->d_type);
+	(void) fprintf(f, "disk: %.*s\n", sizeof(lp->d_typename),
+	    lp->d_typename);
+	(void) fprintf(f, "label: %.*s\n", sizeof(lp->d_packname),
+	    lp->d_packname);
+	(void) fprintf(f, "flags:");
 	if (lp->d_flags & D_REMOVABLE)
-		fprintf(f, " removable");
+		(void) fprintf(f, " removable");
 	if (lp->d_flags & D_ECC)
-		fprintf(f, " ecc");
+		(void) fprintf(f, " ecc");
 	if (lp->d_flags & D_BADSECT)
-		fprintf(f, " badsect");
-	fprintf(f, "\n");
-	fprintf(f, "bytes/sector: %ld\n", (long) lp->d_secsize);
-	fprintf(f, "sectors/track: %ld\n", (long) lp->d_nsectors);
-	fprintf(f, "tracks/cylinder: %ld\n", (long) lp->d_ntracks);
-	fprintf(f, "sectors/cylinder: %ld\n", (long) lp->d_secpercyl);
-	fprintf(f, "cylinders: %ld\n", (long) lp->d_ncylinders);
-	fprintf(f, "total sectors: %ld\n", (long) lp->d_secperunit);
-	fprintf(f, "rpm: %ld\n", (long) lp->d_rpm);
-	fprintf(f, "interleave: %ld\n", (long) lp->d_interleave);
-	fprintf(f, "trackskew: %ld\n", (long) lp->d_trackskew);
-	fprintf(f, "cylinderskew: %ld\n", (long) lp->d_cylskew);
-	fprintf(f, "headswitch: %ld\t\t# milliseconds\n",
+		(void) fprintf(f, " badsect");
+	(void) fprintf(f, "\n");
+	(void) fprintf(f, "bytes/sector: %ld\n", (long) lp->d_secsize);
+	(void) fprintf(f, "sectors/track: %ld\n", (long) lp->d_nsectors);
+	(void) fprintf(f, "tracks/cylinder: %ld\n", (long) lp->d_ntracks);
+	(void) fprintf(f, "sectors/cylinder: %ld\n", (long) lp->d_secpercyl);
+	(void) fprintf(f, "cylinders: %ld\n", (long) lp->d_ncylinders);
+	(void) fprintf(f, "total sectors: %ld\n", (long) lp->d_secperunit);
+	(void) fprintf(f, "rpm: %ld\n", (long) lp->d_rpm);
+	(void) fprintf(f, "interleave: %ld\n", (long) lp->d_interleave);
+	(void) fprintf(f, "trackskew: %ld\n", (long) lp->d_trackskew);
+	(void) fprintf(f, "cylinderskew: %ld\n", (long) lp->d_cylskew);
+	(void) fprintf(f, "headswitch: %ld\t\t# milliseconds\n",
 		(long) lp->d_headswitch);
-	fprintf(f, "track-to-track seek: %ld\t# milliseconds\n",
+	(void) fprintf(f, "track-to-track seek: %ld\t# milliseconds\n",
 		(long) lp->d_trkseek);
-	fprintf(f, "drivedata: ");
+	(void) fprintf(f, "drivedata: ");
 	for (i = NDDATA - 1; i >= 0; i--)
 		if (lp->d_drivedata[i])
 			break;
 	if (i < 0)
 		i = 0;
 	for (j = 0; j <= i; j++)
-		fprintf(f, "%d ", lp->d_drivedata[j]);
-	fprintf(f, "\n\n%d partitions:\n", lp->d_npartitions);
-	fprintf(f,
+		(void) fprintf(f, "%d ", lp->d_drivedata[j]);
+	(void) fprintf(f, "\n\n%d partitions:\n", lp->d_npartitions);
+	(void) fprintf(f,
 	    "#        size   offset    fstype   [fsize bsize   cpg]\n");
 	pp = lp->d_partitions;
 	for (i = 0; i < lp->d_npartitions; i++, pp++) {
@@ -831,54 +940,54 @@ display(f, lp)
 				   (pp->p_offset%lp->d_secpercyl) /
 					   lp->d_nsectors,
 				   pp->p_offset%lp->d_nsectors);
-				fprintf(f, "  %c: %8s %8s ",
+				(void) fprintf(f, "  %c: %8s %8s ",
 				   'a' + i, sbuf, obuf);
 			} else
-				fprintf(f, "  %c: %8d %8d  ", 'a' + i,
+				(void) fprintf(f, "  %c: %8d %8d  ", 'a' + i,
 				   pp->p_size, pp->p_offset);
 			if ((unsigned) pp->p_fstype < FSMAXTYPES)
-				fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
+				(void) fprintf(f, "%8.8s", fstypenames[pp->p_fstype]);
 			else
-				fprintf(f, "%8d", pp->p_fstype);
+				(void) fprintf(f, "%8d", pp->p_fstype);
 			switch (pp->p_fstype) {
 
 			case FS_UNUSED:				/* XXX */
-				fprintf(f, "    %5d %5d %5.5s ",
+				(void) fprintf(f, "    %5d %5d %5.5s ",
 				    pp->p_fsize, pp->p_fsize * pp->p_frag, "");
 				break;
 
 			case FS_BSDFFS:
-				fprintf(f, "    %5d %5d %5d ",
+				(void) fprintf(f, "    %5d %5d %5d ",
 				    pp->p_fsize, pp->p_fsize * pp->p_frag,
 				    pp->p_cpg);
 				break;
 
 			default:
-				fprintf(f, "%20.20s", "");
+				(void) fprintf(f, "%20.20s", "");
 				break;
 			}
 			if (lp->d_secpercyl != 0) {
-				fprintf(f, "\t# (Cyl. %4d",
+				(void) fprintf(f, "\t# (Cyl. %4d",
 				    pp->p_offset / lp->d_secpercyl);
 				if (pp->p_offset % lp->d_secpercyl)
 				    putc('*', f);
 				else
 				    putc(' ', f);
-				fprintf(f, "- %d",
+				(void) fprintf(f, "- %d",
 				    (pp->p_offset + 
 				    pp->p_size + lp->d_secpercyl - 1) /
 				    lp->d_secpercyl - 1);
 				if (pp->p_size % lp->d_secpercyl)
 				    putc('*', f);
-				fprintf(f, ")\n");
+				(void) fprintf(f, ")\n");
 			} else
-				fprintf(f, "\n");
+				(void) fprintf(f, "\n");
 		}
 	}
-	fflush(f);
+	(void) fflush(f);
 }
 
-int
+static int
 edit(lp, f)
 	struct disklabel *lp;
 	int f;
@@ -886,7 +995,6 @@ edit(lp, f)
 	int first, ch;
 	struct disklabel label;
 	FILE *fd;
-	char *mktemp();
 
 	(void) mktemp(tmpfil);
 	fd = fopen(tmpfil, "w");
@@ -896,7 +1004,7 @@ edit(lp, f)
 	}
 	(void)fchmod(fileno(fd), 0600);
 	display(fd, lp);
-	fclose(fd);
+	(void) fclose(fd);
 	for (;;) {
 		if (!editit())
 			break;
@@ -905,7 +1013,7 @@ edit(lp, f)
 			warn("%s", tmpfil);
 			break;
 		}
-		memset(&label, 0, sizeof(label));
+		(void) memset(&label, 0, sizeof(label));
 		if (getasciilabel(fd, &label)) {
 			*lp = label;
 			if (writelabel(f, bootarea, lp) == 0) {
@@ -913,8 +1021,8 @@ edit(lp, f)
 				return (0);
 			}
 		}
-		printf("re-edit the label? [y]: ");
-		fflush(stdout);
+		(void) printf("re-edit the label? [y]: ");
+		(void) fflush(stdout);
 		first = ch = getchar();
 		while (ch != '\n' && ch != EOF)
 			ch = getchar();
@@ -925,12 +1033,11 @@ edit(lp, f)
 	return (1);
 }
 
-int
+static int
 editit()
 {
 	int pid, xpid;
 	int stat;
-	extern char *getenv();
 	sigset_t sigset, osigset;
 
 	sigemptyset(&sigset);
@@ -965,7 +1072,7 @@ editit()
 	return(!stat);
 }
 
-char *
+static char *
 skip(cp)
 	char *cp;
 {
@@ -976,7 +1083,7 @@ skip(cp)
 	return (cp);
 }
 
-char *
+static char *
 word(cp)
 	char *cp;
 {
@@ -998,7 +1105,7 @@ word(cp)
  * in the same format as that put out by display(),
  * and fill in lp.
  */
-int
+static int
 getasciilabel(f, lp)
 	FILE *f;
 	struct disklabel *lp;
@@ -1012,7 +1119,7 @@ getasciilabel(f, lp)
 	lp->d_sbsize = SBSIZE;				/* XXX */
 	while (fgets(line, sizeof(line) - 1, f)) {
 		lineno++;
-		if (cp = strpbrk(line, "#\r\n"))
+		if ((cp = strpbrk(line, "#\r\n")) != NULL)
 			*cp = '\0';
 		cp = skip(line);
 		if (cp == NULL)     /* blank line or comment line */
@@ -1309,7 +1416,7 @@ getasciilabel(f, lp)
  * Check disklabel for errors and fill in
  * derived fields according to supplied values.
  */
-int
+static int
 checklabel(lp)
 	struct disklabel *lp;
 {
@@ -1339,7 +1446,7 @@ checklabel(lp)
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = lp->d_secpercyl * lp->d_ncylinders;
-#ifdef i386__notyet
+#ifdef __i386__notyet__
 	if (dosdp && dosdp->dp_size && dosdp->dp_typ == DOSPTYP_386BSD
 		&& lp->d_secperunit > dosdp->dp_start + dosdp->dp_size) {
 		warnx("exceeds DOS partition size");
@@ -1402,7 +1509,7 @@ checklabel(lp)
  * This allows newfs to prevent creation of a filesystem where it might
  * clobber bootstrap code.
  */
-void
+static void
 setbootflag(lp)
 	struct disklabel *lp;
 {
@@ -1439,45 +1546,60 @@ setbootflag(lp)
 }
 #endif
 
-void
+static void
 usage()
 {
-
+	static const struct {
+		char *name;
+		char *expn;
+	} usages[] = {
 #if NUMBOOT > 0
-	fprintf(stderr,
-"%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n%s\n\t%s\n",
-"usage: disklabel [-r] [-C] disk",
-		"(to read label)",
-"or disklabel -w [-r] disk type [ packid ]",
-		"(to write label with existing boot program)",
-"or disklabel -e [-r] [-C] disk",
-		"(to edit label)",
-"or disklabel -R [-r] disk protofile",
-		"(to restore label with existing boot program)",
-#if NUMBOOT > 1
-"or disklabel -B [ -b xxboot [ -s bootxx ] ] disk [ type ]",
-		"(to install boot program with existing label)",
-"or disklabel -w -B [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
-		"(to write label and boot program)",
-"or disklabel -R -B [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
-		"(to restore label and boot program)",
-#else
-"or disklabel -B [ -b bootprog ] disk [ type ]",
-		"(to install boot program with existing on-disk label)",
-"or disklabel -w -B [ -b bootprog ] disk type [ packid ]",
-		"(to write label and install boot program)",
-"or disklabel -R -B [ -b bootprog ] disk protofile [ type ]",
-		"(to restore label and install boot program)",
+	{ "%s [-rt] [-C] disk",
+	    "(to read label)" },
+	{ "%s -w [-r] disk type [ packid ]",
+	    "(to write label with existing boot program)" },
+	{ "%s -e [-r] [-C] disk",
+	    "(to edit label)" },
+	{ "%s -R [-r] disk protofile",
+	    "(to restore label with existing boot program)" },
+# if NUMBOOT > 1
+	{ "%s -B [ -b xxboot [ -s bootxx ] ] disk [ type ]",
+	    "(to install boot program with existing label)" },
+	{ "%s -w -B [ -b xxboot [ -s bootxx ] ] disk type [ packid ]",
+	    "(to write label and boot program)" },
+	{ "%s -R -B [ -b xxboot [ -s bootxx ] ] disk protofile [ type ]",
+	    "(to restore label and boot program)" },
+# else
+	{ "%s -B [ -b bootprog ] disk [ type ]",
+	    "(to install boot program with existing on-disk label)",
+	{ "%s -w -B [ -b bootprog ] disk type [ packid ]",
+	    "(to write label and install boot program)" },
+	{ "%s -R -B [ -b bootprog ] disk protofile [ type ]",
+	    "(to restore label and install boot program)" },
 #endif
-"or disklabel [-NW] disk",
-		"(to write disable/enable label)");
 #else
-	fprintf(stderr, "%-43s%s\n%-43s%s\n%-43s%s\n%-43s%s\n%-43s%s\n",
-"usage: disklabel [-r] disk", "(to read label)",
-"or disklabel -w [-r] disk type [ packid ]", "(to write label)",
-"or disklabel -e [-r] disk", "(to edit label)",
-"or disklabel -R [-r] disk protofile", "(to restore label)",
-"or disklabel [-NW] disk", "(to write disable/enable label)");
+	{ "%s [-rt] disk",
+	    "(to read label)" },
+	{ "%s -w [-r] disk type [ packid ]",
+	    "(to write label)" },
+	{ "%s -e [-r] disk",
+	    "(to edit label)" },
+	{ "%s -R [-r] disk protofile",
+	    "(to restore label)" },
 #endif
+	{ "%s [-NW] disk",
+	    "(to write disable/enable label)" },
+	{ NULL,
+	    NULL }
+};
+	int i;
+
+	for (i = 0; usages[i].name; i++) {
+		(void) fputs(i ? "or " : "Usage: ", stderr);
+		(void) fprintf(stderr, usages[i].name, __progname);
+		(void) fputs("\n\t", stderr);
+		(void) fprintf(stderr, usages[i].expn, __progname);
+		(void) fputs("\n", stderr);
+	}
 	exit(1);
 }
