@@ -126,9 +126,6 @@ wd1     at wdc? drive ?
 fdc0    at mainbus? base 0x00210fc0 irq 12 dack 0x00002000
 fd0     at fdc? drive ?
 
-# Ramdisk
-rd0	at mainbus?
-
 # kbd via IOMD
 kbd0	at mainbus? base 0x00000000
 
@@ -183,6 +180,8 @@ pseudo-device   pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
 pseudo-device   vnd     4               # paging to files
 pseudo-device	ccd	2		# concatenated disk devices
+
+pseudo-device	rd	1		# Ramdisk driver
 
 makeoptions MONITOR="Taxan875+LR"
 #makeoptions MONITOR="AKF60"
