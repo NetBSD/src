@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io_asm.S,v 1.2 1997/01/26 01:55:04 mark Exp $	*/
+/*	$NetBSD: podulebus_io_asm.S,v 1.3 1997/07/30 23:52:08 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -48,19 +48,22 @@ pc	.req	r15
 
 	.global	_podulebus_r_1
 _podulebus_r_1:
-	ldrb	r0, [r1, r2, lsl #2]
+	mov	r2, r2, lsl r0
+	ldrb	r0, [r1, r2]
 	mov	pc, lr
 
 	.global	_podulebus_r_2
 _podulebus_r_2:
-	ldr	r0, [r1, r2, lsl #2]
+	mov	r2, r2, lsl r0
+	ldr	r0, [r1, r2]
 	bic	r0, r0, #0xff000000
 	bic	r0, r0, #0x00ff0000
 	mov	pc, lr
 
 	.global	_podulebus_r_4
 _podulebus_r_4:
-	ldr	r0, [r1, r2, lsl #2]
+	mov	r2, r2, lsl r0
+	ldr	r0, [r1, r2]
 	mov	pc, lr
 
 	.global	_podulebus_r_8
@@ -78,19 +81,22 @@ podulebus_r_8_text:
 
 	.global	_podulebus_w_1
 _podulebus_w_1:
-	strb	r3, [r1, r2, lsl #2]
+	mov	r2, r2, lsl r0
+	strb	r3, [r1, r2]
 	mov	pc, lr
 
 	.global	_podulebus_w_2
 _podulebus_w_2:
 	mov	r3, r3, lsl #16
 	orr	r3, r3, r3, lsr #16
-	str	r3, [r1, r2, lsl #2]
+	mov	r2, r2, lsl r0
+	str	r3, [r1, r2]
 	mov	pc, lr
 
 	.global	_podulebus_w_4
 _podulebus_w_4:
-	str	r3, [r1, r2, lsl #2]
+	mov	r2, r2, lsl r0
+	str	r3, [r1, r2]
 	mov	pc, lr
 
 	.global	_podulebus_w_8
@@ -117,7 +123,7 @@ podulebus_rm_1_text:
 
 	.global	_podulebus_rm_2
 _podulebus_rm_2:
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	b	_insw
@@ -155,7 +161,7 @@ podulebus_wm_1_text:
 
 	.global	_podulebus_wm_2
 _podulebus_wm_2:
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2, lsl r0
 	mov	r1, r3
 	ldr	r2, [sp, #0]
 	b	_outsw
