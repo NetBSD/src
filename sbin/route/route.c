@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.24 1997/09/16 07:04:19 lukem Exp $	*/
+/*	$NetBSD: route.c,v 1.25 1997/10/01 02:22:54 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.24 1997/09/16 07:04:19 lukem Exp $");
+__RCSID("$NetBSD: route.c,v 1.25 1997/10/01 02:22:54 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	int ch;
 
 	if (argc < 2)
