@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
+/*	$NetBSD: spec.c,v 1.7 1996/02/01 00:04:57 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $";
+static char rcsid[] = "$NetBSD: spec.c,v 1.7 1996/02/01 00:04:57 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -220,11 +220,11 @@ set(t, ip)
 				err("%s", strerror(errno));
 			break;
 		case F_TIME:
-			ip->st_mtimespec.ts_sec = strtoul(val, &ep, 10);
+			ip->st_mtimespec.tv_sec = strtoul(val, &ep, 10);
 			if (*ep != '.')
 				err("invalid time %s", val);
 			val = ep + 1;
-			ip->st_mtimespec.ts_nsec = strtoul(val, &ep, 10);
+			ip->st_mtimespec.tv_nsec = strtoul(val, &ep, 10);
 			if (*ep)
 				err("invalid time %s", val);
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.11 1995/10/09 11:19:32 mycroft Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.12 1996/02/01 00:09:07 jtc Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -264,12 +264,12 @@ ufs_getattr(ap)
 	vap->va_gid = ip->i_gid;
 	vap->va_rdev = (dev_t)ip->i_rdev;
 	vap->va_size = ip->i_din.di_size;
-	vap->va_atime.ts_sec = ip->i_atime;
-	vap->va_atime.ts_nsec = ip->i_atimensec;
-	vap->va_mtime.ts_sec = ip->i_mtime;
-	vap->va_mtime.ts_nsec = ip->i_mtimensec;
-	vap->va_ctime.ts_sec = ip->i_ctime;
-	vap->va_ctime.ts_nsec = ip->i_ctimensec;
+	vap->va_atime.tv_sec = ip->i_atime;
+	vap->va_atime.tv_nsec = ip->i_atimensec;
+	vap->va_mtime.tv_sec = ip->i_mtime;
+	vap->va_mtime.tv_nsec = ip->i_mtimensec;
+	vap->va_ctime.tv_sec = ip->i_ctime;
+	vap->va_ctime.tv_nsec = ip->i_ctimensec;
 	vap->va_flags = ip->i_flags;
 	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */
@@ -348,20 +348,20 @@ ufs_setattr(ap)
 			return (error);
 	}
 	ip = VTOI(vp);
-	if (vap->va_atime.ts_sec != VNOVAL || vap->va_mtime.ts_sec != VNOVAL) {
+	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (cred->cr_uid != ip->i_uid &&
 		    (error = suser(cred, &p->p_acflag)) &&
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(vp, VWRITE, cred, p))))
 			return (error);
-		if (vap->va_atime.ts_sec != VNOVAL)
+		if (vap->va_atime.tv_sec != VNOVAL)
 			ip->i_flag |= IN_ACCESS;
-		if (vap->va_mtime.ts_sec != VNOVAL)
+		if (vap->va_mtime.tv_sec != VNOVAL)
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		atimeval.tv_sec = vap->va_atime.ts_sec;
-		atimeval.tv_usec = vap->va_atime.ts_nsec / 1000;
-		mtimeval.tv_sec = vap->va_mtime.ts_sec;
-		mtimeval.tv_usec = vap->va_mtime.ts_nsec / 1000;
+		atimeval.tv_sec = vap->va_atime.tv_sec;
+		atimeval.tv_usec = vap->va_atime.tv_nsec / 1000;
+		mtimeval.tv_sec = vap->va_mtime.tv_sec;
+		mtimeval.tv_usec = vap->va_mtime.tv_nsec / 1000;
 		if (error = VOP_UPDATE(vp, &atimeval, &mtimeval, 1))
 			return (error);
 	}

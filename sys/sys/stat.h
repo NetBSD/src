@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.17 1995/06/15 23:08:08 cgd Exp $	*/
+/*	$NetBSD: stat.h,v 1.18 1996/02/01 00:10:34 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -94,12 +94,12 @@ struct stat {
 	int64_t	  st_qspare[2];
 };
 #ifndef _POSIX_SOURCE
-#define	st_atime	st_atimespec.ts_sec
-#define	st_atimensec	st_atimespec.ts_nsec
-#define	st_mtime	st_mtimespec.ts_sec
-#define	st_mtimensec	st_mtimespec.ts_nsec
-#define	st_ctime	st_ctimespec.ts_sec
-#define	st_ctimensec	st_ctimespec.ts_nsec
+#define	st_atime	st_atimespec.tv_sec
+#define	st_atimensec	st_atimespec.tv_nsec
+#define	st_mtime	st_mtimespec.tv_sec
+#define	st_mtimensec	st_mtimespec.tv_nsec
+#define	st_ctime	st_ctimespec.tv_sec
+#define	st_ctimensec	st_ctimespec.tv_nsec
 #endif
 
 #define	S_ISUID	0004000			/* set user id on execution */
