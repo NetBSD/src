@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.7 2003/06/06 14:31:27 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.8 2003/06/11 09:03:33 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -168,41 +168,6 @@ wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
 Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
 zajac sie polaczeniem nowo utworzonego /emul/aout ze starym.
 }
-
-message Change_a
-{Zmien a}
-message Change_b
-{Zmien b}
-message NetBSD_partition_cant_change
-{partycja NetBSD - nie mozna zmienic}
-message Whole_disk_cant_change
-{Caly dysk - nie mozna zmienic}
-message Change_e
-{Zmien e}
-message Change_f
-{Zmien f}
-message Change_g
-{Zmien g}
-message Change_h
-{Zmien h}
-message Change_i
-{Zmien i}
-message Change_j
-{Zmien j}
-message Change_k
-{Zmien k}
-message Change_l
-{Zmien l}
-message Change_m
-{Zmien m}
-message Change_n
-{Zmien n}
-message Change_o
-{Zmien o}
-message Change_p
-{Zmien p}
-message Set_new_allocation_size
-{Ustaw nowy przydzial rozmiarow}
 
 message Selection_toggles_inclusion
 {Wybierz}
