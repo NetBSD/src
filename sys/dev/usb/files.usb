@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.44 2002/04/22 09:41:23 augustss Exp $
+#	$NetBSD: files.usb,v 1.45 2002/08/22 10:15:57 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -103,11 +103,16 @@ device	uirda: irbus
 attach	uirda at uhub
 file	dev/usb/uirda.c			uirda
 
-
 # SigmaTel IrDA bridge
 device	ustir: irbus, irdasir
 attach	ustir at uhub
 file	dev/usb/ustir.c			ustir
+
+
+# Bluetooth bridges
+device	ubt
+attach	ubt at uhub
+file	dev/usb/ubt.c			ubt
 
 
 # Misc
