@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 1998/07/22 22:31:29 scottr Exp $
+#	$NetBSD: Makefile,v 1.12 1998/07/27 04:16:19 scottr Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -34,6 +34,8 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
+.include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
+
 # XXX Keep telnet(1) and libtelnet from getting out of sync during the build
 # XXX process.
 .if !exists(${.CURDIR}/../../domestic/usr.bin/telnet) || \
@@ -62,6 +64,7 @@ NOCRYPT_DIR=${.CURDIR}/Nocrypt
 
 MAN=	telnet.1
 
+.include <bsd.obj.mk>
 .include <bsd.man.mk>
 
 .endif	# EXPORTABLE_SYSTEM
