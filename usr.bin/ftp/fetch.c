@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.44 1999/01/01 10:00:46 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.45 1999/01/01 13:26:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.44 1999/01/01 10:00:46 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.45 1999/01/01 13:26:31 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -332,7 +332,7 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 	struct hostent		*hp;
 	volatile sig_t		oldintr, oldintp;
 	volatile int		s;
-	int 			isproxy, rval, hcode;
+	int 			ischunked, isproxy, rval, hcode;
 	size_t			len;
 	char			*cp, *ep, *buf, *savefile;
 	char			*auth, *location, *message;
@@ -349,7 +349,7 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 	s = -1;
 	buf = savefile = NULL;
 	auth = location = message = NULL;
-	isproxy = 0;
+	ischunked = isproxy = 0;
 	rval = 1;
 	hp = NULL;
 
@@ -687,6 +687,21 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 					fprintf(ttyout,
 					    "parsed location as: %s\n", cp);
 
+#define TRANSENC "Transfer-Encoding: "
+			} else if (strncasecmp(cp, TRANSENC,
+						sizeof(TRANSENC) - 1) == 0) {
+				cp += sizeof(TRANSENC) - 1;
+				if (strcasecmp(cp, "chunked") != 0) {
+					warnx(
+				    "Unsupported transfer encoding - `%s'",
+					    cp);
+					goto cleanup_fetch_url;
+				}
+				ischunked++;
+				if (debug)
+					fprintf(ttyout,
+					    "using chunked encoding\n");
+
 #define PROXYAUTH "Proxy-Authenticate: "
 			} else if (strncasecmp(cp, PROXYAUTH,
 						sizeof(PROXYAUTH) - 1) == 0) {
@@ -810,21 +825,55 @@ fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
 	progressmeter(-1);
 
 			/* Finally, suck down the file. */
-	buf = xmalloc(BUFSIZ);
-	while ((len = fread(buf, sizeof(char), BUFSIZ, fin)) > 0) {
-		bytes += len;
-		if (fwrite(buf, sizeof(char), len, fout) != len) {
-			warn("Writing `%s'", savefile);
-			goto cleanup_fetch_url;
-		}
-		if (hash && !progress) {
-			while (bytes >= hashbytes) {
-				(void)putc('#', ttyout);
-				hashbytes += mark;
+	buf = xmalloc(BUFSIZ + 1);
+	do {
+		ssize_t chunksize;
+
+		chunksize = 0;
+					/* read chunksize */
+		if (ischunked) {
+			if (fgets(buf, BUFSIZ, fin) == NULL) {
+				warnx("Unexpected EOF reading chunksize");
+				goto cleanup_fetch_url;
 			}
-			(void)fflush(ttyout);
+			chunksize = strtol(buf, &ep, 16);
+			if (strcmp(ep, "\r\n") != 0) {
+				warnx("Unexpected data following chunksize");
+				goto cleanup_fetch_url;
+			}
+			if (debug)
+				fprintf(ttyout, "got chunksize of %qd\n",
+				    (long long)chunksize);
+			if (chunksize == 0)
+				break;
 		}
-	}
+		while ((len = fread(buf, sizeof(char),
+		    ischunked ? MIN(chunksize, BUFSIZ) : BUFSIZ, fin)) > 0) {
+			bytes += len;
+			if (fwrite(buf, sizeof(char), len, fout) != len) {
+				warn("Writing `%s'", savefile);
+				goto cleanup_fetch_url;
+			}
+			if (hash && !progress) {
+				while (bytes >= hashbytes) {
+					(void)putc('#', ttyout);
+					hashbytes += mark;
+				}
+				(void)fflush(ttyout);
+			}
+			if (ischunked)
+				chunksize -= len;
+		}
+					/* read CRLF after chunk*/
+		if (ischunked) {
+			if (fgets(buf, BUFSIZ, fin) == NULL)
+				break;
+			if (strcmp(buf, "\r\n") != 0) {
+				warnx("Unexpected data following chunk");
+				goto cleanup_fetch_url;
+			}
+		}
+	} while (ischunked);
 	if (hash && !progress && bytes > 0) {
 		if (bytes < mark)
 			(void)putc('#', ttyout);
