@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.165 2004/07/22 19:47:24 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.166 2004/07/22 19:48:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.165 2004/07/22 19:47:24 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.166 2004/07/22 19:48:28 mycroft Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -169,7 +169,7 @@ STATIC void wi_scan_result(struct wi_softc *, int, int);
 
 STATIC void wi_dump_pkt(struct wi_frame *, struct ieee80211_node *, int rssi);
 
-STATIC inline int
+static inline int
 wi_write_val(struct wi_softc *sc, int rid, u_int16_t val)
 {
 
