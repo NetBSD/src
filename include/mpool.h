@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mpool.h	8.1 (Berkeley) 6/2/93
- *	$Id: mpool.h,v 1.4 1993/08/01 18:44:47 mycroft Exp $
+ *	@(#)mpool.h	8.1 (Berkeley) 6/2/93
  */
 
 /*
