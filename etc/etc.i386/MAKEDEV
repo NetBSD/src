@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.188 2002/12/13 23:27:09 christos Exp $
+#	$NetBSD: MAKEDEV,v 1.189 2002/12/15 16:56:10 seb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -867,18 +867,18 @@ pci*)
 	chmod 644 pci$unit
 	;;
 
-dpt*)
-	unit=${i#dpt}
-	rm -f dpt$unit
-	mknod dpt$unit c 96 $unit
-	chmod 600 dpt$unit
-	;;
-
 dpti*)
 	unit=${i#dpti}
 	rm -f dpti$unit
 	mknod dpti$unit c 84 $unit
 	chmod 600 dpti$unit
+	;;
+
+dpt*)
+	unit=${i#dpt}
+	rm -f dpt$unit
+	mknod dpt$unit c 96 $unit
+	chmod 600 dpt$unit
 	;;
 
 altq)
