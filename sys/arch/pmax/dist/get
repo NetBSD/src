@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: get,v 1.4 1994/10/26 21:09:30 cgd Exp $
+#	$NetBSD: get,v 1.5 1994/11/23 18:13:59 dean Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@ then
 fi
 
 # copy in kernel
-cp $DISTROOT/sys/compile/GENERIC.pmax/vmunix .
+cp $DISTROOT/sys/arch/pmax/compile/GENERIC.pmax/netbsd .
 
 # create necessary directories
 DIRLIST="bin dev etc a tmp stand sbin usr usr/mdec"
@@ -71,8 +71,8 @@ for i in $USBIN; do
 done
 ln sbin/restore sbin/rrestore
 
-BIN="[ cat cp dd echo ed expr ls mkdir mv pax rcp rm sh stty sync"
-UBIN="awk mt"
+BIN="[ cat cp dd echo ed expr ls mkdir mv pax rcp rm sh stty sync mt"
+UBIN="awk"
 for i in $BIN; do
 	cp $DISTROOT/bin/$i bin/$i
 done
