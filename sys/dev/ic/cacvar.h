@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.6 2000/09/01 12:12:29 ad Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.7 2000/10/19 14:28:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -124,17 +124,12 @@ struct cac_attach_args {
 	int		caca_unit;
 };
 
-#define	CACACF_UNIT	0
-
-#define	cacacf_unit	cf_loc[CACACF_UNIT]
-
-#define	CACACF_UNIT_UNKNOWN 	-1
+#define	cacacf_unit	cf_loc[CACCF_UNIT]
 
 int	cac_cmd(struct cac_softc *, int, void *, int, int, int, int, 
 		struct cac_context *);
 int	cac_init(struct cac_softc *, const char *, int);
 int	cac_intr(void *);
-void	cac_minphys(struct buf *);
 
 extern struct	cac_linkage cac_l0;
 
