@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.72 2002/05/05 15:16:32 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.73 2002/05/15 11:19:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.72 2002/05/05 15:16:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.73 2002/05/15 11:19:38 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -2225,7 +2225,7 @@ scsipi_print_xfer_mode(periph)
 		return;
 
 	printf("%s: ", periph->periph_dev->dv_xname);
-	if (periph->periph_mode & PERIPH_CAP_SYNC) {
+	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		period = scsipi_sync_factor_to_period(periph->periph_period);
 		printf("sync (%d.%dns offset %d)",
 		    period / 10, period % 10, periph->periph_offset);
@@ -2234,17 +2234,18 @@ scsipi_print_xfer_mode(periph)
 
 	if (periph->periph_mode & PERIPH_CAP_WIDE32)
 		printf(", 32-bit");
-	else if (periph->periph_mode & PERIPH_CAP_WIDE16)
+	else if (periph->periph_mode & (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT))
 		printf(", 16-bit");
 	else
 		printf(", 8-bit");
 
-	if (periph->periph_mode & PERIPH_CAP_SYNC) {
+	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		freq = scsipi_sync_factor_to_freq(periph->periph_period);
 		speed = freq;
 		if (periph->periph_mode & PERIPH_CAP_WIDE32)
 			speed *= 4;
-		else if (periph->periph_mode & PERIPH_CAP_WIDE16)
+		else if (periph->periph_mode &
+		    (PERIPH_CAP_WIDE16 | PERIPH_CAP_DT)) 
 			speed *= 2;
 		mbs = speed / 1000;
 		if (mbs > 0)
