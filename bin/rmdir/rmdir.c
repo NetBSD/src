@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmdir.c	5.3 (Berkeley) 5/31/90";*/
-static char rcsid[] = "$Id: rmdir.c,v 1.9 1993/09/10 19:29:13 jtc Exp $";
+static char rcsid[] = "$Id: rmdir.c,v 1.10 1993/12/31 19:29:02 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -48,8 +48,9 @@ static char rcsid[] = "$Id: rmdir.c,v 1.9 1993/09/10 19:29:13 jtc Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <locale.h>
 #include <errno.h>
+#include <unistd.h>
 #include <err.h>
 
 static int rmdirp __P((char *));
@@ -63,6 +64,8 @@ main(argc, argv)
 	int errors;
 	int ch;
 	int delete_parent_directories = 0;
+
+	setlocale(LC_ALL, "");
 
 	while ((ch = getopt (argc, argv, "p")) != -1) {
 		switch (ch) {
