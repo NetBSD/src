@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_notify.c,v 1.7 2003/11/20 07:12:34 manu Exp $ */
+/*	$NetBSD: mach_notify.c,v 1.8 2003/11/25 17:09:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.7 2003/11/20 07:12:34 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_notify.c,v 1.8 2003/11/25 17:09:24 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -263,6 +263,7 @@ mach_exception(l, exc, code)
 	struct mach_port *exc_port;
 	int error;
 
+	med = l->l_proc->p_emuldata;
 	if ((exc_port = med->med_exc[exc]) == NULL)
 		return EINVAL;
 
