@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 1999/05/18 08:14:18 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 1999/05/24 21:54:42 ross Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -69,6 +69,9 @@ void	store __P((const char *, const char *, int));
 void	user __P((const char *));
 char   *xstrdup __P((const char *));
 void	yyerror __P((char *));
+
+typedef long long qdfmt_t;
+typedef unsigned long long qufmt_t;
 
 #define CLASS_CHROOT	"chroot"
 #define CLASS_GUEST	"guest"
