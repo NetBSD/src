@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.14 2001/03/18 01:31:03 bjh21 Exp $	*/
+/*	$NetBSD: cosc.c,v 1.15 2001/03/18 15:56:05 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -283,8 +283,8 @@ coscattach(pdp, dp, auxp)
 	{
 		evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 		    dp->dv_xname, "intr");
-		sc->sc_ih = podulebus_irq_establish(pdp, sc->sc_podule_number,
-		    IPL_BIO, cosc_intr, sc, &sc->sc_intrcnt);
+		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+		    cosc_intr, sc, &sc->sc_intrcnt);
 		if (sc->sc_ih == NULL)
 			panic("%s: Cannot install IRQ handler\n",
 			    dp->dv_xname);

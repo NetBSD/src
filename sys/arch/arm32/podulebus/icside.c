@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.14 2001/03/18 01:31:04 bjh21 Exp $	*/
+/*	$NetBSD: icside.c,v 1.15 2001/03/18 15:56:05 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -294,9 +294,8 @@ icside_attach(parent, self, aux)
 		icp->ic_irqmask = pa->pa_podule->irq_mask;
 		evcnt_attach_dynamic(&icp->ic_intrcnt, EVCNT_TYPE_INTR, NULL,
 		    self->dv_xname, "intr");
-		icp->ic_ih = podulebus_irq_establish(parent,
-		    sc->sc_podule_number, IPL_BIO, icside_intr, icp,
-		    &icp->ic_intrcnt);
+		icp->ic_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
+		    icside_intr, icp, &icp->ic_intrcnt);
 		if (icp->ic_ih == NULL) {
 			printf("%s: Cannot claim interrupt %d\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname,

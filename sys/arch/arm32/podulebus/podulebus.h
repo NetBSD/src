@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.h,v 1.12 2001/03/17 23:58:43 bjh21 Exp $ */
+/* $NetBSD: podulebus.h,v 1.13 2001/03/18 15:56:05 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -109,11 +109,14 @@ typedef struct {
 #define SLOT_POD  0x01
 #define SLOT_NET  0x02
 
+typedef	int	podulebus_intr_handle_t;
+
 struct podule_attach_args {
 	podule_t *pa_podule;		/* podule descriptor */
 	int pa_podule_number;		/* podule number */
 	int pa_slottype;		/* podule slot type */
 	bus_space_tag_t pa_iot;		/* bus space tag */
+	podulebus_intr_handle_t pa_ih;	/* interrupt handle */
 };
 
 /* Useful macros */
@@ -144,7 +147,7 @@ int matchpodule __P((struct podule_attach_args *pa,
 
 void netslot_ea	__P((u_int8_t *buffer));
 
-extern void *podulebus_irq_establish __P((struct device *, int, int,
+extern void *podulebus_irq_establish __P((podulebus_intr_handle_t, int,
     int (*)(void *), void *, struct evcnt *));
 
 #endif
