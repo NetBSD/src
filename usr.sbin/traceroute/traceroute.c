@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.30.2.2 1999/06/28 23:52:58 perry Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.30.2.3 2000/10/19 15:34:08 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.30.2.2 1999/06/28 23:52:58 perry Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.30.2.3 2000/10/19 15:34:08 he Exp $");
 #endif
 #endif
 
@@ -1349,7 +1349,7 @@ gethostinfo(register char *hostname)
 		exit(1);
 	}
 	if (inet_aton(hostname, &addr) != 0) {
-		hi->name = savestr(hostname);
+		hi->name = strdup(hostname);
 		hi->n = 1;
 		hi->addrs = calloc(1, sizeof(hi->addrs[0]));
 		if (hi->addrs == NULL) {
@@ -1370,7 +1370,7 @@ gethostinfo(register char *hostname)
 		Fprintf(stderr, "%s: bad host %s\n", prog, hostname);
 		exit(1);
 	}
-	hi->name = savestr(hp->h_name);
+	hi->name = strdup(hp->h_name);
 	for (n = 0, p = hp->h_addr_list; *p != NULL; ++n, ++p)
 		continue;
 	hi->n = n;
