@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.9 2002/10/08 15:59:11 scw Exp $
+#	$NetBSD: Makefile.sh5,v 1.10 2003/01/19 19:46:57 scw Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -61,25 +61,25 @@ SH5_ENDIAN_LD=	shelf${SH5_ABI}_nbsd
 	@false
 .endif
 
-CC=		sh5gcc
-AS=		sh5gcc
-LD=		sh5ld -m ${SH5_ENDIAN_LD}
-AR=		sh5ar
-NM=		sh5nm
-RANLIB=		sh5ranlib
-SIZE=		sh5size
-OBJCOPY=	sh5objcopy
+CC=		sh5le-unknown-netbsd-gcc
+AS=		sh5le-unknown-netbsd-gcc
+LD=		sh5le-unknown-netbsd-ld -m ${SH5_ENDIAN_LD}
+AR=		sh5le-unknown-netbsd-ar
+NM=		sh5le-unknown-netbsd-nm
+RANLIB=		sh5le-unknown-netbsd-ranlib
+SIZE=		sh5le-unknown-netbsd-size
+OBJCOPY=	sh5le-unknown-netbsd-objcopy
 DBSYM=		sh5dbsym
 
 CPPFLAGS+=	-D__NetBSD__ -D${MACHINE} ${SH5_ABI_DEF}
 CFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-DEFCOPTS?=	-O1
+DEFCOPTS?=	-O2
 DEFWARNINGS=	no
-CWARNFLAGS+=	-Werror -Wall -Wno-main -Wpointer-arith
-CWARNFLAGS+=	-Wno-uninitialized -Wno-format
+CWARNFLAGS+=	-Werror -Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
+CWARNFLAGS+=	-Wno-uninitialized -Wno-sign-compare -Wno-format
 
 ##
 ## (3) libkern and compat
