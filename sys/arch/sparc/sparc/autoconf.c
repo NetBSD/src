@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.147 2001/05/21 21:25:28 petrov Exp $ */
+/*	$NetBSD: autoconf.c,v 1.148 2001/05/21 22:44:07 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -378,6 +378,7 @@ bootpath_build()
 		break;
 	case PROM_OBP_V2:
 	case PROM_OBP_V3:
+	case PROM_OPENFIRM:
 		while (cp != NULL && *cp == '/') {
 			/* Step over '/' */
 			++cp;
@@ -386,6 +387,35 @@ bootpath_build()
 			while (*cp != '@' && *cp != '/' && *cp != '\0')
 				*pp++ = *cp++;
 			*pp = '\0';
+#if defined(SUN4M)
+			/*
+			 * JS1/OF does not have iommu node in the device
+			 * tree, so bootpath will start with the sbus entry.
+			 * Add entry for iommu to match attachment. See also
+			 * mainbus_attach and iommu_attach.
+			 */
+			if (CPU_ISSUN4M && bp == bootpath
+			    && strcmp(bp->name, "sbus") == 0) {
+				printf("bootpath_build: inserting iommu entry\n");
+				strcpy(bootpath[0].name, "iommu");
+				bootpath[0].val[0] = 0;
+				bootpath[0].val[1] = 0x10000000;
+				bootpath[0].val[2] = 0;
+				++nbootpath;
+
+				strcpy(bootpath[1].name, "sbus");
+				if (*cp == '/') {
+					/* complete sbus entry */
+					bootpath[1].val[0] = 0;
+					bootpath[1].val[1] = 0x10001000;
+					bootpath[1].val[2] = 0;
+					++nbootpath;
+					bp = &bootpath[2];
+					continue;
+				} else 
+					bp = &bootpath[1];
+			}
+#endif /* SUN4M */
 			if (*cp == '@') {
 				cp = str2hex(++cp, &bp->val[0]);
 				if (*cp == ',')
@@ -948,6 +978,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		"SUNW,sx",		/* XXX: no driver for SX yet */
 		"virtual-memory",
 		"aliases",
+		"chosen",		/* OpenFirmware */
 		"memory",
 		"openprom",
 		"options",
@@ -1105,6 +1136,29 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_name = getpropstringA(node, "name",
 					    namebuf, sizeof namebuf);
 		ma.ma_node = node;
+
+#if defined(SUN4M)
+		/*
+		 * JS1/OF does not have iommu node in the device tree,
+		 * so if on sun4m we see sbus node under root - attach
+		 * implicit iommu.  See also bootpath_build where we
+		 * adjust bootpath accordingly and iommu_attach where
+		 * we arrange for this sbus node to be attached.
+		 */
+		if (CPU_ISSUN4M && strcmp(ma.ma_name, "sbus") == 0) {
+			printf("mainbus_attach: sbus node under root on sun4m - assuming iommu\n");
+			ma.ma_name = "iommu";
+			ma.ma_iospace = (bus_type_t) 0;
+			ma.ma_paddr = (bus_addr_t) 0x10000000;
+			ma.ma_size = 0x300;
+			ma.ma_pri = 0;
+			ma.ma_promvaddr = 0;
+
+			(void) config_found(dev, (void *)&ma, mbprint);
+			continue;
+		}
+#endif /* SUN4M */
+
 		if (getprop_reg1(node, &romreg) != 0)
 			continue;
 
