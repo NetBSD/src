@@ -1,4 +1,4 @@
-#	$NetBSD: NBFTP,v 1.4 1999/01/20 11:19:15 mycroft Exp $
+#	$NetBSD: NBFTP,v 1.5 1999/01/20 22:48:42 mycroft Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	NBFTP -- ftp/sup.netbsd.org server machine
@@ -568,10 +568,10 @@ include	"arch/i386/conf/GENERIC.local"
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	md		1	# memory disk device (ramdisk)
-#pseudo-device	vnd		4	# disk-like interface to files
+pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
 pseudo-device	bpfilter	8	# Berkeley packet filter
