@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogin.1,v 1.6 1997/01/09 06:57:45 tls Exp $
+.\"	$NetBSD: rlogin.1,v 1.7 1997/10/19 14:10:34 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,23 +40,23 @@
 .Nm rlogin
 .Nd remote login
 .Sh SYNOPSIS
-.Nm rlogin
+.Nm
 .Op Fl 8EKLdx
 .Op Fl e Ar char
 .Op Fl k Ar realm
 .Op Fl l Ar username
 .Ar host
-.Nm rlogin
+.Nm ""
 .Op Fl 8EKLdx
 .Op Fl e Ar char
 .Op Fl k Ar realm
 .Ar username@host
 .Sh DESCRIPTION
-.Nm Rlogin
+.Nm
 starts a terminal session on a remote host
 .Ar host  .
 .Pp
-.Nm Rlogin
+.Nm
 first attempts to use the Kerberos authorization mechanism, described below.
 If the remote host does not supporting Kerberos the standard Berkeley
 .Pa rhosts
@@ -130,7 +130,7 @@ increased security.
 .Pp
 A line of the form ``<escape char>.'' disconnects from the remote host.
 Similarly, the line ``<escape char>^Z'' will suspend the
-.Nm rlogin
+.Nm
 session, and ``<escape char><delayed-suspend char>'' suspends the
 send portion of the rlogin, but allows output from the remote system.
 By default, the tilde (``~'') character is the escape character, and
@@ -138,7 +138,7 @@ normally control-Y (``^Y'') is the delayed-suspend character.
 .Pp
 All echoing takes place at the remote site, so that (except for delays)
 the
-.Nm rlogin
+.Nm
 is transparent.
 Flow control via ^S/^Q and flushing of input and output on interrupts
 are handled properly.
@@ -169,11 +169,11 @@ the remote user.
 .Pp
 If Kerberos authentication fails, a warning message is printed and the
 standard Berkeley
-.Nm rlogin
+.Nm
 is used instead.
 .Sh ENVIRONMENT
 The following environment variable is utilized by
-.Nm rlogin :
+.Nm "" :
 .Bl -tag -width TERM
 .It Ev TERM
 Determines the user's terminal type.
@@ -185,11 +185,11 @@ Determines the user's terminal type.
 .Xr krb_realmofhost 3
 .Sh HISTORY
 The
-.Nm rlogin
+.Nm
 command appeared in
 .Bx 4.2 .
 .Sh BUGS
-.Nm Rlogin
+.Nm
 will be replaced by
 .Xr telnet  1
 in the near future.

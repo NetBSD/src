@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.19 1997/06/28 23:43:38 tls Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.20 1997/10/19 14:10:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.19 1997/06/28 23:43:38 tls Exp $";
+__RCSID("$NetBSD: rlogin.c,v 1.20 1997/10/19 14:10:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ static char rcsid[] = "$NetBSD: rlogin.c,v 1.19 1997/06/28 23:43:38 tls Exp $";
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
 
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
@@ -127,11 +128,12 @@ struct	winsize winsize;
 
 void		catch_child __P((int));
 void		copytochild __P((int));
-__dead void	doit __P((sigset_t *));
-__dead void	done __P((int));
+void		doit __P((sigset_t *));
+void		done __P((int));
 void		echo __P((char));
 u_int		getescape __P((char *));
 void		lostpeer __P((int));
+int		main __P((int, char **));
 void		mode __P((int));
 void		msg __P((char *));
 void		oob __P((int));
@@ -141,7 +143,7 @@ void		setsignal __P((int));
 int		speed __P((int));
 void		sigwinch __P((int));
 void		stop __P((int));
-__dead void	usage __P((void));
+void		usage __P((void));
 void		writer __P((void));
 void		writeroob __P((int));
 
@@ -151,6 +153,8 @@ void		warning __P((const char *, ...));
 #ifdef OLDSUN
 int		get_window_size __P((int, struct winsize *));
 #endif
+
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -181,13 +185,8 @@ main(argc, argv)
 	one = 1;
 	host = user = NULL;
 
-	if (p = strrchr(argv[0], '/'))
-		++p;
-	else
-		p = argv[0];
-
-	if (strcmp(p, "rlogin") != 0)
-		host = p;
+	if (strcmp(__progname, "rlogin") != 0)
+		host = __progname;
 
 	/* handle "rlogin host flags" */
 	if (!host && argc > 2 && argv[1][0] != '-') {
@@ -200,7 +199,7 @@ main(argc, argv)
 #else
 #define	OPTIONS	"8EKLde:l:"
 #endif
-	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != EOF)
+	while ((ch = getopt(argc - argoff, argv + argoff, OPTIONS)) != -1)
 		switch(ch) {
 		case '8':
 			eight = 1;
@@ -286,7 +285,7 @@ main(argc, argv)
 	if (sp == NULL)
 		errx(1, "login/tcp: unknown service.");
 
-	if (p = getenv("TERM")) {
+	if ((p = getenv("TERM")) != NULL) {
 		(void)strncpy(term, p, sizeof(term) - 1);
 		term[sizeof(term) - 1] = '\0';
 	}
@@ -425,6 +424,7 @@ try_connect:
 	(void)setuid(uid);
 	doit(&smask);
 	/*NOTREACHED*/
+	return (0);
 }
 
 #if BSD >= 198810
@@ -534,7 +534,7 @@ setsignal(sig)
 	(void)sigprocmask(SIG_SETMASK, &sigs, (sigset_t *) 0);
 }
 
-__dead void
+void
 done(status)
 	int status;
 {
@@ -605,7 +605,7 @@ catch_child(signo)
 void
 writer()
 {
-	register int bol, local, n;
+	int bol, local, n;
 	char c;
 
 	bol = 1;			/* beginning of line */
@@ -683,13 +683,13 @@ writer()
 
 void
 #if __STDC__
-echo(register char c)
+echo(char c)
 #else
 echo(c)
-	register char c;
+	char c;
 #endif
 {
-	register char *p;
+	char *p;
 	char buf[8];
 
 	p = buf;
@@ -1003,7 +1003,7 @@ warning(fmt, va_alist)
 }
 #endif
 
-__dead void
+void
 usage()
 {
 	(void)fprintf(stderr,
@@ -1045,7 +1045,7 @@ get_window_size(fd, wp)
 
 u_int
 getescape(p)
-	register char *p;
+	char *p;
 {
 	long val;
 	int len;
@@ -1065,4 +1065,5 @@ getescape(p)
 	msg("illegal option value -- e");
 	usage();
 	/* NOTREACHED */
+	return (0);
 }
