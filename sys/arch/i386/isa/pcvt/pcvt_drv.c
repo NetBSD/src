@@ -1,4 +1,4 @@
-/*	$NetBSD: pcvt_drv.c,v 1.11 1995/04/10 01:07:16 mycroft Exp $	*/
+/*	$NetBSD: pcvt_drv.c,v 1.12 1995/04/10 18:08:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -767,13 +767,11 @@ pccnprobe(struct consdev *cp)
 #if !PCVT_NETBSD
 	cp->cn_tp = &pccons[0];
 #endif /* !PCVT_NETBSD */
-	return 1;
 }
 
 void
 pccninit(struct consdev *cp)
 {
-	return 0;
 }
 
 void
@@ -782,7 +780,6 @@ pccnputc(Dev_t dev, U_char c)
 	if (c == '\n')
 		sput("\r", 1, 1, 0);
 	sput((char *) &c, 1, 1, 0);
-	return 0;
 }
 
 
