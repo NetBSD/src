@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.125 2002/07/20 16:34:15 hannken Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.126 2002/07/21 15:32:18 hannken Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.125 2002/07/20 16:34:15 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.126 2002/07/21 15:32:18 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -366,7 +366,7 @@ raidattach(num)
 	}
 
 	for (raidID = 0; raidID < num; raidID++) {
-		bufq_init(&raid_softc[raidID].buf_queue, BUFQ_FCFS);
+		bufq_alloc(&raid_softc[raidID].buf_queue, BUFQ_FCFS);
 
 		raidrootdev[raidID].dv_class  = DV_DISK;
 		raidrootdev[raidID].dv_cfdata = NULL;
