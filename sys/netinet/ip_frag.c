@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.c,v 1.19 2000/05/11 19:46:06 veego Exp $	*/
+/*	$NetBSD: ip_frag.c,v 1.20 2000/06/12 10:28:21 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-2000 by Darren Reed.
@@ -9,11 +9,15 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.19 2000/05/11 19:46:06 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_frag.c,v 1.20 2000/06/12 10:28:21 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-2000 Darren Reed";
+<<<<<<< ip_frag.c
 static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.3 2000/05/05 15:10:23 darrenr Exp";
 #endif
+=======
+static const char rcsid[] = "@(#)Id: ip_frag.c,v 2.10.2.4 2000/06/06 15:49:15 darrenr Exp";
+>>>>>>> 1.1.1.15
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -149,6 +153,9 @@ ipfr_t *table[];
 {
 	ipfr_t	**fp, *fra, frag;
 	u_int	idx;
+
+	if (ipfr_inuse >= IPFT_SIZE)
+		return NULL;
 
 	frag.ipfr_p = ip->ip_p;
 	idx = ip->ip_p;

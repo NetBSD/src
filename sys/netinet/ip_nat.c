@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.33 2000/05/21 18:45:54 veego Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.34 2000/06/12 10:28:21 veego Exp $	*/
 
 /*
  * Copyright (C) 1995-2000 by Darren Reed.
@@ -11,10 +11,10 @@
  */
 #if !defined(lint)
 #if defined(__NetBSD__)
-static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.33 2000/05/21 18:45:54 veego Exp $";
+static const char rcsid[] = "$NetBSD: ip_nat.c,v 1.34 2000/06/12 10:28:21 veego Exp $";
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.10 2000/05/19 15:54:44 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.13 2000/06/10 15:52:22 darrenr Exp";
 #endif
 #endif
 
@@ -475,10 +475,14 @@ int mode;
 		n->in_next = NULL;
 		*np = n;
 
-		if (n->in_redir & NAT_REDIRECT)
+		if (n->in_redir & NAT_REDIRECT) {
+			n->in_flags &= ~IPN_NOTDST;
 			nat_addrdr(n);
-		if (n->in_redir & (NAT_MAP|NAT_MAPBLK))
+		}
+		if (n->in_redir & (NAT_MAP|NAT_MAPBLK)) {
+			n->in_flags &= ~IPN_NOTSRC;
 			nat_addnat(n);
+		}
 
 		n->in_use = 0;
 		if (n->in_redir & NAT_MAPBLK)
@@ -1716,14 +1720,22 @@ ip_t *ip;
 	if (np->in_p && ip->ip_p != np->in_p)
 		return 0;
 	if (fin->fin_out) {
-		if (!(np->in_redir && (NAT_MAP|NAT_MAPBLK)))
+		if (!(np->in_redir & (NAT_MAP|NAT_MAPBLK)))
 			return 0;
-		if ((fin->fin_fi.fi_saddr & np->in_inmsk) != np->in_inip)
+		if (((fin->fin_fi.fi_saddr & np->in_inmsk) != np->in_inip)
+		    ^ ((np->in_flags & IPN_NOTSRC) != 0))
 			return 0;
-		if ((fin->fin_fi.fi_daddr & np->in_srcmsk) != np->in_srcip)
+		if (((fin->fin_fi.fi_daddr & np->in_srcmsk) != np->in_srcip)
+		    ^ ((np->in_flags & IPN_NOTDST) != 0))
 			return 0;
 	} else {
-		if (!(np->in_redir && NAT_REDIRECT))
+		if (!(np->in_redir & NAT_REDIRECT))
+			return 0;
+		if (((fin->fin_fi.fi_saddr & np->in_srcmsk) != np->in_srcip)
+		    ^ ((np->in_flags & IPN_NOTSRC) != 0))
+			return 0;
+		if (((fin->fin_fi.fi_daddr & np->in_outmsk) != np->in_outip)
+		    ^ ((np->in_flags & IPN_NOTDST) != 0))
 			return 0;
 	}
 
@@ -2026,7 +2038,7 @@ maskloop:
 			} else if ((in.s_addr & np->in_outmsk) != np->in_outip)
 				continue;
 			if ((np->in_redir & NAT_REDIRECT) &&
-			    (!np->in_pmin ||
+			    (!np->in_pmin || (np->in_flags & IPN_FILTER) ||
 			     ((ntohs(np->in_pmax) >= ntohs(dport)) &&
 			      (ntohs(dport) >= ntohs(np->in_pmin)))))
 				if ((nat = nat_new(np, ip, fin, nflags,
