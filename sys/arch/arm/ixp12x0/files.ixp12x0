@@ -1,4 +1,4 @@
-#       $NetBSD: files.ixp12x0,v 1.4 2003/02/17 20:51:52 ichiro Exp $
+#       $NetBSD: files.ixp12x0,v 1.5 2003/07/13 02:48:41 igy Exp $
 #
 # Configuration info for Intel IXP12x0 CPU support
 #
@@ -9,7 +9,6 @@ file	arch/arm/arm32/irq_dispatch.S
 # IXP1200 Slow peripheral devices
 device	ixpsip { [addr=-1], [size=0], [intr=-1] }: bus_space_generic
 file	arch/arm/ixp12x0/ixpsip.c		ixpsip
-file	arch/arm/ixp12x0/ixpsip_io.c		ixpsip
 
 # IXP12x0 Processor CPU support
 # IXP1200 IX,PCI,SRAM bus

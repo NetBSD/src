@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.26 2003/07/13 01:01:51 igy Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.27 2003/07/13 02:48:42 igy Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.26 2003/07/13 01:01:51 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.27 2003/07/13 02:48:42 igy Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -780,7 +780,6 @@ initarm(void *arg)
 void
 consinit(void)
 {
-	extern struct bus_space ixpsip_bs_tag;
 	static int consinit_called = 0;
 
 	if (consinit_called != 0)
@@ -790,7 +789,7 @@ consinit(void)
 
 	pmap_devmap_register(ixm1200_devmap);
 
-	if (ixpcomcnattach(&ixpsip_bs_tag,
+	if (ixpcomcnattach(&ixp12x0_bs_tag,
 			   IXPCOM_UART_HWBASE, IXPCOM_UART_VBASE,
 			   CONSPEED, CONMODE))
 		panic("can't init serial console @%lx", IXPCOM_UART_HWBASE);
