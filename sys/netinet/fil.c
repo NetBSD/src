@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.25 1998/11/26 12:21:47 mrg Exp $	*/
+/*	$NetBSD: fil.c,v 1.26 1999/01/23 08:50:52 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -972,7 +972,7 @@ int len;
 	ipp->ip_src = ip->ip_src;
 	ipp->ip_dst = ip->ip_dst;
 	ipp->ip_p = ip->ip_p;
-	ipp->ip_len = htons(ip->ip_len);
+	ipp->ip_len = htons(ip->ip_len - hlen);
 	m->m_len -= hlen;
 # if BSD >= 199306
 	m->m_data += hlen;
@@ -1026,8 +1026,8 @@ int len;
 	sum += *sp++;	/* ack */
 	sum += *sp++;
 	sum += *sp++;	/* off */
-	sum += *sp;	/* win */
-	sp += 2;	/* Skip over checksum */
+	sum += *sp++;	/* win */
+	sum += *sp++;	/* sum */
 	sum += *sp++;	/* urp */
 
 # if SOLARIS
