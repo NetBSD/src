@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.17 1998/08/29 16:14:15 mrg Exp $	*/
+/*	$NetBSD: tz.c,v 1.18 1998/10/22 23:01:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -226,6 +226,8 @@ tzprobe(xxxsd)
 			sc->sc_tapeid = MT_ISEXABYTE;
 			sc->sc_modelen = 17;
 		} else if (bcmp("VIPER 150", pid, 9) == 0) {
+			sc->sc_tapeid = MT_ISVIPER1;
+		} else if (bcmp("5150ES SCSI", pid, 11)) {
 			sc->sc_tapeid = MT_ISVIPER1;
 		} else if (bcmp("Python 25501", pid, 12) == 0) {
 			sc->sc_tapeid = MT_ISPYTHON;
