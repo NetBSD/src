@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.6 1995/02/28 01:13:50 jtc Exp $	*/
+/*	$NetBSD: getpass.c,v 1.7 1995/06/16 07:20:35 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,11 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)getpass.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getpass.c,v 1.6 1995/02/28 01:13:50 jtc Exp $";
+static char rcsid[] = "$NetBSD: getpass.c,v 1.7 1995/06/16 07:20:35 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <sys/termios.h>
+#include <termios.h>
 #include <signal.h>
 
 #include <paths.h>
