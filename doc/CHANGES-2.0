@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.363 2004/07/28 21:34:02 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.364 2004/07/28 21:35:54 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6263,3 +6263,11 @@ sys/dev/pci/pccbb.c				1.99
 	IBM ThinkPad 40p and 41p respectively, so that the CardBus probes and
 	works on those machines. PR#26380.
 	[he, ticket #724]
+
+etc/Makefile					patch
+
+	Now that one can choose boot image for i386 to produce a slightly
+	different cd-rom image (e.g. using the INSTALL_LAPTOP-derived boot
+	image), make it possible to add a string to the cd-rom image name
+	by setting the optional environment variable CDROM_NAME_ADD.
+	[he, ticket #725]
