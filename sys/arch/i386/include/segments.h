@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.34 2002/10/01 12:57:09 fvdl Exp $	*/
+/*	$NetBSD: segments.h,v 1.35 2002/10/05 21:26:24 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997
@@ -134,7 +134,7 @@ struct region_descriptor {
 #ifdef _KERNEL
 extern union descriptor *idt, *gdt, *ldt;
 
-void setgate __P((struct gate_descriptor *, void *, int, int, int));
+void setgate __P((struct gate_descriptor *, void *, int, int, int, int));
 void setregion __P((struct region_descriptor *, void *, size_t));
 void setsegment __P((struct segment_descriptor *, void *, size_t, int, int,
     int, int));
@@ -253,7 +253,9 @@ void idt_vec_free __P((int));
 #define	GPNPBIOSDATA_SEL 15
 #define	GPNPBIOSSCRATCH_SEL 16
 #define	GPNPBIOSTRAMP_SEL 17
-#define	NGDT		18
+#define GTRAPTSS_SEL	18
+#define GIPITSS_SEL	19
+#define	NGDT		20
 
 /*
  * Entries in the Local Descriptor Table (LDT)
