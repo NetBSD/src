@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/09/20 03:05:39 mikel Exp $
+#	$NetBSD: Makefile.inc,v 1.2.2.1 1997/12/20 23:07:45 perry Exp $
 #
 #	etc.sun3/Makefile.inc -- sun3-specific etc Makefile targets
 #
+
+BIN3+= etc.sun3/ttyaction
 
 .ifdef DESTDIR
 snap_md: netbsd-gen netbsd-dl
