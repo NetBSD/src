@@ -1,5 +1,5 @@
-/*	$NetBSD: faithd.c,v 1.29 2003/05/15 00:23:54 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.60 2003/05/15 00:21:08 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.30 2003/09/02 22:57:29 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.62 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -45,10 +45,8 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/ioctl.h>
-#ifdef __FreeBSD__
-#include <libutil.h>
-#endif
 
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -349,9 +347,8 @@ play_service(int s_wld)
 	socklen_t len;
 	int s_src;
 	pid_t child_pid;
-	fd_set rfds;
+	struct pollfd pfd[2];
 	int error;
-	int maxfd;
 
 	/*
 	 * Wait, accept, fork, faith....
@@ -359,21 +356,18 @@ play_service(int s_wld)
 again:
 	setproctitle("%s", procname);
 
-	FD_ZERO(&rfds);
-	if (s_wld >= FD_SETSIZE)
-		exit_failure("descriptor too big");
-	FD_SET(s_wld, &rfds);
-	maxfd = s_wld;
+	pfd[0].fd = s_wld;
+	pfd[0].events = POLLIN;
+	pfd[1].fd = -1;
+	pfd[1].revents = 0;
 #ifdef USE_ROUTE
 	if (sockfd) {
-		if (sockfd >= FD_SETSIZE)
-			exit_failure("descriptor too big");
-		FD_SET(sockfd, &rfds);
-		maxfd = (maxfd < sockfd) ? sockfd : maxfd;
+		pfd[1].fd = sockfd;
+		pfd[1].events = POLLIN;
 	}
 #endif
 
-	error = select(maxfd + 1, &rfds, NULL, NULL, NULL);
+	error = poll(pfd, sizeof(pfd)/sizeof(pfd[0]), 0);
 	if (error < 0) {
 		if (errno == EINTR)
 			goto again;
@@ -382,11 +376,13 @@ again:
 	}
 
 #ifdef USE_ROUTE
-	if (FD_ISSET(sockfd, &rfds)) {
+	if (pfd[1].revents & POLLIN)
+	{
 		update_myaddrs();
 	}
 #endif
-	if (FD_ISSET(s_wld, &rfds)) {
+	if (pfd[0].revents & POLLIN)
+	{
 		len = sizeof(srcaddr);
 		s_src = accept(s_wld, (struct sockaddr *)&srcaddr, &len);
 		if (s_src < 0) {
