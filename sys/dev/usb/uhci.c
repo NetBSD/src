@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.173 2003/05/13 04:41:59 gson Exp $	*/
+/*	$NetBSD: uhci.c,v 1.174 2003/07/03 11:24:13 drochner Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.173 2003/05/13 04:41:59 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.174 2003/07/03 11:24:13 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3472,6 +3472,7 @@ uhci_root_intr_start(usbd_xfer_handle xfer)
 {
 	usbd_pipe_handle pipe = xfer->pipe;
 	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
+	unsigned int ival;
 
 	DPRINTFN(3, ("uhci_root_intr_start: xfer=%p len=%d flags=%d\n",
 		     xfer, xfer->length, xfer->flags));
@@ -3479,7 +3480,9 @@ uhci_root_intr_start(usbd_xfer_handle xfer)
 	if (sc->sc_dying)
 		return (USBD_IOERROR);
 
-	sc->sc_ival = mstohz(xfer->pipe->endpoint->edesc->bInterval);
+	/* XXX temporary variable needed to avoid gcc3 warning */
+	ival = xfer->pipe->endpoint->edesc->bInterval;
+	sc->sc_ival = mstohz(ival);
 	usb_callout(sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
 	sc->sc_intr_xfer = xfer;
 	return (USBD_IN_PROGRESS);
