@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.110 2002/12/11 14:28:46 fvdl Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.111 2002/12/12 11:34:46 scw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.110 2002/12/11 14:28:46 fvdl Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.111 2002/12/12 11:34:46 scw Exp $");
 #endif
 #endif	/* not lint */
 
@@ -912,6 +912,8 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 {
 	struct disklabel *lp;
 	char		*p;
+	daddr_t		 lsec;
+	off_t		 loff;
 #if NUMBOOT > 0
 	int		 b;
 	char		*dkbasename;
@@ -920,13 +922,17 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 # endif
 #endif	/* NUMBOOT > 0 */
 
+	if ((lsec = getlabelsector()) < 0)
+		err(4, "getlabelsector()");
+	if ((loff = getlabeloffset()) < 0)
+		err(4, "getlabeloffset()");
+
 	/* XXX */
 	if (dp->d_secsize == 0) {
 		dp->d_secsize = DEV_BSIZE;
 		dp->d_bbsize = BBSIZE;
 	}
-	lp = (struct disklabel *)
-		(boot + (LABELSECTOR * dp->d_secsize) + LABELOFFSET);
+	lp = (struct disklabel *) (boot + (lsec * dp->d_secsize) + loff);
 	(void) memset(lp, 0, sizeof(*lp));
 
 #ifdef SAVEBOOTAREA
