@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.6 1993/06/14 16:45:28 mycroft Exp $
+ *	$Id: if_ne.c,v 1.7 1993/06/14 16:49:09 mycroft Exp $
  */
 
 /*
@@ -70,6 +70,13 @@
 #ifdef NS
 #include "netns/ns.h"
 #include "netns/ns_if.h"
+#endif
+
+#include "bpfilter.h"
+#if NBPFILTER > 0
+#include "sys/select.h"
+#include "net/bpf.h"
+#include "net/bpfdesc.h"
 #endif
 
 #include "i386/isa/isa_device.h"
@@ -113,6 +120,7 @@ struct	ne_softc {
 	short	ns_rxbndry;		/* recevier buffer boundary */
 	short	ns_port;		/* i/o port base */
 	short	ns_mode;		/* word/byte mode */
+	caddr_t	ns_bpf;			/* BPF frob */
 } ne_softc[NNE] ;
 #define	ENBUFSIZE	(sizeof(struct ether_header) + ETHERMTU + 2 + ETHER_MIN_LEN)
 
@@ -344,6 +352,11 @@ neattach(dvp)
 	ifp->if_reset = nereset;
 	ifp->if_watchdog = 0;
 	if_attach(ifp);
+
+#if NBPFILTER > 0
+	bpfattach(&ns->ns_bpf, ifp, DLT_EN10MB,
+		  sizeof(struct ether_header));
+#endif
 }
 
 /*
@@ -391,7 +404,12 @@ neinit(unit)
 	outb(nec+ds1_curr, (ns->ns_txstart+PKTSZ)/DS_PGSIZE);
 	ns->ns_cur = (ns->ns_txstart+PKTSZ)/DS_PGSIZE;
 	outb (nec+ds_cmd, DSCM_NODMA|DSCM_PG0|DSCM_START);
-	outb (nec+ds0_rcr, DSRC_AB);
+#if NBPFILTER > 0
+	if (ns->ns_if.if_flags & IFF_PROMISC)
+		outb (nec+ds0_rcr, DSRC_AB | DSRC_PRO | DSRC_AR | DSRC_SEP);
+	else
+#endif
+		outb (nec+ds0_rcr, DSRC_AB);
 	outb(nec+ds0_dcr, ns->ns_mode);
 	outb (nec+ds0_imr, 0xff);
 
@@ -407,6 +425,7 @@ neinit(unit)
  * Get another datagram to send off of the interface queue,
  * and map it to the interface before starting the output.
  * called only at splimp or interrupt level.
+ * XXX: Needs BPF hook.
  */
 nestart(ifp)
 	struct ifnet *ifp;
@@ -644,7 +663,7 @@ nerecv(ns)
 			nefetch(ns, p, b, l);
 	}
 	/* don't forget checksum! */
-	len -= sizeof(struct ether_header) + sizeof(long);
+	len -= sizeof(long) + sizeof(struct ether_header);
 			
 	neread(ns,(caddr_t)(ns->ns_pb), len);
 }
@@ -662,6 +681,7 @@ neread(ns, buf, len)
     	struct mbuf *m;
 	int off, resid;
 	register struct ifqueue *inq;
+	u_short etype;
 
 	/*
 	 * Deal with trailer protocol: if type is trailer type
@@ -669,19 +689,19 @@ neread(ns, buf, len)
 	 * Remember that type was trailer by setting off.
 	 */
 	eh = (struct ether_header *)buf;
-	eh->ether_type = ntohs((u_short)eh->ether_type);
+	etype = ntohs((u_short)eh->ether_type);
 #define	nedataaddr(eh, off, type)	((type)(((caddr_t)((eh)+1)+(off))))
-	if (eh->ether_type >= ETHERTYPE_TRAIL &&
-	    eh->ether_type < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
-		off = (eh->ether_type - ETHERTYPE_TRAIL) * 512;
+	if (etype >= ETHERTYPE_TRAIL &&
+	    etype < ETHERTYPE_TRAIL+ETHERTYPE_NTRAILER) {
+		off = (etype - ETHERTYPE_TRAIL) * 512;
 		if (off >= ETHERMTU) return;		/* sanity */
-		eh->ether_type = ntohs(*nedataaddr(eh, off, u_short *));
-		resid = ntohs(*(nedataaddr(eh, off+2, u_short *)));
+		eh->ether_type = *nedataaddr(eh, off, u_short *);
+		resid = ntohs(*nedataaddr(eh, off+2, u_short *));
 		if (off + resid > len) return;		/* sanity */
 		len = off + resid;
 	} else	off = 0;
 
-	if (len == 0) return;
+	if (len <= 0) return;
 
 	/*
 	 * Pull packet off interface.  Off is nonzero if packet
@@ -691,6 +711,41 @@ neread(ns, buf, len)
 	 */
 	m = neget(buf, len, off, &ns->ns_if);
 	if (m == 0) return;
+
+#if NBPFILTER > 0
+	/*
+	 * Check if there's a bpf filter listening on this interface.
+	 * If so, hand off the raw packet to bpf. 
+	 */
+	if (ns->ns_bpf) {
+		bpf_mtap(ns->ns_bpf, m);
+	}
+
+	/*
+	 * Note that the interface cannot be in promiscuous mode if
+	 * there are no bpf listeners.  And if we are in promiscuous
+	 * mode, we have to check if this packet is really ours.
+	 *
+	 * XXX This test does not support multicasts.
+	 */
+	if ((ns->ns_if.if_flags & IFF_PROMISC) &&
+		bcmp(eh->ether_dhost, ns->ns_addrp,
+			sizeof(eh->ether_dhost)) != 0 &&
+		bcmp(eh->ether_dhost, etherbroadcastaddr,
+			sizeof(eh->ether_dhost)) != 0) {
+
+		m_freem(m);
+		return;
+	}
+#endif
+
+	/*
+	 * Drop packet header and save fixed up ether_type.
+	 */
+#if NBPFILTER > 0
+	m_adj(m, sizeof(struct ether_header));
+#endif
+	eh->ether_type = ntohs(eh->ether_type);
 
 	ether_input(&ns->ns_if, eh, m);
 }
@@ -709,70 +764,81 @@ neread(ns, buf, len)
  * we copy into clusters.
  */
 struct mbuf *
-neget(buf, totlen, off0, ifp)
+neget(buf, totlen, off, ifp)
 	caddr_t buf;
-	int totlen, off0;
+	int totlen, off;
 	struct ifnet *ifp;
 {
-	struct mbuf *top, **mp, *m, *p;
-	int off = off0, len;
-	register caddr_t cp = buf;
-	char *epkt;
-
-	buf += sizeof(struct ether_header);
-	cp = buf;
-	epkt = cp + totlen;
-
-
-	if (off) {
-		cp += off + 2 * sizeof(u_short);
-		totlen -= 2 * sizeof(u_short);
-	}
+	struct mbuf *top, *last, *m;
+	int len;
+	register caddr_t cp;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
-	m->m_pkthdr.rcvif = ifp;
-	m->m_pkthdr.len = totlen;
-	m->m_len = MHLEN;
+	top = last = m;
 
-	top = 0;
-	mp = &top;
+#if NBPFILTER > 0
+	/*
+	 * Copy the ethernet header first.
+	 * XXX: This assumes that ether_header fits inside the mbuf.
+	 */
+	/*
+	 * XXX: This line is to avoid `nfs_rcv odd length!' spewage.
+	 */
+	m->m_data += (MHLEN - sizeof(struct ether_header)) & 3;
+	bcopy(buf, mtod(m, caddr_t), sizeof(struct ether_header));
+        m->m_len = sizeof(struct ether_header);
+	m->m_pkthdr.len = totlen + sizeof(struct ether_header);
+#else
+	m->m_len = 0;
+	m->m_pkthdr.len = totlen;
+#endif
+	m->m_pkthdr.rcvif = ifp;
+
+	buf += sizeof(struct ether_header);
+	cp = buf;
+
+	if (off) {
+		cp += off + 2 * sizeof(u_short);
+		totlen -= off + 2 * sizeof(u_short);
+	}
+
+    copy:
 	while (totlen > 0) {
-		if (top) {
+		len = min(totlen, M_TRAILINGSPACE(m));
+		if (!len) {
 			MGET(m, M_DONTWAIT, MT_DATA);
 			if (m == 0) {
 				m_freem(top);
 				return (0);
 			}
-			m->m_len = MLEN;
+			if (totlen >= MINCLSIZE) {
+				MCLGET(m, M_DONTWAIT);
+				if (m == 0) {
+					m_freem(top);
+					return (0);
+				}
+			}
+			m->m_len = 0;
+			last->m_next = m;
+			last = m;
+			len = min(totlen, M_TRAILINGSPACE(m));
 		}
-		len = min(totlen, epkt - cp);
-		if (len >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				m->m_len = len = min(len, MCLBYTES);
-			else
-				len = m->m_len;
-		} else {
-			/*
-			 * Place initial small packet/header at end of mbuf.
-			 */
-			if (len < m->m_len) {
-				if (top == 0 && len + max_linkhdr <= m->m_len)
-					m->m_data += max_linkhdr;
-				m->m_len = len;
-			} else
-				len = m->m_len;
-		}
-		bcopy(cp, mtod(m, caddr_t), (unsigned)len);
-		cp += len;
-		*mp = m;
-		mp = &m->m_next;
+
+		bcopy(cp, mtod(m, caddr_t) + m->m_len, len);
+		m->m_len += len;
 		totlen -= len;
-		if (cp == epkt)
-			cp = buf;
+		cp += len;
 	}
+
+	if (off) {
+		totlen = off;
+		cp = buf;
+		off = 0;
+		goto copy;
+	}
+
 	return (top);
 }
 
@@ -837,8 +903,17 @@ neioctl(ifp, cmd, data)
 			ifp->if_flags &= ~IFF_RUNNING;
 			outb(ns->ns_port + ds_cmd, DSCM_STOP|DSCM_NODMA);
 		} else if (ifp->if_flags & IFF_UP &&
-		    (ifp->if_flags & IFF_RUNNING) == 0)
+		    (ifp->if_flags & IFF_RUNNING) == 0) {
 			neinit(ifp->if_unit);
+			break;
+		}
+#if NBPFILTER > 0
+		if (ns->ns_if.if_flags & IFF_PROMISC)
+			outb (ns->ns_port+ds0_rcr, DSRC_AB | DSRC_PRO |
+			      DSRC_AR | DSRC_SEP);
+		else
+#endif
+			outb (ns->ns_port+ds0_rcr, DSRC_AB);
 		break;
 
 #ifdef notdef
