@@ -1,4 +1,5 @@
-.\" $NetBSD: xfer,v 1.17 2000/03/13 22:37:13 soren Exp $	
+.\"	$NetBSD: xfer,v 1.18 2000/10/04 00:29:28 lukem Exp $	
+.\"
 .\"(
 .Pp
 Installation is supported from several media types, including:
@@ -51,7 +52,7 @@ disk.
 Note that, when installing or upgrading, the floppy can be
 write-protected if you wish. These systems mount ramdisks as their
 root file systems once booted, and will not need to write to the
-floppy itself at any time -- indeed, once booted, the floppy may be
+floppy itself at any time - indeed, once booted, the floppy may be
 removed from the disk drive.
 .Pp
 Obviously, the steps necessary to prepare the distribution sets for
@@ -82,7 +83,7 @@ Format all of the floppies with
 make any of them bootable
 .Tn DOS
 floppies, i.e. don't use
-.Li format/s
+.Li format /s
 to format them. (If the floppies are bootable, then the
 .Tn DOS
 system
