@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.24 2000/04/10 20:26:31 tron Exp $	*/
+/*	$NetBSD: portmap.c,v 1.25 2000/05/30 15:31:14 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.24 2000/04/10 20:26:31 tron Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.25 2000/05/30 15:31:14 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,8 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
  * Mountain View, California  94043
  */
 
+#define PARANOID_LIST
+
 /* who to suid to if -s is given */
 #define RUN_AS	"daemon"
 
@@ -110,6 +112,12 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <syslog.h>
 #include <unistd.h>
 #include <util.h>
+
+#ifdef PARANOID_LIST
+#include <rpcsvc/mount.h>
+#include <rpcsvc/nfs_prot.h>
+#include <rpcsvc/yp_prot.h>
+#endif
 
 #ifdef LIBWRAP
 # include <tcpd.h>
@@ -171,6 +179,9 @@ int debugging = 0;
 int insecure = 0;
 int runasdaemon = 0;
 int verboselog = 0;
+#ifdef PARANOID_LIST
+int paranoid_hardcoded_service_list = 0;
+#endif
 
 int
 main(argc, argv)
@@ -184,7 +195,7 @@ main(argc, argv)
 	struct pmaplist *pml;
 	extern char *__progname;
 
-	while ((c = getopt(argc, argv, "dils")) != -1) {
+	while ((c = getopt(argc, argv, "dilps")) != -1) {
 		switch (c) {
 
 		case 'd':
@@ -198,7 +209,11 @@ main(argc, argv)
 		case 'l':
 			verboselog = 1;
 			break;
-
+#ifdef PARANOID_LIST
+		case 'p':
+			paranoid_hardcoded_service_list = 1;
+			break;
+#endif
 		case 's':
 			runasdaemon = 1;
 			break;
@@ -319,8 +334,8 @@ reg_service(rqstp, xprt)
 	
 	if (debugging)
 		(void)fprintf(stderr, "server: about to do a switch\n");
-	switch (rqstp->rq_proc) {
 
+	switch (rqstp->rq_proc) {
 	case PMAPPROC_NULL:
 		/*
 		 * Null proc call
@@ -493,6 +508,7 @@ reg_service(rqstp, xprt)
 		 * This procedure is only supported on rpc/udp and calls via 
 		 * rpc/udp.  It passes null authentication parameters.
 		 */
+
 		callit(rqstp, xprt);
 		break;
 
@@ -616,6 +632,23 @@ callit(rqstp, xprt)
 	/* host and service access control */
 	if (!check_access(svc_getcaller(xprt), rqstp->rq_proc, a.rmt_prog)) 
 		return;
+
+	if ((a.rmt_prog == PMAPPROG) && (a.rmt_proc != PMAPPROC_NULL) && !insecure) {
+		logit(deny_severity, svc_getcaller(xprt), a.rmt_proc, a.rmt_prog,
+			": attempt to call port mapper indirectly");
+		return;
+	}
+
+#ifdef PARANOID_LIST
+	if (paranoid_hardcoded_service_list && (a.rmt_prog == NFS_PROGRAM ||
+		    (a.rmt_prog == MOUNTPROG && a.rmt_proc == MOUNTPROC_MNT) ||
+		    (a.rmt_prog == YPPROG && a.rmt_proc != YPPROC_DOMAIN_NONACK))) {
+		logit(deny_severity, svc_getcaller(xprt), a.rmt_proc, a.rmt_prog,
+			": attempt to call disallowed service indirectly");
+		return;
+	}
+#endif
+
 	if ((pml = find_service(a.rmt_prog, a.rmt_vers,
 	    (u_long)IPPROTO_UDP)) == NULL)
 		return;
