@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2000/10/01 22:13:37 itojun Exp $
+#	$NetBSD: Makefile,v 1.8 2001/01/08 07:38:00 itojun Exp $
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.7 2000/10/01 22:13:37 itojun Exp $
+#	$Id: Makefile,v 1.8 2001/01/08 07:38:00 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -31,6 +31,7 @@ SRCS+=	app_rand.c apps.c asn1pars.c ca.c ciphers.c crl.c crl2p7.c dgst.c \
 	speed.c spkac.c verify.c version.c x509.c
 
 LDADD+=	-lssl -lcrypto
+DPADD+=	${LIBSSL} ${LIBCRYPTO}
 
 CPPFLAGS+= -DMONOLITH -DUSE_SSL
 
