@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.67 2003/09/08 17:23:15 petrov Exp $	*/
+/*	$NetBSD: iommu.c,v 1.68 2003/09/15 07:38:22 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.67 2003/09/08 17:23:15 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.68 2003/09/15 07:38:22 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -967,7 +967,8 @@ iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 	}
 
 	if (i == map->dm_nsegs)
-		panic("iommu_dvmamap_sync: segment too short %lu", offset);
+		panic("iommu_dvmamap_sync: segment too short %llu", 
+		    (unsigned long long)offset);
 
 	if (ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_POSTWRITE)) {
 		/* Nothing to do */;
