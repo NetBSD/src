@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.26 2002/10/21 04:15:01 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.27 2003/01/19 23:21:44 rafal Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -138,6 +138,8 @@ all)
 	makedev ttyZ0 ttyZ1 ttyZ2 ttyZ3
 	makedev random local isdns
 	makedev scsibus0 scsibus1 scsibus2 scsibus3
+	makedev pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
+	makedev audio
 	makedev clockctl
 	makedev systrace
 	;;
@@ -498,6 +500,40 @@ systrace)
 	mknod systrace c 63 0
 	chmod 644 systrace
 	;;
+
+audio)
+	makedev audio0 audio1 audio2 audio3
+	ln -fs sound0 sound
+	ln -fs audio0 audio
+	ln -fs mixer0 mixer
+	ln -fs audioctl0 audioctl
+	;;
+
+audio*)
+	unit=${i#audio}
+	audio=audio$unit
+	sound=sound$unit
+	mixer=mixer$unit
+	major=64
+	audioctl=audioctl$unit
+	if [ "$unit" = "" ]; then 
+		unit=0
+	fi
+	rm -f $audio $sound $mixer $audioctl
+	mknod $sound    c $major $(($unit + 0))
+	mknod $audio    c $major $(($unit + 128))
+	mknod $mixer    c $major $(($unit + 16))
+	mknod $audioctl c $major $(($unit + 192))
+	chmod 666 $audio $sound $mixer $audioctl
+	;;
+
+pci*)
+	unit=${i#pci}
+	rm -f pci$unit
+	mknod pci$unit c 65 $unit
+	chmod 644 pci$unit
+	;;
+
 
 local)
 	if [ -f "$0.local" ]; then
