@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.111.2.2 2004/06/07 10:21:16 tron Exp $	*/
+/*	$NetBSD: defs.h,v 1.111.2.3 2004/06/17 09:14:13 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -198,6 +198,7 @@ EXTERN unsigned int  rammb   INIT(0);
 
 /* Actual name of the disk. */
 EXTERN char diskdev[SSTRSIZE] INIT("");
+EXTERN int no_mbr;				/* set for raid (etc) */
 EXTERN int rootpart;				/* partition we install into */
 EXTERN const char *disktype INIT("unknown");		/* ST506, SCSI, ... */
 
