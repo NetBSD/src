@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.106 2000/12/20 06:24:37 haya Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.107 2001/01/10 23:48:54 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.107 2000/12/20 06:05:13 haya Exp 
+ *	NetBSD: pcmciadevs,v 1.108 2001/01/10 23:47:56 ichiro Exp 
  */
 
 /*-
@@ -88,6 +88,7 @@
 #define	PCMCIA_VENDOR_ALLIEDTELESIS	0xc00f	/* Allied Telesis K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 #define	PCMCIA_VENDOR_RATOC	0xc015	/* RATOC System Inc. */
+#define	PCMCIA_VENDOR_EMTAC	0xc250	/* EMTAC Technology Corporation */
 #define	PCMCIA_VENDOR_ELSA	0xd601	/* Elsa */
 
 /*
@@ -441,6 +442,11 @@
 #define	PCMCIA_CIS_MACNICA_ME1_JEIDA	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MACNICA_ME1_JEIDA	0x3300
 #define	PCMCIA_STR_MACNICA_ME1_JEIDA	"MACNICA ME1 for JEIDA"
+
+/* EMTAC */
+#define	PCMCIA_CIS_EMTAC_WLAN	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_EMTAC_WLAN	0x0002
+#define	PCMCIA_STR_EMTAC_WLAN	"EMTAC A2424i 11Mbps WLAN Card"
 
 /* Cards we know only by their cis */
 #define	PCMCIA_VENDOR_PREMAX	-1	/* Premax */
