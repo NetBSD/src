@@ -14,11 +14,8 @@ time_t getsecs()
 
 int getticks()
 {
-	register MachMonRomVector * romvec;
 	register int ticks;
 
-	romvec = romVectorPtr;
-	ticks = *(romvec->nmiClock);
-
+	ticks = *romVectorPtr->nmiClock;
 	return (ticks);
 }
