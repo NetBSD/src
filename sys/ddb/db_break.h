@@ -24,11 +24,14 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_break.h,v 1.2 1993/05/20 03:39:09 cgd Exp $
+ * $Id: db_break.h,v 1.3 1994/01/08 01:01:50 mycroft Exp $
  *
  * HISTORY
  * $Log: db_break.h,v $
- * Revision 1.2  1993/05/20 03:39:09  cgd
+ * Revision 1.3  1994/01/08 01:01:50  mycroft
+ * Rearrange some #includes.
+ *
+ * Revision 1.2  1993/05/20  03:39:09  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:26  cgd
@@ -61,7 +64,8 @@
 #ifndef	_DDB_DB_BREAK_H_
 #define	_DDB_DB_BREAK_H_
 
-#include <vm/vm_map.h>
+#include <vm/vm.h>
+
 #include <machine/db_machdep.h>
 
 /*
