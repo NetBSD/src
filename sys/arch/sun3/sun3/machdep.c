@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1995/04/08 04:43:44 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1995/04/10 11:58:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -143,7 +143,7 @@ caddr_t allocsys __P((caddr_t));
  */
 char	machine[] = "sun3";		/* cpu "architecture" */
 char	cpu_model[120];
-vm_offset_t vmempage;
+vm_offset_t vmmap;
 
 
 void
@@ -316,11 +316,11 @@ void cpu_startup()
 	   nbuf, bufpages * CLBYTES);
 
 	/*
-	 * Allocate vmempage (for use by /dev/mem)
+	 * Allocate vmmap (for use by /dev/mem)
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
-	vmempage = kmem_alloc_wait(kernel_map, NBPG);
+	vmmap = kmem_alloc_wait(kernel_map, NBPG);
 
     /*    initcpu();*/
     /*
