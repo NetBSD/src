@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 1996/04/21 21:13:17 veego Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30 1996/04/23 22:54:49 veego Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -293,7 +293,6 @@ int	dma_cachectl __P((caddr_t, int));
 /*
  * Prototypes from vm_machdep.c
  */
-void	cpu_set_kpc __P((struct proc *, void (*)(struct proc *)));
 int	kvtop __P((caddr_t));
 void	physaccess __P((caddr_t,  caddr_t, int, int));
 void	physunaccess __P((caddr_t, int));
