@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.1.1.1.2.2 1999/12/04 17:05:17 he Exp $	*/
+/*	$NetBSD: util.c,v 1.1.1.1.2.3 2001/01/28 17:09:04 he Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "Id: util.c,v 1.10 1999/01/08 19:25:11 vixie Exp";
+static const char rcsid[] = "Id: util.c,v 1.11 2000/02/04 08:28:33 vixie Exp";
 #endif
 
 #include "port_before.h"
@@ -50,18 +50,18 @@ static const char rcsid[] = "Id: util.c,v 1.10 1999/01/08 19:25:11 vixie Exp";
 void
 map_v4v6_address(const char *src, char *dst) {
 	u_char *p = (u_char *)dst;
-	char tmp[INADDRSZ];
+	char tmp[NS_INADDRSZ];
 	int i;
 
 	/* Stash a temporary copy so our caller can update in place. */
-	memcpy(tmp, src, INADDRSZ);
+	memcpy(tmp, src, NS_INADDRSZ);
 	/* Mark this ipv6 addr as a mapped ipv4. */
 	for (i = 0; i < 10; i++)
 		*p++ = 0x00;
 	*p++ = 0xff;
 	*p++ = 0xff;
 	/* Retrieve the saved copy and we're done. */
-	memcpy((void*)p, tmp, INADDRSZ);
+	memcpy((void*)p, tmp, NS_INADDRSZ);
 }
 
 int

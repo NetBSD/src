@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.1.1.1.2.2 1999/12/04 16:57:40 he Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.1.1.1.2.3 2001/01/28 17:08:59 he Exp $	*/
 
 /*
  * ++Copyright++ 1990
@@ -57,11 +57,13 @@
 
 /*
  *	@(#)pathnames.h	5.1 (Berkeley) 5/28/90
- *	Id: pathnames.h,v 8.1 1994/12/15 06:24:31 vixie Exp
+ *	Id: pathnames.h,v 8.2 2000/11/08 06:47:32 marka Exp
  */
 
 #define	_PATH_NSLOOKUPRC	"/.nslookuprc"
+#ifndef _PATH_PAGERCMD
 #define _PATH_PAGERCMD		"more"
+#endif
 
 #ifndef _PATH_HELPFILE
 #if defined(BSD) && BSD >= 198810

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.1.1.1.2.2 1999/12/04 17:08:04 he Exp $	*/
+/*	$NetBSD: res_query.c,v 1.1.1.1.2.3 2001/01/28 17:09:06 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -72,7 +72,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_query.c,v 8.19 1999/10/15 19:49:11 vixie Exp";
+static const char rcsid[] = "Id: res_query.c,v 8.20 2000/02/29 05:39:12 vixie Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -192,8 +192,9 @@ res_nsearch(res_state statp,
 	HEADER *hp = (HEADER *) answer;
 	char tmp[NS_MAXDNAME];
 	u_int dots;
-	int trailing_dot, ret;
+	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, root_on_list = 0;
+	int tried_as_is = 0;
 
 	errno = 0;
 	RES_SET_H_ERRNO(statp, HOST_NOT_FOUND);  /* True if we never query. */
@@ -210,12 +211,19 @@ res_nsearch(res_state statp,
 		return (res_nquery(statp, cp, class, type, answer, anslen));
 
 	/*
-	 * If there are enough dots in the name, do no searching.
-	 * (The threshold can be set with the "ndots" option.)
+	 * If there are enough dots in the name, let's just give it a
+	 * try 'as is'. The threshold can be set with the "ndots" option.
+	 * Also, query 'as is', if there is a trailing dot in the name.
 	 */
-	if (dots >= statp->ndots || trailing_dot)
-		return (res_nquerydomain(statp, name, NULL, class, type,
-					 answer, anslen));
+	saved_herrno = -1;
+	if (dots >= statp->ndots || trailing_dot) {
+		ret = res_nquerydomain(statp, name, NULL, class, type,
+					 answer, anslen);
+		if (ret > 0 || trailing_dot)
+			return (ret);
+		saved_herrno = h_errno;
+		tried_as_is++;
+	}
 
 	/*
 	 * We do at least one level of search if
@@ -287,10 +295,11 @@ res_nsearch(res_state statp,
 	}
 
 	/*
-	 * If the name has any dots at all, and "." is not on the search
-	 * list, then try an as-is query now.
+	 * If the name has any dots at all, and no earlier 'as-is' query 
+	 * for the name, and "." is not on the search list, then try an as-is
+	 * query now.
 	 */
-	if (statp->ndots) {
+	if (statp->ndots && !(tried_as_is || root_on_list)) {
 		ret = res_nquerydomain(statp, name, NULL, class, type,
 				       answer, anslen);
 		if (ret > 0)
@@ -304,7 +313,9 @@ res_nsearch(res_state statp,
 	 * else send back meaningless H_ERRNO, that being the one from
 	 * the last DNSRCH we did.
 	 */
-	if (got_nodata)
+	if (saved_herrno != -1)
+		RES_SET_H_ERRNO(statp, saved_herrno);
+	else if (got_nodata)
 		RES_SET_H_ERRNO(statp, NO_DATA);
 	else if (got_servfail)
 		RES_SET_H_ERRNO(statp, TRY_AGAIN);

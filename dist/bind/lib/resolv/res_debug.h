@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.h,v 1.1.1.1.2.2 1999/12/04 17:07:38 he Exp $	*/
+/*	$NetBSD: res_debug.h,v 1.1.1.1.2.3 2001/01/28 17:09:06 he Exp $	*/
 
 /*
  * Copyright (c) 1999 by Internet Software Consortium.
@@ -23,8 +23,8 @@
 #ifndef DEBUG
 #   define Dprint(cond, args) /*empty*/
 #   define DprintQ(cond, args, query, size) /*empty*/
-#   define Aerror(file, string, error, address) /*empty*/
-#   define Perror(file, string, error) /*empty*/
+#   define Aerror(statp, file, string, error, address) /*empty*/
+#   define Perror(statp, file, string, error) /*empty*/
 #else
 #   define Dprint(cond, args) if (cond) {fprintf args;} else {}
 #   define DprintQ(cond, args, query, size) if (cond) {\
