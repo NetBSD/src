@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13 1999/02/26 22:37:58 is Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13.2.1 1999/11/28 10:40:46 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,58 +81,62 @@
 #include <sys/trace.h>
 #include <sys/mount.h>
 
+#include <vm/vm.h>
+
 #include <sys/syscallargs.h>
 
 #ifdef TRACE
 int	nvualarm;
 
-vtrace(p, v, retval)
+sys_vtrace(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct vtrace_args /* {
+	struct sys_vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
 	} */ *uap = v;
 	int vdoualarm();
 
-	switch (uap->request) {
+	switch (SCARG(uap, request)) {
 
 	case VTR_DISABLE:		/* disable a trace point */
 	case VTR_ENABLE:		/* enable a trace point */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
-		traceflags[uap->value] = uap->request;
+		*retval = traceflags[SCARG(uap, value)];
+		traceflags[SCARG(uap, value)] = SCARG(uap, request);
 		break;
 
 	case VTR_VALUE:		/* return a trace point setting */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
+		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
 			return (EINVAL);
-		*retval = traceflags[uap->value];
+		*retval = traceflags[SCARG(uap, value)];
 		break;
 
 	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (uap->value <= 0 || uap->value > 60 * hz || nvualarm > 5)
+		if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
+		    nvualarm > 5)
 			return (EINVAL);
 		nvualarm++;
-		timeout(vdoualarm, (caddr_t)p->p_pid, uap->value);
+		timeout(vdoualarm, (void *)p->p_pid, SCARG(uap, value));
 		break;
 
 	case VTR_STAMP:
-		trace(TR_STAMP, uap->value, p->p_pid);
+		trace(TR_STAMP, SCARG(uap, value), p->p_pid);
 		break;
 	}
 	return (0);
 }
 
 vdoualarm(arg)
-	int arg;
+	void *arg;
 {
-	register struct proc *p;
+	int pid = (int)arg;
+	struct proc *p;
 
-	p = pfind(arg);
+	p = pfind(pid);
 	if (p)
 		psignal(p, 16);
 	nvualarm--;
@@ -148,9 +152,16 @@ vdoualarm(arg)
 #define CC_EXTPURGE	0x80000000
 /* XXX end should be */
 
-void	DCIU __P((void));
-void	ICIA __P((void));
-
+/*
+ * Note that what we do here for a 68040 is different than HP-UX.
+ *
+ * In 'pux they either act on a line (len == 16), a page (len == NBPG)
+ * or the whole cache (len == anything else).
+ *
+ * In BSD we attempt to be more optimal when acting on "odd" sizes.
+ * For lengths up to 1024 we do all affected lines, up to 2*NBPG we
+ * do pages, above that we do the entire cache.
+ */
 /*ARGSUSED1*/
 int
 cachectl1(req, addr, len, p)
@@ -161,6 +172,100 @@ cachectl1(req, addr, len, p)
 {
 	int error = 0;
 
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		int inc = 0;
+		int doall = 0;
+		paddr_t pa = 0;
+		vaddr_t end = 0;
+#ifdef COMPAT_HPUX
+		extern struct emul emul_hpux;
+
+		if ((p->p_emul == &emul_hpux) &&
+		    len != 16 && len != NBPG)
+			doall = 1;
+#endif
+
+		if (addr == 0 ||
+#if defined(M68040)
+#if defined(M68060)
+		    (cputype == CPU_68040 && req & CC_IPURGE) ||
+#else
+		    (req && CC_IPURGE) ||
+#endif
+#endif
+		    ((req & ~CC_EXTPURGE) != CC_PURGE && len > 2*NBPG))
+			doall = 1;
+
+		if (!doall) {
+			end = addr + len;
+			if (len <= 1024) {
+				addr = addr & ~0xF;
+				inc = 16;
+			} else {
+				addr = addr & ~PGOFSET;
+				inc = NBPG;
+			}
+		}
+		do {
+			/*
+			 * Convert to physical address if needed.
+			 * If translation fails, we perform operation on
+			 * entire cache (XXX is this a rational thing to do?)
+			 */
+			if (!doall &&
+			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
+				if (pmap_extract(p->p_vmspace->vm_map.pmap,
+				    addr, &pa) == FALSE)
+					doall = 1;
+			}
+			switch (req) {
+			case CC_EXTPURGE|CC_IPURGE:
+			case CC_IPURGE:
+				if (doall) {
+					DCFA();
+					ICPA();
+				} else if (inc == 16) {
+					DCFL(pa);
+					ICPL(pa);
+				} else if (inc == NBPG) {
+					DCFP(pa);
+					ICPP(pa);
+				}
+				break;
+			
+			case CC_EXTPURGE|CC_PURGE:
+			case CC_PURGE:
+				if (doall)
+					DCFA();	/* note: flush not purge */
+				else if (inc == 16)
+					DCPL(pa);
+				else if (inc == NBPG)
+					DCPP(pa);
+				break;
+
+			case CC_EXTPURGE|CC_FLUSH:
+			case CC_FLUSH:
+				if (doall)
+					DCFA();
+				else if (inc == 16)
+					DCFL(pa);
+				else if (inc == NBPG)
+					DCFP(pa);
+				break;
+				
+			default:
+				error = EINVAL;
+				break;
+			}
+			if (doall)
+				break;
+			pa += inc;
+			addr += inc;
+		} while (addr < end);
+		return(error);
+	}
+#endif
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
