@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 1993 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -34,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.26.2.2 1993/09/24 08:49:31 mycroft Exp $
+ *	$Id: wd.c,v 1.26.2.3 1993/10/27 05:38:03 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -43,9 +44,6 @@
 
 /* TODO: peel out buffer at low ipl, speed improvement */
 /* TODO: find and fix the timing bugs apparent on some controllers */
-
-#include "wd.h"
-#if	NWDC > 0
 
 #include "param.h"
 #include "dkbad.h"
@@ -58,6 +56,7 @@
 #include "buf.h"
 #include "uio.h"
 #include "malloc.h"
+#include "kernel.h"
 #include "machine/cpu.h"
 #include "sys/dkstat.h"
 #include "i386/isa/isa.h"
@@ -115,13 +114,12 @@ struct	wd_softc {
 	u_long  sc_openpart;    /* all units open on this drive */
 	short	sc_wlabel;	/* label writable? */
 	short	sc_flags;	/* drive characteistics found */
-#define	DKFL_DOSPART	0x00001	 /* has DOS partition table */
-#define	DKFL_QUIET	0x00002	 /* report errors back, but don't complain */
-#define	DKFL_SINGLE	0x00004	 /* sector at a time mode */
-#define	DKFL_ERROR	0x00008	 /* processing a disk error */
-#define	DKFL_BSDLABEL	0x00010	 /* has a BSD disk label */
-#define	DKFL_BADSECT	0x00020	 /* has a bad144 badsector table */
-#define	DKFL_WRITEPROT	0x00040	 /* manual unit write protect */
+#define	DKFL_SINGLE	0x00001		 /* sector at a time mode */
+#define	DKFL_ERROR	0x00002		 /* processing a disk error */
+#define	DKFL_BADSECT	D_BADSECT	 /* has a bad144 badsector table */
+#define	DKFL_QUIET	0x00008		 /* report errors back, but don't complain */
+#define	DKFL_BSDLABEL	0x00010	 	/* has a BSD disk label */
+#define	DKFL_WRITEPROT	0x00020	 	/* manual unit write protect */
 	struct wdparams sc_params; /* ESDI/IDE drive/controller parameters */
 	struct disklabel sc_dd;	/* device configuration data */
 	struct cpu_disklabel sc_cpd;
@@ -176,8 +174,6 @@ wdcprobe(parent, cf, aux)
 	outb(iobase + wd_cyl_lo, 0xa5);		/* cyl_lo is */
 	if (inb(wdc + wd_error) == 0x5a || inb(iobase + wd_cyl_lo) != 0xa5)
 		return 0;
-
-
 }
 
 /*
@@ -1524,7 +1520,6 @@ wddump(dev_t dev)
 	}
 	return(0);
 }
-#endif
 
 /*
  * Internalize the bad sector table.
@@ -1649,7 +1644,7 @@ int ctrlr;
 		printf("wdc%d: busy too long, resetting\n", ctrlr);
 
 	/* reset the device  */
-	outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
+	outb(wdc+wd_ctlr, WDCTL_RST|WDCTL_IDS);
 	DELAY(1000);
 	outb(wdc+wd_ctlr, WDCTL_4BIT);
 
