@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.22 2000/04/10 08:09:33 mrg Exp $	*/
+/*	$NetBSD: lpd.c,v 1.22.4.1 2000/10/03 21:43:32 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.22 2000/04/10 08:09:33 mrg Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.22.4.1 2000/10/03 21:43:32 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -688,7 +688,7 @@ socksetup(af, options)
 	hints.ai_socktype = SOCK_STREAM;
 	error = getaddrinfo(NULL, "printer", &hints, &res);
 	if (error) {
-		syslog(LOG_ERR, (gai_strerror(error)));
+		syslog(LOG_ERR, "%s", gai_strerror(error));
 		mcleanup(0);
 	}
 
