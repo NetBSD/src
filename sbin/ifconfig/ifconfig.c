@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ifconfig.c	5.1 (Berkeley) 2/28/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.5 1993/05/04 09:26:54 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.6 1993/05/21 12:48:49 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -50,7 +50,6 @@ static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.5 1993
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#ifdef notdef
 #define	NSIP
 #include <netns/ns.h>
 #include <netns/ns_if.h>
@@ -58,7 +57,7 @@ static char rcsid[] = "$Header: /cvsroot/src/sbin/ifconfig/ifconfig.c,v 1.5 1993
 #define EON
 #include <netiso/iso.h>
 #include <netiso/iso_var.h>
-#endif
+
 #include <netdb.h>
 #include <sys/protosw.h>
 
@@ -758,7 +757,7 @@ setnsellength(val)
 	}
 }
 
-#ifdef notdef
+#ifdef EON
 fixnsel(s)
 register struct sockaddr_iso *s;
 {
@@ -770,7 +769,7 @@ register struct sockaddr_iso *s;
 
 adjust_nsellength()
 {
-#ifdef notdef
+#ifdef EON
 	fixnsel(sisotab[RIDADDR]);
 	fixnsel(sisotab[ADDR]);
 	fixnsel(sisotab[DSTADDR]);
