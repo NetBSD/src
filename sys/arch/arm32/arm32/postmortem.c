@@ -1,4 +1,4 @@
-/* $NetBSD: postmortem.c,v 1.8 1996/10/15 02:07:08 mark Exp $ */
+/* $NetBSD: postmortem.c,v 1.9 1997/01/03 23:19:02 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -153,15 +153,19 @@ void
 dumpframe(frame)
 	trapframe_t *frame;
 {
-	u_int s;
+	int s;
     
 	s = splhigh();
 	printf("frame address = %08x  ", (u_int)frame);
 	printf("spsr =%08x\n", frame->tf_spsr);
-	printf("r0 =%08x r1 =%08x r2 =%08x r3 =%08x\n", frame->tf_r0, frame->tf_r1, frame->tf_r2, frame->tf_r3);
-	printf("r4 =%08x r5 =%08x r6 =%08x r7 =%08x\n", frame->tf_r4, frame->tf_r5, frame->tf_r6, frame->tf_r7);
-	printf("r8 =%08x r9 =%08x r10=%08x r11=%08x\n", frame->tf_r8, frame->tf_r9, frame->tf_r10, frame->tf_r11);
-	printf("r12=%08x r13=%08x r14=%08x r15=%08x\n", frame->tf_r12, frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
+	printf("r0 =%08x r1 =%08x r2 =%08x r3 =%08x\n", frame->tf_r0,
+	    frame->tf_r1, frame->tf_r2, frame->tf_r3);
+	printf("r4 =%08x r5 =%08x r6 =%08x r7 =%08x\n", frame->tf_r4,
+	    frame->tf_r5, frame->tf_r6, frame->tf_r7);
+	printf("r8 =%08x r9 =%08x r10=%08x r11=%08x\n", frame->tf_r8,
+	    frame->tf_r9, frame->tf_r10, frame->tf_r11);
+	printf("r12=%08x r13=%08x r14=%08x r15=%08x\n", frame->tf_r12,
+	    frame->tf_usr_sp, frame->tf_usr_lr, frame->tf_pc);
 	printf("slr=%08x\n", frame->tf_svc_lr);
 
 	(void)splx(s);
@@ -177,13 +181,15 @@ check_stacks(p)
 
 	if (p) {
 		ptr = ((u_char *)p->p_addr) + USPACE_UNDEF_STACK_BOTTOM;
-		for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM) && *ptr == 0xdd; ++loop, ++ptr) ;
-		printf("%d bytes of undefined stack fill pattern out of %d bytes\n", loop,
-		    USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM);
+		for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP -
+		  USPACE_UNDEF_STACK_BOTTOM) && *ptr == 0xdd; ++loop, ++ptr) ;
+		printf("%d bytes of undefined stack fill pattern out of %d bytes\n",
+		    loop, USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM);
 		ptr = ((u_char *)p->p_addr) + USPACE_SVC_STACK_BOTTOM;
-		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM) && *ptr == 0xdd; ++loop, ++ptr) ;
-		printf("%d bytes of svc stack fill pattern out of %d bytes\n", loop,
-		    USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM);
+		for (loop = 0; loop < (USPACE_SVC_STACK_TOP -
+		  USPACE_SVC_STACK_BOTTOM) && *ptr == 0xdd; ++loop, ++ptr) ;
+		printf("%d bytes of svc stack fill pattern out of %d bytes\n",
+		    loop, USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM);
 	}
 }
 #endif
@@ -231,7 +237,8 @@ postmortem(frame)
 	    get_stackptr(PSR_SVC32_MODE));
 
 	if (curpcb)
-		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb, curpcb->pcb_sp, curpcb->pcb_und_sp);
+		printf("curpcb=%08x pcb_sp=%08x pcb_und_sp=%08x\n", curpcb,
+		    curpcb->pcb_sp, curpcb->pcb_und_sp);
 
 	printf("proc0=%08x paddr=%08x pcb=%08x\n", (u_int)&proc0,
 	    (u_int)proc0.p_addr, (u_int) &proc0.p_addr->u_pcb);
@@ -269,7 +276,8 @@ buried_alive(p)
 {
 	printf("Ok major screw up detected on kernel stack\n");
 	printf("Putting the process down to minimise further trashing\n");
-	printf("Process was %08x pid=%d comm=%s\n", (u_int) p, p->p_pid, p->p_comm);
+	printf("Process was %08x pid=%d comm=%s\n", (u_int) p,
+	    p->p_pid, p->p_comm);
 
 }
 #else
