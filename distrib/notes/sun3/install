@@ -112,6 +112,62 @@ pair of commands similar to the above.  Here is another example:
 	ssh> run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.gz
 
 
+* Installing from SunOS
+
+To install NetBSD/sun3 onto a machine already running SunOS, you
+will need the miniroot image (miniroot.gz) and some means to
+decompress it.
+
+First, boot SunOS and place the miniroot file onto the hard drive.
+If you do not have gzip for SunOS, you will need to decompress
+the image elsewhere before you can use it.
+
+Next, bring SunOS down to single user mode to insure that nothing
+will be using the swap space on your drive.  To be extra safe, reboot
+the machine into single-user mode rather than using the ``shutdown''
+command.
+
+Now copy the miniroot image onto your swap device (here /dev/rsd0b)
+with the command
+
+  gzip -dc miniroot.gz | dd of=/dev/rsd0b obs=32k
+
+or if you have already decompressed the miniroot
+
+  dd if=miniroot.gz of=/dev/rsd0b obs=32k
+
+Finally, reboot the machine and instruct the ROM to boot from
+the swap device as described in the next section.
+
+
+* Installing from SunOS
+
+To install NetBSD/sun3 onto a machine already running SunOS, you
+will need the miniroot image (miniroot.gz) and some means to
+decompress it.
+
+First, boot SunOS and place the miniroot file onto the hard drive.
+If you do not have gzip for SunOS, you will need to decompress
+the image elsewhere before you can use it.
+
+Next, bring SunOS down to single user mode to insure that nothing
+will be using the swap space on your drive.  To be extra safe, reboot
+the machine into single-user mode rather than using the ``shutdown''
+command.
+
+Now copy the miniroot image onto your swap device (here /dev/rsd0b)
+with the command
+
+  gzip -dc miniroot.gz | dd of=/dev/rsd0b obs=32k
+
+or if you have already decompressed the miniroot
+
+  dd if=miniroot.gz of=/dev/rsd0b obs=32k
+
+Finally, reboot the machine and instruct the ROM to boot from
+the swap device as described in the next section.
+
+
 * Booting the miniroot:
 
 If the miniroot was installed on partition 'b' of the disk with
