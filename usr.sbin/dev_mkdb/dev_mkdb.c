@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.15 2001/07/13 15:54:22 manu Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.16 2001/07/14 14:50:44 manu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.15 2001/07/13 15:54:22 manu Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.16 2001/07/14 14:50:44 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,9 @@ main(argc, argv)
 	if (ftsp == NULL)
 		err(1, "fts_open: %s", path_dev);
 
+	if (chdir(cur_dir))
+		err(1, "%s", cur_dir);
+
 	if (dbname_arg)
 		strncpy(dbname, dbname_arg, MAXPATHLEN);
 	else
@@ -136,20 +139,15 @@ main(argc, argv)
 	 * the loop on dbopen. 
 	 */
 	(void)strncpy(dbtmp, dbname, MAXPATHLEN);
-	q = rindex(dbtmp, '/');
+	q = dbtmp + strlen(dbtmp);
 	do {
 		(void)gettimeofday(&tv, NULL);
-		if (q) {
-			(void)snprintf(q, MAXPATHLEN - (long)(q - dbtmp), 
-			    "%s.%ld.tmp", q, tv.tv_usec);	
-		} else {
-			(void)snprintf(dbtmp, MAXPATHLEN, "./%s.%ld.tmp",
-			    dbname, tv.tv_usec);
-		}
-		errno = 0;
+		(void)snprintf(q, MAXPATHLEN - (long)(q - dbtmp), 
+			    "%ld.tmp", tv.tv_usec);
+		printf (">>%s<<\n", dbtmp);
 		db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
 		    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, NULL);
-	} while (errno == EEXIST);
+	} while (!db && (errno == EEXIST));
 	if (db == NULL)
 		err(1, "%s", dbtmp);
 
@@ -180,6 +178,7 @@ main(argc, argv)
 		else
 			continue;
 		bkey.dev = st->st_rdev;
+		printf (">>>%d\n", bkey.dev);
 
 		/*
 		 * Create the data; nul terminate the name so caller doesn't
@@ -193,6 +192,7 @@ main(argc, argv)
 	}
 	(void)(*db->close)(db);
 	fts_close(ftsp);
+
 	if (chdir(cur_dir))
 		err(1, "%s", cur_dir);
 	if (rename(dbtmp, dbname))
