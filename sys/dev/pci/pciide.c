@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.188 2003/04/04 11:01:48 kent Exp $	*/
+/*	$NetBSD: pciide.c,v 1.189 2003/04/05 13:00:15 kent Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.188 2003/04/04 11:01:48 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.189 2003/04/05 13:00:15 kent Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -299,17 +299,17 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	},
 	{ PCI_PRODUCT_INTEL_82801BAM_IDE,
 	  0,
-	  "Intel 82801BAM IDE Controller (ICH2)",
+	  "Intel 82801BAM IDE Controller (ICH2-M)",
 	  piix_chip_map,
 	},
 	{ PCI_PRODUCT_INTEL_82801CA_IDE_1,
 	  0,
-	  "Intel 82801CA IDE Controller",
+	  "Intel 82801CA IDE Controller (ICH3)",
 	  piix_chip_map,
 	},
 	{ PCI_PRODUCT_INTEL_82801CA_IDE_2,
 	  0,
-	  "Intel 82801CA IDE Controller",
+	  "Intel 82801CA IDE Controller (ICH3)",
 	  piix_chip_map,
 	},
 	{ PCI_PRODUCT_INTEL_82801DB_IDE,
@@ -319,7 +319,7 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	},
 	{ PCI_PRODUCT_INTEL_82801DBM_IDE,
 	  0,
-	  "Intel 82801DBM IDE Controller (ICH4M)",
+	  "Intel 82801DBM IDE Controller (ICH4-M)",
 	  piix_chip_map,
 	},
 	{ PCI_PRODUCT_INTEL_31244,
