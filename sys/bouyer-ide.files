@@ -9,9 +9,14 @@ dev/ic/wdc.c
 dev/ic/wdcvar.h
 dev/ic/wdcreg.h
 dev/scsipi/atapi_wdc.c
+dev/scsipi/atapi_base.c
 dev/pci/pciide_piix_reg.h
 dev/pci/pciide_apollo_reg.h
 dev/pci/pciide_cmd_reg.h
+arch/arm32/podulebus/icside.c
+arch/arm32/podulebus/rapide.c
+arch/arm32/podulebus/simide.c
+arch/arm32/mainbus/wdc_pioc.c
 arch/atari/dev/wdc_mb.c
 arch/i386/conf/GENERIC
 arch/i386/conf/files.i386
