@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxxvar.h,v 1.8 2000/05/29 17:37:14 jhawk Exp $	*/
+/*	$NetBSD: smc91cxxvar.h,v 1.9 2000/07/30 21:34:48 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,10 +47,11 @@ struct smc91cxx_softc {
 	struct	device sc_dev;		/* generic device glue */
 	struct	ethercom sc_ec;		/* ethernet common glue */
 
+	struct mii_data sc_mii;		/* MII/media control		*/
+	struct callout sc_mii_callout;	/* MII callout handle		*/
+
 	bus_space_tag_t sc_bst;		/* bus space */
 	bus_space_handle_t sc_bsh;
-
-	struct	ifmedia sc_media;	/* our media info */
 
 	/* Power management hooks and state. */
 	int	(*sc_enable) __P((struct smc91cxx_softc *));
@@ -58,7 +59,9 @@ struct smc91cxx_softc {
 	u_int32_t	sc_flags;	/* misc. flags*/
 #define SMC_FLAGS_ENABLED	0x0001
 #define SMC_FLAGS_ATTACHED	0x0002		/* attach was successful */
+#define SMC_FLAGS_HAS_MII	0x0004		/* Has MII (FEAST) */
 
+	u_int8_t	sc_chipid;
 
 #if NRND > 0
 	rndsource_element_t rnd_source;
