@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.41 1997/06/05 19:45:32 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.42 1997/06/26 22:28:46 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,6 +86,8 @@ _doadump:
 #include <m68k/m68k/trap_subr.s>
 
 	.globl	_trap, _nofault, _longjmp
+	.globl	_buserr60		| for 060SP
+_buserr60:
 _buserr:
 	tstl	_nofault		|  device probe?
 	jeq	_addrerr		|  no, handle as usual
