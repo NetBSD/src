@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.26 2001/05/27 14:17:56 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.27 2001/05/28 01:09:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -202,6 +202,10 @@ void	getfstab(void);
 char	*rawname(char *);
 struct	dinode *getino(ino_t);
 
+void	*xcalloc(size_t, size_t);
+void	*xmalloc(size_t);
+char	*xstrdup(const char *);
+
 /* rdump routines */
 #if defined(RDUMP) || defined(RRESTORE)
 void	rmtclose(void);
@@ -222,7 +226,8 @@ void	interrupt(int);	/* in case operator bangs on console */
 #define	OPGRENT	"operator"		/* group entry to notify */
 #define DIALUP	"ttyd"			/* prefix for dialups */
 
-struct	fstab *fstabsearch(char *);	/* search fs_file and fs_spec */
+struct	fstab *fstabsearch(const char *);	/* search fs_file and fs_spec */
+struct	statfs *mntinfosearch(const char *key);
 
 #ifndef NAME_MAX
 #define NAME_MAX 255
