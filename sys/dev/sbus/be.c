@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.42 2004/03/17 17:04:58 pk Exp $	*/
+/*	$NetBSD: be.c,v 1.43 2004/05/04 15:34:37 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.42 2004/03/17 17:04:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.43 2004/05/04 15:34:37 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -168,6 +168,9 @@ struct be_softc {
 
 	/* MAC address */
 	u_int8_t sc_enaddr[6];
+#ifdef BEDEBUG
+	int	sc_debug;
+#endif
 };
 
 int	bematch __P((struct device *, struct cfdata *, void *));
@@ -584,14 +587,16 @@ be_read(sc, idx, len)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 
-#ifdef DIAGNOSTIC
-	if (len < ETHER_MIN_LEN || len > ETHER_MAX_LEN + ETHERCAP_VLAN_MTU) {
-		printf("%s: invalid packet size %d; dropping\n",
-			ifp->if_xname, len);
+	if (len <= sizeof(struct ether_header) ||
+	    len > ETHER_MAX_LEN + ETHERCAP_VLAN_MTU) {
+#ifdef BEDEBUG
+		if (sc->sc_debug)
+			printf("%s: invalid packet size %d; dropping\n",
+				ifp->if_xname, len);
+#endif
 		ifp->if_ierrors++;
 		return;
 	}
-#endif
 
 	/*
 	 * Pull packet off interface.
