@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_extern.h,v 1.3 1999/01/08 06:16:55 abs Exp $	*/
+/*	$NetBSD: ex_extern.h,v 1.3.2.1 2000/10/19 16:33:14 he Exp $	*/
 
 int ex __P((SCR **));
 int ex_cmd __P((SCR *));
@@ -64,7 +64,8 @@ int ex_pr __P((SCR *, EXCMD *));
 int ex_print __P((SCR *, EXCMD *, MARK *, MARK *, u_int32_t));
 int ex_ldisplay __P((SCR *, const char *, size_t, size_t, u_int));
 int ex_scprint __P((SCR *, MARK *, MARK *));
-int ex_printf __P((SCR *, const char *, ...));
+int ex_printf __P((SCR *, const char *, ...))
+     __attribute__((__format__(__printf__, 2, 3)));
 int ex_puts __P((SCR *, const char *));
 int ex_fflush __P((SCR *sp));
 int ex_put __P((SCR *, EXCMD *));
