@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.5 1997/06/24 00:27:18 thorpej Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.6 1997/07/23 18:42:40 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,6 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -413,7 +414,7 @@ ofdsize(dev)
 
 	part = DISKPART(dev);
 	omask = of->sc_dk.dk_openmask & (1 << part);
-	lp = sc->sc_dk.dk_label;
+	lp = of->sc_dk.dk_label;
 
 	if (omask == 0 && ofdopen(dev, 0, S_IFBLK, curproc) != 0)
 		return -1;
