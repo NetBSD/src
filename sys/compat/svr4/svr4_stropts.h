@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stropts.h,v 1.5 1995/10/07 06:27:53 mycroft Exp $	 */
+/*	$NetBSD: svr4_stropts.h,v 1.6 1996/04/11 12:50:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -88,7 +88,8 @@ struct svr4_strioctl {
  * streams state.
  */
 struct svr4_strm {
-	int	s_cmd;	/* last getmsg reply or putmsg request */
+	int	s_family;	/* socket family */
+	int	s_cmd;		/* last getmsg reply or putmsg request */
 };
 
 /*
@@ -115,12 +116,17 @@ struct svr4_infocmd {
 	long	provider;
 };
 
-struct svr4_netaddr {
+struct svr4_netaddr_in {
 	u_short	family;
 	u_short	port;
 	u_long	addr;
 };
 
-#define SVR4_ADDROF(sc) (struct svr4_netaddr *) (((char *) (sc)) + (sc)->offs)
+struct svr4_netaddr_un {
+	u_short	family;
+	char 	path[1];
+};
+
+#define SVR4_ADDROF(sc) (void *) (((char *) (sc)) + (sc)->offs)
 
 #endif /* !_SVR4_STROPTS */
