@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.ahdi.s,v 1.1.1.1 1996/02/29 11:36:51 leo Exp $	*/
+/*	$NetBSD: xxboot.ahdi.s,v 1.2 1996/03/18 21:06:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -80,7 +80,11 @@ main:	movml	d3-d7/a3-a5,sp@-
 
 	lea	pc@(m_top),a6
 	movl	_memtop:w,d3
-	cmpl	#MINTOP,d3
+	movl	_v_bas_ad:w,d0
+	cmpl	d0,d3
+	blts	0f			| memtop < v_bas_ad
+	movl	d0,d3
+0:	cmpl	#MINTOP,d3
 	blts	exit			| memtop < MINTOP
 
 	andw	#-4,d3
@@ -195,6 +199,6 @@ m_key:	.asciz	"\007\r\npress any key... @\r\n"
 
 regsav:	.long	0
 
-fill:	.space	54		| 510-(fill-start)
+fill:	.space	44		| 510-(fill-start)
 	.word	0		| checksum
 end:

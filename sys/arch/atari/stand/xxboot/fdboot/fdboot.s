@@ -1,4 +1,4 @@
-/*	$NetBSD: fdboot.s,v 1.1.1.1 1996/02/29 11:36:52 leo Exp $	*/
+/*	$NetBSD: fdboot.s,v 1.2 1996/03/18 21:06:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -58,15 +58,22 @@ start:	bras	main
  * ROM loader does not save any register!
  */
 main:	movml	d1-d7/a0-a6,sp@-
+
 	lea	pc@(m_bot),a3
 	movl	_membot:w,d3
 	lea	MAXBOT,a6
 	cmpl	a6,d3
 	bhis	exit			| membot > MAXBOT
+
 	lea	pc@(m_top),a3
 	movl	_memtop:w,d3
-	cmpl	#MINTOP,d3
+	movl	_v_bas_ad:w,d0
+	cmpl	d0,d3
+	blts	0f			| memtop < v_bas_ad
+	movl	d0,d3
+0:	cmpl	#MINTOP,d3
 	blts	exit			| memtop < MINTOP
+
 	andw	#-4,d3
 	movl	d3,a0
 	movl	sp,a0@-
@@ -215,6 +222,6 @@ m_sbl:	.asciz	"fdboot: bootxx => 0x#\r\n"
 m_rds:	.asciz	"fdboot: Floprd => 0x#\r\n"
 m_key:	.asciz	"\007\r\npress any key... @\r\n"
 
-fill:	.space	22		| 510-(fill-start)
+fill:	.space	12		| 510-(fill-start)
 	.word	0		| checksum
 end:
