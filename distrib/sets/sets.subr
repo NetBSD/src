@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.35 2005/01/07 18:56:40 tron Exp $
+#	$NetBSD: sets.subr,v 1.36 2005/01/09 22:24:04 matt Exp $
 #
 
 #
@@ -32,6 +32,7 @@ MKVARS="\
 	MKCRYPTO_MDC2	\
 	MKCRYPTO_RC5	\
 	MKCVS		\
+	MKGCCCMDS	\
 	MKDOC		\
 	MKGDB		\
 	MKHESIOD	\
@@ -118,7 +119,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.35 2005/01/07 18:56:40 tron Exp $
+# 	# $NetBSD: sets.subr,v 1.36 2005/01/09 22:24:04 matt Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -146,6 +147,7 @@ fi
 #	crypto_rc5		${MKCRYPTO_RC5} != no
 #	cvs			${MKCVS} != no
 #	doc			${MKDOC} != no
+#	gcccmds			${MKGCCCMDS} != no
 #	gdb			${MKGDB} != no
 #	hesiod			${MKHESIOD} != no
 #	info			${MKINFO} != no
