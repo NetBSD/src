@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.13 1998/03/01 02:21:51 fvdl Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.14 1999/03/19 21:46:25 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -441,14 +441,13 @@ umap_mapids(v_mount, credp)
 	/* Now we must map each of the set of groups in the cr_groups 
 		structure. */
 
-	i = 0;
-	while (credp->cr_groups[i] != 0) {
+	for(i=0; i < credp->cr_ngroups; i++) {
 		gid = (gid_t) umap_findid(credp->cr_groups[i],
 					  groupmap, gnentries);
 
 		if (gid != -1)
-			credp->cr_groups[i++] = gid;
+			credp->cr_groups[i] = gid;
 		else
-			credp->cr_groups[i++] = NULLGROUP;
+			credp->cr_groups[i] = NULLGROUP;
 	}
 }
