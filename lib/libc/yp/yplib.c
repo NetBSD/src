@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: yplib.c,v 1.10 1994/08/18 00:45:07 mycroft Exp $";
+static char *rcsid = "$Id: yplib.c,v 1.11 1994/09/18 02:56:00 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -220,10 +220,8 @@ again:
 	if(ysd->dom_vers==0) {
 		sprintf(path, "%s/%s.%d", BINDINGDIR, dom, 2);
 		if( (fd=open(path, O_RDONLY)) == -1) {
-			/* no binding file, YP is dead. */
-			if(new)
-				free(ysd);
-			return YPERR_YPBIND;
+			/* no binding file, YP is dead, or not yet fully alive. */
+			goto trynet;
 		}
 		if( flock(fd, LOCK_EX|LOCK_NB) == -1 && errno==EWOULDBLOCK) {
 			struct iovec iov[2];
@@ -261,6 +259,7 @@ again:
 			return YPERR_YPBIND;
 		}
 	}
+trynet:
 #endif
 	if(ysd->dom_vers==-1 || ysd->dom_vers==0) {
 		memset(&clnt_sin, 0, sizeof clnt_sin);
