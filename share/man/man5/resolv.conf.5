@@ -1,4 +1,4 @@
-.\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
+.\"	$NetBSD: resolv.conf.5,v 1.8 1997/06/08 06:00:06 lukem Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -158,7 +158,13 @@ The syntax is:
 where option is one of the following:
 .Bl -tag -width ndots:n
 .It Sy debug
-sets RES_DEBUG in _res.options.
+enable debugging information, by setting RES_DEBUG in _res.options
+(see
+.Xr resolver 3 ).
+.It Sy inet6
+enable support for IPv6 addresses, by setting RES_USE_INET6 in
+_res.options (see
+.Xr resolver 3 ).
 .It Sy ndots:n
 sets a threshold for the number of dots which
 must appear in a name given to res_query (see
