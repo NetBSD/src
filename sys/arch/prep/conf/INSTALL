@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.13 2002/04/12 08:11:16 gmcgarry Exp $
+#	$NetBSD: INSTALL,v 1.14 2002/04/16 07:42:19 kleink Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -102,12 +102,10 @@ isapnp0 at isa?
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 vga*		at pci?
 wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
-wsmouse*	at pmsi? mux 0
 
 pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
