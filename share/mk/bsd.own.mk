@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.254 2002/01/15 19:13:59 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.255 2002/01/19 13:32:52 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -149,6 +149,8 @@ PWD_MKDB=	${TOOLDIR}/bin/nbpwd_mkdb
 REFER=		${TOOLDIR}/bin/nbrefer
 RPCGEN=		${TOOLDIR}/bin/nbrpcgen
 SOELIM=		${TOOLDIR}/bin/nbsoelim
+SPARCINSTALLBOOT=${TOOLDIR}/bin/nbsparc-installboot
+SUNLABEL=	${TOOLDIR}/bin/nbsunlabel
 TBL=		${TOOLDIR}/bin/nbtbl
 TSORT=		${TOOLDIR}/bin/nbtsort -q
 YACC=		${TOOLDIR}/bin/nbyacc
