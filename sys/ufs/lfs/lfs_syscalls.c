@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.41 2000/03/30 12:41:13 augustss Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.42 2000/06/22 18:11:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -638,6 +638,11 @@ sys_lfs_bmapv(p, v, retval)
 			vp = ufs_ihashlookup(ump->um_dev, blkp->bi_inode);
 			if (vp != NULL && !(vp->v_flag & VXLOCK)) {
 				ip = VTOI(vp);
+				if (lfs_vref(vp)) {
+					v_daddr = LFS_UNUSED_DADDR;
+					need_unlock = 0;
+					continue;
+				}
 				if(VOP_ISLOCKED(vp)) {
 					/* printf("lfs_bmapv: inode %d inlocked\n",ip->i_number); */
 					need_unlock = 0;
@@ -646,7 +651,6 @@ sys_lfs_bmapv(p, v, retval)
 					need_unlock = FVG_UNLOCK;
 					numlocked++;
 				}
-				lfs_vref(vp);
 				numrefed++;
 			} else {
 				error = VFS_VGET(mntp, blkp->bi_inode, &vp);
@@ -917,7 +921,10 @@ lfs_fastvget(mp, ino, daddr, vpp, dinp, need_unlock)
 #endif
 			}
 			ip = VTOI(*vpp);
-			lfs_vref(*vpp);
+			if (lfs_vref(*vpp)) {
+				clean_inlocked++;
+				return EAGAIN;
+			}
 			if (VOP_ISLOCKED(*vpp)) {
 				printf("lfs_fastvget: ino %d inlocked by pid %d\n",ip->i_number,
 				       (*vpp)->v_lock.lk_lockholder);
