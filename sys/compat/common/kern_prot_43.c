@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot_43.c,v 1.1 1995/06/24 20:16:17 christos Exp $	*/
+/*	$NetBSD: kern_prot_43.c,v 1.2 1995/09/19 22:02:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -54,14 +54,15 @@
 
 /* ARGSUSED */
 int
-compat_43_setregid(p, uap, retval)
+compat_43_setregid(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct compat_43_setregid_args /* {
 		syscallarg(int) rgid;
 		syscallarg(int) egid;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct setegid_args segidargs;
 	struct setgid_args sgidargs;
 
@@ -84,14 +85,15 @@ compat_43_setregid(p, uap, retval)
 
 /* ARGSUSED */
 int
-compat_43_setreuid(p, uap, retval)
+compat_43_setreuid(p, v, retval)
 	register struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct compat_43_setreuid_args /* {
 		syscallarg(int) ruid;
 		syscallarg(int) euid;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct seteuid_args seuidargs;
 	struct setuid_args suidargs;
 
