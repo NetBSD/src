@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.5.4.3 2002/06/20 03:37:29 nathanw Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.5.4.4 2002/07/09 16:53:14 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,11 +102,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.5.4.3 2002/06/20 03:37:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.5.4.4 2002/07/09 16:53:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>

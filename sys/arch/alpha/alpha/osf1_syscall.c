@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.5.4.4 2002/06/20 03:37:31 nathanw Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.5.4.5 2002/07/09 16:53:15 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,13 +102,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.5.4.4 2002/06/20 03:37:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.5.4.5 2002/07/09 16:53:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/signal.h>
 #ifdef KTRACE
