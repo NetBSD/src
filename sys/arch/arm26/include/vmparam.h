@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2000/05/09 21:56:01 bjh21 Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2000/11/30 12:16:00 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -70,6 +70,11 @@
  * change over time.
  */
 #define	MAXSLP		20
+
+/*
+ * Override the default pager_map size, there's not enough KVA.
+ */
+#define PAGER_MAP_SIZE          (1 * 1024 * 1024)
 
 /*
  * Mach derived constants
