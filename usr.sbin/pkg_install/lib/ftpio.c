@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.23 2000/08/29 03:56:56 hubertf Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.24 2000/09/01 04:42:57 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.23 2000/08/29 03:56:56 hubertf Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.24 2000/09/01 04:42:57 hubertf Exp $");
 #endif
 
 /*
@@ -37,7 +37,7 @@ __RCSID("$NetBSD: ftpio.c,v 1.23 2000/08/29 03:56:56 hubertf Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/signal.h>
+#include <signal.h>
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
@@ -80,7 +80,7 @@ int		Verbose=1;
 static int	 needclose=0;
 static int	 ftp_started=0;
 static fds	 ftpio;
-
+static int	 ftp_pid;
 
 /*
  * expect "str" (a regular expression) on file descriptor "fd", storing
@@ -122,7 +122,7 @@ expect(int fd, const char *str, int *ftprc)
 
     memset(buf, '\n', sizeof(buf));
 
-    timeout.tv_sec=10*60;	/* seconds until next message from tar */
+    timeout.tv_sec=10*60;    /* seconds until next message from tar */
     timeout.tv_usec=0;
     done=0;
     retval=0;
@@ -140,6 +140,22 @@ expect(int fd, const char *str, int *ftprc)
 	    break;
 	case 0:
 	    warnx("expect: select() timeout");
+	    /* need to send ftp coprocess SIGINT to make it stop
+	     * downloading into dir that we'll blow away in a second */
+	    kill(ftp_pid, SIGINT);
+
+	    /* Wait until ftp coprocess is responsive again 
+	     * XXX Entering recursion here!
+	     */
+	    rc = ftp_cmd("cd .\n", "\n(550|250).*\n");
+	    if (rc != 250) {
+		    /* now we have a really good reason to bail out ;) */
+	    }
+	    /* ftp is at command prompt again, and will wait for our
+	     * next command. If we were downloading, we can now safely
+	     * continue and remove the dir that the tar command was
+	     * expanding to */
+		    
 	    done = 1;	/* hope that's ok */
 	    retval = -1;
 	    break;
@@ -241,7 +257,7 @@ setupCoproc(const char *base)
 	return -1;
     }
 
-    rc1=fork();
+    rc1 = fork();
     switch (rc1) {
     case -1:
 	    /* Error */
@@ -281,6 +297,7 @@ setupCoproc(const char *base)
 	    
 	    ftpio.command = command_pipe[1];
 	    ftpio.answer  = answer_pipe[0];
+	    ftp_pid = rc1;			/* to ^C transfers */
 	    
 	    fcntl(ftpio.command, F_SETFL, O_NONBLOCK);
 	    fcntl(ftpio.answer , F_SETFL, O_NONBLOCK);
@@ -289,6 +306,17 @@ setupCoproc(const char *base)
     }
 
     return 0;
+}
+
+
+/*
+ * Dummy signal handler to detect if the ftp(1) coprocess or
+ * and of the processes of the tar/gzip pipeline dies. 
+ */
+static void
+sigchld_handler (int n)
+{
+	/* Make select(2) return EINTR */
 }
 
 
@@ -397,6 +425,7 @@ ftp_start(char *base)
 		
 		needclose=1;
 		signal(SIGPIPE, sigpipe_handler);
+		signal(SIGCHLD, sigchld_handler);
 
 		if ((expect(ftpio.answer, "\n(221|250|221|550).*\n", &rc) != 0)
 		    || rc != 250) {
