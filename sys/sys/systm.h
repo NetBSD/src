@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.69 1997/06/15 23:42:12 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.70 1997/07/28 23:25:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -303,5 +303,10 @@ void	Debugger __P((void));	/* in DDB only */
 int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
 extern	int db_onpanic;
 #endif	/* DDB */
+
+#ifdef SYSCALL_DEBUG
+void scdebug_call __P((struct proc *, register_t, register_t[]));
+void scdebug_ret __P((struct proc *, register_t, int, register_t[]));
+#endif /* SYSCALL_DEBUG */
 
 #endif	/* !_SYS_SYSTM_H_ */
