@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.36 2002/05/15 21:24:59 matt Exp $
+$NetBSD: miidevs,v 1.37 2002/05/15 22:48:17 matt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ oui xxXAQTI			0xace000	XaQti Corp.
 /* Don't know what's going on here. */
 oui xxDAVICOM			0x000602	Davicom Semiconductor
 oui xxPMCSIERRA			0x0009c0	PMC-Sierra
-oui xxPMCSIERRA2		0x0009ea	PMC-Sierra
+oui xxPMCSIERRA2		0x009057	PMC-Sierra
 
 oui xxMARVELL			0x000ac2	Marvell Semiconductor
 
@@ -159,7 +159,9 @@ model xxNATSEMI DP83861		0x0006 DP83861 1000BASE-T media interface
 
 /* PMC Sierra PHYs */
 model xxPMCSIERRA PM8351	0x0000 PM8351 OctalPHY Gigabit interface
+model xxPMCSIERRA2 PM8352	0x0002 PM8352 OctalPHY Gigabit interface
 model xxPMCSIERRA2 PM8353	0x0003 PM8353 QuadPHY Gigabit interface
+model PMCSIERRA PM8354		0x0004 PM8354 QuadPHY Gigabit interface
 
 /* Quality Semiconductor PHYs */
 model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
