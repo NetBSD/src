@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr405xx.h,v 1.1 2004/12/01 17:55:33 shige Exp $	*/
+/*	$NetBSD: dcr405xx.h,v 1.2 2004/12/17 16:23:57 shige Exp $	*/
 
 /*
  * Copyright (c) 2004 Shigeyuki Fukushima.
@@ -168,6 +168,8 @@
 #define   SDRAM0_ECCESR_CE		(0x00200000)
 #define   SDRAM0_ECCESR_UE		(0x00100000)
 #define   SDRAM0_ECCESR_BKnE(n)		(0x00008000 >> (n))
+#define   SDRAM0_ECCESR_CBEn(n)		(0x00800000 >> (n))
+#define   SDRAM0_ECCESR_BLnCE(n)	(0x80000000 >> (n))
 
 
 /*****************************************************************************/
@@ -373,7 +375,7 @@
  * 	0:15		Reserved
  * 	16:31	DTE	Decode Table Entry
  */
-#if defined(PPC405_HAVE_CODEPACK)
+#if defined(PPC_IBM405_HAVE_CODEPACK)
 #  define DCR_DCP0_CFGADDR	(0x014)
 #  define DCR_DCP0_CFGDATA	(0x015)
 
@@ -415,7 +417,7 @@
 #  define DCP0_RAM_HIGH(n)	(0x600 + n)
 #  define DCP0_RAM_END		(0x7ff)	
 #  define   DCP0_RAM_DTE		(0x0000ffff)
-#endif	/* PPC405_HAVE_CODEPACK */
+#endif	/* PPC_IBM405_HAVE_CODEPACK */
 
 
 /*****************************************************************************/
@@ -441,7 +443,7 @@
  * 	1	DOF	This field shoud remain set to 1
  * 	2:31		Reserved
  */
-#if defined(PPC405_HAVE_OCM0)
+#if defined(PPC_IBM405_HAVE_OCM0)
 #  define DCR_OCM0_ISARC	(0x018)
 #  define  OCM0_ISARC_ISAR		(0xfc000000)
 #  define DCR_OCM0_ISCNTL	(0x019)
@@ -452,7 +454,7 @@
 #  define DCR_OCM0_DSCNTL	(0x01b)
 #  define   OCM0_DSCNTL_DSEN		(0x80000000)
 #  define   OCM0_DSCNTL_DOF		(0x40000000)
-#endif	/* PPC405_HAVE_OCM0 */
+#endif	/* PPC_IBM405_HAVE_OCM0 */
 
 
 /*****************************************************************************/
@@ -511,8 +513,8 @@
 /*
  * Peformance Counters (0x090-0x091)
  */
-#if defined(PPC405_HAVE_PERFCOUNT)
-#endif	/* PPC405_HAVE_PERFCOUNT */
+#if defined(PPC_IBM405_HAVE_PERFCOUNT)
+#endif	/* PPC_IBM405_HAVE_PERFCOUNT */
 
 
 /*****************************************************************************/
@@ -586,10 +588,10 @@
  * 	Electronic Chip ID Register 1
  * 	0:31	ECID	Electronic Chip ID
  */
-#if defined(PPC405_HAVE_ECID)
+#if defined(PPC_IBM405_HAVE_ECID)
 #  define DCR_CPC0_ECID0	(0x0a8)
 #  define DCR_CPC0_ECID1	(0x0a9)
-#endif	/* PPC405_HAVE_ECID */
+#endif	/* PPC_IBM405_HAVE_ECID */
 
 
 /*****************************************************************************/
@@ -604,12 +606,13 @@
  * 	11:15		Reserved
  * 	16:18	UIC	UIC edge triggered external interrupts edge conditioning
  * 	19:31		Reserved
-#if defined(PPC405_HAVE_CEC)
+ */
+#if defined(PPC_IBM405_HAVE_CEC)
 #  define DCR_CPC0_ECR		(0x0aa)
 #  define   CPC0_ECR_RX			(0xe0000000)
 #  define   CPC0_ECR_TX			(0x00e00000)
 #  define   CPC0_ECR_UIC		(0x0000e000)
-#endif	/* PPC405_HAVE_CEC */
+#endif	/* PPC_IBM405_HAVE_CEC */
 
 
 /*****************************************************************************/
@@ -947,16 +950,16 @@
 /*
  * Universal Interrupt Controller 1 Registers (0x0d0-0x0df)
  */
-#if defined(PPC405_HAVE_UIC1)
-#endif	/* PPC405_HAVE_UIC1 */
+#if defined(PPC_IBM405_HAVE_UIC1)
+#endif	/* PPC_IBM405_HAVE_UIC1 */
 
 
 /*****************************************************************************/
 /*
  * Miscellaneous Registers (0x0f0-0x0ff)
  */
-#if defined(PPC405_HAVE_MISC)
-#endif	/* PPC405_HAVE_MISC */
+#if defined(PPC_IBM405_HAVE_MISC)
+#endif	/* PPC_IBM405_HAVE_MISC */
 
 
 /*****************************************************************************/
@@ -1171,7 +1174,7 @@
  * 	0:23		Reserved
  * 	24:31		Receive Channel Buffer Size
  */
-#if defined(PPC405_HAVE_MAL0)
+#if defined(PPC_IBM405_HAVE_MAL0)
 #define DCR_MAL0_CFG		(0x180)
 #define   MAL0_CFG_SR			(0x80000000)
 #define   MAL0_CFG_PLBP			(0x00c00000)
@@ -1204,50 +1207,54 @@
 #define   MAL0_IER_OPB			(0x00000002)
 #define   MAL0_IER_PLB			(0x00000001)
 #define DCR_MAL0_TXCASR		(0x184)
-#define   MAL0_TXCASR_TCAS		(0xc0000000)
+#define   MAL0_TXCASR_TCAS0		(0x80000000)
+#define   MAL0_TXCASR_TCAS1		(0x40000000)
 #define DCR_MAL0_TXCARR		(0x185)
-#define   MAL0_TXCARR_TCAR		(0xc0000000)
+#define   MAL0_TXCARR_TCAR0		(0x80000000)
+#define   MAL0_TXCARR_TCAR1		(0x40000000)
 #define DCR_MAL0_TXEOBISR	(0x186)
-#define   MAL0_TXEOBISR_TCEBI		(0xc0000000)
+#define   MAL0_TXEOBISR_TCEBI0		(0x80000000)
+#define   MAL0_TXEOBISR_TCEBI1		(0x40000000)
 #define DCR_MAL0_TXDEIR		(0x187)
-#define   MAL0_TXDEIR_TDEI		(0xc0000000)
+#define   MAL0_TXDEIR_TDEI0		(0x80000000)
+#define   MAL0_TXDEIR_TDEI1		(0x40000000)
 #define DCR_MAL0_RXCASR		(0x190)
-#define   MAL0_RXCASR_RCAS		(0x80000000)
+#define   MAL0_RXCASR_RCAS0		(0x80000000)
 #define DCR_MAL0_RXCARR		(0x191)
-#define   MAL0_RXCARR_RCAR		(0x80000000)
+#define   MAL0_RXCARR_RCAR0		(0x80000000)
 #define DCR_MAL0_RXEOBISR	(0x192)
-#define   MAL0_RXEOBISR_RCEBI		(0xc0000000)
+#define   MAL0_RXEOBISR_RCEBI0		(0x80000000)
 #define DCR_MAL0_RXDEIR		(0x193)
-#define   MAL0_RXDEIR_RDEI		(0xc0000000)
+#define   MAL0_RXDEIR_RDEI0		(0x80000000)
 #define DCR_MAL0_TXCTPnR(n)	(0x1a0 + n)
 #define DCR_MAL0_RXCTP0R	(0x1c0)
 #define DCR_MAL0_RCBS0		(0x1e0)
 #define   MAL0_RCBS0_RCBS		(0x000000ff)
-#endif	/* PPC405_HAVE_MAL0 */
+#endif	/* PPC_IBM405_HAVE_MAL0 */
 
 
 /*****************************************************************************/
 /*
  * Memory Access Layer 1 Registers (0x200-0x27f)
  */
-#if defined(PPC405_HAVE_MAL1) && !defined(PPC405_HAVE_EVTCOUNT)
-#endif	/* PPC405_HAVE_MAL1 */
+#if defined(PPC_IBM405_HAVE_MAL1) && !defined(PPC_IBM405_HAVE_EVTCOUNT)
+#endif	/* PPC_IBM405_HAVE_MAL1 */
 
 
 /*****************************************************************************/
 /*
  * Memory Access Layer 2 Registers (0x280-0x2ff)
  */
-#if defined(PPC405_HAVE_MAL2)
-#endif	/* PPC405_HAVE_MAL2 */
+#if defined(PPC_IBM405_HAVE_MAL2)
+#endif	/* PPC_IBM405_HAVE_MAL2 */
 
 
 /*****************************************************************************/
 /*
  * Event Counters Registers (0x200-0x203)
  */
-#if defined(PPC405_HAVE_EVTCOUNT) && !defined(PPC405_HAVE_MAL1)
-#endif	/* PPC405_HAVE_EVTCOUNT */
+#if defined(PPC_IBM405_HAVE_EVTCOUNT) && !defined(PPC_IBM405_HAVE_MAL1)
+#endif	/* PPC_IBM405_HAVE_EVTCOUNT */
 
 
 #endif	/* _IBM4XX_DCR405XX_H_ */
