@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.5 1994/11/03 20:27:02 mycroft Exp $	*/
+/*	$NetBSD: device.h,v 1.6 1994/11/03 21:51:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,11 +93,7 @@ struct cfdata {
 #define	FSTATE_FOUND	1	/* has been found */
 #define	FSTATE_STAR	2	/* duplicable */
 
-#ifndef CONFIG_INDIRECT
-typedef int (*cfmatch_t) __P((struct device *, struct cfdata *, void *));
-#else
-typedef int (*cfmatch_t) __P((struct device *, struct device *, void *));
-#endif
+typedef int (*cfmatch_t) __P((struct device *, void *, void *));
 
 /*
  * `configuration' driver (what the machine-independent autoconf uses).
@@ -114,7 +110,7 @@ struct cfdriver {
 	void	(*cd_attach) __P((struct device *, struct device *, void *));
 	enum	devclass cd_class;	/* device classification */
 	size_t	cd_devsize;		/* size of dev data (for malloc) */
-	void	*cd_aux;		/* additional driver, if any */
+	int	cd_indirect;		/* indirectly configure subdevices */
 	int	cd_ndevs;		/* size of cd_devs array */
 };
 
@@ -140,11 +136,11 @@ struct pdevinit {
 struct	device *alldevs;	/* head of list of all devices */
 struct	evcnt *allevents;	/* head of list of all events */
 
-struct cfdata *config_search __P((cfmatch_t, struct device *, void *));
-struct cfdata *config_rootsearch __P((cfmatch_t, char *, void *));
+void *config_search __P((cfmatch_t, struct device *, void *));
+void *config_rootsearch __P((cfmatch_t, char *, void *));
 int config_found __P((struct device *, void *, cfprint_t));
 int config_rootfound __P((char *, void *));
-void config_attach __P((struct device *, struct cfdata *, void *, cfprint_t));
+void config_attach __P((struct device *, void *, void *, cfprint_t));
 void evcnt_attach __P((struct device *, const char *, struct evcnt *));
 
 #endif /* !_SYS_DEVICE_H_ */
