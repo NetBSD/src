@@ -1,4 +1,4 @@
-/*	$NetBSD: mopcopy.c,v 1.2 2002/11/05 04:54:26 thorpej Exp $	*/
+/*	$NetBSD: mopcopy.c,v 1.3 2002/11/05 05:06:05 thorpej Exp $	*/
 
 /* mopcopy - Convert a Unix format kernel into something that
  * can be transfered via MOP.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mopcopy.c,v 1.2 2002/11/05 04:54:26 thorpej Exp $");
+__RCSID("$NetBSD: mopcopy.c,v 1.3 2002/11/05 05:06:05 thorpej Exp $");
 #endif
 
 #include "os.h"
@@ -146,6 +146,7 @@ main (int argc, char **argv)
 	mopFilePutLX(header,IHD_W_ACTIVOFF,0x30,2);/* Offset to 1st section.*/
 	mopFilePutLX(header,IHD_W_ALIAS,IHD_C_NATIVE,2);/* It's a VAX image.*/
 	mopFilePutLX(header,IHD_B_HDRBLKCNT,1,1); /* Only one header block. */
+	mopFilePutLX(header,0xd4+ISD_V_VPN,dl.loadaddr/512,2);/* load Addr */
 	mopFilePutLX(header,0x30+IHA_L_TFRADR1,dl.xferaddr,4); /* Xfer Addr */
 	mopFilePutLX(header,0xd4+ISD_W_PAGCNT,i,2);/* Imagesize in blks.*/
 	
