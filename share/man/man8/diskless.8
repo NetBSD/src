@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.8 1996/05/30 18:55:00 cgd Exp $
+.\"	$NetBSD: diskless.8,v 1.9 1996/08/24 19:39:43 thorpej Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
@@ -180,7 +180,7 @@ If booting an HP 300-series machine, ensure that
 is configured properly to transfer the boot program to the client.
 An entry might look like this:
 .Bd -literal -offset indent -compact
-08:00:09:01:23:E6	SYS_NBOOT	# myclient
+08:00:09:01:23:E6	SYS_UBOOT	# myclient
 .Ed
 .Pp
 See the
@@ -212,9 +212,9 @@ If the client's PROM fails to fetch the expected file,
 can be used to discover which filename the client is trying to read.
 .Pp
 If booting an HP 300-series machine, ensure that the network boot program
-.Pa SYS_NBOOT
+.Pa SYS_UBOOT
 (which may be called
-.Pa netboot.lif
+.Pa uboot.lif
 before installation)
 is installed in the directory
 .Pa /usr/mdec/rbootd .
