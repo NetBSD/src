@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1996/04/26 19:26:36 chuck Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1996/05/20 01:16:50 chuck Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -51,17 +51,19 @@ int	lkmenodev();
 #define	lkmenodev	enodev
 #endif
 
-#include "vnd.h"
-bdev_decl(vnd);
 bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
-#include "cd.h"
-bdev_decl(cd);
-#include "st.h"
-bdev_decl(st);
 #include "ccd.h"
 bdev_decl(ccd);
+#include "vnd.h"
+bdev_decl(vnd);
+#include "st.h"
+bdev_decl(st);
+#include "cd.h"
+bdev_decl(cd);
+#include "rd.h"
+bdev_decl(rd);
 
 struct bdevsw	bdevsw[] =
 {
@@ -70,17 +72,17 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 2 */
 	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
-	bdev_tape_init(NST,st),		/* 5: SCSI tape */
+	bdev_disk_init(NCCD,ccd),	/* 5: concatenated disk driver */
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
-	bdev_disk_init(NCD,cd),		/* 7: SCSI CD-ROM */
-	bdev_notdef(),			/* 8 */
-	bdev_lkm_dummy(),		/* 9 */
+	bdev_tape_init(NST,st),		/* 7: SCSI tape */
+	bdev_disk_init(NCD,cd),		/* 8: SCSI CD-ROM */
+	bdev_disk_init(NRD,rd),		/* 9: RAM disk - for install tape */
 	bdev_lkm_dummy(),		/* 10 */
 	bdev_lkm_dummy(),		/* 11 */
 	bdev_lkm_dummy(),		/* 12 */
 	bdev_lkm_dummy(),		/* 13 */
 	bdev_lkm_dummy(),		/* 14 */
-	bdev_disk_init(NCCD,ccd),	/* 15: concatenated disk driver */
+	bdev_lkm_dummy(),		/* 15 */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -137,7 +139,7 @@ struct cdevsw	cdevsw[] =
 	cdev_log_init(1,log),		/* 6: /dev/klog */
 	cdev_notdef(),			/* 7 */
 	cdev_disk_init(NSD,sd),		/* 8: SCSI disk */
-	cdev_disk_init(NCD,cd),		/* 9: SCSI CD-ROM */
+	cdev_notdef(),			/* 9 */
 	cdev_notdef(),			/* 10 */
 	cdev_notdef(),			/* 11: parallel interface */
 	cdev_tty_init(NZSTTY,zs),	/* 12: SCC serial ports */
@@ -146,7 +148,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 15 */
 	cdev_notdef(),			/* 16 */
 	cdev_disk_init(NCCD,ccd),	/* 17: concatenated disk driver */
-	cdev_notdef(),			/* 18 */
+	cdev_disk_init(NCD,cd),		/* 18: SCSI CD-ROM */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
