@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.12 2001/11/03 20:24:42 thorpej Exp $ */
+/*	$NetBSD: asm.h,v 1.13 2002/06/24 01:13:34 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -105,6 +105,7 @@
 #endif
 
 #define ENTRY(name)		_ENTRY(_C_LABEL(name)); _PROF_PROLOGUE
+#define ENTRY_NOPROFILE(name)	_ENTRY(_C_LABEL(name))
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)); _PROF_PROLOGUE
 #define	FUNC(name)		ASENTRY(name)
 #define RODATA(name)		.align 4; .text; .globl _C_LABEL(name); \
