@@ -324,7 +324,6 @@
 ./usr/share/man/cat4/gus.0
 ./usr/share/man/cat4/icmp.0
 ./usr/share/man/cat4/idp.0
-./usr/share/man/cat4/imp.0
 ./usr/share/man/cat4/inet.0
 ./usr/share/man/cat4/ip.0
 ./usr/share/man/cat4/ipf.0
@@ -1183,7 +1182,6 @@
 ./usr/share/man/man4/gus.4
 ./usr/share/man/man4/icmp.4
 ./usr/share/man/man4/idp.4
-./usr/share/man/man4/imp.4
 ./usr/share/man/man4/inet.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ipf.4
