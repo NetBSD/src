@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.8 1997/07/25 23:53:54 scottr Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.9 1998/02/03 07:48:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.8 1997/07/25 23:53:54 scottr Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.9 1998/02/03 07:48:36 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -866,6 +866,11 @@ cp_file(arcn, fd1, fd2)
 	int rem;
 	int sz = MINFBSZ;
 	struct stat sb;
+
+#ifdef __GNUC__
+	/* This outrageous construct just to shut up a GCC warning. */
+	(void) &cpcnt;
+#endif
 
 	/*
 	 * check for holes in the source file. If none, we will use regular
