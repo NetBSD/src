@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.165 2004/08/27 20:37:29 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.166 2004/09/09 19:35:33 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.165 2004/08/27 20:37:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.166 2004/09/09 19:35:33 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: st.c,v 1.165 2004/08/27 20:37:29 bouyer Exp $");
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsi_tape.h>
 #include <dev/scsipi/stvar.h>
+#include <dev/scsipi/scsipi_base.h>
 
 /* Defines for device specific stuff */
 #define DEF_FIXED_BSIZE  512
@@ -1162,6 +1163,7 @@ ststart(struct scsipi_periph *periph)
 	struct st_softc *st = (void *)periph->periph_dev;
 	struct buf *bp;
 	struct scsi_rw_tape cmd;
+	struct scsipi_xfer *xs;
 	int flags, error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("ststart "));
@@ -1281,15 +1283,11 @@ ststart(struct scsipi_periph *periph)
 		/*
 		 * go ask the adapter to do all this for us
 		 */
-		error = scsipi_command(periph,
+		xs = scsipi_make_xs(periph,
 		    (struct scsipi_generic *)&cmd, sizeof(cmd),
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    0, ST_IO_TIME, bp, flags);
-		if (__predict_false(error)) {
-			printf("%s: not queued, error %d\n",
-			    st->sc_dev.dv_xname, error);
-		}
-		if (__predict_false(error == ENOMEM)) {
+		if (__predict_false(xs == NULL)) {
 			/*
 			 * out of memory. Keep this buffer in the queue, and
 			 * retry later.
@@ -1298,12 +1296,23 @@ ststart(struct scsipi_periph *periph)
 			    periph);
 			return;
 		}
+		/*
+		 * need to dequeue the buffer before queuing the command,
+		 * because cdstart may be called recursively from the
+		 * HBA driver
+		 */
 #ifdef DIAGNOSTIC
 		if (BUFQ_GET(&st->buf_queue) != bp)
 			panic("ststart(): dequeued wrong buf");
 #else
 		BUFQ_GET(&st->buf_queue);
 #endif
+		error = scsipi_command(periph, xs,
+		    (struct scsipi_generic *)&cmd, sizeof(cmd),
+		    (u_char *)bp->b_data, bp->b_bcount,
+		    0, ST_IO_TIME, bp, flags);
+		/* with a scsipi_xfer preallocated, scsipi_command can't fail */
+		KASSERT(error == 0);
 	} /* go back and see if we can cram more work in.. */
 }
 
@@ -1636,7 +1645,7 @@ st_read(struct st_softc *st, char *buf, int size, int flags)
 		    cmd.len);
 	} else
 		_lto3b(size, cmd.len);
-	return (scsipi_command(st->sc_periph,
+	return (scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)buf, size, 0, ST_IO_TIME, NULL, flags | XS_CTL_DATA_IN));
 }
@@ -1672,7 +1681,7 @@ st_erase(struct st_softc *st, int full, int flags)
 	if ((st->quirks & ST_Q_ERASE_NOIMM) == 0)
 		cmd.byte2 |= SE_IMMED;
 
-	return (scsipi_command(st->sc_periph,
+	return (scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, tmo, NULL, flags));
 }
@@ -1758,7 +1767,7 @@ st_space(struct st_softc *st, int number, u_int what, int flags)
 
 	st->flags &= ~ST_POSUPDATED;
 	st->last_ctl_resid = 0;
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, 0, ST_SPC_TIME, NULL, flags);
 
@@ -1828,7 +1837,7 @@ st_write_filemarks(struct st_softc *st, int number, int flags)
 		_lto3b(number, cmd.number);
 
 	/* XXX WE NEED TO BE ABLE TO GET A RESIDIUAL XXX */
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, 0, ST_IO_TIME * 4, NULL, flags);
 	if (error == 0 && st->fileno != -1) {
@@ -1902,7 +1911,7 @@ st_load(struct st_softc *st, u_int type, int flags)
 		cmd.byte2 = SR_IMMED;
 	cmd.how = type;
 
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    0, 0, ST_RETRIES, ST_SPC_TIME, NULL, flags);
 	if (error) {
@@ -1940,7 +1949,7 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 	cmd.opcode = REWIND;
 	cmd.byte2 = immediate;
 
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), 0, 0, ST_RETRIES,
 	    immediate ? ST_CTL_TIME: ST_SPC_TIME, NULL, flags);
 	if (error) {
@@ -1991,7 +2000,7 @@ st_rdpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 	if (hard)
 		cmd.byte1 = 1;
 
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&posdata,
 	    sizeof(posdata), ST_RETRIES, ST_CTL_TIME, NULL,
 	    XS_CTL_SILENT | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
@@ -2032,7 +2041,7 @@ st_setpos(struct st_softc *st, int hard, u_int32_t *blkptr)
 	if (hard)
 		cmd.byte2 = 1 << 2;
 	_lto4b(*blkptr, cmd.blkaddr);
-	error = scsipi_command(st->sc_periph,
+	error = scsipi_command(st->sc_periph, NULL,
 		(struct scsipi_generic *)&cmd, sizeof(cmd),
 		NULL, 0, ST_RETRIES, ST_SPC_TIME, NULL, 0);
 	/*

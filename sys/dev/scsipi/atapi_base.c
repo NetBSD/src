@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_base.c,v 1.21 2004/08/27 20:37:28 bouyer Exp $	*/
+/*	$NetBSD: atapi_base.c,v 1.22 2004/09/09 19:35:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.21 2004/08/27 20:37:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_base.c,v 1.22 2004/09/09 19:35:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,11 +213,10 @@ atapi_print_addr(struct scsipi_periph *periph)
  * to associate with the transfer, we need that too.
  */
 int
-atapi_scsipi_cmd(struct scsipi_periph *periph,
+atapi_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_xfer *xs,
     struct scsipi_generic *scsipi_cmd, int cmdlen, void *data, size_t datalen,
     int retries, int timeout, struct buf *bp, int flags)
 {
-	struct scsipi_xfer *xs;
 	int error;
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("atapi_cmd\n"));
@@ -226,11 +225,12 @@ atapi_scsipi_cmd(struct scsipi_periph *periph,
 	if (bp != NULL && (flags & XS_CTL_ASYNC) == 0)
 		panic("atapi_scsipi_cmd: buffer without async");
 #endif
-
-	if ((xs = scsipi_make_xs(periph, scsipi_cmd, cmdlen, data,
-	    datalen, retries, timeout, bp, flags)) == NULL) {
-		/* let the caller deal with this */
-		return (ENOMEM);
+	if (xs == NULL) {
+		if ((xs = scsipi_make_xs(periph, scsipi_cmd, cmdlen, data,
+		    datalen, retries, timeout, bp, flags)) == NULL) {
+			/* let the caller deal with this */
+			return (ENOMEM);
+		}
 	}
 
 	xs->cmdlen = (periph->periph_cap & PERIPH_CAP_CMD16) ? 16 : 12;
