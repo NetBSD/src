@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.67 2003/11/14 22:33:29 jmcneill Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.68 2004/02/15 09:40:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.67 2003/11/14 22:33:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.68 2004/02/15 09:40:32 jdolecek Exp $");
+
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +117,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.67 2003/11/14 22:33:29 jmcneill Exp $");
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/device.h>
+
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <uvm/uvm_extern.h>		/* for PAGE_SIZE */
 
@@ -238,6 +244,10 @@ struct vr_softc {
 	int	vr_txlast;		/* last used TX descriptor */
 
 	int	vr_rxptr;		/* next ready RX descriptor */
+
+#if NRND > 0
+	rndsource_element_t rnd_source;	/* random source */
+#endif
 };
 
 #define	VR_CDTXADDR(sc, x)	((sc)->vr_cddma + VR_CDTXOFF((x)))
@@ -856,6 +866,11 @@ vr_intr(arg)
 			break;
 
 		handled = 1;
+
+#if NRND > 0
+		if (RND_ENABLED(&sc->rnd_source))
+			rnd_add_uint32(&sc->rnd_source, status);
+#endif
 
 		if (status & VR_ISR_RX_OK)
 			vr_rxeof(sc);
@@ -1691,6 +1706,10 @@ vr_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->vr_enaddr);
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->vr_dev.dv_xname,
+	    RND_TYPE_NET, 0);
+#endif
 
 	sc->vr_ats = shutdownhook_establish(vr_shutdown, sc);
 	if (sc->vr_ats == NULL)
