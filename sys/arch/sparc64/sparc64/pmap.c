@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.123 2002/06/21 02:57:29 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.124 2002/06/24 18:48:15 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -2520,7 +2520,7 @@ pmap_extract(pm, va, pap)
 		pa = (pseg_get(pm, va)&TLB_PA_MASK)+(va&PGOFSET);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			npa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
+			paddr_t npa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
 			printf("pmap_extract: va=%p segs[%ld]=%llx", (void *)(u_long)va, (long)va_to_seg(va), (unsigned long long)npa);
 			if (npa) {
 				npa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)npa)[va_to_dir(va)], ASI_PHYS_CACHED);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.55 2002/06/20 18:26:23 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.56 2002/06/24 18:48:13 eeh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -921,7 +921,7 @@ iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 		     "BUS_DMASYNC_POSTREAD\n", (void *)(u_long)va, (u_long)len));
 #ifdef DIAGNOSTIC
 		if (va < is->is_dvmabase || va >= is->is_dvmaend)
-			panic("iommu_dvmamap_sync: invalid dva %p", va);
+			panic("iommu_dvmamap_sync: invalid dva %lx", va);
 #endif
 		tte = is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)];
 
@@ -948,7 +948,7 @@ iommu_dvmamap_sync(t, sb, map, offset, len, ops)
 	if (ops & BUS_DMASYNC_PREWRITE) {
 #ifdef DIAGNOSTIC
 		if (va < is->is_dvmabase || va >= is->is_dvmaend)
-			panic("iommu_dvmamap_sync: invalid dva %p", va);
+			panic("iommu_dvmamap_sync: invalid dva %lx", va);
 #endif
 		tte = is->is_tsb[IOTSBSLOT(va, is->is_tsbsize)];
 
