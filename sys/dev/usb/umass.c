@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.34 2000/04/28 21:34:05 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.35 2000/05/30 01:12:51 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -172,7 +172,7 @@ int umassdebug = 0; //UDMASS_ALL;
 
 /* Generic definitions */
 
-#define UFI_PROTO_LEN 12
+#define UFI_COMMAND_LENGTH 12
 
 /* Direction for umass_*_transfer */
 #define DIR_NONE	0
@@ -595,6 +595,9 @@ Static void umass_scsipi_sense_cb __P((struct umass_softc *sc, void *priv,
 				       int residue, int status));
 
 Static int scsipiprint __P((void *aux, const char *pnp));
+Static int umass_ufi_transform	__P((struct umass_softc *sc,
+				     struct scsipi_generic *cmd, int cmdlen,
+				     struct scsipi_generic *rcmd, int *rcmdlen));
 #if NATAPIBUS > 0
 Static void umass_atapi_probedev __P((struct atapibus_softc *, int));
 #endif
@@ -1052,8 +1055,10 @@ USB_ATTACH(umass)
 	 * fill in the prototype scsipi_link.
 	 */
 	switch (sc->proto & PROTO_COMMAND) {
-	case PROTO_SCSI:
 	case PROTO_UFI:
+		sc->u.sc_link.quirks |= SDEV_ONLYBIG;
+		/* fall into */
+	case PROTO_SCSI:
 		sc->u.sc_link.type = BUS_SCSI;
 		sc->u.sc_link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
 		sc->u.sc_link.adapter_softc = sc;
@@ -1064,7 +1069,7 @@ USB_ATTACH(umass)
 		sc->u.sc_link.scsipi_scsi.max_target = UMASS_SCSIID_DEVICE;
 		sc->u.sc_link.scsipi_scsi.max_lun = sc->maxlun;
 
-		if(sc->quirks & NO_TEST_UNIT_READY)
+		if (sc->quirks & NO_TEST_UNIT_READY)
 			sc->u.sc_link.quirks |= ADEV_NOTUR;
 		break;
 
@@ -3045,6 +3050,7 @@ umass_scsipi_cmd(xs)
 {
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct umass_softc *sc = sc_link->adapter_softc;
+	struct scsipi_generic *cmd, trcmd;
 	int cmdlen;
 	int dir;
 
@@ -3111,17 +3117,23 @@ umass_scsipi_cmd(xs)
 		goto done;
 	}
 
+	cmd = xs->cmd;
 	cmdlen = xs->cmdlen;
-	/* All UFI commands are 12 bytes.  We'll get a few garbage bytes by extending... */
-	if (sc->proto & PROTO_UFI)
-		cmdlen = UFI_PROTO_LEN;
+	if (sc->proto & PROTO_UFI) {
+		if (!umass_ufi_transform(sc, cmd, cmdlen, &trcmd, &cmdlen)) {
+			xs->error = XS_DRIVER_STUFFUP;
+			goto done;
+		}
+		cmd = &trcmd;
+
+	}
 
 	if (xs->xs_control & XS_CTL_POLL) {
 		/* Use sync transfer. XXX Broken! */
 		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: sync dir=%d\n", dir));
 		sc->sc_xfer_flags = USBD_SYNCHRONOUS;
 		sc->sc_sync_status = USBD_INVAL;
-		sc->transfer(sc, sc_link->scsipi_scsi.lun, xs->cmd, cmdlen,
+		sc->transfer(sc, sc_link->scsipi_scsi.lun, cmd, cmdlen,
 			     xs->data, xs->datalen, dir, 0, xs);
 		sc->sc_xfer_flags = 0;
 		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: done err=%d\n", 
@@ -3142,7 +3154,7 @@ umass_scsipi_cmd(xs)
 		DPRINTF(UDMASS_SCSI, ("umass_scsi_cmd: async dir=%d, cmdlen=%d"
 				      " datalen=%d\n",
 				      dir, cmdlen, xs->datalen));
-		sc->transfer(sc, sc_link->scsipi_scsi.lun, xs->cmd, cmdlen,
+		sc->transfer(sc, sc_link->scsipi_scsi.lun, cmd, cmdlen,
 		    xs->data, xs->datalen, dir, umass_scsipi_cb, xs);
 		return (SUCCESSFULLY_QUEUED);
 	}
@@ -3216,8 +3228,8 @@ umass_scsipi_cb(struct umass_softc *sc, void *priv, int residue, int status)
 		sc->sc_sense_cmd.length = sizeof(xs->sense);
 
 		cmdlen = sizeof(sc->sc_sense_cmd);
-		if (sc->proto & PROTO_UFI)
-			cmdlen = UFI_PROTO_LEN;
+		if (sc->proto & PROTO_UFI) /* XXX */
+			cmdlen = UFI_COMMAND_LENGTH;
 		sc->transfer(sc, sc_link->scsipi_scsi.lun,
 			     &sc->sc_sense_cmd, cmdlen,
 			     &xs->sense, sizeof(xs->sense), DIR_IN,
@@ -3261,7 +3273,8 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	case STATUS_CMD_OK:
 	case STATUS_CMD_UNKNOWN:
 		/* getting sense data succeeded */
-		if (xs->cmd->opcode == INQUIRY  && xs->resid < xs->datalen) {
+		if (xs->cmd->opcode == INQUIRY && (xs->resid < xs->datalen
+		    || ((sc->quirks & RS_NO_CLEAR_UA) /* XXX */) )) {
 			/*
 			 * Some drivers return SENSE errors even after INQUIRY.
 			 * The upper layer doesn't like that.
@@ -3291,6 +3304,71 @@ umass_scsipi_sense_cb(struct umass_softc *sc, void *priv, int residue,
 	s = splbio();
 	scsipi_done(xs);
 	splx(s);
+}
+
+/*
+ * UFI specific functions
+ */
+
+Static int
+umass_ufi_transform(struct umass_softc *sc, struct scsipi_generic *cmd, 
+		    int cmdlen, struct scsipi_generic *rcmd, int *rcmdlen)
+{
+	*rcmdlen = UFI_COMMAND_LENGTH;
+	memset(rcmd, 0, sizeof *rcmd);
+
+	/* Handle any quirks */
+	if (cmd->opcode == TEST_UNIT_READY
+	    && (sc->quirks & NO_TEST_UNIT_READY)) {
+		/*
+		 * Some devices do not support this command.
+		 * Start Stop Unit should give the same results
+		 */
+		DPRINTF(UDMASS_UFI, ("%s: Converted TEST_UNIT_READY "
+			"to START_UNIT\n", USBDEVNAME(sc->sc_dev)));
+		cmd->opcode = START_STOP;
+		cmd->bytes[3] = SSS_START;
+		return 1;
+	} 
+
+	switch (cmd->opcode) {
+	/* Commands of which the format has been verified. They should work. */
+	case TEST_UNIT_READY:
+	case SCSI_REZERO_UNIT:
+	case REQUEST_SENSE:
+	case INQUIRY:
+	case START_STOP:
+	/*case SEND_DIAGNOSTIC: ??*/
+	case PREVENT_ALLOW:
+	case READ_CAPACITY:
+	case READ_BIG:
+	case WRITE_BIG:
+	case POSITION_TO_ELEMENT:	/* SEEK_10 */
+	case SCSI_MODE_SELECT_BIG:
+	case SCSI_MODE_SENSE_BIG:
+		/* Copy the command into the (zeroed out) destination buffer */
+		memcpy(rcmd, cmd, cmdlen);
+		return (1);	/* success */
+
+	/* 
+	 * Other UFI commands: FORMAT_UNIT, MODE_SELECT, READ_FORMAT_CAPACITY,
+	 * VERIFY, WRITE_AND_VERIFY.
+	 * These should be checked whether they somehow can be made to fit.
+	 */
+
+	/* These commands are known _not_ to work. They should be converted. */
+	case SCSI_READ_COMMAND:
+	case SCSI_WRITE_COMMAND:
+	case SCSI_MODE_SENSE:
+	case SCSI_MODE_SELECT:
+	default:
+		printf("%s: Unsupported UFI command 0x%02x",
+			USBDEVNAME(sc->sc_dev), cmd->opcode);
+		if (cmdlen == 6)
+			printf(", 6 byte command should have been converted");
+		printf("\n");
+		return (0);	/* failure */
+	}
 }
 
 #if NATAPIBUS > 0
