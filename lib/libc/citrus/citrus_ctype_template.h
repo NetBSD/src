@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.13.2.6 2003/06/02 15:04:57 tron Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.13.2.7 2003/06/02 15:06:10 tron Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -163,6 +163,8 @@ static int _FUNCNAME(mbrtowc_priv)(_ENCODING_INFO * __restrict,
  *   - additional 6th parameter is the storage to be stored
  *     the return value in the real mbrtowc context.
  *   - return value means "errno" in the real wcrtomb context.
+ *   - caller should ensure that 2nd parameter isn't NULL.
+ *     (XXX inconsist with mbrtowc_priv)
  */
 
 static int _FUNCNAME(wcrtomb_priv)(_ENCODING_INFO * __restrict,
@@ -566,9 +568,18 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 			 void * __restrict pspriv, size_t * __restrict nresult)
 {
 	_ENCODING_STATE *psenc;
+	char buf[MB_LEN_MAX];
 	int err = 0;
 
 	_DIAGASSERT(cl != NULL);
+
+	if (s == NULL) {
+		/*
+		 * use internal buffer.
+		 */
+		s = buf;
+		wc = L'\0'; /* SUSv3 */
+	}
 
 	_RESTART_BEGIN(wcrtomb, _TO_CEI(cl), pspriv, psenc);
 	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s,
