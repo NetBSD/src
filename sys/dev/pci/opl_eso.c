@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_eso.c,v 1.1 1999/07/12 15:13:31 kleink Exp $	*/
+/*	$NetBSD: opl_eso.c,v 1.2 1999/08/01 18:05:42 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
-#include <dev/isa/mpuvar.h> /* XXX should not be ISA! */
+#include <dev/ic/mpuvar.h>
 #include <dev/pci/esovar.h>
 
 static int	opl_eso_match __P((struct device *, struct cfdata *, void *));
