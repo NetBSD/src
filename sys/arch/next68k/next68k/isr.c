@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.7 1999/01/13 09:25:59 abs Exp $ */
+/*	$NetBSD: isr.c,v 1.8 1999/01/27 06:39:31 dbj Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -259,8 +259,14 @@ isrdispatch_autovec(pc, evec, frame)
 		straycount = 0;
 	else if (++straycount > 50)
 		panic("isr_dispatch_autovec: too many stray interrupts");
-	else
+	else {
 		printf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
+
+		printf("  *intrstat = 0x%b\n",
+				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS);
+		printf("  *intrmask = 0x%b\n",
+				(*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),NEXT_INTR_BITS);
+	}
 }
 
 /*
