@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.8 2002/02/04 00:18:32 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/02/04 08:37:37 thorpej Exp $
+
+.include <bsd.own.mk>
 
 .PATH:		${.CURDIR}/../common
 
