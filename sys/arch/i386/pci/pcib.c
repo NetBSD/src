@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.19 1998/08/24 19:27:05 drochner Exp $	*/
+/*	$NetBSD: pcib.c,v 1.20 1998/09/18 11:13:10 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -124,14 +124,22 @@ pcibmatch(parent, match, aux)
 	}
 
 	/*
-	 * The Intel 82371MX identifies itself erroneously as a
-	 * miscellaneous bridge.
+	 * some special cases:
 	 */
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_SIO:
+		    /*
+		     * The Intel SIO identifies itself as a
+		     * miscellaneous prehistoric.
+		     */
 		case PCI_PRODUCT_INTEL_82371MX:
-			return (1);
+		    /*
+		     * The Intel 82371MX identifies itself erroneously as a
+		     * miscellaneous bridge.
+		     */
+		    return (1);
 		}
 		break;
 	}
