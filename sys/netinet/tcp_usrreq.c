@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_usrreq.c	7.15 (Berkeley) 6/28/90
- *	$Id: tcp_usrreq.c,v 1.3 1993/05/22 11:42:50 cgd Exp $
+ *	$Id: tcp_usrreq.c,v 1.4 1993/06/15 02:25:26 cgd Exp $
  */
 
 #include "param.h"
@@ -395,8 +395,8 @@ tcp_ctloutput(op, so, level, optname, mp)
 	return (error);
 }
 
-u_long	tcp_sendspace = 1024*4;
-u_long	tcp_recvspace = 1024*4;
+u_long	tcp_sendspace = 1024*8;
+u_long	tcp_recvspace = 1024*8;
 
 /*
  * Attach TCP protocol to socket, allocating
