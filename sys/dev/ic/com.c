@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.22 1994/03/12 07:25:16 cgd Exp $
+ *	$Id: com.c,v 1.23 1994/03/12 07:43:03 cgd Exp $
  */
 
 /*
@@ -478,19 +478,20 @@ comioctl(dev, cmd, data, flag, p)
 	case TIOCSFLAGS: {
 		int userbits, driverbits = 0;
 
-                error = suser(p->p_ucred, &p->p_acflag); 
-                if (error != 0)
-                        return(EPERM); 
+		error = suser(p->p_ucred, &p->p_acflag); 
+		if (error != 0)
+			return(EPERM); 
 
 		userbits = *(int *)data;
-		if ((userbits & TIOCFLAG_CLOCAL) ||
+		if ((userbits & TIOCFLAG_SOFTCAR) ||
 		    (sc->sc_hwflags & COM_HW_CONSOLE))
-			driverbits |= COM_SW_CLOCAL;
+			driverbits |= COM_SW_SOFTCAR;
 		if (userbits & TIOCFLAG_CLOCAL)
 			driverbits |= COM_SW_CLOCAL;
 		if (userbits & TIOCFLAG_CRTSCTS)
 			driverbits |= COM_SW_CRTSCTS;
 
+		sc->sc_swflags = driverbits;
 		break;
 	}
 	default:
