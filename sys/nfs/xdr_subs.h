@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_subs.h,v 1.12 1997/10/10 01:53:34 fvdl Exp $	*/
+/*	$NetBSD: xdr_subs.h,v 1.13 1999/03/06 05:34:40 fair Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -97,13 +97,14 @@
 	((struct nfsv3_time *)(t))->nfsv3_nsec = htonl((f)->tv_nsec); \
 }
 
-#define	fxdr_hyper(f, t) { \
-	((int32_t *)(t))[_QUAD_HIGHWORD] = ntohl(((int32_t *)(f))[0]); \
-	((int32_t *)(t))[_QUAD_LOWWORD] = ntohl(((int32_t *)(f))[1]); \
-}
-#define	txdr_hyper(f, t) { \
-	((int32_t *)(t))[0] = htonl(((int32_t *)(f))[_QUAD_HIGHWORD]); \
-	((int32_t *)(t))[1] = htonl(((int32_t *)(f))[_QUAD_LOWWORD]); \
+#define	fxdr_hyper(f) 						\
+        ((((u_quad_t)ntohl(((u_int32_t *)(f))[0])) << 32) |	\
+	 (u_quad_t)(ntohl(((u_int32_t *)(f))[1])))
+
+
+#define	txdr_hyper(f, t) {						\
+	((u_int32_t *)(t))[0] = htonl((u_int32_t)((f) >> 32));		\
+	((u_int32_t *)(t))[1] = htonl((u_int32_t)((f) & 0xffffffff));	\
 }
 
 #endif

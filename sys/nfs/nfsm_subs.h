@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.18 1998/08/09 21:19:53 perry Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.19 1999/03/06 05:34:41 fair Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -422,7 +422,7 @@
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		if (*tl == nfs_true) { \
 			nfsm_dissect(tl, u_int32_t *, 2 * NFSX_UNSIGNED); \
-			fxdr_hyper(tl, &(a)->va_size); \
+			(a)->va_size = fxdr_hyper(tl); \
 		} \
 		nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
 		switch (fxdr_unsigned(int, *tl)) { \
