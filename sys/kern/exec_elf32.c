@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.87 2003/02/28 19:09:08 matt Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.88 2003/02/28 19:44:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.87 2003/02/28 19:09:08 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.88 2003/02/28 19:44:42 matt Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -442,10 +442,13 @@ ELFNAME(load_file)(struct proc *p, struct exec_package *epp, char *path,
 			if (base_ph == NULL) {
 				/*
 				 * First encountered psection is always the
-				 * base psection.
+				 * base psection.  Make sure it's aligned
+				 * properly.
 				 */
 				base_ph = ph0;
 				flags = VMCMD_BASE;
+				addr = ELF_TRUNC(addr + ph0->p_align - 1,
+				    ph0->p_align);
 			} else {
 				u_long limit = round_page(last_ph->p_vaddr
 				    + last_ph->p_memsz);
