@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.100 1998/11/19 19:51:47 tron Exp $
+#	$NetBSD: Makefile,v 1.101 1999/01/13 19:43:41 drochner Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 #
 # not yet done: catman
@@ -18,7 +18,7 @@ SUBDIR=	ac accton amd apm apmd arp bad144 bootp \
 	rpc.statd rpc.yppasswdd rwhod sa screenblank \
 	sliplogin slstats spray sup sysctl syslogd tcpdchk \
 	tcpdmatch tcpdump timed traceroute trpt trsp update \
-	usbd usbdevs videomode vipw vnconfig xntp \
+	usbd usbdevs videomode vipw vnconfig wsconscfg wsfontload xntp \
 	ypbind yppoll ypserv ypset \
 	zdump zic
 
