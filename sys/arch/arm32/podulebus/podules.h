@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.5 1997/02/23 03:51:19 mark Exp 
+ *	NetBSD: podules,v 1.6 1997/07/28 17:47:53 mark Exp 
  */
 
 /*
@@ -42,23 +42,27 @@
 
 #define	MANUFACTURER_ACORN	0x0000		/* Acorn Computers */
 #define	MANUFACTURER_OLIVETTI	0x0002		/* Olivetti */
-#define	MANUFACTURER_WATFORD	0x0003		/* Watford */
+#define	MANUFACTURER_WATFORD	0x0003		/* Watford Electronics */
 #define	MANUFACTURER_CCONCEPTS	0x0004		/* Computer Concepts */
 #define	MANUFACTURER_ARMADILLO	0x0007		/* Armadillo Systems */
 #define	MANUFACTURER_WILDVISION	0x0009		/* Wild Vision */
 #define	MANUFACTURER_ATOMWIDE	0x0011		/* Atomwide */
+#define	MANUFACTURER_ATOMWIDE2	0x0017		/* Atomwide */
 #define	MANUFACTURER_LINGENUITY	0x001a		/* Lingenuity */
 #define	MANUFACTURER_IRLAM	0x001f		/* Irlam Instruments */
 #define	MANUFACTURER_OAK	0x0021		/* Oak Solutions */
 #define	MANUFACTURER_MORLEY	0x002b		/* Morley */
+#define	MANUFACTURER_VTI	0x0035		/* Vertical Twist */
 #define	MANUFACTURER_CUMANA	0x003a		/* Cumana */
 #define	MANUFACTURER_ICS	0x003c		/* ICS */
+#define	MANUFACTURER_SERIALPORT	0x003f		/* Serial Port */
 #define	MANUFACTURER_ARXE	0x0041		/* ARXE */
 #define	MANUFACTURER_ALEPH1	0x0042		/* Aleph 1 */
 #define	MANUFACTURER_ICUBED	0x0046		/* I-Cubed */
 #define	MANUFACTURER_BRINI	0x0050		/* Brini */
 #define	MANUFACTURER_ANT	0x0053		/* ANT */
 #define	MANUFACTURER_ALSYSTEMS	0x005b		/* Alsystems */
+#define	MANUFACTURER_SIMTEC	0x005f		/* Simtec Electronics */
 #define	MANUFACTURER_YES	0x0060		/* Yellowstone Educational Solutions */
 #define	MANUFACTURER_MCS	0x0063		/* MCS */
 
@@ -70,6 +74,7 @@
 #define	PODULE_ACORN_ETHER1	0x0003		/* ether 1 interface */
 #define	PODULE_ACORN_RAMROM	0x0005		/* RAM/ROM podule */
 #define	PODULE_ACORN_BBCIO	0x0006		/* BBC IO interface */
+#define	PODULE_ACORN_ST506	0x000b		/* ST506 HD interface */
 #define	PODULE_ACORN_MIDI	0x0013		/* MIDI interface */
 #define	PODULE_ACORN_ETHER2	0x0061		/* ether 2 interface */
 
@@ -85,6 +90,8 @@
 
 #define	PODULE_ATOMWIDE_ETHER3	0x00A4		/* ether 3/5 interface */
 
+#define	PODULE_ATOMWIDE2_SERIAL	0x0090		/* serial interface */
+
 #define	PODULE_LINGENUITY_SCSI	0x0095		/* 16 bit SCSI interface */
 
 #define	PODULE_IRLAM_24I16	0x00e6		/* 24i16 digitiser */
@@ -93,24 +100,28 @@
 
 #define	PODULE_MORLEY_SCSI	0x0067		/* SCSI interface */
 
+#define	PODULE_VTI_SCSI	0x008d		/* SCSI interface */
+
 #define	PODULE_CUMANA_SCSI2	0x003a		/* SCSI II interface */
 #define	PODULE_CUMANA_SCSI1	0x00a0		/* SCSI I interface */
 #define	PODULE_CUMANA_SLCD	0x00dd		/* CDFS & SLCD expansion card */
 
 #define	PODULE_ICS_IDE	0x00ae		/* IDE Interface */
 
+#define	PODULE_SERIALPORT_DUALSERIAL	0x00b9		/* Serial interface */
+
 #define	PODULE_ARXE_SCSI	0x0041		/* 16 bit SCSI interface */
 
 #define	PODULE_ALEPH1_PCCARD	0x00ea		/* PC card */
 
-#define	PODULE_ICUBED_ETHERH	0x00ec		/* etherlan 600 network slot interface */
-#define	PODULE_ICUBED_ETHERHFLASH	0x011e		/* etherlan 600 network slot interface */
+#define	PODULE_ICUBED_ETHERLAN600	0x00ec		/* etherlan 600 network slot interface */
+#define	PODULE_ICUBED_ETHERLAN600A	0x011e		/* etherlan 600A network slot interface */
 #define	PODULE_ICUBED_ETHERLAN500	0x00d4		/* etherlen 500 interface */
-#define	PODULE_ICUBED_ETHERLAN500A	0x011f		/* etherlen 500 interface */
+#define	PODULE_ICUBED_ETHERLAN500A	0x011f		/* etherlen 500A interface */
 #define	PODULE_ICUBED_ETHERLAN200	0x00bd		/* etherlen 200 interface */
-#define	PODULE_ICUBED_ETHERLAN200A	0x011d		/* etherlen 200 interface */
+#define	PODULE_ICUBED_ETHERLAN200A	0x011d		/* etherlen 200A interface */
 #define	PODULE_ICUBED_ETHERLAN100	0x00c4		/* etherlen 100 interface */
-#define	PODULE_ICUBED_ETHERLAN100A	0x011c		/* etherlen 100 interface */
+#define	PODULE_ICUBED_ETHERLAN100A	0x011c		/* etherlen 100A interface */
 
 #define	PODULE_BRINI_PORT	0x0000		/* BriniPort intelligent I/O interface */
 #define	PODULE_BRINI_LINK	0x00df		/* BriniLink transputer link adapter */
@@ -120,6 +131,9 @@
 #define	PODULE_ANT_ETHERM	0x00d8		/* ether M dual interface NIC */
 
 #define	PODULE_ALSYSTEMS_SCSI	0x0107		/* SCSI II host adapter */
+
+#define	PODULE_SIMTEC_IDE8	0x0130		/* 8 bit IDE interface */
+#define	PODULE_SIMTEC_IDE	0x0131		/* 16 bit IDE interface */
 
 #define	PODULE_YES_RAPIDE	0x0114		/* RapIDE32 interface */
 
