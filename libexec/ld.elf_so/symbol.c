@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.10 2000/10/11 20:46:08 dan Exp $	 */
+/*	$NetBSD: symbol.c,v 1.11 2001/10/14 23:13:21 rafal Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -163,7 +163,7 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	bool in_plt;
 {
 	Elf_Addr symnum = ELF_R_SYM(r_info);
-	const Elf_Sym  *ref = NULL;
+	const Elf_Sym  *ref;
 	const Elf_Sym  *def;
 	const Elf_Sym  *symp;
 	const Obj_Entry *obj;
@@ -171,10 +171,10 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	const Objlist_Entry *elm;
 	unsigned long   hash;
 
-	if (name == NULL) {
-		ref = refobj->symtab + symnum;
+	ref = refobj->symtab + symnum;
+	if (name == NULL)
 		name = refobj->strtab + ref->st_name;
-	}
+
 	hash = _rtld_elf_hash(name);
 	def = NULL;
 	defobj = NULL;
@@ -227,6 +227,7 @@ _rtld_find_symdef(obj_list, r_info, name, refobj, defobj_out, in_plt)
 	 * symbol as having the value zero.
 	 */
 	if (def == NULL && ELF_ST_BIND(ref->st_info) == STB_WEAK) {
+		rdbg(1, ("  returning _rtld_sym_zero@_rtld_objmain"));
 		def = &_rtld_sym_zero;
 		defobj = _rtld_objmain;
 	}
