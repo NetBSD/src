@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.9 1996/08/27 00:44:21 cgd Exp $	*/
+/*	$NetBSD: libkern.h,v 1.10 1996/09/22 16:23:31 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -113,6 +113,7 @@ abs(j)
 
 #ifdef NDEBUG						/* tradition! */
 #define	assert(e)	((void)0)
+#else
 #ifdef __STDC__
 #define	assert(e)	((e) ? (void)0 :				    \
 			    __assert("", __FILE__, __LINE__, #e))
