@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.19.4.4 1999/07/11 05:44:01 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.19.4.5 1999/08/02 23:16:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -92,7 +92,7 @@ sys_sbrk(p, v, retval)
 {
 #if 0
 	struct sys_sbrk_args /* {
-		syscallarg(int) incr;
+		syscallarg(intptr_t) incr;
 	} */ *uap = v;
 #endif
 
@@ -197,16 +197,16 @@ sys_mincore(p, v, retval)
 		lim = end < entry->end ? end : entry->end;
 
 		/*
-		 * Special case for mapped devices; these are always
-		 * considered resident.
+		 * Special case for objects with no "real" pages.  Those
+		 * are always considered resident (mapped devices).
 		 */
 		if (UVM_ET_ISOBJ(entry)) {
-			extern struct uvm_pagerops uvm_deviceops; /* XXX */
 #ifdef DIAGNOSTIC
 			if (UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj))
 				panic("mincore: user map has kernel object");
 #endif
-			if (entry->object.uvm_obj->pgops == &uvm_deviceops) {
+			if (entry->object.uvm_obj->pgops->pgo_releasepg
+			    == NULL) {
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)
 					subyte(vec, 1);
@@ -214,8 +214,8 @@ sys_mincore(p, v, retval)
 			}
 		}
 
-		uobj = entry->object.uvm_obj;	/* top layer */
-		amap = entry->aref.ar_amap;	/* bottom layer */
+		amap = entry->aref.ar_amap;	/* top layer */
+		uobj = entry->object.uvm_obj;	/* bottom layer */
 
 		if (amap != NULL)
 			amap_lock(amap);
@@ -510,6 +510,21 @@ sys_mmap(p, v, retval)
 	}
 
 	/*
+	 * XXX (in)sanity check.  We don't do proper datasize checking
+	 * XXX for anonymous (or private writable) mmap().  However,
+	 * XXX know that if we're trying to allocate more than the amount
+	 * XXX remaining under our current data size limit, _that_ should
+	 * XXX be disallowed.
+	 */
+	if ((flags & MAP_ANON) != 0 ||
+	    ((flags & MAP_PRIVATE) != 0 && (prot & PROT_WRITE) != 0)) {
+		if (size >
+		    (p->p_rlimit[RLIMIT_DATA].rlim_cur - ctob(p->p_vmspace->vm_dsize))) {
+			return (ENOMEM);
+		}
+	}
+
+	/*
 	 * now let kernel internal function uvm_mmap do the work.
 	 */
 
@@ -605,7 +620,9 @@ sys___msync13(p, v, retval)
 	/*
 	 * translate MS_ flags into PGO_ flags
 	 */
-	uvmflags = (flags & MS_INVALIDATE) ? PGO_FREE : 0;
+	uvmflags = PGO_CLEANIT;
+	if (flags & MS_INVALIDATE)
+		uvmflags |= PGO_FREE;
 	if (flags & MS_SYNC)
 		uvmflags |= PGO_SYNCIO;
 	else
@@ -827,7 +844,7 @@ sys_madvise(p, v, retval)
 	} */ *uap = v;
 	vaddr_t addr;
 	vsize_t size, pageoff;
-	int advice;
+	int advice, rv;;
 	
 	addr = (vaddr_t)SCARG(uap, addr);
 	size = (vsize_t)SCARG(uap, len);
@@ -841,16 +858,77 @@ sys_madvise(p, v, retval)
 	size += pageoff;
 	size = (vsize_t) round_page(size);
 
-	if ((int)size < 0)
+	if ((ssize_t)size <= 0)
 		return (EINVAL);
-	
-	switch (uvm_map_advice(&p->p_vmspace->vm_map, addr, addr+size,
-			 advice)) {
+
+	switch (advice) {
+	case MADV_NORMAL:
+	case MADV_RANDOM:
+	case MADV_SEQUENTIAL:
+		rv = uvm_map_advice(&p->p_vmspace->vm_map, addr, addr + size,
+		    advice);
+		break;
+
+	case MADV_WILLNEED:
+		/*
+		 * Activate all these pages, pre-faulting them in if
+		 * necessary.
+		 */
+		/*
+		 * XXX IMPLEMENT ME.
+		 * Should invent a "weak" mode for uvm_fault()
+		 * which would only do the PGO_LOCKED pgo_get().
+		 */
+		return (0);
+
+	case MADV_DONTNEED:
+		/*
+		 * Deactivate all these pages.  We don't need them
+		 * any more.  We don't, however, toss the data in
+		 * the pages.
+		 */
+		rv = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
+		    PGO_DEACTIVATE);
+		break;
+
+	case MADV_FREE:
+		/*
+		 * These pages contain no valid data, and may be
+		 * grbage-collected.  Toss all resources, including
+		 * any swap space in use.
+		 */
+		rv = uvm_map_clean(&p->p_vmspace->vm_map, addr, addr + size,
+		    PGO_FREE);
+		break;
+
+	case MADV_SPACEAVAIL:
+		/*
+		 * XXXMRG What is this?  I think it's:
+		 *
+		 *	Ensure that we have allocated backing-store
+		 *	for these pages.
+		 *
+		 * This is going to require changes to the page daemon,
+		 * as it will free swap space allocated to pages in core.
+		 * There's also what to do for device/file/anonymous memory.
+		 */
+		return (EINVAL);
+
+	default:
+		return (EINVAL);
+	}
+
+	switch (rv) {
 	case KERN_SUCCESS:
 		return (0);
-	case KERN_PROTECTION_FAILURE:
-		return (EACCES);
+	case KERN_NO_SPACE:
+		return (EAGAIN);
+	case KERN_INVALID_ADDRESS:
+		return (ENOMEM);
+	case KERN_FAILURE:
+		return (EIO);
 	}
+
 	return (EINVAL);
 }
 
@@ -903,7 +981,7 @@ sys_mlock(p, v, retval)
 #endif
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, FALSE,
-	    FALSE);
+	    0);
 	return (error == KERN_SUCCESS ? 0 : ENOMEM);
 }
 
@@ -950,7 +1028,7 @@ sys_munlock(p, v, retval)
 #endif
 
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE,
-	    FALSE);
+	    0);
 	return (error == KERN_SUCCESS ? 0 : ENOMEM);
 }
 
@@ -1154,7 +1232,7 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 				goto bad;
 			}
 			retval = uvm_map_pageable(map, *addr, *addr + size,
-			    FALSE, TRUE);
+			    FALSE, UVM_LK_ENTER);
 			if (retval != KERN_SUCCESS) {
 				/* unmap the region! */
 				(void) uvm_unmap(map, *addr, *addr + size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.43.4.1 1999/06/21 01:48:00 thorpej Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.43.4.2 1999/08/02 23:17:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,18 +46,6 @@ struct vnode;
 struct core;
 
 #ifdef _KERNEL
-
-void		 iprintf __P((void (*)(const char *, ...), const char *, ...));
-void		 thread_sleep_msg __P((void *, simple_lock_t,
-		     boolean_t, char *, int));
-
-/*
- * This define replaces the thread_wakeup prototype, as thread_wakeup
- * was solely a wrapper around wakeup.
- *
- * void           thread_wakeup __P((void *));
- */
-#define		 thread_wakeup wakeup
 
 /* Machine dependent portion */
 void		vmapbuf __P((struct buf *, vsize_t));

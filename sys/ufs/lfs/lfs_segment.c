@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.23.2.1.2.2 1999/06/21 15:27:13 thorpej Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.23.2.1.2.3 1999/08/02 22:57:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -507,7 +507,7 @@ lfs_segwrite(mp, flags)
 		 */
 		need_unlock = 0;
 		if(VOP_ISLOCKED(vp)
-		   && VTOI(vp)->i_lock.lk_lockholder == curproc->p_pid) {
+		   && vp->v_lock.lk_lockholder == curproc->p_pid) {
 			VREF(vp);
 		} else {
 			while (vget(vp, LK_EXCLUSIVE))
