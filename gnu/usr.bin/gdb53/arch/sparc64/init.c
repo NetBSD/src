@@ -36,6 +36,7 @@ extern initialize_file_ftype _initialize_ser_tcp;
 extern initialize_file_ftype _initialize_kernel_u_addr;
 extern initialize_file_ftype _initialize_infptrace;
 extern initialize_file_ftype _initialize_inftarg;
+extern initialize_file_ftype _initialize_kcore_nbsd;
 extern initialize_file_ftype _initialize_remote;
 extern initialize_file_ftype _initialize_dcache;
 extern initialize_file_ftype _initialize_sr_support;
@@ -130,6 +131,7 @@ initialize_all_files (void)
   _initialize_kernel_u_addr ();
   _initialize_infptrace ();
   _initialize_inftarg ();
+  _initialize_kcore_nbsd ();
   _initialize_remote ();
   _initialize_dcache ();
   _initialize_sr_support ();
