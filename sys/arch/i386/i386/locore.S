@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.24 2004/02/20 17:35:01 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.25 2004/03/26 19:05:33 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -719,13 +719,7 @@ NENTRY(sigcode)
 	leal	12(%esp),%eax		# get pointer to sigcontext
 	movl	%eax,4(%esp)		# put it in the argument slot
 					# fake return address already there
-#if defined(SYS_compat_16___sigreturn14)
 	movl	$SYS_compat_16___sigreturn14,%eax
-#elif defined(SYS___sigreturn14)
-	movl	$SYS___sigreturn14,%eax
-#else
-	#error "no sigreturn14 syscall"
-#endif
 	int	$0x80	 		# enter kernel with args on stack
 	movl	$SYS_exit,%eax
 	int	$0x80			# exit if sigreturn fails
