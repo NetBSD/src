@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.85.2.17 2000/02/13 06:24:00 scottr Exp $
+#	$NetBSD: GENERIC,v 1.85.2.18 2000/02/13 06:26:17 scottr Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.85.2.17 $"
+#ident 		"GENERIC-$Revision: 1.85.2.18 $"
 
 maxusers	16		# estimated number of users
 
@@ -129,7 +129,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 # wscons options
 #options 	WSEMUL_SUN		# sun terminal emulation
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options 	WSDISPLAY_COMPAT_ITE	# ite compatibility
 options 	WSDISPLAY_COMPAT_ITEFONT # use ite font (6x10)
 
 # rcons options; note that 1-bit and 8-bit displays are supported by default.
