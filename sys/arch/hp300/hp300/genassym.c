@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.17 1996/02/02 19:42:36 mycroft Exp $	*/
+/*	$NetBSD: genassym.c,v 1.18 1996/02/02 23:53:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -65,7 +65,6 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <string.h>
-#include <unistd.h>
 
 extern int errno;
 
