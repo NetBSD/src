@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.16 1998/02/05 07:28:57 perry Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.17 1998/10/21 01:08:02 ross Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2429,7 +2429,9 @@ Here is an example of inset labels:
 .Bl -inset -offset indent
 .It Em Tag
 The tagged list (also called a tagged paragraph) is the
-most common type of list used in the Berkeley manuals.
+most common type of list used in the Berkeley manuals. Use a
+.Fl width
+attribute as described below.
 .It Em Diag
 Diag lists create section four diagnostic lists
 and are similar to inset lists except callable
@@ -2489,7 +2491,7 @@ And the unformatted text which created it:
 \&.El
 .Ed
 .Pp
-The tagged list which follows uses an optional width specifier to control
+The tagged list which follows uses a width specifier to control
 the width of the tag.
 .Pp
 .Bl -tag -width "PAGEIN" -compact -offset indent
@@ -2561,7 +2563,10 @@ is a callable macro, the default width for that macro will be used
 as if the macro name had been supplied as the width.
 However,
 if another item in the list is given with a different callable
-macro name, a new and nested list is assumed.
+macro name, a new and nested list is assumed. This effectively
+means that
+.Fl width
+is required for the tag list type.
 .Pp
 .It Fl column
 This list type generates multiple columns.
