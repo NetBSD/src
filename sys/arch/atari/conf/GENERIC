@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.20 1996/11/08 14:12:30 leo Exp $
+#	$NetBSD: GENERIC,v 1.21 1996/11/17 13:33:39 leo Exp $
 #
 # Generic atari
 #
@@ -52,11 +52,6 @@ options		UMAPFS		# null file system (with uid & gid remapping)
 options		PORTAL		# portal file system
 
 options		FIFO		# FIFO operations on vnodes
-
-options		SWAPPAGER	# Pager for swap device
-options		VNODEPAGER	# Pager for vnodes
-options		DEVPAGER	# Pager
-
 
 #
 # Misc. debuging options
