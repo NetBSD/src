@@ -1,13 +1,12 @@
-/*	$NetBSD: zic.c,v 1.21 2003/12/20 00:12:05 kleink Exp $	*/
+/*	$NetBSD: zic.c,v 1.22 2003/12/20 00:21:00 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #ifndef NOID
-__RCSID("$NetBSD: zic.c,v 1.21 2003/12/20 00:12:05 kleink Exp $");
+__RCSID("$NetBSD: zic.c,v 1.22 2003/12/20 00:21:00 kleink Exp $");
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
-static char	elsieid[] = "@(#)zic.c	7.113";
 static char	elsieid[] = "@(#)zic.c	7.115";
 
 #include "private.h"
