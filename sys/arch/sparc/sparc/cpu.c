@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.23 1996/06/12 14:56:09 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.24 1996/06/12 18:39:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -441,6 +441,7 @@ struct info {
 
 #if defined(SUN4C) || defined(SUN4M)
 static struct info iu_types[] = {
+	{ 1, 0x0, 0x4, 4,   "MB86904" },
 	{ 1, 0x0, 0x0, ANY, "MB86900/1A or L64801" },
 	{ 1, 0x1, 0x0, ANY, "RT601 or L64811 v1" },
 	{ 1, 0x1, 0x1, ANY, "RT601 or L64811 v2" },
