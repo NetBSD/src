@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wivar.h,v 1.12 2000/08/26 00:05:54 jhawk Exp $	*/
+/*	$NetBSD: if_wivar.h,v 1.13 2000/08/28 13:25:22 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -83,4 +83,7 @@ struct wi_softc	{
 	int                     wi_tx_key;
 	struct wi_ltv_keys      wi_keys;
 	struct wi_counters	wi_stats;
+#if NRND > 0
+	rndsource_element_t	rnd_source;	/* random source */
+#endif
 };
