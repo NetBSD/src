@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.7 1996/05/30 06:57:16 leo Exp $
+#	$NetBSD: list,v 1.8 1997/11/13 13:56:52 leo Exp $
 
-SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
+SRCDIRS distrib/utils usr.bin bin sbin usr.sbin gnu/usr.bin
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/instbin	instbin
@@ -28,7 +28,7 @@ LINK	instbin			bin/test bin/[
 LINK	instbin			sbin/fsck_ffs sbin/fsck
 LINK	instbin			sbin/reboot sbin/halt
 LINK	instbin			sbin/ifconfig
-LINK	instbin			sbin/init
+LINK	instbin			sbin/init_s sbin/init
 LINK	instbin			sbin/mknod
 LINK	instbin			sbin/mount
 LINK	instbin			sbin/mount_cd9660
@@ -62,9 +62,9 @@ COPY	${DESTDIR}/etc/group		etc/group
 COPY	${DESTDIR}/etc/master.passwd	etc/master.passwd
 COPY	${DESTDIR}/etc/passwd		etc/passwd
 COPY	${DESTDIR}/etc/protocols	etc/protocols
-COPY	${DESTDIR}/etc/pwd.db		etc/pwd.db
 COPY	${DESTDIR}/etc/services		etc/services
 COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
+LINK	etc/spwd.db			etc/pwd.db
 
 # and the installation scripts
 COPY	${CURDIR}/install.sub		install.sub
