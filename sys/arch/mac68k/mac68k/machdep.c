@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 1996/05/10 20:53:31 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 1996/05/14 04:00:53 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1550,7 +1550,24 @@ getenv(str)
 }
 
 /*
- *ROM Vector information for calling drivers in ROMs
+ * ROM Vector information for calling drivers in ROMs
+ *
+ * Egret, ADBReInit_JTBL and ROMResourceMap were added to these
+ *  tables.  Egret probably isn't used anyplace anymore, but I was
+ *  inspired by the default value that was used in "macrom.c".  That
+ *  value was most likely non-functional for all but a few systems,
+ *  so putting it here will hopefully localize system-specific ROM
+ *  addresses.  Likewise ADBReInit_JTBL and ROMResourceMap are
+ *  currently used on only a few systems, but changes in the Booter
+ *  and changes in ROM Mapping were causing problems.  Hopefully
+ *  those problems will be eliminated by having the proper addresses
+ *  for those machines in this table.
+ *
+ * What we probably need is a little MacOS Utility that can suck all
+ *  these addresses from the System, tell the user if his/er system
+ *  is currently supported via the romvec tables, and provide a
+ *  formatted output file for inclusion here if it isn't.
+ *		Bob Nestor - <rnestor@metronet.com>
  */
 static romvec_t romvecs[] =
 {
@@ -1558,7 +1575,7 @@ static romvec_t romvecs[] =
 	{			/* 0 */
 		"Mac II class ROMs",
 		(caddr_t) 0x40807002,	/* where does ADB interrupt */
-		0,		/* PM interrupt (?) */
+		(caddr_t) 0x0,		/* PM interrupt (?) */
 		(caddr_t) 0x4080a4d8,	/* ADBBase + 130 interrupt; whatzit? */
 		(caddr_t) 0x40807778,	/* CountADBs */
 		(caddr_t) 0x40807792,	/* GetIndADB */
@@ -1566,15 +1583,18 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x408077c4,	/* SetADBInfo */
 		(caddr_t) 0x40807704,	/* ADBReInit */
 		(caddr_t) 0x408072fa,	/* ADBOp */
-		0,		/* PMgrOp */
+		(caddr_t) 0x0,		/* PMgrOp */
 		(caddr_t) 0x4080d6d0,	/* WriteParam */
 		(caddr_t) 0x4080d6fa,	/* SetDateTime */
 		(caddr_t) 0x4080dbe8,	/* InitUtil */
 		(caddr_t) 0x4080dd78,	/* ReadXPRam */
 		(caddr_t) 0x4080dd82,	/* WriteXPRam */
 		(caddr_t) 0x4080ddd6,	/* jClkNoMem */
-		0,			/* ADBAlternateInit */
-		0,			/* InitEgret */
+		(caddr_t) 0x0,		/* ADBAlternateInit */
+		(caddr_t) 0x0,		/* Egret */
+		(caddr_t) 0x0,		/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x40814c58,	/* FixDiv */
 		(caddr_t) 0x40814b64,	/* FixMul */
 	},
@@ -1601,7 +1621,10 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
 		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv */
 		(caddr_t) 0x4081c312,	/* FixMul */
 	},
@@ -1611,7 +1634,7 @@ static romvec_t romvecs[] =
 	{			/* 2 */
 		"Mac IIsi class ROMs",
 		(caddr_t) 0x40814912,	/* ADB interrupt */
-		(caddr_t) 0,	/* PM ADB interrupt */
+		(caddr_t) 0x0,		/* PM ADB interrupt */
 		(caddr_t) 0x408150f0,	/* ADBBase + 130 interrupt; whatzit? */
 		(caddr_t) 0x4080a360,	/* CountADBs */
 		(caddr_t) 0x4080a37a,	/* GetIndADB */
@@ -1619,7 +1642,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
-		(caddr_t) 0,	/* PMgrOp */
+		(caddr_t) 0x0,		/* PMgrOp */
 		(caddr_t) 0x4080c05c,	/* WriteParam */
 		(caddr_t) 0x4080c086,	/* SetDateTime */
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
@@ -1627,7 +1650,10 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
 		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv */
 		(caddr_t) 0x4081c312,	/* FixMul */
 	},
@@ -1638,7 +1664,7 @@ static romvec_t romvecs[] =
 	{			/* 3 */
 		"Mac Classic II ROMs",
 		(caddr_t) 0x40a14912,	/* ADB interrupt */
-		(caddr_t) 0,	/* PM ADB interrupt */
+		(caddr_t) 0x0,		/* PM ADB interrupt */
 		(caddr_t) 0x40a150f0,	/* ADBBase + 130 interrupt; whatzit? */
 		(caddr_t) 0x40a0a360,	/* CountADBs */
 		(caddr_t) 0x40a0a37a,	/* GetIndADB */
@@ -1646,7 +1672,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a0a3ac,	/* SetADBInfo */
 		(caddr_t) 0x40a0a752,	/* ADBReInit */
 		(caddr_t) 0x40a0a3dc,	/* ADBOp */
-		(caddr_t) 0,	/* PMgrOp */
+		(caddr_t) 0x0,		/* PMgrOp */
 		(caddr_t) 0x40a0c05c,	/* WriteParam */
 		(caddr_t) 0x40a0c086,	/* SetDateTime */
 		(caddr_t) 0x40a0c5cc,	/* InitUtil */
@@ -1654,7 +1680,10 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a0b190,	/* WriteXPRam */
 		(caddr_t) 0x40ab39b6,	/* jClkNoMem */
 		(caddr_t) 0x40a0a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x40a147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x40a1c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x40a1c312,	/* FixMul, wild guess */
 	},
@@ -1664,7 +1693,7 @@ static romvec_t romvecs[] =
 	{			/* 4 */
 		"Mac IIci/Q700 ROMs",
 		(caddr_t) 0x4080a700,	/* ADB interrupt */
-		(caddr_t) 0,	/* PM ADB interrupt */
+		(caddr_t) 0x0,		/* PM ADB interrupt */
 		(caddr_t) 0x4080a5aa,	/* ADBBase + 130 interrupt; whatzit? */
 		(caddr_t) 0x4080a360,	/* CountADBs */
 		(caddr_t) 0x4080a37a,	/* GetIndADB */
@@ -1672,7 +1701,7 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
-		(caddr_t) 0,	/* PMgrOp */
+		(caddr_t) 0x0,		/* PMgrOp */
 		(caddr_t) 0x4080c05c,	/* WriteParam */
 		(caddr_t) 0x4080c086,	/* SetDateTime */
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
@@ -1680,7 +1709,10 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
 		(caddr_t) 0x4080b1e4,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x0,		/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv */
 		(caddr_t) 0x4081c312,	/* FixMul */
 	},
@@ -1707,7 +1739,10 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
 		(caddr_t) 0x408b39b2,	/* jClkNoMem */		/* From PB180 */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x40888400,	/* InitPwrMgr */	/* From PB180 */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
@@ -1717,7 +1752,7 @@ static romvec_t romvecs[] =
 	{			/* 6 */
 		"Quadra/Centris ROMs",
 		(caddr_t) 0x408b2dea,	/* ADB int */
-		0,			/* PM intr */
+		(caddr_t) 0x0,		/* PM intr */
  		(caddr_t) 0x408b2c72,	/* ADBBase + 130 */
 		(caddr_t) 0x4080a360,	/* CountADBs */
 		(caddr_t) 0x4080a37a,	/* GetIndADB */
@@ -1733,7 +1768,10 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
 		(caddr_t) 0x408b39b6,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
@@ -1744,23 +1782,26 @@ static romvec_t romvecs[] =
 	{			/* 7 */
 		"Quadra AV ROMs",
 		(caddr_t) 0x4080cac6,	/* ADB int */
-		0,		/* PM int */
-		 /* !?! */ 0,	/* ADBBase + 130 */
+		(caddr_t) 0x0,		/* PM int */
+		(caddr_t) 0x0,		/* ADBBase + 130 */
 		(caddr_t) 0x40839600,	/* CountADBs */
 		(caddr_t) 0x4083961a,	/* GetIndADB */
 		(caddr_t) 0x40839646,	/* GetADBInfo */
 		(caddr_t) 0x4083964c,	/* SetADBInfo */
 		(caddr_t) 0x408397b8,	/* ADBReInit */
 		(caddr_t) 0x4083967c,	/* ADBOp */
-		0,		/* PMgrOp */
-		(caddr_t) 0x0,	/* WriteParam */
-		(caddr_t) 0x0,	/* SetDateTime */
-		(caddr_t) 0x0,	/* InitUtil */
-		(caddr_t) 0x0,	/* ReadXPRam */
-		(caddr_t) 0x0,	/* WriteXPRam */
-		(caddr_t) 0x0,	/* jClkNoMem */
-		0,			/* ADBAlternateInit */
-		0,			/* InitEgret */
+		(caddr_t) 0x0,		/* PMgrOp */
+		(caddr_t) 0x0,		/* WriteParam */
+		(caddr_t) 0x0,		/* SetDateTime */
+		(caddr_t) 0x0,		/* InitUtil */
+		(caddr_t) 0x0,		/* ReadXPRam */
+		(caddr_t) 0x0,		/* WriteXPRam */
+		(caddr_t) 0x0,		/* jClkNoMem */
+		(caddr_t) 0x0,		/* ADBAlternateInit */
+		(caddr_t) 0x0,		/* Egret */
+		(caddr_t) 0x0,		/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
@@ -1772,22 +1813,25 @@ static romvec_t romvecs[] =
 		"68040 PowerBook ROMs",
 		(caddr_t) 0x400b2efc,	/* ADB int */
 		(caddr_t) 0x400d8e66,	/* PM int */
-		 /* !?! */ 0,	/* ADBBase + 130 */
+		(caddr_t) 0x0,		/* ADBBase + 130 */
 		(caddr_t) 0x4000a360,	/* CountADBs */
 		(caddr_t) 0x4000a37a,	/* GetIndADB */
 		(caddr_t) 0x4000a3a6,	/* GetADBInfo */
 		(caddr_t) 0x4000a3ac,	/* SetADBInfo */
 		(caddr_t) 0x4000a752,	/* ADBReInit */
 		(caddr_t) 0x4000a3dc,	/* ADBOp */
-		 /* !?! */ 0,	/* PmgrOp */
+		(caddr_t) 0x0,		/* PmgrOp */
 		(caddr_t) 0x4000c05c,	/* WriteParam */
 		(caddr_t) 0x4000c086,	/* SetDateTime */
 		(caddr_t) 0x4000c5cc,	/* InitUtil */
 		(caddr_t) 0x4000b186,	/* ReadXPRam */
 		(caddr_t) 0x4000b190,	/* WriteXPRam */
-		(caddr_t) 0x0,	/* jClkNoMem */
+		(caddr_t) 0x0,		/* jClkNoMem */
 		(caddr_t) 0x4000a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x400147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x4001c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4001c312,	/* FixMul, wild guess */
 	},
@@ -1797,7 +1841,7 @@ static romvec_t romvecs[] =
 	{			/* 9 */
 		"Quadra/Centris 605 ROMs",
 		(caddr_t) 0x408a9b56,	/* ADB int */
-		0,		/* PM int */
+		(caddr_t) 0x0,		/* PM int */
 		(caddr_t) 0x408a99de,	/* ADBBase + 130 */
 		(caddr_t) 0x4080a360,	/* CountADBs */
 		(caddr_t) 0x4080a37a,	/* GetIndADB */
@@ -1805,15 +1849,18 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
-		0,		/* PmgrOp */
+		(caddr_t) 0x0,		/* PmgrOp */
 		(caddr_t) 0x4080c05c,	/* WriteParam */
 		(caddr_t) 0x4080c086,	/* SetDateTime */
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
 		(caddr_t) 0x4080b186,	/* ReadXPRam */
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
-		(caddr_t) 0x0,	/* jClkNoMem */
+		(caddr_t) 0x0,		/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
@@ -1839,7 +1886,10 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
 		(caddr_t) 0x408b3bf8,	/* jClkNoMem */ /* from PB 150 */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40814800,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv, wild guess */
 		(caddr_t) 0x4081c312,	/* FixMul, wild guess */
 	},
@@ -1849,23 +1899,26 @@ static romvec_t romvecs[] =
 	{			/* 11 */
 		"P/LC 550 ROMs",
 		(caddr_t) 0x408d16d6,	/* ADB interrupt */
-		(caddr_t) 0x0,	/* PB ADB interrupt */
+		(caddr_t) 0x0,		/* PB ADB interrupt */
 		(caddr_t) 0x408b2f84,	/* ADBBase + 130 interrupt; whatzit? */
 		(caddr_t) 0x4080a360,	/* CountADBs */
-		(caddr_t) 0x4080a37a,	/* GetIndADB */		/* not verified */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
 		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
 		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
 		(caddr_t) 0x4080a752,	/* ADBReInit */
 		(caddr_t) 0x4080a3dc,	/* ADBOp */
 		(caddr_t) 0x0,		/* PMgrOp */
 		(caddr_t) 0x4080c05c,	/* WriteParam */
-		(caddr_t) 0x4080c086,	/* SetDateTime */	/* not verified */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
 		(caddr_t) 0x4080c5cc,	/* InitUtil */
 		(caddr_t) 0x4080b186,	/* ReadXPRam */
 		(caddr_t) 0x4080b190,	/* WriteXPRam */
 		(caddr_t) 0x408b3c04,	/* jClkNoMem */
 		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408d1450,	/* Egret */
 		(caddr_t) 0x408147c4,	/* InitEgret */
+		(caddr_t) 0x408d24a4,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
 		(caddr_t) 0x4081c406,	/* FixDiv for P550 */
 		(caddr_t) 0x4081c312,	/* FixMul for P550 */
 	},
@@ -1875,7 +1928,7 @@ static romvec_t romvecs[] =
 	{			/* 12 */
 		"MacTV ROMs",
 		(caddr_t) 0x40acfed6,	/* ADB interrupt */
-		(caddr_t) 0x0,	/* PB ADB interrupt */
+		(caddr_t) 0x0,		/* PB ADB interrupt */
 		(caddr_t) 0x40ab2f84,	/* ADBBase + 130 interrupt; whatzit? */
 		(caddr_t) 0x40a0a360,	/* CountADBs */
 		(caddr_t) 0x40a0a37a,	/* GetIndADB */	
@@ -1885,13 +1938,16 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a0a3dc,	/* ADBOp */
 		(caddr_t) 0x0,		/* PMgrOp */
 		(caddr_t) 0x40a0c05c,	/* WriteParam */
-		(caddr_t) 0x40a0c086,	/* SetDateTime */	/* not verified */
+		(caddr_t) 0x40a0c086,	/* SetDateTime */
 		(caddr_t) 0x40a0c5cc,	/* InitUtil */
 		(caddr_t) 0x40a0b186,	/* ReadXPRam */
 		(caddr_t) 0x40a0b190,	/* WriteXPRam */
 		(caddr_t) 0x40ab3bf4,	/* jClkNoMem */
 		(caddr_t) 0x40a0a818,	/* ADBAlternateInit */
+		(caddr_t) 0x40ad1450,	/* Egret */
 		(caddr_t) 0x40a147c4,	/* InitEgret */
+		(caddr_t) 0x0,		/* ADBReInit_JTBL */
+		(caddr_t) 0x0,		/* ROMResourceMap List Head */
 		(caddr_t) 0x40a1c406,	/* FixDiv */
 		(caddr_t) 0x40a1c312,	/* FixMul */
 	},
@@ -2129,6 +2185,7 @@ getenvvars()
 }
 
 struct cpu_model_info *current_mac_model;
+romvec_t *mrg_MacOSROMVectors = 0;
 
 /*
  * Sets a bunch of machine-specific variables
@@ -2158,10 +2215,13 @@ setmachdep()
 		return;
 
 	/*
-	 * Set up current ROM Glue vectors
+	 * Set up current ROM Glue vectors.  Actually now all we do
+	 * is save the address of the ROM Glue Vector table. This gets
+	 * used later when we re-map the vectors from MacOS Address
+	 * Space to NetBSD Address Space.
 	 */
 	if ((mac68k_machine.serial_console & 0x01) == 0)
-		mrg_setvectors(cpui->rom_vectors);
+		mrg_MacOSROMVectors = cpui->rom_vectors;
 
 	/*
 	 * Set up any machine specific stuff that we have to before
@@ -2499,7 +2559,7 @@ get_mapping(void)
 		if (!get_physical(addr, &phys)) {
 			continue;
 		}
-		len = nblen[nbnumranges - 1];
+		len = nbnumranges == 0 ? 0 : nblen[nbnumranges - 1];
 
 		/* printf ("0x%x --> 0x%x\n", addr, phys); */
 		if (nbnumranges > 0
@@ -2508,10 +2568,10 @@ get_mapping(void)
 			nblen[nbnumranges - 1] += 32768;
 			same = 1;
 		} else {
-			if (nbnumranges > 0
+			if ((nbnumranges > 0)
 			    && !same
-			    && addr == nblog[nbnumranges - 1] + len
-			    && phys == nbphys[nbnumranges - 1] + len) {
+			    && (addr == nblog[nbnumranges - 1] + len)
+			    && (phys == nbphys[nbnumranges - 1] + len)) {
 				nblen[nbnumranges - 1] += 32768;
 			} else {
 				if (same) {
@@ -2561,17 +2621,19 @@ get_mapping(void)
 	}
 	if (i == nbnumranges) {
 		if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
+			printf("Checking for Internal Video ");
 			/*
 			 * Kludge for IIvx internal video (60b0 0000).
 			 * PB 520 (6000 0000)
 			 */
-			check_video("IIvx/PB kludge", 1 * 1024 * 1024,
+			check_video("PB/IIvx (0x60?00000)", 1 * 1024 * 1024,
 						   1 * 1024 * 1024);
 		} else if (0x50F40000 <= videoaddr && videoaddr < 0x50FBFFFF) {
 			/*
 			 * Kludge for LC internal video
 			 */
-			check_video("LC video kludge", 512 * 1024, 512 * 1024);
+			check_video("LC video (0x50f40000)",
+					512 * 1024, 512 * 1024);
 		} else {
 			mac68k_vidphys = videoaddr;
 			printf( "  no internal video at address 0 -- "

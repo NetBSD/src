@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.h,v 1.7 1996/05/05 06:18:39 briggs Exp $	*/
+/*	$NetBSD: macrom.h,v 1.8 1996/05/14 04:01:01 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -143,14 +143,13 @@ Handle GetResource(
 	short	theID);
 short ResError(
 	void);
-void mrg_CountResources(
-	void);
-void mrg_GetIndResource(
-	void);
-
-/* Trap management */
-int mrg_SetOSTrapAddress(
-	void);
+short mrg_CountResources(
+	u_int32_t type);
+short Count_Resources(
+	u_int32_t rsrc_type);
+caddr_t *mrg_GetIndResource(
+	u_int16_t index,
+	u_int32_t type);
 
 
 	/* Mac ROM Glue globals for BSD kernel */
@@ -173,6 +172,14 @@ void dumptrace(void);
 
 
 	/* Stuff for configuring ROM Glue */
+typedef struct rsrc_s {
+	u_int16_t unknown[4];	/* ???? */
+	u_int32_t next;		/* pointer to next resoure in list */
+	u_int32_t body;		/* pointer to resource body? */
+	u_int32_t name;		/* resource name */
+	u_int16_t index;	/* ???? */
+} rsrc_t;
+
 typedef struct romvec_s {
 	char *romident; 	/* just to print it out */
 	caddr_t adbintr;	/* where is ADB interrupt */
@@ -195,7 +202,10 @@ typedef struct romvec_s {
 	caddr_t WriteXPRam;
 	caddr_t jClkNoMem;
 	caddr_t ADBAlternateInit;	/* more fundamental than ABDReInit */
+	caddr_t Egret;
 	caddr_t InitEgret;	/* Set up Buffer for Egret routines */
+	caddr_t ADBReInit_JTBL;
+	caddr_t ROMResourceMap; /* Address of first Resource in linked list */
 	caddr_t FixDiv;
 	caddr_t FixMul;
 } romvec_t;
@@ -207,16 +217,12 @@ typedef struct romvec_s {
 /* macrom.c */
 void	mrg_setvectors __P((romvec_t *rom_vectors));
 int	mrg_romready __P((void));
+caddr_t	*Get_Ind_Resource __P((u_int32_t, u_int16_t));
 void	mrg_initadbintr __P((void));
 long	mrg_adbintr __P((void));
 long	mrg_pmintr __P((void));
 void	mrg_fixupROMBase __P((caddr_t, caddr_t));
 int	mrg_Delay __P((void));
-int	is_resource __P((caddr_t));
-int	count_all_resources __P((caddr_t, u_int32_t));
-void	w_build_resource_list __P((caddr_t, u_int32_t));
-int	w_count_resources __P((u_int32_t));
-caddr_t *w_get_ind_resource __P((u_int32_t, u_int16_t));
 void	mrg_VBLQueue __P((void));
 void	mrg_init_stub_1 __P((void));
 void	mrg_init_stub_2 __P((void));
@@ -233,10 +239,13 @@ int	mrg_DisposPtr __P((void));
 int	mrg_GetPtrSize __P((void));
 int	mrg_SetPtrSize __P((void));
 int	mrg_PostEvent __P((void));
+int	mrg_SetTrapAddress __P((void));
 void	mrg_StripAddress __P((void));
 void	mrg_aline_super __P((struct frame *));
 void	mrg_aline_user __P((void));
 void	mrg_init __P((void));
+void	mrg_FixDiv __P((void));
+void	mrg_FixMul __P((void));
 
 /* machdep.c */
 int	mach_cputype __P((void));
