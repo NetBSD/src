@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2000/06/16 16:07:10 minoura Exp $
+#	$NetBSD: Makefile,v 1.6 2000/11/29 08:28:55 minoura Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -9,7 +9,7 @@ TOP=		${.CURDIR}/..
 IMAGE=		sysinst.fs
 KERNDIR=	${KERNOBJDIR}/INSTALL
 KERN=		${KERNDIR}/netbsd
-KERNNAME=	netbsdsi
+KERNNAME=	netbsd
 RAMDISKDIR=	$(.CURDIR)/../ramdisk.sysinst/
 
 .include "${TOP}/bootfloppy-common/Makefile.inc"
