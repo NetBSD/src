@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.21 2004/01/06 18:46:07 he Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.22 2004/08/13 03:12:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.21 2004/01/06 18:46:07 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.22 2004/08/13 03:12:59 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -170,7 +170,7 @@ wdc_mb_attach(parent, self, aux)
 	 */
 	MFP->mf_ierb &= ~IB_DINT;
 
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_HWLOCK |
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 |
 	    WDC_CAPABILITY_ATA_NOSTREAM;
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->sc_wdcdev.claim_hw = &claim_hw;
