@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.18 1998/07/10 04:39:04 thorpej Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.19 1998/07/26 12:58:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.18 1998/07/10 04:39:04 thorpej Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.19 1998/07/26 12:58:17 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ char	pagehelp[] =	"view a remote file through your pager";
 char	passivehelp[] =	"enter passive transfer mode";
 char	porthelp[] =	"toggle use of PORT cmd for each data connection";
 char	preservehelp[] ="toggle preservation of modification time of "
-			"retreived files";
+			"retrieved files";
 char	progresshelp[] ="toggle transfer progress meter";
 char	prompthelp[] =	"force interactive prompting on multiple commands";
 char	proxyhelp[] =	"issue command on alternate connection";
