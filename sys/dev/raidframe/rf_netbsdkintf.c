@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.2 1998/11/13 11:51:55 simonb Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.3 1998/11/15 00:01:24 hubertf Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1023,10 +1023,10 @@ raidioctl(dev, cmd, data, flag, p)
 		raidPtrs[unit]->proc = p; /* XXX  necessary evil */
 		retcode = rf_Shutdown(raidPtrs[unit]);
 
-		db1_printf("Done main shutdown\n");
+		db1_printf(("Done main shutdown\n"));
 
 		pool_destroy(&rs->sc_cbufpool);
-		db1_printf("Done freeing component buffer freelist\n");
+		db1_printf(("Done freeing component buffer freelist\n"));
 
 		/* It's no longer initialized... */
 		rs->sc_flags &= ~RAIDF_INITED;
