@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.146 2002/01/01 01:38:25 thorpej Exp $
+#	$NetBSD: bsd.prog.mk,v 1.147 2002/01/04 19:07:19 thorpej Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -135,9 +135,7 @@ _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
 
 .if defined(PROG_CXX)
 _CCLINK=	${CXX}
-.if defined(HAVE_GCC3)
 _SUPCXX=	-lstdc++ -lm
-.endif
 .else
 _CCLINK=	${CC}
 .endif
