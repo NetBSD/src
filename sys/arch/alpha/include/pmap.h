@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.h,v 1.29 1999/05/23 17:49:08 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.30 1999/05/23 22:37:03 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -103,7 +103,7 @@
  * arrays which hold enough for ALPHA_MAXPROCS.
  */
 struct pmap {
-	LIST_ENTRY(pmap)	pm_list;	/* list of all pmaps */
+	TAILQ_ENTRY(pmap)	pm_list;	/* list of all pmaps */
 	pt_entry_t		*pm_lev1map;	/* level 1 map */
 	int			pm_count;	/* pmap reference count */
 	struct simplelock	pm_slock;	/* lock on pmap */
