@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_machdep.h,v 1.2 1998/12/03 05:15:06 sakamoto Exp $	*/
+/*	$NetBSD: aout_machdep.h,v 1.3 2001/02/09 15:54:18 wiz Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -44,7 +44,7 @@ struct relocation_info_ppc {
 	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
 			r_extern :  1,	/* 1 if need to add symbol to value */
 				 :  1;	/* unused bits */
-	enum reloc_type r_type	 :  6;	/* relocation type */
+	u_int32_t r_type	 :  6;	/* relocation type */
 	long r_addend;			/* relocation addend */
 };
 #define relocation_info	relocation_info_ppc
