@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 2002/05/14 02:58:34 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.7.6.1 2002/12/18 01:05:39 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -553,8 +553,7 @@ trap(type, code, v, tf)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_ucred ? p->p_ucred->cr_uid : -1);
 			sig = SIGKILL;
 		} else {
 			sig = SIGSEGV;

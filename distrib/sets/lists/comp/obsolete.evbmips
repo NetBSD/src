@@ -1,5 +1,0 @@
-# $NetBSD: obsolete.evbmips,v 1.2 2002/11/17 02:48:03 lukem Exp $
-./usr/include/evbmips/intr.h
-./usr/include/evbmips/isa_machdep.h
-./usr/include/evbmips/pci_machdep.h
-./usr/include/evbmips/rnd.h

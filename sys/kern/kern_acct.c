@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.50.12.1 2002/12/18 01:06:05 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.50 2001/11/12 15:25:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.50.12.1 2002/12/18 01:06:05 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,8 +320,8 @@ acct_process(p)
 	acct.ac_io = encode_comp_t(r->ru_inblock + r->ru_oublock, 0);
 
 	/* (6) The UID and GID of the process */
-	acct.ac_uid = p->p_cred->p_ruid;
-	acct.ac_gid = p->p_cred->p_rgid;
+	acct.ac_uid = p->p_ucred->cr_ruid;
+	acct.ac_gid = p->p_ucred->cr_rgid;
 
 	/* (7) The terminal from which the process was started */
 	if ((p->p_flag & P_CONTROLT) && p->p_pgrp->pg_session->s_ttyp)

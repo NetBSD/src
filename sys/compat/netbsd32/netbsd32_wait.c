@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.4 2002/10/23 13:16:46 scw Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.4.2.1 2002/12/18 01:05:57 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.4 2002/10/23 13:16:46 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.4.2.1 2002/12/18 01:05:57 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,15 +128,12 @@ loop:
 			/*
 			 * Decrement the count of procs running with this uid.
 			 */
-			(void)chgproccnt(p->p_cred->p_ruid, -1);
+			(void)chgproccnt(p->p_ucred->cr_ruid, -1);
 
 			/*
 			 * Free up credentials.
 			 */
-			if (--p->p_cred->p_refcnt == 0) {
-				crfree(p->p_cred->pc_ucred);
-				pool_put(&pcred_pool, p->p_cred);
-			}
+			crfree(p->p_ucred);
 
 			/*
 			 * Release reference to text vnode

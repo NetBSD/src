@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.163 2002/11/17 22:53:46 chs Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.163.2.1 2002/12/18 01:06:06 gmcgarry Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.163 2002/11/17 22:53:46 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.163.2.1 2002/12/18 01:06:06 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -662,6 +662,11 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	}
 
 	/*
+	 * Copy credentials so other references do not see our changes.
+	 */
+	p->p_ucred = crcopy(cred);
+
+	/*
 	 * deal with set[ug]id.
 	 * MNT_NOSUID has already been used to disable s[ug]id.
 	 */
@@ -682,7 +687,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		if ((error = fdcheckstd(p)) != 0)
 			goto exec_abort;
 
-		p->p_ucred = crcopy(cred);
 #ifdef KTRACE
 		/*
 		 * If process is being ktraced, turn off - unless
@@ -697,8 +701,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			p->p_ucred->cr_gid = attr.va_gid;
 	} else
 		p->p_flag &= ~P_SUGID;
-	p->p_cred->p_svuid = p->p_ucred->cr_uid;
-	p->p_cred->p_svgid = p->p_ucred->cr_gid;
+	p->p_ucred->cr_svuid = p->p_ucred->cr_uid;
+	p->p_ucred->cr_svgid = p->p_ucred->cr_gid;
 
 #if defined(__HAVE_RAS)
 	/*

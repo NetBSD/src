@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.149 2002/12/12 20:41:47 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.149.2.1 2002/12/18 01:06:24 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -152,7 +152,7 @@ struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
 
 	/* Substructures: */
-	struct pcred	*p_cred;	/* Process owner's identity */
+	struct ucred	*p_ucred;	/* Process owner's identity */
 	struct filedesc	*p_fd;		/* Ptr to open files structure */
 	struct cwdinfo	*p_cwdi;	/* cdir/rdir/cmask info */
 	struct pstats	*p_stats;	/* Accounting/statistics (PROC ONLY) */
@@ -160,7 +160,6 @@ struct proc {
 	struct vmspace	*p_vmspace;	/* Address space */
 	struct sigacts	*p_sigacts;	/* Process sigactions (state is below)*/
 
-#define	p_ucred		p_cred->pc_ucred
 #define	p_rlimit	p_limit->pl_rlimit
 
 	int		p_exitsig;	/* Signal to sent to parent on exit */
@@ -317,22 +316,6 @@ struct proc {
 #define	P_EXITSIG(p)	(((p)->p_flag & (P_TRACED|P_FSTRACE)) ? SIGCHLD : \
 			 p->p_exitsig)
 
-/*
- * MOVE TO ucred.h?
- *
- * Shareable process credentials (always resident).  This includes a reference
- * to the current user credentials as well as real and saved ids that may be
- * used to change ids.
- */
-struct pcred {
-	struct ucred	*pc_ucred;	/* Current credentials */
-	uid_t		p_ruid;		/* Real user id */
-	uid_t		p_svuid;	/* Saved effective user id */
-	gid_t		p_rgid;		/* Real group id */
-	gid_t		p_svgid;	/* Saved effective group id */
-	int		p_refcnt;	/* Number of references */
-};
-
 LIST_HEAD(proclist, proc);		/* A list of processes */
 
 /*
@@ -422,7 +405,6 @@ extern struct proc	*initproc;	/* Process slots for init, pager */
 extern const struct proclist_desc proclists[];
 
 extern struct pool	proc_pool;	/* Memory pool for procs */
-extern struct pool	pcred_pool;	/* Memory pool for pcreds */
 extern struct pool	plimit_pool;	/* Memory pool for plimits */
 extern struct pool	rusage_pool;	/* Memory pool for rusages */
 

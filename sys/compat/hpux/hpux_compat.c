@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.60 2002/08/03 00:12:51 itojun Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.60.2.1 2002/12/18 01:05:45 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.60 2002/08/03 00:12:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.60.2.1 2002/12/18 01:05:45 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -995,7 +995,7 @@ hpux_sys_getaccess(p, v, retval)
 	case 65502:	/* UID_EUID */
 		break;
 	case 65503:	/* UID_RUID */
-		cred->cr_uid = p->p_cred->p_ruid;
+		cred->cr_uid = p->p_ucred->cr_ruid;
 		break;
 	case 65504:	/* UID_SUID */
 		error = EINVAL;
@@ -1014,10 +1014,10 @@ hpux_sys_getaccess(p, v, retval)
 		break;
 	case -2:	/* NGROUPS_RGID */
 		cred->cr_ngroups = 1;
-		cred->cr_gid = p->p_cred->p_rgid;
+		cred->cr_gid = p->p_ucred->cr_rgid;
 		break;
 	case -6:	/* NGROUPS_RGID_SUPP */
-		cred->cr_gid = p->p_cred->p_rgid;
+		cred->cr_gid = p->p_ucred->cr_rgid;
 		break;
 	case -3:	/* NGROUPS_SGID */
 	case -7:	/* NGROUPS_SGID_SUPP */

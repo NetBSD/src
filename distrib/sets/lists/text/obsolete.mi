@@ -1,5 +1,0 @@
-# $NetBSD: obsolete.mi,v 1.2 2002/11/17 02:48:10 lukem Exp $
-./usr/bin/psbb
-./usr/bin/psroff
-./usr/share/man/cat1/psbb.0
-./usr/share/man/man1/psbb.1

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 2002/11/16 07:40:40 uebayasi Exp $     */
+/*	$NetBSD: trap.c,v 1.74.2.1 2002/12/18 01:05:41 gmcgarry Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -274,8 +274,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 				printf("UVM: pid %d (%s), uid %d killed: "
 				       "out of swap\n",
 				       p->p_pid, p->p_comm,
-				       p->p_cred && p->p_ucred ?
-				       p->p_ucred->cr_uid : -1);
+				       p->p_ucred ? p->p_ucred->cr_uid : -1);
 				sig = SIGKILL;
 			} else {
 				sig = SIGSEGV;

@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.3 2001/12/10 02:07:37 thorpej Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.3.16.1 2002/12/18 01:06:03 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.3 2001/12/10 02:07:37 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.3.16.1 2002/12/18 01:06:03 gmcgarry Exp $");
 
 /* If not included by core_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -319,13 +319,13 @@ ELFNAMEEND(coredump_notes)(struct proc *p, struct vnode *vp,
 		cpi.cpi_pgrp = p->p_pgid;
 		cpi.cpi_sid = p->p_session->s_sid;
 
-		cpi.cpi_ruid = p->p_cred->p_ruid;
+		cpi.cpi_ruid = p->p_ucred->cr_ruid;
 		cpi.cpi_euid = p->p_ucred->cr_uid;
-		cpi.cpi_svuid = p->p_cred->p_svuid;
+		cpi.cpi_svuid = p->p_ucred->cr_svuid;
 
-		cpi.cpi_rgid = p->p_cred->p_rgid;
+		cpi.cpi_rgid = p->p_ucred->cr_rgid;
 		cpi.cpi_egid = p->p_ucred->cr_gid;
-		cpi.cpi_svgid = p->p_cred->p_svgid;
+		cpi.cpi_svgid = p->p_ucred->cr_svgid;
 
 		cpi.cpi_nlwps = 1;	/* XXX for now */
 		strcpy(cpi.cpi_name, p->p_comm);

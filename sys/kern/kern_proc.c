@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.54 2002/09/27 15:37:45 provos Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.54.2.1 2002/12/18 01:06:10 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.54 2002/09/27 15:37:45 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.54.2.1 2002/12/18 01:06:10 gmcgarry Exp $");
 
 #include "opt_kstack.h"
 
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.54 2002/09/27 15:37:45 provos Exp $"
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/ras.h>
+#include <sys/ucred.h>
 
 /*
  * Structure associated with user cacheing.
@@ -147,7 +148,6 @@ struct simplelock deadproc_slock;
 struct proclist deadproc;	/* dead, but not yet undead */
 
 struct pool proc_pool;
-struct pool pcred_pool;
 struct pool plimit_pool;
 struct pool pgrp_pool;
 struct pool rusage_pool;
@@ -195,8 +195,6 @@ procinit()
 	pool_init(&proc_pool, sizeof(struct proc), 0, 0, 0, "procpl",
 	    &pool_allocator_nointr);
 	pool_init(&pgrp_pool, sizeof(struct pgrp), 0, 0, 0, "pgrppl",
-	    &pool_allocator_nointr);
-	pool_init(&pcred_pool, sizeof(struct pcred), 0, 0, 0, "pcredpl",
 	    &pool_allocator_nointr);
 	pool_init(&plimit_pool, sizeof(struct plimit), 0, 0, 0, "plimitpl",
 	    &pool_allocator_nointr);

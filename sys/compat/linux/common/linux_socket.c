@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.42 2002/11/29 14:32:27 fvdl Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.42.2.1 2002/12/18 01:05:53 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.42 2002/11/29 14:32:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.42.2.1 2002/12/18 01:05:53 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1110,8 +1110,7 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 			sin6->sin6_scope_id = 0;
 		} else {
 			struct proc *p = curproc;	/* XXX */
-			int uid = p->p_cred && p->p_ucred ? 
-					p->p_ucred->cr_uid : -1;
+			int uid = p->p_ucred ? p->p_ucred->cr_uid : -1;
 
 			log(LOG_DEBUG,
 			    "pid %d (%s), uid %d: obsolete pre-RFC2553 "

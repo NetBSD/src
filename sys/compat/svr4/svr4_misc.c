@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.98 2002/07/25 20:04:04 jdolecek Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.98.2.1 2002/12/18 01:05:58 gmcgarry Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.98 2002/07/25 20:04:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.98.2.1 2002/12/18 01:05:58 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1268,15 +1268,12 @@ loop:
 			/*
 			 * Decrement the count of procs running with this uid.
 			 */
-			(void)chgproccnt(q->p_cred->p_ruid, -1);
+			(void)chgproccnt(q->p_ucred->cr_ruid, -1);
 
 			/*
 			 * Free up credentials.
 			 */
-			if (--q->p_cred->p_refcnt == 0) {
-				crfree(q->p_cred->pc_ucred);
-				pool_put(&pcred_pool, q->p_cred);
-			}
+			crfree(q->p_ucred);
 
 			/*
 			 * Release reference to text vnode

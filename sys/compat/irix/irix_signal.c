@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.22 2002/09/25 19:39:16 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.22.2.1 2002/12/18 01:05:47 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.22 2002/09/25 19:39:16 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.22.2.1 2002/12/18 01:05:47 gmcgarry Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -926,15 +926,12 @@ loop:
 			/*
 			 * Decrement the count of procs running with this uid.
 			 */
-			(void)chgproccnt(q->p_cred->p_ruid, -1);
+			(void)chgproccnt(q->p_ucred->cr_ruid, -1);
 
 			/*
 			 * Free up credentials.
 			 */
-			if (--q->p_cred->p_refcnt == 0) {
-				crfree(q->p_cred->pc_ucred);
-				pool_put(&pcred_pool, q->p_cred);
-			}
+			crfree(q->p_ucred);
 
 			/*
 			 * Release reference to text vnode

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.8 2002/11/29 19:13:16 jdolecek Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.8.2.1 2002/12/18 01:06:00 gmcgarry Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.8 2002/11/29 19:13:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_exec_elf32.c,v 1.8.2.1 2002/12/18 01:06:00 gmcgarry Exp $");
 
 #define	ELFSIZE		32				/* XXX should die */
 
@@ -146,7 +146,7 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 		a++;
 
 		a->a_type = AT_RUID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = p->p_ucred->cr_ruid;
 		a++;
 
 		a->a_type = AT_EGID;
@@ -154,7 +154,7 @@ svr4_32_copyargs(p, pack, arginfo, stackp, argp)
 		a++;
 
 		a->a_type = AT_RGID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = p->p_ucred->cr_rgid;
 		a++;
 
 		if (sun_hwcap) {

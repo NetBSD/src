@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.64 2002/12/17 18:42:54 manu Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.64.2.1 2002/12/18 01:06:09 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.64 2002/12/17 18:42:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.64.2.1 2002/12/18 01:06:09 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -724,20 +724,18 @@ ktrwrite(p, kth)
  * TODO: check groups.  use caller effective gid.
  */
 int
-ktrcanset(callp, targetp)
-	struct proc *callp;
-	struct proc *targetp;
+ktrcanset(struct proc *callp, struct proc *targetp)
 {
-	struct pcred *caller = callp->p_cred;
-	struct pcred *target = targetp->p_cred;
+	struct ucred *caller = callp->p_ucred;
+	struct ucred *target = targetp->p_ucred;
 
-	if ((caller->pc_ucred->cr_uid == target->p_ruid &&
-	     target->p_ruid == target->p_svuid &&
-	     caller->p_rgid == target->p_rgid &&	/* XXX */
-	     target->p_rgid == target->p_svgid &&
+	if ((caller->cr_uid == target->cr_ruid &&
+	     target->cr_ruid == target->cr_svuid &&
+	     caller->cr_rgid == target->cr_rgid &&	/* XXX */
+	     target->cr_rgid == target->cr_svgid &&
 	     (targetp->p_traceflag & KTRFAC_ROOT) == 0 &&
 	     (targetp->p_flag & P_SUGID) == 0) ||
-	     caller->pc_ucred->cr_uid == 0)
+	     caller->cr_uid == 0)
 		return (1);
 
 	return (0);

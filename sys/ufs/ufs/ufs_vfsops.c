@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.13 2001/11/08 02:39:17 lukem Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.13.12.1 2002/12/18 01:06:28 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.13 2001/11/08 02:39:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.13.12.1 2002/12/18 01:06:28 gmcgarry Exp $");
 
 #include "opt_quota.h"
 
@@ -113,14 +113,14 @@ ufs_quotactl(mp, cmds, uid, arg, p)
 	int cmd, type, error;
 
 	if (uid == -1)
-		uid = p->p_cred->p_ruid;
+		uid = p->p_ucred->cr_ruid;
 	cmd = cmds >> SUBCMDSHIFT;
 
 	switch (cmd) {
 	case Q_SYNC:
 		break;
 	case Q_GETQUOTA:
-		if (uid == p->p_cred->p_ruid)
+		if (uid == p->p_ucred->cr_ruid)
 			break;
 		/* fall through */
 	default:

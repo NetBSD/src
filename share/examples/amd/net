@@ -1,8 +1,0 @@
-# $NetBSD: net,v 1.2 1997/12/12 11:52:55 hubertf Exp $
-#
-# /net - NFS-mount directory by cd'ing into it: cd /net/host/filesystem;
-#        be sure to mkdir /net before using this.
-#
-/defaults	type:=host;rhost:=${key};fs:=${autodir}/${rhost}/root
-*		host==${key};type:=link;fs:=/				\
-		host!=${key};opts:=ro,soft,intr,nodev,nosuid,noconn

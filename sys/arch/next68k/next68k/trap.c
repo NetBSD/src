@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.38 2002/09/11 01:46:35 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.38.2.1 2002/12/18 01:05:33 gmcgarry Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -681,8 +681,7 @@ trap(type, code, v, frame)
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_ucred ? p->p_ucred->cr_uid : -1);
 			i = SIGKILL;
 		} else {
 			i = SIGSEGV;

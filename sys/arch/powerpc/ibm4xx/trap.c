@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 2002/11/25 05:11:32 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.9.2.1 2002/12/18 01:05:34 gmcgarry Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -226,8 +226,7 @@ KASSERT(p == curproc && (p->p_stat == SONPROC));
 			printf("UVM: pid %d (%s), uid %d killed: "
 			       "out of swap\n",
 			       p->p_pid, p->p_comm,
-			       p->p_cred && p->p_ucred ?
-			       p->p_ucred->cr_uid : -1);
+			       p->p_ucred ? p->p_ucred->cr_uid : -1);
 			trapsignal(p, SIGKILL, EXC_DSI);
 		} else {
 			trapsignal(p, SIGSEGV, EXC_DSI);

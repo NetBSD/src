@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.77 2002/08/28 07:27:14 gmcgarry Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.77.2.1 2002/12/18 01:06:16 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1993 Jan-Simon Pendry.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.77 2002/08/28 07:27:14 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.77.2.1 2002/12/18 01:06:16 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,7 @@ sys_ptrace(p, v, retval)
 		 *	(4) it's not owned by you, or is set-id on exec
 		 *	    (unless you're root), or...
 		 */
-		if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+		if ((t->p_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 			ISSET(t->p_flag, P_SUGID)) &&
 		    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (error);
@@ -640,7 +640,7 @@ process_checkioperm(p, t)
 	 *	(2) it's not owned by you, or is set-id on exec
 	 *	    (unless you're root), or...
 	 */
-	if ((t->p_cred->p_ruid != p->p_cred->p_ruid ||
+	if ((t->p_ucred->cr_ruid != p->p_ucred->cr_ruid ||
 		ISSET(t->p_flag, P_SUGID)) &&
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);

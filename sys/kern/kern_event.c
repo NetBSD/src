@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.5 2002/11/26 18:44:34 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.5.2.1 2002/12/18 01:06:06 gmcgarry Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -367,7 +367,7 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if ((p->p_cred->p_ruid != curproc->p_cred->p_ruid ||
+	if ((p->p_ucred->cr_ruid != curproc->p_ucred->cr_ruid ||
 		(p->p_flag & P_SUGID))
 	    && suser(curproc->p_ucred, &curproc->p_acflag) != 0)
 		return (EACCES);

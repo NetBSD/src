@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.14 2001/11/13 00:12:58 lukem Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.14.12.1 2002/12/18 01:06:20 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1984 University of British Columbia.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.14 2001/11/13 00:12:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pk_acct.c,v 1.14.12.1 2002/12/18 01:06:20 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ pk_acct(lcp)
 		acbuf.x25acct_revcharge = 1;
 	acbuf.x25acct_stime = lcp -> lcd_stime;
 	acbuf.x25acct_etime = time.tv_sec - acbuf.x25acct_stime;
-	acbuf.x25acct_uid = curproc -> p_cred -> p_ruid;
+	acbuf.x25acct_uid = curproc->p_ucred->cr_ruid;
 	acbuf.x25acct_psize = sa -> x25_opts.op_psize;
 	acbuf.x25acct_net = sa -> x25_net;
 	/*

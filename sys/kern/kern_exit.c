@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.106 2002/11/30 09:59:22 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.106.2.1 2002/12/18 01:06:07 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.106 2002/11/30 09:59:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.106.2.1 2002/12/18 01:06:07 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -545,15 +545,12 @@ sys_wait4(struct proc *q, void *v, register_t *retval)
 			/*
 			 * Decrement the count of procs running with this uid.
 			 */
-			(void)chgproccnt(p->p_cred->p_ruid, -1);
+			(void)chgproccnt(p->p_ucred->cr_ruid, -1);
 
 			/*
 			 * Free up credentials.
 			 */
-			if (--p->p_cred->p_refcnt == 0) {
-				crfree(p->p_cred->pc_ucred);
-				pool_put(&pcred_pool, p->p_cred);
-			}
+			crfree(p->p_ucred);
 
 			/*
 			 * Release reference to text vnode

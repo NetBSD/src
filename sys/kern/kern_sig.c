@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.129 2002/12/06 22:44:49 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.129.2.1 2002/12/18 01:06:12 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.129 2002/12/06 22:44:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.129.2.1 2002/12/18 01:06:12 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -87,14 +87,14 @@ sigset_t	contsigmask, stopsigmask, sigcantmask;
 struct pool	sigacts_pool;	/* memory pool for sigacts structures */
 
 /*
- * Can process p, with pcred pc, send the signal signum to process q?
+ * Can process p, with ucred cr, send the signal signum to process q?
  */
-#define	CANSIGNAL(p, pc, q, signum) \
-	((pc)->pc_ucred->cr_uid == 0 || \
-	    (pc)->p_ruid == (q)->p_cred->p_ruid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_cred->p_ruid || \
-	    (pc)->p_ruid == (q)->p_ucred->cr_uid || \
-	    (pc)->pc_ucred->cr_uid == (q)->p_ucred->cr_uid || \
+#define	CANSIGNAL(p, q, signum) \
+	((p)->p_ucred->cr_uid == 0 || \
+	    (p)->p_ucred->cr_ruid == (q)->p_ucred->cr_ruid || \
+	    (p)->p_ucred->cr_uid == (q)->p_ucred->cr_ruid || \
+	    (p)->p_ucred->cr_ruid == (q)->p_ucred->cr_uid || \
+	    (p)->p_ucred->cr_uid == (q)->p_ucred->cr_uid || \
 	    ((signum) == SIGCONT && (q)->p_session == (p)->p_session))
 
 /*
@@ -605,16 +605,14 @@ sys_kill(struct proc *cp, void *v, register_t *retval)
 		syscallarg(int)	signum;
 	} */ *uap = v;
 	struct proc	*p;
-	struct pcred	*pc;
 
-	pc = cp->p_cred;
 	if ((u_int)SCARG(uap, signum) >= NSIG)
 		return (EINVAL);
 	if (SCARG(uap, pid) > 0) {
 		/* kill single process */
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return (ESRCH);
-		if (!CANSIGNAL(cp, pc, p, SCARG(uap, signum)))
+		if (!CANSIGNAL(cp, p, SCARG(uap, signum)))
 			return (EPERM);
 		if (SCARG(uap, signum))
 			psignal(p, SCARG(uap, signum));
@@ -639,11 +637,9 @@ int
 killpg1(struct proc *cp, int signum, int pgid, int all)
 {
 	struct proc	*p;
-	struct pcred	*pc;
 	struct pgrp	*pgrp;
 	int		nfound;
 	
-	pc = cp->p_cred;
 	nfound = 0;
 	if (all) {
 		/* 
@@ -652,7 +648,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		proclist_lock_read();
 		LIST_FOREACH(p, &allproc, p_list) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM || 
-			    p == cp || !CANSIGNAL(cp, pc, p, signum))
+			    p == cp || !CANSIGNAL(cp, p, signum))
 				continue;
 			nfound++;
 			if (signum)
@@ -672,7 +668,7 @@ killpg1(struct proc *cp, int signum, int pgid, int all)
 		}
 		LIST_FOREACH(p, &pgrp->pg_members, p_pglist) {
 			if (p->p_pid <= 1 || p->p_flag & P_SYSTEM ||
-			    !CANSIGNAL(cp, pc, p, signum))
+			    !CANSIGNAL(cp, p, signum))
 				continue;
 			nfound++;
 			if (signum && P_ZOMBIE(p) == 0)
@@ -1352,7 +1348,7 @@ sigexit(struct proc *p, int signum)
 
 		if (kern_logsigexit) {
 			/* XXX What if we ever have really large UIDs? */
-			int uid = p->p_cred && p->p_ucred ? 
+			int uid = p->p_ucred ? 
 				(int) p->p_ucred->cr_uid : -1;
 
 			if (error) 
@@ -1378,14 +1374,14 @@ coredump(struct proc *p)
 {
 	struct vnode		*vp;
 	struct vmspace		*vm;
-	struct ucred		*cred;
+	struct ucred		*cr;
 	struct nameidata	nd;
 	struct vattr		vattr;
 	int			error, error1;
 	char			name[MAXPATHLEN];
 
 	vm = p->p_vmspace;
-	cred = p->p_cred->pc_ucred;
+	cr = p->p_ucred;
 
 	/*
 	 * Make sure the process has not set-id, to prevent data leaks.
@@ -1424,21 +1420,21 @@ coredump(struct proc *p)
 
 	/* Don't dump to non-regular files or files with links. */
 	if (vp->v_type != VREG ||
-	    VOP_GETATTR(vp, &vattr, cred, p) || vattr.va_nlink != 1) {
+	    VOP_GETATTR(vp, &vattr, cr, p) || vattr.va_nlink != 1) {
 		error = EINVAL;
 		goto out;
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
-	VOP_LEASE(vp, p, cred, LEASE_WRITE);
-	VOP_SETATTR(vp, &vattr, cred, p);
+	VOP_LEASE(vp, p, cr, LEASE_WRITE);
+	VOP_SETATTR(vp, &vattr, cr, p);
 	p->p_acflag |= ACORE;
 
 	/* Now dump the actual core file. */
-	error = (*p->p_execsw->es_coredump)(p, vp, cred);
+	error = (*p->p_execsw->es_coredump)(p, vp, cr);
  out:
 	VOP_UNLOCK(vp, 0);
-	error1 = vn_close(vp, FWRITE, cred, p);
+	error1 = vn_close(vp, FWRITE, cr, p);
 	if (error == 0)
 		error = error1;
 	return (error);

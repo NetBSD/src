@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.67 2002/10/03 05:18:59 itojun Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.67.2.1 2002/12/18 01:06:11 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.67 2002/10/03 05:18:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.67.2.1 2002/12/18 01:06:11 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,19 +198,19 @@ donice(curp, chgp, n)
 	struct proc *curp, *chgp;
 	int n;
 {
-	struct pcred *pcred = curp->p_cred;
+	struct ucred *cr = curp->p_ucred;
 	int s;
 
-	if (pcred->pc_ucred->cr_uid && pcred->p_ruid &&
-	    pcred->pc_ucred->cr_uid != chgp->p_ucred->cr_uid &&
-	    pcred->p_ruid != chgp->p_ucred->cr_uid)
+	if (cr->cr_uid && cr->cr_ruid &&
+	    cr->cr_uid != chgp->p_ucred->cr_uid &&
+	    cr->cr_ruid != chgp->p_ucred->cr_uid)
 		return (EPERM);
 	if (n > PRIO_MAX)
 		n = PRIO_MAX;
 	if (n < PRIO_MIN)
 		n = PRIO_MIN;
 	n += NZERO;
-	if (n < chgp->p_nice && suser(pcred->pc_ucred, &curp->p_acflag))
+	if (n < chgp->p_nice && suser(cr, &curp->p_acflag))
 		return (EACCES);
 	chgp->p_nice = n;
 	SCHED_LOCK(s);
@@ -237,13 +237,13 @@ sys_setrlimit(p, v, retval)
 	error = copyin(SCARG(uap, rlp), &alim, sizeof(struct rlimit));
 	if (error)
 		return (error);
-	return (dosetrlimit(p, p->p_cred, which, &alim));
+	return (dosetrlimit(p, p->p_ucred, which, &alim));
 }
 
 int
-dosetrlimit(p, cred, which, limp)
+dosetrlimit(p, cr, which, limp)
 	struct proc *p;
-	struct  pcred *cred;
+	struct  ucred *cr;
 	int which;
 	struct rlimit *limp;
 {
@@ -271,7 +271,7 @@ dosetrlimit(p, cred, which, limp)
 		return (EINVAL);
 	}
 	if (limp->rlim_max > alimp->rlim_max
-	    && (error = suser(cred->pc_ucred, &p->p_acflag)) != 0)
+	    && (error = suser(cr, &p->p_acflag)) != 0)
 			return (error);
 
 	if (p->p_limit->p_refcnt > 1 &&
