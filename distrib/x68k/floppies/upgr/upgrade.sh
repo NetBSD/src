@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.1.4.2 1996/07/04 16:29:14 oki Exp $
+#	$Id: upgrade.sh,v 1.1.4.3 1996/07/08 19:34:32 oki Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -211,7 +211,7 @@ fi
 
 echo	""
 echo	"Updating boot blocks on ${drivename}..."
-disklabel -r $drivename > /mnt/tmp/${drivename}.label
+disklabel $drivename > /mnt/tmp/${drivename}.label
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: READ OF DISK LABEL FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
