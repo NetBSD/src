@@ -1,4 +1,4 @@
-/*	$NetBSD: pig.c,v 1.4 1997/01/07 11:16:12 tls Exp $	*/
+/*	$NetBSD: pig.c,v 1.5 1997/10/10 16:43:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)pig.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: pig.c,v 1.4 1997/01/07 11:16:12 tls Exp $";
+__RCSID("$NetBSD: pig.c,v 1.5 1997/10/10 16:43:37 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ static char rcsid[] = "$NetBSD: pig.c,v 1.4 1997/01/07 11:16:12 tls Exp $";
 #include <string.h>
 #include <unistd.h>
 
+int main __P((int, char *[]));
 void pigout __P((char *, int));
 void usage __P((void));
 
@@ -63,11 +64,11 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int len;
+	int len;
 	int ch;
 	char buf[1024];
 
-	while ((ch = getopt(argc, argv, "")) != EOF)
+	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
 		case '?':
 		default:
@@ -99,7 +100,7 @@ pigout(buf, len)
 	char *buf;
 	int len;
 {
-	register int ch, start, i;
+	int ch, start, i;
 	int olen, allupper, firstupper;
 
 	/* See if the word is all upper case */
