@@ -1,4 +1,4 @@
-/*	$NetBSD: chpass.c,v 1.13 1997/07/25 06:40:32 mikel Exp $	*/
+/*	$NetBSD: chpass.c,v 1.14 1997/10/18 12:48:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)chpass.c	8.4 (Berkeley) 4/2/94";
 #else 
-static char rcsid[] = "$NetBSD: chpass.c,v 1.13 1997/07/25 06:40:32 mikel Exp $";
+__RCSID("$NetBSD: chpass.c,v 1.14 1997/10/18 12:48:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,11 +76,11 @@ int yflag;
 void	(*Pw_error) __P((const char *, int, int));
 
 #ifdef	YP
-extern struct passwd *ypgetpwnam(), *ypgetpwuid();
 extern	int _yp_check __P((char **));	/* buried deep inside libc */
 #endif
 
 void	baduser __P((void));
+int	main __P((int, char **));
 void	usage __P((void));
 
 int
