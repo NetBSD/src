@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2000/01/31 12:45:29 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.26 2000/02/05 03:25:26 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
