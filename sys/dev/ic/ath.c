@@ -35,7 +35,12 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp $");
+#endif
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.2 2003/10/13 05:34:30 dyoung Exp $");
+#endif
 
 /*
  * Driver for the Atheros Wireless LAN controller.
@@ -46,19 +51,30 @@ __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp 
 
 #include "opt_inet.h"
 
+#ifdef __NetBSD__
+#include "bpfilter.h"
+#endif /* __NetBSD__ */
+
 #include <sys/param.h>
 #include <sys/systm.h> 
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>   
 #include <sys/malloc.h>
 #include <sys/lock.h>
+#ifdef __FreeBSD__
 #include <sys/mutex.h>
+#endif
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/errno.h>
 #include <sys/callout.h>
+#ifdef __FreeBSD__
 #include <sys/bus.h>
+#else
+#include <machine/bus.h>
+#endif
 #include <sys/endian.h>
 
 #include <machine/bus.h>
@@ -67,21 +83,34 @@ __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp 
 #include <net/if_dl.h>
 #include <net/if_media.h>
 #include <net/if_arp.h>
+#ifdef __FreeBSD__
 #include <net/ethernet.h>
+#else
+#include <net/if_ether.h>
+#endif
 #include <net/if_llc.h>
 
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_compat.h>
 
+#if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h> 
-#include <netinet/if_ether.h>
 #endif
 
+#include <dev/ic/athcompat.h>
+
 #define	AR_DEBUG
+#ifdef __FreeBSD__
 #include <dev/ath/if_athvar.h>
 #include <contrib/dev/ath/ah_desc.h>
+#else
+#include <dev/ic/athvar.h>
+#include <../contrib/sys/dev/ic/athhal_desc.h>
+#endif
 
 /* unalligned little endian access */     
 #define LE_READ_2(p)							\
@@ -92,7 +121,13 @@ __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.14 2003/09/05 22:22:49 sam Exp 
 	 ((((u_int8_t *)(p))[0]      ) | (((u_int8_t *)(p))[1] <<  8) |	\
 	  (((u_int8_t *)(p))[2] << 16) | (((u_int8_t *)(p))[3] << 24)))
 
+#ifdef __FreeBSD__
 static void	ath_init(void *);
+#else
+static int	ath_init(struct ifnet *);
+#endif
+static int	ath_init1(struct ath_softc *);
+static int	ath_intr1(struct ath_softc *);
 static void	ath_stop(struct ifnet *);
 static void	ath_start(struct ifnet *);
 static void	ath_reset(struct ath_softc *);
@@ -135,29 +170,33 @@ static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 static void	ath_rate_ctl_reset(struct ath_softc *, enum ieee80211_state);
 static void	ath_rate_ctl(void *, struct ieee80211_node *);
 
+#ifdef __FreeBSD__
 SYSCTL_DECL(_hw_ath);
-
 /* XXX validate sysctl values */
-static	int ath_dwelltime = 200;		/* 5 channels/second */
 SYSCTL_INT(_hw_ath, OID_AUTO, dwell, CTLFLAG_RW, &ath_dwelltime,
 	    0, "channel dwell time (ms) for AP/station scanning");
-static	int ath_calinterval = 30;		/* calibrate every 30 secs */
 SYSCTL_INT(_hw_ath, OID_AUTO, calibrate, CTLFLAG_RW, &ath_calinterval,
 	    0, "chip calibration interval (secs)");
-static	int ath_outdoor = AH_TRUE;		/* outdoor operation */
 SYSCTL_INT(_hw_ath, OID_AUTO, outdoor, CTLFLAG_RD, &ath_outdoor,
 	    0, "enable/disable outdoor operation");
-static	int ath_countrycode = CTRY_DEFAULT;	/* country code */
 SYSCTL_INT(_hw_ath, OID_AUTO, countrycode, CTLFLAG_RD, &ath_countrycode,
 	    0, "country code");
-static	int ath_regdomain = 0;			/* regulatory domain */
 SYSCTL_INT(_hw_ath, OID_AUTO, regdomain, CTLFLAG_RD, &ath_regdomain,
 	    0, "regulatory domain");
+#endif /* __FreeBSD__ */
+
+static	int ath_dwelltime = 200;		/* 5 channels/second */
+static	int ath_calinterval = 30;		/* calibrate every 30 secs */
+static	int ath_outdoor = AH_TRUE;		/* outdoor operation */
+static	int ath_countrycode = CTRY_DEFAULT;	/* country code */
+static	int ath_regdomain = 0;			/* regulatory domain */
 
 #ifdef AR_DEBUG
 int	ath_debug = 0;
+#ifdef __FreeBSD__
 SYSCTL_INT(_hw_ath, OID_AUTO, debug, CTLFLAG_RW, &ath_debug,
 	    0, "control debugging printfs");
+#endif /* __FreeBSD__ */
 #define	IFF_DUMPPKTS(_ifp) \
 	(ath_debug || \
 	    ((_ifp)->if_flags & (IFF_DEBUG|IFF_LINK2)) == (IFF_DEBUG|IFF_LINK2))
@@ -183,9 +222,13 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	DPRINTF(("ath_attach: devid 0x%x\n", devid));
 
+#ifdef __FreeBSD__
 	/* set these up early for if_printf use */
 	ifp->if_unit = device_get_unit(sc->sc_dev);
 	ifp->if_name = "ath";
+#else
+	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+#endif
 
 	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
@@ -226,20 +269,22 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		if_printf(ifp, "failed to allocate descriptors: %d\n", error);
 		goto bad;
 	}
-	callout_init(&sc->sc_scan_ch, CALLOUT_MPSAFE);
-	callout_init(&sc->sc_cal_ch, CALLOUT_MPSAFE);
+	ATH_CALLOUT_INIT(&sc->sc_scan_ch);
+	ATH_CALLOUT_INIT(&sc->sc_cal_ch);
 
+#ifdef __FreeBSD__
 	mtx_init(&sc->sc_txbuflock,
 		device_get_nameunit(sc->sc_dev), "xmit buf q", MTX_DEF);
 	mtx_init(&sc->sc_txqlock,
 		device_get_nameunit(sc->sc_dev), "xmit q", MTX_DEF);
+#endif
 
-	TASK_INIT(&sc->sc_txtask, 0, ath_tx_proc, sc);
-	TASK_INIT(&sc->sc_rxtask, 0, ath_rx_proc, sc);
-	TASK_INIT(&sc->sc_swbatask, 0, ath_beacon_proc, sc);
-	TASK_INIT(&sc->sc_rxorntask, 0, ath_rxorn_proc, sc);
-	TASK_INIT(&sc->sc_fataltask, 0, ath_fatal_proc, sc);
-	TASK_INIT(&sc->sc_bmisstask, 0, ath_bmiss_proc, sc);
+	ATH_TASK_INIT(&sc->sc_txtask, ath_tx_proc, sc);
+	ATH_TASK_INIT(&sc->sc_rxtask, ath_rx_proc, sc);
+	ATH_TASK_INIT(&sc->sc_swbatask, ath_beacon_proc, sc);
+	ATH_TASK_INIT(&sc->sc_rxorntask, ath_rxorn_proc, sc);
+	ATH_TASK_INIT(&sc->sc_fataltask, ath_fatal_proc, sc);
+	ATH_TASK_INIT(&sc->sc_bmisstask, ath_bmiss_proc, sc);
 
 	/*
 	 * For now just pre-allocate one data queue and one
@@ -271,7 +316,14 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ifp->if_watchdog = ath_watchdog;
 	ifp->if_ioctl = ath_ioctl;
 	ifp->if_init = ath_init;
+#ifdef __FreeBSD__
 	ifp->if_snd.ifq_maxlen = IFQ_MAXLEN;
+#else
+#if 0
+	ifp->if_stop = ath_stop;		/* XXX */
+#endif
+	IFQ_SET_READY(&ifp->if_snd);
+#endif
 
 	ic->ic_softc = sc;
 	ic->ic_newassoc = ath_newassoc;
@@ -287,6 +339,9 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	/* get mac address from hardware */
 	ath_hal_getmac(ah, ic->ic_myaddr);
 
+#ifdef __NetBSD__
+	if_attach(ifp);
+#endif
 	/* call MI attach routine. */
 	ieee80211_ifattach(ifp);
 	/* override default methods */
@@ -298,9 +353,11 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	/* complete initialization */
 	ieee80211_media_init(ifp, ath_media_change, ieee80211_media_status);
 
+#if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
 		sizeof(struct ieee80211_frame) + sizeof(sc->sc_tx_th),
 		&sc->sc_drvbpf);
+#endif
 	/*
 	 * Initialize constant fields.
 	 *
@@ -327,16 +384,22 @@ int
 ath_detach(struct ath_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
+	ath_softc_critsect_decl(s);
 
 	DPRINTF(("ath_detach: if_flags %x\n", ifp->if_flags));
 
-	mtx_lock(&sc->sc_mtx);
+	ath_softc_critsect_begin(sc, s);
 	ath_stop(ifp);
+#if NBPFILTER > 0
 	bpfdetach(ifp);
+#endif
 	ath_desc_free(sc);
 	ath_hal_detach(sc->sc_ah);
 	ieee80211_ifdetach(ifp);
-	mtx_unlock(&sc->sc_mtx);
+#ifdef __NetBSD__
+	if_detach(ifp);
+#endif
+	ath_softc_critsect_end(sc, s);
 	return 0;
 }
 
@@ -367,17 +430,34 @@ ath_resume(struct ath_softc *sc)
 void
 ath_shutdown(struct ath_softc *sc)
 {
+#if 1
+	return;
+#else
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	DPRINTF(("ath_shutdown: if_flags %x\n", ifp->if_flags));
 
 	ath_stop(ifp);
+#endif
 }
 
+#ifdef __NetBSD__
+int
+ath_intr(void *arg)
+{
+	return ath_intr1((struct ath_softc *)arg);
+}
+#else
 void
 ath_intr(void *arg)
 {
-	struct ath_softc *sc = arg;
+	(void)ath_intr1((struct ath_softc *)arg);
+}
+#endif
+
+static int
+ath_intr1(struct ath_softc *sc)
+{
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ath_hal *ah = sc->sc_ah;
@@ -389,13 +469,13 @@ ath_intr(void *arg)
 		 * Note this can happen early on if the IRQ is shared.
 		 */
 		DPRINTF(("ath_intr: invalid; ignored\n"));
-		return;
+		return 0;
 	}
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_UP)) != (IFF_RUNNING|IFF_UP)) {
 		DPRINTF(("ath_intr: if_flags 0x%x\n", ifp->if_flags));
 		ath_hal_getisr(ah, &status);	/* clear ISR */
 		ath_hal_intrset(ah, 0);		/* disable further intr's */
-		return;
+		return 1; /* XXX */
 	}
 	ath_hal_getisr(ah, &status);		/* NB: clears ISR too */
 	DPRINTF2(("ath_intr: status 0x%x\n", status));
@@ -409,11 +489,11 @@ ath_intr(void *arg)
 	if (status & HAL_INT_FATAL) {
 		sc->sc_stats.ast_hardware++;
 		ath_hal_intrset(ah, 0);		/* disable intr's until reset */
-		taskqueue_enqueue(taskqueue_swi, &sc->sc_fataltask);
+		ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_fataltask);
 	} else if (status & HAL_INT_RXORN) {
 		sc->sc_stats.ast_rxorn++;
 		ath_hal_intrset(ah, 0);		/* disable intr's until reset */
-		taskqueue_enqueue(taskqueue_swi, &sc->sc_rxorntask);
+		ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_rxorntask);
 	} else {
 		if (status & HAL_INT_RXEOL) {
 			/*
@@ -430,16 +510,17 @@ ath_intr(void *arg)
 			ath_hal_updatetxtriglevel(ah, AH_TRUE);
 		}
 		if (status & HAL_INT_RX)
-			taskqueue_enqueue(taskqueue_swi, &sc->sc_rxtask);
+			ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_rxtask);
 		if (status & HAL_INT_TX)
-			taskqueue_enqueue(taskqueue_swi, &sc->sc_txtask);
+			ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_txtask);
 		if (status & HAL_INT_SWBA)
-			taskqueue_enqueue(taskqueue_swi, &sc->sc_swbatask);
+			ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_swbatask);
 		if (status & HAL_INT_BMISS) {
 			sc->sc_stats.ast_bmiss++;
-			taskqueue_enqueue(taskqueue_swi, &sc->sc_bmisstask);
+			ATH_TASK_RUN_OR_ENQUEUE(&sc->sc_bmisstask);
 		}
 	}
+	return 1;
 }
 
 static void
@@ -486,10 +567,23 @@ ath_chan2flags(struct ieee80211com *ic, struct ieee80211_channel *chan)
 	return modeflags[ieee80211_chan2mode(ic, chan)];
 }
 
+#ifdef __NetBSD__
+static int
+ath_init(struct ifnet *ifp)
+{
+	return ath_init1((struct ath_softc *)ifp->if_softc);
+}
+#else
 static void
 ath_init(void *arg)
 {
-	struct ath_softc *sc = (struct ath_softc *) arg;
+	(void)ath_init1((struct ath_softc *)arg);
+}
+#endif
+
+static int
+ath_init1(struct ath_softc *sc)
+{
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	struct ieee80211_node *ni;
@@ -497,10 +591,12 @@ ath_init(void *arg)
 	struct ath_hal *ah = sc->sc_ah;
 	HAL_STATUS status;
 	HAL_CHANNEL hchan;
+	int error = 0;
+	ath_softc_critsect_decl(s);
 
 	DPRINTF(("ath_init: if_flags 0x%x\n", ifp->if_flags));
 
-	mtx_lock(&sc->sc_mtx);
+	ath_softc_critsect_begin(sc, s);
 	/*
 	 * Stop anything previously setup.  This is safe
 	 * whether this is the first time through or not.
@@ -519,6 +615,7 @@ ath_init(void *arg)
 	if (!ath_hal_reset(ah, ic->ic_opmode, &hchan, AH_FALSE, &status)) {
 		if_printf(ifp, "unable to reset hardware; hal status %u\n",
 			status);
+		error = -1;
 		goto done;
 	}
 
@@ -531,7 +628,7 @@ ath_init(void *arg)
 	 */
 	if (ic->ic_flags & IEEE80211_F_WEPON)
 		ath_initkeytable(sc);
-	if (ath_startrecv(sc) != 0) {
+	if ((error = ath_startrecv(sc)) != 0) {
 		if_printf(ifp, "unable to start recv logic\n");
 		goto done;
 	}
@@ -562,7 +659,8 @@ ath_init(void *arg)
 	else
 		ieee80211_new_state(ic, IEEE80211_S_RUN, -1);
 done:
-	mtx_unlock(&sc->sc_mtx);
+	ath_softc_critsect_end(sc, s);
+	return error;
 }
 
 static void
@@ -571,11 +669,12 @@ ath_stop(struct ifnet *ifp)
 	struct ieee80211com *ic = (struct ieee80211com *) ifp;
 	struct ath_softc *sc = ifp->if_softc;
 	struct ath_hal *ah = sc->sc_ah;
+	ath_softc_critsect_decl(s);
 
 	DPRINTF(("ath_stop: invalid %u if_flags 0x%x\n",
 		sc->sc_invalid, ifp->if_flags));
 
-	mtx_lock(&sc->sc_mtx);
+	ath_softc_critsect_begin(sc, s);
 	if (ifp->if_flags & IFF_RUNNING) {
 		/*
 		 * Shutdown the hardware and driver:
@@ -600,13 +699,17 @@ ath_stop(struct ifnet *ifp)
 			ath_stoprecv(sc);
 		else
 			sc->sc_rxlink = NULL;
+#ifdef __FreeBSD__
 		IF_DRAIN(&ifp->if_snd);
+#else
+		IF_PURGE(&ifp->if_snd);
+#endif
 		ath_beacon_free(sc);
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 		if (!sc->sc_invalid)
 			ath_hal_setpower(ah, HAL_PM_FULL_SLEEP, 0);
 	}
-	mtx_unlock(&sc->sc_mtx);
+	ath_softc_critsect_end(sc, s);
 }
 
 /*
@@ -659,6 +762,7 @@ ath_start(struct ifnet *ifp)
 	struct ath_buf *bf;
 	struct mbuf *m;
 	struct ieee80211_frame *wh;
+	ath_txbuf_critsect_decl(s);
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0 || sc->sc_invalid)
 		return;
@@ -666,11 +770,11 @@ ath_start(struct ifnet *ifp)
 		/*
 		 * Grab a TX buffer and associated resources.
 		 */
-		mtx_lock(&sc->sc_txbuflock);
+		ath_txbuf_critsect_begin(sc, s);
 		bf = TAILQ_FIRST(&sc->sc_txbuf);
 		if (bf != NULL)
 			TAILQ_REMOVE(&sc->sc_txbuf, bf, bf_list);
-		mtx_unlock(&sc->sc_txbuflock);
+		ath_txbuf_critsect_end(sc, s);
 		if (bf == NULL) {
 			DPRINTF(("ath_start: out of xmit buffers\n"));
 			sc->sc_stats.ast_tx_qstop++;
@@ -690,20 +794,29 @@ ath_start(struct ifnet *ifp)
 				DPRINTF(("ath_start: ignore data packet, "
 					"state %u\n", ic->ic_state));
 				sc->sc_stats.ast_tx_discard++;
-				mtx_lock(&sc->sc_txbuflock);
+				ath_txbuf_critsect_begin(sc, s);
 				TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
-				mtx_unlock(&sc->sc_txbuflock);
+				ath_txbuf_critsect_end(sc, s);
 				break;
 			}
 			IF_DEQUEUE(&ifp->if_snd, m);
 			if (m == NULL) {
-				mtx_lock(&sc->sc_txbuflock);
+				ath_txbuf_critsect_begin(sc, s);
 				TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
-				mtx_unlock(&sc->sc_txbuflock);
+				ath_txbuf_critsect_end(sc, s);
 				break;
 			}
 			ifp->if_opackets++;
+
+#ifdef __NetBSD__
+#if NBPFILTER > 0
+			if (ifp->if_bpf)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
+#endif
+#ifdef __FreeBSD__
 			BPF_MTAP(ifp, m);
+#endif
 			/*
 			 * Encapsulate the packet in prep for transmission.
 			 */
@@ -745,10 +858,14 @@ ath_start(struct ifnet *ifp)
 			}
 			sc->sc_stats.ast_tx_mgmt++;
 		}
+#if NBPFILTER > 0
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m);
+#endif
 
+#if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
+#ifdef __FreeBSD__
 			struct mbuf *mb;
 
 			MGETHDR(mb, M_DONTWAIT, m->m_type);
@@ -763,7 +880,21 @@ ath_start(struct ifnet *ifp)
 				bpf_mtap(sc->sc_drvbpf, mb);
 				m_free(mb);
 			}
+#else
+			struct mbuf mb;
+
+			M_COPY_PKTHDR(&mb, m);
+			sc->sc_tx_th.wt_rate =
+				ni->ni_rates.rs_rates[ni->ni_txrate];
+
+			mb.m_next = m;
+			mb.m_data = (caddr_t)&sc->sc_tx_th;
+			mb.m_len = sizeof(sc->sc_tx_th);
+			mb.m_pkthdr.len += mb.m_len;
+			bpf_mtap(sc->sc_drvbpf, &mb);
+#endif
 		}
+#endif
 
 		/*
 		 * TODO:
@@ -774,9 +905,9 @@ ath_start(struct ifnet *ifp)
 		 */
 		if (ath_tx_start(sc, ni, bf, m)) {
 	bad:
-			mtx_lock(&sc->sc_txbuflock);
+			ath_txbuf_critsect_begin(sc, s);
 			TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
-			mtx_unlock(&sc->sc_txbuflock);
+			ath_txbuf_critsect_end(sc, s);
 			ifp->if_oerrors++;
 			if (ni && ni != ic->ic_bss)
 				ieee80211_free_node(ic, ni);
@@ -845,8 +976,9 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	struct ath_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int error = 0;
+	ath_softc_critsect_decl(s);
 
-	mtx_lock(&sc->sc_mtx);
+	ath_softc_critsect_begin(sc, s);
 	switch (cmd) {
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
@@ -885,7 +1017,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 		break;
 	}
-	mtx_unlock(&sc->sc_mtx);
+	ath_softc_critsect_end(sc, s);
 	return error;
 }
 
@@ -911,14 +1043,62 @@ ath_initkeytable(struct ath_softc *sc)
 }
 
 static void
+ath_mcastfilter_accum(caddr_t dl, u_int32_t (*mfilt)[2])
+{
+	u_int32_t val;
+	u_int8_t pos;
+
+	val = LE_READ_4(dl + 0);
+	pos = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
+	val = LE_READ_4(dl + 3);
+	pos ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
+	pos &= 0x3f;
+	(*mfilt)[pos / 32] |= (1 << (pos % 32));
+}
+
+#ifdef __FreeBSD__
+static void
+ath_mcastfilter_compute(struct ath_softc *sc, u_int32_t (*mfilt)[2])
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &ic->ic_if;
+	struct ifmultiaddr *ifma;
+
+	TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
+		caddr_t dl;
+
+		/* calculate XOR of eight 6bit values */
+		dl = LLADDR((struct sockaddr_dl *) ifma->ifma_addr);
+		ath_mcastfilter_accum(dl, &mfilt);
+	}
+}
+#else
+static void
+ath_mcastfilter_compute(struct ath_softc *sc, u_int32_t (*mfilt)[2])
+{
+	struct ether_multi *enm;
+	struct ether_multistep estep;
+
+	ETHER_FIRST_MULTI(estep, &sc->sc_ic.ic_ec, enm);
+	while (enm != NULL) {   
+		/* XXX Punt on ranges. */
+		if (!IEEE80211_ADDR_EQ(enm->enm_addrlo, enm->enm_addrhi)) {
+			(*mfilt)[0] = (*mfilt)[1] = ~((u_int32_t)0);
+			break;
+		}
+		ath_mcastfilter_accum(enm->enm_addrlo, mfilt);
+		ETHER_NEXT_MULTI(estep, enm);
+	}
+}
+#endif
+
+static void
 ath_mode_init(struct ath_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ath_hal *ah = sc->sc_ah;
 	struct ifnet *ifp = &ic->ic_if;
-	u_int32_t rfilt, mfilt[2], val;
-	u_int8_t pos;
-	struct ifmultiaddr *ifma;
+	u_int32_t rfilt, mfilt[2];
 
 	/* configure operational mode */
 	ath_hal_setopmode(ah, ic->ic_opmode);
@@ -938,18 +1118,7 @@ ath_mode_init(struct ath_softc *sc)
 	/* calculate and install multicast filter */
 	if ((ifp->if_flags & IFF_ALLMULTI) == 0) {
 		mfilt[0] = mfilt[1] = 0;
-		TAILQ_FOREACH(ifma, &ifp->if_multiaddrs, ifma_link) {
-			caddr_t dl;
-
-			/* calculate XOR of eight 6bit values */
-			dl = LLADDR((struct sockaddr_dl *) ifma->ifma_addr);
-			val = LE_READ_4(dl + 0);
-			pos = (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
-			val = LE_READ_4(dl + 3);
-			pos ^= (val >> 18) ^ (val >> 12) ^ (val >> 6) ^ val;
-			pos &= 0x3f;
-			mfilt[pos / 32] |= (1 << (pos % 32));
-		}
+		ath_mcastfilter_compute(sc, &mfilt);
 	} else {
 		mfilt[0] = mfilt[1] = ~0;
 	}
@@ -958,6 +1127,7 @@ ath_mode_init(struct ath_softc *sc)
 		rfilt, mfilt[0], mfilt[1]));
 }
 
+#ifdef __FreeBSD__
 static void
 ath_mbuf_load_cb(void *arg, bus_dma_segment_t *seg, int nseg, bus_size_t mapsize, int error)
 {
@@ -968,6 +1138,26 @@ ath_mbuf_load_cb(void *arg, bus_dma_segment_t *seg, int nseg, bus_size_t mapsize
 	bf->bf_mapsize = mapsize;
 	bf->bf_nseg = nseg;
 	bcopy(seg, bf->bf_segs, nseg * sizeof (seg[0]));
+}
+#endif /* __FreeBSD__ */
+
+static struct mbuf *
+ath_getmbuf(int flags, int type, u_int pktlen)
+{
+	struct mbuf *m;
+
+	KASSERT(pktlen <= MCLBYTES, ("802.11 packet too large: %u", pktlen));
+#ifdef __FreeBSD__
+	if (pktlen <= MHLEN)
+		MGETHDR(m, flags, type);
+	else
+		m = m_getcl(flags, type, M_PKTHDR);
+#else
+	MGETHDR(m, flags, type);
+	if (m != NULL && pktlen > MHLEN)
+		MCLGET(m, flags);
+#endif
+	return m;
 }
 
 static int
@@ -1003,10 +1193,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 	       + 8 + 2 + 2 + 2+ni->ni_esslen + 2+rs->rs_nrates + 6;
 	if (rs->rs_nrates > IEEE80211_RATE_SIZE)
 		pktlen += 2;
-	if (pktlen <= MHLEN)
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-	else
-		m = m_getcl(M_DONTWAIT, MT_DATA, M_PKTHDR);
+	m = ath_getmbuf(M_DONTWAIT, MT_DATA, pktlen);
 	if (m == NULL) {
 		DPRINTF(("ath_beacon_alloc: cannot get mbuf/cluster; size %u\n",
 			pktlen));
@@ -1076,9 +1263,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		m->m_pkthdr.len, pktlen));
 
 	DPRINTF2(("ath_beacon_alloc: m %p len %u\n", m, m->m_len));
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_dmamap, m,
-				     ath_mbuf_load_cb, bf,
-				     BUS_DMA_NOWAIT);
+	error = ath_buf_dmamap_load_mbuf(sc->sc_dmat, bf, m, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		m_freem(m);
 		return error;
@@ -1093,6 +1278,10 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 
 	ds->ds_link = 0;
 	ds->ds_data = bf->bf_segs[0].ds_addr;
+
+	DPRINTF2(("%s: segaddr %p seglen %u\n", __func__,
+	    (caddr_t)bf->bf_segs[0].ds_addr, (u_int)bf->bf_segs[0].ds_len));
+
 	/*
 	 * Calculate rate code.
 	 * XXX everything at min xmit rate
@@ -1103,7 +1292,7 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		rate = rt->info[0].rateCode | rt->info[0].shortPreamble;
 	else
 		rate = rt->info[0].rateCode;
-	ath_hal_setuptxdesc(ah, ds
+	if (!ath_hal_setuptxdesc(ah, ds
 		, m->m_pkthdr.len + IEEE80211_CRC_LEN	/* packet length */
 		, sizeof(struct ieee80211_frame)	/* header length */
 		, HAL_PKT_TYPE_BEACON		/* Atheros packet type */
@@ -1114,14 +1303,22 @@ ath_beacon_alloc(struct ath_softc *sc, struct ieee80211_node *ni)
 		, HAL_TXDESC_NOACK		/* no ack for beacons */
 		, 0				/* rts/cts rate */
 		, 0				/* rts/cts duration */
-	);
+	)) {
+		printf("%s: ath_hal_setuptxdesc failed\n", __func__);
+		return -1;
+	}
 	/* NB: beacon's BufLen must be a multiple of 4 bytes */
 	/* XXX verify mbuf data area covers this roundup */
-	ath_hal_filltxdesc(ah, ds
+	if (!ath_hal_filltxdesc(ah, ds
 		, roundup(bf->bf_segs[0].ds_len, 4)	/* buffer length */
 		, AH_TRUE				/* first segment */
 		, AH_TRUE				/* last segment */
-	);
+	)) {
+		printf("%s: ath_hal_filltxdesc failed\n", __func__);
+		return -1;
+	}
+
+	/* XXX it is not appropriate to bus_dmamap_sync? -dcy */
 
 	return 0;
 }
@@ -1147,11 +1344,11 @@ ath_beacon_proc(void *arg, int pending)
 			__func__, sc->sc_bhalq));
 		return;			/* busy, XXX is this right? */
 	}
-	bus_dmamap_sync(sc->sc_dmat, bf->bf_dmamap, BUS_DMASYNC_PREWRITE);
+	ath_buf_dmamap_sync(sc->sc_dmat, bf, BUS_DMASYNC_PREWRITE);
 
 	ath_hal_puttxbuf(ah, sc->sc_bhalq, bf->bf_daddr);
 	ath_hal_txstart(ah, sc->sc_bhalq);
-	DPRINTF2(("%s: TXDP%u = %p (%p)\n", __func__,
+	DPRINTF2(("%s: BCDP%u = %p (%p)\n", __func__,
 		sc->sc_bhalq, (caddr_t)bf->bf_daddr, bf->bf_desc));
 }
 
@@ -1264,13 +1461,16 @@ ath_beacon_config(struct ath_softc *sc)
 	}
 }
 
+#ifdef __FreeBSD__
 static void
 ath_load_cb(void *arg, bus_dma_segment_t *segs, int nsegs, int error)
 {
 	bus_addr_t *paddr = (bus_addr_t*) arg;
 	*paddr = segs->ds_addr;
 }
+#endif
 
+#ifdef __FreeBSD__
 static int
 ath_desc_alloc(struct ath_softc *sc)
 {
@@ -1287,6 +1487,7 @@ ath_desc_alloc(struct ath_softc *sc)
 
 	error = bus_dmamem_alloc(sc->sc_dmat, (void**) &sc->sc_desc,
 				 BUS_DMA_NOWAIT, &sc->sc_ddmamap);
+
 	if (error != 0)
 		goto fail0;
 
@@ -1305,8 +1506,12 @@ ath_desc_alloc(struct ath_softc *sc)
 	/* allocate buffers */
 	bsize = sizeof(struct ath_buf) * (ATH_TXBUF + ATH_RXBUF + 1);
 	bf = malloc(bsize, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (bf == NULL)
+	if (bf == NULL) {
+		printf("%s: unable to allocate Tx/Rx buffers\n",
+		    sc->sc_dev.dv_xname);
+		error = -1;
 		goto fail2;
+	}
 	sc->sc_bufptr = bf;
 
 	TAILQ_INIT(&sc->sc_rxbuf);
@@ -1352,15 +1557,143 @@ fail0:
 	sc->sc_ddmamap = NULL;
 	return error;
 }
+#else
+static int
+ath_desc_alloc(struct ath_softc *sc)
+{
+	int i, bsize, error = -1;
+	struct ath_desc *ds;
+	struct ath_buf *bf;
+
+	/* allocate descriptors */
+	sc->sc_desc_len = sizeof(struct ath_desc) *
+				(ATH_TXBUF * ATH_TXDESC + ATH_RXBUF + 1);
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_desc_len, PAGE_SIZE,
+	    0, &sc->sc_dseg, 1, &sc->sc_dnseg, 0)) != 0) {
+		printf("%s: unable to allocate control data, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail0;
+	}
+
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_dseg, sc->sc_dnseg,
+	    sc->sc_desc_len, (caddr_t *)&sc->sc_desc, BUS_DMA_COHERENT)) != 0) {
+		printf("%s: unable to map control data, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail1;
+	}
+
+	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_desc_len, 1,
+	    sc->sc_desc_len, 0, 0, &sc->sc_ddmamap)) != 0) {
+		printf("%s: unable to create control data DMA map, "
+		    "error = %d\n", sc->sc_dev.dv_xname, error);
+		goto fail2;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_ddmamap, sc->sc_desc,
+	    sc->sc_desc_len, NULL, 0)) != 0) {
+		printf("%s: unable to load control data DMA map, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail3;
+	}
+
+	ds = sc->sc_desc;
+	sc->sc_desc_paddr = sc->sc_ddmamap->dm_segs[0].ds_addr;
+
+	DPRINTF(("ath_desc_alloc: DMA map: %p (%lu) -> %p (%lu)\n",
+	    ds, (u_long)sc->sc_desc_len,
+	    (caddr_t) sc->sc_desc_paddr, /*XXX*/ (u_long) sc->sc_desc_len));
+
+	/* allocate buffers */
+	bsize = sizeof(struct ath_buf) * (ATH_TXBUF + ATH_RXBUF + 1);
+	bf = malloc(bsize, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (bf == NULL) {
+		printf("%s: unable to allocate Tx/Rx buffers\n",
+		    sc->sc_dev.dv_xname);
+		error = ENOMEM;
+		goto fail3;
+	}
+	sc->sc_bufptr = bf;
+
+	TAILQ_INIT(&sc->sc_rxbuf);
+	for (i = 0; i < ATH_RXBUF; i++, bf++, ds++) {
+		bf->bf_desc = ds;
+		bf->bf_daddr = sc->sc_desc_paddr +
+		    ((caddr_t)ds - (caddr_t)sc->sc_desc);
+		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, 0, &bf->bf_dmamap)) != 0) {
+			printf("%s: unable to create Rx dmamap, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			goto fail4;
+		}
+		TAILQ_INSERT_TAIL(&sc->sc_rxbuf, bf, bf_list);
+	}
+
+	TAILQ_INIT(&sc->sc_txbuf);
+	for (i = 0; i < ATH_TXBUF; i++, bf++, ds += ATH_TXDESC) {
+		bf->bf_desc = ds;
+		bf->bf_daddr = sc->sc_desc_paddr +
+		    ((caddr_t)ds - (caddr_t)sc->sc_desc);
+		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+		    ATH_TXDESC, MCLBYTES, 0, 0, &bf->bf_dmamap)) != 0) {
+			printf("%s: unable to create Tx dmamap, error = %d\n",
+			    sc->sc_dev.dv_xname, error);
+			goto fail5;
+		}
+		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
+	}
+	TAILQ_INIT(&sc->sc_txq);
+
+	/* beacon buffer */
+	bf->bf_desc = ds;
+	bf->bf_daddr = sc->sc_desc_paddr + ((caddr_t)ds - (caddr_t)sc->sc_desc);
+	if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1, MCLBYTES, 0, 0,
+	    &bf->bf_dmamap)) != 0) {
+		printf("%s: unable to create beacon dmamap, error = %d\n",
+		    sc->sc_dev.dv_xname, error);
+		goto fail5;
+	}
+	sc->sc_bcbuf = bf;
+	return 0;
+
+fail5:
+	for (i = ATH_RXBUF; i < ATH_RXBUF + ATH_TXBUF; i++) {
+		if (sc->sc_bufptr[i].bf_dmamap == NULL)
+			continue;
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_bufptr[i].bf_dmamap);
+	}
+fail4:
+	for (i = 0; i < ATH_RXBUF; i++) {
+		if (sc->sc_bufptr[i].bf_dmamap == NULL)
+			continue;
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_bufptr[i].bf_dmamap);
+	}
+fail3:
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_ddmamap);
+fail2:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_ddmamap);
+	sc->sc_ddmamap = NULL;
+fail1:
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_desc, sc->sc_desc_len);
+fail0:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_dnseg);
+	return error;
+}
+#endif
 
 static void
 ath_desc_free(struct ath_softc *sc)
 {
 	struct ath_buf *bf;
 
+#ifdef __FreeBSD__
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_ddmamap);
 	bus_dmamem_free(sc->sc_dmat, sc->sc_desc, sc->sc_ddmamap);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_ddmamap);
+#else
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_ddmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_ddmamap);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_dseg, sc->sc_dnseg);
+#endif
 
 	TAILQ_FOREACH(bf, &sc->sc_txq, bf_list) {
 		bus_dmamap_unload(sc->sc_dmat, bf->bf_dmamap);
@@ -1401,7 +1734,7 @@ ath_node_alloc(struct ieee80211com *ic)
 static void
 ath_node_free(struct ieee80211com *ic, struct ieee80211_node *ni)
 {
-        struct ath_softc *sc = ic->ic_if.if_softc;
+	struct ath_softc *sc = ic->ic_if.if_softc;
 	struct ath_buf *bf;
 
 	TAILQ_FOREACH(bf, &sc->sc_txq, bf_list) {
@@ -1435,7 +1768,7 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 		 * multiple of the cache line size.  Not doing this
 		 * causes weird stuff to happen (for the 5210 at least).
 		 */
-		m = m_getcl(M_DONTWAIT, MT_DATA, M_PKTHDR);
+		m = ath_getmbuf(M_DONTWAIT, MT_DATA, MCLBYTES);
 		if (m == NULL) {
 			DPRINTF(("ath_rxbuf_init: no mbuf/cluster\n"));
 			sc->sc_stats.ast_rx_nombuf++;
@@ -1444,11 +1777,10 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 		bf->bf_m = m;
 		m->m_pkthdr.len = m->m_len = m->m_ext.ext_size;
 
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_dmamap, m,
-					     ath_mbuf_load_cb, bf,
-					     BUS_DMA_NOWAIT);
+		error = ath_buf_dmamap_load_mbuf(sc->sc_dmat, bf, m,
+		                                 BUS_DMA_NOWAIT);
 		if (error != 0) {
-			DPRINTF(("ath_rxbuf_init: bus_dmamap_load_mbuf failed;"
+			DPRINTF(("ath_rxbuf_init: ath_buf_dmamap_load_mbuf failed;"
 				" error %d\n", error));
 			sc->sc_stats.ast_rx_busdma++;
 			return error;
@@ -1457,7 +1789,7 @@ ath_rxbuf_init(struct ath_softc *sc, struct ath_buf *bf)
 			("ath_rxbuf_init: multi-segment packet; nseg %u",
 			bf->bf_nseg));
 	}
-	bus_dmamap_sync(sc->sc_dmat, bf->bf_dmamap, BUS_DMASYNC_PREREAD);
+	ath_buf_dmamap_sync(sc->sc_dmat, bf, BUS_DMASYNC_PREREAD);
 
 	/* setup descriptors */
 	ds = bf->bf_desc;
@@ -1534,8 +1866,7 @@ ath_rx_proc(void *arg, int npending)
 			goto rx_next;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, bf->bf_dmamap, 
-		    BUS_DMASYNC_POSTREAD);
+		ath_buf_dmamap_sync(sc->sc_dmat, bf, BUS_DMASYNC_POSTREAD);
 
 		wh = mtod(m, struct ieee80211_frame *);
 		if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) ==
@@ -1554,7 +1885,9 @@ ath_rx_proc(void *arg, int npending)
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
+#if NBPFILTER > 0
 		if (sc->sc_drvbpf) {
+#ifdef __FreeBSD__
 			struct mbuf *mb;
 
 			/* XXX pre-allocate space when setting up recv's */
@@ -1576,7 +1909,27 @@ ath_rx_proc(void *arg, int npending)
 				bpf_mtap(sc->sc_drvbpf, mb);
 				m_free(mb);
 			}
+#else
+			/* XXX pre-allocate space when setting up recv's */
+			struct mbuf mb;
+
+			sc->sc_rx_th.wr_rate =
+				sc->sc_hwmap[ds->ds_rxstat.rs_rate];
+			sc->sc_rx_th.wr_antsignal =
+				ds->ds_rxstat.rs_rssi;
+			sc->sc_rx_th.wr_antenna =
+				ds->ds_rxstat.rs_antenna;
+			/* XXX TSF */
+
+			M_COPY_PKTHDR(&mb, m);
+			mb.m_next = m;
+			mb.m_data = (caddr_t)&sc->sc_rx_th;
+			mb.m_len = sizeof(sc->sc_rx_th);
+			mb.m_pkthdr.len += mb.m_len;
+			bpf_mtap(sc->sc_drvbpf, &mb);
+#endif
 		}
+#endif
 
 		m_adj(m, -IEEE80211_CRC_LEN);
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
@@ -1656,6 +2009,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	const HAL_RATE_TABLE *rt;
 	HAL_BOOL shortPreamble;
 	struct ath_node *an;
+	ath_txq_critsect_decl(s);
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	iswep = wh->i_fc[1] & IEEE80211_FC1_WEP;
@@ -1699,9 +2053,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	 * Load the DMA map so any coalescing is done.  This
 	 * also calculates the number of descriptors we need.
 	 */
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_dmamap, m0,
-				     ath_mbuf_load_cb, bf,
-				     BUS_DMA_NOWAIT);
+	error = ath_buf_dmamap_load_mbuf(sc->sc_dmat, bf, m0, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		sc->sc_stats.ast_tx_busdma++;
 		m_freem(m0);
@@ -1720,7 +2072,11 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 			m_freem(m0);
 			return ENOMEM;
 		}
+#ifdef __FreeBSD__
 		M_MOVE_PKTHDR(m, m0);
+#else
+		M_COPY_PKTHDR(m, m0);
+#endif
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			sc->sc_stats.ast_tx_nomcl++;
@@ -1732,9 +2088,8 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		m_freem(m0);
 		m->m_len = m->m_pkthdr.len;
 		m0 = m;
-		error = bus_dmamap_load_mbuf(sc->sc_dmat, bf->bf_dmamap, m0,
-					     ath_mbuf_load_cb, bf,
-					     BUS_DMA_NOWAIT);
+		error = ath_buf_dmamap_load_mbuf(sc->sc_dmat, bf, m0,
+					         BUS_DMA_NOWAIT);
 		if (error != 0) {
 			sc->sc_stats.ast_tx_busdma++;
 			m_freem(m0);
@@ -1749,7 +2104,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		return EIO;
 	}
 	DPRINTF2(("ath_tx_start: m %p len %u\n", m0, pktlen));
-	bus_dmamap_sync(sc->sc_dmat, bf->bf_dmamap, BUS_DMASYNC_PREWRITE);
+	ath_buf_dmamap_sync(sc->sc_dmat, bf, BUS_DMASYNC_PREWRITE);
 	bf->bf_m = m0;
 	bf->bf_node = ni;			/* NB: held reference */
 
@@ -1911,7 +2266,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 	 * Insert the frame on the outbound list and
 	 * pass it on to the hardware.
 	 */
-	mtx_lock(&sc->sc_txqlock);
+	ath_txq_critsect_begin(sc, s);
 	TAILQ_INSERT_TAIL(&sc->sc_txq, bf, bf_list);
 	if (sc->sc_txlink == NULL) {
 		ath_hal_puttxbuf(ah, sc->sc_txhalq, bf->bf_daddr);
@@ -1923,7 +2278,7 @@ ath_tx_start(struct ath_softc *sc, struct ieee80211_node *ni, struct ath_buf *bf
 		    sc->sc_txlink, (caddr_t)bf->bf_daddr, bf->bf_desc));
 	}
 	sc->sc_txlink = &bf->bf_desc[bf->bf_nseg - 1].ds_link;
-	mtx_unlock(&sc->sc_txqlock);
+	ath_txq_critsect_end(sc, s);
 
 	ath_hal_txstart(ah, sc->sc_txhalq);
 	return 0;
@@ -1942,16 +2297,18 @@ ath_tx_proc(void *arg, int npending)
 	struct ath_node *an;
 	int sr, lr;
 	HAL_STATUS status;
+	ath_txq_critsect_decl(s);
+	ath_txbuf_critsect_decl(s2);
 
 	DPRINTF2(("ath_tx_proc: pending %u tx queue %p, link %p\n",
 		npending, (caddr_t) ath_hal_gettxbuf(sc->sc_ah, sc->sc_txhalq),
 		sc->sc_txlink));
 	for (;;) {
-		mtx_lock(&sc->sc_txqlock);
+		ath_txq_critsect_begin(sc, s);
 		bf = TAILQ_FIRST(&sc->sc_txq);
 		if (bf == NULL) {
 			sc->sc_txlink = NULL;
-			mtx_unlock(&sc->sc_txqlock);
+			ath_txq_critsect_end(sc, s);
 			break;
 		}
 		/* only the last descriptor is needed */
@@ -1962,11 +2319,11 @@ ath_tx_proc(void *arg, int npending)
 			ath_printtxbuf(bf, status == HAL_OK);
 #endif
 		if (status == HAL_EINPROGRESS) {
-			mtx_unlock(&sc->sc_txqlock);
+			ath_txq_critsect_end(sc, s);
 			break;
 		}
 		TAILQ_REMOVE(&sc->sc_txq, bf, bf_list);
-		mtx_unlock(&sc->sc_txqlock);
+		ath_txq_critsect_end(sc, s);
 
 		ni = bf->bf_node;
 		if (ni != NULL) {
@@ -2001,16 +2358,15 @@ ath_tx_proc(void *arg, int npending)
 			if (ni != ic->ic_bss)
 				ieee80211_free_node(ic, ni);
 		}
-		bus_dmamap_sync(sc->sc_dmat, bf->bf_dmamap,
-		    BUS_DMASYNC_POSTWRITE);
+		ath_buf_dmamap_sync(sc->sc_dmat, bf, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, bf->bf_dmamap);
 		m_freem(bf->bf_m);
 		bf->bf_m = NULL;
 		bf->bf_node = NULL;
 
-		mtx_lock(&sc->sc_txbuflock);
+		ath_txbuf_critsect_begin(sc, s2);
 		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
-		mtx_unlock(&sc->sc_txbuflock);
+		ath_txbuf_critsect_end(sc, s2);
 	}
 	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_tx_timer = 0;
@@ -2027,6 +2383,8 @@ ath_draintxq(struct ath_softc *sc)
 	struct ath_hal *ah = sc->sc_ah;
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	struct ath_buf *bf;
+	ath_txq_critsect_decl(s);
+	ath_txbuf_critsect_decl(s2);
 
 	/* XXX return value */
 	if (!sc->sc_invalid) {
@@ -2040,15 +2398,15 @@ ath_draintxq(struct ath_softc *sc)
 		    (caddr_t) ath_hal_gettxbuf(ah, sc->sc_bhalq)));
 	}
 	for (;;) {
-		mtx_lock(&sc->sc_txqlock);
+		ath_txq_critsect_begin(sc, s);
 		bf = TAILQ_FIRST(&sc->sc_txq);
 		if (bf == NULL) {
 			sc->sc_txlink = NULL;
-			mtx_unlock(&sc->sc_txqlock);
+			ath_txq_critsect_end(sc, s);
 			break;
 		}
 		TAILQ_REMOVE(&sc->sc_txq, bf, bf_list);
-		mtx_unlock(&sc->sc_txqlock);
+		ath_txq_critsect_end(sc, s);
 #ifdef AR_DEBUG
 		if (ath_debug)
 			ath_printtxbuf(bf,
@@ -2058,9 +2416,9 @@ ath_draintxq(struct ath_softc *sc)
 		m_freem(bf->bf_m);
 		bf->bf_m = NULL;
 		bf->bf_node = NULL;
-		mtx_lock(&sc->sc_txbuflock);
+		ath_txbuf_critsect_begin(sc, s2);
 		TAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
-		mtx_unlock(&sc->sc_txbuflock);
+		ath_txbuf_critsect_end(sc, s2);
 	}
 	ifp->if_flags &= ~IFF_OACTIVE;
 	sc->sc_tx_timer = 0;
@@ -2203,9 +2561,14 @@ ath_next_scan(void *arg)
 	struct ath_softc *sc = arg;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
+	int s;
+
+	/* don't call ath_start w/o network interrupts blocked */
+	s = splnet();
 
 	if (ic->ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(ifp);
+	splx(s);
 }
 
 /*
@@ -2596,6 +2959,7 @@ ath_rate_ctl(void *arg, struct ieee80211_node *ni)
 }
 
 #ifdef AR_DEBUG
+#ifdef __FreeBSD__
 static int
 sysctl_hw_ath_dump(SYSCTL_HANDLER_ARGS)
 {
@@ -2629,6 +2993,7 @@ sysctl_hw_ath_dump(SYSCTL_HANDLER_ARGS)
 }
 SYSCTL_PROC(_hw_ath, OID_AUTO, dump, CTLTYPE_STRING | CTLFLAG_RW,
 	0, 0, sysctl_hw_ath_dump, "A", "Dump driver state");
+#endif /* __FreeBSD__ */
 
 static void
 ath_printrxbuf(struct ath_buf *bf, int done)
