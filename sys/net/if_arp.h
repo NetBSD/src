@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.8.8.1 1997/02/11 20:21:11 is Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.8.8.2 1997/03/12 15:56:56 is Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -35,6 +35,8 @@
  *	@(#)if_arp.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _IF_ARP_H_
+#define _IF_ARP_H_
 /*
  * Address Resolution Protocol.
  *
@@ -91,3 +93,5 @@ struct arpreq {
 #define	ATF_PERM	0x04	/* permanent entry */
 #define	ATF_PUBL	0x08	/* publish entry (respond for other host) */
 #define	ATF_USETRAILERS	0x10	/* has requested trailers */
+
+#endif _IF_ARP_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.6 1996/11/05 03:04:36 jonathan Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.6.4.1 1997/03/12 16:20:00 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -76,8 +76,8 @@ bha_pci_match(parent, match, aux)
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_BUSLOGIC)
 		return (0);
 
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BUSLOGIC_OLD946C &&
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BUSLOGIC_946C)
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC &&
+	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_BUSLOGIC_MULTIMASTER)
 		return (0);
 
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize))
@@ -111,9 +111,9 @@ bha_pci_attach(parent, self, aux)
 	pcireg_t csr;
 	const char *model, *intrstr;
 
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_OLD946C)
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC)
 		model = "BusLogic 9xxC SCSI";
-	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_946C)
+	else if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_BUSLOGIC_MULTIMASTER)
 		model = "BusLogic 9xxC SCSI";
 	else
 		model = "unknown model!";

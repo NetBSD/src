@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.1 1997/01/16 21:03:34 christos Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.1.4.1 1997/03/12 16:10:46 is Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -103,7 +103,7 @@ sb_isa_match(parent, match, aux)
 	sc->sc_ic = ia->ia_ic;
 
 	if (!sbmatch(sc)) {
-		bus_space_unmap(sc->sc_iot, ia->ia_iobase, SBP_NPORT);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, SBP_NPORT);
 		return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.35 1996/10/13 02:11:03 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.35.4.1 1997/03/12 15:56:58 is Exp $	*/
 
 /*
  * if_ppp.c - Point-to-Point Protocol (PPP) Asynchronous driver.
@@ -352,7 +352,7 @@ pppioctl(sc, cmd, data, flag, p)
 	if (sc->sc_flags & SC_CCP_OPEN && !(flags & SC_CCP_OPEN))
 	    ppp_ccp_closed(sc);
 #endif
-	splhigh();
+	splimp();
 	sc->sc_flags = (sc->sc_flags & ~SC_MASK) | flags;
 	splx(s);
 	break;
@@ -418,7 +418,7 @@ pppioctl(sc, cmd, data, flag, p)
 				sc->sc_if.if_xname);
 			error = ENOBUFS;
 		    }
-		    splhigh();
+		    splimp();
 		    sc->sc_flags &= ~SC_COMP_RUN;
 		    splx(s);
 		} else {
@@ -433,7 +433,7 @@ pppioctl(sc, cmd, data, flag, p)
 				sc->sc_if.if_xname);
 			error = ENOBUFS;
 		    }
-		    splhigh();
+		    splimp();
 		    sc->sc_flags &= ~SC_DECOMP_RUN;
 		    splx(s);
 		}
@@ -842,7 +842,7 @@ ppp_dequeue(sc)
     struct ppp_softc *sc;
 {
     struct mbuf *m;
-    int s = splhigh();
+    int s = splimp();
 
     m = sc->sc_togo;
     if (m) {
@@ -879,7 +879,7 @@ pppintr()
 	    && (sc->sc_if.if_snd.ifq_head || sc->sc_fastq.ifq_head))
 	    ppp_outpkt(sc);
 	for (;;) {
-	    s = splhigh();
+	    s = splimp();
 	    IF_DEQUEUE(&sc->sc_rawq, m);
 	    splx(s);
 	    if (m == NULL)
@@ -1060,7 +1060,7 @@ ppp_ccp(sc, m, rcvd)
     case CCP_TERMACK:
 	/* CCP must be going down - disable compression */
 	if (sc->sc_flags & SC_CCP_UP) {
-	    s = splhigh();
+	    s = splimp();
 	    sc->sc_flags &= ~(SC_CCP_UP | SC_COMP_RUN | SC_DECOMP_RUN);
 	    splx(s);
 	}
@@ -1076,7 +1076,7 @@ ppp_ccp(sc, m, rcvd)
 		    && (*sc->sc_xcomp->comp_init)
 			(sc->sc_xc_state, dp + CCP_HDRLEN, slen - CCP_HDRLEN,
 			 sc->sc_unit, 0, sc->sc_flags & SC_DEBUG)) {
-		    s = splhigh();
+		    s = splimp();
 		    sc->sc_flags |= SC_COMP_RUN;
 		    splx(s);
 		}
@@ -1087,7 +1087,7 @@ ppp_ccp(sc, m, rcvd)
 			(sc->sc_rc_state, dp + CCP_HDRLEN, slen - CCP_HDRLEN,
 			 sc->sc_unit, 0, sc->sc_mru,
 			 sc->sc_flags & SC_DEBUG)) {
-		    s = splhigh();
+		    s = splimp();
 		    sc->sc_flags |= SC_DECOMP_RUN;
 		    sc->sc_flags &= ~(SC_DC_ERROR | SC_DC_FERROR);
 		    splx(s);
@@ -1104,7 +1104,7 @@ ppp_ccp(sc, m, rcvd)
 	    } else {
 		if (sc->sc_rc_state && (sc->sc_flags & SC_DECOMP_RUN)) {
 		    (*sc->sc_rcomp->decomp_reset)(sc->sc_rc_state);
-		    s = splhigh();
+		    s = splimp();
 		    sc->sc_flags &= ~SC_DC_ERROR;
 		    splx(s);
 		}
@@ -1144,7 +1144,7 @@ ppppktin(sc, m, lost)
     struct mbuf *m;
     int lost;
 {
-    int s = splhigh();
+    int s = splimp();
 
     if (lost)
 	m->m_flags |= M_ERRMARK;
@@ -1190,7 +1190,7 @@ ppp_inproc(sc, m)
 
     if (m->m_flags & M_ERRMARK) {
 	m->m_flags &= ~M_ERRMARK;
-	s = splhigh();
+	s = splimp();
 	sc->sc_flags |= SC_VJ_RESET;
 	splx(s);
     }
@@ -1222,7 +1222,7 @@ ppp_inproc(sc, m)
 	     */
 	    if (sc->sc_flags & SC_DEBUG)
 		printf("%s: decompress failed %d\n", ifp->if_xname, rv);
-	    s = splhigh();
+	    s = splimp();
 	    sc->sc_flags |= SC_VJ_RESET;
 	    if (rv == DECOMP_ERROR)
 		sc->sc_flags |= SC_DC_ERROR;
@@ -1253,7 +1253,7 @@ ppp_inproc(sc, m)
 	 */
 	if (sc->sc_comp)
 	    sl_uncompress_tcp(NULL, 0, TYPE_ERROR, sc->sc_comp);
-	s = splhigh();
+	s = splimp();
 	sc->sc_flags &= ~SC_VJ_RESET;
 	splx(s);
     }
@@ -1409,7 +1409,7 @@ ppp_inproc(sc, m)
     /*
      * Put the packet on the appropriate input queue.
      */
-    s = splhigh();
+    s = splimp();
     if (IF_QFULL(inq)) {
 	IF_DROP(inq);
 	splx(s);
