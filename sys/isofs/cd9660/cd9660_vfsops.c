@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.33 1998/09/01 03:40:19 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.34 1998/09/05 04:34:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -194,6 +194,19 @@ cd9660_mount(mp, path, data, ndp, p)
 	if (major(devvp->v_rdev) >= nblkdev) {
 		vrele(devvp);
 		return ENXIO;
+	}
+	/*
+	 * If mount by non-root, then verify that user has necessary
+	 * permissions on the device.
+	 */
+	if (p->p_ucred->cr_uid != 0) {
+		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+		error = VOP_ACCESS(devvp, VREAD, p->p_ucred, p);
+		VOP_UNLOCK(devvp, 0);
+		if (error) {
+			vrele(devvp);
+			return (error);
+		}
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = iso_mountfs(devvp, mp, p, &args);
