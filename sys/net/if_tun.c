@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.43.2.2 2001/08/25 06:16:59 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.43.2.3 2001/09/08 03:42:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -685,6 +685,68 @@ tunpoll(dev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_tunrdetach(struct knote *kn)
+{
+	struct tun_softc *tp = (void *) kn->kn_hook;
+	int s;
+
+	s = splnet();
+	SLIST_REMOVE(&tp->tun_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_tunread(struct knote *kn, long hint)
+{
+	struct tun_softc *tp = (void *) kn->kn_hook;
+	struct ifnet *ifp = &tp->tun_if;
+	struct mbuf *m;
+	int s;
+
+	s = splnet();
+	IF_POLL(&ifp->if_snd, m);
+	if (m == NULL) {
+		splx(s);
+		return (0);
+	}
+
+	for (kn->kn_data = 0; m != NULL; m = m->m_next)
+		kn->kn_data += m->m_len;
+
+	splx(s);
+	return (1);
+}
+
+static const struct filterops tunread_filtops =
+	{ 1, NULL, filt_tunrdetach, filt_tunread };
+
+int
+tunkqfilter(dev_t dev, struct knote *kn)
+{
+	struct tun_softc *tp = &tunctl[minor(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &tp->tun_rsel.si_klist;
+		kn->kn_fop = &tunread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) tp;
+
+	s = splnet();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
 
 #endif  /* NTUN */
