@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostlib.mk,v 1.6 2003/07/31 13:47:32 lukem Exp $
+#	$NetBSD: bsd.hostlib.mk,v 1.7 2003/08/01 17:04:01 lukem Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -21,7 +21,8 @@ OBJHOSTMACHINE=	# set
 ##### Build rules
 .if defined(HOSTLIB)
 DPSRCS+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
-CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
+CLEANFILES+=	${SRCS:M*.l:.l=.c} ${SRCS:M*.y:.y=.c}
+CLEANFILES+=	${YHEADER:D${SRCS:M*.y:.y=.h}}
 .endif	# defined(HOSTLIB)
 
 .if !empty(SRCS:N*.h:N*.sh)
@@ -31,7 +32,9 @@ OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.lo/g}
 .if defined(OBJS) && !empty(OBJS)
 .NOPATH: ${OBJS} ${HOSTPROG} ${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 
-lib${HOSTLIB}.a: ${DPSRCS} ${OBJS} ${DPADD}
+${OBJS}: ${DPSRCS}
+
+lib${HOSTLIB}.a: ${OBJS} ${DPADD}
 	-rm -f ${.TARGET}
 	${HOST_AR} cq ${.TARGET} ${OBJS}
 	@${HOST_RANLIB} ${.TARGET}

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.34 2003/07/31 13:54:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.35 2003/08/01 17:03:43 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
 
 PROG=	hack
 CPPFLAGS+=-I.
-DPSRCS+=hack.onames.h
+DPSRCS+=hack.onames.h hack.h
 SRCS+=	alloc.c hack.Decl.c hack.apply.c hack.bones.c hack.c hack.cmd.c \
 	hack.do.c hack.do_name.c hack.do_wear.c hack.dog.c hack.eat.c \
 	hack.end.c hack.engrave.c hack.fight.c hack.invent.c hack.ioctl.c \
@@ -26,6 +26,7 @@ CLEANFILES+=makedefs
 FILES=help hh data
 FILESDIR=/var/games/hackdir
 
+CLEANFILES+=hack.onames.h
 hack.onames.h: makedefs def.objects.h
 	./makedefs ${.CURDIR}/def.objects.h > hack.onames.h
 
@@ -46,5 +47,3 @@ clobber:
 	rm -f ${DESTDIR}/var/games/hackdir/bones*
 
 .include <bsd.prog.mk>
-
-${OBJS} ${DEPENDSRCS}: hack.h
