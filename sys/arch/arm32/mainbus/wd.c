@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.4 1996/03/17 01:24:39 thorpej Exp $	*/
+/*	$NetBSD: wd.c,v 1.5 1996/03/27 22:08:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -263,6 +263,7 @@ wdcattach(parent, self, aux)
   	wdc->sc_ih.ih_func = wdcintr;
    	wdc->sc_ih.ih_arg = wdc;
    	wdc->sc_ih.ih_level = IPL_BIO;
+   	wdc->sc_ih.ih_name = "wdc";
 	if (irq_claim(mb->mb_irq, &wdc->sc_ih))
 		panic("Cannot claim IRQ %d for wdc%d\n", mb->mb_irq, parent->dv_unit);
 

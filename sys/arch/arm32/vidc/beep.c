@@ -1,4 +1,4 @@
-/* $NetBSD: beep.c,v 1.3 1996/03/17 01:24:23 thorpej Exp $ */
+/* $NetBSD: beep.c,v 1.4 1996/03/27 22:08:36 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -165,6 +165,7 @@ beepattach(parent, self, aux)
 	sc->sc_ih.ih_func = beepintr;
 	sc->sc_ih.ih_arg = sc;
 	sc->sc_ih.ih_level = IPL_NONE;
+	sc->sc_ih.ih_name = "dma snd ch 0";
 
 	if (irq_claim(IRQ_DMASCH0, &sc->sc_ih))
 		panic("Cannot claim DMASCH0 IRQ for beep%d\n", parent->dv_unit);
