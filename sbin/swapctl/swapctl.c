@@ -1,7 +1,7 @@
-/*	$NetBSD: swapctl.c,v 1.10 1999/02/23 17:00:53 mrg Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.11 1999/04/26 01:02:25 mrg Exp $	*/
 
 /*
- * Copyright (c) 1996, 1997 Matthew R. Green
+ * Copyright (c) 1996, 1997, 1999 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -109,7 +109,7 @@ int	pri;		/* uses 0 as default pri */
 
 static	void change_priority __P((const char *));
 static	void add_swap __P((const char *));
-static	void del_swap __P((const char *));
+static	void delete_swap __P((const char *));
 static	void set_dumpdev __P((const char *));
 	int  main __P((int, char *[]));
 static	void do_fstab __P((void));
@@ -246,7 +246,7 @@ main(argc, argv)
 		break;
 
 	case CMD_d:
-		del_swap(argv[0]);
+		delete_swap(argv[0]);
 		break;
 
 	case CMD_A:
@@ -351,10 +351,10 @@ oops:
 }
 
 /*
- * del_swap:  remove the pathname to the list of swap devices.
+ * delete_swap:  remove the pathname to the list of swap devices.
  */
 void
-del_swap(path)
+delete_swap(path)
 	const char *path;
 {
 
@@ -481,6 +481,7 @@ usage()
 
 	fprintf(stderr, "usage: %s -A [-p priority] [-t blk|noblk]\n",
 	    __progname);
+	fprintf(stderr, "       %s -D dumppath\n", __progname);
 	fprintf(stderr, "       %s -a [-p priority] path\n", __progname);
 	fprintf(stderr, "       %s -c -p priority path\n", __progname);
 	fprintf(stderr, "       %s -d path\n", __progname);
