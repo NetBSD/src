@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN32,v 1.2.2.2 2000/08/07 02:31:59 mrg Exp $
+# 	$NetBSD: POWEROFSEVEN32,v 1.2.2.3 2000/08/26 01:12:21 mrg Exp $
 #
 # Configuration for Ultra5/Ultra10
 
@@ -154,6 +154,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 options 	FFS_EI		# FFS Endian Independent support
+options 	SOFTDEP         # FFS soft updates support.
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
