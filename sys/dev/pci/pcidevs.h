@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.240 2000/06/12 22:33:41 nathanw Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.241 2000/06/13 22:44:51 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.233 2000/06/12 21:25:01 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.235 2000/06/13 22:44:19 tron Exp 
  */
 
 /*
@@ -819,6 +819,7 @@
 #define	PCI_PRODUCT_CMDTECH_643	0x0643		/* PCI0643 */
 #define	PCI_PRODUCT_CMDTECH_646	0x0646		/* PCI0646 */
 #define	PCI_PRODUCT_CMDTECH_647	0x0647		/* PCI0647 */
+#define	PCI_PRODUCT_CMDTECH_648	0x0648		/* PCI0648 */
 /* Inclusion of 'A' in the following entry is probably wrong. */
 /* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
 #define	PCI_PRODUCT_CMDTECH_650A	0x0650		/* PCI0650A */
