@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.389 2001/01/08 20:48:11 rh Exp $
+#	$NetBSD: GENERIC,v 1.390 2001/01/09 00:40:53 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.389 $"
+#ident 		"GENERIC-$Revision: 1.390 $"
 
 maxusers	32		# estimated number of users
 
@@ -717,8 +717,8 @@ ugen*	at uhub? port ?
 # Audio Devices
 
 # PCI audio devices
-auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
+auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
@@ -760,8 +760,8 @@ opl*	at ym?
 
 # Audio support
 #audio*	at aria?
-audio*	at auvia?
 audio*	at auich?
+audio*	at auvia?
 audio*	at clcs?
 audio*	at cmpci?
 audio*	at eap?
