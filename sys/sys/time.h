@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.35 2003/01/18 09:53:21 thorpej Exp $	*/
+/*	$NetBSD: time.h,v 1.36 2003/02/03 23:39:40 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -191,6 +191,7 @@ struct 	ptimer {
 	int	pt_overruns;	/* Overruns currently accumulating */
 	int	pt_poverruns;	/* Overruns associated w/ a delivery */
 	int	pt_type;
+	int	pt_entry;
 	struct proc *pt_proc; 
 };
 
@@ -198,7 +199,7 @@ struct 	ptimer {
 #define pt_list	pt_data.pt_nonreal.pt_list
 #define pt_active	pt_data.pt_nonreal.pt_active
 
-#define	TIMER_MAX	32
+#define	TIMER_MAX	32	/* See ptimers->pts_fired if you enlarge this */
 #define	TIMERS_ALL	0
 #define	TIMERS_POSIX	1
 
@@ -208,6 +209,7 @@ struct	ptimers {
 	struct ptlist pts_virtual;
 	struct ptlist pts_prof;
 	struct ptimer *pts_timers[TIMER_MAX];
+	int pts_fired;
 };
 
 int	itimerfix __P((struct timeval *tv));
