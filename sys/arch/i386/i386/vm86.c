@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.29 2002/10/01 12:57:01 fvdl Exp $	*/
+/*	$NetBSD: vm86.c,v 1.30 2002/10/22 23:18:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.29 2002/10/01 12:57:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.30 2002/10/22 23:18:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,27 +72,42 @@ static __inline int is_bitset __P((int, caddr_t));
 #define	SP(tf)		(*(u_short *)&tf->tf_esp)
 
 #define putword(base, ptr, val) \
-	({ ptr = (ptr - 1) & 0xffff;			\
-	   subyte((void *)(base+ptr), (val>>8));			\
-           ptr = (ptr - 1) & 0xffff;			\
-	   subyte((void *)(base+ptr), (val&0xff)); })
+	do { \
+		ptr = (ptr - 1) & 0xffff; \
+		subyte((void *)(base+ptr), (val>>8)); \
+	        ptr = (ptr - 1) & 0xffff; \
+		subyte((void *)(base+ptr), (val&0xff)); \
+	} while (0)
 
 #define putdword(base, ptr, val) \
-	({ putword(base, ptr, (val >> 16));	        \
-	   putword(base, ptr, (val & 0xffff)); })
+	do { \
+		putword(base, ptr, (val >> 16)); \
+		putword(base, ptr, (val & 0xffff)); \
+	} while (0)
 
-#define getbyte(base, ptr) \
-	({ unsigned long __tmp = fubyte((void *)(base+ptr));	 \
-	   if (__tmp == ~0) goto bad;				 \
-	   ptr = (ptr + 1) & 0xffff; __tmp; })
+#define getbyte(base, ptr, byte) \
+	do { \
+		u_long tmplong = fubyte((void *)(base+ptr)); \
+		if (tmplong == ~0) goto bad; \
+		ptr = (ptr + 1) & 0xffff; \
+		byte = tmplong; \
+	} while (0)
 
-#define getword(base, ptr) \
-	({ unsigned long __tmp = getbyte(base, ptr);	\
-	   __tmp |= (getbyte(base, ptr) << 8); __tmp;})
+#define getword(base, ptr, word) \
+	do { \
+		u_long w1, w2; \
+		getbyte(base, ptr, w1); \
+		getbyte(base, ptr, w2); \
+		word = w1 | w2 << 8; \
+	} while (0)
 
-#define getdword(base, ptr) \
-	({ unsigned long __tmp = getword(base, ptr);	\
-	   __tmp |= (getword(base, ptr) << 16); __tmp;})
+#define getdword(base, ptr, dword) \
+	do { \
+		u_long w1, w2; \
+		getword(base, ptr, w1); \
+		getword(base, ptr, w2); \
+		dword = w1 | w2 << 16; \
+	} while (0)
 
 static __inline int
 is_bitset(nr, bitmap)
@@ -249,6 +264,7 @@ vm86_gpfault(p, type)
 	 */
 	u_long cs, ip, ss, sp;
 	u_char tmpbyte;
+	u_long tmpword, tmpdword;
 	int trace;
 
 	cs = CS(tf) << 4;
@@ -262,7 +278,7 @@ vm86_gpfault(p, type)
 	 * For most of these, we must set all the registers before calling
 	 * macros/functions which might do a vm86_return.
 	 */
-	tmpbyte = getbyte(cs, ip);
+	getbyte(cs, ip, tmpbyte);
 	IP(tf) = ip;
 	switch (tmpbyte) {
 	case CLI:
@@ -280,7 +296,7 @@ vm86_gpfault(p, type)
 
 	case INTxx:
 		/* try fast intxx, or return to 32bit mode to handle it. */
-		tmpbyte = getbyte(cs, ip);
+		getbyte(cs, ip, tmpbyte);
 		IP(tf) = ip;
 		fast_intxx(p, tmpbyte);
 		break;
@@ -296,15 +312,16 @@ vm86_gpfault(p, type)
 		break;
 
 	case IRET:
-		IP(tf) = getword(ss, sp);
-		CS(tf) = getword(ss, sp);
+		getword(ss, sp, IP(tf));
+		getword(ss, sp, CS(tf));
 	case POPF:
-		set_vflags_short(p, getword(ss, sp));
+		getword(ss, sp, tmpword);
+		set_vflags_short(p, tmpword);
 		SP(tf) = sp;
 		break;
 
 	case OPSIZ:
-		tmpbyte = getbyte(cs, ip);
+		getbyte(cs, ip, tmpbyte);
 		IP(tf) = ip;
 		switch (tmpbyte) {
 		case PUSHF:
@@ -313,10 +330,11 @@ vm86_gpfault(p, type)
 			break;
 
 		case IRET:
-			IP(tf) = getdword(ss, sp);
-			CS(tf) = getdword(ss, sp);
+			getdword(ss, sp, IP(tf));
+			getdword(ss, sp, CS(tf));
 		case POPF:
-			set_vflags(p, getdword(ss, sp) | PSL_VM);
+			getdword(ss, sp, tmpdword);
+			set_vflags(p, tmpdword | PSL_VM);
 			SP(tf) = sp;
 			break;
 
