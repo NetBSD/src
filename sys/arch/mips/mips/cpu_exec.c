@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.25 2000/11/21 00:37:51 jdolecek Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.26 2000/11/27 13:25:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,7 +133,6 @@ cpu_exec_aout_makecmds(p, epp)
 #endif
 }
 
-#ifdef COMPAT_ULTRIX
 void
 cpu_exec_ecoff_setregs(p, epp, stack)
 	struct proc *p;
@@ -146,7 +145,22 @@ cpu_exec_ecoff_setregs(p, epp, stack)
 	setregs(p, epp, stack);
 	f->f_regs[GP] = (register_t)execp->a.gp_value;
 }
-#endif
+
+/*
+ * cpu_exec_ecoff_probe()
+ *	cpu-dependent ECOFF format hook for execve().
+ *
+ * Do any machine-dependent diddling of the exec package when doing ECOFF.
+ */
+int
+cpu_exec_ecoff_probe(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+
+	/* NetBSD/mips does not have native ECOFF binaries. */
+	return ENOEXEC;
+}
 
 /*
  * mips_elf_makecmds (p, epp)
