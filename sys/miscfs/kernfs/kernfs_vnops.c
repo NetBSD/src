@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: kernfs_vnops.c,v 1.4 1993/03/27 00:37:11 cgd Exp $
+ * $Id: kernfs_vnops.c,v 1.5 1993/04/27 07:21:37 mycroft Exp $
  */
 
 /*
@@ -301,7 +301,7 @@ kernfs_open(vp, mode, cred, p)
 #endif
 
 	if ((mode & FWRITE) && VTOKERN(vp)->kf_kt->kt_rw != KTM_RW)
-		return (EBADF);
+		return (EPERM);
 
 	return (0);
 }
