@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9 1998/10/06 18:58:09 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.10 1998/12/04 20:22:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -213,7 +213,7 @@ bootstrap(nctx)
 #ifdef DDB
 	db_machine_init();
 #ifdef DB_ELF_SYMBOLS
-	ddb_init(ssym, esym); /* No symbols as yet */
+	ddb_init((int)(esym - ssym), ssym, esym); /* No symbols as yet */
 #else
 	ddb_init();
 #endif

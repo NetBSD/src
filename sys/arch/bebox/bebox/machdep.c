@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 1998/11/18 09:05:18 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 1998/12/04 20:22:37 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -349,7 +349,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	pmap_bootstrap(startkernel, endkernel);
 
 #ifdef DDB
-	ddb_init(startsym, endsym);
+	ddb_init((int)(endsym - startsym), startsym, endsym);
 #endif
 #if NIPKDB > 0
 	/*
