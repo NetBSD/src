@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp.h,v 1.2 2003/12/04 16:23:36 drochner Exp $	*/
+/*	$NetBSD: ntp.h,v 1.3 2003/12/04 16:56:01 drochner Exp $	*/
 
 /*
  * ntp.h - NTP definitions for the masses
@@ -470,9 +470,11 @@ struct peer {
  	memcmp(&((struct sockaddr_in *)sock1)->sin_addr, \
 	    &((struct sockaddr_in *)sock2)->sin_addr, \
 	    sizeof(struct in_addr)) == 0 : \
-	memcmp(&((struct sockaddr_in6 *)sock1)->sin6_addr, \
+	(memcmp(&((struct sockaddr_in6 *)sock1)->sin6_addr, \
 	    &((struct sockaddr_in6 *)sock2)->sin6_addr, \
-	    sizeof(struct in6_addr)) == 0 : \
+	    sizeof(struct in6_addr)) == 0) && \
+	    (((struct sockaddr_in6 *)sock1)->sin6_scope_id == \
+	     ((struct sockaddr_in6 *)sock2)->sin6_scope_id) : \
 	0)
 
 #define SOCKNUL(sock1) \
