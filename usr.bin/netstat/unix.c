@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.22 2005/03/04 03:57:48 atatat Exp $	*/
+/*	$NetBSD: unix.c,v 1.23 2005/03/04 03:59:07 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.22 2005/03/04 03:57:48 atatat Exp $");
+__RCSID("$NetBSD: unix.c,v 1.23 2005/03/04 03:59:07 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,6 +126,14 @@ unixdomainpr(so, soaddr)
 	    (u_long) unp.unp_refs, (u_long) unp.unp_nextref);
 	if (unp.unp_addr)
 		printf(" %.*s",
+		    (int) (sun.sun_len - (sizeof(sun) - sizeof(sun.sun_path))),
+		    sun.sun_path);
+	else if (unp.unp_conn &&
+	    kread((u_long)unp.unp_conn, (char *)&unp, sizeof (unp)) == 0 &&
+	    unp.unp_addr &&
+	    kread((u_long)unp.unp_addr, (char *)&sun, sizeof (sun)) == 0 &&
+	    sun.sun_path[0] != '\0')
+		printf(" -> %.*s",
 		    (int) (sun.sun_len - (sizeof(sun) - sizeof(sun.sun_path))),
 		    sun.sun_path);
 	putchar('\n');
