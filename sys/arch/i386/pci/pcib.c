@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.31 2003/01/01 01:24:20 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.32 2003/02/26 22:23:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.31 2003/01/01 01:24:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.32 2003/02/26 22:23:09 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,8 +202,8 @@ pcib_callback(self)
 	 */
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_busname = "isa";
-	iba.iba_iot = I386_BUS_SPACE_IO;
-	iba.iba_memt = I386_BUS_SPACE_MEM;
+	iba.iba_iot = X86_BUS_SPACE_IO;
+	iba.iba_memt = X86_BUS_SPACE_MEM;
 #if NISA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif
