@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2001/05/09 22:30:43 matt Exp $
+#	$NetBSD: Makefile,v 1.3 2001/06/18 21:37:34 bjh21 Exp $
 
 KDIR=	/sys/arch/dnard/include
 INCSDIR= /usr/include/arm/dnard
 
-INCS=	bootconfig.h bus.h \
+INCS=	bootconfig.h \
 	conf.h \
 	db_machdep.h \
 	endian.h \
