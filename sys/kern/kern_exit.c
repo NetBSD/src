@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.93.6.2 2003/10/22 06:15:50 jmc Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.93.6.3 2004/03/28 08:02:36 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.93.6.2 2003/10/22 06:15:50 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.93.6.3 2004/03/28 08:02:36 jmc Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_sysv.h"
@@ -240,14 +240,25 @@ exit1(struct proc *p, int rv)
 		wakeup((caddr_t)initproc);
 	for (; q != 0; q = nq) {
 		nq = q->p_sibling.le_next;
-		proc_reparent(q, initproc);
+
 		/*
-		 * Traced processes are killed
-		 * since their existence means someone is screwing up.
+		 * Traced processes are killed since their existence
+		 * means someone is screwing up. Since we reset the
+		 * trace flags, the logic in sys_wait4() would not be
+		 * triggered to reparent the process to its
+		 * original parent, so we must do this here.
 		 */
 		if (q->p_flag & P_TRACED) {
+			if (q->p_opptr != q->p_pptr) {
+				struct proc *t = q->p_opptr;
+				proc_reparent(q, t ? t : initproc);
+				q->p_opptr = NULL;
+			} else
+				proc_reparent(q, initproc);
 			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 			psignal(q, SIGKILL);
+		} else {
+			proc_reparent(q, initproc);
 		}
 	}
 
