@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.8 1998/12/12 20:08:22 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.9 1999/07/02 15:21:26 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,12 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.8 1998/12/12 20:08:22 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.9 1999/07/02 15:21:26 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
 /*
- * map.c: Editor function definitions 
+ * map.c: Editor function definitions
  */
 #include "sys.h"
 #include <stdlib.h>
@@ -667,8 +667,8 @@ private el_action_t  el_map_vi_command[] = {
     /*  41 */	ED_UNASSIGNED,		/* ) */
     /*  42 */	ED_UNASSIGNED,		/* * */
     /*  43 */	ED_NEXT_HISTORY,	/* + */
-    /*  44 */	VI_REPEAT_PREV_CHAR,	/* , */	
-    /*  45 */	ED_PREV_HISTORY,	/* - */	
+    /*  44 */	VI_REPEAT_PREV_CHAR,	/* , */
+    /*  45 */	ED_PREV_HISTORY,	/* - */
     /*  46 */	ED_UNASSIGNED,		/* . */
     /*  47 */	VI_SEARCH_PREV,		/* / */
     /*  48 */	VI_ZERO,		/* 0 */
@@ -889,7 +889,7 @@ protected int
 map_init(el)
     EditLine *el;
 {
-    
+
     /*
      * Make sure those are correct before starting.
      */
@@ -909,7 +909,7 @@ map_init(el)
     el->el_map.vii   = el_map_vi_insert;
     el->el_map.help  = (el_bindings_t *) el_malloc(sizeof(el_bindings_t) *
 						   EL_NUM_FCNS);
-    (void) memcpy(el->el_map.help, help__get(), 
+    (void) memcpy(el->el_map.help, help__get(),
 		  sizeof(el_bindings_t) * EL_NUM_FCNS);
     el->el_map.func  = (el_func_t *) el_malloc(sizeof(el_func_t) * EL_NUM_FCNS);
     memcpy(el->el_map.func, func__get(), sizeof(el_func_t) * EL_NUM_FCNS);
@@ -955,8 +955,8 @@ map_init_nls(el)
     int i;
     el_action_t *map = el->el_map.key;
 
-    for (i = 0200; i <= 0377; i++) 
-	if (isprint(i)) 
+    for (i = 0200; i <= 0377; i++)
+	if (isprint(i))
 	    map[i] = ED_INSERT;
 }
 
@@ -984,12 +984,12 @@ map_init_meta(el)
 	    if (el->el_map.type == MAP_VI)
 		map = alt;
 	}
-	else 
+	else
 	    map = alt;
     }
     buf[0] = (char) i;
     buf[2] = 0;
-    for (i = 0200; i <= 0377; i++) 
+    for (i = 0200; i <= 0377; i++)
 	switch (map[i]) {
 	case ED_INSERT:
 	case ED_UNASSIGNED:
@@ -1071,14 +1071,14 @@ map_init_emacs(el)
     buf[1] = CONTROL('X');
     buf[2] = 0;
     key_add(el, buf, key_map_cmd(el, EM_EXCHANGE_MARK), XK_CMD);
-    
+
     tty_bind_char(el, 1);
     term_bind_arrow(el);
 }
 
 
 /* map_set_editor():
- *	Set the editor 
+ *	Set the editor
  */
 protected int
 map_set_editor(el, editor)
@@ -1098,7 +1098,7 @@ map_set_editor(el, editor)
 
 
 /* map_get_editor():
- *	Retrieve the editor 
+ *	Retrieve the editor
  */
 protected int
 map_get_editor(el, editor)
@@ -1136,12 +1136,12 @@ map_print_key(el, map, in)
 	(void) key__decode_str(in, outbuf, "");
 	for (bp = el->el_map.help; bp->name != NULL; bp++)
 	    if (bp->func == map[(unsigned char) *in]) {
-		(void) fprintf(el->el_outfile, 
+		(void) fprintf(el->el_outfile,
 			       "%s\t->\t%s\n", outbuf, bp->name);
 		return;
 	    }
     }
-    else 
+    else
 	key_print(el, in);
 }
 
@@ -1174,13 +1174,13 @@ map_print_some_keys(el, map, first, last)
 	if (bp->func == map[first]) {
 	    if (first == last) {
 		(void) fprintf(el->el_outfile, "%-15s->  %s\n",
-			       key__decode_str(firstbuf, unparsbuf, STRQQ), 
+			       key__decode_str(firstbuf, unparsbuf, STRQQ),
 			       bp->name);
 	    }
 	    else {
 		(void) fprintf(el->el_outfile, "%-4s to %-7s->  %s\n",
 			       key__decode_str(firstbuf, unparsbuf, STRQQ),
-			       key__decode_str(lastbuf, extrabuf, STRQQ), 
+			       key__decode_str(lastbuf, extrabuf, STRQQ),
 			       bp->name);
 	    }
 	    return;
@@ -1190,13 +1190,13 @@ map_print_some_keys(el, map, first, last)
     if (map == el->el_map.key) {
 	(void) fprintf(el->el_outfile, "BUG!!! %s isn't bound to anything.\n",
 		       key__decode_str(firstbuf, unparsbuf, STRQQ));
-	(void) fprintf(el->el_outfile, "el->el_map.key[%d] == %d\n", 
+	(void) fprintf(el->el_outfile, "el->el_map.key[%d] == %d\n",
 		       first, el->el_map.key[first]);
     }
     else {
 	(void) fprintf(el->el_outfile, "BUG!!! %s isn't bound to anything.\n",
 		       key__decode_str(firstbuf, unparsbuf, STRQQ));
-	(void) fprintf(el->el_outfile, "el->el_map.alt[%d] == %d\n", 
+	(void) fprintf(el->el_outfile, "el->el_map.alt[%d] == %d\n",
 		       first, el->el_map.alt[first]);
     }
 #endif
@@ -1298,8 +1298,8 @@ map_bind(el, argc, argv)
 		return 0;
 
 	    case 'l':
-		for (bp = el->el_map.help; bp->name != NULL; bp++) 
-		    (void) fprintf(el->el_outfile, "%s\n\t%s\n", 
+		for (bp = el->el_map.help; bp->name != NULL; bp++)
+		    (void) fprintf(el->el_outfile, "%s\n\t%s\n",
 				   bp->name, bp->description);
 		return 0;
 	    default:
@@ -1328,11 +1328,11 @@ map_bind(el, argc, argv)
 	    (void) term_clear_arrow(el, in);
 	    return -1;
 	}
-	if (in[1]) 
+	if (in[1])
 	    (void) key_delete(el, in);
-	else if (map[(unsigned char) *in] == ED_SEQUENCE_LEAD_IN) 
+	else if (map[(unsigned char) *in] == ED_SEQUENCE_LEAD_IN)
 	    (void) key_delete(el, in);
-	else 
+	else
 	    map[(unsigned char) *in] = ED_UNASSIGNED;
 	return 0;
     }
@@ -1356,7 +1356,7 @@ map_bind(el, argc, argv)
     case XK_STR:
     case XK_EXE:
 	if ((out = parse__string(outbuf, argv[argc])) == NULL) {
-	    (void) fprintf(el->el_errfile, 
+	    (void) fprintf(el->el_errfile,
 			   "%s: Invalid \\ or ^ in outstring.\n", argv[0]);
 	    return -1;
 	}
@@ -1369,7 +1369,7 @@ map_bind(el, argc, argv)
 
     case XK_CMD:
 	if ((cmd = parse_cmd(el, argv[argc])) == -1) {
-	    (void) fprintf(el->el_errfile, 
+	    (void) fprintf(el->el_errfile,
 			   "%s: Invalid command `%s'.\n", argv[0], argv[argc]);
 	    return -1;
 	}
@@ -1409,7 +1409,7 @@ map_addfunc(el, name, help, func)
     if (name == NULL || help == NULL || func == NULL)
 	return -1;
 
-    el->el_map.func = (el_func_t *) 
+    el->el_map.func = (el_func_t *)
 		el_realloc(el->el_map.func, nf * sizeof(el_func_t));
     el->el_map.help = (el_bindings_t *)
 		el_realloc(el->el_map.help, nf * sizeof(el_bindings_t));

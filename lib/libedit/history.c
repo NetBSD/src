@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.13 1999/03/06 00:17:25 mycroft Exp $	*/
+/*	$NetBSD: history.c,v 1.14 1999/07/02 15:21:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.13 1999/03/06 00:17:25 mycroft Exp $");
+__RCSID("$NetBSD: history.c,v 1.14 1999/07/02 15:21:25 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -77,7 +77,7 @@ struct history {
     history_gfun_t h_prev;		/* Get the previous element	*/
     history_gfun_t h_curr;		/* Get the current element	*/
     history_sfun_t h_set;		/* Set the current element	*/
-    history_vfun_t h_clear;		/* Clear the history list	*/ 
+    history_vfun_t h_clear;		/* Clear the history list	*/
     history_efun_t h_enter;		/* Add an element		*/
     history_efun_t h_add;		/* Append to an element		*/
 };
@@ -124,7 +124,7 @@ typedef struct history_t {
     hentry_t *cursor;		/* Current element in the list	*/
     int	max;			/* Maximum number of events	*/
     int cur;			/* Current number of events	*/
-    int	eventid;		/* For generation of unique event id	*/ 
+    int	eventid;		/* For generation of unique event id	*/
 } history_t;
 
 private int	history_def_first  __P((ptr_t, HistEvent *));
@@ -148,7 +148,7 @@ private void	history_def_delete __P((history_t *, HistEvent *, hentry_t *));
 				    evp->num = code;\
 				    evp->str = he_strerror(code);\
 				}
-					
+
 /* error messages */
 static const char *const he_errlist[] = {
     "OK",
@@ -439,7 +439,7 @@ history_def_enter(p, ev, str)
      * Always keep at least one entry.
      * This way we don't have to check for the empty list.
      */
-    while (h->cur - 1 > h->max) 
+    while (h->cur - 1 > h->max)
 	history_def_delete(h, ev, h->list.prev);
 
     return 0;
@@ -562,7 +562,7 @@ history_getsize(h, ev)
     HistEvent *ev;
 {
     int retval=0;
- 
+
     if (h->h_next != history_def_next) {
 	he_seterrev(ev, _HE_NOT_ALLOWED);
 	return -1;
@@ -647,7 +647,7 @@ history_load(h, fname)
 
     if (strncmp(line, hist_cookie, sz) != 0)
 	goto done;
-	
+
     ptr = h_malloc(max_size = 1024);
     for (i = 0; (line = fgetln(fp, &sz)) != NULL; i++) {
 	char c = line[sz];
@@ -808,7 +808,7 @@ history(va_alist)
 #ifdef __STDC__
     va_start(va, fun);
 #else
-    History *h; 
+    History *h;
     HistEvent *ev;
     int fun;
     va_start(va);

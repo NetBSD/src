@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.6 1999/02/05 20:53:49 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.7 1999/07/02 15:21:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,11 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.6 1999/02/05 20:53:49 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.7 1999/07/02 15:21:23 simonb Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
-/* 
+/*
  * chared.c: Character editor utilities
  */
 #include "sys.h"
@@ -75,7 +75,7 @@ cv_undo(el, action, size, ptr)
 }
 
 
-/* c_insert(): 
+/* c_insert():
  *	Insert num characters
  */
 protected void
@@ -88,7 +88,7 @@ c_insert(el, num)
     if (el->el_line.lastchar + num >= el->el_line.limit)
 	return;			/* can't go past end of buffer */
 
-    if (el->el_line.cursor < el->el_line.lastchar) {	
+    if (el->el_line.cursor < el->el_line.lastchar) {
 	/* if I must move chars */
 	for (cp = el->el_line.lastchar; cp >= el->el_line.cursor; cp--)
 	    cp[num] = *cp;
@@ -101,7 +101,7 @@ c_insert(el, num)
  *	Delete num characters after the cursor
  */
 protected void
-c_delafter(el, num)	
+c_delafter(el, num)
     EditLine *el;
     int num;
 {
@@ -109,10 +109,10 @@ c_delafter(el, num)
     if (el->el_line.cursor + num > el->el_line.lastchar)
 	num = el->el_line.lastchar - el->el_line.cursor;
 
-    if (num > 0) {			
+    if (num > 0) {
 	char *cp;
 
-	if (el->el_map.current != el->el_map.emacs) 
+	if (el->el_map.current != el->el_map.emacs)
 	    cv_undo(el, INSERT, (size_t)num, el->el_line.cursor);
 
 	for (cp = el->el_line.cursor; cp <= el->el_line.lastchar; cp++)
@@ -133,12 +133,12 @@ c_delbefore(el, num)
 {
 
     if (el->el_line.cursor - num < el->el_line.buffer)
-	num = el->el_line.cursor - el->el_line.buffer;	
+	num = el->el_line.cursor - el->el_line.buffer;
 
-    if (num > 0) {		
+    if (num > 0) {
 	char *cp;
 
-	if (el->el_map.current != el->el_map.emacs) 
+	if (el->el_map.current != el->el_map.emacs)
 	    cv_undo(el, INSERT, (size_t)num, el->el_line.cursor - num);
 
 	for (cp = el->el_line.cursor - num; cp <= el->el_line.lastchar; cp++)
@@ -153,7 +153,7 @@ c_delbefore(el, num)
  *	Return if p is part of a word according to emacs
  */
 protected int
-ce__isword(p) 
+ce__isword(p)
     int p;
 {
     return isalpha(p) || isdigit(p) || strchr("*?_-.[]~=", p) != NULL;
@@ -164,7 +164,7 @@ ce__isword(p)
  *	Return if p is part of a word according to vi
  */
 protected int
-cv__isword(p) 
+cv__isword(p)
     int p;
 {
     return !isspace(p);
@@ -175,7 +175,7 @@ cv__isword(p)
  *	Find the previous word
  */
 protected char *
-c__prev_word(p, low, n, wtest) 
+c__prev_word(p, low, n, wtest)
     char *p, *low;
     int n;
     int (*wtest) __P((int));
@@ -183,9 +183,9 @@ c__prev_word(p, low, n, wtest)
     p--;
 
     while (n--) {
-	while ((p >= low) && !(*wtest)((unsigned char) *p)) 
+	while ((p >= low) && !(*wtest)((unsigned char) *p))
 	    p--;
-	while ((p >= low) && (*wtest)((unsigned char) *p)) 
+	while ((p >= low) && (*wtest)((unsigned char) *p))
 	    p--;
     }
 
@@ -208,9 +208,9 @@ c__next_word(p, high, n, wtest)
     int (*wtest) __P((int));
 {
     while (n--) {
-	while ((p < high) && !(*wtest)((unsigned char) *p)) 
+	while ((p < high) && !(*wtest)((unsigned char) *p))
 	    p++;
-	while ((p < high) && (*wtest)((unsigned char) *p)) 
+	while ((p < high) && (*wtest)((unsigned char) *p))
 	    p++;
     }
     if (p > high)
@@ -233,14 +233,14 @@ cv_next_word(el, p, high, n, wtest)
 
     while (n--) {
     	test = (*wtest)((unsigned char) *p);
-	while ((p < high) && (*wtest)((unsigned char) *p) == test) 
+	while ((p < high) && (*wtest)((unsigned char) *p) == test)
 	    p++;
 	/*
 	 * vi historically deletes with cw only the word preserving the
 	 * trailing whitespace! This is not what 'w' does..
 	 */
-	if (el->el_chared.c_vcmd.action != (DELETE|INSERT)) 
-	    while ((p < high) && isspace((unsigned char) *p)) 
+	if (el->el_chared.c_vcmd.action != (DELETE|INSERT))
+	    while ((p < high) && isspace((unsigned char) *p))
 		p++;
     }
 
@@ -270,14 +270,14 @@ cv_prev_word(el, p, low, n, wtest)
 	 * vi historically deletes with cb only the word preserving the
 	 * leading whitespace! This is not what 'b' does..
 	 */
-	if (el->el_chared.c_vcmd.action != (DELETE|INSERT)) 
-	    while ((p > low) && isspace((unsigned char) *p)) 
+	if (el->el_chared.c_vcmd.action != (DELETE|INSERT))
+	    while ((p > low) && isspace((unsigned char) *p))
 		p--;
 	test = (*wtest)((unsigned char) *p);
-	while ((p >= low) && (*wtest)((unsigned char) *p) == test) 
+	while ((p >= low) && (*wtest)((unsigned char) *p) == test)
 	    p--;
 	p++;
-	while (isspace((unsigned char) *p)) 
+	while (isspace((unsigned char) *p))
 		p++;
     }
 
@@ -327,7 +327,7 @@ c__number(p, num, dval)
  *	Finish vi delete action
  */
 protected void
-cv_delfini(el)		
+cv_delfini(el)
     EditLine *el;
 {
     int size;
@@ -339,13 +339,13 @@ cv_delfini(el)
     oaction = el->el_chared.c_vcmd.action;
     el->el_chared.c_vcmd.action = NOP;
 
-    if (el->el_chared.c_vcmd.pos == 0) 
+    if (el->el_chared.c_vcmd.pos == 0)
 	return;
 
 
     if (el->el_line.cursor > el->el_chared.c_vcmd.pos) {
 	size = (int) (el->el_line.cursor - el->el_chared.c_vcmd.pos);
-	c_delbefore(el, size); 
+	c_delbefore(el, size);
 	el->el_line.cursor = el->el_chared.c_vcmd.pos;
 	re_refresh_cursor(el);
     }
@@ -370,7 +370,7 @@ cv_delfini(el)
 	abort();
 	break;
     }
-	
+
 
     el->el_chared.c_undo.ptr = el->el_line.cursor;
     el->el_chared.c_undo.dsize = size;
@@ -391,7 +391,7 @@ ce__endword(p, high, n)
     while (n--) {
 	while ((p < high) && isspace((unsigned char) *p))
 	    p++;
-	while ((p < high) && !isspace((unsigned char) *p)) 
+	while ((p < high) && !isspace((unsigned char) *p))
 	    p++;
     }
 
@@ -412,14 +412,14 @@ cv__endword(p, high, n)
     p++;
 
     while (n--) {
-	while ((p < high) && isspace((unsigned char) *p)) 
+	while ((p < high) && isspace((unsigned char) *p))
 	    p++;
 
 	if (isalnum((unsigned char) *p))
-	    while ((p < high) && isalnum((unsigned char) *p)) 
+	    while ((p < high) && isalnum((unsigned char) *p))
 		p++;
 	else
-	    while ((p < high) && !(isspace((unsigned char) *p) || 
+	    while ((p < high) && !(isspace((unsigned char) *p) ||
 				   isalnum((unsigned char) *p)))
 		p++;
     }
@@ -466,7 +466,7 @@ ch_init(el)
 
     el->el_chared.c_macro.nline     = NULL;
     el->el_chared.c_macro.level     = -1;
-    el->el_chared.c_macro.macro     = (char **) el_malloc(EL_MAXMACRO * 
+    el->el_chared.c_macro.macro     = (char **) el_malloc(EL_MAXMACRO *
 						          sizeof(char *));
     return 0;
 }
@@ -559,7 +559,7 @@ el_deletestr(el, n)
     if (n <= 0)
 	return;
 
-    if (el->el_line.cursor < &el->el_line.buffer[n]) 
+    if (el->el_line.cursor < &el->el_line.buffer[n])
 	return;
 
     c_delbefore(el, n);		/* delete before dot */
@@ -638,7 +638,7 @@ c_hpos(el)
     if (el->el_line.cursor == el->el_line.buffer)
 	return 0;
     else {
-	for (ptr = el->el_line.cursor - 1; 
+	for (ptr = el->el_line.cursor - 1;
 	     ptr >= el->el_line.buffer && *ptr != '\n';
 	     ptr--)
 	    continue;
