@@ -35,10 +35,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.42 1993/07/22 13:04:21 brezak Exp $
+ *	$Id: machdep.c,v 1.43 1993/08/27 23:52:28 brezak Exp $
  */
 
 #include "npx.h"
+#include "isa.h"
 
 #include <stddef.h>
 #include "param.h"
@@ -59,6 +60,10 @@
 #include "msgbuf.h"
 #include "net/netisr.h"
 
+#ifdef SYSVSHM
+#include "sys/shm.h"
+#endif
+
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
@@ -67,12 +72,22 @@
 #include "sys/vnode.h"
 
 vm_map_t buffer_map;
+
+#ifndef MACHINE_NONCONTIG
 extern vm_offset_t avail_end;
+#else
+extern vm_offset_t avail_start, avail_end;
+static vm_offset_t hole_start, hole_end;
+static vm_offset_t avail_next;
+static unsigned int avail_remaining;
+#endif /* MACHINE_NONCONTIG */
 
 #include "machine/cpu.h"
 #include "machine/reg.h"
 #include "machine/psl.h"
 #include "machine/specialreg.h"
+
+#include "i386/isa/isa.h"
 #include "i386/isa/rtc.h"
 
 
@@ -93,7 +108,6 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped;		/* set when safe to use msgbuf */
 
 /*
  * Machine-dependent startup code
@@ -133,8 +147,13 @@ cpu_startup()
 
 	/* avail_end was pre-decremented in pmap_bootstrap to compensate */
 	for (i = 0; i < btoc(sizeof (struct msgbuf)); i++)
+#ifndef MACHINE_NONCONTIG
 		pmap_enter(pmap_kernel(), msgbufp, avail_end + i * NBPG,
 			   VM_PROT_ALL, TRUE);
+#else
+		pmap_enter(pmap_kernel(), (caddr_t)msgbufp + i * NBPG,
+			   avail_end + i * NBPG, VM_PROT_ALL, TRUE);
+#endif
 	msgbufmapped = 1;
 
 	/*
@@ -603,7 +622,13 @@ boot(arghowto)
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
 		sync((struct sigcontext *)0);
-
+		/*
+		 * Unmount filesystems
+		 */
+#if 0
+		if (panicstr == 0)
+			vfs_unmountall();
+#endif
 		for (iter = 0; iter < 20; iter++) {
 			nbusy = 0;
 			for (bp = &buf[nbuf]; --bp >= buf; )
@@ -944,7 +969,12 @@ extern	IDTVEC(div), IDTVEC(dbg), IDTVEC(nmi), IDTVEC(bpt), IDTVEC(ofl),
 int lcr0(), lcr3(), rcr0(), rcr2();
 int _udatasel, _ucodesel, _gsel_tss;
 
+#ifndef MACHINE_NONCONTIG
 init386(first)
+#else
+init386(first_avail)
+	vm_offset_t first_avail;
+#endif
 {
 	extern ssdtosd(), lgdt(), lidt(), lldt(), etext; 
 	int x, *pi;
@@ -1010,11 +1040,9 @@ init386(first)
 	setidt(30, &IDTVEC(rsvd13),  SDT_SYS386TGT, SEL_KPL);
 	setidt(31, &IDTVEC(rsvd14),  SDT_SYS386TGT, SEL_KPL);
 
-#include	"isa.h"
 #if	NISA >0
 	isa_defaultirq();
 #endif
-
 	r_gdt.rd_limit = sizeof(gdt)-1;
 	r_gdt.rd_base = (int) gdt;
 	lgdt(&r_gdt);
@@ -1027,6 +1055,10 @@ init386(first)
 	ddb_init();
 	if (boothowto & RB_KDB)
 		Debugger();
+#endif
+#ifdef KGDB
+	if (boothowto & RB_KDB)
+	    kgdb_connect(0);
 #endif
 
 	/* Use BIOS values stored in RTC CMOS RAM, since probing
@@ -1049,6 +1081,7 @@ init386(first)
 		biosextmem = 0;				/* assume none*/
 	}
 
+#ifndef MACHINE_NONCONTIG
 	/*
 	 * Go into normal calculation; Note that we try to run in 640K, and
 	 * that invalid CMOS values of non 0xffff are no longer a cause of
@@ -1072,12 +1105,43 @@ init386(first)
 		if (first < 0x100000)
 			first = 0x100000; /* skip hole */
 	}
+#else
+	avail_start = 0x1000;	/* BIOS leaves data in low memory */
+				/* and VM system doesn't work with phys 0 */
+	avail_end = biosextmem ? 0x100000 + biosextmem * 1024 : biosbasemem * 1024;
+	
+	Maxmem = atop(avail_end);
+#endif /* MACHINE_NONCONTIG */
 
 	/* This used to explode, since Maxmem used to be 0 for bas CMOS*/
 	maxmem = Maxmem - 1;	/* highest page of usable memory */
 	physmem = maxmem;	/* number of pages of physmem addr space */
-/*printf("using first 0x%x to 0x%x\n ", first, maxmem*NBPG);*/
+#ifndef MACHINE_NONCONTIG
+	/*printf("using first 0x%x to 0x%x\n ", first, maxmem*NBPG);*/
 	if (maxmem < 2048/4) {
+#else
+	/*
+	 *	Initialize for pmap_free_pages and pmap_next_page.
+	 *	These guys should be page-aligned.
+	 */
+	
+	hole_start = biosbasemem * 1024;
+#if	LOAD_ADDRESS == 0xfe000000
+	avail_next = first_avail;
+	hole_end = 0x100000;
+#else
+#if	LOAD_ADDRESS == 0xfe100000
+	hole_end = round_page((vm_offset_t)first_avail);
+	avail_next = avail_start;
+#else
+#error "unsupported load address"
+#endif
+#endif
+	avail_remaining = atop((avail_end - avail_start) -
+			       (hole_end - hole_start));
+	
+	if (avail_remaining < 2048/4) {
+#endif /* MACHINE_NONCONTIG */
 		printf("Too little RAM memory. Warning, running in degraded mode.\n");
 #ifdef INFORM_WAIT
 		/*
@@ -1089,12 +1153,13 @@ init386(first)
 		cngetc();
 #endif	/* !INFORM_WAIT*/
 	}
-	/*
-	 * End of CMOS bux fix
-	 */
-
 	/* call pmap initialization to make new kernel address space */
+#ifndef MACHINE_NONCONTIG
 	pmap_bootstrap (first, 0);
+#else
+	pmap_bootstrap ((vm_offset_t)atdevbase + IOM_SIZE);
+	
+#endif /* MACHINE_NONCONTIG */
 	/* now running on new page tables, configured,and u/iom is accessible */
 
 	/* make a initial tss so microp can get interrupt stack on syscall! */
@@ -1140,7 +1205,9 @@ clearseg(n) {
 	*(int *)CMAP2 = PG_V | PG_KW | ctob(n);
 	load_cr3(rcr3());
 	bzero(CADDR2,NBPG);
+#ifndef MACHINE_NONCONTIG
 	*(int *) CADDR2 = 0;
+#endif /* MACHINE_NONCONTIG */
 }
 
 /*
@@ -1350,3 +1417,37 @@ cpu_exec_prep_oldzmagic(p, epp)
   return 0;
 }
 #endif /* COMPAT_NOMID */
+
+#ifdef MACHINE_NONCONTIG
+unsigned int pmap_free_pages()
+{
+	return avail_remaining;
+}
+
+pmap_next_page(addrp)
+	vm_offset_t	*addrp;
+{
+	if (avail_next == avail_end)
+		return FALSE;
+	
+	/* skip the hole */
+	
+	if (avail_next == hole_start)
+		avail_next = hole_end;
+	
+	*addrp = avail_next;
+	avail_next += PAGE_SIZE;
+	avail_remaining--;
+	return TRUE;
+}
+
+pmap_page_index(pa)
+	vm_offset_t pa;
+{
+	if (pa >= avail_start && pa < hole_start)
+		return i386_btop(pa - avail_start);
+	if (pa >= hole_end && pa < avail_end)
+		return i386_btop(pa - hole_end + hole_start - avail_start);
+	return -1;
+}
+#endif /* MACHINE_NONCONTIG */
