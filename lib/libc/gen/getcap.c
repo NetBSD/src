@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.17 1998/02/26 02:40:11 perry Exp $	*/
+/*	$NetBSD: getcap.c,v 1.18 1998/03/02 23:39:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.17 1998/02/26 02:40:11 perry Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.18 1998/03/02 23:39:49 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -85,7 +85,7 @@ static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
 
 static int	cdbget __P((DB *, char **, char *));
-static int 	getent __P((char **, u_int *, char **, int, char *, int, char *));
+static int 	getent __P((char **, size_t *, char **, int, char *, int, char *));
 static int	nfcmp __P((char *, char *));
 
 /*
@@ -182,7 +182,7 @@ int
 cgetent(buf, db_array, name)
 	char **buf, **db_array, *name;
 {
-	u_int dummy;
+	size_t dummy;
 
 	return (getent(buf, &dummy, db_array, -1, name, 0, NULL));
 }
@@ -665,7 +665,7 @@ cgetnext(bp, db_array)
 	size_t len;
 	int status, done;
 	char *cp, *line, *rp, *np, buf[BSIZE], nbuf[BSIZE];
-	u_int dummy;
+	size_t dummy;
 
 	if (dbp == NULL)
 		dbp = db_array;
