@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2002/03/24 18:04:40 uch Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 2002/04/26 11:56:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -181,6 +181,17 @@ do {									\
 	goto *(u_int32_t *)(p & ~0x20000000);				\
  P1:	(void)0;							\
 } while (/*CONSTCOND*/0)
+
+#if defined(SH4)
+/* SH4 Processor Version Register */
+#define	SH4_PVR_ADDR	0xff000030	/* P4  address */
+#define	SH4_PVR		(*(volatile unsigned int *) SH4_PVR_ADDR)
+
+#define	SH4_PVR_MASK	0xffffff00
+#define	SH4_PVR_SH7750	0x04020500	/* SH7750  */
+#define	SH4_PVR_SH7750S	0x04020600	/* SH7750S */
+#define	SH4_PVR_SH7751	0x04110000	/* SH7751  */
+#endif
 
 /*
  * pull in #defines for kinds of processors
