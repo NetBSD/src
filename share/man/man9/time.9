@@ -1,4 +1,4 @@
-.\"	$NetBSD: time.9,v 1.1 1995/11/25 21:24:53 perry Exp $
+.\"	$NetBSD: time.9,v 1.2 1998/06/08 11:32:58 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -100,7 +100,7 @@ or
 .Va mono_time ,
 because those variables are updated by
 .Fn hardclock .
-.Va Boottime
+.Va boottime
 and
 .Va runtime
 may be read and written without special precautions.
@@ -111,7 +111,7 @@ may be read and written without special precautions.
 .Xr microtime 9 ,
 .Xr settimeofday 2
 .Sh BUGS
-.Va Runtime
+.Va runtime
 should not be updated when the system time is
 changed with
 .Xr settimeofday ,
