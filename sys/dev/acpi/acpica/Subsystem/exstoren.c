@@ -3,7 +3,7 @@
  *
  * Module Name: exstoren - AML Interpreter object store support,
  *                        Store to Node (namespace object)
- *              xRevision: 55 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -116,13 +116,11 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstoren.c,v 1.6 2003/03/04 17:25:19 kochi Exp $");
-
 #define __EXSTOREN_C__
 
 #include "acpi.h"
 #include "acinterp.h"
+#include "amlcode.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -194,9 +192,10 @@ AcpiExResolveObject (
         /*
          * Must have a Integer, Buffer, or String
          */
-        if ((ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_INTEGER)     &&
-            (ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_BUFFER)      &&
-            (ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_STRING))
+        if ((ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_INTEGER)    &&
+            (ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_BUFFER)     &&
+            (ACPI_GET_OBJECT_TYPE (SourceDesc) != ACPI_TYPE_STRING)     &&
+            !((ACPI_GET_OBJECT_TYPE (SourceDesc) == ACPI_TYPE_LOCAL_REFERENCE) && (SourceDesc->Reference.Opcode == AML_LOAD_OP)))
         {
             /*
              * Conversion successful but still not a valid type

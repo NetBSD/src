@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbrsdt - ACPI RSDT table utilities
- *              xRevision: 7 $
+ *              $Revision: 1.4 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbrsdt.c,v 1.3 2003/05/11 21:20:23 fvdl Exp $");
 
 #define __TBRSDT_C__
 
@@ -369,8 +366,7 @@ AcpiTbGetTableRsdt (
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "RSDP located at %p, points to RSDT physical=%8.8X%8.8X \n",
         AcpiGbl_RSDP,
-        ACPI_HIDWORD (Address.Pointer.Value),
-        ACPI_LODWORD (Address.Pointer.Value)));
+        ACPI_FORMAT_UINT64 (Address.Pointer.Value)));
 
     /* Check the RSDT or XSDT signature */
 

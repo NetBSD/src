@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: dsfield - Dispatcher field routines
- *              xRevision: 71 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsfield.c,v 1.6 2003/03/04 17:25:12 kochi Exp $");
-
 #define __DSFIELD_C__
 
 #include "acpi.h"
@@ -185,30 +182,38 @@ AcpiDsCreateBufferField (
         return_ACPI_STATUS (AE_AML_NO_OPERAND);
     }
 
-    /*
-     * During the load phase, we want to enter the name of the field into
-     * the namespace.  During the execute phase (when we evaluate the size
-     * operand), we want to lookup the name
-     */
-    if (WalkState->ParseFlags & ACPI_PARSE_EXECUTE)
+    if (WalkState->DeferredNode)
     {
-        Flags = ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE;
+        Node = WalkState->DeferredNode;
+        Status = AE_OK;
     }
     else
     {
-        Flags = ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE | ACPI_NS_ERROR_IF_FOUND;
-    }
+        /*
+         * During the load phase, we want to enter the name of the field into
+         * the namespace.  During the execute phase (when we evaluate the size
+         * operand), we want to lookup the name
+         */
+        if (WalkState->ParseFlags & ACPI_PARSE_EXECUTE)
+        {
+            Flags = ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE;
+        }
+        else
+        {
+            Flags = ACPI_NS_NO_UPSEARCH | ACPI_NS_DONT_OPEN_SCOPE | ACPI_NS_ERROR_IF_FOUND;
+        }
 
-    /*
-     * Enter the NameString into the namespace
-     */
-    Status = AcpiNsLookup (WalkState->ScopeInfo, Arg->Common.Value.String,
-                            ACPI_TYPE_ANY, ACPI_IMODE_LOAD_PASS1,
-                            Flags, WalkState, &(Node));
-    if (ACPI_FAILURE (Status))
-    {
-        ACPI_REPORT_NSERROR (Arg->Common.Value.String, Status);
-        return_ACPI_STATUS (Status);
+        /*
+         * Enter the NameString into the namespace
+         */
+        Status = AcpiNsLookup (WalkState->ScopeInfo, Arg->Common.Value.String,
+                                ACPI_TYPE_ANY, ACPI_IMODE_LOAD_PASS1,
+                                Flags, WalkState, &(Node));
+        if (ACPI_FAILURE (Status))
+        {
+            ACPI_REPORT_NSERROR (Arg->Common.Value.String, Status);
+            return_ACPI_STATUS (Status);
+        }
     }
 
     /* We could put the returned object (Node) on the object stack for later, but
@@ -338,9 +343,9 @@ AcpiDsGetFieldNames (
              * In FieldFlags, preserve the flag bits other than the ACCESS_TYPE bits
              */
             Info->FieldFlags = (UINT8) ((Info->FieldFlags & ~(AML_FIELD_ACCESS_TYPE_MASK)) |
-                                        ((UINT8) (Arg->Common.Value.Integer32 >> 8)));
+                                        ((UINT8) ((UINT32) Arg->Common.Value.Integer >> 8)));
 
-            Info->Attribute = (UINT8) (Arg->Common.Value.Integer32);
+            Info->Attribute = (UINT8) (Arg->Common.Value.Integer);
             break;
 
 
@@ -452,7 +457,7 @@ AcpiDsCreateField (
     /* Second arg is the field flags */
 
     Arg = Arg->Common.Next;
-    Info.FieldFlags = Arg->Common.Value.Integer8;
+    Info.FieldFlags = (UINT8) Arg->Common.Value.Integer;
     Info.Attribute = 0;
 
     /* Each remaining arg is a Named Field */
@@ -613,12 +618,12 @@ AcpiDsCreateBankField (
     /* Third arg is the BankValue */
 
     Arg = Arg->Common.Next;
-    Info.BankValue = Arg->Common.Value.Integer32;
+    Info.BankValue = (UINT32) Arg->Common.Value.Integer;
 
     /* Fourth arg is the field flags */
 
     Arg = Arg->Common.Next;
-    Info.FieldFlags = Arg->Common.Value.Integer8;
+    Info.FieldFlags = (UINT8) Arg->Common.Value.Integer;
 
     /* Each remaining arg is a Named Field */
 
@@ -686,7 +691,7 @@ AcpiDsCreateIndexField (
     /* Next arg is the field flags */
 
     Arg = Arg->Common.Next;
-    Info.FieldFlags = Arg->Common.Value.Integer8;
+    Info.FieldFlags = (UINT8) Arg->Common.Value.Integer;
 
     /* Each remaining arg is a Named Field */
 

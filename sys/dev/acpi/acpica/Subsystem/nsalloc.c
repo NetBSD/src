@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsalloc - Namespace allocation and deletion utilities
- *              xRevision: 79 $
+ *              $Revision: 1.10 $
  *
  ******************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.9 2003/10/30 17:46:08 mycroft Exp $");
 
 #define __NSALLOC_C__
 
@@ -194,6 +192,8 @@ AcpiNsDeleteNode (
     PrevNode = NULL;
     NextNode = ParentNode->Child;
 
+    /* Find the node that is the previous peer in the parent's child list */
+
     while (NextNode != Node)
     {
         PrevNode = NextNode;
@@ -202,6 +202,8 @@ AcpiNsDeleteNode (
 
     if (PrevNode)
     {
+        /* Node is not first child, unlink it */
+
         PrevNode->Peer = NextNode->Peer;
         if (NextNode->Flags & ANOBJ_END_OF_PEER_LIST)
         {
@@ -210,12 +212,17 @@ AcpiNsDeleteNode (
     }
     else
     {
+        /* Node is first child (has no previous peer) */
+
         if (NextNode->Flags & ANOBJ_END_OF_PEER_LIST)
         {
+            /* No peers at all */
+
             ParentNode->Child = NULL;
         }
-	else
-        {
+        else
+        {   /* Link peer list to parent */
+
             ParentNode->Child = NextNode->Peer;
         }
     }
@@ -314,7 +321,7 @@ AcpiNsInstallNode (
     ACPI_NAMESPACE_NODE     *Node,          /* New Child*/
     ACPI_OBJECT_TYPE        Type)
 {
-    UINT16                  OwnerId = TABLE_ID_DSDT;
+    UINT16                  OwnerId = 0;
     ACPI_NAMESPACE_NODE     *ChildNode;
 #ifdef ACPI_ALPHABETIC_NAMESPACE
 
@@ -352,7 +359,7 @@ AcpiNsInstallNode (
          * alphabetic placement.
          */
         PreviousChildNode = NULL;
-        while (AcpiNsCompareNames (ChildNode->Name.Ascii, Node->Name.Ascii) < 0)
+        while (AcpiNsCompareNames (AcpiUtGetNodeName (ChildNode), AcpiUtGetNodeName (Node)) < 0)
         {
             if (ChildNode->Flags & ANOBJ_END_OF_PEER_LIST)
             {
@@ -422,8 +429,9 @@ AcpiNsInstallNode (
     Node->Type = (UINT8) Type;
 
     ACPI_DEBUG_PRINT ((ACPI_DB_NAMES, "%4.4s (%s) added to %4.4s (%s) %p at %p\n",
-        Node->Name.Ascii, AcpiUtGetTypeName (Node->Type),
-        ParentNode->Name.Ascii, AcpiUtGetTypeName (ParentNode->Type), ParentNode, Node));
+        AcpiUtGetNodeName (Node), AcpiUtGetTypeName (Node->Type),
+        AcpiUtGetNodeName (ParentNode), AcpiUtGetTypeName (ParentNode->Type),
+        ParentNode, Node));
 
     /*
      * Increment the reference count(s) of all parents up to
@@ -507,23 +515,25 @@ AcpiNsDeleteChildren (
          */
         AcpiNsDetachObject (ChildNode);
 
-	/*
-	 * Decrement the reference count(s) of all parents up to
-	 * the root! (counts were incremented when the node was created)
-	 */
-	Node = ChildNode;
-	while ((Node = AcpiNsGetParentNode (Node)) != NULL) {
-	    Node->ReferenceCount--;
-	}
+        /*
+         * Decrement the reference count(s) of all parents up to
+         * the root! (counts were incremented when the node was created)
+         */
+        Node = ChildNode;
+        while ((Node = AcpiNsGetParentNode (Node)) != NULL)
+        {
+            Node->ReferenceCount--;
+        }
 
-	/* There should be only one reference remaining on this node */
+        /* There should be only one reference remaining on this node */
 
-	if (ChildNode->ReferenceCount != 1) {
-	    ACPI_REPORT_WARNING (("Existing references (%d) on node being deleted (%p)\n",
-		ChildNode->ReferenceCount, ChildNode));
-	}
+        if (ChildNode->ReferenceCount != 1)
+        {
+            ACPI_REPORT_WARNING (("Existing references (%d) on node being deleted (%p)\n",
+                ChildNode->ReferenceCount, ChildNode));
+        }
 
-	/* Now we can delete the node */
+        /* Now we can delete the node */
 
         ACPI_MEM_FREE (ChildNode);
 
@@ -544,6 +554,92 @@ AcpiNsDeleteChildren (
 
 /*******************************************************************************
  *
+ * FUNCTION:    AcpiNsDeleteNamespaceSubtree
+ *
+ * PARAMETERS:  ParentNode      - Root of the subtree to be deleted
+ *
+ * RETURN:      None.
+ *
+ * DESCRIPTION: Delete a subtree of the namespace.  This includes all objects
+ *              stored within the subtree.
+ *
+ ******************************************************************************/
+
+void
+AcpiNsDeleteNamespaceSubtree (
+    ACPI_NAMESPACE_NODE     *ParentNode)
+{
+    ACPI_NAMESPACE_NODE     *ChildNode = NULL;
+    UINT32                  Level = 1;
+
+
+    ACPI_FUNCTION_TRACE ("NsDeleteNamespaceSubtree");
+
+
+    if (!ParentNode)
+    {
+        return_VOID;
+    }
+
+    /*
+     * Traverse the tree of objects until we bubble back up
+     * to where we started.
+     */
+    while (Level > 0)
+    {
+        /* Get the next node in this scope (NULL if none) */
+
+        ChildNode = AcpiNsGetNextNode (ACPI_TYPE_ANY, ParentNode,
+                                            ChildNode);
+        if (ChildNode)
+        {
+            /* Found a child node - detach any attached object */
+
+            AcpiNsDetachObject (ChildNode);
+
+            /* Check if this node has any children */
+
+            if (AcpiNsGetNextNode (ACPI_TYPE_ANY, ChildNode, 0))
+            {
+                /*
+                 * There is at least one child of this node,
+                 * visit the node
+                 */
+                Level++;
+                ParentNode    = ChildNode;
+                ChildNode     = 0;
+            }
+        }
+        else
+        {
+            /*
+             * No more children of this parent node.
+             * Move up to the grandparent.
+             */
+            Level--;
+
+            /*
+             * Now delete all of the children of this parent
+             * all at the same time.
+             */
+            AcpiNsDeleteChildren (ParentNode);
+
+            /* New "last child" is this parent node */
+
+            ChildNode = ParentNode;
+
+            /* Move up the tree to the grandparent */
+
+            ParentNode = AcpiNsGetParentNode (ParentNode);
+        }
+    }
+
+    return_VOID;
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AcpiNsRemoveReference
  *
  * PARAMETERS:  Node           - Named node whose reference count is to be
@@ -557,7 +653,7 @@ AcpiNsDeleteChildren (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiNsRemoveReference (
     ACPI_NAMESPACE_NODE     *Node)
 {
@@ -595,110 +691,6 @@ AcpiNsRemoveReference (
 
         ThisNode = ParentNode;
     }
-}
-
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiNsDeleteNamespaceSubtree
- *
- * PARAMETERS:  ParentNode      - Root of the subtree to be deleted
- *
- * RETURN:      None.
- *
- * DESCRIPTION: Delete a subtree of the namespace.  This includes all objects
- *              stored within the subtree.
- *
- ******************************************************************************/
-
-void
-AcpiNsDeleteNamespaceSubtree (
-    ACPI_NAMESPACE_NODE     *ParentNode)
-{
-    ACPI_NAMESPACE_NODE     *ChildNode;
-    ACPI_NAMESPACE_NODE     *DeletionNode;
-    UINT32                  Level;
-
-
-    ACPI_FUNCTION_TRACE ("NsDeleteNamespaceSubtree");
-
-
-    if (!ParentNode)
-    {
-        return_VOID;
-    }
-
-    ChildNode = NULL;
-    DeletionNode = NULL;
-    Level = 1;
-
-    /*
-     * Traverse the tree of objects until we bubble back up
-     * to where we started.
-     */
-    while (Level > 0)
-    {
-        /* Get the next node in this scope (NULL if none) */
-
-        ChildNode = AcpiNsGetNextNode (ACPI_TYPE_ANY, ParentNode,
-                                            ChildNode);
-        if (DeletionNode)
-        {
-            AcpiNsRemoveReference (DeletionNode);
-            DeletionNode = NULL;
-        }
-
-        if (ChildNode)
-        {
-            /* Found a child node - detach any attached object */
-
-            AcpiNsDetachObject (ChildNode);
-
-            /* Check if this node has any children */
-
-            if (AcpiNsGetNextNode (ACPI_TYPE_ANY, ChildNode, 0))
-            {
-                /*
-                 * There is at least one child of this node,
-                 * visit the node
-                 */
-                Level++;
-                ParentNode    = ChildNode;
-                ChildNode     = 0;
-            }
-	    else
-	    {
-                DeletionNode = ChildNode;
-	    }
-        }
-        else
-        {
-            /*
-             * No more children of this parent node.
-             * Move up to the grandparent.
-             */
-            Level--;
-
-            /*
-             * Now delete all of the children of this parent
-             * all at the same time.
-             */
-	    if (Level != 0)
-	    {
-		DeletionNode = ParentNode;
-	    }
-
-            /* New "last child" is this parent node */
-
-            ChildNode = ParentNode;
-
-            /* Move up the tree to the grandparent */
-
-            ParentNode = AcpiNsGetParentNode (ParentNode);
-        }
-    }
-
-    return_VOID;
 }
 
 

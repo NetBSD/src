@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: tbxfroot - Find the root ACPI table (RSDT)
- *              xRevision: 68 $
+ *              $Revision: 1.8 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tbxfroot.c,v 1.7 2003/05/11 21:20:24 fvdl Exp $");
 
 #define __TBXFROOT_C__
 
@@ -299,8 +296,7 @@ AcpiGetFirmwareTable (
     ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
         "RSDP located at %p, RSDT physical=%8.8X%8.8X \n",
         AcpiGbl_RSDP,
-        ACPI_HIDWORD (Address.Pointer.Value),
-        ACPI_LODWORD (Address.Pointer.Value)));
+        ACPI_FORMAT_UINT64 (Address.Pointer.Value)));
 
     /* Insert ProcessorMode flags */
 

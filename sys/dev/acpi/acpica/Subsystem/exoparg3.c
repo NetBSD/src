@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exoparg3 - AML execution - opcodes with 3 arguments
- *              xRevision: 17 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -116,9 +116,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg3.c,v 1.6 2003/03/04 17:25:18 kochi Exp $");
-
 #define __EXOPARG3_C__
 
 #include "acpi.h"
@@ -180,14 +177,13 @@ AcpiExOpcode_3A_0T_0R (
 
     switch (WalkState->Opcode)
     {
-
     case AML_FATAL_OP:          /* Fatal (FatalType  FatalCode  FatalArg)    */
 
         ACPI_DEBUG_PRINT ((ACPI_DB_INFO,
             "FatalOp: Type %X Code %X Arg %X <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n",
-            (UINT32) Operand[0]->Integer.Value, (UINT32) Operand[1]->Integer.Value,
+            (UINT32) Operand[0]->Integer.Value,
+            (UINT32) Operand[1]->Integer.Value,
             (UINT32) Operand[2]->Integer.Value));
-
 
         Fatal = ACPI_MEM_ALLOCATE (sizeof (ACPI_SIGNAL_FATAL_INFO));
         if (Fatal)

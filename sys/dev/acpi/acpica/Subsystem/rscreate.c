@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rscreate - Create resource lists/tables
- *              xRevision: 64 $
+ *              $Revision: 1.7 $
  *
  ******************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rscreate.c,v 1.6 2003/03/04 17:25:25 kochi Exp $");
 
 #define __RSCREATE_C__
 
@@ -422,7 +420,7 @@ AcpiRsCreatePciRoutingTable (
 
         /* Now align the current length */
 
-        UserPrt->Length = ACPI_ROUND_UP_TO_64BITS (UserPrt->Length);
+        UserPrt->Length = (UINT32) ACPI_ROUND_UP_TO_64BITS (UserPrt->Length);
 
         /*
          * 4) Fourth subobject: Dereference the PRT.SourceIndex

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: pswalk - Parser routines to walk parsed op tree(s)
- *              xRevision: 68 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pswalk.c,v 1.6 2003/03/04 17:25:25 kochi Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
@@ -355,7 +353,7 @@ AcpiPsDeleteParseTree (
         return_VOID;
     }
 
-    WalkState = AcpiDsCreateWalkState (TABLE_ID_DSDT, NULL, NULL, Thread);
+    WalkState = AcpiDsCreateWalkState (0, NULL, NULL, Thread);
     if (!WalkState)
     {
         return_VOID;

@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exstore - AML Interpreter object store support
- *              xRevision: 175 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exstore.c,v 1.6 2003/03/04 17:25:19 kochi Exp $");
 
 #define __EXSTORE_C__
 
@@ -273,8 +270,7 @@ AcpiExStore (
         case ACPI_TYPE_INTEGER:
 
             ACPI_DEBUG_PRINT_RAW ((ACPI_DB_DEBUG_OBJECT, "%8.8X%8.8X\n",
-                    ACPI_HIWORD (SourceDesc->Integer.Value),
-                    ACPI_LOWORD (SourceDesc->Integer.Value)));
+                    ACPI_FORMAT_UINT64 (SourceDesc->Integer.Value)));
             break;
 
 

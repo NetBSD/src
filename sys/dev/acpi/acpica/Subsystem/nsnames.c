@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              xRevision: 82 $
+ *              $Revision: 1.7 $
  *
  ******************************************************************************/
 
@@ -114,9 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.6 2003/03/04 17:25:22 kochi Exp $");
-
 #define __NSNAMES_C__
 
 #include "acpi.h"
@@ -177,7 +174,7 @@ AcpiNsBuildExternalPath (
 
         /* Put the name into the buffer */
 
-        ACPI_MOVE_UNALIGNED32_TO_32 ((NameBuffer + Index), &ParentNode->Name);
+        ACPI_MOVE_32_TO_32 ((NameBuffer + Index), &ParentNode->Name);
         ParentNode = AcpiNsGetParentNode (ParentNode);
 
         /* Prefix name with the path separator */

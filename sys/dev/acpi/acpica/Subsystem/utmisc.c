@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: utmisc - common utility procedures
- *              xRevision: 93 $
+ *              $Revision: 1.7 $
  *
  ******************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utmisc.c,v 1.6 2003/03/04 17:25:30 kochi Exp $");
 
 #define __UTMISC_C__
 
@@ -286,13 +284,15 @@ AcpiUtSetIntegerWidth (
 
     if (Revision <= 1)
     {
-        AcpiGbl_IntegerBitWidth  = 32;
-        AcpiGbl_IntegerByteWidth = 4;
+        AcpiGbl_IntegerBitWidth    = 32;
+        AcpiGbl_IntegerNybbleWidth = 8;
+        AcpiGbl_IntegerByteWidth   = 4;
     }
     else
     {
-        AcpiGbl_IntegerBitWidth  = 64;
-        AcpiGbl_IntegerByteWidth = 8;
+        AcpiGbl_IntegerBitWidth    = 64;
+        AcpiGbl_IntegerNybbleWidth = 16;
+        AcpiGbl_IntegerByteWidth   = 8;
     }
 }
 
@@ -658,7 +658,7 @@ AcpiUtMutexInitialize (
     /*
      * Create each of the predefined mutex objects
      */
-    for (i = 0; i < NUM_MTX; i++)
+    for (i = 0; i < NUM_MUTEX; i++)
     {
         Status = AcpiUtCreateMutex (i);
         if (ACPI_FAILURE (Status))
@@ -666,6 +666,9 @@ AcpiUtMutexInitialize (
             return_ACPI_STATUS (Status);
         }
     }
+
+
+    Status = AcpiOsCreateLock (&AcpiGbl_GpeLock);
 
     return_ACPI_STATUS (AE_OK);
 }
@@ -696,11 +699,12 @@ AcpiUtMutexTerminate (
     /*
      * Delete each predefined mutex object
      */
-    for (i = 0; i < NUM_MTX; i++)
+    for (i = 0; i < NUM_MUTEX; i++)
     {
         (void) AcpiUtDeleteMutex (i);
     }
 
+    AcpiOsDeleteLock (AcpiGbl_GpeLock);
     return_VOID;
 }
 
@@ -727,17 +731,17 @@ AcpiUtCreateMutex (
     ACPI_FUNCTION_TRACE_U32 ("UtCreateMutex", MutexId);
 
 
-    if (MutexId > MAX_MTX)
+    if (MutexId > MAX_MUTEX)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    if (!AcpiGbl_AcpiMutexInfo[MutexId].Mutex)
+    if (!AcpiGbl_MutexInfo[MutexId].Mutex)
     {
         Status = AcpiOsCreateSemaphore (1, 1,
-                        &AcpiGbl_AcpiMutexInfo[MutexId].Mutex);
-        AcpiGbl_AcpiMutexInfo[MutexId].OwnerId = ACPI_MUTEX_NOT_ACQUIRED;
-        AcpiGbl_AcpiMutexInfo[MutexId].UseCount = 0;
+                        &AcpiGbl_MutexInfo[MutexId].Mutex);
+        AcpiGbl_MutexInfo[MutexId].OwnerId = ACPI_MUTEX_NOT_ACQUIRED;
+        AcpiGbl_MutexInfo[MutexId].UseCount = 0;
     }
 
     return_ACPI_STATUS (Status);
@@ -766,15 +770,15 @@ AcpiUtDeleteMutex (
     ACPI_FUNCTION_TRACE_U32 ("UtDeleteMutex", MutexId);
 
 
-    if (MutexId > MAX_MTX)
+    if (MutexId > MAX_MUTEX)
     {
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
-    Status = AcpiOsDeleteSemaphore (AcpiGbl_AcpiMutexInfo[MutexId].Mutex);
+    Status = AcpiOsDeleteSemaphore (AcpiGbl_MutexInfo[MutexId].Mutex);
 
-    AcpiGbl_AcpiMutexInfo[MutexId].Mutex = NULL;
-    AcpiGbl_AcpiMutexInfo[MutexId].OwnerId = ACPI_MUTEX_NOT_ACQUIRED;
+    AcpiGbl_MutexInfo[MutexId].Mutex = NULL;
+    AcpiGbl_MutexInfo[MutexId].OwnerId = ACPI_MUTEX_NOT_ACQUIRED;
 
     return_ACPI_STATUS (Status);
 }
@@ -804,7 +808,7 @@ AcpiUtAcquireMutex (
     ACPI_FUNCTION_NAME ("UtAcquireMutex");
 
 
-    if (MutexId > MAX_MTX)
+    if (MutexId > MAX_MUTEX)
     {
         return (AE_BAD_PARAMETER);
     }
@@ -817,9 +821,9 @@ AcpiUtAcquireMutex (
      * the mutex ordering rule.  This indicates a coding error somewhere in
      * the ACPI subsystem code.
      */
-    for (i = MutexId; i < MAX_MTX; i++)
+    for (i = MutexId; i < MAX_MUTEX; i++)
     {
-        if (AcpiGbl_AcpiMutexInfo[i].OwnerId == ThisThreadId)
+        if (AcpiGbl_MutexInfo[i].OwnerId == ThisThreadId)
         {
             if (i == MutexId)
             {
@@ -843,15 +847,15 @@ AcpiUtAcquireMutex (
                 "Thread %X attempting to acquire Mutex [%s]\n",
                 ThisThreadId, AcpiUtGetMutexName (MutexId)));
 
-    Status = AcpiOsWaitSemaphore (AcpiGbl_AcpiMutexInfo[MutexId].Mutex,
+    Status = AcpiOsWaitSemaphore (AcpiGbl_MutexInfo[MutexId].Mutex,
                                     1, ACPI_WAIT_FOREVER);
     if (ACPI_SUCCESS (Status))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_MUTEX, "Thread %X acquired Mutex [%s]\n",
                     ThisThreadId, AcpiUtGetMutexName (MutexId)));
 
-        AcpiGbl_AcpiMutexInfo[MutexId].UseCount++;
-        AcpiGbl_AcpiMutexInfo[MutexId].OwnerId = ThisThreadId;
+        AcpiGbl_MutexInfo[MutexId].UseCount++;
+        AcpiGbl_MutexInfo[MutexId].OwnerId = ThisThreadId;
     }
     else
     {
@@ -893,7 +897,7 @@ AcpiUtReleaseMutex (
         "Thread %X releasing Mutex [%s]\n", ThisThreadId,
         AcpiUtGetMutexName (MutexId)));
 
-    if (MutexId > MAX_MTX)
+    if (MutexId > MAX_MUTEX)
     {
         return (AE_BAD_PARAMETER);
     }
@@ -901,7 +905,7 @@ AcpiUtReleaseMutex (
     /*
      * Mutex must be acquired in order to release it!
      */
-    if (AcpiGbl_AcpiMutexInfo[MutexId].OwnerId == ACPI_MUTEX_NOT_ACQUIRED)
+    if (AcpiGbl_MutexInfo[MutexId].OwnerId == ACPI_MUTEX_NOT_ACQUIRED)
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
                 "Mutex [%s] is not acquired, cannot release\n",
@@ -916,9 +920,9 @@ AcpiUtReleaseMutex (
      * ordering rule.  This indicates a coding error somewhere in
      * the ACPI subsystem code.
      */
-    for (i = MutexId; i < MAX_MTX; i++)
+    for (i = MutexId; i < MAX_MUTEX; i++)
     {
-        if (AcpiGbl_AcpiMutexInfo[i].OwnerId == ThisThreadId)
+        if (AcpiGbl_MutexInfo[i].OwnerId == ThisThreadId)
         {
             if (i == MutexId)
             {
@@ -935,9 +939,9 @@ AcpiUtReleaseMutex (
 
     /* Mark unlocked FIRST */
 
-    AcpiGbl_AcpiMutexInfo[MutexId].OwnerId = ACPI_MUTEX_NOT_ACQUIRED;
+    AcpiGbl_MutexInfo[MutexId].OwnerId = ACPI_MUTEX_NOT_ACQUIRED;
 
-    Status = AcpiOsSignalSemaphore (AcpiGbl_AcpiMutexInfo[MutexId].Mutex, 1);
+    Status = AcpiOsSignalSemaphore (AcpiGbl_MutexInfo[MutexId].Mutex, 1);
 
     if (ACPI_FAILURE (Status))
     {

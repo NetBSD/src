@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsirq - IRQ resource descriptors
- *              xRevision: 32 $
+ *              $Revision: 1.8 $
  *
  ******************************************************************************/
 
@@ -114,9 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsirq.c,v 1.7 2003/03/04 17:25:26 kochi Exp $");
-
 #define __RSIRQ_C__
 
 #include "acpi.h"
@@ -178,7 +175,7 @@ AcpiRsIrqResource (
      * Point to the 16-bits of Bytes 1 and 2
      */
     Buffer += 1;
-    ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+    ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
     OutputStruct->Data.Irq.NumberOfInterrupts = 0;
 
@@ -331,7 +328,7 @@ AcpiRsIrqStream (
         Temp16 |= 0x1 << Temp8;
     }
 
-    ACPI_MOVE_UNALIGNED16_TO_16 (Buffer, &Temp16);
+    ACPI_MOVE_16_TO_16 (Buffer, &Temp16);
     Buffer += 2;
 
     /*
@@ -409,7 +406,14 @@ AcpiRsExtendedIrqResource (
      * Point past the Descriptor to get the number of bytes consumed
      */
     Buffer += 1;
-    ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+    ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
+
+    /* Validate minimum descriptor length */
+
+    if (Temp16 < 6)
+    {
+        return_ACPI_STATUS (AE_AML_BAD_RESOURCE_LENGTH);
+    }
 
     *BytesConsumed = Temp16 + 3;
     OutputStruct->Id = ACPI_RSTYPE_EXT_IRQ;
@@ -449,6 +453,13 @@ AcpiRsExtendedIrqResource (
     Buffer += 1;
     Temp8 = *Buffer;
 
+    /* Must have at least one IRQ */
+
+    if (Temp8 < 1)
+    {
+        return_ACPI_STATUS (AE_AML_BAD_RESOURCE_LENGTH);
+    }
+
     OutputStruct->Data.ExtendedIrq.NumberOfInterrupts = Temp8;
 
     /*
@@ -467,7 +478,7 @@ AcpiRsExtendedIrqResource (
      */
     for (Index = 0; Index < Temp8; Index++)
     {
-        ACPI_MOVE_UNALIGNED32_TO_32 (
+        ACPI_MOVE_32_TO_32 (
             &OutputStruct->Data.ExtendedIrq.Interrupts[Index], Buffer);
 
         /* Point to the next IRQ */
@@ -481,9 +492,12 @@ AcpiRsExtendedIrqResource (
      * pointer to where the null terminated string goes:
      * Each Interrupt takes 32-bits + the 5 bytes of the
      * stream that are default.
+     *
+     * Note: Some resource descriptors will have an additional null, so
+     * we add 1 to the length.
      */
     if (*BytesConsumed >
-        ((ACPI_SIZE) OutputStruct->Data.ExtendedIrq.NumberOfInterrupts * 4) + 5)
+        ((ACPI_SIZE) OutputStruct->Data.ExtendedIrq.NumberOfInterrupts * 4) + (5 + 1))
     {
         /* Dereference the Index */
 
@@ -631,7 +645,7 @@ AcpiRsExtendedIrqStream (
     for (Index = 0; Index < LinkedList->Data.ExtendedIrq.NumberOfInterrupts;
          Index++)
     {
-        ACPI_MOVE_UNALIGNED32_TO_32 (Buffer,
+        ACPI_MOVE_32_TO_32 (Buffer,
                         &LinkedList->Data.ExtendedIrq.Interrupts[Index]);
         Buffer += 4;
     }
@@ -656,7 +670,7 @@ AcpiRsExtendedIrqStream (
          * Buffer needs to be set to the length of the sting + one for the
          * terminating null
          */
-        Buffer += (ACPI_STRLEN (LinkedList->Data.ExtendedIrq.ResourceSource.StringPtr) + 1);
+        Buffer += (ACPI_SIZE)(ACPI_STRLEN (LinkedList->Data.ExtendedIrq.ResourceSource.StringPtr) + 1);
     }
 
     /*

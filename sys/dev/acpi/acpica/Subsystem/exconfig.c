@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: exconfig - Namespace reconfiguration (Load/Unload opcodes)
- *              xRevision: 71 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -115,9 +115,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconfig.c,v 1.6 2003/03/04 17:25:16 kochi Exp $");
-
 #define __EXCONFIG_C__
 
 #include "acpi.h"
@@ -171,6 +168,9 @@ AcpiExAddTable (
 
     /* Install the new table into the local data structures */
 
+    ACPI_MEMSET (&TableInfo, 0, sizeof (ACPI_TABLE_DESC));
+
+    TableInfo.Type         = 5;
     TableInfo.Pointer      = Table;
     TableInfo.Length       = (ACPI_SIZE) Table->Length;
     TableInfo.Allocation   = ACPI_MEM_ALLOCATED;
@@ -262,7 +262,7 @@ AcpiExLoadTableOp (
             return_ACPI_STATUS (Status);
         }
 
-        /* Not found, return an Integer=0 and AE_OK */
+        /* Table not found, return an Integer=0 and AE_OK */
 
         DdbHandle = AcpiUtCreateInternalObject (ACPI_TYPE_INTEGER);
         if (!DdbHandle)
@@ -341,9 +341,11 @@ AcpiExLoadTableOp (
         if (ACPI_FAILURE (Status))
         {
             (void) AcpiExUnloadTable (DdbHandle);
+            return_ACPI_STATUS (Status);
         }
     }
 
+    *ReturnDesc = DdbHandle;
     return_ACPI_STATUS  (Status);
 }
 
@@ -460,11 +462,11 @@ AcpiExLoadOp (
     /* The table must be either an SSDT or a PSDT */
 
     if ((!ACPI_STRNCMP (TablePtr->Signature,
-                    AcpiGbl_AcpiTableData[ACPI_TABLE_PSDT].Signature,
-                    AcpiGbl_AcpiTableData[ACPI_TABLE_PSDT].SigLength)) &&
+                    AcpiGbl_TableData[ACPI_TABLE_PSDT].Signature,
+                    AcpiGbl_TableData[ACPI_TABLE_PSDT].SigLength)) &&
         (!ACPI_STRNCMP (TablePtr->Signature,
-                    AcpiGbl_AcpiTableData[ACPI_TABLE_SSDT].Signature,
-                    AcpiGbl_AcpiTableData[ACPI_TABLE_SSDT].SigLength)))
+                    AcpiGbl_TableData[ACPI_TABLE_SSDT].Signature,
+                    AcpiGbl_TableData[ACPI_TABLE_SSDT].SigLength)))
     {
         ACPI_DEBUG_PRINT ((ACPI_DB_ERROR,
             "Table has invalid signature [%4.4s], must be SSDT or PSDT\n",
@@ -522,7 +524,7 @@ ACPI_STATUS
 AcpiExUnloadTable (
     ACPI_OPERAND_OBJECT     *DdbHandle)
 {
-    ACPI_STATUS             Status = AE_NOT_IMPLEMENTED;
+    ACPI_STATUS             Status = AE_OK;
     ACPI_OPERAND_OBJECT     *TableDesc = DdbHandle;
     ACPI_TABLE_DESC         *TableInfo;
 

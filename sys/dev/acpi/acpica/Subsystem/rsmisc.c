@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: rsmisc - Miscellaneous resource descriptors
- *              xRevision: 25 $
+ *              $Revision: 1.7 $
  *
  ******************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsmisc.c,v 1.6 2003/03/04 17:25:26 kochi Exp $");
 
 #define __RSMISC_C__
 
@@ -289,7 +286,7 @@ AcpiRsVendorResource (
 
         /* Dereference */
 
-        ACPI_MOVE_UNALIGNED16_TO_16 (&Temp16, Buffer);
+        ACPI_MOVE_16_TO_16 (&Temp16, Buffer);
 
         /* Calculate bytes consumed */
 
@@ -388,7 +385,7 @@ AcpiRsVendorStream (
 
         Temp16 = (UINT16) LinkedList->Data.VendorSpecific.Length;
 
-        ACPI_MOVE_UNALIGNED16_TO_16 (Buffer, &Temp16);
+        ACPI_MOVE_16_TO_16 (Buffer, &Temp16);
         Buffer += 2;
     }
     else

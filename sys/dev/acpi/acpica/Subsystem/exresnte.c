@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: exresnte - AML Interpreter object resolution
- *              xRevision: 62 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -115,15 +115,14 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exresnte.c,v 1.6 2003/03/04 17:25:19 kochi Exp $");
-
 #define __EXRESNTE_C__
 
 #include "acpi.h"
 #include "acdispat.h"
 #include "acinterp.h"
 #include "acnamesp.h"
+#include "acparser.h"
+#include "amlcode.h"
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -330,12 +329,27 @@ AcpiExResolveNodeToValue (
 
     case ACPI_TYPE_LOCAL_REFERENCE:
 
-        /* No named references are allowed here */
+        switch (SourceDesc->Reference.Opcode)
+        {
+        case AML_LOAD_OP:
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unsupported Reference opcode %X\n",
-            SourceDesc->Reference.Opcode));
+            /* This is a DdbHandle */
+            /* Return an additional reference to the object */
 
-        return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
+            ObjDesc = SourceDesc;
+            AcpiUtAddReference (ObjDesc);
+            break;
+
+        default:
+            /* No named references are allowed here */
+
+            ACPI_DEBUG_PRINT ((ACPI_DB_ERROR, "Unsupported Reference opcode %X (%s)\n",
+                SourceDesc->Reference.Opcode,
+                AcpiPsGetOpcodeName (SourceDesc->Reference.Opcode)));
+
+            return_ACPI_STATUS (AE_AML_OPERAND_TYPE);
+        }
+        break;
 
 
     /* Default case is for unknown types */

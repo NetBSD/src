@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psxface - Parser external interfaces
- *              xRevision: 67 $
+ *              $Revision: 1.7 $
  *
  *****************************************************************************/
 
@@ -113,9 +113,6 @@
  * such license, approval or letter.
  *
  *****************************************************************************/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psxface.c,v 1.6 2003/03/04 17:25:25 kochi Exp $");
 
 #define __PSXFACE_C__
 
@@ -264,7 +261,7 @@ AcpiPsxExecute (
 
     /* Create and initialize a new walk state */
 
-    WalkState = AcpiDsCreateWalkState (TABLE_ID_DSDT, NULL, NULL, NULL);
+    WalkState = AcpiDsCreateWalkState (0, NULL, NULL, NULL);
     if (!WalkState)
     {
         return_ACPI_STATUS (AE_NO_MEMORY);

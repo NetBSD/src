@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dmresrcs.c - "Small" Resource Descriptor disassembly
- *              xRevision: 4 $
+ *              $Revision: 1.3 $
  *
  ******************************************************************************/
 
@@ -114,8 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmresrcs.c,v 1.2 2003/02/13 14:16:17 kanaoka Exp $");
 
 #include "acpi.h"
 #include "acdisasm.h"

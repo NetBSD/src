@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: nsparse - namespace interface to AML parser
- *              xRevision: 3 $
+ *              $Revision: 1.3 $
  *
  *****************************************************************************/
 
@@ -114,9 +114,6 @@
  *
  *****************************************************************************/
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsparse.c,v 1.2 2003/02/13 14:16:23 kanaoka Exp $");
-
 #define __NSPARSE_C__
 
 #include "acpi.h"
@@ -163,10 +160,9 @@ AcpiNsOneCompleteParse (
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
-
     /* Create and initialize a new walk state */
 
-    WalkState = AcpiDsCreateWalkState (TABLE_ID_DSDT,
+    WalkState = AcpiDsCreateWalkState (TableDesc->TableId,
                                     NULL, NULL, NULL);
     if (!WalkState)
     {
