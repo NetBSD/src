@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 1998/10/19 03:09:32 matt Exp $  */
+/*	$NetBSD: md.c,v 1.11 1998/12/17 20:14:44 pk Exp $  */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,15 +46,19 @@
 #include <string.h>
 
 #include "ld.h"
+#ifndef RTLD
+/* Pull in the ld(1) bits as well */
+#include "ld_i.h"
+#endif
 
 /*
  * Put little endian VAL of size N at ADDR
  */
 static void
 put_num(addr, val, n)
-unsigned char	*addr;
-long		val;
-char		n;
+	unsigned char	*addr;
+	long		val;
+	char		n;
 {
 	while (n--) {
 		*addr++ = val;
@@ -67,8 +71,8 @@ char		n;
  */
 static unsigned long
 get_num(addr, n)
-unsigned char	*addr;
-int		n;
+	unsigned char	*addr;
+	int		n;
 {
 	int val = 0;
 
@@ -84,9 +88,9 @@ int		n;
  */
 static void
 put_imm(addr, val, n)
-unsigned char	*addr;
-unsigned long	val;
-char    	n;
+	unsigned char	*addr;
+	unsigned long	val;
+	char    	n;
 {
 	addr += (n - 1);
 	while (n--) {
@@ -100,8 +104,8 @@ char    	n;
  */
 static unsigned long
 get_imm(addr, n)
-unsigned char	*addr;
-int 		n;
+	unsigned char	*addr;
+	int 		n;
 {
 	int val = 0;
 
@@ -124,7 +128,7 @@ int 		n;
  */
 static long
 sign_extend(val, n)
-int	val, n;
+	int	val, n;
 {
 	val = val & ((1 << n) - 1);
 	return (val & (1 << (n - 1))?
@@ -139,9 +143,9 @@ int	val, n;
  */
 static void
 put_disp(addr, val, n)
-unsigned char	*addr;
-long		val;
-char		n;
+	unsigned char	*addr;
+	long		val;
+	char		n;
 {
 	switch (n) {
 	case 1:
@@ -181,8 +185,8 @@ char		n;
  */
 static unsigned long
 get_disp(addr, n)
-unsigned char	*addr;
-int		n;
+	unsigned char	*addr;
+	int		n;
 {
 	unsigned long Ivalue;
 
@@ -223,8 +227,8 @@ int		n;
  */
 long
 md_get_addend(rp, addr)
-struct relocation_info	*rp;
-unsigned char		*addr;
+	struct relocation_info	*rp;
+	unsigned char		*addr;
 {
 	int bytes = 1 << RELOC_TARGET_SIZE(rp);
 
@@ -243,9 +247,9 @@ unsigned char		*addr;
  */
 void
 md_relocate(rp, relocation, addr, relocatable_output)
-struct relocation_info	*rp;
-long			relocation;
-unsigned char		*addr;
+	struct relocation_info	*rp;
+	long			relocation;
+	unsigned char		*addr;
 {
 	int bytes = 1 << RELOC_TARGET_SIZE(rp);
 
@@ -259,56 +263,6 @@ unsigned char		*addr;
 	}
 #ifdef RTLD
 	_cachectl (addr, bytes); /* maintain cache coherency */
-#endif
-}
-
-/*
- * Machine dependent part of claim_rrs_reloc().
- * Set RRS relocation type.
- */
-int
-md_make_reloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
-{
-	/* Relocation size */
-	r->r_length = rp->r_length;
-
-	/* Data type */
-	r->r_disp = rp->r_disp;
-
-	if (RELOC_PCREL_P(rp))
-		r->r_pcrel = 1;
-
-	if (type & RELTYPE_RELATIVE)
-		r->r_relative = 1;
-
-	if (type & RELTYPE_COPY)
-		r->r_copy = 1;
-
-	return 0;
-}
-
-/*
- * Set up a transfer from jmpslot at OFFSET (relative to the PLT table)
- * to the binder slot (which is at offset 0 of the PLT).
- */
-void
-md_make_jmpslot(sp, offset, index)
-jmpslot_t	*sp;
-long		offset;
-long		index;
-{
-	/*
-	 * On ns32k machines, a long branch offset is relative to
-	 * the address of the branch instruction.
-	 */
-
-	put_num(sp->code, BSR, 2);
-	put_disp(sp->code + 2, -offset - 1, 4);
-	sp->reloc_index = index;
-#ifdef RTLD
-	_cachectl (sp->code, 6);	/* maintain cache coherency */
 #endif
 }
 
@@ -334,13 +288,71 @@ int		first;
 #endif
 }
 
+void
+md_set_breakpoint(where, savep)
+	long	where;
+	long	*savep;
+{
+	*savep = *(long *)where;
+	*(short *)where = BPT;
+}
+
+
+#ifndef RTLD
+/*
+ * Machine dependent part of claim_rrs_reloc().
+ * Set RRS relocation type.
+ */
+int
+md_make_reloc(rp, r, type)
+	struct relocation_info	*rp, *r;
+	int			type;
+{
+	/* Relocation size */
+	r->r_length = rp->r_length;
+
+	/* Data type */
+	r->r_disp = rp->r_disp;
+
+	if (RELOC_PCREL_P(rp))
+		r->r_pcrel = 1;
+
+	if (type & RELTYPE_RELATIVE)
+		r->r_relative = 1;
+
+	if (type & RELTYPE_COPY)
+		r->r_copy = 1;
+
+	return 0;
+}
+
+/*
+ * Set up a transfer from jmpslot at OFFSET (relative to the PLT table)
+ * to the binder slot (which is at offset 0 of the PLT).
+ */
+void
+md_make_jmpslot(sp, offset, index)
+	jmpslot_t	*sp;
+	long		offset;
+	long		index;
+{
+	/*
+	 * On ns32k machines, a long branch offset is relative to
+	 * the address of the branch instruction.
+	 */
+
+	put_num(sp->code, BSR, 2);
+	put_disp(sp->code + 2, -offset - 1, 4);
+	sp->reloc_index = index;
+}
+
 /*
  * Update the relocation record for a RRS jmpslot.
  */
 void
 md_make_jmpreloc(rp, r, type)
-struct relocation_info	*rp, *r;
-int			type;
+	struct relocation_info	*rp, *r;
+	int			type;
 {
 	jmpslot_t	*sp;
 
@@ -387,7 +399,7 @@ int			type;
  */
 void
 md_make_cpyreloc(rp, r)
-struct relocation_info	*rp, *r;
+	struct relocation_info	*rp, *r;
 {
 	/* Relocation size */
 	r->r_length = 2;
@@ -398,24 +410,14 @@ struct relocation_info	*rp, *r;
 	r->r_copy = 1;
 }
 
-void
-md_set_breakpoint(where, savep)
-long	where;
-long	*savep;
-{
-	*savep = *(long *)where;
-	*(short *)where = BPT;
-}
-
-#ifndef RTLD
 /*
  * Initialize (output) exec header such that useful values are
  * obtained from subsequent N_*() macro evaluations.
  */
 void
 md_init_header(hp, magic, flags)
-struct exec	*hp;
-int		magic, flags;
+	struct exec	*hp;
+	int		magic, flags;
 {
 	if (oldmagic)
 		hp->a_midmag = oldmagic;
@@ -436,7 +438,7 @@ int		magic, flags;
 
 void
 md_swapin_exec_hdr(h)
-struct exec *h;
+	struct exec *h;
 {
 	int skip = 0;
 
@@ -448,7 +450,7 @@ struct exec *h;
 
 void
 md_swapout_exec_hdr(h)
-struct exec *h;
+	struct exec *h;
 {
 	/* NetBSD: Always leave magic alone */
 	int skip = 1;
@@ -463,8 +465,8 @@ struct exec *h;
 
 void
 md_swapin_reloc(r, n)
-struct relocation_info *r;
-int n;
+	struct relocation_info *r;
+	int n;
 {
 	int	bits;
 
@@ -510,8 +512,8 @@ int n;
 
 void
 md_swapout_jmpslot(j, n)
-jmpslot_t	*j;
-int		n;
+	jmpslot_t	*j;
+	int		n;
 {
 	for (; n; n--, j++) {
 		j->opcode = md_swap_short(j->opcode);
@@ -520,5 +522,4 @@ int		n;
 		j->reloc_index = md_swap_short(j->reloc_index);
 	}
 }
-
 #endif /* NEED_SWAP */
