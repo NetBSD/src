@@ -16,19 +16,12 @@ majorminor.cc: $(.CURDIR)/../VERSION
 	@echo const char \*minor_version = \
 	\"`sed -e 's/^[^.]*\.\([0-9]*\).*$$/\1/' $(.CURDIR)/../VERSION`\"\; >>$@
 
-install_data: hyphen.us
-	-test -d $(datadir) || mkdir $(datadir)
-	-test -d $(datasubdir) || mkdir $(datasubdir)
-	-test -d $(tmacdir) || mkdir $(tmacdir)
-	-rm -f $(tmacdir)/hyphen.us
-	$(INSTALL_DATA) $(srcdir)/hyphen.us $(tmacdir)/hyphen.us
-
-uninstall_sub:
-	-rm -f $(tmacdir)/hyphen.us
+# XXX -- this depends on ../include/defs.h
+TMACDIR=/usr/share/tmac
 
 afterinstall:
 	install -c -o bin -g bin -m 444 $(.CURDIR)/hyphen.us \
-		$(DESTDIR)$(tmacdir)/hyphen.us
+		$(DESTDIR)$(TMACDIR)/hyphen.us
 
 .include <bsd.prog.mk>
 .include "../../Makefile.inc"
