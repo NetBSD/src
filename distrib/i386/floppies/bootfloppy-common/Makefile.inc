@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 1997/08/07 18:09:49 hannken Exp $
+#	$NetBSD: Makefile.inc,v 1.8 1997/11/05 03:39:55 perry Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -19,7 +19,8 @@ RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
         printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk-${REV}.fs\n" | \
 	${MAKE} -s -f-
 
-DISKTYPE=	floppy5
+DISKTYPE?=	floppy3
+DISKSIZE?=	2880
 
 # Some reasonable values for the -i parameter to newfs are:
 #
@@ -31,7 +32,7 @@ INO_BYTES?=	204800
 CLEANFILES+=	netbsd.ram.gz
 
 all:	netbsd.ram.gz
-	dd if=/dev/zero of=${IMAGE} bs=100k count=12
+	dd if=/dev/zero of=${IMAGE} count=${DISKSIZE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
