@@ -1,4 +1,4 @@
-# $NetBSD: md.luna68k,v 1.14 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.luna68k,v 1.15 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/luna68k				comp-c-include
 ./usr/include/luna68k/_G_config.h		comp-obsolete		obsolete
@@ -48,3 +48,4 @@
 ./usr/include/luna68k/types.h			comp-c-include
 ./usr/include/luna68k/varargs.h			comp-c-include
 ./usr/include/luna68k/vmparam.h			comp-c-include
+./usr/include/luna68k/wchar_limits.h		comp-c-include

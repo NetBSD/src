@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.16 2004/02/22 01:42:25 uwe Exp $
+# $NetBSD: md.hpcsh,v 1.17 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/hpcsh				comp-c-include
 ./usr/include/hpcsh/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/ansi.h			comp-c-include
@@ -52,5 +52,6 @@
 ./usr/include/hpcsh/types.h			comp-c-include
 ./usr/include/hpcsh/varargs.h			comp-c-include
 ./usr/include/hpcsh/vmparam.h			comp-c-include
+./usr/include/hpcsh/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3/db_disasm.h			comp-obsolete		obsolete

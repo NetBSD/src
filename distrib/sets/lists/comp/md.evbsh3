@@ -1,4 +1,4 @@
-# $NetBSD: md.evbsh3,v 1.22 2004/02/27 23:02:45 uwe Exp $
+# $NetBSD: md.evbsh3,v 1.23 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/evbsh3				comp-c-include
 ./usr/include/evbsh3/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbsh3/ansi.h			comp-c-include
@@ -53,5 +53,6 @@
 ./usr/include/evbsh3/types.h			comp-c-include
 ./usr/include/evbsh3/varargs.h			comp-c-include
 ./usr/include/evbsh3/vmparam.h			comp-c-include
+./usr/include/evbsh3/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3/db_disasm.h			comp-obsolete		obsolete

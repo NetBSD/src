@@ -1,4 +1,4 @@
-# $NetBSD: md.algor,v 1.8 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.algor,v 1.9 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/algor				comp-c-include
 ./usr/include/algor/_G_config.h			comp-obsolete		obsolete
 ./usr/include/algor/ansi.h			comp-c-include
@@ -56,4 +56,5 @@
 ./usr/include/algor/types.h			comp-c-include
 ./usr/include/algor/varargs.h			comp-c-include
 ./usr/include/algor/vmparam.h			comp-c-include
+./usr/include/algor/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.53 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.pmax,v 1.54 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/pmax				comp-c-include
 ./usr/include/pmax/_G_config.h			comp-obsolete		obsolete
@@ -62,3 +62,4 @@
 ./usr/include/pmax/types.h			comp-c-include
 ./usr/include/pmax/varargs.h			comp-c-include
 ./usr/include/pmax/vmparam.h			comp-c-include
+./usr/include/pmax/wchar_limits.h		comp-c-include

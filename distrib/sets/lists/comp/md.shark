@@ -1,4 +1,4 @@
-# $NetBSD: md.shark,v 1.6 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.shark,v 1.7 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/shark				comp-c-include
 ./usr/include/shark/ansi.h			comp-c-include
 ./usr/include/shark/aout_machdep.h		comp-c-include
@@ -46,4 +46,5 @@
 ./usr/include/shark/types.h			comp-c-include
 ./usr/include/shark/varargs.h			comp-c-include
 ./usr/include/shark/vmparam.h			comp-c-include
+./usr/include/shark/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.newsmips,v 1.21 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.newsmips,v 1.22 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/newsmips				comp-c-include
 ./usr/include/newsmips/_G_config.h		comp-obsolete		obsolete
@@ -60,4 +60,5 @@
 ./usr/include/newsmips/types.h			comp-c-include
 ./usr/include/newsmips/varargs.h		comp-c-include
 ./usr/include/newsmips/vmparam.h		comp-c-include
+./usr/include/newsmips/wchar_limits.h		comp-c-include
 ./usr/include/newsmips/z8530var.h		comp-c-include

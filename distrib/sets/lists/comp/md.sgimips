@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.8 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.sgimips,v 1.9 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sgimips				comp-c-include
 ./usr/include/sgimips/_G_config.h		comp-obsolete		obsolete
@@ -55,4 +55,5 @@
 ./usr/include/sgimips/types.h			comp-c-include
 ./usr/include/sgimips/varargs.h			comp-c-include
 ./usr/include/sgimips/vmparam.h			comp-c-include
+./usr/include/sgimips/wchar_limits.h		comp-c-include
 ./usr/include/sgimips/z8530var.h		comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.6 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.evbppc,v 1.7 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/evbppc				comp-c-include
 ./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbppc/ansi.h			comp-c-include
@@ -51,4 +51,5 @@
 ./usr/include/evbppc/types.h			comp-c-include
 ./usr/include/evbppc/varargs.h			comp-c-include
 ./usr/include/evbppc/vmparam.h			comp-c-include
+./usr/include/evbppc/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include

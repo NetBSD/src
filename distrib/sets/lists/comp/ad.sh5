@@ -1,4 +1,4 @@
-#	$NetBSD: ad.sh5,v 1.3 2004/03/17 20:36:04 scw Exp $
+#	$NetBSD: ad.sh5,v 1.4 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh5				comp-c-include
 ./usr/include/sh5/ansi.h			comp-c-include
@@ -47,3 +47,4 @@
 ./usr/include/sh5/types.h			comp-c-include
 ./usr/include/sh5/varargs.h			comp-c-include
 ./usr/include/sh5/vmparam.h			comp-c-include
+./usr/include/sh5/wchar_limits.h		comp-c-include

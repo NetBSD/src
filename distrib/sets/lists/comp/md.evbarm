@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.8 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.evbarm,v 1.9 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/evbarm				comp-c-include
 ./usr/include/evbarm/ansi.h			comp-c-include
 ./usr/include/evbarm/aout_machdep.h		comp-c-include
@@ -45,3 +45,4 @@
 ./usr/include/evbarm/types.h			comp-c-include
 ./usr/include/evbarm/varargs.h			comp-c-include
 ./usr/include/evbarm/vmparam.h			comp-c-include
+./usr/include/evbarm/wchar_limits.h		comp-c-include

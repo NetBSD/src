@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.18 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: ad.sh3,v 1.19 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3				comp-c-include
 ./usr/include/sh3/ansi.h			comp-c-include
@@ -47,3 +47,4 @@
 ./usr/include/sh3/va-sh.h			comp-c-include
 ./usr/include/sh3/varargs.h			comp-c-include
 ./usr/include/sh3/vmparam.h			comp-c-include
+./usr/include/sh3/wchar_limits.h		comp-c-include

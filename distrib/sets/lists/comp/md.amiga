@@ -1,4 +1,4 @@
-# $NetBSD: md.amiga,v 1.51 2004/01/11 10:13:42 lukem Exp $
+# $NetBSD: md.amiga,v 1.52 2004/05/08 21:53:23 kleink Exp $
 ./usr/include/amiga				comp-c-include
 ./usr/include/amiga/_G_config.h			comp-obsolete		obsolete
 ./usr/include/amiga/ansi.h			comp-c-include
@@ -50,6 +50,7 @@
 ./usr/include/amiga/types.h			comp-c-include
 ./usr/include/amiga/varargs.h			comp-c-include
 ./usr/include/amiga/vmparam.h			comp-c-include
+./usr/include/amiga/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/c++rt0.o				comp-obsolete		obsolete
 ./usr/lib/scrt0.o				comp-obsolete		obsolete
