@@ -31,11 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vfs_conf.c	7.3 (Berkeley) 6/28/90
- *	$Id: vfs_conf.c,v 1.12.2.1 1993/10/16 05:40:16 mycroft Exp $
+ *	$Id: vfs_conf.c,v 1.12.2.2 1993/11/14 21:24:17 mycroft Exp $
  */
 
-#include "param.h"
-#include "mount.h"
+#include <sys/param.h>
+#include <sys/mount.h>
 
 /*
  * This specifies the filesystem used to mount the root.
