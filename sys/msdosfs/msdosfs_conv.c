@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.16 1996/02/03 16:04:09 ws Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.17 1996/02/09 19:13:42 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -51,6 +51,7 @@
  * System include files.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>		/* defines tz */
 #include <sys/dirent.h>
