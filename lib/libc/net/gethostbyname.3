@@ -1,4 +1,4 @@
-.\"	$NetBSD: gethostbyname.3,v 1.13 1999/01/16 08:20:26 lukem Exp $
+.\"	$NetBSD: gethostbyname.3,v 1.14 1999/01/18 12:10:06 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,8 +80,10 @@ broken-out fields from a line in
 or database entries supplied by the
 .Xr yp 8
 system .
-If the local name server is not running these routines do a lookup in
-.Pa /etc/hosts .
+The order of the lookups is controlled by the
+.Sq hosts
+entry in
+.Xr nsswitch.conf 5 .
 .Bd -literal
 struct	hostent {
 	char	*h_name;	/* official name of host */
