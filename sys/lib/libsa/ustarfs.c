@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.2 1998/10/05 04:56:36 ross Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.3 1998/10/15 01:11:46 ross Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -118,14 +118,16 @@ typedef struct ust_active_struct {
 	int	uas_offset;		/* amount of cylinder below lba 0 */
 } ust_active_t;
 
-static const char formatid[] = "USTARFS";
+static const char formatid[] = "USTARFS",
+		  metaname[] = "USTAR.volsize.";
 
 static int ustarfs_mode_offset = BBSIZE;
 
 static int checksig __P((ust_active_t *));
-static int get_volume __P((struct open_file *, int));
 static int convert __P((const char *, int, int));
-static int ustarfs_cylinder_read __P((struct open_file *, ustoffs));
+static int get_volume __P((struct open_file *, int));
+static void setwindow(ust_active_t *, ustoffs, ustoffs);
+static int ustarfs_cylinder_read __P((struct open_file *, ustoffs, int));
 static void ustarfs_sscanf __P((const char *, const char *, int *));
 static int read512block __P((struct open_file *, ustoffs, char block[512]));
 
@@ -159,21 +161,45 @@ ustarfs_sscanf(s,f,xi)
 }
 
 static int
-ustarfs_cylinder_read(f, seek2)
+ustarfs_cylinder_read(f, seek2, forcelabel)
 	struct open_file *f;
 	ustoffs seek2;
 {
 	int e;
-	size_t	xfercount;
+	ustoffs	lda;
+	char *xferbase;
 	ust_active_t *ustf;
+	size_t	xferrqst, xfercount;
 
 	ustf = f->f_fsdata;
-	e = f->f_dev->dv_strategy(f->f_devdata, F_READ, seek2 / 512,
-		sizeof ustf->uas_1cyl, ustf->uas_1cyl, &xfercount);
-	if (e == 0 && xfercount != sizeof ustf->uas_1cyl) {
-		printf("Warning, unexpected short transfer %d/%d\n",
-			(int)xfercount, (int) sizeof ustf->uas_1cyl);
-		return EIO;
+	xferrqst = sizeof ustf->uas_1cyl;
+	xferbase = ustf->uas_1cyl;
+	lda = pda2lda(seek2);
+	if (lda < 0) {
+		lda = -lda;
+		ustf->uas_offset = lda;
+		/*
+		 * don't read the label unless we have to. (Preserve
+		 * sequential block access so tape boot works.)
+		 */
+		if (!forcelabel) {
+			memset(xferbase, 0, lda);
+			xferrqst -= lda;
+			xferbase += lda;
+			seek2    += lda;
+		}
+	} else
+		ustf->uas_offset = 0;
+	while(xferrqst > 0) {
+		e = f->f_dev->dv_strategy(f->f_devdata, F_READ, seek2 / 512,
+			xferrqst, xferbase, &xfercount);
+		if (e)
+			break;
+		if (xfercount != xferrqst)
+			printf("Warning, unexpected short transfer %d/%d\n",
+				(int)xfercount, (int)xferrqst);
+		xferrqst -= xfercount;
+		xferbase += xfercount;
 	}
 	return e;
 }
@@ -190,7 +216,7 @@ checksig(ustf)
 }
 
 static int
-get_volume (f, vn)
+get_volume(f, vn)
 	struct open_file *f;
 	int vn;
 {
@@ -208,7 +234,7 @@ get_volume (f, vn)
 			needvolume + 1);
 		getchar();
 		printf("\n");
-		e = ustarfs_cylinder_read(f, 0);
+		e = ustarfs_cylinder_read(f, 0, 1);
 		if (e)
 			return e;
 		if(strncmp(formatid, ustf->uas_1cyl, strlen(formatid))) {
@@ -228,13 +254,22 @@ get_volume (f, vn)
 	return 0;
 }
 
+static void
+setwindow(ust_active_t *ustf, ustoffs pda, ustoffs vda)
+{
+	ustf->uas_windowbase = lda2vda(pda2lda(pda), ustf->uas_volsize,
+					vda2vn(vda, ustf->uas_volsize))
+			     + ustf->uas_offset;
+	ustf->uas_init_window = 1;
+}
+
 static int
 read512block(f, vda, block)
 	struct open_file *f;
 	ustoffs vda;
 	char block[512];
 {
-	ustoffs pda, lda;
+	ustoffs pda;
 	ssize_t	e;
 	int	dienow;
 	ust_active_t *ustf;
@@ -250,12 +285,11 @@ read512block(f, vda, block)
 		 * That signature is used to identify volume zero, which we
 		 * don't give a USTARFS label to. (It's platform-dependent.)
 		 */
-		e = ustarfs_cylinder_read(f, 0);
+		e = ustarfs_cylinder_read(f, 0, 0);
 		if (e)
 			return e;
 		ustf->uas_volzerosig = checksig(ustf);
-		ustf->uas_windowbase = lda2vda(pda2lda(0), ustf->uas_volsize, 0);
-		ustf->uas_init_window = 1;
+		setwindow(ustf, 0, 0);
 	}
 	/*
 	 * if (vda in window)
@@ -287,18 +321,10 @@ tryagain:
 		return e;
 	pda = lda2pda(vda2lda(vda, ustf->uas_volsize));
 	pda-= pda % sizeof ustf->uas_1cyl;
-	e = ustarfs_cylinder_read(f, pda);
+	e = ustarfs_cylinder_read(f, pda, 0);
 	if (e)
 		return e;
-	lda = pda2lda(pda);
-	if (lda < 0) {
-		ustf->uas_offset = -lda;
-		lda = 0;
-	} else
-		ustf->uas_offset = 0;
-	ustf->uas_windowbase = lda2vda(lda, ustf->uas_volsize,
-					vda2vn(vda, ustf->uas_volsize));
-	ustf->uas_init_window = 1;
+	setwindow(ustf, pda, vda);
 	goto tryagain;
 }
 
@@ -313,6 +339,7 @@ ustarfs_open(path, f)
 	char	block[512];
 	int	filesize;
 	int	e, e2;
+	int	newvolblocks;
 
 	if (*path == '/')
 		++path;
@@ -320,8 +347,8 @@ ustarfs_open(path, f)
 	f->f_fsdata = ustf = alloc(sizeof *ustf);
 	memset(ustf, 0, sizeof *ustf);
 	offset = 0;
-	/* XXX -- hardwired for floppy */
-	ustf->uas_volsize = 80 * 2 * 18 * 512 - ustarfs_mode_offset;
+	/* default to 2880 sector floppy */
+	ustf->uas_volsize = 80 * 2 * 18 * 512 - lda2pda(0);
 	ustf->uas_fseek = 0;
 	for(;;) {
 		ustf->uas_filestart = offset;
@@ -335,6 +362,14 @@ ustarfs_open(path, f)
 			break;
 		e = ENOENT;	/* it must be an actual ustarfs */
 		ustf->uas_init_fs = 1;
+		/* if volume metadata is found, use it */
+		if(strncmp(ustf->uas_active.ust_name, metaname,
+		    strlen(metaname)) == 0) {
+			ustarfs_sscanf(ustf->uas_active.ust_name
+				+ strlen(metaname), "%99o", &newvolblocks);
+			ustf->uas_volsize = newvolblocks * 512
+					  - lda2pda(0);
+		}
 		ustarfs_sscanf(ustf->uas_active.ust_size,"%12o",&filesize);
 		if(strncmp(ustf->uas_active.ust_name, path,
 		    sizeof ustf->uas_active.ust_name) == 0) {
