@@ -1,4 +1,4 @@
-#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.5 1999/03/14 10:34:18 mycroft Exp $
+#	$NetBSD: ZYGORTHIAN-SPACE-RAIDERS,v 1.6 1999/03/22 07:51:28 mycroft Exp $
 #	From: GENERIC,v 1.220 1999/02/16 17:46:17 abs Exp
 #
 #	GENERIC -- everything that's currently supported
@@ -514,11 +514,12 @@ ate0	at isa? port 0x2a0 irq ?		# AT1700
 
 # PCI audio devices
 #eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
-#sv*	at pci? dev ? function ?	# S3 SonicVibes
+sv*	at pci? dev ? function ?	# S3 SonicVibes
 
 # ISA Plug-and-Play audio devices
 #ess*	at isapnp?			# ESS Tech ES1887, ES1888, ES888 audio
 #guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
+#mpu*	at isapnp?			# MPU401 clones
 #sb*	at isapnp?			# SoundBlaster-compatible audio
 #wss*	at isapnp?			# Windows Sound System
 #ym*	at isapnp?			# Yamaha OPL3-SA3 audio
@@ -536,7 +537,7 @@ ate0	at isa? port 0x2a0 irq ?		# AT1700
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 #opl*	at ess?
 #opl*	at sb?
-#opl*	at sv?
+opl*	at sv?
 
 # USB Audio devices
 #uaudio*	at uhub? port ? configuration ? interface ?
@@ -550,7 +551,7 @@ ate0	at isa? port 0x2a0 irq ?		# AT1700
 #audio*	at pas?
 #audio*	at sb?
 #audio*	at sp?
-#audio*	at sv?
+audio*	at sv?
 #audio*	at uaudio?
 #audio*	at wss?
 #audio*	at ym?
@@ -558,7 +559,8 @@ ate0	at isa? port 0x2a0 irq ?		# AT1700
 # MIDI support
 midi*	at pcppi?		# MIDI interface to the PC speaker
 #midi*	at sb?			# SB MPU401 port
-#midi*	at opl?			# OPL FM synth
+midi*	at opl?			# OPL FM synth
+#midi*	at mpu?			# MPU401 UARTs
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 #spkr0	at pcppi?		# PC speaker
@@ -604,7 +606,7 @@ include	"arch/i386/conf/GENERIC.local"
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	ccd		4	# concatenated/striped disk devices
+#pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
