@@ -1,11 +1,11 @@
-#
-#	$Id: Makefile,v 1.2 1994/12/22 10:45:52 cgd Exp $
-#
+#	$Id: Makefile,v 1.3 1995/01/18 08:37:48 mycroft Exp $
 
-PROG =	mount_ados
-MAN =	mount_ados.8
+PROG=	mount_ados
+SRCS=	mount_ados.c getmntopts.c
+MAN=	mount_ados.8
 
-BINOWN=	root
-BINMODE= 4555
+MOUNT=	${.CURDIR}/../mount
+CFLAGS+= -I${MOUNT}
+.PATH:	${MOUNT}
 
 .include <bsd.prog.mk>
