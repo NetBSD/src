@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.28 2001/06/14 20:32:47 thorpej Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.29 2001/06/15 17:24:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -143,8 +143,9 @@ exec_script_makecmds(struct proc *p, struct exec_package *epp)
 check_shell:
 #ifdef SETUIDSCRIPTS
 	/*
-	 * MNT_NOSUID and STRC are already taken care of by check_exec,
-	 * so we don't need to worry about them now or later.
+	 * MNT_NOSUID has already taken care of by check_exec,
+	 * so we don't need to worry about it now or later.  We
+	 * will need to check P_TRACED later, however.
 	 */
 	script_sbits = epp->ep_vap->va_mode & (S_ISUID | S_ISGID);
 	if (script_sbits != 0) {
@@ -260,7 +261,9 @@ check_shell:
 #ifdef SETUIDSCRIPTS
 		/*
 		 * set thing up so that set-id scripts will be
-		 * handled appropriately
+		 * handled appropriately.  P_TRACED will be
+		 * checked later when the shell is actually
+		 * exec'd.
 		 */
 		epp->ep_vap->va_mode |= script_sbits;
 		if (script_sbits & S_ISUID)

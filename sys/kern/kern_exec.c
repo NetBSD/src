@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.140 2001/05/07 09:55:14 manu Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.141 2001/06/15 17:24:19 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -212,7 +212,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 		error = EACCES;
 		goto bad1;
 	}
-	if ((vp->v_mount->mnt_flag & MNT_NOSUID) || (p->p_flag & P_TRACED))
+	if (vp->v_mount->mnt_flag & MNT_NOSUID)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
 	/* try to open it */
@@ -591,10 +591,21 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/*
 	 * deal with set[ug]id.
-	 * MNT_NOSUID and P_TRACED have already been used to disable s[ug]id.
+	 * MNT_NOSUID has already been used to disable s[ug]id.
 	 */
-	if (((attr.va_mode & S_ISUID) != 0 && p->p_ucred->cr_uid != attr.va_uid)
-	 || ((attr.va_mode & S_ISGID) != 0 && p->p_ucred->cr_gid != attr.va_gid)){
+	if ((p->p_flag & P_TRACED) == 0 &&
+
+	    (((attr.va_mode & S_ISUID) != 0 &&
+	      p->p_ucred->cr_uid != attr.va_uid) ||
+
+	     ((attr.va_mode & S_ISGID) != 0 &&
+	      p->p_ucred->cr_gid != attr.va_gid))) {
+		/*
+		 * Mark the process as SUGID before we do
+		 * anything that might block.
+		 */
+		p_sugid(p);
+
 		p->p_ucred = crcopy(cred);
 #ifdef KTRACE
 		/*
@@ -608,7 +619,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 			p->p_ucred->cr_uid = attr.va_uid;
 		if (attr.va_mode & S_ISGID)
 			p->p_ucred->cr_gid = attr.va_gid;
-		p_sugid(p);
 	} else
 		p->p_flag &= ~P_SUGID;
 	p->p_cred->p_svuid = p->p_ucred->cr_uid;
