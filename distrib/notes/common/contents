@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.51 2002/05/08 16:32:54 fredette Exp $
+.\"	$NetBSD: contents,v 1.52 2002/05/09 09:45:28 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,6 +113,21 @@ A version of
 .Li INSTALL
 that has MCA stuff enabled to allow installing on IBM PS/2 machines.
 .\}
+.if r_macppc \{\
+.			It Pa netbsd.GENERIC_MD.gz
+A gzipped 
+.Nx
+kernel containing code for everything supported in this release.  It also
+has a RAM-disk installer.  This is the kernel you should use when you want
+to install via from an HFS partition on Open Firmware 3 systems, netboot,
+or from a CD-R.
+.			It Pa netbsd.INSTALL.gz
+A gzipped
+.Nx kernel containing code only for Open Firmware 1.0.5, 1.1.22, 2.0.x,
+and 2.4 systems (i.e. those that have floppy drives).  It has a RAM-disk
+installer.  This is the kernel you should use when you want to install on
+one of these systems from a floppy disk.
+.\}
 .
 .if r_mvme68k \{\
 .			It Pa netbsd.VME147.gz
@@ -135,7 +150,7 @@ see below.
 .
 .	(tag instkernel/ -compact
 .
-.if \n[alpha]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[macppc]:\n[news68k]:\
+.if \n[alpha]:\n[amiga]:\n[atari]:\n[bebox]:\n[i386]:\n[news68k]:\
 \n[newsmips]:\n[pc532]:\n[x68k]:\n[prep]:\n[sandpoint] \{\
 .		It Pa floppy/
 \*M boot and installation floppies; see below.
@@ -170,7 +185,7 @@ this image.
 \*M miniroot file system image; see below.
 .\}
 .
-.if !r_mvme68k \{\
+.if !\n[mvme68k]:\n[macppc] \{\
 .		It Pa misc/
 .
 .if r_alpha \{\
@@ -192,6 +207,14 @@ Statically-linked versions of
 Miscellaneous \*M installation utilities; see
 installation section, below.
 \}
+.\}
+.
+.if r_macppc \{\
+.		It Pa boot.fs
+\*M boot and installation floppy image.  Only usable on models that
+ship with a floppy drive (pre-Open Firmware 3); see below.
+.		It Pa ofwboot.xcf
+\*M bootloader; see below.
 .\}
 .
 .if r_mvme68k \{\
