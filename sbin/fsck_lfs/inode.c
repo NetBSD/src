@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.20 2003/08/07 10:04:23 agc Exp $	 */
+/* $NetBSD: inode.c,v 1.21 2003/09/19 08:31:58 itojun Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -347,7 +347,7 @@ void
 cacheino(struct ufs1_dinode * dp, ino_t inumber)
 {
 	struct inoinfo *inp;
-	struct inoinfo **inpp;
+	struct inoinfo **inpp, **ninpsort;
 	unsigned int blks;
 
 	blks = howmany(dp->di_size, fs->lfs_bsize);
@@ -372,11 +372,12 @@ cacheino(struct ufs1_dinode * dp, ino_t inumber)
 	inp->i_numblks = blks * sizeof(ufs_daddr_t);
 	memcpy(&inp->i_blks[0], &dp->di_db[0], (size_t) inp->i_numblks);
 	if (inplast == listmax) {
-		listmax += 100;
-		inpsort = (struct inoinfo **) realloc((char *) inpsort,
-		    (unsigned) listmax * sizeof(struct inoinfo *));
-		if (inpsort == NULL)
+		ninpsort = (struct inoinfo **) realloc((char *) inpsort,
+		    (unsigned) (listmax + 100) * sizeof(struct inoinfo *));
+		if (ninpsort == NULL)
 			err(8, "cannot increase directory list\n");
+		inpsort = ninpsort;
+		listmax += 100;
 	}
 	inpsort[inplast++] = inp;
 }
