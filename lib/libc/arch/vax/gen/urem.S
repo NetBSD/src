@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)urem.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: urem.S,v 1.1 1995/04/17 12:23:48 ragge Exp $"
+	.asciz "$NetBSD: urem.S,v 1.2 2000/08/07 03:18:04 matt Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
@@ -50,7 +50,11 @@
 #define	DIVIDEND	4(ap)
 #define	DIVISOR		8(ap)
 
+#ifdef __ELF__
+ASENTRY(__urem,0)
+#else
 ASENTRY(urem,0)
+#endif
 	movl	DIVISOR,r2
 	jlss	Leasy		# big divisor: settle by comparison
 	movl	DIVIDEND,r0
@@ -70,7 +74,11 @@ Leasy:
 Ldifference:
 	ret
 
+#ifdef __ELF__
+ASENTRY(__aurem,0)
+#else
 ASENTRY(aurem,0)
+#endif
 	movl	DIVIDEND,r3
 	movl	DIVISOR,r2
 	jlss	La_easy		# big divisor: settle by comparison
