@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.9 2002/07/20 00:03:08 itojun Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.10 2002/07/21 00:25:01 itojun Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.9 2002/07/20 00:03:08 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.10 2002/07/21 00:25:01 itojun Exp $");
 
 #include "opt_systrace.h"
 
@@ -333,7 +333,9 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	if (ret)
 		return (ret);
 	
+	systrace_lock();
 	SYSTRACE_LOCK(fst, curproc);
+	systrace_unlock();
 	if (pid) {
 		strp = systrace_findpid(fst, pid);
 		if (strp == NULL) {
@@ -416,7 +418,9 @@ systracef_select(struct file *fp, int which, struct proc *p)
 	if (which != FREAD)
 		return (0);
 
+	systrace_lock();
 	SYSTRACE_LOCK(fst, p);
+	systrace_unlock();
 	ready = TAILQ_FIRST(&fst->messages) != NULL;
 	if (!ready)
 		selrecord(p, &fst->si);
@@ -451,7 +455,9 @@ systracef_close(struct file *fp, struct proc *p)
 	struct str_process *strp;
 	struct str_policy *strpol;
 
+	systrace_lock();
 	SYSTRACE_LOCK(fst, curproc);
+	systrace_unlock();
 
 	/* Untrace all processes */
 	for (strp = TAILQ_FIRST(&fst->processes); strp;
