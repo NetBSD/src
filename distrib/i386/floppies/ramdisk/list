@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.11 1999/03/11 06:24:36 marc Exp $
+#	$NetBSD: list,v 1.12 1999/03/13 21:21:51 sommerfe Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -55,7 +55,7 @@ SYMLINK	/bin/cat		usr/bin/chgrp
 SYMLINK	/bin/cat		usr/bin/ftp
 SYMLINK	/bin/cat		usr/bin/gunzip
 SYMLINK	/bin/cat		usr/bin/gzcat
-SYMLINK	/bin/cat		usr/bin/gzip
+# SYMLINK	/bin/cat		usr/bin/gzip
 SYMLINK	/bin/cat		usr/bin/less
 SYMLINK	/bin/cat		usr/bin/more
 SYMLINK	/bin/cat		usr/bin/sed
@@ -84,6 +84,8 @@ COPY	${CURDIR}/../../../../etc/master.passwd	etc/master.passwd
 COPY	${CURDIR}/../../../../etc/protocols	etc/protocols
 COPY	${CURDIR}/../../../../etc/services	etc/services
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
+SPECIAL /bin/rm etc/spwd.db
+SPECIAL /bin/rm etc/pwd.db
 
 # and the common installation tools
 # COPY	${CURDIR}/../../../utils/script-installer/dot.commonutils  .commonutils
