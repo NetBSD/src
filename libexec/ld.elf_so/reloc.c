@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.38 2001/07/15 03:09:22 matt Exp $	 */
+/*	$NetBSD: reloc.c,v 1.39 2001/07/15 17:31:02 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -524,13 +524,17 @@ _rtld_relocate_plt_object(obj, rela, addrp, bind_now, dodebug)
 	return _rtld_reloc_powerpc_plt(obj, rela, bind_now);
 #endif
 
-#if defined(__alpha__) || defined(__i386__) || defined(__m68k__) || \
-    defined(__vax__)
+#if defined(__alpha__) || defined(__arm__) || defined(__i386__) || \
+    defined(__m68k__) || defined(__vax__)
 	if (bind_now || obj->pltgot == NULL) {
 		const Elf_Sym  *def;
 		const Obj_Entry *defobj;
 
+#if !defined(__arm__)
 		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JMP_SLOT));
+#else
+		assert(ELF_R_TYPE(rela->r_info) == R_TYPE(JUMP_SLOT));
+#endif
 
 		def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj,
 		    &defobj, true);
