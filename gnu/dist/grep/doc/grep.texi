@@ -1,5 +1,5 @@
 \input texinfo  @c -*-texinfo-*-
-@c $NetBSD: grep.texi,v 1.7 2003/01/26 23:30:44 wiz Exp $
+@c $NetBSD: grep.texi,v 1.8 2003/01/26 23:38:50 wiz Exp $
 @c %**start of header
 @setfilename grep.info
 @settitle grep, print lines matching a pattern
@@ -342,14 +342,11 @@ messages for every directory or silently skip them). If @var{action} is
 recursively; this is equivalent to the @samp{-r} option.
 
 @item -H
-@itemx -o
 @itemx --with-filename
 @opindex -H
-@opindex -o
 @opindex --With-filename
 @cindex with filename prefix
-Print the filename for each match. @samp{-o} has been added to NetBSD's grep
-for 4.4BSD compatibility.
+Print the filename for each match.
 
 @item -h
 @itemx --no-filename
