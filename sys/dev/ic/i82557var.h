@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.32 2004/05/16 02:41:46 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.33 2004/05/16 02:59:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -205,6 +205,8 @@ struct fxp_softc {
 	struct evcnt sc_ev_txstall;	/* Tx stalled */
 	struct evcnt sc_ev_txintr;	/* Tx interrupts */
 	struct evcnt sc_ev_rxintr;	/* Rx interrupts */
+	struct evcnt sc_ev_txpause;	/* Tx PAUSE frames */
+	struct evcnt sc_ev_rxpause;	/* Rx PAUSE frames */
 #endif /* FXP_EVENT_COUNTERS */
 
 	bus_dma_segment_t sc_cdseg;	/* control dma segment */
