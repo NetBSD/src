@@ -2,7 +2,7 @@
 
 SUBDIR= src mailstats makemap praliases cf/cf
 .if make(install)
-SUBDIR+= doc/intro doc/op
+SUBDIR+= doc/intro doc/op cf
 .endif
 
 .include <bsd.subdir.mk>
