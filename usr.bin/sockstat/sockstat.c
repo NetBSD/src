@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.3 2005/03/09 19:09:05 kleink Exp $ */
+/*	$NetBSD: sockstat.c,v 1.4 2005/03/10 05:39:54 atatat Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.3 2005/03/09 19:09:05 kleink Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.4 2005/03/10 05:39:54 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -643,7 +643,8 @@ print_addr(int l, int t, int f, struct sockaddr *sa)
 		break;
 	}
 	case PF_LOCAL: {
-		r = printf("%s", sabuf);
+		struct sockaddr_un *sun = satosun(sa);
+		r = printf("%s", sun->sun_path);
 		if (r == 0)
 			r = printf("-");
 		break;
