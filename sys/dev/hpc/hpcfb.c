@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.6 2001/06/22 14:38:44 toshii Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.7 2001/07/07 09:19:40 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.6 2001/06/22 14:38:44 toshii Exp $";
+    "$NetBSD: hpcfb.c,v 1.7 2001/07/07 09:19:40 toshii Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,12 +315,12 @@ hpcfbattach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dc = (struct hpcfb_devconfig *)
 		    malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
 		sc->nscreens = 0; /* XXXX */
-		bzero(sc->sc_dc, sizeof(struct hpcfb_devconfig));
+		memset(sc->sc_dc, 0, sizeof(struct hpcfb_devconfig));
 		if (hpcfb_init(&ha->ha_fbconflist[0], sc->sc_dc) != 0) {
 			return;
 		}
 		sc->sc_dc->dc_tvram = hpcfb_console_tvram;
-		bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
+		memset(hpcfb_console_tvram, 0, sizeof(hpcfb_console_tvram));
 		sc->sc_dc->dc_sc = sc;
 	}
 	sc->sc_polling = 0; /* XXX */
@@ -432,12 +432,12 @@ hpcfb_cnattach(struct hpcfb_fbconf *fbconf)
 		fbconf = &__fbconf;
 	}
 #endif /* NBIVIDEO > 0 */
-	bzero(&hpcfb_console_dc, sizeof(struct hpcfb_devconfig));
+	memset(&hpcfb_console_dc, 0, sizeof(struct hpcfb_devconfig));
 	if (hpcfb_init(fbconf, &hpcfb_console_dc) != 0)
 		return (ENXIO);
 
 	hpcfb_console_dc.dc_tvram = hpcfb_console_tvram;
-	bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
+	memset(hpcfb_console_tvram, 0, sizeof(hpcfb_console_tvram));
 
 	hpcfb_console_wsscreen = hpcfb_stdscreen;
 	hpcfb_console_wsscreen.nrows = hpcfb_console_dc.dc_rows;
@@ -462,7 +462,7 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 
 	/* init rasops */
 	ri = &dc->dc_rinfo;
-	bzero(ri, sizeof(struct rasops_info));
+	memset(ri, 0, sizeof(struct rasops_info));
 	ri->ri_depth = fbconf->hf_pixel_width;
 	ri->ri_bits = (caddr_t)fbaddr;
 	ri->ri_width = fbconf->hf_width;
@@ -723,7 +723,8 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		    malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
 		if (sc->screens[sc->nscreens] == NULL)
 			return (ENOMEM);
-		bzero(sc->screens[sc->nscreens], sizeof(struct hpcfb_devconfig));
+		memset(sc->screens[sc->nscreens], 0,
+		    sizeof(struct hpcfb_devconfig));
 	}
 	dc = sc->screens[sc->nscreens];
 	dc->dc_sc = sc;
@@ -752,7 +753,7 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 			sc->screens[sc->nscreens] = NULL;
 			return (ENOMEM);
 		}
-		bzero(dc->dc_tvram, 
+		memset(dc->dc_tvram, 0,
 		    sizeof(struct hpcfb_tvrow)*dc->dc_rows);
 	}
 				
@@ -960,7 +961,8 @@ hpcfb_tv_putchar(struct hpcfb_devconfig *dc, int row, int col, u_int uc,
 		vscn[row].maxcol = col;
 	else if (vscn[row].maxcol < col) {
 		vcb =  &vscn[row].col[vscn[row].maxcol+1];
-		bzero(vcb, sizeof(struct hpcfb_vchar)*(col-vscn[row].maxcol-1));
+		memset(vcb, 0,
+		    sizeof(struct hpcfb_vchar)*(col-vscn[row].maxcol-1));
 		vscn[row].maxcol = col;
 	}
 	vc->c = uc;
@@ -1036,7 +1038,7 @@ hpcfb_tv_copycols(struct hpcfb_devconfig *dc, int row, int srccol, int dstcol,
 		dc->dc_max_row = row;
 #endif /* HPCFB_JUMP */
 
-	bcopy(svc, dvc, ncols*sizeof(struct hpcfb_vchar));
+	memcpy(dvc, svc, ncols*sizeof(struct hpcfb_vchar));
 	if (vscn[row].maxcol < srccol+ncols-1)
 		vscn[row].maxcol = srccol+ncols-1;
 	if (vscn[row].maxcol < dstcol+ncols-1)
@@ -1194,7 +1196,7 @@ hpcfb_tv_copyrows(struct hpcfb_devconfig *dc, int src, int dst, int num)
 	}
 
 	for (i = 0; i < num; i++) {
-		bcopy(&svc->col[0], &dvc->col[0], sizeof(struct hpcfb_vchar)*(svc->maxcol+1));
+		memcpy(&dvc->col[0], &svc->col[0], sizeof(struct hpcfb_vchar)*(svc->maxcol+1));
 		if (svc->maxcol < dvc->maxcol && dvc->spacecol < dvc->maxcol)
 			dvc->spacecol = dvc->maxcol;
 		dvc->maxcol = svc->maxcol;

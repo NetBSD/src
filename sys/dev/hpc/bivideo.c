@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.8 2001/06/11 09:37:40 sato Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.9 2001/07/07 09:19:39 toshii Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -37,7 +37,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: bivideo.c,v 1.8 2001/06/11 09:37:40 sato Exp $";
+    "$NetBSD: bivideo.c,v 1.9 2001/07/07 09:19:39 toshii Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ bivideo_init(struct hpcfb_fbconf *fb)
 	}
 
 	/* zero fill */
-	bzero(fb, sizeof(*fb));
+	memset(fb, 0, sizeof(*fb));
 
 	fb->hf_conf_index	= 0;	/* configuration index		*/
 	fb->hf_nconfs		= 1;   	/* how many configurations	*/
