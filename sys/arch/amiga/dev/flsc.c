@@ -368,7 +368,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 		set_link(n, (vm_offset_t)p, l, SFAS_CHAIN_BUMP);
 	else if ((p >= (void *)0xFF000000)
 #if M68040
-		 && (cpu040 && (p >= (void *)0xFFFC0000))
+		 && ((mmutype == MMU_68040) && (p >= (void *)0xFFFC0000))
 #endif
 		 ) {
 		while(l != 0) {

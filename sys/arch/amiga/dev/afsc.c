@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.6 1995/02/12 19:19:00 chopps Exp $	*/
+/*	$NetBSD: afsc.c,v 1.7 1995/08/18 15:27:46 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -107,7 +107,7 @@ afscattach(pdp, dp, auxp)
 	printf("\n");
 
 	zap = auxp;
-	
+
 	sc = (struct siop_softc *)dp;
 	sc->sc_siopp = rp = zap->va + 0x00800000;
 
@@ -117,15 +117,13 @@ afscattach(pdp, dp, auxp)
 	 */
 	sc->sc_clock_freq = 0x8000;
 
-	
-	siopinitialize(sc);
-
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &afsc_scsiswitch;
 	sc->sc_link.device = &afsc_scsidev;
-	sc->sc_link.openings = 1;
-	TAILQ_INIT(&sc->sc_xslist);
+	sc->sc_link.openings = 2;
+
+	siopinitialize(sc);
 
 	sc->sc_isr.isr_intr = afsc_dmaintr;
 	sc->sc_isr.isr_arg = sc;
@@ -158,19 +156,19 @@ afsc_dmaintr(sc)
 	siop_regmap_p rp;
 	u_char istat;
 
+	if (sc->sc_flags & SIOP_INTSOFF)
+		return (0);	/* interrupts are not active */
 	rp = sc->sc_siopp;
 	istat = rp->siop_istat;
 	if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
 		return(0);
-	if ((rp->siop_sien | rp->siop_dien) == 0)
-		return(0);	/* no interrupts enabled */
 	/*
 	 * save interrupt status, DMA status, and SCSI status 0
 	 * (may need to deal with stacked interrupts?)
 	 */
+	sc->sc_sstat0 = rp->siop_sstat0;
 	sc->sc_istat = istat;
 	sc->sc_dstat = rp->siop_dstat;
-	sc->sc_sstat0 = rp->siop_sstat0;
 	siopintr(sc);
 	return(1);
 }

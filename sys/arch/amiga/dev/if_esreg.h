@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esreg.h,v 1.2 1995/04/11 05:59:01 mycroft Exp $	*/
+/*	$NetBSD: if_esreg.h,v 1.3 1995/08/18 15:27:58 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -70,6 +70,19 @@ union smcregs {
 		volatile u_short resv[3];
 		volatile u_short bsr;	/* Bank Select Register */
 	} b3;
+/*
+ * Bank 2 registers defined as u_short fields
+ */
+	struct {
+		volatile u_short mmucr;	/* MMU Command Register */
+		volatile u_short pnrarr;/* Packet Number/Allocation Result */
+		volatile u_short fifo;	/* FIFO Ports Register */
+		volatile u_short ptr;	/* Pointer Register */
+		volatile u_short data;	/* Data Register */
+		volatile u_short datax;	/* Data Register (2nd mapping) */
+		volatile u_short istmsk;/* Interrupt Status/Mask Register */
+		volatile u_short bsr;	/* Bank Select Register */
+	} w2;
 };
 
 /* Transmit Control Register */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 1995/08/13 00:20:52 mycroft Exp $	*/
+/*	$NetBSD: param.h,v 1.25 1995/08/18 15:28:25 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,8 +64,8 @@
 #define	PGSHIFT		13		/* LOG2(NBPG) */
 #define	NPTEPG		(NBPG/(sizeof(u_int)))
 
-#define NBSEG		(cpu040 ? 32*NBPG : 2048*NBPG)	/* bytes/segment */
-#define	SEGOFSET	(NBSEG-1)			/* byte offset into segment */
+#define NBSEG		((mmutype == MMU_68040) ? 32*NBPG : 2048*NBPG)	/* bytes/segment */
+#define	SEGOFSET	(NBSEG-1)	/* byte offset into segment */
 #define	SEGSHIFT	24		/* LOG2(NBSEG) [68030 value] */
 
 #define	KERNBASE	0x0		/* start of kernel virtual */

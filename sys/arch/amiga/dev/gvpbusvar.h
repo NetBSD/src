@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbusvar.h,v 1.7 1995/03/05 13:01:27 chopps Exp $	*/
+/*	$NetBSD: gvpbusvar.h,v 1.8 1995/08/18 15:27:55 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -56,6 +56,7 @@ enum gvpbusflags {
 	GVP_24BITDMA = 0x8,
 	GVP_25BITDMA = 0x10,
 	GVP_NOBANK = 0x20,
+	GVP_14MHZ = 0x40,
 };
 
 struct gvpbus_args {

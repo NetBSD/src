@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.21 1995/05/16 22:24:23 jtc Exp $	*/
+/*	$NetBSD: genassym.c,v 1.22 1995/08/18 15:27:32 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -160,5 +160,6 @@ main()
 	printf("#define\tISR_FORW %d\n", &isr->isr_forw);
 	printf("#define\tISR_INTR %d\n", &isr->isr_intr);
 	printf("#define\tISR_ARG %d\n", &isr->isr_arg);
+	printf("#define\tMMU_68040 %d\n", MMU_68040);
 	exit(0);
 }

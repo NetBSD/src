@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.8 1995/02/12 19:19:01 chopps Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.9 1995/08/18 15:27:48 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -77,7 +77,7 @@ struct scsi_device ahsc_scsidev = {
 
 
 #ifdef DEBUG
-void	ahsc_dmatimeout __P((void *));
+void	ahsc_dmatimeout __P((struct sbic_softc *));
 int	ahsc_dmadebug = 0;
 #endif
 
@@ -127,7 +127,7 @@ ahscattach(pdp, dp, auxp)
 
 #ifdef DEBUG
 	/* make sure timeout is really not needed */
-	timeout(ahsc_dmatimeout, 0, 30 * hz);
+	timeout((void *)ahsc_dmatimeout, sc, 30 * hz);
 #endif
 	/*
 	 * eveything is a valid dma address
@@ -136,14 +136,13 @@ ahscattach(pdp, dp, auxp)
 	sc->sc_sbicp = (sbic_regmap_p) ((int)rp + 0x41);
 	sc->sc_clkfreq = sbic_clock_override ? sbic_clock_override : 143;
 	
-	sbicreset(sc);
-
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &ahsc_scsiswitch;
 	sc->sc_link.device = &ahsc_scsidev;
-	sc->sc_link.openings = 1;
-	TAILQ_INIT(&sc->sc_xslist);
+	sc->sc_link.openings = 2;
+
+	sbicinit(sc);
 
 	sc->sc_isr.isr_intr = ahsc_dmaintr;
 	sc->sc_isr.isr_arg = sc;
@@ -356,26 +355,19 @@ ahsc_dmanext(dev)
 #ifdef DEBUG
 /*ARGSUSED*/
 void
-ahsc_dmatimeout(arg)
-	void *arg;
+ahsc_dmatimeout(sc)
+	struct sbic_softc *sc;
 {
-	struct sbic_softc *dev;
-	int i, s;
+	int s;
 
-	for (i = 0; i < ahsccd.cd_ndevs; i++) {
-		dev = ahsccd.cd_devs[i];
-		if (dev == NULL)
-			continue;
-
-		s = splbio();
-		if (dev->sc_dmatimo) {
-			if (dev->sc_dmatimo > 1)
-				printf("ahsc_dma%d: timeout #%d\n", 
-				    dev->sc_dev.dv_unit, dev->sc_dmatimo - 1);
-			dev->sc_dmatimo++;
-		}
-		splx(s);
+	s = splbio();
+	if (sc->sc_dmatimo) {
+		if (sc->sc_dmatimo > 1)
+			printf("%s: dma timeout #%d\n", 
+			    sc->sc_dev.dv_xname, sc->sc_dmatimo - 1);
+		sc->sc_dmatimo++;
 	}
-	timeout(ahsc_dmatimeout, 0, 30 * hz);
+	splx(s);
+	timeout((void *)ahsc_dmatimeout, sc, 30 * hz);
 }
 #endif

@@ -332,7 +332,7 @@ sfas_scsicmd(struct scsi_xfer *xs)
  */
 	if (!(flags & SCSI_POLL) && (
 #ifdef M68040
-	    (cpu040 && ((vm_offset_t)xs->data >= 0xFFFC0000)) &&
+	    ((mmutype == MMU_68040) && ((vm_offset_t)xs->data >= 0xFFFC0000)) &&
 #endif
 		       ((vm_offset_t)xs->data >= 0xFF000000))) {
 		vm_offset_t	 sva;
@@ -900,7 +900,7 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 	}
 
 /* Flush the caches. (If needed) */
-	if (cpu040 && len && !(mode & SFAS_SELECT_I))
+	if ((mmutype == MMU_68040) && len && !(mode & SFAS_SELECT_I))
 		dma_cachectl(buf, len);
 }
 

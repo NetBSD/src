@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.6 1995/07/02 00:16:04 mycroft Exp $	*/
+/*	$NetBSD: if_es.c,v 1.7 1995/08/18 15:27:57 chopps Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,6 +33,8 @@
 /*
  * SMC 91C90 Single-Chip Ethernet Controller
  */
+
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +92,8 @@ struct	es_softc {
 	unsigned short sc_intctl;
 #ifdef ESDEBUG
 	int	sc_debug;
+	short	sc_intbusy;
+	short	sc_smcbusy;
 #endif
 };
 
@@ -101,6 +105,11 @@ struct	es_softc {
 #ifdef ESDEBUG
 /* console error messages */
 int	esdebug = 0;
+int	estxints = 0;	/* IST_TX with TX enabled */
+int	estxint2 = 0;	/* IST_TX active after IST_TX_EMPTY */
+int	estxint3 = 0;	/* IST_TX interrupt processed */
+int	estxint4 = 0;	/* ~TEMPTY counts */
+int	estxint5 = 0;	/* IST_TX_EMPTY interrupts */
 #endif
 
 int esintr __P((struct es_softc *));
@@ -149,6 +158,15 @@ esattach(parent, self, aux)
 	unsigned long ser;
 
 	sc->sc_base = zap->va;
+#ifdef ESDEBUG
+	/* MLHDEBUG
+	 * MLHDEBUG remove first 4 and last 3 pages of the A4066 memory
+	 * MLHDEBUG and use the 5th page to access the SMC
+	 */
+	sc->sc_base = zap->va + 0x8000;		/* MLHDEBUG */
+	physunaccess(zap->va, 0x8000);		/* MLHDEBUG */
+	physunaccess(zap->va + 0xa000, 0x6000);	/* MLHDEBUG */
+#endif
 
 	/*
 	 * Manufacturer decides the 3 first bytes, i.e. ethernet vendor ID.
@@ -170,6 +188,7 @@ esattach(parent, self, aux)
 	/* Initialize ifnet structure. */
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = escd.cd_name;
+	ifp->if_output = ether_output;
 	ifp->if_ioctl = esioctl;
 	ifp->if_start = esstart;
 	ifp->if_watchdog = eswatchdog;
@@ -193,6 +212,37 @@ esattach(parent, self, aux)
 	add_isr(&sc->sc_isr);
 }
 
+#ifdef ESDEBUG
+void
+es_dump_smcregs(where, smc)
+	char *where;
+	union smcregs *smc;
+{
+	u_short cur_bank = smc->b0.bsr & 0x0300;
+
+	printf("SMC registers %08x from %s bank %04x\n", smc, where,
+	    smc->b0.bsr);
+	smc->b0.bsr = BSR_BANK0;
+	printf("TCR %04x EPHSR %04x RCR %04x ECR %04x MIR %04x MCR %04x\n",
+	    SWAP(smc->b0.tcr), SWAP(smc->b0.ephsr), SWAP(smc->b0.rcr),
+	    SWAP(smc->b0.ecr), SWAP(smc->b0.mir), SWAP(smc->b0.mcr));
+	smc->b1.bsr = BSR_BANK1;
+	printf("CR %04x BAR %04x IAR %04x %04x %04x GPR %04x CTR %04x\n",
+	    SWAP(smc->b1.cr), SWAP(smc->b1.bar), smc->b1.iar[0], smc->b1.iar[1],
+	    smc->b1.iar[2], smc->b1.gpr, SWAP(smc->b1.ctr));
+	smc->b2.bsr = BSR_BANK2;
+	printf("MMUCR %04x PNR %02x ARR %02x FIFO %04x PTR %04x",
+	    SWAP(smc->b2.mmucr), smc->b2.pnr, smc->b2.arr, smc->b2.fifo,
+	    SWAP(smc->b2.ptr));
+	printf(" DATA %04x %04x IST %02x MSK %02x\n", smc->b2.data,
+	    smc->b2.datax, smc->b2.ist, smc->b2.msk);
+	smc->b3.bsr = BSR_BANK3;
+	printf("MT %04x %04x %04x %04x\n",
+	    smc->b3.mt[0], smc->b3.mt[1], smc->b3.mt[2], smc->b3.mt[3]);
+	smc->b3.bsr = cur_bank;
+}
+#endif
+
 void
 esstop(sc)
 	struct es_softc* sc;
@@ -209,6 +259,10 @@ esinit(sc)
 
 	s = splimp();
 
+#ifdef ESDEBUG
+	if (ifp->if_flags & IFF_RUNNING)
+		es_dump_smcregs("esinit", smc);
+#endif
 	smc->b0.bsr = BSR_BANK0;	/* Select bank 0 */
 	smc->b0.rcr = RCR_EPH_RST;
 	smc->b0.rcr = 0;
@@ -250,18 +304,32 @@ esintr(sc)
 {
 	int i;
 	u_short intsts, intact;
-	int done = 0;
 	union smcregs *smc;
+	int s = splimp();
 
 	smc = sc->sc_base;
+#ifdef ESDEBUG
+	while ((smc->b2.bsr & 0x0300) != BSR_BANK2 &&
+	    sc->sc_arpcom.ac_if.if_flags & IFF_RUNNING) {
+		printf("%s: intr BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		    smc->b2.bsr);
+		smc->b2.bsr = BSR_BANK2;
+	}
+#endif
 	intsts = smc->b2.ist;
 	intact = smc->b2.msk & intsts;
-	if ((intact) == 0)
+	if ((intact) == 0) {
+		splx(s);
 		return (0);
+	}
 #ifdef ESDEBUG
 	if (esdebug)
 		printf ("%s: esintr ist %02x msk %02x",
 		    sc->sc_dev.dv_xname, intsts, smc->b2.msk);
+	if (sc->sc_intbusy++) {
+		printf("%s: esintr re-entered\n", sc->sc_dev.dv_xname);
+		panic("esintr re-entered");
+	}
 #endif
 	smc->b2.msk = 0;
 #ifdef ESDEBUG
@@ -274,25 +342,45 @@ esintr(sc)
 		sc->sc_intctl &= ~MSK_ALLOC;
 #ifdef ESDEBUG
 		if (esdebug || 1)
-			printf ("%s: ist %02x\n", sc->sc_dev.dv_xname,
+			printf ("%s: ist %02x", sc->sc_dev.dv_xname,
 			    intsts);
 #endif
 		if ((smc->b2.arr & ARR_FAILED) == 0) {
+			u_char save_pnr;
 #ifdef ESDEBUG
 			if (esdebug || 1)
-				printf ("%s: arr %02x\n", sc->sc_dev.dv_xname,
-				    smc->b2.arr);
+				printf (" arr %02x\n", smc->b2.arr);
 #endif
+			save_pnr = smc->b2.pnr;
 			smc->b2.pnr = smc->b2.arr;
 			smc->b2.mmucr = MMUCR_RLSPKT;
 			while (smc->b2.mmucr & MMUCR_BUSY)
 				;
+			smc->b2.pnr = save_pnr;
 			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
 		}
+#ifdef ESDEBUG
+		else if (esdebug || 1)
+			printf (" IST_ALLOC with ARR_FAILED?\n");
+#endif
 	}
+#ifdef ESDEBUG
+	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+		printf("%s: intr+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		    smc->b2.bsr);
+		smc->b2.bsr = BSR_BANK2;
+	}
+#endif
 	while ((smc->b2.fifo & FIFO_REMPTY) == 0) {
 		esrint(sc);
 	}
+#ifdef ESDEBUG
+	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+		printf("%s: intr++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		    smc->b2.bsr);
+		smc->b2.bsr = BSR_BANK2;
+	}
+#endif
 	if (intact & IST_RX_OVRN) {
 		printf ("%s: Overrun ist %02x", sc->sc_dev.dv_xname,
 		    intsts);
@@ -300,65 +388,135 @@ esintr(sc)
 		printf ("->%02x\n", smc->b2.ist);
 		sc->sc_arpcom.ac_if.if_ierrors++;
 	}
-	if (intact & IST_TX) {
-#ifdef ESDEBUG
-		if (esdebug)
-			printf ("%s: TX INT ist %02x",
-			    sc->sc_dev.dv_xname, intsts);
-#endif
-		smc->b2.ist = ACK_TX;
-#ifdef ESDEBUG
-		if (esdebug)
-			printf ("->%02x\n", smc->b2.ist);
-#endif
-		smc->b0.bsr = BSR_BANK0;
-		if ((smc->b0.tcr & TCR_TXENA) == 0) {
-			printf("%s: IST %02x masked %02x EPH status %04x tcr %04x\n",
-			    sc->sc_dev.dv_xname, intsts, intact, smc->b0.ephsr,
-			    smc->b0.tcr);
-			if ((smc->b0.ephsr & EPHSR_TX_SUC) == 0) {
-				smc->b0.tcr |= TCR_TXENA;
-				sc->sc_arpcom.ac_if.if_oerrors++;
-			}
-		}
-		/*
-		 * else - got a TX interrupt, but TCR_TXENA is still set??
-		 */
-#if 0
-		else if ((intact & IST_TX_EMPTY) == 0) {
-			printf("%s: unexpected TX interrupt %02x %02x\n",
-			    sc->sc_dev.dv_xname, intsts, intact);
-			smc->b2.bsr = 0x0200;
-			printf (" %02x\n", smc->b2.ist);
-		}
-#endif
-		smc->b2.bsr = BSR_BANK2;
-	}
 	if (intact & IST_TX_EMPTY) {
 		u_short ecr;
 #ifdef ESDEBUG
 		if (esdebug)
 			printf ("%s: TX EMPTY %02x",
 			    sc->sc_dev.dv_xname, intsts);
+		++estxint5;		/* count # IST_TX_EMPTY ints */
 #endif
 		smc->b2.ist = ACK_TX_EMPTY;
+		sc->sc_intctl &= ~(MSK_TX_EMPTY | MSK_TX);
 #ifdef ESDEBUG
 		if (esdebug)
 			printf ("->%02x intcl %x pnr %02x arr %02x\n",
 			    smc->b2.ist, sc->sc_intctl, smc->b2.pnr,
 			    smc->b2.arr);
 #endif
-		sc->sc_intctl &= ~(MSK_TX_EMPTY | MSK_TX);
+		if (smc->b2.ist & IST_TX) {
+			intact |= IST_TX;
+#ifdef ESDEBUG
+			++estxint2;		/* count # TX after TX_EMPTY */
+#endif
+		} else {
+			smc->b0.bsr = BSR_BANK0;
+			ecr = smc->b0.ecr;	/* Get error counters */
+			if (ecr & 0xff00)
+				sc->sc_arpcom.ac_if.if_collisions += ((ecr >> 8) & 15) +
+				    ((ecr >> 11) & 0x1e);
+			smc->b2.bsr = BSR_BANK2;
+#if 0
+			smc->b2.mmucr = MMUCR_RESET_TX; /* XXX reset TX FIFO */
+#endif
+		}
+	}
+	if (intact & IST_TX) {
+		u_char tx_pnr, save_pnr;
+		u_short save_ptr, ephsr, tcr;
+		int n = 0;
+#ifdef ESDEBUG
+		if (esdebug) {
+			printf ("%s: TX INT ist %02x",
+			    sc->sc_dev.dv_xname, intsts);
+			printf ("->%02x\n", smc->b2.ist);
+		}
+		++estxint3;			/* count # IST_TX */
+#endif
+zzzz:
+		++estxint4;			/* count # ~TEMPTY */
 		smc->b0.bsr = BSR_BANK0;
-		ecr = smc->b0.ecr;	/* Get error counters */
-		if (ecr & 0xff00)
-			sc->sc_arpcom.ac_if.if_collisions += ((ecr >> 8) & 15) +
-			    ((ecr >> 11) & 0x1e);
+		ephsr = smc->b0.ephsr;		/* get EPHSR */
+		tcr = smc->b0.tcr;		/* and TCR */
 		smc->b2.bsr = BSR_BANK2;
+		save_ptr = smc->b2.ptr;
+		save_pnr = smc->b2.pnr;
+		tx_pnr = smc->b2.fifo >> 8;	/* pktno from completion fifo */
+		smc->b2.pnr = tx_pnr;		/* set TX packet number */
+		smc->b2.ptr = PTR_READ;		/* point to status word */
+#if 0 /* XXXX */
+		printf("%s: esintr TXINT IST %02x PNR %02x(%d)",
+		    sc->sc_dev.dv_xname, smc->b2.ist,
+		    tx_pnr, n);
+		printf(" Status %04x", smc->b2.data);
+		printf(" EPHSR %04x\n", ephsr);
+#endif
+		if ((smc->b2.data & EPHSR_TX_SUC) == 0 && (tcr & TCR_TXENA) == 0) {
+			/*
+			 * Transmitter was stopped for some error.  Enqueue
+			 * the packet again and restart the transmitter.
+			 * May need some check to limit the number of retries.
+			 */
+			smc->b2.mmucr = MMUCR_ENQ_TX;
+			smc->b0.bsr = BSR_BANK0;
+			smc->b0.tcr |= TCR_TXENA;
+			smc->b2.bsr = BSR_BANK2;
+			sc->sc_arpcom.ac_if.if_oerrors++;
+			sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
+		} else {
+			/*
+			 * This shouldn't have happened:  IST_TX indicates
+			 * the TX completion FIFO is not empty, but the
+			 * status for the packet on the completion FIFO
+			 * shows that the transmit was sucessful.  Since
+			 * AutoRelease is being used, a sucessful transmit
+			 * should not result in a packet on the completion
+			 * FIFO.  Also, that packet doesn't seem to want
+			 * to be acknowledged.  If this occurs, just reset
+			 * the TX FIFOs.
+			 */
+#if 1
+			if (smc->b2.ist & IST_TX_EMPTY) {
+				smc->b2.mmucr = MMUCR_RESET_TX;
+				sc->sc_intctl &= ~(MSK_TX_EMPTY | MSK_TX);
+			}
+#endif
+#ifdef ESDEBUG
+			++estxints;	/* count IST_TX with TX enabled */
+#endif
+		}
+		smc->b2.pnr = save_pnr;
+		smc->b2.ptr = save_ptr;
+		smc->b2.ist = ACK_TX;
+
+		if ((smc->b2.fifo & FIFO_TEMPTY) == 0 && n++ < 32) {
+#if 0 /* XXXX */
+			printf("%s: multiple TX int(%2d) pnr %02x ist %02x fifo %04x",
+			    sc->sc_dev.dv_xname, n, tx_pnr, smc->b2.ist, smc->b2.fifo);
+			smc->w2.istmsk = ACK_TX << 8;
+			printf(" %04x\n", smc->b2.fifo);
+#endif
+			if (tx_pnr != (smc->b2.fifo >> 8))
+				goto zzzz;
+		}
 	}
 	/* output packets */
 	estint(sc);
+#ifdef ESDEBUG
+	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+		printf("%s: intr+++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		    smc->b2.bsr);
+		smc->b2.bsr = BSR_BANK2;
+	}
+#endif
 	smc->b2.msk = sc->sc_intctl;
+#ifdef ESDEBUG
+	if (--sc->sc_intbusy) {
+		printf("%s: esintr busy on exit\n", sc->sc_dev.dv_xname);
+		panic("esintr busy on exit");
+	}
+#endif
+	splx(s);
 	return (1);
 }
 
@@ -385,6 +543,15 @@ esrint(sc)
 	if (esdebug)
 		printf ("%s: esrint fifo %04x", sc->sc_dev.dv_xname,
 		    smc->b2.fifo);
+	if (sc->sc_smcbusy++) {
+		printf("%s: esrint re-entered\n");
+		panic("esrint re-entered");
+	}
+	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+		printf("%s: rint BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		    smc->b2.bsr);
+		smc->b2.bsr = BSR_BANK2;
+	}
 #endif
 	data = (u_short *)&smc->b2.data;
 	smc->b2.ptr = PTR_RCV | PTR_AUTOINCR | PTR_READ | SWAP(0x0002);
@@ -407,9 +574,30 @@ esrint(sc)
 	pktlen = SWAP(pktlen) - 6;
 	if (pktctlw & RFSW_ODDFRM)
 		pktlen++;
-	/* XXX copy directly from controller to mbuf */
+	if (len > 1530) {
+		printf("%s: Corrupted packet length-sts %04x bytcnt %04x len %04x bank %04x\n",
+		    sc->sc_dev.dv_xname, pktctlw, pktlen, len, smc->b2.bsr);
+		/* XXX ignore packet, or just truncate? */
+#if defined(ESDEBUG) && defined(DDB)
+		if ((smc->b2.bsr & 0x0300) != BSR_BANK2)
+			Debugger();
+#endif
+		smc->b2.bsr = BSR_BANK2;
+		smc->b2.mmucr = MMUCR_REMRLS_RX;
+		while (smc->b2.mmucr & MMUCR_BUSY)
+			;
+		++sc->sc_arpcom.ac_if.if_ierrors;
+#ifdef ESDEBUG
+		if (--sc->sc_smcbusy) {
+			printf("%s: esrintr busy on bad packet exit\n",
+			    sc->sc_dev.dv_xname);
+			panic("esrintr busy on exit");
+		}
+#endif
+		return;
+	}
 #ifdef USEPKTBUF
-#if 1
+#if 0
 	lbuf = (u_long *) pktbuf;
 	ldata = (u_long *)data;
 	cnt = (len - 4) / 4;
@@ -444,6 +632,7 @@ esrint(sc)
 	}
 #endif
 #else	/* USEPKTBUF */
+	/* XXX copy directly from controller to mbuf */
 #ifdef ESDEBUG
 	if (pktctlw & (RFSW_ALGNERR | RFSW_BADCRC | RFSW_TOOLNG | RFSW_TOOSHORT)) {
 		printf ("%s: Packet error %04x\n", sc->sc_dev.dv_xname, pktctlw);
@@ -514,11 +703,39 @@ esrint(sc)
 		;
 #endif
 	eh = mtod(top, struct ether_header *);
+#if NBPFILTER > 0
+	/*
+	 * Check if there's a BPF listener on this interface.  If so, hand off
+	 * the raw packet to bpf.
+	 */
+	if (sc->sc_arpcom.ac_if.if_bpf) {
+		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, top);
+
+		/*
+		 * Note that the interface cannot be in promiscuous mode if
+		 * there are no BPF listeners.  And if we are in promiscuous
+		 * mode, we have to check if this packet is really ours.
+		 */
+		if ((sc->sc_arpcom.ac_if.if_flags & IFF_PROMISC) &&
+		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
+		    bcmp(eh->ether_dhost, sc->sc_arpcom.ac_enaddr,
+			    sizeof(eh->ether_dhost)) != 0) {
+			m_freem(top);
+			return;
+		}
+	}
+#endif
 	top->m_pkthdr.len -= sizeof (*eh);
 	top->m_len -= sizeof (*eh);
 	top->m_data += sizeof (*eh);
 
 	ether_input(ifp, eh, top);
+#ifdef ESDEBUG
+	if (--sc->sc_smcbusy) {
+		printf("%s: esintr busy on exit\n", sc->sc_dev.dv_xname);
+		panic("esintr busy on exit");
+	}
+#endif
 }
 
 void
@@ -538,6 +755,8 @@ esstart(ifp)
 	struct mbuf *m0, *m;
 #ifdef USEPKTBUF
 	u_short pktbuf[ETHERMTU + 2];
+#else
+	u_short oddbyte, needbyte;
 #endif
 	u_short pktctlw, pktlen;
 	u_short *buf;
@@ -546,12 +765,25 @@ esstart(ifp)
 	volatile u_long *ldata;
 	short cnt;
 	int i;
+	u_char active_pnr;
 
 	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
 	    IFF_RUNNING)
 		return;
 
+#ifdef ESDEBUG
+	if (sc->sc_smcbusy++) {
+		printf("%s: esstart re-entered\n", sc->sc_dev.dv_xname);
+		panic("esstart re-entred");
+	}
+	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+		printf("%s: esstart BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		    smc->b2.bsr);
+		smc->b2.bsr = BSR_BANK2;
+	}
+#endif
 	for (;;) {
+int xxx;
 		/*
 		 * Sneak a peek at the next packet to get the length
 		 * and see if the SMC 91C90 can accept it.
@@ -566,10 +798,6 @@ if (esdebug && (m->m_next || m->m_len & 1))
 #endif
 		for (m0 = m, pktlen = 0; m0; m0 = m0->m_next)
 			pktlen += m0->m_len;
-#ifdef ESDEBUG
-if (esdebug)
-  printf("%s: esstart r1 %x len %d", sc->sc_dev.dv_xname, smc->b2.pnr, pktlen);
-#endif
 		pktctlw = 0;
 		pktlen += 4;
 		if (pktlen & 1)
@@ -582,21 +810,32 @@ if (esdebug)
 				break;
 		if (smc->b2.arr & ARR_FAILED) {
 			sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
-#ifdef ESDEBUG
-if (esdebug)
-  printf("-no xmit bufs r1 %x\n", smc->b2.pnr);
-#endif
 			sc->sc_intctl |= MSK_ALLOC;
 			break;
 		}
-		smc->b2.pnr = smc->b2.arr;
+		active_pnr = smc->b2.pnr = smc->b2.arr;
 
+#ifdef ESDEBUG
+		while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+			printf("%s: esstart+ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+			    smc->b2.bsr);
+		smc->b2.bsr = BSR_BANK2;
+		}
+#endif
 		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m);
+xxx = splhigh();
 		smc->b2.ptr = PTR_AUTOINCR;
 		(void) smc->b2.mmucr;
 		data = (u_short *)&smc->b2.data;
 		*data = SWAP(pktctlw);
 		*data = SWAP(pktlen);
+#ifdef ESDEBUG
+		while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+			printf("%s: esstart++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+			    smc->b2.bsr);
+			smc->b2.bsr = BSR_BANK2;
+		}
+#endif
 #ifdef USEPKTBUF
 		i = 0;
 		for (m0 = m; m; m = m->m_next) {
@@ -608,15 +847,11 @@ if (esdebug)
 			pktbuf[i/2] = (pktbuf[i/2] & 0xff00) | CTLB_ODD;
 		else
 			pktbuf[i/2] = 0;
+		pktlen -= 4;
 #ifdef ESDEBUG
-if (esdebug) {
-  int j;
-  printf("-sending len %d pktlen %d r1 %04x\n", i, pktlen, smc->b2.pnr);
-  for (j = 0; j < pktlen - 4; ++j)
-    printf("%02x%s", ((u_char *)pktbuf)[j], ((j & 31) == 31) ? "\n" : "");
-  if (j & 31)
-    printf("\n");
-}
+		if (pktlen > sizeof(pktbuf))
+			printf("%s: esstart packet longer than pktbuf\n",
+			    sc->sc_dev.dv_xname);
 #endif
 #if 0 /* doesn't quite work? */
 		lbuf = (u_long *)(pktbuf);
@@ -635,35 +870,37 @@ if (esdebug) {
 			*data = *buf++;
 #endif
 #else	/* USEPKTBUF */
-#ifdef ESDEBUG
-if (esdebug)
-  printf("-sending pktlen %d r1 %04x\n", pktlen, smc->b2.pnr);
-#endif
 		pktctlw = 0;
+		oddbyte = needbyte = 0;
 		for (m0 = m; m; m = m->m_next) {
 			buf = mtod(m, u_short *);
-#ifdef ESDEBUG
-if (esdebug) {
-  printf(" m->m_len %d\n", m->m_len);
-  for (i = 0; i < m->m_len; ++i)
-    printf("%02x%s", ((u_char *)buf)[i], ((i & 31) == 31) ? "\n" : "");
-  if (i & 31)
-    printf("\n");
-}
-#endif
 			cnt = m->m_len / 2;
+			if (needbyte) {
+				oddbyte |= *buf >> 8;
+				*data = oddbyte;
+			}
 			while (cnt--)
 				*data = *buf++;
 			if (m->m_len & 1)
 				pktctlw = (*buf & 0xff00) | CTLB_ODD;
+			if (m->m_len & 1 && m->m_next)
+				printf("%s: esstart odd byte count in mbuf\n",
+				    sc->sc_dev.dv_xname);
 		}
 		*data = pktctlw;
 #endif	/* USEPKTBUF */
-		smc->b2.mmucr = MMUCR_ENQ_TX;
+splx(xxx);
 #ifdef ESDEBUG
-if (esdebug)
-  printf("%s: esstart packet sent r1 %x\n", sc->sc_dev.dv_xname, smc->b2.pnr);
+		while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+			printf("%s: esstart+++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+			    smc->b2.bsr);
+			smc->b2.bsr = BSR_BANK2;
+		}
 #endif
+		smc->b2.mmucr = MMUCR_ENQ_TX;
+		if (smc->b2.pnr != active_pnr)
+			printf("%s: esstart - PNR changed %x->%x\n",
+			    sc->sc_dev.dv_xname, active_pnr, smc->b2.pnr);
 #if NBPFILTER > 0
 		if (sc->sc_arpcom.ac_if.if_bpf)
 			bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
@@ -673,6 +910,17 @@ if (esdebug)
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
 	}
 	smc->b2.msk = sc->sc_intctl;
+#ifdef ESDEBUG
+	while ((smc->b2.bsr & 0x0300) != BSR_BANK2) {
+		printf("%s: esstart++++ BSR not 2: %04x\n", sc->sc_dev.dv_xname,
+		    smc->b2.bsr);
+		smc->b2.bsr = BSR_BANK2;
+	}
+	if (--sc->sc_smcbusy) {
+		printf("%s: esstart busy on exit\n", sc->sc_dev.dv_xname);
+		panic("esstart busy on exit");
+	}
+#endif
 }
 
 int
@@ -755,6 +1003,22 @@ esioctl(ifp, command, data)
 		else
 			esdebug = sc->sc_debug = 0;
 #endif
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->sc_arpcom) :
+		    ether_delmulti(ifr, &sc->sc_arpcom);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			/* XXX */
+			error = 0;
+		}
 		break;
 
 	default:

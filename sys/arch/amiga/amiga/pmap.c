@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 1995/05/11 23:05:14 chopps Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 1995/08/18 15:27:36 chopps Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -341,7 +341,7 @@ pmap_bootstrap(firstaddr, loadaddr)
 	pmap_kernel()->pm_stab = Sysseg;
 	pmap_kernel()->pm_ptab = Sysmap;
 #ifdef M68040
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		pmap_kernel()->pm_rtab = Sysseg1;
 		pmap_ishift = SG4_SHIFT2;
 	} else
@@ -474,7 +474,7 @@ pmap_init(phys_start, phys_end)
 	npg = atop(phys_end - phys_start);
 #endif
 #ifdef M68040
-	if (cpu040)
+	if (mmutype == MMU_68040)
 		s = (vm_size_t)AMIGA_040STSIZE * 128 + 
 		    sizeof(struct pv_entry) * npg + npg;
 	else 
@@ -486,7 +486,7 @@ pmap_init(phys_start, phys_end)
 	addr = (vm_offset_t) kmem_alloc(kernel_map, s);
 	Segtabzero = (u_int *) addr;
 #ifdef M68040
-	if (cpu040)
+	if (mmutype == MMU_68040)
 		addr += AMIGA_040STSIZE * 128;
 	else
 #endif
@@ -721,7 +721,7 @@ pmap_pinit(pmap)
 	 * segment table will be allocated.
 	 */
 #ifdef M68040
-	if (cpu040)
+	if (mmutype == MMU_68040)
 		pmap->pm_rtab = Segtabzero;
 #endif
 	pmap->pm_stab = Segtabzero;
@@ -782,7 +782,7 @@ pmap_release(pmap)
 				 AMIGA_UPTSIZE);
 	if (pmap->pm_stab != Segtabzero)
 #ifdef M68040
-		if (cpu040) {
+		if (mmutype == MMU_68040) {
 			kmem_free(kernel_map, (vm_offset_t)pmap->pm_rtab,
 			    AMIGA_040RTSIZE);
 			kmem_free(kernel_map, (vm_offset_t)pmap->pm_stab,
@@ -960,7 +960,7 @@ printf ("pmap_remove: PA %08x index %d\n", pa, pa_index(pa));
 			}
 #endif
 #ifdef M68040
-			if (cpu040) {
+			if (mmutype == MMU_68040) {
 			/*
 			 * On the 68040, the PT page contains 64 page tables,
 			 * so we need to remove all the associated segment
@@ -1003,7 +1003,7 @@ printf ("pmap_remove: PA %08x index %d\n", pa, pa_index(pa));
 					       ptpmap->pm_stab);
 #endif
 #ifdef M68040
-					if (cpu040) {
+					if (mmutype == MMU_68040) {
 						kmem_free(kernel_map,
 							(vm_offset_t)ptpmap->pm_rtab,
 							AMIGA_040RTSIZE);
@@ -1169,7 +1169,7 @@ pmap_protect(pmap, sva, eva, prot)
 		 * Clear caches if making RO (see section
 		 * "7.3 Cache Coherency" in the manual).
 		 */
-		if (isro && cpu040) {
+		if (isro && mmutype == MMU_68040) {
 			vm_offset_t pa = pmap_pte_pa(pte);
 
 			DCFP(pa);
@@ -1385,7 +1385,7 @@ validate:
 	 * AMIGA pages in a MACH page.
 	 */
 #ifdef M68040
-	if (cpu040 && pmap == pmap_kernel() && va >= AMIGA_UPTBASE && 
+	if (mmutype == MMU_68040 && pmap == pmap_kernel() && va >= AMIGA_UPTBASE && 
 	    va < (AMIGA_UPTBASE + AMIGA_UPTMAXSIZE))
 		cacheable = FALSE;	/* don't cache user page tables */
 #endif
@@ -1396,7 +1396,7 @@ validate:
 	if (!checkpv && !cacheable)
 		npte |= PG_CI;
 #ifdef M68040
-	else if (cpu040 && (npte & PG_PROT) == PG_RW)
+	else if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW)
 		npte |= PG_CCB;		/* cache copyback */
 #endif
 	/*
@@ -1405,7 +1405,7 @@ validate:
 	 */
 	wired = ((*(int *)pte ^ npte) == PG_W);
 #ifdef M68040
-	if (cpu040 && !wired) {
+	if (mmutype == MMU_68040 && !wired) {
 		DCFP(pa);
 		ICPP(pa);
 	}
@@ -2002,7 +2002,7 @@ pmap_changebit(pa, bit, setem)
 			 * flushed (but only once).
 			 */
 #ifdef M68040
-			if (firstpage && cpu040 &&
+			if (firstpage && mmutype == MMU_68040 &&
 			    (bit == PG_RO && setem || (bit & PG_CMASK))) {
 				firstpage = FALSE;
 				DCFP(pa);
@@ -2043,7 +2043,7 @@ pmap_enter_ptpage(pmap, va)
 	 */
 	if (pmap->pm_stab == Segtabzero) {
 #ifdef M68040
-		if (cpu040) {
+		if (mmutype == MMU_68040) {
 			pmap->pm_rtab = (u_int *)
 				kmem_alloc(kernel_map, AMIGA_040RTSIZE);
 			pmap->pm_stab = (u_int *)
@@ -2086,7 +2086,7 @@ pmap_enter_ptpage(pmap, va)
 	 * for the page mapped by the first PT entry.
 	 */
 #ifdef M68040
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		ste = pmap_ste(pmap, va & ((SG4_MASK1 | SG4_MASK2) << 6));
 		va = trunc_page((vm_offset_t)pmap_pte(pmap,
 		    va & ((SG4_MASK1|SG4_MASK2) << 6)));
@@ -2190,7 +2190,7 @@ pmap_enter_ptpage(pmap, va)
 	 * release them.  We also avoid the overhead of vm_map_pageable.
 	 */
 #ifdef M68040
-	if (cpu040) {
+	if (mmutype == MMU_68040) {
 		/* 68040 has 64 page tables, so we have to map all 64 */
 		sg = (u_int *) ste;
 		sg_proto = (ptpa & SG_FRAME) | SG_RW | SG_V;

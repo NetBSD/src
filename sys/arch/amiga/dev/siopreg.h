@@ -1,4 +1,4 @@
-/*	$NetBSD: siopreg.h,v 1.6 1994/12/28 09:26:00 chopps Exp $	*/
+/*	$NetBSD: siopreg.h,v 1.7 1995/08/18 15:28:13 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,49 +45,49 @@
  */
 
 typedef struct {
-	volatile unsigned char	siop_sien;	/* rw: SCSI Interrupt Enable */
-	volatile unsigned char	siop_sdid;	/* rw: SCSI Destination ID */
-	volatile unsigned char	siop_scntl1;	/* rw: SCSI control reg 1 */
-	volatile unsigned char	siop_scntl0;	/* rw: SCSI control reg 0 */
-	volatile unsigned char	siop_socl;	/* rw: SCSI Output Control Latch */
-	volatile unsigned char	siop_sodl;	/* rw: SCSI Output Data Latch */
-	volatile unsigned char	siop_sxfer;	/* rw: SCSI Transfer reg */
-	volatile unsigned char	siop_scid;	/* rw: SCSI Chip ID reg */
-	volatile unsigned char	siop_sbcl;	/* ro: SCSI Bus Control Lines */
-	volatile unsigned char	siop_sbdl;	/* ro: SCSI Bus Data Lines */
-	volatile unsigned char	siop_sidl;	/* ro: SCSI Input Data Latch */
-	volatile unsigned char	siop_sfbr;	/* ro: SCSI First Byte Received */
-	volatile unsigned char	siop_sstat2;	/* ro: SCSI status reg 2 */
-	volatile unsigned char	siop_sstat1;	/* ro: SCSI status reg 1 */
-	volatile unsigned char	siop_sstat0;	/* ro: SCSI status reg 0 */
-	volatile unsigned char	siop_dstat;	/* ro: DMA status */
-	volatile unsigned long	siop_dsa;	/* rw: Data Structure Address */
-	volatile unsigned char	siop_ctest3;	/* ro: Chip test register 3 */
-	volatile unsigned char	siop_ctest2;	/* ro: Chip test register 2 */
-	volatile unsigned char	siop_ctest1;	/* ro: Chip test register 1 */
-	volatile unsigned char	siop_ctest0;	/* ro: Chip test register 0 */
-	volatile unsigned char	siop_ctest7;	/* rw: Chip test register 7 */
-	volatile unsigned char	siop_ctest6;	/* rw: Chip test register 6 */
-	volatile unsigned char	siop_ctest5;	/* rw: Chip test register 5 */
-	volatile unsigned char	siop_ctest4;	/* rw: Chip test register 4 */
-	volatile unsigned long	siop_temp;	/* rw: Temporary Stack reg */
-	volatile unsigned char	siop_lcrc;	/* rw: LCRC value */
-	volatile unsigned char	siop_ctest8;	/* rw: Chip test register 8 */
-	volatile unsigned char	siop_istat;	/* rw: Interrupt Status reg */
-	volatile unsigned char	siop_dfifo;	/* rw: DMA FIFO */
-	volatile unsigned char	siop_dcmd;	/* rw: DMA Command Register */
-	volatile unsigned char	siop_dbc2;	/* rw: DMA Byte Counter reg */
-	volatile unsigned char	siop_dbc1;
-	volatile unsigned char	siop_dbc0;
-	volatile unsigned long	siop_dnad;	/* rw: DMA Next Address */
-	volatile unsigned long	siop_dsp;	/* rw: DMA SCRIPTS Pointer reg */
-	volatile unsigned long	siop_dsps;	/* rw: DMA SCRIPTS Pointer Save reg */
-	volatile unsigned long	siop_scratch;	/* rw: Scratch Register */
-	volatile unsigned char	siop_dcntl;	/* rw: DMA Control reg */
-	volatile unsigned char	siop_dwt;	/* rw: DMA Watchdog Timer */
-	volatile unsigned char	siop_dien;	/* rw: DMA Interrupt Enable */
-	volatile unsigned char	siop_dmode;	/* rw: DMA Mode reg */
-	volatile unsigned long	siop_adder;
+/*00*/	volatile unsigned char	siop_sien;	/* rw: SCSI Interrupt Enable */
+/*01*/	volatile unsigned char	siop_sdid;	/* rw: SCSI Destination ID */
+/*02*/	volatile unsigned char	siop_scntl1;	/* rw: SCSI control reg 1 */
+/*03*/	volatile unsigned char	siop_scntl0;	/* rw: SCSI control reg 0 */
+/*04*/	volatile unsigned char	siop_socl;	/* rw: SCSI Output Control Latch */
+/*05*/	volatile unsigned char	siop_sodl;	/* rw: SCSI Output Data Latch */
+/*06*/	volatile unsigned char	siop_sxfer;	/* rw: SCSI Transfer reg */
+/*07*/	volatile unsigned char	siop_scid;	/* rw: SCSI Chip ID reg */
+/*08*/	volatile unsigned char	siop_sbcl;	/* ro: SCSI Bus Control Lines */
+/*09*/	volatile unsigned char	siop_sbdl;	/* ro: SCSI Bus Data Lines */
+/*0a*/	volatile unsigned char	siop_sidl;	/* ro: SCSI Input Data Latch */
+/*0b*/	volatile unsigned char	siop_sfbr;	/* ro: SCSI First Byte Received */
+/*0c*/	volatile unsigned char	siop_sstat2;	/* ro: SCSI status reg 2 */
+/*0d*/	volatile unsigned char	siop_sstat1;	/* ro: SCSI status reg 1 */
+/*0e*/	volatile unsigned char	siop_sstat0;	/* ro: SCSI status reg 0 */
+/*0f*/	volatile unsigned char	siop_dstat;	/* ro: DMA status */
+/*10*/	volatile unsigned long	siop_dsa;	/* rw: Data Structure Address */
+/*14*/	volatile unsigned char	siop_ctest3;	/* ro: Chip test register 3 */
+/*15*/	volatile unsigned char	siop_ctest2;	/* ro: Chip test register 2 */
+/*16*/	volatile unsigned char	siop_ctest1;	/* ro: Chip test register 1 */
+/*17*/	volatile unsigned char	siop_ctest0;	/* ro: Chip test register 0 */
+/*18*/	volatile unsigned char	siop_ctest7;	/* rw: Chip test register 7 */
+/*19*/	volatile unsigned char	siop_ctest6;	/* rw: Chip test register 6 */
+/*1a*/	volatile unsigned char	siop_ctest5;	/* rw: Chip test register 5 */
+/*1b*/	volatile unsigned char	siop_ctest4;	/* rw: Chip test register 4 */
+/*1c*/	volatile unsigned long	siop_temp;	/* rw: Temporary Stack reg */
+/*20*/	volatile unsigned char	siop_lcrc;	/* rw: LCRC value */
+/*21*/	volatile unsigned char	siop_ctest8;	/* rw: Chip test register 8 */
+/*22*/	volatile unsigned char	siop_istat;	/* rw: Interrupt Status reg */
+/*23*/	volatile unsigned char	siop_dfifo;	/* rw: DMA FIFO */
+/*24*/	volatile unsigned char	siop_dcmd;	/* rw: DMA Command Register */
+/*25*/	volatile unsigned char	siop_dbc2;	/* rw: DMA Byte Counter reg */
+/*26*/	volatile unsigned char	siop_dbc1;
+/*27*/	volatile unsigned char	siop_dbc0;
+/*28*/	volatile unsigned long	siop_dnad;	/* rw: DMA Next Address */
+/*2c*/	volatile unsigned long	siop_dsp;	/* rw: DMA SCRIPTS Pointer reg */
+/*30*/	volatile unsigned long	siop_dsps;	/* rw: DMA SCRIPTS Pointer Save reg */
+/*34*/	volatile unsigned long	siop_scratch;	/* rw: Scratch Register */
+/*38*/	volatile unsigned char	siop_dcntl;	/* rw: DMA Control reg */
+/*39*/	volatile unsigned char	siop_dwt;	/* rw: DMA Watchdog Timer */
+/*3a*/	volatile unsigned char	siop_dien;	/* rw: DMA Interrupt Enable */
+/*3b*/	volatile unsigned char	siop_dmode;	/* rw: DMA Mode reg */
+/*3c*/	volatile unsigned long	siop_adder;
 
 } siop_regmap_t;
 typedef volatile siop_regmap_t *siop_regmap_p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.11 1995/05/07 15:37:10 chopps Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.12 1995/08/18 15:28:00 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -103,7 +103,8 @@ ivscmatch(pdp, cdp, auxp)
 	 * Check manufacturer and product id.
 	 */
 	if (zap->manid != 2112 ||	/* If manufacturer is IVS */
-	    (zap->prodid != 52 &&	/*   product = Trumpcard */
+	    (zap->prodid != 48 &&	/*   product = Trumpcard 500 */
+	    zap->prodid != 52 &&	/*   product = Trumpcard */
 	    zap->prodid != 243))	/*   product = Vector SCSI */
 		return(0);		/* didn't match */
 	return(1);

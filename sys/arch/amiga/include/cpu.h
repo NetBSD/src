@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 1995/06/28 02:55:31 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 1995/08/18 15:28:23 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,7 +134,7 @@ int	want_resched;		/* resched() was called */
 #define MMU_68040	-2	/* 68040 on-chip subsubset */
 
 #ifdef _KERNEL
-int machineid, mmutype, cpu040, fputype;
+int machineid, mmutype, fputype;
 #endif
 
 /*

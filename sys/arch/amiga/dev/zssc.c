@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.10 1995/02/12 19:19:33 chopps Exp $	*/
+/*	$NetBSD: zssc.c,v 1.11 1995/08/18 15:28:20 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -107,7 +107,7 @@ zsscattach(pdp, dp, auxp)
 	printf("\n");
 
 	zap = auxp;
-	
+
 	sc = (struct siop_softc *)dp;
 	sc->sc_siopp = rp = zap->va + 0x4000;
 
@@ -118,15 +118,14 @@ zsscattach(pdp, dp, auxp)
 	sc->sc_clock_freq = 0xc0;
 
 	alloc_sicallback();
-	siopinitialize(sc);
 
 	sc->sc_link.adapter_softc = sc;
 	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &zssc_scsiswitch;
 	sc->sc_link.device = &zssc_scsidev;
-	sc->sc_link.openings = 1;
-	TAILQ_INIT(&sc->sc_xslist);
+	sc->sc_link.openings = 2;
 
+	siopinitialize(sc);
 
 	sc->sc_isr.isr_intr = zssc_dmaintr;
 	sc->sc_isr.isr_arg = sc;
@@ -168,19 +167,26 @@ zssc_dmaintr(sc)
 	siop_regmap_p rp;
 	int istat;
 
+	if (sc->sc_flags & SIOP_INTSOFF)
+		return (0);	/* interrupts are not active */
 	rp = sc->sc_siopp;
 	istat = rp->siop_istat;
 	if ((istat & (SIOP_ISTAT_SIP | SIOP_ISTAT_DIP)) == 0)
 		return(0);
-	if ((rp->siop_sien | rp->siop_dien) == 0)
-		return(0);	/* no interrupts enabled */
 	/*
 	 * save interrupt status, DMA status, and SCSI status 0
 	 * (may need to deal with stacked interrupts?)
 	 */
+	sc->sc_sstat0 = rp->siop_sstat0;
 	sc->sc_istat = istat;
 	sc->sc_dstat = rp->siop_dstat;
-	sc->sc_sstat0 = rp->siop_sstat0;
+	/*
+	 * disable interrupts until the callback can process this
+	 * interrupt.
+	 */
+	rp->siop_sien = 0;
+	rp->siop_dien = 0;
+	sc->sc_flags |= SIOP_INTDEFER | SIOP_INTSOFF;
 	add_sicallback (siopintr, sc, NULL);
 	return(1);
 }
