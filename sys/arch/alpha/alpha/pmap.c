@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.20 1997/09/02 13:18:28 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.21 1997/09/02 18:59:02 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1996 Carnegie Mellon University
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 1997/09/02 13:18:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 1997/09/02 18:59:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2334,29 +2334,24 @@ void pmap_collect(p)
  *		processor, and returns a hardware map description.
  */
 void
-pmap_activate(pmap, hwpcb, cpu)
-	register pmap_t	pmap;
-	struct alpha_pcb *hwpcb;
-	int cpu;
+pmap_activate(p)
+	struct proc *p;
 {
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct alpha_pcb *hwpcb = &p->p_addr->u_pcb.pcb_hw;
+	int cpu = 0;	/* XXX for now */
 
-        if (DOPDB(PDB_FOLLOW|PDB_ACTIVATE))
-                printf("pmap_activate(%p, %p, %d)\n", pmap, hwpcb, cpu);
+	if (DOPDB(PDB_FOLLOW|PDB_ACTIVATE))
+		printf("pmap_activate(%p, %p, %d)\n", pmap, hwpcb, cpu);
 
-#if 0
-	PMAP_ACTIVATE(my_pmap, th, my_cpu);
-#else
-        if (DOVPDB(PDB_ACTIVATE))
-                printf("pmap_activate: old pid = %d\n", pmap->pid);
-        if (pmap->pid < 0) pmap_tlbpid_assign(pmap);
-	hwpcb->apcb_asn = pmap->pid;
-        hwpcb->apcb_ptbr = pmap->dirpfn;
-	if (pmap != kernel_pmap)
-		pmap->cpus_using = TRUE;
-        if (DOVPDB(PDB_ACTIVATE))
-                printf("pmap_activate: new pid = %d, new ptbr = 0x%lx\n",
+	if (DOVPDB(PDB_ACTIVATE))
+		printf("pmap_activate: old pid = %d\n", pmap->pid);
+
+	PMAP_ACTIVATE(pmap, hwpcb, cpu);
+
+	if (DOVPDB(PDB_ACTIVATE))
+		printf("pmap_activate: new pid = %d, new ptbr = 0x%lx\n",
 		    pmap->pid, pmap->dirpfn);
-#endif
 }
 
 /*
@@ -2367,19 +2362,21 @@ pmap_activate(pmap, hwpcb, cpu)
  *		in pmap.h)
  */
 void
-pmap_deactivate(pmap, hwpcb, cpu)
-	register pmap_t	pmap;
-	struct alpha_pcb *hwpcb;
-	int cpu;
+pmap_deactivate(p)
+	struct proc *p;
 {
-        if (DOPDB(PDB_FOLLOW|PDB_DEACTIVATE))
-                printf("pmap_deactivate(%p, %p, %d)\n", pmap, hwpcb, cpu);
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+	struct alpha_pcb *hwpcb = &p->p_addr->u_pcb.pcb_hw;
+	int cpu = 0;	/* XXX for now */
+
+	if (DOPDB(PDB_FOLLOW|PDB_DEACTIVATE))
+		printf("pmap_deactivate(%p, %p, %d)\n", pmap, hwpcb, cpu);
 
 #if 0
 	PMAP_DEACTIVATE(pmap, th, which_cpu);
 #else
-        if (DOVPDB(PDB_DEACTIVATE))
-                printf("pmap_deactivate: pid = %d, ptbr = 0x%lx\n",
+	if (DOVPDB(PDB_DEACTIVATE))
+		printf("pmap_deactivate: pid = %d, ptbr = 0x%lx\n",
 		    pmap->pid, pmap->dirpfn);
 	pmap->cpus_using = FALSE;
 #endif
