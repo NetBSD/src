@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.8 1998/10/01 21:16:06 matthias Exp $	*/
+/*	$NetBSD: signal.h,v 1.9 2003/04/28 23:16:21 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -38,10 +38,11 @@
 #ifndef _MACHINE_SIGNAL_H_
 #define _MACHINE_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 typedef int sig_atomic_t;
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 /*
  * Get the "code" values
  */
@@ -79,5 +80,5 @@ struct sigcontext {
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 #endif	/* !_MACHINE_SIGNAL_H_ */

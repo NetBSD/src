@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2002/06/06 19:48:09 fredette Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2003/04/28 23:16:18 bjh21 Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -25,7 +25,9 @@
  * 	Utah $Hdr: param.h 1.18 94/12/16$
  */
 
-#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
+#include <sys/featuretest.h>
+
+#if defined(_NETBSD_SOURCE)
 #include <machine/cpu.h>
 #endif
 

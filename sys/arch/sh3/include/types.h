@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.14 2002/12/16 02:15:58 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.15 2003/04/28 23:16:23 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,6 +39,7 @@
 #define	_SH3_TYPES_H_
 
 #include <sys/cdefs.h>
+#include <sys/featuretest.h>
 #include <sh3/int_types.h>
 
 #if defined(_KERNEL)
@@ -48,7 +49,7 @@ typedef struct label_t {
 #endif
 
 /* NB: This should probably be if defined(_KERNEL) */
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
 

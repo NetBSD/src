@@ -1,4 +1,4 @@
-/*	$NetBSD: grp.h,v 1.16 2002/01/27 07:00:43 lukem Exp $	*/
+/*	$NetBSD: grp.h,v 1.17 2003/04/28 23:16:13 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@
 #include <sys/featuretest.h>
 #include <sys/types.h>
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	_PATH_GROUP		"/etc/group"
 #endif
 
@@ -61,12 +61,12 @@ struct group {
 __BEGIN_DECLS
 struct group	*getgrgid __P((gid_t));
 struct group	*getgrnam __P((const char *));
-#if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
+#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 struct group	*getgrent __P((void));
 void		 setgrent __P((void));
 void		 endgrent __P((void));
 #endif
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 void		 setgrfile __P((const char *));
 int		 setgroupent __P((int));
 const char	*group_from_gid __P((gid_t, int));

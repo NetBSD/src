@@ -1,4 +1,4 @@
-/*	$NetBSD: utsname.h,v 1.9 1998/11/09 13:00:41 kleink Exp $	*/
+/*	$NetBSD: utsname.h,v 1.10 2003/04/28 23:16:32 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -45,7 +45,7 @@
 
 #define	_SYS_NMLN	256
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	SYS_NMLN	_SYS_NMLN
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.15 2001/10/28 05:12:31 kleink Exp $	*/
+/*	$NetBSD: glob.h,v 1.16 2003/04/28 23:16:13 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,7 +85,7 @@ typedef struct {
 #define	GLOB_NOMATCH	(-3)	/* No match, and GLOB_NOCHECK was not set. */
 #define	GLOB_NOSYS	(-4)	/* Implementation does not support function. */
 
-#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #define	GLOB_ALTDIRFUNC	0x0040	/* Use alternately specified directory funcs. */
 #define	GLOB_BRACE	0x0080	/* Expand braces ala csh. */
 #define	GLOB_MAGCHAR	0x0100	/* Pattern had globbing characters. */

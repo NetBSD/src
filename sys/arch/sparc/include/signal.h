@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.10 2003/01/18 06:44:57 thorpej Exp $ */
+/*	$NetBSD: signal.h,v 1.11 2003/04/28 23:16:24 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,12 +47,13 @@
 #ifndef	_SPARC_SIGNAL_H_
 #define _SPARC_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 #ifndef _LOCORE
 typedef int sig_atomic_t;
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #ifndef _LOCORE
 
 /*
@@ -168,5 +169,5 @@ do {									\
 #define	FPE_FLTOPERR_TRAP	0xd0	/* operand error */
 #define	FPE_FLTOVF_TRAP		0xd4	/* overflow */
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 #endif	/* !_SPARC_SIGNAL_H_ */

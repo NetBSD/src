@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.19 2000/02/03 16:16:07 kleink Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.20 2003/04/28 23:16:20 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,9 +59,9 @@ typedef _BSD_VA_LIST_	va_list;
 				   sizeof(type) != __va_size(type) ?	\
 				   sizeof(type) : __va_size(type))))
 
-#if !defined(_ANSI_SOURCE) && \
-    (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE) || \
-     defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L)
+#if !defined(_ANSI_SOURCE) &&						\
+    (defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L ||	\
+     defined(_NETBSD_SOURCE))
 #define	va_copy(dest, src) \
 	((dest) = (src))
 #endif

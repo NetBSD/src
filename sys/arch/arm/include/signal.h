@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 2003/01/17 22:28:48 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.3 2003/04/28 23:16:18 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -46,12 +46,13 @@
 #ifndef _ARM32_SIGNAL_H_
 #define _ARM32_SIGNAL_H_
 
+#include <sys/featuretest.h>
+
 #ifndef _LOCORE
 typedef int sig_atomic_t;
 #endif
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
-    !defined(_XOPEN_SOURCE)
+#if defined(_NETBSD_SOURCE)
 #ifndef _LOCORE
 /*
  * Information pushed on stack when a signal is delivered.
@@ -174,7 +175,7 @@ do {									\
 #define SIG_CODE_SEGV_ADDR_MASK	SIG_CODE_BUS_ADDR_MASK
 #define SIG_CODE_SEGV_TYPE_MASK	SIG_CODE_BUS_TYPE_MASK
 
-#endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 #endif	/* !_ARM_SIGNAL_H_ */
 
 /* End of signal.h */
