@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.11 1998/08/22 14:38:40 minoura Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.11.6.1 1999/01/31 05:40:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,7 +45,6 @@
 #include <sys/proc.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
-#include <sys/mtio.h>
 #include <sys/buf.h>
 #include <sys/trace.h>
 #include <sys/mount.h>

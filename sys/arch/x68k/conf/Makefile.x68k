@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.29 1998/10/15 18:37:17 drochner Exp $
+#	$NetBSD: Makefile.x68k,v 1.29.6.1 1999/01/31 05:40:36 minoura Exp $
 
 # Makefile for NetBSD
 #
@@ -44,14 +44,14 @@ X68K=	$S/arch/x68k
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL \
-		-Dmc68020 -Dx68k
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dx68k
 .if empty(IDENT:M-DM68060)
 CMACHFLAGS=	-m68030
 .else
 CMACHFLAGS=	-m68060
 .endif
-CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes
+CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes \
+		-Wpointer-arith
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
 .endif

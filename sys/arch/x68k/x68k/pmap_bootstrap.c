@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.13.6.1 1998/12/23 16:47:35 minoura Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.13.6.2 1999/01/31 05:40:38 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -60,11 +60,6 @@ extern int maxmem, physmem;
 extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail, virtual_end;
 extern psize_t mem_size;
-#if !defined(MACHINE_NEW_NONCONTIG)
-extern int avail_range;
-extern paddr_t avail_next;
-extern psize_t avail_remaining;
-#endif
 extern int protection_codes[];
 #ifdef M68K_MMU_HP
 extern int pmap_aliasmask;
@@ -456,9 +451,6 @@ pmap_bootstrap(nextpa, firstpa)
 		m68k_ptob(RELOC(maxmem, int))
 			/* XXX allow for msgbuf */
 			- m68k_round_page(MSGBUFSIZE);
-#if !defined(MACHINE_NEW_NONCONTIG)
-	RELOC(avail_next, paddr_t) = nextpa;
-#endif
 #ifdef MACHINE_NONCONTIG
 	{
 		int i;
@@ -487,16 +479,7 @@ pmap_bootstrap(nextpa, firstpa)
 		}
 		av_rem = m68k_trunc_page(av_rem);
 		RELOC(avail_end, paddr_t) = nextpa + av_rem;
-#if !defined(MACHINE_NEW_NONCONTIG)
-		RELOC(avail_range, int) = av_rng;
-		RELOC(avail_remaining, vsize_t) = m68k_btop(av_rem);
-#endif
 	}
-#else
-#if !defined(MACHINE_NEW_NONCONTIG)
-	RELOC(avail_remaining, psize_t) = 0;
-	RELOC(avail_range, int) = -1;
-#endif
 #endif
 	RELOC(mem_size, psize_t) = m68k_ptob(RELOC(physmem, int));
 	RELOC(virtual_avail, vaddr_t) =

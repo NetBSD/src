@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45.4.2 1999/01/30 15:07:42 minoura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45.4.3 1999/01/31 05:40:38 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -135,9 +135,7 @@ vm_map_t phys_map = NULL;
 vm_map_t buffer_map;
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
 extern paddr_t avail_start;
-#endif
 
 #ifdef MACHINE_NONCONTIG
 extern int numranges;
@@ -201,9 +199,7 @@ void	intrhand __P((int));
 void
 consinit()
 {
-#if defined(MACHINE_NEW_NONCONTIG)
 	int i;
-#endif
 
 	/*
 	 * Set cpuspeed immediately since cninit() called routines
@@ -235,7 +231,6 @@ consinit()
 		Debugger();
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	/*
 	 * Tell the VM system about available physical memory.
 	 */
@@ -266,7 +261,6 @@ consinit()
 			atop(avail_start), atop(avail_end));
 #endif
 #endif
-#endif	/* MACHINE_NEW_NONCONTIG */
 }
 
 /*
@@ -522,10 +516,10 @@ again:
 	 * Finally, allocate mbuf cluster submap.
 	 */
 #if defined(UVM)
-	mb_map = uvm_km_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
+	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_MBUF_SIZE, FALSE, FALSE, NULL);
 #else
-	mb_map = kmem_suballoc(kernel_map, (vaddr_t *)&mbutl, &maxaddr,
+	mb_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 #endif
 	/*

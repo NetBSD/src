@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.7.6.2 1998/12/27 15:16:55 minoura Exp $
+#	$NetBSD: INSTALL,v 1.7.6.3 1999/01/31 05:40:36 minoura Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -29,7 +29,6 @@ options 	M68060
 
 options 	UVM			# new virtual memory system
 #options 	MACHINE_NONCONTIG	# support for noncontiguous memory
-options 	MACHINE_NEW_NONCONTIG	# new i/f for noncontig memory support
 options 	FPU_EMULATE		# software fpu emulation for MC68030
 options 	FPSP			# floating point emulation for MC68040
 options 	M060SP			# int/fp emulation for MC68060

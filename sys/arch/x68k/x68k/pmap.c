@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 1998/10/11 23:21:03 chuck Exp $	*/
+/*	$NetBSD: pmap.c,v 1.22.6.1 1999/01/31 05:40:38 minoura Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -277,19 +277,10 @@ struct vm_map	st_map_store, pt_map_store;
 #endif
 
 paddr_t    	avail_start;	/* PA of first available physical page */
-#if !defined(MACHINE_NEW_NONCONTIG)
-paddr_t		avail_next;	/* Next available physical page	*/
-int		avail_remaining;/* Number of physical free pages left */
-int		avail_range;	/* Range avail_next is in */
-#endif
 paddr_t		avail_end;	/* PA of last available physical page */
 psize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-paddr_t		vm_first_phys;	/* PA of first managed page */
-paddr_t		vm_last_phys;	/* PA just past last managed page */
-#endif
 int		page_cnt;	/* number of pages managed by VM system */
 
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
@@ -317,22 +308,9 @@ void	pmap_collect_pv __P((void));
 int	pmap_mapmulti __P((pmap_t, vaddr_t));
 #endif /* COMPAT_HPUX */
 
-#if defined(MACHINE_NEW_NONCONTIG)
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized &&			\
 				 vm_physseg_find(atop((pa)), NULL) != -1)
 
-#else	/* not MACNINE_NEW_NONCONTIG */
-
-#ifdef MACHINE_NONCONTIG
-#define pmap_valid_page(pa)	(pmap_initialized && pmap_page_index(pa) >= 0)
-int pmap_page_index __P((paddr_t pa));
-#define	PAGE_IS_MANAGED(pa)	(pmap_valid_page(pa))
-#else
-#define	PAGE_IS_MANAGED(pa)	((pa) >= vm_first_phys && (pa) < vm_last_phys)
-#endif
-#endif
-
-#if defined(MACHINE_NEW_NONCONTIG)
 #define	pa_to_pvh(pa)							\
 ({									\
 	int bank_, pg_;							\
@@ -348,10 +326,6 @@ int pmap_page_index __P((paddr_t pa));
 	bank_ = vm_physseg_find(atop((pa)), &pg_);			\
 	&vm_physmem[bank_].pmseg.attrs[pg_];				\
 })
-#else
-#define	pa_to_pvh(pa)			(&pv_table[pmap_page_index(pa)])
-#define	pa_to_attribute(pa)		(&pmap_attributes[pmap_page_index(pa)])
-#endif
 
 /*
  * Internal routines
@@ -373,45 +347,7 @@ void pmap_check_wiring	__P((char *, vaddr_t));
 #define	PRM_TFLUSH	1
 #define	PRM_CFLUSH	2
 
-#if !defined(MACHINE_NEW_NONCONTIG)
-/*
- * Bootstrap memory allocator. This function allows for early dynamic
- * memory allocation until the virtual memory system has been bootstrapped.
- * After that point, either kmem_alloc or malloc should be used. This
- * function works by stealing pages from the (to be) managed page pool,
- * stealing virtual address space, then mapping the pages and zeroing them.
- *
- * It should be used from pmap_bootstrap till vm_page_startup, afterwards
- * it cannot be used, and will generate a panic if tried. Note that this
- * memory will never be freed, and in essence it is wired down.
- */
-void *
-pmap_bootstrap_alloc(size)
-	int size;
-{
-	extern boolean_t vm_page_startup_initialized;
-	vaddr_t val;
-	
-	if (vm_page_startup_initialized)
-		panic("pmap_bootstrap_alloc: called after startup initialized");
-	size = round_page(size);
-	val = virtual_avail;
 
-	virtual_avail = pmap_map(virtual_avail, avail_start,
-		avail_start + size, VM_PROT_READ|VM_PROT_WRITE);
-	avail_start += size;
-#ifdef MACHINE_NONCONTIG
-	avail_remaining -= m68k_btop(size);
-	/* XXX hope this doesn't pop it into the next range: */
-	avail_next += size;
-#endif
-	bzero ((caddr_t) val, size);
-	return ((void *) val);
-}
-#endif
-
-
-#if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
 /*
  *	Routine:	pmap_virtual_space
  *
@@ -428,7 +364,6 @@ pmap_virtual_space(vstartp, vendp)
 	*vstartp = virtual_avail;
 	*vendp = virtual_end;
 }
-#endif
 
 /*
  *	Routine:	pmap_init
@@ -439,30 +374,19 @@ pmap_virtual_space(vstartp, vendp)
  *		system needs to map virtual memory.
  */
 void
-#if defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
 pmap_init()
-#else
-pmap_init(phys_start, phys_end)
-	paddr_t	phys_start, phys_end;
-#endif
 {
 	vaddr_t		addr, addr2;
 	vsize_t		s;
 	int		rv;
 	int		npages;
-#if defined(MACHINE_NEW_NONCONTIG)
 	struct pv_entry	*pv;
 	char		*attr;
 	int		bank;
-#endif
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-		printf("pmap_init(%lx, %lx)\n", phys_start, phys_end);
-#else
 		printf("pmap_init()\n");
-#endif
 #endif
 	/*
 	 * Now that kernel map has been allocated, we can mark as
@@ -524,16 +448,8 @@ bogons:
 	 * Allocate memory for random pmap data structures.  Includes the
 	 * initial segment table, pv_head_table and pmap_attributes.
 	 */
-#if defined(MACHINE_NEW_NONCONTIG)
 	for (page_cnt = 0, bank = 0; bank < vm_nphysseg; bank++)
 		page_cnt += vm_physmem[bank].end - vm_physmem[bank].start;
-#else /* not MACHINE_NEW_NONCONTIG */
-#ifdef MACHINE_NONCONTIG
-	page_cnt = atop(high[numranges - 1] - 1);
-#else
-	page_cnt = atop(phys_end - phys_start);
-#endif
-#endif
 	s = X68K_STSIZE;				/* Segtabzero */
 	s += page_cnt * sizeof(struct pv_entry);	/* pv table */
 	s += page_cnt * sizeof(char);			/* attribute table */
@@ -562,7 +478,6 @@ bogons:
 		       pv_table, pmap_attributes);
 #endif
 
-#if defined(MACHINE_NEW_NONCONTIG)
 	/*
 	 * Now that the pv and attribute tables have been allocated,
 	 * assign them to the memory segments.
@@ -576,7 +491,6 @@ bogons:
 		pv += npages;
 		attr += npages;
 	}
-#endif
 
 	/*
 	 * Allocate physical memory for kernel PT pages and their management.
@@ -711,10 +625,6 @@ bogons:
 	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
-#if !defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-	vm_first_phys = phys_start;
-	vm_last_phys = phys_end;
-#endif
 	pmap_initialized = TRUE;
 }
 
@@ -1833,13 +1743,8 @@ void
 pmap_collect(pmap)
 	pmap_t		pmap;
 {
-#if defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-	return;
-#else /* !defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG) */
 	int s;
-#if defined(MACHINE_NEW_NONCONTIG)
 	int bank;
-#endif
 
 	if (pmap != pmap_kernel())
 		return;
@@ -1852,23 +1757,17 @@ pmap_collect(pmap)
 	kpt_stats.collectscans++;
 #endif
 	s = splimp();
-#if defined(MACHINE_NEW_NONCONTIG)
 	for (bank = 0; bank < vm_nphysseg; bank++)
 		pmap_collect1(pmap, ptoa(vm_physmem[bank].start),
 		    ptoa(vm_physmem[bank].end));
-#else
-	pmap_collect1(pmap, vm_first_phys, vm_last_phys);
-#endif
 	splx(s);
 
 #ifdef notyet
 	/* Go compact and garbage-collect the pv_table. */
 	pmap_collect_pv();
 #endif
-#endif /* !defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG) */
 }
 
-#if !defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG)
 /*
  *	Routine:	pmap_collect1()
  *
@@ -1978,7 +1877,6 @@ ok:
 #endif
 	}
 }
-#endif /* !defined(MACHINE_NONCONTIG) || defined(MACHINE_NEW_NONCONTIG) */
 
 /*
  *	pmap_zero_page zeros the specified (machine independent)
@@ -2996,75 +2894,5 @@ pmap_check_wiring(str, va)
 	if (entry->wired_count != count)
 		printf("*%s*: %lx: w%d/a%d\n",
 		       str, va, entry->wired_count, count);
-}
-#endif
-
-#if defined(MACHINE_NONCONTIG) && !defined(MACHINE_NEW_NONCONTIG)
-/*
- * LAK: These functions are from NetBSD/i386 and are used for
- *  the non-contiguous memory machines.
- *  See the functions in sys/vm that #ifdef MACHINE_NONCONTIG.
- */
-
-/*
- * pmap_free_pages()
- *
- *   Returns the number of free physical pages left.
- */
-unsigned int
-pmap_free_pages()
-{
-	return avail_remaining;
-}
-
-/*
- * pmap_next_page()
- *
- *   Stores in *addrp the next available page, skipping the hole between
- *   bank A and bank B.
- */
-int
-pmap_next_page(addrp)
-	vaddr_t *addrp;
-{
-	if (avail_next == high[avail_range]) {
-		avail_range++;
-		if (avail_range >= numranges) {
-			return FALSE;
-		}
-		avail_next = low[avail_range];
-	}
-
-	*addrp = avail_next;
-	avail_next += NBPG;
-	avail_remaining--;
-	return TRUE;
-}
-
-/*
- * pmap_page_index()
- *
- *   Given a physical address, return the page number that it is in
- *   the block of free memory.
- */
-int
-pmap_page_index(pa)
-	paddr_t pa;
-{
-	/*
-	 * XXX LAK: This routine is called quite a bit.  We should go
-	 *  back and try to optimize it a bit.
-	 */
-	int	i, index;
-
-	index = 0;
-	for (i = 0; i < numranges; i++) {
-		if (pa >= low[i] && pa < high[i]) {
-			index += m68k_btop (pa - low[i]);
-			return index;
-		}
-		index += m68k_btop (high[i] - low[i]);
-	}
-	return -1;
 }
 #endif
