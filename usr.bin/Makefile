@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142 2004/11/23 07:35:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.143 2005/01/02 17:55:48 thorpej Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@ SUBDIR= apply apropos asa at audio awk banner basename biff \
 	bzip2 bzip2recover cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp col colcrt colrm \
 	column comm compress crontab crunch ctags cut \
-	db dirname du eject elf2aout elf2ecoff env error expand \
+	db dirname du eject elf2aout elf2ecoff env error expand extattr \
 	false fdformat fgen file find finger fmt fold fpr from \
 	fsplit fstat ftp gcore gencat getconf getent getopt gprof gzip \
 	head hexdump iconv id indent innetgr ipcrm ipcs join jot \
