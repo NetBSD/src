@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.39 2003/11/03 20:30:14 petrov Exp $	*/
+/*	$NetBSD: hme.c,v 1.40 2004/01/21 00:47:37 abs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.39 2003/11/03 20:30:14 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.40 2004/01/21 00:47:37 abs Exp $");
 
 /* #define HMEDEBUG */
 
@@ -996,6 +996,10 @@ hme_intr(v)
 
 	if ((status & HME_SEB_STAT_RXTOHOST) != 0)
 		r |= hme_rint(sc);
+
+#if NRND > 0
+	rnd_add_uint32(&sc->rnd_source, status);
+#endif
 
 	return (r);
 }
