@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.162 2002/02/05 13:54:39 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.163 2002/03/11 16:27:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -908,7 +908,7 @@ cpu_configure()
 			/* Clear top bits of physical address on 4/100 */
 			paddr &= ~0xf0000000;
 
-		if (obio_find_rom_map(paddr, PMAP_OBIO, NBPG, &bh) != 0)
+		if (obio_find_rom_map(paddr, NBPG, &bh) != 0)
 			panic("configure: ROM hasn't mapped memreg!");
 
 		par_err_reg = (volatile int *)bh;
@@ -1017,8 +1017,9 @@ mbprint(aux, name)
 	if (name)
 		printf("%s at %s", ma->ma_name, name);
 	if (ma->ma_paddr)
-		printf(" %saddr 0x%lx", ma->ma_iospace ? "io" : "",
-			(long)ma->ma_paddr);
+		printf(" %saddr 0x%lx",
+			BUS_ADDR_IOSPACE(ma->ma_paddr) ? "io" : "",
+			(u_long)BUS_ADDR_PADDR(ma->ma_paddr));
 	if (ma->ma_pri)
 		printf(" ipl %d", ma->ma_pri);
 	return (UNCONF);
@@ -1225,8 +1226,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (PROM_getprop_reg1(node, &romreg) != 0)
 			continue;
 
-		ma.ma_paddr = (bus_addr_t)romreg.oa_base;
-		ma.ma_iospace = (bus_type_t)romreg.oa_space;
+		ma.ma_paddr = (bus_addr_t)
+			BUS_ADDR(romreg.oa_space, romreg.oa_base);
 		ma.ma_size = romreg.oa_size;
 		if (PROM_getprop_intr1(node, &ma.ma_pri) != 0)
 			continue;
@@ -1281,8 +1282,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (CPU_ISSUN4M && strcmp(ma.ma_name, "sbus") == 0) {
 			printf("mainbus_attach: sbus node under root on sun4m - assuming iommu\n");
 			ma.ma_name = "iommu";
-			ma.ma_iospace = (bus_type_t) 0;
-			ma.ma_paddr = (bus_addr_t) 0x10000000;
+			ma.ma_paddr = (bus_addr_t)BUS_ADDR(0, 0x10000000);
 			ma.ma_size = 0x300;
 			ma.ma_pri = 0;
 			ma.ma_promvaddr = 0;
@@ -1295,8 +1295,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (PROM_getprop_reg1(node, &romreg) != 0)
 			continue;
 
-		ma.ma_paddr = (bus_addr_t)romreg.oa_base;
-		ma.ma_iospace = (bus_type_t)romreg.oa_space;
+		ma.ma_paddr = BUS_ADDR(romreg.oa_space, romreg.oa_base);
 		ma.ma_size = romreg.oa_size;
 
 		if (PROM_getprop_intr1(node, &ma.ma_pri) != 0)
@@ -1721,9 +1720,10 @@ instance_match(dev, aux, bp)
 		ma = aux;
 		DPRINTF(ACDB_BOOTDEV, ("instance_match: mainbus device, "
 		    "want space %#x addr %#x have space %#lx addr %#llx\n",
-		    bp->val[0], bp->val[1], ma->ma_iospace, (unsigned long long)ma->ma_paddr));
-		if ((bus_type_t)(u_long)bp->val[0] == ma->ma_iospace &&
-		    (bus_addr_t)(u_long)bp->val[1] == ma->ma_paddr)
+		    bp->val[0], bp->val[1], BUS_ADDR_IOSPACE(ma->ma_paddr),
+			(unsigned long long)BUS_ADDR_PADDR(ma->ma_paddr)));
+		if ((u_long)bp->val[0] == BUS_ADDR_IOSPACE(ma->ma_paddr) &&
+		    (bus_addr_t)(u_long)bp->val[1] == BUS_ADDR_PADDR(ma->ma_paddr))
 			return (1);
 		break;
 	case BUSCLASS_SBUS:
