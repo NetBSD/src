@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.22 2003/01/21 18:40:24 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.23 2003/06/19 15:55:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.22 2003/01/21 18:40:24 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.23 2003/06/19 15:55:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -374,7 +374,8 @@ history_def_add(ptr_t p, HistEvent *ev, const char *str)
  */
 /* ARGSUSED */
 private void
-history_def_delete(history_t *h, HistEvent *ev, hentry_t *hp)
+history_def_delete(history_t *h, 
+		   HistEvent *ev __attribute__((__unused__)), hentry_t *hp)
 {
 	HistEventPrivate *evp = (void *)&hp->ev;
 	if (hp == &h->list)
@@ -447,7 +448,7 @@ history_def_enter(ptr_t p, HistEvent *ev, const char *str)
  */
 /* ARGSUSED */
 private int
-history_def_init(ptr_t *p, HistEvent *ev, int n)
+history_def_init(ptr_t *p, HistEvent *ev __attribute__((__unused__)), int n)
 {
 	history_t *h = (history_t *) h_malloc(sizeof(history_t));
 	if (h == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.35 2002/03/18 16:00:59 christos Exp $	*/
+/*	$NetBSD: term.c,v 1.36 2003/06/19 15:55:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.35 2002/03/18 16:00:59 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.36 2003/06/19 15:55:06 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -648,7 +648,8 @@ mc_again:
 				 * from col 0
 				 */
 				if (EL_CAN_TAB ?
-				    (-del > (((unsigned int) where >> 3) +
+				    ((unsigned int)-del >
+				    (((unsigned int) where >> 3) +
 				     (where & 07)))
 				    : (-del > where)) {
 					term__putc('\r');	/* do a CR */
@@ -1246,7 +1247,8 @@ term__flush(void)
  */
 protected int
 /*ARGSUSED*/
-term_telltc(EditLine *el, int argc, const char **argv)
+term_telltc(EditLine *el, int argc __attribute__((__unused__)), 
+    const char **argv __attribute__((__unused__)))
 {
 	const struct termcapstr *t;
 	char **ts;
@@ -1281,7 +1283,8 @@ term_telltc(EditLine *el, int argc, const char **argv)
  */
 protected int
 /*ARGSUSED*/
-term_settc(EditLine *el, int argc, const char **argv)
+term_settc(EditLine *el, int argc __attribute__((__unused__)),
+    const char **argv)
 {
 	const struct termcapstr *ts;
 	const struct termcapval *tv;
@@ -1357,7 +1360,8 @@ term_settc(EditLine *el, int argc, const char **argv)
  */
 protected int
 /*ARGSUSED*/
-term_echotc(EditLine *el, int argc, const char **argv)
+term_echotc(EditLine *el, int argc __attribute__((__unused__)),
+    const char **argv)
 {
 	char *cap, *scap, *ep;
 	int arg_need, arg_cols, arg_rows;
