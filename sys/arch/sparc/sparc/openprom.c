@@ -42,7 +42,7 @@
  *	@(#)openprom.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: openprom.c,v 1.3 93/04/27 08:56:09 torek Exp 
- * $Id: openprom.c,v 1.1 1993/10/02 10:24:24 deraadt Exp $
+ * $Id: openprom.c,v 1.2 1994/10/02 21:58:02 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -65,6 +65,10 @@ openpromopen(dev, flags, mode)
 	dev_t dev;
 	int flags, mode;
 {
+#if defined(SUN4)
+	if (cputyp==CPU_SUN4)
+		return (ENODEV);
+#endif	
 
 	return (0);
 }
