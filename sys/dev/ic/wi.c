@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.101 2002/10/25 01:35:12 mycroft Exp $	*/
+/*	$NetBSD: wi.c,v 1.102 2002/11/16 06:02:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.101 2002/10/25 01:35:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.102 2002/11/16 06:02:53 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -254,6 +254,13 @@ wi_attach(struct wi_softc *sc)
 			setbit(ic->ic_chan_avail, i + 1);
 	}
 
+	sc->sc_dbm_adjust = 100; /* default */
+
+	if (sc->sc_firmware_type == WI_INTERSIL &&
+	    wi_read_rid(sc, WI_RID_DBM_ADJUST, &val, &buflen) == 0) {
+		sc->sc_dbm_adjust = le16toh(val);
+	}
+
 	/* Find default IBSS channel */
 	buflen = sizeof(val);
 	if (wi_read_rid(sc, WI_RID_OWN_CHNL, &val, &buflen) == 0)
@@ -324,6 +331,7 @@ wi_attach(struct wi_softc *sc)
 
 	sc->sc_max_datalen = 2304;
 	sc->sc_rts_thresh = 2347;
+	sc->sc_frag_thresh = 2346;
 	sc->sc_system_scale = 1;
 	sc->sc_cnfauthmode = IEEE80211_AUTH_OPEN;
 	sc->sc_roaming_mode = 1;
@@ -565,6 +573,7 @@ wi_init(struct ifnet *ifp)
 	/* not yet common 802.11 configuration */
 	wi_write_val(sc, WI_RID_MAX_DATALEN, sc->sc_max_datalen);
 	wi_write_val(sc, WI_RID_RTS_THRESH, sc->sc_rts_thresh);
+	wi_write_val(sc, WI_RID_FRAG_THRESH, sc->sc_frag_thresh);
 
 	/* driver specific 802.11 configuration */
 	if (sc->sc_flags & WI_FLAGS_HAS_SYSSCALE)
@@ -1492,6 +1501,10 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 			wreq.wi_val[0] = htole16(sc->sc_max_datalen);
 			len = sizeof(u_int16_t);
 			break;
+		case WI_RID_FRAG_THRESH:
+			wreq.wi_val[0] = htole16(sc->sc_frag_thresh);
+			len = sizeof(u_int16_t);
+			break;
 		case WI_RID_RTS_THRESH:
 			wreq.wi_val[0] = htole16(sc->sc_rts_thresh);
 			len = sizeof(u_int16_t);
@@ -1565,6 +1578,7 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    (sc->sc_flags & WI_FLAGS_HAS_SYSSCALE) == 0)
 			break;
 		/* FALLTHROUGH */
+	case WI_RID_FRAG_THRESH:
 	case WI_RID_RTS_THRESH:
 	case WI_RID_CNFAUTHMODE:
 	case WI_RID_MAX_DATALEN:
@@ -1575,6 +1589,9 @@ wi_set_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 				break;
 		}
 		switch (wreq.wi_type) {
+		case WI_RID_FRAG_THRESH:
+			sc->sc_frag_thresh = le16toh(wreq.wi_val[0]);
+			break;
 		case WI_RID_RTS_THRESH:
 			sc->sc_rts_thresh = le16toh(wreq.wi_val[0]);
 			break;
