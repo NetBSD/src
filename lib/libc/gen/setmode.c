@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)setmode.c	5.6 (Berkeley) 5/27/91";*/
-static char *rcsid = "$Id: setmode.c,v 1.7 1994/02/10 23:42:09 cgd Exp $";
+static char *rcsid = "$Id: setmode.c,v 1.8 1994/02/11 05:55:45 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -103,12 +103,17 @@ getmode(bbox, omode)
 		case 'o':
 			value = newmode & S_IRWXO;
 common:			if (set->cmd2 & CMD2_CLR) {
+				mode_t clrval;
+			
+				clrval =
+				    (set->cmd2 & CMD2_SET) ?  S_IRWXO : value;
+				    
 				if (set->cmd2 & CMD2_UBITS)
-					newmode &= ~((value<<6) & set->bits);
+					newmode &= ~((clrval<<6) & set->bits);
 				if (set->cmd2 & CMD2_GBITS)
-					newmode &= ~((value<<3) & set->bits);
+					newmode &= ~((clrval<<3) & set->bits);
 				if (set->cmd2 & CMD2_OBITS)
-					newmode &= ~(value & set->bits);
+					newmode &= ~(clrval & set->bits);
 			}
 			if (set->cmd2 & CMD2_SET) {
 				if (set->cmd2 & CMD2_UBITS)
@@ -276,11 +281,12 @@ getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
 				 * to flush out any partial mode that we have,
 				 * and then do the copying of the mode bits.
 				 */
-				if (perm || (op == '=' && !equalopdone)) {
-					equalopdone = 1;
+				if (perm) {
 					ADDCMD(op, who, perm, mask);
 					perm = 0;
 				}
+				if (op == '=')
+					equalopdone = 1;
 				if (op == '+' && permXbits) {
 					ADDCMD('X', who, permXbits, mask);
 					permXbits = 0;
@@ -294,7 +300,8 @@ getop:		if ((op = *p++) != '+' && op != '-' && op != '=') {
 				 * done.
 				 */
 				if (perm || (op == '=' && !equalopdone)) {
-					equalopdone = 1;
+					if (op == '=')
+						equalopdone = 1;
 					ADDCMD(op, who, perm, mask);
 					perm = 0;
 				}
@@ -367,7 +374,10 @@ addcmd(set, op, who, oparg, mask)
 			set->bits = ~0;
 		} else {
 			set->cmd2 = CMD2_UBITS | CMD2_GBITS | CMD2_OBITS;
-			set->bits = mask;
+			if (oparg == '-')
+				set->bits = (S_IRWXU|S_IRWXG|S_IRWXO);
+			else
+				set->bits = mask;
 		}
 	
 		if (oparg == '+')
