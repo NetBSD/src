@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.26 2001/01/08 13:20:29 itojun Exp $	*/
+/*	$NetBSD: keyword.c,v 1.26.2.1 2002/04/23 20:41:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.26 2001/01/08 13:20:29 itojun Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.26.2.1 2002/04/23 20:41:12 nathanw Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/resource.h>
 #include <sys/sysctl.h>
@@ -73,6 +74,7 @@ static int  vcmp __P((const void *, const void *));
 
 /* Compute offset in common structures. */
 #define	POFF(x)	offsetof(struct kinfo_proc2, x)
+#define	LOFF(x)	offsetof(struct kinfo_lwp, x)
 
 #define	UIDFMT	"u"
 #define	UID(n1, n2, fn, off) \
@@ -95,7 +97,7 @@ VAR var[] = {
 	{"cputime", "", "time"},
 	{"f", "F", NULL, 0, pvar, 0, POFF(p_flag), INT, "x"},
 	{"flags", "", "f"},
-	{"holdcnt", "HOLDCNT", NULL, 0, pvar, 0, POFF(p_holdcnt), INT, "d"},
+	{"holdcnt", "HOLDCNT", NULL, LWP, pvar, 0, LOFF(l_holdcnt), INT, "d"},
 	{"ignored", "", "sigignore"},
 	{"inblk", "INBLK", NULL, 0, pvar, 0, POFF(p_uru_inblock), ULONG, "d"},
 	{"inblock", "", "inblk"},
@@ -103,6 +105,7 @@ VAR var[] = {
 	{"ktrace", "KTRACE", NULL, 0, pvar, 0, POFF(p_traceflag), INT, "x"},
 	/* XXX */
 	{"ktracep", "KTRACEP", NULL, 0, pvar, 0, POFF(p_tracep), KPTR, "llx"},
+	{"lid", "LID", NULL, LWP, pvar, 0, LOFF(l_lid), ULONG, "d"},
 	{"lim", "LIM", NULL, 0, maxrss},
 	{"login", "LOGIN", NULL, LJUST, logname},
 	{"logname", "", "login"},
@@ -114,12 +117,13 @@ VAR var[] = {
 	{"ni", "", "nice"},
 	{"nice", "NI", NULL, 0, pnice},
 	{"nivcsw", "NIVCSW", NULL, 0, pvar, 0, POFF(p_uru_nivcsw), ULONG, "d"},
+	{"nlwp", "NLWP", NULL, 0, pvar, 0, POFF(p_nlwps), ULONG, "d"},
 	{"nsignals", "", "nsigs"},
 	{"nsigs", "NSIGS", NULL, 0, pvar, 0, POFF(p_uru_nsignals), ULONG, "d"},
 	{"nswap", "NSWAP", NULL, 0, pvar, 0, POFF(p_uru_nswap), ULONG, "d"},
 	{"nvcsw", "NVCSW", NULL, 0, pvar, 0, POFF(p_uru_nvcsw), ULONG, "d"},
 	/* XXX */
-	{"nwchan", "WCHAN", NULL, 0, pvar, 0, POFF(p_wchan), KPTR, "llx"},
+	{"nwchan", "WCHAN", NULL, LWP, pvar, 0, LOFF(l_wchan), KPTR, "llx"},
 	{"oublk", "OUBLK", NULL, 0, pvar, 0, POFF(p_uru_oublock), ULONG, "d"},
 	{"oublock", "", "oublk"},
 	/* XXX */
@@ -133,11 +137,12 @@ VAR var[] = {
 	PID("pid", "PID", pvar, POFF(p_pid)),
 	{"pmem", "", "%mem"},
 	PID("ppid", "PPID", pvar, POFF(p_ppid)),
-	{"pri", "PRI", NULL, 0, pri},
-	{"re", "RE", NULL, INF127, pvar, 0, POFF(p_swtime), UINT, "d"},
+	{"pri", "PRI", NULL, LWP, pri},
+	{"re", "RE", NULL, INF127|LWP, pvar, 0, LOFF(l_swtime), UINT, "d"},
 	GID("rgid", "RGID", pvar, POFF(p_rgid)),
 	/* XXX */
-	{"rlink", "RLINK", NULL, 0, pvar, 0, POFF(p_back), KPTR, "llx"},
+	{"rlink", "RLINK", NULL, LWP, pvar, 0, LOFF(l_back), KPTR, "llx"},
+	{"rlwp", "RLWP", NULL, 0, pvar, 0, POFF(p_nrlwps), ULONG, "d"},
 	{"rss", "RSS", NULL, 0, p_rssize},
 	{"rssize", "", "rsz"},
 	{"rsz", "RSZ", NULL, 0, rssize},
@@ -153,7 +158,7 @@ VAR var[] = {
 	    NULL, 0, pvar, 0, POFF(p_sigignore), SIGLIST, "s"},
 	{"sigmask", "BLOCKED",
 	    NULL, 0, pvar, 0, POFF(p_sigmask), SIGLIST, "s"},
-	{"sl", "SL", NULL, INF127, pvar, 0, POFF(p_slptime), UINT, "d"},
+	{"sl", "SL", NULL, INF127|LWP, pvar, 0, LOFF(l_slptime), UINT, "d"},
 	{"start", "STARTED", NULL, 0, started},
 	{"stat", "", "state"},
 	{"state", "STAT", NULL, LJUST, state},
@@ -168,12 +173,12 @@ VAR var[] = {
 	{"tty", "TTY", NULL, LJUST, longtname},
 	{"ucomm", "UCOMM", NULL, LJUST, ucomm},
 	UID("uid", "UID", pvar, POFF(p_uid)),
-	{"upr", "UPR", NULL, 0, pvar, 0, POFF(p_usrpri), UCHAR, "d"},
+	{"upr", "UPR", NULL, LWP, pvar, 0, LOFF(l_usrpri), UCHAR, "d"},
 	{"user", "USER", NULL, LJUST, uname},
 	{"usrpri", "", "upr"},
 	{"vsize", "", "vsz"},
 	{"vsz", "VSZ", NULL, 0, vsize},
-	{"wchan", "WCHAN", NULL, LJUST, wchan},
+	{"wchan", "WCHAN", NULL, LJUST|LWP, wchan},
 	{"xstat", "XSTAT", NULL, 0, pvar, 0, POFF(p_xstat), USHORT, "x"},
 	{""},
 };
