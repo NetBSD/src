@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 2000/03/14 14:08:55 soren Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49 2000/03/19 19:16:14 soren Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 2000/03/14 14:08:55 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49 2000/03/19 19:16:14 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ cpu_fork(p1, p2, stack, stacksize)
 #ifdef MIPS3
 	/* ? make sense ? */
 	if (CPUISMIPS3)
-		mips3_HitFlushDCache((vaddr_t)p2->p_addr, USPACE);
+		MachHitFlushDCache((vaddr_t)p2->p_addr, USPACE);
 #endif
 
 
@@ -291,7 +291,7 @@ pagemove(from, to, size)
 	if (CPUISMIPS3 &&
 	    ((int)from & mips_CacheAliasMask) !=
 	    ((int)to & mips_CacheAliasMask)) {
-		mips3_HitFlushDCache((vaddr_t)from, size);
+		MachHitFlushDCache((vaddr_t)from, size);
 	}
 #endif
 	while (size > 0) {

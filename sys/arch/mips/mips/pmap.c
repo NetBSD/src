@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2000/03/14 14:10:08 soren Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2000/03/19 19:16:14 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2000/03/14 14:10:08 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2000/03/19 19:16:14 soren Exp $");
 
 /*
  *	Manages physical address maps.
@@ -605,8 +605,7 @@ pmap_release(pmap)
 			 * cause problems on machines without secondary caches.
 			 */
 			if (CPUISMIPS3)
-				mips3_HitFlushDCache(
-				    (vaddr_t)pte, PAGE_SIZE);
+				MachHitFlushDCache((vaddr_t)pte, PAGE_SIZE);
 #endif
 			uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
 
@@ -973,8 +972,8 @@ pmap_procwr(p, va, len)
 #if 0
 		printf("pmap_procwr: va %lx len %lx\n", va, len);
 #endif
-		mips3_FlushDCache(va, len);
-		mips3_FlushICache(MIPS_PHYS_TO_KSEG0(va &
+		MachFlushDCache(va, len);
+		MachFlushICache(MIPS_PHYS_TO_KSEG0(va &
 		    (mips_L1ICacheSize - 1)), len);
 	} else {
 		pt_entry_t *pte;
@@ -1592,7 +1591,7 @@ pmap_zero_page(phys)
 	if (CPUISMIPS3 && !mips_L2CachePresent) {
 		/*XXX FIXME Not very sophisticated */
 		/*	MachFlushCache();*/
-		MachFlushDCache(phys, NBPG);
+		MachFlushDCache(MIPS_PHYS_TO_KSEG0(phys), NBPG);
 	}
 #endif
 }

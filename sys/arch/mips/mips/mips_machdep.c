@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.67 2000/03/03 12:43:52 soda Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.68 2000/03/19 19:16:14 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.67 2000/03/03 12:43:52 soda Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.68 2000/03/19 19:16:14 soren Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -246,15 +246,15 @@ mips3_ConfigCache()
 	 * Clear out the I and D caches.
 	 */
 	mips_L2CacheSize = 0; /* kluge to skip L2 cache flush */
-	mips3_FlushCache();
+	MachFlushCache();
 
 	i = *(volatile int *)&snoop_check;	/* Read and cache */
-	mips3_FlushCache();			/* Flush */
+	MachFlushCache();			/* Flush */
 	*(volatile int *)MIPS_PHYS_TO_KSEG1(MIPS_KSEG0_TO_PHYS(&snoop_check))
 	    = ~i;				/* Write uncached */
 	mips_L2CacheIsSnooping = *(volatile int *)&snoop_check == ~i;
 	*(volatile int *)&snoop_check = i;	/* Write uncached */
-	mips3_FlushCache();			/* Flush */
+	MachFlushCache();			/* Flush */
 
 
 	mips_L2CachePresent = (config & MIPS3_CONFIG_SC) == 0;
@@ -320,7 +320,9 @@ mips3_vector_init()
 	mips_L2CacheSize = 1024 * 1024;
 #endif
 
-	mips3_FlushCache();
+	MachFlushCache();
+
+	mips3_clearBEV();
 }
 #endif	/* MIPS3 */
 
@@ -619,7 +621,7 @@ cpu_identify()
 #if !defined(MIPS3_L2CACHE_ABSENT)
 	if (cpu_arch >= 3 && !mips_L2CachePresent) {
 		printf("This kernel doesn't work without L2 cache.\n"
-		    "Please add \"options MIPS3_L2CACHE_ABSENT\""
+		    "Please add \"options MIPS3_L2CACHE_ABSENT\" "
 		    "to the kernel config file.\n");
 		cpu_reboot(RB_HALT, NULL);
 	}
