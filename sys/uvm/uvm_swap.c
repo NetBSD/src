@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.23 1998/12/26 06:25:59 marc Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.24 1999/02/23 15:58:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -533,7 +533,7 @@ sys_swapctl(p, v, retval)
 	 * ensure serialized syscall access by grabbing the swap_syscall_lock
 	 */
 	lockmgr(&swap_syscall_lock, LK_EXCLUSIVE, (void *)0);
-	
+
 	/*
 	 * we handle the non-priv NSWAP and STATS request first.
 	 *
@@ -657,6 +657,15 @@ sys_swapctl(p, v, retval)
 
 	error = 0;		/* assume no error */
 	switch(SCARG(uap, cmd)) {
+	case SWAP_DUMPDEV:
+		if (vp->v_type != VBLK) {
+			error = ENOTBLK;
+			goto out;
+		}
+		dumpdev = vp->v_rdev;
+		
+		break;
+
 	case SWAP_CTL:
 		/*
 		 * get new priority, remove old entry (if any) and then
