@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.12 1998/08/15 10:51:19 mycroft Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.13 2002/06/29 05:30:44 rafal Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 
 #define	NE2100_RDP	0x10
 #define	NE2100_RAP	0x12
+
+#define LANCEISA_FLAG_LOCALBUS	1
 
 /*
  * Ethernet software status per interface.
