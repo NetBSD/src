@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.452 2004/01/03 15:21:30 lukem Exp $
+# $NetBSD: mi,v 1.453 2004/01/04 00:54:18 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -92,7 +92,7 @@
 ./sbin/badsect		base-sysutil-root
 ./sbin/brconfig		base-netutil-root
 ./sbin/ccdconfig	base-sysutil-root
-./sbin/cgdconfig	base-sysutil-root
+./sbin/cgdconfig	base-sysutil-root	crypto
 ./sbin/clri		base-sysutil-root
 ./sbin/dhclient		base-dhclient-root
 ./sbin/dhclient-script	base-dhclient-root
@@ -363,7 +363,7 @@
 ./usr/bin/basename	base-util-bin
 ./usr/bin/batch		base-cron-bin
 ./usr/bin/bc		base-util-bin
-./usr/bin/bdes		base-crypto-bin
+./usr/bin/bdes		base-crypto-bin	crypto
 ./usr/bin/biff		base-mail-bin
 ./usr/bin/bunzip2	base-util-bin
 ./usr/bin/bzcat		base-util-bin
@@ -514,7 +514,7 @@
 ./usr/bin/nslookup	base-netutil-bin
 ./usr/bin/nsupdate	base-netutil-bin
 ./usr/bin/od		base-util-bin
-./usr/bin/openssl	base-crypto-bin
+./usr/bin/openssl	base-crypto-bin	crypto
 ./usr/bin/page		base-util-bin
 ./usr/bin/pagesize	base-util-bin
 ./usr/bin/passwd	base-util-bin
@@ -556,12 +556,12 @@
 ./usr/bin/rusers	base-netutil-bin
 ./usr/bin/rwall		base-netutil-bin
 ./usr/bin/rwho		base-netutil-bin
-./usr/bin/scp		base-secsh-bin
+./usr/bin/scp		base-secsh-bin	crypto
 ./usr/bin/script	base-util-bin
 ./usr/bin/sdiff		base-util-bin
 ./usr/bin/sed		base-util-bin
 ./usr/bin/send-pr	base-gnats-bin
-./usr/bin/sftp		base-secsh-bin
+./usr/bin/sftp		base-secsh-bin	crypto
 ./usr/bin/sha1		base-util-bin
 ./usr/bin/shar		base-util-bin
 ./usr/bin/shlock	base-util-bin
@@ -571,14 +571,14 @@
 ./usr/bin/skeyaudit	base-util-bin	skey
 ./usr/bin/skeyinfo	base-util-bin	skey
 ./usr/bin/skeyinit	base-util-bin	skey
-./usr/bin/slogin	base-secsh-bin
+./usr/bin/slogin	base-secsh-bin	crypto
 ./usr/bin/sort		base-util-bin
 ./usr/bin/split		base-util-bin
-./usr/bin/ssh		base-secsh-bin
-./usr/bin/ssh-add	base-secsh-bin
-./usr/bin/ssh-agent	base-secsh-bin
-./usr/bin/ssh-keygen	base-secsh-bin
-./usr/bin/ssh-keyscan	base-secsh-bin
+./usr/bin/ssh		base-secsh-bin	crypto
+./usr/bin/ssh-add	base-secsh-bin	crypto
+./usr/bin/ssh-agent	base-secsh-bin	crypto
+./usr/bin/ssh-keygen	base-secsh-bin	crypto
+./usr/bin/ssh-keyscan	base-secsh-bin	crypto
 ./usr/bin/stat		base-util-bin
 ./usr/bin/string2key		base-krb5-bin	kerberos
 ./usr/bin/su		base-util-bin
@@ -805,10 +805,10 @@
 ./usr/libexec/rshd		base-netutil-bin
 ./usr/libexec/sendmail		base-sendmail-bin
 ./usr/libexec/sendmail/sendmail base-sendmail-bin	sendmail
-./usr/libexec/sftp-server	base-secsh-bin
+./usr/libexec/sftp-server	base-secsh-bin	crypto
 ./usr/libexec/sm.bin		base-sendmail-usr
 ./usr/libexec/smrsh		base-sendmail-bin	sendmail
-./usr/libexec/ssh-keysign	base-secsh-bin
+./usr/libexec/ssh-keysign	base-secsh-bin	crypto
 ./usr/libexec/telnetd		base-netutil-bin
 ./usr/libexec/tftpd		base-netutil-bin
 ./usr/libexec/utmp_update	base-sysutil-bin
@@ -952,7 +952,7 @@
 ./usr/sbin/nslookup			base-obsolete	obsolete
 ./usr/sbin/nsquery			base-obsolete	obsolete
 ./usr/sbin/nstest			base-obsolete	obsolete
-./usr/sbin/ntp-keygen		base-ntp-bin
+./usr/sbin/ntp-keygen		base-ntp-bin	crypto
 ./usr/sbin/ntpd			base-ntp-bin
 ./usr/sbin/ntpdate		base-ntp-bin
 ./usr/sbin/ntpdc		base-ntp-bin
@@ -998,7 +998,7 @@
 ./usr/sbin/quotacheck		base-sysutil-bin
 ./usr/sbin/quotaoff		base-sysutil-bin
 ./usr/sbin/quotaon		base-sysutil-bin
-./usr/sbin/racoon		base-netutil-bin
+./usr/sbin/racoon		base-netutil-bin	crypto
 ./usr/sbin/rarpd		base-bootserver-bin
 ./usr/sbin/rbootd		base-bootserver-bin
 ./usr/sbin/rdate		base-netutil-bin
@@ -1032,7 +1032,7 @@
 ./usr/sbin/sntp			base-ntp-bin
 ./usr/sbin/spawn			base-obsolete	obsolete
 ./usr/sbin/spray		base-rpcutil-bin
-./usr/sbin/sshd			base-secsh-bin
+./usr/sbin/sshd			base-secsh-bin	crypto
 ./usr/sbin/statmsg			base-obsolete	obsolete
 ./usr/sbin/stdethers		base-nis-bin	yp
 ./usr/sbin/stdhosts		base-nis-bin	yp

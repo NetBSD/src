@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.130 2004/01/03 14:17:06 lukem Exp $
+# $NetBSD: mi,v 1.131 2004/01/04 00:54:18 lukem Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV				etc-sys-etc
@@ -57,7 +57,7 @@
 ./etc/mailer.conf			etc-mailwrapper-etc
 ./etc/man.conf				etc-man-etc
 ./etc/master.passwd			etc-sys-etc
-./etc/moduli				etc-secsh-etc
+./etc/moduli				etc-secsh-etc	crypto
 ./etc/monthly				etc-sys-etc
 ./etc/monthly.conf			etc-sys-etc
 ./etc/motd				etc-sys-etc
@@ -221,8 +221,8 @@
 ./etc/skel/.profile			etc-sys-etc
 ./etc/skeykeys				etc-sys-etc
 ./etc/spwd.db				etc-sys-etc
-./etc/ssh/ssh_config			etc-secsh-etc
-./etc/ssh/sshd_config			etc-secsh-etc
+./etc/ssh/ssh_config			etc-secsh-etc	crypto
+./etc/ssh/sshd_config			etc-secsh-etc	crypto
 ./etc/sysctl.conf			etc-sys-etc
 ./etc/syslog.conf			etc-sys-etc
 ./etc/ttys				etc-sys-etc

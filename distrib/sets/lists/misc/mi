@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.94 2004/01/03 12:40:26 lukem Exp $
+# $NetBSD: mi,v 1.95 2004/01/04 00:54:19 lukem Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -481,10 +481,10 @@
 ./usr/share/examples/mount_portal/tcp.1			misc-sys-examples
 ./usr/share/examples/mount_portal/tcp.1.conf		misc-sys-examples
 ./usr/share/examples/named/named.conf		misc-bind-examples
-./usr/share/examples/openssl/CA.pl		misc-crypto-examples
-./usr/share/examples/openssl/CA.sh		misc-crypto-examples
-./usr/share/examples/openssl/der_chop		misc-crypto-examples
-./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples
+./usr/share/examples/openssl/CA.pl		misc-crypto-examples crypto
+./usr/share/examples/openssl/CA.sh		misc-crypto-examples crypto
+./usr/share/examples/openssl/der_chop		misc-crypto-examples crypto
+./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples crypto
 ./usr/share/examples/postfix/ADDRESS_CLASS_README	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/DEBUG_README		misc-postfix-examples	postfix
 ./usr/share/examples/postfix/ETRN_README		misc-postfix-examples	postfix
@@ -530,13 +530,13 @@
 ./usr/share/examples/postfix/sample-pcre-access.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-pcre-body.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-pcre-header.cf	misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-pcre.cf		misc-postfix-examples	obsolete	postfix
+./usr/share/examples/postfix/sample-pcre.cf		misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/sample-qmqpd.cf		misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-rate.cf		misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-regexp-access.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-regexp-body.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-regexp-header.cf	misc-postfix-examples	postfix
-./usr/share/examples/postfix/sample-regexp.cf		misc-postfix-examples	obsolete	postfix
+./usr/share/examples/postfix/sample-regexp.cf		misc-postfix-examples	obsolete
 ./usr/share/examples/postfix/sample-relocated.cf	misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-resource.cf		misc-postfix-examples	postfix
 ./usr/share/examples/postfix/sample-rewrite.cf		misc-postfix-examples	postfix
@@ -546,11 +546,11 @@
 ./usr/share/examples/postfix/sample-virtual.cf		misc-postfix-examples	postfix
 ./usr/share/examples/postfix/transport			misc-postfix-examples	postfix
 ./usr/share/examples/postfix/virtual			misc-postfix-examples	postfix
-./usr/share/examples/racoon/README.certificate		misc-netutil-examples
-./usr/share/examples/racoon/README.gssapi		misc-netutil-examples
-./usr/share/examples/racoon/psk.txt.sample		misc-netutil-examples
-./usr/share/examples/racoon/racoon.conf.sample		misc-netutil-examples
-./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples
+./usr/share/examples/racoon/README.certificate		misc-netutil-examples	crypto
+./usr/share/examples/racoon/README.gssapi		misc-netutil-examples	crypto
+./usr/share/examples/racoon/psk.txt.sample		misc-netutil-examples	crypto
+./usr/share/examples/racoon/racoon.conf.sample		misc-netutil-examples	crypto
+./usr/share/examples/racoon/racoon.conf.sample-gssapi	misc-netutil-examples	crypto
 ./usr/share/examples/rtadvd/rtadvd.conf			misc-router-examples
 ./usr/share/examples/smbfs/dot.nsmbrc			misc-sysutil-examples
 ./usr/share/examples/supfiles/ftp.cs.umn.edu		misc-sysutil-examples	obsolete

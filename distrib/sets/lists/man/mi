@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.644 2004/01/03 15:21:30 lukem Exp $
+# $NetBSD: mi,v 1.645 2004/01/04 00:54:18 lukem Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -51,7 +51,7 @@
 ./usr/share/man/cat1/basename.0			man-util-catman
 ./usr/share/man/cat1/batch.0			man-cron-catman
 ./usr/share/man/cat1/bc.0			man-util-catman
-./usr/share/man/cat1/bdes.0			man-crypto-catman
+./usr/share/man/cat1/bdes.0			man-crypto-catman	crypto
 ./usr/share/man/cat1/bg.0			man-util-catman
 ./usr/share/man/cat1/biff.0			man-mail-catman
 ./usr/share/man/cat1/bpm.0			man-pkgutil-catman
@@ -253,38 +253,38 @@
 ./usr/share/man/cat1/nohup.0			man-util-catman
 ./usr/share/man/cat1/od.0			man-util-catman
 ./usr/share/man/cat1/omshell.0			man-dhcpd-catman
-./usr/share/man/cat1/openssl.0			man-crypto-catman
-./usr/share/man/cat1/openssl_CA.pl.0		man-crypto-catman
-./usr/share/man/cat1/openssl_asn1parse.0	man-crypto-catman
-./usr/share/man/cat1/openssl_ca.0		man-crypto-catman
-./usr/share/man/cat1/openssl_ciphers.0		man-crypto-catman
-./usr/share/man/cat1/openssl_crl.0		man-crypto-catman
-./usr/share/man/cat1/openssl_crl2pkcs7.0	man-crypto-catman
-./usr/share/man/cat1/openssl_dgst.0		man-crypto-catman
-./usr/share/man/cat1/openssl_dhparam.0		man-crypto-catman
-./usr/share/man/cat1/openssl_dsa.0		man-crypto-catman
-./usr/share/man/cat1/openssl_dsaparam.0		man-crypto-catman
-./usr/share/man/cat1/openssl_enc.0		man-crypto-catman
-./usr/share/man/cat1/openssl_gendsa.0		man-crypto-catman
-./usr/share/man/cat1/openssl_genrsa.0		man-crypto-catman
-./usr/share/man/cat1/openssl_nseq.0		man-crypto-catman
-./usr/share/man/cat1/openssl_passwd.0		man-crypto-catman
-./usr/share/man/cat1/openssl_pkcs12.0		man-crypto-catman
-./usr/share/man/cat1/openssl_pkcs7.0		man-crypto-catman
-./usr/share/man/cat1/openssl_pkcs8.0		man-crypto-catman
-./usr/share/man/cat1/openssl_rand.0		man-crypto-catman
-./usr/share/man/cat1/openssl_req.0		man-crypto-catman
-./usr/share/man/cat1/openssl_rsa.0		man-crypto-catman
-./usr/share/man/cat1/openssl_rsautl.0		man-crypto-catman
-./usr/share/man/cat1/openssl_s_client.0		man-crypto-catman
-./usr/share/man/cat1/openssl_s_server.0		man-crypto-catman
-./usr/share/man/cat1/openssl_sess_id.0		man-crypto-catman
-./usr/share/man/cat1/openssl_smime.0		man-crypto-catman
-./usr/share/man/cat1/openssl_speed.0		man-crypto-catman
-./usr/share/man/cat1/openssl_spkac.0		man-crypto-catman
-./usr/share/man/cat1/openssl_verify.0		man-crypto-catman
-./usr/share/man/cat1/openssl_version.0		man-crypto-catman
-./usr/share/man/cat1/openssl_x509.0		man-crypto-catman
+./usr/share/man/cat1/openssl.0			man-crypto-catman crypto
+./usr/share/man/cat1/openssl_CA.pl.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_asn1parse.0	man-crypto-catman crypto
+./usr/share/man/cat1/openssl_ca.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_ciphers.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_crl.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_crl2pkcs7.0	man-crypto-catman crypto
+./usr/share/man/cat1/openssl_dgst.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_dhparam.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_dsa.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_dsaparam.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_enc.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_gendsa.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_genrsa.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_nseq.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_passwd.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_pkcs12.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_pkcs7.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_pkcs8.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_rand.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_req.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_rsa.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_rsautl.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_s_client.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_s_server.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_sess_id.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_smime.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_speed.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_spkac.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_verify.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_version.0		man-crypto-catman crypto
+./usr/share/man/cat1/openssl_x509.0		man-crypto-catman crypto
 ./usr/share/man/cat1/page.0			man-util-catman
 ./usr/share/man/cat1/pagesize.0			man-util-catman
 ./usr/share/man/cat1/passwd.0			man-util-catman
@@ -358,13 +358,13 @@
 ./usr/share/man/cat1/rusers.0			man-netutil-catman
 ./usr/share/man/cat1/rwall.0			man-netutil-catman
 ./usr/share/man/cat1/rwho.0			man-netutil-catman
-./usr/share/man/cat1/scp.0			man-secsh-catman
+./usr/share/man/cat1/scp.0			man-secsh-catman	crypto
 ./usr/share/man/cat1/screenblank.0		man-sysutil-catman
 ./usr/share/man/cat1/script.0			man-util-catman
 ./usr/share/man/cat1/sdiff.0			man-util-catman
 ./usr/share/man/cat1/sed.0			man-util-catman
 ./usr/share/man/cat1/send-pr.0			man-gnats-catman
-./usr/share/man/cat1/sftp.0			man-secsh-catman
+./usr/share/man/cat1/sftp.0			man-secsh-catman	crypto
 ./usr/share/man/cat1/sh.0			man-util-catman
 ./usr/share/man/cat1/sha1.0			man-util-catman
 ./usr/share/man/cat1/shar.0			man-util-catman
@@ -375,16 +375,16 @@
 ./usr/share/man/cat1/skeyinfo.0			man-util-catman	skey
 ./usr/share/man/cat1/skeyinit.0			man-util-catman	skey
 ./usr/share/man/cat1/sleep.0			man-util-catman
-./usr/share/man/cat1/slogin.0			man-secsh-catman
+./usr/share/man/cat1/slogin.0			man-secsh-catman	crypto
 ./usr/share/man/cat1/sntp.0			man-ntp-catman
 ./usr/share/man/cat1/sort.0			man-util-catman
 ./usr/share/man/cat1/source.0			man-util-catman
 ./usr/share/man/cat1/split.0			man-util-catman
-./usr/share/man/cat1/ssh-add.0			man-secsh-catman
-./usr/share/man/cat1/ssh-agent.0		man-secsh-catman
-./usr/share/man/cat1/ssh-keygen.0		man-secsh-catman
-./usr/share/man/cat1/ssh-keyscan.0		man-secsh-catman
-./usr/share/man/cat1/ssh.0			man-secsh-catman
+./usr/share/man/cat1/ssh-add.0			man-secsh-catman	crypto
+./usr/share/man/cat1/ssh-agent.0		man-secsh-catman	crypto
+./usr/share/man/cat1/ssh-keygen.0		man-secsh-catman	crypto
+./usr/share/man/cat1/ssh-keyscan.0		man-secsh-catman	crypto
+./usr/share/man/cat1/ssh.0			man-secsh-catman	crypto
 ./usr/share/man/cat1/stat.0			man-util-catman
 ./usr/share/man/cat1/stop.0			man-util-catman
 ./usr/share/man/cat1/stty.0			man-util-catman
@@ -1384,7 +1384,7 @@
 ./usr/share/man/cat5/map3270.0			man-tn3270-catman
 ./usr/share/man/cat5/master.passwd.0		man-sys-catman
 ./usr/share/man/cat5/mixerctl.conf.0		man-audio-catman
-./usr/share/man/cat5/moduli.0			man-secsh-catman
+./usr/share/man/cat5/moduli.0			man-secsh-catman	crypto
 ./usr/share/man/cat5/monthly.conf.0		man-sys-catman
 ./usr/share/man/cat5/motd.0			man-sys-catman
 ./usr/share/man/cat5/named.conf.0		man-bind-catman
@@ -1394,7 +1394,7 @@
 ./usr/share/man/cat5/networks.0			man-net-catman
 ./usr/share/man/cat5/newsyslog.conf.0		man-sysutil-catman
 ./usr/share/man/cat5/nsswitch.conf.0		man-net-catman
-./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman
+./usr/share/man/cat5/openssl.cnf.0		man-crypto-catman	crypto
 ./usr/share/man/cat5/passwd.0			man-sys-catman
 ./usr/share/man/cat5/passwd.conf.0		man-sys-catman
 ./usr/share/man/cat5/pcfs.0			man-obsolete	obsolete
@@ -1405,7 +1405,7 @@
 ./usr/share/man/cat5/primes.0			man-obsolete	obsolete
 ./usr/share/man/cat5/printcap.0			man-lpr-catman
 ./usr/share/man/cat5/protocols.0		man-net-catman
-./usr/share/man/cat5/racoon.conf.0		man-netutil-catman
+./usr/share/man/cat5/racoon.conf.0		man-netutil-catman	crypto
 ./usr/share/man/cat5/rc.conf.0			man-sys-catman
 ./usr/share/man/cat5/rcsfile.0			man-rcs-catman
 ./usr/share/man/cat5/regexp_table.0		man-postfix-catman	postfix
@@ -1420,8 +1420,8 @@
 ./usr/share/man/cat5/services.0			man-net-catman
 ./usr/share/man/cat5/shells.0			man-sys-catman
 ./usr/share/man/cat5/siginfo.0			man-obsolete	obsolete
-./usr/share/man/cat5/ssh_config.0		man-secsh-catman
-./usr/share/man/cat5/sshd_config.0		man-secsh-catman
+./usr/share/man/cat5/ssh_config.0		man-secsh-catman	crypto
+./usr/share/man/cat5/sshd_config.0		man-secsh-catman	crypto
 ./usr/share/man/cat5/stab.0			man-sys-catman
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman
 ./usr/share/man/cat5/termcap.0			man-sys-catman
@@ -1446,7 +1446,7 @@
 ./usr/share/man/cat5/wtmpx.0			man-sys-catman
 ./usr/share/man/cat5/ypserv.acl.0		man-obsolete	obsolete
 ./usr/share/man/cat7/ascii.0			man-reference-catman
-./usr/share/man/cat7/des_modes.0		man-reference-catman
+./usr/share/man/cat7/des_modes.0		man-reference-catman	crypto
 ./usr/share/man/cat7/environ.0			man-reference-catman
 ./usr/share/man/cat7/hier.0			man-reference-catman
 ./usr/share/man/cat7/hostname.0			man-reference-catman
@@ -1535,7 +1535,7 @@
 ./usr/share/man/cat8/ccdconfig.0		man-sysutil-catman
 ./usr/share/man/cat8/cesfic/MAKEDEV.0		man-obsolete	obsolete
 ./usr/share/man/cat8/cesfic/makedev.0		man-obsolete	obsolete
-./usr/share/man/cat8/cgdconfig.0		man-sysutil-catman
+./usr/share/man/cat8/cgdconfig.0		man-sysutil-catman	crypto
 ./usr/share/man/cat8/chat.0			man-ppp-catman
 ./usr/share/man/cat8/chown.0			man-sysutil-catman
 ./usr/share/man/cat8/chroot.0			man-sysutil-catman
@@ -1872,7 +1872,7 @@
 ./usr/share/man/cat8/quotacheck.0		man-sysutil-catman
 ./usr/share/man/cat8/quotaoff.0			man-sysutil-catman
 ./usr/share/man/cat8/quotaon.0			man-sysutil-catman
-./usr/share/man/cat8/racoon.0			man-netutil-catman
+./usr/share/man/cat8/racoon.0			man-netutil-catman	crypto
 ./usr/share/man/cat8/raidctl.0			man-sysutil-catman
 ./usr/share/man/cat8/rarpd.0			man-bootserver-catman
 ./usr/share/man/cat8/rbootd.0			man-bootserver-catman
@@ -1935,7 +1935,7 @@
 ./usr/share/man/cat8/setencstat.0		man-sysutil-catman
 ./usr/share/man/cat8/setkey.0			man-netutil-catman
 ./usr/share/man/cat8/setobjstat.0		man-sysutil-catman
-./usr/share/man/cat8/sftp-server.0		man-secsh-catman
+./usr/share/man/cat8/sftp-server.0		man-secsh-catman	crypto
 ./usr/share/man/cat8/sgimips/MAKEDEV.0		man-obsolete	obsolete
 ./usr/share/man/cat8/sgimips/makedev.0		man-obsolete	obsolete
 ./usr/share/man/cat8/shark/MAKEDEV.0		man-obsolete	obsolete
@@ -1964,8 +1964,8 @@
 ./usr/share/man/cat8/spawn.0			man-postfix-catman	postfix
 ./usr/share/man/cat8/spray.0			man-rpcutil-catman
 ./usr/share/man/cat8/sprayd.0			man-rpcserver-catman
-./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman
-./usr/share/man/cat8/sshd.0			man-secsh-catman
+./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman	crypto
+./usr/share/man/cat8/sshd.0			man-secsh-catman	crypto
 ./usr/share/man/cat8/statd.0			man-nfsserver-catman
 ./usr/share/man/cat8/statmsg.0			man-obsolete	obsolete
 ./usr/share/man/cat8/stdethers.0		man-nis-catman	yp
@@ -2098,7 +2098,7 @@
 ./usr/share/man/man1/basename.1			man-util-man
 ./usr/share/man/man1/batch.1			man-cron-man
 ./usr/share/man/man1/bc.1			man-util-man
-./usr/share/man/man1/bdes.1			man-crypto-man
+./usr/share/man/man1/bdes.1			man-crypto-man	crypto
 ./usr/share/man/man1/bg.1			man-util-man
 ./usr/share/man/man1/biff.1			man-mail-man
 ./usr/share/man/man1/bpm.1			man-pkgutil-man
@@ -2300,38 +2300,38 @@
 ./usr/share/man/man1/nohup.1			man-util-man
 ./usr/share/man/man1/od.1			man-util-man
 ./usr/share/man/man1/omshell.1			man-dhcpd-man
-./usr/share/man/man1/openssl.1			man-crypto-man
-./usr/share/man/man1/openssl_CA.pl.1		man-crypto-man
-./usr/share/man/man1/openssl_asn1parse.1	man-crypto-man
-./usr/share/man/man1/openssl_ca.1		man-crypto-man
-./usr/share/man/man1/openssl_ciphers.1		man-crypto-man
-./usr/share/man/man1/openssl_crl.1		man-crypto-man
-./usr/share/man/man1/openssl_crl2pkcs7.1	man-crypto-man
-./usr/share/man/man1/openssl_dgst.1		man-crypto-man
-./usr/share/man/man1/openssl_dhparam.1		man-crypto-man
-./usr/share/man/man1/openssl_dsa.1		man-crypto-man
-./usr/share/man/man1/openssl_dsaparam.1		man-crypto-man
-./usr/share/man/man1/openssl_enc.1		man-crypto-man
-./usr/share/man/man1/openssl_gendsa.1		man-crypto-man
-./usr/share/man/man1/openssl_genrsa.1		man-crypto-man
-./usr/share/man/man1/openssl_nseq.1		man-crypto-man
-./usr/share/man/man1/openssl_passwd.1		man-crypto-man
-./usr/share/man/man1/openssl_pkcs12.1		man-crypto-man
-./usr/share/man/man1/openssl_pkcs7.1		man-crypto-man
-./usr/share/man/man1/openssl_pkcs8.1		man-crypto-man
-./usr/share/man/man1/openssl_rand.1		man-crypto-man
-./usr/share/man/man1/openssl_req.1		man-crypto-man
-./usr/share/man/man1/openssl_rsa.1		man-crypto-man
-./usr/share/man/man1/openssl_rsautl.1		man-crypto-man
-./usr/share/man/man1/openssl_s_client.1		man-crypto-man
-./usr/share/man/man1/openssl_s_server.1		man-crypto-man
-./usr/share/man/man1/openssl_sess_id.1		man-crypto-man
-./usr/share/man/man1/openssl_smime.1		man-crypto-man
-./usr/share/man/man1/openssl_speed.1		man-crypto-man
-./usr/share/man/man1/openssl_spkac.1		man-crypto-man
-./usr/share/man/man1/openssl_verify.1		man-crypto-man
-./usr/share/man/man1/openssl_version.1		man-crypto-man
-./usr/share/man/man1/openssl_x509.1		man-crypto-man
+./usr/share/man/man1/openssl.1			man-crypto-man crypto
+./usr/share/man/man1/openssl_CA.pl.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_asn1parse.1	man-crypto-man crypto
+./usr/share/man/man1/openssl_ca.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_ciphers.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_crl.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_crl2pkcs7.1	man-crypto-man crypto
+./usr/share/man/man1/openssl_dgst.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_dhparam.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_dsa.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_dsaparam.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_enc.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_gendsa.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_genrsa.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_nseq.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_passwd.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_pkcs12.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_pkcs7.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_pkcs8.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_rand.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_req.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_rsa.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_rsautl.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_s_client.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_s_server.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_sess_id.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_smime.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_speed.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_spkac.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_verify.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_version.1		man-crypto-man crypto
+./usr/share/man/man1/openssl_x509.1		man-crypto-man crypto
 ./usr/share/man/man1/page.1			man-util-man
 ./usr/share/man/man1/pagesize.1			man-util-man
 ./usr/share/man/man1/passwd.1			man-util-man
@@ -2405,13 +2405,13 @@
 ./usr/share/man/man1/rusers.1			man-netutil-man
 ./usr/share/man/man1/rwall.1			man-netutil-man
 ./usr/share/man/man1/rwho.1			man-netutil-man
-./usr/share/man/man1/scp.1			man-secsh-man
+./usr/share/man/man1/scp.1			man-secsh-man	crypto
 ./usr/share/man/man1/screenblank.1		man-sysutil-man
 ./usr/share/man/man1/script.1			man-util-man
 ./usr/share/man/man1/sdiff.1			man-util-man
 ./usr/share/man/man1/sed.1			man-util-man
 ./usr/share/man/man1/send-pr.1			man-gnats-man
-./usr/share/man/man1/sftp.1			man-secsh-man
+./usr/share/man/man1/sftp.1			man-secsh-man	crypto
 ./usr/share/man/man1/sh.1			man-util-man
 ./usr/share/man/man1/sha1.1			man-util-man
 ./usr/share/man/man1/shar.1			man-util-man
@@ -2422,16 +2422,16 @@
 ./usr/share/man/man1/skeyinfo.1			man-util-man	skey
 ./usr/share/man/man1/skeyinit.1			man-util-man	skey
 ./usr/share/man/man1/sleep.1			man-util-man
-./usr/share/man/man1/slogin.1			man-secsh-man
+./usr/share/man/man1/slogin.1			man-secsh-man	crypto
 ./usr/share/man/man1/sntp.1			man-ntp-man
 ./usr/share/man/man1/sort.1			man-util-man
 ./usr/share/man/man1/source.1			man-util-man
 ./usr/share/man/man1/split.1			man-util-man
-./usr/share/man/man1/ssh-add.1			man-secsh-man
-./usr/share/man/man1/ssh-agent.1		man-secsh-man
-./usr/share/man/man1/ssh-keygen.1		man-secsh-man
-./usr/share/man/man1/ssh-keyscan.1		man-secsh-man
-./usr/share/man/man1/ssh.1			man-secsh-man
+./usr/share/man/man1/ssh-add.1			man-secsh-man	crypto
+./usr/share/man/man1/ssh-agent.1		man-secsh-man	crypto
+./usr/share/man/man1/ssh-keygen.1		man-secsh-man	crypto
+./usr/share/man/man1/ssh-keyscan.1		man-secsh-man	crypto
+./usr/share/man/man1/ssh.1			man-secsh-man	crypto
 ./usr/share/man/man1/stat.1			man-util-man
 ./usr/share/man/man1/stop.1			man-util-man
 ./usr/share/man/man1/stty.1			man-util-man
@@ -3432,7 +3432,7 @@
 ./usr/share/man/man5/map3270.5			man-tn3270-man
 ./usr/share/man/man5/master.passwd.5		man-sys-man
 ./usr/share/man/man5/mixerctl.conf.5		man-audio-man
-./usr/share/man/man5/moduli.5			man-secsh-man
+./usr/share/man/man5/moduli.5			man-secsh-man	crypto
 ./usr/share/man/man5/monthly.conf.5		man-sys-man
 ./usr/share/man/man5/motd.5			man-sys-man
 ./usr/share/man/man5/named.conf.5		man-bind-man
@@ -3442,7 +3442,7 @@
 ./usr/share/man/man5/networks.5			man-net-man
 ./usr/share/man/man5/newsyslog.conf.5		man-sysutil-man
 ./usr/share/man/man5/nsswitch.conf.5		man-net-man
-./usr/share/man/man5/openssl.cnf.5		man-crypto-man
+./usr/share/man/man5/openssl.cnf.5		man-crypto-man	crypto
 ./usr/share/man/man5/passwd.5			man-sys-man
 ./usr/share/man/man5/passwd.conf.5		man-sys-man
 ./usr/share/man/man5/pcfs.5			man-obsolete	obsolete
@@ -3453,7 +3453,7 @@
 ./usr/share/man/man5/primes.5			man-obsolete	obsolete
 ./usr/share/man/man5/printcap.5			man-lpr-man
 ./usr/share/man/man5/protocols.5		man-net-man
-./usr/share/man/man5/racoon.conf.5		man-netutil-man
+./usr/share/man/man5/racoon.conf.5		man-netutil-man	crypto
 ./usr/share/man/man5/rc.conf.5			man-sys-man
 ./usr/share/man/man5/rcsfile.5			man-rcs-man
 ./usr/share/man/man5/regexp_table.5		man-postfix-man	postfix
@@ -3468,8 +3468,8 @@
 ./usr/share/man/man5/services.5			man-net-man
 ./usr/share/man/man5/shells.5			man-sys-man
 ./usr/share/man/man5/siginfo.5			man-obsolete	obsolete
-./usr/share/man/man5/ssh_config.5		man-secsh-man
-./usr/share/man/man5/sshd_config.5		man-secsh-man
+./usr/share/man/man5/ssh_config.5		man-secsh-man	crypto
+./usr/share/man/man5/sshd_config.5		man-secsh-man	crypto
 ./usr/share/man/man5/stab.5			man-sys-man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man
 ./usr/share/man/man5/termcap.5			man-sys-man
@@ -3494,7 +3494,7 @@
 ./usr/share/man/man5/wtmpx.5			man-sys-man
 ./usr/share/man/man5/ypserv.acl.5		man-obsolete	obsolete
 ./usr/share/man/man7/ascii.7			man-reference-man
-./usr/share/man/man7/des_modes.7		man-reference-man
+./usr/share/man/man7/des_modes.7		man-reference-man	crypto
 ./usr/share/man/man7/environ.7			man-reference-man
 ./usr/share/man/man7/hier.7			man-reference-man
 ./usr/share/man/man7/hostname.7			man-reference-man
@@ -3582,7 +3582,7 @@
 ./usr/share/man/man8/ccdconfig.8		man-sysutil-man
 ./usr/share/man/man8/cesfic/MAKEDEV.8		man-obsolete	obsolete
 ./usr/share/man/man8/cesfic/makedev.8		man-obsolete	obsolete
-./usr/share/man/man8/cgdconfig.8		man-sysutil-man
+./usr/share/man/man8/cgdconfig.8		man-sysutil-man	crypto
 ./usr/share/man/man8/chat.8			man-ppp-man
 ./usr/share/man/man8/chown.8			man-sysutil-man
 ./usr/share/man/man8/chroot.8			man-sysutil-man
@@ -3920,7 +3920,7 @@
 ./usr/share/man/man8/quotacheck.8		man-sysutil-man
 ./usr/share/man/man8/quotaoff.8			man-sysutil-man
 ./usr/share/man/man8/quotaon.8			man-sysutil-man
-./usr/share/man/man8/racoon.8			man-netutil-man
+./usr/share/man/man8/racoon.8			man-netutil-man	crypto
 ./usr/share/man/man8/raidctl.8			man-sysutil-man
 ./usr/share/man/man8/rarpd.8			man-bootserver-man
 ./usr/share/man/man8/rbootd.8			man-bootserver-man
@@ -3983,7 +3983,7 @@
 ./usr/share/man/man8/setencstat.8		man-sysutil-man
 ./usr/share/man/man8/setkey.8			man-netutil-man
 ./usr/share/man/man8/setobjstat.8		man-sysutil-man
-./usr/share/man/man8/sftp-server.8		man-secsh-man
+./usr/share/man/man8/sftp-server.8		man-secsh-man	crypto
 ./usr/share/man/man8/sgimips/MAKEDEV.8		man-obsolete	obsolete
 ./usr/share/man/man8/sgimips/makedev.8		man-obsolete	obsolete
 ./usr/share/man/man8/shark/MAKEDEV.8		man-obsolete	obsolete
@@ -4012,8 +4012,8 @@
 ./usr/share/man/man8/spawn.8			man-postfix-man	postfix
 ./usr/share/man/man8/spray.8			man-rpcutil-man
 ./usr/share/man/man8/sprayd.8			man-rpcserver-man
-./usr/share/man/man8/ssh-keysign.8		man-secsh-man
-./usr/share/man/man8/sshd.8			man-secsh-man
+./usr/share/man/man8/ssh-keysign.8		man-secsh-man	crypto
+./usr/share/man/man8/sshd.8			man-secsh-man	crypto
 ./usr/share/man/man8/statd.8			man-nfsserver-man
 ./usr/share/man/man8/statmsg.8			man-obsolete	obsolete
 ./usr/share/man/man8/stdethers.8		man-nis-man	yp
