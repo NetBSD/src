@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.153 2002/02/02 04:17:37 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.154 2002/02/10 00:41:21 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -595,10 +595,10 @@ identifycpu()
 	printf("%s\n", cpu_model);
 #ifdef DIAGNOSTIC
 	printf("cpu: delay divisor %d", delay_divisor);
-#endif
 	if (mmuid)
 		printf(", mmuid %d", mmuid);
 	printf("\n");
+#endif
 
 	/*
 	 * Now that we have told the user what they have,
