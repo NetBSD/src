@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.26 2001/11/08 19:34:41 mycroft Exp $	*/
+/*	$NetBSD: el.c,v 1.27 2002/02/03 23:30:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,12 +36,14 @@
  * SUCH DAMAGE.
  */
 
+#ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
+#endif
 #if !defined(lint) && !defined(SCCSID)
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.26 2001/11/08 19:34:41 mycroft Exp $");
+__RCSID("$NetBSD: el.c,v 1.27 2002/02/03 23:30:03 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -147,7 +149,7 @@ public int
 el_set(EditLine *el, int op, ...)
 {
 	va_list va;
-	int rv;
+	int rv = 0;
 
 	if (el == NULL)
 		return (-1);
@@ -172,7 +174,6 @@ el_set(EditLine *el, int op, ...)
 			el->el_flags |= HANDLE_SIGNALS;
 		else
 			el->el_flags &= ~HANDLE_SIGNALS;
-		rv = 0;
 		break;
 
 	case EL_BIND:
@@ -262,6 +263,7 @@ el_set(EditLine *el, int op, ...)
 
 	default:
 		rv = -1;
+		break;
 	}
 
 	va_end(va);
@@ -398,7 +400,6 @@ el_line(EditLine *el)
 	return (const LineInfo *) (void *) &el->el_line;
 }
 
-static const char elpath[] = "/.editrc";
 
 /* el_source():
  *	Source a file
@@ -408,10 +409,14 @@ el_source(EditLine *el, const char *fname)
 {
 	FILE *fp;
 	size_t len;
-	char *ptr, path[MAXPATHLEN];
+	char *ptr;
 
 	fp = NULL;
 	if (fname == NULL) {
+#ifdef HAVE_ISSETUGID
+		static const char elpath[] = "/.editrc";
+		char path[MAXPATHLEN];
+
 		if (issetugid())
 			return (-1);
 		if ((ptr = getenv("HOME")) == NULL)
@@ -421,6 +426,14 @@ el_source(EditLine *el, const char *fname)
 		if (strlcat(path, elpath, sizeof(path)) >= sizeof(path))
 			return (-1);
 		fname = path;
+#else
+		/*
+		 * If issetugid() is missing, always return an error, in order
+		 * to keep from inadvertently opening up the user to a security
+		 * hole.
+		 */
+		return (-1);
+#endif
 	}
 	if (fp == NULL)
 		fp = fopen(fname, "r");
