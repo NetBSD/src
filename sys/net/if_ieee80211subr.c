@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.33 2003/05/16 04:54:55 itojun Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.34 2003/05/31 19:37:15 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/net/if_ieee80211subr.c,v 1.4 2003/01/21 08:55:59 alfred Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.33 2003/05/16 04:54:55 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.34 2003/05/31 19:37:15 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1835,7 +1835,7 @@ ieee80211_recv_beacon(struct ieee80211com *ic, struct mbuf *m0, int rssi,
 		printf("ieee80211_recv_beacon: %s%s on chan %u (bss chan %u)",
 		    (ni == NULL ? "new " : ""),
 		    is_prresp ? "probe response" : "beacon",
-		    chan, ieee80211_chan2ieee(ic, ic->ic_bss.ni_chan));
+		    chan, ic->ic_bss.ni_chan);
 		ieee80211_print_essid(ssid + 2, ssid[1]);
 		printf(" from %s\n", ether_sprintf(wh->i_addr2));
 	}
