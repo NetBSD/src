@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.59 2001/01/08 06:21:19 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.60 2001/02/02 22:11:52 is Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -68,6 +68,7 @@
 #
 # Console ports:
 #	ttye*	ite bitmapped consoles
+#	ttyE*	wscons
 #
 # Pointing devices:
 #	mouse*	Amiga mice
@@ -100,6 +101,7 @@
 #		CyberVision 64 (grf5), ET4000 boards (grf6)
 #		or CyberVision 64/3D (grf7).
 #	kbd	Amiga keyboard
+#	wskbd*	wscons keyboard events
 #	view*	generic interface to graphic displays
 #	lkm	loadable kernel modules interface
 #	ipl	IP filter
@@ -141,6 +143,7 @@ all)
 	sh $0 audio0 audio1 audio2 audio3
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 isdn
+	sh $0 wscons
 	;;
 
 floppy)
@@ -456,6 +459,39 @@ view*)
 	rm -f view$unit
 	mknod view$unit	c $chr $unit
 	chmod 666 view$unit
+	;;
+
+wscons)
+	sh $0 ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+#	sh $0 wsmouse0 wsmouse1 wsmouse2 wsmouse3
+	sh $0 wskbd0 wskbd1 wskbd2 wskbd3
+	sh $0 ttyEcfg
+#	sh $0 wsmux
+	;;
+
+ttyEcfg)
+	chr=53
+	rm -f ttyEcfg
+	mknod ttyEcfg c $chr 255
+	chown root.wheel ttyEcfg
+	chmod 600 ttyEcfg
+	;;
+
+ttyE*)
+	chr=53; unit=${i#ttyE}
+	rm -f ttyE$unit
+	mknod ttyE$unit c $chr $unit
+	chown root.wheel ttyE$unit
+	;;
+
+wskbd*)
+	unit=${i#wskbd}
+	wskbd=wskbd$unit
+	major=54
+	rm -f $wskbd
+	mknod $wskbd c $major $unit
+	chown root.wheel $wskbd
+	chmod 600 $wskbd
 	;;
 
 pty*)
