@@ -1,10 +1,7 @@
 /* footnotes.h -- Some functions for manipulating footnotes.
-   $Id: footnotes.h,v 1.1.1.1 1999/02/11 03:57:20 tv Exp $
+   $Id: footnotes.h,v 1.1.1.2 2001/07/25 16:20:46 assar Exp $
 
-   This file is part of GNU Info, a program for reading online documentation
-   stored in Info format.
-
-   Copyright (C) 1993, 97 Free Software Foundation, Inc.
+   Copyright (C) 1993, 97, 98 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -26,7 +23,7 @@
 #define INFO_FOOTNOTES_H
 
 /* Magic string which indicates following text is footnotes. */
-#define FOOTNOTE_LABEL _("---------- Footnotes ----------")
+#define FOOTNOTE_LABEL N_("---------- Footnotes ----------")
 
 #define FN_FOUND   0
 #define FN_UNFOUND 1
