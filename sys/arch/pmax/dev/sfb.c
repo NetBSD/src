@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.7 1996/02/15 19:13:13 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.8 1996/02/28 20:49:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,6 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sfb.c	8.1 (Berkeley) 6/10/93
- *      $Id: sfb.c,v 1.7 1996/02/15 19:13:13 jonathan Exp $
  */
 
 /*
