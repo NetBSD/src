@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.21 1994/05/27 10:32:07 chopps Exp $
+ *	$Id: locore.s,v 1.22 1994/05/29 06:58:27 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -1223,7 +1223,6 @@ ENTRY(cpu_switch)
 	movl	_curproc,sp@-		| remember last proc running
 #endif
 	clrl	_curproc
-	addql	#1,_cnt+V_SWTCH
 Lsw1:
 	/*
 	 * Find the highest-priority queue that isn't empty,
