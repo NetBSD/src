@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.95 1998/08/09 07:25:58 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.96 1998/08/09 20:28:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -224,8 +224,8 @@ audioattach(parent, self, aux)
 	    hwp->close == 0 ||
 	    hwp->query_encoding == 0 ||
 	    hwp->set_params == 0 ||
-	    hwp->start_output == 0 ||
-	    hwp->start_input == 0 ||
+	    (hwp->start_output == 0 && hwp->trigger_output == 0) ||
+	    (hwp->start_input == 0 && hwp->trigger_input == 0) ||
 	    hwp->halt_output == 0 ||
 	    hwp->halt_input == 0 ||
 	    hwp->getdev == 0 ||
@@ -1677,8 +1677,13 @@ audiostartr(sc)
 		 sc->sc_rr.start, sc->sc_rr.used, sc->sc_rr.usedhigh, 
 		 sc->sc_rr.mmapped));
 
-	error = sc->hw_if->start_input(sc->hw_hdl, sc->sc_rr.start, 
-				       sc->sc_rr.blksize, audio_rint, (void *)sc);
+	if (sc->hw_if->trigger_input)
+		error = sc->hw_if->trigger_input(sc->hw_hdl, sc->sc_rr.start,
+		    sc->sc_rr.end, sc->sc_rr.blksize,
+		    audio_rint, (void *)sc, &sc->sc_rparams);
+	else
+		error = sc->hw_if->start_input(sc->hw_hdl, sc->sc_rr.start, 
+		    sc->sc_rr.blksize, audio_rint, (void *)sc);
 	if (error) {
 		DPRINTF(("audiostartr failed: %d\n", error));
 		return error;
@@ -1697,15 +1702,21 @@ audiostartp(sc)
 		 sc->sc_pr.start, sc->sc_pr.used, sc->sc_pr.usedhigh,
 		 sc->sc_pr.mmapped));
     
-	if (sc->sc_pr.used >= sc->sc_pr.blksize || sc->sc_pr.mmapped) {
+	if (!sc->sc_pr.mmapped && sc->sc_pr.used < sc->sc_pr.blksize)
+		return 0;
+
+	if (sc->hw_if->trigger_output)
+		error = sc->hw_if->trigger_output(sc->hw_hdl, sc->sc_pr.start,
+		    sc->sc_pr.end, sc->sc_pr.blksize,
+		    audio_pint, (void *)sc, &sc->sc_pparams);
+	else
 		error = sc->hw_if->start_output(sc->hw_hdl, sc->sc_pr.outp,
-					sc->sc_pr.blksize, audio_pint, (void *)sc);
-		if (error) {
-			DPRINTF(("audiostartp failed: %d\n", error));
-		    	return error;
-		}
-		sc->sc_pbus = 1;
+		    sc->sc_pr.blksize, audio_pint, (void *)sc);
+	if (error) {
+		DPRINTF(("audiostartp failed: %d\n", error));
+	    	return error;
 	}
+	sc->sc_pbus = 1;
 	return 0;
 }
 
@@ -1787,8 +1798,9 @@ audio_pint(v)
 	if (cb->mmapped) {
 		DPRINTFN(5, ("audio_pint: mmapped outp=%p cc=%d inp=%p\n", 
                              cb->outp, cb->blksize, cb->inp));
-		(void)hw->start_output(sc->hw_hdl, cb->outp, cb->blksize,
-				       audio_pint, (void *)sc);
+		if (!hw->trigger_output)
+			(void)hw->start_output(sc->hw_hdl, cb->outp,
+			    cb->blksize, audio_pint, (void *)sc);
 		return;
 	}
 		
@@ -1849,12 +1861,14 @@ audio_pint(v)
 	}
 
 	DPRINTFN(5, ("audio_pint: outp=%p cc=%d\n", cb->outp, cb->blksize));
-	error = hw->start_output(sc->hw_hdl, cb->outp, cb->blksize,
-				 audio_pint, (void *)sc);
-	if (error) {
-		/* XXX does this really help? */
-		DPRINTF(("audio_pint restart failed: %d\n", error));
-		audio_clear(sc);
+	if (!hw->trigger_output) {
+		error = hw->start_output(sc->hw_hdl, cb->outp, cb->blksize,
+		    audio_pint, (void *)sc);
+		if (error) {
+			/* XXX does this really help? */
+			DPRINTF(("audio_pint restart failed: %d\n", error));
+			audio_clear(sc);
+		}
 	}
 
 	DPRINTFN(5, ("audio_pint: mode=%d pause=%d used=%d lowat=%d\n",
@@ -1904,8 +1918,9 @@ audio_rint(v)
 	if (cb->mmapped) {
 		DPRINTFN(2, ("audio_rint: mmapped inp=%p cc=%d\n", 
                              cb->inp, cb->blksize));
-		(void)hw->start_input(sc->hw_hdl, cb->inp, cb->blksize,
-				      audio_rint, (void *)sc);
+		if (!hw->trigger_input)
+			(void)hw->start_input(sc->hw_hdl, cb->inp, cb->blksize,
+			    audio_rint, (void *)sc);
 		return;
 	}
 
@@ -1951,12 +1966,14 @@ audio_rint(v)
 
 	DPRINTFN(2, ("audio_rint: inp=%p cc=%d used=%d\n", 
                      cb->inp, cb->blksize, cb->used));
-	error = hw->start_input(sc->hw_hdl, cb->inp, cb->blksize,
-				audio_rint, (void *)sc);
-	if (error) {
-		/* XXX does this really help? */
-		DPRINTF(("audio_rint: restart failed: %d\n", error));
-		audio_clear(sc);
+	if (!hw->trigger_input) {
+		error = hw->start_input(sc->hw_hdl, cb->inp, cb->blksize,
+		    audio_rint, (void *)sc);
+		if (error) {
+			/* XXX does this really help? */
+			DPRINTF(("audio_rint: restart failed: %d\n", error));
+			audio_clear(sc);
+		}
 	}
 
 	audio_wakeup(&sc->sc_rchan);
