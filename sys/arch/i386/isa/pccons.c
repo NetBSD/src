@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.58 1994/03/03 20:48:16 mycroft Exp $
+ *	$Id: pccons.c,v 1.59 1994/03/11 12:22:31 deraadt Exp $
  */
 
 /*
@@ -773,9 +773,20 @@ sput(cp, n)
 #else
 		/* Extract cursor shape */
 		outb(addr_6845, 10);
-		cursor_shape = (inb(addr_6845+1) & 0x1f) << 8;
+		cursor_shape = inb(addr_6845+1) << 8;
 		outb(addr_6845, 11);
-		cursor_shape |= (inb(addr_6845+1) & 0x1f);
+		cursor_shape |= inb(addr_6845+1);
+
+		/*
+		 * real 6845's, as found on, MDA, Hercules or CGA cards, do
+		 * not support reading the cursor shape registers. the 6845
+		 * tri-states it's data bus. This is _normally_ read by the
+		 * cpu as either 0x00 or 0xff.. in which case we just use
+		 * a line cursor.
+		 */
+		if (cursor_shape == 0x0000 || cursor_shape == 0xffff)
+			cursor_shape = 0x0b10;
+		cursor_shape &= 0x1f1f;
 #endif
 
 		crtat = Crtat + cursorat;
