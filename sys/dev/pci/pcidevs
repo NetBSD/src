@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.409 2002/02/28 03:39:37 junyoung Exp $
+$NetBSD: pcidevs,v 1.410 2002/03/01 13:47:30 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1478,6 +1478,9 @@ product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
 product MOT MPC107	0x0004	MPC107 \"Chaparral\" Host Bridge
+product MOT RAVEN	0x4801	Raven Host Bridge & Multi-Processor Interrupt Controller
+product MOT FALCON	0x4802	Falcon ECC Memory Controller Chip Set
+product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
 
 /* Mylex products */
 product MYLEX RAID_V2		0x0001	DAC960 RAID (v2 interface)
