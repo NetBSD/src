@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.124 2002/01/29 19:01:18 tv Exp $
+#	$NetBSD: Makefile.inc,v 1.125 2002/07/10 04:29:10 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -64,9 +64,9 @@ ASM=	accept.S access.S acct.S bind.S chdir.S chflags.S \
 	sendto.S setegid.S seteuid.S setgid.S setgroups.S setitimer.S \
 	setpgid.S setpriority.S setregid.S setreuid.S setrlimit.S \
 	setsid.S setsockopt.S setuid.S \
-	__shmctl13.S shmdt.S shmget.S shutdown.S __sigaction14.S \
+	__shmctl13.S shmdt.S shmget.S shutdown.S \
 	__sigaltstack14.S __sigpending14.S __sigprocmask14.S __sigsuspend14.S \
-	socket.S socketpair.S __stat13.S statfs.S \
+	__sigaction_sigtramp.S socket.S socketpair.S __stat13.S statfs.S \
 	swapctl.S symlink.S umask.S undelete.S unlink.S \
 	unmount.S utimes.S utrace.S vadvise.S wait4.S write.S writev.S \
 	__sysctl.S \
