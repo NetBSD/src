@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.64 2003/10/17 16:39:09 tsutsui Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.65 2003/10/17 17:42:35 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.64 2003/10/17 16:39:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.65 2003/10/17 17:42:35 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1031,9 +1031,7 @@ vr_start(ifp)
 		 */
 		d->vr_data = htole32(ds->ds_dmamap->dm_segs[0].ds_addr);
 		d->vr_ctl = htole32(m0->m_pkthdr.len);
-		d->vr_ctl |=
-		    htole32(VR_TXCTL_TLINK|VR_TXCTL_FIRSTFRAG|
-		    VR_TXCTL_LASTFRAG);
+		d->vr_ctl |= htole32(VR_TXCTL_FIRSTFRAG | VR_TXCTL_LASTFRAG);
 
 		/*
 		 * If this is the first descriptor we're enqueuing,
@@ -1083,7 +1081,7 @@ vr_start(ifp)
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		/* Start the transmitter. */
-		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_ON|VR_CMD_TX_GO);
+		VR_SETBIT16(sc, VR_COMMAND, VR_CMD_TX_GO);
 
 		/* Set the watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1108,8 +1106,19 @@ vr_init(ifp)
 	/* Reset the Rhine to a known state. */
 	vr_reset(sc);
 
+	/* set DMA length in BCR0 and BCR1 */
+	VR_CLRBIT(sc, VR_BCR0, VR_BCR0_DMA_LENGTH);
+	VR_SETBIT(sc, VR_BCR0, VR_BCR0_DMA_STORENFWD);
+
+	VR_CLRBIT(sc, VR_BCR0, VR_BCR0_RX_THRESH);
+	VR_SETBIT(sc, VR_BCR0, VR_BCR0_RXTH_128BYTES);
+
+	VR_CLRBIT(sc, VR_BCR1, VR_BCR1_TX_THRESH);
+	VR_SETBIT(sc, VR_BCR1, VR_BCR1_TXTH_STORENFWD);
+
+	/* set DMA threshold length in RXCFG and TXCFG */
 	VR_CLRBIT(sc, VR_RXCFG, VR_RXCFG_RX_THRESH);
-	VR_SETBIT(sc, VR_RXCFG, VR_RXTHRESH_STORENFWD);
+	VR_SETBIT(sc, VR_RXCFG, VR_RXTHRESH_128BYTES);
 
 	VR_CLRBIT(sc, VR_TXCFG, VR_TXCFG_TX_THRESH);
 	VR_SETBIT(sc, VR_TXCFG, VR_TXTHRESH_STORENFWD);

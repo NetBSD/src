@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vrreg.h,v 1.11 2003/10/17 16:00:43 tsutsui Exp $	*/
+/*	$NetBSD: if_vrreg.h,v 1.12 2003/10/17 17:42:35 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -282,6 +282,46 @@
 #define VR_STICKHW_WOL_ENB	0x04
 #define VR_STICKHW_WOL_STS	0x08
 #define VR_STICKHW_LEGWOL_ENB	0x80
+
+/*
+ * BCR0 register bits.
+ */
+#define VR_BCR0_DMA_LENGTH	0x07
+#define VR_BCR0_DMA_32BYTES	0x00
+#define VR_BCR0_DMA_64BYTES	0x01
+#define VR_BCR0_DMA_128BYTES	0x02
+#define VR_BCR0_DMA_256BYTES	0x03
+#define VR_BCR0_DMA_512BYTES	0x04
+#define VR_BCR0_DMA_1024BYTES	0x05
+#define VR_BCR0_DMA_STORENFWD	0x07
+
+#define VR_BCR0_RX_THRESH	0x38
+#define VR_BCR0_RXTH_CFG	0x00
+#define VR_BCR0_RXTH_64BYTES	0x08
+#define VR_BCR0_RXTH_128BYTES	0x10
+#define VR_BCR0_RXTH_256BYTES	0x18
+#define VR_BCR0_RXTH_512BYTES	0x20
+#define VR_BCR0_RXTH_1024BYTES	0x28
+#define VR_BCR0_RXTH_STORENFWD	0x38
+
+#define VR_BCR0_EXTLED		0x40
+#define VR_BCR0_MED2		0x80
+
+/*
+ * BCR1 register bits.
+ */
+#define VR_BCR1_POT0		0x01
+#define VR_BCR1_POT1		0x02
+#define VR_BCR1_POT2		0x04
+
+#define VR_BCR1_TX_THRESH	0x38
+#define VR_BCR1_TXTH_CFG	0x00
+#define VR_BCR1_TXTH_64BYTES	0x08
+#define VR_BCR1_TXTH_128BYTES	0x10
+#define VR_BCR1_TXTH_256BYTES	0x18
+#define VR_BCR1_TXTH_512BYTES	0x20
+#define VR_BCR1_TXTH_1024BYTES	0x28
+#define VR_BCR1_TXTH_STORENFWD	0x38
 
 /*
  * Rhine TX/RX list structure.
