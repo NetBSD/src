@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpq.8,v 1.11 2003/03/16 21:55:14 wiz Exp $
+.\"	$NetBSD: ntpq.8,v 1.12 2003/03/31 09:27:52 wiz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -182,9 +182,9 @@ must correspond to the key configured for use by the NTP server for this
 purpose if such requests are to be successful.
 .It Ar raw
 Causes all output from query commands is printed as received from the remote
-server. The only formating/intepretation done on the data is to transform
-nonascii data into a printable (but barely understandable) form.
-.It Ar timeout millseconds
+server. The only formatting/interpretation done on the data is to transform
+non-ASCII data into a printable (but barely understandable) form.
+.It Ar timeout milliseconds
 Specify a timeout period for responses to server queries. The default is
 about 5000 milliseconds. Note that since
 .Pa ntpq
@@ -365,7 +365,7 @@ The following
 .Pa TEST5
 through
 .Pa TEST10
-ennumerate errors
+enumerate errors
 in the packet header. The packet is discarded without inspecting its contents.
 .Bl -tag -width indent
 .It TEST5
