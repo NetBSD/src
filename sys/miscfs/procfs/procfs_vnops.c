@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.68 1999/08/25 14:42:36 sommerfeld Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.69 1999/09/02 23:33:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -484,6 +484,7 @@ procfs_getattr(v)
 	switch (pfs->pfs_type) {
 	case Proot:
 	case Pcurproc:
+	case Pself:
 		procp = 0;
 		break;
 
@@ -575,6 +576,13 @@ procfs_getattr(v)
 		    sprintf(buf, "%ld", (long)curproc->p_pid);
 		break;
 	}
+
+	case Pself:
+		vap->va_nlink = 1;
+		vap->va_uid = 0;
+		vap->va_gid = 0;
+		vap->va_bytes = vap->va_size = sizeof("curproc");
+		break;
 
 	case Pproc:
 		vap->va_nlink = 2;
@@ -706,7 +714,7 @@ procfs_lookup(v)
 	pid_t pid;
 	struct pfsnode *pfs;
 	struct proc *p;
-	int i, error, wantpunlock;
+	int i, error, wantpunlock, iscurproc = 0, isself = 0;
 
 	*vpp = NULL;
 	cnp->cn_flags &= ~PDIRUNLOCK;
@@ -730,8 +738,12 @@ procfs_lookup(v)
 		if (cnp->cn_flags & ISDOTDOT) 
 			return (EIO);
 
-		if (CNEQ(cnp, "curproc", 7)) {
-			error = procfs_allocvp(dvp->v_mount, vpp, 0, Pcurproc);
+		iscurproc = CNEQ(cnp, "curproc", 7);
+		isself = CNEQ(cnp, "self", 4);
+
+		if (iscurproc || isself) {
+			error = procfs_allocvp(dvp->v_mount, vpp, 0,
+			    iscurproc ? Pcurproc : Pself);
 			if ((error == 0) && (wantpunlock)) {
 				VOP_UNLOCK(dvp, 0);
 				cnp->cn_flags |= PDIRUNLOCK;
@@ -910,8 +922,9 @@ procfs_readdir(v)
 
 	/*
 	 * this is for the root of the procfs filesystem
-	 * what is needed is a special entry for "curproc"
-	 * followed by an entry for each process on allproc
+	 * what is needed are special entries for "curproc"
+	 * and "self" followed by an entry for each process
+	 * on allproc
 #ifdef PROCFS_ZOMBIE
 	 * and deadproc and zombproc.
 #endif
@@ -956,8 +969,15 @@ procfs_readdir(v)
 
 			case 2:
 				d.d_fileno = PROCFS_FILENO(0, Pcurproc);
-				d.d_namlen = 7;
-				memcpy(d.d_name, "curproc", 8);
+				d.d_namlen = sizeof("curproc") - 1;
+				memcpy(d.d_name, "curproc", sizeof("curproc"));
+				d.d_type = DT_LNK;
+				break;
+
+			case 3:
+				d.d_fileno = PROCFS_FILENO(0, Pself);
+				d.d_namlen = sizeof("self") - 1;
+				memcpy(d.d_name, "self", sizeof("self"));
 				d.d_type = DT_LNK;
 				break;
 
@@ -1025,10 +1045,12 @@ procfs_readlink(v)
 	char buf[16];		/* should be enough */
 	int len;
 
-	if (VTOPFS(ap->a_vp)->pfs_fileno != PROCFS_FILENO(0, Pcurproc))
+	if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pcurproc))
+		len = sprintf(buf, "%ld", (long)curproc->p_pid);
+	else if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pself))
+		len = sprintf(buf, "%s", "curproc");
+	else
 		return (EINVAL);
-
-	len = sprintf(buf, "%ld", (long)curproc->p_pid);
 
 	return (uiomove((caddr_t)buf, len, ap->a_uio));
 }

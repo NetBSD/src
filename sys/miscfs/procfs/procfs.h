@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.26 1999/03/24 05:51:27 mrg Exp $	*/
+/*	$NetBSD: procfs.h,v 1.27 1999/09/02 23:33:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -45,6 +45,7 @@
 typedef enum {
 	Proot,		/* the filesystem root */
 	Pcurproc,	/* symbolic link for curproc */
+	Pself,		/* like curproc, but this is the Linux name */
 	Pproc,		/* a process-specific sub-directory */
 	Pfile,		/* the executable file */
 	Pmem,		/* the process's memory image */

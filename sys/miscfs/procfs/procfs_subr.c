@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.27 1999/07/08 01:26:28 wrstuden Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.28 1999/09/02 23:33:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -140,6 +140,7 @@ loop:
 		break;
 
 	case Pcurproc:	/* /proc/curproc = lr-xr-xr-x */
+	case Pself:	/* /proc/self    = lr-xr-xr-x */
 		pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH;
 		vp->v_type = VLNK;
 		break;
