@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $	*/
+/*	$NetBSD: network.c,v 1.6 1998/02/27 10:44:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-static char rcsid[] = "$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp $";
+__RCSID("$NetBSD: network.c,v 1.6 1998/02/27 10:44:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,6 +47,7 @@ static char rcsid[] = "$NetBSD: network.c,v 1.5 1996/02/28 21:04:06 thorpej Exp 
 #include <sys/time.h>
 
 #include <errno.h>
+#include <unistd.h>
 
 #include <arpa/telnet.h>
 
@@ -95,7 +97,7 @@ stilloob()
 
     if (value < 0) {
 	perror("select");
-	(void) quit();
+	(void) quit(0, NULL);
 	/* NOTREACHED */
     }
     if (FD_ISSET(net, &excepts)) {

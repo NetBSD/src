@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.8 1997/06/03 01:51:43 mycroft Exp $	*/
+/*	$NetBSD: telnet.c,v 1.9 1998/02/27 10:44:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: telnet.c,v 1.8 1997/06/03 01:51:43 mycroft Exp $";
+__RCSID("$NetBSD: telnet.c,v 1.9 1998/02/27 10:44:14 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,6 +46,7 @@ static char rcsid[] = "$NetBSD: telnet.c,v 1.8 1997/06/03 01:51:43 mycroft Exp $
 
 #if	defined(unix)
 #include <signal.h>
+#include <termcap.h>
 /* By the way, we need to include curses.h before telnet.h since,
  * among other things, telnet.h #defines 'DO', which is a variable
  * declared in curses.h.
@@ -150,6 +152,13 @@ int	linemode;
 #ifdef	KLUDGELINEMODE
 int	kludgelinemode = 1;
 #endif
+
+static void dooption P((int));
+static void dontoption P((int));
+static void suboption P((void));
+static int telsnd P((void));
+static void netclear P((void));
+static void doflush P((void));
 
 /*
  * The following are some clocks used to decide how to interpret
@@ -853,8 +862,8 @@ suboption()
 
 	    TerminalSpeeds(&ispeed, &ospeed);
 
-	    sprintf((char *)temp, "%c%c%c%c%d,%d%c%c", IAC, SB, TELOPT_TSPEED,
-		    TELQUAL_IS, ospeed, ispeed, IAC, SE);
+	    sprintf((char *)temp, "%c%c%c%c%ld,%ld%c%c", IAC, SB, TELOPT_TSPEED,
+		    TELQUAL_IS, (long)ospeed, (long)ispeed, IAC, SE);
 	    len = strlen((char *)temp+4) + 4;	/* temp[3] is 0 ... */
 
 	    if (len < NETROOM()) {
@@ -1148,7 +1157,7 @@ slc_init()
 
 #define	initfunc(func, flags) { \
 					spcp = &spc_data[func]; \
-					if (spcp->valp = tcval(func)) { \
+					if ((spcp->valp = tcval(func)) != NULL){ \
 					    spcp->val = *spcp->valp; \
 					    spcp->mylevel = SLC_VARIABLE|flags; \
 					} else { \
@@ -1206,7 +1215,8 @@ slcstate()
 }
 
     void
-slc_mode_export()
+slc_mode_export(n)
+    int n;
 {
     slc_mode = SLC_EXPORT;
     if (my_state_is_will(TELOPT_LINEMODE))
@@ -1375,8 +1385,8 @@ slc_start_reply()
 
 	void
 slc_add_reply(func, flags, value)
-	unsigned char func;
-	unsigned char flags;
+	unsigned int func;
+	unsigned int flags;
 	cc_t value;
 {
 	if ((*slc_replyp++ = func) == IAC)
@@ -1556,12 +1566,12 @@ env_opt_add(ep)
 	if (ep == NULL || *ep == '\0') {
 		/* Send user defined variables first. */
 		env_default(1, 0);
-		while (ep = env_default(0, 0))
+		while ((ep = env_default(0, 0)) != NULL)
 			env_opt_add(ep);
 
 		/* Now add the list of well know variables.  */
 		env_default(1, 1);
-		while (ep = env_default(0, 1))
+		while ((ep = env_default(0, 1)) != NULL)
 			env_opt_add(ep);
 		return;
 	}
@@ -1591,7 +1601,7 @@ env_opt_add(ep)
 	else
 		*opt_replyp++ = ENV_USERVAR;
 	for (;;) {
-		while (c = *ep++) {
+		while ((c = *ep++) != '\0') {
 			switch(c&0xff) {
 			case IAC:
 				*opt_replyp++ = IAC;
@@ -1605,7 +1615,7 @@ env_opt_add(ep)
 			}
 			*opt_replyp++ = c;
 		}
-		if (ep = vp) {
+		if ((ep = vp) != NULL) {
 #ifdef	OLD_ENVIRON
 			if (telopt_environ == TELOPT_OLD_ENVIRON)
 				*opt_replyp++ = old_env_value;
@@ -1660,7 +1670,7 @@ telrcv()
 {
     register int c;
     register int scc;
-    register unsigned char *sbp;
+    register unsigned char *sbp = NULL;
     int count;
     int returnValue = 0;
 
@@ -1934,7 +1944,7 @@ telsnd()
     int tcc;
     int count;
     int returnValue = 0;
-    unsigned char *tbp;
+    unsigned char *tbp = NULL;
 
     tcc = 0;
     count = 0;
@@ -2401,7 +2411,8 @@ xmitEC()
 
 
     int
-dosynch()
+dosynch(s)
+    char *s;
 {
     netclear();			/* clear the path to the network */
     NETADD(IAC);
@@ -2414,7 +2425,8 @@ dosynch()
 int want_status_response = 0;
 
     int
-get_status()
+get_status(s)
+    char *s;
 {
     unsigned char tmp[16];
     register unsigned char *cp;
@@ -2449,7 +2461,7 @@ intp()
 	doflush();
     }
     if (autosynch) {
-	dosynch();
+	dosynch(NULL);
     }
 }
 
@@ -2463,7 +2475,7 @@ sendbrk()
 	doflush();
     }
     if (autosynch) {
-	dosynch();
+	dosynch(NULL);
     }
 }
 
@@ -2477,7 +2489,7 @@ sendabort()
 	doflush();
     }
     if (autosynch) {
-	dosynch();
+	dosynch(NULL);
     }
 }
 
@@ -2491,7 +2503,7 @@ sendsusp()
 	doflush();
     }
     if (autosynch) {
-	dosynch();
+	dosynch(NULL);
     }
 }
 

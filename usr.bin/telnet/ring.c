@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $	*/
+/*	$NetBSD: ring.c,v 1.8 1998/02/27 10:44:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
 #else
-static char rcsid[] = "$NetBSD: ring.c,v 1.7 1996/02/28 21:04:07 thorpej Exp $";
+__RCSID("$NetBSD: ring.c,v 1.8 1998/02/27 10:44:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +110,8 @@ static u_long ring_clock = 0;
 
 /* Buffer state transition routines */
 
-    ring_init(ring, buffer, count)
+    int
+ring_init(ring, buffer, count)
 Ring *ring;
     unsigned char *buffer;
     int count;

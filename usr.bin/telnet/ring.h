@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.h,v 1.5 1996/02/28 21:04:09 thorpej Exp $	*/
+/*	$NetBSD: ring.h,v 1.6 1998/02/27 10:44:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -83,9 +83,10 @@ extern int
 	ring_empty_count P((Ring *ring)),
 	ring_empty_consecutive P((Ring *ring)),
 	ring_full_count P((Ring *ring)),
-	ring_full_consecutive P((Ring *ring));
+	ring_full_consecutive P((Ring *ring)),
+	ring_at_mark P((Ring *ring));
 
 
 extern void
-    ring_clear_mark(),
-    ring_mark();
+	ring_clear_mark P((Ring *ring)),
+	ring_mark P((Ring *ring));
