@@ -1,4 +1,4 @@
-/*	$NetBSD: swapon.c,v 1.6 1997/11/05 21:40:21 cgd Exp $	*/
+/*	$NetBSD: swapon.c,v 1.7 1999/03/18 04:48:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/types.h>
-#include <vm/vm_swap.h>
+#include <sys/swap.h>
 #include <unistd.h>
 
 int
