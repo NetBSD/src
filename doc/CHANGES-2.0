@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.480 2004/10/02 16:16:48 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.481 2004/10/04 05:21:07 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -7690,3 +7690,20 @@ sys/sys/param.h					patched by hand
 share/tmac/doc-common				patched by hand
 
 	Welcome to 2.0_RC2
+
+sys/compat/linux/common/linux_ipc.c		1.29
+sys/kern/sysv_shm.c				1.78
+sys/sys/shm.h					1.36-1.37
+sys/compat/linux/arch/alpha/syscalls.master	1.47
+sys/compat/linux/arch/alpha/linux_syscall.h	regen
+sys/compat/linux/arch/alpha/linux_syscallargs.h	regen
+sys/compat/linux/arch/alpha/linux_syscalls.c	regen
+sys/compat/linux/arch/alpha/linux_sysent.c	regen
+sys/compat/linux/common/linux_ipc.c		1.30
+sys/compat/linux/common/linux_ipccall.c		1.24
+sys/compat/linux/common/linux_shm.h		1.6
+sys/kern/sysv_shm.c				1.79
+
+	Fix linux handling of SysV-style shared memory. Fixed Linux VMware 
+	display problems.
+	[jdolecek, ticket #884]
