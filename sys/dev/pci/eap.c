@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.12 1998/08/12 18:47:43 mycroft Exp $	*/
+/*	$NetBSD: eap.c,v 1.13 1998/08/12 18:55:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1054,17 +1054,17 @@ eap_mixer_get_port(addr, cp)
 
 	switch (cp->dev) {
 	case EAP_RECORD_SOURCE:
-		if (cp->type != AUDIO_MIXER_SET);
+		if (cp->type != AUDIO_MIXER_SET)
 			return (EINVAL);
 		cp->un.mask = sc->sc_record_source;
 		return (0);
 	case EAP_OUTPUT_SELECT:
-		if (cp->type != AUDIO_MIXER_SET);
+		if (cp->type != AUDIO_MIXER_SET)
 			return (EINVAL);
 		cp->un.mask = sc->sc_output_source;
 		return (0);
 	case EAP_MIC_PREAMP:
-		if (cp->type != AUDIO_MIXER_ENUM);
+		if (cp->type != AUDIO_MIXER_ENUM)
 			return (EINVAL);
 		cp->un.ord = sc->sc_mic_preamp;
 		return (0);
