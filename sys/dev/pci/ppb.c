@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.1 1996/02/28 01:46:32 cgd Exp $	*/
+/*	$NetBSD: ppb.c,v 1.2 1996/03/04 17:02:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -136,7 +136,7 @@ ppbattach(parent, self, aux)
 	pba.pba_bus = sc->sc_s_num;
 	pba.pba_maxndevs = PPB_SECONDARY_DEVICES;
 
-	config_found(self, &pa, ppbprint);
+	config_found(self, &pba, ppbprint);
 }
 
 static int
