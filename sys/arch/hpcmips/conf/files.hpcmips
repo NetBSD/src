@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.58 2001/06/13 07:32:48 enami Exp $
+#	$NetBSD: files.hpcmips,v 1.59 2001/06/13 19:09:07 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -207,13 +207,12 @@ defopt TX39POWERDEBUG
 defopt TX39UARTDEBUG
 defopt USE_POLL
 
-device txsim {[platform = -1]}
+device txsim { }
 device txcsbusif {[platform = -1]}
 device txcomif {[slot = -1]}
 device txsibif {[slot = -1]}
 device ucbif { }
 device irif { }
-device txiomanif {[evtype = -1], [id = -1], [group = -1], [port = -1], [edge = -1], [initial = -1]}
 
 attach txsim at mainbus
 file arch/hpcmips/tx/txsim.c		txsim
@@ -247,17 +246,9 @@ device tx39io
 attach tx39io at txsim
 file arch/hpcmips/tx/tx39io.c		tx39io
 
-device txioman: txiomanif
+device txioman: hpcioif
 attach txioman at txsim
 file arch/hpcmips/tx/txioman.c		txioman
-
-device txin
-attach txin at txiomanif
-file arch/hpcmips/tx/txioman_in.c	txin
-
-device txout
-attach txout at txiomanif
-file arch/hpcmips/tx/txioman_out.c	txout
 
 device tx39sib: txsibif
 attach tx39sib at txsim

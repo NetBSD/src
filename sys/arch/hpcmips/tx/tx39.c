@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.21 2001/04/12 19:22:52 thorpej Exp $ */
+/*	$NetBSD: tx39.c,v 1.22 2001/06/13 19:09:08 uch Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -377,15 +377,6 @@ tx_conf_register_sound(t, soundt)
 	KASSERT(t == &tx_chipset);
 
 	tx_chipset.tc_soundt = soundt;
-}
-
-void
-tx_conf_register_ioman(tx_chipset_tag_t t, struct txio_ops *ops)
-{
-	KASSERT(t == &tx_chipset);
-	KASSERT(ops);
-
-	tx_chipset.tc_ioops[ops->_group] = ops;
 }
 
 void
