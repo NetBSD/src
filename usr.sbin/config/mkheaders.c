@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.32 2002/06/05 10:56:18 lukem Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.33 2002/11/19 04:29:19 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,12 +50,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "defs.h"
 
 static int emitcnt(struct nvlist *);
 static int emitlocs(void);
 static int emitopts(void);
 static int emitioconfh(void);
+static int emittime(void);
 static int herr(const char *, const char *, FILE *);
 static int locators_print(const char *, void *, void *);
 static int defopts_print(const char *, void *, void *);
@@ -82,7 +84,7 @@ mkheaders(void)
 			return (1);
 	}
 
-	if (emitopts() || emitlocs() || emitioconfh())
+	if (emitopts() || emitlocs() || emitioconfh() || emittime())
 		return (1);
 
 	return (0);
@@ -313,6 +315,49 @@ emitioconfh(void)
 		return (herr("clos", tfname, NULL));
 
 	return (moveifchanged(tfname, "ioconf.h"));
+}
+
+/*
+ * Make a file that config_time.h can use as a source, if required.
+ */
+static int
+emittime(void)
+{
+	FILE *fp;
+	time_t t;
+	struct tm *tm;
+	char buf[128];
+
+	t = time(NULL);
+	tm = gmtime(&t);
+
+	if ((fp = fopen("config_time.src", "w")) == NULL)
+		return (herr("open", "config_time.src", NULL));
+
+	if (strftime(buf, sizeof(buf), "%c %Z", tm) == 0)
+		return (herr("strftime", "config_time.src", NULL));
+
+	if (fprintf(fp, "/* %s */\n"
+	    "#define CONFIG_TIME\t%2lld\n"
+	    "#define CONFIG_YEAR\t%2d\n"
+	    "#define CONFIG_MONTH\t%2d\n"
+	    "#define CONFIG_DATE\t%2d\n"
+	    "#define CONFIG_HOUR\t%2d\n"
+	    "#define CONFIG_MINS\t%2d\n"		
+	    "#define CONFIG_SECS\t%2d\n",
+	    buf, (long long)t, 
+	    tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
+	    tm->tm_hour, tm->tm_min, tm->tm_sec) < 0)
+		return (herr("fprintf", "config_time.src", NULL));
+
+	if (fclose(fp) != 0)
+		return (herr("close", "config_time.src", NULL));
+
+	/*
+	 * *Don't* moveifchanged this file.  Makefile.kern.inc will
+	 * handle that if it determines such a move is necessary.
+	 */
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.28 2002/11/03 21:12:27 chris Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.29 2002/11/19 04:29:19 atatat Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -187,6 +187,12 @@ newvers: vers.o
 vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+.endif
+
+.if !target(config_time.h)
+EXTRA_CLEAN+= config_time.h
+config_time.h: Makefile
+	cp config_time.src config_time.h
 .endif
 
 # depend on root or device configuration
