@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2003/11/13 14:31:54 sekiya Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2003/12/30 23:50:25 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -251,7 +251,6 @@ finish:
 		printf("nsym 0x%lx ssym 0x%lx esym 0x%lx\n", marks[MARK_NSYM],
 		       marks[MARK_SYM], marks[MARK_END]);
 	}
-	ARCBIOS->FlushAllCaches();
 	(*entry) (argc, argv, BOOTINFO_MAGIC, bootinfo);
 
 	printf("Kernel returned!  Halting...\n");
