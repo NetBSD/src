@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.48 1997/07/22 04:32:13 jonathan Exp $
+# $NetBSD: files.alpha,v 1.49 1997/08/12 00:04:14 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -17,6 +17,7 @@ defopt	DEC_EB164	# EB164:	AlphaPC 164
 defopt	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 defopt	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 defopt	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
+defopt	DEC_550		# Miata:	Personal Workstation (550)
 
 # Miscellaneous CPU-specific option headers
 defopt	FIX_UNALIGNED_VAX_FP
