@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.49 2004/07/15 06:38:46 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.50 2004/07/15 06:46:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.49 2004/07/15 06:38:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.50 2004/07/15 06:46:08 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2125,9 +2125,7 @@ atw_recv_beacon(struct ieee80211com *ic, struct mbuf *m0,
 
 	ic->ic_flags &= ~IEEE80211_F_SIBSS;
 
-#if 0
 	atw_tsf(sc);
-#endif
 
 	/* negotiate rates with new IBSS */
 	ieee80211_fix_rate(ic, ni, IEEE80211_F_DOFRATE |
