@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.17 1997/10/09 12:29:26 lukem Exp $	*/
+/*	$NetBSD: crt0.c,v 1.18 1997/10/20 13:49:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -32,10 +32,6 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.17 1997/10/09 12:29:26 lukem Exp $");
-#endif /* LIBC_SCCS and not lint */
-
 #include <sys/param.h>
 
 #include <stdlib.h>
@@ -61,6 +57,10 @@ start:
 	movel	d0,sp@-
 	jsr	___start
 ");
+
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: crt0.c,v 1.18 1997/10/20 13:49:54 mycroft Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 void
 __start(argc, argv, envp)
