@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.22 1994/11/23 05:18:16 gwr Exp $	*/
+/*	$NetBSD: param.h,v 1.23 1994/11/28 19:13:18 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -84,7 +84,7 @@
 #define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2		/* pages of u-area */
-#define USPACE		(UPAGES*NBPG)
+#define	USPACE		(UPAGES << PGSHIFT)
 
 /*
  * Constants related to network buffer management.
