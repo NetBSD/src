@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.17 2000/05/14 14:13:53 veego Exp $
+.\" $NetBSD: doc2html,v 1.18 2000/07/04 07:03:15 kleink Exp $
 .\"
 .\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1087,6 +1087,31 @@ AT&T UNIX\\$*
 .			ds std-tmp1 \&IEEE Std1003.2
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``\\*(Px.2'')
+.	       \}
+.	       if "\\$1"-isoC" \{\
+.			ds std-tmp1 \&ISO/IEC 9899:1990
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``ISO C90'')
+.	       \}
+.	       if "\\$1"-isoC-amd1" \{\
+.			ds std-tmp1 \&ISO/IEC 9899/AMD1:1990
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``ISO C90'')
+.	       \}
+.	       if "\\$1"-isoC-amd2" \{\
+.			ds std-tmp1 \&ISO/IEC 9899/AMD2:1990
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``ISO C90'')
+.	       \}
+.	       if "\\$1"-isoC-tcor1" \{\
+.			ds std-tmp1 \&ISO/IEC 9899/TCOR1:1990
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``ISO C90'')
+.	       \}
+.	       if "\\$1"-isoC-tcor2" \{\
+.			ds std-tmp1 \&ISO/IEC 9899/TCOR2:1990
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``ISO C90'')
 .	       \}
 .	       if "\\$1"-isoC99" \{\
 .			ds std-tmp1 \&ISO/IEC 9899:1999

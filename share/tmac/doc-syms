@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-syms,v 1.53 2000/05/14 14:13:53 veego Exp $
+.\"	$NetBSD: doc-syms,v 1.54 2000/07/04 07:03:15 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -320,19 +320,19 @@
 .       \}
 .       if "\\*(A\\n(aP"-isoC" \{\
 .		ds b1 \&\\*(tNISO/IEC \\*(aa9899:1990\\*(sV
-.		as b1 (``\\*(tNISO C\\*(aa'')
+.		as b1 (``\\*(tNISO C90\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-isoC-amd1" \{\
 .		ds b1 \&\\*(tNISO/IEC \\*(aa9899/AMD1:1995\\*(sV
-.		as b1 (``\\*(tNISO C\\*(aa'')
+.		as b1 (``\\*(tNISO C90\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-isoC-tcor1" \{\
 .		ds b1 \&\\*(tNISO/IEC \\*(aa9899/TCOR1:1994\\*(sV
-.		as b1 (``\\*(tNISO C\\*(aa'')
+.		as b1 (``\\*(tNISO C90\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-isoC-tcor2" \{\
 .		ds b1 \&\\*(tNISO/IEC \\*(aa9899/TCOR2:1995\\*(sV
-.		as b1 (``\\*(tNISO C\\*(aa'')
+.		as b1 (``\\*(tNISO C90\\*(aa'')
 .       \}
 .       if "\\*(A\\n(aP"-isoC99" \{\
 .		ds b1 \&\\*(tNISO/IEC \\*(aa9899:1999\\*(sV
