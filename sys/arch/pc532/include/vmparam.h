@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 1999/12/04 21:21:11 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20 2000/01/26 09:44:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -106,28 +106,6 @@
  * change over time.
  */
 #define	MAXSLP 		20
-
-/*
- * A swapped in process is given a small amount of core without being bothered
- * by the page replacement algorithm.  Basically this says that if you are
- * swapped in you deserve some resources.  We protect the last SAFERSS
- * pages against paging and will just swap you out rather than paging you.
- * Note that each process has at least UPAGES+CLSIZE pages which are not
- * paged anyways (this is currently 8+2=10 pages or 5k bytes), so this
- * number just means a swapped in process is given around 25k bytes.
- * Just for fun: current memory prices are 4600$ a megabyte on VAX (4/22/81),
- * so we loan each swapped in process memory worth 100$, or just admit
- * that we don't consider it worthwhile and swap it out to disk which costs
- * $30/mb or about $0.75.
- * { wfj 6/16/89: Retail AT memory expansion $800/megabyte, loan of $17
- *   on disk costing $7/mb or $0.18 (in memory still 100:1 in cost!) }
- * Update: memory prices have changed recently (9/96). At the current    
- * value of $6 per megabyte, we lend each swapped in process memory worth
- * $0.15, or just admit that we don't consider it worthwhile and swap it out
- * to disk which costs $0.20/MB, or just under half a cent. 
- */
-#define	SAFERSS		8		/* nominal ``small'' resident set size
-					   protected against replacement */
 
 /*
  * Mach derived constants
