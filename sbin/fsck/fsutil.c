@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.9 2001/02/19 22:56:19 cgd Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.10 2001/06/18 02:31:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -35,17 +35,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.9 2001/02/19 22:56:19 cgd Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.10 2001/06/18 02:31:09 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 #include <errno.h>
 #include <fstab.h>
 #include <err.h>
@@ -59,60 +55,47 @@ static const char *dev = NULL;
 static int hot = 0;
 static int preen = 0;
 
-static void vmsg __P((int, const char *, va_list))
+static void vmsg(int, const char *, va_list)
      __attribute((__format__(__printf__,2,0)));
 
 void
-setcdevname(cd, pr)
-	const char *cd;
-	int pr;
+setcdevname(const char *cd, int pr)
 {
+
 	dev = cd;
 	preen = pr;
 }
 
 const char *
-cdevname()
+cdevname(void)
 {
+
 	return dev;
 }
 
 int
-hotroot()
+hotroot(void)
 {
+
 	return hot;
 }
 
 /*VARARGS*/
 void
-#if __STDC__
 errexit(const char *fmt, ...)
-#else
-errexit(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	const char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	exit(8);
 }
 
 static void
-vmsg(fatal, fmt, ap)
-	int fatal;
-	const char *fmt;
-	va_list ap;
+vmsg(int fatal, const char *fmt, va_list ap)
 {
+
 	if (!fatal && preen)
 		(void) printf("%s: ", dev);
 
@@ -131,82 +114,46 @@ vmsg(fatal, fmt, ap)
 
 /*VARARGS*/
 void
-#if __STDC__
 pfatal(const char *fmt, ...)
-#else
-pfatal(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	const char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
 	vmsg(1, fmt, ap);
 	va_end(ap);
 }
 
 /*VARARGS*/
 void
-#if __STDC__
 pwarn(const char *fmt, ...)
-#else
-pwarn(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	const char *fmt;
 
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
+	va_start(ap, fmt);
 	vmsg(0, fmt, ap);
 	va_end(ap);
 }
 
 void
-perror(s)
-	const char *s;
+perror(const char *s)
 {
+
 	pfatal("%s (%s)", s, strerror(errno));
 }
 
 void
-#if __STDC__
 panic(const char *fmt, ...)
-#else
-panic(va_alist)
-	va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	const char *fmt;
-
-	va_start(ap);
-	fmt = va_arg(ap, const char *);
-#endif
 	vmsg(1, fmt, ap);
 	va_end(ap);
 	exit(8);
 }
 
 const char *
-unrawname(name)
-	const char *name;
+unrawname(const char *name)
 {
 	static char unrawbuf[32];
 	const char *dp;
@@ -225,8 +172,7 @@ unrawname(name)
 }
 
 const char *
-rawname(name)
-	const char *name;
+rawname(const char *name)
 {
 	static char rawbuf[32];
 	const char *dp;
@@ -238,8 +184,7 @@ rawname(name)
 }
 
 const char *
-blockcheck(origname)
-	const char *origname;
+blockcheck(const char *origname)
 {
 	struct stat stslash, stblock, stchar;
 	const char *newname, *raw;
@@ -292,8 +237,7 @@ retry:
 
 
 void *
-emalloc(s)
-	size_t s;
+emalloc(size_t s)
 {
 	void *p;
 
@@ -305,9 +249,7 @@ emalloc(s)
 
 
 void *
-erealloc(p, s)
-	void *p;
-	size_t s;
+erealloc(void *p, size_t s)
 {
 	void *q;
 
@@ -319,8 +261,7 @@ erealloc(p, s)
 
 
 char *
-estrdup(s)
-	const char *s;
+estrdup(const char *s)
 {
 	char *p;
 
