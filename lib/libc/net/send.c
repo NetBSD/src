@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,19 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)send.c	5.3 (Berkeley) 2/24/91";
+static char sccsid[] = "@(#)send.c	8.2 (Berkeley) 2/21/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <stdio.h>
 
+#include <stddef.h>
+
+ssize_t
 send(s, msg, len, flags)
-	int s, len, flags;
+	int s, flags;
+	size_t len;
 	const void *msg;
 {
-	return(sendto(s, msg, len, flags, (struct sockaddr *)NULL, 0));
+	return (sendto(s, msg, len, flags, NULL, 0));
 }

@@ -1,4 +1,4 @@
-.\" Copyright (c) 1983, 1991, 1993
+.\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,48 +29,82 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)byteorder.3	8.1 (Berkeley) 6/4/93
+.\"     @(#)iso_addr.3	8.1 (Berkeley) 6/4/93
 .\"
 .Dd June 4, 1993
-.Dt BYTEORDER 3
-.Os BSD 4.2
+.Dt ISO_ADDR 3
+.Os
 .Sh NAME
-.Nm htonl ,
-.Nm htons ,
-.Nm ntohl ,
-.Nm ntohs
-.Nd convert values between host and network byte order
+.Nm iso_addr ,
+.Nm iso_ntoa
+.Nd "elementary network address conversion routines for Open System Interconnection
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Ft u_long
-.Fn htonl "u_long hostlong"
-.Ft u_short
-.Fn htons "u_short hostshort"
-.Ft u_long
-.Fn ntohl "u_long netlong"
-.Ft u_short
-.Fn ntohs "u_short netshort"
+.Fd #include <sys/types.h>
+.Fd #include <netiso/iso.h>
+.Ft struct iso_addr *
+.Fn iso_addr "char *cp"
+.Ft char *
+.Fn iso_ntoa "struct iso_addr *isoa"
 .Sh DESCRIPTION
-These routines convert 16 and 32 bit quantities between network
-byte order and host byte order.
-On machines which have a byte order which is the same as the network
-order, routines are defined as null macros.
+The routine
+.Fn iso_addr
+interprets character strings representing
+.Tn OSI
+addresses, returning binary information suitable
+for use in system calls.
+The routine
+.Fn iso_ntoa
+takes
+.Tn OSI
+addresses and returns
+.Tn ASCII
+strings representing NSAPs (network service
+access points) in a
+notation inverse to that accepted by 
+.Fn iso_addr .
 .Pp
-These routines are most often used in conjunction with Internet
-addresses and ports as returned by
-.Xr gethostbyname 3
-and
-.Xr getservent 3 .
+Unfortunately, no universal standard exists for representing
+.Tn OSI
+network addresses.
+.Pp
+The format employed by
+.Fn iso_addr
+is a sequence of hexadecimal
+.Dq digits
+(optionally separated by periods),
+of the form:
+.Bd -filled -offset indent
+<hex digits>.<hex digits>.<hex digits>
+.Ed
+.Pp
+Each pair of hexadecimal digits represents a byte
+with the leading digit indicating the higher-ordered bits.
+A period following an even number of bytes has no
+effect (but may be used to increase legibility).
+A period following an odd number of bytes has the
+effect of causing the byte of address being translated
+to have its higher order bits filled with zeros.
+.Sh RETURN VALUES
+.Fn iso_ntoa
+always returns a null terminated string.
+.Fn iso_addr
+always returns a pointer to a struct iso_addr.
+(See
+.Sx BUGS . )
 .Sh SEE ALSO
-.Xr gethostbyname 3 ,
-.Xr getservent 3
+.Xr iso 4
 .Sh HISTORY
 The
-.Nm byteorder
+.Fn iso_addr
+and
+.Fn iso_ntoa
 functions appeared in 
-.Bx 4.2 .
+.Bx 4.3 Reno .
 .Sh BUGS
-On the
-.Tn VAX
-bytes are handled backwards from most everyone else in
-the world.  This is not expected to be fixed in the near future.
+The returned values
+reside in a static memory area.
+.Pp
+The function
+.Fn iso_addr
+should diagnose improperly formed input, and there should be an unambiguous
+way to recognize this.

@@ -1,6 +1,6 @@
-/*
- * Copyright (c) 1988 Regents of the University of California.
- * All rights reserved.
+/*-
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,10 +29,31 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ * 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)res_query.c	5.11 (Berkeley) 3/6/91";
+static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
+static char rcsid[] = "$Id: res_query.c,v 1.1.1.2 1995/02/25 03:54:52 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -78,7 +99,7 @@ res_query(name, class, type, answer, anslen)
 		return (-1);
 #ifdef DEBUG
 	if (_res.options & RES_DEBUG)
-		printf("res_query(%s, %d, %d)\n", name, class, type);
+		printf(";; res_query(%s, %d, %d)\n", name, class, type);
 #endif
 	n = res_mkquery(QUERY, name, class, type, (char *)NULL, 0, NULL,
 	    buf, sizeof(buf));
@@ -86,7 +107,7 @@ res_query(name, class, type, answer, anslen)
 	if (n <= 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
-			printf("res_query: mkquery failed\n");
+			printf(";; res_query: mkquery failed\n");
 #endif
 		h_errno = NO_RECOVERY;
 		return (n);
@@ -95,7 +116,7 @@ res_query(name, class, type, answer, anslen)
 	if (n < 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
-			printf("res_query: send error\n");
+			printf(";; res_query: send error\n");
 #endif
 		h_errno = TRY_AGAIN;
 		return(n);
@@ -105,7 +126,7 @@ res_query(name, class, type, answer, anslen)
 	if (hp->rcode != NOERROR || ntohs(hp->ancount) == 0) {
 #ifdef DEBUG
 		if (_res.options & RES_DEBUG)
-			printf("rcode = %d, ancount=%d\n", hp->rcode,
+			printf(";; rcode = %d, ancount=%d\n", hp->rcode,
 			    ntohs(hp->ancount));
 #endif
 		switch (hp->rcode) {
@@ -138,6 +159,7 @@ res_query(name, class, type, answer, anslen)
  * Only useful for queries in the same name hierarchy as the local host
  * (not, for example, for host address-to-name lookups in domain in-addr.arpa).
  */
+int
 res_search(name, class, type, answer, anslen)
 	char *name;		/* domain name */
 	int class, type;	/* class and type of query */
@@ -152,7 +174,7 @@ res_search(name, class, type, answer, anslen)
 		return (-1);
 
 	errno = 0;
-	h_errno = HOST_NOT_FOUND;		/* default, if we never query */
+	h_errno = HOST_NOT_FOUND;	/* default, if we never query */
 	for (cp = name, n = 0; *cp; cp++)
 		if (*cp == '.')
 			n++;
@@ -225,7 +247,7 @@ res_querydomain(name, domain, class, type, answer, anslen)
 
 #ifdef DEBUG
 	if (_res.options & RES_DEBUG)
-		printf("res_querydomain(%s, %s, %d, %d)\n",
+		printf(";; res_querydomain(%s, %s, %d, %d)\n",
 		    name, domain, class, type);
 #endif
 	if (domain == NULL) {
