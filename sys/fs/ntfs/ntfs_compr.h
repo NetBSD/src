@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfsmount.h,v 1.4 2002/09/21 18:13:54 christos Exp $	*/
+/*	$NetBSD: ntfs_compr.h,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -25,20 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	Id: ntfsmount.h,v 1.4 1999/05/12 09:43:09 semenu Exp
+ *	Id: ntfs_compr.h,v 1.4 1999/05/12 09:42:55 semenu Exp
  */
 
-#define	NTFS_MFLAG_CASEINS	0x00000001
-#define	NTFS_MFLAG_ALLNAMES	0x00000002
+#define NTFS_COMPBLOCK_SIZE	0x1000
+#define NTFS_COMPUNIT_CL	16
 
-struct ntfs_args {
-	char	*fspec;			/* block special device to mount */
-	struct	export_args export;	/* network export information */
-	uid_t	uid;			/* uid that owns ntfs files */
-	gid_t	gid;			/* gid that owns ntfs files */
-	mode_t	mode;			/* mask to be applied for ntfs perms */
-	u_long	flag;			/* additional flags */
-};
-
-#define NTFS_MFLAG_BITS	"\177\20" \
-    "b\00caseins\0b\01allnames"
+int	ntfs_uncompblock(u_int8_t *, u_int8_t *);
+int	ntfs_uncompunit(struct ntfsmount *, u_int8_t *, u_int8_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_ihash.c,v 1.8 2001/11/10 13:24:53 lukem Exp $	*/
+/*	$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.8 2001/11/10 13:24:53 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,9 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_ihash.c,v 1.8 2001/11/10 13:24:53 lukem Exp $")
 #include <sys/proc.h>
 #include <sys/mount.h>
 
-#include <ntfs/ntfs.h>
-#include <ntfs/ntfs_inode.h>
-#include <ntfs/ntfs_ihash.h>
+#include <fs/ntfs/ntfs.h>
+#include <fs/ntfs/ntfs_inode.h>
+#include <fs/ntfs/ntfs_ihash.h>
 
 MALLOC_DEFINE(M_NTFSNTHASH, "NTFS nthash", "NTFS ntnode hash tables");
 

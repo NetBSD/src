@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.41 2002/10/23 09:14:53 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.1 2002/12/23 17:38:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.41 2002/10/23 09:14:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.1 2002/12/23 17:38:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.41 2002/10/23 09:14:53 jdolecek Exp
 
 
 /*#define NTFS_DEBUG 1*/
-#include <ntfs/ntfs.h>
-#include <ntfs/ntfs_inode.h>
-#include <ntfs/ntfs_subr.h>
+#include <fs/ntfs/ntfs.h>
+#include <fs/ntfs/ntfs_inode.h>
+#include <fs/ntfs/ntfs_subr.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/genfs/genfs.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.3 2001/11/15 09:48:29 lukem Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.3 2001/11/15 09:48:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.1 2002/12/23 17:38:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,13 +60,13 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.3 2001/11/15 09:48:29 lukem Exp $");
 #include <miscfs/specfs/specdev.h>
 
 /* #define NTFS_DEBUG 1 */
-#include <ntfs/ntfs.h>
-#include <ntfs/ntfsmount.h>
-#include <ntfs/ntfs_inode.h>
-#include <ntfs/ntfs_vfsops.h>
-#include <ntfs/ntfs_subr.h>
-#include <ntfs/ntfs_compr.h>
-#include <ntfs/ntfs_ihash.h>
+#include <fs/ntfs/ntfs.h>
+#include <fs/ntfs/ntfsmount.h>
+#include <fs/ntfs/ntfs_inode.h>
+#include <fs/ntfs/ntfs_vfsops.h>
+#include <fs/ntfs/ntfs_subr.h>
+#include <fs/ntfs/ntfs_compr.h>
+#include <fs/ntfs/ntfs_ihash.h>
 
 /* UTF-8 encoding stuff */
 
