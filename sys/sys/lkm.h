@@ -1,4 +1,4 @@
-/*	$NetBSD: lkm.h,v 1.29 2003/09/06 13:12:59 jdolecek Exp $	*/
+/*	$NetBSD: lkm.h,v 1.30 2003/09/06 19:08:53 jdolecek Exp $	*/
 
 /*
  * Header file used by loadable kernel modules and loadable kernel module
@@ -53,7 +53,13 @@ typedef enum loadmod {
 	LM_MISC,
 } MODTYPE;
 
-#define	LKM_VERSION	1		/* version of module loader */
+/*
+ * Version of module interface. Bump if kernel structures or API affecting
+ * LKM modules change, unless the kernel version is bumped at the
+ * same time too.
+ */
+#define	LKM_VERSION	2
+
 #define	MAXLKMNAME	32
 
 /****************************************************************************/
@@ -61,13 +67,23 @@ typedef enum loadmod {
 #ifdef _KERNEL
 
 /*
+ * Any module (to get type and name info without knowing type)
+ */
+struct lkm_any {
+	MODTYPE	lkm_type;
+	const char *lkm_name;
+	u_long	lkm_offset;
+	u_int	lkm_modver;
+	u_int	lkm_sysver;
+	const char *lkm_envver;
+};
+
+
+/*
  * Loadable system call
  */
 struct lkm_syscall {
-	MODTYPE	lkm_type;
-	int	lkm_ver;
-	const char *lkm_name;
-	u_long	lkm_offset;		/* save/assign area */
+	struct lkm_any mod;
 	struct sysent	*lkm_sysent;
 	struct sysent	lkm_oldent;	/* save area for unload */
 };
@@ -76,10 +92,7 @@ struct lkm_syscall {
  * Loadable file system
  */
 struct lkm_vfs {
-	MODTYPE	lkm_type;
-	int	lkm_ver;
-	const char *lkm_name;
-	u_long	lkm_offset;
+	struct lkm_any mod;
 	struct vfsops	*lkm_vfsops;
 };
 
@@ -87,10 +100,7 @@ struct lkm_vfs {
  * Loadable device driver
  */
 struct lkm_dev {
-	MODTYPE	lkm_type;
-	int	lkm_ver;
-	const char *lkm_name;
-	u_long	lkm_offset;
+	struct lkm_any mod;
 	const char *lkm_devname;
 	const struct bdevsw	*lkm_bdev;
 	int lkm_bdevmaj;
@@ -98,27 +108,23 @@ struct lkm_dev {
 	int lkm_cdevmaj;
 };
 
+#ifdef STREAMS
 /*
  * Loadable streams module
  */
 struct lkm_strmod {
-	MODTYPE	lkm_type;
-	int	lkm_ver;
-	const char *lkm_name;
-	u_long	lkm_offset;
+	struct lkm_any mod;
 	/*
 	 * Removed: future release
 	 */
 };
+#endif
 
 /*
  * Exec loader
  */
 struct lkm_exec {
-	MODTYPE	lkm_type;
-	int	lkm_ver;
-	const char *lkm_name;
-	u_long	lkm_offset;
+	struct lkm_any mod;
 	struct execsw	*lkm_execsw;
 	const char *lkm_emul;
 };
@@ -127,33 +133,16 @@ struct lkm_exec {
  * Compat (emulation) loader
  */
 struct lkm_compat {
-	MODTYPE	lkm_type;
-	int	lkm_ver;
-	const char *lkm_name;
-	u_long	lkm_offset;
+	struct lkm_any mod;
 	const struct emul	*lkm_compat;
 };
 
 /*
- * Miscellaneous module (complex load/unload, potentially complex stat
+ * Miscellaneous module (complex load/unload, potentially complex stat)
  */
 struct lkm_misc {
-	MODTYPE	lkm_type;
-	int	lkm_ver;
-	char	*lkm_name;
-	u_long	lkm_offset;
+	struct lkm_any mod;
 };
-
-/*
- * Any module (to get type and name info without knowing type)
- */
-struct lkm_any {
-	MODTYPE	lkm_type;
-	int	lkm_ver;
-	char	*lkm_name;
-	u_long	lkm_offset;
-};
-
 
 /*
  * Generic reference ala XEvent to allow single entry point in the xxxinit()
@@ -164,7 +153,9 @@ union lkm_generic {
 	struct lkm_syscall	*lkm_syscall;
 	struct lkm_vfs		*lkm_vfs;
 	struct lkm_dev		*lkm_dev;
+#ifdef STREAMS
 	struct lkm_strmod	*lkm_strmod;
+#endif
 	struct lkm_exec		*lkm_exec;
 	struct lkm_compat	*lkm_compat;
 	struct lkm_misc		*lkm_misc;
@@ -174,19 +165,15 @@ union lkm_generic {
  * Per module information structure
  */
 struct lkm_table {
-	int	type;
-	u_long	size;
-	u_long	offset;
-	u_long	area;
 	char	used;
-
-	int	ver;		/* version (INIT) */
-	int	refcnt;		/* reference count (INIT) */
-	int	depcnt;		/* dependency count (INIT) */
-	int	id;		/* identifier (INIT) */
+	char	forced;		/* Forced load, skipping compatibility check */
 
 	int	(*entry) __P((struct lkm_table *, int, int));/* entry function */
 	union lkm_generic	private;	/* module private data */
+
+	u_long	size;
+	u_long	offset;
+	u_long	area;
 
 				/* ddb support */
         u_long  syms;		/* start of symbol table */
@@ -203,28 +190,22 @@ struct lkm_table {
 
 #define	MOD_SYSCALL(name,callslot,sysentp)	\
 	static struct lkm_syscall _module = {	\
-		LM_SYSCALL,			\
-		LKM_VERSION,			\
-		name,				\
-		callslot,			\
+		{ LM_SYSCALL, name, callslot,	\
+		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		sysentp				\
 	};
 
 #define	MOD_VFS(name,vfsslot,vfsopsp)		\
 	static struct lkm_vfs _module = {	\
-		LM_VFS,				\
-		LKM_VERSION,			\
-		name,				\
-		vfsslot,			\
+		{ LM_VFS, name, vfsslot,	\
+		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		vfsopsp				\
 	};
 
 #define	MOD_DEV(name,devname,bdevp,bdevm,cdevp,cdevm)	\
 	static struct lkm_dev _module = {	\
-		LM_DEV,				\
-		LKM_VERSION,			\
-		name,				\
-		-1,				\
+		{ LM_DEV, name, -1,		\
+		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		devname,			\
 		bdevp,				\
 		bdevm,				\
@@ -234,48 +215,71 @@ struct lkm_table {
 
 #define	MOD_COMPAT(name, compatslot,emulp)	\
 	static struct lkm_compat _module = {	\
-		LM_COMPAT,			\
-		LKM_VERSION,			\
-		name,				\
-		compatslot,			\
+		{ LM_COMPAT, name, compatslot,	\
+		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		emulp				\
 	};
 
 #define	MOD_EXEC(name,execslot,execsw,emul)	\
 	static struct lkm_exec _module = {	\
-		LM_EXEC,			\
-		LKM_VERSION,			\
-		name,				\
-		execslot,			\
+		{ LM_EXEC, name, execslot,	\
+		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 		execsw,				\
 		emul				\
 	};
 
 #define	MOD_MISC(name)				\
 	static struct lkm_misc _module = {	\
-		LM_MISC,			\
-		LKM_VERSION,			\
-		name				\
+		{ LM_MISC, name, -1,		\
+		  LKM_VERSION, __NetBSD_Version__, _LKM_ENV_VERSION },	\
 	};
 
+/*
+ * Environment encoding, for LKM<->kernel compatibility check.
+ */
+#ifdef DIAGNOSTIC
+#define _LKM_E_DIAGNOSTIC	",DIAGNOSTIC"
+#else
+#define _LKM_E_DIAGNOSTIC	""
+#endif
 
-extern int	lkm_nofunc __P((struct lkm_table *, int));
-extern int	lkmexists __P((struct lkm_table *));
-extern int	lkmdispatch __P((struct lkm_table *, int));
+#ifdef DEBUG
+#define _LKM_E_DEBUG		",DEBUG"
+#else
+#define _LKM_E_DEBUG		""
+#endif
+
+#ifdef LOCKDEBUG
+#define _LKM_E_LOCKDEBUG	",LOCKDEBUG"
+#else
+#define _LKM_E_LOCKDEBUG	""
+#endif
+
+#ifdef MULTIPROCESSOR
+#define _LKM_E_MULTIPROCESSOR	",MULTIPROCESSOR"
+#else
+#define _LKM_E_MULTIPROCESSOR	""
+#endif
+
+#define	_LKM_ENV_VERSION	\
+	_LKM_E_DEBUG _LKM_E_DIAGNOSTIC _LKM_E_LOCKDEBUG \
+	_LKM_E_MULTIPROCESSOR
+
+int lkm_nofunc __P((struct lkm_table *, int));
+int lkmexists __P((struct lkm_table *));
+int lkmdispatch __P((struct lkm_table *, int));
 
 /*
- * DISPATCH -- body function for use in module entry point function;
+ * LKM_DISPATCH -- body function for use in module entry point function;
  * generally, the function body will consist entirely of a single
- * DISPATCH line.
+ * LKM_DISPATCH line.
  *
  * If load/unload/stat are called on each corresponding entry instance.
  * If no function is desired for load/stat/unload, lkm_nofunc() should
  * be specified.  "cmd" is passed to each function so that a single
  * function can be used if desired.
  */
-#define	DISPATCH(lkmtp,cmd,ver,load,unload,stat)			\
-	if (ver != LKM_VERSION)						\
-		return EINVAL;	/* version mismatch */		\
+#define	LKM_DISPATCH(lkmtp, cmd, envdep, load, unload, stat)		\
 	switch (cmd) {							\
 	int	error;							\
 	case LKM_E_LOAD:						\
@@ -287,7 +291,7 @@ extern int	lkmdispatch __P((struct lkm_table *, int));
 	case LKM_E_UNLOAD:						\
 		if ((error = unload(lkmtp, cmd)) != 0)			\
 			return error;					\
-		return lkmdispatch(lkmtp, cmd);			\
+		return lkmdispatch(lkmtp, cmd);				\
 		break;							\
 	case LKM_E_STAT:						\
 		if ((error = stat(lkmtp, cmd)) != 0)			\
@@ -296,6 +300,10 @@ extern int	lkmdispatch __P((struct lkm_table *, int));
 		break;							\
 	}								\
 	return (0);
+
+/* remap the old macro for backward source compatibility */
+#define	DISPATCH(lkmtp, cmd, ver, att, det, stat)	\
+	LKM_DISPATCH(lkmtp, cmd, NULL, att, det, stat)
 
 extern struct vm_map *lkm_map;
 void lkm_init(void);
@@ -316,6 +324,7 @@ void lkm_init(void);
 #define	LMUNLOAD	_IOWR('K', 10, struct lmc_unload)
 #define	LMSTAT		_IOWR('K', 11, struct lmc_stat)
 #define	LMLOADSYMS	_IOW('K', 12, struct lmc_loadbuf)
+#define	LMFORCE		_IOW('K', 13, u_long)
 
 #define	MODIOBUF	512		/* # of bytes at a time to loadbuf */
 
