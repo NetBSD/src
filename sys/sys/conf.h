@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.86 2001/03/26 12:33:22 lukem Exp $	*/
+/*	$NetBSD: conf.h,v 1.87 2001/03/26 13:05:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -381,7 +381,7 @@ extern struct cdevsw cdevsw[];
 	dev_init(c,n,open), dev_noimpl(close,enodev), \
 	dev_noimpl(read,enodev), dev_noimpl(write,enodev), \
 	dev_noimpl(ioctl,enodev), dev_noimpl(stop,enodev), \
-	0, dev_noimpl(poll,enodev), dev_noimpl(mmap,enodev) }
+	0, seltrue, dev_noimpl(mmap,enodev) }
 
 /* open, close, read, write, ioctl, stop, tty, ttpoll, mmap */
 #define cdev_wsdisplay_init(c,n)	cdev__ttym_init(c,n,D_TTY)
