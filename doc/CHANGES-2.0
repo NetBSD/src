@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.82 2004/04/12 03:57:53 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.83 2004/04/12 04:08:43 grant Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -842,3 +842,9 @@ sbin/raidctl/raidctl.8				1.39-1.40
 	Swapping to RAID 5 is happy now.  Remove indications to the contrary.
 	Bump date for last.
 	[oster, ticket #130]
+
+distrib/sets/lists/man/mi			1.681
+usr.sbin/ipf/ippool/Makefile			1.8
+
+	install ippool(5) manual as well.  from peter postma in PR#25053.
+	[mrg, ticket #129]
