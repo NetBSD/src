@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.14 1993/12/06 13:27:49 mycroft Exp $
+ *	$Id: ite.c,v 1.15 1994/01/30 18:30:45 mycroft Exp $
  */
 
 /*
@@ -110,7 +110,6 @@ struct  ite_softc *kbd_ite = NULL;
 struct  ite_softc ite_softc[NITE];
 
 void	itestart();
-extern	int ttrstrt();
 extern	struct tty *constty;
 
 /*
