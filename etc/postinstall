@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.35 2002/11/17 00:49:54 lukem Exp $
+# $NetBSD: postinstall,v 1.36 2002/11/17 01:04:46 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,7 +49,6 @@
 #	- support quiet/verbose mode ?
 #	- check obsolete file lists -- need to remove non obsolete files from
 #	  the sets first.
-#	- etc/moduli
 #
 
 #
@@ -470,6 +469,25 @@ do_ssh()
 			while read _line; do
 				msg "	${_line}"
 			done < ${SCRATCHDIR}/sshd_config.diffs
+		fi
+	fi
+
+	dirsrc=${SRC_DIR}/crypto/dist/ssh
+	diretc=${SRC_DIR}/etc
+	modulidir=
+	if [ -f "${dirsrc}"/moduli ]; then
+		modulidir=$dirsrc
+	elif [ -f "${diretc}"/moduli ]; then
+		modulidir=$diretc
+		msg "Checking for moduli from ${modulidir} instead of ${dirsrc}"
+	else
+		msg "Can't find source directory for etc/moduli"
+		failed=1
+	fi
+	if [ -n "${modulidir}" ]; then
+		if ! compare_dir ${op} ${modulidir} \
+		    ${DEST_DIR}/etc 444 moduli; then
+			failed=1
 		fi
 	fi
 
