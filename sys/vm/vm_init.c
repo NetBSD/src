@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_init.c	7.3 (Berkeley) 4/21/91
- *	$Id: vm_init.c,v 1.5 1993/12/20 12:40:06 cgd Exp $
+ *	$Id: vm_init.c,v 1.5.4.1 1994/04/15 06:17:12 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -94,7 +94,7 @@ void vm_mem_init()
 	 *	From here on, all physical memory is accounted for,
 	 *	and we use only virtual addresses.
 	 */
-
+	vm_set_page_size();
 #ifndef MACHINE_NONCONTIG
 	virtual_avail = vm_page_startup(avail_start, avail_end, virtual_avail);
 #else
