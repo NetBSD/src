@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.30 1994/11/18 22:03:34 mycroft Exp $	*/
+/*	$NetBSD: npx.c,v 1.31 1994/11/30 04:42:07 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -125,11 +125,16 @@ struct cfdriver npxcd = {
 
 struct proc	*npxproc;
 
-static	bool_t			npx_ex16;
-static	bool_t			npx_exists;
+enum npx_type {
+	NPX_NONE = 0,
+	NPX_INTERRUPT,
+	NPX_EXCEPTION,
+	NPX_BROKEN,
+};
+
+static	enum npx_type		npx_type;
 static	int			npx_nointr;
 static	volatile u_int		npx_intrs_while_probing;
-static	bool_t			npx_irq13;
 static	volatile u_int		npx_traps_while_probing;
 
 /*
@@ -181,6 +186,7 @@ npxprobe(parent, match, aux)
 	unsigned save_imen;
 	struct	gate_descriptor save_idt_npxintr;
 	struct	gate_descriptor save_idt_npxtrap;
+
 	/*
 	 * This routine is now just a wrapper for npxprobe1(), to install
 	 * special npx interrupt and trap handlers, to enable npx interrupts
@@ -198,26 +204,6 @@ npxprobe(parent, match, aux)
 	setgate(&idt[16], probetrap, 0, SDT_SYS386TGT, SEL_KPL);
 	imen = ~((1 << IRQ_SLAVE) | (1 << ia->ia_irq));
 	SET_ICUS();
-	enable_intr();
-	result = npxprobe1(ia);
-	disable_intr();
-	imen = save_imen;
-	SET_ICUS();
-	idt[irq] = save_idt_npxintr;
-	idt[16] = save_idt_npxtrap;
-	write_eflags(save_eflags);
-	return (result);
-}
-
-int
-npxprobe1(ia)
-	struct isa_attach_args *ia;
-{
-	int control;
-	int status;
-
-	ia->ia_iosize = 16;
-	ia->ia_msize = 0;
 
 	/*
 	 * Partially reset the coprocessor, if any.  Some BIOS's don't reset
@@ -248,6 +234,30 @@ npxprobe1(ia)
 	 */
 	stop_emulating();
 
+	enable_intr();
+	result = npxprobe1(ia);
+	disable_intr();
+
+	start_emulating();
+
+	imen = save_imen;
+	SET_ICUS();
+	idt[irq] = save_idt_npxintr;
+	idt[16] = save_idt_npxtrap;
+	write_eflags(save_eflags);
+	return (result);
+}
+
+int
+npxprobe1(ia)
+	struct isa_attach_args *ia;
+{
+	int control;
+	int status;
+
+	ia->ia_iosize = 16;
+	ia->ia_msize = 0;
+
 	/*
 	 * Finish resetting the coprocessor, if any.  If there is an error
 	 * pending, then we may get a bogus IRQ13, but probeintr() will handle
@@ -256,14 +266,9 @@ npxprobe1(ia)
 	 */
 	fninit();
 	delay(1000);		/* wait for any IRQ13 (fwait might hang) */
-#ifdef DIAGNOSTIC
-	if (npx_intrs_while_probing != 0)
-		printf("fninit caused %u bogus npx interrupt(s)\n",
-		       npx_intrs_while_probing);
-	if (npx_traps_while_probing != 0)
-		printf("fninit caused %u bogus npx trap(s)\n",
-		       npx_traps_while_probing);
-#endif
+
+	npx_intrs_while_probing = 0;
+	npx_traps_while_probing = 0;
 
 	/*
 	 * Check for a status of mostly zero.
@@ -277,7 +282,6 @@ npxprobe1(ia)
 		control = 0x5a5a;	
 		fnstcw(&control);
 		if ((control & 0x1f3f) == 0x033f) {
-			npx_exists = 1;
 			/*
 			 * We have an npx, now divide by 0 to see if exception
 			 * 16 works.
@@ -290,30 +294,45 @@ npxprobe1(ia)
 				/*
 				 * Good, exception 16 works.
 				 */
-				npx_ex16 = 1;
+				npx_type = NPX_EXCEPTION;
 				ia->ia_irq = IRQUNK;	/* zap the interrupt */
-				return 1;
-			}
-			if (npx_intrs_while_probing != 0) {
+			} else if (npx_intrs_while_probing != 0) {
 				/*
 				 * Bad, we are stuck with IRQ13.
 				 */
-				npx_irq13 = 1;
-				return 1;
+				npx_type = NPX_INTERRUPT;
+			} else {
+				/*
+				 * Worse, even IRQ13 is broken.  Use emulator.
+				 */
+				npx_type = NPX_BROKEN;
+				ia->ia_irq = IRQUNK;
 			}
-			/*
-			 * Worse, even IRQ13 is broken.  Use emulator.
-			 */
+			return 1;
 		}
 	}
 	/*
-	 * Probe failed, but we want to get to npxattach to initialize the
-	 * emulator and say that it has been installed.  XXX handle devices
-	 * that aren't really devices better.
+	 * Probe failed.  There is no usable FPU.
 	 */
-	ia->ia_irq = IRQUNK;
-	return 1;
+	npx_type = NPX_NONE;
+	return 0;
 }
+
+int npx586bug1 __P((int, int));
+asm ("
+	.text
+_npx586bug1:
+	fildl	4(%esp)		# x
+	fildl	8(%esp)		# y
+	fld	%st(1)
+	fdiv	%st(1),%st	# x/y
+	fmulp	%st,%st(1)	# (x/y)*y
+	fsubrp	%st,%st(1)	# x-(x/y)*y
+	pushl	$0
+	fistpl	(%esp)
+	popl	%eax
+	ret
+");
 
 /*
  * Attach routine - announce which it is, and wire into system
@@ -326,24 +345,29 @@ npxattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	static struct intrhand npxhand;
 
-	if (npx_ex16)
-		printf(": using exception 16\n");
-	else if (npx_irq13) {
+	switch (npx_type) {
+	case NPX_INTERRUPT:
 		printf("\n");
 		npxhand.ih_fun = npxintr;
 		npxhand.ih_arg = 0;
 		npxhand.ih_level = IPL_NONE;
 		intr_establish(ia->ia_irq, &npxhand);
-	} else {
-#ifdef MATH_EMULATE
-		if (npx_exists)
-			printf(": error reporting broken; using emulator\n");
-		else
-			printf(": using emulator\n");
-#else
-		panic("npxattach: no math emulator in kernel!");
-#endif
+		break;
+	case NPX_EXCEPTION:
+		printf(": using exception 16\n");
+		break;
+	case NPX_BROKEN:
+		printf(": error reporting broken; using emulator\n");
+		npx_type = NPX_NONE;
+		return;
 	}
+
+	stop_emulating();
+	fninit();
+	if (npx586bug1(4195835, 3145727) != 0)
+		printf("WARNING: Pentium FDIV bug detected!\n");
+	start_emulating();
+
 	npxinit();
 }
 
@@ -372,10 +396,10 @@ npxintr(frame)
 
 	cnt.v_trap++;
 
-	if (p == 0 || !npx_exists) {
+	if (p == 0 || npx_type == NPX_NONE) {
 		/* XXX no %p in stand/printf.c.  Cast to quiet gcc -Wall. */
-		printf("npxintr: p = %lx, curproc = %lx, npx_exists = %d\n",
-		       (u_long) p, (u_long) curproc, npx_exists);
+		printf("npxintr: p = %lx, curproc = %lx, npx_type = %d\n",
+		       (u_long) p, (u_long) curproc, npx_type);
 		panic("npxintr from nowhere");
 	}
 	/*
@@ -474,8 +498,9 @@ int
 npxdna()
 {
 
-	if (!npx_exists)
+	if (npx_type == NPX_NONE)
 		return (0);
+
 #ifdef DIAGNOSTIC
 	if (cpl != 0 || npx_nointr != 0)
 		panic("npxdna");
@@ -549,9 +574,14 @@ void
 npxinit()
 {
 	static u_short control = __INITIAL_NPXCW__;
-
 #ifdef DIAGNOSTIC
 	extern int cold;
+#endif
+
+	if (npx_type == NPX_NONE)
+		return;
+
+#ifdef DIAGNOSTIC
 	if (cpl != 0 && !cold || npx_nointr != 0)
 		panic("npxinit");
 #endif
