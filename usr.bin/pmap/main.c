@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2003/04/16 12:15:07 wiz Exp $ */
+/*	$NetBSD: main.c,v 1.9 2003/05/04 15:09:46 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.8 2003/04/16 12:15:07 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2003/05/04 15:09:46 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -55,18 +55,24 @@ __RCSID("$NetBSD: main.c,v 1.8 2003/04/16 12:15:07 wiz Exp $");
 #include <limits.h>
 #include <string.h>
 
+/*
+ * define LOCKDEBUG here so that we get the LOCKDEBUG sized version of
+ * struct kbit from pmap.h
+ */
+#define LOCKDEBUG
+
 #include "pmap.h"
 #include "main.h"
 
 /*
- * strange gyrations to get the prototype for the lockdebug version of
- * the process_map function
+ * strange gyrations to get the prototype for the regular version of
+ * the vm printing functions
  */
 #undef VERSION
-#define VERSION lockdebug
+#define VERSION regular
 #include "pmap.h"
 #undef VERSION
-#define VERSION regular
+#define VERSION lockdebug
 
 struct cache_head lcache;
 struct nchashhead *nchashtbl;
@@ -135,7 +141,7 @@ struct nlist kmaps[] = {
 #define AMAP_ADDRESS		4
 
 void check_fd(int);
-int using_lockdebug(kvm_t *);
+int not_using_lockdebug(kvm_t *);
 void load_symbols(kvm_t *);
 void cache_enter(int, struct namecache *);
 
@@ -272,6 +278,13 @@ main(int argc, char *argv[])
 
 	/* start by opening libkvm */
 	kd = kvm_openfiles(kernel, kmem, NULL, O_RDONLY, errbuf);
+
+	/* we're completely done with privileges now */
+	rc = setgid(getgid());
+	if (rc == -1)
+		err(1, "failed to reset privileges");
+
+	/* print the kvm_open error, if any */
 	errbuf[_POSIX2_LINE_MAX] = '\0';
 	if (kd == NULL)
 		errx(1, "%s", errbuf);
@@ -279,7 +292,7 @@ main(int argc, char *argv[])
 	/* get "bootstrap" addresses from kernel */
 	load_symbols(kd);
 
-	if (! using_lockdebug(kd)) {
+	if (not_using_lockdebug(kd)) {
 		process_map = PMAPFUNC(process_map,regular);
 		dump_vm_map = PMAPFUNC(dump_vm_map,regular);
 		dump_vm_map_entry = PMAPFUNC(dump_vm_map_entry,regular);
@@ -394,7 +407,7 @@ check_fd(int fd)
 }
 
 int
-using_lockdebug(kvm_t *kd)
+not_using_lockdebug(kvm_t *kd)
 {
 	struct kbit kbit[3];
 	struct kbit *vm_map, *header, *vm_map_entry;
