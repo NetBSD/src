@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.71 1998/08/13 12:44:11 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.72 1998/09/14 16:06:27 phil Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -92,6 +92,7 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
+#	cfs*	Coda file system device
 #
 
 dialin=0
@@ -515,6 +516,16 @@ random)
 	chown root.wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
+	;;
+
+cfs*)
+	unit=${i#cfs}
+	cfs=cfs$unit
+	major=60
+	rm -f $cfs
+	mknod $cfs c $major $unit
+	chown root.wheel $cfs
+	chmod 600 $cfs
 	;;
 
 local)
