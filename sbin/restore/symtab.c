@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.8 1995/03/18 14:59:54 cgd Exp $	*/
+/*	$NetBSD: symtab.c,v 1.8.6.1 1996/12/06 01:50:47 rat Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: symtab.c,v 1.8 1995/03/18 14:59:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: symtab.c,v 1.8.6.1 1996/12/06 01:50:47 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -439,13 +439,13 @@ freename(name)
  * Useful quantities placed at the end of a dumped symbol table.
  */
 struct symtableheader {
-	long	volno;
-	long	stringsize;
-	long	entrytblsize;
+	int32_t	volno;
+	int32_t	stringsize;
+	int32_t	entrytblsize;
 	time_t	dumptime;
 	time_t	dumpdate;
 	ino_t	maxino;
-	long	ntrec;
+	int32_t	ntrec;
 };
 
 /*
