@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.561 2002/10/10 22:07:44 thorpej Exp $
+#	$NetBSD: files,v 1.562 2002/10/10 22:10:52 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -71,7 +71,6 @@ defparam opt_tcp_debug.h	TCP_NDEBUG
 defflag	opt_inet.h		INET INET6 INET6_MD_CKSUM
 defflag	opt_ipsec.h		IPSEC IPSEC_ESP
 defparam opt_inet_conf.h	SUBNETSARELOCAL HOSTZEROBROADCAST
-defflag	opt_atalk.h		NETATALK
 defflag	opt_ns.h		NS NSIP		# NS network stack,
 						# XNS tunneled over IP
 defflag	opt_iso.h		ISO TPIP	# ISO network stack
@@ -1146,13 +1145,6 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | irip
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec
-file	netatalk/aarp.c			netatalk
-file	netatalk/at_control.c		netatalk
-file	netatalk/at_proto.c		netatalk
-file	netatalk/at_rmx.c		netatalkdebug
-file	netatalk/ddp_input.c		netatalk
-file	netatalk/ddp_output.c		netatalk
-file	netatalk/ddp_usrreq.c		netatalk
 file	netccitt/ccitt_proto.c		ccitt
 file	netccitt/hd_debug.c		hdlc
 file	netccitt/hd_input.c		hdlc
