@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.5 2001/08/24 04:20:08 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.6 2001/11/17 01:04:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 	if (p->p_flag & P_SA) /* Already running! */
 		return (EBUSY);
 
-	error = sa_upcall(l, SA_UPCALL_NEWPROC, l, NULL, 0, 0, NULL);
+	error = sa_upcall(l, SA_UPCALL_NEWPROC, l, NULL, 0, NULL);
 	if (error)
 		return (error);
 
@@ -228,7 +228,7 @@ sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
 
 int
 sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
-	int sig, u_long code, void *arg)
+	size_t argsize, void *arg)
 {
 	struct proc *p = l->l_proc;
 	struct sadata *sd = p->p_sa;
@@ -245,8 +245,7 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	s->sau_stack = sd->sa_stacks[--sd->sa_nstacks];
 
 	s->sau_type = type;
-	s->sau_sig = sig;
-	s->sau_code = code;
+	s->sau_argsize = argsize;
 	s->sau_arg = arg;
 	s->sau_event = event;
 	s->sau_interrupted = interrupted;
@@ -296,7 +295,7 @@ sa_switch(struct lwp *l, int type)
 	/* XXX unlock */
 
 	cpu_setfunc(l2, sa_switchcall, l);
-	error = sa_upcall(l2, SA_UPCALL_BLOCKED, l, NULL, 0, 0, NULL);
+	error = sa_upcall(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL);
 	if (error) {
 		/* Put the lwp back */
 		/* XXX lock sadata */
@@ -361,15 +360,22 @@ sa_switch(struct lwp *l, int type)
 		/* XXX unlock */
 	}
 
-	sa_upcall(l, SA_UPCALL_UNBLOCKED, l, l2, 0, 0, NULL);
+	sa_upcall(l, SA_UPCALL_UNBLOCKED, l, l2, 0, NULL);
 }
 
 void
 sa_switchcall(void *arg)
 {
-	struct lwp *l = curproc;
-	struct proc *p = l->l_proc;
-	struct sadata *sa = p->p_sa;
+	struct lwp *l;
+	struct proc *p;
+	struct sadata *sa;
+
+	l = curproc;
+	KASSERT(l != NULL);
+	p = l->l_proc;
+	KASSERT(p != NULL);
+	sa = p->p_sa;
+	KASSERT(sa != NULL);
 
 	DPRINTF(("sa_switchcall(pid: %d.%d)\n", p->p_pid, l->l_lid));
 
@@ -377,7 +383,7 @@ sa_switchcall(void *arg)
 		/* Allocate the next cache LWP */
 		sa_newcachelwp(l);
 	}
-	upcallret(NULL);
+	upcallret(l);
 }
 
 static int
