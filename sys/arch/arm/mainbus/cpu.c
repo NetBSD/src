@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 2001/04/04 21:40:20 reinoud Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19 2001/04/18 20:27:33 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -57,6 +57,7 @@
 #include <machine/undefined.h>
 
 #ifdef ARMFPE
+#include <machine/bootconfig.h> /* For boot_args */
 #include <arm32/fpe-arm/armfpe.h>
 #endif	/* ARMFPE */
 
