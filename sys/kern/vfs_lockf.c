@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.25 2003/05/01 13:06:59 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.26 2003/05/01 13:14:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.25 2003/05/01 13:06:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.26 2003/05/01 13:14:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,9 +91,7 @@ static void lf_printlist(char *, struct lockf *);
  */
 
 /*
- * XXXSMP TODO: Using either (a) a global lock, or (b) the vnode's
- * interlock should be sufficient; (b) requires a change to the API
- * because the vnode isn't visible here.
+ * XXXSMP TODO: Using the vnode's interlock should be sufficient.
  *
  * If there's a lot of lock contention on a single vnode, locking
  * schemes which allow for more paralleism would be needed.  Given how
