@@ -1,4 +1,4 @@
-.\"	$NetBSD: st.4,v 1.20 2001/12/19 18:34:33 wiz Exp $
+.\"	$NetBSD: st.4,v 1.21 2002/01/21 17:59:22 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -248,7 +248,9 @@ Attempts to write past EOM and how EOM is reported are handled slightly
 differently based upon whether EARLY WARNING recognition is enabled in
 the driver.
 .Pp
-If EARLY WARNING recognitions is \fBnot\fR enabled, then detection
+If EARLY WARNING recognitions is
+.Em not
+enabled, then detection
 of EOM (as reported in SCSI Sense Data with an EOM indicator)
 causes the write operation to be flagged with I/O error (EIO).
 This has the effect for the user application of not knowing actually
@@ -256,12 +258,16 @@ how many bytes were read (since the return of the
 .Xr read 2
 system call is set to \(mi1).
 .Pp
-If EARLY WARNING recognition \fBis\fR enabled, then detection of EOM
+If EARLY WARNING recognition
+.Em is
+enabled, then detection of EOM
 (as reported in SCSI Sense Data with an EOM indicator)
 has no immediate effect except that
 the driver notes that EOM has been detected. If the write completing
 didn't transfer all data that was requested, then the residual count
-(counting bytes \fBnot\fR written)
+(counting bytes
+.Em not
+written)
 is returned to the user application. In any event, the next attempt
 to write (if that is the next action the user application takes)
 is immediately completed with no data transferred, and a residual
