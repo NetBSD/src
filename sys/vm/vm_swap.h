@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.h,v 1.1.2.4.2.3 1997/05/09 10:45:42 mrg Exp $	*/
+/*	$NetBSD: vm_swap.h,v 1.1.2.4.2.4 1997/06/01 08:24:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Matthew R. Green
@@ -54,7 +54,7 @@ struct swapent {
 #define SWF_ENABLE	0x00000002
 
 #ifdef _KERNEL
-int sys_swap __P((struct proc *, void *, register_t *));
+int sys_swapctl __P((struct proc *, void *, register_t *));
 daddr_t swap_alloc __P((int size));
 void swap_free __P((int size, daddr_t addr));
 void swapinit __P((void));
