@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.190 2003/11/07 16:00:49 wiz Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.191 2003/12/07 10:37:28 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.188 2003/11/07 15:58:58 hamajima Exp 
+ *	NetBSD: pcmciadevs,v 1.189 2003/12/07 10:37:11 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -181,6 +181,20 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Allied Telesis K.K.",
 	    "Allied Telesis LA-PCM",	}
+	,
+	{
+	    PCMCIA_VENDOR_ANYCOM, PCMCIA_PRODUCT_ANYCOM_LSE041,
+	    PCMCIA_CIS_ANYCOM_LSE041,
+	    0,
+	    "Anycom",
+	    "AnyCom BlueCard LSE041 R1B",	}
+	,
+	{
+	    PCMCIA_VENDOR_ANYCOM, PCMCIA_PRODUCT_ANYCOM_LSE039,
+	    PCMCIA_CIS_ANYCOM_LSE039,
+	    0,
+	    "Anycom",
+	    "Anycom Bluetooth CF Card LSE039",	}
 	,
 	{
 	    PCMCIA_VENDOR_ARCHOS, PCMCIA_PRODUCT_ARCHOS_ARC_ATAPI,
@@ -1918,6 +1932,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Samsung",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_ANYCOM,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Anycom",
 	    NULL,
 	},
 	{

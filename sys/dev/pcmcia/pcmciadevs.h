@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.190 2003/11/07 16:00:49 wiz Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.191 2003/12/07 10:37:28 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.188 2003/11/07 15:58:58 hamajima Exp 
+ *	NetBSD: pcmciadevs,v 1.189 2003/12/07 10:37:11 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -92,6 +92,7 @@
 #define	PCMCIA_VENDOR_TELECOMDEVICE	0x021b	/* Telecom Device */
 #define	PCMCIA_VENDOR_NOKIA	0x023d	/* Nokia Communications */
 #define	PCMCIA_VENDOR_SAMSUNG	0x0250	/* Samsung */
+#define	PCMCIA_VENDOR_ANYCOM	0x0264	/* Anycom */
 #define	PCMCIA_VENDOR_SYMBOL	0x026c	/* Symbol */
 #define	PCMCIA_VENDOR_BUFFALO	0x026f	/* BUFFALO (Melco Corporation) */
 #define	PCMCIA_VENDOR_LINKSYS2	0x0274	/* The Linksys Group */
@@ -182,6 +183,14 @@
 #define	PCMCIA_CIS_ALLIEDTELESIS_LA_PCM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ALLIEDTELESIS_LA_PCM	0x0002
 #define	PCMCIA_STR_ALLIEDTELESIS_LA_PCM	"Allied Telesis LA-PCM"
+
+/* Anycom */
+#define	PCMCIA_CIS_ANYCOM_LSE041	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ANYCOM_LSE041	0x0004
+#define	PCMCIA_STR_ANYCOM_LSE041	"AnyCom BlueCard LSE041 R1B"
+#define	PCMCIA_CIS_ANYCOM_LSE039	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_ANYCOM_LSE039	0x0008
+#define	PCMCIA_STR_ANYCOM_LSE039	"Anycom Bluetooth CF Card LSE039"
 
 /* Archos */
 #define	PCMCIA_CIS_ARCHOS_ARC_ATAPI	{ NULL, NULL, NULL, NULL }
