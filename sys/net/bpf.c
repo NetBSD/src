@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.92 2004/04/11 01:41:01 darrenr Exp $	*/
+/*	$NetBSD: bpf.c,v 1.93 2004/04/14 21:34:26 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.92 2004/04/11 01:41:01 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.93 2004/04/14 21:34:26 darrenr Exp $");
 
 #include "bpfilter.h"
 
@@ -457,6 +457,15 @@ bpfread(dev, uio, ioflag)
 	 * have arrived to fill the store buffer.
 	 */
 	while (d->bd_hbuf == 0) {
+		if (ioflag & IO_NDELAY) {
+			if (d->bd_slen == 0) {
+				splx(s);
+				return (EWOULDBLOCK);
+			}
+			ROTATE_BUFFERS(d);
+			break;
+		}
+
 		if ((d->bd_immediate || timed_out) && d->bd_slen != 0) {
 			/*
 			 * A packet(s) either arrived since the previous
@@ -466,13 +475,8 @@ bpfread(dev, uio, ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		if (d->bd_rtout != -1)
-			error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
-					  d->bd_rtout);
-		else {
-			/* User requested non-blocking I/O */
-			error = EWOULDBLOCK;
-		}
+		error = tsleep((caddr_t)d, PRINET|PCATCH, "bpf",
+				d->bd_rtout);
 		if (error == EINTR || error == ERESTART) {
 			splx(s);
 			return (error);
@@ -896,10 +900,11 @@ bpfioctl(dev, cmd, addr, flag, p)
 		break;
 
 	case FIONBIO:		/* Non-blocking I/O */
-		if (*(int *)addr)
-			d->bd_rtout = -1;
-		else
-			d->bd_rtout = 0;
+		/*
+		 * No need to do anything special as we use IO_NDELAY in
+		 * bpfread() as an indication of whether or not to block
+		 * the read.
+		 */
 		break;
 
 	case FIOASYNC:		/* Send signal on receive packets */
@@ -1082,10 +1087,11 @@ bpfpoll(dev, events, p)
 		/*
 		 * An imitation of the FIONREAD ioctl code.
 		 */
-		if (d->bd_hlen != 0 ||
-		    ((d->bd_immediate && d->bd_slen != 0) ||
-		    d->bd_state == BPF_TIMED_OUT)) {
+		if ((d->bd_hlen != 0) ||
+		    (d->bd_immediate && d->bd_slen != 0)) {
 			revents |= events & (POLLIN | POLLRDNORM);
+		} else if (d->bd_state == BPF_TIMED_OUT) {
+			revents |= events & POLLIN;
 		} else {
 			selrecord(p, &d->bd_sel);
 			/* Start the read timeout if necessary */
