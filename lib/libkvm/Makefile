@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.22 1998/02/11 06:30:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 1998/02/18 01:13:08 thorpej Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
-.if	(${MACHINE} != "i386")   && \
-	(${MACHINE} != "pica")   && \
+.if	(${MACHINE} != "pica")   && \
 	(${MACHINE} != "pmax")
 LIB=	kvm
 CPPFLAGS+=-DLIBC_SCCS
@@ -31,8 +30,7 @@ MLINKS+=kvm_read.3 kvm_write.3
 MLINKS+=kvm_dump.3 kvm_dump_mkheader.3 kvm_dump.3 kvm_dump_wrtheader.3
 MLINKS+=kvm_dump.3 kvm_dump_inval.3
 
-.if	(${MACHINE} != "i386")   && \
-	(${MACHINE} != "pica")   && \
+.if	(${MACHINE} != "pica")   && \
 	(${MACHINE} != "pmax")
 .include <bsd.lib.mk>
 .else
