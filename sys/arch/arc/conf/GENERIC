@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.78 2002/12/07 21:55:44 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.79 2003/01/04 21:09:31 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.78 $"
+#ident		"GENERIC-$Revision: 1.79 $"
 
 maxusers	32		# estimated number of users
 
@@ -143,6 +143,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
 #options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# human readable SCSI error messages
