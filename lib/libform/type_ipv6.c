@@ -1,4 +1,4 @@
-/*	$NetBSD: type_ipv6.c,v 1.3 2001/02/16 03:28:24 blymn Exp $	*/
+/*	$NetBSD: type_ipv6.c,v 1.4 2001/05/11 13:59:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -26,15 +26,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * Many thanks to Jun-ichiro itojun Hagino <itojun@netbsd.org> for providing
+ * the sample code for the check field function, this function is 99.999%
+ * his code.
  *
  */
 
-#include <string.h>
-#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <ctype.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <limits.h>
+#include <netdb.h>
 #include "form.h"
 #include "internals.h"
 
@@ -48,197 +49,51 @@
 static int
 ipv6_check_field(FIELD *field, char *args)
 {
-	char *keeper, *p, *buf, *newbuf, cleaned[48];
-	unsigned int has_dot, compressed, v4_mode, allow_compress;
-	unsigned long vals[10];
-	int i, j;
+	char cleaned[NI_MAXHOST];
+	struct addrinfo hints, *res;
+#ifdef NI_WITHSCOPEID	/* KAME extension */
+	const int niflags = NI_NUMERICHOST | NI_WITHSCOPEID;
+#else
+	const int niflags = NI_NUMERICHOST;
+#endif
 
 	if (args == NULL)
 		return FALSE;
 	
-	if (asprintf(&keeper, "%s", args) < 0)
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM;	/* dummy */
+	hints.ai_flags = AI_NUMERICHOST;
+
+	if (getaddrinfo(args, "0", &hints, &res) != 0) {
+		  /* no it is not an IPv6 address */
 		return FALSE;
-
-	has_dot = FALSE;
-	if (index(keeper, '.') != NULL)
-		has_dot = TRUE;
-
-	compressed = FALSE;
-	for (i = 0; i < 10; i++)
-		vals[i] = 0;
-
-	  /*
-	   * first we forward scan through the address, filling vals
-	   * with the values between the :'s, if we hit a :: we know we
-	   * have a compressed set of 0's so we leave the rest for
-	   * the next loop...
-	   */
-	buf = keeper;
-	v4_mode = FALSE;
-	for (i = 0; i < ((has_dot == TRUE)? 10 : 8); i++) {
-		if (*buf == '\0')
-			goto FAIL;
-		if ((*buf == ':') && (*(buf + 1) == ':')) {
-			compressed = TRUE;
-			break;
-		}
-
-		  /* we don't have more than 8 fields in a pure v6 address */
-		if ((i > 7) && (*buf != '\0') && (has_dot == FALSE))
-			goto FAIL;
-
-		  /* check for premature ipv4 compat address */
-		if ((i < 6) && (*buf == '.'))
-			goto FAIL;
-		
-		
-		if ((*buf == ':') || (*buf == '.'))
-			buf++;
-			
-		vals[i] = strtoul(buf, &newbuf, (v4_mode == FALSE)? 16 : 10);
-		if (vals[i] > ((v4_mode == FALSE)? 65535 : 255))
-			goto FAIL;
-		
-		if ((v4_mode == FALSE) && (*newbuf == '.')) {
-			v4_mode = TRUE;
-			vals[i] = strtoul(buf, &newbuf, 10);
-			if (vals[i] > 255)
-				goto FAIL;
-		}
-		
-		buf = newbuf;
 	}
-
-	  /*
-	   * Check if we had a 0 compression in the address.  Deal
-	   * with this by starting at the end of the address and
-	   * working backwards filling in the vals until we find a ::
-	   * this way all the 0's should just sort themselves out.
-	   */
-	if (compressed == TRUE) {
-		buf = keeper;
-		if (has_dot == TRUE) {
-			  /* we have a dotted quad on the end, process it */
-			i = 9;
-			for (j = 0; j < 3; j++) {
-				if ((p = rindex(buf, '.')) == NULL)
-					goto FAIL;
-				p++;
-				if (!isdigit(*p))
-					goto FAIL;
-				vals[i] = strtoul(p, NULL, 10);
-				if (vals[i] > 255)
-					goto FAIL;
-				i--;
-				p--;
-				*p = '\0';
-			}
-
-			  /* check for further dots - they are not allowed */
-			if (rindex(buf, '.') != NULL)
-				goto FAIL;
-			
-		} else
-			i = 7;
-
-		  /* now scan backwards for colons since we have handled
-		   * any dots that may have been there.
+	
+	if (res->ai_next) {
+		  /* somehow the address resolved to multiple
+		   *  addresses - strange
 		   */
-
-		do {
-			if ((p = rindex(buf, ':')) == NULL)
-				goto FAIL;
-			
-			p++;
-			if (*p == '\0')
-				break;
-			
-			if (!isxdigit(*p))
-				goto FAIL;
-			vals[i] = strtoul(p, NULL, 16);
-			if (vals[i] > 65535)
-				goto FAIL;
-			p--;
-			i--;
-			if (i < 0)
-				goto FAIL;
-			if ((*p == ':') && (*(p - 1) == ':'))
-				break;
-			*p = '\0';
-		} while (/* CONSTCOND */ 1);
+		freeaddrinfo(res);
+		return FALSE;
 	}
-	
+
+	if (getnameinfo(res->ai_addr, res->ai_addrlen, cleaned,
+			sizeof(cleaned), NULL, 0, niflags) != 0) {
+		freeaddrinfo(res);
+		return FALSE;
+	}
+
+	freeaddrinfo(res);
 
 	  /*
-	   * WHEW - if we got here then we have a vals array with the
-	   * converted IPV6 address in it.  Reset the field buffer to
-	   * the cleaned up version.
+	   * now we are sure host is an IPv6 address literal, and "cleaned"
+	   * has the uniformly-formatted IPv6 address literal.  Re-set the
+	   * field buffer to be the reformatted IPv6 address
 	   */
-	if (has_dot == TRUE)
-		i = 5;
-	else
-		i = 7;
-
-	p = cleaned;
-	compressed = FALSE;
-	allow_compress = TRUE;
-	if (vals[0] != 0)
-		p += sprintf(p, "%x", (unsigned int) vals[0]);
-	else {
-		*(p++) = ':';
-		allow_compress = FALSE;
-		compressed = TRUE;
-	}
-	
-	*(p++) = ':';
-	*p = '\0';
-	for (j = 1; j < i; j++) {
-		if (vals[j] == 0) {
-			  /* if we are compressing 0's just continue */
-			if (compressed == TRUE)
-				continue;
-
-			  /* if we have not done a :: compress before, do it */
-			if (allow_compress == TRUE) {
-				compressed = TRUE;
-				allow_compress = FALSE;
-				*(p++) = ':';
-				*p = '\0';
-				continue;
-			}
-			  /* otherwise just drop through to add the 0's */
-		} else
-			compressed = FALSE;
-		
-		p += sprintf(p, "%x:", (unsigned int) vals[j]);
-	}
-
-	if (vals[j] != 0) {
-		compressed = FALSE;
-		p += sprintf(p, "%x", (unsigned int) vals[j]);
-		if (has_dot == TRUE) {
-			*(p++) = ':';
-			*p = '\0';
-		}
-	}
-	
-	  /* tack on the ipv4 part if it was there before... */
-	if (has_dot == TRUE)
-		sprintf(p, "%u.%u.%u.%u", (unsigned int) vals[6],
-			(unsigned int) vals[7], (unsigned int) vals[8],
-			(unsigned int) vals[9]);
-
-	  /* re-set the field buffer to be the reformatted IPv6 address */
 	set_field_buffer(field, 0, cleaned);
 
-	free(keeper);
-	return TRUE;
-		
-	  /* bail out point if we got a bad entry */
-  FAIL:
-	free(keeper);
-	return FALSE;
-	
+	return TRUE;		
 }
 
 /*
