@@ -68,7 +68,7 @@
 
 /* This is the number of history entries to maintain - by default, 256. */
 
-/* #define RC_HISTORY_MAX 10240 */
+/* #define RC_HISTORY_MAX 1024 */
 
 /* Define this if you want dhcpd to dump core when a non-fatal memory
    allocation error is detected (i.e., something that would cause a
@@ -171,4 +171,6 @@
 /* Define this if you want to be able to save and playback server operational
    traces. */
 
+#ifndef SMALL
 #define TRACING
+#endif

@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.1.1.1 2001/08/03 11:35:32 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -124,7 +124,7 @@ void assemble_hw_header (interface, buf, bufix, to)
 		assemble_tr_header (interface, buf, bufix, to);
 	else
 #endif
-#if defined (DEC_FDDI)
+#if defined (DEC_FDDI) || defined (NETBSD_FDDI)
 	     if (interface -> hw_address.hbuf [0] == HTYPE_FDDI)
 		     assemble_fddi_header (interface, buf, bufix, to);
 	else
@@ -209,7 +209,7 @@ ssize_t decode_hw_header (interface, buf, bufix, from)
 		return decode_tr_header (interface, buf, bufix, from);
 	else
 #endif
-#if defined (DEC_FDDI)
+#if defined (DEC_FDDI) || defined (NETBSD_FDDI)
 	     if (interface -> hw_address.hbuf [0] == HTYPE_FDDI)
 		     return decode_fddi_header (interface, buf, bufix, from);
 	else
