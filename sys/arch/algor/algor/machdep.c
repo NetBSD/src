@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2003/01/17 22:01:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.18 2003/04/01 02:15:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -450,7 +450,7 @@ mach_init(int argc, char *argv[], char *envp[])
 	} else
 		printf("Memory size: 0x%08lx\n", size);
 
-	mem_clusters[mem_cluster_cnt].start = NBPG;
+	mem_clusters[mem_cluster_cnt].start = PAGE_SIZE;
 	mem_clusters[mem_cluster_cnt].size =
 	    size - mem_clusters[mem_cluster_cnt].start;
 	mem_cluster_cnt++;
@@ -657,7 +657,7 @@ cpu_startup(void)
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -696,7 +696,7 @@ cpu_startup(void)
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
