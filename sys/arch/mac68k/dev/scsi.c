@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.12 1995/02/01 13:50:42 briggs Exp $	*/
+/*	$NetBSD: scsi.c,v 1.13 1995/04/20 15:32:01 briggs Exp $	*/
 
 /*
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -103,13 +103,13 @@ typedef sci_regmap_t		sci_padded_regmap_t;
 
 #define NNCR5380	1
 
-struct ncr5380_data {
+struct ncr5380_softc {
 	struct device		sc_dev;
 
 	void			*reg_base;
 	int			adapter_target;
 	struct scsi_link	sc_link;
-} *ncr5380data[NNCR5380];
+};
 
 /* From Guide to Mac II family hardware, p. 137 */
 /* These are "adjusted" in the init routine. */
@@ -117,7 +117,7 @@ static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0x10000;
 static volatile long			*sci_4byte_addr=  (long *) 0x6000;
 static volatile u_char			*sci_1byte_addr=(u_char *) 0x12000;
 
-static unsigned int	ncr5380_adapter_info(struct ncr5380_data *ncr5380);
+static unsigned int	ncr5380_adapter_info(struct ncr5380_softc *ncr5380);
 static void		ncr5380_minphys(struct buf *bp);
 static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 
@@ -158,7 +158,7 @@ static void	ncrattach();
 
 struct cfdriver ncrscsicd =
       {	NULL, "ncrscsi", ncrprobe, ncrattach,
-	DV_DULL, sizeof(struct ncr5380_data), NULL, 0 };
+	DV_DULL, sizeof(struct ncr5380_softc), NULL, 0 };
 
 static int
 ncr_print(aux, name)
@@ -170,36 +170,23 @@ ncr_print(aux, name)
 }
 
 static int
-ncrprobe(parent, cf, aux)
+ncrprobe(parent, match, aux)
 	struct device	*parent;
-	struct cfdata	*cf;
+	void		*match;
 	void		*aux;
 {
 static	int			probed = 0;
-	int			unit = cf->cf_unit;
-	struct ncr5380_data	*ncr5380;
+	struct ncr5380_softc	*ncr5380;
 
 	if (!mac68k_machine.scsi80) {
 		return 0;
 	}
 
-	if (strcmp(*((char **) aux), ncrscsicd.cd_name)) {
-		return 0;
-	}
+	ncr5380 = (struct ncr5380_softc *) match;
 
- 	if (unit >= NNCR5380) {
-		printf("ncr5380attach: unit %d more than %d configured.\n",
-			unit+1, NNCR5380);
+	if (strcmp(*((char **) aux), ncr5380->sc_dev.dv_xname)) {
 		return 0;
 	}
-	ncr5380 = malloc(sizeof(struct ncr5380_data), M_TEMP, M_NOWAIT);
-	if (!ncr5380) {
-		printf("ncr5380attach: Can't malloc.\n");
-		return 0;
-	}
-
-	bzero(ncr5380, sizeof(*ncr5380));
-	ncr5380data[unit] = ncr5380;
 
 	if (!probed) {
 		/*
@@ -223,15 +210,10 @@ ncrattach(parent, dev, aux)
 {
 register volatile sci_padded_regmap_t	*regs = ncr;
 	int				unit = dev->dv_unit;
-	struct ncr5380_data		*ncr5380 = ncr5380data[unit];
+	struct ncr5380_softc		*ncr5380;
 	int				r;
 
-	bcopy((char *) ncr5380 + sizeof(struct device),
-	      (char *) dev + sizeof(struct device),
-	      sizeof(struct ncr5380_data) - sizeof(struct device));
-	free(ncr5380, M_TEMP);
-
-	ncr5380data[unit] = ncr5380 = (struct ncr5380_data *) dev;
+	ncr5380 = (struct ncr5380_softc *) dev;
 
 	ncr5380->sc_link.scsibus = unit;
 	ncr5380->sc_link.adapter_target = 7;
