@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.79 1999/07/22 21:08:30 thorpej Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.80 1999/07/25 08:55:46 rh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -893,7 +893,7 @@ svr4_pfind(pid)
 {
 	struct proc *p = NULL;
 
-	proclist_lock_read(0);
+	proclist_lock_read();
 
 	/* look in the live processes */
 	if ((p = pfind(pid)) != NULL)
