@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.14 2000/10/10 11:58:31 lukem Exp $
+.\"	$NetBSD: legal.common,v 1.15 2000/10/11 15:23:05 ad Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,6 +64,8 @@ This product includes software developed by Adam Glass
 and Charles M. Hannum.
 .Pp
 This product includes software developed by Adam Glass.
+.Pp
+This product includes software developed by Alistair G. Crooks.
 .Pp
 This product includes software developed by Amancio Hasty and
 Roger Hardiman.
