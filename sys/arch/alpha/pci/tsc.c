@@ -1,4 +1,4 @@
-/* $NetBSD: tsc.c,v 1.8 2002/09/27 20:29:36 thorpej Exp $ */
+/* $NetBSD: tsc.c,v 1.9 2002/10/02 04:06:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.8 2002/09/27 20:29:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.9 2002/10/02 04:06:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,9 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.8 2002/09/27 20:29:36 thorpej Exp $");
 int	tscmatch __P((struct device *, struct cfdata *, void *));
 void	tscattach __P((struct device *, struct device *, void *));
 
-const struct cfattach tsc_ca = {
-	sizeof(struct tsc_softc), tscmatch, tscattach,
-};
+CFATTACH_DECL(tsc, sizeof(struct tsc_softc),
+    tscmatch, tscattach, NULL, NULL);
 
 extern struct cfdriver tsc_cd;
 
@@ -75,9 +74,8 @@ static int tscprint __P((void *, const char *pnp));
 int	tspmatch __P((struct device *, struct cfdata *, void *));
 void	tspattach __P((struct device *, struct device *, void *));
 
-const struct cfattach tsp_ca = {
-	sizeof(struct tsp_softc), tspmatch, tspattach,
-};
+CFATTACH_DECL(tsp, sizeof(struct tsp_softc),
+    tspmatch, tspattach, NULL, NULL);
 
 extern struct cfdriver tsp_cd;
 
