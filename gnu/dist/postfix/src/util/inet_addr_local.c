@@ -47,6 +47,13 @@
 #endif
 #include <errno.h>
 #include <string.h>
+#if defined(INET6) && (defined (LINUX) || defined (LINUX2))
+#include <netdb.h>
+#include <stdio.h>
+#endif
+#ifdef HAVE_GETIFADDRS
+#include <ifaddrs.h>
+#endif
 
 /* Utility library. */
 
@@ -78,18 +85,96 @@
 
 int     inet_addr_local(INET_ADDR_LIST *addr_list, INET_ADDR_LIST *mask_list)
 {
+#ifdef HAVE_GETIFADDRS
+    char *myname = "inet_addr_local";
+    struct ifaddrs *ifap, *ifa;
+    int initial_count = addr_list->used;
+    struct sockaddr *sa;
+#ifdef INET6
+#ifdef __KAME__
+    struct sockaddr_in6 addr6;
+#endif
+#else
+    void *addr;
+#endif
+
+    if (getifaddrs(&ifap) < 0)
+	msg_fatal("%s: getifaddrs: %m", myname);
+
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+	sa = ifa->ifa_addr;
+	switch (ifa->ifa_addr->sa_family) {
+	case AF_INET:
+#ifndef INET6
+	    addr = (void *)&((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+#endif
+	    break;
+#ifdef INET6
+	case AF_INET6:
+#ifdef __KAME__
+	    memcpy(&addr6, ifa->ifa_addr, ifa->ifa_addr->sa_len);
+	    /* decode scoped address notation */
+	    if ((IN6_IS_ADDR_LINKLOCAL(&addr6.sin6_addr) ||
+	         IN6_IS_ADDR_SITELOCAL(&addr6.sin6_addr)) &&
+		addr6.sin6_scope_id == 0) {
+		addr6.sin6_scope_id = ntohs(addr6.sin6_addr.s6_addr[3] |
+		    (unsigned int)addr6.sin6_addr.s6_addr[2] << 8);
+		addr6.sin6_addr.s6_addr[2] = addr6.sin6_addr.s6_addr[3] = 0;
+		sa = (struct sockaddr *)&addr6;
+	    }
+#endif
+	    break;
+#endif
+	default:
+	    continue;
+	}
+
+#ifdef INET6
+	inet_addr_list_append(addr_list, sa);
+#else
+	inet_addr_list_append(addr_list, (struct in_addr *)addr);
+#endif
+    }
+
+    freeifaddrs(ifap);
+    return (addr_list->used - initial_count);
+#else
     char   *myname = "inet_addr_local";
     struct ifconf ifc;
     struct ifreq *ifr;
     struct ifreq *the_end;
     int     sock;
-    VSTRING *buf = vstring_alloc(1024);
+    VSTRING *buf;
     int     initial_count = addr_list->used;
     struct in_addr addr;
     struct ifreq *ifr_mask;
+    int af = AF_INET;
+#ifdef INET6
+#if defined (LINUX) || defined (LINUX2)
+#define _PATH_PROCNET_IFINET6   "/proc/net/if_inet6"
+    FILE *f;
+    char addr6p[8][5], addr6res[40], devname[20];
+    int plen, scope, dad_status, if_idx, gaierror;
+    struct addrinfo hints, *res, *res0;
+#endif
+    struct sockaddr_in6 addr6;
 
-    if ((sock = socket(PF_INET, SOCK_DGRAM, 0)) < 0)
+other_socket_type:
+#endif
+    buf = vstring_alloc(1024);
+
+    if ((sock = socket(af, SOCK_DGRAM, 0)) < 0) {
+#ifdef INET6
+	if (af == AF_INET6)
+	{
+	    if (msg_verbose)
+		    msg_warn("%s: socket: %m", myname);
+	    goto end;
+	}
+	else
+#endif
 	msg_fatal("%s: socket: %m", myname);
+    }
 
     /*
      * Get the network interface list. XXX The socket API appears to have no
@@ -126,10 +211,15 @@ int     inet_addr_local(INET_ADDR_LIST *addr_list, INET_ADDR_LIST *mask_list)
      */
     the_end = (struct ifreq *) (ifc.ifc_buf + ifc.ifc_len);
     for (ifr = ifc.ifc_req; ifr < the_end;) {
-	if (ifr->ifr_addr.sa_family == AF_INET) {	/* IP interface */
+	if ((ifr->ifr_addr.sa_family == AF_INET) &&
+			(ifr->ifr_addr.sa_family == af)) { /* IP interface */
 	    addr = ((struct sockaddr_in *) & ifr->ifr_addr)->sin_addr;
 	    if (addr.s_addr != INADDR_ANY) {	/* has IP address */
+#ifdef INET6
+		inet_addr_list_append(addr_list, &ifr->ifr_addr);
+#else
 		inet_addr_list_append(addr_list, &addr);
+#endif
 		if (mask_list) {
 		    ifr_mask = (struct ifreq *) mymalloc(IFREQ_SIZE(ifr));
 		    memcpy((char *) ifr_mask, (char *) ifr, IFREQ_SIZE(ifr));
@@ -141,11 +231,61 @@ int     inet_addr_local(INET_ADDR_LIST *addr_list, INET_ADDR_LIST *mask_list)
 		}
 	    }
 	}
+#ifdef INET6
+	else if ((ifr->ifr_addr.sa_family == AF_INET6) &&
+			(ifr->ifr_addr.sa_family == af)) {  /* IPv6 interface */
+	    addr6 = *((struct sockaddr_in6 *) & ifr->ifr_addr);
+#ifdef __KAME__
+	    /* decode scoped address notation */
+	    if ((IN6_IS_ADDR_LINKLOCAL(&addr6.sin6_addr) ||
+	         IN6_IS_ADDR_SITELOCAL(&addr6.sin6_addr)) &&
+		addr6.sin6_scope_id == 0) {
+		addr6.sin6_scope_id = ntohs(addr6.sin6_addr.s6_addr[3] |
+		    (unsigned int)addr6.sin6_addr.s6_addr[2] << 8);
+		addr6.sin6_addr.s6_addr[2] = addr6.sin6_addr.s6_addr[3] = 0;
+	    }
+#endif
+	    if (!(IN6_IS_ADDR_UNSPECIFIED(&addr6.sin6_addr)))
+	        inet_addr_list_append(addr_list, (struct sockaddr *)&addr6);
+	}
+#endif
 	ifr = NEXT_INTERFACE(ifr);
     }
     vstring_free(buf);
     (void) close(sock);
+#ifdef INET6
+end:
+    if (af != AF_INET6) {
+	    af = AF_INET6;
+	    goto other_socket_type;
+    }
+#if defined (LINUX) || defined (LINUX2)
+    if ((f = fopen(_PATH_PROCNET_IFINET6, "r")) != NULL) {
+         while (fscanf(f, "%4s%4s%4s%4s%4s%4s%4s%4s %02x %02x %02x %02x %20s\n",
+	       addr6p[0], addr6p[1], addr6p[2], addr6p[3], addr6p[4],
+	       addr6p[5], addr6p[6], addr6p[7],
+	       &if_idx, &plen, &scope, &dad_status, devname) != EOF) {
+		 sprintf(addr6res, "%s:%s:%s:%s:%s:%s:%s:%s",
+				 addr6p[0], addr6p[1], addr6p[2], addr6p[3],
+				 addr6p[4], addr6p[5], addr6p[6], addr6p[7]);
+		 addr6res[sizeof(addr6res) - 1] = 0;
+		 memset(&hints, 0, sizeof(hints));
+		 hints.ai_flags = AI_NUMERICHOST;
+		 hints.ai_family = AF_UNSPEC;
+		 hints.ai_socktype = SOCK_DGRAM;
+		 gaierror = getaddrinfo(addr6res, NULL, &hints, &res0);
+		 if (!gaierror) {
+			 for (res = res0; res; res = res->ai_next) {
+			       inet_addr_list_append(addr_list, res->ai_addr);
+			 }
+			 freeaddrinfo(res0);
+		 }
+	 }
+    }
+#endif /* linux */
+#endif
     return (addr_list->used - initial_count);
+#endif
 }
 
 #ifdef TEST
@@ -158,6 +298,8 @@ int     main(int unused_argc, char **argv)
     INET_ADDR_LIST addr_list;
     INET_ADDR_LIST mask_list;
     int     i;
+    char abuf[NI_MAXHOST], mbuf[NI_MAXHOST];
+    struct sockaddr *sa;
 
     msg_vstream_init(argv[0], VSTREAM_ERR);
 
@@ -172,8 +314,17 @@ int     main(int unused_argc, char **argv)
 	msg_warn("found only one active network interface");
 
     for (i = 0; i < addr_list.used; i++) {
-	vstream_printf("%s/", inet_ntoa(addr_list.addrs[i]));
-	vstream_printf("%s\n", inet_ntoa(mask_list.addrs[i]));
+	sa = (struct sockaddr *)&addr_list.addrs[i];
+	if (getnameinfo(sa, sa->sa_len, abuf, sizeof(abuf), NULL, 0,
+		NI_NUMERICHOST)) {
+	    strncpy(buf, "???", sizeof(abuf));
+	}
+	sa = (struct sockaddr *)&mask_list.addrs[i];
+	if (getnameinfo(sa, sa->sa_len, mbuf, sizeof(mbuf), NULL, 0,
+		NI_NUMERICHOST)) {
+	    strncpy(buf, "???", sizeof(buf));
+	}
+	vstream_printf("%s/%s\n", abuf, mbuf);
     }
     vstream_fflush(VSTREAM_OUT);
     inet_addr_list_free(&addr_list);

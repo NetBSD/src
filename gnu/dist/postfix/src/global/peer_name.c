@@ -69,12 +69,32 @@
 PEER_NAME *peer_name(int sock)
 {
     static PEER_NAME peer;
-    struct sockaddr_in sin;
-    SOCKADDR_SIZE len = sizeof(sin);
+    union sockunion {
+	struct {
+	    u_char si_len;
+	    u_char si_family;
+	    u_short si_port;
+	} su_si;
+	struct sockaddr peer_un;
+	struct sockaddr_in peer_un4;
+#ifdef INET6
+	struct sockaddr_in6 peer_un6;
+#endif
+    } p_un;
+#define sun p_un.peer_un
+#define sin p_un.peer_un4
+#ifdef INET6
+#define sin6 p_un.peer_un6
+    static char hbuf[NI_MAXHOST];
+    static char abuf[NI_MAXHOST];
+#else
     struct hostent *hp;
+#endif
+    SOCKADDR_SIZE len = sizeof(p_un);
 
-    if (getpeername(sock, (struct sockaddr *) & sin, &len) == 0) {
-	switch (sin.sin_family) {
+    if (getpeername(sock, (struct sockaddr *)&p_un, &len) == 0) {
+	switch (p_un.peer_un.sa_family) {
+#ifndef INET6
 	case AF_INET:
 	    peer.type = PEER_TYPE_INET;
 	    hp = gethostbyaddr((char *) &(sin.sin_addr),
@@ -83,6 +103,24 @@ PEER_NAME *peer_name(int sock)
 			 hp->h_name : "unknown");
 	    peer.addr = inet_ntoa(sin.sin_addr);
 	    return (&peer);
+#else
+	case AF_INET:
+	    peer.type = PEER_TYPE_INET;
+	    if (getnameinfo(&sun, len, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD) != 0)
+		peer.name = "unknown";
+	    else
+		peer.name = hbuf;
+	    peer.addr = abuf;
+	    return (&peer);
+	case AF_INET6:
+	    peer.type = PEER_TYPE_INET6;
+	    if (getnameinfo(&sun, len, hbuf, sizeof(hbuf), NULL, 0, NI_NAMEREQD) != 0)
+		peer.name = "unknown";
+	    else
+		peer.name = hbuf;
+	    peer.addr = abuf;
+	    return (&peer);
+#endif
 	case AF_UNSPEC:
 	case AF_UNIX:
 	    peer.type = PEER_TYPE_LOCAL;
