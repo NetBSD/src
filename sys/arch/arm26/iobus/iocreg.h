@@ -1,4 +1,4 @@
-/* $NetBSD: iocreg.h,v 1.1 2000/05/09 21:56:01 bjh21 Exp $ */
+/* $NetBSD: iocreg.h,v 1.2 2002/03/07 23:16:44 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1997 Ben Harris.
@@ -93,15 +93,22 @@
 /* Control register bits (should most of these be defined here?) */
 #define IOC_CTL_SDA		0x01	/* IIC serial data	*/
 #define IOC_CTL_SCL		0x02	/* IIC serial clock	*/
+#define IOC_CTL_FLYBACK		0x80	/* Video flyback	*/
+
+/* Archimdes machines only */
 #define IOC_CTL_FDREADY		0x04	/* Floppy disc ready	*/
 #define IOC_CTL_SMUTE		0x20	/* Speaker mute		*/
 #define IOC_CTL_LPTACK		0x40	/* Printer acknowledge	*/
-#define IOC_CTL_FLYBACK		0x80	/* Video flyback	*/
+
+/* IOEB machines only */
+#define IOC_CTL_FDDEN		0x04	/* Floppy disc media density */
+#define IOC_CTL_SSN		0x08	/* Electronic machine number */
+#define IOC_CTL_NINDEX		0x40	/* Floppy disc INDEX* signal */
 
 /* Internal control register bits */
 /* These give the current state of the edge-sensitive IRQ lines */
-#define IOC_CTL_NIF	0x04	/* Set if IF* is high (IRQ 2) */
-#define IOC_CTL_IR	0x08	/* Set if IR  is high (IRQ 3) */
+#define IOC_CTL_NIF	0x40	/* Set if IF* is high (IRQ 2) */
+#define IOC_CTL_IR	0x80	/* Set if IR  is high (IRQ 3) */
 
 /* IOC definitions of interrupt sources (independent of machine) */
 /* Hmm Interrupt numbers or masks?  Numbers for now. */
